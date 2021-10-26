@@ -1,0 +1,337 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * This file is part of silofs.
+ *
+ * Copyright (C) 2020-2021 Shachar Sharon
+ *
+ * Silofs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Silofs is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+#ifndef SILOFS_ADDRESS_H_
+#define SILOFS_ADDRESS_H_
+
+#include <silofs/fs/types.h>
+#include <stdint.h>
+#include <endian.h>
+
+loff_t silofs_off_within(loff_t off, size_t bsz);
+
+loff_t silofs_off_in_bk(loff_t off);
+
+loff_t silofs_off_to_vsec_start(loff_t voff);
+
+loff_t silofs_off_to_vsec_next(loff_t voff, size_t nvsec);
+
+loff_t silofs_off_to_spnode_start(loff_t voff);
+
+loff_t silofs_off_to_spnode_next(loff_t voff);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_uuid_generate(struct silofs_uuid *uu);
+
+void silofs_uuid_assign(struct silofs_uuid *uu1,
+                        const struct silofs_uuid *uu2);
+
+void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_stype_isdata(enum silofs_stype stype);
+
+bool silofs_stype_ismeta(enum silofs_stype stype);
+
+size_t silofs_stype_size(enum silofs_stype stype);
+
+ssize_t silofs_stype_ssize(enum silofs_stype stype);
+
+size_t silofs_stype_nkbs(enum silofs_stype stype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_blobid *silofs_blobid_none(void);
+
+size_t silofs_blobid_size(const struct silofs_blobid *bid);
+
+ssize_t silofs_blobid_ssize(const struct silofs_blobid *bid);
+
+void silofs_blobid_reset(struct silofs_blobid *bid);
+
+void silofs_blobid_assign(struct silofs_blobid *bid,
+                          const struct silofs_blobid *other);
+
+long silofs_blobid_compare(const struct silofs_blobid *bid1,
+                           const struct silofs_blobid *bid2);
+
+bool silofs_blobid_isequal(const struct silofs_blobid *bid,
+                           const struct silofs_blobid *other);
+
+uint64_t silofs_blobid_hkey(const struct silofs_blobid *bid);
+
+uint64_t silofs_blobid_as_u64(const struct silofs_blobid *bid);
+
+int silofs_blobid_to_name(const struct silofs_blobid *bid,
+                          char *name, size_t nmax, size_t *out_len);
+
+void silofs_blobid_make(struct silofs_blobid *bid,
+                        const struct silofs_metaid *treeid,
+                        size_t obj_size, size_t nobjs, size_t height);
+
+int silofs_check_blobid_ascii_name(const char *name, size_t nlen);
+
+
+void silofs_blobid40b_reset(struct silofs_blobid40b *bid4);
+
+void silofs_blobid40b_set(struct silofs_blobid40b *bid4,
+                          const struct silofs_blobid *blobid);
+
+void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid4,
+                            struct silofs_blobid *blobid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_oaddr *silofs_oaddr_none(void);
+
+void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
+                        const struct silofs_blobid *bid,
+                        size_t len, loff_t off);
+
+void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
+                        const struct silofs_blobid *bid, silofs_lba_t lba);
+
+void silofs_oaddr_reset(struct silofs_oaddr *oaddr);
+
+void silofs_oaddr_assign(struct silofs_oaddr *oaddr,
+                         const struct silofs_oaddr *other);
+
+long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
+                          const struct silofs_oaddr *oaddr2);
+
+bool silofs_oaddr_isnull(const struct silofs_oaddr *oaddr);
+
+bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr);
+
+bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
+                          const struct silofs_oaddr *other);
+
+silofs_lba_t silofs_oaddr_lba(const struct silofs_oaddr *oaddr);
+
+
+void silofs_ovaddr_setup(struct silofs_ovaddr *ova,
+                         const struct silofs_oaddr *oaddr,
+                         const struct silofs_vaddr *vaddr);
+
+void silofs_ovaddr_assign(struct silofs_ovaddr *ova,
+                          const struct silofs_ovaddr *other);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_metaid_generate(struct silofs_metaid *mid);
+
+uint64_t silofs_metaid_hkey(const struct silofs_metaid *mid);
+
+bool silofs_metaid_isequal(const struct silofs_metaid *mid1,
+                           const struct silofs_metaid *mid2);
+
+void silofs_metaid_to_name(const struct silofs_metaid *mid, char *name);
+
+void silofs_metaid_from_name(struct silofs_metaid *mid, const char *name);
+
+void silofs_metaid128_set(struct silofs_metaid128 *metaid128,
+                          const struct silofs_metaid *mid);
+
+void silofs_metaid128_parse(const struct silofs_metaid128 *metaid128,
+                            struct silofs_metaid *mid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_uaddr *silofs_uaddr_none(void);
+
+bool silofs_uaddr_isnull(struct silofs_uaddr *uaddr);
+
+void silofs_uaddr_reset(struct silofs_uaddr *uaddr);
+
+void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
+                         const struct silofs_uaddr *other);
+
+void silofs_uaddr_to_oaddr(const struct silofs_uaddr *uaddr,
+                           struct silofs_oaddr *oaddr);
+
+long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
+                          const struct silofs_uaddr *uaddr2);
+
+void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
+                        const struct silofs_blobid *bid,
+                        enum silofs_stype stype, loff_t bpos, loff_t voff);
+
+void silofs_uaddr_make_for_super(struct silofs_uaddr *uaddr,
+                                 const struct silofs_blobid *bid);
+
+void silofs_uaddr56b_reset(struct silofs_uaddr56b *uadr);
+
+void silofs_uaddr56b_set(struct silofs_uaddr56b *uadr,
+                         const struct silofs_uaddr *uaddr);
+
+void silofs_uaddr56b_parse(const struct silofs_uaddr56b *uadr,
+                           struct silofs_uaddr *uaddr);
+
+
+void silofs_taddr_setup(struct silofs_taddr *taddr,
+                        const struct silofs_metaid *tree_id,
+                        loff_t voff, size_t height);
+
+void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
+                           const struct silofs_uaddr *uaddr);
+
+bool silofs_taddr_isequal(const struct silofs_taddr *taddr1,
+                          const struct silofs_taddr *taddr2);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_vaddr *silofs_vaddr_none(void);
+
+loff_t silofs_vaddr_off(const struct silofs_vaddr *vaddr);
+
+enum silofs_stype silofs_vaddr_stype(const struct silofs_vaddr *vaddr);
+
+long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
+                          const struct silofs_vaddr *vaddr2);
+
+void silofs_vaddr_setup(struct silofs_vaddr *vaddr,
+                        enum silofs_stype stype, loff_t off);
+
+void silofs_vaddr_setup2(struct silofs_vaddr *vaddr,
+                         enum silofs_stype stype, silofs_lba_t lba);
+
+void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
+                         const struct silofs_vaddr *other);
+
+void silofs_vaddr_reset(struct silofs_vaddr *vaddr);
+
+bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr);
+
+bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr);
+
+silofs_lba_t silofs_vaddr_lba(const struct silofs_vaddr *vaddr);
+
+
+void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
+                            enum silofs_stype stype,
+                            loff_t voff_base, size_t bn, size_t kbn);
+
+void silofs_vaddr56_set(struct silofs_vaddr56 *va, loff_t off);
+
+loff_t silofs_vaddr56_parse(const struct silofs_vaddr56 *va);
+
+void silofs_vaddr64_set(struct silofs_vaddr64 *vadr,
+                        const struct silofs_vaddr *vaddr);
+
+void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
+                          struct silofs_vaddr *vaddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+size_t silofs_vrange_length(const struct silofs_vrange *vrange);
+
+bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off);
+
+void silofs_vrange_setup(struct silofs_vrange *vrange, loff_t beg, loff_t end);
+
+void silofs_vrange_setup_by(struct silofs_vrange *vrange,
+                            size_t height, loff_t voff_base);
+
+void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
+                             size_t height, loff_t voff);
+
+void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff);
+
+void silofs_vrange128_reset(struct silofs_vrange128 *vrng);
+
+void silofs_vrange128_set(struct silofs_vrange128 *vrng,
+                          const struct silofs_vrange *vrange);
+
+void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
+                            struct silofs_vrange *vrange);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_check_fs_capacity(size_t cap_size);
+
+int silofs_calc_fs_capacity(size_t capcity_want, size_t *out_capacity);
+
+
+int silofs_verify_ino(ino_t ino);
+
+int silofs_verify_off(loff_t off);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static inline uint16_t silofs_cpu_to_le16(uint16_t n)
+{
+	return htole16(n);
+}
+
+static inline uint16_t silofs_le16_to_cpu(uint16_t n)
+{
+	return le16toh(n);
+}
+
+static inline uint32_t silofs_cpu_to_le32(uint32_t n)
+{
+	return htole32(n);
+}
+
+static inline uint32_t silofs_le32_to_cpu(uint32_t n)
+{
+	return le32toh(n);
+}
+
+static inline uint64_t silofs_cpu_to_le64(uint64_t n)
+{
+	return htole64(n);
+}
+
+static inline uint64_t silofs_le64_to_cpu(uint64_t n)
+{
+	return le64toh(n);
+}
+
+static inline uint64_t silofs_cpu_to_ino(ino_t ino)
+{
+	return silofs_cpu_to_le64(ino);
+}
+
+static inline ino_t silofs_ino_to_cpu(uint64_t ino)
+{
+	return (ino_t)silofs_le64_to_cpu(ino);
+}
+
+static inline int64_t silofs_cpu_to_off(loff_t off)
+{
+	return (int64_t)silofs_cpu_to_le64((uint64_t)off);
+}
+
+static inline loff_t silofs_off_to_cpu(int64_t off)
+{
+	return (loff_t)silofs_le64_to_cpu((uint64_t)off);
+}
+
+static inline uint64_t silofs_cpu_to_lba(silofs_lba_t lba)
+{
+	return silofs_cpu_to_le64((uint64_t)lba);
+}
+
+static inline silofs_lba_t silofs_lba_to_cpu(uint64_t lba)
+{
+	return (silofs_lba_t)silofs_le64_to_cpu(lba);
+}
+
+
+#endif /* SILOFS_ADDRESS_H_ */

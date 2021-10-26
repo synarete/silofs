@@ -3,7 +3,7 @@ self=$(basename "${BASH_SOURCE[0]}")
 root=$(readlink -f "$(dirname "${self}")")
 
 astyle1tbs() {
-  which astyle > /dev/null
+  command -v astyle > /dev/null
   astyle -Q \
     --style=1tbs \
     --suffix=none \

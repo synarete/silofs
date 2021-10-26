@@ -1,0 +1,80 @@
+Name: silofs
+Summary: The Silo File-System
+Version: @VERSION@
+Release: @RELEASE@.@REVISION@%{?dist}
+License: GPLv3
+Group: Development/Tools
+URL: https://synarete.github.io/silofs
+Source: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
+
+%{?systemd_requires}
+
+%description
+Silofs is a user-space file-system that allows you to easily archive and
+restore a point-in-time snapshot to/from the cloud.
+
+%package devel
+Summary: Silofs devel
+Group: Development/Tools
+Requires: libcap-devel
+Requires: libuuid-devel
+Requires: libgcrypt-devel
+Requires: libunwind-devel
+
+%description devel
+Development files for silofs
+
+%prep
+%setup -q
+
+%build
+%configure
+%{__make}
+
+# TODO: Have fast-check by default
+# %check
+# %{__make} check
+
+%install
+%make_install
+
+%clean
+%{__rm} -rf %{buildroot}
+
+%files
+%defattr(-, root, root)
+%{_bindir}/%{name}
+%{_bindir}/%{name}-vfstests
+%{_sbindir}/%{name}-mountd
+%{_sbindir}/*.%{name}
+%exclude %{_bindir}/%{name}-unitests
+%exclude %{_libdir}/lib%{name}*.la
+%config(noreplace) %{_sysconfdir}/%{name}/*.conf
+%{_mandir}/man1/%{name}.1*
+%{_mandir}/man8/%{name}-*.8*
+%{_datarootdir}/bash-completion/completions/%{name}
+%{_unitdir}/%{name}-mountd.service
+%{_docdir}/%{name}/*
+
+# exclude 'devel' stuff for now
+# %files devel
+# %defattr(-, root, root)
+%exclude %{_includedir}/*
+%exclude %{_libdir}/lib%{name}*.*
+
+
+%post
+%systemd_post %{name}-mountd.service
+
+%preun
+%systemd_preun %{name}-mountd.service
+
+%postun
+%systemd_postun_with_restart %{name}-mountd.service
+
+%changelog
+* @RPMDATE@ Silofs <synarete@xxxxxxxx> @VERSION@-@RELEASE@.@REVISION@
+- Release @REVISION@
+
+

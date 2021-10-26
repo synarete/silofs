@@ -5,7 +5,7 @@ die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
 run() { echo "$self: $@" >&2; try "$@"; }
 
-run which fsstress
+run command -v fsstress
 run fsstress -r 32 -p 4 -v -n 10000 -c \
   -f rmdir=1000 \
   -f link=1000 \

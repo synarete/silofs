@@ -1,0 +1,18 @@
+Source: silofs
+Section: utils
+Priority: optional
+Maintainer: Shachar Sharon <synarete@xxxxxxxx>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev
+Standards-Version: 3.9.3
+Homepage:  https://github.com/synarete/silofs
+
+Package: silofs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Description: Silofs
+ Silofs
+ .
+ This package provides an implementation and documentation of Silofs
+ .
+
+

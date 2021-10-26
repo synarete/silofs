@@ -87,7 +87,7 @@ _fio_to_cvs() {
 }
 
 _fio_verify() {
-  try which fio > /dev/null
+  try command -v fio > /dev/null
 }
 
 

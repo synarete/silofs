@@ -1,0 +1,136 @@
+## bash completion for 'silofs'
+[ -z "$BASH_VERSION" ] && return
+
+_silofs_mkfs() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-s --size=' -- "$cur" ) )
+    COMPREPLY+=( $( compgen -W '-n --name= -F --force -h' -- "$cur" ) )
+  fi
+}
+
+_silofs_mount() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W ' -D --nodaemon -C --coredump -h' -- "$cur" ) )
+    COMPREPLY+=( $( compgen -W ' -r --rdonly -x --noexec --kcopy'-- "$cur" ) )
+    COMPREPLY+=( $( compgen -W ' -A --allow-other' -- "$cur" ) )
+  fi
+}
+
+_silofs_umount() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-h' -- "$cur" ) )
+  fi
+}
+
+_silofs_snap() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-n --name= -h' -- "$cur" ) )
+  fi
+}
+
+_silofs_archive() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-n --name= -h' -- "$cur" ) )
+  fi
+}
+
+_silofs_show() {
+  local cur prev words cword
+  _init_completion || return
+
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-h' -- "$cur" ) )
+  fi
+}
+
+_silofs_lsmnt() {
+  local cur prev words cword
+  _init_completion || return
+
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-l --long -h' -- "$cur" ) )
+  fi
+}
+
+_silofs_subcmd() {
+  local cur prev words cword
+  _init_completion || return
+
+  case "${words[1]}" in
+    "mkfs")
+      _silofs_mkfs
+      ;;
+    "mount")
+      _silofs_mount
+      ;;
+    "umount")
+      _silofs_umount
+      ;;
+    "snap")
+      _silofs_snap
+      ;;
+    "archive")
+      _silofs_archive
+      ;;
+    "show")
+      _silofs_show
+      ;;
+    "lsmnt")
+      _silofs_lsmnt
+      ;;
+  esac
+}
+
+_silofs_main() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
+  else
+    COMPREPLY+=( $(compgen -W 'mkfs mount umount snap' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'archive show lsmnt' -- "$cur") )
+  fi
+}
+
+
+_silofs() {
+  local IFS=$' \t\n'
+  local cur prev words cword
+  _init_completion || return
+
+  compopt -o nospace
+  COMPREPLY=( ${COMPREPLY[@]:-} )
+
+  if [[ $cword -eq 1 ]]; then
+    _silofs_main
+  else
+    _silofs_subcmd
+  fi
+}
+
+complete -o bashdefault -o default -F _silofs silofs
+
+# vim: filetype=sh
+

@@ -1,0 +1,12 @@
+name = @pkg_name@
+version = @pkg_version@
+release = @pkg_release@
+revision = @pkg_revision@
+builddate := $(shell date --iso-8601=minutes)
+
+.DELETE_ON_ERROR:
+
+-include generated
+.PHONY: generated
+generated: $(BUILT_SOURCES)
+

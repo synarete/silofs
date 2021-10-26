@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="refresh" content="1; URL=silofs.html" />
+</head>
+<body>
+  <p>@PACKAGE_NAME@ @PACKAGE_VERSION@-@RELEASE@.@REVISION@</p>
+</body>
+</html>

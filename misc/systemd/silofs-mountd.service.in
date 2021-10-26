@@ -1,0 +1,20 @@
+[Unit]
+Description=@PACKAGE_NAME@ mount-daemon service
+After=syslog.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=300
+MemoryLimit=8M
+Nice=-17
+NoNewPrivileges=yes
+TasksMax=1
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=CAP_SYS_ADMIN
+ExecStart=@PACKAGE_NAME@-mountd -f /etc/@PACKAGE_NAME@/mountd.conf
+
+[Install]
+WantedBy=multi-user.target

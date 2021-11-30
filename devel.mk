@@ -89,7 +89,7 @@ MAKE_OPTS += --silent --no-print-directory
 endif
 
 
-# Pedantic compilation flags
+# Developer's (pedantic) compilation flags
 CFLAGS += -Wall -Wextra -Winit-self -Winline
 CFLAGS += -Wunused -Wunused-parameter -Wunused-result
 CFLAGS += -Wunused-local-typedefs -Wunused-label
@@ -105,6 +105,7 @@ CFLAGS += -Wframe-larger-than=4096 -Wmissing-field-initializers
 CFLAGS += -Wstrict-aliasing=2 -Warray-bounds -Winline -Wcast-qual
 CFLAGS += -fPIC -fwrapv -fstrict-aliasing
 CFLAGS += -fstack-protector -fstack-protector-strong # -fstack-check
+CFLAGS += -fasynchronous-unwind-tables
 # CFLAGS += -Wpadded
 
 # Have 'pedantic' flag only when not using private fuse header
@@ -146,7 +147,9 @@ ifeq ($(CC), gcc)
 CFLAGS += -Werror -Wstack-usage=4096 -Wlogical-op -Wjump-misses-init
 CFLAGS += -Wunsuffixed-float-constants -Wmultistatement-macros
 CFLAGS += -Wunused-const-variable=2 -Wswitch-unreachable
-CFLAGS += -Wstringop-truncation -Wold-style-declaration
+CFLAGS += -Wold-style-declaration
+# CFLAGS += -Wstringop-truncation -Wstringop-overread -Wstringop-overflow
+# CFLAGS += -Wstring-compare
 ifeq ($(WITH_ANALYZER), 1)
 CFLAGS += -fanalyzer -Wno-analyzer-malloc-leak
 endif
@@ -214,11 +217,11 @@ clangscan:
 
 rpm: reset
 	$(call report, $@)
-	@$(TOP)/pkg/packagize-rpm.sh
+	@$(TOP)/dist/packagize-rpm.sh
 
 deb: reset
 	$(call report, $@)
-	@$(TOP)/pkg/packagize-deb.sh
+	@$(TOP)/dist/packagize-deb.sh
 
 reset:
 	$(call report, $@)

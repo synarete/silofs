@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,8 +80,8 @@ void silofs_sni_bind_main_blob(struct silofs_spnode_info *sni,
 
 bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni);
 
-void silofs_sni_main_child_uaddr(const struct silofs_spnode_info *sni,
-                                 loff_t voff, struct silofs_uaddr *out_uaddr);
+void silofs_sni_resolve_main_child(const struct silofs_spnode_info *sni,
+                                   loff_t voff, struct silofs_uaddr *out_ua);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -103,14 +103,6 @@ void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
 enum silofs_stype silofs_sli_stype_sub(const struct silofs_spleaf_info *sli);
 
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
-
-void silofs_sli_resolve_oaddr(const struct silofs_spleaf_info *sli,
-                              const struct silofs_vaddr *vaddr,
-                              struct silofs_oaddr *out_oaddr);
-
-void silofs_sli_resolve_ova(const struct silofs_spleaf_info *sli,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_ovaddr *out_ova);
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
                                enum silofs_stype stype,
@@ -149,8 +141,17 @@ int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
 void silofs_sli_clone_childs(struct silofs_spleaf_info *sli,
                              const struct silofs_spleaf_info *sli_other);
 
-void silofs_sli_bind_to_main_at(struct silofs_spleaf_info *sli,
-                                const struct silofs_vaddr *vaddr);
+
+void silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_ovaddr *out_ova);
+
+void silofs_sli_resolve_main_child(const struct silofs_spleaf_info *sli,
+                                   const struct silofs_vaddr *vaddr,
+                                   struct silofs_ovaddr *out_ova);
+
+void silofs_sli_rebind_child(struct silofs_spleaf_info *sli,
+                             const struct silofs_ovaddr *ova);
 
 
 int silofs_verify_spmap_node(const struct silofs_spmap_node *sn);

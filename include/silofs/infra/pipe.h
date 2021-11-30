@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,15 +22,21 @@
 struct iovec;
 
 struct silofs_pipe {
-	int     fd[2];
-	size_t  size;
-	size_t  pend;
+	int fd[2];
+	size_t size;
+	size_t pend;
 };
 
 struct silofs_nilfd {
-	int     fd;
+	int fd;
 };
 
+struct silofs_piper {
+	struct silofs_nilfd     nfd;
+	struct silofs_pipe      pipe;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_pipe_size_of(size_t pipe_size_want);
 
@@ -67,15 +73,15 @@ int silofs_pipe_flush_to_fd(struct silofs_pipe *pipe, int fd);
 int silofs_pipe_dispose(struct silofs_pipe *pipe,
                         const struct silofs_nilfd *nfd);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_nilfd_init(struct silofs_nilfd *nfd);
+int silofs_piper_init(struct silofs_piper *piper, size_t pipe_size);
 
-void silofs_nilfd_fini(struct silofs_nilfd *nfd);
+void silofs_piper_fini(struct silofs_piper *piper);
 
+int silofs_piper_dispose(struct silofs_piper *piper);
 
-int silofs_kcopy_with_splice(struct silofs_pipe *pipe,
-                             struct silofs_nilfd *nfd,
-                             int fd_in, loff_t *off_in,
-                             int fd_out, loff_t *off_out, size_t len);
+int silofs_piper_kcopy(struct silofs_piper *piper, int fd_in, loff_t *off_in,
+                       int fd_out, loff_t *off_out, size_t nn);
 
 #endif /* SILOFS_PIPE_H_ */

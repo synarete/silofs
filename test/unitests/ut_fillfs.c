@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -185,7 +185,7 @@ static void ut_fillfs_reload_(struct ut_env *ute, size_t bsz)
 	ut_create_file(ute, dino, name, &ino);
 	ut_fillfs_append_(ute, ino, bsz);
 	ut_release_file(ute, ino);
-	ut_reload_ok(ute, ino);
+	ut_reload_fs_ok_at(ute, ino);
 	ut_unlink_file(ute, dino, name);
 	ut_statfs_ok(ute, dino, &stv[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);

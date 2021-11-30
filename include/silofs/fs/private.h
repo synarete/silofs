@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,6 +88,7 @@
 #define listq_initn(lq, n)              silofs_listq_initn(lq, n)
 #define listq_fini(lq)                  silofs_listq_fini(lq)
 #define listq_finin(lq, n)              silofs_listq_finin(lq, n)
+#define listq_size(lq)                  silofs_listq_size(lq)
 #define listq_isempty(lq)               silofs_listq_isempty(lq)
 #define listq_push_back(lq, lh)         silofs_listq_push_back(lq, lh)
 #define listq_push_front(lq, lh)        silofs_listq_push_front(lq, lh)
@@ -121,12 +122,14 @@
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
 #define oaddr_setup(oa, bid, s, o)      silofs_oaddr_setup(oa, bid, s, o)
+#define oaddr_setup_by(oa, bid, va)     silofs_oaddr_setup_by(oa, bid, va)
 #define oaddr_lba(oa)                   silofs_oaddr_lba(oa)
 #define oaddr_isvalid(oa)               silofs_oaddr_isvalid(oa)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
+#define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 
 #define vaddr_none()                    silofs_vaddr_none()
 #define vaddr_off(va)                   silofs_vaddr_off(va)
@@ -137,6 +140,10 @@
 #define vaddr_reset(va)                 silofs_vaddr_reset(va)
 #define vaddr_assign(va, oth)           silofs_vaddr_assign(va, oth)
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
+#define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
+
+#define ovaddr_setup(ova, oa, va)       silofs_ovaddr_setup(ova, oa, va)
+#define ovaddr_assign(ova, oth)         silofs_ovaddr_assign(ova, oth)
 
 #define bli_incref(bli)                 silofs_bli_incref(bli)
 #define bli_decref(bli)                 silofs_bli_decref(bli)
@@ -144,12 +151,15 @@
 #define sbi_apex(sbi)                   silofs_sbi_apex(sbi)
 #define sbi_repo(sbi)                   silofs_sbi_repo(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
+#define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)
 #define ui_dirtify(ui)                  silofs_ui_dirtify(ui)
 #define ui_undirtify(ui)                silofs_ui_undirtify(ui)
+#define ui_stype(ui)                    silofs_ui_stype(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
+#define ui_oaddr(ui)                    silofs_ui_oaddr(ui)
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)

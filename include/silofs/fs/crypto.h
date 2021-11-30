@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 
 
 int silofs_init_gcrypt(void);
+
+int silofs_mdigest_init(struct silofs_mdigest *md);
+
+void silofs_mdigest_fini(struct silofs_mdigest *md);
 
 int silofs_crypto_init(struct silofs_crypto *crypto);
 

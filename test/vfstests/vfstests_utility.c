@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 #include <error.h>
 #include <stdarg.h>
 
+#define MCHUNK_MAGIC 0x3AABE871
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t aligned_size(size_t sz, size_t a)
@@ -28,47 +30,59 @@ static size_t aligned_size(size_t sz, size_t a)
 
 static size_t malloc_total_size(size_t nbytes)
 {
-	size_t total_size;
-	struct vt_mchunk *mchunk = NULL;
+	const struct vt_mchunk *mchunk = NULL;
 	const size_t mchunk_size = sizeof(*mchunk);
-	const size_t data_size = sizeof(mchunk->data);
 
-	total_size = mchunk_size;
-	if (nbytes > data_size) {
-		total_size += aligned_size(nbytes - data_size, mchunk_size);
-	}
-	return total_size;
+	return aligned_size(mchunk_size + nbytes, mchunk_size);
 }
 
-static struct vt_mchunk *malloc_chunk(struct vt_env *vte,
-                                      size_t nbytes)
+static struct vt_mchunk *mchunk_of(void *data, size_t nbytes)
+{
+	struct vt_mchunk *mchunk = NULL;
+	const size_t dlen = aligned_size(nbytes, sizeof(*mchunk));
+	void *pmchunk;
+
+	pmchunk = (uint8_t *)data + dlen;
+	return pmchunk;
+}
+
+static struct vt_mchunk *malloc_chunk(struct vt_env *vte, size_t nbytes)
 {
 	size_t total_size;
 	struct vt_mchunk *mchunk;
+	void *data;
 
 	total_size = malloc_total_size(nbytes);
-	mchunk = (struct vt_mchunk *)malloc(total_size);
-	if (mchunk == NULL) {
+	data = (struct vt_mchunk *)malloc(total_size);
+	if (data == NULL) {
 		error(1, errno, "malloc failure size=%lu", total_size);
 		abort(); /* Make clang happy */
 	}
 
-	mchunk->size = total_size;
+	mchunk = mchunk_of(data, nbytes);
+	mchunk->magic  = MCHUNK_MAGIC;
 	mchunk->next = vte->malloc_list;
+	mchunk->data = data;
+	mchunk->size = total_size;
+
 	vte->malloc_list = mchunk;
 	vte->nbytes_alloc += total_size;
 
 	return mchunk;
 }
 
-static void free_chunk(struct vt_env *vte,
-                       struct vt_mchunk *mchunk)
+static void free_mchunk(struct vt_env *vte, struct vt_mchunk *mchunk)
 {
+	void *data = mchunk->data;
+
+	silofs_assert_not_null(data);
 	silofs_assert(vte->nbytes_alloc >= mchunk->size);
+	silofs_assert_eq(mchunk->magic, MCHUNK_MAGIC);
 
 	vte->nbytes_alloc -= mchunk->size;
-	memset(mchunk, 0xFD, mchunk->size);
-	free(mchunk);
+
+	mchunk->data = NULL;
+	free(data);
 }
 
 static void *do_malloc(struct vt_env *vte, size_t sz)
@@ -122,7 +136,7 @@ void vt_freeall(struct vt_env *vte)
 
 	while (mchunk != NULL) {
 		mnext = mchunk->next;
-		free_chunk(vte, mchunk);
+		free_mchunk(vte, mchunk);
 		mchunk = mnext;
 	}
 	silofs_assert_eq(vte->nbytes_alloc, 0);

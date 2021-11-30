@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,6 +63,8 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii);
 
 bool silof_ii_isimmutable(const struct silofs_inode_info *ii);
 
+void silofs_ii_iaddr(const struct silofs_inode_info *ii,
+                     struct silofs_iaddr *out_iaddr);
 
 void silofs_fixup_rootdir(struct silofs_inode_info *ii);
 
@@ -106,7 +108,7 @@ void silofs_update_iattrs(const struct silofs_oper *op,
 
 void silofs_iattr_setup(struct silofs_iattr *iattr, ino_t ino);
 
-void silofs_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
+void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
 void silofs_setup_inode(struct silofs_inode_info *ii,
                         const struct silofs_ucred *ucred,

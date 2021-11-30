@@ -25,8 +25,9 @@ astyle1tbs() {
     # --indent-switches
 }
 
-srcs=$(find "${root}/include" "${root}/src" "${root}/test" \
-       -type f -not -name "fuse7.h" -name "*.[ch]")
+srcs=$(find "${root}/include" "${root}/lib" \
+  "${root}/cmd" "${root}/mntd" "${root}/test" \
+  -type f -not -name "fuse7.h" -not -name "configs.h" -name "*.[ch]")
 for src in ${srcs}; do
   astyle1tbs "${src}"
 done

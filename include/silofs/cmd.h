@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,10 +43,18 @@ struct silofs_cmd_info {
 	silofs_exec_fn action_hook;
 };
 
+/* arguments for 'init' sub-command */
+struct silofs_subcmd_init {
+	char   *name;
+	char   *repodir;
+	char   *repodir_real;
+};
+
 /* arguments for 'mkfs' sub-command */
 struct silofs_subcmd_mkfs {
 	char   *name;
 	char   *repodir;
+	char   *repodir_real;
 	char   *size;
 	long    fs_size;
 	bool    force;
@@ -66,7 +74,7 @@ struct silofs_subcmd_mount {
 	bool    nosuid;
 	bool    nodev;
 	bool    rdonly;
-	bool    kcopy;
+	bool    nokcopy;
 };
 
 /* arguments for 'umount' sub-command */
@@ -77,11 +85,11 @@ struct silofs_subcmd_umount {
 	bool    lazy;
 };
 
-/* arguments for 'clone' sub-command */
-struct silofs_subcmd_clone {
+/* arguments for 'snap' sub-command */
+struct silofs_subcmd_snap {
 	char   *name;
-	char   *mntpoint;
-	char   *mntpoint_real;
+	char   *dirpath;
+	char   *dirpath_real;
 };
 
 /* arguments for 'archive' sub-command */
@@ -95,9 +103,15 @@ struct silofs_subcmd_archive {
 /* arguments for 'show' sub-command */
 struct silofs_subcmd_show {
 	char   *pathname;
-	bool    volume;
-	bool    version;
-	bool    fsinfo;
+	char   *pathname_real;
+	char   *subcmd;
+};
+
+/* arguments for 'refs' sub-command */
+struct silofs_subcmd_refs {
+	char   *pathname;
+	char   *pathname_real;
+	bool    full;
 };
 
 /* arguments for 'fsck' sub-command */
@@ -119,15 +133,17 @@ struct silofs_subcmd_lsmnt {
 
 /* sub-commands options */
 union silofs_subcmd_args {
+	struct silofs_subcmd_init       init;
 	struct silofs_subcmd_mkfs       mkfs;
 	struct silofs_subcmd_mount      mount;
 	struct silofs_subcmd_umount     umount;
-	struct silofs_subcmd_clone      clone;
-	struct silofs_subcmd_archive    archive;
+	struct silofs_subcmd_snap       snap;
 	struct silofs_subcmd_show       show;
-	struct silofs_subcmd_fsck       fsck;
-	struct silofs_subcmd_prune      prune;
+	struct silofs_subcmd_refs       refs;
 	struct silofs_subcmd_lsmnt      lsmnt;
+	struct silofs_subcmd_archive    archive;
+	struct silofs_subcmd_prune      prune;
+	struct silofs_subcmd_fsck       fsck;
 };
 
 /* repository configuration */
@@ -192,7 +208,9 @@ void silofs_execute_umount(void);
 
 void silofs_execute_show(void);
 
-void silofs_execute_clone(void);
+void silofs_execute_refs(void);
+
+void silofs_execute_snap(void);
 
 void silofs_execute_archive(void);
 
@@ -221,33 +239,39 @@ void silofs_die_if_illegal_name(const char *arg_name, const char *arg_val);
 
 void silofs_die_if_not_dir(const char *path, bool w_ok);
 
+void silofs_die_if_not_dir_or_empty(const char *path, bool w_ok);
+
 void silofs_die_if_not_empty_dir(const char *path, bool w_ok);
 
 void silofs_die_if_not_mntdir(const char *path, bool mount);
 
 void silofs_die_if_not_reg(const char *path, bool w_ok);
 
-void silofs_die_if_not_reg3(const char *dirpath, const char *subdir,
-                            const char *name, bool w_ok);
-
 void silofs_die_if_exists(const char *path);
-
-void silofs_die_if_bad_sb(const char *path, const char *pass,
-                          const struct silofs_cipher_args *cip_args);
 
 void silofs_die_if_no_mountd(void);
 
 void silofs_require_valid_fsname(const char *arg_name, char **p_fsname);
 
-char *silofs_clone_as_tmppath(const char *path);
 
-char *silofs_consume_cmdarg(const char *arg_name, bool last);
+char *silofs_cmd_getarg(const char *arg_name, bool last);
 
-int silofs_getopt_subcmd(const char *sopts, const struct option *lopts);
+int silofs_cmd_getopt(const char *sopts, const struct option *lopts);
 
-long silofs_parse_size(const char *str);
+long silofs_cmd_parse_size(const char *str);
 
-void silofs_daemonize(void);
+char *silofs_cmd_lockfile(const char *dirpath);
+
+char *silofs_cmd_realpath(const char *path);
+
+char *silofs_cmd_basename(const char *path);
+
+void silofs_cmd_stat_ok(const char *path, struct stat *st);
+
+void silofs_cmd_stat_reg(const char *path, struct stat *st);
+
+void silofs_cmd_stat_reg_or_dir(const char *path, struct stat *st);
+
 
 void silofs_fork_daemon(void);
 
@@ -259,25 +283,6 @@ void silofs_setrlimit_nocore(void);
 
 void silofs_prctl_non_dumpable(void);
 
-void silofs_statfs_ok(const char *path, struct statfs *stfs);
-
-void silofs_stat_ok(const char *path, struct stat *st);
-
-void silofs_stat_reg(const char *path, struct stat *st);
-
-void silofs_stat_reg_or_dir(const char *path, struct stat *st);
-
-void silofs_stat_reg_or_blk(const char *path, struct stat *st, loff_t *out_sz);
-
-loff_t silofs_blkgetsize_ok(const char *path);
-
-char *silofs_realpath_safe(const char *path);
-
-char *silofs_basename_safe(const char *path);
-
-char *silofs_joinpath_safe(const char *path, const char *base);
-
-char *silofs_lockfile_path(const char *dirpath);
 
 void silofs_setup_globals(int argc, char *argv[]);
 

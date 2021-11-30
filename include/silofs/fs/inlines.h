@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -176,6 +176,16 @@ silofs_ui_uaddr(const struct silofs_unode_info *ui)
 	return &ui->u_uaddr;
 }
 
+static inline const struct silofs_oaddr *
+silofs_ui_oaddr(const struct silofs_unode_info *ui)
+{
+	return &ui->u_uaddr.oaddr;
+}
+
+static inline enum silofs_stype
+silofs_ui_stype(const struct silofs_unode_info *ui) {
+	return ui->u_uaddr.stype;
+}
 
 static inline
 enum silofs_stype silofs_vi_stype(const struct silofs_vnode_info *vi)
@@ -198,7 +208,7 @@ silofs_vi_apex(const struct silofs_vnode_info *vi)
 static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
-	return vi->v_ti.t_apex->fa_sbi;
+	return vi->v_ti.t_apex->ap_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -247,7 +257,7 @@ silofs_ii_apex(const struct silofs_inode_info *ii)
 static inline struct silofs_cache *
 silofs_ii_cache(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_ti.t_apex->fa_cache;
+	return ii->i_vi.v_ti.t_apex->ap_cache;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -261,14 +271,19 @@ silofs_sbi_apex(const struct silofs_sb_info *sbi)
 static inline struct silofs_cache *
 silofs_sbi_cache(const struct silofs_sb_info *sbi)
 {
-	return sbi->s_ui.u_ti.t_apex->fa_cache;
+	return sbi->s_ui.u_ti.t_apex->ap_cache;
 }
 
 static inline struct silofs_repo *
 silofs_sbi_repo(const struct silofs_sb_info *sbi)
 {
-	return sbi->s_ui.u_ti.t_apex->fa_repo;
+	return sbi->s_ui.u_ti.t_apex->ap_repo;
 }
 
+static inline const struct silofs_uaddr *
+silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
+{
+	return &sbi->s_ui.u_uaddr;
+}
 
 #endif /* SILOFS_INLINES_H_ */

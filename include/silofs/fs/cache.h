@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -202,9 +202,6 @@ void silofs_ui_attach_bk(struct silofs_unode_info *ui,
                          struct silofs_ubk_info *ubi);
 
 bool silofs_ti_isevictable(const struct silofs_tnode_info *ti);
-
-void silofs_ti_bind_hyper(struct silofs_tnode_info *ti,
-                          struct silofs_fs_apex *apex);
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 

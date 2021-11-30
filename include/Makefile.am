@@ -44,6 +44,7 @@ nobase_include_HEADERS += silofs/fs/repo.h
 nobase_include_HEADERS += silofs/fs/spclaim.h
 nobase_include_HEADERS += silofs/fs/spmaps.h
 nobase_include_HEADERS += silofs/fs/spxmap.h
+nobase_include_HEADERS += silofs/fs/stage.h
 nobase_include_HEADERS += silofs/fs/super.h
 nobase_include_HEADERS += silofs/fs/symlink.h
 nobase_include_HEADERS += silofs/fs/types.h

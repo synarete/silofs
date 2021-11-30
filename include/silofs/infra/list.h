@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,6 +78,8 @@ void silofs_listq_initn(struct silofs_listq *lsq, size_t cnt);
 void silofs_listq_fini(struct silofs_listq *lsq);
 
 void silofs_listq_finin(struct silofs_listq *lsq, size_t cnt);
+
+size_t silofs_listq_size(const struct silofs_listq *lsq);
 
 bool silofs_listq_isempty(const struct silofs_listq *lsq);
 

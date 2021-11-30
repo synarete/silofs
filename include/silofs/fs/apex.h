@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,15 +35,9 @@ int silofs_apex_stage_blob(const struct silofs_fs_apex *apex,
                            const struct silofs_blobid *bid,
                            struct silofs_blob_info **out_bli);
 
-int silofs_apex_resolve_sb_addr(const struct silofs_fs_apex *apex,
-                                struct silofs_uaddr *out_uaddr);
-
-int silofs_apex_rebind_sb_addr(struct silofs_fs_apex *apex,
-                               const struct silofs_uaddr *uaddr);
-
 
 int silofs_apex_spawn_super(struct silofs_fs_apex *apex,
-                            struct silofs_sb_info **out_sbi);
+                            size_t cap_want, struct silofs_sb_info **out_sbi);
 
 int silofs_apex_stage_super(struct silofs_fs_apex *apex,
                             const struct silofs_uaddr *uaddr,
@@ -52,14 +46,10 @@ int silofs_apex_stage_super(struct silofs_fs_apex *apex,
 void silofs_apex_bind_to_sbi(struct silofs_fs_apex *apex,
                              struct silofs_sb_info *sbi_new);
 
-int silofs_apex_save_mbr_at(struct silofs_fs_apex *apex,
-                            const struct silofs_sb_info *sbi,
-                            const struct silofs_namestr *name);
+int silofs_apex_root_mbr_name(const struct silofs_fs_apex *apex,
+                              struct silofs_namestr *out_name);
 
 int silofs_apex_save_root_mbr(struct silofs_fs_apex *apex);
-
-int silofs_apex_load_mbr_at(struct silofs_fs_apex *apex,
-                            const struct silofs_namestr *name);
 
 int silofs_apex_load_root_mbr(struct silofs_fs_apex *apex);
 
@@ -69,6 +59,6 @@ int silofs_apex_forkfs(struct silofs_fs_apex *apex,
 
 int silofs_apex_kcopy(struct silofs_fs_apex *apex,
                       const struct silofs_fiovec *fiov_src,
-                      const struct silofs_fiovec *fiov_dst, size_t n);
+                      const struct silofs_fiovec *fiov_dst, size_t len);
 
 #endif /* SILOFS_APEX_H_ */

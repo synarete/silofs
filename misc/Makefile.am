@@ -1,5 +1,3 @@
-SUBDIRS = completions systemd
-
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += checkcstyle.py
 EXTRA_DIST += clangscanbuild.sh

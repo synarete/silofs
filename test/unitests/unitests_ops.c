@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,12 +34,13 @@ static const struct silofs_oper *op(struct ut_env *ute)
 {
 	struct silofs_oper *oper = &ute->oper;
 
-	oper->ucred.uid = getuid();
-	oper->ucred.gid = getgid();
-	oper->ucred.pid = getpid();
-	oper->ucred.umask = 0002;
-	oper->unique = ute->unique_opid++;
-	silofs_ts_gettime(&oper->xtime, true);
+	oper->op_apex = ute->fse->fs_apex;
+	oper->op_ucred.uid = getuid();
+	oper->op_ucred.gid = getgid();
+	oper->op_ucred.pid = getpid();
+	oper->op_ucred.umask = 0002;
+	oper->op_unique = ute->unique_opid++;
+	silofs_ts_gettime(&oper->op_xtime, true);
 
 	return oper;
 }
@@ -1043,10 +1044,9 @@ void ut_write_read_str(struct ut_env *ute, ino_t ino,
 void ut_read_verify(struct ut_env *ute, ino_t ino,
                     const void *buf, size_t bsz, loff_t off)
 {
-	void *dat;
 	char tmp[1024];
+	void *dat = (bsz > sizeof(tmp)) ? ut_randbuf(ute, bsz) : tmp;
 
-	dat = (bsz > sizeof(tmp)) ? ut_randbuf(ute, bsz) : tmp;
 	ut_read_ok(ute, ino, dat, bsz, off);
 	ut_expect_eqm(buf, dat, bsz);
 }
@@ -1489,7 +1489,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_lt(bfree_dif, 4000);
 }
 
-static void ut_reload_fs_ok(struct ut_env *ute)
+void ut_reload_fs_ok(struct ut_env *ute)
 {
 	int err;
 	struct silofs_fs_env *fse = ute->fse;
@@ -1500,14 +1500,14 @@ static void ut_reload_fs_ok(struct ut_env *ute)
 	err = silofs_fse_term(fse);
 	ut_expect_ok(err);
 
-	err = silofs_fse_reopen(fse);
+	err = silofs_fse_reopen_fs(fse);
 	silofs_assert_ok(err);
 
 	err = silofs_fse_reload(fse);
 	ut_expect_ok(err);
 }
 
-void ut_reload_ok(struct ut_env *ute, ino_t ino)
+void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino)
 {
 	struct stat st[2];
 	struct statvfs stv[2];
@@ -1521,3 +1521,24 @@ void ut_reload_ok(struct ut_env *ute, ino_t ino)
 	ut_expect_statvfs(&stv[0], &stv[1]);
 	ut_expect_eq_stat(&st[0], &st[1]);
 }
+
+void ut_reload_fs_clone_ok(struct ut_env *ute, const char *name)
+{
+	int err;
+	struct silofs_fs_env *fse = ute->fse;
+
+	err = silofs_fse_sync_drop(fse);
+	ut_expect_ok(err);
+
+	err = silofs_fse_term(fse);
+	ut_expect_ok(err);
+
+	fse->fs_args.fsname = name;
+
+	err = silofs_fse_reopen_fs(fse);
+	silofs_assert_ok(err);
+
+	err = silofs_fse_reload(fse);
+	ut_expect_ok(err);
+}
+

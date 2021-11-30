@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,45 @@
 #include <stdint.h>
 #include <endian.h>
 
+
+void silofs_hash512_assign(struct silofs_hash512 *hash,
+                           const struct silofs_hash512 *other);
+
+bool silofs_hash512_isequal(const struct silofs_hash512 *hash,
+                            const struct silofs_hash512 *other);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_uuid_generate(struct silofs_uuid *uu);
+
+void silofs_uuid_assign(struct silofs_uuid *uu1,
+                        const struct silofs_uuid *uu2);
+
+void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
+
+
+void silofs_namebuf_reset(struct silofs_namebuf *nb);
+
+void silofs_namebuf_assign(struct silofs_namebuf *nb,
+                           const struct silofs_namebuf *other);
+
+void silofs_namebuf_assign2(struct silofs_namebuf *nb,
+                            const struct silofs_name *name);
+
+void silofs_namebuf_assign_str(struct silofs_namebuf *nb,
+                               const struct silofs_namestr *name);
+
+void silofs_namebuf_copyto(const struct silofs_namebuf *nb,
+                           struct silofs_name *name);
+
+bool silofs_namebuf_isequal(const struct silofs_namebuf *nb,
+                            const struct silofs_namestr *name);
+
+void silofs_namebuf_str(const struct silofs_namebuf *nb,
+                        struct silofs_namestr *name);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 loff_t silofs_off_within(loff_t off, size_t bsz);
 
 loff_t silofs_off_in_bk(loff_t off);
@@ -32,15 +71,6 @@ loff_t silofs_off_to_vsec_next(loff_t voff, size_t nvsec);
 loff_t silofs_off_to_spnode_start(loff_t voff);
 
 loff_t silofs_off_to_spnode_next(loff_t voff);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_uuid_generate(struct silofs_uuid *uu);
-
-void silofs_uuid_assign(struct silofs_uuid *uu1,
-                        const struct silofs_uuid *uu2);
-
-void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -103,6 +133,10 @@ void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *bid,
                         size_t len, loff_t off);
 
+void silofs_oaddr_setup_by(struct silofs_oaddr *oaddr,
+                           const struct silofs_blobid *bid,
+                           const struct silofs_vaddr *vaddr);
+
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *bid, silofs_lba_t lba);
 
@@ -154,7 +188,7 @@ void silofs_metaid128_parse(const struct silofs_metaid128 *metaid128,
 
 const struct silofs_uaddr *silofs_uaddr_none(void);
 
-bool silofs_uaddr_isnull(struct silofs_uaddr *uaddr);
+bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr);
 
@@ -218,6 +252,8 @@ void silofs_vaddr_reset(struct silofs_vaddr *vaddr);
 bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr);
 
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr);
+
+bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr);
 
 silofs_lba_t silofs_vaddr_lba(const struct silofs_vaddr *vaddr);
 

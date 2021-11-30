@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -110,6 +110,11 @@ int silofs_do_query(const struct silofs_oper *op,
 int silofs_do_clone(const struct silofs_oper *op,
                     struct silofs_inode_info *dir_ii,
                     const struct silofs_namestr *name, int flags);
+
+int silofs_do_iterfs(const struct silofs_oper *op,
+                     struct silofs_inode_info *ii, loff_t idx,
+                     struct silofs_namebuf *out_nb,
+                     time_t *out_btime, loff_t *out_idx);
 
 int silofs_check_name(const char *name);
 

@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,22 +81,25 @@ void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
 
 int silofs_sbi_format_spmaps(struct silofs_sb_info *sbi);
 
-int silofs_sbi_reload_spmaps(struct silofs_sb_info *sbi);
-
 int silofs_sbi_format_itable(struct silofs_sb_info *sbi);
 
 int silofs_sbi_reload_itable(struct silofs_sb_info *sbi);
 
-void silofs_statvfs_of(const struct silofs_sb_info *sbi,
-                       struct statvfs *out_stvfs);
+
+int silofs_stage_vnode(struct silofs_sb_info *sbi,
+                       const struct silofs_vaddr *vaddr,
+                       enum silofs_stage_flags flags,
+                       struct silofs_vnode_info **out_vi);
 
 int silofs_stage_inode(struct silofs_sb_info *sbi,
                        ino_t ino, enum silofs_stage_flags flags,
                        struct silofs_inode_info **out_ii);
 
-int silofs_stage_vnode(struct silofs_sb_info *sbi,
-                       const struct silofs_vaddr *vaddr,
-                       enum silofs_stage_flags flags,
+
+int silofs_stage_cached_inode(struct silofs_sb_info *sbi, ino_t ino,
+                              struct silofs_inode_info **out_ii);
+
+int silofs_spawn_vnode(struct silofs_sb_info *sbi, enum silofs_stype stype,
                        struct silofs_vnode_info **out_vi);
 
 int silofs_spawn_inode(struct silofs_sb_info *sbi,
@@ -104,8 +107,6 @@ int silofs_spawn_inode(struct silofs_sb_info *sbi,
                        mode_t parent_mode, mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii);
 
-int silofs_spawn_vnode(struct silofs_sb_info *sbi, enum silofs_stype stype,
-                       struct silofs_vnode_info **out_vi);
 
 int silofs_remove_inode(struct silofs_sb_info *sbi,
                         struct silofs_inode_info *ii);
@@ -131,24 +132,15 @@ int silofs_refcnt_islast_at(struct silofs_sb_info *sbi,
 int silofs_kivam_of(const struct silofs_vnode_info *vi,
                     struct silofs_kivam *out_kivam);
 
-int silofs_resolve_oaddr(struct silofs_sb_info *sbi,
-                         const struct silofs_vaddr *vaddr,
-                         struct silofs_oaddr *out_oaddr);
-
-int silofs_resolve_oaddr_of(struct silofs_sb_info *sbi,
-                            const struct silofs_vnode_info *vi,
-                            struct silofs_oaddr *out_oaddr);
-
 int silofs_sbi_expand_vspace(struct silofs_sb_info *sbi,
                              enum silofs_stype stype, loff_t *out_voff);
-
-int silofs_stage_spleaf(struct silofs_sb_info *sbi, loff_t voff,
-                        enum silofs_stage_flags stg_flags,
-                        struct silofs_spleaf_info **out_sli);
 
 int silofs_stage_spnode(struct silofs_sb_info *sbi, loff_t voff,
                         enum silofs_stage_flags stg_flags,
                         struct silofs_spnode_info **out_sni);
+
+void silofs_sbi_space_stat(const struct silofs_sb_info *sbi,
+                           struct silofs_space_stat *out_sp_st);
 
 size_t silofs_sbi_nused_bytes(const struct silofs_sb_info *sbi);
 
@@ -161,12 +153,34 @@ fsfilcnt_t silofs_sbi_inodes_current(const struct silofs_sb_info *sbi);
 void silofs_sbi_update_stats(struct silofs_sb_info *sbi,
                              const struct silofs_space_stat *spst_dif);
 
-int silofs_spawn_bind_vnode_at(struct silofs_sb_info *sbi,
-                               const struct silofs_ovaddr *ova,
-                               enum silofs_stage_flags stg_flags,
-                               struct silofs_vnode_info **out_vi);
 
-int silofs_sbi_require_mutable_vaddr(struct silofs_sb_info *sbi,
-                                     const struct silofs_vaddr *vaddr);
+void silofs_sbi_main_treeid(const struct silofs_sb_info *sbi,
+                            struct silofs_metaid *out_mid);
+
+void silofs_sbi_main_blobid(const struct silofs_sb_info *sbi,
+                            struct silofs_blobid *out_bid);
+
+void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
+                               const struct silofs_blobid *bid);
+
+bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi);
+
+size_t silofs_sbi_space_tree_height(const struct silofs_sb_info *sbi);
+
+int silofs_sbi_child_at(const struct silofs_sb_info *sbi, loff_t voff,
+                        struct silofs_uaddr *out_uaddr);
+
+void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
+                              loff_t voff, struct silofs_uaddr *out_uaddr);
+
+int silofs_sbi_commit_dirty(struct silofs_sb_info *sbi);
+
+void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
+                           const struct silofs_spnode_info *sni);
+
+void silofs_sbi_update_vlast_by_spleaf(struct silofs_sb_info *sbi,
+                                       const struct silofs_spleaf_info *sli);
+
+bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff);
 
 #endif /* SILOFS_SUPER_H_ */

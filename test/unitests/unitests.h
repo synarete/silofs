@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -174,8 +174,8 @@ extern const struct ut_tests ut_test_file_lseek;
 extern const struct ut_tests ut_test_file_copy_range;
 extern const struct ut_tests ut_test_reload;
 extern const struct ut_tests ut_test_fillfs;
-extern const struct ut_tests ut_test_clone;
-
+extern const struct ut_tests ut_test_clone_basic;
+extern const struct ut_tests ut_test_clone_io;
 
 /* exec */
 void ut_execute_tests(void);
@@ -447,7 +447,11 @@ void ut_sync_drop(struct ut_env *ute);
 
 void ut_drop_caches_fully(struct ut_env *ute);
 
-void ut_reload_ok(struct ut_env *ute, ino_t ino);
+void ut_reload_fs_ok(struct ut_env *ute);
+
+void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino);
+
+void ut_reload_fs_clone_ok(struct ut_env *ute, const char *name);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

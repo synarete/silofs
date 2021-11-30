@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,11 +116,11 @@ enum vt_flags {
 struct vt_env;
 
 struct vt_mchunk {
+	unsigned long magic;
 	struct vt_mchunk *next;
-	size_t  size;
-	uint8_t data[40];
+	uint8_t      *data;
+	unsigned long size;
 };
-
 
 /* Test define */
 struct vt_tdef {

@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ int silofs_sys_statvfs(const char *path, struct statvfs *stv);
 
 int silofs_sys_fstat(int fd, struct stat *st);
 
-int silofs_sys_fstatat(int dirfd, const char *path,
+int silofs_sys_fstatat(int dirfd, const char *pathname,
                        struct stat *st, int flags);
 
 int silofs_sys_stat(const char *path, struct stat *st);
@@ -127,7 +127,7 @@ int silofs_sys_memfd_create(const char *name, unsigned int flags, int *fd);
 
 int silofs_sys_open(const char *path, int flags, mode_t mode, int *fd);
 
-int silofs_sys_openat(int dirfd, const char *path,
+int silofs_sys_openat(int dirfd, const char *pathname,
                       int flags, mode_t mode, int *fd);
 
 int silofs_sys_close(int fd);
@@ -358,7 +358,7 @@ int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off);
 
 int silofs_sys_opendir(const char *path, int *out_fd);
 
-int silofs_sys_opendirat(int dfd, const char *path, int *out_fd);
+int silofs_sys_opendirat(int dfd, const char *pathname, int *out_fd);
 
 int silofs_sys_closefd(int *pfd);
 

@@ -9,7 +9,7 @@ silofs's mounting daemon
 ------------------------
 
 :Author:         Shachar Sharon
-:Date:           Feb 2021
+:Date:           Feb 2022
 :Copyright:      GPLv3
 :Manual section: 8
 :Manual group:   Silofs Manual

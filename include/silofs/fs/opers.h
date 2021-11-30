@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -198,6 +198,11 @@ int silofs_fs_query(struct silofs_fs_apex *apex,
 int silofs_fs_clone(struct silofs_fs_apex *apex,
                     const struct silofs_oper *op,
                     ino_t ino, const char *name, int flags);
+
+int silofs_fs_iterfs(struct silofs_fs_apex *apex,
+                     const struct silofs_oper *op,
+                     ino_t ino, loff_t idx, char *out_buf, size_t bsz,
+                     time_t *out_btime, loff_t *out_index);
 
 int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags);
 

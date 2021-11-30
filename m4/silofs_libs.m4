@@ -73,12 +73,15 @@ AC_DEFUN([AX_SILOFS_NEED_LIBS],
 
   AC_SEARCH_LIBS([cap_clear], [cap], :,
     AC_MSG_ERROR([Unable to find libcap]))
+
+  AX_CHECK_LIBRARY([LIBCURL], [curl/curl.h], [curl], [],
+    [AC_MSG_ERROR([Unable to find libcurl])])
 ])
 
 AC_DEFUN([AX_SILOFS_WANT_LIBS],
 [
   AC_ARG_WITH([libunwind],
-    AS_HELP_STRING([--with-libunwind], 
+    AS_HELP_STRING([--with-libunwind],
       [Use libunwind for call-stack unwinding]),
       [], [with_libunwind=yes])
 
@@ -87,7 +90,7 @@ AC_DEFUN([AX_SILOFS_WANT_LIBS],
       AC_MSG_ERROR([Unable to find libunwind]))
     AX_SILOFS_NEED_HEADER([libunwind.h])
     AC_DEFINE_UNQUOTED([SILOFS_WITH_LIBUNWIND], ["1"])
-    AH_TEMPLATE([SILOFS_WITH_LIBUNWIND], 
+    AH_TEMPLATE([SILOFS_WITH_LIBUNWIND],
       [Use libunwind for call-stack unwinding])
   ])
 ])

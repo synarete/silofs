@@ -9,7 +9,7 @@ The Silo File System
 --------------------
 
 :Author:         Shachar Sharon
-:Date:           Aug 2021
+:Date:           Aug 2022
 :Copyright:      GPLv3
 :Manual section: 1
 :Manual group:   Silofs Manual
@@ -102,7 +102,7 @@ umount
 
 snap
 ----
-**silofs snap** --name=NAME [options] *mountpoint* 
+**silofs snap** --name=NAME [options] *mountpoint*
 
 ..
 

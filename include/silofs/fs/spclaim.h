@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,19 @@
 #ifndef SILOFS_SPCLAIM_H_
 #define SILOFS_SPCLAIM_H_
 
-int silofs_claim_spawn_vnode(struct silofs_sb_info *sbi,
-                             enum silofs_stype stype,
-                             struct silofs_vnode_info **out_vi);
+int silofs_sbi_claim_vnode(struct silofs_sb_info *sbi, enum silofs_stype stype,
+                           struct silofs_vnode_info **out_vi);
 
-int silofs_claim_spawn_inode(struct silofs_sb_info *sbi,
-                             struct silofs_inode_info **out_ii);
+int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
+                           struct silofs_inode_info **out_ii);
 
-int silofs_claim_vspace(struct silofs_sb_info *sbi, enum silofs_stype stype,
-                        struct silofs_ovaddr *out_ova);
+int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
+                            enum silofs_stype stype,
+                            struct silofs_ovaddr *out_ova);
 
-int silofs_reclaim_vspace(struct silofs_sb_info *sbi,
-                          const struct silofs_vaddr *vaddr);
+int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
+                              const struct silofs_vaddr *vaddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #endif /* SILOFS_SPCLAIM_H_ */

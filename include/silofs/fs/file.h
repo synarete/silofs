@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,10 +33,6 @@ int silofs_do_write_iter(const struct silofs_oper *op,
                          struct silofs_inode_info *ii,
                          struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_do_rdwr_post(const struct silofs_oper *op,
-                        struct silofs_inode_info *ii,
-                        const struct silofs_fiovec *fiov, size_t cnt);
-
 int silofs_do_read_iter(const struct silofs_oper *op,
                         struct silofs_inode_info *ii,
                         struct silofs_rwiter_ctx *rwi_ctx);
@@ -64,6 +60,11 @@ int silofs_do_copy_file_range(const struct silofs_oper *op,
                               struct silofs_inode_info *ii_out,
                               loff_t off_in, loff_t off_out, size_t len,
                               int flags, size_t *out_ncp);
+
+int silofs_do_rdwr_post(const struct silofs_oper *op,
+                        struct silofs_inode_info *ii,
+                        const struct silofs_fiovec *fiov, size_t cnt);
+
 
 int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn);
 

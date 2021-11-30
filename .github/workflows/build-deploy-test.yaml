@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: System
+        run: uname -a
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -116,7 +118,7 @@ jobs:
       - name: Install deps
         run: sudo ./misc/installdeps.sh
       - name: Packagize
-        run: ./pkg/packagize-deb.sh
+        run: ./dist/packagize-deb.sh
 
   install:
     name: Install deb package
@@ -129,9 +131,9 @@ jobs:
       - name: Install deps
         run: sudo ./misc/installdeps.sh
       - name: Packagize
-        run: ./pkg/packagize-deb.sh
+        run: ./dist/packagize-deb.sh
       - name: Install
-        run: sudo apt install ./build/silofs_*.deb
+        run: sudo apt install ./build/dist/silofs_*.deb
       - name: Verify installation
         run: silofs --version
 
@@ -149,7 +151,7 @@ jobs:
   #     - name: Install deps
   #       run: sudo ./misc/installdeps.sh
   #     - name: Packagize
-  #       run: ./pkg/packagize-deb.sh
+  #       run: ./dist/packagize-deb.sh
   #     - name: Install
   #       run: sudo apt install ./build/silofs_*.deb
   #     - name: Verify installation

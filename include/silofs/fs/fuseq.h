@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,8 +42,7 @@ struct silofs_fuseq_worker {
 	struct silofs_fuseq_outb       *outb;
 	struct silofs_fuseq_rw_iter    *rwi;
 	struct silofs_oper              oper;
-	struct silofs_pipe              pipe;
-	struct silofs_nilfd             nfd;
+	struct silofs_piper             piper;
 	struct silofs_thread            th;
 	int worker_index;
 } silofs_aligned64;

@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,11 +32,15 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 
 void silofs_fse_del(struct silofs_fs_env *fse);
 
-int silofs_fse_reopen(struct silofs_fs_env *fse);
+int silofs_fse_reopen_repo(struct silofs_fs_env *fse);
+
+int silofs_fse_reopen_fs(struct silofs_fs_env *fse);
 
 int silofs_fse_reload(struct silofs_fs_env *fse);
 
-int silofs_fse_format(struct silofs_fs_env *fse);
+int silofs_fse_format_repo(struct silofs_fs_env *fse);
+
+int silofs_fse_format_fs(struct silofs_fs_env *fse);
 
 int silofs_fse_serve(struct silofs_fs_env *fse);
 

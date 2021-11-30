@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@
 #include <silofs/fs/inode.h>
 #include <silofs/fs/dir.h>
 #include <silofs/fs/file.h>
+#include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/exec.h>
-#include <silofs/fs/boot.h>
 #include <silofs/fs/mntsvc.h>
 #include <silofs/fs/ioctls.h>
 

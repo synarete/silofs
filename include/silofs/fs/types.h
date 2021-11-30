@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@ struct silofs_thread;
 struct silofs_mutex;
 struct silofs_qalloc;
 struct silofs_cache;
-struct silofs_repo_osd;
 struct silofs_repo;
 struct silofs_tnode_info;
 struct silofs_unode_info;
@@ -61,6 +60,7 @@ struct silofs_fuseq_worker;
 struct silofs_fuseq_in;
 struct silofs_fuseq_inb;
 struct silofs_fuseq_outb;
+struct silofs_mboot_info;
 struct silofs_sb_info;
 struct silofs_oper;
 struct silofs_dset;
@@ -90,7 +90,6 @@ enum silofs_flags {
 
 /* stage-element control flags */
 enum silofs_stage_flags {
-	SILOFS_STAGE_CACHEONLY  = SILOFS_BIT(0),
 	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
 	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
 };
@@ -386,28 +385,28 @@ struct silofs_dset {
 
 /* current operation state */
 struct silofs_oper {
-	struct silofs_ucred     ucred;
-	struct timespec         xtime;
-	uint64_t                unique;
-	int                     opcode;
-	volatile int            interrupt;
+	struct silofs_fs_apex  *op_apex;
+	struct silofs_ucred     op_ucred;
+	struct timespec         op_xtime;
+	uint64_t                op_unique;
+	int                     op_code;
+	volatile int            op_interrupt;
 };
 
 /* top-level pseudo meta node */
 struct silofs_fs_apex {
-	const struct silofs_fs_args    *fa_args;
-	struct silofs_alloc_if         *fa_alif;
-	struct silofs_qalloc           *fa_qalloc;
-	struct silofs_cache            *fa_cache;
-	struct silofs_repo             *fa_repo;
-	struct silofs_crypto           *fa_crypto;
-	struct silofs_main_bootrec     *fa_mbr;
-	struct silofs_sb_info          *fa_sbi;
-	struct silofs_pipe              fa_pipe;
-	struct silofs_nilfd             fa_nilfd;
-	struct silofs_oper_stat         fa_ops;
-	iconv_t                         fa_iconv;
-	time_t                          fa_initime;
+	const struct silofs_fs_args    *ap_args;
+	struct silofs_alloc_if         *ap_alif;
+	struct silofs_qalloc           *ap_qalloc;
+	struct silofs_cache            *ap_cache;
+	struct silofs_repo             *ap_repo;
+	struct silofs_crypto           *ap_crypto;
+	struct silofs_sb_info          *ap_sbi;
+	struct silofs_uaddr             ap_sb_uaddr;
+	struct silofs_piper             ap_piper;
+	struct silofs_oper_stat         ap_ops;
+	iconv_t                         ap_iconv;
+	time_t                          ap_initime;
 };
 
 /* file-system input arguments */
@@ -423,7 +422,6 @@ struct silofs_fs_args {
 	pid_t  pid;
 	mode_t umask;
 	bool   with_fuseq;
-	bool   kcopy_mode;
 	bool   pedantic;
 	bool   allowother;
 	bool   lazytime;
@@ -431,6 +429,9 @@ struct silofs_fs_args {
 	bool   nosuid;
 	bool   nodev;
 	bool   rdonly;
+	bool   kcopy;
+	bool   wlock;
+	bool   xlock;
 };
 
 /* file-system environment context */

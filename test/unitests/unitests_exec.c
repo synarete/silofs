@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,9 +47,8 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_test_file_copy_range),
 	UT_DEFTGRP(ut_test_reload),
 	UT_DEFTGRP(ut_test_fillfs),
-	/* XXX
-	UT_DEFTGRP(ut_test_clone),
-	*/
+	UT_DEFTGRP(ut_test_clone_basic),
+	UT_DEFTGRP(ut_test_clone_io),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -225,7 +224,13 @@ static void ut_prep_tests(struct ut_env *ute)
 	int err;
 	struct silofs_fs_env *fse = ute->fse;
 
-	err = silofs_fse_format(fse);
+	err = silofs_fse_format_repo(fse);
+	silofs_assert_ok(err);
+
+	err = silofs_fse_term(fse);
+	silofs_assert_ok(err);
+
+	err = silofs_fse_format_fs(fse);
 	silofs_assert_ok(err);
 
 	err = silofs_fse_sync_drop(fse);
@@ -234,7 +239,7 @@ static void ut_prep_tests(struct ut_env *ute)
 	err = silofs_fse_term(fse);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_reopen(fse);
+	err = silofs_fse_reopen_fs(fse);
 	silofs_assert_ok(err);
 
 	err = silofs_fse_reload(fse);
@@ -267,12 +272,12 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 static void ut_print_tests_start(const struct ut_args *args)
 {
 	printf("  %s %s kcopy=%d\n", args->program, args->version,
-	       (int)args->fs_args.kcopy_mode);
+	       (int)args->fs_args.kcopy);
 }
 
 void ut_execute_tests(void)
 {
-	const bool kcopy_mode = true;
+	const bool kcopy_mode = false;
 	struct ut_args args = {
 		.fs_args = {
 			.uid = getuid(),
@@ -284,16 +289,18 @@ void ut_execute_tests(void)
 			.fsname = "unitests",
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,
-			.pedantic = false /* TODO: make me a knob (true) */
+			.pedantic = false, /* TODO: make me a knob (true) */
+			.wlock = true,
+			.xlock = true,
 		},
 		.program = ut_globals.program,
 		.version = ut_globals.version
 	};
 
-	args.fs_args.kcopy_mode = kcopy_mode;
+	args.fs_args.kcopy = kcopy_mode;
 	ut_print_tests_start(&args);
 	ut_execute_tests_cycle(&args);
-	args.fs_args.kcopy_mode = !kcopy_mode;
+	args.fs_args.kcopy = !kcopy_mode;
 	ut_print_tests_start(&args);
 	ut_execute_tests_cycle(&args);
 }

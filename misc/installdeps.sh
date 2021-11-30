@@ -27,7 +27,7 @@ install_deb() {
     libgcrypt-dev \
     python3-docutils \
     python3-pygments \
-    linux-headers-$(uname-r) \
+    linux-headers-$(uname -r) \
     pkg-config \
     dpkg-dev \
     debhelper

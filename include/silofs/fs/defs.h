@@ -2,7 +2,7 @@
 /*
  * This file is part of silofs.
  *
- * Copyright (C) 2020-2021 Shachar Sharon
+ * Copyright (C) 2020-2022 Shachar Sharon
  *
  * Silofs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,14 @@
 /* current on-disk format version number */
 #define SILOFS_FMT_VERSION              (1)
 
-/* main-boot-record magic-signature (ASCII: "@SILOFS@") */
-#define SILOFS_MBR_MAGIC                (0x4053464F4C495340L)
+/* current repo format version number */
+#define SILOFS_REPO_VERSION             (1)
+
+/* repo meta-file magic-signature (ASCII: "#SILOFS#") */
+#define SILOFS_REPO_META_MAGIC          (0x2353464F4C495323L)
+
+/* boot-record magic-signature (ASCII: "@SILOFS@") */
+#define SILOFS_BOOT_RECORD_MAGIC        (0x4053464F4C495340L)
 
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC              (0x4073666F6C697340L)
@@ -46,17 +52,21 @@
 /* max size of mount-path (including null) */
 #define SILOFS_MNTPATH_MAX              (1920)
 
-/* max path-length (including null) of repository-path */
+/* max path-length of repository-path (including null) */
 #define SILOFS_REPOPATH_MAX             (2032)
 
 /* max number of hard-links to file or sub-directories */
 #define SILOFS_LINK_MAX                 (32767)
+
+/* size of single entry in main boot file */
+#define SILOFS_BOOTREC_SIZE             (4096)
 
 /* number of octets in UUID */
 #define SILOFS_UUID_SIZE                (16)
 
 /* size of common meta-data header */
 #define SILOFS_HEADER_SIZE              (16)
+
 
 
 /* minimal file-system capacity, in bytes (2G) */
@@ -405,7 +415,7 @@ struct silofs_timespec {
 
 struct silofs_hash128 {
 	uint8_t hash[SILOFS_HASH128_LEN];
-} silofs_packed_aligned32;
+} silofs_packed_aligned16;
 
 
 struct silofs_hash256 {
@@ -518,15 +528,18 @@ struct silofs_main_bootrec {
 	uint64_t                mbr_magic;
 	uint64_t                mbr_version;
 	struct silofs_uuid      mbr_uuid;
+	uint64_t                mbr_index;
+	uint64_t                mbr_btime;
 	uint64_t                mbr_flags;
-	uint8_t                 mbr_reserved1[216];
+	uint8_t                 mbr_reserved1[200];
 	struct silofs_name      mbr_name;
 	struct silofs_kdf_pair  mbr_kdf_pair;
 	uint32_t                mbr_chiper_algo;
 	uint32_t                mbr_chiper_mode;
 	uint8_t                 mbr_reserved2[472];
 	struct silofs_uobj_ref  mbr_sb_ref;
-	uint8_t                 mbr_reserved4[2968];
+	uint8_t                 mbr_reserved3[2944];
+	struct silofs_hash512   mbr_hash;
 } silofs_packed_aligned64;
 
 
@@ -876,6 +889,17 @@ union silofs_view {
 	struct silofs_data_block4       db4;
 	struct silofs_data_block        db;
 	struct silofs_block             bk;
+} silofs_packed_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* repo meta record */
+struct silofs_repo_meta {
+	uint64_t        rm_magic;
+	uint32_t        rm_version;
+	uint32_t        rm_flags;
+	uint8_t         rm_reserved1[240];
+	uint8_t         rm_reserved2[256];
 } silofs_packed_aligned64;
 
 #endif /* SILOFS_DEFS_H_ */

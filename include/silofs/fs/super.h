@@ -31,6 +31,8 @@ int silofs_sb_check_rand(const struct silofs_super_block *sb,
 
 int silofs_sb_check_root(const struct silofs_super_block *sb);
 
+bool silofs_sb_isfossil(const struct silofs_super_block *sb);
+
 loff_t silofs_sb_vspace_last(const struct silofs_super_block *sb);
 
 loff_t silofs_sb_vlast_by_stype(const struct silofs_super_block *sb,
@@ -72,9 +74,17 @@ void silofs_sbi_attach_ubi(struct silofs_sb_info *sbi,
 void silofs_sbi_update_by_args(struct silofs_sb_info *sbi,
                                const struct silofs_fs_args *args);
 
-void silofs_sbi_setup_sb(struct silofs_sb_info *sbi, size_t capacity);
+void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi,
+                              const struct silofs_namestr *name,
+                              size_t capacity, time_t btime);
 
 void silofs_sbi_update_birth_time(struct silofs_sb_info *sbi, time_t btime);
+
+void silofs_sbi_name(const struct silofs_sb_info *sbi,
+                     struct silofs_namestr *out_name);
+
+bool silofs_sbi_has_name(const struct silofs_sb_info *sbi,
+                         const struct silofs_namestr *name);
 
 void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
@@ -146,12 +156,17 @@ size_t silofs_sbi_nused_bytes(const struct silofs_sb_info *sbi);
 
 size_t silofs_sbi_vspace_capacity(const struct silofs_sb_info *sbi);
 
+void silofs_sbi_vspace_range(const struct silofs_sb_info *sbi,
+                             struct silofs_vrange *out_vrange);
+
 fsfilcnt_t silofs_sbi_inodes_limit(const struct silofs_sb_info *sbi);
 
 fsfilcnt_t silofs_sbi_inodes_current(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_update_stats(struct silofs_sb_info *sbi,
                              const struct silofs_space_stat *spst_dif);
+
+void silofs_sbi_set_fossil(struct silofs_sb_info *sbi);
 
 
 void silofs_sbi_main_treeid(const struct silofs_sb_info *sbi,
@@ -182,5 +197,14 @@ void silofs_sbi_update_vlast_by_spleaf(struct silofs_sb_info *sbi,
                                        const struct silofs_spleaf_info *sli);
 
 bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff);
+
+
+void silofs_sbi_update_bootsec(struct silofs_sb_info *sbi,
+                               const struct silofs_namestr *name);
+
+int silofs_sbi_save_bootsec(const struct silofs_sb_info *sbi);
+
+int silofs_sbi_load_bootsec(struct silofs_sb_info *sbi,
+                            const struct silofs_namestr *name);
 
 #endif /* SILOFS_SUPER_H_ */

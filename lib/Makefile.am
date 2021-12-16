@@ -50,6 +50,7 @@ libsilofs_la_SOURCES += fs/opers.c
 libsilofs_la_SOURCES += fs/repo.c
 libsilofs_la_SOURCES += fs/spclaim.c
 libsilofs_la_SOURCES += fs/spmaps.c
+libsilofs_la_SOURCES += fs/spwalk.c
 libsilofs_la_SOURCES += fs/spxmap.c
 libsilofs_la_SOURCES += fs/stage.c
 libsilofs_la_SOURCES += fs/super.c

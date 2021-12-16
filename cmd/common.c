@@ -75,7 +75,7 @@ void silofs_die_if_missing_arg(const char *arg_name, const void *arg_val)
 	}
 }
 
-void silofs_die_if_redundant_arg(void)
+static void silofs_die_if_redundant_arg(void)
 {
 	int argc = silofs_globals.cmd_argc;
 	char **argv = silofs_globals.cmd_argv;
@@ -85,11 +85,13 @@ void silofs_die_if_redundant_arg(void)
 	}
 }
 
-void silofs_die_if_illegal_name(const char *arg_name, const char *arg_val)
+void silofs_die_if_illegal_fsname(const char *arg_name, const char *arg_val)
 {
+	struct silofs_namestr nstr;
 	int err;
 
-	err = silofs_check_name(arg_val);
+	silofs_namestr_init(&nstr, arg_val);
+	err = silofs_check_fs_name(&nstr);
 	if (err) {
 		silofs_die(err, "illegal %s: %s",
 		           arg_name ? arg_name : "name", arg_val);
@@ -128,6 +130,16 @@ void silofs_die_if_not_reg(const char *path, bool w_ok)
 	err = silofs_sys_access(path, access_mode);
 	if (err) {
 		silofs_die(err, "no-access: %s", path);
+	}
+}
+
+void silofs_die_if_not_dir_or_reg(const char *path)
+{
+	struct stat st;
+
+	silofs_cmd_stat_ok(path, &st);
+	if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode)) {
+		silofs_die(-ENOTDIR, "not dir-or-reg: %s", path);
 	}
 }
 
@@ -289,28 +301,49 @@ void silofs_die_if_not_mntdir(const char *path, bool mount)
 void silofs_require_valid_fsname(const char *arg_name, char **p_fsname)
 {
 	if (*p_fsname == NULL) {
-		*p_fsname = silofs_strdup_safe(SILOFS_FSNAME_DEFAULT);
+		*p_fsname = silofs_cmd_strdup(SILOFS_FSNAME_DEFAULT);
 	} else {
-		silofs_die_if_illegal_name(arg_name, *p_fsname);
+		silofs_die_if_illegal_fsname(arg_name, *p_fsname);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-char *silofs_cmd_getarg(const char *arg_name, bool last)
+void silofs_cmd_endargs(void)
+{
+	silofs_die_if_redundant_arg();
+}
+
+void silofs_cmd_getarg(const char *arg_name, char **out_arg)
 {
 	char *arg = NULL;
 	int argc = silofs_globals.cmd_argc;
 	char **argv = silofs_globals.cmd_argv;
 
-	if (optind >= argc) {
+	arg = argv[optind];
+	if ((optind >= argc) || (arg == NULL)) {
 		silofs_die_missing_arg(arg_name);
 	}
-	arg = argv[optind++];
-	if (last) {
-		silofs_die_if_redundant_arg();
+	optind++;
+	*out_arg = silofs_cmd_strdup(arg);
+}
+
+void silofs_cmd_getarg_or_cwd(const char *arg_name, char **out_arg)
+{
+	char *arg = NULL;
+	int argc = silofs_globals.cmd_argc;
+	char **argv = silofs_globals.cmd_argv;
+
+	arg = argv[optind];
+	if ((optind >= argc) || (arg == NULL)) {
+		arg = get_current_dir_name();
+		if (arg == NULL) {
+			silofs_die(errno, "no arg '%s' and failed to get "
+			           "current working directory", arg_name);
+		}
 	}
-	return arg;
+	optind++;
+	*out_arg = silofs_cmd_strdup(arg);
 }
 
 int silofs_cmd_getopt(const char *sopts, const struct option *lopts)
@@ -447,25 +480,6 @@ void silofs_prctl_non_dumpable(void)
 	}
 }
 
-static char *silofs_joinpath_safe(const char *path, const char *base)
-{
-	char *rpath;
-	const size_t plen = strlen(path);
-	const size_t blen = strlen(base);
-
-	rpath = silofs_zalloc_safe(plen + blen + 2);
-	memcpy(rpath, path, plen);
-	memcpy(rpath + 1 + plen, base, blen);
-	rpath[plen] = '/';
-	rpath[plen + blen + 1] = '\0';
-	return rpath;
-}
-
-char *silofs_cmd_lockfile(const char *dirpath)
-{
-	return silofs_joinpath_safe(dirpath, "silofs.lock");
-}
-
 char *silofs_cmd_realpath(const char *path)
 {
 	char *real_path;
@@ -475,17 +489,6 @@ char *silofs_cmd_realpath(const char *path)
 		silofs_die(-errno, "realpath failure: '%s'", path);
 	}
 	return real_path;
-}
-
-char *silofs_cmd_basename(const char *path)
-{
-	const char *base;
-	const char *last = strrchr(path, '/');
-
-	base = (last == NULL) ? path : (last + 1);
-	silofs_die_if_illegal_name("basename", base);
-
-	return silofs_strdup_safe(base);
 }
 
 void silofs_cmd_stat_ok(const char *path, struct stat *st)
@@ -523,7 +526,7 @@ void silofs_cmd_stat_reg_or_dir(const char *path, struct stat *st)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void *silofs_zalloc_safe(size_t nbytes)
+void *silofs_cmd_zalloc(size_t nbytes)
 {
 	int err;
 	void *mem = NULL;
@@ -535,14 +538,14 @@ void *silofs_zalloc_safe(size_t nbytes)
 	return mem;
 }
 
-void silofs_zfree_safe(void *ptr, size_t nbytes)
+void silofs_cmd_zfree(void *ptr, size_t nbytes)
 {
 	if (ptr != NULL) {
 		silofs_zfree(ptr, nbytes);
 	}
 }
 
-void silofs_pfree_string(char **pp)
+void silofs_cmd_pfrees(char **pp)
 {
 	if (*pp != NULL) {
 		free(*pp);
@@ -550,7 +553,7 @@ void silofs_pfree_string(char **pp)
 	}
 }
 
-char *silofs_strdup_safe(const char *s)
+char *silofs_cmd_strdup(const char *s)
 {
 	char *d = strdup(s);
 
@@ -560,7 +563,7 @@ char *silofs_strdup_safe(const char *s)
 	return d;
 }
 
-char *silofs_strndup_safe(const char *s, size_t n)
+char *silofs_cmd_strndup(const char *s, size_t n)
 {
 	char *d = strndup(s, n);
 
@@ -570,12 +573,12 @@ char *silofs_strndup_safe(const char *s, size_t n)
 	return d;
 }
 
-char *silofs_sprintf_path(const char *fmt, ...)
+char *silofs_cmd_mkpathf(const char *fmt, ...)
 {
 	va_list ap;
 	int n;
 	size_t path_size = PATH_MAX;
-	char *path = silofs_zalloc_safe(path_size);
+	char *path = silofs_cmd_zalloc(path_size);
 	char *path_dup;
 
 	va_start(ap, fmt);
@@ -585,8 +588,8 @@ char *silofs_sprintf_path(const char *fmt, ...)
 	if (n >= (int)path_size) {
 		silofs_die(0, "illegal path-len %d", n);
 	}
-	path_dup = silofs_strdup_safe(path);
-	silofs_pfree_string(&path);
+	path_dup = silofs_cmd_strdup(path);
+	silofs_cmd_pfrees(&path);
 	return path_dup;
 }
 
@@ -618,6 +621,7 @@ void silofs_destroy_fse_inst(void)
 	if (g_fs_env_inst) {
 		silofs_fse_del(g_fs_env_inst);
 		g_fs_env_inst = NULL;
+		silofs_burnstack();
 	}
 }
 

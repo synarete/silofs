@@ -17,51 +17,41 @@
 #ifndef SILOFS_BOOT_H_
 #define SILOFS_BOOT_H_
 
-struct silofs_mbootrec_info {
-	struct silofs_list_head   mbr_lh;
-	struct silofs_uuid        mbr_uuid;
-	struct silofs_uaddr       mbr_sb_uaddr;
-	struct silofs_namebuf     mbr_name;
-	struct silofs_cipher_args mbr_cip_args;
-	loff_t mbr_index;
-	time_t mbr_btime;
-};
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_mboot_info {
-	struct silofs_alloc_if *mbt_alif;
-	struct silofs_mdigest  *mbt_md;
-	struct silofs_listq     mbt_lsq;
-	loff_t mbt_next_index;
-};
+void silofs_bsec4k_init(struct silofs_bootsec4k *bor);
+
+void silofs_bsec4k_fini(struct silofs_bootsec4k *bor);
+
+void silofs_bsec4k_stamp(struct silofs_bootsec4k *bor,
+                         const struct silofs_mdigest *md);
+
+int silofs_bsec4k_verify(const struct silofs_bootsec4k *mbr,
+                         const struct silofs_mdigest *md);
+
+void silofs_bsec4k_parse(const struct silofs_bootsec4k *bor,
+                         struct silofs_bootsec *bsec);
+
+void silofs_bsec4k_set(struct silofs_bootsec4k *bor,
+                       const struct silofs_bootsec *bsec);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_mbi_init(struct silofs_mboot_info *mbi,
-                    struct silofs_alloc_if *alif, struct silofs_mdigest *md);
+void silofs_bootsec_init(struct silofs_bootsec *bsec);
 
-int silofs_mbi_init_by(struct silofs_mboot_info *mbi,
-                       const struct silofs_fs_apex *apex);
+void silofs_bootsec_fini(struct silofs_bootsec *bsec);
 
-void silofs_mbi_fini(struct silofs_mboot_info *mbi);
+void silofs_bootsec_name(const struct silofs_bootsec *bsec,
+                         struct silofs_namestr *out_name);
 
-int silofs_mbi_decode(struct silofs_mboot_info *mbi,
-                      const void *buf, size_t bsz);
+void silofs_bootsec_set_name(struct silofs_bootsec *bsec,
+                             const struct silofs_namestr *name);
 
-int silofs_mbi_encode(const struct silofs_mboot_info *mbi,
-                      void *buf, size_t bsz, size_t *out_esz);
+bool silofs_bootsec_has_name(const struct silofs_bootsec *bsec,
+                             const struct silofs_namestr *name);
 
-int silofs_mbi_encsize(const struct silofs_mboot_info *mbi, size_t *out_esz);
-
-int silofs_mbi_lookup(const struct silofs_mboot_info *mbi,
-                      const struct silofs_namestr *name,
-                      struct silofs_mbootrec_info **out_mbri);
-
-int silofs_mbi_insert(struct silofs_mboot_info *mbi,
-                      const struct silofs_namestr *name,
-                      const struct silofs_uaddr *sb_uaddr);
-
-int silofs_mbi_nextof(const struct silofs_mboot_info *mbi, loff_t idx,
-                      struct silofs_mbootrec_info **out_mbri);
+void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
+                                 const struct silofs_uaddr *sb_uaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

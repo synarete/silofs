@@ -101,8 +101,7 @@ static void vt_getdents2(int fd, struct vt_getdents_ctx *getdents_ctx)
 	getdents_ctx->ndents = ndents;
 }
 
-static void vt_getdents_from(struct vt_env *vte,
-                             int fd, loff_t off,
+static void vt_getdents_from(struct vt_env *vte, int fd, loff_t off,
                              struct vt_getdents_ctx *getdents_ctx)
 {
 	loff_t pos = -1;

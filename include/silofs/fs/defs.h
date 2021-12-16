@@ -102,7 +102,7 @@
 	(SILOFS_NBK_IN_VSEC * SILOFS_BK_SIZE)
 
 /* number of sub-trees per super-block */
-#define SILOFS_SUPER_NODE_NCHILDS       (32)
+#define SILOFS_SUPER_NODE_NCHILDS       (16)
 
 /* number of children per space-mapping node */
 #define SILOFS_SPMAP_NODE_NCHILDS       (256)
@@ -154,11 +154,11 @@
 /* height of leaf in space mapping tree */
 #define SILOFS_SPLEAF_HEIGHT            (1)
 
-/* on-disk size of space-node mapping (32K) */
-#define SILOFS_SPNODE_SIZE              (32 * SILOFS_KILO)
+/* on-disk size of space-node mapping (64K) */
+#define SILOFS_SPNODE_SIZE              SILOFS_BK_SIZE
 
-/* on-disk size of space-leaf mapping (32K) */
-#define SILOFS_SPLEAF_SIZE              (32 * SILOFS_KILO)
+/* on-disk size of space-leaf mapping (64K) */
+#define SILOFS_SPLEAF_SIZE              SILOFS_BK_SIZE
 
 /* on-disk size of inode's head */
 #define SILOFS_INODE_SIZE               SILOFS_KB_SIZE
@@ -211,6 +211,11 @@
 
 /* on-disk size of file's radix-tree-node */
 #define SILOFS_FILE_RTNODE_SIZE         (8192)
+
+/* max number of callbacks for read-write iter operations */
+#define SILOFS_FILE_NITER_MAX \
+	(SILOFS_FILE_HEAD1_NLEAVES + SILOFS_FILE_HEAD2_NLEAVES + \
+	 (SILOFS_IO_SIZE_MAX / SILOFS_BK_SIZE))
 
 
 /* base size of empty directory */
@@ -289,6 +294,12 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE    = 2
 };
 
+/* boot-record flags */
+enum silofs_bootf {
+	SILOFS_BOOTF_NONE       = 0x00,
+	SILOFS_BOOTF_ACTIVE     = 0x01,
+};
+
 /* file-system logical-elements types */
 enum silofs_stype {
 	SILOFS_STYPE_NONE       = 0x00,
@@ -310,24 +321,30 @@ enum silofs_stype {
 
 /* common-header flags */
 enum silofs_hdrf {
-	SILOFS_HDRF_CSUM        = (1 << 0),
+	SILOFS_HDRF_CSUM        = 1,
 };
 
-/* block-reference flags */
-enum silofs_bkrf {
-	SILOFS_BKRF_NONE        = 0,
+/* super-block flags */
+enum silofs_superf {
+	SILOFS_SUPERF_NONE      = 0,
+	SILOFS_SUPERF_FOSSIL    = 1,
 };
 
+/* space-mapping flags */
+enum silofs_spmapf {
+	SILOFS_SPMAPF_NONE      = 0,
+	SILOFS_SPMAPF_ACTIVE    = 1,
+};
 
 /* inode control flags */
 enum silofs_inodef {
-	SILOFS_INODEF_ROOTD     = (1 << 0),
+	SILOFS_INODEF_ROOTD     = 1,
 };
 
 /* dir-inode control flags */
 enum silofs_dirf {
-	SILOFS_DIRF_HASH_SHA256 = (1 << 0),
-	SILOFS_DIRF_NAME_UTF8   = (1 << 1),
+	SILOFS_DIRF_HASH_SHA256 = 1,
+	SILOFS_DIRF_NAME_UTF8   = 2,
 };
 
 /* extended attributes known classes */
@@ -470,10 +487,17 @@ struct silofs_oaddr48b {
 } silofs_packed_aligned8;
 
 
-struct silofs_uaddr56b {
+struct silofs_uaddr64b {
 	struct silofs_oaddr48b  oaddr;
 	uint64_t                voff_stype;
-} silofs_packed_aligned8;
+	uint64_t                reserved;
+} silofs_packed_aligned32;
+
+
+struct silofs_ulink128b {
+	struct silofs_uaddr64b  owner;
+	struct silofs_uaddr64b  child;
+} silofs_packed_aligned32;
 
 
 struct silofs_vaddr56 {
@@ -493,16 +517,6 @@ struct silofs_vrange128 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_header {
-	uint32_t                h_magic;
-	uint8_t                 h_stype;
-	uint8_t                 h_flags;
-	uint16_t                h_reserved;
-	uint32_t                h_size;
-	uint32_t                h_csum;
-} silofs_packed_aligned16;
-
-
 struct silofs_kdf_desc {
 	uint32_t                kd_iterations;
 	uint32_t                kd_algo;
@@ -518,43 +532,68 @@ struct silofs_kdf_pair {
 } silofs_packed_aligned32;
 
 
-struct silofs_uobj_ref {
-	struct silofs_uaddr56b  uor_uadr;
-	uint64_t                uor_reserved;
+struct silofs_bootsec4k {
+	uint64_t                bs_magic;
+	uint64_t                bs_version;
+	struct silofs_uuid      bs_uuid;
+	uint64_t                bs_btime;
+	uint64_t                bs_flags;
+	uint8_t                 bs_reserved1[208];
+	struct silofs_name      bs_name;
+	struct silofs_kdf_pair  bs_kdf_pair;
+	uint32_t                bs_chiper_algo;
+	uint32_t                bs_chiper_mode;
+	uint8_t                 bs_reserved2[472];
+	struct silofs_uaddr64b  bs_sb_ref;
+	uint8_t                 bs_reserved3[2944];
+	struct silofs_hash512   bs_hash;
+} silofs_packed_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_header {
+	uint32_t                h_magic;
+	uint8_t                 h_stype;
+	uint8_t                 h_flags;
+	uint16_t                h_reserved;
+	uint32_t                h_size;
+	uint32_t                h_csum;
 } silofs_packed_aligned16;
 
 
-struct silofs_main_bootrec {
-	uint64_t                mbr_magic;
-	uint64_t                mbr_version;
-	struct silofs_uuid      mbr_uuid;
-	uint64_t                mbr_index;
-	uint64_t                mbr_btime;
-	uint64_t                mbr_flags;
-	uint8_t                 mbr_reserved1[200];
-	struct silofs_name      mbr_name;
-	struct silofs_kdf_pair  mbr_kdf_pair;
-	uint32_t                mbr_chiper_algo;
-	uint32_t                mbr_chiper_mode;
-	uint8_t                 mbr_reserved2[472];
-	struct silofs_uobj_ref  mbr_sb_ref;
-	uint8_t                 mbr_reserved3[2944];
-	struct silofs_hash512   mbr_hash;
-} silofs_packed_aligned64;
+struct silofs_spmap_ref {
+	struct silofs_ulink128b sr_ulink;
+	uint8_t                 sr_stype_sub;
+	uint8_t                 sr_pad[3];
+	uint32_t                sr_flags;
+	uint8_t                 sr_reserved[88];
+} silofs_packed_aligned32;
+
+
+struct silofs_bk_ref {
+	struct silofs_ulink128b br_ulink;
+	uint64_t                br_allocated;
+	uint64_t                br_unwritten;
+	uint64_t                br_refcnt;
+	int64_t                 br_off;
+	uint32_t                br_flags;
+	uint8_t                 br_reserved2[60];
+} silofs_packed_aligned32;
 
 
 struct silofs_sb_root {
 	struct silofs_header    sb_hdr;
 	uint64_t                sb_magic;
 	uint64_t                sb_version;
-	uint64_t                sb_flags;
+	uint32_t                sb_flags;
+	uint8_t                 sb_reserved1[4];
 	uint8_t                 sb_endianness;
-	uint8_t                 sb_reserved1[23];
+	uint8_t                 sb_reserved2[23];
 	uint8_t                 sb_sw_version[64];
 	struct silofs_uuid      sb_uuid;
-	uint8_t                 sb_reserved2[112];
+	uint8_t                 sb_reserved3[112];
 	struct silofs_name      sb_name;
-	uint8_t                 sb_reserved3[3584];
+	uint8_t                 sb_reserved4[3584];
 } silofs_packed_aligned64;
 
 
@@ -584,7 +623,7 @@ struct silofs_sb_base {
 } silofs_packed_aligned64;
 
 
-struct silofs_sb_usmap {
+struct silofs_sb_umap {
 	struct silofs_vrange128 su_vrange;
 	uint8_t                 su_height;
 	uint8_t                 su_pad[15];
@@ -592,10 +631,9 @@ struct silofs_sb_usmap {
 	uint8_t                 su_reserved1[16];
 	struct silofs_blobid40b su_main_blobid;
 	uint8_t                 su_reserved2[24];
-	struct silofs_blobid40b su_arch_blobid;
-	uint8_t                 su_reserved3[24];
-	uint8_t                 su_reserved4[1856];
-	struct silofs_uobj_ref  su_child[SILOFS_SUPER_NODE_NCHILDS];
+	uint8_t                 su_reserved3[64];
+	uint8_t                 su_reserved4[320];
+	struct silofs_spmap_ref su_subref[SILOFS_SUPER_NODE_NCHILDS];
 } silofs_packed_aligned64;
 
 
@@ -622,7 +660,7 @@ struct silofs_super_block {
 	/* 4K..8K */
 	struct silofs_sb_base   sb_base;
 	/* 8K..12K */
-	struct silofs_sb_usmap  sb_usm;
+	struct silofs_sb_umap   sb_umap;
 	/* 12K..16K */
 	struct silofs_sb_hash   sb_hash;
 	/* 16K..32K */
@@ -630,15 +668,6 @@ struct silofs_super_block {
 	/* 32K..64K */
 	uint8_t                 sb_tail[32 * 1024];
 } silofs_packed_aligned64;
-
-
-struct silofs_spmap_ref {
-	struct silofs_uobj_ref  sr_child;
-	uint8_t                 sr_stype_sub;
-	uint8_t                 sr_pad2;
-	uint16_t                sr_flags;
-	uint8_t                 sr_reserved[44];
-} silofs_packed_aligned16;
 
 
 struct silofs_spmap_node {
@@ -649,23 +678,10 @@ struct silofs_spmap_node {
 	uint8_t                 sn_reserved1[24];
 	struct silofs_blobid40b sn_main_blobid;
 	uint8_t                 sn_reserved2[24];
-	struct silofs_blobid40b sn_arch_blobid;
-	uint8_t                 sn_reserved3[24];
-	uint8_t                 sn_reserved4[3904];
-	struct silofs_spmap_ref sn_child[SILOFS_SPMAP_NODE_NCHILDS];
+	struct silofs_uaddr64b  sn_parent;
+	uint8_t                 sn_reserved4[3904 + 4096];
+	struct silofs_spmap_ref sn_subref[SILOFS_SPMAP_NODE_NCHILDS];
 } silofs_packed_aligned64;
-
-
-struct silofs_bk_ref {
-	struct silofs_blobid40b br_blobid;
-	uint8_t                 br_reserved1[4];
-	uint32_t                br_flags;
-	uint64_t                br_allocated;
-	uint64_t                br_unwritten;
-	uint64_t                br_refcnt;
-	int64_t                 br_off;
-	uint8_t                 br_reserved2[32];
-} silofs_packed_aligned16;
 
 
 struct silofs_spmap_leaf {
@@ -675,10 +691,9 @@ struct silofs_spmap_leaf {
 	uint8_t                 sl_reserved1[31];
 	struct silofs_blobid40b sl_main_blobid;
 	uint8_t                 sl_reserved2[24];
-	struct silofs_blobid40b sl_arch_blobid;
-	uint8_t                 sl_reserved3[24];
-	uint8_t                 sl_reserved4[3904];
-	struct silofs_bk_ref    sl_bkr[SILOFS_SPMAP_LEAF_NCHILDS];
+	struct silofs_uaddr64b  sl_parent;
+	uint8_t                 sl_reserved4[3904 + 4096];
+	struct silofs_bk_ref    sl_subref[SILOFS_SPMAP_LEAF_NCHILDS];
 } silofs_packed_aligned64;
 
 

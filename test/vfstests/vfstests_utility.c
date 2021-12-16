@@ -360,6 +360,24 @@ char *vt_make_name(struct vt_env *vte, unsigned long key)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+char *vt_make_xname_unique(struct vt_env *vte, size_t nlen,
+                           char *buf, size_t bsz)
+{
+	const uint32_t seq = (uint32_t)(++vte->seqn);
+	const uint32_t rnd = (uint32_t)vt_lrand(vte);
+	const uint32_t val = seq ^ rnd ^ (uint32_t)vte->pid;
+	ssize_t len;
+
+	if ((bsz > 0) && (nlen < bsz)) {
+		len = snprintf(buf, bsz, "%s_%08x", vte->currtest->name, val);
+		if ((size_t)len < bsz) {
+			memset(buf + len, 'x', bsz - (size_t)len);
+		}
+		buf[nlen] = '\0';
+	}
+	return buf;
+}
+
 char *vt_new_name_unique(struct vt_env *vte)
 {
 	const uint32_t seq = (uint32_t)(++vte->seqn);

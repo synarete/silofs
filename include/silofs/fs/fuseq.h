@@ -44,7 +44,7 @@ struct silofs_fuseq_worker {
 	struct silofs_oper              oper;
 	struct silofs_piper             piper;
 	struct silofs_thread            th;
-	int worker_index;
+	unsigned int                    worker_index;
 } silofs_aligned64;
 
 struct silofs_fuseq_workset {
@@ -61,7 +61,7 @@ struct silofs_fuseq {
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_fs_lock;
 	struct silofs_mutex             fq_op_lock;
-	struct silofs_fs_apex        *fq_apex;
+	struct silofs_fs_apex          *fq_apex;
 	struct silofs_alloc_if         *fq_alif;
 	uid_t                           fq_fs_owner;
 	size_t                          fq_nopers;
@@ -73,7 +73,6 @@ struct silofs_fuseq {
 	bool                            fq_deny_others;
 	bool                            fq_mount;
 	bool                            fq_umount;
-	bool                            fq_splice_memfd;
 } silofs_aligned64;
 
 

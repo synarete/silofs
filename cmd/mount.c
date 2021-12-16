@@ -69,7 +69,7 @@ static void mount_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("n:rXSZKo:aDV:Ch", opts);
 		if (opt_chr == 'n') {
-			mount_args->name = silofs_strdup_safe(optarg);
+			mount_args->name = silofs_cmd_strdup(optarg);
 		} else if (opt_chr == 'r') {
 			mount_args->rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -97,8 +97,9 @@ static void mount_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	mount_args->repodir = silofs_cmd_getarg("repo-path", false);
-	mount_args->mntpoint = silofs_cmd_getarg("mount-point", true);
+	silofs_cmd_getarg("repo-path", &mount_args->repodir);
+	silofs_cmd_getarg("mount-point", &mount_args->mntpoint);
+	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -120,9 +121,10 @@ static void mount_create_fs_env(void)
 		.nodev = mount_args->nodev,
 		.rdonly = mount_args->rdonly,
 		.kcopy = !mount_args->nokcopy,
+		.concp = true,
 		.pedantic = false,
 		.with_fuseq = true,
-		.wlock = true,
+		.lock_repo = true,
 	};
 
 	silofs_create_fse_inst(&fs_args);
@@ -162,11 +164,13 @@ static void mount_execute_fs(void)
 static void mount_finalize(void)
 {
 	mount_destroy_fs_env();
-	silofs_pfree_string(&mount_args->repodir_real);
-	silofs_pfree_string(&mount_args->mntpoint_real);
-	silofs_pfree_string(&mount_args->name);
 	silofs_close_syslog();
-	silofs_burnstack();
+
+	silofs_cmd_pfrees(&mount_args->repodir);
+	silofs_cmd_pfrees(&mount_args->mntpoint);
+	silofs_cmd_pfrees(&mount_args->repodir_real);
+	silofs_cmd_pfrees(&mount_args->mntpoint_real);
+	silofs_cmd_pfrees(&mount_args->name);
 }
 
 static void mount_start(void)
@@ -177,7 +181,7 @@ static void mount_start(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void mount_setup_check_mntpoint(void)
+static void mount_prepare_mntpoint(void)
 {
 	silofs_require_valid_fsname("name", &mount_args->name);
 	mount_args->mntpoint_real =
@@ -186,7 +190,7 @@ static void mount_setup_check_mntpoint(void)
 	silofs_die_if_no_mountd();
 }
 
-static void mount_setup_check_repo(void)
+static void mount_prepare_repo(void)
 {
 	silofs_die_if_not_dir_or_empty(mount_args->repodir, true);
 	mount_args->repodir_real =
@@ -310,10 +314,10 @@ void silofs_execute_mount(void)
 	mount_getopt();
 
 	/* Require valid mount-point */
-	mount_setup_check_mntpoint();
+	mount_prepare_mntpoint();
 
 	/* Require minimal repository validity */
-	mount_setup_check_repo();
+	mount_prepare_repo();
 
 	/* Setup boot environment instance */
 	mount_create_fs_env();

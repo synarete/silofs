@@ -25,6 +25,8 @@ int silofs_apex_init(struct silofs_fs_apex *apex,
 
 void silofs_apex_fini(struct silofs_fs_apex *apex);
 
+void silofs_apex_shut(struct silofs_fs_apex *apex);
+
 int silofs_apex_flush_dirty(struct silofs_fs_apex *apex, int flags);
 
 int silofs_apex_spawn_blob(const struct silofs_fs_apex *apex,
@@ -36,25 +38,33 @@ int silofs_apex_stage_blob(const struct silofs_fs_apex *apex,
                            struct silofs_blob_info **out_bli);
 
 
-int silofs_apex_spawn_super(struct silofs_fs_apex *apex,
-                            size_t cap_want, struct silofs_sb_info **out_sbi);
+int silofs_apex_spawn_super(struct silofs_fs_apex *apex, size_t cap_want,
+                            const struct silofs_namestr *name,
+                            struct silofs_sb_info **out_sbi);
 
 int silofs_apex_stage_super(struct silofs_fs_apex *apex,
+                            const struct silofs_namestr *name,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_sb_info **out_sbi);
 
 void silofs_apex_bind_to_sbi(struct silofs_fs_apex *apex,
                              struct silofs_sb_info *sbi_new);
 
-int silofs_apex_root_mbr_name(const struct silofs_fs_apex *apex,
-                              struct silofs_namestr *out_name);
-
-int silofs_apex_save_root_mbr(struct silofs_fs_apex *apex);
-
-int silofs_apex_load_root_mbr(struct silofs_fs_apex *apex);
 
 int silofs_apex_forkfs(struct silofs_fs_apex *apex,
                        const struct silofs_namestr *name);
+
+int silofs_apex_prune_space(struct silofs_fs_apex *apex);
+
+bool silofs_apex_has_bootsec(const struct silofs_fs_apex *apex,
+                             const struct silofs_namestr *name);
+
+int silofs_apex_load_bootsec(const struct silofs_fs_apex *apex,
+                             struct silofs_bootsec *out_bsec);
+
+int silofs_apex_lock_bootsec(struct silofs_fs_apex *apex);
+
+int silofs_apex_unlock_bootsec(struct silofs_fs_apex *apex);
 
 
 int silofs_apex_kcopy(struct silofs_fs_apex *apex,

@@ -17,6 +17,8 @@
 #include <silofs/cmd.h>
 
 
+static struct silofs_subcmd_prune *prune_args;
+
 static const char *silofs_prune_usage[] = {
 	"prune [options] <repo-path>",
 	"",
@@ -53,30 +55,45 @@ static void prune_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	if (optind >= argc) {
-		silofs_die(0, "missing repo path");
-	}
-	silofs_globals.cmd.prune.repodir = argv[optind++];
-	silofs_die_if_redundant_arg();
+	silofs_cmd_getarg("repo-path", &prune_args->repodir);
+	silofs_cmd_endargs();
 }
 
 
 static void prune_finalize(void)
 {
 	silofs_destroy_fse_inst();
+	silofs_cmd_pfrees(&prune_args->repodir_real);
+	silofs_cmd_pfrees(&prune_args->repodir);
 }
+
+static void prune_start(void)
+{
+	prune_args = &silofs_globals.cmd.prune;
+	atexit(prune_finalize);
+}
+
+static void prune_prepare(void)
+{
+	silofs_die_if_not_dir_or_empty(prune_args->repodir, true);
+	prune_args->repodir_real = silofs_cmd_realpath(prune_args->repodir);
+}
+
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_execute_prune(void)
 {
 	/* Do all cleanups upon exits */
-	atexit(prune_finalize);
+	prune_start();
 
 	/* Parse command's arguments */
 	prune_getopt();
 
-	/* TODO: FSCK... */
+	/* Verify user's arguments */
+	prune_prepare();
+
+	/* TODO: execute logic... */
 
 	/* Post execution cleanups */
 	prune_finalize();

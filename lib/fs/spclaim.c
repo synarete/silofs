@@ -36,22 +36,22 @@ struct silofs_spalloc_ctx {
 	struct silofs_sb_info     *sbi;
 	struct silofs_spnode_info *sni;
 	struct silofs_spleaf_info *sli;
-	struct silofs_ovaddr       ova;
+	struct silofs_uvaddr       uva;
 	enum silofs_stype          stype;
 };
 
-static void iovaddr_setup(struct silofs_iovaddr *iova, ino_t ino,
-                          const struct silofs_oaddr *oaddr,
+static void iuvaddr_setup(struct silofs_iuvaddr *iuva, ino_t ino,
+                          const struct silofs_uaddr *uaddr,
                           const struct silofs_vaddr *vaddr)
 {
-	iova->ino = ino;
-	ovaddr_setup(&iova->ova, oaddr, vaddr);
+	iuva->ino = ino;
+	uvaddr_setup(&iuva->uva, uaddr, vaddr);
 }
 
-static void iovaddr_setup2(struct silofs_iovaddr *iova, ino_t ino,
-                           const struct silofs_ovaddr *ova)
+static void iuvaddr_setup2(struct silofs_iuvaddr *iuva,
+                           ino_t ino, const struct silofs_uvaddr *uva)
 {
-	iovaddr_setup(iova, ino, &ova->oaddr, &ova->vaddr);
+	iuvaddr_setup(iuva, ino, &uva->uaddr, &uva->vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -257,18 +257,18 @@ static int spc_require_within_vspace(struct silofs_spalloc_ctx *spa_ctx,
 
 static int spc_resolve_oaddr(struct silofs_spalloc_ctx *spa_ctx)
 {
-	const struct silofs_vaddr *vaddr = &spa_ctx->ova.vaddr;
+	const struct silofs_vaddr *vaddr = &spa_ctx->uva.vaddr;
 
 	silofs_assert(!vaddr_isnull(vaddr));
-	return silofs_sbi_resolve_ova(spa_ctx->sbi, vaddr,
-	                              SILOFS_STAGE_RDONLY, &spa_ctx->ova);
+	return silofs_sbi_resolve_uva(spa_ctx->sbi, vaddr,
+	                              SILOFS_STAGE_RDONLY, &spa_ctx->uva);
 }
 
 static int
 spc_find_free_space_at_leaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	int err;
-	struct silofs_vaddr *vaddr = &spa_ctx->ova.vaddr;
+	struct silofs_vaddr *vaddr = &spa_ctx->uva.vaddr;
 
 	err = spc_stage_rdonly_spleaf(spa_ctx, voff);
 	if (err) {
@@ -424,7 +424,7 @@ static int spc_find_free_from_cache(struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_spvmap *spvm = spc_spvmap(spa_ctx);
 
-	return silofs_spvmap_trypop(spvm, spa_ctx->stype, &spa_ctx->ova.vaddr);
+	return silofs_spvmap_trypop(spvm, spa_ctx->stype, &spa_ctx->uva.vaddr);
 }
 
 static int
@@ -461,7 +461,7 @@ static int spc_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 static int spc_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx)
 {
 	const struct silofs_sb_info *sbi = spa_ctx->sbi;
-	const struct silofs_vaddr *vaddr = &spa_ctx->ova.vaddr;
+	const struct silofs_vaddr *vaddr = &spa_ctx->uva.vaddr;
 
 	if (vaddr_isnull(vaddr)) {
 		return -ENOSPC;
@@ -475,7 +475,7 @@ static int spc_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx)
 static void spc_mark_allocated(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	sbi_mark_allocated_at(spa_ctx->sbi, spa_ctx->sni,
-	                      spa_ctx->sli, &spa_ctx->ova.vaddr);
+	                      spa_ctx->sli, &spa_ctx->uva.vaddr);
 }
 
 static int spc_try_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx)
@@ -503,7 +503,7 @@ static int spc_try_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx)
 static int spc_claim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 {
 	int err;
-	const struct silofs_vaddr *vaddr = &spa_ctx->ova.vaddr;
+	const struct silofs_vaddr *vaddr = &spa_ctx->uva.vaddr;
 
 	err = spc_check_avail_space(spa_ctx);
 	if (err) {
@@ -532,7 +532,7 @@ static int spc_claim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 
 int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
                             enum silofs_stype stype,
-                            struct silofs_ovaddr *out_ova)
+                            struct silofs_uvaddr *out_uva)
 {
 	int err;
 	struct silofs_spalloc_ctx spa_ctx = {
@@ -544,14 +544,14 @@ int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	ovaddr_assign(out_ova, &spa_ctx.ova);
+	uvaddr_assign(out_uva, &spa_ctx.uva);
 	return 0;
 }
 
 static int spc_spawn_vnode_at(const struct silofs_spalloc_ctx *spa_ctx,
                               struct silofs_vnode_info **out_vi)
 {
-	return silofs_sbi_spawn_vnode_at(spa_ctx->sbi, &spa_ctx->ova, out_vi);
+	return silofs_sbi_spawn_vnode_at(spa_ctx->sbi, &spa_ctx->uva, out_vi);
 }
 
 /* TODO: cleanups and resource reclaim upon failure in every path */
@@ -578,11 +578,11 @@ int silofs_sbi_claim_vnode(struct silofs_sb_info *sbi,
 }
 
 static int spc_claim_ispace(struct silofs_spalloc_ctx *spa_ctx,
-                            struct silofs_iovaddr *out_iova)
+                            struct silofs_iuvaddr *out_iuva)
 {
 	int err;
 	struct silofs_iaddr iaddr;
-	const struct silofs_vaddr *vaddr = &spa_ctx->ova.vaddr;
+	const struct silofs_vaddr *vaddr = &spa_ctx->uva.vaddr;
 
 	err = spc_claim_vspace(spa_ctx);
 	if (err) {
@@ -592,7 +592,7 @@ static int spc_claim_ispace(struct silofs_spalloc_ctx *spa_ctx,
 	if (err) {
 		return err;
 	}
-	iovaddr_setup2(out_iova, iaddr.ino, &spa_ctx->ova);
+	iuvaddr_setup2(out_iuva, iaddr.ino, &spa_ctx->uva);
 	return 0;
 }
 
@@ -602,7 +602,7 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 	int err;
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_inode_info *ii = NULL;
-	struct silofs_iovaddr iova = {
+	struct silofs_iuvaddr iuva = {
 		.ino = SILOFS_INO_NULL
 	};
 	struct silofs_spalloc_ctx spa_ctx = {
@@ -610,7 +610,7 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 		.stype = SILOFS_STYPE_INODE,
 	};
 
-	err = spc_claim_ispace(&spa_ctx, &iova);
+	err = spc_claim_ispace(&spa_ctx, &iuva);
 	if (err) {
 		return err;
 	}
@@ -619,7 +619,7 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 		return err;
 	}
 	ii = silofs_ii_from_vi(vi);
-	silofs_ii_rebind_view(ii, iova.ino);
+	silofs_ii_rebind_view(ii, iuva.ino);
 	*out_ii = ii;
 	return 0;
 }
@@ -628,7 +628,7 @@ static void spc_reclaim_unallocate(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_sb_info *sbi = spa_ctx->sbi;
 	struct silofs_spvmap *spvm = spc_spvmap(spa_ctx);
-	const struct silofs_vaddr *vaddr = &spa_ctx->ova.vaddr;
+	const struct silofs_vaddr *vaddr = &spa_ctx->uva.vaddr;
 
 	sbi_clear_unallocate_at(sbi, spa_ctx->sni, spa_ctx->sli, vaddr);
 	silofs_spvmap_store(spvm, vaddr);
@@ -639,7 +639,7 @@ static int spc_reclaim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	int err;
 	loff_t voff;
 
-	voff = vaddr_off(&spa_ctx->ova.vaddr);
+	voff = vaddr_off(&spa_ctx->uva.vaddr);
 	err = spc_stage_mutable_spmaps(spa_ctx, voff);
 	if (err) {
 		return err;
@@ -660,7 +660,7 @@ int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
 		.stype = vaddr_stype(vaddr),
 	};
 
-	vaddr_assign(&spa_ctx.ova.vaddr, vaddr);
+	vaddr_assign(&spa_ctx.uva.vaddr, vaddr);
 	return spc_reclaim_vspace(&spa_ctx);
 }
 

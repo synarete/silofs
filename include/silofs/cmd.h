@@ -33,7 +33,7 @@
 #include <errno.h>
 #include <getopt.h>
 
-#define SILOFS_FSNAME_DEFAULT "main"
+#define SILOFS_FSNAME_DEFAULT "default"
 
 typedef void (*silofs_exec_fn)(void);
 
@@ -41,13 +41,6 @@ typedef void (*silofs_exec_fn)(void);
 struct silofs_cmd_info {
 	const char *name;
 	silofs_exec_fn action_hook;
-};
-
-/* arguments for 'init' sub-command */
-struct silofs_subcmd_init {
-	char   *name;
-	char   *repodir;
-	char   *repodir_real;
 };
 
 /* arguments for 'mkfs' sub-command */
@@ -85,43 +78,26 @@ struct silofs_subcmd_umount {
 	bool    lazy;
 };
 
-/* arguments for 'snap' sub-command */
-struct silofs_subcmd_snap {
+/* arguments for 'clone' sub-command */
+struct silofs_subcmd_clone {
 	char   *name;
 	char   *dirpath;
 	char   *dirpath_real;
 };
 
-/* arguments for 'archive' sub-command */
-struct silofs_subcmd_archive {
-	char   *passphrase;
-	char   *passphrase_file;
-	char   *repodir;
+/* arguments for 'rmfs' sub-command */
+struct silofs_subcmd_rmfs {
 	char   *name;
+	char   *dirpath;
+	char   *dirpath_real;
 };
 
-/* arguments for 'show' sub-command */
-struct silofs_subcmd_show {
+/* arguments for 'lsfs' sub-command */
+struct silofs_subcmd_lsfs {
 	char   *pathname;
 	char   *pathname_real;
-	char   *subcmd;
-};
-
-/* arguments for 'refs' sub-command */
-struct silofs_subcmd_refs {
-	char   *pathname;
-	char   *pathname_real;
+	char   *repodir_real;
 	bool    full;
-};
-
-/* arguments for 'fsck' sub-command */
-struct silofs_subcmd_fsck {
-	char   *repodir;
-};
-
-/* arguments for 'prune' sub-command */
-struct silofs_subcmd_prune {
-	char   *repodir;
 };
 
 /* arguments for 'lsmnt' sub-command */
@@ -131,20 +107,59 @@ struct silofs_subcmd_lsmnt {
 	bool    long_listing;
 };
 
+/* arguments for 'show' sub-command */
+struct silofs_subcmd_show {
+	char   *pathname;
+	char   *pathname_real;
+	char   *subcmd;
+};
+
+/* arguments for 'archive' sub-command */
+struct silofs_subcmd_archive {
+	char   *passphrase;
+	char   *passphrase_file;
+	char   *repodir;
+	char   *repodir_real;
+	char   *name;
+};
+
+/* arguments for 'archive' sub-command */
+struct silofs_subcmd_restore {
+	char   *passphrase;
+	char   *passphrase_file;
+	char   *repodir;
+	char   *repodir_real;
+	char   *name;
+};
+
+/* arguments for 'prune' sub-command */
+struct silofs_subcmd_prune {
+	char   *repodir;
+	char   *repodir_real;
+};
+
+/* arguments for 'fsck' sub-command */
+struct silofs_subcmd_fsck {
+	char   *repodir;
+	char   *repodir_real;
+};
+
 /* sub-commands options */
 union silofs_subcmd_args {
-	struct silofs_subcmd_init       init;
 	struct silofs_subcmd_mkfs       mkfs;
 	struct silofs_subcmd_mount      mount;
 	struct silofs_subcmd_umount     umount;
-	struct silofs_subcmd_snap       snap;
 	struct silofs_subcmd_show       show;
-	struct silofs_subcmd_refs       refs;
+	struct silofs_subcmd_clone      clone;
+	struct silofs_subcmd_rmfs       rmfs;
+	struct silofs_subcmd_lsfs       lsfs;
 	struct silofs_subcmd_lsmnt      lsmnt;
 	struct silofs_subcmd_archive    archive;
+	struct silofs_subcmd_restore    restore;
 	struct silofs_subcmd_prune      prune;
 	struct silofs_subcmd_fsck       fsck;
 };
+
 
 /* repository configuration */
 struct silofs_rconf {
@@ -208,20 +223,24 @@ void silofs_execute_umount(void);
 
 void silofs_execute_show(void);
 
-void silofs_execute_refs(void);
+void silofs_execute_clone(void);
 
-void silofs_execute_snap(void);
+void silofs_execute_rmfs(void);
 
-void silofs_execute_archive(void);
-
-void silofs_execute_fsck(void);
-
-void silofs_execute_prune(void);
+void silofs_execute_lsfs(void);
 
 void silofs_execute_lsmnt(void);
 
-/* common utilities */
+void silofs_execute_archive(void);
 
+void silofs_execute_restore(void);
+
+void silofs_execute_prune(void);
+
+void silofs_execute_fsck(void);
+
+
+/* common utilities */
 __attribute__((__noreturn__))
 void silofs_die_redundant_arg(const char *s);
 
@@ -233,9 +252,7 @@ void silofs_die_unsupported_opt(void);
 
 void silofs_die_if_missing_arg(const char *arg_name, const void *arg_val);
 
-void silofs_die_if_redundant_arg(void);
-
-void silofs_die_if_illegal_name(const char *arg_name, const char *arg_val);
+void silofs_die_if_illegal_fsname(const char *arg_name, const char *arg_val);
 
 void silofs_die_if_not_dir(const char *path, bool w_ok);
 
@@ -247,6 +264,8 @@ void silofs_die_if_not_mntdir(const char *path, bool mount);
 
 void silofs_die_if_not_reg(const char *path, bool w_ok);
 
+void silofs_die_if_not_dir_or_reg(const char *path);
+
 void silofs_die_if_exists(const char *path);
 
 void silofs_die_if_no_mountd(void);
@@ -254,13 +273,16 @@ void silofs_die_if_no_mountd(void);
 void silofs_require_valid_fsname(const char *arg_name, char **p_fsname);
 
 
-char *silofs_cmd_getarg(const char *arg_name, bool last);
+void silofs_cmd_endargs(void);
+
+void silofs_cmd_getarg(const char *arg_name, char **out_arg);
+
+void silofs_cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
 
 int silofs_cmd_getopt(const char *sopts, const struct option *lopts);
 
-long silofs_cmd_parse_size(const char *str);
 
-char *silofs_cmd_lockfile(const char *dirpath);
+long silofs_cmd_parse_size(const char *str);
 
 char *silofs_cmd_realpath(const char *path);
 
@@ -297,17 +319,17 @@ void silofs_show_version_and_exit(const char *prog);
 void silofs_pretty_size(size_t n, char *buf, size_t bsz);
 
 
-void *silofs_zalloc_safe(size_t n);
+void *silofs_cmd_zalloc(size_t n);
 
-void silofs_zfree_safe(void *ptr, size_t nbytes);
+void silofs_cmd_zfree(void *ptr, size_t nbytes);
 
-void silofs_pfree_string(char **pp);
+void silofs_cmd_pfrees(char **pp);
 
-char *silofs_strdup_safe(const char *s);
+char *silofs_cmd_strdup(const char *s);
 
-char *silofs_strndup_safe(const char *s, size_t n);
+char *silofs_cmd_strndup(const char *s, size_t n);
 
-char *silofs_sprintf_path(const char *fmt, ...);
+char *silofs_cmd_mkpathf(const char *fmt, ...);
 
 /* singleton instance */
 void silofs_create_fse_inst(const struct silofs_fs_args *args);

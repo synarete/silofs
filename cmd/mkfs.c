@@ -45,7 +45,7 @@ static void mkfs_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("n:s:V:Fh", opts);
 		if (opt_chr == 'n') {
-			mkfs_args->name = silofs_strdup_safe(optarg);
+			mkfs_args->name = silofs_cmd_strdup(optarg);
 		} else if (opt_chr == 's') {
 			mkfs_args->size = optarg;
 			mkfs_args->fs_size = silofs_cmd_parse_size(optarg);
@@ -59,7 +59,8 @@ static void mkfs_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	mkfs_args->repodir = silofs_cmd_getarg("repository-path", true);
+	silofs_cmd_getarg("repository-path", &mkfs_args->repodir);
+	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -67,8 +68,9 @@ static void mkfs_getopt(void)
 static void mkfs_finalize(void)
 {
 	silofs_destroy_fse_inst();
-	silofs_pfree_string(&mkfs_args->name);
-	silofs_pfree_string(&mkfs_args->repodir_real);
+	silofs_cmd_pfrees(&mkfs_args->name);
+	silofs_cmd_pfrees(&mkfs_args->repodir_real);
+	silofs_cmd_pfrees(&mkfs_args->repodir);
 }
 
 static void mkfs_start(void)
@@ -77,7 +79,7 @@ static void mkfs_start(void)
 	atexit(mkfs_finalize);
 }
 
-static void mkfs_setup_check_params(void)
+static void mkfs_prepare(void)
 {
 	silofs_die_if_missing_arg("size", mkfs_args->size);
 	silofs_require_valid_fsname("name", &mkfs_args->name);
@@ -95,8 +97,7 @@ static void mkfs_create_fs_env(void)
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
-		.wlock = false,
-		.xlock = false,
+		.lock_repo = false,
 	};
 
 	silofs_create_fse_inst(&fs_args);
@@ -143,7 +144,7 @@ void silofs_execute_mkfs(void)
 	mkfs_getopt();
 
 	/* Verify user's arguments */
-	mkfs_setup_check_params();
+	mkfs_prepare();
 
 	/* Prepare environment */
 	mkfs_create_fs_env();

@@ -32,9 +32,7 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 
 void silofs_fse_del(struct silofs_fs_env *fse);
 
-int silofs_fse_reopen_repo(struct silofs_fs_env *fse);
-
-int silofs_fse_reopen_fs(struct silofs_fs_env *fse);
+int silofs_fse_reopen(struct silofs_fs_env *fse);
 
 int silofs_fse_reload(struct silofs_fs_env *fse);
 
@@ -56,5 +54,23 @@ int silofs_fse_sync_drop(struct silofs_fs_env *fse);
 
 void silofs_fse_stats(const struct silofs_fs_env *fse,
                       struct silofs_fs_stats *st);
+
+
+int silofs_fse_open_repo(struct silofs_fs_env *fse);
+
+
+int silofs_fse_lock_boot(const struct silofs_fs_env *fse,
+                         const struct silofs_namestr *name, int *pfd);
+
+int silofs_fse_unlock_boot(const struct silofs_fs_env *fse,
+                           const struct silofs_namestr *name, int *pfd);
+
+int silofs_fse_remove_boot(const struct silofs_fs_env *fse,
+                           const struct silofs_namestr *name);
+
+int silofs_fse_load_boot(const struct silofs_fs_env *fse,
+                         const struct silofs_namestr *name,
+                         struct silofs_bootsec *out_bsec);
+
 
 #endif /* SILOFS_EXEC_H_ */

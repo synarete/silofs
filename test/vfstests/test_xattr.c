@@ -17,19 +17,6 @@
 #include "vfstests.h"
 #include <sys/xattr.h>
 
-
-static const char *vt_make_xname(struct vt_env *vte, size_t nlen)
-{
-	char *name;
-
-	name = vt_new_name_unique(vte);
-	while (strlen(name) < nlen) {
-		name = vt_strcat(vte, name, vt_new_name_unique(vte));
-	}
-	name[nlen] = '\0';
-	return name;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects successful setxattr/getxattr/removexattr operations
@@ -243,19 +230,19 @@ static void test_xattr_list(struct vt_env *vte)
  */
 static void test_xattr_any_(struct vt_env *vte, size_t value_size)
 {
-	int fd = -1;
-	size_t cnt = 0;
+	char buf[SILOFS_NAME_MAX + 1] = "";
 	const char *name = NULL;
-	const size_t nlen_max = SILOFS_NAME_MAX;
 	void *vbuf = vt_new_buf_rands(vte, value_size + 1);
 	const void *value = vt_new_buf_rands(vte, value_size);
 	const char *path0 = vt_new_path_unique(vte);
 	const char *path1 = vt_new_path_under(vte, path0);
+	size_t cnt = 0;
+	int fd = -1;
 
 	vt_mkdir(path0, 0700);
 	vt_open(path1, O_CREAT | O_RDWR, 0600, &fd);
-	for (size_t nlen = 1; nlen < nlen_max; ++nlen) {
-		name = vt_make_xname(vte, nlen);
+	for (size_t nlen = 1; nlen < sizeof(buf); ++nlen) {
+		name = vt_make_xname_unique(vte, nlen, buf, sizeof(buf));
 		vt_fsetxattr(fd, name, value, value_size, 0);
 		vt_fgetxattr(fd, name, vbuf, 0, &cnt);
 		vt_expect_eq(cnt, value_size);
@@ -270,14 +257,36 @@ static void test_xattr_any_(struct vt_env *vte, size_t value_size)
 	vt_rmdir(path0);
 }
 
-static void test_xattr_any(struct vt_env *vte)
+static void test_xattr_any_small(struct vt_env *vte)
 {
 	size_t value_size = 1;
-	const size_t value_size_max = SILOFS_XATTR_VALUE_MAX;
+	const size_t value_size_max = 1023;
 
 	while (value_size <= value_size_max) {
-		test_xattr_any_(vte, value_size++);
+		test_xattr_any_(vte, value_size);
+		value_size += 13;
 	}
+}
+
+static void test_xattr_any_large(struct vt_env *vte)
+{
+	size_t value_size = 1024;
+
+	while (value_size <= SILOFS_XATTR_VALUE_MAX) {
+		test_xattr_any_(vte, value_size);
+		value_size += 23;
+	}
+}
+
+static void test_xattr_any_edges(struct vt_env *vte)
+{
+	test_xattr_any_(vte, 1);
+	test_xattr_any_(vte, 2);
+	test_xattr_any_(vte, 247);
+	test_xattr_any_(vte, 248);
+	test_xattr_any_(vte, 249);
+	test_xattr_any_(vte, SILOFS_XATTR_VALUE_MAX - 1);
+	test_xattr_any_(vte, SILOFS_XATTR_VALUE_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -288,7 +297,9 @@ static const struct vt_tdef vt_local_tests[] = {
 	VT_DEFTEST(test_xattr_ctime),
 	VT_DEFTEST(test_xattr_replace),
 	VT_DEFTEST(test_xattr_list),
-	VT_DEFTEST(test_xattr_any),
+	VT_DEFTEST(test_xattr_any_small),
+	VT_DEFTEST(test_xattr_any_large),
+	VT_DEFTEST(test_xattr_any_edges),
 };
 
 const struct vt_tests vt_test_xattr = VT_DEFTESTS(vt_local_tests);

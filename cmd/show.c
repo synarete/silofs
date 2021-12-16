@@ -46,8 +46,9 @@ static void show_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	show_args->subcmd = silofs_cmd_getarg("subcmd", false);
-	show_args->pathname = silofs_cmd_getarg("pathname", true);
+	silofs_cmd_getarg("subcmd", &show_args->subcmd);
+	silofs_cmd_getarg_or_cwd("pathname", &show_args->pathname);
+	silofs_cmd_endargs();
 }
 
 
@@ -76,7 +77,9 @@ static enum silofs_query_type show_subcmd_qtype(void)
 
 static void show_finalize(void)
 {
-	silofs_pfree_string(&show_args->pathname_real);
+	silofs_cmd_pfrees(&show_args->pathname_real);
+	silofs_cmd_pfrees(&show_args->subcmd);
+	silofs_cmd_pfrees(&show_args->pathname);
 }
 
 static void show_start(void)
@@ -85,7 +88,7 @@ static void show_start(void)
 	atexit(show_finalize);
 }
 
-static void show_setup_check_params(void)
+static void show_prepare(void)
 {
 	struct stat st;
 
@@ -212,7 +215,7 @@ static void show_statx(void)
 	printf("ino:        %ld \n", (long)stx->stx_ino);
 	printf("size:       %ld \n", (long)stx->stx_size);
 	printf("blocks:     %ld \n", (long)stx->stx_blocks);
-	printf("mnt_id:     %ld \n", (long)stx->stx_mnt_id);
+	/* printf("mnt_id:     %ld \n", (long)stx->stx_mnt_id); */
 	printf("iflags:     %x  \n",  qstatx->stx_iflags);
 	printf("dirflags:   %x  \n",  qstatx->stx_dirflags);
 }
@@ -252,7 +255,7 @@ void silofs_execute_show(void)
 	show_getopt();
 
 	/* Verify user's arguments */
-	show_setup_check_params();
+	show_prepare();
 
 	/* Do actual query + show */
 	show_execute();

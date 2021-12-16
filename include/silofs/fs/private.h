@@ -142,8 +142,8 @@
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 
-#define ovaddr_setup(ova, oa, va)       silofs_ovaddr_setup(ova, oa, va)
-#define ovaddr_assign(ova, oth)         silofs_ovaddr_assign(ova, oth)
+#define uvaddr_setup(uva, ua, va)       silofs_uvaddr_setup(uva, ua, va)
+#define uvaddr_assign(uva, oth)         silofs_uvaddr_assign(uva, oth)
 
 #define bli_incref(bli)                 silofs_bli_incref(bli)
 #define bli_decref(bli)                 silofs_bli_decref(bli)
@@ -152,6 +152,9 @@
 #define sbi_repo(sbi)                   silofs_sbi_repo(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
+
+#define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
+#define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
 
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)

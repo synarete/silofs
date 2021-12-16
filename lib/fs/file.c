@@ -335,24 +335,24 @@ static int fiovec_by_blob(const struct silofs_file_ctx *f_ctx,
                           loff_t off_within, size_t len,
                           struct silofs_fiovec *out_fiov)
 {
-	struct silofs_ovaddr ova;
+	struct silofs_uvaddr uva;
 	struct silofs_blob_info *bli = NULL;
 	const struct silofs_repo *repo = f_ctx->apex->ap_repo;
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_resolve_ova(f_ctx->sbi, vaddr, stg_flags, &ova);
+	err = silofs_sbi_resolve_uva(f_ctx->sbi, vaddr, stg_flags, &uva);
 	if (err) {
 		return err;
 	}
-	ova.oaddr.pos += off_within;
-	ova.oaddr.len = len;
+	uva.uaddr.oaddr.pos += off_within;
+	uva.uaddr.oaddr.len = len;
 
-	err = silofs_repo_stage_blob(repo, &ova.oaddr.bid, &bli);
+	err = silofs_repo_stage_blob(repo, &uva.uaddr.oaddr.bid, &bli);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_resolve(bli, &ova.oaddr, out_fiov);
+	err = silofs_bli_resolve(bli, &uva.uaddr.oaddr, out_fiov);
 	if (err) {
 		return err;
 	}
@@ -889,12 +889,12 @@ static void fmc_nomap(struct silofs_fmap_ctx *fm_ctx,
 
 static int fmc_require_mutable(const struct silofs_fmap_ctx *fm_ctx)
 {
-	struct silofs_ovaddr ova;
+	struct silofs_uvaddr uva;
 	struct silofs_sb_info *sbi = fm_ctx->f_ctx->sbi;
 	const struct silofs_vaddr *vaddr = &fm_ctx->vaddr;
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_MUTABLE;
 
-	return silofs_sbi_resolve_ova(sbi, vaddr, stg_flags, &ova);
+	return silofs_sbi_resolve_uva(sbi, vaddr, stg_flags, &uva);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2071,13 +2071,13 @@ static int fic_claim_data_space(const struct silofs_file_ctx *f_ctx,
                                 struct silofs_vaddr *out_vaddr)
 {
 	int err;
-	struct silofs_ovaddr ova;
+	struct silofs_uvaddr uva;
 
-	err = silofs_sbi_claim_vspace(f_ctx->sbi, stype, &ova);
+	err = silofs_sbi_claim_vspace(f_ctx->sbi, stype, &uva);
 	if (err) {
 		return err;
 	}
-	vaddr_assign(out_vaddr, &ova.vaddr);
+	vaddr_assign(out_vaddr, &uva.vaddr);
 	return 0;
 }
 
@@ -2616,8 +2616,8 @@ write_iter_of(const struct silofs_rwiter_ctx *rwi)
 static int write_iter_actor(struct silofs_rwiter_ctx *rwi,
                             const struct silofs_fiovec *fiov)
 {
-	int err;
 	struct silofs_write_iter *wri = write_iter_of(rwi);
+	int err;
 
 	if ((fiov->fv_fd > 0) && (fiov->fv_off < 0)) {
 		return -EINVAL;

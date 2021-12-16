@@ -73,7 +73,7 @@ jobs:
       - name: Build
         run: make
 
-  check:
+  unit-tests:
     name: Run unit-tests
     runs-on: ubuntu-latest
     needs: build
@@ -107,10 +107,18 @@ jobs:
       - name: Run clang static-analyzer
         run: ./misc/clangscanbuild.sh
 
+  check:
+    name: Check sources
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - unit-tests
+      - static-analyze
+
   packagize:
     name: Create deb package
     runs-on: ubuntu-latest
-    needs: build
+    needs: check
     steps:
       - uses: actions/checkout@v2
       - name: Update
@@ -137,35 +145,34 @@ jobs:
       - name: Verify installation
         run: silofs --version
 
-  # vfstests:
-  #   name: Run sanity smoke-tests suite
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - check
-  #     - static-analyze
-  #     - install
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Update
-  #       run: sudo apt-get update
-  #     - name: Install deps
-  #       run: sudo ./misc/installdeps.sh
-  #     - name: Packagize
-  #       run: ./dist/packagize-deb.sh
-  #     - name: Install
-  #       run: sudo apt install ./build/silofs_*.deb
-  #     - name: Verify installation
-  #       run: silofs --version
-  #     - name: Prepare tests
-  #       run: |
-  #         sudo mkdir -p /mnt/test
-  #         sudo chmod 777 /mnt/test
-  #         sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
-  #         sudo systemctl restart silofs-mountd.service
-  #     - name: Make file-system
-  #       run: |
-  #         mkdir ./silofs-tests
-  #         silofs mkfs -s 32G ./silofs-tests
+  vfstests:
+    name: Run sanity smoke-tests suite
+    runs-on: ubuntu-latest
+    needs:
+      - static-analyze
+      - install
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./misc/installdeps.sh
+      - name: Packagize
+        run: ./dist/packagize-deb.sh
+      - name: Install
+        run: sudo apt install ./build/dist/silofs_*.deb
+      - name: Verify installation
+        run: silofs --version
+      - name: Prepare tests
+        run: |
+          sudo mkdir -p /mnt/test
+          sudo chmod 777 /mnt/test
+          sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
+          sudo systemctl restart silofs-mountd.service
+      - name: Make file-system
+        run: |
+          mkdir ./silofs-tests
+          silofs mkfs -s 32G ./silofs-tests
   #     - name: Mount file-system
   #       run: silofs mount ./silofs-tests /mnt/test
   #     - name: Run simple I/O
@@ -186,7 +193,7 @@ jobs:
     needs:
       - check
       - install
-      # - vfstests
+      - vfstests
     steps:
       - name: Done
         run: date

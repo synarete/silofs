@@ -33,6 +33,7 @@
 #include <limits.h>
 #include <endian.h>
 
+
 static const struct silofs_cipher_args s_default_cip_args = {
 	.kdf = {
 		.kdf_iv = {
@@ -51,6 +52,8 @@ static const struct silofs_cipher_args s_default_cip_args = {
 	.cipher_algo = SILOFS_CIPHER_AES256,
 	.cipher_mode = SILOFS_CIPHER_MODE_GCM,
 };
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool cip_args_isequal(const struct silofs_cipher_args *cip_args1,
                              const struct silofs_cipher_args *cip_args2)
@@ -91,146 +94,156 @@ static void cpu_to_kdf(const struct silofs_kdf_desc *kd,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t mbr_magic(const struct silofs_main_bootrec *mbr)
+static uint64_t bsec4k_magic(const struct silofs_bootsec4k *bsc)
 {
-	return silofs_le64_to_cpu(mbr->mbr_magic);
+	return silofs_le64_to_cpu(bsc->bs_magic);
 }
 
-static void mbr_set_magic(struct silofs_main_bootrec *mbr, uint64_t magic)
+static void bsec4k_set_magic(struct silofs_bootsec4k *bsc, uint64_t magic)
 {
-	mbr->mbr_magic = silofs_cpu_to_le64(magic);
+	bsc->bs_magic = silofs_cpu_to_le64(magic);
 }
 
-static uint64_t mbr_version(const struct silofs_main_bootrec *mbr)
+static uint64_t bsec4k_version(const struct silofs_bootsec4k *bsc)
 {
-	return silofs_le64_to_cpu(mbr->mbr_version);
+	return silofs_le64_to_cpu(bsc->bs_version);
 }
 
-static void mbr_set_version(struct silofs_main_bootrec *mbr, uint64_t version)
+static void bsec4k_set_version(struct silofs_bootsec4k *bsc, uint64_t version)
 {
-	mbr->mbr_version = silofs_cpu_to_le64(version);
+	bsc->bs_version = silofs_cpu_to_le64(version);
 }
 
-static void mbr_uuid(const struct silofs_main_bootrec *mbr,
-                     struct silofs_uuid *uu)
+static void bsec4k_uuid(const struct silofs_bootsec4k *bsc,
+                        struct silofs_uuid *uu)
 {
-	silofs_uuid_assign(uu, &mbr->mbr_uuid);
+	silofs_uuid_assign(uu, &bsc->bs_uuid);
 }
 
-static void mbr_set_uuid(struct silofs_main_bootrec *mbr,
-                         const struct silofs_uuid *uu)
+static void bsec4k_set_uuid(struct silofs_bootsec4k *bsc,
+                            const struct silofs_uuid *uu)
 {
-	silofs_uuid_assign(&mbr->mbr_uuid, uu);
+	silofs_uuid_assign(&bsc->bs_uuid, uu);
 }
 
-static size_t mbr_index(const struct silofs_main_bootrec *mbr)
+static time_t bsec4k_btime(const struct silofs_bootsec4k *bsc)
 {
-	return silofs_le64_to_cpu(mbr->mbr_index);
+	return (time_t)silofs_le64_to_cpu(bsc->bs_btime);
 }
 
-static void mbr_set_index(struct silofs_main_bootrec *mbr, size_t idx)
+static void bsec4k_set_btime(struct silofs_bootsec4k *bsc, time_t tm)
 {
-	mbr->mbr_index = silofs_cpu_to_le64(idx);
+	bsc->bs_btime = silofs_cpu_to_le64((uint64_t)tm);
 }
 
-static time_t mbr_btime(const struct silofs_main_bootrec *mbr)
+static enum silofs_bootf bsec4k_flags(const struct silofs_bootsec4k *bsc)
 {
-	return (time_t)silofs_le64_to_cpu(mbr->mbr_btime);
+	const uint64_t f = silofs_le64_to_cpu(bsc->bs_flags);
+
+	return (enum silofs_bootf)f;
 }
 
-static void mbr_set_btime(struct silofs_main_bootrec *mbr, time_t tm)
+static void bsec4k_set_flags(struct silofs_bootsec4k *bsc,
+                             enum silofs_bootf flags)
 {
-	mbr->mbr_btime = silofs_cpu_to_le64((uint64_t)tm);
+	const uint64_t f = (uint64_t)flags;
+
+	bsc->bs_flags = silofs_cpu_to_le64(f);
 }
 
-static void mbr_name(const struct silofs_main_bootrec *mbr,
-                     struct silofs_namebuf *nb)
+static void bsec4k_name(const struct silofs_bootsec4k *bsc,
+                        struct silofs_namebuf *nb)
 {
-	silofs_namebuf_assign2(nb, &mbr->mbr_name);
+	silofs_namebuf_assign2(nb, &bsc->bs_name);
 }
 
-static void mbr_set_name(struct silofs_main_bootrec *mbr,
-                         const struct silofs_namebuf *nb)
+static void bsec4k_set_name(struct silofs_bootsec4k *bsc,
+                            const struct silofs_namebuf *nb)
 {
-	silofs_namebuf_copyto(nb, &mbr->mbr_name);
+	silofs_namebuf_copyto(nb, &bsc->bs_name);
 }
 
-static void mbr_kdf(const struct silofs_main_bootrec *mbr,
-                    struct silofs_kdf_pair *kdf)
+static void bsec4k_kdf(const struct silofs_bootsec4k *bsc,
+                       struct silofs_kdf_pair *kdf)
 {
-	kdf_to_cpu(&mbr->mbr_kdf_pair.kdf_iv, &kdf->kdf_iv);
-	kdf_to_cpu(&mbr->mbr_kdf_pair.kdf_key, &kdf->kdf_key);
+	kdf_to_cpu(&bsc->bs_kdf_pair.kdf_iv, &kdf->kdf_iv);
+	kdf_to_cpu(&bsc->bs_kdf_pair.kdf_key, &kdf->kdf_key);
 }
 
-static void mbr_set_kdf(struct silofs_main_bootrec *mbr,
-                        const struct silofs_kdf_pair *kdf)
+static void bsec4k_set_kdf(struct silofs_bootsec4k *bsc,
+                           const struct silofs_kdf_pair *kdf)
 {
-	cpu_to_kdf(&kdf->kdf_iv, &mbr->mbr_kdf_pair.kdf_iv);
-	cpu_to_kdf(&kdf->kdf_key, &mbr->mbr_kdf_pair.kdf_key);
+	cpu_to_kdf(&kdf->kdf_iv, &bsc->bs_kdf_pair.kdf_iv);
+	cpu_to_kdf(&kdf->kdf_key, &bsc->bs_kdf_pair.kdf_key);
 }
 
-static uint32_t mbr_chiper_algo(const struct silofs_main_bootrec *mbr)
+static uint32_t bsec4k_chiper_algo(const struct silofs_bootsec4k *bsc)
 {
-	return silofs_le32_to_cpu(mbr->mbr_chiper_algo);
+	return silofs_le32_to_cpu(bsc->bs_chiper_algo);
 }
 
-static uint32_t mbr_chiper_mode(const struct silofs_main_bootrec *mbr)
+static uint32_t bsec4k_chiper_mode(const struct silofs_bootsec4k *bsc)
 {
-	return silofs_le32_to_cpu(mbr->mbr_chiper_mode);
+	return silofs_le32_to_cpu(bsc->bs_chiper_mode);
 }
 
-static void mbr_set_cipher(struct silofs_main_bootrec *mbr,
-                           uint32_t cipher_algo, uint32_t cipher_mode)
+static void bsec4k_set_cipher(struct silofs_bootsec4k *bsc,
+                              uint32_t cipher_algo, uint32_t cipher_mode)
 {
-	mbr->mbr_chiper_algo = silofs_cpu_to_le32(cipher_algo);
-	mbr->mbr_chiper_mode = silofs_cpu_to_le32(cipher_mode);
+	bsc->bs_chiper_algo = silofs_cpu_to_le32(cipher_algo);
+	bsc->bs_chiper_mode = silofs_cpu_to_le32(cipher_mode);
 }
 
-static void mbr_init_defaults(struct silofs_main_bootrec *mbr)
+void silofs_bsec4k_init(struct silofs_bootsec4k *bsc)
 {
 	const struct silofs_cipher_args *cip_args = &s_default_cip_args;
 
-	memset(mbr, 0, sizeof(*mbr));
-	mbr_set_magic(mbr, SILOFS_BOOT_RECORD_MAGIC);
-	mbr_set_version(mbr, SILOFS_FMT_VERSION);
-	mbr_set_kdf(mbr, &cip_args->kdf);
-	mbr_set_cipher(mbr, cip_args->cipher_algo, cip_args->cipher_mode);
+	silofs_memzero(bsc, sizeof(*bsc));
+	bsec4k_set_magic(bsc, SILOFS_BOOT_RECORD_MAGIC);
+	bsec4k_set_version(bsc, SILOFS_FMT_VERSION);
+	bsec4k_set_kdf(bsc, &cip_args->kdf);
+	bsec4k_set_cipher(bsc, cip_args->cipher_algo, cip_args->cipher_mode);
 }
 
-static void mbr_sb_ref(const struct silofs_main_bootrec *mbr,
-                       struct silofs_uaddr *out_uaddr)
+void silofs_bsec4k_fini(struct silofs_bootsec4k *bsc)
 {
-	silofs_uaddr56b_parse(&mbr->mbr_sb_ref.uor_uadr, out_uaddr);
+	silofs_memffff(bsc, sizeof(*bsc));
 }
 
-static void mbr_set_sb_ref(struct silofs_main_bootrec *mbr,
-                           const struct silofs_uaddr *uaddr)
+static void bsec4k_sb_ref(const struct silofs_bootsec4k *bsc,
+                          struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr56b_set(&mbr->mbr_sb_ref.uor_uadr, uaddr);
+	silofs_uaddr64b_parse(&bsc->bs_sb_ref, out_uaddr);
 }
 
-static int mbr_check_base(const struct silofs_main_bootrec *mbr)
+static void bsec4k_set_sb_ref(struct silofs_bootsec4k *bsc,
+                              const struct silofs_uaddr *uaddr)
 {
-	if (mbr_magic(mbr) != SILOFS_BOOT_RECORD_MAGIC) {
+	silofs_uaddr64b_set(&bsc->bs_sb_ref, uaddr);
+}
+
+static int bsec4k_check_base(const struct silofs_bootsec4k *bsc)
+{
+	if (bsec4k_magic(bsc) != SILOFS_BOOT_RECORD_MAGIC) {
 		return -EINVAL;
 	}
-	if (mbr_version(mbr) != SILOFS_FMT_VERSION) {
+	if (bsec4k_version(bsc) != SILOFS_FMT_VERSION) {
 		return -EUCLEAN;
 	}
 	return 0;
 }
 
-static void mbr_cipher_args(const struct silofs_main_bootrec *mbr,
-                            struct silofs_cipher_args *cip_args)
+static void bsec4k_cipher_args(const struct silofs_bootsec4k *bsc,
+                               struct silofs_cipher_args *cip_args)
 {
-	silofs_assert_not_null(mbr);
+	silofs_assert_not_null(bsc);
 
-	mbr_kdf(mbr, &cip_args->kdf);
-	cip_args->cipher_algo = mbr_chiper_algo(mbr);
-	cip_args->cipher_mode = mbr_chiper_mode(mbr);
+	bsec4k_kdf(bsc, &cip_args->kdf);
+	cip_args->cipher_algo = bsec4k_chiper_algo(bsc);
+	cip_args->cipher_mode = bsec4k_chiper_mode(bsc);
 }
 
-static int mbr_check(const struct silofs_main_bootrec *mbr)
+static int bsec4k_check(const struct silofs_bootsec4k *bsc)
 {
 	int err;
 	struct silofs_cipher_args cip_args = {
@@ -238,435 +251,136 @@ static int mbr_check(const struct silofs_main_bootrec *mbr)
 		.cipher_mode = 0,
 	};
 
-	err = mbr_check_base(mbr);
+	err = bsec4k_check_base(bsc);
 	if (err) {
 		return err;
 	}
 	/* currently, requires default values */
-	mbr_cipher_args(mbr, &cip_args);
+	bsec4k_cipher_args(bsc, &cip_args);
 	if (!cip_args_isequal(&cip_args, &s_default_cip_args)) {
 		return -EINVAL;
 	}
 	return 0;
 }
 
-static void mbr_hash(const struct silofs_main_bootrec *mbr,
-                     struct silofs_hash512 *hash)
+static void bsec4k_hash(const struct silofs_bootsec4k *bsc,
+                        struct silofs_hash512 *hash)
 {
-	silofs_hash512_assign(hash, &mbr->mbr_hash);
+	silofs_hash512_assign(hash, &bsc->bs_hash);
 }
 
-static void mbr_set_hash(struct silofs_main_bootrec *mbr,
-                         const struct silofs_hash512 *hash)
+static void bsec4k_set_hash(struct silofs_bootsec4k *bsc,
+                            const struct silofs_hash512 *hash)
 {
-	silofs_hash512_assign(&mbr->mbr_hash, hash);
+	silofs_hash512_assign(&bsc->bs_hash, hash);
 }
 
-static void mbr_calc_hash(const struct silofs_main_bootrec *mbr,
-                          const struct silofs_mdigest *md,
-                          struct silofs_hash512 *out_hash)
+static void bsec4k_calc_hash(const struct silofs_bootsec4k *bsc,
+                             const struct silofs_mdigest *md,
+                             struct silofs_hash512 *out_hash)
 {
-	const size_t len = offsetof(struct silofs_main_bootrec, mbr_hash);
+	const size_t len = offsetof(struct silofs_bootsec4k, bs_hash);
 
-	silofs_sha3_512_of(md, mbr, len, out_hash);
+	silofs_sha3_512_of(md, bsc, len, out_hash);
 }
 
-static void mbr_stamp_hash(struct silofs_main_bootrec *mbr,
-                           const struct silofs_mdigest *md)
+void silofs_bsec4k_stamp(struct silofs_bootsec4k *bsc,
+                         const struct silofs_mdigest *md)
 {
 	struct silofs_hash512 hash;
 
-	mbr_calc_hash(mbr, md, &hash);
-	mbr_set_hash(mbr, &hash);
+	bsec4k_calc_hash(bsc, md, &hash);
+	bsec4k_set_hash(bsc, &hash);
 }
 
-static int mbr_check_hash(const struct silofs_main_bootrec *mbr,
-                          const struct silofs_mdigest *md)
+static int bsec4k_check_hash(const struct silofs_bootsec4k *bsc,
+                             const struct silofs_mdigest *md)
 {
 	struct silofs_hash512 hash[2];
 
-	mbr_hash(mbr, &hash[0]);
-	mbr_calc_hash(mbr, md, &hash[1]);
+	bsec4k_hash(bsc, &hash[0]);
+	bsec4k_calc_hash(bsc, md, &hash[1]);
 
 	return silofs_hash512_isequal(&hash[0], &hash[1]) ? 0 : -EUCLEAN;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static struct silofs_mbootrec_info *
-mbri_from_lh(const struct silofs_list_head *lh)
+int silofs_bsec4k_verify(const struct silofs_bootsec4k *bsc,
+                         const struct silofs_mdigest *md)
 {
-	const struct silofs_mbootrec_info *mbri = NULL;
+	int err;
 
-	mbri = container_of2(lh, struct silofs_mbootrec_info, mbr_lh);
-	return unconst(mbri);
-}
-
-static void mbri_init(struct silofs_mbootrec_info *mbri)
-{
-	silofs_memzero(mbri, sizeof(*mbri));
-	silofs_list_head_init(&mbri->mbr_lh);
-	silofs_uaddr_reset(&mbri->mbr_sb_uaddr);
-	silofs_uuid_generate(&mbri->mbr_uuid);
-	mbri->mbr_btime = silofs_time_now();
-	mbri->mbr_index = 0;
-}
-
-static void mbri_fini(struct silofs_mbootrec_info *mbri)
-{
-	silofs_list_head_fini(&mbri->mbr_lh);
-	silofs_uaddr_reset(&mbri->mbr_sb_uaddr);
-}
-
-static struct silofs_mbootrec_info *mbri_new(struct silofs_alloc_if *alif)
-{
-	struct silofs_mbootrec_info *mbri;
-
-	mbri = silofs_allocate(alif, sizeof(*mbri));
-	if (mbri != NULL) {
-		mbri_init(mbri);
+	err = bsec4k_check(bsc);
+	if (err) {
+		return err;
 	}
-	return mbri;
+	err = bsec4k_check_hash(bsc, md);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-static void mbri_del(struct silofs_mbootrec_info *mbri,
-                     struct silofs_alloc_if *alif)
+void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
+                         struct silofs_bootsec *bsec)
 {
-	mbri_fini(mbri);
-	silofs_deallocate(alif, mbri, sizeof(*mbri));
+	bsec4k_sb_ref(bsc, &bsec->sb_uaddr);
+	bsec4k_uuid(bsc, &bsec->uuid);
+	bsec4k_name(bsc, &bsec->name);
+	bsec4k_cipher_args(bsc, &bsec->cip_args);
+	bsec->btime = bsec4k_btime(bsc);
+	bsec->bootf = bsec4k_flags(bsc);
 }
 
-static void mbri_import(struct silofs_mbootrec_info *mbri,
-                        const struct silofs_main_bootrec *mbr)
+void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
+                       const struct silofs_bootsec *bsec)
 {
-	mbr_sb_ref(mbr, &mbri->mbr_sb_uaddr);
-	mbr_uuid(mbr, &mbri->mbr_uuid);
-	mbr_name(mbr, &mbri->mbr_name);
-	mbr_cipher_args(mbr, &mbri->mbr_cip_args);
-	mbri->mbr_btime = mbr_btime(mbr);
-	mbri->mbr_index = (long)mbr_index(mbr);
-}
-
-static void mbri_export(const struct silofs_mbootrec_info *mbri,
-                        struct silofs_main_bootrec *mbr)
-{
-	mbr_init_defaults(mbr);
-	mbr_set_sb_ref(mbr, &mbri->mbr_sb_uaddr);
-	mbr_set_uuid(mbr, &mbri->mbr_uuid);
-	mbr_set_name(mbr, &mbri->mbr_name);
-	mbr_set_btime(mbr, mbri->mbr_btime);
-	mbr_set_index(mbr, (uint64_t)mbri->mbr_index);
-}
-
-static void mbri_update(struct silofs_mbootrec_info *mbri,
-                        const struct silofs_uaddr *sb_uaddr)
-{
-	silofs_uaddr_assign(&mbri->mbr_sb_uaddr, sb_uaddr);
-}
-
-static void mbri_assign(struct silofs_mbootrec_info *mbri, loff_t idx,
-                        const struct silofs_namestr *name,
-                        const struct silofs_uaddr *sb_uaddr)
-
-{
-	silofs_namebuf_assign_str(&mbri->mbr_name, name);
-	mbri_update(mbri, sb_uaddr);
-	cip_args_assign(&mbri->mbr_cip_args, &s_default_cip_args);
-	mbri->mbr_btime = silofs_time_now();
-	mbri->mbr_index = idx;
-}
-
-static bool mbri_has_name(const struct silofs_mbootrec_info *mbri,
-                          const struct silofs_namestr *name)
-{
-	return silofs_namebuf_isequal(&mbri->mbr_name, name);
+	silofs_bsec4k_init(bsc);
+	bsec4k_set_sb_ref(bsc, &bsec->sb_uaddr);
+	bsec4k_set_uuid(bsc, &bsec->uuid);
+	bsec4k_set_name(bsc, &bsec->name);
+	bsec4k_set_btime(bsc, bsec->btime);
+	bsec4k_set_flags(bsc, bsec->bootf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int mbi_new_mbri(const struct silofs_mboot_info *mbi,
-                        struct silofs_mbootrec_info **out_mbri)
+void silofs_bootsec_init(struct silofs_bootsec *bsec)
 {
-	*out_mbri = mbri_new(mbi->mbt_alif);
-	return (*out_mbri != NULL) ? 0 : -ENOMEM;
+	silofs_memzero(bsec, sizeof(*bsec));
+	silofs_default_cip_args(&bsec->cip_args);
+	silofs_uuid_generate(&bsec->uuid);
+	bsec->btime = silofs_time_now();
+	bsec->bootf = SILOFS_BOOTF_ACTIVE;
 }
 
-static void mbi_del_mbri(struct silofs_mboot_info *mbi,
-                         struct silofs_mbootrec_info *mbri)
+void silofs_bootsec_fini(struct silofs_bootsec *bsec)
 {
-	mbri_del(mbri, mbi->mbt_alif);
+	silofs_memffff(bsec, sizeof(*bsec));
+	bsec->bootf = SILOFS_BOOTF_NONE;
 }
 
-int silofs_mbi_init(struct silofs_mboot_info *mbi,
-                    struct silofs_alloc_if *alif, struct silofs_mdigest *md)
+void silofs_bootsec_name(const struct silofs_bootsec *bsec,
+                         struct silofs_namestr *out_name)
 {
-	listq_init(&mbi->mbt_lsq);
-	mbi->mbt_alif = alif;
-	mbi->mbt_md = md;
-	mbi->mbt_next_index = 1;
-	return 0;
+	silofs_namebuf_str(&bsec->name, out_name);
 }
 
-int silofs_mbi_init_by(struct silofs_mboot_info *mbi,
-                       const struct silofs_fs_apex *apex)
+void silofs_bootsec_set_name(struct silofs_bootsec *bsec,
+                             const struct silofs_namestr *name)
 {
-	return silofs_mbi_init(mbi, apex->ap_alif, &apex->ap_crypto->md);
+	silofs_namebuf_assign_str(&bsec->name, name);
 }
 
-static void mbi_insert(struct silofs_mboot_info *mbi,
-                       struct silofs_mbootrec_info *mbri)
+bool silofs_bootsec_has_name(const struct silofs_bootsec *bsec,
+                             const struct silofs_namestr *name)
 {
-	listq_push_back(&mbi->mbt_lsq, &mbri->mbr_lh);
-	mbi->mbt_next_index =
-	        silofs_max64(mbi->mbt_next_index, mbri->mbr_index + 1);
+	return silofs_namebuf_isequal(&bsec->name, name);
 }
 
-static void mbi_free_all(struct silofs_mboot_info *mbi)
+void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
+                                 const struct silofs_uaddr *sb_uaddr)
 {
-	struct silofs_list_head *lh;
-	struct silofs_mbootrec_info *bri;
-	struct silofs_listq *lsq = &mbi->mbt_lsq;
-
-	lh = listq_pop_front(lsq);
-	while (lh != NULL) {
-		bri = mbri_from_lh(lh);
-		mbi_del_mbri(mbi, bri);
-		lh = listq_pop_front(lsq);
-	}
-}
-
-void silofs_mbi_fini(struct silofs_mboot_info *mbi)
-{
-	mbi_free_all(mbi);
-	listq_fini(&mbi->mbt_lsq);
-	mbi->mbt_md = NULL;
-	mbi->mbt_alif = NULL;
-}
-
-static int mbi_check_buf(const struct silofs_mboot_info *mbi,
-                         const void *buf, size_t bsz)
-{
-	const size_t mbr_size = SILOFS_BOOTREC_SIZE;
-	const size_t nmbr = mbi->mbt_lsq.sz;
-
-	if ((bsz < mbr_size) || (bsz % mbr_size)) {
-		return -EINVAL;
-	}
-	if ((nmbr * mbr_size) > bsz) {
-		return -EINVAL;
-	}
-	if (buf == NULL) {
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int mbi_decode_recs(struct silofs_mboot_info *mbi,
-                           const struct silofs_main_bootrec *mbrs, size_t cnt)
-{
-	const struct silofs_main_bootrec *mbr = NULL;
-	struct silofs_mbootrec_info *bri = NULL;
-	int err;
-
-	for (size_t i = 0; i < cnt; ++i) {
-		mbr = &mbrs[i];
-		err = mbr_check(mbr);
-		if (err) {
-			return err;
-		}
-		err = mbr_check_hash(mbr, mbi->mbt_md);
-		if (err) {
-			return err;
-		}
-		err = mbi_new_mbri(mbi, &bri);
-		if (err) {
-			return err;
-		}
-		mbri_import(bri, mbr);
-		mbi_insert(mbi, bri);
-	}
-	return 0;
-}
-
-int silofs_mbi_decode(struct silofs_mboot_info *mbi,
-                      const void *buf, size_t bsz)
-{
-	int err;
-
-	err = mbi_check_buf(mbi, buf, bsz);
-	if (err) {
-		return err;
-	}
-	err = mbi_decode_recs(mbi, buf, bsz / SILOFS_BOOTREC_SIZE);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static void mbi_stamp_mbr(const struct silofs_mboot_info *mbi,
-                          struct silofs_main_bootrec *mbr)
-{
-	mbr_stamp_hash(mbr, mbi->mbt_md);
-}
-
-static struct silofs_mbootrec_info *
-mbi_first(const struct silofs_mboot_info *mbi)
-{
-	const struct silofs_listq *lsq = &mbi->mbt_lsq;
-	const struct silofs_list_head *lh = lsq->ls.next;
-
-	return (lh != &lsq->ls) ? mbri_from_lh(lh) : NULL;
-}
-
-static struct silofs_mbootrec_info *
-mbi_nextof(const struct silofs_mboot_info *mbi,
-           const struct silofs_mbootrec_info *mbri)
-{
-	const struct silofs_listq *lsq = &mbi->mbt_lsq;
-	const struct silofs_list_head *lh = mbri->mbr_lh.next;
-
-	return (lh != &lsq->ls) ? mbri_from_lh(lh) : NULL;
-}
-
-static const struct silofs_mbootrec_info *
-mbi_iterate(const struct silofs_mboot_info *mbi, loff_t indx)
-{
-	const struct silofs_mbootrec_info *iter;
-	const struct silofs_mbootrec_info *mbri = NULL;
-
-	iter = mbi_first(mbi);
-	while (iter != NULL) {
-		if (indx <= iter->mbr_index) {
-			if (!mbri || (mbri->mbr_index > iter->mbr_index)) {
-				mbri = iter;
-			}
-		}
-		iter = mbi_nextof(mbi, iter);
-	}
-	return mbri;
-}
-
-static int mbi_encode_recs(const struct silofs_mboot_info *mbi,
-                           struct silofs_main_bootrec *mbrs, size_t *out_cnt)
-{
-	struct silofs_main_bootrec *mbr;
-	const struct silofs_mbootrec_info *mbri;
-	size_t cnt = 0;
-
-	mbri = mbi_iterate(mbi, 0);
-	while (mbri != NULL) {
-		mbr = &mbrs[cnt++];
-		mbri_export(mbri, mbr);
-		mbi_stamp_mbr(mbi, mbr);
-
-		mbri = mbi_iterate(mbi, mbri->mbr_index + 1);
-	}
-	silofs_assert_eq(cnt, mbi->mbt_lsq.sz);
-
-	*out_cnt = cnt;
-	return 0;
-}
-
-static size_t mbi_enc_size_of(const struct silofs_mboot_info *mbi, size_t cnt)
-{
-	silofs_unused(mbi);
-
-	return cnt * SILOFS_BOOTREC_SIZE;
-}
-
-int silofs_mbi_encode(const struct silofs_mboot_info *mbi,
-                      void *buf, size_t bsz, size_t *out_esz)
-{
-	size_t cnt = 0;
-	int err;
-
-	err = mbi_check_buf(mbi, buf, bsz);
-	if (err) {
-		return err;
-	}
-	err = mbi_encode_recs(mbi, buf, &cnt);
-	if (err) {
-		return err;
-	}
-	*out_esz = mbi_enc_size_of(mbi, cnt);
-	return 0;
-}
-
-int silofs_mbi_encsize(const struct silofs_mboot_info *mbi, size_t *out_esz)
-{
-	const size_t nrecs = listq_size(&mbi->mbt_lsq);
-
-	*out_esz = mbi_enc_size_of(mbi, nrecs);
-	return (nrecs > 0) ? 0 : -EINVAL;
-}
-
-static int mbi_insert_new(struct silofs_mboot_info *mbi,
-                          const struct silofs_namestr *name,
-                          const struct silofs_uaddr *sb_uaddr)
-{
-	struct silofs_mbootrec_info *mbri = NULL;
-	int err;
-
-	err = mbi_new_mbri(mbi, &mbri);
-	if (err) {
-		return err;
-	}
-	mbri_assign(mbri, mbi->mbt_next_index++, name, sb_uaddr);
-	mbi_insert(mbi, mbri);
-	return 0;
-}
-
-static struct silofs_mbootrec_info *
-mbi_find(const struct silofs_mboot_info *mbi,
-         const struct silofs_namestr *name)
-{
-	struct silofs_mbootrec_info *mbri;
-
-	mbri = mbi_first(mbi);
-	while (mbri != NULL) {
-		if (mbri_has_name(mbri, name)) {
-			return mbri;
-		}
-		mbri = mbi_nextof(mbi, mbri);
-	}
-	return NULL;
-}
-
-int silofs_mbi_lookup(const struct silofs_mboot_info *mbi,
-                      const struct silofs_namestr *name,
-                      struct silofs_mbootrec_info **out_mbri)
-{
-	*out_mbri = mbi_find(mbi, name);
-	return (*out_mbri == NULL) ? -ENOENT : 0;
-}
-
-
-int silofs_mbi_insert(struct silofs_mboot_info *mbi,
-                      const struct silofs_namestr *name,
-                      const struct silofs_uaddr *sb_uaddr)
-{
-	struct silofs_mbootrec_info *mbri;
-
-	mbri = mbi_find(mbi, name);
-	if (mbri == NULL) {
-		return mbi_insert_new(mbi, name, sb_uaddr);
-	}
-	mbri_update(mbri, sb_uaddr);
-	return 0;
-}
-
-int silofs_mbi_nextof(const struct silofs_mboot_info *mbi, loff_t idx,
-                      struct silofs_mbootrec_info **out_mbri)
-{
-	const struct silofs_mbootrec_info *mbri = NULL;
-
-	mbri = mbi_iterate(mbi, idx);
-	if (mbri == NULL) {
-		return -ENOENT;
-	}
-	*out_mbri = unconst(mbri);
-	return 0;
+	silofs_uaddr_assign(&bsec->sb_uaddr, sb_uaddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

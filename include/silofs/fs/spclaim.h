@@ -25,7 +25,7 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 
 int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
                             enum silofs_stype stype,
-                            struct silofs_ovaddr *out_ova);
+                            struct silofs_uvaddr *out_ova);
 
 int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr);

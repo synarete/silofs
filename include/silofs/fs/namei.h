@@ -22,10 +22,10 @@
 struct silofs_sb_info;
 struct silofs_oper;
 struct silofs_ioc_query;
+struct silofs_ioc_iterfs;
 
-
-int silofs_make_namestr(const struct silofs_inode_info *ii,
-                        const char *name, struct silofs_namestr *str);
+int silofs_make_namestr_by(const struct silofs_inode_info *ii,
+                           const char *name, struct silofs_namestr *str);
 
 int silofs_do_forget(const struct silofs_oper *op,
                      struct silofs_inode_info *ii, size_t nlookup);
@@ -111,12 +111,14 @@ int silofs_do_clone(const struct silofs_oper *op,
                     struct silofs_inode_info *dir_ii,
                     const struct silofs_namestr *name, int flags);
 
-int silofs_do_iterfs(const struct silofs_oper *op,
-                     struct silofs_inode_info *ii, loff_t idx,
-                     struct silofs_namebuf *out_nb,
-                     time_t *out_btime, loff_t *out_idx);
+int silofs_do_unrefs(const struct silofs_oper *op,
+                     struct silofs_inode_info *ii,
+                     const struct silofs_namestr *name);
 
-int silofs_check_name(const char *name);
+int silofs_do_prune(const struct silofs_oper *op,
+                    struct silofs_inode_info *ii);
+
+int silofs_check_fs_name(const struct silofs_namestr *nstr);
 
 int silof_check_writable_fs(const struct silofs_sb_info *sbi);
 

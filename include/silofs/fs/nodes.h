@@ -41,6 +41,7 @@ struct silofs_tnode_info {
 	struct silofs_tnode_info       *t_ds_next;
 	union silofs_view              *t_view;
 	enum silofs_stype               t_stype;
+	bool t_noflush;
 };
 
 /* unode */
@@ -61,6 +62,7 @@ struct silofs_sb_info {
 	struct silofs_alloc_if         *s_alif;
 	struct silofs_ucred             s_owner;
 	struct silofs_itable_info       s_itbi;
+	struct silofs_bootsec           s_bsec;
 	unsigned long                   s_ctl_flags;
 	unsigned long                   s_ms_flags;
 	time_t                          s_mntime;

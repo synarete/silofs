@@ -17,10 +17,10 @@
 #include <silofs/cmd.h>
 
 
-static struct silofs_subcmd_archive *archive_args;
+static struct silofs_subcmd_restore *restore_args;
 
-static const char *archive_usage[] = {
-	"archive [options] <repository-path>",
+static const char *restore_usage[] = {
+	"restore [options] <repository-path>",
 	"",
 	"options:",
 	"  -n, --name=NAME              Private name",
@@ -29,7 +29,7 @@ static const char *archive_usage[] = {
 	NULL
 };
 
-static void archive_getopt(void)
+static void restore_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -45,47 +45,47 @@ static void archive_getopt(void)
 		if (opt_chr == 'V') {
 			silofs_set_verbose_mode(optarg);
 		} else if (opt_chr == 'n') {
-			archive_args->name = optarg;
+			restore_args->name = optarg;
 		} else if (opt_chr == 'P') {
-			archive_args->passphrase_file = optarg;
+			restore_args->passphrase_file = optarg;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(archive_usage);
+			silofs_show_help_and_exit(restore_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repository-path", &archive_args->repodir);
+	silofs_cmd_getarg("repository-path", &restore_args->repodir);
 	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void archive_finalize(void)
+static void restore_finalize(void)
 {
 	silofs_destroy_fse_inst();
-	silofs_delpass(&archive_args->passphrase);
-	silofs_cmd_pfrees(&archive_args->repodir);
+	silofs_delpass(&restore_args->passphrase);
+	silofs_cmd_pfrees(&restore_args->repodir);
 }
 
-static void archive_start(void)
+static void restore_start(void)
 {
-	archive_args = &silofs_globals.cmd.archive;
-	atexit(archive_finalize);
+	restore_args = &silofs_globals.cmd.restore;
+	atexit(restore_finalize);
 }
 
-static void archive_prepare(void)
+static void restore_prepare(void)
 {
-	silofs_die_if_not_empty_dir(archive_args->repodir, true);
-	archive_args->passphrase =
-	        silofs_getpass2(archive_args->passphrase_file);
+	silofs_die_if_not_empty_dir(restore_args->repodir, true);
+	restore_args->passphrase =
+	        silofs_getpass2(restore_args->passphrase_file);
 }
 
-static void archive_create_fs_env(void)
+static void restore_create_fs_env(void)
 {
 	const struct silofs_fs_args args = {
-		.repodir = archive_args->repodir,
-		.fsname = archive_args->name,
-		.passwd = archive_args->passphrase,
+		.repodir = restore_args->repodir,
+		.fsname = restore_args->name,
+		.passwd = restore_args->passphrase,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
@@ -95,50 +95,50 @@ static void archive_create_fs_env(void)
 	silofs_create_fse_inst(&args);
 }
 
-static void archive_filesystem(void)
+static void restore_filesystem(void)
 {
 	/* TODO: write me */
 }
 
-static void archive_finish(void)
+static void restore_finish(void)
 {
 	int err;
 	struct silofs_fs_env *fse = silofs_fse_inst();
 
 	err = silofs_fse_shut(fse);
 	if (err) {
-		silofs_die(err, "finish error: %s", archive_args->repodir);
+		silofs_die(err, "finish error: %s", restore_args->repodir);
 	}
 	err = silofs_fse_term(fse);
 	if (err) {
-		silofs_die(err, "internal error: %s", archive_args->repodir);
+		silofs_die(err, "internal error: %s", restore_args->repodir);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_archive(void)
+void silofs_execute_restore(void)
 {
 	/* Do all cleanups upon exits */
-	archive_start();
+	restore_start();
 
 	/* Parse command's arguments */
-	archive_getopt();
+	restore_getopt();
 
 	/* Verify user's arguments */
-	archive_prepare();
+	restore_prepare();
 
 	/* Prepare environment */
-	archive_create_fs_env();
+	restore_create_fs_env();
 
-	/* Do actual archive */
-	archive_filesystem();
+	/* Do actual restore */
+	restore_filesystem();
 
-	/* Post-archive cleanups */
-	archive_finish();
+	/* Post-restore cleanups */
+	restore_finish();
 
 	/* Post execution cleanups */
-	archive_finalize();
+	restore_finalize();
 }
 
 

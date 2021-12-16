@@ -198,7 +198,7 @@ static char *getpass_from_file(const char *path)
 	read_passphrase_buf(fd, buf, sizeof(buf), &len);
 	parse_passphrase(buf, len);
 	close_passphrase_file(fd, path);
-	return silofs_strdup_safe(buf);
+	return silofs_cmd_strdup(buf);
 }
 
 static char *silofs_do_getpass(const char *path, bool repeat)
@@ -239,7 +239,7 @@ void silofs_delpass(char **pass)
 {
 	if (pass && *pass) {
 		memset(*pass, 0xEC, strlen(*pass));
-		silofs_pfree_string(pass);
+		silofs_cmd_pfrees(pass);
 	}
 }
 

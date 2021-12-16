@@ -76,19 +76,6 @@ static int op_finish(struct silofs_fs_apex *apex,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int namebuf_to_buf(const struct silofs_namebuf *nb,
-                          char *buf, size_t bsz)
-{
-	const size_t len = strlen(nb->name);
-
-	if (len >= bsz) {
-		return -ERANGE;
-	}
-	memcpy(buf, nb->name, len);
-	buf[len] = '\0';
-	return 0;
-}
-
 static void stat_to_itimes(const struct stat *times,
                            struct silofs_itimes *itimes)
 {
@@ -246,7 +233,7 @@ int silofs_fs_lookup(struct silofs_fs_apex *apex,
 	err = stage_rdonly_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_lookup(op, dir_ii, &nstr, &ii);
@@ -320,7 +307,7 @@ int silofs_fs_mkdir(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_mkdir(op, dir_ii, &nstr, mode, &ii);
@@ -349,7 +336,7 @@ int silofs_fs_rmdir(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_rmdir(op, dir_ii, &nstr);
@@ -378,7 +365,7 @@ int silofs_fs_symlink(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = symval_to_str(symval, &value);
@@ -432,7 +419,7 @@ int silofs_fs_unlink(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_unlink(op, dir_ii, &nstr);
@@ -462,7 +449,7 @@ int silofs_fs_link(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_link(op, dir_ii, &nstr, ii);
@@ -710,7 +697,7 @@ int silofs_fs_create(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_create(op, dir_ii, &nstr, mode, &ii);
@@ -762,7 +749,7 @@ int silofs_fs_mknod(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_mknod(op, dir_ii, &nstr, mode, rdev, &ii);
@@ -866,10 +853,10 @@ int silofs_fs_rename(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, newparent, &newp_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(parent_ii, name, &nstr);
+	err = silofs_make_namestr_by(parent_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(parent_ii, newname, &newnstr);
+	err = silofs_make_namestr_by(parent_ii, newname, &newnstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_rename(op, parent_ii, &nstr, newp_ii, &newnstr, flags);
@@ -1072,7 +1059,7 @@ int silofs_fs_setxattr(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(ii, name, &nstr);
+	err = silofs_make_namestr_by(ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_setxattr(op, ii, &nstr, value, size, flags, kill_sgid);
@@ -1099,7 +1086,7 @@ int silofs_fs_getxattr(struct silofs_fs_apex *apex,
 	err = stage_rdonly_inode(apex, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(ii, name, &nstr);
+	err = silofs_make_namestr_by(ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getxattr(op, ii, &nstr, buf, size, out_size);
@@ -1147,7 +1134,7 @@ int silofs_fs_removexattr(struct silofs_fs_apex *apex,
 	err = stage_mutable_inode(apex, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(ii, name, &nstr);
+	err = silofs_make_namestr_by(ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_removexattr(op, ii, &nstr);
@@ -1260,7 +1247,7 @@ int silofs_fs_clone(struct silofs_fs_apex *apex,
 	err = stage_rdonly_inode(apex, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_clone(op, dir_ii, &nstr, flags);
@@ -1269,13 +1256,12 @@ out:
 	return op_finish(apex, op, err);
 }
 
-int silofs_fs_iterfs(struct silofs_fs_apex *apex,
+int silofs_fs_unrefs(struct silofs_fs_apex *apex,
                      const struct silofs_oper *op,
-                     ino_t ino, loff_t idx, char *out_buf, size_t bsz,
-                     time_t *out_btime, loff_t *out_index)
+                     ino_t ino, const char *name)
 {
 	int err;
-	struct silofs_namebuf nb;
+	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 
 	err = op_start(apex, op);
@@ -1287,11 +1273,33 @@ int silofs_fs_iterfs(struct silofs_fs_apex *apex,
 	err = stage_rdonly_inode(apex, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_iterfs(op, ii, idx, &nb, out_btime, out_index);
+	err = silofs_make_namestr_by(ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = namebuf_to_buf(&nb, out_buf, bsz);
+	err = silofs_do_unrefs(op, ii, &nstr);
 	ok_or_goto_out(err);
+out:
+	return op_finish(apex, op, err);
+}
+
+int silofs_fs_prune(struct silofs_fs_apex *apex,
+                    const struct silofs_oper *op, ino_t ino)
+{
+	int err;
+	struct silofs_inode_info *ii = NULL;
+
+	err = op_start(apex, op);
+	ok_or_goto_out(err);
+
+	err = op_authorize(apex, op);
+	ok_or_goto_out(err);
+
+	err = stage_rdonly_inode(apex, ino, &ii);
+	ok_or_goto_out(err);
+
+	err = silofs_do_prune(op, ii);
+	ok_or_goto_out(err);
+
 out:
 	return op_finish(apex, op, err);
 }

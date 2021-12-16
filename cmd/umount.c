@@ -52,14 +52,16 @@ static void umount_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	umount_args->mntpoint = silofs_cmd_getarg("mount-point", true);
+	silofs_cmd_getarg("mount-point", &umount_args->mntpoint);
+	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void umount_finalize(void)
 {
-	silofs_pfree_string(&umount_args->mntpoint_real);
+	silofs_cmd_pfrees(&umount_args->mntpoint_real);
+	silofs_cmd_pfrees(&umount_args->mntpoint);
 }
 
 static void umount_start(void)
@@ -68,7 +70,7 @@ static void umount_start(void)
 	atexit(umount_finalize);
 }
 
-static void umount_setup_check_params(void)
+static void umount_prepare(void)
 {
 	struct stat st;
 	int err;
@@ -151,7 +153,7 @@ void silofs_execute_umount(void)
 	umount_getopt();
 
 	/* Verify user's arguments */
-	umount_setup_check_params();
+	umount_prepare();
 
 	/* Do actual umount */
 	umount_send_recv();

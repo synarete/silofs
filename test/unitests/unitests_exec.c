@@ -36,6 +36,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_test_ioctl),
 	UT_DEFTGRP(ut_test_file_basic),
 	UT_DEFTGRP(ut_test_file_stat),
+	UT_DEFTGRP(ut_test_file_rwiter),
 	UT_DEFTGRP(ut_test_file_ranges),
 	UT_DEFTGRP(ut_test_file_records),
 	UT_DEFTGRP(ut_test_file_random),
@@ -139,18 +140,17 @@ static void ute_del(struct ut_env *ute)
 static void ut_track_test(struct ut_env *ute,
                           const struct ut_testdef *td, bool pre_execute)
 {
-	FILE *fp = stdout;
 	struct timespec dur;
 
 	if (pre_execute) {
-		fprintf(fp, "  %-40s", td->name);
+		printf("  %-40s", td->name);
 		silofs_mclock_now(&ute->ts_start);
 	} else {
 		silofs_mclock_dur(&ute->ts_start, &dur);
-		fprintf(fp, "OK (%ld.%03lds)\n",
-		        dur.tv_sec, dur.tv_nsec / 1000000L);
+		printf("OK (%ld.%03lds)\n",
+		       dur.tv_sec, dur.tv_nsec / 1000000L);
 	}
-	fflush(fp);
+	fflush(stdout);
 }
 
 static void ut_check_valid_statvfs(const struct statvfs *stv)
@@ -230,6 +230,9 @@ static void ut_prep_tests(struct ut_env *ute)
 	err = silofs_fse_term(fse);
 	silofs_assert_ok(err);
 
+	err = silofs_fse_format_repo(fse);
+	silofs_assert_ok(err);
+
 	err = silofs_fse_format_fs(fse);
 	silofs_assert_ok(err);
 
@@ -239,7 +242,7 @@ static void ut_prep_tests(struct ut_env *ute)
 	err = silofs_fse_term(fse);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_reopen_fs(fse);
+	err = silofs_fse_reopen(fse);
 	silofs_assert_ok(err);
 
 	err = silofs_fse_reload(fse);
@@ -271,13 +274,12 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 
 static void ut_print_tests_start(const struct ut_args *args)
 {
-	printf("  %s %s kcopy=%d\n", args->program, args->version,
-	       (int)args->fs_args.kcopy);
+	printf("  %s %s kcopy=%d concp=%d\n", args->program, args->version,
+	       (int)args->fs_args.kcopy, (int)args->fs_args.concp);
 }
 
 void ut_execute_tests(void)
 {
-	const bool kcopy_mode = false;
 	struct ut_args args = {
 		.fs_args = {
 			.uid = getuid(),
@@ -290,19 +292,18 @@ void ut_execute_tests(void)
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,
 			.pedantic = false, /* TODO: make me a knob (true) */
-			.wlock = true,
-			.xlock = true,
+			.lock_repo = true,
 		},
 		.program = ut_globals.program,
 		.version = ut_globals.version
 	};
 
-	args.fs_args.kcopy = kcopy_mode;
-	ut_print_tests_start(&args);
-	ut_execute_tests_cycle(&args);
-	args.fs_args.kcopy = !kcopy_mode;
-	ut_print_tests_start(&args);
-	ut_execute_tests_cycle(&args);
+	for (int test_itr = 0; test_itr < 4; ++test_itr) {
+		args.fs_args.kcopy = ((test_itr & 1) == 1);
+		args.fs_args.concp = ((test_itr & 2) == 2);
+		ut_print_tests_start(&args);
+		ut_execute_tests_cycle(&args);
+	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

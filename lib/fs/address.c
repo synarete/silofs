@@ -658,19 +658,27 @@ static void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ovaddr_setup(struct silofs_ovaddr *ova,
-                         const struct silofs_oaddr *oaddr,
+void silofs_uvaddr_setup(struct silofs_uvaddr *uva,
+                         const struct silofs_uaddr *uaddr,
                          const struct silofs_vaddr *vaddr)
 {
-	oaddr_assign(&ova->oaddr, oaddr);
-	vaddr_assign(&ova->vaddr, vaddr);
+	uaddr_assign(&uva->uaddr, uaddr);
+	vaddr_assign(&uva->vaddr, vaddr);
 }
 
-void silofs_ovaddr_assign(struct silofs_ovaddr *ova,
-                          const struct silofs_ovaddr *other)
+void silofs_uvaddr_setup_by(struct silofs_uvaddr *uva,
+                            const struct silofs_blobid *bid,
+                            const struct silofs_vaddr *vaddr)
 {
-	oaddr_assign(&ova->oaddr, &other->oaddr);
-	vaddr_assign(&ova->vaddr, &other->vaddr);
+	silofs_uaddr_setup_by(&uva->uaddr, bid, vaddr);
+	vaddr_assign(&uva->vaddr, vaddr);
+}
+
+void silofs_uvaddr_assign(struct silofs_uvaddr *uva,
+                          const struct silofs_uvaddr *other)
+{
+	uaddr_assign(&uva->uaddr, &other->uaddr);
+	vaddr_assign(&uva->vaddr, &other->vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -703,6 +711,24 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
 	uaddr->stype = stype;
 }
 
+void silofs_uaddr_setup_by(struct silofs_uaddr *uaddr,
+                           const struct silofs_blobid *bid,
+                           const struct silofs_vaddr *vaddr)
+{
+	const loff_t bpos = blobid_off_within(bid, vaddr->voff);
+
+	silofs_uaddr_setup(uaddr, bid, vaddr->stype, bpos, vaddr->voff);
+}
+
+void silofs_uaddr_setup_by2(struct silofs_uaddr *uaddr,
+                            const struct silofs_blobid *bid,
+                            loff_t voff, enum silofs_stype stype)
+{
+	const loff_t bpos = blobid_off_within(bid, voff);
+
+	silofs_uaddr_setup(uaddr, bid, stype, bpos, voff);
+}
+
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
 {
 	silofs_oaddr_reset(&uaddr->oaddr);
@@ -716,12 +742,6 @@ void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
 	silofs_oaddr_assign(&uaddr->oaddr, &other->oaddr);
 	uaddr->voff = other->voff;
 	uaddr->stype = other->stype;
-}
-
-void silofs_uaddr_to_oaddr(const struct silofs_uaddr *uaddr,
-                           struct silofs_oaddr *oaddr)
-{
-	oaddr_assign(oaddr, &uaddr->oaddr);
 }
 
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
@@ -744,8 +764,8 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 	return 0;
 }
 
-void silofs_uaddr_make_for_super(struct silofs_uaddr *uaddr,
-                                 const struct silofs_blobid *bid)
+void silofs_uaddr_make_super(struct silofs_uaddr *uaddr,
+                             const struct silofs_blobid *bid)
 {
 	silofs_assert_eq(bid->height, SILOFS_SUPER_HEIGHT);
 	silofs_uaddr_setup(uaddr, bid, SILOFS_STYPE_SUPER, 0, 0);
@@ -753,26 +773,68 @@ void silofs_uaddr_make_for_super(struct silofs_uaddr *uaddr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_uaddr56b_reset(struct silofs_uaddr56b *uaddr56)
+void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr)
 {
-	silofs_oaddr48b_reset(&uaddr56->oaddr);
-	uaddr56->voff_stype = 0;
+	silofs_oaddr48b_reset(&uadr->oaddr);
+	uadr->voff_stype = 0;
 }
 
-void silofs_uaddr56b_set(struct silofs_uaddr56b *uaddr56,
+void silofs_uaddr64b_set(struct silofs_uaddr64b *uadr,
                          const struct silofs_uaddr *uaddr)
 {
-	silofs_oaddr48b_set(&uaddr56->oaddr, &uaddr->oaddr);
-	uaddr56->voff_stype =
+	silofs_oaddr48b_set(&uadr->oaddr, &uaddr->oaddr);
+	uadr->voff_stype =
 	        cpu_to_voff_stype(uaddr->voff, uaddr->stype);
 }
 
-void silofs_uaddr56b_parse(const struct silofs_uaddr56b *uaddr56,
+void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
                            struct silofs_uaddr *uaddr)
 {
-	silofs_oaddr48b_parse(&uaddr56->oaddr, &uaddr->oaddr);
-	voff_stype_to_cpu(uaddr56->voff_stype,
+	silofs_oaddr48b_parse(&uadr->oaddr, &uaddr->oaddr);
+	voff_stype_to_cpu(uadr->voff_stype,
 	                  &uaddr->voff, &uaddr->stype);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ulink_setup(struct silofs_ulink *ulink,
+                        const struct silofs_uaddr *owner,
+                        const struct silofs_uaddr *child)
+{
+	silofs_uaddr_assign(&ulink->owner, owner);
+	silofs_uaddr_assign(&ulink->child, child);
+}
+
+void silofs_ulink_reset(struct silofs_ulink *ulink)
+{
+	silofs_uaddr_reset(&ulink->owner);
+	silofs_uaddr_reset(&ulink->child);
+}
+
+bool silofs_ulink_isnull(const struct silofs_ulink *ulink)
+{
+	return silofs_uaddr_isnull(&ulink->owner) &&
+	       silofs_uaddr_isnull(&ulink->child);
+}
+
+void silofs_ulink128b_set(struct silofs_ulink128b *ulnk,
+                          const struct silofs_ulink *ulink)
+{
+	silofs_uaddr64b_set(&ulnk->owner, &ulink->owner);
+	silofs_uaddr64b_set(&ulnk->child, &ulink->child);
+}
+
+void silofs_ulink128b_parse(const struct silofs_ulink128b *ulnk,
+                            struct silofs_ulink *ulink)
+{
+	silofs_uaddr64b_parse(&ulnk->owner, &ulink->owner);
+	silofs_uaddr64b_parse(&ulnk->child, &ulink->child);
+}
+
+void silofs_ulink128b_reset(struct silofs_ulink128b *ulnk)
+{
+	silofs_uaddr64b_reset(&ulnk->owner);
+	silofs_uaddr64b_reset(&ulnk->child);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1124,6 +1186,13 @@ void silofs_namebuf_assign2(struct silofs_namebuf *nb,
 	nb->name[sizeof(nb->name) - 1] = '\0';
 }
 
+void silofs_namebuf_str(const struct silofs_namebuf *nb,
+                        struct silofs_namestr *name)
+{
+	name->str.str = nb->name;
+	name->str.len = strlen(nb->name);
+}
+
 void silofs_namebuf_assign_str(struct silofs_namebuf *nb,
                                const struct silofs_namestr *name)
 {
@@ -1149,11 +1218,11 @@ bool silofs_namebuf_isequal(const struct silofs_namebuf *nb,
 	return (name->str.len == len) && !memcmp(nb->name, name->str.str, len);
 }
 
-void silofs_namebuf_str(const struct silofs_namebuf *nb,
-                        struct silofs_namestr *name)
+
+void silofs_namestr_init(struct silofs_namestr *nstr, const char *name)
 {
-	name->str.str = nb->name;
-	name->str.len = strlen(nb->name);
+	nstr->str.str = name;
+	nstr->str.len = strnlen(name, SILOFS_NAME_MAX + 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

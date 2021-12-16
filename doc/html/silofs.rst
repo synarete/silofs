@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GPL-3.0-or-later
+
 ======================================
  Silofs -- a File-System to the Cloud
 ======================================

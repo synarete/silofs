@@ -94,6 +94,7 @@ static void ti_init(struct silofs_tnode_info *ti, enum silofs_stype stype,
 	ti->t_apex = NULL;
 	ti->t_view = NULL;
 	ti->t_vtbl = vtbl;
+	ti->t_noflush = false;
 }
 
 static void ti_fini(struct silofs_tnode_info *ti)
@@ -166,7 +167,9 @@ silofs_ui_from_ti(const struct silofs_tnode_info *ti)
 static int ui_resolve(const struct silofs_unode_info *ui,
                       struct silofs_oaddr *out_oaddr)
 {
-	silofs_uaddr_to_oaddr(&ui->u_uaddr, out_oaddr);
+	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
+
+	oaddr_assign(out_oaddr, &uaddr->oaddr);
 	return 0;
 }
 
@@ -227,6 +230,7 @@ static void vi_fiov_pre(struct silofs_fiovref *fir)
 	struct silofs_vnode_info *vi = vi_from_fiovref(fir);
 
 	silofs_vi_incref(vi);
+	vi->v_ti.t_noflush = true;
 }
 
 static void vi_fiov_post(struct silofs_fiovref *fir)
@@ -234,6 +238,7 @@ static void vi_fiov_post(struct silofs_fiovref *fir)
 	struct silofs_vnode_info *vi = vi_from_fiovref(fir);
 
 	silofs_vi_decref(vi);
+	vi->v_ti.t_noflush = false;
 }
 
 static void vi_init(struct silofs_vnode_info *vi,
@@ -274,14 +279,14 @@ bool silofs_vi_isdata(const struct silofs_vnode_info *vi)
 static int vi_resolve(const struct silofs_vnode_info *vi,
                       struct silofs_oaddr *out_oaddr)
 {
-	struct silofs_ovaddr ova;
+	struct silofs_uvaddr uva;
 	struct silofs_sb_info *sbi = vi_sbi(vi);
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_resolve_ova(sbi, vi_vaddr(vi), stg_flags, &ova);
+	err = silofs_sbi_resolve_uva(sbi, vi_vaddr(vi), stg_flags, &uva);
 	if (!err) {
-		oaddr_assign(out_oaddr, &ova.oaddr);
+		oaddr_assign(out_oaddr, &uva.uaddr.oaddr);
 	}
 	return err;
 }
@@ -347,6 +352,7 @@ static void sbi_fini(struct silofs_sb_info *sbi)
 {
 	silofs_sbi_fini(sbi);
 	ui_fini(&sbi->s_ui);
+	silofs_memffff(sbi, sizeof(*sbi));
 }
 
 static struct silofs_sb_info *sbi_malloc(struct silofs_alloc_if *alif)

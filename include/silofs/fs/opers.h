@@ -23,6 +23,7 @@
 struct silofs_fs_apex;
 struct silofs_oper;
 struct silofs_ioc_query;
+struct silofs_ioc_iterfs;
 
 int silofs_fs_forget(struct silofs_fs_apex *apex,
                      const struct silofs_oper *op, ino_t ino, size_t nlookup);
@@ -199,10 +200,12 @@ int silofs_fs_clone(struct silofs_fs_apex *apex,
                     const struct silofs_oper *op,
                     ino_t ino, const char *name, int flags);
 
-int silofs_fs_iterfs(struct silofs_fs_apex *apex,
+int silofs_fs_unrefs(struct silofs_fs_apex *apex,
                      const struct silofs_oper *op,
-                     ino_t ino, loff_t idx, char *out_buf, size_t bsz,
-                     time_t *out_btime, loff_t *out_index);
+                     ino_t ino, const char *name);
+
+int silofs_fs_prune(struct silofs_fs_apex *apex,
+                    const struct silofs_oper *op, ino_t ino);
 
 int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags);
 

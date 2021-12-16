@@ -2796,7 +2796,9 @@ void silofs_cache_fill_into_dset(const struct silofs_cache *cache,
 
 	ti = cache_dq_front_ti(cache);
 	while (ti != NULL) {
-		dset->ds_add_fn(dset, ti);
+		if (!ti->t_noflush) {
+			dset->ds_add_fn(dset, ti);
+		}
 		ti = cache_dq_next_ti(cache, ti);
 	}
 }

@@ -68,12 +68,15 @@ static const struct silofs_cmd_info g_cmd_info[] = {
 	DEFCMD(mkfs),
 	DEFCMD(mount),
 	DEFCMD(umount),
-	DEFCMD(fsck),
-	DEFCMD(show),
-	DEFCMD(refs),
-	DEFCMD(snap),
-	DEFCMD(archive),
 	DEFCMD(lsmnt),
+	DEFCMD(show),
+	DEFCMD(clone),
+	DEFCMD(lsfs),
+	DEFCMD(rmfs),
+	DEFCMD(archive),
+	DEFCMD(restore),
+	DEFCMD(prune),
+	DEFCMD(fsck),
 };
 
 static bool equals(const char *s1, const char *s2)

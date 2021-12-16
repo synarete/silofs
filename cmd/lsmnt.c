@@ -65,8 +65,8 @@ static void lsmnt_getopt(void)
 
 static void lsmnt_finalize(void)
 {
-	silofs_pfree_string(&lsmnt_mountinfo);
-	silofs_pfree_string(&lsmnt_args->mntpoint_real);
+	silofs_cmd_pfrees(&lsmnt_mountinfo);
+	silofs_cmd_pfrees(&lsmnt_args->mntpoint_real);
 }
 
 static void lsmnt_start(void)
@@ -75,7 +75,7 @@ static void lsmnt_start(void)
 	atexit(lsmnt_finalize);
 }
 
-static void lsmnt_setup_check_params(void)
+static void lsmnt_prepare(void)
 {
 	struct stat st;
 	const char *path;
@@ -107,7 +107,7 @@ static void lsmnt_read_mountinfo(void)
 	if (err) {
 		silofs_die(err, "failed to open: %s", proc_path);
 	}
-	lsmnt_mountinfo = silofs_zalloc_safe(len_max);
+	lsmnt_mountinfo = silofs_cmd_zalloc(len_max);
 	while (len < len_max) {
 		err = silofs_sys_read(fd, lsmnt_mountinfo, pgsz, &nrd);
 		if (err) {
@@ -247,7 +247,7 @@ void silofs_execute_lsmnt(void)
 	lsmnt_getopt();
 
 	/* Verify user's arguments */
-	lsmnt_setup_check_params();
+	lsmnt_prepare();
 
 	/* Read mount info into global variable, all at once */
 	lsmnt_read_mountinfo();

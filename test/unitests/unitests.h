@@ -163,6 +163,7 @@ extern const struct ut_tests ut_test_xattr;
 extern const struct ut_tests ut_test_ioctl;
 extern const struct ut_tests ut_test_file_basic;
 extern const struct ut_tests ut_test_file_stat;
+extern const struct ut_tests ut_test_file_rwiter;
 extern const struct ut_tests ut_test_file_ranges;
 extern const struct ut_tests ut_test_file_truncate;
 extern const struct ut_tests ut_test_file_records;
@@ -351,6 +352,9 @@ void ut_remove_link(struct ut_env *ute,
 void ut_write_ok(struct ut_env *ute, ino_t ino,
                  const void *buf, size_t bsz, loff_t off);
 
+void ut_write_iter_ok(struct ut_env *ute, ino_t ino,
+                      const void *buf, size_t bsz, off_t off);
+
 void ut_write_nospc(struct ut_env *ute, ino_t ino,
                     const void *buf, size_t bsz,
                     loff_t off, size_t *out_nwr);
@@ -424,6 +428,10 @@ void ut_query_ok(struct ut_env *ute, ino_t ino,
 
 void ut_clone_ok(struct ut_env *ute, ino_t ino, const char *name);
 
+void ut_unrefs_ok(struct ut_env *ute, ino_t ino, const char *name);
+
+void ut_prune_ok(struct ut_env *ute, ino_t ino);
+
 void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm);
 
 void ut_lseek_data(struct ut_env *ute,
@@ -451,7 +459,7 @@ void ut_reload_fs_ok(struct ut_env *ute);
 
 void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino);
 
-void ut_reload_fs_clone_ok(struct ut_env *ute, const char *name);
+void ut_reload_fs_byname_ok(struct ut_env *ute, const char *name);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

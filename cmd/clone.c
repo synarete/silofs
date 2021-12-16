@@ -28,17 +28,17 @@
 #include <getopt.h>
 
 
-static struct silofs_subcmd_snap *snap_args;
+static struct silofs_subcmd_clone *clone_args;
 
-static const char *snap_usage[] = {
-	"snap --name=NAME [options] <dirpath> ",
+static const char *clone_usage[] = {
+	"clone --name=NAME [options] <dirpath> ",
 	"",
 	"options:",
 	"  -n, --name=NAME              Snapshot's name",
 	NULL
 };
 
-static void snap_getopt(void)
+static void clone_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -50,33 +50,35 @@ static void snap_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("n:h", opts);
 		if (opt_chr == 'n') {
-			snap_args->name = optarg;
+			clone_args->name = optarg;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(snap_usage);
+			silofs_show_help_and_exit(clone_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
 	}
-	snap_args->dirpath = silofs_cmd_getarg("dirpath", true);
+	silofs_cmd_getarg_or_cwd("dirpath", &clone_args->dirpath);
+	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void snap_finalize(void)
+static void clone_finalize(void)
 {
-	silofs_pfree_string(&snap_args->dirpath_real);
+	silofs_cmd_pfrees(&clone_args->dirpath_real);
+	silofs_cmd_pfrees(&clone_args->dirpath);
 }
 
-static void snap_start(void)
+static void clone_start(void)
 {
-	snap_args = &silofs_globals.cmd.snap;
-	atexit(snap_finalize);
+	clone_args = &silofs_globals.cmd.clone;
+	atexit(clone_finalize);
 }
 
-static void snap_check_dirpath(void)
+static void clone_check_dirpath(void)
 {
 	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_VERSION };
-	const char *dirpath = snap_args->dirpath_real;
+	const char *dirpath = clone_args->dirpath_real;
 	int dfd = -1;
 	int err;
 
@@ -92,21 +94,21 @@ static void snap_check_dirpath(void)
 	}
 }
 
-static void snap_setup_check_params(void)
+static void clone_prepare(void)
 {
-	snap_args->dirpath_real = silofs_cmd_realpath(snap_args->dirpath);
-	silofs_die_if_illegal_name("name", snap_args->name);
-	snap_check_dirpath();
+	clone_args->dirpath_real = silofs_cmd_realpath(clone_args->dirpath);
+	silofs_die_if_illegal_fsname("name", clone_args->name);
+	clone_check_dirpath();
 }
 
-static void snap_execute(void)
+static void clone_execute(void)
 {
 	struct silofs_ioc_clone clone = {
-		.flags = SILOFS_CLONE_RDONLY,
+		.flags = 0,
 		.name[0] = '\0'
 	};
-	const char *dirpath = snap_args->dirpath_real;
-	const char *name = snap_args->name;
+	const char *dirpath = clone_args->dirpath_real;
+	const char *name = clone_args->name;
 	int dfd = -1;
 	int err;
 
@@ -123,28 +125,28 @@ static void snap_execute(void)
 	if (err == -ENOTTY) {
 		silofs_die(err, "ioctl error: %s", dirpath);
 	} else if (err) {
-		silofs_die(err, "failed to snap: %s", name);
+		silofs_die(err, "failed to clone: %s", name);
 	}
 	silofs_sys_close(dfd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_snap(void)
+void silofs_execute_clone(void)
 {
 	/* Do all cleanups upon exits */
-	snap_start();
+	clone_start();
 
 	/* Parse command's arguments */
-	snap_getopt();
+	clone_getopt();
 
 	/* Verify user's arguments */
-	snap_setup_check_params();
+	clone_prepare();
 
-	/* Do actual snap */
-	snap_execute();
+	/* Do actual clone */
+	clone_execute();
 
 	/* Post execution cleanups */
-	snap_finalize();
+	clone_finalize();
 }
 

@@ -43,10 +43,6 @@ enum silofs_tweak_type {
 	SILOFS_TWEAK_DIRFLAGS   = 2,
 };
 
-enum silofs_clone_flags {
-	SILOFS_CLONE_RDONLY     = 1,
-	SILOFS_CLONE_RDWR       = 2,
-};
 
 struct silofs_query_version {
 	char     v_str[SILOFS_NAME_MAX + 1];
@@ -112,22 +108,29 @@ struct silofs_ioc_tweak {
 };
 
 struct silofs_ioc_clone {
-	uint32_t flags;
-	uint32_t reserved[3];
 	char     name[SILOFS_NAME_MAX + 1];
-	uint8_t  reserved3[240];
+	uint32_t flags;
+	uint8_t  reserved[252];
 };
 
 struct silofs_ioc_iterfs {
+	char     name[SILOFS_NAME_MAX + 1];
 	int64_t  index;
 	int64_t  btime;
+	int64_t  flags;
+	uint8_t  reserved[232];
+};
+
+struct silofs_ioc_unrefs {
 	char     name[SILOFS_NAME_MAX + 1];
+	uint32_t flags;
+	uint8_t  reserved[252];
 };
 
 
 #define SILOFS_FS_IOC_QUERY     _IOWR('S', 1, struct silofs_ioc_query)
 #define SILOFS_FS_IOC_TWEAK     _IOWR('S', 2, struct silofs_ioc_tweak)
 #define SILOFS_FS_IOC_CLONE     _IOWR('S', 3, struct silofs_ioc_clone)
-#define SILOFS_FS_IOC_ITERFS    _IOWR('S', 4, struct silofs_ioc_iterfs)
+#define SILOFS_FS_IOC_UNREFS    _IOWR('S', 4, struct silofs_ioc_unrefs)
 
 #endif /* SILOFS_IOCTLS_H_ */

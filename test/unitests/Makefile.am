@@ -35,6 +35,7 @@ silofs_unitests_SOURCES += ut_file_lseek.c
 silofs_unitests_SOURCES += ut_file_random.c
 silofs_unitests_SOURCES += ut_file_ranges.c
 silofs_unitests_SOURCES += ut_file_records.c
+silofs_unitests_SOURCES += ut_file_rwiter.c
 silofs_unitests_SOURCES += ut_file_stat.c
 silofs_unitests_SOURCES += ut_file_trunc.c
 silofs_unitests_SOURCES += ut_fillfs.c

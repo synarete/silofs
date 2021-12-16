@@ -60,7 +60,7 @@ struct silofs_fuseq_worker;
 struct silofs_fuseq_in;
 struct silofs_fuseq_inb;
 struct silofs_fuseq_outb;
-struct silofs_mboot_info;
+struct silofs_bootmap;
 struct silofs_sb_info;
 struct silofs_oper;
 struct silofs_dset;
@@ -239,8 +239,14 @@ struct silofs_oaddr {
 /* logical addressing of space-mapping elements */
 struct silofs_uaddr {
 	struct silofs_oaddr     oaddr;
-	enum silofs_stype       stype;
 	loff_t                  voff;
+	enum silofs_stype       stype;
+};
+
+/* meta-link via pair of space-addressing */
+struct silofs_ulink {
+	struct silofs_uaddr     owner;
+	struct silofs_uaddr     child;
 };
 
 /* tree addressing of space-mapping elements */
@@ -264,21 +270,31 @@ struct silofs_iaddr {
 };
 
 /* vnode's placement address */
-struct silofs_ovaddr {
-	struct silofs_oaddr     oaddr;
+struct silofs_uvaddr {
+	struct silofs_uaddr     uaddr;
 	struct silofs_vaddr     vaddr;
 };
 
 /* inode's placement address */
-struct silofs_iovaddr {
+struct silofs_iuvaddr {
 	ino_t                   ino;
-	struct silofs_ovaddr    ova;
+	struct silofs_uvaddr    uva;
 };
 
 /* vspace address range [beg, end) */
 struct silofs_vrange {
 	loff_t beg;
 	loff_t end;
+};
+
+/* boot-sector in-memory repr  */
+struct silofs_bootsec {
+	struct silofs_namebuf           name;
+	struct silofs_uuid              uuid;
+	struct silofs_uaddr             sb_uaddr;
+	struct silofs_cipher_args       cip_args;
+	enum silofs_bootf               bootf;
+	time_t btime;
 };
 
 /* caching-element's key, up to 256-bits */
@@ -383,14 +399,22 @@ struct silofs_dset {
 	struct silofs_avl               ds_avl;
 };
 
+/* map of all boot records */
+struct silofs_bootmap {
+	struct silofs_alloc_if         *bm_alif;
+	struct silofs_mdigest          *bm_md;
+	struct silofs_listq             bm_lsq;
+	loff_t bm_next_index;
+};
+
 /* current operation state */
 struct silofs_oper {
-	struct silofs_fs_apex  *op_apex;
-	struct silofs_ucred     op_ucred;
-	struct timespec         op_xtime;
-	uint64_t                op_unique;
-	int                     op_code;
-	volatile int            op_interrupt;
+	struct silofs_fs_apex          *op_apex;
+	struct silofs_ucred             op_ucred;
+	struct timespec                 op_xtime;
+	uint64_t                        op_unique;
+	int                             op_code;
+	volatile int                    op_interrupt;
 };
 
 /* top-level pseudo meta node */
@@ -402,11 +426,11 @@ struct silofs_fs_apex {
 	struct silofs_repo             *ap_repo;
 	struct silofs_crypto           *ap_crypto;
 	struct silofs_sb_info          *ap_sbi;
-	struct silofs_uaddr             ap_sb_uaddr;
 	struct silofs_piper             ap_piper;
 	struct silofs_oper_stat         ap_ops;
 	iconv_t                         ap_iconv;
 	time_t                          ap_initime;
+	int                             ap_slock_fd;
 };
 
 /* file-system input arguments */
@@ -421,6 +445,7 @@ struct silofs_fs_args {
 	gid_t  gid;
 	pid_t  pid;
 	mode_t umask;
+	bool   lock_repo;
 	bool   with_fuseq;
 	bool   pedantic;
 	bool   allowother;
@@ -430,8 +455,7 @@ struct silofs_fs_args {
 	bool   nodev;
 	bool   rdonly;
 	bool   kcopy;
-	bool   wlock;
-	bool   xlock;
+	bool   concp;
 };
 
 /* file-system environment context */

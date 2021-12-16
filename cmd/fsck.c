@@ -17,6 +17,8 @@
 #include <silofs/cmd.h>
 
 
+static struct silofs_subcmd_fsck *fsck_args;
+
 static const char *silofs_fsck_usage[] = {
 	"fsck [options] <repo-path>",
 	"",
@@ -53,30 +55,45 @@ static void fsck_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	if (optind >= argc) {
-		silofs_die(0, "missing repo path");
-	}
-	silofs_globals.cmd.fsck.repodir = argv[optind++];
-	silofs_die_if_redundant_arg();
+	silofs_cmd_getarg("repo-path", &fsck_args->repodir);
+	silofs_cmd_endargs();
 }
 
 
 static void fsck_finalize(void)
 {
 	silofs_destroy_fse_inst();
+	silofs_cmd_pfrees(&fsck_args->repodir_real);
+	silofs_cmd_pfrees(&fsck_args->repodir);
 }
+
+static void fsck_start(void)
+{
+	fsck_args = &silofs_globals.cmd.fsck;
+	atexit(fsck_finalize);
+}
+
+static void fsck_prepare(void)
+{
+	silofs_die_if_not_dir_or_empty(fsck_args->repodir, true);
+	fsck_args->repodir_real = silofs_cmd_realpath(fsck_args->repodir);
+}
+
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_execute_fsck(void)
 {
 	/* Do all cleanups upon exits */
-	atexit(fsck_finalize);
+	fsck_start();
 
 	/* Parse command's arguments */
 	fsck_getopt();
 
-	/* TODO: FSCK... */
+	/* Verify user's arguments */
+	fsck_prepare();
+
+	/* TODO: execute logic... */
 
 	/* Post execution cleanups */
 	fsck_finalize();

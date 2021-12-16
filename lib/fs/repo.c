@@ -38,18 +38,14 @@ struct silofs_repo_defs {
 	size_t re_objs_nsubs;
 	const char *re_objs_name;
 	const char *re_meta_name;
-	const char *re_boot_name;
-	const char *re_wlock_name;
-	const char *re_xlock_name;
+	const char *re_lock_name;
 };
 
 static const struct silofs_repo_defs repo_defs = {
 	.re_objs_nsubs = OSDC_NSUBS,
-	.re_objs_name  = "objs",
-	.re_meta_name  = "meta",
-	.re_boot_name  = "boot",
-	.re_wlock_name = "wlock",
-	.re_xlock_name = "xlock",
+	.re_objs_name  = ".objs",
+	.re_meta_name  = ".meta",
+	.re_lock_name  = ".lock",
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -107,33 +103,45 @@ static int do_fchmod(int fd, mode_t mode)
 	int err;
 
 	err = silofs_sys_fchmod(fd, mode);
-	if (err) {
+	if (err && (err != -ENOENT)) {
 		log_warn("fchmod error: fd=%d mode=0%o err=%d", fd, mode, err);
 	}
 	return err;
 }
 
-static int do_unlinkat(int dirfd, const char *pathname, int flags)
+static int do_fchmodat(int dfd, const char *pathname, mode_t mode)
 {
 	int err;
 
-	err = silofs_sys_unlinkat(dirfd, pathname, flags);
+	err = silofs_sys_fchmodat(dfd, pathname, mode, 0);
 	if (err && (err != -ENOENT)) {
-		log_warn("unlinkat error: dirfd=%d pathname=%s err=%d",
-		         dirfd, pathname, err);
+		log_warn("fchmodat error: dfd=%d mode=0%o "
+		         "err=%d", dfd, mode, err);
 	}
 	return err;
 }
 
-static int do_openat(int dirfd, const char *pathname,
+static int do_unlinkat(int dfd, const char *pathname, int flags)
+{
+	int err;
+
+	err = silofs_sys_unlinkat(dfd, pathname, flags);
+	if (err && (err != -ENOENT)) {
+		log_warn("unlinkat error: dfd=%d pathname=%s err=%d",
+		         dfd, pathname, err);
+	}
+	return err;
+}
+
+static int do_openat(int dfd, const char *pathname,
                      int flags, mode_t mode, int *out_fd)
 {
 	int err;
 
-	err = silofs_sys_openat(dirfd, pathname, flags, mode, out_fd);
-	if (err) {
-		log_warn("openat error: dirfd=%d pathname=%s flags=0x%x "
-		         "mode=0%o err=%d", dirfd, pathname, flags, mode, err);
+	err = silofs_sys_openat(dfd, pathname, flags, mode, out_fd);
+	if (err && (err != -ENOENT)) {
+		log_warn("openat error: dfd=%d pathname=%s flags=0x%x "
+		         "mode=0%o err=%d", dfd, pathname, flags, mode, err);
 	}
 	return err;
 }
@@ -167,6 +175,17 @@ static int do_fsync(int fd)
 	err = silofs_sys_fsync(fd);
 	if (err) {
 		log_warn("fsync error: fd=%d err=%d", fd, err);
+	}
+	return err;
+}
+
+static int do_renameat(int dfd, const char *nold, const char *nnew)
+{
+	int err;
+
+	err = silofs_sys_renameat(dfd, nold, dfd, nnew);
+	if (err) {
+		log_warn("renameat error: dfd=%d err=%d", dfd, err);
 	}
 	return err;
 }
@@ -308,7 +327,7 @@ static int do_fcntl_flock(int fd, int cmd, struct flock *fl)
 	int err;
 
 	err = silofs_sys_fcntl_flock(fd, cmd, fl);
-	if (err) {
+	if (err && (err != -EAGAIN)) {
 		log_warn("flock error: fd=%d cmd=%d err=%d", fd, cmd, err);
 	}
 	return err;
@@ -1042,38 +1061,21 @@ int silofs_repo_remove_blob(const struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_wlock(struct silofs_repo *repo)
+int silofs_repo_lock(struct silofs_repo *repo)
 {
-	const char *name = repo->re_defs->re_wlock_name;
+	const char *name = repo->re_defs->re_lock_name;
 	const int dfd = repo->re_base_dfd;
-	int *pfd = &repo->re_wlock_fd;
+	int *pfd = &repo->re_lock_fd;
 
 	return (*pfd < 0) ? do_acquire_flock(dfd, name, true, pfd) : 0;
 }
 
-int silofs_repo_wunlock(struct silofs_repo *repo)
+int silofs_repo_unlock(struct silofs_repo *repo)
 {
-	int *pfd = &repo->re_wlock_fd;
+	int *pfd = &repo->re_lock_fd;
 
 	return (*pfd < 0) ? 0 : do_release_flock(pfd);
 }
-
-int silofs_repo_xlock(struct silofs_repo *repo)
-{
-	const char *name = repo->re_defs->re_xlock_name;
-	const int dfd = repo->re_base_dfd;
-	int *pfd = &repo->re_xlock_fd;
-
-	return (*pfd < 0) ? do_acquire_flock(dfd, name, true, pfd) : 0;
-}
-
-int silofs_repo_xunlock(struct silofs_repo *repo)
-{
-	int *pfd = &repo->re_xlock_fd;
-
-	return (*pfd < 0) ? 0 : do_release_flock(pfd);
-}
-
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -1384,19 +1386,17 @@ int silofs_repo_collect_flush(struct silofs_repo *repo, int flags)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-
-int silofs_repo_init(struct silofs_repo *repo,
-                     struct silofs_cache *cache,
-                     const char *basedir, bool rw)
+int silofs_repo_init(struct silofs_repo *repo, struct silofs_cache *cache,
+                     struct silofs_crypto *crypto, const char *base, bool rw)
 {
 	repo->re_defs = &repo_defs;
 	repo->re_cache = cache;
 	repo->re_alif = cache->c_alif;
-	repo->re_base_dir = basedir;
+	repo->re_crypto = crypto;
+	repo->re_base_dir = base;
 	repo->re_base_dfd = -1;
 	repo->re_objs_dfd = -1;
-	repo->re_wlock_fd = -1;
-	repo->re_xlock_fd = -1;
+	repo->re_lock_fd = -1;
 	repo->re_rw = rw;
 	return 0;
 }
@@ -1404,37 +1404,11 @@ int silofs_repo_init(struct silofs_repo *repo,
 void silofs_repo_fini(struct silofs_repo *repo)
 {
 	silofs_repo_close(repo);
+	repo->re_crypto = NULL;
 	repo->re_cache = NULL;
 	repo->re_alif = NULL;
 	repo->re_base_dir = NULL;
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int repo_require_boot(struct silofs_repo *repo)
-{
-	int err;
-	int fd = -1;
-	const int o_flags = repo->re_rw ? O_RDWR : O_RDONLY;
-	const char *name = repo->re_defs->re_boot_name;
-	struct stat st = { .st_size = -1 };
-
-	err = do_openat(repo->re_base_dfd, name, o_flags, 0, &fd);
-	if (err) {
-		return err;
-	}
-	err = do_fstat(fd, &st);
-	if (err) {
-		goto out;
-	}
-	if (!S_ISREG(st.st_mode)) {
-		err = S_ISDIR(st.st_mode) ? -EISDIR : -EUCLEAN;
-	}
-out:
-	do_closefd(&fd);
-	return err;
-}
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1495,18 +1469,8 @@ static int repo_create_skel(const struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	name = repo->re_defs->re_wlock_name;
+	name = repo->re_defs->re_lock_name;
 	err = repo_create_skel_subfile(repo, name, 0600, LOCKF_SIZE);
-	if (err) {
-		return err;
-	}
-	name = repo->re_defs->re_xlock_name;
-	err = repo_create_skel_subfile(repo, name, 0600, LOCKF_SIZE);
-	if (err) {
-		return err;
-	}
-	name = repo->re_defs->re_boot_name;
-	err = repo_create_skel_subfile(repo, name, 0600, 0);
 	if (err) {
 		return err;
 	}
@@ -1565,23 +1529,13 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
+	name = repo->re_defs->re_lock_name;
+	err = repo_require_skel_subfile(repo, name, LOCKF_SIZE);
+	if (err) {
+		return err;
+	}
 	name = repo->re_defs->re_meta_name;
 	err = repo_require_skel_subfile(repo, name, METAF_SIZE);
-	if (err) {
-		return err;
-	}
-	name = repo->re_defs->re_boot_name;
-	err = repo_require_skel_subfile(repo, name, 0);
-	if (err) {
-		return err;
-	}
-	name = repo->re_defs->re_wlock_name;
-	err = repo_require_skel_subfile(repo, name, LOCKF_SIZE);
-	if (err) {
-		return err;
-	}
-	name = repo->re_defs->re_xlock_name;
-	err = repo_require_skel_subfile(repo, name, LOCKF_SIZE);
 	if (err) {
 		return err;
 	}
@@ -1667,10 +1621,6 @@ int silofs_repo_format(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	err = repo_require_boot(repo);
-	if (err) {
-		return err;
-	}
 	err = repo_objs_open(repo);
 	if (err) {
 		return err;
@@ -1698,10 +1648,6 @@ int silofs_repo_open(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	err = repo_require_boot(repo);
-	if (err) {
-		return err;
-	}
 	err = repo_objs_open(repo);
 	if (err) {
 		return err;
@@ -1715,10 +1661,7 @@ int silofs_repo_open(struct silofs_repo *repo)
 
 static int repo_close_locks(struct silofs_repo *repo)
 {
-	const int werr = silofs_repo_wunlock(repo);
-	const int xerr = silofs_repo_xunlock(repo);
-
-	return werr || xerr;
+	return silofs_repo_unlock(repo);
 }
 
 static int repo_close_basedir(struct silofs_repo *repo)
@@ -1750,124 +1693,97 @@ int silofs_repo_close(struct silofs_repo *repo)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int repo_lock_mboot(const struct silofs_repo *repo, bool rw, int *pfd)
+static struct silofs_bootsec4k *
+repo_new_bootsec4k(const struct silofs_repo *repo)
 {
-	return do_acquire_flock(repo->re_base_dfd,
-	                        repo->re_defs->re_boot_name, rw, pfd);
-}
+	struct silofs_bootsec4k *bor;
 
-static int repo_unlock_mboot(const struct silofs_repo *repo, int *pfd)
-{
-	silofs_unused(repo);
-	return (*pfd > 0) ? do_release_flock(pfd) : 0;
-}
-
-static int repo_alloc_main_buf(const struct silofs_repo *repo, size_t len,
-                               void **out_buf, size_t *out_bsz)
-{
-	const size_t mega = SILOFS_MEGA;
-
-	*out_bsz = 0;
-	*out_buf = NULL;
-
-	/* TODO-0032: Have explicit defines for min/max size */
-	if (len > 16 * mega) {
-		log_warn("illegal main-boot size: %ld", len);
-		return -EINVAL;
+	bor = silofs_allocate(repo->re_alif, sizeof(*bor));
+	if (bor != NULL) {
+		silofs_bsec4k_init(bor);
 	}
-	*out_bsz = (size_t)len;
-	*out_buf = silofs_allocate(repo->re_alif, *out_bsz);
-	if (*out_buf == NULL) {
-		return -ENOMEM;
-	}
-	return 0;
+	return bor;
 }
 
-static void repo_dealloc_main_buf(const struct silofs_repo *repo,
-                                  void *buf, size_t bsz)
+static void repo_del_bootsec4k(const struct silofs_repo *repo,
+                               struct silofs_bootsec4k *bor)
 {
-	if ((buf != NULL) && (bsz > 0)) {
-		silofs_deallocate(repo->re_alif, buf, bsz);
+	if (bor != NULL) {
+		silofs_bsec4k_fini(bor);
+		silofs_deallocate(repo->re_alif, bor, sizeof(*bor));
 	}
 }
 
-static int repo_load_mbi_from(const struct silofs_repo *repo, int fd,
-                              struct silofs_mboot_info *mbi)
+int silofs_repo_load_bsec(const struct silofs_repo *repo,
+                          const struct silofs_namestr *nstr,
+                          struct silofs_bootsec *out_bsec)
 {
-	struct stat st;
-	void *buf = NULL;
-	size_t bsz = 0;
-	int err;
-
-	err = do_fstat(fd, &st);
-	if (err) {
-		return err;
-	}
-	if (st.st_size == 0) {
-		return 0;
-	}
-	err = repo_alloc_main_buf(repo, (size_t)st.st_size, &buf, &bsz);
-	if (err) {
-		return err;
-	}
-	err = do_preadn(fd, buf, bsz, 0);
-	if (err) {
-		goto out;
-	}
-	err = silofs_mbi_decode(mbi, buf, bsz);
-	if (err) {
-		goto out;
-	}
-out:
-	repo_dealloc_main_buf(repo, buf, bsz);
-	return err;
-}
-
-int silofs_repo_load_mboot(const struct silofs_repo *repo,
-                           struct silofs_mboot_info *mbi)
-{
+	struct silofs_bootsec4k *bor = NULL;
+	const char *name = nstr->str.str;
+	const int dfd = repo->re_base_dfd;
 	int fd = -1;
 	int err;
 
-	err = repo_lock_mboot(repo, false, &fd);
-	if (err) {
-		return err;
+	bor = repo_new_bootsec4k(repo);
+	if (bor == NULL) {
+		return -ENOMEM;
 	}
-	err = repo_load_mbi_from(repo, fd, mbi);
-	repo_unlock_mboot(repo, &fd);
+	err = do_openat(dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		goto out;
+	}
+	err = do_preadn(fd, bor, sizeof(*bor), 0);
+	if (err) {
+		goto out;
+	}
+	err = silofs_bsec4k_verify(bor, &repo->re_crypto->md);
+	if (err) {
+		goto out;
+	}
+	silofs_bsec4k_parse(bor, out_bsec);
+	silofs_bootsec_set_name(out_bsec, nstr);
+out:
+	repo_del_bootsec4k(repo, bor);
+	do_closefd(&fd);
 	return err;
 }
 
-static int repo_save_mbi_into(const struct silofs_repo *repo, int fd,
-                              const struct silofs_mboot_info *mbi)
+static void namebuf_mktmp(struct silofs_namebuf *nb)
 {
-	struct stat st;
-	void *buf = NULL;
-	size_t bsz = 0;
-	size_t esz = 0;
+	long t[2];
+
+	t[0] = (long)silofs_time_now();
+	silofs_getentropy(&t[1], sizeof(t[1]));
+
+	snprintf(nb->name, sizeof(nb->name) - 1, ".%ld%ld", t[0], t[1]);
+}
+
+int silofs_repo_save_bsec(const struct silofs_repo *repo,
+                          const struct silofs_bootsec *bsec)
+{
+	struct silofs_namebuf nbuf;
+	struct silofs_bootsec4k *bor = NULL;
+	const int dfd = repo->re_base_dfd;
+	int fd = -1;
 	int err;
 
-	err = do_fstat(fd, &st);
-	if (err) {
-		return err;
+	namebuf_mktmp(&nbuf);
+	bor = repo_new_bootsec4k(repo);
+	if (bor == NULL) {
+		return -ENOMEM;
 	}
-	err = silofs_mbi_encsize(mbi, &bsz);
-	if (err) {
-		return err;
-	}
-	err = repo_alloc_main_buf(repo, bsz, &buf, &bsz);
-	if (err) {
-		return err;
-	}
-	err = silofs_mbi_encode(mbi, buf, bsz, &esz);
+	silofs_bsec4k_set(bor, bsec);
+	silofs_bsec4k_stamp(bor, &repo->re_crypto->md);
+
+	err = do_openat(dfd, nbuf.name, O_CREAT | O_RDWR, 0600, &fd);
 	if (err) {
 		goto out;
 	}
-	err = do_ftruncate(fd, (loff_t)esz);
+	err = do_fchmod(fd, 0400);
 	if (err) {
 		goto out;
 	}
-	err = do_pwriten(fd, buf, esz, 0);
+	err = do_pwriten(fd, bor, sizeof(*bor), 0);
 	if (err) {
 		goto out;
 	}
@@ -1875,23 +1791,124 @@ static int repo_save_mbi_into(const struct silofs_repo *repo, int fd,
 	if (err) {
 		goto out;
 	}
+	err = do_renameat(dfd, nbuf.name, bsec->name.name);
+	if (err) {
+		goto out;
+	}
 out:
-	repo_dealloc_main_buf(repo, buf, bsz);
+	repo_del_bootsec4k(repo, bor);
+	do_closefd(&fd);
+	if (err) {
+		do_unlinkat(dfd, nbuf.name, 0);
+	}
 	return err;
 }
 
-
-int silofs_repo_save_mboot(const struct silofs_repo *repo,
-                           const struct silofs_mboot_info *mbi)
+int silofs_repo_remove_bsec(const struct silofs_repo *repo,
+                            const struct silofs_namestr *nstr)
 {
+	struct silofs_bootsec4k *bor = NULL;
+	const char *name = nstr->str.str;
+	const int dfd = repo->re_base_dfd;
 	int fd = -1;
 	int err;
 
-	err = repo_lock_mboot(repo, true, &fd);
+	bor = repo_new_bootsec4k(repo);
+	if (bor == NULL) {
+		return -ENOMEM;
+	}
+	err = do_openat(dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		goto out;
+	}
+	err = do_preadn(fd, bor, sizeof(*bor), 0);
+	if (err) {
+		goto out;
+	}
+	err = silofs_bsec4k_verify(bor, &repo->re_crypto->md);
+	if (err) {
+		goto out;
+	}
+	err = do_fchmodat(dfd, name, 0600);
+	if (err) {
+		goto out;
+	}
+	err = do_unlinkat(dfd, name, 0);
+	if (err) {
+		goto out;
+	}
+out:
+	repo_del_bootsec4k(repo, bor);
+	do_closefd(&fd);
+	return err;
+}
+
+int silofs_repo_lock_bsec(const struct silofs_repo *repo,
+                          const struct silofs_namestr *nstr, int *out_fd)
+{
+	const char *name = nstr->str.str;
+	const int dfd = repo->re_base_dfd;
+	int fd = -1;
+	int err;
+
+	err = do_fchmodat(dfd, name, 0600);
+	if (err) {
+		goto out;
+	}
+	err = do_openat(dfd, name, O_RDWR, 0, &fd);
+	if (err) {
+		goto out;
+	}
+	err = do_fchmodat(dfd, name, 0400);
+	if (err) {
+		goto out;
+	}
+	err = do_flock(fd, true);
+	if (err) {
+		goto out;
+	}
+out:
+	if (err) {
+		do_closefd(&fd);
+	}
+	*out_fd = fd;
+	return err;
+}
+
+int silofs_repo_unlock_bsec(const struct silofs_repo *repo,
+                            const struct silofs_namestr *nstr, int *pfd)
+{
+	struct stat st[2];
+	const char *name = nstr->str.str;
+	const int dfd = repo->re_base_dfd;
+	int fd = -1;
+	int err;
+
+	err = do_fstat(*pfd, &st[0]);
 	if (err) {
 		return err;
 	}
-	err = repo_save_mbi_into(repo, fd, mbi);
-	repo_unlock_mboot(repo, &fd);
+	err = do_funlock(*pfd);
+	if (err) {
+		return err;
+	}
+	do_closefd(pfd);
+
+	err = do_openat(dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		err = 0;
+		goto out;
+	}
+	err = do_fstat(fd, &st[1]);
+	if (err) {
+		goto out;
+	}
+	if (st[0].st_ino != st[1].st_ino) {
+		err = -ENOENT; /* underlying file changed */
+	}
+out:
+	do_closefd(&fd);
 	return err;
 }
+
+

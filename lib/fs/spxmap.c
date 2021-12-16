@@ -109,7 +109,7 @@ static void spe_del(struct silofs_spa_entry *spe,
 static unsigned int spamap_capacity(enum silofs_stype stype)
 {
 	const uint32_t mega = SILOFS_MEGA;
-	const uint32_t nmul = stype_isdata(stype) ? 8 : 2;
+	const uint32_t nmul = stype_isdata(stype) ? 16 : 4;
 
 	return (nmul * mega) / sizeof(struct silofs_spa_entry);
 }

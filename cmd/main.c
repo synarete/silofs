@@ -70,9 +70,7 @@ static const struct silofs_cmd_info g_cmd_info[] = {
 	DEFCMD(umount),
 	DEFCMD(lsmnt),
 	DEFCMD(show),
-	DEFCMD(clone),
-	DEFCMD(lsfs),
-	DEFCMD(rmfs),
+	DEFCMD(snap),
 	DEFCMD(archive),
 	DEFCMD(restore),
 	DEFCMD(prune),
@@ -130,7 +128,7 @@ static void silofs_parse_global_args(void)
 	cmd_name = silofs_globals.cmd_name;
 
 	if (equals2(cmd_name, "-v", "--version")) {
-		silofs_show_version_and_exit(NULL);
+		silofs_print_version_and_exit(NULL);
 	}
 	if (equals2(cmd_name, "-h", "--help")) {
 		show_main_help_and_exit(0);

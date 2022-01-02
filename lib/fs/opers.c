@@ -38,37 +38,44 @@
 #include <limits.h>
 #include <time.h>
 
+#define status_ok(err_) ((err_) == 0)
+
 #define ok_or_goto_out(err_) \
-	do { if ((err_) != 0) goto out; } while (0)
+	do { if (!status_ok(err_)) goto out; } while (0)
 
 #define ok_or_goto_out_ok(err_) \
-	do { if ((err_) != 0) goto out_ok; } while (0)
+	do { if (!status_ok(err_)) goto out_ok; } while (0)
 
-static int op_start(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int op_start(const struct silofs_fs_ctx *fs_ctx)
 {
+	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
 	int err;
 
-	apex->ap_ops.op_time = op->op_xtime.tv_sec;
-	apex->ap_ops.op_count++;
-
-	err = silofs_apex_flush_dirty(apex, 0);
-	if (!err) {
-		silofs_cache_relax(apex->ap_cache, SILOFS_F_OPSTART);
+	if (unlikely(apex == NULL)) {
+		return -EINVAL;
 	}
-	return err;
+	err = silofs_apex_flush_dirty(apex, 0);
+	if (unlikely(err)) {
+		return err;
+	}
+	silofs_cache_relax(apex->ap_cache, SILOFS_F_OPSTART);
+	apex->ap_ops.op_time = fs_ctx->fsc_oper.op_creds.xtime.tv_sec;
+	apex->ap_ops.op_count++;
+	return 0;
 }
 
-static int op_finish(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op, int err)
+static int op_finish(const struct silofs_fs_ctx *fs_ctx, int err)
 {
 	const time_t now = time(NULL);
-	const time_t beg = op->op_xtime.tv_sec;
+	const time_t beg = fs_ctx->fsc_oper.op_creds.xtime.tv_sec;
 	const time_t dif = now - beg;
 
 	if ((beg < now) && (dif > 30)) {
 		log_warn("slow-oper: id=%ld code=%d duration=%ld status=%d",
-		         apex->ap_ops.op_count, op->op_code, dif, err);
+		         fs_ctx->fsc_apex->ap_ops.op_count,
+		         fs_ctx->fsc_oper.op_code, dif, err);
 	}
 	/* TODO: maybe extra flush-relax? */
 	return err;
@@ -114,12 +121,14 @@ static bool has_allow_other(const struct silofs_sb_info *sbi)
 	return ((sbi->s_ctl_flags & mask) == mask);
 }
 
-static int op_authorize(const struct silofs_fs_apex *apex,
-                        const struct silofs_oper *op)
+static int op_authorize(const struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_ucred *ucred = &op->op_ucred;
-	const struct silofs_sb_info *sbi = apex->ap_sbi;
+	const struct silofs_ucred *ucred = &fs_ctx->fsc_oper.op_creds.ucred;
+	const struct silofs_sb_info *sbi = fs_ctx->fsc_apex->ap_sbi;
 
+	if (sbi == NULL) {
+		return 0; /* case unpack */
+	}
 	if (is_fsowner(sbi, ucred)) {
 		return 0;
 	}
@@ -134,1174 +143,1181 @@ static int op_authorize(const struct silofs_fs_apex *apex,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stage_cacheonly_inode(const struct silofs_fs_apex *apex,
+static int
+op_stage_cacheonly_inode(const struct silofs_fs_ctx *fs_ctx,
+                         ino_t ino, struct silofs_inode_info **out_ii)
+{
+	return silofs_stage_cached_inode(fs_ctx->fsc_apex->ap_sbi,
+	                                 ino, out_ii);
+}
+
+static int op_stage_rdonly_inode(const struct silofs_fs_ctx *fs_ctx,
                                  ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_cached_inode(apex->ap_sbi, ino, out_ii);
+	return silofs_stage_inode(fs_ctx->fsc_apex->ap_sbi,
+	                          ino, SILOFS_STAGE_RDONLY, out_ii);
 }
 
-static int stage_rdonly_inode(const struct silofs_fs_apex *apex, ino_t ino,
-                              struct silofs_inode_info **out_ii)
+static int op_stage_mutable_inode(const struct silofs_fs_ctx *fs_ctx,
+                                  ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(apex->ap_sbi, ino,
-	                          SILOFS_STAGE_RDONLY, out_ii);
+	return silofs_stage_inode(fs_ctx->fsc_apex->ap_sbi,
+	                          ino, SILOFS_STAGE_MUTABLE, out_ii);
 }
 
-static int stage_mutable_inode(const struct silofs_fs_apex *apex, ino_t ino,
-                               struct silofs_inode_info **out_ii)
-{
-	return silofs_stage_inode(apex->ap_sbi, ino,
-	                          SILOFS_STAGE_MUTABLE, out_ii);
-}
-
-static int stage_openable_inode(const struct silofs_fs_apex *apex, ino_t ino,
-                                int o_flags, struct silofs_inode_info **out_ii)
+static int
+op_stage_openable_inode(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
+                        int o_flags, struct silofs_inode_info **out_ii)
 {
 	int err;
 
 	if (o_flags & (O_RDWR | O_WRONLY | O_TRUNC | O_APPEND)) {
-		err = stage_mutable_inode(apex, ino, out_ii);
+		err = op_stage_mutable_inode(fs_ctx, ino, out_ii);
 	} else {
-		err = stage_rdonly_inode(apex, ino, out_ii);
+		err = op_stage_rdonly_inode(fs_ctx, ino, out_ii);
 	}
 	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_fs_forget(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op,
+int silofs_fs_forget(const struct silofs_fs_ctx *fs_ctx,
                      ino_t ino, size_t nlookup)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_cacheonly_inode(apex, ino, &ii);
+	err = op_stage_cacheonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out_ok(err);
 
-	err = silofs_do_forget(op, ii, nlookup);
+	err = silofs_do_forget(fs_ctx, ii, nlookup);
 	ok_or_goto_out(err);
 out_ok:
 	err = 0;
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_statfs(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op,
+int silofs_fs_statfs(const struct silofs_fs_ctx *fs_ctx,
                      ino_t ino, struct statvfs *stvfs)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_statvfs(op, ii, stvfs);
+	err = silofs_do_statvfs(fs_ctx, ii, stvfs);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_lookup(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op, ino_t parent,
+int silofs_fs_lookup(const struct silofs_fs_ctx *fs_ctx, ino_t parent,
                      const char *name, struct stat *out_stat)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, parent, &dir_ii);
+	err = op_stage_rdonly_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_lookup(op, dir_ii, &nstr, &ii);
+	err = silofs_do_lookup(fs_ctx, dir_ii, &nstr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_getattr(struct silofs_fs_apex *apex,
-                      const struct silofs_oper *op,
+int silofs_fs_getattr(const struct silofs_fs_ctx *fs_ctx,
                       ino_t ino, struct stat *out_stat)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_access(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op,
-                     ino_t ino, int mode)
+int silofs_fs_access(const struct silofs_fs_ctx *fs_ctx, ino_t ino, int mode)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_access(op, ii, mode);
+	err = silofs_do_access(fs_ctx, ii, mode);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_mkdir(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t parent,
+int silofs_fs_mkdir(const struct silofs_fs_ctx *fs_ctx, ino_t parent,
                     const char *name, mode_t mode, struct stat *out_stat)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_mkdir(op, dir_ii, &nstr, mode, &ii);
+	err = silofs_do_mkdir(fs_ctx, dir_ii, &nstr, mode, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_rmdir(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op,
+int silofs_fs_rmdir(const struct silofs_fs_ctx *fs_ctx,
                     ino_t parent, const char *name)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_rmdir(op, dir_ii, &nstr);
+	err = silofs_do_rmdir(fs_ctx, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_symlink(struct silofs_fs_apex *apex,
-                      const struct silofs_oper *op, ino_t parent,
+int silofs_fs_symlink(const struct silofs_fs_ctx *fs_ctx, ino_t parent,
                       const char *name, const char *symval,
                       struct stat *out_stat)
 {
-	int err;
 	struct silofs_str value;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
 	err = symval_to_str(symval, &value);
 	ok_or_goto_out(err);
 
-	err = silofs_do_symlink(op, dir_ii, &nstr, &value, &ii);
+	err = silofs_do_symlink(fs_ctx, dir_ii, &nstr, &value, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_readlink(struct silofs_fs_apex *apex,
-                       const struct silofs_oper *op,
+int silofs_fs_readlink(const struct silofs_fs_ctx *fs_ctx,
                        ino_t ino, char *ptr, size_t lim, size_t *out_len)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_readlink(op, ii, ptr, lim, out_len);
+	err = silofs_do_readlink(fs_ctx, ii, ptr, lim, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_unlink(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op,
+int silofs_fs_unlink(const struct silofs_fs_ctx *fs_ctx,
                      ino_t parent, const char *name)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_unlink(op, dir_ii, &nstr);
+	err = silofs_do_unlink(fs_ctx, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_link(struct silofs_fs_apex *apex,
-                   const struct silofs_oper *op, ino_t ino, ino_t parent,
+int silofs_fs_link(const struct silofs_fs_ctx *fs_ctx, ino_t ino, ino_t parent,
                    const char *name, struct stat *out_stat)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_link(op, dir_ii, &nstr, ii);
+	err = silofs_do_link(fs_ctx, dir_ii, &nstr, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_opendir(struct silofs_fs_apex *apex,
-                      const struct silofs_oper *op, ino_t ino)
+int silofs_fs_opendir(const struct silofs_fs_ctx *fs_ctx, ino_t ino)
 {
-	int err;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &dir_ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_opendir(op, dir_ii);
+	err = silofs_do_opendir(fs_ctx, dir_ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_releasedir(struct silofs_fs_apex *apex,
-                         const struct silofs_oper *op, ino_t ino, int o_flags)
+int silofs_fs_releasedir(const struct silofs_fs_ctx *fs_ctx,
+                         ino_t ino, int o_flags)
 {
-	int err;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
 	unused(o_flags); /* TODO: useme */
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &dir_ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_releasedir(op, dir_ii);
+	err = silofs_do_releasedir(fs_ctx, dir_ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_readdir(struct silofs_fs_apex *apex,
-                      const struct silofs_oper *op, ino_t ino,
+int silofs_fs_readdir(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                       struct silofs_readdir_ctx *rd_ctx)
 {
-	int err;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &dir_ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_readdir(op, dir_ii, rd_ctx);
+	err = silofs_do_readdir(fs_ctx, dir_ii, rd_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_readdirplus(struct silofs_fs_apex *apex,
-                          const struct silofs_oper *op, ino_t ino,
+int silofs_fs_readdirplus(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                           struct silofs_readdir_ctx *rd_ctx)
 {
-	int err;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &dir_ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_readdirplus(op, dir_ii, rd_ctx);
+	err = silofs_do_readdirplus(fs_ctx, dir_ii, rd_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_fsyncdir(struct silofs_fs_apex *apex,
-                       const struct silofs_oper *op, ino_t ino, bool datasync)
+int silofs_fs_fsyncdir(const struct silofs_fs_ctx *fs_ctx,
+                       ino_t ino, bool datasync)
 {
-	int err;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &dir_ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fsyncdir(op, dir_ii, datasync);
+	err = silofs_do_fsyncdir(fs_ctx, dir_ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_chmod(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino, mode_t mode,
+int silofs_fs_chmod(const struct silofs_fs_ctx *fs_ctx, ino_t ino, mode_t mode,
                     const struct stat *st, struct stat *out_stat)
 {
-	int err;
 	struct silofs_itimes itimes;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
 	stat_to_itimes(st, &itimes);
-	err = silofs_do_chmod(op, ii, mode, &itimes);
+	err = silofs_do_chmod(fs_ctx, ii, mode, &itimes);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_chown(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino, uid_t uid,
+int silofs_fs_chown(const struct silofs_fs_ctx *fs_ctx, ino_t ino, uid_t uid,
                     gid_t gid, const struct stat *st, struct stat *out_stat)
 {
-	int err;
 	struct silofs_itimes itimes;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
 	stat_to_itimes(st, &itimes);
-	err = silofs_do_chown(op, ii, uid, gid, &itimes);
+	err = silofs_do_chown(fs_ctx, ii, uid, gid, &itimes);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_utimens(struct silofs_fs_apex *apex,
-                      const struct silofs_oper *op, ino_t ino,
+int silofs_fs_utimens(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                       const struct stat *times, struct stat *out_stat)
 {
-	int err;
 	struct silofs_itimes itimes;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
 	stat_to_itimes(times, &itimes);
-	err = silofs_do_utimens(op, ii, &itimes);
+	err = silofs_do_utimens(fs_ctx, ii, &itimes);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_truncate(struct silofs_fs_apex *apex,
-                       const struct silofs_oper *op,
+int silofs_fs_truncate(const struct silofs_fs_ctx *fs_ctx,
                        ino_t ino, loff_t len, struct stat *out_stat)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_truncate(op, ii, len);
+	err = silofs_do_truncate(fs_ctx, ii, len);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_create(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op, ino_t parent,
+int silofs_fs_create(const struct silofs_fs_ctx *fs_ctx, ino_t parent,
                      const char *name, int o_flags, mode_t mode,
                      struct stat *out_stat)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
 	unused(o_flags); /* XXX use me */
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_create(op, dir_ii, &nstr, mode, &ii);
+	err = silofs_do_create(fs_ctx, dir_ii, &nstr, mode, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_open(struct silofs_fs_apex *apex,
-                   const struct silofs_oper *op, ino_t ino, int o_flags)
+int silofs_fs_open(const struct silofs_fs_ctx *fs_ctx, ino_t ino, int o_flags)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_openable_inode(apex, ino, o_flags, &ii);
+	err = op_stage_openable_inode(fs_ctx, ino, o_flags, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_open(op, ii, o_flags);
+	err = silofs_do_open(fs_ctx, ii, o_flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_mknod(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op,
-                    ino_t parent, const char *name, mode_t mode, dev_t rdev,
+int silofs_fs_mknod(const struct silofs_fs_ctx *fs_ctx, ino_t parent,
+                    const char *name, mode_t mode, dev_t rdev,
                     struct stat *out_stat)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &dir_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_mknod(op, dir_ii, &nstr, mode, rdev, &ii);
+	err = silofs_do_mknod(fs_ctx, dir_ii, &nstr, mode, rdev, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(op, ii, out_stat);
+	err = silofs_do_getattr(fs_ctx, ii, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_release(struct silofs_fs_apex *apex,
-                      const struct silofs_oper *op,
+int silofs_fs_release(const struct silofs_fs_ctx *fs_ctx,
                       ino_t ino, int o_flags, bool flush)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
 	/* TODO: useme */
 	unused(flush);
 	unused(o_flags);
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_release(op, ii);
+	err = silofs_do_release(fs_ctx, ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_flush(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino)
+int silofs_fs_flush(const struct silofs_fs_ctx *fs_ctx, ino_t ino)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_flush(op, ii);
+	err = silofs_do_flush(fs_ctx, ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_fsync(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op,
+int silofs_fs_fsync(const struct silofs_fs_ctx *fs_ctx,
                     ino_t ino, bool datasync)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fsync(op, ii, datasync);
+	err = silofs_do_fsync(fs_ctx, ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_rename(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op, ino_t parent,
+int silofs_fs_rename(const struct silofs_fs_ctx *fs_ctx, ino_t parent,
                      const char *name, ino_t newparent,
                      const char *newname, int flags)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_namestr newnstr;
 	struct silofs_inode_info *parent_ii = NULL;
 	struct silofs_inode_info *newp_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, parent, &parent_ii);
+	err = op_stage_mutable_inode(fs_ctx, parent, &parent_ii);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, newparent, &newp_ii);
+	err = op_stage_mutable_inode(fs_ctx, newparent, &newp_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(parent_ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, parent_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(parent_ii, newname, &newnstr);
+	err = silofs_make_namestr_by(&newnstr, parent_ii, newname);
 	ok_or_goto_out(err);
 
-	err = silofs_do_rename(op, parent_ii, &nstr, newp_ii, &newnstr, flags);
+	err = silofs_do_rename(fs_ctx, parent_ii, &nstr,
+	                       newp_ii, &newnstr, flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_read(struct silofs_fs_apex *apex,
-                   const struct silofs_oper *op, ino_t ino, void *buf,
+int silofs_fs_read(const struct silofs_fs_ctx *fs_ctx, ino_t ino, void *buf,
                    size_t len, loff_t off, size_t *out_len)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_read(op, ii, buf, len, off, out_len);
+	err = silofs_do_read(fs_ctx, ii, buf, len, off, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_read_iter(struct silofs_fs_apex *apex,
-                        const struct silofs_oper *op, ino_t ino,
+int silofs_fs_read_iter(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                         struct silofs_rwiter_ctx *rwi_ctx)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_read_iter(op, ii, rwi_ctx);
+	err = silofs_do_read_iter(fs_ctx, ii, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_write(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino,
+int silofs_fs_write(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     const void *buf, size_t len, off_t off, size_t *out_len)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write(op, ii, buf, len, off, out_len);
+	err = silofs_do_write(fs_ctx, ii, buf, len, off, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_write_iter(struct silofs_fs_apex *apex,
-                         const struct silofs_oper *op, ino_t ino,
+int silofs_fs_write_iter(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                          struct silofs_rwiter_ctx *rwi_ctx)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write_iter(op, ii, rwi_ctx);
+	err = silofs_do_write_iter(fs_ctx, ii, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_rdwr_post(struct silofs_fs_apex *apex,
-                        const struct silofs_oper *op, ino_t ino,
+int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                         const struct silofs_fiovec *fiov, size_t cnt)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = stage_cacheonly_inode(apex, ino, &ii);
+	err = op_stage_cacheonly_inode(fs_ctx, ino, &ii);
 	/* special case: do post even if ii is NULL */
 
-	err = silofs_do_rdwr_post(op, ii, fiov, cnt) || err;
+	err = silofs_do_rdwr_post(fs_ctx, ii, fiov, cnt) || err;
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_fallocate(struct silofs_fs_apex *apex,
-                        const struct silofs_oper *op, ino_t ino,
+int silofs_fs_fallocate(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                         int mode, loff_t offset, loff_t length)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fallocate(op, ii, mode, offset, length);
+	err = silofs_do_fallocate(fs_ctx, ii, mode, offset, length);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_lseek(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino,
+int silofs_fs_lseek(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     loff_t off, int whence, loff_t *out_off)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_lseek(op, ii, off, whence, out_off);
+	err = silofs_do_lseek(fs_ctx, ii, off, whence, out_off);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_copy_file_range(struct silofs_fs_apex *apex,
-                              const struct silofs_oper *op, ino_t ino_in,
+int silofs_fs_copy_file_range(const struct silofs_fs_ctx *fs_ctx, ino_t ino_in,
                               loff_t off_in, ino_t ino_out, loff_t off_out,
                               size_t len, int flags, size_t *out_ncp)
 {
-	int err;
 	struct silofs_inode_info *ii_in = NULL;
 	struct silofs_inode_info *ii_out = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino_in, &ii_in);
+	err = op_stage_mutable_inode(fs_ctx, ino_in, &ii_in);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino_out, &ii_out);
+	err = op_stage_mutable_inode(fs_ctx, ino_out, &ii_out);
 	ok_or_goto_out(err);
 
-	err = silofs_do_copy_file_range(op, ii_in, ii_out, off_in,
+	err = silofs_do_copy_file_range(fs_ctx, ii_in, ii_out, off_in,
 	                                off_out, len, flags, out_ncp);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_setxattr(struct silofs_fs_apex *apex,
-                       const struct silofs_oper *op, ino_t ino,
+int silofs_fs_setxattr(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                        const char *name, const void *value,
                        size_t size, int flags, bool kill_sgid)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_setxattr(op, ii, &nstr, value, size, flags, kill_sgid);
+	err = silofs_do_setxattr(fs_ctx, ii, &nstr,
+	                         value, size, flags, kill_sgid);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_getxattr(struct silofs_fs_apex *apex,
-                       const struct silofs_oper *op, ino_t ino,
+int silofs_fs_getxattr(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                        const char *name, void *buf, size_t size,
                        size_t *out_size)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getxattr(op, ii, &nstr, buf, size, out_size);
+	err = silofs_do_getxattr(fs_ctx, ii, &nstr, buf, size, out_size);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_listxattr(struct silofs_fs_apex *apex,
-                        const struct silofs_oper *op, ino_t ino,
+int silofs_fs_listxattr(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                         struct silofs_listxattr_ctx *lxa_ctx)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_listxattr(op, ii, lxa_ctx);
+	err = silofs_do_listxattr(fs_ctx, ii, lxa_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_removexattr(struct silofs_fs_apex *apex,
-                          const struct silofs_oper *op,
+int silofs_fs_removexattr(const struct silofs_fs_ctx *fs_ctx,
                           ino_t ino, const char *name)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(ii, name, &nstr);
+	err = silofs_make_namestr_by(&nstr, ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_removexattr(op, ii, &nstr);
+	err = silofs_do_removexattr(fs_ctx, ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_statx(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino,
+int silofs_fs_statx(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     unsigned int request_mask, struct statx *out_stx)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_statx(op, ii, request_mask, out_stx);
+	err = silofs_do_statx(fs_ctx, ii, request_mask, out_stx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_fiemap(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op,
+int silofs_fs_fiemap(const struct silofs_fs_ctx *fs_ctx,
                      ino_t ino, struct fiemap *fm)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fiemap(op, ii, fm);
+	err = silofs_do_fiemap(fs_ctx, ii, fm);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_syncfs(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op, ino_t ino)
+int silofs_fs_syncfs(const struct silofs_fs_ctx *fs_ctx, ino_t ino)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_mutable_inode(apex, ino, &ii);
+	err = op_stage_mutable_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = 0; /* XXX */
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_query(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino,
+int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     struct silofs_ioc_query *out_qry)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_query(op, ii, out_qry);
+	err = silofs_do_query(fs_ctx, ii, out_qry);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_clone(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op,
+int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
                     ino_t ino, const char *name, int flags)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *dir_ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &dir_ii);
+	err = silofs_make_fsnamestr(&nstr, name);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(dir_ii, name, &nstr);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_clone(op, dir_ii, &nstr, flags);
+	err = silofs_do_clone(fs_ctx, dir_ii, &nstr, flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_unrefs(struct silofs_fs_apex *apex,
-                     const struct silofs_oper *op,
+int silofs_fs_snap(const struct silofs_fs_ctx *fs_ctx,
+                   ino_t ino, const char *name)
+{
+	struct silofs_namestr nstr;
+	struct silofs_inode_info *dir_ii = NULL;
+	int err;
+
+	err = op_start(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = op_authorize(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = silofs_make_fsnamestr(&nstr, name);
+	ok_or_goto_out(err);
+
+	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
+	ok_or_goto_out(err);
+
+	err = silofs_do_snap(fs_ctx, dir_ii, &nstr);
+	ok_or_goto_out(err);
+out:
+	return op_finish(fs_ctx, err);
+}
+
+int silofs_fs_unrefs(const struct silofs_fs_ctx *fs_ctx,
                      ino_t ino, const char *name)
 {
-	int err;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = silofs_make_fsnamestr(&nstr, name);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(ii, name, &nstr);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_unrefs(op, ii, &nstr);
+	err = silofs_do_unrefs(fs_ctx, ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_prune(struct silofs_fs_apex *apex,
-                    const struct silofs_oper *op, ino_t ino)
+int silofs_fs_inspect(const struct silofs_fs_ctx *fs_ctx, ino_t ino)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
-	err = op_start(apex, op);
+	err = op_start(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(apex, op);
+	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = stage_rdonly_inode(apex, ino, &ii);
+	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_prune(op, ii);
+	err = silofs_do_inspect(fs_ctx, ii);
 	ok_or_goto_out(err);
 
 out:
-	return op_finish(apex, op, err);
+	return op_finish(fs_ctx, err);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx, const char *name)
+{
+	struct silofs_namestr nstr;
+	int err;
+
+	err = op_start(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = op_authorize(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = silofs_make_fsnamestr(&nstr, name);
+	ok_or_goto_out(err);
+
+	err = silofs_do_pack(fs_ctx, &nstr);
+	ok_or_goto_out(err);
+out:
+	return op_finish(fs_ctx, err);
 }
 
 int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags)

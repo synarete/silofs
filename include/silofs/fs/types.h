@@ -62,7 +62,7 @@ struct silofs_fuseq_inb;
 struct silofs_fuseq_outb;
 struct silofs_bootmap;
 struct silofs_sb_info;
-struct silofs_oper;
+struct silofs_fs_ctx;
 struct silofs_dset;
 struct silofs_rwiter_ctx;
 struct silofs_readdir_ctx;
@@ -180,6 +180,12 @@ struct silofs_ucred {
 	mode_t umask;
 };
 
+/* user-credentials with execution-time*/
+struct silofs_creds {
+	struct silofs_ucred     ucred;
+	struct timespec         xtime;
+};
+
 /* space-addressing */
 typedef loff_t          silofs_lba_t;
 
@@ -216,22 +222,48 @@ struct silofs_kivam {
 	unsigned int            cipher_mode;
 };
 
-/* opaque meta-element identifier */
-struct silofs_metaid {
-	uint64_t id[2];
+/* extended identifier */
+struct silofs_xid {
+	uint8_t id[16];
+};
+
+/* tree-addressing blob-id */
+struct silofs_xxid_tas {
+	struct silofs_xid tree_id;
+	struct silofs_xid uniq_id;
+};
+
+/* content-addressing blob-id */
+struct silofs_xxid_cas {
+	struct silofs_hash256 hash;
+};
+
+/* union of possible blob addressing */
+union silofs_xxid_u {
+	struct silofs_xxid_tas  tid;
+	struct silofs_xxid_cas  cid;
+	struct silofs_xid       xid[2];
+};
+
+struct silofs_xxid {
+	union silofs_xxid_u u;
 };
 
 /* opaque blob identifier */
 struct silofs_blobid {
-	struct silofs_metaid    tree_id;
-	struct silofs_metaid    uniq_id;
+	struct silofs_xxid      xxid;
 	size_t                  size;
-	int                     height;
 };
 
-/* object address within blob */
+/* packed-blob identifier */
+struct silofs_packid {
+	struct silofs_blobid    blobid;
+	enum silofs_pack_mode   pmode;
+};
+
+/* opaque address within blob */
 struct silofs_oaddr {
-	struct silofs_blobid    bid;
+	struct silofs_blobid    blobid;
 	loff_t                  pos;
 	size_t                  len;
 };
@@ -241,6 +273,7 @@ struct silofs_uaddr {
 	struct silofs_oaddr     oaddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
+	unsigned int            height;
 };
 
 /* meta-link via pair of space-addressing */
@@ -251,9 +284,9 @@ struct silofs_ulink {
 
 /* tree addressing of space-mapping elements */
 struct silofs_taddr {
-	struct silofs_metaid    tree_id;
+	struct silofs_xid       tree_id;
 	loff_t                  voff;
-	int                     height;
+	unsigned int            height;
 };
 
 /* logical addressing of virtual elements */
@@ -283,8 +316,11 @@ struct silofs_iuvaddr {
 
 /* vspace address range [beg, end) */
 struct silofs_vrange {
-	loff_t beg;
-	loff_t end;
+	loff_t                  beg;
+	loff_t                  end;
+	size_t                  len;
+	size_t                  height;
+	ssize_t                 stepsz;
 };
 
 /* boot-sector in-memory repr  */
@@ -292,8 +328,8 @@ struct silofs_bootsec {
 	struct silofs_namebuf           name;
 	struct silofs_uuid              uuid;
 	struct silofs_uaddr             sb_uaddr;
+	struct silofs_packid            sb_packid;
 	struct silofs_cipher_args       cip_args;
-	enum silofs_bootf               bootf;
 	time_t btime;
 };
 
@@ -311,7 +347,7 @@ union silofs_ckey_u {
 	const struct silofs_oaddr  *oaddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
-	const struct silofs_blobid *bid;
+	const struct silofs_blobid *blobid;
 	const loff_t               *voff;
 	const void                 *key;
 };
@@ -407,14 +443,18 @@ struct silofs_bootmap {
 	loff_t bm_next_index;
 };
 
-/* current operation state */
+/* current operation */
 struct silofs_oper {
-	struct silofs_fs_apex          *op_apex;
-	struct silofs_ucred             op_ucred;
-	struct timespec                 op_xtime;
+	struct silofs_creds             op_creds;
 	uint64_t                        op_unique;
 	int                             op_code;
-	volatile int                    op_interrupt;
+};
+
+/* file-system oper-execution context */
+struct silofs_fs_ctx {
+	struct silofs_fs_apex          *fsc_apex;
+	struct silofs_oper              fsc_oper;
+	volatile int                    fsc_interrupt;
 };
 
 /* top-level pseudo meta node */

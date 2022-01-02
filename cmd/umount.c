@@ -47,7 +47,7 @@ static void umount_getopt(void)
 		} else if (opt_chr == 'f') {
 			umount_args->force = true;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(umount_usage);
+			silofs_print_help_and_exit(umount_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}

@@ -551,12 +551,12 @@ static size_t sptmap_slot_of(const struct silofs_sptmap *sptm,
                              const struct silofs_taddr *taddr)
 {
 	uint64_t key;
-	const uint64_t uoff = (uint64_t)taddr->voff;
-	const uint64_t hash = uoff ^ silofs_metaid_hkey(&taddr->tree_id);
+	const uint64_t hash = silofs_xid_as_u64(&taddr->tree_id);
 
-	key = (uint64_t)taddr->height;
+	key = (uint64_t)taddr->voff;
 	key |= jenkins_hash((uint32_t)hash);
-	key ^= ~jenkins_hash((uint32_t)(hash >> 32));
+	key ^= (~hash >> 32);
+	key = silofs_rotate64(key, taddr->height & 0xF);
 
 	return key % sptm->spt_htbl_cap;
 }

@@ -1,6 +1,6 @@
 # Config file for silofs-mountd service.
 #
-# Lines should have one of the the following format:
+# Lines should have one of the the following formats:
 #
 #  mntpath1
 #  mntpath2 uid=UID

@@ -17,29 +17,47 @@
 #include "unitests.h"
 
 
-static void ut_ioctl_query(struct ut_env *ute)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_pack_simple(struct ut_env *ute)
 {
-	ino_t ino;
 	ino_t dino;
 	const char *name = UT_NAME;
-	struct silofs_ioc_query query = {
-		.qtype = SILOFS_QUERY_VERSION
-	};
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_query_ok(ute, dino, &query);
-	ut_expect_eq(query.u.version.v_major, silofs_version.major);
-	ut_create_file(ute, dino, name, &ino);
-	ut_query_ok(ute, ino, &query);
-	ut_expect_eq(query.u.version.v_minor, silofs_version.minor);
-	ut_remove_file(ute, dino, name, ino);
+	ut_pack_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_pack_data_(struct ut_env *ute, loff_t off, size_t bsz)
+{
+	ino_t ino;
+	ino_t dino;
+	const char *name = UT_NAME;
+	void *buf = ut_randbuf(ute, bsz);
+
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
+	ut_write_read(ute, ino, buf, bsz, off);
+	ut_pack_ok(ute, name);
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_pack_data(struct ut_env *ute)
+{
+	ut_pack_data_(ute, 0, UT_MEGA);
+	ut_pack_data_(ute, UT_KILO - 1, 2 * UT_BK_SIZE);
+	ut_pack_data_(ute, UT_GIGA, UT_MEGA);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_ioctl_query),
+	UT_DEFTEST(ut_pack_simple),
+	UT_DEFTEST(ut_pack_data),
 };
 
-const struct ut_testdefs ut_tdefs_ioctl = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_pack_basic = UT_MKTESTS(ut_local_tests);

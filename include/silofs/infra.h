@@ -29,7 +29,7 @@
 #include <silofs/infra/list.h>
 #include <silofs/infra/avl.h>
 #include <silofs/infra/strings.h>
-#include <silofs/infra/slice.h>
+#include <silofs/infra/bytebuf.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/fiovec.h>

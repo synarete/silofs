@@ -49,7 +49,7 @@ static void restore_getopt(void)
 		} else if (opt_chr == 'P') {
 			restore_args->passphrase_file = optarg;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(restore_usage);
+			silofs_print_help_and_exit(restore_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}

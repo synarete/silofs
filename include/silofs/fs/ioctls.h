@@ -107,18 +107,10 @@ struct silofs_ioc_tweak {
 	union silofs_tweak_u u;
 };
 
-struct silofs_ioc_clone {
+struct silofs_ioc_snapfs {
 	char     name[SILOFS_NAME_MAX + 1];
 	uint32_t flags;
 	uint8_t  reserved[252];
-};
-
-struct silofs_ioc_iterfs {
-	char     name[SILOFS_NAME_MAX + 1];
-	int64_t  index;
-	int64_t  btime;
-	int64_t  flags;
-	uint8_t  reserved[232];
 };
 
 struct silofs_ioc_unrefs {
@@ -130,7 +122,7 @@ struct silofs_ioc_unrefs {
 
 #define SILOFS_FS_IOC_QUERY     _IOWR('S', 1, struct silofs_ioc_query)
 #define SILOFS_FS_IOC_TWEAK     _IOWR('S', 2, struct silofs_ioc_tweak)
-#define SILOFS_FS_IOC_CLONE     _IOWR('S', 3, struct silofs_ioc_clone)
+#define SILOFS_FS_IOC_SNAPFS    _IOWR('S', 3, struct silofs_ioc_snapfs)
 #define SILOFS_FS_IOC_UNREFS    _IOWR('S', 4, struct silofs_ioc_unrefs)
 
 #endif /* SILOFS_IOCTLS_H_ */

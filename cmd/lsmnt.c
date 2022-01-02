@@ -54,7 +54,7 @@ static void lsmnt_getopt(void)
 		if (opt_chr == 'l') {
 			lsmnt_args->long_listing = true;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(lsmnt_usage);
+			silofs_print_help_and_exit(lsmnt_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}

@@ -42,6 +42,7 @@ static void mountd_enable_signals(void);
 static void mountd_boostrap_process(void);
 static void mountd_create_mse_inst(void);
 static void mountd_trace_start(void);
+static void mountd_trace_finish(void);
 static void mound_execute_ms(void);
 static void mountd_finalize(void);
 static void mountd_load_mntrules(void);
@@ -101,6 +102,9 @@ int main(int argc, char *argv[])
 	/* Execute as long as needed... */
 	mound_execute_ms();
 
+	/* Say goodbye */
+	mountd_trace_finish();
+
 	/* Post execution cleanups */
 	mountd_finalize();
 
@@ -131,7 +135,7 @@ static void mountd_init_process(void)
 	int err;
 
 	g_mountd_log_mask |=
-	        SILOFS_LOG_WARN | SILOFS_LOG_ERROR | \
+	        SILOFS_LOG_INFO | SILOFS_LOG_WARN | SILOFS_LOG_ERROR | \
 	        SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT;
 
 	err = silofs_boot_lib();
@@ -242,7 +246,6 @@ static void mountd_finalize(void)
 {
 	mountd_destroy_mse_inst();
 	mountd_drop_mntrules();
-	mountd_trace_finish();
 }
 
 static void mound_execute_ms(void)

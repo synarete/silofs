@@ -25,212 +25,203 @@
 #include <utime.h>
 #include <limits.h>
 
-static struct silofs_fs_apex *apex_of(struct ut_env *ute)
+
+static const struct silofs_fs_ctx *fs_ctx_of(struct ut_env *ute)
 {
-	return ute->fse->fs_apex;
-}
+	struct silofs_fs_ctx *fs_ctx = &ute->fs_ctx;
 
-static const struct silofs_oper *op(struct ut_env *ute)
-{
-	struct silofs_oper *oper = &ute->oper;
-
-	oper->op_apex = ute->fse->fs_apex;
-	oper->op_ucred.uid = getuid();
-	oper->op_ucred.gid = getgid();
-	oper->op_ucred.pid = getpid();
-	oper->op_ucred.umask = 0002;
-	oper->op_unique = ute->unique_opid++;
-	silofs_ts_gettime(&oper->op_xtime, true);
-
-	return oper;
+	fs_ctx->fsc_apex = ute->fs_env->fs_apex;
+	fs_ctx->fsc_oper.op_creds.ucred.uid = getuid();
+	fs_ctx->fsc_oper.op_creds.ucred.gid = getgid();
+	fs_ctx->fsc_oper.op_creds.ucred.pid = getpid();
+	fs_ctx->fsc_oper.op_creds.ucred.umask = 0002;
+	fs_ctx->fsc_oper.op_unique = ute->unique_opid++;
+	silofs_ts_gettime(&fs_ctx->fsc_oper.op_creds.xtime, true);
+	return fs_ctx;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int ut_statfs(struct ut_env *ute,
-                     ino_t ino, struct statvfs *st)
+static int ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 {
-	return silofs_fs_statfs(apex_of(ute), op(ute), ino, st);
+	return silofs_fs_statfs(fs_ctx_of(ute), ino, st);
 }
 
 static int ut_statx(struct ut_env *ute, ino_t ino,
                     unsigned int request_mask, struct statx *stx)
 {
-	return silofs_fs_statx(apex_of(ute), op(ute), ino, request_mask, stx);
+	return silofs_fs_statx(fs_ctx_of(ute), ino, request_mask, stx);
 }
 
 static int ut_access(struct ut_env *ute, ino_t ino, int mode)
 {
-	return silofs_fs_access(apex_of(ute), op(ute), ino, mode);
+	return silofs_fs_access(fs_ctx_of(ute), ino, mode);
 }
 
 static int ut_getattr(struct ut_env *ute, ino_t ino, struct stat *st)
 {
-	return silofs_fs_getattr(apex_of(ute), op(ute), ino, st);
+	return silofs_fs_getattr(fs_ctx_of(ute), ino, st);
 }
 
 static int ut_lookup(struct ut_env *ute, ino_t parent,
                      const char *name, struct stat *st)
 {
-	return silofs_fs_lookup(apex_of(ute), op(ute), parent, name, st);
+	return silofs_fs_lookup(fs_ctx_of(ute), parent, name, st);
 }
 
 static int ut_utimens(struct ut_env *ute, ino_t ino,
                       const struct stat *utimes, struct stat *st)
 {
-	return silofs_fs_utimens(apex_of(ute), op(ute), ino, utimes, st);
+	return silofs_fs_utimens(fs_ctx_of(ute), ino, utimes, st);
 }
 
 static int ut_mkdir(struct ut_env *ute, ino_t parent,
                     const char *name, mode_t mode, struct stat *out_st)
 {
-	return silofs_fs_mkdir(apex_of(ute), op(ute),
-	                       parent, name, mode | S_IFDIR, out_st);
+	return silofs_fs_mkdir(fs_ctx_of(ute), parent,
+	                       name, mode | S_IFDIR, out_st);
 }
 
 static int ut_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 {
-	return silofs_fs_rmdir(apex_of(ute), op(ute), parent, name);
+	return silofs_fs_rmdir(fs_ctx_of(ute), parent, name);
 }
 
 static int ut_opendir(struct ut_env *ute, ino_t ino)
 {
-	return silofs_fs_opendir(apex_of(ute), op(ute), ino);
+	return silofs_fs_opendir(fs_ctx_of(ute), ino);
 }
 
 static int ut_releasedir(struct ut_env *ute, ino_t ino)
 {
-	return silofs_fs_releasedir(apex_of(ute), op(ute), ino, 0);
+	return silofs_fs_releasedir(fs_ctx_of(ute), ino, 0);
 }
 
 static int ut_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 {
-	return silofs_fs_fsyncdir(apex_of(ute), op(ute), ino, datasync);
+	return silofs_fs_fsyncdir(fs_ctx_of(ute), ino, datasync);
 }
 
 
 static int ut_symlink(struct ut_env *ute, ino_t parent,
                       const char *name, const char *val, struct stat *out_st)
 {
-	return silofs_fs_symlink(apex_of(ute), op(ute),
-	                         parent, name, val, out_st);
+	return silofs_fs_symlink(fs_ctx_of(ute), parent, name, val, out_st);
 }
 
 static int ut_readlink(struct ut_env *ute,
                        ino_t ino, char *buf, size_t len, size_t *out_len)
 {
-	return silofs_fs_readlink(apex_of(ute), op(ute),
-	                          ino, buf, len, out_len);
+	return silofs_fs_readlink(fs_ctx_of(ute), ino, buf, len, out_len);
 }
 
 static int ut_link(struct ut_env *ute, ino_t ino, ino_t parent,
                    const char *name, struct stat *out_st)
 {
-	return silofs_fs_link(apex_of(ute), op(ute),
-	                      ino, parent, name, out_st);
+	return silofs_fs_link(fs_ctx_of(ute), ino, parent, name, out_st);
 }
 
 static int ut_unlink(struct ut_env *ute, ino_t parent, const char *name)
 {
-	return silofs_fs_unlink(apex_of(ute), op(ute), parent, name);
+	return silofs_fs_unlink(fs_ctx_of(ute), parent, name);
 }
 
 static int ut_create(struct ut_env *ute, ino_t parent,
                      const char *name, mode_t mode, struct stat *out_st)
 {
-	return silofs_fs_create(apex_of(ute), op(ute),
-	                        parent, name, 0, mode, out_st);
+	return silofs_fs_create(fs_ctx_of(ute), parent, name, 0, mode, out_st);
 }
 
 static int ut_open(struct ut_env *ute, ino_t ino, int flags)
 {
-	return silofs_fs_open(apex_of(ute), op(ute), ino, flags);
+	return silofs_fs_open(fs_ctx_of(ute), ino, flags);
 }
 
 static int ut_release(struct ut_env *ute, ino_t ino)
 {
-	return silofs_fs_release(apex_of(ute), op(ute), ino, 0, false);
+	return silofs_fs_release(fs_ctx_of(ute), ino, 0, false);
 }
 
 static int ut_truncate(struct ut_env *ute, ino_t ino,
                        loff_t length, struct stat *out_st)
 {
-	return silofs_fs_truncate(apex_of(ute), op(ute),
-	                          ino, length, out_st);
+	return silofs_fs_truncate(fs_ctx_of(ute), ino, length, out_st);
 }
 
 static int ut_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 {
-	return silofs_fs_fsync(apex_of(ute), op(ute), ino, datasync);
+	return silofs_fs_fsync(fs_ctx_of(ute), ino, datasync);
 }
 
 static int ut_rename(struct ut_env *ute, ino_t parent,
                      const char *name, ino_t newparent,
                      const char *newname, int flags)
 {
-	return silofs_fs_rename(apex_of(ute), op(ute), parent, name,
+	return silofs_fs_rename(fs_ctx_of(ute), parent, name,
 	                        newparent, newname, flags);
 }
 
 static int ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 {
-	return silofs_fs_fiemap(apex_of(ute), op(ute), ino, fm);
+	return silofs_fs_fiemap(fs_ctx_of(ute), ino, fm);
 }
 
 static int ut_lseek(struct ut_env *ute, ino_t ino,
                     loff_t off, int whence, loff_t *out)
 {
-	return silofs_fs_lseek(apex_of(ute), op(ute), ino, off, whence, out);
+	return silofs_fs_lseek(fs_ctx_of(ute), ino, off, whence, out);
 }
 
 static int ut_copy_file_range(struct ut_env *ute, ino_t ino_in,
                               loff_t off_in, ino_t ino_out, loff_t off_out,
                               size_t len, size_t *out_len)
 {
-	return silofs_fs_copy_file_range(apex_of(ute), op(ute), ino_in, off_in,
+	return silofs_fs_copy_file_range(fs_ctx_of(ute), ino_in, off_in,
 	                                 ino_out, off_out, len, 0, out_len);
 }
 
 static int ut_query(struct ut_env *ute, ino_t ino,
                     struct silofs_ioc_query *out_qry)
 {
-	return silofs_fs_query(apex_of(ute), op(ute), ino, out_qry);
+	return silofs_fs_query(fs_ctx_of(ute), ino, out_qry);
 }
 
-static int ut_clone(struct ut_env *ute, ino_t ino, const char *name)
+static int ut_snap(struct ut_env *ute, ino_t ino, const char *name)
 {
-	return silofs_fs_clone(apex_of(ute), op(ute), ino, name, 0);
+	return silofs_fs_snap(fs_ctx_of(ute), ino, name);
 }
 
 static int ut_unrefs(struct ut_env *ute, ino_t ino, const char *name)
 {
-	return silofs_fs_unrefs(apex_of(ute), op(ute), ino, name);
+	return silofs_fs_unrefs(fs_ctx_of(ute), ino, name);
 }
 
-static int ut_prune(struct ut_env *ute, ino_t ino)
+static int ut_inspect(struct ut_env *ute, ino_t ino)
 {
-	return silofs_fs_prune(apex_of(ute), op(ute), ino);
+	return silofs_fs_inspect(fs_ctx_of(ute), ino);
+}
+
+static int ut_pack(struct ut_env *ute, const char *name)
+{
+	return silofs_fs_pack(fs_ctx_of(ute), name);
 }
 
 static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
                    size_t len, loff_t off, size_t *out_len)
 {
-	return silofs_fs_read(apex_of(ute), op(ute),
-	                      ino, buf, len, off, out_len);
+	return silofs_fs_read(fs_ctx_of(ute), ino, buf, len, off, out_len);
 }
 
 static int ut_fallocate(struct ut_env *ute, ino_t ino,
                         int mode, loff_t offset, loff_t len)
 {
-	return silofs_fs_fallocate(apex_of(ute), op(ute),
-	                           ino, mode, offset, len);
+	return silofs_fs_fallocate(fs_ctx_of(ute), ino, mode, offset, len);
 }
 
 static int ut_write(struct ut_env *ute, ino_t ino, const void *buf,
                     size_t len, off_t off, size_t *out_len)
 {
-	return silofs_fs_write(apex_of(ute), op(ute),
-	                       ino, buf, len, off, out_len);
+	return silofs_fs_write(fs_ctx_of(ute), ino, buf, len, off, out_len);
 }
 
 struct ut_write_iter {
@@ -328,8 +319,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	int err1;
 	int err2;
 	int err3;
-	const struct silofs_fs_apex *apex = apex_of(ute);
-	const bool concp = apex->ap_args->concp;
+	const bool concp = ute->fs_ctx.fsc_apex->ap_args->concp;
 	struct ut_write_iter wri = {
 		.dat = buf,
 		.dat_len = 0,
@@ -342,14 +332,11 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 		concp ? ut_write_iter_concp_actor : ut_write_iter_actor,
 	};
 
-	err1 = silofs_fs_write_iter(apex_of(ute), op(ute),
-	                            ino, &wri.rwi);
-
+	err1 = silofs_fs_write_iter(fs_ctx_of(ute), ino, &wri.rwi);
 	err2 = ut_write_iter_copy_rem(&wri);
 	*out_len = wri.dat_len;
 
-	err3 = silofs_fs_rdwr_post(apex_of(ute), op(ute),
-	                           ino, wri.fiov, wri.cnt);
+	err3 = silofs_fs_rdwr_post(fs_ctx_of(ute), ino, wri.fiov, wri.cnt);
 	return err1 || err2 || err3;
 }
 
@@ -398,7 +385,7 @@ static int ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
 	ut_rd_ctx->plus = 0;
 	rd_ctx->pos = doff;
 	rd_ctx->actor = filldir;
-	return silofs_fs_readdir(apex_of(ute), op(ute), ino, rd_ctx);
+	return silofs_fs_readdir(fs_ctx_of(ute), ino, rd_ctx);
 }
 
 static int ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
@@ -410,35 +397,34 @@ static int ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
 	ut_rd_ctx->plus = 1;
 	rd_ctx->pos = doff;
 	rd_ctx->actor = filldir;
-	return silofs_fs_readdirplus(apex_of(ute), op(ute), ino, rd_ctx);
+	return silofs_fs_readdirplus(fs_ctx_of(ute), ino, rd_ctx);
 }
 
 static int ut_setxattr(struct ut_env *ute, ino_t ino,
                        const char *name, const void *value,
                        size_t size, int flags)
 {
-	return silofs_fs_setxattr(apex_of(ute), op(ute),
-	                          ino, name, value, size, flags, false);
+	return silofs_fs_setxattr(fs_ctx_of(ute), ino, name, value,
+	                          size, flags, false);
 }
 
 static int ut_getxattr(struct ut_env *ute, ino_t ino,
                        const char *name, void *buf,
                        size_t size, size_t *out_size)
 {
-	return silofs_fs_getxattr(apex_of(ute), op(ute),
-	                          ino, name, buf, size, out_size);
+	return silofs_fs_getxattr(fs_ctx_of(ute), ino,
+	                          name, buf, size, out_size);
 }
 
 static int ut_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 {
-	return silofs_fs_removexattr(apex_of(ute), op(ute), ino, name);
+	return silofs_fs_removexattr(fs_ctx_of(ute), ino, name);
 }
 
 static struct ut_listxattr_ctx *
 ut_listxattr_ctx_of(struct silofs_listxattr_ctx *ptr)
 {
-	return ut_container_of(ptr, struct ut_listxattr_ctx,
-	                       lxa_ctx);
+	return ut_container_of(ptr, struct ut_listxattr_ctx, lxa_ctx);
 }
 
 static int fillxent(struct silofs_listxattr_ctx *lxa_ctx,
@@ -468,7 +454,7 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 	ut_lxa_ctx->ute = ute;
 	ut_lxa_ctx->lxa_ctx.actor = fillxent;
 
-	return silofs_fs_listxattr(apex_of(ute), op(ute), ino, lxa_ctx);
+	return silofs_fs_listxattr(fs_ctx_of(ute), ino, lxa_ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1482,11 +1468,11 @@ void ut_query_ok(struct ut_env *ute, ino_t ino,
 	ut_expect_ok(err);
 }
 
-void ut_clone_ok(struct ut_env *ute, ino_t ino, const char *name)
+void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name)
 {
 	int err;
 
-	err = ut_clone(ute, ino, name);
+	err = ut_snap(ute, ino, name);
 	ut_expect_ok(err);
 }
 
@@ -1498,11 +1484,19 @@ void ut_unrefs_ok(struct ut_env *ute, ino_t ino, const char *name)
 	ut_expect_ok(err);
 }
 
-void ut_prune_ok(struct ut_env *ute, ino_t ino)
+void ut_inspect_ok(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_prune(ute, ino);
+	err = ut_inspect(ute, ino);
+	ut_expect_ok(err);
+}
+
+void ut_pack_ok(struct ut_env *ute, const char *name)
+{
+	int err;
+
+	err = ut_pack(ute, name);
 	ut_expect_ok(err);
 }
 
@@ -1589,7 +1583,7 @@ void ut_sync_drop(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fse_sync_drop(ute->fse);
+	err = silofs_fse_sync_drop(ute->fs_env);
 	ut_expect_ok(err);
 }
 
@@ -1598,7 +1592,7 @@ void ut_drop_caches_fully(struct ut_env *ute)
 	struct silofs_fs_stats st;
 
 	ut_sync_drop(ute);
-	silofs_fse_stats(ute->fse, &st);
+	silofs_fse_stats(ute->fs_env, &st);
 	/* super-block is not dropped */
 	ut_expect_eq(st.ncache_ublocks, 1);
 	ut_expect_eq(st.ncache_unodes, 1);
@@ -1649,7 +1643,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 void ut_reload_fs_ok(struct ut_env *ute)
 {
 	int err;
-	struct silofs_fs_env *fse = ute->fse;
+	struct silofs_fs_env *fse = ute->fs_env;
 
 	err = silofs_fse_sync_drop(fse);
 	ut_expect_ok(err);
@@ -1682,7 +1676,7 @@ void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino)
 void ut_reload_fs_byname_ok(struct ut_env *ute, const char *name)
 {
 	int err;
-	struct silofs_fs_env *fse = ute->fse;
+	struct silofs_fs_env *fse = ute->fs_env;
 
 	err = silofs_fse_sync_drop(fse);
 	ut_expect_ok(err);

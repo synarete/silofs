@@ -41,7 +41,7 @@ struct silofs_fuseq_worker {
 	struct silofs_fuseq_inb        *inb;
 	struct silofs_fuseq_outb       *outb;
 	struct silofs_fuseq_rw_iter    *rwi;
-	struct silofs_oper              oper;
+	struct silofs_fs_ctx            fs_ctx;
 	struct silofs_piper             piper;
 	struct silofs_thread            th;
 	unsigned int                    worker_index;
@@ -86,5 +86,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 
 void silofs_fuseq_term(struct silofs_fuseq *fq);
+
+void silofs_guarantee_fuse_proto(void);
 
 #endif /* SILOFS_FUSEQ_H_ */

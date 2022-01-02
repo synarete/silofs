@@ -9,7 +9,7 @@ The Silo File System
 --------------------
 
 :Author:         Shachar Sharon
-:Date:           Aug 2022
+:Date:           Feb 2022
 :Copyright:      GPLv3
 :Manual section: 1
 :Manual group:   Silofs Manual

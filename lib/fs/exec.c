@@ -234,11 +234,11 @@ static union silofs_fuseq_page *fuseq_to_page(struct silofs_fuseq *fuseq)
 
 static int fse_init_fuseq(struct silofs_fs_env *fse)
 {
-	int err;
-	void *mem;
 	union silofs_fuseq_page *fuseq_pg = NULL;
 	const size_t fuseq_pg_size = sizeof(*fuseq_pg);
 	struct silofs_alloc_if *alif = &fse->fs_qalloc->alif;
+	void *mem = NULL;
+	int err;
 
 	STATICASSERT_EQ(sizeof(*fuseq_pg), SILOFS_PAGE_SIZE);
 
@@ -277,8 +277,8 @@ static void fse_fini_fuseq(struct silofs_fs_env *fse)
 
 static int fse_check_args(const struct silofs_fs_args *args)
 {
-	int err;
 	struct silofs_passphrase passph;
+	int err;
 
 	err = silofs_passphrase_setup(&passph, args->passwd);
 	if (err) {
@@ -419,9 +419,9 @@ static struct silofs_sb_info *fse_sbi(const struct silofs_fs_env *fse)
 
 static int fse_reload_rootdir(struct silofs_fs_env *fse)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
 	const ino_t ino = SILOFS_INO_ROOT;
+	int err;
 
 	err = silofs_stage_inode(fse_sbi(fse), ino, SILOFS_STAGE_RDONLY, &ii);
 	if (err) {
@@ -539,9 +539,9 @@ int silofs_fse_term(struct silofs_fs_env *fse)
 
 static int silofs_fse_exec(struct silofs_fs_env *fse)
 {
-	int err;
 	struct silofs_fuseq *fq = fse->fs_fuseq;
 	const char *mount_point = fse->fs_args.mntdir;
+	int err;
 
 	err = silofs_fuseq_mount(fq, fse->fs_apex, mount_point);
 	if (!err) {
@@ -589,11 +589,11 @@ void silofs_fse_stats(const struct silofs_fs_env *fse,
 
 static int fse_derive_main_key(struct silofs_fs_env *fse)
 {
-	int err;
+	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
 	const char *repodir = fse->fs_args.repodir;
 	const struct silofs_mdigest *md = fse_mdigest(fse);
 	const struct silofs_passphrase *pp = &fse->fs_passph;
-	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
+	int err;
 
 	if (!fse->fs_passph.passlen) {
 		return 0; /* operation without passphrase */
@@ -617,6 +617,7 @@ static int fse_derive_main_key(struct silofs_fs_env *fse)
 static int fse_check_sb(const struct silofs_fs_env *fse,
                         const struct silofs_super_block *sb)
 {
+	bool fossil;
 	int err;
 
 	err = silofs_sb_check_root(sb);
@@ -627,7 +628,8 @@ static int fse_check_sb(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	if (silofs_sb_isfossil(sb) && !fse->fs_args.rdonly) {
+	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
+	if (fossil && !fse->fs_args.rdonly) {
 		return -EROFS;
 	}
 	return 0;
@@ -813,15 +815,16 @@ static int fse_format_block_zero(const struct silofs_fs_env *fse)
 }
 
 static int fse_format_rootdir(const struct silofs_fs_env *fse,
-                              const struct silofs_oper *op)
+                              const struct silofs_fs_ctx *fs_ctx)
 {
-	int err;
-	const mode_t mode = S_IFDIR | 0755;
 	struct silofs_inode_info *root_ii = NULL;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
 	const ino_t parent_ino = SILOFS_INO_NULL;
+	const struct silofs_creds *creds = &fs_ctx->fsc_oper.op_creds;
+	const mode_t mode = S_IFDIR | 0755;
+	int err;
 
-	err = silofs_spawn_inode(sbi, op, parent_ino, 0, mode, 0, &root_ii);
+	err = silofs_spawn_inode(sbi, creds, parent_ino, 0, mode, 0, &root_ii);
 	if (err) {
 		return err;
 	}
@@ -834,7 +837,7 @@ static int fse_format_rootdir(const struct silofs_fs_env *fse,
 }
 
 static int fse_format_fs_meta(const struct silofs_fs_env *fse,
-                              const struct silofs_oper *op)
+                              const struct silofs_fs_ctx *fsc)
 {
 	int err;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
@@ -855,7 +858,7 @@ static int fse_format_fs_meta(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_format_rootdir(fse, op);
+	err = fse_format_rootdir(fse, fsc);
 	if (err) {
 		return err;
 	}
@@ -863,26 +866,27 @@ static int fse_format_fs_meta(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int fse_make_oper_self(struct silofs_fs_env *fse,
-                              struct silofs_oper *op)
+static int fse_make_self_ctx(struct silofs_fs_env *fse,
+                             struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_memzero(op, sizeof(*op));
+	silofs_memzero(fs_ctx, sizeof(*fs_ctx));
 
-	op->op_ucred.uid = fse->fs_args.uid;
-	op->op_ucred.gid = fse->fs_args.gid;
-	op->op_ucred.pid = fse->fs_args.pid;
-	op->op_ucred.umask = fse->fs_args.umask;
-	op->op_unique = 0; /* TODO: make me a negative running sequence no */
+	fs_ctx->fsc_oper.op_creds.ucred.uid = fse->fs_args.uid;
+	fs_ctx->fsc_oper.op_creds.ucred.gid = fse->fs_args.gid;
+	fs_ctx->fsc_oper.op_creds.ucred.pid = fse->fs_args.pid;
+	fs_ctx->fsc_oper.op_creds.ucred.umask = fse->fs_args.umask;
+	fs_ctx->fsc_oper.op_unique = 0; /* TODO: negative running sequence */
 
-	return silofs_ts_gettime(&op->op_xtime, true);
+	return silofs_ts_gettime(&fs_ctx->fsc_oper.op_creds.xtime, true);
 }
 
 static int fse_format_super(struct silofs_fs_env *fse,
-                            const struct silofs_oper *op)
+                            const struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_namestr name;
 	struct silofs_sb_info *sbi = NULL;
 	const size_t capacity = fse->fs_apex->ap_args->capacity;
+	const time_t btime = fs_ctx->fsc_oper.op_creds.xtime.tv_sec;
 	int err;
 
 	silofs_namestr_init(&name, fse->fs_args.fsname);
@@ -895,7 +899,7 @@ static int fse_format_super(struct silofs_fs_env *fse,
 		log_err("internal sb format: err=%d", err);
 		return err;
 	}
-	silofs_sbi_update_birth_time(sbi, op->op_xtime.tv_sec);
+	silofs_sbi_update_birth_time(sbi, btime);
 	silofs_apex_bind_to_sbi(fse->fs_apex, sbi);
 	return 0;
 }
@@ -915,10 +919,10 @@ static int fse_format_repo(struct silofs_fs_env *fse)
 
 int silofs_fse_format_repo(struct silofs_fs_env *fse)
 {
-	struct silofs_oper op;
+	struct silofs_fs_ctx fsc;
 	int err;
 
-	err = fse_make_oper_self(fse, &op);
+	err = fse_make_self_ctx(fse, &fsc);
 	if (err) {
 		return err;
 	}
@@ -935,10 +939,10 @@ int silofs_fse_format_repo(struct silofs_fs_env *fse)
 
 int silofs_fse_format_fs(struct silofs_fs_env *fse)
 {
-	struct silofs_oper op;
+	struct silofs_fs_ctx fsc;
 	int err;
 
-	err = fse_make_oper_self(fse, &op);
+	err = fse_make_self_ctx(fse, &fsc);
 	if (err) {
 		return err;
 	}
@@ -950,11 +954,11 @@ int silofs_fse_format_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_format_super(fse, &op);
+	err = fse_format_super(fse, &fsc);
 	if (err) {
 		return err;
 	}
-	err = fse_format_fs_meta(fse, &op);
+	err = fse_format_fs_meta(fse, &fsc);
 	if (err) {
 		return err;
 	}

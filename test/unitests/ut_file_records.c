@@ -269,4 +269,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_file_records_rand_unaligned2),
 };
 
-const struct ut_tests ut_test_file_records = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_file_records = UT_MKTESTS(ut_local_tests);

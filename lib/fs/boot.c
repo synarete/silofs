@@ -136,21 +136,6 @@ static void bsec4k_set_btime(struct silofs_bootsec4k *bsc, time_t tm)
 	bsc->bs_btime = silofs_cpu_to_le64((uint64_t)tm);
 }
 
-static enum silofs_bootf bsec4k_flags(const struct silofs_bootsec4k *bsc)
-{
-	const uint64_t f = silofs_le64_to_cpu(bsc->bs_flags);
-
-	return (enum silofs_bootf)f;
-}
-
-static void bsec4k_set_flags(struct silofs_bootsec4k *bsc,
-                             enum silofs_bootf flags)
-{
-	const uint64_t f = (uint64_t)flags;
-
-	bsc->bs_flags = silofs_cpu_to_le64(f);
-}
-
 static void bsec4k_name(const struct silofs_bootsec4k *bsc,
                         struct silofs_namebuf *nb)
 {
@@ -210,16 +195,28 @@ void silofs_bsec4k_fini(struct silofs_bootsec4k *bsc)
 	silofs_memffff(bsc, sizeof(*bsc));
 }
 
-static void bsec4k_sb_ref(const struct silofs_bootsec4k *bsc,
-                          struct silofs_uaddr *out_uaddr)
+static void bsec4k_sb_uaddr(const struct silofs_bootsec4k *bsc,
+                            struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_parse(&bsc->bs_sb_ref, out_uaddr);
+	silofs_uaddr64b_parse(&bsc->bs_sb_uaddr, out_uaddr);
 }
 
-static void bsec4k_set_sb_ref(struct silofs_bootsec4k *bsc,
-                              const struct silofs_uaddr *uaddr)
+static void bsec4k_set_sb_uaddr(struct silofs_bootsec4k *bsc,
+                                const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&bsc->bs_sb_ref, uaddr);
+	silofs_uaddr64b_set(&bsc->bs_sb_uaddr, uaddr);
+}
+
+static void bsec4k_sb_packid(const struct silofs_bootsec4k *bsc,
+                             struct silofs_packid *out_packid)
+{
+	silofs_packid64b_parse(&bsc->bs_sb_packid, out_packid);
+}
+
+static void bsec4k_set_sb_packid(struct silofs_bootsec4k *bsc,
+                                 const struct silofs_packid *packid)
+{
+	silofs_packid64b_set(&bsc->bs_sb_packid, packid);
 }
 
 static int bsec4k_check_base(const struct silofs_bootsec4k *bsc)
@@ -323,23 +320,23 @@ int silofs_bsec4k_verify(const struct silofs_bootsec4k *bsc,
 void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
                          struct silofs_bootsec *bsec)
 {
-	bsec4k_sb_ref(bsc, &bsec->sb_uaddr);
+	bsec4k_sb_uaddr(bsc, &bsec->sb_uaddr);
+	bsec4k_sb_packid(bsc, &bsec->sb_packid);
 	bsec4k_uuid(bsc, &bsec->uuid);
 	bsec4k_name(bsc, &bsec->name);
 	bsec4k_cipher_args(bsc, &bsec->cip_args);
 	bsec->btime = bsec4k_btime(bsc);
-	bsec->bootf = bsec4k_flags(bsc);
 }
 
 void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
                        const struct silofs_bootsec *bsec)
 {
 	silofs_bsec4k_init(bsc);
-	bsec4k_set_sb_ref(bsc, &bsec->sb_uaddr);
+	bsec4k_set_sb_uaddr(bsc, &bsec->sb_uaddr);
+	bsec4k_set_sb_packid(bsc, &bsec->sb_packid);
 	bsec4k_set_uuid(bsc, &bsec->uuid);
 	bsec4k_set_name(bsc, &bsec->name);
 	bsec4k_set_btime(bsc, bsec->btime);
-	bsec4k_set_flags(bsc, bsec->bootf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -347,16 +344,16 @@ void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
 void silofs_bootsec_init(struct silofs_bootsec *bsec)
 {
 	silofs_memzero(bsec, sizeof(*bsec));
+	silofs_uaddr_reset(&bsec->sb_uaddr);
+	silofs_packid_reset(&bsec->sb_packid);
 	silofs_default_cip_args(&bsec->cip_args);
 	silofs_uuid_generate(&bsec->uuid);
 	bsec->btime = silofs_time_now();
-	bsec->bootf = SILOFS_BOOTF_ACTIVE;
 }
 
 void silofs_bootsec_fini(struct silofs_bootsec *bsec)
 {
 	silofs_memffff(bsec, sizeof(*bsec));
-	bsec->bootf = SILOFS_BOOTF_NONE;
 }
 
 void silofs_bootsec_name(const struct silofs_bootsec *bsec,
@@ -377,11 +374,18 @@ bool silofs_bootsec_has_name(const struct silofs_bootsec *bsec,
 	return silofs_namebuf_isequal(&bsec->name, name);
 }
 
-void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
-                                 const struct silofs_uaddr *sb_uaddr)
+void silofs_bootsec_set_uaddr(struct silofs_bootsec *bsec,
+                              const struct silofs_uaddr *sb_uaddr)
 {
 	silofs_uaddr_assign(&bsec->sb_uaddr, sb_uaddr);
 }
+
+void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
+                               const struct silofs_packid *sb_packid)
+{
+	silofs_packid_assign(&bsec->sb_packid, sb_packid);
+}
+
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

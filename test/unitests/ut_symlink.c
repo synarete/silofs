@@ -349,4 +349,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_symlink_stat),
 };
 
-const struct ut_tests ut_test_symlink = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_symlink = UT_MKTESTS(ut_local_tests);

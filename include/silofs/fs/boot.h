@@ -50,8 +50,11 @@ void silofs_bootsec_set_name(struct silofs_bootsec *bsec,
 bool silofs_bootsec_has_name(const struct silofs_bootsec *bsec,
                              const struct silofs_namestr *name);
 
-void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
-                                 const struct silofs_uaddr *sb_uaddr);
+void silofs_bootsec_set_uaddr(struct silofs_bootsec *bsec,
+                              const struct silofs_uaddr *sb_uaddr);
+
+void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
+                               const struct silofs_packid *sb_packid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

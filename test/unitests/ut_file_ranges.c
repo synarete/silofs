@@ -269,4 +269,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_file_xranges),
 };
 
-const struct ut_tests ut_test_file_ranges = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_file_ranges = UT_MKTESTS(ut_local_tests);

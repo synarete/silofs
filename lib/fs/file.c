@@ -53,12 +53,12 @@
 
 
 struct silofs_file_ctx {
-	const struct silofs_oper *op;
-	struct silofs_fs_apex    *apex;
-	struct silofs_sb_info    *sbi;
-	struct silofs_inode_info *ii;
-	struct silofs_rwiter_ctx *rwi_ctx;
-	struct fiemap *fm;
+	const struct silofs_fs_ctx     *fs_ctx;
+	struct silofs_fs_apex          *apex;
+	struct silofs_sb_info          *sbi;
+	struct silofs_inode_info       *ii;
+	struct silofs_rwiter_ctx       *rwi_ctx;
+	struct fiemap                  *fm;
 	size_t  len;
 	loff_t  beg;
 	loff_t  off;
@@ -348,7 +348,7 @@ static int fiovec_by_blob(const struct silofs_file_ctx *f_ctx,
 	uva.uaddr.oaddr.pos += off_within;
 	uva.uaddr.oaddr.len = len;
 
-	err = silofs_repo_stage_blob(repo, &uva.uaddr.oaddr.bid, &bli);
+	err = silofs_repo_stage_blob(repo, &uva.uaddr.oaddr.blobid, &bli);
 	if (err) {
 		return err;
 	}
@@ -943,7 +943,7 @@ static size_t fic_io_length(const struct silofs_file_ctx *f_ctx)
 static bool fic_has_more_io(const struct silofs_file_ctx *f_ctx)
 {
 	return (f_ctx->off < f_ctx->end) &&
-	       !f_ctx->fm_stop && !f_ctx->op->op_interrupt;
+	       !f_ctx->fm_stop && !f_ctx->fs_ctx->fsc_interrupt;
 }
 
 static bool fic_has_head1_leaves_io(const struct silofs_file_ctx *f_ctx)
@@ -1261,7 +1261,7 @@ fic_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 	const loff_t end = f_ctx->end;
 	const size_t len = fic_io_length(f_ctx);
 
-	iattr_setup(&iattr, ii_ino(ii));
+	silofs_iattr_setup(&iattr, ii_ino(ii));
 	if (f_ctx->op_mask & OP_READ) {
 		iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	} else if (f_ctx->op_mask & (OP_WRITE | OP_COPY_RANGE)) {
@@ -1294,7 +1294,7 @@ fic_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 			}
 		}
 	}
-	update_iattrs(f_ctx->op, ii, &iattr);
+	ii_update_iattrs(ii, &f_ctx->fs_ctx->fsc_oper.op_creds, &iattr);
 }
 
 static int
@@ -1991,12 +1991,12 @@ static int fic_read_iter(struct silofs_file_ctx *f_ctx)
 	return ret;
 }
 
-int silofs_do_read_iter(const struct silofs_oper *op,
+int silofs_do_read_iter(const struct silofs_fs_ctx *fsc,
                         struct silofs_inode_info *ii,
                         struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
-		.op = op,
+		.fs_ctx = fsc,
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
@@ -2009,7 +2009,7 @@ int silofs_do_read_iter(const struct silofs_oper *op,
 	return fic_read_iter(&f_ctx);
 }
 
-int silofs_do_read(const struct silofs_oper *op,
+int silofs_do_read(const struct silofs_fs_ctx *fsc,
                    struct silofs_inode_info *ii,
                    void *buf, size_t len, loff_t off, size_t *out_len)
 {
@@ -2023,7 +2023,7 @@ int silofs_do_read(const struct silofs_oper *op,
 		.dat_max = len,
 	};
 	struct silofs_file_ctx f_ctx = {
-		.op = op,
+		.fs_ctx = fsc,
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
@@ -2153,7 +2153,9 @@ static void fic_update_tree_root(const struct silofs_file_ctx *f_ctx,
 static void fic_update_iattr_blocks(const struct silofs_file_ctx *f_ctx,
                                     const struct silofs_vaddr *vaddr, long dif)
 {
-	update_iblocks(f_ctx->op, f_ctx->ii, vaddr_stype(vaddr), dif);
+	const struct silofs_creds *creds = &f_ctx->fs_ctx->fsc_oper.op_creds;
+
+	ii_update_iblocks(f_ctx->ii, creds, vaddr_stype(vaddr), dif);
 }
 
 static int fic_spawn_setup_finode(const struct silofs_file_ctx *f_ctx,
@@ -2647,14 +2649,14 @@ static int fic_write_iter(struct silofs_file_ctx *f_ctx)
 	return err;
 }
 
-int silofs_do_write_iter(const struct silofs_oper *op,
+int silofs_do_write_iter(const struct silofs_fs_ctx *fsc,
                          struct silofs_inode_info *ii,
                          struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
-		.op = op,
+		.fs_ctx = fsc,
 		.ii = ii,
 		.op_mask = OP_WRITE,
 		.with_backref = 1,
@@ -2665,7 +2667,7 @@ int silofs_do_write_iter(const struct silofs_oper *op,
 	return fic_write_iter(&f_ctx);
 }
 
-int silofs_do_write(const struct silofs_oper *op,
+int silofs_do_write(const struct silofs_fs_ctx *fsc,
                     struct silofs_inode_info *ii,
                     const void *buf, size_t len,
                     loff_t off, size_t *out_len)
@@ -2682,7 +2684,7 @@ int silofs_do_write(const struct silofs_oper *op,
 	struct silofs_file_ctx f_ctx = {
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
-		.op = op,
+		.fs_ctx = fsc,
 		.ii = ii,
 		.op_mask = OP_WRITE,
 		.with_backref = 0,
@@ -2708,14 +2710,14 @@ static int fic_rdwr_post(struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-int silofs_do_rdwr_post(const struct silofs_oper *op,
+int silofs_do_rdwr_post(const struct silofs_fs_ctx *fsc,
                         struct silofs_inode_info *ii,
                         const struct silofs_fiovec *fiov, size_t cnt)
 {
 	struct silofs_file_ctx f_ctx = {
-		.apex = op->op_apex,
-		.sbi = op->op_apex->ap_sbi,
-		.op = op,
+		.apex = fsc->fsc_apex,
+		.sbi = fsc->fsc_apex->ap_sbi,
+		.fs_ctx = fsc,
 		.ii = ii, /* special case: ii may be NULL */
 		.op_mask = OP_RW_POST,
 
@@ -3170,13 +3172,13 @@ out:
 	return ret;
 }
 
-int silofs_do_truncate(const struct silofs_oper *op,
+int silofs_do_truncate(const struct silofs_fs_ctx *fs_ctx,
                        struct silofs_inode_info *ii, loff_t off)
 {
 	const loff_t isp = ii_span(ii);
 	const size_t len = (off < isp) ? off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
-		.op = op,
+		.fs_ctx = fs_ctx,
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
@@ -3290,12 +3292,12 @@ out:
 	return ret;
 }
 
-int silofs_do_lseek(const struct silofs_oper *op,
+int silofs_do_lseek(const struct silofs_fs_ctx *fsc,
                     struct silofs_inode_info *ii,
                     loff_t off, int whence, loff_t *out_off)
 {
 	struct silofs_file_ctx f_ctx = {
-		.op = op,
+		.fs_ctx = fsc,
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
@@ -3513,13 +3515,13 @@ out:
 	return ret;
 }
 
-int silofs_do_fallocate(const struct silofs_oper *op,
+int silofs_do_fallocate(const struct silofs_fs_ctx *fsc,
                         struct silofs_inode_info *ii,
                         int mode, loff_t off, loff_t length)
 {
 	const size_t len = (size_t)length;
 	struct silofs_file_ctx f_ctx = {
-		.op = op,
+		.fs_ctx = fsc,
 		.apex = ii_apex(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
@@ -3702,14 +3704,14 @@ static loff_t ii_off_end(const struct silofs_inode_info *ii,
 	return off_min(end, isz);
 }
 
-int silofs_do_fiemap(const struct silofs_oper *op,
+int silofs_do_fiemap(const struct silofs_fs_ctx *fsc,
                      struct silofs_inode_info *ii, struct fiemap *fm)
 {
 	const loff_t off = (loff_t)fm->fm_start;
 	const size_t len = (size_t)fm->fm_length;
 	struct silofs_file_ctx f_ctx = {
-		.op = op,
-		.apex = ii_apex(ii),
+		.fs_ctx = fsc,
+		.apex = fsc->fsc_apex,
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.len = len,
@@ -4083,14 +4085,14 @@ out:
 	return ret;
 }
 
-int silofs_do_copy_file_range(const struct silofs_oper *op,
+int silofs_do_copy_file_range(const struct silofs_fs_ctx *fsc,
                               struct silofs_inode_info *ii_in,
                               struct silofs_inode_info *ii_out,
                               loff_t off_in, loff_t off_out, size_t len,
                               int flags, size_t *out_ncp)
 {
 	struct silofs_file_ctx f_ctx_in = {
-		.op = op,
+		.fs_ctx = fsc,
 		.apex = ii_apex(ii_in),
 		.sbi = ii_sbi(ii_in),
 		.ii = ii_in,
@@ -4104,7 +4106,7 @@ int silofs_do_copy_file_range(const struct silofs_oper *op,
 		.stg_flags = SILOFS_STAGE_RDONLY,
 	};
 	struct silofs_file_ctx f_ctx_out = {
-		.op = op,
+		.fs_ctx = fsc,
 		.apex = ii_apex(ii_out),
 		.sbi = ii_sbi(ii_out),
 		.ii = ii_out,

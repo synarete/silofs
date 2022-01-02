@@ -132,9 +132,9 @@ static void vbi_free(struct silofs_vbk_info *vbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t hash_of_blobid(const struct silofs_blobid *bid)
+static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 {
-	return silofs_blobid_hkey(bid);
+	return silofs_blobid_hkey(blobid);
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
@@ -146,7 +146,7 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
-	return  hash_of_blobid(&oaddr->bid) ^
+	return  hash_of_blobid(&oaddr->blobid) ^
 	        (((uint64_t)(oaddr->pos) << 17) + oaddr->len);
 }
 
@@ -205,7 +205,7 @@ static long ckey_compare_as_vaddr(const struct silofs_ckey *ckey1,
 static long ckey_compare_as_blobid(const struct silofs_ckey *ckey1,
                                    const struct silofs_ckey *ckey2)
 {
-	return silofs_blobid_compare(ckey1->keyu.bid, ckey2->keyu.bid);
+	return silofs_blobid_compare(ckey1->keyu.blobid, ckey2->keyu.blobid);
 }
 
 static long ckey_compare_as_voff(const struct silofs_ckey *ckey1,
@@ -257,9 +257,9 @@ static bool ckey_isequal(const struct silofs_ckey *ckey1,
 }
 
 void silofs_ckey_by_blobid(struct silofs_ckey *ckey,
-                           const struct silofs_blobid *bid)
+                           const struct silofs_blobid *blobid)
 {
-	ckey_setup(ckey, SILOFS_CKEY_BLOBID, bid, hash_of_blobid(bid));
+	ckey_setup(ckey, SILOFS_CKEY_BLOBID, blobid, hash_of_blobid(blobid));
 }
 
 static void ckey_by_oaddr(struct silofs_ckey *ckey,
@@ -578,9 +578,9 @@ static void bli_free(struct silofs_blob_info *bli,
 }
 
 static void bli_init(struct silofs_blob_info *bli,
-                     const struct silofs_blobid *bid)
+                     const struct silofs_blobid *blobid)
 {
-	silofs_bli_init(bli, bid);
+	silofs_bli_init(bli, blobid);
 }
 
 static void bli_fini(struct silofs_blob_info *bli)
@@ -1108,7 +1108,7 @@ static void cache_undirtify_vi(struct silofs_cache *cache,
 
 static struct silofs_blob_info *
 cache_new_bli(const struct silofs_cache *cache,
-              const struct silofs_blobid *bid)
+              const struct silofs_blobid *blobid)
 {
 	struct silofs_blob_info *bli;
 
@@ -1116,7 +1116,7 @@ cache_new_bli(const struct silofs_cache *cache,
 	if (bli == NULL) {
 		return NULL;
 	}
-	bli_init(bli, bid);
+	bli_init(bli, blobid);
 	return bli;
 }
 
@@ -1140,12 +1140,12 @@ static void cache_fini_bli_lm(struct silofs_cache *cache)
 
 static struct silofs_blob_info *
 cache_find_bli(const struct silofs_cache *cache,
-               const struct silofs_blobid *bid)
+               const struct silofs_blobid *blobid)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
 
-	silofs_ckey_by_blobid(&ckey, bid);
+	silofs_ckey_by_blobid(&ckey, blobid);
 	ce = lrumap_find(&cache->c_bli_lm, &ckey);
 	return bli_from_ce(ce);
 }
@@ -1172,11 +1172,11 @@ static void cache_evict_bli(struct silofs_cache *cache,
 }
 
 static struct silofs_blob_info *
-cache_spawn_bli(struct silofs_cache *cache, const struct silofs_blobid *bid)
+cache_spawn_bli(struct silofs_cache *cache, const struct silofs_blobid *blobid)
 {
 	struct silofs_blob_info *bli;
 
-	bli = cache_new_bli(cache, bid);
+	bli = cache_new_bli(cache, blobid);
 	if (bli == NULL) {
 		return NULL;
 	}
@@ -1186,11 +1186,11 @@ cache_spawn_bli(struct silofs_cache *cache, const struct silofs_blobid *bid)
 
 static struct silofs_blob_info *
 cache_find_relru_bli(struct silofs_cache *cache,
-                     const struct silofs_blobid *bid)
+                     const struct silofs_blobid *blobid)
 {
 	struct silofs_blob_info *bli;
 
-	bli = cache_find_bli(cache, bid);
+	bli = cache_find_bli(cache, blobid);
 	if (bli != NULL) {
 		cache_promote_lru_bli(cache, bli);
 	}
@@ -1199,22 +1199,22 @@ cache_find_relru_bli(struct silofs_cache *cache,
 
 struct silofs_blob_info *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
-                         const struct silofs_blobid *bid)
+                         const struct silofs_blobid *blobid)
 {
-	return cache_find_relru_bli(cache, bid);
+	return cache_find_relru_bli(cache, blobid);
 }
 
 static struct silofs_blob_info *
 cache_find_or_spawn_bli(struct silofs_cache *cache,
-                        const struct silofs_blobid *bid)
+                        const struct silofs_blobid *blobid)
 {
 	struct silofs_blob_info *bli;
 
-	bli = cache_find_relru_bli(cache, bid);
+	bli = cache_find_relru_bli(cache, blobid);
 	if (bli != NULL) {
 		return bli;
 	}
-	bli = cache_spawn_bli(cache, bid);
+	bli = cache_spawn_bli(cache, blobid);
 	if (bli == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -1251,14 +1251,15 @@ cache_find_evictable_bli(struct silofs_cache *cache)
 }
 
 static struct silofs_blob_info *
-cache_require_bli(struct silofs_cache *cache, const struct silofs_blobid *bid)
+cache_require_bli(struct silofs_cache *cache,
+                  const struct silofs_blobid *blobid)
 {
 	int retry = CACHE_RETRY;
 	struct silofs_blob_info *bli = NULL;
 
 	while (retry-- > 0) {
-		bli = cache_find_or_spawn_bli(cache, bid);
-		if (bid != NULL) {
+		bli = cache_find_or_spawn_bli(cache, blobid);
+		if (blobid != NULL) {
 			break;
 		}
 		cache_evict_some(cache);
@@ -1268,9 +1269,9 @@ cache_require_bli(struct silofs_cache *cache, const struct silofs_blobid *bid)
 
 struct silofs_blob_info *
 silofs_cache_spawn_blob(struct silofs_cache *cache,
-                        const struct silofs_blobid *bid)
+                        const struct silofs_blobid *blobid)
 {
-	return cache_require_bli(cache, bid);
+	return cache_require_bli(cache, blobid);
 }
 
 void silofs_cache_evict_blob(struct silofs_cache *cache,
@@ -1608,7 +1609,7 @@ silofs_cache_lookup_ubk(struct silofs_cache *cache,
 {
 	struct silofs_oaddr bk_oaddr;
 
-	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->bid, oaddr_lba(oaddr));
+	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->blobid, oaddr_lba(oaddr));
 	return cache_find_relru_ubi(cache, &bk_oaddr);
 }
 
@@ -1618,7 +1619,7 @@ silofs_cache_spawn_ubk(struct silofs_cache *cache,
 {
 	struct silofs_oaddr bk_oaddr;
 
-	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->bid, oaddr_lba(oaddr));
+	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->blobid, oaddr_lba(oaddr));
 	return cache_require_ubi(cache, &bk_oaddr);
 }
 

@@ -50,6 +50,7 @@ Development files for silofs
 %{_sbindir}/*.%{name}
 %exclude %{_bindir}/%{name}-unitests
 %exclude %{_libdir}/lib%{name}*.la
+%exclude %{_bindir}/smoketests.sh
 %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man8/%{name}-*.8*

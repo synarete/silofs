@@ -78,26 +78,11 @@ struct silofs_subcmd_umount {
 	bool    lazy;
 };
 
-/* arguments for 'clone' sub-command */
-struct silofs_subcmd_clone {
+/* arguments for 'snap' sub-command */
+struct silofs_subcmd_snap {
 	char   *name;
 	char   *dirpath;
 	char   *dirpath_real;
-};
-
-/* arguments for 'rmfs' sub-command */
-struct silofs_subcmd_rmfs {
-	char   *name;
-	char   *dirpath;
-	char   *dirpath_real;
-};
-
-/* arguments for 'lsfs' sub-command */
-struct silofs_subcmd_lsfs {
-	char   *pathname;
-	char   *pathname_real;
-	char   *repodir_real;
-	bool    full;
 };
 
 /* arguments for 'lsmnt' sub-command */
@@ -120,7 +105,8 @@ struct silofs_subcmd_archive {
 	char   *passphrase_file;
 	char   *repodir;
 	char   *repodir_real;
-	char   *name;
+	char   *source_name;
+	char   *target_name;
 };
 
 /* arguments for 'archive' sub-command */
@@ -150,9 +136,7 @@ union silofs_subcmd_args {
 	struct silofs_subcmd_mount      mount;
 	struct silofs_subcmd_umount     umount;
 	struct silofs_subcmd_show       show;
-	struct silofs_subcmd_clone      clone;
-	struct silofs_subcmd_rmfs       rmfs;
-	struct silofs_subcmd_lsfs       lsfs;
+	struct silofs_subcmd_snap       snap;
 	struct silofs_subcmd_lsmnt      lsmnt;
 	struct silofs_subcmd_archive    archive;
 	struct silofs_subcmd_restore    restore;
@@ -223,11 +207,7 @@ void silofs_execute_umount(void);
 
 void silofs_execute_show(void);
 
-void silofs_execute_clone(void);
-
-void silofs_execute_rmfs(void);
-
-void silofs_execute_lsfs(void);
+void silofs_execute_snap(void);
 
 void silofs_execute_lsmnt(void);
 
@@ -267,6 +247,8 @@ void silofs_die_if_not_reg(const char *path, bool w_ok);
 void silofs_die_if_not_dir_or_reg(const char *path);
 
 void silofs_die_if_exists(const char *path);
+
+void silofs_die_if_not_mkdir(const char *path, mode_t mode);
 
 void silofs_die_if_no_mountd(void);
 
@@ -312,11 +294,9 @@ void silofs_init_process(void);
 
 void silofs_set_verbose_mode(const char *mode);
 
-void silofs_show_help_and_exit(const char **help_strings);
+void silofs_print_help_and_exit(const char **help_strings);
 
-void silofs_show_version_and_exit(const char *prog);
-
-void silofs_pretty_size(size_t n, char *buf, size_t bsz);
+void silofs_print_version_and_exit(const char *prog);
 
 
 void *silofs_cmd_zalloc(size_t n);

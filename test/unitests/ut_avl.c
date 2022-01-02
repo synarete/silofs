@@ -514,6 +514,6 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_avl_remove_range),
 };
 
-const struct ut_tests ut_test_avl = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_avl = UT_MKTESTS(ut_local_tests);
 
 

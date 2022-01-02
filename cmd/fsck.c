@@ -48,9 +48,9 @@ static void fsck_getopt(void)
 			break;
 		}
 		if (c == 'v') {
-			silofs_show_version_and_exit(NULL);
+			silofs_print_version_and_exit(NULL);
 		} else if (c == 'h') {
-			silofs_show_help_and_exit(silofs_fsck_usage);
+			silofs_print_help_and_exit(silofs_fsck_usage);
 		} else {
 			silofs_die_unsupported_opt();
 		}

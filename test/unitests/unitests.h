@@ -100,8 +100,8 @@ struct ut_env {
 	struct silofs_prandgen   prng;
 	struct silofs_passphrase passph;
 	struct ut_args          *args;
-	struct silofs_fs_env    *fse;
-	struct silofs_oper       oper;
+	struct silofs_fs_env    *fs_env;
+	struct silofs_fs_ctx     fs_ctx;
 	struct timespec          ts_start;
 	struct statvfs           stvfs_start;
 	struct ut_malloc_chunk  *malloc_list;
@@ -116,20 +116,20 @@ struct ut_dvec {
 	uint8_t dat[8];
 };
 
-typedef void (*ut_hook_fn)(struct ut_env *);
+typedef void (*ut_test_hook_fn)(struct ut_env *);
 
 struct ut_testdef {
-	ut_hook_fn hook;
+	ut_test_hook_fn hook;
 	const char *name;
 };
 
-struct ut_tests {
+struct ut_testdefs {
 	const struct ut_testdef *arr;
 	size_t len;
 };
 
 struct ut_tgroup {
-	const struct ut_tests *tests;
+	const struct ut_testdefs *tests;
 	const char *name;
 };
 
@@ -148,35 +148,36 @@ struct ut_globals {
 extern struct ut_globals ut_globals;
 
 /* modules unit-tests entry-points */
-extern const struct ut_tests ut_test_avl;
-extern const struct ut_tests ut_test_base64;
-extern const struct ut_tests ut_test_strings;
-extern const struct ut_tests ut_test_qalloc;
-extern const struct ut_tests ut_test_super;
-extern const struct ut_tests ut_test_dir;
-extern const struct ut_tests ut_test_dir_iter;
-extern const struct ut_tests ut_test_dir_list;
-extern const struct ut_tests ut_test_namei;
-extern const struct ut_tests ut_test_rename;
-extern const struct ut_tests ut_test_symlink;
-extern const struct ut_tests ut_test_xattr;
-extern const struct ut_tests ut_test_ioctl;
-extern const struct ut_tests ut_test_file_basic;
-extern const struct ut_tests ut_test_file_stat;
-extern const struct ut_tests ut_test_file_rwiter;
-extern const struct ut_tests ut_test_file_ranges;
-extern const struct ut_tests ut_test_file_truncate;
-extern const struct ut_tests ut_test_file_records;
-extern const struct ut_tests ut_test_file_random;
-extern const struct ut_tests ut_test_file_edges;
-extern const struct ut_tests ut_test_file_fallocate;
-extern const struct ut_tests ut_test_file_fiemap;
-extern const struct ut_tests ut_test_file_lseek;
-extern const struct ut_tests ut_test_file_copy_range;
-extern const struct ut_tests ut_test_reload;
-extern const struct ut_tests ut_test_fillfs;
-extern const struct ut_tests ut_test_clone_basic;
-extern const struct ut_tests ut_test_clone_io;
+extern const struct ut_testdefs ut_tdefs_avl;
+extern const struct ut_testdefs ut_tdefs_base64;
+extern const struct ut_testdefs ut_tdefs_strings;
+extern const struct ut_testdefs ut_tdefs_qalloc;
+extern const struct ut_testdefs ut_tdefs_super;
+extern const struct ut_testdefs ut_tdefs_dir;
+extern const struct ut_testdefs ut_tdefs_dir_iter;
+extern const struct ut_testdefs ut_tdefs_dir_list;
+extern const struct ut_testdefs ut_tdefs_namei;
+extern const struct ut_testdefs ut_tdefs_rename;
+extern const struct ut_testdefs ut_tdefs_symlink;
+extern const struct ut_testdefs ut_tdefs_xattr;
+extern const struct ut_testdefs ut_tdefs_ioctl;
+extern const struct ut_testdefs ut_tdefs_file_basic;
+extern const struct ut_testdefs ut_tdefs_file_stat;
+extern const struct ut_testdefs ut_tdefs_file_rwiter;
+extern const struct ut_testdefs ut_tdefs_file_ranges;
+extern const struct ut_testdefs ut_tdefs_file_truncate;
+extern const struct ut_testdefs ut_tdefs_file_records;
+extern const struct ut_testdefs ut_tdefs_file_random;
+extern const struct ut_testdefs ut_tdefs_file_edges;
+extern const struct ut_testdefs ut_tdefs_file_fallocate;
+extern const struct ut_testdefs ut_tdefs_file_fiemap;
+extern const struct ut_testdefs ut_tdefs_file_lseek;
+extern const struct ut_testdefs ut_tdefs_file_copy_range;
+extern const struct ut_testdefs ut_tdefs_reload;
+extern const struct ut_testdefs ut_tdefs_fillfs;
+extern const struct ut_testdefs ut_tdefs_snap_basic;
+extern const struct ut_testdefs ut_tdefs_snap_io;
+extern const struct ut_testdefs ut_tdefs_pack_basic;
 
 /* exec */
 void ut_execute_tests(void);
@@ -426,11 +427,13 @@ void ut_removexattr_all(struct ut_env *ute, ino_t ino,
 void ut_query_ok(struct ut_env *ute, ino_t ino,
                  struct silofs_ioc_query *out_qry);
 
-void ut_clone_ok(struct ut_env *ute, ino_t ino, const char *name);
+void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name);
 
 void ut_unrefs_ok(struct ut_env *ute, ino_t ino, const char *name);
 
-void ut_prune_ok(struct ut_env *ute, ino_t ino);
+void ut_inspect_ok(struct ut_env *ute, ino_t ino);
+
+void ut_pack_ok(struct ut_env *ute, const char *name);
 
 void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm);
 

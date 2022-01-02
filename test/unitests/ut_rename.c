@@ -387,4 +387,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_rename_override),
 };
 
-const struct ut_tests ut_test_rename = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_rename = UT_MKTESTS(ut_local_tests);

@@ -153,13 +153,14 @@ struct silofs_fileaf_info {
 struct silofs_sb_info *
 silofs_sbi_from_ui(const struct silofs_unode_info *ui);
 
-
-struct silofs_spnode_info *silofs_sni_from_ui(struct silofs_unode_info *ui);
+struct silofs_spnode_info *
+silofs_sni_from_ui(const struct silofs_unode_info *ui);
 
 void silofs_sni_rebind_view(struct silofs_spnode_info *sni);
 
 
-struct silofs_spleaf_info *silofs_sli_from_ui(struct silofs_unode_info *ui);
+struct silofs_spleaf_info *
+silofs_sli_from_ui(const struct silofs_unode_info *ui);
 
 void silofs_sli_rebind_view(struct silofs_spleaf_info *sli);
 
@@ -206,6 +207,8 @@ silofs_vi_from_ti(const struct silofs_tnode_info *ti);
 bool silofs_vi_isdata(const struct silofs_vnode_info *vi);
 
 void silofs_vi_seal_meta(const struct silofs_vnode_info *vi);
+
+void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi);
 
 
 struct silofs_unode_info *

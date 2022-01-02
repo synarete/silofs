@@ -12,11 +12,10 @@ cd "${base}" || exit 1
 gittop=$(git rev-parse --show-toplevel > /dev/null 2>&1 && print "git-repo")
 
 if [ -n "${gittop}" ]; then
-  gitrevision=$(git rev-parse --short=7 HEAD)
-  gitdirty=$(git diff --quiet || echo '+')
+  gitrevision=$(git describe --abbrev=7 --always --dirty=+)
+  # gitrevision=$(git rev-parse --short=7 HEAD)
 else
   gitrevision=""
-  gitdirty=""
 fi
 
 version=${SILOFS_VERSION:-1}
@@ -34,7 +33,7 @@ fi
 
 revision=${SILOFS_REVISION:-1}
 if [ -n "${gitrevision}" ]; then
-  revision=${gitrevision}${gitdirty}
+  revision=${gitrevision}
 fi
 
 

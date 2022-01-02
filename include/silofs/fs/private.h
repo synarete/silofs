@@ -104,6 +104,7 @@
 #define stype_ssize(st)                 silofs_stype_ssize(st)
 #define stype_isequal(st1, st2)         silofs_stype_isequal(st1, st2)
 #define stype_isnone(st)                silofs_stype_isnone(st)
+#define stype_issuper(st)               silofs_stype_issuper(st)
 #define stype_isspnode(st)              silofs_stype_isspnode(st)
 #define stype_isspleaf(st)              silofs_stype_isspleaf(st)
 #define stype_isitnode(st)              silofs_stype_isitnode(st)
@@ -112,11 +113,15 @@
 #define stype_isdata(st)                silofs_stype_isdata(st)
 #define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
-#define metaid_isequal(m1, m2)          silofs_metaid_isequal(m1, m2)
+#define packid_isnull(pid)              silofs_packid_isnull(pid)
+#define packid_reset(pid)               silofs_packid_reset(pid)
+#define packid_setup(pid, bid)          silofs_packid_setup(pid, bid)
+#define packid_assign(pid, oth)         silofs_packid_assign(pid, oth)
 
 #define blobid_reset(bid)               silofs_blobid_reset(bid)
 #define blobid_assign(bid, oth)         silofs_blobid_assign(bid, oth)
 #define blobid_isequal(bid, oth)        silofs_blobid_isequal(bid, oth)
+#define blobid_isnull(bid)              silofs_blobid_isnull(bid)
 #define blobid_size(bid)                silofs_blobid_size(bid)
 
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
@@ -130,6 +135,8 @@
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
+#define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
+#define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 
 #define vaddr_none()                    silofs_vaddr_none()
 #define vaddr_off(va)                   silofs_vaddr_off(va)
@@ -202,6 +209,11 @@
 #define ii_islnk(ii)                    silofs_ii_islnk(ii)
 #define ii_isfifo(ii)                   silofs_ii_isfifo(ii)
 #define ii_issock(ii)                   silofs_ii_issock(ii)
+#define ii_update_itimes(ii, cr, f)     silofs_ii_update_itimes(ii, cr, f)
+#define ii_update_iattrs(ii, cr, a)     silofs_ii_update_iattrs(ii, cr, a)
+#define ii_update_isize(ii, cr, sz)     silofs_ii_update_isize(ii, cr, sz)
+#define ii_update_iblocks(ii, cr, vt, d) \
+	silofs_ii_update_iblocks(ii, cr, vt, d)
 
 #define uid_eq(uid1, uid2)              silofs_uid_eq(uid1, uid2)
 #define uid_isroot(uid)                 silofs_uid_isroot(uid)
@@ -224,11 +236,5 @@
 #define lba_isequal(lba1, lba2)         silofs_lba_isequal(lba1, lba2)
 #define lba_isnull(lba)                 silofs_lba_isnull(lba)
 #define lba_to_off(lba)                 silofs_lba_to_off(lba)
-
-#define iattr_setup(ia, ino)            silofs_iattr_setup(ia, ino)
-#define update_itimes(op, ii, f)        silofs_update_itimes(op, ii, f)
-#define update_iattrs(op, ii, a)        silofs_update_iattrs(op, ii, a)
-#define update_isize(op, ii, sz)        silofs_update_isize(op, ii, sz)
-#define update_iblocks(op, ii, vt, d)   silofs_update_iblocks(op, ii, vt, d)
 
 #endif /* SILOFS_PRIVATE_H_ */

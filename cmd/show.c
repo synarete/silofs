@@ -41,7 +41,7 @@ static void show_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("h", opts);
 		if (opt_chr == 'h') {
-			silofs_show_help_and_exit(show_usage);
+			silofs_print_help_and_exit(show_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}

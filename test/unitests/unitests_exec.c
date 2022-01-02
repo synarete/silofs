@@ -21,35 +21,36 @@
 	{ .tests = &(t_), .name = SILOFS_STR(t_) }
 
 static struct ut_tgroup const g_ut_tgroups[] = {
-	UT_DEFTGRP(ut_test_strings),
-	UT_DEFTGRP(ut_test_avl),
-	UT_DEFTGRP(ut_test_base64),
-	UT_DEFTGRP(ut_test_qalloc),
-	UT_DEFTGRP(ut_test_super),
-	UT_DEFTGRP(ut_test_dir),
-	UT_DEFTGRP(ut_test_dir_iter),
-	UT_DEFTGRP(ut_test_dir_list),
-	UT_DEFTGRP(ut_test_namei),
-	UT_DEFTGRP(ut_test_rename),
-	UT_DEFTGRP(ut_test_symlink),
-	UT_DEFTGRP(ut_test_xattr),
-	UT_DEFTGRP(ut_test_ioctl),
-	UT_DEFTGRP(ut_test_file_basic),
-	UT_DEFTGRP(ut_test_file_stat),
-	UT_DEFTGRP(ut_test_file_rwiter),
-	UT_DEFTGRP(ut_test_file_ranges),
-	UT_DEFTGRP(ut_test_file_records),
-	UT_DEFTGRP(ut_test_file_random),
-	UT_DEFTGRP(ut_test_file_edges),
-	UT_DEFTGRP(ut_test_file_truncate),
-	UT_DEFTGRP(ut_test_file_fallocate),
-	UT_DEFTGRP(ut_test_file_lseek),
-	UT_DEFTGRP(ut_test_file_fiemap),
-	UT_DEFTGRP(ut_test_file_copy_range),
-	UT_DEFTGRP(ut_test_reload),
-	UT_DEFTGRP(ut_test_fillfs),
-	UT_DEFTGRP(ut_test_clone_basic),
-	UT_DEFTGRP(ut_test_clone_io),
+	UT_DEFTGRP(ut_tdefs_strings),
+	UT_DEFTGRP(ut_tdefs_avl),
+	UT_DEFTGRP(ut_tdefs_base64),
+	UT_DEFTGRP(ut_tdefs_qalloc),
+	UT_DEFTGRP(ut_tdefs_super),
+	UT_DEFTGRP(ut_tdefs_dir),
+	UT_DEFTGRP(ut_tdefs_dir_iter),
+	UT_DEFTGRP(ut_tdefs_dir_list),
+	UT_DEFTGRP(ut_tdefs_namei),
+	UT_DEFTGRP(ut_tdefs_rename),
+	UT_DEFTGRP(ut_tdefs_symlink),
+	UT_DEFTGRP(ut_tdefs_xattr),
+	UT_DEFTGRP(ut_tdefs_ioctl),
+	UT_DEFTGRP(ut_tdefs_file_basic),
+	UT_DEFTGRP(ut_tdefs_file_stat),
+	UT_DEFTGRP(ut_tdefs_file_rwiter),
+	UT_DEFTGRP(ut_tdefs_file_ranges),
+	UT_DEFTGRP(ut_tdefs_file_records),
+	UT_DEFTGRP(ut_tdefs_file_random),
+	UT_DEFTGRP(ut_tdefs_file_edges),
+	UT_DEFTGRP(ut_tdefs_file_truncate),
+	UT_DEFTGRP(ut_tdefs_file_fallocate),
+	UT_DEFTGRP(ut_tdefs_file_lseek),
+	UT_DEFTGRP(ut_tdefs_file_fiemap),
+	UT_DEFTGRP(ut_tdefs_file_copy_range),
+	UT_DEFTGRP(ut_tdefs_reload),
+	UT_DEFTGRP(ut_tdefs_fillfs),
+	UT_DEFTGRP(ut_tdefs_snap_basic),
+	UT_DEFTGRP(ut_tdefs_snap_io),
+	UT_DEFTGRP(ut_tdefs_pack_basic),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -88,10 +89,10 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 
 static void ute_cleanup(struct ut_env *ute)
 {
-	if (ute->fse != NULL) {
-		silofs_fse_term(ute->fse);
-		silofs_fse_del(ute->fse);
-		ute->fse = NULL;
+	if (ute->fs_env != NULL) {
+		silofs_fse_term(ute->fs_env);
+		silofs_fse_del(ute->fs_env);
+		ute->fs_env = NULL;
 	}
 }
 
@@ -116,7 +117,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fse_new(&ute->args->fs_args, &ute->fse);
+	err = silofs_fse_new(&ute->args->fs_args, &ute->fs_env);
 	silofs_assert_ok(err);
 }
 
@@ -173,7 +174,7 @@ static size_t ualloc_nbytes_now(const struct ut_env *ute)
 {
 	struct silofs_fs_stats st;
 
-	silofs_fse_stats(ute->fse, &st);
+	silofs_fse_stats(ute->fs_env, &st);
 	return st.nalloc_bytes;
 }
 
@@ -222,7 +223,7 @@ static void ut_exec_tests(struct ut_env *ute)
 static void ut_prep_tests(struct ut_env *ute)
 {
 	int err;
-	struct silofs_fs_env *fse = ute->fse;
+	struct silofs_fs_env *fse = ute->fs_env;
 
 	err = silofs_fse_format_repo(fse);
 	silofs_assert_ok(err);
@@ -253,7 +254,7 @@ static void ut_done_tests(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fse_term(ute->fse);
+	err = silofs_fse_term(ute->fs_env);
 	silofs_assert_ok(err);
 }
 

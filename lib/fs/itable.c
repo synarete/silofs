@@ -1586,10 +1586,10 @@ static int verify_itnode_childs(const struct silofs_itable_node *itn)
 
 static int verify_itnode_parent(const struct silofs_itable_node *itn)
 {
-	int err;
+	struct silofs_vaddr vaddr;
 	loff_t off;
 	enum silofs_stype stype;
-	struct silofs_vaddr vaddr;
+	int err;
 
 	itn_parent(itn, &vaddr);
 	if (vaddr_isnull(&vaddr)) {

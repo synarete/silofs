@@ -112,5 +112,5 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_statfs_files),
 };
 
-const struct ut_tests ut_test_super = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_super = UT_MKTESTS(ut_local_tests);
 

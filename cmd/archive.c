@@ -20,10 +20,11 @@
 static struct silofs_subcmd_archive *archive_args;
 
 static const char *archive_usage[] = {
-	"archive [options] <repository-path>",
+	"archive --source=NAME [options] <pathname>",
 	"",
 	"options:",
-	"  -n, --name=NAME              Private name",
+	"  -s, --source=NAME            Source name",
+	"  -t, --target=NAME            Target name",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..3)",
 	"  -P, --passphrase-file=PATH   Passphrase file (unsafe)",
 	NULL
@@ -34,22 +35,25 @@ static void archive_getopt(void)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "verbose", required_argument, NULL, 'V' },
-		{ "name", required_argument, NULL, 'n' },
+		{ "source", required_argument, NULL, 's' },
+		{ "target", required_argument, NULL, 't' },
 		{ "passphrase-file", required_argument, NULL, 'P' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("V:n:P:h", opts);
+		opt_chr = silofs_cmd_getopt("s:t:P:V:h", opts);
 		if (opt_chr == 'V') {
 			silofs_set_verbose_mode(optarg);
-		} else if (opt_chr == 'n') {
-			archive_args->name = optarg;
+		} else if (opt_chr == 's') {
+			archive_args->source_name = optarg;
+		} else if (opt_chr == 't') {
+			archive_args->target_name = optarg;
 		} else if (opt_chr == 'P') {
 			archive_args->passphrase_file = optarg;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(archive_usage);
+			silofs_print_help_and_exit(archive_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
@@ -84,7 +88,7 @@ static void archive_create_fs_env(void)
 {
 	const struct silofs_fs_args args = {
 		.repodir = archive_args->repodir,
-		.fsname = archive_args->name,
+		.fsname = archive_args->source_name,
 		.passwd = archive_args->passphrase,
 		.uid = getuid(),
 		.gid = getgid(),

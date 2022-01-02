@@ -150,7 +150,11 @@ void silofs_die_if_exists(const char *path)
 
 	err = silofs_sys_stat(path, &st);
 	if (!err) {
-		silofs_die(0, "file exists: %s", path);
+		if (S_ISDIR(st.st_mode)) {
+			silofs_die(0, "directory exists: %s", path);
+		} else {
+			silofs_die(0, "path exists: %s", path);
+		}
 	}
 	if (err != -ENOENT) {
 		silofs_die(err, "stat failure: %s", path);
@@ -220,6 +224,16 @@ void silofs_die_if_not_empty_dir(const char *path, bool w_ok)
 	}
 	if (ndes > 2) {
 		silofs_die(0, "not an empty directory: %s", path);
+	}
+}
+
+void silofs_die_if_not_mkdir(const char *path, mode_t mode)
+{
+	int err;
+
+	err = silofs_sys_mkdir(path, mode);
+	if (err) {
+		silofs_die(err, "mkdir failed: %s", path);
 	}
 }
 
@@ -655,7 +669,7 @@ static void show_help_strings(FILE *fp, const char *name,
 	fflush(fp);
 }
 
-void silofs_show_help_and_exit(const char **help_strings)
+void silofs_print_help_and_exit(const char **help_strings)
 {
 	const char *prefix = silofs_globals.name;
 
@@ -663,7 +677,7 @@ void silofs_show_help_and_exit(const char **help_strings)
 	exit(EXIT_SUCCESS);
 }
 
-void silofs_show_version_and_exit(const char *prog)
+void silofs_print_version_and_exit(const char *prog)
 {
 	fprintf(stdout, "%s %s\n",
 	        (prog != NULL) ? prog : "silofs", silofs_globals.version);
@@ -705,14 +719,14 @@ void silofs_setup_globals(int argc, char *argv[])
 	silofs_globals.pid = getpid();
 	silofs_globals.uid = getuid();
 	silofs_globals.gid = getgid();
-	silofs_globals.umsk = umask(0022);
-	silofs_globals.umsk = umask(0022);
+	silofs_globals.umsk = 0022;
 	silofs_globals.start_time = time(NULL);
 	silofs_globals.dont_daemonize = false;
 	silofs_globals.allow_coredump = false;
 	silofs_globals.disable_ptrace = true; /* XXX */
 	silofs_globals.log_mask = SILOFS_LOG_DEFAULT;
 
+	umask(silofs_globals.umsk);
 	setlocale(LC_ALL, "");
 	atexit(silofs_atexit_flush);
 	error_print_progname = silofs_error_print_progname;
@@ -749,25 +763,6 @@ void silofs_init_process(void)
 void silofs_set_verbose_mode(const char *mode)
 {
 	silofs_log_mask_by_str(&silofs_globals.log_mask, mode);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_pretty_size(size_t n, char *buf, size_t bsz)
-{
-	const size_t k = SILOFS_UKILO;
-	const size_t m = SILOFS_UMEGA;
-	const size_t g = SILOFS_UGIGA;
-
-	if (n >= g) {
-		snprintf(buf, bsz, "%0.1fG", (float)n / (float)g);
-	} else if (n >= m) {
-		snprintf(buf, bsz, "%0.1fM", (float)n / (float)m);
-	} else if (n >= k) {
-		snprintf(buf, bsz, "%0.1fK", (float)n / (float)k);
-	} else {
-		snprintf(buf, bsz, "%0.1f", (float)n);
-	}
 }
 
 

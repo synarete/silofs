@@ -14,23 +14,29 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_SLICE_H_
-#define SILOFS_SLICE_H_
+#ifndef SILOFS_BYTEBUF_H_
+#define SILOFS_BYTEBUF_H_
 
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-struct silofs_slice {
-	void  *ptr;
-	size_t len;
-	size_t cap;
+
+struct silofs_bytebuf {
+	uint8_t *ptr;
+	size_t   len;
+	size_t   cap;
 };
 
-void silofs_slice_init(struct silofs_slice *sl, void *p, size_t n);
+void silofs_bytebuf_init(struct silofs_bytebuf *bb, void *p, size_t n);
 
-void silofs_slice_fini(struct silofs_slice *sl);
+void silofs_bytebuf_fini(struct silofs_bytebuf *bb);
 
-void *silofs_slice_end(const struct silofs_slice *sl);
+void *silofs_bytebuf_end(const struct silofs_bytebuf *bb);
 
-size_t silofs_slice_append(struct silofs_slice *sl, const void *p, size_t len);
+bool silofs_bytebuf_has_free(const struct silofs_bytebuf *bb, size_t cnt);
 
-#endif /* SILOFS_SLICE_H_ */
+size_t silofs_bytebuf_append(struct silofs_bytebuf *bb,
+                             const void *p, size_t len);
+
+#endif /* SILOFS_BYTEBUF_H_ */

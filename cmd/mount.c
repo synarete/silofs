@@ -92,7 +92,7 @@ static void mount_getopt(void)
 		} else if (opt_chr == 'C') {
 			silofs_globals.allow_coredump = true;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(mount_usage);
+			silofs_print_help_and_exit(mount_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}

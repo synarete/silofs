@@ -135,29 +135,20 @@ int silofs_apex_flush_dirty(struct silofs_fs_apex *apex, int flags)
 }
 
 int silofs_apex_spawn_blob(const struct silofs_fs_apex *apex,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            struct silofs_blob_info **out_bli)
 {
-	return silofs_repo_spawn_blob(apex->ap_repo, bid, out_bli);
+	return silofs_repo_spawn_blob(apex->ap_repo, blobid, out_bli);
 }
 
 int silofs_apex_stage_blob(const struct silofs_fs_apex *apex,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            struct silofs_blob_info **out_bli)
 {
-	return silofs_repo_stage_blob(apex->ap_repo, bid, out_bli);
+	return silofs_repo_stage_blob(apex->ap_repo, blobid, out_bli);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int apex_spawn_sb_blob(const struct silofs_fs_apex *apex,
-                              const struct silofs_uaddr *uaddr,
-                              struct silofs_blob_info **out_bli)
-{
-	const struct silofs_blobid *bid = &uaddr->oaddr.bid;
-
-	return silofs_repo_spawn_blob(apex->ap_repo, bid, out_bli);
-}
 
 static int apex_spawn_sb_ubi(const struct silofs_fs_apex *apex,
                              const struct silofs_uaddr *uaddr,
@@ -173,10 +164,34 @@ static int apex_spawn_sb_block(const struct silofs_fs_apex *apex,
                                struct silofs_blob_info **out_bli,
                                struct silofs_ubk_info **out_ubi)
 {
-	int err;
+	const struct silofs_blobid *blobid = uaddr_blobid(uaddr);
 	struct silofs_blob_info *bli = NULL;
+	int err;
 
-	err = apex_spawn_sb_blob(apex, uaddr, &bli);
+	err = silofs_apex_spawn_blob(apex, blobid, &bli);
+	if (err) {
+		return err;
+	}
+	bli_incref(bli);
+	err = apex_spawn_sb_ubi(apex, uaddr, out_ubi);
+	bli_decref(bli);
+	if (err) {
+		return err;
+	}
+	*out_bli = bli;
+	return 0;
+}
+
+static int apex_stage_sb_block(const struct silofs_fs_apex *apex,
+                               const struct silofs_uaddr *uaddr,
+                               struct silofs_blob_info **out_bli,
+                               struct silofs_ubk_info **out_ubi)
+{
+	const struct silofs_blobid *blobid = uaddr_blobid(uaddr);
+	struct silofs_blob_info *bli = NULL;
+	int err;
+
+	err = silofs_apex_stage_blob(apex, blobid, &bli);
 	if (err) {
 		return err;
 	}
@@ -194,9 +209,9 @@ static int apex_spawn_sbi(struct silofs_fs_apex *apex,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi)
 {
-	int err;
 	struct silofs_unode_info *ui = NULL;
 	struct silofs_sb_info *sbi = NULL;
+	int err;
 
 	ui = silofs_cache_spawn_unode(apex->ap_cache, uaddr);
 	if (ui == NULL) {
@@ -214,25 +229,33 @@ static int apex_spawn_sbi(struct silofs_fs_apex *apex,
 }
 
 static void apex_make_super_blobid(const struct silofs_fs_apex *apex,
-                                   struct silofs_blobid *out_bid)
+                                   struct silofs_blobid *out_blobid)
 {
-	struct silofs_metaid treeid;
-	const size_t height = SILOFS_SUPER_HEIGHT;
+	struct silofs_xid treeid;
 	const size_t obj_size = stype_size(SILOFS_STYPE_SUPER);
 
-	silofs_metaid_generate(&treeid);
-	treeid.id[0] ^= (uint64_t)(apex->ap_initime);
-	silofs_blobid_make(out_bid, &treeid, obj_size, 1, height);
+	silofs_xid_generate(&treeid);
+	silofs_blobid_make_tas(out_blobid, &treeid, obj_size, 1);
+	silofs_unused(apex);
 }
 
 
 static void apex_make_super_uaddr(const struct silofs_fs_apex *apex,
                                   struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_blobid bid;
+	struct silofs_blobid blobid;
 
-	apex_make_super_blobid(apex, &bid);
-	silofs_uaddr_make_super(out_uaddr, &bid);
+	apex_make_super_blobid(apex, &blobid);
+	silofs_uaddr_make_super(out_uaddr, &blobid);
+}
+
+static void sbi_update_bootsec(struct silofs_sb_info *sbi,
+                               const struct silofs_namestr *name)
+{
+	struct silofs_bootsec *bsec = &sbi->s_bsec;
+
+	silofs_bootsec_set_uaddr(bsec, sbi_uaddr(sbi));
+	silofs_bootsec_set_name(bsec, name);
 }
 
 int silofs_apex_spawn_super(struct silofs_fs_apex *apex, size_t cap_want,
@@ -262,7 +285,8 @@ int silofs_apex_spawn_super(struct silofs_fs_apex *apex, size_t cap_want,
 		return err;
 	}
 	silofs_sbi_attach_ubi(sbi, ubi);
-	silofs_sbi_setup_spawned(sbi, name, capacity, btime);
+	silofs_sbi_setup_spawned(sbi, capacity, btime);
+	sbi_update_bootsec(sbi, name);
 
 	*out_sbi = sbi;
 	return 0;
@@ -282,7 +306,7 @@ int silofs_apex_stage_super(struct silofs_fs_apex *apex,
 	if (err) {
 		return err;
 	}
-	err = apex_spawn_sb_block(apex, uaddr, &bli, &ubi);
+	err = apex_stage_sb_block(apex, uaddr, &bli, &ubi);
 	if (err) {
 		return err;
 	}
@@ -291,7 +315,7 @@ int silofs_apex_stage_super(struct silofs_fs_apex *apex,
 		return err;
 	}
 	silofs_sbi_attach_ubi(sbi, ubi);
-	silofs_sbi_update_bootsec(sbi, name);
+	sbi_update_bootsec(sbi, name);
 	*out_sbi = sbi;
 	return 0;
 }
@@ -440,6 +464,11 @@ static int apex_relock_bootsec(struct silofs_fs_apex *apex)
 	return 0;
 }
 
+static void sbi_set_fossil(struct silofs_sb_info *sbi)
+{
+	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
+}
+
 int silofs_apex_forkfs(struct silofs_fs_apex *apex,
                        const struct silofs_namestr *name)
 {
@@ -471,9 +500,35 @@ int silofs_apex_forkfs(struct silofs_fs_apex *apex,
 	if (err) {
 		return err;
 	}
+	sbi_set_fossil(sbi_curr);
+	return 0;
+}
 
-	silofs_sbi_set_fossil(sbi_curr);
-	err = silofs_apex_flush_dirty(apex, SILOFS_F_NOW);
+int silofs_apex_snapfs(struct silofs_fs_apex *apex,
+                       const struct silofs_namestr *name)
+{
+	struct silofs_namestr ncur = { .str.len = 0 };
+	struct silofs_sb_info *sbi_next = NULL;
+	struct silofs_sb_info *sbi_curr = apex->ap_sbi;
+	int err;
+
+	silofs_sbi_name(sbi_curr, &ncur);
+	err = apex_fork_super(apex, &ncur, &sbi_next);
+	if (err) {
+		return err;
+	}
+	err = silofs_sbi_save_bootsec(sbi_next);
+	if (err) {
+		return err;
+	}
+	silofs_sbi_set_name(sbi_curr, name);
+	sbi_set_fossil(sbi_curr);
+	err = silofs_sbi_save_bootsec(sbi_curr);
+	if (err) {
+		return err;
+	}
+	silofs_apex_bind_to_sbi(apex, sbi_next);
+	err = apex_relock_bootsec(apex);
 	if (err) {
 		return err;
 	}

@@ -89,7 +89,7 @@ static void sbi_active_vspace_range(const struct silofs_sb_info *sbi,
 {
 	const loff_t voff_last = silofs_sb_vspace_last(sbi->sb);
 
-	silofs_vrange_setup(out_vrange, 0, voff_last);
+	silofs_vrange_setup(out_vrange, SILOFS_SUPER_HEIGHT, 0, voff_last);
 }
 
 static loff_t sbi_end_of_active_vspace(const struct silofs_sb_info *sbi)
@@ -309,11 +309,11 @@ static int spc_find_free_space_within(struct silofs_spalloc_ctx *spa_ctx,
 	int err = -ENOSPC;
 	loff_t vnxt;
 	loff_t voff = vrange->beg;
-	struct silofs_vrange sub_vrange;
+	struct silofs_vrange vrange_sub;
 
 	while (voff < vrange->end) {
-		silofs_vrange_setup(&sub_vrange, voff, vrange->end);
-		err = spc_find_free_space_from(spa_ctx, &sub_vrange, &vnxt);
+		silofs_vrange_setup_sub(&vrange_sub, vrange, voff);
+		err = spc_find_free_space_from(spa_ctx, &vrange_sub, &vnxt);
 		if ((err != -ENOSPC) || (vnxt >= vrange->end)) {
 			break;
 		}
@@ -343,7 +343,7 @@ spc_calc_spnode_vrange(const struct silofs_spalloc_ctx *spa_ctx,
 		beg = off_max(fs_vrange.beg, sn_vrange.beg);
 		end = off_min(fs_vrange.end, sn_vrange.end);
 	}
-	silofs_vrange_setup(out_vrange, beg, end);
+	silofs_vrange_setup(out_vrange, sn_vrange.height, beg, end);
 }
 
 static int spc_find_free_space_for(struct silofs_spalloc_ctx *spa_ctx)

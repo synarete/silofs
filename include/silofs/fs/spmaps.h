@@ -32,6 +32,12 @@ void silofs_spr_set_ulink(struct silofs_spmap_ref *spr,
                           const struct silofs_ulink *ulink,
                           enum silofs_stype stype_sub);
 
+void silofs_spr_packid(const struct silofs_spmap_ref *spr,
+                       struct silofs_packid *out_packid);
+
+void silofs_spr_set_packid(struct silofs_spmap_ref *spr,
+                           const struct silofs_packid *packid);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
@@ -39,8 +45,6 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 loff_t silofs_sni_last_voff(const struct silofs_spnode_info *sni);
 
 size_t silofs_sni_height(const struct silofs_spnode_info *sni);
-
-size_t silofs_sni_child_height(const struct silofs_spnode_info *sni);
 
 enum silofs_stype silofs_sni_child_stype(const struct silofs_spnode_info *sni);
 
@@ -51,7 +55,8 @@ void silofs_sni_incref(struct silofs_spnode_info *sni);
 
 void silofs_sni_decref(struct silofs_spnode_info *sni);
 
-void silofs_sni_setup_spawned(struct silofs_spnode_info *sni, size_t height,
+void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
+                              const struct silofs_uaddr *parent,
                               const struct silofs_vrange *vrange);
 
 void silofs_sni_update_staged(struct silofs_spnode_info *sni);
@@ -62,11 +67,8 @@ void silofs_sni_update_nused(struct silofs_spnode_info *sni,
 void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
                               const struct silofs_spnode_info *sni_other);
 
-int silofs_sni_resolve_subref(const struct silofs_spnode_info *sni,
-                              loff_t voff, struct silofs_ulink *out_ulink);
-
-void silofs_sni_setup_parent(struct silofs_spnode_info *sni,
-                             const struct silofs_unode_info *ui);
+int silofs_sni_subref_of(const struct silofs_spnode_info *sni,
+                         loff_t voff, struct silofs_ulink *out_ulink);
 
 void silofs_sni_bind_child_spleaf(struct silofs_spnode_info *sni,
                                   const struct silofs_spleaf_info *sli);
@@ -90,15 +92,25 @@ int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni,
                              enum silofs_stype stype, loff_t *out_voff);
 
 void silofs_sni_main_blob(const struct silofs_spnode_info *sni,
-                          struct silofs_blobid *out_bid);
+                          struct silofs_blobid *out_blobid);
 
 void silofs_sni_bind_main_blob(struct silofs_spnode_info *sni,
-                               const struct silofs_blobid *bid);
+                               const struct silofs_blobid *blobid);
 
 bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni);
 
 void silofs_sni_resolve_main_child(const struct silofs_spnode_info *sni,
                                    loff_t voff, struct silofs_uaddr *out_ua);
+
+void silofs_sni_resolve_packid(const struct silofs_spnode_info *sni,
+                               loff_t voff, struct silofs_packid *out_packid);
+
+void silofs_sni_rebind_packid(struct silofs_spnode_info *sni, loff_t voff,
+                              const struct silofs_packid *packid);
+
+int silofs_sni_lookup_packid(struct silofs_spnode_info *sni,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_packid *out_packid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -110,11 +122,9 @@ void silofs_sli_incref(struct silofs_spleaf_info *sli);
 void silofs_sli_decref(struct silofs_spleaf_info *sli);
 
 void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
+                              const struct silofs_uaddr *parent,
                               const struct silofs_vrange *vrange,
                               enum silofs_stype stype_sub);
-
-void silofs_sli_setup_parent(struct silofs_spleaf_info *sli,
-                             const struct silofs_spnode_info *sni);
 
 void silofs_sli_update_staged(struct silofs_spleaf_info *sli);
 
@@ -125,9 +135,9 @@ void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
 
 enum silofs_stype silofs_sli_stype_sub(const struct silofs_spleaf_info *sli);
 
-loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
+loff_t silofs_sli_voff_beg(const struct silofs_spleaf_info *sli);
 
-loff_t silofs_sli_last_voff(const struct silofs_spleaf_info *sli);
+loff_t silofs_sli_voff_end(const struct silofs_spleaf_info *sli);
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
                                enum silofs_stype stype,
@@ -154,28 +164,39 @@ void silofs_sli_mark_unwritten_at(struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr);
 
 void silofs_sli_main_blob(const struct silofs_spleaf_info *sli,
-                          struct silofs_blobid *out_bid);
+                          struct silofs_blobid *out_blobid);
 
 void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
-                               const struct silofs_blobid *bid);
+                               const struct silofs_blobid *blobid);
 
 bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
-                              const struct silofs_metaid *tree_id);
+                              const struct silofs_xid *tree_id);
 
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
                                const struct silofs_vaddr *vaddr);
 
-void silofs_sli_clone_childs(struct silofs_spleaf_info *sli,
-                             const struct silofs_spleaf_info *sli_other);
+void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
+                              const struct silofs_spleaf_info *sli_other);
 
 
-void silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
-                              loff_t voff, struct silofs_uaddr *out_uaddr);
+int silofs_sli_subref_of(const struct silofs_spleaf_info *sli,
+                         loff_t voff, struct silofs_ulink *out_ulink);
+
+void silofs_sli_resolve_packid(const struct silofs_spleaf_info *sli,
+                               loff_t voff, struct silofs_packid *out_packid);
 
 void silofs_sli_resolve_main_at(const struct silofs_spleaf_info *sli,
-                                loff_t voff, struct silofs_uaddr *out_uaddr);
+                                loff_t voff, struct silofs_ulink *out_ulink);
 
-void silofs_sli_rebind_main_at(struct silofs_spleaf_info *sli, loff_t voff);
+void silofs_sli_rebind_child_at(struct silofs_spleaf_info *sli, loff_t voff,
+                                const struct silofs_ulink *ulink);
+
+void silofs_sli_rebind_packid(struct silofs_spleaf_info *sli, loff_t voff,
+                              const struct silofs_packid *packid);
+
+int silofs_sli_lookup_packid(const struct silofs_spleaf_info *sli,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_packid *out_packid);
 
 
 int silofs_verify_spmap_node(const struct silofs_spmap_node *sn);

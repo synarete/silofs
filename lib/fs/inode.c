@@ -478,7 +478,7 @@ static void silofs_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
  *
  * TODO-0010: Store timezone in inode
  */
-static void setup_inode_common(struct silofs_inode *inode,
+static void inode_setup_common(struct silofs_inode *inode,
                                const struct silofs_ucred *ucred,
                                ino_t ino, ino_t parent, mode_t mode)
 {
@@ -495,12 +495,12 @@ static void setup_inode_common(struct silofs_inode *inode,
 	inode_set_revision(inode, 0);
 }
 
-void silofs_setup_inode(struct silofs_inode_info *ii,
-                        const struct silofs_ucred *ucred,
-                        ino_t parent_ino, mode_t parent_mode,
-                        mode_t mode, dev_t rdev)
+static void ii_setup_inode(struct silofs_inode_info *ii,
+                           const struct silofs_ucred *ucred,
+                           ino_t parent_ino, mode_t parent_mode,
+                           mode_t mode, dev_t rdev)
 {
-	setup_inode_common(ii->inode, ucred, ii_ino(ii), parent_ino, mode);
+	inode_setup_common(ii->inode, ucred, ii_ino(ii), parent_ino, mode);
 	silofs_ii_setup_xattr(ii);
 	if (ii_isdir(ii)) {
 		silofs_setup_dir(ii, parent_mode, 1);
@@ -511,6 +511,15 @@ void silofs_setup_inode(struct silofs_inode_info *ii,
 	} else {
 		silofs_setup_ispecial(ii, rdev);
 	}
+}
+
+void silofs_ii_setup_by(struct silofs_inode_info *ii,
+                        const struct silofs_creds *creds, ino_t parent,
+                        mode_t parent_mode, mode_t mode, dev_t rdev)
+{
+	ii_setup_inode(ii, &creds->ucred, parent, parent_mode, mode, rdev);
+	ii_update_itimes(ii, creds, SILOFS_IATTR_TIMES);
+	ii_dirtify(ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -551,10 +560,10 @@ void silofs_iattr_setup(struct silofs_iattr *iattr, ino_t ino)
 	iattr->ia_ino = ino;
 }
 
-static void iattr_setup3(struct silofs_iattr *iattr, ino_t ino,
-                         const struct silofs_itimes *itimes)
+static void silofs_iattr_setup3(struct silofs_iattr *iattr, ino_t ino,
+                                const struct silofs_itimes *itimes)
 {
-	iattr_setup(iattr, ino);
+	silofs_iattr_setup(iattr, ino);
 	iattr_set_times(iattr, itimes);
 }
 
@@ -592,19 +601,19 @@ static bool has_itype(const struct silofs_inode_info *ii, mode_t mode)
 	return (itype_of(imode) == itype_of(mode));
 }
 
-static int check_waccess(const struct silofs_oper *op,
+static int check_waccess(const struct silofs_fs_ctx *fs_ctx,
                          struct silofs_inode_info *ii)
 {
-	return silofs_do_access(op, ii, W_OK);
+	return silofs_do_access(fs_ctx, ii, W_OK);
 }
 
-static int check_xaccess_parent(const struct silofs_oper *op,
+static int check_xaccess_parent(const struct silofs_fs_ctx *fs_ctx,
                                 const struct silofs_inode_info *ii)
 {
-	int err;
-	ino_t parent;
 	struct silofs_inode_info *parent_ii = NULL;
 	struct silofs_sb_info *sbi = ii_sbi(ii);
+	ino_t parent;
+	int err;
 
 	if (!ii_isdir(ii) || ii_isrootd(ii)) {
 		return 0;
@@ -617,7 +626,7 @@ static int check_xaccess_parent(const struct silofs_oper *op,
 	if (!ii_isdir(parent_ii)) {
 		return -EFSCORRUPTED; /* XXX */
 	}
-	err = silofs_do_access(op, parent_ii, X_OK);
+	err = silofs_do_access(fs_ctx, parent_ii, X_OK);
 	if (err) {
 		return err;
 	}
@@ -649,10 +658,10 @@ static mode_t new_mode_of(const struct silofs_inode_info *ii, mode_t mask)
 	return (ii_mode(ii) & fmt_mask) | (mask & ~fmt_mask);
 }
 
-static int check_chmod(const struct silofs_oper *op,
+static int check_chmod(const struct silofs_fs_ctx *fs_ctx,
                        struct silofs_inode_info *ii, mode_t mode)
 {
-	const struct silofs_ucred *ucred = &op->op_ucred;
+	const struct silofs_ucred *ucred = &fs_ctx->fsc_oper.op_creds.ucred;
 
 	/* TODO: Check chmod allowed and allow root (or CAP_FOWNER) */
 	if (!silofs_user_cap_fowner(ucred) && !user_isowner(ucred, ii)) {
@@ -665,17 +674,17 @@ static int check_chmod(const struct silofs_oper *op,
 	return 0;
 }
 
-static void update_times_attr(const struct silofs_oper *op,
+static void update_times_attr(const struct silofs_fs_ctx *fs_ctx,
                               struct silofs_inode_info *ii,
                               enum silofs_iattr_flags attr_flags,
                               const struct silofs_itimes *itimes)
 {
 	struct silofs_iattr iattr;
 
-	iattr_setup(&iattr, ii_ino(ii));
+	silofs_iattr_setup(&iattr, ii_ino(ii));
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
 	iattr.ia_flags = attr_flags;
-	update_iattrs(op, ii, &iattr);
+	ii_update_iattrs(ii, &fs_ctx->fsc_oper.op_creds, &iattr);
 }
 
 /*
@@ -684,58 +693,59 @@ static void update_times_attr(const struct silofs_oper *op,
  * Support special mode for file as read-only permanently (immutable).
  */
 
-static void update_post_chmod(const struct silofs_oper *op,
+static void update_post_chmod(const struct silofs_fs_ctx *fs_ctx,
                               struct silofs_inode_info *ii,
                               struct silofs_iattr *iattr)
 {
 	const gid_t gid = ii_gid(ii);
-	const struct silofs_ucred *ucred = &op->op_ucred;
+	const struct silofs_creds *creds = &fs_ctx->fsc_oper.op_creds;
+	const struct silofs_ucred *ucred = &creds->ucred;
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
 	if (!gid_eq(gid, ucred->gid) && !silofs_user_cap_fsetid(ucred)) {
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
-	update_iattrs(op, ii, iattr);
+	ii_update_iattrs(ii, creds, iattr);
 }
 
-static int do_chmod(const struct silofs_oper *op,
+static int do_chmod(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes)
 {
 	int err;
 	struct silofs_iattr iattr = { .ia_flags = 0 };
 
-	err = check_chmod(op, ii, mode);
+	err = check_chmod(fs_ctx, ii, mode);
 	if (err) {
 		return err;
 	}
-	err = check_xaccess_parent(op, ii);
+	err = check_xaccess_parent(fs_ctx, ii);
 	if (err) {
 		return err;
 	}
 
-	iattr_setup3(&iattr, ii_ino(ii), itimes);
+	silofs_iattr_setup3(&iattr, ii_ino(ii), itimes);
 	iattr.ia_mode = new_mode_of(ii, mode);
-	update_post_chmod(op, ii, &iattr);
+	update_post_chmod(fs_ctx, ii, &iattr);
 	return 0;
 }
 
-int silofs_do_chmod(const struct silofs_oper *op,
+int silofs_do_chmod(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_chmod(op, ii, mode, itimes);
+	err = do_chmod(fs_ctx, ii, mode, itimes);
 	ii_decref(ii);
 	return err;
 }
 
-static int check_chown_uid(const struct silofs_oper *op,
+static int check_chown_uid(const struct silofs_fs_ctx *fs_ctx,
                            const struct silofs_inode_info *ii, uid_t uid)
 {
-	const struct silofs_ucred *ucred = &op->op_ucred;
+	const struct silofs_ucred *ucred = &fs_ctx->fsc_oper.op_creds.ucred;
 
 	if (uid_eq(uid, ii_uid(ii))) {
 		return 0;
@@ -746,10 +756,10 @@ static int check_chown_uid(const struct silofs_oper *op,
 	return -EPERM;
 }
 
-static int check_chown_gid(const struct silofs_oper *op,
+static int check_chown_gid(const struct silofs_fs_ctx *fs_ctx,
                            const struct silofs_inode_info *ii, gid_t gid)
 {
-	const struct silofs_ucred *ucred = &op->op_ucred;
+	const struct silofs_ucred *ucred = &fs_ctx->fsc_oper.op_creds.ucred;
 
 	if (gid_eq(gid, ii_gid(ii))) {
 		return 0;
@@ -763,22 +773,22 @@ static int check_chown_gid(const struct silofs_oper *op,
 	return -EPERM;
 }
 
-static int check_chown(const struct silofs_oper *op,
+static int check_chown(const struct silofs_fs_ctx *fs_ctx,
                        const struct silofs_inode_info *ii,
                        uid_t uid, gid_t gid)
 {
 	int err = 0;
 
 	if (!uid_isnull(uid)) {
-		err = check_chown_uid(op, ii, uid);
+		err = check_chown_uid(fs_ctx, ii, uid);
 	}
 	if (!gid_isnull(gid) && !err) {
-		err = check_chown_gid(op, ii, gid);
+		err = check_chown_gid(fs_ctx, ii, gid);
 	}
 	return err;
 }
 
-static void update_post_chown(const struct silofs_oper *op,
+static void update_post_chown(const struct silofs_fs_ctx *fs_ctx,
                               struct silofs_inode_info *ii,
                               struct silofs_iattr *iattr)
 {
@@ -790,10 +800,10 @@ static void update_post_chown(const struct silofs_oper *op,
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SUID;
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
-	update_iattrs(op, ii, iattr);
+	ii_update_iattrs(ii, &fs_ctx->fsc_oper.op_creds, iattr);
 }
 
-static int do_chown(const struct silofs_oper *op,
+static int do_chown(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     const struct silofs_itimes *itimes)
 {
@@ -805,11 +815,11 @@ static int do_chown(const struct silofs_oper *op,
 	if (!chown_uid && !chown_gid) {
 		return 0; /* no-op */
 	}
-	err = check_chown(op, ii, uid, gid);
+	err = check_chown(fs_ctx, ii, uid, gid);
 	if (err) {
 		return err;
 	}
-	iattr_setup3(&iattr, ii_ino(ii), itimes);
+	silofs_iattr_setup3(&iattr, ii_ino(ii), itimes);
 	if (chown_uid) {
 		iattr.ia_uid = uid;
 		iattr.ia_flags |= SILOFS_IATTR_UID;
@@ -818,18 +828,18 @@ static int do_chown(const struct silofs_oper *op,
 		iattr.ia_gid = gid;
 		iattr.ia_flags |= SILOFS_IATTR_GID;
 	}
-	update_post_chown(op, ii, &iattr);
+	update_post_chown(fs_ctx, ii, &iattr);
 	return 0;
 }
 
-int silofs_do_chown(const struct silofs_oper *op,
+int silofs_do_chown(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     const struct silofs_itimes *itimes)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_chown(op, ii, uid, gid, itimes);
+	err = do_chown(fs_ctx, ii, uid, gid, itimes);
 	ii_decref(ii);
 	return err;
 }
@@ -844,61 +854,62 @@ static bool is_utime_omit(const struct timespec *tv)
 	return (tv->tv_nsec == UTIME_OMIT);
 }
 
-static int check_utimens(const struct silofs_oper *op,
+static int check_utimens(const struct silofs_fs_ctx *fs_ctx,
                          struct silofs_inode_info *ii)
 {
 	int err;
 
-	if (user_isowner(&op->op_ucred, ii)) {
+	if (user_isowner(&fs_ctx->fsc_oper.op_creds.ucred, ii)) {
 		return 0;
 	}
 	/* TODO: check SILOFS_CAPF_FOWNER */
 	/* TODO: Follow "Permissions requirements" in UTIMENSAT(2) */
-	err = check_waccess(op, ii);
+	err = check_waccess(fs_ctx, ii);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int do_utimens(const struct silofs_oper *op,
+static int do_utimens(const struct silofs_fs_ctx *fs_ctx,
                       struct silofs_inode_info *ii,
                       const struct silofs_itimes *itimes)
 {
-	int err;
+	const struct silofs_creds *creds = &fs_ctx->fsc_oper.op_creds;
 	const struct timespec *ctime = &itimes->ctime;
 	const struct timespec *atime = &itimes->atime;
 	const struct timespec *mtime = &itimes->mtime;
+	int err;
 
-	err = check_utimens(op, ii);
+	err = check_utimens(fs_ctx, ii);
 	if (err) {
 		return err;
 	}
 	if (is_utime_now(atime)) {
-		update_itimes(op, ii, SILOFS_IATTR_ATIME);
+		ii_update_itimes(ii, creds, SILOFS_IATTR_ATIME);
 	} else if (!is_utime_omit(atime)) {
-		update_times_attr(op, ii, SILOFS_IATTR_ATIME, itimes);
+		update_times_attr(fs_ctx, ii, SILOFS_IATTR_ATIME, itimes);
 	}
 	if (is_utime_now(mtime)) {
-		update_itimes(op, ii, SILOFS_IATTR_MTIME);
+		ii_update_itimes(ii, creds, SILOFS_IATTR_MTIME);
 	} else if (!is_utime_omit(mtime)) {
-		update_times_attr(op, ii, SILOFS_IATTR_MTIME, itimes);
+		update_times_attr(fs_ctx, ii, SILOFS_IATTR_MTIME, itimes);
 	}
 	if (!is_utime_omit(ctime)) {
-		update_times_attr(op, ii, SILOFS_IATTR_CTIME, itimes);
+		update_times_attr(fs_ctx, ii, SILOFS_IATTR_CTIME, itimes);
 	}
 	return 0;
 }
 
 
-int silofs_do_utimens(const struct silofs_oper *op,
+int silofs_do_utimens(const struct silofs_fs_ctx *fs_ctx,
                       struct silofs_inode_info *ii,
                       const struct silofs_itimes *itimes)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_utimens(op, ii, itimes);
+	err = do_utimens(fs_ctx, ii, itimes);
 	ii_decref(ii);
 	return err;
 }
@@ -1041,12 +1052,12 @@ static void silofs_statx_of(const struct silofs_inode_info *ii,
  *
  * Have special mode where only root & self may read inode's attributes.
  */
-static int check_getattr(const struct silofs_oper *op,
+static int check_getattr(const struct silofs_fs_ctx *fs_ctx,
                          const struct silofs_inode_info *ii)
 {
 	int err;
 
-	unused(op);
+	unused(fs_ctx);
 	err = check_parent_dir_ii(ii);
 	if (err) {
 		return err;
@@ -1054,13 +1065,13 @@ static int check_getattr(const struct silofs_oper *op,
 	return 0;
 }
 
-static int do_getattr(const struct silofs_oper *op,
+static int do_getattr(const struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_inode_info *ii,
                       struct stat *out_st)
 {
 	int err;
 
-	err = check_getattr(op, ii);
+	err = check_getattr(fs_ctx, ii);
 	if (err) {
 		return err;
 	}
@@ -1068,24 +1079,24 @@ static int do_getattr(const struct silofs_oper *op,
 	return 0;
 }
 
-int silofs_do_getattr(const struct silofs_oper *op,
+int silofs_do_getattr(const struct silofs_fs_ctx *fs_ctx,
                       struct silofs_inode_info *ii, struct stat *out_st)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_getattr(op, ii, out_st);
+	err = do_getattr(fs_ctx, ii, out_st);
 	ii_decref(ii);
 	return err;
 }
 
-static int do_statx(const struct silofs_oper *op,
+static int do_statx(const struct silofs_fs_ctx *fs_ctx,
                     const struct silofs_inode_info *ii,
                     unsigned int request_mask, struct statx *out_stx)
 {
 	int err;
 
-	err = check_getattr(op, ii);
+	err = check_getattr(fs_ctx, ii);
 	if (err) {
 		return err;
 	}
@@ -1093,14 +1104,14 @@ static int do_statx(const struct silofs_oper *op,
 	return 0;
 }
 
-int silofs_do_statx(const struct silofs_oper *op,
+int silofs_do_statx(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *ii,
                     unsigned int request_mask, struct statx *out_stx)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_statx(op, ii, request_mask, out_stx);
+	err = do_statx(fs_ctx, ii, request_mask, out_stx);
 	ii_decref(ii);
 	return err;
 }
@@ -1108,31 +1119,31 @@ int silofs_do_statx(const struct silofs_oper *op,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct timespec *
-timespec_of(const struct silofs_oper *op, const struct timespec *ts_in)
+timespec_of(const struct timespec *ts_in, const struct silofs_creds *creds)
 {
 	const struct timespec *ts = ts_in;
 
 	silofs_assert_not_null(ts_in);
 	if (ts_in->tv_nsec == UTIME_NOW) {
-		ts = &op->op_xtime;
+		ts = &creds->xtime;
 	} else if (ts_in->tv_nsec == UTIME_OMIT) {
 		ts = NULL;
 	}
 	return ts;
 }
 
-static void i_update_atime(struct silofs_inode_info *ii,
-                           const struct timespec *atime)
+static void ii_update_atime(struct silofs_inode_info *ii,
+                            const struct timespec *atime)
 {
 	if (atime != NULL) {
 		memcpy(&ii->i_atime_lazy, atime, sizeof(ii->i_atime_lazy));
 	}
 }
 
-static void update_inode_attr(struct silofs_inode_info *ii,
-                              const struct silofs_oper *op,
-                              enum silofs_iattr_flags attr_flags,
-                              const struct silofs_iattr *iattr)
+static void ii_update_inode_attr(struct silofs_inode_info *ii,
+                                 const struct silofs_creds *creds,
+                                 enum silofs_iattr_flags attr_flags,
+                                 const struct silofs_iattr *iattr)
 {
 	long flags = (long)attr_flags;
 	struct silofs_inode *inode;
@@ -1142,8 +1153,8 @@ static void update_inode_attr(struct silofs_inode_info *ii,
 		return; /* e.g., rename */
 	}
 	if (flags & (SILOFS_IATTR_LAZY | SILOFS_IATTR_ATIME)) {
-		ts = timespec_of(op, &iattr->ia_t.atime);
-		i_update_atime(ii, ts);
+		ts = timespec_of(&iattr->ia_t.atime, creds);
+		ii_update_atime(ii, ts);
 		flags &= ~SILOFS_IATTR_ATIME;
 	}
 	flags &= ~SILOFS_IATTR_LAZY;
@@ -1177,19 +1188,19 @@ static void update_inode_attr(struct silofs_inode_info *ii,
 		inode_set_gid(inode, iattr->ia_gid);
 	}
 	if (flags & SILOFS_IATTR_BTIME) {
-		ts = timespec_of(op, &iattr->ia_t.btime);
+		ts = timespec_of(&iattr->ia_t.btime, creds);
 		inode_set_btime(inode, ts);
 	}
 	if (flags & SILOFS_IATTR_MTIME) {
-		ts = timespec_of(op, &iattr->ia_t.mtime);
+		ts = timespec_of(&iattr->ia_t.mtime, creds);
 		inode_set_mtime(inode, ts);
 	}
 	if (flags & SILOFS_IATTR_CTIME) {
-		ts = timespec_of(op, &iattr->ia_t.ctime);
+		ts = timespec_of(&iattr->ia_t.ctime, creds);
 		inode_set_ctime(inode, ts);
 	}
 	if (flags & SILOFS_IATTR_ATIME) {
-		ts = timespec_of(op, &iattr->ia_t.atime);
+		ts = timespec_of(&iattr->ia_t.atime, creds);
 		inode_set_atime(inode, ts);
 		silofs_ii_refresh_atime(ii, true);
 	} else if (flags & SILOFS_IATTR_TIMES) {
@@ -1202,26 +1213,27 @@ static void update_inode_attr(struct silofs_inode_info *ii,
 	ii_dirtify(ii);
 }
 
-void silofs_update_iattrs(const struct silofs_oper *op,
-                          struct silofs_inode_info *ii,
-                          const struct silofs_iattr *iattr)
+void silofs_ii_update_iattrs(struct silofs_inode_info *ii,
+                             const struct silofs_creds *creds,
+                             const struct silofs_iattr *iattr)
 {
-	struct silofs_oper dummy_op = {
-		.op_unique = 0,
+	struct silofs_creds dummy_creds = {
+		.xtime.tv_sec = 0
 	};
 
-	update_inode_attr(ii, op ? op : &dummy_op, iattr->ia_flags, iattr);
+	ii_update_inode_attr(ii, creds ? creds : &dummy_creds,
+	                     iattr->ia_flags, iattr);
 }
 
-void silofs_update_itimes(const struct silofs_oper *op,
-                          struct silofs_inode_info *ii,
-                          enum silofs_iattr_flags attr_flags)
+void silofs_ii_update_itimes(struct silofs_inode_info *ii,
+                             const struct silofs_creds *creds,
+                             enum silofs_iattr_flags attr_flags)
 {
 	struct silofs_iattr iattr;
 	const enum silofs_iattr_flags mask = SILOFS_IATTR_TIMES;
 
-	iattr_setup(&iattr, ii_ino(ii));
-	update_inode_attr(ii, op, attr_flags & mask, &iattr);
+	silofs_iattr_setup(&iattr, ii_ino(ii));
+	ii_update_inode_attr(ii, creds, attr_flags & mask, &iattr);
 }
 
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
@@ -1250,29 +1262,29 @@ static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
 	return cnt;
 }
 
-void silofs_update_iblocks(const struct silofs_oper *op,
-                           struct silofs_inode_info *ii,
-                           enum silofs_stype stype, long dif)
+void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
+                              const struct silofs_creds *creds,
+                              enum silofs_stype stype, long dif)
 {
 	struct silofs_iattr iattr;
 
-	iattr_setup(&iattr, ii_ino(ii));
+	silofs_iattr_setup(&iattr, ii_ino(ii));
 	iattr.ia_blocks = recalc_iblocks(ii, stype, dif);
 	iattr.ia_flags = SILOFS_IATTR_BLOCKS;
 
-	update_iattrs(op, ii, &iattr);
+	ii_update_iattrs(ii, creds, &iattr);
 }
 
-void silofs_update_isize(const struct silofs_oper *op,
-                         struct silofs_inode_info *ii, loff_t size)
+void silofs_ii_update_isize(struct silofs_inode_info *ii,
+                            const struct silofs_creds *creds, loff_t size)
 {
 	struct silofs_iattr iattr;
 
-	iattr_setup(&iattr, ii_ino(ii));
+	silofs_iattr_setup(&iattr, ii_ino(ii));
 	iattr.ia_size = size;
 	iattr.ia_flags = SILOFS_IATTR_SIZE;
 
-	update_iattrs(op, ii, &iattr);
+	ii_update_iattrs(ii, creds, &iattr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -490,4 +490,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_xattr_replace_multi),
 };
 
-const struct ut_tests ut_test_xattr = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_xattr = UT_MKTESTS(ut_local_tests);

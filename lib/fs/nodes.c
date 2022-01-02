@@ -492,14 +492,15 @@ sni_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
 	return sni;
 }
 
-struct silofs_spnode_info *silofs_sni_from_ui(struct silofs_unode_info *ui)
+struct silofs_spnode_info *
+silofs_sni_from_ui(const struct silofs_unode_info *ui)
 {
-	struct silofs_spnode_info *sni = NULL;
+	const struct silofs_spnode_info *sni = NULL;
 
 	if (ui != NULL) {
-		sni = container_of(ui, struct silofs_spnode_info, sn_ui);
+		sni = container_of2(ui, struct silofs_spnode_info, sn_ui);
 	}
-	return sni;
+	return unconst(sni);
 }
 
 void silofs_sni_rebind_view(struct silofs_spnode_info *sni)
@@ -589,14 +590,15 @@ sli_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
 	return sli;
 }
 
-struct silofs_spleaf_info *silofs_sli_from_ui(struct silofs_unode_info *ui)
+struct silofs_spleaf_info *
+silofs_sli_from_ui(const struct silofs_unode_info *ui)
 {
-	struct silofs_spleaf_info *sli = NULL;
+	const struct silofs_spleaf_info *sli = NULL;
 
 	if (ui != NULL) {
-		sli = container_of(ui, struct silofs_spleaf_info, sl_ui);
+		sli = container_of2(ui, struct silofs_spleaf_info, sl_ui);
 	}
-	return sli;
+	return unconst(sli);
 }
 
 void silofs_sli_rebind_view(struct silofs_spleaf_info *sli)
@@ -1690,6 +1692,17 @@ void silofs_vi_seal_meta(const struct silofs_vnode_info *vi)
 	}
 }
 
+void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi)
+{
+	const enum silofs_stype stype = vi_stype(vi);
+
+	if (!stype_isdata(stype)) {
+		silofs_zero_stamp_view(vi->v_ti.t_view, stype);
+	}
+	vi->v_verified = true;
+	vi_dirtify(vi);
+}
+
 void silofs_zero_stamp_view(union silofs_view *view, enum silofs_stype stype)
 {
 	const size_t len = stype_size(stype);
@@ -1697,4 +1710,3 @@ void silofs_zero_stamp_view(union silofs_view *view, enum silofs_stype stype)
 	silofs_memzero(view, len);
 	hdr_stamp(&view->hdr, stype, len);
 }
-

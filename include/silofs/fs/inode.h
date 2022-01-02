@@ -70,53 +70,49 @@ void silofs_fixup_rootdir(struct silofs_inode_info *ii);
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
 
-int silofs_do_getattr(const struct silofs_oper *op,
+int silofs_do_getattr(const struct silofs_fs_ctx *op,
                       struct silofs_inode_info *ii, struct stat *out_st);
 
-int silofs_do_statx(const struct silofs_oper *op,
+int silofs_do_statx(const struct silofs_fs_ctx *op,
                     struct silofs_inode_info *ii,
                     unsigned int request_mask, struct statx *out_stx);
 
-int silofs_do_chmod(const struct silofs_oper *op,
+int silofs_do_chmod(const struct silofs_fs_ctx *op,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes);
 
-int silofs_do_chown(const struct silofs_oper *op,
+int silofs_do_chown(const struct silofs_fs_ctx *op,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     const struct silofs_itimes *itimes);
 
-int silofs_do_utimens(const struct silofs_oper *op,
+int silofs_do_utimens(const struct silofs_fs_ctx *op,
                       struct silofs_inode_info *ii,
                       const struct silofs_itimes *itimes);
 
 int silofs_verify_inode(const struct silofs_inode *inode);
 
-void silofs_update_itimes(const struct silofs_oper *op,
-                          struct silofs_inode_info *ii,
-                          enum silofs_iattr_flags attr_flags);
+void silofs_ii_update_itimes(struct silofs_inode_info *ii,
+                             const struct silofs_creds *creds,
+                             enum silofs_iattr_flags attr_flags);
 
-void silofs_update_iblocks(const struct silofs_oper *op,
-                           struct silofs_inode_info *ii,
-                           enum silofs_stype stype, long dif);
+void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
+                              const struct silofs_creds *creds,
+                              enum silofs_stype stype, long dif);
 
-void silofs_update_isize(const struct silofs_oper *op,
-                         struct silofs_inode_info *ii, loff_t size);
+void silofs_ii_update_isize(struct silofs_inode_info *ii,
+                            const struct silofs_creds *creds, loff_t size);
 
-void silofs_update_iattrs(const struct silofs_oper *op,
-                          struct silofs_inode_info *ii,
-                          const struct silofs_iattr *attr);
+void silofs_ii_update_iattrs(struct silofs_inode_info *ii,
+                             const struct silofs_creds *creds,
+                             const struct silofs_iattr *iattr);
 
 void silofs_iattr_setup(struct silofs_iattr *iattr, ino_t ino);
 
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
-void silofs_setup_inode(struct silofs_inode_info *ii,
-                        const struct silofs_ucred *ucred,
-                        ino_t parent_ino, mode_t parent_mode,
-                        mode_t mode, dev_t rdev);
-
-void silofs_snap_inode(struct silofs_inode_info *ii,
-                       const struct silofs_inode_info *ii_other);
+void silofs_ii_setup_by(struct silofs_inode_info *ii,
+                        const struct silofs_creds *creds, ino_t parent,
+                        mode_t parent_mode, mode_t mode, dev_t rdev);
 
 void silofs_stat_of(const struct silofs_inode_info *ii, struct stat *st);
 

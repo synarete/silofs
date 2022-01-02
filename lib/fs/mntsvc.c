@@ -1187,7 +1187,7 @@ static int silofs_mse_exec_one(struct silofs_ms_env *mse)
 	if (err) {
 		return err;
 	}
-	err = mntsrv_wait_conn(msrv, 10);
+	err = mntsrv_wait_conn(msrv, 5);
 	if (err) {
 		return err;
 	}
@@ -1200,19 +1200,22 @@ static int silofs_mse_exec_one(struct silofs_ms_env *mse)
 
 static int silofs_mse_exec(struct silofs_ms_env *mse)
 {
+	const char *sock = SILOFS_MNTSOCK_NAME;
 	int err;
 
+	log_info("start serve: sock=@%s", sock);
 	mse->active = 1;
 	while (mse->active) {
+		sleep(1);
 		err = silofs_mse_exec_one(mse);
 		silofs_burnstack();
 
-		if (err == -ETIMEDOUT) {
-			sleep(1);
-		}
 		/* TODO: handle non-valid terminating errors */
-		usleep(1000);
+		if (err && (err != -ETIMEDOUT)) {
+			log_info("serve error: err=%d", err);
+		}
 	}
+	log_info("done serve: sock=@%s", sock);
 	return 0;
 }
 
@@ -1239,6 +1242,7 @@ int silofs_mse_serve(struct silofs_ms_env *mse,
 
 void silofs_mse_halt(struct silofs_ms_env *mse, int signum)
 {
+	silofs_log_info("halt mount service: signum=%d", signum);
 	mse->signum = signum;
 	mse->active = 0;
 }

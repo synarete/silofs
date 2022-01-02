@@ -208,4 +208,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_reload_unlinked),
 };
 
-const struct ut_tests ut_test_reload = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_reload = UT_MKTESTS(ut_local_tests);

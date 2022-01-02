@@ -54,7 +54,7 @@ static void mkfs_getopt(void)
 		} else if (opt_chr == 'F') {
 			mkfs_args->force = true;
 		} else if (opt_chr == 'h') {
-			silofs_show_help_and_exit(mkfs_usage);
+			silofs_print_help_and_exit(mkfs_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
@@ -83,8 +83,23 @@ static void mkfs_prepare(void)
 {
 	silofs_die_if_missing_arg("size", mkfs_args->size);
 	silofs_require_valid_fsname("name", &mkfs_args->name);
-	silofs_die_if_not_empty_dir(mkfs_args->repodir, true);
-	mkfs_args->repodir_real = silofs_cmd_realpath(mkfs_args->repodir);
+}
+
+static void mkfs_make_repodir(void)
+{
+	struct stat st = { .st_ino = 0 };
+	const char *path = mkfs_args->repodir;
+	int err;
+
+	err = silofs_sys_stat(path, &st);
+	if (err == 0) {
+		silofs_die_if_not_empty_dir(path, true);
+	} else if (err == -ENOENT) {
+		silofs_die_if_not_mkdir(path, 0700);
+	} else {
+		silofs_die(err, "stat failure: %s", path);
+	}
+	mkfs_args->repodir_real = silofs_cmd_realpath(path);
 }
 
 static void mkfs_create_fs_env(void)
@@ -145,6 +160,9 @@ void silofs_execute_mkfs(void)
 
 	/* Verify user's arguments */
 	mkfs_prepare();
+
+	/* Create new empty repo dir */
+	mkfs_make_repodir();
 
 	/* Prepare environment */
 	mkfs_create_fs_env();

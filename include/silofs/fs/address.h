@@ -21,6 +21,11 @@
 #include <stdint.h>
 #include <endian.h>
 
+void silofs_uint64_to_ascii(uint64_t u, char *a);
+
+uint64_t silofs_ascii_to_uint64(const char *a);
+
+uint64_t silofs_hash256_to_u64(const struct silofs_hash256 *hash);
 
 void silofs_hash512_assign(struct silofs_hash512 *hash,
                            const struct silofs_hash512 *other);
@@ -61,6 +66,9 @@ void silofs_namebuf_str(const struct silofs_namebuf *nb,
 
 void silofs_namestr_init(struct silofs_namestr *nstr, const char *name);
 
+bool silofs_namestr_isequal(const struct silofs_namestr *nstr,
+                            const struct silofs_namestr *other);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 loff_t silofs_off_within(loff_t off, size_t bsz);
@@ -77,9 +85,9 @@ loff_t silofs_off_to_spnode_next(loff_t voff);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_stype_isdata(enum silofs_stype stype);
+bool silofs_stype_isunode(enum silofs_stype stype);
 
-bool silofs_stype_ismeta(enum silofs_stype stype);
+bool silofs_stype_isdata(enum silofs_stype stype);
 
 size_t silofs_stype_size(enum silofs_stype stype);
 
@@ -91,57 +99,87 @@ size_t silofs_stype_nkbs(enum silofs_stype stype);
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-size_t silofs_blobid_size(const struct silofs_blobid *bid);
+size_t silofs_blobid_size(const struct silofs_blobid *blobid);
 
-ssize_t silofs_blobid_ssize(const struct silofs_blobid *bid);
+bool silofs_blobid_isnull(const struct silofs_blobid *blobid);
 
-void silofs_blobid_reset(struct silofs_blobid *bid);
+void silofs_blobid_reset(struct silofs_blobid *blobid);
 
-void silofs_blobid_assign(struct silofs_blobid *bid,
+void silofs_blobid_assign(struct silofs_blobid *blobid,
                           const struct silofs_blobid *other);
 
-long silofs_blobid_compare(const struct silofs_blobid *bid1,
-                           const struct silofs_blobid *bid2);
+long silofs_blobid_compare(const struct silofs_blobid *blobid1,
+                           const struct silofs_blobid *blobid2);
 
-bool silofs_blobid_isequal(const struct silofs_blobid *bid,
+bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other);
 
-uint64_t silofs_blobid_hkey(const struct silofs_blobid *bid);
+uint64_t silofs_blobid_hkey(const struct silofs_blobid *blobid);
 
-uint64_t silofs_blobid_as_u64(const struct silofs_blobid *bid);
-
-int silofs_blobid_to_name(const struct silofs_blobid *bid,
-                          char *name, size_t nmax, size_t *out_len);
-
-void silofs_blobid_make(struct silofs_blobid *bid,
-                        const struct silofs_metaid *treeid,
-                        size_t obj_size, size_t nobjs, size_t height);
-
-int silofs_check_blobid_ascii_name(const char *name, size_t nlen);
+uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid);
 
 
-void silofs_blobid40b_reset(struct silofs_blobid40b *bid4);
+void silofs_blobid_make_tas(struct silofs_blobid *blobid,
+                            const struct silofs_xid *treeid,
+                            size_t obj_size, size_t nobjs);
 
-void silofs_blobid40b_set(struct silofs_blobid40b *bid4,
+void silofs_blobid_make_cas(struct silofs_blobid *blobid,
+                            const struct silofs_hash256 *hash, size_t size);
+
+
+void silofs_blobid40b_reset(struct silofs_blobid40b *blid);
+
+void silofs_blobid40b_set(struct silofs_blobid40b *blid,
                           const struct silofs_blobid *blobid);
 
-void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid4,
+void silofs_blobid40b_parse(const struct silofs_blobid40b *blid,
                             struct silofs_blobid *blobid);
+
+
+int silofs_blobid_to_name(const struct silofs_blobid *blobid,
+                          char *name, size_t nmax, size_t *out_len);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_packid *silofs_packid_none(void);
+
+bool silofs_packid_isnull(const struct silofs_packid *packid);
+
+void silofs_packid_reset(struct silofs_packid *packid);
+
+void silofs_packid_setup(struct silofs_packid *packid,
+                         const struct silofs_blobid *blobid);
+
+void silofs_packid_assign(struct silofs_packid *packid,
+                          const struct silofs_packid *other);
+
+
+void silofs_packid64b_reset(struct silofs_packid64b *paid);
+
+void silofs_packid64b_set(struct silofs_packid64b *paid,
+                          const struct silofs_packid *packid);
+
+void silofs_packid64b_parse(const struct silofs_packid64b *paid,
+                            struct silofs_packid *packid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_oaddr *silofs_oaddr_none(void);
 
+
+void silofs_oaddr_setup_all(struct silofs_oaddr *oaddr,
+                            const struct silofs_blobid *blobid);
+
 void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
-                        const struct silofs_blobid *bid,
+                        const struct silofs_blobid *blobid,
                         size_t len, loff_t off);
 
 void silofs_oaddr_setup_by(struct silofs_oaddr *oaddr,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            const struct silofs_vaddr *vaddr);
 
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
-                        const struct silofs_blobid *bid, silofs_lba_t lba);
+                        const struct silofs_blobid *blobid, silofs_lba_t lba);
 
 void silofs_oaddr_reset(struct silofs_oaddr *oaddr);
 
@@ -166,7 +204,7 @@ void silofs_uvaddr_setup(struct silofs_uvaddr *uva,
                          const struct silofs_vaddr *vaddr);
 
 void silofs_uvaddr_setup_by(struct silofs_uvaddr *uva,
-                            const struct silofs_blobid *bid,
+                            const struct silofs_blobid *blobid,
                             const struct silofs_vaddr *vaddr);
 
 void silofs_uvaddr_assign(struct silofs_uvaddr *uva,
@@ -174,22 +212,18 @@ void silofs_uvaddr_assign(struct silofs_uvaddr *uva,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_metaid_generate(struct silofs_metaid *mid);
+void silofs_xid_generate(struct silofs_xid *mid);
 
-uint64_t silofs_metaid_hkey(const struct silofs_metaid *mid);
+uint64_t silofs_xid_as_u64(const struct silofs_xid *mid);
 
-bool silofs_metaid_isequal(const struct silofs_metaid *mid1,
-                           const struct silofs_metaid *mid2);
+bool silofs_xid_isequal(const struct silofs_xid *mid1,
+                        const struct silofs_xid *mid2);
 
-void silofs_metaid_to_name(const struct silofs_metaid *mid, char *name);
+void silofs_xid128_set(struct silofs_xid128 *xid128,
+                       const struct silofs_xid *mid);
 
-void silofs_metaid_from_name(struct silofs_metaid *mid, const char *name);
-
-void silofs_metaid128_set(struct silofs_metaid128 *metaid128,
-                          const struct silofs_metaid *mid);
-
-void silofs_metaid128_parse(const struct silofs_metaid128 *metaid128,
-                            struct silofs_metaid *mid);
+void silofs_xid128_parse(const struct silofs_xid128 *xid128,
+                         struct silofs_xid *mid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -205,20 +239,28 @@ void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
 
+bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
+                          const struct silofs_uaddr *uaddr2);
+
+const struct silofs_blobid *
+silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
+
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *bid,
-                        enum silofs_stype stype, loff_t bpos, loff_t voff);
+                        const struct silofs_blobid *blobid,
+                        enum silofs_stype stype, size_t height,
+                        loff_t voff, loff_t bpos);
 
 void silofs_uaddr_setup_by(struct silofs_uaddr *uaddr,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            const struct silofs_vaddr *vaddr);
 
 void silofs_uaddr_setup_by2(struct silofs_uaddr *uaddr,
-                            const struct silofs_blobid *bid,
-                            loff_t voff, enum silofs_stype stype);
+                            const struct silofs_blobid *blobid,
+                            enum silofs_stype stype,
+                            size_t height, loff_t voff);
 
 void silofs_uaddr_make_super(struct silofs_uaddr *uaddr,
-                             const struct silofs_blobid *bid);
+                             const struct silofs_blobid *blobid);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr);
 
@@ -247,7 +289,7 @@ void silofs_ulink128b_reset(struct silofs_ulink128b *ulnk);
 
 
 void silofs_taddr_setup(struct silofs_taddr *taddr,
-                        const struct silofs_metaid *tree_id,
+                        const struct silofs_xid *tree_id,
                         loff_t voff, size_t height);
 
 void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
@@ -303,11 +345,13 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-size_t silofs_vrange_length(const struct silofs_vrange *vrange);
-
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off);
 
-void silofs_vrange_setup(struct silofs_vrange *vrange, loff_t beg, loff_t end);
+void silofs_vrange_setup(struct silofs_vrange *vrange,
+                         size_t height, loff_t beg, loff_t end);
+
+void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
+                             const struct silofs_vrange *other, loff_t beg);
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             size_t height, loff_t voff_base);

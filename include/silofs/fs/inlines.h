@@ -64,6 +64,11 @@ static inline loff_t silofs_off_next(loff_t off, ssize_t len)
 	return silofs_off_align(off + len, len);
 }
 
+static inline loff_t silofs_off_next_bk(loff_t off)
+{
+	return silofs_off_next(off, SILOFS_BK_SIZE);
+}
+
 static inline silofs_lba_t silofs_off_to_lba(loff_t off)
 {
 	return !silofs_off_isnull(off) ?
@@ -138,6 +143,11 @@ static inline bool silofs_stype_isnone(enum silofs_stype stype)
 	return silofs_stype_isequal(stype, SILOFS_STYPE_NONE);
 }
 
+static inline bool silofs_stype_issuper(enum silofs_stype stype)
+{
+	return silofs_stype_isequal(stype, SILOFS_STYPE_SUPER);
+}
+
 static inline bool silofs_stype_isspnode(enum silofs_stype stype)
 {
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SPNODE);
@@ -185,6 +195,13 @@ silofs_ui_oaddr(const struct silofs_unode_info *ui)
 static inline enum silofs_stype
 silofs_ui_stype(const struct silofs_unode_info *ui) {
 	return ui->u_uaddr.stype;
+}
+
+static inline bool
+silofs_ui_has_stype(const struct silofs_unode_info *ui,
+                    enum silofs_stype stype)
+{
+	return stype == silofs_ui_stype(ui);
 }
 
 static inline

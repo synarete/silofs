@@ -17,7 +17,6 @@
 #ifndef SILOFS_APEX_H_
 #define SILOFS_APEX_H_
 
-#include <stdlib.h>
 #include <silofs/fs/types.h>
 
 int silofs_apex_init(struct silofs_fs_apex *apex,
@@ -30,11 +29,11 @@ void silofs_apex_shut(struct silofs_fs_apex *apex);
 int silofs_apex_flush_dirty(struct silofs_fs_apex *apex, int flags);
 
 int silofs_apex_spawn_blob(const struct silofs_fs_apex *apex,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            struct silofs_blob_info **out_bli);
 
 int silofs_apex_stage_blob(const struct silofs_fs_apex *apex,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            struct silofs_blob_info **out_bli);
 
 
@@ -54,7 +53,8 @@ void silofs_apex_bind_to_sbi(struct silofs_fs_apex *apex,
 int silofs_apex_forkfs(struct silofs_fs_apex *apex,
                        const struct silofs_namestr *name);
 
-int silofs_apex_prune_space(struct silofs_fs_apex *apex);
+int silofs_apex_snapfs(struct silofs_fs_apex *apex,
+                       const struct silofs_namestr *name);
 
 bool silofs_apex_has_bootsec(const struct silofs_fs_apex *apex,
                              const struct silofs_namestr *name);

@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	/* Setup process defaults */
 	ut_setup_globals(argc, argv);
 
-	/* Disable tracing */
+	/* Allow error tracing only */
 	ut_setup_tracing();
 
 	/* Parse command-line arguments */

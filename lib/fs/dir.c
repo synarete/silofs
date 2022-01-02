@@ -50,20 +50,20 @@ struct silofs_dir_entry_view {
 } silofs_packed_aligned8;
 
 struct silofs_dir_entry_info {
-	struct silofs_dnode_info  *dni;
-	struct silofs_dir_entry   *de;
-	struct silofs_ino_dt       ino_dt;
+	struct silofs_dnode_info       *dni;
+	struct silofs_dir_entry        *de;
+	struct silofs_ino_dt            ino_dt;
 };
 
 struct silofs_dir_ctx {
-	struct silofs_sb_info     *sbi;
-	const struct silofs_oper  *op;
-	struct silofs_inode_info  *dir_ii;
-	struct silofs_inode_info  *parent_ii;
-	struct silofs_inode_info  *child_ii;
-	struct silofs_readdir_ctx *rd_ctx;
-	const struct silofs_qstr  *name;
-	enum silofs_stage_flags    stg_flags;
+	const struct silofs_fs_ctx     *fs_ctx;
+	struct silofs_sb_info          *sbi;
+	struct silofs_inode_info       *dir_ii;
+	struct silofs_inode_info       *parent_ii;
+	struct silofs_inode_info       *child_ii;
+	struct silofs_readdir_ctx      *rd_ctx;
+	const struct silofs_qstr       *name;
+	enum silofs_stage_flags         stg_flags;
 	int keep_iter;
 	int readdir_plus;
 };
@@ -956,7 +956,7 @@ void silofs_setup_dir(struct silofs_inode_info *dir_ii,
 	};
 
 	idr_setup(idr_of(dir_ii->inode));
-	update_iattrs(NULL, dir_ii, &iattr);
+	ii_update_iattrs(dir_ii, NULL, &iattr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1089,12 +1089,13 @@ static void dic_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
 	size_t last_index;
 	const long dif = new_node ? 1 : -1;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
+	const struct silofs_creds *creds = &d_ctx->fs_ctx->fsc_oper.op_creds;
 
 	dir_update_last_index(dir_ii, node_index, new_node);
 	last_index = dir_last_index(dir_ii);
 
-	update_isize(d_ctx->op, dir_ii, calc_d_isize(last_index));
-	update_iblocks(d_ctx->op, dir_ii, SILOFS_STYPE_DTNODE, dif);
+	ii_update_isize(dir_ii, creds, calc_d_isize(last_index));
+	ii_update_iblocks(dir_ii, creds, SILOFS_STYPE_DTNODE, dif);
 }
 
 static int
@@ -1249,14 +1250,14 @@ out:
 	return ret;
 }
 
-int silofs_lookup_dentry(const struct silofs_oper *op,
+int silofs_lookup_dentry(const struct silofs_fs_ctx *fs_ctx,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name,
                          struct silofs_ino_dt *out_idt)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.sbi = ii_sbi(dir_ii),
-		.op = op,
+		.fs_ctx = fs_ctx,
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
 		.stg_flags = SILOFS_STAGE_RDONLY,
@@ -1350,8 +1351,9 @@ static void dic_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *child_ii = d_ctx->child_ii;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
+	const struct silofs_creds *creds = &d_ctx->fs_ctx->fsc_oper.op_creds;
 
-	iattr_setup(&iattr, ii_ino(child_ii));
+	silofs_iattr_setup(&iattr, ii_ino(child_ii));
 	iattr.ia_nlink = i_nlink_new(child_ii, dif);
 	iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	if (dif > 0) {
@@ -1361,14 +1363,14 @@ static void dic_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 		iattr.ia_parent = SILOFS_INO_NULL;
 		iattr.ia_flags |= SILOFS_IATTR_PARENT;
 	}
-	update_iattrs(d_ctx->op, child_ii, &iattr);
+	ii_update_iattrs(child_ii, creds, &iattr);
 
-	iattr_setup(&iattr, ii_ino(dir_ii));
+	silofs_iattr_setup(&iattr, ii_ino(dir_ii));
 	if (ii_isdir(child_ii)) {
 		iattr.ia_nlink = i_nlink_new(dir_ii, dif);
 		iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	}
-	update_iattrs(d_ctx->op, dir_ii, &iattr);
+	ii_update_iattrs(dir_ii, creds, &iattr);
 }
 
 static int dic_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
@@ -1445,14 +1447,14 @@ out:
 	return ret;
 }
 
-int silofs_add_dentry(const struct silofs_oper *op,
+int silofs_add_dentry(const struct silofs_fs_ctx *fs_ctx,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_qstr *name,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.sbi = ii_sbi(dir_ii),
-		.op = op,
+		.fs_ctx = fs_ctx,
 		.dir_ii = dir_ii,
 		.child_ii = ii,
 		.name = name,
@@ -1777,9 +1779,10 @@ static int dic_iterate(struct silofs_dir_ctx *d_ctx)
 
 static int dic_readdir_emit(struct silofs_dir_ctx *d_ctx)
 {
+	struct silofs_iattr iattr;
+	const struct silofs_creds *creds = &d_ctx->fs_ctx->fsc_oper.op_creds;
 	int err = 0;
 	bool ok = true;
-	struct silofs_iattr iattr;
 
 	if (d_ctx->rd_ctx->pos == 0) {
 		ok = dic_emit_ii(d_ctx, ".", 1, d_ctx->dir_ii);
@@ -1796,9 +1799,9 @@ static int dic_readdir_emit(struct silofs_dir_ctx *d_ctx)
 		err = dic_iterate(d_ctx);
 	}
 
-	iattr_setup(&iattr, ii_ino(d_ctx->dir_ii));
+	silofs_iattr_setup(&iattr, ii_ino(d_ctx->dir_ii));
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
-	update_iattrs(d_ctx->op, d_ctx->dir_ii, &iattr);
+	ii_update_iattrs(d_ctx->dir_ii, creds, &iattr);
 
 	return err;
 }
@@ -1811,7 +1814,7 @@ static int dic_readdir_emit(struct silofs_dir_ctx *d_ctx)
  */
 static int dic_check_raccess(const struct silofs_dir_ctx *d_ctx)
 {
-	return silofs_do_access(d_ctx->op, d_ctx->dir_ii, R_OK);
+	return silofs_do_access(d_ctx->fs_ctx, d_ctx->dir_ii, R_OK);
 }
 
 static int dic_check_dir_io(const struct silofs_dir_ctx *d_ctx)
@@ -1853,12 +1856,12 @@ out:
 	return ret;
 }
 
-int silofs_do_readdir(const struct silofs_oper *op,
+int silofs_do_readdir(const struct silofs_fs_ctx *fs_ctx,
                       struct silofs_inode_info *dir_ii,
                       struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.op = op,
+		.fs_ctx = fs_ctx,
 		.sbi = ii_sbi(dir_ii),
 		.rd_ctx = rd_ctx,
 		.dir_ii = dir_ii,
@@ -1870,12 +1873,12 @@ int silofs_do_readdir(const struct silofs_oper *op,
 	return dic_readdir(&d_ctx);
 }
 
-int silofs_do_readdirplus(const struct silofs_oper *op,
+int silofs_do_readdirplus(const struct silofs_fs_ctx *fs_ctx,
                           struct silofs_inode_info *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.op = op,
+		.fs_ctx = fs_ctx,
 		.sbi = ii_sbi(dir_ii),
 		.rd_ctx = rd_ctx,
 		.dir_ii = dir_ii,
@@ -2057,13 +2060,13 @@ out:
 	return ret;
 }
 
-int silofs_remove_dentry(const struct silofs_oper *op,
+int silofs_remove_dentry(const struct silofs_fs_ctx *fs_ctx,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.sbi = ii_sbi(dir_ii),
-		.op = op,
+		.fs_ctx = fs_ctx,
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
 		.stg_flags = SILOFS_STAGE_MUTABLE,

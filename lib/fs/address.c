@@ -25,8 +25,81 @@
 #include <errno.h>
 #include <ctype.h>
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void byte_to_ascii(unsigned int b, char *a)
+{
+	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
+	a[1] = silofs_nibble_to_ascii((int)b);
+}
+
+static uint8_t ascii_to_byte(const char *a)
+{
+	int nib[2];
+
+	nib[0] = silofs_ascii_to_nibble(a[0]);
+	nib[1] = silofs_ascii_to_nibble(a[1]);
+	return (uint8_t)(nib[0] << 4 | nib[1]);
+}
+
+void silofs_uint64_to_ascii(uint64_t u, char *a)
+{
+	int shift;
+	unsigned int b;
+
+	shift = 64;
+	while (shift > 0) {
+		shift -= 8;
+		b = (unsigned int)((u >> shift) & 0xFF);
+		byte_to_ascii(b, a);
+		a += 2;
+	}
+}
+
+uint64_t silofs_ascii_to_uint64(const char *a)
+{
+	uint64_t u = 0;
+
+	for (size_t i = 0; i < 8; ++i) {
+		u = u << 8;
+		u |= ascii_to_byte(a);
+		a += 2;
+	}
+	return u;
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint64_t u64_of(const uint8_t p[8])
+{
+	uint64_t u = 0;
+
+	u |= (uint64_t)(p[0]) << 56;
+	u |= (uint64_t)(p[1]) << 48;
+	u |= (uint64_t)(p[2]) << 40;
+	u |= (uint64_t)(p[3]) << 32;
+	u |= (uint64_t)(p[4]) << 24;
+	u |= (uint64_t)(p[5]) << 16;
+	u |= (uint64_t)(p[6]) << 8;
+	u |= (uint64_t)(p[7]);
+
+	return u;
+}
+
+uint64_t silofs_hash256_to_u64(const struct silofs_hash256 *hash)
+{
+	const uint8_t *h = hash->hash;
+
+	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 4 * sizeof(uint64_t));
+
+	return u64_of(h) ^ u64_of(h + 8) ^ u64_of(h + 16) ^ u64_of(h + 24);
+}
+
+static void hash256_assign(struct silofs_hash256 *hash,
+                           const struct silofs_hash256 *other)
+{
+	memcpy(hash, other, sizeof(*hash));
+}
 
 void silofs_hash512_assign(struct silofs_hash512 *hash,
                            const struct silofs_hash512 *other)
@@ -74,6 +147,29 @@ static void voff_stype_to_cpu(uint64_t voff_stype, loff_t *out_voff,
 		*out_voff = SILOFS_OFF_NULL;
 		*out_stype = SILOFS_STYPE_NONE;
 	}
+}
+
+static uint64_t cpu_to_len_height(size_t len, size_t height)
+{
+	uint64_t val;
+
+	silofs_assert_lt(len, (1L << 54));
+	silofs_assert_le(height, SILOFS_SUPER_HEIGHT);
+
+	val = ((uint64_t)len << 8) | (height & 0xFF);
+	return silofs_cpu_to_le64(val);
+}
+
+static void len_height_to_cpu(uint64_t len_height,
+                              size_t *out_len, size_t *out_height)
+{
+	const uint64_t val = silofs_le64_to_cpu(len_height);
+
+	*out_len = val >> 8;
+	*out_height = val & 0xFF;
+
+	silofs_assert_lt(*out_len, (1L << 54));
+	silofs_assert_le(*out_height, SILOFS_SUPER_HEIGHT);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -131,6 +227,35 @@ loff_t silofs_off_to_spnode_next(loff_t voff)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_stype_isunode(enum silofs_stype stype)
+{
+	bool ret;
+
+	switch (stype) {
+	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_SPNODE:
+	case SILOFS_STYPE_SPLEAF:
+		ret = true;
+		break;
+	case SILOFS_STYPE_ITNODE:
+	case SILOFS_STYPE_INODE:
+	case SILOFS_STYPE_XANODE:
+	case SILOFS_STYPE_SYMVAL:
+	case SILOFS_STYPE_DTNODE:
+	case SILOFS_STYPE_FTNODE:
+	case SILOFS_STYPE_DATA1K:
+	case SILOFS_STYPE_DATA4K:
+	case SILOFS_STYPE_DATABK:
+	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_MAX:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
 
 bool silofs_stype_isdata(enum silofs_stype stype)
 {
@@ -226,134 +351,160 @@ size_t silofs_stype_nkbs(enum silofs_stype stype)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void byte_to_ascii(unsigned int b, char *a)
+static void xid_xor_with(struct silofs_xid *xid,
+                         const struct silofs_xid *other)
 {
-	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
-	a[1] = silofs_nibble_to_ascii((int)b);
-}
-
-static uint8_t ascii_to_byte(const char *a)
-{
-	int nib[2];
-
-	nib[0] = silofs_ascii_to_nibble(a[0]);
-	nib[1] = silofs_ascii_to_nibble(a[1]);
-	return (uint8_t)(nib[0] << 4 | nib[1]);
-}
-
-static void uint64_to_ascii(uint64_t u, char *a)
-{
-	int shift;
-	unsigned int b;
-
-	shift = 64;
-	while (shift > 0) {
-		shift -= 8;
-		b = (unsigned int)((u >> shift) & 0xFF);
-		byte_to_ascii(b, a);
-		a += 2;
+	for (size_t i = 0; i < ARRAY_SIZE(xid->id); ++i) {
+		xid->id[i] ^= other->id[i];
 	}
 }
 
-static uint64_t ascii_to_uint64(const char *a)
+static void xid_mkrand(struct silofs_xid *xid)
 {
-	uint64_t u = 0;
+	silofs_getentropy(xid->id, sizeof(xid->id));
+}
 
-	for (size_t i = 0; i < 8; ++i) {
-		u = u << 8;
-		u |= ascii_to_byte(a);
-		a += 2;
+void silofs_xid_generate(struct silofs_xid *xid)
+{
+	union {
+		struct timespec   ts;
+		struct silofs_xid xi;
+		long zero;
+	} u = { .zero = 0 };
+
+	silofs_ts_gettime(&u.ts, 1);
+	xid_mkrand(xid);
+	xid_xor_with(xid, &u.xi);
+}
+
+static void xid_assign(struct silofs_xid *xid,
+                       const struct silofs_xid *other)
+{
+	memcpy(xid->id, other->id, sizeof(xid->id));
+}
+
+static long xid_compare(const struct silofs_xid *xid1,
+                        const struct silofs_xid *xid2)
+{
+	return memcmp(xid1->id, xid2->id, sizeof(xid1->id));
+}
+
+uint64_t silofs_xid_as_u64(const struct silofs_xid *xid)
+{
+	STATICASSERT_EQ(ARRAY_SIZE(xid->id), 16);
+
+	return u64_of(&xid->id[0]) ^ u64_of(&xid->id[8]);
+}
+
+bool silofs_xid_isequal(const struct silofs_xid *xid1,
+                        const struct silofs_xid *xid2)
+{
+	return (xid_compare(xid1, xid2) == 0);
+}
+
+static void xid_to_name(const struct silofs_xid *xid, char *name)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(xid->id); ++i) {
+		byte_to_ascii(xid->id[i], name + (2 * i));
 	}
-	return u;
+}
+
+static size_t xid_name_len(const struct silofs_xid *xid)
+{
+	return 2 * ARRAY_SIZE(xid->id);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_metaid_generate(struct silofs_metaid *mid)
+void silofs_xid128_set(struct silofs_xid128 *xid128,
+                       const struct silofs_xid *xid)
 {
-	silofs_getentropy(mid->id, sizeof(mid->id));
+	STATICASSERT_EQ(sizeof(xid128->id), sizeof(xid->id));
+	STATICASSERT_EQ(ARRAY_SIZE(xid128->id), 16);
+
+	memcpy(xid128->id, xid->id, sizeof(xid128->id));
 }
 
-static void metaid_assign(struct silofs_metaid *mid,
-                          const struct silofs_metaid *other)
+void silofs_xid128_parse(const struct silofs_xid128 *xid128,
+                         struct silofs_xid *xid)
 {
-	mid->id[0] = other->id[0];
-	mid->id[1] = other->id[1];
+	STATICASSERT_EQ(sizeof(xid128->id), sizeof(xid->id));
+	STATICASSERT_EQ(ARRAY_SIZE(xid->id), 16);
+
+	memcpy(xid->id, xid128->id, sizeof(xid->id));
 }
 
-static long metaid_compare(const struct silofs_metaid *mid1,
-                           const struct silofs_metaid *mid2)
+static void xxid256_set(struct silofs_xxid256 *xxid256,
+                        const struct silofs_xxid *xxid)
+{
+	STATICASSERT_EQ(sizeof(xxid256->u.xid), sizeof(xxid->u.xid));
+	STATICASSERT_EQ(ARRAY_SIZE(xxid256->u.xid), ARRAY_SIZE(xxid->u.xid));
+	STATICASSERT_EQ(ARRAY_SIZE(xxid256->u.xid), 2);
+
+	silofs_xid128_set(&xxid256->u.xid[0], &xxid->u.xid[0]);
+	silofs_xid128_set(&xxid256->u.xid[1], &xxid->u.xid[1]);
+}
+
+static void xxid256_parse(const struct silofs_xxid256 *xxid256,
+                          struct silofs_xxid *xxid)
+{
+	STATICASSERT_EQ(sizeof(xxid256->u.xid), sizeof(xxid->u.xid));
+	STATICASSERT_EQ(ARRAY_SIZE(xxid256->u.xid), ARRAY_SIZE(xxid->u.xid));
+	STATICASSERT_EQ(ARRAY_SIZE(xxid256->u.xid), 2);
+
+	silofs_xid128_parse(&xxid256->u.xid[0], &xxid->u.xid[0]);
+	silofs_xid128_parse(&xxid256->u.xid[1], &xxid->u.xid[1]);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void xxid_assign(struct silofs_xxid *xxid,
+                        const struct silofs_xxid *other)
+{
+	STATICASSERT_EQ(sizeof(xxid->u.xid), sizeof(xxid->u.tid));
+	STATICASSERT_EQ(sizeof(xxid->u.xid), sizeof(xxid->u.cid));
+
+	xid_assign(&xxid->u.xid[0], &other->u.xid[0]);
+	xid_assign(&xxid->u.xid[1], &other->u.xid[1]);
+}
+
+static long xxid_compare(const struct silofs_xxid *xxid1,
+                         const struct silofs_xxid *xxid2)
 {
 	long cmp;
 
-	cmp = (long)(mid1->id[0]) - (long)(mid2->id[0]);
+	cmp = xid_compare(&xxid1->u.xid[0], &xxid2->u.xid[0]);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(mid1->id[1]) - (long)(mid2->id[1]);
+	cmp = xid_compare(&xxid1->u.xid[1], &xxid2->u.xid[1]);
 	if (cmp) {
 		return cmp;
 	}
 	return 0;
 }
 
-uint64_t silofs_metaid_hkey(const struct silofs_metaid *mid)
+static uint64_t xxid_as_u64(const struct silofs_xxid *xxid)
 {
-	STATICASSERT_EQ(ARRAY_SIZE(mid->id), 2);
-
-	return mid->id[0] ^ mid->id[1];
+	return silofs_xid_as_u64(&xxid->u.xid[0]) ^
+	       silofs_xid_as_u64(&xxid->u.xid[1]);
 }
 
-static uint64_t metaid_as_u64(const struct silofs_metaid *mid)
+static void xxid_to_name(const struct silofs_xxid *xxid, char *name)
 {
-	return silofs_metaid_hkey(mid);
+	xid_to_name(&xxid->u.xid[0], name);
+	xid_to_name(&xxid->u.xid[1], name + xid_name_len(&xxid->u.xid[0]));
 }
 
-bool silofs_metaid_isequal(const struct silofs_metaid *mid1,
-                           const struct silofs_metaid *mid2)
+static size_t xxid_name_len(const struct silofs_xxid *xxid)
 {
-	return (metaid_compare(mid1, mid2) == 0);
-}
-
-void silofs_metaid_to_name(const struct silofs_metaid *mid, char *name)
-{
-	uint64_to_ascii(mid->id[0], name);
-	uint64_to_ascii(mid->id[1], name + 16);
-}
-
-void silofs_metaid_from_name(struct silofs_metaid *mid, const char *name)
-{
-	mid->id[0] = ascii_to_uint64(name);
-	mid->id[1] = ascii_to_uint64(name + 16);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_metaid128_set(struct silofs_metaid128 *metaid128,
-                          const struct silofs_metaid *mid)
-{
-	STATICASSERT_EQ(sizeof(metaid128->id), sizeof(mid->id));
-	STATICASSERT_EQ(ARRAY_SIZE(metaid128->id), 2);
-
-	metaid128->id[0] = silofs_cpu_to_le64(mid->id[0]);
-	metaid128->id[1] = silofs_cpu_to_le64(mid->id[1]);
-}
-
-void silofs_metaid128_parse(const struct silofs_metaid128 *metaid128,
-                            struct silofs_metaid *mid)
-{
-	STATICASSERT_EQ(sizeof(metaid128->id), sizeof(mid->id));
-	STATICASSERT_EQ(ARRAY_SIZE(mid->id), 2);
-
-	mid->id[0] = silofs_le64_to_cpu(metaid128->id[0]);
-	mid->id[1] = silofs_le64_to_cpu(metaid128->id[1]);
+	return 2 * xid_name_len(&xxid->u.xid[0]);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_blobid s_blobid_none = {
 	.size = 0,
-	.height = -1,
 };
 
 const struct silofs_blobid *silofs_blobid_none(void)
@@ -361,130 +512,68 @@ const struct silofs_blobid *silofs_blobid_none(void)
 	return &s_blobid_none;
 }
 
-size_t silofs_blobid_size(const struct silofs_blobid *bid)
+size_t silofs_blobid_size(const struct silofs_blobid *blobid)
 {
-	return bid->size;
+	return blobid->size;
 }
 
-ssize_t silofs_blobid_ssize(const struct silofs_blobid *bid)
+bool silofs_blobid_isnull(const struct silofs_blobid *blobid)
 {
-	return (ssize_t)silofs_blobid_size(bid);
+	return silofs_blobid_size(blobid) == 0;
 }
 
-static bool silofs_blobid_isnull(const struct silofs_blobid *bid)
+static loff_t blobid_off_within(const struct silofs_blobid *blobid, loff_t off)
 {
-	return !bid->size || (bid->height < 0);
-}
-
-static loff_t blobid_off_within(const struct silofs_blobid *bid, loff_t off)
-{
-	const size_t blob_size = silofs_blobid_size(bid);
+	const size_t blob_size = silofs_blobid_size(blobid);
 
 	return blob_size ? silofs_off_within(off, blob_size) : 0;
 }
 
-void silofs_blobid_reset(struct silofs_blobid *bid)
+void silofs_blobid_reset(struct silofs_blobid *blobid)
 {
-	memset(bid, 0, sizeof(*bid));
-	bid->size = 0;
-	bid->height = -1;
+	memset(blobid, 0, sizeof(*blobid));
+	blobid->size = 0;
 }
 
-static void blobid_generate_for(struct silofs_blobid *bid,
-                                const struct silofs_metaid *treeid)
-{
-	metaid_assign(&bid->tree_id, treeid);
-	silofs_metaid_generate(&bid->uniq_id);
-}
-
-void silofs_blobid_assign(struct silofs_blobid *bid,
+void silofs_blobid_assign(struct silofs_blobid *blobid,
                           const struct silofs_blobid *other)
 {
-	metaid_assign(&bid->tree_id, &other->tree_id);
-	metaid_assign(&bid->uniq_id, &other->uniq_id);
-	bid->size = other->size;
-	bid->height = other->height;
+	xxid_assign(&blobid->xxid, &other->xxid);
+	blobid->size = other->size;
 }
 
-long silofs_blobid_compare(const struct silofs_blobid *bid1,
-                           const struct silofs_blobid *bid2)
+long silofs_blobid_compare(const struct silofs_blobid *blobid1,
+                           const struct silofs_blobid *blobid2)
 {
 	long cmp;
 
-	cmp = bid2->height - bid1->height;
+	cmp = (long)(blobid2->size) - (long)(blobid1->size);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(bid2->size) - (long)(bid1->size);
-	if (cmp) {
-		return cmp;
-	}
-	cmp = metaid_compare(&bid1->tree_id, &bid2->tree_id);
-	if (cmp) {
-		return cmp;
-	}
-	cmp = metaid_compare(&bid1->uniq_id, &bid2->uniq_id);
+	cmp = xxid_compare(&blobid1->xxid, &blobid2->xxid);
 	if (cmp) {
 		return cmp;
 	}
 	return 0;
 }
 
-bool silofs_blobid_isequal(const struct silofs_blobid *bid,
+bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other)
 {
-	return silofs_blobid_compare(bid, other) == 0;
+	return silofs_blobid_compare(blobid, other) == 0;
 }
 
-uint64_t silofs_blobid_hkey(const struct silofs_blobid *bid)
+uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid)
 {
-	const uint32_t rot = (uint32_t)bid->height;
-	const uint64_t thk = silofs_metaid_hkey(&bid->tree_id);
-	const uint64_t uhk = silofs_metaid_hkey(&bid->uniq_id);
-
-	return silofs_rotate64(thk, rot) ^ uhk ^ bid->size;
+	return xxid_as_u64(&blobid->xxid);
 }
 
-uint64_t silofs_blobid_as_u64(const struct silofs_blobid *bid)
+uint64_t silofs_blobid_hkey(const struct silofs_blobid *blobid)
 {
-	return metaid_as_u64(&bid->tree_id) ^ metaid_as_u64(&bid->uniq_id);
-}
+	const uint64_t hk = silofs_blobid_as_u64(blobid);
 
-int silofs_blobid_to_name(const struct silofs_blobid *bid,
-                          char *name, size_t nmax, size_t *out_len)
-{
-	int err = -EINVAL;
-	const size_t metaid_name_len = 2 * SILOFS_METAID_SIZE;
-	const size_t blobid_name_len = 2 * metaid_name_len;
-
-	if (nmax >= blobid_name_len) {
-		silofs_metaid_to_name(&bid->tree_id, name);
-		silofs_metaid_to_name(&bid->uniq_id, name + metaid_name_len);
-		*out_len = blobid_name_len;
-		if (nmax > blobid_name_len) {
-			name[blobid_name_len] = '\0';
-		}
-		err = 0;
-	}
-	return err;
-}
-
-int silofs_check_blobid_ascii_name(const char *name, size_t nlen)
-{
-	int ret;
-	const size_t metaid_name_len = 2 * SILOFS_METAID_SIZE;
-	const size_t blobid_name_len = 2 * metaid_name_len;
-
-	if (nlen < blobid_name_len) {
-		return -EINVAL;
-	}
-	for (size_t i = 0; i < nlen; ++i) {
-		ret = silofs_ascii_to_nibble(name[i]);
-		if (ret < 0) {
-			return -EINVAL;
-		}
-	}
-	return 0;
+	return hk ^ blobid->size;
 }
 
 static size_t blobid_size_for(size_t obj_size, size_t nobjs)
@@ -494,42 +583,118 @@ static size_t blobid_size_for(size_t obj_size, size_t nobjs)
 	return div_round_up(nobjs * obj_size, bk_size) * bk_size;
 }
 
-void silofs_blobid_make(struct silofs_blobid *bid,
-                        const struct silofs_metaid *treeid,
-                        size_t obj_size, size_t nobjs, size_t height)
+void silofs_blobid_make_tas(struct silofs_blobid *blobid,
+                            const struct silofs_xid *treeid,
+                            size_t obj_size, size_t nobjs)
 {
-	blobid_generate_for(bid, treeid);
-	bid->size = blobid_size_for(obj_size, nobjs);
-	bid->height = (int)height;
+	struct silofs_xxid_tas *tid = &blobid->xxid.u.tid;
+
+	xid_assign(&tid->tree_id, treeid);
+	xid_mkrand(&tid->uniq_id);
+	blobid->size = blobid_size_for(obj_size, nobjs);
+}
+
+void silofs_blobid_make_cas(struct silofs_blobid *blobid,
+                            const struct silofs_hash256 *hash, size_t size)
+{
+	struct silofs_xxid_cas *cid = &blobid->xxid.u.cid;
+
+	hash256_assign(&cid->hash, hash);
+	blobid->size = size;
+}
+
+int silofs_blobid_to_name(const struct silofs_blobid *blobid,
+                          char *name, size_t nmax, size_t *out_len)
+{
+	*out_len = xxid_name_len(&blobid->xxid);
+	if (nmax <= *out_len) {
+		return -EINVAL;
+	}
+	xxid_to_name(&blobid->xxid, name);
+	name[*out_len] = '\0';
+	return 0;
+}
+
+
+void silofs_blobid40b_reset(struct silofs_blobid40b *blid)
+{
+	memset(blid, 0, sizeof(*blid));
+	blid->size = 0;
+}
+
+void silofs_blobid40b_set(struct silofs_blobid40b *blid,
+                          const struct silofs_blobid *blobid)
+{
+	xxid256_set(&blid->xxid, &blobid->xxid);
+	blid->size = silofs_cpu_to_le32((uint32_t)blobid->size);
+	blid->reserved = 0;
+}
+
+void silofs_blobid40b_parse(const struct silofs_blobid40b *blid,
+                            struct silofs_blobid *blobid)
+{
+	xxid256_parse(&blid->xxid, &blobid->xxid);
+	blobid->size = silofs_le32_to_cpu(blid->size);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_blobid40b_reset(struct silofs_blobid40b *bid40)
+static const struct silofs_packid s_packid_none = {
+	.blobid.size = 0,
+	.pmode = SILOFS_PACK_NONE,
+};
+
+const struct silofs_packid *silofs_packid_none(void)
 {
-	memset(bid40, 0, sizeof(*bid40));
-	bid40->size = 0;
-	bid40->height = 0xFF;
+	return &s_packid_none;
 }
 
-void silofs_blobid40b_set(struct silofs_blobid40b *bid40,
-                          const struct silofs_blobid *bid)
+bool silofs_packid_isnull(const struct silofs_packid *packid)
 {
-	silofs_metaid128_set(&bid40->tree_id, &bid->tree_id);
-	silofs_metaid128_set(&bid40->uniq_id, &bid->uniq_id);
-	bid40->size = silofs_cpu_to_le32((uint32_t)bid->size);
-	bid40->height = (bid->height < 0) ? 0xFF : (uint8_t)bid->height;
-	bid40->flags = 0;
-	bid40->reserved = 0;
+	return (packid->pmode == SILOFS_PACK_NONE) ||
+	       silofs_blobid_isnull(&packid->blobid);
 }
 
-void silofs_blobid40b_parse(const struct silofs_blobid40b *bid40,
-                            struct silofs_blobid *bid)
+void silofs_packid_reset(struct silofs_packid *packid)
 {
-	silofs_metaid128_parse(&bid40->tree_id, &bid->tree_id);
-	silofs_metaid128_parse(&bid40->uniq_id, &bid->uniq_id);
-	bid->height = (bid40->height == 0xFF) ? -1 : (int)bid40->height;
-	bid->size = silofs_le32_to_cpu(bid40->size);
+	silofs_blobid_reset(&packid->blobid);
+	packid->pmode = SILOFS_PACK_NONE;
+}
+
+void silofs_packid_setup(struct silofs_packid *packid,
+                         const struct silofs_blobid *blobid)
+{
+	silofs_blobid_assign(&packid->blobid, blobid);
+	packid->pmode = SILOFS_PACK_SIMPLE;
+}
+
+void silofs_packid_assign(struct silofs_packid *packid,
+                          const struct silofs_packid *other)
+{
+	silofs_blobid_assign(&packid->blobid, &other->blobid);
+	packid->pmode = other->pmode;
+}
+
+void silofs_packid64b_reset(struct silofs_packid64b *paid)
+{
+	silofs_blobid40b_reset(&paid->blobid);
+	paid->pmode = 0;
+	memset(paid->reserved, 0, sizeof(paid->reserved));
+}
+
+void silofs_packid64b_set(struct silofs_packid64b *paid,
+                          const struct silofs_packid *packid)
+{
+	silofs_blobid40b_set(&paid->blobid, &packid->blobid);
+	paid->pmode = (uint8_t)packid->pmode;
+	memset(paid->reserved, 0, sizeof(paid->reserved));
+}
+
+void silofs_packid64b_parse(const struct silofs_packid64b *paid,
+                            struct silofs_packid *packid)
+{
+	silofs_blobid40b_parse(&paid->blobid, &packid->blobid);
+	packid->pmode = (enum silofs_pack_mode)paid->pmode;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -543,14 +708,20 @@ const struct silofs_oaddr *silofs_oaddr_none(void)
 	return &s_oaddr_none;
 }
 
+void silofs_oaddr_setup_all(struct silofs_oaddr *oaddr,
+                            const struct silofs_blobid *blobid)
+{
+	silofs_oaddr_setup(oaddr, blobid, blobid->size, 0);
+}
+
 void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
-                        const struct silofs_blobid *bid,
+                        const struct silofs_blobid *blobid,
                         size_t len, loff_t off)
 {
-	silofs_blobid_assign(&oaddr->bid, bid);
-	if (bid->size && !off_isnull(off)) {
+	silofs_blobid_assign(&oaddr->blobid, blobid);
+	if (blobid->size && !off_isnull(off)) {
 		oaddr->len = len;
-		oaddr->pos = blobid_off_within(bid, off);
+		oaddr->pos = blobid_off_within(blobid, off);
 	} else {
 		oaddr->len = 0;
 		oaddr->pos = SILOFS_OFF_NULL;
@@ -558,15 +729,15 @@ void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
 }
 
 void silofs_oaddr_setup_by(struct silofs_oaddr *oaddr,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            const struct silofs_vaddr *vaddr)
 {
-	silofs_oaddr_setup(oaddr, bid, vaddr->len, vaddr->voff);
+	silofs_oaddr_setup(oaddr, blobid, vaddr->len, vaddr->voff);
 }
 
 void silofs_oaddr_reset(struct silofs_oaddr *oaddr)
 {
-	silofs_blobid_reset(&oaddr->bid);
+	silofs_blobid_reset(&oaddr->blobid);
 	oaddr->len = 0;
 	oaddr->pos = SILOFS_OFF_NULL;
 }
@@ -574,7 +745,7 @@ void silofs_oaddr_reset(struct silofs_oaddr *oaddr)
 void silofs_oaddr_assign(struct silofs_oaddr *oaddr,
                          const struct silofs_oaddr *other)
 {
-	silofs_blobid_assign(&oaddr->bid, &other->bid);
+	silofs_blobid_assign(&oaddr->blobid, &other->blobid);
 	oaddr->len = other->len;
 	oaddr->pos = other->pos;
 }
@@ -592,7 +763,7 @@ long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_blobid_compare(&oaddr1->bid, &oaddr2->bid);
+	cmp = silofs_blobid_compare(&oaddr1->blobid, &oaddr2->blobid);
 	if (cmp) {
 		return cmp;
 	}
@@ -601,15 +772,15 @@ long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
 
 bool silofs_oaddr_isnull(const struct silofs_oaddr *oaddr)
 {
-	return off_isnull(oaddr->pos) || silofs_blobid_isnull(&oaddr->bid);
+	return off_isnull(oaddr->pos) || silofs_blobid_isnull(&oaddr->blobid);
 }
 
 bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr)
 {
 	const loff_t end = off_end(oaddr->pos, oaddr->len);
-	const ssize_t bid_size = (ssize_t)(oaddr->bid.size);
+	const ssize_t blobid_size = (ssize_t)(oaddr->blobid.size);
 
-	return !silofs_oaddr_isnull(oaddr) && (end <= bid_size);
+	return !silofs_oaddr_isnull(oaddr) && (end <= blobid_size);
 }
 
 bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
@@ -617,7 +788,7 @@ bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
 {
 	return ((oaddr->len == other->len) &&
 	        (oaddr->pos == other->pos) &&
-	        silofs_blobid_isequal(&oaddr->bid, &other->bid));
+	        silofs_blobid_isequal(&oaddr->blobid, &other->blobid));
 }
 
 silofs_lba_t silofs_oaddr_lba(const struct silofs_oaddr *oaddr)
@@ -626,16 +797,15 @@ silofs_lba_t silofs_oaddr_lba(const struct silofs_oaddr *oaddr)
 }
 
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
-                        const struct silofs_blobid *bid, silofs_lba_t lba)
+                        const struct silofs_blobid *blobid, silofs_lba_t lba)
 {
-	silofs_oaddr_setup(oaddr, bid, SILOFS_BK_SIZE, lba_to_off(lba));
+	silofs_oaddr_setup(oaddr, blobid, SILOFS_BK_SIZE, lba_to_off(lba));
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48)
 {
-	silofs_blobid40b_reset(&oaddr48->bid);
+	silofs_blobid40b_reset(&oaddr48->blobid);
 	oaddr48->pos = 0;
 	oaddr48->len = 0;
 }
@@ -643,7 +813,7 @@ static void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48)
 static void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
                                 const struct silofs_oaddr *oaddr)
 {
-	silofs_blobid40b_set(&oaddr48->bid, &oaddr->bid);
+	silofs_blobid40b_set(&oaddr48->blobid, &oaddr->blobid);
 	oaddr48->pos = silofs_cpu_to_le32((uint32_t)(oaddr->pos));
 	oaddr48->len = silofs_cpu_to_le32((uint32_t)(oaddr->len));
 }
@@ -651,7 +821,7 @@ static void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
 static void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
                                   struct silofs_oaddr *oaddr)
 {
-	silofs_blobid40b_parse(&oaddr48->bid, &oaddr->bid);
+	silofs_blobid40b_parse(&oaddr48->blobid, &oaddr->blobid);
 	oaddr->pos = (loff_t)silofs_le32_to_cpu(oaddr48->pos);
 	oaddr->len = (size_t)silofs_le32_to_cpu(oaddr48->len);
 }
@@ -667,10 +837,10 @@ void silofs_uvaddr_setup(struct silofs_uvaddr *uva,
 }
 
 void silofs_uvaddr_setup_by(struct silofs_uvaddr *uva,
-                            const struct silofs_blobid *bid,
+                            const struct silofs_blobid *blobid,
                             const struct silofs_vaddr *vaddr)
 {
-	silofs_uaddr_setup_by(&uva->uaddr, bid, vaddr);
+	silofs_uaddr_setup_by(&uva->uaddr, blobid, vaddr);
 	vaddr_assign(&uva->vaddr, vaddr);
 }
 
@@ -684,11 +854,11 @@ void silofs_uvaddr_assign(struct silofs_uvaddr *uva,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_uaddr s_uaddr_none = {
-	.oaddr.bid.size = 0,
-	.oaddr.bid.height = -1,
+	.oaddr.blobid.size = 0,
 	.oaddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
+	.height = UINT32_MAX,
 };
 
 const struct silofs_uaddr *silofs_uaddr_none(void)
@@ -703,30 +873,33 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *bid,
-                        enum silofs_stype stype, loff_t bpos, loff_t voff)
+                        const struct silofs_blobid *blobid,
+                        enum silofs_stype stype, size_t height,
+                        loff_t voff, loff_t bpos)
 {
-	silofs_oaddr_setup(&uaddr->oaddr, bid, stype_size(stype), bpos);
+	silofs_oaddr_setup(&uaddr->oaddr, blobid, stype_size(stype), bpos);
 	uaddr->voff = voff;
 	uaddr->stype = stype;
+	uaddr->height = (unsigned int)height;
 }
 
 void silofs_uaddr_setup_by(struct silofs_uaddr *uaddr,
-                           const struct silofs_blobid *bid,
+                           const struct silofs_blobid *blobid,
                            const struct silofs_vaddr *vaddr)
 {
-	const loff_t bpos = blobid_off_within(bid, vaddr->voff);
+	const loff_t bpos = blobid_off_within(blobid, vaddr->voff);
 
-	silofs_uaddr_setup(uaddr, bid, vaddr->stype, bpos, vaddr->voff);
+	silofs_uaddr_setup(uaddr, blobid, vaddr->stype, 0, vaddr->voff, bpos);
 }
 
 void silofs_uaddr_setup_by2(struct silofs_uaddr *uaddr,
-                            const struct silofs_blobid *bid,
-                            loff_t voff, enum silofs_stype stype)
+                            const struct silofs_blobid *blobid,
+                            enum silofs_stype stype,
+                            size_t height, loff_t voff)
 {
-	const loff_t bpos = blobid_off_within(bid, voff);
+	const loff_t bpos = blobid_off_within(blobid, voff);
 
-	silofs_uaddr_setup(uaddr, bid, stype, bpos, voff);
+	silofs_uaddr_setup(uaddr, blobid, stype, height, voff, bpos);
 }
 
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
@@ -742,6 +915,7 @@ void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
 	silofs_oaddr_assign(&uaddr->oaddr, &other->oaddr);
 	uaddr->voff = other->voff;
 	uaddr->stype = other->stype;
+	uaddr->height = other->height;
 }
 
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
@@ -749,6 +923,10 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 {
 	long cmp;
 
+	cmp = (long)uaddr1->height - (long)uaddr2->height;
+	if (cmp) {
+		return cmp;
+	}
 	cmp = (long)uaddr1->stype - (long)uaddr2->stype;
 	if (cmp) {
 		return cmp;
@@ -764,35 +942,49 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 	return 0;
 }
 
-void silofs_uaddr_make_super(struct silofs_uaddr *uaddr,
-                             const struct silofs_blobid *bid)
+bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
+                          const struct silofs_uaddr *uaddr2)
 {
-	silofs_assert_eq(bid->height, SILOFS_SUPER_HEIGHT);
-	silofs_uaddr_setup(uaddr, bid, SILOFS_STYPE_SUPER, 0, 0);
+	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+const struct silofs_blobid *
+silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
+{
+	return &uaddr->oaddr.blobid;
+}
+
+void silofs_uaddr_make_super(struct silofs_uaddr *uaddr,
+                             const struct silofs_blobid *blobid)
+{
+	silofs_uaddr_setup(uaddr, blobid, SILOFS_STYPE_SUPER,
+	                   SILOFS_SUPER_HEIGHT, 0, 0);
+}
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr)
 {
 	silofs_oaddr48b_reset(&uadr->oaddr);
-	uadr->voff_stype = 0;
+	uadr->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
+	uadr->stype = SILOFS_STYPE_NONE;
+	uadr->height = 0xFF;
 }
 
 void silofs_uaddr64b_set(struct silofs_uaddr64b *uadr,
                          const struct silofs_uaddr *uaddr)
 {
 	silofs_oaddr48b_set(&uadr->oaddr, &uaddr->oaddr);
-	uadr->voff_stype =
-	        cpu_to_voff_stype(uaddr->voff, uaddr->stype);
+	uadr->voff = silofs_cpu_to_off(uaddr->voff);
+	uadr->stype = (uint8_t)uaddr->stype;
+	uadr->height = (uint8_t)uaddr->height;
 }
 
 void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
                            struct silofs_uaddr *uaddr)
 {
 	silofs_oaddr48b_parse(&uadr->oaddr, &uaddr->oaddr);
-	voff_stype_to_cpu(uadr->voff_stype,
-	                  &uaddr->voff, &uaddr->stype);
+	uaddr->voff = silofs_off_to_cpu(uadr->voff);
+	uaddr->stype = (enum silofs_stype)(uadr->stype);
+	uaddr->height = uadr->height;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -817,6 +1009,7 @@ bool silofs_ulink_isnull(const struct silofs_ulink *ulink)
 	       silofs_uaddr_isnull(&ulink->child);
 }
 
+
 void silofs_ulink128b_set(struct silofs_ulink128b *ulnk,
                           const struct silofs_ulink *ulink)
 {
@@ -840,20 +1033,20 @@ void silofs_ulink128b_reset(struct silofs_ulink128b *ulnk)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_taddr_setup(struct silofs_taddr *taddr,
-                        const struct silofs_metaid *tree_id,
+                        const struct silofs_xid *tree_id,
                         loff_t voff, size_t height)
 {
-	metaid_assign(&taddr->tree_id, tree_id);
+	xid_assign(&taddr->tree_id, tree_id);
 	taddr->voff = voff;
-	taddr->height = (int)height;
+	taddr->height = (unsigned int)height;
 }
 
 void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
                            const struct silofs_uaddr *uaddr)
 {
-	metaid_assign(&taddr->tree_id, &uaddr->oaddr.bid.tree_id);
+	xid_assign(&taddr->tree_id, &uaddr->oaddr.blobid.xxid.u.tid.tree_id);
 	taddr->voff = uaddr->voff;
-	taddr->height = uaddr->oaddr.bid.height;
+	taddr->height = uaddr->height;
 }
 
 bool silofs_taddr_isequal(const struct silofs_taddr *taddr1,
@@ -861,7 +1054,7 @@ bool silofs_taddr_isequal(const struct silofs_taddr *taddr1,
 {
 	return (taddr1->height == taddr2->height) &&
 	       (taddr1->voff == taddr2->voff) &&
-	       metaid_isequal(&taddr1->tree_id, &taddr2->tree_id);
+	       silofs_xid_isequal(&taddr1->tree_id, &taddr2->tree_id);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1030,9 +1223,33 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-size_t silofs_vrange_length(const struct silofs_vrange *vrange)
+static size_t height_to_nsteps(size_t height)
 {
-	return off_ulen(vrange->beg, vrange->end);
+	size_t nsteps;
+
+	silofs_assert_gt(height, 0);
+	silofs_assert_le(height, SILOFS_SUPER_HEIGHT);
+
+	if (height <= SILOFS_SPLEAF_HEIGHT) {
+		nsteps = SILOFS_SPMAP_LEAF_NCHILDS;
+	} else if (height >= SILOFS_SUPER_HEIGHT) {
+		nsteps = SILOFS_SUPER_NODE_NCHILDS;
+	} else {
+		silofs_assert_le(height, SILOFS_SPNODE_HEIGHT_MAX);
+		nsteps = SILOFS_SPMAP_NODE_NCHILDS;
+	}
+	return nsteps;
+}
+
+static ssize_t height_to_stepsz(size_t height)
+{
+	ssize_t stepsz = SILOFS_BK_SIZE;
+
+	height = min(height, SILOFS_SUPER_HEIGHT);
+	for (size_t h = SILOFS_SPLEAF_HEIGHT; h <= height; ++h) {
+		stepsz *= (ssize_t)height_to_nsteps(h);
+	}
+	return stepsz;
 }
 
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
@@ -1040,35 +1257,36 @@ bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
 	return (vrange->beg <= off) && (off < vrange->end);
 }
 
-void silofs_vrange_setup(struct silofs_vrange *vrange, loff_t beg, loff_t end)
+void silofs_vrange_setup(struct silofs_vrange *vrange,
+                         size_t height, loff_t beg, loff_t end)
 {
 	silofs_assert_le(beg, end);
+	silofs_assert_gt(height, 0);
+
 	vrange->beg = beg;
 	vrange->end = end;
+	vrange->len = off_ulen(beg, end);
+	vrange->height = height;
+	vrange->stepsz = height_to_stepsz(height - 1);
+}
+
+void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
+                             const struct silofs_vrange *other, loff_t beg)
+{
+	silofs_assert_ge(beg, other->beg);
+
+	silofs_vrange_setup(vrange, other->height, beg, other->end);
 }
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             size_t height, loff_t voff_base)
 {
 	loff_t beg;
-	size_t height_iter = 0;
-	ssize_t span = SILOFS_BK_SIZE;
+	ssize_t stepsz;
 
-	height = min(height, SILOFS_SUPER_HEIGHT);
-	while (height_iter <= height) {
-		if (height_iter == SILOFS_SPLEAF_HEIGHT) {
-			span *= SILOFS_NBK_IN_VSEC;
-		} else if ((height_iter > SILOFS_SPLEAF_HEIGHT) &&
-		           (height_iter <= SILOFS_SPNODE_HEIGHT_MAX)) {
-			span *= SILOFS_SPMAP_NODE_NCHILDS;
-		} else if (height_iter > SILOFS_SPNODE_HEIGHT_MAX) {
-			span *= SILOFS_SUPER_NODE_NCHILDS;
-			break;
-		}
-		height_iter++;
-	}
-	beg = off_align(voff_base, span);
-	silofs_vrange_setup(vrange, beg, off_next(beg, span));
+	stepsz = height_to_stepsz(height);
+	beg = off_align(voff_base, stepsz);
+	silofs_vrange_setup(vrange, height, beg, off_next(beg, stepsz));
 }
 
 void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
@@ -1089,6 +1307,9 @@ void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 	struct silofs_vrange vrange = {
 		.beg = SILOFS_OFF_NULL,
 		.end = SILOFS_OFF_NULL,
+		.len = 0,
+		.height = 0,
+		.stepsz = 0,
 	};
 
 	silofs_vrange128_set(vrng, &vrange);
@@ -1098,16 +1319,20 @@ void silofs_vrange128_set(struct silofs_vrange128 *vrng,
                           const struct silofs_vrange *vrange)
 {
 	vrng->beg = silofs_cpu_to_off(vrange->beg);
-	vrng->end = silofs_cpu_to_off(vrange->end);
+	vrng->len_height = cpu_to_len_height(vrange->len, vrange->height);
 }
 
 void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
                             struct silofs_vrange *vrange)
 {
-	vrange->beg = silofs_off_to_cpu(vrng->beg);
-	vrange->end = silofs_off_to_cpu(vrng->end);
-}
+	loff_t beg;
+	size_t len;
+	size_t height;
 
+	beg = silofs_off_to_cpu(vrng->beg);
+	len_height_to_cpu(vrng->len_height, &len, &height);
+	silofs_vrange_setup(vrange, height, beg, off_end(beg, len));
+}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -1223,6 +1448,15 @@ void silofs_namestr_init(struct silofs_namestr *nstr, const char *name)
 {
 	nstr->str.str = name;
 	nstr->str.len = strnlen(name, SILOFS_NAME_MAX + 1);
+}
+
+bool silofs_namestr_isequal(const struct silofs_namestr *nstr,
+                            const struct silofs_namestr *other)
+{
+	const size_t len = nstr->str.len;
+
+	return (len == other->str.len) &&
+	       !silofs_str_compare(nstr->str.str, other->str.str, len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

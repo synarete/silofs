@@ -360,5 +360,5 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_inode_statx),
 };
 
-const struct ut_tests ut_test_namei = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_namei = UT_MKTESTS(ut_local_tests);
 

@@ -206,5 +206,5 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_fillfs_reload),
 };
 
-const struct ut_tests ut_test_fillfs = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_fillfs = UT_MKTESTS(ut_local_tests);
 

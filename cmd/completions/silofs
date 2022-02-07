@@ -1,13 +1,21 @@
 ## bash completion for 'silofs'
 [ -z "$BASH_VERSION" ] && return
 
+_silofs_init() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $( compgen -W '-h' -- "$cur" ) )
+  fi
+}
+
 _silofs_mkfs() {
   local cur prev words cword
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $( compgen -W '-s --size=' -- "$cur" ) )
-    COMPREPLY+=( $( compgen -W '-n --name= -F --force -h' -- "$cur" ) )
+    COMPREPLY+=( $( compgen -W '-s --size= -F --force -h' -- "$cur" ) )
   fi
 }
 
@@ -69,7 +77,7 @@ _silofs_archive() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $( compgen -W '-n --name= -h' -- "$cur" ) )
+    COMPREPLY+=( $( compgen -W ' -h' -- "$cur" ) )
   fi
 }
 
@@ -78,7 +86,7 @@ _silofs_restore() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $( compgen -W '-n --name= -h' -- "$cur" ) )
+    COMPREPLY+=( $( compgen -W ' -h' -- "$cur" ) )
   fi
 }
 
@@ -105,6 +113,9 @@ _silofs_subcmd() {
   _init_completion || return
 
   case "${words[1]}" in
+    "init")
+      _silofs_init
+      ;;
     "mkfs")
       _silofs_mkfs
       ;;
@@ -145,10 +156,9 @@ _silofs_main() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
-    COMPREPLY+=( $(compgen -W 'mkfs mount umount lsmnt' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'show snap rmfs' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'archive restore' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'prune fsck' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show snap' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'archive restore prune fsck' -- "$cur") )
   fi
 }
 

@@ -19,6 +19,28 @@
 
 #include <unistd.h>
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_inomap_init(struct silofs_inomap *imap,
+                       struct silofs_alloc_if *alif);
+
+void silofs_inomap_fini(struct silofs_inomap *imap);
+
+int silofs_inomap_lookup(struct silofs_inomap *imap,
+                         ino_t ino, loff_t *out_voff);
+
+int silofs_inomap_insert(struct silofs_inomap *imap, ino_t ino, loff_t voff);
+
+int silofs_inomap_remove(struct silofs_inomap *imap, ino_t ino);
+
+int silofs_inomap_update(struct silofs_inomap *imap, ino_t ino, loff_t voff);
+
+void silofs_inomap_relax(struct silofs_inomap *imap, int flags);
+
+void silofs_inomap_clear(struct silofs_inomap *imap);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_itbi_init(struct silofs_itable_info *itbi,
                      struct silofs_alloc_if *alif);
 
@@ -28,6 +50,8 @@ void silofs_itbi_fini(struct silofs_itable_info *itbi);
 
 void silofs_itbi_update_by(struct silofs_itable_info *itbi,
                            const struct silofs_itable_info *itbi_other);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_acquire_ino(struct silofs_sb_info *sbi,
                        const struct silofs_vaddr *vaddr,
@@ -48,6 +72,8 @@ int silofs_reload_itable_at(struct silofs_sb_info *sbi,
                             const struct silofs_vaddr *vaddr);
 
 void silofs_drop_itable_cache(struct silofs_sb_info *sbi);
+
+void silofs_relax_inomap_of(struct silofs_sb_info *sbi, int flags);
 
 int silofs_verify_itable_node(const struct silofs_itable_node *itn);
 

@@ -18,10 +18,10 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/crypto.h>
+#include <silofs/fs/repo.h>
+#include <silofs/fs/apex.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/inode.h>
@@ -78,13 +78,6 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 	if (!err && likely(ii != NULL) && has_nlookup_mode(ii)) {
 		ii->i_nlookup++;
 	}
-}
-
-static const struct silofs_repo *ii_repo(const struct silofs_inode_info *ii)
-{
-	const struct silofs_fs_apex *apex = ii_apex(ii);
-
-	return apex->ap_repo;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2047,17 +2040,18 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 static void fill_query_repo(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	const struct silofs_repo *repo = ii_repo(ii);
+	const struct silofs_fs_apex *apex = ii_apex(ii);
+	const struct silofs_repo *repo = apex->ap_mrepo;
 
 	fill_strbuf(query->u.repo.r_path,
-	            sizeof(query->u.repo.r_path), repo->re_base_dir);
+	            sizeof(query->u.repo.r_path), repo->re_root_dir);
 }
 
 static void fill_query_fsname(const struct silofs_inode_info *ii,
                               struct silofs_ioc_query *query)
 {
 	const struct silofs_fs_apex *apex = ii_apex(ii);
-	const char *fsname = apex->ap_args->fsname;
+	const char *fsname = apex->ap_args->main_name;
 
 	fill_strbuf(query->u.fsname.f_name,
 	            sizeof(query->u.fsname.f_name), fsname);
@@ -2165,6 +2159,8 @@ static int check_fsowner(const struct silofs_fs_ctx *fs_ctx,
 static int check_nonactive_fsname(const struct silofs_inode_info *ii,
                                   const struct silofs_namestr *name)
 {
+	struct silofs_namestr name_src;
+	const struct silofs_fs_apex *apex = ii_apex(ii);
 	int err;
 
 	err = check_name(name);
@@ -2175,22 +2171,32 @@ static int check_nonactive_fsname(const struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	if (silofs_sbi_has_name(ii_sbi(ii), name)) {
+	silofs_apex_main_fsname(apex, &name_src);
+	if (silofs_namestr_isequal(name, &name_src)) {
 		return -EEXIST;
 	}
 	return 0;
 }
 
+static bool has_main_bootsec(const struct silofs_inode_info *ii,
+                             const struct silofs_namestr *name)
+{
+	struct silofs_bootsec bsec;
+	const struct silofs_fs_apex *apex = ii_apex(ii);
+
+	return silofs_repo_load_bsec(apex->ap_mrepo, name, &bsec) == 0;
+}
+
 static int check_no_bootsec(const struct silofs_inode_info *ii,
                             const struct silofs_namestr *name)
 {
-	return silofs_apex_has_bootsec(ii_apex(ii), name) ? -EEXIST : 0;
+	return has_main_bootsec(ii, name) ? -EEXIST : 0;
 }
 
 static int check_has_bootsec(const struct silofs_inode_info *ii,
                              const struct silofs_namestr *name)
 {
-	return silofs_apex_has_bootsec(ii_apex(ii), name) ? 0 : -ENOENT;
+	return has_main_bootsec(ii, name) ? 0 : -ENOENT;
 }
 
 static int check_clone_flags(int flags)
@@ -2200,9 +2206,9 @@ static int check_clone_flags(int flags)
 	return (flags & ~allow_flags) ? -EINVAL : 0;
 }
 
-static int check_dup_fs(const struct silofs_fs_ctx *fs_ctx,
-                        struct silofs_inode_info *ii,
-                        const struct silofs_namestr *name)
+static int check_dupfs(const struct silofs_fs_ctx *fs_ctx,
+                       struct silofs_inode_info *ii,
+                       const struct silofs_namestr *name)
 {
 	int err;
 
@@ -2239,7 +2245,7 @@ static int check_clone(const struct silofs_fs_ctx *fs_ctx,
 {
 	int err;
 
-	err = check_dup_fs(fs_ctx, ii, name);
+	err = check_dupfs(fs_ctx, ii, name);
 	if (err) {
 		return err;
 	}
@@ -2288,44 +2294,6 @@ int silofs_do_clone(const struct silofs_fs_ctx *fs_ctx,
 	return err;
 }
 
-static int do_snap(const struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_inode_info *dir_ii,
-                   const struct silofs_namestr *name)
-{
-	struct silofs_fs_apex *apex = ii_apex(dir_ii);
-	int err;
-
-	err = check_dup_fs(fs_ctx, dir_ii, name);
-	if (err) {
-		return err;
-	}
-	err = flush_dirty_now(apex);
-	if (err) {
-		return err;
-	}
-	err = silofs_apex_snapfs(apex, name);
-	if (err) {
-		return err;
-	}
-	err = flush_dirty_now(apex);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_do_snap(const struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_inode_info *dir_ii,
-                   const struct silofs_namestr *name)
-{
-	int err;
-
-	ii_incref(dir_ii);
-	err = do_snap(fs_ctx, dir_ii, name);
-	ii_decref(dir_ii);
-	return err;
-}
-
 static int check_unrefs(const struct silofs_fs_ctx *fs_ctx,
                         struct silofs_inode_info *ii,
                         const struct silofs_namestr *name)
@@ -2350,7 +2318,8 @@ static int check_unrefs(const struct silofs_fs_ctx *fs_ctx,
 static int unrefs_by_name(const struct silofs_inode_info *ii,
                           const struct silofs_namestr *name)
 {
-	const struct silofs_repo *repo = ii_repo(ii);
+	const struct silofs_fs_apex *apex = ii_apex(ii);
+	const struct silofs_repo *repo = apex->ap_mrepo;
 	int fd = -1;
 	int err;
 
@@ -2414,16 +2383,31 @@ static int check_inspect(const struct silofs_fs_ctx *fs_ctx,
 
 static int inspect_uspace(const struct silofs_inode_info *ii)
 {
+	struct silofs_bootsec bsec;
+	struct silofs_namestr name;
 	struct silofs_uspace_visitor usv;
 	struct silofs_fs_apex *apex = ii_apex(ii);
+	struct silofs_sb_info *sbi = NULL;
 	int err;
 
 	silofs_usvisitor_init(&usv, apex->ap_alif);
+	err = silofs_apex_boot_name(apex, &name);
+	if (err) {
+		goto out;
+	}
+	err = silofs_apex_load_boot(apex, &name, &bsec);
+	if (err) {
+		goto out;
+	}
 	err = flush_dirty_now(apex);
 	if (err) {
 		goto out;
 	}
-	err = silofs_walk_space_tree(apex, &usv.vis);
+	err = silofs_apex_stage_super(apex, &bsec.sb_uaddr, &sbi);
+	if (err) {
+		return err;
+	}
+	err = silofs_walk_space_tree(sbi, &usv.vis);
 	if (err) {
 		goto out;
 	}
@@ -2464,26 +2448,47 @@ int silof_check_writable_fs(const struct silofs_sb_info *sbi)
 	return silofs_sbi_isrofs(sbi) ? -EROFS : 0;
 }
 
-static int check_pack(const struct silofs_fs_ctx *fs_ctx,
-                      const struct silofs_namestr *name)
+static bool unirepo_mode(const struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_namestr nstr;
-	const struct silofs_sb_info *sbi = fs_ctx->fsc_apex->ap_sbi;
+	const struct silofs_repo *mrepo = fs_ctx->fsc_apex->ap_mrepo;
+	const struct silofs_repo *crepo = fs_ctx->fsc_apex->ap_crepo;
+	bool uni = false;
 
-	silofs_sbi_name(sbi, &nstr);
-	if (silofs_namestr_isequal(&nstr, name)) {
+	if (mrepo && crepo) {
+		uni = !strcmp(mrepo->re_root_dir, crepo->re_root_dir);
+	}
+	return uni;
+}
+
+static int check_pack(const struct silofs_fs_ctx *fs_ctx,
+                      const struct silofs_namestr *src_name,
+                      const struct silofs_namestr *dst_name)
+{
+	const int eq = silofs_namestr_isequal(src_name, dst_name);
+	int err;
+
+	err = silofs_check_fs_name(src_name);
+	if (err) {
+		return err;
+	}
+	err = silofs_check_fs_name(dst_name);
+	if (err) {
+		return err;
+	}
+	if (eq && unirepo_mode(fs_ctx)) {
 		return -EEXIST;
 	}
 	return 0;
 }
 
 int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_namestr *name)
+                   const struct silofs_namestr *src_name,
+                   const struct silofs_namestr *dst_name)
 {
 	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
 	int err;
 
-	err = check_pack(fs_ctx, name);
+	err = check_pack(fs_ctx, src_name, dst_name);
 	if (err) {
 		return err;
 	}
@@ -2491,7 +2496,7 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_pack_fs(apex, name);
+	err = silofs_apex_pack_fs(apex, src_name, dst_name);
 	if (err) {
 		return err;
 	}
@@ -2503,12 +2508,13 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_namestr *name)
+                     const struct silofs_namestr *src_name,
+                     const struct silofs_namestr *dst_name)
 {
 	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
 	int err;
 
-	err = check_pack(fs_ctx, name);
+	err = check_pack(fs_ctx, src_name, dst_name);
 	if (err) {
 		return err;
 	}
@@ -2516,7 +2522,7 @@ int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_unpack_fs(apex, name);
+	err = silofs_apex_unpack_fs(apex, src_name, dst_name);
 	if (err) {
 		return err;
 	}

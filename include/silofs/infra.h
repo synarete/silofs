@@ -32,7 +32,7 @@
 #include <silofs/infra/bytebuf.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/random.h>
-#include <silofs/infra/fiovec.h>
+#include <silofs/infra/xiovec.h>
 #include <silofs/infra/qalloc.h>
 #include <silofs/infra/logging.h>
 #include <silofs/infra/pipe.h>

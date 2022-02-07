@@ -30,10 +30,9 @@
 static struct silofs_subcmd_mount *mount_args;
 
 static const char *mount_usage[] = {
-	"mount --name=NAME [options] <repo-path> <mount-point>",
+	"mount [options] <repodir/name> <mountpoint>",
 	"",
 	"options:",
-	"  -n, --name                   File-system's name",
 	"  -r, --rdonly                 Mount in read-only mode",
 	"  -X, --noexec                 Do not allow programs execution",
 	"  -S, --nosuid                 Do not honor special bits",
@@ -51,7 +50,6 @@ static void mount_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "name", required_argument, NULL, 'n' },
 		{ "rdonly", no_argument, NULL, 'r' },
 		{ "noexec", no_argument, NULL, 'X' },
 		{ "nosuid", no_argument, NULL, 'S' },
@@ -67,10 +65,8 @@ static void mount_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("n:rXSZKo:aDV:Ch", opts);
-		if (opt_chr == 'n') {
-			mount_args->name = silofs_cmd_strdup(optarg);
-		} else if (opt_chr == 'r') {
+		opt_chr = silofs_cmd_getopt("rXSZKo:aDV:Ch", opts);
+		if (opt_chr == 'r') {
 			mount_args->rdonly = true;
 		} else if (opt_chr == 'x') {
 			mount_args->noexec = true;
@@ -97,8 +93,8 @@ static void mount_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo-path", &mount_args->repodir);
-	silofs_cmd_getarg("mount-point", &mount_args->mntpoint);
+	silofs_cmd_getarg("repodir/name", &mount_args->repodir_name);
+	silofs_cmd_getarg("mountpoint", &mount_args->mntpoint);
 	silofs_cmd_endargs();
 }
 
@@ -111,9 +107,10 @@ static void mount_create_fs_env(void)
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
-		.repodir = mount_args->repodir_real,
-		.fsname = mount_args->name,
+		.main_repodir = mount_args->repodir_real,
+		.main_name = mount_args->name,
 		.mntdir = mount_args->mntpoint_real,
+		.withfuse = true,
 		.allowother = mount_args->allowother,
 		.lazytime = mount_args->lazytime,
 		.noexec = mount_args->noexec,
@@ -123,8 +120,6 @@ static void mount_create_fs_env(void)
 		.kcopy = !mount_args->nokcopy,
 		.concp = true,
 		.pedantic = false,
-		.with_fuseq = true,
-		.lock_repo = true,
 	};
 
 	silofs_create_fse_inst(&fs_args);
@@ -164,8 +159,9 @@ static void mount_execute_fs(void)
 static void mount_finalize(void)
 {
 	mount_destroy_fs_env();
-	silofs_close_syslog();
+	silofs_cmd_close_syslog();
 
+	silofs_cmd_pfrees(&mount_args->repodir_name);
 	silofs_cmd_pfrees(&mount_args->repodir);
 	silofs_cmd_pfrees(&mount_args->mntpoint);
 	silofs_cmd_pfrees(&mount_args->repodir_real);
@@ -183,18 +179,54 @@ static void mount_start(void)
 
 static void mount_prepare_mntpoint(void)
 {
-	silofs_require_valid_fsname("name", &mount_args->name);
-	mount_args->mntpoint_real =
-	        silofs_cmd_realpath(mount_args->mntpoint);
-	silofs_die_if_not_mntdir(mount_args->mntpoint_real, true);
-	silofs_die_if_no_mountd();
+	silofs_cmd_realpath(mount_args->mntpoint, &mount_args->mntpoint_real);
+	silofs_cmd_check_mntdir(mount_args->mntpoint_real, true);
+	silofs_cmd_check_mountd();
 }
 
 static void mount_prepare_repo(void)
 {
-	silofs_die_if_not_dir_or_empty(mount_args->repodir, true);
-	mount_args->repodir_real =
-	        silofs_cmd_realpath(mount_args->repodir);
+	silofs_cmd_check_exists(mount_args->repodir_name);
+	silofs_cmd_splitpath(mount_args->repodir_name,
+	                     &mount_args->repodir, &mount_args->name);
+	silofs_cmd_check_nonemptydir(mount_args->repodir, true);
+	silofs_cmd_realpath(mount_args->repodir, &mount_args->repodir_real);
+	silofs_cmd_check_fsname(mount_args->name);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void mount_verify_bootsec(void)
+{
+	struct silofs_bootsec bsec;
+	struct silofs_fs_env *fse = silofs_fse_inst();
+	const char *repodir = mount_args->repodir_real;
+	const char *repodir_name = mount_args->repodir_name;
+	struct silofs_namestr nstr;
+	int fd = -1;
+	int err;
+
+	silofs_make_fsnamestr(&nstr, mount_args->name);
+	err = silofs_fse_open_repos(fse);
+	if (err) {
+		silofs_die(err, "failed to open repo: %s", repodir);
+	}
+	err = silofs_fse_lock_boot(fse, &nstr, &fd);
+	if (err) {
+		silofs_die(err, "failed to lock: %s", repodir_name);
+	}
+	err = silofs_fse_load_boot(fse, &nstr, &bsec);
+	if (err) {
+		silofs_die(err, "failed to load boot: %s", repodir_name);
+	}
+	err = silofs_fse_unlock_boot(fse, &nstr, &fd);
+	if (err) {
+		silofs_die(err, "failed to unlock: %s", repodir_name);
+	}
+	err = silofs_fse_close_repos(fse);
+	if (err) {
+		silofs_die(err, "failed to close repo: %s", repodir);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -233,7 +265,7 @@ static void mount_start_daemon(void)
 {
 	const pid_t pre_pid = getpid();
 
-	silofs_fork_daemon();
+	silofs_cmd_fork_daemon();
 
 	if (pre_pid == getpid()) {
 		/* I am the parent: wait for active mount & exit */
@@ -247,7 +279,7 @@ static void mount_boostrap_process(void)
 
 	if (!silofs_globals.dont_daemonize) {
 		mount_start_daemon();
-		silofs_open_syslog();
+		silofs_cmd_open_syslog();
 	}
 	if (!silofs_globals.allow_coredump) {
 		silofs_setrlimit_nocore();
@@ -321,6 +353,9 @@ void silofs_execute_mount(void)
 
 	/* Setup boot environment instance */
 	mount_create_fs_env();
+
+	/* Verify valid and lock-able boot sector */
+	mount_verify_bootsec();
 
 	/* Destroy boot environment instance */
 	mount_destroy_fs_env();

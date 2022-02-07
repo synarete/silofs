@@ -212,11 +212,24 @@ static void spnode_set_mainblobid(struct silofs_spmap_node *sn,
 	silofs_blobid40b_set(&sn->sn_mainblobid, blobid);
 }
 
+static void spnode_mainpackid(const struct silofs_spmap_node *sn,
+                              struct silofs_packid *out_packid)
+{
+	silofs_packid64b_parse(&sn->sn_mainpackid, out_packid);
+}
+
+static void spnode_set_mainpackid(struct silofs_spmap_node *sn,
+                                  const struct silofs_packid *packid)
+{
+	silofs_packid64b_set(&sn->sn_mainpackid, packid);
+}
+
 static void spnode_init(struct silofs_spmap_node *sn,
                         const struct silofs_vrange *vrange)
 {
 	spnode_set_vrange(sn, vrange);
 	silofs_blobid40b_reset(&sn->sn_mainblobid);
+	silofs_packid64b_reset(&sn->sn_mainpackid);
 	silofs_uaddr64b_reset(&sn->sn_parent);
 	silofs_uaddr64b_reset(&sn->sn_self);
 	silofs_spr_initn(sn->sn_subref, ARRAY_SIZE(sn->sn_subref));
@@ -264,6 +277,8 @@ static struct silofs_spmap_ref *
 spnode_subref_at(const struct silofs_spmap_node *sn, size_t slot)
 {
 	const struct silofs_spmap_ref *spr = &sn->sn_subref[slot];
+
+	silofs_assert_lt(slot, ARRAY_SIZE(sn->sn_subref));
 
 	return unconst(spr);
 }
@@ -367,32 +382,6 @@ static void spnode_rebind_packid(struct silofs_spmap_node *sn, loff_t voff,
 	struct silofs_spmap_ref *spr = spnode_child_ref_of(sn, voff);
 
 	silofs_spr_set_packid(spr, packid);
-}
-
-static int spnode_lookup_packid(const struct silofs_spmap_node *sn,
-                                const struct silofs_blobid *blobid,
-                                struct silofs_packid *out_packid)
-{
-	struct silofs_ulink ulink;
-	struct silofs_packid packid;
-	const struct silofs_spmap_ref *spr = NULL;
-	const struct silofs_blobid *child_blobid;
-	const size_t nslots = ARRAY_SIZE(sn->sn_subref);
-
-	for (size_t slot = 0; slot < nslots; ++slot) {
-		spr = spnode_subref_at(sn, slot);
-		silofs_spr_packid(spr, &packid);
-		if (packid_isnull(&packid)) {
-			continue;
-		}
-		silofs_spr_ulink(spr, &ulink);
-		child_blobid = uaddr_blobid(&ulink.child);
-		if (blobid_isequal(blobid, child_blobid)) {
-			packid_assign(out_packid, &packid);
-			return 0;
-		}
-	}
-	return -ENOENT;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -688,6 +677,7 @@ static void spleaf_init(struct silofs_spmap_leaf *sl,
 	silofs_vrange128_set(&sl->sl_vrange, vrange);
 	spleaf_set_stype_sub(sl, stype_sub);
 	silofs_blobid40b_reset(&sl->sl_mainblobid);
+	silofs_packid64b_reset(&sl->sl_mainpackid);
 	silofs_uaddr64b_reset(&sl->sl_parent);
 	silofs_uaddr64b_reset(&sl->sl_self);
 	bkr_init_arr(sl->sl_subref, ARRAY_SIZE(sl->sl_subref), vrange->beg);
@@ -892,6 +882,18 @@ static void spleaf_set_mainblobid(struct silofs_spmap_leaf *sl,
 	silofs_blobid40b_set(&sl->sl_mainblobid, blobid);
 }
 
+static void spleaf_mainpackid(const struct silofs_spmap_leaf *sl,
+                              struct silofs_packid *out_packid)
+{
+	silofs_packid64b_parse(&sl->sl_mainpackid, out_packid);
+}
+
+static void spleaf_set_mainpackid(struct silofs_spmap_leaf *sl,
+                                  const struct silofs_packid *packid)
+{
+	silofs_packid64b_set(&sl->sl_mainpackid, packid);
+}
+
 static void spleaf_make_ulink_at(struct silofs_spmap_leaf *sl, size_t slot,
                                  const struct silofs_uaddr *owner,
                                  struct silofs_ulink *out_ulink)
@@ -1005,32 +1007,6 @@ static void spleaf_rebind_packid(struct silofs_spmap_leaf *sl, loff_t voff,
 	bkr_set_packid(bkr, packid);
 }
 
-static int spleaf_lookup_packid(const struct silofs_spmap_leaf *sl,
-                                const struct silofs_blobid *blobid,
-                                struct silofs_packid *out_packid)
-{
-	struct silofs_ulink ulink;
-	struct silofs_packid packid;
-	const struct silofs_bk_ref *bkr;
-	const struct silofs_blobid *child_blobid;
-	const size_t nslots = ARRAY_SIZE(sl->sl_subref);
-
-	for (size_t slot = 0; slot < nslots; ++slot) {
-		bkr = spleaf_subref_at(sl, slot);
-		bkr_packid(bkr, &packid);
-		if (packid_isnull(&packid)) {
-			continue;
-		}
-		bkr_ulink(bkr, &ulink);
-		child_blobid = uaddr_blobid(&ulink.child);
-		if (blobid_isequal(blobid, child_blobid)) {
-			packid_assign(out_packid, &packid);
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_unode_info *sli_ui(struct silofs_spleaf_info *sli)
@@ -1048,12 +1024,16 @@ silofs_sli_uaddr(const struct silofs_spleaf_info *sli)
 
 void silofs_sli_incref(struct silofs_spleaf_info *sli)
 {
-	ui_incref(sli_ui(sli));
+	if (likely(sli != NULL)) {
+		ui_incref(sli_ui(sli));
+	}
 }
 
 void silofs_sli_decref(struct silofs_spleaf_info *sli)
 {
-	ui_decref(sli_ui(sli));
+	if (likely(sli != NULL)) {
+		ui_decref(sli_ui(sli));
+	}
 }
 
 static void sli_dirtify(struct silofs_spleaf_info *sli)
@@ -1063,14 +1043,16 @@ static void sli_dirtify(struct silofs_spleaf_info *sli)
 
 void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
                               const struct silofs_uaddr *parent,
-                              const struct silofs_vrange *vrange,
-                              enum silofs_stype stype_sub)
+                              loff_t voff, enum silofs_stype stype_sub)
 {
-	spleaf_init(sli->sl, vrange, stype_sub);
+	struct silofs_vrange vrange;
+
+	silofs_vrange_of_spleaf(&vrange, voff);
+	spleaf_init(sli->sl, &vrange, stype_sub);
 	spleaf_set_parent(sli->sl, parent);
 	spleaf_set_self(sli->sl, sli_uaddr(sli));
 	sli_dirtify(sli);
-	sli->sl_voff_last = vrange->beg;
+	sli->sl_voff_last = vrange.beg;
 }
 
 static void sli_formatted_vrange(const struct silofs_spleaf_info *sli,
@@ -1343,6 +1325,19 @@ bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
 	return true;
 }
 
+int silofs_sli_main_pack(const struct silofs_spleaf_info *sli,
+                         struct silofs_packid *out_packid)
+{
+	spleaf_mainpackid(sli->sl, out_packid);
+	return !packid_isnull(out_packid) ? 0 : -ENOENT;
+}
+
+void silofs_sli_bind_main_pack(struct silofs_spleaf_info *sli,
+                               const struct silofs_packid *packid)
+{
+	spleaf_set_mainpackid(sli->sl, packid);
+}
+
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
                                const struct silofs_vaddr *vaddr)
 {
@@ -1386,25 +1381,20 @@ void silofs_sli_rebind_child_at(struct silofs_spleaf_info *sli, loff_t voff,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_resolve_packid(const struct silofs_spleaf_info *sli,
-                               loff_t voff, struct silofs_packid *out_packid)
-{
-	spleaf_resolve_packid(sli->sl, voff, out_packid);
-}
-
 void silofs_sli_rebind_packid(struct silofs_spleaf_info *sli, loff_t voff,
                               const struct silofs_packid *packid)
 {
 	spleaf_rebind_packid(sli->sl, voff, packid);
-	sli_dirtify(sli);
+	/* no need to make dirty -- it is in-memory operation */
 }
 
-int silofs_sli_lookup_packid(const struct silofs_spleaf_info *sli,
-                             const struct silofs_blobid *blobid,
-                             struct silofs_packid *out_packid)
+int silofs_sli_resolve_packid(const struct silofs_spleaf_info *sli,
+                              loff_t voff, struct silofs_packid *out_packid)
 {
-	return spleaf_lookup_packid(sli->sl, blobid, out_packid);
+	spleaf_resolve_packid(sli->sl, voff, out_packid);
+	return packid_isnull(out_packid) ? -ENOENT : 0;
 }
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1428,29 +1418,25 @@ silofs_sni_uaddr(const struct silofs_spnode_info *sni)
 
 void silofs_sni_incref(struct silofs_spnode_info *sni)
 {
-	if (sni != NULL) {
+	if (likely(sni != NULL)) {
 		ui_incref(sni_ui(sni));
 	}
 }
 
 void silofs_sni_decref(struct silofs_spnode_info *sni)
 {
-	if (sni != NULL) {
+	if (likely(sni != NULL)) {
 		ui_decref(sni_ui(sni));
 	}
 }
 
 void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
-                              const struct silofs_uaddr *parent,
-                              const struct silofs_vrange *vrange)
+                              const struct silofs_uaddr *parent, loff_t voff)
 {
-	const unsigned int sn_height = parent->height - 1;
+	struct silofs_vrange vrange;
 
-	silofs_assert_gt(sn_height, SILOFS_SPLEAF_HEIGHT);
-	silofs_assert_le(sn_height, SILOFS_SPNODE_HEIGHT_MAX);
-	silofs_assert_eq(vrange->height, sn_height);
-
-	spnode_init(sni->sn, vrange);
+	silofs_vrange_of_spnode(&vrange, parent->height - 1, voff);
+	spnode_init(sni->sn, &vrange);
 	spnode_set_parent(sni->sn, parent);
 	spnode_set_self(sni->sn, sni_uaddr(sni));
 	sni_dirtify(sni);
@@ -1638,6 +1624,19 @@ bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni)
 	return (blobid_size(&blobid) > 0);
 }
 
+int silofs_sni_main_pack(const struct silofs_spnode_info *sni,
+                         struct silofs_packid *out_packid)
+{
+	spnode_mainpackid(sni->sn, out_packid);
+	return !packid_isnull(out_packid) ? 0 : -ENOENT;
+}
+
+void silofs_sni_bind_main_pack(struct silofs_spnode_info *sni,
+                               const struct silofs_packid *packid)
+{
+	spnode_set_mainpackid(sni->sn, packid);
+}
+
 static loff_t
 sni_bpos_of_child(const struct silofs_spnode_info *sni, loff_t voff)
 {
@@ -1692,24 +1691,18 @@ void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
 	spnode_clone_subrefs(sni->sn, sni_other->sn);
 }
 
-void silofs_sni_resolve_packid(const struct silofs_spnode_info *sni,
-                               loff_t voff, struct silofs_packid *out_packid)
-{
-	spnode_resolve_packid(sni->sn, voff, out_packid);
-}
-
 void silofs_sni_rebind_packid(struct silofs_spnode_info *sni, loff_t voff,
                               const struct silofs_packid *packid)
 {
 	spnode_rebind_packid(sni->sn, voff, packid);
-	sni_dirtify(sni);
+	/* no need to make dirty -- in memory only */
 }
 
-int silofs_sni_lookup_packid(struct silofs_spnode_info *sni,
-                             const struct silofs_blobid *blobid,
-                             struct silofs_packid *out_packid)
+int silofs_sni_resolve_packid(const struct silofs_spnode_info *sni,
+                              loff_t voff, struct silofs_packid *out_packid)
 {
-	return spnode_lookup_packid(sni->sn, blobid, out_packid);
+	spnode_resolve_packid(sni->sn, voff, out_packid);
+	return packid_isnull(out_packid) ? -ENOENT : 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -20,10 +20,9 @@
 static struct silofs_subcmd_mkfs *mkfs_args;
 
 static const char *mkfs_usage[] = {
-	"mkfs --name=NAME [options] <repository-path>",
+	"mkfs --size=NBYTES [options] <repodir/name>",
 	"",
 	"options:",
-	"  -n, --name=NAME              File-system's name",
 	"  -s, --size=NBYTES            Capacity size limit",
 	"  -F, --force                  Force overwrite if already exists",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..3)",
@@ -34,7 +33,6 @@ static void mkfs_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "name", required_argument, NULL, 'n' },
 		{ "size", required_argument, NULL, 's' },
 		{ "force", no_argument, NULL, 'F' },
 		{ "verbose", required_argument, NULL, 'V' },
@@ -43,10 +41,8 @@ static void mkfs_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("n:s:V:Fh", opts);
-		if (opt_chr == 'n') {
-			mkfs_args->name = silofs_cmd_strdup(optarg);
-		} else if (opt_chr == 's') {
+		opt_chr = silofs_cmd_getopt("s:V:Fh", opts);
+		if (opt_chr == 's') {
 			mkfs_args->size = optarg;
 			mkfs_args->fs_size = silofs_cmd_parse_size(optarg);
 		} else if (opt_chr == 'V') {
@@ -59,7 +55,7 @@ static void mkfs_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repository-path", &mkfs_args->repodir);
+	silofs_cmd_getarg("repodir/name", &mkfs_args->repodir_name);
 	silofs_cmd_endargs();
 }
 
@@ -69,8 +65,9 @@ static void mkfs_finalize(void)
 {
 	silofs_destroy_fse_inst();
 	silofs_cmd_pfrees(&mkfs_args->name);
-	silofs_cmd_pfrees(&mkfs_args->repodir_real);
 	silofs_cmd_pfrees(&mkfs_args->repodir);
+	silofs_cmd_pfrees(&mkfs_args->repodir_name);
+	silofs_cmd_pfrees(&mkfs_args->repodir_real);
 }
 
 static void mkfs_start(void)
@@ -82,37 +79,24 @@ static void mkfs_start(void)
 static void mkfs_prepare(void)
 {
 	silofs_die_if_missing_arg("size", mkfs_args->size);
-	silofs_require_valid_fsname("name", &mkfs_args->name);
-}
-
-static void mkfs_make_repodir(void)
-{
-	struct stat st = { .st_ino = 0 };
-	const char *path = mkfs_args->repodir;
-	int err;
-
-	err = silofs_sys_stat(path, &st);
-	if (err == 0) {
-		silofs_die_if_not_empty_dir(path, true);
-	} else if (err == -ENOENT) {
-		silofs_die_if_not_mkdir(path, 0700);
-	} else {
-		silofs_die(err, "stat failure: %s", path);
-	}
-	mkfs_args->repodir_real = silofs_cmd_realpath(path);
+	silofs_cmd_check_notexists(mkfs_args->repodir_name);
+	silofs_cmd_splitpath(mkfs_args->repodir_name,
+	                     &mkfs_args->repodir, &mkfs_args->name);
+	silofs_cmd_check_nonemptydir(mkfs_args->repodir, true);
+	silofs_cmd_realpath(mkfs_args->repodir, &mkfs_args->repodir_real);
+	silofs_cmd_check_fsname(mkfs_args->name);
 }
 
 static void mkfs_create_fs_env(void)
 {
 	const struct silofs_fs_args fs_args = {
-		.repodir = mkfs_args->repodir_real,
-		.fsname = mkfs_args->name,
+		.main_repodir = mkfs_args->repodir_real,
+		.main_name = mkfs_args->name,
 		.capacity = (size_t)mkfs_args->fs_size,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
-		.lock_repo = false,
 	};
 
 	silofs_create_fse_inst(&fs_args);
@@ -121,30 +105,36 @@ static void mkfs_create_fs_env(void)
 static void mkfs_format_filesystem(void)
 {
 	struct silofs_fs_env *fse = silofs_fse_inst();
+	const char *repodir = mkfs_args->repodir_real;
 	int err;
 
-	err = silofs_fse_format_repo(fse);
+	err = silofs_fse_open_repos(fse);
 	if (err) {
-		silofs_die(err, "format repo failed: %s", mkfs_args->repodir);
+		silofs_die(err, "failed to open repo: %s", repodir);
+	}
+	err = silofs_fse_close_repos(fse);
+	if (err) {
+		silofs_die(err, "failed to close repo: %s", repodir);
 	}
 	err = silofs_fse_format_fs(fse);
 	if (err) {
-		silofs_die(err, "format fs failed: %s", mkfs_args->repodir);
+		silofs_die(err, "failed to format fs: %s", repodir);
 	}
 }
 
 static void mkfs_finish(void)
 {
 	struct silofs_fs_env *fse = silofs_fse_inst();
+	const char *repodir = mkfs_args->repodir_real;
 	int err;
 
 	err = silofs_fse_shut(fse);
 	if (err) {
-		silofs_die(err, "shutdown error: %s", mkfs_args->repodir);
+		silofs_die(err, "shutdown error: %s", repodir);
 	}
 	err = silofs_fse_term(fse);
 	if (err) {
-		silofs_die(err, "internal error: %s", mkfs_args->repodir);
+		silofs_die(err, "internal error: %s", repodir);
 	}
 }
 
@@ -160,9 +150,6 @@ void silofs_execute_mkfs(void)
 
 	/* Verify user's arguments */
 	mkfs_prepare();
-
-	/* Create new empty repo dir */
-	mkfs_make_repodir();
 
 	/* Prepare environment */
 	mkfs_create_fs_env();

@@ -19,6 +19,10 @@
 
 #include <silofs/infra.h>
 
+int silofs_sbi_stage_ubk(struct silofs_sb_info *sbi,
+                         const struct silofs_oaddr *oaddr,
+                         struct silofs_ubk_info **out_ubi);
+
 int silofs_sbi_stage_spnode(struct silofs_sb_info *sbi, loff_t voff,
                             enum silofs_stage_flags stg_flags,
                             struct silofs_spnode_info **out_sni);

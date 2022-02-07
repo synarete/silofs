@@ -217,25 +217,25 @@ static char *silofs_do_getpass(const char *path, bool repeat)
 	write_stdout("re-enter passphrase: ");
 	pass2 = getpass_from_file(NULL);
 	if (strcmp(pass, pass2) != 0) {
-		silofs_delpass(&pass);
-		silofs_delpass(&pass2);
+		silofs_cmd_delpass(&pass);
+		silofs_cmd_delpass(&pass2);
 		silofs_die(0, "passphrase not equal");
 	}
-	silofs_delpass(&pass2);
+	silofs_cmd_delpass(&pass2);
 	return pass;
 }
 
-char *silofs_getpass(const char *path)
+void silofs_cmd_getpass(const char *path, char **out_pass)
 {
-	return silofs_do_getpass(path, false);
+	*out_pass = silofs_do_getpass(path, false);
 }
 
-char *silofs_getpass2(const char *path)
+void silofs_cmd_getpass2(const char *path, char **out_pass)
 {
-	return silofs_do_getpass(path, true);
+	*out_pass = silofs_do_getpass(path, true);
 }
 
-void silofs_delpass(char **pass)
+void silofs_cmd_delpass(char **pass)
 {
 	if (pass && *pass) {
 		memset(*pass, 0xEC, strlen(*pass));

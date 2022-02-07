@@ -21,9 +21,9 @@
 #include <silofs/fs/defs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
-#include <silofs/fs/mpool.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/crypto.h>
+#include <silofs/fs/cache.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/opers.h>
 #include <silofs/fs/namei.h>

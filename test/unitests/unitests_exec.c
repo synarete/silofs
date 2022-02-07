@@ -180,9 +180,9 @@ static size_t ualloc_nbytes_now(const struct ut_env *ute)
 
 static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 {
-	size_t ualloc_now;
 	struct statvfs stvfs_now;
 	const size_t bk_sz = UT_BK_SIZE;
+	size_t ualloc_now;
 
 	if (pre_execute) {
 		ut_statfs_rootd(ute, &ute->stvfs_start);
@@ -200,7 +200,7 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 
 static void ut_run_tests_group(struct ut_env *ute, const struct ut_tgroup *tg)
 {
-	const struct ut_testdef *td;
+	const struct ut_testdef *td = NULL;
 
 	for (size_t i = 0; i < tg->tests->len; ++i) {
 		td = &tg->tests->arr[i];
@@ -222,16 +222,13 @@ static void ut_exec_tests(struct ut_env *ute)
 
 static void ut_prep_tests(struct ut_env *ute)
 {
-	int err;
 	struct silofs_fs_env *fse = ute->fs_env;
+	int err;
 
-	err = silofs_fse_format_repo(fse);
+	err = silofs_fse_format_repos(fse);
 	silofs_assert_ok(err);
 
 	err = silofs_fse_term(fse);
-	silofs_assert_ok(err);
-
-	err = silofs_fse_format_repo(fse);
 	silofs_assert_ok(err);
 
 	err = silofs_fse_format_fs(fse);
@@ -287,13 +284,14 @@ void ut_execute_tests(void)
 			.gid = getgid(),
 			.pid = getpid(),
 			.umask = 0002,
-			.repodir = ut_globals.test_dir_real,
+			.main_repodir = ut_globals.test_dir_main,
+			.cold_repodir = ut_globals.test_dir_cold,
+			.main_name = "unitests",
+			.cold_name = "unitests2",
 			.mntdir = "/",
-			.fsname = "unitests",
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,
 			.pedantic = false, /* TODO: make me a knob (true) */
-			.lock_repo = true,
 		},
 		.program = ut_globals.program,
 		.version = ut_globals.version

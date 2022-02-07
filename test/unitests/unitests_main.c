@@ -34,6 +34,7 @@ static void ut_setup_globals(int argc, char *argv[]);
 static void ut_parse_args(void);
 static void ut_setup_tracing(void);
 static void ut_setup_args(void);
+static void ut_prepare(void);
 static void ut_init_lib(void);
 static void ut_atexit(void);
 
@@ -62,6 +63,9 @@ int main(int argc, char *argv[])
 
 	/* Require valid test directory */
 	ut_setup_args();
+
+	/* Prepare test sub directories */
+	ut_prepare();
 
 	/* Prepare libsilofs */
 	ut_init_lib();
@@ -141,10 +145,28 @@ static void ut_parse_args(void)
 	}
 }
 
+static char *ut_join(const char *base, const char *name)
+{
+	const size_t len1 = strlen(base);
+	const size_t len2 = strlen(name);
+	const size_t size = len1 + len2 + 2;
+	char *path;
+
+	path = (char *)malloc(size);
+	if (path == NULL) {
+		error(EXIT_FAILURE, errno, "malloc failed: size=%lu", size);
+	}
+	memcpy(path, base, len1);
+	path[len1] = '/';
+	memcpy(path + len1 + 1, name, len2);
+	path[len1 + 1 + len2] = '\0';
+	return path;
+}
+
 static void ut_setup_args(void)
 {
-	int err;
 	struct stat st;
+	int err;
 
 	ut_globals.test_dir_real = realpath(ut_globals.test_dir, NULL);
 	if (ut_globals.test_dir_real == NULL) {
@@ -164,6 +186,25 @@ static void ut_setup_args(void)
 	if (err) {
 		error(EXIT_FAILURE, -err,
 		      "no access: %s", ut_globals.test_dir_real);
+	}
+	ut_globals.test_dir_main = ut_join(ut_globals.test_dir_real, "main");
+	ut_globals.test_dir_cold = ut_join(ut_globals.test_dir_real, "cold");
+}
+
+static void ut_prepare(void)
+{
+	const char *path;
+	int err;
+
+	path = ut_globals.test_dir_main;
+	err = silofs_sys_mkdir(path, 0700);
+	if (err && (err != -EEXIST)) {
+		error(EXIT_FAILURE, -err, "mkdir failed: %s", path);
+	}
+	path = ut_globals.test_dir_cold;
+	err = silofs_sys_mkdir(path, 0700);
+	if (err && (err != -EEXIST)) {
+		error(EXIT_FAILURE, -err, "mkdir failed: %s", path);
 	}
 }
 
@@ -188,6 +229,8 @@ static void ut_pfree(char **pp)
 static void ut_atexit(void)
 {
 	ut_pfree(&ut_globals.test_dir_real);
+	ut_pfree(&ut_globals.test_dir_main);
+	ut_pfree(&ut_globals.test_dir_cold);
 }
 
 

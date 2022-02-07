@@ -33,8 +33,8 @@
 
 
 /* memory page size */
-#define SILOFS_PAGE_SHIFT       (12)
-#define SILOFS_PAGE_SIZE        (1U << SILOFS_PAGE_SHIFT)
+#define SILOFS_PAGE_SHIFT_MIN   (12)
+#define SILOFS_PAGE_SIZE_MIN    (1U << SILOFS_PAGE_SHIFT_MIN)
 
 #define SILOFS_PAGE_SHIFT_MAX   (16)
 #define SILOFS_PAGE_SIZE_MAX    (1U << SILOFS_PAGE_SHIFT_MAX)

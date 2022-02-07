@@ -479,20 +479,34 @@ static bool de_may_insert(const struct silofs_dir_entry *de, size_t nwant)
 	return true;
 }
 
+static bool de_should_insert(const struct silofs_dir_entry *de, size_t nwant)
+{
+	return !de_isactive(de) && (nwant == de_nents(de));
+}
+
 static const struct silofs_dir_entry *
 de_insert(struct silofs_dir_entry *beg, const struct silofs_dir_entry *end,
           const struct silofs_str *name, ino_t ino, mode_t dt)
 {
+	struct silofs_dir_entry *pos = NULL;
 	struct silofs_dir_entry *itr = beg;
 	const size_t nwant = de_nents_for_name(itr, name->len);
+	int nfit = 0;
 
-	while (itr < end) {
+	while ((itr < end) && (nfit < 4)) {
+		if (de_should_insert(itr, nwant)) {
+			pos = itr;
+			break;
+		}
 		if (de_may_insert(itr, nwant)) {
-			return de_insert_at(itr, end, nwant, name, ino, dt);
+			if (pos == NULL) {
+				pos = itr;
+			}
+			nfit++;
 		}
 		itr = de_next(itr);
 	}
-	return NULL;
+	return pos ? de_insert_at(pos, end, nwant, name, ino, dt) : NULL;
 }
 
 static void de_remove(struct silofs_dir_entry *de,
@@ -558,6 +572,22 @@ static void dtn_set_node_index(struct silofs_dtree_node *dtn, size_t index)
 	dtn->dn_node_index = silofs_cpu_to_le32((uint32_t)index);
 }
 
+static size_t dtn_nde_max(const struct silofs_dtree_node *dtn)
+{
+	return ARRAY_SIZE(dtn->de);
+}
+
+static size_t dtn_nde_used(const struct silofs_dtree_node *dtn)
+{
+	return silofs_le16_to_cpu(dtn->dn_nde_used);
+}
+
+static void dtn_set_nde_used(struct silofs_dtree_node *dtn, size_t cnt)
+{
+	silofs_assert_le(cnt, ARRAY_SIZE(dtn->de));
+	dtn->dn_nde_used = silofs_cpu_to_le16((uint16_t)cnt);
+}
+
 static void dtn_child(const struct silofs_dtree_node *dtn,
                       size_t ord, struct silofs_vaddr *out_vaddr)
 {
@@ -585,6 +615,7 @@ static void dtn_setup(struct silofs_dtree_node *dtn, ino_t ino,
 	dtn_set_ino(dtn, ino);
 	dtn_set_parent(dtn, parent_off);
 	dtn_set_node_index(dtn, node_index);
+	dtn_set_nde_used(dtn, 0);
 	dtn_reset_childs(dtn);
 	de_reset_arr(dtn->de, ARRAY_SIZE(dtn->de));
 	dtn->dn_flags = 0;
@@ -636,11 +667,62 @@ dtn_scan(const struct silofs_dtree_node *dtn,
 	return de_scan(hint ? hint : beg, beg, end, node_index, pos);
 }
 
+static bool dtn_may_insert(const struct silofs_dtree_node *dtn, size_t nlen)
+{
+	const size_t nwant = de_nents_for_name(dtn->de, nlen);
+	const size_t nused = dtn_nde_used(dtn);
+	const size_t limit = dtn_nde_max(dtn);
+
+	silofs_assert_le(nused, limit);
+	return (nwant + nused) <= limit;
+}
+
+static void dtn_update_inserted(struct silofs_dtree_node *dtn, size_t nlen)
+{
+	const size_t nadd = de_nents_for_name(dtn->de, nlen);
+	const size_t nuse = dtn_nde_used(dtn);
+
+	dtn_set_nde_used(dtn, nuse + nadd);
+}
+
+static void dtn_update_removed(struct silofs_dtree_node *dtn, size_t nlen)
+{
+	const size_t ndel = de_nents_for_name(dtn->de, nlen);
+	const size_t nuse = dtn_nde_used(dtn);
+
+	silofs_assert_ge(nuse, ndel);
+	dtn_set_nde_used(dtn, nuse - ndel);
+}
+
 static const struct silofs_dir_entry *
 dtn_insert(struct silofs_dtree_node *dtn,
            const struct silofs_qstr *name, ino_t ino, mode_t dt)
 {
-	return de_insert(dtn_begin(dtn), dtn_end(dtn), &name->str, ino, dt);
+	const struct silofs_dir_entry *de = NULL;
+	const size_t nlen = name->str.len;
+
+	if (!dtn_may_insert(dtn, nlen)) {
+		return NULL;
+	}
+	de = de_insert(dtn_begin(dtn), dtn_end(dtn), &name->str, ino, dt);
+	if (de == NULL) {
+		return NULL;
+	}
+	dtn_update_inserted(dtn, nlen);
+	return de;
+}
+
+static void dtn_remove_de(struct silofs_dtree_node *dtn,
+                          struct silofs_dir_entry *de)
+{
+	const struct silofs_dir_entry *end = dtn_end(dtn);
+	const size_t nlen = de_name_len(de);
+
+	silofs_assert_ge(de, dtn->de);
+	silofs_assert_lt(de, end);
+
+	de_remove(de, end);
+	dtn_update_removed(dtn, nlen);
 }
 
 static loff_t dtn_next_doffset(const struct silofs_dtree_node *dtn)
@@ -1996,7 +2078,7 @@ static int dic_erase_dentry(struct silofs_dir_ctx *d_ctx,
 
 	ii_incref(d_ctx->child_ii);
 
-	de_remove(dei->de, dtn_end(dei->dni->dtn));
+	dtn_remove_de(dei->dni->dtn, dei->de);
 	dni_dirtify(dei->dni);
 
 	dir_dec_ndents(dir_ii);

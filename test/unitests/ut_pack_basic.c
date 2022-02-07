@@ -17,15 +17,23 @@
 #include "unitests.h"
 
 
+static const char *ut_src_fsname(const struct ut_env *ute)
+{
+	return ute->args->fs_args.main_name;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_pack_simple(struct ut_env *ute)
 {
 	ino_t dino;
+	const char *src_name = ut_src_fsname(ute);
+	const char *dst_name = UT_NAME;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_pack_ok(ute, name);
+	ut_archive_ok(ute, src_name, dst_name);
+	ut_restore_ok(ute, dst_name, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -35,13 +43,19 @@ static void ut_pack_data_(struct ut_env *ute, loff_t off, size_t bsz)
 {
 	ino_t ino;
 	ino_t dino;
+	const char *src_name = ut_src_fsname(ute);
+	const char *dst_name = UT_NAME;
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, bsz, off);
-	ut_pack_ok(ute, name);
+	ut_release_ok(ute, ino);
+	ut_archive_ok(ute, src_name, dst_name);
+	ut_restore_ok(ute, dst_name, name);
+	ut_open_rdonly(ute, ino);
+	ut_read_verify(ute, ino, buf, bsz, off);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }

@@ -307,37 +307,36 @@ static void *address_within_bk(void *bk_start, loff_t off_in_bk)
 	return (uint8_t *)bk_start + off_in_bk;
 }
 
-static int fiovec_by_mmapbk(const struct silofs_file_ctx *f_ctx,
+static int xiovec_by_mmapbk(const struct silofs_file_ctx *f_ctx,
                             void *bk_start, loff_t off_in_bk, size_t len,
-                            struct silofs_fiovec *out_fiov)
+                            struct silofs_xiovec *out_xiov)
 {
 	silofs_unused(f_ctx);
-	out_fiov->fv_off = 0;
-	out_fiov->fv_len = len;
-	out_fiov->fv_base = address_within_bk(bk_start, off_in_bk);
-	out_fiov->fv_fd = -1;
-	out_fiov->fv_ref = NULL;
+	out_xiov->xiov_off = 0;
+	out_xiov->xiov_len = len;
+	out_xiov->xiov_base = address_within_bk(bk_start, off_in_bk);
+	out_xiov->xiov_fd = -1;
+	out_xiov->xiov_ref = NULL;
 	return 0;
 }
 
-static int fiovec_by_alloc(const struct silofs_file_ctx *f_ctx,
+static int xiovec_by_alloc(const struct silofs_file_ctx *f_ctx,
                            void *bk_start, loff_t off_in_bk, size_t len,
-                           struct silofs_fiovec *out_fiov)
+                           struct silofs_xiovec *out_xiov)
 {
 	uint8_t *mm = address_within_bk(bk_start, off_in_bk);
 	const struct silofs_alloc_if *alif = f_ctx->sbi->s_alif;
 
-	return silofs_allocresolve(alif, mm, len, out_fiov);
+	return silofs_allocresolve(alif, mm, len, out_xiov);
 }
 
-static int fiovec_by_blob(const struct silofs_file_ctx *f_ctx,
+static int xiovec_by_blob(const struct silofs_file_ctx *f_ctx,
                           const struct silofs_vaddr *vaddr,
                           loff_t off_within, size_t len,
-                          struct silofs_fiovec *out_fiov)
+                          struct silofs_xiovec *out_xiov)
 {
 	struct silofs_uvaddr uva;
-	struct silofs_blob_info *bli = NULL;
-	const struct silofs_repo *repo = f_ctx->apex->ap_repo;
+	struct silofs_ubk_info *ubi = NULL;
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
@@ -347,21 +346,21 @@ static int fiovec_by_blob(const struct silofs_file_ctx *f_ctx,
 	}
 	uva.uaddr.oaddr.pos += off_within;
 	uva.uaddr.oaddr.len = len;
-
-	err = silofs_repo_stage_blob(repo, &uva.uaddr.oaddr.blobid, &bli);
+	err = silofs_sbi_stage_ubk(f_ctx->sbi, &uva.uaddr.oaddr, &ubi);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_resolve(bli, &uva.uaddr.oaddr, out_fiov);
+	silofs_assert_not_null(ubi->bli);
+	err = silofs_bli_resolve(ubi->bli, &uva.uaddr.oaddr, out_xiov);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int fiovec_of_fileaf(const struct silofs_file_ctx *f_ctx,
+static int xiovec_of_fileaf(const struct silofs_file_ctx *f_ctx,
                             struct silofs_fileaf_info *fli,
-                            struct silofs_fiovec *out_fiov)
+                            struct silofs_xiovec *out_xiov)
 {
 	int err;
 	void *dat = fli_data(fli);
@@ -369,52 +368,52 @@ static int fiovec_of_fileaf(const struct silofs_file_ctx *f_ctx,
 	const size_t dlen = fli_len_within(fli, f_ctx->off, f_ctx->end);
 
 	if (fli_has_mmdata(fli)) {
-		err = fiovec_by_mmapbk(f_ctx, dat, doff, dlen, out_fiov);
+		err = xiovec_by_mmapbk(f_ctx, dat, doff, dlen, out_xiov);
 	} else {
-		err = fiovec_by_alloc(f_ctx, dat, doff, dlen, out_fiov);
+		err = xiovec_by_alloc(f_ctx, dat, doff, dlen, out_xiov);
 	}
 	if (err) {
 		return err;
 	}
 	if (f_ctx->with_backref) {
-		out_fiov->fv_ref = &fli->fl_vi.v_fir;
+		out_xiov->xiov_ref = &fli->fl_vi.v_fir;
 	}
 	return 0;
 }
 
-static int fiovec_of_data(const struct silofs_file_ctx *f_ctx,
+static int xiovec_of_data(const struct silofs_file_ctx *f_ctx,
                           const struct silofs_vaddr *vaddr,
                           loff_t off_in_bk, size_t len,
-                          struct silofs_fiovec *out_fiov)
+                          struct silofs_xiovec *out_xiov)
 {
-	return fiovec_by_blob(f_ctx, vaddr, off_in_bk, len, out_fiov);
+	return xiovec_by_blob(f_ctx, vaddr, off_in_bk, len, out_xiov);
 }
 
-static int fic_fiovec_of_vaddr(const struct silofs_file_ctx *f_ctx,
+static int fic_xiovec_of_vaddr(const struct silofs_file_ctx *f_ctx,
                                const struct silofs_vaddr *vaddr,
-                               struct silofs_fiovec *out_fiov)
+                               struct silofs_xiovec *out_xiov)
 {
 	int err;
 	const enum silofs_stype stype = vaddr_stype(vaddr);
 	const loff_t off_within = off_in_data(f_ctx->off, stype);
 	const size_t len = len_of_data(f_ctx->off, f_ctx->end, stype);
 
-	err = fiovec_of_data(f_ctx, vaddr, off_within, len, out_fiov);
+	err = xiovec_of_data(f_ctx, vaddr, off_within, len, out_xiov);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int fic_fiovec_of_zeros(const struct silofs_file_ctx *f_ctx,
+static int fic_xiovec_of_zeros(const struct silofs_file_ctx *f_ctx,
                                const enum silofs_stype stype,
-                               struct silofs_fiovec *out_fiov)
+                               struct silofs_xiovec *out_xiov)
 {
 	void *buf = fic_nil_block(f_ctx);
 	const size_t len = len_of_data(f_ctx->off, f_ctx->end, stype);
 
 	silofs_assert_le(len, SILOFS_BK_SIZE);
-	return fiovec_by_alloc(f_ctx, buf, 0, len, out_fiov);
+	return xiovec_by_alloc(f_ctx, buf, 0, len, out_xiov);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1380,17 +1379,17 @@ fic_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
 {
 	int err;
 	struct silofs_fileaf_info *fli = NULL;
-	struct silofs_fiovec fiov = {
-		.fv_fd = -1,
-		.fv_base = NULL
+	struct silofs_xiovec xiov = {
+		.xiov_fd = -1,
+		.xiov_base = NULL
 	};
 
 	if (fic_has_kcopy_mode(f_ctx)) {
-		err = fiovec_of_data(f_ctx, vaddr, off_in_bk, len, &fiov);
+		err = xiovec_of_data(f_ctx, vaddr, off_in_bk, len, &xiov);
 		if (err) {
 			return err;
 		}
-		err = silofs_fiovec_copy_from(&fiov, fic_nil_block(f_ctx));
+		err = silofs_xiovec_copy_from(&xiov, fic_nil_block(f_ctx));
 		if (err) {
 			return err;
 		}
@@ -1647,21 +1646,21 @@ static int fic_seek_hole_by_head_leaves(struct silofs_file_ctx *f_ctx,
 	return -ENOENT;
 }
 
-static int fic_resolve_fiovec(const struct silofs_file_ctx *f_ctx,
+static int fic_resolve_xiovec(const struct silofs_file_ctx *f_ctx,
                               struct silofs_fileaf_info *fli,
                               const struct silofs_vaddr *vaddr,
-                              struct silofs_fiovec *out_fiov)
+                              struct silofs_xiovec *out_xiov)
 {
 	int err;
 	enum silofs_stype stype;
 
 	if (fli != NULL) {
-		err = fiovec_of_fileaf(f_ctx, fli, out_fiov);
+		err = xiovec_of_fileaf(f_ctx, fli, out_xiov);
 	} else if ((vaddr != NULL) && !vaddr_isnull(vaddr)) {
-		err = fic_fiovec_of_vaddr(f_ctx, vaddr, out_fiov);
+		err = fic_xiovec_of_vaddr(f_ctx, vaddr, out_xiov);
 	} else {
 		stype = off_to_data_stype(f_ctx->off);
-		err = fic_fiovec_of_zeros(f_ctx, stype, out_fiov);
+		err = fic_xiovec_of_zeros(f_ctx, stype, out_xiov);
 	}
 	return err;
 }
@@ -1672,25 +1671,25 @@ static int fic_call_rw_actor(const struct silofs_file_ctx *f_ctx,
                              size_t *out_len)
 {
 	int err;
-	struct silofs_fiovec fiov = {
-		.fv_base = NULL,
-		.fv_off = -1,
-		.fv_len = 0,
-		.fv_fd = -1,
-		.fv_ref = NULL,
+	struct silofs_xiovec xiov = {
+		.xiov_base = NULL,
+		.xiov_off = -1,
+		.xiov_len = 0,
+		.xiov_fd = -1,
+		.xiov_ref = NULL,
 	};
 
-	err = fic_resolve_fiovec(f_ctx, fli, vaddr, &fiov);
+	err = fic_resolve_xiovec(f_ctx, fli, vaddr, &xiov);
 	if (!err) {
 		if (f_ctx->with_backref) {
-			silofs_fiovref_pre(fiov.fv_ref);
+			silofs_xiovref_pre(xiov.xiov_ref);
 		}
-		err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &fiov);
+		err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &xiov);
 		if (err && f_ctx->with_backref) {
-			silofs_fiovref_post(fiov.fv_ref);
+			silofs_xiovref_post(xiov.xiov_ref);
 		}
 	}
-	*out_len = fiov.fv_len;
+	*out_len = xiov.xiov_len;
 	return err;
 }
 
@@ -1936,22 +1935,22 @@ read_iter_of(const struct silofs_rwiter_ctx *rwi)
 }
 
 static int read_iter_actor(struct silofs_rwiter_ctx *rwi,
-                           const struct silofs_fiovec *fiov)
+                           const struct silofs_xiovec *xiov)
 {
 	int err;
 	struct silofs_read_iter *rdi = read_iter_of(rwi);
 
-	if ((fiov->fv_fd > 0) && (fiov->fv_off < 0)) {
+	if ((xiov->xiov_fd > 0) && (xiov->xiov_off < 0)) {
 		return -EINVAL;
 	}
-	if ((rdi->dat_len + fiov->fv_len) > rdi->dat_max) {
+	if ((rdi->dat_len + xiov->xiov_len) > rdi->dat_max) {
 		return -EINVAL;
 	}
-	err = silofs_fiovec_copy_into(fiov, rdi->dat + rdi->dat_len);
+	err = silofs_xiovec_copy_into(xiov, rdi->dat + rdi->dat_len);
 	if (err) {
 		return err;
 	}
-	rdi->dat_len += fiov->fv_len;
+	rdi->dat_len += xiov->xiov_len;
 	return 0;
 }
 
@@ -2616,22 +2615,22 @@ write_iter_of(const struct silofs_rwiter_ctx *rwi)
 }
 
 static int write_iter_actor(struct silofs_rwiter_ctx *rwi,
-                            const struct silofs_fiovec *fiov)
+                            const struct silofs_xiovec *xiov)
 {
 	struct silofs_write_iter *wri = write_iter_of(rwi);
 	int err;
 
-	if ((fiov->fv_fd > 0) && (fiov->fv_off < 0)) {
+	if ((xiov->xiov_fd > 0) && (xiov->xiov_off < 0)) {
 		return -EINVAL;
 	}
-	if ((wri->dat_len + fiov->fv_len) > wri->dat_max) {
+	if ((wri->dat_len + xiov->xiov_len) > wri->dat_max) {
 		return -EINVAL;
 	}
-	err = silofs_fiovec_copy_from(fiov, wri->dat + wri->dat_len);
+	err = silofs_xiovec_copy_from(xiov, wri->dat + wri->dat_len);
 	if (err) {
 		return err;
 	}
-	wri->dat_len += fiov->fv_len;
+	wri->dat_len += xiov->xiov_len;
 	return 0;
 }
 
@@ -2700,11 +2699,11 @@ int silofs_do_write(const struct silofs_fs_ctx *fsc,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int fic_rdwr_post(struct silofs_file_ctx *f_ctx,
-                         const struct silofs_fiovec *fiov, size_t cnt)
+                         const struct silofs_xiovec *xiov, size_t cnt)
 {
 	ii_incref(f_ctx->ii); /* special case: ii may be NULL */
 	for (size_t i = 0; i < cnt; ++i) {
-		silofs_fiovref_post(fiov[i].fv_ref);
+		silofs_xiovref_post(xiov[i].xiov_ref);
 	}
 	ii_decref(f_ctx->ii);
 	return 0;
@@ -2712,7 +2711,7 @@ static int fic_rdwr_post(struct silofs_file_ctx *f_ctx,
 
 int silofs_do_rdwr_post(const struct silofs_fs_ctx *fsc,
                         struct silofs_inode_info *ii,
-                        const struct silofs_fiovec *fiov, size_t cnt)
+                        const struct silofs_xiovec *xiov, size_t cnt)
 {
 	struct silofs_file_ctx f_ctx = {
 		.apex = fsc->fsc_apex,
@@ -2723,7 +2722,7 @@ int silofs_do_rdwr_post(const struct silofs_fs_ctx *fsc,
 
 	};
 
-	return fic_rdwr_post(&f_ctx, fiov, cnt);
+	return fic_rdwr_post(&f_ctx, xiov, cnt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3854,7 +3853,7 @@ static size_t fmc_copy_range_length(const struct silofs_fmap_ctx *fm_ctx_src,
 
 static int fmc_stage_resolve_leaf(const struct silofs_fmap_ctx *fm_ctx,
                                   struct silofs_fileaf_info **out_fli,
-                                  struct silofs_fiovec *out_fiov)
+                                  struct silofs_xiovec *out_xiov)
 {
 	int err;
 
@@ -3862,7 +3861,7 @@ static int fmc_stage_resolve_leaf(const struct silofs_fmap_ctx *fm_ctx,
 	if (err) {
 		return err;
 	}
-	err = fiovec_of_fileaf(fm_ctx->f_ctx, *out_fli, out_fiov);
+	err = xiovec_of_fileaf(fm_ctx->f_ctx, *out_fli, out_xiov);
 	if (err) {
 		return err;
 	}
@@ -3870,11 +3869,11 @@ static int fmc_stage_resolve_leaf(const struct silofs_fmap_ctx *fm_ctx,
 }
 
 static int fmc_resolve_leaf_vaddr(const struct silofs_fmap_ctx *fm_ctx,
-                                  struct silofs_fiovec *out_fiov)
+                                  struct silofs_xiovec *out_xiov)
 {
 	silofs_assert(!vaddr_isnull(&fm_ctx->vaddr));
 
-	return fic_fiovec_of_vaddr(fm_ctx->f_ctx, &fm_ctx->vaddr, out_fiov);
+	return fic_xiovec_of_vaddr(fm_ctx->f_ctx, &fm_ctx->vaddr, out_xiov);
 }
 
 static struct silofs_fs_apex *apex_of(const struct silofs_fmap_ctx *fm_ctx)
@@ -3889,8 +3888,8 @@ static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 	struct silofs_fs_apex *apex = apex_of(fm_ctx_dst);
 	struct silofs_fileaf_info *fli_src = NULL;
 	struct silofs_fileaf_info *fli_dst = NULL;
-	struct silofs_fiovec fiov_src = { .fv_off = -1, .fv_fd = -1 };
-	struct silofs_fiovec fiov_dst = { .fv_off = -1, .fv_fd = -1 };
+	struct silofs_xiovec xiov_src = { .xiov_off = -1, .xiov_fd = -1 };
+	struct silofs_xiovec xiov_dst = { .xiov_off = -1, .xiov_fd = -1 };
 
 	err = fmc_prepare_unwritten_leaf(fm_ctx_dst);
 	if (err) {
@@ -3901,15 +3900,15 @@ static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 		return err;
 	}
 	if (fic_has_kcopy_mode(fm_ctx_dst->f_ctx)) {
-		err = fmc_resolve_leaf_vaddr(fm_ctx_src, &fiov_src);
+		err = fmc_resolve_leaf_vaddr(fm_ctx_src, &xiov_src);
 		if (err) {
 			return err;
 		}
-		err = fmc_resolve_leaf_vaddr(fm_ctx_dst, &fiov_dst);
+		err = fmc_resolve_leaf_vaddr(fm_ctx_dst, &xiov_dst);
 		if (err) {
 			return err;
 		}
-		err = silofs_apex_kcopy(apex, &fiov_src, &fiov_dst, len);
+		err = silofs_apex_kcopy(apex, &xiov_src, &xiov_dst, len);
 		if (err) {
 			return err;
 		}
@@ -3918,15 +3917,15 @@ static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 			return err;
 		}
 	} else {
-		err = fmc_stage_resolve_leaf(fm_ctx_src, &fli_src, &fiov_src);
+		err = fmc_stage_resolve_leaf(fm_ctx_src, &fli_src, &xiov_src);
 		if (err) {
 			return err;
 		}
-		err = fmc_stage_resolve_leaf(fm_ctx_dst, &fli_dst, &fiov_dst);
+		err = fmc_stage_resolve_leaf(fm_ctx_dst, &fli_dst, &xiov_dst);
 		if (err) {
 			return err;
 		}
-		err = silofs_fiovec_copy_mem(&fiov_src, &fiov_dst, len);
+		err = silofs_xiovec_copy_mem(&xiov_src, &xiov_dst, len);
 		if (err) {
 			return err;
 		}

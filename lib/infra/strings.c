@@ -71,12 +71,12 @@ static size_t str_length(const char *s)
 
 size_t silofs_str_length(const char *s)
 {
-	return str_length(s);
+	return (s != NULL) ? str_length(s) : 0;
 }
 
 int silofs_str_compare(const char *s1, const char *s2, size_t n)
 {
-	return memcmp(s1, s2, n);
+	return (s1 == s2) ? 0 : memcmp(s1, s2, n);
 }
 
 int silofs_str_ncompare(const char *s1, size_t n1,

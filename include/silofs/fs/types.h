@@ -84,7 +84,7 @@ enum silofs_flags {
 	SILOFS_F_TIMEOUT        = SILOFS_BIT(9),
 	SILOFS_F_SLUGGISH       = SILOFS_BIT(10),
 	SILOFS_F_IDLE           = SILOFS_BIT(11),
-	SILOFS_F_SEAL           = SILOFS_BIT(12),
+	SILOFS_F_WALKFS         = SILOFS_BIT(12),
 	SILOFS_F_MMAPBLOBS      = SILOFS_BIT(13),
 };
 
@@ -118,7 +118,7 @@ enum silofs_iattr_flags {
 };
 
 
-/* strings & buffer */
+/* strings */
 struct silofs_str {
 	const char *str;
 	size_t len;
@@ -235,7 +235,7 @@ struct silofs_xxid_tas {
 
 /* content-addressing blob-id */
 struct silofs_xxid_cas {
-	struct silofs_hash256 hash;
+	uint8_t hash[SILOFS_HASH256_LEN];
 };
 
 /* union of possible blob addressing */
@@ -261,7 +261,7 @@ struct silofs_packid {
 	enum silofs_pack_mode   pmode;
 };
 
-/* opaque address within blob */
+/* opaque object address within blob */
 struct silofs_oaddr {
 	struct silofs_blobid    blobid;
 	loff_t                  pos;
@@ -325,7 +325,6 @@ struct silofs_vrange {
 
 /* boot-sector in-memory repr  */
 struct silofs_bootsec {
-	struct silofs_namebuf           name;
 	struct silofs_uuid              uuid;
 	struct silofs_uaddr             sb_uaddr;
 	struct silofs_packid            sb_packid;
@@ -376,6 +375,7 @@ struct silofs_ubk_info {
 	struct silofs_cache_elem        ubk_ce;
 	struct silofs_oaddr             ubk_oaddr;
 	struct silofs_block            *ubk;
+	struct silofs_blob_info        *bli;
 };
 
 /* voffset-addressing block info */
@@ -393,23 +393,26 @@ struct silofs_space_stat {
 	ssize_t vspace_nfiles;
 };
 
-/* inodes-table's in-memory map entry */
-struct silofs_itment {
+/* in-memory mapping from ino to voff */
+struct silofs_inoent {
+	struct silofs_list_head htb_lh;
+	struct silofs_list_head lru_lh;
 	ino_t   ino;
-	loff_t  off;
+	loff_t  voff;
 };
 
-/* inodes-table's in-memory (hash) map */
-struct silofs_itmap {
-	struct silofs_alloc_if *itm_alif;
-	struct silofs_itment   *itm_htbl;
-	size_t ithm_nelems;
+/* in-memory hash-map of ino-to-voff mapping */
+struct silofs_inomap {
+	struct silofs_listq      im_lru;
+	struct silofs_alloc_if  *im_alif;
+	struct silofs_list_head *im_htbl;
+	size_t im_htbl_nelems;
 };
 
 /* inodes-table reference */
 struct silofs_itable_info {
-	struct silofs_itmap     it_map;
-	struct silofs_vaddr     it_treeroot;
+	struct silofs_inomap    it_inomap;
+	struct silofs_vaddr     it_rootitbl;
 	struct silofs_iaddr     it_rootdir;
 	ino_t  it_apex_ino;
 	size_t it_ninodes;
@@ -461,13 +464,12 @@ struct silofs_fs_ctx {
 struct silofs_fs_apex {
 	const struct silofs_fs_args    *ap_args;
 	struct silofs_alloc_if         *ap_alif;
-	struct silofs_qalloc           *ap_qalloc;
-	struct silofs_cache            *ap_cache;
-	struct silofs_repo             *ap_repo;
 	struct silofs_crypto           *ap_crypto;
-	struct silofs_sb_info          *ap_sbi;
+	struct silofs_repo             *ap_mrepo;
+	struct silofs_repo             *ap_crepo;
 	struct silofs_piper             ap_piper;
 	struct silofs_oper_stat         ap_ops;
+	struct silofs_sb_info          *ap_sbi;
 	iconv_t                         ap_iconv;
 	time_t                          ap_initime;
 	int                             ap_slock_fd;
@@ -475,9 +477,11 @@ struct silofs_fs_apex {
 
 /* file-system input arguments */
 struct silofs_fs_args {
-	const char *repodir;
+	const char *main_repodir;
+	const char *main_name;
+	const char *cold_repodir;
+	const char *cold_name;
 	const char *mntdir;
-	const char *fsname;
 	const char *passwd;
 	size_t capacity;
 	size_t memwant;
@@ -485,8 +489,8 @@ struct silofs_fs_args {
 	gid_t  gid;
 	pid_t  pid;
 	mode_t umask;
-	bool   lock_repo;
-	bool   with_fuseq;
+	bool   unimode;
+	bool   withfuse;
 	bool   pedantic;
 	bool   allowother;
 	bool   lazytime;
@@ -496,6 +500,7 @@ struct silofs_fs_args {
 	bool   rdonly;
 	bool   kcopy;
 	bool   concp;
+	bool   restore;
 };
 
 /* file-system environment context */
@@ -505,10 +510,9 @@ struct silofs_fs_env {
 	struct silofs_kivam             fs_kivam;
 	struct silofs_qalloc           *fs_qalloc;
 	struct silofs_alloc_if         *fs_alif;
-	struct silofs_mpool            *fs_mpool;
-	struct silofs_cache            *fs_cache;
 	struct silofs_crypto           *fs_crypto;
-	struct silofs_repo             *fs_repo;
+	struct silofs_repo             *fs_main_repo;
+	struct silofs_repo             *fs_cold_repo;
 	struct silofs_fs_apex          *fs_apex;
 	struct silofs_fuseq            *fs_fuseq;
 	int                             fs_signum;
@@ -541,7 +545,7 @@ struct silofs_listxattr_ctx {
 };
 
 typedef int (*silofs_rwiter_fn)(struct silofs_rwiter_ctx *rwi_ctx,
-                                const struct silofs_fiovec *fiov);
+                                const struct silofs_xiovec *xiov);
 
 struct silofs_rwiter_ctx {
 	silofs_rwiter_fn actor;

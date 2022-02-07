@@ -92,6 +92,7 @@
 #define listq_isempty(lq)               silofs_listq_isempty(lq)
 #define listq_push_back(lq, lh)         silofs_listq_push_back(lq, lh)
 #define listq_push_front(lq, lh)        silofs_listq_push_front(lq, lh)
+#define listq_pop_back(lq)              silofs_listq_pop_back(lq)
 #define listq_pop_front(lq)             silofs_listq_pop_front(lq)
 #define listq_remove(lq, lh)            silofs_listq_remove(lq, lh)
 #define listq_front(lq)                 silofs_listq_front(lq)
@@ -135,6 +136,7 @@
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
+#define uaddr_lba(ua)                   silofs_uaddr_lba(ua)
 #define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 
@@ -156,12 +158,18 @@
 #define bli_decref(bli)                 silofs_bli_decref(bli)
 
 #define sbi_apex(sbi)                   silofs_sbi_apex(sbi)
-#define sbi_repo(sbi)                   silofs_sbi_repo(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
+#define sbi_oaddr(sbi)                  silofs_sbi_oaddr(sbi)
+#define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
+#define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
+#define sni_incref(sni)                 silofs_sni_incref(sni)
+#define sni_decref(sni)                 silofs_sni_decref(sni)
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
+#define sli_incref(sli)                 silofs_sli_incref(sli)
+#define sli_decref(sli)                 silofs_sli_decref(sli)
 
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)

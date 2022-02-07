@@ -44,46 +44,25 @@ static loff_t uvaddr_voff(const struct silofs_uvaddr *uva)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ui_stamp_mark_visible(struct silofs_unode_info *ui)
+static void ui_bind_apex_by(struct silofs_unode_info *ui,
+                            const struct silofs_sb_info *sbi)
 {
-	silofs_zero_stamp_view(ui->u_ti.t_view, ui_stype(ui));
-	ui->u_verified = true;
-	ui_dirtify(ui);
-}
-
-static void ui_bind_to(struct silofs_unode_info *ui,
-                       struct silofs_fs_apex *apex,
-                       struct silofs_ubk_info *ubi)
-{
-	ui->u_ti.t_apex = apex;
-	silofs_ui_attach_bk(ui, ubi);
-	silofs_ui_bind_view(ui);
+	silofs_ui_bind_apex(ui, sbi_apex(sbi));
 }
 
 static void vi_bind_to(struct silofs_vnode_info *vi,
-                       struct silofs_fs_apex *apex,
+                       struct silofs_sb_info *sbi,
                        struct silofs_vbk_info *vbi)
 {
+	struct silofs_fs_apex *apex = sbi_apex(sbi);
+
 	vi->v_ti.t_apex = apex;
-	silofs_vi_attach_bk(vi, vbi);
-	silofs_vi_bind_view(vi);
+	vi->v_ti.t_crypto = apex->ap_crypto;
+	vi->v_sbi = sbi;
+	silofs_vi_attach_to(vi, vbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void sni_incref(struct silofs_spnode_info *sni)
-{
-	if (likely(sni != NULL)) {
-		silofs_sni_incref(sni);
-	}
-}
-
-static void sni_decref(struct silofs_spnode_info *sni)
-{
-	if (likely(sni != NULL)) {
-		silofs_sni_decref(sni);
-	}
-}
 
 static void sni_incref2(struct silofs_spnode_info *sni1,
                         struct silofs_spnode_info *sni2)
@@ -97,20 +76,6 @@ static void sni_decref2(struct silofs_spnode_info *sni1,
 {
 	sni_decref(sni1);
 	sni_decref(sni2);
-}
-
-static void sli_incref(struct silofs_spleaf_info *sli)
-{
-	if (likely(sli != NULL)) {
-		silofs_sli_incref(sli);
-	}
-}
-
-static void sli_decref(struct silofs_spleaf_info *sli)
-{
-	if (likely(sli != NULL)) {
-		silofs_sli_decref(sli);
-	}
 }
 
 static void sni_sli_incref(struct silofs_spnode_info *sni,
@@ -129,59 +94,15 @@ static void sni_sli_decref(struct silofs_spnode_info *sni,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int sbi_expects_spawned(const struct silofs_sb_info *sbi, int err)
+static void sbi_log_cache_stat(const struct silofs_sb_info *sbi)
 {
 	const struct silofs_cache *cache = sbi_cache(sbi);
 
-	if (err) {
-		log_dbg("can not spawn: dq_accum_nbytes=%lu " \
-		        "ubi=%lu ui=%lu vbi=%lu vi=%lu err=%d",
-		        cache->c_dq.dq_accum_nbytes,
-		        cache->c_ubi_lm.lm_lru.sz,
-		        cache->c_ui_lm.lm_lru.sz,
-		        cache->c_vbi_lm.lm_lru.sz,
-		        cache->c_vi_lm.lm_lru.sz, err);
-	}
-	return err;
-}
-
-static int sbi_lookup_cached_ubi(struct silofs_sb_info *sbi,
-                                 const struct silofs_oaddr *oaddr,
-                                 struct silofs_ubk_info **out_ubi)
-{
-	*out_ubi = silofs_cache_lookup_ubk(sbi_cache(sbi), oaddr);
-	return (*out_ubi != NULL) ? 0 : -ENOENT;
-}
-
-static void sbi_forget_cached_ubi(const struct silofs_sb_info *sbi,
-                                  struct silofs_ubk_info *ubi)
-{
-	silofs_cache_forget_ubk(sbi_cache(sbi), ubi);
-}
-
-static int sbi_spawn_cached_ubi(struct silofs_sb_info *sbi,
-                                const struct silofs_oaddr *oaddr,
-                                struct silofs_ubk_info **out_ubi)
-{
-	*out_ubi = silofs_cache_spawn_ubk(sbi_cache(sbi), oaddr);
-	return (*out_ubi != NULL) ? 0 : -ENOMEM;
-}
-
-
-static int sbi_lookup_cached_ui(struct silofs_sb_info *sbi,
-                                const struct silofs_uaddr *uaddr,
-                                struct silofs_unode_info **out_ui)
-{
-	*out_ui = silofs_cache_lookup_unode(sbi_cache(sbi), uaddr);
-	return (*out_ui != NULL) ? 0 : -ENOENT;
-}
-
-static int sbi_spawn_cached_ui(struct silofs_sb_info *sbi,
-                               const struct silofs_uaddr *uaddr,
-                               struct silofs_unode_info **out_ui)
-{
-	*out_ui = silofs_cache_spawn_unode(sbi_cache(sbi), uaddr);
-	return (*out_ui == NULL) ? -ENOMEM : 0;
+	log_dbg("cache-stat: dq_accum_nbytes=%lu " \
+	        "ubi=%lu ui=%lu vbi=%lu vi=%lu bli=%lu",
+	        cache->c_dq.dq_accum_nbytes, cache->c_ubi_lm.lm_lru.sz,
+	        cache->c_ui_lm.lm_lru.sz, cache->c_vbi_lm.lm_lru.sz,
+	        cache->c_vi_lm.lm_lru.sz, cache->c_bli_lm.lm_lru.sz);
 }
 
 static int sbi_lookup_cached_vbi(struct silofs_sb_info *sbi, loff_t voff,
@@ -220,10 +141,10 @@ static void sbi_forget_cached_vi(struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int sbi_commit_dirty(struct silofs_sb_info *sbi)
+static int sbi_commit_dirty(const struct silofs_sb_info *sbi)
 {
-	int err;
 	const struct silofs_cache *cache = sbi_cache(sbi);
+	int err;
 
 	err = silofs_apex_flush_dirty(sbi_apex(sbi), SILOFS_F_NOW);
 	if (err) {
@@ -233,120 +154,72 @@ static int sbi_commit_dirty(struct silofs_sb_info *sbi)
 	return err;
 }
 
-static int sbi_spawn_ubi(struct silofs_sb_info *sbi,
-                         const struct silofs_oaddr *oaddr,
-                         struct silofs_ubk_info **out_ubi)
-{
-	int ret;
-
-	ret = sbi_spawn_cached_ubi(sbi, oaddr, out_ubi);
-	if (!ret) {
-		goto out;
-	}
-	ret = sbi_commit_dirty(sbi);
-	if (ret) {
-		goto out;
-	}
-	ret = sbi_spawn_cached_ubi(sbi, oaddr, out_ubi);
-out:
-	return sbi_expects_spawned(sbi, ret);
-}
-
-static int sbi_spawn_ui(struct silofs_sb_info *sbi,
-                        const struct silofs_uaddr *uaddr,
-                        struct silofs_unode_info **out_ui)
-{
-	int ret;
-
-	ret = sbi_spawn_cached_ui(sbi, uaddr, out_ui);
-	if (!ret) {
-		goto out;
-	}
-	ret = sbi_commit_dirty(sbi);
-	if (ret) {
-		goto out;
-	}
-	ret = sbi_spawn_cached_ui(sbi, uaddr, out_ui);
-out:
-	return sbi_expects_spawned(sbi, ret);
-}
-
 static int sbi_spawn_vbi(struct silofs_sb_info *sbi, loff_t voff,
                          struct silofs_vbk_info **out_vbi)
 {
-	int ret;
+	int err;
 
-	ret = sbi_spawn_cached_vbi(sbi, voff, out_vbi);
-	if (!ret) {
-		goto out;
+	err = sbi_spawn_cached_vbi(sbi, voff, out_vbi);
+	if (!err) {
+		goto out_ok;
 	}
-	ret = sbi_commit_dirty(sbi);
-	if (ret) {
-		goto out;
+	err = sbi_commit_dirty(sbi);
+	if (err) {
+		goto out_err;
 	}
-	ret = sbi_spawn_cached_vbi(sbi, voff, out_vbi);
-out:
-	return sbi_expects_spawned(sbi, ret);
+	err = sbi_spawn_cached_vbi(sbi, voff, out_vbi);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	return 0;
+out_err:
+	sbi_log_cache_stat(sbi);
+	return err;
 }
 
 static int sbi_spawn_vi(struct silofs_sb_info *sbi,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_vnode_info **out_vi)
 {
-	int ret;
-
-	ret  = sbi_spawn_cached_vi(sbi, vaddr, out_vi);
-	if (!ret) {
-		goto out;
-	}
-	ret = sbi_commit_dirty(sbi);
-	if (ret) {
-		goto out;
-	}
-	ret = sbi_spawn_cached_vi(sbi, vaddr, out_vi);
-out:
-	return sbi_expects_spawned(sbi, ret);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int sbi_spawn_blob_at(const struct silofs_sb_info *sbi,
-                             const struct silofs_blobid *blobid,
-                             struct silofs_blob_info **out_bli)
-{
-	return silofs_apex_spawn_blob(sbi_apex(sbi), blobid, out_bli);
-}
-
-static int sbi_stage_blob_at(const struct silofs_sb_info *sbi,
-                             const struct silofs_blobid *blobid,
-                             struct silofs_blob_info **out_bli)
-{
-	return silofs_apex_stage_blob(sbi_apex(sbi), blobid, out_bli);
-}
-
-static int sbi_stage_blob_of(const struct silofs_sb_info *sbi,
-                             const struct silofs_oaddr *oaddr,
-                             struct silofs_blob_info **out_bli)
-{
-	return sbi_stage_blob_at(sbi, &oaddr->blobid, out_bli);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int sbi_spawn_bind_ui(struct silofs_sb_info *sbi,
-                             const struct silofs_uaddr *uaddr,
-                             struct silofs_ubk_info *ubi,
-                             struct silofs_unode_info **out_ui)
-{
 	int err;
 
-	err = sbi_spawn_ui(sbi, uaddr, out_ui);
-	if (err) {
-		return err;
+	err = sbi_spawn_cached_vi(sbi, vaddr, out_vi);
+	if (!err) {
+		goto out_ok;
 	}
-	ui_bind_to(*out_ui, sbi_apex(sbi), ubi);
+	err = sbi_commit_dirty(sbi);
+	if (err) {
+		goto out_err;
+	}
+	err = sbi_spawn_cached_vi(sbi, vaddr, out_vi);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
 	return 0;
+out_err:
+	sbi_log_cache_stat(sbi);
+	return err;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
+                          const struct silofs_blobid *blobid,
+                          struct silofs_blob_info **out_bli)
+{
+	return silofs_repo_spawn_blob(sbi->s_repo, blobid, out_bli);
+}
+
+static int sbi_stage_blob(const struct silofs_sb_info *sbi,
+                          const struct silofs_blobid *blobid,
+                          struct silofs_blob_info **out_bli)
+{
+	return silofs_repo_stage_blob(sbi->s_repo, blobid, out_bli);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int sbi_spawn_bind_vi(struct silofs_sb_info *sbi,
                              const struct silofs_vaddr *vaddr,
@@ -355,12 +228,13 @@ static int sbi_spawn_bind_vi(struct silofs_sb_info *sbi,
 {
 	int err;
 
+	silofs_vbi_incref(vbi);
 	err = sbi_spawn_vi(sbi, vaddr, out_vi);
-	if (err) {
-		return err;
+	if (!err) {
+		vi_bind_to(*out_vi, sbi, vbi);
 	}
-	vi_bind_to(*out_vi, sbi_apex(sbi), vbi);
-	return 0;
+	silofs_vbi_decref(vbi);
+	return err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -454,103 +328,40 @@ static int sbi_find_cached_spnode(struct silofs_sb_info *sbi, loff_t voff,
 	return 0;
 }
 
-static int sbi_try_stage_cached_spnode(struct silofs_sb_info *sbi,
-                                       const struct silofs_uaddr *uaddr,
-                                       struct silofs_spnode_info **out_sni)
+int silofs_sbi_stage_ubk(struct silofs_sb_info *sbi,
+                         const struct silofs_oaddr *oaddr,
+                         struct silofs_ubk_info **out_ubi)
 {
-	struct silofs_unode_info *ui = NULL;
-	int err;
-
-	err = sbi_lookup_cached_ui(sbi, uaddr, &ui);
-	if (err) {
-		return err;
-	}
-	*out_sni = silofs_sni_from_ui(ui);
-	return 0;
-}
-
-static int sbi_spawn_load_bk(struct silofs_sb_info *sbi,
-                             struct silofs_blob_info *bli,
-                             const struct silofs_oaddr *oaddr,
-                             struct silofs_ubk_info **out_ubi)
-{
-	int ret;
 	struct silofs_ubk_info *ubi = NULL;
-
-	bli_incref(bli);
-	ret = sbi_spawn_ubi(sbi, oaddr, &ubi);
-	if (ret) {
-		goto out;
-	}
-	ret = silofs_bli_load_bk(bli, ubi->ubk, oaddr);
-	if (ret) {
-		sbi_forget_cached_ubi(sbi, ubi);
-		goto out;
-	}
-	*out_ubi = ubi;
-out:
-	bli_decref(bli);
-	return ret;
-}
-
-static int sbi_stage_load_block(struct silofs_sb_info *sbi,
-                                const struct silofs_oaddr *oaddr,
-                                struct silofs_ubk_info **out_ubi)
-{
-	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	err = sbi_stage_blob_of(sbi, oaddr, &bli);
-	if (err) {
-		return err;
-	}
-	err = sbi_spawn_load_bk(sbi, bli, oaddr, out_ubi);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int sbi_stage_block(struct silofs_sb_info *sbi,
-                           const struct silofs_oaddr *oaddr,
-                           struct silofs_ubk_info **out_ubi)
-{
-	int err;
-
-	err = sbi_lookup_cached_ubi(sbi, oaddr, out_ubi);
+	err = silofs_repo_stage_ubk(sbi->s_repo, oaddr, &ubi);
 	if (!err) {
-		return 0; /* Cache hit */
+		goto out_ok;
 	}
-	err = sbi_stage_load_block(sbi, oaddr, out_ubi);
+	if (err != -ENOMEM) {
+		goto out_err;
+	}
+	err = sbi_commit_dirty(sbi);
 	if (err) {
-		return err;
+		goto out_err;
 	}
+	err = silofs_repo_stage_ubk(sbi->s_repo, oaddr, &ubi);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	*out_ubi = ubi;
 	return 0;
+out_err:
+	sbi_log_cache_stat(sbi);
+	return err;
 }
 
-static int sbi_stage_spmap_at(struct silofs_sb_info *sbi,
-                              const struct silofs_uaddr *uaddr,
-                              struct silofs_unode_info **out_ui)
+static void sbi_bind_sni_to_apex(const struct silofs_sb_info *sbi,
+                                 struct silofs_spnode_info *sni)
 {
-	struct silofs_ubk_info *ubi = NULL;
-	struct silofs_unode_info *ui = NULL;
-	int err;
-
-	err = sbi_stage_block(sbi, &uaddr->oaddr, &ubi);
-	if (err) {
-		return err;
-	}
-	err = sbi_spawn_bind_ui(sbi, uaddr, ubi, &ui);
-	if (err) {
-		return err;
-	}
-	err = silofs_ui_verify_view(ui);
-	if (err) {
-		/* TODO: unbind forget here */
-		return err;
-	}
-	*out_ui = ui;
-	return 0;
+	ui_bind_apex_by(&sni->sn_ui, sbi);
 }
 
 static int sbi_stage_spnode_at(struct silofs_sb_info *sbi,
@@ -558,25 +369,28 @@ static int sbi_stage_spnode_at(struct silofs_sb_info *sbi,
                                struct silofs_spnode_info **out_sni)
 {
 	int err;
-	struct silofs_unode_info *ui = NULL;
-	struct silofs_spnode_info *sni = NULL;
 
-	silofs_assert_eq(uaddr->stype, SILOFS_STYPE_SPNODE);
-
-	err = sbi_try_stage_cached_spnode(sbi, uaddr, out_sni);
+	err = silofs_repo_stage_spnode(sbi->s_repo, uaddr, out_sni);
 	if (!err) {
-		return 0; /* cache hit */
+		goto out_ok;
 	}
-	err = sbi_stage_spmap_at(sbi, uaddr, &ui);
+	if (err != -ENOMEM) {
+		goto out_err;
+	}
+	err = sbi_commit_dirty(sbi);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sni = silofs_sni_from_ui(ui);
-	silofs_sni_rebind_view(sni);
-	silofs_sni_update_staged(sni);
-
-	*out_sni = sni;
+	err = silofs_repo_stage_spnode(sbi->s_repo, uaddr, out_sni);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	sbi_bind_sni_to_apex(sbi, *out_sni);
 	return 0;
+out_err:
+	sbi_log_cache_stat(sbi);
+	return err;
 }
 
 static void sbi_update_uspace_meta(struct silofs_sb_info *sbi,
@@ -603,11 +417,11 @@ static int sbi_spawn_main_blob(struct silofs_sb_info *sbi)
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
-	const size_t nslots = ARRAY_SIZE(sbi->sb->sb_umap.sb_subref);
+	const size_t nslots = ARRAY_SIZE(sbi->sb->sb_subref);
 	int err;
 
 	sbi_make_blobid_for(sbi, SILOFS_STYPE_SPNODE, nslots, &blobid);
-	err = sbi_spawn_blob_at(sbi, &blobid, &bli);
+	err = sbi_spawn_blob(sbi, &blobid, &bli);
 	if (err) {
 		return err;
 	}
@@ -621,7 +435,7 @@ static int sbi_stage_main_blob(struct silofs_sb_info *sbi)
 	struct silofs_blob_info *bli = NULL;
 
 	silofs_sbi_main_blob(sbi, &blobid);
-	return sbi_stage_blob_at(sbi, &blobid, &bli);
+	return sbi_stage_blob(sbi, &blobid, &bli);
 }
 
 static int sbi_require_main_blob(struct silofs_sb_info *sbi)
@@ -636,51 +450,51 @@ static int sbi_require_main_blob(struct silofs_sb_info *sbi)
 	return err;
 }
 
-static int sbi_spawn_spmap(struct silofs_sb_info *sbi,
-                           const struct silofs_uaddr *uaddr,
-                           struct silofs_unode_info **out_ui)
+static int sbi_spawn_spnode(const struct silofs_sb_info *sbi,
+                            const struct silofs_uaddr *uaddr,
+                            struct silofs_spnode_info **out_sni)
 {
 	int err;
-	struct silofs_ubk_info *ubi = NULL;
 
-	err = sbi_stage_block(sbi, &uaddr->oaddr, &ubi);
-	if (err) {
-		return err;
+	err = silofs_repo_spawn_spnode(sbi->s_repo, uaddr, out_sni);
+	if (!err) {
+		goto out_ok;
 	}
-	err = sbi_spawn_bind_ui(sbi, uaddr, ubi, out_ui);
-	if (err) {
-		return err;
+	if (err != -ENOMEM) {
+		goto out_err;
 	}
-	ui_stamp_mark_visible(*out_ui);
+	err = sbi_commit_dirty(sbi);
+	if (err) {
+		goto out_err;
+	}
+	err = silofs_repo_spawn_spnode(sbi->s_repo, uaddr, out_sni);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	sbi_bind_sni_to_apex(sbi, *out_sni);
 	return 0;
+out_err:
+	return err;
 }
 
 static int sbi_spawn_top_spnode_of(struct silofs_sb_info *sbi, loff_t voff,
                                    struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_vrange vrange;
-	struct silofs_unode_info *ui = NULL;
-	struct silofs_spnode_info *sni = NULL;
-	const size_t height = silofs_sbi_space_tree_height(sbi) - 1;
 	int err;
 
 	err = sbi_require_main_blob(sbi);
 	if (err) {
 		return err;
 	}
-
-	silofs_vrange_of_spnode(&vrange, height, voff);
 	silofs_sbi_main_child_at(sbi, voff, &uaddr);
 
-	err = sbi_spawn_spmap(sbi, &uaddr, &ui);
+	err = sbi_spawn_spnode(sbi, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
-	sni = silofs_sni_from_ui(ui);
-	silofs_sni_rebind_view(sni);
-	silofs_sni_setup_spawned(sni, sbi_uaddr(sbi), &vrange);
-	*out_sni = sni;
+	silofs_sni_setup_spawned(*out_sni, sbi_uaddr(sbi), voff);
 	return 0;
 }
 
@@ -722,9 +536,9 @@ static int sbi_stage_top_spnode(struct silofs_sb_info *sbi, loff_t voff,
                                 enum silofs_stage_flags stg_flags,
                                 struct silofs_spnode_info **out_sni)
 {
-	int err;
 	struct silofs_ulink ulink;
 	struct silofs_spnode_info *sni = NULL;
+	int err;
 
 	err = silofs_sbi_subref_of(sbi, voff, &ulink);
 	if (err) {
@@ -754,7 +568,7 @@ static int sbi_stage_spnode_main_blob(struct silofs_sb_info *sbi,
 	struct silofs_blob_info *bli = NULL;
 
 	silofs_sni_main_blob(sni, &blobid);
-	return sbi_stage_blob_at(sbi, &blobid, &bli);
+	return sbi_stage_blob(sbi, &blobid, &bli);
 }
 
 static int sbi_spawn_spnode_main_blob(struct silofs_sb_info *sbi,
@@ -767,7 +581,7 @@ static int sbi_spawn_spnode_main_blob(struct silofs_sb_info *sbi,
 	int err;
 
 	sbi_make_blobid_for(sbi, stype, nchilds, &blobid);
-	err = sbi_spawn_blob_at(sbi, &blobid, &bli);
+	err = sbi_spawn_blob(sbi, &blobid, &bli);
 	if (err) {
 		return err;
 	}
@@ -789,32 +603,23 @@ static int sbi_require_spnode_main_blob(struct silofs_sb_info *sbi,
 }
 
 static int sbi_spawn_sub_spnode_of(struct silofs_sb_info *sbi, loff_t voff,
-                                   struct silofs_spnode_info *sni_parent,
+                                   struct silofs_spnode_info *parent,
                                    struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_vrange vrange;
-	struct silofs_unode_info *ui = NULL;
-	struct silofs_spnode_info *sni = NULL;
-	const size_t height = silofs_sni_height(sni_parent) - 1;
 	int err;
 
-	err = sbi_require_spnode_main_blob(sbi, sni_parent);
+	err = sbi_require_spnode_main_blob(sbi, parent);
 	if (err) {
 		return err;
 	}
+	silofs_sni_resolve_main_child(parent, voff, &uaddr);
 
-	silofs_vrange_of_spnode(&vrange, height, voff);
-	silofs_sni_resolve_main_child(sni_parent, voff, &uaddr);
-
-	err = sbi_spawn_spmap(sbi, &uaddr, &ui);
+	err = sbi_spawn_spnode(sbi, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
-	sni = silofs_sni_from_ui(ui);
-	silofs_sni_rebind_view(sni);
-	silofs_sni_setup_spawned(sni, sni_uaddr(sni_parent), &vrange);
-	*out_sni = sni;
+	silofs_sni_setup_spawned(*out_sni, sni_uaddr(parent), voff);
 	return 0;
 }
 
@@ -961,9 +766,9 @@ static int sbi_find_cached_spleaf(struct silofs_sb_info *sbi, loff_t voff,
                                   enum silofs_stage_flags stg_flags,
                                   struct silofs_spleaf_info **out_sli)
 {
-	int err;
 	struct silofs_unode_info *ui = NULL;
 	struct silofs_spleaf_info *sli = NULL;
+	int err;
 
 	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPLEAF_HEIGHT, &ui);
 	if (err) {
@@ -979,33 +784,59 @@ static int sbi_find_cached_spleaf(struct silofs_sb_info *sbi, loff_t voff,
 	return 0;
 }
 
+static void sbi_bind_sli_to_apex(const struct silofs_sb_info *sbi,
+                                 struct silofs_spleaf_info *sli)
+{
+	ui_bind_apex_by(&sli->sl_ui, sbi);
+}
+
+static int sbi_spawn_spleaf_at(const struct silofs_sb_info *sbi,
+                               const struct silofs_uaddr *uaddr,
+                               struct silofs_spleaf_info **out_sli)
+{
+	int err;
+
+	err = silofs_repo_spawn_spleaf(sbi->s_repo, uaddr, out_sli);
+	if (!err) {
+		goto out_ok;
+	}
+	if (err != -ENOMEM) {
+		goto out_err;
+	}
+	err = sbi_commit_dirty(sbi);
+	if (err) {
+		goto out_err;
+	}
+	err = silofs_repo_spawn_spleaf(sbi->s_repo, uaddr, out_sli);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	sbi_bind_sli_to_apex(sbi, *out_sli);
+	return 0;
+out_err:
+	return err;
+}
+
 static int sbi_spawn_spleaf_of(struct silofs_sb_info *sbi,
                                struct silofs_spnode_info *sni,
                                loff_t voff, enum silofs_stype stype_sub,
                                struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_vrange vrange;
-	struct silofs_unode_info *ui = NULL;
-	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
 	err = sbi_require_spnode_main_blob(sbi, sni);
 	if (err) {
 		return err;
 	}
-
-	silofs_vrange_of_spleaf(&vrange, voff);
 	silofs_sni_resolve_main_child(sni, voff, &uaddr);
 
-	err = sbi_spawn_spmap(sbi, &uaddr, &ui);
+	err = sbi_spawn_spleaf_at(sbi, &uaddr, out_sli);
 	if (err) {
 		return err;
 	}
-	sli = silofs_sli_from_ui(ui);
-	silofs_sli_rebind_view(sli);
-	silofs_sli_setup_spawned(sli, sni_uaddr(sni), &vrange, stype_sub);
-	*out_sli = sli;
+	silofs_sli_setup_spawned(*out_sli, sni_uaddr(sni), voff, stype_sub);
 	return 0;
 }
 
@@ -1018,7 +849,7 @@ static int sbi_spawn_spleaf_main_blob(struct silofs_sb_info *sbi,
 	int err;
 
 	sbi_make_blobid_for(sbi, SILOFS_STYPE_ANONBK, nslots, &blobid);
-	err = sbi_spawn_blob_at(sbi, &blobid, &bli);
+	err = sbi_spawn_blob(sbi, &blobid, &bli);
 	if (err) {
 		return err;
 	}
@@ -1066,42 +897,33 @@ static int sbi_clone_sub_spleaf(struct silofs_sb_info *sbi,
 	return err;
 }
 
-static int sbi_try_stage_cached_spleaf(struct silofs_sb_info *sbi,
-                                       const struct silofs_uaddr *uaddr,
-                                       struct silofs_spleaf_info **out_sli)
-{
-	struct silofs_unode_info *ui = NULL;
-	int err;
-
-	err = sbi_lookup_cached_ui(sbi, uaddr, &ui);
-	if (err) {
-		return err;
-	}
-	*out_sli = silofs_sli_from_ui(ui);
-	return 0;
-}
-
 static int sbi_stage_spleaf_at(struct silofs_sb_info *sbi,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_unode_info *ui = NULL;
-	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = sbi_try_stage_cached_spleaf(sbi, uaddr, out_sli);
+	err = silofs_repo_stage_spleaf(sbi->s_repo, uaddr, out_sli);
 	if (!err) {
-		return 0; /* cache hit */
+		goto out_ok;
 	}
-	err = sbi_stage_spmap_at(sbi, uaddr, &ui);
+	if (err != -ENOMEM) {
+		goto out_err;
+	}
+	err = sbi_commit_dirty(sbi);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sli = silofs_sli_from_ui(ui);
-	silofs_sli_rebind_view(sli);
-	silofs_sli_update_staged(sli);
-	*out_sli = sli;
+	err = silofs_repo_stage_spleaf(sbi->s_repo, uaddr, out_sli);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	sbi_bind_sli_to_apex(sbi, *out_sli);
 	return 0;
+out_err:
+	sbi_log_cache_stat(sbi);
+	return err;
 }
 
 static int sbi_stage_sub_spleaf(struct silofs_sb_info *sbi,
@@ -1171,44 +993,63 @@ int silofs_sbi_stage_spleaf_of(struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_spamaps *sbi_spamaps(const struct silofs_sb_info *sbi)
+{
+	struct silofs_cache *cache = sbi_cache(sbi);
+
+	return &cache->c_spam;
+}
+
 static int sbi_spawn_bind_spleaf_at(struct silofs_sb_info *sbi,
                                     struct silofs_spnode_info *sni,
-                                    const struct silofs_vaddr *vaddr)
+                                    loff_t voff, enum silofs_stype stype)
 {
+	struct silofs_vrange vrange = { .stepsz = -1 };
+	struct silofs_spamaps *spam = NULL;
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	sni_incref(sni);
-	err = sbi_spawn_spleaf(sbi, sni, vaddr->voff, vaddr->stype, &sli);
-	if (!err) {
-		silofs_sni_bind_child_spleaf(sni, sli);
-		silofs_sbi_update_vlast_by_spleaf(sbi, sli);
+	err = sbi_spawn_spleaf(sbi, sni, voff, stype, &sli);
+	if (err) {
+		return err;
 	}
-	sni_decref(sni);
-	return err;
+	silofs_sni_bind_child_spleaf(sni, sli);
+	silofs_sbi_update_vlast_by_spleaf(sbi, sli);
+
+	/*
+	 * New space leaf case: add entire range at once, ignore possible
+	 * out-of-memory) failure.
+	 */
+	silofs_sli_vspace_range(sli, &vrange);
+	spam = sbi_spamaps(sbi);
+	silofs_spamaps_store(spam, stype, vrange.beg, vrange.len);
+	return 0;
 }
 
 static int sbi_stage_mut_spleaf(struct silofs_sb_info *sbi,
-                                struct silofs_spnode_info *sni, loff_t voff,
-                                struct silofs_spleaf_info **out_sli)
+                                struct silofs_spnode_info *sni, loff_t voff)
 {
-	return silofs_sbi_stage_spleaf_of(sbi, sni, voff,
-	                                  SILOFS_STAGE_MUTABLE, out_sli);
+	struct silofs_spleaf_info *sli = NULL;
+	enum silofs_stage_flags stg_flags = SILOFS_STAGE_MUTABLE;
+
+	return silofs_sbi_stage_spleaf_of(sbi, sni, voff, stg_flags, &sli);
 }
 
 static int sbi_require_spleaf_at(struct silofs_sb_info *sbi,
                                  struct silofs_spnode_info *sni,
                                  const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spleaf_info *sli = NULL;
 	const loff_t voff = vaddr_off(vaddr);
+	const enum silofs_stype stype = vaddr_stype(vaddr);
 	int err;
 
+	sni_incref(sni);
 	if (silofs_sni_has_child_at(sni, voff)) {
-		err = sbi_stage_mut_spleaf(sbi, sni, voff, &sli);
+		err = sbi_stage_mut_spleaf(sbi, sni, voff);
 	} else {
-		err = sbi_spawn_bind_spleaf_at(sbi, sni, vaddr);
+		err = sbi_spawn_bind_spleaf_at(sbi, sni, voff, stype);
 	}
+	sni_decref(sni);
 	return err;
 }
 
@@ -1352,7 +1193,7 @@ static int sbi_spawn_load_vbk(struct silofs_sb_info *sbi,
 	if (ret) {
 		goto out;
 	}
-	ret = silofs_bli_load_bk(bli, vbi->vbk, &uva->uaddr.oaddr);
+	ret = silofs_bli_load_bk(bli, &uva->uaddr.oaddr, vbi->vbk);
 	if (ret) {
 		sbi_forget_cached_vbi(sbi, vbi);
 		goto out;
@@ -1363,14 +1204,14 @@ out:
 	return ret;
 }
 
-static int sbi_stage_load_vblock(struct silofs_sb_info *sbi,
-                                 const struct silofs_uvaddr *uva,
-                                 struct silofs_vbk_info **out_vbi)
+static int sbi_stage_load_vbk(struct silofs_sb_info *sbi,
+                              const struct silofs_uvaddr *uva,
+                              struct silofs_vbk_info **out_vbi)
 {
 	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	err = sbi_stage_blob_of(sbi, &uva->uaddr.oaddr, &bli);
+	err = sbi_stage_blob(sbi, uaddr_blobid(&uva->uaddr), &bli);
 	if (err) {
 		return err;
 	}
@@ -1391,7 +1232,7 @@ static int sbi_stage_vblock(struct silofs_sb_info *sbi,
 	if (!err) {
 		return 0; /* Cache hit */
 	}
-	err = sbi_stage_load_vblock(sbi, uva, out_vbi);
+	err = sbi_stage_load_vbk(sbi, uva, out_vbi);
 	if (err) {
 		return err;
 	}
@@ -1482,7 +1323,7 @@ int silofs_sbi_reload_spmaps(struct silofs_sb_info *sbi)
 {
 	loff_t vend = silofs_sb_vspace_last(sbi->sb);
 	struct silofs_spnode_info *sni = NULL;
-	const size_t limit = SILOFS_SPMAP_NODE_NCHILDS;
+	const size_t limit = SILOFS_UNODE_NCHILDS;
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	size_t cnt = 0;
 	loff_t voff = 0;
@@ -1534,11 +1375,21 @@ static int sbi_stage_spmaps_of(struct silofs_sb_info *sbi,
 	return 0;
 }
 
+static int bli_resolve_bk(struct silofs_blob_info *bli,
+                          const struct silofs_oaddr *oaddr,
+                          struct silofs_xiovec *xiov)
+{
+	struct silofs_oaddr bk_oaddr;
+
+	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->blobid, oaddr_lba(oaddr));
+	return silofs_bli_resolve(bli, &bk_oaddr, xiov);
+}
+
 static int sbi_resolve_vbks(struct silofs_sb_info *sbi,
                             const struct silofs_uaddr *uaddr_src,
                             const struct silofs_uaddr *uaddr_dst,
-                            struct silofs_fiovec *out_fiov_src,
-                            struct silofs_fiovec *out_fiov_dst)
+                            struct silofs_xiovec *out_xiov_src,
+                            struct silofs_xiovec *out_xiov_dst)
 {
 	const struct silofs_oaddr *oaddr_src = &uaddr_src->oaddr;
 	const struct silofs_oaddr *oaddr_dst = &uaddr_dst->oaddr;
@@ -1546,24 +1397,24 @@ static int sbi_resolve_vbks(struct silofs_sb_info *sbi,
 	struct silofs_blob_info *bli_dst = NULL;
 	int ret;
 
-	ret = sbi_stage_blob_at(sbi, &oaddr_src->blobid, &bli_src);
+	ret = sbi_stage_blob(sbi, &oaddr_src->blobid, &bli_src);
 	if (ret) {
 		goto out;
 	}
 	bli_incref(bli_src);
 
-	ret = sbi_stage_blob_at(sbi, &oaddr_dst->blobid, &bli_dst);
+	ret = sbi_stage_blob(sbi, &oaddr_dst->blobid, &bli_dst);
 	if (ret) {
 		goto out;
 	}
 	bli_incref(bli_dst);
 
-	ret = silofs_bli_resolve_bk(bli_src, oaddr_src, out_fiov_src);
+	ret = bli_resolve_bk(bli_src, oaddr_src, out_xiov_src);
 	if (ret) {
 		goto out;
 	}
 
-	ret = silofs_bli_resolve_bk(bli_dst, oaddr_dst, out_fiov_dst);
+	ret = bli_resolve_bk(bli_dst, oaddr_dst, out_xiov_dst);
 	if (ret) {
 		goto out;
 	}
@@ -1574,12 +1425,12 @@ out:
 }
 
 static int sbi_kcopy_vblock(struct silofs_sb_info *sbi,
-                            const struct silofs_fiovec *fiov_src,
-                            const struct silofs_fiovec *fiov_dst)
+                            const struct silofs_xiovec *xiov_src,
+                            const struct silofs_xiovec *xiov_dst)
 {
 	struct silofs_fs_apex *apex = sbi_apex(sbi);
 
-	return silofs_apex_kcopy(apex, fiov_src, fiov_dst, SILOFS_BK_SIZE);
+	return silofs_apex_kcopy(apex, xiov_src, xiov_dst, SILOFS_BK_SIZE);
 }
 
 static int sbi_clone_vblock(struct silofs_sb_info *sbi,
@@ -1587,21 +1438,21 @@ static int sbi_clone_vblock(struct silofs_sb_info *sbi,
                             const struct silofs_uvaddr *uva_src)
 {
 	struct silofs_ulink ulink_dst;
-	struct silofs_fiovec fiov_src;
-	struct silofs_fiovec fiov_dst;
+	struct silofs_xiovec xiov_src;
+	struct silofs_xiovec xiov_dst;
 	const loff_t voff = uva_src->vaddr.voff;
 	int err;
 
 	silofs_sli_resolve_main_at(sli, voff, &ulink_dst);
 	err = sbi_resolve_vbks(sbi, &uva_src->uaddr, &ulink_dst.child,
-	                       &fiov_src, &fiov_dst);
+	                       &xiov_src, &xiov_dst);
 	if (err == -ENOENT) {
 		return -EFSCORRUPTED;
 	}
 	if (err) {
 		return err;
 	}
-	err = sbi_kcopy_vblock(sbi, &fiov_src, &fiov_dst);
+	err = sbi_kcopy_vblock(sbi, &xiov_src, &xiov_dst);
 	if (err) {
 		return err;
 	}
@@ -1701,6 +1552,14 @@ static int sbi_require_stable_at(struct silofs_sb_info *sbi,
 	return 0;
 }
 
+static const struct silofs_mdigest *
+sbi_mdigest(const struct silofs_sb_info *sbi)
+{
+	const struct silofs_fs_apex *apex = sbi_apex(sbi);
+
+	return &apex->ap_crypto->md;
+}
+
 int silofs_sbi_stage_vnode_at(struct silofs_sb_info *sbi,
                               const struct silofs_uvaddr *uva,
                               enum silofs_stage_flags stg_flags,
@@ -1717,7 +1576,7 @@ int silofs_sbi_stage_vnode_at(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	err = silofs_vi_verify_view(vi);
+	err = silofs_vi_verify_view(vi, sbi_mdigest(sbi));
 	if (err) {
 		sbi_forget_cached_vi(sbi, vi);
 		return err;

@@ -22,13 +22,24 @@
 
 
 struct silofs_visitor;
+struct silofs_uiterator;
 
 typedef int (*silofs_visit_unode_fn)(struct silofs_visitor *vis,
-                                     struct silofs_unode_info *ui);
+                                     const struct silofs_uiterator *uit);
+
+struct silofs_uiterator {
+	struct silofs_sb_info    *sbi;
+	struct silofs_unode_info *parent;
+	struct silofs_unode_info *ui;
+	size_t height;
+	loff_t voff;
+	size_t slot;
+};
 
 struct silofs_visitor {
-	silofs_visit_unode_fn start_hook;
-	silofs_visit_unode_fn finish_hook;
+	silofs_visit_unode_fn visit_prep_hook;
+	silofs_visit_unode_fn visit_exec_hook;
+	silofs_visit_unode_fn visit_post_hook;
 	bool nodescend;
 	bool halt;
 };
@@ -58,7 +69,7 @@ void silofs_usvisitor_init(struct silofs_uspace_visitor *usv,
 
 void silofs_usvisitor_fini(struct silofs_uspace_visitor *usv);
 
-int silofs_walk_space_tree(struct silofs_fs_apex *apex,
+int silofs_walk_space_tree(struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis);
 
 

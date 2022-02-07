@@ -163,6 +163,7 @@ jobs:
           sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
           sudo systemctl restart silofs-mountd.service
           sudo systemctl status silofs-mountd.service
+          sleep 10
       - name: Run smoke-tests
         run: ./test/sanitests/smoketests.sh ./silofs-tests /mnt/test
       - name: Cleanups

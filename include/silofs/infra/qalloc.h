@@ -17,7 +17,7 @@
 #ifndef SILOFS_QALLOC_H_
 #define SILOFS_QALLOC_H_
 
-struct silofs_fiovec;
+struct silofs_xiovec;
 
 /* allocator stats */
 struct silofs_alloc_stat {
@@ -36,28 +36,28 @@ struct silofs_alloc_if {
 	void (*stat_fn)(const struct silofs_alloc_if *alif,
 	                struct silofs_alloc_stat *out_stat);
 	int (*resolve_fn)(const struct silofs_alloc_if *alif,
-	                  void *ptr, size_t len, struct silofs_fiovec *fiov);
+	                  void *ptr, size_t len, struct silofs_xiovec *xiov);
 };
 
 /* quick memory allocator */
 struct silofs_slab {
 	struct silofs_list_head free_list;
-	size_t sindex;
-	size_t elemsz;
-	size_t nfree;
-	size_t nused;
+	size_t   nfree;
+	size_t   nused;
+	uint32_t sindex;
+	uint32_t elemsz;
 };
 
 struct silofs_qalloc {
-	int mode;
-	int memfd_data;
-	int memfd_meta;
-	void *mem_data;
-	void *mem_meta;
-	struct silofs_alloc_stat st;
-	struct silofs_list_head free_list;
-	struct silofs_slab slabs[8];
-	struct silofs_alloc_if alif;
+	struct silofs_slab       slabs[64];
+	struct silofs_list_head  free_pgs;
+	struct silofs_alloc_stat alst;
+	struct silofs_alloc_if   alif;
+	void   *mem_data;
+	void   *mem_meta;
+	int     memfd_data;
+	int     memfd_meta;
+	int     mode;
 };
 
 
@@ -70,7 +70,7 @@ void silofs_allocstat(const struct silofs_alloc_if *alif,
                       struct silofs_alloc_stat *out_stat);
 
 int silofs_allocresolve(const struct silofs_alloc_if *alif, void *ptr,
-                        size_t len, struct silofs_fiovec *fiov);
+                        size_t len, struct silofs_xiovec *xiov);
 
 
 /* quick allocator */
@@ -90,7 +90,7 @@ void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat);
 
 int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
-                          size_t len, struct silofs_fiovec *fiov);
+                          size_t len, struct silofs_xiovec *xiov);
 
 int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
                          const void *ptr, size_t nbytes);

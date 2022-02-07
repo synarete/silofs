@@ -85,20 +85,18 @@ static void silofs_die_if_redundant_arg(void)
 	}
 }
 
-void silofs_die_if_illegal_fsname(const char *arg_name, const char *arg_val)
+void silofs_cmd_check_fsname(const char *arg_val)
 {
 	struct silofs_namestr nstr;
 	int err;
 
-	silofs_namestr_init(&nstr, arg_val);
-	err = silofs_check_fs_name(&nstr);
+	err = silofs_make_fsnamestr(&nstr, arg_val);
 	if (err) {
-		silofs_die(err, "illegal %s: %s",
-		           arg_name ? arg_name : "name", arg_val);
+		silofs_die(err, "illegal file-system name: %s", arg_val);
 	}
 }
 
-void silofs_die_if_not_dir(const char *path, bool w_ok)
+void silofs_cmd_check_isdir(const char *path, bool w_ok)
 {
 	int err;
 	struct stat st;
@@ -114,7 +112,7 @@ void silofs_die_if_not_dir(const char *path, bool w_ok)
 	}
 }
 
-void silofs_die_if_not_reg(const char *path, bool w_ok)
+void silofs_cmd_check_reg(const char *path, bool w_ok)
 {
 	int err;
 	struct stat st;
@@ -133,20 +131,10 @@ void silofs_die_if_not_reg(const char *path, bool w_ok)
 	}
 }
 
-void silofs_die_if_not_dir_or_reg(const char *path)
+void silofs_cmd_check_notexists(const char *path)
 {
 	struct stat st;
-
-	silofs_cmd_stat_ok(path, &st);
-	if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode)) {
-		silofs_die(-ENOTDIR, "not dir-or-reg: %s", path);
-	}
-}
-
-void silofs_die_if_exists(const char *path)
-{
 	int err;
-	struct stat st;
 
 	err = silofs_sys_stat(path, &st);
 	if (!err) {
@@ -161,7 +149,20 @@ void silofs_die_if_exists(const char *path)
 	}
 }
 
-void silofs_die_if_no_mountd(void)
+void silofs_cmd_check_exists(const char *path)
+{
+	struct stat st;
+	int err;
+
+	err = silofs_sys_stat(path, &st);
+	if (err == -ENOENT) {
+		silofs_die(0, "no such path: %s", path);
+	} else if (err) {
+		silofs_die(err, "stat failed: %s", path);
+	}
+}
+
+void silofs_cmd_check_mountd(void)
 {
 	int err;
 	const char *sock = SILOFS_MNTSOCK_NAME;
@@ -173,7 +174,7 @@ void silofs_die_if_no_mountd(void)
 	}
 }
 
-void silofs_die_if_not_dir_or_empty(const char *path, bool w_ok)
+void silofs_cmd_check_nonemptydir(const char *path, bool w_ok)
 {
 	int err;
 	int dfd = -1;
@@ -182,7 +183,7 @@ void silofs_die_if_not_dir_or_empty(const char *path, bool w_ok)
 	const size_t nde = SILOFS_ARRAY_SIZE(de);
 	char buf[1024] = "";
 
-	silofs_die_if_not_dir(path, w_ok);
+	silofs_cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
 		silofs_die(err, "open-dir error: %s", path);
@@ -200,7 +201,7 @@ void silofs_die_if_not_dir_or_empty(const char *path, bool w_ok)
 	}
 }
 
-void silofs_die_if_not_empty_dir(const char *path, bool w_ok)
+void silofs_cmd_check_emptydir(const char *path, bool w_ok)
 {
 	int err;
 	int dfd = -1;
@@ -209,7 +210,7 @@ void silofs_die_if_not_empty_dir(const char *path, bool w_ok)
 	const size_t nde = SILOFS_ARRAY_SIZE(de);
 	char buf[1024] = "";
 
-	silofs_die_if_not_dir(path, w_ok);
+	silofs_cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
 		silofs_die(err, "open-dir error: %s", path);
@@ -227,7 +228,7 @@ void silofs_die_if_not_empty_dir(const char *path, bool w_ok)
 	}
 }
 
-void silofs_die_if_not_mkdir(const char *path, mode_t mode)
+void silofs_cmd_mkdir(const char *path, mode_t mode)
 {
 	int err;
 
@@ -262,7 +263,7 @@ static void silofs_statfs_ok(const char *path, struct statfs *stfs)
 	}
 }
 
-void silofs_die_if_not_mntdir(const char *path, bool mount)
+void silofs_cmd_check_mntdir(const char *path, bool mount)
 {
 	long fstype;
 	struct stat st;
@@ -273,7 +274,7 @@ void silofs_die_if_not_mntdir(const char *path, bool mount)
 	if (strlen(path) >= SILOFS_MNTPATH_MAX) {
 		silofs_die(0, "illegal mount-path length: %s", path);
 	}
-	silofs_die_if_not_dir(path, mount);
+	silofs_cmd_check_isdir(path, mount);
 
 	if (mount) {
 		silofs_statfs_ok(path, &stfs);
@@ -291,7 +292,7 @@ void silofs_die_if_not_mntdir(const char *path, bool mount)
 			silofs_die(0, "not allowed to mount over: "
 			           "%s fstype=0x%lx", path, fstype);
 		}
-		silofs_die_if_not_empty_dir(path, true);
+		silofs_cmd_check_emptydir(path, true);
 	} else {
 		silofs_statfs_ok(path, &stfs);
 		fstype = (long)stfs.f_type;
@@ -312,17 +313,6 @@ void silofs_die_if_not_mntdir(const char *path, bool mount)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_require_valid_fsname(const char *arg_name, char **p_fsname)
-{
-	if (*p_fsname == NULL) {
-		*p_fsname = silofs_cmd_strdup(SILOFS_FSNAME_DEFAULT);
-	} else {
-		silofs_die_if_illegal_fsname(arg_name, *p_fsname);
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_cmd_endargs(void)
 {
 	silofs_die_if_redundant_arg();
@@ -331,8 +321,8 @@ void silofs_cmd_endargs(void)
 void silofs_cmd_getarg(const char *arg_name, char **out_arg)
 {
 	char *arg = NULL;
-	int argc = silofs_globals.cmd_argc;
 	char **argv = silofs_globals.cmd_argv;
+	int argc = silofs_globals.cmd_argc;
 
 	arg = argv[optind];
 	if ((optind >= argc) || (arg == NULL)) {
@@ -342,22 +332,28 @@ void silofs_cmd_getarg(const char *arg_name, char **out_arg)
 	*out_arg = silofs_cmd_strdup(arg);
 }
 
+static void silofs_cmd_getcwd(char **out_wd)
+{
+	*out_wd = get_current_dir_name();
+	if (*out_wd == NULL) {
+		silofs_die(errno, "failed to get current working directory");
+	}
+}
+
 void silofs_cmd_getarg_or_cwd(const char *arg_name, char **out_arg)
 {
 	char *arg = NULL;
-	int argc = silofs_globals.cmd_argc;
 	char **argv = silofs_globals.cmd_argv;
+	int argc = silofs_globals.cmd_argc;
 
 	arg = argv[optind];
 	if ((optind >= argc) || (arg == NULL)) {
-		arg = get_current_dir_name();
-		if (arg == NULL) {
-			silofs_die(errno, "no arg '%s' and failed to get "
-			           "current working directory", arg_name);
-		}
+		silofs_cmd_getcwd(out_arg);
+	} else {
+		optind++;
+		*out_arg = silofs_cmd_strdup(arg);
 	}
-	optind++;
-	*out_arg = silofs_cmd_strdup(arg);
+	silofs_unused(arg_name);
 }
 
 int silofs_cmd_getopt(const char *sopts, const struct option *lopts)
@@ -446,7 +442,7 @@ static void silofs_daemonize(void)
 	 */
 }
 
-void silofs_fork_daemon(void)
+void silofs_cmd_fork_daemon(void)
 {
 	pid_t pid;
 
@@ -459,13 +455,13 @@ void silofs_fork_daemon(void)
 	}
 }
 
-void silofs_open_syslog(void)
+void silofs_cmd_open_syslog(void)
 {
 	silofs_globals.log_mask |= SILOFS_LOG_SYSLOG;
 	openlog(silofs_globals.name, LOG_CONS | LOG_NDELAY, 0);
 }
 
-void silofs_close_syslog(void)
+void silofs_cmd_close_syslog(void)
 {
 	if (silofs_globals.log_mask & SILOFS_LOG_SYSLOG) {
 		closelog();
@@ -494,15 +490,12 @@ void silofs_prctl_non_dumpable(void)
 	}
 }
 
-char *silofs_cmd_realpath(const char *path)
+void silofs_cmd_realpath(const char *path, char **out_real)
 {
-	char *real_path;
-
-	real_path = realpath(path, NULL);
-	if (real_path == NULL) {
+	*out_real = realpath(path, NULL);
+	if (*out_real == NULL) {
 		silofs_die(-errno, "realpath failure: '%s'", path);
 	}
-	return real_path;
 }
 
 void silofs_cmd_stat_ok(const char *path, struct stat *st)
@@ -535,6 +528,30 @@ void silofs_cmd_stat_reg_or_dir(const char *path, struct stat *st)
 	silofs_cmd_stat_ok(path, st);
 	if (!S_ISDIR(st->st_mode) && !S_ISREG(st->st_mode)) {
 		silofs_die(0, "not dir-or-reg: %s", path);
+	}
+}
+
+void silofs_cmd_splitpath(const char *path, char **out_head, char **out_tail)
+{
+	const char *sep;
+	size_t head_len;
+	size_t tail_len;
+
+	sep = strrchr(path, '/');
+	if (sep == NULL) {
+		silofs_cmd_getcwd(out_head);
+		*out_tail = silofs_cmd_strdup(path);
+	} else {
+		tail_len = strlen(sep + 1);
+		if (!tail_len) {
+			silofs_die(0, "missing filename: %s", path);
+		}
+		if (sep == path) {
+			silofs_die(0, "missing basename: %s", path);
+		}
+		head_len = (size_t)(sep - path);
+		*out_head = silofs_cmd_strndup(path, head_len);
+		*out_tail = silofs_cmd_strndup(sep + 1, tail_len);
 	}
 }
 

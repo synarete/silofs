@@ -45,19 +45,24 @@ _silofs_version() {
   _run silofs --version
 }
 
+_silofs_init() {
+  _msg "# Init repositoy: $1"
+  _run silofs init "$1"
+}
+
 _silofs_mkfs() {
-  _msg "# Format file-system"
+  _msg "# Format file-system: $1"
   _run silofs mkfs -s 32G "$1"
 }
 
 _silofs_mount() {
-  _msg "# Mount file-system"
+  _msg "# Mount file-system: $1 $2"
   _run silofs mount "$1" "$2"
   _run silofs lsmnt
 }
 
 _silofs_umount() {
-  _msg "# Un-mount file-system"
+  _msg "# Un-mount file-system: $1"
   _run silofs umount "$1"
 }
 
@@ -121,25 +126,29 @@ _test_postgresql() {
 _main() {
   local repodir="$1"
   local mntdir="$2"
+  local fsname="test"
 
   _check_args "$@"
   _silofs_version
-  _silofs_mkfs "${repodir}"
+  _silofs_init "${repodir}"
+  _silofs_mkfs "${repodir}/${fsname}"
   _silofs_mount_service_status
 
-  _silofs_mount "${repodir}" "${mntdir}"
+  _silofs_mount "${repodir}/${fsname}" "${mntdir}"
   _silofs_show_version "${mntdir}"
   _silofs_show_repo "${mntdir}"
   _test_simple_io "${mntdir}"
   _silofs_umount "${mntdir}"
 
-  _silofs_mount "${repodir}" "${mntdir}"
-  _test_vfstests "${mntdir}"
-  _test_selfcheck "${mntdir}"
+  _silofs_mount "${repodir}/${fsname}" "${mntdir}"
+  # _test_vfstests "${mntdir}"
+  # _test_selfcheck "${mntdir}"
+  sleep 1
   _silofs_umount "${mntdir}"
 
-  _silofs_mount "${repodir}" "${mntdir}"
-  _test_postgresql "${mntdir}"
+  _silofs_mount "${repodir}/${fsname}" "${mntdir}"
+  # _test_postgresql "${mntdir}"
+  sleep 1
   _silofs_umount "${mntdir}"
 }
 

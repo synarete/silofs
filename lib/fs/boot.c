@@ -136,18 +136,6 @@ static void bsec4k_set_btime(struct silofs_bootsec4k *bsc, time_t tm)
 	bsc->bs_btime = silofs_cpu_to_le64((uint64_t)tm);
 }
 
-static void bsec4k_name(const struct silofs_bootsec4k *bsc,
-                        struct silofs_namebuf *nb)
-{
-	silofs_namebuf_assign2(nb, &bsc->bs_name);
-}
-
-static void bsec4k_set_name(struct silofs_bootsec4k *bsc,
-                            const struct silofs_namebuf *nb)
-{
-	silofs_namebuf_copyto(nb, &bsc->bs_name);
-}
-
 static void bsec4k_kdf(const struct silofs_bootsec4k *bsc,
                        struct silofs_kdf_pair *kdf)
 {
@@ -179,6 +167,11 @@ static void bsec4k_set_cipher(struct silofs_bootsec4k *bsc,
 	bsc->bs_chiper_mode = silofs_cpu_to_le32(cipher_mode);
 }
 
+static void bsec4k_fill_rands(struct silofs_bootsec4k *bsc)
+{
+	silofs_getentropy(bsc->bs_rands, sizeof(bsc->bs_rands));
+}
+
 void silofs_bsec4k_init(struct silofs_bootsec4k *bsc)
 {
 	const struct silofs_cipher_args *cip_args = &s_default_cip_args;
@@ -188,6 +181,7 @@ void silofs_bsec4k_init(struct silofs_bootsec4k *bsc)
 	bsec4k_set_version(bsc, SILOFS_FMT_VERSION);
 	bsec4k_set_kdf(bsc, &cip_args->kdf);
 	bsec4k_set_cipher(bsc, cip_args->cipher_algo, cip_args->cipher_mode);
+	bsec4k_fill_rands(bsc);
 }
 
 void silofs_bsec4k_fini(struct silofs_bootsec4k *bsc)
@@ -323,7 +317,6 @@ void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
 	bsec4k_sb_uaddr(bsc, &bsec->sb_uaddr);
 	bsec4k_sb_packid(bsc, &bsec->sb_packid);
 	bsec4k_uuid(bsc, &bsec->uuid);
-	bsec4k_name(bsc, &bsec->name);
 	bsec4k_cipher_args(bsc, &bsec->cip_args);
 	bsec->btime = bsec4k_btime(bsc);
 }
@@ -335,7 +328,6 @@ void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
 	bsec4k_set_sb_uaddr(bsc, &bsec->sb_uaddr);
 	bsec4k_set_sb_packid(bsc, &bsec->sb_packid);
 	bsec4k_set_uuid(bsc, &bsec->uuid);
-	bsec4k_set_name(bsc, &bsec->name);
 	bsec4k_set_btime(bsc, bsec->btime);
 }
 
@@ -356,24 +348,6 @@ void silofs_bootsec_fini(struct silofs_bootsec *bsec)
 	silofs_memffff(bsec, sizeof(*bsec));
 }
 
-void silofs_bootsec_name(const struct silofs_bootsec *bsec,
-                         struct silofs_namestr *out_name)
-{
-	silofs_namebuf_str(&bsec->name, out_name);
-}
-
-void silofs_bootsec_set_name(struct silofs_bootsec *bsec,
-                             const struct silofs_namestr *name)
-{
-	silofs_namebuf_assign_str(&bsec->name, name);
-}
-
-bool silofs_bootsec_has_name(const struct silofs_bootsec *bsec,
-                             const struct silofs_namestr *name)
-{
-	return silofs_namebuf_isequal(&bsec->name, name);
-}
-
 void silofs_bootsec_set_uaddr(struct silofs_bootsec *bsec,
                               const struct silofs_uaddr *sb_uaddr)
 {
@@ -384,6 +358,13 @@ void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
                                const struct silofs_packid *sb_packid)
 {
 	silofs_packid_assign(&bsec->sb_packid, sb_packid);
+}
+
+void silofs_bootsec_setup(struct silofs_bootsec *bsec,
+                          const struct silofs_uaddr *uaddr)
+{
+	silofs_bootsec_init(bsec);
+	silofs_bootsec_set_uaddr(bsec, uaddr);
 }
 
 
@@ -460,8 +441,8 @@ static int check_sysconf(void)
 {
 	long val;
 	long page_shift = 0;
-	const long page_size_min = SILOFS_PAGE_SIZE;
-	const long page_shift_min = SILOFS_PAGE_SHIFT;
+	const long page_size_min = SILOFS_PAGE_SIZE_MIN;
+	const long page_shift_min = SILOFS_PAGE_SHIFT_MIN;
 	const long page_shift_max = SILOFS_PAGE_SHIFT_MAX;
 	const long cl_size_min = SILOFS_CACHELINE_SIZE;
 

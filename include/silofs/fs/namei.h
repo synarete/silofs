@@ -113,10 +113,6 @@ int silofs_do_clone(const struct silofs_fs_ctx *op,
                     struct silofs_inode_info *dir_ii,
                     const struct silofs_namestr *name, int flags);
 
-int silofs_do_snap(const struct silofs_fs_ctx *op,
-                   struct silofs_inode_info *dir_ii,
-                   const struct silofs_namestr *name);
-
 int silofs_do_unrefs(const struct silofs_fs_ctx *op,
                      struct silofs_inode_info *ii,
                      const struct silofs_namestr *name);
@@ -125,10 +121,12 @@ int silofs_do_inspect(const struct silofs_fs_ctx *op,
                       struct silofs_inode_info *ii);
 
 int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_namestr *name);
+                   const struct silofs_namestr *src_name,
+                   const struct silofs_namestr *dst_name);
 
 int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_namestr *name);
+                     const struct silofs_namestr *src_name,
+                     const struct silofs_namestr *dst_name);
 
 int silofs_check_fs_name(const struct silofs_namestr *nstr);
 

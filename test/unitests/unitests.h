@@ -142,6 +142,8 @@ struct ut_globals {
 	const char     *version;
 	const char     *test_dir;
 	char           *test_dir_real;
+	char           *test_dir_main;
+	char           *test_dir_cold;
 	struct timespec start_ts;
 };
 
@@ -433,7 +435,11 @@ void ut_unrefs_ok(struct ut_env *ute, ino_t ino, const char *name);
 
 void ut_inspect_ok(struct ut_env *ute, ino_t ino);
 
-void ut_pack_ok(struct ut_env *ute, const char *name);
+void ut_archive_ok(struct ut_env *ute,
+                   const char *src_name, const char *dst_name);
+
+void ut_restore_ok(struct ut_env *ute,
+                   const char *src_name, const char *dst_name);
 
 void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm);
 

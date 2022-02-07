@@ -82,7 +82,7 @@ static void snap_check_dirpath(void)
 	int dfd = -1;
 	int err;
 
-	silofs_die_if_not_dir(dirpath, false);
+	silofs_cmd_check_isdir(dirpath, false);
 	err = silofs_sys_open(dirpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
 		silofs_die(err, "failed to open: %s", dirpath);
@@ -96,14 +96,14 @@ static void snap_check_dirpath(void)
 
 static void snap_prepare(void)
 {
-	snap_args->dirpath_real = silofs_cmd_realpath(snap_args->dirpath);
-	silofs_die_if_illegal_fsname("name", snap_args->name);
+	silofs_cmd_realpath(snap_args->dirpath, &snap_args->dirpath_real);
+	silofs_cmd_check_fsname(snap_args->name);
 	snap_check_dirpath();
 }
 
 static void snap_execute(void)
 {
-	struct silofs_ioc_snapfs snap = {
+	struct silofs_ioc_clone clone = {
 		.flags = 0,
 		.name[0] = '\0'
 	};
@@ -120,14 +120,14 @@ static void snap_execute(void)
 	if (err) {
 		silofs_die(err, "syncfs error: %s", dirpath);
 	}
-	strncpy(snap.name, name, sizeof(snap.name) - 1);
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_SNAPFS, &snap);
+	strncpy(clone.name, name, sizeof(clone.name) - 1);
+	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, &clone);
+	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		silofs_die(err, "ioctl error: %s", dirpath);
 	} else if (err) {
 		silofs_die(err, "failed to snap: %s", name);
 	}
-	silofs_sys_close(dfd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

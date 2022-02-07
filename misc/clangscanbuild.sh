@@ -1,4 +1,4 @@
-#!/bin/bash  -e
+#!/bin/bash -e
 self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
@@ -55,7 +55,7 @@ _clang_scan_build() {
 
   run scan-build \
     --use-analyzer="${analyzer}" \
-    -maxloop 256 -k -v -o "${outdir}" \
+    -maxloop 64 -k -v -o "${outdir}" \
     $(_clang_analyzer_checkers_args) \
     make all
 }

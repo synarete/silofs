@@ -22,7 +22,7 @@
 static struct silofs_subcmd_umount *umount_args;
 
 static const char *umount_usage[] = {
-	"umount [options] <mount-point>",
+	"umount [options] <mountpoint>",
 	"",
 	"options:",
 	"  -l, --lazy                   Detach umount",
@@ -52,7 +52,7 @@ static void umount_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("mount-point", &umount_args->mntpoint);
+	silofs_cmd_getarg("mountpoint", &umount_args->mntpoint);
 	silofs_cmd_endargs();
 }
 
@@ -75,17 +75,17 @@ static void umount_prepare(void)
 	struct stat st;
 	int err;
 
-	silofs_die_if_no_mountd();
+	silofs_cmd_check_mountd();
 
 	err = silofs_sys_stat(umount_args->mntpoint, &st);
 	if ((err == -ENOTCONN) && umount_args->force) {
 		silofs_log_debug("transport endpoint "
 		                 "not connected: %s", umount_args->mntpoint);
-	} else {
-		umount_args->mntpoint_real =
-		        silofs_cmd_realpath(umount_args->mntpoint);
-		silofs_die_if_not_mntdir(umount_args->mntpoint_real, false);
+		return;
 	}
+	silofs_cmd_realpath(umount_args->mntpoint,
+	                    &umount_args->mntpoint_real);
+	silofs_cmd_check_mntdir(umount_args->mntpoint_real, false);
 }
 
 static const char *umount_dirpath(void)

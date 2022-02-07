@@ -17,12 +17,10 @@
 #ifndef SILOFS_REPO_H_
 #define SILOFS_REPO_H_
 
-
-struct silofs_qalloc;
-struct silofs_oaddr;
-struct silofs_fiovec;
-struct silofs_blob_info;
-
+/* forward declarations */
+struct silofs_sb_info;
+struct silofs_spnode_info;
+struct silofs_spleaf_info;
 
 /* blob-reference using file-descriptor and fixed-size */
 struct silofs_blob_fdsz {
@@ -33,22 +31,22 @@ struct silofs_blob_fdsz {
 /* blob-reference cache-entry */
 struct silofs_blob_info {
 	struct silofs_blobid     blobid;
+	struct silofs_xiovref    bl_xior;
 	struct silofs_cache_elem bl_ce;
-	struct silofs_fiovref    bl_fir;
 	struct silofs_blob_fdsz  bl_fdsz;
 	unsigned long            bl_hkey;
 };
 
-/* local repository of file-system's blobs */
+/* blobs repository */
 struct silofs_repo {
 	const struct silofs_repo_defs *re_defs;
-	struct silofs_cache     *re_cache;
 	struct silofs_crypto    *re_crypto;
 	struct silofs_alloc_if  *re_alif;
-	const char              *re_base_dir;
-	int                      re_base_dfd;
+	struct silofs_cache      re_cache;
+	const char              *re_root_dir;
+	int                      re_root_dfd;
+	int                      re_dots_dfd;
 	int                      re_objs_dfd;
-	int                      re_lock_fd;
 	bool                     re_rw;
 };
 
@@ -61,37 +59,40 @@ silofs_bli_new(struct silofs_alloc_if *alif,
 void silofs_bli_del(struct silofs_blob_info *bli,
                     struct silofs_alloc_if *alif);
 
-
-void silofs_bli_init(struct silofs_blob_info *bli,
-                     const struct silofs_blobid *blobid);
-
-void silofs_bli_fini(struct silofs_blob_info *bli);
-
-int silofs_bli_store(struct silofs_blob_info *bli,
+int silofs_bli_store(const struct silofs_blob_info *bli,
                      const struct silofs_oaddr *oaddr,
                      const struct silofs_bytebuf *bb);
 
-int silofs_bli_storev(struct silofs_blob_info *bli,
+int silofs_bli_storev(const struct silofs_blob_info *bli,
                       const struct silofs_oaddr *oaddr,
                       const struct iovec *iov, size_t cnt);
 
-int silofs_bli_load(struct silofs_blob_info *bli,
+int silofs_bli_load(const struct silofs_blob_info *bli,
                     const struct silofs_oaddr *oaddr,
                     struct silofs_bytebuf *bb);
+
+int silofs_bli_load_bk(const struct silofs_blob_info *bli,
+                       const struct silofs_oaddr *oaddr,
+                       struct silofs_block *bk);
+
+int silofs_bli_store_bk(const struct silofs_blob_info *bli,
+                        const struct silofs_oaddr *oaddr,
+                        struct silofs_block *bk);
 
 int silofs_bli_flock(struct silofs_blob_info *bli);
 
 int silofs_bli_funlock(struct silofs_blob_info *bli);
 
-int silofs_bli_shut(struct silofs_blob_info *bli);
+int silofs_bli_resolve(struct silofs_blob_info *bli,
+                       const struct silofs_oaddr *oaddr,
+                       struct silofs_xiovec *xiov);
 
-int silofs_bli_load_bk(struct silofs_blob_info *bli, struct silofs_block *bk,
-                       const struct silofs_oaddr *oaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_init(struct silofs_repo *repo, struct silofs_cache *cache,
-                     struct silofs_crypto *crypto, const char *base, bool rw);
+int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc_if *alif,
+                     struct silofs_crypto *crypto, const char *base,
+                     size_t memsz_hint, bool rw);
 
 void silofs_repo_fini(struct silofs_repo *repo);
 
@@ -101,29 +102,73 @@ int silofs_repo_open(struct silofs_repo *repo);
 
 int silofs_repo_close(struct silofs_repo *repo);
 
-int silofs_repo_lock(struct silofs_repo *repo);
+void silofs_repo_drop_cache(struct silofs_repo *repo);
 
-int silofs_repo_unlock(struct silofs_repo *repo);
+void silofs_repo_relax_cache(struct silofs_repo *repo, int flags);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_lookup_blob(const struct silofs_repo *repo,
+int silofs_repo_lookup_blob(struct silofs_repo *repo,
                             const struct silofs_blobid *blobid);
 
-int silofs_repo_spawn_blob(const struct silofs_repo *repo,
+int silofs_repo_spawn_blob(struct silofs_repo *repo,
                            const struct silofs_blobid *blobid,
                            struct silofs_blob_info **out_bli);
 
-int silofs_repo_stage_blob(const struct silofs_repo *repo,
+int silofs_repo_stage_blob(struct silofs_repo *repo,
                            const struct silofs_blobid *blobid,
                            struct silofs_blob_info **out_bli);
 
-int silofs_repo_remove_blob(const struct silofs_repo *repo,
+int silofs_repo_remove_blob(struct silofs_repo *repo,
                             const struct silofs_blobid *blobid);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_read_raw_blob(const struct silofs_repo *repo,
-                              const struct silofs_blobid *blobid, void *buf);
+int silofs_repo_stage_ubk(struct silofs_repo *repo,
+                          const struct silofs_oaddr *oaddr,
+                          struct silofs_ubk_info **out_ubi);
 
+int silofs_repo_spawn_ubk(struct silofs_repo *repo,
+                          const struct silofs_oaddr *oaddr,
+                          struct silofs_ubk_info **out_ubi);
+
+int silofs_repo_stage_super(struct silofs_repo *repo,
+                            const struct silofs_uaddr *uaddr,
+                            struct silofs_sb_info **out_sbi);
+
+int silofs_repo_spawn_super(struct silofs_repo *repo,
+                            const struct silofs_uaddr *uaddr,
+                            struct silofs_sb_info **out_sbi);
+
+int silofs_repo_ghost_super(struct silofs_repo *repo,
+                            const struct silofs_uaddr *uaddr,
+                            struct silofs_sb_info **out_sbi);
+
+int silofs_repo_stage_spnode(struct silofs_repo *repo,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_spnode_info **out_sni);
+
+int silofs_repo_spawn_spnode(struct silofs_repo *repo,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_spnode_info **out_sni);
+
+int silofs_repo_ghost_spnode(struct silofs_repo *repo,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_spnode_info **out_sni);
+
+int silofs_repo_stage_spleaf(struct silofs_repo *repo,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_spleaf_info **out_sli);
+
+int silofs_repo_spawn_spleaf(struct silofs_repo *repo,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_spleaf_info **out_sli);
+
+int silofs_repo_ghost_spleaf(struct silofs_repo *repo,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_spleaf_info **out_sli);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_load_bsec(const struct silofs_repo *repo,
                           const struct silofs_namestr *nstr,
@@ -141,7 +186,6 @@ int silofs_repo_lock_bsec(const struct silofs_repo *repo,
 
 int silofs_repo_unlock_bsec(const struct silofs_repo *repo,
                             const struct silofs_namestr *nstr, int *pfd);
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

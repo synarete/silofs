@@ -242,6 +242,8 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
 
+silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr);
+
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 

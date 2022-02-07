@@ -95,12 +95,6 @@ uint64_t silofs_hash256_to_u64(const struct silofs_hash256 *hash)
 	return u64_of(h) ^ u64_of(h + 8) ^ u64_of(h + 16) ^ u64_of(h + 24);
 }
 
-static void hash256_assign(struct silofs_hash256 *hash,
-                           const struct silofs_hash256 *other)
-{
-	memcpy(hash, other, sizeof(*hash));
-}
-
 void silofs_hash512_assign(struct silofs_hash512 *hash,
                            const struct silofs_hash512 *other)
 {
@@ -599,7 +593,9 @@ void silofs_blobid_make_cas(struct silofs_blobid *blobid,
 {
 	struct silofs_xxid_cas *cid = &blobid->xxid.u.cid;
 
-	hash256_assign(&cid->hash, hash);
+	STATICASSERT_EQ(sizeof(cid->hash), sizeof(hash->hash));
+
+	memcpy(cid->hash, hash->hash, sizeof(hash->hash));
 	blobid->size = size;
 }
 
@@ -614,7 +610,6 @@ int silofs_blobid_to_name(const struct silofs_blobid *blobid,
 	name[*out_len] = '\0';
 	return 0;
 }
-
 
 void silofs_blobid40b_reset(struct silofs_blobid40b *blid)
 {
@@ -948,6 +943,11 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
+silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr)
+{
+	return silofs_off_to_lba(uaddr->voff);
+}
+
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 {
@@ -1044,7 +1044,9 @@ void silofs_taddr_setup(struct silofs_taddr *taddr,
 void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
                            const struct silofs_uaddr *uaddr)
 {
-	xid_assign(&taddr->tree_id, &uaddr->oaddr.blobid.xxid.u.tid.tree_id);
+	const struct silofs_xxid_tas *tas = &uaddr->oaddr.blobid.xxid.u.tid;
+
+	xid_assign(&taddr->tree_id, &tas->tree_id);
 	taddr->voff = uaddr->voff;
 	taddr->height = uaddr->height;
 }
@@ -1231,12 +1233,12 @@ static size_t height_to_nsteps(size_t height)
 	silofs_assert_le(height, SILOFS_SUPER_HEIGHT);
 
 	if (height <= SILOFS_SPLEAF_HEIGHT) {
-		nsteps = SILOFS_SPMAP_LEAF_NCHILDS;
+		nsteps = SILOFS_UNODE_NCHILDS;
 	} else if (height >= SILOFS_SUPER_HEIGHT) {
-		nsteps = SILOFS_SUPER_NODE_NCHILDS;
+		nsteps = SILOFS_UNODE_NCHILDS;
 	} else {
 		silofs_assert_le(height, SILOFS_SPNODE_HEIGHT_MAX);
-		nsteps = SILOFS_SPMAP_NODE_NCHILDS;
+		nsteps = SILOFS_UNODE_NCHILDS;
 	}
 	return nsteps;
 }
@@ -1297,6 +1299,9 @@ void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
 void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
                              size_t height, loff_t voff)
 {
+	silofs_assert_gt(height, SILOFS_SPLEAF_HEIGHT);
+	silofs_assert_le(height, SILOFS_SPNODE_HEIGHT_MAX);
+
 	silofs_vrange_setup_by(vrange, height, voff);
 }
 

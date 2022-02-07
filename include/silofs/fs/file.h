@@ -63,7 +63,7 @@ int silofs_do_copy_file_range(const struct silofs_fs_ctx *op,
 
 int silofs_do_rdwr_post(const struct silofs_fs_ctx *op,
                         struct silofs_inode_info *ii,
-                        const struct silofs_fiovec *fiov, size_t cnt);
+                        const struct silofs_xiovec *xiov, size_t cnt);
 
 
 int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn);

@@ -274,7 +274,7 @@ silofs_ii_apex(const struct silofs_inode_info *ii)
 static inline struct silofs_cache *
 silofs_ii_cache(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_ti.t_apex->ap_cache;
+	return ii->i_vi.v_ti.t_ce.ce_cache;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -288,19 +288,19 @@ silofs_sbi_apex(const struct silofs_sb_info *sbi)
 static inline struct silofs_cache *
 silofs_sbi_cache(const struct silofs_sb_info *sbi)
 {
-	return sbi->s_ui.u_ti.t_apex->ap_cache;
-}
-
-static inline struct silofs_repo *
-silofs_sbi_repo(const struct silofs_sb_info *sbi)
-{
-	return sbi->s_ui.u_ti.t_apex->ap_repo;
+	return sbi->s_ui.u_ti.t_ce.ce_cache;
 }
 
 static inline const struct silofs_uaddr *
 silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 {
 	return &sbi->s_ui.u_uaddr;
+}
+
+static inline const struct silofs_oaddr *
+silofs_sbi_oaddr(const struct silofs_sb_info *sbi)
+{
+	return &sbi->s_ui.u_uaddr.oaddr;
 }
 
 #endif /* SILOFS_INLINES_H_ */

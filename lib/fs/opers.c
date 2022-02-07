@@ -18,9 +18,9 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/boot.h>
+#include <silofs/fs/cache.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/apex.h>
-#include <silofs/fs/cache.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/inode.h>
@@ -60,7 +60,7 @@ static int op_start(const struct silofs_fs_ctx *fs_ctx)
 	if (unlikely(err)) {
 		return err;
 	}
-	silofs_cache_relax(apex->ap_cache, SILOFS_F_OPSTART);
+	silofs_apex_relax_caches(apex, SILOFS_F_OPSTART);
 	apex->ap_ops.op_time = fs_ctx->fsc_oper.op_creds.xtime.tv_sec;
 	apex->ap_ops.op_count++;
 	return 0;
@@ -71,8 +71,9 @@ static int op_finish(const struct silofs_fs_ctx *fs_ctx, int err)
 	const time_t now = time(NULL);
 	const time_t beg = fs_ctx->fsc_oper.op_creds.xtime.tv_sec;
 	const time_t dif = now - beg;
+	const int op_code = fs_ctx->fsc_oper.op_code;
 
-	if ((beg < now) && (dif > 30)) {
+	if (op_code && (beg < now) && (dif > 30)) {
 		log_warn("slow-oper: id=%ld code=%d duration=%ld status=%d",
 		         fs_ctx->fsc_apex->ap_ops.op_count,
 		         fs_ctx->fsc_oper.op_code, dif, err);
@@ -937,7 +938,7 @@ out:
 }
 
 int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
-                        const struct silofs_fiovec *fiov, size_t cnt)
+                        const struct silofs_xiovec *xiov, size_t cnt)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -945,7 +946,7 @@ int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = op_stage_cacheonly_inode(fs_ctx, ino, &ii);
 	/* special case: do post even if ii is NULL */
 
-	err = silofs_do_rdwr_post(fs_ctx, ii, fiov, cnt) || err;
+	err = silofs_do_rdwr_post(fs_ctx, ii, xiov, cnt) || err;
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);
@@ -1227,31 +1228,6 @@ out:
 	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_snap(const struct silofs_fs_ctx *fs_ctx,
-                   ino_t ino, const char *name)
-{
-	struct silofs_namestr nstr;
-	struct silofs_inode_info *dir_ii = NULL;
-	int err;
-
-	err = op_start(fs_ctx);
-	ok_or_goto_out(err);
-
-	err = op_authorize(fs_ctx);
-	ok_or_goto_out(err);
-
-	err = silofs_make_fsnamestr(&nstr, name);
-	ok_or_goto_out(err);
-
-	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
-	ok_or_goto_out(err);
-
-	err = silofs_do_snap(fs_ctx, dir_ii, &nstr);
-	ok_or_goto_out(err);
-out:
-	return op_finish(fs_ctx, err);
-}
-
 int silofs_fs_unrefs(const struct silofs_fs_ctx *fs_ctx,
                      ino_t ino, const char *name)
 {
@@ -1300,9 +1276,11 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx, const char *name)
+int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
+                   const char *src_name, const char *dst_name)
 {
-	struct silofs_namestr nstr;
+	struct silofs_namestr src_nstr;
+	struct silofs_namestr dst_nstr;
 	int err;
 
 	err = op_start(fs_ctx);
@@ -1311,10 +1289,38 @@ int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx, const char *name)
 	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = silofs_make_fsnamestr(&nstr, name);
+	err = silofs_make_fsnamestr(&src_nstr, src_name);
 	ok_or_goto_out(err);
 
-	err = silofs_do_pack(fs_ctx, &nstr);
+	err = silofs_make_fsnamestr(&dst_nstr, dst_name);
+	ok_or_goto_out(err);
+
+	err = silofs_do_pack(fs_ctx, &src_nstr, &dst_nstr);
+	ok_or_goto_out(err);
+out:
+	return op_finish(fs_ctx, err);
+}
+
+int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
+                     const char *src_name, const char *dst_name)
+{
+	struct silofs_namestr src_nstr;
+	struct silofs_namestr dst_nstr;
+	int err;
+
+	err = op_start(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = op_authorize(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = silofs_make_fsnamestr(&src_nstr, src_name);
+	ok_or_goto_out(err);
+
+	err = silofs_make_fsnamestr(&dst_nstr, dst_name);
+	ok_or_goto_out(err);
+
+	err = silofs_do_unpack(fs_ctx, &src_nstr, &dst_nstr);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);
@@ -1328,6 +1334,6 @@ int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags)
 	if (err) {
 		return err;
 	}
-	silofs_cache_relax(apex->ap_cache, flags);
+	silofs_apex_relax_caches(apex, flags);
 	return 0;
 }

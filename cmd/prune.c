@@ -75,8 +75,8 @@ static void prune_start(void)
 
 static void prune_prepare(void)
 {
-	silofs_die_if_not_dir_or_empty(prune_args->repodir, true);
-	prune_args->repodir_real = silofs_cmd_realpath(prune_args->repodir);
+	silofs_cmd_check_nonemptydir(prune_args->repodir, true);
+	silofs_cmd_realpath(prune_args->repodir, &prune_args->repodir_real);
 }
 
 

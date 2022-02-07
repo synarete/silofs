@@ -17,10 +17,10 @@
 #include <silofs/configs.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/types.h>
-#include <silofs/fs/mpool.h>
 #include <silofs/fs/crypto.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/nodes.h>
+#include <silofs/fs/repo.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/stage.h>
 #include <silofs/fs/spmaps.h>
@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-/* local functions forward declarations */
+/* local variables forward declarations */
 static const struct silofs_tnode_vtbl sbi_vtbl;
 static const struct silofs_tnode_vtbl sni_vtbl;
 static const struct silofs_tnode_vtbl sli_vtbl;
@@ -46,6 +46,133 @@ static const struct silofs_tnode_vtbl syi_vtbl;
 static const struct silofs_tnode_vtbl dni_vtbl;
 static const struct silofs_tnode_vtbl fni_vtbl;
 static const struct silofs_tnode_vtbl fli_vtbl;
+
+
+/* local functions forward declarations */
+static int view_verify(const union silofs_view *view,
+                       const enum silofs_stype stype,
+                       const struct silofs_mdigest *md);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint32_t hdr_magic(const struct silofs_header *hdr)
+{
+	return silofs_le32_to_cpu(hdr->h_magic);
+}
+
+static void hdr_set_magic(struct silofs_header *hdr, uint32_t magic)
+{
+	hdr->h_magic = silofs_cpu_to_le32(magic);
+}
+
+static size_t hdr_size(const struct silofs_header *hdr)
+{
+	return silofs_le32_to_cpu(hdr->h_size);
+}
+
+static size_t hdr_payload_size(const struct silofs_header *hdr)
+{
+	return hdr_size(hdr) - sizeof(*hdr);
+}
+
+static void hdr_set_size(struct silofs_header *hdr, size_t size)
+{
+	hdr->h_size = silofs_cpu_to_le32((uint32_t)size);
+}
+
+static enum silofs_stype hdr_stype(const struct silofs_header *hdr)
+{
+	return (enum silofs_stype)(hdr->h_stype);
+}
+
+static void hdr_set_stype(struct silofs_header *hdr, enum silofs_stype stype)
+{
+	hdr->h_stype = (uint8_t)stype;
+}
+
+static uint32_t hdr_csum(const struct silofs_header *hdr)
+{
+	return silofs_le32_to_cpu(hdr->h_csum);
+}
+
+static void hdr_set_csum(struct silofs_header *hdr, uint32_t csum)
+{
+	hdr->h_csum = silofs_cpu_to_le32(csum);
+	hdr->h_flags |= SILOFS_HDRF_CSUM;
+}
+
+static bool hdr_has_csum(const struct silofs_header *hdr)
+{
+	return (hdr->h_flags & SILOFS_HDRF_CSUM) > 0;
+}
+
+static const void *hdr_payload(const struct silofs_header *hdr)
+{
+	return hdr + 1;
+}
+
+static void hdr_stamp(struct silofs_header *hdr,
+                      enum silofs_stype stype, size_t size)
+{
+	hdr_set_magic(hdr, SILOFS_STYPE_MAGIC);
+	hdr_set_size(hdr, size);
+	hdr_set_stype(hdr, stype);
+	hdr->h_csum = 0;
+	hdr->h_flags = 0;
+	hdr->h_reserved = 0;
+}
+
+static int hdr_verify_base(const struct silofs_header *hdr,
+                           const enum silofs_stype stype)
+{
+	const size_t hsz = hdr_size(hdr);
+	const size_t psz = stype_size(stype);
+
+	if (hdr_magic(hdr) != SILOFS_STYPE_MAGIC) {
+		return -EFSCORRUPTED;
+	}
+	if (hdr_stype(hdr) != stype) {
+		return -EFSCORRUPTED;
+	}
+	if (hsz != psz) {
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr,
+                                  const struct silofs_mdigest *md)
+{
+	const void *payload = hdr_payload(hdr);
+	const size_t pl_size = hdr_payload_size(hdr);
+	uint32_t csum = 0;
+
+	silofs_assert_le(pl_size, SILOFS_BK_SIZE - SILOFS_HEADER_SIZE);
+
+	silofs_crc32_of(md, payload, pl_size, &csum);
+	return csum;
+}
+
+static void hdr_calc_set_csum(struct silofs_header *hdr,
+                              const struct silofs_mdigest *md)
+{
+	hdr_set_csum(hdr, hdr_calc_chekcsum(hdr, md));
+}
+
+static int hdr_verify_checksum(const struct silofs_header *hdr,
+                               const struct silofs_mdigest *md)
+{
+	uint32_t csum;
+
+	if (!hdr_has_csum(hdr)) {
+		return 0;
+	}
+	csum = hdr_calc_chekcsum(hdr, md);
+	if (csum != hdr_csum(hdr)) {
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -81,6 +208,28 @@ static loff_t vaddr_bk_pos(const struct silofs_vaddr *vaddr)
 	return silofs_off_in_bk(vaddr_off(vaddr));
 }
 
+static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr,
+                                   const struct silofs_mdigest *md)
+{
+	return hdr_calc_chekcsum(hdr, md);
+}
+
+static uint32_t calc_data_checksum(const void *dat, size_t len,
+                                   const struct silofs_mdigest *md)
+{
+	uint32_t csum = 0;
+
+	silofs_crc32_of(md, dat, len, &csum);
+	return csum;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void bbuf_reset(struct silofs_bytebuf *bb)
+{
+	silofs_bytebuf_init(bb, NULL, 0);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ti_init(struct silofs_tnode_info *ti, enum silofs_stype stype,
@@ -92,6 +241,7 @@ static void ti_init(struct silofs_tnode_info *ti, enum silofs_stype stype,
 	ti->t_stype = stype;
 	ti->t_ds_next = NULL;
 	ti->t_apex = NULL;
+	ti->t_crypto = NULL;
 	ti->t_view = NULL;
 	ti->t_vtbl = vtbl;
 	ti->t_noflush = false;
@@ -105,6 +255,7 @@ static void ti_fini(struct silofs_tnode_info *ti)
 	ti->t_stype = SILOFS_STYPE_NONE;
 	ti->t_ds_next = NULL;
 	ti->t_apex = NULL;
+	ti->t_crypto = NULL;
 	ti->t_view = NULL;
 	ti->t_vtbl = NULL;
 }
@@ -117,6 +268,27 @@ static void ti_seal_noop(struct silofs_tnode_info *ti)
 static bool ti_evictable(const struct silofs_tnode_info *ti)
 {
 	return silofs_ti_isevictable(ti);
+}
+
+static const struct silofs_mdigest *
+ti_mdigest(const struct silofs_tnode_info *ti)
+{
+	silofs_assert_not_null(ti->t_crypto);
+
+	return &ti->t_crypto->md;
+}
+
+static uint32_t ti_calc_chekcsum(const struct silofs_tnode_info *ti)
+{
+	const struct silofs_mdigest *md = ti_mdigest(ti);
+
+	return calc_meta_chekcsum(&ti->t_view->hdr, md);
+}
+
+static int ti_verify_view(struct silofs_tnode_info *ti,
+                          const struct silofs_mdigest *md)
+{
+	return view_verify(ti->t_view, ti->t_stype, md);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -137,19 +309,27 @@ static void ui_init(struct silofs_unode_info *ui,
                     const struct silofs_tnode_vtbl *vtbl)
 {
 	ti_init(&ui->u_ti, uaddr->stype, vtbl);
-	lh_init(&ui->u_sptm_lh);
-	silofs_uaddr_assign(&ui->u_uaddr, uaddr);
-	silofs_taddr_by_uaddr(&ui->u_taddr, uaddr);
+	lh_init(&ui->u_unom_lh);
+	lh_init(&ui->u_pack_lh);
+	uaddr_assign(&ui->u_uaddr, uaddr);
+	packid_reset(&ui->u_packid);
+	bbuf_reset(&ui->u_bb);
 	ui->u_ubi = NULL;
 	ui->u_tmapped = false;
 	ui->u_verified = false;
+	ui->u_plinked = false;
 }
 
 static void ui_fini(struct silofs_unode_info *ui)
 {
+	silofs_assert(!ui->u_plinked);
 	silofs_assert(!ui->u_tmapped);
-	silofs_uaddr_reset(&ui->u_uaddr);
-	lh_fini(&ui->u_sptm_lh);
+
+	uaddr_reset(&ui->u_uaddr);
+	bbuf_reset(&ui->u_bb);
+	packid_reset(&ui->u_packid);
+	lh_fini(&ui->u_pack_lh);
+	lh_fini(&ui->u_unom_lh);
 	ti_fini(&ui->u_ti);
 }
 
@@ -179,11 +359,16 @@ static int ui_resolve_as_ti(const struct silofs_tnode_info *ti,
 	return ui_resolve(silofs_ui_from_ti(ti), out_oaddr);
 }
 
+static void ui_seal(struct silofs_unode_info *ui)
+{
+	hdr_set_csum(&ui->u_ti.t_view->hdr, ti_calc_chekcsum(&ui->u_ti));
+}
+
 static void ui_seal_as_ti(struct silofs_tnode_info *ti)
 {
 	struct silofs_unode_info *ui = silofs_ui_from_ti(ti);
 
-	silofs_unused(ui);
+	ui_seal(ui);
 }
 
 static size_t ui_length(const struct silofs_unode_info *ui)
@@ -202,6 +387,13 @@ void silofs_ui_clone_into(const struct silofs_unode_info *ui,
 	memcpy(dst_view, src_view, len);
 }
 
+void silofs_ui_bind_apex(struct silofs_unode_info *ui,
+                         struct silofs_fs_apex *apex)
+{
+	silofs_assert_not_null(apex);
+	ui->u_ti.t_apex = apex;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
@@ -216,7 +408,7 @@ static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
 }
 
 static struct silofs_vnode_info *
-vi_from_fiovref(const struct silofs_fiovref *fir)
+vi_from_xiovref(const struct silofs_xiovref *fir)
 {
 	const struct silofs_vnode_info *vi = NULL;
 
@@ -225,17 +417,17 @@ vi_from_fiovref(const struct silofs_fiovref *fir)
 }
 
 
-static void vi_fiov_pre(struct silofs_fiovref *fir)
+static void vi_xiov_pre(struct silofs_xiovref *fir)
 {
-	struct silofs_vnode_info *vi = vi_from_fiovref(fir);
+	struct silofs_vnode_info *vi = vi_from_xiovref(fir);
 
 	silofs_vi_incref(vi);
 	vi->v_ti.t_noflush = true;
 }
 
-static void vi_fiov_post(struct silofs_fiovref *fir)
+static void vi_xiov_post(struct silofs_xiovref *fir)
 {
-	struct silofs_vnode_info *vi = vi_from_fiovref(fir);
+	struct silofs_vnode_info *vi = vi_from_xiovref(fir);
 
 	silofs_vi_decref(vi);
 	vi->v_ti.t_noflush = false;
@@ -247,17 +439,18 @@ static void vi_init(struct silofs_vnode_info *vi,
 {
 	ti_init(&vi->v_ti, vaddr->stype, vtbl);
 	vaddr_assign(&vi->v_vaddr, vaddr);
-	silofs_fiovref_init(&vi->v_fir, vi_fiov_pre, vi_fiov_post);
+	silofs_xiovref_init(&vi->v_fir, vi_xiov_pre, vi_xiov_post);
 	vi->v_recheck = false;
 	vi->v_verified = false;
 	vi->v_vbi = NULL;
+	vi->v_sbi = NULL;
 }
 
 static void vi_fini(struct silofs_vnode_info *vi)
 {
 	ti_fini(&vi->v_ti);
 	vaddr_reset(&vi->v_vaddr);
-	silofs_fiovref_fini(&vi->v_fir);
+	silofs_xiovref_fini(&vi->v_fir);
 }
 
 struct silofs_vnode_info *
@@ -299,11 +492,32 @@ static int vi_resolve_as_ti(const struct silofs_tnode_info *ti,
 	return (likely(vi != NULL)) ? vi_resolve(vi, out_oaddr) : -ENOENT;
 }
 
+static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
+{
+	const struct silofs_mdigest *md = ti_mdigest(&vi->v_ti);
+	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
+	uint32_t csum;
+
+	if (vaddr_isdata(vaddr)) {
+		csum = calc_data_checksum(vi->v_ti.t_view, vaddr->len, md);
+	} else {
+		csum = calc_meta_chekcsum(&vi->v_ti.t_view->hdr, md);
+	}
+	return csum;
+}
+
+static void vi_seal_meta(struct silofs_vnode_info *vi)
+{
+	hdr_set_csum(&vi->v_ti.t_view->hdr, vi_calc_chekcsum(vi));
+}
+
 static void vi_seal_as_ti(struct silofs_tnode_info *ti)
 {
 	struct silofs_vnode_info *vi = silofs_vi_from_ti(ti);
 
-	silofs_vi_seal_meta(vi);
+	if (!vi_isdata(vi)) {
+		vi_seal_meta(vi);
+	}
 }
 
 static bool vi_has_stype(const struct silofs_vnode_info *vi,
@@ -341,16 +555,18 @@ static struct silofs_sb_info *sbi_from_ti(const struct silofs_tnode_info *ti)
 	return silofs_sbi_from_ui(silofs_ui_from_ti(ti));
 }
 
-static void sbi_init(struct silofs_sb_info *sbi,
-                     const struct silofs_uaddr *uaddr)
+static int sbi_init(struct silofs_sb_info *sbi,
+                    const struct silofs_uaddr *uaddr,
+                    struct silofs_alloc_if *alif)
 {
-	silofs_sbi_init_commons(sbi);
+	silofs_memzero(sbi, sizeof(*sbi));
 	ui_init(&sbi->s_ui, uaddr, &sbi_vtbl);
+	return silofs_itbi_init(&sbi->s_itbi, alif);
 }
 
 static void sbi_fini(struct silofs_sb_info *sbi)
 {
-	silofs_sbi_fini(sbi);
+	silofs_itbi_fini(&sbi->s_itbi);
 	ui_fini(&sbi->s_ui);
 	silofs_memffff(sbi, sizeof(*sbi));
 }
@@ -366,7 +582,6 @@ static struct silofs_sb_info *sbi_malloc(struct silofs_alloc_if *alif)
 static void sbi_free(struct silofs_sb_info *sbi,
                      struct silofs_alloc_if *alif)
 {
-	silofs_memffff(sbi, sizeof(*sbi));
 	silofs_deallocate(alif, sbi, sizeof(*sbi));
 }
 
@@ -402,10 +617,16 @@ static struct silofs_sb_info *
 sbi_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_sb_info *sbi;
+	int err;
 
 	sbi = sbi_malloc(alif);
-	if (sbi != NULL) {
-		sbi_init(sbi, uaddr);
+	if (sbi == NULL) {
+		return NULL;
+	}
+	err = sbi_init(sbi, uaddr, alif);
+	if (err) {
+		sbi_delete(sbi, alif);
+		return NULL;
 	}
 	return sbi;
 }
@@ -1291,7 +1512,7 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 static const struct silofs_tnode_vtbl fli_vtbl = {
 	.del = fli_delete_as_ti,
 	.evictable = ti_evictable,
-	.seal = ti_seal_noop,
+	.seal = ti_seal_noop, /* no-op for data leaves */
 	.resolve = vi_resolve_as_ti,
 };
 
@@ -1415,157 +1636,24 @@ void silofs_vi_bind_view(struct silofs_vnode_info *vi)
 	ti_bind_view(&vi->v_ti, vi->v_vbi->vbk, bk_pos);
 }
 
+union silofs_view *silofs_make_view_of(struct silofs_header *hdr)
+{
+	return make_view(hdr);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint32_t hdr_magic(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_magic);
-}
-
-static void hdr_set_magic(struct silofs_header *hdr, uint32_t magic)
-{
-	hdr->h_magic = silofs_cpu_to_le32(magic);
-}
-
-static size_t hdr_size(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_size);
-}
-
-static size_t hdr_payload_size(const struct silofs_header *hdr)
-{
-	return hdr_size(hdr) - sizeof(*hdr);
-}
-
-static void hdr_set_size(struct silofs_header *hdr, size_t size)
-{
-	hdr->h_size = silofs_cpu_to_le32((uint32_t)size);
-}
-
-static enum silofs_stype hdr_stype(const struct silofs_header *hdr)
-{
-	return (enum silofs_stype)(hdr->h_stype);
-}
-
-static void hdr_set_stype(struct silofs_header *hdr, enum silofs_stype stype)
-{
-	hdr->h_stype = (uint8_t)stype;
-}
-
-static uint32_t hdr_csum(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_csum);
-}
-
-static void hdr_set_csum(struct silofs_header *hdr, uint32_t csum)
-{
-	hdr->h_csum = silofs_cpu_to_le32(csum);
-	hdr->h_flags |= SILOFS_HDRF_CSUM;
-}
-
-static bool hdr_has_csum(const struct silofs_header *hdr)
-{
-	return (hdr->h_flags & SILOFS_HDRF_CSUM) > 0;
-}
-
-static const void *hdr_payload(const struct silofs_header *hdr)
-{
-	return hdr + 1;
-}
-
-static void hdr_stamp(struct silofs_header *hdr,
-                      enum silofs_stype stype, size_t size)
-{
-	hdr_set_magic(hdr, SILOFS_STYPE_MAGIC);
-	hdr_set_size(hdr, size);
-	hdr_set_stype(hdr, stype);
-	hdr->h_csum = 0;
-	hdr->h_flags = 0;
-	hdr->h_reserved = 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr,
-                                   const struct silofs_mdigest *md)
-{
-	uint32_t csum = 0;
-	const void *payload = hdr_payload(hdr);
-	const size_t pl_size = hdr_payload_size(hdr);
-
-	silofs_assert_le(pl_size, SILOFS_BK_SIZE - SILOFS_HEADER_SIZE);
-
-	silofs_crc32_of(md, payload, pl_size, &csum);
-	return csum;
-}
-
-static uint32_t calc_data_checksum(const void *dat, size_t len,
-                                   const struct silofs_mdigest *md)
-{
-	uint32_t csum = 0;
-
-	silofs_crc32_of(md, dat, len, &csum);
-	return csum;
-}
-
-static const struct silofs_mdigest *
-vi_mdigest(const struct silofs_vnode_info *vi)
-{
-	return &vi->v_ti.t_apex->ap_crypto->md;
-}
-
-static uint32_t calc_chekcsum_of(const struct silofs_vnode_info *vi)
-{
-	uint32_t csum;
-	const struct silofs_mdigest *md = vi_mdigest(vi);
-	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
-
-	if (vaddr_isdata(vaddr)) {
-		csum = calc_data_checksum(vi->v_ti.t_view, vaddr->len, md);
-	} else {
-		csum = calc_meta_chekcsum(&vi->v_ti.t_view->hdr, md);
-	}
-	return csum;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int view_verify_hdr(const union silofs_view *view,
                            enum silofs_stype stype)
 {
-	const struct silofs_header *hdr = &view->hdr;
-	const size_t hsz = hdr_size(hdr);
-	const size_t psz = stype_size(stype);
-
-	if (stype_isdata(stype)) {
-		return 0;
-	}
-	if (hdr_magic(hdr) != SILOFS_STYPE_MAGIC) {
-		return -EFSCORRUPTED;
-	}
-	if (hdr_stype(hdr) != stype) {
-		return -EFSCORRUPTED;
-	}
-	if (hsz != psz) {
-		return -EFSCORRUPTED;
-	}
-
-	return 0;
+	return hdr_verify_base(&view->hdr, stype);
 }
 
 static int view_verify_checksum(const union silofs_view *view,
                                 const struct silofs_mdigest *md)
 {
-	uint32_t csum;
-	const struct silofs_header *hdr = &view->hdr;
-
-	if (hdr_has_csum(hdr)) {
-		csum = calc_meta_chekcsum(hdr, md);
-		if (csum != hdr_csum(hdr)) {
-			return -EFSCORRUPTED;
-		}
-	}
-	return 0;
+	return hdr_verify_checksum(&view->hdr, md);
 }
 
 static int view_verify_sub(const union silofs_view *view,
@@ -1640,25 +1728,15 @@ static int view_verify(const union silofs_view *view,
 	return 0;
 }
 
-static const struct silofs_mdigest *
-ti_mdigest(const struct silofs_tnode_info *ti)
-{
-	return &ti->t_apex->ap_crypto->md;
-}
-
-static int ti_verify_view(struct silofs_tnode_info *ti)
-{
-	return view_verify(ti->t_view, ti->t_stype, ti_mdigest(ti));
-}
-
-int silofs_ui_verify_view(struct silofs_unode_info *ui)
+int silofs_ui_verify_view(struct silofs_unode_info *ui,
+                          const struct silofs_mdigest *md)
 {
 	int err;
 
 	if (ui->u_verified) {
 		return 0;
 	}
-	err = ti_verify_view(&ui->u_ti);
+	err = ti_verify_view(&ui->u_ti, md);
 	if (err) {
 		return err;
 	}
@@ -1666,14 +1744,15 @@ int silofs_ui_verify_view(struct silofs_unode_info *ui)
 	return 0;
 }
 
-int silofs_vi_verify_view(struct silofs_vnode_info *vi)
+int silofs_vi_verify_view(struct silofs_vnode_info *vi,
+                          const struct silofs_mdigest *md)
 {
 	int err;
 
 	if (vi->v_verified) {
 		return 0;
 	}
-	err = ti_verify_view(&vi->v_ti);
+	err = ti_verify_view(&vi->v_ti, md);
 	if (err) {
 		return err;
 	}
@@ -1681,32 +1760,35 @@ int silofs_vi_verify_view(struct silofs_vnode_info *vi)
 	return 0;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_vi_seal_meta(const struct silofs_vnode_info *vi)
-{
-	const struct silofs_sb_info *sbi = vi_sbi(vi);
-
-	if ((sbi->s_ctl_flags & SILOFS_F_SEAL) && !vi_isdata(vi)) {
-		hdr_set_csum(&vi->v_ti.t_view->hdr, calc_chekcsum_of(vi));
-	}
-}
-
 void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi)
 {
 	const enum silofs_stype stype = vi_stype(vi);
 
 	if (!stype_isdata(stype)) {
-		silofs_zero_stamp_view(vi->v_ti.t_view, stype);
+		silofs_zero_stamp_meta(vi->v_ti.t_view, stype);
 	}
 	vi->v_verified = true;
 	vi_dirtify(vi);
 }
 
-void silofs_zero_stamp_view(union silofs_view *view, enum silofs_stype stype)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype)
 {
 	const size_t len = stype_size(stype);
 
 	silofs_memzero(view, len);
 	hdr_stamp(&view->hdr, stype, len);
+}
+
+void silofs_fill_csum_meta(union silofs_view *view,
+                           const struct silofs_mdigest *md)
+{
+	hdr_calc_set_csum(&view->hdr, md);
+}
+
+int silofs_verify_csum_meta(const union silofs_view *view,
+                            const struct silofs_mdigest *md)
+{
+	return view_verify_checksum(view, md);
 }

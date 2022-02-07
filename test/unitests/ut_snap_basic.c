@@ -151,7 +151,7 @@ static void ut_snap_reload_other(struct ut_env *ute)
 	ino_t dino;
 	const loff_t off = UT_TERA;
 	const char *name = UT_NAME;
-	const char *fsname = ute->fs_env->fs_args.fsname;
+	const char *fsname = ute->fs_env->fs_args.main_name;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

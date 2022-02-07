@@ -89,7 +89,7 @@ static void lsmnt_prepare(void)
 		if (st.st_ino != SILOFS_INO_ROOT) {
 			silofs_die(0, "not a silofs mount-point: %s", path);
 		}
-		lsmnt_args->mntpoint_real = silofs_cmd_realpath(path);
+		silofs_cmd_realpath(path, &lsmnt_args->mntpoint_real);
 	}
 }
 

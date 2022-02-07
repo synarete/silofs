@@ -27,7 +27,6 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([gcrypt.h])
   AX_SILOFS_NEED_HEADER([uuid/uuid.h])
   AX_SILOFS_NEED_HEADER([attr/attributes.h])
-  AX_SILOFS_NEED_HEADER([curl/curl.h])
   AX_SILOFS_NEED_HEADER([sys/xattr.h])
   AX_SILOFS_NEED_HEADER([sys/types.h])
   AX_SILOFS_NEED_HEADER([sys/wait.h])
@@ -74,12 +73,6 @@ AC_DEFUN([AX_SILOFS_NEED_LIBS],
 
   AC_SEARCH_LIBS([cap_clear], [cap], :,
     AC_MSG_ERROR([Unable to find libcap]))
-
-  AC_SEARCH_LIBS([curl_version], [curl], :,
-    AC_MSG_ERROR([Unable to find libcurl]))
-
-  AX_CHECK_LIBRARY([LIBCURL], [curl/curl.h], [curl], [],
-    [AC_MSG_ERROR([Unable to find libcurl])])
 ])
 
 AC_DEFUN([AX_SILOFS_WANT_LIBS],

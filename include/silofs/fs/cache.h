@@ -37,7 +37,6 @@ struct silofs_dirtyq {
 
 /* in-memory caching */
 struct silofs_cache {
-	struct silofs_qalloc   *c_qalloc;
 	struct silofs_alloc_if *c_alif;
 	struct silofs_block    *c_nil_bk;
 	struct silofs_lrumap    c_bli_lm;
@@ -46,8 +45,9 @@ struct silofs_cache {
 	struct silofs_lrumap    c_ui_lm;
 	struct silofs_lrumap    c_vi_lm;
 	struct silofs_dirtyq    c_dq;
-	struct silofs_spvmap    c_spvm;
-	struct silofs_sptmap    c_sptm;
+	struct silofs_spamaps   c_spam;
+	struct silofs_unomap    c_unom;
+	size_t mem_size_hint;
 };
 
 
@@ -66,8 +66,7 @@ void silofs_ce_fini(struct silofs_cache_elem *ce);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_cache_init(struct silofs_cache *cache,
-                      struct silofs_qalloc *qalloc,
-                      struct silofs_alloc_if *alif);
+                      struct silofs_alloc_if *alif, size_t msz_hint);
 
 void silofs_cache_fini(struct silofs_cache *cache);
 
@@ -151,14 +150,6 @@ void silofs_cache_forget_vnode(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bli_resolve(struct silofs_blob_info *bli,
-                       const struct silofs_oaddr *oaddr,
-                       struct silofs_fiovec *fiov);
-
-int silofs_bli_resolve_bk(struct silofs_blob_info *bli,
-                          const struct silofs_oaddr *oaddr,
-                          struct silofs_fiovec *fiov);
-
 int silofs_bli_datasync(const struct silofs_blob_info *bli);
 
 void silofs_bli_incref(struct silofs_blob_info *bli);
@@ -174,8 +165,9 @@ void silofs_vi_incref(struct silofs_vnode_info *vi);
 
 void silofs_vi_decref(struct silofs_vnode_info *vi);
 
-void silofs_vi_attach_bk(struct silofs_vnode_info *vi,
+void silofs_vi_attach_to(struct silofs_vnode_info *vi,
                          struct silofs_vbk_info *vbi);
+
 
 size_t silofs_vi_refcnt(const struct silofs_vnode_info *vi);
 
@@ -198,8 +190,9 @@ void silofs_ui_dirtify(struct silofs_unode_info *ui);
 
 void silofs_ui_undirtify(struct silofs_unode_info *ui);
 
-void silofs_ui_attach_bk(struct silofs_unode_info *ui,
+void silofs_ui_attach_to(struct silofs_unode_info *ui,
                          struct silofs_ubk_info *ubi);
+
 
 bool silofs_ti_isevictable(const struct silofs_tnode_info *ti);
 
@@ -207,5 +200,11 @@ void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
 
+void silofs_ubi_attach(struct silofs_ubk_info *ubi,
+                       struct silofs_blob_info *bli);
+
+void silofs_vbi_incref(struct silofs_vbk_info *vbi);
+
+void silofs_vbi_decref(struct silofs_vbk_info *vbi);
 
 #endif /* SILOFS_CACHE_H_ */

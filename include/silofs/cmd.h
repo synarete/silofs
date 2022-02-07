@@ -43,11 +43,18 @@ struct silofs_cmd_info {
 	silofs_exec_fn action_hook;
 };
 
-/* arguments for 'mkfs' sub-command */
-struct silofs_subcmd_mkfs {
-	char   *name;
+/* arguments for 'init' sub-command */
+struct silofs_subcmd_init {
 	char   *repodir;
 	char   *repodir_real;
+};
+
+/* arguments for 'mkfs' sub-command */
+struct silofs_subcmd_mkfs {
+	char   *repodir_name;
+	char   *repodir;
+	char   *repodir_real;
+	char   *name;
 	char   *size;
 	long    fs_size;
 	bool    force;
@@ -55,9 +62,10 @@ struct silofs_subcmd_mkfs {
 
 /* arguments for 'mount' sub-command */
 struct silofs_subcmd_mount {
-	char   *name;
+	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
+	char   *name;
 	char   *mntpoint;
 	char   *mntpoint_real;
 	char   *options;
@@ -101,21 +109,30 @@ struct silofs_subcmd_show {
 
 /* arguments for 'archive' sub-command */
 struct silofs_subcmd_archive {
+	char   *main_repodir_name;
+	char   *main_repodir;
+	char   *main_repodir_real;
+	char   *main_name;
+	char   *cold_repodir_name;
+	char   *cold_repodir;
+	char   *cold_repodir_real;
+	char   *cold_name;
 	char   *passphrase;
 	char   *passphrase_file;
-	char   *repodir;
-	char   *repodir_real;
-	char   *source_name;
-	char   *target_name;
 };
 
 /* arguments for 'archive' sub-command */
 struct silofs_subcmd_restore {
+	char   *main_repodir_name;
+	char   *main_repodir;
+	char   *main_repodir_real;
+	char   *main_name;
+	char   *cold_repodir_name;
+	char   *cold_repodir;
+	char   *cold_repodir_real;
+	char   *cold_name;
 	char   *passphrase;
 	char   *passphrase_file;
-	char   *repodir;
-	char   *repodir_real;
-	char   *name;
 };
 
 /* arguments for 'prune' sub-command */
@@ -132,6 +149,7 @@ struct silofs_subcmd_fsck {
 
 /* sub-commands options */
 union silofs_subcmd_args {
+	struct silofs_subcmd_init       init;
 	struct silofs_subcmd_mkfs       mkfs;
 	struct silofs_subcmd_mount      mount;
 	struct silofs_subcmd_umount     umount;
@@ -199,6 +217,8 @@ extern struct silofs_globals silofs_globals;
 
 
 /* execution hooks */
+void silofs_execute_init(void);
+
 void silofs_execute_mkfs(void);
 
 void silofs_execute_mount(void);
@@ -232,27 +252,26 @@ void silofs_die_unsupported_opt(void);
 
 void silofs_die_if_missing_arg(const char *arg_name, const void *arg_val);
 
-void silofs_die_if_illegal_fsname(const char *arg_name, const char *arg_val);
 
-void silofs_die_if_not_dir(const char *path, bool w_ok);
+void silofs_cmd_check_fsname(const char *arg_val);
 
-void silofs_die_if_not_dir_or_empty(const char *path, bool w_ok);
+void silofs_cmd_check_notexists(const char *path);
 
-void silofs_die_if_not_empty_dir(const char *path, bool w_ok);
+void silofs_cmd_check_exists(const char *path);
 
-void silofs_die_if_not_mntdir(const char *path, bool mount);
+void silofs_cmd_check_isdir(const char *path, bool w_ok);
 
-void silofs_die_if_not_reg(const char *path, bool w_ok);
+void silofs_cmd_check_nonemptydir(const char *path, bool w_ok);
 
-void silofs_die_if_not_dir_or_reg(const char *path);
+void silofs_cmd_check_emptydir(const char *path, bool w_ok);
 
-void silofs_die_if_exists(const char *path);
+void silofs_cmd_check_mntdir(const char *path, bool mount);
 
-void silofs_die_if_not_mkdir(const char *path, mode_t mode);
+void silofs_cmd_check_reg(const char *path, bool w_ok);
 
-void silofs_die_if_no_mountd(void);
+void silofs_cmd_check_mountd(void);
 
-void silofs_require_valid_fsname(const char *arg_name, char **p_fsname);
+void silofs_cmd_mkdir(const char *path, mode_t mode);
 
 
 void silofs_cmd_endargs(void);
@@ -266,9 +285,7 @@ int silofs_cmd_getopt(const char *sopts, const struct option *lopts);
 
 long silofs_cmd_parse_size(const char *str);
 
-char *silofs_cmd_realpath(const char *path);
-
-char *silofs_cmd_basename(const char *path);
+void silofs_cmd_realpath(const char *path, char **out_real);
 
 void silofs_cmd_stat_ok(const char *path, struct stat *st);
 
@@ -276,12 +293,14 @@ void silofs_cmd_stat_reg(const char *path, struct stat *st);
 
 void silofs_cmd_stat_reg_or_dir(const char *path, struct stat *st);
 
+void silofs_cmd_splitpath(const char *path, char **out_head, char **out_tail);
 
-void silofs_fork_daemon(void);
 
-void silofs_open_syslog(void);
+void silofs_cmd_fork_daemon(void);
 
-void silofs_close_syslog(void);
+void silofs_cmd_open_syslog(void);
+
+void silofs_cmd_close_syslog(void);
 
 void silofs_setrlimit_nocore(void);
 
@@ -325,11 +344,11 @@ typedef void (*silofs_signal_hook_fn)(int);
 void silofs_register_sigactions(silofs_signal_hook_fn sig_hook);
 
 /* passphrase input */
-char *silofs_getpass(const char *path);
+void silofs_cmd_getpass(const char *path, char **out_pass);
 
-char *silofs_getpass2(const char *path);
+void silofs_cmd_getpass2(const char *path, char **out_pass);
 
-void silofs_delpass(char **pass);
+void silofs_cmd_delpass(char **pass);
 
 
 #endif /* SILOFS_CMD_H_ */

@@ -22,12 +22,6 @@
 #include <silofs/fs/itable.h>
 #include <silofs/fs/inode.h>
 #include <silofs/fs/private.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <dirent.h>
 #include <limits.h>
 
 #define ITROOT_DEPTH            (1)
@@ -58,11 +52,27 @@ static void iaddr_setup(struct silofs_iaddr *iaddr, ino_t ino,
 	iaddr->ino = ino;
 }
 
+static void iaddr_setup2(struct silofs_iaddr *iaddr, ino_t ino, loff_t voff)
+{
+	iaddr->ino = ino;
+	vaddr_setup(&iaddr->vaddr, SILOFS_STYPE_INODE, voff);
+}
+
 static void iaddr_assign(struct silofs_iaddr *iaddr,
                          const struct silofs_iaddr *other)
 {
 	vaddr_assign(&iaddr->vaddr, &other->vaddr);
 	iaddr->ino = other->ino;
+}
+
+static ino_t iaddr_ino(const struct silofs_iaddr *iaddr)
+{
+	return iaddr->ino;
+}
+
+static loff_t iaddr_voff(const struct silofs_iaddr *iaddr)
+{
+	return vaddr_off(&iaddr->vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -538,105 +548,6 @@ static bool itni_may_prune(const struct silofs_itnode_info *itni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void itment_reset(struct silofs_itment *itme)
-{
-	itme->ino = SILOFS_INO_NULL;
-	itme->off = SILOFS_OFF_NULL;
-}
-
-static void itment_reset_arr(struct silofs_itment *itme_arr, size_t cnt)
-{
-	for (size_t i = 0; i < cnt; ++i) {
-		itment_reset(&itme_arr[i]);
-	}
-}
-
-static int itmap_init(struct silofs_itmap *itm, struct silofs_alloc_if *alif)
-{
-	const size_t elemsz = sizeof(*itm->itm_htbl);
-	const size_t nelems = ((2 * SILOFS_MEGA) / elemsz);
-
-	STATICASSERT_EQ(sizeof(*itm->itm_htbl), 16);
-
-	itm->itm_alif = alif;
-	itm->ithm_nelems = 0;
-	itm->itm_htbl = silofs_allocate(alif, nelems * elemsz);
-	if (itm->itm_htbl == NULL) {
-		return -ENOMEM;
-	}
-	itment_reset_arr(itm->itm_htbl, nelems);
-	itm->ithm_nelems = nelems;
-	return 0;
-}
-
-static void itmap_fini(struct silofs_itmap *itm)
-{
-	const size_t nelems = itm->ithm_nelems;
-	const size_t elemsz = sizeof(*itm->itm_htbl);
-
-	silofs_deallocate(itm->itm_alif, itm->itm_htbl, nelems * elemsz);
-	itm->ithm_nelems = 0;
-	itm->itm_htbl = NULL;
-	itm->itm_alif = NULL;
-}
-
-static void itmap_reset(struct silofs_itmap *itm)
-{
-	itment_reset_arr(itm->itm_htbl, itm->ithm_nelems);
-}
-
-static size_t itmap_ino_to_slot(const struct silofs_itmap *itm, ino_t ino)
-{
-	return ino % itm->ithm_nelems;
-}
-
-static struct silofs_itment *
-itmap_entry_at(const struct silofs_itmap *itm, size_t slot)
-{
-	const struct silofs_itment *itme = &itm->itm_htbl[slot];
-
-	return unconst(itme);
-}
-
-static struct silofs_itment *
-itmap_entry_of(const struct silofs_itmap *itm, ino_t ino)
-{
-	return itmap_entry_at(itm, itmap_ino_to_slot(itm, ino));
-}
-
-static int itmap_lookup(const struct silofs_itmap *itm, ino_t ino,
-                        struct silofs_iaddr *out_iaddr)
-{
-	struct silofs_vaddr vaddr;
-	const struct silofs_itment *itc_ent;
-
-	itc_ent = itmap_entry_of(itm, ino);
-	if (itc_ent->ino != ino) {
-		return -ENOENT;
-	}
-	vaddr_setup(&vaddr, SILOFS_STYPE_INODE, itc_ent->off);
-	iaddr_setup(out_iaddr, itc_ent->ino, &vaddr);
-	return 0;
-}
-
-static void
-itmap_update(struct silofs_itmap *itm, const struct silofs_iaddr *iaddr)
-{
-	struct silofs_itment *itme = itmap_entry_of(itm, iaddr->ino);
-
-	itme->ino = iaddr->ino;
-	itme->off = vaddr_off(&iaddr->vaddr);
-}
-
-static void itmap_remove(const struct silofs_itmap *itm, ino_t ino)
-{
-	struct silofs_itment *itme = itmap_entry_of(itm, ino);
-
-	itment_reset(itme);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static struct silofs_itable_info *itbi_of(const struct silofs_sb_info *sbi)
 {
 	const struct silofs_itable_info *itbi = &sbi->s_itbi;
@@ -647,13 +558,13 @@ static struct silofs_itable_info *itbi_of(const struct silofs_sb_info *sbi)
 static const struct silofs_vaddr *
 itbi_root(const struct silofs_itable_info *itbi)
 {
-	return &itbi->it_treeroot;
+	return &itbi->it_rootitbl;
 }
 
 static void itbi_set_root(struct silofs_itable_info *itbi,
                           const struct silofs_vaddr *vaddr)
 {
-	vaddr_assign(&itbi->it_treeroot, vaddr);
+	vaddr_assign(&itbi->it_rootitbl, vaddr);
 }
 
 static void itbi_init_common(struct silofs_itable_info *itbi)
@@ -678,24 +589,25 @@ int silofs_itbi_init(struct silofs_itable_info *itbi,
                      struct silofs_alloc_if *alif)
 {
 	itbi_init_common(itbi);
-	return itmap_init(&itbi->it_map, alif);
+	return silofs_inomap_init(&itbi->it_inomap, alif);
 }
 
 void silofs_itbi_reinit(struct silofs_itable_info *itbi)
 {
 	itbi_init_common(itbi);
+	silofs_inomap_clear(&itbi->it_inomap);
 }
 
 void silofs_itbi_fini(struct silofs_itable_info *itbi)
 {
-	itmap_fini(&itbi->it_map);
+	silofs_inomap_fini(&itbi->it_inomap);
 	itbi_fini_common(itbi);
 }
 
 void silofs_itbi_update_by(struct silofs_itable_info *itbi,
                            const struct silofs_itable_info *itbi_other)
 {
-	vaddr_assign(&itbi->it_treeroot, &itbi_other->it_treeroot);
+	vaddr_assign(&itbi->it_rootitbl, &itbi_other->it_rootitbl);
 	iaddr_assign(&itbi->it_rootdir, &itbi_other->it_rootdir);
 	itbi->it_apex_ino = itbi_other->it_apex_ino;
 	itbi->it_ninodes = itbi_other->it_ninodes;
@@ -763,37 +675,44 @@ static void itbi_parse_inos_of(struct silofs_itable_info *itbi,
 	}
 }
 
-static int itbi_lookup_cached(const struct silofs_itable_info *itbi, ino_t ino,
+static int itbi_lookup_cached(struct silofs_itable_info *itbi, ino_t ino,
                               struct silofs_iaddr *out_iaddr)
 {
+	loff_t voff;
 	int err;
 
 	if (ino_isnull(ino)) {
-		err = -ENOENT;
-	} else if (ino == itbi->it_rootdir.ino) {
-		iaddr_assign(out_iaddr, &itbi->it_rootdir);
-		err = 0;
-	} else {
-		err = itmap_lookup(&itbi->it_map, ino, out_iaddr);
+		return -ENOENT;
 	}
-	return err;
+	if (ino == itbi->it_rootdir.ino) {
+		iaddr_assign(out_iaddr, &itbi->it_rootdir);
+		return 0;
+	}
+	err = silofs_inomap_lookup(&itbi->it_inomap, ino, &voff);
+	if (err) {
+		return err;
+	}
+	iaddr_setup2(out_iaddr, ino, voff);
+	return 0;
 }
 
 static void itbi_update_cache(struct silofs_itable_info *itbi,
                               const struct silofs_iaddr *iaddr)
 {
-	itmap_update(&itbi->it_map, iaddr);
+	const ino_t ino = iaddr_ino(iaddr);
+	const loff_t voff = iaddr_voff(iaddr);
+
+	silofs_inomap_update(&itbi->it_inomap, ino, voff);
 }
 
-static void
-itbi_remove_cached(const struct silofs_itable_info *itbi, ino_t ino)
+static void itbi_remove_cached(struct silofs_itable_info *itbi, ino_t ino)
 {
-	itmap_remove(&itbi->it_map, ino);
+	silofs_inomap_remove(&itbi->it_inomap, ino);
 }
 
 static void itbi_drop_cache(struct silofs_itable_info *itbi)
 {
-	itmap_reset(&itbi->it_map);
+	silofs_inomap_clear(&itbi->it_inomap);
 }
 
 static int
@@ -1309,7 +1228,7 @@ static int itc_reload_itable_root(const struct silofs_it_ctx *itc,
 	if (!itn_isroot(root_itni->itn)) {
 		return -ENOENT;
 	}
-	vaddr_assign(&itc->itbi->it_treeroot, vaddr);
+	vaddr_assign(&itc->itbi->it_rootitbl, vaddr);
 	return 0;
 }
 
@@ -1500,6 +1419,11 @@ void silofs_drop_itable_cache(struct silofs_sb_info *sbi)
 	};
 
 	itc_drop_cache(&it_ctx);
+}
+
+void silofs_relax_inomap_of(struct silofs_sb_info *sbi, int flags)
+{
+	silofs_inomap_relax(&sbi->s_itbi.it_inomap, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

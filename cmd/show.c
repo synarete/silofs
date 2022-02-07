@@ -24,7 +24,8 @@ static const char *show_usage[] = {
 	"",
 	"sub commands:",
 	"  version      Show mounted file-system's version",
-	"  repo         Show back-end repo path",
+	"  repo         Show back-end repo dir-path",
+	"  fsname       Show file-system name",
 	"  statfsx      Show extended file-system info",
 	"  statx        Show extended file stats",
 	NULL
@@ -55,6 +56,7 @@ static void show_getopt(void)
 static const char *show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
 	[SILOFS_QUERY_REPO]     = "repo",
+	[SILOFS_QUERY_FSNAME]   = "fsname",
 	[SILOFS_QUERY_STATFSX]  = "statfsx",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
@@ -92,8 +94,7 @@ static void show_prepare(void)
 {
 	struct stat st;
 
-	show_args->pathname_real =
-	        silofs_cmd_realpath(show_args->pathname);
+	silofs_cmd_realpath(show_args->pathname, &show_args->pathname_real);
 	silofs_cmd_stat_reg_or_dir(show_args->pathname_real, &st);
 	if (show_subcmd_qtype() == SILOFS_QUERY_NONE) {
 		silofs_die(0, "unknown sub-command %s", show_args->subcmd);

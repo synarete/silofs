@@ -61,14 +61,13 @@ void silofs_list_push_front(struct silofs_list_head *lst,
 void silofs_list_push_back(struct silofs_list_head *lst,
                            struct silofs_list_head *lnk);
 
-struct silofs_list_head *
-silofs_list_front(const struct silofs_list_head *lst);
+struct silofs_list_head *silofs_list_front(const struct silofs_list_head *lst);
 
-struct silofs_list_head *
-silofs_list_back(const struct silofs_list_head *lst);
+struct silofs_list_head *silofs_list_back(const struct silofs_list_head *lst);
 
-struct silofs_list_head *
-silofs_list_pop_front(struct silofs_list_head *lst);
+struct silofs_list_head *silofs_list_pop_front(struct silofs_list_head *lst);
+
+struct silofs_list_head *silofs_list_pop_back(struct silofs_list_head *lst);
 
 
 void silofs_listq_init(struct silofs_listq *lsq);
@@ -93,6 +92,8 @@ void silofs_listq_push_back(struct silofs_listq *lsq,
                             struct silofs_list_head *lnk);
 
 struct silofs_list_head *silofs_listq_pop_front(struct silofs_listq *lsq);
+
+struct silofs_list_head *silofs_listq_pop_back(struct silofs_listq *lsq);
 
 struct silofs_list_head *silofs_listq_front(const struct silofs_listq *lsq);
 

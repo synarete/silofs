@@ -17,6 +17,7 @@
 #ifndef SILOFS_NODES_H_
 #define SILOFS_NODES_H_
 
+struct silofs_crypto;
 struct silofs_tnode_info;
 struct silofs_unode_info;
 struct silofs_vnode_info;
@@ -36,6 +37,7 @@ struct silofs_tnode_info {
 	struct silofs_cache_elem        t_ce;
 	const struct silofs_tnode_vtbl *t_vtbl;
 	struct silofs_fs_apex          *t_apex;
+	struct silofs_crypto           *t_crypto;
 	struct silofs_list_head         t_dq_lh;
 	struct silofs_avl_node          t_ds_an;
 	struct silofs_tnode_info       *t_ds_next;
@@ -46,23 +48,26 @@ struct silofs_tnode_info {
 
 /* unode */
 struct silofs_unode_info {
-	struct silofs_tnode_info        u_ti;
-	struct silofs_list_head         u_sptm_lh;
 	struct silofs_uaddr             u_uaddr;
-	struct silofs_taddr             u_taddr;
+	struct silofs_packid            u_packid;
+	struct silofs_tnode_info        u_ti;
+	struct silofs_list_head         u_unom_lh;
+	struct silofs_list_head         u_pack_lh;
 	struct silofs_ubk_info         *u_ubi;
+	struct silofs_bytebuf           u_bb;
 	bool                            u_tmapped;
 	bool                            u_verified;
+	bool                            u_plinked;
 };
 
 /* super-block */
 struct silofs_sb_info {
 	struct silofs_unode_info        s_ui;
+	struct silofs_itable_info       s_itbi;
 	struct silofs_super_block      *sb;
 	struct silofs_alloc_if         *s_alif;
+	struct silofs_repo             *s_repo;
 	struct silofs_ucred             s_owner;
-	struct silofs_itable_info       s_itbi;
-	struct silofs_bootsec           s_bsec;
 	unsigned long                   s_ctl_flags;
 	unsigned long                   s_ms_flags;
 	time_t                          s_mntime;
@@ -74,7 +79,6 @@ struct silofs_spnode_info {
 	struct silofs_spmap_node       *sn;
 	size_t                          sn_nchild_form;
 	size_t                          sn_nused_bytes;
-	int                             sn_pad[3];
 };
 
 /* spleaf */
@@ -89,8 +93,9 @@ struct silofs_spleaf_info {
 struct silofs_vnode_info {
 	struct silofs_tnode_info        v_ti;
 	struct silofs_vaddr             v_vaddr;
-	struct silofs_fiovref           v_fir;
+	struct silofs_xiovref           v_fir;
 	struct silofs_vbk_info         *v_vbi;
+	struct silofs_sb_info          *v_sbi;
 	bool                            v_recheck;
 	bool                            v_verified;
 };
@@ -206,8 +211,6 @@ silofs_vi_from_ti(const struct silofs_tnode_info *ti);
 
 bool silofs_vi_isdata(const struct silofs_vnode_info *vi);
 
-void silofs_vi_seal_meta(const struct silofs_vnode_info *vi);
-
 void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi);
 
 
@@ -217,7 +220,17 @@ silofs_ui_from_ti(const struct silofs_tnode_info *ti);
 void silofs_ui_clone_into(const struct silofs_unode_info *ui,
                           struct silofs_unode_info *ui_other);
 
-void silofs_zero_stamp_view(union silofs_view *view, enum silofs_stype stype);
+void silofs_ui_bind_apex(struct silofs_unode_info *ui,
+                         struct silofs_fs_apex *apex);
+
+
+void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
+
+void silofs_fill_csum_meta(union silofs_view *view,
+                           const struct silofs_mdigest *md);
+
+int silofs_verify_csum_meta(const union silofs_view *view,
+                            const struct silofs_mdigest *md);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -229,10 +242,16 @@ silofs_new_vi(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr);
 
 void silofs_ui_bind_view(struct silofs_unode_info *ui);
 
-int silofs_ui_verify_view(struct silofs_unode_info *ui);
+int silofs_ui_verify_view(struct silofs_unode_info *ui,
+                          const struct silofs_mdigest *md);
 
 void silofs_vi_bind_view(struct silofs_vnode_info *vi);
 
-int silofs_vi_verify_view(struct silofs_vnode_info *vi);
+int silofs_vi_verify_view(struct silofs_vnode_info *vi,
+                          const struct silofs_mdigest *md);
+
+
+union silofs_view *silofs_make_view_of(struct silofs_header *hdr);
+
 
 #endif /* SILOFS_NODES_H_ */

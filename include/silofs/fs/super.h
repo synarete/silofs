@@ -20,9 +20,6 @@
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 
-int silofs_sb_check_rand(const struct silofs_super_block *sb,
-                         const struct silofs_mdigest *md);
-
 int silofs_sb_check_root(const struct silofs_super_block *sb);
 
 bool silofs_sb_test_flags(const struct silofs_super_block *sb,
@@ -44,34 +41,23 @@ bool silofs_sbi_isrofs(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
 
-void silofs_sbi_init_commons(struct silofs_sb_info *sbi);
-
-void silofs_sbi_fini(struct silofs_sb_info *sbi);
-
-int silofs_sbi_xinit(struct silofs_sb_info *sbi,
-                     struct silofs_fs_apex *apex);
+void silofs_sbi_bind_apex(struct silofs_sb_info *sbi,
+                          struct silofs_fs_apex *apex);
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi);
 
 void silofs_sbi_attach_ubi(struct silofs_sb_info *sbi,
                            struct silofs_ubk_info *ubi);
 
-void silofs_sbi_update_by_args(struct silofs_sb_info *sbi,
-                               const struct silofs_fs_args *args);
+void silofs_sbi_rebind_view(struct silofs_sb_info *sbi);
+
+void silofs_sbi_setup_by_args(struct silofs_sb_info *sbi,
+                              const struct silofs_fs_args *args);
 
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi,
                               size_t capacity, time_t btime);
 
 void silofs_sbi_update_birth_time(struct silofs_sb_info *sbi, time_t btime);
-
-void silofs_sbi_name(const struct silofs_sb_info *sbi,
-                     struct silofs_namestr *out_name);
-
-void silofs_sbi_set_name(struct silofs_sb_info *sbi,
-                         const struct silofs_namestr *name);
-
-bool silofs_sbi_has_name(const struct silofs_sb_info *sbi,
-                         const struct silofs_namestr *name);
 
 void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
@@ -146,7 +132,8 @@ fsfilcnt_t silofs_sbi_inodes_current(const struct silofs_sb_info *sbi);
 void silofs_sbi_update_stats(struct silofs_sb_info *sbi,
                              const struct silofs_space_stat *spst_dif);
 
-void silofs_sbi_add_flags(struct silofs_sb_info *sbi, enum silofs_superf f);
+void silofs_sbi_add_flags(const struct silofs_sb_info *sbi,
+                          enum silofs_superf flags);
 
 
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
@@ -159,6 +146,13 @@ void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
                                const struct silofs_blobid *blobid);
 
 bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi);
+
+
+int silofs_sbi_main_pack(const struct silofs_sb_info *sbi,
+                         struct silofs_packid *out_packid);
+
+void silofs_sbi_bind_main_pack(struct silofs_sb_info *sbi,
+                               const struct silofs_packid *packid);
 
 void silofs_sbi_self(const struct silofs_sb_info *sbi,
                      struct silofs_uaddr *out_uaddr);
@@ -181,17 +175,12 @@ void silofs_sbi_update_vlast_by_spleaf(struct silofs_sb_info *sbi,
 
 bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff);
 
+
 void silofs_sbi_rebind_packid(struct silofs_sb_info *sbi, loff_t voff,
                               const struct silofs_packid *packid);
 
-int silofs_sbi_lookup_packid(const struct silofs_sb_info *sbi,
-                             const struct silofs_blobid *blobid,
-                             struct silofs_packid *out_packid);
+int silofs_sbi_resolve_packid(const struct silofs_sb_info *sbi, loff_t voff,
+                              struct silofs_packid *out_packid);
 
-
-int silofs_sbi_save_bootsec(const struct silofs_sb_info *sbi);
-
-int silofs_sbi_load_bootsec(struct silofs_sb_info *sbi,
-                            const struct silofs_namestr *name);
 
 #endif /* SILOFS_SUPER_H_ */

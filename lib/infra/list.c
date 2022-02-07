@@ -127,6 +127,19 @@ struct silofs_list_head *silofs_list_pop_front(struct silofs_list_head *lst)
 	return lnk;
 }
 
+struct silofs_list_head *silofs_list_pop_back(struct silofs_list_head *lst)
+{
+	struct silofs_list_head *lnk;
+
+	lnk = silofs_list_back(lst);
+	if (lnk != lst) {
+		silofs_list_head_remove(lnk);
+	} else {
+		lnk = NULL;
+	}
+	return lnk;
+}
+
 bool silofs_list_isempty(const struct silofs_list_head *lst)
 {
 	return (lst->next == lst);
@@ -197,6 +210,17 @@ struct silofs_list_head *silofs_listq_pop_front(struct silofs_listq *lsq)
 
 	if (lsq->sz > 0) {
 		lnk = silofs_list_pop_front(&lsq->ls);
+		lsq->sz--;
+	}
+	return lnk;
+}
+
+struct silofs_list_head *silofs_listq_pop_back(struct silofs_listq *lsq)
+{
+	struct silofs_list_head *lnk = NULL;
+
+	if (lsq->sz > 0) {
+		lnk = silofs_list_pop_back(&lsq->ls);
 		lsq->sz--;
 	}
 	return lnk;

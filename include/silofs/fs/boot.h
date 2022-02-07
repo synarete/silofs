@@ -41,20 +41,14 @@ void silofs_bootsec_init(struct silofs_bootsec *bsec);
 
 void silofs_bootsec_fini(struct silofs_bootsec *bsec);
 
-void silofs_bootsec_name(const struct silofs_bootsec *bsec,
-                         struct silofs_namestr *out_name);
-
-void silofs_bootsec_set_name(struct silofs_bootsec *bsec,
-                             const struct silofs_namestr *name);
-
-bool silofs_bootsec_has_name(const struct silofs_bootsec *bsec,
-                             const struct silofs_namestr *name);
-
 void silofs_bootsec_set_uaddr(struct silofs_bootsec *bsec,
                               const struct silofs_uaddr *sb_uaddr);
 
 void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
                                const struct silofs_packid *sb_packid);
+
+void silofs_bootsec_setup(struct silofs_bootsec *bsec,
+                          const struct silofs_uaddr *uaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -75,8 +75,8 @@ static void fsck_start(void)
 
 static void fsck_prepare(void)
 {
-	silofs_die_if_not_dir_or_empty(fsck_args->repodir, true);
-	fsck_args->repodir_real = silofs_cmd_realpath(fsck_args->repodir);
+	silofs_cmd_check_nonemptydir(fsck_args->repodir, true);
+	silofs_cmd_realpath(fsck_args->repodir, &fsck_args->repodir_real);
 }
 
 

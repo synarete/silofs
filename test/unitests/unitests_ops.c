@@ -188,7 +188,7 @@ static int ut_query(struct ut_env *ute, ino_t ino,
 
 static int ut_snap(struct ut_env *ute, ino_t ino, const char *name)
 {
-	return silofs_fs_snap(fs_ctx_of(ute), ino, name);
+	return silofs_fs_clone(fs_ctx_of(ute), ino, name, 0);
 }
 
 static int ut_unrefs(struct ut_env *ute, ino_t ino, const char *name)
@@ -201,9 +201,16 @@ static int ut_inspect(struct ut_env *ute, ino_t ino)
 	return silofs_fs_inspect(fs_ctx_of(ute), ino);
 }
 
-static int ut_pack(struct ut_env *ute, const char *name)
+static int ut_archive(struct ut_env *ute,
+                      const char *src_name, const char *dst_name)
 {
-	return silofs_fs_pack(fs_ctx_of(ute), name);
+	return silofs_fs_pack(fs_ctx_of(ute), src_name, dst_name);
+}
+
+static int ut_restore(struct ut_env *ute,
+                      const char *src_name, const char *dst_name)
+{
+	return silofs_fs_unpack(fs_ctx_of(ute), src_name, dst_name);
 }
 
 static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
@@ -225,7 +232,7 @@ static int ut_write(struct ut_env *ute, ino_t ino, const void *buf,
 }
 
 struct ut_write_iter {
-	struct silofs_fiovec fiov[SILOFS_FILE_NITER_MAX];
+	struct silofs_xiovec xiov[SILOFS_FILE_NITER_MAX];
 	struct silofs_rwiter_ctx rwi;
 	const uint8_t *dat;
 	size_t dat_len;
@@ -243,71 +250,71 @@ write_iter_of(const struct silofs_rwiter_ctx *rwi)
 	return silofs_unconst(wri);
 }
 
-static void fiovec_copy(struct silofs_fiovec *dst,
-                        const struct silofs_fiovec *src)
+static void xiovec_copy(struct silofs_xiovec *dst,
+                        const struct silofs_xiovec *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
 
 static int ut_write_iter_check(const struct ut_write_iter *wri,
-                               const struct silofs_fiovec *fiov)
+                               const struct silofs_xiovec *xiov)
 {
-	if ((fiov->fv_fd > 0) && (fiov->fv_off < 0)) {
+	if ((xiov->xiov_fd > 0) && (xiov->xiov_off < 0)) {
 		return -EINVAL;
 	}
-	if ((wri->dat_len + fiov->fv_len) > wri->dat_max) {
+	if ((wri->dat_len + xiov->xiov_len) > wri->dat_max) {
 		return -EINVAL;
 	}
 	return 0;
 }
 
 static int ut_write_iter_actor(struct silofs_rwiter_ctx *rwi,
-                               const struct silofs_fiovec *fiov)
+                               const struct silofs_xiovec *xiov)
 {
 	struct ut_write_iter *wri = write_iter_of(rwi);
 	int err;
 
-	err = ut_write_iter_check(wri, fiov);
+	err = ut_write_iter_check(wri, xiov);
 	if (err) {
 		return err;
 	}
-	err = silofs_fiovec_copy_from(fiov, wri->dat + wri->dat_len);
+	err = silofs_xiovec_copy_from(xiov, wri->dat + wri->dat_len);
 	if (err) {
 		return err;
 	}
-	fiovec_copy(&wri->fiov[wri->cnt++], fiov);
-	wri->dat_len += fiov->fv_len;
+	xiovec_copy(&wri->xiov[wri->cnt++], xiov);
+	wri->dat_len += xiov->xiov_len;
 	wri->ncp++;
 	return 0;
 }
 
 
 static int ut_write_iter_concp_actor(struct silofs_rwiter_ctx *rwi,
-                                     const struct silofs_fiovec *fiov)
+                                     const struct silofs_xiovec *xiov)
 {
 	struct ut_write_iter *wri = write_iter_of(rwi);
 	int err;
 
-	err = ut_write_iter_check(wri, fiov);
+	err = ut_write_iter_check(wri, xiov);
 	if (err) {
 		return err;
 	}
-	fiovec_copy(&wri->fiov[wri->cnt++], fiov);
+	xiovec_copy(&wri->xiov[wri->cnt++], xiov);
 	return 0;
 }
 
 static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 {
-	const struct silofs_fiovec *fiov;
+	const struct silofs_xiovec *xiov;
 	int err;
 
 	for (size_t i = wri->ncp; i < wri->cnt; ++i) {
-		fiov = &wri->fiov[i];
-		err = silofs_fiovec_copy_from(fiov, wri->dat + wri->dat_len);
+		xiov = &wri->xiov[i];
+		err = silofs_xiovec_copy_from(xiov, wri->dat + wri->dat_len);
 		if (err) {
 			return err;
 		}
-		wri->dat_len += fiov->fv_len;
+		wri->dat_len += xiov->xiov_len;
 		wri->ncp++;
 	}
 	return 0;
@@ -336,7 +343,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	err2 = ut_write_iter_copy_rem(&wri);
 	*out_len = wri.dat_len;
 
-	err3 = silofs_fs_rdwr_post(fs_ctx_of(ute), ino, wri.fiov, wri.cnt);
+	err3 = silofs_fs_rdwr_post(fs_ctx_of(ute), ino, wri.xiov, wri.cnt);
 	return err1 || err2 || err3;
 }
 
@@ -1492,11 +1499,47 @@ void ut_inspect_ok(struct ut_env *ute, ino_t ino)
 	ut_expect_ok(err);
 }
 
-void ut_pack_ok(struct ut_env *ute, const char *name)
+void ut_archive_ok(struct ut_env *ute,
+                   const char *src_name, const char *dst_name)
 {
+	struct silofs_fs_env *fse = ute->fs_env;
 	int err;
 
-	err = ut_pack(ute, name);
+	err = silofs_fse_sync_drop(fse);
+	ut_expect_ok(err);
+
+	err = silofs_fse_term(fse);
+	ut_expect_ok(err);
+
+	err = silofs_fse_reopen(fse);
+	ut_expect_ok(err);
+
+	err = ut_archive(ute, src_name, dst_name);
+	ut_expect_ok(err);
+
+	err = silofs_fse_reload(fse);
+	ut_expect_ok(err);
+}
+
+void ut_restore_ok(struct ut_env *ute,
+                   const char *src_name, const char *dst_name)
+{
+	struct silofs_fs_env *fse = ute->fs_env;
+	int err;
+
+	err = silofs_fse_sync_drop(fse);
+	ut_expect_ok(err);
+
+	err = silofs_fse_term(fse);
+	ut_expect_ok(err);
+
+	err = silofs_fse_reopen(fse);
+	ut_expect_ok(err);
+
+	err = ut_restore(ute, src_name, dst_name);
+	ut_expect_ok(err);
+
+	err = silofs_fse_reload(fse);
 	ut_expect_ok(err);
 }
 
@@ -1684,7 +1727,7 @@ void ut_reload_fs_byname_ok(struct ut_env *ute, const char *name)
 	err = silofs_fse_term(fse);
 	ut_expect_ok(err);
 
-	fse->fs_args.fsname = name;
+	fse->fs_args.main_name = name;
 
 	err = silofs_fse_reopen(fse);
 	silofs_assert_ok(err);

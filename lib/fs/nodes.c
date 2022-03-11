@@ -225,13 +225,6 @@ static uint32_t calc_data_checksum(const void *dat, size_t len,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void bbuf_reset(struct silofs_bytebuf *bb)
-{
-	silofs_bytebuf_init(bb, NULL, 0);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void ti_init(struct silofs_tnode_info *ti, enum silofs_stype stype,
                     const struct silofs_tnode_vtbl *vtbl)
 {
@@ -313,8 +306,8 @@ static void ui_init(struct silofs_unode_info *ui,
 	lh_init(&ui->u_pack_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
 	packid_reset(&ui->u_packid);
-	bbuf_reset(&ui->u_bb);
 	ui->u_ubi = NULL;
+	ui->u_piov = NULL;
 	ui->u_tmapped = false;
 	ui->u_verified = false;
 	ui->u_plinked = false;
@@ -326,7 +319,6 @@ static void ui_fini(struct silofs_unode_info *ui)
 	silofs_assert(!ui->u_tmapped);
 
 	uaddr_reset(&ui->u_uaddr);
-	bbuf_reset(&ui->u_bb);
 	packid_reset(&ui->u_packid);
 	lh_fini(&ui->u_pack_lh);
 	lh_fini(&ui->u_unom_lh);
@@ -472,14 +464,14 @@ bool silofs_vi_isdata(const struct silofs_vnode_info *vi)
 static int vi_resolve(const struct silofs_vnode_info *vi,
                       struct silofs_oaddr *out_oaddr)
 {
-	struct silofs_uvaddr uva;
+	struct silofs_voaddr voa;
 	struct silofs_sb_info *sbi = vi_sbi(vi);
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_resolve_uva(sbi, vi_vaddr(vi), stg_flags, &uva);
+	err = silofs_sbi_resolve_voa(sbi, vi_vaddr(vi), stg_flags, &voa);
 	if (!err) {
-		oaddr_assign(out_oaddr, &uva.uaddr.oaddr);
+		oaddr_assign(out_oaddr, &voa.oaddr);
 	}
 	return err;
 }
@@ -656,16 +648,14 @@ static void sni_init(struct silofs_spnode_info *sni,
 {
 	ui_init(&sni->sn_ui, uaddr, &sni_vtbl);
 	sni->sn = NULL;
-	sni->sn_nchild_form = 0;
-	sni->sn_nused_bytes = 0;
+	sni->sn_nactive_subs = 0;
 }
 
 static void sni_fini(struct silofs_spnode_info *sni)
 {
 	ui_fini(&sni->sn_ui);
 	sni->sn = NULL;
-	sni->sn_nchild_form = 0;
-	sni->sn_nused_bytes = ULONG_MAX;
+	sni->sn_nactive_subs = 0;
 }
 
 static struct silofs_spnode_info *sni_malloc(struct silofs_alloc_if *alif)
@@ -755,7 +745,6 @@ static void sli_init(struct silofs_spleaf_info *sli,
 	ui_init(&sli->sl_ui, uaddr, &sli_vtbl);
 	sli->sl = NULL;
 	sli->sl_nused_bytes = 0;
-	sli->sl_voff_last = SILOFS_OFF_NULL;
 }
 
 static void sli_fini(struct silofs_spleaf_info *sli)
@@ -763,7 +752,6 @@ static void sli_fini(struct silofs_spleaf_info *sli)
 	ui_fini(&sli->sl_ui);
 	sli->sl = NULL;
 	sli->sl_nused_bytes = ULONG_MAX;
-	sli->sl_voff_last = SILOFS_OFF_NULL;
 }
 
 static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc_if *alif)

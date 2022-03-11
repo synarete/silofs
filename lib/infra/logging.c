@@ -110,11 +110,11 @@ static const char *basename_of(const char *path)
 
 void silofs_logf(int flags, const char *file, int line, const char *fmt, ...)
 {
+	char msg[512];
 	va_list ap;
 	size_t len;
 	int saved_errno;
 	int log_mask;
-	char msg[512];
 
 	log_mask = log_mask_now();
 	if ((log_mask & SILOFS_LOG_FILINE) && file && line) {

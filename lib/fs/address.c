@@ -251,6 +251,35 @@ bool silofs_stype_isunode(enum silofs_stype stype)
 	return ret;
 }
 
+bool silofs_stype_isvnode(enum silofs_stype stype)
+{
+	bool ret;
+
+	switch (stype) {
+	case SILOFS_STYPE_ITNODE:
+	case SILOFS_STYPE_INODE:
+	case SILOFS_STYPE_XANODE:
+	case SILOFS_STYPE_SYMVAL:
+	case SILOFS_STYPE_DTNODE:
+	case SILOFS_STYPE_FTNODE:
+	case SILOFS_STYPE_DATA1K:
+	case SILOFS_STYPE_DATA4K:
+	case SILOFS_STYPE_DATABK:
+		ret = true;
+		break;
+	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_SPNODE:
+	case SILOFS_STYPE_SPLEAF:
+	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_MAX:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
+
 bool silofs_stype_isdata(enum silofs_stype stype)
 {
 	bool ret;
@@ -523,6 +552,17 @@ static loff_t blobid_off_within(const struct silofs_blobid *blobid, loff_t off)
 	return blob_size ? silofs_off_within(off, blob_size) : 0;
 }
 
+static silofs_lba_t
+blobid_off_to_lba_within(const struct silofs_blobid *blobid, loff_t off)
+{
+	silofs_lba_t lba = SILOFS_LBA_NULL;
+
+	if (!off_isnull(off) && blobid->size) {
+		lba = off_to_lba(blobid_off_within(blobid, off));
+	}
+	return lba;
+}
+
 void silofs_blobid_reset(struct silofs_blobid *blobid)
 {
 	memset(blobid, 0, sizeof(*blobid));
@@ -692,9 +732,78 @@ void silofs_packid64b_parse(const struct silofs_packid64b *paid,
 	packid->pmode = (enum silofs_pack_mode)paid->pmode;
 }
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_bkaddr s_bkaddr_none = {
+	.lba = SILOFS_LBA_NULL,
+};
+
+const struct silofs_bkaddr *silofs_bkaddr_none(void)
+{
+	return &s_bkaddr_none;
+}
+
+void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
+                         const struct silofs_blobid *blobid, silofs_lba_t lba)
+{
+	silofs_blobid_assign(&bkaddr->blobid, blobid);
+	bkaddr->lba = lba;
+}
+
+static void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr)
+{
+	silofs_blobid_reset(&bkaddr->blobid);
+	bkaddr->lba = SILOFS_LBA_NULL;
+}
+
+void silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
+                          const struct silofs_blobid *blobid, loff_t off)
+{
+	const silofs_lba_t lba = blobid_off_to_lba_within(blobid, off);
+
+	silofs_bkaddr_setup(bkaddr, blobid, lba);
+}
+
+bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
+                           const struct silofs_bkaddr *other)
+{
+	return ((bkaddr->lba == other->lba) &&
+	        silofs_blobid_isequal(&bkaddr->blobid, &other->blobid));
+}
+
+long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
+                           const struct silofs_bkaddr *bkaddr2)
+{
+	long cmp;
+
+	cmp = bkaddr1->lba - bkaddr2->lba;
+	if (cmp) {
+		return cmp;
+	}
+	cmp = silofs_blobid_compare(&bkaddr1->blobid, &bkaddr2->blobid);
+	if (cmp) {
+		return cmp;
+	}
+	return 0;
+}
+
+void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
+                          const struct silofs_bkaddr *other)
+{
+	silofs_bkaddr_setup(bkaddr, &other->blobid, other->lba);
+}
+
+static bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
+{
+	return lba_isnull(bkaddr->lba) ||
+	       silofs_blobid_isnull(&bkaddr->blobid);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_oaddr s_oaddr_none = {
+	.bka.lba = SILOFS_LBA_NULL,
 	.pos = SILOFS_OFF_NULL,
 };
 
@@ -703,18 +812,16 @@ const struct silofs_oaddr *silofs_oaddr_none(void)
 	return &s_oaddr_none;
 }
 
-void silofs_oaddr_setup_all(struct silofs_oaddr *oaddr,
-                            const struct silofs_blobid *blobid)
-{
-	silofs_oaddr_setup(oaddr, blobid, blobid->size, 0);
-}
-
 void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *blobid,
                         size_t len, loff_t off)
 {
-	silofs_blobid_assign(&oaddr->blobid, blobid);
+	silofs_bkaddr_by_off(&oaddr->bka, blobid, off);
 	if (blobid->size && !off_isnull(off)) {
+		silofs_assert_lt(off, blobid->size);
+		silofs_assert_le(off_end(off, len), blobid->size);
+		silofs_assert_le(len, SILOFS_BK_SIZE);
+
 		oaddr->len = len;
 		oaddr->pos = blobid_off_within(blobid, off);
 	} else {
@@ -723,16 +830,18 @@ void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
 	}
 }
 
-void silofs_oaddr_setup_by(struct silofs_oaddr *oaddr,
-                           const struct silofs_blobid *blobid,
-                           const struct silofs_vaddr *vaddr)
+static void silofs_oaddr_setup_by(struct silofs_oaddr *oaddr,
+                                  const struct silofs_blobid *blobid,
+                                  const struct silofs_vaddr *vaddr)
 {
-	silofs_oaddr_setup(oaddr, blobid, vaddr->len, vaddr->voff);
+	const loff_t bpos = blobid_off_within(blobid, vaddr->voff);
+
+	silofs_oaddr_setup(oaddr, blobid, vaddr->len, bpos);
 }
 
 void silofs_oaddr_reset(struct silofs_oaddr *oaddr)
 {
-	silofs_blobid_reset(&oaddr->blobid);
+	silofs_bkaddr_reset(&oaddr->bka);
 	oaddr->len = 0;
 	oaddr->pos = SILOFS_OFF_NULL;
 }
@@ -740,7 +849,7 @@ void silofs_oaddr_reset(struct silofs_oaddr *oaddr)
 void silofs_oaddr_assign(struct silofs_oaddr *oaddr,
                          const struct silofs_oaddr *other)
 {
-	silofs_blobid_assign(&oaddr->blobid, &other->blobid);
+	silofs_bkaddr_assign(&oaddr->bka, &other->bka);
 	oaddr->len = other->len;
 	oaddr->pos = other->pos;
 }
@@ -758,7 +867,7 @@ long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_blobid_compare(&oaddr1->blobid, &oaddr2->blobid);
+	cmp = silofs_bkaddr_compare(&oaddr1->bka, &oaddr2->bka);
 	if (cmp) {
 		return cmp;
 	}
@@ -767,13 +876,13 @@ long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
 
 bool silofs_oaddr_isnull(const struct silofs_oaddr *oaddr)
 {
-	return off_isnull(oaddr->pos) || silofs_blobid_isnull(&oaddr->blobid);
+	return off_isnull(oaddr->pos) || silofs_bkaddr_isnull(&oaddr->bka);
 }
 
 bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr)
 {
 	const loff_t end = off_end(oaddr->pos, oaddr->len);
-	const ssize_t blobid_size = (ssize_t)(oaddr->blobid.size);
+	const ssize_t blobid_size = (ssize_t)(oaddr->bka.blobid.size);
 
 	return !silofs_oaddr_isnull(oaddr) && (end <= blobid_size);
 }
@@ -781,14 +890,8 @@ bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr)
 bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
                           const struct silofs_oaddr *other)
 {
-	return ((oaddr->len == other->len) &&
-	        (oaddr->pos == other->pos) &&
-	        silofs_blobid_isequal(&oaddr->blobid, &other->blobid));
-}
-
-silofs_lba_t silofs_oaddr_lba(const struct silofs_oaddr *oaddr)
-{
-	return off_to_lba(oaddr->pos);
+	return ((oaddr->len == other->len) && (oaddr->pos == other->pos) &&
+	        silofs_bkaddr_isequal(&oaddr->bka, &other->bka));
 }
 
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
@@ -808,7 +911,7 @@ static void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48)
 static void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
                                 const struct silofs_oaddr *oaddr)
 {
-	silofs_blobid40b_set(&oaddr48->blobid, &oaddr->blobid);
+	silofs_blobid40b_set(&oaddr48->blobid, &oaddr->bka.blobid);
 	oaddr48->pos = silofs_cpu_to_le32((uint32_t)(oaddr->pos));
 	oaddr48->len = silofs_cpu_to_le32((uint32_t)(oaddr->len));
 }
@@ -816,40 +919,45 @@ static void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
 static void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
                                   struct silofs_oaddr *oaddr)
 {
-	silofs_blobid40b_parse(&oaddr48->blobid, &oaddr->blobid);
-	oaddr->pos = (loff_t)silofs_le32_to_cpu(oaddr48->pos);
-	oaddr->len = (size_t)silofs_le32_to_cpu(oaddr48->len);
+	struct silofs_blobid blobid;
+	loff_t pos;
+	size_t len;
+
+	silofs_blobid40b_parse(&oaddr48->blobid, &blobid);
+	pos = (loff_t)silofs_le32_to_cpu(oaddr48->pos);
+	len = (size_t)silofs_le32_to_cpu(oaddr48->len);
+	silofs_oaddr_setup(oaddr, &blobid, len, pos);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_uvaddr_setup(struct silofs_uvaddr *uva,
-                         const struct silofs_uaddr *uaddr,
-                         const struct silofs_vaddr *vaddr)
+void silofs_voaddr_setup(struct silofs_voaddr *voa,
+                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_oaddr *oaddr)
 {
-	uaddr_assign(&uva->uaddr, uaddr);
-	vaddr_assign(&uva->vaddr, vaddr);
+	vaddr_assign(&voa->vaddr, vaddr);
+	oaddr_assign(&voa->oaddr, oaddr);
 }
 
-void silofs_uvaddr_setup_by(struct silofs_uvaddr *uva,
+void silofs_voaddr_setup_by(struct silofs_voaddr *voa,
                             const struct silofs_blobid *blobid,
                             const struct silofs_vaddr *vaddr)
 {
-	silofs_uaddr_setup_by(&uva->uaddr, blobid, vaddr);
-	vaddr_assign(&uva->vaddr, vaddr);
+	vaddr_assign(&voa->vaddr, vaddr);
+	silofs_oaddr_setup_by(&voa->oaddr, blobid, vaddr);
 }
 
-void silofs_uvaddr_assign(struct silofs_uvaddr *uva,
-                          const struct silofs_uvaddr *other)
+void silofs_voaddr_assign(struct silofs_voaddr *voa,
+                          const struct silofs_voaddr *other)
 {
-	uaddr_assign(&uva->uaddr, &other->uaddr);
-	vaddr_assign(&uva->vaddr, &other->vaddr);
+	silofs_voaddr_setup(voa, &other->vaddr, &other->oaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_uaddr s_uaddr_none = {
-	.oaddr.blobid.size = 0,
+	.oaddr.bka.blobid.size = 0,
+	.oaddr.bka.lba = SILOFS_LBA_NULL,
 	.oaddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
@@ -951,7 +1059,7 @@ silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr)
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->oaddr.blobid;
+	return &uaddr->oaddr.bka.blobid;
 }
 
 void silofs_uaddr_make_super(struct silofs_uaddr *uaddr,
@@ -989,49 +1097,6 @@ void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ulink_setup(struct silofs_ulink *ulink,
-                        const struct silofs_uaddr *owner,
-                        const struct silofs_uaddr *child)
-{
-	silofs_uaddr_assign(&ulink->owner, owner);
-	silofs_uaddr_assign(&ulink->child, child);
-}
-
-void silofs_ulink_reset(struct silofs_ulink *ulink)
-{
-	silofs_uaddr_reset(&ulink->owner);
-	silofs_uaddr_reset(&ulink->child);
-}
-
-bool silofs_ulink_isnull(const struct silofs_ulink *ulink)
-{
-	return silofs_uaddr_isnull(&ulink->owner) &&
-	       silofs_uaddr_isnull(&ulink->child);
-}
-
-
-void silofs_ulink128b_set(struct silofs_ulink128b *ulnk,
-                          const struct silofs_ulink *ulink)
-{
-	silofs_uaddr64b_set(&ulnk->owner, &ulink->owner);
-	silofs_uaddr64b_set(&ulnk->child, &ulink->child);
-}
-
-void silofs_ulink128b_parse(const struct silofs_ulink128b *ulnk,
-                            struct silofs_ulink *ulink)
-{
-	silofs_uaddr64b_parse(&ulnk->owner, &ulink->owner);
-	silofs_uaddr64b_parse(&ulnk->child, &ulink->child);
-}
-
-void silofs_ulink128b_reset(struct silofs_ulink128b *ulnk)
-{
-	silofs_uaddr64b_reset(&ulnk->owner);
-	silofs_uaddr64b_reset(&ulnk->child);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_taddr_setup(struct silofs_taddr *taddr,
                         const struct silofs_xid *tree_id,
                         loff_t voff, size_t height)
@@ -1044,7 +1109,8 @@ void silofs_taddr_setup(struct silofs_taddr *taddr,
 void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
                            const struct silofs_uaddr *uaddr)
 {
-	const struct silofs_xxid_tas *tas = &uaddr->oaddr.blobid.xxid.u.tid;
+	const struct silofs_xxid_tas *tas =
+		        &uaddr->oaddr.bka.blobid.xxid.u.tid;
 
 	xid_assign(&taddr->tree_id, &tas->tree_id);
 	taddr->voff = uaddr->voff;
@@ -1225,34 +1291,36 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t height_to_nsteps(size_t height)
+static ssize_t uspace_height_to_stepsz(size_t height)
 {
-	size_t nsteps;
+	const ssize_t bk_size = SILOFS_BK_SIZE;
+	const ssize_t nchilds = SILOFS_UNODE_NCHILDS;
+	ssize_t stepsz;
 
-	silofs_assert_gt(height, 0);
-	silofs_assert_le(height, SILOFS_SUPER_HEIGHT);
-
-	if (height <= SILOFS_SPLEAF_HEIGHT) {
-		nsteps = SILOFS_UNODE_NCHILDS;
-	} else if (height >= SILOFS_SUPER_HEIGHT) {
-		nsteps = SILOFS_UNODE_NCHILDS;
-	} else {
-		silofs_assert_le(height, SILOFS_SPNODE_HEIGHT_MAX);
-		nsteps = SILOFS_UNODE_NCHILDS;
-	}
-	return nsteps;
-}
-
-static ssize_t height_to_stepsz(size_t height)
-{
-	ssize_t stepsz = SILOFS_BK_SIZE;
-
-	height = min(height, SILOFS_SUPER_HEIGHT);
-	for (size_t h = SILOFS_SPLEAF_HEIGHT; h <= height; ++h) {
-		stepsz *= (ssize_t)height_to_nsteps(h);
+	switch (height) {
+	case SILOFS_DATABK_HEIGHT:
+		stepsz = bk_size;
+		break;
+	case SILOFS_SPLEAF_HEIGHT:
+		stepsz = bk_size * nchilds;
+		break;
+	case SILOFS_SPNODE2_HEIGHT:
+		stepsz = bk_size * nchilds * nchilds;
+		break;
+	case SILOFS_SPNODE3_HEIGHT:
+		stepsz = bk_size * nchilds * nchilds * nchilds;
+		break;
+	case SILOFS_SUPER_HEIGHT:
+		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
+		break;
+	default:
+		stepsz = -1;
+		break;
 	}
 	return stepsz;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
 {
@@ -1269,7 +1337,7 @@ void silofs_vrange_setup(struct silofs_vrange *vrange,
 	vrange->end = end;
 	vrange->len = off_ulen(beg, end);
 	vrange->height = height;
-	vrange->stepsz = height_to_stepsz(height - 1);
+	vrange->stepsz = uspace_height_to_stepsz(height - 1);
 }
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
@@ -1283,11 +1351,9 @@ void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             size_t height, loff_t voff_base)
 {
-	loff_t beg;
-	ssize_t stepsz;
+	const ssize_t stepsz = uspace_height_to_stepsz(height);
+	const loff_t beg = off_align(voff_base, stepsz);
 
-	stepsz = height_to_stepsz(height);
-	beg = off_align(voff_base, stepsz);
 	silofs_vrange_setup(vrange, height, beg, off_next(beg, stepsz));
 }
 
@@ -1300,7 +1366,7 @@ void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
                              size_t height, loff_t voff)
 {
 	silofs_assert_gt(height, SILOFS_SPLEAF_HEIGHT);
-	silofs_assert_le(height, SILOFS_SPNODE_HEIGHT_MAX);
+	silofs_assert_le(height, SILOFS_SPNODE3_HEIGHT);
 
 	silofs_vrange_setup_by(vrange, height, voff);
 }

@@ -141,13 +141,13 @@ _main() {
   _silofs_umount "${mntdir}"
 
   _silofs_mount "${repodir}/${fsname}" "${mntdir}"
-  # _test_vfstests "${mntdir}"
-  # _test_selfcheck "${mntdir}"
+  _test_vfstests "${mntdir}"
+  _test_selfcheck "${mntdir}"
   sleep 1
   _silofs_umount "${mntdir}"
 
   _silofs_mount "${repodir}/${fsname}" "${mntdir}"
-  # _test_postgresql "${mntdir}"
+  _test_postgresql "${mntdir}"
   sleep 1
   _silofs_umount "${mntdir}"
 }

@@ -67,17 +67,22 @@ int silofs_bli_storev(const struct silofs_blob_info *bli,
                       const struct silofs_oaddr *oaddr,
                       const struct iovec *iov, size_t cnt);
 
+int silofs_bli_storev2(const struct silofs_blob_info *bli, loff_t off,
+                       const struct iovec *iov, size_t cnt);
+
 int silofs_bli_load(const struct silofs_blob_info *bli,
                     const struct silofs_oaddr *oaddr,
                     struct silofs_bytebuf *bb);
 
 int silofs_bli_load_bk(const struct silofs_blob_info *bli,
-                       const struct silofs_oaddr *oaddr,
+                       const struct silofs_bkaddr *bkaddr,
                        struct silofs_block *bk);
 
 int silofs_bli_store_bk(const struct silofs_blob_info *bli,
-                        const struct silofs_oaddr *oaddr,
+                        const struct silofs_bkaddr *bkaddr,
                         struct silofs_block *bk);
+
+int silofs_bli_trim(const struct silofs_blob_info *bli);
 
 int silofs_bli_flock(struct silofs_blob_info *bli);
 
@@ -125,11 +130,11 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stage_ubk(struct silofs_repo *repo,
-                          const struct silofs_oaddr *oaddr,
+                          const struct silofs_bkaddr *bkaddr,
                           struct silofs_ubk_info **out_ubi);
 
 int silofs_repo_spawn_ubk(struct silofs_repo *repo,
-                          const struct silofs_oaddr *oaddr,
+                          const struct silofs_bkaddr *bkaddr,
                           struct silofs_ubk_info **out_ubi);
 
 int silofs_repo_stage_super(struct silofs_repo *repo,

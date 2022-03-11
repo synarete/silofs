@@ -176,7 +176,8 @@ static void iov_advance(struct iovec **p_iov, size_t len)
 	*p_iov = iov;
 }
 
-static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off)
+static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt,
+                           loff_t off, loff_t *out_off)
 {
 	int err = 0;
 	size_t nwr_cur;
@@ -195,6 +196,7 @@ static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off)
 		nwr += nwr_cur;
 		off += (loff_t)nwr_cur;
 	}
+	*out_off = off;
 	return io_status(err, nwr, len);
 }
 
@@ -203,12 +205,18 @@ static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off)
 int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off)
 {
 	struct iovec iov2[PWRITEVN_IOV_MAX];
+	const int cnt_max = PWRITEVN_IOV_MAX;
+	int cnt2;
+	int err = 0;
 
-	if (cnt > PWRITEVN_IOV_MAX) {
-		return -ENOTSUP;
+	while ((cnt > 0) && !err) {
+		cnt2 = (cnt > cnt_max) ? cnt_max : cnt;
+		iov_clone(iov, iov2, cnt2);
+		err = do_sys_pwritevn(fd, iov2, cnt2, off, &off);
+		iov += cnt2;
+		cnt -= cnt2;
 	}
-	iov_clone(iov, iov2, cnt);
-	return do_sys_pwritevn(fd, iov2, cnt, off);
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

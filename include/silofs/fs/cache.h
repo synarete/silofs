@@ -101,11 +101,11 @@ void silofs_cache_relax_blobs(struct silofs_cache *cache);
 
 struct silofs_ubk_info *
 silofs_cache_lookup_ubk(struct silofs_cache *cache,
-                        const struct silofs_oaddr *oaddr);
+                        const struct silofs_bkaddr *bkaddr);
 
 struct silofs_ubk_info *
 silofs_cache_spawn_ubk(struct silofs_cache *cache,
-                       const struct silofs_oaddr *oaddr);
+                       const struct silofs_bkaddr *bkaddr);
 
 void silofs_cache_forget_ubk(struct silofs_cache *cache,
                              struct silofs_ubk_info *ubi);

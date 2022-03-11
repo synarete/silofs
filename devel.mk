@@ -118,6 +118,7 @@ endif
 CFLAGS += -Wbad-function-cast -Wmissing-prototypes -Waggregate-return
 CFLAGS += -Wdeclaration-after-statement -Wnested-externs -Wstrict-prototypes
 CFLAGS += -Wold-style-definition -Winit-self -std=gnu11
+CFLAGS += -Wfree-nonheap-object -Wuninitialized
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)
@@ -147,7 +148,7 @@ ifeq ($(CC), gcc)
 CFLAGS += -Werror -Wstack-usage=4096 -Wlogical-op -Wjump-misses-init
 CFLAGS += -Wunsuffixed-float-constants -Wmultistatement-macros
 CFLAGS += -Wunused-const-variable=2 -Wswitch-unreachable
-CFLAGS += -Wold-style-declaration
+CFLAGS += -Wold-style-declaration -Wmaybe-uninitialized
 # CFLAGS += -Wstringop-truncation -Wstringop-overread -Wstringop-overflow
 # CFLAGS += -Wstring-compare
 ifeq ($(WITH_ANALYZER), 1)

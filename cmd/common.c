@@ -149,6 +149,29 @@ void silofs_cmd_check_notexists(const char *path)
 	}
 }
 
+static char *silofs_joinpath_safe(const char *path, const char *name)
+{
+	char *xpath;
+	const size_t plen = strlen(path);
+	const size_t nlen = strlen(name);
+
+	xpath = silofs_cmd_zalloc(plen + nlen + 2);
+	memcpy(xpath, path, plen);
+	memcpy(xpath + 1 + plen, name, nlen);
+	xpath[plen] = '/';
+	xpath[plen + nlen + 1] = '\0';
+	return xpath;
+}
+
+void silofs_cmd_check_notexists2(const char *path, const char *name)
+{
+	char *xpath;
+
+	xpath = silofs_joinpath_safe(path, name);
+	silofs_cmd_check_notexists(xpath);
+	silofs_cmd_pfrees(&xpath);
+}
+
 void silofs_cmd_check_exists(const char *path)
 {
 	struct stat st;
@@ -553,6 +576,23 @@ void silofs_cmd_splitpath(const char *path, char **out_head, char **out_tail)
 		*out_head = silofs_cmd_strndup(path, head_len);
 		*out_tail = silofs_cmd_strndup(sep + 1, tail_len);
 	}
+}
+
+void silofs_cmd_splitpath2(const char *path, const char *name,
+                           char **out_head, char **out_tail)
+{
+	struct stat st;
+	char *xpath;
+	int err;
+
+	err = silofs_sys_stat(path, &st);
+	if (!err && S_ISDIR(st.st_mode)) {
+		xpath = silofs_joinpath_safe(path, name);
+	} else {
+		xpath = silofs_cmd_strdup(path);
+	}
+	silofs_cmd_splitpath(xpath, out_head, out_tail);
+	silofs_cmd_pfrees(&xpath);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

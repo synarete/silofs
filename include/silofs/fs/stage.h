@@ -19,51 +19,47 @@
 
 #include <silofs/infra.h>
 
-int silofs_sbi_stage_ubk(struct silofs_sb_info *sbi,
-                         const struct silofs_oaddr *oaddr,
-                         struct silofs_ubk_info **out_ubi);
+bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
+                                 const struct silofs_blobid *blobid);
 
-int silofs_sbi_stage_spnode(struct silofs_sb_info *sbi, loff_t voff,
-                            enum silofs_stage_flags stg_flags,
-                            struct silofs_spnode_info **out_sni);
+int silofs_sbi_stage_ubk_of(struct silofs_sb_info *sbi,
+                            const struct silofs_oaddr *oaddr,
+                            struct silofs_ubk_info **out_ubi);
 
-int silofs_sbi_stage_child_spnode(struct silofs_sb_info *sbi, loff_t voff,
-                                  struct silofs_spnode_info *sni_parent,
-                                  enum silofs_stage_flags stg_flags,
-                                  struct silofs_spnode_info **out_sni);
+int silofs_sbi_stage_spnode2(struct silofs_sb_info *sbi, loff_t voff,
+                             enum silofs_stage_flags stg_flags,
+                             struct silofs_spnode_info **out_sni);
+
+int silofs_sbi_stage_spnode3(struct silofs_sb_info *sbi, loff_t voff,
+                             enum silofs_stage_flags stg_flags,
+                             struct silofs_spnode_info **out_sni);
 
 int silofs_sbi_stage_spleaf(struct silofs_sb_info *sbi, loff_t voff,
                             enum silofs_stage_flags stg_flags,
                             struct silofs_spleaf_info **out_sli);
 
-int silofs_sbi_stage_spleaf_of(struct silofs_sb_info *sbi,
-                               struct silofs_spnode_info *sni, loff_t voff,
-                               enum silofs_stage_flags stg_flags,
-                               struct silofs_spleaf_info **out_sli);
-
-int silofs_sbi_require_spmaps_at(struct silofs_sb_info *sbi,
-                                 const struct silofs_vaddr *vaddr,
-                                 enum silofs_stage_flags stg_flags);
+int silofs_sbi_require_spmaps_at(struct silofs_sb_info *sbi, loff_t voff,
+                                 enum silofs_stype stype_sub);
 
 int silofs_sbi_reload_spmaps(struct silofs_sb_info *sbi);
 
 int silofs_sbi_spawn_vnode_at(struct silofs_sb_info *sbi,
-                              const struct silofs_uvaddr *ova,
+                              const struct silofs_voaddr *ova,
                               struct silofs_vnode_info **out_vi);
 
 int silofs_sbi_stage_vnode_at(struct silofs_sb_info *sbi,
-                              const struct silofs_uvaddr *ova,
+                              const struct silofs_voaddr *ova,
                               enum silofs_stage_flags stg_flags,
                               struct silofs_vnode_info **out_vi);
 
 int silofs_sbi_stage_inode_at(struct silofs_sb_info *sbi,
-                              const struct silofs_iuvaddr *iuva,
+                              const struct silofs_ivoaddr *ivoa,
                               enum silofs_stage_flags stg_flags,
                               struct silofs_inode_info **out_ii);
 
-int silofs_sbi_resolve_uva(struct silofs_sb_info *sbi,
+int silofs_sbi_resolve_voa(struct silofs_sb_info *sbi,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stage_flags stg_flags,
-                           struct silofs_uvaddr *out_ova);
+                           struct silofs_voaddr *out_ova);
 
 #endif /* SILOFS_STAGE_H_ */

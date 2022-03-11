@@ -257,6 +257,8 @@ void silofs_cmd_check_fsname(const char *arg_val);
 
 void silofs_cmd_check_notexists(const char *path);
 
+void silofs_cmd_check_notexists2(const char *path, const char *name);
+
 void silofs_cmd_check_exists(const char *path);
 
 void silofs_cmd_check_isdir(const char *path, bool w_ok);
@@ -295,6 +297,8 @@ void silofs_cmd_stat_reg_or_dir(const char *path, struct stat *st);
 
 void silofs_cmd_splitpath(const char *path, char **out_head, char **out_tail);
 
+void silofs_cmd_splitpath2(const char *path, const char *name,
+                           char **out_head, char **out_tail);
 
 void silofs_cmd_fork_daemon(void);
 

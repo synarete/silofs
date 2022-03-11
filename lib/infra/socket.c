@@ -189,8 +189,8 @@ int silofs_sockaddr_unix(struct silofs_sockaddr *sa, const char *path)
 
 int silofs_sockaddr_abstract(struct silofs_sockaddr *sa, const char *name)
 {
-	int err;
 	size_t len;
+	int err;
 
 	err = silofs_check_unixsock(name);
 	if (err) {
@@ -593,9 +593,9 @@ int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
                          size_t bsz, const struct silofs_sockaddr *dst_sa,
                          size_t *out_sent)
 {
-	int err;
 	socklen_t len;
 	const int fd = sock->fd;
+	int err;
 
 	err = socket_checkopen(sock);
 	if (err) {
@@ -636,9 +636,9 @@ int silofs_socket_recvfrom(const struct silofs_socket *sock, void *buf,
                            size_t bsz, struct silofs_sockaddr *sa,
                            size_t *out_recv)
 {
-	int err;
-	const int fd = sock->fd;
 	socklen_t len = sizeof(*sa);
+	const int fd = sock->fd;
+	int err;
 
 	err = socket_checkopen(sock);
 	if (err) {

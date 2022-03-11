@@ -224,8 +224,8 @@ sb_subref_of(const struct silofs_super_block *sb, loff_t voff)
 	return sb_subref_at(sb, sb_slot_of(sb, voff));
 }
 
-static void sb_resolve_subref(const struct silofs_super_block *sb, loff_t voff,
-                              struct silofs_ulink *out_ulink)
+static void sb_resolve_subref(const struct silofs_super_block *sb,
+                              loff_t voff, struct silofs_uaddr *out_ulink)
 {
 	static struct silofs_spmap_ref *spr = NULL;
 
@@ -233,21 +233,21 @@ static void sb_resolve_subref(const struct silofs_super_block *sb, loff_t voff,
 		spr = sb_subref_of(sb, voff);
 		silofs_spr_ulink(spr, out_ulink);
 	} else {
-		silofs_ulink_reset(out_ulink);
+		silofs_uaddr_reset(out_ulink);
 	}
 }
 
 static void sb_set_subref(struct silofs_super_block *sb, loff_t voff,
-                          const struct silofs_ulink *ulink)
+                          const struct silofs_uaddr *ulink)
 {
 	struct silofs_spmap_ref *spr = sb_subref_of(sb, voff);
 
-	silofs_spr_set_ulink(spr, ulink, ulink->child.stype);
+	silofs_spr_set_ulink(spr, ulink);
 }
 
 static size_t sb_num_active_slots(const struct silofs_super_block *sb)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr ulink;
 	size_t nslots_active = 0;
 	const size_t nslots_max = ARRAY_SIZE(sb->sb_subref);
 	static struct silofs_spmap_ref *spr = NULL;
@@ -255,7 +255,7 @@ static size_t sb_num_active_slots(const struct silofs_super_block *sb)
 	for (size_t slot = 0; slot < nslots_max; ++slot) {
 		spr = sb_subref_at(sb, slot);
 		silofs_spr_ulink(spr, &ulink);
-		if (uaddr_isnull(&ulink.child)) {
+		if (uaddr_isnull(&ulink)) {
 			break;
 		}
 		nslots_active++;
@@ -271,27 +271,10 @@ static void sb_generate_treeid(struct silofs_super_block *sb)
 	sb_set_treeid(sb, &xid);
 }
 
-static void sb_bind_subref_of(struct silofs_super_block *sb,
-                              loff_t voff, const struct silofs_ulink *ulink)
+static void sb_bind_subref_of(struct silofs_super_block *sb, loff_t voff,
+                              const struct silofs_uaddr *ulink)
 {
 	sb_set_subref(sb, voff, ulink);
-}
-
-
-static void sb_rebind_packid(struct silofs_super_block *sb, loff_t voff,
-                             const struct silofs_packid *packid)
-{
-	struct silofs_spmap_ref *spr = sb_subref_of(sb, voff);
-
-	silofs_spr_set_packid(spr, packid);
-}
-
-static void sb_resolve_packid(const struct silofs_super_block *sb, loff_t voff,
-                              struct silofs_packid *out_packid)
-{
-	const struct silofs_spmap_ref *spr = sb_subref_of(sb, voff);
-
-	silofs_spr_packid(spr, out_packid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -368,14 +351,14 @@ static void sb_set_vspace_ndata(struct silofs_super_block *sb, size_t ndata)
 	sb->sb_vspace_ndata = silofs_cpu_to_le64(ndata);
 }
 
-loff_t silofs_sb_vspace_last(const struct silofs_super_block *sb)
+loff_t silofs_sb_vspace_end(const struct silofs_super_block *sb)
 {
-	return silofs_off_to_cpu(sb->sb_vspace_last);
+	return silofs_off_to_cpu(sb->sb_vspace_end);
 }
 
-static void sb_set_vspace_last(struct silofs_super_block *sb, loff_t voff)
+static void sb_set_vspace_end(struct silofs_super_block *sb, loff_t voff)
 {
-	sb->sb_vspace_last = silofs_cpu_to_off(voff);
+	sb->sb_vspace_end = silofs_cpu_to_off(voff);
 }
 
 static size_t sb_total_capacity(const struct silofs_super_block *sb)
@@ -393,9 +376,9 @@ static void sb_setup_fresh(struct silofs_super_block *sb,
 {
 	sb_set_birth_time(sb, btime);
 	sb_set_itable_root(sb, silofs_vaddr_none());
-	sb_set_uspace_nmeta(sb, sizeof(*sb));
-	sb_set_vspace_last(sb, 0);
 	sb_set_total_capacity(sb, capacity);
+	sb_set_uspace_nmeta(sb, sizeof(*sb));
+	sb_set_vspace_end(sb, SILOFS_PETA); /* XXX */
 	sb_set_vspace_ndata(sb, 0);
 	sb_set_vspace_nmeta(sb, 0);
 	sb_set_vspace_nfiles(sb, 0);
@@ -408,74 +391,6 @@ static void sb_space_stat(const struct silofs_super_block *sb,
 	out_spst->vspace_ndata = (ssize_t)sb_vspace_ndata(sb);
 	out_spst->vspace_nmeta = (ssize_t)sb_vspace_nmeta(sb);
 	out_spst->vspace_nfiles = (ssize_t)sb_vspace_nfiles(sb);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int64_t *
-sb_vspa_last_of(const struct silofs_super_block *sb, enum silofs_stype stype)
-{
-	const int64_t *vspa_last;
-
-	switch (stype) {
-	case SILOFS_STYPE_DATA1K:
-		vspa_last = &sb->sb_vspa_data1k;
-		break;
-	case SILOFS_STYPE_DATA4K:
-		vspa_last = &sb->sb_vspa_data4k;
-		break;
-	case SILOFS_STYPE_DATABK:
-		vspa_last = &sb->sb_vspa_databk;
-		break;
-	case SILOFS_STYPE_ITNODE:
-		vspa_last = &sb->sb_vspa_itnode;
-		break;
-	case SILOFS_STYPE_INODE:
-		vspa_last = &sb->sb_vspa_inode;
-		break;
-	case SILOFS_STYPE_XANODE:
-		vspa_last = &sb->sb_vspa_xanode;
-		break;
-	case SILOFS_STYPE_DTNODE:
-		vspa_last = &sb->sb_vspa_dirnode;
-		break;
-	case SILOFS_STYPE_FTNODE:
-		vspa_last = &sb->sb_vspa_filenode;
-		break;
-	case SILOFS_STYPE_SYMVAL:
-		vspa_last = &sb->       sb_vspa_symval;
-		break;
-	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPNODE:
-	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_ANONBK:
-	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
-	default:
-		vspa_last = NULL;
-		break;
-	}
-	return unconst(vspa_last);
-}
-
-loff_t silofs_sb_vlast_by_stype(const struct silofs_super_block *sb,
-                                enum silofs_stype stype)
-{
-	const int64_t *vspa_last = sb_vspa_last_of(sb, stype);
-
-	silofs_assert_not_null(vspa_last);
-	return (vspa_last != NULL) ? silofs_off_to_cpu(*vspa_last) : 0;
-}
-
-void silofs_sb_set_voff_last(struct silofs_super_block *sb,
-                             enum silofs_stype stype, loff_t voff_last)
-{
-	int64_t *vspa_last = sb_vspa_last_of(sb, stype);
-
-	silofs_assert_not_null(vspa_last);
-	if (vspa_last != NULL) {
-		*vspa_last = silofs_cpu_to_off(voff_last);
-	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -644,34 +559,20 @@ int silofs_sbi_commit_dirty(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sbi_calc_allowed_vrange(const struct silofs_sb_info *sbi,
-                                    struct silofs_vrange *out_vrange)
+static void sbi_allowed_vrange(const struct silofs_sb_info *sbi,
+                               struct silofs_vrange *out_vrange)
 {
-	size_t length;
 	struct silofs_vrange vrange;
-	const size_t capacity = sb_total_capacity(sbi->sb);
+	const loff_t voff_end = silofs_sb_vspace_end(sbi->sb);
 
 	sb_vrange(sbi->sb, &vrange);
-
-	length = min(vrange.len, 2 * capacity);
-	silofs_vrange_setup(out_vrange, vrange.height, vrange.beg,
-	                    off_end(vrange.beg, length));
-}
-
-static int
-sbi_resolve_unformatted_end(const struct silofs_sb_info *sbi, loff_t *out_voff)
-{
-	struct silofs_vrange allowed_vrange;
-
-	sbi_calc_allowed_vrange(sbi, &allowed_vrange);
-	*out_voff = silofs_sb_vspace_last(sbi->sb);
-	return (*out_voff < allowed_vrange.end) ? 0 : -ENOSPC;
+	silofs_vrange_setup(out_vrange, vrange.height, vrange.beg, voff_end);
 }
 
 void silofs_sbi_vspace_range(const struct silofs_sb_info *sbi,
                              struct silofs_vrange *out_vrange)
 {
-	sbi_calc_allowed_vrange(sbi, out_vrange);
+	sbi_allowed_vrange(sbi, out_vrange);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -768,7 +669,7 @@ sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 	struct silofs_vrange vrange;
 	const size_t child_height = silofs_sbi_space_tree_height(sbi) - 1;
 
-	silofs_assert_eq(child_height, SILOFS_SPNODE_HEIGHT_MAX);
+	silofs_assert_eq(child_height, SILOFS_SPNODE3_HEIGHT);
 
 	silofs_vrange_setup_by(&vrange, child_height, voff);
 	return vrange.beg;
@@ -785,66 +686,44 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 	base = sbi_base_voff_of_child(sbi, voff);
 	bpos = sbi_bpos_of_child_spnode(sbi, voff);
 	silofs_uaddr_setup(out_uaddr, &blobid, SILOFS_STYPE_SPNODE,
-	                   SILOFS_SPNODE_HEIGHT_MAX, base, bpos);
-}
-
-static int flush_dirty_cache(struct silofs_sb_info *sbi, bool all)
-{
-	return silofs_apex_flush_dirty(sbi_apex(sbi), all ? SILOFS_F_NOW : 0);
-}
-
-static void sbi_update_vspace_last(struct silofs_sb_info *sbi, loff_t voff)
-{
-	const loff_t voff_last = silofs_sb_vspace_last(sbi->sb);
-
-	if (voff > voff_last) {
-		sb_set_vspace_last(sbi->sb, voff);
-		sbi_dirtify(sbi);
-	}
-}
-
-static void sbi_update_vlast_by_spnode(struct silofs_sb_info *sbi,
-                                       const struct silofs_spnode_info *sni)
-{
-	struct silofs_vrange vrange;
-
-	silofs_sni_vspace_range(sni, &vrange);
-	sbi_update_vspace_last(sbi, vrange.beg);
-}
-
-void silofs_sbi_update_vlast_by_spleaf(struct silofs_sb_info *sbi,
-                                       const struct silofs_spleaf_info *sli)
-{
-	struct silofs_vrange vrange;
-
-	silofs_sli_vspace_range(sli, &vrange);
-	sbi_update_vspace_last(sbi, vrange.end);
+	                   SILOFS_SPNODE3_HEIGHT, base, bpos);
 }
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
                            const struct silofs_spnode_info *sni)
 {
 	struct silofs_vrange vrange;
-	struct silofs_ulink ulink;
 
-	silofs_sni_vspace_range(sni, &vrange);
-	silofs_ulink_setup(&ulink, sbi_uaddr(sbi), sni_uaddr(sni));
-
-	sb_bind_subref_of(sbi->sb, vrange.beg, &ulink);
-	sbi_update_vlast_by_spnode(sbi, sni);
+	sni_vrange(sni, &vrange);
+	sb_bind_subref_of(sbi->sb, vrange.beg, sni_uaddr(sni));
 	sbi_dirtify(sbi);
 }
 
 static int sbi_format_head_spmaps_of(struct silofs_sb_info *sbi)
 {
+	struct silofs_voaddr voa;
 	int err;
-	loff_t voff = -1;
 
-	err = silofs_sbi_expand_vspace(sbi, SILOFS_STYPE_DATABK, &voff);
+	err = silofs_sbi_claim_vspace(sbi, SILOFS_STYPE_DATABK, &voa);
 	if (err) {
 		log_err("failed to format head spmaps: err=%d", err);
+		return err;
 	}
-	return err;
+	if (voa.vaddr.voff != 0) {
+		log_err("wrong first allocated: voff=%ld", voa.vaddr.voff);
+		return -EFSCORRUPTED; /* TODO: should be internal err */
+	}
+	err = silofs_sbi_reclaim_vspace(sbi, &voa.vaddr);
+	if (err) {
+		log_err("failed to reclaim space: err=%d", err);
+		return err;
+	}
+	return 0;
+}
+
+static int flush_dirty_cache(struct silofs_sb_info *sbi, bool all)
+{
+	return silofs_apex_flush_dirty(sbi_apex(sbi), all ? SILOFS_F_NOW : 0);
 }
 
 int silofs_sbi_format_spmaps(struct silofs_sb_info *sbi)
@@ -862,58 +741,19 @@ int silofs_sbi_format_spmaps(struct silofs_sb_info *sbi)
 	return 0;
 }
 
-int silofs_sbi_subref_of(const struct silofs_sb_info *sbi, loff_t voff,
-                         struct silofs_ulink *out_ulink)
+int silofs_sbi_subref_of(const struct silofs_sb_info *sbi,
+                         loff_t voff, struct silofs_uaddr *out_ulink)
 {
 	sb_resolve_subref(sbi->sb, voff, out_ulink);
-
-	return uaddr_isnull(&out_ulink->child) ? -ENOENT : 0;
+	return uaddr_isnull(out_ulink) ? -ENOENT : 0;
 }
 
 bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr ulink;
 
 	sb_resolve_subref(sbi->sb, voff, &ulink);
-	return !uaddr_isnull(&ulink.child);
-}
-
-void silofs_sbi_rebind_packid(struct silofs_sb_info *sbi, loff_t voff,
-                              const struct silofs_packid *packid)
-{
-	sb_rebind_packid(sbi->sb, voff, packid);
-	/* no need to make dirty -- in memory only */
-}
-
-int silofs_sbi_resolve_packid(const struct silofs_sb_info *sbi, loff_t voff,
-                              struct silofs_packid *out_packid)
-{
-	sb_resolve_packid(sbi->sb, voff, out_packid);
-	return packid_isnull(out_packid) ? -ENOENT : 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_sbi_expand_vspace(struct silofs_sb_info *sbi,
-                             enum silofs_stype stype, loff_t *out_voff)
-{
-	int err;
-	loff_t voff = -1;
-	struct silofs_vaddr vaddr;
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_MUTABLE;
-
-	err = sbi_resolve_unformatted_end(sbi, &voff);
-	if (err) {
-		return err;
-	}
-	vaddr_setup(&vaddr, stype, voff);
-	err = silofs_sbi_require_spmaps_at(sbi, &vaddr, stg_flags);
-	if (err) {
-		log_dbg("can not expand space: voff=0x%lx err=%d", voff, err);
-		return err;
-	}
-	*out_voff = voff;
-	return 0;
+	return !uaddr_isnull(&ulink);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1037,14 +877,14 @@ int silofs_stage_vnode(struct silofs_sb_info *sbi,
                        enum silofs_stage_flags stg_flags,
                        struct silofs_vnode_info **out_vi)
 {
-	struct silofs_uvaddr uva;
+	struct silofs_voaddr voa;
 	int err;
 
 	err = sbi_check_stage_vnode(sbi, vaddr, stg_flags);
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_resolve_uva(sbi, vaddr, stg_flags, &uva);
+	err = silofs_sbi_resolve_voa(sbi, vaddr, stg_flags, &voa);
 	if (err) {
 		return err;
 	}
@@ -1052,7 +892,7 @@ int silofs_stage_vnode(struct silofs_sb_info *sbi,
 	if (!err) {
 		return 0;  /* cache hit */
 	}
-	err = silofs_sbi_stage_vnode_at(sbi, &uva, stg_flags, out_vi);
+	err = silofs_sbi_stage_vnode_at(sbi, &voa, stg_flags, out_vi);
 	if (err) {
 		return err;
 	}
@@ -1066,7 +906,7 @@ int silofs_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	struct silofs_iaddr iaddr = {
 		.ino = ino,
 	};
-	struct silofs_iuvaddr iuva = {
+	struct silofs_ivoaddr ivoa = {
 		.ino = ino
 	};
 	int err;
@@ -1079,8 +919,8 @@ int silofs_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_resolve_uva(sbi, &iaddr.vaddr,
-	                             stg_flags, &iuva.uva);
+	err = silofs_sbi_resolve_voa(sbi, &iaddr.vaddr,
+	                             stg_flags, &ivoa.voa);
 	if (err) {
 		return err;
 	}
@@ -1088,7 +928,7 @@ int silofs_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	if (!err) {
 		return 0;
 	}
-	err = silofs_sbi_stage_inode_at(sbi, &iuva, stg_flags, out_ii);
+	err = silofs_sbi_stage_inode_at(sbi, &ivoa, stg_flags, out_ii);
 	if (err) {
 		return err;
 	}
@@ -1200,10 +1040,10 @@ int silofs_remove_inode(struct silofs_sb_info *sbi,
 static int sbi_reclaim_vspace(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr)
 {
-	struct silofs_uvaddr uva;
+	struct silofs_voaddr voa;
 	int err;
 
-	err = silofs_sbi_resolve_uva(sbi, vaddr, SILOFS_STAGE_RDONLY, &uva);
+	err = silofs_sbi_resolve_voa(sbi, vaddr, SILOFS_STAGE_RDONLY, &voa);
 	if (err) {
 		return err;
 	}

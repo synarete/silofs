@@ -17,7 +17,8 @@
 #ifndef SILOFS_SPCLAIM_H_
 #define SILOFS_SPCLAIM_H_
 
-int silofs_sbi_claim_vnode(struct silofs_sb_info *sbi, enum silofs_stype stype,
+int silofs_sbi_claim_vnode(struct silofs_sb_info *sbi,
+                           enum silofs_stype stype,
                            struct silofs_vnode_info **out_vi);
 
 int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
@@ -25,9 +26,16 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 
 int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
                             enum silofs_stype stype,
-                            struct silofs_uvaddr *out_ova);
+                            struct silofs_voaddr *out_ova);
+
+int silofs_sbi_search_vspace(struct silofs_sb_info *sbi,
+                             enum silofs_stype stype,
+                             struct silofs_voaddr *out_voa);
 
 int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
+                              const struct silofs_vaddr *vaddr);
+
+int silofs_sbi_recache_vspace(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

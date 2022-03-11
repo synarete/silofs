@@ -2088,8 +2088,8 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
                            struct silofs_inode_info *ii,
                            struct silofs_ioc_query *query)
 {
+	enum silofs_query_type qtype = (enum silofs_query_type)query->qtype;
 	int err = 0;
-	const enum silofs_query_type qtype = query->qtype;
 
 	silofs_memzero(&query->u, sizeof(query->u));
 

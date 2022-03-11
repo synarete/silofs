@@ -60,6 +60,8 @@ int silofs_fse_sync_drop(struct silofs_fs_env *fse);
 void silofs_fse_stats(const struct silofs_fs_env *fse,
                       struct silofs_fs_stats *st);
 
+bool silofs_fse_served_clean(const struct silofs_fs_env *fse);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fse_open_repos(struct silofs_fs_env *fse);

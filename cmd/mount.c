@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/vfs.h>
+#include <sys/mount.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -28,9 +29,11 @@
 #include <time.h>
 
 static struct silofs_subcmd_mount *mount_args;
+static int mount_halt_signal = -1;
+static bool mount_clean_ending = true;
 
 static const char *mount_usage[] = {
-	"mount [options] <repodir/name> <mountpoint>",
+	"mount [options] <repo/name> <mountpoint>",
 	"",
 	"options:",
 	"  -r, --rdonly                 Mount in read-only mode",
@@ -93,7 +96,7 @@ static void mount_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repodir/name", &mount_args->repodir_name);
+	silofs_cmd_getarg("repo/name", &mount_args->repodir_name);
 	silofs_cmd_getarg("mountpoint", &mount_args->mntpoint);
 	silofs_cmd_endargs();
 }
@@ -146,14 +149,16 @@ static void mount_enable_signals(void)
 
 static void mount_execute_fs(void)
 {
-	int err;
 	struct silofs_fs_env *fse = silofs_fse_inst();
+	int err;
 
 	err = silofs_fse_serve(fse);
 	if (err) {
 		silofs_die(err, "fs failure: %s %s",
 		           mount_args->repodir, mount_args->mntpoint);
 	}
+	mount_halt_signal = fse->fs_signum;
+	mount_clean_ending = silofs_fse_served_clean(fse);
 }
 
 static void mount_finalize(void)
@@ -337,6 +342,28 @@ static void mount_trace_finish(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/*
+ * In case there is still a dangling mount-point due to halt-by-signal try to
+ * unmount it.
+ */
+static void mount_post_exec_cleanup(void)
+{
+	const char *mntpoint = mount_args->mntpoint_real;
+	const uid_t uid = getuid();
+	const gid_t gid = getgid();
+	int err;
+
+	if (mntpoint && (mount_halt_signal > 0) && !mount_clean_ending) {
+		err = silofs_rpc_umount(mntpoint, uid, gid, MNT_DETACH);
+		if (err) {
+			silofs_log_info("failed to umount lazily: "
+			                "%s err=%d", mntpoint, err);
+		}
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_execute_mount(void)
 {
 	/* Do all cleanups upon exits */
@@ -385,6 +412,9 @@ void silofs_execute_mount(void)
 	mount_destroy_fs_env();
 
 	/* Post execution cleanups */
+	mount_post_exec_cleanup();
+
+	/* Finalize resource allocations */
 	mount_finalize();
 
 	/* Return to main for global cleanups */

@@ -249,7 +249,7 @@ struct silofs_xxid {
 	union silofs_xxid_u u;
 };
 
-/* opaque blob identifier */
+/* blob identifier */
 struct silofs_blobid {
 	struct silofs_xxid      xxid;
 	size_t                  size;
@@ -261,9 +261,15 @@ struct silofs_packid {
 	enum silofs_pack_mode   pmode;
 };
 
-/* opaque object address within blob */
-struct silofs_oaddr {
+/* block address within blob */
+struct silofs_bkaddr {
 	struct silofs_blobid    blobid;
+	silofs_lba_t            lba;
+};
+
+/* object address within blob */
+struct silofs_oaddr {
+	struct silofs_bkaddr    bka;
 	loff_t                  pos;
 	size_t                  len;
 };
@@ -274,12 +280,6 @@ struct silofs_uaddr {
 	loff_t                  voff;
 	enum silofs_stype       stype;
 	unsigned int            height;
-};
-
-/* meta-link via pair of space-addressing */
-struct silofs_ulink {
-	struct silofs_uaddr     owner;
-	struct silofs_uaddr     child;
 };
 
 /* tree addressing of space-mapping elements */
@@ -302,16 +302,16 @@ struct silofs_iaddr {
 	struct silofs_vaddr     vaddr;
 };
 
-/* vnode's placement address */
-struct silofs_uvaddr {
-	struct silofs_uaddr     uaddr;
+/* vnode's object placement address */
+struct silofs_voaddr {
 	struct silofs_vaddr     vaddr;
+	struct silofs_oaddr     oaddr;
 };
 
 /* inode's placement address */
-struct silofs_iuvaddr {
+struct silofs_ivoaddr {
 	ino_t                   ino;
-	struct silofs_uvaddr    uva;
+	struct silofs_voaddr    voa;
 };
 
 /* vspace address range [beg, end) */
@@ -336,14 +336,14 @@ struct silofs_bootsec {
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
 	SILOFS_CKEY_BLOBID,
-	SILOFS_CKEY_OADDR,
+	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
 	SILOFS_CKEY_VOFF,
 };
 
 union silofs_ckey_u {
-	const struct silofs_oaddr  *oaddr;
+	const struct silofs_bkaddr *bkaddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
 	const struct silofs_blobid *blobid;
@@ -373,9 +373,9 @@ struct silofs_cache_elem {
 /* object-addressing block info */
 struct silofs_ubk_info {
 	struct silofs_cache_elem        ubk_ce;
-	struct silofs_oaddr             ubk_oaddr;
+	struct silofs_bkaddr            ubk_addr;
 	struct silofs_block            *ubk;
-	struct silofs_blob_info        *bli;
+	struct silofs_blob_info        *ubk_bli;
 };
 
 /* voffset-addressing block info */

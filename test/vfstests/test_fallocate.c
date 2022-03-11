@@ -478,8 +478,6 @@ static void test_fallocate_zero_range(struct vt_env *vte)
 	 *
 	 * TODO: Submit patch to kernel upstream.
 	 */
-	return;
-
 	test_fallocate_zero_range_(vte, 0, VT_1K);
 	test_fallocate_zero_range_(vte, 0, VT_4K);
 	test_fallocate_zero_range_(vte, 0, VT_BK_SIZE);

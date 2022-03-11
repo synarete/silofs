@@ -20,7 +20,7 @@
 static struct silofs_subcmd_init *init_args;
 
 static const char *init_usage[] = {
-	"init <repodir>",
+	"init <repo-dir>",
 	"",
 	"options:",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..3)",
@@ -46,7 +46,7 @@ static void init_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repodir", &init_args->repodir);
+	silofs_cmd_getarg("repo-dir", &init_args->repodir);
 	silofs_cmd_endargs();
 }
 

@@ -25,13 +25,7 @@ int silofs_sb_check_root(const struct silofs_super_block *sb);
 bool silofs_sb_test_flags(const struct silofs_super_block *sb,
                           enum silofs_superf mask);
 
-loff_t silofs_sb_vspace_last(const struct silofs_super_block *sb);
-
-loff_t silofs_sb_vlast_by_stype(const struct silofs_super_block *sb,
-                                enum silofs_stype stype);
-
-void silofs_sb_set_voff_last(struct silofs_super_block *sb,
-                             enum silofs_stype stype, loff_t voff_last);
+loff_t silofs_sb_vspace_end(const struct silofs_super_block *sb);
 
 int silofs_verify_super_block(const struct silofs_super_block *sb);
 
@@ -112,9 +106,6 @@ int silofs_mark_unwritten(struct silofs_sb_info *sbi,
 int silofs_refcnt_islast_at(struct silofs_sb_info *sbi,
                             const struct silofs_vaddr *vaddr, bool *out_res);
 
-int silofs_sbi_expand_vspace(struct silofs_sb_info *sbi,
-                             enum silofs_stype stype, loff_t *out_voff);
-
 void silofs_sbi_space_stat(const struct silofs_sb_info *sbi,
                            struct silofs_space_stat *out_sp_st);
 
@@ -160,7 +151,7 @@ void silofs_sbi_self(const struct silofs_sb_info *sbi,
 size_t silofs_sbi_space_tree_height(const struct silofs_sb_info *sbi);
 
 int silofs_sbi_subref_of(const struct silofs_sb_info *sbi,
-                         loff_t voff, struct silofs_ulink *out_ulink);
+                         loff_t voff, struct silofs_uaddr *out_ulink);
 
 void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, struct silofs_uaddr *out_uaddr);
@@ -170,17 +161,6 @@ int silofs_sbi_commit_dirty(struct silofs_sb_info *sbi);
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
                            const struct silofs_spnode_info *sni);
 
-void silofs_sbi_update_vlast_by_spleaf(struct silofs_sb_info *sbi,
-                                       const struct silofs_spleaf_info *sli);
-
 bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff);
-
-
-void silofs_sbi_rebind_packid(struct silofs_sb_info *sbi, loff_t voff,
-                              const struct silofs_packid *packid);
-
-int silofs_sbi_resolve_packid(const struct silofs_sb_info *sbi, loff_t voff,
-                              struct silofs_packid *out_packid);
-
 
 #endif /* SILOFS_SUPER_H_ */

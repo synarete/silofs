@@ -20,7 +20,7 @@
 static struct silofs_subcmd_mkfs *mkfs_args;
 
 static const char *mkfs_usage[] = {
-	"mkfs --size=NBYTES [options] <repodir/name>",
+	"mkfs --size=NBYTES [options] <repo/name>",
 	"",
 	"options:",
 	"  -s, --size=NBYTES            Capacity size limit",
@@ -55,7 +55,7 @@ static void mkfs_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repodir/name", &mkfs_args->repodir_name);
+	silofs_cmd_getarg("repo/name", &mkfs_args->repodir_name);
 	silofs_cmd_endargs();
 }
 

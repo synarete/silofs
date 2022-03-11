@@ -164,8 +164,8 @@ jobs:
           sudo systemctl restart silofs-mountd.service
           sudo systemctl status silofs-mountd.service
           sleep 10
-      - name: Run smoke-tests
-        run: ./test/sanitests/smoketests.sh ./silofs-tests /mnt/test
+      # - name: Run smoke-tests
+      #  run: ./test/sanitests/smoketests.sh ./silofs-tests /mnt/test
       - name: Cleanups
         run: rm -rf ./silofs-tests
 

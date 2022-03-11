@@ -665,12 +665,12 @@ int silofs_sys_sbrk(intptr_t increment, void **out_addr)
 /* RLIMITS */
 int silofs_sys_getrlimit(int resource, struct rlimit *rlim)
 {
-	return ok_or_errno(getrlimit(resource, rlim));
+	return ok_or_errno(getrlimit((__rlimit_resource_t)resource, rlim));
 }
 
 int silofs_sys_setrlimit(int resource, const struct rlimit *rlim)
 {
-	return ok_or_errno(setrlimit(resource, rlim));
+	return ok_or_errno(setrlimit((__rlimit_resource_t)resource, rlim));
 }
 
 /* PRCTL */

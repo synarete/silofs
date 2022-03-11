@@ -20,7 +20,7 @@
 static struct silofs_subcmd_archive *archive_args;
 
 static const char *archive_usage[] = {
-	"archive [options] <main-repodir/name> <cold-repodir/name>",
+	"archive [options] <main-repo/name> <cold-repo/name>",
 	"",
 	"options:",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..3)",
@@ -50,10 +50,8 @@ static void archive_getopt(void)
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("main-repodir/name",
-	                  &archive_args->main_repodir_name);
-	silofs_cmd_getarg("cold-repodir/name",
-	                  &archive_args->cold_repodir_name);
+	silofs_cmd_getarg("main-repo/name", &archive_args->main_repodir_name);
+	silofs_cmd_getarg("cold-repo/name", &archive_args->cold_repodir_name);
 	silofs_cmd_endargs();
 }
 
@@ -86,15 +84,17 @@ static void archive_prepare(void)
 	silofs_cmd_getpass2(archive_args->passphrase_file,
 	                    &archive_args->passphrase);
 	*/
-
-	silofs_cmd_check_notexists(archive_args->cold_repodir_name);
-
 	silofs_cmd_splitpath(archive_args->main_repodir_name,
 	                     &archive_args->main_repodir,
 	                     &archive_args->main_name);
-	silofs_cmd_splitpath(archive_args->cold_repodir_name,
-	                     &archive_args->cold_repodir,
-	                     &archive_args->cold_name);
+
+	silofs_cmd_splitpath2(archive_args->cold_repodir_name,
+	                      archive_args->main_name,
+	                      &archive_args->cold_repodir,
+	                      &archive_args->cold_name);
+
+	silofs_cmd_check_notexists2(archive_args->cold_repodir,
+	                            archive_args->cold_name);
 
 	silofs_cmd_check_nonemptydir(archive_args->main_repodir, false);
 	silofs_cmd_realpath(archive_args->main_repodir,

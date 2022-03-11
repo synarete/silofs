@@ -144,10 +144,16 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 	return silofs_rotate64(h, vaddr->stype % 59) ^ vaddr->len;
 }
 
+static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
+{
+	return  hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
+}
+
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
-	return  hash_of_blobid(&oaddr->blobid) ^
-	        (((uint64_t)(oaddr->pos) << 17) + oaddr->len);
+	const uint64_t pos = (uint64_t)(oaddr->pos);
+
+	return  hash_of_bkaddr(&oaddr->bka) ^ ((pos << 17) + oaddr->len);
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
@@ -184,10 +190,10 @@ static void ckey_reset(struct silofs_ckey *ckey)
 	ckey->type = SILOFS_CKEY_NONE;
 }
 
-static long ckey_compare_as_oaddr(const struct silofs_ckey *ckey1,
-                                  const struct silofs_ckey *ckey2)
+static long ckey_compare_as_bkaddr(const struct silofs_ckey *ckey1,
+                                   const struct silofs_ckey *ckey2)
 {
-	return silofs_oaddr_compare(ckey1->keyu.oaddr, ckey2->keyu.oaddr);
+	return silofs_bkaddr_compare(ckey1->keyu.bkaddr, ckey2->keyu.bkaddr);
 }
 
 static long ckey_compare_as_uaddr(const struct silofs_ckey *ckey1,
@@ -225,8 +231,8 @@ long silofs_ckey_compare(const struct silofs_ckey *ckey1,
 	cmp = (long)ckey2->type - (long)ckey1->type;
 	if (cmp == 0) {
 		switch (ckey1->type) {
-		case SILOFS_CKEY_OADDR:
-			cmp = ckey_compare_as_oaddr(ckey1, ckey2);
+		case SILOFS_CKEY_BKADDR:
+			cmp = ckey_compare_as_bkaddr(ckey1, ckey2);
 			break;
 		case SILOFS_CKEY_UADDR:
 			cmp = ckey_compare_as_uaddr(ckey1, ckey2);
@@ -262,10 +268,10 @@ void silofs_ckey_by_blobid(struct silofs_ckey *ckey,
 	ckey_setup(ckey, SILOFS_CKEY_BLOBID, blobid, hash_of_blobid(blobid));
 }
 
-static void ckey_by_oaddr(struct silofs_ckey *ckey,
-                          const struct silofs_oaddr *oaddr)
+static void ckey_by_bkaddr(struct silofs_ckey *ckey,
+                           const struct silofs_bkaddr *bkaddr)
 {
-	ckey_setup(ckey, SILOFS_CKEY_OADDR, oaddr, hash_of_oaddr(oaddr));
+	ckey_setup(ckey, SILOFS_CKEY_BKADDR, bkaddr, hash_of_bkaddr(bkaddr));
 }
 
 static void ckey_by_uaddr(struct silofs_ckey *ckey,
@@ -601,21 +607,21 @@ static struct silofs_cache_elem *ubi_to_ce(const struct silofs_ubk_info *ubi)
 }
 
 static void ubi_set_addr(struct silofs_ubk_info *ubi,
-                         const struct silofs_oaddr *oaddr)
+                         const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_cache_elem *ce = ubi_to_ce(ubi);
 
-	silofs_oaddr_assign(&ubi->ubk_oaddr, oaddr);
-	ckey_by_oaddr(&ce->ce_ckey, &ubi->ubk_oaddr);
+	silofs_bkaddr_assign(&ubi->ubk_addr, bkaddr);
+	ckey_by_bkaddr(&ce->ce_ckey, &ubi->ubk_addr);
 }
 
 static void ubi_init(struct silofs_ubk_info *ubi, struct silofs_block *ubk,
-                     const struct silofs_oaddr *oaddr)
+                     const struct silofs_bkaddr *bkaddr)
 {
 	silofs_ce_init(&ubi->ubk_ce);
-	ubi_set_addr(ubi, oaddr);
+	ubi_set_addr(ubi, bkaddr);
 	ubi->ubk = ubk;
-	ubi->bli = NULL;
+	ubi->ubk_bli = NULL;
 }
 
 static void ubi_fini(struct silofs_ubk_info *ubi)
@@ -642,19 +648,19 @@ static bool ubi_is_evictable(const struct silofs_ubk_info *ubi)
 void silofs_ubi_attach(struct silofs_ubk_info *ubi,
                        struct silofs_blob_info *bli)
 {
-	if (ubi->bli == NULL) {
+	if (ubi->ubk_bli == NULL) {
 		bli_incref(bli);
-		ubi->bli = bli;
+		ubi->ubk_bli = bli;
 	}
 }
 
 static void ubi_detach(struct silofs_ubk_info *ubi)
 {
-	struct silofs_blob_info *bli = ubi->bli;
+	struct silofs_blob_info *bli = ubi->ubk_bli;
 
 	if (bli != NULL) {
 		bli_decref(bli);
-		ubi->bli = NULL;
+		ubi->ubk_bli = NULL;
 	}
 }
 
@@ -1355,7 +1361,7 @@ void silofs_cache_relax_blobs(struct silofs_cache *cache)
 
 static struct silofs_ubk_info *
 cache_new_ubi(const struct silofs_cache *cache,
-              const struct silofs_oaddr *oaddr)
+              const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_block *ubk;
 	struct silofs_ubk_info *ubi = NULL;
@@ -1370,7 +1376,7 @@ cache_new_ubi(const struct silofs_cache *cache,
 		bk_free(ubk, alif);
 		return NULL;
 	}
-	ubi_init(ubi, ubk, oaddr);
+	ubi_init(ubi, ubk, bkaddr);
 	return ubi;
 }
 
@@ -1398,12 +1404,12 @@ static void cache_fini_ubi_lm(struct silofs_cache *cache)
 
 static struct silofs_ubk_info *
 cache_find_ubi(const struct silofs_cache *cache,
-               const struct silofs_oaddr *oaddr)
+               const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
 
-	ckey_by_oaddr(&ckey, oaddr);
+	ckey_by_bkaddr(&ckey, bkaddr);
 	ce = lrumap_find(&cache->c_ubi_lm, &ckey);
 	return ubi_from_ce(ce);
 }
@@ -1437,11 +1443,11 @@ void silofs_cache_forget_ubk(struct silofs_cache *cache,
 
 static struct silofs_ubk_info *
 cache_spawn_ubi(struct silofs_cache *cache,
-                const struct silofs_oaddr *oaddr)
+                const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ubk_info *ubi;
 
-	ubi = cache_new_ubi(cache, oaddr);
+	ubi = cache_new_ubi(cache, bkaddr);
 	if (ubi == NULL) {
 		return NULL;
 	}
@@ -1451,11 +1457,11 @@ cache_spawn_ubi(struct silofs_cache *cache,
 
 static struct silofs_ubk_info *
 cache_find_relru_ubi(struct silofs_cache *cache,
-                     const struct silofs_oaddr *oaddr)
+                     const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ubk_info *ubi;
 
-	ubi = cache_find_ubi(cache, oaddr);
+	ubi = cache_find_ubi(cache, bkaddr);
 	if (ubi != NULL) {
 		cache_promote_lru_ubi(cache, ubi);
 	}
@@ -1464,15 +1470,15 @@ cache_find_relru_ubi(struct silofs_cache *cache,
 
 static struct silofs_ubk_info *
 cache_find_or_spawn_ubi(struct silofs_cache *cache,
-                        const struct silofs_oaddr *oaddr)
+                        const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ubk_info *ubi;
 
-	ubi = cache_find_relru_ubi(cache, oaddr);
+	ubi = cache_find_relru_ubi(cache, bkaddr);
 	if (ubi != NULL) {
 		return ubi;
 	}
-	ubi = cache_spawn_ubi(cache, oaddr);
+	ubi = cache_spawn_ubi(cache, bkaddr);
 	if (ubi == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -1511,13 +1517,13 @@ cache_find_evictable_ubi(struct silofs_cache *cache)
 
 static struct silofs_ubk_info *
 cache_require_ubi(struct silofs_cache *cache,
-                  const struct silofs_oaddr *oaddr)
+                  const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ubk_info *ubi = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		ubi = cache_find_or_spawn_ubi(cache, oaddr);
+		ubi = cache_find_or_spawn_ubi(cache, bkaddr);
 		if (ubi != NULL) {
 			break;
 		}
@@ -1601,22 +1607,16 @@ cache_shrink_or_relru_ubis(struct silofs_cache *cache, size_t cnt)
 
 struct silofs_ubk_info *
 silofs_cache_lookup_ubk(struct silofs_cache *cache,
-                        const struct silofs_oaddr *oaddr)
+                        const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_oaddr bk_oaddr;
-
-	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->blobid, oaddr_lba(oaddr));
-	return cache_find_relru_ubi(cache, &bk_oaddr);
+	return cache_find_relru_ubi(cache, bkaddr);
 }
 
 struct silofs_ubk_info *
 silofs_cache_spawn_ubk(struct silofs_cache *cache,
-                       const struct silofs_oaddr *oaddr)
+                       const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_oaddr bk_oaddr;
-
-	silofs_oaddr_of_bk(&bk_oaddr, &oaddr->blobid, oaddr_lba(oaddr));
-	return cache_require_ubi(cache, &bk_oaddr);
+	return cache_require_ubi(cache, bkaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2300,10 +2300,9 @@ silofs_cache_spawn_vnode(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t cache_shrink_some(struct silofs_cache *cache, int aggressive)
+static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 {
-	const size_t nbk_in_vsec = SILOFS_NBK_IN_VSEC;
-	const size_t extra = aggressive ? nbk_in_vsec : 1;
+	const size_t extra = silofs_clamp(1UL << shift, 1, 64);
 	size_t actual = 0;
 	size_t count;
 
@@ -2355,7 +2354,7 @@ static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
 	return ((1UL << nbits) - 1);
 }
 
-static int cache_calc_niter(const struct silofs_cache *cache, int flags)
+static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 {
 	size_t niter = 0;
 	uint64_t mem_press;
@@ -2363,7 +2362,7 @@ static int cache_calc_niter(const struct silofs_cache *cache, int flags)
 
 	mem_press = cache_memory_pressure(cache);
 	if (flags & SILOFS_F_WALKFS) {
-		niter += silofs_popcount64(mem_press >> 1) + 1;
+		niter += silofs_popcount64(mem_press >> 1);
 	}
 	if (flags & SILOFS_F_BRINGUP) {
 		niter += silofs_popcount64(mem_press >> 3);
@@ -2384,17 +2383,15 @@ static int cache_calc_niter(const struct silofs_cache *cache, int flags)
 	if (cache_has_overpop(cache)) {
 		niter += 2;
 	}
-	return (int)niter;
+	return niter;
 }
 
-static void cache_relax_niter(struct silofs_cache *cache,
-                              int niter, int aggressive)
+static void cache_relax_niter(struct silofs_cache *cache, size_t niter)
 {
-	size_t shrinked = 0;
+	int shift = 0;
 
-	for (int i = 0; i < niter; ++i) {
-		shrinked = cache_shrink_some(cache, aggressive);
-		if (!shrinked) {
+	for (size_t i = 0; i < niter; ++i) {
+		if (!cache_shrink_some(cache, shift++)) {
 			break;
 		}
 	}
@@ -2402,21 +2399,19 @@ static void cache_relax_niter(struct silofs_cache *cache,
 
 void silofs_cache_relax(struct silofs_cache *cache, int flags)
 {
-	int niter;
-	bool aggressive;
+	size_t niter;
 	bool evict_some;
 	bool evict_more;
 
 	niter = cache_calc_niter(cache, flags);
-	aggressive = niter > 16;
 	evict_some = niter > 0;
 	evict_more = (flags & (SILOFS_F_TIMEOUT | SILOFS_F_WALKFS)) > 0;
 
 	if (evict_some) {
-		cache_relax_niter(cache, niter, aggressive);
+		cache_relax_niter(cache, niter);
 	}
 	if (evict_more) {
-		cache_relax_niter(cache, niter, aggressive);
+		cache_relax_niter(cache, max(niter, 1));
 	}
 }
 
@@ -2427,7 +2422,7 @@ void silofs_cache_shrink_once(struct silofs_cache *cache)
 	const size_t memsz_data = cache->mem_size_hint;
 
 	if ((8 * memsz_ubis) > memsz_data) {
-		cache_shrink_some(cache, false);
+		cache_shrink_some(cache, 0);
 	}
 }
 
@@ -2607,7 +2602,7 @@ static void cache_evict_some(struct silofs_cache *cache)
 		evicted = true;
 	}
 	if (!evicted) {
-		cache_shrink_some(cache, false);
+		cache_shrink_some(cache, 0);
 	}
 }
 

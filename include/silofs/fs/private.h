@@ -39,6 +39,19 @@
 #define EFSBADCRC       EBADMSG /* Bad CRC detected */
 #endif
 
+
+static inline int silofs_ENOSPC(void)
+{
+	int err;
+
+	err = 28;
+	return err;
+}
+
+#undef ENOSPC
+#define ENOSPC (silofs_ENOSPC())
+
+
 /* common macros */
 #define likely(x_)                      silofs_likely(x_)
 #define unlikely(x_)                    silofs_unlikely(x_)
@@ -59,6 +72,7 @@
 #define unused(x)                       silofs_unused(x)
 
 #define min(x, y)                       silofs_min(x, y)
+#define min3(x, y, z)                   silofs_min3(x, y, z)
 #define max(x, y)                       silofs_max(x, y)
 #define div_round_up(n, d)              silofs_div_round_up(n, d)
 
@@ -108,6 +122,7 @@
 #define stype_issuper(st)               silofs_stype_issuper(st)
 #define stype_isspnode(st)              silofs_stype_isspnode(st)
 #define stype_isspleaf(st)              silofs_stype_isspleaf(st)
+#define stype_isvnode(st)               silofs_stype_isvnode(st)
 #define stype_isitnode(st)              silofs_stype_isitnode(st)
 #define stype_isinode(st)               silofs_stype_isinode(st)
 #define stype_isftnode(st)              silofs_stype_isftnode(st)
@@ -129,7 +144,6 @@
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
 #define oaddr_setup(oa, bid, s, o)      silofs_oaddr_setup(oa, bid, s, o)
 #define oaddr_setup_by(oa, bid, va)     silofs_oaddr_setup_by(oa, bid, va)
-#define oaddr_lba(oa)                   silofs_oaddr_lba(oa)
 #define oaddr_isvalid(oa)               silofs_oaddr_isvalid(oa)
 
 #define uaddr_none()                    silofs_uaddr_none()
@@ -151,8 +165,8 @@
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 
-#define uvaddr_setup(uva, ua, va)       silofs_uvaddr_setup(uva, ua, va)
-#define uvaddr_assign(uva, oth)         silofs_uvaddr_assign(uva, oth)
+#define voaddr_setup(voa, ua, va)       silofs_voaddr_setup(voa, ua, va)
+#define voaddr_assign(voa, oth)         silofs_voaddr_assign(voa, oth)
 
 #define bli_incref(bli)                 silofs_bli_incref(bli)
 #define bli_decref(bli)                 silofs_bli_decref(bli)
@@ -167,9 +181,12 @@
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)
 #define sni_decref(sni)                 silofs_sni_decref(sni)
+#define sni_vrange(sni, vrng)           silofs_sni_vspace_range(sni, vrng)
+
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
 #define sli_incref(sli)                 silofs_sli_incref(sli)
 #define sli_decref(sli)                 silofs_sli_decref(sli)
+#define sli_vrange(sli, vrng)           silofs_sli_vspace_range(sli, vrng)
 
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)
@@ -178,6 +195,7 @@
 #define ui_stype(ui)                    silofs_ui_stype(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
 #define ui_oaddr(ui)                    silofs_ui_oaddr(ui)
+#define ui_bkaddr(ui)                   silofs_ui_bkaddr(ui)
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)

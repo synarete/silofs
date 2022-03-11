@@ -192,6 +192,12 @@ silofs_ui_oaddr(const struct silofs_unode_info *ui)
 	return &ui->u_uaddr.oaddr;
 }
 
+static inline const struct silofs_bkaddr *
+silofs_ui_bkaddr(const struct silofs_unode_info *ui)
+{
+	return &ui->u_uaddr.oaddr.bka;
+}
+
 static inline enum silofs_stype
 silofs_ui_stype(const struct silofs_unode_info *ui) {
 	return ui->u_uaddr.stype;

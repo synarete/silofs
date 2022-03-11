@@ -54,7 +54,7 @@ struct silofs_unode_info {
 	struct silofs_list_head         u_unom_lh;
 	struct silofs_list_head         u_pack_lh;
 	struct silofs_ubk_info         *u_ubi;
-	struct silofs_bytebuf           u_bb;
+	struct silofs_pack_iovs        *u_piov;
 	bool                            u_tmapped;
 	bool                            u_verified;
 	bool                            u_plinked;
@@ -71,14 +71,22 @@ struct silofs_sb_info {
 	unsigned long                   s_ctl_flags;
 	unsigned long                   s_ms_flags;
 	time_t                          s_mntime;
+	loff_t                          s_vspa_data1k;
+	loff_t                          s_vspa_data4k;
+	loff_t                          s_vspa_databk;
+	loff_t                          s_vspa_itnode;
+	loff_t                          s_vspa_inode;
+	loff_t                          s_vspa_xanode;
+	loff_t                          s_vspa_dirnode;
+	loff_t                          s_vspa_filenode;
+	loff_t                          s_vspa_symval;
 };
 
 /* spnode */
 struct silofs_spnode_info {
 	struct silofs_unode_info        sn_ui;
 	struct silofs_spmap_node       *sn;
-	size_t                          sn_nchild_form;
-	size_t                          sn_nused_bytes;
+	size_t                          sn_nactive_subs;
 };
 
 /* spleaf */
@@ -86,7 +94,6 @@ struct silofs_spleaf_info {
 	struct silofs_unode_info        sl_ui;
 	struct silofs_spmap_leaf       *sl;
 	size_t                          sl_nused_bytes;
-	loff_t                          sl_voff_last;
 };
 
 /* vnode */

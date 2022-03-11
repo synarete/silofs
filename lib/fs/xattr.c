@@ -1036,7 +1036,7 @@ int silofs_do_setxattr(const struct silofs_fs_ctx *fs_ctx,
 /*
  * TODO-0003: Delete node if empty
  *
- * Free xattr-node upon last-entry remuval and update parent-slot.
+ * Free xattr-node upon last-entry remvoal and update parent-slot.
  */
 static int xac_removexattr(struct silofs_xattr_ctx *xa_ctx)
 {

@@ -335,23 +335,22 @@ static int xiovec_by_blob(const struct silofs_file_ctx *f_ctx,
                           loff_t off_within, size_t len,
                           struct silofs_xiovec *out_xiov)
 {
-	struct silofs_uvaddr uva;
+	struct silofs_voaddr voa;
 	struct silofs_ubk_info *ubi = NULL;
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_resolve_uva(f_ctx->sbi, vaddr, stg_flags, &uva);
+	err = silofs_sbi_resolve_voa(f_ctx->sbi, vaddr, stg_flags, &voa);
 	if (err) {
 		return err;
 	}
-	uva.uaddr.oaddr.pos += off_within;
-	uva.uaddr.oaddr.len = len;
-	err = silofs_sbi_stage_ubk(f_ctx->sbi, &uva.uaddr.oaddr, &ubi);
+	voa.oaddr.pos += off_within;
+	voa.oaddr.len = len;
+	err = silofs_sbi_stage_ubk_of(f_ctx->sbi, &voa.oaddr, &ubi);
 	if (err) {
 		return err;
 	}
-	silofs_assert_not_null(ubi->bli);
-	err = silofs_bli_resolve(ubi->bli, &uva.uaddr.oaddr, out_xiov);
+	err = silofs_bli_resolve(ubi->ubk_bli, &voa.oaddr, out_xiov);
 	if (err) {
 		return err;
 	}
@@ -888,12 +887,12 @@ static void fmc_nomap(struct silofs_fmap_ctx *fm_ctx,
 
 static int fmc_require_mutable(const struct silofs_fmap_ctx *fm_ctx)
 {
-	struct silofs_uvaddr uva;
+	struct silofs_voaddr voa;
 	struct silofs_sb_info *sbi = fm_ctx->f_ctx->sbi;
 	const struct silofs_vaddr *vaddr = &fm_ctx->vaddr;
 	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_MUTABLE;
 
-	return silofs_sbi_resolve_uva(sbi, vaddr, stg_flags, &uva);
+	return silofs_sbi_resolve_voa(sbi, vaddr, stg_flags, &voa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2070,13 +2069,13 @@ static int fic_claim_data_space(const struct silofs_file_ctx *f_ctx,
                                 struct silofs_vaddr *out_vaddr)
 {
 	int err;
-	struct silofs_uvaddr uva;
+	struct silofs_voaddr voa;
 
-	err = silofs_sbi_claim_vspace(f_ctx->sbi, stype, &uva);
+	err = silofs_sbi_claim_vspace(f_ctx->sbi, stype, &voa);
 	if (err) {
 		return err;
 	}
-	vaddr_assign(out_vaddr, &uva.vaddr);
+	vaddr_assign(out_vaddr, &voa.vaddr);
 	return 0;
 }
 

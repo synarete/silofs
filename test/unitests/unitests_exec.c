@@ -452,13 +452,14 @@ long *ut_randseq(struct ut_env *ute, size_t len, long base)
 	size_t *pos;
 
 	arr = ut_zerobuf(ute, len * sizeof(*arr));
-	for (size_t i = 0; i < len; ++i) {
-		arr[i] = base++;
-	}
-
 	pos = ut_randbuf(ute, len * sizeof(*pos));
-	for (size_t i = 0; i < len; ++i) {
-		swap(arr, i, pos[i] % len);
+	if ((arr != NULL) && (pos != NULL)) { /* make gcc-analyzer happy */
+		for (size_t i = 0; i < len; ++i) {
+			arr[i] = base++;
+		}
+		for (size_t i = 0; i < len; ++i) {
+			swap(arr, i, pos[i] % len);
+		}
 	}
 	return arr;
 }
@@ -483,8 +484,10 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 	char *str;
 
 	str = ut_randbuf(ute, len + 1);
-	force_alnum(str, len);
-	str[len] = '\0';
+	if (str != NULL) { /* make gcc-analyzer happy */
+		force_alnum(str, len);
+		str[len] = '\0';
+	}
 	return str;
 }
 

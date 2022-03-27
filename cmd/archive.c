@@ -17,10 +17,11 @@
 #include <silofs/cmd.h>
 
 
-static struct silofs_subcmd_archive *archive_args;
+static struct silofs_subcmd_archive *cmd_archive_args;
+static int cmd_archive_warm_lock_fd = -1;
 
-static const char *archive_usage[] = {
-	"archive [options] <main-repo/name> <cold-repo/name>",
+static const char *cmd_archive_usage[] = {
+	"archive [options] <warm-repo/name> <cold-repo/name>",
 	"",
 	"options:",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..3)",
@@ -28,9 +29,10 @@ static const char *archive_usage[] = {
 	NULL
 };
 
-static void archive_getopt(void)
+static void cmd_archive_getopt(void)
 {
 	int opt_chr = 1;
+	char **popt = NULL;
 	const struct option opts[] = {
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "passphrase-file", required_argument, NULL, 'P' },
@@ -43,113 +45,117 @@ static void archive_getopt(void)
 		if (opt_chr == 'V') {
 			silofs_set_verbose_mode(optarg);
 		} else if (opt_chr == 'P') {
-			archive_args->passphrase_file = optarg;
+			popt = &cmd_archive_args->passphrase_file;
+			silofs_cmd_getoptarg("--passphrase-file", popt);
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(archive_usage);
+			silofs_print_help_and_exit(cmd_archive_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("main-repo/name", &archive_args->main_repodir_name);
-	silofs_cmd_getarg("cold-repo/name", &archive_args->cold_repodir_name);
+	silofs_cmd_getarg("warm-repo/name",
+	                  &cmd_archive_args->warm_repodir_name);
+	silofs_cmd_getarg("cold-repo/name",
+	                  &cmd_archive_args->cold_repodir_name);
 	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void archive_finalize(void)
+static void cmd_archive_finalize(void)
 {
-	silofs_destroy_fse_inst();
-	silofs_cmd_delpass(&archive_args->passphrase);
-	silofs_cmd_pfrees(&archive_args->main_repodir_name);
-	silofs_cmd_pfrees(&archive_args->main_repodir);
-	silofs_cmd_pfrees(&archive_args->main_repodir_real);
-	silofs_cmd_pfrees(&archive_args->main_name);
-	silofs_cmd_pfrees(&archive_args->cold_repodir_name);
-	silofs_cmd_pfrees(&archive_args->cold_repodir);
-	silofs_cmd_pfrees(&archive_args->cold_repodir_real);
-	silofs_cmd_pfrees(&archive_args->cold_name);
+	silofs_cmd_destroy_fse_inst();
+	silofs_cmd_pfrees(&cmd_archive_args->warm_repodir_name);
+	silofs_cmd_pfrees(&cmd_archive_args->warm_repodir);
+	silofs_cmd_pfrees(&cmd_archive_args->warm_repodir_real);
+	silofs_cmd_pfrees(&cmd_archive_args->warm_name);
+	silofs_cmd_pfrees(&cmd_archive_args->cold_repodir_name);
+	silofs_cmd_pfrees(&cmd_archive_args->cold_repodir);
+	silofs_cmd_pfrees(&cmd_archive_args->cold_repodir_real);
+	silofs_cmd_pfrees(&cmd_archive_args->cold_name);
+	silofs_cmd_pfrees(&cmd_archive_args->passphrase_file);
+	silofs_cmd_delpass(&cmd_archive_args->passphrase);
+	silofs_cmd_unlockf(&cmd_archive_warm_lock_fd);
 }
 
-static void archive_start(void)
+static void cmd_archive_start(void)
 {
-	archive_args = &silofs_globals.cmd.archive;
-	atexit(archive_finalize);
+	cmd_archive_args = &silofs_globals.cmd.archive;
+	atexit(cmd_archive_finalize);
 }
 
-static void archive_prepare(void)
+static void cmd_archive_prepare(void)
 {
-	/* XXX FIXME */
-	/*
-	silofs_cmd_getpass2(archive_args->passphrase_file,
-	                    &archive_args->passphrase);
-	*/
-	silofs_cmd_splitpath(archive_args->main_repodir_name,
-	                     &archive_args->main_repodir,
-	                     &archive_args->main_name);
+	silofs_cmd_check_reg(cmd_archive_args->warm_repodir_name, false);
 
-	silofs_cmd_splitpath2(archive_args->cold_repodir_name,
-	                      archive_args->main_name,
-	                      &archive_args->cold_repodir,
-	                      &archive_args->cold_name);
+	silofs_cmd_splitpath(cmd_archive_args->warm_repodir_name,
+	                     &cmd_archive_args->warm_repodir,
+	                     &cmd_archive_args->warm_name);
 
-	silofs_cmd_check_notexists2(archive_args->cold_repodir,
-	                            archive_args->cold_name);
+	silofs_cmd_splitpath2(cmd_archive_args->cold_repodir_name,
+	                      cmd_archive_args->warm_name,
+	                      &cmd_archive_args->cold_repodir,
+	                      &cmd_archive_args->cold_name);
 
-	silofs_cmd_check_nonemptydir(archive_args->main_repodir, false);
-	silofs_cmd_realpath(archive_args->main_repodir,
-	                    &archive_args->main_repodir_real);
-	silofs_cmd_check_fsname(archive_args->main_name);
+	silofs_cmd_check_notexists2(cmd_archive_args->cold_repodir,
+	                            cmd_archive_args->cold_name);
 
-	silofs_cmd_check_nonemptydir(archive_args->cold_repodir, true);
-	silofs_cmd_realpath(archive_args->cold_repodir,
-	                    &archive_args->cold_repodir_real);
-	silofs_cmd_check_fsname(archive_args->cold_name);
+	silofs_cmd_check_nonemptydir(cmd_archive_args->warm_repodir, false);
+
+	silofs_cmd_realpath(cmd_archive_args->warm_repodir,
+	                    &cmd_archive_args->warm_repodir_real);
+
+	silofs_cmd_check_fsname(cmd_archive_args->warm_name);
+
+	silofs_cmd_check_nonemptydir(cmd_archive_args->cold_repodir, true);
+
+	silofs_cmd_realpath(cmd_archive_args->cold_repodir,
+	                    &cmd_archive_args->cold_repodir_real);
+
+	silofs_cmd_check_fsname(cmd_archive_args->cold_name);
+
+	silofs_cmd_lockf(cmd_archive_args->warm_repodir_real,
+	                 cmd_archive_args->warm_name,
+	                 &cmd_archive_warm_lock_fd);
+
+	silofs_cmd_getpass2(cmd_archive_args->passphrase_file,
+	                    &cmd_archive_args->passphrase);
 }
 
-static void archive_create_fs_env(void)
+static void cmd_archive_create_fs_env(void)
 {
 	const struct silofs_fs_args args = {
-		.main_repodir = archive_args->main_repodir_real,
-		.cold_repodir = archive_args->cold_repodir_real,
-		.main_name = archive_args->main_name,
-		.cold_name = archive_args->cold_name,
-		.passwd = archive_args->passphrase,
+		.main_repodir = cmd_archive_args->warm_repodir_real,
+		.cold_repodir = cmd_archive_args->cold_repodir_real,
+		.main_name = cmd_archive_args->warm_name,
+		.cold_name = cmd_archive_args->cold_name,
+		.passwd = cmd_archive_args->passphrase,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
 	};
 
-	silofs_create_fse_inst(&args);
+	silofs_cmd_create_fse_inst(&args);
 }
 
-static void archive_verify_bootsec(void)
+static void cmd_archive_verify_bootsec(void)
 {
-	struct silofs_bootsec bsec;
-	struct silofs_fs_env *fse = silofs_fse_inst();
-	const char *repodir = archive_args->main_repodir_real;
-	const char *repodir_name = archive_args->main_repodir_name;
+	struct silofs_bootsec bsec = { .btime = 0 };
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
+	const char *repodir = cmd_archive_args->warm_repodir_real;
+	const char *repodir_name = cmd_archive_args->warm_repodir_name;
 	struct silofs_namestr nstr;
-	int fd = -1;
 	int err;
 
-	silofs_make_fsnamestr(&nstr, archive_args->main_name);
+	silofs_make_fsnamestr(&nstr, cmd_archive_args->warm_name);
 	err = silofs_fse_open_repos(fse);
 	if (err) {
 		silofs_die(err, "failed to open repo: %s", repodir);
 	}
-	err = silofs_fse_lock_boot(fse, &nstr, &fd);
-	if (err) {
-		silofs_die(err, "failed to lock: %s", repodir_name);
-	}
 	err = silofs_fse_load_boot(fse, &nstr, &bsec);
 	if (err) {
 		silofs_die(err, "failed to load boot: %s", repodir_name);
-	}
-	err = silofs_fse_unlock_boot(fse, &nstr, &fd);
-	if (err) {
-		silofs_die(err, "failed to unlock: %s", repodir_name);
 	}
 	err = silofs_fse_close_repos(fse);
 	if (err) {
@@ -157,11 +163,11 @@ static void archive_verify_bootsec(void)
 	}
 }
 
-static void archive_verify_fs_env(void)
+static void cmd_archive_verify_fs_env(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
-	const char *repodir_name = archive_args->main_repodir_name;
-	const char *name = archive_args->main_name;
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
+	const char *repodir_name = cmd_archive_args->warm_repodir_name;
+	const char *name = cmd_archive_args->warm_name;
 	int err;
 
 	err = silofs_fse_verify(fse);
@@ -176,68 +182,68 @@ static void archive_verify_fs_env(void)
 	}
 }
 
-static void archive_filesystem(void)
+static void cmd_archive_filesystem(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
 	int err;
 
 	err = silofs_fse_archive(fse);
 	if (err) {
 		silofs_die(err, "archive failed: %s --> %s",
-		           archive_args->main_repodir_name,
-		           archive_args->cold_repodir_name);
+		           cmd_archive_args->warm_repodir_name,
+		           cmd_archive_args->cold_repodir_name);
 	}
 }
 
-static void archive_finish(void)
+static void cmd_archive_finish(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
 	int err;
 
 	err = silofs_fse_shut(fse);
 	if (err) {
 		silofs_die(err, "finish archive error: %s --> %s",
-		           archive_args->main_repodir_name,
-		           archive_args->cold_repodir_name);
+		           cmd_archive_args->warm_repodir_name,
+		           cmd_archive_args->cold_repodir_name);
 	}
 	err = silofs_fse_term(fse);
 	if (err) {
 		silofs_die(err, "internal archive error: %s --> %s",
-		           archive_args->main_repodir_name,
-		           archive_args->cold_repodir_name);
+		           cmd_archive_args->warm_repodir_name,
+		           cmd_archive_args->cold_repodir_name);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_archive(void)
+void silofs_cmd_execute_archive(void)
 {
 	/* Do all cleanups upon exits */
-	archive_start();
+	cmd_archive_start();
 
 	/* Parse command's arguments */
-	archive_getopt();
+	cmd_archive_getopt();
 
 	/* Verify user's arguments */
-	archive_prepare();
+	cmd_archive_prepare();
 
 	/* Prepare environment */
-	archive_create_fs_env();
+	cmd_archive_create_fs_env();
 
 	/* Require source boot sector */
-	archive_verify_bootsec();
+	cmd_archive_verify_bootsec();
 
 	/* Require source fs */
-	archive_verify_fs_env();
+	cmd_archive_verify_fs_env();
 
 	/* Do actual archive */
-	archive_filesystem();
+	cmd_archive_filesystem();
 
 	/* Post-archive cleanups */
-	archive_finish();
+	cmd_archive_finish();
 
 	/* Post execution cleanups */
-	archive_finalize();
+	cmd_archive_finalize();
 }
 
 

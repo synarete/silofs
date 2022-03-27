@@ -43,7 +43,7 @@ struct silofs_tnode_info {
 	struct silofs_tnode_info       *t_ds_next;
 	union silofs_view              *t_view;
 	enum silofs_stype               t_stype;
-	bool t_noflush;
+	volatile bool                   t_noflush;
 };
 
 /* unode */

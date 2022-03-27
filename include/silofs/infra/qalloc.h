@@ -49,7 +49,7 @@ struct silofs_slab {
 };
 
 struct silofs_qalloc {
-	struct silofs_slab       slabs[64];
+	struct silofs_slab       slabs[32];
 	struct silofs_list_head  free_pgs;
 	struct silofs_alloc_stat alst;
 	struct silofs_alloc_if   alif;

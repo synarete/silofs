@@ -25,6 +25,12 @@ void silofs_uint64_to_ascii(uint64_t u, char *a);
 
 uint64_t silofs_ascii_to_uint64(const char *a);
 
+void silofs_hash256_assign(struct silofs_hash256 *hash,
+                           const struct silofs_hash256 *other);
+
+bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
+                            const struct silofs_hash256 *other);
+
 uint64_t silofs_hash256_to_u64(const struct silofs_hash256 *hash);
 
 void silofs_hash512_assign(struct silofs_hash512 *hash,

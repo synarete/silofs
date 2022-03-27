@@ -62,7 +62,6 @@ int silofs_do_copy_file_range(const struct silofs_fs_ctx *op,
                               int flags, size_t *out_ncp);
 
 int silofs_do_rdwr_post(const struct silofs_fs_ctx *op,
-                        struct silofs_inode_info *ii,
                         const struct silofs_xiovec *xiov, size_t cnt);
 
 

@@ -82,10 +82,9 @@ enum silofs_flags {
 	SILOFS_F_BRINGUP        = SILOFS_BIT(7),
 	SILOFS_F_OPSTART        = SILOFS_BIT(8),
 	SILOFS_F_TIMEOUT        = SILOFS_BIT(9),
-	SILOFS_F_SLUGGISH       = SILOFS_BIT(10),
-	SILOFS_F_IDLE           = SILOFS_BIT(11),
-	SILOFS_F_WALKFS         = SILOFS_BIT(12),
-	SILOFS_F_MMAPBLOBS      = SILOFS_BIT(13),
+	SILOFS_F_IDLE           = SILOFS_BIT(10),
+	SILOFS_F_WALKFS         = SILOFS_BIT(11),
+	SILOFS_F_MMAPBLOBS      = SILOFS_BIT(12),
 };
 
 /* stage-element control flags */
@@ -325,11 +324,13 @@ struct silofs_vrange {
 
 /* boot-sector in-memory repr  */
 struct silofs_bootsec {
+	struct silofs_hash256           key_hash;
 	struct silofs_uuid              uuid;
 	struct silofs_uaddr             sb_uaddr;
 	struct silofs_packid            sb_packid;
 	struct silofs_cipher_args       cip_args;
-	time_t btime;
+	time_t                          btime;
+	enum silofs_bootf               flags;
 };
 
 /* caching-element's key, up to 256-bits */
@@ -464,6 +465,7 @@ struct silofs_fs_ctx {
 struct silofs_fs_apex {
 	const struct silofs_fs_args    *ap_args;
 	struct silofs_alloc_if         *ap_alif;
+	struct silofs_kivam            *ap_kivam;
 	struct silofs_crypto           *ap_crypto;
 	struct silofs_repo             *ap_mrepo;
 	struct silofs_repo             *ap_crepo;
@@ -493,6 +495,7 @@ struct silofs_fs_args {
 	bool   withfuse;
 	bool   pedantic;
 	bool   allowother;
+	bool   wbackcache;
 	bool   lazytime;
 	bool   noexec;
 	bool   nosuid;

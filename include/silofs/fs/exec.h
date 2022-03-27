@@ -47,6 +47,8 @@ int silofs_fse_archive(struct silofs_fs_env *fse);
 
 int silofs_fse_restore(struct silofs_fs_env *fse);
 
+int silofs_fse_snap(struct silofs_fs_env *fse, const char *name);
+
 int silofs_fse_verify(struct silofs_fs_env *fse);
 
 int silofs_fse_shut(struct silofs_fs_env *fse);
@@ -69,12 +71,6 @@ int silofs_fse_open_repos(struct silofs_fs_env *fse);
 int silofs_fse_close_repos(struct silofs_fs_env *fse);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_fse_lock_boot(const struct silofs_fs_env *fse,
-                         const struct silofs_namestr *name, int *pfd);
-
-int silofs_fse_unlock_boot(const struct silofs_fs_env *fse,
-                           const struct silofs_namestr *name, int *pfd);
 
 int silofs_fse_load_boot(const struct silofs_fs_env *fse,
                          const struct silofs_namestr *name,

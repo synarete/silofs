@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define DEFCMD(cmd_)    { #cmd_, silofs_execute_##cmd_ }
+#define DEFCMD(cmd_)    { #cmd_, silofs_cmd_execute_##cmd_ }
 
 static const struct silofs_cmd_info g_cmd_info[] = {
 	DEFCMD(init),

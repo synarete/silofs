@@ -35,9 +35,14 @@ struct silofs_thread {
 
 struct silofs_mutex {
 	pthread_mutex_t mutex;
-	int alive;
 };
 
+struct silofs_cond {
+	pthread_cond_t  cond;
+};
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_thread_sigblock_common(void);
 
@@ -46,9 +51,10 @@ int silofs_thread_create(struct silofs_thread *th,
 
 int silofs_thread_join(struct silofs_thread *th);
 
+
 int silofs_mutex_init(struct silofs_mutex *mutex);
 
-void silofs_mutex_destroy(struct silofs_mutex *mutex);
+void silofs_mutex_fini(struct silofs_mutex *mutex);
 
 void silofs_mutex_lock(struct silofs_mutex *mutex);
 
@@ -58,5 +64,19 @@ bool silofs_mutex_timedlock(struct silofs_mutex *mutex,
                             const struct timespec *abstime);
 
 void silofs_mutex_unlock(struct silofs_mutex *mutex);
+
+
+int silofs_cond_init(struct silofs_cond *cond);
+
+void silofs_cond_fini(struct silofs_cond *cond);
+
+void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex);
+
+int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
+                          const struct timespec *ts);
+
+void silofs_cond_signal(struct silofs_cond *cond);
+
+void silofs_cond_broadcast(struct silofs_cond *cond);
 
 #endif /* SILOFS_THREAD_H_ */

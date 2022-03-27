@@ -1,4 +1,5 @@
 nobase_include_HEADERS = $(NULL)
+nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h
 nobase_include_HEADERS += silofs/infra/bytebuf.h
@@ -29,6 +30,7 @@ nobase_include_HEADERS += silofs/fs/defs.h
 nobase_include_HEADERS += silofs/fs/dir.h
 nobase_include_HEADERS += silofs/fs/exec.h
 nobase_include_HEADERS += silofs/fs/file.h
+nobase_include_HEADERS += silofs/fs/fused.h
 nobase_include_HEADERS += silofs/fs/fuseq.h
 nobase_include_HEADERS += silofs/fs/inlines.h
 nobase_include_HEADERS += silofs/fs/inode.h

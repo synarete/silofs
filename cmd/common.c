@@ -51,13 +51,13 @@
 struct silofs_globals silofs_globals;
 
 __attribute__((__noreturn__))
-void silofs_die_missing_arg(const char *s)
+static void silofs_die_missing_arg(const char *s)
 {
 	silofs_die(0, "missing argument: %s", s);
 }
 
 __attribute__((__noreturn__))
-void silofs_die_redundant_arg(const char *s)
+static void silofs_die_redundant_arg(const char *s)
 {
 	silofs_die(0, "redundant argument: %s", s);
 }
@@ -68,7 +68,7 @@ void silofs_die_unsupported_opt(void)
 	exit(EXIT_FAILURE);
 }
 
-void silofs_die_if_missing_arg(const char *arg_name, const void *arg_val)
+void silofs_cmd_require_arg(const char *arg_name, const void *arg_val)
 {
 	if (arg_val == NULL) {
 		silofs_die_missing_arg(arg_name);
@@ -341,6 +341,14 @@ void silofs_cmd_endargs(void)
 	silofs_die_if_redundant_arg();
 }
 
+void silofs_cmd_getoptarg(const char *opt_name, char **out_opt)
+{
+	if (!optarg || !strlen(optarg)) {
+		silofs_die(0, "missing option argument: %s", opt_name);
+	}
+	*out_opt = silofs_cmd_strdup(optarg);
+}
+
 void silofs_cmd_getarg(const char *arg_name, char **out_arg)
 {
 	char *arg = NULL;
@@ -523,8 +531,8 @@ void silofs_cmd_realpath(const char *path, char **out_real)
 
 void silofs_cmd_stat_ok(const char *path, struct stat *st)
 {
-	int err;
 	mode_t mode;
+	int err;
 
 	silofs_access_ok(path);
 
@@ -543,6 +551,14 @@ void silofs_cmd_stat_reg(const char *path, struct stat *st)
 	silofs_cmd_stat_ok(path, st);
 	if (!S_ISREG(st->st_mode)) {
 		silofs_die(0, "not a regular file: %s", path);
+	}
+}
+
+void silofs_cmd_stat_dir(const char *path, struct stat *st)
+{
+	silofs_cmd_stat_ok(path, st);
+	if (!S_ISDIR(st->st_mode)) {
+		silofs_die(0, "not a directory: %s", path);
 	}
 }
 
@@ -676,7 +692,7 @@ static void silofs_require_no_inst(const void *inst)
 	}
 }
 
-void silofs_create_fse_inst(const struct silofs_fs_args *args)
+void silofs_cmd_create_fse_inst(const struct silofs_fs_args *args)
 {
 	int err;
 
@@ -687,7 +703,7 @@ void silofs_create_fse_inst(const struct silofs_fs_args *args)
 	}
 }
 
-void silofs_destroy_fse_inst(void)
+void silofs_cmd_destroy_fse_inst(void)
 {
 	if (g_fs_env_inst) {
 		silofs_fse_del(g_fs_env_inst);
@@ -696,7 +712,7 @@ void silofs_destroy_fse_inst(void)
 	}
 }
 
-struct silofs_fs_env *silofs_fse_inst(void)
+struct silofs_fs_env *silofs_cmd_fse_inst(void)
 {
 	return g_fs_env_inst;
 }

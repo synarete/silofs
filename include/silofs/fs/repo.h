@@ -186,12 +186,6 @@ int silofs_repo_save_bsec(const struct silofs_repo *repo,
 int silofs_repo_remove_bsec(const struct silofs_repo *repo,
                             const struct silofs_namestr *nstr);
 
-int silofs_repo_lock_bsec(const struct silofs_repo *repo,
-                          const struct silofs_namestr *nstr, int *out_fd);
-
-int silofs_repo_unlock_bsec(const struct silofs_repo *repo,
-                            const struct silofs_namestr *nstr, int *pfd);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_collect_flush(struct silofs_repo *repo, int flags);

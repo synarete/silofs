@@ -3,10 +3,11 @@ name: "Silofs: build check deploy and test"
 
 on:
   push:
-    branches: ['*']
+    branches: 
+      - '*'
+      - '!_*'
   pull_request:
     branches: [$default-branch]
-
 jobs:
   begin:
     name: Validate build environment

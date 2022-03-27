@@ -238,7 +238,7 @@ void silofs_cmd_getpass2(const char *path, char **out_pass)
 void silofs_cmd_delpass(char **pass)
 {
 	if (pass && *pass) {
-		memset(*pass, 0xEC, strlen(*pass));
+		silofs_memffff(*pass, strlen(*pass));
 		silofs_cmd_pfrees(pass);
 	}
 }

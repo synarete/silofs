@@ -187,6 +187,11 @@ COMPILER_PRIVATE = \
     __restrict
     __RESTRICT
     __EXTENSIONS__
+    __ATOMIC_RELAXED
+    __atomic_load_n
+    __atomic_store_n
+    __atomic_add_fetch
+    __atomic_sub_fetch
     '''
 
 SYS_PRIVATE = \
@@ -258,8 +263,8 @@ RE_SUSPICIOUS_SEMICOLON = re.compile(r'''\bif\s*\(.*\)\s*;''')
 # Common helpers:
 
 
-def getext(path: str) -> str:
-    return str(os.path.splitext(path)[1])
+def getext(pname: str) -> str:
+    return str(os.path.splitext(pname)[1])
 
 
 def iscfile(path: str) -> bool:

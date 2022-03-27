@@ -86,6 +86,18 @@ static uint64_t u64_of(const uint8_t p[8])
 	return u;
 }
 
+void silofs_hash256_assign(struct silofs_hash256 *hash,
+                           const struct silofs_hash256 *other)
+{
+	memcpy(hash, other, sizeof(*hash));
+}
+
+bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
+                            const struct silofs_hash256 *other)
+{
+	return (memcmp(hash, other, sizeof(*hash)) == 0);
+}
+
 uint64_t silofs_hash256_to_u64(const struct silofs_hash256 *hash)
 {
 	const uint8_t *h = hash->hash;

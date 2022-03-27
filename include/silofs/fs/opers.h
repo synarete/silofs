@@ -137,13 +137,10 @@ int silofs_fs_read_iter(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                         struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_fs_write(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
-                    const void *buf, size_t len, off_t off, size_t *out_len);
+                    const void *buf, size_t len, loff_t off, size_t *out_len);
 
 int silofs_fs_write_iter(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                          struct silofs_rwiter_ctx *rwi_ctx);
-
-int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
-                        const struct silofs_xiovec *xiov, size_t cnt);
 
 int silofs_fs_statx(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     unsigned int request_mask, struct statx *out_stx);
@@ -154,7 +151,7 @@ int silofs_fs_fiemap(const struct silofs_fs_ctx *fs_ctx,
 int silofs_fs_syncfs(const struct silofs_fs_ctx *fs_ctx, ino_t ino);
 
 int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
-                    struct silofs_ioc_query *out_qry);
+                    int qtype, struct silofs_ioc_query *out_qry);
 
 int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
                     ino_t ino, const char *name, int flags);
@@ -169,6 +166,9 @@ int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
 
 int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
                      const char *src_name, const char *dst_name);
+
+int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx,
+                        const struct silofs_xiovec *xiov, size_t cnt);
 
 int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags);
 

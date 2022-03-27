@@ -181,17 +181,6 @@ static int do_fsync(int fd)
 	return err;
 }
 
-static int do_renameat(int dfd, const char *nold, const char *nnew)
-{
-	int err;
-
-	err = silofs_sys_renameat(dfd, nold, dfd, nnew);
-	if (err) {
-		log_warn("renameat error: dfd=%d err=%d", dfd, err);
-	}
-	return err;
-}
-
 static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 {
 	int err;
@@ -256,17 +245,6 @@ static int do_fstatat(int dirfd, const char *pathname,
 	if (err && (err != -ENOENT)) {
 		log_warn("fstatat error: dirfd=%d pathname=%s flags=%d err=%d",
 		         dirfd, pathname, flags, err);
-	}
-	return err;
-}
-
-static int do_fstat(int fd, struct stat *st)
-{
-	int err;
-
-	err = silofs_sys_fstat(fd, st);
-	if (err && (err != -ENOENT)) {
-		log_warn("fstat error: fd=%d err=%d", fd, st);
 	}
 	return err;
 }
@@ -343,62 +321,6 @@ static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 	return err;
 }
 
-static int do_fcntl_flock(int fd, int cmd, struct flock *fl)
-{
-	int err;
-
-	err = silofs_sys_fcntl_flock(fd, cmd, fl);
-	if (err && (err != -EAGAIN)) {
-		log_warn("flock error: fd=%d cmd=%d err=%d", fd, cmd, err);
-	}
-	return err;
-}
-
-static int do_flock(int fd, bool rw)
-{
-	struct stat st;
-	struct flock fl = {
-		.l_type = rw ? F_WRLCK : F_RDLCK,
-		.l_whence = SEEK_SET,
-		.l_start = 0,
-		.l_len = 0
-	};
-	int err;
-
-	err = do_fstat(fd, &st);
-	if (err) {
-		return err;
-	}
-	fl.l_len = st.st_size;
-	err = do_fcntl_flock(fd, F_SETLK, &fl);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int do_funlock(int fd)
-{
-	struct stat st;
-	struct flock fl = {
-		.l_type = F_UNLCK,
-		.l_whence = SEEK_SET,
-		.l_start = 0,
-		.l_len = 0
-	};
-	int err;
-
-	err = do_fstat(fd, &st);
-	if (err) {
-		return err;
-	}
-	fl.l_len = st.st_size;
-	err = do_fcntl_flock(fd, F_SETLK, &fl);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -1970,31 +1892,20 @@ out:
 	return err;
 }
 
-static void namebuf_mktmp(struct silofs_namebuf *nb)
-{
-	long t[2];
-
-	t[0] = (long)silofs_time_now();
-	silofs_getentropy(&t[1], sizeof(t[1]));
-
-	snprintf(nb->name, sizeof(nb->name) - 1, ".%ld%ld", t[0], t[1]);
-}
-
 int silofs_repo_save_bsec(const struct silofs_repo *repo,
                           const struct silofs_bootsec *bsec,
                           const struct silofs_namestr *nstr)
 {
-	struct silofs_namebuf nbuf;
 	struct silofs_bootsec4k *bsc = NULL;
 	const int dfd = repo->re_root_dfd;
 	int fd = -1;
+	int o_flags;
 	int err;
 
 	err = repo_check_open_mut(repo);
 	if (err) {
 		return err;
 	}
-	namebuf_mktmp(&nbuf);
 	bsc = repo_new_bootsec4k(repo);
 	if (bsc == NULL) {
 		return -ENOMEM;
@@ -2002,7 +1913,15 @@ int silofs_repo_save_bsec(const struct silofs_repo *repo,
 	silofs_bsec4k_set(bsc, bsec);
 	silofs_bsec4k_stamp(bsc, &repo->re_crypto->md);
 
-	err = do_openat(dfd, nbuf.name, O_CREAT | O_RDWR, 0600, &fd);
+	err = do_fchmodat(dfd, nstr->str.str, 0600);
+	if (!err) {
+		o_flags = O_RDWR;
+	} else if (err == -ENOENT) {
+		o_flags = O_RDWR | O_CREAT;
+	} else {
+		goto out;
+	}
+	err = do_openat(dfd, nstr->str.str, o_flags, 0600, &fd);
 	if (err) {
 		goto out;
 	}
@@ -2018,16 +1937,9 @@ int silofs_repo_save_bsec(const struct silofs_repo *repo,
 	if (err) {
 		goto out;
 	}
-	err = do_renameat(dfd, nbuf.name, nstr->str.str);
-	if (err) {
-		goto out;
-	}
 out:
 	repo_del_bootsec4k(repo, bsc);
 	do_closefd(&fd);
-	if (err) {
-		do_unlinkat(dfd, nbuf.name, 0);
-	}
 	return err;
 }
 
@@ -2074,65 +1986,6 @@ out:
 	return err;
 }
 
-int silofs_repo_lock_bsec(const struct silofs_repo *repo,
-                          const struct silofs_namestr *nstr, int *out_fd)
-{
-	const char *name = nstr->str.str;
-	const int dfd = repo->re_root_dfd;
-	int fd = -1;
-	int err;
-
-	err = repo_check_open_mut(repo);
-	if (err) {
-		return err;
-	}
-	err = do_fchmodat(dfd, name, 0600);
-	if (err) {
-		goto out;
-	}
-	err = do_openat(dfd, name, O_RDWR, 0, &fd);
-	if (err) {
-		goto out;
-	}
-	err = do_fchmodat(dfd, name, 0400);
-	if (err) {
-		goto out;
-	}
-	err = do_flock(fd, true);
-	if (err) {
-		goto out;
-	}
-out:
-	if (err) {
-		do_closefd(&fd);
-	}
-	*out_fd = fd;
-	return err;
-}
-
-int silofs_repo_unlock_bsec(const struct silofs_repo *repo,
-                            const struct silofs_namestr *nstr, int *pfd)
-{
-	struct stat st;
-	int err;
-
-	err = repo_check_open_mut(repo);
-	if (err) {
-		return err;
-	}
-	err = do_fstat(*pfd, &st);
-	if (err) {
-		log_dbg("cannot unlock due to fstat error: "
-		        "%s err=%d", nstr->str.str, err);
-		return err;
-	}
-	err = do_funlock(*pfd);
-	if (err) {
-		return err;
-	}
-	do_closefd(pfd);
-	return 0;
-}
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int repo_lookup_cached_ubi(struct silofs_repo *repo,

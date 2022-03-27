@@ -21,9 +21,9 @@
 #include <stdint.h>
 
 struct silofs_prandgen {
-	uint64_t rands[127];
 	uint32_t used_slots;
 	uint32_t take_cycle;
+	uint64_t rands[127];
 };
 
 

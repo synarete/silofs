@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/infra/macros.h>
 #include <silofs/infra/utility.h>
 #include <silofs/infra/errors.h>
 #include <silofs/infra/thread.h>
@@ -73,8 +74,8 @@ static void silofs_thread_complete(struct silofs_thread *th, int err)
 
 static void *silofs_thread_start(void *arg)
 {
-	int err;
 	struct silofs_thread *th = (struct silofs_thread *)arg;
+	int err;
 
 	silofs_thread_prepare(th);
 	err = th->exec(th);
@@ -85,10 +86,10 @@ static void *silofs_thread_start(void *arg)
 int silofs_thread_create(struct silofs_thread *th,
                          silofs_execute_fn exec, const char *name)
 {
-	int err;
-	size_t nlen = 0;
 	pthread_attr_t attr;
 	void *(*start)(void *arg) = silofs_thread_start;
+	size_t nlen = 0;
+	int err;
 
 	if (th->pth || th->exec || !exec) {
 		return -EINVAL;
@@ -116,36 +117,45 @@ int silofs_thread_join(struct silofs_thread *th)
 	return pthread_join(th->pth, NULL);
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int silofs_pthread_err(int err, const char *func)
+{
+#if !defined(NDEBUG)
+	if (err) {
+		silofs_panic("%s: %d", func, err);
+	}
+#else
+	silofs_unused(func);
+#endif
+	return -abs(err);
+}
 
 int silofs_mutex_init(struct silofs_mutex *mutex)
 {
-	int err;
 	pthread_mutexattr_t attr;
+	int err;
 
 	pthread_mutexattr_init(&attr);
 	err = pthread_mutexattr_settype(&attr, SILOFS_MUTEX_KIND);
 	if (err) {
-		return err;
+		return silofs_pthread_err(err, "pthread_mutexattr_settype");
 	}
 	err = pthread_mutex_init(&mutex->mutex, &attr);
 	pthread_mutexattr_destroy(&attr);
 	if (err) {
-		return err;
+		return silofs_pthread_err(err, "pthread_mutexattr_destroy");
 	}
-	mutex->alive = 1;
 	return 0;
 }
 
-void silofs_mutex_destroy(struct silofs_mutex *mutex)
+void silofs_mutex_fini(struct silofs_mutex *mutex)
 {
 	int err;
 
-	if (mutex->alive) {
-		err = pthread_mutex_destroy(&mutex->mutex);
-		if (err) {
-			silofs_panic("pthread_mutex_destroy: %d", err);
-		}
-		mutex->alive = 0;
+	err = pthread_mutex_destroy(&mutex->mutex);
+	if (err) {
+		silofs_panic("pthread_mutex_destroy: %d", err);
 	}
 }
 
@@ -201,3 +211,84 @@ void silofs_mutex_unlock(struct silofs_mutex *mutex)
 		silofs_panic("pthread_mutex_unlock: %d", err);
 	}
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_cond_init(struct silofs_cond *cond)
+{
+	pthread_condattr_t attr;
+	int err;
+
+	err = pthread_condattr_init(&attr);
+	if (err) {
+		return silofs_pthread_err(err, "pthread_condattr_init");
+	}
+	err = pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+	if (err) {
+		pthread_condattr_destroy(&attr);
+		return silofs_pthread_err(err, "pthread_condattr_setclock");
+	}
+	err = pthread_cond_init(&cond->cond, &attr);
+	if (err) {
+		pthread_condattr_destroy(&attr);
+		return silofs_pthread_err(err, "pthread_cond_init");
+	}
+	err = pthread_condattr_destroy(&attr);
+	if (err) {
+		return silofs_pthread_err(err, "pthread_condattr_destroy");
+	}
+	return 0;
+}
+
+void silofs_cond_fini(struct silofs_cond *cond)
+{
+	int err;
+
+	err = pthread_cond_destroy(&cond->cond);
+	if (err) {
+		silofs_panic("pthread_cond_destroy: %d", err);
+	}
+}
+
+void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex)
+{
+	int err;
+
+	err = pthread_cond_wait(&cond->cond, &mutex->mutex);
+	if (err) {
+		silofs_panic("pthread_cond_wait: %d", err);
+	}
+}
+
+int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
+                          const struct timespec *ts)
+{
+	int err;
+
+	err = pthread_cond_timedwait(&cond->cond, &mutex->mutex, ts);
+	if (err && (err != ETIMEDOUT) && (err != EINTR)) {
+		silofs_panic("pthread_cond_timedwait: %d", err);
+	}
+	return -err;
+}
+
+void silofs_cond_signal(struct silofs_cond *cond)
+{
+	int err;
+
+	err = pthread_cond_signal(&cond->cond);
+	if (err) {
+		silofs_panic("pthread_cond_signal: %d", err);
+	}
+}
+
+void silofs_cond_broadcast(struct silofs_cond *cond)
+{
+	int err;
+
+	err = pthread_cond_broadcast(&cond->cond);
+	if (err) {
+		silofs_panic("pthread_cond_broadcast: %d", err);
+	}
+}
+

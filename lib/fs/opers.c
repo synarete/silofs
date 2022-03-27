@@ -896,7 +896,7 @@ out:
 }
 
 int silofs_fs_write(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
-                    const void *buf, size_t len, off_t off, size_t *out_len)
+                    const void *buf, size_t len, loff_t off, size_t *out_len)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -932,21 +932,6 @@ int silofs_fs_write_iter(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	ok_or_goto_out(err);
 
 	err = silofs_do_write_iter(fs_ctx, ii, rwi_ctx);
-	ok_or_goto_out(err);
-out:
-	return op_finish(fs_ctx, err);
-}
-
-int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
-                        const struct silofs_xiovec *xiov, size_t cnt)
-{
-	struct silofs_inode_info *ii = NULL;
-	int err;
-
-	err = op_stage_cacheonly_inode(fs_ctx, ino, &ii);
-	/* special case: do post even if ii is NULL */
-
-	err = silofs_do_rdwr_post(fs_ctx, ii, xiov, cnt) || err;
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);
@@ -1182,7 +1167,7 @@ out:
 	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
+int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino, int qtype,
                     struct silofs_ioc_query *out_qry)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -1197,7 +1182,7 @@ int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_query(fs_ctx, ii, out_qry);
+	err = silofs_do_query(fs_ctx, ii, qtype, out_qry);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);
@@ -1337,3 +1322,13 @@ int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags)
 	silofs_apex_relax_caches(apex, flags);
 	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx,
+                        const struct silofs_xiovec *xiov, size_t cnt)
+{
+	return silofs_do_rdwr_post(fs_ctx, xiov, cnt);
+}
+
+

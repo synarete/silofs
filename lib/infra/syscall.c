@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <utime.h>
+#include <poll.h>
 #include <time.h>
 
 
@@ -806,13 +807,19 @@ int silofs_sys_fcntl_getpipesz(int fd, int *out_pipesize)
 	return val_or_errno2(fcntl(fd, F_GETPIPE_SZ), out_pipesize);
 }
 
-/* SELECT */
+/* SELECT/POLL */
 int silofs_sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
                        fd_set *exceptfds, const struct timespec *timeout,
                        const sigset_t *sigmask, int *out_nfds)
 {
 	return nfds_or_errno(pselect(nfds, readfds, writefds, exceptfds,
 	                             timeout, sigmask), out_nfds);
+}
+
+int silofs_sys_poll(struct pollfd *fds, nfds_t nfds,
+                    int timeout, int *out_nfds)
+{
+	return nfds_or_errno(poll(fds, nfds, timeout), out_nfds);
 }
 
 /* SOCKET */

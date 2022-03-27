@@ -280,6 +280,12 @@
 #define SILOFS_IO_SIZE_MAX              ((2UL * SILOFS_UMEGA) - SILOFS_BK_SIZE)
 
 
+/* boot-sector flags */
+enum silofs_bootf {
+	SILOFS_BOOTF_NONE       = 0x00,
+	SILOFS_BOOTF_KEY_SHA256 = 0x01,
+};
+
 enum silofs_endianness {
 	SILOFS_ENDIANNESS_LE    = 1,
 	SILOFS_ENDIANNESS_BE    = 2
@@ -554,17 +560,19 @@ struct silofs_bootsec4k {
 	struct silofs_uuid      bs_uuid;
 	uint64_t                bs_btime;
 	uint64_t                bs_flags;
-	uint8_t                 bs_reserved1[208];
+	uint8_t                 bs_reserved1[80];
+	struct silofs_hash256   bs_key_hash;
+	uint8_t                 bs_reserved2[96];
 	struct silofs_name      bs_metaname;
 	struct silofs_kdf_pair  bs_kdf_pair;
 	uint32_t                bs_chiper_algo;
 	uint32_t                bs_chiper_mode;
-	uint8_t                 bs_reserved2[472];
+	uint8_t                 bs_reserved3[472];
 	struct silofs_uaddr64b  bs_sb_uaddr;
 	struct silofs_packid64b bs_sb_packid;
-	uint8_t                 bs_reserved3[896];
+	uint8_t                 bs_reserved4[896];
 	uint8_t                 bs_rands[512];
-	uint8_t                 bs_reserved4[1472];
+	uint8_t                 bs_reserved5[1472];
 	struct silofs_hash512   bs_hash;
 } silofs_packed_aligned64;
 

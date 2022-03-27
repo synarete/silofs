@@ -17,9 +17,9 @@
 #include <silofs/cmd.h>
 
 
-static struct silofs_subcmd_prune *prune_args;
+static struct silofs_subcmd_prune *cmd_prune_args;
 
-static const char *silofs_prune_usage[] = {
+static const char *cmd_prune_usage[] = {
 	"prune [options] <repo-path>",
 	"",
 	"options:",
@@ -27,7 +27,7 @@ static const char *silofs_prune_usage[] = {
 	NULL
 };
 
-static void prune_getopt(void)
+static void cmd_prune_getopt(void)
 {
 	int c = 1;
 	int opt_index;
@@ -50,52 +50,53 @@ static void prune_getopt(void)
 		if (c == 'v') {
 			silofs_print_version_and_exit(NULL);
 		} else if (c == 'h') {
-			silofs_print_help_and_exit(silofs_prune_usage);
+			silofs_print_help_and_exit(cmd_prune_usage);
 		} else {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo-path", &prune_args->repodir);
+	silofs_cmd_getarg("repo-path", &cmd_prune_args->repodir);
 	silofs_cmd_endargs();
 }
 
 
-static void prune_finalize(void)
+static void cmd_prune_finalize(void)
 {
-	silofs_destroy_fse_inst();
-	silofs_cmd_pfrees(&prune_args->repodir_real);
-	silofs_cmd_pfrees(&prune_args->repodir);
+	silofs_cmd_destroy_fse_inst();
+	silofs_cmd_pfrees(&cmd_prune_args->repodir_real);
+	silofs_cmd_pfrees(&cmd_prune_args->repodir);
 }
 
-static void prune_start(void)
+static void cmd_prune_start(void)
 {
-	prune_args = &silofs_globals.cmd.prune;
-	atexit(prune_finalize);
+	cmd_prune_args = &silofs_globals.cmd.prune;
+	atexit(cmd_prune_finalize);
 }
 
-static void prune_prepare(void)
+static void cmd_prune_prepare(void)
 {
-	silofs_cmd_check_nonemptydir(prune_args->repodir, true);
-	silofs_cmd_realpath(prune_args->repodir, &prune_args->repodir_real);
+	silofs_cmd_check_nonemptydir(cmd_prune_args->repodir, true);
+	silofs_cmd_realpath(cmd_prune_args->repodir,
+	                    &cmd_prune_args->repodir_real);
 }
 
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_execute_prune(void)
+void silofs_cmd_execute_prune(void)
 {
 	/* Do all cleanups upon exits */
-	prune_start();
+	cmd_prune_start();
 
 	/* Parse command's arguments */
-	prune_getopt();
+	cmd_prune_getopt();
 
 	/* Verify user's arguments */
-	prune_prepare();
+	cmd_prune_prepare();
 
 	/* TODO: execute logic... */
 
 	/* Post execution cleanups */
-	prune_finalize();
+	cmd_prune_finalize();
 }
 

@@ -1,14 +1,14 @@
 #!/bin/bash
-self=$(basename ${BASH_SOURCE[0]})
+self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self: $@" >&2; try "$@"; }
+run() { echo "$self: $*" >&2; try "$@"; }
 
 export LC_ALL=C
 unset CDPATH
 
-basedir=$(realpath $(dirname ${BASH_SOURCE[0]}))
+basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 builddir=${basedir}/build
 buildaux=${basedir}/build-aux
 autom4te_cfg_in=${buildaux}/autom4te.cfg.in
@@ -29,14 +29,14 @@ do_prerequisite() {
 }
 
 do_autom4te_cfg() {
-  msg "create" ${autom4te_cfg}
+  msg "create" "${autom4te_cfg}"
   sed -e "s,[@]AUTOM4TE_CACHEDIR[@],${autom4te_cachedir},g" \
-    < ${autom4te_cfg_in} > ${autom4te_cfg}
+    < "${autom4te_cfg_in}" > "${autom4te_cfg}"
 }
 
 do_autogen() {
-  cd ${basedir}
-  run mkdir -p ${builddir}
+  cd "${basedir}" || die "can not cd into ${basedir}"
+  run mkdir -p "${builddir}"
   do_autom4te_cfg
   run libtoolize --automake --copy --install --force
   run aclocal -I m4
@@ -48,22 +48,22 @@ do_autogen() {
 }
 
 do_autoclean() {
-  cd ${basedir}
-  try mkdir -p ${builddir}
-  run rm -rf ${autom4te_cachedir}
-  run rm -f ${autom4te_cfg}
-  run rm -f ${basedir}/configure
-  run rm -f ${basedir}/aclocal.m4
-  run rm -f ${basedir}/include/config.h.in
-  run rm -f ${buildaux}/compile
-  run rm -f ${buildaux}/config.guess
-  run rm -f ${buildaux}/config.sub
-  run rm -f ${buildaux}/depcomp
-  run rm -f ${buildaux}/install-sh
-  run rm -f ${buildaux}/ltmain.sh
-  run rm -f ${buildaux}/missing
-  run find ${basedir} -type f -name Makefile.in -exec rm -f {} \;
-  run find ${builddir} -depth -mindepth 1 -exec rm -rf {} \;
+  cd "${basedir}" || die "can not cd into ${basedir}"
+  try mkdir -p "${builddir}"
+  run rm -rf "${autom4te_cachedir}"
+  run rm -f "${autom4te_cfg}"
+  run rm -f "${basedir}/configure"
+  run rm -f "${basedir}/aclocal.m4"
+  run rm -f "${basedir}/include/config.h.in"
+  run rm -f "${buildaux}/compile"
+  run rm -f "${buildaux}/config.guess"
+  run rm -f "${buildaux}/config.sub"
+  run rm -f "${buildaux}/depcomp"
+  run rm -f "${buildaux}/install-sh"
+  run rm -f "${buildaux}/ltmain.sh"
+  run rm -f "${buildaux}/missing"
+  run find "${basedir}" -type f -name Makefile.in -exec rm -f {} \;
+  run find "${builddir}" -depth -mindepth 1 -exec rm -rf {} \;
 }
 
 do_autoregen() {
@@ -72,14 +72,14 @@ do_autoregen() {
 }
 
 do_version() {
-  ${basedir}/version.sh
+  "${basedir}/version.sh"
 }
 
 
 arg=${1:-}
 case "$arg" in
   -h|--help)
-    echo ${self} "[--autogen|--autoclean|--version]"
+    echo "${self} [--autogen|--autoclean|--version]"
     ;;
   -c|--autoclean)
     do_autoclean

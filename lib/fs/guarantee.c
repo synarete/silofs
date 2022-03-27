@@ -81,6 +81,9 @@
 #define REQUIRE_SIZEOF_16K(type) \
 	REQUIRE_SIZEOF_NK(type, 16)
 
+#define REQUIRE_SIZEOF_64K(type) \
+	REQUIRE_SIZEOF_NK(type, 64)
+
 #define REQUIRE_MEMBER_SIZE(type, f, size) \
 	REQUIRE_EQ(MEMBER_SIZE(type, f), size)
 
@@ -123,6 +126,22 @@ static void guarantee_fundamental_types_size(void)
 	REQUIRE_SIZEOF(size_t, 8);
 	REQUIRE_SIZEOF(loff_t, 8);
 	REQUIRE_SIZEOF(ino_t, 8);
+}
+
+static void guarantee_persistent_types_nk(void)
+{
+	REQUIRE_SIZEOF_64K(struct silofs_super_block);
+	REQUIRE_SIZEOF_64K(struct silofs_spmap_node);
+	REQUIRE_SIZEOF_64K(struct silofs_spmap_leaf);
+	REQUIRE_SIZEOF_16K(struct silofs_itable_node);
+	REQUIRE_SIZEOF_1K(struct silofs_inode);
+	REQUIRE_SIZEOF_8K(struct silofs_xattr_node);
+	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
+	REQUIRE_SIZEOF_8K(struct silofs_ftree_node);
+	REQUIRE_SIZEOF_1K(struct silofs_symlnk_value);
+	REQUIRE_SIZEOF_1K(struct silofs_data_block1);
+	REQUIRE_SIZEOF_4K(struct silofs_data_block4);
+	REQUIRE_SIZEOF_64K(struct silofs_data_block);
 }
 
 static void guarantee_persistent_types_size(void)
@@ -215,6 +234,7 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_uuid, 16);
 	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_flags, 40);
+	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_key_hash, 128);
 	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_metaname, 256);
 	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_kdf_pair, 512);
 	REQUIRE_OFFSET64(struct silofs_bootsec4k, bs_chiper_algo, 544);
@@ -342,6 +362,7 @@ static void guarantee_external_constants(void)
 static void guarantee_consistency(void)
 {
 	guarantee_fundamental_types_size();
+	guarantee_persistent_types_nk();
 	guarantee_persistent_types_size();
 	guarantee_persistent_types_members();
 	guarantee_persistent_types_alignment1();
@@ -352,7 +373,7 @@ static void guarantee_consistency(void)
 	guarantee_external_constants();
 }
 
-void silofs_boot_cons(void)
+void silofs_boot_defs(void)
 {
 	guarantee_consistency();
 }

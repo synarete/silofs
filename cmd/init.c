@@ -17,9 +17,9 @@
 #include <silofs/cmd.h>
 
 
-static struct silofs_subcmd_init *init_args;
+static struct silofs_subcmd_init *cmd_init_args;
 
-static const char *init_usage[] = {
+static const char *cmd_init_usage[] = {
 	"init <repo-dir>",
 	"",
 	"options:",
@@ -27,7 +27,7 @@ static const char *init_usage[] = {
 	NULL
 };
 
-static void init_getopt(void)
+static void cmd_init_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -41,34 +41,34 @@ static void init_getopt(void)
 		if (opt_chr == 'V') {
 			silofs_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(init_usage);
+			silofs_print_help_and_exit(cmd_init_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo-dir", &init_args->repodir);
+	silofs_cmd_getarg("repo-dir", &cmd_init_args->repodir);
 	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void init_finalize(void)
+static void cmd_init_finalize(void)
 {
-	silofs_destroy_fse_inst();
-	silofs_cmd_pfrees(&init_args->repodir_real);
-	silofs_cmd_pfrees(&init_args->repodir);
+	silofs_cmd_destroy_fse_inst();
+	silofs_cmd_pfrees(&cmd_init_args->repodir_real);
+	silofs_cmd_pfrees(&cmd_init_args->repodir);
 }
 
-static void init_start(void)
+static void cmd_init_start(void)
 {
-	init_args = &silofs_globals.cmd.init;
-	atexit(init_finalize);
+	cmd_init_args = &silofs_globals.cmd.init;
+	atexit(cmd_init_finalize);
 }
 
-static void init_prepare(void)
+static void cmd_init_prepare(void)
 {
 	struct stat st = { .st_ino = 0 };
-	const char *path = init_args->repodir;
+	const char *path = cmd_init_args->repodir;
 	int err;
 
 	err = silofs_sys_stat(path, &st);
@@ -79,13 +79,13 @@ static void init_prepare(void)
 	} else {
 		silofs_die(err, "stat failure: %s", path);
 	}
-	silofs_cmd_realpath(path, &init_args->repodir_real);
+	silofs_cmd_realpath(path, &cmd_init_args->repodir_real);
 }
 
-static void init_create_fs_env(void)
+static void cmd_init_create_fs_env(void)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = init_args->repodir_real,
+		.main_repodir = cmd_init_args->repodir_real,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
@@ -93,59 +93,60 @@ static void init_create_fs_env(void)
 		.unimode = true,
 	};
 
-	silofs_create_fse_inst(&fs_args);
+	silofs_cmd_create_fse_inst(&fs_args);
 }
 
-static void init_format_repo(void)
+static void cmd_init_format_repo(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
 	int err;
 
 	err = silofs_fse_format_repos(fse);
 	if (err) {
-		silofs_die(err, "format repo failed: %s", init_args->repodir);
+		silofs_die(err, "format repo failed: %s",
+		           cmd_init_args->repodir);
 	}
 }
 
-static void init_finish(void)
+static void cmd_init_finish(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
 	int err;
 
 	err = silofs_fse_shut(fse);
 	if (err) {
-		silofs_die(err, "shutdown error: %s", init_args->repodir);
+		silofs_die(err, "shutdown error: %s", cmd_init_args->repodir);
 	}
 	err = silofs_fse_term(fse);
 	if (err) {
-		silofs_die(err, "internal error: %s", init_args->repodir);
+		silofs_die(err, "internal error: %s", cmd_init_args->repodir);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_init(void)
+void silofs_cmd_execute_init(void)
 {
 	/* Do all cleanups upon exits */
-	init_start();
+	cmd_init_start();
 
 	/* Parse command's arguments */
-	init_getopt();
+	cmd_init_getopt();
 
 	/* Verify user's arguments */
-	init_prepare();
+	cmd_init_prepare();
 
 	/* Prepare environment */
-	init_create_fs_env();
+	cmd_init_create_fs_env();
 
 	/* Do actual init */
-	init_format_repo();
+	cmd_init_format_repo();
 
 	/* Post-format cleanups */
-	init_finish();
+	cmd_init_finish();
 
 	/* Post execution cleanups */
-	init_finalize();
+	cmd_init_finalize();
 }
 
 

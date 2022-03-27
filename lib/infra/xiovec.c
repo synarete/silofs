@@ -63,29 +63,29 @@ int silofs_xiovec_copy_mem(const struct silofs_xiovec *xiov_src,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_xiovref_init(struct silofs_xiovref *xir,
+void silofs_xiovref_init(struct silofs_xiovref *xior,
                          silofs_xiovref_fn pre, silofs_xiovref_fn post)
 {
-	xir->pre = pre;
-	xir->post = post;
+	xior->pre = pre;
+	xior->post = post;
 }
 
-void silofs_xiovref_fini(struct silofs_xiovref *xir)
+void silofs_xiovref_fini(struct silofs_xiovref *xior)
 {
-	xir->pre = NULL;
-	xir->post = NULL;
+	xior->pre = NULL;
+	xior->post = NULL;
 }
 
-void silofs_xiovref_pre(struct silofs_xiovref *xir)
+void silofs_xiovref_pre(struct silofs_xiovref *xior)
 {
-	if (xir && xir->pre) {
-		xir->pre(xir);
+	if (xior && xior->pre) {
+		xior->pre(xior);
 	}
 }
 
-void silofs_xiovref_post(struct silofs_xiovref *xir)
+void silofs_xiovref_post(struct silofs_xiovref *xior)
 {
-	if (xir && xir->post) {
-		xir->post(xir);
+	if (xior && xior->post) {
+		xior->post(xior);
 	}
 }

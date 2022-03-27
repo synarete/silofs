@@ -47,13 +47,13 @@ int silofs_xiovec_copy_mem(const struct silofs_xiovec *xiov_src,
                            const struct silofs_xiovec *xiov_dst, size_t len);
 
 
-void silofs_xiovref_init(struct silofs_xiovref *xir,
+void silofs_xiovref_init(struct silofs_xiovref *xior,
                          silofs_xiovref_fn pre, silofs_xiovref_fn post);
 
-void silofs_xiovref_fini(struct silofs_xiovref *xir);
+void silofs_xiovref_fini(struct silofs_xiovref *xior);
 
-void silofs_xiovref_pre(struct silofs_xiovref *xir);
+void silofs_xiovref_pre(struct silofs_xiovref *xior);
 
-void silofs_xiovref_post(struct silofs_xiovref *xir);
+void silofs_xiovref_post(struct silofs_xiovref *xior);
 
 #endif /* SILOFS_XIOVEC_H_ */

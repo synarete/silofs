@@ -35,6 +35,7 @@ struct flock;
 struct fiemap;
 struct sockaddr;
 struct msghdr;
+struct pollfd;
 
 
 /* syscall */
@@ -293,6 +294,9 @@ int silofs_sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
                        fd_set *exceptfds, const struct timespec *timeout,
                        const sigset_t *sigmask, int *out_nfds);
 
+int silofs_sys_poll(struct pollfd *fds, size_t nfds,
+                    int timeout, int *out_nfds);
+
 int silofs_sys_bind(int sd, const struct sockaddr *addr, socklen_t addrlen);
 
 int silofs_sys_send(int sd, const void *buf, size_t len,
@@ -369,6 +373,8 @@ int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off);
 int silofs_proc_pipe_max_size(long *out_value);
 
 int silofs_sys_pselect_rfd(int fd, const struct timespec *ts);
+
+int silofs_sys_pollin_rfd(int fd, int timeout);
 
 /* sysconf */
 long silofs_sc_page_size(void);

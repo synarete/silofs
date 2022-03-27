@@ -39,19 +39,6 @@
 #define EFSBADCRC       EBADMSG /* Bad CRC detected */
 #endif
 
-
-static inline int silofs_ENOSPC(void)
-{
-	int err;
-
-	err = 28;
-	return err;
-}
-
-#undef ENOSPC
-#define ENOSPC (silofs_ENOSPC())
-
-
 /* common macros */
 #define likely(x_)                      silofs_likely(x_)
 #define unlikely(x_)                    silofs_unlikely(x_)

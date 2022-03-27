@@ -106,7 +106,7 @@ int silofs_do_flush(const struct silofs_fs_ctx *op,
                     struct silofs_inode_info *ii);
 
 int silofs_do_query(const struct silofs_fs_ctx *op,
-                    struct silofs_inode_info *ii,
+                    struct silofs_inode_info *ii, int qtype,
                     struct silofs_ioc_query *out_qry);
 
 int silofs_do_clone(const struct silofs_fs_ctx *op,

@@ -43,11 +43,13 @@ static size_t apex_calc_iopen_limit(const struct silofs_fs_apex *apex)
 
 static void apex_init_commons(struct silofs_fs_apex *apex,
                               struct silofs_alloc_if *alif,
+                              struct silofs_kivam *kivam,
                               struct silofs_crypto *crypto)
 
 {
 	apex->ap_initime = silofs_time_now();
 	apex->ap_alif = alif;
+	apex->ap_kivam = kivam;
 	apex->ap_crypto = crypto;
 	apex->ap_iconv = (iconv_t)(-1);
 	apex->ap_sbi = NULL;
@@ -64,6 +66,7 @@ static void apex_fini_commons(struct silofs_fs_apex *apex)
 {
 	silofs_sys_closefd(&apex->ap_slock_fd);
 	apex->ap_alif = NULL;
+	apex->ap_kivam = NULL;
 	apex->ap_crypto = NULL;
 	apex->ap_iconv = (iconv_t)(-1);
 	apex->ap_sbi = NULL;
@@ -113,13 +116,14 @@ static void apex_fini_iconv(struct silofs_fs_apex *apex)
 
 int silofs_apex_init(struct silofs_fs_apex *apex,
                      struct silofs_alloc_if *alif,
+                     struct silofs_kivam *kivam,
                      struct silofs_crypto *crypto,
                      struct silofs_repo *mrepo,
                      struct silofs_repo *crepo)
 {
 	int err;
 
-	apex_init_commons(apex, alif, crypto);
+	apex_init_commons(apex, alif, kivam, crypto);
 	apex_init_repos(apex, mrepo, crepo);
 
 	err = apex_init_piper(apex);
@@ -269,7 +273,6 @@ void silofs_apex_bind_to_sbi(struct silofs_fs_apex *apex,
 
 void silofs_apex_shut(struct silofs_fs_apex *apex)
 {
-	silofs_apex_unlock_boot(apex);
 	silofs_apex_bind_to_sbi(apex, NULL);
 }
 
@@ -325,63 +328,6 @@ int silofs_apex_load_boot(const struct silofs_fs_apex *apex,
 	return err;
 }
 
-int silofs_apex_lock_boot(struct silofs_fs_apex *apex)
-{
-	struct silofs_namestr name;
-	int *pfd = &apex->ap_slock_fd;
-	int err;
-
-	if (*pfd > 0) {
-		return 0;
-	}
-	err = silofs_apex_boot_name(apex, &name);
-	if (err) {
-		return err;
-	}
-	err = silofs_repo_lock_bsec(apex_boot_repo(apex), &name, pfd);
-	if (err) {
-		log_warn("failed to lock: %s err=%d", name.str.str, err);
-		return err;
-	}
-	return 0;
-}
-
-int silofs_apex_unlock_boot(struct silofs_fs_apex *apex)
-{
-	struct silofs_namestr name;
-	int *pfd = &apex->ap_slock_fd;
-	int err;
-
-	if (*pfd < 0) {
-		return 0;
-	}
-	err = silofs_apex_boot_name(apex, &name);
-	if (err) {
-		return err;
-	}
-	err = silofs_repo_unlock_bsec(apex_boot_repo(apex), &name, pfd);
-	if (err && (err != -ENOENT)) {
-		log_warn("failed to unlock: %s err=%d", name.str.str, err);
-		return err;
-	}
-	return 0;
-}
-
-static int apex_relock_boot(struct silofs_fs_apex *apex)
-{
-	int err;
-
-	err = silofs_apex_unlock_boot(apex);
-	if (err) {
-		return err;
-	}
-	err = silofs_apex_lock_boot(apex);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static void sbi_set_fossil(struct silofs_sb_info *sbi)
 {
 	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
@@ -426,10 +372,6 @@ int silofs_apex_forkfs(struct silofs_fs_apex *apex,
 		return err;
 	}
 	silofs_apex_bind_to_sbi(apex, sbi_next);
-	err = apex_relock_boot(apex);
-	if (err) {
-		return err;
-	}
 	sbi_set_fossil(sbi_curr);
 	return 0;
 }

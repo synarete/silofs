@@ -23,50 +23,30 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t aligned_size(size_t sz, size_t a)
+static void *malloc_ok(size_t nbytes)
 {
-	return ((sz + a - 1) / a) * a;
-}
+	void *mem;
 
-static size_t malloc_total_size(size_t nbytes)
-{
-	const struct vt_mchunk *mchunk = NULL;
-	const size_t mchunk_size = sizeof(*mchunk);
-
-	return aligned_size(mchunk_size + nbytes, mchunk_size);
-}
-
-static struct vt_mchunk *mchunk_of(void *data, size_t nbytes)
-{
-	struct vt_mchunk *mchunk = NULL;
-	const size_t dlen = aligned_size(nbytes, sizeof(*mchunk));
-	void *pmchunk;
-
-	pmchunk = (uint8_t *)data + dlen;
-	return pmchunk;
+	mem = malloc(nbytes);
+	if (mem == NULL) {
+		error(1, errno, "malloc failure: nbytes=%lu", nbytes);
+		abort(); /* make clang-scan happy */
+	}
+	return mem;
 }
 
 static struct vt_mchunk *malloc_chunk(struct vt_env *vte, size_t nbytes)
 {
-	size_t total_size;
-	struct vt_mchunk *mchunk;
-	void *data;
+	struct vt_mchunk *mchunk = NULL;
 
-	total_size = malloc_total_size(nbytes);
-	data = (struct vt_mchunk *)malloc(total_size);
-	if (data == NULL) {
-		error(1, errno, "malloc failure size=%lu", total_size);
-		abort(); /* Make clang happy */
-	}
-
-	mchunk = mchunk_of(data, nbytes);
-	mchunk->magic  = MCHUNK_MAGIC;
+	mchunk = (struct vt_mchunk *)malloc_ok(sizeof(*mchunk));
+	mchunk->data = malloc_ok(nbytes);
+	mchunk->size = nbytes + sizeof(*mchunk);
 	mchunk->next = vte->malloc_list;
-	mchunk->data = data;
-	mchunk->size = total_size;
+	mchunk->magic  = MCHUNK_MAGIC;
 
 	vte->malloc_list = mchunk;
-	vte->nbytes_alloc += total_size;
+	vte->nbytes_alloc += mchunk->size;
 
 	return mchunk;
 }
@@ -80,9 +60,9 @@ static void free_mchunk(struct vt_env *vte, struct vt_mchunk *mchunk)
 	silofs_assert_eq(mchunk->magic, MCHUNK_MAGIC);
 
 	vte->nbytes_alloc -= mchunk->size;
-
-	mchunk->data = NULL;
-	free(data);
+	free(mchunk->data);
+	silofs_memffff(mchunk, sizeof(*mchunk));
+	free(mchunk);
 }
 
 static void *do_malloc(struct vt_env *vte, size_t sz)
@@ -302,13 +282,15 @@ static void swap(long *arr, size_t i, size_t j)
 
 long *vt_new_buf_randseq(struct vt_env *vte, size_t cnt, long base)
 {
-	long *arr;
+	long *arr = NULL;
 	size_t *pos;
 
 	arr = vt_new_seq(vte, cnt, base);
 	pos = vt_new_buf_rands(vte, cnt * sizeof(*pos));
-	for (size_t j = 0; j < cnt; ++j) {
-		swap(arr, j, pos[j] % cnt);
+	if (pos != NULL) { /* make gcc-analyzer happy */
+		for (size_t j = 0; j < cnt; ++j) {
+			swap(arr, j, pos[j] % cnt);
+		}
 	}
 	return arr;
 }

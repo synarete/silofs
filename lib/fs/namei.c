@@ -2086,9 +2086,9 @@ static int do_query_statx(const struct silofs_fs_ctx *fs_ctx,
 
 static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
                            struct silofs_inode_info *ii,
+                           enum silofs_query_type qtype,
                            struct silofs_ioc_query *query)
 {
-	enum silofs_query_type qtype = (enum silofs_query_type)query->qtype;
 	int err = 0;
 
 	silofs_memzero(&query->u, sizeof(query->u));
@@ -2119,6 +2119,7 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
 
 static int do_query(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *ii,
+                    enum silofs_query_type qtype,
                     struct silofs_ioc_query *query)
 {
 	int err;
@@ -2127,7 +2128,7 @@ static int do_query(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = do_query_subcmd(fs_ctx, ii, query);
+	err = do_query_subcmd(fs_ctx, ii, qtype, query);
 	if (err) {
 		return err;
 	}
@@ -2135,13 +2136,13 @@ static int do_query(const struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_do_query(const struct silofs_fs_ctx *fs_ctx,
-                    struct silofs_inode_info *ii,
+                    struct silofs_inode_info *ii, int qtype,
                     struct silofs_ioc_query *out_qry)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_query(fs_ctx, ii, out_qry);
+	err = do_query(fs_ctx, ii, qtype, out_qry);
 	ii_decref(ii);
 	return err;
 }
@@ -2319,21 +2320,8 @@ static int unrefs_by_name(const struct silofs_inode_info *ii,
                           const struct silofs_namestr *name)
 {
 	const struct silofs_fs_apex *apex = ii_apex(ii);
-	const struct silofs_repo *repo = apex->ap_mrepo;
-	int fd = -1;
-	int err;
 
-	err = silofs_repo_lock_bsec(repo, name, &fd);
-	if (err) {
-		return err;
-	}
-	err = silofs_repo_remove_bsec(repo, name);
-	if (err) {
-		goto out;
-	}
-out:
-	silofs_repo_unlock_bsec(repo, name, &fd);
-	return err;
+	return silofs_repo_remove_bsec(apex->ap_mrepo, name);
 }
 
 static int do_unrefs(const struct silofs_fs_ctx *fs_ctx,

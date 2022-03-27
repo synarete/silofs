@@ -19,6 +19,7 @@
 #include <silofs/infra/utility.h>
 #include <silofs/infra/errors.h>
 #include <silofs/infra/random.h>
+#include <silofs/infra/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -81,30 +82,33 @@ prandgen_nslots_of(const struct silofs_prandgen *prng, size_t nbytes)
 	return (nbytes + slot_size - 1) / slot_size;
 }
 
-static void prandgen_rotate_tips(struct silofs_prandgen *prng, size_t nslots)
+static void prandgen_rotate_some(struct silofs_prandgen *prng, size_t nslots)
 {
+	struct timespec ts;
 	uint32_t rot;
 	uint64_t val;
 	uint64_t rnd;
-	uint64_t *tip = &prng->rands[prng->used_slots];
+	uint64_t *tip;
 
+	silofs_ts_gettime(&ts, 1);
+	tip = &prng->rands[prng->used_slots];
 	rnd = (tip > prng->rands) ? tip[-1] : tip[nslots - 1];
 	for (size_t i = 0; i < nslots; ++i) {
-		val = *tip;
+		val = *tip ^ (uint64_t)(ts.tv_nsec);
 		rnd ^= val;
 		rot = (uint32_t)(rnd + i) % 59;
 		*tip++ = silofs_rotate64(val, rot);
 	}
 }
 
-static size_t
-prandgen_take_some(struct silofs_prandgen *prng, void *buf, size_t len)
+static size_t prandgen_take_some(struct silofs_prandgen *prng,
+                                 void *buf, size_t len)
 {
 	const size_t nbytes = silofs_min(prandgen_avail_bytes(prng), len);
 	const size_t nslots = prandgen_nslots_of(prng, nbytes);
 
 	memcpy(buf, prandgen_tip(prng), nbytes);
-	prandgen_rotate_tips(prng, nslots);
+	prandgen_rotate_some(prng, nslots);
 	prng->used_slots += (uint32_t)nslots;
 	prng->take_cycle++;
 	return nbytes;
@@ -115,7 +119,7 @@ static uint64_t prandgen_take_uint64(struct silofs_prandgen *prng)
 	uint64_t ret;
 
 	ret = *prandgen_tip(prng);
-	prandgen_rotate_tips(prng, 1);
+	prandgen_rotate_some(prng, 1);
 	prng->used_slots += 1;
 	prng->take_cycle++;
 	return ret;

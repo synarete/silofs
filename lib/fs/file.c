@@ -49,7 +49,6 @@
 #define OP_FIEMAP       (1 << 4)
 #define OP_LSEEK        (1 << 5)
 #define OP_COPY_RANGE   (1 << 6)
-#define OP_RW_POST      (1 << 7)
 
 
 struct silofs_file_ctx {
@@ -2697,31 +2696,14 @@ int silofs_do_write(const struct silofs_fs_ctx *fsc,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int fic_rdwr_post(struct silofs_file_ctx *f_ctx,
-                         const struct silofs_xiovec *xiov, size_t cnt)
+int silofs_do_rdwr_post(const struct silofs_fs_ctx *fsc,
+                        const struct silofs_xiovec *xiov, size_t cnt)
 {
-	ii_incref(f_ctx->ii); /* special case: ii may be NULL */
+	silofs_unused(fsc);
 	for (size_t i = 0; i < cnt; ++i) {
 		silofs_xiovref_post(xiov[i].xiov_ref);
 	}
-	ii_decref(f_ctx->ii);
 	return 0;
-}
-
-int silofs_do_rdwr_post(const struct silofs_fs_ctx *fsc,
-                        struct silofs_inode_info *ii,
-                        const struct silofs_xiovec *xiov, size_t cnt)
-{
-	struct silofs_file_ctx f_ctx = {
-		.apex = fsc->fsc_apex,
-		.sbi = fsc->fsc_apex->ap_sbi,
-		.fs_ctx = fsc,
-		.ii = ii, /* special case: ii may be NULL */
-		.op_mask = OP_RW_POST,
-
-	};
-
-	return fic_rdwr_post(&f_ctx, xiov, cnt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

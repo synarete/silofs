@@ -28,11 +28,10 @@
 #include <getopt.h>
 
 
-static struct silofs_subcmd_lsmnt *lsmnt_args;
+static struct silofs_subcmd_lsmnt *cmd_lsmnt_args;
+static char *cmd_lsmnt_mountinfo;
 
-static char *lsmnt_mountinfo;
-
-static const char *lsmnt_usage[] = {
+static const char *cmd_lsmnt_usage[] = {
 	"lsmnt [options]",
 	"",
 	"options:",
@@ -40,7 +39,7 @@ static const char *lsmnt_usage[] = {
 	NULL
 };
 
-static void lsmnt_getopt(void)
+static void cmd_lsmnt_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -52,9 +51,9 @@ static void lsmnt_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("lh", opts);
 		if (opt_chr == 'l') {
-			lsmnt_args->long_listing = true;
+			cmd_lsmnt_args->long_listing = true;
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(lsmnt_usage);
+			silofs_print_help_and_exit(cmd_lsmnt_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
@@ -63,24 +62,24 @@ static void lsmnt_getopt(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void lsmnt_finalize(void)
+static void cmd_lsmnt_finalize(void)
 {
-	silofs_cmd_pfrees(&lsmnt_mountinfo);
-	silofs_cmd_pfrees(&lsmnt_args->mntpoint_real);
+	silofs_cmd_pfrees(&cmd_lsmnt_mountinfo);
+	silofs_cmd_pfrees(&cmd_lsmnt_args->mntpoint_real);
 }
 
-static void lsmnt_start(void)
+static void cmd_lsmnt_start(void)
 {
-	lsmnt_args = &silofs_globals.cmd.lsmnt;
-	atexit(lsmnt_finalize);
+	cmd_lsmnt_args = &silofs_globals.cmd.lsmnt;
+	atexit(cmd_lsmnt_finalize);
 }
 
-static void lsmnt_prepare(void)
+static void cmd_lsmnt_prepare(void)
 {
 	struct stat st;
 	const char *path;
 
-	path = lsmnt_args->mntpoint;
+	path = cmd_lsmnt_args->mntpoint;
 	if (path != NULL) {
 		silofs_cmd_stat_ok(path, &st);
 		if (!S_ISDIR(st.st_mode)) {
@@ -89,64 +88,27 @@ static void lsmnt_prepare(void)
 		if (st.st_ino != SILOFS_INO_ROOT) {
 			silofs_die(0, "not a silofs mount-point: %s", path);
 		}
-		silofs_cmd_realpath(path, &lsmnt_args->mntpoint_real);
+		silofs_cmd_realpath(path, &cmd_lsmnt_args->mntpoint_real);
 	}
 }
 
-static void lsmnt_read_mountinfo(void)
+static void cmd_lsmnt_print_mntdir(const struct silofs_proc_mntinfo *mi)
 {
-	int err;
-	int fd = -1;
-	size_t nrd = 0;
-	size_t len = 0;
-	const size_t len_max = 1UL << 20;
-	const char *proc_path = "/proc/self/mountinfo";
-	const size_t pgsz = (size_t)silofs_sc_page_size();
-
-	err = silofs_sys_open(proc_path, O_RDONLY, 0, &fd);
-	if (err) {
-		silofs_die(err, "failed to open: %s", proc_path);
-	}
-	lsmnt_mountinfo = silofs_cmd_zalloc(len_max);
-	while (len < len_max) {
-		err = silofs_sys_read(fd, lsmnt_mountinfo, pgsz, &nrd);
-		if (err) {
-			silofs_die(err, "read error: %s", proc_path);
-		}
-		if (nrd == 0) {
-			break;
-		}
-		len += nrd;
-	}
-	err = silofs_sys_closefd(&fd);
-	if (err) {
-		silofs_die(err, "close error: %s", proc_path);
-	}
-	if (len >= len_max) {
-		silofs_die(0, "unsupported mountinfo: %s", proc_path);
-	}
+	printf("%s\n", mi->mntdir);
 }
 
-static void lsmnt_print_mntdir(const struct silofs_substr *mntdir)
+static void cmd_lsmnt_print_mntdir_long(const struct silofs_proc_mntinfo *mi)
 {
-	printf("%.*s\n", (int)mntdir->len, mntdir->str);
-}
-
-static void lsmnt_print_mntdir_long(const struct silofs_substr *mntdir)
-{
-	int err;
-	int dfd = -1;
-	int o_flags;
-	mode_t mode;
-	struct stat st;
 	char perm[11] = "";
-	char path[SILOFS_MNTPATH_MAX + 1] = "";
-
-	silofs_substr_copyto(mntdir, path, sizeof(path) - 1);
+	struct stat st;
+	mode_t mode;
+	int o_flags;
+	int dfd = -1;
+	int err;
 
 	memset(perm, '?', sizeof(perm) - 1);
 	o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
-	err = silofs_sys_openat(AT_FDCWD, path, o_flags, 0, &dfd);
+	err = silofs_sys_openat(AT_FDCWD, mi->mntdir, o_flags, 0, &dfd);
 	if (err) {
 		goto out;
 	}
@@ -167,95 +129,50 @@ static void lsmnt_print_mntdir_long(const struct silofs_substr *mntdir)
 	perm[9] = (mode & S_IXOTH) ? 'x' : '-';
 out:
 	silofs_sys_closefd(&dfd);
-	printf("%s %.*s ", perm, (int)mntdir->len, mntdir->str);
+	printf("%s %s ", perm, mi->mntdir);
 }
 
-static void lsmnt_print_mntargs(const struct silofs_substr *args)
+static void cmd_lsmnt_print_mntargs(const struct silofs_proc_mntinfo *mi)
 {
-	printf("%.*s \n", (int)args->len, args->str);
+	printf("%s \n", mi->mntargs);
 }
 
-static void lsmnt_parse_field(const struct silofs_substr *line,
-                              size_t idx, struct silofs_substr *field)
+static void cmd_lsmnt_execute(void)
 {
-	struct silofs_substr_pair pair;
-	struct silofs_substr *word = &pair.first;
-	struct silofs_substr *tail = &pair.second;
+	struct silofs_proc_mntinfo *mi_list = NULL;
+	struct silofs_proc_mntinfo *mi_iter = NULL;
 
-	silofs_substr_init(field, "");
-	silofs_substr_split(line, " \t\v", &pair);
-	while (!silofs_substr_isempty(word) || !silofs_substr_isempty(tail)) {
-		if (idx == 0) {
-			silofs_substr_strip_ws(word, field);
-			break;
+	mi_list = silofs_cmd_parse_mountinfo();
+	mi_iter = mi_list;
+	while (mi_iter != NULL) {
+		if (cmd_lsmnt_args->long_listing) {
+			cmd_lsmnt_print_mntdir_long(mi_iter);
+			cmd_lsmnt_print_mntargs(mi_iter);
+		} else {
+			cmd_lsmnt_print_mntdir(mi_iter);
 		}
-		silofs_substr_split(tail, " \t\v", &pair);
-		idx--;
+		mi_iter = mi_iter->next;
 	}
-}
-
-static void lsmnt_parse_mountinfo_line(const struct silofs_substr *line)
-{
-	struct silofs_substr mntdir;
-	struct silofs_substr mntargs;
-	struct silofs_substr_pair pair;
-	struct silofs_substr *head = &pair.first;
-	struct silofs_substr *tail = &pair.second;
-
-	silofs_substr_split_str(line, " - ", &pair);
-	lsmnt_parse_field(head, 4, &mntdir);
-	lsmnt_parse_field(tail, 2, &mntargs);
-
-	if (lsmnt_args->long_listing) {
-		lsmnt_print_mntdir_long(&mntdir);
-		lsmnt_print_mntargs(&mntargs);
-	} else {
-		lsmnt_print_mntdir(&mntdir);
-	}
-}
-
-static bool lsmnt_isfusesilofs(const struct silofs_substr *line)
-{
-	return (silofs_substr_find(line, "fuse.silofs") < line->len);
-}
-
-static void lsmnt_parse_mountinfo(void)
-{
-	struct silofs_substr info;
-	struct silofs_substr_pair pair;
-	struct silofs_substr *line = &pair.first;
-	struct silofs_substr *tail = &pair.second;
-
-	silofs_substr_init(&info, lsmnt_mountinfo);
-	silofs_substr_split_chr(&info, '\n', &pair);
-	while (!silofs_substr_isempty(line) || !silofs_substr_isempty(tail)) {
-		if (lsmnt_isfusesilofs(line)) {
-			lsmnt_parse_mountinfo_line(line);
-		}
-		silofs_substr_split_chr(tail, '\n', &pair);
-	}
+	silofs_cmd_free_mountinfo(mi_list);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_lsmnt(void)
+void silofs_cmd_execute_lsmnt(void)
 {
 	/* Do all cleanups upon exits */
-	lsmnt_start();
+	cmd_lsmnt_start();
 
 	/* Parse command's arguments */
-	lsmnt_getopt();
+	cmd_lsmnt_getopt();
 
 	/* Verify user's arguments */
-	lsmnt_prepare();
+	cmd_lsmnt_prepare();
 
-	/* Read mount info into global variable, all at once */
-	lsmnt_read_mountinfo();
-
-	/* Parse line-by-line */
-	lsmnt_parse_mountinfo();
+	/* Read mount info and print */
+	cmd_lsmnt_execute();
 
 	/* Post execution cleanups */
-	lsmnt_finalize();
+	cmd_lsmnt_finalize();
 }
 

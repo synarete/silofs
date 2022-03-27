@@ -19,20 +19,20 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bsec4k_init(struct silofs_bootsec4k *bor);
+void silofs_bsec4k_init(struct silofs_bootsec4k *bsc);
 
-void silofs_bsec4k_fini(struct silofs_bootsec4k *bor);
+void silofs_bsec4k_fini(struct silofs_bootsec4k *bsc);
 
-void silofs_bsec4k_stamp(struct silofs_bootsec4k *bor,
+void silofs_bsec4k_stamp(struct silofs_bootsec4k *bsc,
                          const struct silofs_mdigest *md);
 
 int silofs_bsec4k_verify(const struct silofs_bootsec4k *mbr,
                          const struct silofs_mdigest *md);
 
-void silofs_bsec4k_parse(const struct silofs_bootsec4k *bor,
+void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
                          struct silofs_bootsec *bsec);
 
-void silofs_bsec4k_set(struct silofs_bootsec4k *bor,
+void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
                        const struct silofs_bootsec *bsec);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -47,22 +47,30 @@ void silofs_bootsec_set_uaddr(struct silofs_bootsec *bsec,
 void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
                                const struct silofs_packid *sb_packid);
 
-void silofs_bootsec_setup(struct silofs_bootsec *bsec,
-                          const struct silofs_uaddr *uaddr);
+void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,
+                                const struct silofs_hash256 *hash);
+
+void silofs_bootsec_clear_keyhash(struct silofs_bootsec *bsec);
+
+bool silofs_bootsec_has_keyhash(const struct silofs_bootsec *bsec,
+                                const struct silofs_hash256 *hash);
+
+void silofs_bootsec_cipher_args(const struct silofs_bootsec *bsec,
+                                struct silofs_cipher_args *out_cip_args);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_default_cip_args(struct silofs_cipher_args *cip_args);
 
-void silofs_calc_pass_hash(const struct silofs_passphrase *pp,
-                           const struct silofs_mdigest *md,
-                           struct silofs_hash512 *out_hash);
+void silofs_calc_key_hash(const struct silofs_key *key,
+                          const struct silofs_mdigest *md,
+                          struct silofs_hash256 *out_hash);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_boot_lib(void);
 
-void silofs_boot_cons(void);
+void silofs_boot_defs(void);
 
 int silofs_boot_mem(size_t mem_want, size_t *out_mem_size);
 

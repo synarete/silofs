@@ -43,11 +43,12 @@
 #define MPAGES_IN_HOLE          (32)
 
 #define MSLAB_SEG_SIZE          (32)
-#define MSLAB_SIZE_MAX          (QALLOC_PAGE_SIZE / 2)
+#define MSLAB_SIZE_MIN          MSLAB_SEG_SIZE
+#define MSLAB_SIZE_MAX          (QALLOC_PAGE_SIZE / 4)
 
 #define MSLAB_INDEX_NONE        (0)
 
-#define QALLOC_NSLABS           (MSLAB_SIZE_MAX / MSLAB_SEG_SIZE)
+#define QALLOC_NSLABS           (MSLAB_SIZE_MAX / MSLAB_SIZE_MIN)
 
 #define STATICASSERT_EQ(a_, b_) \
 	SILOFS_STATICASSERT_EQ(a_, b_)

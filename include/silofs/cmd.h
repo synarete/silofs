@@ -70,6 +70,7 @@ struct silofs_subcmd_mount {
 	char   *mntpoint_real;
 	char   *options;
 	bool    allowother;
+	bool    wbackcache;
 	bool    lazytime;
 	bool    noexec;
 	bool    nosuid;
@@ -88,9 +89,14 @@ struct silofs_subcmd_umount {
 
 /* arguments for 'snap' sub-command */
 struct silofs_subcmd_snap {
-	char   *name;
-	char   *dirpath;
-	char   *dirpath_real;
+	char   *src_repodir_name;
+	char   *src_repodir;
+	char   *src_repodir_real;
+	char   *src_name;
+	char   *dst_repodir_name;
+	char   *dst_repodir;
+	char   *dst_repodir_real;
+	char   *dst_name;
 };
 
 /* arguments for 'lsmnt' sub-command */
@@ -109,10 +115,10 @@ struct silofs_subcmd_show {
 
 /* arguments for 'archive' sub-command */
 struct silofs_subcmd_archive {
-	char   *main_repodir_name;
-	char   *main_repodir;
-	char   *main_repodir_real;
-	char   *main_name;
+	char   *warm_repodir_name;
+	char   *warm_repodir;
+	char   *warm_repodir_real;
+	char   *warm_name;
 	char   *cold_repodir_name;
 	char   *cold_repodir;
 	char   *cold_repodir_real;
@@ -123,10 +129,10 @@ struct silofs_subcmd_archive {
 
 /* arguments for 'archive' sub-command */
 struct silofs_subcmd_restore {
-	char   *main_repodir_name;
-	char   *main_repodir;
-	char   *main_repodir_real;
-	char   *main_name;
+	char   *warm_repodir_name;
+	char   *warm_repodir;
+	char   *warm_repodir_real;
+	char   *warm_name;
 	char   *cold_repodir_name;
 	char   *cold_repodir;
 	char   *cold_repodir_real;
@@ -217,40 +223,34 @@ extern struct silofs_globals silofs_globals;
 
 
 /* execution hooks */
-void silofs_execute_init(void);
+void silofs_cmd_execute_init(void);
 
-void silofs_execute_mkfs(void);
+void silofs_cmd_execute_mkfs(void);
 
-void silofs_execute_mount(void);
+void silofs_cmd_execute_mount(void);
 
-void silofs_execute_umount(void);
+void silofs_cmd_execute_umount(void);
 
-void silofs_execute_show(void);
+void silofs_cmd_execute_show(void);
 
-void silofs_execute_snap(void);
+void silofs_cmd_execute_snap(void);
 
-void silofs_execute_lsmnt(void);
+void silofs_cmd_execute_lsmnt(void);
 
-void silofs_execute_archive(void);
+void silofs_cmd_execute_archive(void);
 
-void silofs_execute_restore(void);
+void silofs_cmd_execute_restore(void);
 
-void silofs_execute_prune(void);
+void silofs_cmd_execute_prune(void);
 
-void silofs_execute_fsck(void);
+void silofs_cmd_execute_fsck(void);
 
 
 /* common utilities */
 __attribute__((__noreturn__))
-void silofs_die_redundant_arg(const char *s);
-
-__attribute__((__noreturn__))
-void silofs_die_missing_arg(const char *s);
-
-__attribute__((__noreturn__))
 void silofs_die_unsupported_opt(void);
 
-void silofs_die_if_missing_arg(const char *arg_name, const void *arg_val);
+void silofs_cmd_require_arg(const char *arg_name, const void *arg_val);
 
 
 void silofs_cmd_check_fsname(const char *arg_val);
@@ -276,13 +276,16 @@ void silofs_cmd_check_mountd(void);
 void silofs_cmd_mkdir(const char *path, mode_t mode);
 
 
-void silofs_cmd_endargs(void);
+
+void silofs_cmd_getoptarg(const char *opt_name, char **out_opt);
 
 void silofs_cmd_getarg(const char *arg_name, char **out_arg);
 
 void silofs_cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
 
 int silofs_cmd_getopt(const char *sopts, const struct option *lopts);
+
+void silofs_cmd_endargs(void);
 
 
 long silofs_cmd_parse_size(const char *str);
@@ -292,6 +295,8 @@ void silofs_cmd_realpath(const char *path, char **out_real);
 void silofs_cmd_stat_ok(const char *path, struct stat *st);
 
 void silofs_cmd_stat_reg(const char *path, struct stat *st);
+
+void silofs_cmd_stat_dir(const char *path, struct stat *st);
 
 void silofs_cmd_stat_reg_or_dir(const char *path, struct stat *st);
 
@@ -334,12 +339,31 @@ char *silofs_cmd_strndup(const char *s, size_t n);
 
 char *silofs_cmd_mkpathf(const char *fmt, ...);
 
+/* repository locking */
+void silofs_cmd_lockf(const char *repodir, const char *name, int *out_fd);
+
+bool silofs_cmd_trylockf(const char *repodir, const char *name, int *out_fd);
+
+void silofs_cmd_unlockf(int *pfd);
+
+/* extra utilities */
+struct silofs_proc_mntinfo {
+	struct silofs_proc_mntinfo *next;
+	const char *mntdir;
+	const char *mntargs;
+	size_t msz;
+};
+
+struct silofs_proc_mntinfo *silofs_cmd_parse_mountinfo(void);
+
+void silofs_cmd_free_mountinfo(struct silofs_proc_mntinfo *mi_list);
+
 /* singleton instance */
-void silofs_create_fse_inst(const struct silofs_fs_args *args);
+void silofs_cmd_create_fse_inst(const struct silofs_fs_args *args);
 
-void silofs_destroy_fse_inst(void);
+void silofs_cmd_destroy_fse_inst(void);
 
-struct silofs_fs_env *silofs_fse_inst(void);
+struct silofs_fs_env *silofs_cmd_fse_inst(void);
 
 
 /* signals handling */

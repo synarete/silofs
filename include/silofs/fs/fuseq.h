@@ -32,6 +32,7 @@ struct silofs_fuseq_conn_info {
 	size_t  max_background;
 	size_t  congestion_threshold;
 	size_t  time_gran;
+	size_t  max_inlen;
 } silofs_aligned64;
 
 struct silofs_fuseq_worker {
@@ -41,7 +42,7 @@ struct silofs_fuseq_worker {
 	struct silofs_fuseq_inb        *inb;
 	struct silofs_fuseq_outb       *outb;
 	struct silofs_fuseq_rw_iter    *rwi;
-	struct silofs_fs_ctx            fs_ctx;
+	struct silofs_oper_ctx         *opc;
 	struct silofs_piper             piper;
 	struct silofs_thread            th;
 	unsigned int                    worker_index;
@@ -63,16 +64,19 @@ struct silofs_fuseq {
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_fs_apex          *fq_apex;
 	struct silofs_alloc_if         *fq_alif;
-	uid_t                           fq_fs_owner;
 	size_t                          fq_nopers;
+	uid_t                           fq_fs_owner;
 	time_t                          fq_times;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
+	bool                            fq_init_locks;
 	bool                            fq_got_init;
+	bool                            fq_reply_init_ok;
 	bool                            fq_got_destroy;
 	bool                            fq_deny_others;
 	bool                            fq_mount;
 	bool                            fq_umount;
+	bool                            fq_writeback_cache;
 } silofs_aligned64;
 
 

@@ -513,17 +513,42 @@ static size_t sbi_cache_ndirty(const struct silofs_sb_info *sbi)
 	return cache->c_dq.dq_accum_nbytes;
 }
 
+/*
+ * Special case where data-node has been unmapped due to forget, yet it still
+ * had a live ref-count due to on-going I/O operation.
+ */
+static int sbi_fixup_cached_vi(const struct silofs_sb_info *sbi,
+                               struct silofs_vnode_info *vi)
+{
+	if (!vi->v_ti.t_ce.ce_forgot) {
+		return 0;
+	}
+	if (silofs_vi_refcnt(vi)) {
+		return 0;
+	}
+	silofs_cache_forget_vnode(sbi_cache(sbi), vi);
+	return -ENOENT;
+}
+
 static int sbi_lookup_cached_vi(const struct silofs_sb_info *sbi,
                                 const struct silofs_vaddr *vaddr,
                                 struct silofs_vnode_info **out_vi)
 {
+	struct silofs_vnode_info *vi;
+	int err;
+
 	if (vaddr_isnull(vaddr)) {
 		return -ENOENT;
 	}
-	*out_vi = silofs_cache_lookup_vnode(sbi_cache(sbi), vaddr);
-	if (*out_vi == NULL) {
+	vi = silofs_cache_lookup_vnode(sbi_cache(sbi), vaddr);
+	if (vi == NULL) {
 		return -ENOENT;
 	}
+	err = sbi_fixup_cached_vi(sbi, vi);
+	if (err) {
+		return err;
+	}
+	*out_vi = vi;
 	return 0;
 }
 

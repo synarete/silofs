@@ -38,6 +38,7 @@ libsilofs_la_SOURCES += fs/crypto.c
 libsilofs_la_SOURCES += fs/dir.c
 libsilofs_la_SOURCES += fs/exec.c
 libsilofs_la_SOURCES += fs/file.c
+libsilofs_la_SOURCES += fs/fused.c
 libsilofs_la_SOURCES += fs/fuseq.c
 libsilofs_la_SOURCES += fs/guarantee.c
 libsilofs_la_SOURCES += fs/inode.c

@@ -22,6 +22,7 @@
 #include <sys/syscall.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <poll.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -57,10 +58,10 @@ static int io_status(int err, size_t nexpected, size_t ncomplete)
 
 int silofs_sys_readn(int fd, void *buf, size_t cnt)
 {
-	int err = 0;
+	uint8_t *ptr;
 	size_t nrd_cur;
 	size_t nrd = 0;
-	uint8_t *ptr;
+	int err = 0;
 
 	while (nrd < cnt) {
 		ptr = buffer_at(buf, nrd);
@@ -79,11 +80,11 @@ int silofs_sys_readn(int fd, void *buf, size_t cnt)
 
 int silofs_sys_preadn(int fd, void *buf, size_t cnt, loff_t off)
 {
-	int err = 0;
+	uint8_t *ptr;
 	loff_t pos;
 	size_t nrd_cur;
 	size_t nrd = 0;
-	uint8_t *ptr;
+	int err = 0;
 
 	while (nrd < cnt) {
 		ptr = buffer_at(buf, nrd);
@@ -103,10 +104,10 @@ int silofs_sys_preadn(int fd, void *buf, size_t cnt, loff_t off)
 
 int silofs_sys_writen(int fd, const void *buf, size_t cnt)
 {
-	int err = 0;
+	const uint8_t *ptr;
 	size_t nwr_cur;
 	size_t nwr = 0;
-	const uint8_t *ptr;
+	int err = 0;
 
 	while (nwr < cnt) {
 		ptr = buffer_at(buf, nwr);
@@ -125,11 +126,11 @@ int silofs_sys_writen(int fd, const void *buf, size_t cnt)
 
 int silofs_sys_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 {
-	int err = 0;
+	const uint8_t *ptr;
 	loff_t pos;
 	size_t nwr_cur;
 	size_t nwr = 0;
-	const uint8_t *ptr;
+	int err = 0;
 
 	while (nwr < cnt) {
 		ptr = buffer_at(buf, nwr);
@@ -179,10 +180,10 @@ static void iov_advance(struct iovec **p_iov, size_t len)
 static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt,
                            loff_t off, loff_t *out_off)
 {
-	int err = 0;
 	size_t nwr_cur;
 	size_t nwr = 0;
 	const size_t len = iov_length(iov, cnt);
+	int err = 0;
 
 	while (nwr < len) {
 		err = silofs_sys_pwritev(fd, iov, cnt, off, &nwr_cur);
@@ -276,9 +277,9 @@ int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off)
 
 int silofs_sys_pselect_rfd(int fd, const struct timespec *ts)
 {
+	fd_set rfds;
 	int err;
 	int nfds = 0;
-	fd_set rfds;
 
 	if (fd >= FD_SETSIZE) {
 		return -EBADF;
@@ -290,6 +291,26 @@ int silofs_sys_pselect_rfd(int fd, const struct timespec *ts)
 		return err;
 	}
 	if (!nfds || !FD_ISSET(fd, &rfds)) {
+		return -ETIMEDOUT;
+	}
+	return 0;
+}
+
+int silofs_sys_pollin_rfd(int fd, int timeout)
+{
+	struct pollfd fds = {
+		.fd = fd,
+		.events = POLLIN,
+		.revents = 0,
+	};
+	int nfds = 0;
+	int err;
+
+	err = silofs_sys_poll(&fds, 1, timeout, &nfds);
+	if (err) {
+		return err;
+	}
+	if (!nfds || !fds.revents) {
 		return -ETIMEDOUT;
 	}
 	return 0;

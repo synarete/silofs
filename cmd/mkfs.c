@@ -17,7 +17,7 @@
 #include <silofs/cmd.h>
 
 
-static struct silofs_subcmd_mkfs *mkfs_args;
+static struct silofs_subcmd_mkfs *cmd_mkfs_args;
 
 static const char *mkfs_usage[] = {
 	"mkfs --size=NBYTES [options] <repo/name>",
@@ -29,7 +29,7 @@ static const char *mkfs_usage[] = {
 	NULL
 };
 
-static void mkfs_getopt(void)
+static void cmd_mkfs_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -43,69 +43,75 @@ static void mkfs_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("s:V:Fh", opts);
 		if (opt_chr == 's') {
-			mkfs_args->size = optarg;
-			mkfs_args->fs_size = silofs_cmd_parse_size(optarg);
+			cmd_mkfs_args->size = optarg;
+			cmd_mkfs_args->fs_size = silofs_cmd_parse_size(optarg);
 		} else if (opt_chr == 'V') {
 			silofs_set_verbose_mode(optarg);
 		} else if (opt_chr == 'F') {
-			mkfs_args->force = true;
+			cmd_mkfs_args->force = true;
 		} else if (opt_chr == 'h') {
 			silofs_print_help_and_exit(mkfs_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo/name", &mkfs_args->repodir_name);
+	silofs_cmd_require_arg("size", cmd_mkfs_args->size);
+	silofs_cmd_getarg("repo/name", &cmd_mkfs_args->repodir_name);
 	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void mkfs_finalize(void)
+static void cmd_mkfs_finalize(void)
 {
-	silofs_destroy_fse_inst();
-	silofs_cmd_pfrees(&mkfs_args->name);
-	silofs_cmd_pfrees(&mkfs_args->repodir);
-	silofs_cmd_pfrees(&mkfs_args->repodir_name);
-	silofs_cmd_pfrees(&mkfs_args->repodir_real);
+	silofs_cmd_destroy_fse_inst();
+	silofs_cmd_pfrees(&cmd_mkfs_args->name);
+	silofs_cmd_pfrees(&cmd_mkfs_args->repodir);
+	silofs_cmd_pfrees(&cmd_mkfs_args->repodir_name);
+	silofs_cmd_pfrees(&cmd_mkfs_args->repodir_real);
 }
 
-static void mkfs_start(void)
+static void cmd_mkfs_start(void)
 {
-	mkfs_args = &silofs_globals.cmd.mkfs;
-	atexit(mkfs_finalize);
+	cmd_mkfs_args = &silofs_globals.cmd.mkfs;
+	atexit(cmd_mkfs_finalize);
 }
 
-static void mkfs_prepare(void)
+static void cmd_mkfs_prepare(void)
 {
-	silofs_die_if_missing_arg("size", mkfs_args->size);
-	silofs_cmd_check_notexists(mkfs_args->repodir_name);
-	silofs_cmd_splitpath(mkfs_args->repodir_name,
-	                     &mkfs_args->repodir, &mkfs_args->name);
-	silofs_cmd_check_nonemptydir(mkfs_args->repodir, true);
-	silofs_cmd_realpath(mkfs_args->repodir, &mkfs_args->repodir_real);
-	silofs_cmd_check_fsname(mkfs_args->name);
+	silofs_cmd_check_notexists(cmd_mkfs_args->repodir_name);
+
+	silofs_cmd_splitpath(cmd_mkfs_args->repodir_name,
+	                     &cmd_mkfs_args->repodir,
+	                     &cmd_mkfs_args->name);
+
+	silofs_cmd_check_nonemptydir(cmd_mkfs_args->repodir, true);
+
+	silofs_cmd_realpath(cmd_mkfs_args->repodir,
+	                    &cmd_mkfs_args->repodir_real);
+
+	silofs_cmd_check_fsname(cmd_mkfs_args->name);
 }
 
-static void mkfs_create_fs_env(void)
+static void cmd_mkfs_create_fs_env(void)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = mkfs_args->repodir_real,
-		.main_name = mkfs_args->name,
-		.capacity = (size_t)mkfs_args->fs_size,
+		.main_repodir = cmd_mkfs_args->repodir_real,
+		.main_name = cmd_mkfs_args->name,
+		.capacity = (size_t)cmd_mkfs_args->fs_size,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
 	};
 
-	silofs_create_fse_inst(&fs_args);
+	silofs_cmd_create_fse_inst(&fs_args);
 }
 
-static void mkfs_format_filesystem(void)
+static void cmd_mkfs_format_filesystem(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
-	const char *repodir = mkfs_args->repodir_real;
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
+	const char *repodir = cmd_mkfs_args->repodir_real;
 	int err;
 
 	err = silofs_fse_open_repos(fse);
@@ -122,10 +128,10 @@ static void mkfs_format_filesystem(void)
 	}
 }
 
-static void mkfs_finish(void)
+static void cmd_mkfs_finish(void)
 {
-	struct silofs_fs_env *fse = silofs_fse_inst();
-	const char *repodir = mkfs_args->repodir_real;
+	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
+	const char *repodir = cmd_mkfs_args->repodir_real;
 	int err;
 
 	err = silofs_fse_shut(fse);
@@ -140,28 +146,28 @@ static void mkfs_finish(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_mkfs(void)
+void silofs_cmd_execute_mkfs(void)
 {
 	/* Do all cleanups upon exits */
-	mkfs_start();
+	cmd_mkfs_start();
 
 	/* Parse command's arguments */
-	mkfs_getopt();
+	cmd_mkfs_getopt();
 
 	/* Verify user's arguments */
-	mkfs_prepare();
+	cmd_mkfs_prepare();
 
 	/* Prepare environment */
-	mkfs_create_fs_env();
+	cmd_mkfs_create_fs_env();
 
 	/* Do actual mkfs */
-	mkfs_format_filesystem();
+	cmd_mkfs_format_filesystem();
 
 	/* Post-format cleanups */
-	mkfs_finish();
+	cmd_mkfs_finish();
 
 	/* Post execution cleanups */
-	mkfs_finalize();
+	cmd_mkfs_finalize();
 }
 
 

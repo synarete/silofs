@@ -114,6 +114,18 @@ static void bsec4k_set_version(struct silofs_bootsec4k *bsc, uint64_t version)
 	bsc->bs_version = silofs_cpu_to_le64(version);
 }
 
+static enum silofs_bootf bsec4k_flags(const struct silofs_bootsec4k *bsc)
+{
+	const uint64_t f = silofs_le64_to_cpu(bsc->bs_flags);
+
+	return (enum silofs_bootf)f;
+}
+
+static void bsec4k_set_flags(struct silofs_bootsec4k *bsc, enum silofs_bootf f)
+{
+	bsc->bs_flags = silofs_cpu_to_le64((uint64_t)f);
+}
+
 static void bsec4k_uuid(const struct silofs_bootsec4k *bsc,
                         struct silofs_uuid *uu)
 {
@@ -134,6 +146,18 @@ static time_t bsec4k_btime(const struct silofs_bootsec4k *bsc)
 static void bsec4k_set_btime(struct silofs_bootsec4k *bsc, time_t tm)
 {
 	bsc->bs_btime = silofs_cpu_to_le64((uint64_t)tm);
+}
+
+static void bsec4k_key_hash(const struct silofs_bootsec4k *bsc,
+                            struct silofs_hash256 *out_hash)
+{
+	silofs_hash256_assign(out_hash, &bsc->bs_key_hash);
+}
+
+static void bsec4k_set_key_hash(struct silofs_bootsec4k *bsc,
+                                const struct silofs_hash256 *hash)
+{
+	silofs_hash256_assign(&bsc->bs_key_hash, hash);
 }
 
 static void bsec4k_kdf(const struct silofs_bootsec4k *bsc,
@@ -179,6 +203,7 @@ void silofs_bsec4k_init(struct silofs_bootsec4k *bsc)
 	silofs_memzero(bsc, sizeof(*bsc));
 	bsec4k_set_magic(bsc, SILOFS_BOOT_RECORD_MAGIC);
 	bsec4k_set_version(bsc, SILOFS_FMT_VERSION);
+	bsec4k_set_flags(bsc, SILOFS_BOOTF_NONE);
 	bsec4k_set_kdf(bsc, &cip_args->kdf);
 	bsec4k_set_cipher(bsc, cip_args->cipher_algo, cip_args->cipher_mode);
 	bsec4k_fill_rands(bsc);
@@ -319,6 +344,10 @@ void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
 	bsec4k_uuid(bsc, &bsec->uuid);
 	bsec4k_cipher_args(bsc, &bsec->cip_args);
 	bsec->btime = bsec4k_btime(bsc);
+	bsec->flags = bsec4k_flags(bsc);
+	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
+		bsec4k_key_hash(bsc, &bsec->key_hash);
+	}
 }
 
 void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
@@ -329,6 +358,10 @@ void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
 	bsec4k_set_sb_packid(bsc, &bsec->sb_packid);
 	bsec4k_set_uuid(bsc, &bsec->uuid);
 	bsec4k_set_btime(bsc, bsec->btime);
+	bsec4k_set_flags(bsc, bsec->flags);
+	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
+		bsec4k_set_key_hash(bsc, &bsec->key_hash);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -341,6 +374,7 @@ void silofs_bootsec_init(struct silofs_bootsec *bsec)
 	silofs_default_cip_args(&bsec->cip_args);
 	silofs_uuid_generate(&bsec->uuid);
 	bsec->btime = silofs_time_now();
+	bsec->flags = SILOFS_BOOTF_NONE;
 }
 
 void silofs_bootsec_fini(struct silofs_bootsec *bsec)
@@ -360,25 +394,42 @@ void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
 	silofs_packid_assign(&bsec->sb_packid, sb_packid);
 }
 
-void silofs_bootsec_setup(struct silofs_bootsec *bsec,
-                          const struct silofs_uaddr *uaddr)
+void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,
+                                const struct silofs_hash256 *hash)
 {
-	silofs_bootsec_init(bsec);
-	silofs_bootsec_set_uaddr(bsec, uaddr);
+	silofs_hash256_assign(&bsec->key_hash, hash);
+	bsec->flags |= SILOFS_BOOTF_KEY_SHA256;
 }
 
+void silofs_bootsec_clear_keyhash(struct silofs_bootsec *bsec)
+{
+	silofs_memzero(&bsec->key_hash, sizeof(bsec->key_hash));
+	bsec->flags &= (enum silofs_bootf)(~SILOFS_BOOTF_KEY_SHA256);
+}
+
+bool silofs_bootsec_has_keyhash(const struct silofs_bootsec *bsec,
+                                const struct silofs_hash256 *pass_hash)
+{
+	return silofs_hash256_isequal(&bsec->key_hash, pass_hash);
+}
+
+void silofs_bootsec_cipher_args(const struct silofs_bootsec *bsec,
+                                struct silofs_cipher_args *out_cip_args)
+{
+	if (!bsec || !bsec->cip_args.cipher_algo) {
+		silofs_default_cip_args(out_cip_args);
+	} else {
+		cip_args_assign(out_cip_args, &bsec->cip_args);
+	}
+}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_calc_pass_hash(const struct silofs_passphrase *pp,
-                           const struct silofs_mdigest *md,
-                           struct silofs_hash512 *out_hash)
+void silofs_calc_key_hash(const struct silofs_key *key,
+                          const struct silofs_mdigest *md,
+                          struct silofs_hash256 *out_hash)
 {
-	if (pp->passlen) {
-		silofs_sha3_512_of(md, pp->pass, pp->passlen, out_hash);
-	} else {
-		silofs_memzero(out_hash, sizeof(*out_hash));
-	}
+	silofs_sha256_of(md, key->key, sizeof(key->key), out_hash);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -521,7 +572,7 @@ int silofs_boot_lib(void)
 {
 	int err;
 
-	silofs_boot_cons();
+	silofs_boot_defs();
 
 	if (g_boot_lib_once) {
 		return 0;

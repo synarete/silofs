@@ -155,6 +155,7 @@ static char *ut_join(const char *base, const char *name)
 	path = (char *)malloc(size);
 	if (path == NULL) {
 		error(EXIT_FAILURE, errno, "malloc failed: size=%lu", size);
+		abort(); /* make gxx-analyzer happy */
 	}
 	memcpy(path, base, len1);
 	path[len1] = '/';

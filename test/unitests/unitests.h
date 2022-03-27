@@ -426,7 +426,7 @@ void ut_setxattr_all(struct ut_env *ute, ino_t ino,
 void ut_removexattr_all(struct ut_env *ute, ino_t ino,
                         const struct ut_kvl *kvl);
 
-void ut_query_ok(struct ut_env *ute, ino_t ino,
+void ut_query_ok(struct ut_env *ute, ino_t ino, int qtype,
                  struct silofs_ioc_query *out_qry);
 
 void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name);

@@ -17,9 +17,9 @@
 #include <silofs/cmd.h>
 
 
-static struct silofs_subcmd_fsck *fsck_args;
+static struct silofs_subcmd_fsck *cmd_fsck_args;
 
-static const char *silofs_fsck_usage[] = {
+static const char *cmd_fsck_usage[] = {
 	"fsck [options] <repo-path>",
 	"",
 	"options:",
@@ -50,52 +50,53 @@ static void fsck_getopt(void)
 		if (c == 'v') {
 			silofs_print_version_and_exit(NULL);
 		} else if (c == 'h') {
-			silofs_print_help_and_exit(silofs_fsck_usage);
+			silofs_print_help_and_exit(cmd_fsck_usage);
 		} else {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo-path", &fsck_args->repodir);
+	silofs_cmd_getarg("repo-path", &cmd_fsck_args->repodir);
 	silofs_cmd_endargs();
 }
 
 
-static void fsck_finalize(void)
+static void cmd_fsck_finalize(void)
 {
-	silofs_destroy_fse_inst();
-	silofs_cmd_pfrees(&fsck_args->repodir_real);
-	silofs_cmd_pfrees(&fsck_args->repodir);
+	silofs_cmd_destroy_fse_inst();
+	silofs_cmd_pfrees(&cmd_fsck_args->repodir_real);
+	silofs_cmd_pfrees(&cmd_fsck_args->repodir);
 }
 
-static void fsck_start(void)
+static void cmd_fsck_start(void)
 {
-	fsck_args = &silofs_globals.cmd.fsck;
-	atexit(fsck_finalize);
+	cmd_fsck_args = &silofs_globals.cmd.fsck;
+	atexit(cmd_fsck_finalize);
 }
 
-static void fsck_prepare(void)
+static void cmd_fsck_prepare(void)
 {
-	silofs_cmd_check_nonemptydir(fsck_args->repodir, true);
-	silofs_cmd_realpath(fsck_args->repodir, &fsck_args->repodir_real);
+	silofs_cmd_check_nonemptydir(cmd_fsck_args->repodir, true);
+	silofs_cmd_realpath(cmd_fsck_args->repodir,
+	                    &cmd_fsck_args->repodir_real);
 }
 
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_execute_fsck(void)
+void silofs_cmd_execute_fsck(void)
 {
 	/* Do all cleanups upon exits */
-	fsck_start();
+	cmd_fsck_start();
 
 	/* Parse command's arguments */
 	fsck_getopt();
 
 	/* Verify user's arguments */
-	fsck_prepare();
+	cmd_fsck_prepare();
 
 	/* TODO: execute logic... */
 
 	/* Post execution cleanups */
-	fsck_finalize();
+	cmd_fsck_finalize();
 }
 

@@ -400,26 +400,26 @@ static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
 }
 
 static struct silofs_vnode_info *
-vi_from_xiovref(const struct silofs_xiovref *fir)
+vi_from_xiovref(const struct silofs_xiovref *xior)
 {
 	const struct silofs_vnode_info *vi = NULL;
 
-	vi = container_of2(fir, struct silofs_vnode_info, v_fir);
+	vi = container_of2(xior, struct silofs_vnode_info, v_fir);
 	return vi_unconst(vi);
 }
 
 
-static void vi_xiov_pre(struct silofs_xiovref *fir)
+static void vi_xiov_pre(struct silofs_xiovref *xior)
 {
-	struct silofs_vnode_info *vi = vi_from_xiovref(fir);
+	struct silofs_vnode_info *vi = vi_from_xiovref(xior);
 
 	silofs_vi_incref(vi);
 	vi->v_ti.t_noflush = true;
 }
 
-static void vi_xiov_post(struct silofs_xiovref *fir)
+static void vi_xiov_post(struct silofs_xiovref *xior)
 {
-	struct silofs_vnode_info *vi = vi_from_xiovref(fir);
+	struct silofs_vnode_info *vi = vi_from_xiovref(xior);
 
 	silofs_vi_decref(vi);
 	vi->v_ti.t_noflush = false;
@@ -587,13 +587,17 @@ static void sbi_delete(struct silofs_sb_info *sbi,
 static void sbi_delete_as_ui(struct silofs_unode_info *ui,
                              struct silofs_alloc_if *alif)
 {
-	sbi_delete(silofs_sbi_from_ui(ui), alif);
+	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
+		sbi_delete(silofs_sbi_from_ui(ui), alif);
+	}
 }
 
 static void sbi_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	sbi_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		sbi_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	}
 }
 
 static bool sbi_evictable_as_ti(const struct silofs_tnode_info *ti)
@@ -682,13 +686,17 @@ static void sni_delete(struct silofs_spnode_info *sni,
 static void sni_delete_as_ui(struct silofs_unode_info *ui,
                              struct silofs_alloc_if *alif)
 {
-	sni_delete(silofs_sni_from_ui(ui), alif);
+	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
+		sni_delete(silofs_sni_from_ui(ui), alif);
+	}
 }
 
 static void sni_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	sni_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		sni_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_spnode_info *
@@ -778,13 +786,17 @@ static void sli_delete(struct silofs_spleaf_info *sli,
 static void sli_delete_as_ui(struct silofs_unode_info *ui,
                              struct silofs_alloc_if *alif)
 {
-	sli_delete(silofs_sli_from_ui(ui), alif);
+	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
+		sli_delete(silofs_sli_from_ui(ui), alif);
+	}
 }
 
 static void sli_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	sli_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		sli_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_spleaf_info *
@@ -872,13 +884,17 @@ static void itni_delete(struct silofs_itnode_info *itni,
 static void itni_delete_as_vi(struct silofs_vnode_info *vi,
                               struct silofs_alloc_if *alif)
 {
-	itni_delete(silofs_itni_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		itni_delete(silofs_itni_from_vi(vi), alif);
+	}
 }
 
 static void itni_delete_as_ti(struct silofs_tnode_info *ti,
                               struct silofs_alloc_if *alif)
 {
-	itni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		itni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_itnode_info *
@@ -969,13 +985,17 @@ static void ii_delete(struct silofs_inode_info *ii,
 static void ii_delete_as_vi(struct silofs_vnode_info *vi,
                             struct silofs_alloc_if *alif)
 {
-	ii_delete(silofs_ii_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		ii_delete(silofs_ii_from_vi(vi), alif);
+	}
 }
 
 static void ii_delete_as_ti(struct silofs_tnode_info *ti,
                             struct silofs_alloc_if *alif)
 {
-	ii_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		ii_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_inode_info *
@@ -1072,13 +1092,17 @@ static void xai_delete(struct silofs_xanode_info *xai,
 static void xai_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc_if *alif)
 {
-	xai_delete(silofs_xai_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		xai_delete(silofs_xai_from_vi(vi), alif);
+	}
 }
 
 static void xai_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	xai_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		xai_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_xanode_info *
@@ -1165,13 +1189,17 @@ static void syi_delete(struct silofs_symval_info *syi,
 static void syi_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc_if *alif)
 {
-	syi_delete(silofs_syi_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		syi_delete(silofs_syi_from_vi(vi), alif);
+	}
 }
 
 static void syi_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	syi_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		syi_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_symval_info *
@@ -1258,13 +1286,17 @@ static void dni_delete(struct silofs_dnode_info *dni,
 static void dni_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc_if *alif)
 {
-	dni_delete(silofs_dni_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		dni_delete(silofs_dni_from_vi(vi), alif);
+	}
 }
 
 static void dni_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	dni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		dni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_dnode_info *
@@ -1354,13 +1386,17 @@ static void fni_delete(struct silofs_finode_info *fni,
 static void fni_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc_if *alif)
 {
-	fni_delete(silofs_fni_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		fni_delete(silofs_fni_from_vi(vi), alif);
+	}
 }
 
 static void fni_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	fni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		fni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_finode_info *
@@ -1448,13 +1484,17 @@ static void fli_delete(struct silofs_fileaf_info *fli,
 static void fli_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc_if *alif)
 {
-	fli_delete(silofs_fli_from_vi(vi), alif);
+	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
+		fli_delete(silofs_fli_from_vi(vi), alif);
+	}
 }
 
 static void fli_delete_as_ti(struct silofs_tnode_info *ti,
                              struct silofs_alloc_if *alif)
 {
-	fli_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
+		fli_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	}
 }
 
 static struct silofs_fileaf_info *

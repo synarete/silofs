@@ -21,6 +21,7 @@
 
 int silofs_apex_init(struct silofs_fs_apex *apex,
                      struct silofs_alloc_if *alif,
+                     struct silofs_kivam *kivam,
                      struct silofs_crypto *crypto,
                      struct silofs_repo *mrepo,
                      struct silofs_repo *crepo);
@@ -59,11 +60,6 @@ int silofs_apex_save_boot(const struct silofs_fs_apex *apex,
 int silofs_apex_load_boot(const struct silofs_fs_apex *apex,
                           const struct silofs_namestr *name,
                           struct silofs_bootsec *out_bsec);
-
-int silofs_apex_lock_boot(struct silofs_fs_apex *apex);
-
-int silofs_apex_unlock_boot(struct silofs_fs_apex *apex);
-
 
 int silofs_apex_kcopy(struct silofs_fs_apex *apex,
                       const struct silofs_xiovec *xiov_src,

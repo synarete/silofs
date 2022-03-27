@@ -19,18 +19,16 @@
 
 static void ut_ioctl_query(struct ut_env *ute)
 {
+	struct silofs_ioc_query query = { .reserved = 0 };
+	const char *name = UT_NAME;
 	ino_t ino;
 	ino_t dino;
-	const char *name = UT_NAME;
-	struct silofs_ioc_query query = {
-		.qtype = SILOFS_QUERY_VERSION
-	};
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_query_ok(ute, dino, &query);
+	ut_query_ok(ute, dino, SILOFS_QUERY_VERSION, &query);
 	ut_expect_eq(query.u.version.v_major, silofs_version.major);
 	ut_create_file(ute, dino, name, &ino);
-	ut_query_ok(ute, ino, &query);
+	ut_query_ok(ute, ino, SILOFS_QUERY_VERSION, &query);
 	ut_expect_eq(query.u.version.v_minor, silofs_version.minor);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);

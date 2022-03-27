@@ -116,10 +116,10 @@ enum vt_flags {
 struct vt_env;
 
 struct vt_mchunk {
-	unsigned long magic;
 	struct vt_mchunk *next;
 	uint8_t      *data;
-	unsigned long size;
+	size_t        size;
+	unsigned long magic;
 };
 
 /* Test define */

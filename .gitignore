@@ -25,8 +25,11 @@ lib*.la
 /config.status
 
 # IDEs
-.cproject
-.project
-.pydevproject
-.settings
-.vscode
+/.cproject
+/.project
+/.pydevproject
+/.settings
+/.vscode
+
+# External tools
+/cscope.out

@@ -180,10 +180,10 @@ static int ut_copy_file_range(struct ut_env *ute, ino_t ino_in,
 	                                 ino_out, off_out, len, 0, out_len);
 }
 
-static int ut_query(struct ut_env *ute, ino_t ino,
+static int ut_query(struct ut_env *ute, ino_t ino, int qtype,
                     struct silofs_ioc_query *out_qry)
 {
-	return silofs_fs_query(fs_ctx_of(ute), ino, out_qry);
+	return silofs_fs_query(fs_ctx_of(ute), ino, qtype, out_qry);
 }
 
 static int ut_snap(struct ut_env *ute, ino_t ino, const char *name)
@@ -343,7 +343,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	err2 = ut_write_iter_copy_rem(&wri);
 	*out_len = wri.dat_len;
 
-	err3 = silofs_fs_rdwr_post(fs_ctx_of(ute), ino, wri.xiov, wri.cnt);
+	err3 = silofs_fs_rdwr_post(fs_ctx_of(ute), wri.xiov, wri.cnt);
 	return err1 || err2 || err3;
 }
 
@@ -1466,12 +1466,12 @@ void ut_removexattr_all(struct ut_env *ute, ino_t ino,
 	}
 }
 
-void ut_query_ok(struct ut_env *ute, ino_t ino,
+void ut_query_ok(struct ut_env *ute, ino_t ino, int qtype,
                  struct silofs_ioc_query *out_qry)
 {
 	int err;
 
-	err = ut_query(ute, ino, out_qry);
+	err = ut_query(ute, ino, qtype, out_qry);
 	ut_expect_ok(err);
 }
 

@@ -28,3 +28,4 @@ silofs_SOURCES += show.c
 silofs_SOURCES += signals.c
 silofs_SOURCES += snap.c
 silofs_SOURCES += umount.c
+silofs_SOURCES += xutils.c

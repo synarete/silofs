@@ -18,9 +18,10 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/opers.h>
 #include <silofs/fs/mntsvc.h>
+#include <silofs/fs/ioctls.h>
+#include <silofs/fs/fused.h>
 #include <silofs/fs/fuseq.h>
 #include <silofs/fs/private.h>
-#include <silofs/fs/ioctls.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -65,8 +66,8 @@
 #define FUSEQ_ENORX     (10001)
 #define FUSEQ_ENOTX     (10101)
 
-/* max size for write-buf */
-#define FUSEQ_WRITEBUF_MAX      (SILOFS_KILO)
+/* max size for read/write I/O copy-buffer in splice-pipe mode */
+#define FUSEQ_IOBUF_MAX SILOFS_PAGE_SIZE_MIN
 
 /* local functions */
 static void fuseq_lock_ch(const struct silofs_fuseq_worker *fqw);
@@ -76,7 +77,6 @@ static void fuseq_unlock_fs(const struct silofs_fuseq_worker *fqw);
 static void fuseq_lock_op(const struct silofs_fuseq_worker *fqw);
 static void fuseq_unlock_op(const struct silofs_fuseq_worker *fqw);
 static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq);
-static void fuseq_set_umask(struct silofs_fuseq_worker *fqw, mode_t umask);
 
 /* FUSE types per 7.34 */
 struct fuse_setxattr1_in {
@@ -389,6 +389,7 @@ struct silofs_fuseq_rd_iter {
 	struct silofs_rwiter_ctx rwi;
 	struct silofs_fuseq_worker *fqw;
 	size_t cnt;
+	size_t ncp;
 	size_t nrd;
 	size_t nrd_max;
 };
@@ -505,7 +506,7 @@ static void statx_to_fuse_attr(const struct statx *stx,
 	attr->nlink = stx->stx_nlink;
 	attr->uid = stx->stx_uid;
 	attr->gid = stx->stx_gid;
-	attr->mode = stx->stx_mode;
+	attr->mask = stx->stx_mode;
 	attr->ino = stx->stx_ino;
 	attr->size = stx->stx_size;
 	attr->blocks = stx->stx_blocks;
@@ -594,10 +595,19 @@ static struct silofs_fs_apex *apex_of(const struct silofs_fuseq_worker *fqw)
 	return fqw->fq->fq_apex;
 }
 
-static const struct silofs_fs_ctx *
-fs_ctx_of(const struct silofs_fuseq_worker *fqw)
+static struct silofs_oper_ctx *op_ctx_of(const struct silofs_fuseq_worker *fqw)
 {
-	return &fqw->fs_ctx;
+	return fqw->opc;
+}
+
+static void op_ctx_set_umask(struct silofs_oper_ctx *opc, mode_t umask)
+{
+	opc->opc_fsc.fsc_oper.op_creds.ucred.umask = umask;
+}
+
+static struct silofs_fs_ctx *fs_ctx_of(const struct silofs_fuseq_worker *fqw)
+{
+	return &fqw->opc->opc_fsc;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -706,7 +716,9 @@ static int fuseq_reply_status(struct silofs_fuseq_worker *fqw, int status)
 
 static int fuseq_reply_none(struct silofs_fuseq_worker *fqw)
 {
-	fqw->fs_ctx.fsc_oper.op_unique = 0;
+	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+
+	fsc->fsc_oper.op_unique = 0;
 	return 0;
 }
 
@@ -853,7 +865,7 @@ static int fuseq_reply_ioctl_ok(struct silofs_fuseq_worker *fqw, int result,
 	memset(&arg, 0, sizeof(arg));
 	arg.result = result;
 
-	if (size) {
+	if (size && buf) {
 		ret = fuseq_reply_arg2(fqw, &arg, sizeof(arg), buf, size);
 	} else {
 		ret = fuseq_reply_arg(fqw, &arg, sizeof(arg));
@@ -865,7 +877,9 @@ static int fuseq_reply_ioctl_ok(struct silofs_fuseq_worker *fqw, int result,
 
 static bool fuseq_interrupted(const struct silofs_fuseq_worker *fqw)
 {
-	return fqw->fs_ctx.fsc_interrupt > 0;
+	const struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+
+	return fsc->fsc_interrupt > 0;
 }
 
 static int fuseq_reply_attr(struct silofs_fuseq_worker *fqw,
@@ -1112,6 +1126,47 @@ static int fuseq_reply_read_buf(struct silofs_fuseq_worker *fqw,
 	return ret;
 }
 
+static int fuseq_rdwr_post(const struct silofs_fuseq_worker *fqw,
+                           const struct silofs_xiovec *xiov, size_t cnt)
+{
+	return silofs_fs_rdwr_post(fs_ctx_of(fqw), xiov, cnt);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void xiovec_reset(struct silofs_xiovec *xiov)
+{
+	memset(xiov, 0, sizeof(*xiov));
+	xiov->xiov_fd = -1;
+}
+
+static void xiovec_assign(struct silofs_xiovec *xiov,
+                          const struct silofs_xiovec *other)
+{
+	memcpy(xiov, other, sizeof(*xiov));
+}
+
+static bool xiovec_isfdseq(const struct silofs_xiovec *xiov1,
+                           const struct silofs_xiovec *xiov2)
+{
+	const loff_t end1 = off_end(xiov1->xiov_off, xiov1->xiov_len);
+	const loff_t beg2 = xiov2->xiov_off;
+	const int fd1 = xiov1->xiov_fd;
+	const int fd2 = xiov2->xiov_fd;
+
+	return (fd1 > 0) && (fd2 > 0) && (fd1 == fd2) && (end1 == beg2);
+}
+
+
+static void xiovec_append_len(struct silofs_xiovec *xiov,
+                              const struct silofs_xiovec *other)
+{
+	silofs_assert_eq(off_end(xiov->xiov_off, xiov->xiov_len),
+	                 other->xiov_off);
+
+	xiov->xiov_len += other->xiov_len;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
@@ -1123,7 +1178,6 @@ fuseq_append_hdr_to_pipe(struct silofs_fuseq_worker *fqw, size_t len)
 	fuseq_fill_out_header(fqw, &hdr,  sizeof(hdr) + len, 0);
 	return silofs_pipe_append_from_buf(pipe, &hdr, sizeof(hdr));
 }
-
 
 static int fuseq_append_to_pipe_by_fd(struct silofs_fuseq_worker *fqw,
                                       const struct silofs_xiovec *xiov)
@@ -1170,43 +1224,11 @@ fuseq_append_data_to_pipe(struct silofs_fuseq_worker *fqw,
 	return err;
 }
 
-static int
-fuseq_append_response_to_pipe(struct silofs_fuseq_worker *fqw, size_t nrd,
-                              const struct silofs_xiovec *xiov, size_t cnt)
-{
-	int err;
-
-	err = fuseq_append_hdr_to_pipe(fqw, nrd);
-	if (err) {
-		return err;
-	}
-	err = fuseq_append_data_to_pipe(fqw, xiov, cnt);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int fuseq_send_pipe(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_pipe *pipe = &fqw->piper.pipe;
 
 	return silofs_pipe_flush_to_fd(pipe, fqw->fq->fq_fuse_fd);
-}
-
-static int fuseq_reply_read_pipe(struct silofs_fuseq_worker *fqw, size_t nrd,
-                                 const struct silofs_xiovec *xiov, size_t cnt)
-{
-	int err;
-	int ret;
-
-	err = fuseq_append_response_to_pipe(fqw, nrd, xiov, cnt);
-	if (err) {
-		ret = fuseq_reply_err(fqw, err);
-	} else {
-		ret = fuseq_send_pipe(fqw);
-	}
-	return ret ? ret : err;
 }
 
 static int fuseq_reply_read_data(struct silofs_fuseq_worker *fqw, size_t nrd,
@@ -1215,23 +1237,64 @@ static int fuseq_reply_read_data(struct silofs_fuseq_worker *fqw, size_t nrd,
 	return fuseq_reply_arg(fqw, xiov->xiov_base, nrd);
 }
 
-static int fuseq_reply_read_ok(struct silofs_fuseq_worker *fqw, size_t nrd,
-                               const struct silofs_xiovec *xiov, size_t cnt)
+static int fuseq_reply_read_iov(struct silofs_fuseq_rd_iter *fq_rdi)
 {
+	struct silofs_xiovec xiov;
+	struct silofs_fuseq_worker *fqw = fq_rdi->fqw;
+	const struct silofs_xiovec *itr = NULL;
+	size_t cur = 0;
+	int err = 0;
+	int ret = 0;
+
+	err = fuseq_append_hdr_to_pipe(fqw, fq_rdi->nrd);
+	if (err) {
+		goto out;
+	}
+	while (fq_rdi->ncp < fq_rdi->cnt) {
+		cur = 0;
+		xiovec_reset(&xiov);
+		for (size_t i = fq_rdi->ncp; i < fq_rdi->cnt; ++i) {
+			itr = &fq_rdi->xiov[i];
+			if (!cur) {
+				xiovec_assign(&xiov, itr);
+			} else if (xiovec_isfdseq(&xiov, itr)) {
+				xiovec_append_len(&xiov, itr);
+			} else {
+				break;
+			}
+			cur++;
+		}
+		err = fuseq_append_data_to_pipe(fqw, &xiov, 1);
+		if (err) {
+			goto out;
+		}
+		fq_rdi->ncp += cur;
+	}
+out:
+	if (err) {
+		ret = fuseq_reply_err(fqw, err);
+	} else {
+		ret = fuseq_send_pipe(fqw);
+	}
+	return ret ? ret : err;
+}
+
+static int fuseq_reply_read_ok(struct silofs_fuseq_rd_iter *fq_rdi)
+{
+	struct silofs_fuseq_worker *fqw = fq_rdi->fqw;
 	int ret;
 
-	if ((cnt > 1) || (xiov->xiov_base == NULL)) {
-		ret = fuseq_reply_read_pipe(fqw, nrd, xiov, cnt);
+	if ((fq_rdi->cnt <= 1) && (fq_rdi->xiov[0].xiov_fd < 0)) {
+		ret = fuseq_reply_read_data(fqw, fq_rdi->nrd, fq_rdi->xiov);
 	} else {
-		ret = fuseq_reply_read_data(fqw, nrd, xiov);
+		ret = fuseq_reply_read_iov(fq_rdi);
 	}
 	return ret;
 }
 
-static int fuseq_reply_read_iter(struct silofs_fuseq_worker *fqw, size_t nrd,
-                                 const struct silofs_xiovec *xiov,
-                                 size_t cnt, int err)
+static int fuseq_reply_read_iter(struct silofs_fuseq_rd_iter *fq_rdi, int err)
 {
+	struct silofs_fuseq_worker *fqw = fq_rdi->fqw;
 	int ret;
 
 	if (fuseq_interrupted(fqw)) {
@@ -1239,7 +1302,7 @@ static int fuseq_reply_read_iter(struct silofs_fuseq_worker *fqw, size_t nrd,
 	} else if (unlikely(err)) {
 		ret = fuseq_reply_err(fqw, err);
 	} else {
-		ret = fuseq_reply_read_ok(fqw, nrd, xiov, cnt);
+		ret = fuseq_reply_read_ok(fq_rdi);
 	}
 	return ret;
 }
@@ -1473,7 +1536,6 @@ static void setup_cap_want(struct silofs_fuseq_conn_info *coni, int cap)
 static int check_init(const struct silofs_fuseq_worker *fqw,
                       const struct fuse_init_in *arg)
 {
-	int err = 0;
 	const unsigned int u_major = FUSE_KERNEL_VERSION;
 	const unsigned int u_minor = FUSE_KERNEL_MINOR_VERSION;
 
@@ -1484,26 +1546,27 @@ static int check_init(const struct silofs_fuseq_worker *fqw,
 		               arg->major, arg->minor, u_major, u_minor);
 	}
 	/*
-	 * XXX minor __should__ be 34, but allow 33 due to fuse version on
-	 * github's runners (ubuntu 20.04). FIXME
+	 * XXX minor __should__ be 34, but allow 31 due to fuse version on
+	 * github's ubuntu-20.04 runners (fuse7.33) and RHEL8 (fuse7.31).
 	 */
-	if ((arg->major != 7) || (arg->minor < 33)) {
+	if ((arg->major != 7) || (arg->minor < 31)) {
 		fuseq_log_err("unsupported fuse-protocol version: %u.%u",
 		              arg->major, arg->minor);
-		err = -EPROTO;
+		return -EPROTO;
 	}
-	return err;
+	return 0;
 }
 
 static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
                    const struct silofs_fuseq_in *in)
 {
-	int err = 0;
+	struct silofs_fuseq_conn_info *coni = &fqw->fq->fq_coni;
+	struct silofs_fs_apex *apex = fqw->fq->fq_apex;
 	const int in_major = (int)(in->u.init.arg.major);
 	const int in_minor = (int)(in->u.init.arg.minor);
 	const int in_flags = (int)(in->u.init.arg.flags);
-	struct silofs_fuseq_conn_info *coni = &fqw->fq->fq_coni;
-	struct silofs_fs_apex *apex = fqw->fq->fq_apex;
+	int err = 0;
+	int ret;
 
 	fuseq_log_info("init: ino=%ld version=%d.%d flags=0x%x",
 	               ino, in_major, in_minor, in_flags);
@@ -1523,12 +1586,9 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	 * TODO-0018: Enable more capabilities
 	 *
 	 * XXX: When enabling FUSE_WRITEBACK_CACHE fstests fails with
-	 * metadata (st_ctime,st_blocks) issues. Needs further investigation.
-	 *
-	 * XXX: Also, bugs in 'test_truncate_zero'
+	 * metadata (st_ctime,st_blocks) issues. Also, bugs in
+	 * 'test_truncate_zero'. Needs further investigation.
 	 */
-	/* setup_cap_want(coni, FUSE_WRITEBACK_CACHE); */
-
 	setup_cap_want(coni, FUSE_ATOMIC_O_TRUNC);
 	setup_cap_want(coni, FUSE_EXPORT_SUPPORT);
 	setup_cap_want(coni, FUSE_HANDLE_KILLPRIV);
@@ -1537,6 +1597,9 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	setup_cap_want(coni, FUSE_SPLICE_READ);
 	setup_cap_want(coni, FUSE_SPLICE_WRITE);
 	setup_cap_want(coni, FUSE_SETXATTR_EXT);
+	if (fqw->fq->fq_writeback_cache) {
+		setup_cap_want(coni, FUSE_WRITEBACK_CACHE);
+	}
 
 	/*
 	 * TODO-0025: Have support for ACLs
@@ -1549,7 +1612,11 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	apex->ap_sbi->s_mntime = silofs_time_now();
 
 out:
-	return fuseq_reply_init(fqw, err);
+	ret = fuseq_reply_init(fqw, err);
+	if (!err && !ret) {
+		fqw->fq->fq_reply_init_ok = true;
+	}
+	return err ? err : ret;
 }
 
 static int do_destroy(struct silofs_fuseq_worker *fqw, ino_t ino,
@@ -1575,12 +1642,13 @@ static bool fuseq_has_cap(const struct silofs_fuseq *fq, int cap_mask)
 
 static bool fuseq_is_normal(const struct silofs_fuseq *fq)
 {
-	return fq->fq_got_init && !fq->fq_got_destroy && (fq->fq_nopers > 1);
+	return fq->fq_got_init && fq->fq_reply_init_ok &&
+	       !fq->fq_got_destroy && (fq->fq_nopers > 1);
 }
 
 static bool fuseq_may_splice(const struct silofs_fuseq *fq)
 {
-	return fuseq_is_normal(fq) && (fq->fq_nopers > 4);
+	return fuseq_is_normal(fq) && (fq->fq_nopers > 2);
 }
 
 static bool fuseq_cap_splice_read(const struct silofs_fuseq *fq)
@@ -1591,6 +1659,18 @@ static bool fuseq_cap_splice_read(const struct silofs_fuseq *fq)
 static bool fuseq_cap_splice_write(const struct silofs_fuseq *fq)
 {
 	return fuseq_may_splice(fq) && fuseq_has_cap(fq, FUSE_SPLICE_WRITE);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int fuseq_exec_op(struct silofs_fuseq *fq, struct silofs_oper_ctx *opc)
+{
+	int err;
+
+	silofs_mutex_lock(&fq->fq_fs_lock);
+	err = silofs_exec_fs_oper(opc);
+	silofs_mutex_unlock(&fq->fq_fs_lock);
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1645,47 +1725,40 @@ static void utimens_of(const struct stat *st, int to_set, struct stat *times)
 static int do_setattr(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
-	const struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
-	struct stat attr;
-	struct stat st;
-	struct stat tms;
-	uid_t uid;
-	gid_t gid;
-	mode_t mode;
-	loff_t size;
-	int to_set;
+	struct stat attr = { .st_size = -1 };
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	const int to_set = (int)(in->u.setattr.arg.valid & FATTR_MASK);
 	int err;
 
+	silofs_memzero(&opc->opc_in.setattr, sizeof(opc->opc_in.setattr));
 	fuse_setattr_to_stat(&in->u.setattr.arg, &attr);
 
-	to_set = (int)(in->u.setattr.arg.valid & FATTR_MASK);
-	utimens_of(&attr, to_set, &tms);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_getattr(fs_ctx, ino, &st);
-	if (!err && (to_set & (FATTR_UID | FATTR_GID))) {
-		err = uid_gid_of(&attr, to_set, &uid, &gid);
+	utimens_of(&attr, to_set, &opc->opc_in.setattr.tims);
+	if (to_set & (FATTR_UID | FATTR_GID)) {
+		uid_gid_of(&attr, to_set, &opc->opc_in.setattr.uid,
+		           &opc->opc_in.setattr.gid);
+		opc->opc_in.setattr.set_uid_gid = true;
 	}
-	if (!err && (to_set & FATTR_AMTIME_NOW)) {
-		err = silofs_fs_utimens(fs_ctx, ino, &tms, &st);
+	if (to_set & FATTR_AMTIME_NOW) {
+		opc->opc_in.setattr.set_amtime_now = true;
 	}
-	if (!err && (to_set & FATTR_MODE)) {
-		mode = attr.st_mode;
-		err = silofs_fs_chmod(fs_ctx, ino, mode, &tms, &st);
+	if (to_set & FATTR_MODE) {
+		opc->opc_in.setattr.mode = attr.st_mode;
+		opc->opc_in.setattr.set_mode = true;
 	}
-	if (!err && (to_set & (FATTR_UID | FATTR_GID))) {
-		err = silofs_fs_chown(fs_ctx, ino, uid, gid, &tms, &st);
+	if (to_set & FATTR_SIZE) {
+		opc->opc_in.setattr.size = attr.st_size;
+		opc->opc_in.setattr.set_size = true;
 	}
-	if (!err && (to_set & FATTR_SIZE)) {
-		size = attr.st_size;
-		err = silofs_fs_truncate(fs_ctx, ino, size, &st);
+	if (to_set & FATTR_AMCTIME) {
+		opc->opc_in.setattr.set_amctime = true;
 	}
-	if (!err && (to_set & FATTR_AMCTIME) && !(to_set & FATTR_NONTIME)) {
-		err = silofs_fs_utimens(fs_ctx, ino, &tms, &st);
+	if (to_set & FATTR_NONTIME) {
+		opc->opc_in.setattr.set_nontime = true;
 	}
-	fuseq_unlock_fs(fqw);
-
-	return fuseq_reply_attr(fqw, &st, err);
+	opc->opc_in.setattr.ino = ino;
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_attr(fqw, &opc->opc_out.setattr.st, err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1693,27 +1766,26 @@ static int do_setattr(struct silofs_fuseq_worker *fqw, ino_t ino,
 static int do_lookup(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
-	const char *name = in->u.lookup.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_lookup(fs_ctx_of(fqw), ino, name, &st);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.lookup.parent = ino;
+	opc->opc_in.lookup.name = in->u.lookup.name;
 
-	return fuseq_reply_entry(fqw, &st, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_entry(fqw, &opc->opc_out.lookup.st, err);
 }
 
 static int do_forget(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	const size_t nlookup = in->u.forget.arg.nlookup;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_forget(fs_ctx_of(fqw), ino, nlookup);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.forget.ino = ino;
+	opc->opc_in.forget.nlookup = in->u.forget.arg.nlookup;
 
+	err = fuseq_exec_op(fqw->fq, opc);
 	unused(err);
 	return fuseq_reply_none(fqw);
 }
@@ -1721,21 +1793,14 @@ static int do_forget(struct silofs_fuseq_worker *fqw, ino_t ino,
 static int do_batch_forget(struct silofs_fuseq_worker *fqw, ino_t unused_ino,
                            const struct silofs_fuseq_in *in)
 {
-	const size_t count = in->u.batch_forget.arg.count;
-	size_t nlookup;
-	ino_t ino;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	for (size_t i = 0; i < count; ++i) {
-		ino = (ino_t)(in->u.batch_forget.one[i].nodeid);
-		nlookup = (ino_t)(in->u.batch_forget.one[i].nlookup);
+	opc->opc_in.batch_forget.count = in->u.batch_forget.arg.count;
+	opc->opc_in.batch_forget.one = in->u.batch_forget.one;
 
-		err = silofs_fs_forget(fs_ctx_of(fqw), ino, nlookup);
-		unused(err);
-	}
-	fuseq_unlock_fs(fqw);
-
+	err = fuseq_exec_op(fqw->fq, opc);
+	unused(err);
 	unused(unused_ino);
 	return fuseq_reply_none(fqw);
 }
@@ -1743,236 +1808,224 @@ static int do_batch_forget(struct silofs_fuseq_worker *fqw, ino_t unused_ino,
 static int do_getattr(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
 	fuseq_check_fh(fqw, ino, in->u.getattr.arg.fh);
+	opc->opc_in.getattr.ino = ino;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_getattr(fs_ctx_of(fqw), ino, &st);
-	fuseq_unlock_fs(fqw);
-
-	return fuseq_reply_attr(fqw, &st, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_attr(fqw, &opc->opc_out.getattr.st, err);
 }
 
 static int do_readlink(struct silofs_fuseq_worker *fqw, ino_t ino,
                        const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_pathbuf *pab = &fqw->outb->u.pab;
-	const size_t lim = sizeof(pab->path);
 	char *lnk = pab->path;
-	size_t nrd = 0;
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_readlink(fs_ctx_of(fqw), ino, lnk, lim, &nrd);
-	fuseq_unlock_fs(fqw);
-
 	unused(in);
+	opc->opc_in.readlink.ino = ino;
+	opc->opc_in.readlink.ptr = lnk;
+	opc->opc_in.readlink.lim = sizeof(pab->path);
+	opc->opc_out.readlink.len = 0;
 
-	return fuseq_reply_readlink(fqw, lnk, nrd, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_readlink(fqw, lnk, opc->opc_out.readlink.len, err);
 }
 
 static int do_symlink(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
-	const char *name = in->u.symlink.name_target;
-	const char *target = after_name(name);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_symlink(fs_ctx_of(fqw), ino, name, target, &st);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.symlink.parent = ino;
+	opc->opc_in.symlink.name = in->u.symlink.name_target;
+	opc->opc_in.symlink.symval = after_name(opc->opc_in.symlink.name);
 
-	return fuseq_reply_entry(fqw, &st, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_entry(fqw, &opc->opc_out.symlink.st, err);
 }
 
 static int do_mknod(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
-	const dev_t rdev = (dev_t)in->u.mknod.arg.rdev;
-	const mode_t mode = (mode_t)in->u.mknod.arg.mode;
-	const mode_t umask = (mode_t)in->u.mknod.arg.umask;
-	const char *name = in->u.mknod.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_set_umask(fqw, umask);
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_mknod(fs_ctx_of(fqw), ino, name, mode, rdev, &st);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.mknod.parent = ino;
+	opc->opc_in.mknod.name = in->u.mknod.name;
+	opc->opc_in.mknod.rdev = (dev_t)in->u.mknod.arg.rdev;
+	opc->opc_in.mknod.mode = (mode_t)in->u.mknod.arg.mode;
+	opc->opc_in.mknod.umask = (mode_t)in->u.mknod.arg.umask;
+	op_ctx_set_umask(opc, opc->opc_in.mknod.umask);
 
-	return fuseq_reply_entry(fqw, &st, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_entry(fqw, &opc->opc_out.mknod.st, err);
 }
 
 static int do_mkdir(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
-	const mode_t mode = (mode_t)(in->u.mkdir.arg.mode | S_IFDIR);
-	const mode_t umask = (mode_t)in->u.mkdir.arg.umask;
-	const char *name = in->u.mkdir.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_set_umask(fqw, umask);
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_mkdir(fs_ctx_of(fqw), ino, name, mode, &st);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.mkdir.parent = ino;
+	opc->opc_in.mkdir.name = in->u.mkdir.name;
+	opc->opc_in.mkdir.mode = (mode_t)(in->u.mkdir.arg.mode | S_IFDIR);
+	opc->opc_in.mkdir.umask = (mode_t)in->u.mkdir.arg.umask;
+	op_ctx_set_umask(opc, opc->opc_in.mkdir.umask);
 
-	return fuseq_reply_entry(fqw, &st, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_entry(fqw, &opc->opc_out.mkdir.st, err);
 }
 
 static int do_unlink(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	const char *name = in->u.unlink.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_unlink(fs_ctx_of(fqw), ino, name);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.unlink.parent = ino;
+	opc->opc_in.unlink.name = in->u.unlink.name;
 
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_rmdir(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
-	const char *name = in->u.rmdir.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_rmdir(fs_ctx_of(fqw), ino, name);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.rmdir.parent = ino;
+	opc->opc_in.rmdir.name = in->u.rmdir.name;
 
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_rename(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	const struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
-	const ino_t newparent = (ino_t)(in->u.rename.arg.newdir);
-	const char *name = in->u.rename.name_newname;
-	const char *newname = after_name(name);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_rename(fs_ctx, ino, name, newparent, newname, 0);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.rename.parent = ino;
+	opc->opc_in.rename.name = in->u.rename.name_newname;
+	opc->opc_in.rename.newparent = (ino_t)(in->u.rename.arg.newdir);
+	opc->opc_in.rename.newname = after_name(opc->opc_in.rename.name);
+	opc->opc_in.rename.flags = 0;
 
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_link(struct silofs_fuseq_worker *fqw, ino_t ino,
                    const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
-	const ino_t oldino = (ino_t)(in->u.link.arg.oldnodeid);
-	const char *newname = in->u.link.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_link(fs_ctx_of(fqw), oldino, ino, newname, &st);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.link.ino = (ino_t)(in->u.link.arg.oldnodeid);
+	opc->opc_in.link.parent = ino;
+	opc->opc_in.link.name = in->u.link.name;
 
-	return fuseq_reply_entry(fqw, &st, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_entry(fqw, &opc->opc_out.link.st, err);
 }
 
 static int do_open(struct silofs_fuseq_worker *fqw, ino_t ino,
                    const struct silofs_fuseq_in *in)
 {
-	const int o_flags = (int)(in->u.open.arg.flags);
-	const int noflush = (o_flags & O_ACCMODE) == O_RDONLY;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_open(fs_ctx_of(fqw), ino, o_flags);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.open.ino = ino;
+	opc->opc_in.open.o_flags = (int)(in->u.open.arg.flags);
+	opc->opc_in.open.noflush =
+	        (opc->opc_in.open.o_flags & O_ACCMODE) == O_RDONLY;
 
-	return fuseq_reply_open(fqw, noflush, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_open(fqw, opc->opc_in.open.noflush, err);
 }
 
 static int do_statfs(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	struct statvfs stv = { .f_bsize = 0 };
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_statfs(fs_ctx_of(fqw), ino, &stv);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.statfs.ino = ino;
 
 	unused(in);
-
-	return fuseq_reply_statfs(fqw, &stv, err);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_statfs(fqw, &opc->opc_out.statfs.stv, err);
 }
 
 static int do_release(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
-	const int o_flags = (int)in->u.release.arg.flags;
-	const bool flush = (in->u.release.arg.flags & FUSE_RELEASE_FLUSH) > 0;
 
 	fuseq_check_fh(fqw, ino, in->u.release.arg.fh);
+	opc->opc_in.release.ino = ino;
+	opc->opc_in.release.o_flags = (int)in->u.release.arg.flags;
+	opc->opc_in.release.flush =
+	        (in->u.release.arg.flags & FUSE_RELEASE_FLUSH) > 0;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_release(fs_ctx_of(fqw), ino, o_flags, flush);
-	fuseq_unlock_fs(fqw);
-
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_fsync(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
-	const bool datasync = (in->u.fsync.arg.fsync_flags & 1) != 0;
 
 	fuseq_check_fh(fqw, ino, in->u.fsync.arg.fh);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_fsync(fs_ctx_of(fqw), ino, datasync);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.fsync.ino = ino;
+	opc->opc_in.fsync.datasync = (in->u.fsync.arg.fsync_flags & 1) != 0;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_setxattr1(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
-	const struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
-	const size_t vsz = in->u.setxattr1.arg.size;
-	const int flags = (int)(in->u.setxattr1.arg.flags);
-	const char *name = in->u.setxattr1.name_value;
-	const char *value = after_name(name);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_setxattr(fs_ctx, ino, name, value, vsz, flags, 0);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.setxattr.ino = ino;
+	opc->opc_in.setxattr.name = in->u.setxattr1.name_value;
+	opc->opc_in.setxattr.value = after_name(in->u.setxattr1.name_value);
+	opc->opc_in.setxattr.size = in->u.setxattr1.arg.size;
+	opc->opc_in.setxattr.flags = (int)(in->u.setxattr1.arg.flags);
+	opc->opc_in.setxattr.kill_sgid = false;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_setxattr2(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
-	const size_t vsz = in->u.setxattr.arg.size;
-	const int flags = (int)(in->u.setxattr.arg.flags);
-	const int setxattr_flags = (int)(in->u.setxattr.arg.setxattr_flags);
-	const char *name = in->u.setxattr.name_value;
-	const char *value = after_name(name);
-	bool kill_sgid = (setxattr_flags & FUSE_SETXATTR_ACL_KILL_SGID) > 0;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_setxattr(fs_ctx_of(fqw), ino, name, value,
-	                         vsz, flags, kill_sgid);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.setxattr.ino = ino;
+	opc->opc_in.setxattr.name = in->u.setxattr.name_value;
+	opc->opc_in.setxattr.value = after_name(in->u.setxattr.name_value);
+	opc->opc_in.setxattr.size = in->u.setxattr.arg.size;
+	opc->opc_in.setxattr.flags = (int)(in->u.setxattr.arg.flags);
+	opc->opc_in.setxattr.kill_sgid =
+	        (opc->opc_in.setxattr.flags & FUSE_SETXATTR_ACL_KILL_SGID) > 0;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
@@ -1986,273 +2039,252 @@ static int do_setxattr(struct silofs_fuseq_worker *fqw, ino_t ino,
 static int do_getxattr(struct silofs_fuseq_worker *fqw, ino_t ino,
                        const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_xattrbuf *xab = &fqw->outb->u.xab;
-	const size_t len = min(in->u.getxattr.arg.size, sizeof(xab->value));
-	void *buf = len ? xab->value : NULL;
-	const char *name = in->u.getxattr.name;
-	size_t cnt = 0;
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_getxattr(fs_ctx_of(fqw), ino, name, buf, len, &cnt);
-	fuseq_unlock_fs(fqw);
-
-	return fuseq_reply_xattr(fqw, buf, cnt, err);
+	opc->opc_in.getxattr.ino = ino;
+	opc->opc_in.getxattr.name = in->u.getxattr.name;
+	opc->opc_in.getxattr.size =
+	        min(in->u.getxattr.arg.size, sizeof(xab->value));
+	opc->opc_in.getxattr.buf =
+	        opc->opc_in.getxattr.size ? xab->value : NULL;
+	opc->opc_out.getxattr.size = 0;
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_xattr(fqw, opc->opc_in.getxattr.buf,
+	                         opc->opc_out.getxattr.size, err);
 }
 
 static int do_listxattr(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_xiter *xit = &fqw->outb->u.xit;
 	int ret;
 	int err;
 
 	xiter_prep(xit, in->u.listxattr.arg.size);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_listxattr(fs_ctx_of(fqw), ino, &xit->lxa);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.listxattr.ino = ino;
+	opc->opc_in.listxattr.lxa_ctx = &xit->lxa;
+	err = fuseq_exec_op(fqw->fq, opc);
 	ret = fuseq_reply_xattr(fqw, xit->beg, xit->cnt, err);
-
 	xiter_done(xit);
-
 	return ret;
 }
 
 static int do_removexattr(struct silofs_fuseq_worker *fqw, ino_t ino,
                           const struct silofs_fuseq_in *in)
 {
-	const char *name = in->u.removexattr.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_removexattr(fs_ctx_of(fqw), ino, name);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.removexattr.ino = ino;
+	opc->opc_in.removexattr.name = in->u.removexattr.name;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_flush(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
 	fuseq_check_fh(fqw, ino, in->u.flush.arg.fh);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_flush(fs_ctx_of(fqw), ino);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.flush.ino = ino;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_opendir(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
-	const int o_flags = (int)(in->u.opendir.arg.flags);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	unused(o_flags); /* XXX use me */
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_opendir(fs_ctx_of(fqw), ino);
-	fuseq_unlock_fs(fqw);
-
+	/* TODO: use OPENDIR's o_flags */
+	opc->opc_in.opendir.ino = ino;
+	opc->opc_in.opendir.o_flags = (int)(in->u.opendir.arg.flags);
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_opendir(fqw, err);
 }
 
 static int do_readdir(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	struct silofs_fuseq_diter *dit = &fqw->outb->u.dit;
 	const size_t size = in->u.readdir.arg.size;
 	const loff_t off = (loff_t)(in->u.readdir.arg.offset);
-	struct silofs_fuseq_diter *dit = &fqw->outb->u.dit;
 	int ret;
 	int err;
 
 	fuseq_check_fh(fqw, ino, in->u.readdir.arg.fh);
 	diter_prep(dit, size, off, 0);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_readdir(fs_ctx_of(fqw), ino, &dit->rd_ctx);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.readdir.ino = ino;
+	opc->opc_in.readdir.rd_ctx = &dit->rd_ctx;
+	err = fuseq_exec_op(fqw->fq, opc);
 	ret = fuseq_reply_readdir(fqw, dit, err);
 	diter_done(dit);
-
 	return ret;
 }
 
 static int do_readdirplus(struct silofs_fuseq_worker *fqw, ino_t ino,
                           const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	struct silofs_fuseq_diter *dit = &fqw->outb->u.dit;
 	const size_t size = in->u.readdir.arg.size;
 	const loff_t off = (loff_t)(in->u.readdir.arg.offset);
-	struct silofs_fuseq_diter *dit = &fqw->outb->u.dit;
 	int ret;
 	int err;
 
 	fuseq_check_fh(fqw, ino, in->u.readdir.arg.fh);
 	diter_prep(dit, size, off, 1);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_readdirplus(fs_ctx_of(fqw), ino, &dit->rd_ctx);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.readdir.ino = ino;
+	opc->opc_in.readdir.rd_ctx = &dit->rd_ctx;
+	err = fuseq_exec_op(fqw->fq, opc);
 	ret = fuseq_reply_readdir(fqw, dit, err);
 	diter_done(dit);
-
 	return ret;
 }
 
 static int do_releasedir(struct silofs_fuseq_worker *fqw, ino_t ino,
                          const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
-	const int o_flags = (int)(in->u.releasedir.arg.flags);
 
 	fuseq_check_fh(fqw, ino, in->u.releasedir.arg.fh);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_releasedir(fs_ctx_of(fqw), ino, o_flags);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.releasedir.ino = ino;
+	opc->opc_in.releasedir.o_flags = (int)(in->u.releasedir.arg.flags);
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_fsyncdir(struct silofs_fuseq_worker *fqw, ino_t ino,
                        const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
-	const bool datasync = (in->u.fsyncdir.arg.fsync_flags & 1) != 0;
 
 	fuseq_check_fh(fqw, ino, in->u.fsyncdir.arg.fh);
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_fsyncdir(fs_ctx_of(fqw), ino, datasync);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.fsyncdir.ino = ino;
+	opc->opc_in.fsyncdir.datasync =
+	        (in->u.fsyncdir.arg.fsync_flags & 1) != 0;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_access(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
-	const int mask = (int)(in->u.access.arg.mask);
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_access(fs_ctx_of(fqw), ino, mask);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.access.ino = ino;
+	opc->opc_in.access.mask = (int)(in->u.access.arg.mask);
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_create(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
-	const int o_flags = (int)(in->u.create.arg.flags);
-	const mode_t mode = (mode_t)(in->u.create.arg.mode);
-	const mode_t umask = (mode_t)(in->u.create.arg.umask);
-	const char *name = in->u.create.name;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_set_umask(fqw, umask);
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_create(fs_ctx_of(fqw), ino, name, o_flags, mode, &st);
-	fuseq_unlock_fs(fqw);
-
-	return fuseq_reply_create(fqw, &st, err);
+	opc->opc_in.create.parent = ino;
+	opc->opc_in.create.name = in->u.create.name;
+	opc->opc_in.create.o_flags = (int)(in->u.create.arg.flags);
+	opc->opc_in.create.mode = (mode_t)(in->u.create.arg.mode);
+	opc->opc_in.create.umask = (mode_t)(in->u.create.arg.umask);
+	op_ctx_set_umask(opc, opc->opc_in.create.umask);
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_create(fqw, &opc->opc_out.create.st, err);
 }
 
 static int do_fallocate(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
-	const int mode = (int)(in->u.fallocate.arg.mode);
-	const loff_t off = (loff_t)(in->u.fallocate.arg.offset);
-	const loff_t len = (loff_t)(in->u.fallocate.arg.length);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
 	fuseq_check_fh(fqw, ino, in->u.fallocate.arg.fh);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_fallocate(fs_ctx_of(fqw), ino, mode, off, len);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.fallocate.ino = ino;
+	opc->opc_in.fallocate.mode = (int)(in->u.fallocate.arg.mode);
+	opc->opc_in.fallocate.off = (loff_t)(in->u.fallocate.arg.offset);
+	opc->opc_in.fallocate.len = (loff_t)(in->u.fallocate.arg.length);
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_rename2(struct silofs_fuseq_worker *fqw, ino_t ino,
                       const struct silofs_fuseq_in *in)
 {
-	const ino_t newparent = (ino_t)(in->u.rename2.arg.newdir);
-	const char *name = in->u.rename2.name_newname;
-	const char *newname = after_name(name);
-	const int flags = (int)(in->u.rename2.arg.flags);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_rename(fs_ctx_of(fqw), ino, name,
-	                       newparent, newname, flags);
-	fuseq_unlock_fs(fqw);
-
+	opc->opc_in.rename.parent = ino;
+	opc->opc_in.rename.newparent = (ino_t)(in->u.rename2.arg.newdir);
+	opc->opc_in.rename.name = in->u.rename2.name_newname;
+	opc->opc_in.rename.newname = after_name(opc->opc_in.rename.name);
+	opc->opc_in.rename.flags = (int)(in->u.rename2.arg.flags);
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
 static int do_lseek(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
-	loff_t soff = -1;
-	const loff_t off = (loff_t)(in->u.lseek.arg.offset);
-	const int whence = (int)(in->u.lseek.arg.whence);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
 	fuseq_check_fh(fqw, ino, in->u.lseek.arg.fh);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_lseek(fs_ctx_of(fqw), ino, off, whence, &soff);
-	fuseq_unlock_fs(fqw);
-
-	return fuseq_reply_lseek(fqw, soff, err);
+	opc->opc_in.lseek.ino = ino;
+	opc->opc_in.lseek.off = (loff_t)(in->u.lseek.arg.offset);
+	opc->opc_in.lseek.whence = (int)(in->u.lseek.arg.whence);
+	opc->opc_out.lseek.off = -1;
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_lseek(fqw, opc->opc_out.lseek.off, err);
 }
 
 
 static int do_copy_file_range(struct silofs_fuseq_worker *fqw, ino_t ino_in,
                               const struct silofs_fuseq_in *in)
 {
-	size_t cnt = 0;
-	const loff_t off_in = (loff_t)in->u.copy_file_range.arg.off_in;
-	const ino_t ino_out = (ino_t)in->u.copy_file_range.arg.nodeid_out;
-	const loff_t off_out = (loff_t)in->u.copy_file_range.arg.off_out;
-	const size_t len = in->u.copy_file_range.arg.len;
-	const int flags = (int)in->u.copy_file_range.arg.flags;
-	const struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	size_t ncp = 0;
 	int err;
 
 	fuseq_check_fh(fqw, ino_in, in->u.copy_file_range.arg.fh_in);
-	fuseq_check_fh(fqw, ino_out, in->u.copy_file_range.arg.fh_out);
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_copy_file_range(fs_ctx, ino_in, off_in, ino_out,
-	                                off_out, len, flags, &cnt);
-	fuseq_unlock_fs(fqw);
-
-	return fuseq_reply_copy_file_range(fqw, cnt, err);
+	opc->opc_in.copy_file_range.ino_in = ino_in;
+	opc->opc_in.copy_file_range.off_in =
+	        (loff_t)in->u.copy_file_range.arg.off_in;
+	opc->opc_in.copy_file_range.ino_out =
+	        (ino_t)in->u.copy_file_range.arg.nodeid_out;
+	opc->opc_in.copy_file_range.off_out =
+	        (loff_t)in->u.copy_file_range.arg.off_out;
+	opc->opc_in.copy_file_range.len = in->u.copy_file_range.arg.len;
+	opc->opc_in.copy_file_range.flags =
+	        (int)in->u.copy_file_range.arg.flags;
+	opc->opc_out.copy_file_range.ncp = 0;
+	err = fuseq_exec_op(fqw->fq, opc);
+	ncp = opc->opc_out.copy_file_range.ncp;
+	return fuseq_reply_copy_file_range(fqw, ncp, err);
 }
 
 static int do_syncfs(struct silofs_fuseq_worker *fqw, ino_t ino,
                      const struct silofs_fuseq_in *in)
 {
-	const unsigned long dumb = in->u.syncfs.arg.padding;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_syncfs(fs_ctx_of(fqw), ino);
-	fuseq_unlock_fs(fqw);
-
-	unused(dumb);
+	unused(in);
+	opc->opc_in.syncfs.ino = ino;
+	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_status(fqw, err);
 }
 
@@ -2285,18 +2317,6 @@ static int do_interrupt(struct silofs_fuseq_worker *fqw, ino_t ino,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void xiovec_reset(struct silofs_xiovec *xiov)
-{
-	memset(xiov, 0, sizeof(*xiov));
-	xiov->xiov_fd = -1;
-}
-
-static void xiovec_assign(struct silofs_xiovec *xiov,
-                          const struct silofs_xiovec *other)
-{
-	memcpy(xiov, other, sizeof(*xiov));
-}
 
 static struct silofs_fuseq_rd_iter *
 fuseq_rd_iter_of(const struct silofs_rwiter_ctx *rwi)
@@ -2333,6 +2353,7 @@ static void fuseq_setup_rd_iter(struct silofs_fuseq_worker *fqw,
 {
 	fq_rdi->fqw = fqw;
 	fq_rdi->cnt = 0;
+	fq_rdi->ncp = 0;
 	fq_rdi->nrd = 0;
 	fq_rdi->nrd_max = len;
 	fq_rdi->rwi.len = len;
@@ -2343,43 +2364,46 @@ static void fuseq_setup_rd_iter(struct silofs_fuseq_worker *fqw,
 static int do_read_iter(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
-	const loff_t off = (loff_t)(in->u.read.arg.offset);
-	const size_t len = min(in->u.read.arg.size, fqw->fq->fq_coni.max_read);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_rd_iter *fq_rdi = &fqw->rwi->u.rdi;
+	const size_t len = min(in->u.read.arg.size, fqw->fq->fq_coni.max_read);
 	int ret;
 	int err;
 
-	fuseq_setup_rd_iter(fqw, fq_rdi, len, off);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_read_iter(fs_ctx_of(fqw), ino, &fq_rdi->rwi);
-	fuseq_unlock_fs(fqw);
-
-	ret = fuseq_reply_read_iter(fqw, fq_rdi->nrd,
-	                            fq_rdi->xiov, fq_rdi->cnt, err);
-	if (!fq_rdi->cnt) {
-		return ret;
-	}
-	fuseq_lock_fs(fqw);
-	silofs_fs_rdwr_post(fs_ctx_of(fqw), ino, fq_rdi->xiov, fq_rdi->cnt);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.read.ino = ino;
+	opc->opc_in.read.buf = NULL;
+	opc->opc_in.read.off = (loff_t)(in->u.read.arg.offset);
+	opc->opc_in.read.len = len;
+	opc->opc_in.read.rwi_ctx = &fq_rdi->rwi;
+	fuseq_setup_rd_iter(fqw, fq_rdi, len, opc->opc_in.read.off);
+	err = fuseq_exec_op(fqw->fq, opc);
+	ret = fuseq_reply_read_iter(fq_rdi, err);
+	/* no need for mutex lock -- atomic operation only */
+	fuseq_rdwr_post(fqw, fq_rdi->xiov, fq_rdi->cnt);
 	return ret;
 }
 
 static int do_read_buf(struct silofs_fuseq_worker *fqw, ino_t ino,
                        const struct silofs_fuseq_in *in)
 {
-	const loff_t off = (loff_t)(in->u.read.arg.offset);
-	const size_t len = min(in->u.read.arg.size, fqw->fq->fq_coni.max_read);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_databuf *dab = &fqw->outb->u.dab;
-	size_t nrd = 0;
+	const size_t len = min(in->u.read.arg.size, fqw->fq->fq_coni.max_read);
 	int err;
 
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_read(fs_ctx_of(fqw), ino, dab->buf, len, off, &nrd);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.read.ino = ino;
+	opc->opc_in.read.buf = dab->buf;
+	opc->opc_in.read.off = (loff_t)(in->u.read.arg.offset);
+	opc->opc_in.read.len = len;
+	opc->opc_in.read.rwi_ctx = NULL;
+	opc->opc_out.read.nrd = 0;
+	err = fuseq_exec_op(fqw->fq, opc);
+	return fuseq_reply_read_buf(fqw, dab->buf, opc->opc_out.read.nrd, err);
+}
 
-	return fuseq_reply_read_buf(fqw, dab->buf, nrd, err);
+static bool fuseq_cap_splice_out(const struct silofs_fuseq_worker *fqw)
+{
+	return fuseq_cap_splice_write(fqw->fq);
 }
 
 static int do_read(struct silofs_fuseq_worker *fqw, ino_t ino,
@@ -2390,7 +2414,7 @@ static int do_read(struct silofs_fuseq_worker *fqw, ino_t ino,
 
 	fuseq_check_fh(fqw, ino, in->u.read.arg.fh);
 
-	if ((rd_size > 4096) && fuseq_cap_splice_write(fqw->fq)) {
+	if ((rd_size > FUSEQ_IOBUF_MAX) && fuseq_cap_splice_out(fqw)) {
 		ret = do_read_iter(fqw, ino, in);
 	} else {
 		ret = do_read_buf(fqw, ino, in);
@@ -2502,17 +2526,6 @@ static int fuseq_wr_iter_concp_actor(struct silofs_rwiter_ctx *rwi,
 	return 0;
 }
 
-static bool hasfdseq(const struct silofs_xiovec *xiov1,
-                     const struct silofs_xiovec *xiov2)
-{
-	const loff_t end1 = off_end(xiov1->xiov_off, xiov1->xiov_len);
-	const loff_t beg2 = xiov2->xiov_off;
-	const int fd1 = xiov1->xiov_fd;
-	const int fd2 = xiov2->xiov_fd;
-
-	return (fd1 > 0) && (fd2 > 0) && (fd1 == fd2) && (end1 == beg2);
-}
-
 static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 {
 	struct silofs_xiovec xiov;
@@ -2528,8 +2541,8 @@ static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 			itr = &fq_wri->xiov[i];
 			if (!cur) {
 				xiovec_assign(&xiov, itr);
-			} else if (hasfdseq(&xiov, itr)) {
-				xiov.xiov_len += itr->xiov_len;
+			} else if (xiovec_isfdseq(&xiov, itr)) {
+				xiovec_append_len(&xiov, itr);
 			} else {
 				break;
 			}
@@ -2574,52 +2587,46 @@ static void *tail_of(const struct silofs_fuseq_in *in, size_t head_len)
 static int do_write_buf(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
-	const loff_t off = (loff_t)(in->u.write.arg.offset);
-	const size_t len = in->u.write.arg.size;
-	const void *in_buf = tail_of(in, sizeof(in->u.write));
-	size_t nwr = 0;
-	int err = 0;
-	int ret = 0;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	int err;
+	int ret;
 
 	fuseq_check_fh(fqw, ino, in->u.write.arg.fh);
-
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_write(fs_ctx_of(fqw), ino, in_buf, len, off, &nwr);
-	fuseq_unlock_fs(fqw);
-
-	ret = fuseq_reply_write(fqw, nwr, err);
+	opc->opc_in.write.ino = ino;
+	opc->opc_in.write.buf = tail_of(in, sizeof(in->u.write));
+	opc->opc_in.write.len = in->u.write.arg.size;
+	opc->opc_in.write.off = (loff_t)(in->u.write.arg.offset);
+	opc->opc_in.write.rwi_ctx = NULL;
+	opc->opc_out.write.nwr = 0;
+	err = fuseq_exec_op(fqw->fq, opc);
+	ret = fuseq_reply_write(fqw, opc->opc_out.write.nwr, err);
 	return ret;
 }
 
 static int do_write_iter(struct silofs_fuseq_worker *fqw, ino_t ino,
                          const struct silofs_fuseq_in *in)
 {
-	const loff_t off = (loff_t)(in->u.write.arg.offset);
-	const size_t lim = fqw->fq->fq_coni.max_write;
-	const size_t wsz = in->u.write.arg.size;
-	const size_t len = min(wsz, lim);
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_wr_iter *fq_wri = &fqw->rwi->u.wri;
+	size_t len = min(in->u.write.arg.size, fqw->fq->fq_coni.max_write);
 	int err = 0;
 	int err2 = 0;
 	int ret = 0;
 
 	fuseq_check_fh(fqw, ino, in->u.write.arg.fh);
-
-	fuseq_setup_wr_iter(fqw, fq_wri, len, off);
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_write_iter(fs_ctx_of(fqw), ino, &fq_wri->rwi);
-	fuseq_unlock_fs(fqw);
+	opc->opc_in.write.ino = ino;
+	opc->opc_in.write.buf = NULL;
+	opc->opc_in.write.len = len;
+	opc->opc_in.write.off = (loff_t)(in->u.write.arg.offset);
+	opc->opc_in.write.rwi_ctx = &fq_wri->rwi;
+	opc->opc_out.write.nwr = 0;
+	fuseq_setup_wr_iter(fqw, fq_wri, len, opc->opc_in.write.off);
+	err = fuseq_exec_op(fqw->fq, opc);
 
 	err2 = fuseq_wr_iter_copy_iov(fq_wri); /* unlocked */
 	ret = fuseq_reply_write(fqw, fq_wri->nwr, err ? err : err2);
-	if (!fq_wri->cnt) {
-		goto out;
-	}
-
-	fuseq_lock_fs(fqw);
-	silofs_fs_rdwr_post(fs_ctx_of(fqw), ino, fq_wri->xiov, fq_wri->cnt);
-	fuseq_unlock_fs(fqw);
-out:
+	/* no need for mutex lock -- atomic operation only */
+	fuseq_rdwr_post(fqw, fq_wri->xiov, fq_wri->cnt);
 	return ret;
 }
 
@@ -2628,7 +2635,7 @@ static int do_write(struct silofs_fuseq_worker *fqw, ino_t ino,
 {
 	const size_t wsz = in->u.write.arg.size;
 
-	return (wsz <= FUSEQ_WRITEBUF_MAX) ?
+	return (wsz <= FUSEQ_IOBUF_MAX) ?
 	       do_write_buf(fqw, ino, in) : do_write_iter(fqw, ino, in);
 }
 
@@ -2646,91 +2653,93 @@ static int do_ioc_notimpl(struct silofs_fuseq_worker *fqw, ino_t ino,
 static int do_ioc_getflags(struct silofs_fuseq_worker *fqw, ino_t ino,
                            const struct silofs_fuseq_in *in)
 {
-	struct stat st = { .st_ino = 0 };
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	const size_t out_bufsz = in->u.ioctl.arg.out_size;
 	long attr = 0;
 	int err;
 
 	if (out_bufsz != sizeof(attr)) {
 		err = -EINVAL;
-	} else {
-		fuseq_lock_fs(fqw);
-		err = silofs_fs_getattr(fs_ctx_of(fqw), ino, &st);
-		fuseq_unlock_fs(fqw);
-
-		if (!err) {
-			/* TODO: proper impl */
-			attr = (long)(FS_NOATIME_FL);
-		}
+		goto out;
 	}
+	opc->opc_fsc.fsc_oper.op_code = FUSE_GETATTR;
+	opc->opc_in.getattr.ino = ino;
+	err = fuseq_exec_op(fqw->fq, opc);
+	if (err) {
+		goto out;
+	}
+	/* TODO: proper impl */
+	attr = (long)(FS_NOATIME_FL);
+out:
 	return fuseq_reply_ioctl(fqw, 0, &attr, sizeof(attr), err);
 }
 
 static int do_ioc_query(struct silofs_fuseq_worker *fqw, ino_t ino,
                         const struct silofs_fuseq_in *in)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_NONE };
-	const void *buf_in;
-	size_t bsz_in;
-	size_t bsz_out;
-	int flags;
-	int err;
-
-	flags = (int)(in->u.ioctl.arg.flags);
-	buf_in = in->u.ioctl.buf;
-	bsz_in = in->u.ioctl.arg.in_size;
-	bsz_out = in->u.ioctl.arg.out_size;
-
-	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
-		err = -ENOSYS;
-		goto out;
-	}
-	if (bsz_out != sizeof(query)) {
-		err = -EINVAL;
-		goto out;
-	}
-	if (bsz_in < sizeof(query.qtype)) {
-		err = -EINVAL;
-		goto out;
-	}
-	query.qtype = ((const struct silofs_ioc_query *)buf_in)->qtype;
-	fuseq_lock_fs(fqw);
-	err = silofs_fs_query(fs_ctx_of(fqw), ino, &query);
-	fuseq_unlock_fs(fqw);
-out:
-	return fuseq_reply_ioctl(fqw, 0, &query, sizeof(query), err);
-}
-
-static int do_ioc_clone(struct silofs_fuseq_worker *fqw, ino_t ino,
-                        const struct silofs_fuseq_in *in)
-{
-	struct silofs_ioc_clone clone = { .flags = 0 };
-	const struct silofs_ioc_clone *clone_in = NULL;
-	const size_t bsz_in_min = offsetof(struct silofs_ioc_clone, name) + 1;
-	const size_t bsz_in_max = sizeof(*clone_in);
-	const size_t name_max = sizeof(clone_in->name) - 1;
-	const void  *buf_in = in->u.ioctl.buf;
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	const void *buf_in = in->u.ioctl.buf;
+	const struct silofs_ioc_query *qry_in = buf_in;
 	const size_t bsz_in = in->u.ioctl.arg.in_size;
 	const size_t bsz_out = in->u.ioctl.arg.out_size;
 	const int flags = (int)(in->u.ioctl.arg.flags);
 	int err;
 
-	clone_in = buf_in;
+	opc->opc_ioc_cmd = SILOFS_FS_IOC_QUERY;
+	opc->opc_in.query.ino = ino;
+	opc->opc_in.query.qtype = qry_in->qtype;
+
 	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
 		err = -ENOSYS;
-	} else if ((bsz_in < bsz_in_min) || (bsz_in > bsz_in_max)) {
-		err = -EINVAL;
-	} else if (strnlen(clone_in->name, name_max + 1) > name_max) {
-		err = -EINVAL;
-	} else {
-		memcpy(&clone, clone_in, sizeof(clone));
-
-		fuseq_lock_fs(fqw);
-		err = silofs_fs_clone(fs_ctx_of(fqw), ino,
-		                      clone.name, (int)clone.flags);
-		fuseq_unlock_fs(fqw);
+		goto out;
 	}
-	return fuseq_reply_ioctl(fqw, 0, &clone, sizeof(clone), err);
+	if (bsz_out != sizeof(*qry_in)) {
+		err = -EINVAL;
+		goto out;
+	}
+	if (bsz_in < sizeof(qry_in->qtype)) {
+		err = -EINVAL;
+		goto out;
+	}
+	err = fuseq_exec_op(fqw->fq, opc);
+out:
+	return fuseq_reply_ioctl(fqw, 0, &opc->opc_out.query.qry,
+	                         sizeof(opc->opc_out.query.qry), err);
+}
+
+static int do_ioc_clone(struct silofs_fuseq_worker *fqw, ino_t ino,
+                        const struct silofs_fuseq_in *in)
+{
+	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
+	const size_t bsz_in_min = offsetof(struct silofs_ioc_clone, name) + 1;
+	const void  *buf_in = in->u.ioctl.buf;
+	const struct silofs_ioc_clone *clone_in = buf_in;
+	const size_t bsz_in_max = sizeof(*clone_in);
+	const size_t name_max = sizeof(clone_in->name) - 1;
+	const size_t bsz_in = in->u.ioctl.arg.in_size;
+	const size_t bsz_out = in->u.ioctl.arg.out_size;
+	const int flags = (int)(in->u.ioctl.arg.flags);
+	int err;
+
+	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
+		err = -ENOSYS;
+		goto out;
+	}
+	if ((bsz_in < bsz_in_min) || (bsz_in > bsz_in_max)) {
+		err = -EINVAL;
+		goto out;
+	}
+	if (strnlen(clone_in->name, name_max + 1) > name_max) {
+		err = -EINVAL;
+		goto out;
+	}
+	opc->opc_ioc_cmd = SILOFS_FS_IOC_CLONE;
+	opc->opc_in.clone.ino = ino;
+	opc->opc_in.clone.flags = (int)clone_in->flags;
+	opc->opc_in.clone.name = clone_in->name;
+	err = fuseq_exec_op(fqw->fq, opc);
+out:
+	return fuseq_reply_ioctl(fqw, 0, NULL, 0, err);
 }
 
 static int check_ioctl_flags(int flags)
@@ -2752,12 +2761,12 @@ static int do_ioctl_bad_flags(struct silofs_fuseq_worker *fqw, int err)
 static int do_ioctl(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
-	int err = 0;
-	int ret;
-	int flags;
-	long cmd;
-	size_t in_size;
 	const void *in_buf;
+	size_t in_size;
+	long cmd;
+	int flags;
+	int ret;
+	int err = 0;
 
 	cmd = (long)(in->u.ioctl.arg.cmd);
 	flags = (int)(in->u.ioctl.arg.flags);
@@ -2847,7 +2856,12 @@ static const struct silofs_fuseq_cmd fuseq_cmd_tbl[] = {
 
 static const struct silofs_fuseq_cmd *cmd_of(unsigned int opc)
 {
-	return (opc <= ARRAY_SIZE(fuseq_cmd_tbl)) ? &fuseq_cmd_tbl[opc] : NULL;
+	const struct silofs_fuseq_cmd *cmd = NULL;
+
+	if (opc && (opc < ARRAY_SIZE(fuseq_cmd_tbl))) {
+		cmd = &fuseq_cmd_tbl[opc];
+	}
+	return cmd;
 }
 
 static int fuseq_resolve_cmd(struct silofs_fuseq_worker *fqw, unsigned int opc)
@@ -2870,13 +2884,17 @@ static int fuseq_resolve_cmd(struct silofs_fuseq_worker *fqw, unsigned int opc)
 
 static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
 {
+	const struct silofs_fs_ctx *fsc = NULL;
+
 	if (!fqw->fq->fq_deny_others) {
 		return 0;
 	}
 	if ((opuid == 0) || (opuid == fqw->fq->fq_fs_owner)) {
 		return 0;
 	}
-	switch (fqw->fs_ctx.fsc_oper.op_code) {
+
+	fsc = fs_ctx_of(fqw);
+	switch (fsc->fsc_oper.op_code) {
 	case FUSE_INIT:
 	case FUSE_READ:
 	case FUSE_WRITE:
@@ -2897,19 +2915,22 @@ static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
 static void fuseq_assign_curr_oper(struct silofs_fuseq_worker *fqw,
                                    const struct fuse_in_header *hdr)
 {
-	fqw->fs_ctx.fsc_apex = fqw->fq->fq_apex;
-	fqw->fs_ctx.fsc_oper.op_creds.ucred.uid = (uid_t)(hdr->uid);
-	fqw->fs_ctx.fsc_oper.op_creds.ucred.gid = (gid_t)(hdr->gid);
-	fqw->fs_ctx.fsc_oper.op_creds.ucred.pid = (pid_t)(hdr->pid);
-	fqw->fs_ctx.fsc_oper.op_creds.ucred.umask = 0;
-	fqw->fs_ctx.fsc_oper.op_unique = hdr->unique;
-	fqw->fs_ctx.fsc_oper.op_code = (int)hdr->opcode;
-	fqw->fs_ctx.fsc_interrupt = 0;
+	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+
+	fsc->fsc_apex = fqw->fq->fq_apex;
+	fsc->fsc_oper.op_creds.ucred.uid = (uid_t)(hdr->uid);
+	fsc->fsc_oper.op_creds.ucred.gid = (gid_t)(hdr->gid);
+	fsc->fsc_oper.op_creds.ucred.pid = (pid_t)(hdr->pid);
+	fsc->fsc_oper.op_creds.ucred.umask = 0;
+	fsc->fsc_oper.op_unique = hdr->unique;
+	fsc->fsc_oper.op_code = (int)hdr->opcode;
+	fsc->fsc_interrupt = 0;
 }
 
 static int fuseq_assign_curr_xtime(struct silofs_fuseq_worker *fqw)
 {
-	struct silofs_creds *creds = &fqw->fs_ctx.fsc_oper.op_creds;
+	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+	struct silofs_creds *creds = &fsc->fsc_oper.op_creds;
 	const bool is_realtime = (fqw->cmd->realtime > 0);
 
 	return silofs_ts_gettime(&creds->xtime, is_realtime);
@@ -2948,20 +2969,22 @@ static int fuseq_process_hdr(struct silofs_fuseq_worker *fqw)
 static void fuseq_enq_active_op(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq_workset *fq_ws = &fqw->fq->fq_ws;
+	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
 
 	fuseq_lock_op(fqw);
 	listq_push_front(&fq_ws->fws_curropsq, &fqw->lh);
-	fqw->fs_ctx.fsc_interrupt = 0;
+	fsc->fsc_interrupt = 0;
 	fuseq_unlock_op(fqw);
 }
 
 static void fuseq_dec_active_op(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq_workset *fq_ws = &fqw->fq->fq_ws;
+	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
 
 	fuseq_lock_op(fqw);
 	listq_remove(&fq_ws->fws_curropsq, &fqw->lh);
-	fqw->fs_ctx.fsc_interrupt = 0;
+	fsc->fsc_interrupt = 0;
 	fuseq_unlock_op(fqw);
 }
 
@@ -2981,8 +3004,8 @@ static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq)
 	itr = lsq->ls.next;
 	while (itr != &lsq->ls) {
 		fqw_other = fuseq_worker_of(itr);
-		if (fqw_other->fs_ctx.fsc_oper.op_unique == unq) {
-			fqw_other->fs_ctx.fsc_interrupt++;
+		if (fqw_other->opc->opc_fsc.fsc_oper.op_unique == unq) {
+			fqw_other->opc->opc_fsc.fsc_interrupt++;
 			break;
 		}
 		itr = itr->next;
@@ -2998,11 +3021,6 @@ static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq)
 	 * in fuse.rst:#interrupting-filesystem-operations
 	 */
 	silofs_unused(do_interrupt);
-}
-
-static void fuseq_set_umask(struct silofs_fuseq_worker *fqw, mode_t umask)
-{
-	fqw->fs_ctx.fsc_oper.op_creds.ucred.umask = umask;
 }
 
 static int fuseq_call_oper(struct silofs_fuseq_worker *fqw)
@@ -3039,20 +3057,30 @@ static void fuseq_reset_inhdr(struct silofs_fuseq_worker *fqw)
 	memset(&in->u.hdr, 0, sizeof(in->u.hdr));
 }
 
-static int fuseq_check_inhdr(const struct silofs_fuseq_worker *fqw, size_t nrd)
+static int fuseq_check_inhdr(const struct silofs_fuseq_worker *fqw,
+                             size_t nrd, bool full)
 {
 	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
-	const int opc = (int)in->u.hdr.hdr.opcode;
-	const size_t len = in->u.hdr.hdr.len;
+	const struct silofs_fuseq_hdr_in *hdr = &in->u.hdr;
+	const size_t len = hdr->hdr.len;
+	const size_t len_min = sizeof(*hdr);
+	const size_t len_max = fqw->fq->fq_coni.max_inlen;
+	const int opc = (int)hdr->hdr.opcode;
 
-	if (len != nrd) {
+	if (nrd < len_min) {
+		fuseq_log_err("illegal in-length: "\
+		              "nrd=%lu len_min=%lu ", nrd, len_min);
+		return -EPROTO;
+	}
+	if (len > len_max) {
+		fuseq_log_err("illegal header: opc=%d len=%lu len_max=%lu",
+		              opc, len, len_max);
+		return -EPROTO;
+	}
+	if (full && (len != nrd)) {
 		fuseq_log_err("header length mismatch: "\
 		              "opc=%d nrd=%lu len=%lu ", opc, nrd, len);
 		return -EIO;
-	}
-	if ((len > sizeof(in->u)) && (opc != FUSE_WRITE)) {
-		fuseq_log_err("illegal header: opc=%d len=%lu", opc, len);
-		return -EPROTO;
 	}
 	return 0;
 }
@@ -3078,25 +3106,33 @@ static int fuseq_check_pipe_pre(const struct silofs_fuseq_worker *fqw)
 static int fuseq_wait_request(const struct silofs_fuseq_worker *fqw)
 {
 	const int fuse_fd = fqw->fq->fq_fuse_fd;
-	const struct timespec ts = { .tv_sec = 1 };
 
-	return silofs_sys_pselect_rfd(fuse_fd, &ts);
+	return silofs_sys_pollin_rfd(fuse_fd, 100 /* millisec */);
 }
 
-static int fuseq_do_recv_in(struct silofs_fuseq_worker *fqw, size_t *out_sz)
+static int fuseq_recv_buf(const struct silofs_fuseq_worker *fqw,
+                          void *buf, size_t cnt, size_t *out_sz)
 {
 	const int fuse_fd = fqw->fq->fq_fuse_fd;
-	struct silofs_fuseq_in *in = fuseq_in_of(fqw);
 
-	return silofs_sys_read(fuse_fd, in, sizeof(*in), out_sz);
+	*out_sz = 0;
+	return cnt ? silofs_sys_read(fuse_fd, buf, cnt, out_sz) : 0;
 }
 
-static int fuseq_recv_in(struct silofs_fuseq_worker *fqw)
+static int fuseq_recv_in_all(struct silofs_fuseq_worker *fqw, size_t *out_sz)
+{
+	struct silofs_fuseq_in *in = fuseq_in_of(fqw);
+	const size_t cnt = min(sizeof(*in), fqw->fq->fq_coni.max_inlen);
+
+	return fuseq_recv_buf(fqw, in, cnt, out_sz);
+}
+
+static int fuseq_recv_copy_in(struct silofs_fuseq_worker *fqw)
 {
 	size_t len = 0;
 	int err;
 
-	err = fuseq_do_recv_in(fqw, &len);
+	err = fuseq_recv_in_all(fqw, &len);
 	if (err == -ETIMEDOUT) {
 		return err;
 	}
@@ -3109,70 +3145,96 @@ static int fuseq_recv_in(struct silofs_fuseq_worker *fqw)
 		fuseq_log_err("fuse read-in too-short: len=%lu", len);
 		return -EIO;
 	}
-	return fuseq_check_inhdr(fqw, len);
+	return fuseq_check_inhdr(fqw, len, true);
 }
 
-static int fuseq_do_splice_in(struct silofs_fuseq_worker *fqw)
+static int fuseq_splice_into_pipe(struct silofs_fuseq_worker *fqw, size_t cnt)
 {
 	struct silofs_pipe *pipe = &fqw->piper.pipe;
 	const int fuse_fd = fqw->fq->fq_fuse_fd;
-
-	return silofs_pipe_splice_from_fd(pipe, fuse_fd, NULL, pipe->size);
-}
-
-static int fuseq_splice_in(struct silofs_fuseq_worker *fqw)
-{
-	struct silofs_pipe *pipe = &fqw->piper.pipe;
-	struct silofs_fuseq_in *in = NULL;
-	const struct silofs_fuseq_hdr_in *hdr_in = NULL;
-	size_t rem = 0;
-	size_t len = 0;
-	size_t nsp = 0;
-	size_t hdr_len = 0;
 	int err;
 
-	err = fuseq_do_splice_in(fqw);
-	if (err == -ETIMEDOUT) {
-		return err;
-	}
+	silofs_assert_eq(pipe->pend, 0);
+	silofs_assert_gt(cnt, 0);
+	silofs_assert_le(cnt, pipe->size);
+
+	err = silofs_pipe_splice_from_fd(pipe, fuse_fd, NULL, cnt);
 	if (err) {
-		fuseq_log_err("fuse splice-in failed: fuse_fd=%d err=%d",
-		              fqw->fq->fq_fuse_fd, err);
-		return err;
+		fuseq_log_err("fuse splice-in failed: "
+		              "fuse_fd=%d cnt=%lu err=%d", fuse_fd, cnt, err);
 	}
-	nsp = pipe->pend;
-	hdr_len = sizeof(in->u.hdr.hdr);
-	if (nsp < hdr_len) {
-		fuseq_log_err("fuse splice-in too-short: "\
-		              "nsp=%lu hdr_len=%lu", nsp, hdr_len);
-		return -EIO;
-	}
-	in = fuseq_in_of(fqw);
-	len = min(nsp, sizeof(in->u.write));
-	err = silofs_pipe_copy_to_buf(pipe, in, len);
-	if (err) {
-		fuseq_log_err("pipe-copy failed: len=%lu err=%d", len, err);
-		return err;
-	}
-	err = fuseq_check_inhdr(fqw, nsp);
+	return err;
+}
+
+static int fuseq_copy_from_pipe_in(struct silofs_fuseq_worker *fqw,
+                                   size_t head_sz, size_t cnt, size_t *out_ncp)
+{
+	struct silofs_fuseq_in *in = fuseq_in_of(fqw);
+	struct silofs_pipe *pipe = &fqw->piper.pipe;
+	const size_t pre = pipe->pend;
+	int err;
+
+	err = silofs_pipe_copy_to_buf(pipe, tail_of(in, head_sz), cnt);
 	if (err) {
 		return err;
 	}
-	rem = nsp - len;
-	if (!rem) {
+	*out_ncp = pre - pipe->pend;
+	return 0;
+}
+
+static bool fuseq_has_long_write_in(const struct silofs_fuseq_worker *fqw)
+{
+	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
+	const int opc = (int)in->u.hdr.hdr.opcode;
+
+	return (opc == FUSE_WRITE) && (in->u.write.arg.size > FUSEQ_IOBUF_MAX);
+}
+
+/*
+ * fuse.ko requires user-space to transfer the entire message (header +
+ * sub-command control + data payload) into user-space owned buffer: either
+ * as in-memory buffer or via in-kernel pipe (splice-mode). When trying to
+ * copy in smaller chunks, we get -EINVAL.
+ *
+ * Do a two phase operation: first copy from common fuse-fd into thread-private
+ * pipe under channel-lock, then release the lock and copy from private pipe
+ * into internal buffer. Note that for the special case of long-write
+ * operation, data remains in pipe until it is consumed by write_iter.
+ */
+static int fuseq_recv_splice_in(struct silofs_fuseq_worker *fqw)
+{
+	return fuseq_splice_into_pipe(fqw, fqw->fq->fq_coni.buffsize);
+}
+
+static int fuseq_copy_pipe_in(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_fuseq_in *in = fuseq_in_of(fqw);
+	struct silofs_fuseq_hdr_in *hdr_in = &in->u.hdr;
+	const size_t nsp = fqw->piper.pipe.pend;
+	const size_t cnt = min(sizeof(in->u.write), nsp);
+	size_t ncp1 = 0;
+	size_t ncp2 = 0;
+	size_t rem;
+	int err;
+
+	err = fuseq_copy_from_pipe_in(fqw, 0, cnt, &ncp1);
+	if (err) {
+		return err;
+	}
+	rem = (size_t)hdr_in->hdr.len - ncp1;
+	err = fuseq_check_inhdr(fqw, ncp1, rem == 0);
+	if (err) {
+		return err;
+	}
+	if (!rem || fuseq_has_long_write_in(fqw)) {
 		return 0;
 	}
-	/* FUSE_WRITE in write_iter (pipe+splice) mode */
-	hdr_in = &in->u.hdr;
-	if ((hdr_in->hdr.opcode == FUSE_WRITE) &&
-	    (in->u.write.arg.size > FUSEQ_WRITEBUF_MAX)) {
-		return 0;
-	}
-	/* FUSE_WRITE(short), FUSE_SETXATTR, FUSE_BATCH_FORGET et.al. */
-	err = silofs_pipe_copy_to_buf(pipe, tail_of(in, len), rem);
+	err = fuseq_copy_from_pipe_in(fqw, ncp1, rem, &ncp2);
 	if (err) {
-		fuseq_log_err("pipe-copy-tail failed: opcode=%lu len=%lu " \
-		              "err=%d", hdr_in->hdr.opcode, rem, err);
+		return err;
+	}
+	err = fuseq_check_inhdr(fqw, ncp1 + ncp2, true);
+	if (err) {
 		return err;
 	}
 	return 0;
@@ -3188,31 +3250,45 @@ static bool fuseq_cap_splice_in(const struct silofs_fuseq_worker *fqw)
 	return fuseq_cap_splice_read(fqw->fq);
 }
 
+static int fuseq_do_recv_in(struct silofs_fuseq_worker *fqw, bool *out_spliced)
+{
+	int err;
+
+	if (!fuseq_is_active(fqw->fq)) {
+		return -FUSEQ_ENORX;
+	}
+	err = fuseq_wait_request(fqw);
+	if (err) {
+		return err;
+	}
+	if (!fuseq_cap_splice_in(fqw)) {
+		return fuseq_recv_copy_in(fqw);
+	}
+	*out_spliced = true;
+	return fuseq_recv_splice_in(fqw);
+}
+
 static int fuseq_recv_in_locked(struct silofs_fuseq_worker *fqw)
 {
 	int err = -FUSEQ_ENORX;
+	bool spliced = false;
 
 	fuseq_lock_ch(fqw);
-	if (fuseq_is_active(fqw->fq)) {
-		err = fuseq_wait_request(fqw);
-		if (!err) {
-			if (fuseq_cap_splice_in(fqw)) {
-				err = fuseq_splice_in(fqw);
-			} else {
-				err = fuseq_recv_in(fqw);
-			}
-		}
-		if (err == -EINVAL) {
-			fuseq_log_err("unexpected input error: fuse_fd=%d " \
-			              "err=%d", fqw->fq->fq_fuse_fd, err);
-			fqw->fq->fq_active = 0;
-		} else if (err == -ENODEV) {
-			/* umount case: set non-active under channel-lock */
-			fuseq_log_err("input status: err=%d", err);
-			fqw->fq->fq_active = 0;
-		}
+	err = fuseq_do_recv_in(fqw, &spliced);
+	if (err == -EINVAL) {
+		fuseq_log_err("unexpected input error: fuse_fd=%d " \
+		              "err=%d", fqw->fq->fq_fuse_fd, err);
+		fqw->fq->fq_active = 0;
+	} else if (err == -ENODEV) {
+		/* umount case: set non-active under channel-lock */
+		fuseq_log_err("input status: err=%d", err);
+		fqw->fq->fq_active = 0;
 	}
 	fuseq_unlock_ch(fqw);
+
+	if (!err && spliced) {
+		err = fuseq_copy_pipe_in(fqw);
+	}
 	return err;
 }
 
@@ -3386,6 +3462,7 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 	fq->fq_coni.max_background = nworkers_max; /* XXX is it? */
 	fq->fq_coni.congestion_threshold = 2 * nworkers_max;
 	fq->fq_coni.time_gran = 1;
+	fq->fq_coni.max_inlen = buff_size;
 	return 0;
 }
 
@@ -3444,6 +3521,37 @@ static void fuseq_fini_rwi(struct silofs_fuseq_worker *fqw)
 	}
 }
 
+static int fuseq_init_opc(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_alloc_if *alif = fqw->fq->fq_alif;
+	struct silofs_oper_ctx *opc = NULL;
+	int err;
+
+	opc = silofs_allocate(alif, sizeof(*opc));
+	if (opc == NULL) {
+		return -ENOMEM;
+	}
+	err = silofs_operctx_init(opc);
+	if (err) {
+		silofs_deallocate(alif, opc, sizeof(*opc));
+		return err;
+	}
+	fqw->opc = opc;
+	return 0;
+}
+
+static void fuseq_fini_opc(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_alloc_if *alif = fqw->fq->fq_alif;
+	struct silofs_oper_ctx *opc = fqw->opc;
+
+	if (opc != NULL) {
+		silofs_operctx_fini(opc);
+		silofs_deallocate(alif, opc, sizeof(*opc));
+		fqw->opc = NULL;
+	}
+}
+
 static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
                              struct silofs_fuseq *fq, unsigned int idx)
 {
@@ -3461,22 +3569,26 @@ static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
 
 	err = fuseq_init_bufs(fqw);
 	if (err) {
-		goto out;
+		goto out_err;
 	}
 	err = fuseq_init_rwi(fqw);
 	if (err) {
-		goto out;
+		goto out_err;
+	}
+	err = fuseq_init_opc(fqw);
+	if (err) {
+		goto out_err;
 	}
 	err = fuseq_init_piper(fqw, pipe_size_want);
 	if (err) {
-		goto out;
+		goto out_err;
 	}
-out:
-	if (err) {
-		fuseq_fini_piper(fqw);
-		fuseq_fini_rwi(fqw);
-		fuseq_fini_bufs(fqw);
-	}
+	return 0;
+out_err:
+	fuseq_fini_piper(fqw);
+	fuseq_fini_opc(fqw);
+	fuseq_fini_rwi(fqw);
+	fuseq_fini_bufs(fqw);
 	return err;
 }
 
@@ -3484,6 +3596,7 @@ static void fuseq_fini_worker(struct silofs_fuseq_worker *fqw)
 {
 	list_head_fini(&fqw->lh);
 	fuseq_fini_piper(fqw);
+	fuseq_fini_opc(fqw);
 	fuseq_fini_rwi(fqw);
 	fuseq_fini_bufs(fqw);
 	fqw->cmd = NULL;
@@ -3568,19 +3681,22 @@ static int fuseq_init_locks(struct silofs_fuseq *fq)
 	if (err) {
 		goto err2;
 	}
+	fq->fq_init_locks = true;
 	return 0;
 err2:
-	silofs_mutex_destroy(&fq->fq_fs_lock);
+	silofs_mutex_fini(&fq->fq_fs_lock);
 err1:
-	silofs_mutex_destroy(&fq->fq_ch_lock);
+	silofs_mutex_fini(&fq->fq_ch_lock);
 	return err;
 }
 
 static void fuseq_fini_locks(struct silofs_fuseq *fq)
 {
-	silofs_mutex_destroy(&fq->fq_op_lock);
-	silofs_mutex_destroy(&fq->fq_fs_lock);
-	silofs_mutex_destroy(&fq->fq_ch_lock);
+	if (fq->fq_init_locks) {
+		silofs_mutex_fini(&fq->fq_op_lock);
+		silofs_mutex_fini(&fq->fq_fs_lock);
+		silofs_mutex_fini(&fq->fq_ch_lock);
+	}
 }
 
 static void fuseq_init_common(struct silofs_fuseq *fq,
@@ -3589,13 +3705,16 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_times = 0;
 	fq->fq_apex = NULL;
 	fq->fq_alif = alif;
+	fq->fq_active = 0;
 	fq->fq_nopers = 0;
 	fq->fq_fuse_fd = -1;
 	fq->fq_got_init = false;
+	fq->fq_reply_init_ok = false;
 	fq->fq_got_destroy = false;
 	fq->fq_deny_others = false;
-	fq->fq_active = 0;
+	fq->fq_mount = false;
 	fq->fq_umount = false;
+	fq->fq_writeback_cache = false;
 	fq->fq_fs_owner = (uid_t)(-1);
 }
 
@@ -3650,15 +3769,15 @@ void silofs_fuseq_fini(struct silofs_fuseq *fq)
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
                        struct silofs_fs_apex *apex, const char *path)
 {
-	int err;
-	int fd = -1;
-	uid_t uid;
-	gid_t gid;
-	uint64_t ms_flags;
-	bool allow_other;
 	const size_t max_read = fq->fq_coni.buffsize;
 	const char *sock = SILOFS_MNTSOCK_NAME;
 	struct silofs_sb_info *sbi = apex->ap_sbi;
+	uint64_t ms_flags;
+	uid_t uid;
+	gid_t gid;
+	int fd = -1;
+	int err;
+	bool allow_other;
 
 	uid = sbi->s_owner.uid;
 	gid = sbi->s_owner.gid;
@@ -3742,18 +3861,15 @@ static int fuseq_exec_one(struct silofs_fuseq_worker *fqw)
 
 static int fuseq_timeout_flags(const struct silofs_fuseq_worker *fqw)
 {
-	int flags;
 	const time_t now = silofs_time_now();
 	const time_t dif = labs(now - fqw->fq->fq_times);
+	int flags = 0;
 
-	if (dif < 3) {
-		flags = 0;
-	} else if (dif < 20) {
-		flags = SILOFS_F_TIMEOUT;
-	} else if (dif < 60) {
-		flags = SILOFS_F_TIMEOUT | SILOFS_F_SLUGGISH;
-	} else {
-		flags = SILOFS_F_TIMEOUT | SILOFS_F_SLUGGISH | SILOFS_F_IDLE;
+	if (dif > 10) {
+		flags |= SILOFS_F_TIMEOUT;
+	}
+	if (dif > 30) {
+		flags |= SILOFS_F_IDLE;
 	}
 	return flags;
 }

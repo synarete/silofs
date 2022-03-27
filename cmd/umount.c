@@ -19,9 +19,9 @@
 #include <sys/statvfs.h>
 #include <sys/mount.h>
 
-static struct silofs_subcmd_umount *umount_args;
+static struct silofs_subcmd_umount *cmd_umount_args;
 
-static const char *umount_usage[] = {
+static const char *cmd_umount_usage[] = {
 	"umount [options] <mountpoint>",
 	"",
 	"options:",
@@ -30,7 +30,7 @@ static const char *umount_usage[] = {
 	NULL
 };
 
-static void umount_getopt(void)
+static void cmd_umount_getopt(void)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -43,83 +43,83 @@ static void umount_getopt(void)
 	while (opt_chr > 0) {
 		opt_chr = silofs_cmd_getopt("lfh", opts);
 		if (opt_chr == 'l') {
-			umount_args->lazy = true;
+			cmd_umount_args->lazy = true;
 		} else if (opt_chr == 'f') {
-			umount_args->force = true;
+			cmd_umount_args->force = true;
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(umount_usage);
+			silofs_print_help_and_exit(cmd_umount_usage);
 		} else if (opt_chr > 0) {
 			silofs_die_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("mountpoint", &umount_args->mntpoint);
+	silofs_cmd_getarg("mountpoint", &cmd_umount_args->mntpoint);
 	silofs_cmd_endargs();
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void umount_finalize(void)
+static void cmd_umount_finalize(void)
 {
-	silofs_cmd_pfrees(&umount_args->mntpoint_real);
-	silofs_cmd_pfrees(&umount_args->mntpoint);
+	silofs_cmd_pfrees(&cmd_umount_args->mntpoint_real);
+	silofs_cmd_pfrees(&cmd_umount_args->mntpoint);
 }
 
-static void umount_start(void)
+static void cmd_umount_start(void)
 {
-	umount_args = &silofs_globals.cmd.umount;
-	atexit(umount_finalize);
+	cmd_umount_args = &silofs_globals.cmd.umount;
+	atexit(cmd_umount_finalize);
 }
 
-static void umount_prepare(void)
+static void cmd_umount_prepare(void)
 {
 	struct stat st;
 	int err;
 
 	silofs_cmd_check_mountd();
 
-	err = silofs_sys_stat(umount_args->mntpoint, &st);
-	if ((err == -ENOTCONN) && umount_args->force) {
-		silofs_log_debug("transport endpoint "
-		                 "not connected: %s", umount_args->mntpoint);
+	err = silofs_sys_stat(cmd_umount_args->mntpoint, &st);
+	if ((err == -ENOTCONN) && cmd_umount_args->force) {
+		silofs_log_debug("transport endpoint not connected: %s",
+		                 cmd_umount_args->mntpoint);
 		return;
 	}
-	silofs_cmd_realpath(umount_args->mntpoint,
-	                    &umount_args->mntpoint_real);
-	silofs_cmd_check_mntdir(umount_args->mntpoint_real, false);
+	silofs_cmd_realpath(cmd_umount_args->mntpoint,
+	                    &cmd_umount_args->mntpoint_real);
+	silofs_cmd_check_mntdir(cmd_umount_args->mntpoint_real, false);
 }
 
-static const char *umount_dirpath(void)
+static const char *cmd_umount_dirpath(void)
 {
-	return (umount_args->mntpoint_real != NULL) ?
-	       umount_args->mntpoint_real : umount_args->mntpoint;
+	return (cmd_umount_args->mntpoint_real != NULL) ?
+	       cmd_umount_args->mntpoint_real : cmd_umount_args->mntpoint;
 }
 
-static void umount_send_recv(void)
+static void cmd_umount_send_recv(void)
 {
-	const char *path = umount_dirpath();
+	const char *path = cmd_umount_dirpath();
 	int mnt_flags = 0;
 	int err;
 
-	if (umount_args->lazy) {
+	if (cmd_umount_args->lazy) {
 		mnt_flags |= MNT_DETACH;
 	}
-	if (umount_args->force) {
+	if (cmd_umount_args->force) {
 		mnt_flags |= MNT_FORCE;
 	}
 	err = silofs_rpc_umount(path, getuid(), getgid(), mnt_flags);
 	if (err) {
 		silofs_die(err, "umount failed: %s lazy=%d force=%d", path,
-		           (int)umount_args->lazy,
-		           (int)umount_args->force);
+		           (int)cmd_umount_args->lazy,
+		           (int)cmd_umount_args->force);
 	}
 }
 
-static void umount_probe_statvfs(void)
+static void cmd_umount_probe_statvfs(void)
 {
 	int err;
 	long fstype;
 	struct statfs stfs;
-	const char *path = umount_dirpath();
+	const char *path = cmd_umount_dirpath();
 
 	for (size_t i = 0; i < 4; ++i) {
 		sleep(1);
@@ -144,25 +144,25 @@ static void umount_probe_statvfs(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_execute_umount(void)
+void silofs_cmd_execute_umount(void)
 {
 	/* Do all cleanups upon exits */
-	umount_start();
+	cmd_umount_start();
 
 	/* Parse command's arguments */
-	umount_getopt();
+	cmd_umount_getopt();
 
 	/* Verify user's arguments */
-	umount_prepare();
+	cmd_umount_prepare();
 
 	/* Do actual umount */
-	umount_send_recv();
+	cmd_umount_send_recv();
 
 	/* Post-umount checks */
-	umount_probe_statvfs();
+	cmd_umount_probe_statvfs();
 
 	/* Post execution cleanups */
-	umount_finalize();
+	cmd_umount_finalize();
 }
 
 

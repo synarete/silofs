@@ -734,10 +734,10 @@ static int avl_search_leaf_ipos(struct silofs_avl *avl,
                                 const struct silofs_avl_node *z,
                                 struct silofs_avl_pos *out_pos)
 {
-	long cmp;
-	bool isleft = false;
 	struct silofs_avl_node *p = NULL;
 	struct silofs_avl_node *x = *avl_root_p(avl);
+	long cmp;
+	bool isleft = false;
 
 	while (x != NULL) {
 		cmp = avl_compare(avl, x, z);
@@ -773,27 +773,30 @@ static struct silofs_avl_node *
 avl_insert_leaf_at(struct silofs_avl *avl, struct silofs_avl_node *x,
                    const struct silofs_avl_pos *pos)
 {
-	struct silofs_avl_node *minn;
-	struct silofs_avl_node *maxn;
-	struct silofs_avl_node **link;
-
 	x->parent = pos->parent;
 	*pos->pnode = x;
 
 	avl_insert_fixup(x, avl_root_p(avl));
+	return x;
+}
+
+static void avl_post_insert_fixup(struct silofs_avl *avl)
+{
+	struct silofs_avl_node *prev;
+	struct silofs_avl_node *next;
+	struct silofs_avl_node **link;
 
 	link = avl_leftmost_p(avl);
-	minn = bst_predecessor(*link);
-	if (minn != NULL) {
-		*link = minn;
+	prev = bst_predecessor(*link);
+	if (prev != NULL) {
+		*link = prev;
 	}
 
 	link = avl_rightmost_p(avl);
-	maxn = bst_successor(*link);
-	if (maxn != NULL) {
-		*link = maxn;
+	next = bst_successor(*link);
+	if (next != NULL) {
+		*link = next;
 	}
-	return x;
 }
 
 static struct silofs_avl_node *
@@ -806,8 +809,11 @@ avl_insert_leaf(struct silofs_avl *avl, struct silofs_avl_node *x, int unique)
 	if (err) {
 		return NULL; /* not unique */
 	}
-	avl_node_init(x);
-	avl_insert_leaf_at(avl, x, &pos);
+	if (pos.parent && pos.pnode) { /* make gcc-analyzer happy */
+		avl_node_init(x);
+		avl_insert_leaf_at(avl, x, &pos);
+	}
+	avl_post_insert_fixup(avl);
 	return x;
 }
 

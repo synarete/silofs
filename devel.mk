@@ -19,12 +19,12 @@
 # O = OPTLEVEL (0|1|2|3)
 # V = VERBOSE (0|1)
 # CC = COMPLIER (gcc|clang)
-# WITH_ANALYZER = ANALYZER-MODE (0|1)
+# ANALYZER = ANALYZER-MODE (0|1)
 # PREFIX =
 D ?= 1
 O ?= 0
 V ?= 0
-WITH_ANALYZER ?= 0
+ANALYZER ?= 0
 
 MKDIR_P := mkdir -p
 SELF := $(lastword $(MAKEFILE_LIST))
@@ -68,8 +68,8 @@ ifneq ($(V), $(VRBS))
 V := 0
 endif
 
-ifneq ($(WITH_ANALYZER), $(ANLZ))
-WITH_ANALYZER := 0
+ifneq ($(ANALYZER), $(ANLZ))
+ANALYZER := 0
 endif
 
 
@@ -151,7 +151,7 @@ CFLAGS += -Wunused-const-variable=2 -Wswitch-unreachable
 CFLAGS += -Wold-style-declaration -Wmaybe-uninitialized
 # CFLAGS += -Wstringop-truncation -Wstringop-overread -Wstringop-overflow
 # CFLAGS += -Wstring-compare
-ifeq ($(WITH_ANALYZER), 1)
+ifeq ($(ANALYZER), 1)
 CFLAGS += -fanalyzer -Wno-analyzer-malloc-leak
 endif
 else ifeq ($(CC), clang)
@@ -258,7 +258,7 @@ help:
 	$(info   D=[$(DBGS)])
 	$(info   O=[$(OPTS)])
 	$(info   V=[$(VRBS)])
-	$(info   WITH_ANALYZER=[$(ANLZ)])
+	$(info   ANALYZER=[$(ANLZ)])
 	$(info   PREFIX=[DIRPATH])
 	$(info )
 

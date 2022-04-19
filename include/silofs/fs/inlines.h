@@ -148,6 +148,11 @@ static inline bool silofs_stype_issuper(enum silofs_stype stype)
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SUPER);
 }
 
+static inline bool silofs_stype_isstats(enum silofs_stype stype)
+{
+	return silofs_stype_isequal(stype, SILOFS_STYPE_STATS);
+}
+
 static inline bool silofs_stype_isspnode(enum silofs_stype stype)
 {
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SPNODE);
@@ -225,13 +230,13 @@ silofs_vi_vaddr(const struct silofs_vnode_info *vi)
 static inline struct silofs_fs_apex *
 silofs_vi_apex(const struct silofs_vnode_info *vi)
 {
-	return vi->v_ti.t_apex;
+	return vi->v_si.s_apex;
 }
 
 static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
-	return vi->v_ti.t_apex->ap_sbi;
+	return vi->v_si.s_apex->ap_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -274,13 +279,13 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 static inline struct silofs_fs_apex *
 silofs_ii_apex(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_ti.t_apex;
+	return ii->i_vi.v_si.s_apex;
 }
 
 static inline struct silofs_cache *
 silofs_ii_cache(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_ti.t_ce.ce_cache;
+	return ii->i_vi.v_si.s_ce.ce_cache;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -288,25 +293,40 @@ silofs_ii_cache(const struct silofs_inode_info *ii)
 static inline struct silofs_fs_apex *
 silofs_sbi_apex(const struct silofs_sb_info *sbi)
 {
-	return sbi->s_ui.u_ti.t_apex;
+	return sbi->sb_ui.u_si.s_apex;
+}
+
+static inline struct silofs_alloc *
+silofs_sbi_alloc(const struct silofs_sb_info *sbi)
+{
+	return sbi->sb_ui.u_si.s_apex->ap_alloc;
 }
 
 static inline struct silofs_cache *
 silofs_sbi_cache(const struct silofs_sb_info *sbi)
 {
-	return sbi->s_ui.u_ti.t_ce.ce_cache;
+	return sbi->sb_ui.u_si.s_ce.ce_cache;
 }
 
 static inline const struct silofs_uaddr *
 silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 {
-	return &sbi->s_ui.u_uaddr;
+	return &sbi->sb_ui.u_uaddr;
 }
 
-static inline const struct silofs_oaddr *
-silofs_sbi_oaddr(const struct silofs_sb_info *sbi)
+static inline const struct silofs_blobid *
+silofs_sbi_blobid(const struct silofs_sb_info *sbi)
 {
-	return &sbi->s_ui.u_uaddr.oaddr;
+	return &sbi->sb_ui.u_uaddr.oaddr.bka.blobid;
+}
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static inline const struct silofs_uaddr *
+silofs_sti_uaddr(const struct silofs_stats_info *sti)
+{
+	return &sti->st_ui.u_uaddr;
 }
 
 #endif /* SILOFS_INLINES_H_ */

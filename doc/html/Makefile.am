@@ -19,10 +19,10 @@ dist-local: all-local
 
 %.html: %.rst
 	@echo "  RST2HTML $@" && \
-	  $(rst2html) --stylesheet=$(srcdir)/silofs.css < $< > $@ ;
+	  $(rst2html) --stylesheet=$(srcdir)/silofs.css < "$<" > "$@" ;
 
 index.html: index.html.in
-	@echo "  SED      $@"; $(PATSUBST) $< > $@ ;
+	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;
 
 endif
 

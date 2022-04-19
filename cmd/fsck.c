@@ -14,10 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
-
-
-static struct silofs_subcmd_fsck *cmd_fsck_args;
+#include "cmd.h"
 
 static const char *cmd_fsck_usage[] = {
 	"fsck [options] <repo-path>",
@@ -27,76 +24,90 @@ static const char *cmd_fsck_usage[] = {
 	NULL
 };
 
-static void fsck_getopt(void)
+struct cmd_fsck_args {
+	char   *repodir;
+	char   *repodir_real;
+};
+
+struct cmd_fsck_ctx {
+	struct cmd_fsck_args    args;
+	struct silofs_fs_env   *fse;
+};
+
+static struct cmd_fsck_ctx *cmd_fsck_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 {
-	int c = 1;
-	int opt_index;
-	int argc;
-	char **argv;
+	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "version", no_argument, NULL, 'v' },
+
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
-	argc = silofs_globals.cmd_argc;
-	argv = silofs_globals.cmd_argv;
-	while (c > 0) {
-		opt_index = 0;
-		c = getopt_long(argc, argv, "vh", opts, &opt_index);
-		if (c == -1) {
-			break;
-		}
-		if (c == 'v') {
-			silofs_print_version_and_exit(NULL);
-		} else if (c == 'h') {
-			silofs_print_help_and_exit(cmd_fsck_usage);
-		} else {
-			silofs_die_unsupported_opt();
+	while (opt_chr > 0) {
+		opt_chr = cmd_getopt("h", opts);
+		if (opt_chr == 'h') {
+			cmd_print_help_and_exit(cmd_fsck_usage);
+		} else if (opt_chr > 0) {
+			cmd_fatal_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo-path", &cmd_fsck_args->repodir);
-	silofs_cmd_endargs();
+	cmd_getarg("repodir", &ctx->args.repodir);
+	cmd_endargs();
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_fsck_finalize(void)
+static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
-	silofs_cmd_destroy_fse_inst();
-	silofs_cmd_pfrees(&cmd_fsck_args->repodir_real);
-	silofs_cmd_pfrees(&cmd_fsck_args->repodir);
+	cmd_del_env(&ctx->fse);
+	cmd_pstrfree(&ctx->args.repodir_real);
+	cmd_pstrfree(&ctx->args.repodir);
+	cmd_fsck_ctx = NULL;
 }
 
-static void cmd_fsck_start(void)
+static void cmd_fsck_atexit(void)
 {
-	cmd_fsck_args = &silofs_globals.cmd.fsck;
-	atexit(cmd_fsck_finalize);
+	if (cmd_fsck_ctx != NULL) {
+		cmd_fsck_finalize(cmd_fsck_ctx);
+	}
 }
 
-static void cmd_fsck_prepare(void)
+static void cmd_fsck_start(struct cmd_fsck_ctx *ctx)
 {
-	silofs_cmd_check_nonemptydir(cmd_fsck_args->repodir, true);
-	silofs_cmd_realpath(cmd_fsck_args->repodir,
-	                    &cmd_fsck_args->repodir_real);
+	cmd_fsck_ctx = ctx;
+	atexit(cmd_fsck_atexit);
 }
 
+static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
+{
+	cmd_check_nonemptydir(ctx->args.repodir, true);
+	cmd_realpath(ctx->args.repodir, &ctx->args.repodir_real);
+}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_cmd_execute_fsck(void)
+void cmd_execute_fsck(void)
 {
+	struct cmd_fsck_ctx ctx = {
+		.fse = NULL,
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_fsck_start();
+	cmd_fsck_start(&ctx);
 
 	/* Parse command's arguments */
-	fsck_getopt();
+	cmd_fsck_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_fsck_prepare();
+	cmd_fsck_prepare(&ctx);
 
 	/* TODO: execute logic... */
 
 	/* Post execution cleanups */
-	cmd_fsck_finalize();
+	cmd_fsck_finalize(&ctx);
 }
 

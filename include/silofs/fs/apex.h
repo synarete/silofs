@@ -20,7 +20,7 @@
 #include <silofs/fs/types.h>
 
 int silofs_apex_init(struct silofs_fs_apex *apex,
-                     struct silofs_alloc_if *alif,
+                     struct silofs_alloc *alloc,
                      struct silofs_kivam *kivam,
                      struct silofs_crypto *crypto,
                      struct silofs_repo *mrepo,
@@ -30,42 +30,28 @@ void silofs_apex_fini(struct silofs_fs_apex *apex);
 
 void silofs_apex_shut(struct silofs_fs_apex *apex);
 
-int silofs_apex_flush_dirty(const struct silofs_fs_apex *apex, int flags);
-
 void silofs_apex_relax_caches(const struct silofs_fs_apex *apex, int flags);
 
-int silofs_apex_spawn_super(struct silofs_fs_apex *apex, size_t capacity,
-                            struct silofs_sb_info **out_sbi);
+int silofs_apex_spawn_supers(struct silofs_fs_apex *apex, size_t capacity,
+                             struct silofs_sb_info **out_sbi);
 
-int silofs_apex_stage_super(struct silofs_fs_apex *apex,
-                            const struct silofs_uaddr *uaddr,
-                            struct silofs_sb_info **out_sbi);
+int silofs_apex_stage_supers(struct silofs_fs_apex *apex,
+                             const struct silofs_uaddr *uaddr,
+                             struct silofs_sb_info **out_sbi);
 
-void silofs_apex_bind_to_sbi(struct silofs_fs_apex *apex,
-                             struct silofs_sb_info *sbi_new);
+int silofs_apex_format_supers(struct silofs_fs_apex *apex, size_t capacity);
+
+int silofs_apex_reload_supers(struct silofs_fs_apex *apex,
+                              const struct silofs_uaddr *sb_uaddr);
 
 
 int silofs_apex_forkfs(struct silofs_fs_apex *apex,
-                       const struct silofs_namestr *name);
+                       struct silofs_bootsec *out_bsec);
 
+int silofs_apex_flush_dirty(const struct silofs_fs_apex *apex, int flags);
 
-
-int silofs_apex_boot_name(const struct silofs_fs_apex *apex,
-                          struct silofs_namestr *out_name);
-
-int silofs_apex_save_boot(const struct silofs_fs_apex *apex,
-                          const struct silofs_bootsec *bsec,
-                          const struct silofs_namestr *name);
-
-int silofs_apex_load_boot(const struct silofs_fs_apex *apex,
-                          const struct silofs_namestr *name,
-                          struct silofs_bootsec *out_bsec);
-
-int silofs_apex_kcopy(struct silofs_fs_apex *apex,
-                      const struct silofs_xiovec *xiov_src,
-                      const struct silofs_xiovec *xiov_dst, size_t len);
-
-void silofs_apex_main_fsname(const struct silofs_fs_apex *apex,
-                             struct silofs_namestr *out_name);
+int silofs_exec_kcopy_by(struct silofs_fs_apex *apex,
+                         const struct silofs_xiovec *xiov_src,
+                         const struct silofs_xiovec *xiov_dst, size_t len);
 
 #endif /* SILOFS_APEX_H_ */

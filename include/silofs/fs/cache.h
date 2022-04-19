@@ -17,10 +17,6 @@
 #ifndef SILOFS_CACHE_H_
 #define SILOFS_CACHE_H_
 
-#include <stdlib.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/spxmap.h>
-
 /* LRU + hash-map */
 struct silofs_lrumap {
 	struct silofs_listq      lm_lru;
@@ -37,7 +33,7 @@ struct silofs_dirtyq {
 
 /* in-memory caching */
 struct silofs_cache {
-	struct silofs_alloc_if *c_alif;
+	struct silofs_alloc *c_alloc;
 	struct silofs_block    *c_nil_bk;
 	struct silofs_lrumap    c_bli_lm;
 	struct silofs_lrumap    c_ubi_lm;
@@ -66,7 +62,7 @@ void silofs_ce_fini(struct silofs_cache_elem *ce);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_cache_init(struct silofs_cache *cache,
-                      struct silofs_alloc_if *alif, size_t msz_hint);
+                      struct silofs_alloc *alloc, size_t msz_hint);
 
 void silofs_cache_fini(struct silofs_cache *cache);
 
@@ -194,17 +190,22 @@ void silofs_ui_attach_to(struct silofs_unode_info *ui,
                          struct silofs_ubk_info *ubi);
 
 
-bool silofs_ti_isevictable(const struct silofs_tnode_info *ti);
+bool silofs_si_isevictable(const struct silofs_snode_info *si);
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
 
-void silofs_ubi_attach(struct silofs_ubk_info *ubi,
-                       struct silofs_blob_info *bli);
+void silofs_sti_incref(struct silofs_stats_info *sti);
+
+void silofs_sti_decref(struct silofs_stats_info *sti);
 
 void silofs_vbi_incref(struct silofs_vbk_info *vbi);
 
 void silofs_vbi_decref(struct silofs_vbk_info *vbi);
+
+
+void silofs_ubi_attach(struct silofs_ubk_info *ubi,
+                       struct silofs_blob_info *bli);
 
 #endif /* SILOFS_CACHE_H_ */

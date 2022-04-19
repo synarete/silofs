@@ -14,12 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <termios.h>
 #include <ctype.h>
+#include "cmd.h"
 
 static void write_stdout(const char *msg)
 {
@@ -38,19 +35,19 @@ static void write_newline(void)
 static void check_passphrase_char(int ch)
 {
 	if (!isascii(ch)) {
-		silofs_die(-EINVAL, "non ASCII char in passphrase");
+		cmd_dief(-EINVAL, "non ASCII char in passphrase");
 	}
 	if (iscntrl(ch)) {
-		silofs_die(-EINVAL, "control char in passphrase");
+		cmd_dief(-EINVAL, "control char in passphrase");
 	}
 	if (isspace(ch)) {
-		silofs_die(-EINVAL, "space char in passphrase");
+		cmd_dief(-EINVAL, "space char in passphrase");
 	}
 	if (!isprint(ch)) {
-		silofs_die(-EINVAL, "non printable char in passphrase");
+		cmd_dief(-EINVAL, "non printable char in passphrase");
 	}
 	if (!isalnum(ch) && !ispunct(ch)) {
-		silofs_die(-EINVAL, "illegal char in passphrase");
+		cmd_dief(-EINVAL, "illegal char in passphrase");
 	}
 }
 
@@ -72,10 +69,10 @@ static void parse_passphrase(char *buf, size_t bsz)
 		len--;
 	}
 	if (len == 0) {
-		silofs_die(-EINVAL, "zero length passphrase");
+		cmd_dief(-EINVAL, "zero length passphrase");
 	}
 	if ((len > SILOFS_PASSPHRASE_MAX) || (len >= bsz)) {
-		silofs_die(-EINVAL, "passphrase too long");
+		cmd_dief(-EINVAL, "passphrase too long");
 	}
 	for (size_t i = 0; i < len; ++i) {
 		check_passphrase_char(str[i]);
@@ -92,14 +89,14 @@ read_passphrase_buf_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
-		silofs_die(err, "fstat failed");
+		cmd_dief(err, "fstat failed");
 	}
 	if (!st.st_size || (st.st_size > (loff_t)bsz)) {
-		silofs_die(-EFBIG, "illegal passphrase file size");
+		cmd_dief(-EFBIG, "illegal passphrase file size");
 	}
 	err = silofs_sys_pread(fd, buf, (size_t)st.st_size, 0, out_len);
 	if (err) {
-		silofs_die(err, "pread passphrase file");
+		cmd_dief(err, "pread passphrase file");
 	}
 }
 
@@ -114,7 +111,7 @@ read_passphrase_buf_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = tcgetattr(fd, &tr_old);
 	if (err) {
-		silofs_die(errno, "tcgetattr fd=%d", fd);
+		cmd_dief(errno, "tcgetattr fd=%d", fd);
 	}
 	memcpy(&tr_new, &tr_old, sizeof(tr_new));
 	tr_new.c_lflag &= ~((tcflag_t)ECHO);
@@ -124,7 +121,7 @@ read_passphrase_buf_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 	tr_new.c_cc[VTIME] = 0;
 	err = tcsetattr(fd, TCSANOW, &tr_new);
 	if (err) {
-		silofs_die(errno, "tcsetattr fd=%d", fd);
+		cmd_dief(errno, "tcsetattr fd=%d", fd);
 	}
 
 	read_err = silofs_sys_read(fd, buf, bsz, out_len);
@@ -132,19 +129,19 @@ read_passphrase_buf_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = tcsetattr(fd, TCSANOW, &tr_old);
 	if (err) {
-		silofs_die(errno, "tcsetattr fd=%d", fd);
+		cmd_dief(errno, "tcsetattr fd=%d", fd);
 	}
 
 	err = read_err;
 	if (err) {
-		silofs_die(err, "read passphrase error");
+		cmd_dief(err, "read passphrase error");
 	}
 	if (*out_len == 0) {
-		silofs_die(-EINVAL, "read zero-length passphrase");
+		cmd_dief(-EINVAL, "read zero-length passphrase");
 	}
 	pass = buf;
 	if (pass[*out_len - 1] != '\n') {
-		silofs_die(-EINVAL, "passphrase too long");
+		cmd_dief(-EINVAL, "passphrase too long");
 	}
 }
 
@@ -167,11 +164,11 @@ static int open_passphrase_file(const char *path)
 	}
 	err = silofs_sys_access(path, R_OK);
 	if (err) {
-		silofs_die(err, "no read access to passphrase file %s", path);
+		cmd_dief(err, "no read access to passphrase file %s", path);
 	}
 	err = silofs_sys_open(path, O_RDONLY, 0, &fd);
 	if (err) {
-		silofs_die(err, "can not open passphrase file %s", path);
+		cmd_dief(err, "can not open passphrase file %s", path);
 	}
 	return fd;
 }
@@ -183,7 +180,7 @@ static void close_passphrase_file(int fd, const char *path)
 	if (path != NULL) {
 		err = silofs_sys_close(fd);
 		if (err) {
-			silofs_die(err, "close failed: %s", path);
+			cmd_dief(err, "close failed: %s", path);
 		}
 	}
 }
@@ -198,7 +195,7 @@ static char *getpass_from_file(const char *path)
 	read_passphrase_buf(fd, buf, sizeof(buf), &len);
 	parse_passphrase(buf, len);
 	close_passphrase_file(fd, path);
-	return silofs_cmd_strdup(buf);
+	return cmd_strdup(buf);
 }
 
 static char *silofs_do_getpass(const char *path, bool repeat)
@@ -217,29 +214,29 @@ static char *silofs_do_getpass(const char *path, bool repeat)
 	write_stdout("re-enter passphrase: ");
 	pass2 = getpass_from_file(NULL);
 	if (strcmp(pass, pass2) != 0) {
-		silofs_cmd_delpass(&pass);
-		silofs_cmd_delpass(&pass2);
-		silofs_die(0, "passphrase not equal");
+		cmd_delpass(&pass);
+		cmd_delpass(&pass2);
+		cmd_dief(0, "passphrase not equal");
 	}
-	silofs_cmd_delpass(&pass2);
+	cmd_delpass(&pass2);
 	return pass;
 }
 
-void silofs_cmd_getpass(const char *path, char **out_pass)
+void cmd_getpass(const char *path, char **out_pass)
 {
 	*out_pass = silofs_do_getpass(path, false);
 }
 
-void silofs_cmd_getpass2(const char *path, char **out_pass)
+void cmd_getpass2(const char *path, char **out_pass)
 {
 	*out_pass = silofs_do_getpass(path, true);
 }
 
-void silofs_cmd_delpass(char **pass)
+void cmd_delpass(char **pass)
 {
 	if (pass && *pass) {
 		silofs_memffff(*pass, strlen(*pass));
-		silofs_cmd_pfrees(pass);
+		cmd_pstrfree(pass);
 	}
 }
 

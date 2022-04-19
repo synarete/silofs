@@ -21,7 +21,11 @@
 
 size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii);
 
+uint64_t silofs_dir_seed(const struct silofs_inode_info *dir_ii);
+
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
+
+enum silofs_dirhfn silofs_dir_hfn(const struct silofs_inode_info *dir_ii);
 
 int silofs_verify_dir_inode(const struct silofs_inode *inode);
 

@@ -21,7 +21,7 @@
 
 /* in-mempry map of previously-allocated now-free space */
 struct silofs_spamap {
-	struct silofs_alloc_if *spa_alif;
+	struct silofs_alloc *spa_alloc;
 	struct silofs_avl       spa_avl;
 	enum silofs_stype       spa_stype;
 	unsigned int            spa_cap_max;
@@ -51,15 +51,15 @@ struct silofs_unomap {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_list_head *
-silofs_lista_new(struct silofs_alloc_if *alif, size_t nelems);
+silofs_lista_new(struct silofs_alloc *alloc, size_t nelems);
 
 void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-                      struct silofs_alloc_if *alif);
+                      struct silofs_alloc *alloc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spamaps_init(struct silofs_spamaps *spam,
-                        struct silofs_alloc_if *alif);
+                        struct silofs_alloc *alloc);
 
 void silofs_spamaps_fini(struct silofs_spamaps *spam);
 
@@ -74,10 +74,10 @@ int silofs_spamaps_store(struct silofs_spamaps *spam,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_unomap_init(struct silofs_unomap *unom,
-                       struct silofs_alloc_if *alif);
+                       struct silofs_alloc *alloc);
 
 void silofs_unomap_fini(struct silofs_unomap *unom,
-                        struct silofs_alloc_if *alif);
+                        struct silofs_alloc *alloc);
 
 void silofs_unomap_insert(struct silofs_unomap *unom,
                           struct silofs_unode_info *ui);

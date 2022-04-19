@@ -60,7 +60,7 @@ int silofs_rpc_mount(const char *mountpoint, uid_t uid, gid_t gid,
                      bool allow_other, int *out_fd);
 
 int silofs_rpc_umount(const char *mountpoint,
-                      uid_t uid, gid_t gid, int mnt_flags);
+                      uid_t uid, gid_t gid, unsigned int mnt_flags);
 
 bool silofs_is_fuse_fstype(long fstype);
 

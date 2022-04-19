@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <linux/stat.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -31,10 +32,9 @@
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
 	SILOFS_QUERY_VERSION    = 1,
-	SILOFS_QUERY_REPO       = 2,
-	SILOFS_QUERY_FSNAME     = 3,
-	SILOFS_QUERY_STATFSX    = 4,
-	SILOFS_QUERY_STATX      = 5,
+	SILOFS_QUERY_REPONAME   = 2,
+	SILOFS_QUERY_STATFSX    = 3,
+	SILOFS_QUERY_STATX      = 4,
 };
 
 enum silofs_tweak_type {
@@ -45,41 +45,42 @@ enum silofs_tweak_type {
 
 
 struct silofs_query_version {
-	char     v_str[SILOFS_NAME_MAX + 1];
-	uint32_t v_major;
-	uint32_t v_minor;
-	uint32_t v_sublevel;
+	char     string[SILOFS_NAME_MAX + 1];
+	uint32_t major;
+	uint32_t minor;
+	uint32_t sublevel;
 };
 
-struct silofs_query_repo {
-	char    r_path[SILOFS_REPOPATH_MAX];
+struct silofs_query_reponame {
+	char    repodir[SILOFS_REPOPATH_MAX];
+	char    name[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_query_fsname {
-	char    f_name[SILOFS_NAME_MAX + 1];
+	char    name[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_query_statfsx {
-	uint64_t f_msflags;     /* mount flags */
-	int64_t  f_uptime;      /* current up-time in seconds */
-	uint64_t f_bsize;       /* size of fs in bytes */
-	uint64_t f_bused;       /* number of used bytes */
-	uint64_t f_ilimit;      /* max number of inodes */
-	uint64_t f_icurr;       /* currently used inodes */
-	uint64_t f_umeta;       /* uspace used meta bytes */
-	uint64_t f_vmeta;       /* vspace used meta bytes */
-	uint64_t f_vdata;       /* vspace used data bytes */
+	uint64_t msflags;     /* mount flags */
+	int64_t  uptime;      /* current up-time in seconds */
+	uint64_t bsize;       /* size of fs in bytes */
+	uint64_t bused;       /* number of used bytes */
+	uint64_t ilimit;      /* max number of inodes */
+	uint64_t icurr;       /* currently used inodes */
+	uint64_t umeta;       /* uspace used meta bytes */
+	uint64_t vmeta;       /* vspace used meta bytes */
+	uint64_t vdata;       /* vspace used data bytes */
 };
 
 struct silofs_query_statx {
 	struct statx stx;
-	uint32_t stx_iflags;
-	uint32_t stx_dirflags;
+	uint32_t iflags;
+	uint32_t dirflags;
 };
 
 union silofs_query_u {
 	struct silofs_query_version     version;
-	struct silofs_query_repo        repo;
+	struct silofs_query_reponame    reponame;
 	struct silofs_query_fsname      fsname;
 	struct silofs_query_statfsx     statfsx;
 	struct silofs_query_statx       statx;
@@ -108,9 +109,7 @@ struct silofs_ioc_tweak {
 };
 
 struct silofs_ioc_clone {
-	char     name[SILOFS_NAME_MAX + 1];
-	uint32_t flags;
-	uint8_t  reserved[252];
+	struct silofs_bootsec1k bsec;
 };
 
 

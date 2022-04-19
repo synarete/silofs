@@ -21,11 +21,11 @@
 #include <silofs/fs/types.h>
 
 int silofs_apex_pack_fs(struct silofs_fs_apex *apex,
-                        const struct silofs_namestr *src_name,
-                        const struct silofs_namestr *dst_name);
+                        const struct silofs_bootsec *src_bsec,
+                        struct silofs_bootsec *dst_bsec);
 
 int silofs_apex_unpack_fs(struct silofs_fs_apex *apex,
-                          const struct silofs_namestr *src_name,
-                          const struct silofs_namestr *dst_name);
+                          const struct silofs_bootsec *src_bsec,
+                          struct silofs_bootsec *dst_bsec);
 
 #endif /* SILOFS_PACK_H_ */

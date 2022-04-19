@@ -108,66 +108,66 @@ static void static_assert_alloc_sizes(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_qalloc *alif_to_qal(const struct silofs_alloc_if *alif)
+static struct silofs_qalloc *alloc_to_qal(const struct silofs_alloc *alloc)
 {
 	const struct silofs_qalloc *qal;
 
-	qal = silofs_container_of2(alif, struct silofs_qalloc, alif);
+	qal = silofs_container_of2(alloc, struct silofs_qalloc, alloc);
 	return silofs_unconst(qal);
 }
 
-static void *qal_malloc(struct silofs_alloc_if *aif, size_t nbytes)
+static void *qal_malloc(struct silofs_alloc *aif, size_t nbytes)
 {
-	struct silofs_qalloc *qal = alif_to_qal(aif);
+	struct silofs_qalloc *qal = alloc_to_qal(aif);
 
 	return silofs_qalloc_malloc(qal, nbytes);
 }
 
-static void qal_free(struct silofs_alloc_if *aif, void *ptr, size_t nbytes)
+static void qal_free(struct silofs_alloc *aif, void *ptr, size_t nbytes)
 {
-	struct silofs_qalloc *qal = alif_to_qal(aif);
+	struct silofs_qalloc *qal = alloc_to_qal(aif);
 
 	silofs_qalloc_free(qal, ptr, nbytes);
 }
 
-static void qal_stat(const struct silofs_alloc_if *alif,
+static void qal_stat(const struct silofs_alloc *alloc,
                      struct silofs_alloc_stat *out_stat)
 {
-	const struct silofs_qalloc *qal = alif_to_qal(alif);
+	const struct silofs_qalloc *qal = alloc_to_qal(alloc);
 
 	silofs_qalloc_stat(qal, out_stat);
 }
 
-static int qal_resolve(const struct silofs_alloc_if *alif, void *ptr,
+static int qal_resolve(const struct silofs_alloc *alloc, void *ptr,
                        size_t len, struct silofs_xiovec *xiov)
 {
-	const struct silofs_qalloc *qal = alif_to_qal(alif);
+	const struct silofs_qalloc *qal = alloc_to_qal(alloc);
 
 	return silofs_qalloc_resolve(qal, ptr, len, xiov);
 }
 
-void *silofs_allocate(struct silofs_alloc_if *alif, size_t size)
+void *silofs_allocate(struct silofs_alloc *alloc, size_t size)
 {
-	return alif->malloc_fn(alif, size);
+	return alloc->malloc_fn(alloc, size);
 }
 
-void silofs_deallocate(struct silofs_alloc_if *alif, void *ptr, size_t size)
+void silofs_deallocate(struct silofs_alloc *alloc, void *ptr, size_t size)
 {
 	if ((ptr != NULL) && (size > 0)) {
-		alif->free_fn(alif, ptr, size);
+		alloc->free_fn(alloc, ptr, size);
 	}
 }
 
-void silofs_allocstat(const struct silofs_alloc_if *alif,
+void silofs_allocstat(const struct silofs_alloc *alloc,
                       struct silofs_alloc_stat *out_stat)
 {
-	alif->stat_fn(alif, out_stat);
+	alloc->stat_fn(alloc, out_stat);
 }
 
-int silofs_allocresolve(const struct silofs_alloc_if *alif, void *ptr,
+int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
                         size_t len, struct silofs_xiovec *xiov)
 {
-	return alif->resolve_fn(alif, ptr, len, xiov);
+	return alloc->resolve_fn(alloc, ptr, len, xiov);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -582,18 +582,18 @@ static int check_memsize(size_t memsize)
 
 static void qalloc_init_interface(struct silofs_qalloc *qal)
 {
-	qal->alif.malloc_fn = qal_malloc;
-	qal->alif.free_fn = qal_free;
-	qal->alif.stat_fn = qal_stat;
-	qal->alif.resolve_fn = qal_resolve;
+	qal->alloc.malloc_fn = qal_malloc;
+	qal->alloc.free_fn = qal_free;
+	qal->alloc.stat_fn = qal_stat;
+	qal->alloc.resolve_fn = qal_resolve;
 }
 
 static void qalloc_fini_interface(struct silofs_qalloc *qal)
 {
-	qal->alif.malloc_fn = NULL;
-	qal->alif.free_fn = NULL;
-	qal->alif.stat_fn = NULL;
-	qal->alif.resolve_fn = NULL;
+	qal->alloc.malloc_fn = NULL;
+	qal->alloc.free_fn = NULL;
+	qal->alloc.stat_fn = NULL;
+	qal->alloc.resolve_fn = NULL;
 }
 
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)

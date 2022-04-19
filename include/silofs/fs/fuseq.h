@@ -63,7 +63,7 @@ struct silofs_fuseq {
 	struct silofs_mutex             fq_fs_lock;
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_fs_apex          *fq_apex;
-	struct silofs_alloc_if         *fq_alif;
+	struct silofs_alloc            *fq_alloc;
 	size_t                          fq_nopers;
 	uid_t                           fq_fs_owner;
 	time_t                          fq_times;
@@ -80,7 +80,7 @@ struct silofs_fuseq {
 } silofs_aligned64;
 
 
-int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc_if *alif);
+int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 
 void silofs_fuseq_fini(struct silofs_fuseq *fq);
 

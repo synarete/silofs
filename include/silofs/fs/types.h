@@ -51,7 +51,7 @@ struct silofs_mutex;
 struct silofs_qalloc;
 struct silofs_cache;
 struct silofs_repo;
-struct silofs_tnode_info;
+struct silofs_snode_info;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 struct silofs_inode_info;
@@ -60,9 +60,6 @@ struct silofs_fuseq_worker;
 struct silofs_fuseq_in;
 struct silofs_fuseq_inb;
 struct silofs_fuseq_outb;
-struct silofs_bootmap;
-struct silofs_sb_info;
-struct silofs_fs_ctx;
 struct silofs_dset;
 struct silofs_rwiter_ctx;
 struct silofs_readdir_ctx;
@@ -124,12 +121,12 @@ struct silofs_str {
 };
 
 struct silofs_qstr {
-	struct silofs_str str;
+	struct silofs_str s;
 	uint64_t hash;
 };
 
 struct silofs_namestr {
-	struct silofs_str str;
+	struct silofs_str s;
 };
 
 /* pair of ino and dir-type */
@@ -242,6 +239,7 @@ union silofs_xxid_u {
 	struct silofs_xxid_tas  tid;
 	struct silofs_xxid_cas  cid;
 	struct silofs_xid       xid[2];
+	uint32_t                zid[8];
 };
 
 struct silofs_xxid {
@@ -322,17 +320,6 @@ struct silofs_vrange {
 	ssize_t                 stepsz;
 };
 
-/* boot-sector in-memory repr  */
-struct silofs_bootsec {
-	struct silofs_hash256           key_hash;
-	struct silofs_uuid              uuid;
-	struct silofs_uaddr             sb_uaddr;
-	struct silofs_packid            sb_packid;
-	struct silofs_cipher_args       cip_args;
-	time_t                          btime;
-	enum silofs_bootf               flags;
-};
-
 /* caching-element's key, up to 256-bits */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
@@ -386,12 +373,37 @@ struct silofs_vbk_info {
 	loff_t                          vbk_voff;
 };
 
-/* space accounting */
-struct silofs_space_stat {
-	ssize_t uspace_nmeta;
-	ssize_t vspace_ndata;
-	ssize_t vspace_nmeta;
-	ssize_t vspace_nfiles;
+/* space accounting per stype */
+struct silofs_space_stats {
+	time_t sp_timestamp;
+	/* unodes */
+	size_t sp_nsuper;
+	size_t sp_nstats;
+	size_t sp_nspnode;
+	size_t sp_nspleaf;
+	/* vnodes */
+	size_t sp_ndata1k;
+	size_t sp_ndata4k;
+	size_t sp_ndatabk;
+	size_t sp_nitnode;
+	size_t sp_ninode;
+	size_t sp_nxanode;
+	size_t sp_ndtnode;
+	size_t sp_nftnode;
+	size_t sp_nsymval;
+};
+
+/* v-space allocation hints */
+struct silofs_vspalloc_hints {
+	loff_t data1k;
+	loff_t data4k;
+	loff_t databk;
+	loff_t itnode;
+	loff_t inode;
+	loff_t xanode;
+	loff_t dirnode;
+	loff_t filenode;
+	loff_t symval;
 };
 
 /* in-memory mapping from ino to voff */
@@ -405,13 +417,13 @@ struct silofs_inoent {
 /* in-memory hash-map of ino-to-voff mapping */
 struct silofs_inomap {
 	struct silofs_listq      im_lru;
-	struct silofs_alloc_if  *im_alif;
+	struct silofs_alloc     *im_alloc;
 	struct silofs_list_head *im_htbl;
 	size_t im_htbl_nelems;
 };
 
 /* inodes-table reference */
-struct silofs_itable_info {
+struct silofs_itable {
 	struct silofs_inomap    it_inomap;
 	struct silofs_vaddr     it_rootitbl;
 	struct silofs_iaddr     it_rootdir;
@@ -431,20 +443,12 @@ struct silofs_oper_stat {
 
 /* dirty-vnodes set */
 typedef void (*silofs_dset_add_fn)(struct silofs_dset *dset,
-                                   struct silofs_tnode_info *ti);
+                                   struct silofs_snode_info *si);
 
 struct silofs_dset {
 	silofs_dset_add_fn              ds_add_fn;
-	struct silofs_tnode_info       *ds_tiq;
+	struct silofs_snode_info       *ds_siq;
 	struct silofs_avl               ds_avl;
-};
-
-/* map of all boot records */
-struct silofs_bootmap {
-	struct silofs_alloc_if         *bm_alif;
-	struct silofs_mdigest          *bm_md;
-	struct silofs_listq             bm_lsq;
-	loff_t bm_next_index;
 };
 
 /* current operation */
@@ -464,7 +468,7 @@ struct silofs_fs_ctx {
 /* top-level pseudo meta node */
 struct silofs_fs_apex {
 	const struct silofs_fs_args    *ap_args;
-	struct silofs_alloc_if         *ap_alif;
+	struct silofs_alloc            *ap_alloc;
 	struct silofs_kivam            *ap_kivam;
 	struct silofs_crypto           *ap_crypto;
 	struct silofs_repo             *ap_mrepo;
@@ -512,7 +516,7 @@ struct silofs_fs_env {
 	struct silofs_passphrase        fs_passph;
 	struct silofs_kivam             fs_kivam;
 	struct silofs_qalloc           *fs_qalloc;
-	struct silofs_alloc_if         *fs_alif;
+	struct silofs_alloc            *fs_alloc;
 	struct silofs_crypto           *fs_crypto;
 	struct silofs_repo             *fs_main_repo;
 	struct silofs_repo             *fs_cold_repo;

@@ -138,7 +138,7 @@ static void mountd_init_process(void)
 	        SILOFS_LOG_INFO | SILOFS_LOG_WARN | SILOFS_LOG_ERROR | \
 	        SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT;
 
-	err = silofs_boot_lib();
+	err = silofs_lib_setup();
 	if (err) {
 		silofs_die(err, "unable to init lib");
 	}

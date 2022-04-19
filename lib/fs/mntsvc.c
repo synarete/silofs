@@ -540,6 +540,12 @@ static int do_sendmsg(const struct silofs_socket *sock,
 	return 0;
 }
 
+/*
+ * TODO-0033: Use pidfd_getfd(2) to transfer fuse fd
+ *
+ * Consider using Linux modern pidfd_open(2) + pidfd_getfd(2) to send FUSE fd
+ * back to client process. See also: https://lwn.net/Articles/808997/
+ */
 static void do_pack_fd(struct msghdr *msg, int fd)
 {
 	struct cmsghdr *cmsg = NULL;
@@ -672,7 +678,7 @@ static void mntsvc_init(struct silofs_mntsvc *msvc)
 	msvc->ms_srv = NULL;
 }
 
-static void mntsvc_close_fd(struct silofs_mntsvc *msvc)
+static void mntsvc_close_fuse_fd(struct silofs_mntsvc *msvc)
 {
 	close_fd(&msvc->ms_fuse_fd);
 }
@@ -686,7 +692,7 @@ static void mntsvc_close_sock(struct silofs_mntsvc *msvc)
 static void mntsvc_fini(struct silofs_mntsvc *msvc)
 {
 	mntsvc_close_sock(msvc);
-	mntsvc_close_fd(msvc);
+	mntsvc_close_fuse_fd(msvc);
 	mntsvc_reset_peer_ucred(msvc);
 	msvc->ms_srv = NULL;
 }
@@ -973,7 +979,7 @@ static void mntsvc_serve_request(struct silofs_mntsvc *msvc)
 		mntsvc_fill_response(msvc, &mmsg);
 		mntsvc_send_response(msvc, &mmsg);
 		mntsvc_term_peer(msvc);
-		mntsvc_close_fd(msvc);
+		mntsvc_close_fuse_fd(msvc);
 	}
 }
 
@@ -1458,12 +1464,12 @@ static int do_rpc_umount(struct silofs_mntclnt *mclnt,
 }
 
 int silofs_rpc_umount(const char *mountpoint,
-                      uid_t uid, gid_t gid, int mnt_flags)
+                      uid_t uid, gid_t gid, unsigned int mnt_flags)
 {
 	struct silofs_mntclnt mclnt;
 	struct silofs_mntparams mntp = {
 		.path = mountpoint,
-		.flags = (uint64_t)mnt_flags,
+		.flags = mnt_flags,
 		.user_id = uid,
 		.group_id = gid,
 	};

@@ -17,6 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/inode.h>
@@ -238,7 +240,8 @@ static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	int ret;
 
 	ii_incref(sl_ctx->lnk_ii);
-	ret = silofs_stage_vnode(sl_ctx->sbi, vaddr, sl_ctx->stg_flags, &vi);
+	ret = silofs_sbi_stage_vnode(sl_ctx->sbi, vaddr,
+	                             sl_ctx->stg_flags, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -363,7 +366,7 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_symval_info *syi = NULL;
 
-	err = silofs_spawn_vnode(sl_ctx->sbi, SILOFS_STYPE_SYMVAL, &vi);
+	err = silofs_sbi_spawn_vnode(sl_ctx->sbi, SILOFS_STYPE_SYMVAL, &vi);
 	if (err) {
 		return err;
 	}
@@ -376,7 +379,7 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_at(sl_ctx->sbi, vaddr);
+	return silofs_sbi_remove_vnode_at(sl_ctx->sbi, vaddr);
 }
 
 static int slc_create_symval(struct silofs_symlnk_ctx *sl_ctx,

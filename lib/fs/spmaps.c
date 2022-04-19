@@ -18,7 +18,9 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
+#include <silofs/fs/stats.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
@@ -27,7 +29,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t nkb_of(const struct silofs_vaddr *vaddr)
+static size_t nkbs_of(const struct silofs_vaddr *vaddr)
 {
 	return stype_nkbs(vaddr_stype(vaddr));
 }
@@ -39,11 +41,6 @@ static size_t kbn_of(const struct silofs_vaddr *vaddr)
 	const loff_t off = vaddr_off(vaddr);
 
 	return (size_t)((off / kb_size) % nkb_in_bk);
-}
-
-static ssize_t sum_vspace_used_bytes(const struct silofs_space_stat *sp_st)
-{
-	return sp_st->vspace_ndata + sp_st->vspace_nmeta;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -601,25 +598,6 @@ static int bkr_find_free(const struct silofs_bk_ref *bkr,
 	return -ENOSPC;
 }
 
-static void bkr_accum_space_stat(const struct silofs_bk_ref *bkr,
-                                 enum silofs_stype stype_sub,
-                                 struct silofs_space_stat *sp_st)
-{
-	const bool isdata = stype_isdata(stype_sub);
-	const bool isinode = stype_isinode(stype_sub);
-	const ssize_t kb_size = (ssize_t)(SILOFS_KB_SIZE);
-	const ssize_t usecnt = (ssize_t)bkr_usecnt(bkr);
-
-	if (isdata) {
-		sp_st->vspace_ndata += (usecnt * kb_size);
-	} else {
-		sp_st->vspace_nmeta += (usecnt * kb_size);
-		if (isinode) {
-			sp_st->vspace_nfiles += usecnt;
-		}
-	}
-}
-
 static void bkr_clone_from(struct silofs_bk_ref *bkr,
                            const struct silofs_bk_ref *bkr_other)
 {
@@ -732,7 +710,7 @@ static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *sl,
                                    const struct silofs_vaddr *vaddr)
 {
 	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkb_of(vaddr);
+	const size_t nkb = nkbs_of(vaddr);
 	const struct silofs_bk_ref *bkr;
 
 	bkr = spleaf_bkr_by_vaddr(sl, vaddr);
@@ -744,7 +722,7 @@ static bool spleaf_test_unwritten_at(const struct silofs_spmap_leaf *sl,
 {
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	return bkr_test_unwritten_at(bkr, kbn_of(vaddr), nkb_of(vaddr));
+	return bkr_test_unwritten_at(bkr, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
 static void spleaf_set_unwritten_at(struct silofs_spmap_leaf *sl,
@@ -752,7 +730,7 @@ static void spleaf_set_unwritten_at(struct silofs_spmap_leaf *sl,
 {
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	bkr_set_unwritten_at(bkr, kbn_of(vaddr), nkb_of(vaddr));
+	bkr_set_unwritten_at(bkr, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
 static void spleaf_clear_unwritten_at(struct silofs_spmap_leaf *sl,
@@ -760,7 +738,7 @@ static void spleaf_clear_unwritten_at(struct silofs_spmap_leaf *sl,
 {
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	bkr_clear_unwritten_at(bkr, kbn_of(vaddr), nkb_of(vaddr));
+	bkr_clear_unwritten_at(bkr, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
 static size_t spleaf_refcnt_at(const struct silofs_spmap_leaf *sl, loff_t voff)
@@ -790,7 +768,7 @@ static void spleaf_set_allocated_at(struct silofs_spmap_leaf *sl,
                                     const struct silofs_vaddr *vaddr)
 {
 	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkb_of(vaddr);
+	const size_t nkb = nkbs_of(vaddr);
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
 	bkr_inc_refcnt(bkr, nkb);
@@ -801,7 +779,7 @@ static void spleaf_clear_allocated_at(struct silofs_spmap_leaf *sl,
                                       const struct silofs_vaddr *vaddr)
 {
 	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkb_of(vaddr);
+	const size_t nkb = nkbs_of(vaddr);
 	const size_t nkb_in_bk = SILOFS_NKB_IN_BK;
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
@@ -886,7 +864,8 @@ static void spleaf_make_ulink_at(struct silofs_spmap_leaf *sl, size_t slot,
 	const loff_t voff = spleaf_voff_base(sl) + bpos;
 
 	spleaf_mainblobid(sl, &blobid);
-	silofs_uaddr_setup(out_ulink, &blobid, stype, 0, voff, bpos);
+	silofs_uaddr_setup(out_ulink, &blobid, bpos,
+	                   stype, SILOFS_DATABK_HEIGHT, voff);
 }
 
 static void spleaf_bind_bks_to_main(struct silofs_spmap_leaf *sl)
@@ -903,39 +882,38 @@ static void spleaf_bind_bks_to_main(struct silofs_spmap_leaf *sl)
 	}
 }
 
-static void spleaf_calc_space_stat(const struct silofs_spmap_leaf *sl,
-                                   struct silofs_space_stat *sp_st)
+static size_t spleaf_calc_total_usecnt(const struct silofs_spmap_leaf *sl)
 {
-	const struct silofs_bk_ref *bkr;
+	const struct silofs_bk_ref *bkr = NULL;
 	const size_t nslots = ARRAY_SIZE(sl->sl_subref);
-	const enum silofs_stype stype_sub = spleaf_stype_sub(sl);
+	size_t usecnt_sum = 0;
 
-	silofs_memzero(sp_st, sizeof(*sp_st));
 	for (size_t slot = 0; slot < nslots; ++slot) {
 		bkr = spleaf_subref_at(sl, slot);
 		if (bkr_refcnt(bkr)) {
-			bkr_accum_space_stat(bkr, stype_sub, sp_st);
+			usecnt_sum += bkr_usecnt(bkr);
 		}
 	}
+	return usecnt_sum;
 }
 
 static size_t spleaf_sum_nbytes_used(const struct silofs_spmap_leaf *sl)
 {
-	struct silofs_space_stat sp_st = { .uspace_nmeta = 0 };
-
-	spleaf_calc_space_stat(sl, &sp_st);
-	return (size_t)sum_vspace_used_bytes(&sp_st);
+	return spleaf_calc_total_usecnt(sl) * SILOFS_KB_SIZE;
 }
 
 static void spleaf_resolve_main_at(struct silofs_spmap_leaf *sl, loff_t voff,
                                    struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_blobid blobid;
-	const loff_t bk_voff = off_align_to_bk(voff);
-	const enum silofs_stype stype = SILOFS_STYPE_ANONBK;
+	loff_t bk_voff;
+	loff_t bk_bpos;
 
 	spleaf_mainblobid(sl, &blobid);
-	silofs_uaddr_setup_by2(out_uaddr, &blobid, stype, 0, bk_voff);
+	bk_voff = off_align_to_bk(voff);
+	bk_bpos = silofs_blobid_pos(&blobid, bk_voff);
+	silofs_uaddr_setup(out_uaddr, &blobid, bk_bpos,
+	                   SILOFS_STYPE_ANONBK, SILOFS_DATABK_HEIGHT, bk_voff);
 }
 
 static void spleaf_clone_subrefs(struct silofs_spmap_leaf *sl,
@@ -1181,7 +1159,7 @@ bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli, loff_t voff)
 bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
                                 const struct silofs_vaddr *vaddr)
 {
-	const size_t nkb = nkb_of(vaddr);
+	const size_t nkb = nkbs_of(vaddr);
 	const size_t cnt = spleaf_refcnt_at(sli->sl, vaddr->voff);
 
 	return (nkb == cnt);
@@ -1561,14 +1539,11 @@ void silofs_sni_resolve_main_child(const struct silofs_spnode_info *sni,
                                    loff_t voff, struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_blobid blobid;
-	loff_t base;
-	loff_t bpos;
+	const loff_t base = sni_base_voff_of_child(sni, voff);
 
 	silofs_sni_main_blob(sni, &blobid);
-	base = sni_base_voff_of_child(sni, voff);
-	bpos = sni_bpos_of_child(sni, voff);
-	silofs_uaddr_setup(out_uaddr, &blobid, sni_child_stype(sni),
-	                   sni_child_height(sni), base, bpos);
+	silofs_uaddr_setup(out_uaddr, &blobid, sni_bpos_of_child(sni, voff),
+	                   sni_child_stype(sni), sni_child_height(sni), base);
 }
 
 void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
@@ -1589,6 +1564,7 @@ static int verify_stype(enum silofs_stype stype)
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
 	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_STATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ITNODE:

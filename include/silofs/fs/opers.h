@@ -17,9 +17,8 @@
 #ifndef SILOFS_OPERS_H_
 #define SILOFS_OPERS_H_
 
-#include <unistd.h>
-#include <stdlib.h>
 
+struct silofs_bootsec;
 struct silofs_fs_apex;
 struct silofs_fs_ctx;
 struct silofs_ioc_query;
@@ -154,22 +153,22 @@ int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     int qtype, struct silofs_ioc_query *out_qry);
 
 int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
-                    ino_t ino, const char *name, int flags);
-
-int silofs_fs_unrefs(const struct silofs_fs_ctx *fs_ctx,
-                     ino_t ino, const char *name);
-
-int silofs_fs_inspect(const struct silofs_fs_ctx *fs_ctx, ino_t ino);
-
-int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const char *src_name, const char *dst_name);
-
-int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const char *src_name, const char *dst_name);
+                    ino_t ino, int flags, struct silofs_bootsec *out_bsec);
 
 int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx,
                         const struct silofs_xiovec *xiov, size_t cnt);
 
-int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags);
+int silofs_fs_timedout(const struct silofs_fs_ctx *fs_ctx, int flags);
+
+int silofs_fs_inspect(const struct silofs_fs_ctx *fs_ctx,
+                      const struct silofs_bootsec *bsec);
+
+int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
+                   const struct silofs_bootsec *src_bsec,
+                   struct silofs_bootsec *dst_bsec);
+
+int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
+                     const struct silofs_bootsec *src_bsec,
+                     struct silofs_bootsec *dst_bsec);
 
 #endif /* SILOFS_OPERS_H_ */

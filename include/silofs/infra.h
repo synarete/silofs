@@ -31,6 +31,7 @@
 #include <silofs/infra/avl.h>
 #include <silofs/infra/strings.h>
 #include <silofs/infra/bytebuf.h>
+#include <silofs/infra/hash.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/xiovec.h>

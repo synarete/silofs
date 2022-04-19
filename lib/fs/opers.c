@@ -18,6 +18,8 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/boot.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/apex.h>
@@ -112,14 +114,14 @@ static int symval_to_str(const char *symval, struct silofs_str *str)
 static bool is_fsowner(const struct silofs_sb_info *sbi,
                        const struct silofs_ucred *ucred)
 {
-	return uid_eq(ucred->uid, sbi->s_owner.uid);
+	return uid_eq(ucred->uid, sbi->sb_owner.uid);
 }
 
 static bool has_allow_other(const struct silofs_sb_info *sbi)
 {
 	const unsigned long mask = SILOFS_F_ALLOWOTHER;
 
-	return ((sbi->s_ctl_flags & mask) == mask);
+	return ((sbi->sb_ctl_flags & mask) == mask);
 }
 
 static int op_authorize(const struct silofs_fs_ctx *fs_ctx)
@@ -148,22 +150,22 @@ static int
 op_stage_cacheonly_inode(const struct silofs_fs_ctx *fs_ctx,
                          ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_cached_inode(fs_ctx->fsc_apex->ap_sbi,
-	                                 ino, out_ii);
+	return silofs_sbi_stage_cached_ii(fs_ctx->fsc_apex->ap_sbi,
+	                                  ino, out_ii);
 }
 
 static int op_stage_rdonly_inode(const struct silofs_fs_ctx *fs_ctx,
                                  ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(fs_ctx->fsc_apex->ap_sbi,
-	                          ino, SILOFS_STAGE_RDONLY, out_ii);
+	return silofs_sbi_stage_inode(fs_ctx->fsc_apex->ap_sbi,
+	                              ino, SILOFS_STAGE_RDONLY, out_ii);
 }
 
 static int op_stage_mutable_inode(const struct silofs_fs_ctx *fs_ctx,
                                   ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(fs_ctx->fsc_apex->ap_sbi,
-	                          ino, SILOFS_STAGE_MUTABLE, out_ii);
+	return silofs_sbi_stage_inode(fs_ctx->fsc_apex->ap_sbi,
+	                              ino, SILOFS_STAGE_MUTABLE, out_ii);
 }
 
 static int
@@ -1189,9 +1191,8 @@ out:
 }
 
 int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
-                    ino_t ino, const char *name, int flags)
+                    ino_t ino, int flags, struct silofs_bootsec *out_bsec)
 {
-	struct silofs_namestr nstr;
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
@@ -1201,60 +1202,11 @@ int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
 	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = silofs_make_fsnamestr(&nstr, name);
-	ok_or_goto_out(err);
-
 	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_clone(fs_ctx, dir_ii, &nstr, flags);
+	err = silofs_do_clone(fs_ctx, dir_ii, flags, out_bsec);
 	ok_or_goto_out(err);
-out:
-	return op_finish(fs_ctx, err);
-}
-
-int silofs_fs_unrefs(const struct silofs_fs_ctx *fs_ctx,
-                     ino_t ino, const char *name)
-{
-	struct silofs_namestr nstr;
-	struct silofs_inode_info *ii = NULL;
-	int err;
-
-	err = op_start(fs_ctx);
-	ok_or_goto_out(err);
-
-	err = op_authorize(fs_ctx);
-	ok_or_goto_out(err);
-
-	err = silofs_make_fsnamestr(&nstr, name);
-	ok_or_goto_out(err);
-
-	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
-	ok_or_goto_out(err);
-
-	err = silofs_do_unrefs(fs_ctx, ii, &nstr);
-	ok_or_goto_out(err);
-out:
-	return op_finish(fs_ctx, err);
-}
-
-int silofs_fs_inspect(const struct silofs_fs_ctx *fs_ctx, ino_t ino)
-{
-	struct silofs_inode_info *ii = NULL;
-	int err;
-
-	err = op_start(fs_ctx);
-	ok_or_goto_out(err);
-
-	err = op_authorize(fs_ctx);
-	ok_or_goto_out(err);
-
-	err = op_stage_rdonly_inode(fs_ctx, ino, &ii);
-	ok_or_goto_out(err);
-
-	err = silofs_do_inspect(fs_ctx, ii);
-	ok_or_goto_out(err);
-
 out:
 	return op_finish(fs_ctx, err);
 }
@@ -1262,10 +1214,9 @@ out:
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const char *src_name, const char *dst_name)
+                   const struct silofs_bootsec *src_bsec,
+                   struct silofs_bootsec *dst_bsec)
 {
-	struct silofs_namestr src_nstr;
-	struct silofs_namestr dst_nstr;
 	int err;
 
 	err = op_start(fs_ctx);
@@ -1274,23 +1225,16 @@ int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
 	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = silofs_make_fsnamestr(&src_nstr, src_name);
-	ok_or_goto_out(err);
-
-	err = silofs_make_fsnamestr(&dst_nstr, dst_name);
-	ok_or_goto_out(err);
-
-	err = silofs_do_pack(fs_ctx, &src_nstr, &dst_nstr);
+	err = silofs_do_pack(fs_ctx, src_bsec, dst_bsec);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);
 }
 
 int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const char *src_name, const char *dst_name)
+                     const struct silofs_bootsec *src_bsec,
+                     struct silofs_bootsec *dst_bsec)
 {
-	struct silofs_namestr src_nstr;
-	struct silofs_namestr dst_nstr;
 	int err;
 
 	err = op_start(fs_ctx);
@@ -1299,28 +1243,10 @@ int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
 	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = silofs_make_fsnamestr(&src_nstr, src_name);
-	ok_or_goto_out(err);
-
-	err = silofs_make_fsnamestr(&dst_nstr, dst_name);
-	ok_or_goto_out(err);
-
-	err = silofs_do_unpack(fs_ctx, &src_nstr, &dst_nstr);
+	err = silofs_do_unpack(fs_ctx, src_bsec, dst_bsec);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);
-}
-
-int silofs_fs_timedout(struct silofs_fs_apex *apex, int flags)
-{
-	int err;
-
-	err = silofs_apex_flush_dirty(apex, flags);
-	if (err) {
-		return err;
-	}
-	silofs_apex_relax_caches(apex, flags);
-	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1331,4 +1257,33 @@ int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx,
 	return silofs_do_rdwr_post(fs_ctx, xiov, cnt);
 }
 
+int silofs_fs_timedout(const struct silofs_fs_ctx *fs_ctx, int flags)
+{
+	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
+	int err;
+
+	err = silofs_apex_flush_dirty(apex, flags);
+	if (err) {
+		return err;
+	}
+	silofs_apex_relax_caches(apex, flags);
+	return 0;
+}
+
+int silofs_fs_inspect(const struct silofs_fs_ctx *fs_ctx,
+                      const struct silofs_bootsec *bsec)
+{
+	int err;
+
+	err = op_start(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = op_authorize(fs_ctx);
+	ok_or_goto_out(err);
+
+	err = silofs_do_inspect(fs_ctx, bsec);
+	ok_or_goto_out(err);
+out:
+	return op_finish(fs_ctx, err);
+}
 

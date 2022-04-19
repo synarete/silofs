@@ -25,9 +25,8 @@ static void ut_snap_mkdir_rmdir(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_snap_ok(ute, dino, name);
-	ut_inspect_ok(ute, dino);
-	ut_unrefs_ok(ute, dino, name);
-	ut_inspect_ok(ute, dino);
+	ut_inspect_ok(ute, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -43,7 +42,7 @@ static void ut_snap_create_remove(struct ut_env *ute)
 	ut_create_file(ute, dino, name, &ino);
 	ut_snap_ok(ute, dino, name);
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -67,7 +66,7 @@ static void ut_snap_write_read(struct ut_env *ute)
 	ut_expect_eq_stat(&st[0], &st[1]);
 	ut_read_verify(ute, ino, &val, sizeof(val), off);
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -85,7 +84,7 @@ static void ut_snap_write_post(struct ut_env *ute)
 	ut_snap_ok(ute, dino, name);
 	ut_write_read_str(ute, ino, name, off);
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -111,7 +110,7 @@ static void ut_snap_overwrite(struct ut_env *ute)
 	ut_read_zero(ute, ino, off - 1);
 	ut_write_read(ute, ino, &val, sizeof(val), off);
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -131,15 +130,14 @@ static void ut_snap_reload(struct ut_env *ute)
 	ut_release_ok(ute, ino);
 	ut_snap_ok(ute, dino, name);
 	ut_reload_fs_ok(ute);
-	ut_inspect_ok(ute, dino);
+	ut_inspect_ok(ute, name);
 	ut_open_rdonly(ute, ino);
 	ut_read_verify_str(ute, ino, name, UT_MEGA);
 	ut_read_verify_str(ute, ino, name, UT_KILO);
 	ut_read_verify_str(ute, ino, name, UT_TERA);
 	ut_read_zeros(ute, ino, UT_GIGA, 1);
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
-	ut_inspect_ok(ute, dino);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -158,18 +156,16 @@ static void ut_snap_reload_other(struct ut_env *ute)
 	ut_write_read_str(ute, ino, name, off);
 	ut_release_ok(ute, ino);
 	ut_snap_ok(ute, dino, name);
-	ute->fs_env->fs_args.rdonly = true;
 	ut_reload_fs_byname_ok(ute, name);
 	ut_open_rdonly(ute, ino);
 	ut_read_verify_str(ute, ino, name, off);
 	ut_release_ok(ute, ino);
-	ute->fs_env->fs_args.rdonly = false;
 	ut_reload_fs_byname_ok(ute, fsname);
 	ut_open_rdonly(ute, ino);
 	ut_read_verify_str(ute, ino, name, off);
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
-	ut_inspect_ok(ute, dino);
+	ut_inspect_ok(ute, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 

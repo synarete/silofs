@@ -212,6 +212,7 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute);
 
 struct ut_dvec *ut_new_dvec(struct ut_env *, loff_t, size_t);
 
+const struct silofs_fs_ctx *ut_fs_ctx_of(struct ut_env *ute);
 
 /* no-fail operations wrappers */
 void ut_access_ok(struct ut_env *ute, ino_t ino, int mode);
@@ -431,9 +432,7 @@ void ut_query_ok(struct ut_env *ute, ino_t ino, int qtype,
 
 void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name);
 
-void ut_unrefs_ok(struct ut_env *ute, ino_t ino, const char *name);
-
-void ut_inspect_ok(struct ut_env *ute, ino_t ino);
+void ut_inspect_ok(struct ut_env *ute, const char *name);
 
 void ut_archive_ok(struct ut_env *ute,
                    const char *src_name, const char *dst_name);
@@ -464,11 +463,24 @@ void ut_sync_drop(struct ut_env *ute);
 
 void ut_drop_caches_fully(struct ut_env *ute);
 
+
+void ut_save_bsec_ok(struct ut_env *ute, const struct silofs_bootsec *bsec);
+
+void ut_load_bsec_ok(struct ut_env *ute, struct silofs_bootsec *bsec);
+
+void ut_save_bsec_at(const struct ut_env *ute, bool main, const char *name,
+                     const struct silofs_bootsec *bsec);
+
+void ut_load_bsec_at(const struct ut_env *ute, bool main, const char *name,
+                     struct silofs_bootsec *out_bsec);
+
 void ut_reload_fs_ok(struct ut_env *ute);
 
 void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino);
 
 void ut_reload_fs_byname_ok(struct ut_env *ute, const char *name);
+
+void ut_unrefs_ok(struct ut_env *ute, const char *name);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

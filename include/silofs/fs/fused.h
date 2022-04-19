@@ -306,10 +306,12 @@ struct silofs_opc_query_out {
 
 struct silofs_opc_clone_in {
 	ino_t ino;
-	const char *name;
 	int flags;
 };
 
+struct silofs_opc_clone_out {
+	struct silofs_bootsec bsec;
+};
 
 union silofs_oper_ctx_in {
 	struct silofs_opc_lookup_in             lookup;
@@ -367,6 +369,7 @@ union silofs_oper_ctx_out {
 	struct silofs_opc_read_out              read;
 	struct silofs_opc_write_out             write;
 	struct silofs_opc_query_out             query;
+	struct silofs_opc_clone_out             clone;
 } silofs_aligned64;
 
 struct silofs_oper_ctx {

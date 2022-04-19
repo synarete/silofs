@@ -18,10 +18,13 @@
 #include <silofs/fs/address.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/crypto.h>
-#include <silofs/fs/cache.h>
 #include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
+#include <silofs/fs/cache.h>
+#include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/super.h>
+#include <silofs/fs/stats.h>
 #include <silofs/fs/stage.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/itable.h>
@@ -36,22 +39,22 @@
 #include <limits.h>
 
 /* local variables forward declarations */
-static const struct silofs_tnode_vtbl sbi_vtbl;
-static const struct silofs_tnode_vtbl sni_vtbl;
-static const struct silofs_tnode_vtbl sli_vtbl;
-static const struct silofs_tnode_vtbl itni_vtbl;
-static const struct silofs_tnode_vtbl ii_vtbl;
-static const struct silofs_tnode_vtbl xai_vtbl;
-static const struct silofs_tnode_vtbl syi_vtbl;
-static const struct silofs_tnode_vtbl dni_vtbl;
-static const struct silofs_tnode_vtbl fni_vtbl;
-static const struct silofs_tnode_vtbl fli_vtbl;
+static const struct silofs_snode_vtbl sbi_vtbl;
+static const struct silofs_snode_vtbl sti_vtbl;
+static const struct silofs_snode_vtbl sni_vtbl;
+static const struct silofs_snode_vtbl sli_vtbl;
+static const struct silofs_snode_vtbl itni_vtbl;
+static const struct silofs_snode_vtbl ii_vtbl;
+static const struct silofs_snode_vtbl xai_vtbl;
+static const struct silofs_snode_vtbl syi_vtbl;
+static const struct silofs_snode_vtbl dni_vtbl;
+static const struct silofs_snode_vtbl fni_vtbl;
+static const struct silofs_snode_vtbl fli_vtbl;
 
 
 /* local functions forward declarations */
 static int view_verify(const union silofs_view *view,
-                       const enum silofs_stype stype,
-                       const struct silofs_mdigest *md);
+                       const enum silofs_stype stype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -140,34 +143,31 @@ static int hdr_verify_base(const struct silofs_header *hdr,
 	return 0;
 }
 
-static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr,
-                                  const struct silofs_mdigest *md)
+static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr)
 {
 	const void *payload = hdr_payload(hdr);
 	const size_t pl_size = hdr_payload_size(hdr);
-	uint32_t csum = 0;
 
 	silofs_assert_le(pl_size, SILOFS_BK_SIZE - SILOFS_HEADER_SIZE);
+	silofs_assert_eq(pl_size % 16, 0);
+	silofs_assert_eq((long)payload % 16, 0);
 
-	silofs_crc32_of(md, payload, pl_size, &csum);
-	return csum;
+	return silofs_hash_xxh32(payload, pl_size, SILOFS_STYPE_MAGIC);
 }
 
-static void hdr_calc_set_csum(struct silofs_header *hdr,
-                              const struct silofs_mdigest *md)
+static void hdr_calc_set_csum(struct silofs_header *hdr)
 {
-	hdr_set_csum(hdr, hdr_calc_chekcsum(hdr, md));
+	hdr_set_csum(hdr, hdr_calc_chekcsum(hdr));
 }
 
-static int hdr_verify_checksum(const struct silofs_header *hdr,
-                               const struct silofs_mdigest *md)
+static int hdr_verify_checksum(const struct silofs_header *hdr)
 {
 	uint32_t csum;
 
 	if (!hdr_has_csum(hdr)) {
 		return 0;
 	}
-	csum = hdr_calc_chekcsum(hdr, md);
+	csum = hdr_calc_chekcsum(hdr);
 	if (csum != hdr_csum(hdr)) {
 		return -EFSCORRUPTED;
 	}
@@ -208,10 +208,9 @@ static loff_t vaddr_bk_pos(const struct silofs_vaddr *vaddr)
 	return silofs_off_in_bk(vaddr_off(vaddr));
 }
 
-static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr,
-                                   const struct silofs_mdigest *md)
+static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr)
 {
-	return hdr_calc_chekcsum(hdr, md);
+	return hdr_calc_chekcsum(hdr);
 }
 
 static uint32_t calc_data_checksum(const void *dat, size_t len,
@@ -225,63 +224,52 @@ static uint32_t calc_data_checksum(const void *dat, size_t len,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ti_init(struct silofs_tnode_info *ti, enum silofs_stype stype,
-                    const struct silofs_tnode_vtbl *vtbl)
+static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
+                    const struct silofs_snode_vtbl *vtbl)
 {
-	silofs_ce_init(&ti->t_ce);
-	lh_init(&ti->t_dq_lh);
-	an_init(&ti->t_ds_an);
-	ti->t_stype = stype;
-	ti->t_ds_next = NULL;
-	ti->t_apex = NULL;
-	ti->t_crypto = NULL;
-	ti->t_view = NULL;
-	ti->t_vtbl = vtbl;
-	ti->t_noflush = false;
+	silofs_ce_init(&si->s_ce);
+	lh_init(&si->s_dq_lh);
+	an_init(&si->s_ds_an);
+	si->s_stype = stype;
+	si->s_ds_next = NULL;
+	si->s_apex = NULL;
+	si->s_md = NULL;
+	si->s_view = NULL;
+	si->s_vtbl = vtbl;
+	si->s_noflush = false;
 }
 
-static void ti_fini(struct silofs_tnode_info *ti)
+static void si_fini(struct silofs_snode_info *si)
 {
-	silofs_ce_fini(&ti->t_ce);
-	lh_fini(&ti->t_dq_lh);
-	an_fini(&ti->t_ds_an);
-	ti->t_stype = SILOFS_STYPE_NONE;
-	ti->t_ds_next = NULL;
-	ti->t_apex = NULL;
-	ti->t_crypto = NULL;
-	ti->t_view = NULL;
-	ti->t_vtbl = NULL;
+	silofs_ce_fini(&si->s_ce);
+	lh_fini(&si->s_dq_lh);
+	an_fini(&si->s_ds_an);
+	si->s_stype = SILOFS_STYPE_NONE;
+	si->s_ds_next = NULL;
+	si->s_apex = NULL;
+	si->s_md = NULL;
+	si->s_view = NULL;
+	si->s_vtbl = NULL;
 }
 
-static void ti_seal_noop(struct silofs_tnode_info *ti)
+static void si_seal_noop(struct silofs_snode_info *si)
 {
-	silofs_unused(ti);
+	silofs_unused(si);
 }
 
-static bool ti_evictable(const struct silofs_tnode_info *ti)
+static bool si_evictable(const struct silofs_snode_info *si)
 {
-	return silofs_ti_isevictable(ti);
+	return silofs_si_isevictable(si);
 }
 
-static const struct silofs_mdigest *
-ti_mdigest(const struct silofs_tnode_info *ti)
+static uint32_t si_calc_chekcsum(const struct silofs_snode_info *si)
 {
-	silofs_assert_not_null(ti->t_crypto);
-
-	return &ti->t_crypto->md;
+	return calc_meta_chekcsum(&si->s_view->hdr);
 }
 
-static uint32_t ti_calc_chekcsum(const struct silofs_tnode_info *ti)
+static int si_verify_view(struct silofs_snode_info *si)
 {
-	const struct silofs_mdigest *md = ti_mdigest(ti);
-
-	return calc_meta_chekcsum(&ti->t_view->hdr, md);
-}
-
-static int ti_verify_view(struct silofs_tnode_info *ti,
-                          const struct silofs_mdigest *md)
-{
-	return view_verify(ti->t_view, ti->t_stype, md);
+	return view_verify(si->s_view, si->s_stype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -299,13 +287,14 @@ static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)
 
 static void ui_init(struct silofs_unode_info *ui,
                     const struct silofs_uaddr *uaddr,
-                    const struct silofs_tnode_vtbl *vtbl)
+                    const struct silofs_snode_vtbl *vtbl)
 {
-	ti_init(&ui->u_ti, uaddr->stype, vtbl);
+	si_init(&ui->u_si, uaddr->stype, vtbl);
 	lh_init(&ui->u_unom_lh);
 	lh_init(&ui->u_pack_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
 	packid_reset(&ui->u_packid);
+	ui->u_repo = NULL;
 	ui->u_ubi = NULL;
 	ui->u_piov = NULL;
 	ui->u_tmapped = false;
@@ -322,16 +311,15 @@ static void ui_fini(struct silofs_unode_info *ui)
 	packid_reset(&ui->u_packid);
 	lh_fini(&ui->u_pack_lh);
 	lh_fini(&ui->u_unom_lh);
-	ti_fini(&ui->u_ti);
+	si_fini(&ui->u_si);
 }
 
-struct silofs_unode_info *
-silofs_ui_from_ti(const struct silofs_tnode_info *ti)
+struct silofs_unode_info *silofs_ui_from_si(const struct silofs_snode_info *si)
 {
 	const struct silofs_unode_info *ui = NULL;
 
-	if (likely(ti != NULL)) {
-		ui = container_of2(ti, struct silofs_unode_info, u_ti);
+	if (likely(si != NULL)) {
+		ui = container_of2(si, struct silofs_unode_info, u_si);
 	}
 	return ui_unconst(ui);
 }
@@ -345,45 +333,29 @@ static int ui_resolve(const struct silofs_unode_info *ui,
 	return 0;
 }
 
-static int ui_resolve_as_ti(const struct silofs_tnode_info *ti,
+static int ui_resolve_as_si(const struct silofs_snode_info *si,
                             struct silofs_oaddr *out_oaddr)
 {
-	return ui_resolve(silofs_ui_from_ti(ti), out_oaddr);
+	return ui_resolve(silofs_ui_from_si(si), out_oaddr);
 }
 
 static void ui_seal(struct silofs_unode_info *ui)
 {
-	hdr_set_csum(&ui->u_ti.t_view->hdr, ti_calc_chekcsum(&ui->u_ti));
+	hdr_set_csum(&ui->u_si.s_view->hdr, si_calc_chekcsum(&ui->u_si));
 }
 
-static void ui_seal_as_ti(struct silofs_tnode_info *ti)
+static void ui_seal_as_si(struct silofs_snode_info *si)
 {
-	struct silofs_unode_info *ui = silofs_ui_from_ti(ti);
+	struct silofs_unode_info *ui = silofs_ui_from_si(si);
 
 	ui_seal(ui);
-}
-
-static size_t ui_length(const struct silofs_unode_info *ui)
-{
-	return silofs_stype_size(ui->u_ti.t_stype);
-}
-
-void silofs_ui_clone_into(const struct silofs_unode_info *ui,
-                          struct silofs_unode_info *ui_other)
-{
-	const size_t len = ui_length(ui);
-	const union silofs_view *src_view = ui->u_ti.t_view;
-	union silofs_view *dst_view = ui_other->u_ti.t_view;
-
-	silofs_assert_eq(ui->u_ti.t_stype, ui_other->u_ti.t_stype);
-	memcpy(dst_view, src_view, len);
 }
 
 void silofs_ui_bind_apex(struct silofs_unode_info *ui,
                          struct silofs_fs_apex *apex)
 {
 	silofs_assert_not_null(apex);
-	ui->u_ti.t_apex = apex;
+	ui->u_si.s_apex = apex;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -414,7 +386,7 @@ static void vi_xiov_pre(struct silofs_xiovref *xior)
 	struct silofs_vnode_info *vi = vi_from_xiovref(xior);
 
 	silofs_vi_incref(vi);
-	vi->v_ti.t_noflush = true;
+	vi->v_si.s_noflush = true;
 }
 
 static void vi_xiov_post(struct silofs_xiovref *xior)
@@ -422,14 +394,14 @@ static void vi_xiov_post(struct silofs_xiovref *xior)
 	struct silofs_vnode_info *vi = vi_from_xiovref(xior);
 
 	silofs_vi_decref(vi);
-	vi->v_ti.t_noflush = false;
+	vi->v_si.s_noflush = false;
 }
 
 static void vi_init(struct silofs_vnode_info *vi,
                     const struct silofs_vaddr *vaddr,
-                    const struct silofs_tnode_vtbl *vtbl)
+                    const struct silofs_snode_vtbl *vtbl)
 {
-	ti_init(&vi->v_ti, vaddr->stype, vtbl);
+	si_init(&vi->v_si, vaddr->stype, vtbl);
 	vaddr_assign(&vi->v_vaddr, vaddr);
 	silofs_xiovref_init(&vi->v_fir, vi_xiov_pre, vi_xiov_post);
 	vi->v_recheck = false;
@@ -440,18 +412,17 @@ static void vi_init(struct silofs_vnode_info *vi,
 
 static void vi_fini(struct silofs_vnode_info *vi)
 {
-	ti_fini(&vi->v_ti);
+	si_fini(&vi->v_si);
 	vaddr_reset(&vi->v_vaddr);
 	silofs_xiovref_fini(&vi->v_fir);
 }
 
-struct silofs_vnode_info *
-silofs_vi_from_ti(const struct silofs_tnode_info *ti)
+struct silofs_vnode_info *silofs_vi_from_si(const struct silofs_snode_info *si)
 {
 	const struct silofs_vnode_info *vi = NULL;
 
-	if (likely(ti != NULL)) {
-		vi = container_of2(ti, struct silofs_vnode_info, v_ti);
+	if (likely(si != NULL)) {
+		vi = container_of2(si, struct silofs_vnode_info, v_si);
 	}
 	return vi_unconst(vi);
 }
@@ -476,36 +447,36 @@ static int vi_resolve(const struct silofs_vnode_info *vi,
 	return err;
 }
 
-static int vi_resolve_as_ti(const struct silofs_tnode_info *ti,
+static int vi_resolve_as_si(const struct silofs_snode_info *si,
                             struct silofs_oaddr *out_oaddr)
 {
-	const struct silofs_vnode_info *vi = silofs_vi_from_ti(ti);
+	const struct silofs_vnode_info *vi = silofs_vi_from_si(si);
 
 	return (likely(vi != NULL)) ? vi_resolve(vi, out_oaddr) : -ENOENT;
 }
 
 static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_mdigest *md = ti_mdigest(&vi->v_ti);
 	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
+	union silofs_view *view = vi->v_si.s_view;
 	uint32_t csum;
 
 	if (vaddr_isdata(vaddr)) {
-		csum = calc_data_checksum(vi->v_ti.t_view, vaddr->len, md);
+		csum = calc_data_checksum(view, vaddr->len, vi->v_si.s_md);
 	} else {
-		csum = calc_meta_chekcsum(&vi->v_ti.t_view->hdr, md);
+		csum = calc_meta_chekcsum(&view->hdr);
 	}
 	return csum;
 }
 
 static void vi_seal_meta(struct silofs_vnode_info *vi)
 {
-	hdr_set_csum(&vi->v_ti.t_view->hdr, vi_calc_chekcsum(vi));
+	hdr_set_csum(&vi->v_si.s_view->hdr, vi_calc_chekcsum(vi));
 }
 
-static void vi_seal_as_ti(struct silofs_tnode_info *ti)
+static void vi_seal_as_si(struct silofs_snode_info *si)
 {
-	struct silofs_vnode_info *vi = silofs_vi_from_ti(ti);
+	struct silofs_vnode_info *vi = silofs_vi_from_si(si);
 
 	if (!vi_isdata(vi)) {
 		vi_seal_meta(vi);
@@ -526,7 +497,7 @@ sbi_to_ui(const struct silofs_sb_info *sbi)
 	const struct silofs_unode_info *ui = NULL;
 
 	if (likely(sbi != NULL)) {
-		ui = &sbi->s_ui;
+		ui = &sbi->sb_ui;
 	}
 	return ui_unconst(ui);
 }
@@ -537,101 +508,199 @@ silofs_sbi_from_ui(const struct silofs_unode_info *ui)
 	const struct silofs_sb_info *sbi = NULL;
 
 	if (likely(ui != NULL)) {
-		sbi = container_of2(ui, struct silofs_sb_info, s_ui);
+		sbi = container_of2(ui, struct silofs_sb_info, sb_ui);
 	}
 	return unconst(sbi);
 }
 
-static struct silofs_sb_info *sbi_from_ti(const struct silofs_tnode_info *ti)
+static struct silofs_sb_info *sbi_from_si(const struct silofs_snode_info *si)
 {
-	return silofs_sbi_from_ui(silofs_ui_from_ti(ti));
+	return silofs_sbi_from_ui(silofs_ui_from_si(si));
 }
 
 static int sbi_init(struct silofs_sb_info *sbi,
                     const struct silofs_uaddr *uaddr,
-                    struct silofs_alloc_if *alif)
+                    struct silofs_alloc *alloc)
 {
 	silofs_memzero(sbi, sizeof(*sbi));
-	ui_init(&sbi->s_ui, uaddr, &sbi_vtbl);
-	return silofs_itbi_init(&sbi->s_itbi, alif);
+	ui_init(&sbi->sb_ui, uaddr, &sbi_vtbl);
+	return silofs_sbi_xinit(sbi, alloc);
 }
 
 static void sbi_fini(struct silofs_sb_info *sbi)
 {
-	silofs_itbi_fini(&sbi->s_itbi);
-	ui_fini(&sbi->s_ui);
+	silofs_sbi_xfini(sbi);
+	ui_fini(&sbi->sb_ui);
 	silofs_memffff(sbi, sizeof(*sbi));
 }
 
-static struct silofs_sb_info *sbi_malloc(struct silofs_alloc_if *alif)
+static struct silofs_sb_info *sbi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_sb_info *sbi;
 
-	sbi = silofs_allocate(alif, sizeof(*sbi));
+	sbi = silofs_allocate(alloc, sizeof(*sbi));
 	return sbi;
 }
 
 static void sbi_free(struct silofs_sb_info *sbi,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, sbi, sizeof(*sbi));
+	silofs_deallocate(alloc, sbi, sizeof(*sbi));
 }
 
 static void sbi_delete(struct silofs_sb_info *sbi,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	sbi_fini(sbi);
-	sbi_free(sbi, alif);
+	sbi_free(sbi, alloc);
 }
 
 static void sbi_delete_as_ui(struct silofs_unode_info *ui,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sbi_delete(silofs_sbi_from_ui(ui), alif);
+		sbi_delete(silofs_sbi_from_ui(ui), alloc);
 	}
 }
 
-static void sbi_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void sbi_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		sbi_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		sbi_delete_as_ui(silofs_ui_from_si(si), alloc);
 	}
 }
 
-static bool sbi_evictable_as_ti(const struct silofs_tnode_info *ti)
+static bool sbi_evictable_as_si(const struct silofs_snode_info *si)
 {
-	const struct silofs_sb_info *sbi = sbi_from_ti(ti);
+	const struct silofs_sb_info *sbi = sbi_from_si(si);
 
-	silofs_assert(ti ==  &sbi->s_ui.u_ti);
+	silofs_assert(si ==  &sbi->sb_ui.u_si);
 
-	return ti_evictable(&sbi->s_ui.u_ti);
+	return si_evictable(&sbi->sb_ui.u_si);
 }
 
 static struct silofs_sb_info *
-sbi_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
+sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_sb_info *sbi;
 	int err;
 
-	sbi = sbi_malloc(alif);
+	sbi = sbi_malloc(alloc);
 	if (sbi == NULL) {
 		return NULL;
 	}
-	err = sbi_init(sbi, uaddr, alif);
+	err = sbi_init(sbi, uaddr, alloc);
 	if (err) {
-		sbi_delete(sbi, alif);
+		sbi_free(sbi, alloc);
 		return NULL;
 	}
 	return sbi;
 }
 
-static const struct silofs_tnode_vtbl sbi_vtbl = {
-	.del = sbi_delete_as_ti,
-	.evictable = sbi_evictable_as_ti,
-	.seal = ui_seal_as_ti,
-	.resolve = ui_resolve_as_ti,
+static const struct silofs_snode_vtbl sbi_vtbl = {
+	.del = sbi_delete_as_si,
+	.evictable = sbi_evictable_as_si,
+	.seal = ui_seal_as_si,
+	.resolve = ui_resolve_as_si,
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_unode_info *
+sti_to_ui(const struct silofs_stats_info *sti)
+{
+	const struct silofs_unode_info *ui = NULL;
+
+	if (likely(sti != NULL)) {
+		ui = &sti->st_ui;
+	}
+	return ui_unconst(ui);
+}
+
+struct silofs_stats_info *
+silofs_sti_from_ui(const struct silofs_unode_info *ui)
+{
+	const struct silofs_stats_info *sti = NULL;
+
+	if (likely(ui != NULL)) {
+		sti = container_of2(ui, struct silofs_stats_info, st_ui);
+	}
+	return unconst(sti);
+}
+
+static struct silofs_stats_info *
+sti_from_si(const struct silofs_snode_info *si)
+{
+	return silofs_sti_from_ui(silofs_ui_from_si(si));
+}
+
+static int sti_init(struct silofs_stats_info *sti,
+                    const struct silofs_uaddr *uaddr)
+{
+	silofs_memzero(sti, sizeof(*sti));
+	ui_init(&sti->st_ui, uaddr, &sti_vtbl);
+	return 0;
+}
+
+static void sti_fini(struct silofs_stats_info *sti)
+{
+	ui_fini(&sti->st_ui);
+	silofs_memffff(sti, sizeof(*sti));
+}
+
+static struct silofs_stats_info *sti_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_stats_info *sti;
+
+	sti = silofs_allocate(alloc, sizeof(*sti));
+	return sti;
+}
+
+static void sti_free(struct silofs_stats_info *sti,
+                     struct silofs_alloc *alloc)
+{
+	silofs_deallocate(alloc, sti, sizeof(*sti));
+}
+
+static void sti_delete(struct silofs_stats_info *sti,
+                       struct silofs_alloc *alloc)
+{
+	sti_fini(sti);
+	sti_free(sti, alloc);
+}
+
+static void sti_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
+{
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		sti_delete(sti_from_si(si), alloc);
+	}
+}
+
+static struct silofs_stats_info *
+sti_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+{
+	struct silofs_stats_info *sti;
+	int err;
+
+	sti = sti_malloc(alloc);
+	if (sti == NULL) {
+		return NULL;
+	}
+	err = sti_init(sti, uaddr);
+	if (err) {
+		sti_free(sti, alloc);
+		return NULL;
+	}
+	return sti;
+}
+
+static const struct silofs_snode_vtbl sti_vtbl = {
+	.del = sti_delete_as_si,
+	.evictable = si_evictable,
+	.seal = ui_seal_as_si,
+	.resolve = ui_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -662,49 +731,49 @@ static void sni_fini(struct silofs_spnode_info *sni)
 	sni->sn_nactive_subs = 0;
 }
 
-static struct silofs_spnode_info *sni_malloc(struct silofs_alloc_if *alif)
+static struct silofs_spnode_info *sni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spnode_info *sni;
 
-	sni = silofs_allocate(alif, sizeof(*sni));
+	sni = silofs_allocate(alloc, sizeof(*sni));
 	return sni;
 }
 
 static void sni_free(struct silofs_spnode_info *sni,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, sni, sizeof(*sni));
+	silofs_deallocate(alloc, sni, sizeof(*sni));
 }
 
 static void sni_delete(struct silofs_spnode_info *sni,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	sni_fini(sni);
-	sni_free(sni, alif);
+	sni_free(sni, alloc);
 }
 
 static void sni_delete_as_ui(struct silofs_unode_info *ui,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sni_delete(silofs_sni_from_ui(ui), alif);
+		sni_delete(silofs_sni_from_ui(ui), alloc);
 	}
 }
 
-static void sni_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void sni_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		sni_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		sni_delete_as_ui(silofs_ui_from_si(si), alloc);
 	}
 }
 
 static struct silofs_spnode_info *
-sni_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
+sni_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_spnode_info *sni;
 
-	sni = sni_malloc(alif);
+	sni = sni_malloc(alloc);
 	if (sni != NULL) {
 		sni_init(sni, uaddr);
 	}
@@ -722,16 +791,11 @@ silofs_sni_from_ui(const struct silofs_unode_info *ui)
 	return unconst(sni);
 }
 
-void silofs_sni_rebind_view(struct silofs_spnode_info *sni)
-{
-	sni->sn = &sni->sn_ui.u_ti.t_view->sn;
-}
-
-static const struct silofs_tnode_vtbl sni_vtbl = {
-	.del = sni_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = ui_seal_as_ti,
-	.resolve = ui_resolve_as_ti,
+static const struct silofs_snode_vtbl sni_vtbl = {
+	.del = sni_delete_as_si,
+	.evictable = si_evictable,
+	.seal = ui_seal_as_si,
+	.resolve = ui_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -762,49 +826,49 @@ static void sli_fini(struct silofs_spleaf_info *sli)
 	sli->sl_nused_bytes = ULONG_MAX;
 }
 
-static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc_if *alif)
+static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spleaf_info *sli;
 
-	sli = silofs_allocate(alif, sizeof(*sli));
+	sli = silofs_allocate(alloc, sizeof(*sli));
 	return sli;
 }
 
 static void sli_free(struct silofs_spleaf_info *sli,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, sli, sizeof(*sli));
+	silofs_deallocate(alloc, sli, sizeof(*sli));
 }
 
 static void sli_delete(struct silofs_spleaf_info *sli,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	sli_fini(sli);
-	sli_free(sli, alif);
+	sli_free(sli, alloc);
 }
 
 static void sli_delete_as_ui(struct silofs_unode_info *ui,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sli_delete(silofs_sli_from_ui(ui), alif);
+		sli_delete(silofs_sli_from_ui(ui), alloc);
 	}
 }
 
-static void sli_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void sli_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		sli_delete_as_ui(silofs_ui_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		sli_delete_as_ui(silofs_ui_from_si(si), alloc);
 	}
 }
 
 static struct silofs_spleaf_info *
-sli_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
+sli_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_spleaf_info *sli;
 
-	sli = sli_malloc(alif);
+	sli = sli_malloc(alloc);
 	if (sli != NULL) {
 		sli_init(sli, uaddr);
 	}
@@ -822,16 +886,11 @@ silofs_sli_from_ui(const struct silofs_unode_info *ui)
 	return unconst(sli);
 }
 
-void silofs_sli_rebind_view(struct silofs_spleaf_info *sli)
-{
-	sli->sl = &sli->sl_ui.u_ti.t_view->sl;
-}
-
-static const struct silofs_tnode_vtbl sli_vtbl = {
-	.del = sli_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = ui_seal_as_ti,
-	.resolve = ui_resolve_as_ti,
+static const struct silofs_snode_vtbl sli_vtbl = {
+	.del = sli_delete_as_si,
+	.evictable = si_evictable,
+	.seal = ui_seal_as_si,
+	.resolve = ui_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -860,49 +919,49 @@ static void itni_fini(struct silofs_itnode_info *itni)
 	itni->itn = NULL;
 }
 
-static struct silofs_itnode_info *itni_malloc(struct silofs_alloc_if *alif)
+static struct silofs_itnode_info *itni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_itnode_info *itni;
 
-	itni = silofs_allocate(alif, sizeof(*itni));
+	itni = silofs_allocate(alloc, sizeof(*itni));
 	return itni;
 }
 
 static void itni_free(struct silofs_itnode_info *itni,
-                      struct silofs_alloc_if *alif)
+                      struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, itni, sizeof(*itni));
+	silofs_deallocate(alloc, itni, sizeof(*itni));
 }
 
 static void itni_delete(struct silofs_itnode_info *itni,
-                        struct silofs_alloc_if *alif)
+                        struct silofs_alloc *alloc)
 {
 	itni_fini(itni);
-	itni_free(itni, alif);
+	itni_free(itni, alloc);
 }
 
 static void itni_delete_as_vi(struct silofs_vnode_info *vi,
-                              struct silofs_alloc_if *alif)
+                              struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		itni_delete(silofs_itni_from_vi(vi), alif);
+		itni_delete(silofs_itni_from_vi(vi), alloc);
 	}
 }
 
-static void itni_delete_as_ti(struct silofs_tnode_info *ti,
-                              struct silofs_alloc_if *alif)
+static void itni_delete_as_si(struct silofs_snode_info *si,
+                              struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		itni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		itni_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_itnode_info *
-itni_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+itni_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_itnode_info *itni;
 
-	itni = itni_malloc(alif);
+	itni = itni_malloc(alloc);
 	if (itni != NULL) {
 		itni_init(itni, vaddr);
 	}
@@ -922,22 +981,21 @@ struct silofs_itnode_info *silofs_itni_from_vi(struct silofs_vnode_info *vi)
 
 void silofs_itni_rebind_view(struct silofs_itnode_info *itni)
 {
-	itni->itn = &itni->itn_vi.v_ti.t_view->itn;
+	itni->itn = &itni->itn_vi.v_si.s_view->itn;
 }
 
-static const struct silofs_tnode_vtbl itni_vtbl = {
-	.del = itni_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = vi_seal_as_ti,
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl itni_vtbl = {
+	.del = itni_delete_as_si,
+	.evictable = si_evictable,
+	.seal = vi_seal_as_si,
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_inode_info *ii_from_ti(const struct silofs_tnode_info
-                *ti)
+static struct silofs_inode_info *ii_from_si(const struct silofs_snode_info *si)
 {
-	return silofs_ii_from_vi(silofs_vi_from_ti(ti));
+	return silofs_ii_from_vi(silofs_vi_from_si(si));
 }
 
 static void ii_init(struct silofs_inode_info *ii,
@@ -961,58 +1019,58 @@ static void ii_fini(struct silofs_inode_info *ii)
 	ii->i_nopen = INT_MIN;
 }
 
-static struct silofs_inode_info *ii_malloc(struct silofs_alloc_if *alif)
+static struct silofs_inode_info *ii_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_inode_info *ii;
 
-	ii = silofs_allocate(alif, sizeof(*ii));
+	ii = silofs_allocate(alloc, sizeof(*ii));
 	return ii;
 }
 
 static void ii_free(struct silofs_inode_info *ii,
-                    struct silofs_alloc_if *alif)
+                    struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, ii, sizeof(*ii));
+	silofs_deallocate(alloc, ii, sizeof(*ii));
 }
 
 static void ii_delete(struct silofs_inode_info *ii,
-                      struct silofs_alloc_if *alif)
+                      struct silofs_alloc *alloc)
 {
 	ii_fini(ii);
-	ii_free(ii, alif);
+	ii_free(ii, alloc);
 }
 
 static void ii_delete_as_vi(struct silofs_vnode_info *vi,
-                            struct silofs_alloc_if *alif)
+                            struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		ii_delete(silofs_ii_from_vi(vi), alif);
+		ii_delete(silofs_ii_from_vi(vi), alloc);
 	}
 }
 
-static void ii_delete_as_ti(struct silofs_tnode_info *ti,
-                            struct silofs_alloc_if *alif)
+static void ii_delete_as_si(struct silofs_snode_info *si,
+                            struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		ii_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		ii_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_inode_info *
-ii_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+ii_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_inode_info *ii;
 
-	ii = ii_malloc(alif);
+	ii = ii_malloc(alloc);
 	if (ii != NULL) {
 		ii_init(ii, vaddr);
 	}
 	return ii;
 }
 
-static bool ii_evictable_as_ti(const struct silofs_tnode_info *ti)
+static bool ii_evictable_as_si(const struct silofs_snode_info *si)
 {
-	const struct silofs_inode_info *ii = ii_from_ti(ti);
+	const struct silofs_inode_info *ii = ii_from_si(si);
 
 	return silofs_ii_isevictable(ii);
 }
@@ -1031,15 +1089,15 @@ void silofs_ii_rebind_view(struct silofs_inode_info *ii, ino_t ino)
 {
 	silofs_assert_not_null(ii);
 
-	ii->inode = &ii->i_vi.v_ti.t_view->in;
+	ii->inode = &ii->i_vi.v_si.s_view->in;
 	ii->i_ino = ino;
 }
 
-static const struct silofs_tnode_vtbl ii_vtbl = {
-	.del = ii_delete_as_ti,
-	.evictable = ii_evictable_as_ti,
-	.seal = vi_seal_as_ti,
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl ii_vtbl = {
+	.del = ii_delete_as_si,
+	.evictable = ii_evictable_as_si,
+	.seal = vi_seal_as_si,
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1050,7 +1108,7 @@ xai_to_vi(const struct silofs_xanode_info *xai)
 	const struct silofs_vnode_info *vi = NULL;
 
 	if (likely(xai != NULL)) {
-		vi = &xai->xa_vi;
+		vi = &xai->xan_vi;
 	}
 	return vi_unconst(vi);
 }
@@ -1058,59 +1116,59 @@ xai_to_vi(const struct silofs_xanode_info *xai)
 static void xai_init(struct silofs_xanode_info *xai,
                      const struct silofs_vaddr *vaddr)
 {
-	vi_init(&xai->xa_vi, vaddr, &xai_vtbl);
+	vi_init(&xai->xan_vi, vaddr, &xai_vtbl);
 	xai->xan = NULL;
 }
 
 static void xai_fini(struct silofs_xanode_info *xai)
 {
-	vi_fini(&xai->xa_vi);
+	vi_fini(&xai->xan_vi);
 	xai->xan = NULL;
 }
 
-static struct silofs_xanode_info *xai_malloc(struct silofs_alloc_if *alif)
+static struct silofs_xanode_info *xai_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_xanode_info *xai;
 
-	xai = silofs_allocate(alif, sizeof(*xai));
+	xai = silofs_allocate(alloc, sizeof(*xai));
 	return xai;
 }
 
 static void xai_free(struct silofs_xanode_info *xai,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, xai, sizeof(*xai));
+	silofs_deallocate(alloc, xai, sizeof(*xai));
 }
 
 static void xai_delete(struct silofs_xanode_info *xai,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	xai_fini(xai);
-	xai_free(xai, alif);
+	xai_free(xai, alloc);
 }
 
 static void xai_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		xai_delete(silofs_xai_from_vi(vi), alif);
+		xai_delete(silofs_xai_from_vi(vi), alloc);
 	}
 }
 
-static void xai_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void xai_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		xai_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		xai_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_xanode_info *
-xai_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+xai_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_xanode_info *xai;
 
-	xai = xai_malloc(alif);
+	xai = xai_malloc(alloc);
 	if (xai != NULL) {
 		xai_init(xai, vaddr);
 	}
@@ -1123,20 +1181,20 @@ struct silofs_xanode_info *silofs_xai_from_vi(struct silofs_vnode_info *vi)
 
 	silofs_assert_not_null(vi);
 	silofs_assert(vi_has_stype(vi, SILOFS_STYPE_XANODE));
-	xai = container_of(vi, struct silofs_xanode_info, xa_vi);
+	xai = container_of(vi, struct silofs_xanode_info, xan_vi);
 	return xai;
 }
 
 void silofs_xai_rebind_view(struct silofs_xanode_info *xai)
 {
-	xai->xan = &xai->xa_vi.v_ti.t_view->xan;
+	xai->xan = &xai->xan_vi.v_si.s_view->xan;
 }
 
-static const struct silofs_tnode_vtbl xai_vtbl = {
-	.del = xai_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = vi_seal_as_ti,
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl xai_vtbl = {
+	.del = xai_delete_as_si,
+	.evictable = si_evictable,
+	.seal = vi_seal_as_si,
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1165,49 +1223,49 @@ static void syi_fini(struct silofs_symval_info *syi)
 	syi->syv = NULL;
 }
 
-static struct silofs_symval_info *syi_malloc(struct silofs_alloc_if *alif)
+static struct silofs_symval_info *syi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_symval_info *syi;
 
-	syi = silofs_allocate(alif, sizeof(*syi));
+	syi = silofs_allocate(alloc, sizeof(*syi));
 	return syi;
 }
 
 static void syi_free(struct silofs_symval_info *syi,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, syi, sizeof(*syi));
+	silofs_deallocate(alloc, syi, sizeof(*syi));
 }
 
 static void syi_delete(struct silofs_symval_info *syi,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	syi_fini(syi);
-	syi_free(syi, alif);
+	syi_free(syi, alloc);
 }
 
 static void syi_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		syi_delete(silofs_syi_from_vi(vi), alif);
+		syi_delete(silofs_syi_from_vi(vi), alloc);
 	}
 }
 
-static void syi_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void syi_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		syi_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		syi_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_symval_info *
-syi_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+syi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_symval_info *syi;
 
-	syi = syi_malloc(alif);
+	syi = syi_malloc(alloc);
 	if (syi != NULL) {
 		syi_init(syi, vaddr);
 	}
@@ -1226,14 +1284,14 @@ struct silofs_symval_info *silofs_syi_from_vi(struct silofs_vnode_info *vi)
 
 void silofs_syi_rebind_view(struct silofs_symval_info *syi)
 {
-	syi->syv = &syi->sy_vi.v_ti.t_view->sym;
+	syi->syv = &syi->sy_vi.v_si.s_view->sym;
 }
 
-static const struct silofs_tnode_vtbl syi_vtbl = {
-	.del = syi_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = vi_seal_as_ti,
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl syi_vtbl = {
+	.del = syi_delete_as_si,
+	.evictable = si_evictable,
+	.seal = vi_seal_as_si,
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1262,49 +1320,49 @@ static void dni_fini(struct silofs_dnode_info *dni)
 	dni->dtn = NULL;
 }
 
-static struct silofs_dnode_info *dni_malloc(struct silofs_alloc_if *alif)
+static struct silofs_dnode_info *dni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_dnode_info *dni;
 
-	dni = silofs_allocate(alif, sizeof(*dni));
+	dni = silofs_allocate(alloc, sizeof(*dni));
 	return dni;
 }
 
 static void dni_free(struct silofs_dnode_info *dni,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, dni, sizeof(*dni));
+	silofs_deallocate(alloc, dni, sizeof(*dni));
 }
 
 static void dni_delete(struct silofs_dnode_info *dni,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	dni_fini(dni);
-	dni_free(dni, alif);
+	dni_free(dni, alloc);
 }
 
 static void dni_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		dni_delete(silofs_dni_from_vi(vi), alif);
+		dni_delete(silofs_dni_from_vi(vi), alloc);
 	}
 }
 
-static void dni_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void dni_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		dni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		dni_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_dnode_info *
-dni_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+dni_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_dnode_info *dni;
 
-	dni = dni_malloc(alif);
+	dni = dni_malloc(alloc);
 	if (dni != NULL) {
 		dni_init(dni, vaddr);
 	}
@@ -1326,14 +1384,14 @@ struct silofs_dnode_info *silofs_dni_from_vi(struct silofs_vnode_info *vi)
 
 void silofs_dni_rebind_view(struct silofs_dnode_info *dni)
 {
-	dni->dtn = &dni->dn_vi.v_ti.t_view->dtn;
+	dni->dtn = &dni->dn_vi.v_si.s_view->dtn;
 }
 
-static const struct silofs_tnode_vtbl dni_vtbl = {
-	.del = dni_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = vi_seal_as_ti,
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl dni_vtbl = {
+	.del = dni_delete_as_si,
+	.evictable = si_evictable,
+	.seal = vi_seal_as_si,
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1362,49 +1420,49 @@ static void fni_fini(struct silofs_finode_info *fni)
 	fni->ftn = NULL;
 }
 
-static struct silofs_finode_info *fni_malloc(struct silofs_alloc_if *alif)
+static struct silofs_finode_info *fni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_finode_info *fni;
 
-	fni = silofs_allocate(alif, sizeof(*fni));
+	fni = silofs_allocate(alloc, sizeof(*fni));
 	return fni;
 }
 
 static void fni_free(struct silofs_finode_info *fni,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, fni, sizeof(*fni));
+	silofs_deallocate(alloc, fni, sizeof(*fni));
 }
 
 static void fni_delete(struct silofs_finode_info *fni,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	fni_fini(fni);
-	fni_free(fni, alif);
+	fni_free(fni, alloc);
 }
 
 static void fni_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		fni_delete(silofs_fni_from_vi(vi), alif);
+		fni_delete(silofs_fni_from_vi(vi), alloc);
 	}
 }
 
-static void fni_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void fni_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		fni_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		fni_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_finode_info *
-fni_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+fni_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_finode_info *fni;
 
-	fni = fni_malloc(alif);
+	fni = fni_malloc(alloc);
 	if (fni != NULL) {
 		fni_init(fni, vaddr);
 	}
@@ -1424,14 +1482,14 @@ struct silofs_finode_info *silofs_fni_from_vi(struct silofs_vnode_info *vi)
 
 void silofs_fni_rebind_view(struct silofs_finode_info *fni)
 {
-	fni->ftn = &fni->fn_vi.v_ti.t_view->ftn;
+	fni->ftn = &fni->fn_vi.v_si.s_view->ftn;
 }
 
-static const struct silofs_tnode_vtbl fni_vtbl = {
-	.del = fni_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = vi_seal_as_ti,
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl fni_vtbl = {
+	.del = fni_delete_as_si,
+	.evictable = si_evictable,
+	.seal = vi_seal_as_si,
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1460,49 +1518,49 @@ static void fli_fini(struct silofs_fileaf_info *fli)
 	fli->flu.db = NULL;
 }
 
-static struct silofs_fileaf_info *fli_malloc(struct silofs_alloc_if *alif)
+static struct silofs_fileaf_info *fli_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_fileaf_info *fli;
 
-	fli = silofs_allocate(alif, sizeof(*fli));
+	fli = silofs_allocate(alloc, sizeof(*fli));
 	return fli;
 }
 
 static void fli_free(struct silofs_fileaf_info *fli,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, fli, sizeof(*fli));
+	silofs_deallocate(alloc, fli, sizeof(*fli));
 }
 
 static void fli_delete(struct silofs_fileaf_info *fli,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	fli_fini(fli);
-	fli_free(fli, alif);
+	fli_free(fli, alloc);
 }
 
 static void fli_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc_if *alif)
+                             struct silofs_alloc *alloc)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		fli_delete(silofs_fli_from_vi(vi), alif);
+		fli_delete(silofs_fli_from_vi(vi), alloc);
 	}
 }
 
-static void fli_delete_as_ti(struct silofs_tnode_info *ti,
-                             struct silofs_alloc_if *alif)
+static void fli_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc)
 {
-	if (likely(ti != NULL)) { /* make gcc-analyzer happy */
-		fli_delete_as_vi(silofs_vi_from_ti(ti), alif);
+	if (likely(si != NULL)) { /* make gcc-analyzer happy */
+		fli_delete_as_vi(silofs_vi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_fileaf_info *
-fli_new(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+fli_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_fileaf_info *fli;
 
-	fli = fli_malloc(alif);
+	fli = fli_malloc(alloc);
 	if (fli != NULL) {
 		fli_init(fli, vaddr);
 	}
@@ -1528,38 +1586,41 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 	const enum silofs_stype stype = fli_stype(fli);
 
 	if (stype == SILOFS_STYPE_DATA1K) {
-		fli->flu.db1 = &fli->fl_vi.v_ti.t_view->db1;
+		fli->flu.db1 = &fli->fl_vi.v_si.s_view->db1;
 	} else if (stype == SILOFS_STYPE_DATA4K) {
-		fli->flu.db4 = &fli->fl_vi.v_ti.t_view->db4;
+		fli->flu.db4 = &fli->fl_vi.v_si.s_view->db4;
 	} else {
 		silofs_assert_eq(stype, SILOFS_STYPE_DATABK);
-		fli->flu.db = &fli->fl_vi.v_ti.t_view->db;
+		fli->flu.db = &fli->fl_vi.v_si.s_view->db;
 	}
 }
 
-static const struct silofs_tnode_vtbl fli_vtbl = {
-	.del = fli_delete_as_ti,
-	.evictable = ti_evictable,
-	.seal = ti_seal_noop, /* no-op for data leaves */
-	.resolve = vi_resolve_as_ti,
+static const struct silofs_snode_vtbl fli_vtbl = {
+	.del = fli_delete_as_si,
+	.evictable = si_evictable,
+	.seal = si_seal_noop, /* no-op for data leaves */
+	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_unode_info *
-silofs_new_ui(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
+silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *ui;
 
 	switch (uaddr->stype) {
 	case SILOFS_STYPE_SUPER:
-		ui = sbi_to_ui(sbi_new(alif, uaddr));
+		ui = sbi_to_ui(sbi_new(alloc, uaddr));
+		break;
+	case SILOFS_STYPE_STATS:
+		ui = sti_to_ui(sti_new(alloc, uaddr));
 		break;
 	case SILOFS_STYPE_SPNODE:
-		ui = sni_to_ui(sni_new(alif, uaddr));
+		ui = sni_to_ui(sni_new(alloc, uaddr));
 		break;
 	case SILOFS_STYPE_SPLEAF:
-		ui = sli_to_ui(sli_new(alif, uaddr));
+		ui = sli_to_ui(sli_new(alloc, uaddr));
 		break;
 	case SILOFS_STYPE_ITNODE:
 	case SILOFS_STYPE_INODE:
@@ -1581,43 +1642,44 @@ silofs_new_ui(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
 }
 
 struct silofs_vnode_info *
-silofs_new_vi(struct silofs_alloc_if *alif, const struct silofs_vaddr *vaddr)
+silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_vnode_info *vi;
+	struct silofs_vnode_info *vi = NULL;
 
 	switch (vaddr->stype) {
 	case SILOFS_STYPE_ITNODE:
-		vi = itni_to_vi(itni_new(alif, vaddr));
+		vi = itni_to_vi(itni_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_INODE:
-		vi = ii_to_vi(ii_new(alif, vaddr));
+		vi = ii_to_vi(ii_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_XANODE:
-		vi = xai_to_vi(xai_new(alif, vaddr));
+		vi = xai_to_vi(xai_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_SYMVAL:
-		vi = syi_to_vi(syi_new(alif, vaddr));
+		vi = syi_to_vi(syi_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_DTNODE:
-		vi = dni_to_vi(dni_new(alif, vaddr));
+		vi = dni_to_vi(dni_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_FTNODE:
-		vi = fni_to_vi(fni_new(alif, vaddr));
+		vi = fni_to_vi(fni_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
-		vi = fli_to_vi(fli_new(alif, vaddr));
+		vi = fli_to_vi(fli_new(alloc, vaddr));
 		break;
 	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_STATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_MAX:
 	default:
-		vi = NULL;
-		silofs_assert_not_null(vi);
+		log_crit("illegal vaddr stype: stype=%d voff=%ld",
+		         (int)vaddr->stype, (long)vaddr->voff);
 		break;
 	}
 	return vi;
@@ -1644,24 +1706,24 @@ static union silofs_view *make_view(const void *opaque_view)
 	return u.vq;
 }
 
-static void ti_bind_view(struct silofs_tnode_info *ti,
+static void si_bind_view(struct silofs_snode_info *si,
                          struct silofs_block *bk, long bk_pos)
 {
-	ti->t_view = make_view(opaque_view_of(bk, bk_pos));
+	si->s_view = make_view(opaque_view_of(bk, bk_pos));
 }
 
 void silofs_ui_bind_view(struct silofs_unode_info *ui)
 {
 	const loff_t bk_pos = uaddr_bk_pos(ui_uaddr(ui));
 
-	ti_bind_view(&ui->u_ti, ui->u_ubi->ubk, bk_pos);
+	si_bind_view(&ui->u_si, ui->u_ubi->ubk, bk_pos);
 }
 
 void silofs_vi_bind_view(struct silofs_vnode_info *vi)
 {
 	const loff_t bk_pos = vaddr_bk_pos(vi_vaddr(vi));
 
-	ti_bind_view(&vi->v_ti, vi->v_vbi->vbk, bk_pos);
+	si_bind_view(&vi->v_si, vi->v_vbi->vbk, bk_pos);
 }
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr)
@@ -1678,63 +1740,51 @@ static int view_verify_hdr(const union silofs_view *view,
 	return hdr_verify_base(&view->hdr, stype);
 }
 
-static int view_verify_checksum(const union silofs_view *view,
-                                const struct silofs_mdigest *md)
+static int view_verify_checksum(const union silofs_view *view)
 {
-	return hdr_verify_checksum(&view->hdr, md);
+	return hdr_verify_checksum(&view->hdr);
 }
 
 static int view_verify_sub(const union silofs_view *view,
                            enum silofs_stype stype)
 {
-	int err;
-
 	switch (stype) {
 	case SILOFS_STYPE_SUPER:
-		err = silofs_verify_super_block(&view->sb);
-		break;
+		return silofs_verify_super_block(&view->sb);
+	case SILOFS_STYPE_STATS:
+		return silofs_verify_super_stats(&view->st);
 	case SILOFS_STYPE_SPNODE:
-		err = silofs_verify_spmap_node(&view->sn);
-		break;
+		return silofs_verify_spmap_node(&view->sn);
 	case SILOFS_STYPE_SPLEAF:
-		err = silofs_verify_spmap_leaf(&view->sl);
-		break;
+		return silofs_verify_spmap_leaf(&view->sl);
 	case SILOFS_STYPE_ITNODE:
-		err = silofs_verify_itable_node(&view->itn);
-		break;
+		return silofs_verify_itable_node(&view->itn);
 	case SILOFS_STYPE_INODE:
-		err = silofs_verify_inode(&view->in);
-		break;
+		return silofs_verify_inode(&view->in);
 	case SILOFS_STYPE_XANODE:
-		err = silofs_verify_xattr_node(&view->xan);
-		break;
+		return silofs_verify_xattr_node(&view->xan);
 	case SILOFS_STYPE_DTNODE:
-		err = silofs_verify_dtree_node(&view->dtn);
-		break;
+		return silofs_verify_dtree_node(&view->dtn);
 	case SILOFS_STYPE_FTNODE:
-		err = silofs_verify_ftree_node(&view->ftn);
-		break;
+		return silofs_verify_ftree_node(&view->ftn);
 	case SILOFS_STYPE_SYMVAL:
-		err = silofs_verify_symlnk_value(&view->sym);
-		break;
+		return silofs_verify_symlnk_value(&view->sym);
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
 	case SILOFS_STYPE_ANONBK:
-		err = 0;
 		break;
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_MAX:
 	default:
-		err = -EFSCORRUPTED;
-		break;
+		log_err("illegal sub-type: stype=%d", (int)stype);
+		return -EFSCORRUPTED;
 	}
-	return err;
+	return 0;
 }
 
 static int view_verify(const union silofs_view *view,
-                       const enum silofs_stype stype,
-                       const struct silofs_mdigest *md)
+                       const enum silofs_stype stype)
 {
 	int err;
 
@@ -1745,7 +1795,7 @@ static int view_verify(const union silofs_view *view,
 	if (err) {
 		return err;
 	}
-	err = view_verify_checksum(view, md);
+	err = view_verify_checksum(view);
 	if (err) {
 		return err;
 	}
@@ -1756,15 +1806,14 @@ static int view_verify(const union silofs_view *view,
 	return 0;
 }
 
-int silofs_ui_verify_view(struct silofs_unode_info *ui,
-                          const struct silofs_mdigest *md)
+int silofs_ui_verify_view(struct silofs_unode_info *ui)
 {
 	int err;
 
 	if (ui->u_verified) {
 		return 0;
 	}
-	err = ti_verify_view(&ui->u_ti, md);
+	err = si_verify_view(&ui->u_si);
 	if (err) {
 		return err;
 	}
@@ -1772,15 +1821,14 @@ int silofs_ui_verify_view(struct silofs_unode_info *ui,
 	return 0;
 }
 
-int silofs_vi_verify_view(struct silofs_vnode_info *vi,
-                          const struct silofs_mdigest *md)
+int silofs_vi_verify_view(struct silofs_vnode_info *vi)
 {
 	int err;
 
 	if (vi->v_verified) {
 		return 0;
 	}
-	err = ti_verify_view(&vi->v_ti, md);
+	err = si_verify_view(&vi->v_si);
 	if (err) {
 		return err;
 	}
@@ -1793,7 +1841,7 @@ void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi)
 	const enum silofs_stype stype = vi_stype(vi);
 
 	if (!stype_isdata(stype)) {
-		silofs_zero_stamp_meta(vi->v_ti.t_view, stype);
+		silofs_zero_stamp_meta(vi->v_si.s_view, stype);
 	}
 	vi->v_verified = true;
 	vi_dirtify(vi);
@@ -1809,14 +1857,12 @@ void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype)
 	hdr_stamp(&view->hdr, stype, len);
 }
 
-void silofs_fill_csum_meta(union silofs_view *view,
-                           const struct silofs_mdigest *md)
+void silofs_fill_csum_meta(union silofs_view *view)
 {
-	hdr_calc_set_csum(&view->hdr, md);
+	hdr_calc_set_csum(&view->hdr);
 }
 
-int silofs_verify_csum_meta(const union silofs_view *view,
-                            const struct silofs_mdigest *md)
+int silofs_verify_csum_meta(const union silofs_view *view)
 {
-	return view_verify_checksum(view, md);
+	return view_verify_checksum(view);
 }

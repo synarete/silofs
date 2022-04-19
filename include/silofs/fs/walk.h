@@ -54,7 +54,7 @@ struct silofs_usaddr_info {
 
 struct silofs_usaddr_set {
 	struct silofs_avl       uss_avl;
-	struct silofs_alloc_if *uss_alif;
+	struct silofs_alloc    *uss_alloc;
 };
 
 struct silofs_uspace_visitor {
@@ -65,7 +65,7 @@ struct silofs_uspace_visitor {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_usvisitor_init(struct silofs_uspace_visitor *usv,
-                           struct silofs_alloc_if *alif);
+                           struct silofs_alloc *alloc);
 
 void silofs_usvisitor_fini(struct silofs_uspace_visitor *usv);
 

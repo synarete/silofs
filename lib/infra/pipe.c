@@ -193,8 +193,8 @@ static size_t pipe_avail(const struct silofs_pipe *pipe)
 	return (pipe->size - pipe->pend);
 }
 
-int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe,
-                               int fd, loff_t *off, size_t len)
+int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
+                               size_t len, unsigned int flags)
 {
 	size_t cnt;
 	size_t nsp = 0;
@@ -202,17 +202,17 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe,
 	int err;
 
 	cnt = silofs_min(pipe_avail(pipe), len);
-	err = silofs_sys_splice(fd, off, pipe->fd[1], NULL, cnt, 0, &nsp);
+	err = silofs_sys_splice(fd, off, pipe->fd[1], NULL, cnt, flags, &nsp);
 	if (err) {
 		silofs_log_error("splice-error: fd_in=%d off_in=%ld "\
-		                 "fd_out=%d cnt=%lu err=%d", fd, off_in,
-		                 pipe->fd[1], cnt, err);
+		                 "fd_out=%d cnt=%lu flags=%u err=%d",
+		                 fd, off_in, pipe->fd[1], cnt, flags, err);
 		return err;
 	}
 	if (nsp > cnt) {
 		silofs_log_error("bad-splice: fd_in=%d off_in=%ld fd_out=%d "\
-		                 "cnt=%lu nsp=%lu", fd, off_in,
-		                 pipe->fd[1], cnt, nsp);
+		                 "cnt=%lu flags=%u nsp=%lu", fd, off_in,
+		                 pipe->fd[1], cnt, flags, nsp);
 		return -EIO;
 	}
 	pipe->pend += nsp;
@@ -220,27 +220,27 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe,
 }
 
 int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
-                                  const struct iovec *iov, size_t niov)
+                                  const struct iovec *iov,
+                                  size_t niov, unsigned int flags)
 {
 	size_t cnt;
 	size_t nsp = 0;
-	const unsigned int splice_flags = SPLICE_F_NONBLOCK;
 	int err;
 
 	cnt = iov_count_ceil(iov, niov, pipe_avail(pipe));
-	err = silofs_sys_vmsplice(pipe->fd[1], iov, cnt, splice_flags, &nsp);
+	err = silofs_sys_vmsplice(pipe->fd[1], iov, cnt, flags, &nsp);
 	if (err) {
 		silofs_log_error("vmsplice-error: fd=%d cnt=%lu "\
-		                 "splice_flags=%u err=%d",
-		                 pipe->fd[1], cnt, splice_flags, err);
+		                 "flags=%u err=%d",
+		                 pipe->fd[1], cnt, flags, err);
 		return err;
 	}
 	pipe->pend += nsp;
 	return 0;
 }
 
-int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe,
-                             int fd, loff_t *off, size_t len)
+int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd,
+                             loff_t *off, size_t len, unsigned int flags)
 {
 	size_t cnt;
 	size_t nsp = 0;
@@ -248,17 +248,17 @@ int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe,
 	int err;
 
 	cnt = silofs_min(pipe->pend, len);
-	err = silofs_sys_splice(pipe->fd[0], NULL, fd, off, cnt, 0, &nsp);
+	err = silofs_sys_splice(pipe->fd[0], NULL, fd, off, cnt, flags, &nsp);
 	if (err) {
 		silofs_log_error("splice-error: fd_in=%d fd_out=%d "\
-		                 "off_out=%ld cnt=%lu err=%d", pipe->fd[0],
-		                 fd, off_out, cnt, err);
+		                 "off_out=%ld cnt=%lu flags=%u err=%d",
+		                 pipe->fd[0], fd, off_out, cnt, flags, err);
 		return err;
 	}
 	if (nsp > pipe->pend) {
 		silofs_log_error("bad-splice: fd_in=%d fd_out=%d off_out=%ld"\
-		                 "cnt=%lu nsp=%lu", pipe->fd[0], fd, off_out,
-		                 cnt, nsp);
+		                 "cnt=%lu flags=%u nsp=%lu",
+		                 pipe->fd[0], fd, off_out, cnt, flags, nsp);
 		return -EIO;
 	}
 	pipe->pend -= nsp;
@@ -266,7 +266,8 @@ int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe,
 }
 
 int silofs_pipe_vmsplice_to_iov(struct silofs_pipe *pipe,
-                                const struct iovec *iov, size_t niov)
+                                const struct iovec *iov,
+                                size_t niov, unsigned int flags)
 {
 	size_t len;
 	size_t cnt;
@@ -275,15 +276,17 @@ int silofs_pipe_vmsplice_to_iov(struct silofs_pipe *pipe,
 
 	cnt = iov_count_ceil(iov, niov, pipe->pend);
 	len = iov_length(iov, cnt);
-	err = silofs_sys_vmsplice(pipe->fd[0], iov, cnt, 0, &nsp);
+	err = silofs_sys_vmsplice(pipe->fd[0], iov, cnt, flags, &nsp);
 	if (err) {
-		silofs_log_error("vmsplice-error: fd=%d cnt=%lu err=%d",
-		                 pipe->fd[1], cnt, err);
+		silofs_log_error("vmsplice-error: fd=%d cnt=%lu "
+		                 "flags=%u err=%d", pipe->fd[1],
+		                 cnt, flags, err);
 		return err;
 	}
 	if ((nsp != len) || (nsp > pipe->pend)) {
-		silofs_log_error("bad-vmsplice: fd=%d cnt=%lu nsp=%lu",
-		                 pipe->fd[1], cnt, nsp);
+		silofs_log_error("bad-vmsplice: fd=%d cnt=%lu "
+		                 "flags=%u nsp=%lu", pipe->fd[1],
+		                 cnt, flags, nsp);
 		return -EIO;
 	}
 	pipe->pend -= nsp;
@@ -325,8 +328,13 @@ int silofs_pipe_append_from_buf(struct silofs_pipe *pipe,
 
 int silofs_pipe_flush_to_fd(struct silofs_pipe *pipe, int fd)
 {
-	return (pipe->pend > 0) ?
-	       silofs_pipe_splice_to_fd(pipe, fd, NULL, pipe->pend) : 0;
+	int ret = 0;
+
+	if (pipe->pend > 0) {
+		ret = silofs_pipe_splice_to_fd(pipe, fd, NULL,
+		                               pipe->pend, SPLICE_F_NONBLOCK);
+	}
+	return ret;
 }
 
 int silofs_pipe_dispose(struct silofs_pipe *pipe,
@@ -335,17 +343,17 @@ int silofs_pipe_dispose(struct silofs_pipe *pipe,
 	return silofs_pipe_flush_to_fd(pipe, nfd->fd);
 }
 
-static int pipe_kcopy_by_splice(struct silofs_pipe *pipe,
-                                int fd_in, loff_t *off_in,
-                                int fd_out, loff_t *off_out, size_t len)
+static int pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
+                                loff_t *off_in, int fd_out, loff_t *off_out,
+                                size_t len, unsigned int flags)
 {
 	int err;
 
-	err = silofs_pipe_splice_from_fd(pipe, fd_in, off_in, len);
+	err = silofs_pipe_splice_from_fd(pipe, fd_in, off_in, len, flags);
 	if (err) {
 		return err;
 	}
-	err = silofs_pipe_splice_to_fd(pipe, fd_out, off_out, len);
+	err = silofs_pipe_splice_to_fd(pipe, fd_out, off_out, len, flags);
 	if (err) {
 		return err;
 	}
@@ -412,14 +420,11 @@ int silofs_piper_dispose(struct silofs_piper *piper)
 }
 
 int silofs_piper_kcopy(struct silofs_piper *piper, int fd_in, loff_t *off_in,
-                       int fd_out, loff_t *off_out, size_t nn)
+                       int fd_out, loff_t *off_out, size_t len,
+                       unsigned int flags)
 {
 	struct silofs_pipe *pipe = &piper->pipe;
-	int err;
 
-	err = pipe_kcopy_by_splice(pipe, fd_in, off_in, fd_out, off_out, nn);
-	if (err) {
-		silofs_piper_dispose(piper);
-	}
-	return err;
+	return pipe_kcopy_by_splice(pipe, fd_in, off_in,
+	                            fd_out, off_out, len, flags);
 }

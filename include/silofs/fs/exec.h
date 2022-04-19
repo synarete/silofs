@@ -33,23 +33,37 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 
 void silofs_fse_del(struct silofs_fs_env *fse);
 
-int silofs_fse_reopen(struct silofs_fs_env *fse);
+int silofs_fse_reopen(struct silofs_fs_env *fse,
+                      const struct silofs_bootsec *bsec);
 
-int silofs_fse_reload(struct silofs_fs_env *fse);
+int silofs_fse_reload(struct silofs_fs_env *fse,
+                      const struct silofs_bootsec *bsec);
 
 int silofs_fse_format_repos(struct silofs_fs_env *fse);
 
-int silofs_fse_format_fs(struct silofs_fs_env *fse);
+int silofs_fse_format_fs(struct silofs_fs_env *fse,
+                         struct silofs_bootsec *out_bsec);
 
-int silofs_fse_serve(struct silofs_fs_env *fse);
+int silofs_fse_serve(struct silofs_fs_env *fse,
+                     const struct silofs_bootsec *bsec);
 
-int silofs_fse_archive(struct silofs_fs_env *fse);
+int silofs_fse_archive(struct silofs_fs_env *fse,
+                       const struct silofs_bootsec *src_bsec,
+                       struct silofs_bootsec *dst_bsec);
 
-int silofs_fse_restore(struct silofs_fs_env *fse);
+int silofs_fse_restore(struct silofs_fs_env *fse,
+                       const struct silofs_bootsec *src_bsec,
+                       struct silofs_bootsec *dst_bsec);
 
-int silofs_fse_snap(struct silofs_fs_env *fse, const char *name);
+int silofs_fse_snap(struct silofs_fs_env *fse,
+                    const struct silofs_bootsec *src_bsec,
+                    struct silofs_bootsec *out_bsec);
 
-int silofs_fse_verify(struct silofs_fs_env *fse);
+int silofs_fse_verify(struct silofs_fs_env *fse,
+                      const struct silofs_bootsec *bsec);
+
+int silofs_fse_resolve(const struct silofs_fs_env *fse,
+                       struct silofs_bootsec *out_bsec);
 
 int silofs_fse_shut(struct silofs_fs_env *fse);
 
@@ -69,11 +83,5 @@ bool silofs_fse_served_clean(const struct silofs_fs_env *fse);
 int silofs_fse_open_repos(struct silofs_fs_env *fse);
 
 int silofs_fse_close_repos(struct silofs_fs_env *fse);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_fse_load_boot(const struct silofs_fs_env *fse,
-                         const struct silofs_namestr *name,
-                         struct silofs_bootsec *out_bsec);
 
 #endif /* SILOFS_EXEC_H_ */

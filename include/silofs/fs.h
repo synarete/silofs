@@ -23,6 +23,7 @@
 #include <silofs/fs/address.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/crypto.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/opers.h>
@@ -32,6 +33,7 @@
 #include <silofs/fs/file.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
+#include <silofs/fs/umeta.h>
 #include <silofs/fs/exec.h>
 #include <silofs/fs/mntsvc.h>
 #include <silofs/fs/ioctls.h>

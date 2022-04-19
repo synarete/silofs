@@ -17,6 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/namei.h>
@@ -653,7 +655,7 @@ static const struct silofs_dir_entry *
 dtn_search(const struct silofs_dtree_node *dtn,
            const struct silofs_qstr *name)
 {
-	return de_search(dtn_begin(dtn), dtn_end(dtn), &name->str);
+	return de_search(dtn_begin(dtn), dtn_end(dtn), &name->s);
 }
 
 static const struct silofs_dir_entry *
@@ -699,12 +701,12 @@ dtn_insert(struct silofs_dtree_node *dtn,
            const struct silofs_qstr *name, ino_t ino, mode_t dt)
 {
 	const struct silofs_dir_entry *de = NULL;
-	const size_t nlen = name->str.len;
+	const size_t nlen = name->s.len;
 
 	if (!dtn_may_insert(dtn, nlen)) {
 		return NULL;
 	}
-	de = de_insert(dtn_begin(dtn), dtn_end(dtn), &name->str, ino, dt);
+	de = de_insert(dtn_begin(dtn), dtn_end(dtn), &name->s, ino, dt);
 	if (de == NULL) {
 		return NULL;
 	}
@@ -872,6 +874,16 @@ static struct silofs_inode_dir *idr_of(const struct silofs_inode *inode)
 	return &dir_inode->i_sp.d;
 }
 
+static uint64_t idr_seed(const struct silofs_inode_dir *idr)
+{
+	return silofs_le64_to_cpu(idr->d_seed);
+}
+
+static void idr_set_seed(struct silofs_inode_dir *idr, size_t seed)
+{
+	idr->d_seed = silofs_cpu_to_le64(seed);
+}
+
 static uint64_t idr_ndents(const struct silofs_inode_dir *idr)
 {
 	return silofs_le64_to_cpu(idr->d_ndents);
@@ -938,17 +950,30 @@ static enum silofs_dirf idr_flags(const struct silofs_inode_dir *idr)
 }
 
 static void idr_set_flags(struct silofs_inode_dir *idr,
-                          enum silofs_dirf f)
+                          enum silofs_dirf flags)
 {
-	idr->d_flags = silofs_cpu_to_le32((uint32_t)f);
+	idr->d_flags = silofs_cpu_to_le32((uint32_t)flags);
 }
 
-static void idr_setup(struct silofs_inode_dir *idr)
+static enum silofs_dirhfn idr_hashfn(const struct silofs_inode_dir *idr)
 {
+	return (enum silofs_dirhfn)(idr->d_hashfn);
+}
+
+static void idr_set_hashfn(struct silofs_inode_dir *idr,
+                           enum silofs_dirhfn hfn)
+{
+	idr->d_hashfn = (uint8_t)hfn;
+}
+
+static void idr_setup(struct silofs_inode_dir *idr, uint64_t seed)
+{
+	idr_set_seed(idr, seed);
 	idr_set_htree_root(idr, SILOFS_OFF_NULL);
 	idr_set_last_index(idr, DTREE_INDEX_NULL);
 	idr_set_ndents(idr, 0);
-	idr_set_flags(idr, SILOFS_DIRF_HASH_SHA256 | SILOFS_DIRF_NAME_UTF8);
+	idr_set_flags(idr, SILOFS_DIRF_NAME_UTF8);
+	idr_set_hashfn(idr, SILOFS_DIRHASH_XXH64);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1017,12 +1042,30 @@ size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii)
 	return dir_ndents(dir_ii);
 }
 
+uint64_t silofs_dir_seed(const struct silofs_inode_info *dir_ii)
+{
+	return idr_seed(dir_ispec_of(dir_ii));
+}
+
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
 {
 	return idr_flags(dir_ispec_of(dir_ii));
 }
 
+enum silofs_dirhfn silofs_dir_hfn(const struct silofs_inode_info *dir_ii)
+{
+	return idr_hashfn(dir_ispec_of(dir_ii));
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint64_t unique_seed(void)
+{
+	uint64_t s;
+
+	silofs_getentropy(&s, sizeof(s));
+	return s ^ (uint64_t)silofs_time_now();
+}
 
 void silofs_setup_dir(struct silofs_inode_info *dir_ii,
                       mode_t parent_mode, nlink_t nlink)
@@ -1037,7 +1080,7 @@ void silofs_setup_dir(struct silofs_inode_info *dir_ii,
 		SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE
 	};
 
-	idr_setup(idr_of(dir_ii->inode));
+	idr_setup(idr_of(dir_ii->inode), unique_seed());
 	ii_update_iattrs(dir_ii, NULL, &iattr);
 }
 
@@ -1090,7 +1133,7 @@ static int dic_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
-	ret = silofs_stage_vnode(d_ctx->sbi, vaddr, d_ctx->stg_flags, &vi);
+	ret = silofs_sbi_stage_vnode(d_ctx->sbi, vaddr, d_ctx->stg_flags, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -1137,7 +1180,7 @@ static int dic_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_dnode_info *dni = NULL;
 
-	err = silofs_spawn_vnode(d_ctx->sbi, SILOFS_STYPE_DTNODE, &vi);
+	err = silofs_sbi_spawn_vnode(d_ctx->sbi, SILOFS_STYPE_DTNODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -1150,7 +1193,7 @@ static int dic_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 static int dic_remove_dnode(const struct silofs_dir_ctx *d_ctx,
                             struct silofs_dnode_info *dni)
 {
-	return silofs_remove_vnode(d_ctx->sbi, &dni->dn_vi);
+	return silofs_sbi_remove_vnode(d_ctx->sbi, &dni->dn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1295,10 +1338,10 @@ static int dic_check_self_and_name(const struct silofs_dir_ctx *d_ctx)
 	if (!ii_isdir(d_ctx->dir_ii)) {
 		return -ENOTDIR;
 	}
-	if (d_ctx->name->str.len == 0) {
+	if (d_ctx->name->s.len == 0) {
 		return -EINVAL;
 	}
-	if (d_ctx->name->str.len > SILOFS_NAME_MAX) {
+	if (d_ctx->name->s.len > SILOFS_NAME_MAX) {
 		return -ENAMETOOLONG;
 	}
 	return 0;
@@ -1551,7 +1594,8 @@ int silofs_add_dentry(const struct silofs_fs_ctx *fs_ctx,
 static int dic_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
                            struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(d_ctx->sbi, ino, d_ctx->stg_flags, out_ii);
+	return silofs_sbi_stage_inode(d_ctx->sbi, ino,
+	                              d_ctx->stg_flags, out_ii);
 }
 
 static int dic_check_stage_parent(struct silofs_dir_ctx *d_ctx)

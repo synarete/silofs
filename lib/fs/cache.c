@@ -15,7 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
+#include <silofs/fs/nodes.h>
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/boot.h>
@@ -42,7 +44,7 @@ struct silofs_cache_ctx {
 	struct silofs_blob_info  *bli;
 	struct silofs_ubk_info   *ubi;
 	struct silofs_vbk_info   *vbi;
-	struct silofs_tnode_info *ti;
+	struct silofs_snode_info *si;
 	struct silofs_unode_info *ui;
 	struct silofs_vnode_info *vi;
 	size_t limit;
@@ -89,45 +91,45 @@ static uint64_t twang_mix64(uint64_t key)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_block *bk_malloc(struct silofs_alloc_if *alif)
+static struct silofs_block *bk_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_block *bk;
 
-	bk = silofs_allocate(alif, sizeof(*bk));
+	bk = silofs_allocate(alloc, sizeof(*bk));
 	return bk;
 }
 
-static void bk_free(struct silofs_block *bk, struct silofs_alloc_if *alif)
+static void bk_free(struct silofs_block *bk, struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, bk, sizeof(*bk));
+	silofs_deallocate(alloc, bk, sizeof(*bk));
 }
 
-static struct silofs_ubk_info *ubi_malloc(struct silofs_alloc_if *alif)
+static struct silofs_ubk_info *ubi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_ubk_info *ubi;
 
-	ubi = silofs_allocate(alif, sizeof(*ubi));
+	ubi = silofs_allocate(alloc, sizeof(*ubi));
 	return ubi;
 }
 
 static void ubi_free(struct silofs_ubk_info *ubi,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, ubi, sizeof(*ubi));
+	silofs_deallocate(alloc, ubi, sizeof(*ubi));
 }
 
-static struct silofs_vbk_info *vbi_malloc(struct silofs_alloc_if *alif)
+static struct silofs_vbk_info *vbi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_vbk_info *vbi;
 
-	vbi = silofs_allocate(alif, sizeof(*vbi));
+	vbi = silofs_allocate(alloc, sizeof(*vbi));
 	return vbi;
 }
 
 static void vbi_free(struct silofs_vbk_info *vbi,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alif, vbi, sizeof(*vbi));
+	silofs_deallocate(alloc, vbi, sizeof(*vbi));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -397,6 +399,7 @@ static void ce_incref(struct silofs_cache_elem *ce)
 static void ce_decref(struct silofs_cache_elem *ce)
 {
 	silofs_atomic_sub(&ce->ce_refcnt, 1);
+	silofs_assert_ge(ce->ce_refcnt, 0);
 }
 
 static bool ce_is_evictable(const struct silofs_cache_elem *ce)
@@ -407,11 +410,11 @@ static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int lrumap_init(struct silofs_lrumap *lm,
-                       struct silofs_alloc_if *alif, size_t cap)
+                       struct silofs_alloc *alloc, size_t cap)
 {
 	struct silofs_list_head *htbl;
 
-	htbl = silofs_lista_new(alif, cap);
+	htbl = silofs_lista_new(alloc, cap);
 	if (htbl == NULL) {
 		return -ENOMEM;
 	}
@@ -422,10 +425,10 @@ static int lrumap_init(struct silofs_lrumap *lm,
 	return 0;
 }
 
-static void lrumap_fini(struct silofs_lrumap *lm, struct silofs_alloc_if *alif)
+static void lrumap_fini(struct silofs_lrumap *lm, struct silofs_alloc *alloc)
 {
 	if (lm->lm_htbl != NULL) {
-		silofs_lista_del(lm->lm_htbl, lm->lm_htbl_cap, alif);
+		silofs_lista_del(lm->lm_htbl, lm->lm_htbl_cap, alloc);
 		listq_fini(&lm->lm_lru);
 		lm->lm_htbl = NULL;
 		lm->lm_htbl_cap = 0;
@@ -458,10 +461,10 @@ static void lrumap_store(struct silofs_lrumap *lm,
 static struct silofs_cache_elem *
 lrumap_find(const struct silofs_lrumap *lm, const struct silofs_ckey *ckey)
 {
-	size_t bin;
 	const struct silofs_list_head *lst;
 	const struct silofs_list_head *itr;
 	const struct silofs_cache_elem *ce;
+	size_t bin;
 
 	bin = lrumap_key_to_bin(lm, ckey);
 	lst = &lm->lm_htbl[bin];
@@ -515,13 +518,12 @@ static struct silofs_cache_elem *lrumap_get_lru(const struct silofs_lrumap *lm)
 static void lrumap_foreach_backward(struct silofs_lrumap *lm,
                                     silofs_cache_elem_fn cb, void *arg)
 {
-	int ret = 0;
-	size_t count;
 	struct silofs_cache_elem *ce;
 	struct silofs_listq *lru = &lm->lm_lru;
 	struct silofs_list_head *itr = lru->ls.prev;
+	size_t count = lru->sz;
+	int ret = 0;
 
-	count = lru->sz;
 	while (!ret && count-- && (itr != &lru->ls)) {
 		ce = ce_from_lru_link(itr);
 		itr = itr->prev;
@@ -721,53 +723,53 @@ static bool vbi_is_evictable(const struct silofs_vbk_info *vbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_tnode_info *ti_from_ce(const struct silofs_cache_elem *ce)
+static struct silofs_snode_info *si_from_ce(const struct silofs_cache_elem *ce)
 {
-	const struct silofs_tnode_info *ti = NULL;
+	const struct silofs_snode_info *si = NULL;
 
 	if (likely(ce != NULL)) {
-		ti = container_of2(ce, struct silofs_tnode_info, t_ce);
+		si = container_of2(ce, struct silofs_snode_info, s_ce);
 	}
-	return unconst(ti);
+	return unconst(si);
 }
 
-static struct silofs_cache_elem *ti_to_ce(const struct silofs_tnode_info *ti)
+static struct silofs_cache_elem *si_to_ce(const struct silofs_snode_info *si)
 {
-	const struct silofs_cache_elem *ce = &ti->t_ce;
+	const struct silofs_cache_elem *ce = &si->s_ce;
 
 	return unconst(ce);
 }
 
-static struct silofs_cache *ti_cache(const struct silofs_tnode_info *ti)
+static struct silofs_cache *si_cache(const struct silofs_snode_info *si)
 {
-	return ti->t_ce.ce_cache;
+	return si->s_ce.ce_cache;
 }
 
-static void ti_set_cache(struct silofs_tnode_info *ti,
+static void si_set_cache(struct silofs_snode_info *si,
                          struct silofs_cache *cache)
 {
-	ti->t_ce.ce_cache = cache;
+	si->s_ce.ce_cache = cache;
 }
 
-bool silofs_ti_isevictable(const struct silofs_tnode_info *ti)
+bool silofs_si_isevictable(const struct silofs_snode_info *si)
 {
-	return ce_is_evictable(ti_to_ce(ti));
+	return ce_is_evictable(si_to_ce(si));
 }
 
-static void ti_incref(struct silofs_tnode_info *ti)
+static void si_incref(struct silofs_snode_info *si)
 {
-	ce_incref(&ti->t_ce);
+	ce_incref(&si->s_ce);
 }
 
-static void ti_decref(struct silofs_tnode_info *ti)
+static void si_decref(struct silofs_snode_info *si)
 {
-	ce_decref(&ti->t_ce);
+	ce_decref(&si->s_ce);
 }
 
-static void ti_remove_from_lrumap(struct silofs_tnode_info *ti,
+static void si_remove_from_lrumap(struct silofs_snode_info *si,
                                   struct silofs_lrumap *lm)
 {
-	struct silofs_cache_elem *ce = ti_to_ce(ti);
+	struct silofs_cache_elem *ce = si_to_ce(si);
 
 	if (ce->ce_mapped) {
 		lrumap_remove(lm, ce);
@@ -776,20 +778,19 @@ static void ti_remove_from_lrumap(struct silofs_tnode_info *ti,
 	}
 }
 
-static void ti_delete(struct silofs_tnode_info *ti,
-                      struct silofs_alloc_if *alif)
+static void si_delete(struct silofs_snode_info *si, struct silofs_alloc *alloc)
 {
-	ti->t_vtbl->del(ti, alif);
+	si->s_vtbl->del(si, alloc);
 }
 
 static int visit_evictable_ti(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_tnode_info *ti = ti_from_ce(ce);
+	struct silofs_snode_info *si = si_from_ce(ce);
 
 	c_ctx->count++;
-	if (ti->t_vtbl->evictable(ti)) {
-		c_ctx->ti = ti; /* fount evictable */
+	if (si->s_vtbl->evictable(si)) {
+		c_ctx->si = si; /* fount evictable */
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {
@@ -802,20 +803,20 @@ static int visit_evictable_ti(struct silofs_cache_elem *ce, void *arg)
 
 static struct silofs_cache *ui_cache(const struct silofs_unode_info *ui)
 {
-	return ti_cache(&ui->u_ti);
+	return si_cache(&ui->u_si);
 }
 
 void silofs_ui_incref(struct silofs_unode_info *ui)
 {
 	if (likely(ui != NULL)) {
-		ti_incref(&ui->u_ti);
+		si_incref(&ui->u_si);
 	}
 }
 
 void silofs_ui_decref(struct silofs_unode_info *ui)
 {
 	if (likely(ui != NULL)) {
-		ti_decref(&ui->u_ti);
+		si_decref(&ui->u_si);
 	}
 }
 
@@ -834,14 +835,14 @@ static struct silofs_unode_info *ui_from_ce(struct silofs_cache_elem *ce)
 	struct silofs_unode_info *ui = NULL;
 
 	if (ce != NULL) {
-		ui = silofs_ui_from_ti(ti_from_ce(ce));
+		ui = silofs_ui_from_si(si_from_ce(ce));
 	}
 	return ui;
 }
 
 static struct silofs_cache_elem *ui_to_ce(struct silofs_unode_info *ui)
 {
-	return ti_to_ce(&ui->u_ti);
+	return si_to_ce(&ui->u_si);
 }
 
 static void ui_attach_bk(struct silofs_unode_info *ui,
@@ -863,12 +864,12 @@ static void ui_detach_bk(struct silofs_unode_info *ui)
 
 static int visit_evictable_ui(struct silofs_cache_elem *ce, void *arg)
 {
-	int ret;
 	struct silofs_cache_ctx *c_ctx = arg;
+	int ret;
 
 	ret = visit_evictable_ti(ce, arg);
-	if (ret && (c_ctx->ti != NULL)) {
-		c_ctx->ui = silofs_ui_from_ti(c_ctx->ti);
+	if (ret && (c_ctx->si != NULL)) {
+		c_ctx->ui = silofs_ui_from_si(c_ctx->si);
 	}
 	return ret;
 }
@@ -883,14 +884,14 @@ void silofs_ui_attach_to(struct silofs_unode_info *ui,
 
 static bool ui_is_evictable(const struct silofs_unode_info *ui)
 {
-	return ui->u_ti.t_vtbl->evictable(&ui->u_ti);
+	return ui->u_si.s_vtbl->evictable(&ui->u_si);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_cache *vi_cache(const struct silofs_vnode_info *vi)
 {
-	return ti_cache(&vi->v_ti);
+	return si_cache(&vi->v_si);
 }
 
 static struct silofs_vnode_info *vi_from_ce(struct silofs_cache_elem *ce)
@@ -898,14 +899,14 @@ static struct silofs_vnode_info *vi_from_ce(struct silofs_cache_elem *ce)
 	struct silofs_vnode_info *vi = NULL;
 
 	if (ce != NULL) {
-		vi = silofs_vi_from_ti(ti_from_ce(ce));
+		vi = silofs_vi_from_si(si_from_ce(ce));
 	}
 	return vi;
 }
 
 static struct silofs_cache_elem *vi_to_ce(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_cache_elem *ce = &vi->v_ti.t_ce;
+	const struct silofs_cache_elem *ce = &vi->v_si.s_ce;
 
 	return unconst(ce);
 }
@@ -916,8 +917,8 @@ static int visit_evictable_vi(struct silofs_cache_elem *ce, void *arg)
 	struct silofs_cache_ctx *c_ctx = arg;
 
 	ret = visit_evictable_ti(ce, arg);
-	if (ret && (c_ctx->ti != NULL)) {
-		c_ctx->vi = silofs_vi_from_ti(c_ctx->ti);
+	if (ret && (c_ctx->si != NULL)) {
+		c_ctx->vi = silofs_vi_from_si(c_ctx->si);
 	}
 	return ret;
 }
@@ -972,7 +973,7 @@ void silofs_vi_attach_to(struct silofs_vnode_info *vi,
 
 static bool vi_is_evictable(const struct silofs_vnode_info *vi)
 {
-	return vi->v_ti.t_vtbl->evictable(&vi->v_ti);
+	return vi->v_si.s_vtbl->evictable(&vi->v_si);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1019,89 +1020,89 @@ dq_next_of(const struct silofs_dirtyq *dq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_tnode_info *dq_lh_to_ti(struct silofs_list_head *dq_lh)
+static struct silofs_snode_info *dq_lh_to_si(struct silofs_list_head *dq_lh)
 {
-	const struct silofs_tnode_info *ti = NULL;
+	const struct silofs_snode_info *si = NULL;
 
 	if (dq_lh != NULL) {
-		ti = container_of(dq_lh, struct silofs_tnode_info, t_dq_lh);
+		si = container_of(dq_lh, struct silofs_snode_info, s_dq_lh);
 	}
-	return unconst(ti);
+	return unconst(si);
 }
 
-static void cache_dq_enq_ti(struct silofs_cache *cache,
-                            struct silofs_tnode_info *ti)
+static void cache_dq_enq_si(struct silofs_cache *cache,
+                            struct silofs_snode_info *si)
 {
 	struct silofs_dirtyq *dq = &cache->c_dq;
 
-	if (!ti->t_ce.ce_dirty) {
-		dq_append(dq, &ti->t_dq_lh, stype_size(ti->t_stype));
-		ti->t_ce.ce_dirty = true;
+	if (!si->s_ce.ce_dirty) {
+		dq_append(dq, &si->s_dq_lh, stype_size(si->s_stype));
+		si->s_ce.ce_dirty = true;
 	}
 }
 
-static void cache_dq_dec_ti(struct silofs_cache *cache,
-                            struct silofs_tnode_info *ti)
+static void cache_dq_dec_si(struct silofs_cache *cache,
+                            struct silofs_snode_info *si)
 {
 	struct silofs_dirtyq *dq = &cache->c_dq;
 
-	if (ti->t_ce.ce_dirty) {
-		dq_remove(dq, &ti->t_dq_lh, stype_size(ti->t_stype));
-		ti->t_ce.ce_dirty = false;
+	if (si->s_ce.ce_dirty) {
+		dq_remove(dq, &si->s_dq_lh, stype_size(si->s_stype));
+		si->s_ce.ce_dirty = false;
 	}
 }
 
-static void cache_dirtify_ti(struct silofs_cache *cache,
-                             struct silofs_tnode_info *ti)
+static void cache_dirtify_si(struct silofs_cache *cache,
+                             struct silofs_snode_info *si)
 {
-	cache_dq_enq_ti(cache, ti);
+	cache_dq_enq_si(cache, si);
 }
 
-static void cache_undirtify_ti(struct silofs_cache *cache,
-                               struct silofs_tnode_info *ti)
+static void cache_undirtify_si(struct silofs_cache *cache,
+                               struct silofs_snode_info *si)
 {
-	cache_dq_dec_ti(cache, ti);
+	cache_dq_dec_si(cache, si);
 }
 
-static struct silofs_tnode_info *
-cache_dq_front_ti(const struct silofs_cache *cache)
+static struct silofs_snode_info *
+cache_dq_front_si(const struct silofs_cache *cache)
 {
 	const struct silofs_dirtyq *dq = &cache->c_dq;
 
-	return dq_lh_to_ti(dq_front(dq));
+	return dq_lh_to_si(dq_front(dq));
 }
 
-static struct silofs_tnode_info *
-cache_dq_next_ti(const struct silofs_cache *cache,
-                 const struct silofs_tnode_info *ti)
+static struct silofs_snode_info *
+cache_dq_next_si(const struct silofs_cache *cache,
+                 const struct silofs_snode_info *si)
 {
 	const struct silofs_dirtyq *dq = &cache->c_dq;
 
-	return dq_lh_to_ti(dq_next_of(dq, &ti->t_dq_lh));
+	return dq_lh_to_si(dq_next_of(dq, &si->s_dq_lh));
 }
 
 static void cache_dirtify_ui(struct silofs_cache *cache,
                              struct silofs_unode_info *ui)
 {
-	cache_dirtify_ti(cache, &ui->u_ti);
+	cache_dirtify_si(cache, &ui->u_si);
 }
 
 static void cache_undirtify_ui(struct silofs_cache *cache,
                                struct silofs_unode_info *ui)
 {
-	cache_undirtify_ti(cache, &ui->u_ti);
+	cache_undirtify_si(cache, &ui->u_si);
 }
 
 static void cache_dirtify_vi(struct silofs_cache *cache,
                              struct silofs_vnode_info *vi)
 {
-	cache_dirtify_ti(cache, &vi->v_ti);
+	cache_dirtify_si(cache, &vi->v_si);
 }
 
 static void cache_undirtify_vi(struct silofs_cache *cache,
                                struct silofs_vnode_info *vi)
 {
-	cache_undirtify_ti(cache, &vi->v_ti);
+	cache_undirtify_si(cache, &vi->v_si);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1110,23 +1111,23 @@ static struct silofs_blob_info *
 cache_new_bli(const struct silofs_cache *cache,
               const struct silofs_blobid *blobid)
 {
-	return silofs_bli_new(cache->c_alif, blobid);
+	return silofs_bli_new(cache->c_alloc, blobid);
 }
 
 static void cache_del_bli(const struct silofs_cache *cache,
                           struct silofs_blob_info *bli)
 {
-	silofs_bli_del(bli, cache->c_alif);
+	silofs_bli_del(bli, cache->c_alloc);
 }
 
 static int cache_init_bli_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_bli_lm, cache->c_alif, htbl_size);
+	return lrumap_init(&cache->c_bli_lm, cache->c_alloc, htbl_size);
 }
 
 static void cache_fini_bli_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_bli_lm, cache->c_alif);
+	lrumap_fini(&cache->c_bli_lm, cache->c_alloc);
 }
 
 static struct silofs_blob_info *
@@ -1357,15 +1358,15 @@ cache_new_ubi(const struct silofs_cache *cache,
 {
 	struct silofs_block *ubk;
 	struct silofs_ubk_info *ubi = NULL;
-	struct silofs_alloc_if *alif = cache->c_alif;
+	struct silofs_alloc *alloc = cache->c_alloc;
 
-	ubk = bk_malloc(alif);
+	ubk = bk_malloc(alloc);
 	if (ubk == NULL) {
 		return NULL;
 	}
-	ubi = ubi_malloc(alif);
+	ubi = ubi_malloc(alloc);
 	if (ubi == NULL) {
-		bk_free(ubk, alif);
+		bk_free(ubk, alloc);
 		return NULL;
 	}
 	ubi_init(ubi, ubk, bkaddr);
@@ -1376,22 +1377,22 @@ static void cache_del_ubi(const struct silofs_cache *cache,
                           struct silofs_ubk_info *ubi)
 {
 	struct silofs_block *ubk = ubi->ubk;
-	struct silofs_alloc_if *alif = cache->c_alif;
+	struct silofs_alloc *alloc = cache->c_alloc;
 
 	ubi_detach(ubi);
 	ubi_fini(ubi);
-	ubi_free(ubi, alif);
-	bk_free(ubk, alif);
+	ubi_free(ubi, alloc);
+	bk_free(ubk, alloc);
 }
 
 static int cache_init_ubi_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_ubi_lm, cache->c_alif, htbl_size);
+	return lrumap_init(&cache->c_ubi_lm, cache->c_alloc, htbl_size);
 }
 
 static void cache_fini_ubi_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_ubi_lm, cache->c_alif);
+	lrumap_fini(&cache->c_ubi_lm, cache->c_alloc);
 }
 
 static struct silofs_ubk_info *
@@ -1615,12 +1616,12 @@ silofs_cache_spawn_ubk(struct silofs_cache *cache,
 
 static int cache_init_ui_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_ui_lm, cache->c_alif, htbl_size);
+	return lrumap_init(&cache->c_ui_lm, cache->c_alloc, htbl_size);
 }
 
 static void cache_fini_ui_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_ui_lm, cache->c_alif);
+	lrumap_fini(&cache->c_ui_lm, cache->c_alloc);
 }
 
 static struct silofs_unode_info *
@@ -1670,7 +1671,7 @@ cache_find_relru_ui(struct silofs_cache *cache,
 static void cache_remove_ui(struct silofs_cache *cache,
                             struct silofs_unode_info *ui)
 {
-	ti_remove_from_lrumap(&ui->u_ti, &cache->c_ui_lm);
+	si_remove_from_lrumap(&ui->u_si, &cache->c_ui_lm);
 }
 
 static void cache_unmap_ui(struct silofs_cache *cache,
@@ -1688,12 +1689,12 @@ static void cache_map_ui(struct silofs_cache *cache,
 static void cache_evict_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_tnode_info *ti = &ui->u_ti;
+	struct silofs_snode_info *ti = &ui->u_si;
 
 	cache_unmap_ui(cache, ui);
 	cache_remove_ui(cache, ui);
 	ui_detach_bk(ui);
-	ti_delete(ti, cache->c_alif);
+	si_delete(ti, cache->c_alloc);
 }
 
 static void cache_store_ui_lrumap(struct silofs_cache *cache,
@@ -1713,10 +1714,10 @@ static struct silofs_unode_info *cache_get_lru_ui(struct silofs_cache *cache)
 static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
                                     struct silofs_unode_info *ui)
 {
+	struct silofs_snode_info *ti = &ui->u_si;
 	bool evicted;
-	struct silofs_tnode_info *ti = &ui->u_ti;
 
-	if (ti->t_vtbl->evictable(ti)) {
+	if (ti->s_vtbl->evictable(ti)) {
 		cache_evict_ui(cache, ui);
 		evicted = true;
 	} else {
@@ -1765,7 +1766,7 @@ static struct silofs_unode_info *
 cache_new_ui(const struct silofs_cache *cache,
              const struct silofs_uaddr *uaddr)
 {
-	return silofs_new_ui(cache->c_alif, uaddr);
+	return silofs_new_ui(cache->c_alloc, uaddr);
 }
 
 struct silofs_unode_info *
@@ -1794,10 +1795,10 @@ cache_require_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 static void cache_store_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_tnode_info *ti = &ui->u_ti;
+	struct silofs_snode_info *ti = &ui->u_si;
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 
-	ckey_by_uaddr(&ti->t_ce.ce_ckey, uaddr);
+	ckey_by_uaddr(&ti->s_ce.ce_ckey, uaddr);
 	cache_store_ui_lrumap(cache, ui);
 	cache_map_ui(cache, ui);
 }
@@ -1810,7 +1811,7 @@ silofs_cache_spawn_unode(struct silofs_cache *cache,
 
 	ui = cache_require_ui(cache, uaddr);
 	if (ui != NULL) {
-		ti_set_cache(&ui->u_ti, cache);
+		si_set_cache(&ui->u_si, cache);
 		cache_store_ui(cache, ui);
 	}
 	return ui;
@@ -1838,13 +1839,13 @@ cache_new_vbi(const struct silofs_cache *cache, loff_t voff)
 	struct silofs_block *bk;
 	struct silofs_vbk_info *vbi;
 
-	bk = bk_malloc(cache->c_alif);
+	bk = bk_malloc(cache->c_alloc);
 	if (bk == NULL) {
 		return NULL;
 	}
-	vbi = vbi_malloc(cache->c_alif);
+	vbi = vbi_malloc(cache->c_alloc);
 	if (vbi == NULL) {
-		bk_free(bk, cache->c_alif);
+		bk_free(bk, cache->c_alloc);
 		return NULL;
 	}
 	vbi_init(vbi, bk, voff);
@@ -1857,18 +1858,18 @@ static void cache_del_vbi(const struct silofs_cache *cache,
 	struct silofs_block *bk = vbi->vbk;
 
 	vbi_fini(vbi);
-	bk_free(bk, cache->c_alif);
-	vbi_free(vbi, cache->c_alif);
+	bk_free(bk, cache->c_alloc);
+	vbi_free(vbi, cache->c_alloc);
 }
 
 static int cache_init_vbi_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_vbi_lm, cache->c_alif, htbl_size);
+	return lrumap_init(&cache->c_vbi_lm, cache->c_alloc, htbl_size);
 }
 
 static void cache_fini_vbi_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_vbi_lm, cache->c_alif);
+	lrumap_fini(&cache->c_vbi_lm, cache->c_alloc);
 }
 
 static struct silofs_vbk_info *
@@ -2082,12 +2083,12 @@ silofs_cache_spawn_vbk(struct silofs_cache *cache, loff_t voff)
 
 static int cache_init_vi_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_vi_lm, cache->c_alif, htbl_size);
+	return lrumap_init(&cache->c_vi_lm, cache->c_alloc, htbl_size);
 }
 
 static void cache_fini_vi_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_vi_lm, cache->c_alif);
+	lrumap_fini(&cache->c_vi_lm, cache->c_alloc);
 }
 
 static struct silofs_vnode_info *
@@ -2137,17 +2138,17 @@ cache_find_relru_vi(struct silofs_cache *cache,
 static void cache_remove_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
-	ti_remove_from_lrumap(&vi->v_ti, &cache->c_vi_lm);
+	si_remove_from_lrumap(&vi->v_si, &cache->c_vi_lm);
 }
 
 static void cache_evict_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_tnode_info *ti = &vi->v_ti;
+	struct silofs_snode_info *ti = &vi->v_si;
 
 	cache_remove_vi(cache, vi);
 	vi_detach_bk(vi);
-	ti_delete(ti, cache->c_alif);
+	si_delete(ti, cache->c_alloc);
 }
 
 static void cache_store_vi_lrumap(struct silofs_cache *cache,
@@ -2159,9 +2160,9 @@ static void cache_store_vi_lrumap(struct silofs_cache *cache,
 static void cache_store_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_tnode_info *ti = &vi->v_ti;
+	struct silofs_snode_info *ti = &vi->v_si;
 
-	ckey_by_vaddr(&ti->t_ce.ce_ckey, &vi->v_vaddr);
+	ckey_by_vaddr(&ti->s_ce.ce_ckey, &vi->v_vaddr);
 	cache_store_vi_lrumap(cache, vi);
 }
 
@@ -2176,10 +2177,10 @@ static struct silofs_vnode_info *cache_get_lru_vi(struct silofs_cache *cache)
 static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
                                     struct silofs_vnode_info *vi)
 {
-	struct silofs_tnode_info *ti = &vi->v_ti;
+	struct silofs_snode_info *si = &vi->v_si;
 	bool evicted;
 
-	if (ti->t_vtbl->evictable(ti)) {
+	if (si->s_vtbl->evictable(si)) {
 		cache_evict_vi(cache, vi);
 		evicted = true;
 	} else {
@@ -2230,7 +2231,7 @@ static struct silofs_vnode_info *
 cache_new_vi(const struct silofs_cache *cache,
              const struct silofs_vaddr *vaddr)
 {
-	return silofs_new_vi(cache->c_alif, vaddr);
+	return silofs_new_vi(cache->c_alloc, vaddr);
 }
 
 struct silofs_vnode_info *
@@ -2259,7 +2260,7 @@ cache_require_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 static void cache_unmap_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	if (vi->v_ti.t_ce.ce_mapped) {
+	if (vi->v_si.s_ce.ce_mapped) {
 		lrumap_unmap(&cache->c_vi_lm, vi_to_ce(vi));
 	}
 }
@@ -2270,7 +2271,7 @@ void silofs_cache_forget_vnode(struct silofs_cache *cache,
 	vi_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
-		vi->v_ti.t_ce.ce_forgot = true;
+		vi->v_si.s_ce.ce_forgot = true;
 	} else {
 		cache_evict_vi(cache, vi);
 	}
@@ -2284,7 +2285,7 @@ silofs_cache_spawn_vnode(struct silofs_cache *cache,
 
 	vi = cache_require_vi(cache, vaddr);
 	if (vi != NULL) {
-		ti_set_cache(&vi->v_ti, cache);
+		si_set_cache(&vi->v_si, cache);
 		cache_store_vi(cache, vi);
 	}
 	return vi;
@@ -2338,7 +2339,7 @@ static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
 	struct silofs_alloc_stat st;
 	uint64_t nbits;
 
-	silofs_allocstat(cache->c_alif, &st);
+	silofs_allocstat(cache->c_alloc, &st);
 	nbits = min((64UL * st.npages_used) / st.npages_tota, 63);
 
 	/* returns memory-pressure represented as bit-mask */
@@ -2460,13 +2461,16 @@ static size_t flush_threshold_of(int flags)
 	return threshold;
 }
 
-static bool cache_dq_need_flush(const struct silofs_cache *cache,
-                                const struct silofs_dirtyq *dq, int flags)
+static bool dq_need_flush(const struct silofs_dirtyq *dq, int flags)
 {
-	const size_t threshold = flush_threshold_of(flags);
+	size_t threshold;
+	bool ret = false;
 
-	silofs_unused(cache);
-	return (dq->dq_accum_nbytes > threshold);
+	if (dq->dq_accum_nbytes) {
+		threshold = flush_threshold_of(flags);
+		ret = (dq->dq_accum_nbytes > threshold);
+	}
+	return ret;
 }
 
 static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
@@ -2478,7 +2482,7 @@ static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
 
 bool silofs_cache_need_flush(const struct silofs_cache *cache, int flags)
 {
-	return cache_dq_need_flush(cache, &cache->c_dq, flags) ||
+	return dq_need_flush(&cache->c_dq, flags) ||
 	       cache_mem_press_need_flush(cache);
 }
 
@@ -2584,7 +2588,7 @@ static int cache_init_nil_bk(struct silofs_cache *cache)
 {
 	struct silofs_block *nil_bk;
 
-	nil_bk = silofs_allocate(cache->c_alif, sizeof(*nil_bk));
+	nil_bk = silofs_allocate(cache->c_alloc, sizeof(*nil_bk));
 	if (nil_bk == NULL) {
 		return -ENOMEM;
 	}
@@ -2598,7 +2602,7 @@ static void cache_fini_nil_bk(struct silofs_cache *cache)
 	struct silofs_block *nil_bk = cache->c_nil_bk;
 
 	if (nil_bk != NULL) {
-		silofs_deallocate(cache->c_alif, nil_bk, sizeof(*nil_bk));
+		silofs_deallocate(cache->c_alloc, nil_bk, sizeof(*nil_bk));
 		cache->c_nil_bk = NULL;
 	}
 }
@@ -2657,7 +2661,7 @@ out_err:
 
 static int cache_init_spamaps(struct silofs_cache *cache)
 {
-	return silofs_spamaps_init(&cache->c_spam, cache->c_alif);
+	return silofs_spamaps_init(&cache->c_spam, cache->c_alloc);
 }
 
 static void cache_fini_spamaps(struct silofs_cache *cache)
@@ -2667,21 +2671,21 @@ static void cache_fini_spamaps(struct silofs_cache *cache)
 
 static int cache_init_unomap(struct silofs_cache *cache)
 {
-	return silofs_unomap_init(&cache->c_unom, cache->c_alif);
+	return silofs_unomap_init(&cache->c_unom, cache->c_alloc);
 }
 
 static void cache_fini_unomap(struct silofs_cache *cache)
 {
-	silofs_unomap_fini(&cache->c_unom, cache->c_alif);
+	silofs_unomap_fini(&cache->c_unom, cache->c_alloc);
 }
 
 
 int silofs_cache_init(struct silofs_cache *cache,
-                      struct silofs_alloc_if *alif, size_t msz_hint)
+                      struct silofs_alloc *alloc, size_t msz_hint)
 {
 	int err;
 
-	cache->c_alif = alif;
+	cache->c_alloc = alloc;
 	cache->c_nil_bk = NULL;
 	cache->mem_size_hint = msz_hint;
 	dq_init(&cache->c_dq);
@@ -2717,7 +2721,7 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	cache_fini_nil_bk(cache);
 	cache_fini_unomap(cache);
 	cache_fini_spamaps(cache);
-	cache->c_alif = NULL;
+	cache->c_alloc = NULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2764,40 +2768,60 @@ void silofs_ii_decref(struct silofs_inode_info *ii)
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi)
 {
-	ti_incref(&sbi->s_ui.u_ti);
+	if (likely(sbi != NULL)) {
+		si_incref(&sbi->sb_ui.u_si);
+	}
 }
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi)
 {
-	ti_decref(&sbi->s_ui.u_ti);
+	if (likely(sbi != NULL)) {
+		si_decref(&sbi->sb_ui.u_si);
+	}
 }
+
+
+void silofs_sti_incref(struct silofs_stats_info *sti)
+{
+	if (likely(sti != NULL)) {
+		si_incref(&sti->st_ui.u_si);
+	}
+}
+
+void silofs_sti_decref(struct silofs_stats_info *sti)
+{
+	if (likely(sti != NULL)) {
+		si_decref(&sti->st_ui.u_si);
+	}
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_cache_fill_into_dset(const struct silofs_cache *cache,
                                  struct silofs_dset *dset)
 {
-	struct silofs_tnode_info *ti = NULL;
+	struct silofs_snode_info *si = NULL;
 
-	ti = cache_dq_front_ti(cache);
-	while (ti != NULL) {
-		if (!ti->t_noflush) {
-			dset->ds_add_fn(dset, ti);
+	si = cache_dq_front_si(cache);
+	while (si != NULL) {
+		if (!si->s_noflush) {
+			dset->ds_add_fn(dset, si);
 		}
-		ti = cache_dq_next_ti(cache, ti);
+		si = cache_dq_next_si(cache, si);
 	}
 }
 
 void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
                                     const struct silofs_dset *dset)
 {
-	struct silofs_tnode_info *next = NULL;
-	struct silofs_tnode_info *ti = dset->ds_tiq;
+	struct silofs_snode_info *si_next = NULL;
+	struct silofs_snode_info *si = dset->ds_siq;
 
-	while (ti != NULL) {
-		next = ti->t_ds_next;
-		cache_undirtify_ti(cache, ti);
-		ti->t_ds_next = NULL;
-		ti = next;
+	while (si != NULL) {
+		si_next = si->s_ds_next;
+		cache_undirtify_si(cache, si);
+		si->s_ds_next = NULL;
+		si = si_next;
 	}
 }

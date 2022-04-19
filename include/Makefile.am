@@ -5,7 +5,7 @@ nobase_include_HEADERS += silofs/infra/base64.h
 nobase_include_HEADERS += silofs/infra/bytebuf.h
 nobase_include_HEADERS += silofs/infra/consts.h
 nobase_include_HEADERS += silofs/infra/errors.h
-nobase_include_HEADERS += silofs/infra/xiovec.h
+nobase_include_HEADERS += silofs/infra/hash.h
 nobase_include_HEADERS += silofs/infra/list.h
 nobase_include_HEADERS += silofs/infra/logging.h
 nobase_include_HEADERS += silofs/infra/macros.h
@@ -19,6 +19,7 @@ nobase_include_HEADERS += silofs/infra/thread.h
 nobase_include_HEADERS += silofs/infra/time.h
 nobase_include_HEADERS += silofs/infra/utility.h
 nobase_include_HEADERS += silofs/infra/version.h
+nobase_include_HEADERS += silofs/infra/xiovec.h
 nobase_include_HEADERS += silofs/infra.h
 
 nobase_include_HEADERS += silofs/fs/address.h
@@ -47,14 +48,15 @@ nobase_include_HEADERS += silofs/fs/spclaim.h
 nobase_include_HEADERS += silofs/fs/spmaps.h
 nobase_include_HEADERS += silofs/fs/spxmap.h
 nobase_include_HEADERS += silofs/fs/stage.h
+nobase_include_HEADERS += silofs/fs/stats.h
 nobase_include_HEADERS += silofs/fs/super.h
 nobase_include_HEADERS += silofs/fs/symlink.h
 nobase_include_HEADERS += silofs/fs/types.h
+nobase_include_HEADERS += silofs/fs/umeta.h
 nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
 nobase_include_HEADERS += silofs/fs.h
 
-nobase_include_HEADERS += silofs/cmd.h
 nobase_include_HEADERS += silofs/mntd.h
 
 noinst_HEADERS = $(NULL)

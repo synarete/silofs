@@ -18,11 +18,14 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/boot.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/crypto.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/apex.h>
 #include <silofs/fs/super.h>
+#include <silofs/fs/stats.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/inode.h>
 #include <silofs/fs/dir.h>
@@ -45,9 +48,9 @@
 #include <limits.h>
 
 
-static int namestr_to_hash(const struct silofs_inode_info *dir_ii,
-                           const struct silofs_namestr *ns,
-                           uint64_t *out_hash);
+static int dii_namestr_to_hash(const struct silofs_inode_info *dir_ii,
+                               const struct silofs_namestr *ns,
+                               uint64_t *out_hash);
 
 static bool dir_hasflag(const struct silofs_inode_info *dir_ii,
                         enum silofs_dirf mask)
@@ -63,7 +66,7 @@ static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_sb_info *sbi = ii_sbi(ii);
 
-	return ((sbi->s_ctl_flags & SILOFS_F_NLOOKUP) != 0);
+	return ((sbi->sb_ctl_flags & SILOFS_F_NLOOKUP) != 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -195,8 +198,8 @@ static int new_inode(const struct silofs_fs_ctx *fs_ctx,
 	const mode_t parent_mode = ii_mode(parent_dir_ii);
 	struct silofs_sb_info *sbi = ii_sbi(parent_dir_ii);
 
-	return silofs_spawn_inode(sbi, creds_of(fs_ctx), parent_ino,
-	                          parent_mode, mode, rdev, out_ii);
+	return silofs_sbi_spawn_inode(sbi, creds_of(fs_ctx), parent_ino,
+	                              parent_mode, mode, rdev, out_ii);
 }
 
 static int new_dir_inode(const struct silofs_fs_ctx *fs_ctx,
@@ -249,7 +252,7 @@ static int new_inode_by_mode(const struct silofs_fs_ctx *fs_ctx,
 
 static int del_inode(struct silofs_inode_info *ii)
 {
-	return silofs_remove_inode(ii_sbi(ii), ii);
+	return silofs_sbi_remove_inode(ii_sbi(ii), ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -326,7 +329,7 @@ int silofs_do_access(const struct silofs_fs_ctx *fs_ctx,
 
 static int check_on_writable_fs(const struct silofs_inode_info *ii)
 {
-	return silof_check_writable_fs(ii_sbi(ii));
+	return silof_sbi_check_mut_fs(ii_sbi(ii));
 }
 
 static int check_waccess(const struct silofs_fs_ctx *fs_ctx,
@@ -367,21 +370,6 @@ static int check_dir_waccess(const struct silofs_fs_ctx *fs_ctx,
 	return 0;
 }
 
-static int check_name(const struct silofs_namestr *name)
-{
-	/* TODO: redundant checks; namestr should have valid name; remove */
-	if (name->str.len == 0) {
-		return -EINVAL;
-	}
-	if (name->str.len > SILOFS_NAME_MAX) {
-		return -ENAMETOOLONG;
-	}
-	if (memchr(name->str.str, '/', name->str.len)) {
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static int check_dir_and_name(const struct silofs_inode_info *ii,
                               const struct silofs_namestr *name)
 {
@@ -391,7 +379,7 @@ static int check_dir_and_name(const struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	err = check_name(name);
+	err = silofs_check_name(name);
 	if (err) {
 		return err;
 	}
@@ -425,12 +413,12 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = namestr_to_hash(dir_ii, nstr, &qstr->hash);
+	err = dii_namestr_to_hash(dir_ii, nstr, &qstr->hash);
 	if (err) {
 		return err;
 	}
-	qstr->str.str = nstr->str.str;
-	qstr->str.len = nstr->str.len;
+	qstr->s.str = nstr->s.str;
+	qstr->s.len = nstr->s.len;
 	return 0;
 }
 
@@ -468,7 +456,7 @@ static int stage_by_name(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_inode(sbi, ino, stg_flags, out_ii);
+	err = silofs_sbi_stage_inode(sbi, ino, stg_flags, out_ii);
 	if (err) {
 		return err;
 	}
@@ -686,7 +674,7 @@ static int check_mknod(const struct silofs_fs_ctx *fs_ctx,
 		if (rdev == 0) {
 			return -EINVAL;
 		}
-		if (sbi->s_ms_flags & MS_NODEV) {
+		if (sbi->sb_ms_flags & MS_NODEV) {
 			return -EOPNOTSUPP;
 		}
 	} else {
@@ -1936,62 +1924,23 @@ int silofs_do_rename(const struct silofs_fs_ctx *fs_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/*
- * TODO-0028: Use statvfs.f_bsize=BK (64K) and KB to statvfs.f_frsize=KB (1K)
- *
- * The semantics of statvfs and statfs are not entirely clear; in particular,
- * statvfs(3p) states that statvfs.f_blocks define the file-system's size in
- * f_frsize units, where f_bfree is number of free blocks (but without stating
- * explicit units). For now, we force 4K units to both, but need more
- * investigations before changing, especially with respect to various
- * user-space tools.
- */
-static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
-{
-	return (fsblkcnt_t)nbytes / unit;
-}
-
-static void fill_statvfs(const struct silofs_sb_info *sbi, struct statvfs *stv)
-{
-	const size_t funit = 4 * SILOFS_KB_SIZE;
-	const size_t bsize = funit;
-	const size_t frsize = funit;
-	const size_t nbytes_max = silofs_sbi_vspace_capacity(sbi);
-	const size_t nbytes_use = silofs_sbi_nused_bytes(sbi);
-	const size_t nbytes_free = nbytes_max - nbytes_use;
-	const fsfilcnt_t nfiles_max = silofs_sbi_inodes_limit(sbi);
-	const fsfilcnt_t nfiles_cur = silofs_sbi_inodes_current(sbi);
-
-	silofs_assert_ge(nbytes_max, nbytes_use);
-
-	silofs_memzero(stv, sizeof(*stv));
-	stv->f_bsize = bsize;
-	stv->f_frsize = frsize;
-	stv->f_blocks = bytes_to_fsblkcnt(nbytes_max, frsize);
-	stv->f_bfree = bytes_to_fsblkcnt(nbytes_free, bsize);
-	stv->f_bavail = stv->f_bfree;
-	stv->f_files = nfiles_max;
-	stv->f_ffree = nfiles_max - nfiles_cur;
-	stv->f_favail = stv->f_ffree;
-	stv->f_namemax = SILOFS_NAME_MAX;
-	stv->f_fsid = SILOFS_FSID_MAGIC;
-}
-
 static void fill_statfsx(const struct silofs_sb_info *sbi,
                          struct silofs_query_statfsx *stx)
 {
-	struct silofs_space_stat sp_st;
+	struct silofs_space_stats sp_st;
+	const struct silofs_stats_info *sti = sbi->sb_sti;
+	const time_t now = silofs_time_now();
 
-	silofs_sbi_space_stat(sbi, &sp_st);
-	stx->f_uptime = silofs_time_now() - sbi->s_mntime;
-	stx->f_msflags = sbi->s_ms_flags;
-	stx->f_bsize = silofs_sbi_vspace_capacity(sbi);
-	stx->f_bused = silofs_sbi_nused_bytes(sbi);
-	stx->f_ilimit = silofs_sbi_inodes_limit(sbi);
-	stx->f_icurr = silofs_sbi_inodes_current(sbi);
-	stx->f_umeta = (uint64_t)sp_st.uspace_nmeta;
-	stx->f_vmeta = (uint64_t)sp_st.vspace_nmeta;
-	stx->f_vdata = (uint64_t)sp_st.vspace_ndata;
+	silofs_sti_collect_curr(sti, &sp_st);
+	stx->bsize = silofs_sti_capacity(sti);
+	stx->bused = silofs_sti_inodes_used(sti);
+	stx->ilimit = silofs_sti_inodes_max(sti);
+	stx->icurr = silofs_sti_inodes_used(sti);
+	stx->umeta = 0; /* XXX */
+	stx->vmeta = 0; /* XXX */
+	stx->vdata = 0; /* XXX */
+	stx->uptime = now - sbi->sb_mntime;
+	stx->msflags = sbi->sb_ms_flags;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2000,8 +1949,10 @@ static int do_statvfs(const struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_inode_info *ii,
                       struct statvfs *out_stv)
 {
+	const struct silofs_sb_info *sbi = ii_sbi(ii);
+
+	silofs_sti_fill_statvfs(sbi->sb_sti, out_stv);
 	unused(fs_ctx);
-	fill_statvfs(ii_sbi(ii), out_stv);
 	return 0;
 }
 
@@ -2016,10 +1967,10 @@ int silofs_do_statvfs(const struct silofs_fs_ctx *op,
 	return err;
 }
 
-static void fill_strbuf(char *buf, size_t bsz, const char *str)
+static void fill_strbuf(char *buf, size_t bsz, const struct silofs_str *s)
 {
-	if ((str != NULL) && (bsz > 0)) {
-		strncpy(buf, str, bsz - 1);
+	if ((s != NULL) && (bsz > 0)) {
+		memcpy(buf, s->str, min(bsz - 1, s->len));
 		buf[bsz - 1] = '\0';
 	}
 }
@@ -2027,34 +1978,32 @@ static void fill_strbuf(char *buf, size_t bsz, const char *str)
 static void fill_query_version(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	const char *verstr = silofs_version.string;
+	struct silofs_str s = {
+		.str = silofs_version.string,
+		.len = silofs_str_length(silofs_version.string),
+	};
+	const size_t bsz = sizeof(query->u.version.string);
 
-	query->u.version.v_major = silofs_version.major;
-	query->u.version.v_minor = silofs_version.minor;
-	query->u.version.v_sublevel = silofs_version.sublevel;
-	fill_strbuf(query->u.version.v_str,
-	            sizeof(query->u.version.v_str), verstr);
+	query->u.version.major = silofs_version.major;
+	query->u.version.minor = silofs_version.minor;
+	query->u.version.sublevel = silofs_version.sublevel;
+	fill_strbuf(query->u.version.string, bsz, &s);
 	unused(ii);
 }
 
-static void fill_query_repo(const struct silofs_inode_info *ii,
-                            struct silofs_ioc_query *query)
+static void fill_query_reponame(const struct silofs_inode_info *ii,
+                                struct silofs_ioc_query *query)
 {
 	const struct silofs_fs_apex *apex = ii_apex(ii);
 	const struct silofs_repo *repo = apex->ap_mrepo;
+	const struct silofs_bootpath *bpath = &repo->re_bootpath;
+	size_t bsz;
 
-	fill_strbuf(query->u.repo.r_path,
-	            sizeof(query->u.repo.r_path), repo->re_root_dir);
-}
+	bsz = sizeof(query->u.reponame.repodir);
+	fill_strbuf(query->u.reponame.repodir, bsz, &bpath->repodir);
 
-static void fill_query_fsname(const struct silofs_inode_info *ii,
-                              struct silofs_ioc_query *query)
-{
-	const struct silofs_fs_apex *apex = ii_apex(ii);
-	const char *fsname = apex->ap_args->main_name;
-
-	fill_strbuf(query->u.fsname.f_name,
-	            sizeof(query->u.fsname.f_name), fsname);
+	bsz = sizeof(query->u.reponame.name);
+	fill_strbuf(query->u.reponame.name, bsz, &bpath->name.s);
 }
 
 static void fill_query_statfsx(const struct silofs_inode_info *ii,
@@ -2076,10 +2025,10 @@ static int do_query_statx(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	query->u.statx.stx_iflags = (uint32_t)iflags;
+	query->u.statx.iflags = (uint32_t)iflags;
 	if (ii_isdir(ii)) {
 		dflags = silofs_dir_flags(ii);
-		query->u.statx.stx_dirflags = (uint32_t)dflags;
+		query->u.statx.dirflags = (uint32_t)dflags;
 	}
 	return 0;
 }
@@ -2097,11 +2046,8 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
 	case SILOFS_QUERY_VERSION:
 		fill_query_version(ii, query);
 		break;
-	case SILOFS_QUERY_REPO:
-		fill_query_repo(ii, query);
-		break;
-	case SILOFS_QUERY_FSNAME:
-		fill_query_fsname(ii, query);
+	case SILOFS_QUERY_REPONAME:
+		fill_query_reponame(ii, query);
 		break;
 	case SILOFS_QUERY_STATFSX:
 		fill_query_statfsx(ii, query);
@@ -2154,50 +2100,7 @@ static int check_fsowner(const struct silofs_fs_ctx *fs_ctx,
 {
 	const struct silofs_creds *creds = creds_of(fs_ctx);
 
-	return uid_eq(creds->ucred.uid, sbi->s_owner.uid) ? 0 : -EPERM;
-}
-
-static int check_nonactive_fsname(const struct silofs_inode_info *ii,
-                                  const struct silofs_namestr *name)
-{
-	struct silofs_namestr name_src;
-	const struct silofs_fs_apex *apex = ii_apex(ii);
-	int err;
-
-	err = check_name(name);
-	if (err) {
-		return err;
-	}
-	err = silofs_check_fs_name(name);
-	if (err) {
-		return err;
-	}
-	silofs_apex_main_fsname(apex, &name_src);
-	if (silofs_namestr_isequal(name, &name_src)) {
-		return -EEXIST;
-	}
-	return 0;
-}
-
-static bool has_main_bootsec(const struct silofs_inode_info *ii,
-                             const struct silofs_namestr *name)
-{
-	struct silofs_bootsec bsec;
-	const struct silofs_fs_apex *apex = ii_apex(ii);
-
-	return silofs_repo_load_bsec(apex->ap_mrepo, name, &bsec) == 0;
-}
-
-static int check_no_bootsec(const struct silofs_inode_info *ii,
-                            const struct silofs_namestr *name)
-{
-	return has_main_bootsec(ii, name) ? -EEXIST : 0;
-}
-
-static int check_has_bootsec(const struct silofs_inode_info *ii,
-                             const struct silofs_namestr *name)
-{
-	return has_main_bootsec(ii, name) ? 0 : -ENOENT;
+	return uid_eq(creds->ucred.uid, sbi->sb_owner.uid) ? 0 : -EPERM;
 }
 
 static int check_clone_flags(int flags)
@@ -2207,17 +2110,16 @@ static int check_clone_flags(int flags)
 	return (flags & ~allow_flags) ? -EINVAL : 0;
 }
 
-static int check_dupfs(const struct silofs_fs_ctx *fs_ctx,
-                       struct silofs_inode_info *ii,
-                       const struct silofs_namestr *name)
+static int check_clone(const struct silofs_fs_ctx *fs_ctx,
+                       struct silofs_inode_info *ii, int flags)
 {
 	int err;
 
-	err = check_on_writable_fs(ii);
+	err = check_isdir(ii);
 	if (err) {
 		return err;
 	}
-	err = check_isdir(ii);
+	err = check_on_writable_fs(ii);
 	if (err) {
 		return err;
 	}
@@ -2229,27 +2131,6 @@ static int check_dupfs(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = check_nonactive_fsname(ii, name);
-	if (err) {
-		return err;
-	}
-	err = check_no_bootsec(ii, name);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int check_clone(const struct silofs_fs_ctx *fs_ctx,
-                       struct silofs_inode_info *ii,
-                       const struct silofs_namestr *name, int flags)
-{
-	int err;
-
-	err = check_dupfs(fs_ctx, ii, name);
-	if (err) {
-		return err;
-	}
 	err = check_clone_flags(flags);
 	if (err) {
 		return err;
@@ -2258,13 +2139,13 @@ static int check_clone(const struct silofs_fs_ctx *fs_ctx,
 }
 
 static int do_clone(const struct silofs_fs_ctx *fs_ctx,
-                    struct silofs_inode_info *dir_ii,
-                    const struct silofs_namestr *name, int flags)
+                    struct silofs_inode_info *dir_ii, int flags,
+                    struct silofs_bootsec *out_bsec)
 {
 	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
 	int err;
 
-	err = check_clone(fs_ctx, dir_ii, name, flags);
+	err = check_clone(fs_ctx, dir_ii, flags);
 	if (err) {
 		return err;
 	}
@@ -2272,7 +2153,7 @@ static int do_clone(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_forkfs(apex, name);
+	err = silofs_apex_forkfs(apex, out_bsec);
 	if (err) {
 		return err;
 	}
@@ -2284,199 +2165,64 @@ static int do_clone(const struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_do_clone(const struct silofs_fs_ctx *fs_ctx,
-                    struct silofs_inode_info *dir_ii,
-                    const struct silofs_namestr *name, int flags)
+                    struct silofs_inode_info *dir_ii, int flags,
+                    struct silofs_bootsec *out_bsec)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_clone(fs_ctx, dir_ii, name, flags);
+	err = do_clone(fs_ctx, dir_ii, flags, out_bsec);
 	ii_decref(dir_ii);
 	return err;
 }
 
-static int check_unrefs(const struct silofs_fs_ctx *fs_ctx,
-                        struct silofs_inode_info *ii,
-                        const struct silofs_namestr *name)
+static int walk_inspect_fs(struct silofs_sb_info *sbi)
 {
-	int err;
-
-	err = check_raccess(fs_ctx, ii);
-	if (err) {
-		return err;
-	}
-	err = check_nonactive_fsname(ii, name);
-	if (err) {
-		return err;
-	}
-	err = check_has_bootsec(ii, name);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int unrefs_by_name(const struct silofs_inode_info *ii,
-                          const struct silofs_namestr *name)
-{
-	const struct silofs_fs_apex *apex = ii_apex(ii);
-
-	return silofs_repo_remove_bsec(apex->ap_mrepo, name);
-}
-
-static int do_unrefs(const struct silofs_fs_ctx *fs_ctx,
-                     struct silofs_inode_info *ii,
-                     const struct silofs_namestr *name)
-{
-	int err;
-
-	err = check_unrefs(fs_ctx, ii, name);
-	if (err) {
-		return err;
-	}
-	err = unrefs_by_name(ii, name);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_do_unrefs(const struct silofs_fs_ctx *fs_ctx,
-                     struct silofs_inode_info *ii,
-                     const struct silofs_namestr *name)
-{
-	int err;
-
-	ii_incref(ii);
-	err = do_unrefs(fs_ctx, ii, name);
-	ii_decref(ii);
-	return err;
-}
-
-static int check_inspect(const struct silofs_fs_ctx *fs_ctx,
-                         struct silofs_inode_info *ii)
-{
-	int err;
-
-	err = check_raccess(fs_ctx, ii);
-	if (err) {
-		return err;
-	}
-	err = check_on_writable_fs(ii);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int inspect_uspace(const struct silofs_inode_info *ii)
-{
-	struct silofs_bootsec bsec;
-	struct silofs_namestr name;
 	struct silofs_uspace_visitor usv;
-	struct silofs_fs_apex *apex = ii_apex(ii);
-	struct silofs_sb_info *sbi = NULL;
-	int err;
+	int ret;
 
-	silofs_usvisitor_init(&usv, apex->ap_alif);
-	err = silofs_apex_boot_name(apex, &name);
-	if (err) {
-		goto out;
-	}
-	err = silofs_apex_load_boot(apex, &name, &bsec);
-	if (err) {
-		goto out;
-	}
-	err = flush_dirty_now(apex);
-	if (err) {
-		goto out;
-	}
-	err = silofs_apex_stage_super(apex, &bsec.sb_uaddr, &sbi);
-	if (err) {
-		return err;
-	}
-	err = silofs_walk_space_tree(sbi, &usv.vis);
-	if (err) {
-		goto out;
-	}
-out:
+	silofs_usvisitor_init(&usv, sbi_alloc(sbi));
+	ret = silofs_walk_space_tree(sbi, &usv.vis);
 	silofs_usvisitor_fini(&usv);
-	return err;
-}
-
-static int do_inspect(const struct silofs_fs_ctx *fs_ctx,
-                      struct silofs_inode_info *ii)
-{
-	int err;
-
-	err = check_inspect(fs_ctx, ii);
-	if (err) {
-		return err;
-	}
-	err = inspect_uspace(ii);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return ret;
 }
 
 int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx,
-                      struct silofs_inode_info *ii)
+                      const struct silofs_bootsec *bsec)
 {
+	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
+	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	ii_incref(ii);
-	err = do_inspect(fs_ctx, ii);
-	ii_decref(ii);
-	return err;
-}
-
-int silof_check_writable_fs(const struct silofs_sb_info *sbi)
-{
-	return silofs_sbi_isrofs(sbi) ? -EROFS : 0;
-}
-
-static bool unirepo_mode(const struct silofs_fs_ctx *fs_ctx)
-{
-	const struct silofs_repo *mrepo = fs_ctx->fsc_apex->ap_mrepo;
-	const struct silofs_repo *crepo = fs_ctx->fsc_apex->ap_crepo;
-	bool uni = false;
-
-	if (mrepo && crepo) {
-		uni = !strcmp(mrepo->re_root_dir, crepo->re_root_dir);
-	}
-	return uni;
-}
-
-static int check_pack(const struct silofs_fs_ctx *fs_ctx,
-                      const struct silofs_namestr *src_name,
-                      const struct silofs_namestr *dst_name)
-{
-	const int eq = silofs_namestr_isequal(src_name, dst_name);
-	int err;
-
-	err = silofs_check_fs_name(src_name);
+	err = flush_dirty_now(apex);
 	if (err) {
 		return err;
 	}
-	err = silofs_check_fs_name(dst_name);
+	err = silofs_apex_stage_supers(apex, &bsec->sb_uaddr, &sbi);
 	if (err) {
 		return err;
 	}
-	if (eq && unirepo_mode(fs_ctx)) {
-		return -EEXIST;
+	err = walk_inspect_fs(sbi);
+	if (err) {
+		return err;
 	}
+	return 0;
+}
+
+static int check_pack(const struct silofs_fs_ctx *fs_ctx)
+{
+	silofs_unused(fs_ctx);
 	return 0;
 }
 
 int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_namestr *src_name,
-                   const struct silofs_namestr *dst_name)
+                   const struct silofs_bootsec *src_bsec,
+                   struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
 	int err;
 
-	err = check_pack(fs_ctx, src_name, dst_name);
+	err = check_pack(fs_ctx);
 	if (err) {
 		return err;
 	}
@@ -2484,7 +2230,7 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_pack_fs(apex, src_name, dst_name);
+	err = silofs_apex_pack_fs(apex, src_bsec, dst_bsec);
 	if (err) {
 		return err;
 	}
@@ -2496,13 +2242,13 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_namestr *src_name,
-                     const struct silofs_namestr *dst_name)
+                     const struct silofs_bootsec *src_bsec,
+                     struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
 	int err;
 
-	err = check_pack(fs_ctx, src_name, dst_name);
+	err = check_pack(fs_ctx);
 	if (err) {
 		return err;
 	}
@@ -2510,7 +2256,7 @@ int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_unpack_fs(apex, src_name, dst_name);
+	err = silofs_apex_unpack_fs(apex, src_bsec, dst_bsec);
 	if (err) {
 		return err;
 	}
@@ -2533,9 +2279,9 @@ static int check_utf8_name(const struct silofs_fs_apex *apex,
                            const struct silofs_namestr *nstr)
 {
 	union silofs_utf32_name_buf unb;
-	char *in = unconst(nstr->str.str);
+	char *in = unconst(nstr->s.str);
 	char *out = unb.dat;
-	size_t len = nstr->str.len;
+	size_t len = nstr->s.len;
 	size_t outlen = sizeof(unb.dat);
 	size_t datlen;
 	size_t ret;
@@ -2553,142 +2299,68 @@ static int check_utf8_name(const struct silofs_fs_apex *apex,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t namehash_by_sha256(const struct silofs_mdigest *md,
-                                   const char *name, size_t nlen)
+static const struct silofs_mdigest *
+dii_mdigest(const struct silofs_inode_info *ii)
+{
+	return &ii->i_vi.v_si.s_apex->ap_crypto->md;
+}
+
+static uint64_t
+dii_namehash_by_sha256(const struct silofs_inode_info *dii,
+                       const char *name, size_t nlen)
 {
 	struct silofs_hash256 sha256;
 
-	silofs_sha256_of(md, name, nlen, &sha256);
+	silofs_sha256_of(dii_mdigest(dii), name, nlen, &sha256);
 	return silofs_hash256_to_u64(&sha256);
 }
 
-static const struct silofs_mdigest *
-ii_mdigest_of(const struct silofs_inode_info *ii)
+static uint64_t
+dii_namehash_by_xxh64(const struct silofs_inode_info *dir_ii,
+                      const char *name, size_t nlen)
 {
-	return &ii->i_vi.v_ti.t_apex->ap_crypto->md;
+	return silofs_hash_xxh64(name, nlen, silofs_dir_seed(dir_ii));
 }
 
-static int name_to_hash(const struct silofs_inode_info *dir_ii,
-                        const char *name, size_t nlen, uint64_t *out_hash)
+static int dii_name_to_hash(const struct silofs_inode_info *dir_ii,
+                            const char *name, size_t nlen, uint64_t *out_hash)
 {
-	int err;
-	const struct silofs_mdigest *md = ii_mdigest_of(dir_ii);
-	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
+	const enum silofs_dirhfn dhfn = silofs_dir_hfn(dir_ii);
+	int err = 0;
 
-	if (flags & SILOFS_DIRF_HASH_SHA256) {
-		*out_hash = namehash_by_sha256(md, name, nlen);
-		err = 0;
-	} else {
-		*out_hash = 0;
+	switch (dhfn) {
+	case SILOFS_DIRHASH_SHA256:
+		*out_hash = dii_namehash_by_sha256(dir_ii, name, nlen);
+		break;
+	case SILOFS_DIRHASH_XXH64:
+		*out_hash = dii_namehash_by_xxh64(dir_ii, name, nlen);
+		break;
+	default:
 		err = -EFSCORRUPTED;
+		break;
 	}
 	return err;
 }
 
-static int namestr_to_hash(const struct silofs_inode_info *dir_ii,
-                           const struct silofs_namestr *ns, uint64_t *out_hash)
+static int
+dii_namestr_to_hash(const struct silofs_inode_info *dir_ii,
+                    const struct silofs_namestr *ns, uint64_t *out_hash)
 {
-	return name_to_hash(dir_ii, ns->str.str, ns->str.len, out_hash);
+	return dii_name_to_hash(dir_ii, ns->s.str, ns->s.len, out_hash);
 }
 
-static int check_name_len(const struct silofs_namestr *nstr)
-{
-	if (nstr->str.len == 0) {
-		return -EINVAL;
-	}
-	if (nstr->str.len > SILOFS_NAME_MAX) {
-		return -ENAMETOOLONG;
-	}
-	return 0;
-}
-
-static int check_name_dat(const struct silofs_namestr *nstr)
-{
-	if (nstr->str.str == NULL) {
-		return -EINVAL;
-	}
-	if (memchr(nstr->str.str, '/', nstr->str.len)) {
-		return -EINVAL;
-	}
-	if (nstr->str.str[nstr->str.len] != '\0') {
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int check_name_str(const struct silofs_namestr *nstr)
-{
-	int err;
-
-	err = check_name_len(nstr);
-	if (err) {
-		return err;
-	}
-	err = check_name_dat(nstr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int check_ascii_fs_name(const struct silofs_namestr *nstr)
-{
-	const char *allowed =
-	        "abcdefghijklmnopqrstuvwxyz"
-	        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	        "0123456789_-+.";
-	struct silofs_substr ss;
-	size_t n;
-
-	silofs_substr_init_rd(&ss, nstr->str.str, nstr->str.len);
-	if (!silofs_substr_isprint(&ss)) {
-		return -EINVAL;
-	}
-	n = silofs_substr_count_if(&ss, silofs_chr_isspace);
-	if (n > 0) {
-		return -EINVAL;
-	}
-	n = silofs_substr_count_if(&ss, silofs_chr_iscntrl);
-	if (n > 0) {
-		return -EINVAL;
-	}
-	n = silofs_substr_find_first_not_of(&ss, allowed);
-	if (n < ss.len) {
-		return -EINVAL;
-	}
-	return 0;
-}
-
-int silofs_check_fs_name(const struct silofs_namestr *nstr)
-{
-	int err;
-
-	err = check_name_str(nstr);
-	if (err) {
-		return err;
-	}
-	if (nstr->str.str[0] == '.') {
-		return -EINVAL;
-	}
-	if (nstr->str.len > (SILOFS_NAME_MAX / 2)) {
-		return -ENAMETOOLONG;
-	}
-	err = check_ascii_fs_name(nstr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int check_valid_encoding(const struct silofs_inode_info *ii,
                                 const struct silofs_namestr *nstr)
 {
-	int ret = 0;
-
-	if (ii_isdir(ii) && dir_hasflag(ii, SILOFS_DIRF_NAME_UTF8)) {
-		ret = check_utf8_name(ii_apex(ii), nstr);
+	if (!ii_isdir(ii)) {
+		return 0;
 	}
-	return ret;
+	if (!dir_hasflag(ii, SILOFS_DIRF_NAME_UTF8)) {
+		return 0;
+	}
+	return check_utf8_name(ii_apex(ii), nstr);
 }
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,
@@ -2696,8 +2368,7 @@ int silofs_make_namestr_by(struct silofs_namestr *nstr,
 {
 	int err;
 
-	silofs_namestr_init(nstr, s);
-	err = check_name_str(nstr);
+	err = silofs_make_namestr(nstr, s);
 	if (err) {
 		return err;
 	}
@@ -2707,13 +2378,6 @@ int silofs_make_namestr_by(struct silofs_namestr *nstr,
 	}
 	return 0;
 }
-
-int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
-{
-	silofs_namestr_init(nstr, s);
-	return silofs_check_fs_name(nstr);
-}
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

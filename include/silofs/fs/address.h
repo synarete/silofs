@@ -109,6 +109,8 @@ const struct silofs_blobid *silofs_blobid_none(void);
 
 size_t silofs_blobid_size(const struct silofs_blobid *blobid);
 
+loff_t silofs_blobid_pos(const struct silofs_blobid *blobid, loff_t off);
+
 bool silofs_blobid_isnull(const struct silofs_blobid *blobid);
 
 void silofs_blobid_reset(struct silofs_blobid *blobid);
@@ -195,7 +197,7 @@ const struct silofs_oaddr *silofs_oaddr_none(void);
 
 void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *blobid,
-                        size_t len, loff_t off);
+                        loff_t off, size_t len);
 
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *blobid, silofs_lba_t lba);
@@ -265,21 +267,8 @@ const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *blobid,
-                        enum silofs_stype stype, size_t height,
-                        loff_t voff, loff_t bpos);
-
-void silofs_uaddr_setup_by(struct silofs_uaddr *uaddr,
-                           const struct silofs_blobid *blobid,
-                           const struct silofs_vaddr *vaddr);
-
-void silofs_uaddr_setup_by2(struct silofs_uaddr *uaddr,
-                            const struct silofs_blobid *blobid,
-                            enum silofs_stype stype,
-                            size_t height, loff_t voff);
-
-void silofs_uaddr_make_super(struct silofs_uaddr *uaddr,
-                             const struct silofs_blobid *blobid);
+                        const struct silofs_blobid *blobid, loff_t bpos,
+                        enum silofs_stype stype, size_t height, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr);
 

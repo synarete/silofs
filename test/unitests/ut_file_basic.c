@@ -707,7 +707,7 @@ static void ut_file_read_behind_(struct ut_env *ute, loff_t off)
 	const char *name = UT_NAME;
 
 	pos = (off < bsz) ? 0 : (off - bsz + 1);
-	idx = (off < bsz) ? off : (bsz - 1);
+	idx = ((off >= 0) && (off < bsz)) ? off : (bsz - 1);
 	buf = ut_randbuf(ute, (size_t)bsz);
 	buf[idx] = (uint8_t)(~da);
 

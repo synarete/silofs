@@ -18,6 +18,8 @@
 #include <silofs/infra.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/namei.h>
@@ -147,12 +149,12 @@ static void xe_set_name_len(struct silofs_xattr_entry *xe, size_t name_len)
 
 static size_t xe_value_size(const struct silofs_xattr_entry *xe)
 {
-	return silofs_le16_to_cpu(xe->xe_value_size);
+	return silofs_le32_to_cpu(xe->xe_value_size);
 }
 
 static void xe_set_value_size(struct silofs_xattr_entry *xe, size_t value_size)
 {
-	xe->xe_value_size = silofs_cpu_to_le16((uint16_t)value_size);
+	xe->xe_value_size = silofs_cpu_to_le32((uint32_t)value_size);
 }
 
 static char *xe_name(const struct silofs_xattr_entry *xe)
@@ -212,8 +214,11 @@ static void xe_squeeze(struct silofs_xattr_entry *xe,
                        const struct silofs_xattr_entry *last)
 {
 	const struct silofs_xattr_entry *next = xe_next(xe);
+	const size_t move = xe_diff(next, last);
+	const size_t zero = xe_diff(xe, next);
 
-	memmove(xe, next, xe_diff(next, last) * sizeof(*xe));
+	memmove(xe, next, move * sizeof(*xe));
+	memset(xe + move, 0, zero * sizeof(*xe));
 }
 
 static void xe_copy_value(const struct silofs_xattr_entry *xe,
@@ -236,6 +241,17 @@ xe_search(const struct silofs_xattr_entry *itr,
 	return NULL;
 }
 
+static bool xe_may_append(const struct silofs_xattr_entry *xe,
+                          const struct silofs_xattr_entry *end,
+                          const struct silofs_str *name,
+                          const struct silofs_bytebuf *value)
+{
+	const size_t nfree = xe_diff(xe, end);
+	const size_t nents = xe_calc_nents_of(name, value);
+
+	return (nfree >= nents);
+}
+
 static struct silofs_xattr_entry *
 xe_append(struct silofs_xattr_entry *xe,
           const struct silofs_xattr_entry *end,
@@ -252,14 +268,35 @@ xe_append(struct silofs_xattr_entry *xe,
 	return xe;
 }
 
-static int xe_verify(const struct silofs_xattr_entry *xe,
-                     const struct silofs_xattr_entry *end)
+static int xe_verify(const struct silofs_xattr_entry *xe)
 {
-	size_t nents;
+	size_t name_len;
+	size_t value_size;
+
+	name_len = xe_name_len(xe);
+	if (!name_len || (name_len > SILOFS_NAME_MAX)) {
+		return -EFSCORRUPTED;
+	}
+	value_size = xe_value_size(xe);
+	if (value_size > SILOFS_XATTR_VALUE_MAX) {
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int xe_verify_range(const struct silofs_xattr_entry *xe,
+                           const struct silofs_xattr_entry *end)
+{
 	const struct silofs_xattr_entry *itr = xe;
+	size_t nents;
+	int err;
 
 	while (itr < end) {
-		nents = xe_nents(xe);
+		err = xe_verify(itr);
+		if (err) {
+			return err;
+		}
+		nents = xe_nents(itr);
 		if (!nents || ((xe + nents) > end)) {
 			return -EFSCORRUPTED;
 		}
@@ -309,8 +346,7 @@ static void xan_setup(struct silofs_xattr_node *xan, ino_t ino)
 	xe_reset_arr(xan->xe, ARRAY_SIZE(xan->xe));
 }
 
-static struct silofs_xattr_entry *
-xan_begin(const struct silofs_xattr_node *xan)
+static struct silofs_xattr_entry *xan_beg(const struct silofs_xattr_node *xan)
 {
 	return xe_unconst(xan->xe);
 }
@@ -321,8 +357,7 @@ xan_end(const struct silofs_xattr_node *xan)
 	return xan->xe + ARRAY_SIZE(xan->xe);
 }
 
-static struct silofs_xattr_entry *
-xan_last(const struct silofs_xattr_node *xan)
+static struct silofs_xattr_entry *xan_tip(const struct silofs_xattr_node *xan)
 {
 	return xe_unconst(xan->xe) + xan_nents(xan);
 }
@@ -334,7 +369,7 @@ xan_search(const struct silofs_xattr_node *xan, const struct silofs_str *str)
 	const size_t nmin = xe_calc_nents(str->len, 0);
 
 	if (xan_nents(xan) >= nmin) {
-		xe = xe_search(xan_begin(xan), xan_last(xan), str);
+		xe = xe_search(xan_beg(xan), xan_tip(xan), str);
 	}
 	return xe;
 }
@@ -343,12 +378,14 @@ static struct silofs_xattr_entry *
 xan_insert(struct silofs_xattr_node *xan,
            const struct silofs_str *name, const struct silofs_bytebuf *value)
 {
-	struct silofs_xattr_entry *xe;
+	struct silofs_xattr_entry *xe = xan_tip(xan);
+	const struct silofs_xattr_entry *end = xan_end(xan);
 
-	xe = xe_append(xan_last(xan), xan_end(xan), name, value);
-	if (xe != NULL) {
-		xan_inc_nents(xan, xe_nents(xe));
+	if (!xe_may_append(xe, end, name, value)) {
+		return NULL;
 	}
+	xe_append(xe, end, name, value);
+	xan_inc_nents(xan, xe_nents(xe));
 	return xe;
 }
 
@@ -357,13 +394,13 @@ static void xan_remove(struct silofs_xattr_node *xan,
 {
 	const size_t nents = xe_nents(xe);
 
-	xe_squeeze(xe, xan_last(xan));
+	xe_squeeze(xe, xan_tip(xan));
 	xan_dec_nents(xan, nents);
 }
 
 static int xan_verify(const struct silofs_xattr_node *xan)
 {
-	return xe_verify(xan_begin(xan), xan_end(xan));
+	return xe_verify_range(xan_beg(xan), xan_tip(xan));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -379,26 +416,6 @@ inode_xattr_of(const struct silofs_inode *inode)
 static struct silofs_inode_xattr *ixa_of(const struct silofs_inode_info *ii)
 {
 	return inode_xattr_of(ii->inode);
-}
-
-static size_t ixa_nents(const struct silofs_inode_xattr *ixa)
-{
-	return silofs_le16_to_cpu(ixa->ix_nents);
-}
-
-static void ixa_set_nents(struct silofs_inode_xattr *ixa, size_t n)
-{
-	ixa->ix_nents = silofs_cpu_to_le16((uint16_t)n);
-}
-
-static void ixa_inc_nents(struct silofs_inode_xattr *ixa, size_t n)
-{
-	ixa_set_nents(ixa, ixa_nents(ixa) + n);
-}
-
-static void ixa_dec_nents(struct silofs_inode_xattr *ixa, size_t n)
-{
-	ixa_set_nents(ixa, ixa_nents(ixa) - n);
 }
 
 static void ixa_vaddr(const struct silofs_inode_xattr *ixa, size_t slot,
@@ -434,68 +451,22 @@ static void ixa_reset_slots(struct silofs_inode_xattr *ixa)
 
 static void ixa_setup(struct silofs_inode_xattr *ixa)
 {
-	ixa_set_nents(ixa, 0);
 	ixa_reset_slots(ixa);
-	xe_reset_arr(ixa->ixe, ARRAY_SIZE(ixa->ixe));
-}
-
-static struct silofs_xattr_entry *
-ixa_begin(const struct silofs_inode_xattr *ixa)
-{
-	return xe_unconst(ixa->ixe);
-}
-
-static const struct silofs_xattr_entry *
-ixa_end(const struct silofs_inode_xattr *ixa)
-{
-	return ixa->ixe + ARRAY_SIZE(ixa->ixe);
-}
-
-static struct silofs_xattr_entry *
-ixa_last(const struct silofs_inode_xattr *ixa)
-{
-	return xe_unconst(ixa->ixe) + ixa_nents(ixa);
-}
-
-static struct silofs_xattr_entry *
-ixa_search(const struct silofs_inode_xattr *ixa,
-           const struct silofs_str *str)
-{
-	struct silofs_xattr_entry *xe = NULL;
-	const size_t nmin = xe_calc_nents(str->len, 0);
-
-	if (ixa_nents(ixa) >= nmin) {
-		xe = xe_search(ixa_begin(ixa), ixa_last(ixa), str);
-	}
-	return xe;
-}
-
-static struct silofs_xattr_entry *
-ixa_insert(struct silofs_inode_xattr *ixa,
-           const struct silofs_str *name,
-           const struct silofs_bytebuf *value)
-{
-	struct silofs_xattr_entry *xe;
-
-	xe = xe_append(ixa_last(ixa), ixa_end(ixa), name, value);
-	if (xe != NULL) {
-		ixa_inc_nents(ixa, xe_nents(xe));
-	}
-	return xe;
-}
-
-static void ixa_remove(struct silofs_inode_xattr *ixa,
-                       struct silofs_xattr_entry *xe)
-{
-	const size_t nents = xe_nents(xe);
-
-	xe_squeeze(xe, ixa_last(ixa));
-	ixa_dec_nents(ixa, nents);
 }
 
 static int ixa_verify(const struct silofs_inode_xattr *ixa)
 {
-	return xe_verify(ixa_begin(ixa), ixa_end(ixa));
+	struct silofs_vaddr vaddr = { .voff = -1 };
+	int err;
+
+	for (size_t slot = 0; slot < ARRAY_SIZE(ixa->ix_vaddr); ++slot) {
+		ixa_vaddr(ixa, slot, &vaddr);
+		err = silofs_verify_off(vaddr_off(&vaddr));
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -532,12 +503,12 @@ void silofs_ii_setup_xattr(struct silofs_inode_info *ii)
 static const struct silofs_vaddr *
 xai_vaddr(const struct silofs_xanode_info *xai)
 {
-	return vi_vaddr(&xai->xa_vi);
+	return vi_vaddr(&xai->xan_vi);
 }
 
 static void xai_dirtify(struct silofs_xanode_info *xai)
 {
-	vi_dirtify(&xai->xa_vi);
+	vi_dirtify(&xai->xan_vi);
 }
 
 static void xai_setup_node(struct silofs_xanode_info *xai, ino_t ino)
@@ -552,8 +523,8 @@ static void xei_discard_entry(const struct silofs_xentry_info *xei)
 	struct silofs_inode_info *ii = xei->ii;
 	struct silofs_xanode_info *xai = xei->xai;
 
+	silofs_assert_null(ii);
 	if (ii != NULL) {
-		ixa_remove(ixa_of(ii), xei->xe);
 		ii_dirtify(ii);
 	} else if (xai != NULL) {
 		xan_remove(xai->xan, xei->xe);
@@ -569,14 +540,14 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 	const ino_t ino = ii_ino(xa_ctx->ii);
 	const ino_t xa_ino = xan_ino(xai->xan);
 
-	if (xai->xa_vi.v_recheck) {
+	if (xai->xan_vi.v_recheck) {
 		return 0;
 	}
 	if (ino != xa_ino) {
 		log_err("bad xanode ino: ino=%lu xa_ino=%lu", ino, xa_ino);
 		return -EFSCORRUPTED;
 	}
-	xai->xa_vi.v_recheck = true;
+	xai->xan_vi.v_recheck = true;
 	return 0;
 }
 
@@ -589,7 +560,8 @@ static int xac_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	int ret;
 
 	ii_incref(xa_ctx->ii);
-	ret = silofs_stage_vnode(xa_ctx->sbi, vaddr, xa_ctx->stg_flags, &vi);
+	ret = silofs_sbi_stage_vnode(xa_ctx->sbi, vaddr,
+	                             xa_ctx->stg_flags, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -626,7 +598,7 @@ search_prefix(const struct silofs_namestr *name)
 
 	for (size_t i = 0; i < ARRAY_SIZE(s_xattr_prefix); ++i) {
 		xap = &s_xattr_prefix[i];
-		if (has_prefix(xap, &name->str)) {
+		if (has_prefix(xap, &name->s)) {
 			return xap;
 		}
 	}
@@ -640,7 +612,7 @@ static int check_xattr_name(const struct silofs_namestr *name)
 	if (!name) {
 		return 0;
 	}
-	if (name->str.len > SILOFS_NAME_MAX) {
+	if (name->s.len > SILOFS_NAME_MAX) {
 		return -ENAMETOOLONG;
 	}
 	xap = search_prefix(name);
@@ -692,7 +664,7 @@ xac_lookup_entry_at_node(const struct silofs_xattr_ctx *xa_ctx,
 	if (err) {
 		return err;
 	}
-	xe = xan_search(xai->xan, &xa_ctx->name->str);
+	xe = xan_search(xai->xan, &xa_ctx->name->s);
 	if (xe == NULL) {
 		return -ENOENT;
 	}
@@ -721,16 +693,9 @@ static int xac_lookup_entry_at_nodes(struct silofs_xattr_ctx *xa_ctx,
 static int xac_lookup_entry_at_inode(struct silofs_xattr_ctx *xa_ctx,
                                      struct silofs_xentry_info *xei)
 {
-	struct silofs_xattr_entry *xe;
-	struct silofs_inode_info *ii = xa_ctx->ii;
-
-	xe = ixa_search(ixa_of(ii), &xa_ctx->name->str);
-	if (xe == NULL) {
-		return -ENOENT;
-	}
-	xei->ii = ii;
-	xei->xe = xe;
-	return 0;
+	(void)xa_ctx;
+	(void)xei;
+	return -ENOENT;
 }
 
 static int xac_lookup_entry(struct silofs_xattr_ctx *xa_ctx,
@@ -807,7 +772,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_xanode_info *xai = NULL;
 
-	err = silofs_spawn_vnode(xa_ctx->sbi, SILOFS_STYPE_XANODE, &vi);
+	err = silofs_sbi_spawn_vnode(xa_ctx->sbi, SILOFS_STYPE_XANODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -838,7 +803,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_at(xa_ctx->sbi, vaddr);
+	return silofs_sbi_remove_vnode_at(xa_ctx->sbi, vaddr);
 }
 
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,
@@ -863,7 +828,7 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 {
 	struct silofs_xattr_entry *xe;
 
-	xe = xan_insert(xai->xan, &xa_ctx->name->str, &xa_ctx->value);
+	xe = xan_insert(xai->xan, &xa_ctx->name->s, &xa_ctx->value);
 	if (xe == NULL) {
 		return -ENOSPC;
 	}
@@ -896,17 +861,9 @@ static int xac_try_insert_at_nodes(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_try_insert_at_inode(const struct silofs_xattr_ctx *xa_ctx,
                                    struct silofs_xentry_info *xei)
 {
-	struct silofs_xattr_entry *xe;
-	struct silofs_inode_info *ii = xa_ctx->ii;
-
-	xe = ixa_insert(ixa_of(ii), &xa_ctx->name->str, &xa_ctx->value);
-	if (xe == NULL) {
-		return -ENOSPC;
-	}
-	xei->ii = ii;
-	xei->xe = xe;
-	ii_dirtify(ii);
-	return 0;
+	(void)xa_ctx;
+	(void)xei;
+	return -ENOSPC;
 }
 
 static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
@@ -1104,15 +1061,14 @@ static int xac_emit_range(struct silofs_xattr_ctx *xa_ctx,
 
 static int xac_emit_inode(struct silofs_xattr_ctx *xa_ctx)
 {
-	const struct silofs_inode_xattr *ixa = ixa_of(xa_ctx->ii);
-
-	return xac_emit_range(xa_ctx, ixa_begin(ixa), ixa_last(ixa));
+	(void)xa_ctx;
+	return 0;
 }
 
 static int xac_emit_node(struct silofs_xattr_ctx *xa_ctx,
                          const struct silofs_xanode_info *xai)
 {
-	return xac_emit_range(xa_ctx, xan_begin(xai->xan), xan_last(xai->xan));
+	return xac_emit_range(xa_ctx, xan_beg(xai->xan), xan_tip(xai->xan));
 }
 
 static int xac_emit_node_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)

@@ -475,6 +475,46 @@ static void ut_xattr_replace_multi(struct ut_env *ute)
 	ut_rmdir_ok(ute, root_ino, dname);
 }
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_xattr_with_io_(struct ut_env *ute, loff_t base_off,
+                              size_t name_len, size_t value_size)
+{
+	ino_t ino;
+	ino_t dino;
+	loff_t off;
+	const char *name = UT_NAME;
+	const struct ut_keyval *kv = NULL;
+	struct ut_kvl *kvl = kvl_new(ute, 3);
+
+	kvl_populate(kvl, name_len, value_size);
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
+	for (size_t i = 0; i < kvl->count; ++i) {
+		kv = kvl->list[i];
+		ut_setxattr_create(ute, ino, kv);
+		off = base_off + (long)(i * value_size);
+		ut_write_ok(ute, ino, kv->value, kv->size, off);
+	}
+	for (size_t i = 0; i < kvl->count; ++i) {
+		kv = kvl->list[i];
+		ut_getxattr_value(ute, ino, kv);
+		off = base_off + (long)(i * value_size);
+		ut_read_verify(ute, ino, kv->value, kv->size, off);
+	}
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_xattr_with_io(struct ut_env *ute)
+{
+	ut_xattr_with_io_(ute, 0, SILOFS_NAME_MAX, UT_KILO / 4);
+	ut_xattr_with_io_(ute, UT_KILO, SILOFS_NAME_MAX / 2, UT_KILO / 2);
+	ut_xattr_with_io_(ute, UT_MEGA, SILOFS_NAME_MAX / 4, UT_KILO);
+	ut_xattr_with_io_(ute, UT_TERA, SILOFS_NAME_MAX / 8, 2 * UT_KILO);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
@@ -488,6 +528,7 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_xattr_lookup_random),
 	UT_DEFTEST(ut_xattr_replace),
 	UT_DEFTEST(ut_xattr_replace_multi),
+	UT_DEFTEST(ut_xattr_with_io),
 };
 
 const struct ut_testdefs ut_tdefs_xattr = UT_MKTESTS(ut_local_tests);

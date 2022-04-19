@@ -1,5 +1,5 @@
-#!/bin/bash
-# bash completion for 'silofs'
+# silofs(1) bash completion
+# shellcheck shell=bash
 # shellcheck disable=SC2207
 
 [ -z "$BASH_VERSION" ] && return
@@ -62,7 +62,7 @@ _silofs_show() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
   else
-    COMPREPLY+=( $(compgen -W 'version repo fsname' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'version reponame' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'statx statfsx' -- "$cur") )
   fi
 }
@@ -73,6 +73,15 @@ _silofs_snap() {
 
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-n --name= -h' -- "$cur") )
+  fi
+}
+
+_silofs_unrefs() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
   fi
 }
 
@@ -138,6 +147,9 @@ _silofs_subcmd() {
     "snap")
       _silofs_snap
       ;;
+    "unrefs")
+      _silofs_unrefs
+      ;;
     "archive")
       _silofs_archive
       ;;
@@ -161,7 +173,7 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsmnt show snap' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show snap unrefs' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'archive restore prune fsck' -- "$cur") )
   fi
 }

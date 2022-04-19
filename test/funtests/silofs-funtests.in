@@ -1,0 +1,3 @@
+#!/bin/sh
+PYTHONPATH=@PYTHONDIR@:${PYTHONPATH} \
+	@PYTHON@ -m silofs.funtestsmain "$@"

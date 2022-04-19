@@ -165,6 +165,7 @@ def run_fios(wdirs: list[str]) -> dict[str, list[FioInfo]]:
         fio_info_list = []
         for jobs in (1, 2, 4, 8):
             args = FioArgs(wdir, jobs)
+            print("# " + " ".join(args.to_argv()))
             data = run_fio_once(args)
             print(data.to_text())
             fio_info_list.append(FioInfo(args, data))

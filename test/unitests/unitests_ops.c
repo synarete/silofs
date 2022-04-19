@@ -40,6 +40,11 @@ static const struct silofs_fs_ctx *fs_ctx_of(struct ut_env *ute)
 	return fs_ctx;
 }
 
+const struct silofs_fs_ctx *ut_fs_ctx_of(struct ut_env *ute)
+{
+	return fs_ctx_of(ute);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
@@ -186,31 +191,9 @@ static int ut_query(struct ut_env *ute, ino_t ino, int qtype,
 	return silofs_fs_query(fs_ctx_of(ute), ino, qtype, out_qry);
 }
 
-static int ut_snap(struct ut_env *ute, ino_t ino, const char *name)
+static int ut_inspect(struct ut_env *ute, const struct silofs_bootsec *bsec)
 {
-	return silofs_fs_clone(fs_ctx_of(ute), ino, name, 0);
-}
-
-static int ut_unrefs(struct ut_env *ute, ino_t ino, const char *name)
-{
-	return silofs_fs_unrefs(fs_ctx_of(ute), ino, name);
-}
-
-static int ut_inspect(struct ut_env *ute, ino_t ino)
-{
-	return silofs_fs_inspect(fs_ctx_of(ute), ino);
-}
-
-static int ut_archive(struct ut_env *ute,
-                      const char *src_name, const char *dst_name)
-{
-	return silofs_fs_pack(fs_ctx_of(ute), src_name, dst_name);
-}
-
-static int ut_restore(struct ut_env *ute,
-                      const char *src_name, const char *dst_name)
-{
-	return silofs_fs_unpack(fs_ctx_of(ute), src_name, dst_name);
+	return silofs_fs_inspect(fs_ctx_of(ute), bsec);
 }
 
 static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
@@ -462,6 +445,26 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 	ut_lxa_ctx->lxa_ctx.actor = fillxent;
 
 	return silofs_fs_listxattr(fs_ctx_of(ute), ino, lxa_ctx);
+}
+
+static int ut_snap(struct ut_env *ute, ino_t ino,
+                   struct silofs_bootsec *out_bsec)
+{
+	return silofs_fs_clone(fs_ctx_of(ute), ino, 0, out_bsec);
+}
+
+static int ut_archive(struct ut_env *ute,
+                      const struct silofs_bootsec *src_bsec,
+                      struct silofs_bootsec *dst_bsec)
+{
+	return silofs_fs_pack(fs_ctx_of(ute), src_bsec, dst_bsec);
+}
+
+static int ut_restore(struct ut_env *ute,
+                      const struct silofs_bootsec *src_bsec,
+                      struct silofs_bootsec *dst_bsec)
+{
+	return silofs_fs_unpack(fs_ctx_of(ute), src_bsec, dst_bsec);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1475,74 +1478,6 @@ void ut_query_ok(struct ut_env *ute, ino_t ino, int qtype,
 	ut_expect_ok(err);
 }
 
-void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name)
-{
-	int err;
-
-	err = ut_snap(ute, ino, name);
-	ut_expect_ok(err);
-}
-
-void ut_unrefs_ok(struct ut_env *ute, ino_t ino, const char *name)
-{
-	int err;
-
-	err = ut_unrefs(ute, ino, name);
-	ut_expect_ok(err);
-}
-
-void ut_inspect_ok(struct ut_env *ute, ino_t ino)
-{
-	int err;
-
-	err = ut_inspect(ute, ino);
-	ut_expect_ok(err);
-}
-
-void ut_archive_ok(struct ut_env *ute,
-                   const char *src_name, const char *dst_name)
-{
-	struct silofs_fs_env *fse = ute->fs_env;
-	int err;
-
-	err = silofs_fse_sync_drop(fse);
-	ut_expect_ok(err);
-
-	err = silofs_fse_term(fse);
-	ut_expect_ok(err);
-
-	err = silofs_fse_reopen(fse);
-	ut_expect_ok(err);
-
-	err = ut_archive(ute, src_name, dst_name);
-	ut_expect_ok(err);
-
-	err = silofs_fse_reload(fse);
-	ut_expect_ok(err);
-}
-
-void ut_restore_ok(struct ut_env *ute,
-                   const char *src_name, const char *dst_name)
-{
-	struct silofs_fs_env *fse = ute->fs_env;
-	int err;
-
-	err = silofs_fse_sync_drop(fse);
-	ut_expect_ok(err);
-
-	err = silofs_fse_term(fse);
-	ut_expect_ok(err);
-
-	err = silofs_fse_reopen(fse);
-	ut_expect_ok(err);
-
-	err = ut_restore(ute, src_name, dst_name);
-	ut_expect_ok(err);
-
-	err = silofs_fse_reload(fse);
-	ut_expect_ok(err);
-}
-
 void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 {
 	int err;
@@ -1636,9 +1571,9 @@ void ut_drop_caches_fully(struct ut_env *ute)
 
 	ut_sync_drop(ute);
 	silofs_fse_stats(ute->fs_env, &st);
-	/* super-block is not dropped */
-	ut_expect_eq(st.ncache_ublocks, 1);
-	ut_expect_eq(st.ncache_unodes, 1);
+	/* super-blocks are not dropped */
+	ut_expect_eq(st.ncache_ublocks, 2);
+	ut_expect_eq(st.ncache_unodes, 2);
 	ut_expect_eq(st.ncache_vblocks, 0);
 	ut_expect_eq(st.ncache_vnodes, 0);
 }
@@ -1683,21 +1618,34 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_lt(bfree_dif, 4000);
 }
 
+void ut_save_bsec_ok(struct ut_env *ute, const struct silofs_bootsec *bsec)
+{
+	ut_save_bsec_at(ute, true, ute->fs_env->fs_args.main_name, bsec);
+}
+
+void ut_load_bsec_ok(struct ut_env *ute, struct silofs_bootsec *bsec)
+{
+	ut_load_bsec_at(ute, true, ute->fs_env->fs_args.main_name, bsec);
+}
+
 void ut_reload_fs_ok(struct ut_env *ute)
 {
-	int err;
+	struct silofs_bootsec bsec;
 	struct silofs_fs_env *fse = ute->fs_env;
+	int err;
 
-	err = silofs_fse_sync_drop(fse);
+	err = silofs_fse_resolve(fse, &bsec);
 	ut_expect_ok(err);
 
 	err = silofs_fse_term(fse);
 	ut_expect_ok(err);
 
-	err = silofs_fse_reopen(fse);
+	ut_save_bsec_ok(ute, &bsec);
+
+	err = silofs_fse_reopen(fse, &bsec);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_reload(fse);
+	err = silofs_fse_reload(fse, &bsec);
 	ut_expect_ok(err);
 }
 
@@ -1718,21 +1666,197 @@ void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino)
 
 void ut_reload_fs_byname_ok(struct ut_env *ute, const char *name)
 {
-	int err;
+	struct silofs_bootsec bsec;
 	struct silofs_fs_env *fse = ute->fs_env;
+	int err;
 
-	err = silofs_fse_sync_drop(fse);
+	err = silofs_fse_resolve(fse, &bsec);
 	ut_expect_ok(err);
 
 	err = silofs_fse_term(fse);
 	ut_expect_ok(err);
 
-	fse->fs_args.main_name = name;
+	ut_save_bsec_ok(ute, &bsec);
+	ut_load_bsec_at(ute, true, name, &bsec);
 
-	err = silofs_fse_reopen(fse);
+	err = silofs_fse_reopen(fse, &bsec);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_reload(fse);
+	err = silofs_fse_reload(fse, &bsec);
 	ut_expect_ok(err);
 }
 
+static void ut_setup_bootpath(const struct ut_env *ute,
+                              struct silofs_bootpath *bpath,
+                              const char *name, bool main)
+{
+	const char *repodir;
+	int err;
+
+	if (main) {
+		repodir = ute->fs_env->fs_args.main_repodir;
+		if (name == NULL) {
+			name = ute->fs_env->fs_args.main_name;
+		}
+	} else {
+		repodir = ute->fs_env->fs_args.cold_repodir;
+		if (name == NULL) {
+			name = ute->fs_env->fs_args.cold_name;
+		}
+	}
+
+	err = silofs_bootpath_setup(bpath, repodir, name);
+	ut_expect_ok(err);
+}
+
+static void ut_open_bootldr(const struct ut_env *ute,
+                            const struct silofs_bootpath *bpath,
+                            struct silofs_bootldr *bldr)
+{
+	int err;
+
+	err = silofs_bootldr_init(bldr);
+	ut_expect_ok(err);
+
+	err = silofs_bootldr_open(bldr, bpath);
+	ut_expect_ok(err);
+
+	ut_unused(ute);
+}
+
+static void ut_close_bootldr(const struct ut_env *ute,
+                             struct silofs_bootldr *bldr)
+{
+	int err;
+
+	err = silofs_bootldr_close(bldr);
+	ut_expect_ok(err);
+
+	silofs_bootldr_fini(bldr);
+	silofs_unused(ute);
+}
+
+void ut_unrefs_ok(struct ut_env *ute, const char *name)
+{
+	struct silofs_bootpath bpath;
+	struct silofs_bootldr bldr;
+	int err;
+
+	ut_setup_bootpath(ute, &bpath, name, true);
+	ut_open_bootldr(ute, &bpath, &bldr);
+	err = silofs_bootldr_unref(&bldr, &bpath);
+	ut_expect_ok(err);
+	ut_close_bootldr(ute, &bldr);
+}
+
+void ut_load_bsec_at(const struct ut_env *ute,
+                     bool main, const char *name,
+                     struct silofs_bootsec *out_bsec)
+{
+	struct silofs_bootpath bpath;
+	struct silofs_bootldr bldr;
+	int err;
+
+	ut_setup_bootpath(ute, &bpath, name, main);
+	ut_open_bootldr(ute, &bpath, &bldr);
+	err = silofs_bootldr_fetch(&bldr, &bpath, out_bsec);
+	ut_expect_ok(err);
+	ut_close_bootldr(ute, &bldr);
+}
+
+void ut_save_bsec_at(const struct ut_env *ute,
+                     bool main, const char *name,
+                     const struct silofs_bootsec *bsec)
+{
+	struct silofs_bootpath bpath;
+	struct silofs_bootldr bldr;
+	int err;
+
+	ut_setup_bootpath(ute, &bpath, name, main);
+	ut_open_bootldr(ute, &bpath, &bldr);
+	err = silofs_bootldr_store(&bldr, &bpath, bsec);
+	ut_expect_ok(err);
+	ut_close_bootldr(ute, &bldr);
+}
+
+void ut_inspect_ok(struct ut_env *ute, const char *name)
+{
+	struct silofs_bootsec bsec;
+	int err;
+
+	ut_load_bsec_at(ute, true, name, &bsec);
+	err = ut_inspect(ute, &bsec);
+	ut_expect_ok(err);
+}
+
+void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name)
+{
+	struct silofs_bootsec bsec = { .flags = 0 };
+	int err;
+
+	err = ut_snap(ute, ino, &bsec);
+	ut_expect_ok(err);
+
+	ut_save_bsec_at(ute, true, name, &bsec);
+}
+
+void ut_archive_ok(struct ut_env *ute,
+                   const char *src_name, const char *dst_name)
+{
+	struct silofs_bootsec bsec = { .flags = 0 };
+	struct silofs_bootsec src_bsec = { .flags = 0 };
+	struct silofs_bootsec dst_bsec = { .flags = 0 };
+	struct silofs_fs_env *fse = ute->fs_env;
+	int err;
+
+	err = silofs_fse_resolve(fse, &bsec);
+	ut_expect_ok(err);
+
+	err = silofs_fse_term(fse);
+	ut_expect_ok(err);
+
+	ut_save_bsec_ok(ute, &bsec);
+
+	ut_load_bsec_at(ute, true, src_name, &src_bsec);
+	err = silofs_fse_reopen(fse, &src_bsec);
+	ut_expect_ok(err);
+
+	err = ut_archive(ute, &src_bsec, &dst_bsec);
+	ut_expect_ok(err);
+
+	ut_save_bsec_at(ute, false, dst_name, &dst_bsec);
+
+	err = silofs_fse_reload(fse, &src_bsec);
+	ut_expect_ok(err);
+}
+
+
+void ut_restore_ok(struct ut_env *ute,
+                   const char *src_name, const char *dst_name)
+{
+	struct silofs_bootsec bsec = { .flags = 0 };
+	struct silofs_bootsec src_bsec = { .flags = 0 };
+	struct silofs_bootsec dst_bsec = { .flags = 0 };
+	struct silofs_fs_env *fse = ute->fs_env;
+	int err;
+
+	err = silofs_fse_resolve(fse, &bsec);
+	ut_expect_ok(err);
+
+	err = silofs_fse_term(fse);
+	ut_expect_ok(err);
+
+	ut_save_bsec_ok(ute, &bsec);
+
+	ut_load_bsec_at(ute, false, src_name, &src_bsec);
+	err = silofs_fse_reopen(fse, &src_bsec);
+	ut_expect_ok(err);
+
+	err = ut_restore(ute, &src_bsec, &dst_bsec);
+	ut_expect_ok(err);
+
+	ut_save_bsec_at(ute, true, dst_name, &dst_bsec);
+
+	err = silofs_fse_reload(fse, &src_bsec);
+	ut_expect_ok(err);
+}

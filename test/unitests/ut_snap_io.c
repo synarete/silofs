@@ -42,7 +42,7 @@ static void ut_snap_write_sparse_(struct ut_env *ute,
 		ut_write_read(ute, ino, buf, bsz, offs[i - 1]);
 	}
 	ut_remove_file(ute, dino, name, ino);
-	ut_unrefs_ok(ute, dino, name);
+	ut_unrefs_ok(ute, name);
 	ut_rmdir_at_root(ute, name);
 }
 

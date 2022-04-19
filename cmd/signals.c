@@ -14,16 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <signal.h>
-#include <errno.h>
-#include <error.h>
+#include "cmd.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static silofs_signal_hook_fn silofs_signal_callback_hook = NULL;
+static void (*silofs_signal_callback_hook)(int) = NULL;
 
 static void sigaction_info_handler(int signum)
 {
@@ -33,7 +31,7 @@ static void sigaction_info_handler(int signum)
 static void sigaction_halt_handler(int signum)
 {
 	silofs_log_info("halt-signal: %d", signum);
-	silofs_globals.sig_halt = signum;
+	cmd_globals.sig_halt = signum;
 	if (silofs_signal_callback_hook != NULL) {
 		/* Call sub-program specific logic */
 		silofs_signal_callback_hook(signum);
@@ -47,21 +45,21 @@ static void sigaction_term_handler(int signum)
 {
 	silofs_backtrace();
 	silofs_log_crit("term-signal: %d", signum);
-	silofs_globals.sig_halt = signum;
-	silofs_globals.sig_fatal = signum;
+	cmd_globals.sig_halt = signum;
+	cmd_globals.sig_fatal = signum;
 	exit(EXIT_FAILURE);
 }
 
 static void sigaction_abort_handler(int signum)
 {
-	if (silofs_globals.sig_fatal) {
+	if (cmd_globals.sig_fatal) {
 		_exit(EXIT_FAILURE);
 	}
 
 	silofs_backtrace();
 	silofs_log_crit("abort-signal: %d", signum);
-	silofs_globals.sig_halt = signum;
-	silofs_globals.sig_fatal = signum;
+	cmd_globals.sig_halt = signum;
+	cmd_globals.sig_fatal = signum;
 	abort(); /* Re-raise to _exit */
 }
 
@@ -87,7 +85,7 @@ static void register_sigaction(int signum, struct sigaction *sa)
 
 	err = silofs_sys_sigaction(signum, sa, NULL);
 	if (err) {
-		silofs_die(err, "sigaction error: signum=%d", signum);
+		cmd_dief(err, "sigaction error: signum=%d", signum);
 	}
 }
 
@@ -111,7 +109,7 @@ static void sigaction_abort(int signum)
 	register_sigaction(signum, &s_sigaction_abort);
 }
 
-void silofs_register_sigactions(silofs_signal_hook_fn sig_hook)
+void cmd_register_sigactions(void (*sig_hook_fn)(int))
 {
 	sigaction_info(SIGHUP);
 	sigaction_halt(SIGINT);
@@ -142,6 +140,6 @@ void silofs_register_sigactions(silofs_signal_hook_fn sig_hook)
 	sigaction_info(SIGIO);
 	sigaction_halt(SIGPWR);
 	sigaction_halt(SIGSYS);
-	silofs_signal_callback_hook = sig_hook;
+	silofs_signal_callback_hook = sig_hook_fn;
 }
 

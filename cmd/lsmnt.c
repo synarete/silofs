@@ -14,22 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include <error.h>
-#include <getopt.h>
+#include "cmd.h"
 
-
-static struct silofs_subcmd_lsmnt *cmd_lsmnt_args;
-static char *cmd_lsmnt_mountinfo;
 
 static const char *cmd_lsmnt_usage[] = {
 	"lsmnt [options]",
@@ -39,7 +25,22 @@ static const char *cmd_lsmnt_usage[] = {
 	NULL
 };
 
-static void cmd_lsmnt_getopt(void)
+struct cmd_lsmnt_args {
+	char   *mntpoint;
+	char   *mntpoint_real;
+	bool    long_listing;
+};
+
+struct cmd_lsmnt_ctx {
+	struct cmd_lsmnt_args   args;
+	struct silofs_ioc_query ioc_qry;
+};
+
+static struct cmd_lsmnt_ctx *cmd_lsmnt_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_lsmnt_getopt(struct cmd_lsmnt_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -49,130 +50,108 @@ static void cmd_lsmnt_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("lh", opts);
+		opt_chr = cmd_getopt("lh", opts);
 		if (opt_chr == 'l') {
-			cmd_lsmnt_args->long_listing = true;
+			ctx->args.long_listing = true;
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(cmd_lsmnt_usage);
+			cmd_print_help_and_exit(cmd_lsmnt_usage);
 		} else if (opt_chr > 0) {
-			silofs_die_unsupported_opt();
+			cmd_fatal_unsupported_opt();
 		}
 	}
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_lsmnt_finalize(void)
+static void cmd_lsmnt_finalize(struct cmd_lsmnt_ctx *ctx)
 {
-	silofs_cmd_pfrees(&cmd_lsmnt_mountinfo);
-	silofs_cmd_pfrees(&cmd_lsmnt_args->mntpoint_real);
+	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
+	cmd_lsmnt_ctx = NULL;
 }
 
-static void cmd_lsmnt_start(void)
+static void cmd_lsmnt_atexit(void)
 {
-	cmd_lsmnt_args = &silofs_globals.cmd.lsmnt;
-	atexit(cmd_lsmnt_finalize);
-}
-
-static void cmd_lsmnt_prepare(void)
-{
-	struct stat st;
-	const char *path;
-
-	path = cmd_lsmnt_args->mntpoint;
-	if (path != NULL) {
-		silofs_cmd_stat_ok(path, &st);
-		if (!S_ISDIR(st.st_mode)) {
-			silofs_die(-ENOTDIR, "bad mount-point: %s", path);
-		}
-		if (st.st_ino != SILOFS_INO_ROOT) {
-			silofs_die(0, "not a silofs mount-point: %s", path);
-		}
-		silofs_cmd_realpath(path, &cmd_lsmnt_args->mntpoint_real);
+	if (cmd_lsmnt_ctx != NULL) {
+		cmd_lsmnt_finalize(cmd_lsmnt_ctx);
 	}
 }
 
-static void cmd_lsmnt_print_mntdir(const struct silofs_proc_mntinfo *mi)
+static void cmd_lsmnt_start(struct cmd_lsmnt_ctx *ctx)
 {
-	printf("%s\n", mi->mntdir);
+	cmd_lsmnt_ctx = ctx;
+	atexit(cmd_lsmnt_atexit);
 }
 
-static void cmd_lsmnt_print_mntdir_long(const struct silofs_proc_mntinfo *mi)
+static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 {
-	char perm[11] = "";
-	struct stat st;
-	mode_t mode;
+	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
+}
+
+static void cmd_lsmnt_exec_mi(struct cmd_lsmnt_ctx *ctx,
+                              const struct silofs_proc_mntinfo *mi)
+{
+	struct silofs_ioc_query *qry = &ctx->ioc_qry;
+	const char *repodir = "";
+	const char *name = "";
+	char sep = ' ';
 	int o_flags;
 	int dfd = -1;
-	int err;
+	int err = 0;
 
-	memset(perm, '?', sizeof(perm) - 1);
+	if (!ctx->args.long_listing) {
+		goto out;
+	}
 	o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	err = silofs_sys_openat(AT_FDCWD, mi->mntdir, o_flags, 0, &dfd);
 	if (err) {
 		goto out;
 	}
-	err = silofs_sys_fstat(dfd, &st);
+	qry->qtype = SILOFS_QUERY_REPONAME;
+	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}
-	mode = st.st_mode;
-	perm[0] = S_ISDIR(mode) ? 'd' : (S_ISLNK(mode) ? 'l' : '-');
-	perm[1] = (mode & S_IRUSR) ? 'r' : '-';
-	perm[2] = (mode & S_IWUSR) ? 'w' : '-';
-	perm[3] = (mode & S_IXUSR) ? 'x' : '-';
-	perm[4] = (mode & S_IRGRP) ? 'r' : '-';
-	perm[5] = (mode & S_IWGRP) ? 'w' : '-';
-	perm[6] = (mode & S_IXGRP) ? 'x' : '-';
-	perm[7] = (mode & S_IROTH) ? 'r' : '-';
-	perm[8] = (mode & S_IWOTH) ? 'w' : '-';
-	perm[9] = (mode & S_IXOTH) ? 'x' : '-';
+	repodir = qry->u.reponame.repodir;
+	name = qry->u.reponame.name;
+	sep = '/';
 out:
 	silofs_sys_closefd(&dfd);
-	printf("%s %s ", perm, mi->mntdir);
+	printf("%-16s %s%c%s\n", mi->mntdir, repodir, sep, name);
 }
 
-static void cmd_lsmnt_print_mntargs(const struct silofs_proc_mntinfo *mi)
-{
-	printf("%s \n", mi->mntargs);
-}
-
-static void cmd_lsmnt_execute(void)
+static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 {
 	struct silofs_proc_mntinfo *mi_list = NULL;
 	struct silofs_proc_mntinfo *mi_iter = NULL;
 
-	mi_list = silofs_cmd_parse_mountinfo();
-	mi_iter = mi_list;
-	while (mi_iter != NULL) {
-		if (cmd_lsmnt_args->long_listing) {
-			cmd_lsmnt_print_mntdir_long(mi_iter);
-			cmd_lsmnt_print_mntargs(mi_iter);
-		} else {
-			cmd_lsmnt_print_mntdir(mi_iter);
-		}
-		mi_iter = mi_iter->next;
+	mi_list = cmd_parse_mountinfo();
+	for (mi_iter = mi_list; mi_iter != NULL; mi_iter = mi_iter->next) {
+		cmd_lsmnt_exec_mi(ctx, mi_iter);
 	}
-	silofs_cmd_free_mountinfo(mi_list);
+	cmd_free_mountinfo(mi_list);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_cmd_execute_lsmnt(void)
+void cmd_execute_lsmnt(void)
 {
+	struct cmd_lsmnt_ctx ctx = {
+		.ioc_qry.qtype = 0,
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_lsmnt_start();
+	cmd_lsmnt_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_lsmnt_getopt();
+	cmd_lsmnt_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_lsmnt_prepare();
+	cmd_lsmnt_prepare(&ctx);
 
 	/* Read mount info and print */
-	cmd_lsmnt_execute();
+	cmd_lsmnt_execute(&ctx);
 
 	/* Post execution cleanups */
-	cmd_lsmnt_finalize();
+	cmd_lsmnt_finalize(&ctx);
 }
 

@@ -19,9 +19,12 @@
 #include <silofs/fs/address.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/boot.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/super.h>
+#include <silofs/fs/stats.h>
 #include <silofs/fs/stage.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/apex.h>
@@ -33,6 +36,7 @@ struct silofs_walk_ctx {
 	struct silofs_visitor     *vis;
 	struct silofs_fs_apex     *apex;
 	struct silofs_sb_info     *sbi;
+	struct silofs_stats_info  *sti;
 	struct silofs_spnode_info *sni3;
 	struct silofs_spnode_info *sni2;
 	struct silofs_spleaf_info *sli;
@@ -40,6 +44,14 @@ struct silofs_walk_ctx {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void sbi_vrange(const struct silofs_sb_info *sbi,
+                       struct silofs_vrange *out_vrange)
+{
+	const loff_t voff_end = silofs_sti_vspace_end(sbi->sb_sti);
+
+	silofs_vrange_setup(out_vrange, SILOFS_SUPER_HEIGHT, 0, voff_end);
+}
 
 static size_t ui_height(const struct silofs_unode_info *ui)
 {
@@ -343,7 +355,7 @@ static int wac_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 static int wac_traverse_at_spnode3(struct silofs_walk_ctx *wa_ctx,
                                    loff_t voff, size_t slot)
 {
-	struct silofs_unode_info *parent = &wa_ctx->sbi->s_ui;
+	struct silofs_unode_info *parent = &wa_ctx->sbi->sb_ui;
 	struct silofs_spnode_info *sni = wa_ctx->sni3;
 	int err;
 
@@ -378,7 +390,7 @@ static int wac_traverse_super_child(struct silofs_walk_ctx *wa_ctx,
 	return 0;
 }
 
-static int wac_traverse_super(struct silofs_walk_ctx *wa_ctx)
+static int wac_traverse_utree(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_vrange vrange = { .beg = -1 };
 	struct silofs_uaddr ulink = { .voff = -1 };
@@ -387,14 +399,14 @@ static int wac_traverse_super(struct silofs_walk_ctx *wa_ctx)
 	loff_t voff;
 	int err = 0;
 
-	silofs_sbi_vspace_range(sbi, &vrange);
+	sbi_vrange(sbi, &vrange);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = silofs_sbi_subref_of(sbi, voff, &ulink);
 		if (err) {
 			break;
 		}
-		err = wac_visit_prep_at(wa_ctx, &sbi->s_ui, voff, slot);
+		err = wac_visit_prep_at(wa_ctx, &sbi->sb_ui, voff, slot);
 		if (err) {
 			break;
 		}
@@ -408,33 +420,41 @@ static int wac_traverse_super(struct silofs_walk_ctx *wa_ctx)
 	return (err == -ENOENT) ? 0 : err;
 }
 
-static int wac_traverse_at_super(struct silofs_walk_ctx *wa_ctx)
+static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_sb_info *sbi = wa_ctx->sbi;
+	struct silofs_stats_info *sti = wa_ctx->sti;
 	loff_t voff = 0;
 	int err;
 
-	err = wac_visit_exec_at(wa_ctx, NULL, &sbi->s_ui, voff, 0);
+	err = wac_visit_exec_at(wa_ctx, NULL, &sbi->sb_ui, voff, 0);
 	if (err) {
 		return err;
 	}
-	err = wac_traverse_super(wa_ctx);
+	err = wac_visit_exec_at(wa_ctx, NULL, &sti->st_ui, voff, 1);
 	if (err) {
 		return err;
 	}
-	err = wac_visit_post_at(wa_ctx, NULL, &sbi->s_ui, voff, 0);
+	err = wac_traverse_utree(wa_ctx);
+	if (err) {
+		return err;
+	}
+	err = wac_visit_post_at(wa_ctx, NULL, &sti->st_ui, voff, 1);
+	if (err) {
+		return err;
+	}
+	err = wac_visit_post_at(wa_ctx, NULL, &sbi->sb_ui, voff, 0);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-
 static int wac_traverse_fs(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
-	err = wac_traverse_at_super(wa_ctx);
+	err = wac_traverse_supers(wa_ctx);
 	wac_relax_cache(wa_ctx);
 	return err;
 }
@@ -446,6 +466,7 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 		.vis = vis,
 		.apex = sbi_apex(sbi),
 		.sbi = sbi,
+		.sti = sbi->sb_sti,
 		.sni3 = NULL,
 		.sni2 = NULL,
 		.sli = NULL,
@@ -476,11 +497,11 @@ static void usi_fini(struct silofs_usaddr_info *usi)
 }
 
 static struct silofs_usaddr_info *
-usi_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
+usi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_usaddr_info *usi = NULL;
 
-	usi = silofs_allocate(alif, sizeof(*usi));
+	usi = silofs_allocate(alloc, sizeof(*usi));
 	if (usi != NULL) {
 		usi_init(usi, uaddr);
 	}
@@ -488,10 +509,10 @@ usi_new(struct silofs_alloc_if *alif, const struct silofs_uaddr *uaddr)
 }
 
 static void usi_delete(struct silofs_usaddr_info *usi,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	usi_fini(usi);
-	silofs_deallocate(alif, usi, sizeof(*usi));
+	silofs_deallocate(alloc, usi, sizeof(*usi));
 }
 
 
@@ -524,14 +545,14 @@ static long uaddr_compare(const void *x, const void *y)
 static void uss_delete_usi(struct silofs_usaddr_set *uss,
                            struct silofs_usaddr_info *usi)
 {
-	usi_delete(usi, uss->uss_alif);
+	usi_delete(usi, uss->uss_alloc);
 }
 
 static void uss_init(struct silofs_usaddr_set *uss,
-                     struct silofs_alloc_if *alif)
+                     struct silofs_alloc *alloc)
 {
 	silofs_avl_init(&uss->uss_avl, usi_getkey, uaddr_compare, uss);
-	uss->uss_alif = alif;
+	uss->uss_alloc = alloc;
 }
 
 static void uss_avl_node_delete_cb(struct silofs_avl_node *an, void *p)
@@ -556,7 +577,7 @@ static void uss_fini(struct silofs_usaddr_set *uss)
 {
 	uss_clear(uss);
 	silofs_avl_fini(&uss->uss_avl);
-	uss->uss_alif = NULL;
+	uss->uss_alloc = NULL;
 }
 
 static int uss_insert(struct silofs_usaddr_set *uss,
@@ -564,7 +585,7 @@ static int uss_insert(struct silofs_usaddr_set *uss,
 {
 	struct silofs_usaddr_info *usi;
 
-	usi = usi_new(uss->uss_alif, uaddr);
+	usi = usi_new(uss->uss_alloc, uaddr);
 	if (usi == NULL) {
 		return -ENOMEM;
 	}
@@ -632,10 +653,10 @@ static int usv_visit_hook(struct silofs_visitor *vis,
 }
 
 void silofs_usvisitor_init(struct silofs_uspace_visitor *usv,
-                           struct silofs_alloc_if *alif)
+                           struct silofs_alloc *alloc)
 {
 	silofs_memzero(usv, sizeof(*usv));
-	uss_init(&usv->uss, alif);
+	uss_init(&usv->uss, alloc);
 	usv->vis.visit_prep_hook = NULL;
 	usv->vis.visit_exec_hook = usv_visit_hook;
 	usv->vis.visit_post_hook = NULL;

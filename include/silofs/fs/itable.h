@@ -22,7 +22,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_inomap_init(struct silofs_inomap *imap,
-                       struct silofs_alloc_if *alif);
+                       struct silofs_alloc *alloc);
 
 void silofs_inomap_fini(struct silofs_inomap *imap);
 
@@ -41,15 +41,14 @@ void silofs_inomap_clear(struct silofs_inomap *imap);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_itbi_init(struct silofs_itable_info *itbi,
-                     struct silofs_alloc_if *alif);
+int silofs_itbl_init(struct silofs_itable *itbl, struct silofs_alloc *alloc);
 
-void silofs_itbi_reinit(struct silofs_itable_info *itbi);
+void silofs_itbl_reinit(struct silofs_itable *itbl);
 
-void silofs_itbi_fini(struct silofs_itable_info *itbi);
+void silofs_itbl_fini(struct silofs_itable *itbl);
 
-void silofs_itbi_update_by(struct silofs_itable_info *itbi,
-                           const struct silofs_itable_info *itbi_other);
+void silofs_itbl_update_by(struct silofs_itable *itbl,
+                           const struct silofs_itable *itbl_other);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -9,5 +9,5 @@ config.sub
 ltmain.sh
 ar-lib
 test-driver
-
+py-compile
 

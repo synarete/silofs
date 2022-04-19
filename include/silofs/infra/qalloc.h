@@ -30,12 +30,12 @@ struct silofs_alloc_stat {
 };
 
 /* allocator interface */
-struct silofs_alloc_if {
-	void *(*malloc_fn)(struct silofs_alloc_if *alif, size_t size);
-	void (*free_fn)(struct silofs_alloc_if *alif, void *ptr, size_t size);
-	void (*stat_fn)(const struct silofs_alloc_if *alif,
+struct silofs_alloc {
+	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size);
+	void (*free_fn)(struct silofs_alloc *alloc, void *ptr, size_t size);
+	void (*stat_fn)(const struct silofs_alloc *alloc,
 	                struct silofs_alloc_stat *out_stat);
-	int (*resolve_fn)(const struct silofs_alloc_if *alif,
+	int (*resolve_fn)(const struct silofs_alloc *alloc,
 	                  void *ptr, size_t len, struct silofs_xiovec *xiov);
 };
 
@@ -52,7 +52,7 @@ struct silofs_qalloc {
 	struct silofs_slab       slabs[32];
 	struct silofs_list_head  free_pgs;
 	struct silofs_alloc_stat alst;
-	struct silofs_alloc_if   alif;
+	struct silofs_alloc   alloc;
 	void   *mem_data;
 	void   *mem_meta;
 	int     memfd_data;
@@ -62,14 +62,14 @@ struct silofs_qalloc {
 
 
 /* allocation via interface */
-void *silofs_allocate(struct silofs_alloc_if *alif, size_t size);
+void *silofs_allocate(struct silofs_alloc *alloc, size_t size);
 
-void silofs_deallocate(struct silofs_alloc_if *alif, void *ptr, size_t size);
+void silofs_deallocate(struct silofs_alloc *alloc, void *ptr, size_t size);
 
-void silofs_allocstat(const struct silofs_alloc_if *alif,
+void silofs_allocstat(const struct silofs_alloc *alloc,
                       struct silofs_alloc_stat *out_stat);
 
-int silofs_allocresolve(const struct silofs_alloc_if *alif, void *ptr,
+int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
                         size_t len, struct silofs_xiovec *xiov);
 
 

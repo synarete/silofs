@@ -22,7 +22,6 @@
 #include <silofs/fs/private.h>
 
 
-
 /* single entry of free vspace */
 struct silofs_spa_entry {
 	struct silofs_avl_node  spe_an;
@@ -86,11 +85,11 @@ static void spe_chop_head(struct silofs_spa_entry *spe, size_t len)
 }
 
 static struct silofs_spa_entry *
-spe_new(loff_t voff, size_t len, struct silofs_alloc_if *alif)
+spe_new(loff_t voff, size_t len, struct silofs_alloc *alloc)
 {
 	struct silofs_spa_entry *spe;
 
-	spe = silofs_allocate(alif, sizeof(*spe));
+	spe = silofs_allocate(alloc, sizeof(*spe));
 	if (spe != NULL) {
 		spe_init(spe, voff, len);
 	}
@@ -98,10 +97,10 @@ spe_new(loff_t voff, size_t len, struct silofs_alloc_if *alif)
 }
 
 static void spe_del(struct silofs_spa_entry *spe,
-                    struct silofs_alloc_if *alif)
+                    struct silofs_alloc *alloc)
 {
 	spe_fini(spe);
-	silofs_deallocate(alif, spe, sizeof(*spe));
+	silofs_deallocate(alloc, spe, sizeof(*spe));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -119,14 +118,14 @@ spamap_new_spe(struct silofs_spamap *spa, loff_t voff, size_t len)
 {
 	struct silofs_spa_entry *spe;
 
-	spe = spe_new(voff, len, spa->spa_alif);
+	spe = spe_new(voff, len, spa->spa_alloc);
 	return spe;
 }
 
 static void spamap_delete_spe(struct silofs_spamap *spa,
                               struct silofs_spa_entry *spe)
 {
-	spe_del(spe, spa->spa_alif);
+	spe_del(spe, spa->spa_alloc);
 }
 
 static struct silofs_spa_entry *
@@ -368,10 +367,10 @@ static void spamap_clear(struct silofs_spamap *spa)
 }
 
 static void spamap_init(struct silofs_spamap *spa, enum silofs_stype stype,
-                        struct silofs_alloc_if *alif)
+                        struct silofs_alloc *alloc)
 {
 	silofs_avl_init(&spa->spa_avl, spe_getkey, voff_compare, spa);
-	spa->spa_alif = alif;
+	spa->spa_alloc = alloc;
 	spa->spa_cap_max = spamap_capacity(stype);
 	spa->spa_stype = stype;
 }
@@ -379,7 +378,7 @@ static void spamap_init(struct silofs_spamap *spa, enum silofs_stype stype,
 static void spamap_fini(struct silofs_spamap *spa)
 {
 	silofs_avl_fini(&spa->spa_avl);
-	spa->spa_alif = NULL;
+	spa->spa_alloc = NULL;
 	spa->spa_cap_max = 0;
 	spa->spa_stype = SILOFS_STYPE_NONE;
 }
@@ -389,47 +388,36 @@ static void spamap_fini(struct silofs_spamap *spa)
 static struct silofs_spamap *
 spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_stype stype)
 {
-	struct silofs_spamap *spa;
-
 	switch (stype) {
 	case SILOFS_STYPE_DATA1K:
-		spa = &spam->spa_data1k;
-		break;
+		return &spam->spa_data1k;
 	case SILOFS_STYPE_DATA4K:
-		spa = &spam->spa_data4k;
-		break;
+		return &spam->spa_data4k;
 	case SILOFS_STYPE_DATABK:
-		spa = &spam->spa_databk;
-		break;
+		return &spam->spa_databk;
 	case SILOFS_STYPE_ITNODE:
-		spa = &spam->spa_itnode;
-		break;
+		return &spam->spa_itnode;
 	case SILOFS_STYPE_INODE:
-		spa = &spam->spa_inode;
-		break;
+		return &spam->spa_inode;
 	case SILOFS_STYPE_XANODE:
-		spa = &spam->spa_xanode;
-		break;
+		return &spam->spa_xanode;
 	case SILOFS_STYPE_DTNODE:
-		spa = &spam->spa_dtnode;
-		break;
+		return &spam->spa_dtnode;
 	case SILOFS_STYPE_FTNODE:
-		spa = &spam->spa_ftnode;
-		break;
+		return &spam->spa_ftnode;
 	case SILOFS_STYPE_SYMVAL:
-		spa = &spam->spa_symval;
-		break;
+		return &spam->spa_symval;
 	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_STATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_MAX:
 	default:
-		spa = NULL;
 		break;
 	}
-	return spa;
+	return NULL;
 }
 
 int silofs_spamaps_store(struct silofs_spamaps *spam,
@@ -472,7 +460,7 @@ void silofs_spamaps_drop(struct silofs_spamaps *spam)
 }
 
 int silofs_spamaps_init(struct silofs_spamaps *spam,
-                        struct silofs_alloc_if *alif)
+                        struct silofs_alloc *alloc)
 {
 	struct silofs_spamap *spa = NULL;
 	enum silofs_stype stype = SILOFS_STYPE_NONE;
@@ -480,7 +468,7 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
 	while (++stype < SILOFS_STYPE_MAX) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
-			spamap_init(spa, stype, alif);
+			spamap_init(spa, stype, alloc);
 		}
 	}
 	return 0;
@@ -525,13 +513,13 @@ ui_from_unom_lh(const struct silofs_list_head *lh)
 }
 
 int silofs_unomap_init(struct silofs_unomap *unom,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	const unsigned int cap = 4093;
 
 	unom->uno_htbl_sz = 0;
 	unom->uno_htbl_cap = 0;
-	unom->uno_htbl = silofs_lista_new(alif, cap);
+	unom->uno_htbl = silofs_lista_new(alloc, cap);
 	if (unom->uno_htbl == NULL) {
 		return -ENOMEM;
 	}
@@ -540,10 +528,10 @@ int silofs_unomap_init(struct silofs_unomap *unom,
 }
 
 void silofs_unomap_fini(struct silofs_unomap *unom,
-                        struct silofs_alloc_if *alif)
+                        struct silofs_alloc *alloc)
 {
 	if (unom->uno_htbl != NULL) {
-		silofs_lista_del(unom->uno_htbl, unom->uno_htbl_cap, alif);
+		silofs_lista_del(unom->uno_htbl, unom->uno_htbl_cap, alloc);
 		unom->uno_htbl_cap = 0;
 		unom->uno_htbl_sz = 0;
 	}
@@ -633,11 +621,11 @@ silofs_unomap_lookup(const struct silofs_unomap *unom,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_list_head *
-silofs_lista_new(struct silofs_alloc_if *alif, size_t nelems)
+silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
 {
 	struct silofs_list_head *lista;
 
-	lista = silofs_allocate(alif, sizeof(*lista) * nelems);
+	lista = silofs_allocate(alloc, sizeof(*lista) * nelems);
 	if (lista != NULL) {
 		list_head_initn(lista, nelems);
 	}
@@ -645,10 +633,10 @@ silofs_lista_new(struct silofs_alloc_if *alif, size_t nelems)
 }
 
 void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-                      struct silofs_alloc_if *alif)
+                      struct silofs_alloc *alloc)
 {
 	list_head_finin(lista, nelems);
-	silofs_deallocate(alif, lista, sizeof(*lista) * nelems);
+	silofs_deallocate(alloc, lista, sizeof(*lista) * nelems);
 }
 
 

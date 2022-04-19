@@ -8,4 +8,4 @@ silofsmountdunitdir = $(prefix)/lib/systemd/system
 dist_silofsmountdunit_DATA = silofs-mountd.service
 
 silofs-mountd.service: silofs-mountd.service.in
-	@echo "  SED      $@"; $(PATSUBST) $< > $@ ;
+	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;

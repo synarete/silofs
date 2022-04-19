@@ -39,11 +39,11 @@ static void inoent_fini(struct silofs_inoent *ient)
 }
 
 static struct silofs_inoent *
-inoent_new(struct silofs_alloc_if *alif, ino_t ino, loff_t voff)
+inoent_new(struct silofs_alloc *alloc, ino_t ino, loff_t voff)
 {
 	struct silofs_inoent *ient;
 
-	ient = silofs_allocate(alif, sizeof(*ient));
+	ient = silofs_allocate(alloc, sizeof(*ient));
 	if (ient != NULL) {
 		inoent_init(ient, ino, voff);
 	}
@@ -51,10 +51,10 @@ inoent_new(struct silofs_alloc_if *alif, ino_t ino, loff_t voff)
 }
 
 static void inoent_del(struct silofs_inoent *ient,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	inoent_fini(ient);
-	silofs_deallocate(alif, ient, sizeof(*ient));
+	silofs_deallocate(alloc, ient, sizeof(*ient));
 }
 
 static struct silofs_inoent *
@@ -78,14 +78,14 @@ inoent_from_lru_lh(const struct silofs_list_head *lh)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_inomap_init(struct silofs_inomap *imap,
-                       struct silofs_alloc_if *alif)
+                       struct silofs_alloc *alloc)
 {
 	const size_t htbl_nelems = 65479;
 
 	listq_init(&imap->im_lru);
-	imap->im_alif = alif;
+	imap->im_alloc = alloc;
 	imap->im_htbl_nelems = 0;
-	imap->im_htbl = silofs_lista_new(alif, htbl_nelems);
+	imap->im_htbl = silofs_lista_new(alloc, htbl_nelems);
 	if (imap->im_htbl == NULL) {
 		return -ENOMEM;
 	}
@@ -96,11 +96,11 @@ int silofs_inomap_init(struct silofs_inomap *imap,
 void silofs_inomap_fini(struct silofs_inomap *imap)
 {
 	silofs_inomap_clear(imap);
-	silofs_lista_del(imap->im_htbl, imap->im_htbl_nelems, imap->im_alif);
+	silofs_lista_del(imap->im_htbl, imap->im_htbl_nelems, imap->im_alloc);
 	listq_fini(&imap->im_lru);
 	imap->im_htbl_nelems = 0;
 	imap->im_htbl = NULL;
-	imap->im_alif = NULL;
+	imap->im_alloc = NULL;
 }
 
 static size_t inomap_ino_to_slot(const struct silofs_inomap *imap, ino_t ino)
@@ -167,13 +167,13 @@ int silofs_inomap_lookup(struct silofs_inomap *imap,
 static struct silofs_inoent *
 inomap_new_ient(const struct silofs_inomap *imap, ino_t ino, loff_t voff)
 {
-	return inoent_new(imap->im_alif, ino, voff);
+	return inoent_new(imap->im_alloc, ino, voff);
 }
 
 static void inomap_del_ient(const struct silofs_inomap *imap,
                             struct silofs_inoent *ient)
 {
-	inoent_del(ient, imap->im_alif);
+	inoent_del(ient, imap->im_alloc);
 }
 
 static void inomap_insert_htbl(struct silofs_inomap *imap,

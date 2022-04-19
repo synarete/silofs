@@ -17,6 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
@@ -394,7 +396,7 @@ bool silofs_ii_issock(const struct silofs_inode_info *ii)
 
 static ino_t rootd_ino(const struct silofs_sb_info *sbi)
 {
-	return sbi->s_itbi.it_rootdir.ino;
+	return sbi->sb_itbl.it_rootdir.ino;
 }
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii)
@@ -404,7 +406,7 @@ bool silofs_ii_isrootd(const struct silofs_inode_info *ii)
 	return ii_isdir(ii) && (ii_ino(ii) == rootd_ino(sbi));
 }
 
-void silofs_fixup_rootdir(struct silofs_inode_info *ii)
+void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 {
 	struct silofs_inode *inode = ii->inode;
 
@@ -436,9 +438,9 @@ static void silofs_ii_times(const struct silofs_inode_info *ii,
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	const struct silofs_tnode_info *ti = &ii->i_vi.v_ti;
+	const struct silofs_snode_info *si = &ii->i_vi.v_si;
 
-	return !ii->i_pinned && !ii->i_nopen && silofs_ti_isevictable(ti);
+	return !ii->i_pinned && !ii->i_nopen && silofs_si_isevictable(si);
 }
 
 /*
@@ -619,7 +621,8 @@ static int check_xaccess_parent(const struct silofs_fs_ctx *fs_ctx,
 		return 0;
 	}
 	parent = ii_parent(ii);
-	err = silofs_stage_inode(sbi, parent, SILOFS_STAGE_RDONLY, &parent_ii);
+	err = silofs_sbi_stage_inode(sbi, parent,
+	                             SILOFS_STAGE_RDONLY, &parent_ii);
 	if (err) {
 		return err;
 	}
@@ -928,7 +931,8 @@ static int check_parent_dir_ii(const struct silofs_inode_info *ii)
 	if (ino_isnull(parent)) {
 		return ii->i_nopen ? 0 : -ENOENT;
 	}
-	err = silofs_stage_inode(sbi, parent, SILOFS_STAGE_RDONLY, &parent_ii);
+	err = silofs_sbi_stage_inode(sbi, parent,
+	                             SILOFS_STAGE_RDONLY, &parent_ii);
 	if (err) {
 		return err;
 	}

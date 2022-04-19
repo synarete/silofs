@@ -14,11 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
-
-
-static struct silofs_subcmd_restore *cmd_restore_args;
-static int cmd_restore_cold_lock_fd = -1;
+#include "cmd.h"
 
 static const char *cmd_restore_usage[] = {
 	"restore [options] <cold-repo/name> <warm-repo/name>",
@@ -29,10 +25,34 @@ static const char *cmd_restore_usage[] = {
 	NULL
 };
 
-static void cmd_restore_getopt(void)
+struct cmd_restore_args {
+	char   *warm_repodir_name;
+	char   *warm_repodir;
+	char   *warm_repodir_real;
+	char   *warm_name;
+	char   *cold_repodir_name;
+	char   *cold_repodir;
+	char   *cold_repodir_real;
+	char   *cold_name;
+	char   *passphrase;
+	char   *passphrase_file;
+};
+
+struct cmd_restore_ctx {
+	struct cmd_restore_args args;
+	struct silofs_bootlink  src_blnk;
+	struct silofs_bootlink  dst_blnk;
+	struct silofs_fs_env   *fse;
+	int                     src_lock_fd;
+};
+
+static struct cmd_restore_ctx *cmd_restore_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
 {
 	int opt_chr = 1;
-	char **popt = NULL;
 	const struct option opts[] = {
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "passphrase-file", required_argument, NULL, 'P' },
@@ -41,95 +61,87 @@ static void cmd_restore_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("V:P:h", opts);
+		opt_chr = cmd_getopt("V:P:h", opts);
 		if (opt_chr == 'V') {
-			silofs_set_verbose_mode(optarg);
+			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'P') {
-			popt = &cmd_restore_args->passphrase_file;
-			silofs_cmd_getoptarg("--passphrase-file", popt);
+			cmd_getoptarg("--passphrase-file",
+			              &ctx->args.passphrase_file);
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(cmd_restore_usage);
+			cmd_print_help_and_exit(cmd_restore_usage);
 		} else if (opt_chr > 0) {
-			silofs_die_unsupported_opt();
+			cmd_fatal_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("cold-repo/name",
-	                  &cmd_restore_args->cold_repodir_name);
-	silofs_cmd_getarg("warm-repo/name",
-	                  &cmd_restore_args->warm_repodir_name);
-	silofs_cmd_endargs();
+	cmd_getarg("cold-repo/name", &ctx->args.cold_repodir_name);
+	cmd_getarg("warm-repo/name", &ctx->args.warm_repodir_name);
+	cmd_endargs();
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_restore_finalize(void)
+static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 {
-	silofs_cmd_destroy_fse_inst();
-	silofs_cmd_pfrees(&cmd_restore_args->warm_repodir_name);
-	silofs_cmd_pfrees(&cmd_restore_args->warm_repodir);
-	silofs_cmd_pfrees(&cmd_restore_args->warm_repodir_real);
-	silofs_cmd_pfrees(&cmd_restore_args->warm_name);
-	silofs_cmd_pfrees(&cmd_restore_args->cold_repodir_name);
-	silofs_cmd_pfrees(&cmd_restore_args->cold_repodir);
-	silofs_cmd_pfrees(&cmd_restore_args->cold_repodir_real);
-	silofs_cmd_pfrees(&cmd_restore_args->cold_name);
-	silofs_cmd_pfrees(&cmd_restore_args->passphrase_file);
-	silofs_cmd_delpass(&cmd_restore_args->passphrase);
-	silofs_cmd_unlockf(&cmd_restore_cold_lock_fd);
+	cmd_del_env(&ctx->fse);
+	cmd_pstrfree(&ctx->args.warm_repodir_name);
+	cmd_pstrfree(&ctx->args.warm_repodir);
+	cmd_pstrfree(&ctx->args.warm_repodir_real);
+	cmd_pstrfree(&ctx->args.warm_name);
+	cmd_pstrfree(&ctx->args.cold_repodir_name);
+	cmd_pstrfree(&ctx->args.cold_repodir);
+	cmd_pstrfree(&ctx->args.cold_repodir_real);
+	cmd_pstrfree(&ctx->args.cold_name);
+	cmd_pstrfree(&ctx->args.passphrase_file);
+	cmd_delpass(&ctx->args.passphrase);
+	cmd_unlock_bpath(&ctx->src_blnk.bpath, &ctx->src_lock_fd);
+	cmd_restore_ctx = NULL;
 }
 
-static void cmd_restore_start(void)
+static void cmd_restore_atexit(void)
 {
-	cmd_restore_args = &silofs_globals.cmd.restore;
-	atexit(cmd_restore_finalize);
+	if (cmd_restore_ctx != NULL) {
+		cmd_restore_finalize(cmd_restore_ctx);
+	}
 }
 
-static void cmd_restore_prepare(void)
+static void cmd_restore_start(struct cmd_restore_ctx *ctx)
 {
-	silofs_cmd_check_reg(cmd_restore_args->cold_repodir_name, false);
-
-	silofs_cmd_splitpath(cmd_restore_args->cold_repodir_name,
-	                     &cmd_restore_args->cold_repodir,
-	                     &cmd_restore_args->cold_name);
-
-	silofs_cmd_splitpath2(cmd_restore_args->warm_repodir_name,
-	                      cmd_restore_args->cold_name,
-	                      &cmd_restore_args->warm_repodir,
-	                      &cmd_restore_args->warm_name);
-
-	silofs_cmd_check_notexists2(cmd_restore_args->warm_repodir,
-	                            cmd_restore_args->warm_name);
-
-	silofs_cmd_check_nonemptydir(cmd_restore_args->cold_repodir, true);
-
-	silofs_cmd_realpath(cmd_restore_args->cold_repodir,
-	                    &cmd_restore_args->cold_repodir_real);
-
-	silofs_cmd_check_fsname(cmd_restore_args->cold_name);
-
-	silofs_cmd_check_nonemptydir(cmd_restore_args->warm_repodir, false);
-
-	silofs_cmd_realpath(cmd_restore_args->warm_repodir,
-	                    &cmd_restore_args->warm_repodir_real);
-
-	silofs_cmd_check_fsname(cmd_restore_args->warm_name);
-
-	silofs_cmd_lockf(cmd_restore_args->cold_repodir_real,
-	                 cmd_restore_args->cold_name,
-	                 &cmd_restore_cold_lock_fd);
-
-	silofs_cmd_getpass(cmd_restore_args->passphrase_file,
-	                   &cmd_restore_args->passphrase);
+	cmd_restore_ctx = ctx;
+	atexit(cmd_restore_atexit);
 }
 
-static void cmd_restore_create_fs_env(void)
+static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
 {
-	const struct silofs_fs_args args = {
-		.main_repodir = cmd_restore_args->warm_repodir_real,
-		.main_name = cmd_restore_args->warm_name,
-		.cold_repodir = cmd_restore_args->cold_repodir_real,
-		.cold_name = cmd_restore_args->cold_name,
-		.passwd = cmd_restore_args->passphrase,
+	cmd_check_reg(ctx->args.cold_repodir_name, false);
+	cmd_split_path(ctx->args.cold_repodir_name,
+	               &ctx->args.cold_repodir, &ctx->args.cold_name);
+	cmd_split_path2(ctx->args.warm_repodir_name, ctx->args.cold_name,
+	                &ctx->args.warm_repodir, &ctx->args.warm_name);
+	cmd_check_notexists2(ctx->args.warm_repodir, ctx->args.warm_name);
+	cmd_check_nonemptydir(ctx->args.cold_repodir, true);
+	cmd_realpath(ctx->args.cold_repodir, &ctx->args.cold_repodir_real);
+	cmd_check_fsname(ctx->args.cold_name);
+	cmd_check_nonemptydir(ctx->args.warm_repodir, false);
+	cmd_realpath(ctx->args.warm_repodir, &ctx->args.warm_repodir_real);
+	cmd_check_fsname(ctx->args.warm_name);
+	cmd_check_diff(ctx->args.warm_repodir_name,
+	               ctx->args.cold_repodir_name);
+	cmd_setup_bpath(&ctx->src_blnk.bpath,
+	                ctx->args.cold_repodir_real, ctx->args.cold_name);
+	cmd_setup_bpath(&ctx->dst_blnk.bpath,
+	                ctx->args.warm_repodir_real, ctx->args.warm_name);
+	cmd_lock_bpath(&ctx->src_blnk.bpath, &ctx->src_lock_fd);
+	cmd_getpass(ctx->args.passphrase_file, &ctx->args.passphrase);
+}
+
+static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
+{
+	const struct silofs_fs_args fs_args = {
+		.main_repodir = ctx->args.warm_repodir_real,
+		.main_name = ctx->args.warm_name,
+		.cold_repodir = ctx->args.cold_repodir_real,
+		.cold_name = ctx->args.cold_name,
+		.passwd = ctx->args.passphrase,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
@@ -137,92 +149,48 @@ static void cmd_restore_create_fs_env(void)
 		.restore = true,
 	};
 
-	silofs_cmd_create_fse_inst(&args);
+	cmd_new_env(&ctx->fse, &fs_args);
 }
 
-static void cmd_restore_verify_bootsec(void)
+static void cmd_restore_filesystem(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_bootsec bsec = { .btime = 0 };
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	const char *repodir = cmd_restore_args->cold_repodir_real;
-	const char *repodir_name = cmd_restore_args->cold_repodir_name;
-	struct silofs_namestr nstr;
-	int err;
-
-	silofs_make_fsnamestr(&nstr, cmd_restore_args->cold_name);
-	err = silofs_fse_open_repos(fse);
-	if (err) {
-		silofs_die(err, "failed to open repo: %s", repodir);
-	}
-	err = silofs_fse_load_boot(fse, &nstr, &bsec);
-	if (err) {
-		silofs_die(err, "failed to load boot: %s", repodir_name);
-	}
-	err = silofs_fse_close_repos(fse);
-	if (err) {
-		silofs_die(err, "failed to close repo: %s", repodir);
-	}
+	cmd_load_bsec(&ctx->src_blnk.bpath, &ctx->src_blnk.bsec);
+	cmd_restore_fs(ctx->fse, &ctx->src_blnk, &ctx->dst_blnk);
+	cmd_save_bsec(&ctx->dst_blnk.bpath, &ctx->dst_blnk.bsec);
 }
 
-static void cmd_restore_filesystem(void)
+static void cmd_restore_finish(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	int err;
-
-	err = silofs_fse_restore(fse);
-	if (err) {
-		silofs_die(err, "restore failed: %s --> %s",
-		           cmd_restore_args->cold_repodir_name,
-		           cmd_restore_args->warm_repodir_name);
-	}
-}
-
-static void cmd_restore_finish(void)
-{
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	int err;
-
-	err = silofs_fse_shut(fse);
-	if (err) {
-		silofs_die(err, "finish restore error: %s --> %s",
-		           cmd_restore_args->cold_repodir_name,
-		           cmd_restore_args->warm_repodir_name);
-	}
-	err = silofs_fse_term(fse);
-	if (err) {
-		silofs_die(err, "internal restore error: %s --> %s",
-		           cmd_restore_args->cold_repodir_name,
-		           cmd_restore_args->warm_repodir_name);
-	}
+	cmd_shutdown_fs(ctx->fse);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_cmd_execute_restore(void)
+void cmd_execute_restore(void)
 {
+	struct cmd_restore_ctx ctx = {
+		.fse = NULL,
+		.src_lock_fd = -1,
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_restore_start();
+	cmd_restore_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_restore_getopt();
+	cmd_restore_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_restore_prepare();
+	cmd_restore_prepare(&ctx);
 
 	/* Prepare environment */
-	cmd_restore_create_fs_env();
-
-	/* Require source boot sector */
-	cmd_restore_verify_bootsec();
+	cmd_restore_setup_env(&ctx);
 
 	/* Do actual restore */
-	cmd_restore_filesystem();
+	cmd_restore_filesystem(&ctx);
 
 	/* Post-restore cleanups */
-	cmd_restore_finish();
+	cmd_restore_finish(&ctx);
 
 	/* Post execution cleanups */
-	cmd_restore_finalize();
+	cmd_restore_finalize(&ctx);
 }
-
-

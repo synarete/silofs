@@ -14,24 +14,37 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
 #include <sys/mount.h>
-
-static struct silofs_subcmd_show *cmd_show_args;
+#include "cmd.h"
 
 static const char *cmd_show_usage[] = {
 	"show <subcmd> <pathname>",
 	"",
 	"sub commands:",
 	"  version      Show mounted file-system's version",
-	"  repo         Show back-end repo dir-path",
-	"  fsname       Show file-system name",
+	"  reponame     Show back-end repo dir-path and fs-name",
 	"  statfsx      Show extended file-system info",
 	"  statx        Show extended file stats",
 	NULL
 };
 
-static void cmd_show_getopt(void)
+struct cmd_show_args {
+	char   *pathname;
+	char   *pathname_real;
+	char   *subcmd;
+};
+
+struct cmd_show_ctx {
+	struct cmd_show_args    args;
+	struct silofs_ioc_query query;
+	enum silofs_query_type  qtype;
+};
+
+static struct cmd_show_ctx *cmd_show_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -40,31 +53,30 @@ static void cmd_show_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("h", opts);
+		opt_chr = cmd_getopt("h", opts);
 		if (opt_chr == 'h') {
-			silofs_print_help_and_exit(cmd_show_usage);
+			cmd_print_help_and_exit(cmd_show_usage);
 		} else if (opt_chr > 0) {
-			silofs_die_unsupported_opt();
+			cmd_fatal_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("subcmd", &cmd_show_args->subcmd);
-	silofs_cmd_getarg_or_cwd("pathname", &cmd_show_args->pathname);
-	silofs_cmd_endargs();
+	cmd_getarg("subcmd", &ctx->args.subcmd);
+	cmd_getarg_or_cwd("pathname", &ctx->args.pathname);
+	cmd_endargs();
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
-	[SILOFS_QUERY_REPO]     = "repo",
-	[SILOFS_QUERY_FSNAME]   = "fsname",
+	[SILOFS_QUERY_REPONAME] = "reponame",
 	[SILOFS_QUERY_STATFSX]  = "statfsx",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
 
-static enum silofs_query_type cmd_show_subcmd_qtype(void)
+static enum silofs_query_type cmd_show_qtype_by_subcmd(const char *subcmd)
 {
 	const int nelems = (int)SILOFS_ARRAY_SIZE(cmd_show_subcommands);
-	const char *subcmd = cmd_show_args->subcmd;
 
 	for (int qtype = 0; qtype < nelems; ++qtype) {
 		if ((cmd_show_subcommands[qtype] != NULL) &&
@@ -75,72 +87,71 @@ static enum silofs_query_type cmd_show_subcmd_qtype(void)
 	return SILOFS_QUERY_NONE;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_show_finalize(void)
+static void cmd_show_finalize(struct cmd_show_ctx *ctx)
 {
-	silofs_cmd_pfrees(&cmd_show_args->pathname_real);
-	silofs_cmd_pfrees(&cmd_show_args->subcmd);
-	silofs_cmd_pfrees(&cmd_show_args->pathname);
+	cmd_pstrfree(&ctx->args.pathname_real);
+	cmd_pstrfree(&ctx->args.subcmd);
+	cmd_pstrfree(&ctx->args.pathname);
+	cmd_show_ctx = NULL;
 }
 
-static void cmd_show_start(void)
+static void cmd_show_atexit(void)
 {
-	cmd_show_args = &silofs_globals.cmd.show;
-	atexit(cmd_show_finalize);
-}
-
-static void cmd_show_prepare(void)
-{
-	struct stat st;
-
-	silofs_cmd_realpath(cmd_show_args->pathname,
-	                    &cmd_show_args->pathname_real);
-	silofs_cmd_stat_reg_or_dir(cmd_show_args->pathname_real, &st);
-	if (cmd_show_subcmd_qtype() == SILOFS_QUERY_NONE) {
-		silofs_die(0, "unknown sub-command %s", cmd_show_args->subcmd);
+	if (cmd_show_ctx != NULL) {
+		cmd_show_finalize(cmd_show_ctx);
 	}
 }
 
-static void cmd_show_do_ioctl_query(struct silofs_ioc_query *query)
+static void cmd_show_start(struct cmd_show_ctx *ctx)
 {
-	const char *path = cmd_show_args->pathname_real;
+	cmd_show_ctx = ctx;
+	atexit(cmd_show_atexit);
+}
+
+static void cmd_show_prepare(struct cmd_show_ctx *ctx)
+{
+	cmd_realpath(ctx->args.pathname, &ctx->args.pathname_real);
+	cmd_check_reg_or_dir(ctx->args.pathname_real);
+}
+
+static void cmd_show_resolve_subcmd(struct cmd_show_ctx *ctx)
+{
+	ctx->qtype = cmd_show_qtype_by_subcmd(ctx->args.subcmd);
+	if (ctx->qtype == SILOFS_QUERY_NONE) {
+		cmd_dief(0, "unknown sub-command %s", ctx->args.subcmd);
+	}
+	ctx->query.qtype = ctx->qtype;
+}
+
+static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
+{
 	int fd = -1;
 	int err;
 
-	err = silofs_sys_open(path, O_RDONLY, 0, &fd);
+	err = silofs_sys_open(ctx->args.pathname_real, O_RDONLY, 0, &fd);
 	if (err) {
-		silofs_die(err, "failed to open: %s", path);
+		cmd_dief(err, "failed to open: %s", ctx->args.pathname_real);
 	}
-	err = silofs_sys_ioctlp(fd, SILOFS_FS_IOC_QUERY, query);
+	err = silofs_sys_ioctlp(fd, SILOFS_FS_IOC_QUERY, &ctx->query);
+	if (err) {
+		cmd_dief(err, "ioctl error: %s", ctx->args.pathname_real);
+	}
 	silofs_sys_close(fd);
-	if (err) {
-		silofs_die(err, "ioctl error: %s", path);
-	}
 }
 
-static void cmd_show_version(void)
+static void cmd_show_version(struct cmd_show_ctx *ctx)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_VERSION };
-
-	cmd_show_do_ioctl_query(&query);
-	printf("%s\n", query.u.version.v_str);
+	cmd_show_do_ioctl_query(ctx);
+	printf("%s\n", ctx->query.u.version.string);
 }
 
-static void cmd_show_repo(void)
+static void cmd_show_repo(struct cmd_show_ctx *ctx)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_REPO };
-
-	cmd_show_do_ioctl_query(&query);
-	printf("%s\n", query.u.repo.r_path);
-}
-
-static void cmd_show_fsname(void)
-{
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_FSNAME };
-
-	cmd_show_do_ioctl_query(&query);
-	printf("%s\n", query.u.fsname.f_name);
+	cmd_show_do_ioctl_query(ctx);
+	printf("%s/%s\n", ctx->query.u.reponame.repodir,
+	       ctx->query.u.reponame.name);
 }
 
 struct silofs_msflag_name {
@@ -182,33 +193,30 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 	}
 }
 
-static void cmd_show_statfsx(void)
+static void cmd_show_statfsx(struct cmd_show_ctx *ctx)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_STATFSX };
-	const struct silofs_query_statfsx *qstfsx = &query.u.statfsx;
 	char mntfstr[128] = "";
+	const struct silofs_query_statfsx *qstfsx = &ctx->query.u.statfsx;
 
-	cmd_show_do_ioctl_query(&query);
-	msflags_str(qstfsx->f_msflags, mntfstr, sizeof(mntfstr) - 1);
-
+	cmd_show_do_ioctl_query(ctx);
+	msflags_str(qstfsx->msflags, mntfstr, sizeof(mntfstr) - 1);
 	printf("mountf:     %s \n", mntfstr);
-	printf("uptime:     %ld seconds \n", qstfsx->f_uptime);
-	printf("bsize:      %lu bytes \n", qstfsx->f_bsize);
-	printf("bused:      %lu bytes \n", qstfsx->f_bused);
-	printf("ilimit:     %lu inodes \n", qstfsx->f_ilimit);
-	printf("icurr:      %lu inodes \n", qstfsx->f_icurr);
-	printf("umeta:      %lu bytes \n", qstfsx->f_umeta);
-	printf("vmeta:      %lu bytes \n", qstfsx->f_vmeta);
-	printf("vdata:      %lu bytes \n", qstfsx->f_vdata);
+	printf("uptime:     %ld seconds \n", qstfsx->uptime);
+	printf("bsize:      %lu bytes \n", qstfsx->bsize);
+	printf("bused:      %lu bytes \n", qstfsx->bused);
+	printf("ilimit:     %lu inodes \n", qstfsx->ilimit);
+	printf("icurr:      %lu inodes \n", qstfsx->icurr);
+	printf("umeta:      %lu bytes \n", qstfsx->umeta);
+	printf("vmeta:      %lu bytes \n", qstfsx->vmeta);
+	printf("vdata:      %lu bytes \n", qstfsx->vdata);
 }
 
-static void cmd_show_statx(void)
+static void cmd_show_statx(struct cmd_show_ctx *ctx)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_STATX };
-	const struct silofs_query_statx *qstatx = &query.u.statx;
-	const struct statx *stx = &query.u.statx.stx;
+	const struct silofs_query_statx *qstatx = &ctx->query.u.statx;
+	const struct statx *stx = &qstatx->stx;
 
-	cmd_show_do_ioctl_query(&query);
+	cmd_show_do_ioctl_query(ctx);
 	printf("blksize:    %ld \n", (long)stx->stx_blksize);
 	printf("nlink:      %u  \n",  stx->stx_nlink);
 	printf("uid:        %u  \n",  stx->stx_uid);
@@ -218,27 +226,24 @@ static void cmd_show_statx(void)
 	printf("size:       %ld \n", (long)stx->stx_size);
 	printf("blocks:     %ld \n", (long)stx->stx_blocks);
 	/* printf("mnt_id:     %ld \n", (long)stx->stx_mnt_id); */
-	printf("iflags:     %x  \n",  qstatx->stx_iflags);
-	printf("dirflags:   %x  \n",  qstatx->stx_dirflags);
+	printf("iflags:     %x  \n",  qstatx->iflags);
+	printf("dirflags:   %x  \n",  qstatx->dirflags);
 }
 
-static void cmd_show_execute(void)
+static void cmd_show_execute(struct cmd_show_ctx *ctx)
 {
-	switch (cmd_show_subcmd_qtype()) {
+	switch (ctx->qtype) {
 	case SILOFS_QUERY_VERSION:
-		cmd_show_version();
+		cmd_show_version(ctx);
 		break;
-	case SILOFS_QUERY_REPO:
-		cmd_show_repo();
-		break;
-	case SILOFS_QUERY_FSNAME:
-		cmd_show_fsname();
+	case SILOFS_QUERY_REPONAME:
+		cmd_show_repo(ctx);
 		break;
 	case SILOFS_QUERY_STATFSX:
-		cmd_show_statfsx();
+		cmd_show_statfsx(ctx);
 		break;
 	case SILOFS_QUERY_STATX:
-		cmd_show_statx();
+		cmd_show_statx(ctx);
 		break;
 	case SILOFS_QUERY_NONE:
 	default:
@@ -248,22 +253,29 @@ static void cmd_show_execute(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_cmd_execute_show(void)
+void cmd_execute_show(void)
 {
+	struct cmd_show_ctx ctx = {
+		.qtype = SILOFS_QUERY_NONE
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_show_start();
+	cmd_show_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_show_getopt();
+	cmd_show_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_show_prepare();
+	cmd_show_prepare(&ctx);
+
+	/* Resolve sub-command to query-type */
+	cmd_show_resolve_subcmd(&ctx);
 
 	/* Do actual query + show */
-	cmd_show_execute();
+	cmd_show_execute(&ctx);
 
 	/* Post execution cleanups */
-	cmd_show_finalize();
+	cmd_show_finalize(&ctx);
 }
 
 

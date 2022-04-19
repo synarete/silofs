@@ -14,24 +14,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/vfs.h>
+#include <sys/prctl.h>
 #include <sys/mount.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <limits.h>
-#include <errno.h>
-#include <getopt.h>
 #include <time.h>
+#include "cmd.h"
 
-static struct silofs_subcmd_mount *cmd_mount_args;
-static int cmd_mount_halt_signal = -1;
-static int cmd_mount_lock_fd = -1;
-static bool cmd_mount_clean_ending = true;
 
 static const char *cmd_mount_usage[] = {
 	"mount [options] <repo/name> <mountpoint>",
@@ -42,7 +36,6 @@ static const char *cmd_mount_usage[] = {
 	"  -S, --nosuid                 Do not honor special bits",
 	"      --nodev                  Do not allow access to device files",
 	"      --nokcopy                Do not copy data by in-kernel copy",
-	"  -o  --options                Additional mount options",
 	"  -a  --allow-other            Allow other users to access fs",
 	"  -W  --writeback-cache        Enable write-back cache mode",
 	"  -D, --nodaemon               Do not run as daemon process",
@@ -51,7 +44,38 @@ static const char *cmd_mount_usage[] = {
 	NULL
 };
 
-static void cmd_mount_getopt(void)
+struct cmd_mount_args {
+	char   *repodir_name;
+	char   *repodir;
+	char   *repodir_real;
+	char   *name;
+	char   *mntpoint;
+	char   *mntpoint_real;
+	bool    allowother;
+	bool    wbackcache;
+	bool    lazytime;
+	bool    noexec;
+	bool    nosuid;
+	bool    nodev;
+	bool    rdonly;
+	bool    nokcopy;
+};
+
+struct cmd_mount_ctx {
+	struct cmd_mount_args   args;
+	struct silofs_bootlink  blnk;
+	struct silofs_fs_env   *fse;
+	time_t                  start_time;
+	int                     halt_signal;
+	int                     lock_fd;
+	bool                    clean_ending;
+};
+
+static struct cmd_mount_ctx *cmd_mount_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -60,7 +84,6 @@ static void cmd_mount_getopt(void)
 		{ "nosuid", no_argument, NULL, 'S' },
 		{ "nodev", no_argument, NULL, 'Z' },
 		{ "nokcopy", no_argument, NULL, 'K' },
-		{ "options", required_argument, NULL, 'o' },
 		{ "allow-other", no_argument, NULL, 'a' },
 		{ "writeback-cache", no_argument, NULL, 'W' },
 		{ "nodaemon", no_argument, NULL, 'D' },
@@ -71,185 +94,159 @@ static void cmd_mount_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("rXSZKo:aWDV:Ch", opts);
+		opt_chr = cmd_getopt("rXSZKaWDV:Ch", opts);
 		if (opt_chr == 'r') {
-			cmd_mount_args->rdonly = true;
+			ctx->args.rdonly = true;
 		} else if (opt_chr == 'x') {
-			cmd_mount_args->noexec = true;
+			ctx->args.noexec = true;
 		} else if (opt_chr == 'S') {
-			cmd_mount_args->nosuid = true;
+			ctx->args.nosuid = true;
 		} else if (opt_chr == 'Z') {
-			cmd_mount_args->nodev = true;
+			ctx->args.nodev = true;
 		} else if (opt_chr == 'K') {
-			cmd_mount_args->nokcopy = true;
-		} else if (opt_chr == 'o') {
-			/* currently, only for xfstests */
-			cmd_mount_args->options = optarg;
+			ctx->args.nokcopy = true;
 		} else if (opt_chr == 'a') {
-			cmd_mount_args->allowother = true;
+			ctx->args.allowother = true;
 		} else if (opt_chr == 'W') {
-			cmd_mount_args->wbackcache = true;
+			ctx->args.wbackcache = true;
 		} else if (opt_chr == 'D') {
-			silofs_globals.dont_daemonize = true;
+			cmd_globals.dont_daemonize = true;
 		} else if (opt_chr == 'V') {
-			silofs_set_verbose_mode(optarg);
+			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'C') {
-			silofs_globals.allow_coredump = true;
+			cmd_globals.allow_coredump = true;
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(cmd_mount_usage);
+			cmd_print_help_and_exit(cmd_mount_usage);
 		} else if (opt_chr > 0) {
-			silofs_die_unsupported_opt();
+			cmd_fatal_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo/name", &cmd_mount_args->repodir_name);
-	silofs_cmd_getarg("mountpoint", &cmd_mount_args->mntpoint);
-	silofs_cmd_endargs();
+	cmd_getarg("repo/name", &ctx->args.repodir_name);
+	cmd_getarg("mountpoint", &ctx->args.mntpoint);
+	cmd_endargs();
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mount_create_fs_env(void)
+static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
 {
 	const struct silofs_fs_args fs_args = {
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
-		.main_repodir = cmd_mount_args->repodir_real,
-		.main_name = cmd_mount_args->name,
-		.mntdir = cmd_mount_args->mntpoint_real,
+		.main_repodir = ctx->args.repodir_real,
+		.main_name = ctx->args.name,
+		.mntdir = ctx->args.mntpoint_real,
 		.withfuse = true,
-		.allowother = cmd_mount_args->allowother,
-		.wbackcache = cmd_mount_args->wbackcache,
-		.lazytime = cmd_mount_args->lazytime,
-		.noexec = cmd_mount_args->noexec,
-		.nosuid = cmd_mount_args->nosuid,
-		.nodev = cmd_mount_args->nodev,
-		.rdonly = cmd_mount_args->rdonly,
-		.kcopy = !cmd_mount_args->nokcopy,
+		.allowother = ctx->args.allowother,
+		.wbackcache = ctx->args.wbackcache,
+		.lazytime = ctx->args.lazytime,
+		.noexec = ctx->args.noexec,
+		.nosuid = ctx->args.nosuid,
+		.nodev = ctx->args.nodev,
+		.rdonly = ctx->args.rdonly,
+		.kcopy = !ctx->args.nokcopy,
 		.concp = true,
 		.pedantic = false,
 	};
 
-	silofs_cmd_create_fse_inst(&fs_args);
+	cmd_new_env(&ctx->fse, &fs_args);
 }
 
-static void cmd_mount_destroy_fs_env(void)
+static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
 {
-	silofs_cmd_destroy_fse_inst();
+	cmd_del_env(&ctx->fse);
 }
 
 static void cmd_mount_halt_by_signal(int signum)
 {
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
+	struct cmd_mount_ctx *ctx;
 
-	if (fse) {
-		silofs_fse_halt(fse, signum);
+	ctx = cmd_mount_ctx;
+	if (ctx && ctx->fse) {
+		silofs_fse_halt(ctx->fse, signum);
 	}
 }
 
 static void cmd_mount_enable_signals(void)
 {
-	silofs_register_sigactions(cmd_mount_halt_by_signal);
+	cmd_register_sigactions(cmd_mount_halt_by_signal);
 }
 
-static void cmd_mount_execute_fs(void)
+static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	int err;
+	ctx->start_time = silofs_time_now();
+	cmd_serve_fs(ctx->fse, &ctx->blnk.bsec);
+	ctx->halt_signal = ctx->fse->fs_signum;
+	ctx->clean_ending = silofs_fse_served_clean(ctx->fse);
+}
 
-	err = silofs_fse_serve(fse);
-	if (err) {
-		silofs_die(err, "fs failure: %s %s",
-		           cmd_mount_args->repodir, cmd_mount_args->mntpoint);
+static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
+{
+	cmd_del_env(&ctx->fse);
+	cmd_pstrfree(&ctx->args.repodir_name);
+	cmd_pstrfree(&ctx->args.repodir);
+	cmd_pstrfree(&ctx->args.mntpoint);
+	cmd_pstrfree(&ctx->args.repodir_real);
+	cmd_pstrfree(&ctx->args.mntpoint_real);
+	cmd_pstrfree(&ctx->args.name);
+	cmd_unlock_bpath(&ctx->blnk.bpath, &ctx->lock_fd);
+	cmd_close_syslog();
+	cmd_mount_ctx = NULL;
+}
+
+static void cmd_mount_atexit(void)
+{
+	if (cmd_mount_ctx != NULL) {
+		cmd_mount_finalize(cmd_mount_ctx);
 	}
-	cmd_mount_halt_signal = fse->fs_signum;
-	cmd_mount_clean_ending = silofs_fse_served_clean(fse);
 }
 
-static void cmd_mount_finalize(void)
+static void cmd_mount_start(struct cmd_mount_ctx *ctx)
 {
-	cmd_mount_destroy_fs_env();
-	silofs_cmd_pfrees(&cmd_mount_args->repodir_name);
-	silofs_cmd_pfrees(&cmd_mount_args->repodir);
-	silofs_cmd_pfrees(&cmd_mount_args->mntpoint);
-	silofs_cmd_pfrees(&cmd_mount_args->repodir_real);
-	silofs_cmd_pfrees(&cmd_mount_args->mntpoint_real);
-	silofs_cmd_pfrees(&cmd_mount_args->name);
-	silofs_cmd_unlockf(&cmd_mount_lock_fd);
-	silofs_cmd_close_syslog();
-}
-
-static void cmd_mount_start(void)
-{
-	cmd_mount_args = &silofs_globals.cmd.mount;
-	atexit(cmd_mount_finalize);
+	cmd_mount_ctx = ctx;
+	atexit(cmd_mount_atexit);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mount_prepare_mntpoint(void)
+static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 {
-	silofs_cmd_realpath(cmd_mount_args->mntpoint,
-	                    &cmd_mount_args->mntpoint_real);
-	silofs_cmd_check_mntdir(cmd_mount_args->mntpoint_real, true);
-	silofs_cmd_check_mountd();
+	cmd_realpath(ctx->args.mntpoint, &ctx->args.mntpoint_real);
+	cmd_check_mntdir(ctx->args.mntpoint_real, true);
+	cmd_check_mountd();
 }
 
-static void cmd_mount_prepare_repo(void)
+static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
-	silofs_cmd_check_exists(cmd_mount_args->repodir_name);
-
-	silofs_cmd_check_reg(cmd_mount_args->repodir_name, false);
-
-	silofs_cmd_splitpath(cmd_mount_args->repodir_name,
-	                     &cmd_mount_args->repodir,
-	                     &cmd_mount_args->name);
-
-	silofs_cmd_check_nonemptydir(cmd_mount_args->repodir, true);
-
-	silofs_cmd_realpath(cmd_mount_args->repodir,
-	                    &cmd_mount_args->repodir_real);
-
-	silofs_cmd_check_fsname(cmd_mount_args->name);
-
-	silofs_cmd_lockf(cmd_mount_args->repodir_real,
-	                 cmd_mount_args->name, &cmd_mount_lock_fd);
-
-	silofs_cmd_unlockf(&cmd_mount_lock_fd);
+	cmd_check_exists(ctx->args.repodir_name);
+	cmd_check_reg(ctx->args.repodir_name, false);
+	cmd_split_path(ctx->args.repodir_name,
+	               &ctx->args.repodir, &ctx->args.name);
+	cmd_check_nonemptydir(ctx->args.repodir, true);
+	cmd_realpath(ctx->args.repodir, &ctx->args.repodir_real);
+	cmd_check_fsname(ctx->args.name);
+	cmd_setup_bpath(&ctx->blnk.bpath,
+	                ctx->args.repodir_real, ctx->args.name);
 }
 
-static void cmd_mount_lock_repo(void)
+static void cmd_mount_ensure_lockable(struct cmd_mount_ctx *ctx)
 {
-	silofs_cmd_lockf(cmd_mount_args->repodir_real,
-	                 cmd_mount_args->name,
-	                 &cmd_mount_lock_fd);
+	int fd = -1;
+
+	cmd_lock_bpath(&ctx->blnk.bpath, &fd);
+	cmd_unlock_bpath(&ctx->blnk.bpath, &fd);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void cmd_mount_verify_bootsec(void)
+static void cmd_mount_lock_repo(struct cmd_mount_ctx *ctx)
 {
-	struct silofs_bootsec bsec = { .btime = 0 };
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	const char *repodir = cmd_mount_args->repodir_real;
-	const char *repodir_name = cmd_mount_args->repodir_name;
-	struct silofs_namestr nstr;
-	int err;
+	cmd_lock_bpath(&ctx->blnk.bpath, &ctx->lock_fd);
+}
 
-	silofs_make_fsnamestr(&nstr, cmd_mount_args->name);
-	err = silofs_fse_open_repos(fse);
-	if (err) {
-		silofs_die(err, "failed to open repo: %s", repodir);
-	}
-	err = silofs_fse_load_boot(fse, &nstr, &bsec);
-	if (err) {
-		silofs_die(err, "failed to load boot: %s", repodir_name);
-	}
-	err = silofs_fse_close_repos(fse);
-	if (err) {
-		silofs_die(err, "failed to close repo: %s", repodir);
-	}
+static void cmd_mount_load_bootsec(struct cmd_mount_ctx *ctx)
+{
+	cmd_load_bsec(&ctx->blnk.bpath, &ctx->blnk.bsec);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -260,74 +257,74 @@ static void cmd_mount_verify_bootsec(void)
  * Better user modern inotify interface on mount-directory instead of this
  * naive busy-loop.
  */
-static int cmd_mount_probe_rootdir(void)
+static void cmd_mount_finish_parent(const struct cmd_mount_ctx *ctx)
 {
-	struct stat st;
-
-	silofs_cmd_stat_ok(cmd_mount_args->mntpoint_real, &st);
-	if (!S_ISDIR(st.st_mode)) {
-		silofs_die(0, "illegal mount-point: %s",
-		           cmd_mount_args->mntpoint_real);
-	}
-	return (st.st_ino == SILOFS_INO_ROOT) ? 0 : -1;
-}
-
-static void cmd_mount_finish_parent(void)
-{
+	struct stat st = { .st_ino = 0 };
 	int err = -1;
-	size_t retry = 20;
 
-	while (retry-- && err) {
-		err = cmd_mount_probe_rootdir();
+	for (size_t retry = 0; (retry < 20); ++retry) {
+		cmd_stat_dir(ctx->args.mntpoint_real, &st);
+		if (st.st_ino == SILOFS_INO_ROOT) {
+			exit(EXIT_SUCCESS);
+		}
 		sleep(1);
 	}
 	exit(err);
 }
 
-static void cmd_mount_start_daemon(void)
+static void cmd_mount_start_daemon(const struct cmd_mount_ctx *ctx)
 {
 	const pid_t pre_pid = getpid();
 
-	silofs_cmd_fork_daemon();
+	cmd_fork_daemon();
 
 	if (pre_pid == getpid()) {
-		/* I am the parent: wait for active mount & exit */
-		cmd_mount_finish_parent();
+		/* I am parent: wait for active mount & exit */
+		cmd_mount_finish_parent(ctx);
+	} else {
+		/* I am child: eanble syslog */
+		cmd_open_syslog();
 	}
 }
 
-static void cmd_mount_boostrap_process(void)
+static void cmd_mount_non_dumpable(void)
 {
-	silofs_globals.log_mask |= SILOFS_LOG_INFO;
-
-	if (!silofs_globals.dont_daemonize) {
-		cmd_mount_start_daemon();
-		silofs_cmd_open_syslog();
-	}
-	if (!silofs_globals.allow_coredump) {
-		silofs_setrlimit_nocore();
-	}
-	if (!silofs_globals.disable_ptrace) {
-		silofs_prctl_non_dumpable();
-	}
-}
-
-static void cmd_mount_verify_fs_env(void)
-{
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	const char *repodir = cmd_mount_args->repodir_real;
-	const char *name = cmd_mount_args->name;
 	int err;
 
-	err = silofs_fse_verify(fse);
+	err = silofs_sys_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+	if (err) {
+		cmd_dief(err, "failed to prctl non-dumpable");
+	}
+}
+
+static void cmd_mount_boostrap_process(const struct cmd_mount_ctx *ctx)
+{
+	cmd_globals.log_mask |= SILOFS_LOG_INFO;
+
+	if (!cmd_globals.dont_daemonize) {
+		cmd_mount_start_daemon(ctx);
+	}
+	if (!cmd_globals.allow_coredump) {
+		cmd_setrlimit_nocore();
+	}
+	if (!cmd_globals.disable_ptrace) {
+		cmd_mount_non_dumpable();
+	}
+}
+
+static void cmd_mount_verify_fs(struct cmd_mount_ctx *ctx)
+{
+	int err;
+
+	err = silofs_fse_verify(ctx->fse, &ctx->blnk.bsec);
 	if (err == -EUCLEAN) {
-		silofs_die(0, "bad repo: %s", repodir);
+		cmd_dief(0, "bad repo: %s", ctx->args.repodir_real);
 	} else if (err == -EKEYEXPIRED) {
-		silofs_die(0, "wrong passphrase: %s", repodir);
+		cmd_dief(0, "wrong passphrase: %s", ctx->args.repodir_name);
 	} else if (err == -ENOENT) {
-		silofs_die(0, "not exist: %s", name);
+		cmd_dief(0, "not exist: %s", ctx->args.name);
 	} else if (err != 0) {
-		silofs_die(err, "illegal repo: %s", repodir);
+		cmd_dief(err, "illegal repo: %s", ctx->args.repodir_real);
 	}
 }
 
@@ -338,26 +335,24 @@ static void cmd_mount_verify_fs_env(void)
  *
  *   $ journalctl -b -n 60 -f -t silofs
  */
-static void cmd_mount_trace_start(void)
+static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 {
-	silofs_log_meta_banner(silofs_globals.name, 1);
-	silofs_log_info("executable: %s", silofs_globals.prog);
-	silofs_log_info("mountpoint: %s", cmd_mount_args->mntpoint_real);
-	silofs_log_info("repodir: %s", cmd_mount_args->repodir_real);
+	silofs_log_meta_banner(cmd_globals.name, 1);
+	silofs_log_info("executable: %s", cmd_globals.prog);
+	silofs_log_info("mountpoint: %s", ctx->args.mntpoint_real);
+	silofs_log_info("repodir: %s", ctx->args.repodir_real);
 	silofs_log_info("modes: rdonly=%d noexec=%d nodev=%d nosuid=%d",
-	                (int)cmd_mount_args->rdonly,
-	                (int)cmd_mount_args->noexec,
-	                (int)cmd_mount_args->nodev,
-	                (int)cmd_mount_args->nosuid);
+	                (int)ctx->args.rdonly, (int)ctx->args.noexec,
+	                (int)ctx->args.nodev, (int)ctx->args.nosuid);
 }
 
-static void cmd_mount_trace_finish(void)
+static void cmd_mount_trace_finish(const struct cmd_mount_ctx *ctx)
 {
-	const time_t exec_time = time(NULL) - silofs_globals.start_time;
+	const time_t exec_time = silofs_time_now() - ctx->start_time;
 
-	silofs_log_info("mount done: %s", cmd_mount_args->mntpoint_real);
+	silofs_log_info("mount done: %s", ctx->args.mntpoint_real);
 	silofs_log_info("execution time: %ld seconds", exec_time);
-	silofs_log_meta_banner(silofs_globals.name, 0);
+	silofs_log_meta_banner(cmd_globals.name, 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -366,79 +361,90 @@ static void cmd_mount_trace_finish(void)
  * In case there is still a dangling mount-point due to halt-by-signal try to
  * unmount it.
  */
-static void cmd_mount_post_exec_cleanup(void)
+static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 {
-	const char *mntp = cmd_mount_args->mntpoint_real;
-	const uid_t uid = getuid();
-	const gid_t gid = getgid();
 	int err;
 
-	if (mntp && (cmd_mount_halt_signal > 0) && !cmd_mount_clean_ending) {
-		err = silofs_rpc_umount(mntp, uid, gid, MNT_DETACH);
+	if ((ctx->halt_signal > 0) && !ctx->clean_ending) {
+		err = silofs_rpc_umount(ctx->args.mntpoint_real,
+		                        getuid(), getgid(), MNT_DETACH);
 		if (err) {
-			silofs_log_info("failed to umount lazily: "
-			                "%s err=%d", mntp, err);
+			silofs_log_info("failed to umount lazily: %s err=%d",
+			                ctx->args.mntpoint_real, err);
 		}
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_cmd_execute_mount(void)
+void cmd_execute_mount(void)
 {
+	struct cmd_mount_ctx ctx = {
+		.fse = NULL,
+		.halt_signal = -1,
+		.lock_fd = -1,
+		.clean_ending = true,
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_mount_start();
+	cmd_mount_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_mount_getopt();
+	cmd_mount_getopt(&ctx);
 
 	/* Require valid mount-point */
-	cmd_mount_prepare_mntpoint();
+	cmd_mount_prepare_mntpoint(&ctx);
 
 	/* Require minimal repository validity */
-	cmd_mount_prepare_repo();
+	cmd_mount_prepare_repo(&ctx);
+
+	/* Require lock-able boot-sec */
+	cmd_mount_ensure_lockable(&ctx);
 
 	/* Setup boot environment instance */
-	cmd_mount_create_fs_env();
+	cmd_mount_setup_env(&ctx);
 
-	/* Verify valid and lock-able boot sector */
-	cmd_mount_verify_bootsec();
+	/* Load-verify bootsec */
+	cmd_mount_load_bootsec(&ctx);
 
 	/* Destroy boot environment instance */
-	cmd_mount_destroy_fs_env();
+	cmd_mount_destroy_env(&ctx);
 
 	/* Become daemon process */
-	cmd_mount_boostrap_process();
+	cmd_mount_boostrap_process(&ctx);
 
 	/* Setup main environment instance */
-	cmd_mount_create_fs_env();
+	cmd_mount_setup_env(&ctx);
+
+	/* ReLoad-verify bootsec */
+	cmd_mount_load_bootsec(&ctx);
 
 	/* Re-verify MBR and input arguments */
-	cmd_mount_verify_fs_env();
+	cmd_mount_verify_fs(&ctx);
 
 	/* Report beginning-of-mount */
-	cmd_mount_trace_start();
+	cmd_mount_trace_start(&ctx);
 
 	/* Allow halt by signal */
 	cmd_mount_enable_signals();
 
 	/* Require repository lock */
-	cmd_mount_lock_repo();
+	cmd_mount_lock_repo(&ctx);
 
 	/* Execute as long as needed... */
-	cmd_mount_execute_fs();
+	cmd_mount_execute_fs(&ctx);
 
 	/* Report end-of-mount */
-	cmd_mount_trace_finish();
+	cmd_mount_trace_finish(&ctx);
 
 	/* Destroy main environment instance */
-	cmd_mount_destroy_fs_env();
+	cmd_mount_destroy_env(&ctx);
 
 	/* Post execution cleanups */
-	cmd_mount_post_exec_cleanup();
+	cmd_mount_post_exec_cleanup(&ctx);
 
 	/* Finalize resource allocations */
-	cmd_mount_finalize();
+	cmd_mount_finalize(&ctx);
 
 	/* Return to main for global cleanups */
 }

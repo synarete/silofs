@@ -14,12 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
 #include <sys/vfs.h>
 #include <sys/statvfs.h>
 #include <sys/mount.h>
-
-static struct silofs_subcmd_umount *cmd_umount_args;
+#include "cmd.h"
 
 static const char *cmd_umount_usage[] = {
 	"umount [options] <mountpoint>",
@@ -30,7 +28,23 @@ static const char *cmd_umount_usage[] = {
 	NULL
 };
 
-static void cmd_umount_getopt(void)
+struct cmd_umount_args {
+	char   *mntpoint;
+	char   *mntpoint_real;
+	int     force;
+	int     lazy;
+};
+
+struct cmd_umount_ctx {
+	struct cmd_umount_args  args;
+	long pad;
+};
+
+static struct cmd_umount_ctx *cmd_umount_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_umount_getopt(struct cmd_umount_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -41,89 +55,100 @@ static void cmd_umount_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("lfh", opts);
+		opt_chr = cmd_getopt("lfh", opts);
 		if (opt_chr == 'l') {
-			cmd_umount_args->lazy = true;
+			ctx->args.lazy = 1;
 		} else if (opt_chr == 'f') {
-			cmd_umount_args->force = true;
+			ctx->args.force = 1;
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(cmd_umount_usage);
+			cmd_print_help_and_exit(cmd_umount_usage);
 		} else if (opt_chr > 0) {
-			silofs_die_unsupported_opt();
+			cmd_fatal_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("mountpoint", &cmd_umount_args->mntpoint);
-	silofs_cmd_endargs();
+	cmd_getarg("mountpoint", &ctx->args.mntpoint);
+	cmd_endargs();
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_umount_finalize(void)
+static void cmd_umount_finalize(struct cmd_umount_ctx *ctx)
 {
-	silofs_cmd_pfrees(&cmd_umount_args->mntpoint_real);
-	silofs_cmd_pfrees(&cmd_umount_args->mntpoint);
+	cmd_pstrfree(&ctx->args.mntpoint_real);
+	cmd_pstrfree(&ctx->args.mntpoint);
+	cmd_umount_ctx = NULL;
 }
 
-static void cmd_umount_start(void)
+static void cmd_umount_atexit(void)
 {
-	cmd_umount_args = &silofs_globals.cmd.umount;
-	atexit(cmd_umount_finalize);
+	if (cmd_umount_ctx != NULL) {
+		cmd_umount_finalize(cmd_umount_ctx);
+	}
 }
 
-static void cmd_umount_prepare(void)
+static void cmd_umount_start(struct cmd_umount_ctx *ctx)
+{
+	cmd_umount_ctx = ctx;
+	atexit(cmd_umount_atexit);
+}
+
+static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 {
 	struct stat st;
 	int err;
 
-	silofs_cmd_check_mountd();
-
-	err = silofs_sys_stat(cmd_umount_args->mntpoint, &st);
-	if ((err == -ENOTCONN) && cmd_umount_args->force) {
+	cmd_check_mountd();
+	err = silofs_sys_stat(ctx->args.mntpoint, &st);
+	if ((err == -ENOTCONN) && ctx->args.force) {
 		silofs_log_debug("transport endpoint not connected: %s",
-		                 cmd_umount_args->mntpoint);
+		                 ctx->args.mntpoint);
 		return;
 	}
-	silofs_cmd_realpath(cmd_umount_args->mntpoint,
-	                    &cmd_umount_args->mntpoint_real);
-	silofs_cmd_check_mntdir(cmd_umount_args->mntpoint_real, false);
+	cmd_realpath(ctx->args.mntpoint, &ctx->args.mntpoint_real);
+	cmd_check_mntdir(ctx->args.mntpoint_real, false);
 }
 
-static const char *cmd_umount_dirpath(void)
+static const char *cmd_umount_dirpath(const struct cmd_umount_ctx *ctx)
 {
-	return (cmd_umount_args->mntpoint_real != NULL) ?
-	       cmd_umount_args->mntpoint_real : cmd_umount_args->mntpoint;
+	return (ctx->args.mntpoint_real != NULL) ?
+	       ctx->args.mntpoint_real : ctx->args.mntpoint;
 }
 
-static void cmd_umount_send_recv(void)
+static uint32_t cmd_umount_mnt_flags(const struct cmd_umount_ctx *ctx)
 {
-	const char *path = cmd_umount_dirpath();
-	int mnt_flags = 0;
-	int err;
+	unsigned int mnt_flags = 0;
 
-	if (cmd_umount_args->lazy) {
+	if (ctx->args.lazy) {
 		mnt_flags |= MNT_DETACH;
 	}
-	if (cmd_umount_args->force) {
+	if (ctx->args.force) {
 		mnt_flags |= MNT_FORCE;
 	}
-	err = silofs_rpc_umount(path, getuid(), getgid(), mnt_flags);
+	return mnt_flags;
+}
+
+static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
+{
+	const char *mntpath = cmd_umount_dirpath(ctx);
+	int err;
+
+	err = silofs_rpc_umount(mntpath, getuid(), getgid(),
+	                        cmd_umount_mnt_flags(ctx));
 	if (err) {
-		silofs_die(err, "umount failed: %s lazy=%d force=%d", path,
-		           (int)cmd_umount_args->lazy,
-		           (int)cmd_umount_args->force);
+		cmd_dief(err, "umount failed: %s lazy=%d force=%d",
+		         mntpath, ctx->args.lazy, ctx->args.force);
 	}
 }
 
-static void cmd_umount_probe_statvfs(void)
+static void cmd_umount_probe_statvfs(const struct cmd_umount_ctx *ctx)
 {
-	int err;
-	long fstype;
 	struct statfs stfs;
-	const char *path = cmd_umount_dirpath();
+	const char *path = cmd_umount_dirpath(ctx);
+	long fstype;
+	int err;
 
 	for (size_t i = 0; i < 4; ++i) {
 		sleep(1);
-
 		memset(&stfs, 0, sizeof(stfs));
 		err = silofs_sys_statfs(path, &stfs);
 		if (err) {
@@ -144,25 +169,29 @@ static void cmd_umount_probe_statvfs(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_cmd_execute_umount(void)
+void cmd_execute_umount(void)
 {
+	struct cmd_umount_ctx ctx = {
+		.pad = 0,
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_umount_start();
+	cmd_umount_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_umount_getopt();
+	cmd_umount_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_umount_prepare();
+	cmd_umount_prepare(&ctx);
 
 	/* Do actual umount */
-	cmd_umount_send_recv();
+	cmd_umount_send_recv(&ctx);
 
 	/* Post-umount checks */
-	cmd_umount_probe_statvfs();
+	cmd_umount_probe_statvfs(&ctx);
 
 	/* Post execution cleanups */
-	cmd_umount_finalize();
+	cmd_umount_finalize(&ctx);
 }
 
 

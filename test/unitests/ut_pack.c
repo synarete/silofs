@@ -20,9 +20,13 @@
 static void ut_archive_restore_ok(struct ut_env *ute, const char *dst_name)
 {
 	const char *src_name = ute->args->fs_args.main_name;
+	struct statvfs stv[2];
 
+	ut_statfs_rootd(ute, &stv[0]);
 	ut_archive_ok(ute, src_name, dst_name);
 	ut_restore_ok(ute, dst_name, src_name);
+	ut_statfs_rootd(ute, &stv[1]);
+	ut_expect_statvfs(&stv[0], &stv[1]);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

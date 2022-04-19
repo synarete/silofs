@@ -19,11 +19,13 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
+#include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
 #include <silofs/fs/super.h>
+#include <silofs/fs/stats.h>
 #include <silofs/fs/stage.h>
-#include <silofs/fs/spxmap.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/spclaim.h>
 #include <silofs/fs/itable.h>
@@ -57,51 +59,49 @@ static void ivoaddr_setup2(struct silofs_ivoaddr *ivoa,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t *sbi_vspa_last_of(const struct silofs_sb_info *sbi,
-                                enum silofs_stype stype)
+static const loff_t *
+sbi_vspa_by_stype(const struct silofs_sb_info *sbi, enum silofs_stype stype)
 {
-	const loff_t *vspa_last;
-
 	switch (stype) {
 	case SILOFS_STYPE_DATA1K:
-		vspa_last = &sbi->s_vspa_data1k;
-		break;
+		return &sbi->sb_vspa.data1k;
 	case SILOFS_STYPE_DATA4K:
-		vspa_last = &sbi->s_vspa_data4k;
-		break;
+		return &sbi->sb_vspa.data4k;
 	case SILOFS_STYPE_DATABK:
-		vspa_last = &sbi->s_vspa_databk;
-		break;
+		return &sbi->sb_vspa.databk;
 	case SILOFS_STYPE_ITNODE:
-		vspa_last = &sbi->s_vspa_itnode;
-		break;
+		return &sbi->sb_vspa.itnode;
 	case SILOFS_STYPE_INODE:
-		vspa_last = &sbi->s_vspa_inode;
-		break;
+		return &sbi->sb_vspa.inode;
 	case SILOFS_STYPE_XANODE:
-		vspa_last = &sbi->s_vspa_xanode;
-		break;
+		return &sbi->sb_vspa.xanode;
 	case SILOFS_STYPE_DTNODE:
-		vspa_last = &sbi->s_vspa_dirnode;
-		break;
+		return &sbi->sb_vspa.dirnode;
 	case SILOFS_STYPE_FTNODE:
-		vspa_last = &sbi->s_vspa_filenode;
-		break;
+		return &sbi->sb_vspa.filenode;
 	case SILOFS_STYPE_SYMVAL:
-		vspa_last = &sbi->s_vspa_symval;
-		break;
+		return &sbi->sb_vspa.symval;
 	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_STATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_MAX:
 	default:
-		vspa_last = NULL;
 		break;
 	}
-	return unconst(vspa_last);
+	return NULL;
 }
+
+static loff_t *sbi_vspa_last_of(const struct silofs_sb_info *sbi,
+                                enum silofs_stype stype)
+{
+	const loff_t *p_off = sbi_vspa_by_stype(sbi, stype);
+
+	return unconst(p_off);
+}
+
 
 static loff_t sbi_voff_last_of(const struct silofs_sb_info *sbi,
                                enum silofs_stype stype)
@@ -123,49 +123,9 @@ static void sbi_set_voff_last_of(struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void calc_vspace_stat_diff(const struct silofs_vaddr *vaddr,
-                                  int take, struct silofs_space_stat *spst_dif)
+static loff_t sbi_vspace_end(const struct silofs_sb_info *sbi)
 {
-	const ssize_t nbytes = (ssize_t)vaddr->len;
-	const enum silofs_stype stype = vaddr_stype(vaddr);
-
-	silofs_memzero(spst_dif, sizeof(*spst_dif));
-	if (take > 0) {
-		if (stype_isdata(stype)) {
-			spst_dif->vspace_ndata = nbytes;
-		} else {
-			spst_dif->vspace_nmeta = nbytes;
-		}
-		if (stype_isinode(stype)) {
-			spst_dif->vspace_nfiles = 1;
-		}
-	} else if (take < 0) {
-		if (stype_isdata(stype)) {
-			spst_dif->vspace_ndata = -nbytes;
-		} else {
-			spst_dif->vspace_nmeta = -nbytes;
-		}
-		if (stype_isinode(stype)) {
-			spst_dif->vspace_nfiles = -1;
-		}
-	}
-}
-
-static void sbi_active_vspace_range(const struct silofs_sb_info *sbi,
-                                    struct silofs_vrange *out_vrange)
-{
-	const loff_t voff_end = silofs_sb_vspace_end(sbi->sb);
-
-	silofs_vrange_setup(out_vrange, SILOFS_SUPER_HEIGHT, 0, voff_end);
-}
-
-static loff_t sbi_end_of_active_vspace(const struct silofs_sb_info *sbi)
-{
-	struct silofs_vrange vrange;
-
-	sbi_active_vspace_range(sbi, &vrange);
-	silofs_assert_eq(vrange.beg, 0);
-	return vrange.end;
+	return silofs_sti_vspace_end(sbi->sb_sti);
 }
 
 static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
@@ -173,45 +133,9 @@ static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
 {
 	const loff_t vaddr_beg = vaddr_off(vaddr);
 	const loff_t vaddr_end = off_end(vaddr_beg, vaddr->len);
-	const loff_t vspace_end = sbi_end_of_active_vspace(sbi);
+	const loff_t vspace_end = sbi_vspace_end(sbi);
 
 	return (vaddr_end <= vspace_end);
-}
-
-static bool sbi_may_alloc_some(const struct silofs_sb_info *sbi, size_t nb)
-{
-	const size_t nbytes_pad = SILOFS_BK_SIZE;
-	const size_t nbytes_used = silofs_sbi_nused_bytes(sbi);
-	const size_t nbytes_cap = silofs_sbi_vspace_capacity(sbi);
-
-	return ((nb + nbytes_used + nbytes_pad) < nbytes_cap);
-}
-
-static bool sbi_may_alloc_data(const struct silofs_sb_info *sbi, size_t nb)
-{
-	const size_t user_limit = (31 * silofs_sbi_vspace_capacity(sbi)) / 32;
-	const size_t used_bytes = silofs_sbi_nused_bytes(sbi);
-
-	return ((used_bytes + nb) <= user_limit);
-}
-
-static bool sbi_may_alloc_meta(const struct silofs_sb_info *sbi,
-                               size_t nb, bool new_file)
-{
-	fsfilcnt_t files_max;
-	fsfilcnt_t files_cur;
-	const size_t limit = silofs_sbi_vspace_capacity(sbi);
-	const size_t nused = silofs_sbi_nused_bytes(sbi);
-	bool ret = true;
-
-	if ((nused + nb) > limit) {
-		ret = false;
-	} else if (new_file) {
-		files_max = silofs_sbi_inodes_limit(sbi);
-		files_cur = silofs_sbi_inodes_current(sbi);
-		ret = (files_cur < files_max);
-	}
-	return ret;
 }
 
 static void sbi_update_voff_last(struct silofs_sb_info *sbi,
@@ -220,13 +144,10 @@ static void sbi_update_voff_last(struct silofs_sb_info *sbi,
 	sbi_set_voff_last_of(sbi, vaddr_stype(vaddr), vaddr_off(vaddr));
 }
 
-static void sbi_update_vspace_change(struct silofs_sb_info *sbi, int take,
-                                     const struct silofs_vaddr *vaddr)
+static void sbi_update_curr_stats(struct silofs_sb_info *sbi,
+                                  const struct silofs_vaddr *vaddr, int take)
 {
-	struct silofs_space_stat spst_dif;
-
-	calc_vspace_stat_diff(vaddr, take, &spst_dif);
-	silofs_sbi_update_stats(sbi, &spst_dif);
+	silofs_sti_update_curr(sbi->sb_sti, vaddr->stype, take);
 }
 
 static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
@@ -234,7 +155,7 @@ static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
                                   const struct silofs_vaddr *vaddr)
 {
 	silofs_sli_mark_allocated_space(sli, vaddr);
-	sbi_update_vspace_change(sbi, 1, vaddr);
+	sbi_update_curr_stats(sbi, vaddr, 1);
 	sbi_update_voff_last(sbi, vaddr);
 }
 
@@ -243,7 +164,7 @@ static void sbi_clear_unallocate_at(struct silofs_sb_info *sbi,
                                     const struct silofs_vaddr *vaddr)
 {
 	silofs_sli_clear_allocated_space(sli, vaddr);
-	sbi_update_vspace_change(sbi, -1, vaddr);
+	sbi_update_curr_stats(sbi, vaddr, -1);
 }
 
 /*
@@ -264,7 +185,7 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
 	if (!silofs_sbi_ismutable_blobid(sbi, &blobid)) {
 		return 0;
 	}
-	err = silofs_repo_stage_blob(sbi->s_repo, &blobid, &bli);
+	err = silofs_repo_stage_blob(sbi->sb_ui.u_repo, &blobid, &bli);
 	if (err) {
 		log_err("failed to stage unused blob: err=%d", err);
 		return err;
@@ -508,7 +429,7 @@ static int
 spc_find_free_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
 	loff_t voff = hint;
-	const loff_t vend = sbi_end_of_active_vspace(spa_ctx->sbi);
+	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
 	int err = -ENOSPC;
 
 	while ((voff < vend) && (err == -ENOSPC)) {
@@ -558,18 +479,18 @@ spc_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 
 static int spc_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	const size_t nbytes_want = stype_size(spa_ctx->stype);
-	const struct silofs_sb_info *sbi = spa_ctx->sbi;
+	const struct silofs_stats_info *sti = spa_ctx->sbi->sb_sti;
+	const size_t nb = stype_size(spa_ctx->stype);
 	bool new_file;
 	bool ok;
 
-	ok = sbi_may_alloc_some(sbi, nbytes_want);
+	ok = silofs_sti_may_alloc_some(sti, nb);
 	if (ok) {
 		if (stype_isdata(spa_ctx->stype)) {
-			ok = sbi_may_alloc_data(sbi, nbytes_want);
+			ok = silofs_sti_may_alloc_data(sti, nb);
 		} else {
 			new_file = stype_isinode(spa_ctx->stype);
-			ok = sbi_may_alloc_meta(sbi, nbytes_want, new_file);
+			ok = silofs_sti_may_alloc_meta(sti, nb, new_file);
 		}
 	}
 	return ok ? 0 : -ENOSPC;

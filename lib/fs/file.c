@@ -17,6 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
+#include <silofs/fs/nodes.h>
+#include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
@@ -324,9 +326,8 @@ static int xiovec_by_alloc(const struct silofs_file_ctx *f_ctx,
                            struct silofs_xiovec *out_xiov)
 {
 	uint8_t *mm = address_within_bk(bk_start, off_in_bk);
-	const struct silofs_alloc_if *alif = f_ctx->sbi->s_alif;
 
-	return silofs_allocresolve(alif, mm, len, out_xiov);
+	return silofs_allocresolve(sbi_alloc(f_ctx->sbi), mm, len, out_xiov);
 }
 
 static int xiovec_by_blob(const struct silofs_file_ctx *f_ctx,
@@ -1236,7 +1237,7 @@ static int fic_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
 
 static bool fic_has_kcopy_mode(const struct silofs_file_ctx *f_ctx)
 {
-	return ((f_ctx->sbi->s_ctl_flags & SILOFS_F_KCOPY) > 0);
+	return ((f_ctx->sbi->sb_ctl_flags & SILOFS_F_KCOPY) > 0);
 }
 
 static bool fic_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
@@ -1302,7 +1303,7 @@ fic_probe_unwritten_at(const struct silofs_file_ctx *f_ctx,
 
 	*out_res = false;
 	if (!vaddr_isnull(vaddr)) {
-		err = silofs_probe_unwritten(f_ctx->sbi, vaddr, out_res);
+		err = silofs_sbi_test_unwritten(f_ctx->sbi, vaddr, out_res);
 	}
 	return err;
 }
@@ -1334,7 +1335,7 @@ static int fic_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 	int ret;
 
 	ii_incref(f_ctx->ii);
-	ret = silofs_stage_vnode(f_ctx->sbi, vaddr, f_ctx->stg_flags, &vi);
+	ret = silofs_sbi_stage_vnode(f_ctx->sbi, vaddr, f_ctx->stg_flags, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -1463,7 +1464,7 @@ static int fic_stage_finode(const struct silofs_file_ctx *f_ctx,
 
 	ii_incref(f_ctx->ii);
 
-	ret = silofs_stage_vnode(f_ctx->sbi, vaddr, f_ctx->stg_flags, &vi);
+	ret = silofs_sbi_stage_vnode(f_ctx->sbi, vaddr, f_ctx->stg_flags, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -2042,7 +2043,7 @@ static int fic_clear_unwritten_at(const struct silofs_file_ctx *f_ctx,
 {
 	silofs_assert(vaddr_isdata(vaddr));
 
-	return silofs_clear_unwritten(f_ctx->sbi, vaddr);
+	return silofs_sbi_clear_unwritten(f_ctx->sbi, vaddr);
 }
 
 static int fic_clear_unwritten_of(const struct silofs_file_ctx *f_ctx,
@@ -2086,7 +2087,7 @@ static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
 
 	silofs_assert(vaddr_isdata(vaddr));
 
-	err = silofs_refcnt_islast_at(f_ctx->sbi, vaddr, &last);
+	err = silofs_sbi_test_lastref(f_ctx->sbi, vaddr, &last);
 	if (err) {
 		return err;
 	}
@@ -2096,7 +2097,7 @@ static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	}
-	err = silofs_remove_vnode_at(f_ctx->sbi, vaddr);
+	err = silofs_sbi_remove_vnode_at(f_ctx->sbi, vaddr);
 	if (err) {
 		return err;
 	}
@@ -2110,7 +2111,7 @@ static int fic_spawn_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_finode_info *fni = NULL;
 
-	err = silofs_spawn_vnode(f_ctx->sbi, SILOFS_STYPE_FTNODE, &vi);
+	err = silofs_sbi_spawn_vnode(f_ctx->sbi, SILOFS_STYPE_FTNODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -2123,7 +2124,7 @@ static int fic_spawn_finode(const struct silofs_file_ctx *f_ctx,
 static int fic_remove_finode(const struct silofs_file_ctx *f_ctx,
                              struct silofs_finode_info *fni)
 {
-	return silofs_remove_vnode(f_ctx->sbi, &fni->fn_vi);
+	return silofs_sbi_remove_vnode(f_ctx->sbi, &fni->fn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2977,7 +2978,7 @@ static int fmc_discard_entire(const struct silofs_fmap_ctx *fm_ctx)
 
 static int fmc_discard_by_set_unwritten(const struct silofs_fmap_ctx *fm_ctx)
 {
-	return silofs_mark_unwritten(fm_ctx->f_ctx->sbi, &fm_ctx->vaddr);
+	return silofs_sbi_mark_unwritten(fm_ctx->f_ctx->sbi, &fm_ctx->vaddr);
 }
 
 static int fmc_discard_data_at(const struct silofs_fmap_ctx *fm_ctx)
@@ -3889,7 +3890,7 @@ static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 		if (err) {
 			return err;
 		}
-		err = silofs_apex_kcopy(apex, &xiov_src, &xiov_dst, len);
+		err = silofs_exec_kcopy_by(apex, &xiov_src, &xiov_dst, len);
 		if (err) {
 			return err;
 		}

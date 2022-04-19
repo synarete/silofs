@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/fs/types.h>
+#include <silofs/fs/boot.h>
 #include <silofs/fs/opers.h>
 #include <silofs/fs/ioctls.h>
 #include <silofs/fs/fused.h>
@@ -393,8 +394,8 @@ static int opc_ioctl_clone(struct silofs_oper_ctx *opc)
 {
 	return silofs_fs_clone(opc_fs_ctx(opc),
 	                       opc->opc_in.clone.ino,
-	                       opc->opc_in.clone.name,
-	                       opc->opc_in.clone.flags);
+	                       opc->opc_in.clone.flags,
+	                       &opc->opc_out.clone.bsec);
 }
 
 static int opc_ioctl(struct silofs_oper_ctx *opc)
@@ -471,9 +472,16 @@ static silofs_opc_fn hook_of(const struct silofs_oper_ctx *opc)
 
 int silofs_exec_fs_oper(struct silofs_oper_ctx *opc)
 {
-	silofs_opc_fn hook = hook_of(opc);
+	silofs_opc_fn hook;
+	int ret;
 
-	return (hook != NULL) ? hook(opc) : -ENOSYS;
+	hook = hook_of(opc);
+	if (hook != NULL) {
+		ret = hook(opc);
+	} else {
+		ret = -ENOSYS;
+	}
+	return ret;
 }
 
 int silofs_operctx_init(struct silofs_oper_ctx *opc)

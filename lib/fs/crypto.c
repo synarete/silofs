@@ -216,8 +216,8 @@ void silofs_sha3_256_of(const struct silofs_mdigest *md,
                         const void *buf, size_t bsz,
                         struct silofs_hash256 *out_hash)
 {
-	const int algo = GCRY_MD_SHA3_256;
 	const size_t hlen = sizeof(out_hash->hash);
+	const int algo = GCRY_MD_SHA3_256;
 
 	require_algo_dlen(algo, hlen);
 	mdigest_calc(md, algo, buf, bsz, hlen, out_hash->hash);
@@ -227,8 +227,8 @@ void silofs_sha3_512_of(const struct silofs_mdigest *md,
                         const void *buf, size_t bsz,
                         struct silofs_hash512 *out_hash)
 {
-	const int algo = GCRY_MD_SHA3_512;
 	const size_t hlen = sizeof(out_hash->hash);
+	const int algo = GCRY_MD_SHA3_512;
 
 	require_algo_dlen(algo, hlen);
 	mdigest_calc(md, algo, buf, bsz, hlen, out_hash->hash);

@@ -26,10 +26,10 @@ static void ut_ioctl_query(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_ok(ute, dino, SILOFS_QUERY_VERSION, &query);
-	ut_expect_eq(query.u.version.v_major, silofs_version.major);
+	ut_expect_eq(query.u.version.major, silofs_version.major);
 	ut_create_file(ute, dino, name, &ino);
 	ut_query_ok(ute, ino, SILOFS_QUERY_VERSION, &query);
-	ut_expect_eq(query.u.version.v_minor, silofs_version.minor);
+	ut_expect_eq(query.u.version.minor, silofs_version.minor);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }

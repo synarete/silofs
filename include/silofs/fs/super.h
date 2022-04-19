@@ -17,115 +17,105 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
+struct silofs_stats_info;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 
-int silofs_sb_check_root(const struct silofs_super_block *sb);
+int silofs_sb_check_version(const struct silofs_super_block *sb);
 
 bool silofs_sb_test_flags(const struct silofs_super_block *sb,
                           enum silofs_superf mask);
-
-loff_t silofs_sb_vspace_end(const struct silofs_super_block *sb);
 
 int silofs_verify_super_block(const struct silofs_super_block *sb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_sbi_isrofs(const struct silofs_sb_info *sbi);
+int silofs_sbi_xinit(struct silofs_sb_info *sbi, struct silofs_alloc *alloc);
 
-void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
+void silofs_sbi_xfini(struct silofs_sb_info *sbi);
+
+int silofs_sbi_shut(struct silofs_sb_info *sbi);
+
+void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
+
+void silofs_sbi_setup_btime(struct silofs_sb_info *sbi);
+
+void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
+
+void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
+                           struct silofs_stats_info *sti);
 
 void silofs_sbi_bind_apex(struct silofs_sb_info *sbi,
                           struct silofs_fs_apex *apex);
 
-int silofs_sbi_shut(struct silofs_sb_info *sbi);
 
-void silofs_sbi_attach_ubi(struct silofs_sb_info *sbi,
-                           struct silofs_ubk_info *ubi);
+void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
 
-void silofs_sbi_rebind_view(struct silofs_sb_info *sbi);
+int silofs_sbi_stats_uaddr(const struct silofs_sb_info *sbi,
+                           struct silofs_uaddr *out_uaddr);
 
-void silofs_sbi_setup_by_args(struct silofs_sb_info *sbi,
-                              const struct silofs_fs_args *args);
+void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
+                                const struct silofs_uaddr *uaddr);
 
-void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi,
-                              size_t capacity, time_t btime);
-
-void silofs_sbi_update_birth_time(struct silofs_sb_info *sbi, time_t btime);
-
-void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
+void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
-
-int silofs_sbi_format_spmaps(struct silofs_sb_info *sbi);
 
 int silofs_sbi_format_itable(struct silofs_sb_info *sbi);
 
 int silofs_sbi_reload_itable(struct silofs_sb_info *sbi);
 
 
-int silofs_stage_vnode(struct silofs_sb_info *sbi,
-                       const struct silofs_vaddr *vaddr,
-                       enum silofs_stage_flags flags,
-                       struct silofs_vnode_info **out_vi);
+int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
+                           const struct silofs_vaddr *vaddr,
+                           enum silofs_stage_flags flags,
+                           struct silofs_vnode_info **out_vi);
 
-int silofs_stage_inode(struct silofs_sb_info *sbi,
-                       ino_t ino, enum silofs_stage_flags flags,
-                       struct silofs_inode_info **out_ii);
-
-
-int silofs_stage_cached_inode(struct silofs_sb_info *sbi, ino_t ino,
-                              struct silofs_inode_info **out_ii);
-
-int silofs_spawn_vnode(struct silofs_sb_info *sbi, enum silofs_stype stype,
-                       struct silofs_vnode_info **out_vi);
-
-int silofs_spawn_inode(struct silofs_sb_info *sbi,
-                       const struct silofs_creds *creds, ino_t parent_ino,
-                       mode_t parent_mode, mode_t mode, dev_t rdev,
-                       struct silofs_inode_info **out_ii);
+int silofs_sbi_stage_inode(struct silofs_sb_info *sbi,
+                           ino_t ino, enum silofs_stage_flags flags,
+                           struct silofs_inode_info **out_ii);
 
 
-int silofs_remove_inode(struct silofs_sb_info *sbi,
-                        struct silofs_inode_info *ii);
+int silofs_sbi_stage_cached_ii(struct silofs_sb_info *sbi, ino_t ino,
+                               struct silofs_inode_info **out_ii);
 
-int silofs_remove_vnode(struct silofs_sb_info *sbi,
-                        struct silofs_vnode_info *vi);
+int silofs_sbi_spawn_vnode(struct silofs_sb_info *sbi,
+                           enum silofs_stype stype,
+                           struct silofs_vnode_info **out_vi);
 
-int silofs_remove_vnode_at(struct silofs_sb_info *sbi,
-                           const struct silofs_vaddr *vaddr);
+int silofs_sbi_spawn_inode(struct silofs_sb_info *sbi,
+                           const struct silofs_creds *creds, ino_t parent_ino,
+                           mode_t parent_mode, mode_t mode, dev_t rdev,
+                           struct silofs_inode_info **out_ii);
 
-int silofs_probe_unwritten(struct silofs_sb_info *sbi,
-                           const struct silofs_vaddr *vaddr, bool *out_res);
 
-int silofs_clear_unwritten(struct silofs_sb_info *sbi,
-                           const struct silofs_vaddr *vaddr);
+int silofs_sbi_remove_inode(struct silofs_sb_info *sbi,
+                            struct silofs_inode_info *ii);
 
-int silofs_mark_unwritten(struct silofs_sb_info *sbi,
-                          const struct silofs_vaddr *vaddr);
+int silofs_sbi_remove_vnode(struct silofs_sb_info *sbi,
+                            struct silofs_vnode_info *vi);
 
-int silofs_refcnt_islast_at(struct silofs_sb_info *sbi,
+int silofs_sbi_remove_vnode_at(struct silofs_sb_info *sbi,
+                               const struct silofs_vaddr *vaddr);
+
+int silofs_sbi_test_unwritten(struct silofs_sb_info *sbi,
+                              const struct silofs_vaddr *vaddr, bool *out_res);
+
+int silofs_sbi_clear_unwritten(struct silofs_sb_info *sbi,
+                               const struct silofs_vaddr *vaddr);
+
+int silofs_sbi_mark_unwritten(struct silofs_sb_info *sbi,
+                              const struct silofs_vaddr *vaddr);
+
+int silofs_sbi_test_lastref(struct silofs_sb_info *sbi,
                             const struct silofs_vaddr *vaddr, bool *out_res);
 
-void silofs_sbi_space_stat(const struct silofs_sb_info *sbi,
-                           struct silofs_space_stat *out_sp_st);
-
-size_t silofs_sbi_nused_bytes(const struct silofs_sb_info *sbi);
-
-size_t silofs_sbi_vspace_capacity(const struct silofs_sb_info *sbi);
-
-void silofs_sbi_vspace_range(const struct silofs_sb_info *sbi,
-                             struct silofs_vrange *out_vrange);
-
-fsfilcnt_t silofs_sbi_inodes_limit(const struct silofs_sb_info *sbi);
-
-fsfilcnt_t silofs_sbi_inodes_current(const struct silofs_sb_info *sbi);
-
-void silofs_sbi_update_stats(struct silofs_sb_info *sbi,
-                             const struct silofs_space_stat *spst_dif);
-
-void silofs_sbi_add_flags(const struct silofs_sb_info *sbi,
+void silofs_sbi_add_flags(struct silofs_sb_info *sbi,
                           enum silofs_superf flags);
 
+bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
+                           enum silofs_superf flags);
+
+int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
                        struct silofs_xid *out_mid);
@@ -155,8 +145,6 @@ int silofs_sbi_subref_of(const struct silofs_sb_info *sbi,
 
 void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, struct silofs_uaddr *out_uaddr);
-
-int silofs_sbi_commit_dirty(struct silofs_sb_info *sbi);
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
                            const struct silofs_spnode_info *sni);

@@ -22,6 +22,7 @@
 #include <silofs/fs/address.h>
 #include <silofs/fs/crypto.h>
 #include <silofs/fs/boot.h>
+#include <silofs/fs/namei.h>
 #include <silofs/fs/private.h>
 #include <linux/limits.h>
 #include <sys/types.h>
@@ -33,6 +34,109 @@
 #include <limits.h>
 #include <endian.h>
 
+
+static int check_ascii_fs_name(const struct silofs_namestr *nstr)
+{
+	const char *allowed =
+	        "abcdefghijklmnopqrstuvwxyz"
+	        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	        "0123456789_-+.";
+	struct silofs_substr ss;
+	size_t n;
+
+	silofs_substr_init_rd(&ss, nstr->s.str, nstr->s.len);
+	if (!silofs_substr_isprint(&ss)) {
+		return -EINVAL;
+	}
+	n = silofs_substr_count_if(&ss, silofs_chr_isspace);
+	if (n > 0) {
+		return -EINVAL;
+	}
+	n = silofs_substr_count_if(&ss, silofs_chr_iscntrl);
+	if (n > 0) {
+		return -EINVAL;
+	}
+	n = silofs_substr_find_first_not_of(&ss, allowed);
+	if (n < ss.len) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int check_name_len(const struct silofs_namestr *nstr)
+{
+	if (nstr->s.len == 0) {
+		return -EINVAL;
+	}
+	if (nstr->s.len > SILOFS_NAME_MAX) {
+		return -ENAMETOOLONG;
+	}
+	return 0;
+}
+
+static int check_name_dat(const struct silofs_namestr *nstr)
+{
+	if (nstr->s.str == NULL) {
+		return -EINVAL;
+	}
+	if (memchr(nstr->s.str, '/', nstr->s.len)) {
+		return -EINVAL;
+	}
+	if (nstr->s.str[nstr->s.len] != '\0') {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+int silofs_check_name(const struct silofs_namestr *nstr)
+{
+	int err;
+
+	err = check_name_len(nstr);
+	if (err) {
+		return err;
+	}
+	err = check_name_dat(nstr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int check_fsname(const struct silofs_namestr *nstr)
+{
+	int err;
+
+	err = silofs_check_name(nstr);
+	if (err) {
+		return err;
+	}
+	if (nstr->s.str[0] == '.') {
+		return -EINVAL;
+	}
+	if (nstr->s.len > (SILOFS_NAME_MAX / 2)) {
+		return -ENAMETOOLONG;
+	}
+	err = check_ascii_fs_name(nstr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
+{
+	silofs_namestr_init(nstr, s);
+	return silofs_check_name(nstr);
+}
+
+int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
+{
+	silofs_namestr_init(nstr, s);
+	return check_fsname(nstr);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const struct silofs_cipher_args s_default_cip_args = {
 	.kdf = {
@@ -94,172 +198,162 @@ static void cpu_to_kdf(const struct silofs_kdf_desc *kd,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t bsec4k_magic(const struct silofs_bootsec4k *bsc)
+static uint64_t bsec1k_magic(const struct silofs_bootsec1k *bsc)
 {
 	return silofs_le64_to_cpu(bsc->bs_magic);
 }
 
-static void bsec4k_set_magic(struct silofs_bootsec4k *bsc, uint64_t magic)
+static void bsec1k_set_magic(struct silofs_bootsec1k *bsc, uint64_t magic)
 {
 	bsc->bs_magic = silofs_cpu_to_le64(magic);
 }
 
-static uint64_t bsec4k_version(const struct silofs_bootsec4k *bsc)
+static uint64_t bsec1k_version(const struct silofs_bootsec1k *bsc)
 {
 	return silofs_le64_to_cpu(bsc->bs_version);
 }
 
-static void bsec4k_set_version(struct silofs_bootsec4k *bsc, uint64_t version)
+static void bsec1k_set_version(struct silofs_bootsec1k *bsc, uint64_t version)
 {
 	bsc->bs_version = silofs_cpu_to_le64(version);
 }
 
-static enum silofs_bootf bsec4k_flags(const struct silofs_bootsec4k *bsc)
+static enum silofs_bootf bsec1k_flags(const struct silofs_bootsec1k *bsc)
 {
 	const uint64_t f = silofs_le64_to_cpu(bsc->bs_flags);
 
 	return (enum silofs_bootf)f;
 }
 
-static void bsec4k_set_flags(struct silofs_bootsec4k *bsc, enum silofs_bootf f)
+static void bsec1k_set_flags(struct silofs_bootsec1k *bsc, enum silofs_bootf f)
 {
 	bsc->bs_flags = silofs_cpu_to_le64((uint64_t)f);
 }
 
-static void bsec4k_uuid(const struct silofs_bootsec4k *bsc,
+static void bsec1k_uuid(const struct silofs_bootsec1k *bsc,
                         struct silofs_uuid *uu)
 {
 	silofs_uuid_assign(uu, &bsc->bs_uuid);
 }
 
-static void bsec4k_set_uuid(struct silofs_bootsec4k *bsc,
+static void bsec1k_set_uuid(struct silofs_bootsec1k *bsc,
                             const struct silofs_uuid *uu)
 {
 	silofs_uuid_assign(&bsc->bs_uuid, uu);
 }
 
-static time_t bsec4k_btime(const struct silofs_bootsec4k *bsc)
-{
-	return (time_t)silofs_le64_to_cpu(bsc->bs_btime);
-}
-
-static void bsec4k_set_btime(struct silofs_bootsec4k *bsc, time_t tm)
-{
-	bsc->bs_btime = silofs_cpu_to_le64((uint64_t)tm);
-}
-
-static void bsec4k_key_hash(const struct silofs_bootsec4k *bsc,
+static void bsec1k_key_hash(const struct silofs_bootsec1k *bsc,
                             struct silofs_hash256 *out_hash)
 {
 	silofs_hash256_assign(out_hash, &bsc->bs_key_hash);
 }
 
-static void bsec4k_set_key_hash(struct silofs_bootsec4k *bsc,
+static void bsec1k_set_key_hash(struct silofs_bootsec1k *bsc,
                                 const struct silofs_hash256 *hash)
 {
 	silofs_hash256_assign(&bsc->bs_key_hash, hash);
 }
 
-static void bsec4k_kdf(const struct silofs_bootsec4k *bsc,
+static void bsec1k_kdf(const struct silofs_bootsec1k *bsc,
                        struct silofs_kdf_pair *kdf)
 {
 	kdf_to_cpu(&bsc->bs_kdf_pair.kdf_iv, &kdf->kdf_iv);
 	kdf_to_cpu(&bsc->bs_kdf_pair.kdf_key, &kdf->kdf_key);
 }
 
-static void bsec4k_set_kdf(struct silofs_bootsec4k *bsc,
+static void bsec1k_set_kdf(struct silofs_bootsec1k *bsc,
                            const struct silofs_kdf_pair *kdf)
 {
 	cpu_to_kdf(&kdf->kdf_iv, &bsc->bs_kdf_pair.kdf_iv);
 	cpu_to_kdf(&kdf->kdf_key, &bsc->bs_kdf_pair.kdf_key);
 }
 
-static uint32_t bsec4k_chiper_algo(const struct silofs_bootsec4k *bsc)
+static uint32_t bsec1k_chiper_algo(const struct silofs_bootsec1k *bsc)
 {
 	return silofs_le32_to_cpu(bsc->bs_chiper_algo);
 }
 
-static uint32_t bsec4k_chiper_mode(const struct silofs_bootsec4k *bsc)
+static uint32_t bsec1k_chiper_mode(const struct silofs_bootsec1k *bsc)
 {
 	return silofs_le32_to_cpu(bsc->bs_chiper_mode);
 }
 
-static void bsec4k_set_cipher(struct silofs_bootsec4k *bsc,
+static void bsec1k_set_cipher(struct silofs_bootsec1k *bsc,
                               uint32_t cipher_algo, uint32_t cipher_mode)
 {
 	bsc->bs_chiper_algo = silofs_cpu_to_le32(cipher_algo);
 	bsc->bs_chiper_mode = silofs_cpu_to_le32(cipher_mode);
 }
 
-static void bsec4k_fill_rands(struct silofs_bootsec4k *bsc)
+static void bsec1k_fill_rands(struct silofs_bootsec1k *bsc)
 {
 	silofs_getentropy(bsc->bs_rands, sizeof(bsc->bs_rands));
 }
 
-void silofs_bsec4k_init(struct silofs_bootsec4k *bsc)
+void silofs_bsec1k_init(struct silofs_bootsec1k *bsc)
 {
 	const struct silofs_cipher_args *cip_args = &s_default_cip_args;
 
 	silofs_memzero(bsc, sizeof(*bsc));
-	bsec4k_set_magic(bsc, SILOFS_BOOT_RECORD_MAGIC);
-	bsec4k_set_version(bsc, SILOFS_FMT_VERSION);
-	bsec4k_set_flags(bsc, SILOFS_BOOTF_NONE);
-	bsec4k_set_kdf(bsc, &cip_args->kdf);
-	bsec4k_set_cipher(bsc, cip_args->cipher_algo, cip_args->cipher_mode);
-	bsec4k_fill_rands(bsc);
+	bsec1k_set_magic(bsc, SILOFS_BOOT_RECORD_MAGIC);
+	bsec1k_set_version(bsc, SILOFS_FMT_VERSION);
+	bsec1k_set_flags(bsc, SILOFS_BOOTF_NONE);
+	bsec1k_set_kdf(bsc, &cip_args->kdf);
+	bsec1k_set_cipher(bsc, cip_args->cipher_algo, cip_args->cipher_mode);
+	bsec1k_fill_rands(bsc);
 }
 
-void silofs_bsec4k_fini(struct silofs_bootsec4k *bsc)
+void silofs_bsec1k_fini(struct silofs_bootsec1k *bsc)
 {
 	silofs_memffff(bsc, sizeof(*bsc));
 }
 
-static void bsec4k_sb_uaddr(const struct silofs_bootsec4k *bsc,
+static void bsec1k_sb_uaddr(const struct silofs_bootsec1k *bsc,
                             struct silofs_uaddr *out_uaddr)
 {
 	silofs_uaddr64b_parse(&bsc->bs_sb_uaddr, out_uaddr);
 }
 
-static void bsec4k_set_sb_uaddr(struct silofs_bootsec4k *bsc,
+static void bsec1k_set_sb_uaddr(struct silofs_bootsec1k *bsc,
                                 const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr64b_set(&bsc->bs_sb_uaddr, uaddr);
 }
 
-static void bsec4k_sb_packid(const struct silofs_bootsec4k *bsc,
+static void bsec1k_sb_packid(const struct silofs_bootsec1k *bsc,
                              struct silofs_packid *out_packid)
 {
 	silofs_packid64b_parse(&bsc->bs_sb_packid, out_packid);
 }
 
-static void bsec4k_set_sb_packid(struct silofs_bootsec4k *bsc,
+static void bsec1k_set_sb_packid(struct silofs_bootsec1k *bsc,
                                  const struct silofs_packid *packid)
 {
 	silofs_packid64b_set(&bsc->bs_sb_packid, packid);
 }
 
-static int bsec4k_check_base(const struct silofs_bootsec4k *bsc)
+static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
 {
-	if (bsec4k_magic(bsc) != SILOFS_BOOT_RECORD_MAGIC) {
+	if (bsec1k_magic(bsc) != SILOFS_BOOT_RECORD_MAGIC) {
 		return -EINVAL;
 	}
-	if (bsec4k_version(bsc) != SILOFS_FMT_VERSION) {
+	if (bsec1k_version(bsc) != SILOFS_FMT_VERSION) {
 		return -EUCLEAN;
 	}
 	return 0;
 }
 
-static void bsec4k_cipher_args(const struct silofs_bootsec4k *bsc,
+static void bsec1k_cipher_args(const struct silofs_bootsec1k *bsc,
                                struct silofs_cipher_args *cip_args)
 {
 	silofs_assert_not_null(bsc);
 
-	bsec4k_kdf(bsc, &cip_args->kdf);
-	cip_args->cipher_algo = bsec4k_chiper_algo(bsc);
-	cip_args->cipher_mode = bsec4k_chiper_mode(bsc);
+	bsec1k_kdf(bsc, &cip_args->kdf);
+	cip_args->cipher_algo = bsec1k_chiper_algo(bsc);
+	cip_args->cipher_mode = bsec1k_chiper_mode(bsc);
 }
 
-static int bsec4k_check(const struct silofs_bootsec4k *bsc)
+static int bsec1k_check(const struct silofs_bootsec1k *bsc)
 {
 	int err;
 	struct silofs_cipher_args cip_args = {
@@ -267,100 +361,98 @@ static int bsec4k_check(const struct silofs_bootsec4k *bsc)
 		.cipher_mode = 0,
 	};
 
-	err = bsec4k_check_base(bsc);
+	err = bsec1k_check_base(bsc);
 	if (err) {
 		return err;
 	}
 	/* currently, requires default values */
-	bsec4k_cipher_args(bsc, &cip_args);
+	bsec1k_cipher_args(bsc, &cip_args);
 	if (!cip_args_isequal(&cip_args, &s_default_cip_args)) {
 		return -EINVAL;
 	}
 	return 0;
 }
 
-static void bsec4k_hash(const struct silofs_bootsec4k *bsc,
-                        struct silofs_hash512 *hash)
+static void bsec1k_hash(const struct silofs_bootsec1k *bsc,
+                        struct silofs_hash256 *hash)
 {
-	silofs_hash512_assign(hash, &bsc->bs_hash);
+	silofs_hash256_assign(hash, &bsc->bs_hash);
 }
 
-static void bsec4k_set_hash(struct silofs_bootsec4k *bsc,
-                            const struct silofs_hash512 *hash)
+static void bsec1k_set_hash(struct silofs_bootsec1k *bsc,
+                            const struct silofs_hash256 *hash)
 {
-	silofs_hash512_assign(&bsc->bs_hash, hash);
+	silofs_hash256_assign(&bsc->bs_hash, hash);
 }
 
-static void bsec4k_calc_hash(const struct silofs_bootsec4k *bsc,
+static void bsec1k_calc_hash(const struct silofs_bootsec1k *bsc,
                              const struct silofs_mdigest *md,
-                             struct silofs_hash512 *out_hash)
+                             struct silofs_hash256 *out_hash)
 {
-	const size_t len = offsetof(struct silofs_bootsec4k, bs_hash);
+	const size_t len = offsetof(struct silofs_bootsec1k, bs_hash);
 
-	silofs_sha3_512_of(md, bsc, len, out_hash);
+	silofs_sha3_256_of(md, bsc, len, out_hash);
 }
 
-void silofs_bsec4k_stamp(struct silofs_bootsec4k *bsc,
+void silofs_bsec1k_stamp(struct silofs_bootsec1k *bsc,
                          const struct silofs_mdigest *md)
 {
-	struct silofs_hash512 hash;
+	struct silofs_hash256 hash;
 
-	bsec4k_calc_hash(bsc, md, &hash);
-	bsec4k_set_hash(bsc, &hash);
+	bsec1k_calc_hash(bsc, md, &hash);
+	bsec1k_set_hash(bsc, &hash);
 }
 
-static int bsec4k_check_hash(const struct silofs_bootsec4k *bsc,
+static int bsec1k_check_hash(const struct silofs_bootsec1k *bsc,
                              const struct silofs_mdigest *md)
 {
-	struct silofs_hash512 hash[2];
+	struct silofs_hash256 hash[2];
 
-	bsec4k_hash(bsc, &hash[0]);
-	bsec4k_calc_hash(bsc, md, &hash[1]);
+	bsec1k_hash(bsc, &hash[0]);
+	bsec1k_calc_hash(bsc, md, &hash[1]);
 
-	return silofs_hash512_isequal(&hash[0], &hash[1]) ? 0 : -EUCLEAN;
+	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -EUCLEAN;
 }
 
-int silofs_bsec4k_verify(const struct silofs_bootsec4k *bsc,
+int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,
                          const struct silofs_mdigest *md)
 {
 	int err;
 
-	err = bsec4k_check(bsc);
+	err = bsec1k_check(bsc);
 	if (err) {
 		return err;
 	}
-	err = bsec4k_check_hash(bsc, md);
+	err = bsec1k_check_hash(bsc, md);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
+void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
                          struct silofs_bootsec *bsec)
 {
-	bsec4k_sb_uaddr(bsc, &bsec->sb_uaddr);
-	bsec4k_sb_packid(bsc, &bsec->sb_packid);
-	bsec4k_uuid(bsc, &bsec->uuid);
-	bsec4k_cipher_args(bsc, &bsec->cip_args);
-	bsec->btime = bsec4k_btime(bsc);
-	bsec->flags = bsec4k_flags(bsc);
+	bsec1k_sb_uaddr(bsc, &bsec->sb_uaddr);
+	bsec1k_sb_packid(bsc, &bsec->sb_packid);
+	bsec1k_uuid(bsc, &bsec->uuid);
+	bsec1k_cipher_args(bsc, &bsec->cip_args);
+	bsec->flags = bsec1k_flags(bsc);
 	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
-		bsec4k_key_hash(bsc, &bsec->key_hash);
+		bsec1k_key_hash(bsc, &bsec->key_hash);
 	}
 }
 
-void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
+void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
                        const struct silofs_bootsec *bsec)
 {
-	silofs_bsec4k_init(bsc);
-	bsec4k_set_sb_uaddr(bsc, &bsec->sb_uaddr);
-	bsec4k_set_sb_packid(bsc, &bsec->sb_packid);
-	bsec4k_set_uuid(bsc, &bsec->uuid);
-	bsec4k_set_btime(bsc, bsec->btime);
-	bsec4k_set_flags(bsc, bsec->flags);
+	silofs_bsec1k_init(bsc);
+	bsec1k_set_sb_uaddr(bsc, &bsec->sb_uaddr);
+	bsec1k_set_sb_packid(bsc, &bsec->sb_packid);
+	bsec1k_set_uuid(bsc, &bsec->uuid);
+	bsec1k_set_flags(bsc, bsec->flags);
 	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
-		bsec4k_set_key_hash(bsc, &bsec->key_hash);
+		bsec1k_set_key_hash(bsc, &bsec->key_hash);
 	}
 }
 
@@ -373,7 +465,6 @@ void silofs_bootsec_init(struct silofs_bootsec *bsec)
 	silofs_packid_reset(&bsec->sb_packid);
 	silofs_default_cip_args(&bsec->cip_args);
 	silofs_uuid_generate(&bsec->uuid);
-	bsec->btime = silofs_time_now();
 	bsec->flags = SILOFS_BOOTF_NONE;
 }
 
@@ -422,6 +513,221 @@ void silofs_bootsec_cipher_args(const struct silofs_bootsec *bsec,
 		cip_args_assign(out_cip_args, &bsec->cip_args);
 	}
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_bootpath_setup(struct silofs_bootpath *bpath,
+                          const char *repodir, const char *name)
+{
+	size_t len;
+	int ret = -EINVAL;
+
+	len = silofs_str_length(repodir);
+	if (len && (len < SILOFS_REPOPATH_MAX)) {
+		bpath->repodir.str = repodir;
+		bpath->repodir.len = len;
+		ret = silofs_make_namestr(&bpath->name, name);
+	}
+	return ret;
+}
+
+void silofs_bootpath_assign(struct silofs_bootpath *bpath,
+                            const struct silofs_bootpath *other)
+{
+	bpath->repodir.str = other->repodir.str;
+	bpath->repodir.len = other->repodir.len;
+
+	bpath->name.s.str = other->name.s.str;
+	bpath->name.s.len = other->name.s.len;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_bootldr_init(struct silofs_bootldr *bldr)
+{
+	bldr->btl_dfd = -1;
+	return silofs_mdigest_init(&bldr->btl_md);
+}
+
+void silofs_bootldr_fini(struct silofs_bootldr *bldr)
+{
+	silofs_bootldr_close(bldr);
+	silofs_mdigest_fini(&bldr->btl_md);
+	bldr->btl_dfd = -1;
+}
+
+int silofs_bootldr_open(struct silofs_bootldr *bldr,
+                        const struct silofs_bootpath *bpath)
+{
+	const char *rootdir = bpath->repodir.str;
+	int err;
+
+	if (bldr->btl_dfd > 0) {
+		return -EALREADY;
+	}
+	err = silofs_sys_opendir(rootdir, &bldr->btl_dfd);
+	if (err) {
+		log_warn("opendir failed: %s err=%d", rootdir, err);
+		return err;
+	}
+	return 0;
+}
+
+int silofs_bootldr_close(struct silofs_bootldr *bldr)
+{
+	return silofs_sys_closefd(&bldr->btl_dfd);
+}
+
+static int bootldr_check_open(const struct silofs_bootldr *bldr)
+{
+	return likely(bldr->btl_dfd > 0) ? 0 : -EBADF;
+}
+
+static int bootldr_check_oper(const struct silofs_bootldr *bldr,
+                              const struct silofs_bootpath *bpath)
+{
+	int err;
+
+	err = check_fsname(&bpath->name);
+	if (err) {
+		return err;
+	}
+	err = bootldr_check_open(bldr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int bootldr_verify_bsec1k(const struct silofs_bootldr *bldr,
+                                 const struct silofs_bootsec1k *bsc)
+{
+	return silofs_bsec1k_verify(bsc, &bldr->btl_md);
+}
+
+int silofs_bootldr_fetch(const struct silofs_bootldr *bldr,
+                         const struct silofs_bootpath *bpath,
+                         struct silofs_bootsec *out_bsec)
+{
+	struct silofs_bootsec1k bsc;
+	const char *name = NULL;
+	int fd = -1;
+	int err;
+
+	err = bootldr_check_oper(bldr, bpath);
+	if (err) {
+		return err;
+	}
+	name = bpath->name.s.str;
+	err = silofs_sys_openat(bldr->btl_dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_preadn(fd, &bsc, sizeof(bsc), 0);
+	if (err) {
+		goto out;
+	}
+	err = bootldr_verify_bsec1k(bldr, &bsc);
+	if (err) {
+		goto out;
+	}
+	silofs_bsec1k_parse(&bsc, out_bsec);
+out:
+	silofs_sys_closefd(&fd);
+	return err;
+}
+
+static void bootldr_setup_bsec1k(const struct silofs_bootldr *bldr,
+                                 const struct silofs_bootsec *bsec,
+                                 struct silofs_bootsec1k *bsc)
+{
+	silofs_bsec1k_set(bsc, bsec);
+	silofs_bsec1k_stamp(bsc, &bldr->btl_md);
+}
+
+int silofs_bootldr_store(const struct silofs_bootldr *bldr,
+                         const struct silofs_bootpath *bpath,
+                         const struct silofs_bootsec *bsec)
+{
+	struct silofs_bootsec1k bsc;
+	const char *name = NULL;
+	int fd = -1;
+	int o_flags;
+	int err;
+
+	err = bootldr_check_oper(bldr, bpath);
+	if (err) {
+		return err;
+	}
+	name = bpath->name.s.str;
+	err = silofs_sys_fchmodat(bldr->btl_dfd, name, 0600, 0);
+	if (!err) {
+		o_flags = O_RDWR;
+	} else if (err == -ENOENT) {
+		o_flags = O_RDWR | O_CREAT;
+	} else {
+		goto out;
+	}
+	err = silofs_sys_openat(bldr->btl_dfd, name, o_flags, 0600, &fd);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_fchmod(fd, 0400);
+	if (err) {
+		goto out;
+	}
+	bootldr_setup_bsec1k(bldr, bsec, &bsc);
+	err = silofs_sys_pwriten(fd, &bsc, sizeof(bsc), 0);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_fsync(fd);
+	if (err) {
+		goto out;
+	}
+out:
+	silofs_sys_closefd(&fd);
+	return err;
+}
+
+int silofs_bootldr_unref(const struct silofs_bootldr *bldr,
+                         const struct silofs_bootpath *bpath)
+{
+	struct silofs_bootsec1k bsc;
+	const char *name;
+	int fd = -1;
+	int err;
+
+	err = bootldr_check_oper(bldr, bpath);
+	if (err) {
+		return err;
+	}
+	name = bpath->name.s.str;
+	err = silofs_sys_openat(bldr->btl_dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_preadn(fd, &bsc, sizeof(bsc), 0);
+	if (err) {
+		goto out;
+	}
+	err = bootldr_verify_bsec1k(bldr, &bsc);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_fchmodat(bldr->btl_dfd, name, 0600, 0);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_unlinkat(bldr->btl_dfd, name, 0);
+	if (err) {
+		goto out;
+	}
+out:
+	silofs_sys_closefd(&fd);
+	return err;
+}
+
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -568,11 +874,11 @@ static int check_proc_rlimits(void)
 
 static int g_boot_lib_once;
 
-int silofs_boot_lib(void)
+int silofs_lib_setup(void)
 {
 	int err;
 
-	silofs_boot_defs();
+	silofs_lib_verify_defs();
 
 	if (g_boot_lib_once) {
 		return 0;
@@ -604,62 +910,4 @@ int silofs_boot_lib(void)
 	return 0;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static size_t align_down(size_t sz, size_t align)
-{
-	return (sz / align) * align;
-}
-
-static int getmemlimit(size_t *out_lim)
-{
-	int err;
-	struct rlimit rlim = {
-		.rlim_cur = 0
-	};
-
-	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
-	if (!err) {
-		*out_lim = rlim.rlim_cur;
-	}
-	return err;
-}
-
-int silofs_boot_mem(size_t mem_want, size_t *out_mem_size)
-{
-	int err;
-	size_t mem_floor;
-	size_t mem_ceil;
-	size_t mem_rlim;
-	size_t mem_glim;
-	size_t page_size;
-	size_t phys_pages;
-	size_t mem_total;
-	size_t mem_uget;
-
-	page_size = (size_t)silofs_sc_page_size();
-	phys_pages = (size_t)silofs_sc_phys_pages();
-	mem_total = (page_size * phys_pages);
-	mem_floor = SILOFS_UGIGA / 8;
-	if (mem_total < mem_floor) {
-		return -ENOMEM;
-	}
-	err = getmemlimit(&mem_rlim);
-	if (err) {
-		return err;
-	}
-	if (mem_rlim < mem_floor) {
-		return -ENOMEM;
-	}
-	mem_glim = 64 * SILOFS_UGIGA;
-	mem_ceil = silofs_min3(mem_glim, mem_rlim, mem_total / 4);
-
-	if (mem_want == 0) {
-		mem_want = 2 * SILOFS_GIGA;
-	}
-	mem_uget = silofs_clamp(mem_want, mem_floor, mem_ceil);
-
-	*out_mem_size = align_down(mem_uget, SILOFS_UMEGA);
-	return 0;
-}
 

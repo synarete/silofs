@@ -135,6 +135,7 @@ static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 		len = strlen(fname);
 		off = make_offset(i, step);
 		ut_read_verify(ute, fino, fname, len, off);
+		/* XXX how do you truncate read-only file ? */
 		ut_trunacate_file(ute, fino, off);
 		ut_release_file(ute, fino);
 	}
@@ -200,12 +201,49 @@ static void ut_reload_unlinked(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_reload_xattr_(struct ut_env *ute, loff_t off, size_t value_size)
+{
+	ino_t fino;
+	ino_t dino;
+	const char *name = UT_NAME;
+	struct ut_keyval kv = {
+		.name = name,
+		.value = ut_randbuf(ute, value_size),
+		.size = value_size,
+	};
+
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_setxattr_create(ute, dino, &kv);
+	ut_create_file(ute, dino, name, &fino);
+	ut_write_read(ute, fino, kv.value, kv.size, off);
+	ut_setxattr_create(ute, fino, &kv);
+	ut_release_file(ute, fino);
+	ut_reload_fs_ok_at(ute, dino);
+	ut_getxattr_value(ute, dino, &kv);
+	ut_open_rdonly(ute, fino);
+	ut_getxattr_value(ute, fino, &kv);
+	ut_read_verify(ute, fino, kv.value, kv.size, off);
+	ut_release_file(ute, fino);
+	ut_unlink_ok(ute, dino, name);
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_reload_xattr(struct ut_env *ute)
+{
+	ut_reload_xattr_(ute, 0, UT_KILO / 4);
+	ut_reload_xattr_(ute, UT_GIGA, SILOFS_XATTR_VALUE_MAX / 2);
+	ut_reload_xattr_(ute, UT_TERA, SILOFS_XATTR_VALUE_MAX);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_reload_simple),
 	UT_DEFTEST(ut_reload_nfiles),
 	UT_DEFTEST(ut_reload_mixed),
 	UT_DEFTEST(ut_reload_io),
 	UT_DEFTEST(ut_reload_unlinked),
+	UT_DEFTEST(ut_reload_xattr),
 };
 
 const struct ut_testdefs ut_tdefs_reload = UT_MKTESTS(ut_local_tests);

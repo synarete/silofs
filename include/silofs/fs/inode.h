@@ -66,7 +66,7 @@ bool silof_ii_isimmutable(const struct silofs_inode_info *ii);
 void silofs_ii_iaddr(const struct silofs_inode_info *ii,
                      struct silofs_iaddr *out_iaddr);
 
-void silofs_fixup_rootdir(struct silofs_inode_info *ii);
+void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
 

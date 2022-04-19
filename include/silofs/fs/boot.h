@@ -17,22 +17,51 @@
 #ifndef SILOFS_BOOT_H_
 #define SILOFS_BOOT_H_
 
+
+/* boot pathname: a pair of repo-directory & bootsec name (optional) */
+struct silofs_bootpath {
+	struct silofs_str       repodir;
+	struct silofs_namestr   name;
+};
+
+/* boot-sector in-memory representation  */
+struct silofs_bootsec {
+	struct silofs_hash256           key_hash;
+	struct silofs_uuid              uuid;
+	struct silofs_uaddr             sb_uaddr;
+	struct silofs_packid            sb_packid;
+	struct silofs_cipher_args       cip_args;
+	enum silofs_bootf               flags;
+};
+
+/* pair of boot-path and its referenced sec */
+struct silofs_bootlink {
+	struct silofs_bootpath bpath;
+	struct silofs_bootsec  bsec;
+};
+
+/* repository boot-loader*/
+struct silofs_bootldr {
+	struct silofs_mdigest   btl_md;
+	int                     btl_dfd;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bsec4k_init(struct silofs_bootsec4k *bsc);
+void silofs_bsec1k_init(struct silofs_bootsec1k *bsc);
 
-void silofs_bsec4k_fini(struct silofs_bootsec4k *bsc);
+void silofs_bsec1k_fini(struct silofs_bootsec1k *bsc);
 
-void silofs_bsec4k_stamp(struct silofs_bootsec4k *bsc,
+void silofs_bsec1k_stamp(struct silofs_bootsec1k *bsc,
                          const struct silofs_mdigest *md);
 
-int silofs_bsec4k_verify(const struct silofs_bootsec4k *mbr,
+int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,
                          const struct silofs_mdigest *md);
 
-void silofs_bsec4k_parse(const struct silofs_bootsec4k *bsc,
+void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
                          struct silofs_bootsec *bsec);
 
-void silofs_bsec4k_set(struct silofs_bootsec4k *bsc,
+void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
                        const struct silofs_bootsec *bsec);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -60,6 +89,44 @@ void silofs_bootsec_cipher_args(const struct silofs_bootsec *bsec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_bootpath_setup(struct silofs_bootpath *bp,
+                          const char *repodir, const char *name);
+
+void silofs_bootpath_assign(struct silofs_bootpath *bpath,
+                            const struct silofs_bootpath *other);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_bootldr_init(struct silofs_bootldr *bldr);
+
+void silofs_bootldr_fini(struct silofs_bootldr *bldr);
+
+int silofs_bootldr_open(struct silofs_bootldr *bldr,
+                        const struct silofs_bootpath *bpath);
+
+int silofs_bootldr_close(struct silofs_bootldr *bldr);
+
+int silofs_bootldr_fetch(const struct silofs_bootldr *bldr,
+                         const struct silofs_bootpath *bpath,
+                         struct silofs_bootsec *out_bsec);
+
+int silofs_bootldr_store(const struct silofs_bootldr *bldr,
+                         const struct silofs_bootpath *bpath,
+                         const struct silofs_bootsec *bsec);
+
+int silofs_bootldr_unref(const struct silofs_bootldr *bldr,
+                         const struct silofs_bootpath *bpath);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_check_name(const struct silofs_namestr *nstr);
+
+int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
+
+int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_default_cip_args(struct silofs_cipher_args *cip_args);
 
 void silofs_calc_key_hash(const struct silofs_key *key,
@@ -68,11 +135,8 @@ void silofs_calc_key_hash(const struct silofs_key *key,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_boot_lib(void);
+int silofs_lib_setup(void);
 
-void silofs_boot_defs(void);
-
-int silofs_boot_mem(size_t mem_want, size_t *out_mem_size);
-
+void silofs_lib_verify_defs(void);
 
 #endif /* SILOFS_BOOT_H_ */

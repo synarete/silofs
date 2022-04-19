@@ -25,6 +25,8 @@ install_deb() {
     libcap-dev \
     libunwind-dev \
     libgcrypt-dev \
+    xxhash \
+    libxxhash-dev \
     python3-docutils \
     python3-pygments \
     linux-headers-$(uname -r) \
@@ -49,6 +51,8 @@ install_rpm() {
     libcap-devel \
     libunwind-devel \
     libgcrypt-devel \
+    xxhash-libs \
+    xxhash-devel \
     python3-docutils \
     python3-pygments \
     kernel-headers \

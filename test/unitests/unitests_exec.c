@@ -198,6 +198,20 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 	}
 }
 
+static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
+{
+	td->hook(ute);
+}
+
+static void ut_post_test(struct ut_env *ute)
+{
+	const struct silofs_fs_ctx *fs_ctx = ut_fs_ctx_of(ute);
+	int err;
+
+	err = silofs_fs_timedout(fs_ctx, SILOFS_F_NOW);
+	silofs_assert_ok(err);
+}
+
 static void ut_run_tests_group(struct ut_env *ute, const struct ut_tgroup *tg)
 {
 	const struct ut_testdef *td = NULL;
@@ -206,10 +220,11 @@ static void ut_run_tests_group(struct ut_env *ute, const struct ut_tgroup *tg)
 		td = &tg->tests->arr[i];
 		ut_track_test(ute, td, true);
 		ut_probe_stats(ute, true);
-		td->hook(ute);
+		ut_run_test(ute, td);
 		ut_probe_stats(ute, false);
 		ut_track_test(ute, td, false);
 		ut_freeall(ute);
+		ut_post_test(ute);
 	}
 }
 
@@ -220,8 +235,20 @@ static void ut_exec_tests(struct ut_env *ute)
 	}
 }
 
+static void ut_format_filesystem(struct ut_env *ute)
+{
+	struct silofs_bootsec bsec = { .flags = 0 };
+	int err;
+
+	err = silofs_fse_format_fs(ute->fs_env, &bsec);
+	silofs_assert_ok(err);
+
+	ut_save_bsec_ok(ute, &bsec);
+}
+
 static void ut_prep_tests(struct ut_env *ute)
 {
+	struct silofs_bootsec bsec = { .flags = 0 };
 	struct silofs_fs_env *fse = ute->fs_env;
 	int err;
 
@@ -231,19 +258,17 @@ static void ut_prep_tests(struct ut_env *ute)
 	err = silofs_fse_term(fse);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_format_fs(fse);
-	silofs_assert_ok(err);
-
-	err = silofs_fse_sync_drop(fse);
-	ut_expect_ok(err);
+	ut_format_filesystem(ute);
 
 	err = silofs_fse_term(fse);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_reopen(fse);
+	ut_load_bsec_ok(ute, &bsec);
+
+	err = silofs_fse_reopen(fse, &bsec);
 	silofs_assert_ok(err);
 
-	err = silofs_fse_reload(fse);
+	err = silofs_fse_reload(fse, &bsec);
 	silofs_assert_ok(err);
 }
 
@@ -609,18 +634,7 @@ bool ut_not_dot_or_dotdot(const char *s)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-uint64_t ut_fnv1a(const void *buf, size_t len, uint64_t hval_base)
+uint64_t ut_fnv1a(const void *buf, size_t len, uint64_t seed)
 {
-	uint64_t hval;
-	const uint8_t *itr = (const uint8_t *)buf;
-	const uint8_t *end = itr + len;
-	const uint64_t fnv_prime = 0x100000001b3UL;
-
-	hval = hval_base;
-	while (itr < end) {
-		hval *= fnv_prime;
-
-		hval ^= (uint64_t)(*itr++);
-	}
-	return hval;
+	return silofs_hash_fnv1a(buf, len, seed);
 }

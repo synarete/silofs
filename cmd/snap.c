@@ -14,7 +14,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/cmd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -26,11 +25,7 @@
 #include <errno.h>
 #include <error.h>
 #include <getopt.h>
-
-
-static struct silofs_subcmd_snap *cmd_snap_args;
-static char *cmd_snap_src_mntdir;
-static int cmd_snap_src_lock_fd = -1;
+#include "cmd.h"
 
 static const char *cmd_snap_usage[] = {
 	"snap <repo/src-name> <repo/dst-name>",
@@ -40,7 +35,31 @@ static const char *cmd_snap_usage[] = {
 	NULL
 };
 
-static void cmd_snap_getopt(void)
+struct cmd_snap_args {
+	char   *src_repodir_name;
+	char   *src_repodir;
+	char   *src_repodir_real;
+	char   *src_name;
+	char   *dst_repodir_name;
+	char   *dst_repodir;
+	char   *dst_repodir_real;
+	char   *dst_name;
+};
+
+struct cmd_snap_ctx {
+	struct cmd_snap_args    args;
+	struct silofs_bootlink  src_blnk;
+	struct silofs_bootlink  dst_blnk;
+	struct silofs_fs_env   *fse;
+	char                   *src_mntdir;
+	int                     src_lock_fd;
+};
+
+static struct cmd_snap_ctx *cmd_snap_ctx;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -49,89 +68,89 @@ static void cmd_snap_getopt(void)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = silofs_cmd_getopt("V:h", opts);
+		opt_chr = cmd_getopt("V:h", opts);
 		if (opt_chr == 'V') {
-			silofs_set_verbose_mode(optarg);
+			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
-			silofs_print_help_and_exit(cmd_snap_usage);
+			cmd_print_help_and_exit(cmd_snap_usage);
 		} else if (opt_chr > 0) {
-			silofs_die_unsupported_opt();
+			cmd_fatal_unsupported_opt();
 		}
 	}
-	silofs_cmd_getarg("repo/src-name",
-	                  &cmd_snap_args->src_repodir_name);
-	silofs_cmd_getarg("repo/dst-name",
-	                  &cmd_snap_args->dst_repodir_name);
-	silofs_cmd_endargs();
+	cmd_getarg("repo/src-name", &ctx->args.src_repodir_name);
+	cmd_getarg("repo/dst-name", &ctx->args.dst_repodir_name);
+	cmd_endargs();
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_snap_finalize(void)
+static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
-	silofs_cmd_destroy_fse_inst();
-	silofs_cmd_pfrees(&cmd_snap_args->src_repodir_name);
-	silofs_cmd_pfrees(&cmd_snap_args->src_repodir);
-	silofs_cmd_pfrees(&cmd_snap_args->src_repodir_real);
-	silofs_cmd_pfrees(&cmd_snap_args->src_name);
-	silofs_cmd_pfrees(&cmd_snap_args->dst_repodir_name);
-	silofs_cmd_pfrees(&cmd_snap_args->dst_repodir_name);
-	silofs_cmd_pfrees(&cmd_snap_args->dst_repodir_real);
-	silofs_cmd_pfrees(&cmd_snap_args->dst_repodir_real);
-	silofs_cmd_pfrees(&cmd_snap_src_mntdir);
-	silofs_cmd_unlockf(&cmd_snap_src_lock_fd);
+	cmd_del_env(&ctx->fse);
+	cmd_pstrfree(&ctx->args.src_repodir_name);
+	cmd_pstrfree(&ctx->args.src_repodir);
+	cmd_pstrfree(&ctx->args.src_repodir_real);
+	cmd_pstrfree(&ctx->args.src_name);
+	cmd_pstrfree(&ctx->args.dst_repodir_name);
+	cmd_pstrfree(&ctx->args.dst_repodir_name);
+	cmd_pstrfree(&ctx->args.dst_repodir_real);
+	cmd_pstrfree(&ctx->args.dst_repodir_real);
+	cmd_pstrfree(&ctx->src_mntdir);
+	cmd_unlock_bpath(&ctx->src_blnk.bpath, &ctx->src_lock_fd);
+	cmd_snap_ctx = NULL;
 }
 
-static void cmd_snap_start(void)
+static void cmd_snap_atexit(void)
 {
-	cmd_snap_args = &silofs_globals.cmd.snap;
-	atexit(cmd_snap_finalize);
-}
-
-static void cmd_snap_check_samerepo(void)
-{
-	struct stat src_st;
-	struct stat dst_st;
-
-	silofs_cmd_stat_dir(cmd_snap_args->src_repodir_real, &src_st);
-	silofs_cmd_stat_dir(cmd_snap_args->dst_repodir_real, &dst_st);
-	if ((src_st.st_ino != dst_st.st_ino) ||
-	    (src_st.st_dev != dst_st.st_dev)) {
-		silofs_die(0, "not on same repository: %s %s",
-		           cmd_snap_args->src_repodir_name,
-		           cmd_snap_args->dst_repodir_name);
+	if (cmd_snap_ctx != NULL) {
+		cmd_snap_finalize(cmd_snap_ctx);
 	}
 }
 
-static void cmd_snap_prepare(void)
+static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 {
-	silofs_cmd_check_reg(cmd_snap_args->src_repodir_name, false);
+	cmd_snap_ctx = ctx;
+	atexit(cmd_snap_atexit);
+}
 
-	silofs_cmd_check_notexists(cmd_snap_args->dst_repodir_name);
+static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)
+{
+	cmd_check_reg(ctx->args.src_repodir_name, false);
+	cmd_check_notexists(ctx->args.dst_repodir_name);
+	cmd_split_path(ctx->args.src_repodir_name,
+	               &ctx->args.src_repodir, &ctx->args.src_name);
+	cmd_split_path(ctx->args.dst_repodir_name,
+	               &ctx->args.dst_repodir, &ctx->args.dst_name);
+	cmd_check_nonemptydir(ctx->args.src_repodir, false);
+	cmd_check_nonemptydir(ctx->args.dst_repodir, true);
+	cmd_realpath(ctx->args.src_repodir, &ctx->args.src_repodir_real);
+	cmd_check_fsname(ctx->args.src_name);
+	cmd_realpath(ctx->args.dst_repodir, &ctx->args.dst_repodir_real);
+	cmd_check_fsname(ctx->args.dst_name);
+	cmd_setup_bpath(&ctx->src_blnk.bpath,
+	                ctx->args.src_repodir_real, ctx->args.src_name);
+	cmd_setup_bpath(&ctx->dst_blnk.bpath,
+	                ctx->args.dst_repodir_real, ctx->args.dst_name);
+}
 
-	silofs_cmd_splitpath(cmd_snap_args->src_repodir_name,
-	                     &cmd_snap_args->src_repodir,
-	                     &cmd_snap_args->src_name);
+static bool cmd_snap_stat_samedir(const char *path1, const char *path2)
+{
+	struct stat st1;
+	struct stat st2;
 
-	silofs_cmd_splitpath(cmd_snap_args->dst_repodir_name,
-	                     &cmd_snap_args->dst_repodir,
-	                     &cmd_snap_args->dst_name);
+	cmd_stat_dir(path1, &st1);
+	cmd_stat_dir(path2, &st2);
+	return (st1.st_ino == st2.st_ino) && (st1.st_dev == st2.st_dev);
+}
 
-	silofs_cmd_check_nonemptydir(cmd_snap_args->src_repodir, false);
+static void cmd_snap_check_samerepo(const struct cmd_snap_ctx *ctx)
+{
+	const char *src = ctx->args.src_repodir_real;
+	const char *dst = ctx->args.dst_repodir_real;
 
-	silofs_cmd_check_nonemptydir(cmd_snap_args->dst_repodir, true);
-
-	silofs_cmd_realpath(cmd_snap_args->src_repodir,
-	                    &cmd_snap_args->src_repodir_real);
-
-	silofs_cmd_check_fsname(cmd_snap_args->src_name);
-
-	silofs_cmd_realpath(cmd_snap_args->dst_repodir,
-	                    &cmd_snap_args->dst_repodir_real);
-
-	silofs_cmd_check_fsname(cmd_snap_args->dst_name);
-
-	cmd_snap_check_samerepo();
+	if (!cmd_snap_stat_samedir(src, dst)) {
+		cmd_dief(0, "not on same repository: %s %s", src, dst);
+	}
 }
 
 static void cmd_snap_ioctl_query(const char *path,
@@ -142,174 +161,149 @@ static void cmd_snap_ioctl_query(const char *path,
 
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
-		silofs_die(err, "failed to open: %s", path);
+		cmd_dief(err, "failed to open: %s", path);
 	}
 	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_QUERY, qry);
 	if (err) {
-		silofs_die(err, "ioctl error: %s", path);
+		cmd_dief(err, "ioctl error: %s", path);
 	}
 	silofs_sys_closefd(&dfd);
 }
 
-static bool cmd_snap_stat_samedir(const char *path0, const char *path1)
+static bool cmd_snap_is_src_mntdir(struct cmd_snap_ctx *ctx,
+                                   const char *mntdir)
 {
-	struct stat st[2];
-	int err;
+	struct silofs_ioc_query query = {
+		.qtype = SILOFS_QUERY_REPONAME,
+	};
+	bool ret;
 
-	err = silofs_sys_stat(path0, &st[0]);
-	if (err) {
-		silofs_die(err, "stat error: %s", path0);
-	}
-	err = silofs_sys_stat(path1, &st[1]);
-	if (err) {
-		silofs_die(err, "stat error: %s", path1);
-	}
-	return S_ISDIR(st[0].st_mode) &&
-	       (st[0].st_ino == st[1].st_ino) &&
-	       (st[0].st_dev == st[1].st_dev);
+	cmd_snap_ioctl_query(mntdir, &query);
+	ret = cmd_snap_stat_samedir(query.u.reponame.repodir,
+	                            ctx->args.src_repodir_real);
+	return ret && !strcmp(query.u.reponame.name, ctx->args.src_name);
 }
 
-static bool cmd_snap_is_src_mntdir(const char *mntdir)
-{
-	struct silofs_ioc_query query = { .reserved = 0 };
-	bool ret = false;
-
-	query.qtype = SILOFS_QUERY_VERSION;
-	cmd_snap_ioctl_query(mntdir, &query);
-
-	query.qtype = SILOFS_QUERY_REPO;
-	cmd_snap_ioctl_query(mntdir, &query);
-
-	ret = cmd_snap_stat_samedir(query.u.repo.r_path,
-	                            cmd_snap_args->src_repodir_real);
-	if (ret) {
-		query.qtype = SILOFS_QUERY_FSNAME;
-		cmd_snap_ioctl_query(mntdir, &query);
-		ret = !strcmp(query.u.fsname.f_name, cmd_snap_args->src_name);
-	}
-	return ret;
-}
-
-static void cmd_snap_resolve_mntdir(void)
+static void cmd_snap_resolve_src_mntdir(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_proc_mntinfo *mi_list = NULL;
 	struct silofs_proc_mntinfo *mi_iter = NULL;
 
-	mi_list = silofs_cmd_parse_mountinfo();
+	mi_list = cmd_parse_mountinfo();
 	mi_iter = mi_list;
-	while (mi_iter && !cmd_snap_src_mntdir) {
-		if (cmd_snap_is_src_mntdir(mi_iter->mntdir)) {
-			silofs_cmd_realpath(mi_iter->mntdir,
-			                    &cmd_snap_src_mntdir);
+	while (mi_iter && !ctx->src_mntdir) {
+		if (cmd_snap_is_src_mntdir(ctx, mi_iter->mntdir)) {
+			cmd_realpath(mi_iter->mntdir, &ctx->src_mntdir);
 		}
 		mi_iter = mi_iter->next;
 	}
-	silofs_cmd_free_mountinfo(mi_list);
+	cmd_free_mountinfo(mi_list);
 
-	if (cmd_snap_src_mntdir == NULL) {
-		silofs_die(0, "failed to resolve mount point of: %s",
-		           cmd_snap_args->src_repodir_name);
+	if (!ctx->src_mntdir) {
+		cmd_dief(0, "failed to resolve mount point of: %s",
+		         ctx->args.src_repodir_name);
 	}
 }
 
-static void cmd_snap_by_ioctl_clone(void)
+static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_ioc_clone clone = { .name[0] = '\0' };
-	const char *dirpath = cmd_snap_src_mntdir;
-	const char *name = cmd_snap_args->dst_name;
+	struct silofs_ioc_clone clone;
 	int dfd = -1;
 	int err;
 
-	err = silofs_sys_open(dirpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	err = silofs_sys_opendir(ctx->src_mntdir, &dfd);
 	if (err) {
-		silofs_die(err, "failed to open dir: %s", dirpath);
+		cmd_dief(err, "failed to open dir: %s", ctx->src_mntdir);
 	}
 	err = silofs_sys_syncfs(dfd);
 	if (err) {
-		silofs_die(err, "syncfs error: %s", dirpath);
+		cmd_dief(err, "syncfs error: %s", ctx->src_mntdir);
 	}
-	strncpy(clone.name, name, sizeof(clone.name) - 1);
+
 	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, &clone);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
-		silofs_die(err, "ioctl error: %s", dirpath);
+		cmd_dief(err, "ioctl error: %s", ctx->src_mntdir);
 	} else if (err) {
-		silofs_die(err, "failed to snap: %s", name);
+		cmd_dief(err, "failed to snap: %s",
+		         ctx->args.dst_repodir_name);
 	}
+
+	silofs_bsec1k_parse(&clone.bsec, &ctx->dst_blnk.bsec);
+	cmd_save_bsec(&ctx->dst_blnk.bpath, &ctx->dst_blnk.bsec);
 }
 
-static void cmd_snap_online(void)
+static void cmd_snap_online(struct cmd_snap_ctx *ctx)
 {
-	cmd_snap_resolve_mntdir();
-	cmd_snap_by_ioctl_clone();
+	cmd_snap_resolve_src_mntdir(ctx);
+	cmd_snap_by_ioctl_clone(ctx);
 }
 
-static void cmd_snap_create_fs_env(void)
+static void cmd_snap_setup_env(struct cmd_snap_ctx *ctx)
 {
-	const struct silofs_fs_args args = {
-		.main_repodir = cmd_snap_args->src_repodir_real,
-		.main_name = cmd_snap_args->src_name,
+	const struct silofs_fs_args fs_args = {
+		.main_repodir = ctx->args.src_repodir_real,
+		.main_name = ctx->args.src_name,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
 	};
-
-	silofs_cmd_create_fse_inst(&args);
+	cmd_new_env(&ctx->fse, &fs_args);
 }
 
-static void cmd_snap_by_exec_fse(void)
+static void cmd_snap_by_exec_fse(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_fs_env *fse = silofs_cmd_fse_inst();
-	int err;
-
-	err = silofs_fse_snap(fse, cmd_snap_args->dst_name);
-	if (err) {
-		silofs_die(err, "snap failed: %s --> %s",
-		           cmd_snap_args->src_repodir_name,
-		           cmd_snap_args->dst_repodir_name);
-	}
+	cmd_load_bsec(&ctx->src_blnk.bpath, &ctx->src_blnk.bsec);
+	cmd_snap_fs(ctx->fse, &ctx->src_blnk.bsec, &ctx->dst_blnk.bsec);
+	cmd_save_bsec(&ctx->dst_blnk.bpath, &ctx->dst_blnk.bsec);
 }
 
-static void cmd_snap_offline(void)
+static void cmd_snap_offline(struct cmd_snap_ctx *ctx)
 {
-	cmd_snap_create_fs_env();
-	cmd_snap_by_exec_fse();
+	cmd_snap_setup_env(ctx);
+	cmd_snap_by_exec_fse(ctx);
 }
 
-static bool cmd_snap_need_online(void)
+static bool cmd_snap_need_online(struct cmd_snap_ctx *ctx)
 {
-	return !silofs_cmd_trylockf(cmd_snap_args->src_repodir,
-	                            cmd_snap_args->src_name,
-	                            &cmd_snap_src_lock_fd);
+	return !cmd_trylock_bpath(&ctx->src_blnk.bpath, &ctx->src_lock_fd);
 }
 
-static void cmd_snap_execute(void)
+static void cmd_snap_execute(struct cmd_snap_ctx *ctx)
 {
-	if (cmd_snap_need_online()) {
-		cmd_snap_online();
+	if (cmd_snap_need_online(ctx)) {
+		cmd_snap_online(ctx);
 	} else {
-		cmd_snap_offline();
+		cmd_snap_offline(ctx);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_cmd_execute_snap(void)
+void cmd_execute_snap(void)
 {
+	struct cmd_snap_ctx ctx = {
+		.fse = NULL,
+		.src_lock_fd = -1,
+	};
+
 	/* Do all cleanups upon exits */
-	cmd_snap_start();
+	cmd_snap_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_snap_getopt();
+	cmd_snap_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_snap_prepare();
+	cmd_snap_prepare(&ctx);
+
+	/* Require single repo mode */
+	cmd_snap_check_samerepo(&ctx);
 
 	/* Do actual snap */
-	cmd_snap_execute();
+	cmd_snap_execute(&ctx);
 
 	/* Post execution cleanups */
-	cmd_snap_finalize();
+	cmd_snap_finalize(&ctx);
 }
 

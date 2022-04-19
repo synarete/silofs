@@ -17,8 +17,8 @@
 #ifndef SILOFS_NAMEI_H_
 #define SILOFS_NAMEI_H_
 
-#include <unistd.h>
 
+struct silofs_bootsec;
 struct silofs_sb_info;
 struct silofs_fs_ctx;
 struct silofs_ioc_query;
@@ -26,8 +26,6 @@ struct silofs_ioc_iterfs;
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,
                            const struct silofs_inode_info *ii, const char *s);
-
-int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
 
 int silofs_do_forget(const struct silofs_fs_ctx *op,
                      struct silofs_inode_info *ii, size_t nlookup);
@@ -110,27 +108,18 @@ int silofs_do_query(const struct silofs_fs_ctx *op,
                     struct silofs_ioc_query *out_qry);
 
 int silofs_do_clone(const struct silofs_fs_ctx *op,
-                    struct silofs_inode_info *dir_ii,
-                    const struct silofs_namestr *name, int flags);
-
-int silofs_do_unrefs(const struct silofs_fs_ctx *op,
-                     struct silofs_inode_info *ii,
-                     const struct silofs_namestr *name);
+                    struct silofs_inode_info *dir_ii, int flags,
+                    struct silofs_bootsec *out_bsec);
 
 int silofs_do_inspect(const struct silofs_fs_ctx *op,
-                      struct silofs_inode_info *ii);
+                      const struct silofs_bootsec *bsec);
 
 int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_namestr *src_name,
-                   const struct silofs_namestr *dst_name);
+                   const struct silofs_bootsec *src_bsec,
+                   struct silofs_bootsec *dst_bsec);
 
 int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_namestr *src_name,
-                     const struct silofs_namestr *dst_name);
-
-int silofs_check_fs_name(const struct silofs_namestr *nstr);
-
-int silof_check_writable_fs(const struct silofs_sb_info *sbi);
-
+                     const struct silofs_bootsec *src_bsec,
+                     struct silofs_bootsec *dst_bsec);
 
 #endif /* SILOFS_NAMEI_H_ */

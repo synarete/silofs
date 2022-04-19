@@ -62,6 +62,7 @@ do_autoclean() {
   run rm -f "${buildaux}/install-sh"
   run rm -f "${buildaux}/ltmain.sh"
   run rm -f "${buildaux}/missing"
+  run rm -f "${buildaux}/py-compile"
   run find "${basedir}" -type f -name Makefile.in -exec rm -f {} \;
   run find "${builddir}" -depth -mindepth 1 -exec rm -rf {} \;
 }

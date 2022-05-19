@@ -220,8 +220,11 @@
 /* on-disk size of directory tree-node */
 #define SILOFS_DIR_NODE_SIZE            (8192)
 
-/* number of directory-entries in dir's hash-tree mapping node  */
-#define SILOFS_DIR_NODE_NENTS           (480)
+/* number of directory-entries in dir's hash-tree node */
+#define SILOFS_DIR_NODE_NENTS           (320)
+
+/* max size of names-buffer in dir's hash-tree node */
+#define SILOFS_DIR_NODE_NBUF_SIZE       (7680)
 
 /* bits-shift of children per dir-htree node */
 #define SILOFS_DIR_NODE_SHIFT           (6)
@@ -778,33 +781,33 @@ union silofs_inode_specific {
 
 
 struct silofs_inode {
-	struct silofs_header    i_hdr;
-	uint64_t                i_ino;
-	uint64_t                i_parent;
-	uint32_t                i_uid;
-	uint32_t                i_gid;
-	uint32_t                i_mode;
-	uint32_t                i_flags;
-	int64_t                 i_size;
-	int64_t                 i_span;
-	uint64_t                i_blocks;
-	uint64_t                i_nlink;
-	uint64_t                i_attributes; /* statx */
-	uint32_t                i_rdev_major;
-	uint32_t                i_rdev_minor;
-	uint64_t                i_revision;
-	uint8_t                 i_reserved1[24];
-	struct silofs_inode_times   i_tm;
-	uint8_t                 i_reserved2[64];
-	struct silofs_inode_xattr   i_xa;
-	union silofs_inode_specific i_sp;
+	struct silofs_header            i_hdr;
+	uint64_t                        i_ino;
+	uint64_t                        i_parent;
+	uint32_t                        i_uid;
+	uint32_t                        i_gid;
+	uint32_t                        i_mode;
+	uint32_t                        i_flags;
+	int64_t                         i_size;
+	int64_t                         i_span;
+	uint64_t                        i_blocks;
+	uint64_t                        i_nlink;
+	uint64_t                        i_attributes; /* statx */
+	uint32_t                        i_rdev_major;
+	uint32_t                        i_rdev_minor;
+	uint64_t                        i_revision;
+	uint8_t                         i_reserved1[24];
+	struct silofs_inode_times       i_tm;
+	uint8_t                         i_reserved2[64];
+	struct silofs_inode_xattr       i_xa;
+	union silofs_inode_specific     i_sp;
 } silofs_packed_aligned64;
 
 
 struct silofs_xattr_entry {
-	uint16_t                xe_name_len;
-	uint16_t                xe_reserved;
-	uint32_t                xe_value_size;
+	uint16_t                        xe_name_len;
+	uint16_t                        xe_reserved;
+	uint32_t                        xe_value_size;
 } silofs_packed_aligned8;
 
 
@@ -819,12 +822,18 @@ struct silofs_xattr_node {
 
 struct silofs_dir_entry {
 	uint64_t                de_ino;
-	uint16_t                de_nents;
-	uint16_t                de_nprev;
+	uint64_t                de_name_hash;
 	uint16_t                de_name_len;
+	uint16_t                de_name_pos;
 	uint8_t                 de_dt;
-	uint8_t                 de_reserved;
+	uint8_t                 de_reserved[3];
 } silofs_packed_aligned8;
+
+
+union silofs_dtree_data {
+	struct silofs_dir_entry de[SILOFS_DIR_NODE_NENTS];
+	uint8_t                 nb[SILOFS_DIR_NODE_NBUF_SIZE];
+} silofs_packed_aligned64;
 
 
 struct silofs_dtree_node {
@@ -832,11 +841,11 @@ struct silofs_dtree_node {
 	uint64_t                dn_ino;
 	int64_t                 dn_parent;
 	uint32_t                dn_node_index;
-	uint16_t                dn_nde_head;
-	uint16_t                dn_nde_tail;
+	uint16_t                dn_nde;
+	uint16_t                dn_nnb;
 	uint64_t                dn_reserved[3];
 	struct silofs_vaddr56   dn_child[SILOFS_DIR_NODE_NCHILDS];
-	struct silofs_dir_entry de[SILOFS_DIR_NODE_NENTS];
+	union silofs_dtree_data dn_data;
 } silofs_packed_aligned64;
 
 

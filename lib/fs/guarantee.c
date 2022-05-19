@@ -178,7 +178,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF_BK(struct silofs_data_block);
 	REQUIRE_SIZEOF_BK(struct silofs_block);
 	REQUIRE_SIZEOF(struct silofs_itable_entry, 16);
-	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
+	REQUIRE_SIZEOF(struct silofs_dir_entry, 24);
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
 	REQUIRE_SIZEOF(struct silofs_inode_file, 512);
@@ -191,6 +191,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_xattr_node, SILOFS_XATTR_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_ftree_node, SILOFS_FILE_RTNODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_itable_node, SILOFS_ITNODE_SIZE);
+	REQUIRE_SIZEOF(union silofs_dtree_data, SILOFS_DIR_NODE_NBUF_SIZE);
 	REQUIRE_SIZEOF(struct silofs_dtree_node, SILOFS_DIR_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_data_block4, SILOFS_FILE_HEAD2_LEAF_SIZE);
 	REQUIRE_SIZEOF(struct silofs_repo_meta, 512);
@@ -204,8 +205,7 @@ static void guarantee_persistent_types_members(void)
 	REQUIRE_MEMBER_SIZE(struct silofs_itable_node, it_child, 1024);
 	REQUIRE_NELEMS(struct silofs_ftree_node,
 	               fn_child, SILOFS_FILE_NODE_NCHILDS);
-	REQUIRE_NELEMS(struct silofs_dtree_node,
-	               de, SILOFS_DIR_NODE_NENTS);
+	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
 	REQUIRE_NELEMS(struct silofs_dtree_node,
 	               dn_child, SILOFS_DIR_NODE_NCHILDS);
 }
@@ -290,13 +290,13 @@ static void guarantee_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_inode, i_xa, 256);
 	REQUIRE_OFFSET64(struct silofs_inode, i_sp, 512);
 	REQUIRE_OFFSET(struct silofs_dir_entry, de_ino, 0);
-	REQUIRE_OFFSET(struct silofs_dir_entry, de_nents, 8);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_nprev, 10);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len, 12);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_dt, 14);
+	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_hash, 8);
+	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len, 16);
+	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_pos, 18);
+	REQUIRE_XOFFSET(struct silofs_dir_entry, de_dt, 20);
 	REQUIRE_OFFSET(struct silofs_dtree_node, dn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_dtree_node, de, 512);
+	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_data, 512);
 	REQUIRE_OFFSET(struct silofs_ftree_node, fn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_zeros, 64);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);

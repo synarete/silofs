@@ -46,11 +46,6 @@
  * While 255 is de-facto standard for modern file-systems, long term vision
  * should allow more (think non-ascii with long UTF8 encoding).
  */
-struct silofs_dir_entry_view {
-	struct silofs_dir_entry de;
-	uint8_t de_name[SILOFS_NAME_MAX + 1];
-} silofs_packed_aligned8;
-
 struct silofs_dir_entry_info {
 	struct silofs_dnode_info       *dni;
 	struct silofs_dir_entry        *de;
@@ -212,15 +207,6 @@ static loff_t calc_d_isize(size_t last_index)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_dir_entry_view *
-de_view_of(const struct silofs_dir_entry *de)
-{
-	const struct silofs_dir_entry_view *de_view;
-
-	de_view = container_of2(de, struct silofs_dir_entry_view, de);
-	return unconst(de_view);
-}
-
 static struct silofs_dir_entry *de_unconst(const struct silofs_dir_entry *de)
 {
 	union {
@@ -242,11 +228,6 @@ static void de_set_dt(struct silofs_dir_entry *de, mode_t dt)
 	de->de_dt = (uint8_t)dt;
 }
 
-static bool de_isvalid(const struct silofs_dir_entry *de)
-{
-	return (dttoif(de_dt(de)) != 0);
-}
-
 static ino_t de_ino(const struct silofs_dir_entry *de)
 {
 	return silofs_ino_to_cpu(de->de_ino);
@@ -257,10 +238,14 @@ static void de_set_ino(struct silofs_dir_entry *de, ino_t ino)
 	de->de_ino = silofs_cpu_to_ino(ino);
 }
 
-static void de_set_ino_dt(struct silofs_dir_entry *de, ino_t ino, mode_t dt)
+static uint64_t de_name_hash(const struct silofs_dir_entry *de)
 {
-	de_set_ino(de, ino);
-	de_set_dt(de, dt);
+	return silofs_le64_to_cpu(de->de_name_hash);
+}
+
+static void de_set_name_hash(struct silofs_dir_entry *de, uint64_t hash)
+{
+	de->de_name_hash = silofs_cpu_to_le64(hash);
 }
 
 static size_t de_name_len(const struct silofs_dir_entry *de)
@@ -273,16 +258,35 @@ static void de_set_name_len(struct silofs_dir_entry *de, size_t nlen)
 	de->de_name_len = silofs_cpu_to_le16((uint16_t)nlen);
 }
 
-static bool de_isactive(const struct silofs_dir_entry *de)
+static size_t de_name_pos(const struct silofs_dir_entry *de)
 {
-	return (de_name_len(de) > 0) && ino_isvalid(de_ino(de));
+	return silofs_le16_to_cpu(de->de_name_pos);
 }
 
-static const char *de_name(const struct silofs_dir_entry *de)
+static void de_set_name_pos(struct silofs_dir_entry *de, size_t pos)
 {
-	const struct silofs_dir_entry_view *de_view = de_view_of(de);
+	de->de_name_pos = silofs_cpu_to_le16((uint16_t)pos);
+}
 
-	return (const char *)(de_view->de_name);
+static bool de_isvalid(const struct silofs_dir_entry *de)
+{
+	ino_t ino;
+	mode_t dt;
+	size_t nlen;
+
+	ino = de_ino(de);
+	if (!ino_isvalid(ino)) {
+		return false;
+	}
+	dt = de_dt(de);
+	if (dttoif(dt) == 0) {
+		return false;
+	}
+	nlen = de_name_len(de);
+	if (!nlen) {
+		return false;
+	}
+	return true;
 }
 
 static bool de_has_name_len(const struct silofs_dir_entry *de, size_t nlen)
@@ -290,256 +294,53 @@ static bool de_has_name_len(const struct silofs_dir_entry *de, size_t nlen)
 	return (de_name_len(de) == nlen);
 }
 
-static bool de_has_name(const struct silofs_dir_entry *de,
-                        const struct silofs_str *name)
+static bool de_has_name_hash(const struct silofs_dir_entry *de, uint64_t hash)
 {
-	bool ret = false;
-
-	if (de_isactive(de) && de_has_name_len(de, name->len)) {
-		ret = !memcmp(de_name(de), name->str, name->len);
-	}
-	return ret;
+	return (de_name_hash(de) == hash);
 }
 
-static size_t de_nents_for_name(const struct silofs_dir_entry *de, size_t nlen)
+static size_t de_data_size_of(const struct silofs_dir_entry *de, size_t nlen)
 {
-	const size_t de_size = sizeof(*de);
-	const size_t name_ndes = (nlen + de_size - 1) / de_size;
-
-	return 1 + name_ndes;
+	return sizeof(*de) + nlen;
 }
 
-static size_t de_nents(const struct silofs_dir_entry *de)
+static void de_assign_meta(struct silofs_dir_entry *de, ino_t ino, mode_t dt,
+                           uint64_t hash, size_t name_len, size_t name_pos)
 {
-	return silofs_le16_to_cpu(de->de_nents);
+	de_set_ino(de, ino);
+	de_set_name_hash(de, hash);
+	de_set_name_len(de, name_len);
+	de_set_name_pos(de, name_pos);
+	de_set_dt(de, dt);
 }
 
-static void de_set_nents(struct silofs_dir_entry *de, size_t nents)
+static void de_memmove(struct silofs_dir_entry *de_dst,
+                       const struct silofs_dir_entry *de_src, size_t nde)
 {
-	de->de_nents = silofs_cpu_to_le16((uint16_t)nents);
+	silofs_assert_lt(nde, SILOFS_DIR_NODE_NENTS);
+	memmove(de_dst, de_src, nde * sizeof(*de_dst));
 }
 
-static size_t de_nprev(const struct silofs_dir_entry *de)
+static void de_swap(struct silofs_dir_entry *de1, struct silofs_dir_entry *de2)
 {
-	return silofs_le16_to_cpu(de->de_nprev);
+	struct silofs_dir_entry de_tmp;
+
+	memcpy(&de_tmp, de1, sizeof(de_tmp));
+	memcpy(de1, de2, sizeof(*de1));
+	memcpy(de2, &de_tmp, sizeof(*de2));
 }
 
-static void de_set_nprev(struct silofs_dir_entry *de, size_t nprev)
+static bool de_is_lesseq_hash(const struct silofs_dir_entry *de1, uint64_t h2)
 {
-	de->de_nprev = silofs_cpu_to_le16((uint16_t)nprev);
+	const uint64_t h1 = de_name_hash(de1);
+
+	return (h1 <= h2);
 }
 
-static struct silofs_dir_entry *de_next(const struct silofs_dir_entry *de)
+static bool de_is_lesseq(const struct silofs_dir_entry *de1,
+                         const struct silofs_dir_entry *de2)
 {
-	const size_t step = de_nents(de);
-
-	return de_unconst(de + step);
-}
-
-static struct silofs_dir_entry *
-de_next_safe(const struct silofs_dir_entry *de,
-             const struct silofs_dir_entry *end)
-{
-	const struct silofs_dir_entry *next = de_next(de);
-
-	return (next < end) ? de_unconst(next) : NULL;
-}
-
-static struct silofs_dir_entry *
-de_prev_safe(const struct silofs_dir_entry *de)
-{
-	const size_t step = de_nprev(de);
-
-	return step ? de_unconst(de - step) : NULL;
-}
-
-static void de_assign(struct silofs_dir_entry *de, size_t nents,
-                      const struct silofs_str *name, ino_t ino, mode_t dt)
-{
-	struct silofs_dir_entry_view *de_view  = de_view_of(de);
-
-	de_set_ino_dt(de, ino, dt);
-	de_set_name_len(de, name->len);
-	de_set_nents(de, nents);
-	memcpy(de_view->de_name, name->str, name->len);
-}
-
-static void de_reset(struct silofs_dir_entry *de, size_t nents, size_t nprev)
-{
-	silofs_memzero(de + 1, (nents - 1) * sizeof(*de));
-	de_set_ino_dt(de, SILOFS_INO_NULL, 0);
-	de_set_name_len(de, 0);
-	de_set_nents(de, nents);
-	de_set_nprev(de, nprev);
-}
-
-static void de_reset_arr(struct silofs_dir_entry *de, size_t nents)
-{
-	de_reset(de, nents, 0);
-}
-
-static size_t de_slot(const struct silofs_dir_entry *de,
-                      const struct silofs_dir_entry *beg)
-{
-	const ptrdiff_t slot = (de - beg);
-
-	return (size_t)slot;
-}
-
-static loff_t de_doffset(const struct silofs_dir_entry *de,
-                         const struct silofs_dir_entry *beg, size_t node_index)
-{
-	return make_doffset(node_index, de_slot(de, beg));
-}
-
-static const struct silofs_dir_entry *
-de_search(const struct silofs_dir_entry *de,
-          const struct silofs_dir_entry *end,
-          const struct silofs_str *name)
-{
-	const struct silofs_dir_entry *itr = de;
-
-	while (itr < end) {
-		if (de_has_name(itr, name)) {
-			return itr;
-		}
-		itr = de_next(itr);
-	}
-	return NULL;
-}
-
-static int de_verify(const struct silofs_dir_entry *beg,
-                     const struct silofs_dir_entry *end)
-{
-	const struct silofs_dir_entry *itr = beg;
-
-	while (itr < end) {
-		if (de_isactive(itr) && !de_isvalid(itr)) {
-			return -EFSCORRUPTED;
-		}
-		itr = de_next(itr);
-	}
-	return 0;
-}
-
-static const struct silofs_dir_entry *
-de_scan(const struct silofs_dir_entry *de, const struct silofs_dir_entry *beg,
-        const struct silofs_dir_entry *end, size_t node_index, loff_t pos)
-{
-	loff_t doff;
-	const struct silofs_dir_entry *itr = de;
-
-	while (itr < end) {
-		if (de_isactive(itr)) {
-			doff = de_doffset(itr, beg, node_index);
-			if (doff >= pos) {
-				return itr;
-			}
-		}
-		itr = de_next(itr);
-	}
-	return NULL;
-}
-
-static const struct silofs_dir_entry *
-de_insert_at(struct silofs_dir_entry *de, const struct silofs_dir_entry *end,
-             size_t nents, const struct silofs_str *name, ino_t ino, mode_t dt)
-{
-	size_t nents_new;
-	struct silofs_dir_entry *next_new;
-	struct silofs_dir_entry *next_old;
-	const size_t ncurr = de_nents(de);
-
-	next_old = de_next_safe(de, end);
-	de_assign(de, nents, name, ino, dt);
-	if (nents < ncurr) {
-		nents_new = ncurr - nents;
-		next_new = de_next(de);
-		de_reset(next_new, nents_new, nents);
-		if (next_old != NULL) {
-			de_set_nprev(next_old, nents_new);
-		}
-	}
-	return de;
-}
-
-static bool de_may_insert(const struct silofs_dir_entry *de, size_t nwant)
-{
-	size_t nents;
-
-	if (de_isactive(de)) {
-		return false;
-	}
-	nents = de_nents(de);
-	if (nwant > nents) {
-		return false;
-	}
-	/* avoid single-dentry holes, as it is useless */
-	if ((nents - nwant) == 1) {
-		return false;
-	}
-	return true;
-}
-
-static bool de_should_insert(const struct silofs_dir_entry *de, size_t nwant)
-{
-	return !de_isactive(de) && (nwant == de_nents(de));
-}
-
-static const struct silofs_dir_entry *
-de_insert(struct silofs_dir_entry *beg, const struct silofs_dir_entry *end,
-          const struct silofs_str *name, ino_t ino, mode_t dt)
-{
-	struct silofs_dir_entry *pos = NULL;
-	struct silofs_dir_entry *itr = beg;
-	const size_t nwant = de_nents_for_name(itr, name->len);
-	int nfit = 0;
-
-	while ((itr < end) && (nfit < 4)) {
-		if (de_should_insert(itr, nwant)) {
-			pos = itr;
-			break;
-		}
-		if (de_may_insert(itr, nwant)) {
-			if (pos == NULL) {
-				pos = itr;
-			}
-			nfit++;
-		}
-		itr = de_next(itr);
-	}
-	return pos ? de_insert_at(pos, end, nwant, name, ino, dt) : NULL;
-}
-
-static void de_remove(struct silofs_dir_entry *de,
-                      const struct silofs_dir_entry *end)
-{
-	size_t nents = de_nents(de);
-	size_t nents_prev = de_nprev(de);
-	struct silofs_dir_entry *next;
-	struct silofs_dir_entry *prev;
-	struct silofs_dir_entry *dent = de;
-
-	next = de_next_safe(de, end);
-	if (next != NULL) {
-		if (!de_isactive(next)) {
-			nents += de_nents(next);
-			next = de_next_safe(next, end);
-		}
-	}
-	prev = de_prev_safe(de);
-	if (prev != NULL) {
-		if (!de_isactive(prev)) {
-			nents += de_nents(prev);
-			nents_prev = de_nprev(prev);
-			dent = prev;
-		}
-	}
-
-	de_reset(dent, nents, nents_prev);
-	if (next != NULL) {
-		de_set_nprev(next, nents);
-	}
+	return de_is_lesseq_hash(de1, de_name_hash(de2));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -574,36 +375,56 @@ static void dtn_set_node_index(struct silofs_dtree_node *dtn, size_t index)
 	dtn->dn_node_index = silofs_cpu_to_le32((uint32_t)index);
 }
 
-static size_t dtn_nde_max(const struct silofs_dtree_node *dtn)
+static size_t dtn_data_max(const struct silofs_dtree_node *dtn)
 {
-	return ARRAY_SIZE(dtn->de);
+	return sizeof(dtn->dn_data);
 }
 
-static size_t dtn_nde_head(const struct silofs_dtree_node *dtn)
+static size_t dtn_nde(const struct silofs_dtree_node *dtn)
 {
-	return silofs_le16_to_cpu(dtn->dn_nde_head);
+	return silofs_le16_to_cpu(dtn->dn_nde);
 }
 
-static void dtn_set_nde_head(struct silofs_dtree_node *dtn, size_t cnt)
+static void dtn_set_nde(struct silofs_dtree_node *dtn, size_t cnt)
 {
-	silofs_assert_le(cnt, ARRAY_SIZE(dtn->de));
-	dtn->dn_nde_head = silofs_cpu_to_le16((uint16_t)cnt);
+	silofs_assert_le(cnt, ARRAY_SIZE(dtn->dn_data.de));
+	dtn->dn_nde = silofs_cpu_to_le16((uint16_t)cnt);
 }
 
-static size_t dtn_nde_tail(const struct silofs_dtree_node *dtn)
+static void dtn_inc_nde(struct silofs_dtree_node *dtn)
 {
-	return silofs_le16_to_cpu(dtn->dn_nde_tail);
+	dtn_set_nde(dtn, dtn_nde(dtn) + 1);
 }
 
-static void dtn_set_nde_tail(struct silofs_dtree_node *dtn, size_t cnt)
+static void dtn_dec_nde(struct silofs_dtree_node *dtn)
 {
-	silofs_assert_le(cnt, ARRAY_SIZE(dtn->de));
-	dtn->dn_nde_tail = silofs_cpu_to_le16((uint16_t)cnt);
+	dtn_set_nde(dtn, dtn_nde(dtn) - 1);
 }
 
-static size_t dtn_nde_used(const struct silofs_dtree_node *dtn)
+static size_t dtn_nnb(const struct silofs_dtree_node *dtn)
 {
-	return dtn_nde_head(dtn) + dtn_nde_tail(dtn);
+	return silofs_le16_to_cpu(dtn->dn_nnb);
+}
+
+static void dtn_set_nnb(struct silofs_dtree_node *dtn, size_t nb)
+{
+	silofs_assert_le(nb, sizeof(dtn->dn_data));
+	dtn->dn_nnb = silofs_cpu_to_le16((uint16_t)nb);
+}
+
+static void dtn_add_nnb(struct silofs_dtree_node *dtn, size_t nb)
+{
+	dtn_set_nnb(dtn, dtn_nnb(dtn) + nb);
+}
+
+static void dtn_sub_nnb(struct silofs_dtree_node *dtn, size_t nb)
+{
+	dtn_set_nnb(dtn, dtn_nnb(dtn) - nb);
+}
+
+static size_t dtn_data_used(const struct silofs_dtree_node *dtn)
+{
+	return dtn_nnb(dtn) + (dtn_nde(dtn) * sizeof(dtn->dn_data.de[0]));
 }
 
 static loff_t dtn_child_off(const struct silofs_dtree_node *dtn, size_t ord)
@@ -630,6 +451,11 @@ static void dtn_reset_childs(struct silofs_dtree_node *dtn)
 	}
 }
 
+static void dtn_reset_data(struct silofs_dtree_node *dtn)
+{
+	silofs_memzero(&dtn->dn_data, sizeof(dtn->dn_data));
+}
+
 static void dtn_setup(struct silofs_dtree_node *dtn, ino_t ino,
                       size_t node_index, loff_t parent_off)
 {
@@ -638,10 +464,10 @@ static void dtn_setup(struct silofs_dtree_node *dtn, ino_t ino,
 	dtn_set_ino(dtn, ino);
 	dtn_set_parent(dtn, parent_off);
 	dtn_set_node_index(dtn, node_index);
-	dtn_set_nde_head(dtn, 0);
-	dtn_set_nde_tail(dtn, 0);
+	dtn_set_nde(dtn, 0);
+	dtn_set_nnb(dtn, 0);
 	dtn_reset_childs(dtn);
-	de_reset_arr(dtn->de, ARRAY_SIZE(dtn->de));
+	dtn_reset_data(dtn);
 }
 
 static size_t dtn_child_ord(const struct silofs_dtree_node *dtn)
@@ -656,96 +482,261 @@ static size_t dtn_depth(const struct silofs_dtree_node *dtn)
 	return index_to_depth(index);
 }
 
-static struct silofs_dir_entry *dtn_begin(const struct silofs_dtree_node *dtn)
+static struct silofs_dir_entry *
+dtn_first_de(const struct silofs_dtree_node *dtn)
 {
-	return de_unconst(dtn->de);
+	return de_unconst(&dtn->dn_data.de[0]);
 }
 
-static const struct silofs_dir_entry *
-dtn_end(const struct silofs_dtree_node *dtn)
+static struct silofs_dir_entry *
+dtn_last_de(const struct silofs_dtree_node *dtn)
 {
-	return dtn->de + ARRAY_SIZE(dtn->de);
+	return dtn_first_de(dtn) + dtn_nde(dtn);
 }
 
-static void dtn_reset_des(struct silofs_dtree_node *dtn)
+static char *dtn_name_at(const struct silofs_dtree_node *dtn, size_t name_pos)
 {
-	de_reset(dtn->de, ARRAY_SIZE(dtn->de), 0);
+	const void *dat = &dtn->dn_data.nb[name_pos];
+
+	silofs_assert_gt(name_pos, 0);
+	silofs_assert_le(name_pos, ARRAY_SIZE(dtn->dn_data.nb));
+	return unconst(dat);
+}
+
+static char *dtn_names_begin(const struct silofs_dtree_node *dtn)
+{
+	const size_t nnb = dtn_nnb(dtn);
+
+	silofs_assert_lt(nnb, ARRAY_SIZE(dtn->dn_data.nb));
+	return dtn_name_at(dtn, ARRAY_SIZE(dtn->dn_data.nb) - nnb);
+}
+
+static char *dtn_names_end(const struct silofs_dtree_node *dtn)
+{
+	return dtn_name_at(dtn, ARRAY_SIZE(dtn->dn_data.nb));
+}
+
+static char *dtn_name_of_de(const struct silofs_dtree_node *dtn,
+                            const struct silofs_dir_entry *de)
+{
+	return dtn_name_at(dtn, de_name_pos(de));
+}
+
+static bool dtn_has_name_at_de(const struct silofs_dtree_node *dtn,
+                               const struct silofs_dir_entry *de,
+                               const struct silofs_qstr *name)
+{
+	const char *de_name = dtn_name_of_de(dtn, de);
+
+	return memcmp(de_name, name->s.str, name->s.len) == 0;
+}
+
+static bool dtn_de_has_name(const struct silofs_dtree_node *dtn,
+                            const struct silofs_dir_entry *de,
+                            const struct silofs_qstr *name)
+{
+	if (!de_has_name_hash(de, name->hash)) {
+		return false;
+	}
+	if (!de_has_name_len(de, name->s.len)) {
+		return false;
+	}
+	if (!dtn_has_name_at_de(dtn, de, name)) {
+		return false;
+	}
+	return true;
 }
 
 static const struct silofs_dir_entry *
 dtn_search(const struct silofs_dtree_node *dtn,
            const struct silofs_qstr *name)
 {
-	return de_search(dtn_begin(dtn), dtn_end(dtn), &name->s);
+	const struct silofs_dir_entry *de = dtn_first_de(dtn);
+	const struct silofs_dir_entry *de_end = dtn_last_de(dtn);
+	uint64_t hash = 0;
+	uint64_t de_hash;
+
+	while (de < de_end) {
+		de_hash = de_name_hash(de);
+		silofs_assert(de_hash >= hash);
+
+		if (dtn_de_has_name(dtn, de, name)) {
+			return de;
+		}
+		if (!de_is_lesseq_hash(de, name->hash)) {
+			break;
+		}
+		hash = de_hash;
+		de++;
+	}
+	return NULL;
+}
+
+static size_t dtn_slot_of_de(const struct silofs_dtree_node *dtn,
+                             const struct silofs_dir_entry *de)
+{
+	const struct silofs_dir_entry *de_base = dtn_first_de(dtn);
+	const struct silofs_dir_entry *de_end = dtn_last_de(dtn);
+
+	silofs_assert_ge(de, de_base);
+	silofs_assert_lt(de, de_end);
+
+	return (size_t)(de - de_base);
+}
+
+static loff_t dtn_doffset_of_de(const struct silofs_dtree_node *dtn,
+                                const struct silofs_dir_entry *de)
+{
+	const size_t node_index = dtn_node_index(dtn);
+	const size_t slot = dtn_slot_of_de(dtn, de);
+
+	return make_doffset(node_index, slot);
 }
 
 static const struct silofs_dir_entry *
 dtn_scan(const struct silofs_dtree_node *dtn,
          const struct silofs_dir_entry *hint, loff_t pos)
 {
-	const struct silofs_dir_entry *beg = dtn_begin(dtn);
-	const struct silofs_dir_entry *end = dtn_end(dtn);
-	const size_t node_index = dtn_node_index(dtn);
+	const struct silofs_dir_entry *de = hint ? hint : dtn_first_de(dtn);
+	const struct silofs_dir_entry *de_end = dtn_last_de(dtn);
 
-	return de_scan(hint ? hint : beg, beg, end, node_index, pos);
+	loff_t doff;
+
+	while (de < de_end) {
+		doff = dtn_doffset_of_de(dtn, de);
+		if (doff >= pos) {
+			return de;
+		}
+		de++;
+	}
+	return NULL;
 }
 
 static bool dtn_may_insert(const struct silofs_dtree_node *dtn, size_t nlen)
 {
-	const size_t nwant = de_nents_for_name(dtn->de, nlen);
-	const size_t nused = dtn_nde_used(dtn);
-	const size_t limit = dtn_nde_max(dtn);
+	const size_t nwant = de_data_size_of(dtn->dn_data.de, nlen);
+	const size_t nused = dtn_data_used(dtn);
+	const size_t limit = dtn_data_max(dtn);
 
 	silofs_assert_le(nused, limit);
 	return (nwant + nused) <= limit;
 }
 
-static void dtn_update_inserted(struct silofs_dtree_node *dtn, size_t nlen)
+static size_t dtn_insert_pos_of(struct silofs_dtree_node *dtn, size_t nlen)
 {
-	const size_t nadd = de_nents_for_name(dtn->de, nlen);
-	const size_t nuse = dtn_nde_used(dtn);
+	const size_t nnb = dtn_nnb(dtn);
 
-	dtn_set_nde_head(dtn, nuse + nadd);
+	silofs_assert_lt(nnb + nlen, sizeof(dtn->dn_data.nb));
+
+	return sizeof(dtn->dn_data.nb) - nnb - nlen;
 }
 
-static void dtn_update_removed(struct silofs_dtree_node *dtn, size_t nlen)
+static void dtn_assing_name_of_de(struct silofs_dtree_node *dtn,
+                                  const struct silofs_dir_entry *de,
+                                  const struct silofs_qstr *name)
 {
-	const size_t ndel = de_nents_for_name(dtn->de, nlen);
-	const size_t nuse = dtn_nde_used(dtn);
+	char *dst = dtn_name_of_de(dtn, de);
 
-	silofs_assert_ge(nuse, ndel);
-	dtn_set_nde_head(dtn, nuse - ndel);
+	memcpy(dst, name->s.str, name->s.len);
 }
 
-static const struct silofs_dir_entry *
-dtn_insert(struct silofs_dtree_node *dtn,
-           const struct silofs_qstr *name, ino_t ino, mode_t dt)
+static void dtn_insert_fixup(struct silofs_dtree_node *dtn)
 {
-	const struct silofs_dir_entry *de = NULL;
+	struct silofs_dir_entry *beg = dtn_first_de(dtn);
+	struct silofs_dir_entry *de = dtn_last_de(dtn) - 1;
+	struct silofs_dir_entry *de_prev;
+
+	while (de > beg) {
+		de_prev = de - 1;
+		if (de_is_lesseq(de_prev, de)) {
+			break;
+		}
+		de_swap(de_prev, de);
+		de = de_prev;
+	}
+}
+
+static void dtn_insert(struct silofs_dtree_node *dtn,
+                       const struct silofs_qstr *name, ino_t ino, mode_t dt)
+{
+	struct silofs_dir_entry *de;
 	const size_t nlen = name->s.len;
+	size_t npos;
 
-	if (!dtn_may_insert(dtn, nlen)) {
-		return NULL;
-	}
-	de = de_insert(dtn_begin(dtn), dtn_end(dtn), &name->s, ino, dt);
-	if (de == NULL) {
-		return NULL;
-	}
-	dtn_update_inserted(dtn, nlen);
-	return de;
+	silofs_assert(dtn_may_insert(dtn, nlen));
+
+	npos = dtn_insert_pos_of(dtn, nlen);
+	de = dtn_last_de(dtn);
+	de_assign_meta(de, ino, dt, name->hash, nlen, npos);
+	dtn_assing_name_of_de(dtn, de, name);
+
+	dtn_inc_nde(dtn);
+	dtn_add_nnb(dtn, nlen);
+
+	dtn_insert_fixup(dtn);
 }
 
-static void dtn_remove_de(struct silofs_dtree_node *dtn,
-                          struct silofs_dir_entry *de)
+static void dtn_punch_de_slot(struct silofs_dtree_node *dtn,
+                              struct silofs_dir_entry *de)
 {
-	const struct silofs_dir_entry *end = dtn_end(dtn);
-	const size_t nlen = de_name_len(de);
+	const size_t ndes = dtn_nde(dtn);
+	const size_t slot = dtn_slot_of_de(dtn, de);
 
-	silofs_assert_ge(de, dtn->de);
-	silofs_assert_lt(de, end);
+	silofs_assert_gt(ndes, slot);
+	de_memmove(de, de + 1, ndes - slot - 1);
+}
 
-	de_remove(de, end);
-	dtn_update_removed(dtn, nlen);
+static void dtn_punch_name(struct silofs_dtree_node *dtn,
+                           size_t name_pos, size_t name_len)
+{
+	char *beg = dtn_names_begin(dtn);
+	char *name = dtn_name_at(dtn, name_pos);
+	const size_t cnt = (size_t)(name - beg);
+
+	silofs_assert_ge(name, beg);
+	memmove((name + name_len) - cnt, beg, cnt);
+}
+
+static void dtn_punch_de_name(struct silofs_dtree_node *dtn,
+                              const struct silofs_dir_entry *de)
+{
+	const size_t name_len = de_name_len(de);
+	const size_t name_pos = de_name_pos(de);
+
+	dtn_punch_name(dtn, name_pos, name_len);
+}
+
+static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
+                             size_t name_pos_ref, size_t nb_moved)
+{
+	struct silofs_dir_entry *de = dtn_first_de(dtn);
+	const struct silofs_dir_entry *de_end = dtn_last_de(dtn);
+	size_t name_pos;
+
+	while (de < de_end) {
+		name_pos = de_name_pos(de);
+		if (name_pos < name_pos_ref) {
+			de_set_name_pos(de, name_pos + nb_moved);
+		}
+		de++;
+	}
+}
+
+static void dtn_remove(struct silofs_dtree_node *dtn,
+                       struct silofs_dir_entry *de)
+{
+	const size_t name_len = de_name_len(de);
+	const size_t name_pos = de_name_pos(de);
+
+	silofs_assert_ge(de, dtn->dn_data.de);
+
+	dtn_punch_de_name(dtn, de);
+	dtn_punch_de_slot(dtn, de);
+
+	dtn_dec_nde(dtn);
+	dtn_sub_nnb(dtn, name_len);
+
+	dtn_remove_fixup(dtn, name_pos, name_len);
 }
 
 static loff_t dtn_next_doffset(const struct silofs_dtree_node *dtn)
@@ -759,9 +750,9 @@ static loff_t dtn_resolve_doffset(const struct silofs_dtree_node *dtn,
                                   const struct silofs_dir_entry *de)
 {
 	const size_t index = dtn_node_index(dtn);
-	const size_t sloti = de_slot(de, dtn_begin(dtn));
+	const size_t slot = dtn_slot_of_de(dtn, de);
 
-	return make_doffset(index, sloti);
+	return make_doffset(index, slot);
 }
 
 static void dtn_child_by_ord(const struct silofs_dtree_node *dtn,
@@ -782,6 +773,28 @@ static void dtn_parent_addr(const struct silofs_dtree_node *dtn,
                             struct silofs_vaddr *out_vaddr)
 {
 	vaddr_of_dnode(out_vaddr, dtn_parent(dtn));
+}
+
+static int dtn_verify_des(const struct silofs_dtree_node *dtn)
+{
+	const struct silofs_dir_entry *de = dtn_first_de(dtn);
+	const struct silofs_dir_entry *de_end = dtn_last_de(dtn);
+	const char *nit = dtn_names_begin(dtn);
+	const char *end = dtn_names_end(dtn);
+
+	while (de < de_end) {
+		if (!de_isvalid(de)) {
+			return -EFSCORRUPTED;
+		}
+		de++;
+	}
+	while (nit < end) {
+		if ((*nit == 0) || (*nit == '/')) {
+			return -EFSCORRUPTED;
+		}
+		nit++;
+	}
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1476,7 +1489,7 @@ static int dic_discard_dnode(const struct silofs_dir_ctx *d_ctx,
 	const size_t node_index = dtn_node_index(dni->dtn);
 	int err;
 
-	dtn_reset_des(dni->dtn);
+	dtn_reset_data(dni->dtn);
 	err = dic_remove_dnode(d_ctx, dni);
 	if (err) {
 		return err;
@@ -1522,13 +1535,12 @@ static void dic_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 static int dic_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
                             struct silofs_dnode_info *dni)
 {
-	const struct silofs_dir_entry *de;
 	const struct silofs_inode_info *ii = d_ctx->child_ii;
 
-	de = dtn_insert(dni->dtn, d_ctx->name, ii_ino(ii), ii_dtype_of(ii));
-	if (de == NULL) {
+	if (!dtn_may_insert(dni->dtn, d_ctx->name->s.len)) {
 		return -ENOSPC;
 	}
+	dtn_insert(dni->dtn, d_ctx->name, ii_ino(ii), ii_dtype_of(ii));
 	dir_inc_ndents(d_ctx->dir_ii);
 	dni_dirtify(dni);
 	return 0;
@@ -1690,13 +1702,14 @@ static bool dic_emit(struct silofs_dir_ctx *d_ctx, const char *name,
 }
 
 static bool dic_emit_dirent(struct silofs_dir_ctx *d_ctx,
+                            const struct silofs_dtree_node *dtn,
                             const struct silofs_dir_entry *de, loff_t doff,
                             const struct silofs_inode_info *ii)
 {
 	const ino_t ino = de_ino(de);
 	const mode_t dt = de_dt(de);
-	const size_t len = de_name_len(de);
-	const char *name = de_name(de);
+	const size_t nlen = de_name_len(de);
+	const char *name = dtn_name_of_de(dtn, de);
 	const struct stat *attr = NULL;
 	struct stat st;
 
@@ -1706,7 +1719,7 @@ static bool dic_emit_dirent(struct silofs_dir_ctx *d_ctx,
 	}
 
 	d_ctx->rd_ctx->pos = doff;
-	return dic_emit(d_ctx, name, len, ino, dt, attr);
+	return dic_emit(d_ctx, name, nlen, ino, dt, attr);
 }
 
 static bool dic_emit_ii(struct silofs_dir_ctx *d_ctx, const char *name,
@@ -1754,7 +1767,7 @@ static int dic_iterate_node(struct silofs_dir_ctx *d_ctx,
 		if (err) {
 			return err;
 		}
-		ok = dic_emit_dirent(d_ctx, de, off, ii);
+		ok = dic_emit_dirent(d_ctx, dni->dtn, de, off, ii);
 		if (!ok) {
 			break;
 		}
@@ -2143,7 +2156,7 @@ static int dic_erase_dentry(struct silofs_dir_ctx *d_ctx,
 
 	ii_incref(d_ctx->child_ii);
 
-	dtn_remove_de(dei->dni->dtn, dei->de);
+	dtn_remove(dei->dni->dtn, dei->de);
 	dni_dirtify(dei->dni);
 
 	dir_dec_ndents(dir_ii);
@@ -2287,11 +2300,6 @@ static int verify_childs_of(const struct silofs_dtree_node *dtn)
 	return 0;
 }
 
-static int verify_dirents_of(const struct silofs_dtree_node *dtn)
-{
-	return de_verify(dtn_begin(dtn), dtn_end(dtn));
-}
-
 int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
 {
 	int err;
@@ -2312,7 +2320,7 @@ int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
 	if (err) {
 		return err;
 	}
-	err = verify_dirents_of(dtn);
+	err = dtn_verify_des(dtn);
 	if (err) {
 		return err;
 	}

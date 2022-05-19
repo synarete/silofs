@@ -99,6 +99,8 @@ static void ut_statfs_files_(struct ut_env *ute, size_t cnt)
 
 static void ut_statfs_files(struct ut_env *ute)
 {
+	ut_statfs_files_(ute, 1);
+	ut_statfs_files_(ute, 2);
 	ut_statfs_files_(ute, 100);
 	ut_statfs_files_(ute, 1000);
 }

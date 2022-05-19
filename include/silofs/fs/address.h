@@ -267,8 +267,9 @@ const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *blobid, loff_t bpos,
-                        enum silofs_stype stype, size_t height, loff_t voff);
+                        const struct silofs_blobid *blobid,
+                        loff_t bpos, enum silofs_stype stype,
+                        enum silofs_height height, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr);
 
@@ -277,17 +278,6 @@ void silofs_uaddr64b_set(struct silofs_uaddr64b *uadr,
 
 void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
                            struct silofs_uaddr *uaddr);
-
-
-void silofs_taddr_setup(struct silofs_taddr *taddr,
-                        const struct silofs_xid *tree_id,
-                        loff_t voff, size_t height);
-
-void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
-                           const struct silofs_uaddr *uaddr);
-
-bool silofs_taddr_isequal(const struct silofs_taddr *taddr1,
-                          const struct silofs_taddr *taddr2);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -339,16 +329,16 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off);
 
 void silofs_vrange_setup(struct silofs_vrange *vrange,
-                         size_t height, loff_t beg, loff_t end);
+                         enum silofs_height height, loff_t beg, loff_t end);
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
                              const struct silofs_vrange *other, loff_t beg);
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
-                            size_t height, loff_t voff_base);
+                            enum silofs_height height, loff_t voff_base);
 
 void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
-                             size_t height, loff_t voff);
+                             enum silofs_height height, loff_t voff);
 
 void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff);
 
@@ -433,5 +423,14 @@ static inline silofs_lba_t silofs_lba_to_cpu(uint64_t lba)
 	return (silofs_lba_t)silofs_le64_to_cpu(lba);
 }
 
+static inline uint64_t silofs_cpu_to_time(time_t tm)
+{
+	return silofs_cpu_to_le64((uint64_t)tm);
+}
+
+static inline time_t silofs_time_to_cpu(uint64_t tm)
+{
+	return (time_t)silofs_le64_to_cpu(tm);
+}
 
 #endif /* SILOFS_ADDRESS_H_ */

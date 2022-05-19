@@ -15,20 +15,13 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/repo.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <unistd.h>
 
 #define REPO_METAF_SIZE (4096)
 #define REPO_OBJS_NSUBS (256)
@@ -50,7 +43,6 @@ static const struct silofs_repo_defs repo_defs = {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 
 static uint64_t rmeta_magic(const struct silofs_repo_meta *rm)
 {
@@ -285,7 +277,6 @@ static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 	}
 	return err;
 }
-
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -800,6 +791,12 @@ static void rehash_blobid(const struct silofs_blobid *blobid,
 	silofs_blobid_make_cas(out_blobid, &hash, blobid->size);
 }
 
+static const struct silofs_mdigest *
+repo_mdigest(const struct silofs_repo *repo)
+{
+	return &repo->re_bootldr.btl_md;
+}
+
 static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
                                      const struct silofs_blobid *blobid,
                                      struct silofs_namebuf *out_nb)
@@ -807,7 +804,7 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	struct silofs_blobid hashed_blobid = { .size = 0 };
 	const size_t nsubs = repo->re_defs->re_objs_nsubs;
 
-	rehash_blobid(blobid, repo->re_mdigest, &hashed_blobid);
+	rehash_blobid(blobid, repo_mdigest(repo), &hashed_blobid);
 	return blobid_to_pathname(&hashed_blobid, nsubs, out_nb);
 }
 
@@ -892,15 +889,14 @@ static int repo_objs_open_blob(const struct silofs_repo *repo,
 	return 0;
 out_err:
 	/*
+	 * TODO-0032: Consider using EFSCORRUPTED
+	 *
 	 * When higher layer wants to open a blob, it should exist. Do not
 	 * return -ENOENT as this may be interpreted as non-error by caller.
-	 *
-	 * TODO-0032: Consider using EFSCORRUPTED
 	 */
 	if (err == -ENOENT) {
 		return -EIO;
 	}
-
 	return err;
 }
 
@@ -1146,6 +1142,21 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 	return 0;
 }
 
+int silofs_repo_require_blob(struct silofs_repo *repo,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_blob_info **out_bli)
+{
+	int err;
+
+	err = silofs_repo_lookup_blob(repo, blobid);
+	if (!err) {
+		err = silofs_repo_stage_blob(repo, blobid, out_bli);
+	} else if (err == -ENOENT) {
+		err = silofs_repo_spawn_blob(repo, blobid, out_bli);
+	}
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int repo_init_cache(struct silofs_repo *repo, size_t memsz_hint)
@@ -1178,6 +1189,7 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc,
 	repo->re_dots_dfd = -1;
 	repo->re_objs_dfd = -1;
 	repo->re_rw = rw;
+	repo->re_inited = false;
 	silofs_bootpath_assign(&repo->re_bootpath, bpath);
 	err = repo_init_cache(repo, msz);
 	if (err) {
@@ -1187,7 +1199,7 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc,
 	if (err) {
 		return err;
 	}
-	repo->re_mdigest = &repo->re_bootldr.btl_md;
+	repo->re_inited = true;
 	return 0;
 }
 
@@ -1568,7 +1580,7 @@ static int repo_spawn_ubk(struct silofs_repo *repo,
 	if (!err) {
 		return -EEXIST;
 	}
-	err = silofs_repo_spawn_blob(repo, &bkaddr->blobid, &bli);
+	err = silofs_repo_require_blob(repo, &bkaddr->blobid, &bli);
 	if (err) {
 		return err;
 	}

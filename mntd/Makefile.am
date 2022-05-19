@@ -2,6 +2,7 @@ SUBDIRS = systemd
 -include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 
+
 sbin_PROGRAMS = silofs-mountd
 silofs_mountd_CPPFLAGS = -I$(top_srcdir)/include
 silofs_mountd_LDFLAGS = $(NULL)
@@ -17,6 +18,7 @@ silofs_mountd_LDADD += $(LIBGCRYPT_LIBS)
 silofs_mountd_SOURCES = $(NULL)
 silofs_mountd_SOURCES += mntconf.c
 silofs_mountd_SOURCES += mountd.c
+silofs_mountd_SOURCES += mountd.h
 
 EXTRA_DIST = mountd.conf.in
 CLEANFILES = $(silofs_mountd_conf_DATA)
@@ -25,3 +27,6 @@ silofs_mountd_conf_DATA = mountd.conf
 
 mountd.conf: mountd.conf.in
 	@echo "  SED      $@"; $(PATSUBST) $< > $@ ;
+
+install-data-local:
+	@install -d $(DESTDIR)$(localstatedir)/run/silofs

@@ -15,23 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/spclaim.h>
-#include <silofs/fs/itable.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/namei.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -139,14 +124,6 @@ static size_t sb_height(const struct silofs_super_block *sb)
 	return vrange.height;
 }
 
-static bool sb_in_vrange(const struct silofs_super_block *sb, loff_t voff)
-{
-	struct silofs_vrange vrange;
-
-	sb_vrange(sb, &vrange);
-	return (vrange.beg <= voff) && (voff < vrange.end);
-}
-
 static void sb_treeid(const struct silofs_super_block *sb,
                       struct silofs_xid *out_xid)
 {
@@ -203,7 +180,7 @@ static void sb_reset_main_blobid(struct silofs_super_block *sb)
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const long nslots = (long)ARRAY_SIZE(sb->sb_subref);
+	const long nslots = SILOFS_UNODE_NCHILDS;
 	size_t slot;
 	long span;
 	long roff;
@@ -216,71 +193,12 @@ static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 	return slot;
 }
 
-static struct silofs_spmap_ref *
-sb_subref_at(const struct silofs_super_block *sb, size_t slot)
-{
-	const struct silofs_spmap_ref *spr = &sb->sb_subref[slot];
-
-	return unconst(spr);
-}
-
-static struct silofs_spmap_ref *
-sb_subref_of(const struct silofs_super_block *sb, loff_t voff)
-{
-	return sb_subref_at(sb, sb_slot_of(sb, voff));
-}
-
-static void sb_resolve_subref(const struct silofs_super_block *sb,
-                              loff_t voff, struct silofs_uaddr *out_ulink)
-{
-	static struct silofs_spmap_ref *spr = NULL;
-
-	if (sb_in_vrange(sb, voff)) {
-		spr = sb_subref_of(sb, voff);
-		silofs_spr_ulink(spr, out_ulink);
-	} else {
-		silofs_uaddr_reset(out_ulink);
-	}
-}
-
-static void sb_set_subref(struct silofs_super_block *sb, loff_t voff,
-                          const struct silofs_uaddr *ulink)
-{
-	struct silofs_spmap_ref *spr = sb_subref_of(sb, voff);
-
-	silofs_spr_set_ulink(spr, ulink);
-}
-
-static size_t sb_num_active_slots(const struct silofs_super_block *sb)
-{
-	struct silofs_uaddr ulink;
-	size_t nslots_active = 0;
-	const size_t nslots_max = ARRAY_SIZE(sb->sb_subref);
-	static struct silofs_spmap_ref *spr = NULL;
-
-	for (size_t slot = 0; slot < nslots_max; ++slot) {
-		spr = sb_subref_at(sb, slot);
-		silofs_spr_ulink(spr, &ulink);
-		if (uaddr_isnull(&ulink)) {
-			break;
-		}
-		nslots_active++;
-	}
-	return nslots_active;
-}
-
 static void sb_generate_treeid(struct silofs_super_block *sb)
 {
 	struct silofs_xid xid;
 
 	silofs_xid_generate(&xid);
 	sb_set_treeid(sb, &xid);
-}
-
-static void sb_bind_subref_of(struct silofs_super_block *sb, loff_t voff,
-                              const struct silofs_uaddr *ulink)
-{
-	sb_set_subref(sb, voff, ulink);
 }
 
 static void sb_stats_uaddr(const struct silofs_super_block *sb,
@@ -295,6 +213,28 @@ static void sb_set_stats_uaddr(struct silofs_super_block *sb,
 	silofs_uaddr64b_set(&sb->sb_stats_uaddr, uaddr);
 }
 
+static void sb_reset_stats_uaddr(struct silofs_super_block *sb)
+{
+	sb_set_stats_uaddr(sb, silofs_uaddr_none());
+}
+
+static void sb_spnode_uaddr(const struct silofs_super_block *sb,
+                            struct silofs_uaddr *out_uaddr)
+{
+	silofs_uaddr64b_parse(&sb->sb_sproot_uaddr, out_uaddr);
+}
+
+static void sb_set_spnode_uaddr(struct silofs_super_block *sb,
+                                const struct silofs_uaddr *uaddr)
+{
+	silofs_uaddr64b_set(&sb->sb_sproot_uaddr, uaddr);
+}
+
+static void sb_reset_spnode_uaddr(struct silofs_super_block *sb)
+{
+	sb_set_spnode_uaddr(sb, silofs_uaddr_none());
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void sb_init(struct silofs_super_block *sb)
@@ -305,10 +245,11 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_set_swversion(sb, silofs_version.string);
 	sb_generate_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
+	sb_reset_stats_uaddr(sb);
+	sb_reset_spnode_uaddr(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobid(sb);
 	silofs_uaddr64b_reset(&sb->sb_self);
-	silofs_spr_initn(sb->sb_subref, ARRAY_SIZE(sb->sb_subref));
 }
 
 static void sb_set_birth_time(struct silofs_super_block *sb, time_t btime)
@@ -343,17 +284,22 @@ static void sb_setup_fresh(struct silofs_super_block *sb)
 
 int silofs_verify_super_block(const struct silofs_super_block *sb)
 {
-	size_t height;
-	size_t nactive_slots;
+	struct silofs_uaddr uaddr;
+	enum silofs_height height;
 
 	height = sb_height(sb);
-	if (height != SILOFS_SUPER_HEIGHT) {
+	if (height != SILOFS_HEIGHT_SUPER) {
 		log_err("illegal sb height: height=%lu", height);
 		return -EFSCORRUPTED;
 	}
-	nactive_slots = sb_num_active_slots(sb);
-	if (nactive_slots >= ARRAY_SIZE(sb->sb_subref)) {
-		return -EFSCORRUPTED;
+	sb_spnode_uaddr(sb, &uaddr);
+	if (!uaddr_isnull(&uaddr)) {
+		if ((uaddr.stype != SILOFS_STYPE_SPNODE) ||
+		    (uaddr.height != SILOFS_HEIGHT_SPNODE4)) {
+			log_err("bad spnode root: stype=%d height=%d",
+			        (int)uaddr.stype, (int)uaddr.height);
+			return -EFSCORRUPTED;
+		}
 	}
 	/* TODO: complete me */
 	return 0;
@@ -463,9 +409,9 @@ static void sbi_forget_cached_ii(struct silofs_sb_info *sbi,
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi)
 {
-	const struct silofs_fs_apex *apex = sbi_apex(sbi);
+	const struct silofs_fs_uber *uber = sbi_uber(sbi);
 
-	log_dbg("shut-super: op_count=%lu", apex->ap_ops.op_count);
+	log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
 	silofs_itbl_reinit(&sbi->sb_itbl);
 	return 0;
 }
@@ -537,7 +483,7 @@ sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 	struct silofs_vrange vrange;
 	const size_t child_height = silofs_sbi_space_tree_height(sbi) - 1;
 
-	silofs_assert_eq(child_height, SILOFS_SPNODE3_HEIGHT);
+	silofs_assert_eq(child_height, SILOFS_HEIGHT_SPNODE4);
 
 	silofs_vrange_setup_by(&vrange, child_height, voff);
 	return vrange.beg;
@@ -551,33 +497,25 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 
 	silofs_sbi_main_blob(sbi, &blobid);
 	silofs_uaddr_setup(out_uaddr, &blobid, sbi_bpos_of_child(sbi, voff),
-	                   SILOFS_STYPE_SPNODE, SILOFS_SPNODE3_HEIGHT, base);
+	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE4, base);
 }
 
-void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
-                           const struct silofs_spnode_info *sni)
+int silofs_sbi_sproot_uaddr(const struct silofs_sb_info *sbi,
+                            struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_vrange vrange;
+	sb_spnode_uaddr(sbi->sb, out_uaddr);
+	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
+}
 
-	sni_vrange(sni, &vrange);
-	sb_bind_subref_of(sbi->sb, vrange.beg, sni_uaddr(sni));
+void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
+                            const struct silofs_spnode_info *sni)
+{
+	const struct silofs_uaddr *uaddr = sni_uaddr(sni);
+
+	sb_set_spnode_uaddr(sbi->sb, uaddr);
 	sbi_dirtify(sbi);
 }
 
-int silofs_sbi_subref_of(const struct silofs_sb_info *sbi,
-                         loff_t voff, struct silofs_uaddr *out_ulink)
-{
-	sb_resolve_subref(sbi->sb, voff, out_ulink);
-	return uaddr_isnull(out_ulink) ? -ENOENT : 0;
-}
-
-bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff)
-{
-	struct silofs_uaddr ulink;
-
-	sb_resolve_subref(sbi->sb, voff, &ulink);
-	return !uaddr_isnull(&ulink);
-}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -632,11 +570,11 @@ int silofs_sbi_format_itable(struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int sbi_check_stage(const struct silofs_sb_info *sbi,
-                           enum silofs_stage_flags stg_flags)
+                           enum silofs_stage_mode stg_mode)
 {
 	int err = 0;
 
-	if (stg_flags & SILOFS_STAGE_MUTABLE) {
+	if (stg_mode & SILOFS_STAGE_MUTABLE) {
 		err = silof_sbi_check_mut_fs(sbi);
 	}
 	return err;
@@ -644,37 +582,37 @@ static int sbi_check_stage(const struct silofs_sb_info *sbi,
 
 static int sbi_check_stage_vnode(struct silofs_sb_info *sbi,
                                  const struct silofs_vaddr *vaddr,
-                                 enum silofs_stage_flags stg_flags)
+                                 enum silofs_stage_mode stg_mode)
 {
-	return vaddr_isnull(vaddr) ? -ENOENT : sbi_check_stage(sbi, stg_flags);
+	return vaddr_isnull(vaddr) ? -ENOENT : sbi_check_stage(sbi, stg_mode);
 }
 
 static int sbi_check_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
-                                 enum silofs_stage_flags stg_flags)
+                                 enum silofs_stage_mode stg_mode)
 {
-	return ino_isnull(ino) ? -ENOENT : sbi_check_stage(sbi, stg_flags);
+	return ino_isnull(ino) ? -ENOENT : sbi_check_stage(sbi, stg_mode);
 }
 
 static int sbi_check_staged_inode(const struct silofs_inode_info *ii,
-                                  enum silofs_stage_flags stg_flags)
+                                  enum silofs_stage_mode stg_mode)
 {
-	return ((stg_flags & SILOFS_STAGE_MUTABLE) &&
+	return ((stg_mode & SILOFS_STAGE_MUTABLE) &&
 	        silof_ii_isimmutable(ii)) ? -EACCES : 0;
 }
 
 int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
                            const struct silofs_vaddr *vaddr,
-                           enum silofs_stage_flags stg_flags,
+                           enum silofs_stage_mode stg_mode,
                            struct silofs_vnode_info **out_vi)
 {
 	struct silofs_voaddr voa;
 	int err;
 
-	err = sbi_check_stage_vnode(sbi, vaddr, stg_flags);
+	err = sbi_check_stage_vnode(sbi, vaddr, stg_mode);
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_resolve_voa(sbi, vaddr, stg_flags, &voa);
+	err = silofs_sbi_resolve_voa(sbi, vaddr, stg_mode, &voa);
 	if (err) {
 		return err;
 	}
@@ -682,7 +620,7 @@ int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
 	if (!err) {
 		return 0;  /* cache hit */
 	}
-	err = silofs_sbi_stage_vnode_at(sbi, &voa, stg_flags, out_vi);
+	err = silofs_sbi_stage_vnode_at(sbi, &voa, stg_mode, out_vi);
 	if (err) {
 		return err;
 	}
@@ -690,7 +628,7 @@ int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
 }
 
 int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
-                           enum silofs_stage_flags stg_flags,
+                           enum silofs_stage_mode stg_mode,
                            struct silofs_inode_info **out_ii)
 {
 	struct silofs_iaddr iaddr = {
@@ -701,7 +639,7 @@ int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	};
 	int err;
 
-	err = sbi_check_stage_inode(sbi, ino, stg_flags);
+	err = sbi_check_stage_inode(sbi, ino, stg_mode);
 	if (err) {
 		return err;
 	}
@@ -710,7 +648,7 @@ int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 		return err;
 	}
 	err = silofs_sbi_resolve_voa(sbi, &iaddr.vaddr,
-	                             stg_flags, &ivoa.voa);
+	                             stg_mode, &ivoa.voa);
 	if (err) {
 		return err;
 	}
@@ -718,11 +656,11 @@ int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	if (!err) {
 		return 0;
 	}
-	err = silofs_sbi_stage_inode_at(sbi, &ivoa, stg_flags, out_ii);
+	err = silofs_sbi_stage_inode_at(sbi, &ivoa, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}
-	err = sbi_check_staged_inode(*out_ii, stg_flags);
+	err = sbi_check_staged_inode(*out_ii, stg_mode);
 	if (err) {
 		return err;
 	}
@@ -883,15 +821,37 @@ int silofs_sbi_remove_vnode_at(struct silofs_sb_info *sbi,
 	return err;
 }
 
+static int sbi_stage_spleaf(struct silofs_sb_info *sbi,
+                            const struct silofs_vaddr *vaddr,
+                            enum silofs_stage_mode stg_mode,
+                            struct silofs_spleaf_info **out_sli)
+{
+	struct silofs_spnode_info *sni = NULL;
+
+	return silofs_sbi_stage_spmaps_of(sbi, vaddr, stg_mode, &sni, out_sli);
+}
+
+static int sbi_stage_rdo_spleaf(struct silofs_sb_info *sbi,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_spleaf_info **out_sli)
+{
+	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_RDONLY, out_sli);
+}
+
+static int sbi_stage_mut_spleaf(struct silofs_sb_info *sbi,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_spleaf_info **out_sli)
+{
+	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_MUTABLE, out_sli);
+}
+
 int silofs_sbi_test_unwritten(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &sli);
+	err = sbi_stage_rdo_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -903,11 +863,9 @@ int silofs_sbi_clear_unwritten(struct silofs_sb_info *sbi,
                                const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_MUTABLE;
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &sli);
+	err = sbi_stage_mut_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -919,10 +877,9 @@ int silofs_sbi_mark_unwritten(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, SILOFS_STAGE_MUTABLE, &sli);
+	err = sbi_stage_mut_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -934,11 +891,9 @@ int silofs_sbi_test_lastref(struct silofs_sb_info *sbi,
                             const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &sli);
+	err = sbi_stage_rdo_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1011,11 +966,11 @@ static void sbi_setup_by_args(struct silofs_sb_info *sbi,
 	sbi_update_ctlflags(sbi, args);
 }
 
-void silofs_sbi_bind_apex(struct silofs_sb_info *sbi,
-                          struct silofs_fs_apex *apex)
+void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
+                          struct silofs_fs_uber *uber)
 {
-	silofs_ui_bind_apex(&sbi->sb_ui, apex);
-	sbi_setup_by_args(sbi, apex->ap_args);
+	silofs_ui_bind_uber(&sbi->sb_ui, uber);
+	sbi_setup_by_args(sbi, uber->ub_args);
 }
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
@@ -1036,7 +991,7 @@ static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 {
 	struct silofs_vrange vrange;
 
-	silofs_vrange_setup_by(&vrange, SILOFS_SUPER_HEIGHT, 0);
+	silofs_vrange_setup_by(&vrange, SILOFS_HEIGHT_SUPER, 0);
 	sb_set_vrange(sbi->sb, &vrange);
 }
 
@@ -1089,7 +1044,6 @@ static void sbi_update_by(struct silofs_sb_info *sbi,
 	silofs_itbl_update_by(&sbi->sb_itbl, &sbi_other->sb_itbl);
 	sbi->sb_ctl_flags = sbi_other->sb_ctl_flags;
 	sbi->sb_ms_flags = sbi_other->sb_ms_flags;
-	sbi->sb_mntime = sbi_other->sb_mntime;
 }
 
 void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
@@ -1126,7 +1080,7 @@ void silofs_sbi_xfini(struct silofs_sb_info *sbi)
 }
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_stats_info *sti)
+                           struct silofs_spstats_info *sti)
 {
 	if (sbi->sb_sti != NULL) {
 		sti_decref(sbi->sb_sti);

@@ -42,13 +42,20 @@ struct silofs_repo {
 	const struct silofs_repo_defs *re_defs;
 	struct silofs_bootldr   re_bootldr;
 	struct silofs_bootpath  re_bootpath;
-	struct silofs_mdigest  *re_mdigest;
 	struct silofs_alloc    *re_alloc;
 	struct silofs_cache     re_cache;
 	const char             *re_root_dir;
 	int                     re_dots_dfd;
 	int                     re_objs_dfd;
+	bool                    re_inited;
 	bool                    re_rw;
+
+};
+
+/* a pair of warm-cold repositories */
+struct silofs_repos {
+	struct silofs_repo repo_warm;
+	struct silofs_repo repo_cold;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -127,6 +134,10 @@ int silofs_repo_stage_blob(struct silofs_repo *repo,
 int silofs_repo_remove_blob(struct silofs_repo *repo,
                             const struct silofs_blobid *blobid);
 
+int silofs_repo_require_blob(struct silofs_repo *repo,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_blob_info **out_bli);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stage_ubk(struct silofs_repo *repo,
@@ -136,6 +147,5 @@ int silofs_repo_stage_ubk(struct silofs_repo *repo,
 int silofs_repo_spawn_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
                           struct silofs_ubk_info **out_ubi);
-
 
 #endif /* SILOFS_REPO_H_ */

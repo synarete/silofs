@@ -395,7 +395,7 @@ static int opc_ioctl_clone(struct silofs_oper_ctx *opc)
 	return silofs_fs_clone(opc_fs_ctx(opc),
 	                       opc->opc_in.clone.ino,
 	                       opc->opc_in.clone.flags,
-	                       &opc->opc_out.clone.bsec);
+	                       &opc->opc_out.clone.bsecs);
 }
 
 static int opc_ioctl(struct silofs_oper_ctx *opc)

@@ -34,38 +34,22 @@
 #include <silofs/infra.h>
 #include <silofs/fs/defs.h>
 
-
-/* standard types forward declarations */
-struct stat;
-struct statx;
-struct ucred;
-struct timespec;
-
 /* types forward declarations */
-struct silofs_list_head;
-struct silofs_listq;
-struct silofs_avl;
-struct silofs_avl_node;
-struct silofs_thread;
-struct silofs_mutex;
-struct silofs_qalloc;
-struct silofs_cache;
-struct silofs_repo;
+struct silofs_dset;
 struct silofs_snode_info;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 struct silofs_inode_info;
-struct silofs_fuseq;
-struct silofs_fuseq_worker;
-struct silofs_fuseq_in;
-struct silofs_fuseq_inb;
-struct silofs_fuseq_outb;
-struct silofs_dset;
 struct silofs_rwiter_ctx;
 struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_listxattr_ctx;
 
+/* stage-vnodes operational mode */
+enum silofs_stage_mode {
+	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
+	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
+};
 
 /* file-system control flags */
 enum silofs_flags {
@@ -82,12 +66,6 @@ enum silofs_flags {
 	SILOFS_F_IDLE           = SILOFS_BIT(10),
 	SILOFS_F_WALKFS         = SILOFS_BIT(11),
 	SILOFS_F_MMAPBLOBS      = SILOFS_BIT(12),
-};
-
-/* stage-element control flags */
-enum silofs_stage_flags {
-	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
-	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
 };
 
 /* inode's attributes masks */
@@ -276,14 +254,7 @@ struct silofs_uaddr {
 	struct silofs_oaddr     oaddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
-	unsigned int            height;
-};
-
-/* tree addressing of space-mapping elements */
-struct silofs_taddr {
-	struct silofs_xid       tree_id;
-	loff_t                  voff;
-	unsigned int            height;
+	enum silofs_height      height;
 };
 
 /* logical addressing of virtual elements */
@@ -316,8 +287,8 @@ struct silofs_vrange {
 	loff_t                  beg;
 	loff_t                  end;
 	size_t                  len;
-	size_t                  height;
 	ssize_t                 stepsz;
+	enum silofs_height      height;
 };
 
 /* caching-element's key, up to 256-bits */
@@ -373,24 +344,33 @@ struct silofs_vbk_info {
 	loff_t                          vbk_voff;
 };
 
-/* space accounting per stype */
-struct silofs_space_stats {
-	time_t sp_timestamp;
-	/* unodes */
-	size_t sp_nsuper;
-	size_t sp_nstats;
-	size_t sp_nspnode;
-	size_t sp_nspleaf;
-	/* vnodes */
-	size_t sp_ndata1k;
-	size_t sp_ndata4k;
-	size_t sp_ndatabk;
-	size_t sp_nitnode;
-	size_t sp_ninode;
-	size_t sp_nxanode;
-	size_t sp_ndtnode;
-	size_t sp_nftnode;
-	size_t sp_nsymval;
+
+/* space accounting per sub-type */
+struct silofs_spacestat_rec {
+	size_t ndata1k;
+	size_t ndata4k;
+	size_t ndatabk;
+	size_t nsuper;
+	size_t nspstats;
+	size_t nspnode;
+	size_t nspleaf;
+	size_t nitnode;
+	size_t ninode;
+	size_t nxanode;
+	size_t ndtnode;
+	size_t nftnode;
+	size_t nsymval;
+};
+
+/* space accounting per sub-kind + sub-type */
+struct silofs_spacestats {
+	time_t btime;
+	time_t ctime;
+	size_t capacity;
+	size_t vspacesize;
+	struct silofs_spacestat_rec blobs;
+	struct silofs_spacestat_rec bks;
+	struct silofs_spacestat_rec objs;
 };
 
 /* v-space allocation hints */
@@ -427,7 +407,7 @@ struct silofs_itable {
 	struct silofs_inomap    it_inomap;
 	struct silofs_vaddr     it_rootitbl;
 	struct silofs_iaddr     it_rootdir;
-	ino_t  it_apex_ino;
+	ino_t  it_uber_ino;
 	size_t it_ninodes;
 	size_t it_ninodes_max;
 };
@@ -460,31 +440,29 @@ struct silofs_oper {
 
 /* file-system oper-execution context */
 struct silofs_fs_ctx {
-	struct silofs_fs_apex          *fsc_apex;
+	struct silofs_fs_uber          *fsc_uber;
 	struct silofs_oper              fsc_oper;
 	volatile int                    fsc_interrupt;
 };
 
 /* top-level pseudo meta node */
-struct silofs_fs_apex {
-	const struct silofs_fs_args    *ap_args;
-	struct silofs_alloc            *ap_alloc;
-	struct silofs_kivam            *ap_kivam;
-	struct silofs_crypto           *ap_crypto;
-	struct silofs_repo             *ap_mrepo;
-	struct silofs_repo             *ap_crepo;
-	struct silofs_piper             ap_piper;
-	struct silofs_oper_stat         ap_ops;
-	struct silofs_sb_info          *ap_sbi;
-	iconv_t                         ap_iconv;
-	time_t                          ap_initime;
-	int                             ap_slock_fd;
+struct silofs_fs_uber {
+	const struct silofs_fs_args    *ub_args;
+	struct silofs_alloc            *ub_alloc;
+	struct silofs_crypto           *ub_crypto;
+	struct silofs_repos            *ub_repos;
+	struct silofs_piper             ub_piper;
+	struct silofs_oper_stat         ub_ops;
+	struct silofs_sb_info          *ub_sbi;
+	iconv_t                         ub_iconv;
+	time_t                          ub_initime;
+	int                             ub_slock_fd;
 };
 
 /* file-system input arguments */
 struct silofs_fs_args {
-	const char *main_repodir;
-	const char *main_name;
+	const char *warm_repodir;
+	const char *warm_name;
 	const char *cold_repodir;
 	const char *cold_name;
 	const char *mntdir;
@@ -518,9 +496,8 @@ struct silofs_fs_env {
 	struct silofs_qalloc           *fs_qalloc;
 	struct silofs_alloc            *fs_alloc;
 	struct silofs_crypto           *fs_crypto;
-	struct silofs_repo             *fs_main_repo;
-	struct silofs_repo             *fs_cold_repo;
-	struct silofs_fs_apex          *fs_apex;
+	struct silofs_repos            *fs_repos;
+	struct silofs_fs_uber          *fs_uber;
 	struct silofs_fuseq            *fs_fuseq;
 	int                             fs_signum;
 };

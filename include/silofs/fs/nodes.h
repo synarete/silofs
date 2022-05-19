@@ -34,7 +34,7 @@ struct silofs_snode_vtbl {
 struct silofs_snode_info {
 	struct silofs_cache_elem        s_ce;
 	const struct silofs_snode_vtbl *s_vtbl;
-	struct silofs_fs_apex          *s_apex;
+	struct silofs_fs_uber          *s_uber;
 	struct silofs_mdigest          *s_md;
 	struct silofs_list_head         s_dq_lh;
 	struct silofs_avl_node          s_ds_an;
@@ -49,12 +49,10 @@ struct silofs_unode_info {
 	struct silofs_uaddr             u_uaddr;
 	struct silofs_packid            u_packid;
 	struct silofs_snode_info        u_si;
-	struct silofs_list_head         u_unom_lh;
 	struct silofs_list_head         u_pack_lh;
 	struct silofs_repo             *u_repo;
 	struct silofs_ubk_info         *u_ubi;
 	struct silofs_pack_iovs        *u_piov;
-	bool                            u_tmapped;
 	bool                            u_verified;
 	bool                            u_plinked;
 };
@@ -64,18 +62,17 @@ struct silofs_sb_info {
 	struct silofs_unode_info        sb_ui;
 	struct silofs_itable            sb_itbl;
 	struct silofs_super_block      *sb;
-	struct silofs_stats_info       *sb_sti;
+	struct silofs_spstats_info     *sb_sti;
 	struct silofs_ucred             sb_owner;
 	struct silofs_vspalloc_hints    sb_vspa;
 	unsigned long                   sb_ctl_flags;
 	unsigned long                   sb_ms_flags;
-	time_t                          sb_mntime;
 };
 
-/* super-stats */
-struct silofs_stats_info {
-	struct silofs_unode_info        st_ui;
-	struct silofs_super_stats      *st;
+/* space-stats */
+struct silofs_spstats_info {
+	struct silofs_unode_info        sp_ui;
+	struct silofs_spstats_node     *sp;
 };
 
 /* space-node */
@@ -161,7 +158,7 @@ struct silofs_fileaf_info {
 struct silofs_sb_info *
 silofs_sbi_from_ui(const struct silofs_unode_info *ui);
 
-struct silofs_stats_info *
+struct silofs_spstats_info *
 silofs_sti_from_ui(const struct silofs_unode_info *ui);
 
 struct silofs_spnode_info *
@@ -219,8 +216,8 @@ void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi);
 struct silofs_unode_info *
 silofs_ui_from_si(const struct silofs_snode_info *si);
 
-void silofs_ui_bind_apex(struct silofs_unode_info *ui,
-                         struct silofs_fs_apex *apex);
+void silofs_ui_bind_uber(struct silofs_unode_info *ui,
+                         struct silofs_fs_uber *uber);
 
 
 void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);

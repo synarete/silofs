@@ -7,6 +7,10 @@ Group: Development/Tools
 URL: https://synarete.github.io/silofs
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
+Requires: libcap-devel
+Requires: libuuid-devel
+Requires: libgcrypt-devel
+Requires: libunwind-devel
 
 %{?systemd_requires}
 
@@ -15,15 +19,13 @@ Silofs is a user-space file-system that allows you to easily archive and
 restore a point-in-time snapshot to/from the cloud.
 
 %package devel
-Summary: Silofs devel
+Summary: Silofs testing utilities and development files
 Group: Development/Tools
-Requires: libcap-devel
-Requires: libuuid-devel
-Requires: libgcrypt-devel
-Requires: libunwind-devel
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: python3-pyxattr
 
 %description devel
-Development files for silofs
+Various testing programs for silofs.
 
 %prep
 %setup -q
@@ -45,24 +47,27 @@ Development files for silofs
 %files
 %defattr(-, root, root)
 %{_bindir}/%{name}
-%{_bindir}/%{name}-vfstests
-%{_bindir}/%{name}-funtests
 %{_sbindir}/%{name}-mountd
 %{_sbindir}/*.%{name}
-%{_prefix}/lib/python3*/site-packages/%{name}/*
-%exclude %{_bindir}/%{name}-unitests
 %exclude %{_libdir}/lib%{name}*.la
-%exclude %{_bindir}/smoketests.sh
 %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man8/%{name}-*.8*
 %{_datarootdir}/bash-completion/completions/%{name}
-%{_unitdir}/%{name}-mountd.service
 %{_docdir}/%{name}/*
+%if 0%{?_unitdir:1}
+%dir %{_localstatedir}/%{_rundir}/%{name}
+%{_unitdir}/%{name}-mountd.service
+%else
+%exclude %{_prefix}/lib/systemd/system/%{name}*.*
+%endif
 
-# exclude 'devel' stuff for now
-# %files devel
-# %defattr(-, root, root)
+%files devel
+%defattr(-, root, root)
+%{_bindir}/%{name}-vfstests
+%{_bindir}/%{name}-ci-tests
+%{_prefix}/lib/python3*/site-packages/%{name}/*
+%exclude %{_bindir}/%{name}-unitests
 %exclude %{_includedir}/*
 %exclude %{_libdir}/lib%{name}*.*
 

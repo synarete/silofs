@@ -29,8 +29,8 @@ _silofs_mount() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-D --nodaemon -C --coredump -h ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-r --rdonly -a --allow-other '-- "$cur") )
-    COMPREPLY+=( $(compgen -W '-W --writeback-cache '-- "$cur") )
-    COMPREPLY+=( $(compgen -W '-X --noexec -K --nokcopy '-- "$cur") )
+    COMPREPLY+=( $(compgen -W '-W --writeback-cache ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-X --noexec -K --nokcopy ' -- "$cur") )
   fi
 }
 
@@ -62,8 +62,8 @@ _silofs_show() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
   else
-    COMPREPLY+=( $(compgen -W 'version reponame' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'statx statfsx' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'version bootsec' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'uptime spstats statx' -- "$cur") )
   fi
 }
 

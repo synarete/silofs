@@ -16,7 +16,6 @@
  */
 #include "cmd.h"
 
-
 static const char *cmd_init_usage[] = {
 	"init <repo-dir>",
 	"",
@@ -104,8 +103,8 @@ static void cmd_init_prepare(struct cmd_init_ctx *ctx)
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = ctx->args.repodir_real,
-		.main_name = "silofs", /* stub fs-name, unused */
+		.warm_repodir = ctx->args.repodir_real,
+		.warm_name = "silofs", /* stub fs-name, unused */
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),

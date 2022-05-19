@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+import sys
+
+SILOFS_PYTHONDIR = "@PYTHONDIR@"
+
+def main():
+    xdir = SILOFS_PYTHONDIR
+    if xdir not in sys.path:
+        sys.path = [ xdir ] + sys.path
+
+    import silofs.ci.main as cimain
+    cimain.main()
+
+if __name__ == "__main__":
+    main()

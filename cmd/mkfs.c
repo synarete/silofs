@@ -118,8 +118,8 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = ctx->args.repodir_real,
-		.main_name = ctx->args.name,
+		.warm_repodir = ctx->args.repodir_real,
+		.warm_name = ctx->args.name,
 		.capacity = (size_t)ctx->args.fs_size,
 		.uid = getuid(),
 		.gid = getgid(),

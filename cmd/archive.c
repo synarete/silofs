@@ -16,7 +16,6 @@
  */
 #include "cmd.h"
 
-
 static const char *cmd_archive_usage[] = {
 	"archive [options] <warm-repo/name> <cold-repo/name>",
 	"",
@@ -138,9 +137,9 @@ static void cmd_archive_prepare(struct cmd_archive_ctx *ctx)
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = ctx->args.warm_repodir_real,
+		.warm_repodir = ctx->args.warm_repodir_real,
 		.cold_repodir = ctx->args.cold_repodir_real,
-		.main_name = ctx->args.warm_name,
+		.warm_name = ctx->args.warm_name,
 		.cold_name = ctx->args.cold_name,
 		.passwd = ctx->args.passphrase,
 		.uid = getuid(),
@@ -211,5 +210,4 @@ void cmd_execute_archive(void)
 	/* Post execution cleanups */
 	cmd_archive_finalize(&ctx);
 }
-
 

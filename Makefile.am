@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
-SUBDIRS = . include lib cmd mntd test doc misc
+SUBDIRS = . include lib cmd mntd tools tests ci doc misc dist
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += version.sh

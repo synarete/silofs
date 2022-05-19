@@ -21,7 +21,6 @@
 #include <silofs/fs.h>
 #include <getopt.h>
 
-
 typedef void (*silofs_exec_fn)(void);
 
 /* sub-command descriptor */
@@ -54,7 +53,7 @@ struct cmd_globals {
 	/* common process settings */
 	bool    dont_daemonize;
 	bool    allow_coredump;
-	bool    disable_ptrace; /* XXX: TODO: allow set */
+	bool    dumpable; /* XXX: TODO: allow set */
 
 	/* capability */
 	bool    cap_sys_admin;
@@ -68,7 +67,6 @@ struct cmd_globals {
 };
 
 extern struct cmd_globals cmd_globals;
-
 
 /* execution hooks */
 void cmd_execute_init(void);
@@ -95,7 +93,6 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
-
 /* fatal-error handling */
 __attribute__((__noreturn__))
 void cmd_dief(int errnum, const char *restrict fmt, ...);
@@ -106,7 +103,6 @@ void cmd_fatal_unsupported_opt(void);
 
 /* common utilities */
 void cmd_require_arg(const char *arg_name, const void *arg_val);
-
 
 void cmd_check_fsname(const char *arg_val);
 
@@ -134,9 +130,7 @@ void cmd_check_reg_or_dir(const char *path);
 
 void cmd_check_mountd(void);
 
-
 void cmd_mkdir(const char *path, mode_t mode);
-
 
 void cmd_getoptarg(const char *opt_name, char **out_opt);
 
@@ -147,7 +141,6 @@ void cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
 int cmd_getopt(const char *sopts, const struct option *lopts);
 
 void cmd_endargs(void);
-
 
 long cmd_parse_size(const char *str);
 
@@ -162,6 +155,8 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail);
 void cmd_split_path2(const char *path, const char *name,
                      char **out_head, char **out_tail);
 
+void cmd_join_path(const char *dirpath, const char *name, char **out_path);
+
 void cmd_fork_daemon(void);
 
 void cmd_open_syslog(void);
@@ -170,12 +165,9 @@ void cmd_close_syslog(void);
 
 void cmd_setrlimit_nocore(void);
 
-
-
 void cmd_set_verbose_mode(const char *mode);
 
 void cmd_print_help_and_exit(const char **help_strings);
-
 
 void *cmd_zalloc(size_t n);
 
@@ -207,7 +199,6 @@ void cmd_save_bsec(const struct silofs_bootpath *bpath,
 
 void cmd_unref_bsec(const struct silofs_bootpath *bpath);
 
-
 /* complex fs operations */
 void cmd_format_repo(struct silofs_fs_env *fse);
 
@@ -222,7 +213,7 @@ void cmd_shutdown_fs(struct silofs_fs_env *fse);
 
 void cmd_snap_fs(struct silofs_fs_env *fse,
                  const struct silofs_bootsec *bsec,
-                 struct silofs_bootsec *out_bsec);
+                 struct silofs_bootsecs *out_bsecs);
 
 void cmd_verify_fs(struct silofs_fs_env *fse,
                    const struct silofs_bootsec *bsec);
@@ -256,7 +247,6 @@ void cmd_new_env(struct silofs_fs_env **pfse,
 
 void cmd_del_env(struct silofs_fs_env **pfse);
 
-
 /* signals handling */
 void cmd_register_sigactions(void (*sig_hook_fn)(int));
 
@@ -266,6 +256,5 @@ void cmd_getpass(const char *path, char **out_pass);
 void cmd_getpass2(const char *path, char **out_pass);
 
 void cmd_delpass(char **pass);
-
 
 #endif /* SILOFS_CMD_H_ */

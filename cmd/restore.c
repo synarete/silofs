@@ -137,8 +137,8 @@ static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = ctx->args.warm_repodir_real,
-		.main_name = ctx->args.warm_name,
+		.warm_repodir = ctx->args.warm_repodir_real,
+		.warm_name = ctx->args.warm_name,
 		.cold_repodir = ctx->args.cold_repodir_real,
 		.cold_name = ctx->args.cold_name,
 		.passwd = ctx->args.passphrase,

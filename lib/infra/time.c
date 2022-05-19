@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra/syscall.h>
-#include <silofs/infra/errors.h>
+#include <silofs/infra/panic.h>
 #include <silofs/infra/time.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,6 +67,14 @@ void silofs_mclock_dur(const struct timespec *start, struct timespec *dur)
 time_t silofs_time_now(void)
 {
 	return time(NULL);
+}
+
+time_t silofs_time_now_monotonic(void)
+{
+	struct timespec ts;
+
+	silofs_mclock_now(&ts);
+	return ts.tv_sec;
 }
 
 void silofs_ts_copy(struct timespec *dst, const struct timespec *src)

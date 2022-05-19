@@ -16,7 +16,6 @@
  */
 #include "cmd.h"
 
-
 static const char *cmd_lsmnt_usage[] = {
 	"lsmnt [options]",
 	"",
@@ -106,13 +105,13 @@ static void cmd_lsmnt_exec_mi(struct cmd_lsmnt_ctx *ctx,
 	if (err) {
 		goto out;
 	}
-	qry->qtype = SILOFS_QUERY_REPONAME;
+	qry->qtype = SILOFS_QUERY_BOOTSEC;
 	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}
-	repodir = qry->u.reponame.repodir;
-	name = qry->u.reponame.name;
+	repodir = qry->u.bootsec.repo;
+	name = qry->u.bootsec.name;
 	sep = '/';
 out:
 	silofs_sys_closefd(&dfd);

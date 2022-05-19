@@ -42,7 +42,6 @@
 #include <getopt.h>
 #include "cmd.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 __attribute__((__noreturn__))
@@ -344,7 +343,6 @@ void cmd_check_mntdir(const char *path, bool mount)
 	struct statfs stfs;
 	const struct silofs_fsinfo *fsi = NULL;
 
-
 	if (strlen(path) >= SILOFS_MNTPATH_MAX) {
 		cmd_dief(0, "illegal mount-path length: %s", path);
 	}
@@ -632,6 +630,11 @@ void cmd_split_path2(const char *path, const char *name,
 	cmd_pstrfree(&xpath);
 }
 
+void cmd_join_path(const char *dirpath, const char *name, char **out_path)
+{
+	*out_path = cmd_mkpathf("%s/%s", dirpath, name);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void *cmd_zalloc(size_t nbytes)
@@ -700,7 +703,6 @@ char *cmd_mkpathf(const char *fmt, ...)
 	cmd_pstrfree(&path);
 	return path_dup;
 }
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1067,12 +1069,10 @@ void cmd_free_mountinfo(struct silofs_proc_mntinfo *mi_list)
 {
 	struct silofs_proc_mntinfo *mi_next;
 
-
 	while (mi_list != NULL) {
 		mi_next = mi_list->next;
 		cmd_zfree(mi_list, mi_list->msz);
 		mi_list = mi_next;
 	}
 }
-
 

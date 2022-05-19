@@ -14,16 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/fs.h>
-#include <silofs/mntd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <limits.h>
-#include <errno.h>
+#include "mountd.h"
 
 #define die_illegal_conf(fl_, fmt_, ...) \
 	silofs_die_at(errno, (fl_)->file, (fl_)->line, fmt_, __VA_ARGS__)
@@ -318,7 +309,7 @@ static void del_mnt_conf(struct silofs_mntrules *mrules)
 	free(mrules);
 }
 
-struct silofs_mntrules *silofs_parse_mntrules(const char *path)
+struct silofs_mntrules *mountd_parse_mntrules(const char *path)
 {
 	char *conf;
 	struct silofs_substr ss_conf;
@@ -334,7 +325,7 @@ struct silofs_mntrules *silofs_parse_mntrules(const char *path)
 	return mrules;
 }
 
-void silofs_free_mntrules(struct silofs_mntrules *mnt_conf)
+void mountd_free_mntrules(struct silofs_mntrules *mnt_conf)
 {
 	if (mnt_conf != NULL) {
 		del_mnt_conf(mnt_conf);

@@ -22,24 +22,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_spr_initn(struct silofs_spmap_ref *spr, size_t n);
-
-void silofs_spr_set_stype_sub(struct silofs_spmap_ref *spr,
-                              enum silofs_stype stype_sub);
-
-void silofs_spr_ulink(const struct silofs_spmap_ref *spr,
-                      struct silofs_uaddr *out_ulink);
-
-void silofs_spr_set_ulink(struct silofs_spmap_ref *spr,
-                          const struct silofs_uaddr *ulink);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
 loff_t silofs_sni_last_voff(const struct silofs_spnode_info *sni);
 
-size_t silofs_sni_height(const struct silofs_spnode_info *sni);
+enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
 
 enum silofs_stype silofs_sni_stype_sub(const struct silofs_spnode_info *sni);
 
@@ -76,8 +63,8 @@ void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
 void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
                               struct silofs_vrange *out_vrange);
 
-int silofs_sni_check_may_alloc_at(const struct silofs_spnode_info *sni,
-                                  loff_t voff, const enum silofs_stype stype);
+int silofs_sni_cap_alloc_at(const struct silofs_spnode_info *sni,
+                            loff_t voff, const enum silofs_stype stype);
 
 int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni,
                              const struct silofs_vrange *range,
@@ -134,10 +121,14 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 void silofs_sli_clear_allocated_space(struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr *vaddr);
 
+bool silofs_sli_has_allocated_space(const struct silofs_spleaf_info *sli,
+                                    const struct silofs_vaddr *vaddr);
+
 size_t silofs_sli_nallocated_at(const struct silofs_spleaf_info *sli,
                                 const silofs_lba_t lba);
 
-bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli, loff_t voff);
+bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
+                            const struct silofs_vaddr *vaddr);
 
 bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
                                 const struct silofs_vaddr *vaddr);

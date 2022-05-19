@@ -14,52 +14,25 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/fs.h>
-#include <silofs/mntd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
-#include <sys/capability.h>
-#include <sys/prctl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include <error.h>
-#include <locale.h>
-#include <getopt.h>
-#include <signal.h>
+#include "mountd.h"
 
-#define MOUNTD_LOG_MASK (SILOFS_LOG_WARN | SILOFS_LOG_ERROR | \
-                         SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT)
 
-static void mountd_setup_globals(int argc, char *argv[]);
-static void mountd_getopt(void);
-static void mountd_init_process(void);
-static void mountd_enable_signals(void);
-static void mountd_boostrap_process(void);
-static void mountd_create_mse_inst(void);
-static void mountd_trace_start(void);
-static void mountd_trace_finish(void);
-static void mound_execute_ms(void);
-static void mountd_finalize(void);
-static void mountd_load_mntrules(void);
-static void mountd_require_cap_sys_admin(void);
+/* local functions */
+static void mountd_start(struct mountd_ctx *ctx);
+static void mountd_getopt(struct mountd_ctx *ctx);
+static void mountd_init_process(struct mountd_ctx *ctx);
+static void mountd_boot_process(const struct mountd_ctx *ctx);
+static void mountd_setup_env(struct mountd_ctx *ctx);
+static void mountd_trace_start(const struct mountd_ctx *ctx);
+static void mountd_trace_finish(const struct mountd_ctx *ctx);
+static void mound_execute_ms(struct mountd_ctx *ctx);
+static void mountd_finalize(struct mountd_ctx *ctx);
+static void mountd_load_mntrules(struct mountd_ctx *ctx);
+static void mountd_enable_signals(const struct mountd_ctx *ctx);
+static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx);
 
-/* globals */
-static char *g_mountd_confpath;
-static struct silofs_ms_env *g_mountd_ms_env_inst;
-static struct silofs_mntrules *g_mountd_mntrules;
-static int g_mountd_allow_coredump;
-static int g_mountd_disable_ptrace;
-static int g_mountd_argc;
-static char **g_mountd_argv;
-static int g_mountd_sig_halt;
-static int g_mountd_sig_fatal;
-static int g_mountd_log_mask = MOUNTD_LOG_MASK;
-
+/* execution context */
+static struct mountd_ctx *mountd_ctx;
 
 /*
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -72,201 +45,221 @@ static int g_mountd_log_mask = MOUNTD_LOG_MASK;
  */
 int main(int argc, char *argv[])
 {
-	/* Setup process defaults */
-	mountd_setup_globals(argc, argv);
+	struct mountd_ctx ctx = {
+		.args.argc = argc,
+		.args.argv = argv,
+		.args.allow_coredump = false,
+		.args.dumpable = false,
+		.log_mask = MOUNTD_LOG_MASK,
+		.progname = program_invocation_short_name,
+	};
+
+	/* Do all cleanups upon exits */
+	mountd_start(&ctx);
 
 	/* Parse command-line options */
-	mountd_getopt();
+	mountd_getopt(&ctx);
 
 	/* Common process initializations */
-	mountd_init_process();
+	mountd_init_process(&ctx);
 
 	/* Process specific bootstrap sequence */
-	mountd_boostrap_process();
+	mountd_boot_process(&ctx);
 
 	/* Must have mount/umount capabilities */
-	mountd_require_cap_sys_admin();
+	mountd_require_cap_sys_admin(&ctx);
 
 	/* Load mount-rules from config-file */
-	mountd_load_mntrules();
+	mountd_load_mntrules(&ctx);
 
 	/* Setup environment instance */
-	mountd_create_mse_inst();
+	mountd_setup_env(&ctx);
 
 	/* Say something */
-	mountd_trace_start();
+	mountd_trace_start(&ctx);
 
 	/* Allow halt by signal */
-	mountd_enable_signals();
+	mountd_enable_signals(&ctx);
 
 	/* Execute as long as needed... */
-	mound_execute_ms();
+	mound_execute_ms(&ctx);
 
 	/* Say goodbye */
-	mountd_trace_finish();
+	mountd_trace_finish(&ctx);
 
 	/* Post execution cleanups */
-	mountd_finalize();
+	mountd_finalize(&ctx);
 
 	/* Goodbye ;) */
 	return 0;
 }
 
-
-static void mountd_atexit(void)
+__attribute__((__noreturn__))
+static void mountd_dief(int errnum, const char *restrict fmt, ...)
 {
-	fflush(stdout);
-	fflush(stderr);
+	char msg[2048] = "";
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	va_end(ap);
+	error(EXIT_FAILURE, abs(errnum), "%s", msg);
+	_exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
-static void mountd_setup_globals(int argc, char *argv[])
-{
-	g_mountd_argc = argc;
-	g_mountd_argv = argv;
-	g_mountd_allow_coredump = 0;
-	g_mountd_disable_ptrace = 1;
-
-	setlocale(LC_ALL, "");
-	atexit(mountd_atexit);
-}
-
-static void mountd_init_process(void)
+static void mountd_init_process(struct mountd_ctx *ctx)
 {
 	int err;
 
-	g_mountd_log_mask |=
-	        SILOFS_LOG_INFO | SILOFS_LOG_WARN | SILOFS_LOG_ERROR | \
-	        SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT;
-
 	err = silofs_lib_setup();
 	if (err) {
-		silofs_die(err, "unable to init lib");
+		mountd_dief(err, "unable to init lib");
 	}
-	silofs_set_logmaskp(&g_mountd_log_mask);
+	silofs_set_logmaskp(&ctx->log_mask);
 }
 
 static void mountd_setrlimit_nocore(void)
 {
-	int err;
 	struct rlimit rlim = { .rlim_cur = 0, .rlim_max = 0 };
+	int err;
 
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
-		silofs_die(err, "failed to disable core-dupms");
+		mountd_dief(err, "failed to disable core-dupms");
 	}
 }
 
-static void mountd_prctl_non_dumpable(void)
+static void mountd_set_dumpable(unsigned int state)
 {
 	int err;
 
-	err = silofs_sys_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
 	if (err) {
-		silofs_die(err, "failed to prctl non-dumpable");
+		mountd_dief(err, "failed to prctl dumpable: state=%u", state);
 	}
 }
 
-static void mountd_boostrap_process(void)
+static void mountd_boot_process(const struct mountd_ctx *ctx)
 {
-	if (!g_mountd_allow_coredump) {
+	if (!ctx->args.allow_coredump) {
 		mountd_setrlimit_nocore();
 	}
-	if (!g_mountd_disable_ptrace) {
-		mountd_prctl_non_dumpable();
+	if (ctx->args.dumpable) {
+		mountd_set_dumpable(1);
+	} else {
+		mountd_set_dumpable(0);
 	}
-	atexit(mountd_finalize);
 }
 
-static void mountd_require_cap_sys_admin(void)
+static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 {
-	int err;
-	cap_t cap;
 	cap_value_t value = CAP_SYS_ADMIN;
 	cap_flag_value_t flag = CAP_CLEAR;
+	cap_t cap;
+	int err;
 
 	errno = 0;
 	cap = cap_get_pid(getpid());
 	if (cap == NULL) {
-		silofs_die(errno, "failed to get cap");
+		mountd_dief(errno, "failed to get cap");
 	}
 	err = cap_get_flag(cap, value, CAP_EFFECTIVE, &flag);
 	if (err) {
-		silofs_die(errno, "failed to get capability: value=%d", value);
+		mountd_dief(errno, "failed to get capability: %d", value);
 	}
 	cap_free(cap);
 
 	if (flag != CAP_SET) {
-		silofs_die(0, "does not have CAP_SYS_ADMIN capability");
+		mountd_dief(0, "does not have CAP_SYS_ADMIN capability");
+	}
+	silofs_unused(ctx);
+}
+
+static void mountd_setup_env(struct mountd_ctx *ctx)
+{
+	struct silofs_ms_args ms_args = {
+		.runstatedir = SILOFS_RUNSTATEDIR,
+		.use_abstract = true
+	};
+	int err;
+
+	err = silofs_mse_new(&ms_args, &ctx->mse);
+	if (err) {
+		mountd_dief(err, "failed to create instance");
 	}
 }
 
+static void mountd_trace_start(const struct mountd_ctx *ctx)
+{
+	silofs_log_meta_banner(ctx->progname, 1);
+}
 
-static void mountd_create_mse_inst(void)
+static void mountd_trace_finish(const struct mountd_ctx *ctx)
+{
+	silofs_log_meta_banner(ctx->progname, 0);
+}
+
+static void mountd_load_mntrules(struct mountd_ctx *ctx)
+{
+	ctx->mntrules = mountd_parse_mntrules(ctx->args.confpath);
+}
+
+static void mountd_drop_mntrules(struct mountd_ctx *ctx)
+{
+	if (ctx->mntrules != NULL) {
+		mountd_free_mntrules(ctx->mntrules);
+		ctx->mntrules = NULL;
+	}
+}
+
+static void mountd_del_env(struct mountd_ctx *ctx)
+{
+	if (ctx->mse != NULL) {
+		silofs_mse_del(ctx->mse);
+		ctx->mse = NULL;
+	}
+}
+
+static void mountd_finalize(struct mountd_ctx *ctx)
+{
+	mountd_del_env(ctx);
+	mountd_drop_mntrules(ctx);
+	mountd_ctx = NULL;
+
+	silofs_backtrace();
+}
+
+static void mountd_atexit(void)
+{
+	if (mountd_ctx != NULL) {
+		mountd_finalize(mountd_ctx);
+	}
+}
+
+static void mountd_start(struct mountd_ctx *ctx)
+{
+	mountd_ctx = ctx;
+	atexit(mountd_atexit);
+	setlocale(LC_ALL, "");
+}
+
+static void mound_execute_ms(struct mountd_ctx *ctx)
 {
 	int err;
 
-	err = silofs_mse_new(&g_mountd_ms_env_inst);
+	err = silofs_mse_serve(ctx->mse, ctx->mntrules);
 	if (err) {
-		silofs_die(err, "failed to create instance");
-	}
-}
-
-static void mountd_trace_start(void)
-{
-	silofs_log_meta_banner(program_invocation_short_name, 1);
-}
-
-static void mountd_trace_finish(void)
-{
-	silofs_log_meta_banner(program_invocation_short_name, 0);
-}
-
-static void mountd_load_mntrules(void)
-{
-	g_mountd_mntrules = silofs_parse_mntrules(g_mountd_confpath);
-}
-
-static void mountd_drop_mntrules(void)
-{
-	if (g_mountd_mntrules != NULL) {
-		silofs_free_mntrules(g_mountd_mntrules);
-		g_mountd_mntrules = NULL;
-	}
-}
-
-static void mountd_destroy_mse_inst(void)
-{
-	if (g_mountd_ms_env_inst) {
-		silofs_mse_del(g_mountd_ms_env_inst);
-		g_mountd_ms_env_inst = NULL;
-	}
-}
-
-static void mountd_finalize(void)
-{
-	mountd_destroy_mse_inst();
-	mountd_drop_mntrules();
-}
-
-static void mound_execute_ms(void)
-{
-	int err;
-	struct silofs_ms_env *ms_env = g_mountd_ms_env_inst;
-
-	err = silofs_mse_serve(ms_env, g_mountd_mntrules);
-	if (err) {
-		silofs_die(err, "mount-service error");
+		mountd_dief(err, "mount-service error");
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void mountd_halt_by_signal(int signum)
+static void mountd_halt_by_signal(struct mountd_ctx *ctx, int signum)
 {
-	struct silofs_ms_env *ms_env = g_mountd_ms_env_inst;
-
-	if (ms_env) {
-		silofs_mse_halt(ms_env, signum);
+	ctx->sig_halt = signum;
+	if (ctx->mse) {
+		silofs_mse_halt(ctx->mse, signum);
 	}
 }
 
@@ -277,30 +270,39 @@ static void mountd_sigaction_info_handler(int signum)
 
 static void mountd_sigaction_halt_handler(int signum)
 {
+	struct mountd_ctx *ctx = mountd_ctx;
+
 	silofs_log_info("halt-signal: %d", signum);
-	g_mountd_sig_halt = signum;
-	mountd_halt_by_signal(signum);
+	if (ctx != NULL) {
+		mountd_halt_by_signal(ctx, signum);
+	}
 }
 
 static void mountd_sigaction_term_handler(int signum)
 {
-	silofs_backtrace();
+	struct mountd_ctx *ctx = mountd_ctx;
+
 	silofs_log_crit("term-signal: %d", signum);
-	g_mountd_sig_halt = signum;
-	g_mountd_sig_fatal = signum;
+	if (ctx != NULL) {
+		ctx->sig_halt = signum;
+		ctx->sig_fatal = signum;
+	}
 	exit(EXIT_FAILURE);
 }
 
 static void mountd_sigaction_abort_handler(int signum)
 {
-	if (g_mountd_sig_fatal) {
+	struct mountd_ctx *ctx = mountd_ctx;
+
+	if (ctx && ctx->sig_fatal) {
 		_exit(EXIT_FAILURE);
 	}
 
-	silofs_backtrace();
 	silofs_log_crit("abort-signal: %d", signum);
-	g_mountd_sig_halt = signum;
-	g_mountd_sig_fatal = signum;
+	if (ctx) {
+		ctx->sig_halt = signum;
+		ctx->sig_fatal = signum;
+	}
 	abort(); /* Re-raise to _exit */
 }
 
@@ -326,7 +328,7 @@ static void register_sigaction(int signum, struct sigaction *sa)
 
 	err = silofs_sys_sigaction(signum, sa, NULL);
 	if (err) {
-		silofs_die(err, "sigaction error: signum=%d", signum);
+		mountd_dief(err, "sigaction error: signum=%d", signum);
 	}
 }
 
@@ -350,7 +352,7 @@ static void sigaction_abort(int signum)
 	register_sigaction(signum, &s_sigaction_abort);
 }
 
-static void mountd_enable_signals(void)
+static void mountd_enable_signals(const struct mountd_ctx *ctx)
 {
 	sigaction_info(SIGHUP);
 	sigaction_halt(SIGINT);
@@ -381,11 +383,12 @@ static void mountd_enable_signals(void)
 	sigaction_info(SIGIO);
 	sigaction_halt(SIGPWR);
 	sigaction_halt(SIGSYS);
+	silofs_unused(ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const char silofs_mountd_usage[] =
+static const char mountd_usage[] =
         "[options] [-f conf]\n"\
         "\n"\
         "options:\n"\
@@ -400,7 +403,7 @@ static void mountd_goodbye(void)
 
 static void mountd_show_usage(void)
 {
-	printf("%s\n", silofs_mountd_usage);
+	printf("%s\n", mountd_usage);
 	mountd_goodbye();
 }
 
@@ -411,12 +414,12 @@ static void mountd_show_version(void)
 	mountd_goodbye();
 }
 
-static void mountd_getopt(void)
+static void mountd_getopt(struct mountd_ctx *ctx)
 {
 	int opt_chr = 1;
 	int opt_index = 0;
-	int argc = g_mountd_argc;
-	char **argv = g_mountd_argv;
+	int argc = ctx->args.argc;
+	char **argv = ctx->args.argv;
 	const struct option lopts[] = {
 		{ "conf", required_argument, NULL, 'f' },
 		{ "verbose", required_argument, NULL, 'V' },
@@ -432,22 +435,22 @@ static void mountd_getopt(void)
 			break;
 		}
 		if (opt_chr == 'f') {
-			g_mountd_confpath = optarg;
+			ctx->args.confpath = optarg;
 		} else if (opt_chr == 'V') {
-			silofs_log_mask_by_str(&g_mountd_log_mask, optarg);
+			silofs_log_mask_by_str(&ctx->log_mask, optarg);
 		} else if (opt_chr == 'v') {
 			mountd_show_version();
 		} else if (opt_chr == 'h') {
 			mountd_show_usage();
 		} else if (opt_chr > 0) {
-			silofs_die(0, "unsupported option: %s", optarg);
+			mountd_dief(0, "unsupported option: %s", optarg);
 		}
 	}
 	if (optind < argc) {
-		silofs_die(0, "redundant argument: %s", argv[optind]);
+		mountd_dief(0, "redundant argument: %s", argv[optind]);
 	}
-	if (!g_mountd_confpath) {
-		silofs_die(0, "missing argument: %s", "conf");
+	if (ctx->args.confpath == NULL) {
+		mountd_dief(0, "missing argument: %s", "conf");
 	}
 }
 

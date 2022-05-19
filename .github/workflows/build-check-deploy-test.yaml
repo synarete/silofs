@@ -19,7 +19,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Require build tools
         run: ./misc/requiredeps.sh
       - name: Require install tool
@@ -34,7 +34,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Check C-style
         run: ./cstylelint.sh
       - name: Verify code formatting
@@ -49,7 +49,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Build without optimization
         run: make -f devel.mk O=0
       - name: Reset
@@ -66,7 +66,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Bootstrap
         run: ./bootstrap
       - name: Configure
@@ -83,7 +83,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Bootstrap
         run: ./bootstrap
       - name: Configure
@@ -104,7 +104,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Run clang static-analyzer
         run: ./misc/clangscanbuild.sh
 
@@ -118,7 +118,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Packagize
         run: ./dist/packagize-deb.sh
 
@@ -131,7 +131,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Packagize
         run: ./dist/packagize-deb.sh
       - name: Install
@@ -139,8 +139,8 @@ jobs:
       - name: Verify installation
         run: silofs --version
 
-  sanity-tests:
-    name: Run smoke tests-suite
+  ci-tests:
+    name: Run CI tests-suite
     runs-on: ubuntu-latest
     needs:
       - install
@@ -149,7 +149,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./misc/installdeps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Packagize
         run: ./dist/packagize-deb.sh
       - name: Install
@@ -165,8 +165,8 @@ jobs:
           sudo systemctl restart silofs-mountd.service
           sudo systemctl status silofs-mountd.service
           sleep 10
-      # - name: Run smoke-tests
-      #  run: ./test/sanitests/smoketests.sh ./silofs-tests /mnt/test
+      - name: Run CI tests
+        run: ./ci/run-ci-tests.sh ./silofs-tests /mnt/test
       - name: Cleanups
         run: rm -rf ./silofs-tests
 
@@ -176,7 +176,7 @@ jobs:
     needs:
       - unit-tests
       - static-analyze
-      - sanity-tests
+      - ci-tests
     steps:
       - name: Done
         run: date

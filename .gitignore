@@ -9,7 +9,6 @@ lib*.la
 .deps
 .libs
 *~
-__pycache__
 
 # Top-level excludes
 /.autom4te.cfg
@@ -35,3 +34,4 @@ __pycache__
 
 # External tools
 /cscope.out
+/.mypy_cache/

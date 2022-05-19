@@ -21,6 +21,8 @@
 
 time_t silofs_time_now(void);
 
+time_t silofs_time_now_monotonic(void);
+
 void silofs_rclock_now(struct timespec *ts);
 
 void silofs_mclock_now(struct timespec *ts);

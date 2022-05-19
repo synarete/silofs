@@ -22,8 +22,9 @@ static const char *cmd_show_usage[] = {
 	"",
 	"sub commands:",
 	"  version      Show mounted file-system's version",
-	"  reponame     Show back-end repo dir-path and fs-name",
-	"  statfsx      Show extended file-system info",
+	"  bootsec      Show back-end repo dir-path and fs-name",
+	"  uptime       Show current mount uptime in seconds",
+	"  spstats      Show space-allocations stats",
 	"  statx        Show extended file stats",
 	NULL
 };
@@ -69,8 +70,9 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
-	[SILOFS_QUERY_REPONAME] = "reponame",
-	[SILOFS_QUERY_STATFSX]  = "statfsx",
+	[SILOFS_QUERY_BOOTSEC]  = "bootsec",
+	[SILOFS_QUERY_UPTIME]   = "uptime",
+	[SILOFS_QUERY_SPSTATS]  = "spstats",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
 
@@ -147,11 +149,11 @@ static void cmd_show_version(struct cmd_show_ctx *ctx)
 	printf("%s\n", ctx->query.u.version.string);
 }
 
-static void cmd_show_repo(struct cmd_show_ctx *ctx)
+static void cmd_show_bootsec(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s/%s\n", ctx->query.u.reponame.repodir,
-	       ctx->query.u.reponame.name);
+	printf("%s/%s\n", ctx->query.u.bootsec.repo,
+	       ctx->query.u.bootsec.name);
 }
 
 struct silofs_msflag_name {
@@ -193,22 +195,99 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 	}
 }
 
-static void cmd_show_statfsx(struct cmd_show_ctx *ctx)
+static void print_msflags(unsigned long msflags)
 {
 	char mntfstr[128] = "";
-	const struct silofs_query_statfsx *qstfsx = &ctx->query.u.statfsx;
+
+	msflags_str(msflags, mntfstr, sizeof(mntfstr) - 1);
+	printf("mount-flags: %s\n", mntfstr);
+}
+
+static void print_time(const char *name, time_t tm)
+{
+	printf("%s: %ld\n", name, tm);
+}
+
+static void cmd_show_uptime(struct cmd_show_ctx *ctx)
+{
+	const struct silofs_query_uptime *qstfx = &ctx->query.u.uptime;
 
 	cmd_show_do_ioctl_query(ctx);
-	msflags_str(qstfsx->msflags, mntfstr, sizeof(mntfstr) - 1);
-	printf("mountf:     %s \n", mntfstr);
-	printf("uptime:     %ld seconds \n", qstfsx->uptime);
-	printf("bsize:      %lu bytes \n", qstfsx->bsize);
-	printf("bused:      %lu bytes \n", qstfsx->bused);
-	printf("ilimit:     %lu inodes \n", qstfsx->ilimit);
-	printf("icurr:      %lu inodes \n", qstfsx->icurr);
-	printf("umeta:      %lu bytes \n", qstfsx->umeta);
-	printf("vmeta:      %lu bytes \n", qstfsx->vmeta);
-	printf("vdata:      %lu bytes \n", qstfsx->vdata);
+	print_time("uptime", (time_t)qstfx->uptime);
+	if (qstfx->msflags) {
+		print_msflags(qstfx->msflags);
+	}
+}
+
+static void print_count(const char *prefix, const char *name, size_t cnt)
+{
+	if (prefix && strlen(prefix)) {
+		printf("%s.%s: %lu\n", prefix, name, cnt);
+	} else {
+		printf("%s: %lu\n", name, cnt);
+	}
+}
+
+static void print_spacestats(const struct silofs_spacestats *spst)
+{
+	const char *prefix;
+
+	prefix = "";
+	print_time("btime", spst->btime);
+	print_time("ctime", spst->ctime);
+	print_count(prefix, "capacity", spst->capacity);
+	print_count(prefix, "vspacesize", spst->vspacesize);
+	prefix = "blobs";
+	print_count(prefix, "ndata1k", spst->blobs.ndata1k);
+	print_count(prefix, "ndata4k", spst->blobs.ndata4k);
+	print_count(prefix, "ndatabk", spst->blobs.ndatabk);
+	print_count(prefix, "nsuper", spst->blobs.nsuper);
+	print_count(prefix, "nspstats", spst->blobs.nspstats);
+	print_count(prefix, "nspnode", spst->blobs.nspnode);
+	print_count(prefix, "nspleaf", spst->blobs.nspleaf);
+	print_count(prefix, "nitnode", spst->blobs.nitnode);
+	print_count(prefix, "ninode", spst->blobs.ninode);
+	print_count(prefix, "nxanode", spst->blobs.nxanode);
+	print_count(prefix, "ndtnode", spst->blobs.ndtnode);
+	print_count(prefix, "nftnode", spst->blobs.nftnode);
+	print_count(prefix, "nsymval", spst->blobs.nsymval);
+	prefix = "bks";
+	print_count(prefix, "ndata1k", spst->bks.ndata1k);
+	print_count(prefix, "ndata4k", spst->bks.ndata4k);
+	print_count(prefix, "ndatabk", spst->bks.ndatabk);
+	print_count(prefix, "nsuper", spst->bks.nsuper);
+	print_count(prefix, "nspstats", spst->bks.nspstats);
+	print_count(prefix, "nspnode", spst->bks.nspnode);
+	print_count(prefix, "nspleaf", spst->bks.nspleaf);
+	print_count(prefix, "nitnode", spst->bks.nitnode);
+	print_count(prefix, "ninode", spst->bks.ninode);
+	print_count(prefix, "nxanode", spst->bks.nxanode);
+	print_count(prefix, "ndtnode", spst->bks.ndtnode);
+	print_count(prefix, "nftnode", spst->bks.nftnode);
+	print_count(prefix, "nsymval", spst->bks.nsymval);
+	prefix = "objs";
+	print_count(prefix, "ndata1k", spst->objs.ndata1k);
+	print_count(prefix, "ndata4k", spst->objs.ndata4k);
+	print_count(prefix, "ndatabk", spst->objs.ndatabk);
+	print_count(prefix, "nsuper", spst->objs.nsuper);
+	print_count(prefix, "nspstats", spst->objs.nspstats);
+	print_count(prefix, "nspnode", spst->objs.nspnode);
+	print_count(prefix, "nspleaf", spst->objs.nspleaf);
+	print_count(prefix, "nitnode", spst->objs.nitnode);
+	print_count(prefix, "ninode", spst->objs.ninode);
+	print_count(prefix, "nxanode", spst->objs.nxanode);
+	print_count(prefix, "ndtnode", spst->objs.ndtnode);
+	print_count(prefix, "nftnode", spst->objs.nftnode);
+	print_count(prefix, "nsymval", spst->objs.nsymval);
+}
+
+static void cmd_show_spstats(struct cmd_show_ctx *ctx)
+{
+	struct silofs_spacestats spst;
+
+	cmd_show_do_ioctl_query(ctx);
+	silofs_spacestats_import(&spst, &ctx->query.u.spstats.spst);
+	print_spacestats(&spst);
 }
 
 static void cmd_show_statx(struct cmd_show_ctx *ctx)
@@ -217,17 +296,17 @@ static void cmd_show_statx(struct cmd_show_ctx *ctx)
 	const struct statx *stx = &qstatx->stx;
 
 	cmd_show_do_ioctl_query(ctx);
-	printf("blksize:    %ld \n", (long)stx->stx_blksize);
-	printf("nlink:      %u  \n",  stx->stx_nlink);
-	printf("uid:        %u  \n",  stx->stx_uid);
-	printf("gid:        %u  \n",  stx->stx_gid);
-	printf("mode:       0%o \n",  stx->stx_mode);
-	printf("ino:        %ld \n", (long)stx->stx_ino);
-	printf("size:       %ld \n", (long)stx->stx_size);
-	printf("blocks:     %ld \n", (long)stx->stx_blocks);
+	printf("blksize: %ld\n", (long)stx->stx_blksize);
+	printf("nlink: %u\n",  stx->stx_nlink);
+	printf("uid: %u\n",  stx->stx_uid);
+	printf("gid: %u\n",  stx->stx_gid);
+	printf("mode: 0%o\n",  stx->stx_mode);
+	printf("ino: %ld\n", (long)stx->stx_ino);
+	printf("size: %ld\n", (long)stx->stx_size);
+	printf("blocks: %ld\n", (long)stx->stx_blocks);
 	/* printf("mnt_id:     %ld \n", (long)stx->stx_mnt_id); */
-	printf("iflags:     %x  \n",  qstatx->iflags);
-	printf("dirflags:   %x  \n",  qstatx->dirflags);
+	printf("iflags: %x\n",  qstatx->iflags);
+	printf("dirflags: %x\n",  qstatx->dirflags);
 }
 
 static void cmd_show_execute(struct cmd_show_ctx *ctx)
@@ -236,11 +315,14 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_VERSION:
 		cmd_show_version(ctx);
 		break;
-	case SILOFS_QUERY_REPONAME:
-		cmd_show_repo(ctx);
+	case SILOFS_QUERY_BOOTSEC:
+		cmd_show_bootsec(ctx);
 		break;
-	case SILOFS_QUERY_STATFSX:
-		cmd_show_statfsx(ctx);
+	case SILOFS_QUERY_UPTIME:
+		cmd_show_uptime(ctx);
+		break;
+	case SILOFS_QUERY_SPSTATS:
+		cmd_show_spstats(ctx);
 		break;
 	case SILOFS_QUERY_STATX:
 		cmd_show_statx(ctx);

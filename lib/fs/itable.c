@@ -15,14 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/itable.h>
-#include <silofs/fs/inode.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <limits.h>
 
@@ -572,7 +565,7 @@ static void itbl_init_common(struct silofs_itable *itbl)
 {
 	itbl_set_root(itbl, vaddr_none());
 	iaddr_reset(&itbl->it_rootdir);
-	itbl->it_apex_ino = SILOFS_INO_ROOT + SILOFS_INO_PSEUDO_MAX;
+	itbl->it_uber_ino = SILOFS_INO_ROOT + SILOFS_INO_PSEUDO_MAX;
 	itbl->it_ninodes_max = ULONG_MAX / 2;
 	itbl->it_ninodes = 0;
 }
@@ -581,7 +574,7 @@ static void itbl_fini_common(struct silofs_itable *itbl)
 {
 	itbl_set_root(itbl, vaddr_none());
 	iaddr_reset(&itbl->it_rootdir);
-	itbl->it_apex_ino = 0;
+	itbl->it_uber_ino = 0;
 	itbl->it_ninodes_max = 0;
 	itbl->it_ninodes = 0;
 }
@@ -609,7 +602,7 @@ void silofs_itbl_update_by(struct silofs_itable *itbl,
 {
 	vaddr_assign(&itbl->it_rootitbl, &itbl_other->it_rootitbl);
 	iaddr_assign(&itbl->it_rootdir, &itbl_other->it_rootdir);
-	itbl->it_apex_ino = itbl_other->it_apex_ino;
+	itbl->it_uber_ino = itbl_other->it_uber_ino;
 	itbl->it_ninodes = itbl_other->it_ninodes;
 	itbl->it_ninodes_max = itbl_other->it_ninodes_max;
 }
@@ -635,28 +628,28 @@ static int itbl_next_ino(struct silofs_itable *itbl, ino_t *out_ino)
 	if (itbl->it_ninodes >= itbl->it_ninodes_max) {
 		return -ENOSPC;
 	}
-	itbl->it_apex_ino += 1;
-	*out_ino = itbl->it_apex_ino;
+	itbl->it_uber_ino += 1;
+	*out_ino = itbl->it_uber_ino;
 	return 0;
 }
 
-static void itbl_fixup_apex_ino(struct silofs_itable *itbl, ino_t ino)
+static void itbl_fixup_uber_ino(struct silofs_itable *itbl, ino_t ino)
 {
-	if (itbl->it_apex_ino < ino) {
-		itbl->it_apex_ino = ino;
+	if (itbl->it_uber_ino < ino) {
+		itbl->it_uber_ino = ino;
 	}
 }
 
 static void itbl_add_ino(struct silofs_itable *itbl, ino_t ino)
 {
 	itbl->it_ninodes++;
-	itbl_fixup_apex_ino(itbl, ino);
+	itbl_fixup_uber_ino(itbl, ino);
 }
 
 static void itbl_remove_ino(struct silofs_itable *itbl, ino_t ino)
 {
 	silofs_assert_gt(itbl->it_ninodes, 0);
-	silofs_assert_ge(itbl->it_apex_ino, ino);
+	silofs_assert_ge(itbl->it_uber_ino, ino);
 
 	itbl->it_ninodes--;
 }
@@ -834,14 +827,14 @@ static int recheck_itnode(struct silofs_itnode_info *itni)
 
 static int itc_stage_itnode(const struct silofs_it_ctx *it_ctx,
                             const struct silofs_vaddr *vaddr,
-                            enum silofs_stage_flags stg_flags,
+                            enum silofs_stage_mode stg_mode,
                             struct silofs_itnode_info **out_itni)
 {
 	int err;
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_itnode_info *itni = NULL;
 
-	err = silofs_sbi_stage_vnode(it_ctx->sbi, vaddr, stg_flags, &vi);
+	err = silofs_sbi_stage_vnode(it_ctx->sbi, vaddr, stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -865,7 +858,7 @@ static int itc_stage_rdonly_itnode(const struct silofs_it_ctx *it_ctx,
 static int
 itc_stage_child_itnode(const struct silofs_it_ctx *it_ctx,
                        struct silofs_itnode_info *parent_itni,
-                       ino_t ino, enum silofs_stage_flags stg_flags,
+                       ino_t ino, enum silofs_stage_mode stg_mode,
                        struct silofs_itnode_info **out_itni)
 {
 	struct silofs_vaddr vaddr;
@@ -873,7 +866,7 @@ itc_stage_child_itnode(const struct silofs_it_ctx *it_ctx,
 
 	itni_resolve_child(parent_itni, ino, &vaddr);
 	itni_incref(parent_itni);
-	err = itc_stage_itnode(it_ctx, &vaddr, stg_flags, out_itni);
+	err = itc_stage_itnode(it_ctx, &vaddr, stg_mode, out_itni);
 	itni_decref(parent_itni);
 	return err;
 }
@@ -897,13 +890,13 @@ itc_stage_rdonly_child(const struct silofs_it_ctx *it_ctx,
 }
 
 static int itc_stage_itroot(const struct silofs_it_ctx *it_ctx,
-                            enum silofs_stage_flags stg_flags,
+                            enum silofs_stage_mode stg_mode,
                             struct silofs_itnode_info **out_itni)
 {
 	const struct silofs_vaddr *it_root = itc_treeroot(it_ctx);
 	int err;
 
-	err = itc_stage_itnode(it_ctx, it_root, stg_flags, out_itni);
+	err = itc_stage_itnode(it_ctx, it_root, stg_mode, out_itni);
 	if (err) {
 		return err;
 	}
@@ -1406,7 +1399,7 @@ int silofs_bind_rootdir(struct silofs_sb_info *sbi,
 
 	err = itbl_set_rootdir(itbl, ino, ii_vaddr(ii));
 	if (!err) {
-		itbl_fixup_apex_ino(itbl, ino);
+		itbl_fixup_uber_ino(itbl, ino);
 	}
 	return err;
 }

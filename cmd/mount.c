@@ -26,7 +26,6 @@
 #include <time.h>
 #include "cmd.h"
 
-
 static const char *cmd_mount_usage[] = {
 	"mount [options] <repo/name> <mountpoint>",
 	"",
@@ -135,8 +134,8 @@ static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
 		.gid = getgid(),
 		.pid = getpid(),
 		.umask = 0022,
-		.main_repodir = ctx->args.repodir_real,
-		.main_name = ctx->args.name,
+		.warm_repodir = ctx->args.repodir_real,
+		.warm_name = ctx->args.name,
 		.mntdir = ctx->args.mntpoint_real,
 		.withfuse = true,
 		.allowother = ctx->args.allowother,
@@ -287,13 +286,13 @@ static void cmd_mount_start_daemon(const struct cmd_mount_ctx *ctx)
 	}
 }
 
-static void cmd_mount_non_dumpable(void)
+static void cmd_mount_set_dumpable(unsigned int state)
 {
 	int err;
 
-	err = silofs_sys_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
 	if (err) {
-		cmd_dief(err, "failed to prctl non-dumpable");
+		cmd_dief(err, "failed to prctl dumpable: state=%d", state);
 	}
 }
 
@@ -307,25 +306,16 @@ static void cmd_mount_boostrap_process(const struct cmd_mount_ctx *ctx)
 	if (!cmd_globals.allow_coredump) {
 		cmd_setrlimit_nocore();
 	}
-	if (!cmd_globals.disable_ptrace) {
-		cmd_mount_non_dumpable();
+	if (cmd_globals.dumpable) {
+		cmd_mount_set_dumpable(1);
+	} else {
+		cmd_mount_set_dumpable(0);
 	}
 }
 
 static void cmd_mount_verify_fs(struct cmd_mount_ctx *ctx)
 {
-	int err;
-
-	err = silofs_fse_verify(ctx->fse, &ctx->blnk.bsec);
-	if (err == -EUCLEAN) {
-		cmd_dief(0, "bad repo: %s", ctx->args.repodir_real);
-	} else if (err == -EKEYEXPIRED) {
-		cmd_dief(0, "wrong passphrase: %s", ctx->args.repodir_name);
-	} else if (err == -ENOENT) {
-		cmd_dief(0, "not exist: %s", ctx->args.name);
-	} else if (err != 0) {
-		cmd_dief(err, "illegal repo: %s", ctx->args.repodir_real);
-	}
+	cmd_verify_fs(ctx->fse, &ctx->blnk.bsec);
 }
 
 /*

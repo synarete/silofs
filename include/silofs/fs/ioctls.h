@@ -32,9 +32,10 @@
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
 	SILOFS_QUERY_VERSION    = 1,
-	SILOFS_QUERY_REPONAME   = 2,
-	SILOFS_QUERY_STATFSX    = 3,
-	SILOFS_QUERY_STATX      = 4,
+	SILOFS_QUERY_BOOTSEC    = 2,
+	SILOFS_QUERY_UPTIME     = 3,
+	SILOFS_QUERY_SPSTATS    = 4,
+	SILOFS_QUERY_STATX      = 5,
 };
 
 enum silofs_tweak_type {
@@ -51,8 +52,8 @@ struct silofs_query_version {
 	uint32_t sublevel;
 };
 
-struct silofs_query_reponame {
-	char    repodir[SILOFS_REPOPATH_MAX];
+struct silofs_query_bootsec {
+	char    repo[SILOFS_REPOPATH_MAX];
 	char    name[SILOFS_NAME_MAX + 1];
 };
 
@@ -60,16 +61,13 @@ struct silofs_query_fsname {
 	char    name[SILOFS_NAME_MAX + 1];
 };
 
-struct silofs_query_statfsx {
+struct silofs_query_uptime {
 	uint64_t msflags;     /* mount flags */
 	int64_t  uptime;      /* current up-time in seconds */
-	uint64_t bsize;       /* size of fs in bytes */
-	uint64_t bused;       /* number of used bytes */
-	uint64_t ilimit;      /* max number of inodes */
-	uint64_t icurr;       /* currently used inodes */
-	uint64_t umeta;       /* uspace used meta bytes */
-	uint64_t vmeta;       /* vspace used meta bytes */
-	uint64_t vdata;       /* vspace used data bytes */
+};
+
+struct silofs_query_spstats {
+	struct silofs_spstats spst;
 };
 
 struct silofs_query_statx {
@@ -80,16 +78,17 @@ struct silofs_query_statx {
 
 union silofs_query_u {
 	struct silofs_query_version     version;
-	struct silofs_query_reponame    reponame;
+	struct silofs_query_bootsec     bootsec;
 	struct silofs_query_fsname      fsname;
-	struct silofs_query_statfsx     statfsx;
+	struct silofs_query_uptime      uptime;
+	struct silofs_query_spstats     spstats;
 	struct silofs_query_statx       statx;
-	uint8_t pad[2040];
+	uint8_t pad[1984];
 };
 
 struct silofs_ioc_query {
 	int32_t  qtype;
-	uint32_t reserved;
+	uint32_t reserved[15];
 	union silofs_query_u u;
 };
 
@@ -109,7 +108,7 @@ struct silofs_ioc_tweak {
 };
 
 struct silofs_ioc_clone {
-	struct silofs_bootsec1k bsec;
+	struct silofs_bootsec1k bsec[2];
 };
 
 

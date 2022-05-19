@@ -15,10 +15,12 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/infra.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/spxmap.h>
+#include <silofs/fs/crypto.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
@@ -30,7 +32,7 @@
 
 #define CACHE_RETRY 2
 
-
+static void cache_drop_uamap(struct silofs_cache *cache);
 static void cache_evict_some(struct silofs_cache *cache);
 static void cache_dirtify_ui(struct silofs_cache *cache,
                              struct silofs_unode_info *ui);
@@ -163,8 +165,9 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	const uint64_t voff = (uint64_t)uaddr->voff;
 	const uint64_t stype = (uint64_t)(uaddr->stype);
 	const uint64_t ohash = hash_of_oaddr(&uaddr->oaddr);
+	const uint32_t height = (uint32_t)uaddr->height;
 
-	return ohash ^ stype ^ voff;
+	return silofs_rotate64(ohash + stype, height % 7) ^ voff;
 }
 
 static uint64_t hash_of_voff(const loff_t *voff)
@@ -369,15 +372,27 @@ static void ce_unlru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	listq_remove(lru, ce_lru_link(ce));
 }
 
-static bool ce_islru_front(struct silofs_cache_elem *ce,
-                           struct silofs_listq *lru)
+static bool ce_need_relru(struct silofs_cache_elem *ce,
+                          const struct silofs_listq *lru)
 {
-	return (listq_front(lru) == ce_lru_link(ce));
+	const struct silofs_list_head *lru_front = listq_front(lru);
+	const struct silofs_list_head *ce_lru_lnk = ce_lru_link(ce);
+
+	if (unlikely(lru_front == NULL)) {
+		return false; /* make clang-scan happy */
+	}
+	if (lru_front == ce_lru_lnk) {
+		return false;
+	}
+	if (lru_front->next == ce_lru_lnk) {
+		return false;
+	}
+	return true;
 }
 
 static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 {
-	if (!ce_islru_front(ce, lru)) {
+	if (ce_need_relru(ce, lru)) {
 		ce_unlru(ce, lru);
 		ce_lru(ce, lru);
 	}
@@ -1674,24 +1689,11 @@ static void cache_remove_ui(struct silofs_cache *cache,
 	si_remove_from_lrumap(&ui->u_si, &cache->c_ui_lm);
 }
 
-static void cache_unmap_ui(struct silofs_cache *cache,
-                           struct silofs_unode_info *ui)
-{
-	silofs_unomap_remove(&cache->c_unom, ui);
-}
-
-static void cache_map_ui(struct silofs_cache *cache,
-                         struct silofs_unode_info *ui)
-{
-	silofs_unomap_insert(&cache->c_unom, ui);
-}
-
 static void cache_evict_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
 	struct silofs_snode_info *ti = &ui->u_si;
 
-	cache_unmap_ui(cache, ui);
 	cache_remove_ui(cache, ui);
 	ui_detach_bk(ui);
 	si_delete(ti, cache->c_alloc);
@@ -1769,11 +1771,46 @@ cache_new_ui(const struct silofs_cache *cache,
 	return silofs_new_ui(cache->c_alloc, uaddr);
 }
 
+static void cache_track_uaddr(struct silofs_cache *cache,
+                              const struct silofs_uaddr *uaddr)
+{
+	silofs_uamap_insert(&cache->c_uam, uaddr);
+}
+
+static void cache_forget_uaddr(struct silofs_cache *cache,
+                               const struct silofs_uaddr *uaddr)
+{
+	silofs_uamap_remove(&cache->c_uam, uaddr);
+}
+
+static const struct silofs_uaddr *
+cache_lookup_uaddr_by(struct silofs_cache *cache,
+                      loff_t voff, enum silofs_height height)
+{
+	return silofs_uamap_lookup(&cache->c_uam, voff, height);
+}
+
+static void cache_track_uaddr_of(struct silofs_cache *cache,
+                                 const struct silofs_unode_info *ui)
+{
+	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
+
+	if (!cache_lookup_uaddr_by(cache, uaddr->voff, uaddr->height)) {
+		cache_track_uaddr(cache, uaddr);
+	}
+}
+
 struct silofs_unode_info *
 silofs_cache_lookup_unode(struct silofs_cache *cache,
                           const struct silofs_uaddr *uaddr)
 {
-	return cache_find_relru_ui(cache, uaddr);
+	struct silofs_unode_info *ui;
+
+	ui = cache_find_relru_ui(cache, uaddr);
+	if (ui != NULL) {
+		cache_track_uaddr_of(cache, ui);
+	}
+	return ui;
 }
 
 static struct silofs_unode_info *
@@ -1795,12 +1832,11 @@ cache_require_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 static void cache_store_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *ti = &ui->u_si;
+	struct silofs_snode_info *si = &ui->u_si;
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 
-	ckey_by_uaddr(&ti->s_ce.ce_ckey, uaddr);
+	ckey_by_uaddr(&si->s_ce.ce_ckey, uaddr);
 	cache_store_ui_lrumap(cache, ui);
-	cache_map_ui(cache, ui);
 }
 
 struct silofs_unode_info *
@@ -1813,6 +1849,7 @@ silofs_cache_spawn_unode(struct silofs_cache *cache,
 	if (ui != NULL) {
 		si_set_cache(&ui->u_si, cache);
 		cache_store_ui(cache, ui);
+		cache_track_uaddr(cache, ui_uaddr(ui));
 	}
 	return ui;
 }
@@ -1821,14 +1858,27 @@ void silofs_cache_forget_unode(struct silofs_cache *cache,
                                struct silofs_unode_info *ui)
 {
 	ui_undirtify(ui);
+	cache_forget_uaddr(cache, ui_uaddr(ui));
 	cache_evict_ui(cache, ui);
 }
 
 struct silofs_unode_info *
-silofs_cache_find_unode_by(const struct silofs_cache *cache,
-                           const struct silofs_taddr *taddr)
+silofs_cache_find_unode_by(struct silofs_cache *cache,
+                           loff_t voff, enum silofs_height height)
 {
-	return silofs_unomap_lookup(&cache->c_unom, taddr);
+	const struct silofs_uaddr *uaddr;
+	struct silofs_unode_info *ui = NULL;
+
+	uaddr = cache_lookup_uaddr_by(cache, voff, height);
+	if (uaddr != NULL) {
+		ui = silofs_cache_lookup_unode(cache, uaddr);
+	}
+	return ui;
+}
+
+void silofs_cache_forget_uaddrs(struct silofs_cache *cache)
+{
+	cache_drop_uamap(cache);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2160,9 +2210,9 @@ static void cache_store_vi_lrumap(struct silofs_cache *cache,
 static void cache_store_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_snode_info *ti = &vi->v_si;
+	struct silofs_snode_info *si = &vi->v_si;
 
-	ckey_by_vaddr(&ti->s_ce.ce_ckey, &vi->v_vaddr);
+	ckey_by_vaddr(&si->s_ce.ce_ckey, &vi->v_vaddr);
 	cache_store_vi_lrumap(cache, vi);
 }
 
@@ -2438,10 +2488,16 @@ static void cache_drop_spcmaps(struct silofs_cache *cache)
 	silofs_spamaps_drop(&cache->c_spam);
 }
 
+static void cache_drop_uamap(struct silofs_cache *cache)
+{
+	silofs_uamap_drop_all(&cache->c_uam);
+}
+
 void silofs_cache_drop(struct silofs_cache *cache)
 {
 	cache_drop_evictables(cache);
 	cache_drop_spcmaps(cache);
+	cache_drop_uamap(cache);
 }
 
 static size_t flush_threshold_of(int flags)
@@ -2669,16 +2725,25 @@ static void cache_fini_spamaps(struct silofs_cache *cache)
 	silofs_spamaps_fini(&cache->c_spam);
 }
 
-static int cache_init_unomap(struct silofs_cache *cache)
+static int cache_init_uamap(struct silofs_cache *cache)
 {
-	return silofs_unomap_init(&cache->c_unom, cache->c_alloc);
+	return silofs_uamap_init(&cache->c_uam, cache->c_alloc);
 }
 
-static void cache_fini_unomap(struct silofs_cache *cache)
+static void cache_fini_uamap(struct silofs_cache *cache)
 {
-	silofs_unomap_fini(&cache->c_unom, cache->c_alloc);
+	silofs_uamap_fini(&cache->c_uam);
 }
 
+static int cache_init_mdigest(struct silofs_cache *cache)
+{
+	return silofs_mdigest_init(&cache->c_mdigest);
+}
+
+static void cache_fini_mdigest(struct silofs_cache *cache)
+{
+	silofs_mdigest_fini(&cache->c_mdigest);
+}
 
 int silofs_cache_init(struct silofs_cache *cache,
                       struct silofs_alloc *alloc, size_t msz_hint)
@@ -2690,13 +2755,17 @@ int silofs_cache_init(struct silofs_cache *cache,
 	cache->mem_size_hint = msz_hint;
 	dq_init(&cache->c_dq);
 
-	err = cache_init_spamaps(cache);
+	err = cache_init_mdigest(cache);
 	if (err) {
 		return err;
 	}
-	err = cache_init_unomap(cache);
+	err = cache_init_spamaps(cache);
 	if (err) {
-		return err;
+		goto out_err;
+	}
+	err = cache_init_uamap(cache);
+	if (err) {
+		goto out_err;
 	}
 	err = cache_init_nil_bk(cache);
 	if (err) {
@@ -2708,9 +2777,7 @@ int silofs_cache_init(struct silofs_cache *cache,
 	}
 	return 0;
 out_err:
-	cache_fini_nil_bk(cache);
-	cache_fini_unomap(cache);
-	cache_fini_spamaps(cache);
+	silofs_cache_fini(cache);
 	return err;
 }
 
@@ -2719,8 +2786,9 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	dq_fini(&cache->c_dq);
 	cache_fini_lrumaps(cache);
 	cache_fini_nil_bk(cache);
-	cache_fini_unomap(cache);
+	cache_fini_uamap(cache);
 	cache_fini_spamaps(cache);
+	cache_fini_mdigest(cache);
 	cache->c_alloc = NULL;
 }
 
@@ -2781,17 +2849,17 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 }
 
 
-void silofs_sti_incref(struct silofs_stats_info *sti)
+void silofs_sti_incref(struct silofs_spstats_info *sti)
 {
 	if (likely(sti != NULL)) {
-		si_incref(&sti->st_ui.u_si);
+		si_incref(&sti->sp_ui.u_si);
 	}
 }
 
-void silofs_sti_decref(struct silofs_stats_info *sti)
+void silofs_sti_decref(struct silofs_spstats_info *sti)
 {
 	if (likely(sti != NULL)) {
-		si_decref(&sti->st_ui.u_si);
+		si_decref(&sti->sp_ui.u_si);
 	}
 }
 

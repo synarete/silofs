@@ -49,7 +49,9 @@ struct cmd_snap_args {
 struct cmd_snap_ctx {
 	struct cmd_snap_args    args;
 	struct silofs_bootlink  src_blnk;
-	struct silofs_bootlink  dst_blnk;
+	struct silofs_bootpath  dst_bpath;
+	struct silofs_bootsecs  dst_bsecs;
+	struct silofs_ioc_clone ioc_clone;
 	struct silofs_fs_env   *fse;
 	char                   *src_mntdir;
 	int                     src_lock_fd;
@@ -129,7 +131,7 @@ static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)
 	cmd_check_fsname(ctx->args.dst_name);
 	cmd_setup_bpath(&ctx->src_blnk.bpath,
 	                ctx->args.src_repodir_real, ctx->args.src_name);
-	cmd_setup_bpath(&ctx->dst_blnk.bpath,
+	cmd_setup_bpath(&ctx->dst_bpath,
 	                ctx->args.dst_repodir_real, ctx->args.dst_name);
 }
 
@@ -174,14 +176,14 @@ static bool cmd_snap_is_src_mntdir(struct cmd_snap_ctx *ctx,
                                    const char *mntdir)
 {
 	struct silofs_ioc_query query = {
-		.qtype = SILOFS_QUERY_REPONAME,
+		.qtype = SILOFS_QUERY_BOOTSEC,
 	};
 	bool ret;
 
 	cmd_snap_ioctl_query(mntdir, &query);
-	ret = cmd_snap_stat_samedir(query.u.reponame.repodir,
+	ret = cmd_snap_stat_samedir(query.u.bootsec.repo,
 	                            ctx->args.src_repodir_real);
-	return ret && !strcmp(query.u.reponame.name, ctx->args.src_name);
+	return ret && !strcmp(query.u.bootsec.name, ctx->args.src_name);
 }
 
 static void cmd_snap_resolve_src_mntdir(struct cmd_snap_ctx *ctx)
@@ -207,7 +209,7 @@ static void cmd_snap_resolve_src_mntdir(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_ioc_clone clone;
+	struct silofs_ioc_clone *clone = &ctx->ioc_clone;
 	int dfd = -1;
 	int err;
 
@@ -220,7 +222,7 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "syncfs error: %s", ctx->src_mntdir);
 	}
 
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, &clone);
+	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, clone);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		cmd_dief(err, "ioctl error: %s", ctx->src_mntdir);
@@ -229,21 +231,28 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		         ctx->args.dst_repodir_name);
 	}
 
-	silofs_bsec1k_parse(&clone.bsec, &ctx->dst_blnk.bsec);
-	cmd_save_bsec(&ctx->dst_blnk.bpath, &ctx->dst_blnk.bsec);
+	silofs_bsec1k_parse(&clone->bsec[0], &ctx->dst_bsecs.bsec[0]);
+	silofs_bsec1k_parse(&clone->bsec[1], &ctx->dst_bsecs.bsec[1]);
+}
+
+static void cmd_snap_resave_bsecs(struct cmd_snap_ctx *ctx)
+{
+	cmd_save_bsec(&ctx->src_blnk.bpath, &ctx->dst_bsecs.bsec[0]);
+	cmd_save_bsec(&ctx->dst_bpath, &ctx->dst_bsecs.bsec[1]);
 }
 
 static void cmd_snap_online(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_resolve_src_mntdir(ctx);
 	cmd_snap_by_ioctl_clone(ctx);
+	cmd_snap_resave_bsecs(ctx);
 }
 
 static void cmd_snap_setup_env(struct cmd_snap_ctx *ctx)
 {
 	const struct silofs_fs_args fs_args = {
-		.main_repodir = ctx->args.src_repodir_real,
-		.main_name = ctx->args.src_name,
+		.warm_repodir = ctx->args.src_repodir_real,
+		.warm_name = ctx->args.src_name,
 		.uid = getuid(),
 		.gid = getgid(),
 		.pid = getpid(),
@@ -255,14 +264,14 @@ static void cmd_snap_setup_env(struct cmd_snap_ctx *ctx)
 static void cmd_snap_by_exec_fse(struct cmd_snap_ctx *ctx)
 {
 	cmd_load_bsec(&ctx->src_blnk.bpath, &ctx->src_blnk.bsec);
-	cmd_snap_fs(ctx->fse, &ctx->src_blnk.bsec, &ctx->dst_blnk.bsec);
-	cmd_save_bsec(&ctx->dst_blnk.bpath, &ctx->dst_blnk.bsec);
+	cmd_snap_fs(ctx->fse, &ctx->src_blnk.bsec, &ctx->dst_bsecs);
 }
 
 static void cmd_snap_offline(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_setup_env(ctx);
 	cmd_snap_by_exec_fse(ctx);
+	cmd_snap_resave_bsecs(ctx);
 }
 
 static bool cmd_snap_need_online(struct cmd_snap_ctx *ctx)

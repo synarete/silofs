@@ -1,14 +1,18 @@
+-include $(top_builddir)/common.mk
+-include $(top_builddir)/sedsub.mk
+
 nobase_include_HEADERS = $(NULL)
 nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h
 nobase_include_HEADERS += silofs/infra/bytebuf.h
+nobase_include_HEADERS += silofs/infra/ccattr.h
 nobase_include_HEADERS += silofs/infra/consts.h
-nobase_include_HEADERS += silofs/infra/errors.h
 nobase_include_HEADERS += silofs/infra/hash.h
 nobase_include_HEADERS += silofs/infra/list.h
 nobase_include_HEADERS += silofs/infra/logging.h
 nobase_include_HEADERS += silofs/infra/macros.h
+nobase_include_HEADERS += silofs/infra/panic.h
 nobase_include_HEADERS += silofs/infra/pipe.h
 nobase_include_HEADERS += silofs/infra/qalloc.h
 nobase_include_HEADERS += silofs/infra/random.h
@@ -23,7 +27,6 @@ nobase_include_HEADERS += silofs/infra/xiovec.h
 nobase_include_HEADERS += silofs/infra.h
 
 nobase_include_HEADERS += silofs/fs/address.h
-nobase_include_HEADERS += silofs/fs/apex.h
 nobase_include_HEADERS += silofs/fs/boot.h
 nobase_include_HEADERS += silofs/fs/cache.h
 nobase_include_HEADERS += silofs/fs/crypto.h
@@ -52,15 +55,19 @@ nobase_include_HEADERS += silofs/fs/stats.h
 nobase_include_HEADERS += silofs/fs/super.h
 nobase_include_HEADERS += silofs/fs/symlink.h
 nobase_include_HEADERS += silofs/fs/types.h
-nobase_include_HEADERS += silofs/fs/umeta.h
+nobase_include_HEADERS += silofs/fs/uber.h
 nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
 nobase_include_HEADERS += silofs/fs.h
 
-nobase_include_HEADERS += silofs/mntd.h
-
 noinst_HEADERS = $(NULL)
 noinst_HEADERS += config.h
+noinst_HEADERS += config-am.h
 noinst_HEADERS += silofs/configs.h
 noinst_HEADERS += linux/fuse7.h
+
+EXTRA_DIST = config-am.h.in
+
+config-am.h: config-am.h.in
+	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;
 

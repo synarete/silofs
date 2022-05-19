@@ -160,8 +160,8 @@
 #define bli_incref(bli)                 silofs_bli_incref(bli)
 #define bli_decref(bli)                 silofs_bli_decref(bli)
 
-#define sbi_apex(sbi)                   silofs_sbi_apex(sbi)
-#define sbi_alloc(sbi)                   silofs_sbi_alloc(sbi)
+#define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
+#define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 #define sbi_blobid(sbi)                 silofs_sbi_blobid(sbi)
@@ -194,7 +194,7 @@
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)
-#define vi_apex(vi)                     silofs_vi_apex(vi)
+#define vi_uber(vi)                     silofs_vi_uber(vi)
 #define vi_sbi(vi)                      silofs_vi_sbi(vi)
 #define vi_refcnt(vi)                   silofs_vi_refcnt(vi)
 #define vi_incref(vi)                   silofs_vi_incref(vi)
@@ -208,7 +208,7 @@
 #define ii_ino(ii)                      silofs_ii_ino(ii)
 #define ii_vaddr(ii)                    silofs_ii_vaddr(ii)
 #define ii_sbi(ii)                      silofs_ii_sbi(ii)
-#define ii_apex(ii)                     silofs_ii_apex(ii)
+#define ii_uber(ii)                     silofs_ii_uber(ii)
 #define ii_cache(ii)                    silofs_ii_cache(ii)
 #define ii_refcnt(ii)                   silofs_ii_refcnt(ii)
 #define ii_incref(ii)                   silofs_ii_incref(ii)

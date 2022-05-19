@@ -33,7 +33,8 @@ struct silofs_dirtyq {
 
 /* in-memory caching */
 struct silofs_cache {
-	struct silofs_alloc *c_alloc;
+	struct silofs_mdigest   c_mdigest;
+	struct silofs_alloc    *c_alloc;
 	struct silofs_block    *c_nil_bk;
 	struct silofs_lrumap    c_bli_lm;
 	struct silofs_lrumap    c_ubi_lm;
@@ -42,7 +43,7 @@ struct silofs_cache {
 	struct silofs_lrumap    c_vi_lm;
 	struct silofs_dirtyq    c_dq;
 	struct silofs_spamaps   c_spam;
-	struct silofs_unomap    c_unom;
+	struct silofs_uamap     c_uam;
 	size_t mem_size_hint;
 };
 
@@ -119,8 +120,10 @@ silofs_cache_lookup_unode(struct silofs_cache *cache,
                           const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
-silofs_cache_find_unode_by(const struct silofs_cache *cache,
-                           const struct silofs_taddr *taddr);
+silofs_cache_find_unode_by(struct silofs_cache *cache,
+                           loff_t voff, enum silofs_height height);
+
+void silofs_cache_forget_uaddrs(struct silofs_cache *cache);
 
 
 struct silofs_vbk_info *
@@ -196,9 +199,9 @@ void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
 
-void silofs_sti_incref(struct silofs_stats_info *sti);
+void silofs_sti_incref(struct silofs_spstats_info *sti);
 
-void silofs_sti_decref(struct silofs_stats_info *sti);
+void silofs_sti_decref(struct silofs_spstats_info *sti);
 
 void silofs_vbi_incref(struct silofs_vbk_info *vbi);
 

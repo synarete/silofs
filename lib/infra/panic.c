@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra/macros.h>
 #include <silofs/infra/utility.h>
-#include <silofs/infra/errors.h>
+#include <silofs/infra/panic.h>
 #include <silofs/infra/list.h>
 #include <silofs/infra/qalloc.h>
 #include <silofs/infra/logging.h>

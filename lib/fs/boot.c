@@ -34,7 +34,6 @@
 #include <limits.h>
 #include <endian.h>
 
-
 static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 {
 	const char *allowed =
@@ -338,7 +337,7 @@ static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
 		return -EINVAL;
 	}
 	if (bsec1k_version(bsc) != SILOFS_FMT_VERSION) {
-		return -EUCLEAN;
+		return -EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -411,7 +410,7 @@ static int bsec1k_check_hash(const struct silofs_bootsec1k *bsc,
 	bsec1k_hash(bsc, &hash[0]);
 	bsec1k_calc_hash(bsc, md, &hash[1]);
 
-	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -EUCLEAN;
+	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -EFSCORRUPTED;
 }
 
 int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,
@@ -453,6 +452,14 @@ void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
 	bsec1k_set_flags(bsc, bsec->flags);
 	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
 		bsec1k_set_key_hash(bsc, &bsec->key_hash);
+	}
+}
+
+void silofs_bsec1k_setn(struct silofs_bootsec1k *bsc,
+                        const struct silofs_bootsec *bsec, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		silofs_bsec1k_set(&bsc[i], &bsec[i]);
 	}
 }
 
@@ -728,7 +735,6 @@ out:
 	return err;
 }
 
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_calc_key_hash(const struct silofs_key *key,
@@ -870,7 +876,6 @@ static int check_proc_rlimits(void)
 	}
 	return 0;
 }
-
 
 static int g_boot_lib_once;
 

@@ -133,7 +133,7 @@ void cmd_format_repo(struct silofs_fs_env *fse)
 	err = silofs_fse_format_repos(fse);
 	if (err) {
 		cmd_dief(err, "failed to format repo: %s",
-		         fse->fs_args.main_repodir);
+		         fse->fs_args.warm_repodir);
 	}
 }
 
@@ -144,7 +144,7 @@ void cmd_open_repo(struct silofs_fs_env *fse)
 	err = silofs_fse_open_repos(fse);
 	if (err) {
 		cmd_dief(err, "failed to open repo: %s",
-		         fse->fs_args.main_repodir);
+		         fse->fs_args.warm_repodir);
 	}
 }
 
@@ -155,7 +155,7 @@ void cmd_close_repo(struct silofs_fs_env *fse)
 	err = silofs_fse_close_repos(fse);
 	if (err) {
 		cmd_dief(err, "failed to close repo: %s",
-		         fse->fs_args.main_repodir);
+		         fse->fs_args.warm_repodir);
 	}
 }
 
@@ -167,8 +167,8 @@ void cmd_format_fs(struct silofs_fs_env *fse,
 	err = silofs_fse_format_fs(fse, bsec);
 	if (err) {
 		cmd_dief(err, "failed to format fs: %s/%s",
-		         fse->fs_args.main_repodir,
-		         fse->fs_args.main_name);
+		         fse->fs_args.warm_repodir,
+		         fse->fs_args.warm_name);
 	}
 }
 
@@ -179,47 +179,57 @@ void cmd_shutdown_fs(struct silofs_fs_env *fse)
 	err = silofs_fse_shut(fse);
 	if (err) {
 		cmd_dief(err, "shutdown error: %s",
-		         fse->fs_args.main_repodir);
+		         fse->fs_args.warm_repodir);
 	}
 	err = silofs_fse_term(fse);
 	if (err) {
 		cmd_dief(err, "internal error: %s",
-		         fse->fs_args.main_repodir);
+		         fse->fs_args.warm_repodir);
 	}
+}
+
+static void cmd_warm_pathname(const struct silofs_fs_env *fse, char **outp)
+{
+	const struct silofs_fs_args *args = &fse->fs_args;
+
+	cmd_join_path(args->warm_repodir, args->warm_name, outp);
 }
 
 void cmd_snap_fs(struct silofs_fs_env *fse,
                  const struct silofs_bootsec *bsec,
-                 struct silofs_bootsec *out_bsec)
+                 struct silofs_bootsecs *out_bsecs)
 {
+	char *path = NULL;
 	int err;
 
-	err = silofs_fse_snap(fse, bsec, out_bsec);
+	cmd_warm_pathname(fse, &path);
+	err = silofs_fse_snap(fse, bsec, out_bsecs);
 	if (err) {
-		cmd_dief(err, "failed to snap: %s/%s",
-		         fse->fs_args.main_repodir,
-		         fse->fs_args.main_name);
+		cmd_dief(err, "failed to snap: %s", path);
 	}
+	cmd_pstrfree(&path);
 }
 
 void cmd_verify_fs(struct silofs_fs_env *fse,
                    const struct silofs_bootsec *bsec)
 {
+	char *path = NULL;
 	int err;
 
+	cmd_warm_pathname(fse, &path);
 	err = silofs_fse_verify(fse, bsec);
-	if (err == -EUCLEAN) {
-		cmd_dief(0, "bad repo: %s", fse->fs_args.main_repodir);
+	if (err == -EROFS) {
+		cmd_dief(err, "read-only: %s", path);
+	} else if (err == -EUCLEAN) {
+		cmd_dief(0, "unclean: %s", path);
 	} else if (err == -EKEYEXPIRED) {
-		cmd_dief(0, "wrong passphrase: %s",
-		         fse->fs_args.main_repodir);
+		cmd_dief(0, "wrong passphrase: %s", path);
 	} else if (err == -ENOENT) {
-		cmd_dief(0, "not exist: %s", fse->fs_args.main_repodir);
+		cmd_dief(0, "not exist: %s", path);
 	} else if (err != 0) {
-		cmd_dief(err, "illegal: %s/%s",
-		         fse->fs_args.main_repodir,
-		         fse->fs_args.main_name);
+		cmd_dief(err, "illegal: %s", path);
 	}
+	cmd_pstrfree(&path);
 }
 
 void cmd_serve_fs(struct silofs_fs_env *fse,
@@ -230,7 +240,7 @@ void cmd_serve_fs(struct silofs_fs_env *fse,
 	err = silofs_fse_serve(fse, bsec);
 	if (err) {
 		cmd_dief(err, "fs failure: %s %s",
-		         fse->fs_args.main_repodir,
+		         fse->fs_args.warm_repodir,
 		         fse->fs_args.mntdir);
 	}
 }

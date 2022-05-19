@@ -579,27 +579,48 @@ static size_t dtn_nde_max(const struct silofs_dtree_node *dtn)
 	return ARRAY_SIZE(dtn->de);
 }
 
-static size_t dtn_nde_used(const struct silofs_dtree_node *dtn)
+static size_t dtn_nde_head(const struct silofs_dtree_node *dtn)
 {
-	return silofs_le16_to_cpu(dtn->dn_nde_used);
+	return silofs_le16_to_cpu(dtn->dn_nde_head);
 }
 
-static void dtn_set_nde_used(struct silofs_dtree_node *dtn, size_t cnt)
+static void dtn_set_nde_head(struct silofs_dtree_node *dtn, size_t cnt)
 {
 	silofs_assert_le(cnt, ARRAY_SIZE(dtn->de));
-	dtn->dn_nde_used = silofs_cpu_to_le16((uint16_t)cnt);
+	dtn->dn_nde_head = silofs_cpu_to_le16((uint16_t)cnt);
+}
+
+static size_t dtn_nde_tail(const struct silofs_dtree_node *dtn)
+{
+	return silofs_le16_to_cpu(dtn->dn_nde_tail);
+}
+
+static void dtn_set_nde_tail(struct silofs_dtree_node *dtn, size_t cnt)
+{
+	silofs_assert_le(cnt, ARRAY_SIZE(dtn->de));
+	dtn->dn_nde_tail = silofs_cpu_to_le16((uint16_t)cnt);
+}
+
+static size_t dtn_nde_used(const struct silofs_dtree_node *dtn)
+{
+	return dtn_nde_head(dtn) + dtn_nde_tail(dtn);
+}
+
+static loff_t dtn_child_off(const struct silofs_dtree_node *dtn, size_t ord)
+{
+	return silofs_vaddr56_parse(&dtn->dn_child[ord]);
 }
 
 static void dtn_child(const struct silofs_dtree_node *dtn,
                       size_t ord, struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr64_parse(&dtn->dn_child[ord], out_vaddr);
+	vaddr_setup(out_vaddr, SILOFS_STYPE_DTNODE, dtn_child_off(dtn, ord));
 }
 
 static void dtn_set_child(struct silofs_dtree_node *dtn,
                           size_t ord, const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr64_set(&dtn->dn_child[ord], vaddr);
+	silofs_vaddr56_set(&dtn->dn_child[ord], vaddr_off(vaddr));
 }
 
 static void dtn_reset_childs(struct silofs_dtree_node *dtn)
@@ -617,10 +638,10 @@ static void dtn_setup(struct silofs_dtree_node *dtn, ino_t ino,
 	dtn_set_ino(dtn, ino);
 	dtn_set_parent(dtn, parent_off);
 	dtn_set_node_index(dtn, node_index);
-	dtn_set_nde_used(dtn, 0);
+	dtn_set_nde_head(dtn, 0);
+	dtn_set_nde_tail(dtn, 0);
 	dtn_reset_childs(dtn);
 	de_reset_arr(dtn->de, ARRAY_SIZE(dtn->de));
-	dtn->dn_flags = 0;
 }
 
 static size_t dtn_child_ord(const struct silofs_dtree_node *dtn)
@@ -684,7 +705,7 @@ static void dtn_update_inserted(struct silofs_dtree_node *dtn, size_t nlen)
 	const size_t nadd = de_nents_for_name(dtn->de, nlen);
 	const size_t nuse = dtn_nde_used(dtn);
 
-	dtn_set_nde_used(dtn, nuse + nadd);
+	dtn_set_nde_head(dtn, nuse + nadd);
 }
 
 static void dtn_update_removed(struct silofs_dtree_node *dtn, size_t nlen)
@@ -693,7 +714,7 @@ static void dtn_update_removed(struct silofs_dtree_node *dtn, size_t nlen)
 	const size_t nuse = dtn_nde_used(dtn);
 
 	silofs_assert_ge(nuse, ndel);
-	dtn_set_nde_used(dtn, nuse - ndel);
+	dtn_set_nde_head(dtn, nuse - ndel);
 }
 
 static const struct silofs_dir_entry *

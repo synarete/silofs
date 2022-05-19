@@ -295,8 +295,8 @@ static void guarantee_persistent_types_alignment3(void)
 	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len, 12);
 	REQUIRE_XOFFSET(struct silofs_dir_entry, de_dt, 14);
 	REQUIRE_OFFSET(struct silofs_dtree_node, dn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_dtree_node, de, 64);
-	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 7680);
+	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);
+	REQUIRE_OFFSET64(struct silofs_dtree_node, de, 512);
 	REQUIRE_OFFSET(struct silofs_ftree_node, fn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_zeros, 64);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);

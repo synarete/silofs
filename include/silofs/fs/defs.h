@@ -221,7 +221,7 @@
 #define SILOFS_DIR_NODE_SIZE            (8192)
 
 /* number of directory-entries in dir's hash-tree mapping node  */
-#define SILOFS_DIR_NODE_NENTS           (476)
+#define SILOFS_DIR_NODE_NENTS           (480)
 
 /* bits-shift of children per dir-htree node */
 #define SILOFS_DIR_NODE_SHIFT           (6)
@@ -832,11 +832,11 @@ struct silofs_dtree_node {
 	uint64_t                dn_ino;
 	int64_t                 dn_parent;
 	uint32_t                dn_node_index;
-	uint16_t                dn_flags;
-	uint16_t                dn_nde_used;
+	uint16_t                dn_nde_head;
+	uint16_t                dn_nde_tail;
 	uint64_t                dn_reserved[3];
+	struct silofs_vaddr56   dn_child[SILOFS_DIR_NODE_NCHILDS];
 	struct silofs_dir_entry de[SILOFS_DIR_NODE_NENTS];
-	struct silofs_vaddr64   dn_child[SILOFS_DIR_NODE_NCHILDS];
 } silofs_packed_aligned64;
 
 

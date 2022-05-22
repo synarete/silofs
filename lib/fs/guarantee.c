@@ -178,7 +178,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF_BK(struct silofs_data_block);
 	REQUIRE_SIZEOF_BK(struct silofs_block);
 	REQUIRE_SIZEOF(struct silofs_itable_entry, 16);
-	REQUIRE_SIZEOF(struct silofs_dir_entry, 24);
+	REQUIRE_SIZEOF(struct silofs_dir_entry, 32);
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
 	REQUIRE_SIZEOF(struct silofs_inode_file, 512);

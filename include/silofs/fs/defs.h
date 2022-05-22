@@ -221,7 +221,7 @@
 #define SILOFS_DIR_NODE_SIZE            (8192)
 
 /* number of directory-entries in dir's hash-tree node */
-#define SILOFS_DIR_NODE_NENTS           (320)
+#define SILOFS_DIR_NODE_NENTS           (240)
 
 /* max size of names-buffer in dir's hash-tree node */
 #define SILOFS_DIR_NODE_NBUF_SIZE       (7680)
@@ -826,7 +826,7 @@ struct silofs_dir_entry {
 	uint16_t                de_name_len;
 	uint16_t                de_name_pos;
 	uint8_t                 de_dt;
-	uint8_t                 de_reserved[3];
+	uint8_t                 de_reserved[11];
 } silofs_packed_aligned8;
 
 

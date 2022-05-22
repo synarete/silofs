@@ -176,21 +176,21 @@ static size_t hash_to_child_index(uint64_t hash, size_t parent_index)
 
 #define DOFF_SHIFT 13
 
-static loff_t make_doffset(size_t node_index, size_t sloti)
+static loff_t make_doffset(size_t node_index, size_t slot)
 {
 	STATICASSERT_LT(SILOFS_DIR_NODE_NENTS, 1 << 10);
 	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DOFF_SHIFT);
 
-	return (loff_t)((node_index << DOFF_SHIFT) | (sloti << 2) | 3);
+	return (loff_t)(((node_index << DOFF_SHIFT) | slot) << 2) | 3;
 }
 
-static size_t doffset_to_index(loff_t doff)
+static size_t doffset_to_node_index(loff_t doff)
 {
 	const loff_t doff_mask = (1L << DOFF_SHIFT) - 1;
 
 	STATICASSERT_EQ(DTREE_INDEX_ROOT, 0);
 
-	return (size_t)((doff >> DOFF_SHIFT) & doff_mask);
+	return (size_t)((doff >> (DOFF_SHIFT + 2)) & doff_mask);
 }
 
 static loff_t calc_d_isize(size_t last_index)
@@ -736,15 +736,6 @@ static loff_t dtn_next_doffset(const struct silofs_dtree_node *dtn)
 	return make_doffset(node_index + 1, 0);
 }
 
-static loff_t dtn_resolve_doffset(const struct silofs_dtree_node *dtn,
-                                  const struct silofs_dir_entry *de)
-{
-	const size_t index = dtn_node_index(dtn);
-	const size_t slot = dtn_slot_of(dtn, de);
-
-	return make_doffset(index, slot);
-}
-
 static void dtn_child_by_ord(const struct silofs_dtree_node *dtn,
                              size_t ord, struct silofs_vaddr *out_vaddr)
 {
@@ -997,7 +988,8 @@ static void idr_setup(struct silofs_inode_dir *idr, uint64_t seed)
 	idr_set_last_index(idr, DTREE_INDEX_NULL);
 	idr_set_ndents(idr, 0);
 	idr_set_flags(idr, SILOFS_DIRF_NAME_UTF8);
-	idr_set_hashfn(idr, SILOFS_DIRHASH_XXH64);
+	/* idr_set_hashfn(idr, SILOFS_DIRHASH_XXH64); XXX */
+	idr_set_hashfn(idr, SILOFS_DIRHASH_SHA256); /* XXX */
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1229,7 +1221,7 @@ static size_t dic_last_node_index_of(const struct silofs_dir_ctx *d_ctx)
 
 static size_t dic_curr_node_index_of(const struct silofs_dir_ctx *d_ctx)
 {
-	return doffset_to_index(d_ctx->rd_ctx->pos);
+	return doffset_to_node_index(d_ctx->rd_ctx->pos);
 }
 
 static void dic_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
@@ -1657,7 +1649,7 @@ static bool dic_inrange(const struct silofs_dir_ctx *d_ctx)
 	const loff_t doff = d_ctx->rd_ctx->pos;
 
 	if (doff >= 0) {
-		ret = dic_isindex_inrange(d_ctx, doffset_to_index(doff));
+		ret = dic_isindex_inrange(d_ctx, doffset_to_node_index(doff));
 	}
 	return ret;
 }
@@ -1752,7 +1744,7 @@ static int dic_iterate_node(struct silofs_dir_ctx *d_ctx,
 			d_ctx->rd_ctx->pos = off;
 			break;
 		}
-		off = dtn_resolve_doffset(dni->dtn, de);
+		off = dtn_doffset_of(dni->dtn, de);
 		err = dic_stage_inode_of_de(d_ctx, de, &ii);
 		if (err) {
 			return err;

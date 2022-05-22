@@ -142,6 +142,88 @@ static void ut_dir_iter_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_dir_iter_names_(struct ut_env *ute,
+                               const char *names[], size_t nnames)
+{
+	ino_t ino;
+	ino_t dino;
+	const char *name = NULL;
+	const char *dname = UT_NAME;
+	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	ut_opendir_ok(ute, dino);
+	for (size_t i = 0; i < nnames; ++i) {
+		ut_create_only(ute, dino, names[i], &ino);
+	}
+	ut_readdir_ok(ute, dino, 0, rd_ctx);
+	for (size_t i = 0; i < rd_ctx->nde; ++i) {
+		name = rd_ctx->dei[i].de.d_name;
+		if (!ut_dot_or_dotdot(name)) {
+			ut_unlink_file(ute, dino, name);
+		}
+	}
+	for (size_t i = nnames; i > 0; --i) {
+		ut_create_only(ute, dino, names[i - 1], &ino);
+	}
+	ut_readdir_ok(ute, dino, 0, rd_ctx);
+	for (size_t i = 0; i < rd_ctx->nde; ++i) {
+		name = rd_ctx->dei[i].de.d_name;
+		if (!ut_dot_or_dotdot(name)) {
+			ut_unlink_file(ute, dino, name);
+		}
+	}
+	ut_releasedir_ok(ute, dino);
+	ut_rmdir_at_root(ute, dname);
+}
+
+static void ut_dir_iter_names(struct ut_env *ute)
+{
+	const char *names1[] = {
+		"1",
+		"22",
+		"333",
+		"4444",
+		"55555"
+		"666666"
+		"7777777"
+		"88888888"
+		"999999999"
+	};
+	const char *names2[] = {
+		"a",
+		"bb",
+		"ccc",
+		"dddd",
+		"eeeee",
+		"ffffff",
+		"ggggggg",
+		"hhhhhhhh",
+		"iiiiiiiii",
+		"jjjjjjjjjj",
+		"kkkkkkkkkkk",
+		"llllllllllll",
+		"mmmmmmmmmmmmm",
+		"nnnnnnnnnnnnnn",
+		"ooooooooooooooo",
+		"pppppppppppppppp",
+		"qqqqqqqqqqqqqqqqq",
+		"rrrrrrrrrrrrrrrrrr",
+		"sssssssssssssssssss",
+		"tttttttttttttttttttt",
+		"uuuuuuuuuuuuuuuuuuuuu",
+		"vvvvvvvvvvvvvvvvvvvvvv",
+		"wwwwwwwwwwwwwwwwwwwwwww",
+		"xxxxxxxxxxxxxxxxxxxxxxxx",
+		"yyyyyyyyyyyyyyyyyyyyyyyyy",
+		"zzzzzzzzzzzzzzzzzzzzzzzzzz",
+	};
+	ut_dir_iter_names_(ute, names1, UT_ARRAY_SIZE(names1));
+	ut_dir_iter_names_(ute, names2, UT_ARRAY_SIZE(names2));
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void ut_dir_iter_links_(struct ut_env *ute, size_t count)
 {
 	loff_t doff;
@@ -315,9 +397,11 @@ static void ut_dir_iter_plus(struct ut_env *ute)
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_dir_open_release),
 	UT_DEFTEST(ut_dir_iter_simple),
+	UT_DEFTEST(ut_dir_iter_names),
 	UT_DEFTEST(ut_dir_iter_links),
 	UT_DEFTEST(ut_dir_iter_unlink),
 	UT_DEFTEST(ut_dir_iter_plus),
 };
 
 const struct ut_testdefs ut_tdefs_dir_iter = UT_MKTESTS(ut_local_tests);
+

@@ -820,14 +820,20 @@ struct silofs_xattr_node {
 } silofs_packed_aligned64;
 
 
+union silofs_dir_entry_name {
+	uint16_t                de_name_pos;
+	uint8_t                 de_name[12];
+} silofs_packed_aligned4;
+
+
 struct silofs_dir_entry {
 	uint64_t                de_ino;
 	uint64_t                de_name_hash;
 	uint16_t                de_name_len;
-	uint16_t                de_name_pos;
 	uint8_t                 de_dt;
-	uint8_t                 de_reserved[11];
-} silofs_packed_aligned8;
+	uint8_t                 de_pad;
+	union silofs_dir_entry_name de_name;
+} silofs_packed_aligned32;
 
 
 union silofs_dtree_data {

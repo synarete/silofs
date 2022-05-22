@@ -447,7 +447,7 @@ static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
 	silofs_blobid_make_tas(out_blobid, &tree_id, obj_size, nobjs);
 }
 
-static int sbi_spawn_main_blob(struct silofs_sb_info *sbi)
+static int sbi_spawn_super_main_blob(struct silofs_sb_info *sbi)
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
@@ -463,7 +463,7 @@ static int sbi_spawn_main_blob(struct silofs_sb_info *sbi)
 	return 0;
 }
 
-static int sbi_stage_main_blob(struct silofs_sb_info *sbi)
+static int sbi_stage_super_main_blob(struct silofs_sb_info *sbi)
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
@@ -477,9 +477,9 @@ static int sbi_require_main_blob(struct silofs_sb_info *sbi)
 	int err;
 
 	if (silofs_sbi_has_main_blob(sbi)) {
-		err = sbi_stage_main_blob(sbi);
+		err = sbi_stage_super_main_blob(sbi);
 	} else {
-		err = sbi_spawn_main_blob(sbi);
+		err = sbi_spawn_super_main_blob(sbi);
 	}
 	return err;
 }

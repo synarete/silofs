@@ -213,6 +213,44 @@ static int unc_require_cached_ui(const struct silofs_unop_ctx *un_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int unc_require_blob(const struct silofs_unop_ctx *un_ctx,
+                            const struct silofs_blobid *blobid,
+                            struct silofs_blob_info **out_bli)
+{
+	int err;
+
+	err = silofs_repo_lookup_blob(un_ctx->repo, blobid);
+	if (!err) {
+		err = silofs_repo_stage_blob(un_ctx->repo, blobid, out_bli);
+	} else if (err == -ENOENT) {
+		err = silofs_repo_spawn_blob(un_ctx->repo, blobid, out_bli);
+	}
+	return err;
+}
+
+static int unc_spawn_ubk(const struct silofs_unop_ctx *un_ctx,
+                         const struct silofs_bkaddr *bkaddr,
+                         struct silofs_ubk_info **out_ubi)
+{
+	struct silofs_blob_info *bli = NULL;
+	int err;
+
+	err = unc_require_blob(un_ctx, &bkaddr->blobid, &bli);
+	if (err) {
+		goto out;
+	}
+	bli_incref(bli);
+	err = silofs_repo_spawn_ubk(un_ctx->repo, bkaddr, out_ubi);
+	if (err) {
+		goto out;
+	}
+out:
+	bli_decref(bli);
+	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int unc_require_cached_sbi(const struct silofs_unop_ctx *un_ctx,
                                   struct silofs_sb_info **out_sbi)
 {
@@ -248,7 +286,7 @@ static int unc_spawn_attach_sbi_bk(const struct silofs_unop_ctx *un_ctx,
 	int err;
 
 	sbi_incref(sbi);
-	err = silofs_repo_spawn_ubk(un_ctx->repo, sbi_bkaddr(sbi), &ubi);
+	err = unc_spawn_ubk(un_ctx, sbi_bkaddr(sbi), &ubi);
 	if (!err) {
 		sbi_attach_to(sbi, ubi);
 	}
@@ -392,7 +430,7 @@ static int unc_spawn_attach_sti_bk(const struct silofs_unop_ctx *un_ctx,
 	int err;
 
 	sti_incref(sti);
-	err = silofs_repo_spawn_ubk(un_ctx->repo, sti_bkaddr(sti), &ubi);
+	err = unc_spawn_ubk(un_ctx, sti_bkaddr(sti), &ubi);
 	if (!err) {
 		sti_attach_to(sti, ubi);
 	}
@@ -536,7 +574,7 @@ static int unc_spawn_attach_sni_bk(const struct silofs_unop_ctx *un_ctx,
 	int err;
 
 	sni_incref(sni);
-	err = silofs_repo_spawn_ubk(un_ctx->repo, sni_bkaddr(sni), &ubi);
+	err = unc_spawn_ubk(un_ctx, sni_bkaddr(sni), &ubi);
 	if (!err) {
 		sni_attach_to(sni, ubi);
 	}
@@ -681,7 +719,7 @@ static int unc_spawn_attach_sli_bk(const struct silofs_unop_ctx *un_ctx,
 	int err;
 
 	sli_incref(sli);
-	err = silofs_repo_spawn_ubk(un_ctx->repo, sli_bkaddr(sli), &ubi);
+	err = unc_spawn_ubk(un_ctx, sli_bkaddr(sli), &ubi);
 	if (!err) {
 		sli_attach_to(sli, ubi);
 	}

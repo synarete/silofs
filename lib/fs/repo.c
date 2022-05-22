@@ -1146,6 +1146,21 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 	return 0;
 }
 
+int silofs_repo_require_blob(struct silofs_repo *repo,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_blob_info **out_bli)
+{
+	int err;
+
+	err = silofs_repo_lookup_blob(repo, blobid);
+	if (!err) {
+		err = silofs_repo_stage_blob(repo, blobid, out_bli);
+	} else if (err == -ENOENT) {
+		err = silofs_repo_spawn_blob(repo, blobid, out_bli);
+	}
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int repo_init_cache(struct silofs_repo *repo, size_t memsz_hint)
@@ -1568,7 +1583,7 @@ static int repo_spawn_ubk(struct silofs_repo *repo,
 	if (!err) {
 		return -EEXIST;
 	}
-	err = silofs_repo_spawn_blob(repo, &bkaddr->blobid, &bli);
+	err = silofs_repo_require_blob(repo, &bkaddr->blobid, &bli);
 	if (err) {
 		return err;
 	}

@@ -18,6 +18,7 @@
 #include <sys/wait.h>
 #include <error.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #define MCHUNK_MAGIC 0x3AABE871
 
@@ -335,9 +336,36 @@ char *vt_strfmt(struct vt_env *vte, const char *fmt, ...)
 	return vt_strdup(vte, str);
 }
 
-char *vt_make_name(struct vt_env *vte, unsigned long key)
+char *vt_make_ulong_name(struct vt_env *vte, unsigned long key)
 {
 	return vt_strfmt(vte, "%08lx", key);
+}
+
+
+static void vt_force_alnum(char *str, size_t len)
+{
+	const char *alt = "_0123456789abcdefghijklmnopqrstuvwxyz";
+	const size_t alt_len = strlen(alt);
+	size_t idx;
+	int ch;
+
+	for (size_t i = 0; i < len; ++i) {
+		ch = (int)(str[i]);
+		if (!isalnum(ch)) {
+			idx = (size_t)abs(ch);
+			str[i] = alt[idx % alt_len];
+		}
+	}
+}
+
+char *vt_make_rand_name(struct vt_env *vte, size_t name_len)
+{
+	char *str;
+
+	str = vt_new_buf_rands(vte, name_len + 1);
+	vt_force_alnum(str, name_len);
+	str[name_len] = '\0';
+	return str;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

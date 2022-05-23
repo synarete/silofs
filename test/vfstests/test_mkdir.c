@@ -189,12 +189,12 @@ static void test_mkdir_many(struct vt_env *vte, size_t cnt)
 	vt_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 
 	for (size_t i = 0; i < cnt; ++i) {
-		name = vt_make_name(vte, i);
+		name = vt_make_ulong_name(vte, i);
 		vt_openat(dfd, name, O_CREAT | O_RDWR, 0644, &fd);
 		vt_close(fd);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		name = vt_make_name(vte, j);
+		name = vt_make_ulong_name(vte, j);
 		vt_fstatat(dfd, name, &st, 0);
 		vt_unlinkat(dfd, name, 0);
 	}

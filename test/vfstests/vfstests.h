@@ -188,7 +188,9 @@ void vt_freeall(struct vt_env *vte);
 
 char *vt_strfmt(struct vt_env *vte, const char *fmt, ...);
 
-char *vt_make_name(struct vt_env *vte, unsigned long key);
+char *vt_make_ulong_name(struct vt_env *vte, unsigned long key);
+
+char *vt_make_rand_name(struct vt_env *vte, size_t name_len);
 
 char *vt_make_xname_unique(struct vt_env *vte, size_t nlen, char *p, size_t n);
 

@@ -43,7 +43,7 @@ static void test_mkfifoat_(struct vt_env *vte, size_t count)
 	vt_mkdir(path, 0700);
 	vt_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < count; ++i) {
-		name = vt_make_name(vte, i + 1);
+		name = vt_make_ulong_name(vte, i + 1);
 		vt_mkfifoat(dfd, name, S_IFIFO | 0600);
 		vt_fstatat(dfd, name, &st, 0);
 		vt_expect_true(S_ISFIFO(st.st_mode));
@@ -51,7 +51,7 @@ static void test_mkfifoat_(struct vt_env *vte, size_t count)
 		vt_expect_eq(st.st_size, 0);
 	}
 	for (size_t i = 0; i < count; ++i) {
-		name = vt_make_name(vte, i + 1);
+		name = vt_make_ulong_name(vte, i + 1);
 		vt_unlinkat(dfd, name, 0);
 	}
 	vt_close(dfd);
@@ -197,7 +197,7 @@ static void test_fifo_nlinks_(struct vt_env *vte, nlink_t nlink)
 	void *buf1 = vt_new_buf_rands(vte, bsz);
 	void *buf2 = vt_new_buf_rands(vte, bsz);
 	const char *dpath = vt_new_path_unique(vte);
-	const char *fname = vt_make_name(vte, nlink);
+	const char *fname = vt_make_ulong_name(vte, nlink);
 	const char *lname = NULL;
 
 	vt_mkdir(dpath, 0700);
@@ -207,7 +207,7 @@ static void test_fifo_nlinks_(struct vt_env *vte, nlink_t nlink)
 	vt_fstat(fd, &st);
 	vt_expect_true(S_ISFIFO(st.st_mode));
 	for (nlink_t i = 0; i < nlink; ++i) {
-		lname = vt_make_name(vte, i);
+		lname = vt_make_ulong_name(vte, i);
 		vt_linkat(dfd, fname, dfd, lname, 0);
 		vt_fstat(fd, &st);
 		vt_expect_eq(st.st_nlink, i + 2);
@@ -217,7 +217,7 @@ static void test_fifo_nlinks_(struct vt_env *vte, nlink_t nlink)
 	}
 	vt_unlinkat(dfd, fname, 0);
 	for (nlink_t i = nlink; i > 0; --i) {
-		lname = vt_make_name(vte, i - 1);
+		lname = vt_make_ulong_name(vte, i - 1);
 		vt_unlinkat(dfd, lname, 0);
 		vt_fstat(fd, &st);
 		vt_expect_eq(st.st_nlink, i - 1);

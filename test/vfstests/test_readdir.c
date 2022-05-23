@@ -62,26 +62,26 @@ struct vt_getdents_ctx {
 };
 
 static struct vt_getdents_ctx *
-new_getdents_ctx(struct vt_env *vte)
+vt_new_getdents_ctx(struct vt_env *vte)
 {
-	struct vt_getdents_ctx *getdents_ctx;
+	struct vt_getdents_ctx *gd_ctx;
 
-	getdents_ctx = vt_new_buf_zeros(vte, sizeof(*getdents_ctx));
-	return getdents_ctx;
+	gd_ctx = vt_new_buf_zeros(vte, sizeof(*gd_ctx));
+	return gd_ctx;
 }
 
-static void verify_getdents_ctx(struct vt_env *vte,
-                                struct vt_getdents_ctx *getdents_ctx)
+static void vt_verify_getdents_ctx(struct vt_env *vte,
+                                   struct vt_getdents_ctx *gd_ctx)
 {
 	loff_t off_curr;
 	loff_t off_prev = -1;
 	const struct dirent64 *dent;
 
-	for (size_t i = 0; i < getdents_ctx->ndents; ++i) {
-		dent = &getdents_ctx->dents[i];
+	for (size_t i = 0; i < gd_ctx->ndents; ++i) {
+		dent = &gd_ctx->dents[i];
 		off_curr = dent->d_off;
 		if (off_curr == -1) {
-			vt_expect_eq(i + 1, getdents_ctx->ndents);
+			vt_expect_eq(i + 1, gd_ctx->ndents);
 		} else {
 			vt_expect_gt(off_curr, off_prev);
 		}
@@ -90,26 +90,26 @@ static void verify_getdents_ctx(struct vt_env *vte,
 	silofs_unused(vte);
 }
 
-static void vt_getdents2(int fd, struct vt_getdents_ctx *getdents_ctx)
+static void vt_getdents2(int fd, struct vt_getdents_ctx *gd_ctx)
 {
 	size_t ndents = 0;
-	const size_t ndents_max = VT_ARRAY_SIZE(getdents_ctx->dents);
+	const size_t ndents_max = VT_ARRAY_SIZE(gd_ctx->dents);
 
-	vt_getdents(fd, getdents_ctx->buf, sizeof(getdents_ctx->buf),
-	            getdents_ctx->dents, ndents_max, &ndents);
+	vt_getdents(fd, gd_ctx->buf, sizeof(gd_ctx->buf),
+	            gd_ctx->dents, ndents_max, &ndents);
 	vt_expect_le(ndents, ndents_max);
-	getdents_ctx->ndents = ndents;
+	gd_ctx->ndents = ndents;
 }
 
 static void vt_getdents_from(struct vt_env *vte, int fd, loff_t off,
-                             struct vt_getdents_ctx *getdents_ctx)
+                             struct vt_getdents_ctx *gd_ctx)
 {
 	loff_t pos = -1;
 
 	vt_llseek(fd, off, SEEK_SET, &pos);
 	vt_expect_eq(off, pos);
-	vt_getdents2(fd, getdents_ctx);
-	verify_getdents_ctx(vte, getdents_ctx);
+	vt_getdents2(fd, gd_ctx);
+	vt_verify_getdents_ctx(vte, gd_ctx);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -337,7 +337,7 @@ static void test_readdir_counted_(struct vt_env *vte, size_t lim)
 	const char *path0 = vt_new_path_unique(vte);
 	const char *path1 = NULL;
 	const char *name = NULL;
-	struct vt_getdents_ctx *getdents_ctx = new_getdents_ctx(vte);
+	struct vt_getdents_ctx *gd_ctx = vt_new_getdents_ctx(vte);
 
 	vt_mkdir(path0, 0700);
 	for (size_t diri = 0; diri < lim; ++diri) {
@@ -346,10 +346,10 @@ static void test_readdir_counted_(struct vt_env *vte, size_t lim)
 	}
 	vt_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	while (cnt < lim) {
-		vt_getdents_from(vte, dfd, off, getdents_ctx);
-		vt_expect_gt(getdents_ctx->ndents, 0);
-		for (size_t i = 0; i < getdents_ctx->ndents; ++i) {
-			dent = &getdents_ctx->dents[i];
+		vt_getdents_from(vte, dfd, off, gd_ctx);
+		vt_expect_gt(gd_ctx->ndents, 0);
+		for (size_t i = 0; i < gd_ctx->ndents; ++i) {
+			dent = &gd_ctx->dents[i];
 			off = dent->d_off;
 			vt_expect_true(dirent_isdir(dent));
 			if (is_dot_or_dotdot(dent)) {
@@ -360,10 +360,10 @@ static void test_readdir_counted_(struct vt_env *vte, size_t lim)
 	}
 	cnt = 0;
 	while (cnt < lim) {
-		vt_getdents_from(vte, dfd, 0, getdents_ctx);
-		vt_expect_gt(getdents_ctx->ndents, 0);
-		for (size_t j = 0; j < getdents_ctx->ndents; ++j) {
-			dent = &getdents_ctx->dents[j];
+		vt_getdents_from(vte, dfd, 0, gd_ctx);
+		vt_expect_gt(gd_ctx->ndents, 0);
+		for (size_t j = 0; j < gd_ctx->ndents; ++j) {
+			dent = &gd_ctx->dents[j];
 			vt_expect_true(dirent_isdir(dent));
 			if (is_dot_or_dotdot(dent)) {
 				continue;
@@ -405,7 +405,7 @@ static void test_readdir_unlinkat_(struct vt_env *vte, size_t lim)
 	const char *path1 = vt_new_path_unique(vte);
 	const char *path2 = vt_new_path_unique(vte);
 	const char *fname = vt_new_name_unique(vte);
-	struct vt_getdents_ctx *getdents_ctx = new_getdents_ctx(vte);
+	struct vt_getdents_ctx *gd_ctx = vt_new_getdents_ctx(vte);
 
 	vt_mkdir(path1, 0700);
 	vt_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
@@ -413,26 +413,26 @@ static void test_readdir_unlinkat_(struct vt_env *vte, size_t lim)
 	vt_open(path2, O_DIRECTORY | O_RDONLY, 0, &dfd2);
 	vt_openat(dfd2, fname, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < lim; ++i) {
-		name = vt_make_name(vte, i + 1);
+		name = vt_make_ulong_name(vte, i + 1);
 		vt_linkat(dfd2, fname, dfd1, name, 0);
 		vt_fstat(dfd1, &st);
 		vt_expect_ge(st.st_size, i + 1);
 	}
 	for (size_t i = 0; i < lim; ++i) {
-		name = vt_make_name(vte, i + 1);
+		name = vt_make_ulong_name(vte, i + 1);
 		vt_linkat_err(dfd2, fname, dfd1, name, 0, -EEXIST);
 	}
 	while (cnt < lim) {
 		vt_fstat(dfd1, &st);
 		vt_expect_gt(st.st_size, 0);
 		doff = st.st_size / 2;
-		vt_getdents_from(vte, dfd1, doff, getdents_ctx);
-		if (getdents_ctx->ndents == 0) {
-			vt_getdents_from(vte, dfd1, 2, getdents_ctx);
-			vt_expect_gt(getdents_ctx->ndents, 0);
+		vt_getdents_from(vte, dfd1, doff, gd_ctx);
+		if (gd_ctx->ndents == 0) {
+			vt_getdents_from(vte, dfd1, 2, gd_ctx);
+			vt_expect_gt(gd_ctx->ndents, 0);
 		}
-		for (size_t j = 0; j < getdents_ctx->ndents; ++j) {
-			dent = &getdents_ctx->dents[j];
+		for (size_t j = 0; j < gd_ctx->ndents; ++j) {
+			dent = &gd_ctx->dents[j];
 			if (is_dot_or_dotdot(dent)) {
 				continue;
 			}
@@ -479,33 +479,34 @@ static void test_readdir_nox_(struct vt_env *vte, size_t cnt)
 	int dfd = -1;
 	const char *name = NULL;
 	const struct dirent64 *dent = NULL;
+	struct vt_getdents_ctx *gd_ctx = vt_new_getdents_ctx(vte);
 	const char *path = vt_new_path_unique(vte);
-	struct vt_getdents_ctx *getdents_ctx = new_getdents_ctx(vte);
 
 	vt_mkdir(path, 0700);
 	vt_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < cnt; ++i) {
-		name = vt_make_name(vte, i + 1);
+		name = vt_make_ulong_name(vte, i + 1);
 		vt_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 		vt_close(fd);
 	}
 	vt_close(dfd);
 	vt_chmod(path, 0600);
 	vt_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	vt_getdents2(dfd, getdents_ctx);
-	vt_expect_gt(getdents_ctx->ndents, 2);
-	vt_expect_le(getdents_ctx->ndents, cnt + 2);
-	for (size_t i = 0; i < getdents_ctx->ndents; ++i) {
-		dent = &getdents_ctx->dents[i];
-		if (!is_dot_or_dotdot(dent)) {
-			vt_fstatat_err(dfd, dent->d_name, 0, -EACCES);
+	vt_getdents2(dfd, gd_ctx);
+	vt_expect_gt(gd_ctx->ndents, 2);
+	vt_expect_le(gd_ctx->ndents, cnt + 2);
+	for (size_t i = 0; i < gd_ctx->ndents; ++i) {
+		dent = &gd_ctx->dents[i];
+		if (is_dot_or_dotdot(dent)) {
+			continue;
 		}
+		vt_fstatat_err(dfd, dent->d_name, 0, -EACCES);
 	}
 	vt_close(dfd);
 	vt_chmod(path, 0700);
 	vt_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < cnt; ++i) {
-		name = vt_make_name(vte, i + 1);
+		name = vt_make_ulong_name(vte, i + 1);
 		vt_unlinkat(dfd, name, 0);
 	}
 	vt_close(dfd);
@@ -516,6 +517,70 @@ static void test_readdir_nox(struct vt_env *vte)
 {
 	test_readdir_nox_(vte, 10);
 	test_readdir_nox_(vte, 100);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects Linux getdents(2) to iterate on all entries from various directory
+ * stream positions, while unlinking entries.
+ */
+static void
+test_readdir_unlink_names_arr_(struct vt_env *vte,
+                               const char *names[], size_t cnt)
+{
+	int fd = -1;
+	int dfd = -1;
+	loff_t doff = 0;
+	size_t dcnt = 0;
+	const char *name = NULL;
+	const struct dirent64 *dent = NULL;
+	struct vt_getdents_ctx *gd_ctx = vt_new_getdents_ctx(vte);
+	const char *path = vt_new_path_unique(vte);
+
+	vt_mkdir(path, 0700);
+	vt_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	for (size_t i = 0; i < cnt; ++i) {
+		name = names[i];
+		vt_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
+		vt_close(fd);
+	}
+	while (doff >= 0) {
+		dcnt = 0;
+		vt_getdents_from(vte, dfd, doff, gd_ctx);
+		for (size_t i = 0; i < gd_ctx->ndents; ++i) {
+			dent = &gd_ctx->dents[i];
+			doff = dent->d_off;
+			if (is_dot_or_dotdot(dent)) {
+				continue;
+			}
+			vt_unlinkat(dfd, dent->d_name, 0);
+			if (++dcnt >= 5) {
+				break;
+			}
+		}
+	}
+	vt_close(dfd);
+	vt_rmdir(path);
+}
+
+static void test_readdir_unlink_names_(struct vt_env *vte, size_t name_len)
+{
+	const char *names[256];
+	char *name_i;
+	const size_t cnt = VT_ARRAY_SIZE(names);
+
+	for (size_t i = 0; i < cnt; ++i) {
+		name_i = vt_make_rand_name(vte, name_len);
+		name_i[0] = (char)('A' + ((int)i % 23));
+		names[i] = name_i;
+	}
+	test_readdir_unlink_names_arr_(vte, names, cnt);
+}
+
+static void test_readdir_unlink_names(struct vt_env *vte)
+{
+	test_readdir_unlink_names_(vte, SILOFS_NAME_MAX / 5);
+	test_readdir_unlink_names_(vte, SILOFS_NAME_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -534,6 +599,7 @@ static const struct vt_tdef vt_local_tests[] = {
 	VT_DEFTEST(test_readdir_unlinkat_big),
 	VT_DEFTEST(test_readdir_unlinkat_large),
 	VT_DEFTEST(test_readdir_nox),
+	VT_DEFTEST(test_readdir_unlink_names),
 };
 
 const struct vt_tests vt_test_readdir = VT_DEFTESTS(vt_local_tests);

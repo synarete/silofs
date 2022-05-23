@@ -489,17 +489,18 @@ long *ut_randseq(struct ut_env *ute, size_t len, long base)
 	return arr;
 }
 
-static void force_alnum(char *str, size_t len)
+static void ut_force_alnum(char *str, size_t len)
 {
-	int ch;
-	size_t idx;
 	const char *alt = "_0123456789abcdefghijklmnopqrstuvwxyz";
+	const size_t alt_len = strlen(alt);
+	size_t idx;
+	int ch;
 
 	for (size_t i = 0; i < len; ++i) {
 		ch = (int)(str[i]);
 		if (!isalnum(ch)) {
 			idx = (size_t)abs(ch);
-			str[i] = alt[idx % strlen(alt)];
+			str[i] = alt[idx % alt_len];
 		}
 	}
 }
@@ -510,7 +511,7 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 
 	str = ut_randbuf(ute, len + 1);
 	if (str != NULL) { /* make gcc-analyzer happy */
-		force_alnum(str, len);
+		ut_force_alnum(str, len);
 		str[len] = '\0';
 	}
 	return str;

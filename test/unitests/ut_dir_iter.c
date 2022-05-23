@@ -172,6 +172,7 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 			}
 		}
 		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		dcnt = 0;
 	}
 	for (size_t i = nnames; i > 0; --i) {
 		ut_create_only(ute, dino, names[i - 1], &ino);
@@ -235,13 +236,13 @@ static void ut_dir_iter_fixed_names(struct ut_env *ute)
 
 static void ut_dir_iter_rand_names_(struct ut_env *ute, size_t name_len)
 {
-	const char *names[24];
+	const char *names[40];
 	char *name_i;
 	const size_t nnames = UT_ARRAY_SIZE(names);
 
 	for (size_t i = 0; i < nnames; ++i) {
 		name_i = ut_randstr(ute, name_len);
-		name_i[0] = (char)('A' + (int)i);
+		name_i[0] = (char)('A' + ((int)i % 23));
 		names[i] = name_i;
 	}
 	ut_dir_iter_names_(ute, names, nnames);

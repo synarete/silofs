@@ -167,7 +167,7 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 				continue;
 			}
 			ut_unlink_file(ute, dino, name);
-			if (++dcnt > 2) {
+			if (++dcnt >= 5) {
 				break;
 			}
 		}

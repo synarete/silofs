@@ -45,12 +45,12 @@ Development files for silofs
 %files
 %defattr(-, root, root)
 %{_bindir}/%{name}
-%{_bindir}/%{name}-vfstests
-%{_bindir}/%{name}-funtests
+%{_bindir}/%{name}-vtests
+%{_bindir}/%{name}-ftests
 %{_sbindir}/%{name}-mountd
 %{_sbindir}/*.%{name}
 %{_prefix}/lib/python3*/site-packages/%{name}/*
-%exclude %{_bindir}/%{name}-unitests
+%exclude %{_bindir}/%{name}-utests
 %exclude %{_libdir}/lib%{name}*.la
 %exclude %{_bindir}/smoketests.sh
 %config(noreplace) %{_sysconfdir}/%{name}/*.conf

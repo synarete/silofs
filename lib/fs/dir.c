@@ -188,7 +188,7 @@ static size_t hash_to_child_dtn_index(uint64_t hash, size_t parent_dtn_index)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define DOFF_SHIFT 13
+#define DOFF_SHIFT 14
 
 static void
 encode_doffset(uint64_t dtn_index, uint64_t slot, uint64_t *out_doff)
@@ -212,10 +212,10 @@ static loff_t make_doffset(size_t dtn_index, size_t slot)
 	uint64_t doff;
 
 	STATICASSERT_LT(SILOFS_DIR_NODE_NENTS, 1 << 10);
-	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DOFF_SHIFT);
+	STATICASSERT_LE(SILOFS_DIR_NODE_SIZE, 1 << DOFF_SHIFT);
 
 	encode_doffset(dtn_index, slot, &doff);
-	return (loff_t)((doff << 3) | 3);
+	return (loff_t)((doff << 2) | 2);
 }
 
 static size_t doff_to_dtn_index(loff_t doff)
@@ -225,7 +225,7 @@ static size_t doff_to_dtn_index(loff_t doff)
 
 	STATICASSERT_EQ(DTREE_NODE_INDEX_ROOT, 0);
 
-	decode_doffset((uint64_t)(doff >> 3), &dtn_index, &slot);
+	decode_doffset((uint64_t)(doff >> 2), &dtn_index, &slot);
 	return dtn_index;
 }
 
@@ -236,7 +236,7 @@ static size_t doff_to_slot(loff_t doff)
 
 	STATICASSERT_EQ(DTREE_NODE_INDEX_ROOT, 0);
 
-	decode_doffset((uint64_t)(doff >> 3), &dtn_index, &slot);
+	decode_doffset((uint64_t)(doff >> 2), &dtn_index, &slot);
 	return slot;
 }
 

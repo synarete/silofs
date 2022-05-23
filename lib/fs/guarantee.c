@@ -178,7 +178,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF_BK(struct silofs_data_block);
 	REQUIRE_SIZEOF_BK(struct silofs_block);
 	REQUIRE_SIZEOF(struct silofs_itable_entry, 16);
-	REQUIRE_SIZEOF(struct silofs_dir_entry, 32);
+	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
 	REQUIRE_SIZEOF(struct silofs_inode_file, 512);
@@ -291,9 +291,8 @@ static void guarantee_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_inode, i_sp, 512);
 	REQUIRE_OFFSET(struct silofs_dir_entry, de_ino, 0);
 	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_hash, 8);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len, 16);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_dt, 18);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name, 20);
+	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len_dt, 12);
+	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_pos, 14);
 	REQUIRE_OFFSET(struct silofs_dtree_node, dn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_data, 512);

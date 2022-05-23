@@ -221,7 +221,7 @@
 #define SILOFS_DIR_NODE_SIZE            (8192)
 
 /* number of directory-entries in dir's hash-tree node */
-#define SILOFS_DIR_NODE_NENTS           (240)
+#define SILOFS_DIR_NODE_NENTS           (480)
 
 /* max size of names-buffer in dir's hash-tree node */
 #define SILOFS_DIR_NODE_NBUF_SIZE       (7680)
@@ -820,20 +820,12 @@ struct silofs_xattr_node {
 } silofs_packed_aligned64;
 
 
-union silofs_dir_entry_name {
-	uint16_t                de_name_pos;
-	uint8_t                 de_name[12];
-} silofs_packed_aligned4;
-
-
 struct silofs_dir_entry {
 	uint64_t                de_ino;
-	uint64_t                de_name_hash;
-	uint16_t                de_name_len;
-	uint8_t                 de_dt;
-	uint8_t                 de_pad;
-	union silofs_dir_entry_name de_name;
-} silofs_packed_aligned32;
+	uint32_t                de_name_hash;
+	uint16_t                de_name_len_dt;
+	uint16_t                de_name_pos;
+} silofs_packed_aligned16;
 
 
 union silofs_dtree_data {

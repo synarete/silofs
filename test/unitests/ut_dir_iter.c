@@ -147,6 +147,8 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 {
 	ino_t ino;
 	ino_t dino;
+	loff_t doff = 0;
+	size_t dcnt = 0;
 	const char *name = NULL;
 	const char *dname = UT_NAME;
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
@@ -156,12 +158,20 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 	for (size_t i = 0; i < nnames; ++i) {
 		ut_create_only(ute, dino, names[i], &ino);
 	}
-	ut_readdir_ok(ute, dino, 0, rd_ctx);
-	for (size_t i = 0; i < rd_ctx->nde; ++i) {
-		name = rd_ctx->dei[i].de.d_name;
-		if (!ut_dot_or_dotdot(name)) {
+	ut_readdir_ok(ute, dino, doff, rd_ctx);
+	while (rd_ctx->nde > 0) {
+		for (size_t i = 0; i < rd_ctx->nde; ++i) {
+			name = rd_ctx->dei[i].de.d_name;
+			doff = rd_ctx->dei[i].de.d_off;
+			if (ut_dot_or_dotdot(name)) {
+				continue;
+			}
 			ut_unlink_file(ute, dino, name);
+			if (++dcnt > 2) {
+				break;
+			}
 		}
+		ut_readdir_ok(ute, dino, doff, rd_ctx);
 	}
 	for (size_t i = nnames; i > 0; --i) {
 		ut_create_only(ute, dino, names[i - 1], &ino);
@@ -177,9 +187,9 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 	ut_rmdir_at_root(ute, dname);
 }
 
-static void ut_dir_iter_names(struct ut_env *ute)
+static void ut_dir_iter_fixed_names(struct ut_env *ute)
 {
-	const char *names1[] = {
+	const char *dig_names[] = {
 		"1",
 		"22",
 		"333",
@@ -190,7 +200,7 @@ static void ut_dir_iter_names(struct ut_env *ute)
 		"88888888"
 		"999999999"
 	};
-	const char *names2[] = {
+	const char *abc_names[] = {
 		"a",
 		"bb",
 		"ccc",
@@ -218,9 +228,30 @@ static void ut_dir_iter_names(struct ut_env *ute)
 		"yyyyyyyyyyyyyyyyyyyyyyyyy",
 		"zzzzzzzzzzzzzzzzzzzzzzzzzz",
 	};
-	ut_dir_iter_names_(ute, names1, UT_ARRAY_SIZE(names1));
-	ut_dir_iter_names_(ute, names2, UT_ARRAY_SIZE(names2));
+
+	ut_dir_iter_names_(ute, dig_names, UT_ARRAY_SIZE(dig_names));
+	ut_dir_iter_names_(ute, abc_names, UT_ARRAY_SIZE(abc_names));
 };
+
+static void ut_dir_iter_rand_names_(struct ut_env *ute, size_t name_len)
+{
+	const char *names[24];
+	char *name_i;
+	const size_t nnames = UT_ARRAY_SIZE(names);
+
+	for (size_t i = 0; i < nnames; ++i) {
+		name_i = ut_randstr(ute, name_len);
+		name_i[0] = (char)('A' + (int)i);
+		names[i] = name_i;
+	}
+	ut_dir_iter_names_(ute, names, nnames);
+}
+
+static void ut_dir_iter_rand_names(struct ut_env *ute)
+{
+	ut_dir_iter_rand_names_(ute, UT_NAME_MAX / 5);
+	ut_dir_iter_rand_names_(ute, UT_NAME_MAX);
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -395,9 +426,11 @@ static void ut_dir_iter_plus(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
+
 	UT_DEFTEST(ut_dir_open_release),
 	UT_DEFTEST(ut_dir_iter_simple),
-	UT_DEFTEST(ut_dir_iter_names),
+	UT_DEFTEST(ut_dir_iter_fixed_names),
+	UT_DEFTEST(ut_dir_iter_rand_names),
 	UT_DEFTEST(ut_dir_iter_links),
 	UT_DEFTEST(ut_dir_iter_unlink),
 	UT_DEFTEST(ut_dir_iter_plus),

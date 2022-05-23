@@ -194,9 +194,9 @@ static int new_inode(const struct silofs_fs_ctx *fs_ctx,
                      mode_t mode, dev_t rdev,
                      struct silofs_inode_info **out_ii)
 {
+	struct silofs_sb_info *sbi = ii_sbi(parent_dir_ii);
 	const ino_t parent_ino = ii_ino(parent_dir_ii);
 	const mode_t parent_mode = ii_mode(parent_dir_ii);
-	struct silofs_sb_info *sbi = ii_sbi(parent_dir_ii);
 
 	return silofs_sbi_spawn_inode(sbi, creds_of(fs_ctx), parent_ino,
 	                              parent_mode, mode, rdev, out_ii);

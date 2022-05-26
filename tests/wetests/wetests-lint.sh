@@ -1,20 +1,21 @@
 #!/bin/bash
 self=$(basename "${BASH_SOURCE[0]}")
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-srcdir="${selfdir}/silofs"
+basedir=$(realpath "${1:-$selfdir}")
+srcdir="${basedir}/silofs"
 
 _msg() { echo "$self: $*" >&2; }
 _die() { _msg "$*"; exit 1; }
 _try() { ( "$@" ) || _die "failed: $*"; }
-_run() { echo "# $self: $*" >&2; _try "$@"; }
+_run() { echo "$self: $1" >&2; _try "$@"; }
+_run2() { echo "$self: $*" >&2; _try "$@"; }
 
 export LC_ALL=C
 unset CDPATH
 
 
 _run_command() {
- _try command -v "$1" > /dev/null
- _run "$@"
+  command -v "$1" > /dev/null && _run "$@"
 }
 
 _run_black() {
@@ -22,7 +23,7 @@ _run_black() {
 }
 
 _run_pylint() {
-  _run_command pylint --rcfile="${selfdir}/pylintrc" "${srcdir}"
+  _run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
 }
 
 _run_flake8() {
@@ -30,11 +31,11 @@ _run_flake8() {
 }
 
 _run_mypy() {
-  _run_command mypy --no-color-output "${srcdir}"
+  _run_command mypy --no-color-output "${srcdir}" | grep -v "Success: "
 }
 
 _main() {
-  cd "${selfdir}" || exit 1
+  cd "${srcdir}/../" || exit 1
   _run_black
   _run_flake8
   _run_mypy

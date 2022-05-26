@@ -18,3 +18,6 @@ class TestEnv:
     def show_version(self) -> None:
         vers = self.cmd.version()
         print(vers)
+
+    def do_nothing(self) -> None:
+        pass

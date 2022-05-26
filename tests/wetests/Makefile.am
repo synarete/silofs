@@ -13,8 +13,17 @@ nobase_python_PYTHON += silofs/wetests/ctx.py
 nobase_python_PYTHON += silofs/wetests/run.py
 nobase_python_PYTHON += silofs/wetests/test_basics.py
 
-EXTRA_DIST = silofs-wetests.in
+noinst_SCRIPTS = wetests-lint.sh
+
 CLEANFILES = silofs-wetests
+EXTRA_DIST = $(NULL)
+EXTRA_DIST += silofs-wetests.in
+EXTRA_DIST += wetests-lint.sh
+EXTRA_DIST += pylintrc
+
 
 silofs-wetests: silofs-wetests.in
 	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ; chmod +x "$@" ;
+
+all-local: wetests-lint.sh
+	@echo "  PYLINT     "; sh "$<" $(srcdir) ;

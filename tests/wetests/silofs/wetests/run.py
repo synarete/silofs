@@ -6,7 +6,6 @@ TESTS = [test_basics.test_hello]
 
 
 def run_tests():
-    global TESTS
     te = ctx.TestEnv("/", "/")
     te.show_version()
     for t in TESTS:

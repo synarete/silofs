@@ -15,40 +15,16 @@ class CmdExec:
 
     def __init__(self, prog: str) -> None:
         self.prog = prog
-        self.xbin = CmdExec._locate_bin(self.prog)
+        self.xbin = _locate_bin(self.prog)
 
-    def _execute_mute(self, args: typing.Iterable[str]) -> None:
-        out = self._execute(args)
-        if len(out):
+    def execute_mute(self, args: typing.Iterable[str]) -> None:
+        out = self.execute(args)
+        if out:
             raise CmdError("unexpected output: " + out)
 
-    def _execute(self, args: typing.Iterable[str]) -> str:
+    def execute(self, args: typing.Iterable[str]) -> str:
         cmd = self.xbin + " " + " ".join(args)
-        return Cmd._subexec(cmd).strip()
-
-    @staticmethod
-    def _locate_bin(name: str) -> str:
-        xbin = distutils.spawn.find_executable(name)
-        if not xbin:
-            raise CmdError("failed to find " + name)
-        return str(xbin).strip()
-
-    @staticmethod
-    def _subexec(cmd, work_dir=None) -> str:
-        """Execute command as sub-process, raise upon failure"""
-        pipes = subprocess.Popen(
-            shlex.split(cmd),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=work_dir,
-            shell=False,
-            env=os.environ.copy(),
-        )
-        std_out, std_err = pipes.communicate()
-        if pipes.returncode != 0:
-            raise CmdError("failed: " + cmd)
-        out = std_err or std_out
-        return out.decode("UTF-8")
+        return _sub_exec(cmd).strip()
 
 
 class Cmd(CmdExec):
@@ -58,16 +34,43 @@ class Cmd(CmdExec):
         CmdExec.__init__(self, "silofs")
 
     def version(self) -> str:
-        return self._execute(["-v"])
+        return self.execute(["-v"])
 
     def init(self, repodir: str) -> None:
-        self._execute_mute(["init", repodir])
+        self.execute_mute(["init", repodir])
 
     def mkfs(self, repodir_name: str, size: int) -> None:
-        self._execute_mute(["mkfs", "-s", repodir_name])
+        self.execute_mute(["mkfs", "-s", str(size), repodir_name])
 
     def mount(self, repodir_name: str, mntpoint: str) -> None:
-        self._execute_mute(["mount", repodir_name, mntpoint])
+        self.execute_mute(["mount", repodir_name, mntpoint])
 
     def umount(self, mntpoint: str) -> None:
-        self._execute_mute(["mount", mntpoint])
+        self.execute_mute(["mount", mntpoint])
+
+
+def _locate_bin(name: str) -> str:
+    """locate executable program's path by name"""
+    xbin = distutils.spawn.find_executable(name)
+    if not xbin:
+        raise CmdError("failed to find " + name)
+    return str(xbin).strip()
+
+
+def _sub_exec(cmd, work_dir=None) -> str:
+    """Execute command as sub-process, raise upon failure"""
+    ret = ""
+    with subprocess.Popen(
+        shlex.split(cmd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=work_dir,
+        shell=False,
+        env=os.environ.copy(),
+    ) as pipes:
+        std_out, std_err = pipes.communicate()
+        if pipes.returncode != 0:
+            raise CmdError("failed: " + cmd)
+        out = std_err or std_out
+        ret = out.decode("UTF-8")
+    return ret

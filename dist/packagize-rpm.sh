@@ -42,7 +42,6 @@ run command -v rpmbuild
 # Autotools build
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
-run "${basedir}"/bootstrap
 run "${basedir}"/configure "--enable-unitests=no"
 run make
 run make distcheck

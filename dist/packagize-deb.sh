@@ -1,20 +1,20 @@
 #!/bin/bash -e
-self=$(basename ${BASH_SOURCE[0]})
-yell() { echo "$self: $*" >&2; }
-die() { yell "$*"; exit 1; }
-try() { "$@" || die "failed: $*"; }
-run() { echo "$self: $@" >&2; try "$@"; }
+self=$(basename "${BASH_SOURCE[0]}")
+msg() { echo "$self: $*" >&2; }
+die() { msg "$*"; exit 1; }
+try() { ( "$@" ) || die "failed: $*"; }
+run() { echo "$self:" "$@" >&2; try "$@"; }
 
 export LC_ALL=C
 unset CDPATH
 
 name=silofs
-selfdir=$(realpath $(dirname ${BASH_SOURCE[0]}))
-basedir=$(realpath ${selfdir}/../)
+selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+basedir=$(realpath "${selfdir}"/../)
 version_sh=${basedir}/version.sh
-version=$(try ${version_sh} --version)
-release=$(try ${version_sh} --release)
-revision=$(try ${version_sh} --revision)
+version=$(try "${version_sh}" --version)
+release=$(try "${version_sh}" --release)
+revision=$(try "${version_sh}" --revision)
 archive_tgz=${name}-${version}.tar.gz
 
 builddir=${basedir}/build
@@ -22,7 +22,6 @@ buildauxdir=${builddir}/deb
 debdistdir=${builddir}/dist
 autotoolsdir=${buildauxdir}/autotools/
 
-debdate=$(date -R)
 debsourcedir=${selfdir}/deb
 debbuilddir=${buildauxdir}/debbuild
 deborig_archive=${name}_${version}.orig.tar.gz
@@ -42,35 +41,34 @@ run command -v dpkg-buildpackage
 run command -v dh
 
 # Autotools build
-run mkdir -p ${autotoolsdir}
-run cd ${autotoolsdir}
-run ${basedir}/bootstrap
-run ${basedir}/configure "--enable-unitests=no"
+run mkdir -p "${autotoolsdir}"
+run cd "${autotoolsdir}"
+run "${basedir}"/configure "--enable-unitests=no"
 run make
 run make distcheck
 
 # Prepare deb tree
-run mkdir -p ${debbuilddir}
-run mkdir -p ${debbuild_distdir}
-run mkdir -p ${debbuild_debiandir}
+run mkdir -p "${debbuilddir}"
+run mkdir -p "${debbuild_distdir}"
+run mkdir -p "${debbuild_debiandir}"
 
 # Copy and extract dist archives
-run cp ${autotoolsdir}/${archive_tgz} ${debbuilddir}/
-run cp ${autotoolsdir}/${archive_tgz} ${debbuilddir}/${deborig_archive}
-run cp ${autotoolsdir}/${archive_tgz} ${debbuilddir}/${debrelease_archive}
-run cd ${debbuilddir}
-run tar xvfz ${archive_tgz}
+run cp "${autotoolsdir}/${archive_tgz}" "${debbuilddir}/"
+run cp "${autotoolsdir}/${archive_tgz}" "${debbuilddir}/${deborig_archive}"
+run cp "${autotoolsdir}/${archive_tgz}" "${debbuilddir}/${debrelease_archive}"
+run cd "${debbuilddir}"
+run tar xvfz "${archive_tgz}"
 
 # Prepare deb files
-run cd ${basedir}
-run mkdir -p ${debbuild_debiandir}/source
-run cp ${debsourcedir}/format ${debbuild_debiandir}/source
-run cp ${debsourcedir}/compat ${debbuild_debiandir}
-run cp ${debsourcedir}/control ${debbuild_debiandir}
-run cp ${debsourcedir}/copyright ${debbuild_debiandir}
-run cp ${debsourcedir}/docs ${debbuild_debiandir}
-run cp ${debsourcedir}/README.Debian ${debbuild_debiandir}
-run cp ${debsourcedir}/rules ${debbuild_debiandir}
+run cd "${basedir}"
+run mkdir -p "${debbuild_debiandir}"/source
+run cp "${debsourcedir}"/format "${debbuild_debiandir}"/source
+run cp "${debsourcedir}"/compat "${debbuild_debiandir}"
+run cp "${debsourcedir}"/control "${debbuild_debiandir}"
+run cp "${debsourcedir}"/copyright "${debbuild_debiandir}"
+run cp "${debsourcedir}"/docs "${debbuild_debiandir}"
+run cp "${debsourcedir}"/README.Debian "${debbuild_debiandir}"
+run cp "${debsourcedir}"/rules "${debbuild_debiandir}"
 
 
 # Generate changelog
@@ -79,21 +77,21 @@ run sed \
   -e "s,[@]VERSION[@],${version},g" \
   -e "s,[@]RELEASE[@],${release},g" \
   -e "s,[@]REVISION[@],${revision},g" \
-  ${debsourcedir}/changelog.in > ${debbuild_debiandir}/changelog
+  "${debsourcedir}"/changelog.in > "${debbuild_debiandir}"/changelog
 
 # Build deb package
-run cd ${debbuild_distdir}
+run cd "${debbuild_distdir}"
 run dpkg-buildpackage -us -uc
 
 # Copy debs to root of build-dir
 run mkdir -p "${debdistdir}"
-run find ${debbuilddir}/ \
-  -type f -name ${name}_${version}'*.deb' \
-  -exec cp {} ${debdistdir} \;
+run find "${debbuilddir}/" \
+  -type f -name "${name}_${version}"'*.deb' \
+  -exec cp {} "${debdistdir}" \;
 
 # Cleanup build staging area
-run cd ${basedir}
-run rm -rf ${buildauxdir}
+run cd "${basedir}"
+run rm -rf "${buildauxdir}"
 
 # Show result deb files
 run find "${debdistdir}" -type f -name ${name}'*.deb' -exec basename {} \;

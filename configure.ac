@@ -65,6 +65,7 @@ AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([doc/man/Makefile])
 AC_CONFIG_FILES([doc/html/Makefile])
 AC_CONFIG_FILES([misc/Makefile])
+AC_CONFIG_FILES([dist/Makefile])
 AC_OUTPUT
 
 AC_MSG_NOTICE([Package........: $pkg_name])

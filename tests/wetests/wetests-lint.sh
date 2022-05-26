@@ -8,14 +8,13 @@ _msg() { echo "$self: $*" >&2; }
 _die() { _msg "$*"; exit 1; }
 _try() { ( "$@" ) || _die "failed: $*"; }
 _run() { echo "$self: $1" >&2; _try "$@"; }
-_run2() { echo "$self: $*" >&2; _try "$@"; }
 
 export LC_ALL=C
 unset CDPATH
 
 
 _run_command() {
-  command -v "$1" > /dev/null && _run "$@"
+  command -v "$1" > /dev/null && _try "$@"
 }
 
 _run_black() {

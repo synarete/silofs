@@ -17,14 +17,14 @@ class CmdExec:
         self.prog = prog
         self.xbin = _locate_bin(self.prog)
 
-    def execute_mute(self, args: typing.Iterable[str]) -> None:
-        out = self.execute(args)
-        if out:
-            raise CmdError("unexpected output: " + out)
-
     def execute(self, args: typing.Iterable[str]) -> str:
-        cmd = self.xbin + " " + " ".join(args)
-        return _sub_exec(cmd).strip()
+        return _subproc_comm(self._make_cmd(args)).strip()
+
+    def execute2(self, args: typing.Iterable[str]) -> None:
+        _subproc_run(self._make_cmd(args))
+
+    def _make_cmd(self, args: typing.Iterable[str]) -> str:
+        return self.xbin + " " + " ".join(args)
 
 
 class Cmd(CmdExec):
@@ -37,16 +37,16 @@ class Cmd(CmdExec):
         return self.execute(["-v"])
 
     def init(self, repodir: str) -> None:
-        self.execute_mute(["init", repodir])
+        self.execute2(["init", repodir])
 
     def mkfs(self, repodir_name: str, size: int) -> None:
-        self.execute_mute(["mkfs", "-s", str(size), repodir_name])
+        self.execute2(["mkfs", "-s", str(size), repodir_name])
 
     def mount(self, repodir_name: str, mntpoint: str) -> None:
-        self.execute_mute(["mount", repodir_name, mntpoint])
+        self.execute2(["mount", repodir_name, mntpoint])
 
     def umount(self, mntpoint: str) -> None:
-        self.execute_mute(["mount", mntpoint])
+        self.execute2(["umount", mntpoint])
 
 
 def _locate_bin(name: str) -> str:
@@ -57,7 +57,14 @@ def _locate_bin(name: str) -> str:
     return str(xbin).strip()
 
 
-def _sub_exec(cmd, work_dir=None) -> str:
+def _subproc_run(cmd: str, work_dir=None) -> None:
+    """Execute command as sub-process, raise upon failure"""
+    proc = subprocess.run(shlex.split(cmd), check=True, cwd=work_dir)
+    if proc.returncode != 0:
+        raise CmdError("failed: " + cmd)
+
+
+def _subproc_comm(cmd: str, work_dir=None) -> str:
     """Execute command as sub-process, raise upon failure"""
     ret = ""
     with subprocess.Popen(
@@ -67,9 +74,13 @@ def _sub_exec(cmd, work_dir=None) -> str:
         cwd=work_dir,
         shell=False,
         env=os.environ.copy(),
-    ) as pipes:
-        std_out, std_err = pipes.communicate()
-        if pipes.returncode != 0:
+    ) as proc:
+        try:
+            std_out, std_err = proc.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            std_out, std_err = proc.communicate()
+        if proc.returncode != 0:
             raise CmdError("failed: " + cmd)
         out = std_err or std_out
         ret = out.decode("UTF-8")

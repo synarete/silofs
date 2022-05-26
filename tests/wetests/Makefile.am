@@ -10,6 +10,7 @@ nobase_python_PYTHON += silofs/wetestsmain.py
 nobase_python_PYTHON += silofs/wetests/__init__.py
 nobase_python_PYTHON += silofs/wetests/cmd.py
 nobase_python_PYTHON += silofs/wetests/ctx.py
+nobase_python_PYTHON += silofs/wetests/fsutils.py
 nobase_python_PYTHON += silofs/wetests/run.py
 nobase_python_PYTHON += silofs/wetests/test_basics.py
 

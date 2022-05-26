@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_UMETA_H_
-#define SILOFS_UMETA_H_
+#ifndef SILOFS_UBER_H_
+#define SILOFS_UBER_H_
 
 
 int silofs_spawn_super_at(struct silofs_repo *repo,
@@ -69,4 +69,4 @@ int silofs_shadow_spleaf_at(struct silofs_repo *repo,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spleaf_info **out_sli);
 
-#endif /* SILOFS_UMETA_H_ */
+#endif /* SILOFS_UBER_H_ */

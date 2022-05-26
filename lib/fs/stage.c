@@ -29,7 +29,7 @@
 #include <silofs/fs/stage.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/inode.h>
-#include <silofs/fs/umeta.h>
+#include <silofs/fs/uber.h>
 #include <silofs/fs/private.h>
 
 
@@ -222,18 +222,35 @@ static struct silofs_repo *sbi_repo(const struct silofs_sb_info *sbi)
 	return sbi->sb_ui.u_repo;
 }
 
-static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
-                          const struct silofs_blobid *blobid,
-                          struct silofs_blob_info **out_bli)
-{
-	return silofs_repo_spawn_blob(sbi_repo(sbi), blobid, out_bli);
-}
-
 static int sbi_stage_blob(const struct silofs_sb_info *sbi,
                           const struct silofs_blobid *blobid,
                           struct silofs_blob_info **out_bli)
 {
-	return silofs_repo_stage_blob(sbi_repo(sbi), blobid, out_bli);
+	struct silofs_repo *repo = sbi_repo(sbi);
+
+	return silofs_repo_stage_blob(repo, blobid, out_bli);
+}
+
+static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
+                          const struct silofs_blobid *blobid,
+                          struct silofs_blob_info **out_bli)
+{
+	struct silofs_repo *repo = sbi_repo(sbi);
+	int err;
+
+	err = silofs_repo_lookup_blob(repo, blobid);
+	if (!err) {
+		return -EEXIST;
+	}
+	if (err != -ENOENT) {
+		return err;
+	}
+	err = silofs_repo_spawn_blob(repo, blobid, out_bli);
+	if (err) {
+		return err;
+	}
+	silofs_sti_inc_nblobs(sbi->sb_sti);
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

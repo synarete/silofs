@@ -59,7 +59,7 @@ libsilofs_la_SOURCES += fs/stage.c
 libsilofs_la_SOURCES += fs/stats.c
 libsilofs_la_SOURCES += fs/super.c
 libsilofs_la_SOURCES += fs/symlink.c
-libsilofs_la_SOURCES += fs/umeta.c
+libsilofs_la_SOURCES += fs/uber.c
 libsilofs_la_SOURCES += fs/walk.c
 libsilofs_la_SOURCES += fs/xattr.c
 

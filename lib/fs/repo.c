@@ -800,6 +800,12 @@ static void rehash_blobid(const struct silofs_blobid *blobid,
 	silofs_blobid_make_cas(out_blobid, &hash, blobid->size);
 }
 
+static const struct silofs_mdigest *
+repo_mdigest(const struct silofs_repo *repo)
+{
+	return &repo->re_bootldr.btl_md;
+}
+
 static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
                                      const struct silofs_blobid *blobid,
                                      struct silofs_namebuf *out_nb)
@@ -807,7 +813,7 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	struct silofs_blobid hashed_blobid = { .size = 0 };
 	const size_t nsubs = repo->re_defs->re_objs_nsubs;
 
-	rehash_blobid(blobid, repo->re_mdigest, &hashed_blobid);
+	rehash_blobid(blobid, repo_mdigest(repo), &hashed_blobid);
 	return blobid_to_pathname(&hashed_blobid, nsubs, out_nb);
 }
 
@@ -1202,7 +1208,6 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc,
 	if (err) {
 		return err;
 	}
-	repo->re_mdigest = &repo->re_bootldr.btl_md;
 	return 0;
 }
 

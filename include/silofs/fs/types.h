@@ -376,6 +376,7 @@ struct silofs_vbk_info {
 /* space accounting per stype */
 struct silofs_space_stats {
 	time_t sp_timestamp;
+	size_t sp_nblobs;
 	/* unodes */
 	size_t sp_nsuper;
 	size_t sp_nstats;

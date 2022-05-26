@@ -42,7 +42,6 @@ struct silofs_repo {
 	const struct silofs_repo_defs *re_defs;
 	struct silofs_bootldr   re_bootldr;
 	struct silofs_bootpath  re_bootpath;
-	struct silofs_mdigest  *re_mdigest;
 	struct silofs_alloc    *re_alloc;
 	struct silofs_cache     re_cache;
 	const char             *re_root_dir;

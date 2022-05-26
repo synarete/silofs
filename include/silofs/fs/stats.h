@@ -40,6 +40,8 @@ size_t silofs_sti_capacity(const struct silofs_stats_info *sti);
 
 void silofs_sti_set_capacity(struct silofs_stats_info *sti, size_t capacity);
 
+void silofs_sti_inc_nblobs(struct silofs_stats_info *sti);
+
 
 void silofs_sti_update_curr(struct silofs_stats_info *sti,
                             enum silofs_stype stype, ssize_t take);

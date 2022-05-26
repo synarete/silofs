@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0
 
-from .funtests import context
+from .wetests import run
 
 
 def main() -> None:
-    env = context.Env()
-    env.show()
+    run.run_tests()
 
 
 if __name__ == "__main__":

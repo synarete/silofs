@@ -29,7 +29,7 @@
 #include <silofs/fs/stats.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/stage.h>
-#include <silofs/fs/umeta.h>
+#include <silofs/fs/uber.h>
 #include <silofs/fs/walk.h>
 #include <silofs/fs/pack.h>
 #include <silofs/fs/private.h>

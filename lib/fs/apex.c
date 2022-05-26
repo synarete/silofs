@@ -22,12 +22,12 @@
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/repo.h>
-#include <silofs/fs/umeta.h>
 #include <silofs/fs/itable.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/stats.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/apex.h>
+#include <silofs/fs/uber.h>
 #include <silofs/fs/private.h>
 #include <stdlib.h>
 #include <iconv.h>

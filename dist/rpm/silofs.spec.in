@@ -25,6 +25,14 @@ Requires: libunwind-devel
 %description devel
 Development files for silofs
 
+%package tests
+Summary: Silofs testing utilities
+Group: Development/Tools
+Requires: python3-pyxattr
+
+%description tests
+Various testing programs for silofs.
+
 %prep
 %setup -q
 
@@ -45,12 +53,8 @@ Development files for silofs
 %files
 %defattr(-, root, root)
 %{_bindir}/%{name}
-%{_bindir}/%{name}-vtests
-%{_bindir}/%{name}-ftests
 %{_sbindir}/%{name}-mountd
 %{_sbindir}/*.%{name}
-%{_prefix}/lib/python3*/site-packages/%{name}/*
-%exclude %{_bindir}/%{name}-utests
 %exclude %{_libdir}/lib%{name}*.la
 %exclude %{_bindir}/smoketests.sh
 %config(noreplace) %{_sysconfdir}/%{name}/*.conf
@@ -66,6 +70,11 @@ Development files for silofs
 %exclude %{_includedir}/*
 %exclude %{_libdir}/lib%{name}*.*
 
+%files tests
+%{_bindir}/%{name}-vtests
+%{_bindir}/%{name}-wetests
+%{_prefix}/lib/python3*/site-packages/%{name}/*
+%exclude %{_bindir}/%{name}-utests
 
 %post
 %systemd_post %{name}-mountd.service

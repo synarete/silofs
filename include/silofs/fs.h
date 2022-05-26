@@ -33,7 +33,7 @@
 #include <silofs/fs/file.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
-#include <silofs/fs/umeta.h>
+#include <silofs/fs/uber.h>
 #include <silofs/fs/exec.h>
 #include <silofs/fs/mntsvc.h>
 #include <silofs/fs/ioctls.h>

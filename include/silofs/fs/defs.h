@@ -656,7 +656,8 @@ struct silofs_stats_record {
 	uint64_t                        sr_ndtnode;
 	uint64_t                        sr_nftnode;
 	uint64_t                        sr_nsymval;
-	uint8_t                         sr_reserved[128];
+	uint64_t                        sr_nblobs;
+	uint8_t                         sr_reserved[120];
 } silofs_packed_aligned64;
 
 

@@ -1,3 +1,15 @@
-#!/bin/sh
-PYTHONPATH=@PYTHONDIR@:${PYTHONPATH} \
-	@PYTHON@ -m silofs.wetestsmain "$@"
+#!/usr/bin/env python3
+import sys
+
+SILOFS_PYTHONDIR = "@PYTHONDIR@"
+
+def main():
+    xdir = SILOFS_PYTHONDIR
+    if xdir not in sys.path:
+        sys.path = [ xdir ] + sys.path
+
+    from silofs import wetestsmain
+    wetestsmain.main()
+
+if __name__ == "__main__":
+    main()

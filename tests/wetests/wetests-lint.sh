@@ -18,7 +18,7 @@ _run_command() {
 }
 
 _run_black() {
-  _run_command black -q "${srcdir}"
+  _run_command black -q -l 79 --preview "${srcdir}"
 }
 
 _run_pylint() {

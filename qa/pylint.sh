@@ -2,7 +2,7 @@
 self=$(basename "${BASH_SOURCE[0]}")
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 basedir=$(realpath "${1:-$selfdir}")
-srcdir="${basedir}/silofs"
+srcdir="${basedir}"
 
 _msg() { echo "$self: $*" >&2; }
 _die() { _msg "$*"; exit 1; }

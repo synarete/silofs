@@ -2,8 +2,8 @@
 import sys
 import os
 
-from .wetests import ctx
-from .wetests import run
+from .tests import ctx
+from .tests import run
 
 
 def _progname() -> str:

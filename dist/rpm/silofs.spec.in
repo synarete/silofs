@@ -72,7 +72,7 @@ Various testing programs for silofs.
 
 %files tests
 %{_bindir}/%{name}-vtests
-%{_bindir}/%{name}-wetests
+%{_bindir}/%{name}-qa-tests
 %{_prefix}/lib/python3*/site-packages/%{name}/*
 %exclude %{_bindir}/%{name}-utests
 

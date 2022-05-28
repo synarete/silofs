@@ -21,16 +21,16 @@ _run_black() {
   _run_command black -q -l 79 --preview "${srcdir}"
 }
 
-_run_pylint() {
-  _run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
-}
-
 _run_flake8() {
   _run_command flake8 "${srcdir}"
 }
 
 _run_mypy() {
   _run_command mypy --no-color-output "${srcdir}" | grep -v "Success: "
+}
+
+_run_pylint() {
+  _run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
 }
 
 _main() {
@@ -42,3 +42,4 @@ _main() {
 }
 
 _main
+exit 0

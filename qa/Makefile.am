@@ -25,5 +25,5 @@ EXTRA_DIST += pylintrc
 silofs-qa-tests: silofs-qa-tests.in
 	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ; chmod +x "$@" ;
 
-all-local: pylint.sh
-	@echo "  PYLINT     "; sh "$<" $(srcdir) ;
+all-local: $(nobase_silofs_qa_tests_PYTHON)
+	@echo "  PYLINT     "; sh "$(srcdir)/pylint.sh" "$(srcdir)" ;

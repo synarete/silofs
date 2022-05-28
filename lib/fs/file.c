@@ -158,7 +158,7 @@ static loff_t off_head1_end_of(size_t slot)
 
 static loff_t off_head1_max(void)
 {
-	return off_head1_end_of(SILOFS_FILE_HEAD1_NLEAVES - 1);
+	return off_head1_end_of(SILOFS_FILE_HEAD1_NLEAF - 1);
 }
 
 static loff_t off_head2_end_of(size_t slot)
@@ -170,7 +170,7 @@ static loff_t off_head2_end_of(size_t slot)
 
 static loff_t off_head2_max(void)
 {
-	return off_head2_end_of(SILOFS_FILE_HEAD2_NLEAVES - 1);
+	return off_head2_end_of(SILOFS_FILE_HEAD2_NLEAF - 1);
 }
 
 static bool off_is_head1(loff_t off)
@@ -976,7 +976,7 @@ static size_t fic_head1_leaf_slot_of(const struct silofs_file_ctx *f_ctx)
 	silofs_assert_lt(off, 4 * SILOFS_KILO);
 	slot = (size_t)off / slot_size;
 
-	silofs_assert_lt(slot, SILOFS_FILE_HEAD1_NLEAVES);
+	silofs_assert_lt(slot, SILOFS_FILE_HEAD1_NLEAF);
 	return slot;
 }
 
@@ -1017,7 +1017,7 @@ static size_t fic_head2_leaf_slot_of(const struct silofs_file_ctx *f_ctx)
 	silofs_assert_ge(off, off_head1_max());
 	slot = (size_t)(off - off_head1_max()) / slot_size;
 
-	silofs_assert_lt(slot, SILOFS_FILE_HEAD2_NLEAVES);
+	silofs_assert_lt(slot, SILOFS_FILE_HEAD2_NLEAF);
 	return slot;
 }
 

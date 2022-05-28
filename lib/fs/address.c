@@ -330,7 +330,7 @@ size_t silofs_stype_size(enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 		return sizeof(struct silofs_super_block);
 	case SILOFS_STYPE_STATS:
-		return sizeof(struct silofs_super_stats);
+		return sizeof(struct silofs_stats_node);
 	case SILOFS_STYPE_SPNODE:
 		return sizeof(struct silofs_spmap_node);
 	case SILOFS_STYPE_SPLEAF:

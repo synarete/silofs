@@ -18,12 +18,12 @@
 #define SILOFS_STATS_H_
 
 
-void silofs_spstats_reset(struct silofs_space_stats *spst);
+void silofs_spstats_reset(struct silofs_spacestats *spst);
 
-void silofs_spstats_add(struct silofs_space_stats *spst,
-                        const struct silofs_space_stats *other);
+void silofs_spstats_add(struct silofs_spacestats *spst,
+                        const struct silofs_spacestats *other);
 
-void silofs_spstats_by_stype(struct silofs_space_stats *spst,
+void silofs_spstats_by_stype(struct silofs_spacestats *spst,
                              enum silofs_stype stype, size_t cnt);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -47,7 +47,7 @@ void silofs_sti_update_curr(struct silofs_stats_info *sti,
                             enum silofs_stype stype, ssize_t take);
 
 void silofs_sti_collect_curr(const struct silofs_stats_info *sti,
-                             struct silofs_space_stats *out_sp);
+                             struct silofs_spacestats *out_sp);
 
 
 loff_t silofs_sti_vspace_end(const struct silofs_stats_info *sti);
@@ -69,6 +69,6 @@ bool silofs_sti_may_alloc_meta(const struct silofs_stats_info *sti,
 void silofs_sti_fill_statvfs(const struct silofs_stats_info *sti,
                              struct statvfs *out_stv);
 
-int silofs_verify_super_stats(const struct silofs_super_stats *ss);
+int silofs_verify_super_stats(const struct silofs_stats_node *ss);
 
 #endif /* SILOFS_STATS_H_ */

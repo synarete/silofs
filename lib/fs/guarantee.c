@@ -72,6 +72,9 @@
 #define REQUIRE_SIZEOF_1K(type) \
 	REQUIRE_SIZEOF_NK(type, 1)
 
+#define REQUIRE_SIZEOF_2K(type) \
+	REQUIRE_SIZEOF_NK(type, 2)
+
 #define REQUIRE_SIZEOF_4K(type) \
 	REQUIRE_SIZEOF_NK(type, 4)
 
@@ -128,7 +131,7 @@ static void guarantee_fundamental_types_size(void)
 static void guarantee_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_64K(struct silofs_super_block);
-	REQUIRE_SIZEOF_1K(struct silofs_super_stats);
+	REQUIRE_SIZEOF_2K(struct silofs_stats_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_leaf);
 	REQUIRE_SIZEOF_8K(struct silofs_itable_node);
@@ -165,12 +168,15 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_packid64b, 64);
 	REQUIRE_SIZEOF(struct silofs_oaddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
-	REQUIRE_SIZEOF(struct silofs_stats_record, 256);
 	REQUIRE_SIZEOF(struct silofs_spmap_ref, 120);
 	REQUIRE_SIZEOF(struct silofs_bk_ref, 120);
 	REQUIRE_SIZEOF(struct silofs_bootsec1k, SILOFS_BOOTSEC_SIZE);
 	REQUIRE_SIZEOF_BK(struct silofs_super_block);
 	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
+	REQUIRE_SIZEOF(struct silofs_stats_record, 256);
+	REQUIRE_SIZEOF(struct silofs_space_stats_rec, 256);
+	REQUIRE_SIZEOF(struct silofs_space_stats, 960);
+	REQUIRE_SIZEOF(struct silofs_stats_node, SILOFS_STNODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPNODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPLEAF_SIZE);
 	REQUIRE_SIZEOF_KB(struct silofs_inode);
@@ -251,8 +257,7 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_mainpackid, 2176);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_self, 2304);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_subref, 4096);
-	REQUIRE_OFFSET64(struct silofs_super_stats, st_curr, 256);
-	REQUIRE_OFFSET64(struct silofs_super_stats, st_base, 512);
+	REQUIRE_OFFSET64(struct silofs_stats_node, st_curr, 256);
 	REQUIRE_OFFSET64(struct silofs_stats_record, sr_timestamp, 0);
 	REQUIRE_OFFSET64(struct silofs_stats_record, sr_capacity, 8);
 	REQUIRE_OFFSET64(struct silofs_stats_record, sr_vspace_end, 16);
@@ -325,10 +330,10 @@ static void guarantee_defs_consistency(void)
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 256 * SILOFS_TERA);
 
-	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAVES,
+	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
 	           SILOFS_FILE_HEAD2_LEAF_SIZE);
-	REQUIRE_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAVES) +
-	           (SILOFS_FILE_HEAD2_LEAF_SIZE * SILOFS_FILE_HEAD2_NLEAVES),
+	REQUIRE_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF) +
+	           (SILOFS_FILE_HEAD2_LEAF_SIZE * SILOFS_FILE_HEAD2_NLEAF),
 	           SILOFS_FILE_TREE_LEAF_SIZE);
 }
 

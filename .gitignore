@@ -34,3 +34,4 @@ lib*.la
 
 # External tools
 /cscope.out
+/.mypy_cache/

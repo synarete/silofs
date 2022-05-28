@@ -16,7 +16,7 @@ nobase_silofs_qa_tests_PYTHON += tests/fsutils.py
 nobase_silofs_qa_tests_PYTHON += tests/run.py
 nobase_silofs_qa_tests_PYTHON += tests/test_basics.py
 
-CLEANFILES = silofs-qa-tests
+CLEANFILES = silofs-qa-tests pylint
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += silofs-qa-tests.in
 EXTRA_DIST += pylint.sh
@@ -25,5 +25,7 @@ EXTRA_DIST += pylintrc
 silofs-qa-tests: silofs-qa-tests.in
 	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ; chmod +x "$@" ;
 
-all-local: $(nobase_silofs_qa_tests_PYTHON)
-	@echo "  PYLINT     "; sh "$(srcdir)/pylint.sh" "$(srcdir)" ;
+pylint: $(nobase_silofs_qa_tests_PYTHON)
+	@echo "  PYLINT     "; sh "$(srcdir)/pylint.sh" "$(srcdir)" > "$@" ;
+
+all-local: pylint

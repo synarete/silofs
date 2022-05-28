@@ -69,6 +69,6 @@ bool silofs_sti_may_alloc_meta(const struct silofs_stats_info *sti,
 void silofs_sti_fill_statvfs(const struct silofs_stats_info *sti,
                              struct statvfs *out_stv);
 
-int silofs_verify_super_stats(const struct silofs_stats_node *ss);
+int silofs_verify_stats_node(const struct silofs_stats_node *ss);
 
 #endif /* SILOFS_STATS_H_ */

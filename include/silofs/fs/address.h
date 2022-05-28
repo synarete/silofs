@@ -433,5 +433,14 @@ static inline silofs_lba_t silofs_lba_to_cpu(uint64_t lba)
 	return (silofs_lba_t)silofs_le64_to_cpu(lba);
 }
 
+static inline uint64_t silofs_cpu_to_time(time_t tm)
+{
+	return silofs_cpu_to_le64((uint64_t)tm);
+}
+
+static inline time_t silofs_time_to_cpu(uint64_t tm)
+{
+	return (time_t)silofs_le64_to_cpu(tm);
+}
 
 #endif /* SILOFS_ADDRESS_H_ */

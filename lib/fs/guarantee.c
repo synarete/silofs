@@ -174,7 +174,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF_BK(struct silofs_super_block);
 	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
 	REQUIRE_SIZEOF(struct silofs_stats_record, 256);
-	REQUIRE_SIZEOF(struct silofs_space_stats_rec, 256);
+	REQUIRE_SIZEOF(struct silofs_stats_record, 256);
 	REQUIRE_SIZEOF(struct silofs_space_stats, 960);
 	REQUIRE_SIZEOF(struct silofs_stats_node, SILOFS_STNODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPNODE_SIZE);
@@ -257,10 +257,11 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_mainpackid, 2176);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_self, 2304);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_subref, 4096);
-	REQUIRE_OFFSET64(struct silofs_stats_node, st_curr, 256);
-	REQUIRE_OFFSET64(struct silofs_stats_record, sr_timestamp, 0);
-	REQUIRE_OFFSET64(struct silofs_stats_record, sr_capacity, 8);
-	REQUIRE_OFFSET64(struct silofs_stats_record, sr_vspace_end, 16);
+	REQUIRE_OFFSET64(struct silofs_stats_node, st_sp, 64);
+	REQUIRE_OFFSET64(struct silofs_space_stats, sp_btime, 0);
+	REQUIRE_OFFSET64(struct silofs_space_stats, sp_ctime, 8);
+	REQUIRE_OFFSET64(struct silofs_space_stats, sp_capacity, 16);
+	REQUIRE_OFFSET64(struct silofs_space_stats, sp_vspacesize, 24);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_mainblobid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_mainpackid, 128);

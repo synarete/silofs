@@ -1752,7 +1752,7 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_SUPER:
 		return silofs_verify_super_block(&view->sb);
 	case SILOFS_STYPE_STATS:
-		return silofs_verify_super_stats(&view->st);
+		return silofs_verify_stats_node(&view->st);
 	case SILOFS_STYPE_SPNODE:
 		return silofs_verify_spmap_node(&view->sn);
 	case SILOFS_STYPE_SPLEAF:

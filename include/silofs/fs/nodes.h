@@ -75,7 +75,7 @@ struct silofs_sb_info {
 /* super-stats */
 struct silofs_stats_info {
 	struct silofs_unode_info        st_ui;
-	struct silofs_stats_node      *st;
+	struct silofs_stats_node       *st;
 };
 
 /* space-node */

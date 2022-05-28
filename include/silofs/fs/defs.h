@@ -643,28 +643,6 @@ struct silofs_super_block {
 
 
 struct silofs_stats_record {
-	uint64_t                        sr_timestamp;
-	uint64_t                        sr_capacity;
-	int64_t                         sr_vspace_end;
-	uint64_t                        sr_ndata1k;
-	uint64_t                        sr_ndata4k;
-	uint64_t                        sr_ndatabk;
-	uint64_t                        sr_nsuper;
-	uint64_t                        sr_nstats;
-	uint64_t                        sr_nspnode;
-	uint64_t                        sr_nspleaf;
-	uint64_t                        sr_nitnode;
-	uint64_t                        sr_ninode;
-	uint64_t                        sr_nxanode;
-	uint64_t                        sr_ndtnode;
-	uint64_t                        sr_nftnode;
-	uint64_t                        sr_nsymval;
-	uint64_t                        sr_nblobs;
-	uint8_t                         sr_reserved[120];
-} silofs_packed_aligned64;
-
-
-struct silofs_space_stats_rec {
 	uint64_t                        sr_ndata1k;
 	uint64_t                        sr_ndata4k;
 	uint64_t                        sr_ndatabk;
@@ -688,19 +666,17 @@ struct silofs_space_stats {
 	uint64_t                        sp_capacity;
 	uint64_t                        sp_vspacesize;
 	uint64_t                        sp_reserved[20];
-	struct silofs_space_stats_rec   sp_objs;
-	struct silofs_space_stats_rec   sp_bks;
-	struct silofs_space_stats_rec   sp_blobs;
+	struct silofs_stats_record      sp_objs;
+	struct silofs_stats_record      sp_bks;
+	struct silofs_stats_record      sp_blobs;
 } silofs_packed_aligned64;
 
 
 struct silofs_stats_node {
 	struct silofs_header            st_hdr;
 	uint8_t                         st_reserved1[48];
-	uint8_t                         st_reserved2[192];
-	struct silofs_stats_record      st_curr;
-	uint8_t                         st_reserved3[512];
-	uint8_t                         st_reserved4[1024];
+	struct silofs_space_stats       st_sp;
+	uint8_t                         st_reserved2[1024];
 } silofs_packed_aligned64;
 
 

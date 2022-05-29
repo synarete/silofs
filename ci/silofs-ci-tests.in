@@ -8,8 +8,8 @@ def main():
     if xdir not in sys.path:
         sys.path = [ xdir ] + sys.path
 
-    import silofs.qa.main as qamain
-    qamain.main()
+    import silofs.ci.main as cimain
+    cimain.main()
 
 if __name__ == "__main__":
     main()

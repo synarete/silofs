@@ -18,57 +18,51 @@
 #define SILOFS_STATS_H_
 
 
-void silofs_spstats_reset(struct silofs_spacestats *spst);
-
-void silofs_spstats_add(struct silofs_spacestats *spst,
-                        const struct silofs_spacestats *other);
-
-void silofs_spstats_by_stype(struct silofs_spacestats *spst,
-                             enum silofs_stype stype, size_t cnt);
+void silofs_spacestat_add(struct silofs_spacestat *spst,
+                          const struct silofs_spacestat *other);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sti_bind_apex(struct silofs_stats_info *sti,
+void silofs_sti_bind_apex(struct silofs_spstat_info *sti,
                           struct silofs_fs_apex *apex);
 
-void silofs_sti_setup_spawned(struct silofs_stats_info *sti);
+void silofs_sti_setup_spawned(struct silofs_spstat_info *sti);
 
-void silofs_sti_make_clone(struct silofs_stats_info *sti,
-                           const struct silofs_stats_info *sti_other);
+void silofs_sti_make_clone(struct silofs_spstat_info *sti,
+                           const struct silofs_spstat_info *sti_other);
 
-size_t silofs_sti_capacity(const struct silofs_stats_info *sti);
+size_t silofs_sti_capacity(const struct silofs_spstat_info *sti);
 
-void silofs_sti_set_capacity(struct silofs_stats_info *sti, size_t capacity);
+void silofs_sti_set_capacity(struct silofs_spstat_info *sti, size_t capacity);
 
-void silofs_sti_inc_nblobs(struct silofs_stats_info *sti);
+loff_t silofs_sti_vspace_end(const struct silofs_spstat_info *sti);
+
+size_t silofs_sti_bytes_used(const struct silofs_spstat_info *sti);
+
+fsfilcnt_t silofs_sti_inodes_used(const struct silofs_spstat_info *sti);
+
+fsfilcnt_t silofs_sti_inodes_max(const struct silofs_spstat_info *sti);
 
 
-void silofs_sti_update_curr(struct silofs_stats_info *sti,
+void silofs_sti_update_objs(struct silofs_spstat_info *sti,
                             enum silofs_stype stype, ssize_t take);
 
-void silofs_sti_collect_curr(const struct silofs_stats_info *sti,
-                             struct silofs_spacestats *out_sp);
+void silofs_sti_collect_objs(const struct silofs_spstat_info *sti,
+                             struct silofs_spacestat *out_sp);
 
+void silofs_sti_update_blobs(struct silofs_spstat_info *sti,
+                             enum silofs_stype stype, ssize_t take);
 
-loff_t silofs_sti_vspace_end(const struct silofs_stats_info *sti);
+bool silofs_sti_may_alloc_some(const struct silofs_spstat_info *sti, size_t n);
 
-size_t silofs_sti_bytes_used(const struct silofs_stats_info *sti);
+bool silofs_sti_may_alloc_data(const struct silofs_spstat_info *sti, size_t n);
 
-fsfilcnt_t silofs_sti_inodes_used(const struct silofs_stats_info *sti);
+bool silofs_sti_may_alloc_meta(const struct silofs_spstat_info *sti,
+                               size_t nbytes, bool new_file);
 
-fsfilcnt_t silofs_sti_inodes_max(const struct silofs_stats_info *sti);
-
-
-bool silofs_sti_may_alloc_some(const struct silofs_stats_info *sti, size_t nb);
-
-bool silofs_sti_may_alloc_data(const struct silofs_stats_info *sti, size_t nb);
-
-bool silofs_sti_may_alloc_meta(const struct silofs_stats_info *sti,
-                               size_t nb, bool new_file);
-
-void silofs_sti_fill_statvfs(const struct silofs_stats_info *sti,
+void silofs_sti_fill_statvfs(const struct silofs_spstat_info *sti,
                              struct statvfs *out_stv);
 
-int silofs_verify_stats_node(const struct silofs_stats_node *ss);
+int silofs_verify_stats_node(const struct silofs_spstat_node *ss);
 
 #endif /* SILOFS_STATS_H_ */

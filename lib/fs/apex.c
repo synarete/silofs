@@ -189,7 +189,7 @@ static void make_stats_uaddr(const struct silofs_blobid *blobid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_uaddr_setup(out_uaddr, blobid, SILOFS_BK_SIZE,
-	                   SILOFS_STYPE_STATS, SILOFS_SUPER_HEIGHT, 0);
+	                   SILOFS_STYPE_SPSTAT, SILOFS_SUPER_HEIGHT, 0);
 }
 
 /*. . . . . . . . . . . . . . . b. . . . . . . . . . . . . . . . . . . . . .*/
@@ -240,7 +240,7 @@ static int apex_spawn_super_of(struct silofs_fs_apex *apex,
 
 static int apex_spawn_stats_at(struct silofs_fs_apex *apex,
                                const struct silofs_uaddr *uaddr,
-                               struct silofs_stats_info **out_sti)
+                               struct silofs_spstat_info **out_sti)
 {
 	int err;
 
@@ -255,7 +255,7 @@ static int apex_spawn_stats_at(struct silofs_fs_apex *apex,
 
 static int apex_spawn_stats_of(struct silofs_fs_apex *apex,
                                struct silofs_sb_info *sbi,
-                               struct silofs_stats_info **out_sti)
+                               struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uaddr uaddr;
 	int ret;
@@ -271,7 +271,7 @@ int silofs_apex_spawn_supers(struct silofs_fs_apex *apex, size_t capacity,
                              struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_stats_info *sti = NULL;
+	struct silofs_spstat_info *sti = NULL;
 	int err;
 
 	err = apex_spawn_super_of(apex, &sbi);
@@ -309,7 +309,7 @@ static int apex_stage_super_at(struct silofs_fs_apex *apex,
 
 static int apex_stage_stats_at(struct silofs_fs_apex *apex,
                                const struct silofs_uaddr *uaddr,
-                               struct silofs_stats_info **out_sti)
+                               struct silofs_spstat_info **out_sti)
 {
 	int err;
 
@@ -323,7 +323,7 @@ static int apex_stage_stats_at(struct silofs_fs_apex *apex,
 
 static int apex_stage_stats_of(struct silofs_fs_apex *apex,
                                struct silofs_sb_info *sbi,
-                               struct silofs_stats_info **out_sti)
+                               struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uaddr uaddr;
 	int err;
@@ -342,7 +342,7 @@ int silofs_apex_stage_supers(struct silofs_fs_apex *apex,
                              struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_stats_info *sti = NULL;
+	struct silofs_spstat_info *sti = NULL;
 	int err;
 
 	err = apex_stage_super_at(apex, uaddr, &sbi);
@@ -360,10 +360,10 @@ int silofs_apex_stage_supers(struct silofs_fs_apex *apex,
 
 static void sbi_account_supers_of(struct silofs_sb_info *sbi)
 {
-	struct silofs_stats_info *sti = sbi->sb_sti;
+	struct silofs_spstat_info *sti = sbi->sb_sti;
 
-	silofs_sti_update_curr(sti, SILOFS_STYPE_SUPER, 1);
-	silofs_sti_update_curr(sti, SILOFS_STYPE_STATS, 1);
+	silofs_sti_update_objs(sti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_objs(sti, SILOFS_STYPE_SPSTAT, 1);
 }
 
 int silofs_apex_format_supers(struct silofs_fs_apex *apex, size_t capacity)
@@ -397,8 +397,8 @@ int silofs_apex_reload_supers(struct silofs_fs_apex *apex,
 static void sbi_make_clone(struct silofs_sb_info *sbi_new,
                            const struct silofs_sb_info *sbi_cur)
 {
-	struct silofs_stats_info *sti_new = sbi_new->sb_sti;
-	struct silofs_stats_info *sti_cur = sbi_cur->sb_sti;
+	struct silofs_spstat_info *sti_new = sbi_new->sb_sti;
+	struct silofs_spstat_info *sti_cur = sbi_cur->sb_sti;
 
 	silofs_sti_make_clone(sti_new, sti_cur);
 	silofs_sbi_make_clone(sbi_new, sbi_cur);

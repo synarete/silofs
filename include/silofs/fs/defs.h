@@ -308,7 +308,7 @@ enum silofs_stype {
 	SILOFS_STYPE_DATA4K     = 3,
 	SILOFS_STYPE_DATABK     = 4,
 	SILOFS_STYPE_SUPER      = 5,
-	SILOFS_STYPE_STATS      = 6,
+	SILOFS_STYPE_SPSTAT     = 6,
 	SILOFS_STYPE_SPNODE     = 7,
 	SILOFS_STYPE_SPLEAF     = 8,
 	SILOFS_STYPE_ITNODE     = 9,
@@ -642,7 +642,7 @@ struct silofs_super_block {
 } silofs_packed_aligned64;
 
 
-struct silofs_stats_record {
+struct silofs_spstat_record {
 	uint64_t                        sr_ndata1k;
 	uint64_t                        sr_ndata4k;
 	uint64_t                        sr_ndatabk;
@@ -660,23 +660,18 @@ struct silofs_stats_record {
 } silofs_packed_aligned64;
 
 
-struct silofs_space_stats {
+struct silofs_spstat_node {
+	struct silofs_header            sp_hdr;
+	uint8_t                         sp_reserved1[48];
 	uint64_t                        sp_btime;
 	uint64_t                        sp_ctime;
 	uint64_t                        sp_capacity;
 	uint64_t                        sp_vspacesize;
 	uint64_t                        sp_reserved[20];
-	struct silofs_stats_record      sp_objs;
-	struct silofs_stats_record      sp_bks;
-	struct silofs_stats_record      sp_blobs;
-} silofs_packed_aligned64;
-
-
-struct silofs_stats_node {
-	struct silofs_header            st_hdr;
-	uint8_t                         st_reserved1[48];
-	struct silofs_space_stats       st_sp;
-	uint8_t                         st_reserved2[1024];
+	struct silofs_spstat_record     sp_objs;
+	struct silofs_spstat_record     sp_bks;
+	struct silofs_spstat_record     sp_blobs;
+	uint8_t                         sp_reserved2[1024];
 } silofs_packed_aligned64;
 
 
@@ -923,10 +918,9 @@ struct silofs_block {
 union silofs_view {
 	struct silofs_header            hdr;
 	struct silofs_super_block       sb;
-	struct silofs_stats_node        st;
+	struct silofs_spstat_node       st;
 	struct silofs_spmap_node        sn;
 	struct silofs_spmap_leaf        sl;
-	struct silofs_bk_ref            br;
 	struct silofs_inode             in;
 	struct silofs_dtree_node        dtn;
 	struct silofs_ftree_node        ftn;

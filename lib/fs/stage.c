@@ -233,6 +233,7 @@ static int sbi_stage_blob(const struct silofs_sb_info *sbi,
 
 static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
                           const struct silofs_blobid *blobid,
+                          enum silofs_stype stype_sub,
                           struct silofs_blob_info **out_bli)
 {
 	struct silofs_repo *repo = sbi_repo(sbi);
@@ -249,7 +250,7 @@ static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	silofs_sti_inc_nblobs(sbi->sb_sti);
+	silofs_sti_update_blobs(sbi->sb_sti, stype_sub, 1);
 	return 0;
 }
 
@@ -450,7 +451,7 @@ out_err:
 static void stgc_update_uspace_meta(const struct silofs_stage_ctx *stg_ctx,
                                     const struct silofs_uaddr *uaddr)
 {
-	silofs_sti_update_curr(stg_ctx->sbi->sb_sti, uaddr->stype, 1);
+	silofs_sti_update_objs(stg_ctx->sbi->sb_sti, uaddr->stype, 1);
 }
 
 static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
@@ -469,10 +470,11 @@ static int sbi_spawn_super_main_blob(struct silofs_sb_info *sbi)
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
 	const size_t nslots = ARRAY_SIZE(sbi->sb->sb_subref);
+	const enum silofs_stype stype = SILOFS_STYPE_SPNODE;
 	int err;
 
-	sbi_make_blobid_for(sbi, SILOFS_STYPE_SPNODE, nslots, &blobid);
-	err = sbi_spawn_blob(sbi, &blobid, &bli);
+	sbi_make_blobid_for(sbi, stype, nslots, &blobid);
+	err = sbi_spawn_blob(sbi, &blobid, stype, &bli);
 	if (err) {
 		return err;
 	}
@@ -585,7 +587,7 @@ static int sbi_spawn_spnode_main_blob(struct silofs_sb_info *sbi,
 	int err;
 
 	sbi_make_blobid_for(sbi, stype, nchilds, &blobid);
-	err = sbi_spawn_blob(sbi, &blobid, &bli);
+	err = sbi_spawn_blob(sbi, &blobid, stype, &bli);
 	if (err) {
 		return err;
 	}
@@ -938,7 +940,7 @@ static int stgc_spawn_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	sbi_make_blobid_for(stg_ctx->sbi, SILOFS_STYPE_ANONBK, nbks, &blobid);
-	err = sbi_spawn_blob(stg_ctx->sbi, &blobid, &bli);
+	err = sbi_spawn_blob(stg_ctx->sbi, &blobid, stg_ctx->stype_sub, &bli);
 	if (err) {
 		return err;
 	}

@@ -36,7 +36,7 @@ struct silofs_walk_ctx {
 	struct silofs_visitor     *vis;
 	struct silofs_fs_apex     *apex;
 	struct silofs_sb_info     *sbi;
-	struct silofs_stats_info  *sti;
+	struct silofs_spstat_info  *sti;
 	struct silofs_spnode_info *sni3;
 	struct silofs_spnode_info *sni2;
 	struct silofs_spleaf_info *sli;
@@ -423,7 +423,7 @@ static int wac_traverse_utree(struct silofs_walk_ctx *wa_ctx)
 static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_sb_info *sbi = wa_ctx->sbi;
-	struct silofs_stats_info *sti = wa_ctx->sti;
+	struct silofs_spstat_info *sti = wa_ctx->sti;
 	loff_t voff = 0;
 	int err;
 
@@ -431,7 +431,7 @@ static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 	if (err) {
 		return err;
 	}
-	err = wac_visit_exec_at(wa_ctx, NULL, &sti->st_ui, voff, 1);
+	err = wac_visit_exec_at(wa_ctx, NULL, &sti->sp_ui, voff, 1);
 	if (err) {
 		return err;
 	}
@@ -439,7 +439,7 @@ static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 	if (err) {
 		return err;
 	}
-	err = wac_visit_post_at(wa_ctx, NULL, &sti->st_ui, voff, 1);
+	err = wac_visit_post_at(wa_ctx, NULL, &sti->sp_ui, voff, 1);
 	if (err) {
 		return err;
 	}

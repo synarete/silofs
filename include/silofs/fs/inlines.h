@@ -150,7 +150,7 @@ static inline bool silofs_stype_issuper(enum silofs_stype stype)
 
 static inline bool silofs_stype_isstats(enum silofs_stype stype)
 {
-	return silofs_stype_isequal(stype, SILOFS_STYPE_STATS);
+	return silofs_stype_isequal(stype, SILOFS_STYPE_SPSTAT);
 }
 
 static inline bool silofs_stype_isspnode(enum silofs_stype stype)
@@ -324,9 +324,9 @@ silofs_sbi_blobid(const struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static inline const struct silofs_uaddr *
-silofs_sti_uaddr(const struct silofs_stats_info *sti)
+silofs_sti_uaddr(const struct silofs_spstat_info *sti)
 {
-	return &sti->st_ui.u_uaddr;
+	return &sti->sp_ui.u_uaddr;
 }
 
 #endif /* SILOFS_INLINES_H_ */

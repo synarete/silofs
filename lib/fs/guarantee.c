@@ -131,7 +131,7 @@ static void guarantee_fundamental_types_size(void)
 static void guarantee_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_64K(struct silofs_super_block);
-	REQUIRE_SIZEOF_2K(struct silofs_stats_node);
+	REQUIRE_SIZEOF_2K(struct silofs_spstat_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_leaf);
 	REQUIRE_SIZEOF_8K(struct silofs_itable_node);
@@ -173,10 +173,8 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_bootsec1k, SILOFS_BOOTSEC_SIZE);
 	REQUIRE_SIZEOF_BK(struct silofs_super_block);
 	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
-	REQUIRE_SIZEOF(struct silofs_stats_record, 256);
-	REQUIRE_SIZEOF(struct silofs_stats_record, 256);
-	REQUIRE_SIZEOF(struct silofs_space_stats, 960);
-	REQUIRE_SIZEOF(struct silofs_stats_node, SILOFS_STNODE_SIZE);
+	REQUIRE_SIZEOF(struct silofs_spstat_record, 256);
+	REQUIRE_SIZEOF(struct silofs_spstat_node, SILOFS_STNODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPNODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPLEAF_SIZE);
 	REQUIRE_SIZEOF_KB(struct silofs_inode);
@@ -257,11 +255,13 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_mainpackid, 2176);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_self, 2304);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_subref, 4096);
-	REQUIRE_OFFSET64(struct silofs_stats_node, st_sp, 64);
-	REQUIRE_OFFSET64(struct silofs_space_stats, sp_btime, 0);
-	REQUIRE_OFFSET64(struct silofs_space_stats, sp_ctime, 8);
-	REQUIRE_OFFSET64(struct silofs_space_stats, sp_capacity, 16);
-	REQUIRE_OFFSET64(struct silofs_space_stats, sp_vspacesize, 24);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_btime, 64);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_ctime, 72);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_capacity, 80);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_vspacesize, 88);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_objs, 256);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_bks, 512);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_blobs, 768);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_mainblobid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_mainpackid, 128);

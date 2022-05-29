@@ -373,25 +373,33 @@ struct silofs_vbk_info {
 	loff_t                          vbk_voff;
 };
 
+
+/* space accounting per sub-type */
+struct silofs_spacestat_rec {
+	size_t ndata1k;
+	size_t ndata4k;
+	size_t ndatabk;
+	size_t nsuper;
+	size_t nstats;
+	size_t nspnode;
+	size_t nspleaf;
+	size_t nitnode;
+	size_t ninode;
+	size_t nxanode;
+	size_t ndtnode;
+	size_t nftnode;
+	size_t nsymval;
+};
+
 /* space accounting per stype */
-struct silofs_spacestats {
-	time_t sp_timestamp;
-	size_t sp_nblobs;
-	/* unodes */
-	size_t sp_nsuper;
-	size_t sp_nstats;
-	size_t sp_nspnode;
-	size_t sp_nspleaf;
-	/* vnodes */
-	size_t sp_ndata1k;
-	size_t sp_ndata4k;
-	size_t sp_ndatabk;
-	size_t sp_nitnode;
-	size_t sp_ninode;
-	size_t sp_nxanode;
-	size_t sp_ndtnode;
-	size_t sp_nftnode;
-	size_t sp_nsymval;
+struct silofs_spacestat {
+	time_t btime;
+	time_t ctime;
+	size_t capacity;
+	size_t vspacesize;
+	struct silofs_spacestat_rec objs;
+	struct silofs_spacestat_rec bks;
+	struct silofs_spacestat_rec blobs;
 };
 
 /* v-space allocation hints */

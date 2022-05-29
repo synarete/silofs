@@ -17,7 +17,7 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
-struct silofs_stats_info;
+struct silofs_spstat_info;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 
@@ -43,7 +43,7 @@ void silofs_sbi_setup_btime(struct silofs_sb_info *sbi);
 void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_stats_info *sti);
+                           struct silofs_spstat_info *sti);
 
 void silofs_sbi_bind_apex(struct silofs_sb_info *sbi,
                           struct silofs_fs_apex *apex);

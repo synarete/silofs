@@ -1927,11 +1927,11 @@ int silofs_do_rename(const struct silofs_fs_ctx *fs_ctx,
 static void fill_statfsx(const struct silofs_sb_info *sbi,
                          struct silofs_query_statfsx *stx)
 {
-	struct silofs_spacestats sp_st;
-	const struct silofs_stats_info *sti = sbi->sb_sti;
+	struct silofs_spacestat sp_st;
+	const struct silofs_spstat_info *sti = sbi->sb_sti;
 	const time_t now = silofs_time_now();
 
-	silofs_sti_collect_curr(sti, &sp_st);
+	silofs_sti_collect_objs(sti, &sp_st);
 	stx->bsize = silofs_sti_capacity(sti);
 	stx->bused = silofs_sti_inodes_used(sti);
 	stx->ilimit = silofs_sti_inodes_max(sti);

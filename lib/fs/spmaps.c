@@ -1564,7 +1564,7 @@ static int verify_stype(enum silofs_stype stype)
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_STATS:
+	case SILOFS_STYPE_SPSTAT:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ITNODE:

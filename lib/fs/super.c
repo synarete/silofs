@@ -1126,7 +1126,7 @@ void silofs_sbi_xfini(struct silofs_sb_info *sbi)
 }
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_stats_info *sti)
+                           struct silofs_spstat_info *sti)
 {
 	if (sbi->sb_sti != NULL) {
 		sti_decref(sbi->sb_sti);

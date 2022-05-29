@@ -2302,7 +2302,7 @@ static int check_utf8_name(const struct silofs_fs_apex *apex,
 static const struct silofs_mdigest *
 dii_mdigest(const struct silofs_inode_info *ii)
 {
-	return &ii->i_vi.v_si.s_apex->ap_crypto->md;
+	return ii->i_vi.v_si.s_md;
 }
 
 static uint64_t

@@ -29,6 +29,7 @@
 #include <silofs/fs/private.h>
 
 struct silofs_uber_ctx {
+	struct silofs_fs_apex     *apex;
 	struct silofs_repo        *repo;
 	struct silofs_cache       *cache;
 	struct silofs_mdigest     *mdigest;
@@ -165,11 +166,25 @@ static void sli_set_spawned(struct silofs_spleaf_info *sli)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void ubc_setup(struct silofs_uber_ctx *ub_ctx, struct silofs_repo *repo)
+static struct silofs_repo *repo_of(struct silofs_fs_apex *apex, bool main)
 {
-	ub_ctx->repo = repo;
-	ub_ctx->cache = &repo->re_cache;
-	ub_ctx->mdigest = &repo->re_bootldr.btl_md;
+	return main ? apex->ap_mrepo : apex->ap_crepo;
+}
+
+static int ubc_setup(struct silofs_uber_ctx *ub_ctx,
+                     struct silofs_fs_apex *apex, bool main)
+{
+	struct silofs_repo *repo = repo_of(apex, main);
+
+	if (repo == NULL) {
+		log_dbg("%s repo not set", main ? "main" : "cold");
+		return -EBADSLT;
+	}
+	ub_ctx->apex = apex;
+	ub_ctx->repo = repo_of(apex, main);
+	ub_ctx->cache = &ub_ctx->repo->re_cache;
+	ub_ctx->mdigest = &ub_ctx->repo->re_bootldr.btl_md;
+	return 0;
 }
 
 static int ubc_spawn_cached_ubi(const struct silofs_uber_ctx *ub_ctx,
@@ -319,14 +334,17 @@ static int ubc_attach_ghost_sbi_bk(const struct silofs_uber_ctx *ub_ctx,
 	return err;
 }
 
-int silofs_spawn_super_at(struct silofs_repo *repo,
+int silofs_spawn_super_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sbi(&ub_ctx, uaddr, out_sbi);
 	if (err) {
 		return err;
@@ -342,14 +360,17 @@ int silofs_spawn_super_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_stage_super_at(struct silofs_repo *repo,
+int silofs_stage_super_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sbi(&ub_ctx, uaddr, out_sbi);
 	if (err) {
 		return err;
@@ -368,14 +389,17 @@ int silofs_stage_super_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_shadow_super_at(struct silofs_repo *repo,
+int silofs_shadow_super_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sbi(&ub_ctx, uaddr, out_sbi);
 	if (err) {
 		return err;
@@ -452,14 +476,17 @@ static int ubc_ghost_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
 	return err;
 }
 
-int silofs_spawn_stats_at(struct silofs_repo *repo,
+int silofs_spawn_stats_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sti(&ub_ctx, uaddr, out_sti);
 	if (err) {
 		return err;
@@ -475,14 +502,17 @@ int silofs_spawn_stats_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_stage_stats_at(struct silofs_repo *repo,
+int silofs_stage_stats_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sti(&ub_ctx, uaddr, out_sti);
 	if (err) {
 		return err;
@@ -501,14 +531,17 @@ int silofs_stage_stats_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_shadow_stats_at(struct silofs_repo *repo,
+int silofs_shadow_stats_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sti(&ub_ctx, uaddr, out_sti);
 	if (err) {
 		return err;
@@ -585,14 +618,17 @@ static int ubc_ghost_attach_sni_bk(const struct silofs_uber_ctx *ub_ctx,
 	return err;
 }
 
-int silofs_spawn_spnode_at(struct silofs_repo *repo,
+int silofs_spawn_spnode_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sni(&ub_ctx, uaddr, out_sni);
 	if (err) {
 		return err;
@@ -608,14 +644,17 @@ int silofs_spawn_spnode_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_stage_spnode_at(struct silofs_repo *repo,
+int silofs_stage_spnode_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sni(&ub_ctx, uaddr, out_sni);
 	if (err) {
 		return err;
@@ -635,14 +674,17 @@ int silofs_stage_spnode_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_shadow_spnode_at(struct silofs_repo *repo,
+int silofs_shadow_spnode_at(struct silofs_fs_apex *apex, bool main,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sni(&ub_ctx, uaddr, out_sni);
 	if (err) {
 		return err;
@@ -719,14 +761,17 @@ static int ubc_ghost_attach_sli_bk(const struct silofs_uber_ctx *ub_ctx,
 	return err;
 }
 
-int silofs_spawn_spleaf_at(struct silofs_repo *repo,
+int silofs_spawn_spleaf_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sli(&ub_ctx, uaddr, out_sli);
 	if (err) {
 		return err;
@@ -742,14 +787,17 @@ int silofs_spawn_spleaf_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_stage_spleaf_at(struct silofs_repo *repo,
+int silofs_stage_spleaf_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sli(&ub_ctx, uaddr, out_sli);
 	if (err) {
 		return err;
@@ -769,14 +817,17 @@ int silofs_stage_spleaf_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_shadow_spleaf_at(struct silofs_repo *repo,
+int silofs_shadow_spleaf_at(struct silofs_fs_apex *apex, bool main,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
 
-	ubc_setup(&ub_ctx, repo);
+	err = ubc_setup(&ub_ctx, apex, main);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_cached_sli(&ub_ctx, uaddr, out_sli);
 	if (err) {
 		return err;

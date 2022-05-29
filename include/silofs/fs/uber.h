@@ -18,54 +18,54 @@
 #define SILOFS_UBER_H_
 
 
-int silofs_spawn_super_at(struct silofs_repo *repo,
+int silofs_spawn_super_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi);
 
-int silofs_stage_super_at(struct silofs_repo *repo,
+int silofs_stage_super_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi);
 
-int silofs_shadow_super_at(struct silofs_repo *repo,
+int silofs_shadow_super_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi);
 
 
-int silofs_spawn_stats_at(struct silofs_repo *repo,
+int silofs_spawn_stats_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_spstat_info **out_sti);
 
-int silofs_stage_stats_at(struct silofs_repo *repo,
+int silofs_stage_stats_at(struct silofs_fs_apex *apex, bool main,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_spstat_info **out_sti);
 
-int silofs_shadow_stats_at(struct silofs_repo *repo,
+int silofs_shadow_stats_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spstat_info **out_sti);
 
 
-int silofs_spawn_spnode_at(struct silofs_repo *repo,
+int silofs_spawn_spnode_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni);
 
-int silofs_stage_spnode_at(struct silofs_repo *repo,
+int silofs_stage_spnode_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni);
 
-int silofs_shadow_spnode_at(struct silofs_repo *repo,
+int silofs_shadow_spnode_at(struct silofs_fs_apex *apex, bool main,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spnode_info **out_sni);
 
 
-int silofs_spawn_spleaf_at(struct silofs_repo *repo,
+int silofs_spawn_spleaf_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_spleaf_at(struct silofs_repo *repo,
+int silofs_stage_spleaf_at(struct silofs_fs_apex *apex, bool main,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_shadow_spleaf_at(struct silofs_repo *repo,
+int silofs_shadow_spleaf_at(struct silofs_fs_apex *apex, bool main,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spleaf_info **out_sli);
 

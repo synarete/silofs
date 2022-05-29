@@ -500,13 +500,15 @@ static struct silofs_repo *pac_dst_repo(const struct silofs_pack_ctx *pa_ctx)
 	return pa_ctx->pack ? apex->ap_crepo : apex->ap_mrepo;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct silofs_mdigest *
 pac_mdigest(const struct silofs_pack_ctx *pa_ctx)
 {
-	return &pa_ctx->apex->ap_crypto->md;
+	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+
+	return &repo->re_bootldr.btl_md;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void pac_seal_meta_of(const struct silofs_pack_ctx *pa_ctx,
                              const struct silofs_unode_info *ui)
@@ -991,14 +993,14 @@ static int pac_stage_super(const struct silofs_pack_ctx *pa_ctx,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi)
 {
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	int err;
 
-	err = silofs_stage_super_at(repo, uaddr, out_sbi);
+	err = silofs_stage_super_at(apex, pa_ctx->pack, uaddr, out_sbi);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_apex(*out_sbi, pa_ctx->apex);
+	silofs_sbi_bind_apex(*out_sbi, apex);
 	return 0;
 }
 
@@ -1007,7 +1009,7 @@ static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
                            struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	int err;
 
 	sbi_incref(sbi);
@@ -1015,11 +1017,11 @@ static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = silofs_stage_stats_at(repo, &uaddr, out_sti);
+	err = silofs_stage_stats_at(apex, pa_ctx->pack, &uaddr, out_sti);
 	if (err) {
 		goto out;
 	}
-	silofs_sti_bind_apex(*out_sti, pa_ctx->apex);
+	silofs_sti_bind_apex(*out_sti, apex);
 out:
 	sbi_decref(sbi);
 	return err;
@@ -1089,12 +1091,13 @@ out:
 static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
                             struct silofs_sb_info **out_sbi)
 {
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = silofs_shadow_super_at(repo, &bsec->sb_uaddr, &sbi);
+	err = silofs_shadow_super_at(apex, pa_ctx->pack,
+	                             &bsec->sb_uaddr, &sbi);
 	if (err) {
 		return err;
 	}
@@ -1102,7 +1105,7 @@ static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_apex(sbi, pa_ctx->apex);
+	silofs_sbi_bind_apex(sbi, apex);
 	*out_sbi = sbi;
 	return 0;
 }
@@ -1112,7 +1115,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
                             struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
 	struct silofs_spstat_info *sti = NULL;
 	int err;
@@ -1122,7 +1125,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = silofs_shadow_stats_at(repo, &uaddr, &sti);
+	err = silofs_shadow_stats_at(apex, pa_ctx->pack, &uaddr, &sti);
 	if (err) {
 		goto out;
 	}
@@ -1130,7 +1133,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sti_bind_apex(sti, pa_ctx->apex);
+	silofs_sti_bind_apex(sti, apex);
 out:
 	sbi_decref(sbi);
 	*out_sti = sti;
@@ -1415,7 +1418,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_uaddr ulink;
 	struct silofs_packid packid;
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
@@ -1427,7 +1430,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(repo, &ulink, &sni_child);
+	err = silofs_shadow_spnode_at(apex, pa_ctx->pack, &ulink, &sni_child);
 	if (err) {
 		return err;
 	}
@@ -1444,7 +1447,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_uaddr ulink;
 	struct silofs_packid packid;
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
@@ -1456,7 +1459,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spleaf_at(repo, &ulink, &sli);
+	err = silofs_shadow_spleaf_at(apex, pa_ctx->pack, &ulink, &sli);
 	if (err) {
 		return err;
 	}
@@ -1473,7 +1476,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_uaddr ulink;
 	struct silofs_packid packid;
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_fs_apex *apex = pa_ctx->apex;
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
@@ -1485,7 +1488,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(repo, &ulink, &sni);
+	err = silofs_shadow_spnode_at(apex, pa_ctx->pack, &ulink, &sni);
 	if (err) {
 		return err;
 	}

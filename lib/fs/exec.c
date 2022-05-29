@@ -318,8 +318,7 @@ static int fse_init_apex(struct silofs_fs_env *fse)
 	struct silofs_fs_apex *apex = &fse_obj_of(fse)->fs_core.c.apex;
 	int err;
 
-	err = silofs_apex_init(apex, fse->fs_alloc,
-	                       &fse->fs_kivam, fse->fs_crypto,
+	err = silofs_apex_init(apex, fse->fs_alloc, &fse->fs_kivam,
 	                       fse->fs_main_repo, fse->fs_cold_repo);
 	if (!err) {
 		apex->ap_args = &fse->fs_args;

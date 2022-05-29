@@ -46,14 +46,12 @@ static size_t apex_calc_iopen_limit(const struct silofs_fs_apex *apex)
 
 static void apex_init_commons(struct silofs_fs_apex *apex,
                               struct silofs_alloc *alloc,
-                              struct silofs_kivam *kivam,
-                              struct silofs_crypto *crypto)
+                              struct silofs_kivam *kivam)
 
 {
 	apex->ap_initime = silofs_time_now();
 	apex->ap_alloc = alloc;
 	apex->ap_kivam = kivam;
-	apex->ap_crypto = crypto;
 	apex->ap_iconv = (iconv_t)(-1);
 	apex->ap_sbi = NULL;
 	apex->ap_slock_fd = -1;
@@ -70,7 +68,6 @@ static void apex_fini_commons(struct silofs_fs_apex *apex)
 	silofs_sys_closefd(&apex->ap_slock_fd);
 	apex->ap_alloc = NULL;
 	apex->ap_kivam = NULL;
-	apex->ap_crypto = NULL;
 	apex->ap_iconv = (iconv_t)(-1);
 	apex->ap_sbi = NULL;
 }
@@ -120,13 +117,12 @@ static void apex_fini_iconv(struct silofs_fs_apex *apex)
 int silofs_apex_init(struct silofs_fs_apex *apex,
                      struct silofs_alloc *alloc,
                      struct silofs_kivam *kivam,
-                     struct silofs_crypto *crypto,
                      struct silofs_repo *mrepo,
                      struct silofs_repo *crepo)
 {
 	int err;
 
-	apex_init_commons(apex, alloc, kivam, crypto);
+	apex_init_commons(apex, alloc, kivam);
 	apex_init_repos(apex, mrepo, crepo);
 
 	err = apex_init_piper(apex);
@@ -215,7 +211,7 @@ static int apex_spawn_super_at(struct silofs_fs_apex *apex,
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = silofs_spawn_super_at(apex->ap_mrepo, uaddr, &sbi);
+	err = silofs_spawn_super_at(apex, true, uaddr, &sbi);
 	if (err) {
 		return err;
 	}
@@ -244,7 +240,7 @@ static int apex_spawn_stats_at(struct silofs_fs_apex *apex,
 {
 	int err;
 
-	err = silofs_spawn_stats_at(apex->ap_mrepo, uaddr, out_sti);
+	err = silofs_spawn_stats_at(apex, true, uaddr, out_sti);
 	if (err) {
 		return err;
 	}
@@ -299,7 +295,7 @@ static int apex_stage_super_at(struct silofs_fs_apex *apex,
 {
 	int err;
 
-	err = silofs_stage_super_at(apex->ap_mrepo, uaddr, out_sbi);
+	err = silofs_stage_super_at(apex, true, uaddr, out_sbi);
 	if (err) {
 		return err;
 	}
@@ -313,7 +309,7 @@ static int apex_stage_stats_at(struct silofs_fs_apex *apex,
 {
 	int err;
 
-	err = silofs_stage_stats_at(apex->ap_mrepo, uaddr, out_sti);
+	err = silofs_stage_stats_at(apex, true, uaddr, out_sti);
 	if (err) {
 		return err;
 	}

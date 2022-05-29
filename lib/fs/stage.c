@@ -69,7 +69,8 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
 	struct silofs_fs_apex *apex = sbi_apex(sbi);
 
 	vi->v_si.s_apex = apex;
-	vi->v_si.s_md = &apex->ap_crypto->md;
+	/* TODO: move to lower level */
+	vi->v_si.s_md = &vi->v_si.s_ce.ce_cache->c_mdigest;
 	vi->v_sbi = sbi;
 	silofs_vi_attach_to(vi, vbi);
 }
@@ -418,14 +419,20 @@ static void sbi_bind_sni_to_apex(const struct silofs_sb_info *sbi,
 	ui_bind_apex_by(&sni->sn_ui, sbi);
 }
 
+static int sbi_do_stage_spnode_at(struct silofs_sb_info *sbi,
+                                  const struct silofs_uaddr *uaddr,
+                                  struct silofs_spnode_info **out_sni)
+{
+	return silofs_stage_spnode_at(sbi_apex(sbi), true, uaddr, out_sni);
+}
+
 static int sbi_stage_spnode_at(struct silofs_sb_info *sbi,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spnode_info **out_sni)
 {
-	struct silofs_repo *repo = sbi_repo(sbi);
 	int err;
 
-	err = silofs_stage_spnode_at(repo, uaddr, out_sni);
+	err = sbi_do_stage_spnode_at(sbi, uaddr, out_sni);
 	if (!err) {
 		goto out_ok;
 	}
@@ -436,7 +443,7 @@ static int sbi_stage_spnode_at(struct silofs_sb_info *sbi,
 	if (err) {
 		goto out_err;
 	}
-	err = silofs_stage_spnode_at(repo, uaddr, out_sni);
+	err = sbi_do_stage_spnode_at(sbi, uaddr, out_sni);
 	if (err) {
 		goto out_err;
 	}
@@ -503,14 +510,20 @@ static int sbi_require_main_blob(struct silofs_sb_info *sbi)
 	return err;
 }
 
-static int sbi_spawn_spnode(const struct silofs_sb_info *sbi,
-                            const struct silofs_uaddr *uaddr,
-                            struct silofs_spnode_info **out_sni)
+static int sbi_do_spawn_spnode_at(const struct silofs_sb_info *sbi,
+                                  const struct silofs_uaddr *uaddr,
+                                  struct silofs_spnode_info **out_sni)
 {
-	struct silofs_repo *repo = sbi_repo(sbi);
+	return silofs_spawn_spnode_at(sbi_apex(sbi), true, uaddr, out_sni);
+}
+
+static int sbi_spawn_spnode_at(const struct silofs_sb_info *sbi,
+                               const struct silofs_uaddr *uaddr,
+                               struct silofs_spnode_info **out_sni)
+{
 	int err;
 
-	err = silofs_spawn_spnode_at(repo, uaddr, out_sni);
+	err = sbi_do_spawn_spnode_at(sbi, uaddr, out_sni);
 	if (!err) {
 		goto out_ok;
 	}
@@ -521,7 +534,7 @@ static int sbi_spawn_spnode(const struct silofs_sb_info *sbi,
 	if (err) {
 		goto out_err;
 	}
-	err = silofs_spawn_spnode_at(repo, uaddr, out_sni);
+	err = sbi_do_spawn_spnode_at(sbi, uaddr, out_sni);
 	if (err) {
 		goto out_err;
 	}
@@ -551,7 +564,7 @@ static int stgc_spawn_spnode3_of(const struct silofs_stage_ctx *stg_ctx,
 	}
 	silofs_sbi_main_child_at(stg_ctx->sbi, stg_ctx->voff, &uaddr);
 
-	err = sbi_spawn_spnode(stg_ctx->sbi, &uaddr, out_sni);
+	err = sbi_spawn_spnode_at(stg_ctx->sbi, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
@@ -631,7 +644,7 @@ static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
 	silofs_sni_resolve_main_child(stg_ctx->sni_parent,
 	                              stg_ctx->voff, &uaddr);
 
-	err = sbi_spawn_spnode(stg_ctx->sbi, &uaddr, out_sni);
+	err = sbi_spawn_spnode_at(stg_ctx->sbi, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
@@ -871,14 +884,20 @@ static void sbi_bind_sli_to_apex(const struct silofs_sb_info *sbi,
 	ui_bind_apex_by(&sli->sl_ui, sbi);
 }
 
+static int sbi_do_spawn_spleaf_at(const struct silofs_sb_info *sbi,
+                                  const struct silofs_uaddr *uaddr,
+                                  struct silofs_spleaf_info **out_sli)
+{
+	return silofs_spawn_spleaf_at(sbi_apex(sbi), true, uaddr, out_sli);
+}
+
 static int sbi_spawn_spleaf_at(const struct silofs_sb_info *sbi,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_repo *repo = sbi_repo(sbi);
 	int err;
 
-	err = silofs_spawn_spleaf_at(repo, uaddr, out_sli);
+	err = sbi_do_spawn_spleaf_at(sbi, uaddr, out_sli);
 	if (!err) {
 		goto out_ok;
 	}
@@ -889,7 +908,7 @@ static int sbi_spawn_spleaf_at(const struct silofs_sb_info *sbi,
 	if (err) {
 		goto out_err;
 	}
-	err = silofs_spawn_spleaf_at(repo, uaddr, out_sli);
+	err = sbi_do_spawn_spleaf_at(sbi, uaddr, out_sli);
 	if (err) {
 		goto out_err;
 	}
@@ -981,14 +1000,20 @@ static int stgc_clone_spleaf(const struct silofs_stage_ctx *stg_ctx,
 	return err;
 }
 
+static int sbi_do_stage_spleaf_at(struct silofs_sb_info *sbi,
+                                  const struct silofs_uaddr *uaddr,
+                                  struct silofs_spleaf_info **out_sli)
+{
+	return silofs_stage_spleaf_at(sbi_apex(sbi), true, uaddr, out_sli);
+}
+
 static int sbi_stage_spleaf_at(struct silofs_sb_info *sbi,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_repo *repo = sbi_repo(sbi);
 	int err;
 
-	err = silofs_stage_spleaf_at(repo, uaddr, out_sli);
+	err = sbi_do_stage_spleaf_at(sbi, uaddr, out_sli);
 	if (!err) {
 		goto out_ok;
 	}
@@ -999,7 +1024,7 @@ static int sbi_stage_spleaf_at(struct silofs_sb_info *sbi,
 	if (err) {
 		goto out_err;
 	}
-	err = silofs_stage_spleaf_at(repo, uaddr, out_sli);
+	err = sbi_do_stage_spleaf_at(sbi, uaddr, out_sli);
 	if (err) {
 		goto out_err;
 	}

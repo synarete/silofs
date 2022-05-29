@@ -19,6 +19,7 @@
 #include <silofs/fs/address.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/spxmap.h>
+#include <silofs/fs/crypto.h>
 #include <silofs/fs/cache.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/repo.h>
@@ -2679,6 +2680,15 @@ static void cache_fini_unomap(struct silofs_cache *cache)
 	silofs_unomap_fini(&cache->c_unom, cache->c_alloc);
 }
 
+static int cache_init_mdigest(struct silofs_cache *cache)
+{
+	return silofs_mdigest_init(&cache->c_mdigest);
+}
+
+static void cache_fini_mdigest(struct silofs_cache *cache)
+{
+	silofs_mdigest_fini(&cache->c_mdigest);
+}
 
 int silofs_cache_init(struct silofs_cache *cache,
                       struct silofs_alloc *alloc, size_t msz_hint)
@@ -2690,13 +2700,17 @@ int silofs_cache_init(struct silofs_cache *cache,
 	cache->mem_size_hint = msz_hint;
 	dq_init(&cache->c_dq);
 
-	err = cache_init_spamaps(cache);
+	err = cache_init_mdigest(cache);
 	if (err) {
 		return err;
 	}
+	err = cache_init_spamaps(cache);
+	if (err) {
+		goto out_err;
+	}
 	err = cache_init_unomap(cache);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = cache_init_nil_bk(cache);
 	if (err) {
@@ -2708,9 +2722,7 @@ int silofs_cache_init(struct silofs_cache *cache,
 	}
 	return 0;
 out_err:
-	cache_fini_nil_bk(cache);
-	cache_fini_unomap(cache);
-	cache_fini_spamaps(cache);
+	silofs_cache_fini(cache);
 	return err;
 }
 
@@ -2721,6 +2733,7 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	cache_fini_nil_bk(cache);
 	cache_fini_unomap(cache);
 	cache_fini_spamaps(cache);
+	cache_fini_mdigest(cache);
 	cache->c_alloc = NULL;
 }
 

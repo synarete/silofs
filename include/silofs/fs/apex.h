@@ -22,7 +22,6 @@
 int silofs_apex_init(struct silofs_fs_apex *apex,
                      struct silofs_alloc *alloc,
                      struct silofs_kivam *kivam,
-                     struct silofs_crypto *crypto,
                      struct silofs_repo *mrepo,
                      struct silofs_repo *crepo);
 

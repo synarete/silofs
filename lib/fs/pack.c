@@ -30,6 +30,7 @@ struct silofs_pack_ctx {
 	struct silofs_visitor           vis;
 	struct silofs_listq             uil;
 	struct silofs_crypto            cryp;
+	const struct silofs_kivam      *kivam;
 	const struct silofs_bootsec    *src_bsec;
 	struct silofs_bootsec          *dst_bsec;
 	struct silofs_fs_uber          *uber;
@@ -259,20 +260,14 @@ pac_cipher(const struct silofs_pack_ctx *pa_ctx)
 	return &pa_ctx->cryp.ci;
 }
 
-static const struct silofs_kivam *
-pac_kivam(const struct silofs_pack_ctx *pa_ctx)
-{
-	return pa_ctx->uber->ub_kivam;
-}
-
 static int pac_encrypt_bk(const struct silofs_pack_ctx *pa_ctx,
                           const struct silofs_block *bk,
                           struct silofs_block *enc_bk)
 {
 	const struct silofs_cipher *ci = pac_cipher(pa_ctx);
-	const struct silofs_kivam *kivam = pac_kivam(pa_ctx);
+	const size_t enc_sz = sizeof(*enc_bk);
 
-	return silofs_encrypt_buf(ci, kivam, bk, enc_bk, sizeof(*enc_bk));
+	return silofs_encrypt_buf(ci, pa_ctx->kivam, bk, enc_bk, enc_sz);
 }
 
 static int pac_decrypt_bk(const struct silofs_pack_ctx *pa_ctx,
@@ -280,9 +275,9 @@ static int pac_decrypt_bk(const struct silofs_pack_ctx *pa_ctx,
                           struct silofs_block *bk)
 {
 	const struct silofs_cipher *ci = pac_cipher(pa_ctx);
-	const struct silofs_kivam *kivam = pac_kivam(pa_ctx);
+	const size_t dec_sz = sizeof(*bk);
 
-	return silofs_decrypt_buf(ci, kivam, enc_bk, bk, sizeof(*bk));
+	return silofs_decrypt_buf(ci, pa_ctx->kivam, enc_bk, bk, dec_sz);
 }
 
 static int pac_setup_piov_of(const struct silofs_pack_ctx *pa_ctx,
@@ -966,12 +961,12 @@ static int pac_prep_archive_at(struct silofs_pack_ctx *pa_ctx,
 static void pac_update_dst_bootsec(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_hash256 hash;
-	const struct silofs_kivam *kivam = pa_ctx->uber->ub_kivam;
 	const struct silofs_sb_info *sbi = pa_ctx->sbi;
+	const struct silofs_mdigest *md = pac_mdigest(pa_ctx);
 
 	silofs_bootsec_set_uaddr(pa_ctx->dst_bsec, sbi_uaddr(sbi));
 	if (pa_ctx->pack) {
-		silofs_calc_key_hash(&kivam->key, pac_mdigest(pa_ctx), &hash);
+		silofs_calc_key_hash(&pa_ctx->kivam->key, md, &hash);
 		silofs_bootsec_set_keyhash(pa_ctx->dst_bsec, &hash);
 	} else {
 		silofs_bootsec_clear_keyhash(pa_ctx->dst_bsec);
@@ -1257,6 +1252,7 @@ static int pack_visit_post(struct silofs_visitor *vis,
 }
 
 int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
+                        const struct silofs_kivam *kivam,
                         const struct silofs_bootsec *src_bsec,
                         struct silofs_bootsec *dst_bsec)
 {
@@ -1264,6 +1260,7 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
 		.vis.visit_prep_hook =  pack_visit_prep,
 		.vis.visit_exec_hook = pack_visit_exec,
 		.vis.visit_post_hook = pack_visit_post,
+		.kivam = kivam,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
 		.uber = uber,
@@ -1549,6 +1546,7 @@ static int unpack_visit_post(struct silofs_visitor *vis,
 }
 
 int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
+                          const struct silofs_kivam *kivam,
                           const struct silofs_bootsec *src_bsec,
                           struct silofs_bootsec *dst_bsec)
 {
@@ -1556,6 +1554,7 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
 		.vis.visit_prep_hook = unpack_visit_prep,
 		.vis.visit_exec_hook = unpack_visit_exec,
 		.vis.visit_post_hook = unpack_visit_post,
+		.kivam = kivam,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
 		.uber = uber,

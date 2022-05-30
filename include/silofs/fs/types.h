@@ -478,7 +478,6 @@ struct silofs_fs_ctx {
 struct silofs_fs_uber {
 	const struct silofs_fs_args    *ub_args;
 	struct silofs_alloc            *ub_alloc;
-	struct silofs_kivam            *ub_kivam;
 	struct silofs_crypto           *ub_crypto;
 	struct silofs_repos            *ub_repos;
 	struct silofs_piper             ub_piper;

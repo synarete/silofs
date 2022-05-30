@@ -26,6 +26,12 @@
 #include <limits.h>
 
 
+
+static const struct silofs_kivam *kivam_of(const struct ut_env *ute)
+{
+	return &ute->fs_env->fs_kivam;
+}
+
 static const struct silofs_fs_ctx *fs_ctx_of(struct ut_env *ute)
 {
 	struct silofs_fs_ctx *fs_ctx = &ute->fs_ctx;
@@ -457,14 +463,16 @@ static int ut_archive(struct ut_env *ute,
                       const struct silofs_bootsec *src_bsec,
                       struct silofs_bootsec *dst_bsec)
 {
-	return silofs_fs_pack(fs_ctx_of(ute), src_bsec, dst_bsec);
+	return silofs_fs_pack(fs_ctx_of(ute), kivam_of(ute),
+	                      src_bsec, dst_bsec);
 }
 
 static int ut_restore(struct ut_env *ute,
                       const struct silofs_bootsec *src_bsec,
                       struct silofs_bootsec *dst_bsec)
 {
-	return silofs_fs_unpack(fs_ctx_of(ute), src_bsec, dst_bsec);
+	return silofs_fs_unpack(fs_ctx_of(ute),  kivam_of(ute),
+	                        src_bsec, dst_bsec);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

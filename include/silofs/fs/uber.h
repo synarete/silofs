@@ -19,8 +19,7 @@
 
 #include <silofs/fs/types.h>
 
-int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_alloc *alloc,
-                     struct silofs_kivam *kivam, struct silofs_repos *repos);
+int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_repos *repos);
 
 void silofs_uber_fini(struct silofs_fs_uber *uber);
 

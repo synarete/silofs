@@ -164,10 +164,12 @@ int silofs_fs_inspect(const struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_bootsec *bsec);
 
 int silofs_fs_pack(const struct silofs_fs_ctx *fs_ctx,
+                   const struct silofs_kivam *kivam,
                    const struct silofs_bootsec *src_bsec,
                    struct silofs_bootsec *dst_bsec);
 
 int silofs_fs_unpack(const struct silofs_fs_ctx *fs_ctx,
+                     const struct silofs_kivam *kivam,
                      const struct silofs_bootsec *src_bsec,
                      struct silofs_bootsec *dst_bsec);
 

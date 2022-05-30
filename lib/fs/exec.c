@@ -302,8 +302,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 	struct silofs_fs_uber *uber = &fse_obj_of(fse)->fs_core.c.uber;
 	int err;
 
-	err = silofs_uber_init(uber, fse->fs_alloc,
-	                       &fse->fs_kivam, fse->fs_repos);
+	err = silofs_uber_init(uber, fse->fs_repos);
 	if (!err) {
 		uber->ub_args = &fse->fs_args;
 		fse->fs_uber = uber;
@@ -1212,7 +1211,7 @@ static int fse_archive_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_pack(&fs_ctx, src_bsec, dst_bsec);
+	err = silofs_fs_pack(&fs_ctx, &fse->fs_kivam, src_bsec, dst_bsec);
 	if (err) {
 		return err;
 	}
@@ -1269,7 +1268,7 @@ static int fse_restore_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unpack(&fs_ctx, src_bsec, dst_bsec);
+	err = silofs_fs_unpack(&fs_ctx, &fse->fs_kivam, src_bsec, dst_bsec);
 	if (err) {
 		return err;
 	}

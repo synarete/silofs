@@ -23,7 +23,6 @@ nobase_include_HEADERS += silofs/infra/xiovec.h
 nobase_include_HEADERS += silofs/infra.h
 
 nobase_include_HEADERS += silofs/fs/address.h
-nobase_include_HEADERS += silofs/fs/apex.h
 nobase_include_HEADERS += silofs/fs/boot.h
 nobase_include_HEADERS += silofs/fs/cache.h
 nobase_include_HEADERS += silofs/fs/crypto.h

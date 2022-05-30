@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/infra.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/nodes.h>
@@ -372,10 +373,10 @@ static int stnode_verify(const struct silofs_spstat_node *stn)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sti_bind_apex(struct silofs_spstat_info *sti,
-                          struct silofs_fs_apex *apex)
+void silofs_sti_bind_uber(struct silofs_spstat_info *sti,
+                          struct silofs_fs_uber *uber)
 {
-	silofs_ui_bind_apex(&sti->sp_ui, apex);
+	silofs_ui_bind_uber(&sti->sp_ui, uber);
 }
 
 static void sti_dirtify(struct silofs_spstat_info *sti)

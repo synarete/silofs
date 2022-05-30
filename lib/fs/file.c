@@ -15,19 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spclaim.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/file.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <linux/falloc.h>
 #include <linux/fiemap.h>
@@ -55,7 +43,7 @@
 
 struct silofs_file_ctx {
 	const struct silofs_fs_ctx     *fs_ctx;
-	struct silofs_fs_apex          *apex;
+	struct silofs_fs_uber          *uber;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *ii;
 	struct silofs_rwiter_ctx       *rwi_ctx;
@@ -1995,7 +1983,7 @@ int silofs_do_read_iter(const struct silofs_fs_ctx *fsc,
 {
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fsc,
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.op_mask = OP_READ,
@@ -2022,7 +2010,7 @@ int silofs_do_read(const struct silofs_fs_ctx *fsc,
 	};
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fsc,
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.op_mask = OP_READ,
@@ -2652,7 +2640,7 @@ int silofs_do_write_iter(const struct silofs_fs_ctx *fsc,
                          struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.fs_ctx = fsc,
 		.ii = ii,
@@ -2680,7 +2668,7 @@ int silofs_do_write(const struct silofs_fs_ctx *fsc,
 		.dat_max = len
 	};
 	struct silofs_file_ctx f_ctx = {
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.fs_ctx = fsc,
 		.ii = ii,
@@ -2915,7 +2903,7 @@ int silofs_drop_reg(struct silofs_inode_info *ii)
 {
 	int err;
 	struct silofs_file_ctx f_ctx = {
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii
 	};
@@ -3160,7 +3148,7 @@ int silofs_do_truncate(const struct silofs_fs_ctx *fs_ctx,
 	const size_t len = (off < isp) ? off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fs_ctx,
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.len = len,
@@ -3279,7 +3267,7 @@ int silofs_do_lseek(const struct silofs_fs_ctx *fsc,
 {
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fsc,
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.len = 0,
@@ -3503,7 +3491,7 @@ int silofs_do_fallocate(const struct silofs_fs_ctx *fsc,
 	const size_t len = (size_t)length;
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fsc,
-		.apex = ii_apex(ii),
+		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.len = len,
@@ -3692,7 +3680,7 @@ int silofs_do_fiemap(const struct silofs_fs_ctx *fsc,
 	const size_t len = (size_t)fm->fm_length;
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fsc,
-		.apex = fsc->fsc_apex,
+		.uber = fsc->fsc_uber,
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.len = len,
@@ -3858,16 +3846,16 @@ static int fmc_resolve_leaf_vaddr(const struct silofs_fmap_ctx *fm_ctx,
 	return fic_xiovec_of_vaddr(fm_ctx->f_ctx, &fm_ctx->vaddr, out_xiov);
 }
 
-static struct silofs_fs_apex *apex_of(const struct silofs_fmap_ctx *fm_ctx)
+static struct silofs_fs_uber *uber_of(const struct silofs_fmap_ctx *fm_ctx)
 {
-	return sbi_apex(fm_ctx->f_ctx->sbi);
+	return sbi_uber(fm_ctx->f_ctx->sbi);
 }
 
 static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
                          const struct silofs_fmap_ctx *fm_ctx_dst, size_t len)
 {
 	int err;
-	struct silofs_fs_apex *apex = apex_of(fm_ctx_dst);
+	struct silofs_fs_uber *uber = uber_of(fm_ctx_dst);
 	struct silofs_fileaf_info *fli_src = NULL;
 	struct silofs_fileaf_info *fli_dst = NULL;
 	struct silofs_xiovec xiov_src = { .xiov_off = -1, .xiov_fd = -1 };
@@ -3890,7 +3878,7 @@ static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 		if (err) {
 			return err;
 		}
-		err = silofs_exec_kcopy_by(apex, &xiov_src, &xiov_dst, len);
+		err = silofs_exec_kcopy_by(uber, &xiov_src, &xiov_dst, len);
 		if (err) {
 			return err;
 		}
@@ -4074,7 +4062,7 @@ int silofs_do_copy_file_range(const struct silofs_fs_ctx *fsc,
 {
 	struct silofs_file_ctx f_ctx_in = {
 		.fs_ctx = fsc,
-		.apex = ii_apex(ii_in),
+		.uber = ii_uber(ii_in),
 		.sbi = ii_sbi(ii_in),
 		.ii = ii_in,
 		.len = len,
@@ -4088,7 +4076,7 @@ int silofs_do_copy_file_range(const struct silofs_fs_ctx *fsc,
 	};
 	struct silofs_file_ctx f_ctx_out = {
 		.fs_ctx = fsc,
-		.apex = ii_apex(ii_out),
+		.uber = ii_uber(ii_out),
 		.sbi = ii_sbi(ii_out),
 		.ii = ii_out,
 		.len = len,

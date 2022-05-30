@@ -227,16 +227,16 @@ silofs_vi_vaddr(const struct silofs_vnode_info *vi)
 	return &vi->v_vaddr;
 }
 
-static inline struct silofs_fs_apex *
-silofs_vi_apex(const struct silofs_vnode_info *vi)
+static inline struct silofs_fs_uber *
+silofs_vi_uber(const struct silofs_vnode_info *vi)
 {
-	return vi->v_si.s_apex;
+	return vi->v_si.s_uber;
 }
 
 static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
-	return vi->v_si.s_apex->ap_sbi;
+	return vi->v_si.s_uber->ub_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -276,10 +276,10 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 	return silofs_vi_sbi(silofs_ii_to_vi(ii));
 }
 
-static inline struct silofs_fs_apex *
-silofs_ii_apex(const struct silofs_inode_info *ii)
+static inline struct silofs_fs_uber *
+silofs_ii_uber(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_si.s_apex;
+	return ii->i_vi.v_si.s_uber;
 }
 
 static inline struct silofs_cache *
@@ -290,16 +290,16 @@ silofs_ii_cache(const struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static inline struct silofs_fs_apex *
-silofs_sbi_apex(const struct silofs_sb_info *sbi)
+static inline struct silofs_fs_uber *
+silofs_sbi_uber(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_si.s_apex;
+	return sbi->sb_ui.u_si.s_uber;
 }
 
 static inline struct silofs_alloc *
 silofs_sbi_alloc(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_si.s_apex->ap_alloc;
+	return sbi->sb_ui.u_si.s_uber->ub_alloc;
 }
 
 static inline struct silofs_cache *

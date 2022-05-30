@@ -30,7 +30,7 @@ static const struct silofs_fs_ctx *fs_ctx_of(struct ut_env *ute)
 {
 	struct silofs_fs_ctx *fs_ctx = &ute->fs_ctx;
 
-	fs_ctx->fsc_apex = ute->fs_env->fs_apex;
+	fs_ctx->fsc_uber = ute->fs_env->fs_uber;
 	fs_ctx->fsc_oper.op_creds.ucred.uid = getuid();
 	fs_ctx->fsc_oper.op_creds.ucred.gid = getgid();
 	fs_ctx->fsc_oper.op_creds.ucred.pid = getpid();
@@ -309,7 +309,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	int err1;
 	int err2;
 	int err3;
-	const bool concp = ute->fs_ctx.fsc_apex->ap_args->concp;
+	const bool concp = ute->fs_ctx.fsc_uber->ub_args->concp;
 	struct ut_write_iter wri = {
 		.dat = buf,
 		.dat_len = 0,

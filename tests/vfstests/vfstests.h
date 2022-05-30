@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_VTESTS_H_
-#define SILOFS_VTESTS_H_
+#ifndef SILOFS_VFSTESTS_H_
+#define SILOFS_VFSTESTS_H_
 
 #include <silofs/configs.h>
 #include <silofs/infra.h>
@@ -489,5 +489,5 @@ extern const struct vt_tests vt_test_namespace;
 #define VT_DEFTESTS(a_) \
 	{ .arr = (a_), .len = VT_ARRAY_SIZE(a_) }
 
-#endif /* SILOFS_VTESTS_H_ */
+#endif /* SILOFS_VFSTESTS_H_ */
 

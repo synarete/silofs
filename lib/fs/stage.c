@@ -15,21 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/uber.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
 
@@ -56,19 +43,19 @@ static loff_t voaddr_voff(const struct silofs_voaddr *voa)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ui_bind_apex_by(struct silofs_unode_info *ui,
+static void ui_bind_uber_by(struct silofs_unode_info *ui,
                             const struct silofs_sb_info *sbi)
 {
-	silofs_ui_bind_apex(ui, sbi_apex(sbi));
+	silofs_ui_bind_uber(ui, sbi_uber(sbi));
 }
 
 static void vi_bind_to(struct silofs_vnode_info *vi,
                        struct silofs_sb_info *sbi,
                        struct silofs_vbk_info *vbi)
 {
-	struct silofs_fs_apex *apex = sbi_apex(sbi);
+	struct silofs_fs_uber *uber = sbi_uber(sbi);
 
-	vi->v_si.s_apex = apex;
+	vi->v_si.s_uber = uber;
 	/* TODO: move to lower level */
 	vi->v_si.s_md = &vi->v_si.s_ce.ce_cache->c_mdigest;
 	vi->v_sbi = sbi;
@@ -159,7 +146,7 @@ static int sbi_commit_dirty(const struct silofs_sb_info *sbi)
 	const struct silofs_cache *cache = sbi_cache(sbi);
 	int err;
 
-	err = silofs_apex_flush_dirty(sbi_apex(sbi), SILOFS_F_NOW);
+	err = silofs_uber_flush_dirty(sbi_uber(sbi), SILOFS_F_NOW);
 	if (err) {
 		log_dbg("commit dirty failure: ndirty=%lu err=%d",
 		        cache->c_dq.dq_accum_nbytes, err);
@@ -413,17 +400,17 @@ out_err:
 	return err;
 }
 
-static void sbi_bind_sni_to_apex(const struct silofs_sb_info *sbi,
+static void sbi_bind_sni_to_uber(const struct silofs_sb_info *sbi,
                                  struct silofs_spnode_info *sni)
 {
-	ui_bind_apex_by(&sni->sn_ui, sbi);
+	ui_bind_uber_by(&sni->sn_ui, sbi);
 }
 
 static int sbi_do_stage_spnode_at(struct silofs_sb_info *sbi,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode_at(sbi_apex(sbi), true, uaddr, out_sni);
+	return silofs_stage_spnode_at(sbi_uber(sbi), true, uaddr, out_sni);
 }
 
 static int sbi_stage_spnode_at(struct silofs_sb_info *sbi,
@@ -448,7 +435,7 @@ static int sbi_stage_spnode_at(struct silofs_sb_info *sbi,
 		goto out_err;
 	}
 out_ok:
-	sbi_bind_sni_to_apex(sbi, *out_sni);
+	sbi_bind_sni_to_uber(sbi, *out_sni);
 	return 0;
 out_err:
 	sbi_log_cache_stat(sbi);
@@ -514,7 +501,7 @@ static int sbi_do_spawn_spnode_at(const struct silofs_sb_info *sbi,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spnode_info **out_sni)
 {
-	return silofs_spawn_spnode_at(sbi_apex(sbi), true, uaddr, out_sni);
+	return silofs_spawn_spnode_at(sbi_uber(sbi), true, uaddr, out_sni);
 }
 
 static int sbi_spawn_spnode_at(const struct silofs_sb_info *sbi,
@@ -539,7 +526,7 @@ static int sbi_spawn_spnode_at(const struct silofs_sb_info *sbi,
 		goto out_err;
 	}
 out_ok:
-	sbi_bind_sni_to_apex(sbi, *out_sni);
+	sbi_bind_sni_to_uber(sbi, *out_sni);
 	return 0;
 out_err:
 	return err;
@@ -878,17 +865,17 @@ static int sbi_find_cached_spleaf(struct silofs_sb_info *sbi, loff_t voff,
 	return 0;
 }
 
-static void sbi_bind_sli_to_apex(const struct silofs_sb_info *sbi,
+static void sbi_bind_sli_to_uber(const struct silofs_sb_info *sbi,
                                  struct silofs_spleaf_info *sli)
 {
-	ui_bind_apex_by(&sli->sl_ui, sbi);
+	ui_bind_uber_by(&sli->sl_ui, sbi);
 }
 
 static int sbi_do_spawn_spleaf_at(const struct silofs_sb_info *sbi,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spleaf_info **out_sli)
 {
-	return silofs_spawn_spleaf_at(sbi_apex(sbi), true, uaddr, out_sli);
+	return silofs_spawn_spleaf_at(sbi_uber(sbi), true, uaddr, out_sli);
 }
 
 static int sbi_spawn_spleaf_at(const struct silofs_sb_info *sbi,
@@ -913,7 +900,7 @@ static int sbi_spawn_spleaf_at(const struct silofs_sb_info *sbi,
 		goto out_err;
 	}
 out_ok:
-	sbi_bind_sli_to_apex(sbi, *out_sli);
+	sbi_bind_sli_to_uber(sbi, *out_sli);
 	return 0;
 out_err:
 	return err;
@@ -1004,7 +991,7 @@ static int sbi_do_stage_spleaf_at(struct silofs_sb_info *sbi,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_at(sbi_apex(sbi), true, uaddr, out_sli);
+	return silofs_stage_spleaf_at(sbi_uber(sbi), true, uaddr, out_sli);
 }
 
 static int sbi_stage_spleaf_at(struct silofs_sb_info *sbi,
@@ -1029,7 +1016,7 @@ static int sbi_stage_spleaf_at(struct silofs_sb_info *sbi,
 		goto out_err;
 	}
 out_ok:
-	sbi_bind_sli_to_apex(sbi, *out_sli);
+	sbi_bind_sli_to_uber(sbi, *out_sli);
 	return 0;
 out_err:
 	sbi_log_cache_stat(sbi);
@@ -1536,9 +1523,9 @@ static int sbi_kcopy_vblock(struct silofs_sb_info *sbi,
                             const struct silofs_xiovec *xiov_src,
                             const struct silofs_xiovec *xiov_dst)
 {
-	struct silofs_fs_apex *apex = sbi_apex(sbi);
+	struct silofs_fs_uber *uber = sbi_uber(sbi);
 
-	return silofs_exec_kcopy_by(apex, xiov_src, xiov_dst, SILOFS_BK_SIZE);
+	return silofs_exec_kcopy_by(uber, xiov_src, xiov_dst, SILOFS_BK_SIZE);
 }
 
 static int sbi_clone_vblock(struct silofs_sb_info *sbi,

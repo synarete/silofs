@@ -15,27 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/itable.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/dir.h>
-#include <silofs/fs/file.h>
-#include <silofs/fs/symlink.h>
-#include <silofs/fs/xattr.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <limits.h>
 
 /* local variables forward declarations */
@@ -232,7 +214,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	an_init(&si->s_ds_an);
 	si->s_stype = stype;
 	si->s_ds_next = NULL;
-	si->s_apex = NULL;
+	si->s_uber = NULL;
 	si->s_md = NULL;
 	si->s_view = NULL;
 	si->s_vtbl = vtbl;
@@ -246,7 +228,7 @@ static void si_fini(struct silofs_snode_info *si)
 	an_fini(&si->s_ds_an);
 	si->s_stype = SILOFS_STYPE_NONE;
 	si->s_ds_next = NULL;
-	si->s_apex = NULL;
+	si->s_uber = NULL;
 	si->s_md = NULL;
 	si->s_view = NULL;
 	si->s_vtbl = NULL;
@@ -351,11 +333,11 @@ static void ui_seal_as_si(struct silofs_snode_info *si)
 	ui_seal(ui);
 }
 
-void silofs_ui_bind_apex(struct silofs_unode_info *ui,
-                         struct silofs_fs_apex *apex)
+void silofs_ui_bind_uber(struct silofs_unode_info *ui,
+                         struct silofs_fs_uber *uber)
 {
-	silofs_assert_not_null(apex);
-	ui->u_si.s_apex = apex;
+	silofs_assert_not_null(uber);
+	ui->u_si.s_uber = uber;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

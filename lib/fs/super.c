@@ -15,23 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/spclaim.h>
-#include <silofs/fs/itable.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/namei.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -463,9 +448,9 @@ static void sbi_forget_cached_ii(struct silofs_sb_info *sbi,
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi)
 {
-	const struct silofs_fs_apex *apex = sbi_apex(sbi);
+	const struct silofs_fs_uber *uber = sbi_uber(sbi);
 
-	log_dbg("shut-super: op_count=%lu", apex->ap_ops.op_count);
+	log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
 	silofs_itbl_reinit(&sbi->sb_itbl);
 	return 0;
 }
@@ -1011,11 +996,11 @@ static void sbi_setup_by_args(struct silofs_sb_info *sbi,
 	sbi_update_ctlflags(sbi, args);
 }
 
-void silofs_sbi_bind_apex(struct silofs_sb_info *sbi,
-                          struct silofs_fs_apex *apex)
+void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
+                          struct silofs_fs_uber *uber)
 {
-	silofs_ui_bind_apex(&sbi->sb_ui, apex);
-	sbi_setup_by_args(sbi, apex->ap_args);
+	silofs_ui_bind_uber(&sbi->sb_ui, uber);
+	sbi_setup_by_args(sbi, uber->ub_args);
 }
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)

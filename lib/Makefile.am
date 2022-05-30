@@ -32,7 +32,6 @@ libsilofs_la_SOURCES += infra/utility.c
 libsilofs_la_SOURCES += infra/version.c
 libsilofs_la_SOURCES += infra/xiovec.c
 libsilofs_la_SOURCES += fs/address.c
-libsilofs_la_SOURCES += fs/apex.c
 libsilofs_la_SOURCES += fs/boot.c
 libsilofs_la_SOURCES += fs/cache.c
 libsilofs_la_SOURCES += fs/crypto.c

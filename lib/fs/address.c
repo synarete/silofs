@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/infra.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/address.h>

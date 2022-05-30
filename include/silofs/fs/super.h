@@ -45,8 +45,8 @@ void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
                            struct silofs_spstat_info *sti);
 
-void silofs_sbi_bind_apex(struct silofs_sb_info *sbi,
-                          struct silofs_fs_apex *apex);
+void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
+                          struct silofs_fs_uber *uber);
 
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);

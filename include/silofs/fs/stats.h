@@ -23,8 +23,8 @@ void silofs_spacestat_add(struct silofs_spacestat *spst,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sti_bind_apex(struct silofs_spstat_info *sti,
-                          struct silofs_fs_apex *apex);
+void silofs_sti_bind_uber(struct silofs_spstat_info *sti,
+                          struct silofs_fs_uber *uber);
 
 void silofs_sti_setup_spawned(struct silofs_spstat_info *sti);
 

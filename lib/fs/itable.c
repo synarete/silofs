@@ -572,7 +572,7 @@ static void itbl_init_common(struct silofs_itable *itbl)
 {
 	itbl_set_root(itbl, vaddr_none());
 	iaddr_reset(&itbl->it_rootdir);
-	itbl->it_apex_ino = SILOFS_INO_ROOT + SILOFS_INO_PSEUDO_MAX;
+	itbl->it_uber_ino = SILOFS_INO_ROOT + SILOFS_INO_PSEUDO_MAX;
 	itbl->it_ninodes_max = ULONG_MAX / 2;
 	itbl->it_ninodes = 0;
 }
@@ -581,7 +581,7 @@ static void itbl_fini_common(struct silofs_itable *itbl)
 {
 	itbl_set_root(itbl, vaddr_none());
 	iaddr_reset(&itbl->it_rootdir);
-	itbl->it_apex_ino = 0;
+	itbl->it_uber_ino = 0;
 	itbl->it_ninodes_max = 0;
 	itbl->it_ninodes = 0;
 }
@@ -609,7 +609,7 @@ void silofs_itbl_update_by(struct silofs_itable *itbl,
 {
 	vaddr_assign(&itbl->it_rootitbl, &itbl_other->it_rootitbl);
 	iaddr_assign(&itbl->it_rootdir, &itbl_other->it_rootdir);
-	itbl->it_apex_ino = itbl_other->it_apex_ino;
+	itbl->it_uber_ino = itbl_other->it_uber_ino;
 	itbl->it_ninodes = itbl_other->it_ninodes;
 	itbl->it_ninodes_max = itbl_other->it_ninodes_max;
 }
@@ -635,28 +635,28 @@ static int itbl_next_ino(struct silofs_itable *itbl, ino_t *out_ino)
 	if (itbl->it_ninodes >= itbl->it_ninodes_max) {
 		return -ENOSPC;
 	}
-	itbl->it_apex_ino += 1;
-	*out_ino = itbl->it_apex_ino;
+	itbl->it_uber_ino += 1;
+	*out_ino = itbl->it_uber_ino;
 	return 0;
 }
 
-static void itbl_fixup_apex_ino(struct silofs_itable *itbl, ino_t ino)
+static void itbl_fixup_uber_ino(struct silofs_itable *itbl, ino_t ino)
 {
-	if (itbl->it_apex_ino < ino) {
-		itbl->it_apex_ino = ino;
+	if (itbl->it_uber_ino < ino) {
+		itbl->it_uber_ino = ino;
 	}
 }
 
 static void itbl_add_ino(struct silofs_itable *itbl, ino_t ino)
 {
 	itbl->it_ninodes++;
-	itbl_fixup_apex_ino(itbl, ino);
+	itbl_fixup_uber_ino(itbl, ino);
 }
 
 static void itbl_remove_ino(struct silofs_itable *itbl, ino_t ino)
 {
 	silofs_assert_gt(itbl->it_ninodes, 0);
-	silofs_assert_ge(itbl->it_apex_ino, ino);
+	silofs_assert_ge(itbl->it_uber_ino, ino);
 
 	itbl->it_ninodes--;
 }
@@ -1406,7 +1406,7 @@ int silofs_bind_rootdir(struct silofs_sb_info *sbi,
 
 	err = itbl_set_rootdir(itbl, ino, ii_vaddr(ii));
 	if (!err) {
-		itbl_fixup_apex_ino(itbl, ino);
+		itbl_fixup_uber_ino(itbl, ino);
 	}
 	return err;
 }

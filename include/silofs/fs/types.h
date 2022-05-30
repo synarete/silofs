@@ -436,7 +436,7 @@ struct silofs_itable {
 	struct silofs_inomap    it_inomap;
 	struct silofs_vaddr     it_rootitbl;
 	struct silofs_iaddr     it_rootdir;
-	ino_t  it_apex_ino;
+	ino_t  it_uber_ino;
 	size_t it_ninodes;
 	size_t it_ninodes_max;
 };
@@ -469,25 +469,25 @@ struct silofs_oper {
 
 /* file-system oper-execution context */
 struct silofs_fs_ctx {
-	struct silofs_fs_apex          *fsc_apex;
+	struct silofs_fs_uber          *fsc_uber;
 	struct silofs_oper              fsc_oper;
 	volatile int                    fsc_interrupt;
 };
 
 /* top-level pseudo meta node */
-struct silofs_fs_apex {
-	const struct silofs_fs_args    *ap_args;
-	struct silofs_alloc            *ap_alloc;
-	struct silofs_kivam            *ap_kivam;
-	struct silofs_crypto           *ap_crypto;
-	struct silofs_repo             *ap_mrepo;
-	struct silofs_repo             *ap_crepo;
-	struct silofs_piper             ap_piper;
-	struct silofs_oper_stat         ap_ops;
-	struct silofs_sb_info          *ap_sbi;
-	iconv_t                         ap_iconv;
-	time_t                          ap_initime;
-	int                             ap_slock_fd;
+struct silofs_fs_uber {
+	const struct silofs_fs_args    *ub_args;
+	struct silofs_alloc            *ub_alloc;
+	struct silofs_kivam            *ub_kivam;
+	struct silofs_crypto           *ub_crypto;
+	struct silofs_repo             *ub_mrepo;
+	struct silofs_repo             *ub_crepo;
+	struct silofs_piper             ub_piper;
+	struct silofs_oper_stat         ub_ops;
+	struct silofs_sb_info          *ub_sbi;
+	iconv_t                         ub_iconv;
+	time_t                          ub_initime;
+	int                             ub_slock_fd;
 };
 
 /* file-system input arguments */
@@ -529,7 +529,7 @@ struct silofs_fs_env {
 	struct silofs_crypto           *fs_crypto;
 	struct silofs_repo             *fs_main_repo;
 	struct silofs_repo             *fs_cold_repo;
-	struct silofs_fs_apex          *fs_apex;
+	struct silofs_fs_uber          *fs_uber;
 	struct silofs_fuseq            *fs_fuseq;
 	int                             fs_signum;
 };

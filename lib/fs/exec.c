@@ -15,24 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/spclaim.h>
-#include <silofs/fs/itable.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/opers.h>
+#include <silofs/fs.h>
 #include <silofs/fs/fuseq.h>
-#include <silofs/fs/exec.h>
 #include <silofs/fs/private.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -50,7 +34,7 @@ struct silofs_fs_core {
 	struct silofs_crypto    crypto;
 	struct silofs_repo      main_repo;
 	struct silofs_repo      cold_repo;
-	struct silofs_fs_apex   apex;
+	struct silofs_fs_uber   uber;
 };
 
 union silofs_fs_core_u {
@@ -313,25 +297,25 @@ static void fse_fini_repos(struct silofs_fs_env *fse)
 	fse_fini_cold_repo(fse);
 }
 
-static int fse_init_apex(struct silofs_fs_env *fse)
+static int fse_init_uber(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_apex *apex = &fse_obj_of(fse)->fs_core.c.apex;
+	struct silofs_fs_uber *uber = &fse_obj_of(fse)->fs_core.c.uber;
 	int err;
 
-	err = silofs_apex_init(apex, fse->fs_alloc, &fse->fs_kivam,
+	err = silofs_uber_init(uber, fse->fs_alloc, &fse->fs_kivam,
 	                       fse->fs_main_repo, fse->fs_cold_repo);
 	if (!err) {
-		apex->ap_args = &fse->fs_args;
-		fse->fs_apex = apex;
+		uber->ub_args = &fse->fs_args;
+		fse->fs_uber = uber;
 	}
 	return err;
 }
 
-static void fse_fini_apex(struct silofs_fs_env *fse)
+static void fse_fini_uber(struct silofs_fs_env *fse)
 {
-	if (fse->fs_apex != NULL) {
-		silofs_apex_fini(fse->fs_apex);
-		fse->fs_apex = NULL;
+	if (fse->fs_uber != NULL) {
+		silofs_uber_fini(fse->fs_uber);
+		fse->fs_uber = NULL;
 	}
 }
 
@@ -444,7 +428,7 @@ static int fse_init(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_init_apex(fse);
+	err = fse_init_uber(fse);
 	if (err) {
 		return err;
 	}
@@ -459,13 +443,13 @@ static void fse_fini_commons(struct silofs_fs_env *fse)
 {
 	silofs_kivam_fini(&fse->fs_kivam);
 	silofs_passphrase_reset(&fse->fs_passph);
-	fse->fs_apex = NULL;
+	fse->fs_uber = NULL;
 }
 
 static void fse_fini(struct silofs_fs_env *fse)
 {
 	fse_fini_fuseq(fse);
-	fse_fini_apex(fse);
+	fse_fini_uber(fse);
 	fse_fini_crypto(fse);
 	fse_fini_repos(fse);
 	fse_fini_qalloc(fse);
@@ -513,8 +497,8 @@ void silofs_fse_del(struct silofs_fs_env *fse)
 
 static void fse_drop_caches(const struct silofs_fs_env *fse)
 {
-	if (fse->fs_apex && fse->fs_apex->ap_sbi) {
-		silofs_drop_itable_cache(fse->fs_apex->ap_sbi);
+	if (fse->fs_uber && fse->fs_uber->ub_sbi) {
+		silofs_drop_itable_cache(fse->fs_uber->ub_sbi);
 	}
 	if (fse->fs_main_repo) {
 		silofs_repo_drop_cache(fse->fs_main_repo);
@@ -542,10 +526,10 @@ static void fse_relax_cache(struct silofs_fs_env *fse, bool drop_cache)
 
 static struct silofs_sb_info *fse_sbi(const struct silofs_fs_env *fse)
 {
-	silofs_assert_not_null(fse->fs_apex);
-	silofs_assert_not_null(fse->fs_apex->ap_sbi);
+	silofs_assert_not_null(fse->fs_uber);
+	silofs_assert_not_null(fse->fs_uber->ub_sbi);
 
-	return fse->fs_apex->ap_sbi;
+	return fse->fs_uber->ub_sbi;
 }
 
 static int fse_reload_rootdir(struct silofs_fs_env *fse)
@@ -621,24 +605,24 @@ static int fse_reload_vspace(struct silofs_fs_env *fse)
 
 static int fse_flush_dirty(const struct silofs_fs_env *fse)
 {
-	silofs_assert_not_null(fse->fs_apex);
+	silofs_assert_not_null(fse->fs_uber);
 
-	return silofs_apex_flush_dirty(fse->fs_apex, SILOFS_F_NOW);
+	return silofs_uber_flush_dirty(fse->fs_uber, SILOFS_F_NOW);
 }
 
-static int fse_shut_apex(struct silofs_fs_env *fse)
+static int fse_shut_uber(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_apex *apex = fse->fs_apex;
+	struct silofs_fs_uber *uber = fse->fs_uber;
 	int err;
 
-	if ((apex == NULL) || (apex->ap_sbi == NULL)) {
+	if ((uber == NULL) || (uber->ub_sbi == NULL)) {
 		return 0;
 	}
-	err = silofs_sbi_shut(apex->ap_sbi);
+	err = silofs_sbi_shut(uber->ub_sbi);
 	if (err) {
 		return err;
 	}
-	silofs_apex_shut(apex);
+	silofs_uber_shut(uber);
 	return 0;
 }
 
@@ -674,10 +658,10 @@ static void fse_update_bootsec(const struct silofs_fs_env *fse,
 int silofs_fse_resolve(const struct silofs_fs_env *fse,
                        struct silofs_bootsec *bsec)
 {
-	const struct silofs_fs_apex *apex = fse->fs_apex;
+	const struct silofs_fs_uber *uber = fse->fs_uber;
 	int ret = -ENOENT;
 
-	if (apex && apex->ap_sbi) {
+	if (uber && uber->ub_sbi) {
 		silofs_bootsec_init(bsec);
 		fse_update_bootsec(fse, bsec);
 		ret = 0;
@@ -707,7 +691,7 @@ static int silofs_fse_exec(struct silofs_fs_env *fse)
 	const char *mount_point = fse->fs_args.mntdir;
 	int err;
 
-	err = silofs_fuseq_mount(fq, fse->fs_apex, mount_point);
+	err = silofs_fuseq_mount(fq, fse->fs_uber, mount_point);
 	if (!err) {
 		err = silofs_fuseq_exec(fq);
 	}
@@ -828,14 +812,14 @@ static int fse_verify_bootsec(const struct silofs_fs_env *fse,
 static int fse_reload_supers(struct silofs_fs_env *fse,
                              const struct silofs_uaddr *sb_uaddr)
 {
-	struct silofs_fs_apex *apex = fse->fs_apex;
+	struct silofs_fs_uber *uber = fse->fs_uber;
 	int err;
 
-	err = silofs_apex_reload_supers(apex, sb_uaddr);
+	err = silofs_uber_reload_supers(uber, sb_uaddr);
 	if (err) {
 		return err;
 	}
-	err = fse_check_super_block(fse, apex->ap_sbi);
+	err = fse_check_super_block(fse, uber->ub_sbi);
 	if (err) {
 		log_warn("bad super-block: err=%d", err);
 		return err;
@@ -1041,7 +1025,7 @@ static int fse_make_self_ctx(struct silofs_fs_env *fse,
 {
 	silofs_memzero(fs_ctx, sizeof(*fs_ctx));
 
-	fs_ctx->fsc_apex = fse->fs_apex;
+	fs_ctx->fsc_uber = fse->fs_uber;
 	fs_ctx->fsc_oper.op_creds.ucred.uid = fse->fs_args.uid;
 	fs_ctx->fsc_oper.op_creds.ucred.gid = fse->fs_args.gid;
 	fs_ctx->fsc_oper.op_creds.ucred.pid = fse->fs_args.pid;
@@ -1053,8 +1037,8 @@ static int fse_make_self_ctx(struct silofs_fs_env *fse,
 
 static int fse_format_supers(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_apex *apex = fse->fs_apex;
-	const size_t cap_want = apex->ap_args->capacity;
+	struct silofs_fs_uber *uber = fse->fs_uber;
+	const size_t cap_want = uber->ub_args->capacity;
 	size_t capacity = 0;
 	int err;
 
@@ -1063,11 +1047,11 @@ static int fse_format_supers(struct silofs_fs_env *fse)
 		log_err("illegal capacity: cap=%lu err=%d", cap_want, err);
 		return err;
 	}
-	err = silofs_apex_format_supers(apex, capacity);
+	err = silofs_uber_format_supers(uber, capacity);
 	if (err) {
 		return err;
 	}
-	err = fse_check_super_block(fse, apex->ap_sbi);
+	err = fse_check_super_block(fse, uber->ub_sbi);
 	if (err) {
 		log_err("internal sb format: err=%d", err);
 		return err;
@@ -1205,7 +1189,7 @@ int silofs_fse_shut(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_shut_apex(fse);
+	err = fse_shut_uber(fse);
 	if (err) {
 		return err;
 	}

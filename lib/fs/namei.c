@@ -15,25 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/namei.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/dir.h>
-#include <silofs/fs/file.h>
-#include <silofs/fs/symlink.h>
-#include <silofs/fs/xattr.h>
-#include <silofs/fs/walk.h>
-#include <silofs/fs/pack.h>
+#include <silofs/fs.h>
 #include <silofs/fs/ioctls.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
@@ -129,10 +111,10 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
 	const int i_open_max = INT_MAX / 2;
-	const struct silofs_fs_apex *apex = ii_apex(ii);
+	const struct silofs_fs_uber *uber = ii_uber(ii);
 
 	if (!ii->i_nopen &&
-	    !(apex->ap_ops.op_iopen < apex->ap_ops.op_iopen_max)) {
+	    !(uber->ub_ops.op_iopen < uber->ub_ops.op_iopen_max)) {
 		return -ENFILE;
 	}
 	if (ii->i_nopen >= i_open_max) {
@@ -143,15 +125,15 @@ static int check_open_limit(const struct silofs_inode_info *ii)
 
 static void update_nopen(struct silofs_inode_info *ii, int n)
 {
-	struct silofs_fs_apex *apex = ii_apex(ii);
+	struct silofs_fs_uber *uber = ii_uber(ii);
 
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		apex->ap_ops.op_iopen++;
+		uber->ub_ops.op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		apex->ap_ops.op_iopen--;
+		uber->ub_ops.op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -1367,12 +1349,12 @@ int silofs_do_symlink(const struct silofs_fs_ctx *fs_ctx,
 
 static int flush_dirty_of(const struct silofs_inode_info *ii, int flags)
 {
-	return silofs_apex_flush_dirty(ii_apex(ii), flags);
+	return silofs_uber_flush_dirty(ii_uber(ii), flags);
 }
 
-static int flush_dirty_now(struct silofs_fs_apex *apex)
+static int flush_dirty_now(struct silofs_fs_uber *uber)
 {
-	return silofs_apex_flush_dirty(apex, SILOFS_F_NOW);
+	return silofs_uber_flush_dirty(uber, SILOFS_F_NOW);
 }
 
 static int check_opendir(const struct silofs_fs_ctx *fs_ctx,
@@ -1994,8 +1976,8 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 static void fill_query_reponame(const struct silofs_inode_info *ii,
                                 struct silofs_ioc_query *query)
 {
-	const struct silofs_fs_apex *apex = ii_apex(ii);
-	const struct silofs_repo *repo = apex->ap_mrepo;
+	const struct silofs_fs_uber *uber = ii_uber(ii);
+	const struct silofs_repo *repo = uber->ub_mrepo;
 	const struct silofs_bootpath *bpath = &repo->re_bootpath;
 	size_t bsz;
 
@@ -2142,22 +2124,22 @@ static int do_clone(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *dir_ii, int flags,
                     struct silofs_bootsec *out_bsec)
 {
-	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
+	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
 
 	err = check_clone(fs_ctx, dir_ii, flags);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_forkfs(apex, out_bsec);
+	err = silofs_uber_forkfs(uber, out_bsec);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
@@ -2190,15 +2172,15 @@ static int walk_inspect_fs(struct silofs_sb_info *sbi)
 int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_bootsec *bsec)
 {
-	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
+	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_stage_supers(apex, &bsec->sb_uaddr, &sbi);
+	err = silofs_uber_stage_supers(uber, &bsec->sb_uaddr, &sbi);
 	if (err) {
 		return err;
 	}
@@ -2219,22 +2201,22 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
                    const struct silofs_bootsec *src_bsec,
                    struct silofs_bootsec *dst_bsec)
 {
-	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
+	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
 
 	err = check_pack(fs_ctx);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_pack_fs(apex, src_bsec, dst_bsec);
+	err = silofs_uber_pack_fs(uber, src_bsec, dst_bsec);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
@@ -2245,22 +2227,22 @@ int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
                      const struct silofs_bootsec *src_bsec,
                      struct silofs_bootsec *dst_bsec)
 {
-	struct silofs_fs_apex *apex = fs_ctx->fsc_apex;
+	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
 
 	err = check_pack(fs_ctx);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
-	err = silofs_apex_unpack_fs(apex, src_bsec, dst_bsec);
+	err = silofs_uber_unpack_fs(uber, src_bsec, dst_bsec);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(apex);
+	err = flush_dirty_now(uber);
 	if (err) {
 		return err;
 	}
@@ -2275,7 +2257,7 @@ union silofs_utf32_name_buf {
 } silofs_aligned64;
 
 
-static int check_utf8_name(const struct silofs_fs_apex *apex,
+static int check_utf8_name(const struct silofs_fs_uber *uber,
                            const struct silofs_namestr *nstr)
 {
 	union silofs_utf32_name_buf unb;
@@ -2286,7 +2268,7 @@ static int check_utf8_name(const struct silofs_fs_apex *apex,
 	size_t datlen;
 	size_t ret;
 
-	ret = iconv(apex->ap_iconv, &in, &len, &out, &outlen);
+	ret = iconv(uber->ub_iconv, &in, &len, &out, &outlen);
 	if ((ret != 0) || len || (outlen % 4)) {
 		return errno ? -errno : -EINVAL;
 	}
@@ -2360,7 +2342,7 @@ static int check_valid_encoding(const struct silofs_inode_info *ii,
 	if (!dir_hasflag(ii, SILOFS_DIRF_NAME_UTF8)) {
 		return 0;
 	}
-	return check_utf8_name(ii_apex(ii), nstr);
+	return check_utf8_name(ii_uber(ii), nstr);
 }
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,

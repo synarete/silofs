@@ -16,22 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/uber.h>
-#include <silofs/fs/walk.h>
-#include <silofs/fs/pack.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
 
@@ -47,7 +32,7 @@ struct silofs_pack_ctx {
 	struct silofs_crypto            cryp;
 	const struct silofs_bootsec    *src_bsec;
 	struct silofs_bootsec          *dst_bsec;
-	struct silofs_fs_apex          *apex;
+	struct silofs_fs_uber          *uber;
 	struct silofs_alloc            *alloc;
 	struct silofs_sb_info          *sbi;
 	struct silofs_block            *tbk;
@@ -277,7 +262,7 @@ pac_cipher(const struct silofs_pack_ctx *pa_ctx)
 static const struct silofs_kivam *
 pac_kivam(const struct silofs_pack_ctx *pa_ctx)
 {
-	return pa_ctx->apex->ap_kivam;
+	return pa_ctx->uber->ub_kivam;
 }
 
 static int pac_encrypt_bk(const struct silofs_pack_ctx *pa_ctx,
@@ -488,16 +473,16 @@ static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
 
 static struct silofs_repo *pac_src_repo(const struct silofs_pack_ctx *pa_ctx)
 {
-	const struct silofs_fs_apex *apex = pa_ctx->apex;
+	const struct silofs_fs_uber *uber = pa_ctx->uber;
 
-	return pa_ctx->pack ? apex->ap_mrepo : apex->ap_crepo;
+	return pa_ctx->pack ? uber->ub_mrepo : uber->ub_crepo;
 }
 
 static struct silofs_repo *pac_dst_repo(const struct silofs_pack_ctx *pa_ctx)
 {
-	const struct silofs_fs_apex *apex = pa_ctx->apex;
+	const struct silofs_fs_uber *uber = pa_ctx->uber;
 
-	return pa_ctx->pack ? apex->ap_crepo : apex->ap_mrepo;
+	return pa_ctx->pack ? uber->ub_crepo : uber->ub_mrepo;
 }
 
 static const struct silofs_mdigest *
@@ -977,7 +962,7 @@ static int pac_prep_archive_at(struct silofs_pack_ctx *pa_ctx,
 static void pac_update_dst_bootsec(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_hash256 hash;
-	const struct silofs_kivam *kivam = pa_ctx->apex->ap_kivam;
+	const struct silofs_kivam *kivam = pa_ctx->uber->ub_kivam;
 	const struct silofs_sb_info *sbi = pa_ctx->sbi;
 
 	silofs_bootsec_set_uaddr(pa_ctx->dst_bsec, sbi_uaddr(sbi));
@@ -993,14 +978,14 @@ static int pac_stage_super(const struct silofs_pack_ctx *pa_ctx,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi)
 {
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	int err;
 
-	err = silofs_stage_super_at(apex, pa_ctx->pack, uaddr, out_sbi);
+	err = silofs_stage_super_at(uber, pa_ctx->pack, uaddr, out_sbi);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_apex(*out_sbi, apex);
+	silofs_sbi_bind_uber(*out_sbi, uber);
 	return 0;
 }
 
@@ -1009,7 +994,7 @@ static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
                            struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	int err;
 
 	sbi_incref(sbi);
@@ -1017,11 +1002,11 @@ static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = silofs_stage_stats_at(apex, pa_ctx->pack, &uaddr, out_sti);
+	err = silofs_stage_stats_at(uber, pa_ctx->pack, &uaddr, out_sti);
 	if (err) {
 		goto out;
 	}
-	silofs_sti_bind_apex(*out_sti, apex);
+	silofs_sti_bind_uber(*out_sti, uber);
 out:
 	sbi_decref(sbi);
 	return err;
@@ -1082,7 +1067,7 @@ static int pac_refill_unode(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	silofs_ui_bind_apex(ui, pa_ctx->apex);
+	silofs_ui_bind_uber(ui, pa_ctx->uber);
 out:
 	ui_decref(ui);
 	return err;
@@ -1091,12 +1076,12 @@ out:
 static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
                             struct silofs_sb_info **out_sbi)
 {
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = silofs_shadow_super_at(apex, pa_ctx->pack,
+	err = silofs_shadow_super_at(uber, pa_ctx->pack,
 	                             &bsec->sb_uaddr, &sbi);
 	if (err) {
 		return err;
@@ -1105,7 +1090,7 @@ static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_apex(sbi, apex);
+	silofs_sbi_bind_uber(sbi, uber);
 	*out_sbi = sbi;
 	return 0;
 }
@@ -1115,7 +1100,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
                             struct silofs_spstat_info **out_sti)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
 	struct silofs_spstat_info *sti = NULL;
 	int err;
@@ -1125,7 +1110,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = silofs_shadow_stats_at(apex, pa_ctx->pack, &uaddr, &sti);
+	err = silofs_shadow_stats_at(uber, pa_ctx->pack, &uaddr, &sti);
 	if (err) {
 		goto out;
 	}
@@ -1133,7 +1118,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sti_bind_apex(sti, apex);
+	silofs_sti_bind_uber(sti, uber);
 out:
 	sbi_decref(sbi);
 	*out_sti = sti;
@@ -1267,7 +1252,7 @@ static int pack_visit_post(struct silofs_visitor *vis,
 	return pac_post_archive_at(pa_ctx, uit);
 }
 
-int silofs_apex_pack_fs(struct silofs_fs_apex *apex,
+int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
                         const struct silofs_bootsec *src_bsec,
                         struct silofs_bootsec *dst_bsec)
 {
@@ -1277,8 +1262,8 @@ int silofs_apex_pack_fs(struct silofs_fs_apex *apex,
 		.vis.visit_post_hook = pack_visit_post,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
-		.apex = apex,
-		.alloc = apex->ap_alloc,
+		.uber = uber,
+		.alloc = uber->ub_alloc,
 		.sbi = NULL,
 		.pack = true,
 	};
@@ -1418,7 +1403,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_uaddr ulink;
 	struct silofs_packid packid;
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
@@ -1430,7 +1415,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(apex, pa_ctx->pack, &ulink, &sni_child);
+	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &ulink, &sni_child);
 	if (err) {
 		return err;
 	}
@@ -1447,7 +1432,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_uaddr ulink;
 	struct silofs_packid packid;
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
@@ -1459,7 +1444,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spleaf_at(apex, pa_ctx->pack, &ulink, &sli);
+	err = silofs_shadow_spleaf_at(uber, pa_ctx->pack, &ulink, &sli);
 	if (err) {
 		return err;
 	}
@@ -1476,7 +1461,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_uaddr ulink;
 	struct silofs_packid packid;
-	struct silofs_fs_apex *apex = pa_ctx->apex;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
@@ -1488,7 +1473,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(apex, pa_ctx->pack, &ulink, &sni);
+	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &ulink, &sni);
 	if (err) {
 		return err;
 	}
@@ -1559,7 +1544,7 @@ static int unpack_visit_post(struct silofs_visitor *vis,
 	return pac_post_restore_at(pa_ctx, uit);
 }
 
-int silofs_apex_unpack_fs(struct silofs_fs_apex *apex,
+int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
                           const struct silofs_bootsec *src_bsec,
                           struct silofs_bootsec *dst_bsec)
 {
@@ -1569,8 +1554,8 @@ int silofs_apex_unpack_fs(struct silofs_fs_apex *apex,
 		.vis.visit_post_hook = unpack_visit_post,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
-		.apex = apex,
-		.alloc = apex->ap_alloc,
+		.uber = uber,
+		.alloc = uber->ub_alloc,
 		.sbi = NULL,
 		.pack = false,
 	};

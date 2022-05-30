@@ -15,10 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/opers.h>
-#include <silofs/fs/mntsvc.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/ioctls.h>
 #include <silofs/fs/fused.h>
 #include <silofs/fs/fuseq.h>
@@ -594,9 +592,9 @@ static void fill_fuse_open(struct fuse_open_out *open, int noflush)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_fs_apex *apex_of(const struct silofs_fuseq_worker *fqw)
+static struct silofs_fs_uber *uber_of(const struct silofs_fuseq_worker *fqw)
 {
-	return fqw->fq->fq_apex;
+	return fqw->fq->fq_uber;
 }
 
 static struct silofs_oper_ctx *op_ctx_of(const struct silofs_fuseq_worker *fqw)
@@ -617,14 +615,14 @@ static struct silofs_fs_ctx *fs_ctx_of(const struct silofs_fuseq_worker *fqw)
 static struct silofs_fs_ctx *fs_ctx_self(const struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
-	struct silofs_fs_apex *apex = apex_of(fqw);
+	struct silofs_fs_uber *uber = uber_of(fqw);
 
-	fs_ctx->fsc_apex = apex;
+	fs_ctx->fsc_uber = uber;
 	fs_ctx->fsc_interrupt = 0;
-	fs_ctx->fsc_oper.op_creds.ucred.uid = apex->ap_args->uid;
-	fs_ctx->fsc_oper.op_creds.ucred.gid = apex->ap_args->gid;
+	fs_ctx->fsc_oper.op_creds.ucred.uid = uber->ub_args->uid;
+	fs_ctx->fsc_oper.op_creds.ucred.gid = uber->ub_args->gid;
 	fs_ctx->fsc_oper.op_creds.ucred.pid = getpid();
-	fs_ctx->fsc_oper.op_creds.ucred.umask = apex->ap_args->umask;
+	fs_ctx->fsc_oper.op_creds.ucred.umask = uber->ub_args->umask;
 	fs_ctx->fsc_oper.op_creds.xtime.tv_sec = silofs_time_now();
 	fs_ctx->fsc_oper.op_creds.xtime.tv_nsec = 0;
 	fs_ctx->fsc_oper.op_unique = 0;
@@ -1586,7 +1584,7 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
                    const struct silofs_fuseq_in *in)
 {
 	struct silofs_fuseq_conn_info *coni = &fqw->fq->fq_coni;
-	struct silofs_fs_apex *apex = fqw->fq->fq_apex;
+	struct silofs_fs_uber *uber = fqw->fq->fq_uber;
 	const int in_major = (int)(in->u.init.arg.major);
 	const int in_minor = (int)(in->u.init.arg.minor);
 	const int in_flags = (int)(in->u.init.arg.flags);
@@ -1634,7 +1632,7 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	/* setup_cap_want(coni, FUSE_POSIX_ACL); */
 
 	/* TODO: let super do his private stuff on init */
-	apex->ap_sbi->sb_mntime = silofs_time_now();
+	uber->ub_sbi->sb_mntime = silofs_time_now();
 
 out:
 	ret = fuseq_reply_init(fqw, err);
@@ -2322,7 +2320,7 @@ static int do_statx(struct silofs_fuseq_worker *fqw, ino_t ino,
 	struct statx stx = { .stx_mask = 0 };
 
 	fuseq_lock_fs(fqw);
-	err = silofs_fs_statx(apex_of(fqw), fs_ctx_of(fqw),
+	err = silofs_fs_statx(uber_of(fqw), fs_ctx_of(fqw),
 	                      ino, request_mask, &stx);
 	fuseq_unlock_fs(fqw);
 
@@ -2589,8 +2587,8 @@ static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
                                 struct silofs_fuseq_wr_iter *fq_rwi,
                                 size_t len, loff_t off)
 {
-	const struct silofs_fs_apex *apex = apex_of(fqw);
-	const bool concp = apex->ap_args->concp;
+	const struct silofs_fs_uber *uber = uber_of(fqw);
+	const bool concp = uber->ub_args->concp;
 
 	fq_rwi->fqw = fqw;
 	fq_rwi->nwr = 0;
@@ -2947,7 +2945,7 @@ static void fuseq_assign_curr_oper(struct silofs_fuseq_worker *fqw,
 {
 	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
 
-	fsc->fsc_apex = fqw->fq->fq_apex;
+	fsc->fsc_uber = fqw->fq->fq_uber;
 	fsc->fsc_oper.op_creds.ucred.uid = (uid_t)(hdr->uid);
 	fsc->fsc_oper.op_creds.ucred.gid = (gid_t)(hdr->gid);
 	fsc->fsc_oper.op_creds.ucred.pid = (pid_t)(hdr->pid);
@@ -3734,7 +3732,7 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
                               struct silofs_alloc *alloc)
 {
 	fq->fq_times = 0;
-	fq->fq_apex = NULL;
+	fq->fq_uber = NULL;
 	fq->fq_alloc = alloc;
 	fq->fq_active = 0;
 	fq->fq_nopers = 0;
@@ -3794,15 +3792,15 @@ void silofs_fuseq_fini(struct silofs_fuseq *fq)
 	fuseq_fini_workers(fq);
 	fuseq_fini_locks(fq);
 	fq->fq_alloc = NULL;
-	fq->fq_apex = NULL;
+	fq->fq_uber = NULL;
 }
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
-                       struct silofs_fs_apex *apex, const char *path)
+                       struct silofs_fs_uber *uber, const char *path)
 {
 	const size_t max_read = fq->fq_coni.buffsize;
 	const char *sock = SILOFS_MNTSOCK_NAME;
-	struct silofs_sb_info *sbi = apex->ap_sbi;
+	struct silofs_sb_info *sbi = uber->ub_sbi;
 	uint64_t ms_flags;
 	uid_t uid;
 	gid_t gid;
@@ -3834,7 +3832,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	fq->fq_fs_owner = sbi->sb_owner.uid;
 	fq->fq_fuse_fd = fd;
 	fq->fq_mount = true;
-	fq->fq_apex = apex;
+	fq->fq_uber = uber;
 
 	/* TODO: Looks like kernel needs time. why? */
 	sleep(1);
@@ -3845,7 +3843,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 void silofs_fuseq_term(struct silofs_fuseq *fq)
 {
 	fuseq_fini_fuse_fd(fq);
-	fq->fq_apex = NULL;
+	fq->fq_uber = NULL;
 }
 
 static int fuseq_check_input(const struct silofs_fuseq_worker *fqw)

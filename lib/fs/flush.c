@@ -15,14 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/apex.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
 
@@ -335,15 +328,15 @@ static int flush_dirty_of(struct silofs_repo *repo, int flags)
 	return 0;
 }
 
-int silofs_apex_flush_dirty(const struct silofs_fs_apex *apex, int flags)
+int silofs_uber_flush_dirty(const struct silofs_fs_uber *uber, int flags)
 {
 	int err;
 
-	err = flush_dirty_of(apex->ap_mrepo, flags);
+	err = flush_dirty_of(uber->ub_mrepo, flags);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(apex->ap_crepo, flags);
+	err = flush_dirty_of(uber->ub_crepo, flags);
 	if (err) {
 		return err;
 	}

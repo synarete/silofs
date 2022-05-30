@@ -15,20 +15,13 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/crypto.h>
-#include <silofs/fs/repo.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <unistd.h>
 
 #define REPO_METAF_SIZE (4096)
 #define REPO_OBJS_NSUBS (256)

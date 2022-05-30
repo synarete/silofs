@@ -34,7 +34,7 @@ struct silofs_snode_vtbl {
 struct silofs_snode_info {
 	struct silofs_cache_elem        s_ce;
 	const struct silofs_snode_vtbl *s_vtbl;
-	struct silofs_fs_apex          *s_apex;
+	struct silofs_fs_uber          *s_uber;
 	struct silofs_mdigest          *s_md;
 	struct silofs_list_head         s_dq_lh;
 	struct silofs_avl_node          s_ds_an;
@@ -219,8 +219,8 @@ void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi);
 struct silofs_unode_info *
 silofs_ui_from_si(const struct silofs_snode_info *si);
 
-void silofs_ui_bind_apex(struct silofs_unode_info *ui,
-                         struct silofs_fs_apex *apex);
+void silofs_ui_bind_uber(struct silofs_unode_info *ui,
+                         struct silofs_fs_uber *uber);
 
 
 void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);

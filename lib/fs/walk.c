@@ -16,25 +16,13 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/repo.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spmaps.h>
-#include <silofs/fs/apex.h>
-#include <silofs/fs/walk.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
 
 struct silofs_walk_ctx {
 	struct silofs_visitor     *vis;
-	struct silofs_fs_apex     *apex;
+	struct silofs_fs_uber     *uber;
 	struct silofs_sb_info     *sbi;
 	struct silofs_spstat_info  *sti;
 	struct silofs_spnode_info *sni3;
@@ -97,7 +85,7 @@ static void uiter_decrefs(const struct silofs_uiterator *uit)
 
 static void wac_relax_cache(const struct silofs_walk_ctx *wa_ctx)
 {
-	silofs_apex_relax_caches(wa_ctx->apex, SILOFS_F_WALKFS);
+	silofs_uber_relax_caches(wa_ctx->uber, SILOFS_F_WALKFS);
 }
 
 static int wac_visit_prep(const struct silofs_walk_ctx *wa_ctx,
@@ -464,7 +452,7 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 {
 	struct silofs_walk_ctx wa_ctx = {
 		.vis = vis,
-		.apex = sbi_apex(sbi),
+		.uber = sbi_uber(sbi),
 		.sbi = sbi,
 		.sti = sbi->sb_sti,
 		.sni3 = NULL,

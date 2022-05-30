@@ -19,7 +19,7 @@
 
 
 struct silofs_bootsec;
-struct silofs_fs_apex;
+struct silofs_fs_uber;
 struct silofs_fs_ctx;
 struct silofs_ioc_query;
 struct silofs_ioc_iterfs;

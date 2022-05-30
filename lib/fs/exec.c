@@ -1062,14 +1062,14 @@ static int fse_format_main_repo(struct silofs_fs_env *fse)
 {
 	struct silofs_repo *repo = &fse->fs_repos->repo_main;
 
-	return repo ? silofs_repo_format(repo) : 0;
+	return repo->re_inited ? silofs_repo_format(repo) : 0;
 }
 
 static int fse_format_cold_repo(struct silofs_fs_env *fse)
 {
 	struct silofs_repo *repo = &fse->fs_repos->repo_cold;
 
-	return repo ? silofs_repo_format(repo) : 0;
+	return repo->re_inited ? silofs_repo_format(repo) : 0;
 }
 
 int silofs_fse_format_repos(struct silofs_fs_env *fse)

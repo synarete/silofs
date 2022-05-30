@@ -59,14 +59,12 @@ Various testing programs for silofs.
 
 %files devel
 %defattr(-, root, root)
-%{_bindir}/%{name}-vtests
+%{_bindir}/%{name}-vfstests
 %{_bindir}/%{name}-ci-tests
 %{_prefix}/lib/python3*/site-packages/%{name}/*
-%exclude %{_bindir}/%{name}-utests
-# exclude headers for now
+%exclude %{_bindir}/%{name}-unitests
 %exclude %{_includedir}/*
 %exclude %{_libdir}/lib%{name}*.*
-%exclude %{_bindir}/smoketests.sh
 
 
 %post

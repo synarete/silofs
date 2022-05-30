@@ -1192,6 +1192,7 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc,
 	repo->re_dots_dfd = -1;
 	repo->re_objs_dfd = -1;
 	repo->re_rw = rw;
+	repo->re_inited = false;
 	silofs_bootpath_assign(&repo->re_bootpath, bpath);
 	err = repo_init_cache(repo, msz);
 	if (err) {
@@ -1201,6 +1202,7 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc,
 	if (err) {
 		return err;
 	}
+	repo->re_inited = true;
 	return 0;
 }
 

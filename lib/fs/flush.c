@@ -304,7 +304,7 @@ static bool repo_need_flush(const struct silofs_repo *repo, int flags)
 {
 	bool ret = false;
 
-	if (repo != NULL) {
+	if (repo != NULL && repo->re_inited) {
 		ret = silofs_cache_need_flush(&repo->re_cache, flags);
 	}
 	return ret;
@@ -332,11 +332,11 @@ int silofs_uber_flush_dirty(const struct silofs_fs_uber *uber, int flags)
 {
 	int err;
 
-	err = flush_dirty_of(uber->ub_mrepo, flags);
+	err = flush_dirty_of(&uber->ub_repos->repo_main, flags);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(uber->ub_crepo, flags);
+	err = flush_dirty_of(&uber->ub_repos->repo_cold, flags);
 	if (err) {
 		return err;
 	}

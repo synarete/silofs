@@ -480,8 +480,7 @@ struct silofs_fs_uber {
 	struct silofs_alloc            *ub_alloc;
 	struct silofs_kivam            *ub_kivam;
 	struct silofs_crypto           *ub_crypto;
-	struct silofs_repo             *ub_mrepo;
-	struct silofs_repo             *ub_crepo;
+	struct silofs_repos            *ub_repos;
 	struct silofs_piper             ub_piper;
 	struct silofs_oper_stat         ub_ops;
 	struct silofs_sb_info          *ub_sbi;
@@ -527,8 +526,7 @@ struct silofs_fs_env {
 	struct silofs_qalloc           *fs_qalloc;
 	struct silofs_alloc            *fs_alloc;
 	struct silofs_crypto           *fs_crypto;
-	struct silofs_repo             *fs_main_repo;
-	struct silofs_repo             *fs_cold_repo;
+	struct silofs_repos            *fs_repos;
 	struct silofs_fs_uber          *fs_uber;
 	struct silofs_fuseq            *fs_fuseq;
 	int                             fs_signum;

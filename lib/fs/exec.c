@@ -32,8 +32,7 @@
 struct silofs_fs_core {
 	struct silofs_qalloc    qalloc;
 	struct silofs_crypto    crypto;
-	struct silofs_repo      main_repo;
-	struct silofs_repo      cold_repo;
+	struct silofs_repos     repos;
 	struct silofs_fs_uber   uber;
 };
 
@@ -191,7 +190,12 @@ static void fse_fini_crypto(struct silofs_fs_env *fse)
 
 static size_t fse_repo_memsz_hint(const struct silofs_fs_env *fse)
 {
-	return fse->fs_qalloc->alst.memsz_data;
+	size_t memsz_hint = fse->fs_qalloc->alst.memsz_data;
+
+	if (fse->fs_args.main_repodir && fse->fs_args.cold_repodir) {
+		memsz_hint /= 2;
+	}
+	return memsz_hint;
 }
 
 static int fse_main_bootpath(struct silofs_fs_env *fse,
@@ -213,73 +217,69 @@ static int fse_cold_bootpath(struct silofs_fs_env *fse,
 static int fse_init_main_repo(struct silofs_fs_env *fse)
 {
 	struct silofs_bootpath bpath = { .repodir = NULL };
-	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
-	struct silofs_repo *repo = NULL;
+	struct silofs_repo *repo = &fse->fs_repos->repo_main;
 	int err;
 
 	if (fse->fs_args.main_repodir == NULL) {
-		goto out;
+		return 0;
 	}
 	err = fse_main_bootpath(fse, &bpath);
 	if (err) {
 		return err;
 	}
-	repo = &fse_obj->fs_core.c.main_repo;
 	err = silofs_repo_init(repo, fse->fs_alloc, &bpath,
 	                       fse_repo_memsz_hint(fse), !fse->fs_args.rdonly);
 	if (err) {
 		return err;
 	}
-out:
-	fse->fs_main_repo = repo;
 	return 0;
 }
 
 static void fse_fini_main_repo(struct silofs_fs_env *fse)
 {
-	if (fse->fs_main_repo != NULL) {
-		silofs_repo_fini(fse->fs_main_repo);
-		fse->fs_main_repo = NULL;
+	struct silofs_repo *repo = &fse->fs_repos->repo_main;
+
+	if (repo->re_inited) {
+		silofs_repo_fini(repo);
 	}
 }
 
 static int fse_init_cold_repo(struct silofs_fs_env *fse)
 {
 	struct silofs_bootpath bpath = { .repodir = NULL };
-	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
-	struct silofs_repo *repo = NULL;
+	struct silofs_repo *repo = &fse->fs_repos->repo_cold;
 	int err;
 
 	if (fse->fs_args.cold_repodir == NULL) {
-		goto out;
+		return 0;
 	}
 	err = fse_cold_bootpath(fse, &bpath);
 	if (err) {
 		return err;
 	}
-	repo = &fse_obj->fs_core.c.cold_repo;
 	err = silofs_repo_init(repo, fse->fs_alloc, &bpath,
 	                       fse_repo_memsz_hint(fse), !fse->fs_args.rdonly);
 	if (err) {
 		return err;
 	}
-out:
-	fse->fs_cold_repo = repo;
 	return 0;
 }
 
 static void fse_fini_cold_repo(struct silofs_fs_env *fse)
 {
-	if (fse->fs_cold_repo != NULL) {
-		silofs_repo_fini(fse->fs_cold_repo);
-		fse->fs_cold_repo = NULL;
+	struct silofs_repo *repo = &fse->fs_repos->repo_cold;
+
+	if (repo->re_inited) {
+		silofs_repo_fini(repo);
 	}
 }
 
 static int fse_init_repos(struct silofs_fs_env *fse)
 {
+	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
 	int err;
 
+	fse->fs_repos = &fse_obj->fs_core.c.repos;
 	err = fse_init_main_repo(fse);
 	if (err) {
 		return err;
@@ -302,8 +302,8 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 	struct silofs_fs_uber *uber = &fse_obj_of(fse)->fs_core.c.uber;
 	int err;
 
-	err = silofs_uber_init(uber, fse->fs_alloc, &fse->fs_kivam,
-	                       fse->fs_main_repo, fse->fs_cold_repo);
+	err = silofs_uber_init(uber, fse->fs_alloc,
+	                       &fse->fs_kivam, fse->fs_repos);
 	if (!err) {
 		uber->ub_args = &fse->fs_args;
 		fse->fs_uber = uber;
@@ -500,11 +500,11 @@ static void fse_drop_caches(const struct silofs_fs_env *fse)
 	if (fse->fs_uber && fse->fs_uber->ub_sbi) {
 		silofs_drop_itable_cache(fse->fs_uber->ub_sbi);
 	}
-	if (fse->fs_main_repo) {
-		silofs_repo_drop_cache(fse->fs_main_repo);
+	if (fse->fs_repos->repo_main.re_inited) {
+		silofs_repo_drop_cache(&fse->fs_repos->repo_main);
 	}
-	if (fse->fs_cold_repo) {
-		silofs_repo_drop_cache(fse->fs_cold_repo);
+	if (fse->fs_repos->repo_cold.re_inited) {
+		silofs_repo_drop_cache(&fse->fs_repos->repo_cold);
 	}
 	silofs_burnstack();
 }
@@ -513,11 +513,11 @@ static void fse_relax_cache(struct silofs_fs_env *fse, bool drop_cache)
 {
 	const int flags = SILOFS_F_BRINGUP;
 
-	if (fse->fs_main_repo) {
-		silofs_repo_relax_cache(fse->fs_main_repo, flags);
+	if (fse->fs_repos->repo_main.re_inited) {
+		silofs_repo_relax_cache(&fse->fs_repos->repo_main, flags);
 	}
-	if (fse->fs_cold_repo) {
-		silofs_repo_relax_cache(fse->fs_cold_repo, flags);
+	if (fse->fs_repos->repo_cold.re_inited) {
+		silofs_repo_relax_cache(&fse->fs_repos->repo_cold, flags);
 	}
 	if (drop_cache) {
 		fse_drop_caches(fse);
@@ -630,14 +630,14 @@ int silofs_fse_close_repos(struct silofs_fs_env *fse)
 {
 	int err;
 
-	if (fse->fs_cold_repo != NULL) {
-		err = silofs_repo_close(fse->fs_cold_repo);
+	if (fse->fs_repos->repo_cold.re_inited) {
+		err = silofs_repo_close(&fse->fs_repos->repo_cold);
 		if (err) {
 			return err;
 		}
 	}
-	if (fse->fs_main_repo != NULL) {
-		err = silofs_repo_close(fse->fs_main_repo);
+	if (fse->fs_repos->repo_main.re_inited) {
+		err = silofs_repo_close(&fse->fs_repos->repo_main);
 		if (err) {
 			return err;
 		}
@@ -729,15 +729,15 @@ void silofs_fse_stats(const struct silofs_fs_env *fse,
 	silofs_memzero(st, sizeof(*st));
 	silofs_allocstat(fse->fs_alloc, &alst);
 	st->nalloc_bytes = alst.nbytes_used;
-	if (fse->fs_main_repo != NULL) {
-		cache = &fse->fs_main_repo->re_cache;
+	if (fse->fs_repos->repo_main.re_inited) {
+		cache = &fse->fs_repos->repo_main.re_cache;
 		st->ncache_ublocks += cache->c_ubi_lm.lm_htbl_sz;
 		st->ncache_vblocks += cache->c_vbi_lm.lm_htbl_sz;
 		st->ncache_unodes += cache->c_ui_lm.lm_htbl_sz;
 		st->ncache_vnodes += cache->c_vi_lm.lm_htbl_sz;
 	}
-	if (fse->fs_cold_repo != NULL) {
-		cache = &fse->fs_cold_repo->re_cache;
+	if (fse->fs_repos->repo_cold.re_inited) {
+		cache = &fse->fs_repos->repo_cold.re_cache;
 		st->ncache_ublocks += cache->c_ubi_lm.lm_htbl_sz;
 		st->ncache_vblocks += cache->c_vbi_lm.lm_htbl_sz;
 		st->ncache_unodes += cache->c_ui_lm.lm_htbl_sz;
@@ -831,14 +831,14 @@ int silofs_fse_open_repos(struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = silofs_repo_open(fse->fs_main_repo);
+	err = silofs_repo_open(&fse->fs_repos->repo_main);
 	if (err) {
 		return err;
 	}
-	if (fse->fs_cold_repo == NULL) {
+	if (!fse->fs_repos->repo_cold.re_inited) {
 		return 0;
 	}
-	err = silofs_repo_open(fse->fs_cold_repo);
+	err = silofs_repo_open(&fse->fs_repos->repo_cold);
 	if (err) {
 		return err;
 	}
@@ -1061,14 +1061,14 @@ static int fse_format_supers(struct silofs_fs_env *fse)
 
 static int fse_format_main_repo(struct silofs_fs_env *fse)
 {
-	struct silofs_repo *repo = fse->fs_main_repo;
+	struct silofs_repo *repo = &fse->fs_repos->repo_main;
 
 	return repo ? silofs_repo_format(repo) : 0;
 }
 
 static int fse_format_cold_repo(struct silofs_fs_env *fse)
 {
-	struct silofs_repo *repo = fse->fs_cold_repo;
+	struct silofs_repo *repo = &fse->fs_repos->repo_cold;
 
 	return repo ? silofs_repo_format(repo) : 0;
 }

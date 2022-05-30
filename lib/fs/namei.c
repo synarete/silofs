@@ -1977,7 +1977,7 @@ static void fill_query_reponame(const struct silofs_inode_info *ii,
                                 struct silofs_ioc_query *query)
 {
 	const struct silofs_fs_uber *uber = ii_uber(ii);
-	const struct silofs_repo *repo = uber->ub_mrepo;
+	const struct silofs_repo *repo = &uber->ub_repos->repo_main;
 	const struct silofs_bootpath *bpath = &repo->re_bootpath;
 	size_t bsz;
 

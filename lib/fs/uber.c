@@ -68,17 +68,14 @@ static void uber_fini_commons(struct silofs_fs_uber *uber)
 }
 
 static void uber_init_repos(struct silofs_fs_uber *uber,
-                            struct silofs_repo *mrepo,
-                            struct silofs_repo *crepo)
+                            struct silofs_repos *repos)
 {
-	uber->ub_mrepo = mrepo;
-	uber->ub_crepo = crepo;
+	uber->ub_repos = repos;
 }
 
 static void uber_fini_repos(struct silofs_fs_uber *uber)
 {
-	uber->ub_mrepo = NULL;
-	uber->ub_crepo = NULL;
+	uber->ub_repos = NULL;
 }
 
 static int uber_init_piper(struct silofs_fs_uber *uber)
@@ -109,16 +106,13 @@ static void uber_fini_iconv(struct silofs_fs_uber *uber)
 	}
 }
 
-int silofs_uber_init(struct silofs_fs_uber *uber,
-                     struct silofs_alloc *alloc,
-                     struct silofs_kivam *kivam,
-                     struct silofs_repo *mrepo,
-                     struct silofs_repo *crepo)
+int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_alloc *alloc,
+                     struct silofs_kivam *kivam, struct silofs_repos *repos)
 {
 	int err;
 
 	uber_init_commons(uber, alloc, kivam);
-	uber_init_repos(uber, mrepo, crepo);
+	uber_init_repos(uber, repos);
 
 	err = uber_init_piper(uber);
 	if (err) {
@@ -149,11 +143,11 @@ void silofs_uber_relax_caches(const struct silofs_fs_uber *uber, int flags)
 	if (uber->ub_sbi) {
 		silofs_relax_inomap_of(uber->ub_sbi, flags);
 	}
-	if (uber->ub_mrepo) {
-		silofs_repo_relax_cache(uber->ub_mrepo, flags);
+	if (uber->ub_repos->repo_main.re_inited) {
+		silofs_repo_relax_cache(&uber->ub_repos->repo_main, flags);
 	}
-	if (uber->ub_crepo) {
-		silofs_repo_relax_cache(uber->ub_crepo, flags);
+	if (uber->ub_repos->repo_cold.re_inited) {
+		silofs_repo_relax_cache(&uber->ub_repos->repo_cold, flags);
 	}
 }
 
@@ -604,7 +598,7 @@ static void sli_set_spawned(struct silofs_spleaf_info *sli)
 
 static struct silofs_repo *repo_of(struct silofs_fs_uber *uber, bool main)
 {
-	return main ? uber->ub_mrepo : uber->ub_crepo;
+	return main ? &uber->ub_repos->repo_main : &uber->ub_repos->repo_cold;
 }
 
 static int ubc_setup(struct silofs_uber_ctx *ub_ctx,

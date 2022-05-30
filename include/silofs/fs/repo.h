@@ -47,7 +47,15 @@ struct silofs_repo {
 	const char             *re_root_dir;
 	int                     re_dots_dfd;
 	int                     re_objs_dfd;
+	bool                    re_inited;
 	bool                    re_rw;
+
+};
+
+/* a pair of main-cold repositories */
+struct silofs_repos {
+	struct silofs_repo repo_main;
+	struct silofs_repo repo_cold;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

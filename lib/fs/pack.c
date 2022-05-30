@@ -475,14 +475,18 @@ static struct silofs_repo *pac_src_repo(const struct silofs_pack_ctx *pa_ctx)
 {
 	const struct silofs_fs_uber *uber = pa_ctx->uber;
 
-	return pa_ctx->pack ? uber->ub_mrepo : uber->ub_crepo;
+	return pa_ctx->pack ?
+	       &uber->ub_repos->repo_main :
+	       &uber->ub_repos->repo_cold;
 }
 
 static struct silofs_repo *pac_dst_repo(const struct silofs_pack_ctx *pa_ctx)
 {
 	const struct silofs_fs_uber *uber = pa_ctx->uber;
 
-	return pa_ctx->pack ? uber->ub_crepo : uber->ub_mrepo;
+	return pa_ctx->pack ?
+	       &uber->ub_repos->repo_cold :
+	       &uber->ub_repos->repo_main;
 }
 
 static const struct silofs_mdigest *

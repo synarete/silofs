@@ -1317,7 +1317,7 @@ out:
 }
 
 static int fse_snap_fs(struct silofs_fs_env *fse, int flags,
-                       struct silofs_bootsec *out_bsec)
+                       struct silofs_bootsecs *out_bsecs)
 
 {
 	struct silofs_fs_ctx fs_ctx;
@@ -1328,7 +1328,7 @@ static int fse_snap_fs(struct silofs_fs_env *fse, int flags,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_clone(&fs_ctx, ino, flags, out_bsec);
+	err = silofs_fs_clone(&fs_ctx, ino, flags, out_bsecs);
 	if (err) {
 		return err;
 	}
@@ -1337,7 +1337,7 @@ static int fse_snap_fs(struct silofs_fs_env *fse, int flags,
 
 int silofs_fse_snap(struct silofs_fs_env *fse,
                     const struct silofs_bootsec *src_bsec,
-                    struct silofs_bootsec *out_bsec)
+                    struct silofs_bootsecs *out_bsecs)
 {
 	int err = 0;
 	int err2 = 0;
@@ -1356,7 +1356,7 @@ int silofs_fse_snap(struct silofs_fs_env *fse,
 		        fse->fs_args.main_repodir, err);
 		goto out;
 	}
-	err = fse_snap_fs(fse, 0, out_bsec);
+	err = fse_snap_fs(fse, 0, out_bsecs);
 	if (err) {
 		log_err("snap-fs error: err=%d", err);
 		/* no return -- do post-snap cleanups */

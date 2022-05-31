@@ -152,8 +152,8 @@ int silofs_fs_syncfs(const struct silofs_fs_ctx *fs_ctx, ino_t ino);
 int silofs_fs_query(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
                     int qtype, struct silofs_ioc_query *out_qry);
 
-int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
-                    ino_t ino, int flags, struct silofs_bootsec *out_bsec);
+int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
+                    int flags, struct silofs_bootsecs *out_bsecs);
 
 int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx,
                         const struct silofs_xiovec *xiov, size_t cnt);

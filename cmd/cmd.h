@@ -162,6 +162,9 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail);
 void cmd_split_path2(const char *path, const char *name,
                      char **out_head, char **out_tail);
 
+void cmd_join_path(const char *dirpath, const char *name, char **out_path);
+
+
 void cmd_fork_daemon(void);
 
 void cmd_open_syslog(void);
@@ -222,7 +225,7 @@ void cmd_shutdown_fs(struct silofs_fs_env *fse);
 
 void cmd_snap_fs(struct silofs_fs_env *fse,
                  const struct silofs_bootsec *bsec,
-                 struct silofs_bootsec *out_bsec);
+                 struct silofs_bootsecs *out_bsecs);
 
 void cmd_verify_fs(struct silofs_fs_env *fse,
                    const struct silofs_bootsec *bsec);

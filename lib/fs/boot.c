@@ -456,6 +456,14 @@ void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
 	}
 }
 
+void silofs_bsec1k_setn(struct silofs_bootsec1k *bsc,
+                        const struct silofs_bootsec *bsec, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		silofs_bsec1k_set(&bsc[i], &bsec[i]);
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_bootsec_init(struct silofs_bootsec *bsec)

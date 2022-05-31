@@ -16,15 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/namei.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/xattr.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/xattr.h>

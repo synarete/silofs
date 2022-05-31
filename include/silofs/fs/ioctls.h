@@ -109,7 +109,7 @@ struct silofs_ioc_tweak {
 };
 
 struct silofs_ioc_clone {
-	struct silofs_bootsec1k bsec;
+	struct silofs_bootsec1k bsec[2];
 };
 
 

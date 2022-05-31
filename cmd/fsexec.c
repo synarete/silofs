@@ -188,38 +188,48 @@ void cmd_shutdown_fs(struct silofs_fs_env *fse)
 	}
 }
 
+static void cmd_main_pathname(const struct silofs_fs_env *fse, char **outp)
+{
+	const struct silofs_fs_args *args = &fse->fs_args;
+
+	cmd_join_path(args->main_repodir, args->main_name, outp);
+}
+
 void cmd_snap_fs(struct silofs_fs_env *fse,
                  const struct silofs_bootsec *bsec,
-                 struct silofs_bootsec *out_bsec)
+                 struct silofs_bootsecs *out_bsecs)
 {
+	char *path = NULL;
 	int err;
 
-	err = silofs_fse_snap(fse, bsec, out_bsec);
+	cmd_main_pathname(fse, &path);
+	err = silofs_fse_snap(fse, bsec, out_bsecs);
 	if (err) {
-		cmd_dief(err, "failed to snap: %s/%s",
-		         fse->fs_args.main_repodir,
-		         fse->fs_args.main_name);
+		cmd_dief(err, "failed to snap: %s", path);
 	}
+	cmd_pstrfree(&path);
 }
 
 void cmd_verify_fs(struct silofs_fs_env *fse,
                    const struct silofs_bootsec *bsec)
 {
+	char *path = NULL;
 	int err;
 
+	cmd_main_pathname(fse, &path);
 	err = silofs_fse_verify(fse, bsec);
-	if (err == -EUCLEAN) {
-		cmd_dief(0, "bad repo: %s", fse->fs_args.main_repodir);
+	if (err == -EROFS) {
+		cmd_dief(err, "read-only: %s", path);
+	} else if (err == -EUCLEAN) {
+		cmd_dief(0, "unclean: %s", path);
 	} else if (err == -EKEYEXPIRED) {
-		cmd_dief(0, "wrong passphrase: %s",
-		         fse->fs_args.main_repodir);
+		cmd_dief(0, "wrong passphrase: %s", path);
 	} else if (err == -ENOENT) {
-		cmd_dief(0, "not exist: %s", fse->fs_args.main_repodir);
+		cmd_dief(0, "not exist: %s", path);
 	} else if (err != 0) {
-		cmd_dief(err, "illegal: %s/%s",
-		         fse->fs_args.main_repodir,
-		         fse->fs_args.main_name);
+		cmd_dief(err, "illegal: %s", path);
 	}
+	cmd_pstrfree(&path);
 }
 
 void cmd_serve_fs(struct silofs_fs_env *fse,

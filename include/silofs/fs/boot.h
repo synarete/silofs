@@ -24,7 +24,7 @@ struct silofs_bootpath {
 	struct silofs_namestr   name;
 };
 
-/* boot-sector in-memory representation  */
+/* boot-sector in-memory representation */
 struct silofs_bootsec {
 	struct silofs_hash256           key_hash;
 	struct silofs_uuid              uuid;
@@ -34,10 +34,15 @@ struct silofs_bootsec {
 	enum silofs_bootf               flags;
 };
 
+/* boot-sector pair after fork-fs */
+struct silofs_bootsecs {
+	struct silofs_bootsec   bsec[2];
+};
+
 /* pair of boot-path and its referenced sec */
 struct silofs_bootlink {
-	struct silofs_bootpath bpath;
-	struct silofs_bootsec  bsec;
+	struct silofs_bootpath  bpath;
+	struct silofs_bootsec   bsec;
 };
 
 /* repository boot-loader*/
@@ -63,6 +68,9 @@ void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
 
 void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
                        const struct silofs_bootsec *bsec);
+
+void silofs_bsec1k_setn(struct silofs_bootsec1k *bsc,
+                        const struct silofs_bootsec *bsec, size_t n);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

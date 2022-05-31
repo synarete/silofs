@@ -40,7 +40,7 @@ static size_t uber_calc_iopen_limit(const struct silofs_fs_uber *uber)
 }
 
 static void uber_init_commons(struct silofs_fs_uber *uber,
-		struct silofs_repos *repos)
+                              struct silofs_repos *repos)
 {
 	uber->ub_initime = silofs_time_now();
 	uber->ub_repos = repos;
@@ -412,23 +412,26 @@ static void sbi_export_bootsec(const struct silofs_sb_info *sbi,
 }
 
 int silofs_uber_forkfs(struct silofs_fs_uber *uber,
-                       struct silofs_bootsec *out_bsec)
+                       struct silofs_bootsecs *out_bsecs)
 {
-	struct silofs_sb_info *sbi_fork = NULL;
-	struct silofs_sb_info *sbi_next = NULL;
-	struct silofs_sb_info *sbi_curr = uber->ub_sbi;
+	struct silofs_sb_info *sbi_alt = NULL;
+	struct silofs_sb_info *sbi_new = NULL;
+	struct silofs_sb_info *sbi_cur = uber->ub_sbi;
 	int err;
 
-	err = uber_clone_rebind_supers(uber, sbi_curr, &sbi_fork);
+	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_alt);
 	if (err) {
 		return err;
 	}
-	err = uber_clone_rebind_supers(uber, sbi_curr, &sbi_next);
+	sbi_export_bootsec(sbi_alt, &out_bsecs->bsec[1]);
+
+	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}
-	sbi_mark_fossil(sbi_curr);
-	sbi_export_bootsec(sbi_fork, out_bsec);
+	sbi_export_bootsec(sbi_new, &out_bsecs->bsec[0]);
+
+	sbi_mark_fossil(sbi_cur);
 	return 0;
 }
 

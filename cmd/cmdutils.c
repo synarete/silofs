@@ -632,6 +632,11 @@ void cmd_split_path2(const char *path, const char *name,
 	cmd_pstrfree(&xpath);
 }
 
+void cmd_join_path(const char *dirpath, const char *name, char **out_path)
+{
+	*out_path = cmd_mkpathf("%s/%s", dirpath, name);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void *cmd_zalloc(size_t nbytes)

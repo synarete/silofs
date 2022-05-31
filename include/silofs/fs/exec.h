@@ -57,7 +57,7 @@ int silofs_fse_restore(struct silofs_fs_env *fse,
 
 int silofs_fse_snap(struct silofs_fs_env *fse,
                     const struct silofs_bootsec *src_bsec,
-                    struct silofs_bootsec *out_bsec);
+                    struct silofs_bootsecs *out_bsecs);
 
 int silofs_fse_verify(struct silofs_fs_env *fse,
                       const struct silofs_bootsec *bsec);

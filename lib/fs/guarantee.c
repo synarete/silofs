@@ -314,7 +314,7 @@ static void guarantee_persistent_types_alignment3(void)
 static void guarantee_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
-	REQUIRE_SIZEOF(struct silofs_ioc_clone, 1024);
+	REQUIRE_SIZEOF(struct silofs_ioc_clone, 2048);
 }
 
 static void guarantee_defs_consistency(void)

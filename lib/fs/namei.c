@@ -2122,7 +2122,7 @@ static int check_clone(const struct silofs_fs_ctx *fs_ctx,
 
 static int do_clone(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *dir_ii, int flags,
-                    struct silofs_bootsec *out_bsec)
+                    struct silofs_bootsecs *out_bsecs)
 {
 	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
@@ -2135,7 +2135,7 @@ static int do_clone(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_forkfs(uber, out_bsec);
+	err = silofs_uber_forkfs(uber, out_bsecs);
 	if (err) {
 		return err;
 	}
@@ -2148,12 +2148,12 @@ static int do_clone(const struct silofs_fs_ctx *fs_ctx,
 
 int silofs_do_clone(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *dir_ii, int flags,
-                    struct silofs_bootsec *out_bsec)
+                    struct silofs_bootsecs *out_bsecs)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_clone(fs_ctx, dir_ii, flags, out_bsec);
+	err = do_clone(fs_ctx, dir_ii, flags, out_bsecs);
 	ii_decref(dir_ii);
 	return err;
 }

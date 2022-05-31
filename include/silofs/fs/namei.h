@@ -109,7 +109,7 @@ int silofs_do_query(const struct silofs_fs_ctx *op,
 
 int silofs_do_clone(const struct silofs_fs_ctx *op,
                     struct silofs_inode_info *dir_ii, int flags,
-                    struct silofs_bootsec *out_bsec);
+                    struct silofs_bootsecs *out_bsecs);
 
 int silofs_do_inspect(const struct silofs_fs_ctx *op,
                       const struct silofs_bootsec *bsec);

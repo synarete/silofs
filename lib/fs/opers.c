@@ -1175,8 +1175,8 @@ out:
 	return op_finish(fs_ctx, err);
 }
 
-int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
-                    ino_t ino, int flags, struct silofs_bootsec *out_bsec)
+int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx, ino_t ino,
+                    int flags, struct silofs_bootsecs *out_bsecs)
 {
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
@@ -1190,7 +1190,7 @@ int silofs_fs_clone(const struct silofs_fs_ctx *fs_ctx,
 	err = op_stage_rdonly_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_clone(fs_ctx, dir_ii, flags, out_bsec);
+	err = silofs_do_clone(fs_ctx, dir_ii, flags, out_bsecs);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, err);

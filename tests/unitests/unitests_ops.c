@@ -454,9 +454,9 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 }
 
 static int ut_snap(struct ut_env *ute, ino_t ino,
-                   struct silofs_bootsec *out_bsec)
+                   struct silofs_bootsecs *out_bsecs)
 {
-	return silofs_fs_clone(fs_ctx_of(ute), ino, 0, out_bsec);
+	return silofs_fs_clone(fs_ctx_of(ute), ino, 0, out_bsecs);
 }
 
 static int ut_archive(struct ut_env *ute,
@@ -1799,13 +1799,15 @@ void ut_inspect_ok(struct ut_env *ute, const char *name)
 
 void ut_snap_ok(struct ut_env *ute, ino_t ino, const char *name)
 {
-	struct silofs_bootsec bsec = { .flags = 0 };
+	const char *fsname = ute->fs_env->fs_args.main_name;
+	struct silofs_bootsecs bsecs;
 	int err;
 
-	err = ut_snap(ute, ino, &bsec);
+	err = ut_snap(ute, ino, &bsecs);
 	ut_expect_ok(err);
 
-	ut_save_bsec_at(ute, true, name, &bsec);
+	ut_save_bsec_at(ute, true, fsname, &bsecs.bsec[0]);
+	ut_save_bsec_at(ute, true, name, &bsecs.bsec[1]);
 }
 
 void ut_archive_ok(struct ut_env *ute,

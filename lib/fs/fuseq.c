@@ -2765,7 +2765,8 @@ static int do_ioc_clone(struct silofs_fuseq_worker *fqw, ino_t ino,
 	if (err) {
 		goto out;
 	}
-	silofs_bsec1k_set(&clone_out->bsec, &opc->opc_out.clone.bsec);
+	silofs_bsec1k_setn(clone_out->bsec, opc->opc_out.clone.bsecs.bsec,
+	                   ARRAY_SIZE(clone_out->bsec));
 out:
 	return fuseq_reply_ioctl(fqw, 0, clone_out, sizeof(*clone_out), err);
 }

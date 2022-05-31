@@ -310,7 +310,7 @@ struct silofs_opc_clone_in {
 };
 
 struct silofs_opc_clone_out {
-	struct silofs_bootsec bsec;
+	struct silofs_bootsecs bsecs;
 };
 
 union silofs_oper_ctx_in {

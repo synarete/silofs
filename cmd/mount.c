@@ -314,18 +314,7 @@ static void cmd_mount_boostrap_process(const struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_verify_fs(struct cmd_mount_ctx *ctx)
 {
-	int err;
-
-	err = silofs_fse_verify(ctx->fse, &ctx->blnk.bsec);
-	if (err == -EUCLEAN) {
-		cmd_dief(0, "bad repo: %s", ctx->args.repodir_real);
-	} else if (err == -EKEYEXPIRED) {
-		cmd_dief(0, "wrong passphrase: %s", ctx->args.repodir_name);
-	} else if (err == -ENOENT) {
-		cmd_dief(0, "not exist: %s", ctx->args.name);
-	} else if (err != 0) {
-		cmd_dief(err, "illegal repo: %s", ctx->args.repodir_real);
-	}
+	cmd_verify_fs(ctx->fse, &ctx->blnk.bsec);
 }
 
 /*

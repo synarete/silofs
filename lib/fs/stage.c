@@ -1604,6 +1604,7 @@ int silofs_sbi_resolve_voa(struct silofs_sb_info *sbi,
 
 int silofs_sbi_spawn_vnode_at(struct silofs_sb_info *sbi,
                               const struct silofs_voaddr *voa_want,
+                              enum silofs_stage_flags stg_flags,
                               struct silofs_vnode_info **out_vi)
 {
 	struct silofs_voaddr voa;
@@ -1611,8 +1612,7 @@ int silofs_sbi_spawn_vnode_at(struct silofs_sb_info *sbi,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_sbi_resolve_voa(sbi, &voa_want->vaddr,
-	                             SILOFS_STAGE_MUTABLE, &voa);
+	err = silofs_sbi_resolve_voa(sbi, &voa_want->vaddr, stg_flags, &voa);
 	if (err) {
 		return err;
 	}
@@ -1659,7 +1659,7 @@ int silofs_sbi_stage_vnode_at(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_spawn_vnode_at(sbi, voa, &vi);
+	err = silofs_sbi_spawn_vnode_at(sbi, voa, stg_flags, &vi);
 	if (err) {
 		return err;
 	}

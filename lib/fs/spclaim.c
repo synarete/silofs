@@ -575,10 +575,11 @@ int silofs_sbi_search_vspace(struct silofs_sb_info *sbi,
 }
 
 
-static int spc_spawn_vnode_at(const struct silofs_spalloc_ctx *spa_ctx,
-                              struct silofs_vnode_info **out_vi)
+static int spc_spawn_mutable_vnode(const struct silofs_spalloc_ctx *spa_ctx,
+                                   struct silofs_vnode_info **out_vi)
 {
-	return silofs_sbi_spawn_vnode_at(spa_ctx->sbi, &spa_ctx->voa, out_vi);
+	return silofs_sbi_spawn_vnode_at(spa_ctx->sbi, &spa_ctx->voa,
+	                                 SILOFS_STAGE_MUTABLE, out_vi);
 }
 
 /* TODO: cleanups and resource reclaim upon failure in every path */
@@ -596,7 +597,7 @@ int silofs_sbi_claim_vnode(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	err = spc_spawn_vnode_at(&spa_ctx, out_vi);
+	err = spc_spawn_mutable_vnode(&spa_ctx, out_vi);
 	if (err) {
 		/* TODO: spfree inode from ag */
 		return err;
@@ -641,7 +642,7 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	err = spc_spawn_vnode_at(&spa_ctx, &vi);
+	err = spc_spawn_mutable_vnode(&spa_ctx, &vi);
 	if (err) {
 		return err;
 	}

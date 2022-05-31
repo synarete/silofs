@@ -43,8 +43,10 @@ int silofs_sbi_require_spmaps_at(struct silofs_sb_info *sbi, loff_t voff,
 
 int silofs_sbi_reload_spmaps(struct silofs_sb_info *sbi);
 
+
 int silofs_sbi_spawn_vnode_at(struct silofs_sb_info *sbi,
                               const struct silofs_voaddr *ova,
+                              enum silofs_stage_flags stg_flags,
                               struct silofs_vnode_info **out_vi);
 
 int silofs_sbi_stage_vnode_at(struct silofs_sb_info *sbi,

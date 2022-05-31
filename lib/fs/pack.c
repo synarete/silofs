@@ -468,20 +468,26 @@ static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
 
 static struct silofs_repo *pac_src_repo(const struct silofs_pack_ctx *pa_ctx)
 {
-	const struct silofs_fs_uber *uber = pa_ctx->uber;
+	struct silofs_repo *repo;
 
-	return pa_ctx->pack ?
-	       &uber->ub_repos->repo_main :
-	       &uber->ub_repos->repo_cold;
+	if (pa_ctx->pack) {
+		repo = &pa_ctx->uber->ub_repos->repo_main;
+	} else {
+		repo = &pa_ctx->uber->ub_repos->repo_cold;
+	}
+	return repo;
 }
 
 static struct silofs_repo *pac_dst_repo(const struct silofs_pack_ctx *pa_ctx)
 {
-	const struct silofs_fs_uber *uber = pa_ctx->uber;
+	struct silofs_repo *repo;
 
-	return pa_ctx->pack ?
-	       &uber->ub_repos->repo_cold :
-	       &uber->ub_repos->repo_main;
+	if (pa_ctx->pack) {
+		repo = &pa_ctx->uber->ub_repos->repo_cold;
+	} else {
+		repo = &pa_ctx->uber->ub_repos->repo_main;
+	}
+	return repo;
 }
 
 static const struct silofs_mdigest *

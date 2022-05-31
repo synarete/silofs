@@ -218,10 +218,12 @@ clangscan:
 
 rpm: bootstrap
 	$(call report, $@)
+	@rm -rf $(BUILDDIR)/dist/*.rpm
 	@$(TOP)/dist/packagize-rpm.sh
 
 deb: bootstrap
 	$(call report, $@)
+	@rm -rf $(BUILDDIR)/dist/*.deb
 	@$(TOP)/dist/packagize-deb.sh
 
 reset:

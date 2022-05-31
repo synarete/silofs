@@ -588,6 +588,14 @@ static int fse_reload_vspace(struct silofs_fs_env *fse)
 	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err = 0;
 
+	/*
+	 * TODO-0034: reload vspace without creating new blobs.
+	 *
+	 * Create flow creates new blobs. Bad for snap-offline. Need to relaod
+	 * only already-created blobs.
+	 */
+	return 0;
+
 	while ((stype++ < SILOFS_STYPE_MAX) && !err) {
 		if (!silofs_stype_isvnode(stype)) {
 			continue;

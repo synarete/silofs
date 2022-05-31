@@ -891,15 +891,14 @@ static int repo_objs_open_blob(const struct silofs_repo *repo,
 	return 0;
 out_err:
 	/*
+	 * TODO-0032: Consider using EFSCORRUPTED
+	 *
 	 * When higher layer wants to open a blob, it should exist. Do not
 	 * return -ENOENT as this may be interpreted as non-error by caller.
-	 *
-	 * TODO-0032: Consider using EFSCORRUPTED
 	 */
 	if (err == -ENOENT) {
 		return -EIO;
 	}
-
 	return err;
 }
 

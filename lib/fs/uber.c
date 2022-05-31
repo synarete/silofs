@@ -40,11 +40,11 @@ static size_t uber_calc_iopen_limit(const struct silofs_fs_uber *uber)
 }
 
 static void uber_init_commons(struct silofs_fs_uber *uber,
-                              struct silofs_alloc *alloc)
-
+		struct silofs_repos *repos)
 {
 	uber->ub_initime = silofs_time_now();
-	uber->ub_alloc = alloc;
+	uber->ub_repos = repos;
+	uber->ub_alloc = repos->repo_main.re_alloc;
 	uber->ub_iconv = (iconv_t)(-1);
 	uber->ub_sbi = NULL;
 	uber->ub_slock_fd = -1;
@@ -59,20 +59,10 @@ static void uber_init_commons(struct silofs_fs_uber *uber,
 static void uber_fini_commons(struct silofs_fs_uber *uber)
 {
 	silofs_sys_closefd(&uber->ub_slock_fd);
+	uber->ub_repos = NULL;
 	uber->ub_alloc = NULL;
 	uber->ub_iconv = (iconv_t)(-1);
 	uber->ub_sbi = NULL;
-}
-
-static void uber_init_repos(struct silofs_fs_uber *uber,
-                            struct silofs_repos *repos)
-{
-	uber->ub_repos = repos;
-}
-
-static void uber_fini_repos(struct silofs_fs_uber *uber)
-{
-	uber->ub_repos = NULL;
 }
 
 static int uber_init_piper(struct silofs_fs_uber *uber)
@@ -107,9 +97,7 @@ int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_repos *repos)
 {
 	int err;
 
-	uber_init_commons(uber, repos->repo_main.re_alloc);
-	uber_init_repos(uber, repos);
-
+	uber_init_commons(uber, repos);
 	err = uber_init_piper(uber);
 	if (err) {
 		goto out_err;
@@ -128,7 +116,6 @@ void silofs_uber_fini(struct silofs_fs_uber *uber)
 {
 	uber_fini_iconv(uber);
 	uber_fini_piper(uber);
-	uber_fini_repos(uber);
 	uber_fini_commons(uber);
 }
 

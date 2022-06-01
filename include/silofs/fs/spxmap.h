@@ -40,14 +40,6 @@ struct silofs_spamaps {
 	struct silofs_spamap    spa_symval;
 };
 
-/* in-memory map of unodes indexed by (treeid,voff,height) tuple */
-struct silofs_unomap {
-	struct silofs_list_head *uno_htbl;
-	unsigned int            uno_htbl_cap;
-	unsigned int            uno_htbl_sz;
-};
-
-
 /* in-memory mapping of uaddr by (voff,height) */
 struct silofs_uamap {
 	struct silofs_listq      uam_lru;
@@ -83,24 +75,6 @@ int silofs_spamaps_store(struct silofs_spamaps *spam,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_unomap_init(struct silofs_unomap *unom,
-                       struct silofs_alloc *alloc);
-
-void silofs_unomap_fini(struct silofs_unomap *unom,
-                        struct silofs_alloc *alloc);
-
-void silofs_unomap_insert(struct silofs_unomap *unom,
-                          struct silofs_unode_info *ui);
-
-void silofs_unomap_remove(struct silofs_unomap *unom,
-                          struct silofs_unode_info *ui);
-
-struct silofs_unode_info *
-silofs_unomap_lookup(const struct silofs_unomap *unom,
-                     const struct silofs_taddr *taddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_uamap_init(struct silofs_uamap *uam, struct silofs_alloc *alloc);
 
 void silofs_uamap_fini(struct silofs_uamap *uam);
@@ -109,7 +83,8 @@ const struct silofs_uaddr *
 silofs_uamap_lookup(const struct silofs_uamap *uam,
                     loff_t voff, size_t height);
 
-int silofs_uamap_remove(struct silofs_uamap *uam, loff_t voff, size_t height);
+int silofs_uamap_remove(struct silofs_uamap *uam,
+                        const struct silofs_uaddr *uaddr);
 
 int silofs_uamap_insert(struct silofs_uamap *uam,
                         const struct silofs_uaddr *uaddr);

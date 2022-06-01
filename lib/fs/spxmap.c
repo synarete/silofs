@@ -490,137 +490,6 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint32_t jenkins_hash(uint32_t a)
-{
-	a = (a + 0x7ed55d16) + (a << 12);
-	a = (a ^ 0xc761c23c) ^ (a >> 19);
-	a = (a + 0x165667b1) + (a << 5);
-	a = (a + 0xd3a2646c) ^ (a << 9);
-	a = (a + 0xfd7046c5) + (a << 3);
-	a = (a ^ 0xb55a4f09) ^ (a >> 16);
-	return a;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_unode_info *
-ui_from_unom_lh(const struct silofs_list_head *lh)
-{
-	const struct silofs_unode_info *ui = NULL;
-
-	ui = container_of2(lh, struct silofs_unode_info, u_unom_lh);
-	return unconst(ui);
-}
-
-int silofs_unomap_init(struct silofs_unomap *unom,
-                       struct silofs_alloc *alloc)
-{
-	const unsigned int cap = 4093;
-
-	unom->uno_htbl_sz = 0;
-	unom->uno_htbl_cap = 0;
-	unom->uno_htbl = silofs_lista_new(alloc, cap);
-	if (unom->uno_htbl == NULL) {
-		return -ENOMEM;
-	}
-	unom->uno_htbl_cap = cap;
-	return 0;
-}
-
-void silofs_unomap_fini(struct silofs_unomap *unom,
-                        struct silofs_alloc *alloc)
-{
-	if (unom->uno_htbl != NULL) {
-		silofs_lista_del(unom->uno_htbl, unom->uno_htbl_cap, alloc);
-		unom->uno_htbl_cap = 0;
-		unom->uno_htbl_sz = 0;
-	}
-}
-
-static size_t unomap_slot_of(const struct silofs_unomap *unom,
-                             const struct silofs_taddr *taddr)
-{
-	uint64_t key;
-	const uint64_t hash = silofs_xid_as_u64(&taddr->tree_id);
-
-	key = (uint64_t)taddr->voff;
-	key |= jenkins_hash((uint32_t)hash);
-	key ^= (~hash >> 32);
-	key = silofs_rotate64(key, taddr->height & 0xF);
-
-	return key % unom->uno_htbl_cap;
-}
-
-static struct silofs_list_head *
-unomap_lst_by(const struct silofs_unomap *unom,
-              const struct silofs_taddr *taddr)
-{
-	const size_t slot = unomap_slot_of(unom, taddr);
-	const struct silofs_list_head *lh = NULL;
-
-	lh = &unom->uno_htbl[slot];
-	return silofs_unconst(lh);
-}
-
-void silofs_unomap_insert(struct silofs_unomap *unom,
-                          struct silofs_unode_info *ui)
-{
-	struct silofs_taddr taddr;
-	struct silofs_list_head *lst;
-
-	if (!ui->u_tmapped) {
-		silofs_taddr_by_uaddr(&taddr, ui_uaddr(ui));
-
-		lst = unomap_lst_by(unom, &taddr);
-		list_push_front(lst, &ui->u_unom_lh);
-		ui->u_tmapped = true;
-		unom->uno_htbl_sz++;
-	}
-}
-
-void silofs_unomap_remove(struct silofs_unomap *unom,
-                          struct silofs_unode_info *ui)
-{
-	if (ui->u_tmapped) {
-		silofs_assert_gt(unom->uno_htbl_sz, 0);
-		list_head_remove(&ui->u_unom_lh);
-		ui->u_tmapped = false;
-		unom->uno_htbl_sz--;
-	}
-}
-
-static bool ui_has_taddr(const struct silofs_unode_info *ui,
-                         const struct silofs_taddr *taddr)
-{
-	struct silofs_taddr ui_taddr;
-
-	silofs_taddr_by_uaddr(&ui_taddr, ui_uaddr(ui));
-	return silofs_taddr_isequal(&ui_taddr, taddr);
-}
-
-struct silofs_unode_info *
-silofs_unomap_lookup(const struct silofs_unomap *unom,
-                     const struct silofs_taddr *taddr)
-{
-	const struct silofs_list_head *lst;
-	const struct silofs_list_head *itr;
-	const struct silofs_unode_info *ui;
-
-	lst = unomap_lst_by(unom, taddr);
-	itr = lst->next;
-	while (itr != lst) {
-		ui = ui_from_unom_lh(itr);
-		if (ui_has_taddr(ui, taddr)) {
-			return unconst(ui);
-		}
-		itr = itr->next;
-	}
-	return NULL;
-}
-
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 struct silofs_uaent {
 	struct silofs_list_head  htb_lh;
 	struct silofs_list_head  lru_lh;
@@ -729,7 +598,7 @@ static size_t uamap_slot_of(const struct silofs_uamap *uam,
                             loff_t voff, size_t height)
 {
 	const uint64_t uoff = (uint64_t)voff;
-	const uint64_t key = silofs_rotate64(uoff, height & 0xF);
+	const uint64_t key = silofs_rotate64(uoff, height & 0xF) ^ height;
 
 	return key % uam->uam_htbl_cap;
 }
@@ -822,11 +691,12 @@ static void uamap_remove_del(struct silofs_uamap *uam,
 	uae_del(uae, uam->uam_alloc);
 }
 
-int silofs_uamap_remove(struct silofs_uamap *uam, loff_t voff, size_t height)
+int silofs_uamap_remove(struct silofs_uamap *uam,
+                        const struct silofs_uaddr *uaddr)
 {
 	struct silofs_uaent *uae;
 
-	uae = uamap_find(uam, voff, height);
+	uae = uamap_find(uam, uaddr->voff, uaddr->height);
 	if (uae == NULL) {
 		return -ENOENT;
 	}
@@ -866,7 +736,7 @@ static int uamap_remove_lru(struct silofs_uamap *uam)
 
 static void uamap_refresh(struct silofs_uamap *uam)
 {
-	if ((uam->uam_lru.sz / 2) > uam->uam_htbl_cap) {
+	if ((2 * uam->uam_lru.sz) > uam->uam_htbl_cap) {
 		uamap_remove_lru(uam);
 	}
 }

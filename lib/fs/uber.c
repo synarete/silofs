@@ -411,6 +411,21 @@ static void sbi_export_bootsec(const struct silofs_sb_info *sbi,
 	silofs_bootsec_set_uaddr(bsec, sbi_uaddr(sbi));
 }
 
+static void uber_pre_forkfs(struct silofs_fs_uber *uber)
+{
+	struct silofs_repos *repos = uber->ub_repos;
+	struct silofs_cache *cache;
+
+	if (uber->ub_repos->repo_main.re_inited) {
+		cache = &repos->repo_main.re_cache;
+		silofs_cache_forget_uaddrs(cache);
+	}
+	if (uber->ub_repos->repo_cold.re_inited) {
+		cache = &repos->repo_cold.re_cache;
+		silofs_cache_forget_uaddrs(cache);
+	}
+}
+
 int silofs_uber_forkfs(struct silofs_fs_uber *uber,
                        struct silofs_bootsecs *out_bsecs)
 {
@@ -418,6 +433,8 @@ int silofs_uber_forkfs(struct silofs_fs_uber *uber,
 	struct silofs_sb_info *sbi_new = NULL;
 	struct silofs_sb_info *sbi_cur = uber->ub_sbi;
 	int err;
+
+	uber_pre_forkfs(uber);
 
 	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_alt);
 	if (err) {

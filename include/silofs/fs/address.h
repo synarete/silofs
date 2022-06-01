@@ -278,17 +278,6 @@ void silofs_uaddr64b_set(struct silofs_uaddr64b *uadr,
 void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
                            struct silofs_uaddr *uaddr);
 
-
-void silofs_taddr_setup(struct silofs_taddr *taddr,
-                        const struct silofs_xid *tree_id,
-                        loff_t voff, size_t height);
-
-void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
-                           const struct silofs_uaddr *uaddr);
-
-bool silofs_taddr_isequal(const struct silofs_taddr *taddr1,
-                          const struct silofs_taddr *taddr2);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_vaddr *silofs_vaddr_none(void);

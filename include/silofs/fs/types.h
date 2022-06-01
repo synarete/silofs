@@ -279,13 +279,6 @@ struct silofs_uaddr {
 	unsigned int            height;
 };
 
-/* tree addressing of space-mapping elements */
-struct silofs_taddr {
-	struct silofs_xid       tree_id;
-	loff_t                  voff;
-	unsigned int            height;
-};
-
 /* logical addressing of virtual elements */
 struct silofs_vaddr {
 	loff_t                  voff;

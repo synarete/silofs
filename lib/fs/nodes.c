@@ -272,7 +272,6 @@ static void ui_init(struct silofs_unode_info *ui,
                     const struct silofs_snode_vtbl *vtbl)
 {
 	si_init(&ui->u_si, uaddr->stype, vtbl);
-	lh_init(&ui->u_unom_lh);
 	lh_init(&ui->u_pack_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
 	packid_reset(&ui->u_packid);
@@ -292,7 +291,6 @@ static void ui_fini(struct silofs_unode_info *ui)
 	uaddr_reset(&ui->u_uaddr);
 	packid_reset(&ui->u_packid);
 	lh_fini(&ui->u_pack_lh);
-	lh_fini(&ui->u_unom_lh);
 	si_fini(&ui->u_si);
 }
 

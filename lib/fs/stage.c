@@ -317,15 +317,11 @@ static int sbi_find_cached_spmap(struct silofs_sb_info *sbi,
                                  loff_t voff, size_t height,
                                  struct silofs_unode_info **out_ui)
 {
-	struct silofs_taddr taddr;
 	struct silofs_vrange vrange;
-	struct silofs_xid tree_id;
+	struct silofs_cache *cache = sbi_cache(sbi);
 
-	silofs_sbi_treeid(sbi, &tree_id);
 	silofs_vrange_setup_by(&vrange, height, voff);
-	silofs_taddr_setup(&taddr, &tree_id, vrange.beg, height);
-
-	*out_ui = silofs_cache_find_unode_by(sbi_cache(sbi), &taddr);
+	*out_ui = silofs_cache_find_unode_by(cache, vrange.beg, vrange.height);
 	return (*out_ui != NULL) ? 0 : -ENOENT;
 }
 

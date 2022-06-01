@@ -43,7 +43,6 @@ struct silofs_cache {
 	struct silofs_lrumap    c_vi_lm;
 	struct silofs_dirtyq    c_dq;
 	struct silofs_spamaps   c_spam;
-	struct silofs_unomap    c_unom;
 	struct silofs_uamap     c_uam;
 	size_t mem_size_hint;
 };
@@ -121,8 +120,10 @@ silofs_cache_lookup_unode(struct silofs_cache *cache,
                           const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
-silofs_cache_find_unode_by(const struct silofs_cache *cache,
-                           const struct silofs_taddr *taddr);
+silofs_cache_find_unode_by(struct silofs_cache *cache,
+                           loff_t voff, size_t height);
+
+void silofs_cache_forget_uaddrs(struct silofs_cache *cache);
 
 
 struct silofs_vbk_info *

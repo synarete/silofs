@@ -1073,36 +1073,6 @@ void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_taddr_setup(struct silofs_taddr *taddr,
-                        const struct silofs_xid *tree_id,
-                        loff_t voff, size_t height)
-{
-	xid_assign(&taddr->tree_id, tree_id);
-	taddr->voff = voff;
-	taddr->height = (unsigned int)height;
-}
-
-void silofs_taddr_by_uaddr(struct silofs_taddr *taddr,
-                           const struct silofs_uaddr *uaddr)
-{
-	const struct silofs_xxid_tas *tas =
-		        &uaddr->oaddr.bka.blobid.xxid.u.tid;
-
-	xid_assign(&taddr->tree_id, &tas->tree_id);
-	taddr->voff = uaddr->voff;
-	taddr->height = uaddr->height;
-}
-
-bool silofs_taddr_isequal(const struct silofs_taddr *taddr1,
-                          const struct silofs_taddr *taddr2)
-{
-	return (taddr1->height == taddr2->height) &&
-	       (taddr1->voff == taddr2->voff) &&
-	       silofs_xid_isequal(&taddr1->tree_id, &taddr2->tree_id);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct silofs_vaddr s_vaddr_none = {
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,

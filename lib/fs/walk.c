@@ -24,10 +24,11 @@ struct silofs_walk_ctx {
 	struct silofs_visitor     *vis;
 	struct silofs_fs_uber     *uber;
 	struct silofs_sb_info     *sbi;
-	struct silofs_spstat_info  *sti;
+	struct silofs_spstat_info *sti;
 	struct silofs_spnode_info *sni3;
 	struct silofs_spnode_info *sni2;
 	struct silofs_spleaf_info *sli;
+	bool main;
 	bool halt;
 };
 
@@ -170,22 +171,55 @@ static int wac_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
 	return err;
 }
 
-static int wac_stage_ro_spnode3(struct silofs_walk_ctx *wa_ctx, loff_t voff)
+static int wac_stage_spnode3(struct silofs_walk_ctx *wa_ctx, loff_t voff)
 {
-	return silofs_sbi_stage_spnode3(wa_ctx->sbi, voff,
-	                                SILOFS_STAGE_RDONLY, &wa_ctx->sni3);
+	struct silofs_uaddr uaddr;
+	int err;
+
+	err = silofs_sbi_subref_of(wa_ctx->sbi, voff, &uaddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_spnode_at(wa_ctx->uber, wa_ctx->main,
+	                             &uaddr, &wa_ctx->sni3);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-static int wac_stage_ro_spnode2(struct silofs_walk_ctx *wa_ctx, loff_t voff)
+static int wac_stage_spnode2(struct silofs_walk_ctx *wa_ctx, loff_t voff)
 {
-	return silofs_sbi_stage_spnode2(wa_ctx->sbi, voff,
-	                                SILOFS_STAGE_RDONLY, &wa_ctx->sni2);
+	struct silofs_uaddr uaddr;
+	int err;
+
+	err = silofs_sni_subref_of(wa_ctx->sni3, voff, &uaddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_spnode_at(wa_ctx->uber, wa_ctx->main,
+	                             &uaddr, &wa_ctx->sni2);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-static int wac_stage_ro_spleaf(struct silofs_walk_ctx *wa_ctx, loff_t voff)
+static int wac_stage_spleaf(struct silofs_walk_ctx *wa_ctx, loff_t voff)
 {
-	return silofs_sbi_stage_spleaf(wa_ctx->sbi, voff,
-	                               SILOFS_STAGE_RDONLY, &wa_ctx->sli);
+	struct silofs_uaddr uaddr;
+	int err;
+
+	err = silofs_sni_subref_of(wa_ctx->sni2, voff, &uaddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_spleaf_at(wa_ctx->uber, wa_ctx->main,
+	                             &uaddr, &wa_ctx->sli);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int wac_traverse_at_spleaf(struct silofs_walk_ctx *wa_ctx,
@@ -211,7 +245,7 @@ static int wac_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx,
 {
 	int err;
 
-	err = wac_stage_ro_spleaf(wa_ctx, voff);
+	err = wac_stage_spleaf(wa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -289,7 +323,7 @@ static int wac_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx,
 {
 	int err;
 
-	err = wac_stage_ro_spnode2(wa_ctx, voff);
+	err = wac_stage_spnode2(wa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -367,7 +401,7 @@ static int wac_traverse_super_child(struct silofs_walk_ctx *wa_ctx,
 {
 	int err;
 
-	err = wac_stage_ro_spnode3(wa_ctx, voff);
+	err = wac_stage_spnode3(wa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -447,6 +481,14 @@ static int wac_traverse_fs(struct silofs_walk_ctx *wa_ctx)
 	return err;
 }
 
+static bool sbi_is_main(const struct silofs_sb_info *sbi)
+{
+	const struct silofs_fs_uber *uber = sbi_uber(sbi);
+	const struct silofs_repo *main_repo = &uber->ub_repos->repo_main;
+
+	return (sbi->sb_ui.u_repo == main_repo);
+}
+
 int silofs_walk_space_tree(struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis)
 {
@@ -458,6 +500,7 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 		.sni3 = NULL,
 		.sni2 = NULL,
 		.sli = NULL,
+		.main = sbi_is_main(sbi),
 		.halt = false,
 	};
 	int err;

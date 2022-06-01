@@ -161,7 +161,7 @@
 #define bli_decref(bli)                 silofs_bli_decref(bli)
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
-#define sbi_alloc(sbi)                   silofs_sbi_alloc(sbi)
+#define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 #define sbi_blobid(sbi)                 silofs_sbi_blobid(sbi)

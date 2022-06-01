@@ -336,7 +336,7 @@ static int sbi_find_cached_spnode3(struct silofs_sb_info *sbi, loff_t voff,
 	struct silofs_unode_info *ui = NULL;
 	int err;
 
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPLEAF_HEIGHT + 2, &ui);
+	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE3_HEIGHT, &ui);
 	if (err) {
 		return err;
 	}
@@ -356,7 +356,7 @@ static int sbi_find_cached_spnode2(struct silofs_sb_info *sbi, loff_t voff,
 	struct silofs_unode_info *ui = NULL;
 	int err;
 
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPLEAF_HEIGHT + 1, &ui);
+	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE2_HEIGHT, &ui);
 	if (err) {
 		return err;
 	}

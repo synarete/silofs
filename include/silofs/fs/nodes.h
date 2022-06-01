@@ -64,7 +64,7 @@ struct silofs_sb_info {
 	struct silofs_unode_info        sb_ui;
 	struct silofs_itable            sb_itbl;
 	struct silofs_super_block      *sb;
-	struct silofs_spstat_info       *sb_sti;
+	struct silofs_spstat_info      *sb_sti;
 	struct silofs_ucred             sb_owner;
 	struct silofs_vspalloc_hints    sb_vspa;
 	unsigned long                   sb_ctl_flags;

@@ -44,6 +44,7 @@ struct silofs_cache {
 	struct silofs_dirtyq    c_dq;
 	struct silofs_spamaps   c_spam;
 	struct silofs_unomap    c_unom;
+	struct silofs_uamap     c_uam;
 	size_t mem_size_hint;
 };
 

@@ -2681,6 +2681,16 @@ static void cache_fini_unomap(struct silofs_cache *cache)
 	silofs_unomap_fini(&cache->c_unom, cache->c_alloc);
 }
 
+static int cache_init_uamap(struct silofs_cache *cache)
+{
+	return silofs_uamap_init(&cache->c_uam, cache->c_alloc);
+}
+
+static void cache_fini_uamap(struct silofs_cache *cache)
+{
+	silofs_uamap_fini(&cache->c_uam);
+}
+
 static int cache_init_mdigest(struct silofs_cache *cache)
 {
 	return silofs_mdigest_init(&cache->c_mdigest);
@@ -2713,6 +2723,10 @@ int silofs_cache_init(struct silofs_cache *cache,
 	if (err) {
 		goto out_err;
 	}
+	err = cache_init_uamap(cache);
+	if (err) {
+		goto out_err;
+	}
 	err = cache_init_nil_bk(cache);
 	if (err) {
 		goto out_err;
@@ -2732,6 +2746,7 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	dq_fini(&cache->c_dq);
 	cache_fini_lrumaps(cache);
 	cache_fini_nil_bk(cache);
+	cache_fini_uamap(cache);
 	cache_fini_unomap(cache);
 	cache_fini_spamaps(cache);
 	cache_fini_mdigest(cache);

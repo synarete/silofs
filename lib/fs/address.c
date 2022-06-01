@@ -1341,7 +1341,7 @@ void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
 void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
                              size_t height, loff_t voff)
 {
-	silofs_assert_gt(height, SILOFS_SPLEAF_HEIGHT);
+	silofs_assert_ge(height, SILOFS_SPNODE2_HEIGHT);
 	silofs_assert_le(height, SILOFS_SPNODE3_HEIGHT);
 
 	silofs_vrange_setup_by(vrange, height, voff);

@@ -222,7 +222,7 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "syncfs error: %s", ctx->src_mntdir);
 	}
 
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, &clone);
+	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, clone);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		cmd_dief(err, "ioctl error: %s", ctx->src_mntdir);

@@ -10,7 +10,7 @@ unset CDPATH
 
 name=silofs
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}"/../)
+basedir=$(realpath "${selfdir}"/../../)
 version_sh="${basedir}"/version.sh
 version=$(try "${version_sh}" --version)
 release=$(try "${version_sh}" --release)
@@ -22,7 +22,7 @@ rpmhomedir=${builddir}/rpm
 rpmdistdir=${builddir}/dist
 autotoolsdir=${rpmhomedir}/autotools/
 
-rpmsourcedir=${selfdir}/rpm
+rpmsourcedir=${selfdir}
 rpmbuilddir=${rpmhomedir}/rpmbuild
 rpmvardir=${rpmbuilddir}/var
 rpmtmpdir=${rpmvardir}/tmp

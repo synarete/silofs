@@ -32,6 +32,9 @@ if [ -e "${base}/RELEASE" ]; then
 fi
 
 revision=${SILOFS_REVISION:-1}
+if [ -e "${base}/REVISION" ]; then
+  revision=$(head -1 "${base}"/REVISION)
+fi
 if [ -n "${gitrevision}" ]; then
   revision=${gitrevision}
 fi

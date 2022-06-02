@@ -92,7 +92,10 @@ script is provided to build packages:
 
 .. code-block:: sh
 
-  $ ./pkg/packagize.sh
+  $ # On rpm based system:
+  $ ./pkg/packagize-rpm.sh
+  $ # On deb based system:
+  $ ./pkg/packagize-deb.sh
   ...
 
 When done, packages are located under ``build`` directory, and should be

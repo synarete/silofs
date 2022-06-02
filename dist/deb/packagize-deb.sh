@@ -10,7 +10,7 @@ unset CDPATH
 
 name=silofs
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}"/../)
+basedir=$(realpath "${selfdir}"/../../)
 version_sh=${basedir}/version.sh
 version=$(try "${version_sh}" --version)
 release=$(try "${version_sh}" --release)
@@ -22,7 +22,7 @@ buildauxdir=${builddir}/deb
 debdistdir=${builddir}/dist
 autotoolsdir=${buildauxdir}/autotools/
 
-debsourcedir=${selfdir}/deb
+debsourcedir=${selfdir}
 debbuilddir=${buildauxdir}/debbuild
 deborig_archive=${name}_${version}.orig.tar.gz
 debrelease_archive=${name}_${version}-${release}.debian.tar.gz

@@ -7,7 +7,6 @@ EXTRA_DIST += fio2csv.sh
 EXTRA_DIST += fio2plot.py
 EXTRA_DIST += fsstress.sh
 EXTRA_DIST += gitarchive.sh
-EXTRA_DIST += installdeps.sh
 EXTRA_DIST += todolist.sh
 EXTRA_DIST += torturefs.sh
 EXTRA_DIST += valgrind-memcheck.sh

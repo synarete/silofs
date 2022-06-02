@@ -54,8 +54,12 @@ Various testing programs for silofs.
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man8/%{name}-*.8*
 %{_datarootdir}/bash-completion/completions/%{name}
-%{_unitdir}/%{name}-mountd.service
 %{_docdir}/%{name}/*
+%if 0%{?_unitdir:1}
+%{_unitdir}/%{name}-mountd.service
+%else
+%exclude %{_prefix}/lib/systemd/system/%{name}*.*
+%endif
 
 %files devel
 %defattr(-, root, root)

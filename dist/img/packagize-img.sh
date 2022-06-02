@@ -18,7 +18,7 @@ revision=$(try "${version_sh}" --revision)
 dist_name="${name}-${version}"
 archive_tgz="${dist_name}.tar.gz"
 arch=$(try uname -m)
-tag_name="${name}:v${version}"
+tag_name="${name}-toolbox:v${version}"
 
 imgsourcedir=${selfdir}
 builddir=${basedir}/build
@@ -54,10 +54,10 @@ run podman build \
   --build-arg=REVISION="${revision}" \
   --build-arg=ARCH="${arch}" \
   --build-arg=DIST_NAME="${dist_name}" \
-  --tag ${tag_name} \
+  --tag "${tag_name}" \
   --file "${imgbuilddir}/Containerfile" \
   "${imgbuilddir}"
-	
+
 # Cleanup build staging area
 cd "${basedir}"
 #run rm -rf "${imgbuilddir}"

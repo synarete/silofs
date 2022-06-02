@@ -28,6 +28,7 @@ struct silofs_spalloc_ctx {
 	struct silofs_spleaf_info *sli;
 	struct silofs_voaddr       voa;
 	enum silofs_stype          stype;
+	bool no_new_blobs;
 };
 
 static void ivoaddr_setup(struct silofs_ivoaddr *ivoa, ino_t ino,
@@ -373,6 +374,15 @@ spc_try_find_free_at_spnode(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	return 0;
 }
 
+static int
+spc_require_spmaps_at(const struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+{
+	struct silofs_sb_info *sbi = spa_ctx->sbi;
+	const enum silofs_stype stype_sub = spa_ctx->stype;
+
+	return silofs_sbi_require_spmaps_at(sbi, voff, stype_sub);
+}
+
 static int spc_want_spmaps_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	struct silofs_sb_info *sbi = spa_ctx->sbi;
@@ -394,7 +404,10 @@ static int spc_want_spmaps_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	}
 	return 0;
 out_want_path:
-	return silofs_sbi_require_spmaps_at(sbi, voff, spa_ctx->stype);
+	if (!spa_ctx->no_new_blobs) {
+		err = spc_require_spmaps_at(spa_ctx, voff);
+	}
+	return err;
 }
 
 static int spc_want_free_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
@@ -415,8 +428,8 @@ static int spc_want_free_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 static int
 spc_find_free_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
-	loff_t voff = hint;
 	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
+	loff_t voff = hint;
 	int err = -ENOSPC;
 
 	while ((voff < vend) && (err == -ENOSPC)) {
@@ -563,6 +576,7 @@ int silofs_sbi_search_vspace(struct silofs_sb_info *sbi,
 	struct silofs_spalloc_ctx spa_ctx = {
 		.sbi = sbi,
 		.stype = stype,
+		.no_new_blobs = true,
 	};
 	int err;
 

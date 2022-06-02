@@ -574,10 +574,6 @@ static int fse_reload_meta(struct silofs_fs_env *fse)
 		return err;
 	}
 	fse_relax_drop_caches(fse);
-	err = fse_reload_rootdir(fse);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 
@@ -585,29 +581,26 @@ static int fse_reload_vspace(struct silofs_fs_env *fse)
 {
 	struct silofs_voaddr voaddr;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_stype stype;
 	int err = 0;
 
-	/*
-	 * TODO-0034: reload vspace without creating new blobs.
-	 *
-	 * Create flow creates new blobs. Bad for snap-offline. Need to relaod
-	 * only already-created blobs.
-	 */
-	return 0;
-
-	while ((stype++ < SILOFS_STYPE_MAX) && !err) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
 		if (!silofs_stype_isvnode(stype)) {
 			continue;
 		}
 		err = silofs_sbi_search_vspace(sbi, stype, &voaddr);
-		if (!err) {
-			err = silofs_sbi_recache_vspace(sbi, &voaddr.vaddr);
-		} else if (err == -ENOSPC) {
-			err = 0;
+		if ((err == -ENOSPC) || (err == -ENOENT)) {
+			continue;
+		}
+		if (err != 0) {
+			return err;
+		}
+		err = silofs_sbi_recache_vspace(sbi, &voaddr.vaddr);
+		if (err) {
+			return err;
 		}
 	}
-	return err;
+	return 0;
 }
 
 static int fse_flush_dirty(const struct silofs_fs_env *fse)

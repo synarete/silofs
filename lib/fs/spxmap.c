@@ -449,9 +449,9 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_stype stype,
 void silofs_spamaps_drop(struct silofs_spamaps *spam)
 {
 	struct silofs_spamap *spa = NULL;
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_stype stype;
 
-	while (++stype < SILOFS_STYPE_MAX) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
 			spamap_clear(spa);
@@ -463,9 +463,9 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
                         struct silofs_alloc *alloc)
 {
 	struct silofs_spamap *spa = NULL;
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_stype stype;
 
-	while (++stype < SILOFS_STYPE_MAX) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
 			spamap_init(spa, stype, alloc);
@@ -477,9 +477,9 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
 void silofs_spamaps_fini(struct silofs_spamaps *spam)
 {
 	struct silofs_spamap *spa = NULL;
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_stype stype;
 
-	while (++stype < SILOFS_STYPE_MAX) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
 			spamap_clear(spa);

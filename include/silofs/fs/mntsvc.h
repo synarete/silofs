@@ -42,8 +42,14 @@ struct silofs_mntrules {
 	struct silofs_mntrule rules[SILOFS_MNTRULE_MAX];
 };
 
+struct silofs_ms_args {
+	const char *runstatedir;
+	bool use_abstract;
+};
 
-int silofs_mse_new(struct silofs_ms_env **out_mse);
+
+int silofs_mse_new(const struct silofs_ms_args *ms_args,
+                   struct silofs_ms_env **out_mse);
 
 void silofs_mse_del(struct silofs_ms_env *mse);
 

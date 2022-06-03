@@ -12,5 +12,6 @@ PATSUBST = @SED@ \
   -e "s,[@]SYSCONFDIR[@],$(DESTDIR)$(sysconfdir),g" \
   -e "s,[@]DATAROOTDIR[@],$(DESTDIR)$(datarootdir),g" \
   -e "s,[@]LOCALSTATEDIR[@],$(DESTDIR)$(localstatedir),g" \
+  -e "s,[@]RUNSTATEDIR[@],$(DESTDIR)$(localstatedir)/run,g" \
   -e "s,[@]PYTHON[@],$(PYTHON),g" \
   -e "s,[@]PYTHONDIR[@],$(pythondir),g"

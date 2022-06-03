@@ -287,13 +287,13 @@ static void cmd_mount_start_daemon(const struct cmd_mount_ctx *ctx)
 	}
 }
 
-static void cmd_mount_non_dumpable(void)
+static void cmd_mount_set_dumpable(unsigned int state)
 {
 	int err;
 
-	err = silofs_sys_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
 	if (err) {
-		cmd_dief(err, "failed to prctl non-dumpable");
+		cmd_dief(err, "failed to prctl dumpable: state=%d", state);
 	}
 }
 
@@ -307,8 +307,10 @@ static void cmd_mount_boostrap_process(const struct cmd_mount_ctx *ctx)
 	if (!cmd_globals.allow_coredump) {
 		cmd_setrlimit_nocore();
 	}
-	if (!cmd_globals.disable_ptrace) {
-		cmd_mount_non_dumpable();
+	if (cmd_globals.dumpable) {
+		cmd_mount_set_dumpable(1);
+	} else {
+		cmd_mount_set_dumpable(0);
 	}
 }
 

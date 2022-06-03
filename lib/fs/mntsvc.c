@@ -87,15 +87,16 @@ struct silofs_mntsvc {
 };
 
 struct silofs_mntsrv {
-	const struct silofs_mntrules *ms_rules;
-	struct silofs_socket    ms_lsock;
-	struct silofs_mntsvc    ms_svc;
+	struct silofs_ms_args           ms_args;
+	const struct silofs_mntrules   *ms_rules;
+	struct silofs_socket            ms_lsock;
+	struct silofs_mntsvc            ms_svc;
 };
 
 struct silofs_ms_env {
-	struct silofs_mntsrv *srv;
-	int active;
-	int signum;
+	struct silofs_mntsrv *ms_srv;
+	int ms_active;
+	int ms_signum;
 };
 
 struct silofs_ms_env_obj {
@@ -985,8 +986,10 @@ static void mntsvc_serve_request(struct silofs_mntsvc *msvc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void mntsrv_init(struct silofs_mntsrv *msrv)
+static void mntsrv_init(struct silofs_mntsrv *msrv,
+                        const struct silofs_ms_args *ms_args)
 {
+	memcpy(&msrv->ms_args, ms_args, sizeof(msrv->ms_args));
 	silofs_streamsock_initu(&msrv->ms_lsock);
 	mntsvc_init(&msrv->ms_svc);
 	msrv->ms_rules = NULL;
@@ -1038,7 +1041,7 @@ static void mntsrv_close(struct silofs_mntsrv *msrv)
 	silofs_socket_close(&msrv->ms_lsock);
 }
 
-static int mntsrv_bind(struct silofs_mntsrv *msrv)
+static int mntsrv_bind_abstract(struct silofs_mntsrv *msrv)
 {
 	struct silofs_sockaddr saddr;
 	struct silofs_socket *sock = &msrv->ms_lsock;
@@ -1052,6 +1055,56 @@ static int mntsrv_bind(struct silofs_mntsrv *msrv)
 	}
 	log_info("bind-socket: @%s", sock_name);
 	return 0;
+}
+
+static int mntsrv_make_unixaddr(const struct silofs_mntsrv *msrv,
+                                char *buf, size_t bsz)
+{
+	const char *base_path = msrv->ms_args.runstatedir;
+	const char *sock_name = SILOFS_MNTSOCK_NAME;
+	ssize_t len;
+
+	len = snprintf(buf, bsz, "%s/%s", base_path, sock_name);
+	if ((size_t)len >= bsz) {
+		log_err("invalid unix sock: %s/%s", base_path, sock_name);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int mntsrv_bind_unix(struct silofs_mntsrv *msrv)
+{
+	char uadr[104] = "";
+	struct silofs_sockaddr saddr;
+	struct silofs_socket *sock = &msrv->ms_lsock;
+	int err;
+
+	err = mntsrv_make_unixaddr(msrv, uadr, sizeof(uadr));
+	if (err) {
+		return err;
+	}
+	err = silofs_sockaddr_unix(&saddr, uadr);
+	if (err) {
+		return err;
+	}
+	err = silofs_socket_bind(sock, &saddr);
+	if (err) {
+		return err;
+	}
+	log_info("bind-socket: %s", uadr);
+	return 0;
+}
+
+static int mntsrv_bind(struct silofs_mntsrv *msrv)
+{
+	int err;
+
+	if (msrv->ms_args.use_abstract) {
+		err = mntsrv_bind_abstract(msrv);
+	} else {
+		err = mntsrv_bind_unix(msrv);
+	}
+	return err;
 }
 
 static int mntsrv_wait_incoming(struct silofs_mntsrv *msrv)
@@ -1115,21 +1168,23 @@ static int mntsrv_serve_conn(struct silofs_mntsrv *msrv)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int mse_init(struct silofs_ms_env *mse)
+static int mse_init(struct silofs_ms_env *mse,
+                    const struct silofs_ms_args *ms_args)
 {
-	mntsrv_init(mse->srv);
-	mse->active = 0;
-	mse->signum = 0;
+	mntsrv_init(mse->ms_srv, ms_args);
+	mse->ms_active = 0;
+	mse->ms_signum = 0;
 	return 0;
 }
 
 static void mse_fini(struct silofs_ms_env *mse)
 {
-	mntsrv_fini(mse->srv);
-	mse->active = 0;
+	mntsrv_fini(mse->ms_srv);
+	mse->ms_active = 0;
 }
 
-int silofs_mse_new(struct silofs_ms_env **out_mse)
+int silofs_mse_new(const struct silofs_ms_args *ms_args,
+                   struct silofs_ms_env **out_mse)
 {
 	void *mem = NULL;
 	struct silofs_ms_env *mse = NULL;
@@ -1142,9 +1197,9 @@ int silofs_mse_new(struct silofs_ms_env **out_mse)
 	}
 	mse_obj = mem;
 	mse = &mse_obj->ms_env;
-	mse->srv = &mse_obj->ms_srv;
+	mse->ms_srv = &mse_obj->ms_srv;
 
-	err = mse_init(mse);
+	err = mse_init(mse, ms_args);
 	if (err) {
 		mse_fini(mse);
 		free(mem);
@@ -1172,7 +1227,7 @@ void silofs_mse_del(struct silofs_ms_env *mse)
 static int silofs_mse_open(struct silofs_ms_env *mse,
                            const struct silofs_mntrules *mrules)
 {
-	struct silofs_mntsrv *msrv = mse->srv;
+	struct silofs_mntsrv *msrv = mse->ms_srv;
 	int err;
 
 	err = mntsrv_setrules(msrv, mrules);
@@ -1194,7 +1249,7 @@ static int silofs_mse_open(struct silofs_ms_env *mse,
 
 static int silofs_mse_exec_one(struct silofs_ms_env *mse)
 {
-	struct silofs_mntsrv *msrv = mse->srv;
+	struct silofs_mntsrv *msrv = mse->ms_srv;
 	int err;
 
 	err = mntsrv_wait_incoming(msrv);
@@ -1222,8 +1277,8 @@ static int silofs_mse_exec(struct silofs_ms_env *mse)
 	int err;
 
 	log_info("start serve: sock=@%s", sock);
-	mse->active = 1;
-	while (mse->active) {
+	mse->ms_active = 1;
+	while (mse->ms_active) {
 		sleep(1);
 		err = silofs_mse_exec_one(mse);
 		silofs_burnstack();
@@ -1239,7 +1294,7 @@ static int silofs_mse_exec(struct silofs_ms_env *mse)
 
 static void silofs_mse_close(struct silofs_ms_env *mse)
 {
-	struct silofs_mntsrv *msrv = mse->srv;
+	struct silofs_mntsrv *msrv = mse->ms_srv;
 
 	mntsrv_close(msrv);
 	mntsrv_fini(msrv);
@@ -1261,8 +1316,8 @@ int silofs_mse_serve(struct silofs_ms_env *mse,
 void silofs_mse_halt(struct silofs_ms_env *mse, int signum)
 {
 	silofs_log_info("halt mount service: signum=%d", signum);
-	mse->signum = signum;
-	mse->active = 0;
+	mse->ms_signum = signum;
+	mse->ms_active = 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

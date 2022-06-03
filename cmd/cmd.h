@@ -54,7 +54,7 @@ struct cmd_globals {
 	/* common process settings */
 	bool    dont_daemonize;
 	bool    allow_coredump;
-	bool    disable_ptrace; /* XXX: TODO: allow set */
+	bool    dumpable; /* XXX: TODO: allow set */
 
 	/* capability */
 	bool    cap_sys_admin;

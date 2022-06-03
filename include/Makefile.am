@@ -1,3 +1,6 @@
+-include $(top_builddir)/common.mk
+-include $(top_builddir)/sedsub.mk
+
 nobase_include_HEADERS = $(NULL)
 nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
@@ -56,10 +59,14 @@ nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
 nobase_include_HEADERS += silofs/fs.h
 
-nobase_include_HEADERS += silofs/mntd.h
-
 noinst_HEADERS = $(NULL)
 noinst_HEADERS += config.h
+noinst_HEADERS += config-am.h
 noinst_HEADERS += silofs/configs.h
 noinst_HEADERS += linux/fuse7.h
+
+EXTRA_DIST = config-am.h.in
+
+config-am.h: config-am.h.in
+	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;
 

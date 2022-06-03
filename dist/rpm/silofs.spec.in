@@ -56,6 +56,7 @@ Various testing programs for silofs.
 %{_datarootdir}/bash-completion/completions/%{name}
 %{_docdir}/%{name}/*
 %if 0%{?_unitdir:1}
+%dir %{_localstatedir}/%{_rundir}/%{name}
 %{_unitdir}/%{name}-mountd.service
 %else
 %exclude %{_prefix}/lib/systemd/system/%{name}*.*

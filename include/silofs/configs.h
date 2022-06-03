@@ -31,4 +31,5 @@
 #endif
 
 #include "config.h"
+#include "config-am.h"
 #define SILOFS_CONFIGS_ONCE 1

@@ -109,7 +109,7 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_globals.umsk = 0022;
 	cmd_globals.dont_daemonize = false;
 	cmd_globals.allow_coredump = false;
-	cmd_globals.disable_ptrace = true; /* XXX */
+	cmd_globals.dumpable = true; /* XXX */
 	cmd_globals.log_mask = SILOFS_CMD_LOG_DEFAULT;
 
 	umask(cmd_globals.umsk);

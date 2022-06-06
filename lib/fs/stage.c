@@ -214,9 +214,7 @@ static int sbi_stage_blob(const struct silofs_sb_info *sbi,
                           const struct silofs_blobid *blobid,
                           struct silofs_blob_info **out_bli)
 {
-	struct silofs_repo *repo = sbi_repo(sbi);
-
-	return silofs_repo_stage_blob(repo, blobid, out_bli);
+	return silofs_stage_blob_at(sbi_uber(sbi), true, blobid, out_bli);
 }
 
 static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
@@ -224,17 +222,9 @@ static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
                           enum silofs_stype stype_sub,
                           struct silofs_blob_info **out_bli)
 {
-	struct silofs_repo *repo = sbi_repo(sbi);
 	int err;
 
-	err = silofs_repo_lookup_blob(repo, blobid);
-	if (!err) {
-		return -EEXIST;
-	}
-	if (err != -ENOENT) {
-		return err;
-	}
-	err = silofs_repo_spawn_blob(repo, blobid, out_bli);
+	err = silofs_spawn_blob_at(sbi_uber(sbi), true, blobid, out_bli);
 	if (err) {
 		return err;
 	}
@@ -438,10 +428,11 @@ out_err:
 	return err;
 }
 
-static void stgc_update_uspace_meta(const struct silofs_stage_ctx *stg_ctx,
+static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
                                     const struct silofs_uaddr *uaddr)
 {
 	silofs_sti_update_objs(stg_ctx->sbi->sb_sti, uaddr->stype, 1);
+	silofs_sti_update_bks(stg_ctx->sbi->sb_sti, uaddr->stype, 1);
 }
 
 static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
@@ -642,7 +633,7 @@ static int stgc_spawn_spnode3(const struct silofs_stage_ctx *stg_ctx,
 
 	err = stgc_spawn_spnode3_of(stg_ctx, out_sni);
 	if (!err) {
-		stgc_update_uspace_meta(stg_ctx, sni_uaddr(*out_sni));
+		stgc_update_space_stats(stg_ctx, sni_uaddr(*out_sni));
 	}
 	return err;
 }
@@ -706,7 +697,7 @@ static int stgc_spawn_spnode2(const struct silofs_stage_ctx *stg_ctx,
 
 	err = stgc_spawn_spnode2_of(stg_ctx, out_sni);
 	if (!err) {
-		stgc_update_uspace_meta(stg_ctx, sni_uaddr(*out_sni));
+		stgc_update_space_stats(stg_ctx, sni_uaddr(*out_sni));
 	}
 	return err;
 }
@@ -963,7 +954,7 @@ static int stgc_spawn_spleaf(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	stgc_update_uspace_meta(stg_ctx, sli_uaddr(*out_sli));
+	stgc_update_space_stats(stg_ctx, sli_uaddr(*out_sli));
 	return 0;
 }
 

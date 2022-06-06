@@ -327,16 +327,22 @@ static void stnode_export_to(const struct silofs_spstat_node *stn,
 	sr_export_to(&stn->sp_blobs, &spst->blobs);
 }
 
+static void stnode_update_blobs(struct silofs_spstat_node *stn,
+                                enum silofs_stype stype, ssize_t take)
+{
+	sr_update_take(&stn->sp_blobs, stype, take);
+}
+
 static void stnode_update_objs(struct silofs_spstat_node *stn,
                                enum silofs_stype stype, ssize_t take)
 {
 	sr_update_take(&stn->sp_objs, stype, take);
 }
 
-static void stnode_update_blobs(struct silofs_spstat_node *stn,
-                                enum silofs_stype stype, ssize_t take)
+static void stnode_update_bks(struct silofs_spstat_node *stn,
+                              enum silofs_stype stype, ssize_t take)
 {
-	sr_update_take(&stn->sp_blobs, stype, take);
+	sr_update_take(&stn->sp_bks, stype, take);
 }
 
 static fsfilcnt_t stnode_ninodes(const struct silofs_spstat_node *stn)
@@ -413,24 +419,37 @@ void silofs_sti_set_capacity(struct silofs_spstat_info *sti, size_t capacity)
 	sti_dirtify(sti);
 }
 
-void silofs_sti_update_objs(struct silofs_spstat_info *sti,
-                            enum silofs_stype stype, ssize_t take)
-{
-	stnode_update_objs(sti->sp, stype, take);
-	sti_dirtify(sti);
-}
-
-void silofs_sti_collect_objs(const struct silofs_spstat_info *sti,
-                             struct silofs_spacestat *spst)
-{
-	stnode_export_to(sti->sp, spst);
-}
-
 void silofs_sti_update_blobs(struct silofs_spstat_info *sti,
                              enum silofs_stype stype, ssize_t take)
 {
-	stnode_update_blobs(sti->sp, stype, take);
-	sti_dirtify(sti);
+	if (take != 0) {
+		stnode_update_blobs(sti->sp, stype, take);
+		sti_dirtify(sti);
+	}
+}
+
+void silofs_sti_update_bks(struct silofs_spstat_info *sti,
+                           enum silofs_stype stype, ssize_t take)
+{
+	if (take != 0) {
+		stnode_update_bks(sti->sp, stype, take);
+		sti_dirtify(sti);
+	}
+}
+
+void silofs_sti_update_objs(struct silofs_spstat_info *sti,
+                            enum silofs_stype stype, ssize_t take)
+{
+	if (take != 0) {
+		stnode_update_objs(sti->sp, stype, take);
+		sti_dirtify(sti);
+	}
+}
+
+void silofs_sti_collect_stats(const struct silofs_spstat_info *sti,
+                              struct silofs_spacestat *spst)
+{
+	stnode_export_to(sti->sp, spst);
 }
 
 loff_t silofs_sti_vspace_end(const struct silofs_spstat_info *sti)

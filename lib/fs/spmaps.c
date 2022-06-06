@@ -1150,8 +1150,11 @@ void silofs_sli_clear_allocated_space(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli, loff_t voff)
+bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
+                            const struct silofs_vaddr *vaddr)
 {
+	const loff_t voff = vaddr->voff;
+
 	silofs_assert(sli_is_inrange(sli, voff));
 
 	return spleaf_refcnt_at(sli->sl, voff) > 0;

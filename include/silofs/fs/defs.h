@@ -668,9 +668,9 @@ struct silofs_spstat_node {
 	uint64_t                        sp_capacity;
 	uint64_t                        sp_vspacesize;
 	uint64_t                        sp_reserved[20];
-	struct silofs_spstat_record     sp_objs;
-	struct silofs_spstat_record     sp_bks;
 	struct silofs_spstat_record     sp_blobs;
+	struct silofs_spstat_record     sp_bks;
+	struct silofs_spstat_record     sp_objs;
 	uint8_t                         sp_reserved2[1024];
 } silofs_packed_aligned64;
 

@@ -132,18 +132,22 @@ static void sbi_update_voff_last(struct silofs_sb_info *sbi,
 	sbi_set_voff_last_of(sbi, vaddr_stype(vaddr), vaddr_off(vaddr));
 }
 
-static void sbi_update_curr_stats(struct silofs_sb_info *sbi,
-                                  const struct silofs_vaddr *vaddr, int take)
+static void sbi_update_space_stats(struct silofs_sb_info *sbi,
+                                   const struct silofs_vaddr *vaddr,
+                                   ssize_t nobjs_take, ssize_t nbks_take)
 {
-	silofs_sti_update_objs(sbi->sb_sti, vaddr->stype, take);
+	silofs_sti_update_objs(sbi->sb_sti, vaddr->stype, nobjs_take);
+	silofs_sti_update_bks(sbi->sb_sti, vaddr->stype, nbks_take);
 }
 
 static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
                                   struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr)
 {
+	const bool first_bk = !silofs_sli_has_refs_at(sli, vaddr);
+
 	silofs_sli_mark_allocated_space(sli, vaddr);
-	sbi_update_curr_stats(sbi, vaddr, 1);
+	sbi_update_space_stats(sbi, vaddr, 1, first_bk ? 1 : 0);
 	sbi_update_voff_last(sbi, vaddr);
 }
 
@@ -152,7 +156,7 @@ static void sbi_clear_unallocate_at(struct silofs_sb_info *sbi,
                                     const struct silofs_vaddr *vaddr)
 {
 	silofs_sli_clear_allocated_space(sli, vaddr);
-	sbi_update_curr_stats(sbi, vaddr, -1);
+	sbi_update_space_stats(sbi, vaddr, -1, 0);
 }
 
 /*
@@ -173,7 +177,7 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
 	if (!silofs_sbi_ismutable_blobid(sbi, &blobid)) {
 		return 0;
 	}
-	err = silofs_repo_stage_blob(sbi->sb_ui.u_repo, &blobid, &bli);
+	err = silofs_stage_blob_at(sbi_uber(sbi), true, &blobid, &bli);
 	if (err) {
 		log_err("failed to stage unused blob: err=%d", err);
 		return err;

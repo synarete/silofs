@@ -137,7 +137,8 @@ void silofs_sli_clear_allocated_space(struct silofs_spleaf_info *sli,
 size_t silofs_sli_nallocated_at(const struct silofs_spleaf_info *sli,
                                 const silofs_lba_t lba);
 
-bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli, loff_t voff);
+bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
+                            const struct silofs_vaddr *vaddr);
 
 bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
                                 const struct silofs_vaddr *vaddr);

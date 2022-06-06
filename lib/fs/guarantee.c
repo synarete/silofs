@@ -259,9 +259,9 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_ctime, 72);
 	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_capacity, 80);
 	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_vspacesize, 88);
-	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_objs, 256);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_blobs, 256);
 	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_bks, 512);
-	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_blobs, 768);
+	REQUIRE_OFFSET64(struct silofs_spstat_node, sp_objs, 768);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_mainblobid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_mainpackid, 128);

@@ -44,14 +44,18 @@ fsfilcnt_t silofs_sti_inodes_used(const struct silofs_spstat_info *sti);
 fsfilcnt_t silofs_sti_inodes_max(const struct silofs_spstat_info *sti);
 
 
+void silofs_sti_update_blobs(struct silofs_spstat_info *sti,
+                             enum silofs_stype stype, ssize_t take);
+
+void silofs_sti_update_bks(struct silofs_spstat_info *sti,
+                           enum silofs_stype stype, ssize_t take);
+
 void silofs_sti_update_objs(struct silofs_spstat_info *sti,
                             enum silofs_stype stype, ssize_t take);
 
-void silofs_sti_collect_objs(const struct silofs_spstat_info *sti,
-                             struct silofs_spacestat *out_sp);
+void silofs_sti_collect_stats(const struct silofs_spstat_info *sti,
+                              struct silofs_spacestat *out_sp);
 
-void silofs_sti_update_blobs(struct silofs_spstat_info *sti,
-                             enum silofs_stype stype, ssize_t take);
 
 bool silofs_sti_may_alloc_some(const struct silofs_spstat_info *sti, size_t n);
 

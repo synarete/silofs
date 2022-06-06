@@ -43,7 +43,7 @@ int silofs_uber_reload_supers(struct silofs_fs_uber *uber,
 int silofs_uber_forkfs(struct silofs_fs_uber *uber,
                        struct silofs_bootsecs *out_bsecs);
 
-int silofs_uber_flush_dirty(const struct silofs_fs_uber *uber, int flags);
+int silofs_uber_flush_dirty(struct silofs_fs_uber *uber, int flags);
 
 int silofs_exec_kcopy_by(struct silofs_fs_uber *uber,
                          const struct silofs_xiovec *xiov_src,

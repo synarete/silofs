@@ -19,6 +19,15 @@
 #include <silofs/fs/private.h>
 
 
+struct silofs_flush_ctx {
+	struct silofs_dset      dset;
+	struct silofs_fs_uber  *uber;
+	struct silofs_repo     *repo;
+	struct silofs_cache    *cache;
+	int flags;
+};
+
+
 struct silofs_sgvec {
 	struct iovec iov[SILOFS_NKB_IN_BK];
 	struct silofs_blobid blobid;
@@ -113,25 +122,6 @@ static int sgvec_populate(struct silofs_sgvec *sgv,
 	return 0;
 }
 
-static int sgvec_store_in_blob(const struct silofs_sgvec *sgv,
-                               struct silofs_repo *repo)
-{
-	struct silofs_oaddr oaddr;
-	struct silofs_blob_info *bli = NULL;
-	int err;
-
-	oaddr_setup(&oaddr, &sgv->blobid, sgv->off, sgv->len);
-	err = silofs_repo_stage_blob(repo, &oaddr.bka.blobid, &bli);
-	if (err) {
-		return err;
-	}
-	err = silofs_bli_storev(bli, &oaddr, sgv->iov, sgv->cnt);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static long ckey_compare(const void *x, const void *y)
@@ -203,7 +193,17 @@ static void dset_push_front_siq(struct silofs_dset *dset,
 	dset->ds_siq = si;
 }
 
-static void dset_make_fifo(struct silofs_dset *dset)
+static void dset_seal_all(const struct silofs_dset *dset)
+{
+	struct silofs_snode_info *si = dset->ds_siq;
+
+	while (si != NULL) {
+		si->s_vtbl->seal(si);
+		si = si->s_ds_next;
+	}
+}
+
+static void dsek_mkfifo(struct silofs_dset *dset)
 {
 	struct silofs_snode_info *si;
 	const struct silofs_avl_node *end;
@@ -220,20 +220,74 @@ static void dset_make_fifo(struct silofs_dset *dset)
 	}
 }
 
-static void dset_seal_all(const struct silofs_dset *dset)
-{
-	struct silofs_snode_info *si = dset->ds_siq;
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-	while (si != NULL) {
-		si->s_vtbl->seal(si);
-		si = si->s_ds_next;
-	}
+static void flc_init_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	dset_init(&fl_ctx->dset);
 }
 
-static int dset_flush(const struct silofs_dset *dset,
-                      struct silofs_repo *repo)
+static void flc_fini_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	dset_fini(&fl_ctx->dset);
+}
+
+static void flc_make_fifo_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	dsek_mkfifo(&fl_ctx->dset);
+}
+
+static void flc_seal_dset(const struct silofs_flush_ctx *fl_ctx)
+{
+	dset_seal_all(&fl_ctx->dset);
+}
+
+static void flc_fill_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	silofs_cache_fill_into_dset(fl_ctx->cache, &fl_ctx->dset);
+}
+
+static void flc_populate_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	flc_fill_dset(fl_ctx);
+	flc_make_fifo_dset(fl_ctx);
+	flc_seal_dset(fl_ctx);
+}
+
+static void flc_undirtify_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	silofs_cache_undirtify_by_dset(fl_ctx->cache, &fl_ctx->dset);
+}
+
+static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx)
+{
+	dset_clear_map(&fl_ctx->dset);
+}
+
+
+static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
+                         const struct silofs_sgvec *sgv)
+{
+	struct silofs_oaddr oaddr;
+	struct silofs_blob_info *bli = NULL;
+	int err;
+
+	oaddr_setup(&oaddr, &sgv->blobid, sgv->off, sgv->len);
+	err = silofs_repo_stage_blob(fl_ctx->repo, &oaddr.bka.blobid, &bli);
+	if (err) {
+		return err;
+	}
+	err = silofs_bli_storev(bli, &oaddr, sgv->iov, sgv->cnt);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 {
 	struct silofs_sgvec sgv;
+	struct silofs_dset *dset = &fl_ctx->dset;
 	struct silofs_snode_info *siq = dset->ds_siq;
 	int err;
 
@@ -243,8 +297,7 @@ static int dset_flush(const struct silofs_dset *dset,
 		if (err) {
 			return err;
 		}
-		silofs_assert_gt(sgv.cnt, 0);
-		err = sgvec_store_in_blob(&sgv, repo);
+		err = flc_store_sgv(fl_ctx, &sgv);
 		if (err) {
 			return err;
 		}
@@ -252,91 +305,121 @@ static int dset_flush(const struct silofs_dset *dset,
 	return 0;
 }
 
-static size_t ndirty_of(const struct silofs_cache *cache)
+static int flc_collect_flush_dset(struct silofs_flush_ctx *fl_ctx)
 {
-	return cache->c_dq.dq_accum_nbytes;
-}
-
-static int dset_collect_flush(struct silofs_dset *dset,
-                              struct silofs_repo *repo)
-{
-	struct silofs_cache *cache = &repo->re_cache;
-	const size_t ndirty = ndirty_of(cache);
 	int err;
 
-	silofs_cache_fill_into_dset(cache, dset);
-	dset_make_fifo(dset);
-	dset_seal_all(dset);
-	err = dset_flush(dset, repo);
+	flc_populate_dset(fl_ctx);
+	err = flc_flush_dset(fl_ctx);
 	if (!err) {
-		silofs_cache_undirtify_by_dset(cache, dset);
-	} else {
-		log_warn("flush error: ndirty=%lu err=%d", ndirty, err);
+		flc_undirtify_dset(fl_ctx);
 	}
-	dset_clear_map(dset);
+	flc_cleanup_dset(fl_ctx);
 	return err;
 }
 
-static int repo_collect_flush_dirty(struct silofs_repo *repo)
+static int flc_collect_flush_dirty(struct silofs_flush_ctx *fl_ctx)
 {
-	struct silofs_dset dset;
-
 	int err;
 
-	dset_init(&dset);
-	err = dset_collect_flush(&dset, repo);
-	dset_fini(&dset);
+	flc_init_dset(fl_ctx);
+	err = flc_collect_flush_dset(fl_ctx);
+	flc_fini_dset(fl_ctx);
 	return err;
 }
 
-static int repo_objs_sync(struct silofs_repo *repo)
+static int flc_commit_last(const struct silofs_flush_ctx *fl_ctx)
 {
-	silofs_unused(repo);
-	return 0;
+	int ret = 0;
+
+	if (fl_ctx->flags & SILOFS_F_NOW) {
+		/*
+		 * TODO-0034: issue flush sync to dirty blobs
+		 *
+		 * Implement fsync at blobs level and ensure that all of
+		 * kernel's in-cache data is flushed all the way to stable
+		 * storage.
+		 */
+		ret = 0;
+	}
+
+	return ret;
 }
 
-static int repo_objs_commit_last(struct silofs_repo *repo, int flags)
-{
-	return (flags & SILOFS_F_NOW) ? repo_objs_sync(repo) : 0;
-}
-
-static bool repo_need_flush(const struct silofs_repo *repo, int flags)
+static bool flc_need_flush(const struct silofs_flush_ctx *fl_ctx)
 {
 	bool ret = false;
 
-	if (repo != NULL && repo->re_inited) {
-		ret = silofs_cache_need_flush(&repo->re_cache, flags);
+	if (fl_ctx->repo->re_inited) {
+		ret = silofs_cache_need_flush(fl_ctx->cache, fl_ctx->flags);
 	}
 	return ret;
 }
 
-static int flush_dirty_of(struct silofs_repo *repo, int flags)
+static int flc_flush_dirty_of(struct silofs_flush_ctx *fl_ctx)
 {
 	int err;
 
-	if (!repo_need_flush(repo, flags)) {
+	if (!flc_need_flush(fl_ctx)) {
 		return 0;
 	}
-	err = repo_collect_flush_dirty(repo);
+	err = flc_collect_flush_dirty(fl_ctx);
 	if (err) {
+		log_warn("flush failure: err=%d", err);
 		return err;
 	}
-	err = repo_objs_commit_last(repo, flags);
+	err = flc_commit_last(fl_ctx);
 	if (err) {
+		log_warn("commit-last failure: err=%d", err);
 		return err;
 	}
 	return 0;
 }
 
-int silofs_uber_flush_dirty(const struct silofs_fs_uber *uber, int flags)
+static int uber_flush_main(struct silofs_fs_uber *uber, int flags)
 {
+	struct silofs_flush_ctx fl_ctx = {
+		.uber = uber,
+		.repo = &uber->ub_repos->repo_main,
+		.cache = &uber->ub_repos->repo_main.re_cache,
+		.flags = flags,
+	};
 	int err;
 
-	err = flush_dirty_of(&uber->ub_repos->repo_main, flags);
+	err = flc_flush_dirty_of(&fl_ctx);
+	if (err) {
+		log_dbg("failed to flush main: err=%d", err);
+	}
+	return err;
+}
+
+static int uber_flush_cold(struct silofs_fs_uber *uber, int flags)
+{
+	struct silofs_flush_ctx fl_ctx = {
+		.uber = uber,
+		.repo = &uber->ub_repos->repo_cold,
+		.cache = &uber->ub_repos->repo_cold.re_cache,
+		.flags = flags,
+	};
+	int err;
+
+	err = flc_flush_dirty_of(&fl_ctx);
+	if (err) {
+		log_dbg("failed to flush main: err=%d", err);
+	}
+	return err;
+}
+
+int silofs_uber_flush_dirty(struct silofs_fs_uber *uber, int flags)
+{
+
+	int err;
+
+	err = uber_flush_main(uber, flags);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(&uber->ub_repos->repo_cold, flags);
+	err = uber_flush_cold(uber, flags);
 	if (err) {
 		return err;
 	}

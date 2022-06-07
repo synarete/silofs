@@ -390,9 +390,9 @@ struct silofs_spacestats {
 	time_t ctime;
 	size_t capacity;
 	size_t vspacesize;
-	struct silofs_spacestat_rec objs;
-	struct silofs_spacestat_rec bks;
 	struct silofs_spacestat_rec blobs;
+	struct silofs_spacestat_rec bks;
+	struct silofs_spacestat_rec objs;
 };
 
 /* v-space allocation hints */

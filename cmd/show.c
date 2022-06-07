@@ -233,7 +233,7 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "ndata4k", spst->blobs.ndata4k);
 	print_count(prefix, "ndatabk", spst->blobs.ndatabk);
 	print_count(prefix, "nsuper", spst->blobs.nsuper);
-	print_count(prefix, "nstats", spst->blobs.nstats);
+	print_count(prefix, "nspstats", spst->blobs.nspstats);
 	print_count(prefix, "nspnode", spst->blobs.nspnode);
 	print_count(prefix, "nspleaf", spst->blobs.nspleaf);
 	print_count(prefix, "nitnode", spst->blobs.nitnode);
@@ -247,7 +247,7 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "ndata4k", spst->bks.ndata4k);
 	print_count(prefix, "ndatabk", spst->bks.ndatabk);
 	print_count(prefix, "nsuper", spst->bks.nsuper);
-	print_count(prefix, "nstats", spst->bks.nstats);
+	print_count(prefix, "nspstats", spst->bks.nspstats);
 	print_count(prefix, "nspnode", spst->bks.nspnode);
 	print_count(prefix, "nspleaf", spst->bks.nspleaf);
 	print_count(prefix, "nitnode", spst->bks.nitnode);
@@ -261,7 +261,7 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "ndata4k", spst->objs.ndata4k);
 	print_count(prefix, "ndatabk", spst->objs.ndatabk);
 	print_count(prefix, "nsuper", spst->objs.nsuper);
-	print_count(prefix, "nstats", spst->objs.nstats);
+	print_count(prefix, "nspstats", spst->objs.nspstats);
 	print_count(prefix, "nspnode", spst->objs.nspnode);
 	print_count(prefix, "nspleaf", spst->objs.nspleaf);
 	print_count(prefix, "nitnode", spst->objs.nitnode);

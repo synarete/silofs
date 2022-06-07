@@ -40,10 +40,12 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 static void ut_query_spacestats(struct ut_env *ute, ino_t ino,
                                 struct silofs_spacestats *out_spst)
 {
-	struct silofs_ioc_query query = { .reserved = 0 };
+	struct silofs_ioc_query query = {
+		.u.statfsx.uptime = -1,
+	};
 
 	ut_query_ok(ute, ino, SILOFS_QUERY_STATFSX, &query);
-	ut_expect_gt(query.u.statfsx.uptime, 0);
+	ut_expect_ge(query.u.statfsx.uptime, 0);
 
 	silofs_spacestats_import(out_spst, &query.u.statfsx.spst);
 }
@@ -60,6 +62,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_gt(spst.ctime, 0);
 	ut_expect_ge(spst.capacity, SILOFS_CAPACITY_SIZE_MIN);
 	ut_expect_ge(spst.vspacesize, SILOFS_CAPACITY_SIZE_MIN);
+	ut_expect_ge(spst.blobs.nsuper, 1);
 	ut_expect_ge(spst.blobs.ndatabk, 1);
 	ut_expect_ge(spst.blobs.nspnode, 2);
 	ut_expect_ge(spst.blobs.nspleaf, 4);
@@ -70,7 +73,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_ge(spst.bks.ndata4k, spst.bks.ndata4k);
 	ut_expect_ge(spst.bks.ndatabk, spst.bks.ndatabk);
 	ut_expect_ge(spst.bks.nsuper, spst.bks.nsuper);
-	ut_expect_ge(spst.bks.nstats, spst.bks.nstats);
+	ut_expect_ge(spst.bks.nspstats, spst.bks.nspstats);
 	ut_expect_ge(spst.bks.nspnode, spst.bks.nspnode);
 	ut_expect_ge(spst.bks.nspleaf, spst.bks.nspleaf);
 	ut_expect_ge(spst.bks.nitnode, spst.bks.nitnode);
@@ -83,7 +86,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_ge(spst.objs.ndata4k, spst.objs.ndata4k);
 	ut_expect_ge(spst.objs.ndatabk, spst.objs.ndatabk);
 	ut_expect_ge(spst.objs.nsuper, spst.objs.nsuper);
-	ut_expect_ge(spst.objs.nstats, spst.objs.nstats);
+	ut_expect_ge(spst.objs.nspstats, spst.objs.nspstats);
 	ut_expect_ge(spst.objs.nspnode, spst.objs.nspnode);
 	ut_expect_ge(spst.objs.nspleaf, spst.objs.nspleaf);
 	ut_expect_ge(spst.objs.nitnode, spst.objs.nitnode);

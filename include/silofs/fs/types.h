@@ -373,7 +373,7 @@ struct silofs_spacestat_rec {
 	size_t ndata4k;
 	size_t ndatabk;
 	size_t nsuper;
-	size_t nstats;
+	size_t nspstats;
 	size_t nspnode;
 	size_t nspleaf;
 	size_t nitnode;

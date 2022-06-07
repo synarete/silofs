@@ -647,7 +647,7 @@ struct silofs_spstat_record {
 	uint64_t                        sr_ndata4k;
 	uint64_t                        sr_ndatabk;
 	uint64_t                        sr_nsuper;
-	uint64_t                        sr_nstats;
+	uint64_t                        sr_nspstats;
 	uint64_t                        sr_nspnode;
 	uint64_t                        sr_nspleaf;
 	uint64_t                        sr_nitnode;

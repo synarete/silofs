@@ -50,7 +50,7 @@ spsr_counter(const struct silofs_spacestat_rec *spsr, enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 		return &spsr->nsuper;
 	case SILOFS_STYPE_SPSTATS:
-		return &spsr->nstats;
+		return &spsr->nspstats;
 	case SILOFS_STYPE_SPNODE:
 		return &spsr->nspnode;
 	case SILOFS_STYPE_SPLEAF:
@@ -139,7 +139,7 @@ sr_counter_of(const struct silofs_spstat_record *sr, enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 		return &sr->sr_nsuper;
 	case SILOFS_STYPE_SPSTATS:
-		return &sr->sr_nstats;
+		return &sr->sr_nspstats;
 	case SILOFS_STYPE_SPNODE:
 		return &sr->sr_nspnode;
 	case SILOFS_STYPE_SPLEAF:

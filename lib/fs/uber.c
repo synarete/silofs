@@ -337,6 +337,9 @@ static void sbi_account_supers_of(struct silofs_sb_info *sbi)
 {
 	struct silofs_spstats_info *sti = sbi->sb_sti;
 
+	silofs_sti_update_blobs(sti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_bks(sti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_bks(sti, SILOFS_STYPE_SPSTATS, 1);
 	silofs_sti_update_objs(sti, SILOFS_STYPE_SUPER, 1);
 	silofs_sti_update_objs(sti, SILOFS_STYPE_SPSTATS, 1);
 }

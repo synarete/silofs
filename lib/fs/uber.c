@@ -157,7 +157,7 @@ static void make_stats_uaddr(const struct silofs_blobid *blobid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_uaddr_setup(out_uaddr, blobid, SILOFS_BK_SIZE,
-	                   SILOFS_STYPE_SPSTAT, SILOFS_SUPER_HEIGHT, 0);
+	                   SILOFS_STYPE_SPSTATS, SILOFS_SUPER_HEIGHT, 0);
 }
 
 /*. . . . . . . . . . . . . . . b. . . . . . . . . . . . . . . . . . . . . .*/
@@ -208,7 +208,7 @@ static int uber_spawn_super_of(struct silofs_fs_uber *uber,
 
 static int uber_spawn_stats_at(struct silofs_fs_uber *uber,
                                const struct silofs_uaddr *uaddr,
-                               struct silofs_spstat_info **out_sti)
+                               struct silofs_spstats_info **out_sti)
 {
 	int err;
 
@@ -223,7 +223,7 @@ static int uber_spawn_stats_at(struct silofs_fs_uber *uber,
 
 static int uber_spawn_stats_of(struct silofs_fs_uber *uber,
                                struct silofs_sb_info *sbi,
-                               struct silofs_spstat_info **out_sti)
+                               struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uaddr uaddr;
 	int ret;
@@ -239,7 +239,7 @@ int silofs_uber_spawn_supers(struct silofs_fs_uber *uber, size_t capacity,
                              struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstat_info *sti = NULL;
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	err = uber_spawn_super_of(uber, &sbi);
@@ -277,7 +277,7 @@ static int uber_stage_super_at(struct silofs_fs_uber *uber,
 
 static int uber_stage_stats_at(struct silofs_fs_uber *uber,
                                const struct silofs_uaddr *uaddr,
-                               struct silofs_spstat_info **out_sti)
+                               struct silofs_spstats_info **out_sti)
 {
 	int err;
 
@@ -291,7 +291,7 @@ static int uber_stage_stats_at(struct silofs_fs_uber *uber,
 
 static int uber_stage_stats_of(struct silofs_fs_uber *uber,
                                struct silofs_sb_info *sbi,
-                               struct silofs_spstat_info **out_sti)
+                               struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uaddr uaddr;
 	int err;
@@ -310,7 +310,7 @@ int silofs_uber_stage_supers(struct silofs_fs_uber *uber,
                              struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstat_info *sti = NULL;
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	err = uber_stage_super_at(uber, uaddr, &sbi);
@@ -328,10 +328,10 @@ int silofs_uber_stage_supers(struct silofs_fs_uber *uber,
 
 static void sbi_account_supers_of(struct silofs_sb_info *sbi)
 {
-	struct silofs_spstat_info *sti = sbi->sb_sti;
+	struct silofs_spstats_info *sti = sbi->sb_sti;
 
 	silofs_sti_update_objs(sti, SILOFS_STYPE_SUPER, 1);
-	silofs_sti_update_objs(sti, SILOFS_STYPE_SPSTAT, 1);
+	silofs_sti_update_objs(sti, SILOFS_STYPE_SPSTATS, 1);
 }
 
 int silofs_uber_format_supers(struct silofs_fs_uber *uber, size_t capacity)
@@ -365,8 +365,8 @@ int silofs_uber_reload_supers(struct silofs_fs_uber *uber,
 static void sbi_make_clone(struct silofs_sb_info *sbi_new,
                            const struct silofs_sb_info *sbi_cur)
 {
-	struct silofs_spstat_info *sti_new = sbi_new->sb_sti;
-	struct silofs_spstat_info *sti_cur = sbi_cur->sb_sti;
+	struct silofs_spstats_info *sti_new = sbi_new->sb_sti;
+	struct silofs_spstats_info *sti_cur = sbi_cur->sb_sti;
 
 	silofs_sti_make_clone(sti_new, sti_cur);
 	silofs_sbi_make_clone(sbi_new, sbi_cur);
@@ -510,29 +510,29 @@ static void sbi_set_spawned(struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_bkaddr *
-sti_bkaddr(const struct silofs_spstat_info *sti)
+sti_bkaddr(const struct silofs_spstats_info *sti)
 {
 	return ui_bkaddr(&sti->sp_ui);
 }
 
-static bool sti_is_stable(const struct silofs_spstat_info *sti)
+static bool sti_is_stable(const struct silofs_spstats_info *sti)
 {
 	return (sti->sp_ui.u_ubi != NULL) && (sti->sp != NULL);
 }
 
-static void sti_attach_to(struct silofs_spstat_info *sti,
+static void sti_attach_to(struct silofs_spstats_info *sti,
                           struct silofs_ubk_info *ubi)
 {
 	silofs_ui_attach_to(&sti->sp_ui, ubi);
 	sti->sp = &sti->sp_ui.u_si.s_view->st;
 }
 
-static int sti_verify_view(struct silofs_spstat_info *sti)
+static int sti_verify_view(struct silofs_spstats_info *sti)
 {
 	return silofs_ui_verify_view(&sti->sp_ui);
 }
 
-static void sti_set_spawned(struct silofs_spstat_info *sti)
+static void sti_set_spawned(struct silofs_spstats_info *sti)
 {
 	ui_stamp_mark_visible(&sti->sp_ui);
 }
@@ -872,7 +872,7 @@ int silofs_shadow_super_at(struct silofs_fs_uber *uber, bool main,
 
 static int ubc_require_cached_sti(const struct silofs_uber_ctx *ub_ctx,
                                   const struct silofs_uaddr *uaddr,
-                                  struct silofs_spstat_info **out_sti)
+                                  struct silofs_spstats_info **out_sti)
 {
 	struct silofs_unode_info *ui = NULL;
 	int err;
@@ -885,7 +885,7 @@ static int ubc_require_cached_sti(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_stage_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
-                                   struct silofs_spstat_info *sti)
+                                   struct silofs_spstats_info *sti)
 {
 	struct silofs_ubk_info *ubi = NULL;
 	int err;
@@ -900,7 +900,7 @@ static int ubc_stage_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_spawn_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
-                                   struct silofs_spstat_info *sti)
+                                   struct silofs_spstats_info *sti)
 {
 	struct silofs_ubk_info *ubi = NULL;
 	int err;
@@ -915,7 +915,7 @@ static int ubc_spawn_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_ghost_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
-                                   struct silofs_spstat_info *sti)
+                                   struct silofs_spstats_info *sti)
 {
 	struct silofs_ubk_info *ubi = NULL;
 	int err;
@@ -931,7 +931,7 @@ static int ubc_ghost_attach_sti_bk(const struct silofs_uber_ctx *ub_ctx,
 
 int silofs_spawn_stats_at(struct silofs_fs_uber *uber, bool main,
                           const struct silofs_uaddr *uaddr,
-                          struct silofs_spstat_info **out_sti)
+                          struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
@@ -957,7 +957,7 @@ int silofs_spawn_stats_at(struct silofs_fs_uber *uber, bool main,
 
 int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool main,
                           const struct silofs_uaddr *uaddr,
-                          struct silofs_spstat_info **out_sti)
+                          struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;
@@ -986,7 +986,7 @@ int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool main,
 
 int silofs_shadow_stats_at(struct silofs_fs_uber *uber, bool main,
                            const struct silofs_uaddr *uaddr,
-                           struct silofs_spstat_info **out_sti)
+                           struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx;
 	int err;

@@ -1906,22 +1906,22 @@ int silofs_do_rename(const struct silofs_fs_ctx *fs_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static time_t uptime_of(const struct silofs_sb_info *sbi)
+{
+	const time_t now = silofs_time_now_monotonic();
+
+	return now - sbi->sb_mntime;
+}
+
 static void fill_statfsx(const struct silofs_sb_info *sbi,
                          struct silofs_query_statfsx *stx)
 {
-	struct silofs_spacestat sp_st;
-	const struct silofs_spstat_info *sti = sbi->sb_sti;
-	const time_t now = silofs_time_now();
+	struct silofs_spacestats spst;
+	const struct silofs_spstats_info *sti = sbi->sb_sti;
 
-	silofs_sti_collect_stats(sti, &sp_st);
-	stx->bsize = silofs_sti_capacity(sti);
-	stx->bused = silofs_sti_inodes_used(sti);
-	stx->ilimit = silofs_sti_inodes_max(sti);
-	stx->icurr = silofs_sti_inodes_used(sti);
-	stx->umeta = 0; /* XXX */
-	stx->vmeta = 0; /* XXX */
-	stx->vdata = 0; /* XXX */
-	stx->uptime = now - sbi->sb_mntime;
+	silofs_sti_collect_stats(sti, &spst);
+	silofs_spacestats_export(&spst, &stx->spst);
+	stx->uptime = uptime_of(sbi);
 	stx->msflags = sbi->sb_ms_flags;
 }
 
@@ -1974,7 +1974,7 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 }
 
 static void fill_query_bootsec(const struct silofs_inode_info *ii,
-                                struct silofs_ioc_query *query)
+                               struct silofs_ioc_query *query)
 {
 	const struct silofs_fs_uber *uber = ii_uber(ii);
 	const struct silofs_repo *repo = &uber->ub_repos->repo_main;

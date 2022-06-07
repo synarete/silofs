@@ -70,7 +70,7 @@ sbi_vspa_by_stype(const struct silofs_sb_info *sbi, enum silofs_stype stype)
 	case SILOFS_STYPE_SYMVAL:
 		return &sbi->sb_vspa.symval;
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTAT:
+	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
@@ -483,7 +483,7 @@ spc_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 
 static int spc_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	const struct silofs_spstat_info *sti = spa_ctx->sbi->sb_sti;
+	const struct silofs_spstats_info *sti = spa_ctx->sbi->sb_sti;
 	const size_t nb = stype_size(spa_ctx->stype);
 	bool new_file;
 	bool ok;

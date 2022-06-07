@@ -146,11 +146,11 @@ sbi_from_ui(const struct silofs_unode_info *ui)
 	return silofs_sbi_from_ui(ui);
 }
 
-static struct silofs_spstat_info *
+static struct silofs_spstats_info *
 sti_from_ui(const struct silofs_unode_info *ui)
 {
 	silofs_assert_not_null(ui);
-	silofs_assert(silofs_ui_has_stype(ui, SILOFS_STYPE_SPSTAT));
+	silofs_assert(silofs_ui_has_stype(ui, SILOFS_STYPE_SPSTATS));
 
 	return silofs_sti_from_ui(ui);
 }
@@ -413,7 +413,7 @@ static void pac_setup_dst_bsec(struct silofs_pack_ctx *pa_ctx)
 
 static void pac_bind_to(struct silofs_pack_ctx *pa_ctx,
                         struct silofs_sb_info *sbi,
-                        struct silofs_spstat_info *sti)
+                        struct silofs_spstats_info *sti)
 {
 	if (pa_ctx->sbi != NULL) {
 		silofs_sbi_bind_stats(pa_ctx->sbi, NULL);
@@ -857,7 +857,7 @@ pac_post_archive_spnode3(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_post_archive_stats(struct silofs_pack_ctx *pa_ctx,
-                                  struct silofs_spstat_info *sti, size_t slot)
+                                  struct silofs_spstats_info *sti, size_t slot)
 {
 	silofs_assert_eq(slot, 1);
 	return pac_repack_unode(pa_ctx, pa_ctx->piov, slot, &sti->sp_ui);
@@ -883,7 +883,7 @@ static int pac_post_archive(struct silofs_pack_ctx *pa_ctx,
                             const struct silofs_uiterator *uit)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstat_info *sti = NULL;
+	struct silofs_spstats_info *sti = NULL;
 	struct silofs_spnode_info *parent = NULL;
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
@@ -996,7 +996,7 @@ static int pac_stage_super(const struct silofs_pack_ctx *pa_ctx,
 
 static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
                            struct silofs_sb_info *sbi,
-                           struct silofs_spstat_info **out_sti)
+                           struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_fs_uber *uber = pa_ctx->uber;
@@ -1020,7 +1020,7 @@ out:
 static int pac_stage_supers(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstat_info *sti = NULL;
+	struct silofs_spstats_info *sti = NULL;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
 	int err;
 
@@ -1102,12 +1102,12 @@ static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
 
 static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
                             struct silofs_sb_info *sbi,
-                            struct silofs_spstat_info **out_sti)
+                            struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
-	struct silofs_spstat_info *sti = NULL;
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	sbi_incref(sbi);
@@ -1133,7 +1133,7 @@ out:
 static int pac_shadow_supers(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstat_info *sti = NULL;
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	err = pac_shadow_super(pa_ctx, &sbi);
@@ -1175,7 +1175,7 @@ static int pac_save_supers_as_pack(struct silofs_pack_ctx *pa_ctx)
 
 static int pac_save_stats_as_unpack(struct silofs_pack_ctx *pa_ctx)
 {
-	struct silofs_spstat_info *sti = pa_ctx->sbi->sb_sti;
+	struct silofs_spstats_info *sti = pa_ctx->sbi->sb_sti;
 	int err;
 
 	pac_seal_meta_of(pa_ctx, &sti->sp_ui);

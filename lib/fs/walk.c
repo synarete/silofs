@@ -24,7 +24,7 @@ struct silofs_walk_ctx {
 	struct silofs_visitor     *vis;
 	struct silofs_fs_uber     *uber;
 	struct silofs_sb_info     *sbi;
-	struct silofs_spstat_info *sti;
+	struct silofs_spstats_info *sti;
 	struct silofs_spnode_info *sni3;
 	struct silofs_spnode_info *sni2;
 	struct silofs_spleaf_info *sli;
@@ -445,7 +445,7 @@ static int wac_traverse_utree(struct silofs_walk_ctx *wa_ctx)
 static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_sb_info *sbi = wa_ctx->sbi;
-	struct silofs_spstat_info *sti = wa_ctx->sti;
+	struct silofs_spstats_info *sti = wa_ctx->sti;
 	loff_t voff = 0;
 	int err;
 

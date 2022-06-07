@@ -308,7 +308,7 @@ enum silofs_stype {
 	SILOFS_STYPE_DATA4K     = 3,
 	SILOFS_STYPE_DATABK     = 4,
 	SILOFS_STYPE_SUPER      = 5,
-	SILOFS_STYPE_SPSTAT     = 6,
+	SILOFS_STYPE_SPSTATS    = 6,
 	SILOFS_STYPE_SPNODE     = 7,
 	SILOFS_STYPE_SPLEAF     = 8,
 	SILOFS_STYPE_ITNODE     = 9,
@@ -660,9 +660,7 @@ struct silofs_spstat_record {
 } silofs_packed_aligned64;
 
 
-struct silofs_spstat_node {
-	struct silofs_header            sp_hdr;
-	uint8_t                         sp_reserved1[48];
+struct silofs_spstats {
 	uint64_t                        sp_btime;
 	uint64_t                        sp_ctime;
 	uint64_t                        sp_capacity;
@@ -671,6 +669,13 @@ struct silofs_spstat_node {
 	struct silofs_spstat_record     sp_blobs;
 	struct silofs_spstat_record     sp_bks;
 	struct silofs_spstat_record     sp_objs;
+} silofs_packed_aligned64;
+
+
+struct silofs_spstats_node {
+	struct silofs_header            sp_hdr;
+	uint8_t                         sp_reserved1[48];
+	struct silofs_spstats           sp_st;
 	uint8_t                         sp_reserved2[1024];
 } silofs_packed_aligned64;
 
@@ -918,7 +923,7 @@ struct silofs_block {
 union silofs_view {
 	struct silofs_header            hdr;
 	struct silofs_super_block       sb;
-	struct silofs_spstat_node       st;
+	struct silofs_spstats_node       st;
 	struct silofs_spmap_node        sn;
 	struct silofs_spmap_leaf        sl;
 	struct silofs_inode             in;

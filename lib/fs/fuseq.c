@@ -1632,7 +1632,7 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	/* setup_cap_want(coni, FUSE_POSIX_ACL); */
 
 	/* TODO: let super do his private stuff on init */
-	uber->ub_sbi->sb_mntime = silofs_time_now();
+	uber->ub_sbi->sb_mntime = silofs_time_now_monotonic();
 
 out:
 	ret = fuseq_reply_init(fqw, err);

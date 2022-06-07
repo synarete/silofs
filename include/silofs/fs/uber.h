@@ -66,15 +66,15 @@ int silofs_shadow_super_at(struct silofs_fs_uber *uber, bool main,
 
 int silofs_spawn_stats_at(struct silofs_fs_uber *uber, bool main,
                           const struct silofs_uaddr *uaddr,
-                          struct silofs_spstat_info **out_sti);
+                          struct silofs_spstats_info **out_sti);
 
 int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool main,
                           const struct silofs_uaddr *uaddr,
-                          struct silofs_spstat_info **out_sti);
+                          struct silofs_spstats_info **out_sti);
 
 int silofs_shadow_stats_at(struct silofs_fs_uber *uber, bool main,
                            const struct silofs_uaddr *uaddr,
-                           struct silofs_spstat_info **out_sti);
+                           struct silofs_spstats_info **out_sti);
 
 
 int silofs_spawn_spnode_at(struct silofs_fs_uber *uber, bool main,

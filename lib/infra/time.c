@@ -69,6 +69,14 @@ time_t silofs_time_now(void)
 	return time(NULL);
 }
 
+time_t silofs_time_now_monotonic(void)
+{
+	struct timespec ts;
+
+	silofs_mclock_now(&ts);
+	return ts.tv_sec;
+}
+
 void silofs_ts_copy(struct timespec *dst, const struct timespec *src)
 {
 	dst->tv_sec = src->tv_sec;

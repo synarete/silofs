@@ -49,7 +49,7 @@ spsr_counter(const struct silofs_spacestat_rec *spsr, enum silofs_stype stype)
 	switch (stype) {
 	case SILOFS_STYPE_SUPER:
 		return &spsr->nsuper;
-	case SILOFS_STYPE_SPSTAT:
+	case SILOFS_STYPE_SPSTATS:
 		return &spsr->nstats;
 	case SILOFS_STYPE_SPNODE:
 		return &spsr->nspnode;
@@ -138,7 +138,7 @@ sr_counter_of(const struct silofs_spstat_record *sr, enum silofs_stype stype)
 	switch (stype) {
 	case SILOFS_STYPE_SUPER:
 		return &sr->sr_nsuper;
-	case SILOFS_STYPE_SPSTAT:
+	case SILOFS_STYPE_SPSTATS:
 		return &sr->sr_nstats;
 	case SILOFS_STYPE_SPNODE:
 		return &sr->sr_nspnode;
@@ -252,105 +252,105 @@ static int sr_verify(const struct silofs_spstat_record *sr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static time_t stnode_btime(const struct silofs_spstat_node *stn)
+static time_t stnode_btime(const struct silofs_spstats_node *stn)
 {
-	return silofs_time_to_cpu(stn->sp_btime);
+	return silofs_time_to_cpu(stn->sp_st.sp_btime);
 }
 
-static void stnode_set_btime(struct silofs_spstat_node *stn, time_t tm)
+static void stnode_set_btime(struct silofs_spstats_node *stn, time_t tm)
 {
-	stn->sp_btime = silofs_cpu_to_time(tm);
+	stn->sp_st.sp_btime = silofs_cpu_to_time(tm);
 }
 
-static time_t stnode_ctime(const struct silofs_spstat_node *stn)
+static time_t stnode_ctime(const struct silofs_spstats_node *stn)
 {
-	return silofs_time_to_cpu(stn->sp_ctime);
+	return silofs_time_to_cpu(stn->sp_st.sp_ctime);
 }
 
-static void stnode_set_ctime(struct silofs_spstat_node *stn, time_t tm)
+static void stnode_set_ctime(struct silofs_spstats_node *stn, time_t tm)
 {
-	stn->sp_ctime = silofs_cpu_to_time(tm);
+	stn->sp_st.sp_ctime = silofs_cpu_to_time(tm);
 }
 
-static size_t stnode_capacity(const struct silofs_spstat_node *stn)
+static size_t stnode_capacity(const struct silofs_spstats_node *stn)
 {
-	return silofs_le64_to_cpu(stn->sp_capacity);
+	return silofs_le64_to_cpu(stn->sp_st.sp_capacity);
 }
 
-static void stnode_set_capacity(struct silofs_spstat_node *stn, size_t nbytes)
+static void stnode_set_capacity(struct silofs_spstats_node *stn, size_t nbytes)
 {
-	stn->sp_capacity = silofs_cpu_to_le64(nbytes);
+	stn->sp_st.sp_capacity = silofs_cpu_to_le64(nbytes);
 }
 
-static size_t stnode_vspacesize(const struct silofs_spstat_node *stn)
+static size_t stnode_vspacesize(const struct silofs_spstats_node *stn)
 {
-	return silofs_le64_to_cpu(stn->sp_vspacesize);
+	return silofs_le64_to_cpu(stn->sp_st.sp_vspacesize);
 }
 
-static void stnode_set_vspacesize(struct silofs_spstat_node *stn, size_t vsz)
+static void stnode_set_vspacesize(struct silofs_spstats_node *stn, size_t vsz)
 {
-	stn->sp_vspacesize = silofs_cpu_to_le64(vsz);
+	stn->sp_st.sp_vspacesize = silofs_cpu_to_le64(vsz);
 }
 
-static void stnode_init(struct silofs_spstat_node *stn)
+static void stnode_init(struct silofs_spstats_node *stn)
 {
 	stnode_set_btime(stn, silofs_time_now());
 	stnode_set_ctime(stn, silofs_time_now());
 	stnode_set_capacity(stn, 0);
 	stnode_set_vspacesize(stn, SILOFS_PETA); /* XXX */
-	sr_bzero_all(&stn->sp_objs);
-	sr_bzero_all(&stn->sp_bks);
-	sr_bzero_all(&stn->sp_blobs);
+	sr_bzero_all(&stn->sp_st.sp_objs);
+	sr_bzero_all(&stn->sp_st.sp_bks);
+	sr_bzero_all(&stn->sp_st.sp_blobs);
 }
 
-static void stnode_make_clone(struct silofs_spstat_node *stn,
-                              const struct silofs_spstat_node *stn_other)
+static void stnode_make_clone(struct silofs_spstats_node *stn,
+                              const struct silofs_spstats_node *stn_other)
 {
 	stnode_set_btime(stn, stnode_btime(stn_other));
 	stnode_set_ctime(stn, stnode_ctime(stn_other));
 	stnode_set_capacity(stn, stnode_capacity(stn_other));
 	stnode_set_vspacesize(stn, stnode_vspacesize(stn_other));
-	sr_make_clone(&stn->sp_objs, &stn_other->sp_objs);
-	sr_make_clone(&stn->sp_bks, &stn_other->sp_bks);
-	sr_make_clone(&stn->sp_blobs, &stn_other->sp_blobs);
+	sr_make_clone(&stn->sp_st.sp_objs, &stn_other->sp_st.sp_objs);
+	sr_make_clone(&stn->sp_st.sp_bks, &stn_other->sp_st.sp_bks);
+	sr_make_clone(&stn->sp_st.sp_blobs, &stn_other->sp_st.sp_blobs);
 }
 
-static void stnode_export_to(const struct silofs_spstat_node *stn,
-                             struct silofs_spacestat *spst)
+static void stnode_export_to(const struct silofs_spstats_node *stn,
+                             struct silofs_spacestats *spst)
 {
 	spst->btime = stnode_btime(stn);
 	spst->ctime = stnode_ctime(stn);
 	spst->capacity = stnode_capacity(stn);
 	spst->vspacesize = stnode_vspacesize(stn);
-	sr_export_to(&stn->sp_objs, &spst->objs);
-	sr_export_to(&stn->sp_bks, &spst->bks);
-	sr_export_to(&stn->sp_blobs, &spst->blobs);
+	sr_export_to(&stn->sp_st.sp_objs, &spst->objs);
+	sr_export_to(&stn->sp_st.sp_bks, &spst->bks);
+	sr_export_to(&stn->sp_st.sp_blobs, &spst->blobs);
 }
 
-static void stnode_update_blobs(struct silofs_spstat_node *stn,
+static void stnode_update_blobs(struct silofs_spstats_node *stn,
                                 enum silofs_stype stype, ssize_t take)
 {
-	sr_update_take(&stn->sp_blobs, stype, take);
+	sr_update_take(&stn->sp_st.sp_blobs, stype, take);
 }
 
-static void stnode_update_objs(struct silofs_spstat_node *stn,
+static void stnode_update_objs(struct silofs_spstats_node *stn,
                                enum silofs_stype stype, ssize_t take)
 {
-	sr_update_take(&stn->sp_objs, stype, take);
+	sr_update_take(&stn->sp_st.sp_objs, stype, take);
 }
 
-static void stnode_update_bks(struct silofs_spstat_node *stn,
+static void stnode_update_bks(struct silofs_spstats_node *stn,
                               enum silofs_stype stype, ssize_t take)
 {
-	sr_update_take(&stn->sp_bks, stype, take);
+	sr_update_take(&stn->sp_st.sp_bks, stype, take);
 }
 
-static fsfilcnt_t stnode_ninodes(const struct silofs_spstat_node *stn)
+static fsfilcnt_t stnode_ninodes(const struct silofs_spstats_node *stn)
 {
-	return sr_ninodes(&stn->sp_objs);
+	return sr_ninodes(&stn->sp_st.sp_objs);
 }
 
-static int stnode_verify(const struct silofs_spstat_node *stn)
+static int stnode_verify(const struct silofs_spstats_node *stn)
 {
 	int err;
 
@@ -362,15 +362,15 @@ static int stnode_verify(const struct silofs_spstat_node *stn)
 	if (err) {
 		return err;
 	}
-	err = sr_verify(&stn->sp_objs);
+	err = sr_verify(&stn->sp_st.sp_objs);
 	if (err) {
 		return err;
 	}
-	err = sr_verify(&stn->sp_bks);
+	err = sr_verify(&stn->sp_st.sp_bks);
 	if (err) {
 		return err;
 	}
-	err = sr_verify(&stn->sp_blobs);
+	err = sr_verify(&stn->sp_st.sp_blobs);
 	if (err) {
 		return err;
 	}
@@ -379,28 +379,96 @@ static int stnode_verify(const struct silofs_spstat_node *stn)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sti_bind_uber(struct silofs_spstat_info *sti,
+static void spacestat_rec_export(const struct silofs_spacestat_rec *spsr,
+                                 struct silofs_spstat_record *out_sr)
+{
+	uint64_t *dst = NULL;
+	const size_t *src = NULL;
+	enum silofs_stype stype;
+
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+		dst = sr_counter_of2(out_sr, stype);
+		if (dst == NULL) {
+			continue;
+		}
+		src = spsr_counter(spsr, stype);
+		if (src == NULL) {
+			continue;
+		}
+		*dst = *src;
+	}
+}
+
+static void spacestat_rec_import(struct silofs_spacestat_rec *spsr,
+                                 const struct silofs_spstat_record *in_sr)
+{
+	size_t *dst = NULL;
+	const uint64_t *src = NULL;
+	enum silofs_stype stype;
+
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+		src = sr_counter_of(in_sr, stype);
+		if (src == NULL) {
+			continue;
+		}
+		dst = spsr_counter2(spsr, stype);
+		if (dst == NULL) {
+			continue;
+		}
+		*dst = *src;
+	}
+}
+
+void silofs_spacestats_export(const struct silofs_spacestats *spst,
+                              struct silofs_spstats *out_spst)
+{
+	silofs_memzero(out_spst, sizeof(*out_spst));
+	out_spst->sp_btime = (uint64_t)(spst->btime);
+	out_spst->sp_ctime = (uint64_t)(spst->ctime);
+	out_spst->sp_capacity = spst->capacity;
+	out_spst->sp_vspacesize = spst->vspacesize;
+	spacestat_rec_export(&spst->blobs, &out_spst->sp_blobs);
+	spacestat_rec_export(&spst->bks, &out_spst->sp_bks);
+	spacestat_rec_export(&spst->objs, &out_spst->sp_objs);
+}
+
+void silofs_spacestats_import(struct silofs_spacestats *spst,
+                              const struct silofs_spstats *in_spst)
+{
+	silofs_memzero(spst, sizeof(*spst));
+	spst->btime = (time_t)in_spst->sp_btime;
+	spst->ctime = (time_t)in_spst->sp_ctime;
+	spst->capacity = in_spst->sp_capacity;
+	spst->vspacesize = in_spst->sp_vspacesize;
+	spacestat_rec_import(&spst->blobs, &in_spst->sp_blobs);
+	spacestat_rec_import(&spst->bks, &in_spst->sp_bks);
+	spacestat_rec_import(&spst->objs, &in_spst->sp_objs);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_sti_bind_uber(struct silofs_spstats_info *sti,
                           struct silofs_fs_uber *uber)
 {
 	silofs_ui_bind_uber(&sti->sp_ui, uber);
 }
 
-static void sti_dirtify(struct silofs_spstat_info *sti)
+static void sti_dirtify(struct silofs_spstats_info *sti)
 {
 	ui_dirtify(&sti->sp_ui);
 }
 
-void silofs_sti_setup_spawned(struct silofs_spstat_info *sti)
+void silofs_sti_setup_spawned(struct silofs_spstats_info *sti)
 {
 	union silofs_view *view = sti->sp_ui.u_si.s_view;
 
-	silofs_zero_stamp_meta(view, SILOFS_STYPE_SPSTAT);
+	silofs_zero_stamp_meta(view, SILOFS_STYPE_SPSTATS);
 	stnode_init(sti->sp);
 	sti_dirtify(sti);
 }
 
-void silofs_sti_make_clone(struct silofs_spstat_info *sti,
-                           const struct silofs_spstat_info *sti_other)
+void silofs_sti_make_clone(struct silofs_spstats_info *sti,
+                           const struct silofs_spstats_info *sti_other)
 {
 	stnode_make_clone(sti->sp, sti_other->sp);
 	sti_dirtify(sti);
@@ -408,18 +476,18 @@ void silofs_sti_make_clone(struct silofs_spstat_info *sti,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-size_t silofs_sti_capacity(const struct silofs_spstat_info *sti)
+size_t silofs_sti_capacity(const struct silofs_spstats_info *sti)
 {
 	return stnode_capacity(sti->sp);
 }
 
-void silofs_sti_set_capacity(struct silofs_spstat_info *sti, size_t capacity)
+void silofs_sti_set_capacity(struct silofs_spstats_info *sti, size_t capacity)
 {
 	stnode_set_capacity(sti->sp, capacity);
 	sti_dirtify(sti);
 }
 
-void silofs_sti_update_blobs(struct silofs_spstat_info *sti,
+void silofs_sti_update_blobs(struct silofs_spstats_info *sti,
                              enum silofs_stype stype, ssize_t take)
 {
 	if (take != 0) {
@@ -428,7 +496,7 @@ void silofs_sti_update_blobs(struct silofs_spstat_info *sti,
 	}
 }
 
-void silofs_sti_update_bks(struct silofs_spstat_info *sti,
+void silofs_sti_update_bks(struct silofs_spstats_info *sti,
                            enum silofs_stype stype, ssize_t take)
 {
 	if (take != 0) {
@@ -437,7 +505,7 @@ void silofs_sti_update_bks(struct silofs_spstat_info *sti,
 	}
 }
 
-void silofs_sti_update_objs(struct silofs_spstat_info *sti,
+void silofs_sti_update_objs(struct silofs_spstats_info *sti,
                             enum silofs_stype stype, ssize_t take)
 {
 	if (take != 0) {
@@ -446,40 +514,41 @@ void silofs_sti_update_objs(struct silofs_spstat_info *sti,
 	}
 }
 
-void silofs_sti_collect_stats(const struct silofs_spstat_info *sti,
-                              struct silofs_spacestat *spst)
+void silofs_sti_collect_stats(const struct silofs_spstats_info *sti,
+                              struct silofs_spacestats *spst)
 {
 	stnode_export_to(sti->sp, spst);
 }
 
-loff_t silofs_sti_vspace_end(const struct silofs_spstat_info *sti)
+loff_t silofs_sti_vspace_end(const struct silofs_spstats_info *sti)
 {
 	const size_t vspsz = stnode_vspacesize(sti->sp);
 
 	return (loff_t)vspsz;
 }
 
-size_t silofs_sti_bytes_used(const struct silofs_spstat_info *sti)
+size_t silofs_sti_bytes_used(const struct silofs_spstats_info *sti)
 {
-	struct silofs_spacestat spst = { .btime = 0 };
+	struct silofs_spacestats spst = { .btime = 0 };
 
 	stnode_export_to(sti->sp, &spst);
 	return spsr_sum(&spst.objs);
 }
 
-fsfilcnt_t silofs_sti_inodes_used(const struct silofs_spstat_info *sti)
+fsfilcnt_t silofs_sti_inodes_used(const struct silofs_spstats_info *sti)
 {
 	return stnode_ninodes(sti->sp);
 }
 
-fsfilcnt_t silofs_sti_inodes_max(const struct silofs_spstat_info *sti)
+fsfilcnt_t silofs_sti_inodes_max(const struct silofs_spstats_info *sti)
 {
 	return (silofs_sti_capacity(sti) / SILOFS_INODE_SIZE) >> 2;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_sti_may_alloc_some(const struct silofs_spstat_info *sti, size_t nb)
+bool silofs_sti_may_alloc_some(const struct silofs_spstats_info *sti,
+                               size_t nb)
 {
 	const size_t nbytes_used = silofs_sti_bytes_used(sti);
 	const size_t nbytes_cap = silofs_sti_capacity(sti);
@@ -488,7 +557,8 @@ bool silofs_sti_may_alloc_some(const struct silofs_spstat_info *sti, size_t nb)
 	return ((nb + nbytes_used + nbytes_pad) < nbytes_cap);
 }
 
-bool silofs_sti_may_alloc_data(const struct silofs_spstat_info *sti, size_t nb)
+bool silofs_sti_may_alloc_data(const struct silofs_spstats_info *sti,
+                               size_t nb)
 {
 	const size_t user_limit = (31 * silofs_sti_capacity(sti)) / 32;
 	const size_t used_bytes = silofs_sti_bytes_used(sti);
@@ -496,7 +566,7 @@ bool silofs_sti_may_alloc_data(const struct silofs_spstat_info *sti, size_t nb)
 	return ((used_bytes + nb) <= user_limit);
 }
 
-bool silofs_sti_may_alloc_meta(const struct silofs_spstat_info *sti,
+bool silofs_sti_may_alloc_meta(const struct silofs_spstats_info *sti,
                                size_t nb, bool new_file)
 {
 	const size_t limit = silofs_sti_capacity(sti);
@@ -532,7 +602,7 @@ static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
 	return (fsblkcnt_t)nbytes / unit;
 }
 
-void silofs_sti_fill_statvfs(const struct silofs_spstat_info *sti,
+void silofs_sti_fill_statvfs(const struct silofs_spstats_info *sti,
                              struct statvfs *out_stv)
 {
 	const size_t funit = 4 * SILOFS_KB_SIZE;
@@ -561,7 +631,7 @@ void silofs_sti_fill_statvfs(const struct silofs_spstat_info *sti,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_verify_stats_node(const struct silofs_spstat_node *st)
+int silofs_verify_stats_node(const struct silofs_spstats_node *st)
 {
 	return stnode_verify(st);
 }

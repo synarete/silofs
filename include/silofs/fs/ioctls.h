@@ -61,15 +61,9 @@ struct silofs_query_fsname {
 };
 
 struct silofs_query_statfsx {
+	struct silofs_spstats spst;
 	uint64_t msflags;     /* mount flags */
 	int64_t  uptime;      /* current up-time in seconds */
-	uint64_t bsize;       /* size of fs in bytes */
-	uint64_t bused;       /* number of used bytes */
-	uint64_t ilimit;      /* max number of inodes */
-	uint64_t icurr;       /* currently used inodes */
-	uint64_t umeta;       /* uspace used meta bytes */
-	uint64_t vmeta;       /* vspace used meta bytes */
-	uint64_t vdata;       /* vspace used data bytes */
 };
 
 struct silofs_query_statx {
@@ -80,16 +74,16 @@ struct silofs_query_statx {
 
 union silofs_query_u {
 	struct silofs_query_version     version;
-	struct silofs_query_bootsec  	bootsec;
+	struct silofs_query_bootsec     bootsec;
 	struct silofs_query_fsname      fsname;
 	struct silofs_query_statfsx     statfsx;
 	struct silofs_query_statx       statx;
-	uint8_t pad[2040];
+	uint8_t pad[1984];
 };
 
 struct silofs_ioc_query {
 	int32_t  qtype;
-	uint32_t reserved;
+	uint32_t reserved[15];
 	union silofs_query_u u;
 };
 

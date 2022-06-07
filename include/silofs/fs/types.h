@@ -384,8 +384,8 @@ struct silofs_spacestat_rec {
 	size_t nsymval;
 };
 
-/* space accounting per stype */
-struct silofs_spacestat {
+/* space accounting per sub-kind + sub-type */
+struct silofs_spacestats {
 	time_t btime;
 	time_t ctime;
 	size_t capacity;

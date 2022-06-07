@@ -408,7 +408,7 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_stype stype)
 	case SILOFS_STYPE_SYMVAL:
 		return &spam->spa_symval;
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTAT:
+	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:

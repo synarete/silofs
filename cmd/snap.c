@@ -176,14 +176,14 @@ static bool cmd_snap_is_src_mntdir(struct cmd_snap_ctx *ctx,
                                    const char *mntdir)
 {
 	struct silofs_ioc_query query = {
-		.qtype = SILOFS_QUERY_REPONAME,
+		.qtype = SILOFS_QUERY_BOOTSEC,
 	};
 	bool ret;
 
 	cmd_snap_ioctl_query(mntdir, &query);
-	ret = cmd_snap_stat_samedir(query.u.reponame.repodir,
+	ret = cmd_snap_stat_samedir(query.u.bootsec.repo,
 	                            ctx->args.src_repodir_real);
-	return ret && !strcmp(query.u.reponame.name, ctx->args.src_name);
+	return ret && !strcmp(query.u.bootsec.name, ctx->args.src_name);
 }
 
 static void cmd_snap_resolve_src_mntdir(struct cmd_snap_ctx *ctx)

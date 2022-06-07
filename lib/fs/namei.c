@@ -1973,7 +1973,7 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static void fill_query_reponame(const struct silofs_inode_info *ii,
+static void fill_query_bootsec(const struct silofs_inode_info *ii,
                                 struct silofs_ioc_query *query)
 {
 	const struct silofs_fs_uber *uber = ii_uber(ii);
@@ -1981,11 +1981,11 @@ static void fill_query_reponame(const struct silofs_inode_info *ii,
 	const struct silofs_bootpath *bpath = &repo->re_bootpath;
 	size_t bsz;
 
-	bsz = sizeof(query->u.reponame.repodir);
-	fill_strbuf(query->u.reponame.repodir, bsz, &bpath->repodir);
+	bsz = sizeof(query->u.bootsec.repo);
+	fill_strbuf(query->u.bootsec.repo, bsz, &bpath->repodir);
 
-	bsz = sizeof(query->u.reponame.name);
-	fill_strbuf(query->u.reponame.name, bsz, &bpath->name.s);
+	bsz = sizeof(query->u.bootsec.name);
+	fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
 }
 
 static void fill_query_statfsx(const struct silofs_inode_info *ii,
@@ -2028,8 +2028,8 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
 	case SILOFS_QUERY_VERSION:
 		fill_query_version(ii, query);
 		break;
-	case SILOFS_QUERY_REPONAME:
-		fill_query_reponame(ii, query);
+	case SILOFS_QUERY_BOOTSEC:
+		fill_query_bootsec(ii, query);
 		break;
 	case SILOFS_QUERY_STATFSX:
 		fill_query_statfsx(ii, query);

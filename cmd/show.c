@@ -22,7 +22,7 @@ static const char *cmd_show_usage[] = {
 	"",
 	"sub commands:",
 	"  version      Show mounted file-system's version",
-	"  reponame     Show back-end repo dir-path and fs-name",
+	"  bootsec      Show back-end repo dir-path and fs-name",
 	"  statfsx      Show extended file-system info",
 	"  statx        Show extended file stats",
 	NULL
@@ -68,8 +68,8 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const char *cmd_show_subcommands[] = {
-	[SILOFS_QUERY_VERSION]  = "version",
-	[SILOFS_QUERY_REPONAME] = "reponame",
+	[SILOFS_QUERY_VERSION] 	= "version",
+	[SILOFS_QUERY_BOOTSEC]	= "bootsec",
 	[SILOFS_QUERY_STATFSX]  = "statfsx",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
@@ -147,11 +147,11 @@ static void cmd_show_version(struct cmd_show_ctx *ctx)
 	printf("%s\n", ctx->query.u.version.string);
 }
 
-static void cmd_show_repo(struct cmd_show_ctx *ctx)
+static void cmd_show_bootsec(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s/%s\n", ctx->query.u.reponame.repodir,
-	       ctx->query.u.reponame.name);
+	printf("%s/%s\n", ctx->query.u.bootsec.repo,
+	       ctx->query.u.bootsec.name);
 }
 
 struct silofs_msflag_name {
@@ -236,8 +236,8 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_VERSION:
 		cmd_show_version(ctx);
 		break;
-	case SILOFS_QUERY_REPONAME:
-		cmd_show_repo(ctx);
+	case SILOFS_QUERY_BOOTSEC:
+		cmd_show_bootsec(ctx);
 		break;
 	case SILOFS_QUERY_STATFSX:
 		cmd_show_statfsx(ctx);

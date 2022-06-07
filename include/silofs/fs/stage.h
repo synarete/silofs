@@ -26,11 +26,15 @@ int silofs_sbi_stage_ubk_of(struct silofs_sb_info *sbi,
                             const struct silofs_oaddr *oaddr,
                             struct silofs_ubk_info **out_ubi);
 
-int silofs_sbi_stage_spnode2(struct silofs_sb_info *sbi, loff_t voff,
+int silofs_sbi_stage_spnode4(struct silofs_sb_info *sbi, loff_t voff,
                              enum silofs_stage_flags stg_flags,
                              struct silofs_spnode_info **out_sni);
 
 int silofs_sbi_stage_spnode3(struct silofs_sb_info *sbi, loff_t voff,
+                             enum silofs_stage_flags stg_flags,
+                             struct silofs_spnode_info **out_sni);
+
+int silofs_sbi_stage_spnode2(struct silofs_sb_info *sbi, loff_t voff,
                              enum silofs_stage_flags stg_flags,
                              struct silofs_spnode_info **out_sni);
 

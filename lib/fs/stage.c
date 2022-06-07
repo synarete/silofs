@@ -315,46 +315,6 @@ static int sbi_find_cached_spmap(struct silofs_sb_info *sbi,
 	return (*out_ui != NULL) ? 0 : -ENOENT;
 }
 
-static int sbi_find_cached_spnode3(struct silofs_sb_info *sbi, loff_t voff,
-                                   enum silofs_stage_flags stg_flags,
-                                   struct silofs_spnode_info **out_sni)
-{
-	struct silofs_unode_info *ui = NULL;
-	int err;
-
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE3_HEIGHT, &ui);
-	if (err) {
-		return err;
-	}
-	*out_sni = silofs_sni_from_ui(ui);
-
-	err = sbi_inspect_cached_sni(sbi, *out_sni, stg_flags);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int sbi_find_cached_spnode2(struct silofs_sb_info *sbi, loff_t voff,
-                                   enum silofs_stage_flags stg_flags,
-                                   struct silofs_spnode_info **out_sni)
-{
-	struct silofs_unode_info *ui = NULL;
-	int err;
-
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE2_HEIGHT, &ui);
-	if (err) {
-		return err;
-	}
-	*out_sni = silofs_sni_from_ui(ui);
-
-	err = sbi_inspect_cached_sni(sbi, *out_sni, stg_flags);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 int silofs_sbi_stage_ubk_of(struct silofs_sb_info *sbi,
                             const struct silofs_oaddr *oaddr,
                             struct silofs_ubk_info **out_ubi)
@@ -519,33 +479,6 @@ out_err:
 	return err;
 }
 
-static void stgc_setup_spawned_spnode3(const struct silofs_stage_ctx *stg_ctx,
-                                       struct silofs_spnode_info *sni)
-{
-	silofs_sni_setup_spawned(sni, sbi_uaddr(stg_ctx->sbi),
-	                         stg_ctx->voff, SILOFS_STYPE_NONE);
-}
-
-static int stgc_spawn_spnode3_of(const struct silofs_stage_ctx *stg_ctx,
-                                 struct silofs_spnode_info **out_sni)
-{
-	struct silofs_uaddr uaddr;
-	int err;
-
-	err = sbi_require_main_blob(stg_ctx->sbi);
-	if (err) {
-		return err;
-	}
-	silofs_sbi_main_child_at(stg_ctx->sbi, stg_ctx->voff, &uaddr);
-
-	err = sbi_spawn_spnode_at(stg_ctx->sbi, &uaddr, out_sni);
-	if (err) {
-		return err;
-	}
-	stgc_setup_spawned_spnode3(stg_ctx, *out_sni);
-	return 0;
-}
-
 static int sbi_stage_spnode_main_blob(struct silofs_sb_info *sbi,
                                       struct silofs_spnode_info *sni)
 {
@@ -595,34 +528,52 @@ static int sbi_require_spnode_main_blob(struct silofs_sb_info *sbi,
 	return err;
 }
 
-static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
-                                       struct silofs_spnode_info *sni)
-{
-	silofs_assert_ne(stg_ctx->stype_sub, SILOFS_STYPE_NONE);
-	silofs_assert(stype_isvnode(stg_ctx->stype_sub));
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni_parent),
-	                         stg_ctx->voff, stg_ctx->stype_sub);
+static int sbi_find_cached_spnode3(struct silofs_sb_info *sbi, loff_t voff,
+                                   enum silofs_stage_flags stg_flags,
+                                   struct silofs_spnode_info **out_sni)
+{
+	struct silofs_unode_info *ui = NULL;
+	int err;
+
+	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE3_HEIGHT, &ui);
+	if (err) {
+		return err;
+	}
+	*out_sni = silofs_sni_from_ui(ui);
+
+	err = sbi_inspect_cached_sni(sbi, *out_sni, stg_flags);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
+static void stgc_setup_spawned_spnode3(const struct silofs_stage_ctx *stg_ctx,
+                                       struct silofs_spnode_info *sni)
+{
+	silofs_sni_setup_spawned(sni, sbi_uaddr(stg_ctx->sbi),
+	                         stg_ctx->voff, SILOFS_STYPE_NONE);
+}
+
+static int stgc_spawn_spnode3_of(const struct silofs_stage_ctx *stg_ctx,
                                  struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uaddr uaddr;
 	int err;
 
-	err = sbi_require_spnode_main_blob(stg_ctx->sbi, stg_ctx->sni_parent);
+	err = sbi_require_main_blob(stg_ctx->sbi);
 	if (err) {
 		return err;
 	}
-	silofs_sni_resolve_main_child(stg_ctx->sni_parent,
-	                              stg_ctx->voff, &uaddr);
+	silofs_sbi_main_child_at(stg_ctx->sbi, stg_ctx->voff, &uaddr);
 
 	err = sbi_spawn_spnode_at(stg_ctx->sbi, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
-	stgc_setup_spawned_spnode2(stg_ctx, *out_sni);
+	stgc_setup_spawned_spnode3(stg_ctx, *out_sni);
 	return 0;
 }
 
@@ -690,6 +641,91 @@ out_ok:
 	return 0;
 }
 
+static int sbi_stage_spnode3_of(struct silofs_sb_info *sbi, loff_t voff,
+                                enum silofs_stage_flags stg_flags,
+                                struct silofs_spnode_info **out_sni)
+{
+	struct silofs_stage_ctx stg_ctx = {
+		.sbi = sbi,
+		.sni_parent = NULL,
+		.stg_flags = stg_flags,
+		.voff = voff,
+		.stype_sub = SILOFS_STYPE_NONE,
+	};
+
+	return stgc_stage_spnode3(&stg_ctx, out_sni);
+}
+
+int silofs_sbi_stage_spnode3(struct silofs_sb_info *sbi, loff_t voff,
+                             enum silofs_stage_flags stg_flags,
+                             struct silofs_spnode_info **out_sni)
+{
+	int err;
+
+	err = sbi_find_cached_spnode3(sbi, voff, stg_flags, out_sni);
+	if (!err) {
+		return 0;
+	}
+	err = sbi_stage_spnode3_of(sbi, voff, stg_flags, out_sni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int sbi_find_cached_spnode2(struct silofs_sb_info *sbi, loff_t voff,
+                                   enum silofs_stage_flags stg_flags,
+                                   struct silofs_spnode_info **out_sni)
+{
+	struct silofs_unode_info *ui = NULL;
+	int err;
+
+	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE2_HEIGHT, &ui);
+	if (err) {
+		return err;
+	}
+	*out_sni = silofs_sni_from_ui(ui);
+
+	err = sbi_inspect_cached_sni(sbi, *out_sni, stg_flags);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
+                                       struct silofs_spnode_info *sni)
+{
+	silofs_assert_ne(stg_ctx->stype_sub, SILOFS_STYPE_NONE);
+	silofs_assert(stype_isvnode(stg_ctx->stype_sub));
+
+	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni_parent),
+	                         stg_ctx->voff, stg_ctx->stype_sub);
+}
+
+static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
+                                 struct silofs_spnode_info **out_sni)
+{
+	struct silofs_uaddr uaddr;
+	int err;
+
+	err = sbi_require_spnode_main_blob(stg_ctx->sbi, stg_ctx->sni_parent);
+	if (err) {
+		return err;
+	}
+	silofs_sni_resolve_main_child(stg_ctx->sni_parent,
+	                              stg_ctx->voff, &uaddr);
+
+	err = sbi_spawn_spnode_at(stg_ctx->sbi, &uaddr, out_sni);
+	if (err) {
+		return err;
+	}
+	stgc_setup_spawned_spnode2(stg_ctx, *out_sni);
+	return 0;
+}
+
 static int stgc_spawn_spnode2(const struct silofs_stage_ctx *stg_ctx,
                               struct silofs_spnode_info **out_sni)
 {
@@ -751,38 +787,6 @@ static int stgc_stage_spnode2(const struct silofs_stage_ctx *stg_ctx,
 	}
 out_ok:
 	*out_sni = sni;
-	return 0;
-}
-
-static int sbi_stage_spnode3_of(struct silofs_sb_info *sbi, loff_t voff,
-                                enum silofs_stage_flags stg_flags,
-                                struct silofs_spnode_info **out_sni)
-{
-	struct silofs_stage_ctx stg_ctx = {
-		.sbi = sbi,
-		.sni_parent = NULL,
-		.stg_flags = stg_flags,
-		.voff = voff,
-		.stype_sub = SILOFS_STYPE_NONE,
-	};
-
-	return stgc_stage_spnode3(&stg_ctx, out_sni);
-}
-
-int silofs_sbi_stage_spnode3(struct silofs_sb_info *sbi, loff_t voff,
-                             enum silofs_stage_flags stg_flags,
-                             struct silofs_spnode_info **out_sni)
-{
-	int err;
-
-	err = sbi_find_cached_spnode3(sbi, voff, stg_flags, out_sni);
-	if (!err) {
-		return 0;
-	}
-	err = sbi_stage_spnode3_of(sbi, voff, stg_flags, out_sni);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 

@@ -1908,9 +1908,7 @@ int silofs_do_rename(const struct silofs_fs_ctx *fs_ctx,
 
 static time_t uptime_of(const struct silofs_sb_info *sbi)
 {
-	const time_t now = silofs_time_now_monotonic();
-
-	return now - sbi->sb_mntime;
+	return silofs_uber_uptime(sbi_uber(sbi));
 }
 
 static void fill_statfsx(const struct silofs_sb_info *sbi,

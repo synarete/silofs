@@ -23,6 +23,8 @@ int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_repos *repos);
 
 void silofs_uber_fini(struct silofs_fs_uber *uber);
 
+time_t silofs_uber_uptime(const struct silofs_fs_uber *uber);
+
 void silofs_uber_shut(struct silofs_fs_uber *uber);
 
 void silofs_uber_relax_caches(const struct silofs_fs_uber *uber, int flags);

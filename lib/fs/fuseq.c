@@ -1584,7 +1584,6 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
                    const struct silofs_fuseq_in *in)
 {
 	struct silofs_fuseq_conn_info *coni = &fqw->fq->fq_coni;
-	struct silofs_fs_uber *uber = fqw->fq->fq_uber;
 	const int in_major = (int)(in->u.init.arg.major);
 	const int in_minor = (int)(in->u.init.arg.minor);
 	const int in_flags = (int)(in->u.init.arg.flags);
@@ -1630,9 +1629,6 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	 * Enable FUSE_POSIX_ACL (plus, "system." prefix in xattr)
 	 */
 	/* setup_cap_want(coni, FUSE_POSIX_ACL); */
-
-	/* TODO: let super do his private stuff on init */
-	uber->ub_sbi->sb_mntime = silofs_time_now_monotonic();
 
 out:
 	ret = fuseq_reply_init(fqw, err);

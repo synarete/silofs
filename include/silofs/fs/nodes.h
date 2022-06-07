@@ -68,7 +68,6 @@ struct silofs_sb_info {
 	struct silofs_vspalloc_hints    sb_vspa;
 	unsigned long                   sb_ctl_flags;
 	unsigned long                   sb_ms_flags;
-	time_t                          sb_mntime;
 };
 
 /* space-stats */

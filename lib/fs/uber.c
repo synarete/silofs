@@ -42,7 +42,7 @@ static size_t uber_calc_iopen_limit(const struct silofs_fs_uber *uber)
 static void uber_init_commons(struct silofs_fs_uber *uber,
                               struct silofs_repos *repos)
 {
-	uber->ub_initime = silofs_time_now();
+	uber->ub_initime = silofs_time_now_monotonic();
 	uber->ub_repos = repos;
 	uber->ub_alloc = repos->repo_main.re_alloc;
 	uber->ub_iconv = (iconv_t)(-1);
@@ -117,6 +117,13 @@ void silofs_uber_fini(struct silofs_fs_uber *uber)
 	uber_fini_iconv(uber);
 	uber_fini_piper(uber);
 	uber_fini_commons(uber);
+}
+
+time_t silofs_uber_uptime(const struct silofs_fs_uber *uber)
+{
+	const time_t now = silofs_time_now_monotonic();
+
+	return now - uber->ub_initime;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

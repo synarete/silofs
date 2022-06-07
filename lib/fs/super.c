@@ -1074,7 +1074,6 @@ static void sbi_update_by(struct silofs_sb_info *sbi,
 	silofs_itbl_update_by(&sbi->sb_itbl, &sbi_other->sb_itbl);
 	sbi->sb_ctl_flags = sbi_other->sb_ctl_flags;
 	sbi->sb_ms_flags = sbi_other->sb_ms_flags;
-	sbi->sb_mntime = sbi_other->sb_mntime;
 }
 
 void silofs_sbi_make_clone(struct silofs_sb_info *sbi,

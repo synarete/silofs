@@ -25,6 +25,7 @@ struct silofs_flush_ctx {
 	struct silofs_repo     *repo;
 	struct silofs_cache    *cache;
 	int flags;
+	bool main;
 };
 
 
@@ -268,15 +269,16 @@ static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx)
 static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
                          const struct silofs_sgvec *sgv)
 {
-	struct silofs_oaddr oaddr;
+	struct silofs_oaddr oaddr = { .pos = -1 };
+	const struct silofs_blobid *blobid = &sgv->blobid;
 	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	oaddr_setup(&oaddr, &sgv->blobid, sgv->off, sgv->len);
-	err = silofs_repo_stage_blob(fl_ctx->repo, &oaddr.bka.blobid, &bli);
+	err = silofs_stage_blob_at(fl_ctx->uber, fl_ctx->main, blobid, &bli);
 	if (err) {
 		return err;
 	}
+	oaddr_setup(&oaddr, blobid, sgv->off, sgv->len);
 	err = silofs_bli_storev(bli, &oaddr, sgv->iov, sgv->cnt);
 	if (err) {
 		return err;
@@ -383,6 +385,7 @@ static int uber_flush_main(struct silofs_fs_uber *uber, int flags)
 		.repo = &uber->ub_repos->repo_main,
 		.cache = &uber->ub_repos->repo_main.re_cache,
 		.flags = flags,
+		.main = true,
 	};
 	int err;
 
@@ -400,6 +403,7 @@ static int uber_flush_cold(struct silofs_fs_uber *uber, int flags)
 		.repo = &uber->ub_repos->repo_cold,
 		.cache = &uber->ub_repos->repo_cold.re_cache,
 		.flags = flags,
+		.main = false,
 	};
 	int err;
 

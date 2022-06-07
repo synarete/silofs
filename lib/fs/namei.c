@@ -1911,16 +1911,20 @@ static time_t uptime_of(const struct silofs_sb_info *sbi)
 	return silofs_uber_uptime(sbi_uber(sbi));
 }
 
-static void fill_statfsx(const struct silofs_sb_info *sbi,
-                         struct silofs_query_statfsx *stx)
+static void fill_spstats(const struct silofs_sb_info *sbi,
+                         struct silofs_query_spstats *qsp)
 {
 	struct silofs_spacestats spst;
-	const struct silofs_spstats_info *sti = sbi->sb_sti;
 
-	silofs_sti_collect_stats(sti, &spst);
-	silofs_spacestats_export(&spst, &stx->spst);
-	stx->uptime = uptime_of(sbi);
-	stx->msflags = sbi->sb_ms_flags;
+	silofs_sti_collect_stats(sbi->sb_sti, &spst);
+	silofs_spacestats_export(&spst, &qsp->spst);
+}
+
+static void fill_uptime(const struct silofs_sb_info *sbi,
+                        struct silofs_query_uptime *qut)
+{
+	qut->uptime = uptime_of(sbi);
+	qut->msflags = sbi->sb_ms_flags;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1986,10 +1990,16 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 	fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
 }
 
-static void fill_query_statfsx(const struct silofs_inode_info *ii,
+static void fill_query_uptime(const struct silofs_inode_info *ii,
+                              struct silofs_ioc_query *query)
+{
+	fill_uptime(ii_sbi(ii), &query->u.uptime);
+}
+
+static void fill_query_spstats(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	fill_statfsx(ii_sbi(ii), &query->u.statfsx);
+	fill_spstats(ii_sbi(ii), &query->u.spstats);
 }
 
 static int do_query_statx(const struct silofs_fs_ctx *fs_ctx,
@@ -2029,8 +2039,11 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
 	case SILOFS_QUERY_BOOTSEC:
 		fill_query_bootsec(ii, query);
 		break;
-	case SILOFS_QUERY_STATFSX:
-		fill_query_statfsx(ii, query);
+	case SILOFS_QUERY_UPTIME:
+		fill_query_uptime(ii, query);
+		break;
+	case SILOFS_QUERY_SPSTATS:
+		fill_query_spstats(ii, query);
 		break;
 	case SILOFS_QUERY_STATX:
 		err = do_query_statx(fs_ctx, ii, query);

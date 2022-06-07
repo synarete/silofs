@@ -23,7 +23,8 @@ static const char *cmd_show_usage[] = {
 	"sub commands:",
 	"  version      Show mounted file-system's version",
 	"  bootsec      Show back-end repo dir-path and fs-name",
-	"  statfsx      Show extended file-system info",
+	"  uptime       Show current mount uptime in seconds",
+	"  spstats      Show space-allocations stats",
 	"  statx        Show extended file stats",
 	NULL
 };
@@ -70,7 +71,8 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
 	[SILOFS_QUERY_BOOTSEC]  = "bootsec",
-	[SILOFS_QUERY_STATFSX]  = "statfsx",
+	[SILOFS_QUERY_UPTIME]   = "uptime",
+	[SILOFS_QUERY_SPSTATS]  = "spstats",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
 
@@ -193,12 +195,27 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 	}
 }
 
-static void print_time(const char *prefix, const char *name, time_t tm)
+static void print_msflags(unsigned long msflags)
 {
-	if (prefix && strlen(prefix)) {
-		printf("%s.%s: %ld\n", prefix, name, tm);
-	} else {
-		printf("%s: %ld\n", name, tm);
+	char mntfstr[128] = "";
+
+	msflags_str(msflags, mntfstr, sizeof(mntfstr) - 1);
+	printf("mount-flags: %s\n", mntfstr);
+}
+
+static void print_time(const char *name, time_t tm)
+{
+	printf("%s: %ld\n", name, tm);
+}
+
+static void cmd_show_uptime(struct cmd_show_ctx *ctx)
+{
+	const struct silofs_query_uptime *qstfx = &ctx->query.u.uptime;
+
+	cmd_show_do_ioctl_query(ctx);
+	print_time("uptime", (time_t)qstfx->uptime);
+	if (qstfx->msflags) {
+		print_msflags(qstfx->msflags);
 	}
 }
 
@@ -211,21 +228,13 @@ static void print_count(const char *prefix, const char *name, size_t cnt)
 	}
 }
 
-static void print_msflags(unsigned long msflags)
-{
-	char mntfstr[128] = "";
-
-	msflags_str(msflags, mntfstr, sizeof(mntfstr) - 1);
-	printf("mount-flags: %s\n", mntfstr);
-}
-
 static void print_spacestats(const struct silofs_spacestats *spst)
 {
 	const char *prefix;
 
 	prefix = "";
-	print_time(prefix, "btime", spst->btime);
-	print_time(prefix, "ctime", spst->ctime);
+	print_time("btime", spst->btime);
+	print_time("ctime", spst->ctime);
 	print_count(prefix, "capacity", spst->capacity);
 	print_count(prefix, "vspacesize", spst->vspacesize);
 	prefix = "blobs";
@@ -272,16 +281,12 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "nsymval", spst->objs.nsymval);
 }
 
-static void cmd_show_statfsx(struct cmd_show_ctx *ctx)
+static void cmd_show_spstats(struct cmd_show_ctx *ctx)
 {
 	struct silofs_spacestats spst;
-	const char *prefix = "";
-	const struct silofs_query_statfsx *qstfx = &ctx->query.u.statfsx;
 
 	cmd_show_do_ioctl_query(ctx);
-	silofs_spacestats_import(&spst, &qstfx->spst);
-	print_msflags(qstfx->msflags);
-	print_time(prefix, "uptime", (time_t)qstfx->uptime);
+	silofs_spacestats_import(&spst, &ctx->query.u.spstats.spst);
 	print_spacestats(&spst);
 }
 
@@ -313,8 +318,11 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_BOOTSEC:
 		cmd_show_bootsec(ctx);
 		break;
-	case SILOFS_QUERY_STATFSX:
-		cmd_show_statfsx(ctx);
+	case SILOFS_QUERY_UPTIME:
+		cmd_show_uptime(ctx);
+		break;
+	case SILOFS_QUERY_SPSTATS:
+		cmd_show_spstats(ctx);
 		break;
 	case SILOFS_QUERY_STATX:
 		cmd_show_statx(ctx);

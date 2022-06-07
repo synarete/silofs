@@ -41,13 +41,11 @@ static void ut_query_spacestats(struct ut_env *ute, ino_t ino,
                                 struct silofs_spacestats *out_spst)
 {
 	struct silofs_ioc_query query = {
-		.u.statfsx.uptime = -1,
+		.u.uptime.uptime = -1,
 	};
 
-	ut_query_ok(ute, ino, SILOFS_QUERY_STATFSX, &query);
-	ut_expect_ge(query.u.statfsx.uptime, 0);
-
-	silofs_spacestats_import(out_spst, &query.u.statfsx.spst);
+	ut_query_ok(ute, ino, SILOFS_QUERY_SPSTATS, &query);
+	silofs_spacestats_import(out_spst, &query.u.spstats.spst);
 }
 
 static void ut_ioctl_query_statfsx(struct ut_env *ute)

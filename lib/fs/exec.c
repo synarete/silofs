@@ -556,16 +556,43 @@ static void fse_relax_drop_caches(struct silofs_fs_env *fse)
 	silofs_drop_itable_cache(fse_sbi(fse));
 }
 
-static int fse_reload_meta(struct silofs_fs_env *fse)
+static int fse_reload_block0(struct silofs_fs_env *fse)
 {
-	struct silofs_sb_info *sbi = fse_sbi(fse);
+	struct silofs_vaddr vaddr;
+	struct silofs_spleaf_info *sli = NULL;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_reload_spmaps(sbi);
+	vaddr_setup(&vaddr, SILOFS_STYPE_DATABK, 0);
+	err = silofs_sbi_stage_spleaf_of(fse_sbi(fse), &vaddr, stg_mode, &sli);
+	if (err) {
+		log_err("failed to stage first block: err=%d", err);
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int fse_reload_inodes_table(struct silofs_fs_env *fse)
+{
+	int err;
+
+	err = silofs_sbi_reload_itable(fse_sbi(fse));
+	if (err) {
+		log_err("failed to load inodes-table: err=%d", err);
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int fse_reload_meta(struct silofs_fs_env *fse)
+{
+	int err;
+
+	err = fse_reload_block0(fse);
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_reload_itable(sbi);
+	err = fse_reload_inodes_table(fse);
 	if (err) {
 		return err;
 	}

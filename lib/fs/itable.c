@@ -834,14 +834,14 @@ static int recheck_itnode(struct silofs_itnode_info *itni)
 
 static int itc_stage_itnode(const struct silofs_it_ctx *it_ctx,
                             const struct silofs_vaddr *vaddr,
-                            enum silofs_stage_flags stg_flags,
+                            enum silofs_stage_mode stg_mode,
                             struct silofs_itnode_info **out_itni)
 {
 	int err;
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_itnode_info *itni = NULL;
 
-	err = silofs_sbi_stage_vnode(it_ctx->sbi, vaddr, stg_flags, &vi);
+	err = silofs_sbi_stage_vnode(it_ctx->sbi, vaddr, stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -865,7 +865,7 @@ static int itc_stage_rdonly_itnode(const struct silofs_it_ctx *it_ctx,
 static int
 itc_stage_child_itnode(const struct silofs_it_ctx *it_ctx,
                        struct silofs_itnode_info *parent_itni,
-                       ino_t ino, enum silofs_stage_flags stg_flags,
+                       ino_t ino, enum silofs_stage_mode stg_mode,
                        struct silofs_itnode_info **out_itni)
 {
 	struct silofs_vaddr vaddr;
@@ -873,7 +873,7 @@ itc_stage_child_itnode(const struct silofs_it_ctx *it_ctx,
 
 	itni_resolve_child(parent_itni, ino, &vaddr);
 	itni_incref(parent_itni);
-	err = itc_stage_itnode(it_ctx, &vaddr, stg_flags, out_itni);
+	err = itc_stage_itnode(it_ctx, &vaddr, stg_mode, out_itni);
 	itni_decref(parent_itni);
 	return err;
 }
@@ -897,13 +897,13 @@ itc_stage_rdonly_child(const struct silofs_it_ctx *it_ctx,
 }
 
 static int itc_stage_itroot(const struct silofs_it_ctx *it_ctx,
-                            enum silofs_stage_flags stg_flags,
+                            enum silofs_stage_mode stg_mode,
                             struct silofs_itnode_info **out_itni)
 {
 	const struct silofs_vaddr *it_root = itc_treeroot(it_ctx);
 	int err;
 
-	err = itc_stage_itnode(it_ctx, it_root, stg_flags, out_itni);
+	err = itc_stage_itnode(it_ctx, it_root, stg_mode, out_itni);
 	if (err) {
 		return err;
 	}

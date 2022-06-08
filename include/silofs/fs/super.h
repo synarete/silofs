@@ -67,11 +67,11 @@ int silofs_sbi_reload_itable(struct silofs_sb_info *sbi);
 
 int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
                            const struct silofs_vaddr *vaddr,
-                           enum silofs_stage_flags flags,
+                           enum silofs_stage_mode flags,
                            struct silofs_vnode_info **out_vi);
 
 int silofs_sbi_stage_inode(struct silofs_sb_info *sbi,
-                           ino_t ino, enum silofs_stage_flags flags,
+                           ino_t ino, enum silofs_stage_mode flags,
                            struct silofs_inode_info **out_ii);
 
 

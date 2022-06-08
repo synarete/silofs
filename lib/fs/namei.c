@@ -427,7 +427,7 @@ static int lookup_by_name(const struct silofs_fs_ctx *fs_ctx,
 static int stage_by_name(const struct silofs_fs_ctx *fs_ctx,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name,
-                         enum silofs_stage_flags stg_flags,
+                         enum silofs_stage_mode stg_mode,
                          struct silofs_inode_info **out_ii)
 {
 	struct silofs_sb_info *sbi = ii_sbi(dir_ii);
@@ -438,7 +438,7 @@ static int stage_by_name(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_stage_inode(sbi, ino, stg_flags, out_ii);
+	err = silofs_sbi_stage_inode(sbi, ino, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}

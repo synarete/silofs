@@ -60,7 +60,7 @@ struct silofs_xattr_ctx {
 	int     flags;
 	int     keep_iter;
 	bool    kill_sgid;
-	enum silofs_stage_flags stg_flags;
+	enum silofs_stage_mode stg_mode;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -553,7 +553,7 @@ static int xac_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 
 	ii_incref(xa_ctx->ii);
 	ret = silofs_sbi_stage_vnode(xa_ctx->sbi, vaddr,
-	                             xa_ctx->stg_flags, &vi);
+	                             xa_ctx->stg_mode, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -749,7 +749,7 @@ int silofs_do_getxattr(const struct silofs_fs_ctx *fs_ctx,
 		.value.ptr = buf,
 		.value.len = 0,
 		.value.cap = size,
-		.stg_flags = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
 
 	return xac_getxattr(&xa_ctx, out_size);
@@ -974,7 +974,7 @@ int silofs_do_setxattr(const struct silofs_fs_ctx *fs_ctx,
 		.size = size,
 		.flags = flags,
 		.kill_sgid = kill_sgid,
-		.stg_flags = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_MUTABLE,
 	};
 
 	return xac_setxattr(&xa_ctx);
@@ -1018,7 +1018,7 @@ int silofs_do_removexattr(const struct silofs_fs_ctx *fs_ctx,
 		.fs_ctx = fs_ctx,
 		.ii = ii,
 		.name = name,
-		.stg_flags = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_MUTABLE,
 	};
 
 	return xac_removexattr(&xa_ctx);
@@ -1146,7 +1146,7 @@ int silofs_do_listxattr(const struct silofs_fs_ctx *fs_ctx,
 		.ii = ii,
 		.lxa_ctx = lxa_ctx,
 		.keep_iter = true,
-		.stg_flags = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
 
 	return xac_listxattr(&xa_ctx);
@@ -1189,7 +1189,7 @@ int silofs_drop_xattr(struct silofs_inode_info *ii)
 	struct silofs_xattr_ctx xa_ctx = {
 		.sbi = ii_sbi(ii),
 		.ii = ii,
-		.stg_flags = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_MUTABLE,
 	};
 
 	return xac_drop_xattr_slots(&xa_ctx);

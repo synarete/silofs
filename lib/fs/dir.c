@@ -49,7 +49,7 @@ struct silofs_dir_ctx {
 	struct silofs_inode_info       *child_ii;
 	struct silofs_readdir_ctx      *rd_ctx;
 	const struct silofs_qstr       *name;
-	enum silofs_stage_flags         stg_flags;
+	enum silofs_stage_mode         stg_mode;
 	int keep_iter;
 	int readdir_plus;
 };
@@ -1202,7 +1202,7 @@ static int dic_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
-	ret = silofs_sbi_stage_vnode(d_ctx->sbi, vaddr, d_ctx->stg_flags, &vi);
+	ret = silofs_sbi_stage_vnode(d_ctx->sbi, vaddr, d_ctx->stg_mode, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -1455,7 +1455,7 @@ int silofs_lookup_dentry(const struct silofs_fs_ctx *fs_ctx,
 		.fs_ctx = fs_ctx,
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
-		.stg_flags = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
 
 	return dic_lookup_dentry(&d_ctx, out_idt);
@@ -1652,7 +1652,7 @@ int silofs_add_dentry(const struct silofs_fs_ctx *fs_ctx,
 		.dir_ii = dir_ii,
 		.child_ii = ii,
 		.name = name,
-		.stg_flags = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_MUTABLE,
 	};
 
 	return dic_add_dentry(&d_ctx);
@@ -1664,7 +1664,7 @@ static int dic_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
                            struct silofs_inode_info **out_ii)
 {
 	return silofs_sbi_stage_inode(d_ctx->sbi, ino,
-	                              d_ctx->stg_flags, out_ii);
+	                              d_ctx->stg_mode, out_ii);
 }
 
 static int dic_check_stage_parent(struct silofs_dir_ctx *d_ctx)
@@ -2068,7 +2068,7 @@ int silofs_do_readdir(const struct silofs_fs_ctx *fs_ctx,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
 		.readdir_plus = 0,
-		.stg_flags = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
 
 	return dic_readdir(&d_ctx);
@@ -2085,7 +2085,7 @@ int silofs_do_readdirplus(const struct silofs_fs_ctx *fs_ctx,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
 		.readdir_plus = 1,
-		.stg_flags = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
 
 	return dic_readdir(&d_ctx);
@@ -2270,7 +2270,7 @@ int silofs_remove_dentry(const struct silofs_fs_ctx *fs_ctx,
 		.fs_ctx = fs_ctx,
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
-		.stg_flags = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_MUTABLE,
 	};
 
 	return dic_remove_dentry(&d_ctx);

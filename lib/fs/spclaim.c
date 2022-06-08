@@ -193,14 +193,17 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int spc_stage_spnode2(struct silofs_spalloc_ctx *spa_ctx, loff_t voff,
-                             enum silofs_stage_flags stg_flags)
+                             enum silofs_stage_mode stg_mode)
 {
-	return silofs_sbi_stage_spnode2(spa_ctx->sbi, voff,
-	                                stg_flags, &spa_ctx->sni);
+	struct silofs_vaddr vaddr;
+
+	vaddr_setup(&vaddr, spa_ctx->stype, voff);
+	return silofs_sbi_stage_spnode2_of(spa_ctx->sbi, &vaddr,
+	                                   stg_mode, &spa_ctx->sni);
 }
 
 static int
-spc_stage_ro_spnode2(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spc_stage_rdo_spnode2(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	return spc_stage_spnode2(spa_ctx, voff, SILOFS_STAGE_RDONLY);
 }
@@ -212,33 +215,44 @@ spc_stage_mut_spnode2(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 }
 
 static int spc_stage_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff,
-                            enum silofs_stage_flags stg_flags)
+                            enum silofs_stage_mode stg_mode)
 {
+	struct silofs_vaddr vaddr;
 	struct silofs_sb_info *sbi = spa_ctx->sbi;
 	int ret;
 
 	sni_incref(spa_ctx->sni);
-	ret = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &spa_ctx->sli);
+	vaddr_setup(&vaddr, spa_ctx->stype, voff);
+	ret = silofs_sbi_stage_spleaf_of(sbi, &vaddr, stg_mode, &spa_ctx->sli);
 	sni_decref(spa_ctx->sni);
 	return ret;
 }
 
 static int
-spc_stage_rdonly_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spc_stage_rdo_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	return spc_stage_spleaf(spa_ctx, voff, SILOFS_STAGE_RDONLY);
 }
 
 static int
-spc_stage_mutable_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spc_stage_mut_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	return spc_stage_spleaf(spa_ctx, voff, SILOFS_STAGE_MUTABLE);
 }
 
-static int spc_require_spmaps_with(struct silofs_spalloc_ctx *spa_ctx,
-                                   loff_t voff, enum silofs_stype stype_sub)
+static int spc_require_spmaps_of(const struct silofs_spalloc_ctx *spa_ctx,
+                                 loff_t voff, enum silofs_stype stype_sub)
 {
-	return silofs_sbi_require_spmaps_at(spa_ctx->sbi, voff, stype_sub);
+	struct silofs_vaddr vaddr;
+
+	vaddr_setup(&vaddr, stype_sub, voff);
+	return silofs_sbi_require_spmaps_of(spa_ctx->sbi, &vaddr);
+}
+
+static int
+spc_require_spmaps_at(const struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+{
+	return spc_require_spmaps_of(spa_ctx, voff, spa_ctx->stype);
 }
 
 static int spc_stage_mutable_spmaps(struct silofs_spalloc_ctx *spa_ctx,
@@ -246,7 +260,7 @@ static int spc_stage_mutable_spmaps(struct silofs_spalloc_ctx *spa_ctx,
 {
 	int err;
 
-	err = spc_require_spmaps_with(spa_ctx, voff, stype_sub);
+	err = spc_require_spmaps_of(spa_ctx, voff, stype_sub);
 	if (err) {
 		return err;
 	}
@@ -254,7 +268,7 @@ static int spc_stage_mutable_spmaps(struct silofs_spalloc_ctx *spa_ctx,
 	if (err) {
 		return err;
 	}
-	err = spc_stage_mutable_spleaf(spa_ctx, voff);
+	err = spc_stage_mut_spleaf(spa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -289,7 +303,7 @@ spc_find_free_space_at_leaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	const enum silofs_stype stype = spa_ctx->stype;
 	int err;
 
-	err = spc_stage_rdonly_spleaf(spa_ctx, voff);
+	err = spc_stage_rdo_spleaf(spa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -367,7 +381,7 @@ spc_try_find_free_at_spnode(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	int err;
 
-	err = spc_stage_ro_spnode2(spa_ctx, voff);
+	err = spc_stage_rdo_spnode2(spa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -378,37 +392,15 @@ spc_try_find_free_at_spnode(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	return 0;
 }
 
-static int
-spc_require_spmaps_at(const struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
-{
-	struct silofs_sb_info *sbi = spa_ctx->sbi;
-	const enum silofs_stype stype_sub = spa_ctx->stype;
-
-	return silofs_sbi_require_spmaps_at(sbi, voff, stype_sub);
-}
-
 static int spc_want_spmaps_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
-	struct silofs_sb_info *sbi = spa_ctx->sbi;
-	struct silofs_spnode_info *sni = NULL;
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
+	const enum silofs_stype stype = spa_ctx->stype;
 	int err;
 
-	err = silofs_sbi_stage_spnode3(sbi, voff, stg_flags, &sni);
-	if (err == -ENOENT) {
-		goto out_want_path;
-	}
-	err = silofs_sbi_stage_spnode2(sbi, voff, stg_flags, &sni);
-	if (err == -ENOENT) {
-		goto out_want_path;
-	}
-	err = silofs_sni_check_may_alloc_at(sni, voff, spa_ctx->stype);
-	if (err) {
-		return err;
-	}
-	return 0;
-out_want_path:
-	if (!spa_ctx->no_new_blobs) {
+	err = spc_stage_rdo_spnode2(spa_ctx, voff);
+	if (!err) {
+		err = silofs_sni_cap_alloc_at(spa_ctx->sni, voff, stype);
+	} else if ((err == -ENOENT) && !spa_ctx->no_new_blobs) {
 		err = spc_require_spmaps_at(spa_ctx, voff);
 	}
 	return err;

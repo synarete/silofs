@@ -45,6 +45,11 @@ struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_listxattr_ctx;
 
+/* stage-vnodes operational mode */
+enum silofs_stage_mode {
+	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
+	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
+};
 
 /* file-system control flags */
 enum silofs_flags {
@@ -61,12 +66,6 @@ enum silofs_flags {
 	SILOFS_F_IDLE           = SILOFS_BIT(10),
 	SILOFS_F_WALKFS         = SILOFS_BIT(11),
 	SILOFS_F_MMAPBLOBS      = SILOFS_BIT(12),
-};
-
-/* stage-element control flags */
-enum silofs_stage_flags {
-	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
-	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
 };
 
 /* inode's attributes masks */

@@ -37,7 +37,7 @@ struct silofs_symlnk_ctx {
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *lnk_ii;
 	const struct silofs_str        *symval;
-	enum silofs_stage_flags         stg_flags;
+	enum silofs_stage_mode         stg_mode;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -241,7 +241,7 @@ static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 
 	ii_incref(sl_ctx->lnk_ii);
 	ret = silofs_sbi_stage_vnode(sl_ctx->sbi, vaddr,
-	                             sl_ctx->stg_flags, &vi);
+	                             sl_ctx->stg_mode, &vi);
 	if (ret) {
 		goto out;
 	}
@@ -343,7 +343,7 @@ int silofs_do_readlink(const struct silofs_fs_ctx *fs_ctx,
 		.fs_ctx = fs_ctx,
 		.sbi = ii_sbi(lnk_ii),
 		.lnk_ii = lnk_ii,
-		.stg_flags = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
 	struct silofs_bytebuf sl;
 	int err;
@@ -503,7 +503,7 @@ int silofs_setup_symlink(const struct silofs_fs_ctx *fs_ctx,
 		.sbi = ii_sbi(lnk_ii),
 		.lnk_ii = lnk_ii,
 		.symval = symval,
-		.stg_flags = SILOFS_STAGE_MUTABLE
+		.stg_mode = SILOFS_STAGE_MUTABLE
 	};
 
 	return slc_symlink(&sl_ctx);

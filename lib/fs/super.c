@@ -617,11 +617,11 @@ int silofs_sbi_format_itable(struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int sbi_check_stage(const struct silofs_sb_info *sbi,
-                           enum silofs_stage_flags stg_flags)
+                           enum silofs_stage_mode stg_mode)
 {
 	int err = 0;
 
-	if (stg_flags & SILOFS_STAGE_MUTABLE) {
+	if (stg_mode & SILOFS_STAGE_MUTABLE) {
 		err = silof_sbi_check_mut_fs(sbi);
 	}
 	return err;
@@ -629,37 +629,37 @@ static int sbi_check_stage(const struct silofs_sb_info *sbi,
 
 static int sbi_check_stage_vnode(struct silofs_sb_info *sbi,
                                  const struct silofs_vaddr *vaddr,
-                                 enum silofs_stage_flags stg_flags)
+                                 enum silofs_stage_mode stg_mode)
 {
-	return vaddr_isnull(vaddr) ? -ENOENT : sbi_check_stage(sbi, stg_flags);
+	return vaddr_isnull(vaddr) ? -ENOENT : sbi_check_stage(sbi, stg_mode);
 }
 
 static int sbi_check_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
-                                 enum silofs_stage_flags stg_flags)
+                                 enum silofs_stage_mode stg_mode)
 {
-	return ino_isnull(ino) ? -ENOENT : sbi_check_stage(sbi, stg_flags);
+	return ino_isnull(ino) ? -ENOENT : sbi_check_stage(sbi, stg_mode);
 }
 
 static int sbi_check_staged_inode(const struct silofs_inode_info *ii,
-                                  enum silofs_stage_flags stg_flags)
+                                  enum silofs_stage_mode stg_mode)
 {
-	return ((stg_flags & SILOFS_STAGE_MUTABLE) &&
+	return ((stg_mode & SILOFS_STAGE_MUTABLE) &&
 	        silof_ii_isimmutable(ii)) ? -EACCES : 0;
 }
 
 int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
                            const struct silofs_vaddr *vaddr,
-                           enum silofs_stage_flags stg_flags,
+                           enum silofs_stage_mode stg_mode,
                            struct silofs_vnode_info **out_vi)
 {
 	struct silofs_voaddr voa;
 	int err;
 
-	err = sbi_check_stage_vnode(sbi, vaddr, stg_flags);
+	err = sbi_check_stage_vnode(sbi, vaddr, stg_mode);
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_resolve_voa(sbi, vaddr, stg_flags, &voa);
+	err = silofs_sbi_resolve_voa(sbi, vaddr, stg_mode, &voa);
 	if (err) {
 		return err;
 	}
@@ -667,7 +667,7 @@ int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
 	if (!err) {
 		return 0;  /* cache hit */
 	}
-	err = silofs_sbi_stage_vnode_at(sbi, &voa, stg_flags, out_vi);
+	err = silofs_sbi_stage_vnode_at(sbi, &voa, stg_mode, out_vi);
 	if (err) {
 		return err;
 	}
@@ -675,7 +675,7 @@ int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
 }
 
 int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
-                           enum silofs_stage_flags stg_flags,
+                           enum silofs_stage_mode stg_mode,
                            struct silofs_inode_info **out_ii)
 {
 	struct silofs_iaddr iaddr = {
@@ -686,7 +686,7 @@ int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	};
 	int err;
 
-	err = sbi_check_stage_inode(sbi, ino, stg_flags);
+	err = sbi_check_stage_inode(sbi, ino, stg_mode);
 	if (err) {
 		return err;
 	}
@@ -695,7 +695,7 @@ int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 		return err;
 	}
 	err = silofs_sbi_resolve_voa(sbi, &iaddr.vaddr,
-	                             stg_flags, &ivoa.voa);
+	                             stg_mode, &ivoa.voa);
 	if (err) {
 		return err;
 	}
@@ -703,11 +703,11 @@ int silofs_sbi_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 	if (!err) {
 		return 0;
 	}
-	err = silofs_sbi_stage_inode_at(sbi, &ivoa, stg_flags, out_ii);
+	err = silofs_sbi_stage_inode_at(sbi, &ivoa, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}
-	err = sbi_check_staged_inode(*out_ii, stg_flags);
+	err = sbi_check_staged_inode(*out_ii, stg_mode);
 	if (err) {
 		return err;
 	}
@@ -868,15 +868,35 @@ int silofs_sbi_remove_vnode_at(struct silofs_sb_info *sbi,
 	return err;
 }
 
+static int sbi_stage_spleaf(struct silofs_sb_info *sbi,
+                            const struct silofs_vaddr *vaddr,
+                            enum silofs_stage_mode stg_mode,
+                            struct silofs_spleaf_info **out_sli)
+{
+	return silofs_sbi_stage_spleaf_of(sbi, vaddr, stg_mode, out_sli);
+}
+
+static int sbi_stage_rdo_spleaf(struct silofs_sb_info *sbi,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_spleaf_info **out_sli)
+{
+	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_RDONLY, out_sli);
+}
+
+static int sbi_stage_mut_spleaf(struct silofs_sb_info *sbi,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_spleaf_info **out_sli)
+{
+	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_MUTABLE, out_sli);
+}
+
 int silofs_sbi_test_unwritten(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &sli);
+	err = sbi_stage_rdo_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -888,11 +908,9 @@ int silofs_sbi_clear_unwritten(struct silofs_sb_info *sbi,
                                const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_MUTABLE;
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &sli);
+	err = sbi_stage_mut_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -904,10 +922,9 @@ int silofs_sbi_mark_unwritten(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, SILOFS_STAGE_MUTABLE, &sli);
+	err = sbi_stage_mut_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -919,11 +936,9 @@ int silofs_sbi_test_lastref(struct silofs_sb_info *sbi,
                             const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	const loff_t voff = vaddr_off(vaddr);
-	const enum silofs_stage_flags stg_flags = SILOFS_STAGE_RDONLY;
 	int err;
 
-	err = silofs_sbi_stage_spleaf(sbi, voff, stg_flags, &sli);
+	err = sbi_stage_rdo_spleaf(sbi, vaddr, &sli);
 	if (err) {
 		return err;
 	}

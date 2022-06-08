@@ -1466,8 +1466,8 @@ static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 	return child_stype;
 }
 
-int silofs_sni_check_may_alloc_at(const struct silofs_spnode_info *sni,
-                                  loff_t voff, const enum silofs_stype stype)
+int silofs_sni_cap_alloc_at(const struct silofs_spnode_info *sni,
+                            loff_t voff, const enum silofs_stype stype)
 {
 	return spnode_may_alloc_at(sni->sn, voff, stype) ? 0 : -ENOSPC;
 }

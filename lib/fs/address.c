@@ -156,27 +156,27 @@ static void voff_stype_to_cpu(uint64_t voff_stype, loff_t *out_voff,
 	}
 }
 
-static uint64_t cpu_to_len_height(size_t len, size_t height)
+static uint64_t cpu_to_len_height(size_t len, enum silofs_height height)
 {
 	uint64_t val;
 
 	silofs_assert_lt(len, (1L << 54));
-	silofs_assert_le(height, SILOFS_SUPER_HEIGHT);
+	silofs_assert_le(height, SILOFS_HEIGHT_SUPER);
 
 	val = ((uint64_t)len << 8) | (height & 0xFF);
 	return silofs_cpu_to_le64(val);
 }
 
 static void len_height_to_cpu(uint64_t len_height,
-                              size_t *out_len, size_t *out_height)
+                              size_t *out_len, enum silofs_height *out_height)
 {
 	const uint64_t val = silofs_le64_to_cpu(len_height);
 
 	*out_len = val >> 8;
-	*out_height = val & 0xFF;
+	*out_height = (enum silofs_height)(val & 0xFF);
 
 	silofs_assert_lt(*out_len, (1L << 54));
-	silofs_assert_le(*out_height, SILOFS_SUPER_HEIGHT);
+	silofs_assert_le(*out_height, SILOFS_HEIGHT_SUPER);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -979,8 +979,9 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *blobid, loff_t bpos,
-                        enum silofs_stype stype, size_t height, loff_t voff)
+                        const struct silofs_blobid *blobid,
+                        loff_t bpos, enum silofs_stype stype,
+                        enum silofs_height height, loff_t voff)
 {
 	silofs_oaddr_setup(&uaddr->oaddr, blobid, bpos, stype_size(stype));
 	uaddr->voff = voff;
@@ -1237,26 +1238,26 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ssize_t uspace_height_to_stepsz(size_t height)
+static ssize_t height_to_stepsz(enum silofs_height height)
 {
 	const ssize_t bk_size = SILOFS_BK_SIZE;
 	const ssize_t nchilds = SILOFS_UNODE_NCHILDS;
 	ssize_t stepsz;
 
 	switch (height) {
-	case SILOFS_DATABK_HEIGHT:
+	case SILOFS_HEIGHT_DATABK:
 		stepsz = bk_size;
 		break;
-	case SILOFS_SPLEAF_HEIGHT:
+	case SILOFS_HEIGHT_SPLEAF:
 		stepsz = bk_size * nchilds;
 		break;
-	case SILOFS_SPNODE2_HEIGHT:
+	case SILOFS_HEIGHT_SPNODE2:
 		stepsz = bk_size * nchilds * nchilds;
 		break;
-	case SILOFS_SPNODE3_HEIGHT:
+	case SILOFS_HEIGHT_SPNODE3:
 		stepsz = bk_size * nchilds * nchilds * nchilds;
 		break;
-	case SILOFS_SUPER_HEIGHT:
+	case SILOFS_HEIGHT_SUPER:
 		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
 		break;
 	default:
@@ -1274,7 +1275,7 @@ bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
 }
 
 void silofs_vrange_setup(struct silofs_vrange *vrange,
-                         size_t height, loff_t beg, loff_t end)
+                         enum silofs_height height, loff_t beg, loff_t end)
 {
 	silofs_assert_le(beg, end);
 	silofs_assert_gt(height, 0);
@@ -1283,7 +1284,7 @@ void silofs_vrange_setup(struct silofs_vrange *vrange,
 	vrange->end = end;
 	vrange->len = off_ulen(beg, end);
 	vrange->height = height;
-	vrange->stepsz = uspace_height_to_stepsz(height - 1);
+	vrange->stepsz = height_to_stepsz(height - 1);
 }
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
@@ -1295,9 +1296,9 @@ void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
 }
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
-                            size_t height, loff_t voff_base)
+                            enum silofs_height height, loff_t voff_base)
 {
-	const ssize_t stepsz = uspace_height_to_stepsz(height);
+	const ssize_t stepsz = height_to_stepsz(height);
 	const loff_t beg = off_align(voff_base, stepsz);
 
 	silofs_vrange_setup(vrange, height, beg, off_next(beg, stepsz));
@@ -1305,14 +1306,14 @@ void silofs_vrange_setup_by(struct silofs_vrange *vrange,
 
 void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
 {
-	silofs_vrange_setup_by(vrange, SILOFS_SPLEAF_HEIGHT, voff);
+	silofs_vrange_setup_by(vrange, SILOFS_HEIGHT_SPLEAF, voff);
 }
 
 void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
-                             size_t height, loff_t voff)
+                             enum silofs_height height, loff_t voff)
 {
-	silofs_assert_ge(height, SILOFS_SPNODE2_HEIGHT);
-	silofs_assert_le(height, SILOFS_SPNODE3_HEIGHT);
+	silofs_assert_ge(height, SILOFS_HEIGHT_SPNODE2);
+	silofs_assert_le(height, SILOFS_HEIGHT_SPNODE3);
 
 	silofs_vrange_setup_by(vrange, height, voff);
 }
@@ -1344,7 +1345,7 @@ void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
 {
 	loff_t beg;
 	size_t len;
-	size_t height;
+	enum silofs_height height;
 
 	beg = silofs_off_to_cpu(vrng->beg);
 	len_height_to_cpu(vrng->len_height, &len, &height);

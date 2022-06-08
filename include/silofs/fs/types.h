@@ -34,33 +34,12 @@
 #include <silofs/infra.h>
 #include <silofs/fs/defs.h>
 
-
-/* standard types forward declarations */
-struct stat;
-struct statx;
-struct ucred;
-struct timespec;
-
 /* types forward declarations */
-struct silofs_list_head;
-struct silofs_listq;
-struct silofs_avl;
-struct silofs_avl_node;
-struct silofs_thread;
-struct silofs_mutex;
-struct silofs_qalloc;
-struct silofs_cache;
-struct silofs_repo;
+struct silofs_dset;
 struct silofs_snode_info;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 struct silofs_inode_info;
-struct silofs_fuseq;
-struct silofs_fuseq_worker;
-struct silofs_fuseq_in;
-struct silofs_fuseq_inb;
-struct silofs_fuseq_outb;
-struct silofs_dset;
 struct silofs_rwiter_ctx;
 struct silofs_readdir_ctx;
 struct silofs_readdir_info;
@@ -309,8 +288,8 @@ struct silofs_vrange {
 	loff_t                  beg;
 	loff_t                  end;
 	size_t                  len;
-	size_t                  height;
 	ssize_t                 stepsz;
+	enum silofs_height      height;
 };
 
 /* caching-element's key, up to 256-bits */

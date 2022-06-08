@@ -39,7 +39,7 @@ static void sbi_vrange(const struct silofs_sb_info *sbi,
 {
 	const loff_t voff_end = silofs_sti_vspace_end(sbi->sb_sti);
 
-	silofs_vrange_setup(out_vrange, SILOFS_SUPER_HEIGHT, 0, voff_end);
+	silofs_vrange_setup(out_vrange, SILOFS_HEIGHT_SUPER, 0, voff_end);
 }
 
 static size_t ui_height(const struct silofs_unode_info *ui)

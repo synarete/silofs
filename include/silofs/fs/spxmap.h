@@ -81,7 +81,7 @@ void silofs_uamap_fini(struct silofs_uamap *uam);
 
 const struct silofs_uaddr *
 silofs_uamap_lookup(const struct silofs_uamap *uam,
-                    loff_t voff, size_t height);
+                    loff_t voff, enum silofs_height height);
 
 int silofs_uamap_remove(struct silofs_uamap *uam,
                         const struct silofs_uaddr *uaddr);

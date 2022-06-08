@@ -121,7 +121,7 @@ silofs_cache_lookup_unode(struct silofs_cache *cache,
 
 struct silofs_unode_info *
 silofs_cache_find_unode_by(struct silofs_cache *cache,
-                           loff_t voff, size_t height);
+                           loff_t voff, enum silofs_height height);
 
 void silofs_cache_forget_uaddrs(struct silofs_cache *cache);
 

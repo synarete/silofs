@@ -1771,7 +1771,8 @@ static void cache_forget_uaddr(struct silofs_cache *cache,
 }
 
 static const struct silofs_uaddr *
-cache_lookup_uaddr_by(struct silofs_cache *cache, loff_t voff, size_t height)
+cache_lookup_uaddr_by(struct silofs_cache *cache,
+                      loff_t voff, enum silofs_height height)
 {
 	return silofs_uamap_lookup(&cache->c_uam, voff, height);
 }
@@ -1850,7 +1851,7 @@ void silofs_cache_forget_unode(struct silofs_cache *cache,
 
 struct silofs_unode_info *
 silofs_cache_find_unode_by(struct silofs_cache *cache,
-                           loff_t voff, size_t height)
+                           loff_t voff, enum silofs_height height)
 {
 	const struct silofs_uaddr *uaddr;
 	struct silofs_unode_info *ui = NULL;

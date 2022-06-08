@@ -303,18 +303,6 @@ static int sbi_inspect_cached_sli(const struct silofs_sb_info *sbi,
 	return sbi_inspect_cached_ui(sbi, &sli->sl_ui, stg_flags);
 }
 
-static int sbi_find_cached_spmap(struct silofs_sb_info *sbi,
-                                 loff_t voff, size_t height,
-                                 struct silofs_unode_info **out_ui)
-{
-	struct silofs_vrange vrange;
-	struct silofs_cache *cache = sbi_cache(sbi);
-
-	silofs_vrange_setup_by(&vrange, height, voff);
-	*out_ui = silofs_cache_find_unode_by(cache, vrange.beg, vrange.height);
-	return (*out_ui != NULL) ? 0 : -ENOENT;
-}
-
 int silofs_sbi_stage_ubk_of(struct silofs_sb_info *sbi,
                             const struct silofs_oaddr *oaddr,
                             struct silofs_ubk_info **out_ubi)
@@ -491,9 +479,9 @@ static int sbi_stage_spnode_main_blob(struct silofs_sb_info *sbi,
 
 static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 {
-	const size_t height = silofs_sni_height(sni);
+	const enum silofs_height height = silofs_sni_height(sni);
 
-	return ((height - 1) > SILOFS_SPLEAF_HEIGHT) ?
+	return ((height - 1) > SILOFS_HEIGHT_SPLEAF) ?
 	       SILOFS_STYPE_SPNODE : SILOFS_STYPE_SPLEAF;
 }
 
@@ -530,25 +518,56 @@ static int sbi_require_spnode_main_blob(struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int sbi_find_cached_spnode3(struct silofs_sb_info *sbi, loff_t voff,
-                                   enum silofs_stage_flags stg_flags,
-                                   struct silofs_spnode_info **out_sni)
+static int stgc_find_cached_unode(struct silofs_stage_ctx *stg_ctx,
+                                  enum silofs_height height,
+                                  struct silofs_unode_info **out_ui)
+{
+	struct silofs_vrange vrange;
+	struct silofs_cache *cache = sbi_cache(stg_ctx->sbi);
+
+	silofs_vrange_setup_by(&vrange, height, stg_ctx->voff);
+	*out_ui = silofs_cache_find_unode_by(cache, vrange.beg, vrange.height);
+	return (*out_ui != NULL) ? 0 : -ENOENT;
+}
+
+static int stgc_find_cached_spnode_of(struct silofs_stage_ctx *stg_ctx,
+                                      enum silofs_height height,
+                                      struct silofs_spnode_info **out_sni)
 {
 	struct silofs_unode_info *ui = NULL;
 	int err;
 
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE3_HEIGHT, &ui);
+	err = stgc_find_cached_unode(stg_ctx, height, &ui);
+	if (err) {
+		return err;
+	}
+	err = sbi_inspect_cached_ui(stg_ctx->sbi, ui, stg_ctx->stg_flags);
 	if (err) {
 		return err;
 	}
 	*out_sni = silofs_sni_from_ui(ui);
+	return 0;
+}
 
-	err = sbi_inspect_cached_sni(sbi, *out_sni, stg_flags);
+static int stgc_find_cached_spleaf_of(struct silofs_stage_ctx *stg_ctx,
+                                      struct silofs_spleaf_info **out_sli)
+{
+	struct silofs_unode_info *ui = NULL;
+	int err;
+
+	err = stgc_find_cached_unode(stg_ctx, SILOFS_HEIGHT_SPLEAF, &ui);
 	if (err) {
 		return err;
 	}
+	err = sbi_inspect_cached_ui(stg_ctx->sbi, ui, stg_ctx->stg_flags);
+	if (err) {
+		return err;
+	}
+	*out_sli = silofs_sli_from_ui(ui);
 	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void stgc_setup_spawned_spnode3(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
@@ -583,10 +602,26 @@ static int stgc_spawn_spnode3(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	err = stgc_spawn_spnode3_of(stg_ctx, out_sni);
-	if (!err) {
-		stgc_update_space_stats(stg_ctx, sni_uaddr(*out_sni));
+	if (err) {
+		return err;
 	}
-	return err;
+	stgc_update_space_stats(stg_ctx, sni_uaddr(*out_sni));
+	return 0;
+}
+
+static int stgc_clone_spnode3(const struct silofs_stage_ctx *stg_ctx,
+                              struct silofs_spnode_info *sni_curr,
+                              struct silofs_spnode_info **out_sni)
+{
+	int err;
+
+	err = stgc_spawn_spnode3(stg_ctx, out_sni);
+	if (err) {
+		return err;
+	}
+	silofs_sni_clone_subrefs(*out_sni, sni_curr);
+	silofs_sbi_bind_child(stg_ctx->sbi, *out_sni);
+	return 0;
 }
 
 static int sbi_clone_spnode3(struct silofs_sb_info *sbi,
@@ -597,26 +632,20 @@ static int sbi_clone_spnode3(struct silofs_sb_info *sbi,
 		.sbi = sbi,
 		.sni_parent = NULL,
 		.stype_sub = SILOFS_STYPE_NONE, /* XXX FIXME */
+		.voff = silofs_sni_base_voff(sni_curr),
 	};
-	struct silofs_vrange vrange;
 	int err;
 
 	sni_incref(sni_curr);
-	sni_vrange(sni_curr, &vrange);
-	stg_ctx.voff = vrange.beg;
-	err = stgc_spawn_spnode3(&stg_ctx, out_sni);
-	if (!err) {
-		silofs_sni_clone_subrefs(*out_sni, sni_curr);
-		silofs_sbi_bind_child(sbi, *out_sni);
-	}
+	err = stgc_clone_spnode3(&stg_ctx, sni_curr, out_sni);
 	sni_decref(sni_curr);
 	return err;
 }
 
-static int stgc_stage_spnode3(const struct silofs_stage_ctx *stg_ctx,
-                              struct silofs_spnode_info **out_sni)
+static int stgc_do_stage_spnode3(const struct silofs_stage_ctx *stg_ctx,
+                                 struct silofs_spnode_info **out_sni)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr ulink = { .voff = -1 };
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
@@ -641,32 +670,43 @@ out_ok:
 	return 0;
 }
 
-static int sbi_stage_spnode3_of(struct silofs_sb_info *sbi, loff_t voff,
-                                enum silofs_stage_flags stg_flags,
-                                struct silofs_spnode_info **out_sni)
+static int stgc_stage_spnode3(const struct silofs_stage_ctx *stg_ctx,
+                              struct silofs_spnode_info **out_sni)
 {
-	struct silofs_stage_ctx stg_ctx = {
-		.sbi = sbi,
-		.sni_parent = NULL,
-		.stg_flags = stg_flags,
-		.voff = voff,
-		.stype_sub = SILOFS_STYPE_NONE,
-	};
+	int err;
 
-	return stgc_stage_spnode3(&stg_ctx, out_sni);
+	sni_incref(stg_ctx->sni_parent);
+	err = stgc_do_stage_spnode3(stg_ctx, out_sni);
+	sni_decref(stg_ctx->sni_parent);
+	return err;
+}
+
+static int stgc_find_cached_spnode3(struct silofs_stage_ctx *stg_ctx,
+                                    struct silofs_spnode_info **out_sni)
+{
+	const enum silofs_height height = SILOFS_HEIGHT_SPNODE3;
+
+	return stgc_find_cached_spnode_of(stg_ctx, height, out_sni);
 }
 
 int silofs_sbi_stage_spnode3(struct silofs_sb_info *sbi, loff_t voff,
                              enum silofs_stage_flags stg_flags,
                              struct silofs_spnode_info **out_sni)
 {
+	struct silofs_stage_ctx stg_ctx = {
+		.sbi = sbi,
+		.sni_parent = NULL,
+		.stg_flags = stg_flags,
+		.stype_sub = SILOFS_STYPE_NONE,
+		.voff = voff,
+	};
 	int err;
 
-	err = sbi_find_cached_spnode3(sbi, voff, stg_flags, out_sni);
+	err = stgc_find_cached_spnode3(&stg_ctx, out_sni);
 	if (!err) {
 		return 0;
 	}
-	err = sbi_stage_spnode3_of(sbi, voff, stg_flags, out_sni);
+	err = stgc_stage_spnode3(&stg_ctx, out_sni);
 	if (err) {
 		return err;
 	}
@@ -674,26 +714,6 @@ int silofs_sbi_stage_spnode3(struct silofs_sb_info *sbi, loff_t voff,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int sbi_find_cached_spnode2(struct silofs_sb_info *sbi, loff_t voff,
-                                   enum silofs_stage_flags stg_flags,
-                                   struct silofs_spnode_info **out_sni)
-{
-	struct silofs_unode_info *ui = NULL;
-	int err;
-
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPNODE2_HEIGHT, &ui);
-	if (err) {
-		return err;
-	}
-	*out_sni = silofs_sni_from_ui(ui);
-
-	err = sbi_inspect_cached_sni(sbi, *out_sni, stg_flags);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
 
 static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
@@ -708,7 +728,7 @@ static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
                                  struct silofs_spnode_info **out_sni)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = sbi_require_spnode_main_blob(stg_ctx->sbi, stg_ctx->sni_parent);
@@ -732,10 +752,26 @@ static int stgc_spawn_spnode2(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	err = stgc_spawn_spnode2_of(stg_ctx, out_sni);
-	if (!err) {
-		stgc_update_space_stats(stg_ctx, sni_uaddr(*out_sni));
+	if (err) {
+		return err;
 	}
-	return err;
+	stgc_update_space_stats(stg_ctx, sni_uaddr(*out_sni));
+	return 0;
+}
+
+static int stgc_clone_spnode2(const struct silofs_stage_ctx *stg_ctx,
+                              struct silofs_spnode_info *sni_curr,
+                              struct silofs_spnode_info **out_sni)
+{
+	int err;
+
+	err = stgc_spawn_spnode2(stg_ctx, out_sni);
+	if (err) {
+		return err;
+	}
+	silofs_sni_clone_subrefs(*out_sni, sni_curr);
+	silofs_sni_bind_child_spnode(stg_ctx->sni_parent, *out_sni);
+	return 0;
 }
 
 static int sbi_clone_spnode2(struct silofs_sb_info *sbi,
@@ -753,19 +789,15 @@ static int sbi_clone_spnode2(struct silofs_sb_info *sbi,
 	int err;
 
 	sni_incref2(sni_parent, sni_curr);
-	err = stgc_spawn_spnode2(&stg_ctx, out_sni);
-	if (!err) {
-		silofs_sni_clone_subrefs(*out_sni, sni_curr);
-		silofs_sni_bind_child_spnode(sni_parent, *out_sni);
-	}
+	err = stgc_clone_spnode2(&stg_ctx, sni_curr, out_sni);
 	sni_decref2(sni_curr, sni_parent);
 	return err;
 }
 
-static int stgc_stage_spnode2(const struct silofs_stage_ctx *stg_ctx,
-                              struct silofs_spnode_info **out_sni)
+static int stgc_do_stage_spnode2(const struct silofs_stage_ctx *stg_ctx,
+                                 struct silofs_spnode_info **out_sni)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr ulink =  { .voff = -1 };
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
@@ -790,42 +822,48 @@ out_ok:
 	return 0;
 }
 
-static int sbi_stage_spnode2_of(struct silofs_sb_info *sbi,
-                                struct silofs_spnode_info *sni_parent,
-                                loff_t voff, enum silofs_stage_flags stg_flags,
-                                struct silofs_spnode_info **out_sni)
+static int stgc_stage_spnode2(const struct silofs_stage_ctx *stg_ctx,
+                              struct silofs_spnode_info **out_sni)
 {
-	struct silofs_stage_ctx stg_ctx = {
-		.sbi = sbi,
-		.sni_parent = sni_parent,
-		.stg_flags = stg_flags,
-		.voff = voff,
-		.stype_sub = SILOFS_STYPE_NONE,
-	};
 	int err;
 
-	sni_incref(sni_parent);
-	err = stgc_stage_spnode2(&stg_ctx, out_sni);
-	sni_decref(sni_parent);
+	sni_incref(stg_ctx->sni_parent);
+	err = stgc_do_stage_spnode2(stg_ctx, out_sni);
+	sni_decref(stg_ctx->sni_parent);
 	return err;
+}
+
+static int stgc_find_cached_spnode2(struct silofs_stage_ctx *stg_ctx,
+                                    struct silofs_spnode_info **out_sni)
+{
+	const enum silofs_height height = SILOFS_HEIGHT_SPNODE2;
+
+	return stgc_find_cached_spnode_of(stg_ctx, height, out_sni);
 }
 
 int silofs_sbi_stage_spnode2(struct silofs_sb_info *sbi, loff_t voff,
                              enum silofs_stage_flags stg_flags,
                              struct silofs_spnode_info **out_sni)
 {
-	struct silofs_spnode_info *sni_parent = NULL;
+	struct silofs_stage_ctx stg_ctx = {
+		.sbi = sbi,
+		.sni_parent = NULL,
+		.stg_flags = stg_flags,
+		.stype_sub = SILOFS_STYPE_NONE,
+		.voff = voff,
+	};
 	int err;
 
-	err = sbi_find_cached_spnode2(sbi, voff, stg_flags, out_sni);
+	err = stgc_find_cached_spnode2(&stg_ctx, out_sni);
 	if (!err) {
 		return 0;
 	}
-	err = silofs_sbi_stage_spnode3(sbi, voff, stg_flags, &sni_parent);
+	err = silofs_sbi_stage_spnode3(sbi, voff, stg_flags,
+	                               &stg_ctx.sni_parent);
 	if (err) {
 		return err;
 	}
-	err = sbi_stage_spnode2_of(sbi, sni_parent, voff, stg_flags, out_sni);
+	err = stgc_stage_spnode2(&stg_ctx, out_sni);
 	if (err) {
 		return err;
 	}
@@ -833,28 +871,6 @@ int silofs_sbi_stage_spnode2(struct silofs_sb_info *sbi, loff_t voff,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int sbi_find_cached_spleaf(struct silofs_sb_info *sbi, loff_t voff,
-                                  enum silofs_stage_flags stg_flags,
-                                  struct silofs_spleaf_info **out_sli)
-{
-	struct silofs_unode_info *ui = NULL;
-	struct silofs_spleaf_info *sli = NULL;
-	int err;
-
-	err = sbi_find_cached_spmap(sbi, voff, SILOFS_SPLEAF_HEIGHT, &ui);
-	if (err) {
-		return err;
-	}
-	sli = silofs_sli_from_ui(ui);
-
-	err = sbi_inspect_cached_sli(sbi, sli, stg_flags);
-	if (err) {
-		return err;
-	}
-	*out_sli = sli;
-	return 0;
-}
 
 static void sbi_bind_sli_to_uber(const struct silofs_sb_info *sbi,
                                  struct silofs_spleaf_info *sli)
@@ -1021,8 +1037,8 @@ static void stgc_update_by_spleaf(struct silofs_stage_ctx *stg_ctx,
 	stg_ctx->stype_sub = silofs_sli_stype_sub(sli);
 }
 
-static int stgc_stage_spleaf(struct silofs_stage_ctx *stg_ctx,
-                             struct silofs_spleaf_info **out_sli)
+static int stgc_do_stage_spleaf(struct silofs_stage_ctx *stg_ctx,
+                                struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uaddr ulink;
 	struct silofs_spleaf_info *sli = NULL;
@@ -1050,23 +1066,14 @@ out_ok:
 	return 0;
 }
 
-static int sbi_stage_spleaf_of(struct silofs_sb_info *sbi,
-                               struct silofs_spnode_info *sni_parent,
-                               loff_t voff, enum silofs_stage_flags stg_flags,
-                               struct silofs_spleaf_info **out_sli)
+static int stgc_stage_spleaf(struct silofs_stage_ctx *stg_ctx,
+                             struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_stage_ctx stg_ctx = {
-		.sbi = sbi,
-		.sni_parent = sni_parent,
-		.stg_flags = stg_flags,
-		.voff = voff,
-		.stype_sub = SILOFS_STYPE_NONE,
-	};
 	int err;
 
-	sni_incref(sni_parent);
-	err = stgc_stage_spleaf(&stg_ctx, out_sli);
-	sni_decref(sni_parent);
+	sni_incref(stg_ctx->sni_parent);
+	err = stgc_do_stage_spleaf(stg_ctx, out_sli);
+	sni_decref(stg_ctx->sni_parent);
 	return err;
 }
 
@@ -1074,18 +1081,24 @@ int silofs_sbi_stage_spleaf(struct silofs_sb_info *sbi, loff_t voff,
                             enum silofs_stage_flags stg_flags,
                             struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_spnode_info *sni_parent = NULL;
+	struct silofs_stage_ctx stg_ctx = {
+		.sbi = sbi,
+		.stg_flags = stg_flags,
+		.stype_sub = SILOFS_STYPE_NONE,
+		.voff = voff,
+	};
 	int err;
 
-	err = sbi_find_cached_spleaf(sbi, voff, stg_flags, out_sli);
+	err = stgc_find_cached_spleaf_of(&stg_ctx, out_sli);
 	if (!err) {
 		return 0;
 	}
-	err = silofs_sbi_stage_spnode2(sbi, voff, stg_flags, &sni_parent);
+	err = silofs_sbi_stage_spnode2(sbi, voff, stg_flags,
+	                               &stg_ctx.sni_parent);
 	if (err) {
 		return err;
 	}
-	err = sbi_stage_spleaf_of(sbi, sni_parent, voff, stg_flags, out_sli);
+	err = stgc_stage_spleaf(&stg_ctx, out_sli);
 	if (err) {
 		return err;
 	}
@@ -1227,7 +1240,6 @@ int silofs_sbi_require_spmaps_at(struct silofs_sb_info *sbi, loff_t voff,
 {
 	struct silofs_stage_ctx stg_ctx = {
 		.sbi = sbi,
-		.sni_parent = NULL,
 		.stg_flags = SILOFS_STAGE_MUTABLE,
 		.stype_sub = stype_sub,
 		.voff = voff,
@@ -1236,18 +1248,19 @@ int silofs_sbi_require_spmaps_at(struct silofs_sb_info *sbi, loff_t voff,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
+	stg_ctx.sni_parent = NULL;
 	err = stgc_require_spnode3(&stg_ctx, &sni);
 	if (err) {
 		return err;
 	}
-	stg_ctx.sni_parent = sni;
 
+	stg_ctx.sni_parent = sni;
 	err = stgc_require_spnode2(&stg_ctx, &sni);
 	if (err) {
 		return err;
 	}
-	stg_ctx.sni_parent = sni;
 
+	stg_ctx.sni_parent = sni;
 	err = stgc_require_spleaf_at(&stg_ctx, &sli);
 	if (err) {
 		return err;

@@ -135,21 +135,6 @@
 /* on-disk size of super-block */
 #define SILOFS_SB_SIZE                  SILOFS_BK_SIZE
 
-/* height of super-block at root of mapping tree */
-#define SILOFS_SUPER_HEIGHT             (SILOFS_SPNODE3_HEIGHT + 1)
-
-/* max height of node in space mapping tree */
-#define SILOFS_SPNODE3_HEIGHT           (3)
-
-/* min height of node in space mapping tree */
-#define SILOFS_SPNODE2_HEIGHT           (2)
-
-/* height of leaf in space mapping tree */
-#define SILOFS_SPLEAF_HEIGHT            (1)
-
-/* height of data vblocks */
-#define SILOFS_DATABK_HEIGHT            (0)
-
 /* on-disk size of space-stats node (2K) */
 #define SILOFS_STNODE_SIZE              (2 * SILOFS_KILO)
 
@@ -318,6 +303,16 @@ enum silofs_stype {
 	SILOFS_STYPE_FTNODE     = 13,
 	SILOFS_STYPE_SYMVAL     = 14,
 	SILOFS_STYPE_MAX, /* keep last */
+};
+
+/* logical heights of unode mappings */
+enum silofs_height {
+	SILOFS_HEIGHT_DATABK    = 0,
+	SILOFS_HEIGHT_SPLEAF    = 1,
+	SILOFS_HEIGHT_SPNODE2   = 2,
+	SILOFS_HEIGHT_SPNODE3   = 3,
+	/* SILOFS_HEIGHT_SPNODE4        = 4, */
+	SILOFS_HEIGHT_SUPER     = 4,
 };
 
 /* common-header flags */

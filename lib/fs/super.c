@@ -328,11 +328,11 @@ static void sb_setup_fresh(struct silofs_super_block *sb)
 
 int silofs_verify_super_block(const struct silofs_super_block *sb)
 {
-	size_t height;
+	enum silofs_height height;
 	size_t nactive_slots;
 
 	height = sb_height(sb);
-	if (height != SILOFS_SUPER_HEIGHT) {
+	if (height != SILOFS_HEIGHT_SUPER) {
 		log_err("illegal sb height: height=%lu", height);
 		return -EFSCORRUPTED;
 	}
@@ -522,7 +522,7 @@ sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 	struct silofs_vrange vrange;
 	const size_t child_height = silofs_sbi_space_tree_height(sbi) - 1;
 
-	silofs_assert_eq(child_height, SILOFS_SPNODE3_HEIGHT);
+	silofs_assert_eq(child_height, SILOFS_HEIGHT_SPNODE3);
 
 	silofs_vrange_setup_by(&vrange, child_height, voff);
 	return vrange.beg;
@@ -536,7 +536,7 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 
 	silofs_sbi_main_blob(sbi, &blobid);
 	silofs_uaddr_setup(out_uaddr, &blobid, sbi_bpos_of_child(sbi, voff),
-	                   SILOFS_STYPE_SPNODE, SILOFS_SPNODE3_HEIGHT, base);
+	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE3, base);
 }
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
@@ -1021,7 +1021,7 @@ static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 {
 	struct silofs_vrange vrange;
 
-	silofs_vrange_setup_by(&vrange, SILOFS_SUPER_HEIGHT, 0);
+	silofs_vrange_setup_by(&vrange, SILOFS_HEIGHT_SUPER, 0);
 	sb_set_vrange(sbi->sb, &vrange);
 }
 

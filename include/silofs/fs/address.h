@@ -267,8 +267,9 @@ const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *blobid, loff_t bpos,
-                        enum silofs_stype stype, size_t height, loff_t voff);
+                        const struct silofs_blobid *blobid,
+                        loff_t bpos, enum silofs_stype stype,
+                        enum silofs_height height, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr);
 
@@ -328,16 +329,16 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off);
 
 void silofs_vrange_setup(struct silofs_vrange *vrange,
-                         size_t height, loff_t beg, loff_t end);
+                         enum silofs_height height, loff_t beg, loff_t end);
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
                              const struct silofs_vrange *other, loff_t beg);
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
-                            size_t height, loff_t voff_base);
+                            enum silofs_height height, loff_t voff_base);
 
 void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
-                             size_t height, loff_t voff);
+                             enum silofs_height height, loff_t voff);
 
 void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff);
 

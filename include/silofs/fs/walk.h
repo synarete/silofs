@@ -31,7 +31,7 @@ struct silofs_uiterator {
 	struct silofs_sb_info    *sbi;
 	struct silofs_unode_info *parent;
 	struct silofs_unode_info *ui;
-	size_t height;
+	enum silofs_height height;
 	loff_t voff;
 	size_t slot;
 };

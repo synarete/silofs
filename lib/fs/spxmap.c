@@ -531,7 +531,7 @@ static void uae_del(struct silofs_uaent *uae, struct silofs_alloc *alloc)
 
 
 static bool uae_has_mapping(const struct silofs_uaent *uae,
-                            loff_t voff, size_t height)
+                            loff_t voff, enum silofs_height height)
 {
 	const struct silofs_uaddr *uaddr = &uae->uaddr;
 
@@ -595,16 +595,18 @@ void silofs_uamap_fini(struct silofs_uamap *uam)
 }
 
 static size_t uamap_slot_of(const struct silofs_uamap *uam,
-                            loff_t voff, size_t height)
+                            loff_t voff, enum silofs_height height)
 {
 	const uint64_t uoff = (uint64_t)voff;
-	const uint64_t key = silofs_rotate64(uoff, height & 0xF) ^ height;
+	const uint64_t uhei = (uint64_t)height;
+	const uint64_t key = silofs_rotate64(uoff, uhei & 0xF) ^ uhei;
 
 	return key % uam->uam_htbl_cap;
 }
 
 static struct silofs_list_head *
-uamap_list_of(const struct silofs_uamap *uam, loff_t voff, size_t height)
+uamap_list_of(const struct silofs_uamap *uam,
+              loff_t voff, enum silofs_height height)
 {
 	const size_t slot = uamap_slot_of(uam, voff, height);
 	const struct silofs_list_head *lh = &uam->uam_htbl[slot];
@@ -620,7 +622,8 @@ uamap_list_of_uaddr(const struct silofs_uamap *uam,
 }
 
 static struct silofs_uaent *
-uamap_find(const struct silofs_uamap *uam, loff_t voff, size_t height)
+uamap_find(const struct silofs_uamap *uam,
+           loff_t voff, enum silofs_height height)
 {
 	const struct silofs_list_head *lst;
 	const struct silofs_list_head *itr;
@@ -639,7 +642,8 @@ uamap_find(const struct silofs_uamap *uam, loff_t voff, size_t height)
 }
 
 const struct silofs_uaddr *
-silofs_uamap_lookup(const struct silofs_uamap *uam, loff_t voff, size_t height)
+silofs_uamap_lookup(const struct silofs_uamap *uam,
+                    loff_t voff, enum silofs_height height)
 {
 	const struct silofs_uaent *uae;
 

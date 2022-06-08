@@ -157,14 +157,14 @@ static void make_super_uaddr(const struct silofs_blobid *blobid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_uaddr_setup(out_uaddr, blobid, 0,
-	                   SILOFS_STYPE_SUPER, SILOFS_SUPER_HEIGHT, 0);
+	                   SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER, 0);
 }
 
 static void make_stats_uaddr(const struct silofs_blobid *blobid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_uaddr_setup(out_uaddr, blobid, SILOFS_BK_SIZE,
-	                   SILOFS_STYPE_SPSTATS, SILOFS_SUPER_HEIGHT, 0);
+	                   SILOFS_STYPE_SPSTATS, SILOFS_HEIGHT_SUPER, 0);
 }
 
 /*. . . . . . . . . . . . . . . b. . . . . . . . . . . . . . . . . . . . . .*/

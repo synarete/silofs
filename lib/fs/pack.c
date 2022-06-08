@@ -175,7 +175,7 @@ sli_from_ui(const struct silofs_unode_info *ui)
 
 static bool sni_istoplevel(const struct silofs_spnode_info *sni)
 {
-	return silofs_sni_height(sni) == SILOFS_SPNODE3_HEIGHT;
+	return silofs_sni_height(sni) == SILOFS_HEIGHT_SPNODE3;
 }
 
 static bool ui_isspleaf(const struct silofs_unode_info *ui)

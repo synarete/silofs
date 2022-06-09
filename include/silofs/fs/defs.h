@@ -223,12 +223,15 @@
 /* maximum depth of directory htree-mapping */
 #define SILOFS_DIR_TREE_DEPTH_MAX       (4L)
 
-/* max number of dir htree nodes */
+/* max dir-node index of dir htree nodes (1-based) */
 #define SILOFS_DIR_TREE_INDEX_MAX \
-	((1L << (SILOFS_DIR_NODE_SHIFT * SILOFS_DIR_TREE_DEPTH_MAX)) - 1)
+	((1L << (SILOFS_DIR_NODE_SHIFT * SILOFS_DIR_TREE_DEPTH_MAX)))
 
 /* non-valid dir tree node-index */
-#define SILOFS_DIR_TREE_INDEX_NULL      (1L << 31)
+#define SILOFS_DIR_TREE_INDEX_NULL      (0)
+
+/* node-index of dir-tree root */
+#define SILOFS_DIR_TREE_INDEX_ROOT      (1)
 
 /* max entries in directory */
 #define SILOFS_DIR_ENTRIES_MAX \

@@ -57,6 +57,9 @@ int silofs_sbi_stats_uaddr(const struct silofs_sb_info *sbi,
 void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
                                 const struct silofs_uaddr *uaddr);
 
+int silofs_sbi_spnode_uaddr(const struct silofs_sb_info *sbi,
+                            struct silofs_uaddr *out_uaddr);
+
 void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
 

@@ -280,6 +280,28 @@ static void sb_set_stats_uaddr(struct silofs_super_block *sb,
 	silofs_uaddr64b_set(&sb->sb_stats_uaddr, uaddr);
 }
 
+static void sb_reset_stats_uaddr(struct silofs_super_block *sb)
+{
+	sb_set_stats_uaddr(sb, silofs_uaddr_none());
+}
+
+static void sb_spnode_uaddr(const struct silofs_super_block *sb,
+                            struct silofs_uaddr *out_uaddr)
+{
+	silofs_uaddr64b_parse(&sb->sb_spnode_uaddr, out_uaddr);
+}
+
+static void sb_set_spnode_uaddr(struct silofs_super_block *sb,
+                                const struct silofs_uaddr *uaddr)
+{
+	silofs_uaddr64b_set(&sb->sb_spnode_uaddr, uaddr);
+}
+
+static void sb_reset_spnode_uaddr(struct silofs_super_block *sb)
+{
+	sb_set_spnode_uaddr(sb, silofs_uaddr_none());
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void sb_init(struct silofs_super_block *sb)
@@ -290,6 +312,8 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_set_swversion(sb, silofs_version.string);
 	sb_generate_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
+	sb_reset_stats_uaddr(sb);
+	sb_reset_spnode_uaddr(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobid(sb);
 	silofs_uaddr64b_reset(&sb->sb_self);
@@ -1074,6 +1098,13 @@ void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
 {
 	sb_set_stats_uaddr(sbi->sb, uaddr);
 	sbi_dirtify(sbi);
+}
+
+int silofs_sbi_spnode_uaddr(const struct silofs_sb_info *sbi,
+                            struct silofs_uaddr *out_uaddr)
+{
+	sb_spnode_uaddr(sbi->sb, out_uaddr);
+	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
 }
 
 static void ucred_copyto(const struct silofs_ucred *ucred,

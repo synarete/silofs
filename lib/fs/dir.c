@@ -49,7 +49,7 @@ struct silofs_dir_ctx {
 	struct silofs_inode_info       *child_ii;
 	struct silofs_readdir_ctx      *rd_ctx;
 	const struct silofs_qstr       *name;
-	enum silofs_stage_mode         stg_mode;
+	enum silofs_stage_mode          stg_mode;
 	int keep_iter;
 	int readdir_plus;
 };

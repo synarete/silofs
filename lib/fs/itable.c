@@ -15,14 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/itable.h>
-#include <silofs/fs/inode.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <limits.h>
 

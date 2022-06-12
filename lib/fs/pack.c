@@ -22,7 +22,7 @@
 
 struct silofs_pack_iovs {
 	struct iovec            pi_iov[SILOFS_UNODE_NCHILDS];
-	struct silofs_alloc *pi_alloc;
+	struct silofs_alloc    *pi_alloc;
 	size_t                  pi_cnt;
 };
 
@@ -167,15 +167,13 @@ sni_from_ui(const struct silofs_unode_info *ui)
 static struct silofs_spleaf_info *
 sli_from_ui(const struct silofs_unode_info *ui)
 {
-	silofs_assert_not_null(ui);
-	silofs_assert(silofs_ui_has_stype(ui, SILOFS_STYPE_SPLEAF));
-
 	return silofs_sli_from_ui(ui);
 }
 
-static bool sni_istoplevel(const struct silofs_spnode_info *sni)
+static bool sni_has_height(const struct silofs_spnode_info *sni,
+                           enum silofs_height height)
 {
-	return silofs_sni_height(sni) == SILOFS_HEIGHT_SPNODE3;
+	return (silofs_sni_height(sni) == height);
 }
 
 static bool ui_isspleaf(const struct silofs_unode_info *ui)
@@ -190,12 +188,14 @@ static bool ui_isspnode(const struct silofs_unode_info *ui)
 
 static bool ui_isspnode3(const struct silofs_unode_info *ui)
 {
-	return ui_isspnode(ui) && sni_istoplevel(sni_from_ui(ui));
+	return ui_isspnode(ui) &&
+	       sni_has_height(sni_from_ui(ui), SILOFS_HEIGHT_SPNODE3);
 }
 
 static bool ui_isspnode2(const struct silofs_unode_info *ui)
 {
-	return ui_isspnode(ui) && !sni_istoplevel(sni_from_ui(ui));
+	return ui_isspnode(ui) &&
+	       sni_has_height(sni_from_ui(ui), SILOFS_HEIGHT_SPNODE2);
 }
 
 static bool ui_isstats(const struct silofs_unode_info *ui)

@@ -183,7 +183,7 @@ static void spnode_set_vrange(struct silofs_spmap_node *sn,
 	silofs_vrange128_set(&sn->sn_vrange, vrange);
 }
 
-static size_t spnode_heigth(const struct silofs_spmap_node *sn)
+static enum silofs_height spnode_heigth(const struct silofs_spmap_node *sn)
 {
 	struct silofs_vrange vrange;
 
@@ -1339,7 +1339,7 @@ void silofs_sni_update_staged(struct silofs_spnode_info *sni)
 	sni->sn_nactive_subs = spnode_count_nactive(sni->sn);
 }
 
-size_t silofs_sni_height(const struct silofs_spnode_info *sni)
+enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni)
 {
 	return spnode_heigth(sni->sn);
 }
@@ -1354,8 +1354,6 @@ int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni,
                              enum silofs_stype stype, loff_t *out_voff)
 {
 	bool ok;
-
-	silofs_assert_eq(silofs_sni_height(sni), 2);
 
 	ok = spnode_find_avail_spleaf(sni->sn, vrange, stype, out_voff);
 	silofs_assert_ge(*out_voff, vrange->beg);
@@ -1392,9 +1390,6 @@ void silofs_sni_bind_child_spleaf(struct silofs_spnode_info *sni,
 {
 	struct silofs_vrange vrange;
 	const enum silofs_stype stype_sub = silofs_sli_stype_sub(sli);
-
-	silofs_assert_eq(silofs_sni_height(sni), 2);
-	silofs_assert(!stype_isnone(stype_sub));
 
 	sli_vrange(sli, &vrange);
 	sni_bind_subref(sni, vrange.beg, sli_uaddr(sli), stype_sub);

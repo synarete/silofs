@@ -39,7 +39,7 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
 loff_t silofs_sni_last_voff(const struct silofs_spnode_info *sni);
 
-size_t silofs_sni_height(const struct silofs_spnode_info *sni);
+enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
 
 enum silofs_stype silofs_sni_stype_sub(const struct silofs_spnode_info *sni);
 

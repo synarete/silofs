@@ -246,10 +246,11 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_uuid, 128);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 256);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_stats_uaddr, 1024);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_birth_time, 1088);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_clone_time, 1096);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_pack_time, 1104);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_itable_root, 1112);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_spnode_uaddr, 1088);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_itable_root, 1152);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_birth_time, 1160);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_clone_time, 1168);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_pack_time, 1176);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_vrange, 2048);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_treeid, 2064);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_mainblobid, 2112);

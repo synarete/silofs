@@ -16,9 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/defs.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/mntsvc.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -26,9 +24,6 @@
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdint.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -619,11 +619,12 @@ struct silofs_super_block {
 	uint8_t                         sb_reserved4[512];
 	/* 1K..2K */
 	struct silofs_uaddr64b          sb_stats_uaddr;
+	struct silofs_uaddr64b          sb_spnode_uaddr;
+	struct silofs_vaddr64           sb_itable_root;
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
 	uint64_t                        sb_pack_time;
-	struct silofs_vaddr64           sb_itable_root;
-	uint8_t                         sb_reserved5[928];
+	uint8_t                         sb_reserved5[864];
 	/* 2K..4K */
 	struct silofs_vrange128         sb_vrange;
 	struct silofs_xid128            sb_treeid;

@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/infra.h>
 #include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <linux/falloc.h>

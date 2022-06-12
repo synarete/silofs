@@ -986,7 +986,7 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
 	silofs_oaddr_setup(&uaddr->oaddr, blobid, bpos, stype_size(stype));
 	uaddr->voff = voff;
 	uaddr->stype = stype;
-	uaddr->height = (unsigned int)height;
+	uaddr->height = height;
 }
 
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
@@ -1260,12 +1260,9 @@ static ssize_t height_to_stepsz(enum silofs_height height)
 	case SILOFS_HEIGHT_SPNODE4:
 		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
 		break;
-	/* XXX crap
 	case SILOFS_HEIGHT_SUPER:
-	        stepsz = bk_size * nchilds *
-	                        nchilds * nchilds * nchilds;
+	        stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
 	        break;
-	*/
 	default:
 		stepsz = -1;
 		break;
@@ -1319,7 +1316,7 @@ void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
                              enum silofs_height height, loff_t voff)
 {
 	silofs_assert_ge(height, SILOFS_HEIGHT_SPNODE2);
-	silofs_assert_le(height, SILOFS_HEIGHT_SPNODE3);
+	silofs_assert_le(height, SILOFS_HEIGHT_SPNODE4);
 
 	silofs_vrange_setup_by(vrange, height, voff);
 }

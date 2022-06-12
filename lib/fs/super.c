@@ -238,15 +238,15 @@ static void sb_set_subref(struct silofs_super_block *sb, loff_t voff,
 
 static size_t sb_num_active_slots(const struct silofs_super_block *sb)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr uaddr;
 	size_t nslots_active = 0;
 	const size_t nslots_max = ARRAY_SIZE(sb->sb_subref);
 	static struct silofs_spmap_ref *spr = NULL;
 
 	for (size_t slot = 0; slot < nslots_max; ++slot) {
 		spr = sb_subref_at(sb, slot);
-		silofs_spr_ulink(spr, &ulink);
-		if (uaddr_isnull(&ulink)) {
+		silofs_spr_ulink(spr, &uaddr);
+		if (uaddr_isnull(&uaddr)) {
 			break;
 		}
 		nslots_active++;
@@ -546,7 +546,7 @@ sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 	struct silofs_vrange vrange;
 	const size_t child_height = silofs_sbi_space_tree_height(sbi) - 1;
 
-	silofs_assert_eq(child_height, SILOFS_HEIGHT_SPNODE3);
+	silofs_assert_eq(child_height, SILOFS_HEIGHT_SPNODE4);
 
 	silofs_vrange_setup_by(&vrange, child_height, voff);
 	return vrange.beg;
@@ -560,7 +560,7 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 
 	silofs_sbi_main_blob(sbi, &blobid);
 	silofs_uaddr_setup(out_uaddr, &blobid, sbi_bpos_of_child(sbi, voff),
-	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE3, base);
+	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE4, base);
 }
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,

@@ -53,7 +53,6 @@ struct silofs_unode_info {
 	struct silofs_repo             *u_repo;
 	struct silofs_ubk_info         *u_ubi;
 	struct silofs_pack_iovs        *u_piov;
-	bool                            u_tmapped;
 	bool                            u_verified;
 	bool                            u_plinked;
 };

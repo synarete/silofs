@@ -489,7 +489,6 @@ static int sbi_require_spnode_main_blob(struct silofs_sb_info *sbi,
 	return err;
 }
 
-
 static void sbi_bind_sli_to_uber(const struct silofs_sb_info *sbi,
                                  struct silofs_spleaf_info *sli)
 {
@@ -752,12 +751,6 @@ static int stgc_do_stage_spnode4(struct silofs_stage_ctx *stg_ctx)
 	struct silofs_spnode_info *sni4 = NULL;
 	int err;
 
-
-	/* XXX */
-	if (stg_ctx != NULL) {
-		return 0;
-	}
-
 	err = silofs_sbi_subref_of(stg_ctx->sbi, stg_ctx->voff, &uaddr);
 	if (err) {
 		return err;
@@ -831,11 +824,6 @@ static int stgc_require_spnode4(struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
-	/* XXX */
-	if (stg_ctx != NULL) {
-		return 0;
-	}
-
 	if (stgc_has_spnode4_child_at(stg_ctx)) {
 		err = stgc_stage_spnode4_of(stg_ctx);
 	} else {
@@ -849,7 +837,7 @@ static int stgc_require_spnode4(struct silofs_stage_ctx *stg_ctx)
 static void stgc_setup_spawned_spnode3(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
-	silofs_sni_setup_spawned(sni, sbi_uaddr(stg_ctx->sbi),
+	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni4),
 	                         stg_ctx->voff, SILOFS_STYPE_NONE);
 }
 
@@ -859,11 +847,11 @@ static int stgc_spawn_spnode3_of(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_uaddr uaddr;
 	int err;
 
-	err = sbi_require_main_blob(stg_ctx->sbi);
+	err = sbi_require_spnode_main_blob(stg_ctx->sbi, stg_ctx->sni4);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_main_child_at(stg_ctx->sbi, stg_ctx->voff, &uaddr);
+	silofs_sni_resolve_main_child(stg_ctx->sni4, stg_ctx->voff, &uaddr);
 
 	err = sbi_spawn_spnode_at(stg_ctx->sbi, &uaddr, out_sni);
 	if (err) {
@@ -897,7 +885,7 @@ static int stgc_do_clone_spnode3(struct silofs_stage_ctx *stg_ctx,
 		return err;
 	}
 	silofs_sni_clone_subrefs(sni_clone, stg_ctx->sni3);
-	silofs_sbi_bind_child(stg_ctx->sbi, sni_clone);
+	silofs_sni_bind_child_spnode(stg_ctx->sni4, sni_clone);
 
 	*out_sni = sni_clone;
 	return 0;
@@ -925,7 +913,7 @@ static int stgc_do_stage_spnode3(struct silofs_stage_ctx *stg_ctx)
 	struct silofs_spnode_info *sni3 = NULL;
 	int err;
 
-	err = silofs_sbi_subref_of(stg_ctx->sbi, stg_ctx->voff, &uaddr);
+	err = silofs_sni_subref_of(stg_ctx->sni4, stg_ctx->voff, &uaddr);
 	if (err) {
 		return err;
 	}
@@ -966,6 +954,10 @@ static int stgc_stage_spnode3_of(struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
+	err = stgc_stage_spnode4(stg_ctx);
+	if (err) {
+		return err;
+	}
 	err = stgc_stage_cached_spnode3(stg_ctx);
 	if (!err) {
 		return 0;
@@ -985,13 +977,13 @@ static int stgc_spawn_bind_spnode3(struct silofs_stage_ctx *stg_ctx)
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_child(stg_ctx->sbi, stg_ctx->sni3);
+	silofs_sni_bind_child_spnode(stg_ctx->sni4, stg_ctx->sni3);
 	return 0;
 }
 
 static bool stgc_has_spnode3_child_at(const struct silofs_stage_ctx *stg_ctx)
 {
-	return silofs_sbi_has_child_at(stg_ctx->sbi, stg_ctx->voff);
+	return silofs_sni_has_child_at(stg_ctx->sni4, stg_ctx->voff);
 }
 
 static int stgc_require_spnode3(struct silofs_stage_ctx *stg_ctx)
@@ -1013,7 +1005,6 @@ static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
 {
 	silofs_assert_ne(stg_ctx->stype_sub, SILOFS_STYPE_NONE);
 	silofs_assert(stype_isvnode(stg_ctx->stype_sub));
-	silofs_assert_not_null(stg_ctx->sni3);
 
 	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni3),
 	                         stg_ctx->voff, stg_ctx->stype_sub);
@@ -1025,7 +1016,6 @@ static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_uaddr uaddr;
 	int err;
 
-	silofs_assert_not_null(stg_ctx->sni3);
 	err = sbi_require_spnode_main_blob(stg_ctx->sbi, stg_ctx->sni3);
 	if (err) {
 		return err;
@@ -1094,7 +1084,6 @@ static int stgc_do_stage_spnode2(struct silofs_stage_ctx *stg_ctx)
 	struct silofs_spnode_info *sni2 = NULL;
 	int err;
 
-	silofs_assert_not_null(stg_ctx->sni3);
 	err = silofs_sni_subref_of(stg_ctx->sni3, stg_ctx->voff, &uaddr);
 	if (err) {
 		return err;
@@ -1136,7 +1125,6 @@ static int stgc_spawn_bind_spnode2(struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
-	silofs_assert_not_null(stg_ctx->sni3);
 	err = stgc_spawn_spnode2(stg_ctx, &stg_ctx->sni2);
 	if (err) {
 		return err;
@@ -1217,7 +1205,6 @@ static void stgc_setup_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
 	silofs_assert_ne(stg_ctx->stype_sub, SILOFS_STYPE_NONE);
 	silofs_assert(stype_isvnode(stg_ctx->stype_sub));
 
-	silofs_assert_not_null(stg_ctx->sni2);
 	silofs_sli_setup_spawned(sli, sni_uaddr(stg_ctx->sni2),
 	                         stg_ctx->voff, stg_ctx->stype_sub);
 }
@@ -1390,7 +1377,6 @@ static void stgc_track_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
 static void stgc_bind_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
                                      struct silofs_spleaf_info *sli)
 {
-	silofs_assert_not_null(stg_ctx->sni2);
 	silofs_sni_bind_child_spleaf(stg_ctx->sni2, sli);
 }
 
@@ -1411,7 +1397,6 @@ static int stgc_spawn_bind_spleaf_at(struct silofs_stage_ctx *stg_ctx)
 
 static bool stgc_has_spleaf_child_at(const struct silofs_stage_ctx *stg_ctx)
 {
-	silofs_assert_not_null(stg_ctx->sni2);
 	return silofs_sni_has_child_at(stg_ctx->sni2, stg_ctx->voff);
 }
 

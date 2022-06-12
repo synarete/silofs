@@ -278,7 +278,6 @@ static void ui_init(struct silofs_unode_info *ui,
 	ui->u_repo = NULL;
 	ui->u_ubi = NULL;
 	ui->u_piov = NULL;
-	ui->u_tmapped = false;
 	ui->u_verified = false;
 	ui->u_plinked = false;
 }
@@ -286,12 +285,14 @@ static void ui_init(struct silofs_unode_info *ui,
 static void ui_fini(struct silofs_unode_info *ui)
 {
 	silofs_assert(!ui->u_plinked);
-	silofs_assert(!ui->u_tmapped);
 
 	uaddr_reset(&ui->u_uaddr);
 	packid_reset(&ui->u_packid);
 	lh_fini(&ui->u_pack_lh);
 	si_fini(&ui->u_si);
+	ui->u_repo = NULL;
+	ui->u_ubi = NULL;
+	ui->u_piov = NULL;
 }
 
 struct silofs_unode_info *silofs_ui_from_si(const struct silofs_snode_info *si)

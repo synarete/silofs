@@ -254,7 +254,7 @@ struct silofs_uaddr {
 	struct silofs_oaddr     oaddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
-	unsigned int            height;
+	enum silofs_height      height;
 };
 
 /* logical addressing of virtual elements */

@@ -315,7 +315,7 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE2   = 2,
 	SILOFS_HEIGHT_SPNODE3   = 3,
 	SILOFS_HEIGHT_SPNODE4   = 4,
-	SILOFS_HEIGHT_SUPER     = 4, /* XXX crap */
+	SILOFS_HEIGHT_SUPER     = 5,
 };
 
 /* common-header flags */
@@ -922,7 +922,7 @@ struct silofs_block {
 union silofs_view {
 	struct silofs_header            hdr;
 	struct silofs_super_block       sb;
-	struct silofs_spstats_node       st;
+	struct silofs_spstats_node      st;
 	struct silofs_spmap_node        sn;
 	struct silofs_spmap_leaf        sl;
 	struct silofs_inode             in;

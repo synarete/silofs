@@ -191,6 +191,45 @@ static void test_unlinked_rename(struct vt_env *vte)
 	test_unlinked_rename_(vte, 1111);
 }
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Tests I/O over several unlinked files, all created with the same pathname.
+ */
+static void test_unlinked_same_path_(struct vt_env *vte, size_t cnt)
+{
+	int fd = -1;
+	int dat = -1;
+	int *fds = vt_new_buf_zeros(vte, cnt * sizeof(fd));
+	const char *path = vt_new_path_unique(vte);
+	loff_t pos;
+
+	for (size_t i = 0; i < cnt; ++i) {
+		vt_open(path, O_CREAT | O_RDWR, 0600, &fd);
+		vt_unlink(path);
+		fds[i] = fd;
+		pos = (loff_t)((i * VT_UMEGA) + i);
+		vt_pwriten(fd, &fd, sizeof(fd), pos);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		fd = fds[i];
+		pos = (loff_t)((i * VT_UMEGA) + i);
+		vt_preadn(fd, &dat, sizeof(dat), pos);
+		vt_expect_eq(fd, dat);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		vt_unlink_noent(path);
+		fd = fds[i];
+		vt_close(fd);
+	}
+}
+
+static void test_unlinked_same_path(struct vt_env *vte)
+{
+	test_unlinked_same_path_(vte, 10);
+	test_unlinked_same_path_(vte, 100);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct vt_tdef vt_local_tests[] = {
@@ -200,6 +239,7 @@ static const struct vt_tdef vt_local_tests[] = {
 	VT_DEFTEST(test_unlinked_complex2),
 	VT_DEFTEST(test_unlinked_multi),
 	VT_DEFTEST(test_unlinked_rename),
+	VT_DEFTEST(test_unlinked_same_path),
 };
 
 const struct vt_tests vt_test_unlinked_file = VT_DEFTESTS(vt_local_tests);

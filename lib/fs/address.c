@@ -1257,9 +1257,15 @@ static ssize_t height_to_stepsz(enum silofs_height height)
 	case SILOFS_HEIGHT_SPNODE3:
 		stepsz = bk_size * nchilds * nchilds * nchilds;
 		break;
-	case SILOFS_HEIGHT_SUPER:
+	case SILOFS_HEIGHT_SPNODE4:
 		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
 		break;
+	/* XXX crap
+	case SILOFS_HEIGHT_SUPER:
+	        stepsz = bk_size * nchilds *
+	                        nchilds * nchilds * nchilds;
+	        break;
+	*/
 	default:
 		stepsz = -1;
 		break;

@@ -314,8 +314,8 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPLEAF    = 1,
 	SILOFS_HEIGHT_SPNODE2   = 2,
 	SILOFS_HEIGHT_SPNODE3   = 3,
-	/* SILOFS_HEIGHT_SPNODE4        = 4, */
-	SILOFS_HEIGHT_SUPER     = 4,
+	SILOFS_HEIGHT_SPNODE4   = 4,
+	SILOFS_HEIGHT_SUPER     = 4, /* XXX crap */
 };
 
 /* common-header flags */

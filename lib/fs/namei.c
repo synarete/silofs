@@ -2344,19 +2344,18 @@ dii_namestr_to_hash(const struct silofs_inode_info *dir_ii,
 	return dii_name_to_hash(dir_ii, ns->s.str, ns->s.len, out_hash);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int check_valid_encoding(const struct silofs_inode_info *ii,
-                                const struct silofs_namestr *nstr)
+static int dii_check_name_encoding(const struct silofs_inode_info *dir_ii,
+                                   const struct silofs_namestr *nstr)
 {
-	if (!ii_isdir(ii)) {
-		return 0;
+	int ret = 0;
+
+	if (dir_hasflag(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
+		ret = check_utf8_name(ii_uber(dir_ii), nstr);
 	}
-	if (!dir_hasflag(ii, SILOFS_DIRF_NAME_UTF8)) {
-		return 0;
-	}
-	return check_utf8_name(ii_uber(ii), nstr);
+	return ret;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,
                            const struct silofs_inode_info *ii, const char *s)
@@ -2367,7 +2366,10 @@ int silofs_make_namestr_by(struct silofs_namestr *nstr,
 	if (err) {
 		return err;
 	}
-	err = check_valid_encoding(ii, nstr);
+	if (!ii_isdir(ii)) {
+		return 0;
+	}
+	err = dii_check_name_encoding(ii, nstr);
 	if (err) {
 		return err;
 	}

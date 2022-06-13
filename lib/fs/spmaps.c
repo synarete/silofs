@@ -1348,7 +1348,12 @@ void silofs_sni_update_staged(struct silofs_spnode_info *sni)
 
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni)
 {
-	return spnode_heigth(sni->sn);
+	const struct silofs_uaddr *uaddr = sni_uaddr(sni);
+	const int sn_height = spnode_heigth(sni->sn);
+
+	silofs_assert_eq(uaddr->height, sn_height);
+
+	return uaddr->height;
 }
 
 static size_t sni_child_height(const struct silofs_spnode_info *sni)

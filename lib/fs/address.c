@@ -1261,8 +1261,8 @@ static ssize_t height_to_stepsz(enum silofs_height height)
 		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
 		break;
 	case SILOFS_HEIGHT_SUPER:
-	        stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
-	        break;
+		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
+		break;
 	default:
 		stepsz = -1;
 		break;

@@ -165,8 +165,9 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	const uint64_t voff = (uint64_t)uaddr->voff;
 	const uint64_t stype = (uint64_t)(uaddr->stype);
 	const uint64_t ohash = hash_of_oaddr(&uaddr->oaddr);
+	const uint32_t height = (uint32_t)uaddr->height;
 
-	return ohash ^ stype ^ voff;
+	return silofs_rotate64(ohash + stype, height % 7) ^ voff;
 }
 
 static uint64_t hash_of_voff(const loff_t *voff)
@@ -371,15 +372,27 @@ static void ce_unlru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	listq_remove(lru, ce_lru_link(ce));
 }
 
-static bool ce_islru_front(struct silofs_cache_elem *ce,
-                           struct silofs_listq *lru)
+static bool ce_need_relru(struct silofs_cache_elem *ce,
+                          const struct silofs_listq *lru)
 {
-	return (listq_front(lru) == ce_lru_link(ce));
+	const struct silofs_list_head *lru_front = listq_front(lru);
+	const struct silofs_list_head *ce_lru_lnk = ce_lru_link(ce);
+
+	if (unlikely(lru_front == NULL)) {
+		return false; /* make clang-scan happy */
+	}
+	if (lru_front == ce_lru_lnk) {
+		return false;
+	}
+	if (lru_front->next == ce_lru_lnk) {
+		return false;
+	}
+	return true;
 }
 
 static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 {
-	if (!ce_islru_front(ce, lru)) {
+	if (ce_need_relru(ce, lru)) {
 		ce_unlru(ce, lru);
 		ce_lru(ce, lru);
 	}
@@ -1819,10 +1832,10 @@ cache_require_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 static void cache_store_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *ti = &ui->u_si;
+	struct silofs_snode_info *si = &ui->u_si;
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 
-	ckey_by_uaddr(&ti->s_ce.ce_ckey, uaddr);
+	ckey_by_uaddr(&si->s_ce.ce_ckey, uaddr);
 	cache_store_ui_lrumap(cache, ui);
 }
 
@@ -2197,9 +2210,9 @@ static void cache_store_vi_lrumap(struct silofs_cache *cache,
 static void cache_store_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_snode_info *ti = &vi->v_si;
+	struct silofs_snode_info *si = &vi->v_si;
 
-	ckey_by_vaddr(&ti->s_ce.ce_ckey, &vi->v_vaddr);
+	ckey_by_vaddr(&si->s_ce.ce_ckey, &vi->v_vaddr);
 	cache_store_vi_lrumap(cache, vi);
 }
 

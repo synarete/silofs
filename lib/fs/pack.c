@@ -186,16 +186,32 @@ static bool ui_isspnode(const struct silofs_unode_info *ui)
 	return stype_isspnode(ui_stype(ui));
 }
 
+static bool ui_isspnode_with(const struct silofs_unode_info *ui,
+                             enum silofs_height height)
+{
+	const struct silofs_spnode_info *sni = NULL;
+	bool ret = false;
+
+	if (ui_isspnode(ui)) {
+		sni = sni_from_ui(ui);
+		ret = sni_has_height(sni, height);
+	}
+	return ret;
+}
+
+static bool ui_isspnode4(const struct silofs_unode_info *ui)
+{
+	return ui_isspnode_with(ui, SILOFS_HEIGHT_SPNODE4);
+}
+
 static bool ui_isspnode3(const struct silofs_unode_info *ui)
 {
-	return ui_isspnode(ui) &&
-	       sni_has_height(sni_from_ui(ui), SILOFS_HEIGHT_SPNODE3);
+	return ui_isspnode_with(ui, SILOFS_HEIGHT_SPNODE3);
 }
 
 static bool ui_isspnode2(const struct silofs_unode_info *ui)
 {
-	return ui_isspnode(ui) &&
-	       sni_has_height(sni_from_ui(ui), SILOFS_HEIGHT_SPNODE2);
+	return ui_isspnode_with(ui, SILOFS_HEIGHT_SPNODE2);
 }
 
 static bool ui_isstats(const struct silofs_unode_info *ui)
@@ -755,7 +771,7 @@ static int pac_archive_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
                                   struct silofs_spleaf_info *sli,
                                   loff_t voff, size_t slot)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_ubk_info *ubi = NULL;
 	struct silofs_block *enc_bk = NULL;
 	size_t nalloc;
@@ -765,11 +781,11 @@ static int pac_archive_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (!nalloc) {
 		goto out;
 	}
-	err = silofs_sli_subref_of(sli, voff, &ulink);
+	err = silofs_sli_subref_of(sli, voff, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = pac_stage_block(pa_ctx, blobid_of(&ulink), slot, &ubi);
+	err = pac_stage_block(pa_ctx, blobid_of(&uaddr), slot, &ubi);
 	if (err) {
 		return err;
 	}
@@ -841,6 +857,23 @@ pac_post_archive_spnode2(struct silofs_pack_ctx *pa_ctx,
 
 static int
 pac_post_archive_spnode3(struct silofs_pack_ctx *pa_ctx,
+                         struct silofs_spnode_info *parent,
+                         struct silofs_spnode_info *sni, size_t slot)
+{
+	struct silofs_packid packid;
+	const struct silofs_unode_info *ui = &sni->sn_ui;
+	int err;
+
+	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &packid);
+	if (!err) {
+		silofs_sni_bind_main_pack(sni, &packid);
+		err = pac_repack_unode(pa_ctx, parent->sn_ui.u_piov, slot, ui);
+	}
+	return err;
+}
+
+static int
+pac_post_archive_spnode4(struct silofs_pack_ctx *pa_ctx,
                          struct silofs_sb_info *sbi,
                          struct silofs_spnode_info *sni, size_t slot)
 {
@@ -884,24 +917,29 @@ static int pac_post_archive(struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_sb_info *sbi = NULL;
 	struct silofs_spstats_info *sti = NULL;
-	struct silofs_spnode_info *parent = NULL;
-	struct silofs_spnode_info *sni = NULL;
+	struct silofs_spnode_info *sni4 = NULL;
+	struct silofs_spnode_info *sni3 = NULL;
+	struct silofs_spnode_info *sni2 = NULL;
 	struct silofs_spleaf_info *sli = NULL;
 	const size_t slot = uit->slot;
 	int err = 0;
 
 	if (ui_isspleaf(uit->ui)) {
-		sni = sni_from_ui(uit->parent);
+		sni2 = sni_from_ui(uit->parent);
 		sli = sli_from_ui(uit->ui);
-		err = pac_post_archive_spleaf(pa_ctx, sni, sli, slot);
+		err = pac_post_archive_spleaf(pa_ctx, sni2, sli, slot);
 	} else if (ui_isspnode2(uit->ui)) {
-		parent = sni_from_ui(uit->parent);
-		sni = sni_from_ui(uit->ui);
-		err = pac_post_archive_spnode2(pa_ctx, parent, sni, slot);
+		sni3 = sni_from_ui(uit->parent);
+		sni2 = sni_from_ui(uit->ui);
+		err = pac_post_archive_spnode2(pa_ctx, sni3, sni2, slot);
 	} else if (ui_isspnode3(uit->ui)) {
+		sni4 = sni_from_ui(uit->parent);
+		sni3 = sni_from_ui(uit->ui);
+		err = pac_post_archive_spnode3(pa_ctx, sni4, sni3, slot);
+	} else if (ui_isspnode4(uit->ui)) {
 		sbi = sbi_from_ui(uit->parent);
-		sni = sni_from_ui(uit->ui);
-		err = pac_post_archive_spnode3(pa_ctx, sbi, sni, slot);
+		sni4 = sni_from_ui(uit->ui);
+		err = pac_post_archive_spnode4(pa_ctx, sbi, sni4, slot);
 	} else if (ui_isstats(uit->ui)) {
 		sti = sti_from_ui(uit->ui);
 		err = pac_post_archive_stats(pa_ctx, sti, slot);
@@ -1304,20 +1342,20 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
                                   struct silofs_spleaf_info *sli,
                                   loff_t voff, size_t slot)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_packid packid;
 	struct silofs_blob_info *bli = NULL;
 	struct silofs_ubk_info *ubi_src = NULL;
 	struct silofs_ubk_info *ubi_dst = NULL;
-	const struct silofs_bkaddr *bkaddr = &ulink.oaddr.bka;
+	const struct silofs_bkaddr *bkaddr = &uaddr.oaddr.bka;
 	size_t nalloc;
 	int err;
 
-	err = silofs_sli_subref_of(sli, voff, &ulink);
+	err = silofs_sli_subref_of(sli, voff, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = pac_require_blob_of(pa_ctx, blobid_of(&ulink), &bli);
+	err = pac_require_blob_of(pa_ctx, blobid_of(&uaddr), &bli);
 	if (err) {
 		return err;
 	}
@@ -1404,11 +1442,11 @@ static int pac_post_restore_at(struct silofs_pack_ctx *pa_ctx,
 	return ret;
 }
 
-static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
+static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
                                  struct silofs_spnode_info *sni,
                                  loff_t voff, size_t slot)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_packid packid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni_child = NULL;
@@ -1418,11 +1456,40 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_sni_subref_of(sni, voff, &ulink);
+	err = silofs_sni_subref_of(sni, voff, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &ulink, &sni_child);
+	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &uaddr, &sni_child);
+	if (err) {
+		return err;
+	}
+	err = pac_refill_unode(pa_ctx, &packid, slot, &sni_child->sn_ui);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
+                                 struct silofs_spnode_info *sni,
+                                 loff_t voff, size_t slot)
+{
+	struct silofs_uaddr uaddr;
+	struct silofs_packid packid;
+	struct silofs_fs_uber *uber = pa_ctx->uber;
+	struct silofs_spnode_info *sni_child = NULL;
+	int err;
+
+	err = silofs_sni_main_pack(sni, &packid);
+	if (err) {
+		return err;
+	}
+	err = silofs_sni_subref_of(sni, voff, &uaddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &uaddr, &sni_child);
 	if (err) {
 		return err;
 	}
@@ -1437,7 +1504,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
                                  struct silofs_spnode_info *sni,
                                  loff_t voff, size_t slot)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_packid packid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spleaf_info *sli = NULL;
@@ -1447,11 +1514,11 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_sni_subref_of(sni, voff, &ulink);
+	err = silofs_sni_subref_of(sni, voff, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spleaf_at(uber, pa_ctx->pack, &ulink, &sli);
+	err = silofs_shadow_spleaf_at(uber, pa_ctx->pack, &uaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1466,7 +1533,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
                                struct silofs_sb_info *sbi,
                                loff_t voff, size_t slot)
 {
-	struct silofs_uaddr ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_packid packid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni = NULL;
@@ -1476,11 +1543,11 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_subref_of(sbi, voff, &ulink);
+	err = silofs_sbi_subref_of(sbi, voff, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &ulink, &sni);
+	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &uaddr, &sni);
 	if (err) {
 		return err;
 	}
@@ -1504,6 +1571,9 @@ static int pac_prep_restore(struct silofs_pack_ctx *pa_ctx,
 	if (ui_issuper(parent)) {
 		sbi = sbi_from_ui(parent);
 		ret = pac_reload_by_super(pa_ctx, sbi, voff, slot);
+	} else if (ui_isspnode4(parent)) {
+		sni = sni_from_ui(parent);
+		ret = pac_reload_by_spnode4(pa_ctx, sni, voff, slot);
 	} else if (ui_isspnode3(parent)) {
 		sni = sni_from_ui(parent);
 		ret = pac_reload_by_spnode3(pa_ctx, sni, voff, slot);

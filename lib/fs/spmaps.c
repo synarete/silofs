@@ -725,6 +725,14 @@ static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *sl,
 	return bkr_test_allocated_at(bkr, kbn, nkb);
 }
 
+static size_t spleaf_num_allocated_with(const struct silofs_spmap_leaf *sl,
+                                    const struct silofs_vaddr *vaddr)
+{
+	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
+
+	return bkr_allocated(bkr);
+}
+
 static bool spleaf_test_unwritten_at(const struct silofs_spmap_leaf *sl,
                                      const struct silofs_vaddr *vaddr)
 {
@@ -762,14 +770,6 @@ spleaf_allocated_at(const struct silofs_spmap_leaf *sl, silofs_lba_t lba)
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_lba(sl, lba);
 
 	return bkr_allocated(bkr);
-}
-
-static bool spleaf_has_allocated_by(const struct silofs_spmap_leaf *sl,
-                                    const struct silofs_vaddr *vaddr)
-{
-	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
-
-	return (bkr_allocated(bkr) > 0);
 }
 
 static void spleaf_set_allocated_at(struct silofs_spmap_leaf *sl,
@@ -1151,7 +1151,7 @@ void silofs_sli_clear_allocated_space(struct silofs_spleaf_info *sli,
 	sli->sl_nused_bytes -= vaddr->len;
 
 	spleaf_clear_allocated_at(sl, vaddr);
-	if (!spleaf_has_allocated_by(sl, vaddr)) {
+	if (spleaf_num_allocated_with(sl, vaddr) == 0) {
 		spleaf_renew_bk_at(sl, vaddr);
 	}
 	sli_dirtify(sli);
@@ -1186,6 +1186,12 @@ static bool sli_is_allocated_at(const struct silofs_spleaf_info *sli,
                                 const struct silofs_vaddr *vaddr)
 {
 	return spleaf_is_allocated_at(sli->sl, vaddr);
+}
+
+bool silofs_sli_has_allocated_space(const struct silofs_spleaf_info *sli,
+                                    const struct silofs_vaddr *vaddr)
+{
+	return sli_is_allocated_at(sli, vaddr);
 }
 
 bool silofs_sli_has_unwritten_at(const struct silofs_spleaf_info *sli,

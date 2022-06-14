@@ -151,7 +151,7 @@ static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
 	sbi_update_voff_last(sbi, vaddr);
 }
 
-static void sbi_clear_unallocate_at(struct silofs_sb_info *sbi,
+static void sbi_clear_allocate_at(struct silofs_sb_info *sbi,
                                     struct silofs_spleaf_info *sli,
                                     const struct silofs_vaddr *vaddr)
 {
@@ -662,13 +662,13 @@ int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
 	return 0;
 }
 
-static void spc_reclaim_unallocate(const struct silofs_spalloc_ctx *spa_ctx)
+static void spc_reclaim_vspace_of(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_sb_info *sbi = spa_ctx->sbi;
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
 	const struct silofs_vaddr *vaddr = &spa_ctx->voa.vaddr;
 
-	sbi_clear_unallocate_at(sbi, sli, vaddr);
+	sbi_clear_allocate_at(sbi, sli, vaddr);
 	silofs_sbi_recache_vspace(sbi, vaddr);
 
 	sbi_vspace_reclaimed_at(sbi, sli);
@@ -687,7 +687,7 @@ static int spc_reclaim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	if (err) {
 		return err;
 	}
-	spc_reclaim_unallocate(spa_ctx);
+	spc_reclaim_vspace_of(spa_ctx);
 	return 0;
 }
 

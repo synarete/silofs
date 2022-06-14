@@ -4069,7 +4069,6 @@ static void fuseq_finish_workers(struct silofs_fuseq *fq)
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	int err;
 
 	fuseq_log_info("exec: nprocs=%ld", silofs_sc_nproc_onln());

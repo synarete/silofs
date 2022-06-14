@@ -30,16 +30,34 @@
 #include <limits.h>
 
 
-static int dii_namestr_to_hash(const struct silofs_inode_info *dir_ii,
-                               const struct silofs_namestr *ns,
-                               uint64_t *out_hash);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool dir_hasflag(const struct silofs_inode_info *dir_ii,
-                        enum silofs_dirf mask)
+union silofs_utf32_name_buf {
+	char dat[4 * (SILOFS_NAME_MAX + 1)];
+	uint32_t utf32[SILOFS_NAME_MAX + 1];
+} silofs_aligned64;
+
+
+static int check_utf8_name(const struct silofs_fs_uber *uber,
+                           const struct silofs_namestr *nstr)
 {
-	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
+	union silofs_utf32_name_buf unb;
+	char *in = unconst(nstr->s.str);
+	char *out = unb.dat;
+	size_t len = nstr->s.len;
+	size_t outlen = sizeof(unb.dat);
+	size_t datlen;
+	size_t ret;
 
-	return ((flags & mask) == mask);
+	ret = iconv(uber->ub_iconv, &in, &len, &out, &outlen);
+	if ((ret != 0) || len || (outlen % 4)) {
+		return errno ? -errno : -EINVAL;
+	}
+	datlen = sizeof(unb.dat) - outlen;
+	if (datlen == 0) {
+		return -EINVAL;
+	}
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -63,6 +81,86 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 	if (!err && likely(ii != NULL) && has_nlookup_mode(ii)) {
 		ii->i_nlookup++;
 	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_mdigest *
+dii_mdigest(const struct silofs_inode_info *ii)
+{
+	return ii->i_vi.v_si.s_md;
+}
+
+static uint64_t
+dii_namehash_by_sha256(const struct silofs_inode_info *dii,
+                       const char *name, size_t nlen)
+{
+	struct silofs_hash256 sha256;
+
+	silofs_sha256_of(dii_mdigest(dii), name, nlen, &sha256);
+	return silofs_hash256_to_u64(&sha256);
+}
+
+static uint64_t
+dii_namehash_by_xxh64(const struct silofs_inode_info *dir_ii,
+                      const char *name, size_t nlen)
+{
+	return silofs_hash_xxh64(name, nlen, silofs_dir_seed(dir_ii));
+}
+
+static int dii_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
+                            const struct silofs_namebuf *nbuf,
+                            size_t nlen, uint64_t *out_hash)
+{
+	const enum silofs_dirhfn dhfn = silofs_dir_hfn(dir_ii);
+
+	switch (dhfn) {
+	case SILOFS_DIRHASH_SHA256:
+		*out_hash = dii_namehash_by_sha256(dir_ii, nbuf->name, nlen);
+		break;
+	case SILOFS_DIRHASH_XXH64:
+		*out_hash = dii_namehash_by_xxh64(dir_ii, nbuf->name, nlen);
+		break;
+	default:
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int
+dii_name_to_hash(const struct silofs_inode_info *dir_ii,
+                 const struct silofs_namestr *nstr, uint64_t *out_hash)
+{
+	struct silofs_namebuf nbuf;
+	const size_t aligned_nlen = div_round_up(nstr->s.len, 8);
+
+	STATICASSERT_EQ(sizeof(nbuf.name) % 8, 0);
+
+	if (likely(nstr->s.len >= sizeof(nbuf.name))) {
+		return -EINVAL;
+	}
+	silofs_memzero(&nbuf, sizeof(nbuf));
+	silofs_namebuf_assign_str(&nbuf, nstr);
+	return dii_nbuf_to_hash(dir_ii, &nbuf, aligned_nlen, out_hash);
+}
+
+static bool
+dii_hasflag(const struct silofs_inode_info *dir_ii, enum silofs_dirf mask)
+{
+	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
+
+	return ((flags & mask) == mask);
+}
+
+static int dii_check_name_encoding(const struct silofs_inode_info *dir_ii,
+                                   const struct silofs_namestr *nstr)
+{
+	int ret = 0;
+
+	if (dii_hasflag(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
+		ret = check_utf8_name(ii_uber(dir_ii), nstr);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -395,7 +493,7 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = dii_namestr_to_hash(dir_ii, nstr, &qstr->hash);
+	err = dii_name_to_hash(dir_ii, nstr, &qstr->hash);
 	if (err) {
 		return err;
 	}
@@ -2260,99 +2358,6 @@ int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-union silofs_utf32_name_buf {
-	char dat[4 * (SILOFS_NAME_MAX + 1)];
-	uint32_t utf32[SILOFS_NAME_MAX + 1];
-} silofs_aligned64;
-
-
-static int check_utf8_name(const struct silofs_fs_uber *uber,
-                           const struct silofs_namestr *nstr)
-{
-	union silofs_utf32_name_buf unb;
-	char *in = unconst(nstr->s.str);
-	char *out = unb.dat;
-	size_t len = nstr->s.len;
-	size_t outlen = sizeof(unb.dat);
-	size_t datlen;
-	size_t ret;
-
-	ret = iconv(uber->ub_iconv, &in, &len, &out, &outlen);
-	if ((ret != 0) || len || (outlen % 4)) {
-		return errno ? -errno : -EINVAL;
-	}
-	datlen = sizeof(unb.dat) - outlen;
-	if (datlen == 0) {
-		return -EINVAL;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_mdigest *
-dii_mdigest(const struct silofs_inode_info *ii)
-{
-	return ii->i_vi.v_si.s_md;
-}
-
-static uint64_t
-dii_namehash_by_sha256(const struct silofs_inode_info *dii,
-                       const char *name, size_t nlen)
-{
-	struct silofs_hash256 sha256;
-
-	silofs_sha256_of(dii_mdigest(dii), name, nlen, &sha256);
-	return silofs_hash256_to_u64(&sha256);
-}
-
-static uint64_t
-dii_namehash_by_xxh64(const struct silofs_inode_info *dir_ii,
-                      const char *name, size_t nlen)
-{
-	return silofs_hash_xxh64(name, nlen, silofs_dir_seed(dir_ii));
-}
-
-static int dii_name_to_hash(const struct silofs_inode_info *dir_ii,
-                            const char *name, size_t nlen, uint64_t *out_hash)
-{
-	const enum silofs_dirhfn dhfn = silofs_dir_hfn(dir_ii);
-	int err = 0;
-
-	switch (dhfn) {
-	case SILOFS_DIRHASH_SHA256:
-		*out_hash = dii_namehash_by_sha256(dir_ii, name, nlen);
-		break;
-	case SILOFS_DIRHASH_XXH64:
-		*out_hash = dii_namehash_by_xxh64(dir_ii, name, nlen);
-		break;
-	default:
-		err = -EFSCORRUPTED;
-		break;
-	}
-	return err;
-}
-
-static int
-dii_namestr_to_hash(const struct silofs_inode_info *dir_ii,
-                    const struct silofs_namestr *ns, uint64_t *out_hash)
-{
-	return dii_name_to_hash(dir_ii, ns->s.str, ns->s.len, out_hash);
-}
-
-static int dii_check_name_encoding(const struct silofs_inode_info *dir_ii,
-                                   const struct silofs_namestr *nstr)
-{
-	int ret = 0;
-
-	if (dir_hasflag(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
-		ret = check_utf8_name(ii_uber(dir_ii), nstr);
-	}
-	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

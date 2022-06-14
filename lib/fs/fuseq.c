@@ -3647,8 +3647,6 @@ static int fuseq_init_workers_limit(struct silofs_fuseq *fq)
 	fws->fws_nlimit = (unsigned int)nlimit;
 	fws->fws_navail = 0;
 	fws->fws_nactive = 0;
-
-	fuseq_log_info("init workers: nprocs=%d workers=%d", nprocs, nlimit);
 	return 0;
 }
 
@@ -4045,6 +4043,7 @@ static int fuseq_start_workers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	int err;
 
+	fuseq_log_info("start workers: nworkers=%d", fws->fws_navail);
 	fq->fq_active = 1;
 	fws->fws_nactive = 0;
 	for (size_t i = 0; i < fws->fws_navail; ++i) {
@@ -4061,6 +4060,7 @@ static void fuseq_finish_workers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 
+	fuseq_log_info("finish workers: nworkers=%d", fws->fws_nactive);
 	fq->fq_active = 0;
 	for (size_t i = 0; i < fws->fws_nactive; ++i) {
 		fuseq_join_thread(&fws->fws_workers[i]);
@@ -4069,13 +4069,16 @@ static void fuseq_finish_workers(struct silofs_fuseq *fq)
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq)
 {
+	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	int err;
 
+	fuseq_log_info("exec: nprocs=%ld", silofs_sc_nproc_onln());
 	err = fuseq_start_workers(fq);
 	if (!err) {
 		fuseq_suspend_while_active(fq);
 	}
 	fuseq_finish_workers(fq);
+	fuseq_log_info("done: nprocs=%ld", silofs_sc_nproc_onln());
 	return err;
 }
 

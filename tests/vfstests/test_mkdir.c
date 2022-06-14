@@ -174,10 +174,13 @@ static void test_mkdir_loop(struct vt_env *vte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* TODO: rename test and move me from here */
+
 /*
  * Verify creation & removal of many-many dir-entries.
  */
-static void test_mkdir_many(struct vt_env *vte, size_t cnt)
+static void test_mkdir_many_(struct vt_env *vte, size_t cnt)
 {
 	int fd = -1;
 	int dfd = -1;
@@ -204,14 +207,14 @@ static void test_mkdir_many(struct vt_env *vte, size_t cnt)
 	vt_rmdir(path);
 }
 
-static void test_mkdir_big(struct vt_env *vte)
+static void test_mkdir_many(struct vt_env *vte)
 {
-	test_mkdir_many(vte, 1000);
+	test_mkdir_many_(vte, 1000);
 }
 
-static void test_mkdir_bigger(struct vt_env *vte)
+static void test_mkdir_many_more(struct vt_env *vte)
 {
-	test_mkdir_many(vte, 30000);
+	test_mkdir_many_(vte, 30000);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -469,8 +472,8 @@ static const struct vt_tdef vt_local_tests[] = {
 	VT_DEFTEST(test_mkdir_chmod),
 	VT_DEFTEST(test_mkdir_loop),
 	VT_DEFTEST(test_mkdir_nested),
-	VT_DEFTEST(test_mkdir_big),
-	VT_DEFTEST(test_mkdir_bigger),
+	VT_DEFTEST(test_mkdir_many),
+	VT_DEFTEST(test_mkdir_many_more),
 	VT_DEFTEST(test_mkdir_tree_wide),
 	VT_DEFTEST(test_mkdir_tree_deep),
 	VT_DEFTEST(test_rmdir_mctime),

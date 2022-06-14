@@ -812,8 +812,9 @@ static void dtn_child_by_hash(const struct silofs_dtree_node *dtn,
                               uint64_t hash, struct silofs_vaddr *out_vaddr)
 {
 	silofs_dtn_ord_t ord;
+	const silofs_dtn_depth_t depth = dtn_depth(dtn);
 
-	ord = hash_to_child_ord(hash, dtn_depth(dtn) + 1);
+	ord = hash_to_child_ord(hash, depth + 1);
 	dtn_child_by_ord(dtn, ord, out_vaddr);
 }
 
@@ -1377,9 +1378,9 @@ static int dic_require_tree_root(const struct silofs_dir_ctx *d_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int dic_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
-                              struct silofs_dnode_info *root_dni,
-                              struct silofs_dir_entry_info *dei)
+static int dic_do_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
+                                 struct silofs_dnode_info *root_dni,
+                                 struct silofs_dir_entry_info *dei)
 {
 	const struct silofs_qstr *name = d_ctx->name;
 	struct silofs_dnode_info *child_dni = NULL;
@@ -1387,27 +1388,37 @@ static int dic_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 	silofs_dtn_depth_t depth;
 	int ret = -ENOENT;
 
-	dni_incref(root_dni);
 	for (depth = dtn_depth(dni->dtn); depth_isvalid(depth); ++depth) {
 		ret = search_dnode(dni, name, dei);
 		if (!ret || (ret != -ENOENT)) {
-			goto out;
+			break;
 		}
 		ret = dic_stage_child_by_name(d_ctx, dni, &child_dni);
 		if (ret) {
-			goto out;
+			break;
 		}
 		dni = child_dni;
 		ret = dni_check_child_depth(dni, depth);
 		if (ret) {
-			goto out;
+			break;
 		}
 		ret = -ENOENT;
 	}
-out:
+	return ret;
+}
+
+static int dic_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
+                              struct silofs_dnode_info *root_dni,
+                              struct silofs_dir_entry_info *dei)
+{
+	int ret;
+
+	dni_incref(root_dni);
+	ret = dic_do_lookup_by_tree(d_ctx, root_dni, dei);
 	dni_decref(root_dni);
 	return ret;
 }
+
 
 static int dic_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dir_entry_info *dei)

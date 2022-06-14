@@ -21,8 +21,7 @@ struct ut_namesarr {
 	const char *arr[1];
 };
 
-static const char *make_name(struct ut_env *ute,
-                             long idx, size_t len)
+static const char *make_name(struct ut_env *ute, long idx, size_t len)
 {
 	char name[UT_NAME_MAX + 1] = "";
 	const size_t name_max = sizeof(name) - 1;
@@ -34,6 +33,16 @@ static const char *make_name(struct ut_env *ute,
 		name[strlen(name)] = '_';
 		name[len] = '\0';
 	}
+	return ut_strdup(ute, name);
+}
+
+
+static const char *make_ulong_name(struct ut_env *ute, unsigned long key)
+{
+	char name[UT_NAME_MAX + 1] = "";
+	const size_t name_max = sizeof(name) - 1;
+
+	snprintf(name, name_max, "%lu", key);
 	return ut_strdup(ute, name);
 }
 
@@ -53,11 +62,10 @@ new_namesarr(struct ut_env *ute, size_t cnt)
 }
 
 static struct ut_namesarr *
-make_names_(struct ut_env *ute, size_t cnt, size_t len)
+make_names_with_len(struct ut_env *ute, size_t cnt, size_t len)
 {
-	struct ut_namesarr *na;
+	struct ut_namesarr *na = new_namesarr(ute, cnt);
 
-	na = new_namesarr(ute, cnt);
 	for (size_t i = 0; i < na->cnt; ++i) {
 		na->arr[i] = make_name(ute, (long)i + 1, len);
 	}
@@ -67,13 +75,13 @@ make_names_(struct ut_env *ute, size_t cnt, size_t len)
 static struct ut_namesarr *
 make_names(struct ut_env *ute, size_t cnt)
 {
-	return make_names_(ute, cnt, 0);
+	return make_names_with_len(ute, cnt, 0);
 }
 
 static struct ut_namesarr *
-make_long_names(struct ut_env *ute, size_t cnt)
+make_names_max_len(struct ut_env *ute, size_t cnt)
 {
-	return make_names_(ute, cnt, UT_NAME_MAX);
+	return make_names_with_len(ute, cnt, UT_NAME_MAX);
 }
 
 static struct ut_namesarr *
@@ -85,6 +93,17 @@ make_names_any_len(struct ut_env *ute, size_t cnt)
 		size_t len = silofs_clamp(i % UT_NAME_MAX, 17, UT_NAME_MAX);
 
 		na->arr[i] = make_name(ute, (long)i + 1, len);
+	}
+	return na;
+}
+
+static struct ut_namesarr *
+make_names_ulongs_seq(struct ut_env *ute, size_t cnt)
+{
+	struct ut_namesarr *na = new_namesarr(ute, cnt);
+
+	for (size_t i = 0; i < na->cnt; ++i) {
+		na->arr[i] = make_ulong_name(ute, i + 1);
 	}
 	return na;
 }
@@ -247,7 +266,7 @@ static void ut_mkdir_link_max(struct ut_env *ute)
 	struct statvfs stv;
 	const char *dname = UT_NAME;
 	const size_t nlink_max = SILOFS_LINK_MAX;
-	struct ut_namesarr *na = make_names(ute, nlink_max);
+	const struct ut_namesarr *na = make_names(ute, nlink_max);
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_statfs_ok(ute, dino, &stv);
@@ -271,13 +290,43 @@ static void ut_mkdir_link_max(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_dir_create_seq_(struct ut_env *ute, size_t cnt)
+{
+	ino_t ino;
+	ino_t dino;
+	const char *name = UT_NAME;
+	const char *fname = NULL;
+	const struct ut_namesarr *na = make_names_ulongs_seq(ute, cnt);
+	struct stat st;
+
+	ut_mkdir_at_root(ute, name, &dino);
+	for (size_t i = 0; i < cnt; ++i) {
+		fname = na->arr[i];
+		ut_create_only(ute, dino, fname, &ino);
+		ut_getattr_ok(ute, ino, &st);
+	}
+	for (size_t j = 0; j < cnt; ++j) {
+		fname = na->arr[j];
+		ut_lookup_ok(ute, dino, fname, &st);
+		ut_unlink_ok(ute, dino, fname);
+	}
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_dir_create_seq_many(struct ut_env *ute)
+{
+	ut_dir_create_seq_(ute, 30000);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void ut_dir_link_any_names_(struct ut_env *ute, size_t cnt)
 {
 	ino_t ino;
 	ino_t dino;
 	const char *name = UT_NAME;
 	const long *idx = ut_randseq(ute, cnt, 0);
-	struct ut_namesarr *na = make_names_any_len(ute, cnt);
+	const struct ut_namesarr *na = make_names_any_len(ute, cnt);
 
 	ut_mkdir_at_root(ute, name, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -305,7 +354,7 @@ static void ut_dir_link_long_names_(struct ut_env *ute, size_t cnt)
 	ino_t dino;
 	long *idx = NULL;
 	const char *name = UT_NAME;
-	const struct ut_namesarr *na = make_long_names(ute, cnt);
+	const struct ut_namesarr *na = make_names_max_len(ute, cnt);
 
 	ut_mkdir_at_root(ute, name, &dino);
 	idx = ut_randseq(ute, cnt, 0);
@@ -500,6 +549,7 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_mkdir_multi_link_max),
 	UT_DEFTEST(ut_mkdir_link_max),
 	UT_DEFTEST(ut_rmdir_when_open),
+	UT_DEFTEST(ut_dir_create_seq_many),
 	UT_DEFTEST(ut_dir_link_any_names),
 	UT_DEFTEST(ut_dir_link_long_names),
 	UT_DEFTEST(ut_dir_link_unlink_mixed),

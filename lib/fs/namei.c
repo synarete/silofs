@@ -132,7 +132,7 @@ dii_name_to_hash(const struct silofs_inode_info *dir_ii,
                  const struct silofs_namestr *nstr, uint64_t *out_hash)
 {
 	struct silofs_namebuf nbuf;
-	const size_t aligned_nlen = div_round_up(nstr->s.len, 8);
+	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
 
 	STATICASSERT_EQ(sizeof(nbuf.name) % 8, 0);
 
@@ -141,7 +141,7 @@ dii_name_to_hash(const struct silofs_inode_info *dir_ii,
 	}
 	silofs_memzero(&nbuf, sizeof(nbuf));
 	silofs_namebuf_assign_str(&nbuf, nstr);
-	return dii_nbuf_to_hash(dir_ii, &nbuf, aligned_nlen, out_hash);
+	return dii_nbuf_to_hash(dir_ii, &nbuf, alen, out_hash);
 }
 
 static bool
@@ -487,16 +487,18 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
                            const struct silofs_namestr *nstr,
                            struct silofs_qstr *qstr)
 {
+	uint64_t hash = 0;
 	int err;
 
 	err = check_isdir(dir_ii);
 	if (err) {
 		return err;
 	}
-	err = dii_name_to_hash(dir_ii, nstr, &qstr->hash);
+	err = dii_name_to_hash(dir_ii, nstr, &hash);
 	if (err) {
 		return err;
 	}
+	qstr->hash = hash;
 	qstr->s.str = nstr->s.str;
 	qstr->s.len = nstr->s.len;
 	return 0;

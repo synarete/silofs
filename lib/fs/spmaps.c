@@ -726,7 +726,7 @@ static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *sl,
 }
 
 static size_t spleaf_num_allocated_with(const struct silofs_spmap_leaf *sl,
-                                    const struct silofs_vaddr *vaddr)
+                                        const struct silofs_vaddr *vaddr)
 {
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
@@ -1132,6 +1132,7 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
 
+	silofs_assert_eq(sli->sl->sl_stype_sub, vaddr->stype);
 	silofs_assert_le(sli->sl_nused_bytes + vaddr->len, SILOFS_VSEC_SIZE);
 	sli->sl_nused_bytes += vaddr->len;
 
@@ -1147,6 +1148,7 @@ void silofs_sli_clear_allocated_space(struct silofs_spleaf_info *sli,
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
 
+	silofs_assert_eq(sli->sl->sl_stype_sub, vaddr->stype);
 	silofs_assert_ge(sli->sl_nused_bytes, vaddr->len);
 	sli->sl_nused_bytes -= vaddr->len;
 

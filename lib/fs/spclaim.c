@@ -152,8 +152,8 @@ static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
 }
 
 static void sbi_clear_allocate_at(struct silofs_sb_info *sbi,
-                                    struct silofs_spleaf_info *sli,
-                                    const struct silofs_vaddr *vaddr)
+                                  struct silofs_spleaf_info *sli,
+                                  const struct silofs_vaddr *vaddr)
 {
 	silofs_sli_clear_allocated_space(sli, vaddr);
 	sbi_update_space_stats(sbi, vaddr, -1, 0);
@@ -426,13 +426,16 @@ spc_find_free_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
 	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
 	loff_t voff = hint;
-	int err = -ENOSPC;
+	int ret;
 
-	while ((voff < vend) && (err == -ENOSPC)) {
-		err = spc_want_free_at(spa_ctx, voff);
+	while (voff < vend) {
+		ret = spc_want_free_at(spa_ctx, voff);
+		if (ret != -ENOSPC) {
+			return ret;
+		}
 		voff = silofs_off_to_spnode_next(voff);
 	}
-	return err;
+	return -ENOSPC;
 }
 
 static struct silofs_spamaps *

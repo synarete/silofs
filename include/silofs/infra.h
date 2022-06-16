@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <silofs/infra/version.h>
 #include <silofs/infra/macros.h>
+#include <silofs/infra/ccattr.h>
 #include <silofs/infra/consts.h>
 #include <silofs/infra/errors.h>
 #include <silofs/infra/atomic.h>

@@ -6,6 +6,7 @@ nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h
 nobase_include_HEADERS += silofs/infra/bytebuf.h
+nobase_include_HEADERS += silofs/infra/ccattr.h
 nobase_include_HEADERS += silofs/infra/consts.h
 nobase_include_HEADERS += silofs/infra/errors.h
 nobase_include_HEADERS += silofs/infra/hash.h

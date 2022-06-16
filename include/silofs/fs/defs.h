@@ -17,6 +17,7 @@
 #ifndef SILOFS_DEFS_H_
 #define SILOFS_DEFS_H_
 
+#include <silofs/infra/ccattr.h>
 #include <stdint.h>
 
 /* current on-disk format version number */
@@ -411,21 +412,6 @@ enum silofs_kdf_algos {
 /* max number of mount-rules */
 #define SILOFS_MNTRULE_MAX      1024
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-#define silofs_aligned          __attribute__ ((__aligned__))
-#define silofs_aligned8         __attribute__ ((__aligned__(8)))
-#define silofs_aligned16        __attribute__ ((__aligned__(16)))
-#define silofs_aligned32        __attribute__ ((__aligned__(32)))
-#define silofs_aligned64        __attribute__ ((__aligned__(64)))
-#define silofs_packed           __attribute__ ((__packed__))
-#define silofs_packed_aligned   __attribute__ ((__packed__, __aligned__))
-#define silofs_packed_aligned4  __attribute__ ((__packed__, __aligned__(4)))
-#define silofs_packed_aligned8  __attribute__ ((__packed__, __aligned__(8)))
-#define silofs_packed_aligned16 __attribute__ ((__packed__, __aligned__(16)))
-#define silofs_packed_aligned32 __attribute__ ((__packed__, __aligned__(32)))
-#define silofs_packed_aligned64 __attribute__ ((__packed__, __aligned__(64)))
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -897,7 +897,9 @@ static int sbi_stage_spleaf(struct silofs_sb_info *sbi,
                             enum silofs_stage_mode stg_mode,
                             struct silofs_spleaf_info **out_sli)
 {
-	return silofs_sbi_stage_spleaf_of(sbi, vaddr, stg_mode, out_sli);
+	struct silofs_spnode_info *sni = NULL;
+
+	return silofs_sbi_stage_spmaps_of(sbi, vaddr, stg_mode, &sni, out_sli);
 }
 
 static int sbi_stage_rdo_spleaf(struct silofs_sb_info *sbi,

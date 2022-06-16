@@ -715,6 +715,19 @@ static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,
 	return err;
 }
 
+static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_blob_info *bli,
+                            struct silofs_ubk_info **out_ubi)
+{
+	int err;
+
+	bli_incref(bli);
+	err = silofs_repo_spawn_ubk(ub_ctx->repo, bkaddr, out_ubi);
+	bli_decref(bli);
+	return err;
+}
+
 static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_ubk_info **out_ubi)
@@ -724,16 +737,13 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
 
 	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &bli);
 	if (err) {
-		goto out;
+		return err;
 	}
-	bli_incref(bli);
-	err = silofs_repo_spawn_ubk(ub_ctx->repo, bkaddr, out_ubi);
+	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, bli, out_ubi);
 	if (err) {
-		goto out;
+		return err;
 	}
-out:
-	bli_decref(bli);
-	return err;
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -802,24 +812,26 @@ int silofs_spawn_super_at(struct silofs_fs_uber *uber, bool main,
                           struct silofs_sb_info **out_sbi)
 {
 	struct silofs_uber_ctx ub_ctx;
+	struct silofs_sb_info *sbi = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, uber, main);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sbi(&ub_ctx, uaddr, out_sbi);
+	err = ubc_require_cached_sbi(&ub_ctx, uaddr, &sbi);
 	if (err) {
 		return err;
 	}
-	if (sbi_is_stable(*out_sbi)) {
+	if (sbi_is_stable(sbi)) {
 		return -EEXIST;
 	}
-	err = ubc_spawn_attach_sbi_bk(&ub_ctx, *out_sbi);
+	err = ubc_spawn_attach_sbi_bk(&ub_ctx, sbi);
 	if (err) {
 		return err;
 	}
-	sbi_set_spawned(*out_sbi);
+	sbi_set_spawned(sbi);
+	*out_sbi = sbi;
 	return 0;
 }
 

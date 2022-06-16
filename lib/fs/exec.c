@@ -559,12 +559,14 @@ static void fse_relax_drop_caches(struct silofs_fs_env *fse)
 static int fse_reload_block0(struct silofs_fs_env *fse)
 {
 	struct silofs_vaddr vaddr;
+	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_sb_info *sbi = fse_sbi(fse);
 	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RDONLY;
 	int err;
 
 	vaddr_setup(&vaddr, SILOFS_STYPE_DATABK, 0);
-	err = silofs_sbi_stage_spleaf_of(fse_sbi(fse), &vaddr, stg_mode, &sli);
+	err = silofs_sbi_stage_spmaps_of(sbi, &vaddr, stg_mode, &sni, &sli);
 	if (err) {
 		log_err("failed to stage first block: err=%d", err);
 		return -EFSCORRUPTED;

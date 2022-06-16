@@ -2630,7 +2630,7 @@ static int do_write_iter(struct silofs_fuseq_worker *fqw, ino_t ino,
 	struct silofs_oper_ctx *opc = op_ctx_of(fqw);
 	struct silofs_fuseq_wr_iter *fq_wri = &fqw->rwi->u.wri;
 	size_t len = min(in->u.write.arg.size, fqw->fq->fq_coni.max_write);
-	int err = 0;
+	int err1 = 0;
 	int err2 = 0;
 	int ret = 0;
 
@@ -2642,10 +2642,11 @@ static int do_write_iter(struct silofs_fuseq_worker *fqw, ino_t ino,
 	opc->opc_in.write.rwi_ctx = &fq_wri->rwi;
 	opc->opc_out.write.nwr = 0;
 	fuseq_setup_wr_iter(fqw, fq_wri, len, opc->opc_in.write.off);
-	err = fuseq_exec_op(fqw->fq, opc);
-
-	err2 = fuseq_wr_iter_copy_iov(fq_wri); /* unlocked */
-	ret = fuseq_reply_write(fqw, fq_wri->nwr, err ? err : err2);
+	err1 = fuseq_exec_op(fqw->fq, opc);
+	if (!err1 || (err1 == -ENOSPC)) {
+		err2 = fuseq_wr_iter_copy_iov(fq_wri); /* unlocked */
+	}
+	ret = fuseq_reply_write(fqw, fq_wri->nwr, err1 ? err1 : err2);
 	/* no need for mutex lock -- atomic operation only */
 	fuseq_rdwr_post(fqw, fq_wri->xiov, fq_wri->cnt);
 	return ret;

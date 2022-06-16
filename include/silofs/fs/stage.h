@@ -32,13 +32,16 @@ int silofs_sbi_stage_spnode2_of(struct silofs_sb_info *sbi,
                                 enum silofs_stage_mode stg_mode,
                                 struct silofs_spnode_info **out_sni);
 
-int silofs_sbi_stage_spleaf_of(struct silofs_sb_info *sbi,
+int silofs_sbi_stage_spmaps_of(struct silofs_sb_info *sbi,
                                const struct silofs_vaddr *vaddr,
                                enum silofs_stage_mode stg_mode,
+                               struct silofs_spnode_info **out_sni,
                                struct silofs_spleaf_info **out_sli);
 
 int silofs_sbi_require_spmaps_of(struct silofs_sb_info *sbi,
-                                 const struct silofs_vaddr *vaddr);
+                                 const struct silofs_vaddr *vaddr,
+                                 struct silofs_spnode_info **out_sni,
+                                 struct silofs_spleaf_info **out_sli);
 
 int silofs_sbi_spawn_vnode_at(struct silofs_sb_info *sbi,
                               const struct silofs_voaddr *ova,

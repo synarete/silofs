@@ -338,7 +338,7 @@ static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
 		return -EINVAL;
 	}
 	if (bsec1k_version(bsc) != SILOFS_FMT_VERSION) {
-		return -EUCLEAN;
+		return -EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -411,7 +411,7 @@ static int bsec1k_check_hash(const struct silofs_bootsec1k *bsc,
 	bsec1k_hash(bsc, &hash[0]);
 	bsec1k_calc_hash(bsc, md, &hash[1]);
 
-	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -EUCLEAN;
+	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -EFSCORRUPTED;
 }
 
 int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,

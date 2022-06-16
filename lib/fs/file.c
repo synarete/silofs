@@ -350,10 +350,10 @@ static int xiovec_of_fileaf(const struct silofs_file_ctx *f_ctx,
                             struct silofs_fileaf_info *fli,
                             struct silofs_xiovec *out_xiov)
 {
-	int err;
 	void *dat = fli_data(fli);
 	const loff_t doff = fli_off_within(fli, f_ctx->off);
 	const size_t dlen = fli_len_within(fli, f_ctx->off, f_ctx->end);
+	int err;
 
 	if (fli_has_mmdata(fli)) {
 		err = xiovec_by_mmapbk(f_ctx, dat, doff, dlen, out_xiov);
@@ -381,16 +381,11 @@ static int fic_xiovec_of_vaddr(const struct silofs_file_ctx *f_ctx,
                                const struct silofs_vaddr *vaddr,
                                struct silofs_xiovec *out_xiov)
 {
-	int err;
 	const enum silofs_stype stype = vaddr_stype(vaddr);
 	const loff_t off_within = off_in_data(f_ctx->off, stype);
 	const size_t len = len_of_data(f_ctx->off, f_ctx->end, stype);
 
-	err = xiovec_of_data(f_ctx, vaddr, off_within, len, out_xiov);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return xiovec_of_data(f_ctx, vaddr, off_within, len, out_xiov);
 }
 
 static int fic_xiovec_of_zeros(const struct silofs_file_ctx *f_ctx,
@@ -1173,7 +1168,6 @@ static int fic_check_io_end(const struct silofs_file_ctx *f_ctx)
 static int fic_check_file_io(const struct silofs_file_ctx *f_ctx)
 {
 	int err;
-	const size_t len_max = SILOFS_IO_SIZE_MAX;
 
 	err = fic_check_reg(f_ctx);
 	if (err) {
@@ -1194,7 +1188,7 @@ static int fic_check_file_io(const struct silofs_file_ctx *f_ctx)
 		}
 	}
 	if (f_ctx->op_mask & (OP_READ | OP_WRITE)) {
-		if (f_ctx->len > len_max) {
+		if (f_ctx->len > SILOFS_IO_SIZE_MAX) {
 			return -EINVAL;
 		}
 		if (!f_ctx->rwi_ctx) {
@@ -1211,7 +1205,8 @@ static int fic_check_file_io(const struct silofs_file_ctx *f_ctx)
 		if (f_ctx->cp_flags != 0) {
 			return -EINVAL;
 		}
-		if (!off_isaligned(f_ctx->beg) && (f_ctx->len > len_max)) {
+		if (!off_isaligned(f_ctx->beg) &&
+		    (f_ctx->len > SILOFS_IO_SIZE_MAX)) {
 			return -EINVAL;
 		}
 	}
@@ -1365,12 +1360,12 @@ fic_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
                          const struct silofs_vaddr *vaddr,
                          loff_t off_in_bk, size_t len)
 {
-	int err;
-	struct silofs_fileaf_info *fli = NULL;
 	struct silofs_xiovec xiov = {
 		.xiov_fd = -1,
 		.xiov_base = NULL
 	};
+	struct silofs_fileaf_info *fli = NULL;
+	int err;
 
 	if (fic_has_kcopy_mode(f_ctx)) {
 		err = xiovec_of_data(f_ctx, vaddr, off_in_bk, len, &xiov);
@@ -1523,9 +1518,9 @@ fic_seek_tree_recursive_at(struct silofs_file_ctx *f_ctx,
                            struct silofs_finode_info *parent_fni, size_t slot,
                            struct silofs_fmap_ctx *out_fm_ctx)
 {
-	int err;
 	struct silofs_vaddr vaddr;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	fni_resolve_child_by_slot(parent_fni, slot, &vaddr);
 	if (vaddr_isnull(&vaddr)) {
@@ -1639,8 +1634,8 @@ static int fic_resolve_xiovec(const struct silofs_file_ctx *f_ctx,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_xiovec *out_xiov)
 {
-	int err;
 	enum silofs_stype stype;
+	int err;
 
 	if (fli != NULL) {
 		err = xiovec_of_fileaf(f_ctx, fli, out_xiov);
@@ -1658,7 +1653,6 @@ static int fic_call_rw_actor(const struct silofs_file_ctx *f_ctx,
                              const struct silofs_vaddr *vaddr,
                              size_t *out_len)
 {
-	int err;
 	struct silofs_xiovec xiov = {
 		.xiov_base = NULL,
 		.xiov_off = -1,
@@ -1666,6 +1660,7 @@ static int fic_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 		.xiov_fd = -1,
 		.xiov_ref = NULL,
 	};
+	int err;
 
 	err = fic_resolve_xiovec(f_ctx, fli, vaddr, &xiov);
 	if (!err) {
@@ -1733,10 +1728,10 @@ static void fic_resolve_curr_node(const struct silofs_file_ctx *f_ctx,
 static int fic_stage_by_tree_map(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_finode_info **out_fni)
 {
-	int err;
-	size_t height;
-	struct silofs_finode_info *fni = NULL;
 	struct silofs_fmap_ctx fm_ctx = { .file_pos = -1 };
+	struct silofs_finode_info *fni = NULL;
+	size_t height;
+	int err;
 
 	if (!fic_has_tree_root(f_ctx)) {
 		return -ENOENT;
@@ -1792,9 +1787,9 @@ static int fic_read_from_leaf(struct silofs_file_ctx *f_ctx,
                               const struct silofs_fmap_ctx *fm_ctx,
                               size_t *out_len)
 {
+	struct silofs_fileaf_info *fli = NULL;
 	int err;
 	bool unwritten = false;
-	struct silofs_fileaf_info *fli = NULL;
 
 	*out_len = 0;
 	err = fmc_probe_unwritten(fm_ctx, &unwritten);
@@ -1868,9 +1863,9 @@ static int fic_read_by_tree_map(struct silofs_file_ctx *f_ctx)
 
 static int fic_read_by_head_leaves(struct silofs_file_ctx *f_ctx)
 {
-	int err;
-	size_t len;
 	struct silofs_fmap_ctx fm_ctx;
+	size_t len;
+	int err;
 
 	while (fic_has_head1_leaves_io(f_ctx)) {
 		fic_resolve_head1_leaf(f_ctx, &fm_ctx);
@@ -2000,7 +1995,6 @@ int silofs_do_read(const struct silofs_fs_ctx *fsc,
                    struct silofs_inode_info *ii,
                    void *buf, size_t len, loff_t off, size_t *out_len)
 {
-	int err;
 	struct silofs_read_iter rdi = {
 		.dat_len = 0,
 		.rwi.actor = read_iter_actor,
@@ -2018,11 +2012,12 @@ int silofs_do_read(const struct silofs_fs_ctx *fsc,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STAGE_RDONLY,
 	};
+	int ret;
 
 	fic_update_with_rw_iter(&f_ctx, &rdi.rwi);
-	err = fic_read_iter(&f_ctx);
+	ret = fic_read_iter(&f_ctx);
 	*out_len = rdi.dat_len;
-	return err;
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2057,8 +2052,8 @@ static int fic_claim_data_space(const struct silofs_file_ctx *f_ctx,
                                 enum silofs_stype stype,
                                 struct silofs_vaddr *out_vaddr)
 {
-	int err;
 	struct silofs_voaddr voa;
+	int err;
 
 	err = silofs_sbi_claim_vspace(f_ctx->sbi, stype, &voa);
 	if (err) {
@@ -2096,9 +2091,9 @@ static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
 static int fic_spawn_finode(const struct silofs_file_ctx *f_ctx,
                             struct silofs_finode_info **out_fni)
 {
-	int err;
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	err = silofs_sbi_spawn_vnode(f_ctx->sbi, SILOFS_STYPE_FTNODE, &vi);
 	if (err) {
@@ -2172,9 +2167,9 @@ static int fic_spawn_bind_finode(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_finode_info *parent_fni,
                                  struct silofs_finode_info **out_fni)
 {
-	int err;
 	const loff_t file_pos = f_ctx->off;
 	const size_t height = fni_height(parent_fni);
+	int err;
 
 	err = fic_spawn_setup_finode(f_ctx, file_pos, height - 1, out_fni);
 	if (err) {
@@ -2201,9 +2196,9 @@ static int fic_create_data_leaf(const struct silofs_file_ctx *f_ctx,
 static int fic_create_head1_leaf_space(const struct silofs_file_ctx *f_ctx,
                                        struct silofs_fmap_ctx *out_fm_ctx)
 {
-	int err;
 	struct silofs_vaddr vaddr;
 	const size_t slot = fic_head1_leaf_slot_of(f_ctx);
+	int err;
 
 	err = fic_create_data_leaf(f_ctx, SILOFS_STYPE_DATA1K, &vaddr);
 	if (err) {
@@ -2217,9 +2212,9 @@ static int fic_create_head1_leaf_space(const struct silofs_file_ctx *f_ctx,
 static int fic_create_head2_leaf_space(const struct silofs_file_ctx *f_ctx,
                                        struct silofs_fmap_ctx *out_fm_ctx)
 {
-	int err;
 	struct silofs_vaddr vaddr;
 	const size_t slot = fic_head2_leaf_slot_of(f_ctx);
+	int err;
 
 	err = fic_create_data_leaf(f_ctx, SILOFS_STYPE_DATA4K, &vaddr);
 	if (err) {
@@ -2272,10 +2267,10 @@ static int fic_resolve_tree_root(const struct silofs_file_ctx *f_ctx,
 
 static int fic_create_tree_spine(const struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	size_t new_height;
 	size_t cur_height;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	err = fic_resolve_tree_root(f_ctx, &fni);
 	if (err) {
@@ -2314,9 +2309,9 @@ static int fic_require_finode(const struct silofs_file_ctx *f_ctx,
 static int fic_require_tree_path(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_finode_info **out_fni)
 {
-	int err;
-	size_t height;
 	struct silofs_finode_info *fni;
+	size_t height;
+	int err;
 
 	*out_fni = NULL;
 	err = fic_stage_tree_root(f_ctx, &fni);
@@ -2417,8 +2412,8 @@ static int fic_require_tree_leaf(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_finode_info *parent_fni,
                                  struct silofs_fmap_ctx *out_fm_ctx)
 {
-	int err;
 	struct silofs_vaddr *vaddr = &out_fm_ctx->vaddr;
+	int err;
 
 	fic_resolve_tree_leaf(f_ctx, parent_fni, out_fm_ctx);
 	if (out_fm_ctx->has_data) {
@@ -2437,8 +2432,8 @@ static int fic_require_tree_leaf(const struct silofs_file_ctx *f_ctx,
 static int
 fmc_write_to_leaf(const struct silofs_fmap_ctx *fm_ctx, size_t *out_len)
 {
-	int err;
 	struct silofs_fileaf_info *fli = NULL;
+	int err;
 
 	*out_len = 0;
 	err = fmc_prepare_unwritten_leaf(fm_ctx);
@@ -2491,8 +2486,8 @@ static int fic_write_to_leaves(struct silofs_file_ctx *f_ctx,
 
 static int fic_write_by_tree_map(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	while (fic_has_more_io(f_ctx)) {
 		err = fic_require_tree(f_ctx, &fni);
@@ -2541,9 +2536,9 @@ static int fic_require_head2_leaf(const struct silofs_file_ctx *f_ctx,
 
 static int fic_write_by_head_leaves(struct silofs_file_ctx *f_ctx)
 {
-	int err;
-	size_t len = 0;
 	struct silofs_fmap_ctx fm_ctx;
+	size_t len = 0;
+	int err;
 
 	while (fic_has_head1_leaves_io(f_ctx)) {
 		err = fic_require_head1_leaf(f_ctx, &fm_ctx);
@@ -2659,7 +2654,6 @@ int silofs_do_write(const struct silofs_fs_ctx *fsc,
                     const void *buf, size_t len,
                     loff_t off, size_t *out_len)
 {
-	int err;
 	struct silofs_write_iter wri = {
 		.rwi.actor = write_iter_actor,
 		.rwi.len = len,
@@ -2677,11 +2671,12 @@ int silofs_do_write(const struct silofs_fs_ctx *fsc,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STAGE_MUTABLE,
 	};
+	int ret;
 
 	fic_update_with_rw_iter(&f_ctx, &wri.rwi);
-	err = fic_write_iter(&f_ctx);
+	ret = fic_write_iter(&f_ctx);
 	*out_len = wri.dat_len;
-	return err;
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2720,8 +2715,8 @@ static int fic_discard_data_leaf(const struct silofs_file_ctx *f_ctx,
 static int fic_drop_subtree(struct silofs_file_ctx *f_ctx,
                             const struct silofs_vaddr *vaddr)
 {
-	int err;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	if (vaddr_isnull(vaddr)) {
 		return 0;
@@ -2741,8 +2736,8 @@ static int
 fic_drop_subtree_at(struct silofs_file_ctx *f_ctx,
                     const struct silofs_finode_info *parent_fni, size_t slot)
 {
-	int err;
 	struct silofs_vaddr vaddr;
+	int err;
 
 	fni_resolve_child_by_slot(parent_fni, slot, &vaddr);
 	if (fni_isbottom(parent_fni)) {
@@ -2803,8 +2798,8 @@ static void fic_reset_tree_root(struct silofs_file_ctx *f_ctx)
 
 static int fic_drop_tree_map(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	if (!fic_has_tree_root(f_ctx)) {
 		return 0;
@@ -2863,8 +2858,8 @@ static size_t fic_num_head2_leaf_slots(const struct silofs_file_ctx *f_ctx)
 
 static int fic_drop_head_leaves(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	size_t nslots;
+	int err;
 
 	nslots = fic_num_head1_leaf_slots(f_ctx);
 	for (size_t slot = 0; slot < nslots; ++slot) {
@@ -2902,19 +2897,17 @@ static int fic_drop_data_and_meta(struct silofs_file_ctx *f_ctx)
 
 int silofs_drop_reg(struct silofs_inode_info *ii)
 {
-	int err;
 	struct silofs_file_ctx f_ctx = {
 		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii
 	};
-
-	silofs_assert_ge(ii_span(ii), ii_size(ii));
+	int reg;
 
 	ii_incref(ii);
-	err = fic_drop_data_and_meta(&f_ctx);
+	reg = fic_drop_data_and_meta(&f_ctx);
 	ii_decref(ii);
-	return err;
+	return reg;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2931,7 +2924,6 @@ static int fmc_discard_partial(const struct silofs_fmap_ctx *fm_ctx)
 	fni_incref(fm_ctx->parent);
 	err = fic_zero_data_leaf_range(fm_ctx->f_ctx, vaddr, blobid, len);
 	fni_decref(fm_ctx->parent);
-
 	return err;
 }
 
@@ -2972,10 +2964,10 @@ static int fmc_discard_by_set_unwritten(const struct silofs_fmap_ctx *fm_ctx)
 
 static int fmc_discard_data_at(const struct silofs_fmap_ctx *fm_ctx)
 {
-	int err = 0;
 	const loff_t end = fm_ctx->f_ctx->end;
 	const int fl_mode = fm_ctx->f_ctx->fl_mode;
 	const enum silofs_stype stype = vaddr_stype(&fm_ctx->vaddr);
+	int err = 0;
 	bool partial;
 
 	if (fm_ctx->has_data) {
@@ -2993,8 +2985,8 @@ static int fmc_discard_data_at(const struct silofs_fmap_ctx *fm_ctx)
 
 static int fic_discard_by_tree_map(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	struct silofs_fmap_ctx fm_ctx;
+	int err;
 
 	if (!fic_has_tree_root(f_ctx)) {
 		return 0;
@@ -3018,8 +3010,8 @@ static int fic_discard_by_tree_map(struct silofs_file_ctx *f_ctx)
 
 static int fic_discard_by_head_leaves(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	struct silofs_fmap_ctx fm_ctx;
+	int err;
 
 	while (fic_has_head1_leaves_io(f_ctx)) {
 		fic_resolve_head1_leaf(f_ctx, &fm_ctx);
@@ -3062,8 +3054,8 @@ static int fic_discard_unused_meta(struct silofs_file_ctx *f_ctx)
 
 static loff_t fic_head_leaves_end(const struct silofs_file_ctx *f_ctx)
 {
-	size_t slot;
 	struct silofs_vaddr vaddr;
+	size_t slot;
 
 	slot = fic_num_head2_leaf_slots(f_ctx);
 	while (slot-- > 0) {
@@ -3085,8 +3077,8 @@ static loff_t fic_head_leaves_end(const struct silofs_file_ctx *f_ctx)
 static int
 fic_resolve_tree_end(const struct silofs_file_ctx *f_ctx, loff_t *out_end)
 {
-	int err;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	*out_end = 0;
 	if (!fic_has_tree_root(f_ctx)) {
@@ -3102,9 +3094,9 @@ fic_resolve_tree_end(const struct silofs_file_ctx *f_ctx, loff_t *out_end)
 
 static int fic_resolve_truncate_end(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	loff_t tend;
 	loff_t lend;
+	int err;
 
 	err = fic_resolve_tree_end(f_ctx, &tend);
 	if (err) {
@@ -3219,11 +3211,9 @@ static int fic_lseek_hole_noleaf(struct silofs_file_ctx *f_ctx,
 
 static int fic_lseek_hole(struct silofs_file_ctx *f_ctx)
 {
-	int err;
+	struct silofs_fmap_ctx fm_ctx = { .parent = NULL };
 	const loff_t isz = ii_size(f_ctx->ii);
-	struct silofs_fmap_ctx fm_ctx = {
-		.parent = NULL,
-	};
+	int err;
 
 	err = fic_lseek_hole_noleaf(f_ctx, &fm_ctx);
 	if (err == 0) {
@@ -3316,8 +3306,8 @@ static int fic_check_fl_mode(const struct silofs_file_ctx *f_ctx)
 static int fic_create_bind_tree_leaf(const struct silofs_file_ctx *f_ctx,
                                      struct silofs_finode_info *parent_fni)
 {
-	int err;
 	struct silofs_fmap_ctx fm_ctx;
+	int err;
 
 	fic_resolve_tree_leaf(f_ctx, parent_fni, &fm_ctx);
 	if (fm_ctx.has_data) {
@@ -3352,9 +3342,9 @@ static int fic_reserve_tree_leaves(struct silofs_file_ctx *f_ctx,
 
 static int fic_reserve_leaves(struct silofs_file_ctx *f_ctx)
 {
-	int err;
-	size_t height;
 	struct silofs_finode_info *fni = NULL;
+	size_t height;
+	int err;
 
 	err = fic_stage_tree_root(f_ctx, &fni);
 	if (err) {
@@ -3400,8 +3390,8 @@ static int fic_fallocate_reserve_by_tree_map(struct silofs_file_ctx *f_ctx)
 
 static int fic_fallocate_reserve_by_head_leaves(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	struct silofs_fmap_ctx fm_ctx;
+	int err;
 
 	while (fic_has_head1_leaves_io(f_ctx)) {
 		err = fic_require_head1_leaf(f_ctx, &fm_ctx);
@@ -3447,8 +3437,8 @@ static int fic_fallocate_zero_range(struct silofs_file_ctx *f_ctx)
 
 static int fic_fallocate_op(struct silofs_file_ctx *f_ctx)
 {
-	int err;
 	const int fl_mode = f_ctx->fl_mode;
+	int err;
 
 	if (fl_mode_reserve_range(fl_mode)) {
 		err = fic_fallocate_reserve(f_ctx);
@@ -3487,18 +3477,17 @@ out:
 
 int silofs_do_fallocate(const struct silofs_fs_ctx *fsc,
                         struct silofs_inode_info *ii,
-                        int mode, loff_t off, loff_t length)
+                        int mode, loff_t off, loff_t len)
 {
-	const size_t len = (size_t)length;
 	struct silofs_file_ctx f_ctx = {
 		.fs_ctx = fsc,
 		.uber = ii_uber(ii),
 		.sbi = ii_sbi(ii),
 		.ii = ii,
-		.len = len,
+		.len = (size_t)len,
 		.beg = off,
 		.off = off,
-		.end = off_end(off, len),
+		.end = off_end(off, (size_t)len),
 		.op_mask = OP_FALLOC,
 		.fl_mode = mode,
 		.stg_mode = SILOFS_STAGE_MUTABLE,
@@ -3554,7 +3543,7 @@ static bool fic_emit_fiemap(struct silofs_file_ctx *f_ctx,
 static int fic_fiemap_by_tree_leaves(struct silofs_file_ctx *f_ctx,
                                      struct silofs_finode_info *parent_fni)
 {
-	struct silofs_fmap_ctx fm_ctx = { .f_ctx = NULL };
+	struct silofs_fmap_ctx fm_ctx;
 
 	fni_incref(parent_fni);
 	while (fic_has_more_io(f_ctx)) {
@@ -3728,9 +3717,9 @@ fic_resolve_fmap_recursive_at(struct silofs_file_ctx *f_ctx,
                               struct silofs_finode_info *parent_fni,
                               size_t slot, struct silofs_fmap_ctx *out_fm_ctx)
 {
-	int err;
 	struct silofs_vaddr vaddr;
 	struct silofs_finode_info *fni = NULL;
+	int err;
 
 	fni_resolve_child_by_slot(parent_fni, slot, &vaddr);
 	fmc_nomap(out_fm_ctx, f_ctx, parent_fni, f_ctx->off);
@@ -3855,12 +3844,12 @@ static struct silofs_fs_uber *uber_of(const struct silofs_fmap_ctx *fm_ctx)
 static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
                          const struct silofs_fmap_ctx *fm_ctx_dst, size_t len)
 {
-	int err;
+	struct silofs_xiovec xiov_src = { .xiov_off = -1, .xiov_fd = -1 };
+	struct silofs_xiovec xiov_dst = { .xiov_off = -1, .xiov_fd = -1 };
 	struct silofs_fs_uber *uber = uber_of(fm_ctx_dst);
 	struct silofs_fileaf_info *fli_src = NULL;
 	struct silofs_fileaf_info *fli_dst = NULL;
-	struct silofs_xiovec xiov_src = { .xiov_off = -1, .xiov_fd = -1 };
-	struct silofs_xiovec xiov_dst = { .xiov_off = -1, .xiov_fd = -1 };
+	int err;
 
 	err = fmc_prepare_unwritten_leaf(fm_ctx_dst);
 	if (err) {
@@ -3911,8 +3900,8 @@ static int fmc_copy_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 static int fic_require_tree_leaf2(const struct silofs_file_ctx *f_ctx,
                                   struct silofs_fmap_ctx *out_fm_ctx)
 {
-	int err;
 	struct silofs_finode_info *parent_fni = NULL;
+	int err;
 
 	err = fic_require_tree(f_ctx, &parent_fni);
 	if (err) {
@@ -3944,9 +3933,9 @@ static int
 fmc_copy_range_at_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
                        struct silofs_fmap_ctx *fm_ctx_dst, size_t *out_len)
 {
-	int err = 0;
-	size_t len = 0;
 	const struct silofs_file_ctx *f_ctx_dst = fm_ctx_dst->f_ctx;
+	size_t len = 0;
+	int err = 0;
 
 	len = fmc_copy_range_length(fm_ctx_src, fm_ctx_dst);
 	if (!fm_ctx_src->has_data) {
@@ -3984,10 +3973,10 @@ fmc_copy_range_at_leaf(const struct silofs_fmap_ctx *fm_ctx_src,
 static int fic_copy_range_iter(struct silofs_file_ctx *f_ctx_src,
                                struct silofs_file_ctx *f_ctx_dst)
 {
-	int err;
-	size_t len;
 	struct silofs_fmap_ctx fm_ctx_src;
 	struct silofs_fmap_ctx fm_ctx_dst;
+	size_t len;
+	int err;
 
 	while (fic_has_more_io(f_ctx_src) && fic_has_more_io(f_ctx_dst)) {
 		err = fic_resolve_fmap_at(f_ctx_src, &fm_ctx_src);
@@ -4011,10 +4000,10 @@ static int fic_copy_range_iter(struct silofs_file_ctx *f_ctx_src,
 static int fic_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
                                 const struct silofs_file_ctx *f_ctx_dst)
 {
-	int err;
 	const long len = (long)(f_ctx_dst->len);
 	const loff_t off_src = f_ctx_src->off;
 	const loff_t off_dst = f_ctx_dst->off;
+	int err;
 
 	err = fic_check_file_io(f_ctx_src);
 	if (err) {
@@ -4105,12 +4094,12 @@ void silofs_setup_reg(struct silofs_inode_info *ii)
 
 int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn)
 {
-	int err;
 	loff_t spbh;
 	const loff_t span = ftn_span(ftn);
 	const size_t height = ftn_height(ftn);
 	enum silofs_stype child_stype;
 	enum silofs_stype expect_stype;
+	int err;
 
 	err = silofs_verify_ino(ftn_ino(ftn));
 	if (err) {

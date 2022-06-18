@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra/syscall.h>
-#include <silofs/infra/errors.h>
+#include <silofs/infra/panic.h>
 #include <silofs/infra/time.h>
 #include <stdlib.h>
 #include <string.h>

@@ -24,7 +24,7 @@
 #include <silofs/infra/macros.h>
 #include <silofs/infra/ccattr.h>
 #include <silofs/infra/consts.h>
-#include <silofs/infra/errors.h>
+#include <silofs/infra/panic.h>
 #include <silofs/infra/atomic.h>
 #include <silofs/infra/utility.h>
 #include <silofs/infra/base64.h>

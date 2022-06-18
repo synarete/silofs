@@ -1539,11 +1539,14 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
+	if ((voff != 0) || (slot != 0)) {
+		return -EFSCORRUPTED; /* TODO: other err */
+	}
 	err = silofs_sbi_main_pack(sbi, &packid);
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_subref_of(sbi, voff, &uaddr);
+	err = silofs_sbi_sproot_uaddr(sbi, &uaddr);
 	if (err) {
 		return err;
 	}

@@ -371,7 +371,7 @@ static int sbi_spawn_super_main_blob(struct silofs_sb_info *sbi)
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
-	const size_t nslots = ARRAY_SIZE(sbi->sb->sb_subref);
+	const size_t nslots = SILOFS_UNODE_NCHILDS;
 	const enum silofs_stype stype = SILOFS_STYPE_SPNODE;
 	int err;
 
@@ -723,7 +723,7 @@ static int stgc_do_clone_spnode4(struct silofs_stage_ctx *stg_ctx,
 		return err;
 	}
 	silofs_sni_clone_subrefs(sni_clone, stg_ctx->sni4);
-	silofs_sbi_bind_child(stg_ctx->sbi, sni_clone);
+	silofs_sbi_bind_sproot(stg_ctx->sbi, sni_clone);
 
 	*out_sni = sni_clone;
 	return 0;
@@ -751,9 +751,9 @@ static int stgc_do_stage_spnode4(struct silofs_stage_ctx *stg_ctx)
 	struct silofs_spnode_info *sni4 = NULL;
 	int err;
 
-	err = silofs_sbi_subref_of(stg_ctx->sbi, stg_ctx->voff, &uaddr);
+	err = silofs_sbi_sproot_uaddr(stg_ctx->sbi, &uaddr);
 	if (err) {
-		return err;
+		return -EFSCORRUPTED;
 	}
 	err = sbi_stage_spnode_at(stg_ctx->sbi, &uaddr, &stg_ctx->sni4);
 	if (err) {
@@ -807,13 +807,17 @@ static int stgc_spawn_bind_spnode4(struct silofs_stage_ctx *stg_ctx)
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_child(stg_ctx->sbi, stg_ctx->sni4);
+	silofs_sbi_bind_sproot(stg_ctx->sbi, stg_ctx->sni4);
 	return 0;
 }
 
 static bool stgc_has_spnode4_child_at(const struct silofs_stage_ctx *stg_ctx)
 {
-	return silofs_sbi_has_child_at(stg_ctx->sbi, stg_ctx->voff);
+	struct silofs_uaddr uaddr;
+	int err;
+
+	err = silofs_sbi_sproot_uaddr(stg_ctx->sbi, &uaddr);
+	return !err;
 }
 
 static int stgc_do_require_spnode4(struct silofs_stage_ctx *stg_ctx)

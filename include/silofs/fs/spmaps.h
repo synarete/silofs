@@ -22,19 +22,6 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_spr_initn(struct silofs_spmap_ref *spr, size_t n);
-
-void silofs_spr_set_stype_sub(struct silofs_spmap_ref *spr,
-                              enum silofs_stype stype_sub);
-
-void silofs_spr_ulink(const struct silofs_spmap_ref *spr,
-                      struct silofs_uaddr *out_ulink);
-
-void silofs_spr_set_ulink(struct silofs_spmap_ref *spr,
-                          const struct silofs_uaddr *ulink);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
 loff_t silofs_sni_last_voff(const struct silofs_spnode_info *sni);

@@ -605,7 +605,7 @@ struct silofs_super_block {
 	uint8_t                         sb_reserved4[512];
 	/* 1K..2K */
 	struct silofs_uaddr64b          sb_stats_uaddr;
-	struct silofs_uaddr64b          sb_spnode_uaddr;
+	struct silofs_uaddr64b          sb_sproot_uaddr;
 	struct silofs_vaddr64           sb_itable_root;
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
@@ -622,8 +622,7 @@ struct silofs_super_block {
 	struct silofs_uaddr64b          sb_self;
 	uint8_t                         sb_reserved9[1728];
 	/* 4K..64K */
-	struct silofs_spmap_ref         sb_subref[SILOFS_UNODE_NCHILDS];
-
+	uint8_t                         sb_reserved10[60 * 1024];
 } silofs_packed_aligned64;
 
 

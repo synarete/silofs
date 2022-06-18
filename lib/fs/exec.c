@@ -941,11 +941,23 @@ out:
 static int fse_format_base_spmaps(const struct silofs_fs_env *fse)
 {
 	struct silofs_voaddr voa;
+	struct silofs_vaddr vaddr;
+	struct silofs_sb_info *sbi = fse_sbi(fse);
+	struct silofs_spnode_info *sni = NULL;
+	struct silofs_spleaf_info *sli = NULL;
+	enum silofs_stype stype;
 	int err;
 
-	err = silofs_sbi_claim_vspace(fse_sbi(fse), SILOFS_STYPE_DATABK, &voa);
+	stype = SILOFS_STYPE_DATABK;
+	vaddr_setup(&vaddr, stype, 0);
+	err = silofs_sbi_require_spmaps_of(sbi, &vaddr, &sni, &sli);
 	if (err) {
 		log_err("failed to format head spmaps: err=%d", err);
+		return err;
+	}
+	err = silofs_sbi_claim_vspace(fse_sbi(fse), SILOFS_STYPE_DATABK, &voa);
+	if (err) {
+		log_err("failed to claim vspace: err=%d", err);
 		return err;
 	}
 	if (voa.vaddr.voff != 0) {

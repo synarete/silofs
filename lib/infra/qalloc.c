@@ -21,7 +21,7 @@
 #include <silofs/infra/list.h>
 #include <silofs/infra/utility.h>
 #include <silofs/infra/xiovec.h>
-#include <silofs/infra/errors.h>
+#include <silofs/infra/panic.h>
 #include <silofs/infra/logging.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/qalloc.h>

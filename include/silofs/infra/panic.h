@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ERRORS_H_
-#define SILOFS_ERRORS_H_
+#ifndef SILOFS_PANIC_H_
+#define SILOFS_PANIC_H_
 
 /* expect-or-die */
 void silofs_expect_true_(int cond, const char *fl, int ln);
@@ -136,4 +136,4 @@ void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...);
 /* backtrace */
 void silofs_backtrace(void);
 
-#endif /* SILOFS_ERRORS_H_ */
+#endif /* SILOFS_PANIC_H_ */

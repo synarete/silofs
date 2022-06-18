@@ -124,14 +124,6 @@ static size_t sb_height(const struct silofs_super_block *sb)
 	return vrange.height;
 }
 
-static bool sb_in_vrange(const struct silofs_super_block *sb, loff_t voff)
-{
-	struct silofs_vrange vrange;
-
-	sb_vrange(sb, &vrange);
-	return (vrange.beg <= voff) && (voff < vrange.end);
-}
-
 static void sb_treeid(const struct silofs_super_block *sb,
                       struct silofs_xid *out_xid)
 {
@@ -188,7 +180,7 @@ static void sb_reset_main_blobid(struct silofs_super_block *sb)
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const long nslots = (long)ARRAY_SIZE(sb->sb_subref);
+	const long nslots = SILOFS_UNODE_NCHILDS;
 	size_t slot;
 	long span;
 	long roff;
@@ -201,71 +193,12 @@ static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 	return slot;
 }
 
-static struct silofs_spmap_ref *
-sb_subref_at(const struct silofs_super_block *sb, size_t slot)
-{
-	const struct silofs_spmap_ref *spr = &sb->sb_subref[slot];
-
-	return unconst(spr);
-}
-
-static struct silofs_spmap_ref *
-sb_subref_of(const struct silofs_super_block *sb, loff_t voff)
-{
-	return sb_subref_at(sb, sb_slot_of(sb, voff));
-}
-
-static void sb_resolve_subref(const struct silofs_super_block *sb,
-                              loff_t voff, struct silofs_uaddr *out_ulink)
-{
-	static struct silofs_spmap_ref *spr = NULL;
-
-	if (sb_in_vrange(sb, voff)) {
-		spr = sb_subref_of(sb, voff);
-		silofs_spr_ulink(spr, out_ulink);
-	} else {
-		silofs_uaddr_reset(out_ulink);
-	}
-}
-
-static void sb_set_subref(struct silofs_super_block *sb, loff_t voff,
-                          const struct silofs_uaddr *ulink)
-{
-	struct silofs_spmap_ref *spr = sb_subref_of(sb, voff);
-
-	silofs_spr_set_ulink(spr, ulink);
-}
-
-static size_t sb_num_active_slots(const struct silofs_super_block *sb)
-{
-	struct silofs_uaddr uaddr;
-	size_t nslots_active = 0;
-	const size_t nslots_max = ARRAY_SIZE(sb->sb_subref);
-	static struct silofs_spmap_ref *spr = NULL;
-
-	for (size_t slot = 0; slot < nslots_max; ++slot) {
-		spr = sb_subref_at(sb, slot);
-		silofs_spr_ulink(spr, &uaddr);
-		if (uaddr_isnull(&uaddr)) {
-			break;
-		}
-		nslots_active++;
-	}
-	return nslots_active;
-}
-
 static void sb_generate_treeid(struct silofs_super_block *sb)
 {
 	struct silofs_xid xid;
 
 	silofs_xid_generate(&xid);
 	sb_set_treeid(sb, &xid);
-}
-
-static void sb_bind_subref_of(struct silofs_super_block *sb, loff_t voff,
-                              const struct silofs_uaddr *ulink)
-{
-	sb_set_subref(sb, voff, ulink);
 }
 
 static void sb_stats_uaddr(const struct silofs_super_block *sb,
@@ -288,13 +221,13 @@ static void sb_reset_stats_uaddr(struct silofs_super_block *sb)
 static void sb_spnode_uaddr(const struct silofs_super_block *sb,
                             struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_parse(&sb->sb_spnode_uaddr, out_uaddr);
+	silofs_uaddr64b_parse(&sb->sb_sproot_uaddr, out_uaddr);
 }
 
 static void sb_set_spnode_uaddr(struct silofs_super_block *sb,
                                 const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&sb->sb_spnode_uaddr, uaddr);
+	silofs_uaddr64b_set(&sb->sb_sproot_uaddr, uaddr);
 }
 
 static void sb_reset_spnode_uaddr(struct silofs_super_block *sb)
@@ -317,7 +250,6 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_generate_treeid(sb);
 	sb_reset_main_blobid(sb);
 	silofs_uaddr64b_reset(&sb->sb_self);
-	silofs_spr_initn(sb->sb_subref, ARRAY_SIZE(sb->sb_subref));
 }
 
 static void sb_set_birth_time(struct silofs_super_block *sb, time_t btime)
@@ -352,17 +284,22 @@ static void sb_setup_fresh(struct silofs_super_block *sb)
 
 int silofs_verify_super_block(const struct silofs_super_block *sb)
 {
+	struct silofs_uaddr uaddr;
 	enum silofs_height height;
-	size_t nactive_slots;
 
 	height = sb_height(sb);
 	if (height != SILOFS_HEIGHT_SUPER) {
 		log_err("illegal sb height: height=%lu", height);
 		return -EFSCORRUPTED;
 	}
-	nactive_slots = sb_num_active_slots(sb);
-	if (nactive_slots >= ARRAY_SIZE(sb->sb_subref)) {
-		return -EFSCORRUPTED;
+	sb_spnode_uaddr(sb, &uaddr);
+	if (!uaddr_isnull(&uaddr)) {
+		if ((uaddr.stype != SILOFS_STYPE_SPNODE) ||
+		    (uaddr.height != SILOFS_HEIGHT_SPNODE4)) {
+			log_err("bad spnode root: stype=%d height=%d",
+			        (int)uaddr.stype, (int)uaddr.height);
+			return -EFSCORRUPTED;
+		}
 	}
 	/* TODO: complete me */
 	return 0;
@@ -563,30 +500,22 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE4, base);
 }
 
-void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
-                           const struct silofs_spnode_info *sni)
+int silofs_sbi_sproot_uaddr(const struct silofs_sb_info *sbi,
+                            struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_vrange vrange;
+	sb_spnode_uaddr(sbi->sb, out_uaddr);
+	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
+}
 
-	sni_vrange(sni, &vrange);
-	sb_bind_subref_of(sbi->sb, vrange.beg, sni_uaddr(sni));
+void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
+                            const struct silofs_spnode_info *sni)
+{
+	const struct silofs_uaddr *uaddr = sni_uaddr(sni);
+
+	sb_set_spnode_uaddr(sbi->sb, uaddr);
 	sbi_dirtify(sbi);
 }
 
-int silofs_sbi_subref_of(const struct silofs_sb_info *sbi,
-                         loff_t voff, struct silofs_uaddr *out_ulink)
-{
-	sb_resolve_subref(sbi->sb, voff, out_ulink);
-	return uaddr_isnull(out_ulink) ? -ENOENT : 0;
-}
-
-bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff)
-{
-	struct silofs_uaddr ulink;
-
-	sb_resolve_subref(sbi->sb, voff, &ulink);
-	return !uaddr_isnull(&ulink);
-}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1100,13 +1029,6 @@ void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
 {
 	sb_set_stats_uaddr(sbi->sb, uaddr);
 	sbi_dirtify(sbi);
-}
-
-int silofs_sbi_spnode_uaddr(const struct silofs_sb_info *sbi,
-                            struct silofs_uaddr *out_uaddr)
-{
-	sb_spnode_uaddr(sbi->sb, out_uaddr);
-	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
 }
 
 static void ucred_copyto(const struct silofs_ucred *ucred,

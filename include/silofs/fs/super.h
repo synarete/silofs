@@ -57,8 +57,11 @@ int silofs_sbi_stats_uaddr(const struct silofs_sb_info *sbi,
 void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
                                 const struct silofs_uaddr *uaddr);
 
-int silofs_sbi_spnode_uaddr(const struct silofs_sb_info *sbi,
+int silofs_sbi_sproot_uaddr(const struct silofs_sb_info *sbi,
                             struct silofs_uaddr *out_uaddr);
+
+void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
+                            const struct silofs_spnode_info *sni);
 
 void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
@@ -143,15 +146,8 @@ void silofs_sbi_self(const struct silofs_sb_info *sbi,
 
 size_t silofs_sbi_space_tree_height(const struct silofs_sb_info *sbi);
 
-int silofs_sbi_subref_of(const struct silofs_sb_info *sbi,
-                         loff_t voff, struct silofs_uaddr *out_ulink);
-
 void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, struct silofs_uaddr *out_uaddr);
 
-void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
-                           const struct silofs_spnode_info *sni);
-
-bool silofs_sbi_has_child_at(const struct silofs_sb_info *sbi, loff_t voff);
 
 #endif /* SILOFS_SUPER_H_ */

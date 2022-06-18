@@ -84,13 +84,13 @@ static enum silofs_stype spr_stype_sub(const struct silofs_spmap_ref *spr)
 	return spr->sr_stype_sub;
 }
 
-void silofs_spr_set_stype_sub(struct silofs_spmap_ref *spr,
+static void spr_set_stype_sub(struct silofs_spmap_ref *spr,
                               enum silofs_stype stype_sub)
 {
 	spr->sr_stype_sub = (uint8_t)stype_sub;
 }
 
-void silofs_spr_ulink(const struct silofs_spmap_ref *spr,
+static void spr_ulink(const struct silofs_spmap_ref *spr,
                       struct silofs_uaddr *out_uaddr)
 {
 	if (spr_isactive(spr)) {
@@ -100,17 +100,17 @@ void silofs_spr_ulink(const struct silofs_spmap_ref *spr,
 	}
 }
 
-void silofs_spr_set_ulink(struct silofs_spmap_ref *spr,
-                          const struct silofs_uaddr *ulink)
+static void spr_set_ulink(struct silofs_spmap_ref *spr,
+                          const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&spr->sr_ulink, ulink);
+	silofs_uaddr64b_set(&spr->sr_ulink, uaddr);
 	spr_add_flags(spr, SILOFS_SPMAPF_ACTIVE);
 }
 
 static void spr_reset(struct silofs_spmap_ref *spr)
 {
 	silofs_uaddr64b_reset(&spr->sr_ulink);
-	silofs_spr_set_stype_sub(spr, SILOFS_STYPE_NONE);
+	spr_set_stype_sub(spr, SILOFS_STYPE_NONE);
 	spr_reset_flags(spr);
 }
 
@@ -120,7 +120,7 @@ static void spr_init(struct silofs_spmap_ref *spr)
 	spr_reset(spr);
 }
 
-void silofs_spr_initn(struct silofs_spmap_ref *spr, size_t n)
+static void spr_initn(struct silofs_spmap_ref *spr, size_t n)
 {
 	for (size_t i = 0; i < n; ++i) {
 		spr_init(&spr[i]);
@@ -149,9 +149,9 @@ static void spr_clone_from(struct silofs_spmap_ref *spr,
 {
 	struct silofs_uaddr uaddr;
 
-	silofs_spr_ulink(spr_other, &uaddr);
-	silofs_spr_set_ulink(spr, &uaddr);
-	silofs_spr_set_stype_sub(spr, spr_stype_sub(spr_other));
+	spr_ulink(spr_other, &uaddr);
+	spr_set_ulink(spr, &uaddr);
+	spr_set_stype_sub(spr, spr_stype_sub(spr_other));
 	spr_set_flags(spr, spr_flags(spr_other));
 }
 
@@ -252,7 +252,7 @@ static void spnode_init(struct silofs_spmap_node *sn,
 	silofs_packid64b_reset(&sn->sn_mainpackid);
 	silofs_uaddr64b_reset(&sn->sn_parent);
 	silofs_uaddr64b_reset(&sn->sn_self);
-	silofs_spr_initn(sn->sn_subref, ARRAY_SIZE(sn->sn_subref));
+	spr_initn(sn->sn_subref, ARRAY_SIZE(sn->sn_subref));
 }
 
 static size_t spnode_slot_of(const struct silofs_spmap_node *sn, loff_t voff)
@@ -293,7 +293,7 @@ static void spnode_ulink_of(const struct silofs_spmap_node *sn, loff_t voff,
 {
 	const struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
 
-	silofs_spr_ulink(spr, out_uaddr);
+	spr_ulink(spr, out_uaddr);
 }
 
 static void spnode_set_ulink_of(struct silofs_spmap_node *sn, loff_t voff,
@@ -301,7 +301,7 @@ static void spnode_set_ulink_of(struct silofs_spmap_node *sn, loff_t voff,
 {
 	struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
 
-	silofs_spr_set_ulink(spr, uaddr);
+	spr_set_ulink(spr, uaddr);
 }
 
 static bool spnode_has_subref(const struct silofs_spmap_node *sn, loff_t voff)
@@ -316,7 +316,7 @@ static void spnode_set_stype_sub_of(struct silofs_spmap_node *sn,
 {
 	struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
 
-	silofs_spr_set_stype_sub(spr, stype_sub);
+	spr_set_stype_sub(spr, stype_sub);
 }
 
 static bool spnode_find_avail_spleaf(const struct silofs_spmap_node *sn,
@@ -1692,7 +1692,7 @@ static int verify_spmap_ref(const struct silofs_spmap_ref *spr,
 	enum silofs_stype stype_sub;
 	int err;
 
-	silofs_spr_ulink(spr, &uaddr);
+	spr_ulink(spr, &uaddr);
 	if (uaddr_isnull(&uaddr)) {
 		return 0;
 	}

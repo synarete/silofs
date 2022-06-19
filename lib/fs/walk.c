@@ -24,7 +24,7 @@ struct silofs_walk_ctx {
 	struct silofs_visitor      *vis;
 	struct silofs_fs_uber      *uber;
 	struct silofs_sb_info      *sbi;
-	struct silofs_spstats_info *sti;
+	struct silofs_spstats_info *spi;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;
@@ -38,7 +38,7 @@ struct silofs_walk_ctx {
 static void sbi_vrange(const struct silofs_sb_info *sbi,
                        struct silofs_vrange *out_vrange)
 {
-	const loff_t voff_end = silofs_sti_vspace_end(sbi->sb_sti);
+	const loff_t voff_end = silofs_spi_vspace_end(sbi->sb_spi);
 
 	silofs_vrange_setup(out_vrange, SILOFS_HEIGHT_SUPER, 0, voff_end);
 }
@@ -544,7 +544,7 @@ out:
 static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_sb_info *sbi = wa_ctx->sbi;
-	struct silofs_spstats_info *sti = wa_ctx->sti;
+	struct silofs_spstats_info *spi = wa_ctx->spi;
 	loff_t voff = 0;
 	int err;
 
@@ -552,7 +552,7 @@ static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 	if (err) {
 		return err;
 	}
-	err = wac_visit_exec_at(wa_ctx, NULL, &sti->sp_ui, voff, 1);
+	err = wac_visit_exec_at(wa_ctx, NULL, &spi->sp_ui, voff, 1);
 	if (err) {
 		return err;
 	}
@@ -560,7 +560,7 @@ static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 	if (err) {
 		return err;
 	}
-	err = wac_visit_post_at(wa_ctx, NULL, &sti->sp_ui, voff, 1);
+	err = wac_visit_post_at(wa_ctx, NULL, &spi->sp_ui, voff, 1);
 	if (err) {
 		return err;
 	}
@@ -595,7 +595,7 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 		.vis = vis,
 		.uber = sbi_uber(sbi),
 		.sbi = sbi,
-		.sti = sbi->sb_sti,
+		.spi = sbi->sb_spi,
 		.sni4 = NULL,
 		.sni3 = NULL,
 		.sni2 = NULL,

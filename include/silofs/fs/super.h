@@ -43,7 +43,7 @@ void silofs_sbi_setup_btime(struct silofs_sb_info *sbi);
 void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_spstats_info *sti);
+                           struct silofs_spstats_info *spi);
 
 void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
                           struct silofs_fs_uber *uber);

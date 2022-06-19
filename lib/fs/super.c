@@ -1065,7 +1065,7 @@ int silofs_sbi_xinit(struct silofs_sb_info *sbi, struct silofs_alloc *alloc)
 {
 	int err;
 
-	sbi->sb_sti = NULL;
+	sbi->sb_spi = NULL;
 	err = silofs_itbl_init(&sbi->sb_itbl, alloc);
 	if (err) {
 		return err;
@@ -1080,15 +1080,15 @@ void silofs_sbi_xfini(struct silofs_sb_info *sbi)
 }
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_spstats_info *sti)
+                           struct silofs_spstats_info *spi)
 {
-	if (sbi->sb_sti != NULL) {
-		sti_decref(sbi->sb_sti);
-		sbi->sb_sti = NULL;
+	if (sbi->sb_spi != NULL) {
+		spi_decref(sbi->sb_spi);
+		sbi->sb_spi = NULL;
 	}
-	if (sti != NULL) {
-		sti_incref(sti);
-		sbi->sb_sti = sti;
+	if (spi != NULL) {
+		spi_incref(spi);
+		sbi->sb_spi = spi;
 	}
 }
 

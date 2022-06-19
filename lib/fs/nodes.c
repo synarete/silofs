@@ -22,7 +22,7 @@
 
 /* local variables forward declarations */
 static const struct silofs_snode_vtbl sbi_vtbl;
-static const struct silofs_snode_vtbl sti_vtbl;
+static const struct silofs_snode_vtbl spi_vtbl;
 static const struct silofs_snode_vtbl sni_vtbl;
 static const struct silofs_snode_vtbl sli_vtbl;
 static const struct silofs_snode_vtbl itni_vtbl;
@@ -589,48 +589,48 @@ static const struct silofs_snode_vtbl sbi_vtbl = {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_unode_info *
-sti_to_ui(const struct silofs_spstats_info *sti)
+spi_to_ui(const struct silofs_spstats_info *spi)
 {
 	const struct silofs_unode_info *ui = NULL;
 
-	if (likely(sti != NULL)) {
-		ui = &sti->sp_ui;
+	if (likely(spi != NULL)) {
+		ui = &spi->sp_ui;
 	}
 	return ui_unconst(ui);
 }
 
 struct silofs_spstats_info *
-silofs_sti_from_ui(const struct silofs_unode_info *ui)
+silofs_spi_from_ui(const struct silofs_unode_info *ui)
 {
-	const struct silofs_spstats_info *sti = NULL;
+	const struct silofs_spstats_info *spi = NULL;
 
 	if (likely(ui != NULL)) {
-		sti = container_of2(ui, struct silofs_spstats_info, sp_ui);
+		spi = container_of2(ui, struct silofs_spstats_info, sp_ui);
 	}
-	return unconst(sti);
+	return unconst(spi);
 }
 
 static struct silofs_spstats_info *
-sti_from_si(const struct silofs_snode_info *si)
+spi_from_si(const struct silofs_snode_info *si)
 {
-	return silofs_sti_from_ui(silofs_ui_from_si(si));
+	return silofs_spi_from_ui(silofs_ui_from_si(si));
 }
 
-static int sti_init(struct silofs_spstats_info *sti,
+static int spi_init(struct silofs_spstats_info *spi,
                     const struct silofs_uaddr *uaddr)
 {
-	silofs_memzero(sti, sizeof(*sti));
-	ui_init(&sti->sp_ui, uaddr, &sti_vtbl);
+	silofs_memzero(spi, sizeof(*spi));
+	ui_init(&spi->sp_ui, uaddr, &spi_vtbl);
 	return 0;
 }
 
-static void sti_fini(struct silofs_spstats_info *sti)
+static void spi_fini(struct silofs_spstats_info *spi)
 {
-	ui_fini(&sti->sp_ui);
-	silofs_memffff(sti, sizeof(*sti));
+	ui_fini(&spi->sp_ui);
+	silofs_memffff(spi, sizeof(*spi));
 }
 
-static struct silofs_spstats_info *sti_malloc(struct silofs_alloc *alloc)
+static struct silofs_spstats_info *spi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spstats_info *sti;
 
@@ -638,47 +638,47 @@ static struct silofs_spstats_info *sti_malloc(struct silofs_alloc *alloc)
 	return sti;
 }
 
-static void sti_free(struct silofs_spstats_info *sti,
+static void spi_free(struct silofs_spstats_info *spi,
                      struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, sti, sizeof(*sti));
+	silofs_deallocate(alloc, spi, sizeof(*spi));
 }
 
-static void sti_delete(struct silofs_spstats_info *sti,
+static void spi_delete(struct silofs_spstats_info *spi,
                        struct silofs_alloc *alloc)
 {
-	sti_fini(sti);
-	sti_free(sti, alloc);
+	spi_fini(spi);
+	spi_free(spi, alloc);
 }
 
-static void sti_delete_as_si(struct silofs_snode_info *si,
+static void spi_delete_as_si(struct silofs_snode_info *si,
                              struct silofs_alloc *alloc)
 {
 	if (likely(si != NULL)) { /* make gcc-analyzer happy */
-		sti_delete(sti_from_si(si), alloc);
+		spi_delete(spi_from_si(si), alloc);
 	}
 }
 
 static struct silofs_spstats_info *
-sti_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+spi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	struct silofs_spstats_info *sti;
+	struct silofs_spstats_info *spi;
 	int err;
 
-	sti = sti_malloc(alloc);
-	if (sti == NULL) {
+	spi = spi_malloc(alloc);
+	if (spi == NULL) {
 		return NULL;
 	}
-	err = sti_init(sti, uaddr);
+	err = spi_init(spi, uaddr);
 	if (err) {
-		sti_free(sti, alloc);
+		spi_free(spi, alloc);
 		return NULL;
 	}
-	return sti;
+	return spi;
 }
 
-static const struct silofs_snode_vtbl sti_vtbl = {
-	.del = sti_delete_as_si,
+static const struct silofs_snode_vtbl spi_vtbl = {
+	.del = spi_delete_as_si,
 	.evictable = si_evictable,
 	.seal = ui_seal_as_si,
 	.resolve = ui_resolve_as_si,
@@ -1595,7 +1595,7 @@ silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 		ui = sbi_to_ui(sbi_new(alloc, uaddr));
 		break;
 	case SILOFS_STYPE_SPSTATS:
-		ui = sti_to_ui(sti_new(alloc, uaddr));
+		ui = spi_to_ui(spi_new(alloc, uaddr));
 		break;
 	case SILOFS_STYPE_SPNODE:
 		ui = sni_to_ui(sni_new(alloc, uaddr));
@@ -1733,7 +1733,7 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_SUPER:
 		return silofs_verify_super_block(&view->sb);
 	case SILOFS_STYPE_SPSTATS:
-		return silofs_verify_stats_node(&view->st);
+		return silofs_verify_spstats_node(&view->sp);
 	case SILOFS_STYPE_SPNODE:
 		return silofs_verify_spmap_node(&view->sn);
 	case SILOFS_STYPE_SPLEAF:

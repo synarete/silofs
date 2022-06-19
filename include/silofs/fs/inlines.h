@@ -320,13 +320,4 @@ silofs_sbi_blobid(const struct silofs_sb_info *sbi)
 	return &sbi->sb_ui.u_uaddr.oaddr.bka.blobid;
 }
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static inline const struct silofs_uaddr *
-silofs_sti_uaddr(const struct silofs_spstats_info *sti)
-{
-	return &sti->sp_ui.u_uaddr;
-}
-
 #endif /* SILOFS_INLINES_H_ */

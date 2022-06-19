@@ -201,7 +201,7 @@ static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	silofs_sti_update_blobs(sbi->sb_sti, stype_sub, 1);
+	silofs_spi_update_blobs(sbi->sb_spi, stype_sub, 1);
 	return 0;
 }
 
@@ -352,8 +352,8 @@ out_err:
 static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
                                     const struct silofs_uaddr *uaddr)
 {
-	silofs_sti_update_objs(stg_ctx->sbi->sb_sti, uaddr->stype, 1);
-	silofs_sti_update_bks(stg_ctx->sbi->sb_sti, uaddr->stype, 1);
+	silofs_spi_update_objs(stg_ctx->sbi->sb_spi, uaddr->stype, 1);
+	silofs_spi_update_bks(stg_ctx->sbi->sb_spi, uaddr->stype, 1);
 }
 
 static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,

@@ -2849,17 +2849,17 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 }
 
 
-void silofs_sti_incref(struct silofs_spstats_info *sti)
+void silofs_spi_incref(struct silofs_spstats_info *spi)
 {
-	if (likely(sti != NULL)) {
-		si_incref(&sti->sp_ui.u_si);
+	if (likely(spi != NULL)) {
+		si_incref(&spi->sp_ui.u_si);
 	}
 }
 
-void silofs_sti_decref(struct silofs_spstats_info *sti)
+void silofs_spi_decref(struct silofs_spstats_info *spi)
 {
-	if (likely(sti != NULL)) {
-		si_decref(&sti->sp_ui.u_si);
+	if (likely(spi != NULL)) {
+		si_decref(&spi->sp_ui.u_si);
 	}
 }
 

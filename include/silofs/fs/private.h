@@ -169,9 +169,8 @@
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)
 
-#define sti_uaddr(sti)                  silofs_sti_uaddr(sti)
-#define sti_incref(sti)                 silofs_sti_incref(sti)
-#define sti_decref(sti)                 silofs_sti_decref(sti)
+#define spi_incref(spi)                 silofs_spi_incref(spi)
+#define spi_decref(spi)                 silofs_spi_decref(spi)
 
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)

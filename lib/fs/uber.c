@@ -614,9 +614,9 @@ static struct silofs_repo *repo_of(struct silofs_fs_uber *uber, bool warm)
 	return warm ? &uber->ub_repos->repo_warm : &uber->ub_repos->repo_cold;
 }
 
-static int ubc_setup(struct silofs_uber_ctx *ub_ctx,
-                     struct silofs_fs_uber *uber, bool warm)
+static int ubc_setup(struct silofs_uber_ctx *ub_ctx, bool warm)
 {
+	struct silofs_fs_uber *uber = ub_ctx->uber;
 	struct silofs_repo *repo = repo_of(uber, warm);
 
 	if (repo == NULL) {
@@ -811,11 +811,11 @@ int silofs_spawn_super_at(struct silofs_fs_uber *uber, bool warm,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -839,10 +839,10 @@ int silofs_stage_super_at(struct silofs_fs_uber *uber, bool warm,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -868,10 +868,10 @@ int silofs_shadow_super_at(struct silofs_fs_uber *uber, bool warm,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -955,10 +955,10 @@ int silofs_spawn_stats_at(struct silofs_fs_uber *uber, bool warm,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_spstats_info **out_sti)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -981,10 +981,10 @@ int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool warm,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_spstats_info **out_sti)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1010,10 +1010,10 @@ int silofs_shadow_stats_at(struct silofs_fs_uber *uber, bool warm,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spstats_info **out_sti)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1097,10 +1097,10 @@ int silofs_spawn_spnode_at(struct silofs_fs_uber *uber, bool warm,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1123,10 +1123,10 @@ int silofs_stage_spnode_at(struct silofs_fs_uber *uber, bool warm,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1153,10 +1153,10 @@ int silofs_shadow_spnode_at(struct silofs_fs_uber *uber, bool warm,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spnode_info **out_sni)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1240,10 +1240,10 @@ int silofs_spawn_spleaf_at(struct silofs_fs_uber *uber, bool warm,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1266,10 +1266,10 @@ int silofs_stage_spleaf_at(struct silofs_fs_uber *uber, bool warm,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1296,10 +1296,10 @@ int silofs_shadow_spleaf_at(struct silofs_fs_uber *uber, bool warm,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1339,10 +1339,10 @@ int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
                          struct silofs_blob_info **out_bli)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
@@ -1361,10 +1361,10 @@ int silofs_stage_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
                          struct silofs_blob_info **out_bli)
 {
-	struct silofs_uber_ctx ub_ctx;
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, uber, warm);
+	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}

@@ -241,6 +241,8 @@ struct silofs_proc_mntinfo *cmd_parse_mountinfo(void);
 
 void cmd_free_mountinfo(struct silofs_proc_mntinfo *mi_list);
 
+void cmd_trace_debug_info(void);
+
 /* file-system environment */
 void cmd_new_env(struct silofs_fs_env **pfse,
                  const struct silofs_fs_args *args);

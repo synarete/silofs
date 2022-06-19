@@ -749,7 +749,7 @@ int silofs_do_getxattr(const struct silofs_fs_ctx *fs_ctx,
 		.value.ptr = buf,
 		.value.len = 0,
 		.value.cap = size,
-		.stg_mode = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RO,
 	};
 
 	return xac_getxattr(&xa_ctx, out_size);
@@ -833,9 +833,9 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_try_insert_at_nodes(const struct silofs_xattr_ctx *xa_ctx,
                                    struct silofs_xentry_info *xei)
 {
-	int err;
 	struct silofs_xanode_info *xai = NULL;
 	const size_t nslots_max = ii_xa_nslots_max(xa_ctx->ii);
+	int err;
 
 	for (size_t sloti = 0; sloti < nslots_max; ++sloti) {
 		err = xac_require_xanode(xa_ctx, sloti, &xai);
@@ -853,6 +853,11 @@ static int xac_try_insert_at_nodes(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_try_insert_at_inode(const struct silofs_xattr_ctx *xa_ctx,
                                    struct silofs_xentry_info *xei)
 {
+	/*
+	 * TODO-0036: Consider using short-xatts embedded within inode.
+	 *
+	 * Allow having fast-access to short-xattr.
+	 */
 	(void)xa_ctx;
 	(void)xei;
 	return -ENOSPC;
@@ -974,7 +979,7 @@ int silofs_do_setxattr(const struct silofs_fs_ctx *fs_ctx,
 		.size = size,
 		.flags = flags,
 		.kill_sgid = kill_sgid,
-		.stg_mode = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_RW,
 	};
 
 	return xac_setxattr(&xa_ctx);
@@ -1018,7 +1023,7 @@ int silofs_do_removexattr(const struct silofs_fs_ctx *fs_ctx,
 		.fs_ctx = fs_ctx,
 		.ii = ii,
 		.name = name,
-		.stg_mode = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_RW,
 	};
 
 	return xac_removexattr(&xa_ctx);
@@ -1146,7 +1151,7 @@ int silofs_do_listxattr(const struct silofs_fs_ctx *fs_ctx,
 		.ii = ii,
 		.lxa_ctx = lxa_ctx,
 		.keep_iter = true,
-		.stg_mode = SILOFS_STAGE_RDONLY,
+		.stg_mode = SILOFS_STAGE_RO,
 	};
 
 	return xac_listxattr(&xa_ctx);
@@ -1189,7 +1194,7 @@ int silofs_drop_xattr(struct silofs_inode_info *ii)
 	struct silofs_xattr_ctx xa_ctx = {
 		.sbi = ii_sbi(ii),
 		.ii = ii,
-		.stg_mode = SILOFS_STAGE_MUTABLE,
+		.stg_mode = SILOFS_STAGE_RW,
 	};
 
 	return xac_drop_xattr_slots(&xa_ctx);

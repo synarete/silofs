@@ -45,10 +45,10 @@ struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_listxattr_ctx;
 
-/* stage-vnodes operational mode */
+/* stage-elements mode */
 enum silofs_stage_mode {
-	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
-	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
+	SILOFS_STAGE_RO         = SILOFS_BIT(1),
+	SILOFS_STAGE_RW         = SILOFS_BIT(2),
 };
 
 /* file-system control flags */
@@ -196,44 +196,36 @@ struct silofs_kivam {
 	unsigned int            cipher_mode;
 };
 
-/* extended identifier */
-struct silofs_xid {
-	uint8_t id[16];
+/* space-tree id */
+struct silofs_treeid {
+	struct silofs_uuid      uuid;
 };
 
 /* tree-addressing blob-id */
-struct silofs_xxid_tas {
-	struct silofs_xid tree_id;
-	struct silofs_xid uniq_id;
+struct silofs_blobid_ta {
+	struct silofs_treeid    treeid;
+	loff_t                  voff;
 };
 
 /* content-addressing blob-id */
-struct silofs_xxid_cas {
+struct silofs_blobid_ca {
 	uint8_t hash[SILOFS_HASH256_LEN];
 };
 
 /* union of possible blob addressing */
-union silofs_xxid_u {
-	struct silofs_xxid_tas  tid;
-	struct silofs_xxid_cas  cid;
-	struct silofs_xid       xid[2];
-	uint32_t                zid[8];
-};
-
-struct silofs_xxid {
-	union silofs_xxid_u u;
+union silofs_blobid_u {
+	struct silofs_blobid_ta ta;
+	struct silofs_blobid_ca ca;
 };
 
 /* blob identifier */
 struct silofs_blobid {
-	struct silofs_xxid      xxid;
+	union silofs_blobid_u   u;
 	size_t                  size;
-};
-
-/* packed-blob identifier */
-struct silofs_packid {
-	struct silofs_blobid    blobid;
-	enum silofs_pack_mode   pmode;
+	enum silofs_stype       vspace;
+	enum silofs_height      height;
+	enum silofs_blobtype    btype;
+	enum silofs_pack   pmode;
 };
 
 /* block address within blob */
@@ -286,8 +278,6 @@ struct silofs_ivoaddr {
 struct silofs_vrange {
 	loff_t                  beg;
 	loff_t                  end;
-	size_t                  len;
-	ssize_t                 stepsz;
 	enum silofs_height      height;
 };
 
@@ -298,7 +288,7 @@ enum silofs_ckey_type {
 	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
-	SILOFS_CKEY_VOFF,
+	SILOFS_CKEY_VBKADDR
 };
 
 union silofs_ckey_u {
@@ -306,7 +296,7 @@ union silofs_ckey_u {
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
 	const struct silofs_blobid *blobid;
-	const loff_t               *voff;
+	const struct silofs_vbk_addr *vbk_addr;
 	const void                 *key;
 };
 
@@ -329,19 +319,25 @@ struct silofs_cache_elem {
 	char ce_pad;
 };
 
-/* object-addressing block info */
+/* uber-block info */
 struct silofs_ubk_info {
 	struct silofs_cache_elem        ubk_ce;
 	struct silofs_bkaddr            ubk_addr;
 	struct silofs_block            *ubk;
-	struct silofs_blob_info        *ubk_bli;
+	struct silofs_blobref_info        *ubk_bri;
 };
 
-/* voffset-addressing block info */
+/* virtual-block addressing */
+struct silofs_vbk_addr {
+	loff_t                          vbk_voff;
+	enum silofs_stype               vbk_vspace;
+};
+
+/* virtual-block info */
 struct silofs_vbk_info {
 	struct silofs_cache_elem        vbk_ce;
 	struct silofs_block            *vbk;
-	loff_t                          vbk_voff;
+	struct silofs_vbk_addr          vbk_addr;
 };
 
 
@@ -351,7 +347,6 @@ struct silofs_spacestat_rec {
 	size_t ndata4k;
 	size_t ndatabk;
 	size_t nsuper;
-	size_t nspstats;
 	size_t nspnode;
 	size_t nspleaf;
 	size_t nitnode;
@@ -403,10 +398,10 @@ struct silofs_inomap {
 };
 
 /* inodes-table reference */
-struct silofs_itable {
+struct silofs_itable_info {
 	struct silofs_inomap    it_inomap;
-	struct silofs_vaddr     it_rootitbl;
-	struct silofs_iaddr     it_rootdir;
+	struct silofs_vaddr     it_root_itb;
+	struct silofs_iaddr     it_root_dir;
 	ino_t  it_uber_ino;
 	size_t it_ninodes;
 	size_t it_ninodes_max;
@@ -473,7 +468,6 @@ struct silofs_fs_args {
 	gid_t  gid;
 	pid_t  pid;
 	mode_t umask;
-	bool   unimode;
 	bool   withfuse;
 	bool   pedantic;
 	bool   allowother;
@@ -485,7 +479,7 @@ struct silofs_fs_args {
 	bool   rdonly;
 	bool   kcopy;
 	bool   concp;
-	bool   restore;
+	bool   restore_forced;
 };
 
 /* file-system environment context */

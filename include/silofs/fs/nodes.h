@@ -47,32 +47,31 @@ struct silofs_snode_info {
 /* unode */
 struct silofs_unode_info {
 	struct silofs_uaddr             u_uaddr;
-	struct silofs_packid            u_packid;
 	struct silofs_snode_info        u_si;
 	struct silofs_list_head         u_pack_lh;
 	struct silofs_repo             *u_repo;
-	struct silofs_ubk_info         *u_ubi;
-	struct silofs_pack_iovs        *u_piov;
+	struct silofs_ubk_info         *u_ubki;
 	bool                            u_verified;
-	bool                            u_plinked;
+	bool                            u_in_pq;
+	char                            u_pad[6];
+};
+
+/* space-stats */
+struct silofs_stats_info {
+	struct silofs_space_stats      *spst;
+	struct silofs_sb_info          *sbi;
 };
 
 /* super-block */
 struct silofs_sb_info {
 	struct silofs_unode_info        sb_ui;
-	struct silofs_itable            sb_itbl;
+	struct silofs_stats_info        sb_sti;
+	struct silofs_itable_info       sb_itbi;
 	struct silofs_super_block      *sb;
-	struct silofs_spstats_info     *sb_sti;
 	struct silofs_ucred             sb_owner;
 	struct silofs_vspalloc_hints    sb_vspa;
 	unsigned long                   sb_ctl_flags;
 	unsigned long                   sb_ms_flags;
-};
-
-/* space-stats */
-struct silofs_spstats_info {
-	struct silofs_unode_info        sp_ui;
-	struct silofs_spstats_node     *sp;
 };
 
 /* space-node */
@@ -94,7 +93,7 @@ struct silofs_vnode_info {
 	struct silofs_snode_info        v_si;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_xiovref           v_fir;
-	struct silofs_vbk_info         *v_vbi;
+	struct silofs_vbk_info         *v_vbki;
 	struct silofs_sb_info          *v_sbi;
 	bool                            v_recheck;
 	bool                            v_verified;
@@ -158,9 +157,6 @@ struct silofs_fileaf_info {
 struct silofs_sb_info *
 silofs_sbi_from_ui(const struct silofs_unode_info *ui);
 
-struct silofs_spstats_info *
-silofs_sti_from_ui(const struct silofs_unode_info *ui);
-
 struct silofs_spnode_info *
 silofs_sni_from_ui(const struct silofs_unode_info *ui);
 
@@ -219,6 +215,7 @@ silofs_ui_from_si(const struct silofs_snode_info *si);
 void silofs_ui_bind_uber(struct silofs_unode_info *ui,
                          struct silofs_fs_uber *uber);
 
+void silofs_ui_seal_meta(struct silofs_unode_info *ui);
 
 void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
 
@@ -242,6 +239,9 @@ void silofs_vi_bind_view(struct silofs_vnode_info *vi);
 
 int silofs_vi_verify_view(struct silofs_vnode_info *vi);
 
+
+int silofs_verify_view_by(const union silofs_view *view,
+                          const enum silofs_stype stype);
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr);
 

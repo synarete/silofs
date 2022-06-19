@@ -16,7 +16,7 @@
  */
 #include "cmd.h"
 
-static const char *cmd_unrefs_usage[] = {
+static const char *cmd_unrefs_help_desc[] = {
 	"unrefs <repo/name>",
 	"",
 	"options:",
@@ -55,7 +55,7 @@ static void cmd_unrefs_getopt(struct cmd_unrefs_ctx *ctx)
 		if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_unrefs_usage);
+			cmd_print_help_and_exit(cmd_unrefs_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

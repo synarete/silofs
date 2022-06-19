@@ -208,15 +208,15 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
-	const int i_open_max = INT_MAX / 2;
 	const struct silofs_fs_uber *uber = ii_uber(ii);
+	const size_t total_iopen_max = uber->ub_ops.op_iopen_max;
+	const size_t iopen_max = total_iopen_max / 2;
 
-	if (!ii->i_nopen &&
-	    !(uber->ub_ops.op_iopen < uber->ub_ops.op_iopen_max)) {
-		return -ENFILE;
+	if (uber->ub_ops.op_iopen >= total_iopen_max) {
+		return -EMFILE;
 	}
-	if (ii->i_nopen >= i_open_max) {
-		return -ENFILE;
+	if (ii->i_nopen >= (long)iopen_max) {
+		return -EMFILE;
 	}
 	return 0;
 }
@@ -556,7 +556,7 @@ static int do_lookup(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_RDONLY, out_ii);
+	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_RO, out_ii);
 	if (err) {
 		return err;
 	}
@@ -663,6 +663,10 @@ static int check_create(const struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	err = check_create_mode(mode);
+	if (err) {
+		return err;
+	}
+	err = check_open_limit(dir_ii);
 	if (err) {
 		return err;
 	}
@@ -1088,7 +1092,7 @@ static int check_prepare_unlink(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(fs_ctx, dir_ii, nstr, SILOFS_STAGE_MUTABLE, &ii);
+	err = stage_by_name(fs_ctx, dir_ii, nstr, SILOFS_STAGE_RW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1312,7 +1316,7 @@ static int check_prepare_rmdir(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_MUTABLE, &ii);
+	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_RW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1942,7 +1946,7 @@ static int check_stage_rename_at(const struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	err = stage_by_name(fs_ctx, dref->dir_ii, dref->name,
-	                    SILOFS_STAGE_MUTABLE, &dref->ii);
+	                    SILOFS_STAGE_RW, &dref->ii);
 	if (err) {
 		return ((err == -ENOENT) && new_de) ? 0 : err;
 	}
@@ -2006,25 +2010,32 @@ int silofs_do_rename(const struct silofs_fs_ctx *fs_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static time_t uptime_of(const struct silofs_sb_info *sbi)
-{
-	return silofs_uber_uptime(sbi_uber(sbi));
-}
-
 static void fill_spstats(const struct silofs_sb_info *sbi,
                          struct silofs_query_spstats *qsp)
 {
 	struct silofs_spacestats spst;
 
-	silofs_sti_collect_stats(sbi->sb_sti, &spst);
+	silofs_sti_collect_stats(&sbi->sb_sti, &spst);
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
-static void fill_uptime(const struct silofs_sb_info *sbi,
-                        struct silofs_query_uptime *qut)
+static void fill_prstats(const struct silofs_sb_info *sbi,
+                         struct silofs_query_prstats *qus)
 {
-	qut->uptime = uptime_of(sbi);
-	qut->msflags = sbi->sb_ms_flags;
+	struct silofs_alloc_stat alst = { .pad = 0 };
+	const struct silofs_fs_uber *uber = sbi_uber(sbi);
+	const struct silofs_alloc *alloc = sbi_alloc(sbi);
+	const struct silofs_cache *cache = sbi_cache(sbi);
+
+	silofs_allocstat(alloc, &alst);
+	silofs_memzero(qus, sizeof(*qus));
+	qus->msflags = sbi->sb_ms_flags;
+	qus->uptime = silofs_uber_uptime(uber);
+	qus->iopen_max = uber->ub_ops.op_iopen_max;
+	qus->iopen_cur = uber->ub_ops.op_iopen;
+	qus->memsz_max = alst.memsz_data;
+	qus->memsz_cur = alst.nbytes_used;
+	qus->bopen_cur = cache->c_bri_lm.lm_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2035,7 +2046,7 @@ static int do_statvfs(const struct silofs_fs_ctx *fs_ctx,
 {
 	const struct silofs_sb_info *sbi = ii_sbi(ii);
 
-	silofs_sti_fill_statvfs(sbi->sb_sti, out_stv);
+	silofs_sti_fill_statvfs(&sbi->sb_sti, out_stv);
 	unused(fs_ctx);
 	return 0;
 }
@@ -2090,10 +2101,10 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 	fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
 }
 
-static void fill_query_uptime(const struct silofs_inode_info *ii,
-                              struct silofs_ioc_query *query)
+static void fill_query_prstats(const struct silofs_inode_info *ii,
+                               struct silofs_ioc_query *query)
 {
-	fill_uptime(ii_sbi(ii), &query->u.uptime);
+	fill_prstats(ii_sbi(ii), &query->u.prstats);
 }
 
 static void fill_query_spstats(const struct silofs_inode_info *ii,
@@ -2139,8 +2150,8 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
 	case SILOFS_QUERY_BOOTSEC:
 		fill_query_bootsec(ii, query);
 		break;
-	case SILOFS_QUERY_UPTIME:
-		fill_query_uptime(ii, query);
+	case SILOFS_QUERY_PRSTATS:
+		fill_query_prstats(ii, query);
 		break;
 	case SILOFS_QUERY_SPSTATS:
 		fill_query_spstats(ii, query);
@@ -2269,17 +2280,6 @@ int silofs_do_clone(const struct silofs_fs_ctx *fs_ctx,
 	return err;
 }
 
-static int walk_inspect_fs(struct silofs_sb_info *sbi)
-{
-	struct silofs_uspace_visitor usv;
-	int ret;
-
-	silofs_usvisitor_init(&usv, sbi_alloc(sbi));
-	ret = silofs_walk_space_tree(sbi, &usv.vis);
-	silofs_usvisitor_fini(&usv);
-	return ret;
-}
-
 int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_bootsec *bsec)
 {
@@ -2295,7 +2295,7 @@ int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = walk_inspect_fs(sbi);
+	err = silofs_inspect_fs(sbi);
 	if (err) {
 		return err;
 	}

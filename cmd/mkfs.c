@@ -16,7 +16,7 @@
  */
 #include "cmd.h"
 
-static const char *cmd_mkfs_usage[] = {
+static const char *cmd_mkfs_help_desc[] = {
 	"mkfs --size=NBYTES [options] <repo/name>",
 	"",
 	"options:",
@@ -68,7 +68,7 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 		} else if (opt_chr == 'F') {
 			ctx->args.force = true;
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_mkfs_usage);
+			cmd_print_help_and_exit(cmd_mkfs_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

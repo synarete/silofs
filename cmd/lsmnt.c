@@ -16,7 +16,7 @@
  */
 #include "cmd.h"
 
-static const char *cmd_lsmnt_usage[] = {
+static const char *cmd_lsmnt_help_desc[] = {
 	"lsmnt [options]",
 	"",
 	"options:",
@@ -53,7 +53,7 @@ static void cmd_lsmnt_getopt(struct cmd_lsmnt_ctx *ctx)
 		if (opt_chr == 'l') {
 			ctx->args.long_listing = true;
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_lsmnt_usage);
+			cmd_print_help_and_exit(cmd_lsmnt_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

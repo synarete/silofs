@@ -16,7 +16,7 @@
  */
 #include "cmd.h"
 
-static const char *cmd_fsck_usage[] = {
+static const char *cmd_fsck_help_desc[] = {
 	"fsck [options] <repo-path>",
 	"",
 	"options:",
@@ -50,7 +50,7 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 	while (opt_chr > 0) {
 		opt_chr = cmd_getopt("h", opts);
 		if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_fsck_usage);
+			cmd_print_help_and_exit(cmd_fsck_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

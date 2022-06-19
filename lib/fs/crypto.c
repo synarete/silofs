@@ -81,6 +81,11 @@ out_control_err:
 	return gcrypt_err(err);
 }
 
+const char *silofs_gcrypt_version(void)
+{
+	return GCRYPT_VERSION;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_mdigest_init(struct silofs_mdigest *md)

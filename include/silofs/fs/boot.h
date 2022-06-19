@@ -29,7 +29,7 @@ struct silofs_bootsec {
 	struct silofs_hash256           key_hash;
 	struct silofs_uuid              uuid;
 	struct silofs_uaddr             sb_uaddr;
-	struct silofs_packid            sb_packid;
+	struct silofs_blobid            sb_cold_blobid;
 	struct silofs_cipher_args       cip_args;
 	enum silofs_bootf               flags;
 };
@@ -78,11 +78,17 @@ void silofs_bootsec_init(struct silofs_bootsec *bsec);
 
 void silofs_bootsec_fini(struct silofs_bootsec *bsec);
 
-void silofs_bootsec_set_uaddr(struct silofs_bootsec *bsec,
-                              const struct silofs_uaddr *sb_uaddr);
+void silofs_bootsec_sb_uaddr(const struct silofs_bootsec *bsec,
+                             struct silofs_uaddr *out_uaddr);
 
-void silofs_bootsec_set_packid(struct silofs_bootsec *bsec,
-                               const struct silofs_packid *sb_packid);
+void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
+                                 const struct silofs_uaddr *sb_uaddr);
+
+void silofs_bootsec_cold_blobid(const struct silofs_bootsec *bsec,
+                                struct silofs_blobid *out_blobid);
+
+void silofs_bootsec_set_cold_blobid(struct silofs_bootsec *bsec,
+                                    const struct silofs_blobid *sb_blobid);
 
 void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,
                                 const struct silofs_hash256 *hash);

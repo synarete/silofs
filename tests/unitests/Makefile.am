@@ -37,6 +37,7 @@ silofs_unitests_SOURCES += ut_file_rwiter.c
 silofs_unitests_SOURCES += ut_file_stat.c
 silofs_unitests_SOURCES += ut_file_trunc.c
 silofs_unitests_SOURCES += ut_fillfs.c
+silofs_unitests_SOURCES += ut_inspect.c
 silofs_unitests_SOURCES += ut_ioctl.c
 silofs_unitests_SOURCES += ut_namei.c
 silofs_unitests_SOURCES += ut_pack.c

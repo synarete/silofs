@@ -46,6 +46,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_file_lseek),
 	UT_DEFTGRP(ut_tdefs_file_fiemap),
 	UT_DEFTGRP(ut_tdefs_file_copy_range),
+	UT_DEFTGRP(ut_tdefs_inspect),
 	UT_DEFTGRP(ut_tdefs_reload),
 	UT_DEFTGRP(ut_tdefs_fillfs),
 	UT_DEFTGRP(ut_tdefs_snap_basic),
@@ -317,6 +318,7 @@ void ut_execute_tests(void)
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,
 			.pedantic = false, /* TODO: make me a knob (true) */
+			.restore_forced = true,
 		},
 		.program = ut_globals.program,
 		.version = ut_globals.version
@@ -433,9 +435,9 @@ const char *ut_make_name(struct ut_env *ute, const char *pre, size_t idx)
 	const char *name;
 
 	if (pre && strlen(pre)) {
-		name = ut_strfmt(ute, "%s-%lx", pre, idx + 1);
+		name = ut_strfmt(ute, "%s%lu", pre, idx + 1);
 	} else {
-		name = ut_strfmt(ute, "%lx", idx + 1);
+		name = ut_strfmt(ute, "%lu", idx + 1);
 	}
 	return name;
 }

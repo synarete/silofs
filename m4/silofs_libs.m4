@@ -26,6 +26,7 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([pthread.h])
   AX_SILOFS_NEED_HEADER([gcrypt.h])
   AX_SILOFS_NEED_HEADER([xxhash.h])
+  AX_SILOFS_NEED_HEADER([zstd.h])
   AX_SILOFS_NEED_HEADER([uuid/uuid.h])
   AX_SILOFS_NEED_HEADER([attr/attributes.h])
   AX_SILOFS_NEED_HEADER([sys/xattr.h])
@@ -74,9 +75,12 @@ AC_DEFUN([AX_SILOFS_NEED_LIBS],
 
   AC_SEARCH_LIBS([cap_clear], [cap], :,
     AC_MSG_ERROR([Unable to find libcap]))
-    
+
   AC_SEARCH_LIBS([XXH32], [xxhash], :,
     AC_MSG_ERROR([Unable to find libxxhash]))
+
+  AC_SEARCH_LIBS([ZSTD_compress], [zstd], :,
+    AC_MSG_ERROR([Unable to find libzstd]))
 ])
 
 AC_DEFUN([AX_SILOFS_WANT_LIBS],

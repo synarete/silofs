@@ -27,7 +27,7 @@
 #include <getopt.h>
 #include "cmd.h"
 
-static const char *cmd_snap_usage[] = {
+static const char *cmd_snap_help_desc[] = {
 	"snap <repo/src-name> <repo/dst-name>",
 	"",
 	"options:",
@@ -47,14 +47,14 @@ struct cmd_snap_args {
 };
 
 struct cmd_snap_ctx {
-	struct cmd_snap_args    args;
-	struct silofs_bootlink  src_blnk;
-	struct silofs_bootpath  dst_bpath;
-	struct silofs_bootsecs  dst_bsecs;
-	struct silofs_ioc_clone ioc_clone;
-	struct silofs_fs_env   *fse;
-	char                   *src_mntdir;
-	int                     src_lock_fd;
+	struct cmd_snap_args     args;
+	struct silofs_bootlink   src_blnk;
+	struct silofs_bootpath   dst_bpath;
+	struct silofs_bootsecs   dst_bsecs;
+	struct silofs_ioc_clone *ioc_clone;
+	struct silofs_fs_env    *fse;
+	char                    *src_mntdir;
+	int                      src_lock_fd;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -74,7 +74,7 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 		if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_snap_usage);
+			cmd_print_help_and_exit(cmd_snap_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}
@@ -85,6 +85,17 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void cmd_snap_malloc_ioc(struct cmd_snap_ctx *ctx)
+{
+	ctx->ioc_clone = cmd_zalloc(sizeof(*ctx->ioc_clone));
+}
+
+static void cmd_snap_free_ioc(struct cmd_snap_ctx *ctx)
+{
+	cmd_zfree(ctx->ioc_clone, sizeof(*ctx->ioc_clone));
+	ctx->ioc_clone = NULL;
+}
 
 static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
@@ -99,6 +110,7 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 	cmd_pstrfree(&ctx->args.dst_repodir_real);
 	cmd_pstrfree(&ctx->src_mntdir);
 	cmd_unlock_bpath(&ctx->src_blnk.bpath, &ctx->src_lock_fd);
+	cmd_snap_free_ioc(ctx);
 	cmd_snap_ctx = NULL;
 }
 
@@ -111,6 +123,7 @@ static void cmd_snap_atexit(void)
 
 static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 {
+	cmd_snap_malloc_ioc(ctx);
 	cmd_snap_ctx = ctx;
 	atexit(cmd_snap_atexit);
 }
@@ -209,7 +222,6 @@ static void cmd_snap_resolve_src_mntdir(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_ioc_clone *clone = &ctx->ioc_clone;
 	int dfd = -1;
 	int err;
 
@@ -222,7 +234,7 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "syncfs error: %s", ctx->src_mntdir);
 	}
 
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, clone);
+	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, ctx->ioc_clone);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		cmd_dief(err, "ioctl error: %s", ctx->src_mntdir);
@@ -231,8 +243,8 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		         ctx->args.dst_repodir_name);
 	}
 
-	silofs_bsec1k_parse(&clone->bsec[0], &ctx->dst_bsecs.bsec[0]);
-	silofs_bsec1k_parse(&clone->bsec[1], &ctx->dst_bsecs.bsec[1]);
+	silofs_bsec1k_parse(&ctx->ioc_clone->bsec[0], &ctx->dst_bsecs.bsec[0]);
+	silofs_bsec1k_parse(&ctx->ioc_clone->bsec[1], &ctx->dst_bsecs.bsec[1]);
 }
 
 static void cmd_snap_resave_bsecs(struct cmd_snap_ctx *ctx)
@@ -294,6 +306,7 @@ void cmd_execute_snap(void)
 {
 	struct cmd_snap_ctx ctx = {
 		.fse = NULL,
+		.ioc_clone = NULL,
 		.src_lock_fd = -1,
 	};
 

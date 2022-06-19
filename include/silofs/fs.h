@@ -18,11 +18,13 @@
 #define SILOFS_FS_H_
 
 #include <silofs/infra.h>
+#include <silofs/fs/errors.h>
 #include <silofs/fs/defs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/nodes.h>
+#include <silofs/fs/zcomp.h>
 #include <silofs/fs/crypto.h>
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>
@@ -40,6 +42,7 @@
 #include <silofs/fs/stage.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/spclaim.h>
+#include <silofs/fs/inspect.h>
 #include <silofs/fs/uber.h>
 #include <silofs/fs/exec.h>
 #include <silofs/fs/walk.h>

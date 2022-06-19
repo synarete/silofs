@@ -175,6 +175,7 @@ extern const struct ut_testdefs ut_tdefs_file_fallocate;
 extern const struct ut_testdefs ut_tdefs_file_fiemap;
 extern const struct ut_testdefs ut_tdefs_file_lseek;
 extern const struct ut_testdefs ut_tdefs_file_copy_range;
+extern const struct ut_testdefs ut_tdefs_inspect;
 extern const struct ut_testdefs ut_tdefs_reload;
 extern const struct ut_testdefs ut_tdefs_fillfs;
 extern const struct ut_testdefs ut_tdefs_snap_basic;

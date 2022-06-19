@@ -17,7 +17,7 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
-struct silofs_spstats_info;
+struct silofs_stats_info;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 
@@ -43,7 +43,7 @@ void silofs_sbi_setup_btime(struct silofs_sb_info *sbi);
 void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_spstats_info *sti);
+                           struct silofs_stats_info *sti);
 
 void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
                           struct silofs_fs_uber *uber);
@@ -51,16 +51,12 @@ void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
 
-int silofs_sbi_stats_uaddr(const struct silofs_sb_info *sbi,
-                           struct silofs_uaddr *out_uaddr);
-
-void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
-                                const struct silofs_uaddr *uaddr);
-
-int silofs_sbi_sproot_uaddr(const struct silofs_sb_info *sbi,
-                            struct silofs_uaddr *out_uaddr);
+int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vstype,
+                         struct silofs_uaddr *out_uaddr);
 
 void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
+                            enum silofs_stype vstype,
                             const struct silofs_spnode_info *sni);
 
 void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
@@ -124,30 +120,29 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
-                       struct silofs_xid *out_mid);
+                       struct silofs_treeid *out_treeid);
 
-void silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
-                          struct silofs_blobid *out_blobid);
+int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vspace,
+                         struct silofs_blobid *out_blobid);
 
 void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
+                               enum silofs_stype vspace,
                                const struct silofs_blobid *blobid);
 
-bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi);
-
-
-int silofs_sbi_main_pack(const struct silofs_sb_info *sbi,
-                         struct silofs_packid *out_packid);
-
-void silofs_sbi_bind_main_pack(struct silofs_sb_info *sbi,
-                               const struct silofs_packid *packid);
-
-void silofs_sbi_self(const struct silofs_sb_info *sbi,
-                     struct silofs_uaddr *out_uaddr);
-
-size_t silofs_sbi_space_tree_height(const struct silofs_sb_info *sbi);
+bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
+                              enum silofs_stype vspace);
 
 void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
-                              loff_t voff, struct silofs_uaddr *out_uaddr);
+                              loff_t voff, enum silofs_stype vspace,
+                              struct silofs_uaddr *out_uaddr);
 
+int silofs_sbi_cold_blob(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vspace,
+                         struct silofs_blobid *out_blobid);
+
+void silofs_sbi_bind_cold_blob(struct silofs_sb_info *sbi,
+                               enum silofs_stype vspace,
+                               const struct silofs_blobid *blobid);
 
 #endif /* SILOFS_SUPER_H_ */

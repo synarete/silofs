@@ -25,7 +25,7 @@ lib*.la
 /config.log
 /config.status
 
-# IDEs
+# Editors and IDEs
 /.cproject
 /.project
 /.pydevproject
@@ -33,5 +33,6 @@ lib*.la
 /.vscode
 
 # External tools
+/cscope.files
 /cscope.out
 /.mypy_cache/

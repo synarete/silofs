@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	/* Actual tests execution... */
 	ut_execute_tests();
 
-	/* ...and we are done! */
+	/* ...done! */
 	return 0;
 }
 

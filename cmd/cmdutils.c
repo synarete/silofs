@@ -706,8 +706,8 @@ char *cmd_mkpathf(const char *fmt, ...)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_show_help_strings(FILE *fp, const char *name,
-                                  const char **help_strings)
+static void cmd_show_help_descs(FILE *fp, const char *name,
+                                const char **help_strings)
 {
 	size_t idx = 0;
 	const char *help_string = NULL;
@@ -733,7 +733,7 @@ void cmd_print_help_and_exit(const char **help_strings)
 {
 	const char *prefix = cmd_globals.name;
 
-	cmd_show_help_strings(stdout, prefix, help_strings);
+	cmd_show_help_descs(stdout, prefix, help_strings);
 	exit(EXIT_SUCCESS);
 }
 
@@ -1076,3 +1076,11 @@ void cmd_free_mountinfo(struct silofs_proc_mntinfo *mi_list)
 	}
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void cmd_trace_debug_info(void)
+{
+	silofs_log_debug("version: %s", silofs_version.string);
+	silofs_log_debug("gcrypt version: %s", silofs_gcrypt_version());
+	silofs_log_debug("zstd version: %s", silofs_zstd_version());
+}

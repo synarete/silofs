@@ -64,6 +64,11 @@ static inline loff_t silofs_off_next(loff_t off, ssize_t len)
 	return silofs_off_align(off + len, len);
 }
 
+static inline loff_t silofs_off_next_n(loff_t off, ssize_t len, size_t n)
+{
+	return silofs_off_align(off + ((ssize_t)n * len), len);
+}
+
 static inline loff_t silofs_off_next_bk(loff_t off)
 {
 	return silofs_off_next(off, SILOFS_BK_SIZE);
@@ -146,11 +151,6 @@ static inline bool silofs_stype_isnone(enum silofs_stype stype)
 static inline bool silofs_stype_issuper(enum silofs_stype stype)
 {
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SUPER);
-}
-
-static inline bool silofs_stype_isstats(enum silofs_stype stype)
-{
-	return silofs_stype_isequal(stype, SILOFS_STYPE_SPSTATS);
 }
 
 static inline bool silofs_stype_isspnode(enum silofs_stype stype)
@@ -318,15 +318,6 @@ static inline const struct silofs_blobid *
 silofs_sbi_blobid(const struct silofs_sb_info *sbi)
 {
 	return &sbi->sb_ui.u_uaddr.oaddr.bka.blobid;
-}
-
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static inline const struct silofs_uaddr *
-silofs_sti_uaddr(const struct silofs_spstats_info *sti)
-{
-	return &sti->sp_ui.u_uaddr;
 }
 
 #endif /* SILOFS_INLINES_H_ */

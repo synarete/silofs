@@ -18,6 +18,8 @@
 #define SILOFS_CRYPTO_H_
 
 
+const char *silofs_gcrypt_version(void);
+
 int silofs_init_gcrypt(void);
 
 int silofs_mdigest_init(struct silofs_mdigest *md);

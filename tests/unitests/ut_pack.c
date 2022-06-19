@@ -34,10 +34,14 @@ static void ut_archive_restore_ok(struct ut_env *ute, const char *dst_name)
 static void ut_pack_simple(struct ut_env *ute)
 {
 	ino_t dino;
+	ino_t ino;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
+	ut_release_ok(ute, ino);
 	ut_archive_restore_ok(ute, name);
+	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -70,7 +74,45 @@ static void ut_pack_data(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_pack_nfiles_(struct ut_env *ute, size_t nfiles, size_t bsz)
+static void ut_pack_nfiles_data_(struct ut_env *ute, size_t nfiles)
+{
+	ino_t ino;
+	ino_t dino;
+	loff_t off;
+	uint64_t val;
+	const char *name = UT_NAME;
+	const char *fname = NULL;
+
+	ut_mkdir_at_root(ute, name, &dino);
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname = ut_make_name(ute, name, i);
+		ut_create_file(ute, dino, fname, &ino);
+		val = ino;
+		off = (loff_t)(i * UT_KILO);
+		ut_write_read(ute, ino, &val, sizeof(val), off);
+		ut_release_ok(ute, ino);
+	}
+	ut_archive_restore_ok(ute, name);
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname = ut_make_name(ute, name, i);
+		ut_lookup_ino(ute, dino, fname, &ino);
+		ut_open_rdonly(ute, ino);
+		val = ino;
+		off = (loff_t)(i * UT_KILO);
+		ut_read_verify(ute, ino, &val, sizeof(val), off);
+		ut_remove_file(ute, dino, fname, ino);
+	}
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_pack_nfiles_data(struct ut_env *ute)
+{
+	ut_pack_nfiles_data_(ute, 1024);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_pack_nfiles_rand_(struct ut_env *ute, size_t nfiles, size_t bsz)
 {
 	ino_t ino;
 	ino_t dino;
@@ -99,10 +141,10 @@ static void ut_pack_nfiles_(struct ut_env *ute, size_t nfiles, size_t bsz)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_pack_nfiles(struct ut_env *ute)
+static void ut_pack_nfiles_rand(struct ut_env *ute)
 {
-	ut_pack_nfiles_(ute, 16, UT_MEGA);
-	ut_pack_nfiles_(ute, 1024, UT_KILO);
+	ut_pack_nfiles_rand_(ute, 8, UT_MEGA);
+	ut_pack_nfiles_rand_(ute, 1024, UT_KILO);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -139,7 +181,8 @@ static void ut_pack_ndirs(struct ut_env *ute)
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_pack_simple),
 	UT_DEFTEST(ut_pack_data),
-	UT_DEFTEST(ut_pack_nfiles),
+	UT_DEFTEST(ut_pack_nfiles_data),
+	UT_DEFTEST(ut_pack_nfiles_rand),
 	UT_DEFTEST(ut_pack_ndirs),
 };
 

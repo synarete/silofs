@@ -1579,9 +1579,9 @@ void ut_drop_caches_fully(struct ut_env *ute)
 
 	ut_sync_drop(ute);
 	silofs_fse_stats(ute->fs_env, &st);
-	/* super-blocks are not dropped */
-	ut_expect_eq(st.ncache_ublocks, 2);
-	ut_expect_eq(st.ncache_unodes, 2);
+	/* sb not dropped */
+	ut_expect_eq(st.ncache_ublocks, 1);
+	ut_expect_eq(st.ncache_unodes, 1);
 	ut_expect_eq(st.ncache_vblocks, 0);
 	ut_expect_eq(st.ncache_vnodes, 0);
 }
@@ -1621,9 +1621,13 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_ge(stv1->f_bfree, stv2->f_bfree);
 	ut_expect_ge(stv1->f_bavail, stv2->f_bavail);
 
-	/* XXX calc expected diff based on volume size */
+	/*
+	 * TODO-0040: Calculate expected diff based on volume size.
+	 *
+	 * Have more-fine grained calculation of 'bfree_dif'.
+	 */
 	bfree_dif = stv1->f_bfree - stv2->f_bfree;
-	ut_expect_lt(bfree_dif, 4000);
+	ut_expect_lt(bfree_dif, 16 * 4000);
 }
 
 void ut_save_bsec_ok(struct ut_env *ute, const struct silofs_bootsec *bsec)
@@ -1859,6 +1863,7 @@ void ut_restore_ok(struct ut_env *ute,
 	ut_save_bsec_ok(ute, &bsec);
 
 	ut_load_bsec_at(ute, false, src_name, &src_bsec);
+
 	err = silofs_fse_reopen(fse, &src_bsec);
 	ut_expect_ok(err);
 

@@ -21,5 +21,6 @@ apt-get install -y \
   linux-headers-$(uname -r) \
   pkg-config \
   dpkg-dev \
-  debhelper
+  debhelper \
+  zstd-dev
 

@@ -44,6 +44,7 @@ libsilofs_la_SOURCES += fs/fuseq.c
 libsilofs_la_SOURCES += fs/guarantee.c
 libsilofs_la_SOURCES += fs/inode.c
 libsilofs_la_SOURCES += fs/inomap.c
+libsilofs_la_SOURCES += fs/inspect.c
 libsilofs_la_SOURCES += fs/itable.c
 libsilofs_la_SOURCES += fs/journal.c
 libsilofs_la_SOURCES += fs/mntsvc.c
@@ -62,4 +63,4 @@ libsilofs_la_SOURCES += fs/symlink.c
 libsilofs_la_SOURCES += fs/uber.c
 libsilofs_la_SOURCES += fs/walk.c
 libsilofs_la_SOURCES += fs/xattr.c
-
+libsilofs_la_SOURCES += fs/zcomp.c

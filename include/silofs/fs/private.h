@@ -107,7 +107,6 @@
 #define stype_isequal(st1, st2)         silofs_stype_isequal(st1, st2)
 #define stype_isnone(st)                silofs_stype_isnone(st)
 #define stype_issuper(st)               silofs_stype_issuper(st)
-#define stype_isstats(st)               silofs_stype_isstats(st)
 #define stype_isspnode(st)              silofs_stype_isspnode(st)
 #define stype_isspleaf(st)              silofs_stype_isspleaf(st)
 #define stype_isunode(st)               silofs_stype_isunode(st)
@@ -118,30 +117,32 @@
 #define stype_isdata(st)                silofs_stype_isdata(st)
 #define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
-#define packid_isnull(pid)              silofs_packid_isnull(pid)
-#define packid_reset(pid)               silofs_packid_reset(pid)
-#define packid_setup(pid, bid)          silofs_packid_setup(pid, bid)
-#define packid_assign(pid, oth)         silofs_packid_assign(pid, oth)
-
 #define blobid_reset(bid)               silofs_blobid_reset(bid)
 #define blobid_assign(bid, oth)         silofs_blobid_assign(bid, oth)
 #define blobid_isequal(bid, oth)        silofs_blobid_isequal(bid, oth)
 #define blobid_isnull(bid)              silofs_blobid_isnull(bid)
 #define blobid_size(bid)                silofs_blobid_size(bid)
+#define blobid_has_treeid(bid, tid)     silofs_blobid_has_treeid(bid, tid)
+
+#define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
+#define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
+#define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
 
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
-#define oaddr_setup(oa, bid, s, o)      silofs_oaddr_setup(oa, bid, s, o)
+#define oaddr_setup(oa, bid, o, l)      silofs_oaddr_setup(oa, bid, o, l)
 #define oaddr_setup_by(oa, bid, va)     silofs_oaddr_setup_by(oa, bid, va)
 #define oaddr_isvalid(oa)               silofs_oaddr_isvalid(oa)
+#define oaddr_isnull(oa)                silofs_oaddr_isnull(oa)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_lba(ua)                   silofs_uaddr_lba(ua)
-#define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
+#define uaddr_setup(ua, b, p, s, h, o)  silofs_uaddr_setup(ua, b, p, s, h, o)
+#define uaddr_vspace(ua)                silofs_uaddr_vspace(ua)
 
 #define vaddr_none()                    silofs_vaddr_none()
 #define vaddr_off(va)                   silofs_vaddr_off(va)
@@ -154,11 +155,10 @@
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 
-#define voaddr_setup(voa, ua, va)       silofs_voaddr_setup(voa, ua, va)
-#define voaddr_assign(voa, oth)         silofs_voaddr_assign(voa, oth)
+#define vrange_next(vrng, o)            silofs_vrange_next(vrng, o)
 
-#define bli_incref(bli)                 silofs_bli_incref(bli)
-#define bli_decref(bli)                 silofs_bli_decref(bli)
+#define bri_incref(bri)                 silofs_bri_incref(bri)
+#define bri_decref(bri)                 silofs_bri_decref(bri)
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)
@@ -169,14 +169,11 @@
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)
 
-#define sti_uaddr(sti)                  silofs_sti_uaddr(sti)
-#define sti_incref(sti)                 silofs_sti_incref(sti)
-#define sti_decref(sti)                 silofs_sti_decref(sti)
-
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)
 #define sni_decref(sni)                 silofs_sni_decref(sni)
 #define sni_vrange(sni, vrng)           silofs_sni_vspace_range(sni, vrng)
+#define sni_slot_of(sni, o)             silofs_sni_slot_of(sni, o)
 
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
 #define sli_incref(sli)                 silofs_sli_incref(sli)

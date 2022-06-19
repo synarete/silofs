@@ -43,9 +43,9 @@ typedef int (*silofs_cache_elem_fn)(struct silofs_cache_elem *, void *);
 
 struct silofs_cache_ctx {
 	struct silofs_cache      *cache;
-	struct silofs_blob_info  *bli;
-	struct silofs_ubk_info   *ubi;
-	struct silofs_vbk_info   *vbi;
+	struct silofs_blobref_info  *bri;
+	struct silofs_ubk_info   *ubki;
+	struct silofs_vbk_info   *vbki;
 	struct silofs_snode_info *si;
 	struct silofs_unode_info *ui;
 	struct silofs_vnode_info *vi;
@@ -106,39 +106,39 @@ static void bk_free(struct silofs_block *bk, struct silofs_alloc *alloc)
 	silofs_deallocate(alloc, bk, sizeof(*bk));
 }
 
-static struct silofs_ubk_info *ubi_malloc(struct silofs_alloc *alloc)
+static struct silofs_ubk_info *ubki_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_ubk_info *ubi;
+	struct silofs_ubk_info *ubki;
 
-	ubi = silofs_allocate(alloc, sizeof(*ubi));
-	return ubi;
+	ubki = silofs_allocate(alloc, sizeof(*ubki));
+	return ubki;
 }
 
-static void ubi_free(struct silofs_ubk_info *ubi,
-                     struct silofs_alloc *alloc)
+static void ubki_free(struct silofs_ubk_info *ubki,
+                      struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, ubi, sizeof(*ubi));
+	silofs_deallocate(alloc, ubki, sizeof(*ubki));
 }
 
-static struct silofs_vbk_info *vbi_malloc(struct silofs_alloc *alloc)
+static struct silofs_vbk_info *vbki_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_vbk_info *vbi;
+	struct silofs_vbk_info *vbki;
 
-	vbi = silofs_allocate(alloc, sizeof(*vbi));
-	return vbi;
+	vbki = silofs_allocate(alloc, sizeof(*vbki));
+	return vbki;
 }
 
-static void vbi_free(struct silofs_vbk_info *vbi,
-                     struct silofs_alloc *alloc)
+static void vbki_free(struct silofs_vbk_info *vbki,
+                      struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, vbi, sizeof(*vbi));
+	silofs_deallocate(alloc, vbki, sizeof(*vbki));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 {
-	return silofs_blobid_hkey(blobid);
+	return silofs_blobid_as_u64(blobid);
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
@@ -150,14 +150,14 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return  hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
+	return hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
 }
 
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
 	const uint64_t pos = (uint64_t)(oaddr->pos);
 
-	return  hash_of_bkaddr(&oaddr->bka) ^ ((pos << 17) + oaddr->len);
+	return hash_of_bkaddr(&oaddr->bka) ^ ((pos << 17) + oaddr->len);
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
@@ -170,11 +170,12 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	return silofs_rotate64(ohash + stype, height % 7) ^ voff;
 }
 
-static uint64_t hash_of_voff(const loff_t *voff)
+static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)
 {
-	const uint64_t uoff = (uint64_t)(*voff);
+	const uint64_t uoff = (uint64_t)(vbk_addr->vbk_voff);
+	const uint32_t vspc = (uint64_t)vbk_addr->vbk_vspace;
 
-	return ~twang_mix64(~uoff);
+	return ~twang_mix64(uoff + vspc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -219,13 +220,22 @@ static long ckey_compare_as_blobid(const struct silofs_ckey *ckey1,
 	return silofs_blobid_compare(ckey1->keyu.blobid, ckey2->keyu.blobid);
 }
 
-static long ckey_compare_as_voff(const struct silofs_ckey *ckey1,
-                                 const struct silofs_ckey *ckey2)
+static long ckey_compare_as_vbk_addr(const struct silofs_ckey *ckey1,
+                                     const struct silofs_ckey *ckey2)
 {
-	const loff_t voff1 = *(ckey1->keyu.voff);
-	const loff_t voff2 = *(ckey2->keyu.voff);
+	const struct silofs_vbk_addr *vbk_addr1 = ckey1->keyu.vbk_addr;
+	const struct silofs_vbk_addr *vbk_addr2 = ckey2->keyu.vbk_addr;
+	long cmp;
 
-	return voff1 - voff2;
+	cmp = (long)vbk_addr2->vbk_vspace - (long)vbk_addr1->vbk_vspace;
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)vbk_addr2->vbk_voff - (long)vbk_addr1->vbk_voff;
+	if (cmp) {
+		return cmp;
+	}
+	return 0;
 }
 
 long silofs_ckey_compare(const struct silofs_ckey *ckey1,
@@ -248,8 +258,8 @@ long silofs_ckey_compare(const struct silofs_ckey *ckey1,
 		case SILOFS_CKEY_BLOBID:
 			cmp = ckey_compare_as_blobid(ckey1, ckey2);
 			break;
-		case SILOFS_CKEY_VOFF:
-			cmp = ckey_compare_as_voff(ckey1, ckey2);
+		case SILOFS_CKEY_VBKADDR:
+			cmp = ckey_compare_as_vbk_addr(ckey1, ckey2);
 			break;
 		case SILOFS_CKEY_NONE:
 		default:
@@ -291,9 +301,11 @@ static void ckey_by_vaddr(struct silofs_ckey *ckey,
 	ckey_setup(ckey, SILOFS_CKEY_VADDR, vaddr, hash_of_vaddr(vaddr));
 }
 
-static void ckey_by_voff(struct silofs_ckey *ckey, const loff_t *voff)
+static void ckey_by_vbk_addr(struct silofs_ckey *ckey,
+                             const struct silofs_vbk_addr *vbk_addr)
 {
-	ckey_setup(ckey, SILOFS_CKEY_VOFF, voff, hash_of_voff(voff));
+	ckey_setup(ckey, SILOFS_CKEY_VBKADDR, vbk_addr,
+	           hash_of_vbk_addr(vbk_addr));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -332,11 +344,13 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 {
 	silofs_assert_ge(ce->ce_refcnt, 0);
 	silofs_assert_lt(ce->ce_refcnt, INT_MAX / 2);
+	silofs_assert(!ce->ce_mapped);
+	silofs_assert(!ce->ce_dirty);
 
 	ckey_reset(&ce->ce_ckey);
 	list_head_fini(&ce->ce_htb_lh);
 	list_head_fini(&ce->ce_lru_lh);
-	ce->ce_refcnt = 0;
+	ce->ce_refcnt = INT_MIN;
 	ce->ce_cache = NULL;
 }
 
@@ -398,22 +412,27 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	}
 }
 
-static size_t ce_refcnt(const struct silofs_cache_elem *ce_const)
+static size_t ce_refcnt(const struct silofs_cache_elem *ce)
 {
-	struct silofs_cache_elem *ce = unconst(ce_const);
-	int *p_refcnt = (int *)(&ce->ce_refcnt);
-
+	/*
+	struct silofs_cache_elem *ce2 = unconst(ce);
+	int *p_refcnt = (int *)(&ce2->ce_refcnt);
 	return (size_t)silofs_atomic_get(p_refcnt);
+	*/
+	silofs_assert_ge(ce->ce_refcnt, 0);
+	return (size_t)ce->ce_refcnt;
 }
 
 static void ce_incref(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_add(&ce->ce_refcnt, 1);
+	/* silofs_atomic_add(&ce->ce_refcnt, 1); */
+	ce->ce_refcnt++;
 }
 
 static void ce_decref(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_sub(&ce->ce_refcnt, 1);
+	/* silofs_atomic_sub(&ce->ce_refcnt, 1); */
+	ce->ce_refcnt--;
 	silofs_assert_ge(ce->ce_refcnt, 0);
 }
 
@@ -565,175 +584,180 @@ static size_t lrumap_calc_search_evictable_max(const struct silofs_lrumap *lm)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_blob_info *bli_from_ce(const struct silofs_cache_elem *ce)
+static struct silofs_blobref_info *
+bri_from_ce(const struct silofs_cache_elem *ce)
 {
-	const struct silofs_blob_info *bli = NULL;
+	const struct silofs_blobref_info *bri = NULL;
 
 	if (ce != NULL) {
-		bli = container_of2(ce, struct silofs_blob_info, bl_ce);
+		bri = container_of2(ce, struct silofs_blobref_info, br_ce);
 	}
-	return unconst(bli);
+	return unconst(bri);
 }
 
-static struct silofs_cache_elem *bli_to_ce(const struct silofs_blob_info *bli)
+static struct silofs_cache_elem *
+bri_to_ce(const struct silofs_blobref_info *bri)
 {
-	const struct silofs_cache_elem *ce = &bli->bl_ce;
+	const struct silofs_cache_elem *ce = &bri->br_ce;
 
 	return unconst(ce);
 }
 
-void silofs_bli_incref(struct silofs_blob_info *bli)
+void silofs_bri_incref(struct silofs_blobref_info *bri)
 {
-	if (likely(bli != NULL)) {
-		ce_incref(bli_to_ce(bli));
+	if (likely(bri != NULL)) {
+		ce_incref(bri_to_ce(bri));
 	}
 }
 
-void silofs_bli_decref(struct silofs_blob_info *bli)
+void silofs_bri_decref(struct silofs_blobref_info *bri)
 {
-	if (likely(bli != NULL)) {
-		ce_decref(bli_to_ce(bli));
+	if (likely(bri != NULL)) {
+		ce_decref(bri_to_ce(bri));
 	}
 }
 
-static bool bli_is_evictable(const struct silofs_blob_info *bli)
+static bool bri_is_evictable(const struct silofs_blobref_info *bri)
 {
-	return ce_is_evictable(bli_to_ce(bli));
+	return ce_is_evictable(bri_to_ce(bri));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_ubk_info *
-ubi_from_ce(const struct silofs_cache_elem *ce)
+ubki_from_ce(const struct silofs_cache_elem *ce)
 {
-	const struct silofs_ubk_info *ubi = NULL;
+	const struct silofs_ubk_info *ubki = NULL;
 
 	if (ce != NULL) {
-		ubi = container_of2(ce, struct silofs_ubk_info, ubk_ce);
+		ubki = container_of2(ce, struct silofs_ubk_info, ubk_ce);
 	}
-	return unconst(ubi);
+	return unconst(ubki);
 }
 
-static struct silofs_cache_elem *ubi_to_ce(const struct silofs_ubk_info *ubi)
+static struct silofs_cache_elem *ubki_to_ce(const struct silofs_ubk_info *ubki)
 {
-	const struct silofs_cache_elem *ce = &ubi->ubk_ce;
+	const struct silofs_cache_elem *ce = &ubki->ubk_ce;
 
 	return unconst(ce);
 }
 
-static void ubi_set_addr(struct silofs_ubk_info *ubi,
-                         const struct silofs_bkaddr *bkaddr)
+static void ubki_set_addr(struct silofs_ubk_info *ubki,
+                          const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_cache_elem *ce = ubi_to_ce(ubi);
+	struct silofs_cache_elem *ce = ubki_to_ce(ubki);
 
-	silofs_bkaddr_assign(&ubi->ubk_addr, bkaddr);
-	ckey_by_bkaddr(&ce->ce_ckey, &ubi->ubk_addr);
+	silofs_bkaddr_assign(&ubki->ubk_addr, bkaddr);
+	ckey_by_bkaddr(&ce->ce_ckey, &ubki->ubk_addr);
 }
 
-static void ubi_init(struct silofs_ubk_info *ubi, struct silofs_block *ubk,
-                     const struct silofs_bkaddr *bkaddr)
+static void ubki_init(struct silofs_ubk_info *ubki, struct silofs_block *ubk,
+                      const struct silofs_bkaddr *bkaddr)
 {
-	silofs_ce_init(&ubi->ubk_ce);
-	ubi_set_addr(ubi, bkaddr);
-	ubi->ubk = ubk;
-	ubi->ubk_bli = NULL;
+	silofs_ce_init(&ubki->ubk_ce);
+	ubki_set_addr(ubki, bkaddr);
+	ubki->ubk = ubk;
+	ubki->ubk_bri = NULL;
 }
 
-static void ubi_fini(struct silofs_ubk_info *ubi)
+static void ubki_fini(struct silofs_ubk_info *ubki)
 {
-	silofs_ce_fini(&ubi->ubk_ce);
-	ubi->ubk = NULL;
+	silofs_ce_fini(&ubki->ubk_ce);
+	ubki->ubk = NULL;
 }
 
-static void ubi_incref(struct silofs_ubk_info *ubi)
+static void ubki_incref(struct silofs_ubk_info *ubki)
 {
-	ce_incref(ubi_to_ce(ubi));
+	ce_incref(ubki_to_ce(ubki));
 }
 
-static void ubi_decref(struct silofs_ubk_info *ubi)
+static void ubki_decref(struct silofs_ubk_info *ubki)
 {
-	ce_decref(ubi_to_ce(ubi));
+	ce_decref(ubki_to_ce(ubki));
 }
 
-static bool ubi_is_evictable(const struct silofs_ubk_info *ubi)
+static bool ubki_is_evictable(const struct silofs_ubk_info *ubki)
 {
-	return ce_is_evictable(ubi_to_ce(ubi));
+	return ce_is_evictable(ubki_to_ce(ubki));
 }
 
-void silofs_ubi_attach(struct silofs_ubk_info *ubi,
-                       struct silofs_blob_info *bli)
+void silofs_ubki_attach(struct silofs_ubk_info *ubki,
+                        struct silofs_blobref_info *bri)
 {
-	if (ubi->ubk_bli == NULL) {
-		bli_incref(bli);
-		ubi->ubk_bli = bli;
+	if (ubki->ubk_bri == NULL) {
+		bri_incref(bri);
+		ubki->ubk_bri = bri;
 	}
 }
 
-static void ubi_detach(struct silofs_ubk_info *ubi)
+static void ubki_detach(struct silofs_ubk_info *ubki)
 {
-	struct silofs_blob_info *bli = ubi->ubk_bli;
+	struct silofs_blobref_info *bri = ubki->ubk_bri;
 
-	if (bli != NULL) {
-		bli_decref(bli);
-		ubi->ubk_bli = NULL;
+	if (bri != NULL) {
+		bri_decref(bri);
+		ubki->ubk_bri = NULL;
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vbk_info *
-vbi_from_ce(const struct silofs_cache_elem *ce)
+vbki_from_ce(const struct silofs_cache_elem *ce)
 {
-	const struct silofs_vbk_info *vbi = NULL;
+	const struct silofs_vbk_info *vbki = NULL;
 
 	if (ce != NULL) {
-		vbi = container_of2(ce, struct silofs_vbk_info, vbk_ce);
+		vbki = container_of2(ce, struct silofs_vbk_info, vbk_ce);
 	}
-	return unconst(vbi);
+	return unconst(vbki);
 }
 
-static struct silofs_cache_elem *vbi_to_ce(const struct silofs_vbk_info *vbi)
+static struct silofs_cache_elem *vbki_to_ce(const struct silofs_vbk_info *vbki)
 {
-	const struct silofs_cache_elem *ce = &vbi->vbk_ce;
+	const struct silofs_cache_elem *ce = &vbki->vbk_ce;
 
 	return unconst(ce);
 }
 
-static void vbi_set_voff(struct silofs_vbk_info *vbi, loff_t voff)
+static void vbki_set_vbk_addr(struct silofs_vbk_info *vbki,
+                              loff_t voff, enum silofs_stype vspace)
 {
-	struct silofs_cache_elem *ce = vbi_to_ce(vbi);
+	struct silofs_cache_elem *ce = vbki_to_ce(vbki);
 
-	vbi->vbk_voff = off_align_to_bk(voff);
-	ckey_by_voff(&ce->ce_ckey, &vbi->vbk_voff);
+	vbki->vbk_addr.vbk_voff = off_align_to_bk(voff);
+	vbki->vbk_addr.vbk_vspace = vspace;
+	ckey_by_vbk_addr(&ce->ce_ckey, &vbki->vbk_addr);
 }
 
-static void vbi_init(struct silofs_vbk_info *vbi,
-                     struct silofs_block *bk, loff_t voff)
+static void vbki_init(struct silofs_vbk_info *vbki,
+                      struct silofs_block *bk,
+                      loff_t voff, enum silofs_stype vspace)
 {
-	silofs_ce_init(&vbi->vbk_ce);
-	vbi_set_voff(vbi, voff);
-	vbi->vbk = bk;
+	silofs_ce_init(&vbki->vbk_ce);
+	vbki_set_vbk_addr(vbki, voff, vspace);
+	vbki->vbk = bk;
 }
 
-static void vbi_fini(struct silofs_vbk_info *vbi)
+static void vbki_fini(struct silofs_vbk_info *vbki)
 {
-	silofs_ce_fini(&vbi->vbk_ce);
-	vbi->vbk = NULL;
+	silofs_ce_fini(&vbki->vbk_ce);
+	vbki->vbk = NULL;
 }
 
-void silofs_vbi_incref(struct silofs_vbk_info *vbi)
+void silofs_vbki_incref(struct silofs_vbk_info *vbki)
 {
-	ce_incref(vbi_to_ce(vbi));
+	ce_incref(vbki_to_ce(vbki));
 }
 
-void silofs_vbi_decref(struct silofs_vbk_info *vbi)
+void silofs_vbki_decref(struct silofs_vbk_info *vbki)
 {
-	ce_decref(vbi_to_ce(vbi));
+	ce_decref(vbki_to_ce(vbki));
 }
 
-static bool vbi_is_evictable(const struct silofs_vbk_info *vbi)
+static bool vbki_is_evictable(const struct silofs_vbk_info *vbki)
 {
-	return ce_is_evictable(vbi_to_ce(vbi));
+	return ce_is_evictable(vbki_to_ce(vbki));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -861,19 +885,19 @@ static struct silofs_cache_elem *ui_to_ce(struct silofs_unode_info *ui)
 }
 
 static void ui_attach_bk(struct silofs_unode_info *ui,
-                         struct silofs_ubk_info *ubi)
+                         struct silofs_ubk_info *ubki)
 {
-	ubi_incref(ubi);
-	ui->u_ubi = ubi;
+	ubki_incref(ubki);
+	ui->u_ubki = ubki;
 }
 
 static void ui_detach_bk(struct silofs_unode_info *ui)
 {
-	struct silofs_ubk_info *ubi = ui->u_ubi;
+	struct silofs_ubk_info *ubki = ui->u_ubki;
 
-	if (ubi != NULL) {
-		ubi_decref(ubi);
-		ui->u_ubi = NULL;
+	if (ubki != NULL) {
+		ubki_decref(ubki);
+		ui->u_ubki = NULL;
 	}
 }
 
@@ -890,10 +914,10 @@ static int visit_evictable_ui(struct silofs_cache_elem *ce, void *arg)
 }
 
 void silofs_ui_attach_to(struct silofs_unode_info *ui,
-                         struct silofs_ubk_info *ubi)
+                         struct silofs_ubk_info *ubki)
 {
 	ui_detach_bk(ui);
-	ui_attach_bk(ui, ubi);
+	ui_attach_bk(ui, ubki);
 	silofs_ui_bind_view(ui);
 }
 
@@ -963,26 +987,26 @@ void silofs_vi_decref(struct silofs_vnode_info *vi)
 }
 
 static void vi_attach_bk(struct silofs_vnode_info *vi,
-                         struct silofs_vbk_info *vbi)
+                         struct silofs_vbk_info *vbki)
 {
-	silofs_vbi_incref(vbi);
-	vi->v_vbi = vbi;
+	silofs_vbki_incref(vbki);
+	vi->v_vbki = vbki;
 }
 
 static void vi_detach_bk(struct silofs_vnode_info *vi)
 {
-	struct silofs_vbk_info *vbi = vi->v_vbi;
+	struct silofs_vbk_info *vbki = vi->v_vbki;
 
-	if (vbi != NULL) {
-		silofs_vbi_decref(vbi);
-		vi->v_vbi = NULL;
+	if (vbki != NULL) {
+		silofs_vbki_decref(vbki);
+		vi->v_vbki = NULL;
 	}
 }
 
 void silofs_vi_attach_to(struct silofs_vnode_info *vi,
-                         struct silofs_vbk_info *vbi)
+                         struct silofs_vbk_info *vbki)
 {
-	vi_attach_bk(vi, vbi);
+	vi_attach_bk(vi, vbki);
 	silofs_vi_bind_view(vi);
 }
 
@@ -1122,120 +1146,121 @@ static void cache_undirtify_vi(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_blob_info *
-cache_new_bli(const struct silofs_cache *cache,
+static struct silofs_blobref_info *
+cache_new_bri(const struct silofs_cache *cache,
               const struct silofs_blobid *blobid)
 {
-	return silofs_bli_new(cache->c_alloc, blobid);
+	return silofs_bri_new(cache->c_alloc, blobid);
 }
 
-static void cache_del_bli(const struct silofs_cache *cache,
-                          struct silofs_blob_info *bli)
+static void cache_del_bri(const struct silofs_cache *cache,
+                          struct silofs_blobref_info *bri)
 {
-	silofs_bli_del(bli, cache->c_alloc);
+	silofs_bri_del(bri, cache->c_alloc);
 }
 
-static int cache_init_bli_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_bri_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_bli_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_bri_lm, cache->c_alloc, htbl_size);
 }
 
-static void cache_fini_bli_lm(struct silofs_cache *cache)
+static void cache_fini_bri_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_bli_lm, cache->c_alloc);
+	lrumap_fini(&cache->c_bri_lm, cache->c_alloc);
 }
 
-static struct silofs_blob_info *
-cache_find_bli(const struct silofs_cache *cache,
+static struct silofs_blobref_info *
+cache_find_bri(const struct silofs_cache *cache,
                const struct silofs_blobid *blobid)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
 
 	silofs_ckey_by_blobid(&ckey, blobid);
-	ce = lrumap_find(&cache->c_bli_lm, &ckey);
-	return bli_from_ce(ce);
+	ce = lrumap_find(&cache->c_bri_lm, &ckey);
+	return bri_from_ce(ce);
 }
 
-static void cache_store_bli(struct silofs_cache *cache,
-                            struct silofs_blob_info *bli)
+static void cache_store_bri(struct silofs_cache *cache,
+                            struct silofs_blobref_info *bri)
 {
-	lrumap_store(&cache->c_bli_lm, bli_to_ce(bli));
+	lrumap_store(&cache->c_bri_lm, bri_to_ce(bri));
 }
 
-static void cache_promote_lru_bli(struct silofs_cache *cache,
-                                  struct silofs_blob_info *bli)
+static void cache_promote_lru_bri(struct silofs_cache *cache,
+                                  struct silofs_blobref_info *bri)
 {
-	lrumap_promote_lru(&cache->c_bli_lm, bli_to_ce(bli));
+	lrumap_promote_lru(&cache->c_bri_lm, bri_to_ce(bri));
 }
 
-static void cache_evict_bli(struct silofs_cache *cache,
-                            struct silofs_blob_info *bli)
+static void cache_evict_bri(struct silofs_cache *cache,
+                            struct silofs_blobref_info *bri)
 {
-	silofs_assert(ce_is_evictable(bli_to_ce(bli)));
+	silofs_assert(ce_is_evictable(bri_to_ce(bri)));
 
-	lrumap_remove(&cache->c_bli_lm, bli_to_ce(bli));
-	cache_del_bli(cache, bli);
+	lrumap_remove(&cache->c_bri_lm, bri_to_ce(bri));
+	cache_del_bri(cache, bri);
 }
 
-static struct silofs_blob_info *
-cache_spawn_bli(struct silofs_cache *cache, const struct silofs_blobid *blobid)
+static struct silofs_blobref_info *
+cache_spawn_bri(struct silofs_cache *cache,
+                const struct silofs_blobid *blobid)
 {
-	struct silofs_blob_info *bli;
+	struct silofs_blobref_info *bri;
 
-	bli = cache_new_bli(cache, blobid);
-	if (bli == NULL) {
+	bri = cache_new_bri(cache, blobid);
+	if (bri == NULL) {
 		return NULL;
 	}
-	cache_store_bli(cache, bli);
-	return bli;
+	cache_store_bri(cache, bri);
+	return bri;
 }
 
-static struct silofs_blob_info *
-cache_find_relru_bli(struct silofs_cache *cache,
+static struct silofs_blobref_info *
+cache_find_relru_bri(struct silofs_cache *cache,
                      const struct silofs_blobid *blobid)
 {
-	struct silofs_blob_info *bli;
+	struct silofs_blobref_info *bri;
 
-	bli = cache_find_bli(cache, blobid);
-	if (bli != NULL) {
-		cache_promote_lru_bli(cache, bli);
+	bri = cache_find_bri(cache, blobid);
+	if (bri != NULL) {
+		cache_promote_lru_bri(cache, bri);
 	}
-	return bli;
+	return bri;
 }
 
-struct silofs_blob_info *
+struct silofs_blobref_info *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
                          const struct silofs_blobid *blobid)
 {
-	return cache_find_relru_bli(cache, blobid);
+	return cache_find_relru_bri(cache, blobid);
 }
 
-static struct silofs_blob_info *
-cache_find_or_spawn_bli(struct silofs_cache *cache,
+static struct silofs_blobref_info *
+cache_find_or_spawn_bri(struct silofs_cache *cache,
                         const struct silofs_blobid *blobid)
 {
-	struct silofs_blob_info *bli;
+	struct silofs_blobref_info *bri;
 
-	bli = cache_find_relru_bli(cache, blobid);
-	if (bli != NULL) {
-		return bli;
+	bri = cache_find_relru_bri(cache, blobid);
+	if (bri != NULL) {
+		return bri;
 	}
-	bli = cache_spawn_bli(cache, blobid);
-	if (bli == NULL) {
+	bri = cache_spawn_bri(cache, blobid);
+	if (bri == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
-	return bli;
+	return bri;
 }
 
-static int visit_evictable_bli(struct silofs_cache_elem *ce, void *arg)
+static int visit_evictable_bri(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_blob_info *bli = bli_from_ce(ce);
+	struct silofs_blobref_info *bri = bri_from_ce(ce);
 
 	c_ctx->count++;
-	if (bli_is_evictable(bli)) {
-		c_ctx->bli = bli;
+	if (bri_is_evictable(bri)) {
+		c_ctx->bri = bri;
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {
@@ -1244,263 +1269,289 @@ static int visit_evictable_bli(struct silofs_cache_elem *ce, void *arg)
 	return 0;
 }
 
-static struct silofs_blob_info *
-cache_find_evictable_bli(struct silofs_cache *cache)
+static struct silofs_blobref_info *
+cache_find_evictable_bri(struct silofs_cache *cache)
 {
 	struct silofs_cache_ctx c_ctx = {
 		.cache = cache,
-		.bli = NULL,
+		.bri = NULL,
 		.limit = 4
 	};
 
-	lrumap_foreach_backward(&cache->c_bli_lm, visit_evictable_bli, &c_ctx);
-	return c_ctx.bli;
+	lrumap_foreach_backward(&cache->c_bri_lm, visit_evictable_bri, &c_ctx);
+	return c_ctx.bri;
 }
 
-static struct silofs_blob_info *
-cache_require_bli(struct silofs_cache *cache,
+static struct silofs_blobref_info *
+cache_require_bri(struct silofs_cache *cache,
                   const struct silofs_blobid *blobid)
 {
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		bli = cache_find_or_spawn_bli(cache, blobid);
+		bri = cache_find_or_spawn_bri(cache, blobid);
 		if (blobid != NULL) {
 			break;
 		}
 		cache_evict_some(cache);
 	}
-	return bli;
+	return bri;
 }
 
-struct silofs_blob_info *
+struct silofs_blobref_info *
 silofs_cache_spawn_blob(struct silofs_cache *cache,
                         const struct silofs_blobid *blobid)
 {
-	return cache_require_bli(cache, blobid);
+	return cache_require_bri(cache, blobid);
 }
 
 void silofs_cache_evict_blob(struct silofs_cache *cache,
-                             struct silofs_blob_info *bli)
+                             struct silofs_blobref_info *bri)
 {
-	cache_evict_bli(cache, bli);
+	cache_evict_bri(cache, bri);
 }
 
-static struct silofs_blob_info *cache_get_lru_bli(struct silofs_cache *cache)
+static struct silofs_blobref_info *cache_get_lru_bri(struct silofs_cache
+                *cache)
 {
 	struct silofs_cache_elem *ce;
 
-	ce = lrumap_get_lru(&cache->c_bli_lm);
-	return bli_from_ce(ce);
+	ce = lrumap_get_lru(&cache->c_bri_lm);
+	return bri_from_ce(ce);
 }
 
-static void cache_try_evict_bli(struct silofs_cache *cache,
-                                struct silofs_blob_info *bli)
+static void cache_try_evict_bri(struct silofs_cache *cache,
+                                struct silofs_blobref_info *bri)
 {
-	silofs_assert_not_null(bli);
+	silofs_assert_not_null(bri);
 
-	if (bli_is_evictable(bli)) {
-		cache_evict_bli(cache, bli);
+	if (bri_is_evictable(bri)) {
+		cache_evict_bri(cache, bri);
 	}
 }
 
-static int try_evict_bli(struct silofs_cache_elem *ce, void *arg)
+static int try_evict_bri(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_blob_info *bli = bli_from_ce(ce);
+	struct silofs_blobref_info *bri = bri_from_ce(ce);
 
-	cache_try_evict_bli(c_ctx->cache, bli);
+	cache_try_evict_bri(c_ctx->cache, bri);
 	return 0;
 }
 
-static void cache_drop_evictable_blis(struct silofs_cache *cache)
+static void cache_drop_evictable_bris(struct silofs_cache *cache)
 {
 	struct silofs_cache_ctx c_ctx = {
 		.cache = cache
 	};
 
-	lrumap_foreach_backward(&cache->c_bli_lm, try_evict_bli, &c_ctx);
+	lrumap_foreach_backward(&cache->c_bri_lm, try_evict_bri, &c_ctx);
 }
 
-static bool cache_evict_or_relru_bli(struct silofs_cache *cache,
-                                     struct silofs_blob_info *bli)
+static bool cache_evict_or_relru_bri(struct silofs_cache *cache,
+                                     struct silofs_blobref_info *bri)
 {
 	bool evicted;
 
-	if (bli_is_evictable(bli)) {
-		cache_evict_bli(cache, bli);
+	if (bri_is_evictable(bri)) {
+		cache_evict_bri(cache, bri);
 		evicted = true;
 	} else {
-		cache_promote_lru_bli(cache, bli);
+		cache_promote_lru_bri(cache, bri);
 		evicted = false;
 	}
 	return evicted;
 }
 
 static size_t
-cache_shrink_or_relru_blis(struct silofs_cache *cache, size_t cnt)
+cache_shrink_or_relru_bris(struct silofs_cache *cache, size_t cnt,
+                           bool force)
 {
-	struct silofs_blob_info *bli;
-	const size_t n = min(cnt, cache->c_bli_lm.lm_lru.sz);
+	struct silofs_blobref_info *bri;
+	const size_t n = min(cnt, cache->c_bri_lm.lm_lru.sz);
 	size_t evicted = 0;
 	bool ok;
 
 	for (size_t i = 0; i < n; ++i) {
-		bli = cache_get_lru_bli(cache);
-		if (bli == NULL) {
+		bri = cache_get_lru_bri(cache);
+		if (bri == NULL) {
 			break;
 		}
-		ok = cache_evict_or_relru_bli(cache, bli);
-		if (!ok) {
+		ok = cache_evict_or_relru_bri(cache, bri);
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
 
+/*
+ * Shrink-relru of blobs is different from other shrinker, as elements do not
+ * get promoted often in LRU, but rather stay alive due to ref-count by live
+ * blocks. Thus, we end up with lots of elements which are live with active
+ * ref-count at the tail of LRU, and therefore we need to keep on iterating in
+ * search for other candidate for eviction.
+ */
+/*
+ * TODO-0035: Define proper upper-bound.
+ *
+ * Have explicit upper-limit to cached blobs, based on the process' rlimit
+ * RLIMIT_NOFILE and memory limits.
+ */
+static size_t cache_blobs_overflow(const struct silofs_cache *cache)
+{
+	const size_t bar = 256;
+	const size_t cur = cache->c_bri_lm.lm_lru.sz;
+
+	return (cur > bar) ? (cur - bar) : 0;
+}
+
 void silofs_cache_relax_blobs(struct silofs_cache *cache)
 {
-	cache_shrink_or_relru_blis(cache, 1);
+	const size_t cnt = cache_blobs_overflow(cache);
+
+	cache_shrink_or_relru_bris(cache, cnt, true);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_ubk_info *
-cache_new_ubi(const struct silofs_cache *cache,
-              const struct silofs_bkaddr *bkaddr)
+cache_new_ubki(const struct silofs_cache *cache,
+               const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_block *ubk;
-	struct silofs_ubk_info *ubi = NULL;
+	struct silofs_ubk_info *ubki = NULL;
 	struct silofs_alloc *alloc = cache->c_alloc;
 
 	ubk = bk_malloc(alloc);
 	if (ubk == NULL) {
 		return NULL;
 	}
-	ubi = ubi_malloc(alloc);
-	if (ubi == NULL) {
+	ubki = ubki_malloc(alloc);
+	if (ubki == NULL) {
 		bk_free(ubk, alloc);
 		return NULL;
 	}
-	ubi_init(ubi, ubk, bkaddr);
-	return ubi;
+	ubki_init(ubki, ubk, bkaddr);
+	return ubki;
 }
 
-static void cache_del_ubi(const struct silofs_cache *cache,
-                          struct silofs_ubk_info *ubi)
+static void cache_del_ubki(const struct silofs_cache *cache,
+                           struct silofs_ubk_info *ubki)
 {
-	struct silofs_block *ubk = ubi->ubk;
+	struct silofs_block *ubk = ubki->ubk;
 	struct silofs_alloc *alloc = cache->c_alloc;
 
-	ubi_detach(ubi);
-	ubi_fini(ubi);
-	ubi_free(ubi, alloc);
+	ubki_detach(ubki);
+	ubki_fini(ubki);
+	ubki_free(ubki, alloc);
 	bk_free(ubk, alloc);
 }
 
-static int cache_init_ubi_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_ubki_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_ubi_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_ubki_lm, cache->c_alloc, htbl_size);
 }
 
-static void cache_fini_ubi_lm(struct silofs_cache *cache)
+static void cache_fini_ubki_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_ubi_lm, cache->c_alloc);
+	lrumap_fini(&cache->c_ubki_lm, cache->c_alloc);
 }
 
 static struct silofs_ubk_info *
-cache_find_ubi(const struct silofs_cache *cache,
-               const struct silofs_bkaddr *bkaddr)
+cache_find_ubki(const struct silofs_cache *cache,
+                const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
 
 	ckey_by_bkaddr(&ckey, bkaddr);
-	ce = lrumap_find(&cache->c_ubi_lm, &ckey);
-	return ubi_from_ce(ce);
+	ce = lrumap_find(&cache->c_ubki_lm, &ckey);
+	return ubki_from_ce(ce);
 }
 
-static void cache_store_ubi(struct silofs_cache *cache,
-                            struct silofs_ubk_info *ubi)
+static void cache_store_ubki(struct silofs_cache *cache,
+                             struct silofs_ubk_info *ubki)
 {
-	lrumap_store(&cache->c_ubi_lm, ubi_to_ce(ubi));
+	lrumap_store(&cache->c_ubki_lm, ubki_to_ce(ubki));
 }
 
-static void cache_promote_lru_ubi(struct silofs_cache *cache,
-                                  struct silofs_ubk_info *ubi)
+static void cache_promote_lru_ubki(struct silofs_cache *cache,
+                                   struct silofs_ubk_info *ubki)
 {
-	lrumap_promote_lru(&cache->c_ubi_lm, ubi_to_ce(ubi));
+	lrumap_promote_lru(&cache->c_ubki_lm, ubki_to_ce(ubki));
 }
 
-static void cache_evict_ubi(struct silofs_cache *cache,
-                            struct silofs_ubk_info *ubi)
+static void cache_evict_ubki(struct silofs_cache *cache,
+                             struct silofs_ubk_info *ubki)
 {
-	lrumap_remove(&cache->c_ubi_lm, ubi_to_ce(ubi));
-	cache_del_ubi(cache, ubi);
+	lrumap_remove(&cache->c_ubki_lm, ubki_to_ce(ubki));
+	cache_del_ubki(cache, ubki);
 }
 
 void silofs_cache_forget_ubk(struct silofs_cache *cache,
-                             struct silofs_ubk_info *ubi)
+                             struct silofs_ubk_info *ubki)
 {
-	if (ubi_is_evictable(ubi)) {
-		cache_evict_ubi(cache, ubi);
+	if (ubki_is_evictable(ubki)) {
+		cache_evict_ubki(cache, ubki);
 	}
 }
 
 static struct silofs_ubk_info *
-cache_spawn_ubi(struct silofs_cache *cache,
-                const struct silofs_bkaddr *bkaddr)
+cache_spawn_ubki(struct silofs_cache *cache,
+                 const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_ubk_info *ubi;
+	struct silofs_ubk_info *ubki;
 
-	ubi = cache_new_ubi(cache, bkaddr);
-	if (ubi == NULL) {
+	ubki = cache_new_ubki(cache, bkaddr);
+	if (ubki == NULL) {
 		return NULL;
 	}
-	cache_store_ubi(cache, ubi);
-	return ubi;
+	cache_store_ubki(cache, ubki);
+	return ubki;
 }
 
 static struct silofs_ubk_info *
-cache_find_relru_ubi(struct silofs_cache *cache,
-                     const struct silofs_bkaddr *bkaddr)
+cache_find_relru_ubki(struct silofs_cache *cache,
+                      const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_ubk_info *ubi;
+	struct silofs_ubk_info *ubki;
 
-	ubi = cache_find_ubi(cache, bkaddr);
-	if (ubi != NULL) {
-		cache_promote_lru_ubi(cache, ubi);
+	ubki = cache_find_ubki(cache, bkaddr);
+	if (ubki != NULL) {
+		cache_promote_lru_ubki(cache, ubki);
 	}
-	return ubi;
+	return ubki;
 }
 
 static struct silofs_ubk_info *
-cache_find_or_spawn_ubi(struct silofs_cache *cache,
-                        const struct silofs_bkaddr *bkaddr)
+cache_find_or_spawn_ubki(struct silofs_cache *cache,
+                         const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_ubk_info *ubi;
+	struct silofs_ubk_info *ubki;
 
-	ubi = cache_find_relru_ubi(cache, bkaddr);
-	if (ubi != NULL) {
-		return ubi;
+	ubki = cache_find_relru_ubki(cache, bkaddr);
+	if (ubki != NULL) {
+		return ubki;
 	}
-	ubi = cache_spawn_ubi(cache, bkaddr);
-	if (ubi == NULL) {
+	ubki = cache_spawn_ubki(cache, bkaddr);
+	if (ubki == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
-	return ubi;
+	return ubki;
 }
 
-static int visit_evictable_ubi(struct silofs_cache_elem *ce, void *arg)
+static int visit_evictable_ubki(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_ubk_info *ubi = ubi_from_ce(ce);
+	struct silofs_ubk_info *ubki = ubki_from_ce(ce);
 
 	c_ctx->count++;
-	if (ubi_is_evictable(ubi)) {
-		c_ctx->ubi = ubi;
+	if (ubki_is_evictable(ubki)) {
+		c_ctx->ubki = ubki;
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {
@@ -1510,105 +1561,106 @@ static int visit_evictable_ubi(struct silofs_cache_elem *ce, void *arg)
 }
 
 static struct silofs_ubk_info *
-cache_find_evictable_ubi(struct silofs_cache *cache)
+cache_find_evictable_ubki(struct silofs_cache *cache)
 {
-	struct silofs_lrumap *lm = &cache->c_ubi_lm;
+	struct silofs_lrumap *lm = &cache->c_ubki_lm;
 	struct silofs_cache_ctx c_ctx = {
 		.cache = cache,
-		.ubi = NULL,
+		.ubki = NULL,
 		.limit = lrumap_calc_search_evictable_max(lm)
 	};
 
-	lrumap_foreach_backward(lm, visit_evictable_ubi, &c_ctx);
-	return c_ctx.ubi;
+	lrumap_foreach_backward(lm, visit_evictable_ubki, &c_ctx);
+	return c_ctx.ubki;
 }
 
 static struct silofs_ubk_info *
-cache_require_ubi(struct silofs_cache *cache,
-                  const struct silofs_bkaddr *bkaddr)
+cache_require_ubki(struct silofs_cache *cache,
+                   const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_ubk_info *ubi = NULL;
+	struct silofs_ubk_info *ubki = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		ubi = cache_find_or_spawn_ubi(cache, bkaddr);
-		if (ubi != NULL) {
+		ubki = cache_find_or_spawn_ubki(cache, bkaddr);
+		if (ubki != NULL) {
 			break;
 		}
 		cache_evict_some(cache);
 	}
-	return ubi;
+	return ubki;
 }
 
-static struct silofs_ubk_info *cache_get_lru_ubi(struct silofs_cache *cache)
+static struct silofs_ubk_info *cache_get_lru_ubki(struct silofs_cache *cache)
 {
 	struct silofs_cache_elem *ce;
 
-	ce = lrumap_get_lru(&cache->c_ubi_lm);
-	return ubi_from_ce(ce);
+	ce = lrumap_get_lru(&cache->c_ubki_lm);
+	return ubki_from_ce(ce);
 }
 
-static void cache_try_evict_ubi(struct silofs_cache *cache,
-                                struct silofs_ubk_info *ubi)
+static void cache_try_evict_ubki(struct silofs_cache *cache,
+                                 struct silofs_ubk_info *ubki)
 {
-	silofs_assert_not_null(ubi);
+	silofs_assert_not_null(ubki);
 
-	if (ubi_is_evictable(ubi)) {
-		cache_evict_ubi(cache, ubi);
+	if (ubki_is_evictable(ubki)) {
+		cache_evict_ubki(cache, ubki);
 	}
 }
 
-static int try_evict_ubi(struct silofs_cache_elem *ce, void *arg)
+static int try_evict_ubki(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_ubk_info *ubi = ubi_from_ce(ce);
+	struct silofs_ubk_info *ubki = ubki_from_ce(ce);
 
-	cache_try_evict_ubi(c_ctx->cache, ubi);
+	cache_try_evict_ubki(c_ctx->cache, ubki);
 	return 0;
 }
 
-static void cache_drop_evictable_ubis(struct silofs_cache *cache)
+static void cache_drop_evictable_ubkis(struct silofs_cache *cache)
 {
 	struct silofs_cache_ctx c_ctx = {
 		.cache = cache
 	};
 
-	lrumap_foreach_backward(&cache->c_ubi_lm, try_evict_ubi, &c_ctx);
+	lrumap_foreach_backward(&cache->c_ubki_lm, try_evict_ubki, &c_ctx);
 }
 
-static bool cache_evict_or_relru_ubi(struct silofs_cache *cache,
-                                     struct silofs_ubk_info *ubi)
+static bool cache_evict_or_relru_ubki(struct silofs_cache *cache,
+                                      struct silofs_ubk_info *ubki)
 {
 	bool evicted;
 
-	if (ubi_is_evictable(ubi)) {
-		cache_evict_ubi(cache, ubi);
+	if (ubki_is_evictable(ubki)) {
+		cache_evict_ubki(cache, ubki);
 		evicted = true;
 	} else {
-		cache_promote_lru_ubi(cache, ubi);
+		cache_promote_lru_ubki(cache, ubki);
 		evicted = false;
 	}
 	return evicted;
 }
 
 static size_t
-cache_shrink_or_relru_ubis(struct silofs_cache *cache, size_t cnt)
+cache_shrink_or_relru_ubkis(struct silofs_cache *cache, size_t cnt, bool force)
 {
-	struct silofs_ubk_info *ubi;
-	const size_t n = min(cnt, cache->c_ubi_lm.lm_lru.sz);
+	struct silofs_ubk_info *ubki;
+	const size_t n = min(cnt, cache->c_ubki_lm.lm_lru.sz);
 	size_t evicted = 0;
 	bool ok;
 
 	for (size_t i = 0; i < n; ++i) {
-		ubi = cache_get_lru_ubi(cache);
-		if (ubi == NULL) {
+		ubki = cache_get_lru_ubki(cache);
+		if (ubki == NULL) {
 			break;
 		}
-		ok = cache_evict_or_relru_ubi(cache, ubi);
-		if (!ok) {
+		ok = cache_evict_or_relru_ubki(cache, ubki);
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -1617,14 +1669,14 @@ struct silofs_ubk_info *
 silofs_cache_lookup_ubk(struct silofs_cache *cache,
                         const struct silofs_bkaddr *bkaddr)
 {
-	return cache_find_relru_ubi(cache, bkaddr);
+	return cache_find_relru_ubki(cache, bkaddr);
 }
 
 struct silofs_ubk_info *
 silofs_cache_spawn_ubk(struct silofs_cache *cache,
                        const struct silofs_bkaddr *bkaddr)
 {
-	return cache_require_ubi(cache, bkaddr);
+	return cache_require_ubki(cache, bkaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1729,7 +1781,8 @@ static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
 	return evicted;
 }
 
-static size_t cache_shrink_or_relru_uis(struct silofs_cache *cache, size_t cnt)
+static size_t
+cache_shrink_or_relru_uis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_unode_info *ui;
 	const size_t n = min(cnt, cache->c_ui_lm.lm_lru.sz);
@@ -1742,10 +1795,11 @@ static size_t cache_shrink_or_relru_uis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_ui(cache, ui);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -1785,17 +1839,19 @@ static void cache_forget_uaddr(struct silofs_cache *cache,
 
 static const struct silofs_uaddr *
 cache_lookup_uaddr_by(struct silofs_cache *cache,
-                      loff_t voff, enum silofs_height height)
+                      const struct silofs_uakey *uakey)
 {
-	return silofs_uamap_lookup(&cache->c_uam, voff, height);
+	return silofs_uamap_lookup(&cache->c_uam, uakey);
 }
 
 static void cache_track_uaddr_of(struct silofs_cache *cache,
                                  const struct silofs_unode_info *ui)
 {
+	struct silofs_uakey uakey;
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 
-	if (!cache_lookup_uaddr_by(cache, uaddr->voff, uaddr->height)) {
+	silofs_uakey_setup_by(&uakey, uaddr);
+	if (!cache_lookup_uaddr_by(cache, &uakey)) {
 		cache_track_uaddr(cache, uaddr);
 	}
 }
@@ -1864,12 +1920,12 @@ void silofs_cache_forget_unode(struct silofs_cache *cache,
 
 struct silofs_unode_info *
 silofs_cache_find_unode_by(struct silofs_cache *cache,
-                           loff_t voff, enum silofs_height height)
+                           const struct silofs_uakey *uakey)
 {
 	const struct silofs_uaddr *uaddr;
 	struct silofs_unode_info *ui = NULL;
 
-	uaddr = cache_lookup_uaddr_by(cache, voff, height);
+	uaddr = cache_lookup_uaddr_by(cache, uakey);
 	if (uaddr != NULL) {
 		ui = silofs_cache_lookup_unode(cache, uaddr);
 	}
@@ -1884,130 +1940,138 @@ void silofs_cache_forget_uaddrs(struct silofs_cache *cache)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vbk_info *
-cache_new_vbi(const struct silofs_cache *cache, loff_t voff)
+cache_new_vbki(const struct silofs_cache *cache,
+               loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_block *bk;
-	struct silofs_vbk_info *vbi;
+	struct silofs_vbk_info *vbki;
 
 	bk = bk_malloc(cache->c_alloc);
 	if (bk == NULL) {
 		return NULL;
 	}
-	vbi = vbi_malloc(cache->c_alloc);
-	if (vbi == NULL) {
+	vbki = vbki_malloc(cache->c_alloc);
+	if (vbki == NULL) {
 		bk_free(bk, cache->c_alloc);
 		return NULL;
 	}
-	vbi_init(vbi, bk, voff);
-	return vbi;
+	vbki_init(vbki, bk, voff, vspace);
+	return vbki;
 }
 
-static void cache_del_vbi(const struct silofs_cache *cache,
-                          struct silofs_vbk_info *vbi)
+static void cache_del_vbki(const struct silofs_cache *cache,
+                           struct silofs_vbk_info *vbki)
 {
-	struct silofs_block *bk = vbi->vbk;
+	struct silofs_block *bk = vbki->vbk;
 
-	vbi_fini(vbi);
+	vbki_fini(vbki);
 	bk_free(bk, cache->c_alloc);
-	vbi_free(vbi, cache->c_alloc);
+	vbki_free(vbki, cache->c_alloc);
 }
 
-static int cache_init_vbi_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_vbki_lm(struct silofs_cache *cache, size_t htbl_size)
 {
-	return lrumap_init(&cache->c_vbi_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_vbki_lm, cache->c_alloc, htbl_size);
 }
 
-static void cache_fini_vbi_lm(struct silofs_cache *cache)
+static void cache_fini_vbki_lm(struct silofs_cache *cache)
 {
-	lrumap_fini(&cache->c_vbi_lm, cache->c_alloc);
+	lrumap_fini(&cache->c_vbki_lm, cache->c_alloc);
 }
 
 static struct silofs_vbk_info *
-cache_find_vbi(const struct silofs_cache *cache, loff_t voff)
+cache_find_vbki(const struct silofs_cache *cache,
+                loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
-	const loff_t bk_voff = off_align_to_bk(voff);
+	const struct silofs_vbk_addr vbk_addr = {
+		.vbk_voff = off_align_to_bk(voff),
+		.vbk_vspace = vspace,
+	};
 
-	ckey_by_voff(&ckey, &bk_voff);
-	ce = lrumap_find(&cache->c_vbi_lm, &ckey);
-	return vbi_from_ce(ce);
+	ckey_by_vbk_addr(&ckey, &vbk_addr);
+	ce = lrumap_find(&cache->c_vbki_lm, &ckey);
+	return vbki_from_ce(ce);
 }
 
-static void cache_store_vbi(struct silofs_cache *cache,
-                            struct silofs_vbk_info *vbi)
+static void cache_store_vbki(struct silofs_cache *cache,
+                             struct silofs_vbk_info *vbki)
 {
-	lrumap_store(&cache->c_vbi_lm, vbi_to_ce(vbi));
+	lrumap_store(&cache->c_vbki_lm, vbki_to_ce(vbki));
 }
 
-static void cache_promote_lru_vbi(struct silofs_cache *cache,
-                                  struct silofs_vbk_info *vbi)
+static void cache_promote_lru_vbki(struct silofs_cache *cache,
+                                   struct silofs_vbk_info *vbki)
 {
-	lrumap_promote_lru(&cache->c_vbi_lm, vbi_to_ce(vbi));
+	lrumap_promote_lru(&cache->c_vbki_lm, vbki_to_ce(vbki));
 }
 
-static void cache_evict_vbi(struct silofs_cache *cache,
-                            struct silofs_vbk_info *vbi)
+static void cache_evict_vbki(struct silofs_cache *cache,
+                             struct silofs_vbk_info *vbki)
 {
-	lrumap_remove(&cache->c_vbi_lm, vbi_to_ce(vbi));
-	cache_del_vbi(cache, vbi);
+	lrumap_remove(&cache->c_vbki_lm, vbki_to_ce(vbki));
+	cache_del_vbki(cache, vbki);
 }
 
 void silofs_cache_forget_vbk(struct silofs_cache *cache,
-                             struct silofs_vbk_info *vbi)
+                             struct silofs_vbk_info *vbki)
 {
-	cache_evict_vbi(cache, vbi);
+	cache_evict_vbki(cache, vbki);
 }
 
 static struct silofs_vbk_info *
-cache_spawn_vbi(struct silofs_cache *cache, loff_t voff)
+cache_spawn_vbki(struct silofs_cache *cache,
+                 loff_t voff, enum silofs_stype vspace)
 {
-	struct silofs_vbk_info *vbi;
+	struct silofs_vbk_info *vbki;
 
-	vbi = cache_new_vbi(cache, voff);
-	if (vbi == NULL) {
+	vbki = cache_new_vbki(cache, voff, vspace);
+	if (vbki == NULL) {
 		return NULL;
 	}
-	cache_store_vbi(cache, vbi);
-	return vbi;
+	cache_store_vbki(cache, vbki);
+	return vbki;
 }
 
 static struct silofs_vbk_info *
-cache_find_relru_vbi(struct silofs_cache *cache, loff_t voff)
+cache_find_relru_vbki(struct silofs_cache *cache,
+                      loff_t voff, enum silofs_stype vspace)
 {
-	struct silofs_vbk_info *vbi;
+	struct silofs_vbk_info *vbki;
 
-	vbi = cache_find_vbi(cache, voff);
-	if (vbi != NULL) {
-		cache_promote_lru_vbi(cache, vbi);
+	vbki = cache_find_vbki(cache, voff, vspace);
+	if (vbki != NULL) {
+		cache_promote_lru_vbki(cache, vbki);
 	}
-	return vbi;
+	return vbki;
 }
 
 static struct silofs_vbk_info *
-cache_find_or_spawn_vbi(struct silofs_cache *cache, loff_t voff)
+cache_find_or_spawn_vbki(struct silofs_cache *cache,
+                         loff_t voff, enum silofs_stype vspace)
 {
-	struct silofs_vbk_info *vbi;
+	struct silofs_vbk_info *vbki;
 
-	vbi = cache_find_relru_vbi(cache, voff);
-	if (vbi != NULL) {
-		return vbi;
+	vbki = cache_find_relru_vbki(cache, voff, vspace);
+	if (vbki != NULL) {
+		return vbki;
 	}
-	vbi = cache_spawn_vbi(cache, voff);
-	if (vbi == NULL) {
+	vbki = cache_spawn_vbki(cache, voff, vspace);
+	if (vbki == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
-	return vbi;
+	return vbki;
 }
 
-static int visit_evictable_vbi(struct silofs_cache_elem *ce, void *arg)
+static int visit_evictable_vbki(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_vbk_info *vbi = vbi_from_ce(ce);
+	struct silofs_vbk_info *vbki = vbki_from_ce(ce);
 
 	c_ctx->count++;
-	if (vbi_is_evictable(vbi)) {
-		c_ctx->vbi = vbi;
+	if (vbki_is_evictable(vbki)) {
+		c_ctx->vbki = vbki;
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {
@@ -2017,116 +2081,120 @@ static int visit_evictable_vbi(struct silofs_cache_elem *ce, void *arg)
 }
 
 static struct silofs_vbk_info *
-cache_find_evictable_vbi(struct silofs_cache *cache)
+cache_find_evictable_vbki(struct silofs_cache *cache)
 {
-	struct silofs_lrumap *lm = &cache->c_vbi_lm;
+	struct silofs_lrumap *lm = &cache->c_vbki_lm;
 	struct silofs_cache_ctx c_ctx = {
 		.cache = cache,
-		.ubi = NULL,
+		.ubki = NULL,
 		.limit = lrumap_calc_search_evictable_max(lm)
 	};
 
-	lrumap_foreach_backward(lm, visit_evictable_vbi, &c_ctx);
-	return c_ctx.vbi;
+	lrumap_foreach_backward(lm, visit_evictable_vbki, &c_ctx);
+	return c_ctx.vbki;
 }
 
 static struct silofs_vbk_info *
-cache_require_vbi(struct silofs_cache *cache, loff_t voff)
+cache_require_vbki(struct silofs_cache *cache,
+                   loff_t voff, enum silofs_stype vspace)
 {
-	struct silofs_vbk_info *vbi = NULL;
+	struct silofs_vbk_info *vbki = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		vbi = cache_find_or_spawn_vbi(cache, voff);
-		if (vbi != NULL) {
+		vbki = cache_find_or_spawn_vbki(cache, voff, vspace);
+		if (vbki != NULL) {
 			break;
 		}
 		cache_evict_some(cache);
 	}
-	return vbi;
+	return vbki;
 }
 
-static struct silofs_vbk_info *cache_get_lru_vbi(struct silofs_cache *cache)
+static struct silofs_vbk_info *cache_get_lru_vbki(struct silofs_cache *cache)
 {
 	struct silofs_cache_elem *ce;
 
-	ce = lrumap_get_lru(&cache->c_vbi_lm);
-	return vbi_from_ce(ce);
+	ce = lrumap_get_lru(&cache->c_vbki_lm);
+	return vbki_from_ce(ce);
 }
 
-static void cache_try_evict_vbi(struct silofs_cache *cache,
-                                struct silofs_vbk_info *vbi)
+static void cache_try_evict_vbki(struct silofs_cache *cache,
+                                 struct silofs_vbk_info *vbki)
 {
-	if (vbi_is_evictable(vbi)) {
-		cache_evict_vbi(cache, vbi);
+	if (vbki_is_evictable(vbki)) {
+		cache_evict_vbki(cache, vbki);
 	}
 }
 
-static int try_evict_vbi(struct silofs_cache_elem *ce, void *arg)
+static int try_evict_vbki(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_vbk_info *vbi = vbi_from_ce(ce);
+	struct silofs_vbk_info *vbki = vbki_from_ce(ce);
 
-	cache_try_evict_vbi(c_ctx->cache, vbi);
+	cache_try_evict_vbki(c_ctx->cache, vbki);
 	return 0;
 }
 
-static void cache_drop_evictable_vbis(struct silofs_cache *cache)
+static void cache_drop_evictable_vbkis(struct silofs_cache *cache)
 {
 	struct silofs_cache_ctx c_ctx = {
 		.cache = cache
 	};
 
-	lrumap_foreach_backward(&cache->c_vbi_lm, try_evict_vbi, &c_ctx);
+	lrumap_foreach_backward(&cache->c_vbki_lm, try_evict_vbki, &c_ctx);
 }
 
-static bool cache_evict_or_relru_vbi(struct silofs_cache *cache,
-                                     struct silofs_vbk_info *vbi)
+static bool cache_evict_or_relru_vbki(struct silofs_cache *cache,
+                                      struct silofs_vbk_info *vbki)
 {
 	bool evicted;
 
-	if (vbi_is_evictable(vbi)) {
-		cache_evict_vbi(cache, vbi);
+	if (vbki_is_evictable(vbki)) {
+		cache_evict_vbki(cache, vbki);
 		evicted = true;
 	} else {
-		cache_promote_lru_vbi(cache, vbi);
+		cache_promote_lru_vbki(cache, vbki);
 		evicted = false;
 	}
 	return evicted;
 }
 
 static size_t
-cache_shrink_or_relru_vbis(struct silofs_cache *cache, size_t cnt)
+cache_shrink_or_relru_vbkis(struct silofs_cache *cache, size_t cnt, bool force)
 {
-	struct silofs_vbk_info *vbi = NULL;
-	const size_t n = min(cnt, cache->c_vbi_lm.lm_lru.sz);
+	struct silofs_vbk_info *vbki = NULL;
+	const size_t n = min(cnt, cache->c_vbki_lm.lm_lru.sz);
 	size_t evicted = 0;
 	bool ok;
 
 	for (size_t i = 0; i < n; ++i) {
-		vbi = cache_get_lru_vbi(cache);
-		if (vbi == NULL) {
+		vbki = cache_get_lru_vbki(cache);
+		if (vbki == NULL) {
 			break;
 		}
-		ok = cache_evict_or_relru_vbi(cache, vbi);
-		if (!ok) {
+		ok = cache_evict_or_relru_vbki(cache, vbki);
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
 
 struct silofs_vbk_info *
-silofs_cache_lookup_vbk(struct silofs_cache *cache, loff_t voff)
+silofs_cache_lookup_vbk(struct silofs_cache *cache,
+                        loff_t voff, enum silofs_stype vspace)
 {
-	return cache_find_relru_vbi(cache, voff);
+	return cache_find_relru_vbki(cache, voff, vspace);
 }
 
 struct silofs_vbk_info *
-silofs_cache_spawn_vbk(struct silofs_cache *cache, loff_t voff)
+silofs_cache_spawn_vbk(struct silofs_cache *cache,
+                       loff_t voff, enum silofs_stype vspace)
 {
-	return cache_require_vbi(cache, voff);
+	return cache_require_vbki(cache, voff, vspace);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2240,7 +2308,8 @@ static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
 	return evicted;
 }
 
-static size_t cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt)
+static size_t
+cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_vnode_info *vi = NULL;
 	const size_t n = min(cnt, cache->c_vi_lm.lm_lru.sz);
@@ -2253,10 +2322,11 @@ static size_t cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_vi(cache, vi);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -2350,31 +2420,31 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 	size_t count;
 
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
-	actual += cache_shrink_or_relru_vis(cache, count);
+	actual += cache_shrink_or_relru_vis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
-	actual += cache_shrink_or_relru_uis(cache, count);
+	actual += cache_shrink_or_relru_uis(cache, count, false);
 
-	count = lrumap_overpop(&cache->c_ubi_lm) + extra;
-	actual += cache_shrink_or_relru_ubis(cache, count);
+	count = lrumap_overpop(&cache->c_ubki_lm) + extra;
+	actual += cache_shrink_or_relru_ubkis(cache, count, false);
 
-	count = lrumap_overpop(&cache->c_vbi_lm) + extra;
-	actual += cache_shrink_or_relru_vbis(cache, count);
+	count = lrumap_overpop(&cache->c_vbki_lm) + extra;
+	actual += cache_shrink_or_relru_vbkis(cache, count, false);
 
-	count = lrumap_overpop(&cache->c_bli_lm) + extra;
-	actual += cache_shrink_or_relru_blis(cache, count);
+	count = lrumap_overpop(&cache->c_bri_lm) + extra;
+	actual += cache_shrink_or_relru_bris(cache, count, false);
 
 	return actual;
 }
 
-static size_t cache_overpop(const struct silofs_cache *cache)
+static size_t cache_lrumaps_overpop(const struct silofs_cache *cache)
 {
 	const struct silofs_lrumap *lms[] = {
 		&cache->c_vi_lm,
 		&cache->c_ui_lm,
-		&cache->c_ubi_lm,
-		&cache->c_vbi_lm,
-		&cache->c_bli_lm
+		&cache->c_ubki_lm,
+		&cache->c_vbki_lm,
+		&cache->c_bri_lm
 	};
 	size_t ovp = 0;
 
@@ -2398,9 +2468,12 @@ static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
 
 static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 {
-	size_t niter = 0;
+	const size_t blobs_over = cache_blobs_overflow(cache);
+	const size_t lrumaps_over = cache_lrumaps_overpop(cache);
 	const uint64_t mem_press = cache_memory_pressure(cache);
+	size_t niter;
 
+	niter = min(lrumaps_over, 64);
 	if (flags & SILOFS_F_WALKFS) {
 		niter += silofs_popcount64(mem_press >> 1);
 	}
@@ -2419,8 +2492,12 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	if ((flags & (SILOFS_F_IDLE | SILOFS_F_WALKFS))) {
 		niter += (mem_press & ~1UL) ? 2 : 1;
 	}
-	niter += silofs_clamp(cache_overpop(cache), 0, 64);
-
+	if (flags & SILOFS_F_NOW) {
+		niter += 1;
+	}
+	if (flags && blobs_over) {
+		niter += 2;
+	}
 	return niter;
 }
 
@@ -2443,19 +2520,19 @@ void silofs_cache_relax(struct silofs_cache *cache, int flags)
 void silofs_cache_shrink_once(struct silofs_cache *cache)
 {
 	const size_t bk_size = SILOFS_BK_SIZE;
-	const size_t memsz_ubis = bk_size * cache->c_ubi_lm.lm_htbl_sz;
+	const size_t memsz_ubkis = bk_size * cache->c_ubki_lm.lm_htbl_sz;
 	const size_t memsz_data = cache->mem_size_hint;
 
-	if ((8 * memsz_ubis) > memsz_data) {
+	if ((8 * memsz_ubkis) > memsz_data) {
 		cache_shrink_some(cache, 0);
 	}
 }
 
 static size_t cache_lrumap_usage_sum(const struct silofs_cache *cache)
 {
-	return lrumap_usage(&cache->c_bli_lm) +
-	       lrumap_usage(&cache->c_ubi_lm) +
-	       lrumap_usage(&cache->c_vbi_lm) +
+	return lrumap_usage(&cache->c_bri_lm) +
+	       lrumap_usage(&cache->c_ubki_lm) +
+	       lrumap_usage(&cache->c_vbki_lm) +
 	       lrumap_usage(&cache->c_vi_lm) +
 	       lrumap_usage(&cache->c_ui_lm);
 }
@@ -2464,9 +2541,9 @@ static void cache_drop_evictables_once(struct silofs_cache *cache)
 {
 	cache_drop_evictable_vis(cache);
 	cache_drop_evictable_uis(cache);
-	cache_drop_evictable_vbis(cache);
-	cache_drop_evictable_ubis(cache);
-	cache_drop_evictable_blis(cache);
+	cache_drop_evictable_vbkis(cache);
+	cache_drop_evictable_ubkis(cache);
+	cache_drop_evictable_bris(cache);
 }
 
 static void cache_drop_evictables(struct silofs_cache *cache)
@@ -2538,43 +2615,51 @@ static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
 
 bool silofs_cache_need_flush(const struct silofs_cache *cache, int flags)
 {
-	return dq_need_flush(&cache->c_dq, flags) ||
-	       cache_mem_press_need_flush(cache);
+	if (cache_blobs_overflow(cache) > 0) {
+		return true;
+	}
+	if (dq_need_flush(&cache->c_dq, flags)) {
+		return true;
+	}
+	if (cache_mem_press_need_flush(cache)) {
+		return true;
+	}
+	return false;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool cache_evict_by_bli(struct silofs_cache *cache,
-                               struct silofs_blob_info *bli)
+static bool cache_evict_by_bri(struct silofs_cache *cache,
+                               struct silofs_blobref_info *bri)
 {
 	bool ret = false;
 
-	if ((bli != NULL) && bli_is_evictable(bli)) {
-		cache_evict_bli(cache, bli);
+	if ((bri != NULL) && bri_is_evictable(bri)) {
+		cache_evict_bri(cache, bri);
 		ret = true;
 	}
 	return ret;
 }
 
-static bool cache_evict_by_ubi(struct silofs_cache *cache,
-                               struct silofs_ubk_info *ubi)
+static bool cache_evict_by_ubki(struct silofs_cache *cache,
+                                struct silofs_ubk_info *ubki)
 {
 	bool ret = false;
 
-	if ((ubi != NULL) && ubi_is_evictable(ubi)) {
-		cache_evict_ubi(cache, ubi);
+	if ((ubki != NULL) && ubki_is_evictable(ubki)) {
+		cache_evict_ubki(cache, ubki);
 		ret = true;
 	}
 	return ret;
 }
 
-static bool cache_evict_by_vbi(struct silofs_cache *cache,
-                               struct silofs_vbk_info *vbi)
+static bool cache_evict_by_vbki(struct silofs_cache *cache,
+                                struct silofs_vbk_info *vbki)
 {
 	bool ret = false;
 
-	if ((vbi != NULL) && vbi_is_evictable(vbi)) {
-		cache_evict_vbi(cache, vbi);
+	if ((vbki != NULL) && vbki_is_evictable(vbki)) {
+		cache_evict_vbki(cache, vbki);
 		ret = true;
 	}
 	return ret;
@@ -2608,9 +2693,9 @@ static void cache_evict_some(struct silofs_cache *cache)
 {
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_unode_info *ui = NULL;
-	struct silofs_vbk_info *vbi = NULL;
-	struct silofs_ubk_info *ubi = NULL;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_vbk_info *vbki = NULL;
+	struct silofs_ubk_info *ubki = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	bool evicted = false;
 
 	vi = cache_find_evictable_vi(cache);
@@ -2621,16 +2706,16 @@ static void cache_evict_some(struct silofs_cache *cache)
 	if (cache_evict_by_ui(cache, ui)) {
 		evicted = true;
 	}
-	vbi = cache_find_evictable_vbi(cache);
-	if (cache_evict_by_vbi(cache, vbi)) {
+	vbki = cache_find_evictable_vbki(cache);
+	if (cache_evict_by_vbki(cache, vbki)) {
 		evicted = true;
 	}
-	ubi = cache_find_evictable_ubi(cache);
-	if (cache_evict_by_ubi(cache, ubi)) {
+	ubki = cache_find_evictable_ubki(cache);
+	if (cache_evict_by_ubki(cache, ubki)) {
 		evicted = true;
 	}
-	bli = cache_find_evictable_bli(cache);
-	if (cache_evict_by_bli(cache, bli)) {
+	bri = cache_find_evictable_bri(cache);
+	if (cache_evict_by_bri(cache, bri)) {
 		evicted = true;
 	}
 	if (!evicted) {
@@ -2675,9 +2760,9 @@ static void cache_fini_lrumaps(struct silofs_cache *cache)
 {
 	cache_fini_vi_lm(cache);
 	cache_fini_ui_lm(cache);
-	cache_fini_vbi_lm(cache);
-	cache_fini_ubi_lm(cache);
-	cache_fini_bli_lm(cache);
+	cache_fini_vbki_lm(cache);
+	cache_fini_ubki_lm(cache);
+	cache_fini_bri_lm(cache);
 }
 
 static int cache_init_lrumaps(struct silofs_cache *cache)
@@ -2686,16 +2771,16 @@ static int cache_init_lrumaps(struct silofs_cache *cache)
 	size_t hsize;
 
 	hsize = cache_htbl_size(cache, sizeof(struct silofs_block));
-	err = cache_init_bli_lm(cache, hsize);
+	err = cache_init_bri_lm(cache, hsize);
 	if (err) {
 		goto out_err;
 	}
 	hsize = cache_htbl_size(cache, sizeof(struct silofs_block));
-	err = cache_init_vbi_lm(cache, hsize);
+	err = cache_init_vbki_lm(cache, hsize);
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_ubi_lm(cache, hsize);
+	err = cache_init_ubki_lm(cache, hsize);
 	if (err) {
 		goto out_err;
 	}
@@ -2847,22 +2932,6 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 		si_decref(&sbi->sb_ui.u_si);
 	}
 }
-
-
-void silofs_sti_incref(struct silofs_spstats_info *sti)
-{
-	if (likely(sti != NULL)) {
-		si_incref(&sti->sp_ui.u_si);
-	}
-}
-
-void silofs_sti_decref(struct silofs_spstats_info *sti)
-{
-	if (likely(sti != NULL)) {
-		si_decref(&sti->sp_ui.u_si);
-	}
-}
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

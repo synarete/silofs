@@ -22,55 +22,28 @@
 
 
 struct silofs_visitor;
-struct silofs_uiterator;
+struct silofs_space_iter;
 
-typedef int (*silofs_visit_unode_fn)(struct silofs_visitor *vis,
-                                     const struct silofs_uiterator *uit);
+typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
+                               const struct silofs_space_iter *spit);
 
-struct silofs_uiterator {
-	struct silofs_sb_info    *sbi;
-	struct silofs_unode_info *parent;
-	struct silofs_unode_info *ui;
-	enum silofs_height height;
-	loff_t voff;
-	size_t slot;
+struct silofs_space_iter {
+	struct silofs_sb_info      *sbi;
+	struct silofs_spnode_info  *sni4;
+	struct silofs_spnode_info  *sni3;
+	struct silofs_spnode_info  *sni2;
+	struct silofs_spleaf_info  *sli;
+	enum silofs_height          height;
+	enum silofs_stype           vspace;
+	loff_t                      voff;
 };
 
 struct silofs_visitor {
-	silofs_visit_unode_fn visit_prep_hook;
-	silofs_visit_unode_fn visit_exec_hook;
-	silofs_visit_unode_fn visit_post_hook;
-	bool nodescend;
-	bool halt;
+	silofs_visit_fn exec_hook;
+	silofs_visit_fn post_hook;
 };
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_usaddr_info {
-	struct silofs_avl_node  us_an;
-	struct silofs_uaddr     us_uaddr;
-	size_t us_refcnt;
-};
-
-struct silofs_usaddr_set {
-	struct silofs_avl       uss_avl;
-	struct silofs_alloc    *uss_alloc;
-};
-
-struct silofs_uspace_visitor {
-	struct silofs_visitor    vis;
-	struct silofs_usaddr_set uss;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_usvisitor_init(struct silofs_uspace_visitor *usv,
-                           struct silofs_alloc *alloc);
-
-void silofs_usvisitor_fini(struct silofs_uspace_visitor *usv);
 
 int silofs_walk_space_tree(struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis);
-
 
 #endif /* SILOFS_WALK_H_ */

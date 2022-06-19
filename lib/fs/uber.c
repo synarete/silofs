@@ -678,6 +678,12 @@ static int ubc_require_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 	return ret;
 }
 
+static void ubc_forget_cached_ui(const struct silofs_uber_ctx *ub_ctx,
+                                 struct silofs_unode_info *ui)
+{
+	silofs_cache_forget_unode(ub_ctx->cache, ui);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int ubc_lookup_blob(const struct silofs_uber_ctx *ub_ctx,
@@ -892,6 +898,14 @@ int silofs_shadow_super_at(struct silofs_fs_uber *uber, bool warm,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ubc_forget_cached_sti(const struct silofs_uber_ctx *ub_ctx,
+                                  struct silofs_spstats_info *sti)
+{
+	if (sti != NULL) {
+		ubc_forget_cached_ui(ub_ctx, &sti->sp_ui);
+	}
+}
+
 static int ubc_require_cached_sti(const struct silofs_uber_ctx *ub_ctx,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spstats_info **out_sti)
@@ -956,25 +970,30 @@ int silofs_spawn_stats_at(struct silofs_fs_uber *uber, bool warm,
                           struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sti(&ub_ctx, uaddr, out_sti);
+	err = ubc_require_cached_sti(&ub_ctx, uaddr, &sti);
 	if (err) {
 		return err;
 	}
-	if (sti_is_stable(*out_sti)) {
+	if (sti_is_stable(sti)) {
 		return -EEXIST;
 	}
-	err = ubc_spawn_attach_sti_bk(&ub_ctx, *out_sti);
+	err = ubc_spawn_attach_sti_bk(&ub_ctx, sti);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sti_set_spawned(*out_sti);
+	sti_set_spawned(sti);
+	*out_sti = sti;
 	return 0;
+out_err:
+	ubc_forget_cached_sti(&ub_ctx, sti);
+	return err;
 }
 
 int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool warm,
@@ -982,28 +1001,34 @@ int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool warm,
                           struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sti(&ub_ctx, uaddr, out_sti);
+	err = ubc_require_cached_sti(&ub_ctx, uaddr, &sti);
 	if (err) {
 		return err;
 	}
-	if (sti_is_stable(*out_sti)) {
-		return 0;
+	if (sti_is_stable(sti)) {
+		goto out_ok;
 	}
-	err = ubc_stage_attach_sti_bk(&ub_ctx, *out_sti);
+	err = ubc_stage_attach_sti_bk(&ub_ctx, sti);
+	if (err) {
+		goto out_err;
+	}
+	err = sti_verify_view(sti);
 	if (err) {
 		return err;
 	}
-	err = sti_verify_view(*out_sti);
-	if (err) {
-		return err;
-	}
+out_ok:
+	*out_sti = sti;
 	return 0;
+out_err:
+	ubc_forget_cached_sti(&ub_ctx, sti);
+	return err;
 }
 
 int silofs_shadow_stats_at(struct silofs_fs_uber *uber, bool warm,
@@ -1011,28 +1036,42 @@ int silofs_shadow_stats_at(struct silofs_fs_uber *uber, bool warm,
                            struct silofs_spstats_info **out_sti)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spstats_info *sti = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sti(&ub_ctx, uaddr, out_sti);
+	err = ubc_require_cached_sti(&ub_ctx, uaddr, &sti);
 	if (err) {
 		return err;
 	}
-	if (sti_is_stable(*out_sti)) {
-		return 0;
+	if (sti_is_stable(sti)) {
+		goto out_ok;
 	}
-	err = ubc_ghost_attach_sti_bk(&ub_ctx, *out_sti);
+	err = ubc_ghost_attach_sti_bk(&ub_ctx, sti);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sti_set_spawned(*out_sti);
+	sti_set_spawned(sti);
+out_ok:
+	*out_sti = sti;
 	return 0;
+out_err:
+	ubc_forget_cached_sti(&ub_ctx, sti);
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ubc_forget_cached_sni(const struct silofs_uber_ctx *ub_ctx,
+                                  struct silofs_spnode_info *sni)
+{
+	if (sni != NULL) {
+		ubc_forget_cached_ui(ub_ctx, &sni->sn_ui);
+	}
+}
 
 static int ubc_require_cached_sni(const struct silofs_uber_ctx *ub_ctx,
                                   const struct silofs_uaddr *uaddr,
@@ -1098,25 +1137,30 @@ int silofs_spawn_spnode_at(struct silofs_fs_uber *uber, bool warm,
                            struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spnode_info *sni = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sni(&ub_ctx, uaddr, out_sni);
+	err = ubc_require_cached_sni(&ub_ctx, uaddr, &sni);
 	if (err) {
 		return err;
 	}
-	if (sni_is_stable(*out_sni)) {
+	if (sni_is_stable(sni)) {
 		return -EEXIST;
 	}
-	err = ubc_spawn_attach_sni_bk(&ub_ctx, *out_sni);
+	err = ubc_spawn_attach_sni_bk(&ub_ctx, sni);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sni_set_spawned(*out_sni);
+	sni_set_spawned(sni);
+	*out_sni = sni;
 	return 0;
+out_err:
+	ubc_forget_cached_sni(&ub_ctx, sni);
+	return err;
 }
 
 int silofs_stage_spnode_at(struct silofs_fs_uber *uber, bool warm,
@@ -1124,29 +1168,35 @@ int silofs_stage_spnode_at(struct silofs_fs_uber *uber, bool warm,
                            struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spnode_info *sni = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sni(&ub_ctx, uaddr, out_sni);
+	err = ubc_require_cached_sni(&ub_ctx, uaddr, &sni);
 	if (err) {
 		return err;
 	}
-	if (sni_is_stable(*out_sni)) {
-		return 0;
+	if (sni_is_stable(sni)) {
+		goto out_ok;
 	}
-	err = ubc_stage_attach_sni_bk(&ub_ctx, *out_sni);
+	err = ubc_stage_attach_sni_bk(&ub_ctx, sni);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	err = sni_verify_view(*out_sni);
+	err = sni_verify_view(sni);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	silofs_sni_update_staged(*out_sni);
+	silofs_sni_update_staged(sni);
+out_ok:
+	*out_sni = sni;
 	return 0;
+out_err:
+	ubc_forget_cached_sni(&ub_ctx, sni);
+	return err;
 }
 
 int silofs_shadow_spnode_at(struct silofs_fs_uber *uber, bool warm,
@@ -1154,28 +1204,42 @@ int silofs_shadow_spnode_at(struct silofs_fs_uber *uber, bool warm,
                             struct silofs_spnode_info **out_sni)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spnode_info *sni = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sni(&ub_ctx, uaddr, out_sni);
+	err = ubc_require_cached_sni(&ub_ctx, uaddr, &sni);
 	if (err) {
 		return err;
 	}
-	if (sni_is_stable(*out_sni)) {
-		return 0;
+	if (sni_is_stable(sni)) {
+		goto out_ok;
 	}
-	err = ubc_ghost_attach_sni_bk(&ub_ctx, *out_sni);
+	err = ubc_ghost_attach_sni_bk(&ub_ctx, sni);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sni_set_spawned(*out_sni);
+	sni_set_spawned(sni);
+out_ok:
+	*out_sni = sni;
 	return 0;
+out_err:
+	ubc_forget_cached_sni(&ub_ctx, sni);
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ubc_forget_cached_sli(const struct silofs_uber_ctx *ub_ctx,
+                                  struct silofs_spleaf_info *sli)
+{
+	if (sli != NULL) {
+		ubc_forget_cached_ui(ub_ctx, &sli->sl_ui);
+	}
+}
 
 static int ubc_require_cached_sli(const struct silofs_uber_ctx *ub_ctx,
                                   const struct silofs_uaddr *uaddr,
@@ -1241,25 +1305,30 @@ int silofs_spawn_spleaf_at(struct silofs_fs_uber *uber, bool warm,
                            struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sli(&ub_ctx, uaddr, out_sli);
+	err = ubc_require_cached_sli(&ub_ctx, uaddr, &sli);
 	if (err) {
 		return err;
 	}
-	if (sli_is_stable(*out_sli)) {
+	if (sli_is_stable(sli)) {
 		return -EEXIST;
 	}
-	err = ubc_spawn_attach_sli_bk(&ub_ctx, *out_sli);
+	err = ubc_spawn_attach_sli_bk(&ub_ctx, sli);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sli_set_spawned(*out_sli);
+	sli_set_spawned(sli);
+	*out_sli = sli;
 	return 0;
+out_err:
+	ubc_forget_cached_sli(&ub_ctx, sli);
+	return err;
 }
 
 int silofs_stage_spleaf_at(struct silofs_fs_uber *uber, bool warm,
@@ -1267,29 +1336,35 @@ int silofs_stage_spleaf_at(struct silofs_fs_uber *uber, bool warm,
                            struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sli(&ub_ctx, uaddr, out_sli);
+	err = ubc_require_cached_sli(&ub_ctx, uaddr, &sli);
 	if (err) {
 		return err;
 	}
-	if (sli_is_stable(*out_sli)) {
-		return 0;
+	if (sli_is_stable(sli)) {
+		goto out_ok;
 	}
-	err = ubc_stage_attach_sli_bk(&ub_ctx, *out_sli);
+	err = ubc_stage_attach_sli_bk(&ub_ctx, sli);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	err = sli_verify_view(*out_sli);
+	err = sli_verify_view(sli);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	silofs_sli_update_staged(*out_sli);
+	silofs_sli_update_staged(sli);
+out_ok:
+	*out_sli = sli;
 	return 0;
+out_err:
+	ubc_forget_cached_sli(&ub_ctx, sli);
+	return err;
 }
 
 int silofs_shadow_spleaf_at(struct silofs_fs_uber *uber, bool warm,
@@ -1297,25 +1372,31 @@ int silofs_shadow_spleaf_at(struct silofs_fs_uber *uber, bool warm,
                             struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
 	err = ubc_setup(&ub_ctx, warm);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_cached_sli(&ub_ctx, uaddr, out_sli);
+	err = ubc_require_cached_sli(&ub_ctx, uaddr, &sli);
 	if (err) {
 		return err;
 	}
-	if (sli_is_stable(*out_sli)) {
-		return 0;
+	if (sli_is_stable(sli)) {
+		goto out_ok;
 	}
-	err = ubc_ghost_attach_sli_bk(&ub_ctx, *out_sli);
+	err = ubc_ghost_attach_sli_bk(&ub_ctx, sli);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	sli_set_spawned(*out_sli);
+	sli_set_spawned(sli);
+out_ok:
+	*out_sli = sli;
 	return 0;
+out_err:
+	ubc_forget_cached_sli(&ub_ctx, sli);
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

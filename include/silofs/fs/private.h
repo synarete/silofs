@@ -140,7 +140,6 @@
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_lba(ua)                   silofs_uaddr_lba(ua)
-#define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 
 #define vaddr_none()                    silofs_vaddr_none()

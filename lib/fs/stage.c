@@ -183,11 +183,41 @@ static struct silofs_repo *sbi_repo(const struct silofs_sb_info *sbi)
 	return sbi->sb_ui.u_repo;
 }
 
+static int sbi_commit_and_relax(const struct silofs_sb_info *sbi)
+{
+	int err;
+
+	err = sbi_commit_dirty(sbi);
+	if (!err) {
+		silofs_uber_relax_caches(sbi_uber(sbi), 0);
+	}
+	return err;
+}
+
 static int sbi_stage_blob(const struct silofs_sb_info *sbi,
                           const struct silofs_blobid *blobid,
                           struct silofs_blob_info **out_bli)
 {
-	return silofs_stage_blob_at(sbi_uber(sbi), true, blobid, out_bli);
+	struct silofs_fs_uber *uber = sbi_uber(sbi);
+	int err;
+
+	err = silofs_stage_blob_at(uber, true, blobid, out_bli);
+	if (!err) {
+		goto out_ok;
+	}
+	if (err != -EMFILE) {
+		return err;
+	}
+	err = sbi_commit_and_relax(sbi);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_blob_at(uber, true, blobid, out_bli);
+	if (err) {
+		return err;
+	}
+out_ok:
+	return 0;
 }
 
 static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
@@ -195,12 +225,25 @@ static int sbi_spawn_blob(const struct silofs_sb_info *sbi,
                           enum silofs_stype stype_sub,
                           struct silofs_blob_info **out_bli)
 {
+	struct silofs_fs_uber *uber = sbi_uber(sbi);
 	int err;
 
-	err = silofs_spawn_blob_at(sbi_uber(sbi), true, blobid, out_bli);
+	err = silofs_spawn_blob_at(uber, true, blobid, out_bli);
+	if (!err) {
+		goto out_ok;
+	}
+	if (err != -EMFILE) {
+		return err;
+	}
+	err = sbi_commit_and_relax(sbi);
 	if (err) {
 		return err;
 	}
+	err = silofs_spawn_blob_at(uber, true, blobid, out_bli);
+	if (err) {
+		return err;
+	}
+out_ok:
 	silofs_spi_update_blobs(sbi->sb_spi, stype_sub, 1);
 	return 0;
 }

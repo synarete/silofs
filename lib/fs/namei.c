@@ -208,15 +208,15 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
-	const int i_open_max = INT_MAX / 2;
 	const struct silofs_fs_uber *uber = ii_uber(ii);
+	const size_t total_iopen_max = uber->ub_ops.op_iopen_max;
+	const size_t iopen_max = total_iopen_max / 2;
 
-	if (!ii->i_nopen &&
-	    !(uber->ub_ops.op_iopen < uber->ub_ops.op_iopen_max)) {
-		return -ENFILE;
+	if (uber->ub_ops.op_iopen >= total_iopen_max) {
+		return -EMFILE;
 	}
-	if (ii->i_nopen >= i_open_max) {
-		return -ENFILE;
+	if (ii->i_nopen >= (long)iopen_max) {
+		return -EMFILE;
 	}
 	return 0;
 }
@@ -663,6 +663,10 @@ static int check_create(const struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	err = check_create_mode(mode);
+	if (err) {
+		return err;
+	}
+	err = check_open_limit(dir_ii);
 	if (err) {
 		return err;
 	}

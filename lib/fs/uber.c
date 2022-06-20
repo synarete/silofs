@@ -38,9 +38,9 @@ spi_uaddr(const struct silofs_spstats_info *spi)
 
 static size_t uber_calc_iopen_limit(const struct silofs_fs_uber *uber)
 {
-	size_t lim;
-	const size_t align = 128;
 	struct silofs_alloc_stat st;
+	const size_t align = 128;
+	size_t lim;
 
 	silofs_allocstat(uber->ub_alloc, &st);
 	lim = (st.memsz_data / (2 * SILOFS_BK_SIZE));
@@ -704,14 +704,26 @@ static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_blobid *blobid,
                           struct silofs_blob_info **out_bli)
 {
-	return silofs_repo_stage_blob(ub_ctx->repo, blobid, out_bli);
+	int err;
+
+	err = silofs_repo_stage_blob(ub_ctx->repo, blobid, out_bli);
+	if (err && (err != -ENOENT)) {
+		log_dbg("stage blob failed: err=%d", err);
+	}
+	return err;
 }
 
 static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_blobid *blobid,
                           struct silofs_blob_info **out_bli)
 {
-	return silofs_repo_spawn_blob(ub_ctx->repo, blobid, out_bli);
+	int err;
+
+	err = silofs_repo_spawn_blob(ub_ctx->repo, blobid, out_bli);
+	if (err && (err != -ENOENT)) {
+		log_dbg("spawn blob failed: err=%d", err);
+	}
+	return err;
 }
 
 static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,

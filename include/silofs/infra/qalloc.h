@@ -27,6 +27,7 @@ struct silofs_alloc_stat {
 	size_t npages_tota;
 	size_t npages_used;
 	size_t nbytes_used;
+	size_t pad;
 };
 
 /* allocator interface */

@@ -2010,11 +2010,6 @@ int silofs_do_rename(const struct silofs_fs_ctx *fs_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static time_t uptime_of(const struct silofs_sb_info *sbi)
-{
-	return silofs_uber_uptime(sbi_uber(sbi));
-}
-
 static void fill_spstats(const struct silofs_sb_info *sbi,
                          struct silofs_query_spstats *qsp)
 {
@@ -2024,11 +2019,21 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
-static void fill_uptime(const struct silofs_sb_info *sbi,
-                        struct silofs_query_uptime *qut)
+static void fill_prstats(const struct silofs_sb_info *sbi,
+                         struct silofs_query_prstats *qus)
 {
-	qut->uptime = uptime_of(sbi);
-	qut->msflags = sbi->sb_ms_flags;
+	struct silofs_alloc_stat alst = { .pad = 0 };
+	const struct silofs_fs_uber *uber = sbi_uber(sbi);
+	const struct silofs_alloc *alloc = sbi_alloc(sbi);
+
+	silofs_allocstat(alloc, &alst);
+	silofs_memzero(qus, sizeof(*qus));
+	qus->msflags = sbi->sb_ms_flags;
+	qus->uptime = silofs_uber_uptime(uber);
+	qus->iopen_max = uber->ub_ops.op_iopen_max;
+	qus->iopen_cur = uber->ub_ops.op_iopen;
+	qus->memsz_max = alst.memsz_data;
+	qus->memsz_cur = alst.nbytes_used;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2094,10 +2099,10 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 	fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
 }
 
-static void fill_query_uptime(const struct silofs_inode_info *ii,
-                              struct silofs_ioc_query *query)
+static void fill_query_prstats(const struct silofs_inode_info *ii,
+                               struct silofs_ioc_query *query)
 {
-	fill_uptime(ii_sbi(ii), &query->u.uptime);
+	fill_prstats(ii_sbi(ii), &query->u.prstats);
 }
 
 static void fill_query_spstats(const struct silofs_inode_info *ii,
@@ -2143,8 +2148,8 @@ static int do_query_subcmd(const struct silofs_fs_ctx *fs_ctx,
 	case SILOFS_QUERY_BOOTSEC:
 		fill_query_bootsec(ii, query);
 		break;
-	case SILOFS_QUERY_UPTIME:
-		fill_query_uptime(ii, query);
+	case SILOFS_QUERY_PRSTATS:
+		fill_query_prstats(ii, query);
 		break;
 	case SILOFS_QUERY_SPSTATS:
 		fill_query_spstats(ii, query);

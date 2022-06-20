@@ -27,7 +27,7 @@
 #include <getopt.h>
 #include "cmd.h"
 
-static const char *cmd_snap_usage[] = {
+static const char *cmd_snap_help_desc[] = {
 	"snap <repo/src-name> <repo/dst-name>",
 	"",
 	"options:",
@@ -74,7 +74,7 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 		if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_snap_usage);
+			cmd_print_help_and_exit(cmd_snap_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

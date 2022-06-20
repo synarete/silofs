@@ -17,13 +17,13 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_show_usage[] = {
+static const char *cmd_show_help_desc[] = {
 	"show <subcmd> <pathname>",
 	"",
 	"sub commands:",
 	"  version      Show mounted file-system's version",
 	"  bootsec      Show back-end repo dir-path and fs-name",
-	"  uptime       Show current mount uptime in seconds",
+	"  prstats      Show current internal resources usage",
 	"  spstats      Show space-allocations stats",
 	"  statx        Show extended file stats",
 	NULL
@@ -56,7 +56,7 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 	while (opt_chr > 0) {
 		opt_chr = cmd_getopt("h", opts);
 		if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_show_usage);
+			cmd_print_help_and_exit(cmd_show_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}
@@ -71,7 +71,7 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
 	[SILOFS_QUERY_BOOTSEC]  = "bootsec",
-	[SILOFS_QUERY_UPTIME]   = "uptime",
+	[SILOFS_QUERY_PRSTATS]  = "prstats",
 	[SILOFS_QUERY_SPSTATS]  = "spstats",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
@@ -208,17 +208,6 @@ static void print_time(const char *name, time_t tm)
 	printf("%s: %ld\n", name, tm);
 }
 
-static void cmd_show_uptime(struct cmd_show_ctx *ctx)
-{
-	const struct silofs_query_uptime *qstfx = &ctx->query.u.uptime;
-
-	cmd_show_do_ioctl_query(ctx);
-	print_time("uptime", (time_t)qstfx->uptime);
-	if (qstfx->msflags) {
-		print_msflags(qstfx->msflags);
-	}
-}
-
 static void print_count(const char *prefix, const char *name, size_t cnt)
 {
 	if (prefix && strlen(prefix)) {
@@ -226,6 +215,26 @@ static void print_count(const char *prefix, const char *name, size_t cnt)
 	} else {
 		printf("%s: %lu\n", name, cnt);
 	}
+}
+
+static void print_count1(const char *name, size_t cnt)
+{
+	printf("%s: %lu\n", name, cnt);
+}
+
+static void cmd_show_prstats(struct cmd_show_ctx *ctx)
+{
+	const struct silofs_query_prstats *qfsp = &ctx->query.u.prstats;
+
+	cmd_show_do_ioctl_query(ctx);
+	print_time("uptime", (time_t)qfsp->uptime);
+	if (qfsp->msflags) {
+		print_msflags(qfsp->msflags);
+	}
+	print_count1("iopen_max", qfsp->iopen_max);
+	print_count1("iopen_cur", qfsp->iopen_cur);
+	print_count1("memsz_max", qfsp->memsz_max);
+	print_count1("memsz_cur", qfsp->memsz_cur);
 }
 
 static void print_spacestats(const struct silofs_spacestats *spst)
@@ -318,8 +327,8 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_BOOTSEC:
 		cmd_show_bootsec(ctx);
 		break;
-	case SILOFS_QUERY_UPTIME:
-		cmd_show_uptime(ctx);
+	case SILOFS_QUERY_PRSTATS:
+		cmd_show_prstats(ctx);
 		break;
 	case SILOFS_QUERY_SPSTATS:
 		cmd_show_spstats(ctx);

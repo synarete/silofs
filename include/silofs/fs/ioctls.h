@@ -33,7 +33,7 @@ enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
 	SILOFS_QUERY_VERSION    = 1,
 	SILOFS_QUERY_BOOTSEC    = 2,
-	SILOFS_QUERY_UPTIME     = 3,
+	SILOFS_QUERY_PRSTATS    = 3,
 	SILOFS_QUERY_SPSTATS    = 4,
 	SILOFS_QUERY_STATX      = 5,
 };
@@ -61,9 +61,14 @@ struct silofs_query_fsname {
 	char    name[SILOFS_NAME_MAX + 1];
 };
 
-struct silofs_query_uptime {
-	uint64_t msflags;     /* mount flags */
+struct silofs_query_prstats {
 	int64_t  uptime;      /* current up-time in seconds */
+	uint64_t msflags;     /* mount flags */
+	uint64_t iopen_max;
+	uint64_t iopen_cur;
+	uint64_t memsz_max;
+	uint64_t memsz_cur;
+	uint64_t pad[10];
 };
 
 struct silofs_query_spstats {
@@ -80,7 +85,7 @@ union silofs_query_u {
 	struct silofs_query_version     version;
 	struct silofs_query_bootsec     bootsec;
 	struct silofs_query_fsname      fsname;
-	struct silofs_query_uptime      uptime;
+	struct silofs_query_prstats     prstats;
 	struct silofs_query_spstats     spstats;
 	struct silofs_query_statx       statx;
 	uint8_t pad[1984];

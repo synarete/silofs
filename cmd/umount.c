@@ -19,7 +19,7 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_umount_usage[] = {
+static const char *cmd_umount_help_desc[] = {
 	"umount [options] <mountpoint>",
 	"",
 	"options:",
@@ -61,7 +61,7 @@ static void cmd_umount_getopt(struct cmd_umount_ctx *ctx)
 		} else if (opt_chr == 'f') {
 			ctx->args.force = 1;
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_umount_usage);
+			cmd_print_help_and_exit(cmd_umount_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

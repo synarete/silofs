@@ -16,7 +16,7 @@
  */
 #include "cmd.h"
 
-static const char *cmd_restore_usage[] = {
+static const char *cmd_restore_help_desc[] = {
 	"restore [options] <cold-repo/name> <warm-repo/name>",
 	"",
 	"options:",
@@ -68,7 +68,7 @@ static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
 			cmd_getoptarg("--passphrase-file",
 			              &ctx->args.passphrase_file);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_restore_usage);
+			cmd_print_help_and_exit(cmd_restore_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

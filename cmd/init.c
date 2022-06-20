@@ -16,7 +16,7 @@
  */
 #include "cmd.h"
 
-static const char *cmd_init_usage[] = {
+static const char *cmd_init_help_desc[] = {
 	"init <repo-dir>",
 	"",
 	"options:",
@@ -52,7 +52,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 		if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_init_usage);
+			cmd_print_help_and_exit(cmd_init_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}

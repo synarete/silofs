@@ -40,9 +40,7 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 static void ut_query_spacestats(struct ut_env *ute, ino_t ino,
                                 struct silofs_spacestats *out_spst)
 {
-	struct silofs_ioc_query query = {
-		.u.uptime.uptime = -1,
-	};
+	struct silofs_ioc_query query = { . qtype = 0 };
 
 	ut_query_ok(ute, ino, SILOFS_QUERY_SPSTATS, &query);
 	silofs_spacestats_import(out_spst, &query.u.spstats.spst);

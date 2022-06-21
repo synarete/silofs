@@ -1419,6 +1419,34 @@ out_err:
 	return err;
 }
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int ubc_stage_ubk_of(const struct silofs_uber_ctx *ub_ctx,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_ubk_info **out_ubi)
+{
+	return silofs_repo_stage_ubk(ub_ctx->repo, bkaddr, out_ubi);
+}
+
+int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,
+                        const struct silofs_bkaddr *bkaddr,
+                        struct silofs_ubk_info **out_ubi)
+{
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	int err;
+
+	err = ubc_setup(&ub_ctx, warm);
+	if (err) {
+		return err;
+	}
+	err = ubc_stage_ubk_of(&ub_ctx, bkaddr, out_ubi);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int ubc_require_no_blob(const struct silofs_uber_ctx *ub_ctx,

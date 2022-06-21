@@ -106,6 +106,12 @@ int silofs_shadow_spleaf_at(struct silofs_fs_uber *uber, bool warm,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,
+                        const struct silofs_bkaddr *bkaddr,
+                        struct silofs_ubk_info **out_ubi);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
                          struct silofs_blob_info **out_bli);

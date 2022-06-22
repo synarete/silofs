@@ -565,7 +565,7 @@ static int pac_stage_block(const struct silofs_pack_ctx *pa_ctx,
 	struct silofs_bkaddr bkaddr;
 	struct silofs_repo *repo = pac_src_repo(pa_ctx);
 
-	silofs_assert_lt(slot, SILOFS_NBK_IN_VSEC);
+	silofs_assert_lt(slot, SILOFS_NBK_IN_BLOB_MAX);
 
 	silofs_bkaddr_setup(&bkaddr, blobid, (silofs_lba_t)slot);
 	return silofs_repo_stage_ubk(repo, &bkaddr, out_ubi);

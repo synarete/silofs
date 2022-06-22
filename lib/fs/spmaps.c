@@ -337,7 +337,7 @@ static bool spnode_find_avail_spleaf(const struct silofs_spmap_node *sn,
 			ret = true;
 			break;
 		}
-		voff = silofs_off_to_vsec_next(voff, 1);
+		voff = silofs_off_to_spleaf_next(voff);
 	}
 	*out_voff = voff;
 	return ret;
@@ -1100,9 +1100,9 @@ static int sli_cap_allocate(const struct silofs_spleaf_info *sli,
                             enum silofs_stype stype)
 {
 	const size_t nbytes = stype_size(stype);
-	const size_t nbytes_max = SILOFS_VSEC_SIZE;
+	const size_t nbytes_max = SILOFS_BLOB_SIZE_MAX;
 
-	silofs_assert_le(sli->sl_nused_bytes, SILOFS_VSEC_SIZE);
+	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
 
 	return ((sli->sl_nused_bytes + nbytes) <= nbytes_max) ? 0 : -ENOSPC;
 }
@@ -1133,7 +1133,7 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 	struct silofs_spmap_leaf *sl = sli->sl;
 
 	silofs_assert_eq(sli->sl->sl_stype_sub, vaddr->stype);
-	silofs_assert_le(sli->sl_nused_bytes + vaddr->len, SILOFS_VSEC_SIZE);
+	silofs_assert_le(sli->sl_nused_bytes + vaddr->len, SILOFS_BLOB_SIZE_MAX);
 	sli->sl_nused_bytes += vaddr->len;
 
 	spleaf_set_allocated_at(sl, vaddr);
@@ -1148,7 +1148,7 @@ void silofs_sli_clear_allocated_space(struct silofs_spleaf_info *sli,
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
 
-	silofs_assert_le(sli->sl_nused_bytes, SILOFS_VSEC_SIZE);
+	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
 	silofs_assert_eq(sli->sl->sl_stype_sub, vaddr->stype);
 	silofs_assert_ge(sli->sl_nused_bytes, vaddr->len);
 	sli->sl_nused_bytes -= vaddr->len;
@@ -1779,7 +1779,7 @@ int silofs_verify_spmap_node(const struct silofs_spmap_node *sn)
 	}
 	spnode_vrange(sn, &vrange);
 	len = off_len(vrange.beg, vrange.end);
-	if (len < SILOFS_VSEC_SIZE) {
+	if (len < SILOFS_BLOB_SIZE_MAX) {
 		log_err("bad spmap-node vrange: height=%lu "
 		        "beg=0x%lx end=0x%lx", height, vrange.beg, vrange.end);
 		return -EFSCORRUPTED;

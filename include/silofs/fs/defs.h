@@ -95,19 +95,15 @@
 #define SILOFS_BK_SIZE                  (1L << SILOFS_BK_SHIFT)
 
 
-/* number of blocks within virtual section */
-#define SILOFS_NBK_IN_VSEC              (512L)
+/* maximal number of blocks within single blob */
+#define SILOFS_NBK_IN_BLOB_MAX          (512L)
 
-/* size in bytes of single virtual section (32M) */
-#define SILOFS_VSEC_SIZE \
-	(SILOFS_NBK_IN_VSEC * SILOFS_BK_SIZE)
+/* maximal size in bytes of single blob (32M) */
+#define SILOFS_BLOB_SIZE_MAX \
+	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BK_SIZE)
 
 /* number of children per space-mapping node */
-#define SILOFS_UNODE_NCHILDS            SILOFS_NBK_IN_VSEC
-
-/* vspace-span of single bottom-level space-node (16G) */
-#define SILOFS_SPNODE_VRANGE_SIZE \
-	(SILOFS_UNODE_NCHILDS * SILOFS_VSEC_SIZE)
+#define SILOFS_UNODE_NCHILDS            SILOFS_NBK_IN_BLOB_MAX
 
 
 /* non-valid ("NIL") logical byte address */

@@ -2399,7 +2399,7 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 	return actual;
 }
 
-static size_t cache_overpop(const struct silofs_cache *cache)
+static size_t cache_lrumaps_overpop(const struct silofs_cache *cache)
 {
 	const struct silofs_lrumap *lms[] = {
 		&cache->c_vi_lm,
@@ -2430,9 +2430,12 @@ static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
 
 static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 {
-	size_t niter = 0;
+	const size_t blobs_over = cache_blobs_overflow(cache);
+	const size_t lrumaps_over = cache_lrumaps_overpop(cache);
 	const uint64_t mem_press = cache_memory_pressure(cache);
+	size_t niter;
 
+	niter = min(lrumaps_over, 64);
 	if (flags & SILOFS_F_WALKFS) {
 		niter += silofs_popcount64(mem_press >> 1);
 	}
@@ -2454,8 +2457,9 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	if (flags & SILOFS_F_NOW) {
 		niter += 1;
 	}
-	niter += silofs_clamp(cache_overpop(cache), 0, 64);
-
+	if (flags && blobs_over) {
+		niter += 2;
+	}
 	return niter;
 }
 

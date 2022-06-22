@@ -176,10 +176,10 @@ static void test_fallocate_truncate(struct vt_env *vte)
 	test_fallocate_truncate_(vte, 0, VT_BK_SIZE);
 	test_fallocate_truncate_(vte, 11, VT_BK_SIZE);
 	test_fallocate_truncate_(vte, 11, VT_UMEGA + 111);
-	test_fallocate_truncate_(vte, 0, SILOFS_VSEC_SIZE);
-	test_fallocate_truncate_(vte, VT_MEGA - 1, SILOFS_VSEC_SIZE + 2);
+	test_fallocate_truncate_(vte, 0, SILOFS_BLOB_SIZE_MAX);
+	test_fallocate_truncate_(vte, VT_MEGA - 1, SILOFS_BLOB_SIZE_MAX + 2);
 	test_fallocate_truncate_(vte, VT_GIGA, VT_UMEGA);
-	test_fallocate_truncate_(vte, VT_TERA - 2, SILOFS_VSEC_SIZE + 3);
+	test_fallocate_truncate_(vte, VT_TERA - 2, SILOFS_BLOB_SIZE_MAX + 3);
 	test_fallocate_truncate_(vte, VT_TERA - 1111, VT_UMEGA + 1111);
 }
 

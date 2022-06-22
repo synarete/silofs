@@ -26,6 +26,10 @@
 #include <errno.h>
 #include <ctype.h>
 
+
+#define SPNODE2_VRANGE_SIZE (SILOFS_NBK_IN_BLOB_MAX * SILOFS_BLOB_SIZE_MAX)
+
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void byte_to_ascii(unsigned int b, char *a)
@@ -209,28 +213,28 @@ loff_t silofs_off_in_bk(loff_t off)
 	return silofs_off_within(off, SILOFS_BK_SIZE);
 }
 
-loff_t silofs_off_to_vsec_start(loff_t voff)
+loff_t silofs_off_to_spleaf_start(loff_t voff)
 {
-	return off_align(voff, SILOFS_VSEC_SIZE);
+	return off_align(voff, SILOFS_BLOB_SIZE_MAX);
 }
 
-loff_t silofs_off_to_vsec_next(loff_t voff, size_t nvsec)
+loff_t silofs_off_to_spleaf_next(loff_t voff)
 {
-	const loff_t voff_next = off_end(voff, nvsec * SILOFS_VSEC_SIZE);
+	const loff_t voff_next = off_end(voff, SILOFS_BLOB_SIZE_MAX);
 
-	return silofs_off_to_vsec_start(voff_next);
+	return silofs_off_to_spleaf_start(voff_next);
 }
 
-loff_t silofs_off_to_spnode_start(loff_t voff)
+static loff_t silofs_off_to_spnode2_start(loff_t voff)
 {
-	return off_align(voff, SILOFS_SPNODE_VRANGE_SIZE);
+	return off_align(voff, SPNODE2_VRANGE_SIZE);
 }
 
-loff_t silofs_off_to_spnode_next(loff_t voff)
+loff_t silofs_off_to_spnode2_next(loff_t voff)
 {
-	const loff_t voff_next = off_end(voff, SILOFS_SPNODE_VRANGE_SIZE);
+	const loff_t voff_next = off_end(voff, SPNODE2_VRANGE_SIZE);
 
-	return silofs_off_to_spnode_start(voff_next);
+	return silofs_off_to_spnode2_start(voff_next);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -613,22 +617,14 @@ uint64_t silofs_blobid_hkey(const struct silofs_blobid *blobid)
 	return hk ^ blobid->size;
 }
 
-static size_t blobid_size_for(size_t obj_size, size_t nobjs)
-{
-	const size_t bk_size = SILOFS_BK_SIZE;
-
-	return div_round_up(nobjs * obj_size, bk_size) * bk_size;
-}
-
 void silofs_blobid_make_tas(struct silofs_blobid *blobid,
-                            const struct silofs_xid *treeid,
-                            size_t obj_size, size_t nobjs)
+                            const struct silofs_xid *treeid)
 {
 	struct silofs_xxid_tas *tid = &blobid->xxid.u.tid;
 
 	xid_assign(&tid->tree_id, treeid);
 	xid_mkrand(&tid->uniq_id);
-	blobid->size = blobid_size_for(obj_size, nobjs);
+	blobid->size = SILOFS_BLOB_SIZE_MAX;
 }
 
 void silofs_blobid_make_cas(struct silofs_blobid *blobid,
@@ -1370,7 +1366,7 @@ int silofs_check_fs_capacity(size_t cap_size)
 int silofs_calc_fs_capacity(size_t capcity_want, size_t *out_capacity)
 {
 	int err;
-	const size_t align_size = SILOFS_VSEC_SIZE;
+	const size_t align_size = SILOFS_BLOB_SIZE_MAX;
 
 	err = silofs_check_fs_capacity(capcity_want);
 	if (err) {

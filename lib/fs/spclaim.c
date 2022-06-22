@@ -304,7 +304,7 @@ static int spac_find_free_space_within(struct silofs_spalloc_ctx *spa_ctx,
 		if ((err != -ENOSPC) || (vnxt >= vrange->end)) {
 			break;
 		}
-		voff = silofs_off_to_vsec_next(vnxt, 1);
+		voff = silofs_off_to_spleaf_next(vnxt);
 	}
 	return err;
 }
@@ -388,7 +388,7 @@ spac_find_free_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 		if (ret != -ENOSPC) {
 			return ret;
 		}
-		voff = silofs_off_to_spnode_next(voff);
+		voff = silofs_off_to_spnode2_next(voff);
 	}
 	return -ENOSPC;
 }

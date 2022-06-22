@@ -299,14 +299,12 @@ static int sbi_inspect_cached_sli(const struct silofs_sb_info *sbi,
 }
 
 static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
-                                enum silofs_stype stype, size_t nobjs,
                                 struct silofs_blobid *out_blobid)
 {
 	struct silofs_xid tree_id;
-	const size_t obj_size = stype_size(stype);
 
 	silofs_sbi_treeid(sbi, &tree_id);
-	silofs_blobid_make_tas(out_blobid, &tree_id, obj_size, nobjs);
+	silofs_blobid_make_tas(out_blobid, &tree_id);
 }
 
 static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
@@ -430,11 +428,10 @@ static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
-	const size_t nslots = SILOFS_UNODE_NCHILDS;
 	const enum silofs_stype stype = SILOFS_STYPE_SPNODE;
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, stype, nslots, &blobid);
+	sbi_make_blobid_for(stg_ctx->sbi, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
 	if (err) {
 		return err;
@@ -471,11 +468,10 @@ static int stgc_spawn_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
-	const size_t nchilds = ARRAY_SIZE(sni->sn->sn_subref);
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, stype, nchilds, &blobid);
+	sbi_make_blobid_for(stg_ctx->sbi, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
 	if (err) {
 		return err;
@@ -1373,10 +1369,9 @@ static int stgc_spawn_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
-	const size_t nbks = ARRAY_SIZE(sli->sl->sl_subref);
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, SILOFS_STYPE_ANONBK, nbks, &blobid);
+	sbi_make_blobid_for(stg_ctx->sbi, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->stype_sub, &bli);
 	if (err) {
 		return err;

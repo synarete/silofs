@@ -81,13 +81,11 @@ loff_t silofs_off_within(loff_t off, size_t bsz);
 
 loff_t silofs_off_in_bk(loff_t off);
 
-loff_t silofs_off_to_vsec_start(loff_t voff);
+loff_t silofs_off_to_spleaf_start(loff_t voff);
 
-loff_t silofs_off_to_vsec_next(loff_t voff, size_t nvsec);
+loff_t silofs_off_to_spleaf_next(loff_t voff);
 
-loff_t silofs_off_to_spnode_start(loff_t voff);
-
-loff_t silofs_off_to_spnode_next(loff_t voff);
+loff_t silofs_off_to_spnode2_next(loff_t voff);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -130,8 +128,7 @@ uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid);
 
 
 void silofs_blobid_make_tas(struct silofs_blobid *blobid,
-                            const struct silofs_xid *treeid,
-                            size_t obj_size, size_t nobjs);
+                            const struct silofs_xid *treeid);
 
 void silofs_blobid_make_cas(struct silofs_blobid *blobid,
                             const struct silofs_hash256 *hash, size_t size);

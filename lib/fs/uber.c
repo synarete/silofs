@@ -154,11 +154,9 @@ void silofs_uber_relax_caches(const struct silofs_fs_uber *uber, int flags)
 static void make_supers_blobid(struct silofs_blobid *out_blobid)
 {
 	struct silofs_xid treeid;
-	const size_t obj_size = SILOFS_BK_SIZE;
-	const size_t nobjs = SILOFS_NBK_IN_VSEC;
 
 	silofs_xid_generate(&treeid);
-	silofs_blobid_make_tas(out_blobid, &treeid, obj_size, nobjs);
+	silofs_blobid_make_tas(out_blobid, &treeid);
 }
 
 static void make_super_uaddr(const struct silofs_blobid *blobid,

@@ -1520,7 +1520,6 @@ void silofs_repo_drop_cache(struct silofs_repo *repo)
 
 void silofs_repo_relax_cache(struct silofs_repo *repo, int flags)
 {
-	silofs_cache_relax_blobs(&repo->re_cache);
 	silofs_cache_relax(&repo->re_cache, flags);
 }
 

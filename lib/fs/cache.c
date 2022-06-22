@@ -408,12 +408,14 @@ static size_t ce_refcnt(const struct silofs_cache_elem *ce_const)
 
 static void ce_incref(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_add(&ce->ce_refcnt, 1);
+	/* silofs_atomic_add(&ce->ce_refcnt, 1); */
+	ce->ce_refcnt++;
 }
 
 static void ce_decref(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_sub(&ce->ce_refcnt, 1);
+	/* silofs_atomic_sub(&ce->ce_refcnt, 1); */
+	ce->ce_refcnt--;
 	silofs_assert_ge(ce->ce_refcnt, 0);
 }
 

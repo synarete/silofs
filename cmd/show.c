@@ -228,13 +228,12 @@ static void cmd_show_prstats(struct cmd_show_ctx *ctx)
 
 	cmd_show_do_ioctl_query(ctx);
 	print_time("uptime", (time_t)qfsp->uptime);
-	if (qfsp->msflags) {
-		print_msflags(qfsp->msflags);
-	}
-	print_count1("iopen_max", qfsp->iopen_max);
-	print_count1("iopen_cur", qfsp->iopen_cur);
+	print_msflags(qfsp->msflags);
 	print_count1("memsz_max", qfsp->memsz_max);
 	print_count1("memsz_cur", qfsp->memsz_cur);
+	print_count1("bopen_cur", qfsp->bopen_cur);
+	print_count1("iopen_max", qfsp->iopen_max);
+	print_count1("iopen_cur", qfsp->iopen_cur);
 }
 
 static void print_spacestats(const struct silofs_spacestats *spst)

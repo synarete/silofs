@@ -1339,7 +1339,7 @@ static bool cache_evict_or_relru_bli(struct silofs_cache *cache,
 }
 
 static size_t
-cache_shrink_or_relru_blis(struct silofs_cache *cache, size_t cnt)
+cache_shrink_or_relru_blis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_blob_info *bli;
 	const size_t n = min(cnt, cache->c_bli_lm.lm_lru.sz);
@@ -1352,17 +1352,25 @@ cache_shrink_or_relru_blis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_bli(cache, bli);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
 
-void silofs_cache_relax_blobs(struct silofs_cache *cache)
+/*
+ * Shrink-relru of blobs is different from other shrinker, as elements do not
+ * get promoted often in LRU, but rather stay alive due to ref-count by live
+ * blocks. Thus, we end up with lots of elements which are live with active
+ * ref-count at the tail of LRU, and therefore we need to keep on iterating in
+ * search for other candidate for eviction.
+ */
+void silofs_cache_relax_blobs(struct silofs_cache *cache, size_t cnt)
 {
-	cache_shrink_or_relru_blis(cache, 1);
+	cache_shrink_or_relru_blis(cache, cnt, true);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1592,7 +1600,7 @@ static bool cache_evict_or_relru_ubi(struct silofs_cache *cache,
 }
 
 static size_t
-cache_shrink_or_relru_ubis(struct silofs_cache *cache, size_t cnt)
+cache_shrink_or_relru_ubis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_ubk_info *ubi;
 	const size_t n = min(cnt, cache->c_ubi_lm.lm_lru.sz);
@@ -1605,10 +1613,11 @@ cache_shrink_or_relru_ubis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_ubi(cache, ubi);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -1729,7 +1738,8 @@ static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
 	return evicted;
 }
 
-static size_t cache_shrink_or_relru_uis(struct silofs_cache *cache, size_t cnt)
+static size_t
+cache_shrink_or_relru_uis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_unode_info *ui;
 	const size_t n = min(cnt, cache->c_ui_lm.lm_lru.sz);
@@ -1742,10 +1752,11 @@ static size_t cache_shrink_or_relru_uis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_ui(cache, ui);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -2096,7 +2107,7 @@ static bool cache_evict_or_relru_vbi(struct silofs_cache *cache,
 }
 
 static size_t
-cache_shrink_or_relru_vbis(struct silofs_cache *cache, size_t cnt)
+cache_shrink_or_relru_vbis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_vbk_info *vbi = NULL;
 	const size_t n = min(cnt, cache->c_vbi_lm.lm_lru.sz);
@@ -2109,10 +2120,11 @@ cache_shrink_or_relru_vbis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_vbi(cache, vbi);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -2240,7 +2252,8 @@ static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
 	return evicted;
 }
 
-static size_t cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt)
+static size_t
+cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_vnode_info *vi = NULL;
 	const size_t n = min(cnt, cache->c_vi_lm.lm_lru.sz);
@@ -2253,10 +2266,11 @@ static size_t cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt)
 			break;
 		}
 		ok = cache_evict_or_relru_vi(cache, vi);
-		if (!ok) {
+		if (ok) {
+			evicted++;
+		} else if (!force) {
 			break;
 		}
-		evicted++;
 	}
 	return evicted;
 }
@@ -2348,21 +2362,22 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 	const size_t extra = silofs_clamp(1UL << shift, 1, 64);
 	size_t actual = 0;
 	size_t count;
+	bool force = false;
 
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
-	actual += cache_shrink_or_relru_vis(cache, count);
+	actual += cache_shrink_or_relru_vis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
-	actual += cache_shrink_or_relru_uis(cache, count);
+	actual += cache_shrink_or_relru_uis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_ubi_lm) + extra;
-	actual += cache_shrink_or_relru_ubis(cache, count);
+	actual += cache_shrink_or_relru_ubis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_vbi_lm) + extra;
-	actual += cache_shrink_or_relru_vbis(cache, count);
+	actual += cache_shrink_or_relru_vbis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_bli_lm) + extra;
-	actual += cache_shrink_or_relru_blis(cache, count);
+	actual += cache_shrink_or_relru_blis(cache, count, force);
 
 	return actual;
 }

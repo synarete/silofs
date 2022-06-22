@@ -64,11 +64,12 @@ struct silofs_query_fsname {
 struct silofs_query_prstats {
 	int64_t  uptime;      /* current up-time in seconds */
 	uint64_t msflags;     /* mount flags */
-	uint64_t iopen_max;
-	uint64_t iopen_cur;
 	uint64_t memsz_max;
 	uint64_t memsz_cur;
-	uint64_t pad[10];
+	uint64_t bopen_cur;
+	uint64_t iopen_max;
+	uint64_t iopen_cur;
+	uint64_t pad[9];
 };
 
 struct silofs_query_spstats {

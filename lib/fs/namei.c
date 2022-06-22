@@ -2025,6 +2025,7 @@ static void fill_prstats(const struct silofs_sb_info *sbi,
 	struct silofs_alloc_stat alst = { .pad = 0 };
 	const struct silofs_fs_uber *uber = sbi_uber(sbi);
 	const struct silofs_alloc *alloc = sbi_alloc(sbi);
+	const struct silofs_cache *cache = sbi_cache(sbi);
 
 	silofs_allocstat(alloc, &alst);
 	silofs_memzero(qus, sizeof(*qus));
@@ -2034,6 +2035,7 @@ static void fill_prstats(const struct silofs_sb_info *sbi,
 	qus->iopen_cur = uber->ub_ops.op_iopen;
 	qus->memsz_max = alst.memsz_data;
 	qus->memsz_cur = alst.nbytes_used;
+	qus->bopen_cur = cache->c_bli_lm.lm_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

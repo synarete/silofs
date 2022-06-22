@@ -93,7 +93,7 @@ silofs_cache_spawn_blob(struct silofs_cache *cache,
 void silofs_cache_evict_blob(struct silofs_cache *cache,
                              struct silofs_blob_info *bli);
 
-void silofs_cache_relax_blobs(struct silofs_cache *cache);
+void silofs_cache_relax_blobs(struct silofs_cache *cache, size_t cnt);
 
 
 struct silofs_ubk_info *

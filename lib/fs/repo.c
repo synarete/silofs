@@ -711,22 +711,7 @@ static void repo_evict_cached_bli(struct silofs_repo *repo,
 
 static int repo_objs_relax_cached_blis(struct silofs_repo *repo)
 {
-	/*
-	 * TODO-0035: Define proper upper-bound.
-	 *
-	 * Let each repo have upper-limit to cached blobs, based on the
-	 * process' rlimit RLIMIT_NOFILE.
-	 */
-	const size_t ncached_lim = 256;
-	const size_t ncached = repo->re_cache.c_bli_lm.lm_lru.sz;
-	size_t dif;
-	size_t cnt;
-
-	if (ncached > ncached_lim) {
-		dif = ncached - ncached_lim;
-		cnt = silofs_clamp(dif / 2, 1, 64);
-		silofs_cache_relax_blobs(&repo->re_cache, cnt);
-	}
+	silofs_cache_relax_blobs(&repo->re_cache);
 	return 0;
 }
 
@@ -1535,6 +1520,7 @@ void silofs_repo_drop_cache(struct silofs_repo *repo)
 
 void silofs_repo_relax_cache(struct silofs_repo *repo, int flags)
 {
+	silofs_cache_relax_blobs(&repo->re_cache);
 	silofs_cache_relax(&repo->re_cache, flags);
 }
 

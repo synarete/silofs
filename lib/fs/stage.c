@@ -39,6 +39,11 @@ struct silofs_stage_ctx {
 
 static bool is_low_resource_error(int err)
 {
+	/* XXX rm */
+	if ((err == -EMFILE) || (err == EMFILE)) {
+		return true;
+	}
+
 	return (err == -ENOMEM) || (err == -EMFILE) || (err == -ENFILE);
 }
 
@@ -198,7 +203,7 @@ static int sbi_commit_and_relax(const struct silofs_sb_info *sbi)
 
 	err = sbi_commit_dirty(sbi);
 	if (!err) {
-		silofs_uber_relax_caches(sbi_uber(sbi), 0);
+		silofs_uber_relax_caches(sbi_uber(sbi), SILOFS_F_NOW);
 	}
 	return err;
 }
@@ -344,7 +349,7 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 }
 
 
-static int stgc_flush_dirty(const struct silofs_stage_ctx *stg_ctx)
+static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
 {
 	const struct silofs_cache *cache = NULL;
 	int err;
@@ -354,8 +359,10 @@ static int stgc_flush_dirty(const struct silofs_stage_ctx *stg_ctx)
 		cache = sbi_cache(stg_ctx->sbi);
 		log_dbg("commit dirty failure: ndirty=%lu err=%d",
 		        cache->c_dq.dq_accum_nbytes, err);
+		return err;
 	}
-	return err;
+	silofs_uber_relax_caches(stg_ctx->uber, SILOFS_F_NOW);
+	return 0;
 }
 
 static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
@@ -372,7 +379,7 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (!is_low_resource_error(err)) {
 		return err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		return err;
 	}
@@ -398,7 +405,7 @@ static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (!is_low_resource_error(err)) {
 		return err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		return err;
 	}
@@ -658,7 +665,7 @@ static int stgc_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
 	if (err != -ENOMEM) {
 		goto out_err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -694,7 +701,7 @@ static int stgc_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
 	if (err != -ENOMEM) {
 		goto out_err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -735,7 +742,7 @@ static int stgc_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
 	if (err != -ENOMEM) {
 		goto out_err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -771,7 +778,7 @@ static int stgc_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
 	if (err != -ENOMEM) {
 		goto out_err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -1568,7 +1575,7 @@ static int stgc_stage_ubk_at(const struct silofs_stage_ctx *stg_ctx,
 	if (!is_low_resource_error(err)) {
 		goto out_err;
 	}
-	err = stgc_flush_dirty(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}

@@ -1370,8 +1370,24 @@ cache_shrink_or_relru_blis(struct silofs_cache *cache, size_t cnt, bool force)
  * ref-count at the tail of LRU, and therefore we need to keep on iterating in
  * search for other candidate for eviction.
  */
-void silofs_cache_relax_blobs(struct silofs_cache *cache, size_t cnt)
+/*
+ * TODO-0035: Define proper upper-bound.
+ *
+ * Have explicit upper-limit to cached blobs, based on the process' rlimit
+ * RLIMIT_NOFILE and memory limits.
+ */
+static size_t cache_blobs_overflow(const struct silofs_cache *cache)
 {
+	const size_t bar = 256;
+	const size_t cur = cache->c_bli_lm.lm_lru.sz;
+
+	return (cur > bar) ? (cur - bar) : 0;
+}
+
+void silofs_cache_relax_blobs(struct silofs_cache *cache)
+{
+	const size_t cnt = cache_blobs_overflow(cache);
+
 	cache_shrink_or_relru_blis(cache, cnt, true);
 }
 
@@ -2364,22 +2380,21 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 	const size_t extra = silofs_clamp(1UL << shift, 1, 64);
 	size_t actual = 0;
 	size_t count;
-	bool force = false;
 
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
-	actual += cache_shrink_or_relru_vis(cache, count, force);
+	actual += cache_shrink_or_relru_vis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
-	actual += cache_shrink_or_relru_uis(cache, count, force);
+	actual += cache_shrink_or_relru_uis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_ubi_lm) + extra;
-	actual += cache_shrink_or_relru_ubis(cache, count, force);
+	actual += cache_shrink_or_relru_ubis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_vbi_lm) + extra;
-	actual += cache_shrink_or_relru_vbis(cache, count, force);
+	actual += cache_shrink_or_relru_vbis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_bli_lm) + extra;
-	actual += cache_shrink_or_relru_blis(cache, count, force);
+	actual += cache_shrink_or_relru_blis(cache, count, false);
 
 	return actual;
 }
@@ -2435,6 +2450,9 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	}
 	if ((flags & (SILOFS_F_IDLE | SILOFS_F_WALKFS))) {
 		niter += (mem_press & ~1UL) ? 2 : 1;
+	}
+	if (flags & SILOFS_F_NOW) {
+		niter += 1;
 	}
 	niter += silofs_clamp(cache_overpop(cache), 0, 64);
 
@@ -2555,8 +2573,16 @@ static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
 
 bool silofs_cache_need_flush(const struct silofs_cache *cache, int flags)
 {
-	return dq_need_flush(&cache->c_dq, flags) ||
-	       cache_mem_press_need_flush(cache);
+	if (cache_blobs_overflow(cache) > 0) {
+		return true;
+	}
+	if (dq_need_flush(&cache->c_dq, flags)) {
+		return true;
+	}
+	if (cache_mem_press_need_flush(cache)) {
+		return true;
+	}
+	return false;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

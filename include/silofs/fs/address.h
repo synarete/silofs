@@ -128,7 +128,8 @@ uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid);
 
 
 void silofs_blobid_make_tas(struct silofs_blobid *blobid,
-                            const struct silofs_xid *treeid);
+                            const struct silofs_xid *tree_id,
+                            const struct silofs_xid *uniq_id);
 
 void silofs_blobid_make_cas(struct silofs_blobid *blobid,
                             const struct silofs_hash256 *hash, size_t size);
@@ -228,18 +229,24 @@ void silofs_voaddr_assign(struct silofs_voaddr *voa,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_xid_generate(struct silofs_xid *mid);
+void silofs_xid_generate(struct silofs_xid *xid);
 
-uint64_t silofs_xid_as_u64(const struct silofs_xid *mid);
+uint64_t silofs_xid_as_u64(const struct silofs_xid *xid);
 
-bool silofs_xid_isequal(const struct silofs_xid *mid1,
-                        const struct silofs_xid *mid2);
+bool silofs_xid_isequal(const struct silofs_xid *xid1,
+                        const struct silofs_xid *xid2);
 
 void silofs_xid128_set(struct silofs_xid128 *xid128,
-                       const struct silofs_xid *mid);
+                       const struct silofs_xid *xid);
 
 void silofs_xid128_parse(const struct silofs_xid128 *xid128,
-                         struct silofs_xid *mid);
+                         struct silofs_xid *xid);
+
+void silofs_xxid256_set(struct silofs_xxid256 *xxid256,
+                        const struct silofs_xxid *xxid);
+
+void silofs_xxid256_parse(const struct silofs_xxid256 *xxid256,
+                          struct silofs_xxid *xxid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -334,6 +341,8 @@ void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             enum silofs_height height, loff_t voff_base);
 
+void silofs_vrange_of_super(struct silofs_vrange *vrange);
+
 void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
                              enum silofs_height height, loff_t voff);
 
@@ -346,6 +355,13 @@ void silofs_vrange128_set(struct silofs_vrange128 *vrng,
 
 void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
                             struct silofs_vrange *vrange);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_calc_uniq_id(const struct silofs_mdigest *md,
+                         const struct silofs_seed64b *base,
+                         const struct silofs_vrange  *vrange,
+                         struct silofs_xid *out_uniq_id);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -16,9 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/address.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -407,10 +405,15 @@ void silofs_xid_generate(struct silofs_xid *xid)
 	xid_xor_with(xid, &u.xi);
 }
 
+static void xid_assign_by(struct silofs_xid *xid, const void *id)
+{
+	memcpy(xid->id, id, sizeof(xid->id));
+}
+
 static void xid_assign(struct silofs_xid *xid,
                        const struct silofs_xid *other)
 {
-	memcpy(xid->id, other->id, sizeof(xid->id));
+	xid_assign_by(xid, other->id);
 }
 
 static long xid_compare(const struct silofs_xid *xid1,
@@ -464,7 +467,7 @@ void silofs_xid128_parse(const struct silofs_xid128 *xid128,
 	memcpy(xid->id, xid128->id, sizeof(xid->id));
 }
 
-static void xxid256_set(struct silofs_xxid256 *xxid256,
+void silofs_xxid256_set(struct silofs_xxid256 *xxid256,
                         const struct silofs_xxid *xxid)
 {
 	STATICASSERT_EQ(sizeof(xxid256->u.xid), sizeof(xxid->u.xid));
@@ -475,7 +478,7 @@ static void xxid256_set(struct silofs_xxid256 *xxid256,
 	silofs_xid128_set(&xxid256->u.xid[1], &xxid->u.xid[1]);
 }
 
-static void xxid256_parse(const struct silofs_xxid256 *xxid256,
+void silofs_xxid256_parse(const struct silofs_xxid256 *xxid256,
                           struct silofs_xxid *xxid)
 {
 	STATICASSERT_EQ(sizeof(xxid256->u.xid), sizeof(xxid->u.xid));
@@ -618,12 +621,14 @@ uint64_t silofs_blobid_hkey(const struct silofs_blobid *blobid)
 }
 
 void silofs_blobid_make_tas(struct silofs_blobid *blobid,
-                            const struct silofs_xid *treeid)
+                            const struct silofs_xid *tree_id,
+                            const struct silofs_xid *uniq_id)
 {
 	struct silofs_xxid_tas *tid = &blobid->xxid.u.tid;
 
-	xid_assign(&tid->tree_id, treeid);
-	xid_mkrand(&tid->uniq_id);
+	xid_assign(&tid->tree_id, tree_id);
+	xid_assign(&tid->uniq_id, uniq_id);
+
 	blobid->size = SILOFS_BLOB_SIZE_MAX;
 }
 
@@ -659,7 +664,7 @@ void silofs_blobid40b_reset(struct silofs_blobid40b *blid)
 void silofs_blobid40b_set(struct silofs_blobid40b *blid,
                           const struct silofs_blobid *blobid)
 {
-	xxid256_set(&blid->xxid, &blobid->xxid);
+	silofs_xxid256_set(&blid->xxid, &blobid->xxid);
 	blid->size = silofs_cpu_to_le32((uint32_t)blobid->size);
 	blid->reserved = 0;
 }
@@ -667,7 +672,7 @@ void silofs_blobid40b_set(struct silofs_blobid40b *blid,
 void silofs_blobid40b_parse(const struct silofs_blobid40b *blid,
                             struct silofs_blobid *blobid)
 {
-	xxid256_parse(&blid->xxid, &blobid->xxid);
+	silofs_xxid256_parse(&blid->xxid, &blobid->xxid);
 	blobid->size = silofs_le32_to_cpu(blid->size);
 }
 
@@ -1316,6 +1321,11 @@ void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
 	silofs_vrange_setup_by(vrange, height, voff);
 }
 
+void silofs_vrange_of_super(struct silofs_vrange *vrange)
+{
+	silofs_vrange_setup_by(vrange, SILOFS_HEIGHT_SUPER, 0);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
@@ -1348,6 +1358,40 @@ void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
 	beg = silofs_off_to_cpu(vrng->beg);
 	len_height_to_cpu(vrng->len_height, &len, &height);
 	silofs_vrange_setup(vrange, height, beg, off_end(beg, len));
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void seed64b_assign(struct silofs_seed64b *seed,
+                           const struct silofs_seed64b *other)
+{
+	memcpy(seed, other, sizeof(*seed));
+}
+
+static void seed128b_setup(struct silofs_seed128b *seed,
+                           const struct silofs_seed64b *base,
+                           const struct silofs_vrange  *vrange)
+{
+	memset(seed, 0, sizeof(*seed));
+	seed64b_assign(&seed->base, base);
+	seed->voff = silofs_cpu_to_off(vrange->beg);
+	seed->height = (uint8_t)vrange->height;
+}
+
+void silofs_calc_uniq_id(const struct silofs_mdigest *md,
+                         const struct silofs_seed64b *base,
+                         const struct silofs_vrange  *vrange,
+                         struct silofs_xid *out_uniq_id)
+{
+	struct silofs_seed128b seed;
+	struct silofs_hash256 hash;
+
+	STATICASSERT_LE(sizeof(out_uniq_id->id), sizeof(hash));
+
+	seed128b_setup(&seed, base, vrange);
+	silofs_sha256_of(md, &seed, sizeof(seed), &hash);
+
+	xid_assign_by(out_uniq_id, hash.hash);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

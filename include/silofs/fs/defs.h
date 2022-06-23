@@ -481,10 +481,17 @@ struct silofs_xxid256 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_vrange128 {
-	int64_t                         beg;
-	uint64_t                        len_height;
-} silofs_packed_aligned16;
+struct silofs_seed64b {
+	uint8_t                         seed[64];
+} silofs_packed_aligned64;
+
+
+struct silofs_seed128b {
+	struct silofs_seed64b           base;
+	int64_t                         voff;
+	uint8_t                         height;
+	uint8_t                         reserved[55];
+} silofs_packed_aligned64;
 
 
 struct silofs_blobid40b {
@@ -515,6 +522,12 @@ struct silofs_uaddr64b {
 	uint8_t                         height;
 	uint8_t                         reserved[6];
 } silofs_packed_aligned8;
+
+
+struct silofs_vrange128 {
+	int64_t                         beg;
+	uint64_t                        len_height;
+} silofs_packed_aligned16;
 
 
 struct silofs_vaddr56 {
@@ -576,15 +589,6 @@ struct silofs_header {
 } silofs_packed_aligned16;
 
 
-struct silofs_spmap_ref {
-	struct silofs_uaddr64b          sr_ulink;
-	uint8_t                         sr_stype_sub;
-	uint8_t                         sr_pad[3];
-	uint32_t                        sr_flags;
-	uint8_t                         sr_reserved[48];
-} silofs_packed_aligned8;
-
-
 struct silofs_super_block {
 	/* 0..2K */
 	struct silofs_header            sb_hdr;
@@ -596,7 +600,8 @@ struct silofs_super_block {
 	uint8_t                         sb_reserved2[23];
 	uint8_t                         sb_sw_version[64];
 	struct silofs_uuid              sb_uuid;
-	uint8_t                         sb_reserved3[112];
+	uint8_t                         sb_reserved3[48];
+	struct silofs_seed64b           sb_seed;
 	struct silofs_name              sb_name;
 	uint8_t                         sb_reserved4[512];
 	/* 1K..2K */
@@ -656,6 +661,15 @@ struct silofs_spstats_node {
 	struct silofs_spstats           sp_st;
 	uint8_t                         sp_reserved2[1024];
 } silofs_packed_aligned64;
+
+
+struct silofs_spmap_ref {
+	struct silofs_uaddr64b          sr_ulink;
+	uint8_t                         sr_stype_sub;
+	uint8_t                         sr_pad[3];
+	uint32_t                        sr_flags;
+	uint8_t                         sr_reserved[48];
+} silofs_packed_aligned8;
 
 
 struct silofs_spmap_node {

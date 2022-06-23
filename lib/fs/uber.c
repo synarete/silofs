@@ -153,10 +153,11 @@ void silofs_uber_relax_caches(const struct silofs_fs_uber *uber, int flags)
 
 static void make_supers_blobid(struct silofs_blobid *out_blobid)
 {
-	struct silofs_xid treeid;
+	struct silofs_xid tree_id;
+	struct silofs_xid uniq_id = {};
 
-	silofs_xid_generate(&treeid);
-	silofs_blobid_make_tas(out_blobid, &treeid);
+	silofs_xid_generate(&tree_id);
+	silofs_blobid_make_tas(out_blobid, &tree_id, &uniq_id);
 }
 
 static void make_super_uaddr(const struct silofs_blobid *blobid,
@@ -620,20 +621,15 @@ static struct silofs_repo *repo_of(struct silofs_fs_uber *uber, bool warm)
 	return warm ? &uber->ub_repos->repo_warm : &uber->ub_repos->repo_cold;
 }
 
-static int ubc_setup(struct silofs_uber_ctx *ub_ctx, bool warm)
+static void ubc_setup(struct silofs_uber_ctx *ub_ctx, bool warm)
 {
 	struct silofs_fs_uber *uber = ub_ctx->uber;
 	struct silofs_repo *repo = repo_of(uber, warm);
 
-	if (repo == NULL) {
-		log_dbg("%s repo not set", warm ? "main" : "cold");
-		return -EBADSLT;
-	}
 	ub_ctx->uber = uber;
-	ub_ctx->repo = repo_of(uber, warm);
-	ub_ctx->cache = &ub_ctx->repo->re_cache;
-	ub_ctx->mdigest = &ub_ctx->repo->re_bootldr.btl_md;
-	return 0;
+	ub_ctx->repo = repo;
+	ub_ctx->cache = &repo->re_cache;
+	ub_ctx->mdigest = &repo->re_bootldr.btl_md;
 }
 
 static int ubc_spawn_cached_ubi(const struct silofs_uber_ctx *ub_ctx,
@@ -839,10 +835,7 @@ int silofs_spawn_super_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sbi(&ub_ctx, uaddr, &sbi);
 	if (err) {
 		return err;
@@ -866,10 +859,7 @@ int silofs_stage_super_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sbi(&ub_ctx, uaddr, out_sbi);
 	if (err) {
 		return err;
@@ -895,10 +885,7 @@ int silofs_shadow_super_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sbi(&ub_ctx, uaddr, out_sbi);
 	if (err) {
 		return err;
@@ -991,10 +978,7 @@ int silofs_spawn_stats_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spstats_info *spi = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_spi(&ub_ctx, uaddr, &spi);
 	if (err) {
 		return err;
@@ -1022,10 +1006,7 @@ int silofs_stage_stats_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spstats_info *spi = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_spi(&ub_ctx, uaddr, &spi);
 	if (err) {
 		return err;
@@ -1057,10 +1038,7 @@ int silofs_shadow_stats_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spstats_info *spi = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_spi(&ub_ctx, uaddr, &spi);
 	if (err) {
 		return err;
@@ -1158,10 +1136,7 @@ int silofs_spawn_spnode_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sni(&ub_ctx, uaddr, &sni);
 	if (err) {
 		return err;
@@ -1189,10 +1164,7 @@ int silofs_stage_spnode_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sni(&ub_ctx, uaddr, &sni);
 	if (err) {
 		return err;
@@ -1225,10 +1197,7 @@ int silofs_shadow_spnode_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sni(&ub_ctx, uaddr, &sni);
 	if (err) {
 		return err;
@@ -1326,10 +1295,7 @@ int silofs_spawn_spleaf_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sli(&ub_ctx, uaddr, &sli);
 	if (err) {
 		return err;
@@ -1357,10 +1323,7 @@ int silofs_stage_spleaf_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sli(&ub_ctx, uaddr, &sli);
 	if (err) {
 		return err;
@@ -1393,10 +1356,7 @@ int silofs_shadow_spleaf_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_cached_sli(&ub_ctx, uaddr, &sli);
 	if (err) {
 		return err;
@@ -1434,10 +1394,7 @@ int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_stage_ubk_of(&ub_ctx, bkaddr, out_ubi);
 	if (err) {
 		return err;
@@ -1469,10 +1426,7 @@ int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_require_no_blob(&ub_ctx, blobid);
 	if (err) {
 		return err;
@@ -1491,10 +1445,7 @@ int silofs_stage_blob_at(struct silofs_fs_uber *uber, bool warm,
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
-	err = ubc_setup(&ub_ctx, warm);
-	if (err) {
-		return err;
-	}
+	ubc_setup(&ub_ctx, warm);
 	err = ubc_lookup_blob(&ub_ctx, blobid);
 	if (err) {
 		return err;

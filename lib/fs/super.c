@@ -85,6 +85,13 @@ static void sb_generate_uuid(struct silofs_super_block *sb)
 	silofs_uuid_generate(&sb->sb_uuid);
 }
 
+static void sb_generate_seed(struct silofs_super_block *sb)
+{
+	struct silofs_seed64b *seed = &sb->sb_seed;
+
+	silofs_getentropy(seed, sizeof(*seed));
+}
+
 int silofs_sb_check_version(const struct silofs_super_block *sb)
 {
 	if (sb_magic(sb) != SILOFS_SUPER_MAGIC) {
@@ -244,6 +251,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_set_flags(sb, SILOFS_SUPERF_NONE);
 	sb_set_swversion(sb, silofs_version.string);
 	sb_generate_uuid(sb);
+	sb_generate_seed(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_stats_uaddr(sb);
 	sb_reset_spnode_uaddr(sb);

@@ -39,11 +39,6 @@ struct silofs_stage_ctx {
 
 static bool is_low_resource_error(int err)
 {
-	/* XXX rm */
-	if ((err == -EMFILE) || (err == EMFILE)) {
-		return true;
-	}
-
 	return (err == -ENOMEM) || (err == -EMFILE) || (err == -ENFILE);
 }
 
@@ -82,6 +77,34 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
 	vi->v_si.s_md = &vi->v_si.s_ce.ce_cache->c_mdigest;
 	vi->v_sbi = sbi;
 	silofs_vi_attach_to(vi, vbi);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static const struct silofs_mdigest *
+sbi_mdigest(const struct silofs_sb_info *sbi)
+{
+	return &sbi->sb_ui.u_si.s_ce.ce_cache->c_mdigest;
+}
+
+static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
+                                const struct silofs_vrange *vrange,
+                                struct silofs_blobid *out_blobid)
+{
+	struct silofs_xid tree_id;
+	struct silofs_xid uniq_id;
+	const struct silofs_mdigest *md = sbi_mdigest(sbi);
+
+	silofs_sbi_treeid(sbi, &tree_id);
+	silofs_calc_uniq_id(md, &sbi->sb->sb_seed, vrange, &uniq_id);
+	silofs_blobid_make_tas(out_blobid, &tree_id, &uniq_id);
+}
+
+static void sbi_vrange(const struct silofs_sb_info *sbi,
+                       struct silofs_vrange *out_vrange)
+{
+	silofs_vrange_of_super(out_vrange);
+	silofs_unused(sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -298,15 +321,6 @@ static int sbi_inspect_cached_sli(const struct silofs_sb_info *sbi,
 	return sbi_inspect_cached_ui(sbi, &sli->sl_ui, stg_mode);
 }
 
-static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
-                                struct silofs_blobid *out_blobid)
-{
-	struct silofs_xid tree_id;
-
-	silofs_sbi_treeid(sbi, &tree_id);
-	silofs_blobid_make_tas(out_blobid, &tree_id);
-}
-
 static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 {
 	enum silofs_stype stype;
@@ -427,11 +441,13 @@ static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
+	struct silofs_vrange vrange;
 	struct silofs_blob_info *bli = NULL;
 	const enum silofs_stype stype = SILOFS_STYPE_SPNODE;
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, &blobid);
+	sbi_vrange(stg_ctx->sbi, &vrange);
+	sbi_make_blobid_for(stg_ctx->sbi, &vrange, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
 	if (err) {
 		return err;
@@ -467,11 +483,13 @@ static int stgc_spawn_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_blobid blobid;
+	struct silofs_vrange vrange;
 	struct silofs_blob_info *bli = NULL;
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, &blobid);
+	sni_vrange(sni, &vrange);
+	sbi_make_blobid_for(stg_ctx->sbi, &vrange, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
 	if (err) {
 		return err;
@@ -1368,10 +1386,12 @@ static int stgc_spawn_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spleaf_info *sli)
 {
 	struct silofs_blobid blobid;
+	struct silofs_vrange vrange;
 	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, &blobid);
+	sli_vrange(sli, &vrange);
+	sbi_make_blobid_for(stg_ctx->sbi, &vrange, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->stype_sub, &bli);
 	if (err) {
 		return err;

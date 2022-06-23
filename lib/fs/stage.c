@@ -81,23 +81,15 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const struct silofs_mdigest *
-sbi_mdigest(const struct silofs_sb_info *sbi)
-{
-	return &sbi->sb_ui.u_si.s_ce.ce_cache->c_mdigest;
-}
-
 static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
                                 const struct silofs_vrange *vrange,
                                 struct silofs_blobid *out_blobid)
 {
-	struct silofs_xid tree_id;
-	struct silofs_xid uniq_id;
-	const struct silofs_mdigest *md = sbi_mdigest(sbi);
+	struct silofs_treeid treeid;
 
-	silofs_sbi_treeid(sbi, &tree_id);
-	silofs_calc_uniq_id(md, &sbi->sb->sb_seed, vrange, &uniq_id);
-	silofs_blobid_make_tas(out_blobid, &tree_id, &uniq_id);
+	silofs_sbi_treeid(sbi, &treeid);
+	silofs_blobid_make_ta(out_blobid, &treeid,
+	                      vrange->beg, vrange->height);
 }
 
 static void sbi_vrange(const struct silofs_sb_info *sbi,
@@ -280,10 +272,10 @@ static int sbi_spawn_bind_vi(struct silofs_sb_info *sbi,
 bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
                                  const struct silofs_blobid *blobid)
 {
-	struct silofs_xid tree_id;
+	struct silofs_treeid treeid;
 
-	silofs_sbi_treeid(sbi, &tree_id);
-	return silofs_xid_isequal(&tree_id, &blobid->xxid.u.tid.tree_id);
+	silofs_sbi_treeid(sbi, &treeid);
+	return blobid_has_treeid(blobid, &treeid);
 }
 
 static bool sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,

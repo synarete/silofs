@@ -106,6 +106,10 @@
 #define SILOFS_UNODE_NCHILDS            SILOFS_NBK_IN_BLOB_MAX
 
 
+/* size of uber-space tree-id */
+#define SILOFS_TREEID_SIZE              (24)
+
+
 /* non-valid ("NIL") logical byte address */
 #define SILOFS_OFF_NULL                 (-1)
 
@@ -268,21 +272,39 @@
 #define SILOFS_IO_SIZE_MAX              ((2UL * SILOFS_UMEGA) - SILOFS_BK_SIZE)
 
 
+/* cryptographic key size */
+#define SILOFS_KEY_SIZE                 (32)
+
+/* initialization vector size (for AES256) */
+#define SILOFS_IV_SIZE                  (16)
+
+/* cryptographic hash-128-bits bytes-size */
+#define SILOFS_HASH128_LEN              (16)
+
+/* cryptographic hash-256-bits bytes-size */
+#define SILOFS_HASH256_LEN              (32)
+
+/* cryptographic hash-512-bits bytes-size */
+#define SILOFS_HASH512_LEN              (64)
+
+
 /* boot-sector flags */
 enum silofs_bootf {
 	SILOFS_BOOTF_NONE       = 0x00,
 	SILOFS_BOOTF_KEY_SHA256 = 0x01,
 };
 
+/* format endianness */
 enum silofs_endianness {
 	SILOFS_ENDIANNESS_LE    = 1,
-	SILOFS_ENDIANNESS_BE    = 2
+	SILOFS_ENDIANNESS_BE    = 2,
 };
 
-/* space packing modes */
-enum silofs_pack_mode {
-	SILOFS_PACK_NONE        = 0x00,
-	SILOFS_PACK_SIMPLE      = 0x01,
+/* blobs sub-types */
+enum silofs_blobtype {
+	SILOFS_BLOBTYPE_NONE    = 0,
+	SILOFS_BLOBTYPE_TA      = 1,
+	SILOFS_BLOBTYPE_CA      = 2,
 };
 
 /* file-system logical-elements types */
@@ -313,6 +335,12 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE3   = 3,
 	SILOFS_HEIGHT_SPNODE4   = 4,
 	SILOFS_HEIGHT_SUPER     = 5,
+};
+
+/* space packing modes */
+enum silofs_pack_mode {
+	SILOFS_PACK_NONE        = 0x00,
+	SILOFS_PACK_SIMPLE      = 0x01,
 };
 
 /* common-header flags */
@@ -358,23 +386,6 @@ enum silofs_xattr_ns {
 	SILOFS_XATTR_USER       = 4,
 };
 
-/* cryptographic key size */
-#define SILOFS_KEY_SIZE         (32)
-
-/* initialization vector size (for AES256) */
-#define SILOFS_IV_SIZE          (16)
-
-/* cryptographic hash-128-bits bytes-size */
-#define SILOFS_HASH128_LEN      (16)
-
-/* cryptographic hash-256-bits bytes-size */
-#define SILOFS_HASH256_LEN      (32)
-
-/* cryptographic hash-512-bits bytes-size */
-#define SILOFS_HASH512_LEN      (64)
-
-/* salt size for Key-Derivation-Function */
-#define SILOFS_SALT_SIZE        (128)
 
 /* encryption cipher settings (libgcrypt values) */
 enum silofs_cipher_algo {
@@ -452,52 +463,40 @@ struct silofs_iv {
 } silofs_packed_aligned8;
 
 
+struct silofs_treeid192 {
+	uint8_t                         id[SILOFS_TREEID_SIZE];
+} silofs_packed_aligned8;
+
+
 struct silofs_xid128 {
 	uint8_t                         id[16];
 } silofs_packed_aligned8;
 
 
-struct silofs_xxid256_tas {
-	struct silofs_xid128            tree_id;
-	struct silofs_xid128            uniq_id;
+struct silofs_blobid32b_ta {
+	struct silofs_treeid192         treeid;
+	uint64_t                        voff_height;
 } silofs_packed_aligned8;
 
 
-struct silofs_xxid256_cas {
+struct silofs_blobid32b_ca {
 	uint8_t                         hash[SILOFS_HASH256_LEN];
 } silofs_packed_aligned8;
 
 
-union silofs_xxid256_u {
-	struct silofs_xxid256_tas       tid;
-	struct silofs_xxid256_cas       cid;
-	struct silofs_xid128            xid[2];
+union silofs_blobid32b_u {
+	struct silofs_blobid32b_ta      ta;
+	struct silofs_blobid32b_ca      ca;
 } silofs_packed_aligned8;
 
-
-struct silofs_xxid256 {
-	union silofs_xxid256_u u;
-} silofs_packed_aligned8;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_seed64b {
-	uint8_t                         seed[64];
-} silofs_packed_aligned64;
-
-
-struct silofs_seed128b {
-	struct silofs_seed64b           base;
-	int64_t                         voff;
-	uint8_t                         height;
-	uint8_t                         reserved[55];
-} silofs_packed_aligned64;
-
-
 struct silofs_blobid40b {
-	struct silofs_xxid256           xxid;
+	union silofs_blobid32b_u        u;
 	uint32_t                        size;
-	uint32_t                        reserved;
+	uint8_t                         btype;
+	uint8_t                         reserved[3];
 } silofs_packed_aligned8;
 
 
@@ -600,8 +599,7 @@ struct silofs_super_block {
 	uint8_t                         sb_reserved2[23];
 	uint8_t                         sb_sw_version[64];
 	struct silofs_uuid              sb_uuid;
-	uint8_t                         sb_reserved3[48];
-	struct silofs_seed64b           sb_seed;
+	uint8_t                         sb_reserved3[112];
 	struct silofs_name              sb_name;
 	uint8_t                         sb_reserved4[512];
 	/* 1K..2K */
@@ -614,8 +612,8 @@ struct silofs_super_block {
 	uint8_t                         sb_reserved5[864];
 	/* 2K..4K */
 	struct silofs_vrange128         sb_vrange;
-	struct silofs_xid128            sb_treeid;
-	uint8_t                         sb_reserved6[32];
+	struct silofs_treeid192         sb_treeid;
+	uint8_t                         sb_reserved6[24];
 	struct silofs_blobid40b         sb_mainblobid;
 	uint8_t                         sb_reserved7[24];
 	struct silofs_packid64b         sb_mainpackid;

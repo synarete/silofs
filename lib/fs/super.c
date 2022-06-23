@@ -85,13 +85,6 @@ static void sb_generate_uuid(struct silofs_super_block *sb)
 	silofs_uuid_generate(&sb->sb_uuid);
 }
 
-static void sb_generate_seed(struct silofs_super_block *sb)
-{
-	struct silofs_seed64b *seed = &sb->sb_seed;
-
-	silofs_getentropy(seed, sizeof(*seed));
-}
-
 int silofs_sb_check_version(const struct silofs_super_block *sb)
 {
 	if (sb_magic(sb) != SILOFS_SUPER_MAGIC) {
@@ -132,15 +125,15 @@ static size_t sb_height(const struct silofs_super_block *sb)
 }
 
 static void sb_treeid(const struct silofs_super_block *sb,
-                      struct silofs_xid *out_xid)
+                      struct silofs_treeid *out_treeid)
 {
-	silofs_xid128_parse(&sb->sb_treeid, out_xid);
+	silofs_treeid192_parse(&sb->sb_treeid, out_treeid);
 }
 
 static void sb_set_treeid(struct silofs_super_block *sb,
-                          const struct silofs_xid *xid)
+                          const struct silofs_treeid *treeid)
 {
-	silofs_xid128_set(&sb->sb_treeid, xid);
+	silofs_treeid192_set(&sb->sb_treeid, treeid);
 }
 
 static void sb_main_blobid(const struct silofs_super_block *sb,
@@ -202,10 +195,10 @@ static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 
 static void sb_generate_treeid(struct silofs_super_block *sb)
 {
-	struct silofs_xid xid;
+	struct silofs_treeid treeid;
 
-	silofs_xid_generate(&xid);
-	sb_set_treeid(sb, &xid);
+	silofs_treeid_generate(&treeid);
+	sb_set_treeid(sb, &treeid);
 }
 
 static void sb_stats_uaddr(const struct silofs_super_block *sb,
@@ -251,7 +244,6 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_set_flags(sb, SILOFS_SUPERF_NONE);
 	sb_set_swversion(sb, silofs_version.string);
 	sb_generate_uuid(sb);
-	sb_generate_seed(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_stats_uaddr(sb);
 	sb_reset_spnode_uaddr(sb);
@@ -427,9 +419,9 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
-                       struct silofs_xid *out_xid)
+                       struct silofs_treeid *out_treeid)
 {
-	sb_treeid(sbi->sb, out_xid);
+	sb_treeid(sbi->sb, out_treeid);
 }
 
 void silofs_sbi_main_blob(const struct silofs_sb_info *sbi,

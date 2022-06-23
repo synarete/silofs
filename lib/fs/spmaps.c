@@ -1236,7 +1236,7 @@ void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
 }
 
 bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
-                              const struct silofs_xid *tree_id)
+                              const struct silofs_treeid *treeid)
 {
 	struct silofs_blobid blobid;
 
@@ -1244,7 +1244,7 @@ bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
 	if (blobid_size(&blobid) == 0) {
 		return false;
 	}
-	if (!silofs_xid_isequal(tree_id, &blobid.xxid.u.tid.tree_id)) {
+	if (!blobid_has_treeid(&blobid, treeid)) {
 		return false;
 	}
 	return true;

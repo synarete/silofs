@@ -138,7 +138,7 @@ static void vbi_free(struct silofs_vbk_info *vbi,
 
 static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 {
-	return silofs_blobid_hkey(blobid);
+	return silofs_blobid_as_u64(blobid);
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)

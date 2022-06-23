@@ -538,7 +538,7 @@ static void pac_calc_cas_blobid(const struct silofs_pack_ctx *pa_ctx,
 	const size_t len = cnt * SILOFS_BK_SIZE;
 
 	silofs_sha256_ofv(pac_mdigest(pa_ctx), iov, cnt, &hash);
-	silofs_blobid_make_cas(out_blobid, &hash, len);
+	silofs_blobid_make_ca(out_blobid, &hash, len);
 }
 
 static void pac_resolve_packid_of(const struct silofs_pack_ctx *pa_ctx,

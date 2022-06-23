@@ -153,11 +153,10 @@ void silofs_uber_relax_caches(const struct silofs_fs_uber *uber, int flags)
 
 static void make_supers_blobid(struct silofs_blobid *out_blobid)
 {
-	struct silofs_xid tree_id;
-	struct silofs_xid uniq_id = {};
+	struct silofs_treeid treeid;
 
-	silofs_xid_generate(&tree_id);
-	silofs_blobid_make_tas(out_blobid, &tree_id, &uniq_id);
+	silofs_treeid_generate(&treeid);
+	silofs_blobid_make_ta(out_blobid, &treeid, 0, SILOFS_HEIGHT_SPNODE4);
 }
 
 static void make_super_uaddr(const struct silofs_blobid *blobid,

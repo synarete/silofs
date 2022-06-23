@@ -302,26 +302,25 @@ static void index_to_namebuf(size_t idx, struct silofs_namebuf *nb)
 	nb->name[len] = '\0';
 }
 
-static int blobid_to_pathname(const struct silofs_blobid *blobid,
-                              size_t nsubs, struct silofs_namebuf *out_nb)
+static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
+                         struct silofs_namebuf *out_nb)
 {
-	size_t len = 0;
-	size_t nlen = 0;
-	size_t idx;
+	size_t len;
+	size_t nlim;
+	size_t nlen;
 	char *nbuf = out_nb->name;
 	const size_t nmax = sizeof(out_nb->name);
-	int err;
 
 	silofs_memzero(out_nb, sizeof(*out_nb));
-	idx = blobid_to_index(blobid, nsubs);
-	len += index_to_name(idx, nbuf, nmax);
+	len = index_to_name(idx, nbuf, nmax);
 	if (len > (nmax / 2)) {
 		return -EINVAL;
 	}
 	nbuf[len++] = '/';
-	err = silofs_blobid_to_name(blobid, nbuf + len, nmax - len - 1, &nlen);
-	if (err) {
-		return err;
+	nlim = nmax - len - 1;
+	nlen = silofs_hash256_to_name(hash, nbuf + len, nlim);
+	if (nlen >= nlim) {
+		return -EINVAL;
 	}
 	len += nlen;
 	nbuf[len] = '\0';
@@ -398,7 +397,7 @@ static void bli_init(struct silofs_blob_info *bli,
 	fdsz_reset(&bli->bl_fdsz);
 	silofs_ce_init(&bli->bl_ce);
 	silofs_xiovref_init(&bli->bl_xior, bli_xiov_pre, bli_xiov_post);
-	bli->bl_hkey = silofs_blobid_hkey(blobid);
+	bli->bl_hkey = silofs_blobid_as_u64(blobid);
 	silofs_ckey_by_blobid(&bli->bl_ce.ce_ckey, &bli->blobid);
 }
 
@@ -782,30 +781,29 @@ repo_mdigest(const struct silofs_repo *repo)
 	return &repo->re_bootldr.btl_md;
 }
 
-static void repo_rehash_blobid(const struct silofs_repo *repo,
-                               const struct silofs_blobid *blobid,
-                               struct silofs_blobid *out_blobid)
+static void repo_hash_blobid(const struct silofs_repo *repo,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_hash256 *out_hash)
 {
-	struct silofs_hash256 hash;
-	struct silofs_xxid256 xxid256;
+	struct silofs_blobid40b blid;
 	const struct silofs_mdigest *md = repo_mdigest(repo);
 
-	SILOFS_STATICASSERT_EQ(sizeof(hash), sizeof(xxid256));
-
-	silofs_xxid256_set(&xxid256, &blobid->xxid);
-	silofs_sha256_of(md, &xxid256, sizeof(xxid256), &hash);
-	silofs_blobid_make_cas(out_blobid, &hash, blobid->size);
+	silofs_blobid40b_set(&blid, blobid);
+	silofs_sha256_of(md, &blid, sizeof(blid), out_hash);
 }
 
 static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
                                      const struct silofs_blobid *blobid,
                                      struct silofs_namebuf *out_nb)
 {
-	struct silofs_blobid hashed_blobid = { .size = 0 };
+	struct silofs_hash256 hash;
 	const size_t nsubs = repo->re_defs->re_objs_nsubs;
+	size_t idx;
 
-	repo_rehash_blobid(repo, blobid, &hashed_blobid);
-	return blobid_to_pathname(&hashed_blobid, nsubs, out_nb);
+	idx = blobid_to_index(blobid, nsubs);
+	repo_hash_blobid(repo, blobid, &hash);
+
+	return make_pathname(&hash, idx, out_nb);
 }
 
 static int repo_objs_create_blob(const struct silofs_repo *repo,

@@ -149,7 +149,7 @@ void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
                                const struct silofs_blobid *blobid);
 
 bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
-                              const struct silofs_xid *tree_id);
+                              const struct silofs_treeid *treeid);
 
 int silofs_sli_main_pack(const struct silofs_spleaf_info *sli,
                          struct silofs_packid *out_packid);

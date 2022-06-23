@@ -196,38 +196,34 @@ struct silofs_kivam {
 	unsigned int            cipher_mode;
 };
 
-/* extended identifier */
-struct silofs_xid {
-	uint8_t id[16];
+/* space-tree id */
+struct silofs_treeid {
+	uint8_t                 id[SILOFS_TREEID_SIZE];
 };
 
 /* tree-addressing blob-id */
-struct silofs_xxid_tas {
-	struct silofs_xid tree_id;
-	struct silofs_xid uniq_id;
+struct silofs_blobid_ta {
+	struct silofs_treeid    treeid;
+	loff_t                  voff;
+	enum silofs_height      height;
 };
 
 /* content-addressing blob-id */
-struct silofs_xxid_cas {
+struct silofs_blobid_ca {
 	uint8_t hash[SILOFS_HASH256_LEN];
 };
 
 /* union of possible blob addressing */
-union silofs_xxid_u {
-	struct silofs_xxid_tas  tid;
-	struct silofs_xxid_cas  cid;
-	struct silofs_xid       xid[2];
-	uint32_t                zid[8];
-};
-
-struct silofs_xxid {
-	union silofs_xxid_u u;
+union silofs_blobid_u {
+	struct silofs_blobid_ta ta;
+	struct silofs_blobid_ca ca;
 };
 
 /* blob identifier */
 struct silofs_blobid {
-	struct silofs_xxid      xxid;
+	union silofs_blobid_u   u;
 	size_t                  size;
+	enum silofs_blobtype    btype;
 };
 
 /* packed-blob identifier */

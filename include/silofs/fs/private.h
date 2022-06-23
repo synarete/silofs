@@ -128,6 +128,7 @@
 #define blobid_isequal(bid, oth)        silofs_blobid_isequal(bid, oth)
 #define blobid_isnull(bid)              silofs_blobid_isnull(bid)
 #define blobid_size(bid)                silofs_blobid_size(bid)
+#define blobid_has_treeid(bid, tid)     silofs_blobid_has_treeid(bid, tid)
 
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)

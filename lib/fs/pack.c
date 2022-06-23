@@ -541,21 +541,18 @@ static void pac_calc_cas_blobid(const struct silofs_pack_ctx *pa_ctx,
 	silofs_blobid_make_ca(out_blobid, &hash, len);
 }
 
-static void pac_resolve_packid_of(const struct silofs_pack_ctx *pa_ctx,
+static void pac_resolve_blobid_of(const struct silofs_pack_ctx *pa_ctx,
                                   const struct iovec *iov, size_t cnt,
-                                  struct silofs_packid *out_packid)
+                                  struct silofs_blobid *out_blobid)
 {
-	struct silofs_blobid cas_blobid;
-
-	pac_calc_cas_blobid(pa_ctx, iov, cnt, &cas_blobid);
-	packid_setup(out_packid, &cas_blobid);
+	pac_calc_cas_blobid(pa_ctx, iov, cnt, out_blobid);
 }
 
-static void pac_resolve_packid(const struct silofs_pack_ctx *pa_ctx,
+static void pac_resolve_blobid(const struct silofs_pack_ctx *pa_ctx,
                                const struct silofs_pack_iovs *piov,
-                               struct silofs_packid *out_packid)
+                               struct silofs_blobid *out_blobid)
 {
-	pac_resolve_packid_of(pa_ctx, piov->pi_iov, piov->pi_cnt, out_packid);
+	pac_resolve_blobid_of(pa_ctx, piov->pi_iov, piov->pi_cnt, out_blobid);
 }
 
 static int pac_stage_block(const struct silofs_pack_ctx *pa_ctx,
@@ -711,10 +708,10 @@ static int pac_save_blob_of(const struct silofs_pack_ctx *pa_ctx,
 
 static int pac_resolve_save_blob(const struct silofs_pack_ctx *pa_ctx,
                                  const struct silofs_pack_iovs *piov,
-                                 struct silofs_packid *out_packid)
+                                 struct silofs_blobid *out_blobid)
 {
-	pac_resolve_packid(pa_ctx, piov, out_packid);
-	return pac_save_blob_of(pa_ctx, &out_packid->blobid, piov);
+	pac_resolve_blobid(pa_ctx, piov, out_blobid);
+	return pac_save_blob_of(pa_ctx, out_blobid, piov);
 }
 
 static int pac_require_blob_of(struct silofs_pack_ctx *pa_ctx,
@@ -826,13 +823,13 @@ static int pac_post_archive_spleaf(struct silofs_pack_ctx *pa_ctx,
                                    struct silofs_spnode_info *sni,
                                    struct silofs_spleaf_info *sli, size_t slot)
 {
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sli->sl_ui;
 	int err;
 
-	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &packid);
+	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sli_bind_main_pack(sli, &packid);
+		silofs_sli_bind_main_pack(sli, &blobid);
 		err = pac_repack_unode(pa_ctx, sni->sn_ui.u_piov, slot, ui);
 	}
 	return err;
@@ -843,13 +840,13 @@ pac_post_archive_spnode2(struct silofs_pack_ctx *pa_ctx,
                          struct silofs_spnode_info *parent,
                          struct silofs_spnode_info *sni, size_t slot)
 {
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sni->sn_ui;
 	int err;
 
-	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &packid);
+	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sni_bind_main_pack(sni, &packid);
+		silofs_sni_bind_main_pack(sni, &blobid);
 		err = pac_repack_unode(pa_ctx, parent->sn_ui.u_piov, slot, ui);
 	}
 	return err;
@@ -860,13 +857,13 @@ pac_post_archive_spnode3(struct silofs_pack_ctx *pa_ctx,
                          struct silofs_spnode_info *parent,
                          struct silofs_spnode_info *sni, size_t slot)
 {
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sni->sn_ui;
 	int err;
 
-	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &packid);
+	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sni_bind_main_pack(sni, &packid);
+		silofs_sni_bind_main_pack(sni, &blobid);
 		err = pac_repack_unode(pa_ctx, parent->sn_ui.u_piov, slot, ui);
 	}
 	return err;
@@ -877,13 +874,13 @@ pac_post_archive_spnode4(struct silofs_pack_ctx *pa_ctx,
                          struct silofs_sb_info *sbi,
                          struct silofs_spnode_info *sni, size_t slot)
 {
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sni->sn_ui;
 	int err;
 
-	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &packid);
+	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sni_bind_main_pack(sni, &packid);
+		silofs_sni_bind_main_pack(sni, &blobid);
 		err = pac_repack_unode(pa_ctx, sbi->sb_ui.u_piov, slot, ui);
 	}
 	return err;
@@ -899,14 +896,14 @@ static int pac_post_archive_stats(struct silofs_pack_ctx *pa_ctx,
 static int pac_post_archive_super(struct silofs_pack_ctx *pa_ctx,
                                   struct silofs_sb_info *sbi, size_t slot)
 {
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sbi->sb_ui;
 	int err;
 
 	silofs_assert_eq(slot, 0);
-	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &packid);
+	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sbi_bind_main_pack(sbi, &packid);
+		silofs_sbi_bind_main_pack(sbi, &blobid);
 		err = pac_repack_unode(pa_ctx, pa_ctx->piov, 0, ui);
 	}
 	return err;
@@ -1090,7 +1087,7 @@ static int pac_refill_view_of(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_refill_unode(struct silofs_pack_ctx *pa_ctx,
-                            const struct silofs_packid *packid,
+                            const struct silofs_blobid *blobid,
                             size_t slot, struct silofs_unode_info *ui)
 {
 	struct silofs_ubk_info *ubi = NULL;
@@ -1098,7 +1095,7 @@ static int pac_refill_unode(struct silofs_pack_ctx *pa_ctx,
 	int err;
 
 	ui_incref(ui);
-	err = pac_stage_block(pa_ctx, &packid->blobid, slot, &ubi);
+	err = pac_stage_block(pa_ctx, blobid, slot, &ubi);
 	if (err) {
 		goto out;
 	}
@@ -1129,7 +1126,7 @@ static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &bsec->sb_packid, 0, &sbi->sb_ui);
+	err = pac_refill_unode(pa_ctx, &bsec->sb_blobid, 0, &sbi->sb_ui);
 	if (err) {
 		return err;
 	}
@@ -1157,7 +1154,7 @@ static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_refill_unode(pa_ctx, &bsec->sb_packid, 1, &spi->sp_ui);
+	err = pac_refill_unode(pa_ctx, &bsec->sb_blobid, 1, &spi->sp_ui);
 	if (err) {
 		return err;
 	}
@@ -1200,14 +1197,14 @@ static int pac_load_supers(struct silofs_pack_ctx *pa_ctx)
 
 static int pac_save_supers_as_pack(struct silofs_pack_ctx *pa_ctx)
 {
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	int err;
 
-	err = pac_resolve_save_blob(pa_ctx, pa_ctx->piov, &packid);
+	err = pac_resolve_save_blob(pa_ctx, pa_ctx->piov, &blobid);
 	if (err) {
 		return err;
 	}
-	silofs_bootsec_set_packid(pa_ctx->dst_bsec, &packid);
+	silofs_bootsec_set_blobid(pa_ctx->dst_bsec, &blobid);
 	return 0;
 }
 
@@ -1343,7 +1340,7 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
                                   loff_t voff, size_t slot)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
 	struct silofs_ubk_info *ubi_src = NULL;
 	struct silofs_ubk_info *ubi_dst = NULL;
@@ -1363,11 +1360,11 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (!nalloc) {
 		return 0;
 	}
-	err = silofs_sli_main_pack(sli, &packid);
+	err = silofs_sli_main_pack(sli, &blobid);
 	if (err) {
 		return err;
 	}
-	err = pac_stage_block(pa_ctx, &packid.blobid, slot, &ubi_src);
+	err = pac_stage_block(pa_ctx, &blobid, slot, &ubi_src);
 	if (err) {
 		return err;
 	}
@@ -1447,12 +1444,12 @@ static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
                                  loff_t voff, size_t slot)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
-	err = silofs_sni_main_pack(sni, &packid);
+	err = silofs_sni_main_pack(sni, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1464,7 +1461,7 @@ static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &packid, slot, &sni_child->sn_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, slot, &sni_child->sn_ui);
 	if (err) {
 		return err;
 	}
@@ -1476,12 +1473,12 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
                                  loff_t voff, size_t slot)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
-	err = silofs_sni_main_pack(sni, &packid);
+	err = silofs_sni_main_pack(sni, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1493,7 +1490,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &packid, slot, &sni_child->sn_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, slot, &sni_child->sn_ui);
 	if (err) {
 		return err;
 	}
@@ -1505,12 +1502,12 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
                                  loff_t voff, size_t slot)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = silofs_sni_main_pack(sni, &packid);
+	err = silofs_sni_main_pack(sni, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1522,7 +1519,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &packid, slot, &sli->sl_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, slot, &sli->sl_ui);
 	if (err) {
 		return err;
 	}
@@ -1534,7 +1531,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
                                loff_t voff, size_t slot)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_packid packid;
+	struct silofs_blobid blobid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni = NULL;
 	int err;
@@ -1542,7 +1539,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if ((voff != 0) || (slot != 0)) {
 		return -EFSCORRUPTED; /* TODO: other err */
 	}
-	err = silofs_sbi_main_pack(sbi, &packid);
+	err = silofs_sbi_main_pack(sbi, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1554,7 +1551,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &packid, slot, &sni->sn_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, slot, &sni->sn_ui);
 	if (err) {
 		return err;
 	}

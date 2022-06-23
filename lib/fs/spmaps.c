@@ -232,15 +232,15 @@ static void spnode_set_mainblobid(struct silofs_spmap_node *sn,
 }
 
 static void spnode_mainpackid(const struct silofs_spmap_node *sn,
-                              struct silofs_packid *out_packid)
+                              struct silofs_blobid *out_blobid)
 {
-	silofs_packid64b_parse(&sn->sn_mainpackid, out_packid);
+	silofs_blobid40b_parse(&sn->sn_mainpackid, out_blobid);
 }
 
 static void spnode_set_mainpackid(struct silofs_spmap_node *sn,
-                                  const struct silofs_packid *packid)
+                                  const struct silofs_blobid *blobid)
 {
-	silofs_packid64b_set(&sn->sn_mainpackid, packid);
+	silofs_blobid40b_set(&sn->sn_mainpackid, blobid);
 }
 
 static void spnode_init(struct silofs_spmap_node *sn,
@@ -249,7 +249,7 @@ static void spnode_init(struct silofs_spmap_node *sn,
 	spnode_set_stype_sub(sn, SILOFS_STYPE_NONE);
 	spnode_set_vrange(sn, vrange);
 	silofs_blobid40b_reset(&sn->sn_mainblobid);
-	silofs_packid64b_reset(&sn->sn_mainpackid);
+	silofs_blobid40b_reset(&sn->sn_mainpackid);
 	silofs_uaddr64b_reset(&sn->sn_parent);
 	silofs_uaddr64b_reset(&sn->sn_self);
 	spr_initn(sn->sn_subref, ARRAY_SIZE(sn->sn_subref));
@@ -637,7 +637,7 @@ static void spleaf_init(struct silofs_spmap_leaf *sl,
 	silofs_vrange128_set(&sl->sl_vrange, vrange);
 	spleaf_set_stype_sub(sl, SILOFS_STYPE_NONE);
 	silofs_blobid40b_reset(&sl->sl_mainblobid);
-	silofs_packid64b_reset(&sl->sl_mainpackid);
+	silofs_blobid40b_reset(&sl->sl_mainpackid);
 	silofs_uaddr64b_reset(&sl->sl_parent);
 	silofs_uaddr64b_reset(&sl->sl_self);
 	bkr_init_arr(sl->sl_subref, ARRAY_SIZE(sl->sl_subref), vrange->beg);
@@ -851,15 +851,15 @@ static void spleaf_set_mainblobid(struct silofs_spmap_leaf *sl,
 }
 
 static void spleaf_mainpackid(const struct silofs_spmap_leaf *sl,
-                              struct silofs_packid *out_packid)
+                              struct silofs_blobid *out_blobid)
 {
-	silofs_packid64b_parse(&sl->sl_mainpackid, out_packid);
+	silofs_blobid40b_parse(&sl->sl_mainpackid, out_blobid);
 }
 
 static void spleaf_set_mainpackid(struct silofs_spmap_leaf *sl,
-                                  const struct silofs_packid *packid)
+                                  const struct silofs_blobid *blobid)
 {
-	silofs_packid64b_set(&sl->sl_mainpackid, packid);
+	silofs_blobid40b_set(&sl->sl_mainpackid, blobid);
 }
 
 static void spleaf_make_ulink_at(struct silofs_spmap_leaf *sl, size_t slot,
@@ -1132,8 +1132,6 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
 
-	silofs_assert_eq(sli->sl->sl_stype_sub, vaddr->stype);
-	silofs_assert_le(sli->sl_nused_bytes + vaddr->len, SILOFS_BLOB_SIZE_MAX);
 	sli->sl_nused_bytes += vaddr->len;
 
 	spleaf_set_allocated_at(sl, vaddr);
@@ -1251,16 +1249,16 @@ bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
 }
 
 int silofs_sli_main_pack(const struct silofs_spleaf_info *sli,
-                         struct silofs_packid *out_packid)
+                         struct silofs_blobid *out_blobid)
 {
-	spleaf_mainpackid(sli->sl, out_packid);
-	return !packid_isnull(out_packid) ? 0 : -ENOENT;
+	spleaf_mainpackid(sli->sl, out_blobid);
+	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;
 }
 
 void silofs_sli_bind_main_pack(struct silofs_spleaf_info *sli,
-                               const struct silofs_packid *packid)
+                               const struct silofs_blobid *blobid)
 {
-	spleaf_set_mainpackid(sli->sl, packid);
+	spleaf_set_mainpackid(sli->sl, blobid);
 }
 
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
@@ -1525,16 +1523,16 @@ bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni)
 }
 
 int silofs_sni_main_pack(const struct silofs_spnode_info *sni,
-                         struct silofs_packid *out_packid)
+                         struct silofs_blobid *out_blobid)
 {
-	spnode_mainpackid(sni->sn, out_packid);
-	return !packid_isnull(out_packid) ? 0 : -ENOENT;
+	spnode_mainpackid(sni->sn, out_blobid);
+	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;
 }
 
 void silofs_sni_bind_main_pack(struct silofs_spnode_info *sni,
-                               const struct silofs_packid *packid)
+                               const struct silofs_blobid *blobid)
 {
-	spnode_set_mainpackid(sni->sn, packid);
+	spnode_set_mainpackid(sni->sn, blobid);
 }
 
 static loff_t

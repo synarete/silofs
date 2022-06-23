@@ -136,10 +136,10 @@ bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi);
 
 
 int silofs_sbi_main_pack(const struct silofs_sb_info *sbi,
-                         struct silofs_packid *out_packid);
+                         struct silofs_blobid *out_blobid);
 
 void silofs_sbi_bind_main_pack(struct silofs_sb_info *sbi,
-                               const struct silofs_packid *packid);
+                               const struct silofs_blobid *blobid);
 
 void silofs_sbi_self(const struct silofs_sb_info *sbi,
                      struct silofs_uaddr *out_uaddr);

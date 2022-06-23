@@ -149,27 +149,27 @@ static void sb_set_main_blobid(struct silofs_super_block *sb,
 }
 
 static void sb_main_packid(const struct silofs_super_block *sb,
-                           struct silofs_packid *out_packid)
+                           struct silofs_blobid *out_blobid)
 {
-	silofs_packid64b_parse(&sb->sb_mainpackid, out_packid);
+	silofs_blobid40b_parse(&sb->sb_mainpackid, out_blobid);
 }
 
 static void sb_set_main_packid(struct silofs_super_block *sb,
-                               const struct silofs_packid *packid)
+                               const struct silofs_blobid *blobid)
 {
-	silofs_packid64b_set(&sb->sb_mainpackid, packid);
+	silofs_blobid40b_set(&sb->sb_mainpackid, blobid);
 }
 
 static void sb_self(const struct silofs_super_block *sb,
                     struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_parse(&sb->sb_self, out_uaddr);
+	silofs_uaddr64b_parse(&sb->sb_self_uaddr, out_uaddr);
 }
 
 static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&sb->sb_self, uaddr);
+	silofs_uaddr64b_set(&sb->sb_self_uaddr, uaddr);
 }
 
 static void sb_reset_main_blobid(struct silofs_super_block *sb)
@@ -249,7 +249,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_reset_spnode_uaddr(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobid(sb);
-	silofs_uaddr64b_reset(&sb->sb_self);
+	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
 }
 
 static void sb_set_birth_time(struct silofs_super_block *sb, time_t btime)
@@ -446,16 +446,16 @@ bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi)
 }
 
 int silofs_sbi_main_pack(const struct silofs_sb_info *sbi,
-                         struct silofs_packid *out_packid)
+                         struct silofs_blobid *out_blobid)
 {
-	sb_main_packid(sbi->sb, out_packid);
-	return !packid_isnull(out_packid) ? 0 : -ENOENT;
+	sb_main_packid(sbi->sb, out_blobid);
+	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;
 }
 
 void silofs_sbi_bind_main_pack(struct silofs_sb_info *sbi,
-                               const struct silofs_packid *packid)
+                               const struct silofs_blobid *blobid)
 {
-	sb_set_main_packid(sbi->sb, packid);
+	sb_set_main_packid(sbi->sb, blobid);
 }
 
 void silofs_sbi_self(const struct silofs_sb_info *sbi,

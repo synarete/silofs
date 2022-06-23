@@ -472,6 +472,7 @@ void silofs_treeid192_parse(const struct silofs_treeid192 *treeid196,
 static const struct silofs_blobid s_blobid_none = {
 	.size = 0,
 	.btype = SILOFS_BLOBTYPE_NONE,
+	.pmode = SILOFS_PACK_NONE,
 };
 
 const struct silofs_blobid *silofs_blobid_none(void)
@@ -546,6 +547,7 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 {
 	blobid->size = other->size;
 	blobid->btype = other->btype;
+	blobid->pmode = other->pmode;
 
 	switch (other->btype) {
 	case SILOFS_BLOBTYPE_TA:
@@ -566,7 +568,7 @@ static long blobid_compare_ta(const struct silofs_blobid *blobid1,
 {
 	long cmp;
 
-	cmp = (long)(blobid2->u.ta.height) - (long)(blobid1->u.ta.height);
+	cmp = (int)(blobid2->u.ta.height) - (int)(blobid1->u.ta.height);
 	if (cmp) {
 		return cmp;
 	}
@@ -603,7 +605,11 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(blobid2->btype) - (long)(blobid1->btype);
+	cmp = (int)(blobid2->btype) - (int)(blobid1->btype);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (int)(blobid2->pmode) - (int)(blobid1->pmode);
 	if (cmp) {
 		return cmp;
 	}
@@ -669,8 +675,9 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
 	treeid_assign(&blobid->u.ta.treeid, treeid);
 	blobid->u.ta.voff = voff;
 	blobid->u.ta.height = height;
-	blobid->btype = SILOFS_BLOBTYPE_TA;
 	blobid->size = SILOFS_BLOB_SIZE_MAX;
+	blobid->btype = SILOFS_BLOBTYPE_TA;
+	blobid->pmode = SILOFS_PACK_NONE;
 }
 
 void silofs_blobid_make_ca(struct silofs_blobid *blobid,
@@ -681,13 +688,15 @@ void silofs_blobid_make_ca(struct silofs_blobid *blobid,
 	memcpy(blobid->u.ca.hash, hash->hash, sizeof(blobid->u.ca.hash));
 	blobid->btype = SILOFS_BLOBTYPE_CA;
 	blobid->size = size;
+	blobid->pmode = SILOFS_PACK_SIMPLE;
 }
 
 void silofs_blobid40b_reset(struct silofs_blobid40b *blid)
 {
 	memset(blid, 0, sizeof(*blid));
 	blid->size = 0;
-	blid->btype = (uint64_t)SILOFS_BLOBTYPE_NONE;
+	blid->btype = SILOFS_BLOBTYPE_NONE;
+	blid->pmode = SILOFS_PACK_NONE;
 }
 
 static void blobid40b_set_ta(struct silofs_blobid40b *blid,
@@ -712,6 +721,7 @@ void silofs_blobid40b_set(struct silofs_blobid40b *blid,
 	memset(blid, 0, sizeof(*blid));
 	blid->size = silofs_cpu_to_le32((uint32_t)blobid->size);
 	blid->btype = (uint8_t)blobid->btype;
+	blid->pmode = (uint8_t)blobid->pmode;
 	switch (blobid->btype) {
 	case SILOFS_BLOBTYPE_TA:
 		blobid40b_set_ta(blid, blobid);
@@ -746,6 +756,7 @@ void silofs_blobid40b_parse(const struct silofs_blobid40b *blid,
 {
 	blobid->size = silofs_le32_to_cpu(blid->size);
 	blobid->btype = (enum silofs_blobtype)blid->btype;
+	blobid->pmode = (enum silofs_pack_mode)blid->pmode;
 	switch (blobid->btype) {
 	case SILOFS_BLOBTYPE_TA:
 		blobid40b_parse_ta(blid, blobid);
@@ -757,66 +768,6 @@ void silofs_blobid40b_parse(const struct silofs_blobid40b *blid,
 	default:
 		break;
 	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_packid s_packid_none = {
-	.blobid.size = 0,
-	.pmode = SILOFS_PACK_NONE,
-};
-
-const struct silofs_packid *silofs_packid_none(void)
-{
-	return &s_packid_none;
-}
-
-bool silofs_packid_isnull(const struct silofs_packid *packid)
-{
-	return (packid->pmode == SILOFS_PACK_NONE) ||
-	       silofs_blobid_isnull(&packid->blobid);
-}
-
-void silofs_packid_reset(struct silofs_packid *packid)
-{
-	silofs_blobid_reset(&packid->blobid);
-	packid->pmode = SILOFS_PACK_NONE;
-}
-
-void silofs_packid_setup(struct silofs_packid *packid,
-                         const struct silofs_blobid *blobid)
-{
-	silofs_blobid_assign(&packid->blobid, blobid);
-	packid->pmode = SILOFS_PACK_SIMPLE;
-}
-
-void silofs_packid_assign(struct silofs_packid *packid,
-                          const struct silofs_packid *other)
-{
-	silofs_blobid_assign(&packid->blobid, &other->blobid);
-	packid->pmode = other->pmode;
-}
-
-void silofs_packid64b_reset(struct silofs_packid64b *paid)
-{
-	silofs_blobid40b_reset(&paid->blobid);
-	paid->pmode = 0;
-	memset(paid->reserved, 0, sizeof(paid->reserved));
-}
-
-void silofs_packid64b_set(struct silofs_packid64b *paid,
-                          const struct silofs_packid *packid)
-{
-	silofs_blobid40b_set(&paid->blobid, &packid->blobid);
-	paid->pmode = (uint8_t)packid->pmode;
-	memset(paid->reserved, 0, sizeof(paid->reserved));
-}
-
-void silofs_packid64b_parse(const struct silofs_packid64b *paid,
-                            struct silofs_packid *packid)
-{
-	silofs_blobid40b_parse(&paid->blobid, &packid->blobid);
-	packid->pmode = (enum silofs_pack_mode)paid->pmode;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -153,29 +153,6 @@ int silofs_blobid_to_name(const struct silofs_blobid *blobid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_packid *silofs_packid_none(void);
-
-bool silofs_packid_isnull(const struct silofs_packid *packid);
-
-void silofs_packid_reset(struct silofs_packid *packid);
-
-void silofs_packid_setup(struct silofs_packid *packid,
-                         const struct silofs_blobid *blobid);
-
-void silofs_packid_assign(struct silofs_packid *packid,
-                          const struct silofs_packid *other);
-
-
-void silofs_packid64b_reset(struct silofs_packid64b *paid);
-
-void silofs_packid64b_set(struct silofs_packid64b *paid,
-                          const struct silofs_packid *packid);
-
-void silofs_packid64b_parse(const struct silofs_packid64b *paid,
-                            struct silofs_packid *packid);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 const struct silofs_bkaddr *silofs_bkaddr_none(void);
 
 void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,

@@ -224,11 +224,6 @@ struct silofs_blobid {
 	union silofs_blobid_u   u;
 	size_t                  size;
 	enum silofs_blobtype    btype;
-};
-
-/* packed-blob identifier */
-struct silofs_packid {
-	struct silofs_blobid    blobid;
 	enum silofs_pack_mode   pmode;
 };
 

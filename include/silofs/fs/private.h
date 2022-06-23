@@ -118,11 +118,6 @@
 #define stype_isdata(st)                silofs_stype_isdata(st)
 #define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
-#define packid_isnull(pid)              silofs_packid_isnull(pid)
-#define packid_reset(pid)               silofs_packid_reset(pid)
-#define packid_setup(pid, bid)          silofs_packid_setup(pid, bid)
-#define packid_assign(pid, oth)         silofs_packid_assign(pid, oth)
-
 #define blobid_reset(bid)               silofs_blobid_reset(bid)
 #define blobid_assign(bid, oth)         silofs_blobid_assign(bid, oth)
 #define blobid_isequal(bid, oth)        silofs_blobid_isequal(bid, oth)

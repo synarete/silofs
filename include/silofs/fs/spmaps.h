@@ -82,10 +82,10 @@ void silofs_sni_resolve_main_child(const struct silofs_spnode_info *sni,
                                    loff_t voff, struct silofs_uaddr *out_ua);
 
 int silofs_sni_main_pack(const struct silofs_spnode_info *sni,
-                         struct silofs_packid *out_packid);
+                         struct silofs_blobid *out_blobid);
 
 void silofs_sni_bind_main_pack(struct silofs_spnode_info *sni,
-                               const struct silofs_packid *packid);
+                               const struct silofs_blobid *blobid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -152,10 +152,10 @@ bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
                               const struct silofs_treeid *treeid);
 
 int silofs_sli_main_pack(const struct silofs_spleaf_info *sli,
-                         struct silofs_packid *out_packid);
+                         struct silofs_blobid *out_blobid);
 
 void silofs_sli_bind_main_pack(struct silofs_spleaf_info *sli,
-                               const struct silofs_packid *packid);
+                               const struct silofs_blobid *blobid);
 
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
                                const struct silofs_vaddr *vaddr);

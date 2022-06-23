@@ -121,9 +121,11 @@ static void ut_file_fallocate_truncate(struct ut_env *ute)
 	ut_file_fallocate_truncate_(ute, 11, UT_BK_SIZE);
 	ut_file_fallocate_truncate_(ute, 11, UT_UMEGA);
 	ut_file_fallocate_truncate_(ute, 0, SILOFS_BLOB_SIZE_MAX);
-	ut_file_fallocate_truncate_(ute, UT_MEGA - 1, SILOFS_BLOB_SIZE_MAX + 2);
+	ut_file_fallocate_truncate_(ute, UT_MEGA - 1,
+	                            SILOFS_BLOB_SIZE_MAX + 2);
 	ut_file_fallocate_truncate_(ute, UT_GIGA, UT_UMEGA);
-	ut_file_fallocate_truncate_(ute, UT_TERA - 2, SILOFS_BLOB_SIZE_MAX + 3);
+	ut_file_fallocate_truncate_(ute, UT_TERA - 2,
+	                            SILOFS_BLOB_SIZE_MAX + 3);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

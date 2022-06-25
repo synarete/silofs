@@ -144,8 +144,6 @@ void silofs_sbi_bind_main_pack(struct silofs_sb_info *sbi,
 void silofs_sbi_self(const struct silofs_sb_info *sbi,
                      struct silofs_uaddr *out_uaddr);
 
-size_t silofs_sbi_space_tree_height(const struct silofs_sb_info *sbi);
-
 void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, struct silofs_uaddr *out_uaddr);
 

@@ -21,7 +21,7 @@
 
 
 struct silofs_pack_iovs {
-	struct iovec            pi_iov[SILOFS_UNODE_NCHILDS];
+	struct iovec            pi_iov[SILOFS_SPMAP_NCHILDS];
 	struct silofs_alloc    *pi_alloc;
 	size_t                  pi_cnt;
 };
@@ -813,7 +813,7 @@ static int pac_exec_archive_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 		if (err) {
 			return err;
 		}
-		voff = off_next(voff, vrange.stepsz);
+		voff = off_next(voff, vrange.vspan);
 		slot++;
 	}
 	return 0;
@@ -1401,7 +1401,7 @@ static int pac_restore_spleaf_subs(struct silofs_pack_ctx *pa_ctx,
 		if (err) {
 			return err;
 		}
-		voff = off_next(voff, vrange.stepsz);
+		voff = off_next(voff, vrange.vspan);
 		slot++;
 	}
 	return 0;

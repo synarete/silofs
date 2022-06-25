@@ -177,22 +177,6 @@ static void sb_reset_main_blobid(struct silofs_super_block *sb)
 	silofs_blobid40b_reset(&sb->sb_mainblobid);
 }
 
-static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
-{
-	struct silofs_vrange vrange;
-	const long nslots = SILOFS_UNODE_NCHILDS;
-	size_t slot;
-	long span;
-	long roff;
-
-	sb_vrange(sb, &vrange);
-	span = (long)vrange.len;
-	roff = off_diff(vrange.beg, voff);
-	slot = (size_t)((roff * nslots) / span);
-	silofs_assert_lt(slot, nslots);
-	return slot;
-}
-
 static void sb_generate_treeid(struct silofs_super_block *sb)
 {
 	struct silofs_treeid treeid;
@@ -464,9 +448,20 @@ void silofs_sbi_self(const struct silofs_sb_info *sbi,
 	sb_self(sbi->sb, out_uaddr);
 }
 
-size_t silofs_sbi_space_tree_height(const struct silofs_sb_info *sbi)
+static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 {
-	return sb_height(sbi->sb);
+	struct silofs_vrange vrange;
+	const long nslots = SILOFS_SPMAP_NCHILDS;
+	size_t slot;
+	long span;
+	long roff;
+
+	sb_vrange(sb, &vrange);
+	span = (long)vrange.len;
+	roff = off_diff(vrange.beg, voff);
+	slot = (size_t)((roff * nslots) / span);
+	silofs_assert_lt(slot, nslots);
+	return slot;
 }
 
 static loff_t
@@ -481,11 +476,9 @@ static loff_t
 sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const size_t child_height = silofs_sbi_space_tree_height(sbi) - 1;
 
-	silofs_assert_eq(child_height, SILOFS_HEIGHT_SPNODE4);
-
-	silofs_vrange_setup_by(&vrange, child_height, voff);
+	silofs_unused(sbi);
+	silofs_vrange_setup_by(&vrange, SILOFS_HEIGHT_SPNODE4, voff);
 	return vrange.beg;
 }
 
@@ -493,10 +486,11 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_blobid blobid;
+	const loff_t bpos = sbi_bpos_of_child(sbi, voff);
 	const loff_t base = sbi_base_voff_of_child(sbi, voff);
 
 	silofs_sbi_main_blob(sbi, &blobid);
-	silofs_uaddr_setup(out_uaddr, &blobid, sbi_bpos_of_child(sbi, voff),
+	silofs_uaddr_setup(out_uaddr, &blobid, bpos,
 	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE4, base);
 }
 

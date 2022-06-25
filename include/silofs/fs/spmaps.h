@@ -107,9 +107,7 @@ void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
 
 enum silofs_stype silofs_sli_stype_sub(const struct silofs_spleaf_info *sli);
 
-loff_t silofs_sli_voff_beg(const struct silofs_spleaf_info *sli);
-
-loff_t silofs_sli_voff_end(const struct silofs_spleaf_info *sli);
+loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
                                loff_t voff_from, enum silofs_stype stype,

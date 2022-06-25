@@ -83,7 +83,7 @@
 /* small ("sector") meta-block size (1K) */
 #define SILOFS_KB_SIZE                  (1 << SILOFS_KB_SHIFT)
 
-/* number of small blocks in block-octet */
+/* number of 1K blocks in block */
 #define SILOFS_NKB_IN_BK \
 	(SILOFS_BK_SIZE / SILOFS_KB_SIZE)
 
@@ -101,9 +101,6 @@
 /* maximal size in bytes of single blob (32M) */
 #define SILOFS_BLOB_SIZE_MAX \
 	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BK_SIZE)
-
-/* number of children per space-mapping node */
-#define SILOFS_UNODE_NCHILDS            SILOFS_NBK_IN_BLOB_MAX
 
 
 /* size of uber-space tree-id */
@@ -139,8 +136,17 @@
 /* on-disk size of space-stats node (2K) */
 #define SILOFS_STNODE_SIZE              (2 * SILOFS_KILO)
 
+/* number of children per space-mapping node (spnode/spleaf) */
+#define SILOFS_SPMAP_NCHILDS            SILOFS_NBK_IN_BLOB_MAX
+
+/* number of spnode/spleaf mapping in block */
+#define SILOFS_NSPMAPS_IN_BK            (1)
+
 /* on-disk size of space-node mapping (64K) */
 #define SILOFS_SPNODE_SIZE              SILOFS_BK_SIZE
+
+/* number of space-nodes mapping in block */
+#define SILOFS_NSPNODE_IN_BK            (SILOFS_BK_SIZE / SILOFS_SPNODE_SIZE)
 
 /* on-disk size of space-leaf mapping (64K) */
 #define SILOFS_SPLEAF_SIZE              SILOFS_BK_SIZE
@@ -329,7 +335,7 @@ enum silofs_stype {
 
 /* logical heights of unode mappings */
 enum silofs_height {
-	SILOFS_HEIGHT_DATABK    = 0,
+	SILOFS_HEIGHT_VDATA     = 0,
 	SILOFS_HEIGHT_SPLEAF    = 1,
 	SILOFS_HEIGHT_SPNODE2   = 2,
 	SILOFS_HEIGHT_SPNODE3   = 3,
@@ -677,7 +683,7 @@ struct silofs_spmap_node {
 	struct silofs_uaddr64b          sn_parent;
 	struct silofs_uaddr64b          sn_self;
 	uint8_t                         sn_reserved4[3712];
-	struct silofs_spmap_ref         sn_subref[SILOFS_UNODE_NCHILDS];
+	struct silofs_spmap_ref         sn_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 
 
@@ -704,7 +710,7 @@ struct silofs_spmap_leaf {
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
 	uint8_t                         sl_reserved4[3712];
-	struct silofs_bk_ref            sl_subref[SILOFS_UNODE_NCHILDS];
+	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 
 

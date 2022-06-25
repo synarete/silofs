@@ -82,21 +82,13 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
-                                const struct silofs_vrange *vrange,
+                                loff_t voff, enum silofs_height height,
                                 struct silofs_blobid *out_blobid)
 {
 	struct silofs_treeid treeid;
 
 	silofs_sbi_treeid(sbi, &treeid);
-	silofs_blobid_make_ta(out_blobid, &treeid,
-	                      vrange->beg, vrange->height);
-}
-
-static void sbi_vrange(const struct silofs_sb_info *sbi,
-                       struct silofs_vrange *out_vrange)
-{
-	silofs_vrange_of_super(out_vrange);
-	silofs_unused(sbi);
+	silofs_blobid_make_ta(out_blobid, &treeid, voff, height);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -328,12 +320,17 @@ static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 		stype = SILOFS_STYPE_SPLEAF;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-	case SILOFS_HEIGHT_DATABK:
+	case SILOFS_HEIGHT_VDATA:
 	default:
 		stype = SILOFS_STYPE_NONE;
 		break;
 	}
 	return stype;
+}
+
+static enum silofs_height
+sni_child_height(const struct silofs_spnode_info *sni) {
+	return silofs_sni_height(sni) - 1;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -433,14 +430,11 @@ static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
-	struct silofs_vrange vrange;
 	struct silofs_blob_info *bli = NULL;
-	const enum silofs_stype stype = SILOFS_STYPE_SPNODE;
 	int err;
 
-	sbi_vrange(stg_ctx->sbi, &vrange);
-	sbi_make_blobid_for(stg_ctx->sbi, &vrange, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
+	sbi_make_blobid_for(stg_ctx->sbi, 0, SILOFS_HEIGHT_SPNODE4, &blobid);
+	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &bli);
 	if (err) {
 		return err;
 	}
@@ -475,13 +469,13 @@ static int stgc_spawn_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_blobid blobid;
-	struct silofs_vrange vrange;
 	struct silofs_blob_info *bli = NULL;
+	const loff_t voff = silofs_sni_base_voff(sni);
+	const enum silofs_height height = sni_child_height(sni);
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
-	sni_vrange(sni, &vrange);
-	sbi_make_blobid_for(stg_ctx->sbi, &vrange, &blobid);
+	sbi_make_blobid_for(stg_ctx->sbi, voff, height, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
 	if (err) {
 		return err;
@@ -1378,12 +1372,11 @@ static int stgc_spawn_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spleaf_info *sli)
 {
 	struct silofs_blobid blobid;
-	struct silofs_vrange vrange;
 	struct silofs_blob_info *bli = NULL;
+	const loff_t voff = silofs_sli_base_voff(sli);
 	int err;
 
-	sli_vrange(sli, &vrange);
-	sbi_make_blobid_for(stg_ctx->sbi, &vrange, &blobid);
+	sbi_make_blobid_for(stg_ctx->sbi, voff, SILOFS_HEIGHT_VDATA, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->stype_sub, &bli);
 	if (err) {
 		return err;
@@ -1504,7 +1497,7 @@ stgc_spamaps(const struct silofs_stage_ctx *stg_ctx)
 static void stgc_track_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
                                       const struct silofs_spleaf_info *sli)
 {
-	struct silofs_vrange vrange = { .stepsz = -1 };
+	struct silofs_vrange vrange = { .vspan = -1 };
 	struct silofs_spamaps *spam = stgc_spamaps(stg_ctx);
 	const struct silofs_uaddr *uaddr = sli_uaddr(sli);
 

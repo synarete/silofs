@@ -308,7 +308,7 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, vrange.stepsz);
+		voff = off_next(voff, vrange.vspan);
 		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
@@ -386,7 +386,7 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, vrange.stepsz);
+		voff = off_next(voff, vrange.vspan);
 		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
@@ -464,7 +464,7 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, vrange.stepsz);
+		voff = off_next(voff, vrange.vspan);
 		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;

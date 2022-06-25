@@ -25,8 +25,57 @@
 #include <ctype.h>
 
 
-#define SPNODE2_VRANGE_SIZE (SILOFS_NBK_IN_BLOB_MAX * SILOFS_BLOB_SIZE_MAX)
+#define SPNODE2_VRANGE_SIZE \
+	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BLOB_SIZE_MAX)
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static ssize_t height_to_vspan(enum silofs_height height)
+{
+	const ssize_t bk_size = SILOFS_BK_SIZE;
+	const ssize_t nchilds = SILOFS_SPMAP_NCHILDS;
+	const ssize_t nspmaps = SILOFS_NSPMAPS_IN_BK;
+	const ssize_t nmbk = nchilds * nspmaps;
+	ssize_t vspan;
+
+	switch (height) {
+	case SILOFS_HEIGHT_VDATA:
+		vspan = bk_size;
+		break;
+	case SILOFS_HEIGHT_SPLEAF:
+		vspan = bk_size * nmbk;
+		break;
+	case SILOFS_HEIGHT_SPNODE2:
+		vspan = bk_size * nmbk * nmbk;
+		break;
+	case SILOFS_HEIGHT_SPNODE3:
+		vspan = bk_size * nmbk * nmbk * nmbk;
+		break;
+	case SILOFS_HEIGHT_SPNODE4:
+	case SILOFS_HEIGHT_SUPER:
+		vspan = bk_size * nmbk * nmbk * nmbk * nmbk;
+		break;
+	default:
+		vspan = -1;
+		break;
+	}
+	return vspan;
+}
+
+static loff_t voff_base_of(loff_t voff, enum silofs_height height)
+{
+	loff_t voff_base;
+	ssize_t align;
+
+	if (height == SILOFS_HEIGHT_VDATA) {
+		align = SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS *
+		        SILOFS_NSPMAPS_IN_BK;
+		voff_base = off_align(voff, align);
+	} else {
+		voff_base = voff;
+	}
+	return voff_base;
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -673,7 +722,7 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
                            loff_t voff, enum silofs_height height)
 {
 	treeid_assign(&blobid->u.ta.treeid, treeid);
-	blobid->u.ta.voff = voff;
+	blobid->u.ta.voff = voff_base_of(voff, height);
 	blobid->u.ta.height = height;
 	blobid->size = SILOFS_BLOB_SIZE_MAX;
 	blobid->btype = SILOFS_BLOBTYPE_TA;
@@ -1272,40 +1321,6 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ssize_t height_to_stepsz(enum silofs_height height)
-{
-	const ssize_t bk_size = SILOFS_BK_SIZE;
-	const ssize_t nchilds = SILOFS_UNODE_NCHILDS;
-	ssize_t stepsz;
-
-	switch (height) {
-	case SILOFS_HEIGHT_DATABK:
-		stepsz = bk_size;
-		break;
-	case SILOFS_HEIGHT_SPLEAF:
-		stepsz = bk_size * nchilds;
-		break;
-	case SILOFS_HEIGHT_SPNODE2:
-		stepsz = bk_size * nchilds * nchilds;
-		break;
-	case SILOFS_HEIGHT_SPNODE3:
-		stepsz = bk_size * nchilds * nchilds * nchilds;
-		break;
-	case SILOFS_HEIGHT_SPNODE4:
-		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
-		break;
-	case SILOFS_HEIGHT_SUPER:
-		stepsz = bk_size * nchilds * nchilds * nchilds * nchilds;
-		break;
-	default:
-		stepsz = -1;
-		break;
-	}
-	return stepsz;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
 {
 	return (vrange->beg <= off) && (off < vrange->end);
@@ -1321,24 +1336,22 @@ void silofs_vrange_setup(struct silofs_vrange *vrange,
 	vrange->end = end;
 	vrange->len = off_ulen(beg, end);
 	vrange->height = height;
-	vrange->stepsz = height_to_stepsz(height - 1);
+	vrange->vspan = height_to_vspan(height - 1);
 }
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
                              const struct silofs_vrange *other, loff_t beg)
 {
-	silofs_assert_ge(beg, other->beg);
-
 	silofs_vrange_setup(vrange, other->height, beg, other->end);
 }
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             enum silofs_height height, loff_t voff_base)
 {
-	const ssize_t stepsz = height_to_stepsz(height);
-	const loff_t beg = off_align(voff_base, stepsz);
+	const ssize_t vspan = height_to_vspan(height);
+	const loff_t beg = off_align(voff_base, vspan);
 
-	silofs_vrange_setup(vrange, height, beg, off_next(beg, stepsz));
+	silofs_vrange_setup(vrange, height, beg, off_next(beg, vspan));
 }
 
 void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
@@ -1369,7 +1382,7 @@ void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 		.end = SILOFS_OFF_NULL,
 		.len = 0,
 		.height = 0,
-		.stepsz = 0,
+		.vspan = 0,
 	};
 
 	silofs_vrange128_set(vrng, &vrange);

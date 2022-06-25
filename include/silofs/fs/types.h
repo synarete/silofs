@@ -278,7 +278,7 @@ struct silofs_vrange {
 	loff_t                  beg;
 	loff_t                  end;
 	size_t                  len;
-	ssize_t                 stepsz;
+	ssize_t                 vspan;
 	enum silofs_height      height;
 };
 

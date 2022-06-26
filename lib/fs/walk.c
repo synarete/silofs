@@ -290,10 +290,12 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_spnode_info *sni = wa_ctx->sni2;
 	size_t slot = 0;
+	ssize_t span;
 	loff_t voff;
 	int err = 0;
 
 	sni_vrange(sni, &vrange);
+	span = silofs_height_to_span(vrange.height - 1);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
@@ -308,7 +310,7 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, vrange.vspan);
+		voff = off_next(voff, span);
 		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
@@ -368,10 +370,12 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_spnode_info *sni = wa_ctx->sni3;
 	size_t slot = 0;
+	ssize_t span;
 	loff_t voff;
 	int err = 0;
 
 	sni_vrange(sni, &vrange);
+	span = silofs_height_to_span(vrange.height - 1);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
@@ -386,7 +390,7 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, vrange.vspan);
+		voff = off_next(voff, span);
 		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
@@ -446,10 +450,12 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_spnode_info *sni = wa_ctx->sni4;
 	size_t slot = 0;
+	ssize_t span;
 	loff_t voff;
 	int err = 0;
 
 	sni_vrange(sni, &vrange);
+	span = silofs_height_to_span(vrange.height - 1);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
@@ -464,7 +470,7 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, vrange.vspan);
+		voff = off_next(voff, span);
 		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;

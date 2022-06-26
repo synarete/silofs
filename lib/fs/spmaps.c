@@ -258,6 +258,7 @@ static void spnode_init(struct silofs_spmap_node *sn,
 static size_t spnode_slot_of(const struct silofs_spmap_node *sn, loff_t voff)
 {
 	struct silofs_vrange vrange;
+	size_t len;
 	size_t slot;
 	ssize_t roff;
 	const size_t nslots = ARRAY_SIZE(sn->sn_subref);
@@ -266,8 +267,9 @@ static size_t spnode_slot_of(const struct silofs_spmap_node *sn, loff_t voff)
 	silofs_assert_le(vrange.beg, voff);
 	silofs_assert_lt(voff, vrange.end);
 
+	len = silofs_vrange_length(&vrange);
 	roff = off_diff(vrange.beg, voff);
-	slot = (size_t)(roff * (long)nslots) / vrange.len;
+	slot = (size_t)(roff * (long)nslots) / len;
 	silofs_assert_lt(slot, nslots);
 	return slot;
 }
@@ -1429,11 +1431,13 @@ void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
 {
 	struct silofs_vrange vrange;
 	size_t nform_size;
+	ssize_t span;
 
 	silofs_assert_le(sni->sn_nactive_subs, SILOFS_SPMAP_NCHILDS);
 
 	silofs_sni_vspace_range(sni, &vrange);
-	nform_size = sni->sn_nactive_subs * (size_t)vrange.vspan;
+	span = silofs_height_to_span(vrange.height - 1);
+	nform_size = sni->sn_nactive_subs * (size_t)span;
 	silofs_vrange_setup(out_vrange, vrange.height, vrange.beg,
 	                    off_end(vrange.beg, nform_size));
 }

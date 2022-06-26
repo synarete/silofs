@@ -453,13 +453,13 @@ static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 	struct silofs_vrange vrange;
 	const long nslots = SILOFS_SPMAP_NCHILDS;
 	size_t slot;
-	long span;
+	size_t len;
 	long roff;
 
 	sb_vrange(sb, &vrange);
-	span = (long)vrange.len;
+	len = silofs_vrange_length(&vrange);
 	roff = off_diff(vrange.beg, voff);
-	slot = (size_t)((roff * nslots) / span);
+	slot = (size_t)(roff * nslots) / len;
 	silofs_assert_lt(slot, nslots);
 	return slot;
 }

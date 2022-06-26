@@ -801,9 +801,11 @@ static int pac_exec_archive_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_vrange vrange = { .beg = -1 };
 	loff_t voff = -1;
 	size_t slot = 0;
+	ssize_t span;
 	int err;
 
 	sli_vrange(sli, &vrange);
+	span = silofs_height_to_span(vrange.height - 1);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = pac_archive_spleaf_sub(pa_ctx, sli, voff, slot);
@@ -813,7 +815,7 @@ static int pac_exec_archive_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 		if (err) {
 			return err;
 		}
-		voff = off_next(voff, vrange.vspan);
+		voff = off_next(voff, span);
 		slot++;
 	}
 	return 0;
@@ -1389,9 +1391,11 @@ static int pac_restore_spleaf_subs(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_vrange vrange = { .beg = -1 };
 	loff_t voff = -1;
 	size_t slot = 0;
+	ssize_t span;
 	int err;
 
 	sli_vrange(sli, &vrange);
+	span = silofs_height_to_span(vrange.height - 1);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = pac_restore_spleaf_sub(pa_ctx, sli, voff, slot);
@@ -1401,7 +1405,7 @@ static int pac_restore_spleaf_subs(struct silofs_pack_ctx *pa_ctx,
 		if (err) {
 			return err;
 		}
-		voff = off_next(voff, vrange.vspan);
+		voff = off_next(voff, span);
 		slot++;
 	}
 	return 0;

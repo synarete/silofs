@@ -1497,12 +1497,14 @@ stgc_spamaps(const struct silofs_stage_ctx *stg_ctx)
 static void stgc_track_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
                                       const struct silofs_spleaf_info *sli)
 {
-	struct silofs_vrange vrange = { .vspan = -1 };
+	struct silofs_vrange vrange;
 	struct silofs_spamaps *spam = stgc_spamaps(stg_ctx);
 	const struct silofs_uaddr *uaddr = sli_uaddr(sli);
+	size_t len;
 
 	sli_vrange(sli, &vrange);
-	silofs_spamaps_store(spam, uaddr->stype, vrange.beg, vrange.len);
+	len = silofs_vrange_length(&vrange);
+	silofs_spamaps_store(spam, uaddr->stype, vrange.beg, len);
 }
 
 static void stgc_bind_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,

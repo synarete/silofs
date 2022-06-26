@@ -30,36 +30,36 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ssize_t height_to_vspan(enum silofs_height height)
+ssize_t silofs_height_to_span(enum silofs_height height)
 {
 	const ssize_t bk_size = SILOFS_BK_SIZE;
 	const ssize_t nchilds = SILOFS_SPMAP_NCHILDS;
 	const ssize_t nspmaps = SILOFS_NSPMAPS_IN_BK;
 	const ssize_t nmbk = nchilds * nspmaps;
-	ssize_t vspan;
+	ssize_t span;
 
 	switch (height) {
 	case SILOFS_HEIGHT_VDATA:
-		vspan = bk_size;
+		span = bk_size;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		vspan = bk_size * nmbk;
+		span = bk_size * nmbk;
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		vspan = bk_size * nmbk * nmbk;
+		span = bk_size * nmbk * nmbk;
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		vspan = bk_size * nmbk * nmbk * nmbk;
+		span = bk_size * nmbk * nmbk * nmbk;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
-		vspan = bk_size * nmbk * nmbk * nmbk * nmbk;
+		span = bk_size * nmbk * nmbk * nmbk * nmbk;
 		break;
 	default:
-		vspan = -1;
+		span = -1;
 		break;
 	}
-	return vspan;
+	return span;
 }
 
 static loff_t voff_base_of(loff_t voff, enum silofs_height height)
@@ -1333,9 +1333,7 @@ void silofs_vrange_setup(struct silofs_vrange *vrange,
 
 	vrange->beg = beg;
 	vrange->end = end;
-	vrange->len = off_ulen(beg, end);
 	vrange->height = height;
-	vrange->vspan = height_to_vspan(height - 1);
 }
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
@@ -1347,10 +1345,15 @@ void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             enum silofs_height height, loff_t voff_base)
 {
-	const ssize_t vspan = height_to_vspan(height);
+	const ssize_t vspan = silofs_height_to_span(height);
 	const loff_t beg = off_align(voff_base, vspan);
 
 	silofs_vrange_setup(vrange, height, beg, off_next(beg, vspan));
+}
+
+size_t silofs_vrange_length(const struct silofs_vrange *vrange)
+{
+	return off_ulen(vrange->beg, vrange->end);
 }
 
 void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
@@ -1379,9 +1382,7 @@ void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 	struct silofs_vrange vrange = {
 		.beg = SILOFS_OFF_NULL,
 		.end = SILOFS_OFF_NULL,
-		.len = 0,
-		.height = 0,
-		.vspan = 0,
+		.height = SILOFS_HEIGHT_VDATA,
 	};
 
 	silofs_vrange128_set(vrng, &vrange);
@@ -1390,8 +1391,10 @@ void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 void silofs_vrange128_set(struct silofs_vrange128 *vrng,
                           const struct silofs_vrange *vrange)
 {
+	const size_t len = silofs_vrange_length(vrange);
+
 	vrng->beg = silofs_cpu_to_off(vrange->beg);
-	vrng->len_height = cpu_to_len_height(vrange->len, vrange->height);
+	vrng->len_height = cpu_to_len_height(len, vrange->height);
 }
 
 void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,

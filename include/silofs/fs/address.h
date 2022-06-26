@@ -300,6 +300,8 @@ void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+ssize_t silofs_height_to_span(enum silofs_height height);
+
 bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off);
 
 void silofs_vrange_setup(struct silofs_vrange *vrange,
@@ -310,6 +312,8 @@ void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
 
 void silofs_vrange_setup_by(struct silofs_vrange *vrange,
                             enum silofs_height height, loff_t voff_base);
+
+size_t silofs_vrange_length(const struct silofs_vrange *vrange);
 
 void silofs_vrange_of_super(struct silofs_vrange *vrange);
 

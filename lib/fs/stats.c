@@ -297,7 +297,7 @@ static void spst_init(struct silofs_spstats_node *sp)
 	spst_set_btime(sp, silofs_time_now());
 	spst_set_ctime(sp, silofs_time_now());
 	spst_set_capacity(sp, 0);
-	spst_set_vspacesize(sp, SILOFS_PETA); /* XXX */
+	spst_set_vspacesize(sp, SILOFS_VSPACE_SIZE_MAX);
 	sr_bzero_all(&sp->sp_st.sp_objs);
 	sr_bzero_all(&sp->sp_st.sp_bks);
 	sr_bzero_all(&sp->sp_st.sp_blobs);

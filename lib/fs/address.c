@@ -68,8 +68,7 @@ static loff_t voff_base_of(loff_t voff, enum silofs_height height)
 	ssize_t align;
 
 	if (height == SILOFS_HEIGHT_VDATA) {
-		align = SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS *
-		        SILOFS_NSPMAPS_IN_BK;
+		align = SILOFS_BLOB_SIZE_MAX;
 		voff_base = off_align(voff, align);
 	} else {
 		voff_base = voff;

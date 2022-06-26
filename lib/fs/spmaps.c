@@ -689,8 +689,8 @@ spleaf_subref_at(const struct silofs_spmap_leaf *sl, size_t slot)
 	return unconst(bkr);
 }
 
-static size_t spleaf_lba_slot(const struct silofs_spmap_leaf *sl,
-                              silofs_lba_t lba)
+static size_t
+spleaf_lba_slot(const struct silofs_spmap_leaf *sl, silofs_lba_t lba)
 {
 	return (size_t)lba % ARRAY_SIZE(sl->sl_subref);
 }
@@ -1649,8 +1649,8 @@ static int verify_spmap_leaf_self(const struct silofs_spmap_leaf *sl)
 
 int silofs_verify_spmap_leaf(const struct silofs_spmap_leaf *sl)
 {
-	int err;
 	const struct silofs_bk_ref *bkr;
+	int err;
 
 	err = verify_spmap_leaf_parent(sl);
 	if (err) {
@@ -1679,7 +1679,6 @@ static int verify_spmap_ref(const struct silofs_spmap_ref *spr,
                             enum silofs_height height)
 {
 	struct silofs_uaddr uaddr;
-	const size_t spleaf_height = SILOFS_HEIGHT_SPLEAF;
 	enum silofs_stype stype_sub;
 	int err;
 
@@ -1697,7 +1696,7 @@ static int verify_spmap_ref(const struct silofs_spmap_ref *spr,
 		log_err("non valid spmap: sub_type=%d", stype_sub);
 		return err;
 	}
-	if (stype_isnone(stype_sub) && (height == spleaf_height + 1)) {
+	if (stype_isnone(stype_sub) && (height == SILOFS_HEIGHT_SPNODE2)) {
 		return -EFSCORRUPTED;
 	}
 	return 0;

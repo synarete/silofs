@@ -470,9 +470,9 @@ static void spac_mark_allocated(const struct silofs_spalloc_ctx *spa_ctx)
 
 static int spac_try_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx)
 {
-	const loff_t voff = sbi_voff_last_of(spa_ctx->sbi, spa_ctx->stype);
+	const loff_t hint = sbi_voff_last_of(spa_ctx->sbi, spa_ctx->stype);
 
-	return spac_find_unallocated_vspace(spa_ctx, voff);
+	return spac_find_unallocated_vspace(spa_ctx, hint);
 }
 
 static int spac_resolve_and_claim(struct silofs_spalloc_ctx *spa_ctx)

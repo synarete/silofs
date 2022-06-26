@@ -76,6 +76,9 @@
 /* maximal file-system capacity, in bytes (256T) */
 #define SILOFS_CAPACITY_SIZE_MAX        (256L * SILOFS_TERA)
 
+/* maximal size of virtual address space (1P) */
+#define SILOFS_VSPACE_SIZE_MAX          (4 * SILOFS_CAPACITY_SIZE_MAX)
+
 
 /* bits-shift of small (1K) block-size */
 #define SILOFS_KB_SHIFT                 (10)
@@ -526,7 +529,7 @@ struct silofs_uaddr64b {
 struct silofs_vrange128 {
 	int64_t                         beg;
 	uint64_t                        len_height;
-} silofs_packed_aligned16;
+} silofs_packed_aligned8;
 
 
 struct silofs_vaddr56 {

@@ -1623,7 +1623,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 
 	/* XXX calc expected diff based on volume size */
 	bfree_dif = stv1->f_bfree - stv2->f_bfree;
-	ut_expect_lt(bfree_dif, 4000);
+	ut_expect_lt(bfree_dif, 16 * 4000); // XXX was 4000 only
 }
 
 void ut_save_bsec_ok(struct ut_env *ute, const struct silofs_bootsec *bsec)

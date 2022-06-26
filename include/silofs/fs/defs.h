@@ -703,17 +703,18 @@ struct silofs_bk_ref {
 
 struct silofs_spmap_leaf {
 	struct silofs_header            sl_hdr;
-	struct silofs_vrange128         sl_vrange;
 	uint8_t                         sl_stype_sub;
-	uint8_t                         sl_reserved1[31];
+	uint8_t                         sl_reserved1[7];
 	struct silofs_blobid40b         sl_mainblobid;
-	uint8_t                         sl_reserved2[24];
 	struct silofs_blobid40b         sl_mainpackid;
-	uint8_t                         sl_reserved3[88];
+	struct silofs_vrange128         sl_vrange;
+	uint8_t                         sl_reserved2[8];
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
-	uint8_t                         sl_reserved4[3712];
-	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
+	// struct silofs_bk_ref            sl_subref[512];
+	// uint8_t                              sl_reserved3[3840];
+	struct silofs_bk_ref            sl_subref[32];
+	uint8_t                         sl_reserved3[1024 * 60];
 } silofs_packed_aligned64;
 
 

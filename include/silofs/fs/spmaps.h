@@ -66,8 +66,7 @@ void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
 int silofs_sni_cap_alloc_at(const struct silofs_spnode_info *sni,
                             loff_t voff, const enum silofs_stype stype);
 
-int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni,
-                             const struct silofs_vrange *range,
+int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni, loff_t beg,
                              enum silofs_stype stype, loff_t *out_voff);
 
 void silofs_sni_main_blob(const struct silofs_spnode_info *sni,

@@ -321,16 +321,18 @@ static void spnode_set_stype_sub_of(struct silofs_spmap_node *sn,
 	spr_set_stype_sub(spr, stype_sub);
 }
 
-static bool spnode_find_avail_spleaf(const struct silofs_spmap_node *sn,
-                                     const struct silofs_vrange *vrange,
-                                     enum silofs_stype stype, loff_t *out_voff)
+static bool
+spnode_find_avail_spleaf(const struct silofs_spmap_node *sn, loff_t voff_beg,
+                         enum silofs_stype stype, loff_t *out_voff)
 {
-	loff_t voff;
+	struct silofs_vrange vrange;
 	const struct silofs_spmap_ref *spr = NULL;
+	loff_t voff;
 	bool ret = false;
 
-	voff = vrange->beg;
-	while (voff < vrange->end) {
+	spnode_vrange(sn, &vrange);
+	voff = voff_beg;
+	while (voff < vrange.end) {
 		spr = spnode_subref_of(sn, voff);
 		if (!spr_isactive(spr)) {
 			break;
@@ -1045,6 +1047,12 @@ loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
 static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_vrange vrange;
+	const size_t slot = (size_t)off_to_lba(voff) % 512; // XXX
+
+	// XXX
+	if (slot >= ARRAY_SIZE(sli->sl->sl_subref)) {
+		return false;
+	}
 
 	sli_vrange(sli, &vrange);
 	return (vrange.beg <= voff) && (voff < vrange.end);
@@ -1058,7 +1066,7 @@ static size_t sli_voff_to_bn(const struct silofs_spleaf_info *sli, loff_t voff)
 	silofs_assert_ge(voff, beg);
 
 	bn = (size_t)off_to_lba(voff - beg);
-	silofs_assert_le(bn, ARRAY_SIZE(sli->sl->sl_subref));
+	//silofs_assert_le(bn, ARRAY_SIZE(sli->sl->sl_subref));
 	return bn;
 }
 
@@ -1071,18 +1079,32 @@ static void sli_vaddr_at(const struct silofs_spleaf_info *sli,
 	silofs_vaddr_by_spleaf(out_vaddr, stype, beg, bn, kbn);
 }
 
-static int sli_find_free_space_within(const struct silofs_spleaf_info *sli,
-                                      enum silofs_stype stype,
-                                      const struct silofs_vrange *vrange,
-                                      struct silofs_vaddr *out_vaddr)
+static int sli_find_free_space_from(const struct silofs_spleaf_info *sli,
+                                    loff_t voff_from, enum silofs_stype stype,
+                                    struct silofs_vaddr *out_vaddr)
 {
-	const size_t bn_beg = sli_voff_to_bn(sli, vrange->beg);
-	const size_t bn_end = sli_voff_to_bn(sli, vrange->end);
+	struct silofs_vrange vrange;
+	loff_t voff_beg;
+	size_t bn_beg;
+	size_t bn_end;
+	size_t bn_end2; /* XXX */
 	size_t bn;
 	size_t kbn;
 	int err;
 
-	err = spleaf_find_free(sli->sl, stype, bn_beg, bn_end, &bn, &kbn);
+	sli_vrange(sli, &vrange);
+	if (voff_from >= vrange.end) {
+		return -ENOSPC;
+	}
+	voff_beg = off_max(voff_from, vrange.beg);
+	silofs_assert_eq(voff_beg % SILOFS_KB_SIZE, 0);
+	bn_beg = sli_voff_to_bn(sli, voff_beg);
+	bn_end = sli_voff_to_bn(sli, vrange.end);
+
+	/* XXX */
+	bn_end2 = min(bn_end, ARRAY_SIZE(sli->sl->sl_subref));
+
+	err = spleaf_find_free(sli->sl, stype, bn_beg, bn_end2, &bn, &kbn);
 	if (err) {
 		return err;
 	}
@@ -1105,16 +1127,13 @@ int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
                                loff_t voff_from, enum silofs_stype stype,
                                struct silofs_vaddr *out_vaddr)
 {
-	struct silofs_vrange vrange;
 	int err;
 
 	err = sli_cap_allocate(sli, stype);
 	if (err) {
 		return err;
 	}
-	sli_vrange(sli, &vrange);
-	vrange.beg = off_max(vrange.beg, voff_from);
-	err = sli_find_free_space_within(sli, stype, &vrange, out_vaddr);
+	err = sli_find_free_space_from(sli, voff_from, stype, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -1277,13 +1296,20 @@ void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
 int silofs_sli_subref_of(const struct silofs_spleaf_info *sli,
                          loff_t voff, struct silofs_uaddr *out_ulink)
 {
+	if (!sli_is_inrange(sli, voff)) {
+		return -ENOENT;
+	}
 	spleaf_resolve_subref(sli->sl, voff, out_ulink);
-	return silofs_uaddr_isnull(out_ulink) ? -ENOENT : 0;
+	if (uaddr_isnull(out_ulink)) {
+		return -ENOENT;
+	}
+	return 0;
 }
 
 void silofs_sli_resolve_main_at(const struct silofs_spleaf_info *sli,
                                 loff_t voff, struct silofs_uaddr *out_ulink)
 {
+	silofs_assert(sli_is_inrange(sli, voff));
 	spleaf_resolve_main_at(sli->sl, voff, out_ulink);
 }
 
@@ -1362,17 +1388,12 @@ static size_t sni_child_height(const struct silofs_spnode_info *sni)
 	return silofs_sni_height(sni) - 1;
 }
 
-int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni,
-                             const struct silofs_vrange *vrange,
+int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni, loff_t beg,
                              enum silofs_stype stype, loff_t *out_voff)
 {
 	bool ok;
 
-	ok = spnode_find_avail_spleaf(sni->sn, vrange, stype, out_voff);
-	silofs_assert_ge(*out_voff, vrange->beg);
-	if (ok) {
-		silofs_assert_lt(*out_voff, vrange->end);
-	}
+	ok = spnode_find_avail_spleaf(sni->sn, beg, stype, out_voff);
 	return ok ? 0 : -ENOSPC;
 }
 

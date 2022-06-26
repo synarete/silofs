@@ -272,39 +272,20 @@ spac_find_free_space_at_leaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	return 0;
 }
 
-static int
-spac_find_free_space_from(struct silofs_spalloc_ctx *spa_ctx,
-                          const struct silofs_vrange *vrange, loff_t *out_voff)
-{
-	const enum silofs_stype stype = spa_ctx->stype;
-	int err;
-
-	err = silofs_sni_search_spleaf(spa_ctx->sni, vrange, stype, out_voff);
-	if (err) {
-		return err;
-	}
-	err = spac_find_free_space_at_leaf(spa_ctx, *out_voff);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int spac_find_free_space_within(struct silofs_spalloc_ctx *spa_ctx,
                                        const struct silofs_vrange *vrange)
 {
-	struct silofs_vrange vrange_sub;
+	const struct silofs_spnode_info *sni = spa_ctx->sni;
+	const enum silofs_stype stype = spa_ctx->stype;
 	loff_t voff = vrange->beg;
-	loff_t vnxt = voff;
 	int err = -ENOSPC;
 
-	while (voff < vrange->end) {
-		silofs_vrange_setup_sub(&vrange_sub, vrange, voff);
-		err = spac_find_free_space_from(spa_ctx, &vrange_sub, &vnxt);
-		if ((err != -ENOSPC) || (vnxt >= vrange->end)) {
-			break;
+	while ((voff < vrange->end) && (err == -ENOSPC)) {
+		err = silofs_sni_search_spleaf(sni, voff, stype, &voff);
+		if (!err) {
+			err = spac_find_free_space_at_leaf(spa_ctx, voff);
 		}
-		voff = silofs_off_to_spleaf_next(vnxt);
+		voff = silofs_off_to_spleaf_next(voff);
 	}
 	return err;
 }
@@ -381,16 +362,16 @@ spac_find_free_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
 	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
 	loff_t voff = hint;
-	int ret;
+	int ret = -ENOSPC;
 
 	while (voff < vend) {
 		ret = spac_want_free_at(spa_ctx, voff);
 		if (ret != -ENOSPC) {
-			return ret;
+			break;
 		}
 		voff = silofs_off_to_spnode2_next(voff);
 	}
-	return -ENOSPC;
+	return ret;
 }
 
 static struct silofs_spamaps *

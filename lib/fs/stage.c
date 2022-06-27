@@ -994,7 +994,7 @@ static int stgc_spawn_spnode3_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_resolve_main_child(stg_ctx->sni4, stg_ctx->bk_voff, &uaddr);
+	silofs_sni_resolve_main_at(stg_ctx->sni4, stg_ctx->bk_voff, &uaddr);
 
 	err = stgc_spawn_spnode_at(stg_ctx, &uaddr, out_sni);
 	if (err) {
@@ -1175,7 +1175,7 @@ static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_resolve_main_child(stg_ctx->sni3, stg_ctx->bk_voff, &uaddr);
+	silofs_sni_resolve_main_at(stg_ctx->sni3, stg_ctx->bk_voff, &uaddr);
 
 	err = stgc_spawn_spnode_at(stg_ctx, &uaddr, out_sni);
 	if (err) {
@@ -1358,7 +1358,7 @@ static int stgc_spawn_spleaf_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_resolve_main_child(stg_ctx->sni2, stg_ctx->bk_voff, &uaddr);
+	silofs_sni_resolve_main_at(stg_ctx->sni2, stg_ctx->bk_voff, &uaddr);
 
 	err = stgc_spawn_spleaf_at(stg_ctx, &uaddr, out_sli);
 	if (err) {
@@ -1940,7 +1940,7 @@ static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 	const loff_t voff = voa_src->vaddr.voff;
 	int err;
 
-	silofs_sli_resolve_main_at(stg_ctx->sli, voff, &dst_uaddr);
+	silofs_sli_resolve_main_vbk(stg_ctx->sli, voff, &dst_uaddr);
 	err = sbi_resolve_vbks(stg_ctx->sbi, &voa_src->oaddr,
 	                       &dst_uaddr.oaddr, &src_xiov, &dst_xiov);
 	if (err == -ENOENT) {

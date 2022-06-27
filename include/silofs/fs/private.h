@@ -137,6 +137,7 @@
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_lba(ua)                   silofs_uaddr_lba(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
+#define uaddr_setup(ua, b, p, s, h, o)  silofs_uaddr_setup(ua, b, p, s, h, o)
 
 #define vaddr_none()                    silofs_vaddr_none()
 #define vaddr_off(va)                   silofs_vaddr_off(va)

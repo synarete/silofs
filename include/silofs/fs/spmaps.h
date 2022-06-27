@@ -24,8 +24,6 @@
 
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
-loff_t silofs_sni_last_voff(const struct silofs_spnode_info *sni);
-
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
 
 enum silofs_stype silofs_sni_stype_sub(const struct silofs_spnode_info *sni);
@@ -77,8 +75,8 @@ void silofs_sni_bind_main_blob(struct silofs_spnode_info *sni,
 
 bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni);
 
-void silofs_sni_resolve_main_child(const struct silofs_spnode_info *sni,
-                                   loff_t voff, struct silofs_uaddr *out_ua);
+void silofs_sni_resolve_main_at(const struct silofs_spnode_info *sni,
+                                loff_t voff, struct silofs_uaddr *out_ua);
 
 int silofs_sni_main_pack(const struct silofs_spnode_info *sni,
                          struct silofs_blobid *out_blobid);
@@ -164,8 +162,8 @@ void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
 int silofs_sli_subref_of(const struct silofs_spleaf_info *sli,
                          loff_t voff, struct silofs_uaddr *out_ulink);
 
-void silofs_sli_resolve_main_at(const struct silofs_spleaf_info *sli,
-                                loff_t voff, struct silofs_uaddr *out_ulink);
+void silofs_sli_resolve_main_vbk(const struct silofs_spleaf_info *sli,
+                                 loff_t voff, struct silofs_uaddr *out_ulink);
 
 void silofs_sli_rebind_child_at(struct silofs_spleaf_info *sli, loff_t voff,
                                 const struct silofs_uaddr *ulink);

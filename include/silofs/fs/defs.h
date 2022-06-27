@@ -676,17 +676,19 @@ struct silofs_spmap_ref {
 
 struct silofs_spmap_node {
 	struct silofs_header            sn_hdr;
-	struct silofs_vrange128         sn_vrange;
 	uint8_t                         sn_stype_sub;
-	uint8_t                         sn_reserved1[31];
+	uint8_t                         sn_reserved1[7];
 	struct silofs_blobid40b         sn_mainblobid;
-	uint8_t                         sn_reserved2[24];
 	struct silofs_blobid40b         sn_mainpackid;
-	uint8_t                         sn_reserved3[88];
+	struct silofs_vrange128         sn_vrange;
+	uint8_t                         sn_reserved2[8];
 	struct silofs_uaddr64b          sn_parent;
 	struct silofs_uaddr64b          sn_self;
-	uint8_t                         sn_reserved4[3712];
 	struct silofs_spmap_ref         sn_subref[SILOFS_SPMAP_NCHILDS];
+	uint8_t                         sn_reserved3[3840];
+	// XXX
+	// struct silofs_spmap_ref         sn_subref[32];
+	// uint8_t                         sn_reserved3[1024 * 60];
 } silofs_packed_aligned64;
 
 
@@ -711,10 +713,11 @@ struct silofs_spmap_leaf {
 	uint8_t                         sl_reserved2[8];
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
-	// struct silofs_bk_ref            sl_subref[512];
-	// uint8_t                              sl_reserved3[3840];
-	struct silofs_bk_ref            sl_subref[32];
-	uint8_t                         sl_reserved3[1024 * 60];
+	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
+	uint8_t                         sl_reserved3[3840];
+	// XXX
+	// struct silofs_bk_ref            sl_subref[32];
+	// uint8_t                         sl_reserved3[1024 * 60];
 } silofs_packed_aligned64;
 
 

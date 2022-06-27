@@ -155,6 +155,8 @@ int silofs_blobid_to_name(const struct silofs_blobid *blobid,
 
 const struct silofs_bkaddr *silofs_bkaddr_none(void);
 
+void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr);
+
 void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
                          const struct silofs_blobid *blobid, silofs_lba_t lba);
 
@@ -169,6 +171,16 @@ long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
 
 void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
                           const struct silofs_bkaddr *other);
+
+bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
+
+void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48);
+
+void silofs_bkaddr48b_set(struct silofs_bkaddr48b *bkaddr48,
+                          const struct silofs_bkaddr *bkaddr);
+
+void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
+                            struct silofs_bkaddr *bkaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -195,6 +207,14 @@ bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr);
 
 bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
                           const struct silofs_oaddr *other);
+
+void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
+                         const struct silofs_oaddr *oaddr);
+
+void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
+                           struct silofs_oaddr *oaddr);
+
+void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48);
 
 
 void silofs_voaddr_setup(struct silofs_voaddr *voa,
@@ -393,14 +413,14 @@ static inline loff_t silofs_off_to_cpu(int64_t off)
 	return (loff_t)silofs_le64_to_cpu((uint64_t)off);
 }
 
-static inline uint64_t silofs_cpu_to_lba(silofs_lba_t lba)
+static inline uint32_t silofs_cpu_to_lba32(silofs_lba_t lba)
 {
-	return silofs_cpu_to_le64((uint64_t)lba);
+	return silofs_cpu_to_le32((uint32_t)lba);
 }
 
-static inline silofs_lba_t silofs_lba_to_cpu(uint64_t lba)
+static inline silofs_lba_t silofs_lba32_to_cpu(uint32_t lba)
 {
-	return (silofs_lba_t)silofs_le64_to_cpu(lba);
+	return (silofs_lba_t)silofs_le32_to_cpu(lba);
 }
 
 static inline uint64_t silofs_cpu_to_time(time_t tm)

@@ -166,6 +166,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_blobid32b_ta, 32);
 	REQUIRE_SIZEOF(struct silofs_blobid32b_ca, 32);
 	REQUIRE_SIZEOF(struct silofs_blobid40b, 40);
+	REQUIRE_SIZEOF(struct silofs_bkaddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_oaddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bootsec1k, SILOFS_BOOTSEC_SIZE);
@@ -219,9 +220,10 @@ static void guarantee_persistent_types_alignment1(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_ulink, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_stype_sub, 64);
 	REQUIRE_OFFSET(struct silofs_spmap_ref, sr_flags, 68);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_ulink, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 64);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 72);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_bkaddr, 0);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 48);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 56);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 64);
 }
 
 static void guarantee_persistent_types_alignment2(void)

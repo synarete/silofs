@@ -125,11 +125,17 @@
 #define blobid_size(bid)                silofs_blobid_size(bid)
 #define blobid_has_treeid(bid, tid)     silofs_blobid_has_treeid(bid, tid)
 
+#define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
+#define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
+#define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
+
+
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
-#define oaddr_setup(oa, bid, s, o)      silofs_oaddr_setup(oa, bid, s, o)
+#define oaddr_setup(oa, bid, o, l)      silofs_oaddr_setup(oa, bid, o, l)
 #define oaddr_setup_by(oa, bid, va)     silofs_oaddr_setup_by(oa, bid, va)
 #define oaddr_isvalid(oa)               silofs_oaddr_isvalid(oa)
+#define oaddr_isnull(oa)                silofs_oaddr_isnull(oa)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)

@@ -768,7 +768,7 @@ static int pac_archive_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
                                   struct silofs_spleaf_info *sli,
                                   loff_t voff, size_t slot)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_bkaddr bkaddr;
 	struct silofs_ubk_info *ubi = NULL;
 	struct silofs_block *enc_bk = NULL;
 	size_t nalloc;
@@ -778,11 +778,11 @@ static int pac_archive_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (!nalloc) {
 		goto out;
 	}
-	err = silofs_sli_subref_of(sli, voff, &uaddr);
+	err = silofs_sli_resolve_vbk(sli, voff, &bkaddr);
 	if (err) {
 		return err;
 	}
-	err = pac_stage_block(pa_ctx, blobid_of(&uaddr), slot, &ubi);
+	err = pac_stage_block(pa_ctx, &bkaddr.blobid, slot, &ubi);
 	if (err) {
 		return err;
 	}
@@ -1341,20 +1341,19 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
                                   struct silofs_spleaf_info *sli,
                                   loff_t voff, size_t slot)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_bkaddr bkaddr;
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
 	struct silofs_ubk_info *ubi_src = NULL;
 	struct silofs_ubk_info *ubi_dst = NULL;
-	const struct silofs_bkaddr *bkaddr = &uaddr.oaddr.bka;
 	size_t nalloc;
 	int err;
 
-	err = silofs_sli_subref_of(sli, voff, &uaddr);
+	err = silofs_sli_resolve_vbk(sli, voff, &bkaddr);
 	if (err) {
 		return err;
 	}
-	err = pac_require_blob_of(pa_ctx, blobid_of(&uaddr), &bli);
+	err = pac_require_blob_of(pa_ctx, &bkaddr.blobid, &bli);
 	if (err) {
 		return err;
 	}
@@ -1370,7 +1369,7 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_require_ubk(pa_ctx, bkaddr, &ubi_dst);
+	err = pac_require_ubk(pa_ctx, &bkaddr, &ubi_dst);
 	if (err) {
 		return err;
 	}
@@ -1378,7 +1377,7 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_store_bk(ubi_dst->ubk_bli, bkaddr, ubi_dst->ubk);
+	err = silofs_bli_store_bk(ubi_dst->ubk_bli, &bkaddr, ubi_dst->ubk);
 	if (err) {
 		return err;
 	}

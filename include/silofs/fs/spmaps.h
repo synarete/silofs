@@ -159,14 +159,14 @@ void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
                               const struct silofs_spleaf_info *sli_other);
 
 
-int silofs_sli_subref_of(const struct silofs_spleaf_info *sli,
-                         loff_t voff, struct silofs_uaddr *out_ulink);
+int silofs_sli_resolve_vbk(const struct silofs_spleaf_info *sli,
+                           loff_t voff, struct silofs_bkaddr *out_bkaddr);
 
 void silofs_sli_resolve_main_vbk(const struct silofs_spleaf_info *sli,
-                                 loff_t voff, struct silofs_uaddr *out_ulink);
+                                 loff_t voff, struct silofs_bkaddr *out_bka);
 
-void silofs_sli_rebind_child_at(struct silofs_spleaf_info *sli, loff_t voff,
-                                const struct silofs_uaddr *ulink);
+void silofs_sli_rebind_vbk(struct silofs_spleaf_info *sli, loff_t voff,
+                           const struct silofs_bkaddr *bkaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

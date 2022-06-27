@@ -836,7 +836,7 @@ void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
 	bkaddr->lba = lba;
 }
 
-static void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr)
+void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr)
 {
 	silofs_blobid_reset(&bkaddr->blobid);
 	bkaddr->lba = SILOFS_LBA_NULL;
@@ -879,10 +879,37 @@ void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
 	silofs_bkaddr_setup(bkaddr, &other->blobid, other->lba);
 }
 
-static bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
+bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
 {
 	return lba_isnull(bkaddr->lba) ||
 	       silofs_blobid_isnull(&bkaddr->blobid);
+}
+
+
+void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48)
+{
+	silofs_blobid40b_reset(&bkaddr48->blobid);
+	bkaddr48->lba = silofs_cpu_to_lba32(UINT32_MAX);
+	bkaddr48->reserved = 0;
+}
+
+void silofs_bkaddr48b_set(struct silofs_bkaddr48b *bkaddr48,
+                          const struct silofs_bkaddr *bkaddr)
+{
+	silofs_blobid40b_set(&bkaddr48->blobid, &bkaddr->blobid);
+	bkaddr48->lba = silofs_cpu_to_lba32(bkaddr->lba);
+	bkaddr48->reserved = 0;
+}
+
+void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
+                            struct silofs_bkaddr *bkaddr)
+{
+	struct silofs_blobid blobid;
+	silofs_lba_t lba;
+
+	silofs_blobid40b_parse(&bkaddr48->blobid, &blobid);
+	lba = silofs_lba32_to_cpu(bkaddr48->lba);
+	silofs_bkaddr_setup(bkaddr, &blobid, lba);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -986,23 +1013,23 @@ void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
 }
 
 
-static void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48)
+void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48)
 {
 	silofs_blobid40b_reset(&oaddr48->blobid);
 	oaddr48->pos = 0;
 	oaddr48->len = 0;
 }
 
-static void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
-                                const struct silofs_oaddr *oaddr)
+void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
+                         const struct silofs_oaddr *oaddr)
 {
 	silofs_blobid40b_set(&oaddr48->blobid, &oaddr->bka.blobid);
 	oaddr48->pos = silofs_cpu_to_le32((uint32_t)(oaddr->pos));
 	oaddr48->len = silofs_cpu_to_le32((uint32_t)(oaddr->len));
 }
 
-static void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
-                                  struct silofs_oaddr *oaddr)
+void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
+                           struct silofs_oaddr *oaddr)
 {
 	struct silofs_blobid blobid;
 	loff_t pos;

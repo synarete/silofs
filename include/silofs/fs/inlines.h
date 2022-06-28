@@ -64,6 +64,11 @@ static inline loff_t silofs_off_next(loff_t off, ssize_t len)
 	return silofs_off_align(off + len, len);
 }
 
+static inline loff_t silofs_off_next_n(loff_t off, ssize_t len, size_t n)
+{
+	return silofs_off_align(off + ((ssize_t)n * len), len);
+}
+
 static inline loff_t silofs_off_next_bk(loff_t off)
 {
 	return silofs_off_next(off, SILOFS_BK_SIZE);

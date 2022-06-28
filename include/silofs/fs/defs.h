@@ -145,9 +145,11 @@
 /* number of spnode/spleaf mapping in block */
 #define SILOFS_NSPMAPS_IN_BK            (1)
 
-#define SILOFS_NSPMAPS_LEAF_IN_BK            SILOFS_NSPMAPS_IN_BK /* (16) */
+#define SILOFS_NSPMAPS_LEAF_IN_BK       SILOFS_NSPMAPS_IN_BK /* XXX */
+// #define SILOFS_NSPMAPS_LEAF_IN_BK       (16)
 
-#define SILOFS_SPMAP_LEAF_NCHILDS            SILOFS_SPMAP_NCHILDS /* (32) */
+#define SILOFS_SPMAP_LEAF_NCHILDS       SILOFS_SPMAP_NCHILDS /* XXX */
+// #define SILOFS_SPMAP_LEAF_NCHILDS       (32)
 
 /* on-disk size of space-node mapping (64K) */
 #define SILOFS_SPNODE_SIZE              SILOFS_BK_SIZE
@@ -156,7 +158,8 @@
 #define SILOFS_NSPNODE_IN_BK            (SILOFS_BK_SIZE / SILOFS_SPNODE_SIZE)
 
 /* on-disk size of space-leaf mapping (4K) */
-#define SILOFS_SPLEAF_SIZE              SILOFS_BK_SIZE /* (4 * SILOFS_KB_SIZE) */
+#define SILOFS_SPLEAF_SIZE              SILOFS_BK_SIZE /* XXX */
+// #define SILOFS_SPLEAF_SIZE              (4 * SILOFS_KB_SIZE)
 
 /* on-disk size of inode's head */
 #define SILOFS_INODE_SIZE               SILOFS_KB_SIZE

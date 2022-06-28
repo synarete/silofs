@@ -255,7 +255,11 @@ static int wac_traverse_at_spleaf(struct silofs_walk_ctx *wa_ctx,
 {
 	struct silofs_spnode_info *sni = wa_ctx->sni2;
 	struct silofs_spleaf_info *sli = wa_ctx->sli;
+	const enum silofs_stype stype = silofs_sli_stype_sub(sli);
 	int err;
+
+	// XXX
+	silofs_assert(stype != SILOFS_STYPE_NONE);
 
 	err = wac_visit_exec_at(wa_ctx, &sni->sn_ui, &sli->sl_ui, voff, slot);
 	if (err) {
@@ -289,17 +293,22 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 	struct silofs_vrange vrange = { .beg = -1 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_spnode_info *sni = wa_ctx->sni2;
-	size_t slot = 0;
 	ssize_t span;
 	loff_t voff;
 	int err = 0;
 
 	sni_vrange(sni, &vrange);
 	span = silofs_height_to_span(vrange.height - 1);
-	voff = vrange.beg;
-	while (voff < vrange.end) {
+	for (size_t slot = 0; slot < ARRAY_SIZE(sni->sn->sn_subref); ++slot) {
+		voff = off_next_n(vrange.beg, span, slot);
+		if (voff >= vrange.end) {
+			break;
+		}
+		/* Space-nodes at level2 are non-continuous; do not try to
+		 * traverse into non-existing leaves */
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
 		if (err) {
+			// XXX continue
 			break;
 		}
 		err = wac_visit_prep_at(wa_ctx, &sni->sn_ui, voff, slot);
@@ -310,8 +319,6 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, span);
-		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
 }
@@ -369,15 +376,17 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 	struct silofs_vrange vrange = { .beg = -1 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_spnode_info *sni = wa_ctx->sni3;
-	size_t slot = 0;
 	ssize_t span;
 	loff_t voff;
 	int err = 0;
 
 	sni_vrange(sni, &vrange);
 	span = silofs_height_to_span(vrange.height - 1);
-	voff = vrange.beg;
-	while (voff < vrange.end) {
+	for (size_t slot = 0; slot < ARRAY_SIZE(sni->sn->sn_subref); ++slot) {
+		voff = off_next_n(vrange.beg, span, slot);
+		if (voff >= vrange.end) {
+			break;
+		}
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
 		if (err) {
 			break;
@@ -390,8 +399,6 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, span);
-		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
 }
@@ -449,15 +456,17 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 	struct silofs_vrange vrange = { .beg = -1 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_spnode_info *sni = wa_ctx->sni4;
-	size_t slot = 0;
 	ssize_t span;
 	loff_t voff;
 	int err = 0;
 
 	sni_vrange(sni, &vrange);
 	span = silofs_height_to_span(vrange.height - 1);
-	voff = vrange.beg;
-	while (voff < vrange.end) {
+	for (size_t slot = 0; slot < ARRAY_SIZE(sni->sn->sn_subref); ++slot) {
+		voff = vrange.beg + ((ssize_t)slot * span);
+		if (voff >= vrange.end) {
+			break;
+		}
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
 		if (err) {
 			break;
@@ -470,8 +479,6 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -ENOENT)) {
 			break;
 		}
-		voff = off_next(voff, span);
-		slot++;
 	}
 	return (err == -ENOENT) ? 0 : err;
 }

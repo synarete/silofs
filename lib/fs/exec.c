@@ -538,7 +538,7 @@ static int fse_reload_rootdir(struct silofs_fs_env *fse)
 	const ino_t ino = SILOFS_INO_ROOT;
 	int err;
 
-	err = silofs_sbi_stage_inode(sbi, ino, SILOFS_STAGE_RDONLY, &ii);
+	err = silofs_sbi_stage_inode(sbi, ino, SILOFS_STAGE_RO, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -562,11 +562,11 @@ static int fse_reload_block0(struct silofs_fs_env *fse)
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RDONLY;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
 	int err;
 
 	vaddr_setup(&vaddr, SILOFS_STYPE_DATABK, 0);
-	err = silofs_sbi_stage_spmaps_of(sbi, &vaddr, stg_mode, &sni, &sli);
+	err = silofs_sbi_stage_spmaps_at(sbi, &vaddr, stg_mode, &sni, &sli);
 	if (err) {
 		log_err("failed to stage first block: err=%d", err);
 		return -EFSCORRUPTED;
@@ -634,9 +634,15 @@ static int fse_reload_vspace(struct silofs_fs_env *fse)
 
 static int fse_flush_dirty(const struct silofs_fs_env *fse)
 {
+	int err;
+
 	silofs_assert_not_null(fse->fs_uber);
 
-	return silofs_uber_flush_dirty(fse->fs_uber, SILOFS_F_NOW);
+	err = silofs_uber_flush_dirty(fse->fs_uber, SILOFS_F_NOW);
+	if (err) {
+		log_err("failed to flush-dirty: err=%d", err);
+	}
+	return err;
 }
 
 static int fse_shut_uber(struct silofs_fs_env *fse)
@@ -736,7 +742,7 @@ void silofs_fse_halt(struct silofs_fs_env *fse, int signum)
 	}
 }
 
-int silofs_fse_sync_drop(struct silofs_fs_env *fse)
+static int fse_flush_and_drop_caches(const struct silofs_fs_env *fse)
 {
 	int err;
 
@@ -748,6 +754,10 @@ int silofs_fse_sync_drop(struct silofs_fs_env *fse)
 	return 0;
 }
 
+int silofs_fse_sync_drop(struct silofs_fs_env *fse)
+{
+	return fse_flush_and_drop_caches(fse);
+}
 
 void silofs_fse_stats(const struct silofs_fs_env *fse,
                       struct silofs_fs_stats *st)
@@ -940,38 +950,75 @@ out:
 
 static int fse_format_base_spmaps(const struct silofs_fs_env *fse)
 {
-	struct silofs_voaddr voa;
 	struct silofs_vaddr vaddr;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
-	enum silofs_stype stype = SILOFS_STYPE_DATABK;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RW;
+	const enum silofs_stype stype = SILOFS_STYPE_DATABK;
 	int err;
 
 	vaddr_setup(&vaddr, stype, 0);
-	err = silofs_sbi_require_spmaps_of(sbi, &vaddr, &sni, &sli);
+	err = silofs_sbi_require_spmaps_at(sbi, &vaddr, stg_mode, &sni, &sli);
 	if (err) {
 		log_err("failed to format head spmaps: err=%d", err);
 		return err;
 	}
-	err = silofs_sbi_claim_vspace(fse_sbi(fse), stype, &voa);
+	err = fse_flush_and_drop_caches(fse);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int fse_format_claim_vspace(const struct silofs_fs_env *fse,
+                                   enum silofs_stype stype, loff_t voff_exp)
+{
+	struct silofs_voaddr voa;
+	struct silofs_sb_info *sbi = fse_sbi(fse);
+	int err;
+
+	err = silofs_sbi_claim_vspace(sbi, stype, &voa);
 	if (err) {
 		log_err("failed to claim vspace: err=%d", err);
 		return err;
 	}
-	if (voa.vaddr.voff != 0) {
-		log_err("wrong first allocated: voff=%ld", voa.vaddr.voff);
-		return -EFSCORRUPTED; /* TODO: should be internal err */
+	if (voa.vaddr.voff != voff_exp) {
+		log_err("wrong first voff: expected-voff=%ld got-voff=%ld",
+		        voff_exp, voa.vaddr.voff);
+		return -EFSCORRUPTED; /* TODO: should be internal */
 	}
-	err = silofs_sbi_reclaim_vspace(fse_sbi(fse), &voa.vaddr);
+	err = silofs_sbi_reclaim_vspace(sbi, &voa.vaddr);
 	if (err) {
 		log_err("failed to reclaim space: err=%d", err);
-		return err;
 	}
-	err = fse_flush_dirty(fse);
-	if (err) {
-		log_err("failed to flush dirty spmaps: err=%d", err);
-		return err;
+	return 0;
+}
+
+static int fse_format_base_vspace(const struct silofs_fs_env *fse)
+{
+	struct silofs_spacestats spst = { .capacity = 0 };
+	struct silofs_sb_info *sbi = fse_sbi(fse);
+	const enum silofs_stype stypes[] = {
+		SILOFS_STYPE_DATABK,
+		SILOFS_STYPE_DATA4K,
+		SILOFS_STYPE_DATA1K,
+		SILOFS_STYPE_INODE,
+	};
+	loff_t voff = 0;
+	int err;
+
+	for (size_t i = 0; i < ARRAY_SIZE(stypes); ++i) {
+		err = fse_format_claim_vspace(fse, stypes[i], voff);
+		if (err) {
+			return err;
+		}
+		err = fse_flush_and_drop_caches(fse);
+		if (err) {
+			return err;
+		}
+		silofs_spi_collect_stats(sbi->sb_spi, &spst);
+		voff += SILOFS_BLOB_SIZE_MAX;
 	}
 	return 0;
 }
@@ -1041,6 +1088,10 @@ static int fse_format_fs_meta(const struct silofs_fs_env *fse,
 	int err;
 
 	err = fse_format_base_spmaps(fse);
+	if (err) {
+		return err;
+	}
+	err = fse_format_base_vspace(fse);
 	if (err) {
 		return err;
 	}

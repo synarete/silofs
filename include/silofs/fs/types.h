@@ -45,10 +45,10 @@ struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_listxattr_ctx;
 
-/* stage-vnodes operational mode */
+/* stage-elements mode */
 enum silofs_stage_mode {
-	SILOFS_STAGE_RDONLY     = SILOFS_BIT(1),
-	SILOFS_STAGE_MUTABLE    = SILOFS_BIT(2),
+	SILOFS_STAGE_RO         = SILOFS_BIT(1),
+	SILOFS_STAGE_RW         = SILOFS_BIT(2),
 };
 
 /* file-system control flags */

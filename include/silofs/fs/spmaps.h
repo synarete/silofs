@@ -26,8 +26,6 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
 
-enum silofs_stype silofs_sni_stype_sub(const struct silofs_spnode_info *sni);
-
 const struct silofs_uaddr *
 silofs_sni_uaddr(const struct silofs_spnode_info *sni);
 
@@ -61,11 +59,11 @@ void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
 void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
                               struct silofs_vrange *out_vrange);
 
+int silofs_sni_cap_alloc_stype(const struct silofs_spnode_info *sni,
+                               const enum silofs_stype stype);
+
 int silofs_sni_cap_alloc_at(const struct silofs_spnode_info *sni,
                             loff_t voff, const enum silofs_stype stype);
-
-int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni, loff_t beg,
-                             enum silofs_stype stype, loff_t *out_voff);
 
 void silofs_sni_main_blob(const struct silofs_spnode_info *sni,
                           struct silofs_blobid *out_blobid);

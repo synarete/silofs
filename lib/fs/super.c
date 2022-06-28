@@ -568,7 +568,7 @@ static int sbi_check_stage(const struct silofs_sb_info *sbi,
 {
 	int err = 0;
 
-	if (stg_mode & SILOFS_STAGE_MUTABLE) {
+	if (stg_mode & SILOFS_STAGE_RW) {
 		err = silof_sbi_check_mut_fs(sbi);
 	}
 	return err;
@@ -590,8 +590,12 @@ static int sbi_check_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 static int sbi_check_staged_inode(const struct silofs_inode_info *ii,
                                   enum silofs_stage_mode stg_mode)
 {
-	return ((stg_mode & SILOFS_STAGE_MUTABLE) &&
-	        silof_ii_isimmutable(ii)) ? -EACCES : 0;
+	int err = 0;
+
+	if (stg_mode & SILOFS_STAGE_RW) {
+		err = silof_ii_isimmutable(ii) ? -EACCES : 0;
+	}
+	return err;
 }
 
 int silofs_sbi_stage_vnode(struct silofs_sb_info *sbi,
@@ -765,7 +769,7 @@ static int sbi_reclaim_vspace(struct silofs_sb_info *sbi,
 	struct silofs_voaddr voa;
 	int err;
 
-	err = silofs_sbi_resolve_voa(sbi, vaddr, SILOFS_STAGE_RDONLY, &voa);
+	err = silofs_sbi_resolve_voa(sbi, vaddr, SILOFS_STAGE_RO, &voa);
 	if (err) {
 		return err;
 	}
@@ -822,21 +826,21 @@ static int sbi_stage_spleaf(struct silofs_sb_info *sbi,
 {
 	struct silofs_spnode_info *sni = NULL;
 
-	return silofs_sbi_stage_spmaps_of(sbi, vaddr, stg_mode, &sni, out_sli);
+	return silofs_sbi_stage_spmaps_at(sbi, vaddr, stg_mode, &sni, out_sli);
 }
 
 static int sbi_stage_rdo_spleaf(struct silofs_sb_info *sbi,
                                 const struct silofs_vaddr *vaddr,
                                 struct silofs_spleaf_info **out_sli)
 {
-	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_RDONLY, out_sli);
+	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_RO, out_sli);
 }
 
 static int sbi_stage_mut_spleaf(struct silofs_sb_info *sbi,
                                 const struct silofs_vaddr *vaddr,
                                 struct silofs_spleaf_info **out_sli)
 {
-	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_MUTABLE, out_sli);
+	return sbi_stage_spleaf(sbi, vaddr, SILOFS_STAGE_RW, out_sli);
 }
 
 int silofs_sbi_test_unwritten(struct silofs_sb_info *sbi,

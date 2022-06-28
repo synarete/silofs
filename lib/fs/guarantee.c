@@ -134,7 +134,7 @@ static void guarantee_persistent_types_nk(void)
 	REQUIRE_SIZEOF_2K(struct silofs_spstats_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_leaf);
-	// REQUIRE_SIZEOF_4K(struct silofs_spmap_leaf);
+	//REQUIRE_SIZEOF_4K(struct silofs_spmap_leaf);
 	REQUIRE_SIZEOF_8K(struct silofs_itable_node);
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
@@ -330,7 +330,6 @@ static void guarantee_defs_consistency(void)
 	REQUIRE_EQ(SILOFS_NSPMAPS_IN_BK, SILOFS_BK_SIZE / SILOFS_SPNODE_SIZE);
 	// XXX
 	// REQUIRE_EQ(SILOFS_NSPMAPS_IN_BK, SILOFS_BK_SIZE / SILOFS_SPLEAF_SIZE);
-
 	REQUIRE_EQ(SILOFS_NSPMAPS_LEAF_IN_BK, SILOFS_BK_SIZE / SILOFS_SPLEAF_SIZE);
 
 	REQUIRE_LT(SILOFS_DIR_TREE_DEPTH_MAX, SILOFS_HASH256_LEN);

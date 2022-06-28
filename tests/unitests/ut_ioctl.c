@@ -60,11 +60,13 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_ge(spst.vspacesize, SILOFS_CAPACITY_SIZE_MIN);
 	ut_expect_ge(spst.blobs.nsuper, 1);
 	ut_expect_ge(spst.blobs.ndatabk, 1);
-	ut_expect_ge(spst.blobs.nspnode, 2);
-	ut_expect_ge(spst.blobs.nspleaf, 4);
+	ut_expect_ge(spst.blobs.nspnode, 3);
+	ut_expect_ge(spst.blobs.nspleaf, 1);
 	ut_expect_ge(spst.blobs.nitnode, 1);
 	ut_expect_ge(spst.blobs.ninode, 1);
 	ut_expect_ge(spst.blobs.ndtnode, 1);
+	ut_expect_ge(spst.objs.nspnode, 3);
+	ut_expect_ge(spst.objs.nspleaf, 4);
 	ut_expect_ge(spst.bks.ndata1k, spst.bks.ndata1k);
 	ut_expect_ge(spst.bks.ndata4k, spst.bks.ndata4k);
 	ut_expect_ge(spst.bks.ndatabk, spst.bks.ndatabk);

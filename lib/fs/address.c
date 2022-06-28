@@ -31,6 +31,7 @@ ssize_t silofs_height_to_span(enum silofs_height height)
 	ssize_t span;
 
 	switch (height) {
+	default:
 	case SILOFS_HEIGHT_VDATA:
 		span = SILOFS_BK_SIZE;
 		break;
@@ -51,25 +52,15 @@ ssize_t silofs_height_to_span(enum silofs_height height)
 		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS *
 		       SILOFS_SPMAP_NCHILDS;
 		break;
-	default:
-		span = -1;
-		break;
 	}
 	return span;
 }
 
-static loff_t voff_base_of(loff_t voff, enum silofs_height height)
+static loff_t voff_to_blobid_base(loff_t voff)
 {
-	loff_t voff_base;
-	ssize_t align;
+	const ssize_t align = SILOFS_BLOB_SIZE_MAX;
 
-	if (height == SILOFS_HEIGHT_VDATA) {
-		align = SILOFS_BLOB_SIZE_MAX;
-		voff_base = off_align(voff, align);
-	} else {
-		voff_base = voff;
-	}
-	return voff_base;
+	return off_align(voff, align);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -727,7 +718,7 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
                            loff_t voff, enum silofs_height height)
 {
 	treeid_assign(&blobid->u.ta.treeid, treeid);
-	blobid->u.ta.voff = voff_base_of(voff, height);
+	blobid->u.ta.voff = voff_to_blobid_base(voff);
 	blobid->u.ta.height = height;
 	blobid->size = SILOFS_BLOB_SIZE_MAX;
 	blobid->btype = SILOFS_BLOBTYPE_TA;

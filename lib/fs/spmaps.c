@@ -132,9 +132,6 @@ static bool spr_may_alloc_stype(const struct silofs_spmap_ref *spr,
 {
 	const enum silofs_stype stype_sub = spr_stype_sub(spr);
 
-	if (!spr_isactive(spr)) {
-		return false;
-	}
 	if (stype_isnone(stype_sub)) {
 		return true;
 	}
@@ -306,45 +303,12 @@ static void spnode_set_ulink_of(struct silofs_spmap_node *sn, loff_t voff,
 	spr_set_ulink(spr, uaddr);
 }
 
-static bool spnode_has_subref(const struct silofs_spmap_node *sn, loff_t voff)
-{
-	const struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
-
-	return spr_has_flags(spr, SILOFS_SPMAPF_ACTIVE);
-}
-
 static void spnode_set_stype_sub_of(struct silofs_spmap_node *sn,
                                     loff_t voff, enum silofs_stype stype_sub)
 {
 	struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
 
 	spr_set_stype_sub(spr, stype_sub);
-}
-
-static bool
-spnode_find_avail_spleaf(const struct silofs_spmap_node *sn, loff_t voff_beg,
-                         enum silofs_stype stype, loff_t *out_voff)
-{
-	struct silofs_vrange vrange;
-	const struct silofs_spmap_ref *spr = NULL;
-	loff_t voff;
-	bool ret = false;
-
-	spnode_vrange(sn, &vrange);
-	voff = voff_beg;
-	while (voff < vrange.end) {
-		spr = spnode_subref_of(sn, voff);
-		if (!spr_isactive(spr)) {
-			break;
-		}
-		if (spr_may_alloc_stype(spr, stype)) {
-			ret = true;
-			break;
-		}
-		voff = silofs_off_to_spleaf_next(voff);
-	}
-	*out_voff = voff;
-	return ret;
 }
 
 static size_t spnode_count_nactive(const struct silofs_spmap_node *sn)
@@ -383,6 +347,14 @@ static bool spnode_may_alloc_at(const struct silofs_spmap_node *sn,
 	const struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
 
 	return spr_may_alloc_stype(spr, stype);
+}
+
+static bool
+spnode_has_child_at(const struct silofs_spmap_node *sn, loff_t voff)
+{
+	const struct silofs_spmap_ref *spr = spnode_subref_of(sn, voff);
+
+	return spr_isactive(spr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1172,6 +1144,14 @@ bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
 size_t silofs_sli_nallocated_at(const struct silofs_spleaf_info *sli,
                                 const silofs_lba_t lba)
 {
+	// XXX
+	struct silofs_vrange vrange;
+	const loff_t off = lba_to_off(lba);
+
+	sli_vrange(sli, &vrange);
+	silofs_assert_ge(off, vrange.beg);
+	silofs_assert_lt(off, vrange.end);
+
 	return spleaf_allocated_at(sli->sl, lba);
 }
 
@@ -1368,21 +1348,12 @@ static size_t sni_child_height(const struct silofs_spnode_info *sni)
 	return silofs_sni_height(sni) - 1;
 }
 
-int silofs_sni_search_spleaf(const struct silofs_spnode_info *sni, loff_t beg,
-                             enum silofs_stype stype, loff_t *out_voff)
-{
-	bool ok;
-
-	ok = spnode_find_avail_spleaf(sni->sn, beg, stype, out_voff);
-	return ok ? 0 : -ENOSPC;
-}
-
 static void sni_bind_subref(struct silofs_spnode_info *sni, loff_t voff,
                             const struct silofs_uaddr *ulink,
                             enum silofs_stype stype_sub)
 {
 	/* either we set new ulink or override upon clone */
-	const bool bind_override = spnode_has_subref(sni->sn, voff);
+	const bool bind_override = spnode_has_child_at(sni->sn, voff);
 
 	spnode_set_ulink_of(sni->sn, voff, ulink);
 	spnode_set_stype_sub_of(sni->sn, voff, stype_sub);
@@ -1392,11 +1363,6 @@ static void sni_bind_subref(struct silofs_spnode_info *sni, loff_t voff,
 		silofs_assert_lt(sni->sn_nactive_subs, SILOFS_SPMAP_NCHILDS);
 		sni->sn_nactive_subs++;
 	}
-}
-
-bool silofs_sni_has_child_at(const struct silofs_spnode_info *sni, loff_t voff)
-{
-	return spnode_has_subref(sni->sn, voff);
 }
 
 void silofs_sni_bind_child_spleaf(struct silofs_spnode_info *sni,
@@ -1465,11 +1431,6 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni)
 	return vrange.beg;
 }
 
-enum silofs_stype silofs_sni_stype_sub(const struct silofs_spnode_info *sni)
-{
-	return spnode_stype_sub(sni->sn);
-}
-
 static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 {
 	enum silofs_stype child_stype;
@@ -1483,10 +1444,39 @@ static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 	return child_stype;
 }
 
+int silofs_sni_cap_alloc_stype(const struct silofs_spnode_info *sni,
+                               const enum silofs_stype stype)
+{
+	const enum silofs_stype stype_sub = spnode_stype_sub(sni->sn);
+
+	/*
+	 * TODO-0037: Allow sparse space-allocations.
+	 *
+	 * Use entire span of spnode2 for same stype. Would need to refactor
+	 * walk.c/pack.c modules.
+	 */
+	if (!stype_isnone(stype_sub)) {
+		return 0;
+	}
+
+	if (stype_isvnode(stype_sub) && !stype_isequal(stype_sub, stype)) {
+		return -ENOSPC;
+	}
+	return 0;
+}
+
 int silofs_sni_cap_alloc_at(const struct silofs_spnode_info *sni,
                             loff_t voff, const enum silofs_stype stype)
 {
-	return spnode_may_alloc_at(sni->sn, voff, stype) ? 0 : -ENOSPC;
+	if (!spnode_may_alloc_at(sni->sn, voff, stype)) {
+		return -ENOSPC;
+	}
+	return 0;
+}
+
+bool silofs_sni_has_child_at(const struct silofs_spnode_info *sni, loff_t voff)
+{
+	return spnode_has_child_at(sni->sn, voff);
 }
 
 static size_t sni_child_objsize(const struct silofs_spnode_info *sni)
@@ -1667,6 +1657,10 @@ int silofs_verify_spmap_leaf(const struct silofs_spmap_leaf *sl)
 	const struct silofs_bk_ref *bkr;
 	int err;
 
+	err = verify_stype_sub(spleaf_stype_sub(sl));
+	if (err) {
+		return err;
+	}
 	err = verify_spmap_leaf_parent(sl);
 	if (err) {
 		return err;
@@ -1767,15 +1761,8 @@ int silofs_verify_spmap_node(const struct silofs_spmap_node *sn)
 	struct silofs_vrange vrange;
 	enum silofs_height height;
 	ssize_t len;
-	enum silofs_stype stype_sub;
 	int err;
 
-	stype_sub = spnode_stype_sub(sn);
-	err = verify_stype_sub(stype_sub);
-	if (err) {
-		log_err("bad spnode sub stype: stype_sub=%d", stype_sub);
-		return err;
-	}
 	height = spnode_heigth(sn);
 	err = verify_spnode_height(height);
 	if (err) {

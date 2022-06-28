@@ -418,7 +418,7 @@ static int vi_resolve(const struct silofs_vnode_info *vi,
 {
 	struct silofs_voaddr voa;
 	struct silofs_sb_info *sbi = vi_sbi(vi);
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RDONLY;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
 	int err;
 
 	err = silofs_sbi_resolve_voa(sbi, vi_vaddr(vi), stg_mode, &voa);

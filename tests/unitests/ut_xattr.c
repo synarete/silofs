@@ -532,3 +532,4 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_xattr = UT_MKTESTS(ut_local_tests);
+

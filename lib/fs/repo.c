@@ -1054,7 +1054,7 @@ int silofs_repo_lookup_blob(struct silofs_repo *repo,
 	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	err  = repo_check_open(repo);
+	err = repo_check_open(repo);
 	if (err) {
 		return err;
 	}

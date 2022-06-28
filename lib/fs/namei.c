@@ -556,7 +556,7 @@ static int do_lookup(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_RDONLY, out_ii);
+	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_RO, out_ii);
 	if (err) {
 		return err;
 	}
@@ -1092,7 +1092,7 @@ static int check_prepare_unlink(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(fs_ctx, dir_ii, nstr, SILOFS_STAGE_MUTABLE, &ii);
+	err = stage_by_name(fs_ctx, dir_ii, nstr, SILOFS_STAGE_RW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1316,7 +1316,7 @@ static int check_prepare_rmdir(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_MUTABLE, &ii);
+	err = stage_by_name(fs_ctx, dir_ii, name, SILOFS_STAGE_RW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1946,7 +1946,7 @@ static int check_stage_rename_at(const struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	err = stage_by_name(fs_ctx, dref->dir_ii, dref->name,
-	                    SILOFS_STAGE_MUTABLE, &dref->ii);
+	                    SILOFS_STAGE_RW, &dref->ii);
 	if (err) {
 		return ((err == -ENOENT) && new_de) ? 0 : err;
 	}

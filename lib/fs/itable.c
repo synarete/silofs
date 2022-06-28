@@ -852,7 +852,7 @@ static int itc_stage_rdonly_itnode(const struct silofs_it_ctx *it_ctx,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_itnode_info **out_itni)
 {
-	return itc_stage_itnode(it_ctx, vaddr, SILOFS_STAGE_RDONLY, out_itni);
+	return itc_stage_itnode(it_ctx, vaddr, SILOFS_STAGE_RO, out_itni);
 }
 
 static int
@@ -877,7 +877,7 @@ itc_stage_mutable_child(const struct silofs_it_ctx *it_ctx,
                         ino_t ino, struct silofs_itnode_info **out_itni)
 {
 	return itc_stage_child_itnode(it_ctx, parent_itni, ino,
-	                              SILOFS_STAGE_MUTABLE, out_itni);
+	                              SILOFS_STAGE_RW, out_itni);
 }
 
 static int
@@ -886,7 +886,7 @@ itc_stage_rdonly_child(const struct silofs_it_ctx *it_ctx,
                        ino_t ino, struct silofs_itnode_info **out_itni)
 {
 	return itc_stage_child_itnode(it_ctx, parent_itni, ino,
-	                              SILOFS_STAGE_RDONLY, out_itni);
+	                              SILOFS_STAGE_RO, out_itni);
 }
 
 static int itc_stage_itroot(const struct silofs_it_ctx *it_ctx,
@@ -910,13 +910,13 @@ static int itc_stage_itroot(const struct silofs_it_ctx *it_ctx,
 static int itc_stage_mutable_itroot(const struct silofs_it_ctx *it_ctx,
                                     struct silofs_itnode_info **out_itni)
 {
-	return itc_stage_itroot(it_ctx, SILOFS_STAGE_MUTABLE, out_itni);
+	return itc_stage_itroot(it_ctx, SILOFS_STAGE_RW, out_itni);
 }
 
 static int itc_stage_rdonly_itroot(const struct silofs_it_ctx *it_ctx,
                                    struct silofs_itnode_info **out_itni)
 {
-	return itc_stage_itroot(it_ctx, SILOFS_STAGE_RDONLY, out_itni);
+	return itc_stage_itroot(it_ctx, SILOFS_STAGE_RO, out_itni);
 }
 
 static int itc_lookup_iaddr_of(const struct silofs_it_ctx *it_ctx, ino_t ino,
@@ -1294,7 +1294,7 @@ static int itc_stage_rdonly_inode(const struct silofs_it_ctx *it_ctx,
                                   ino_t ino, struct silofs_inode_info **out_ii)
 {
 	return silofs_sbi_stage_inode(it_ctx->sbi, ino,
-	                              SILOFS_STAGE_RDONLY, out_ii);
+	                              SILOFS_STAGE_RO, out_ii);
 }
 
 static int itc_scan_stage_root_inode_by(const struct silofs_it_ctx *it_ctx,

@@ -622,7 +622,7 @@ static int check_xaccess_parent(const struct silofs_fs_ctx *fs_ctx,
 	}
 	parent = ii_parent(ii);
 	err = silofs_sbi_stage_inode(sbi, parent,
-	                             SILOFS_STAGE_RDONLY, &parent_ii);
+	                             SILOFS_STAGE_RO, &parent_ii);
 	if (err) {
 		return err;
 	}
@@ -932,7 +932,7 @@ static int check_parent_dir_ii(const struct silofs_inode_info *ii)
 		return ii->i_nopen ? 0 : -ENOENT;
 	}
 	err = silofs_sbi_stage_inode(sbi, parent,
-	                             SILOFS_STAGE_RDONLY, &parent_ii);
+	                             SILOFS_STAGE_RO, &parent_ii);
 	if (err) {
 		return err;
 	}

@@ -24,36 +24,32 @@
 #include <errno.h>
 #include <ctype.h>
 
-
-#define SPNODE2_VRANGE_SIZE \
-	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BLOB_SIZE_MAX)
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 ssize_t silofs_height_to_span(enum silofs_height height)
 {
-	const ssize_t bk_size = SILOFS_BK_SIZE;
-	const ssize_t nchilds = SILOFS_SPMAP_NCHILDS;
-	const ssize_t nspmaps = SILOFS_NSPMAPS_IN_BK;
-	const ssize_t nmbk = nchilds * nspmaps;
 	ssize_t span;
 
 	switch (height) {
 	case SILOFS_HEIGHT_VDATA:
-		span = bk_size;
+		span = SILOFS_BK_SIZE;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		span = bk_size * nmbk;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		span = bk_size * nmbk * nmbk;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		span = bk_size * nmbk * nmbk * nmbk;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
-		span = bk_size * nmbk * nmbk * nmbk * nmbk;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS;
 		break;
 	default:
 		span = -1;
@@ -299,26 +295,36 @@ loff_t silofs_off_in_bk(loff_t off)
 	return silofs_off_within(off, SILOFS_BK_SIZE);
 }
 
+static size_t spleaf_span(void)
+{
+	return SILOFS_SPMAP_LEAF_NCHILDS * SILOFS_BK_SIZE;
+}
+
 loff_t silofs_off_to_spleaf_start(loff_t voff)
 {
-	return off_align(voff, SILOFS_BLOB_SIZE_MAX);
+	return off_align(voff, (long)spleaf_span());
 }
 
 loff_t silofs_off_to_spleaf_next(loff_t voff)
 {
-	const loff_t voff_next = off_end(voff, SILOFS_BLOB_SIZE_MAX);
+	const loff_t voff_next = off_end(voff, spleaf_span());
 
 	return silofs_off_to_spleaf_start(voff_next);
 }
 
+static size_t spnode2_span(void)
+{
+	return SILOFS_NBK_IN_BLOB_MAX * SILOFS_BLOB_SIZE_MAX;
+}
+
 static loff_t silofs_off_to_spnode2_start(loff_t voff)
 {
-	return off_align(voff, SPNODE2_VRANGE_SIZE);
+	return off_align(voff, (long)spnode2_span());
 }
 
 loff_t silofs_off_to_spnode2_next(loff_t voff)
 {
-	const loff_t voff_next = off_end(voff, SPNODE2_VRANGE_SIZE);
+	const loff_t voff_next = off_end(voff, spnode2_span());
 
 	return silofs_off_to_spnode2_start(voff_next);
 }

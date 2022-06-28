@@ -132,9 +132,10 @@ spamap_minimal_spe(const struct silofs_spamap *spa)
 	struct silofs_avl_node *an = NULL;
 	const struct silofs_avl *avl = &spa->spa_avl;
 
-	if (avl->size > 0) {
-		an = silofs_avl_begin(avl);
+	if (avl->size == 0) {
+		return NULL;
 	}
+	an = silofs_avl_begin(avl);
 	return avl_node_to_spe(an);
 }
 
@@ -144,9 +145,10 @@ spamap_maximal_spe(const struct silofs_spamap *spa)
 	struct silofs_avl_node *an = NULL;
 	const struct silofs_avl *avl = &spa->spa_avl;
 
-	if (avl->size > 0) {
-		an = silofs_avl_rbegin(avl);
+	if (avl->size == 0) {
+		return NULL;
 	}
+	an = silofs_avl_rbegin(avl);
 	return avl_node_to_spe(an);
 }
 

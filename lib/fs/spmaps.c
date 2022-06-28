@@ -1025,7 +1025,8 @@ loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
 static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const size_t slot = (size_t)off_to_lba(voff) % 512; // XXX
+	const size_t slot = (size_t)off_to_lba(voff) %
+	                    SILOFS_SPMAP_LEAF_NCHILDS; // XXX
 
 	// XXX
 	if (slot >= ARRAY_SIZE(sli->sl->sl_subref)) {

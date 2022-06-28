@@ -278,16 +278,19 @@ static int spac_find_free_space_within(struct silofs_spalloc_ctx *spa_ctx,
 	const struct silofs_spnode_info *sni = spa_ctx->sni;
 	const enum silofs_stype stype = spa_ctx->stype;
 	loff_t voff = vrange->beg;
-	int err = -ENOSPC;
+	int err;
 
-	while ((voff < vrange->end) && (err == -ENOSPC)) {
+	while (voff < vrange->end) {
 		err = silofs_sni_search_spleaf(sni, voff, stype, &voff);
 		if (!err) {
 			err = spac_find_free_space_at_leaf(spa_ctx, voff);
 		}
+		if (err != -ENOSPC) {
+			return err;
+		}
 		voff = silofs_off_to_spleaf_next(voff);
 	}
-	return err;
+	return -ENOSPC;
 }
 
 static int
@@ -401,14 +404,20 @@ spac_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
 	int err;
 
+	/* Fast path: there exists an in-memory cached free space; use it */
 	err = spac_find_free_from_cache(spa_ctx);
 	if (!err) {
 		return 0;
 	}
+	/* Slow path: stage and search space maps */
 	err = spac_find_free_by_spmaps(spa_ctx, hint);
 	if (err) {
 		return err;
 	}
+	/* Perhaps in-memory cache was re-popolated due to slow-path search;
+	 * if so, ensure that the newly inserted ranged is chopped-out from
+	 * in-memory cache (and dont-care if not-in-cache) */
+	spac_find_free_from_cache(spa_ctx);
 	return 0;
 }
 

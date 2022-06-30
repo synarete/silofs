@@ -29,6 +29,7 @@ struct silofs_walk_ctx {
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;
 	struct silofs_spleaf_info  *sli;
+	enum silofs_stype vstype;
 	bool main;
 	bool halt;
 };
@@ -190,7 +191,7 @@ static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx, loff_t voff)
 	if (voff > vrange.end) {
 		return -ENOENT;
 	}
-	err = silofs_sbi_sproot_uaddr(wa_ctx->sbi, &uaddr);
+	err = silofs_sbi_sproot_of(wa_ctx->sbi, wa_ctx->vstype, &uaddr);
 	if (err) {
 		return err;
 	}
@@ -538,7 +539,7 @@ static int wac_traverse_utree(struct silofs_walk_ctx *wa_ctx)
 	const loff_t voff = 0;
 	int err = 0;
 
-	err = silofs_sbi_sproot_uaddr(wa_ctx->sbi, &uaddr);
+	err = silofs_sbi_sproot_of(wa_ctx->sbi, wa_ctx->vstype, &uaddr);
 	if (err) {
 		goto out;
 	}

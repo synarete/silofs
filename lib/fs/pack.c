@@ -38,6 +38,7 @@ struct silofs_pack_ctx {
 	struct silofs_sb_info          *sbi;
 	struct silofs_block            *tbk;
 	struct silofs_pack_iovs        *piov;
+	enum silofs_stype               vstype;
 	bool                            pack;
 };
 
@@ -1310,6 +1311,7 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
 		.alloc = uber->ub_alloc,
 		.sbi = NULL,
 		.pack = true,
+		.vstype = SILOFS_STYPE_NONE, // XXX
 	};
 	int err;
 
@@ -1546,7 +1548,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_sproot_uaddr(sbi, &uaddr);
+	err = silofs_sbi_sproot_of(sbi, pa_ctx->vstype, &uaddr);
 	if (err) {
 		return err;
 	}
@@ -1640,6 +1642,7 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
 		.alloc = uber->ub_alloc,
 		.sbi = NULL,
 		.pack = false,
+		.vstype = SILOFS_STYPE_NONE, // XXX
 	};
 	int err;
 

@@ -607,7 +607,7 @@ struct silofs_header {
 
 
 struct silofs_super_block {
-	/* 0..2K */
+	/* 0..1K */
 	struct silofs_header            sb_hdr;
 	uint64_t                        sb_magic;
 	uint64_t                        sb_version;
@@ -623,7 +623,6 @@ struct silofs_super_block {
 	/* 1K..2K */
 	struct silofs_uaddr64b          sb_self_uaddr;
 	struct silofs_uaddr64b          sb_stats_uaddr;
-	struct silofs_uaddr64b          sb_sproot_uaddr;
 	struct silofs_blobid40b         sb_mainblobid;
 	uint8_t                         sb_reserved5[24];
 	struct silofs_blobid40b         sb_mainpackid;
@@ -635,9 +634,12 @@ struct silofs_super_block {
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
 	uint64_t                        sb_pack_time;
-	uint8_t                         sb_reserved8[624];
-	/* 2K..4K */
-	uint8_t                         sb_reserved9[2048];
+	uint8_t                         sb_reserved8[688];
+	/* 2K..3K */
+	struct silofs_uaddr64b          sb_sproot_uaddr;
+	uint8_t                         sb_reserved9[960];
+	/* 3K..4K */
+	uint8_t                         sb_reserved10[1024];
 } silofs_packed_aligned64;
 
 

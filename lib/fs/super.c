@@ -202,21 +202,25 @@ static void sb_reset_stats_uaddr(struct silofs_super_block *sb)
 	sb_set_stats_uaddr(sb, silofs_uaddr_none());
 }
 
-static void sb_spnode_uaddr(const struct silofs_super_block *sb,
-                            struct silofs_uaddr *out_uaddr)
+static void sb_sproot_of(const struct silofs_super_block *sb,
+                         enum silofs_stype stype,
+                         struct silofs_uaddr *out_uaddr)
 {
+	silofs_unused(stype);
 	silofs_uaddr64b_parse(&sb->sb_sproot_uaddr, out_uaddr);
 }
 
-static void sb_set_spnode_uaddr(struct silofs_super_block *sb,
-                                const struct silofs_uaddr *uaddr)
+static void sb_set_sproot_of(struct silofs_super_block *sb,
+                             enum silofs_stype stype,
+                             const struct silofs_uaddr *uaddr)
 {
+	silofs_unused(stype);
 	silofs_uaddr64b_set(&sb->sb_sproot_uaddr, uaddr);
 }
 
-static void sb_reset_spnode_uaddr(struct silofs_super_block *sb)
+static void sb_reset_sproot_of(struct silofs_super_block *sb)
 {
-	sb_set_spnode_uaddr(sb, silofs_uaddr_none());
+	sb_set_sproot_of(sb, SILOFS_STYPE_NONE, silofs_uaddr_none());
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -230,7 +234,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_generate_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_stats_uaddr(sb);
-	sb_reset_spnode_uaddr(sb);
+	sb_reset_sproot_of(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobid(sb);
 	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
@@ -266,24 +270,35 @@ static void sb_setup_fresh(struct silofs_super_block *sb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int verify_sproot(const struct silofs_uaddr *uaddr)
+{
+	if (uaddr_isnull(uaddr)) {
+		return 0;
+	}
+	if ((uaddr->stype != SILOFS_STYPE_SPNODE) ||
+	    (uaddr->height != SILOFS_HEIGHT_SPNODE4)) {
+		log_err("bad spnode root: stype=%d height=%d",
+		        (int)uaddr->stype, (int)uaddr->height);
+		return -EFSCORRUPTED;
+	}
+	return 0;
+}
+
 int silofs_verify_super_block(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
 	enum silofs_height height;
+	int err;
 
 	height = sb_height(sb);
 	if (height != SILOFS_HEIGHT_SUPER) {
 		log_err("illegal sb height: height=%lu", height);
 		return -EFSCORRUPTED;
 	}
-	sb_spnode_uaddr(sb, &uaddr);
-	if (!uaddr_isnull(&uaddr)) {
-		if ((uaddr.stype != SILOFS_STYPE_SPNODE) ||
-		    (uaddr.height != SILOFS_HEIGHT_SPNODE4)) {
-			log_err("bad spnode root: stype=%d height=%d",
-			        (int)uaddr.stype, (int)uaddr.height);
-			return -EFSCORRUPTED;
-		}
+	sb_sproot_of(sb, SILOFS_STYPE_NONE, &uaddr);
+	err = verify_sproot(&uaddr);
+	if (err) {
+		return err;
 	}
 	/* TODO: complete me */
 	return 0;
@@ -494,19 +509,21 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 	                   SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SPNODE4, base);
 }
 
-int silofs_sbi_sproot_uaddr(const struct silofs_sb_info *sbi,
-                            struct silofs_uaddr *out_uaddr)
+int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vstype,
+                         struct silofs_uaddr *out_uaddr)
 {
-	sb_spnode_uaddr(sbi->sb, out_uaddr);
+	sb_sproot_of(sbi->sb, vstype, out_uaddr);
 	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
 }
 
 void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
+                            enum silofs_stype vstype,
                             const struct silofs_spnode_info *sni)
 {
 	const struct silofs_uaddr *uaddr = sni_uaddr(sni);
 
-	sb_set_spnode_uaddr(sbi->sb, uaddr);
+	sb_set_sproot_of(sbi->sb, vstype, uaddr);
 	sbi_dirtify(sbi);
 }
 

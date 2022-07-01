@@ -636,8 +636,16 @@ struct silofs_super_block {
 	uint64_t                        sb_pack_time;
 	uint8_t                         sb_reserved8[688];
 	/* 2K..3K */
-	struct silofs_uaddr64b          sb_sproot_uaddr;
-	uint8_t                         sb_reserved9[960];
+	struct silofs_uaddr64b          sb_sproot_itnode;
+	struct silofs_uaddr64b          sb_sproot_inode;
+	struct silofs_uaddr64b          sb_sproot_xanode;
+	struct silofs_uaddr64b          sb_sproot_dtnode;
+	struct silofs_uaddr64b          sb_sproot_ftnode;
+	struct silofs_uaddr64b          sb_sproot_symval;
+	struct silofs_uaddr64b          sb_sproot_data1k;
+	struct silofs_uaddr64b          sb_sproot_data4k;
+	struct silofs_uaddr64b          sb_sproot_databk;
+	uint8_t                         sb_reserved9[448];
 	/* 3K..4K */
 	uint8_t                         sb_reserved10[1024];
 } silofs_packed_aligned64;

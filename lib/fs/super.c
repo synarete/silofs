@@ -202,25 +202,90 @@ static void sb_reset_stats_uaddr(struct silofs_super_block *sb)
 	sb_set_stats_uaddr(sb, silofs_uaddr_none());
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_uaddr64b *
+sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
+{
+	switch (stype) {
+	case SILOFS_STYPE_DATA1K:
+		return &sb->sb_sproot_data1k;
+	case SILOFS_STYPE_DATA4K:
+		return &sb->sb_sproot_data4k;
+	case SILOFS_STYPE_DATABK:
+		return &sb->sb_sproot_databk;
+	case SILOFS_STYPE_ITNODE:
+		return &sb->sb_sproot_itnode;
+	case SILOFS_STYPE_INODE:
+		return &sb->sb_sproot_inode;
+	case SILOFS_STYPE_XANODE:
+		return &sb->sb_sproot_xanode;
+	case SILOFS_STYPE_DTNODE:
+		return &sb->sb_sproot_dtnode;
+	case SILOFS_STYPE_FTNODE:
+		return &sb->sb_sproot_ftnode;
+	case SILOFS_STYPE_SYMVAL:
+		return &sb->sb_sproot_symval;
+	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_SPSTATS:
+	case SILOFS_STYPE_SPNODE:
+	case SILOFS_STYPE_SPLEAF:
+	case SILOFS_STYPE_MAX:
+	default:
+		break;
+	}
+	return NULL;
+}
+
+static struct silofs_uaddr64b *
+sb_sproot_by2(struct silofs_super_block *sb, enum silofs_stype stype)
+{
+	const struct silofs_uaddr64b *uadr = sb_sproot_by(sb, stype);
+
+	return unconst(uadr);
+}
+
 static void sb_sproot_of(const struct silofs_super_block *sb,
                          enum silofs_stype stype,
                          struct silofs_uaddr *out_uaddr)
 {
-	silofs_unused(stype);
-	silofs_uaddr64b_parse(&sb->sb_sproot_uaddr, out_uaddr);
+	const struct silofs_uaddr64b *uadr = sb_sproot_by(sb, stype);
+
+	silofs_assert(stype_isvnode(stype));
+
+	if (likely(uadr != NULL)) {
+		silofs_uaddr64b_parse(uadr, out_uaddr);
+	} else {
+		silofs_uaddr_reset(out_uaddr);
+	}
 }
 
 static void sb_set_sproot_of(struct silofs_super_block *sb,
                              enum silofs_stype stype,
                              const struct silofs_uaddr *uaddr)
 {
-	silofs_unused(stype);
-	silofs_uaddr64b_set(&sb->sb_sproot_uaddr, uaddr);
+	struct silofs_uaddr64b *uadr = sb_sproot_by2(sb, stype);
+
+	silofs_assert(stype_isvnode(stype));
+
+	if (likely(uadr != NULL)) {
+		silofs_uaddr64b_set(uadr, uaddr);
+	}
 }
 
-static void sb_reset_sproot_of(struct silofs_super_block *sb)
+static void sb_reset_sproots(struct silofs_super_block *sb)
 {
-	sb_set_sproot_of(sb, SILOFS_STYPE_NONE, silofs_uaddr_none());
+	struct silofs_uaddr64b *uadr;
+	enum silofs_stype stype;
+
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+		uadr = sb_sproot_by2(sb, stype);
+		if (uadr != NULL) {
+			silofs_uaddr64b_set(uadr, silofs_uaddr_none());
+		}
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -234,7 +299,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_generate_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_stats_uaddr(sb);
-	sb_reset_sproot_of(sb);
+	sb_reset_sproots(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobid(sb);
 	silofs_uaddr64b_reset(&sb->sb_self_uaddr);

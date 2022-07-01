@@ -257,7 +257,15 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_birth_time, 1336);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_clone_time, 1344);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_pack_time, 1352);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_uaddr, 2048);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_itnode, 2048);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_inode, 2112);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_xanode, 2176);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_dtnode, 2240);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_ftnode, 2304);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_symval, 2368);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_data1k, 2432);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_data4k, 2496);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_databk, 2560);
 	REQUIRE_OFFSET64(struct silofs_spstats, sp_btime, 0);
 	REQUIRE_OFFSET64(struct silofs_spstats, sp_ctime, 8);
 	REQUIRE_OFFSET64(struct silofs_spstats, sp_capacity, 16);

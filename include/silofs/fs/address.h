@@ -49,6 +49,9 @@ void silofs_uuid_generate(struct silofs_uuid *uu);
 void silofs_uuid_assign(struct silofs_uuid *uu1,
                         const struct silofs_uuid *uu2);
 
+long silofs_uuid_compare(const struct silofs_uuid *uu1,
+                         const struct silofs_uuid *uu2);
+
 void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
 
 
@@ -132,8 +135,8 @@ uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid);
 
 
 void silofs_blobid_make_ta(struct silofs_blobid *blobid,
-                           const struct silofs_treeid *treeid,
-                           loff_t voff, enum silofs_height height);
+                           const struct silofs_treeid *treeid, loff_t voff,
+                           enum silofs_height height, enum silofs_stype vspa);
 
 void silofs_blobid_make_ca(struct silofs_blobid *blobid,
                            const struct silofs_hash256 *hash, size_t size);
@@ -232,10 +235,10 @@ void silofs_voaddr_assign(struct silofs_voaddr *voa,
 
 void silofs_treeid_generate(struct silofs_treeid *treeid);
 
-void silofs_treeid192_set(struct silofs_treeid192 *treeid196,
+void silofs_treeid128_set(struct silofs_treeid128 *treeid196,
                           const struct silofs_treeid *treeid);
 
-void silofs_treeid192_parse(const struct silofs_treeid192 *treeid196,
+void silofs_treeid128_parse(const struct silofs_treeid128 *treeid196,
                             struct silofs_treeid *treeid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -254,6 +257,8 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
+
+enum silofs_stype silofs_uaddr_vspace(const struct silofs_uaddr *uaddr);
 
 silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr);
 

@@ -136,18 +136,18 @@ void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
 
 bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi);
 
+int silofs_sbi_pack_blobid(const struct silofs_sb_info *sbi,
+                           struct silofs_blobid *out_blobid);
 
-int silofs_sbi_main_pack(const struct silofs_sb_info *sbi,
-                         struct silofs_blobid *out_blobid);
-
-void silofs_sbi_bind_main_pack(struct silofs_sb_info *sbi,
-                               const struct silofs_blobid *blobid);
+void silofs_sbi_bind_pack_blobid(struct silofs_sb_info *sbi,
+                                 const struct silofs_blobid *blobid);
 
 void silofs_sbi_self(const struct silofs_sb_info *sbi,
                      struct silofs_uaddr *out_uaddr);
 
-void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
-                              loff_t voff, struct silofs_uaddr *out_uaddr);
+void silofs_sbi_main_child_of(const struct silofs_sb_info *sbi,
+                              enum silofs_stype vspace,
+                              struct silofs_uaddr *out_uaddr);
 
 
 #endif /* SILOFS_SUPER_H_ */

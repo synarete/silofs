@@ -34,7 +34,7 @@ struct silofs_stage_ctx {
 	loff_t                          bk_voff;
 	loff_t                          voff;
 	enum silofs_stage_mode          stg_mode;
-	enum silofs_stype               vstype;
+	enum silofs_stype               vspace;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -83,18 +83,6 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void sbi_make_blobid_for(const struct silofs_sb_info *sbi,
-                                loff_t voff, enum silofs_height height,
-                                struct silofs_blobid *out_blobid)
-{
-	struct silofs_treeid treeid;
-
-	silofs_sbi_treeid(sbi, &treeid);
-	silofs_blobid_make_ta(out_blobid, &treeid, voff, height);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void sbi_log_cache_stat(const struct silofs_sb_info *sbi)
 {
 	const struct silofs_cache *cache = sbi_cache(sbi);
@@ -106,10 +94,11 @@ static void sbi_log_cache_stat(const struct silofs_sb_info *sbi)
 	        cache->c_vi_lm.lm_lru.sz, cache->c_bli_lm.lm_lru.sz);
 }
 
-static int sbi_lookup_cached_vbi(struct silofs_sb_info *sbi, loff_t voff,
+static int sbi_lookup_cached_vbi(struct silofs_sb_info *sbi,
+                                 loff_t voff, enum silofs_stype vspace,
                                  struct silofs_vbk_info **out_vbi)
 {
-	*out_vbi = silofs_cache_lookup_vbk(sbi_cache(sbi), voff);
+	*out_vbi = silofs_cache_lookup_vbk(sbi_cache(sbi), voff, vspace);
 	return (*out_vbi != NULL) ? 0 : -ENOENT;
 }
 
@@ -119,10 +108,11 @@ static void sbi_forget_cached_vbi(const struct silofs_sb_info *sbi,
 	silofs_cache_forget_vbk(sbi_cache(sbi), vbi);
 }
 
-static int sbi_spawn_cached_vbi(struct silofs_sb_info *sbi, loff_t voff,
+static int sbi_spawn_cached_vbi(struct silofs_sb_info *sbi,
+                                loff_t voff, enum silofs_stype vspace,
                                 struct silofs_vbk_info **out_vbi)
 {
-	*out_vbi = silofs_cache_spawn_vbk(sbi_cache(sbi), voff);
+	*out_vbi = silofs_cache_spawn_vbk(sbi_cache(sbi), voff, vspace);
 	return (*out_vbi != NULL) ? 0 : -ENOMEM;
 }
 
@@ -155,12 +145,13 @@ static int sbi_commit_dirty(const struct silofs_sb_info *sbi)
 	return err;
 }
 
-static int sbi_spawn_vbi(struct silofs_sb_info *sbi, loff_t voff,
+static int sbi_spawn_vbi(struct silofs_sb_info *sbi,
+                         loff_t voff, enum silofs_stype vspace,
                          struct silofs_vbk_info **out_vbi)
 {
 	int err;
 
-	err = sbi_spawn_cached_vbi(sbi, voff, out_vbi);
+	err = sbi_spawn_cached_vbi(sbi, voff, vspace, out_vbi);
 	if (!err) {
 		goto out_ok;
 	}
@@ -168,7 +159,7 @@ static int sbi_spawn_vbi(struct silofs_sb_info *sbi, loff_t voff,
 	if (err) {
 		goto out_err;
 	}
-	err = sbi_spawn_cached_vbi(sbi, voff, out_vbi);
+	err = sbi_spawn_cached_vbi(sbi, voff, vspace, out_vbi);
 	if (err) {
 		goto out_err;
 	}
@@ -340,7 +331,7 @@ sni_child_height(const struct silofs_spnode_info *sni) {
 	return silofs_sni_height(sni) - 1;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
                        struct silofs_sb_info *sbi,
@@ -352,7 +343,7 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 	stg_ctx->sbi = sbi;
 	stg_ctx->vaddr = vaddr;
 	stg_ctx->stg_mode = stg_mode;
-	stg_ctx->vstype = vaddr->stype;
+	stg_ctx->vspace = vaddr->stype;
 	stg_ctx->bk_voff = vaddr_bk_voff(vaddr);
 	stg_ctx->bk_lba = off_to_lba(stg_ctx->bk_voff);
 	stg_ctx->voff = vaddr->voff;
@@ -427,6 +418,30 @@ out_ok:
 	return 0;
 }
 
+static void
+stgc_make_spmap_main_blobid(const struct silofs_stage_ctx *stg_ctx,
+                            loff_t voff, enum silofs_height height,
+                            struct silofs_blobid *out_blobid)
+{
+	struct silofs_treeid treeid;
+
+	silofs_sbi_treeid(stg_ctx->sbi, &treeid);
+	silofs_blobid_make_ta(out_blobid, &treeid, voff,
+	                      height, stg_ctx->vspace);
+}
+
+static void
+stgc_make_super_main_blobid(const struct silofs_stage_ctx *stg_ctx,
+                            struct silofs_blobid *out_blobid)
+{
+	struct silofs_treeid treeid;
+
+	silofs_sbi_treeid(stg_ctx->sbi, &treeid);
+	silofs_blobid_make_ta(out_blobid, &treeid, 0,
+	                      SILOFS_HEIGHT_SPNODE4,
+	                      SILOFS_STYPE_SUPER);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
@@ -442,7 +457,7 @@ static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, 0, SILOFS_HEIGHT_SPNODE4, &blobid);
+	stgc_make_super_main_blobid(stg_ctx, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &bli);
 	if (err) {
 		return err;
@@ -457,6 +472,7 @@ static int stgc_stage_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 	struct silofs_blob_info *bli = NULL;
 
 	silofs_sbi_main_blob(stg_ctx->sbi, &blobid);
+	silofs_assert(!blobid_isnull(&blobid));
 	return stgc_stage_blob(stg_ctx, &blobid, &bli);
 }
 
@@ -484,7 +500,7 @@ static int stgc_spawn_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, voff, height, &blobid);
+	stgc_make_spmap_main_blobid(stg_ctx, voff, height, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
 	if (err) {
 		return err;
@@ -584,10 +600,12 @@ static int stgc_find_cached_unode(const struct silofs_stage_ctx *stg_ctx,
                                   struct silofs_unode_info **out_ui)
 {
 	struct silofs_vrange vrange;
+	struct silofs_uakey uakey;
 	struct silofs_cache *cache = sbi_cache(stg_ctx->sbi);
 
 	silofs_vrange_setup_by(&vrange, height, stg_ctx->bk_voff);
-	*out_ui = silofs_cache_find_unode_by(cache, vrange.beg, vrange.height);
+	silofs_uakey_setup_by2(&uakey, &vrange, stg_ctx->vspace);
+	*out_ui = silofs_cache_find_unode_by(cache, &uakey);
 	return (*out_ui != NULL) ? 0 : -ENOENT;
 }
 
@@ -830,7 +848,7 @@ static int stgc_spawn_spnode4_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_main_child_at(stg_ctx->sbi, stg_ctx->bk_voff, &uaddr);
+	silofs_sbi_main_child_of(stg_ctx->sbi, stg_ctx->vspace, &uaddr);
 
 	err = stgc_spawn_spnode_at(stg_ctx, &uaddr, out_sni);
 	if (err) {
@@ -864,7 +882,7 @@ static int stgc_do_clone_spnode4(struct silofs_stage_ctx *stg_ctx,
 		return err;
 	}
 	silofs_sni_clone_subrefs(sni_clone, stg_ctx->sni4);
-	silofs_sbi_bind_sproot(stg_ctx->sbi, stg_ctx->vstype, sni_clone);
+	silofs_sbi_bind_sproot(stg_ctx->sbi, stg_ctx->vspace, sni_clone);
 
 	*out_sni = sni_clone;
 	return 0;
@@ -892,7 +910,7 @@ static int stgc_do_stage_spnode4(struct silofs_stage_ctx *stg_ctx)
 	struct silofs_spnode_info *sni4 = NULL;
 	int err;
 
-	err = silofs_sbi_sproot_of(stg_ctx->sbi, stg_ctx->vstype, &uaddr);
+	err = silofs_sbi_sproot_of(stg_ctx->sbi, stg_ctx->vspace, &uaddr);
 	if (err) {
 		return -EFSCORRUPTED;
 	}
@@ -951,7 +969,7 @@ static int stgc_spawn_bind_spnode4(struct silofs_stage_ctx *stg_ctx)
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_sproot(stg_ctx->sbi, stg_ctx->vstype, stg_ctx->sni4);
+	silofs_sbi_bind_sproot(stg_ctx->sbi, stg_ctx->vspace, stg_ctx->sni4);
 	return 0;
 }
 
@@ -960,7 +978,7 @@ static bool stgc_has_spnode4_child_at(const struct silofs_stage_ctx *stg_ctx)
 	struct silofs_uaddr uaddr;
 	int err;
 
-	err = silofs_sbi_sproot_of(stg_ctx->sbi, stg_ctx->vstype, &uaddr);
+	err = silofs_sbi_sproot_of(stg_ctx->sbi, stg_ctx->vspace, &uaddr);
 	return !err;
 }
 
@@ -1184,11 +1202,11 @@ static int stgc_require_spnode3_of(struct silofs_stage_ctx *stg_ctx)
 static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
-	silofs_assert_ne(stg_ctx->vstype, SILOFS_STYPE_NONE);
-	silofs_assert(stype_isvnode(stg_ctx->vstype));
+	silofs_assert_ne(stg_ctx->vspace, SILOFS_STYPE_NONE);
+	silofs_assert(stype_isvnode(stg_ctx->vspace));
 
 	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni3),
-	                         stg_ctx->bk_voff, stg_ctx->vstype);
+	                         stg_ctx->bk_voff, stg_ctx->vspace);
 }
 
 static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
@@ -1230,7 +1248,7 @@ static int stgc_do_clone_spnode2(struct silofs_stage_ctx *stg_ctx,
 	struct silofs_spnode_info *sni_clone = NULL;
 	int err;
 
-	silofs_assert(!stype_isnone(stg_ctx->vstype));
+	silofs_assert(!stype_isnone(stg_ctx->vspace));
 
 	err = stgc_spawn_spnode2(stg_ctx, &sni_clone);
 	if (err) {
@@ -1371,11 +1389,11 @@ static int stgc_require_spnode2_of(struct silofs_stage_ctx *stg_ctx)
 static void stgc_setup_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
                                       struct silofs_spleaf_info *sli)
 {
-	silofs_assert_ne(stg_ctx->vstype, SILOFS_STYPE_NONE);
-	silofs_assert(stype_isvnode(stg_ctx->vstype));
+	silofs_assert_ne(stg_ctx->vspace, SILOFS_STYPE_NONE);
+	silofs_assert(stype_isvnode(stg_ctx->vspace));
 
 	silofs_sli_setup_spawned(sli, sni_uaddr(stg_ctx->sni2),
-	                         stg_ctx->bk_voff, stg_ctx->vstype);
+	                         stg_ctx->bk_voff, stg_ctx->vspace);
 }
 
 static int stgc_spawn_spleaf_of(const struct silofs_stage_ctx *stg_ctx,
@@ -1404,10 +1422,11 @@ static int stgc_spawn_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
 	const loff_t voff = silofs_sli_base_voff(sli);
+	const enum silofs_height height = SILOFS_HEIGHT_VDATA;
 	int err;
 
-	sbi_make_blobid_for(stg_ctx->sbi, voff, SILOFS_HEIGHT_VDATA, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->vstype, &bli);
+	stgc_make_spmap_main_blobid(stg_ctx, voff, height, &blobid);
+	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->vspace, &bli);
 	if (err) {
 		return err;
 	}
@@ -1745,6 +1764,7 @@ int silofs_sbi_stage_spnode2_at(struct silofs_sb_info *sbi,
 		return err;
 	}
 	*out_sni = stg_ctx.sni2;
+
 	return 0;
 }
 
@@ -1846,7 +1866,7 @@ static int sbi_spawn_vbi_of(struct silofs_sb_info *sbi,
 	int ret;
 
 	bli_incref(bli);
-	ret = sbi_spawn_vbi(sbi, vaddr->voff, out_vbi);
+	ret = sbi_spawn_vbi(sbi, vaddr->voff, vaddr->stype, out_vbi);
 	bli_decref(bli);
 	return ret;
 }
@@ -1894,9 +1914,10 @@ static int sbi_stage_vblock(struct silofs_sb_info *sbi,
                             const struct silofs_voaddr *voa,
                             struct silofs_vbk_info **out_vbi)
 {
+	const struct silofs_vaddr *vaddr = &voa->vaddr;
 	int err;
 
-	err = sbi_lookup_cached_vbi(sbi, voa->vaddr.voff, out_vbi);
+	err = sbi_lookup_cached_vbi(sbi, vaddr->voff, vaddr->stype, out_vbi);
 	if (!err) {
 		return 0; /* Cache hit */
 	}

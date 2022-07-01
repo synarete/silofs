@@ -58,8 +58,9 @@ static void ut_statfs_empty(struct ut_env *ute)
 	ut_expect_gt(used_bytes, SILOFS_SB_SIZE);
 	ut_expect_lt(used_bytes, capacity);
 
+	/* 2 used inodes: anon-allocation at voff=0 and root-dir */
 	used_files = stv.f_files - stv.f_ffree;
-	ut_expect_eq(used_files, 1);
+	ut_expect_eq(used_files, 2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -1349,13 +1349,13 @@ static size_t sni_child_height(const struct silofs_spnode_info *sni)
 }
 
 static void sni_bind_subref(struct silofs_spnode_info *sni, loff_t voff,
-                            const struct silofs_uaddr *ulink,
+                            const struct silofs_uaddr *uaddr,
                             enum silofs_stype stype_sub)
 {
 	/* either we set new ulink or override upon clone */
 	const bool bind_override = spnode_has_child_at(sni->sn, voff);
 
-	spnode_set_ulink_of(sni->sn, voff, ulink);
+	spnode_set_ulink_of(sni->sn, voff, uaddr);
 	spnode_set_stype_sub_of(sni->sn, voff, stype_sub);
 	sni_dirtify(sni);
 
@@ -1490,8 +1490,6 @@ static size_t sni_child_objsize(const struct silofs_spnode_info *sni)
 int silofs_sni_subref_of(const struct silofs_spnode_info *sni,
                          loff_t voff, struct silofs_uaddr *out_uaddr)
 {
-
-
 	spnode_ulink_of(sni->sn, voff, out_uaddr);
 	return silofs_uaddr_isnull(out_uaddr) ? -ENOENT : 0;
 }

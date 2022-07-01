@@ -490,21 +490,53 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+void silofs_uakey_setup(struct silofs_uakey *uakey, loff_t voff,
+                        enum silofs_height height, enum silofs_stype vspace)
+{
+	uakey->voff = voff;
+	uakey->height = height;
+	uakey->vspace = vspace;
+}
+
+void silofs_uakey_setup_by(struct silofs_uakey *uakey,
+                           const struct silofs_uaddr *uaddr)
+{
+	silofs_uakey_setup(uakey, uaddr->voff,
+	                   uaddr->height, uaddr_vspace(uaddr));
+}
+
+void silofs_uakey_setup_by2(struct silofs_uakey *uakey,
+                            const struct silofs_vrange *vrange,
+                            enum silofs_stype vspace)
+{
+	silofs_uakey_setup(uakey, vrange->beg, vrange->height, vspace);
+}
+
+static bool uakey_isequal(const struct silofs_uakey *uakey1,
+                          const struct silofs_uakey *uakey2)
+{
+	return ((uakey1->voff == uakey2->voff) &&
+	        (uakey1->height == uakey2->height) &&
+	        (uakey1->vspace == uakey2->vspace));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 struct silofs_uaent {
 	struct silofs_list_head  htb_lh;
 	struct silofs_list_head  lru_lh;
 	struct silofs_uaddr      uaddr;
 };
 
-static void uae_init(struct silofs_uaent *uae,
-                     const struct silofs_uaddr *uaddr)
+static void uaent_init(struct silofs_uaent *uae,
+                       const struct silofs_uaddr *uaddr)
 {
 	list_head_init(&uae->htb_lh);
 	list_head_init(&uae->lru_lh);
 	uaddr_assign(&uae->uaddr, uaddr);
 }
 
-static void uae_fini(struct silofs_uaent *uae)
+static void uaent_fini(struct silofs_uaent *uae)
 {
 	list_head_fini(&uae->htb_lh);
 	list_head_fini(&uae->lru_lh);
@@ -512,33 +544,34 @@ static void uae_fini(struct silofs_uaent *uae)
 }
 
 static struct silofs_uaent *
-uae_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+uaent_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_uaent *uae = NULL;
 
 	uae = silofs_allocate(alloc, sizeof(*uae));
 	if (uae != NULL) {
-		uae_init(uae, uaddr);
+		uaent_init(uae, uaddr);
 	}
 	return uae;
 }
 
-static void uae_del(struct silofs_uaent *uae, struct silofs_alloc *alloc)
+static void uaent_del(struct silofs_uaent *uae, struct silofs_alloc *alloc)
 {
-	uae_fini(uae);
+	uaent_fini(uae);
 	silofs_deallocate(alloc, uae, sizeof(*uae));
 }
 
 
-static bool uae_has_mapping(const struct silofs_uaent *uae,
-                            loff_t voff, enum silofs_height height)
+static bool uaent_has_mapping(const struct silofs_uaent *uaent,
+                              const struct silofs_uakey *uakey)
 {
-	const struct silofs_uaddr *uaddr = &uae->uaddr;
+	struct silofs_uakey uakey_ent;
 
-	return (uaddr->voff == voff) && (uaddr->height == height);
+	silofs_uakey_setup_by(&uakey_ent, &uaent->uaddr);
+	return uakey_isequal(uakey, &uakey_ent);
 }
 
-static struct silofs_uaent *uae_unconst(const struct silofs_uaent *uae)
+static struct silofs_uaent *uaent_unconst(const struct silofs_uaent *uae)
 {
 	union {
 		const struct silofs_uaent *p;
@@ -549,92 +582,98 @@ static struct silofs_uaent *uae_unconst(const struct silofs_uaent *uae)
 	return u.q;
 }
 
-static struct silofs_uaent *uae_from_htb_lh(const struct silofs_list_head *lh)
+static struct silofs_uaent *
+uaent_from_htb_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_uaent *uae = NULL;
 
 	uae = container_of2(lh, struct silofs_uaent, htb_lh);
-	return uae_unconst(uae);
+	return uaent_unconst(uae);
 }
 
-static struct silofs_uaent *uae_from_lru_lh(const struct silofs_list_head *lh)
+static struct silofs_uaent *
+uaent_from_lru_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_uaent *uae = NULL;
 
 	uae = container_of2(lh, struct silofs_uaent, lru_lh);
-	return uae_unconst(uae);
+	return uaent_unconst(uae);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_uamap_init(struct silofs_uamap *uam, struct silofs_alloc *alloc)
+int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc)
 {
-	const unsigned int cap = 4093;
+	const unsigned int cap = 4093; /* TODO: cap based on memory size */
 
-	listq_init(&uam->uam_lru);
-	uam->uam_alloc = alloc;
-	uam->uam_htbl_sz = 0;
-	uam->uam_htbl_cap = 0;
-	uam->uam_htbl = silofs_lista_new(alloc, cap);
-	if (uam->uam_htbl == NULL) {
+	listq_init(&uamap->uam_lru);
+	uamap->uam_alloc = alloc;
+	uamap->uam_htbl_sz = 0;
+	uamap->uam_htbl_cap = 0;
+	uamap->uam_htbl = silofs_lista_new(alloc, cap);
+	if (uamap->uam_htbl == NULL) {
 		return -ENOMEM;
 	}
-	uam->uam_htbl_cap = cap;
+	uamap->uam_htbl_cap = cap;
 	return 0;
 }
 
-void silofs_uamap_fini(struct silofs_uamap *uam)
+void silofs_uamap_fini(struct silofs_uamap *uamap)
 {
-	silofs_uamap_drop_all(uam);
-	silofs_lista_del(uam->uam_htbl, uam->uam_htbl_cap, uam->uam_alloc);
-	listq_fini(&uam->uam_lru);
-	uam->uam_alloc = NULL;
-	uam->uam_htbl_sz = 0;
-	uam->uam_htbl_cap = 0;
-	uam->uam_htbl = NULL;
+	struct silofs_alloc *alloc = uamap->uam_alloc;
+
+	silofs_uamap_drop_all(uamap);
+	silofs_lista_del(uamap->uam_htbl, uamap->uam_htbl_cap, alloc);
+	listq_fini(&uamap->uam_lru);
+	uamap->uam_alloc = NULL;
+	uamap->uam_htbl_sz = 0;
+	uamap->uam_htbl_cap = 0;
+	uamap->uam_htbl = NULL;
 }
 
-static size_t uamap_slot_of(const struct silofs_uamap *uam,
-                            loff_t voff, enum silofs_height height)
+static size_t uamap_slot_of(const struct silofs_uamap *uamap,
+                            const struct silofs_uakey *uakey)
 {
-	const uint64_t uoff = (uint64_t)voff;
-	const uint64_t uhei = (uint64_t)height;
-	const uint64_t key = silofs_rotate64(uoff, uhei & 0xF) ^ uhei;
+	const uint32_t rot = (uint32_t)uakey->height & 0xF;
+	const uint64_t ukey = (uint64_t)(uakey->voff + uakey->vspace);
+	const uint64_t key = silofs_rotate64(ukey, rot);
 
-	return key % uam->uam_htbl_cap;
+	return key % uamap->uam_htbl_cap;
 }
 
 static struct silofs_list_head *
-uamap_list_of(const struct silofs_uamap *uam,
-              loff_t voff, enum silofs_height height)
+uamap_list_of(const struct silofs_uamap *uamap,
+              const struct silofs_uakey *uakey)
 {
-	const size_t slot = uamap_slot_of(uam, voff, height);
-	const struct silofs_list_head *lh = &uam->uam_htbl[slot];
+	const size_t slot = uamap_slot_of(uamap, uakey);
+	const struct silofs_list_head *lh = &uamap->uam_htbl[slot];
 
 	return silofs_unconst(lh);
 }
 
 static struct silofs_list_head *
-uamap_list_of_uaddr(const struct silofs_uamap *uam,
+uamap_list_of_uaddr(const struct silofs_uamap *uamap,
                     const struct silofs_uaddr *uaddr)
 {
-	return uamap_list_of(uam, uaddr->voff, uaddr->height);
+	struct silofs_uakey uakey;
+
+	silofs_uakey_setup_by(&uakey, uaddr);
+	return uamap_list_of(uamap, &uakey);
 }
 
 static struct silofs_uaent *
-uamap_find(const struct silofs_uamap *uam,
-           loff_t voff, enum silofs_height height)
+uamap_find(const struct silofs_uamap *uamap, const struct silofs_uakey *uakey)
 {
 	const struct silofs_list_head *lst;
 	const struct silofs_list_head *itr;
 	const struct silofs_uaent *uae = NULL;
 
-	lst = uamap_list_of(uam, voff, height);
+	lst = uamap_list_of(uamap, uakey);
 	itr = lst->next;
 	while (itr != lst) {
-		uae = uae_from_htb_lh(itr);
-		if (uae_has_mapping(uae, voff, height)) {
-			return uae_unconst(uae);
+		uae = uaent_from_htb_lh(itr);
+		if (uaent_has_mapping(uae, uakey)) {
+			return uaent_unconst(uae);
 		}
 		itr = itr->next;
 	}
@@ -642,129 +681,133 @@ uamap_find(const struct silofs_uamap *uam,
 }
 
 const struct silofs_uaddr *
-silofs_uamap_lookup(const struct silofs_uamap *uam,
-                    loff_t voff, enum silofs_height height)
+silofs_uamap_lookup(const struct silofs_uamap *uamap,
+                    const struct silofs_uakey *uakey)
 {
-	const struct silofs_uaent *uae;
+	const struct silofs_uaent *uaent;
 
-	uae = uamap_find(uam, voff, height);
-	return (uae != NULL) ? &uae->uaddr : NULL;
+	uaent = uamap_find(uamap, uakey);
+	return (uaent != NULL) ? &uaent->uaddr : NULL;
 }
 
-static void uamap_insert_to_lru(struct silofs_uamap *uam,
-                                struct silofs_uaent *uae)
+static void uamap_insert_to_lru(struct silofs_uamap *uamap,
+                                struct silofs_uaent *uaent)
 {
-	listq_push_front(&uam->uam_lru, &uae->lru_lh);
+	listq_push_front(&uamap->uam_lru, &uaent->lru_lh);
 }
 
-static void uamap_remove_from_lru(struct silofs_uamap *uam,
-                                  struct silofs_uaent *uae)
+static void uamap_remove_from_lru(struct silofs_uamap *uamap,
+                                  struct silofs_uaent *uaent)
 {
-	silofs_assert_gt(uam->uam_lru.sz, 0);
-	listq_remove(&uam->uam_lru, &uae->lru_lh);
+	silofs_assert_gt(uamap->uam_lru.sz, 0);
+	listq_remove(&uamap->uam_lru, &uaent->lru_lh);
 }
 
-static void uamap_insert_to_htbl(struct silofs_uamap *uam,
-                                 struct silofs_uaent *uae)
+static void uamap_insert_to_htbl(struct silofs_uamap *uamap,
+                                 struct silofs_uaent *uaent)
 {
 	struct silofs_list_head *lst;
 
-	lst = uamap_list_of_uaddr(uam, &uae->uaddr);
-	list_push_front(lst, &uae->htb_lh);
-	uam->uam_htbl_sz++;
+	lst = uamap_list_of_uaddr(uamap, &uaent->uaddr);
+	list_push_front(lst, &uaent->htb_lh);
+	uamap->uam_htbl_sz++;
 }
 
-static void uamap_remove_from_htbl(struct silofs_uamap *uam,
-                                   struct silofs_uaent *uae)
+static void uamap_remove_from_htbl(struct silofs_uamap *uamap,
+                                   struct silofs_uaent *uaent)
 {
-	silofs_assert_gt(uam->uam_htbl_sz, 0);
-	list_head_remove(&uae->htb_lh);
-	uam->uam_htbl_sz--;
+	silofs_assert_gt(uamap->uam_htbl_sz, 0);
+	list_head_remove(&uaent->htb_lh);
+	uamap->uam_htbl_sz--;
 }
 
-static void uamap_remove(struct silofs_uamap *uam, struct silofs_uaent *uae)
+static void uamap_remove(struct silofs_uamap *uamap,
+                         struct silofs_uaent *uaent)
 {
-	uamap_remove_from_htbl(uam, uae);
-	uamap_remove_from_lru(uam, uae);
+	uamap_remove_from_htbl(uamap, uaent);
+	uamap_remove_from_lru(uamap, uaent);
 }
 
-static void uamap_remove_del(struct silofs_uamap *uam,
-                             struct silofs_uaent *uae)
+static void uamap_remove_del(struct silofs_uamap *uamap,
+                             struct silofs_uaent *uaent)
 {
-	uamap_remove(uam, uae);
-	uae_del(uae, uam->uam_alloc);
+	uamap_remove(uamap, uaent);
+	uaent_del(uaent, uamap->uam_alloc);
 }
 
-int silofs_uamap_remove(struct silofs_uamap *uam,
+int silofs_uamap_remove(struct silofs_uamap *uamap,
                         const struct silofs_uaddr *uaddr)
 {
-	struct silofs_uaent *uae;
+	struct silofs_uakey uakey;
+	struct silofs_uaent *uaent;
 
-	uae = uamap_find(uam, uaddr->voff, uaddr->height);
-	if (uae == NULL) {
+	silofs_uakey_setup_by(&uakey, uaddr);
+	uaent = uamap_find(uamap, &uakey);
+	if (uaent == NULL) {
 		return -ENOENT;
 	}
-	uamap_remove_del(uam, uae);
+	uamap_remove_del(uamap, uaent);
 	return 0;
 }
 
-static struct silofs_uaent *uamap_get_lru(struct silofs_uamap *uam)
+static struct silofs_uaent *uamap_get_lru(struct silofs_uamap *uamap)
 {
 	struct silofs_uaent *uae = NULL;
 	struct silofs_list_head *lh;
 
-	lh = listq_back(&uam->uam_lru);
+	lh = listq_back(&uamap->uam_lru);
 	if (lh != NULL) {
-		uae = uae_from_lru_lh(lh);
+		uae = uaent_from_lru_lh(lh);
 	}
 	return uae;
 }
 
-static void uamap_insert(struct silofs_uamap *uam, struct silofs_uaent *uae)
+static void uamap_insert(struct silofs_uamap *uamap,
+                         struct silofs_uaent *uaent)
 {
-	uamap_insert_to_lru(uam, uae);
-	uamap_insert_to_htbl(uam, uae);
+	uamap_insert_to_lru(uamap, uaent);
+	uamap_insert_to_htbl(uamap, uaent);
 }
 
-static int uamap_remove_lru(struct silofs_uamap *uam)
+static int uamap_remove_lru(struct silofs_uamap *uamap)
 {
-	struct silofs_uaent *uae;
+	struct silofs_uaent *uaent;
 
-	uae = uamap_get_lru(uam);
-	while (uae == NULL) {
+	uaent = uamap_get_lru(uamap);
+	while (uaent == NULL) {
 		return -ENOENT;
 	}
-	uamap_remove_del(uam, uae);
+	uamap_remove_del(uamap, uaent);
 	return 0;
 }
 
-static void uamap_refresh(struct silofs_uamap *uam)
+static void uamap_refresh(struct silofs_uamap *uamap)
 {
-	if ((2 * uam->uam_lru.sz) > uam->uam_htbl_cap) {
-		uamap_remove_lru(uam);
+	if ((2 * uamap->uam_lru.sz) > uamap->uam_htbl_cap) {
+		uamap_remove_lru(uamap);
 	}
 }
 
-int silofs_uamap_insert(struct silofs_uamap *uam,
+int silofs_uamap_insert(struct silofs_uamap *uamap,
                         const struct silofs_uaddr *uaddr)
 {
-	struct silofs_uaent *uae;
+	struct silofs_uaent *uaent;
 
-	uae = uae_new(uam->uam_alloc, uaddr);
-	if (uae == NULL) {
+	uaent = uaent_new(uamap->uam_alloc, uaddr);
+	if (uaent == NULL) {
 		return -ENOMEM;
 	}
-	uamap_refresh(uam);
-	uamap_insert(uam, uae);
+	uamap_refresh(uamap);
+	uamap_insert(uamap, uaent);
 	return 0;
 }
 
-void silofs_uamap_drop_all(struct silofs_uamap *uam)
+void silofs_uamap_drop_all(struct silofs_uamap *uamap)
 {
 	bool keep_drop = true;
 
 	while (keep_drop) {
-		keep_drop = (uamap_remove_lru(uam) == 0);
+		keep_drop = (uamap_remove_lru(uamap) == 0);
 	}
 }
 

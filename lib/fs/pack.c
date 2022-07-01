@@ -38,7 +38,7 @@ struct silofs_pack_ctx {
 	struct silofs_sb_info          *sbi;
 	struct silofs_block            *tbk;
 	struct silofs_pack_iovs        *piov;
-	enum silofs_stype               vstype;
+	enum silofs_stype               vspace;
 	bool                            pack;
 };
 
@@ -906,7 +906,7 @@ static int pac_post_archive_super(struct silofs_pack_ctx *pa_ctx,
 	silofs_assert_eq(slot, 0);
 	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sbi_bind_main_pack(sbi, &blobid);
+		silofs_sbi_bind_pack_blobid(sbi, &blobid);
 		err = pac_repack_unode(pa_ctx, pa_ctx->piov, 0, ui);
 	}
 	return err;
@@ -1271,24 +1271,24 @@ static struct silofs_pack_ctx *pack_ctx_of(struct silofs_visitor *vis)
 	return silofs_container_of(vis, struct silofs_pack_ctx, vis);
 }
 
-static int pack_visit_prep(struct silofs_visitor *vis,
-                           const struct silofs_uiterator *uit)
+static int pack_visit_prep_by(struct silofs_visitor *vis,
+                              const struct silofs_uiterator *uit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
 	return pac_prep_archive_at(pa_ctx, uit);
 }
 
-static int pack_visit_exec(struct silofs_visitor *vis,
-                           const struct silofs_uiterator *uit)
+static int pack_visit_exec_at(struct silofs_visitor *vis,
+                              const struct silofs_uiterator *uit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
 	return pac_exec_archive_at(pa_ctx, uit);
 }
 
-static int pack_visit_post(struct silofs_visitor *vis,
-                           const struct silofs_uiterator *uit)
+static int pack_visit_post_at(struct silofs_visitor *vis,
+                              const struct silofs_uiterator *uit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
@@ -1301,9 +1301,9 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
                         struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
-		.vis.visit_prep_hook =  pack_visit_prep,
-		.vis.visit_exec_hook = pack_visit_exec,
-		.vis.visit_post_hook = pack_visit_post,
+		.vis.visit_prep_by_hook =  pack_visit_prep_by,
+		.vis.visit_exec_at_hook = pack_visit_exec_at,
+		.vis.visit_post_at_hook = pack_visit_post_at,
 		.kivam = kivam,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
@@ -1311,7 +1311,6 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
 		.alloc = uber->ub_alloc,
 		.sbi = NULL,
 		.pack = true,
-		.vstype = SILOFS_STYPE_NONE, // XXX
 	};
 	int err;
 
@@ -1533,22 +1532,23 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 
 static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
                                struct silofs_sb_info *sbi,
-                               loff_t voff, size_t slot)
+                               enum silofs_stype vspace)
 {
 	struct silofs_uaddr uaddr;
 	struct silofs_blobid blobid;
 	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni = NULL;
+	const size_t slot = (size_t)vspace; // XXX assuming block per spnode
 	int err;
 
-	if ((voff != 0) || (slot != 0)) {
+	if (!stype_isvnode(vspace)) {
 		return -EFSCORRUPTED; /* TODO: other err */
 	}
-	err = silofs_sbi_main_pack(sbi, &blobid);
+	err = silofs_sbi_pack_blobid(sbi, &blobid);
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_sproot_of(sbi, pa_ctx->vstype, &uaddr);
+	err = silofs_sbi_sproot_of(sbi, vspace, &uaddr);
 	if (err) {
 		return err;
 	}
@@ -1569,22 +1569,20 @@ static int pac_prep_restore(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_unode_info *parent = uit->parent;
 	struct silofs_sb_info *sbi = NULL;
 	struct silofs_spnode_info *sni = NULL;
-	const loff_t voff = uit->voff;
-	const size_t slot = uit->slot;
 	int ret = 0;
 
 	if (ui_issuper(parent)) {
 		sbi = sbi_from_ui(parent);
-		ret = pac_reload_by_super(pa_ctx, sbi, voff, slot);
+		ret = pac_reload_by_super(pa_ctx, sbi, uit->vspace);
 	} else if (ui_isspnode4(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode4(pa_ctx, sni, voff, slot);
+		ret = pac_reload_by_spnode4(pa_ctx, sni, uit->voff, uit->slot);
 	} else if (ui_isspnode3(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode3(pa_ctx, sni, voff, slot);
+		ret = pac_reload_by_spnode3(pa_ctx, sni, uit->voff, uit->slot);
 	} else if (ui_isspnode2(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode2(pa_ctx, sni, voff, slot);
+		ret = pac_reload_by_spnode2(pa_ctx, sni, uit->voff, uit->slot);
 	}
 	return ret;
 }
@@ -1602,24 +1600,24 @@ static int pac_prep_restore_at(struct silofs_pack_ctx *pa_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int unpack_visit_prep(struct silofs_visitor *vis,
-                             const struct silofs_uiterator *uit)
+static int unpack_visit_prep_by(struct silofs_visitor *vis,
+                                const struct silofs_uiterator *uit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
 	return pac_prep_restore_at(pa_ctx, uit);
 }
 
-static int unpack_visit_exec(struct silofs_visitor *vis,
-                             const struct silofs_uiterator *uit)
+static int unpack_visit_exec_at(struct silofs_visitor *vis,
+                                const struct silofs_uiterator *uit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
 	return pac_exec_restore_at(pa_ctx, uit);
 }
 
-static int unpack_visit_post(struct silofs_visitor *vis,
-                             const struct silofs_uiterator *uit)
+static int unpack_visit_post_at(struct silofs_visitor *vis,
+                                const struct silofs_uiterator *uit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
@@ -1632,9 +1630,9 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
                           struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
-		.vis.visit_prep_hook = unpack_visit_prep,
-		.vis.visit_exec_hook = unpack_visit_exec,
-		.vis.visit_post_hook = unpack_visit_post,
+		.vis.visit_prep_by_hook = unpack_visit_prep_by,
+		.vis.visit_exec_at_hook = unpack_visit_exec_at,
+		.vis.visit_post_at_hook = unpack_visit_post_at,
 		.kivam = kivam,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
@@ -1642,7 +1640,6 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
 		.alloc = uber->ub_alloc,
 		.sbi = NULL,
 		.pack = false,
-		.vstype = SILOFS_STYPE_NONE, // XXX
 	};
 	int err;
 

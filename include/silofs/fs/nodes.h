@@ -47,7 +47,6 @@ struct silofs_snode_info {
 /* unode */
 struct silofs_unode_info {
 	struct silofs_uaddr             u_uaddr;
-	struct silofs_blobid            u_blobid;
 	struct silofs_snode_info        u_si;
 	struct silofs_list_head         u_pack_lh;
 	struct silofs_repo             *u_repo;

@@ -129,7 +129,6 @@
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
 #define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
 
-
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
 #define oaddr_setup(oa, bid, o, l)      silofs_oaddr_setup(oa, bid, o, l)
@@ -144,6 +143,7 @@
 #define uaddr_lba(ua)                   silofs_uaddr_lba(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, b, p, s, h, o)  silofs_uaddr_setup(ua, b, p, s, h, o)
+#define uaddr_vspace(ua)                silofs_uaddr_vspace(ua)
 
 #define vaddr_none()                    silofs_vaddr_none()
 #define vaddr_off(va)                   silofs_vaddr_off(va)

@@ -31,15 +31,16 @@ struct silofs_uiterator {
 	struct silofs_sb_info    *sbi;
 	struct silofs_unode_info *parent;
 	struct silofs_unode_info *ui;
+	enum silofs_stype  vspace;
 	enum silofs_height height;
 	loff_t voff;
 	size_t slot;
 };
 
 struct silofs_visitor {
-	silofs_visit_unode_fn visit_prep_hook;
-	silofs_visit_unode_fn visit_exec_hook;
-	silofs_visit_unode_fn visit_post_hook;
+	silofs_visit_unode_fn visit_prep_by_hook;
+	silofs_visit_unode_fn visit_exec_at_hook;
+	silofs_visit_unode_fn visit_post_at_hook;
 	bool nodescend;
 	bool halt;
 };

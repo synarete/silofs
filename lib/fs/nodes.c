@@ -274,7 +274,6 @@ static void ui_init(struct silofs_unode_info *ui,
 	si_init(&ui->u_si, uaddr->stype, vtbl);
 	lh_init(&ui->u_pack_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
-	blobid_reset(&ui->u_blobid);
 	ui->u_repo = NULL;
 	ui->u_ubi = NULL;
 	ui->u_piov = NULL;
@@ -287,7 +286,6 @@ static void ui_fini(struct silofs_unode_info *ui)
 	silofs_assert(!ui->u_plinked);
 
 	uaddr_reset(&ui->u_uaddr);
-	blobid_reset(&ui->u_blobid);
 	lh_fini(&ui->u_pack_lh);
 	si_fini(&ui->u_si);
 	ui->u_repo = NULL;

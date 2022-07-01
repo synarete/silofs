@@ -150,14 +150,14 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return  hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
+	return hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
 }
 
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
 	const uint64_t pos = (uint64_t)(oaddr->pos);
 
-	return  hash_of_bkaddr(&oaddr->bka) ^ ((pos << 17) + oaddr->len);
+	return hash_of_bkaddr(&oaddr->bka) ^ ((pos << 17) + oaddr->len);
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
@@ -170,11 +170,12 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	return silofs_rotate64(ohash + stype, height % 7) ^ voff;
 }
 
-static uint64_t hash_of_voff(const loff_t *voff)
+static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)
 {
-	const uint64_t uoff = (uint64_t)(*voff);
+	const uint64_t uoff = (uint64_t)(vbk_addr->vbk_voff);
+	const uint32_t vspc = (uint64_t)vbk_addr->vbk_vspace;
 
-	return ~twang_mix64(~uoff);
+	return ~twang_mix64(uoff + vspc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -219,13 +220,22 @@ static long ckey_compare_as_blobid(const struct silofs_ckey *ckey1,
 	return silofs_blobid_compare(ckey1->keyu.blobid, ckey2->keyu.blobid);
 }
 
-static long ckey_compare_as_voff(const struct silofs_ckey *ckey1,
-                                 const struct silofs_ckey *ckey2)
+static long ckey_compare_as_vbk_addr(const struct silofs_ckey *ckey1,
+                                     const struct silofs_ckey *ckey2)
 {
-	const loff_t voff1 = *(ckey1->keyu.voff);
-	const loff_t voff2 = *(ckey2->keyu.voff);
+	const struct silofs_vbk_addr *vbk_addr1 = ckey1->keyu.vbk_addr;
+	const struct silofs_vbk_addr *vbk_addr2 = ckey2->keyu.vbk_addr;
+	long cmp;
 
-	return voff1 - voff2;
+	cmp = (long)vbk_addr2->vbk_vspace - (long)vbk_addr1->vbk_vspace;
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)vbk_addr2->vbk_voff - (long)vbk_addr1->vbk_voff;
+	if (cmp) {
+		return cmp;
+	}
+	return 0;
 }
 
 long silofs_ckey_compare(const struct silofs_ckey *ckey1,
@@ -248,8 +258,8 @@ long silofs_ckey_compare(const struct silofs_ckey *ckey1,
 		case SILOFS_CKEY_BLOBID:
 			cmp = ckey_compare_as_blobid(ckey1, ckey2);
 			break;
-		case SILOFS_CKEY_VOFF:
-			cmp = ckey_compare_as_voff(ckey1, ckey2);
+		case SILOFS_CKEY_VBKADDR:
+			cmp = ckey_compare_as_vbk_addr(ckey1, ckey2);
 			break;
 		case SILOFS_CKEY_NONE:
 		default:
@@ -291,9 +301,11 @@ static void ckey_by_vaddr(struct silofs_ckey *ckey,
 	ckey_setup(ckey, SILOFS_CKEY_VADDR, vaddr, hash_of_vaddr(vaddr));
 }
 
-static void ckey_by_voff(struct silofs_ckey *ckey, const loff_t *voff)
+static void ckey_by_vbk_addr(struct silofs_ckey *ckey,
+                             const struct silofs_vbk_addr *vbk_addr)
 {
-	ckey_setup(ckey, SILOFS_CKEY_VOFF, voff, hash_of_voff(voff));
+	ckey_setup(ckey, SILOFS_CKEY_VBKADDR, vbk_addr,
+	           hash_of_vbk_addr(vbk_addr));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -701,19 +713,22 @@ static struct silofs_cache_elem *vbi_to_ce(const struct silofs_vbk_info *vbi)
 	return unconst(ce);
 }
 
-static void vbi_set_voff(struct silofs_vbk_info *vbi, loff_t voff)
+static void vbi_set_vbk_addr(struct silofs_vbk_info *vbi,
+                             loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_cache_elem *ce = vbi_to_ce(vbi);
 
-	vbi->vbk_voff = off_align_to_bk(voff);
-	ckey_by_voff(&ce->ce_ckey, &vbi->vbk_voff);
+	vbi->vbk_addr.vbk_voff = off_align_to_bk(voff);
+	vbi->vbk_addr.vbk_vspace = vspace;
+	ckey_by_vbk_addr(&ce->ce_ckey, &vbi->vbk_addr);
 }
 
 static void vbi_init(struct silofs_vbk_info *vbi,
-                     struct silofs_block *bk, loff_t voff)
+                     struct silofs_block *bk,
+                     loff_t voff, enum silofs_stype vspace)
 {
 	silofs_ce_init(&vbi->vbk_ce);
-	vbi_set_voff(vbi, voff);
+	vbi_set_vbk_addr(vbi, voff, vspace);
 	vbi->vbk = bk;
 }
 
@@ -1814,17 +1829,19 @@ static void cache_forget_uaddr(struct silofs_cache *cache,
 
 static const struct silofs_uaddr *
 cache_lookup_uaddr_by(struct silofs_cache *cache,
-                      loff_t voff, enum silofs_height height)
+                      const struct silofs_uakey *uakey)
 {
-	return silofs_uamap_lookup(&cache->c_uam, voff, height);
+	return silofs_uamap_lookup(&cache->c_uam, uakey);
 }
 
 static void cache_track_uaddr_of(struct silofs_cache *cache,
                                  const struct silofs_unode_info *ui)
 {
+	struct silofs_uakey uakey;
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 
-	if (!cache_lookup_uaddr_by(cache, uaddr->voff, uaddr->height)) {
+	silofs_uakey_setup_by(&uakey, uaddr);
+	if (!cache_lookup_uaddr_by(cache, &uakey)) {
 		cache_track_uaddr(cache, uaddr);
 	}
 }
@@ -1893,12 +1910,12 @@ void silofs_cache_forget_unode(struct silofs_cache *cache,
 
 struct silofs_unode_info *
 silofs_cache_find_unode_by(struct silofs_cache *cache,
-                           loff_t voff, enum silofs_height height)
+                           const struct silofs_uakey *uakey)
 {
 	const struct silofs_uaddr *uaddr;
 	struct silofs_unode_info *ui = NULL;
 
-	uaddr = cache_lookup_uaddr_by(cache, voff, height);
+	uaddr = cache_lookup_uaddr_by(cache, uakey);
 	if (uaddr != NULL) {
 		ui = silofs_cache_lookup_unode(cache, uaddr);
 	}
@@ -1913,7 +1930,8 @@ void silofs_cache_forget_uaddrs(struct silofs_cache *cache)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vbk_info *
-cache_new_vbi(const struct silofs_cache *cache, loff_t voff)
+cache_new_vbi(const struct silofs_cache *cache,
+              loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_block *bk;
 	struct silofs_vbk_info *vbi;
@@ -1927,7 +1945,7 @@ cache_new_vbi(const struct silofs_cache *cache, loff_t voff)
 		bk_free(bk, cache->c_alloc);
 		return NULL;
 	}
-	vbi_init(vbi, bk, voff);
+	vbi_init(vbi, bk, voff, vspace);
 	return vbi;
 }
 
@@ -1952,13 +1970,17 @@ static void cache_fini_vbi_lm(struct silofs_cache *cache)
 }
 
 static struct silofs_vbk_info *
-cache_find_vbi(const struct silofs_cache *cache, loff_t voff)
+cache_find_vbi(const struct silofs_cache *cache,
+               loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
-	const loff_t bk_voff = off_align_to_bk(voff);
+	const struct silofs_vbk_addr vbk_addr = {
+		.vbk_voff = off_align_to_bk(voff),
+		.vbk_vspace = vspace,
+	};
 
-	ckey_by_voff(&ckey, &bk_voff);
+	ckey_by_vbk_addr(&ckey, &vbk_addr);
 	ce = lrumap_find(&cache->c_vbi_lm, &ckey);
 	return vbi_from_ce(ce);
 }
@@ -1989,11 +2011,12 @@ void silofs_cache_forget_vbk(struct silofs_cache *cache,
 }
 
 static struct silofs_vbk_info *
-cache_spawn_vbi(struct silofs_cache *cache, loff_t voff)
+cache_spawn_vbi(struct silofs_cache *cache,
+                loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_vbk_info *vbi;
 
-	vbi = cache_new_vbi(cache, voff);
+	vbi = cache_new_vbi(cache, voff, vspace);
 	if (vbi == NULL) {
 		return NULL;
 	}
@@ -2002,11 +2025,12 @@ cache_spawn_vbi(struct silofs_cache *cache, loff_t voff)
 }
 
 static struct silofs_vbk_info *
-cache_find_relru_vbi(struct silofs_cache *cache, loff_t voff)
+cache_find_relru_vbi(struct silofs_cache *cache,
+                     loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_vbk_info *vbi;
 
-	vbi = cache_find_vbi(cache, voff);
+	vbi = cache_find_vbi(cache, voff, vspace);
 	if (vbi != NULL) {
 		cache_promote_lru_vbi(cache, vbi);
 	}
@@ -2014,15 +2038,16 @@ cache_find_relru_vbi(struct silofs_cache *cache, loff_t voff)
 }
 
 static struct silofs_vbk_info *
-cache_find_or_spawn_vbi(struct silofs_cache *cache, loff_t voff)
+cache_find_or_spawn_vbi(struct silofs_cache *cache,
+                        loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_vbk_info *vbi;
 
-	vbi = cache_find_relru_vbi(cache, voff);
+	vbi = cache_find_relru_vbi(cache, voff, vspace);
 	if (vbi != NULL) {
 		return vbi;
 	}
-	vbi = cache_spawn_vbi(cache, voff);
+	vbi = cache_spawn_vbi(cache, voff, vspace);
 	if (vbi == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -2060,13 +2085,14 @@ cache_find_evictable_vbi(struct silofs_cache *cache)
 }
 
 static struct silofs_vbk_info *
-cache_require_vbi(struct silofs_cache *cache, loff_t voff)
+cache_require_vbi(struct silofs_cache *cache,
+                  loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_vbk_info *vbi = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		vbi = cache_find_or_spawn_vbi(cache, voff);
+		vbi = cache_find_or_spawn_vbi(cache, voff, vspace);
 		if (vbi != NULL) {
 			break;
 		}
@@ -2148,15 +2174,17 @@ cache_shrink_or_relru_vbis(struct silofs_cache *cache, size_t cnt, bool force)
 }
 
 struct silofs_vbk_info *
-silofs_cache_lookup_vbk(struct silofs_cache *cache, loff_t voff)
+silofs_cache_lookup_vbk(struct silofs_cache *cache,
+                        loff_t voff, enum silofs_stype vspace)
 {
-	return cache_find_relru_vbi(cache, voff);
+	return cache_find_relru_vbi(cache, voff, vspace);
 }
 
 struct silofs_vbk_info *
-silofs_cache_spawn_vbk(struct silofs_cache *cache, loff_t voff)
+silofs_cache_spawn_vbk(struct silofs_cache *cache,
+                       loff_t voff, enum silofs_stype vspace)
 {
-	return cache_require_vbi(cache, voff);
+	return cache_require_vbi(cache, voff, vspace);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

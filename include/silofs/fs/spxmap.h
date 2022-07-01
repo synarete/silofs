@@ -40,7 +40,14 @@ struct silofs_spamaps {
 	struct silofs_spamap    spa_symval;
 };
 
-/* in-memory mapping of uaddr by (voff,height) */
+/* key of in-memory uaddress-mapping */
+struct silofs_uakey {
+	loff_t                  voff;
+	enum silofs_height      height;
+	enum silofs_stype       vspace;
+};
+
+/* in-memory mapping of uaddr by (voff,height,vspace) */
 struct silofs_uamap {
 	struct silofs_listq      uam_lru;
 	struct silofs_alloc     *uam_alloc;
@@ -75,20 +82,31 @@ int silofs_spamaps_store(struct silofs_spamaps *spam,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_uamap_init(struct silofs_uamap *uam, struct silofs_alloc *alloc);
+void silofs_uakey_setup(struct silofs_uakey *uakey, loff_t voff,
+                        enum silofs_height height, enum silofs_stype vspace);
 
-void silofs_uamap_fini(struct silofs_uamap *uam);
+void silofs_uakey_setup_by(struct silofs_uakey *uakey,
+                           const struct silofs_uaddr *uaddr);
+
+void silofs_uakey_setup_by2(struct silofs_uakey *uakey,
+                            const struct silofs_vrange *vrange,
+                            enum silofs_stype vspace);
+
+
+int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc);
+
+void silofs_uamap_fini(struct silofs_uamap *uamap);
 
 const struct silofs_uaddr *
-silofs_uamap_lookup(const struct silofs_uamap *uam,
-                    loff_t voff, enum silofs_height height);
+silofs_uamap_lookup(const struct silofs_uamap *uamap,
+                    const struct silofs_uakey *uakey);
 
-int silofs_uamap_remove(struct silofs_uamap *uam,
+int silofs_uamap_remove(struct silofs_uamap *uamap,
                         const struct silofs_uaddr *uaddr);
 
-int silofs_uamap_insert(struct silofs_uamap *uam,
+int silofs_uamap_insert(struct silofs_uamap *uamap,
                         const struct silofs_uaddr *uaddr);
 
-void silofs_uamap_drop_all(struct silofs_uamap *uam);
+void silofs_uamap_drop_all(struct silofs_uamap *uamap);
 
 #endif /* SILOFS_SPXMAP_H_ */

@@ -830,9 +830,9 @@ static int itc_stage_itnode(const struct silofs_it_ctx *it_ctx,
                             enum silofs_stage_mode stg_mode,
                             struct silofs_itnode_info **out_itni)
 {
-	int err;
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_itnode_info *itni = NULL;
+	int err;
 
 	err = silofs_sbi_stage_vnode(it_ctx->sbi, vaddr, stg_mode, &vi);
 	if (err) {

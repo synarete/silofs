@@ -198,7 +198,7 @@ struct silofs_kivam {
 
 /* space-tree id */
 struct silofs_treeid {
-	uint8_t                 id[SILOFS_TREEID_SIZE];
+	struct silofs_uuid      uuid;
 };
 
 /* tree-addressing blob-id */
@@ -206,6 +206,7 @@ struct silofs_blobid_ta {
 	struct silofs_treeid    treeid;
 	loff_t                  voff;
 	enum silofs_height      height;
+	enum silofs_stype       vspace;
 };
 
 /* content-addressing blob-id */
@@ -287,7 +288,7 @@ enum silofs_ckey_type {
 	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
-	SILOFS_CKEY_VOFF,
+	SILOFS_CKEY_VBKADDR
 };
 
 union silofs_ckey_u {
@@ -295,7 +296,7 @@ union silofs_ckey_u {
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
 	const struct silofs_blobid *blobid;
-	const loff_t               *voff;
+	const struct silofs_vbk_addr *vbk_addr;
 	const void                 *key;
 };
 
@@ -318,7 +319,7 @@ struct silofs_cache_elem {
 	char ce_pad;
 };
 
-/* object-addressing block info */
+/* uber-block info */
 struct silofs_ubk_info {
 	struct silofs_cache_elem        ubk_ce;
 	struct silofs_bkaddr            ubk_addr;
@@ -326,11 +327,17 @@ struct silofs_ubk_info {
 	struct silofs_blob_info        *ubk_bli;
 };
 
-/* voffset-addressing block info */
+/* virtual-block addressing */
+struct silofs_vbk_addr {
+	loff_t                          vbk_voff;
+	enum silofs_stype               vbk_vspace;
+};
+
+/* virtual-block info */
 struct silofs_vbk_info {
 	struct silofs_cache_elem        vbk_ce;
 	struct silofs_block            *vbk;
-	loff_t                          vbk_voff;
+	struct silofs_vbk_addr          vbk_addr;
 };
 
 

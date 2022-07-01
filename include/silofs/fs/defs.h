@@ -106,10 +106,6 @@
 	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BK_SIZE)
 
 
-/* size of uber-space tree-id */
-#define SILOFS_TREEID_SIZE              (24)
-
-
 /* non-valid ("NIL") logical byte address */
 #define SILOFS_OFF_NULL                 (-1)
 
@@ -466,7 +462,7 @@ struct silofs_uuid {
 
 struct silofs_name {
 	uint8_t name[SILOFS_NAME_MAX + 1];
-} silofs_packed_aligned8;
+} silofs_packed_aligned16;
 
 
 struct silofs_key {
@@ -479,19 +475,17 @@ struct silofs_iv {
 } silofs_packed_aligned8;
 
 
-struct silofs_treeid192 {
-	uint8_t                         id[SILOFS_TREEID_SIZE];
-} silofs_packed_aligned8;
-
-
-struct silofs_xid128 {
-	uint8_t                         id[16];
+struct silofs_treeid128 {
+	struct silofs_uuid              uuid;
 } silofs_packed_aligned8;
 
 
 struct silofs_blobid32b_ta {
-	struct silofs_treeid192         treeid;
-	uint64_t                        voff_height;
+	struct silofs_treeid128         treeid;
+	int64_t                         voff;
+	uint8_t                         height;
+	uint8_t                         vspace;
+	uint8_t                         pad[6];
 } silofs_packed_aligned8;
 
 
@@ -606,6 +600,20 @@ struct silofs_header {
 } silofs_packed_aligned16;
 
 
+struct silofs_sb_sproots {
+	struct silofs_uaddr64b          sb_sproot_itnode;
+	struct silofs_uaddr64b          sb_sproot_inode;
+	struct silofs_uaddr64b          sb_sproot_xanode;
+	struct silofs_uaddr64b          sb_sproot_dtnode;
+	struct silofs_uaddr64b          sb_sproot_ftnode;
+	struct silofs_uaddr64b          sb_sproot_symval;
+	struct silofs_uaddr64b          sb_sproot_data1k;
+	struct silofs_uaddr64b          sb_sproot_data4k;
+	struct silofs_uaddr64b          sb_sproot_databk;
+	uint8_t                         sb_reserved[448];
+} silofs_packed_aligned64;
+
+
 struct silofs_super_block {
 	/* 0..1K */
 	struct silofs_header            sb_hdr;
@@ -621,24 +629,21 @@ struct silofs_super_block {
 	struct silofs_name              sb_name;
 	uint8_t                         sb_reserved4[512];
 	/* 1K..2K */
+	struct silofs_blobid40b         sb_main_blobid;
+	uint8_t                         sb_reserved7[24];
+	struct silofs_blobid40b         sb_pack_blobid;
+	uint8_t                         sb_reserved8[24];
 	struct silofs_uaddr64b          sb_self_uaddr;
 	struct silofs_uaddr64b          sb_stats_uaddr;
-	struct silofs_blobid40b         sb_mainblobid;
-	uint8_t                         sb_reserved5[24];
-	struct silofs_blobid40b         sb_mainpackid;
-	uint8_t                         sb_reserved6[24];
-	struct silofs_treeid192         sb_treeid;
-	uint8_t                         sb_reserved7[8];
+	struct silofs_treeid128         sb_treeid;
 	struct silofs_vrange128         sb_vrange;
 	struct silofs_vaddr64           sb_itable_root;
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
 	uint64_t                        sb_pack_time;
-	uint8_t                         sb_reserved8[688];
-	/* 2K..3K */
-	struct silofs_uaddr64b          sb_sproot_uaddr;
-	uint8_t                         sb_reserved9[960];
-	/* 3K..4K */
+	uint8_t                         sb_reserved9[704];
+	/* 2K..4K */
+	struct silofs_sb_sproots        sb_sproots;
 	uint8_t                         sb_reserved10[1024];
 } silofs_packed_aligned64;
 
@@ -731,8 +736,8 @@ struct silofs_spmap_leaf {
 	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_LEAF_NCHILDS];
 	uint8_t                         sl_reserved3[3840];
 	// XXX
-	// struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_LEAF_NCHILDS];
-	// uint8_t                         sl_reserved3[1024 * 60];
+	// struct silofs_bk_ref    sl_subref[SILOFS_SPMAP_LEAF_NCHILDS];
+	// uint8_t                 sl_reserved3[1024 * 60];
 } silofs_packed_aligned64;
 
 

@@ -948,25 +948,44 @@ out:
 	return err ? err : err2;
 }
 
-static int fse_format_base_spmaps(const struct silofs_fs_env *fse)
+static int fse_format_base_spmaps_of(const struct silofs_fs_env *fse,
+					const struct silofs_vaddr *vaddr)
 {
-	struct silofs_vaddr vaddr;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
 	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RW;
-	const enum silofs_stype stype = SILOFS_STYPE_DATABK;
 	int err;
 
-	vaddr_setup(&vaddr, stype, 0);
-	err = silofs_sbi_require_spmaps_at(sbi, &vaddr, stg_mode, &sni, &sli);
+	err = silofs_sbi_require_spmaps_at(sbi, vaddr, stg_mode, &sni, &sli);
 	if (err) {
-		log_err("failed to format head spmaps: err=%d", err);
+		log_err("failed to format base spmaps: stype=%d err=%d",
+			vaddr->stype, err);
 		return err;
 	}
 	err = fse_flush_and_drop_caches(fse);
 	if (err) {
 		return err;
+	}
+	log_dbg("format base spmaps of: stype=%d err=%d", vaddr->stype, err);
+	return 0;
+}
+
+static int fse_format_base_spmaps(const struct silofs_fs_env *fse)
+{
+	struct silofs_vaddr vaddr;
+	enum silofs_stype stype = SILOFS_STYPE_DATABK;
+	int err;
+
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+		if (!stype_isvnode(stype)) {
+			continue;
+		}
+		vaddr_setup(&vaddr, stype, 0);
+		err = fse_format_base_spmaps_of(fse, &vaddr);
+		if (err) {
+			return err;
+		}
 	}
 	return 0;
 }

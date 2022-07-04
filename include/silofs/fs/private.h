@@ -178,6 +178,7 @@
 #define sni_incref(sni)                 silofs_sni_incref(sni)
 #define sni_decref(sni)                 silofs_sni_decref(sni)
 #define sni_vrange(sni, vrng)           silofs_sni_vspace_range(sni, vrng)
+#define sni_slot_of(sni, o)             silofs_sni_slot_of(sni, o)
 
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
 #define sli_incref(sli)                 silofs_sli_incref(sli)

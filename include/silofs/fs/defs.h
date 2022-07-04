@@ -130,7 +130,7 @@
 
 
 /* on-disk size of super-block */
-#define SILOFS_SB_SIZE                  (4 * SILOFS_KILO)
+#define SILOFS_SB_SIZE                  (8 * SILOFS_KILO)
 
 /* on-disk size of space-stats node (2K) */
 #define SILOFS_STNODE_SIZE              (2 * SILOFS_KILO)
@@ -322,21 +322,21 @@ enum silofs_blobtype {
 /* file-system logical-elements types */
 enum silofs_stype {
 	SILOFS_STYPE_NONE       = 0,
-	SILOFS_STYPE_ANONBK     = 1,
-	SILOFS_STYPE_DATA1K     = 2,
-	SILOFS_STYPE_DATA4K     = 3,
-	SILOFS_STYPE_DATABK     = 4,
-	SILOFS_STYPE_SUPER      = 5,
-	SILOFS_STYPE_SPSTATS    = 6,
-	SILOFS_STYPE_SPNODE     = 7,
-	SILOFS_STYPE_SPLEAF     = 8,
-	SILOFS_STYPE_ITNODE     = 9,
-	SILOFS_STYPE_INODE      = 10,
-	SILOFS_STYPE_XANODE     = 11,
-	SILOFS_STYPE_DTNODE     = 12,
-	SILOFS_STYPE_FTNODE     = 13,
-	SILOFS_STYPE_SYMVAL     = 14,
-	SILOFS_STYPE_MAX, /* keep last */
+	SILOFS_STYPE_SUPER      = 1,
+	SILOFS_STYPE_SPSTATS    = 2,
+	SILOFS_STYPE_SPNODE     = 3,
+	SILOFS_STYPE_SPLEAF     = 4,
+	SILOFS_STYPE_ITNODE     = 5,
+	SILOFS_STYPE_INODE      = 6,
+	SILOFS_STYPE_XANODE     = 7,
+	SILOFS_STYPE_SYMVAL     = 8,
+	SILOFS_STYPE_DTNODE     = 9,
+	SILOFS_STYPE_FTNODE     = 10,
+	SILOFS_STYPE_DATA1K     = 11,
+	SILOFS_STYPE_DATA4K     = 12,
+	SILOFS_STYPE_DATABK     = 13,
+	SILOFS_STYPE_ANONBK     = 14,
+	SILOFS_STYPE_LAST, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -614,8 +614,22 @@ struct silofs_sb_sproots {
 } silofs_packed_aligned64;
 
 
+struct silofs_sb_blobids {
+	struct silofs_blobid40b         sb_blobid_itnode;
+	struct silofs_blobid40b         sb_blobid_inode;
+	struct silofs_blobid40b         sb_blobid_xanode;
+	struct silofs_blobid40b         sb_blobid_dtnode;
+	struct silofs_blobid40b         sb_blobid_ftnode;
+	struct silofs_blobid40b         sb_blobid_symval;
+	struct silofs_blobid40b         sb_blobid_data1k;
+	struct silofs_blobid40b         sb_blobid_data4k;
+	struct silofs_blobid40b         sb_blobid_databk;
+	uint8_t                         sb_reserved[664];
+} silofs_packed_aligned64;
+
+
 struct silofs_super_block {
-	/* 0..1K */
+	/* 0..512 */
 	struct silofs_header            sb_hdr;
 	uint64_t                        sb_magic;
 	uint64_t                        sb_version;
@@ -627,12 +641,7 @@ struct silofs_super_block {
 	struct silofs_uuid              sb_uuid;
 	uint8_t                         sb_reserved3[112];
 	struct silofs_name              sb_name;
-	uint8_t                         sb_reserved4[512];
-	/* 1K..2K */
-	struct silofs_blobid40b         sb_main_blobid;
-	uint8_t                         sb_reserved7[24];
-	struct silofs_blobid40b         sb_pack_blobid;
-	uint8_t                         sb_reserved8[24];
+	/* 512..1K */
 	struct silofs_uaddr64b          sb_self_uaddr;
 	struct silofs_uaddr64b          sb_stats_uaddr;
 	struct silofs_treeid128         sb_treeid;
@@ -641,10 +650,15 @@ struct silofs_super_block {
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
 	uint64_t                        sb_pack_time;
-	uint8_t                         sb_reserved9[704];
-	/* 2K..4K */
-	struct silofs_sb_sproots        sb_sproots;
-	uint8_t                         sb_reserved10[1024];
+	uint8_t                         sb_reserved4[320];
+	/* 1K..2K */
+	struct silofs_sb_sproots        sb_sproot_uaddr;
+	/* 2K..3K */
+	struct silofs_sb_blobids        sb_main_blobid;
+	/* 3K..4K */
+	struct silofs_sb_blobids        sb_pack_blobid;
+	/* 4K..8K */
+	uint8_t                         sb_reserved5[4096];
 } silofs_packed_aligned64;
 
 

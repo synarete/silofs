@@ -322,7 +322,7 @@ bool silofs_stype_isunode(enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		ret = false;
 		break;
@@ -352,7 +352,7 @@ bool silofs_stype_isvnode(enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		ret = false;
 		break;
@@ -382,7 +382,7 @@ bool silofs_stype_isdata(enum silofs_stype stype)
 	case SILOFS_STYPE_FTNODE:
 	case SILOFS_STYPE_SYMVAL:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		ret = false;
 		break;
@@ -421,7 +421,7 @@ size_t silofs_stype_size(enum silofs_stype stype)
 	case SILOFS_STYPE_ANONBK:
 		return sizeof(struct silofs_data_block);
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		break;
 	}

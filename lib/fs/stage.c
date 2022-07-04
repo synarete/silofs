@@ -430,18 +430,6 @@ stgc_make_spmap_main_blobid(const struct silofs_stage_ctx *stg_ctx,
 	                      height, stg_ctx->vspace);
 }
 
-static void
-stgc_make_super_main_blobid(const struct silofs_stage_ctx *stg_ctx,
-                            struct silofs_blobid *out_blobid)
-{
-	struct silofs_treeid treeid;
-
-	silofs_sbi_treeid(stg_ctx->sbi, &treeid);
-	silofs_blobid_make_ta(out_blobid, &treeid, 0,
-	                      SILOFS_HEIGHT_SPNODE4,
-	                      SILOFS_STYPE_SUPER);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
@@ -455,14 +443,15 @@ static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
+	const enum silofs_height height = SILOFS_HEIGHT_SPNODE4;
 	int err;
 
-	stgc_make_super_main_blobid(stg_ctx, &blobid);
+	stgc_make_spmap_main_blobid(stg_ctx, 0, height, &blobid);
 	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &bli);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_main_blob(stg_ctx->sbi, &bli->blobid);
+	silofs_sbi_bind_main_blob(stg_ctx->sbi, stg_ctx->vspace, &bli->blobid);
 	return 0;
 }
 
@@ -471,7 +460,7 @@ static int stgc_stage_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
 
-	silofs_sbi_main_blob(stg_ctx->sbi, &blobid);
+	silofs_sbi_main_blob(stg_ctx->sbi, stg_ctx->vspace, &blobid);
 	silofs_assert(!blobid_isnull(&blobid));
 	return stgc_stage_blob(stg_ctx, &blobid, &bli);
 }
@@ -480,7 +469,7 @@ static int stgc_require_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
-	if (silofs_sbi_has_main_blob(stg_ctx->sbi)) {
+	if (silofs_sbi_has_main_blob(stg_ctx->sbi, stg_ctx->vspace)) {
 		err = stgc_stage_super_main_blob(stg_ctx);
 	} else {
 		err = stgc_spawn_super_main_blob(stg_ctx);
@@ -848,7 +837,8 @@ static int stgc_spawn_spnode4_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_main_child_of(stg_ctx->sbi, stg_ctx->vspace, &uaddr);
+	silofs_sbi_main_child_at(stg_ctx->sbi, stg_ctx->voff,
+	                         stg_ctx->vspace, &uaddr);
 
 	err = stgc_spawn_spnode_at(stg_ctx, &uaddr, out_sni);
 	if (err) {

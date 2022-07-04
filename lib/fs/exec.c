@@ -557,7 +557,7 @@ static int fse_reload_free_vspace(struct silofs_fs_env *fse)
 	enum silofs_stype stype;
 	int err = 0;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		if (!silofs_stype_isvnode(stype)) {
 			continue;
 		}
@@ -867,7 +867,7 @@ static int fse_format_base_spmaps(const struct silofs_fs_env *fse)
 	enum silofs_stype stype;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -912,7 +912,7 @@ static int fse_format_base_vspace(const struct silofs_fs_env *fse)
 	enum silofs_stype stype;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -953,7 +953,7 @@ static int fse_reload_base_vspace(const struct silofs_fs_env *fse)
 	enum silofs_stype stype;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -994,7 +994,7 @@ static int fse_format_zero_vspace(const struct silofs_fs_env *fse)
 	enum silofs_stype stype;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}

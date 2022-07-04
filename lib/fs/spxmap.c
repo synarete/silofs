@@ -413,7 +413,7 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		break;
 	}
@@ -451,7 +451,7 @@ void silofs_spamaps_drop(struct silofs_spamaps *spam)
 	struct silofs_spamap *spa = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
 			spamap_clear(spa);
@@ -465,7 +465,7 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
 	struct silofs_spamap *spa = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
 			spamap_init(spa, stype, alloc);
@@ -479,7 +479,7 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam)
 	struct silofs_spamap *spa = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		spa = spamaps_sub_map(spam, stype);
 		if (spa != NULL) {
 			spamap_clear(spa);

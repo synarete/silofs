@@ -1612,7 +1612,7 @@ silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_STYPE_DATABK:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		ui = NULL;
 		break;
@@ -1655,7 +1655,7 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		log_crit("illegal vaddr stype: stype=%d voff=%ld",
 		         (int)vaddr->stype, (long)vaddr->voff);
@@ -1754,7 +1754,7 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_ANONBK:
 		break;
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		log_err("illegal sub-type: stype=%d", (int)stype);
 		return -EFSCORRUPTED;

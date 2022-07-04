@@ -1487,9 +1487,18 @@ static size_t sni_child_objsize(const struct silofs_spnode_info *sni)
 	       SILOFS_SPLEAF_SIZE : SILOFS_SPNODE_SIZE;
 }
 
-int silofs_sni_subref_of(const struct silofs_spnode_info *sni,
-                         loff_t voff, struct silofs_uaddr *out_uaddr)
+size_t silofs_sni_slot_of(const struct silofs_spnode_info *sni, loff_t voff)
 {
+	silofs_assert(sni_is_inrange(sni, voff));
+
+	return  spnode_slot_of(sni->sn, voff);
+}
+
+int silofs_sni_subref_of(const struct silofs_spnode_info *sni, loff_t voff,
+                         struct silofs_uaddr *out_uaddr)
+{
+	silofs_assert(sni_is_inrange(sni, voff));
+
 	spnode_ulink_of(sni->sn, voff, out_uaddr);
 	return silofs_uaddr_isnull(out_uaddr) ? -ENOENT : 0;
 }
@@ -1588,7 +1597,7 @@ static int verify_stype(enum silofs_stype stype)
 	case SILOFS_STYPE_FTNODE:
 	case SILOFS_STYPE_SYMVAL:
 		return 0;
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		break;
 	}

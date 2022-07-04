@@ -75,7 +75,7 @@ spsr_counter(const struct silofs_spacestat_rec *spsr, enum silofs_stype stype)
 		return &spsr->ndatabk;
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		break;
 	}
@@ -94,7 +94,7 @@ static size_t spsr_sum(const struct silofs_spacestat_rec *spsr)
 	const size_t *cnt = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		cnt = spsr_counter(spsr, stype);
 		if (likely(cnt != NULL)) {
 			sum += *cnt * stype_size(stype);
@@ -164,7 +164,7 @@ sr_counter_of(const struct silofs_spstat_record *sr, enum silofs_stype stype)
 		return &sr->sr_ndatabk;
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_MAX:
+	case SILOFS_STYPE_LAST:
 	default:
 		break;
 	}
@@ -192,7 +192,7 @@ static void sr_export_to(const struct silofs_spstat_record *sr,
 	const uint64_t *src = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		src = sr_counter_of(sr, stype);
 		if (unlikely(src == NULL)) {
 			continue;
@@ -236,7 +236,7 @@ static int sr_verify(const struct silofs_spstat_record *sr)
 	size_t cnt;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		pcnt = sr_counter_of(sr, stype);
 		if (unlikely(pcnt == NULL)) {
 			continue;
@@ -386,7 +386,7 @@ static void spacestat_rec_export(const struct silofs_spacestat_rec *spsr,
 	const size_t *src = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		dst = sr_counter_of2(out_sr, stype);
 		if (dst == NULL) {
 			continue;
@@ -406,7 +406,7 @@ static void spacestat_rec_import(struct silofs_spacestat_rec *spsr,
 	const uint64_t *src = NULL;
 	enum silofs_stype stype;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		src = sr_counter_of(in_sr, stype);
 		if (src == NULL) {
 			continue;

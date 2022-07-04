@@ -247,7 +247,6 @@ static int wac_visit_post_at_spstats(const struct silofs_walk_ctx *wa_ctx)
 	return wac_visit_post_at(wa_ctx, &uit);
 }
 
-
 static int wac_visit_exec_at_spnode4(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_uiterator uit;
@@ -278,7 +277,6 @@ static int wac_visit_post_at_spnode4(const struct silofs_walk_ctx *wa_ctx)
 	                ui_height(sni_ui), wa_ctx->slot4);
 	return wac_visit_post_at(wa_ctx, &uit);
 }
-
 
 static int wac_visit_exec_at_spnode3(const struct silofs_walk_ctx *wa_ctx)
 {
@@ -312,7 +310,6 @@ static int wac_visit_post_at_spnode3(const struct silofs_walk_ctx *wa_ctx)
 	return wac_visit_post_at(wa_ctx, &uit);
 }
 
-
 static int wac_visit_exec_at_spnode2(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_uiterator uit;
@@ -344,7 +341,6 @@ static int wac_visit_post_at_spnode2(const struct silofs_walk_ctx *wa_ctx)
 	                ui_height(sni_ui), wa_ctx->slot2);
 	return wac_visit_post_at(wa_ctx, &uit);
 }
-
 
 static int wac_visit_exec_at_spleaf(const struct silofs_walk_ctx *wa_ctx)
 {
@@ -756,7 +752,7 @@ static int wac_traverse_space_trees(struct silofs_walk_ctx *wa_ctx)
 	enum silofs_stype stype;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_MAX; ++stype) {
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}

@@ -875,12 +875,15 @@ pac_post_archive_spnode3(struct silofs_pack_ctx *pa_ctx,
 static int
 pac_post_archive_spnode4(struct silofs_pack_ctx *pa_ctx,
                          struct silofs_sb_info *sbi,
-                         struct silofs_spnode_info *sni, size_t slot)
+                         struct silofs_spnode_info *sni,
+                         enum silofs_stype vspace)
 {
 	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sni->sn_ui;
+	const size_t slot = (size_t)vspace;
 	int err;
 
+	silofs_assert(stype_isvnode(vspace));
 	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
 		silofs_sni_bind_main_pack(sni, &blobid);
@@ -897,17 +900,18 @@ static int pac_post_archive_stats(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_post_archive_super(struct silofs_pack_ctx *pa_ctx,
-                                  struct silofs_sb_info *sbi, size_t slot)
+                                  const struct silofs_uiterator *uit,
+                                  struct silofs_sb_info *sbi)
 {
 	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &sbi->sb_ui;
 	int err;
 
-	silofs_assert_eq(slot, 0);
+	silofs_assert_eq(uit->slot, 0);
 	err = pac_resolve_save_blob(pa_ctx, ui->u_piov, &blobid);
 	if (!err) {
-		silofs_sbi_bind_pack_blobid(sbi, &blobid);
-		err = pac_repack_unode(pa_ctx, pa_ctx->piov, 0, ui);
+		silofs_sbi_bind_pack_blobid(sbi, uit->vspace, &blobid);
+		err = pac_repack_unode(pa_ctx, pa_ctx->piov, uit->slot, ui);
 	}
 	return err;
 }
@@ -921,31 +925,30 @@ static int pac_post_archive(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_spnode_info *sni3 = NULL;
 	struct silofs_spnode_info *sni2 = NULL;
 	struct silofs_spleaf_info *sli = NULL;
-	const size_t slot = uit->slot;
 	int err = 0;
 
 	if (ui_isspleaf(uit->ui)) {
 		sni2 = sni_from_ui(uit->parent);
 		sli = sli_from_ui(uit->ui);
-		err = pac_post_archive_spleaf(pa_ctx, sni2, sli, slot);
+		err = pac_post_archive_spleaf(pa_ctx, sni2, sli, uit->slot);
 	} else if (ui_isspnode2(uit->ui)) {
 		sni3 = sni_from_ui(uit->parent);
 		sni2 = sni_from_ui(uit->ui);
-		err = pac_post_archive_spnode2(pa_ctx, sni3, sni2, slot);
+		err = pac_post_archive_spnode2(pa_ctx, sni3, sni2, uit->slot);
 	} else if (ui_isspnode3(uit->ui)) {
 		sni4 = sni_from_ui(uit->parent);
 		sni3 = sni_from_ui(uit->ui);
-		err = pac_post_archive_spnode3(pa_ctx, sni4, sni3, slot);
+		err = pac_post_archive_spnode3(pa_ctx, sni4, sni3, uit->slot);
 	} else if (ui_isspnode4(uit->ui)) {
 		sbi = sbi_from_ui(uit->parent);
 		sni4 = sni_from_ui(uit->ui);
-		err = pac_post_archive_spnode4(pa_ctx, sbi, sni4, slot);
+		err = pac_post_archive_spnode4(pa_ctx, sbi, sni4, uit->vspace);
 	} else if (ui_isspstats(uit->ui)) {
 		spi = spi_from_ui(uit->ui);
-		err = pac_post_archive_stats(pa_ctx, spi, slot);
+		err = pac_post_archive_stats(pa_ctx, spi, uit->slot);
 	} else if (ui_issuper(uit->ui)) {
 		sbi = sbi_from_ui(uit->ui);
-		err = pac_post_archive_super(pa_ctx, sbi, slot);
+		err = pac_post_archive_super(pa_ctx, uit, sbi);
 	} else {
 		err = -EFSCORRUPTED;
 	}
@@ -990,14 +993,6 @@ static int pac_post_archive_at(struct silofs_pack_ctx *pa_ctx,
 	}
 	pac_uil_remove(pa_ctx, uit->ui);
 	return 0;
-}
-
-static int pac_prep_archive_at(struct silofs_pack_ctx *pa_ctx,
-                               const struct silofs_uiterator *uit)
-{
-	silofs_unused(pa_ctx);
-
-	return (uit && uit->parent) ? 0 : -EINVAL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1271,14 +1266,6 @@ static struct silofs_pack_ctx *pack_ctx_of(struct silofs_visitor *vis)
 	return silofs_container_of(vis, struct silofs_pack_ctx, vis);
 }
 
-static int pack_visit_prep_by(struct silofs_visitor *vis,
-                              const struct silofs_uiterator *uit)
-{
-	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
-
-	return pac_prep_archive_at(pa_ctx, uit);
-}
-
 static int pack_visit_exec_at(struct silofs_visitor *vis,
                               const struct silofs_uiterator *uit)
 {
@@ -1301,7 +1288,7 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
                         struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
-		.vis.visit_prep_by_hook =  pack_visit_prep_by,
+		.vis.visit_prep_by_hook =  NULL,
 		.vis.visit_exec_at_hook = pack_visit_exec_at,
 		.vis.visit_post_at_hook = pack_visit_post_at,
 		.kivam = kivam,
@@ -1444,12 +1431,10 @@ static int pac_post_restore_at(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
-                                 struct silofs_spnode_info *sni,
-                                 loff_t voff, size_t slot)
+                                 struct silofs_spnode_info *sni, loff_t voff)
 {
 	struct silofs_uaddr uaddr;
 	struct silofs_blobid blobid;
-	struct silofs_fs_uber *uber = pa_ctx->uber;
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
@@ -1461,11 +1446,13 @@ static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_shadow_spnode_at(uber, pa_ctx->pack, &uaddr, &sni_child);
+	err = silofs_shadow_spnode_at(pa_ctx->uber, pa_ctx->pack,
+	                              &uaddr, &sni_child);
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &blobid, slot, &sni_child->sn_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, sni_slot_of(sni, voff),
+	                       &sni_child->sn_ui);
 	if (err) {
 		return err;
 	}
@@ -1473,8 +1460,7 @@ static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
-                                 struct silofs_spnode_info *sni,
-                                 loff_t voff, size_t slot)
+                                 struct silofs_spnode_info *sni, loff_t voff)
 {
 	struct silofs_uaddr uaddr;
 	struct silofs_blobid blobid;
@@ -1494,7 +1480,8 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &blobid, slot, &sni_child->sn_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, sni_slot_of(sni, voff),
+	                       &sni_child->sn_ui);
 	if (err) {
 		return err;
 	}
@@ -1502,8 +1489,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
-                                 struct silofs_spnode_info *sni,
-                                 loff_t voff, size_t slot)
+                                 struct silofs_spnode_info *sni, loff_t voff)
 {
 	struct silofs_uaddr uaddr;
 	struct silofs_blobid blobid;
@@ -1523,7 +1509,8 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_refill_unode(pa_ctx, &blobid, slot, &sli->sl_ui);
+	err = pac_refill_unode(pa_ctx, &blobid, sni_slot_of(sni, voff),
+	                       &sli->sl_ui);
 	if (err) {
 		return err;
 	}
@@ -1544,7 +1531,7 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (!stype_isvnode(vspace)) {
 		return -EFSCORRUPTED; /* TODO: other err */
 	}
-	err = silofs_sbi_pack_blobid(sbi, &blobid);
+	err = silofs_sbi_pack_blobid(sbi, vspace, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1576,13 +1563,13 @@ static int pac_prep_restore(struct silofs_pack_ctx *pa_ctx,
 		ret = pac_reload_by_super(pa_ctx, sbi, uit->vspace);
 	} else if (ui_isspnode4(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode4(pa_ctx, sni, uit->voff, uit->slot);
+		ret = pac_reload_by_spnode4(pa_ctx, sni, uit->voff);
 	} else if (ui_isspnode3(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode3(pa_ctx, sni, uit->voff, uit->slot);
+		ret = pac_reload_by_spnode3(pa_ctx, sni, uit->voff);
 	} else if (ui_isspnode2(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode2(pa_ctx, sni, uit->voff, uit->slot);
+		ret = pac_reload_by_spnode2(pa_ctx, sni, uit->voff);
 	}
 	return ret;
 }

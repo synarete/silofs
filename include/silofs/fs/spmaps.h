@@ -42,8 +42,10 @@ void silofs_sni_update_staged(struct silofs_spnode_info *sni);
 void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
                               const struct silofs_spnode_info *sni_other);
 
-int silofs_sni_subref_of(const struct silofs_spnode_info *sni,
-                         loff_t voff, struct silofs_uaddr *out_ulink);
+size_t silofs_sni_slot_of(const struct silofs_spnode_info *sni, loff_t voff);
+
+int silofs_sni_subref_of(const struct silofs_spnode_info *sni, loff_t voff,
+                         struct silofs_uaddr *out_ulink);
 
 void silofs_sni_bind_child_spleaf(struct silofs_spnode_info *sni,
                                   const struct silofs_spleaf_info *sli);

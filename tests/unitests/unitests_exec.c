@@ -46,6 +46,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_file_lseek),
 	UT_DEFTGRP(ut_tdefs_file_fiemap),
 	UT_DEFTGRP(ut_tdefs_file_copy_range),
+	UT_DEFTGRP(ut_tdefs_inspect),
 	UT_DEFTGRP(ut_tdefs_reload),
 	UT_DEFTGRP(ut_tdefs_fillfs),
 	UT_DEFTGRP(ut_tdefs_snap_basic),

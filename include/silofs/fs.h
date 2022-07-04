@@ -40,6 +40,7 @@
 #include <silofs/fs/stage.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/spclaim.h>
+#include <silofs/fs/inspect.h>
 #include <silofs/fs/uber.h>
 #include <silofs/fs/exec.h>
 #include <silofs/fs/walk.h>

@@ -38,6 +38,7 @@ nobase_include_HEADERS += silofs/fs/fused.h
 nobase_include_HEADERS += silofs/fs/fuseq.h
 nobase_include_HEADERS += silofs/fs/inlines.h
 nobase_include_HEADERS += silofs/fs/inode.h
+nobase_include_HEADERS += silofs/fs/inspect.h
 nobase_include_HEADERS += silofs/fs/ioctls.h
 nobase_include_HEADERS += silofs/fs/itable.h
 nobase_include_HEADERS += silofs/fs/mntsvc.h

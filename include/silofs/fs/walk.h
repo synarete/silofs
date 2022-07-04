@@ -45,33 +45,8 @@ struct silofs_visitor {
 	bool halt;
 };
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_usaddr_info {
-	struct silofs_avl_node  us_an;
-	struct silofs_uaddr     us_uaddr;
-	size_t us_refcnt;
-};
-
-struct silofs_usaddr_set {
-	struct silofs_avl       uss_avl;
-	struct silofs_alloc    *uss_alloc;
-};
-
-struct silofs_uspace_visitor {
-	struct silofs_visitor    vis;
-	struct silofs_usaddr_set uss;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_usvisitor_init(struct silofs_uspace_visitor *usv,
-                           struct silofs_alloc *alloc);
-
-void silofs_usvisitor_fini(struct silofs_uspace_visitor *usv);
 
 int silofs_walk_space_tree(struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis);
-
 
 #endif /* SILOFS_WALK_H_ */

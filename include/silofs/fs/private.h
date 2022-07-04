@@ -107,7 +107,7 @@
 #define stype_isequal(st1, st2)         silofs_stype_isequal(st1, st2)
 #define stype_isnone(st)                silofs_stype_isnone(st)
 #define stype_issuper(st)               silofs_stype_issuper(st)
-#define stype_isstats(st)               silofs_stype_isstats(st)
+#define stype_isspstats(st)             silofs_stype_isspstats(st)
 #define stype_isspnode(st)              silofs_stype_isspnode(st)
 #define stype_isspleaf(st)              silofs_stype_isspleaf(st)
 #define stype_isunode(st)               silofs_stype_isunode(st)

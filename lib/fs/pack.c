@@ -215,9 +215,9 @@ static bool ui_isspnode2(const struct silofs_unode_info *ui)
 	return ui_isspnode_with(ui, SILOFS_HEIGHT_SPNODE2);
 }
 
-static bool ui_isstats(const struct silofs_unode_info *ui)
+static bool ui_isspstats(const struct silofs_unode_info *ui)
 {
-	return stype_isstats(ui_stype(ui));
+	return stype_isspstats(ui_stype(ui));
 }
 
 static bool ui_issuper(const struct silofs_unode_info *ui)
@@ -940,7 +940,7 @@ static int pac_post_archive(struct silofs_pack_ctx *pa_ctx,
 		sbi = sbi_from_ui(uit->parent);
 		sni4 = sni_from_ui(uit->ui);
 		err = pac_post_archive_spnode4(pa_ctx, sbi, sni4, slot);
-	} else if (ui_isstats(uit->ui)) {
+	} else if (ui_isspstats(uit->ui)) {
 		spi = spi_from_ui(uit->ui);
 		err = pac_post_archive_stats(pa_ctx, spi, slot);
 	} else if (ui_issuper(uit->ui)) {

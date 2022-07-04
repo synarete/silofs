@@ -2280,17 +2280,6 @@ int silofs_do_clone(const struct silofs_fs_ctx *fs_ctx,
 	return err;
 }
 
-static int walk_inspect_fs(struct silofs_sb_info *sbi)
-{
-	struct silofs_uspace_visitor usv;
-	int ret;
-
-	silofs_usvisitor_init(&usv, sbi_alloc(sbi));
-	ret = silofs_walk_space_tree(sbi, &usv.vis);
-	silofs_usvisitor_fini(&usv);
-	return ret;
-}
-
 int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_bootsec *bsec)
 {
@@ -2306,7 +2295,7 @@ int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = walk_inspect_fs(sbi);
+	err = silofs_inspect_fs(sbi);
 	if (err) {
 		return err;
 	}

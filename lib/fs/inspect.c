@@ -35,19 +35,18 @@ struct silofs_space_visitor {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int spvi_visit_prep_by(struct silofs_space_visitor *spvi,
-                              const struct silofs_uiterator *uit)
+                              const struct silofs_space_iter *spit)
 {
-	silofs_assert_not_null(uit->parent);
+	silofs_assert_not_null(spit->sbi);
 	silofs_unused(spvi);
 	return 0;
 }
 
 static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
-                              const struct silofs_uiterator *uit)
+                              const struct silofs_space_iter *spit)
 {
 	struct silofs_spacestats *spst = &spvi->spst;
-	const struct silofs_uaddr *uaddr = ui_uaddr(uit->ui);
-	const enum silofs_stype stype = uaddr->stype;
+	const enum silofs_stype stype = spit->stype;
 
 	silofs_assert(!stype_isvnode(stype));
 	if (stype_issuper(stype)) {
@@ -63,7 +62,7 @@ static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
 }
 
 static int spvi_visit_post_at(struct silofs_space_visitor *spvi,
-                              const struct silofs_uiterator *uit)
+                              const struct silofs_space_iter *uit)
 {
 	silofs_assert_not_null(uit->ui);
 	silofs_unused(spvi);
@@ -77,20 +76,20 @@ static struct silofs_space_visitor *spvi_of(struct silofs_visitor *vis)
 }
 
 static int spvi_visit_prep_by_hook(struct silofs_visitor *vis,
-                                   const struct silofs_uiterator *uit)
+                                   const struct silofs_space_iter *uit)
 {
 	return spvi_visit_prep_by(spvi_of(vis), uit);
 }
 
 static int spvi_visit_exec_at_hook(struct silofs_visitor *vis,
-                                   const struct silofs_uiterator *uit)
+                                   const struct silofs_space_iter *uit)
 {
 	silofs_assert_not_null(uit->ui);
 	return spvi_visit_exec_at(spvi_of(vis), uit);
 }
 
 static int spvi_visit_post_at_hook(struct silofs_visitor *vis,
-                                   const struct silofs_uiterator *uit)
+                                   const struct silofs_space_iter *uit)
 {
 	silofs_assert_not_null(uit->ui);
 	return spvi_visit_post_at(spvi_of(vis), uit);

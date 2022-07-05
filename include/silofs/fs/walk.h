@@ -22,25 +22,32 @@
 
 
 struct silofs_visitor;
-struct silofs_uiterator;
+struct silofs_space_iter;
 
-typedef int (*silofs_visit_unode_fn)(struct silofs_visitor *vis,
-                                     const struct silofs_uiterator *uit);
+typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
+                               const struct silofs_space_iter *spit);
 
-struct silofs_uiterator {
-	struct silofs_sb_info    *sbi;
-	struct silofs_unode_info *parent;
-	struct silofs_unode_info *ui;
+struct silofs_space_iter {
+	struct silofs_sb_info      *sbi;
+	struct silofs_spstats_info *spi;
+	struct silofs_spnode_info  *sni4;
+	struct silofs_spnode_info  *sni3;
+	struct silofs_spnode_info  *sni2;
+	struct silofs_spleaf_info  *sli;
 	enum silofs_stype  vspace;
-	enum silofs_height height;
+	enum silofs_stype  stype;
 	loff_t voff;
 	size_t slot;
+
+
+	struct silofs_unode_info *parent;
+	struct silofs_unode_info *ui;
 };
 
 struct silofs_visitor {
-	silofs_visit_unode_fn visit_prep_by_hook;
-	silofs_visit_unode_fn visit_exec_at_hook;
-	silofs_visit_unode_fn visit_post_at_hook;
+	silofs_visit_fn visit_prep_by_hook;
+	silofs_visit_fn visit_exec_at_hook;
+	silofs_visit_fn visit_post_at_hook;
 	bool nodescend;
 	bool halt;
 };

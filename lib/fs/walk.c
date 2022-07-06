@@ -510,11 +510,8 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 		if (wa_ctx->voff >= vrange.end) {
 			break;
 		}
-		/* Space-nodes at level2 are non-continuous; do not try to
-		 * traverse into non-existing leaves */
 		err = silofs_sni_subref_of(sni, wa_ctx->voff, &uaddr);
 		if (err) {
-			// XXX continue
 			break;
 		}
 		err = wac_visit_prep_by_spnode2(wa_ctx);

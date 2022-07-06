@@ -288,51 +288,12 @@ spac_require_vspace_by(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	return err;
 }
 
-static int spac_cap_alloc_at_spnode2(const struct silofs_spalloc_ctx *spa_ctx,
-                                     loff_t voff, loff_t *vnxt)
-{
-	int err;
-	bool has_child;
-
-	err = silofs_sni_cap_alloc_stype(spa_ctx->sni, spa_ctx->stype);
-	if (err) {
-		*vnxt = silofs_off_to_spnode2_next(voff);
-		return err;
-	}
-	has_child = silofs_sni_has_child_at(spa_ctx->sni, voff);
-	if (!has_child) {
-		return -ENOENT;
-	}
-	err = silofs_sni_cap_alloc_at(spa_ctx->sni, voff, spa_ctx->stype);
-	if (err) {
-		*vnxt = silofs_off_to_spleaf_next(voff);
-		return err;
-	}
-	return 0;
-}
-
-static int spac_check_alloc_by_ro_spnode2(struct silofs_spalloc_ctx *spa_ctx,
-                loff_t voff, loff_t *vnxt)
+static int
+spac_require_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	int err;
 
 	err = spac_stage_ro_spnode2_of(spa_ctx, voff);
-	if (err) {
-		return err;
-	}
-	err = spac_cap_alloc_at_spnode2(spa_ctx, voff, vnxt);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int spac_require_vspace_by_spmaps_at(struct silofs_spalloc_ctx *spa_ctx,
-                loff_t voff, loff_t *vnxt)
-{
-	int err;
-
-	err = spac_check_alloc_by_ro_spnode2(spa_ctx, voff, vnxt);
 	if (err && (err != -ENOENT)) {
 		return err;
 	}
@@ -342,7 +303,6 @@ static int spac_require_vspace_by_spmaps_at(struct silofs_spalloc_ctx *spa_ctx,
 	}
 	err = spac_require_vspace_by(spa_ctx, voff);
 	if (err) {
-		*vnxt = silofs_off_to_spleaf_next(voff);
 		return err;
 	}
 	return 0;
@@ -353,17 +313,14 @@ spac_require_vspace_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
 	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
 	loff_t voff = hint;
-	loff_t vnxt;
 	int err;
 
 	while (voff < vend) {
-		vnxt = voff;
-		err = spac_require_vspace_by_spmaps_at(spa_ctx, voff, &vnxt);
+		err = spac_require_vspace_at(spa_ctx, voff);
 		if (err != -ENOSPC) {
 			return err;
 		}
-		silofs_assert_ne(voff, vnxt);
-		voff = vnxt;
+		voff = silofs_off_to_spleaf_next(voff);
 	}
 	return -ENOSPC;
 }

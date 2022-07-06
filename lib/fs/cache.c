@@ -344,6 +344,8 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 {
 	silofs_assert_ge(ce->ce_refcnt, 0);
 	silofs_assert_lt(ce->ce_refcnt, INT_MAX / 2);
+	silofs_assert(!ce->ce_mapped);
+	silofs_assert(!ce->ce_dirty);
 
 	ckey_reset(&ce->ce_ckey);
 	list_head_fini(&ce->ce_htb_lh);

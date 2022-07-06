@@ -281,23 +281,6 @@ loff_t silofs_off_to_spleaf_next(loff_t voff)
 	return silofs_off_to_spleaf_start(voff_next);
 }
 
-static size_t spnode2_span(void)
-{
-	return SILOFS_NBK_IN_BLOB_MAX * SILOFS_BLOB_SIZE_MAX;
-}
-
-static loff_t silofs_off_to_spnode2_start(loff_t voff)
-{
-	return off_align(voff, (long)spnode2_span());
-}
-
-loff_t silofs_off_to_spnode2_next(loff_t voff)
-{
-	const loff_t voff_next = off_end(voff, spnode2_span());
-
-	return silofs_off_to_spnode2_start(voff_next);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 bool silofs_stype_isunode(enum silofs_stype stype)

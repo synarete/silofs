@@ -824,7 +824,7 @@ static void stgc_setup_spawned_spnode4(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	silofs_sni_setup_spawned(sni, sbi_uaddr(stg_ctx->sbi),
-	                         stg_ctx->bk_voff, SILOFS_STYPE_NONE);
+	                         stg_ctx->bk_voff);
 }
 
 static int stgc_spawn_spnode4_of(const struct silofs_stage_ctx *stg_ctx,
@@ -1011,7 +1011,7 @@ static void stgc_setup_spawned_spnode3(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni4),
-	                         stg_ctx->bk_voff, SILOFS_STYPE_NONE);
+	                         stg_ctx->bk_voff);
 }
 
 static int stgc_spawn_spnode3_of(const struct silofs_stage_ctx *stg_ctx,
@@ -1192,11 +1192,8 @@ static int stgc_require_spnode3_of(struct silofs_stage_ctx *stg_ctx)
 static void stgc_setup_spawned_spnode2(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
-	silofs_assert_ne(stg_ctx->vspace, SILOFS_STYPE_NONE);
-	silofs_assert(stype_isvnode(stg_ctx->vspace));
-
 	silofs_sni_setup_spawned(sni, sni_uaddr(stg_ctx->sni3),
-	                         stg_ctx->bk_voff, stg_ctx->vspace);
+	                         stg_ctx->bk_voff);
 }
 
 static int stgc_spawn_spnode2_of(const struct silofs_stage_ctx *stg_ctx,
@@ -1379,11 +1376,8 @@ static int stgc_require_spnode2_of(struct silofs_stage_ctx *stg_ctx)
 static void stgc_setup_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
                                       struct silofs_spleaf_info *sli)
 {
-	silofs_assert_ne(stg_ctx->vspace, SILOFS_STYPE_NONE);
-	silofs_assert(stype_isvnode(stg_ctx->vspace));
-
 	silofs_sli_setup_spawned(sli, sni_uaddr(stg_ctx->sni2),
-	                         stg_ctx->bk_voff, stg_ctx->vspace);
+	                         stg_ctx->bk_voff);
 }
 
 static int stgc_spawn_spleaf_of(const struct silofs_stage_ctx *stg_ctx,
@@ -1543,12 +1537,10 @@ static void stgc_track_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_vrange vrange;
 	struct silofs_spamaps *spam = stgc_spamaps(stg_ctx);
 	size_t len;
-	enum silofs_stype stype;
 
 	sli_vrange(sli, &vrange);
 	len = silofs_vrange_length(&vrange);
-	stype = silofs_sli_stype_sub(sli);
-	silofs_spamaps_store(spam, stype, vrange.beg, len);
+	silofs_spamaps_store(spam, stg_ctx->vspace, vrange.beg, len);
 }
 
 static void stgc_bind_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,

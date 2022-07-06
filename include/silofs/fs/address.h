@@ -91,7 +91,6 @@ loff_t silofs_off_to_spleaf_start(loff_t voff);
 
 loff_t silofs_off_to_spleaf_next(loff_t voff);
 
-loff_t silofs_off_to_spnode2_next(loff_t voff);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

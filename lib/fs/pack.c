@@ -816,7 +816,7 @@ static int pac_post_archive_spleaf(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_bind_main_pack(spit->sli, &blobid);
+	silofs_sli_bind_pack_blob(spit->sli, &blobid);
 
 	err = pac_repack_spleaf_at(pa_ctx, spit);
 	if (err) {
@@ -842,7 +842,7 @@ static int pac_post_archive_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_pack(spit->sni2, &blobid);
+	silofs_sni_bind_pack_blob(spit->sni2, &blobid);
 
 	err = pac_repack_spnode2_at(pa_ctx, spit);
 	if (err) {
@@ -868,7 +868,7 @@ static int pac_post_archive_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_pack(spit->sni3, &blobid);
+	silofs_sni_bind_pack_blob(spit->sni3, &blobid);
 
 	err = pac_repack_spnode3_at(pa_ctx, spit);
 	if (err) {
@@ -897,7 +897,7 @@ static int pac_post_archive_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_pack(spit->sni4, &blobid);
+	silofs_sni_bind_pack_blob(spit->sni4, &blobid);
 
 	err = pac_repack_spnode4_at(pa_ctx, spit);
 	if (err) {
@@ -1346,7 +1346,7 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (!nalloc) {
 		return 0;
 	}
-	err = silofs_sli_main_pack(sli, &blobid);
+	err = silofs_sli_pack_blob(sli, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1428,7 +1428,7 @@ static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
-	err = silofs_sni_main_pack(sni, &blobid);
+	err = silofs_sni_pack_blob(sni, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1458,7 +1458,7 @@ static int pac_reload_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_spnode_info *sni_child = NULL;
 	int err;
 
-	err = silofs_sni_main_pack(sni, &blobid);
+	err = silofs_sni_pack_blob(sni, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1487,7 +1487,7 @@ static int pac_reload_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = silofs_sni_main_pack(sni, &blobid);
+	err = silofs_sni_pack_blob(sni, &blobid);
 	if (err) {
 		return err;
 	}

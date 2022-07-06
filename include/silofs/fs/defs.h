@@ -366,12 +366,6 @@ enum silofs_superf {
 	SILOFS_SUPERF_FOSSIL    = 1,
 };
 
-/* space-mapping flags */
-enum silofs_spmapf {
-	SILOFS_SPMAPF_NONE      = 0,
-	SILOFS_SPMAPF_ACTIVE    = 1,
-};
-
 /* inode control flags */
 enum silofs_inodef {
 	SILOFS_INODEF_ROOTD     = 1,
@@ -702,19 +696,15 @@ struct silofs_spstats_node {
 
 struct silofs_spmap_ref {
 	struct silofs_uaddr64b          sr_ulink;
-	uint8_t                         sr_stype_sub;
-	uint8_t                         sr_pad[3];
-	uint32_t                        sr_flags;
-	uint8_t                         sr_reserved[48];
+	uint8_t                         sr_reserved[56];
 } silofs_packed_aligned8;
 
 
 struct silofs_spmap_node {
 	struct silofs_header            sn_hdr;
-	uint8_t                         sn_stype_sub;
-	uint8_t                         sn_reserved1[7];
-	struct silofs_blobid40b         sn_mainblobid;
-	struct silofs_blobid40b         sn_mainpackid;
+	uint8_t                         sn_reserved1[8];
+	struct silofs_blobid40b         sn_main_blobid;
+	struct silofs_blobid40b         sn_pack_blobid;
 	struct silofs_vrange128         sn_vrange;
 	uint8_t                         sn_reserved2[8];
 	struct silofs_uaddr64b          sn_parent;
@@ -739,10 +729,9 @@ struct silofs_bk_ref {
 
 struct silofs_spmap_leaf {
 	struct silofs_header            sl_hdr;
-	uint8_t                         sl_stype_sub;
-	uint8_t                         sl_reserved1[7];
-	struct silofs_blobid40b         sl_mainblobid;
-	struct silofs_blobid40b         sl_mainpackid;
+	uint8_t                         sl_reserved1[8];
+	struct silofs_blobid40b         sl_main_blobid;
+	struct silofs_blobid40b         sl_pack_blobid;
 	struct silofs_vrange128         sl_vrange;
 	uint8_t                         sl_reserved2[8];
 	struct silofs_uaddr64b          sl_parent;

@@ -98,9 +98,9 @@ static int spvi_visit_post_at_hook(struct silofs_visitor *vis,
 static void spvi_init(struct silofs_space_visitor *spvi)
 {
 	silofs_memzero(spvi, sizeof(*spvi));
-	spvi->vis.visit_prep_by_hook = spvi_visit_prep_by_hook;
-	spvi->vis.visit_exec_at_hook = spvi_visit_exec_at_hook;
-	spvi->vis.visit_post_at_hook = spvi_visit_post_at_hook;
+	spvi->vis.prep_by_hook = spvi_visit_prep_by_hook;
+	spvi->vis.exec_at_hook = spvi_visit_exec_at_hook;
+	spvi->vis.post_at_hook = spvi_visit_post_at_hook;
 }
 
 static void spvi_fini(struct silofs_space_visitor *spvi)

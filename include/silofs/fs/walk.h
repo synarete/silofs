@@ -45,9 +45,9 @@ struct silofs_space_iter {
 };
 
 struct silofs_visitor {
-	silofs_visit_fn visit_prep_by_hook;
-	silofs_visit_fn visit_exec_at_hook;
-	silofs_visit_fn visit_post_at_hook;
+	silofs_visit_fn prep_by_hook;
+	silofs_visit_fn exec_at_hook;
+	silofs_visit_fn post_at_hook;
 	bool nodescend;
 	bool halt;
 };

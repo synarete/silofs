@@ -957,14 +957,11 @@ static int pac_post_archive(struct silofs_pack_ctx *pa_ctx,
 	return err;
 }
 
-static int pac_do_exec_archive_at(struct silofs_pack_ctx *pa_ctx,
-                                  const struct silofs_space_iter *spit)
+static int pac_archive_exec_at(struct silofs_pack_ctx *pa_ctx,
+                               const struct silofs_space_iter *spit)
 {
 	int ret = 0;
 
-	if ((spit == NULL) || (spit->ui == NULL)) {
-		goto out; /* make clangscan happy */
-	}
 	ret = pac_setup_piov_of(pa_ctx, spit->ui);
 	if (ret) {
 		goto out;
@@ -978,14 +975,11 @@ out:
 	return ret;
 }
 
-static int pac_do_post_archive_at(struct silofs_pack_ctx *pa_ctx,
-                                  const struct silofs_space_iter *spit)
+static int pac_archive_post_at(struct silofs_pack_ctx *pa_ctx,
+                               const struct silofs_space_iter *spit)
 {
 	int err;
 
-	if ((spit == NULL) || (spit->ui == NULL)) {
-		return 0; /* make clangscan happy */
-	}
 	err = pac_post_archive(pa_ctx, spit);
 	if (err) {
 		return err;
@@ -1015,14 +1009,14 @@ static int pac_stage_super(const struct silofs_pack_ctx *pa_ctx,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi)
 {
-	struct silofs_fs_uber *uber = pa_ctx->uber;
 	int err;
 
-	err = silofs_stage_super_at(uber, pa_ctx->pack, uaddr, out_sbi);
+	err = silofs_stage_super_at(pa_ctx->uber, pa_ctx->pack,
+	                            uaddr, out_sbi);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_uber(*out_sbi, uber);
+	silofs_sbi_bind_uber(*out_sbi, pa_ctx->uber);
 	return 0;
 }
 
@@ -1030,8 +1024,7 @@ static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
                            struct silofs_sb_info *sbi,
                            struct silofs_spstats_info **out_spi)
 {
-	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_fs_uber *uber = pa_ctx->uber;
+	struct silofs_uaddr uaddr;
 	int err;
 
 	sbi_incref(sbi);
@@ -1039,11 +1032,12 @@ static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = silofs_stage_stats_at(uber, pa_ctx->pack, &uaddr, out_spi);
+	err = silofs_stage_stats_at(pa_ctx->uber, pa_ctx->pack,
+	                            &uaddr, out_spi);
 	if (err) {
 		goto out;
 	}
-	silofs_spi_bind_uber(*out_spi, uber);
+	silofs_spi_bind_uber(*out_spi, pa_ctx->uber);
 out:
 	sbi_decref(sbi);
 	return err;
@@ -1180,18 +1174,6 @@ static int pac_shadow_supers(struct silofs_pack_ctx *pa_ctx)
 	return 0;
 }
 
-static int pac_load_supers(struct silofs_pack_ctx *pa_ctx)
-{
-	int ret;
-
-	if (pa_ctx->pack) {
-		ret = pac_stage_supers(pa_ctx);
-	} else {
-		ret = pac_shadow_supers(pa_ctx);
-	}
-	return ret;
-}
-
 static int pac_save_supers_as_pack(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_blobid blobid;
@@ -1241,18 +1223,6 @@ static int pac_save_supers_as_unpack(struct silofs_pack_ctx *pa_ctx)
 	return 0;
 }
 
-static int pac_save_supers(struct silofs_pack_ctx *pa_ctx)
-{
-	int ret;
-
-	if (pa_ctx->pack) {
-		ret = pac_save_supers_as_pack(pa_ctx);
-	} else {
-		ret = pac_save_supers_as_unpack(pa_ctx);
-	}
-	return ret;
-}
-
 static int pac_traverse_fs(struct silofs_pack_ctx *pa_ctx)
 {
 	return silofs_walk_space_tree(pa_ctx->sbi, &pa_ctx->vis);
@@ -1265,16 +1235,16 @@ static struct silofs_pack_ctx *pack_ctx_of(struct silofs_visitor *vis)
 	return silofs_container_of(vis, struct silofs_pack_ctx, vis);
 }
 
-static int pack_exec_archive_at(struct silofs_visitor *vis,
-                                const struct silofs_space_iter *spit)
+static int pack_exec_at(struct silofs_visitor *vis,
+                        const struct silofs_space_iter *spit)
 {
-	return pac_do_exec_archive_at(pack_ctx_of(vis), spit);
+	return pac_archive_exec_at(pack_ctx_of(vis), spit);
 }
 
-static int pack_post_archive_at(struct silofs_visitor *vis,
-                                const struct silofs_space_iter *spit)
+static int pack_post_at(struct silofs_visitor *vis,
+                        const struct silofs_space_iter *spit)
 {
-	return pac_do_post_archive_at(pack_ctx_of(vis), spit);
+	return pac_archive_post_at(pack_ctx_of(vis), spit);
 }
 
 int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
@@ -1283,9 +1253,8 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
                         struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
-		.vis.visit_prep_by_hook = NULL,
-		.vis.visit_exec_at_hook = pack_exec_archive_at,
-		.vis.visit_post_at_hook = pack_post_archive_at,
+		.vis.exec_at_hook = pack_exec_at,
+		.vis.post_at_hook = pack_post_at,
 		.kivam = kivam,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
@@ -1300,7 +1269,7 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
 	if (err) {
 		return err;
 	}
-	err = pac_load_supers(&pa_ctx);
+	err = pac_stage_supers(&pa_ctx);
 	if (err) {
 		goto out;
 	}
@@ -1308,7 +1277,7 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
 	if (err) {
 		goto out;
 	}
-	err = pac_save_supers(&pa_ctx);
+	err = pac_save_supers_as_pack(&pa_ctx);
 	if (err) {
 		goto out;
 	}
@@ -1391,31 +1360,6 @@ static int pac_restore_spleaf_subs(struct silofs_pack_ctx *pa_ctx,
 		slot++;
 	}
 	return 0;
-}
-
-static int pac_do_exec_restore_at(struct silofs_pack_ctx *pa_ctx,
-                                  const struct silofs_space_iter *spit)
-{
-	return spit->sli ? pac_restore_spleaf_subs(pa_ctx, spit->sli) : 0;
-}
-
-static int pac_restore_unode(struct silofs_pack_ctx *pa_ctx,
-                             const struct silofs_space_iter *uit)
-{
-	const struct silofs_unode_info *ui = uit->ui;
-
-	return pac_restore_ubk(pa_ctx, ui->u_ubi, ui_bkaddr(ui));
-}
-
-static int pac_do_post_restore_at(struct silofs_pack_ctx *pa_ctx,
-                                  const struct silofs_space_iter *uit)
-{
-	int ret = 0;
-
-	if (uit && uit->ui) {
-		ret = pac_restore_unode(pa_ctx, uit);
-	}
-	return ret;
 }
 
 static int pac_reload_by_spnode4(struct silofs_pack_ctx *pa_ctx,
@@ -1538,61 +1482,71 @@ static int pac_reload_by_super(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_prep_restore(struct silofs_pack_ctx *pa_ctx,
-                            const struct silofs_space_iter *uit)
+static int pac_restore_prep_by(struct silofs_pack_ctx *pa_ctx,
+                               const struct silofs_space_iter *spit)
 {
-	struct silofs_unode_info *parent = uit->parent;
+	struct silofs_unode_info *parent = spit->parent;
 	struct silofs_sb_info *sbi = NULL;
 	struct silofs_spnode_info *sni = NULL;
 	int ret = 0;
 
-	if (ui_issuper(parent)) {
+	if (parent == NULL) {
+		ret = 0;
+	} else if (ui_issuper(parent)) {
 		sbi = sbi_from_ui(parent);
-		ret = pac_reload_by_super(pa_ctx, sbi, uit->vspace);
+		ret = pac_reload_by_super(pa_ctx, sbi, spit->vspace);
 	} else if (ui_isspnode4(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode4(pa_ctx, sni, uit->voff);
+		ret = pac_reload_by_spnode4(pa_ctx, sni, spit->voff);
 	} else if (ui_isspnode3(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode3(pa_ctx, sni, uit->voff);
+		ret = pac_reload_by_spnode3(pa_ctx, sni, spit->voff);
 	} else if (ui_isspnode2(parent)) {
 		sni = sni_from_ui(parent);
-		ret = pac_reload_by_spnode2(pa_ctx, sni, uit->voff);
+		ret = pac_reload_by_spnode2(pa_ctx, sni, spit->voff);
 	}
 	return ret;
 }
 
-static int pac_do_prep_restore_by(struct silofs_pack_ctx *pa_ctx,
-                                  const struct silofs_space_iter *uit)
+static int pac_restore_exec_at(struct silofs_pack_ctx *pa_ctx,
+                               const struct silofs_space_iter *spit)
 {
-	int ret = 0;
+	return spit->sli ? pac_restore_spleaf_subs(pa_ctx, spit->sli) : 0;
+}
 
-	if (uit && uit->parent) {
-		ret = pac_prep_restore(pa_ctx, uit);
+static int pac_restore_post_at(struct silofs_pack_ctx *pa_ctx,
+                               const struct silofs_space_iter *spit)
+{
+	const struct silofs_unode_info *ui = spit->ui;
+	int err;
+
+	err = pac_restore_ubk(pa_ctx, ui->u_ubi, ui_bkaddr(ui));
+	if (err) {
+		return err;
 	}
-	return ret;
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int unpack_prep_restore_by(struct silofs_visitor *vis,
-                                  const struct silofs_space_iter *uit)
+static int unpack_prep_by(struct silofs_visitor *vis,
+                          const struct silofs_space_iter *spit)
 {
-	return pac_do_prep_restore_by(pack_ctx_of(vis), uit);
+	return pac_restore_prep_by(pack_ctx_of(vis), spit);
 }
 
-static int unpack_exec_restore_at(struct silofs_visitor *vis,
-                                  const struct silofs_space_iter *uit)
+static int unpack_exec_at(struct silofs_visitor *vis,
+                          const struct silofs_space_iter *spit)
 {
-	return pac_do_exec_restore_at(pack_ctx_of(vis), uit);
+	return pac_restore_exec_at(pack_ctx_of(vis), spit);
 }
 
-static int unpack_post_restore_at(struct silofs_visitor *vis,
-                                  const struct silofs_space_iter *uit)
+static int unpack_post_at(struct silofs_visitor *vis,
+                          const struct silofs_space_iter *spit)
 {
 	struct silofs_pack_ctx *pa_ctx = pack_ctx_of(vis);
 
-	return pac_do_post_restore_at(pa_ctx, uit);
+	return pac_restore_post_at(pa_ctx, spit);
 }
 
 int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
@@ -1601,9 +1555,9 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
                           struct silofs_bootsec *dst_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
-		.vis.visit_prep_by_hook = unpack_prep_restore_by,
-		.vis.visit_exec_at_hook = unpack_exec_restore_at,
-		.vis.visit_post_at_hook = unpack_post_restore_at,
+		.vis.prep_by_hook = unpack_prep_by,
+		.vis.exec_at_hook = unpack_exec_at,
+		.vis.post_at_hook = unpack_post_at,
 		.kivam = kivam,
 		.src_bsec = src_bsec,
 		.dst_bsec = dst_bsec,
@@ -1618,7 +1572,7 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
 	if (err) {
 		return err;
 	}
-	err = pac_load_supers(&pa_ctx);
+	err = pac_shadow_supers(&pa_ctx);
 	if (err) {
 		goto out;
 	}
@@ -1626,7 +1580,7 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
 	if (err) {
 		goto out;
 	}
-	err = pac_save_supers(&pa_ctx);
+	err = pac_save_supers_as_unpack(&pa_ctx);
 	if (err) {
 		goto out;
 	}

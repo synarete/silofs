@@ -138,8 +138,8 @@ static int wac_do_visit_prep_by(const struct silofs_walk_ctx *wa_ctx,
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
-	if (vis && vis->visit_prep_by_hook) {
-		ret = vis->visit_prep_by_hook(vis, uit);
+	if (vis && vis->prep_by_hook) {
+		ret = vis->prep_by_hook(vis, uit);
 	}
 	return ret;
 }
@@ -161,9 +161,9 @@ static int wac_do_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
-	if (vis && vis->visit_exec_at_hook) {
+	if (vis && vis->exec_at_hook) {
 		wac_relax_cache(wa_ctx);
-		ret = vis->visit_exec_at_hook(vis, uit);
+		ret = vis->exec_at_hook(vis, uit);
 	}
 	return ret;
 }
@@ -185,8 +185,8 @@ static int wac_do_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
-	if (vis && vis->visit_post_at_hook) {
-		ret = vis->visit_post_at_hook(vis, uit);
+	if (vis && vis->post_at_hook) {
+		ret = vis->post_at_hook(vis, uit);
 		wac_relax_cache(wa_ctx);
 	}
 	return ret;

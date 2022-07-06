@@ -18,6 +18,7 @@
 #define SILOFS_FS_H_
 
 #include <silofs/infra.h>
+#include <silofs/fs/errors.h>
 #include <silofs/fs/defs.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/address.h>

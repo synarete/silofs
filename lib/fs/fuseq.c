@@ -61,10 +61,6 @@
 #define SILOFS_CMD_FORGET_ONE_MAX \
 	(SILOFS_CMD_TAIL_MAX / sizeof(struct fuse_forget_one))
 
-/* internal special error-codes */
-#define FUSEQ_ENORX     (10001)
-#define FUSEQ_ENOTX     (10101)
-
 /* max size for read/write I/O copy-buffer in splice-pipe mode */
 #define FUSEQ_IOBUF_MAX SILOFS_PAGE_SIZE_MIN
 
@@ -3286,7 +3282,7 @@ static int fuseq_do_recv_in(struct silofs_fuseq_worker *fqw, bool *out_spliced)
 	int err;
 
 	if (!fuseq_is_active(fqw->fq)) {
-		return -FUSEQ_ENORX;
+		return -SILOFS_ENORX;
 	}
 	err = fuseq_wait_request(fqw);
 	if (err) {
@@ -3301,7 +3297,7 @@ static int fuseq_do_recv_in(struct silofs_fuseq_worker *fqw, bool *out_spliced)
 
 static int fuseq_recv_in_locked(struct silofs_fuseq_worker *fqw)
 {
-	int err = -FUSEQ_ENORX;
+	int err = -SILOFS_ENORX;
 	bool spliced = false;
 
 	fuseq_lock_ch(fqw->fq);
@@ -3332,16 +3328,16 @@ static int fuseq_read_or_splice_request(struct silofs_fuseq_worker *fqw)
 		return err;
 	}
 	err = fuseq_recv_in_locked(fqw);
-	if ((err == -ETIMEDOUT) || (err == -FUSEQ_ENORX)) {
+	if ((err == -ETIMEDOUT) || (err == -SILOFS_ENORX)) {
 		return err;
 	}
 	if (err == -ENOENT) {
 		/* hmmm... ok, but why? */
-		return -FUSEQ_ENORX;
+		return -SILOFS_ENORX;
 	}
 	if ((err == -EINTR) || (err == -EAGAIN)) {
 		log_dbg("fuse no-read: err=%d", err);
-		return -FUSEQ_ENORX;
+		return -SILOFS_ENORX;
 	}
 	if (err == -ENODEV) {
 		/* Filesystem unmounted, or connection aborted */
@@ -3855,7 +3851,7 @@ static int fuseq_check_input(const struct silofs_fuseq_worker *fqw)
 	if (!in_len || !opcode) {
 		fuseq_log_warn("bad fuse input: in_len=%u opcode=%u",
 		               in_len, opcode);
-		return -FUSEQ_ENORX;
+		return -SILOFS_ENORX;
 	}
 	return 0;
 }
@@ -3865,7 +3861,7 @@ static int fuseq_exec_one(struct silofs_fuseq_worker *fqw)
 	int err;
 
 	if (!fuseq_is_active(fqw->fq)) {
-		return -FUSEQ_ENORX;
+		return -SILOFS_ENORX;
 	}
 	err = fuseq_recv_request(fqw);
 	if (err) {
@@ -3879,7 +3875,7 @@ static int fuseq_exec_one(struct silofs_fuseq_worker *fqw)
 	if (err == -ENOENT) {
 		/* probably due to FR_ABORTED on FUSE side (ENOENT means the
 		 * operation was interrupted). */
-		return -FUSEQ_ENOTX;
+		return -SILOFS_ENOTX;
 	}
 	if (err) {
 		return err;
@@ -3974,7 +3970,7 @@ static int fuseq_sub_exec_loop(struct silofs_fuseq_worker *fqw)
 			break;
 		}
 		/* no-lock & interrupt cases */
-		if ((err == -FUSEQ_ENORX) || (err == -FUSEQ_ENOTX)) {
+		if ((err == -SILOFS_ENORX) || (err == -SILOFS_ENOTX)) {
 			fuseq_suspend(fqw);
 			err = 0;
 		}

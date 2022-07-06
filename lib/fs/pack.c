@@ -19,8 +19,6 @@
 #include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
-#define SILOFS_EFSCORRUPTED (1000 + EFSCORRUPTED)
-
 
 struct silofs_pack_iovs {
 	struct iovec            pi_iov[SILOFS_SPMAP_NCHILDS];

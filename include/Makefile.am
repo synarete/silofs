@@ -32,6 +32,7 @@ nobase_include_HEADERS += silofs/fs/cache.h
 nobase_include_HEADERS += silofs/fs/crypto.h
 nobase_include_HEADERS += silofs/fs/defs.h
 nobase_include_HEADERS += silofs/fs/dir.h
+nobase_include_HEADERS += silofs/fs/errors.h
 nobase_include_HEADERS += silofs/fs/exec.h
 nobase_include_HEADERS += silofs/fs/file.h
 nobase_include_HEADERS += silofs/fs/fused.h

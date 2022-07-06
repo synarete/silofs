@@ -19,8 +19,6 @@
 #include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
-#define SILOFS_EPERM    (1000 + EPERM)
-
 
 struct silofs_stage_ctx {
 	struct silofs_fs_uber          *uber;

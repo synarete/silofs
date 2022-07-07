@@ -252,7 +252,7 @@ static int spac_resolve_oaddr(struct silofs_spalloc_ctx *spa_ctx)
 }
 
 static int
-spac_require_vspace_at_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	struct silofs_vaddr *out_vaddr = &spa_ctx->voa.vaddr;
 	const enum silofs_stype stype = spa_ctx->stype;
@@ -270,7 +270,7 @@ spac_require_vspace_at_spleaf(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 }
 
 static int
-spac_require_vspace_by(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spac_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	struct silofs_vrange vrange;
 	int err;
@@ -283,7 +283,7 @@ spac_require_vspace_by(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	silofs_assert_lt(voff, vrange.end);
 
 	spac_increfs(spa_ctx);
-	err = spac_require_vspace_at_spleaf(spa_ctx, voff);
+	err = spac_do_find_free_vspace_at(spa_ctx, voff);
 	spac_decrefs(spa_ctx);
 	return err;
 }
@@ -301,7 +301,7 @@ spac_require_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	if (err) {
 		return err;
 	}
-	err = spac_require_vspace_by(spa_ctx, voff);
+	err = spac_find_free_vspace_at(spa_ctx, voff);
 	if (err) {
 		return err;
 	}
@@ -333,6 +333,11 @@ spac_spamaps(const struct silofs_spalloc_ctx *spa_ctx)
 	return &cache->c_spam;
 }
 
+static void spac_setup_vaddr(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+{
+	vaddr_setup(&spa_ctx->voa.vaddr, spa_ctx->stype, voff);
+}
+
 static int spac_claim_vspace_from_cache(struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
@@ -342,14 +347,13 @@ static int spac_claim_vspace_from_cache(struct silofs_spalloc_ctx *spa_ctx)
 
 	err = silofs_spamaps_trypop(spam, stype, stype_size(stype), &voff);
 	if (!err) {
-		vaddr_setup(&spa_ctx->voa.vaddr, stype, voff);
+		spac_setup_vaddr(spa_ctx, voff);
 	}
 	return err;
 }
 
 static int
-spac_require_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx,
-                                loff_t hint)
+spac_require_unalloc_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 {
 	int err;
 
@@ -411,7 +415,7 @@ static int spac_try_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx)
 {
 	const loff_t hint = sbi_voff_last_of(spa_ctx->sbi, spa_ctx->stype);
 
-	return spac_require_unallocated_vspace(spa_ctx, hint);
+	return spac_require_unalloc_vspace(spa_ctx, hint);
 }
 
 static int spac_resolve_and_claim(struct silofs_spalloc_ctx *spa_ctx)
@@ -473,30 +477,6 @@ int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
 	}
 	voaddr_assign(out_voa, &spa_ctx.voa);
 	return 0;
-}
-
-int silofs_sbi_search_vspace(struct silofs_sb_info *sbi,
-                             enum silofs_stype stype,
-                             struct silofs_voaddr *out_voa)
-{
-	/*
-	 * TODO-0038: Scan vspace range for next-alloc free address.
-	 *
-	 * Scan spnode2 level and find first available free address for next
-	 * allocation. Populate in-memory cache as part of 'reload'.
-	 */
-	struct silofs_spalloc_ctx spa_ctx = {
-		.sbi = sbi,
-		.stype = stype,
-	};
-	int err;
-
-	err = spac_stage_ro_spmaps_of(&spa_ctx, 0);
-	if (err) {
-		return err;
-	}
-	silofs_unused(out_voa);
-	return -ENOENT;
 }
 
 static int spac_spawn_mutable_vnode(const struct silofs_spalloc_ctx *spa_ctx,
@@ -639,6 +619,8 @@ int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
 	return spac_reclaim_vspace(&spa_ctx);
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_sbi_recache_vspace(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr)
 {
@@ -651,3 +633,47 @@ int silofs_sbi_recache_vspace(struct silofs_sb_info *sbi,
 	return spac_recache_vspace(&spa_ctx);
 }
 
+static void
+spac_update_voff_hint(const struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+{
+	sbi_set_voff_last_of(spa_ctx->sbi, spa_ctx->stype, voff);
+}
+
+static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx)
+{
+	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
+	loff_t voff = 0;
+	int err;
+
+	while (voff < vend) {
+		err = spac_stage_ro_spmaps_of(spa_ctx, voff);
+		if (err) {
+			return err;
+		}
+		spac_update_voff_hint(spa_ctx, voff);
+
+		err = spac_find_free_vspace_at(spa_ctx, voff);
+		if (!err) {
+			return 0;
+		}
+		voff = silofs_off_to_spleaf_next(voff);
+	}
+	return -ENOSPC;
+}
+
+int silofs_sbi_rescan_free_vspace(struct silofs_sb_info *sbi,
+                                  enum silofs_stype stype)
+{
+	struct silofs_spalloc_ctx spa_ctx = {
+		.sbi = sbi,
+		.stype = stype,
+	};
+	int err;
+
+	err = spac_rescan_free_vspace(&spa_ctx);
+	if (err) {
+		return err;
+	}
+	spac_recache_vspace(&spa_ctx);
+	return 0;
+}

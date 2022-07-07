@@ -28,15 +28,14 @@ int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
                             enum silofs_stype stype,
                             struct silofs_voaddr *out_ova);
 
-int silofs_sbi_search_vspace(struct silofs_sb_info *sbi,
-                             enum silofs_stype stype,
-                             struct silofs_voaddr *out_voa);
-
 int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr);
 
 int silofs_sbi_recache_vspace(struct silofs_sb_info *sbi,
                               const struct silofs_vaddr *vaddr);
+
+int silofs_sbi_rescan_free_vspace(struct silofs_sb_info *sbi,
+                                  enum silofs_stype stype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

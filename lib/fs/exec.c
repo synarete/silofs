@@ -552,24 +552,16 @@ static int fse_reload_rootdir(struct silofs_fs_env *fse)
 
 static int fse_reload_free_vspace(struct silofs_fs_env *fse)
 {
-	struct silofs_voaddr voaddr;
 	struct silofs_sb_info *sbi = fse_sbi(fse);
 	enum silofs_stype stype;
-	int err = 0;
+	int err;
 
 	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
-		if (!silofs_stype_isvnode(stype)) {
+		if (!stype_isvnode(stype)) {
 			continue;
 		}
-		err = silofs_sbi_search_vspace(sbi, stype, &voaddr);
-		if ((err == -ENOSPC) || (err == -ENOENT)) {
-			continue;
-		}
-		if (err != 0) {
-			return err;
-		}
-		err = silofs_sbi_recache_vspace(sbi, &voaddr.vaddr);
-		if (err) {
+		err = silofs_sbi_rescan_free_vspace(sbi, stype);
+		if (err && (err != -ENOSPC) && (err != -ENOENT)) {
 			return err;
 		}
 	}

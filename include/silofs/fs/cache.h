@@ -60,6 +60,10 @@ void silofs_ce_init(struct silofs_cache_elem *ce);
 
 void silofs_ce_fini(struct silofs_cache_elem *ce);
 
+void silofs_ce_incref(struct silofs_cache_elem *ce);
+
+void silofs_ce_decref(struct silofs_cache_elem *ce);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_cache_init(struct silofs_cache *cache,

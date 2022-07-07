@@ -19,6 +19,27 @@
 #include <silofs/fs.h>
 #include <silofs/fs/private.h>
 
+union silofs_pack_qelem_u {
+	struct silofs_sb_info          *sbi;
+	struct silofs_spstats_info     *spi;
+	struct silofs_spnode_info      *sni;
+	struct silofs_spleaf_info      *sli;
+	struct silofs_ubk_info         *ubi;
+	void *ptr;
+};
+
+struct silofs_pack_qelem {
+	struct silofs_list_head         qe_lh;
+	union silofs_pack_qelem_u       qe_u;
+	struct silofs_cache_elem       *qe_ce_ref;
+	enum silofs_stype               qe_stype;
+};
+
+struct silofs_pack_queues {
+	struct silofs_alloc            *alloc;
+	struct silofs_listq             pq[SILOFS_HEIGHT_LAST];
+};
+
 
 struct silofs_pack_iovs {
 	struct iovec            pi_iov[SILOFS_SPNODE_NCHILDS];
@@ -28,6 +49,7 @@ struct silofs_pack_iovs {
 
 struct silofs_pack_ctx {
 	struct silofs_visitor           vis;
+	struct silofs_pack_queues       pqs;
 	struct silofs_listq             uil;
 	struct silofs_crypto            cryp;
 	const struct silofs_kivam      *kivam;
@@ -41,6 +63,116 @@ struct silofs_pack_ctx {
 	enum silofs_stype               vspace;
 	bool                            pack;
 };
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_pack_qelem *
+qpe_from_lh(const struct silofs_list_head *lh)
+{
+	const struct silofs_pack_qelem *pqe;
+
+	pqe = container_of2(lh, struct silofs_pack_qelem, qe_lh);
+	return unconst(pqe);
+}
+
+static void pqe_init(struct silofs_pack_qelem *pqe,
+                     struct silofs_cache_elem *ce_ref,
+                     enum silofs_stype stype)
+{
+	list_head_init(&pqe->qe_lh);
+	pqe->qe_u.ptr = NULL;
+	pqe->qe_ce_ref = ce_ref;
+	pqe->qe_stype = stype;
+	silofs_ce_incref(pqe->qe_ce_ref);
+}
+
+static void pqe_fini(struct silofs_pack_qelem *pqe)
+{
+	silofs_ce_decref(pqe->qe_ce_ref);
+	list_head_fini(&pqe->qe_lh);
+	pqe->qe_u.ptr = NULL;
+	pqe->qe_ce_ref = NULL;
+	pqe->qe_stype = SILOFS_STYPE_NONE;
+}
+
+static struct silofs_pack_qelem *
+pqe_new(struct silofs_alloc *alloc,
+        struct silofs_cache_elem *ce_ref, enum silofs_stype stype)
+{
+	struct silofs_pack_qelem *pqe = NULL;
+
+	pqe = silofs_allocate(alloc, sizeof(*pqe));
+	if (pqe != NULL) {
+		pqe_init(pqe, ce_ref, stype);
+	}
+	return pqe;
+}
+
+static void pqe_del(struct silofs_pack_qelem *pqe, struct silofs_alloc *alloc)
+{
+	pqe_fini(pqe);
+	silofs_deallocate(alloc, pqe, sizeof(*pqe));
+}
+
+static inline struct silofs_pack_qelem *
+pqe_new_for_ubk(struct silofs_alloc *alloc, struct silofs_ubk_info *ubi)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new(alloc, &ubi->ubk_ce, SILOFS_STYPE_ANONBK);
+	if (pqe != NULL) {
+		pqe->qe_u.ubi = ubi;
+	}
+	return pqe;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void pqs_init(struct silofs_pack_queues *pqs,
+                     struct silofs_alloc *alloc)
+{
+	pqs->alloc = alloc;
+	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
+		listq_init(&pqs->pq[i]);
+	}
+}
+
+static void pqs_fini(struct silofs_pack_queues *pqs)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
+		listq_fini(&pqs->pq[i]);
+	}
+	pqs->alloc = NULL;
+}
+
+static void pqs_clear_at(struct silofs_pack_queues *pqs,
+                         struct silofs_listq *pq)
+{
+	struct silofs_list_head *lh;
+	struct silofs_pack_qelem *pqe;
+
+	lh = listq_pop_front(pq);
+	while (lh != NULL) {
+		pqe = qpe_from_lh(lh);
+		pqe_del(pqe, pqs->alloc);
+		lh = listq_pop_front(pq);
+	}
+}
+
+static inline void pqs_clear_by(struct silofs_pack_queues *pqs,
+                                enum silofs_height height)
+{
+	silofs_assert_ge(height, 0);
+	silofs_assert_lt(height, SILOFS_HEIGHT_LAST);
+	pqs_clear_at(pqs, &pqs->pq[height]);
+}
+
+static void pqs_clear(struct silofs_pack_queues *pqs)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
+		pqs_clear_at(pqs, &pqs->pq[i]);
+	}
+}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -423,6 +555,7 @@ static int pac_start(struct silofs_pack_ctx *pa_ctx)
 {
 	int err;
 
+	pqs_init(&pa_ctx->pqs, pa_ctx->alloc);
 	pac_uil_init(pa_ctx);
 	pac_bind_to(pa_ctx, NULL, NULL);
 	err = pac_init_tmp_bk(pa_ctx);
@@ -453,6 +586,8 @@ static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
 	pac_fini_tmp_bk(pa_ctx);
 	pac_uil_clear(pa_ctx);
 	pac_uil_fini(pa_ctx);
+	pqs_clear(&pa_ctx->pqs);
+	pqs_fini(&pa_ctx->pqs);
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
 }
 

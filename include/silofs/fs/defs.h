@@ -337,6 +337,7 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE3   = 3,
 	SILOFS_HEIGHT_SPNODE4   = 4,
 	SILOFS_HEIGHT_SUPER     = 5,
+	SILOFS_HEIGHT_LAST, /* keep last */
 };
 
 /* space packing modes */

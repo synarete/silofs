@@ -48,6 +48,7 @@ ssize_t silofs_height_to_span(enum silofs_height height)
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
+	case SILOFS_HEIGHT_LAST:
 		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
 		       SILOFS_SPNODE_NCHILDS * SILOFS_SPNODE_NCHILDS *
 		       SILOFS_SPNODE_NCHILDS;

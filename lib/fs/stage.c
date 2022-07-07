@@ -317,6 +317,7 @@ static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
 	case SILOFS_HEIGHT_VDATA:
+	case SILOFS_HEIGHT_LAST:
 	default:
 		stype = SILOFS_STYPE_NONE;
 		break;

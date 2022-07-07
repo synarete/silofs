@@ -879,13 +879,6 @@ loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
 static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const size_t slot = (size_t)off_to_lba(voff) %
-	                    SILOFS_SPMAP_LEAF_NCHILDS; // XXX
-
-	// XXX
-	if (slot >= ARRAY_SIZE(sli->sl->sl_subref)) {
-		return false;
-	}
 
 	sli_vrange(sli, &vrange);
 	return (vrange.beg <= voff) && (voff < vrange.end);
@@ -893,13 +886,11 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 
 static size_t sli_voff_to_bn(const struct silofs_spleaf_info *sli, loff_t voff)
 {
-	size_t bn;
 	const loff_t beg = sli_start_voff(sli);
+	const size_t bn = (size_t)off_to_lba(voff - beg);
 
 	silofs_assert_ge(voff, beg);
-
-	bn = (size_t)off_to_lba(voff - beg);
-	//silofs_assert_le(bn, ARRAY_SIZE(sli->sl->sl_subref));
+	silofs_assert_le(bn, ARRAY_SIZE(sli->sl->sl_subref));
 	return bn;
 }
 
@@ -1025,14 +1016,6 @@ bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
 size_t silofs_sli_nallocated_at(const struct silofs_spleaf_info *sli,
                                 const silofs_lba_t lba)
 {
-	// XXX
-	struct silofs_vrange vrange;
-	const loff_t off = lba_to_off(lba);
-
-	sli_vrange(sli, &vrange);
-	silofs_assert_ge(off, vrange.beg);
-	silofs_assert_lt(off, vrange.end);
-
 	return spleaf_allocated_at(sli->sl, lba);
 }
 
@@ -1231,7 +1214,7 @@ static void sni_bind_subref(struct silofs_spnode_info *sni, loff_t voff,
 	sni_dirtify(sni);
 
 	if (!bind_override) {
-		silofs_assert_lt(sni->sn_nactive_subs, SILOFS_SPMAP_NCHILDS);
+		silofs_assert_lt(sni->sn_nactive_subs, SILOFS_SPNODE_NCHILDS);
 		sni->sn_nactive_subs++;
 	}
 }
@@ -1260,12 +1243,6 @@ void silofs_sni_bind_child_spnode(struct silofs_spnode_info *sni,
 static bool sni_is_inrange(const struct silofs_spnode_info *sni, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const size_t slot = (size_t)off_to_lba(voff) % 512; // XXX
-
-	// XXX
-	if (slot >= ARRAY_SIZE(sni->sn->sn_subref)) {
-		return false;
-	}
 
 	sni_vrange(sni, &vrange);
 	return (vrange.beg <= voff) && (voff < vrange.end);
@@ -1284,7 +1261,7 @@ void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
 	size_t nform_size;
 	ssize_t span;
 
-	silofs_assert_le(sni->sn_nactive_subs, SILOFS_SPMAP_NCHILDS);
+	silofs_assert_le(sni->sn_nactive_subs, SILOFS_SPNODE_NCHILDS);
 
 	sni_vrange(sni, &vrange);
 	span = silofs_height_to_span(vrange.height - 1);

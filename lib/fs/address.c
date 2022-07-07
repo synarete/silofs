@@ -36,21 +36,21 @@ ssize_t silofs_height_to_span(enum silofs_height height)
 		span = SILOFS_BK_SIZE;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS *
-		       SILOFS_SPMAP_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
+		       SILOFS_SPNODE_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS *
-		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
+		       SILOFS_SPNODE_NCHILDS * SILOFS_SPNODE_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
-		span = SILOFS_BK_SIZE * SILOFS_SPMAP_LEAF_NCHILDS *
-		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS *
-		       SILOFS_SPMAP_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
+		       SILOFS_SPNODE_NCHILDS * SILOFS_SPNODE_NCHILDS *
+		       SILOFS_SPNODE_NCHILDS;
 		break;
 	}
 	return span;
@@ -266,7 +266,7 @@ loff_t silofs_off_in_bk(loff_t off)
 
 static size_t spleaf_span(void)
 {
-	return SILOFS_SPMAP_LEAF_NCHILDS * SILOFS_BK_SIZE;
+	return SILOFS_SPLEAF_NCHILDS * SILOFS_BK_SIZE;
 }
 
 loff_t silofs_off_to_spleaf_start(loff_t voff)

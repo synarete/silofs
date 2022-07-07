@@ -724,17 +724,17 @@ void silofs_sbi_bind_pack_blobid(struct silofs_sb_info *sbi,
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 {
 	struct silofs_vrange vrange;
-	const long nslots = SILOFS_SPMAP_NCHILDS;
-	size_t slot;
-	size_t len;
-	long roff;
+	ssize_t span;
+	ssize_t slot;
 
 	sb_vrange(sb, &vrange);
-	len = silofs_vrange_length(&vrange);
-	roff = off_diff(vrange.beg, voff);
-	slot = (size_t)(roff * nslots) / len;
-	silofs_assert_lt(slot, nslots);
-	return slot;
+	span = silofs_height_to_span(vrange.height - 1);
+	slot = voff / span;
+
+	silofs_assert_ge(voff, vrange.beg);
+	silofs_assert_lt(voff, vrange.end);
+	silofs_assert_eq(slot, 0);
+	return (size_t)slot;
 }
 
 static loff_t

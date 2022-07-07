@@ -134,7 +134,6 @@ static void guarantee_persistent_types_nk(void)
 	REQUIRE_SIZEOF_2K(struct silofs_spstats_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_64K(struct silofs_spmap_leaf);
-	//REQUIRE_SIZEOF_4K(struct silofs_spmap_leaf);
 	REQUIRE_SIZEOF_8K(struct silofs_itable_node);
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
@@ -172,7 +171,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_bootsec1k, SILOFS_BOOTSEC_SIZE);
 	REQUIRE_SIZEOF(struct silofs_sb_sproots, 1024);
 	REQUIRE_SIZEOF(struct silofs_sb_blobids, 1024);
-	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
+	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SUPERB_SIZE);
 	REQUIRE_SIZEOF(struct silofs_spstat_record, 256);
 	REQUIRE_SIZEOF(struct silofs_spstats, 960);
 	REQUIRE_SIZEOF(struct silofs_spstats_node, SILOFS_STNODE_SIZE);
@@ -270,14 +269,14 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_vrange, 104);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subref, 256);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subref, 4096);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_blobid, 24);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_pack_blobid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 104);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 256);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 4096);
 }
 
 static void guarantee_persistent_types_alignment3(void)
@@ -324,11 +323,6 @@ static void guarantee_ioctl_types_size(void)
 static void guarantee_defs_consistency(void)
 {
 	REQUIRE_EQ(CHAR_BIT, 8);
-	REQUIRE_EQ(SILOFS_NSPMAPS_IN_BK, SILOFS_BK_SIZE / SILOFS_SPNODE_SIZE);
-	// XXX
-	// REQUIRE_EQ(SILOFS_NSPMAPS_IN_BK, SILOFS_BK_SIZE / SILOFS_SPLEAF_SIZE);
-	REQUIRE_EQ(SILOFS_NSPMAPS_LEAF_IN_BK, SILOFS_BK_SIZE / SILOFS_SPLEAF_SIZE);
-
 	REQUIRE_LT(SILOFS_DIR_TREE_DEPTH_MAX, SILOFS_HASH256_LEN);
 	REQUIRE_LT(SILOFS_DIR_TREE_INDEX_MAX, INT32_MAX);
 	REQUIRE_GT(SILOFS_DIR_ENTRIES_MAX, SILOFS_LINK_MAX);

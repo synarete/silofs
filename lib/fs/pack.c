@@ -21,7 +21,7 @@
 
 
 struct silofs_pack_iovs {
-	struct iovec            pi_iov[SILOFS_SPMAP_NCHILDS];
+	struct iovec            pi_iov[SILOFS_SPNODE_NCHILDS];
 	struct silofs_alloc    *pi_alloc;
 	size_t                  pi_cnt;
 };

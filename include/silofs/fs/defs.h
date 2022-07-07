@@ -130,32 +130,22 @@
 
 
 /* on-disk size of super-block */
-#define SILOFS_SB_SIZE                  (8 * SILOFS_KILO)
+#define SILOFS_SUPERB_SIZE              (8 * SILOFS_KILO)
 
 /* on-disk size of space-stats node (2K) */
 #define SILOFS_STNODE_SIZE              (2 * SILOFS_KILO)
 
-/* number of children per space-mapping node (spnode/spleaf) */
-#define SILOFS_SPMAP_NCHILDS            SILOFS_NBK_IN_BLOB_MAX
+/* number of children per space-mapping node */
+#define SILOFS_SPNODE_NCHILDS           SILOFS_NBK_IN_BLOB_MAX
 
-/* number of spnode/spleaf mapping in block */
-#define SILOFS_NSPMAPS_IN_BK            (1)
-
-#define SILOFS_NSPMAPS_LEAF_IN_BK       SILOFS_NSPMAPS_IN_BK /* XXX */
-// #define SILOFS_NSPMAPS_LEAF_IN_BK       (16)
-
-#define SILOFS_SPMAP_LEAF_NCHILDS       SILOFS_SPMAP_NCHILDS /* XXX */
-// #define SILOFS_SPMAP_LEAF_NCHILDS       (32)
+/* number of children per space-mapping leaf */
+#define SILOFS_SPLEAF_NCHILDS           SILOFS_NBK_IN_BLOB_MAX
 
 /* on-disk size of space-node mapping (64K) */
 #define SILOFS_SPNODE_SIZE              SILOFS_BK_SIZE
 
-/* number of space-nodes mapping in block */
-#define SILOFS_NSPNODE_IN_BK            (SILOFS_BK_SIZE / SILOFS_SPNODE_SIZE)
-
-/* on-disk size of space-leaf mapping (4K) */
-#define SILOFS_SPLEAF_SIZE              SILOFS_BK_SIZE /* XXX */
-// #define SILOFS_SPLEAF_SIZE              (4 * SILOFS_KB_SIZE)
+/* on-disk size of space-leaf mapping (64K) */
+#define SILOFS_SPLEAF_SIZE              SILOFS_BK_SIZE
 
 /* on-disk size of inode's head */
 #define SILOFS_INODE_SIZE               SILOFS_KB_SIZE
@@ -709,11 +699,8 @@ struct silofs_spmap_node {
 	uint8_t                         sn_reserved2[8];
 	struct silofs_uaddr64b          sn_parent;
 	struct silofs_uaddr64b          sn_self;
-	struct silofs_spmap_ref         sn_subref[SILOFS_SPMAP_NCHILDS];
 	uint8_t                         sn_reserved3[3840];
-	// XXX
-	// struct silofs_spmap_ref         sn_subref[32];
-	// uint8_t                         sn_reserved3[1024 * 60];
+	struct silofs_spmap_ref         sn_subref[SILOFS_SPNODE_NCHILDS];
 } silofs_packed_aligned64;
 
 
@@ -736,11 +723,8 @@ struct silofs_spmap_leaf {
 	uint8_t                         sl_reserved2[8];
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
-	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_LEAF_NCHILDS];
 	uint8_t                         sl_reserved3[3840];
-	// XXX
-	// struct silofs_bk_ref    sl_subref[SILOFS_SPMAP_LEAF_NCHILDS];
-	// uint8_t                 sl_reserved3[1024 * 60];
+	struct silofs_bk_ref            sl_subref[SILOFS_SPLEAF_NCHILDS];
 } silofs_packed_aligned64;
 
 

@@ -55,7 +55,7 @@ static void ut_statfs_empty(struct ut_env *ute)
 	ut_expect_eq(fs_size, capacity);
 
 	used_bytes = (stv.f_blocks - stv.f_bfree) * stv.f_frsize;
-	ut_expect_gt(used_bytes, SILOFS_SB_SIZE);
+	ut_expect_gt(used_bytes, SILOFS_SUPERB_SIZE);
 	ut_expect_lt(used_bytes, capacity);
 
 	/* 2 used inodes: anon-allocation at voff=0 and root-dir */

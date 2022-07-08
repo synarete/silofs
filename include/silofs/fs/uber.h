@@ -108,7 +108,7 @@ int silofs_shadow_spleaf_at(struct silofs_fs_uber *uber, bool warm,
 
 int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,
                         const struct silofs_bkaddr *bkaddr,
-                        struct silofs_ubk_info **out_ubi);
+                        struct silofs_ubk_info **out_ubki);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

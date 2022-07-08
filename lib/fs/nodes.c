@@ -275,7 +275,7 @@ static void ui_init(struct silofs_unode_info *ui,
 	lh_init(&ui->u_pack_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
 	ui->u_repo = NULL;
-	ui->u_ubi = NULL;
+	ui->u_ubki = NULL;
 	ui->u_piov = NULL;
 	ui->u_verified = false;
 	ui->u_plinked = false;
@@ -289,7 +289,7 @@ static void ui_fini(struct silofs_unode_info *ui)
 	lh_fini(&ui->u_pack_lh);
 	si_fini(&ui->u_si);
 	ui->u_repo = NULL;
-	ui->u_ubi = NULL;
+	ui->u_ubki = NULL;
 	ui->u_piov = NULL;
 }
 
@@ -385,7 +385,7 @@ static void vi_init(struct silofs_vnode_info *vi,
 	silofs_xiovref_init(&vi->v_fir, vi_xiov_pre, vi_xiov_post);
 	vi->v_recheck = false;
 	vi->v_verified = false;
-	vi->v_vbi = NULL;
+	vi->v_vbki = NULL;
 	vi->v_sbi = NULL;
 }
 
@@ -1695,14 +1695,14 @@ void silofs_ui_bind_view(struct silofs_unode_info *ui)
 {
 	const loff_t bk_pos = uaddr_bk_pos(ui_uaddr(ui));
 
-	si_bind_view(&ui->u_si, ui->u_ubi->ubk, bk_pos);
+	si_bind_view(&ui->u_si, ui->u_ubki->ubk, bk_pos);
 }
 
 void silofs_vi_bind_view(struct silofs_vnode_info *vi)
 {
 	const loff_t bk_pos = vaddr_bk_pos(vi_vaddr(vi));
 
-	si_bind_view(&vi->v_si, vi->v_vbi->vbk, bk_pos);
+	si_bind_view(&vi->v_si, vi->v_vbki->vbk, bk_pos);
 }
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr)

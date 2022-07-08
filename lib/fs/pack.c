@@ -24,7 +24,7 @@ union silofs_pack_qelem_u {
 	struct silofs_spstats_info     *spi;
 	struct silofs_spnode_info      *sni;
 	struct silofs_spleaf_info      *sli;
-	struct silofs_ubk_info         *ubi;
+	struct silofs_ubk_info         *ubki;
 	void *ptr;
 };
 
@@ -115,13 +115,13 @@ static void pqe_del(struct silofs_pack_qelem *pqe, struct silofs_alloc *alloc)
 }
 
 static inline struct silofs_pack_qelem *
-pqe_new_for_ubk(struct silofs_alloc *alloc, struct silofs_ubk_info *ubi)
+pqe_new_for_ubk(struct silofs_alloc *alloc, struct silofs_ubk_info *ubki)
 {
 	struct silofs_pack_qelem *pqe;
 
-	pqe = pqe_new(alloc, &ubi->ubk_ce, SILOFS_STYPE_ANONBK);
+	pqe = pqe_new(alloc, &ubki->ubk_ce, SILOFS_STYPE_ANONBK);
 	if (pqe != NULL) {
-		pqe->qe_u.ubi = ubi;
+		pqe->qe_u.ubki = ubki;
 	}
 	return pqe;
 }
@@ -334,7 +334,7 @@ static bool ui_issuper(const struct silofs_unode_info *ui)
 
 static struct silofs_block *ui_block(const struct silofs_unode_info *ui)
 {
-	return ui->u_ubi->ubk;
+	return ui->u_ubki->ubk;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -668,7 +668,7 @@ static void pac_resolve_blobid(const struct silofs_pack_ctx *pa_ctx,
 
 static int pac_stage_block(const struct silofs_pack_ctx *pa_ctx,
                            const struct silofs_blobid *blobid, size_t slot,
-                           struct silofs_ubk_info **out_ubi)
+                           struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_bkaddr bkaddr;
 	struct silofs_repo *repo = pac_src_repo(pa_ctx);
@@ -676,12 +676,12 @@ static int pac_stage_block(const struct silofs_pack_ctx *pa_ctx,
 	silofs_assert_lt(slot, SILOFS_NBK_IN_BLOB_MAX);
 
 	silofs_bkaddr_setup(&bkaddr, blobid, (silofs_lba_t)slot);
-	return silofs_repo_stage_ubk(repo, &bkaddr, out_ubi);
+	return silofs_repo_stage_ubk(repo, &bkaddr, out_ubki);
 }
 
 static int pac_require_ubk(const struct silofs_pack_ctx *pa_ctx,
                            const struct silofs_bkaddr *bkaddr,
-                           struct silofs_ubk_info **out_ubi)
+                           struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_repo *repo = pac_dst_repo(pa_ctx);
 	const struct silofs_blobid *blobid = &bkaddr->blobid;
@@ -695,31 +695,31 @@ static int pac_require_ubk(const struct silofs_pack_ctx *pa_ctx,
 			return err;
 		}
 		bli_incref(bli);
-		err = silofs_repo_stage_ubk(repo, bkaddr, out_ubi);
+		err = silofs_repo_stage_ubk(repo, bkaddr, out_ubki);
 	} else if (err == -ENOENT) {
 		err = silofs_repo_spawn_blob(repo, blobid, &bli);
 		if (err) {
 			return err;
 		}
 		bli_incref(bli);
-		err = silofs_repo_spawn_ubk(repo, bkaddr, out_ubi);
+		err = silofs_repo_spawn_ubk(repo, bkaddr, out_ubki);
 	}
 	bli_decref(bli);
 	return err;
 }
 
 static int pac_restore_ubk(const struct silofs_pack_ctx *pa_ctx,
-                           const struct silofs_ubk_info *ubi_src,
+                           const struct silofs_ubk_info *ubki_src,
                            const struct silofs_bkaddr *bkaddr_dst)
 {
-	struct silofs_ubk_info *ubi_dst = NULL;
+	struct silofs_ubk_info *ubki_dst = NULL;
 	int err;
 
-	err = pac_require_ubk(pa_ctx, bkaddr_dst, &ubi_dst);
+	err = pac_require_ubk(pa_ctx, bkaddr_dst, &ubki_dst);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_store_bk(ubi_dst->ubk_bli, bkaddr_dst, ubi_src->ubk);
+	err = silofs_bli_store_bk(ubki_dst->ubk_bli, bkaddr_dst, ubki_src->ubk);
 	if (err) {
 		return err;
 	}
@@ -880,7 +880,7 @@ static int pac_archive_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
                                   loff_t voff, size_t slot)
 {
 	struct silofs_bkaddr bkaddr;
-	struct silofs_ubk_info *ubi = NULL;
+	struct silofs_ubk_info *ubki = NULL;
 	struct silofs_block *enc_bk = NULL;
 	size_t nalloc;
 	int err;
@@ -893,12 +893,12 @@ static int pac_archive_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_stage_block(pa_ctx, &bkaddr.blobid, slot, &ubi);
+	err = pac_stage_block(pa_ctx, &bkaddr.blobid, slot, &ubki);
 	if (err) {
 		return err;
 	}
 	enc_bk = pa_ctx->tbk;
-	err = pac_encrypt_bk(pa_ctx, ubi->ubk, enc_bk);
+	err = pac_encrypt_bk(pa_ctx, ubki->ubk, enc_bk);
 	if (err) {
 		return err;
 	}
@@ -1201,7 +1201,7 @@ static int pac_refill_view_of(struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_block *bk,
                               struct silofs_unode_info *ui)
 {
-	struct silofs_block *ubk = ui->u_ubi->ubk;
+	struct silofs_block *ubk = ui->u_ubki->ubk;
 	int err;
 
 	memcpy(ubk, bk, sizeof(*ubk));
@@ -1216,16 +1216,16 @@ static int pac_refill_unode(struct silofs_pack_ctx *pa_ctx,
                             const struct silofs_blobid *blobid,
                             size_t slot, struct silofs_unode_info *ui)
 {
-	struct silofs_ubk_info *ubi = NULL;
+	struct silofs_ubk_info *ubki = NULL;
 	struct silofs_block *bk = pa_ctx->tbk;
 	int err;
 
 	ui_incref(ui);
-	err = pac_stage_block(pa_ctx, blobid, slot, &ubi);
+	err = pac_stage_block(pa_ctx, blobid, slot, &ubki);
 	if (err) {
 		goto out;
 	}
-	err = pac_decrypt_bk(pa_ctx, ubi->ubk, bk);
+	err = pac_decrypt_bk(pa_ctx, ubki->ubk, bk);
 	if (err) {
 		goto out;
 	}
@@ -1431,8 +1431,8 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_bkaddr bkaddr;
 	struct silofs_blobid blobid;
 	struct silofs_blob_info *bli = NULL;
-	struct silofs_ubk_info *ubi_src = NULL;
-	struct silofs_ubk_info *ubi_dst = NULL;
+	struct silofs_ubk_info *ubki_src = NULL;
+	struct silofs_ubk_info *ubki_dst = NULL;
 	size_t nalloc;
 	int err;
 
@@ -1452,19 +1452,19 @@ static int pac_restore_spleaf_sub(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_stage_block(pa_ctx, &blobid, slot, &ubi_src);
+	err = pac_stage_block(pa_ctx, &blobid, slot, &ubki_src);
 	if (err) {
 		return err;
 	}
-	err = pac_require_ubk(pa_ctx, &bkaddr, &ubi_dst);
+	err = pac_require_ubk(pa_ctx, &bkaddr, &ubki_dst);
 	if (err) {
 		return err;
 	}
-	err = pac_decrypt_bk(pa_ctx, ubi_src->ubk, ubi_dst->ubk);
+	err = pac_decrypt_bk(pa_ctx, ubki_src->ubk, ubki_dst->ubk);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_store_bk(ubi_dst->ubk_bli, &bkaddr, ubi_dst->ubk);
+	err = silofs_bli_store_bk(ubki_dst->ubk_bli, &bkaddr, ubki_dst->ubk);
 	if (err) {
 		return err;
 	}
@@ -1655,7 +1655,7 @@ static int pac_restore_post_at(struct silofs_pack_ctx *pa_ctx,
 	const struct silofs_unode_info *ui = spit->ui;
 	int err;
 
-	err = pac_restore_ubk(pa_ctx, ui->u_ubi, ui_bkaddr(ui));
+	err = pac_restore_ubk(pa_ctx, ui->u_ubki, ui_bkaddr(ui));
 	if (err) {
 		return err;
 	}

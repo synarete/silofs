@@ -26,7 +26,7 @@ bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
 int silofs_sbi_stage_ubk_at(struct silofs_sb_info *sbi,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stage_mode stg_mode,
-                            struct silofs_ubk_info **out_ubi);
+                            struct silofs_ubk_info **out_ubki);
 
 int silofs_sbi_stage_spnode2_at(struct silofs_sb_info *sbi,
                                 const struct silofs_vaddr *vaddr,

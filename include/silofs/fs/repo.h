@@ -142,10 +142,10 @@ int silofs_repo_require_blob(struct silofs_repo *repo,
 
 int silofs_repo_stage_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubi);
+                          struct silofs_ubk_info **out_ubki);
 
 int silofs_repo_spawn_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubi);
+                          struct silofs_ubk_info **out_ubki);
 
 #endif /* SILOFS_REPO_H_ */

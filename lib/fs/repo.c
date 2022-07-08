@@ -1527,39 +1527,39 @@ void silofs_repo_relax_cache(struct silofs_repo *repo, int flags)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int repo_lookup_cached_ubi(struct silofs_repo *repo,
+static int repo_lookup_cached_ubki(struct silofs_repo *repo,
+                                   const struct silofs_bkaddr *bkaddr,
+                                   struct silofs_ubk_info **out_ubki)
+{
+	*out_ubki = silofs_cache_lookup_ubk(&repo->re_cache, bkaddr);
+	return (*out_ubki != NULL) ? 0 : -ENOENT;
+}
+
+static void repo_forget_cached_ubki(struct silofs_repo *repo,
+                                    struct silofs_ubk_info *ubki)
+{
+	silofs_cache_forget_ubk(&repo->re_cache, ubki);
+}
+
+static int repo_spawn_cached_ubki(struct silofs_repo *repo,
                                   const struct silofs_bkaddr *bkaddr,
-                                  struct silofs_ubk_info **out_ubi)
+                                  struct silofs_ubk_info **out_ubki)
 {
-	*out_ubi = silofs_cache_lookup_ubk(&repo->re_cache, bkaddr);
-	return (*out_ubi != NULL) ? 0 : -ENOENT;
+	*out_ubki = silofs_cache_spawn_ubk(&repo->re_cache, bkaddr);
+	return (*out_ubki != NULL) ? 0 : -ENOMEM;
 }
 
-static void repo_forget_cached_ubi(struct silofs_repo *repo,
-                                   struct silofs_ubk_info *ubi)
-{
-	silofs_cache_forget_ubk(&repo->re_cache, ubi);
-}
-
-static int repo_spawn_cached_ubi(struct silofs_repo *repo,
-                                 const struct silofs_bkaddr *bkaddr,
-                                 struct silofs_ubk_info **out_ubi)
-{
-	*out_ubi = silofs_cache_spawn_ubk(&repo->re_cache, bkaddr);
-	return (*out_ubi != NULL) ? 0 : -ENOMEM;
-}
-
-static int repo_spawn_attach_ubi(struct silofs_repo *repo,
-                                 struct silofs_blob_info *bli,
-                                 const struct silofs_bkaddr *bkaddr,
-                                 struct silofs_ubk_info **out_ubi)
+static int repo_spawn_attach_ubki(struct silofs_repo *repo,
+                                  struct silofs_blob_info *bli,
+                                  const struct silofs_bkaddr *bkaddr,
+                                  struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
 	bli_incref(bli);
-	err = repo_spawn_cached_ubi(repo, bkaddr, out_ubi);
+	err = repo_spawn_cached_ubki(repo, bkaddr, out_ubki);
 	if (!err) {
-		silofs_ubi_attach(*out_ubi, bli);
+		silofs_ubki_attach(*out_ubki, bli);
 	}
 	bli_decref(bli);
 	return err;
@@ -1569,12 +1569,12 @@ static int repo_spawn_attach_ubi(struct silofs_repo *repo,
 
 static int repo_spawn_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubi)
+                          struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_blob_info *bli = NULL;
 	int err;
 
-	err = repo_lookup_cached_ubi(repo, bkaddr, out_ubi);
+	err = repo_lookup_cached_ubki(repo, bkaddr, out_ubki);
 	if (!err) {
 		return -EEXIST;
 	}
@@ -1582,7 +1582,7 @@ static int repo_spawn_ubk(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_attach_ubi(repo, bli, bkaddr, out_ubi);
+	err = repo_spawn_attach_ubki(repo, bli, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -1591,7 +1591,7 @@ static int repo_spawn_ubk(struct silofs_repo *repo,
 
 int silofs_repo_spawn_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubi)
+                          struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
@@ -1599,7 +1599,7 @@ int silofs_repo_spawn_ubk(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_ubk(repo, bkaddr, out_ubi);
+	err = repo_spawn_ubk(repo, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -1608,13 +1608,13 @@ int silofs_repo_spawn_ubk(struct silofs_repo *repo,
 
 static int repo_stage_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubi)
+                          struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_blob_info *bli = NULL;
-	struct silofs_ubk_info *ubi = NULL;
+	struct silofs_ubk_info *ubki = NULL;
 	int err;
 
-	err = repo_lookup_cached_ubi(repo, bkaddr, out_ubi);
+	err = repo_lookup_cached_ubki(repo, bkaddr, out_ubki);
 	if (!err) {
 		return 0; /* cache hit */
 	}
@@ -1622,22 +1622,22 @@ static int repo_stage_ubk(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_attach_ubi(repo, bli, bkaddr, &ubi);
+	err = repo_spawn_attach_ubki(repo, bli, bkaddr, &ubki);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_load_bk(bli, bkaddr, ubi->ubk);
+	err = silofs_bli_load_bk(bli, bkaddr, ubki->ubk);
 	if (err) {
-		repo_forget_cached_ubi(repo, ubi);
+		repo_forget_cached_ubki(repo, ubki);
 		return err;
 	}
-	*out_ubi = ubi;
+	*out_ubki = ubki;
 	return 0;
 }
 
 int silofs_repo_stage_ubk(struct silofs_repo *repo,
                           const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubi)
+                          struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
@@ -1645,7 +1645,7 @@ int silofs_repo_stage_ubk(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_stage_ubk(repo, bkaddr, out_ubi);
+	err = repo_stage_ubk(repo, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}

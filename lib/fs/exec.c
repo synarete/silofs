@@ -734,15 +734,15 @@ void silofs_fse_stats(const struct silofs_fs_env *fse,
 	st->nalloc_bytes = alst.nbytes_used;
 	if (fse->fs_repos->repo_warm.re_inited) {
 		cache = &fse->fs_repos->repo_warm.re_cache;
-		st->ncache_ublocks += cache->c_ubi_lm.lm_htbl_sz;
-		st->ncache_vblocks += cache->c_vbi_lm.lm_htbl_sz;
+		st->ncache_ublocks += cache->c_ubki_lm.lm_htbl_sz;
+		st->ncache_vblocks += cache->c_vbki_lm.lm_htbl_sz;
 		st->ncache_unodes += cache->c_ui_lm.lm_htbl_sz;
 		st->ncache_vnodes += cache->c_vi_lm.lm_htbl_sz;
 	}
 	if (fse->fs_repos->repo_cold.re_inited) {
 		cache = &fse->fs_repos->repo_cold.re_cache;
-		st->ncache_ublocks += cache->c_ubi_lm.lm_htbl_sz;
-		st->ncache_vblocks += cache->c_vbi_lm.lm_htbl_sz;
+		st->ncache_ublocks += cache->c_ubki_lm.lm_htbl_sz;
+		st->ncache_vblocks += cache->c_vbki_lm.lm_htbl_sz;
 		st->ncache_unodes += cache->c_ui_lm.lm_htbl_sz;
 		st->ncache_vnodes += cache->c_vi_lm.lm_htbl_sz;
 	}

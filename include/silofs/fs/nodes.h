@@ -50,7 +50,7 @@ struct silofs_unode_info {
 	struct silofs_snode_info        u_si;
 	struct silofs_list_head         u_pack_lh;
 	struct silofs_repo             *u_repo;
-	struct silofs_ubk_info         *u_ubi;
+	struct silofs_ubk_info         *u_ubki;
 	struct silofs_pack_iovs        *u_piov;
 	bool                            u_verified;
 	bool                            u_plinked;
@@ -93,7 +93,7 @@ struct silofs_vnode_info {
 	struct silofs_snode_info        v_si;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_xiovref           v_fir;
-	struct silofs_vbk_info         *v_vbi;
+	struct silofs_vbk_info         *v_vbki;
 	struct silofs_sb_info          *v_sbi;
 	bool                            v_recheck;
 	bool                            v_verified;

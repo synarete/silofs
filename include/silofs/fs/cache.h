@@ -37,8 +37,8 @@ struct silofs_cache {
 	struct silofs_alloc    *c_alloc;
 	struct silofs_block    *c_nil_bk;
 	struct silofs_lrumap    c_bli_lm;
-	struct silofs_lrumap    c_ubi_lm;
-	struct silofs_lrumap    c_vbi_lm;
+	struct silofs_lrumap    c_ubki_lm;
+	struct silofs_lrumap    c_vbki_lm;
 	struct silofs_lrumap    c_ui_lm;
 	struct silofs_lrumap    c_vi_lm;
 	struct silofs_dirtyq    c_dq;
@@ -109,7 +109,7 @@ silofs_cache_spawn_ubk(struct silofs_cache *cache,
                        const struct silofs_bkaddr *bkaddr);
 
 void silofs_cache_forget_ubk(struct silofs_cache *cache,
-                             struct silofs_ubk_info *ubi);
+                             struct silofs_ubk_info *ubki);
 
 
 struct silofs_unode_info *
@@ -139,7 +139,7 @@ silofs_cache_spawn_vbk(struct silofs_cache *cache,
                        loff_t voff, enum silofs_stype vspace);
 
 void silofs_cache_forget_vbk(struct silofs_cache *cache,
-                             struct silofs_vbk_info *vbi);
+                             struct silofs_vbk_info *vbki);
 
 
 struct silofs_vnode_info *
@@ -171,7 +171,7 @@ void silofs_vi_incref(struct silofs_vnode_info *vi);
 void silofs_vi_decref(struct silofs_vnode_info *vi);
 
 void silofs_vi_attach_to(struct silofs_vnode_info *vi,
-                         struct silofs_vbk_info *vbi);
+                         struct silofs_vbk_info *vbki);
 
 
 size_t silofs_vi_refcnt(const struct silofs_vnode_info *vi);
@@ -196,7 +196,7 @@ void silofs_ui_dirtify(struct silofs_unode_info *ui);
 void silofs_ui_undirtify(struct silofs_unode_info *ui);
 
 void silofs_ui_attach_to(struct silofs_unode_info *ui,
-                         struct silofs_ubk_info *ubi);
+                         struct silofs_ubk_info *ubki);
 
 
 bool silofs_si_isevictable(const struct silofs_snode_info *si);
@@ -209,12 +209,12 @@ void silofs_spi_incref(struct silofs_spstats_info *spi);
 
 void silofs_spi_decref(struct silofs_spstats_info *spi);
 
-void silofs_vbi_incref(struct silofs_vbk_info *vbi);
+void silofs_vbki_incref(struct silofs_vbk_info *vbki);
 
-void silofs_vbi_decref(struct silofs_vbk_info *vbi);
+void silofs_vbki_decref(struct silofs_vbk_info *vbki);
 
 
-void silofs_ubi_attach(struct silofs_ubk_info *ubi,
-                       struct silofs_blob_info *bli);
+void silofs_ubki_attach(struct silofs_ubk_info *ubki,
+                        struct silofs_blob_info *bli);
 
 #endif /* SILOFS_CACHE_H_ */

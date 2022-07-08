@@ -324,18 +324,18 @@ static int xiovec_by_blob(const struct silofs_file_ctx *f_ctx,
                           struct silofs_xiovec *out_xiov)
 {
 	struct silofs_voaddr voa;
-	struct silofs_ubk_info *ubi = NULL;
+	struct silofs_ubk_info *ubki = NULL;
 	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
 	int err;
 
-	err = silofs_sbi_stage_ubk_at(f_ctx->sbi, vaddr, stg_mode, &ubi);
+	err = silofs_sbi_stage_ubk_at(f_ctx->sbi, vaddr, stg_mode, &ubki);
 	if (err) {
 		return err;
 	}
-	silofs_voaddr_setup_by(&voa, &ubi->ubk_addr.blobid, vaddr);
+	silofs_voaddr_setup_by(&voa, &ubki->ubk_addr.blobid, vaddr);
 	voa.oaddr.pos += off_within;
 	voa.oaddr.len = len;
-	err = silofs_bli_resolve(ubi->ubk_bli, &voa.oaddr, out_xiov);
+	err = silofs_bli_resolve(ubki->ubk_bli, &voa.oaddr, out_xiov);
 	if (err) {
 		return err;
 	}

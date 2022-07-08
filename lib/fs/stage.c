@@ -1707,7 +1707,7 @@ static int stgc_voaddr_at(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_bkaddr bkaddr;
 	int err;
 
-	err = silofs_sli_resolve_vbk(stg_ctx->sli, stg_ctx->bk_voff, &bkaddr);
+	err = silofs_sli_resolve_ubk(stg_ctx->sli, stg_ctx->bk_voff, &bkaddr);
 	if (err) {
 		return err;
 	}

@@ -149,7 +149,7 @@ void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
                               const struct silofs_spleaf_info *sli_other);
 
 
-int silofs_sli_resolve_vbk(const struct silofs_spleaf_info *sli,
+int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
                            loff_t voff, struct silofs_bkaddr *out_bkaddr);
 
 void silofs_sli_resolve_main_vbk(const struct silofs_spleaf_info *sli,

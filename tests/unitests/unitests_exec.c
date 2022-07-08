@@ -21,11 +21,6 @@
 	{ .tests = &(t_), .name = SILOFS_STR(t_) }
 
 static struct ut_tgroup const g_ut_tgroups[] = {
-
-	// XXX
-	UT_DEFTGRP(ut_tdefs_pack),
-
-
 	UT_DEFTGRP(ut_tdefs_strings),
 	UT_DEFTGRP(ut_tdefs_avl),
 	UT_DEFTGRP(ut_tdefs_base64),

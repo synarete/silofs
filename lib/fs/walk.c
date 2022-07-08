@@ -506,11 +506,9 @@ static int wac_traverse_spleaf(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
-	wac_push_height(wa_ctx);
 	sli_incref(wa_ctx->sli);
 	err = wac_do_traverse_spleaf(wa_ctx);
 	sli_decref(wa_ctx->sli);
-	wac_pop_height(wa_ctx);
 	return err;
 }
 
@@ -519,7 +517,7 @@ static void wac_depart_spleaf(struct silofs_walk_ctx *wa_ctx)
 	wa_ctx->sli = NULL;
 }
 
-static int wac_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx)
+static int wac_do_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
@@ -533,6 +531,16 @@ static int wac_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx)
 	}
 	wac_depart_spleaf(wa_ctx);
 	return 0;
+}
+
+static int wac_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx)
+{
+	int ret;
+
+	wac_push_height(wa_ctx);
+	ret = wac_do_traverse_spnode2_child(wa_ctx);
+	wac_pop_height(wa_ctx);
+	return ret;
 }
 
 static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
@@ -570,11 +578,9 @@ static int wac_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	wac_push_height(wa_ctx);
 	sni_incref(wa_ctx->sni2);
 	ret = wac_do_traverse_spnode2(wa_ctx);
 	sni_decref(wa_ctx->sni2);
-	wac_pop_height(wa_ctx);
 	return ret;
 }
 
@@ -603,7 +609,7 @@ static void wac_depart_spnode2(struct silofs_walk_ctx *wa_ctx)
 	wa_ctx->slot2 = 0;
 }
 
-static int wac_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx)
+static int wac_do_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
@@ -617,6 +623,16 @@ static int wac_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx)
 	}
 	wac_depart_spnode2(wa_ctx);
 	return 0;
+}
+
+static int wac_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx)
+{
+	int ret;
+
+	wac_push_height(wa_ctx);
+	ret = wac_do_traverse_spnode3_child(wa_ctx);
+	wac_pop_height(wa_ctx);
+	return ret;
 }
 
 static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
@@ -654,11 +670,9 @@ static int wac_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	wac_push_height(wa_ctx);
 	sni_incref(wa_ctx->sni3);
 	ret = wac_do_traverse_spnode3(wa_ctx);
 	sni_decref(wa_ctx->sni3);
-	wac_pop_height(wa_ctx);
 	return ret;
 }
 
@@ -687,7 +701,7 @@ static void wac_depart_spnode3(struct silofs_walk_ctx *wa_ctx)
 	wa_ctx->slot3 = 0;
 }
 
-static int wac_traverse_spnode4_child(struct silofs_walk_ctx *wa_ctx)
+static int wac_do_traverse_spnode4_child(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
@@ -701,6 +715,16 @@ static int wac_traverse_spnode4_child(struct silofs_walk_ctx *wa_ctx)
 	}
 	wac_depart_spnode3(wa_ctx);
 	return 0;
+}
+
+static int wac_traverse_spnode4_child(struct silofs_walk_ctx *wa_ctx)
+{
+	int ret;
+
+	wac_push_height(wa_ctx);
+	ret = wac_do_traverse_spnode4_child(wa_ctx);
+	wac_pop_height(wa_ctx);
+	return ret;
 }
 
 static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
@@ -738,11 +762,9 @@ static int wac_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	wac_push_height(wa_ctx);
 	sni_incref(wa_ctx->sni4);
 	ret = wac_do_traverse_spnode4(wa_ctx);
 	sni_decref(wa_ctx->sni4);
-	wac_pop_height(wa_ctx);
 	return ret;
 }
 
@@ -771,7 +793,7 @@ static void wac_depart_spnode4(struct silofs_walk_ctx *wa_ctx)
 	wa_ctx->slot4 = 0;
 }
 
-static int wac_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
+static int wac_do_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
@@ -785,6 +807,16 @@ static int wac_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
 	}
 	wac_depart_spnode4(wa_ctx);
 	return 0;
+}
+
+static int wac_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
+{
+	int ret;
+
+	wac_push_height(wa_ctx);
+	ret = wac_do_traverse_super_child(wa_ctx);
+	wac_pop_height(wa_ctx);
+	return ret;
 }
 
 static int wac_do_traverse_sptree(struct silofs_walk_ctx *wa_ctx)

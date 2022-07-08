@@ -350,7 +350,7 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 	ckey_reset(&ce->ce_ckey);
 	list_head_fini(&ce->ce_htb_lh);
 	list_head_fini(&ce->ce_lru_lh);
-	ce->ce_refcnt = 0;
+	ce->ce_refcnt = INT_MIN;
 	ce->ce_cache = NULL;
 }
 
@@ -412,12 +412,15 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	}
 }
 
-static size_t ce_refcnt(const struct silofs_cache_elem *ce_const)
+static size_t ce_refcnt(const struct silofs_cache_elem *ce)
 {
-	struct silofs_cache_elem *ce = unconst(ce_const);
-	int *p_refcnt = (int *)(&ce->ce_refcnt);
-
+	/*
+	struct silofs_cache_elem *ce2 = unconst(ce);
+	int *p_refcnt = (int *)(&ce2->ce_refcnt);
 	return (size_t)silofs_atomic_get(p_refcnt);
+	*/
+	silofs_assert_ge(ce->ce_refcnt, 0);
+	return (size_t)ce->ce_refcnt;
 }
 
 static void ce_incref(struct silofs_cache_elem *ce)
@@ -440,7 +443,7 @@ static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 
 void silofs_ce_incref(struct silofs_cache_elem *ce)
 {
-	ce_refcnt(ce);
+	ce_incref(ce);
 }
 
 void silofs_ce_decref(struct silofs_cache_elem *ce)

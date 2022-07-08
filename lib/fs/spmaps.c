@@ -1110,7 +1110,7 @@ void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
 	spleaf_clone_subrefs(sli->sl, sli_other->sl);
 }
 
-int silofs_sli_resolve_vbk(const struct silofs_spleaf_info *sli,
+int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
                            loff_t voff, struct silofs_bkaddr *out_bkaddr)
 {
 	if (!sli_is_inrange(sli, voff)) {

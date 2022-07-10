@@ -336,6 +336,11 @@ void silofs_ui_bind_uber(struct silofs_unode_info *ui,
 	ui->u_si.s_uber = uber;
 }
 
+void silofs_ui_seal_meta(struct silofs_unode_info *ui)
+{
+	silofs_fill_csum_meta(ui->u_si.s_view);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
@@ -1740,3 +1745,5 @@ int silofs_verify_csum_meta(const union silofs_view *view)
 {
 	return view_verify_checksum(view);
 }
+
+

@@ -24,7 +24,6 @@ struct silofs_walk_ctx {
 	struct silofs_visitor      *vis;
 	struct silofs_fs_uber      *uber;
 	struct silofs_sb_info      *sbi;
-	struct silofs_spstats_info *spsti;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;
@@ -94,7 +93,6 @@ static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
 {
 	silofs_memzero(spit, sizeof(*spit));
 	spit->sbi = wa_ctx->sbi;
-	spit->spsti = wa_ctx->spsti;
 	spit->sni4 = wa_ctx->sni4;
 	spit->sni3 = wa_ctx->sni3;
 	spit->sni2 = wa_ctx->sni2;
@@ -887,7 +885,6 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 		.vis = vis,
 		.uber = sbi_uber(sbi),
 		.sbi = sbi,
-		.spsti = &sbi->sb_spsti,
 		.sni4 = NULL,
 		.sni3 = NULL,
 		.sni2 = NULL,

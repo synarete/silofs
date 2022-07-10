@@ -141,8 +141,8 @@ int silofs_sbi_pack_blobid(const struct silofs_sb_info *sbi,
                            enum silofs_stype vspace,
                            struct silofs_blobid *out_blobid);
 
-void silofs_sbi_bind_pack_blobid(struct silofs_sb_info *sbi,
-                                 enum silofs_stype vspace,
-                                 const struct silofs_blobid *blobid);
+void silofs_sbi_bind_pack_blob(struct silofs_sb_info *sbi,
+                               enum silofs_stype vspace,
+                               const struct silofs_blobid *blobid);
 
 #endif /* SILOFS_SUPER_H_ */

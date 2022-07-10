@@ -1095,6 +1095,7 @@ void silofs_sli_bind_pack_blob(struct silofs_spleaf_info *sli,
                                const struct silofs_blobid *blobid)
 {
 	spleaf_set_pack_blobid(sli->sl, blobid);
+	silofs_ui_seal_meta(&sli->sl_ui);
 }
 
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
@@ -1352,6 +1353,7 @@ void silofs_sni_bind_pack_blob(struct silofs_spnode_info *sni,
                                const struct silofs_blobid *blobid)
 {
 	spnode_set_pack_blobid(sni->sn, blobid);
+	silofs_ui_seal_meta(&sni->sn_ui);
 }
 
 static loff_t

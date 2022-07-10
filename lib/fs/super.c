@@ -697,11 +697,12 @@ int silofs_sbi_pack_blobid(const struct silofs_sb_info *sbi,
 	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;
 }
 
-void silofs_sbi_bind_pack_blobid(struct silofs_sb_info *sbi,
-                                 enum silofs_stype vspace,
-                                 const struct silofs_blobid *blobid)
+void silofs_sbi_bind_pack_blob(struct silofs_sb_info *sbi,
+                               enum silofs_stype vspace,
+                               const struct silofs_blobid *blobid)
 {
 	sb_set_pack_blobid(sbi->sb, vspace, blobid);
+	silofs_ui_seal_meta(&sbi->sb_ui);
 }
 
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)

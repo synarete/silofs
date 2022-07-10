@@ -218,6 +218,7 @@ silofs_ui_from_si(const struct silofs_snode_info *si);
 void silofs_ui_bind_uber(struct silofs_unode_info *ui,
                          struct silofs_fs_uber *uber);
 
+void silofs_ui_seal_meta(struct silofs_unode_info *ui);
 
 void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
 

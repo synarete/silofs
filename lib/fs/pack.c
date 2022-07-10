@@ -29,10 +29,11 @@ union silofs_pack_qelem_u {
 };
 
 struct silofs_pack_qelem {
-	struct silofs_list_head         qe_lh;
-	union silofs_pack_qelem_u       qe_u;
-	struct silofs_cache_elem       *qe_ce_ref;
-	enum silofs_stype               qe_stype;
+	struct silofs_list_head         pqe_lh;
+	union silofs_pack_qelem_u       pqe_u;
+	struct silofs_cache_elem       *pqe_ce_ref;
+	struct silofs_ubk_info         *pqe_ubki;
+	enum silofs_stype               pqe_stype;
 };
 
 struct silofs_pack_queues {
@@ -42,9 +43,9 @@ struct silofs_pack_queues {
 
 
 struct silofs_pack_iovs {
-	struct iovec            pi_iov[SILOFS_SPNODE_NCHILDS];
-	struct silofs_alloc    *pi_alloc;
-	size_t                  pi_cnt;
+	struct iovec                    pi_iov[SILOFS_SPNODE_NCHILDS];
+	struct silofs_alloc            *pi_alloc;
+	size_t                          pi_cnt;
 };
 
 struct silofs_pack_ctx {
@@ -63,247 +64,6 @@ struct silofs_pack_ctx {
 	enum silofs_stype               vspace;
 	bool                            pack;
 };
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static struct silofs_pack_qelem *
-qpe_from_lh(const struct silofs_list_head *lh)
-{
-	const struct silofs_pack_qelem *pqe;
-
-	pqe = container_of2(lh, struct silofs_pack_qelem, qe_lh);
-	return unconst(pqe);
-}
-
-static void pqe_init(struct silofs_pack_qelem *pqe,
-                     struct silofs_cache_elem *ce_ref,
-                     enum silofs_stype stype)
-{
-	list_head_init(&pqe->qe_lh);
-	pqe->qe_u.ptr = NULL;
-	pqe->qe_ce_ref = ce_ref;
-	pqe->qe_stype = stype;
-	silofs_ce_incref(pqe->qe_ce_ref);
-}
-
-static void pqe_fini(struct silofs_pack_qelem *pqe)
-{
-	silofs_ce_decref(pqe->qe_ce_ref);
-	list_head_fini(&pqe->qe_lh);
-	pqe->qe_u.ptr = NULL;
-	pqe->qe_ce_ref = NULL;
-	pqe->qe_stype = SILOFS_STYPE_NONE;
-}
-
-static struct silofs_pack_qelem *
-pqe_new(struct silofs_alloc *alloc,
-        struct silofs_cache_elem *ce_ref, enum silofs_stype stype)
-{
-	struct silofs_pack_qelem *pqe = NULL;
-
-	pqe = silofs_allocate(alloc, sizeof(*pqe));
-	if (pqe != NULL) {
-		pqe_init(pqe, ce_ref, stype);
-	}
-	return pqe;
-}
-
-static void pqe_del(struct silofs_pack_qelem *pqe, struct silofs_alloc *alloc)
-{
-	pqe_fini(pqe);
-	silofs_deallocate(alloc, pqe, sizeof(*pqe));
-}
-
-static struct silofs_pack_qelem *
-pqe_new_for_ubk(struct silofs_alloc *alloc, struct silofs_ubk_info *ubki)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new(alloc, &ubki->ubk_ce, SILOFS_STYPE_ANONBK);
-	if (pqe != NULL) {
-		pqe->qe_u.ubki = ubki;
-	}
-	return pqe;
-}
-
-static struct silofs_pack_qelem *
-pqe_new_for_spleaf(struct silofs_alloc *alloc, struct silofs_spleaf_info *sli)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new(alloc, &sli->sl_ui.u_si.s_ce, SILOFS_STYPE_SPLEAF);
-	if (pqe != NULL) {
-		pqe->qe_u.sli = sli;
-	}
-	return pqe;
-}
-
-static struct silofs_pack_qelem *
-pqe_new_for_spnode(struct silofs_alloc *alloc, struct silofs_spnode_info *sni)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new(alloc, &sni->sn_ui.u_si.s_ce, SILOFS_STYPE_SPNODE);
-	if (pqe != NULL) {
-		pqe->qe_u.sni = sni;
-	}
-	return pqe;
-}
-
-static struct silofs_pack_qelem *
-pqe_new_for_sb(struct silofs_alloc *alloc, struct silofs_sb_info *sbi)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new(alloc, &sbi->sb_ui.u_si.s_ce, SILOFS_STYPE_SUPER);
-	if (pqe != NULL) {
-		pqe->qe_u.sbi = sbi;
-	}
-	return pqe;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void pqs_init(struct silofs_pack_queues *pqs,
-                     struct silofs_alloc *alloc)
-{
-	pqs->alloc = alloc;
-	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
-		listq_init(&pqs->pq[i]);
-	}
-}
-
-static void pqs_fini(struct silofs_pack_queues *pqs)
-{
-	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
-		listq_fini(&pqs->pq[i]);
-	}
-	pqs->alloc = NULL;
-}
-
-static void pqs_clear_at(struct silofs_pack_queues *pqs,
-                         struct silofs_listq *pq)
-{
-	struct silofs_list_head *lh;
-	struct silofs_pack_qelem *pqe;
-
-	lh = listq_pop_front(pq);
-	while (lh != NULL) {
-		pqe = qpe_from_lh(lh);
-		pqe_del(pqe, pqs->alloc);
-		lh = listq_pop_front(pq);
-	}
-}
-
-static struct silofs_listq *
-pqs_queue_of(struct silofs_pack_queues *pqs, enum silofs_height height)
-{
-	silofs_assert_ge(height, 0);
-	silofs_assert_lt(height, SILOFS_HEIGHT_LAST);
-
-	return &pqs->pq[height];
-}
-
-static void pqs_insert_by(struct silofs_pack_queues *pqs,
-                          struct silofs_pack_qelem *pqe,
-                          enum silofs_height height)
-{
-	struct silofs_listq *lq = pqs_queue_of(pqs, height);
-
-	listq_push_back(lq, &pqe->qe_lh);
-}
-
-static int pqs_insert_ubk(struct silofs_pack_queues *pqs,
-                          struct silofs_ubk_info *ubki)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new_for_ubk(pqs->alloc, ubki);
-	if (pqe == NULL) {
-		return -ENOMEM;
-	}
-	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_VDATA);
-	return 0;
-}
-
-static int pqs_insert_spleaf(struct silofs_pack_queues *pqs,
-                             struct silofs_spleaf_info *sli)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new_for_spleaf(pqs->alloc, sli);
-	if (pqe == NULL) {
-		return -ENOMEM;
-	}
-	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_SPLEAF);
-	return 0;
-}
-
-static int pqs_insert_spnode(struct silofs_pack_queues *pqs,
-                             struct silofs_spnode_info *sni,
-                             enum silofs_height height)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new_for_spnode(pqs->alloc, sni);
-	if (pqe == NULL) {
-		return -ENOMEM;
-	}
-	pqs_insert_by(pqs, pqe, height);
-	return 0;
-}
-
-static int pqs_insert_sb(struct silofs_pack_queues *pqs,
-                         struct silofs_sb_info *sbi)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new_for_sb(pqs->alloc, sbi);
-	if (pqe == NULL) {
-		return -ENOMEM;
-	}
-	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_SUPER);
-	return 0;
-}
-
-static void pqs_clear_by(struct silofs_pack_queues *pqs,
-                         enum silofs_height height)
-{
-	pqs_clear_at(pqs, pqs_queue_of(pqs, height));
-}
-
-static void pqs_clear_ubks(struct silofs_pack_queues *pqs)
-{
-	pqs_clear_by(pqs, SILOFS_HEIGHT_VDATA);
-}
-
-static void pqs_clear_spleafs(struct silofs_pack_queues *pqs)
-{
-	pqs_clear_by(pqs, SILOFS_HEIGHT_SPLEAF);
-}
-
-static void pqs_clear_spnodes2(struct silofs_pack_queues *pqs)
-{
-	pqs_clear_by(pqs, SILOFS_HEIGHT_SPNODE2);
-}
-
-static void pqs_clear_spnodes3(struct silofs_pack_queues *pqs)
-{
-	pqs_clear_by(pqs, SILOFS_HEIGHT_SPNODE3);
-}
-
-static void pqs_clear_spnodes4(struct silofs_pack_queues *pqs)
-{
-	pqs_clear_by(pqs, SILOFS_HEIGHT_SPNODE4);
-}
-
-static void pqs_clear_all(struct silofs_pack_queues *pqs)
-{
-	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
-		pqs_clear_at(pqs, &pqs->pq[i]);
-	}
-}
-
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -351,12 +111,13 @@ static int piov_set_at(struct silofs_pack_iovs *piov, size_t slot,
 	return 0;
 }
 
-static void piov_unset_at(struct silofs_pack_iovs *piov, size_t slot)
+static void piov_unset_at(struct silofs_pack_iovs *piov,
+                          struct silofs_alloc *alloc, size_t slot)
 {
 	struct iovec *iov = piov_iovec_at(piov, slot);
 
 	if (iov->iov_base != NULL) {
-		silofs_deallocate(piov->pi_alloc, iov->iov_base, iov->iov_len);
+		silofs_deallocate(alloc, iov->iov_base, iov->iov_len);
 		iov->iov_base = NULL;
 	}
 	iov->iov_len = 0;
@@ -368,11 +129,13 @@ static int piov_add_bk(struct silofs_pack_iovs *piov, size_t slot,
 	return piov_set_at(piov, slot, bk, sizeof(*bk));
 }
 
-static void piov_clear(struct silofs_pack_iovs *piov)
+static void piov_clear(struct silofs_pack_iovs *piov,
+                       struct silofs_alloc *alloc)
 {
 	for (size_t slot = 0; slot < piov->pi_cnt; ++slot) {
-		piov_unset_at(piov, slot);
+		piov_unset_at(piov, alloc, slot);
 	}
+	piov->pi_cnt = 0;
 }
 
 static struct silofs_pack_iovs *piov_new(struct silofs_alloc *alloc)
@@ -389,9 +152,328 @@ static struct silofs_pack_iovs *piov_new(struct silofs_alloc *alloc)
 static void piov_del(struct silofs_pack_iovs *piov,
                      struct silofs_alloc *alloc)
 {
-	piov_clear(piov);
+	piov_clear(piov, alloc);
 	piov_fini(piov);
 	silofs_deallocate(alloc, piov, sizeof(*piov));
+}
+
+static void piov_calc_blobid(const struct silofs_pack_iovs *piov,
+                             const struct silofs_mdigest *md,
+                             struct silofs_blobid *out_blobid)
+{
+	struct silofs_hash256 hash;
+	const size_t cnt = ARRAY_SIZE(piov->pi_iov);
+	const size_t len = cnt * SILOFS_BK_SIZE;
+
+	silofs_sha256_ofv(md, piov->pi_iov, cnt, &hash);
+	silofs_blobid_make_ca(out_blobid, &hash, len);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_pack_qelem *
+qpe_from_lh(const struct silofs_list_head *lh)
+{
+	const struct silofs_pack_qelem *pqe;
+
+	pqe = container_of2(lh, struct silofs_pack_qelem, pqe_lh);
+	return unconst(pqe);
+}
+
+static void pqe_init(struct silofs_pack_qelem *pqe,
+                     struct silofs_cache_elem *ce_ref,
+                     enum silofs_stype stype)
+{
+	list_head_init(&pqe->pqe_lh);
+	pqe->pqe_u.ptr = NULL;
+	pqe->pqe_ce_ref = ce_ref;
+	pqe->pqe_ubki = NULL;
+	pqe->pqe_stype = stype;
+	silofs_ce_incref(pqe->pqe_ce_ref);
+}
+
+static void pqe_fini(struct silofs_pack_qelem *pqe)
+{
+	silofs_ce_decref(pqe->pqe_ce_ref);
+	list_head_fini(&pqe->pqe_lh);
+	pqe->pqe_u.ptr = NULL;
+	pqe->pqe_ce_ref = NULL;
+	pqe->pqe_ubki = NULL;
+	pqe->pqe_stype = SILOFS_STYPE_NONE;
+}
+
+static struct silofs_pack_qelem *
+pqe_new(struct silofs_alloc *alloc,
+        struct silofs_cache_elem *ce_ref, enum silofs_stype stype)
+{
+	struct silofs_pack_qelem *pqe = NULL;
+
+	pqe = silofs_allocate(alloc, sizeof(*pqe));
+	if (pqe != NULL) {
+		pqe_init(pqe, ce_ref, stype);
+	}
+	return pqe;
+}
+
+static void pqe_del(struct silofs_pack_qelem *pqe, struct silofs_alloc *alloc)
+{
+	pqe_fini(pqe);
+	silofs_deallocate(alloc, pqe, sizeof(*pqe));
+}
+
+static struct silofs_pack_qelem *
+pqe_new_for_ubk(struct silofs_alloc *alloc, struct silofs_ubk_info *ubki)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new(alloc, &ubki->ubk_ce, SILOFS_STYPE_ANONBK);
+	if (pqe != NULL) {
+		pqe->pqe_u.ubki = ubki;
+		pqe->pqe_ubki = ubki;
+	}
+	return pqe;
+}
+
+static struct silofs_pack_qelem *
+pqe_new_for_spleaf(struct silofs_alloc *alloc, struct silofs_spleaf_info *sli)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new(alloc, &sli->sl_ui.u_si.s_ce, SILOFS_STYPE_SPLEAF);
+	if (pqe != NULL) {
+		pqe->pqe_u.sli = sli;
+		pqe->pqe_ubki = sli->sl_ui.u_ubki;
+	}
+	return pqe;
+}
+
+static struct silofs_pack_qelem *
+pqe_new_for_spnode(struct silofs_alloc *alloc, struct silofs_spnode_info *sni)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new(alloc, &sni->sn_ui.u_si.s_ce, SILOFS_STYPE_SPNODE);
+	if (pqe != NULL) {
+		pqe->pqe_u.sni = sni;
+		pqe->pqe_ubki = sni->sn_ui.u_ubki;
+	}
+	return pqe;
+}
+
+static struct silofs_pack_qelem *
+pqe_new_for_super(struct silofs_alloc *alloc, struct silofs_sb_info *sbi)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new(alloc, &sbi->sb_ui.u_si.s_ce, SILOFS_STYPE_SUPER);
+	if (pqe != NULL) {
+		pqe->pqe_u.sbi = sbi;
+		pqe->pqe_ubki = sbi->sb_ui.u_ubki;
+	}
+	return pqe;
+}
+
+static silofs_lba_t pqe_lba(const struct silofs_pack_qelem *pqe)
+{
+	return pqe->pqe_ubki->ubk_addr.lba;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void pqs_init(struct silofs_pack_queues *pqs,
+                     struct silofs_alloc *alloc)
+{
+	pqs->alloc = alloc;
+	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
+		listq_init(&pqs->pq[i]);
+	}
+}
+
+static void pqs_fini(struct silofs_pack_queues *pqs)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
+		listq_fini(&pqs->pq[i]);
+	}
+	pqs->alloc = NULL;
+}
+
+static void pqs_clear_at(struct silofs_pack_queues *pqs,
+                         struct silofs_listq *pq)
+{
+	struct silofs_list_head *lh;
+	struct silofs_pack_qelem *pqe;
+
+	lh = listq_pop_front(pq);
+	while (lh != NULL) {
+		pqe = qpe_from_lh(lh);
+		pqe_del(pqe, pqs->alloc);
+		lh = listq_pop_front(pq);
+	}
+}
+
+static struct silofs_listq *
+pqs_queue_of(const struct silofs_pack_queues *pqs, enum silofs_height height)
+{
+	const struct silofs_listq *lq = &pqs->pq[height];
+
+	silofs_assert_ge(height, 0);
+	silofs_assert_lt(height, SILOFS_HEIGHT_LAST);
+	silofs_assert_lt(height, ARRAY_SIZE(pqs->pq));
+
+	return unconst(lq);
+}
+
+static void pqs_insert_by(struct silofs_pack_queues *pqs,
+                          struct silofs_pack_qelem *pqe,
+                          enum silofs_height height)
+{
+	struct silofs_listq *lq = pqs_queue_of(pqs, height);
+
+	listq_push_back(lq, &pqe->pqe_lh);
+}
+
+static int pqs_insert_ubk(struct silofs_pack_queues *pqs,
+                          struct silofs_ubk_info *ubki)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new_for_ubk(pqs->alloc, ubki);
+	if (pqe == NULL) {
+		return -ENOMEM;
+	}
+	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_VDATA);
+	return 0;
+}
+
+static int pqs_insert_spleaf(struct silofs_pack_queues *pqs,
+                             struct silofs_spleaf_info *sli)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new_for_spleaf(pqs->alloc, sli);
+	if (pqe == NULL) {
+		return -ENOMEM;
+	}
+	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_SPLEAF);
+	return 0;
+}
+
+static int pqs_insert_spnode(struct silofs_pack_queues *pqs,
+                             struct silofs_spnode_info *sni,
+                             enum silofs_height height)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new_for_spnode(pqs->alloc, sni);
+	if (pqe == NULL) {
+		return -ENOMEM;
+	}
+	pqs_insert_by(pqs, pqe, height);
+	return 0;
+}
+
+static int pqs_insert_super(struct silofs_pack_queues *pqs,
+                            struct silofs_sb_info *sbi)
+{
+	struct silofs_pack_qelem *pqe;
+
+	pqe = pqe_new_for_super(pqs->alloc, sbi);
+	if (pqe == NULL) {
+		return -ENOMEM;
+	}
+	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_SUPER);
+	return 0;
+}
+
+static void pqs_clear_by(struct silofs_pack_queues *pqs,
+                         enum silofs_height height)
+{
+	pqs_clear_at(pqs, pqs_queue_of(pqs, height));
+}
+
+static void pqs_clear_ubks(struct silofs_pack_queues *pqs)
+{
+	pqs_clear_by(pqs, SILOFS_HEIGHT_VDATA);
+}
+
+static void pqs_clear_spleafs(struct silofs_pack_queues *pqs)
+{
+	pqs_clear_by(pqs, SILOFS_HEIGHT_SPLEAF);
+}
+
+static void pqs_clear_spnodes2(struct silofs_pack_queues *pqs)
+{
+	pqs_clear_by(pqs, SILOFS_HEIGHT_SPNODE2);
+}
+
+static void pqs_clear_spnodes3(struct silofs_pack_queues *pqs)
+{
+	pqs_clear_by(pqs, SILOFS_HEIGHT_SPNODE3);
+}
+
+static void pqs_clear_spnodes4(struct silofs_pack_queues *pqs)
+{
+	pqs_clear_by(pqs, SILOFS_HEIGHT_SPNODE4);
+}
+
+static void pqs_clear_all(struct silofs_pack_queues *pqs)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(pqs->pq); ++i) {
+		pqs_clear_at(pqs, &pqs->pq[i]);
+	}
+}
+
+static struct silofs_block *
+new_enc_ubk(struct silofs_alloc *alloc, const struct silofs_cipher *cipher,
+            const struct silofs_kivam *kivam, const struct silofs_block *ubk)
+{
+	struct silofs_block *enc_ubk = NULL;
+	const size_t bk_size = sizeof(*enc_ubk);
+
+	enc_ubk = silofs_allocate(alloc, bk_size);
+	if (enc_ubk == NULL) {
+		return NULL;
+	}
+	silofs_encrypt_buf(cipher, kivam, ubk, enc_ubk, bk_size);
+	return enc_ubk;
+}
+
+static int pqs_make_enc_piov(struct silofs_pack_queues *pqs,
+                             struct silofs_alloc *alloc,
+                             const struct silofs_cipher *cipher,
+                             const struct silofs_kivam *kivam,
+                             enum silofs_height height,
+                             struct silofs_pack_iovs *piov)
+{
+	const struct silofs_list_head *lh;
+	const struct silofs_pack_qelem *pqe;
+	const struct silofs_block *ubk = NULL;
+	struct silofs_block *enc_ubk = NULL;
+	const struct silofs_listq *pq = pqs_queue_of(pqs, height);
+	struct iovec *iov;
+	size_t slot;
+
+	silofs_assert_le(pq->sz, ARRAY_SIZE(piov->pi_iov));
+
+	for (lh = listq_front(pq); lh != NULL; lh = listq_next(pq, lh)) {
+		pqe = qpe_from_lh(lh);
+		ubk = pqe->pqe_ubki->ubk;
+		enc_ubk = new_enc_ubk(alloc, cipher, kivam, ubk);
+		if (enc_ubk == NULL) {
+			piov_clear(piov, pqs->alloc);
+			return -ENOMEM;
+		}
+
+		slot = (size_t)pqe_lba(pqe) % ARRAY_SIZE(piov->pi_iov);
+		silofs_assert_eq(slot, piov->pi_cnt);
+		silofs_assert_null(piov->pi_iov[slot].iov_base);
+
+		iov = piov_iovec_at(piov, slot);
+		iov->iov_base = enc_ubk;
+		iov->iov_len = sizeof(*enc_ubk);
+		piov->pi_cnt++;
+	}
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -683,7 +765,6 @@ static int pac_start(struct silofs_pack_ctx *pa_ctx)
 {
 	int err;
 
-	pqs_init(&pa_ctx->pqs, pa_ctx->alloc);
 	pac_uil_init(pa_ctx);
 	pac_bind_to(pa_ctx, NULL);
 	err = pac_init_tmp_bk(pa_ctx);
@@ -699,6 +780,7 @@ static int pac_start(struct silofs_pack_ctx *pa_ctx)
 		goto out_err;
 	}
 	pac_setup_dst_bsec(pa_ctx);
+	pqs_init(&pa_ctx->pqs, pa_ctx->alloc);
 	return 0;
 out_err:
 	pac_fini_tmp_bk(pa_ctx);
@@ -708,14 +790,14 @@ out_err:
 
 static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
 {
+	pqs_clear_all(&pa_ctx->pqs);
+	pqs_fini(&pa_ctx->pqs);
 	pac_bind_to(pa_ctx, NULL);
 	pac_fini_crypto(pa_ctx);
 	pac_fini_piov(pa_ctx);
 	pac_fini_tmp_bk(pa_ctx);
 	pac_uil_clear(pa_ctx);
 	pac_uil_fini(pa_ctx);
-	pqs_clear_all(&pa_ctx->pqs);
-	pqs_fini(&pa_ctx->pqs);
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
 }
 
@@ -754,13 +836,6 @@ pac_mdigest(const struct silofs_pack_ctx *pa_ctx)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void pac_seal_meta_of(const struct silofs_pack_ctx *pa_ctx,
-                             const struct silofs_unode_info *ui)
-{
-	silofs_unused(pa_ctx);
-	silofs_fill_csum_meta(ui->u_si.s_view);
-}
 
 static int pac_verify_meta_of(const struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_unode_info *ui)
@@ -969,7 +1044,6 @@ static int pac_repack_unode(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_block *enc_bk = pa_ctx->tbk;
 	int err;
 
-	pac_seal_meta_of(pa_ctx, ui);
 	err = pac_encrypt_bk(pa_ctx, ui_block(ui), enc_bk);
 	if (err) {
 		return err;
@@ -1109,7 +1183,7 @@ static int pac_archive_exec_at_sb(struct silofs_pack_ctx *pa_ctx,
 	silofs_assert(stype_issuper(spit->stype));
 	silofs_assert_eq(spit->height, SILOFS_HEIGHT_SUPER);
 
-	return pqs_insert_sb(&pa_ctx->pqs, spit->sbi);
+	return pqs_insert_super(&pa_ctx->pqs, spit->sbi);
 }
 
 static int pac_archive_exec_at(struct silofs_pack_ctx *pa_ctx,
@@ -1156,26 +1230,53 @@ static int pac_repack_spleaf_at(struct silofs_pack_ctx *pa_ctx,
 	                        spit->slot, &spit->sli->sl_ui);
 }
 
+static int pac_resolve_save_ubks_blob(struct silofs_pack_ctx *pa_ctx,
+                                      struct silofs_blobid *out_blobid)
+{
+	struct silofs_pack_queues *pqs = &pa_ctx->pqs;
+	struct silofs_pack_iovs *piov;
+	int err;
+
+	piov = piov_new(pa_ctx->alloc);
+	if (piov == NULL) {
+		return -ENOMEM;
+	}
+	err = pqs_make_enc_piov(pqs, pa_ctx->alloc, pac_cipher(pa_ctx),
+	                        pa_ctx->kivam, SILOFS_HEIGHT_VDATA, piov);
+	if (err) {
+		goto out;
+	}
+	piov_calc_blobid(piov, pac_mdigest(pa_ctx), out_blobid);
+
+	err = pac_save_blob_of(pa_ctx, out_blobid, piov);
+	if (err) {
+		goto out;
+	}
+out:
+	piov_clear(piov, pa_ctx->alloc);
+	piov_del(piov, pa_ctx->alloc);
+	return err;
+}
+
+
 static int pac_archive_post_at_spleaf(struct silofs_pack_ctx *pa_ctx,
                                       const struct silofs_space_iter *spit)
 {
 	struct silofs_blobid blobid;
 	int err;
 
-	silofs_assert_not_null(spit->sli);
-	silofs_assert(stype_isspleaf(spit->stype));
-
-	err = pac_resolve_save_blob(pa_ctx, spit->sli->sl_ui.u_piov, &blobid);
+	err = pac_resolve_save_ubks_blob(pa_ctx, &blobid);
 	if (err) {
 		return err;
 	}
+	pqs_clear_ubks(&pa_ctx->pqs);
+
 	silofs_sli_bind_pack_blob(spit->sli, &blobid);
 
 	err = pac_repack_spleaf_at(pa_ctx, spit);
 	if (err) {
 		return err;
 	}
-	pqs_clear_ubks(&pa_ctx->pqs);
 	return 0;
 }
 
@@ -1199,6 +1300,7 @@ static int pac_archive_post_at_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
+
 	silofs_sni_bind_pack_blob(spit->sni2, &blobid);
 
 	err = pac_repack_spnode2_at(pa_ctx, spit);
@@ -1229,6 +1331,7 @@ static int pac_archive_post_at_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
+
 	silofs_sni_bind_pack_blob(spit->sni3, &blobid);
 
 	err = pac_repack_spnode3_at(pa_ctx, spit);
@@ -1262,6 +1365,7 @@ static int pac_archive_post_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
+
 	silofs_sni_bind_pack_blob(spit->sni4, &blobid);
 
 	err = pac_repack_spnode4_at(pa_ctx, spit);
@@ -1272,8 +1376,8 @@ static int pac_archive_post_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_archive_post_at_sb(struct silofs_pack_ctx *pa_ctx,
-                                  const struct silofs_space_iter *spit)
+static int pac_archive_post_at_super(struct silofs_pack_ctx *pa_ctx,
+                                     const struct silofs_space_iter *spit)
 {
 	struct silofs_blobid blobid;
 	const struct silofs_unode_info *ui = &spit->sbi->sb_ui;
@@ -1284,7 +1388,8 @@ static int pac_archive_post_at_sb(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_pack_blobid(spit->sbi, spit->vspace, &blobid);
+
+	silofs_sbi_bind_pack_blob(spit->sbi, spit->vspace, &blobid);
 
 	err = pac_repack_unode(pa_ctx, pa_ctx->piov,
 	                       spit->slot, &spit->sbi->sb_ui);
@@ -1314,7 +1419,7 @@ static int pac_archive_post_at(struct silofs_pack_ctx *pa_ctx,
 		err = pac_archive_post_at_spnode4(pa_ctx, spit);
 		break;
 	case SILOFS_HEIGHT_SUPER:
-		err = pac_archive_post_at_sb(pa_ctx, spit);
+		err = pac_archive_post_at_super(pa_ctx, spit);
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
@@ -1468,7 +1573,6 @@ static int pac_save_super_as_unpack(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = pa_ctx->sbi;
 
-	pac_seal_meta_of(pa_ctx, &sbi->sb_ui);
 	return pac_save_unode(pa_ctx, &sbi->sb_ui);
 }
 

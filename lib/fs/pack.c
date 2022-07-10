@@ -21,7 +21,7 @@
 
 union silofs_pack_qelem_u {
 	struct silofs_sb_info          *sbi;
-	struct silofs_spstats_info     *spi;
+	struct silofs_spstats_info     *spsti;
 	struct silofs_spnode_info      *sni;
 	struct silofs_spleaf_info      *sli;
 	struct silofs_ubk_info         *ubki;
@@ -151,19 +151,6 @@ pqe_new_for_spnode(struct silofs_alloc *alloc, struct silofs_spnode_info *sni)
 }
 
 static struct silofs_pack_qelem *
-pqe_new_for_spstats(struct silofs_alloc *alloc,
-                    struct silofs_spstats_info *spi)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new(alloc, &spi->sp_ui.u_si.s_ce, SILOFS_STYPE_SPSTATS);
-	if (pqe != NULL) {
-		pqe->qe_u.spi = spi;
-	}
-	return pqe;
-}
-
-static struct silofs_pack_qelem *
 pqe_new_for_sb(struct silofs_alloc *alloc, struct silofs_sb_info *sbi)
 {
 	struct silofs_pack_qelem *pqe;
@@ -263,19 +250,6 @@ static int pqs_insert_spnode(struct silofs_pack_queues *pqs,
 		return -ENOMEM;
 	}
 	pqs_insert_by(pqs, pqe, height);
-	return 0;
-}
-
-static int pqs_insert_spstats(struct silofs_pack_queues *pqs,
-                              struct silofs_spstats_info *spi)
-{
-	struct silofs_pack_qelem *pqe;
-
-	pqe = pqe_new_for_spstats(pqs->alloc, spi);
-	if (pqe == NULL) {
-		return -ENOMEM;
-	}
-	pqs_insert_by(pqs, pqe, SILOFS_HEIGHT_SUPER);
 	return 0;
 }
 
@@ -693,16 +667,13 @@ static void pac_setup_dst_bsec(struct silofs_pack_ctx *pa_ctx)
 }
 
 static void pac_bind_to(struct silofs_pack_ctx *pa_ctx,
-                        struct silofs_sb_info *sbi,
-                        struct silofs_spstats_info *spi)
+                        struct silofs_sb_info *sbi)
 {
 	if (pa_ctx->sbi != NULL) {
-		silofs_sbi_bind_stats(pa_ctx->sbi, NULL);
 		silofs_sbi_decref(pa_ctx->sbi);
 		pa_ctx->sbi = NULL;
 	}
 	if (sbi != NULL) {
-		silofs_sbi_bind_stats(sbi, spi);
 		silofs_sbi_incref(sbi);
 		pa_ctx->sbi = sbi;
 	}
@@ -714,7 +685,7 @@ static int pac_start(struct silofs_pack_ctx *pa_ctx)
 
 	pqs_init(&pa_ctx->pqs, pa_ctx->alloc);
 	pac_uil_init(pa_ctx);
-	pac_bind_to(pa_ctx, NULL, NULL);
+	pac_bind_to(pa_ctx, NULL);
 	err = pac_init_tmp_bk(pa_ctx);
 	if (err) {
 		goto out_err;
@@ -737,7 +708,7 @@ out_err:
 
 static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
 {
-	pac_bind_to(pa_ctx, NULL, NULL);
+	pac_bind_to(pa_ctx, NULL);
 	pac_fini_crypto(pa_ctx);
 	pac_fini_piov(pa_ctx);
 	pac_fini_tmp_bk(pa_ctx);
@@ -1131,16 +1102,6 @@ static int pac_archive_exec_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 	return pqs_insert_spnode(&pa_ctx->pqs, spit->sni4, spit->height);
 }
 
-static int pac_archive_exec_at_spstats(struct silofs_pack_ctx *pa_ctx,
-                                       const struct silofs_space_iter *spit)
-{
-	silofs_assert_not_null(spit->spi);
-	silofs_assert(stype_isspstats(spit->stype));
-	silofs_assert_eq(spit->height, SILOFS_HEIGHT_SUPER);
-
-	return pqs_insert_spstats(&pa_ctx->pqs, spit->spi);
-}
-
 static int pac_archive_exec_at_sb(struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_space_iter *spit)
 {
@@ -1149,21 +1110,6 @@ static int pac_archive_exec_at_sb(struct silofs_pack_ctx *pa_ctx,
 	silofs_assert_eq(spit->height, SILOFS_HEIGHT_SUPER);
 
 	return pqs_insert_sb(&pa_ctx->pqs, spit->sbi);
-}
-
-static int pac_archive_exec_at_super(struct silofs_pack_ctx *pa_ctx,
-                                     const struct silofs_space_iter *spit)
-{
-	int err;
-
-	if (spit->spi && stype_isspstats(spit->stype)) {
-		err = pac_archive_exec_at_spstats(pa_ctx, spit);
-	} else if (spit->sbi && stype_issuper(spit->stype)) {
-		err = pac_archive_exec_at_sb(pa_ctx, spit);
-	} else {
-		err = -SILOFS_EFSCORRUPTED;
-	}
-	return err;
 }
 
 static int pac_archive_exec_at(struct silofs_pack_ctx *pa_ctx,
@@ -1191,7 +1137,7 @@ static int pac_archive_exec_at(struct silofs_pack_ctx *pa_ctx,
 		err = pac_archive_exec_at_spnode4(pa_ctx, spit);
 		break;
 	case SILOFS_HEIGHT_SUPER:
-		err = pac_archive_exec_at_super(pa_ctx, spit);
+		err = pac_archive_exec_at_sb(pa_ctx, spit);
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
@@ -1326,14 +1272,6 @@ static int pac_archive_post_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_archive_post_at_spstats(struct silofs_pack_ctx *pa_ctx,
-                                       const struct silofs_space_iter *spit)
-{
-	silofs_assert_eq(spit->slot, 1);
-	return pac_repack_unode(pa_ctx, pa_ctx->piov,
-	                        spit->slot, &spit->spi->sp_ui);
-}
-
 static int pac_archive_post_at_sb(struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_space_iter *spit)
 {
@@ -1357,21 +1295,6 @@ static int pac_archive_post_at_sb(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_archive_post_at_super(struct silofs_pack_ctx *pa_ctx,
-                                     const struct silofs_space_iter *spit)
-{
-	int err;
-
-	if (spit->spi && stype_isspstats(spit->stype)) {
-		err = pac_archive_post_at_spstats(pa_ctx, spit);
-	} else if (spit->sbi && stype_issuper(spit->stype)) {
-		err = pac_archive_post_at_sb(pa_ctx, spit);
-	} else {
-		err = -SILOFS_EFSCORRUPTED;
-	}
-	return err;
-}
-
 static int pac_archive_post_at(struct silofs_pack_ctx *pa_ctx,
                                const struct silofs_space_iter *spit)
 {
@@ -1391,7 +1314,7 @@ static int pac_archive_post_at(struct silofs_pack_ctx *pa_ctx,
 		err = pac_archive_post_at_spnode4(pa_ctx, spit);
 		break;
 	case SILOFS_HEIGHT_SUPER:
-		err = pac_archive_post_at_super(pa_ctx, spit);
+		err = pac_archive_post_at_sb(pa_ctx, spit);
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
@@ -1437,33 +1360,9 @@ static int pac_stage_super(const struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_stage_stats(const struct silofs_pack_ctx *pa_ctx,
-                           struct silofs_sb_info *sbi,
-                           struct silofs_spstats_info **out_spi)
-{
-	struct silofs_uaddr uaddr;
-	int err;
-
-	sbi_incref(sbi);
-	err = silofs_sbi_stats_uaddr(sbi, &uaddr);
-	if (err) {
-		goto out;
-	}
-	err = silofs_stage_stats_at(pa_ctx->uber, pa_ctx->pack,
-	                            &uaddr, out_spi);
-	if (err) {
-		goto out;
-	}
-	silofs_spi_bind_uber(*out_spi, pa_ctx->uber);
-out:
-	sbi_decref(sbi);
-	return err;
-}
-
 static int pac_stage_supers(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstats_info *spi = NULL;
 	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
 	int err;
 
@@ -1471,11 +1370,7 @@ static int pac_stage_supers(struct silofs_pack_ctx *pa_ctx)
 	if (err) {
 		return err;
 	}
-	err = pac_stage_stats(pa_ctx, sbi, &spi);
-	if (err) {
-		return err;
-	}
-	pac_bind_to(pa_ctx, sbi, spi);
+	pac_bind_to(pa_ctx, sbi);
 	return 0;
 }
 
@@ -1543,51 +1438,16 @@ static int pac_shadow_super(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_shadow_stats(struct silofs_pack_ctx *pa_ctx,
-                            struct silofs_sb_info *sbi,
-                            struct silofs_spstats_info **out_spi)
-{
-	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_fs_uber *uber = pa_ctx->uber;
-	const struct silofs_bootsec *bsec = pa_ctx->src_bsec;
-	struct silofs_spstats_info *spi = NULL;
-	int err;
-
-	sbi_incref(sbi);
-	err = silofs_sbi_stats_uaddr(sbi, &uaddr);
-	if (err) {
-		goto out;
-	}
-	err = silofs_shadow_stats_at(uber, pa_ctx->pack, &uaddr, &spi);
-	if (err) {
-		goto out;
-	}
-	err = pac_refill_unode(pa_ctx, &bsec->sb_blobid, 1, &spi->sp_ui);
-	if (err) {
-		return err;
-	}
-	silofs_spi_bind_uber(spi, uber);
-out:
-	sbi_decref(sbi);
-	*out_spi = spi;
-	return err;
-}
-
 static int pac_shadow_supers(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = NULL;
-	struct silofs_spstats_info *spi = NULL;
 	int err;
 
 	err = pac_shadow_super(pa_ctx, &sbi);
 	if (err) {
 		return err;
 	}
-	err = pac_shadow_stats(pa_ctx, sbi, &spi);
-	if (err) {
-		return err;
-	}
-	pac_bind_to(pa_ctx, sbi, spi);
+	pac_bind_to(pa_ctx, sbi);
 	return 0;
 }
 
@@ -1604,19 +1464,6 @@ static int pac_save_supers_as_pack(struct silofs_pack_ctx *pa_ctx)
 	return 0;
 }
 
-static int pac_save_stats_as_unpack(struct silofs_pack_ctx *pa_ctx)
-{
-	struct silofs_spstats_info *spi = pa_ctx->sbi->sb_spi;
-	int err;
-
-	pac_seal_meta_of(pa_ctx, &spi->sp_ui);
-	err = pac_save_unode(pa_ctx, &spi->sp_ui);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int pac_save_super_as_unpack(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = pa_ctx->sbi;
@@ -1629,10 +1476,6 @@ static int pac_save_supers_as_unpack(struct silofs_pack_ctx *pa_ctx)
 {
 	int err;
 
-	err = pac_save_stats_as_unpack(pa_ctx);
-	if (err) {
-		return err;
-	}
 	err = pac_save_super_as_unpack(pa_ctx);
 	if (err) {
 		return err;

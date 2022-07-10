@@ -107,7 +107,6 @@
 #define stype_isequal(st1, st2)         silofs_stype_isequal(st1, st2)
 #define stype_isnone(st)                silofs_stype_isnone(st)
 #define stype_issuper(st)               silofs_stype_issuper(st)
-#define stype_isspstats(st)             silofs_stype_isspstats(st)
 #define stype_isspnode(st)              silofs_stype_isspnode(st)
 #define stype_isspleaf(st)              silofs_stype_isspleaf(st)
 #define stype_isunode(st)               silofs_stype_isunode(st)
@@ -170,9 +169,6 @@
 #define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)
-
-#define spi_incref(spi)                 silofs_spi_incref(spi)
-#define spi_decref(spi)                 silofs_spi_decref(spi)
 
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)

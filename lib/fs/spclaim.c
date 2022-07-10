@@ -69,7 +69,6 @@ sbi_vspa_by_stype(const struct silofs_sb_info *sbi, enum silofs_stype stype)
 	case SILOFS_STYPE_SYMVAL:
 		return &sbi->sb_vspa.symval;
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
@@ -112,7 +111,7 @@ static void sbi_set_voff_last_of(struct silofs_sb_info *sbi,
 
 static loff_t sbi_vspace_end(const struct silofs_sb_info *sbi)
 {
-	return silofs_spi_vspace_end(sbi->sb_spi);
+	return silofs_spsti_vspace_end(&sbi->sb_spsti);
 }
 
 static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
@@ -135,8 +134,8 @@ static void sbi_update_space_stats(struct silofs_sb_info *sbi,
                                    const struct silofs_vaddr *vaddr,
                                    ssize_t nobjs_take, ssize_t nbks_take)
 {
-	silofs_spi_update_objs(sbi->sb_spi, vaddr->stype, nobjs_take);
-	silofs_spi_update_bks(sbi->sb_spi, vaddr->stype, nbks_take);
+	silofs_spsti_update_objs(&sbi->sb_spsti, vaddr->stype, nobjs_take);
+	silofs_spsti_update_bks(&sbi->sb_spsti, vaddr->stype, nbks_take);
 }
 
 static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
@@ -376,18 +375,18 @@ spac_require_unalloc_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 
 static int spac_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	const struct silofs_spstats_info *sti = spa_ctx->sbi->sb_spi;
+	const struct silofs_spstats_info *spsti = &spa_ctx->sbi->sb_spsti;
 	const size_t nb = stype_size(spa_ctx->stype);
 	bool new_file;
 	bool ok;
 
-	ok = silofs_spi_mayalloc_some(sti, nb);
+	ok = silofs_spsti_mayalloc_some(spsti, nb);
 	if (ok) {
 		if (stype_isdata(spa_ctx->stype)) {
-			ok = silofs_spi_mayalloc_data(sti, nb);
+			ok = silofs_spsti_mayalloc_data(spsti, nb);
 		} else {
 			new_file = stype_isinode(spa_ctx->stype);
-			ok = silofs_spi_mayalloc_meta(sti, nb, new_file);
+			ok = silofs_spsti_mayalloc_meta(spsti, nb, new_file);
 		}
 	}
 	return ok ? 0 : -ENOSPC;

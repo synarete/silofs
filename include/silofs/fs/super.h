@@ -43,19 +43,13 @@ void silofs_sbi_setup_btime(struct silofs_sb_info *sbi);
 void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
 
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_spstats_info *spi);
+                           struct silofs_spstats_info *spsti);
 
 void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
                           struct silofs_fs_uber *uber);
 
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
-
-int silofs_sbi_stats_uaddr(const struct silofs_sb_info *sbi,
-                           struct silofs_uaddr *out_uaddr);
-
-void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
-                                const struct silofs_uaddr *uaddr);
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          enum silofs_stype vstype,

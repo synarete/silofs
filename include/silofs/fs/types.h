@@ -347,7 +347,6 @@ struct silofs_spacestat_rec {
 	size_t ndata4k;
 	size_t ndatabk;
 	size_t nsuper;
-	size_t nspstats;
 	size_t nspnode;
 	size_t nspleaf;
 	size_t nitnode;
@@ -399,10 +398,10 @@ struct silofs_inomap {
 };
 
 /* inodes-table reference */
-struct silofs_itable {
+struct silofs_itable_info {
 	struct silofs_inomap    it_inomap;
-	struct silofs_vaddr     it_rootitbl;
-	struct silofs_iaddr     it_rootdir;
+	struct silofs_vaddr     it_root_itb;
+	struct silofs_iaddr     it_root_dir;
 	ino_t  it_uber_ino;
 	size_t it_ninodes;
 	size_t it_ninodes_max;

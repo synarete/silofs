@@ -2015,7 +2015,7 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 {
 	struct silofs_spacestats spst;
 
-	silofs_spi_collect_stats(sbi->sb_spi, &spst);
+	silofs_spsti_collect_stats(&sbi->sb_spsti, &spst);
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
@@ -2046,7 +2046,7 @@ static int do_statvfs(const struct silofs_fs_ctx *fs_ctx,
 {
 	const struct silofs_sb_info *sbi = ii_sbi(ii);
 
-	silofs_spi_fill_statvfs(sbi->sb_spi, out_stv);
+	silofs_spsti_fill_statvfs(&sbi->sb_spsti, out_stv);
 	unused(fs_ctx);
 	return 0;
 }

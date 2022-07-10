@@ -205,10 +205,6 @@ void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
 
-void silofs_spi_incref(struct silofs_spstats_info *spi);
-
-void silofs_spi_decref(struct silofs_spstats_info *spi);
-
 void silofs_vbki_incref(struct silofs_vbk_info *vbki);
 
 void silofs_vbki_decref(struct silofs_vbk_info *vbki);

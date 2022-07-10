@@ -396,7 +396,7 @@ bool silofs_ii_issock(const struct silofs_inode_info *ii)
 
 static ino_t rootd_ino(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_itbl.it_rootdir.ino;
+	return sbi->sb_itbi.it_root_dir.ino;
 }
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii)

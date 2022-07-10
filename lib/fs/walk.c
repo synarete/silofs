@@ -24,7 +24,7 @@ struct silofs_walk_ctx {
 	struct silofs_visitor      *vis;
 	struct silofs_fs_uber      *uber;
 	struct silofs_sb_info      *sbi;
-	struct silofs_spstats_info *spi;
+	struct silofs_spstats_info *spsti;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;
@@ -42,7 +42,7 @@ struct silofs_walk_ctx {
 static void sbi_vrange(const struct silofs_sb_info *sbi,
                        struct silofs_vrange *out_vrange)
 {
-	const loff_t voff_end = silofs_spi_vspace_end(sbi->sb_spi);
+	const loff_t voff_end = silofs_spsti_vspace_end(&sbi->sb_spsti);
 
 	silofs_vrange_setup(out_vrange, SILOFS_HEIGHT_SUPER, 0, voff_end);
 }
@@ -63,7 +63,6 @@ static loff_t vrange_voff_at(const struct silofs_vrange *vrange, size_t slot)
 static void spit_increfs(const struct silofs_space_iter *spit)
 {
 	sbi_incref(spit->sbi);
-	spi_incref(spit->spi);
 	sni_incref(spit->sni4);
 	sni_incref(spit->sni3);
 	sni_incref(spit->sni2);
@@ -82,7 +81,6 @@ static void spit_decrefs(const struct silofs_space_iter *spit)
 	sni_decref(spit->sni2);
 	sni_decref(spit->sni3);
 	sni_decref(spit->sni4);
-	spi_decref(spit->spi);
 	sbi_decref(spit->sbi);
 }
 
@@ -96,7 +94,7 @@ static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
 {
 	silofs_memzero(spit, sizeof(*spit));
 	spit->sbi = wa_ctx->sbi;
-	spit->spi = wa_ctx->spi;
+	spit->spsti = wa_ctx->spsti;
 	spit->sni4 = wa_ctx->sni4;
 	spit->sni3 = wa_ctx->sni3;
 	spit->sni2 = wa_ctx->sni2;
@@ -246,28 +244,6 @@ static int wac_visit_post_at_super(const struct silofs_walk_ctx *wa_ctx)
 	wac_setup_space_iter(wa_ctx, &spit,
 	                     SILOFS_STYPE_SUPER,
 	                     NULL, sbi_ui, 0);
-	return wac_visit_post_at(wa_ctx, &spit);
-}
-
-static int wac_visit_exec_at_spstats(const struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_space_iter spit;
-	struct silofs_unode_info *spi_ui = &wa_ctx->spi->sp_ui;
-
-	wac_setup_space_iter(wa_ctx, &spit,
-	                     SILOFS_STYPE_SPSTATS,
-	                     NULL, spi_ui, 1);
-	return wac_visit_exec_at(wa_ctx, &spit);
-}
-
-static int wac_visit_post_at_spstats(const struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_space_iter spit;
-	struct silofs_unode_info *spi_ui = &wa_ctx->spi->sp_ui;
-
-	wac_setup_space_iter(wa_ctx, &spit,
-	                     SILOFS_STYPE_SPSTATS,
-	                     NULL, spi_ui, 1);
 	return wac_visit_post_at(wa_ctx, &spit);
 }
 
@@ -876,15 +852,7 @@ static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
 	if (err) {
 		return err;
 	}
-	err = wac_visit_exec_at_spstats(wa_ctx);
-	if (err) {
-		return err;
-	}
 	err = wac_traverse_space_trees(wa_ctx);
-	if (err) {
-		return err;
-	}
-	err = wac_visit_post_at_spstats(wa_ctx);
 	if (err) {
 		return err;
 	}
@@ -919,7 +887,7 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 		.vis = vis,
 		.uber = sbi_uber(sbi),
 		.sbi = sbi,
-		.spi = sbi->sb_spi,
+		.spsti = &sbi->sb_spsti,
 		.sni4 = NULL,
 		.sni3 = NULL,
 		.sni2 = NULL,

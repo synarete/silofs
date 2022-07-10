@@ -290,7 +290,6 @@ bool silofs_stype_isunode(enum silofs_stype stype)
 
 	switch (stype) {
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 		ret = true;
@@ -331,7 +330,6 @@ bool silofs_stype_isvnode(enum silofs_stype stype)
 		ret = true;
 		break;
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
@@ -356,7 +354,6 @@ bool silofs_stype_isdata(enum silofs_stype stype)
 		break;
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ITNODE:
@@ -379,8 +376,6 @@ size_t silofs_stype_size(enum silofs_stype stype)
 	switch (stype) {
 	case SILOFS_STYPE_SUPER:
 		return sizeof(struct silofs_super_block);
-	case SILOFS_STYPE_SPSTATS:
-		return sizeof(struct silofs_spstats_node);
 	case SILOFS_STYPE_SPNODE:
 		return sizeof(struct silofs_spmap_node);
 	case SILOFS_STYPE_SPLEAF:

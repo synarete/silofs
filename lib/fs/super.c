@@ -156,23 +156,6 @@ static void sb_generate_treeid(struct silofs_super_block *sb)
 	sb_set_treeid(sb, &treeid);
 }
 
-static void sb_stats_uaddr(const struct silofs_super_block *sb,
-                           struct silofs_uaddr *out_uaddr)
-{
-	silofs_uaddr64b_parse(&sb->sb_stats_uaddr, out_uaddr);
-}
-
-static void sb_set_stats_uaddr(struct silofs_super_block *sb,
-                               const struct silofs_uaddr *uaddr)
-{
-	silofs_uaddr64b_set(&sb->sb_stats_uaddr, uaddr);
-}
-
-static void sb_reset_stats_uaddr(struct silofs_super_block *sb)
-{
-	sb_set_stats_uaddr(sb, silofs_uaddr_none());
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_blobid40b *
@@ -200,7 +183,6 @@ sb_mainblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_LAST:
@@ -282,7 +264,6 @@ sb_packblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_LAST:
@@ -364,7 +345,6 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPSTATS:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_LAST:
@@ -447,7 +427,6 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_set_swversion(sb, silofs_version.string);
 	sb_generate_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
-	sb_reset_stats_uaddr(sb);
 	sb_reset_sproots(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobids(sb);
@@ -556,6 +535,10 @@ int silofs_verify_super_block(const struct silofs_super_block *sb)
 		return err;
 	}
 	err = verify_sb_sproots(sb);
+	if (err) {
+		return err;
+	}
+	err = silofs_verify_space_stats(&sb->sb_space_stats);
 	if (err) {
 		return err;
 	}
@@ -670,7 +653,7 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 	const struct silofs_fs_uber *uber = sbi_uber(sbi);
 
 	log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
-	silofs_itbl_reinit(&sbi->sb_itbl);
+	silofs_itbi_reinit(&sbi->sb_itbi);
 	return 0;
 }
 
@@ -1269,12 +1252,18 @@ static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 	sb_set_vrange(sbi->sb, &vrange);
 }
 
+static void sbi_setup_spstats(struct silofs_sb_info *sbi)
+{
+	silofs_spsti_setup_spawned(&sbi->sb_spsti, sbi);
+}
+
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 {
 	sbi_zero_stamp_view(sbi);
 	sb_init(sbi->sb);
 	sb_set_self(sbi->sb, sbi_uaddr(sbi));
 	sb_setup_fresh(sbi->sb);
+	sbi_setup_spstats(sbi);
 	sbi_assign_vspace_span(sbi);
 	sbi_dirtify(sbi);
 }
@@ -1291,20 +1280,6 @@ void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi)
 	sbi_dirtify(sbi);
 }
 
-int silofs_sbi_stats_uaddr(const struct silofs_sb_info *sbi,
-                           struct silofs_uaddr *out_uaddr)
-{
-	sb_stats_uaddr(sbi->sb, out_uaddr);
-	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
-}
-
-void silofs_sbi_set_stats_uaddr(struct silofs_sb_info *sbi,
-                                const struct silofs_uaddr *uaddr)
-{
-	sb_set_stats_uaddr(sbi->sb, uaddr);
-	sbi_dirtify(sbi);
-}
-
 static void ucred_copyto(const struct silofs_ucred *ucred,
                          struct silofs_ucred *other)
 {
@@ -1315,7 +1290,7 @@ static void sbi_update_by(struct silofs_sb_info *sbi,
                           const struct silofs_sb_info *sbi_other)
 {
 	ucred_copyto(&sbi_other->sb_owner, &sbi->sb_owner);
-	silofs_itbl_update_by(&sbi->sb_itbl, &sbi_other->sb_itbl);
+	silofs_itbi_update_by(&sbi->sb_itbi, &sbi_other->sb_itbi);
 	sbi->sb_ctl_flags = sbi_other->sb_ctl_flags;
 	sbi->sb_ms_flags = sbi_other->sb_ms_flags;
 }
@@ -1340,33 +1315,12 @@ void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
 
 int silofs_sbi_xinit(struct silofs_sb_info *sbi, struct silofs_alloc *alloc)
 {
-	int err;
-
-	sbi->sb_spi = NULL;
-	err = silofs_itbl_init(&sbi->sb_itbl, alloc);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_itbi_init(&sbi->sb_itbi, alloc);
 }
 
 void silofs_sbi_xfini(struct silofs_sb_info *sbi)
 {
-	silofs_itbl_fini(&sbi->sb_itbl);
-	silofs_sbi_bind_stats(sbi, NULL);
-}
-
-void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
-                           struct silofs_spstats_info *spi)
-{
-	if (sbi->sb_spi != NULL) {
-		spi_decref(sbi->sb_spi);
-		sbi->sb_spi = NULL;
-	}
-	if (spi != NULL) {
-		spi_incref(spi);
-		sbi->sb_spi = spi;
-	}
+	silofs_itbi_fini(&sbi->sb_itbi);
 }
 
 

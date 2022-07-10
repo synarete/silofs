@@ -2938,22 +2938,6 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 	}
 }
 
-
-void silofs_spi_incref(struct silofs_spstats_info *spi)
-{
-	if (likely(spi != NULL)) {
-		si_incref(&spi->sp_ui.u_si);
-	}
-}
-
-void silofs_spi_decref(struct silofs_spstats_info *spi)
-{
-	if (likely(spi != NULL)) {
-		si_decref(&spi->sp_ui.u_si);
-	}
-}
-
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_cache_fill_into_dset(const struct silofs_cache *cache,

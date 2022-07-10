@@ -56,22 +56,22 @@ struct silofs_unode_info {
 	bool                            u_plinked;
 };
 
+/* space-stats */
+struct silofs_spstats_info {
+	struct silofs_space_stats      *sp;
+	struct silofs_sb_info          *sbi;
+};
+
 /* super-block */
 struct silofs_sb_info {
 	struct silofs_unode_info        sb_ui;
-	struct silofs_itable            sb_itbl;
+	struct silofs_spstats_info      sb_spsti;
+	struct silofs_itable_info       sb_itbi;
 	struct silofs_super_block      *sb;
-	struct silofs_spstats_info     *sb_spi;
 	struct silofs_ucred             sb_owner;
 	struct silofs_vspalloc_hints    sb_vspa;
 	unsigned long                   sb_ctl_flags;
 	unsigned long                   sb_ms_flags;
-};
-
-/* space-stats */
-struct silofs_spstats_info {
-	struct silofs_unode_info        sp_ui;
-	struct silofs_spstats_node     *sp;
 };
 
 /* space-node */
@@ -158,7 +158,7 @@ struct silofs_sb_info *
 silofs_sbi_from_ui(const struct silofs_unode_info *ui);
 
 struct silofs_spstats_info *
-silofs_spi_from_ui(const struct silofs_unode_info *ui);
+silofs_spsti_from_ui(const struct silofs_unode_info *ui);
 
 struct silofs_spnode_info *
 silofs_sni_from_ui(const struct silofs_unode_info *ui);

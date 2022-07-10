@@ -1579,9 +1579,9 @@ void ut_drop_caches_fully(struct ut_env *ute)
 
 	ut_sync_drop(ute);
 	silofs_fse_stats(ute->fs_env, &st);
-	/* super-blocks are not dropped */
-	ut_expect_eq(st.ncache_ublocks, 2);
-	ut_expect_eq(st.ncache_unodes, 2);
+	/* sb not dropped */
+	ut_expect_eq(st.ncache_ublocks, 1);
+	ut_expect_eq(st.ncache_unodes, 1);
 	ut_expect_eq(st.ncache_vblocks, 0);
 	ut_expect_eq(st.ncache_vnodes, 0);
 }

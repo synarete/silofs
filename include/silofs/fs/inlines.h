@@ -153,11 +153,6 @@ static inline bool silofs_stype_issuper(enum silofs_stype stype)
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SUPER);
 }
 
-static inline bool silofs_stype_isspstats(enum silofs_stype stype)
-{
-	return silofs_stype_isequal(stype, SILOFS_STYPE_SPSTATS);
-}
-
 static inline bool silofs_stype_isspnode(enum silofs_stype stype)
 {
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SPNODE);

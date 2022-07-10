@@ -51,8 +51,6 @@ static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
 	silofs_assert(!stype_isvnode(stype));
 	if (stype_issuper(stype)) {
 		spst->objs.nsuper++;
-	} else if (stype_isspstats(stype)) {
-		spst->objs.nspstats++;
 	} else if (stype_isspnode(stype)) {
 		spst->objs.nspnode++;
 	} else if (stype_isspleaf(stype)) {

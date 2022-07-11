@@ -388,7 +388,7 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 		return err;
 	}
 out_ok:
-	silofs_spsti_update_blobs(&stg_ctx->sbi->sb_spsti, stype_sub, 1);
+	silofs_sti_update_blobs(&stg_ctx->sbi->sb_sti, stype_sub, 1);
 	return 0;
 }
 
@@ -434,8 +434,8 @@ stgc_make_spmap_main_blobid(const struct silofs_stage_ctx *stg_ctx,
 static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
                                     const struct silofs_uaddr *uaddr)
 {
-	silofs_spsti_update_objs(&stg_ctx->sbi->sb_spsti, uaddr->stype, 1);
-	silofs_spsti_update_bks(&stg_ctx->sbi->sb_spsti, uaddr->stype, 1);
+	silofs_sti_update_objs(&stg_ctx->sbi->sb_sti, uaddr->stype, 1);
+	silofs_sti_update_bks(&stg_ctx->sbi->sb_sti, uaddr->stype, 1);
 }
 
 static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)

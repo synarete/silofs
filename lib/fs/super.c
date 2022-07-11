@@ -1255,7 +1255,7 @@ static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 
 static void sbi_setup_spstats(struct silofs_sb_info *sbi)
 {
-	silofs_spsti_setup_spawned(&sbi->sb_spsti, sbi);
+	silofs_sti_setup_spawned(&sbi->sb_sti, sbi);
 }
 
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)

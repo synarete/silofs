@@ -111,7 +111,7 @@ static void sbi_set_voff_last_of(struct silofs_sb_info *sbi,
 
 static loff_t sbi_vspace_end(const struct silofs_sb_info *sbi)
 {
-	return silofs_spsti_vspace_end(&sbi->sb_spsti);
+	return silofs_sti_vspace_end(&sbi->sb_sti);
 }
 
 static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
@@ -134,8 +134,8 @@ static void sbi_update_space_stats(struct silofs_sb_info *sbi,
                                    const struct silofs_vaddr *vaddr,
                                    ssize_t nobjs_take, ssize_t nbks_take)
 {
-	silofs_spsti_update_objs(&sbi->sb_spsti, vaddr->stype, nobjs_take);
-	silofs_spsti_update_bks(&sbi->sb_spsti, vaddr->stype, nbks_take);
+	silofs_sti_update_objs(&sbi->sb_sti, vaddr->stype, nobjs_take);
+	silofs_sti_update_bks(&sbi->sb_sti, vaddr->stype, nbks_take);
 }
 
 static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
@@ -375,18 +375,18 @@ spac_require_unalloc_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint)
 
 static int spac_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	const struct silofs_spstats_info *spsti = &spa_ctx->sbi->sb_spsti;
+	const struct silofs_stats_info *sti = &spa_ctx->sbi->sb_sti;
 	const size_t nb = stype_size(spa_ctx->stype);
 	bool new_file;
 	bool ok;
 
-	ok = silofs_spsti_mayalloc_some(spsti, nb);
+	ok = silofs_sti_mayalloc_some(sti, nb);
 	if (ok) {
 		if (stype_isdata(spa_ctx->stype)) {
-			ok = silofs_spsti_mayalloc_data(spsti, nb);
+			ok = silofs_sti_mayalloc_data(sti, nb);
 		} else {
 			new_file = stype_isinode(spa_ctx->stype);
-			ok = silofs_spsti_mayalloc_meta(spsti, nb, new_file);
+			ok = silofs_sti_mayalloc_meta(sti, nb, new_file);
 		}
 	}
 	return ok ? 0 : -ENOSPC;

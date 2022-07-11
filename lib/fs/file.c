@@ -2260,7 +2260,7 @@ static int fic_resolve_tree_root(const struct silofs_file_ctx *f_ctx,
 	       fic_stage_tree_root(f_ctx, out_fni) : 0;
 }
 
-static int fic_create_tree_spstine(const struct silofs_file_ctx *f_ctx)
+static int fic_create_tree_stine(const struct silofs_file_ctx *f_ctx)
 {
 	size_t new_height;
 	size_t cur_height;
@@ -2332,7 +2332,7 @@ static int fic_require_tree(const struct silofs_file_ctx *f_ctx,
 {
 	int err;
 
-	err = fic_create_tree_spstine(f_ctx);
+	err = fic_create_tree_stine(f_ctx);
 	if (err) {
 		return err;
 	}
@@ -3363,7 +3363,7 @@ static int fic_reserve_by_tree_map(struct silofs_file_ctx *f_ctx)
 {
 	int err;
 
-	err = fic_create_tree_spstine(f_ctx);
+	err = fic_create_tree_stine(f_ctx);
 	if (err) {
 		return err;
 	}

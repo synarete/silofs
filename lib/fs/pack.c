@@ -21,7 +21,7 @@
 
 union silofs_pack_qelem_u {
 	struct silofs_sb_info          *sbi;
-	struct silofs_spstats_info     *spsti;
+	struct silofs_stats_info     *sti;
 	struct silofs_spnode_info      *sni;
 	struct silofs_spleaf_info      *sli;
 	struct silofs_ubk_info         *ubki;
@@ -922,7 +922,8 @@ static int pac_restore_ubk(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_store_bk(ubki_dst->ubk_bli, bkaddr_dst, ubki_src->ubk);
+	err = silofs_bli_store_bk(ubki_dst->ubk_bli, bkaddr_dst,
+	                          ubki_src->ubk);
 	if (err) {
 		return err;
 	}

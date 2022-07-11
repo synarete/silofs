@@ -916,7 +916,7 @@ static int fse_format_base_vspace(const struct silofs_fs_env *fse)
 		if (err) {
 			return err;
 		}
-		silofs_spsti_collect_stats(&sbi->sb_spsti, &spst);
+		silofs_sti_collect_stats(&sbi->sb_sti, &spst);
 	}
 	return 0;
 }

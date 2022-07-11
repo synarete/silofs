@@ -215,7 +215,7 @@ int silofs_uber_spawn_supers(struct silofs_fs_uber *uber, size_t capacity,
 		return err;
 	}
 	silofs_sbi_setup_btime(sbi);
-	silofs_spsti_set_capacity(&sbi->sb_spsti, capacity);
+	silofs_sti_set_capacity(&sbi->sb_sti, capacity);
 	*out_sbi = sbi;
 	return 0;
 }
@@ -243,11 +243,11 @@ int silofs_uber_stage_supers(struct silofs_fs_uber *uber,
 
 static void sbi_account_supers_of(struct silofs_sb_info *sbi)
 {
-	struct silofs_spstats_info *spsti = &sbi->sb_spsti;
+	struct silofs_stats_info *sti = &sbi->sb_sti;
 
-	silofs_spsti_update_blobs(spsti, SILOFS_STYPE_SUPER, 1);
-	silofs_spsti_update_bks(spsti, SILOFS_STYPE_SUPER, 1);
-	silofs_spsti_update_objs(spsti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_blobs(sti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_bks(sti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_objs(sti, SILOFS_STYPE_SUPER, 1);
 }
 
 int silofs_uber_format_supers(struct silofs_fs_uber *uber, size_t capacity)
@@ -281,10 +281,10 @@ int silofs_uber_reload_supers(struct silofs_fs_uber *uber,
 static void sbi_make_clone(struct silofs_sb_info *sbi_new,
                            const struct silofs_sb_info *sbi_cur)
 {
-	struct silofs_spstats_info *spsti_new = &sbi_new->sb_spsti;
-	const struct silofs_spstats_info *spsti_cur = &sbi_cur->sb_spsti;
+	struct silofs_stats_info *sti_new = &sbi_new->sb_sti;
+	const struct silofs_stats_info *sti_cur = &sbi_cur->sb_sti;
 
-	silofs_spsti_make_clone(spsti_new, spsti_cur);
+	silofs_sti_make_clone(sti_new, sti_cur);
 	silofs_sbi_make_clone(sbi_new, sbi_cur);
 	silofs_sbi_setup_ctime(sbi_new);
 
@@ -410,8 +410,8 @@ static void sbi_attach_to(struct silofs_sb_info *sbi,
 {
 	silofs_ui_attach_to(&sbi->sb_ui, ubki);
 	sbi->sb = &sbi->sb_ui.u_si.s_view->sb;
-	sbi->sb_spsti.sp = &sbi->sb->sb_space_stats;
-	sbi->sb_spsti.sbi = sbi;
+	sbi->sb_sti.spst = &sbi->sb->sb_space_stats;
+	sbi->sb_sti.sbi = sbi;
 }
 
 static int sbi_verify_view(struct silofs_sb_info *sbi)

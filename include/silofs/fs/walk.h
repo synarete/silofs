@@ -37,11 +37,6 @@ struct silofs_space_iter {
 	enum silofs_stype  vspace;
 	enum silofs_stype  stype;
 	loff_t voff;
-	size_t slot;
-
-
-	struct silofs_unode_info *parent;
-	struct silofs_unode_info *ui;
 };
 
 struct silofs_visitor {

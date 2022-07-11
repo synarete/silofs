@@ -51,9 +51,9 @@ struct silofs_unode_info {
 	struct silofs_list_head         u_pack_lh;
 	struct silofs_repo             *u_repo;
 	struct silofs_ubk_info         *u_ubki;
-	struct silofs_pack_iovs        *u_piov;
 	bool                            u_verified;
-	bool                            u_plinked;
+	bool                            u_in_pq;
+	char                            u_pad[6];
 };
 
 /* space-stats */
@@ -156,9 +156,6 @@ struct silofs_fileaf_info {
 
 struct silofs_sb_info *
 silofs_sbi_from_ui(const struct silofs_unode_info *ui);
-
-struct silofs_stats_info *
-silofs_sti_from_ui(const struct silofs_unode_info *ui);
 
 struct silofs_spnode_info *
 silofs_sni_from_ui(const struct silofs_unode_info *ui);

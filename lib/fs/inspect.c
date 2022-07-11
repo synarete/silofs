@@ -60,9 +60,9 @@ static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
 }
 
 static int spvi_visit_post_at(struct silofs_space_visitor *spvi,
-                              const struct silofs_space_iter *uit)
+                              const struct silofs_space_iter *spit)
 {
-	silofs_assert_not_null(uit->ui);
+	silofs_assert_not_null(spit->sbi);
 	silofs_unused(spvi);
 	return 0;
 }
@@ -82,14 +82,12 @@ static int spvi_visit_prep_by_hook(struct silofs_visitor *vis,
 static int spvi_visit_exec_at_hook(struct silofs_visitor *vis,
                                    const struct silofs_space_iter *uit)
 {
-	silofs_assert_not_null(uit->ui);
 	return spvi_visit_exec_at(spvi_of(vis), uit);
 }
 
 static int spvi_visit_post_at_hook(struct silofs_visitor *vis,
                                    const struct silofs_space_iter *uit)
 {
-	silofs_assert_not_null(uit->ui);
 	return spvi_visit_post_at(spvi_of(vis), uit);
 }
 

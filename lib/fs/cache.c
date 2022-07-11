@@ -443,12 +443,16 @@ static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 
 void silofs_ce_incref(struct silofs_cache_elem *ce)
 {
-	ce_incref(ce);
+	if (ce != NULL) {
+		ce_incref(ce);
+	}
 }
 
 void silofs_ce_decref(struct silofs_cache_elem *ce)
 {
-	ce_decref(ce);
+	if (ce != NULL) {
+		ce_decref(ce);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

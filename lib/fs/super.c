@@ -689,9 +689,9 @@ bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
 	return (blobid_size(&blob_id) > 0);
 }
 
-int silofs_sbi_pack_blobid(const struct silofs_sb_info *sbi,
-                           enum silofs_stype vspace,
-                           struct silofs_blobid *out_blobid)
+int silofs_sbi_pack_blob(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vspace,
+                         struct silofs_blobid *out_blobid)
 {
 	sb_pack_blobid(sbi->sb, vspace, out_blobid);
 	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;

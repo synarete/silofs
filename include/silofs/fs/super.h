@@ -137,9 +137,9 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, enum silofs_stype vspace,
                               struct silofs_uaddr *out_uaddr);
 
-int silofs_sbi_pack_blobid(const struct silofs_sb_info *sbi,
-                           enum silofs_stype vspace,
-                           struct silofs_blobid *out_blobid);
+int silofs_sbi_pack_blob(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vspace,
+                         struct silofs_blobid *out_blobid);
 
 void silofs_sbi_bind_pack_blob(struct silofs_sb_info *sbi,
                                enum silofs_stype vspace,

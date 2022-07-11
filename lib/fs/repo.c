@@ -547,6 +547,46 @@ int silofs_bli_storev2(const struct silofs_blob_info *bli, loff_t off,
 	return 0;
 }
 
+int silofs_bli_pwriten(const struct silofs_blob_info *bli,
+                       loff_t off, const void *buf, size_t len)
+{
+	struct silofs_xiovec xiov = { .xiov_off = -1 };
+	int err;
+
+	err = bli_xiovec_at(bli, off, len, &xiov);
+	if (err) {
+		return err;
+	}
+	if (len != xiov.xiov_len) {
+		return -EINVAL;
+	}
+	err = do_pwriten(xiov.xiov_fd, buf, len, xiov.xiov_off);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_bli_preadn(const struct silofs_blob_info *bli,
+                      loff_t off, void *buf, size_t len)
+{
+	struct silofs_xiovec xiov = { .xiov_off = -1 };
+	int err;
+
+	err = bli_xiovec_at(bli, off, len, &xiov);
+	if (err) {
+		return err;
+	}
+	if (len != xiov.xiov_len) {
+		return -EINVAL;
+	}
+	err = do_preadn(xiov.xiov_fd, buf, len, xiov.xiov_off);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int check_oaddr_iovec(const struct silofs_oaddr *oaddr,
                              const struct iovec *iov, size_t cnt)
 {
@@ -613,12 +653,12 @@ int silofs_bli_load_bk(const struct silofs_blob_info *bli,
 
 int silofs_bli_store_bk(const struct silofs_blob_info *bli,
                         const struct silofs_bkaddr *bkaddr,
-                        struct silofs_block *bk)
+                        const struct silofs_block *bk)
 {
 	struct silofs_oaddr bk_oaddr;
 	struct silofs_bytebuf bb;
 
-	silofs_bytebuf_init2(&bb, bk, sizeof(*bk));
+	silofs_bytebuf_init2(&bb, unconst(bk), sizeof(*bk));
 	silofs_oaddr_of_bk(&bk_oaddr, &bkaddr->blobid, bkaddr->lba);
 	return silofs_bli_store(bli, &bk_oaddr, &bb);
 }
@@ -1138,21 +1178,6 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 		repo_evict_cached_bli(repo, bli);
 	}
 	return 0;
-}
-
-int silofs_repo_require_blob(struct silofs_repo *repo,
-                             const struct silofs_blobid *blobid,
-                             struct silofs_blob_info **out_bli)
-{
-	int err;
-
-	err = silofs_repo_lookup_blob(repo, blobid);
-	if (!err) {
-		err = silofs_repo_stage_blob(repo, blobid, out_bli);
-	} else if (err == -ENOENT) {
-		err = silofs_repo_spawn_blob(repo, blobid, out_bli);
-	}
-	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

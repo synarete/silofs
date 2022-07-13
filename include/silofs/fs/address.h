@@ -141,12 +141,12 @@ void silofs_blobid_make_ca(struct silofs_blobid *blobid,
                            const struct silofs_hash256 *hash, size_t size);
 
 
-void silofs_blobid40b_reset(struct silofs_blobid40b *blid);
+void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40);
 
-void silofs_blobid40b_set(struct silofs_blobid40b *blid,
+void silofs_blobid40b_set(struct silofs_blobid40b *blobid40,
                           const struct silofs_blobid *blobid);
 
-void silofs_blobid40b_parse(const struct silofs_blobid40b *blid,
+void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid40,
                             struct silofs_blobid *blobid);
 
 

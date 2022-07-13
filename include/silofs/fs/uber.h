@@ -101,11 +101,11 @@ int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,
 
 int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blob_info **out_bli);
+                         struct silofs_blobref_info **out_bri);
 
 int silofs_stage_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blob_info **out_bli);
+                         struct silofs_blobref_info **out_bri);
 
 
 #endif /* SILOFS_UBER_H_ */

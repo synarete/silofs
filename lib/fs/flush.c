@@ -271,15 +271,15 @@ static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
 {
 	struct silofs_oaddr oaddr = { .pos = -1 };
 	const struct silofs_blobid *blobid = &sgv->blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
-	err = silofs_stage_blob_at(fl_ctx->uber, fl_ctx->warm, blobid, &bli);
+	err = silofs_stage_blob_at(fl_ctx->uber, fl_ctx->warm, blobid, &bri);
 	if (err) {
 		return err;
 	}
 	oaddr_setup(&oaddr, blobid, sgv->off, sgv->len);
-	err = silofs_bli_storev(bli, &oaddr, sgv->iov, sgv->cnt);
+	err = silofs_bri_storev(bri, &oaddr, sgv->iov, sgv->cnt);
 	if (err) {
 		return err;
 	}

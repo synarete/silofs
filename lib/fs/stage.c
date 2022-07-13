@@ -86,10 +86,10 @@ static void sbi_log_cache_stat(const struct silofs_sb_info *sbi)
 	const struct silofs_cache *cache = sbi_cache(sbi);
 
 	log_dbg("cache-stat: dq_accum_nbytes=%lu " \
-	        "ubki=%lu ui=%lu vbki=%lu vi=%lu bli=%lu",
+	        "ubki=%lu ui=%lu vbki=%lu vi=%lu bri=%lu",
 	        cache->c_dq.dq_accum_nbytes, cache->c_ubki_lm.lm_lru.sz,
 	        cache->c_ui_lm.lm_lru.sz, cache->c_vbki_lm.lm_lru.sz,
-	        cache->c_vi_lm.lm_lru.sz, cache->c_bli_lm.lm_lru.sz);
+	        cache->c_vi_lm.lm_lru.sz, cache->c_bri_lm.lm_lru.sz);
 }
 
 static int sbi_lookup_cached_vbki(struct silofs_sb_info *sbi,
@@ -208,12 +208,12 @@ static int sbi_commit_and_relax(const struct silofs_sb_info *sbi)
 
 static int sbi_stage_blob(const struct silofs_sb_info *sbi,
                           const struct silofs_blobid *blobid,
-                          struct silofs_blob_info **out_bli)
+                          struct silofs_blobref_info **out_bri)
 {
 	struct silofs_fs_uber *uber = sbi_uber(sbi);
 	int err;
 
-	err = silofs_stage_blob_at(uber, true, blobid, out_bli);
+	err = silofs_stage_blob_at(uber, true, blobid, out_bri);
 	if (!err) {
 		goto out_ok;
 	}
@@ -224,7 +224,7 @@ static int sbi_stage_blob(const struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_blob_at(uber, true, blobid, out_bli);
+	err = silofs_stage_blob_at(uber, true, blobid, out_bri);
 	if (err) {
 		return err;
 	}
@@ -368,11 +368,11 @@ static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
 static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
                            const struct silofs_blobid *blobid,
                            enum silofs_stype stype_sub,
-                           struct silofs_blob_info **out_bli)
+                           struct silofs_blobref_info **out_bri)
 {
 	int err;
 
-	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_bli);
+	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_bri);
 	if (!err) {
 		goto out_ok;
 	}
@@ -383,7 +383,7 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_bli);
+	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_bri);
 	if (err) {
 		return err;
 	}
@@ -394,11 +394,11 @@ out_ok:
 
 static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
                            const struct silofs_blobid *blobid,
-                           struct silofs_blob_info **out_bli)
+                           struct silofs_blobref_info **out_bri)
 {
 	int err;
 
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bli);
+	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bri);
 	if (!err) {
 		goto out_ok;
 	}
@@ -409,7 +409,7 @@ static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bli);
+	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bri);
 	if (err) {
 		return err;
 	}
@@ -441,27 +441,27 @@ static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	const enum silofs_height height = SILOFS_HEIGHT_SPNODE4;
 	int err;
 
 	stgc_make_spmap_main_blobid(stg_ctx, 0, height, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &bli);
+	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &bri);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_main_blob(stg_ctx->sbi, stg_ctx->vspace, &bli->blobid);
+	silofs_sbi_bind_main_blob(stg_ctx->sbi, stg_ctx->vspace, &bri->br_blobid);
 	return 0;
 }
 
 static int stgc_stage_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 
 	silofs_sbi_main_blob(stg_ctx->sbi, stg_ctx->vspace, &blobid);
 	silofs_assert(!blobid_isnull(&blobid));
-	return stgc_stage_blob(stg_ctx, &blobid, &bli);
+	return stgc_stage_blob(stg_ctx, &blobid, &bri);
 }
 
 static int stgc_require_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
@@ -482,18 +482,18 @@ static int stgc_spawn_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	const loff_t voff = silofs_sni_base_voff(sni);
 	const enum silofs_height height = sni_child_height(sni);
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
 	stgc_make_spmap_main_blobid(stg_ctx, voff, height, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bli);
+	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bri);
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_blob(sni, &bli->blobid);
+	silofs_sni_bind_main_blob(sni, &bri->br_blobid);
 	return 0;
 }
 
@@ -501,10 +501,10 @@ static int stgc_stage_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 
 	silofs_sni_main_blob(sni, &blobid);
-	return stgc_stage_blob(stg_ctx, &blobid, &bli);
+	return stgc_stage_blob(stg_ctx, &blobid, &bri);
 }
 
 static int
@@ -1403,17 +1403,17 @@ static int stgc_spawn_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spleaf_info *sli)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	const loff_t voff = silofs_sli_base_voff(sli);
 	const enum silofs_height height = SILOFS_HEIGHT_VDATA;
 	int err;
 
 	stgc_make_spmap_main_blobid(stg_ctx, voff, height, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->vspace, &bli);
+	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->vspace, &bri);
 	if (err) {
 		return err;
 	}
-	silofs_sli_bind_main_blob(sli, &bli->blobid);
+	silofs_sli_bind_main_blob(sli, &bri->br_blobid);
 	return 0;
 }
 
@@ -1840,31 +1840,31 @@ int silofs_sbi_stage_ubk_at(struct silofs_sb_info *sbi,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int sbi_spawn_vbki_of(struct silofs_sb_info *sbi,
-                             struct silofs_blob_info *bli,
+                             struct silofs_blobref_info *bri,
                              const struct silofs_vaddr *vaddr,
                              struct silofs_vbk_info **out_vbki)
 {
 	int ret;
 
-	bli_incref(bli);
+	bri_incref(bri);
 	ret = sbi_spawn_vbki(sbi, vaddr->voff, vaddr->stype, out_vbki);
-	bli_decref(bli);
+	bri_decref(bri);
 	return ret;
 }
 
 static int sbi_spawn_load_vbk(struct silofs_sb_info *sbi,
-                              struct silofs_blob_info *bli,
+                              struct silofs_blobref_info *bri,
                               const struct silofs_voaddr *voa,
                               struct silofs_vbk_info **out_vbki)
 {
 	struct silofs_vbk_info *vbki = NULL;
 	int err;
 
-	err = sbi_spawn_vbki_of(sbi, bli, &voa->vaddr, &vbki);
+	err = sbi_spawn_vbki_of(sbi, bri, &voa->vaddr, &vbki);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_load_bk(bli, &voa->oaddr.bka, vbki->vbk);
+	err = silofs_bri_load_bk(bri, &voa->oaddr.bka, vbki->vbk);
 	if (err) {
 		sbi_forget_cached_vbki(sbi, vbki);
 		return err;
@@ -1877,14 +1877,14 @@ static int sbi_stage_load_vbk(struct silofs_sb_info *sbi,
                               const struct silofs_voaddr *voa,
                               struct silofs_vbk_info **out_vbki)
 {
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
-	err = sbi_stage_blob(sbi, &voa->oaddr.bka.blobid, &bli);
+	err = sbi_stage_blob(sbi, &voa->oaddr.bka.blobid, &bri);
 	if (err) {
 		return err;
 	}
-	err = sbi_spawn_load_vbk(sbi, bli, voa, out_vbki);
+	err = sbi_spawn_load_vbk(sbi, bri, voa, out_vbki);
 	if (err) {
 		return err;
 	}
@@ -1939,7 +1939,7 @@ static int sbi_stage_vblock_of(struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int bli_resolve_bk(struct silofs_blob_info *bli,
+static int bri_resolve_bk(struct silofs_blobref_info *bri,
                           const struct silofs_bkaddr *bkaddr,
                           struct silofs_xiovec *xiov)
 {
@@ -1947,7 +1947,7 @@ static int bli_resolve_bk(struct silofs_blob_info *bli,
 	const loff_t off = lba_to_off(bkaddr->lba);
 
 	silofs_oaddr_setup(&oaddr, &bkaddr->blobid, off, SILOFS_BK_SIZE);
-	return silofs_bli_resolve(bli, &oaddr, xiov);
+	return silofs_bri_resolve(bri, &oaddr, xiov);
 }
 
 static int sbi_resolve_vbks(struct silofs_sb_info *sbi,
@@ -1956,34 +1956,34 @@ static int sbi_resolve_vbks(struct silofs_sb_info *sbi,
                             struct silofs_xiovec *out_xiov_src,
                             struct silofs_xiovec *out_xiov_dst)
 {
-	struct silofs_blob_info *bli_src = NULL;
-	struct silofs_blob_info *bli_dst = NULL;
+	struct silofs_blobref_info *bri_src = NULL;
+	struct silofs_blobref_info *bri_dst = NULL;
 	int ret;
 
-	ret = sbi_stage_blob(sbi, &src_bkaddr->blobid, &bli_src);
+	ret = sbi_stage_blob(sbi, &src_bkaddr->blobid, &bri_src);
 	if (ret) {
 		goto out;
 	}
-	bli_incref(bli_src);
+	bri_incref(bri_src);
 
-	ret = sbi_stage_blob(sbi, &dst_bkaddr->blobid, &bli_dst);
+	ret = sbi_stage_blob(sbi, &dst_bkaddr->blobid, &bri_dst);
 	if (ret) {
 		goto out;
 	}
-	bli_incref(bli_dst);
+	bri_incref(bri_dst);
 
-	ret = bli_resolve_bk(bli_src, src_bkaddr, out_xiov_src);
+	ret = bri_resolve_bk(bri_src, src_bkaddr, out_xiov_src);
 	if (ret) {
 		goto out;
 	}
 
-	ret = bli_resolve_bk(bli_dst, dst_bkaddr, out_xiov_dst);
+	ret = bri_resolve_bk(bri_dst, dst_bkaddr, out_xiov_dst);
 	if (ret) {
 		goto out;
 	}
 out:
-	bli_decref(bli_dst);
-	bli_decref(bli_src);
+	bri_decref(bri_dst);
+	bri_decref(bri_src);
 	return ret;
 }
 

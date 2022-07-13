@@ -1609,7 +1609,7 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	/*
 	 * TODO-0018: Enable more capabilities
 	 *
-	 * XXX: When enabling FUSE_WRITEBACK_CACHE fstests fails with
+	 * XXX: When enabring FUSE_WRITEBACK_CACHE fstests fails with
 	 * metadata (st_ctime,st_blocks) issues. Also, bugs in
 	 * 'test_truncate_zero'. Needs further investigation.
 	 */

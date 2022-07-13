@@ -324,7 +324,7 @@ struct silofs_ubk_info {
 	struct silofs_cache_elem        ubk_ce;
 	struct silofs_bkaddr            ubk_addr;
 	struct silofs_block            *ubk;
-	struct silofs_blob_info        *ubk_bli;
+	struct silofs_blobref_info        *ubk_bri;
 };
 
 /* virtual-block addressing */

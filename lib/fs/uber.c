@@ -566,11 +566,11 @@ static int ubc_lookup_blob(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_blobid *blobid,
-                          struct silofs_blob_info **out_bli)
+                          struct silofs_blobref_info **out_bri)
 {
 	int err;
 
-	err = silofs_repo_stage_blob(ub_ctx->repo, blobid, out_bli);
+	err = silofs_repo_stage_blob(ub_ctx->repo, blobid, out_bri);
 	if (err && (err != -ENOENT)) {
 		log_dbg("stage blob failed: err=%d", err);
 	}
@@ -579,11 +579,11 @@ static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_blobid *blobid,
-                          struct silofs_blob_info **out_bli)
+                          struct silofs_blobref_info **out_bri)
 {
 	int err;
 
-	err = silofs_repo_spawn_blob(ub_ctx->repo, blobid, out_bli);
+	err = silofs_repo_spawn_blob(ub_ctx->repo, blobid, out_bri);
 	if (err && (err != -ENOENT)) {
 		log_dbg("spawn blob failed: err=%d", err);
 	}
@@ -592,29 +592,29 @@ static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_blobid *blobid,
-                            struct silofs_blob_info **out_bli)
+                            struct silofs_blobref_info **out_bri)
 {
 	int err;
 
 	err = ubc_lookup_blob(ub_ctx, blobid);
 	if (!err) {
-		err = ubc_stage_blob(ub_ctx, blobid, out_bli);
+		err = ubc_stage_blob(ub_ctx, blobid, out_bri);
 	} else if (err == -ENOENT) {
-		err = ubc_spawn_blob(ub_ctx, blobid, out_bli);
+		err = ubc_spawn_blob(ub_ctx, blobid, out_bri);
 	}
 	return err;
 }
 
 static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_bkaddr *bkaddr,
-                            struct silofs_blob_info *bli,
+                            struct silofs_blobref_info *bri,
                             struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
-	bli_incref(bli);
+	bri_incref(bri);
 	err = silofs_repo_spawn_ubk(ub_ctx->repo, bkaddr, out_ubki);
-	bli_decref(bli);
+	bri_decref(bri);
 	return err;
 }
 
@@ -622,14 +622,14 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &bli);
+	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &bri);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, bli, out_ubki);
+	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, bri, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -1133,7 +1133,7 @@ static int ubc_require_no_blob(const struct silofs_uber_ctx *ub_ctx,
 
 int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blob_info **out_bli)
+                         struct silofs_blobref_info **out_bri)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
@@ -1143,7 +1143,7 @@ int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_blob(&ub_ctx, blobid, out_bli);
+	err = ubc_spawn_blob(&ub_ctx, blobid, out_bri);
 	if (err) {
 		return err;
 	}
@@ -1152,7 +1152,7 @@ int silofs_spawn_blob_at(struct silofs_fs_uber *uber, bool warm,
 
 int silofs_stage_blob_at(struct silofs_fs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blob_info **out_bli)
+                         struct silofs_blobref_info **out_bri)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
@@ -1162,7 +1162,7 @@ int silofs_stage_blob_at(struct silofs_fs_uber *uber, bool warm,
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_blob(&ub_ctx, blobid, out_bli);
+	err = ubc_stage_blob(&ub_ctx, blobid, out_bri);
 	if (err) {
 		return err;
 	}

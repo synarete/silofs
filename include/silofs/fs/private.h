@@ -158,8 +158,8 @@
 #define voaddr_setup(voa, ua, va)       silofs_voaddr_setup(voa, ua, va)
 #define voaddr_assign(voa, oth)         silofs_voaddr_assign(voa, oth)
 
-#define bli_incref(bli)                 silofs_bli_incref(bli)
-#define bli_decref(bli)                 silofs_bli_decref(bli)
+#define bri_incref(bri)                 silofs_bri_incref(bri)
+#define bri_decref(bri)                 silofs_bri_decref(bri)
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)

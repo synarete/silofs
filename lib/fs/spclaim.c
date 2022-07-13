@@ -165,7 +165,7 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
                                    const struct silofs_spleaf_info *sli)
 {
 	struct silofs_blobid blobid = { .size = 0 };
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
 	if (sli->sl_nused_bytes) {
@@ -175,12 +175,12 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
 	if (!silofs_sbi_ismutable_blobid(sbi, &blobid)) {
 		return 0;
 	}
-	err = silofs_stage_blob_at(sbi_uber(sbi), true, &blobid, &bli);
+	err = silofs_stage_blob_at(sbi_uber(sbi), true, &blobid, &bri);
 	if (err) {
 		log_err("failed to stage unused blob: err=%d", err);
 		return err;
 	}
-	err = silofs_bli_trim(bli);
+	err = silofs_bri_trim(bri);
 	if (err) {
 		log_err("trim blob failure: err=%d", err);
 		return err;

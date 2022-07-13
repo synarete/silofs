@@ -2035,7 +2035,7 @@ static void fill_prstats(const struct silofs_sb_info *sbi,
 	qus->iopen_cur = uber->ub_ops.op_iopen;
 	qus->memsz_max = alst.memsz_data;
 	qus->memsz_cur = alst.nbytes_used;
-	qus->bopen_cur = cache->c_bli_lm.lm_lru.sz;
+	qus->bopen_cur = cache->c_bri_lm.lm_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

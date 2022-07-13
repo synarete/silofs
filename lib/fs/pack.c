@@ -736,26 +736,26 @@ static int pac_require_ubk(const struct silofs_pack_ctx *pa_ctx,
 {
 	struct silofs_repo *repo = pac_dst_repo(pa_ctx);
 	const struct silofs_blobid *blobid = &bkaddr->blobid;
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
 	err = silofs_repo_lookup_blob(repo, blobid);
 	if (!err) {
-		err = silofs_repo_stage_blob(repo, blobid, &bli);
+		err = silofs_repo_stage_blob(repo, blobid, &bri);
 		if (err) {
 			return err;
 		}
-		bli_incref(bli);
+		bri_incref(bri);
 		err = silofs_repo_stage_ubk(repo, bkaddr, out_ubki);
 	} else if (err == -ENOENT) {
-		err = silofs_repo_spawn_blob(repo, blobid, &bli);
+		err = silofs_repo_spawn_blob(repo, blobid, &bri);
 		if (err) {
 			return err;
 		}
-		bli_incref(bli);
+		bri_incref(bri);
 		err = silofs_repo_spawn_ubk(repo, bkaddr, out_ubki);
 	}
-	bli_decref(bli);
+	bri_decref(bri);
 	return err;
 }
 
@@ -770,7 +770,7 @@ static int pac_restore_ubk(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_store_bk(ubki_dst->ubk_bli, bkaddr_dst, ubk_src);
+	err = silofs_bri_store_bk(ubki_dst->ubk_bri, bkaddr_dst, ubk_src);
 	if (err) {
 		return err;
 	}
@@ -787,7 +787,7 @@ static int pac_restore_ubk_of(const struct silofs_pack_ctx *pa_ctx,
 static int pac_save_pblob(const struct silofs_pack_ctx *pa_ctx,
                           const struct silofs_pack_blob *pb)
 {
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	struct silofs_repo *repo = pac_dst_repo(pa_ctx);
 	const struct silofs_blobid *blobid = &pb->pb_blobid;
 	int err;
@@ -799,11 +799,11 @@ static int pac_save_pblob(const struct silofs_pack_ctx *pa_ctx,
 	if (!err) {
 		return 0; /* ok -- already exists */
 	}
-	err = silofs_repo_spawn_blob(repo, blobid, &bli);
+	err = silofs_repo_spawn_blob(repo, blobid, &bri);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_pwriten(bli, 0, pb->pb_blob, pblob_length(pb));
+	err = silofs_bri_pwriten(bri, 0, pb->pb_blob, pblob_length(pb));
 	if (err) {
 		return err;
 	}
@@ -813,7 +813,7 @@ static int pac_save_pblob(const struct silofs_pack_ctx *pa_ctx,
 static int pac_load_pblob(const struct silofs_pack_ctx *pa_ctx,
                           const struct silofs_pack_blob *pb)
 {
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	struct silofs_repo *repo = pac_src_repo(pa_ctx);
 	const struct silofs_blobid *blobid = &pb->pb_blobid;
 	int err;
@@ -821,11 +821,11 @@ static int pac_load_pblob(const struct silofs_pack_ctx *pa_ctx,
 	if (repo == NULL) {
 		return -EBADF;
 	}
-	err = silofs_repo_stage_blob(repo, blobid, &bli);
+	err = silofs_repo_stage_blob(repo, blobid, &bri);
 	if (err) {
 		return err;
 	}
-	err = silofs_bli_preadn(bli, 0, pb->pb_blob, blobid->size);
+	err = silofs_bri_preadn(bri, 0, pb->pb_blob, blobid->size);
 	if (err) {
 		return err;
 	}
@@ -1378,26 +1378,26 @@ static int pac_refill_shadow_spleaf(struct silofs_pack_ctx *pa_ctx,
 
 int silofs_repo_require_blob(struct silofs_repo *repo,
                              const struct silofs_blobid *blobid,
-                             struct silofs_blob_info **out_bli)
+                             struct silofs_blobref_info **out_bri)
 {
 	int err;
 
 	err = silofs_repo_lookup_blob(repo, blobid);
 	if (!err) {
-		err = silofs_repo_stage_blob(repo, blobid, out_bli);
+		err = silofs_repo_stage_blob(repo, blobid, out_bri);
 	} else if (err == -ENOENT) {
-		err = silofs_repo_spawn_blob(repo, blobid, out_bli);
+		err = silofs_repo_spawn_blob(repo, blobid, out_bri);
 	}
 	return err;
 }
 
 static int pac_require_blob_of(struct silofs_pack_ctx *pa_ctx,
                                const struct silofs_blobid *blobid,
-                               struct silofs_blob_info **out_bli)
+                               struct silofs_blobref_info **out_bri)
 {
 	struct silofs_repo *repo = pac_dst_repo(pa_ctx);
 
-	return silofs_repo_require_blob(repo, blobid, out_bli);
+	return silofs_repo_require_blob(repo, blobid, out_bri);
 }
 
 static int pac_load_shadow_super_blob(struct silofs_pack_ctx *pa_ctx)
@@ -1827,11 +1827,11 @@ static int pac_restore_exec_at(struct silofs_pack_ctx *pa_ctx,
 static int pac_restore_post_at_unode(struct silofs_pack_ctx *pa_ctx,
                                      const struct silofs_unode_info *ui)
 {
-	struct silofs_blob_info *bli = NULL;
+	struct silofs_blobref_info *bri = NULL;
 	const struct silofs_bkaddr *bkaddr = ui_bkaddr(ui);
 	int err;
 
-	err = pac_require_blob_of(pa_ctx, &bkaddr->blobid, &bli);
+	err = pac_require_blob_of(pa_ctx, &bkaddr->blobid, &bri);
 	if (err) {
 		return err;
 	}

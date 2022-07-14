@@ -240,6 +240,9 @@ void silofs_vi_bind_view(struct silofs_vnode_info *vi);
 int silofs_vi_verify_view(struct silofs_vnode_info *vi);
 
 
+int silofs_verify_view_by(const union silofs_view *view,
+                          const enum silofs_stype stype);
+
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr);
 
 

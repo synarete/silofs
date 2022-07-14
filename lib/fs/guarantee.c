@@ -215,9 +215,10 @@ static void guarantee_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_ulink, 0);
 	REQUIRE_OFFSET64(struct silofs_bk_ref, br_bkaddr, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 48);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 56);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 64);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_cold_blobid, 48);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 88);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 96);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 104);
 }
 
 static void guarantee_persistent_types_alignment2(void)

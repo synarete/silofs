@@ -450,7 +450,8 @@ static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_main_blob(stg_ctx->sbi, stg_ctx->vspace, &bri->br_blobid);
+	silofs_sbi_bind_main_blob(stg_ctx->sbi, stg_ctx->vspace,
+	                          &bri->br_blobid);
 	return 0;
 }
 
@@ -2004,7 +2005,7 @@ static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 	const loff_t voff = voa_src->vaddr.voff;
 	int err;
 
-	silofs_sli_resolve_main_vbk(stg_ctx->sli, voff, &dst_bkaddr);
+	silofs_sli_resolve_main_ubk(stg_ctx->sli, voff, &dst_bkaddr);
 	err = sbi_resolve_vbks(stg_ctx->sbi, &voa_src->oaddr.bka,
 	                       &dst_bkaddr, &src_xiov, &dst_xiov);
 	if (err == -ENOENT) {
@@ -2017,7 +2018,7 @@ static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_rebind_vbk(stg_ctx->sli, voff, &dst_bkaddr);
+	silofs_sli_rebind_ubk(stg_ctx->sli, voff, &dst_bkaddr);
 	return 0;
 }
 

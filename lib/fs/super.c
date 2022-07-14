@@ -665,11 +665,12 @@ void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
 	sb_treeid(sbi->sb, out_treeid);
 }
 
-void silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
-                          enum silofs_stype vspace,
-                          struct silofs_blobid *out_blobid)
+int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vspace,
+                         struct silofs_blobid *out_blobid)
 {
 	sb_main_blobid(sbi->sb, vspace, out_blobid);
+	return blobid_isnull(out_blobid) ? -ENOENT : 0;
 }
 
 void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,

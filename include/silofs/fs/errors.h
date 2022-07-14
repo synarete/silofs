@@ -27,9 +27,11 @@
 #define SILOFS_EFSCORRUPTED     SILOFS_DEFERR(EFSCORRUPTED)
 
 /* error codes which are internal-only */
-#define SILOFS_EBUG             SILOFS_DEFERR2(1)
-#define SILOFS_ENORX            SILOFS_DEFERR2(2)
-#define SILOFS_ENOTX            SILOFS_DEFERR2(3)
-#define SILOFS_ECSUM            SILOFS_DEFERR2(4)
+#define SILOFS_ENORX            SILOFS_DEFERR2(1)
+#define SILOFS_ENOTX            SILOFS_DEFERR2(2)
+#define SILOFS_ECSUM            SILOFS_DEFERR2(3)
+
+/* insternal-bug error */
+#define SILOFS_EBUG             SILOFS_DEFERR2(1111)
 
 #endif /* SILOFS_ERRORS_H_ */

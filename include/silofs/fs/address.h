@@ -339,12 +339,7 @@ void silofs_vrange_setup_by(struct silofs_vrange *vrange,
 
 size_t silofs_vrange_length(const struct silofs_vrange *vrange);
 
-void silofs_vrange_of_super(struct silofs_vrange *vrange);
-
-void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
-                             enum silofs_height height, loff_t voff);
-
-void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff);
+loff_t silofs_vrange_voff_at(const struct silofs_vrange *vrange, size_t slot);
 
 void silofs_vrange128_reset(struct silofs_vrange128 *vrng);
 

@@ -698,11 +698,12 @@ struct silofs_spmap_node {
 
 struct silofs_bk_ref {
 	struct silofs_bkaddr48b         br_bkaddr;
+	struct silofs_blobid40b         br_cold_blobid;
 	uint64_t                        br_allocated;
 	uint64_t                        br_unwritten;
 	uint64_t                        br_refcnt;
 	uint32_t                        br_flags;
-	uint8_t                         br_reserved1[44];
+	uint8_t                         br_reserved[4];
 } silofs_packed_aligned8;
 
 

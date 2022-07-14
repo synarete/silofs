@@ -34,10 +34,14 @@ static void ut_archive_restore_ok(struct ut_env *ute, const char *dst_name)
 static void ut_pack_simple(struct ut_env *ute)
 {
 	ino_t dino;
+	ino_t ino;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
+	ut_release_ok(ute, ino);
 	ut_archive_restore_ok(ute, name);
+	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 

@@ -323,7 +323,7 @@ static void sbi_export_bootsec(const struct silofs_sb_info *sbi,
                                struct silofs_bootsec *bsec)
 {
 	silofs_bootsec_init(bsec);
-	silofs_bootsec_set_uaddr(bsec, sbi_uaddr(sbi));
+	silofs_bootsec_set_sb_uaddr(bsec, sbi_uaddr(sbi));
 }
 
 static void uber_pre_forkfs(struct silofs_fs_uber *uber)

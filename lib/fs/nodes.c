@@ -33,10 +33,6 @@ static const struct silofs_snode_vtbl fni_vtbl;
 static const struct silofs_snode_vtbl fli_vtbl;
 
 
-/* local functions forward declarations */
-static int view_verify(const union silofs_view *view,
-                       const enum silofs_stype stype);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static uint32_t hdr_magic(const struct silofs_header *hdr)
@@ -250,7 +246,7 @@ static uint32_t si_calc_chekcsum(const struct silofs_snode_info *si)
 
 static int si_verify_view(struct silofs_snode_info *si)
 {
-	return view_verify(si->s_view, si->s_stype);
+	return silofs_verify_view_by(si->s_view, si->s_stype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1660,8 +1656,8 @@ static int view_verify_sub(const union silofs_view *view,
 	return 0;
 }
 
-static int view_verify(const union silofs_view *view,
-                       const enum silofs_stype stype)
+int silofs_verify_view_by(const union silofs_view *view,
+                          const enum silofs_stype stype)
 {
 	int err;
 

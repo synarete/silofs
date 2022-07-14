@@ -441,20 +441,6 @@ static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 	return !ce->ce_dirty && !ce_refcnt(ce);
 }
 
-void silofs_ce_incref(struct silofs_cache_elem *ce)
-{
-	if (ce != NULL) {
-		ce_incref(ce);
-	}
-}
-
-void silofs_ce_decref(struct silofs_cache_elem *ce)
-{
-	if (ce != NULL) {
-		ce_decref(ce);
-	}
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int lrumap_init(struct silofs_lrumap *lm,

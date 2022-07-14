@@ -139,9 +139,6 @@ bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
 int silofs_sli_pack_blob(const struct silofs_spleaf_info *sli,
                          struct silofs_blobid *out_blobid);
 
-void silofs_sli_bind_pack_blob(struct silofs_spleaf_info *sli,
-                               const struct silofs_blobid *blobid);
-
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
                                const struct silofs_vaddr *vaddr);
 
@@ -149,14 +146,23 @@ void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
                               const struct silofs_spleaf_info *sli_other);
 
 
+void silofs_sli_resolve_main_ubk(const struct silofs_spleaf_info *sli,
+                                 loff_t voff, struct silofs_bkaddr *out_bka);
+
 int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
                            loff_t voff, struct silofs_bkaddr *out_bkaddr);
 
-void silofs_sli_resolve_main_vbk(const struct silofs_spleaf_info *sli,
-                                 loff_t voff, struct silofs_bkaddr *out_bka);
-
-void silofs_sli_rebind_vbk(struct silofs_spleaf_info *sli, loff_t voff,
+void silofs_sli_rebind_ubk(struct silofs_spleaf_info *sli, loff_t voff,
                            const struct silofs_bkaddr *bkaddr);
+
+
+int silofs_sli_resolve_cold(const struct silofs_spleaf_info *sli,
+                            loff_t voff, struct silofs_blobid *out_blobid);
+
+void silofs_sli_rebind_cold(struct silofs_spleaf_info *sli, loff_t voff,
+                            const struct silofs_blobid *blobid);
+
+void silofs_sli_seal_meta(struct silofs_spleaf_info *sli);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

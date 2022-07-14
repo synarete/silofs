@@ -122,9 +122,9 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
                        struct silofs_treeid *out_treeid);
 
-void silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
-                          enum silofs_stype vspace,
-                          struct silofs_blobid *out_blobid);
+int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
+                         enum silofs_stype vspace,
+                         struct silofs_blobid *out_blobid);
 
 void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
                                enum silofs_stype vspace,

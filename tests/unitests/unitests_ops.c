@@ -1863,6 +1863,7 @@ void ut_restore_ok(struct ut_env *ute,
 	ut_save_bsec_ok(ute, &bsec);
 
 	ut_load_bsec_at(ute, false, src_name, &src_bsec);
+
 	err = silofs_fse_reopen(fse, &src_bsec);
 	ut_expect_ok(err);
 

@@ -46,17 +46,6 @@ static void sbi_vrange(const struct silofs_sb_info *sbi,
 	silofs_vrange_setup(out_vrange, SILOFS_HEIGHT_SUPER, 0, voff_end);
 }
 
-static loff_t vrange_voff_at(const struct silofs_vrange *vrange, size_t slot)
-{
-	ssize_t span;
-	loff_t voff;
-
-	span = silofs_height_to_span(vrange->height - 1);
-	voff = silofs_off_next_n(vrange->beg, span, slot);
-	silofs_assert_le(voff, vrange->end);
-	return voff;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spit_increfs(const struct silofs_space_iter *spit)
@@ -128,74 +117,51 @@ static void wac_pop_height(struct silofs_walk_ctx *wa_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int wac_do_visit_prep_by(const struct silofs_walk_ctx *wa_ctx,
-                                const struct silofs_space_iter *uit)
-{
-	struct silofs_visitor *vis = wa_ctx->vis;
-	int ret = 0;
-
-	if (vis && vis->prep_by_hook) {
-		ret = vis->prep_by_hook(vis, uit);
-	}
-	return ret;
-}
-
-static int wac_visit_prep_by(const struct silofs_walk_ctx *wa_ctx,
-                             struct silofs_space_iter *uit)
-{
-	int err;
-
-	spit_increfs(uit);
-	err = wac_do_visit_prep_by(wa_ctx, uit);
-	spit_decrefs(uit);
-	return err;
-}
-
 static int wac_do_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
-                                const struct silofs_space_iter *uit)
+                                const struct silofs_space_iter *spit)
 {
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
 	if (vis && vis->exec_at_hook) {
 		wac_relax_cache(wa_ctx);
-		ret = vis->exec_at_hook(vis, uit);
+		ret = vis->exec_at_hook(vis, spit);
 	}
 	return ret;
 }
 
 static int wac_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
-                             struct silofs_space_iter *uit)
+                             struct silofs_space_iter *spit)
 {
 	int err;
 
-	spit_increfs(uit);
-	err = wac_do_visit_exec_at(wa_ctx, uit);
-	spit_decrefs(uit);
+	spit_increfs(spit);
+	err = wac_do_visit_exec_at(wa_ctx, spit);
+	spit_decrefs(spit);
 	return err;
 }
 
 static int wac_do_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
-                                const struct silofs_space_iter *uit)
+                                const struct silofs_space_iter *spit)
 {
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
 	if (vis && vis->post_at_hook) {
-		ret = vis->post_at_hook(vis, uit);
+		ret = vis->post_at_hook(vis, spit);
 		wac_relax_cache(wa_ctx);
 	}
 	return ret;
 }
 
 static int wac_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
-                             struct silofs_space_iter *uit)
+                             struct silofs_space_iter *spit)
 {
 	int err;
 
-	spit_increfs(uit);
-	err = wac_do_visit_post_at(wa_ctx, uit);
-	spit_decrefs(uit);
+	spit_increfs(spit);
+	err = wac_do_visit_post_at(wa_ctx, spit);
+	spit_decrefs(spit);
 	return err;
 }
 
@@ -207,14 +173,6 @@ static int wac_visit_exec_at_super(const struct silofs_walk_ctx *wa_ctx)
 
 	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SUPER);
 	return wac_visit_exec_at(wa_ctx, &spit);
-}
-
-static int wac_visit_prep_by_super(const struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_space_iter spit;
-
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SUPER);
-	return wac_visit_prep_by(wa_ctx, &spit);
 }
 
 static int wac_visit_post_at_super(const struct silofs_walk_ctx *wa_ctx)
@@ -233,14 +191,6 @@ static int wac_visit_exec_at_spnode4(const struct silofs_walk_ctx *wa_ctx)
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
-static int wac_visit_prep_by_spnode4(const struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_space_iter spit;
-
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
-	return wac_visit_prep_by(wa_ctx, &spit);
-}
-
 static int wac_visit_post_at_spnode4(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
@@ -257,14 +207,6 @@ static int wac_visit_exec_at_spnode3(const struct silofs_walk_ctx *wa_ctx)
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
-static int wac_visit_prep_by_spnode3(const struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_space_iter spit;
-
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
-	return wac_visit_prep_by(wa_ctx, &spit);
-}
-
 static int wac_visit_post_at_spnode3(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
@@ -279,14 +221,6 @@ static int wac_visit_exec_at_spnode2(const struct silofs_walk_ctx *wa_ctx)
 
 	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
 	return wac_visit_exec_at(wa_ctx, &spit);
-}
-
-static int wac_visit_prep_by_spnode2(const struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_space_iter spit;
-
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
-	return wac_visit_prep_by(wa_ctx, &spit);
 }
 
 static int wac_visit_post_at_spnode2(const struct silofs_walk_ctx *wa_ctx)
@@ -466,15 +400,11 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 	sni_vrange(sni, &vrange);
 	wa_ctx->slot2 = 0;
 	while (wa_ctx->slot2 < ARRAY_SIZE(sni->sn->sn_subref)) {
-		wa_ctx->voff = vrange_voff_at(&vrange, wa_ctx->slot2);
+		wa_ctx->voff = silofs_vrange_voff_at(&vrange, wa_ctx->slot2);
 		if (wa_ctx->voff >= vrange.end) {
 			break;
 		}
 		err = silofs_sni_subref_of(sni, wa_ctx->voff, &uaddr);
-		if (err) {
-			break;
-		}
-		err = wac_visit_prep_by_spnode2(wa_ctx);
 		if (err) {
 			break;
 		}
@@ -558,15 +488,11 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 	sni_vrange(sni, &vrange);
 	wa_ctx->slot3 = 0;
 	while (wa_ctx->slot3 < ARRAY_SIZE(sni->sn->sn_subref)) {
-		wa_ctx->voff = vrange_voff_at(&vrange, wa_ctx->slot3);
+		wa_ctx->voff = silofs_vrange_voff_at(&vrange, wa_ctx->slot3);
 		if (wa_ctx->voff >= vrange.end) {
 			break;
 		}
 		err = silofs_sni_subref_of(sni, wa_ctx->voff, &uaddr);
-		if (err) {
-			break;
-		}
-		err = wac_visit_prep_by_spnode3(wa_ctx);
 		if (err) {
 			break;
 		}
@@ -650,15 +576,11 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 	sni_vrange(sni, &vrange);
 	wa_ctx->slot4 = 0;
 	while (wa_ctx->slot4 < ARRAY_SIZE(sni->sn->sn_subref)) {
-		wa_ctx->voff = vrange_voff_at(&vrange, wa_ctx->slot4);
+		wa_ctx->voff = silofs_vrange_voff_at(&vrange, wa_ctx->slot4);
 		if (wa_ctx->voff >= vrange.end) {
 			break;
 		}
 		err = silofs_sni_subref_of(sni, wa_ctx->voff, &uaddr);
-		if (err) {
-			break;
-		}
-		err = wac_visit_prep_by_spnode4(wa_ctx);
 		if (err) {
 			break;
 		}
@@ -741,10 +663,6 @@ static int wac_do_traverse_sptree(struct silofs_walk_ctx *wa_ctx)
 	if (err) {
 		goto out;
 	}
-	err = wac_visit_prep_by_super(wa_ctx);
-	if (err) {
-		goto out;
-	}
 	err = wac_traverse_super_child(wa_ctx);
 	if (err) {
 		goto out;
@@ -759,12 +677,24 @@ static int wac_traverse_sptree_of(struct silofs_walk_ctx *wa_ctx,
 	int err;
 
 	wac_resetup(wa_ctx, vspace);
+	err = wac_visit_exec_at_super(wa_ctx);
+	if (err) {
+		goto out;
+	}
 	err = wac_do_traverse_sptree(wa_ctx);
+	if (err) {
+		goto out;
+	}
+	err = wac_visit_post_at_super(wa_ctx);
+	if (err) {
+		goto out;
+	}
+out:
 	wac_resetup(wa_ctx, SILOFS_STYPE_NONE);
 	return err;
 }
 
-static int wac_traverse_space_trees(struct silofs_walk_ctx *wa_ctx)
+static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 {
 	enum silofs_stype stype;
 	int err;
@@ -777,36 +707,9 @@ static int wac_traverse_space_trees(struct silofs_walk_ctx *wa_ctx)
 		if (err) {
 			return err;
 		}
-		err = wac_visit_post_at_super(wa_ctx);
-		if (err) {
-			return err;
-		}
+		wac_relax_cache(wa_ctx);
 	}
 	return 0;
-}
-
-static int wac_traverse_supers(struct silofs_walk_ctx *wa_ctx)
-{
-	int err;
-
-	err = wac_visit_exec_at_super(wa_ctx);
-	if (err) {
-		return err;
-	}
-	err = wac_traverse_space_trees(wa_ctx);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int wac_traverse_fs(struct silofs_walk_ctx *wa_ctx)
-{
-	int err;
-
-	err = wac_traverse_supers(wa_ctx);
-	wac_relax_cache(wa_ctx);
-	return err;
 }
 
 static bool sbi_is_main(const struct silofs_sb_info *sbi)
@@ -835,7 +738,7 @@ int silofs_walk_space_tree(struct silofs_sb_info *sbi,
 	int err;
 
 	sbi_incref(sbi);
-	err = wac_traverse_fs(&wa_ctx);
+	err = wac_traverse_spaces(&wa_ctx);
 	sbi_decref(sbi);
 	return err;
 }

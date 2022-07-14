@@ -735,9 +735,11 @@ static void blobid40b_set_ta(struct silofs_blobid40b *blobid40,
 static void blobid40b_set_ca(struct silofs_blobid40b *blobid40,
                              const struct silofs_blobid *blobid)
 {
-	STATICASSERT_EQ(sizeof(blobid40->u.ca.hash), sizeof(blobid->u.ca.hash));
+	STATICASSERT_EQ(sizeof(blobid40->u.ca.hash),
+	                sizeof(blobid->u.ca.hash));
 
-	memcpy(blobid40->u.ca.hash, blobid->u.ca.hash, sizeof(blobid40->u.ca.hash));
+	memcpy(blobid40->u.ca.hash, blobid->u.ca.hash,
+	       sizeof(blobid40->u.ca.hash));
 }
 
 void silofs_blobid40b_set(struct silofs_blobid40b *blobid40,
@@ -772,9 +774,11 @@ static void blobid40b_parse_ta(const struct silofs_blobid40b *blobid40,
 static void blobid40b_parse_ca(const struct silofs_blobid40b *blobid40,
                                struct silofs_blobid *blobid)
 {
-	STATICASSERT_EQ(sizeof(blobid40->u.ca.hash), sizeof(blobid->u.ca.hash));
+	STATICASSERT_EQ(sizeof(blobid40->u.ca.hash),
+	                sizeof(blobid->u.ca.hash));
 
-	memcpy(blobid->u.ca.hash, blobid40->u.ca.hash, sizeof(blobid->u.ca.hash));
+	memcpy(blobid->u.ca.hash, blobid40->u.ca.hash,
+	       sizeof(blobid->u.ca.hash));
 }
 
 void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid40,
@@ -1366,23 +1370,15 @@ size_t silofs_vrange_length(const struct silofs_vrange *vrange)
 	return off_ulen(vrange->beg, vrange->end);
 }
 
-void silofs_vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
+loff_t silofs_vrange_voff_at(const struct silofs_vrange *vrange, size_t slot)
 {
-	silofs_vrange_setup_by(vrange, SILOFS_HEIGHT_SPLEAF, voff);
-}
+	ssize_t span;
+	loff_t voff;
 
-void silofs_vrange_of_spnode(struct silofs_vrange *vrange,
-                             enum silofs_height height, loff_t voff)
-{
-	silofs_assert_ge(height, SILOFS_HEIGHT_SPNODE2);
-	silofs_assert_le(height, SILOFS_HEIGHT_SPNODE4);
-
-	silofs_vrange_setup_by(vrange, height, voff);
-}
-
-void silofs_vrange_of_super(struct silofs_vrange *vrange)
-{
-	silofs_vrange_setup_by(vrange, SILOFS_HEIGHT_SUPER, 0);
+	span = silofs_height_to_span(vrange->height - 1);
+	voff = silofs_off_next_n(vrange->beg, span, slot);
+	silofs_assert_le(voff, vrange->end);
+	return voff;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

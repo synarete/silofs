@@ -651,7 +651,7 @@ static void fse_update_bootsec(const struct silofs_fs_env *fse,
 
 	silofs_assert_eq(sbi->sb->sb_flags, 0);
 
-	silofs_bootsec_set_uaddr(bsec, sbi_uaddr(sbi));
+	silofs_bootsec_set_sb_uaddr(bsec, sbi_uaddr(sbi));
 }
 
 int silofs_fse_resolve(const struct silofs_fs_env *fse,

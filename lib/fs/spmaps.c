@@ -16,13 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
-#include <silofs/fs/nodes.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/spmaps.h>
+#include <silofs/fs.h>
 #include <silofs/fs/private.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1154,8 +1148,9 @@ void silofs_sli_resolve_main_ubk(const struct silofs_spleaf_info *sli,
 int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
                            loff_t voff, struct silofs_bkaddr *out_bkaddr)
 {
+	silofs_assert(sli_is_inrange(sli, voff));
 	if (!sli_is_inrange(sli, voff)) {
-		return -ENOENT;
+		return -SILOFS_ERANGE;
 	}
 	spleaf_resolve_ubk(sli->sl, voff, out_bkaddr);
 	if (bkaddr_isnull(out_bkaddr)) {
@@ -1176,7 +1171,7 @@ int silofs_sli_resolve_cold(const struct silofs_spleaf_info *sli,
                             loff_t voff, struct silofs_blobid *out_blobid)
 {
 	if (!sli_is_inrange(sli, voff)) {
-		return -ENOENT;
+		return -SILOFS_ERANGE;
 	}
 	spleaf_resolve_cold(sli->sl, voff, out_blobid);
 	if (blobid_isnull(out_blobid)) {
@@ -1366,16 +1361,21 @@ size_t silofs_sni_slot_of(const struct silofs_spnode_info *sni, loff_t voff)
 {
 	silofs_assert(sni_is_inrange(sni, voff));
 
-	return  spnode_slot_of(sni->sn, voff);
+	return spnode_slot_of(sni->sn, voff);
 }
 
 int silofs_sni_subref_of(const struct silofs_spnode_info *sni, loff_t voff,
                          struct silofs_uaddr *out_uaddr)
 {
 	silofs_assert(sni_is_inrange(sni, voff));
-
+	if (!sni_is_inrange(sni, voff)) {
+		return -SILOFS_ERANGE;
+	}
 	spnode_ulink_of(sni->sn, voff, out_uaddr);
-	return silofs_uaddr_isnull(out_uaddr) ? -ENOENT : 0;
+	if (uaddr_isnull(out_uaddr)) {
+		return -ENOENT;
+	}
+	return 0;
 }
 
 void silofs_sni_main_blob(const struct silofs_spnode_info *sni,

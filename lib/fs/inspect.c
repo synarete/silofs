@@ -65,14 +65,14 @@ static struct silofs_space_visitor *spvi_of(struct silofs_visitor *vis)
 	return container_of(vis, struct silofs_space_visitor, vis);
 }
 
-static int spvi_visit_exec_at_hook(struct silofs_visitor *vis,
-                                   const struct silofs_space_iter *uit)
+static int spvi_visit_exec_hook(struct silofs_visitor *vis,
+                                const struct silofs_space_iter *uit)
 {
 	return spvi_visit_exec_at(spvi_of(vis), uit);
 }
 
-static int spvi_visit_post_at_hook(struct silofs_visitor *vis,
-                                   const struct silofs_space_iter *uit)
+static int spvi_visit_post_hook(struct silofs_visitor *vis,
+                                const struct silofs_space_iter *uit)
 {
 	return spvi_visit_post_at(spvi_of(vis), uit);
 }
@@ -80,8 +80,8 @@ static int spvi_visit_post_at_hook(struct silofs_visitor *vis,
 static void spvi_init(struct silofs_space_visitor *spvi)
 {
 	silofs_memzero(spvi, sizeof(*spvi));
-	spvi->vis.exec_at_hook = spvi_visit_exec_at_hook;
-	spvi->vis.post_at_hook = spvi_visit_post_at_hook;
+	spvi->vis.exec_hook = spvi_visit_exec_hook;
+	spvi->vis.post_hook = spvi_visit_post_hook;
 }
 
 static void spvi_fini(struct silofs_space_visitor *spvi)

@@ -341,6 +341,8 @@ size_t silofs_vrange_length(const struct silofs_vrange *vrange);
 
 loff_t silofs_vrange_voff_at(const struct silofs_vrange *vrange, size_t slot);
 
+loff_t silofs_vrange_next(const struct silofs_vrange *vrange, loff_t voff);
+
 void silofs_vrange128_reset(struct silofs_vrange128 *vrng);
 
 void silofs_vrange128_set(struct silofs_vrange128 *vrng,

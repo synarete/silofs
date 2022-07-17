@@ -25,6 +25,7 @@
 /* error codes derived from standard errno values */
 #define SILOFS_EPERM            SILOFS_DEFERR(EPERM)
 #define SILOFS_EFSCORRUPTED     SILOFS_DEFERR(EFSCORRUPTED)
+#define SILOFS_ERANGE           SILOFS_DEFERR(ERANGE)
 
 /* error codes which are internal-only */
 #define SILOFS_ENORX            SILOFS_DEFERR2(1)

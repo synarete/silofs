@@ -68,9 +68,9 @@ static void spit_decrefs(const struct silofs_space_iter *spit)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
-                                 struct silofs_space_iter *spit,
-                                 enum silofs_stype stype)
+static void wac_set_space_iter(const struct silofs_walk_ctx *wa_ctx,
+                               struct silofs_space_iter *spit,
+                               size_t slot, enum silofs_stype stype)
 {
 	silofs_memzero(spit, sizeof(*spit));
 	spit->sbi = wa_ctx->sbi;
@@ -82,6 +82,7 @@ static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
 	spit->stype = stype;
 	spit->vspace = wa_ctx->vspace;
 	spit->voff = wa_ctx->voff;
+	spit->slot = slot;
 }
 
 static void wac_resetup(struct silofs_walk_ctx *wa_ctx,
@@ -123,9 +124,9 @@ static int wac_do_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
-	if (vis && vis->exec_at_hook) {
+	if (vis && vis->exec_hook) {
 		wac_relax_cache(wa_ctx);
-		ret = vis->exec_at_hook(vis, spit);
+		ret = vis->exec_hook(vis, spit);
 	}
 	return ret;
 }
@@ -147,8 +148,8 @@ static int wac_do_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
-	if (vis && vis->post_at_hook) {
-		ret = vis->post_at_hook(vis, spit);
+	if (vis && vis->post_hook) {
+		ret = vis->post_hook(vis, spit);
 		wac_relax_cache(wa_ctx);
 	}
 	return ret;
@@ -171,7 +172,7 @@ static int wac_visit_exec_at_super(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SUPER);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SUPER);
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
@@ -179,7 +180,7 @@ static int wac_visit_post_at_super(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SUPER);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SUPER);
 	return wac_visit_post_at(wa_ctx, &spit);
 }
 
@@ -187,7 +188,7 @@ static int wac_visit_exec_at_spnode4(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPNODE);
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
@@ -195,7 +196,7 @@ static int wac_visit_post_at_spnode4(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPNODE);
 	return wac_visit_post_at(wa_ctx, &spit);
 }
 
@@ -203,7 +204,7 @@ static int wac_visit_exec_at_spnode3(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPNODE);
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
@@ -211,7 +212,7 @@ static int wac_visit_post_at_spnode3(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPNODE);
 	return wac_visit_post_at(wa_ctx, &spit);
 }
 
@@ -219,7 +220,7 @@ static int wac_visit_exec_at_spnode2(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPNODE);
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
@@ -227,7 +228,7 @@ static int wac_visit_post_at_spnode2(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPNODE);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPNODE);
 	return wac_visit_post_at(wa_ctx, &spit);
 }
 
@@ -235,7 +236,7 @@ static int wac_visit_exec_at_spleaf(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPLEAF);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPLEAF);
 	return wac_visit_exec_at(wa_ctx, &spit);
 }
 
@@ -243,7 +244,7 @@ static int wac_visit_post_at_spleaf(const struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_space_iter spit;
 
-	wac_setup_space_iter(wa_ctx, &spit, SILOFS_STYPE_SPLEAF);
+	wac_set_space_iter(wa_ctx, &spit, 0, SILOFS_STYPE_SPLEAF);
 	return wac_visit_post_at(wa_ctx, &spit);
 }
 

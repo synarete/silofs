@@ -434,9 +434,9 @@ const char *ut_make_name(struct ut_env *ute, const char *pre, size_t idx)
 	const char *name;
 
 	if (pre && strlen(pre)) {
-		name = ut_strfmt(ute, "%s-%lx", pre, idx + 1);
+		name = ut_strfmt(ute, "%s%lu", pre, idx + 1);
 	} else {
-		name = ut_strfmt(ute, "%lx", idx + 1);
+		name = ut_strfmt(ute, "%lu", idx + 1);
 	}
 	return name;
 }

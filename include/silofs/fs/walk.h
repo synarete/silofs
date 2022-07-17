@@ -37,15 +37,13 @@ struct silofs_space_iter {
 	enum silofs_stype  vspace;
 	enum silofs_stype  stype;
 	loff_t voff;
+	size_t slot;
 };
 
 struct silofs_visitor {
-	silofs_visit_fn exec_at_hook;
-	silofs_visit_fn post_at_hook;
-	bool nodescend;
-	bool halt;
+	silofs_visit_fn exec_hook;
+	silofs_visit_fn post_hook;
 };
-
 
 int silofs_walk_space_tree(struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis);

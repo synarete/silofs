@@ -1803,6 +1803,7 @@ static int fic_read_from_leaf(struct silofs_file_ctx *f_ctx,
 		}
 	} else {
 		err = fmc_stage_fileaf_at(fm_ctx, &fli);
+		/* TODO-0042: Why ENOENT here? try use internal errors */
 		if (err && (err != -ENOENT)) {
 			return err;
 		}

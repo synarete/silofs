@@ -36,22 +36,22 @@ ssize_t silofs_height_to_span(enum silofs_height height)
 		span = SILOFS_BK_SIZE;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
-		       SILOFS_SPNODE_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
-		       SILOFS_SPNODE_NCHILDS * SILOFS_SPNODE_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
 	case SILOFS_HEIGHT_LAST:
-		span = SILOFS_BK_SIZE * SILOFS_SPLEAF_NCHILDS *
-		       SILOFS_SPNODE_NCHILDS * SILOFS_SPNODE_NCHILDS *
-		       SILOFS_SPNODE_NCHILDS;
+		span = SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS * SILOFS_SPMAP_NCHILDS *
+		       SILOFS_SPMAP_NCHILDS;
 		break;
 	}
 	return span;
@@ -267,7 +267,7 @@ loff_t silofs_off_in_bk(loff_t off)
 
 static size_t spleaf_span(void)
 {
-	return SILOFS_SPLEAF_NCHILDS * SILOFS_BK_SIZE;
+	return SILOFS_SPMAP_NCHILDS * SILOFS_BK_SIZE;
 }
 
 loff_t silofs_off_to_spleaf_start(loff_t voff)
@@ -865,33 +865,6 @@ bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
 {
 	return lba_isnull(bkaddr->lba) ||
 	       silofs_blobid_isnull(&bkaddr->blobid);
-}
-
-
-void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48)
-{
-	silofs_blobid40b_reset(&bkaddr48->blobid);
-	bkaddr48->lba = silofs_cpu_to_lba32(UINT32_MAX);
-	bkaddr48->reserved = 0;
-}
-
-void silofs_bkaddr48b_set(struct silofs_bkaddr48b *bkaddr48,
-                          const struct silofs_bkaddr *bkaddr)
-{
-	silofs_blobid40b_set(&bkaddr48->blobid, &bkaddr->blobid);
-	bkaddr48->lba = silofs_cpu_to_lba32(bkaddr->lba);
-	bkaddr48->reserved = 0;
-}
-
-void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
-                            struct silofs_bkaddr *bkaddr)
-{
-	struct silofs_blobid blobid;
-	silofs_lba_t lba;
-
-	silofs_blobid40b_parse(&bkaddr48->blobid, &blobid);
-	lba = silofs_lba32_to_cpu(bkaddr48->lba);
-	silofs_bkaddr_setup(bkaddr, &blobid, lba);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -176,14 +176,6 @@ void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
 
 bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
 
-void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48);
-
-void silofs_bkaddr48b_set(struct silofs_bkaddr48b *bkaddr48,
-                          const struct silofs_bkaddr *bkaddr);
-
-void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
-                            struct silofs_bkaddr *bkaddr);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_oaddr *silofs_oaddr_none(void);

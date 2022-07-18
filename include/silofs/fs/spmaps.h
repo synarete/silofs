@@ -71,10 +71,10 @@ bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni);
 void silofs_sni_resolve_main_at(const struct silofs_spnode_info *sni,
                                 loff_t voff, struct silofs_uaddr *out_ua);
 
-int silofs_sni_pack_blob(const struct silofs_spnode_info *sni,
+int silofs_sni_cold_blob(const struct silofs_spnode_info *sni,
                          struct silofs_blobid *out_blobid);
 
-void silofs_sni_bind_pack_blob(struct silofs_spnode_info *sni,
+void silofs_sni_bind_cold_blob(struct silofs_spnode_info *sni,
                                const struct silofs_blobid *blobid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -135,9 +135,6 @@ void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
 
 bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
                               const struct silofs_treeid *treeid);
-
-int silofs_sli_pack_blob(const struct silofs_spleaf_info *sli,
-                         struct silofs_blobid *out_blobid);
 
 int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
                                const struct silofs_vaddr *vaddr);

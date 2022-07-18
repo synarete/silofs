@@ -161,7 +161,6 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_blobid32b_ta, 32);
 	REQUIRE_SIZEOF(struct silofs_blobid32b_ca, 32);
 	REQUIRE_SIZEOF(struct silofs_blobid40b, 40);
-	REQUIRE_SIZEOF(struct silofs_bkaddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_oaddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bootsec1k, SILOFS_BOOTSEC_SIZE);
@@ -214,11 +213,11 @@ static void guarantee_persistent_types_members(void)
 static void guarantee_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_ulink, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_bkaddr, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_cold_blobid, 48);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 88);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 96);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 104);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_uref_blobid, 0);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_cold_blobid, 40);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 80);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 88);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 96);
 }
 
 static void guarantee_persistent_types_alignment2(void)
@@ -260,17 +259,17 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_objs, 768);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_main_blobid, 24);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_pack_blobid, 64);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_cold_blobid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_vrange, 104);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subref, 4096);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_blobid, 24);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_pack_blobid, 64);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 104);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 192);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
+
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 4096);
 }
 

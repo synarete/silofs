@@ -97,7 +97,7 @@ static size_t uaddr_to_slot(const struct silofs_uaddr *uaddr)
 {
 	const ssize_t span = silofs_height_to_span(uaddr->height + 1);
 	const loff_t roff = uaddr->voff % span;
-	const ssize_t nchilds = SILOFS_SPNODE_NCHILDS;
+	const ssize_t nchilds = SILOFS_SPMAP_NCHILDS;
 	ssize_t slot;
 
 	slot = (roff * nchilds) / span;
@@ -1128,7 +1128,7 @@ static int pac_post_archive_at_spnode2(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_pack_blob(spit->sni2, &cold);
+	silofs_sni_bind_cold_blob(spit->sni2, &cold);
 	return 0;
 }
 
@@ -1142,7 +1142,7 @@ static int pac_post_archive_at_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_pack_blob(spit->sni3, &cold);
+	silofs_sni_bind_cold_blob(spit->sni3, &cold);
 	return 0;
 }
 
@@ -1156,7 +1156,7 @@ static int pac_post_archive_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_pack_blob(spit->sni4, &cold);
+	silofs_sni_bind_cold_blob(spit->sni4, &cold);
 	return 0;
 }
 
@@ -1615,7 +1615,7 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	loff_t voff;
 	int err;
 
-	err = silofs_sni_pack_blob(spit->sni2, &cold);
+	err = silofs_sni_cold_blob(spit->sni2, &cold);
 	if (err) {
 		goto out;
 	}
@@ -1628,7 +1628,7 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 		goto out;
 	}
 	sni_vrange(spit->sni2, &vrange);
-	for (size_t slot = 0; slot < SILOFS_SPNODE_NCHILDS; ++slot) {
+	for (size_t slot = 0; slot < SILOFS_SPMAP_NCHILDS; ++slot) {
 		voff = silofs_vrange_voff_at(&vrange, slot);
 		if (voff >= vrange.end) {
 			break;
@@ -1665,7 +1665,7 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	loff_t voff;
 	int err;
 
-	err = silofs_sni_pack_blob(spit->sni3, &cold);
+	err = silofs_sni_cold_blob(spit->sni3, &cold);
 	if (err) {
 		goto out;
 	}
@@ -1678,7 +1678,7 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 		goto out;
 	}
 	sni_vrange(spit->sni3, &vrange);
-	for (size_t slot = 0; slot < SILOFS_SPNODE_NCHILDS; ++slot) {
+	for (size_t slot = 0; slot < SILOFS_SPMAP_NCHILDS; ++slot) {
 		voff = silofs_vrange_voff_at(&vrange, slot);
 		if (voff >= vrange.end) {
 			break;
@@ -1715,7 +1715,7 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 	loff_t voff;
 	int err;
 
-	err = silofs_sni_pack_blob(spit->sni4, &cold);
+	err = silofs_sni_cold_blob(spit->sni4, &cold);
 	if (err) {
 		goto out;
 	}
@@ -1728,7 +1728,7 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 		goto out;
 	}
 	sni_vrange(spit->sni4, &vrange);
-	for (size_t slot = 0; slot < SILOFS_SPNODE_NCHILDS; ++slot) {
+	for (size_t slot = 0; slot < SILOFS_SPMAP_NCHILDS; ++slot) {
 		voff = silofs_vrange_voff_at(&vrange, slot);
 		if (voff >= vrange.end) {
 			break;

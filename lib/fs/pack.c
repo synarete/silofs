@@ -28,7 +28,6 @@ struct silofs_pack_blob {
 	struct silofs_pack_blob        *pb_cold;
 	struct silofs_list_head         pb_lh;
 	size_t                          pb_size_max;
-	enum silofs_height              pb_height;
 };
 
 struct silofs_pack_elem {
@@ -66,6 +65,16 @@ struct silofs_cimdka {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void blobid_anon(struct silofs_blobid *blobid,
+                        enum silofs_stype vspace, enum silofs_height height)
+{
+	struct silofs_hash256 hash;
+	const size_t size = SILOFS_BLOB_SIZE_MAX;
+
+	silofs_memzero(&hash, sizeof(hash));
+	silofs_blobid_make_ca(blobid, &hash, size, vspace, height);
+}
 
 static enum silofs_height ui_height(const struct silofs_unode_info *ui)
 {
@@ -116,16 +125,29 @@ pblob_from_lh(const struct silofs_list_head *lh)
 	return unconst(pb);
 }
 
-static void pblob_init(struct silofs_pack_blob *pb, struct silofs_alloc *alloc,
-                       void *blob, size_t bsz, enum silofs_height height)
+static void pblob_blobid(const struct silofs_pack_blob *pb,
+                         struct silofs_blobid *out_blobid)
 {
-	blobid_reset(&pb->pb_blobid);
+	blobid_assign(out_blobid, &pb->pb_blobid);
+}
+
+static void pblob_set_blobid(struct silofs_pack_blob *pb,
+                             const struct silofs_blobid *blobid)
+{
+	blobid_assign(&pb->pb_blobid, blobid);
+}
+
+static void pblob_init(struct silofs_pack_blob *pb,
+                       struct silofs_alloc *alloc,
+                       const struct silofs_blobid *blobid,
+                       void *blob, size_t bsz)
+{
+	blobid_assign(&pb->pb_blobid, blobid);
 	list_head_init(&pb->pb_lh);
 	pb->pb_alloc = alloc;
 	pb->pb_blob = blob;
 	pb->pb_cold = NULL;
 	pb->pb_size_max = bsz;
-	pb->pb_height = height;
 }
 
 static void pblob_fini(struct silofs_pack_blob *pb)
@@ -139,7 +161,7 @@ static void pblob_fini(struct silofs_pack_blob *pb)
 }
 
 static struct silofs_pack_blob *
-pblob_new(struct silofs_alloc *alloc, enum silofs_height height)
+pblob_new(struct silofs_alloc *alloc, const struct silofs_blobid *blobid)
 {
 	struct silofs_pack_blob *pb;
 	const size_t bsz = SILOFS_BLOB_SIZE_MAX;
@@ -154,7 +176,7 @@ pblob_new(struct silofs_alloc *alloc, enum silofs_height height)
 		silofs_deallocate(alloc, pb, sizeof(*pb));
 		return NULL;
 	}
-	pblob_init(pb, alloc, blob, bsz, height);
+	pblob_init(pb, alloc, blobid, blob, bsz);
 	return pb;
 }
 
@@ -201,27 +223,17 @@ static void pblob_set_length(struct silofs_pack_blob *pb, size_t size)
 	pb->pb_blobid.size = size;
 }
 
-static void pblob_blobid(const struct silofs_pack_blob *pb,
-                         struct silofs_blobid *out_blobid)
-{
-	blobid_assign(out_blobid, &pb->pb_blobid);
-}
-
-static void pblob_set_blobid(struct silofs_pack_blob *pb,
-                             const struct silofs_blobid *blobid)
-{
-	blobid_assign(&pb->pb_blobid, blobid);
-}
-
 static void pblob_calc_blobid(const struct silofs_pack_blob *pb,
                               const struct silofs_mdigest *md,
                               struct silofs_blobid *out_blobid)
 {
 	struct silofs_hash256 hash;
-	const size_t len = pblob_length(pb);
+	const size_t len = pb->pb_blobid.size;
+	const enum silofs_stype vspace = pb->pb_blobid.vspace;
+	const enum silofs_height height = pb->pb_blobid.height;
 
 	silofs_sha3_256_of(md, pb->pb_blob, len, &hash);
-	silofs_blobid_make_ca(out_blobid, &hash, len);
+	silofs_blobid_make_ca(out_blobid, &hash, len, vspace, height);
 }
 
 static int pblob_check_blobid(const struct silofs_pack_blob *pb,
@@ -489,7 +501,7 @@ pqs_pbq_of(const struct silofs_pack_queues *pqs, enum silofs_height height)
 static void pqs_insert_pblob(struct silofs_pack_queues *pqs,
                              struct silofs_pack_blob *pb)
 {
-	struct silofs_listq *lq = pqs_pbq_of(pqs, pb->pb_height);
+	struct silofs_listq *lq = pqs_pbq_of(pqs, pb->pb_blobid.height);
 
 	listq_push_back(lq, &pb->pb_lh);
 }
@@ -546,7 +558,7 @@ static int pqs_assign_pblob_by_pe(struct silofs_pack_queues *pqs,
 {
 	const struct silofs_list_head *lh;
 	const struct silofs_pack_elem *pe;
-	const struct silofs_listq *lq = pqs_peq_of(pqs, pb->pb_height);
+	const struct silofs_listq *lq = pqs_peq_of(pqs, pb->pb_blobid.height);
 	int err;
 
 	for (lh = listq_front(lq); lh != NULL; lh = listq_next(lq, lh)) {
@@ -561,11 +573,11 @@ static int pqs_assign_pblob_by_pe(struct silofs_pack_queues *pqs,
 
 static struct silofs_pack_blob *
 pqs_lookup_pblob(const struct silofs_pack_queues *pqs,
-                 const struct silofs_blobid *blobid, enum silofs_height height)
+                 const struct silofs_blobid *blobid)
 {
 	struct silofs_pack_blob *pb;
 	const struct silofs_list_head *lh;
-	const struct silofs_listq *pbq = pqs_pbq_of(pqs, height);
+	const struct silofs_listq *pbq = pqs_pbq_of(pqs, blobid->height);
 
 	lh = listq_front(pbq);
 	while (lh != NULL) {
@@ -579,24 +591,21 @@ pqs_lookup_pblob(const struct silofs_pack_queues *pqs,
 }
 
 static bool pqs_has_pblob(const struct silofs_pack_queues *pqs,
-                          const struct silofs_blobid *blobid,
-                          enum silofs_height height)
+                          const struct silofs_blobid *blobid)
 {
 	struct silofs_pack_blob *pb;
 
-	pb = pqs_lookup_pblob(pqs, blobid, height);
+	pb = pqs_lookup_pblob(pqs, blobid);
 	return (pb != NULL);
 }
 
 static bool pqs_resolve_cold_of(const struct silofs_pack_queues *pqs,
                                 const struct silofs_blobid *warm,
-                                enum silofs_height height,
                                 struct silofs_blobid *out_cold)
 {
-	struct silofs_pack_blob *pb;
+	struct silofs_pack_blob *pb = pqs_lookup_pblob(pqs, warm);
 	bool ret = false;
 
-	pb = pqs_lookup_pblob(pqs, warm, height);
 	if (pb && pb->pb_cold) {
 		blobid_assign(out_cold, &pb->pb_cold->pb_blobid);
 		ret = true;
@@ -749,34 +758,31 @@ static void pac_clear_at(struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_new_pblob(struct silofs_pack_ctx *pa_ctx,
-                         enum silofs_height height,
+                         const struct silofs_blobid *blobid,
                          struct silofs_pack_blob **out_pb)
 {
-	*out_pb = pblob_new(pa_ctx->alloc, height);
+	*out_pb = pblob_new(pa_ctx->alloc, blobid);
 	return (*out_pb == NULL) ? -ENOMEM : 0;
 }
 
-static int pac_new_pblob2(struct silofs_pack_ctx *pa_ctx,
-                          const struct silofs_blobid *blobid,
-                          enum silofs_height height,
-                          struct silofs_pack_blob **out_pb)
+static int
+pac_new_anon_pblob(struct silofs_pack_ctx *pa_ctx,
+                   enum silofs_stype vspace, enum silofs_height height,
+                   struct silofs_pack_blob **out_pb)
 {
-	int err;
+	struct silofs_blobid blobid;
 
-	err = pac_new_pblob(pa_ctx, height, out_pb);
-	if (!err) {
-		pblob_set_blobid(*out_pb, blobid);
-	}
-	return 0;
+	blobid_anon(&blobid, vspace, height);
+	return pac_new_pblob(pa_ctx, &blobid, out_pb);
 }
 
 static int pac_put_new_pblob(struct silofs_pack_ctx *pa_ctx,
-                             enum silofs_height height,
+                             const struct silofs_blobid *blobid,
                              struct silofs_pack_blob **out_pb)
 {
 	int err;
 
-	err = pac_new_pblob(pa_ctx, height, out_pb);
+	err = pac_new_pblob(pa_ctx, blobid, out_pb);
 	if (err) {
 		return err;
 	}
@@ -784,19 +790,18 @@ static int pac_put_new_pblob(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_put_new_pblob2(struct silofs_pack_ctx *pa_ctx,
-                              const struct silofs_blobid *blobid,
-                              enum silofs_height height,
-                              struct silofs_pack_blob **out_pb)
+static int
+pac_put_new_anon_pblob(struct silofs_pack_ctx *pa_ctx,
+                       enum silofs_stype vspace, enum silofs_height height,
+                       struct silofs_pack_blob **out_pb)
 {
 	int err;
 
-	err = pac_put_new_pblob(pa_ctx, height, out_pb);
+	err = pac_new_anon_pblob(pa_ctx, vspace, height, out_pb);
 	if (err) {
 		return err;
 	}
-	pblob_set_blobid(*out_pb, blobid);
-	pblob_set_length(*out_pb, blobid->size);
+	pqs_insert_pblob(&pa_ctx->pqs, *out_pb);
 	return 0;
 }
 
@@ -997,22 +1002,22 @@ static int pac_exec_archive_at(struct silofs_pack_ctx *pa_ctx,
 
 static int pac_archive_vdata_blob(struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_blobid *warm,
-                                  enum silofs_height height,
                                   struct silofs_blobid *out_cold)
 {
 	struct silofs_pack_blob *pb_warm = NULL;
 	struct silofs_pack_blob *pb_cold = NULL;
 	int err;
 
-	err = pac_put_new_pblob2(pa_ctx, warm, height, &pb_warm);
-	if (err) {
-		return err;
-	}
-	err = pac_put_new_pblob(pa_ctx, height, &pb_cold);
+	err = pac_put_new_pblob(pa_ctx, warm, &pb_warm);
 	if (err) {
 		return err;
 	}
 	err = pac_load_warm_blob(pa_ctx, pb_warm);
+	if (err) {
+		return err;
+	}
+	err = pac_put_new_anon_pblob(pa_ctx, warm->vspace,
+	                             warm->height, &pb_cold);
 	if (err) {
 		return err;
 	}
@@ -1043,11 +1048,11 @@ pac_post_archive_at_blob_of(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	known = pqs_resolve_cold_of(pqs, &warm, spit->height - 1, &cold);
+	known = pqs_resolve_cold_of(pqs, &warm, &cold);
 	if (known) {
 		goto out_ok;
 	}
-	err = pac_archive_vdata_blob(pa_ctx, &warm, spit->height - 1, &cold);
+	err = pac_archive_vdata_blob(pa_ctx, &warm, &cold);
 	if (err) {
 		return err;
 	}
@@ -1085,19 +1090,20 @@ static int pac_assign_unodes_blob(struct silofs_pack_ctx *pa_ctx,
 	return pqs_assign_pblob_by_pe(&pa_ctx->pqs, pb);
 }
 
-static int pac_archive_unodes_blob(struct silofs_pack_ctx *pa_ctx,
-                                   enum silofs_height height,
-                                   struct silofs_blobid *out_cold)
+static int
+pac_archive_unodes_blob(struct silofs_pack_ctx *pa_ctx,
+                        enum silofs_stype vpsace, enum silofs_height height,
+                        struct silofs_blobid *out_cold)
 {
 	struct silofs_pack_blob *pb_warm = NULL;
 	struct silofs_pack_blob *pb_cold = NULL;
 	int err;
 
-	err = pac_put_new_pblob(pa_ctx, height, &pb_warm);
+	err = pac_put_new_anon_pblob(pa_ctx, vpsace, height, &pb_warm);
 	if (err) {
 		return err;
 	}
-	err = pac_put_new_pblob(pa_ctx, height, &pb_cold);
+	err = pac_put_new_anon_pblob(pa_ctx, vpsace, height, &pb_cold);
 	if (err) {
 		return err;
 	}
@@ -1124,7 +1130,8 @@ static int pac_post_archive_at_spnode2(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->height - 1, &cold);
+	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
+	                              &cold);
 	if (err) {
 		return err;
 	}
@@ -1138,7 +1145,8 @@ static int pac_post_archive_at_spnode3(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->height - 1, &cold);
+	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
+	                              &cold);
 	if (err) {
 		return err;
 	}
@@ -1152,7 +1160,8 @@ static int pac_post_archive_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->height - 1, &cold);
+	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
+	                              &cold);
 	if (err) {
 		return err;
 	}
@@ -1166,7 +1175,8 @@ static int pac_post_archive_at_super(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->height - 1, &cold);
+	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
+	                              &cold);
 	if (err) {
 		return err;
 	}
@@ -1210,7 +1220,8 @@ static int pac_post_archive_at_uber(struct silofs_pack_ctx *pa_ctx)
 	struct silofs_blobid blobid;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, SILOFS_HEIGHT_SUPER, &blobid);
+	err = pac_archive_unodes_blob(pa_ctx, SILOFS_STYPE_SUPER,
+	                              SILOFS_HEIGHT_SUPER, &blobid);
 	if (err) {
 		return err;
 	}
@@ -1399,7 +1410,7 @@ pac_restore_shadow_blob(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_pack_blob *pb_cold = NULL;
 	int err;
 
-	err = pac_new_pblob2(pa_ctx, cold, pb_shadow->pb_height, &pb_cold);
+	err = pac_new_pblob(pa_ctx, cold, &pb_cold);
 	if (err) {
 		return err;
 	}
@@ -1549,7 +1560,7 @@ pac_exec_restore_vdata_blob(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	if (pqs_has_pblob(&pa_ctx->pqs, &warm, spit->height - 1)) {
+	if (pqs_has_pblob(&pa_ctx->pqs, &warm)) {
 		/* already restored */
 		return 0;
 	}
@@ -1557,11 +1568,11 @@ pac_exec_restore_vdata_blob(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_put_new_pblob2(pa_ctx, &cold, spit->height - 1, &pb_cold);
+	err = pac_put_new_pblob(pa_ctx, &cold, &pb_cold);
 	if (err) {
 		return err;
 	}
-	err = pac_put_new_pblob2(pa_ctx, &warm, spit->height - 1, &pb_warm);
+	err = pac_put_new_pblob(pa_ctx, &warm, &pb_warm);
 	if (err) {
 		return err;
 	}
@@ -1615,11 +1626,12 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	loff_t voff;
 	int err;
 
-	err = silofs_sni_cold_blob(spit->sni2, &cold);
+	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
+	                         spit->height - 1, &pb_shadow);
 	if (err) {
 		goto out;
 	}
-	err = pac_new_pblob(pa_ctx, spit->height - 1, &pb_shadow);
+	err = silofs_sni_cold_blob(spit->sni2, &cold);
 	if (err) {
 		goto out;
 	}
@@ -1669,7 +1681,8 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_new_pblob(pa_ctx, spit->height - 1, &pb_shadow);
+	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
+	                         spit->height - 1, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1719,7 +1732,8 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_new_pblob(pa_ctx, spit->height - 1, &pb_shadow);
+	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
+	                         spit->height - 1, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1767,7 +1781,8 @@ pac_exec_restore_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_new_pblob(pa_ctx, spit->height - 1, &pb_shadow);
+	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
+	                         spit->height - 1, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1803,7 +1818,8 @@ static int pac_exec_restore_at_uber(struct silofs_pack_ctx *pa_ctx)
 	silofs_bootsec_sb_uaddr(pa_ctx->src_bsec, &sb_uaddr);
 	silofs_bootsec_cold_blobid(pa_ctx->src_bsec, &cold);
 
-	err = pac_new_pblob(pa_ctx, SILOFS_HEIGHT_SUPER, &pb_shadow);
+	err = pac_new_anon_pblob(pa_ctx, SILOFS_STYPE_SUPER,
+	                         SILOFS_HEIGHT_SUPER, &pb_shadow);
 	if (err) {
 		goto out;
 	}

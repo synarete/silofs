@@ -138,8 +138,8 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
                            enum silofs_height height, enum silofs_stype vspa);
 
 void silofs_blobid_make_ca(struct silofs_blobid *blobid,
-                           const struct silofs_hash256 *hash, size_t size);
-
+                           const struct silofs_hash256 *hash, size_t size,
+                           enum silofs_stype vspac, enum silofs_height height);
 
 void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40);
 

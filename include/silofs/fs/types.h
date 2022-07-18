@@ -205,8 +205,6 @@ struct silofs_treeid {
 struct silofs_blobid_ta {
 	struct silofs_treeid    treeid;
 	loff_t                  voff;
-	enum silofs_height      height;
-	enum silofs_stype       vspace;
 };
 
 /* content-addressing blob-id */
@@ -224,6 +222,8 @@ union silofs_blobid_u {
 struct silofs_blobid {
 	union silofs_blobid_u   u;
 	size_t                  size;
+	enum silofs_stype       vspace;
+	enum silofs_height      height;
 	enum silofs_blobtype    btype;
 	enum silofs_pack_mode   pmode;
 };

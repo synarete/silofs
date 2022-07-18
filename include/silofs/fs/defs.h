@@ -464,9 +464,7 @@ struct silofs_treeid128 {
 struct silofs_blobid32b_ta {
 	struct silofs_treeid128         treeid;
 	int64_t                         voff;
-	uint8_t                         height;
-	uint8_t                         vspace;
-	uint8_t                         pad[6];
+	uint8_t                         pad[8];
 } silofs_packed_aligned8;
 
 
@@ -486,9 +484,10 @@ union silofs_blobid32b_u {
 struct silofs_blobid40b {
 	union silofs_blobid32b_u        u;
 	uint32_t                        size;
+	uint8_t                         vspace;
+	uint8_t                         height;
 	uint8_t                         btype;
 	uint8_t                         pmode;
-	uint8_t                         reserved[2];
 } silofs_packed_aligned8;
 
 

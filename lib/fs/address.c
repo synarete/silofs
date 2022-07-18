@@ -469,6 +469,8 @@ void silofs_treeid128_parse(const struct silofs_treeid128 *treeid128,
 
 static const struct silofs_blobid s_blobid_none = {
 	.size = 0,
+	.vspace = SILOFS_STYPE_NONE,
+	.height = SILOFS_HEIGHT_LAST,
 	.btype = SILOFS_BLOBTYPE_NONE,
 	.pmode = SILOFS_PACK_NONE,
 };
@@ -524,8 +526,6 @@ static void blobid_assign_ta(struct silofs_blobid *blobid,
 {
 	treeid_assign(&blobid->u.ta.treeid, &other->u.ta.treeid);
 	blobid->u.ta.voff = other->u.ta.voff;
-	blobid->u.ta.height = other->u.ta.height;
-	blobid->u.ta.vspace = other->u.ta.vspace;
 }
 
 static void blobid_assign_ca(struct silofs_blobid *blobid,
@@ -545,9 +545,10 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
                           const struct silofs_blobid *other)
 {
 	blobid->size = other->size;
+	blobid->vspace = other->vspace;
+	blobid->height = other->height;
 	blobid->btype = other->btype;
 	blobid->pmode = other->pmode;
-
 	switch (other->btype) {
 	case SILOFS_BLOBTYPE_TA:
 		blobid_assign_ta(blobid, other);
@@ -567,14 +568,6 @@ static long blobid_compare_ta(const struct silofs_blobid *blobid1,
 {
 	long cmp;
 
-	cmp = (int)(blobid2->u.ta.height) - (int)(blobid1->u.ta.height);
-	if (cmp) {
-		return cmp;
-	}
-	cmp = (int)(blobid2->u.ta.vspace) - (int)(blobid1->u.ta.vspace);
-	if (cmp) {
-		return cmp;
-	}
 	cmp = (long)(blobid2->u.ta.voff) - (long)(blobid1->u.ta.voff);
 	if (cmp) {
 		return cmp;
@@ -604,7 +597,11 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 {
 	long cmp;
 
-	cmp = (long)(blobid2->size) - (long)(blobid1->size);
+	cmp = (int)(blobid2->vspace) - (int)(blobid1->vspace);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (int)(blobid2->height) - (int)(blobid1->height);
 	if (cmp) {
 		return cmp;
 	}
@@ -613,6 +610,10 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 		return cmp;
 	}
 	cmp = (int)(blobid2->pmode) - (int)(blobid1->pmode);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)(blobid2->size) - (long)(blobid1->size);
 	if (cmp) {
 		return cmp;
 	}
@@ -641,12 +642,10 @@ static uint64_t blobid_as_u64_ta(const struct silofs_blobid *blobid)
 {
 	uint64_t u1;
 	uint64_t u2;
-	const uint32_t hi = (uint32_t)blobid->u.ta.height;
-	const uint64_t vs = (uint64_t)blobid->u.ta.vspace;
 	const uint64_t uoff = (uint64_t)(blobid->u.ta.voff);
 
 	treeid_as_u64(&blobid->u.ta.treeid, &u1, &u2);
-	return silofs_rotate64((uoff + vs) ^ u1 ^ u2, hi);
+	return uoff ^ u1 ^ u2;
 }
 
 static uint64_t blobid_as_u64_ca(const struct silofs_blobid *blobid)
@@ -654,41 +653,34 @@ static uint64_t blobid_as_u64_ca(const struct silofs_blobid *blobid)
 	return hash256_to_u64(blobid->u.ca.hash);
 }
 
-uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid)
+static uint64_t blobid_as_u64_by_meta(const struct silofs_blobid *blobid)
 {
-	uint64_t h;
-
-	switch (blobid->btype) {
-	case SILOFS_BLOBTYPE_TA:
-		h = blobid_as_u64_ta(blobid);
-		break;
-	case SILOFS_BLOBTYPE_CA:
-		h = blobid_as_u64_ca(blobid);
-		break;
-	case SILOFS_BLOBTYPE_NONE:
-	default:
-		h = 0;
-		break;
-	}
-	h ^= silofs_rotate64(blobid->size, blobid->btype);
-	return h;
+	return ((uint64_t)blobid->btype << 24) |
+	       ((uint64_t)blobid->pmode << 16) |
+	       ((uint64_t)blobid->height << 8) |
+	       ((uint64_t)blobid->vspace);
 }
 
-static enum silofs_stype blobid_vspace(const struct silofs_blobid *blobid)
+uint64_t silofs_blobid_as_u64(const struct silofs_blobid *blobid)
 {
-	enum silofs_stype vspace;
+	uint64_t h1;
+	uint64_t h2;
 
 	switch (blobid->btype) {
 	case SILOFS_BLOBTYPE_TA:
-		vspace = blobid->u.ta.vspace;
+		h1 = blobid_as_u64_ta(blobid);
+		break;
+	case SILOFS_BLOBTYPE_CA:
+		h1 = blobid_as_u64_ca(blobid);
 		break;
 	case SILOFS_BLOBTYPE_NONE:
-	case SILOFS_BLOBTYPE_CA:
 	default:
-		vspace = SILOFS_STYPE_NONE;
+		h1 = 0;
 		break;
 	}
-	return vspace;
+	h2 = blobid_as_u64_by_meta(blobid);
+
+	return h1 ^ h2 ^ blobid->size;
 }
 
 void silofs_blobid_make_ta(struct silofs_blobid *blobid,
@@ -697,21 +689,24 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
 {
 	treeid_assign(&blobid->u.ta.treeid, treeid);
 	blobid->u.ta.voff = voff_to_blobid_base(voff);
-	blobid->u.ta.height = height;
-	blobid->u.ta.vspace = vspace;
 	blobid->size = SILOFS_BLOB_SIZE_MAX;
 	blobid->btype = SILOFS_BLOBTYPE_TA;
 	blobid->pmode = SILOFS_PACK_NONE;
+	blobid->height = height;
+	blobid->vspace = vspace;
 }
 
 void silofs_blobid_make_ca(struct silofs_blobid *blobid,
-                           const struct silofs_hash256 *hash, size_t size)
+                           const struct silofs_hash256 *hash, size_t size,
+                           enum silofs_stype vspace, enum silofs_height height)
 {
 	STATICASSERT_EQ(sizeof(blobid->u.ca.hash), sizeof(hash->hash));
 
 	memcpy(blobid->u.ca.hash, hash->hash, sizeof(blobid->u.ca.hash));
-	blobid->btype = SILOFS_BLOBTYPE_CA;
 	blobid->size = size;
+	blobid->vspace = vspace;
+	blobid->height = height;
+	blobid->btype = SILOFS_BLOBTYPE_CA;
 	blobid->pmode = SILOFS_PACK_SIMPLE;
 }
 
@@ -719,6 +714,8 @@ void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40)
 {
 	memset(blobid40, 0, sizeof(*blobid40));
 	blobid40->size = 0;
+	blobid40->vspace = SILOFS_STYPE_NONE;
+	blobid40->height = SILOFS_HEIGHT_LAST;
 	blobid40->btype = SILOFS_BLOBTYPE_NONE;
 	blobid40->pmode = SILOFS_PACK_NONE;
 }
@@ -728,8 +725,6 @@ static void blobid40b_set_ta(struct silofs_blobid40b *blobid40,
 {
 	silofs_treeid128_set(&blobid40->u.ta.treeid, &blobid->u.ta.treeid);
 	blobid40->u.ta.voff = silofs_cpu_to_off(blobid->u.ta.voff);
-	blobid40->u.ta.height = (uint8_t)blobid->u.ta.height;
-	blobid40->u.ta.vspace = (uint8_t)blobid->u.ta.vspace;
 }
 
 static void blobid40b_set_ca(struct silofs_blobid40b *blobid40,
@@ -747,6 +742,8 @@ void silofs_blobid40b_set(struct silofs_blobid40b *blobid40,
 {
 	memset(blobid40, 0, sizeof(*blobid40));
 	blobid40->size = silofs_cpu_to_le32((uint32_t)blobid->size);
+	blobid40->vspace = (uint8_t)blobid->vspace;
+	blobid40->height = (uint8_t)blobid->height;
 	blobid40->btype = (uint8_t)blobid->btype;
 	blobid40->pmode = (uint8_t)blobid->pmode;
 	switch (blobid->btype) {
@@ -767,8 +764,6 @@ static void blobid40b_parse_ta(const struct silofs_blobid40b *blobid40,
 {
 	silofs_treeid128_parse(&blobid40->u.ta.treeid, &blobid->u.ta.treeid);
 	blobid->u.ta.voff = silofs_off_to_cpu(blobid40->u.ta.voff);
-	blobid->u.ta.height = (enum silofs_height)blobid40->u.ta.height;
-	blobid->u.ta.vspace = (enum silofs_stype)blobid40->u.ta.vspace;
 }
 
 static void blobid40b_parse_ca(const struct silofs_blobid40b *blobid40,
@@ -785,6 +780,8 @@ void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid40,
                             struct silofs_blobid *blobid)
 {
 	blobid->size = silofs_le32_to_cpu(blobid40->size);
+	blobid->vspace = (enum silofs_stype)blobid40->vspace;
+	blobid->height = (enum silofs_height)blobid40->height;
 	blobid->btype = (enum silofs_blobtype)blobid40->btype;
 	blobid->pmode = (enum silofs_pack_mode)blobid40->pmode;
 	switch (blobid->btype) {
@@ -1101,7 +1098,7 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 
 enum silofs_stype silofs_uaddr_vspace(const struct silofs_uaddr *uaddr)
 {
-	return blobid_vspace(&uaddr->oaddr.bka.blobid);
+	return uaddr->oaddr.bka.blobid.vspace;
 }
 
 silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr)

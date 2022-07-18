@@ -776,6 +776,14 @@ pac_new_anon_pblob(struct silofs_pack_ctx *pa_ctx,
 	return pac_new_pblob(pa_ctx, &blobid, out_pb);
 }
 
+static int
+pac_new_shadow_pblob(struct silofs_pack_ctx *pa_ctx,
+                     const struct silofs_blobid *cold,
+                     struct silofs_pack_blob **out_pb)
+{
+	return pac_new_anon_pblob(pa_ctx, cold->vspace, cold->height, out_pb);
+}
+
 static int pac_put_new_pblob(struct silofs_pack_ctx *pa_ctx,
                              const struct silofs_blobid *blobid,
                              struct silofs_pack_blob **out_pb)
@@ -993,6 +1001,7 @@ static int pac_exec_archive_at(struct silofs_pack_ctx *pa_ctx,
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
+	case SILOFS_HEIGHT_NONE:
 	default:
 		err = -SILOFS_EBUG;
 		break;
@@ -1207,6 +1216,7 @@ static int pac_post_archive_at(struct silofs_pack_ctx *pa_ctx,
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
+	case SILOFS_HEIGHT_NONE:
 	default:
 		err = -SILOFS_EFSCORRUPTED;
 		break;
@@ -1522,25 +1532,25 @@ static int pac_require_blob_of(struct silofs_pack_ctx *pa_ctx,
 	return silofs_repo_require_blob(repo, blobid, out_bri);
 }
 
-static int pac_shadow_super_at(struct silofs_pack_ctx *pa_ctx,
-                               const struct silofs_uaddr *uaddr,
-                               struct silofs_sb_info **out_sbi)
+static int pac_make_shadow_super(struct silofs_pack_ctx *pa_ctx,
+                                 const struct silofs_uaddr *uaddr,
+                                 struct silofs_sb_info **out_sbi)
 {
 	return silofs_shadow_super_at(pa_ctx->uber, pa_ctx->pack,
 	                              uaddr, out_sbi);
 }
 
-static int pac_shadow_spnode_at(struct silofs_pack_ctx *pa_ctx,
-                                const struct silofs_uaddr *uaddr,
-                                struct silofs_spnode_info **out_sni)
+static int pac_make_shadow_spnode(struct silofs_pack_ctx *pa_ctx,
+                                  const struct silofs_uaddr *uaddr,
+                                  struct silofs_spnode_info **out_sni)
 {
 	return silofs_shadow_spnode_at(pa_ctx->uber, pa_ctx->pack,
 	                               uaddr, out_sni);
 }
 
-static int pac_shadow_spleaf_at(struct silofs_pack_ctx *pa_ctx,
-                                const struct silofs_uaddr *uaddr,
-                                struct silofs_spleaf_info **out_sli)
+static int pac_make_shadow_spleaf(struct silofs_pack_ctx *pa_ctx,
+                                  const struct silofs_uaddr *uaddr,
+                                  struct silofs_spleaf_info **out_sli)
 {
 	return silofs_shadow_spleaf_at(pa_ctx->uber, pa_ctx->pack,
 	                               uaddr, out_sli);
@@ -1626,12 +1636,11 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 	loff_t voff;
 	int err;
 
-	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
-	                         spit->height - 1, &pb_shadow);
+	err = silofs_sni_cold_blob(spit->sni2, &cold);
 	if (err) {
 		goto out;
 	}
-	err = silofs_sni_cold_blob(spit->sni2, &cold);
+	err = pac_new_shadow_pblob(pa_ctx, &cold, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1650,7 +1659,7 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 			err = 0;
 			break;
 		}
-		err = pac_shadow_spleaf_at(pa_ctx, &uaddr, &sli);
+		err = pac_make_shadow_spleaf(pa_ctx, &uaddr, &sli);
 		if (err) {
 			break;
 		}
@@ -1681,8 +1690,7 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
-	                         spit->height - 1, &pb_shadow);
+	err = pac_new_shadow_pblob(pa_ctx, &cold, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1701,7 +1709,7 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 			err = 0;
 			break;
 		}
-		err = pac_shadow_spnode_at(pa_ctx, &uaddr, &sni);
+		err = pac_make_shadow_spnode(pa_ctx, &uaddr, &sni);
 		if (err) {
 			break;
 		}
@@ -1732,8 +1740,7 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
-	                         spit->height - 1, &pb_shadow);
+	err = pac_new_shadow_pblob(pa_ctx, &cold, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1752,7 +1759,7 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 			err = 0;
 			break;
 		}
-		err = pac_shadow_spnode_at(pa_ctx, &uaddr, &sni);
+		err = pac_make_shadow_spnode(pa_ctx, &uaddr, &sni);
 		if (err) {
 			break;
 		}
@@ -1781,8 +1788,7 @@ pac_exec_restore_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_new_anon_pblob(pa_ctx, spit->vspace,
-	                         spit->height - 1, &pb_shadow);
+	err = pac_new_shadow_pblob(pa_ctx, &cold, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1794,7 +1800,7 @@ pac_exec_restore_by_super(struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_shadow_spnode_at(pa_ctx, &uaddr, &sni);
+	err = pac_make_shadow_spnode(pa_ctx, &uaddr, &sni);
 	if (err) {
 		goto out;
 	}
@@ -1818,8 +1824,7 @@ static int pac_exec_restore_at_uber(struct silofs_pack_ctx *pa_ctx)
 	silofs_bootsec_sb_uaddr(pa_ctx->src_bsec, &sb_uaddr);
 	silofs_bootsec_cold_blobid(pa_ctx->src_bsec, &cold);
 
-	err = pac_new_anon_pblob(pa_ctx, SILOFS_STYPE_SUPER,
-	                         SILOFS_HEIGHT_SUPER, &pb_shadow);
+	err = pac_new_shadow_pblob(pa_ctx, &cold, &pb_shadow);
 	if (err) {
 		goto out;
 	}
@@ -1827,7 +1832,7 @@ static int pac_exec_restore_at_uber(struct silofs_pack_ctx *pa_ctx)
 	if (err) {
 		goto out;
 	}
-	err = pac_shadow_super_at(pa_ctx, &sb_uaddr, &sbi);
+	err = pac_make_shadow_super(pa_ctx, &sb_uaddr, &sbi);
 	if (err) {
 		goto out;
 	}
@@ -1866,6 +1871,7 @@ static int pac_exec_restore_at(struct silofs_pack_ctx *pa_ctx,
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
+	case SILOFS_HEIGHT_NONE:
 	default:
 		err = -SILOFS_EBUG;
 		break;
@@ -1944,6 +1950,7 @@ static int pac_post_restore_at(struct silofs_pack_ctx *pa_ctx,
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
+	case SILOFS_HEIGHT_NONE:
 	default:
 		err = -SILOFS_EBUG;
 		break;

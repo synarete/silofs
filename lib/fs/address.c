@@ -32,6 +32,7 @@ ssize_t silofs_height_to_span(enum silofs_height height)
 
 	switch (height) {
 	default:
+	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_VDATA:
 		span = SILOFS_BK_SIZE;
 		break;

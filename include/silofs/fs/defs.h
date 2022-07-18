@@ -327,12 +327,13 @@ enum silofs_stype {
 
 /* logical heights of unode mappings */
 enum silofs_height {
-	SILOFS_HEIGHT_VDATA     = 0,
-	SILOFS_HEIGHT_SPLEAF    = 1,
-	SILOFS_HEIGHT_SPNODE2   = 2,
-	SILOFS_HEIGHT_SPNODE3   = 3,
-	SILOFS_HEIGHT_SPNODE4   = 4,
-	SILOFS_HEIGHT_SUPER     = 5,
+	SILOFS_HEIGHT_NONE      = 0,
+	SILOFS_HEIGHT_VDATA     = 1,
+	SILOFS_HEIGHT_SPLEAF    = 2,
+	SILOFS_HEIGHT_SPNODE2   = 3,
+	SILOFS_HEIGHT_SPNODE3   = 4,
+	SILOFS_HEIGHT_SPNODE4   = 5,
+	SILOFS_HEIGHT_SUPER     = 6,
 	SILOFS_HEIGHT_LAST, /* keep last */
 };
 

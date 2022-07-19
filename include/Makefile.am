@@ -29,6 +29,7 @@ nobase_include_HEADERS += silofs/infra.h
 nobase_include_HEADERS += silofs/fs/address.h
 nobase_include_HEADERS += silofs/fs/boot.h
 nobase_include_HEADERS += silofs/fs/cache.h
+nobase_include_HEADERS += silofs/fs/compress.h
 nobase_include_HEADERS += silofs/fs/crypto.h
 nobase_include_HEADERS += silofs/fs/defs.h
 nobase_include_HEADERS += silofs/fs/dir.h

@@ -24,6 +24,7 @@
 #include <silofs/fs/address.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/nodes.h>
+#include <silofs/fs/compress.h>
 #include <silofs/fs/crypto.h>
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/cache.h>

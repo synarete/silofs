@@ -34,6 +34,7 @@ libsilofs_la_SOURCES += infra/xiovec.c
 libsilofs_la_SOURCES += fs/address.c
 libsilofs_la_SOURCES += fs/boot.c
 libsilofs_la_SOURCES += fs/cache.c
+libsilofs_la_SOURCES += fs/compress.c
 libsilofs_la_SOURCES += fs/crypto.c
 libsilofs_la_SOURCES += fs/dir.c
 libsilofs_la_SOURCES += fs/exec.c

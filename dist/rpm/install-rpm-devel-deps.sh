@@ -19,5 +19,6 @@ dnf install -y \
   python3-docutils \
   python3-pygments \
   kernel-headers \
-  rpm-build
+  rpm-build \
+  libzstd-devel
 

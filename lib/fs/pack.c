@@ -45,16 +45,15 @@ struct silofs_pack_queues {
 struct silofs_pack_ctx {
 	struct silofs_visitor           vis;
 	struct silofs_pack_queues       pqs;
-	struct silofs_crypto            cryp;
+	struct silofs_crypto            crypto;
+	struct silofs_blobid            cold_blobid;
+	const struct silofs_bootsec    *warm_bsec;
+	const struct silofs_bootsec    *cold_bsec;
 	const struct silofs_kivam      *kivam;
-	const struct silofs_bootsec    *src_bsec;
-	struct silofs_bootsec          *dst_bsec;
 	struct silofs_fs_uber          *uber;
 	struct silofs_alloc            *alloc;
 	struct silofs_sb_info          *sbi;
-	struct silofs_block            *tbk;
 	enum silofs_stype               vspace;
-	bool                            pack;
 };
 
 struct silofs_cimdka {
@@ -277,14 +276,6 @@ static bool pblob_has_blobid(const struct silofs_pack_blob *pb,
 	return !blobid_isnull(&pb->pb_blobid) &&
 	       blobid_isequal(&pb->pb_blobid, blobid);
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void del_ubk(struct silofs_block *ubk, struct silofs_alloc *alloc)
-{
-	silofs_deallocate(alloc, ubk, sizeof(*ubk));
-}
-
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -626,26 +617,16 @@ static struct silofs_repo *pac_cold_repo(const struct silofs_pack_ctx *pa_ctx)
 	return &pa_ctx->uber->ub_repos->repo_cold;
 }
 
-static struct silofs_repo *pac_src_repo(const struct silofs_pack_ctx *pa_ctx)
-{
-	return pa_ctx->pack ? pac_warm_repo(pa_ctx) : pac_cold_repo(pa_ctx);
-}
-
-static struct silofs_repo *pac_dst_repo(const struct silofs_pack_ctx *pa_ctx)
-{
-	return pa_ctx->pack ? pac_cold_repo(pa_ctx) : pac_warm_repo(pa_ctx);
-}
-
 static const struct silofs_cipher *
 pac_cipher(const struct silofs_pack_ctx *pa_ctx)
 {
-	return &pa_ctx->cryp.ci;
+	return &pa_ctx->crypto.ci;
 }
 
 static const struct silofs_mdigest *
 pac_mdigest(const struct silofs_pack_ctx *pa_ctx)
 {
-	struct silofs_repo *repo = pac_src_repo(pa_ctx);
+	struct silofs_repo *repo = pac_warm_repo(pa_ctx);
 
 	return &repo->re_bootldr.btl_md;
 }
@@ -661,47 +642,14 @@ static void pac_make_cimdka(const struct silofs_pack_ctx *pa_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int pac_init_tmp_bk(struct silofs_pack_ctx *pa_ctx)
-{
-	struct silofs_block *bk;
-
-	bk = silofs_allocate(pa_ctx->alloc, sizeof(*bk));
-	if (bk == NULL) {
-		return -ENOMEM;
-	}
-	silofs_memzero(bk, sizeof(*bk));
-	pa_ctx->tbk = bk;
-	return 0;
-}
-
-static void pac_fini_tmp_bk(struct silofs_pack_ctx *pa_ctx)
-{
-	struct silofs_block *bk = pa_ctx->tbk;
-
-	if (bk != NULL) {
-		silofs_memzero(bk, sizeof(*bk));
-		del_ubk(bk, pa_ctx->alloc);
-		pa_ctx->tbk = NULL;
-	}
-}
-
 static int pac_init_crypto(struct silofs_pack_ctx *pa_ctx)
 {
-	return silofs_crypto_init(&pa_ctx->cryp);
+	return silofs_crypto_init(&pa_ctx->crypto);
 }
 
 static void pac_fini_crypto(struct silofs_pack_ctx *pa_ctx)
 {
-	silofs_crypto_fini(&pa_ctx->cryp);
-}
-
-static void pac_setup_dst_bsec(struct silofs_pack_ctx *pa_ctx)
-{
-	const struct silofs_bootsec *src_bsec = pa_ctx->src_bsec;
-	struct silofs_bootsec *dst_bsec = pa_ctx->dst_bsec;
-
-	silofs_bootsec_init(dst_bsec);
-	silofs_bootsec_set_sb_uaddr(dst_bsec, &src_bsec->sb_uaddr);
+	silofs_crypto_fini(&pa_ctx->crypto);
 }
 
 static void pac_bind_to(struct silofs_pack_ctx *pa_ctx,
@@ -721,21 +669,14 @@ static int pac_start(struct silofs_pack_ctx *pa_ctx)
 {
 	int err;
 
+	blobid_reset(&pa_ctx->cold_blobid);
 	pac_bind_to(pa_ctx, NULL);
-	err = pac_init_tmp_bk(pa_ctx);
-	if (err) {
-		goto out_err;
-	}
 	err = pac_init_crypto(pa_ctx);
 	if (err) {
-		goto out_err;
+		return err;
 	}
-	pac_setup_dst_bsec(pa_ctx);
 	pqs_init(&pa_ctx->pqs, pa_ctx->alloc);
 	return 0;
-out_err:
-	pac_fini_tmp_bk(pa_ctx);
-	return err;
 }
 
 static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
@@ -744,7 +685,6 @@ static void pac_cleanup(struct silofs_pack_ctx *pa_ctx)
 	pqs_fini(&pa_ctx->pqs);
 	pac_bind_to(pa_ctx, NULL);
 	pac_fini_crypto(pa_ctx);
-	pac_fini_tmp_bk(pa_ctx);
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
 }
 
@@ -830,7 +770,7 @@ static int pac_require_ubk(const struct silofs_pack_ctx *pa_ctx,
                            const struct silofs_bkaddr *bkaddr,
                            struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_repo *repo = pac_dst_repo(pa_ctx);
+	struct silofs_repo *repo = pac_warm_repo(pa_ctx);
 	const struct silofs_blobid *blobid = &bkaddr->blobid;
 	struct silofs_blobref_info *bri = NULL;
 	int err;
@@ -1235,16 +1175,9 @@ static int pac_post_archive_at(struct silofs_pack_ctx *pa_ctx,
 static int pac_post_archive_at_uber(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_blobid anon;
-	struct silofs_blobid cold;
-	int err;
 
 	blobid_anon(&anon, SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
-	err = pac_archive_unodes_blob(pa_ctx, &anon, &cold);
-	if (err) {
-		return err;
-	}
-	silofs_bootsec_set_cold_blobid(pa_ctx->dst_bsec, &cold);
-	return 0;
+	return pac_archive_unodes_blob(pa_ctx, &anon, &pa_ctx->cold_blobid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1252,31 +1185,16 @@ static int pac_post_archive_at_uber(struct silofs_pack_ctx *pa_ctx)
 static int pac_exec_archive_at_uber(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_sb_info *sbi = NULL;
-	const struct silofs_uaddr *uaddr = &pa_ctx->src_bsec->sb_uaddr;
+	const struct silofs_uaddr *uaddr = &pa_ctx->warm_bsec->sb_uaddr;
 	int err;
 
-	err = silofs_stage_super_at(pa_ctx->uber, pa_ctx->pack, uaddr, &sbi);
+	err = silofs_stage_super_at(pa_ctx->uber, true, uaddr, &sbi);
 	if (err) {
 		return err;
 	}
 	silofs_sbi_bind_uber(sbi, pa_ctx->uber);
 	pac_bind_to(pa_ctx, sbi);
 	return 0;
-}
-
-static void pac_update_dst_bootsec(struct silofs_pack_ctx *pa_ctx)
-{
-	struct silofs_hash256 hash;
-	const struct silofs_sb_info *sbi = pa_ctx->sbi;
-	const struct silofs_mdigest *md = pac_mdigest(pa_ctx);
-
-	silofs_bootsec_set_sb_uaddr(pa_ctx->dst_bsec, sbi_uaddr(sbi));
-	if (pa_ctx->pack) {
-		silofs_calc_key_hash(&pa_ctx->kivam->key, md, &hash);
-		silofs_bootsec_set_keyhash(pa_ctx->dst_bsec, &hash);
-	} else {
-		silofs_bootsec_clear_keyhash(pa_ctx->dst_bsec);
-	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1311,19 +1229,30 @@ static int pac_walk_space_pack(struct silofs_pack_ctx *pa_ctx)
 	return ret;
 }
 
+static void pac_assign_cold_bootsec(struct silofs_pack_ctx *pa_ctx,
+                                    struct silofs_bootsec *bsec)
+{
+	struct silofs_hash256 hash;
+	const struct silofs_mdigest *md = pac_mdigest(pa_ctx);
+
+	silofs_bootsec_init(bsec);
+	silofs_bootsec_set_sb_uaddr(bsec, sbi_uaddr(pa_ctx->sbi));
+	silofs_bootsec_set_cold_blobid(bsec, &pa_ctx->cold_blobid);
+	silofs_calc_key_hash(&pa_ctx->kivam->key, md, &hash);
+	silofs_bootsec_set_keyhash(bsec, &hash);
+}
+
 int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
                         const struct silofs_kivam *kivam,
-                        const struct silofs_bootsec *src_bsec,
-                        struct silofs_bootsec *dst_bsec)
+                        const struct silofs_bootsec *warm_bsec,
+                        struct silofs_bootsec *out_cold_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
 		.kivam = kivam,
-		.src_bsec = src_bsec,
-		.dst_bsec = dst_bsec,
+		.warm_bsec = warm_bsec,
 		.uber = uber,
 		.alloc = uber->ub_alloc,
 		.sbi = NULL,
-		.pack = true,
 	};
 	int err;
 
@@ -1343,7 +1272,7 @@ int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
 	if (err) {
 		goto out;
 	}
-	pac_update_dst_bootsec(&pa_ctx);
+	pac_assign_cold_bootsec(&pa_ctx, out_cold_bsec);
 out:
 	pac_cleanup(&pa_ctx);
 	return err;
@@ -1535,7 +1464,7 @@ static int pac_require_blob_of(struct silofs_pack_ctx *pa_ctx,
                                const struct silofs_blobid *blobid,
                                struct silofs_blobref_info **out_bri)
 {
-	struct silofs_repo *repo = pac_dst_repo(pa_ctx);
+	struct silofs_repo *repo = pac_warm_repo(pa_ctx);
 
 	return silofs_repo_require_blob(repo, blobid, out_bri);
 }
@@ -1544,24 +1473,21 @@ static int pac_make_shadow_super(struct silofs_pack_ctx *pa_ctx,
                                  const struct silofs_uaddr *uaddr,
                                  struct silofs_sb_info **out_sbi)
 {
-	return silofs_shadow_super_at(pa_ctx->uber, pa_ctx->pack,
-	                              uaddr, out_sbi);
+	return silofs_shadow_super_at(pa_ctx->uber, false, uaddr, out_sbi);
 }
 
 static int pac_make_shadow_spnode(struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spnode_info **out_sni)
 {
-	return silofs_shadow_spnode_at(pa_ctx->uber, pa_ctx->pack,
-	                               uaddr, out_sni);
+	return silofs_shadow_spnode_at(pa_ctx->uber, false, uaddr, out_sni);
 }
 
 static int pac_make_shadow_spleaf(struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_uaddr *uaddr,
                                   struct silofs_spleaf_info **out_sli)
 {
-	return silofs_shadow_spleaf_at(pa_ctx->uber, pa_ctx->pack,
-	                               uaddr, out_sli);
+	return silofs_shadow_spleaf_at(pa_ctx->uber, false, uaddr, out_sli);
 }
 
 static int
@@ -1823,8 +1749,8 @@ static int pac_exec_restore_at_uber(struct silofs_pack_ctx *pa_ctx)
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	silofs_bootsec_sb_uaddr(pa_ctx->src_bsec, &sb_uaddr);
-	silofs_bootsec_cold_blobid(pa_ctx->src_bsec, &cold);
+	silofs_bootsec_sb_uaddr(pa_ctx->cold_bsec, &sb_uaddr);
+	silofs_bootsec_cold_blobid(pa_ctx->cold_bsec, &cold);
 
 	err = pac_new_shadow_pblob(pa_ctx, &cold, &pb_shadow);
 	if (err) {
@@ -1994,20 +1920,24 @@ static int pac_walk_space_unpack(struct silofs_pack_ctx *pa_ctx)
 	return ret;
 }
 
+static void pac_reassign_warm_bootsec(struct silofs_pack_ctx *pa_ctx,
+                                      struct silofs_bootsec *bsec)
+{
+	silofs_bootsec_init(bsec);
+	silofs_bootsec_set_sb_uaddr(bsec, sbi_uaddr(pa_ctx->sbi));
+	silofs_bootsec_clear_keyhash(bsec);
+}
 
 int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
                           const struct silofs_kivam *kivam,
-                          const struct silofs_bootsec *src_bsec,
-                          struct silofs_bootsec *dst_bsec)
+                          const struct silofs_bootsec *cold_bsec,
+                          struct silofs_bootsec *out_warm_bsec)
 {
 	struct silofs_pack_ctx pa_ctx = {
 		.kivam = kivam,
-		.src_bsec = src_bsec,
-		.dst_bsec = dst_bsec,
+		.cold_bsec = cold_bsec,
 		.uber = uber,
 		.alloc = uber->ub_alloc,
-		.sbi = NULL,
-		.pack = false,
 	};
 	int err;
 
@@ -2027,7 +1957,7 @@ int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
 	if (err) {
 		goto out;
 	}
-	pac_update_dst_bootsec(&pa_ctx);
+	pac_reassign_warm_bootsec(&pa_ctx, out_warm_bsec);
 out:
 	pac_cleanup(&pa_ctx);
 	return err;

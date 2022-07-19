@@ -20,14 +20,15 @@
 #include <silofs/infra.h>
 #include <silofs/fs/types.h>
 
+
 int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
                         const struct silofs_kivam *kivam,
-                        const struct silofs_bootsec *src_bsec,
-                        struct silofs_bootsec *dst_bsec);
+                        const struct silofs_bootsec *warm_bsec,
+                        struct silofs_bootsec *out_cold_bsec);
 
 int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
                           const struct silofs_kivam *kivam,
-                          const struct silofs_bootsec *src_bsec,
-                          struct silofs_bootsec *dst_bsec);
+                          const struct silofs_bootsec *cold_bsec,
+                          struct silofs_bootsec *out_warm_bsec);
 
 #endif /* SILOFS_PACK_H_ */

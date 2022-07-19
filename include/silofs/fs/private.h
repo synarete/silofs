@@ -155,8 +155,7 @@
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 
-#define voaddr_setup(voa, ua, va)       silofs_voaddr_setup(voa, ua, va)
-#define voaddr_assign(voa, oth)         silofs_voaddr_assign(voa, oth)
+#define vrange_next(vrng, o)            silofs_vrange_next(vrng, o)
 
 #define bri_incref(bri)                 silofs_bri_incref(bri)
 #define bri_decref(bri)                 silofs_bri_decref(bri)

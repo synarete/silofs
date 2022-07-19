@@ -22,11 +22,11 @@
 
 
 struct silofs_pack_blob {
+	struct silofs_list_head         pb_lh;
 	struct silofs_blobid            pb_blobid;
 	struct silofs_alloc            *pb_alloc;
 	struct silofs_block            *pb_blob;
 	struct silofs_pack_blob        *pb_cold;
-	struct silofs_list_head         pb_lh;
 	size_t                          pb_size_max;
 };
 
@@ -72,7 +72,7 @@ static void blobid_anon(struct silofs_blobid *blobid,
 	struct silofs_hash256 hash;
 	const size_t size = SILOFS_BLOB_SIZE_MAX;
 
-	silofs_memzero(&hash, sizeof(hash));
+	silofs_getentropy(&hash, sizeof(hash));
 	silofs_blobid_make_ca(blobid, &hash, size, vspace, height);
 }
 
@@ -561,6 +561,7 @@ static int pqs_assign_pblob_by_pe(struct silofs_pack_queues *pqs,
 	const struct silofs_listq *lq = pqs_peq_of(pqs, pb->pb_blobid.height);
 	int err;
 
+	pblob_set_length(pb, SILOFS_BK_SIZE);
 	for (lh = listq_front(lq); lh != NULL; lh = listq_next(lq, lh)) {
 		pe = pe_from_lh(lh);
 		err = pe_assign_to_blob(pe, pb);
@@ -770,10 +771,10 @@ pac_new_anon_pblob(struct silofs_pack_ctx *pa_ctx,
                    enum silofs_stype vspace, enum silofs_height height,
                    struct silofs_pack_blob **out_pb)
 {
-	struct silofs_blobid blobid;
+	struct silofs_blobid anon;
 
-	blobid_anon(&blobid, vspace, height);
-	return pac_new_pblob(pa_ctx, &blobid, out_pb);
+	blobid_anon(&anon, vspace, height);
+	return pac_new_pblob(pa_ctx, &anon, out_pb);
 }
 
 static int
@@ -1078,7 +1079,7 @@ static int pac_post_archive_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 	int err;
 
 	sli_vrange(spit->sli, &vrange);
-	voff = vrange.beg;
+	voff = off_max(vrange.beg, spit->voff);
 	while (voff < vrange.end) {
 		err = pac_post_archive_at_blob_of(pa_ctx, spit, voff);
 		if (err == -ENOENT) {
@@ -1087,7 +1088,7 @@ static int pac_post_archive_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 		if (err) {
 			return err;
 		}
-		voff = silofs_vrange_next(&vrange, voff);
+		voff = vrange_next(&vrange, voff);
 	}
 	silofs_sli_seal_meta(spit->sli);
 	return 0;
@@ -1101,46 +1102,49 @@ static int pac_assign_unodes_blob(struct silofs_pack_ctx *pa_ctx,
 
 static int
 pac_archive_unodes_blob(struct silofs_pack_ctx *pa_ctx,
-                        enum silofs_stype vpsace, enum silofs_height height,
+                        const struct silofs_blobid *anon,
                         struct silofs_blobid *out_cold)
 {
 	struct silofs_pack_blob *pb_warm = NULL;
 	struct silofs_pack_blob *pb_cold = NULL;
 	int err;
 
-	err = pac_put_new_anon_pblob(pa_ctx, vpsace, height, &pb_warm);
+	err = pac_new_pblob(pa_ctx, anon, &pb_warm);
 	if (err) {
-		return err;
+		goto out;
 	}
-	err = pac_put_new_anon_pblob(pa_ctx, vpsace, height, &pb_cold);
+	err = pac_new_pblob(pa_ctx, anon, &pb_cold);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = pac_assign_unodes_blob(pa_ctx, pb_warm);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = pac_encode_blob_into(pa_ctx, pb_warm, pb_cold);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = pac_save_cold_blob(pa_ctx, pb_cold);
 	if (err) {
-		return err;
+		goto out;
 	}
-	pac_fixup_used_blobs(pa_ctx, pb_warm, pb_cold);
 	pblob_blobid(pb_cold, out_cold);
-	return 0;
+out:
+	pblob_del(pb_warm);
+	pblob_del(pb_cold);
+	return err;
 }
 
 static int pac_post_archive_at_spnode2(struct silofs_pack_ctx *pa_ctx,
                                        const struct silofs_space_iter *spit)
 {
+	struct silofs_blobid anon;
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
-	                              &cold);
+	blobid_anon(&anon, spit->vspace, spit->height - 1);
+	err = pac_archive_unodes_blob(pa_ctx, &anon, &cold);
 	if (err) {
 		return err;
 	}
@@ -1151,11 +1155,12 @@ static int pac_post_archive_at_spnode2(struct silofs_pack_ctx *pa_ctx,
 static int pac_post_archive_at_spnode3(struct silofs_pack_ctx *pa_ctx,
                                        const struct silofs_space_iter *spit)
 {
+	struct silofs_blobid anon;
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
-	                              &cold);
+	blobid_anon(&anon, spit->vspace, spit->height - 1);
+	err = pac_archive_unodes_blob(pa_ctx, &anon, &cold);
 	if (err) {
 		return err;
 	}
@@ -1166,11 +1171,12 @@ static int pac_post_archive_at_spnode3(struct silofs_pack_ctx *pa_ctx,
 static int pac_post_archive_at_spnode4(struct silofs_pack_ctx *pa_ctx,
                                        const struct silofs_space_iter *spit)
 {
+	struct silofs_blobid anon;
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
-	                              &cold);
+	blobid_anon(&anon, spit->vspace, spit->height - 1);
+	err = pac_archive_unodes_blob(pa_ctx, &anon, &cold);
 	if (err) {
 		return err;
 	}
@@ -1181,11 +1187,12 @@ static int pac_post_archive_at_spnode4(struct silofs_pack_ctx *pa_ctx,
 static int pac_post_archive_at_super(struct silofs_pack_ctx *pa_ctx,
                                      const struct silofs_space_iter *spit)
 {
+	struct silofs_blobid anon;
 	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, spit->vspace, spit->height - 1,
-	                              &cold);
+	blobid_anon(&anon, spit->vspace, spit->height - 1);
+	err = pac_archive_unodes_blob(pa_ctx, &anon, &cold);
 	if (err) {
 		return err;
 	}
@@ -1227,15 +1234,16 @@ static int pac_post_archive_at(struct silofs_pack_ctx *pa_ctx,
 
 static int pac_post_archive_at_uber(struct silofs_pack_ctx *pa_ctx)
 {
-	struct silofs_blobid blobid;
+	struct silofs_blobid anon;
+	struct silofs_blobid cold;
 	int err;
 
-	err = pac_archive_unodes_blob(pa_ctx, SILOFS_STYPE_SUPER,
-	                              SILOFS_HEIGHT_SUPER, &blobid);
+	blobid_anon(&anon, SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
+	err = pac_archive_unodes_blob(pa_ctx, &anon, &cold);
 	if (err) {
 		return err;
 	}
-	silofs_bootsec_set_cold_blobid(pa_ctx->dst_bsec, &blobid);
+	silofs_bootsec_set_cold_blobid(pa_ctx->dst_bsec, &cold);
 	return 0;
 }
 
@@ -1610,7 +1618,7 @@ static int pac_exec_restore_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 	int err;
 
 	sli_vrange(spit->sli, &vrange);
-	voff = vrange.beg;
+	voff = off_max(vrange.beg, spit->voff);
 	while (voff < vrange.end) {
 		err = pac_exec_restore_vdata_blob(pa_ctx, spit, voff);
 		if (err == -ENOENT) {
@@ -1619,7 +1627,7 @@ static int pac_exec_restore_at_spleaf(struct silofs_pack_ctx *pa_ctx,
 		if (err) {
 			return err;
 		}
-		voff = silofs_vrange_next(&vrange, voff);
+		voff = vrange_next(&vrange, voff);
 	}
 	return 0;
 }
@@ -1649,11 +1657,8 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 		goto out;
 	}
 	sni_vrange(spit->sni2, &vrange);
-	for (size_t slot = 0; slot < SILOFS_SPMAP_NCHILDS; ++slot) {
-		voff = silofs_vrange_voff_at(&vrange, slot);
-		if (voff >= vrange.end) {
-			break;
-		}
+	voff = off_max(vrange.beg, spit->voff);
+	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(spit->sni2, voff, &uaddr);
 		if (err == -ENOENT) {
 			err = 0;
@@ -1668,6 +1673,7 @@ pac_exec_restore_by_spnode2(struct silofs_pack_ctx *pa_ctx,
 			break;
 		}
 		sli = NULL;
+		voff = vrange_next(&vrange, voff);
 	}
 out:
 	pblob_del(pb_shadow);
@@ -1699,11 +1705,8 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 		goto out;
 	}
 	sni_vrange(spit->sni3, &vrange);
-	for (size_t slot = 0; slot < SILOFS_SPMAP_NCHILDS; ++slot) {
-		voff = silofs_vrange_voff_at(&vrange, slot);
-		if (voff >= vrange.end) {
-			break;
-		}
+	voff = off_max(vrange.beg, spit->voff);
+	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(spit->sni3, voff, &uaddr);
 		if (err == -ENOENT) {
 			err = 0;
@@ -1718,6 +1721,7 @@ pac_exec_restore_by_spnode3(struct silofs_pack_ctx *pa_ctx,
 			break;
 		}
 		sni = NULL;
+		voff = vrange_next(&vrange, voff);
 	}
 out:
 	pblob_del(pb_shadow);
@@ -1749,11 +1753,8 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 		goto out;
 	}
 	sni_vrange(spit->sni4, &vrange);
-	for (size_t slot = 0; slot < SILOFS_SPMAP_NCHILDS; ++slot) {
-		voff = silofs_vrange_voff_at(&vrange, slot);
-		if (voff >= vrange.end) {
-			break;
-		}
+	voff = off_max(vrange.beg, spit->voff);
+	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(spit->sni4, voff, &uaddr);
 		if (err == -ENOENT) {
 			err = 0;
@@ -1768,6 +1769,7 @@ pac_exec_restore_by_spnode4(struct silofs_pack_ctx *pa_ctx,
 			break;
 		}
 		sni = NULL;
+		voff = vrange_next(&vrange, voff);
 	}
 out:
 	pblob_del(pb_shadow);

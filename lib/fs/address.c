@@ -1357,9 +1357,9 @@ loff_t silofs_vrange_next(const struct silofs_vrange *vrange, loff_t voff)
 	ssize_t span;
 	loff_t vnxt;
 
-	if (voff < vrange->beg) {
+	if (unlikely(voff < vrange->beg)) {
 		vnxt = vrange->beg;
-	} else if (voff >= vrange->end) {
+	} else if (unlikely(voff >= vrange->end)) {
 		vnxt = voff;
 	} else {
 		span = silofs_height_to_span(vrange->height - 1);

@@ -41,8 +41,6 @@ void silofs_sni_update_staged(struct silofs_spnode_info *sni);
 void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
                               const struct silofs_spnode_info *sni_other);
 
-size_t silofs_sni_slot_of(const struct silofs_spnode_info *sni, loff_t voff);
-
 bool silofs_sni_has_child_at(const struct silofs_spnode_info *sni, loff_t off);
 
 int silofs_sni_subref_of(const struct silofs_spnode_info *sni, loff_t voff,

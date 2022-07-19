@@ -35,7 +35,7 @@ static void ivoaddr_setup(struct silofs_ivoaddr *ivoa, ino_t ino,
                           const struct silofs_oaddr *oaddr)
 {
 	ivoa->ino = ino;
-	voaddr_setup(&ivoa->voa, vaddr, oaddr);
+	silofs_voaddr_setup(&ivoa->voa, vaddr, oaddr);
 }
 
 static void ivoaddr_setup2(struct silofs_ivoaddr *ivoa,
@@ -474,7 +474,7 @@ int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	voaddr_assign(out_voa, &spa_ctx.voa);
+	silofs_voaddr_assign(out_voa, &spa_ctx.voa);
 	return 0;
 }
 

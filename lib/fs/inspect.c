@@ -38,15 +38,22 @@ static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
                               const struct silofs_space_iter *spit)
 {
 	struct silofs_spacestats *spst = &spvi->spst;
-	const enum silofs_stype stype = spit->stype;
 
-	silofs_assert(!stype_isvnode(stype));
-	if (stype_issuper(stype)) {
-		spst->objs.nsuper++;
-	} else if (stype_isspnode(stype)) {
-		spst->objs.nspnode++;
-	} else if (stype_isspleaf(stype)) {
+	switch (spit->height) {
+	case SILOFS_HEIGHT_SPLEAF:
 		spst->objs.nspleaf++;
+		break;
+	case SILOFS_HEIGHT_SPNODE2:
+	case SILOFS_HEIGHT_SPNODE3:
+	case SILOFS_HEIGHT_SPNODE4:
+		spst->objs.nspnode++;
+		break;
+	case SILOFS_HEIGHT_NONE:
+	case SILOFS_HEIGHT_VDATA:
+	case SILOFS_HEIGHT_SUPER:
+	case SILOFS_HEIGHT_LAST:
+	default:
+		break;
 	}
 	return 0;
 }

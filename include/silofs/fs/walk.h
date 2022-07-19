@@ -33,11 +33,9 @@ struct silofs_space_iter {
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;
 	struct silofs_spleaf_info  *sli;
-	enum silofs_height height;
-	enum silofs_stype  vspace;
-	enum silofs_stype  stype;
-	loff_t voff;
-	size_t slot;
+	enum silofs_height          height;
+	enum silofs_stype           vspace;
+	loff_t                      voff;
 };
 
 struct silofs_visitor {

@@ -1,0 +1,90 @@
+Name: silofs
+Summary: The Silo File-System
+Version: @VERSION@
+Release: @RELEASE@.@REVISION@%{?dist}
+License: GPLv3
+Group: Development/Tools
+URL: https://synarete.github.io/silofs
+Source: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
+Requires: libcap-devel
+Requires: libuuid-devel
+Requires: libgcrypt-devel
+Requires: libunwind-devel
+
+%{?systemd_requires}
+
+%description
+Silofs is a user-space file-system with unique approach to the problem of
+archiving large volumes of data as cloud objects: it implements a fully
+functional file system on top of binary large objects (*blobs*), which serve
+both for I/O operations and data packing. Combined with built-in snapshot
+capabilities, users can easily archive and restore their data as cloud friendly
+format.
+
+%package devel
+Summary: Silofs testing utilities and development files
+Group: Development/Tools
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: python3-pyxattr
+
+%description devel
+Various testing programs for silofs.
+
+%prep
+%setup -q -n %{name}-%{version}
+
+%build
+%configure
+%{__make}
+
+%check
+%{__make} check
+
+%install
+%make_install
+
+%clean
+%{__rm} -rf %{buildroot}
+
+%files
+%defattr(-, root, root)
+%{_bindir}/%{name}
+%{_sbindir}/%{name}-mountd
+%{_sbindir}/*.%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/*.conf
+%{_mandir}/man1/%{name}.1*
+%{_mandir}/man8/%{name}-*.8*
+%{_datarootdir}/bash-completion/completions/%{name}
+%{_docdir}/%{name}/*
+%if 0%{?_unitdir:1}
+%dir %{_localstatedir}/%{_rundir}/%{name}
+%{_unitdir}/%{name}-mountd.service
+%else
+%exclude %{_prefix}/lib/systemd/system/%{name}*.*
+%endif
+
+%files devel
+%defattr(-, root, root)
+%{_bindir}/%{name}-unitests
+%{_bindir}/%{name}-vfstests
+%{_bindir}/%{name}-citests
+%{_prefix}/lib/python3*/site-packages/%{name}/*
+%exclude %{_includedir}/*
+%exclude %{_libdir}/lib%{name}*.*
+
+
+%post
+%systemd_post %{name}-mountd.service
+
+%preun
+%systemd_preun %{name}-mountd.service
+
+%postun
+%systemd_postun_with_restart %{name}-mountd.service
+
+%changelog
+* @RPMDATE@ Silofs <synarete@xxxxxxxx> @VERSION@-@RELEASE@.@REVISION@
+- Release @REVISION@
+
+

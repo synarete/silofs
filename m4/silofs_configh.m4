@@ -1,0 +1,20 @@
+AC_DEFUN([AX_SILOFS_NEED_CONFIG_H],
+[
+  AC_DEFINE_UNQUOTED([SILOFS_VERSION_STRING], ["$pkg_version"])
+  AH_TEMPLATE([SILOFS_VERSION_STRING], [Version string])
+
+  AC_DEFINE_UNQUOTED([SILOFS_VERSION_MAJOR], [$pkg_version_major])
+  AH_TEMPLATE([SILOFS_VERSION_MAJOR], [Version major number])
+
+  AC_DEFINE_UNQUOTED([SILOFS_VERSION_MINOR], [$pkg_version_minor])
+  AH_TEMPLATE([SILOFS_VERSION_MINOR], [Version minor number])
+
+  AC_DEFINE_UNQUOTED([SILOFS_VERSION_SUBLEVEL], [$pkg_version_sublevel])
+  AH_TEMPLATE([SILOFS_VERSION_SUBLEVEL], [Version sublevel number])
+
+  AC_DEFINE_UNQUOTED([SILOFS_RELEASE], ["$pkg_release"])
+  AH_TEMPLATE([SILOFS_RELEASE], [Release number])
+
+  AC_DEFINE_UNQUOTED([SILOFS_REVISION], ["$pkg_revision"])
+  AH_TEMPLATE([SILOFS_REVISION], [Revision id])
+])

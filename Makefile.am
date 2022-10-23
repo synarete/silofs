@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
-SUBDIRS = . include lib cmd mntd
+SUBDIRS = . include lib cmd mntd tools
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += bootstrap

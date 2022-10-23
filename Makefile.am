@@ -2,6 +2,7 @@ ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 SUBDIRS = . include lib cmd mntd tools tests man docs scripts dist
 
 EXTRA_DIST = $(NULL)
+EXTRA_DIST += README.md
 EXTRA_DIST += bootstrap
 EXTRA_DIST += version.sh
 EXTRA_DIST += VERSION

@@ -1,0 +1,201 @@
+# silofs(1) bash completion
+# shellcheck shell=bash
+# shellcheck disable=SC2207
+
+[ -z "$BASH_VERSION" ] && return
+
+_silofs_init() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h -a --attic' -- "$cur") )
+  fi
+}
+
+_silofs_mkfs() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-s --size= -F --force -h' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-U --suid= -G --sgid=' -- "$cur") )
+  fi
+}
+
+_silofs_mount() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-D --nodaemon -C --coredump -h ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-r --rdonly -a --allow-other ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-W --writeback-cache ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-X --noexec -K --nokcopy ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-V --verbose= ' -- "$cur") )
+  fi
+}
+
+_silofs_umount() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  fi
+}
+
+_silofs_lsmnt() {
+  local cur prev words cword
+  _init_completion || return
+
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-l --long -h' -- "$cur") )
+  fi
+}
+
+_silofs_show() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  else
+    COMPREPLY+=( $(compgen -W 'version boot prstats spstats statx' -- "$cur") )
+  fi
+}
+
+_silofs_snap() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-o --offline -n --name= -h' -- "$cur") )
+  fi
+}
+
+_silofs_archive() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-V --verbose= -h' -- "$cur") )
+  fi
+}
+
+_silofs_restore() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-V --verbose= -h' -- "$cur") )
+  fi
+}
+
+_silofs_rmfs() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  fi
+}
+
+_silofs_prune() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  fi
+}
+
+_silofs_fsck() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  fi
+}
+
+_silofs_subcmd() {
+  local cur prev words cword
+  _init_completion || return
+
+  case "${words[1]}" in
+    "init")
+      _silofs_init
+      ;;
+    "mkfs")
+      _silofs_mkfs
+      ;;
+    "mount")
+      _silofs_mount
+      ;;
+    "umount")
+      _silofs_umount
+      ;;
+    "lsmnt")
+      _silofs_lsmnt
+      ;;
+    "show")
+      _silofs_show
+      ;;
+    "snap")
+      _silofs_snap
+      ;;
+    "rmfs")
+      _silofs_rmfs
+      ;;
+    "archive")
+      _silofs_archive
+      ;;
+    "restore")
+      _silofs_restore
+      ;;
+    "prune")
+      _silofs_prune
+      ;;
+    "fsck")
+      _silofs_fsck
+      ;;
+  esac
+}
+
+_silofs_main() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
+  else
+    COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show snap rmfs' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'archive restore prune fsck' -- "$cur") )
+  fi
+}
+
+
+_silofs() {
+  local IFS=$' \t\n'
+  local cur prev words cword
+  _init_completion || return
+
+  compopt -o nospace
+  COMPREPLY=( "${COMPREPLY[@]:-}" )
+
+  if [[ $cword -eq 1 ]]; then
+    _silofs_main
+  else
+    _silofs_subcmd
+  fi
+}
+
+complete -o bashdefault -o default -F _silofs silofs
+
+# vim: filetype=sh
+

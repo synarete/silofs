@@ -5,7 +5,7 @@ AC_INIT([silofs],[SILOFS_VERSION],[synarete@xxxxxxxx])
 AC_COPYRIGHT([Copyright (C) 2020-2022, Shachar Sharon])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([lib/boot.c])
+AC_CONFIG_SRCDIR([cmd/main.c])
 AX_SILOFS_GLOBALS(silofs)
 AX_CHECK_ENABLE_DEBUG(no, DEBUG)
 
@@ -50,6 +50,9 @@ AC_CONFIG_FILES([sedsub.mk])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([include/Makefile])
 AC_CONFIG_FILES([lib/Makefile])
+AC_CONFIG_FILES([cmd/Makefile])
+AC_CONFIG_FILES([cmd/completions/Makefile])
+AC_CONFIG_FILES([cmd/sbinutils/Makefile])
 AC_OUTPUT
 
 AC_MSG_NOTICE([Package........: $pkg_name])

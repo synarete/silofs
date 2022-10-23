@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
-SUBDIRS = . include lib cmd mntd tools tests man docs
+SUBDIRS = . include lib cmd mntd tools tests man docs scripts
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += bootstrap
@@ -7,6 +7,7 @@ EXTRA_DIST += version.sh
 EXTRA_DIST += VERSION
 EXTRA_DIST += REVISION
 EXTRA_DIST += COPYING
+EXTRA_DIST += TODO
 EXTRA_DIST += common.mk.in
 EXTRA_DIST += sedsub.mk.in
 EXTRA_DIST += build-aux/autom4te.cfg.in

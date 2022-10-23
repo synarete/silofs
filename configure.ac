@@ -62,6 +62,8 @@ AC_CONFIG_FILES([tests/unitests/Makefile])
 AC_CONFIG_FILES([tests/vfstests/Makefile])
 AC_CONFIG_FILES([tests/citests/Makefile])
 AC_CONFIG_FILES([man/Makefile])
+AC_CONFIG_FILES([docs/Makefile])
+AC_CONFIG_FILES([scripts/Makefile])
 AC_OUTPUT
 
 AC_MSG_NOTICE([Package........: $pkg_name])

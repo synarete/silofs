@@ -1,0 +1,4 @@
+Silofs's TODOs (bugs, fixes, hacjing-ideas) are maintained within the source
+code itself. To view, run from project's top directory:
+
+  $ scripts/todolist.sh

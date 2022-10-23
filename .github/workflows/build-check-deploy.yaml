@@ -1,0 +1,144 @@
+---
+name: "Silofs: build and deploy"
+on:
+  push:
+    branches:
+      - '*'
+      - '!_*'
+  pull_request:
+    branches: [$default-branch]
+jobs:
+  prepare:
+    name: Prepare environment
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "repo ${{ github.repository }} "
+      - run: echo "ref ${{ github.ref }} ${{ github.sha }}"
+      - run: echo "sha ${{ github.sha }}"
+      - name: System
+        run: uname -a
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Require build tools
+        run: ./scripts/requiredeps.sh
+      - name: Require install tool
+        run: apt --version
+  codelint:
+    name: Lint code style
+    runs-on: ubuntu-22.04
+    needs: prepare
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Check C-style
+        run: ./cstylelint.sh
+      - name: Verify code formatting
+        run: ./astyleall.sh
+  build-devel:
+    name: Build with developer flags
+    needs: codelint
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Build with GCC
+        run: make -f devel.mk
+      - name: Re-build with Clang
+        run: |
+          make -f devel.mk reset
+          make -f devel.mk CC=clang
+      - name: Re-build with optimization
+        run: |
+          make -f devel.mk reset
+          make -f devel.mk O=2
+  build-check:
+    name: Build and check
+    needs: codelint
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Bootstrap
+        run: ./bootstrap
+      - name: Configure
+        run: ./configure --enable-unitests=1
+      - name: Build
+        run: make
+      - name: Check
+        run: make check
+  static-analyze:
+    name: Run static-code analysis
+    runs-on: ubuntu-22.04
+    needs:
+      - codelint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Run clang static-analyzer
+        run: ./scripts/clangscanbuild.sh
+  install-and-mount:
+    name: Install and mount
+    runs-on: ubuntu-22.04
+    needs:
+      - build-check
+      - build-devel
+      - static-analyze
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Packagize
+        run: ./dist/deb/packagize-deb.sh
+      - name: Install
+        run: sudo apt install ./build/dist/silofs_*.deb
+      - name: Verify installation
+        run: silofs --version
+      - name: Prepare service
+        run: |
+          sudo mkdir -p /mnt/test
+          sudo chmod 700 /mnt/test
+          sudo chown $(id -u):$(id -g) /mnt/test
+          sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
+          sudo systemctl restart silofs-mountd.service
+          sudo systemctl status silofs-mountd.service
+          sleep 10
+      - name: Make file-system
+        run: |
+          silofs init ./build/repo
+          silofs mkfs -s 16G ./build/repo/test
+      - name: Mount file-system
+        run: |
+          silofs mount ./build/repo/test /mnt/test
+          mkdir /mnt/test/A
+          echo "hello, world" > /mnt/test/A/hello
+          cat /mnt/test/A/hello
+          silofs lsmnt
+      - name: Umount file-system
+        run: silofs umount /mnt/test
+      - name: Cleanups
+        run: rm -rf ./build/repo
+  done:
+    name: End workflow
+    runs-on: ubuntu-22.04
+    needs:
+      - install-and-mount
+    steps:
+      - name: Done
+        run: date

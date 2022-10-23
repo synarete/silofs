@@ -53,6 +53,8 @@ AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([cmd/Makefile])
 AC_CONFIG_FILES([cmd/completions/Makefile])
 AC_CONFIG_FILES([cmd/sbinutils/Makefile])
+AC_CONFIG_FILES([mntd/Makefile])
+AC_CONFIG_FILES([mntd/systemd/Makefile])
 AC_OUTPUT
 
 AC_MSG_NOTICE([Package........: $pkg_name])

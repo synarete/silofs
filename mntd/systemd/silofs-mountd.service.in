@@ -1,0 +1,22 @@
+[Unit]
+After=syslog.target
+Description=silofs mount-daemon service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+CapabilityBoundingSet=CAP_SYS_ADMIN
+ExecStart=silofs-mountd -f /etc/silofs/mountd.conf
+LimitNPROC=1
+LimitFSIZE=0
+MemoryDenyWriteExecute=yes
+MemoryLimit=8M
+Nice=-17
+NoNewPrivileges=yes
+Restart=on-failure
+RestartSec=30
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+TasksMax=1
+Type=simple

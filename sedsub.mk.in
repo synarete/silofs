@@ -1,0 +1,17 @@
+-include $(top_builddir)/common.mk
+
+PATSUBST = @SED@ \
+  -e "s,[@]PACKAGE_NAME[@],$(name),g" \
+  -e "s,[@]PACKAGE_VERSION[@],$(version),g" \
+  -e "s,[@]RELEASE[@],$(release),g" \
+  -e "s,[@]REVISION[@],$(revision),g" \
+  -e "s,[@]PREFIX[@],$(DESTDIR)$(prefix),g" \
+  -e "s,[@]BINDIR[@],$(DESTDIR)$(bindir),g" \
+  -e "s,[@]SBINDIR[@],$(DESTDIR)$(sbindir),g" \
+  -e "s,[@]LIBDIR[@],$(DESTDIR)$(libdir),g" \
+  -e "s,[@]SYSCONFDIR[@],$(DESTDIR)$(sysconfdir),g" \
+  -e "s,[@]DATAROOTDIR[@],$(DESTDIR)$(datarootdir),g" \
+  -e "s,[@]LOCALSTATEDIR[@],$(DESTDIR)$(localstatedir),g" \
+  -e "s,[@]RUNSTATEDIR[@],$(DESTDIR)$(localstatedir)/run,g" \
+  -e "s,[@]PYTHON[@],$(PYTHON),g" \
+  -e "s,[@]PYTHONDIR[@],$(pythondir),g"

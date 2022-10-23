@@ -1,0 +1,39 @@
+# https://github.com/github/gitignore
+
+# Global excludes
+Makefile
+Makefile.in
+*.[oa]
+lib*.lo
+lib*.la
+.deps
+.libs
+*~
+
+# Top-level excludes
+/.autom4te.cfg
+/autom4te.cache
+/aclocal.m4
+/configure
+/configure.scan
+/makefile
+/build
+/REVISION
+/tags
+/libtool
+/common.mk
+/config.log
+/config.status
+/sedsub.mk
+
+# Editors and IDEs
+/.cproject
+/.project
+/.pydevproject
+/.settings
+/.vscode
+
+# External tools
+/cscope.files
+/cscope.out
+/.mypy_cache/

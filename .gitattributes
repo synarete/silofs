@@ -1,0 +1,18 @@
+# Sources
+*.c     text diff=c
+*.h     text diff=c
+
+# Compiled Object files
+*.lo    binary
+*.o     binary
+
+# Compiled Dynamic libraries
+*.so    binary
+
+# Compiled Static libraries
+*.la    binary
+*.a     binary
+*.lib   binary
+
+# Shell scripts
+*.sh    text eol=lf

@@ -1,0 +1,13 @@
+autom4te.cache
+aclocal.m4
+compile
+depcomp
+install-sh
+missing
+config.guess
+config.sub
+ltmain.sh
+ar-lib
+test-driver
+py-compile
+

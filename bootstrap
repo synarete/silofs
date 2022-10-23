@@ -1,0 +1,119 @@
+#!/bin/bash
+self=$(basename "${BASH_SOURCE[0]}")
+msg() { echo "$self: $*" >&2; }
+die() { msg "$*"; exit 1; }
+try() { ( "$@" ) || die "failed: $*"; }
+run() { echo "$self: $*" >&2; try "$@"; }
+
+export LC_ALL=C
+unset CDPATH
+
+basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+macrodir="${basedir}/m4"
+builddir="${basedir}/build"
+buildaux="${basedir}/build-aux"
+autom4te_cfg_in="${buildaux}/autom4te.cfg.in"
+autom4te_cfg="${basedir}/.autom4te.cfg"
+autom4te_cachedir="${buildaux}/autom4te.cache"
+
+
+do_requirebin() {
+   try command -v "$@" > /dev/null
+}
+
+do_prerequisite() {
+  do_requirebin make
+  do_requirebin autoheader
+  do_requirebin autoconf
+  do_requirebin automake
+  do_requirebin pkg-config
+}
+
+do_autom4te_cfg() {
+  msg "create" "${autom4te_cfg}"
+  sed -e "s,[@]AUTOM4TE_CACHEDIR[@],${autom4te_cachedir},g" \
+    < "${autom4te_cfg_in}" > "${autom4te_cfg}"
+}
+
+do_autogen() {
+  cd "${basedir}" || die "can not cd into ${basedir}"
+  run mkdir -p "${builddir}"
+  do_autom4te_cfg
+  run libtoolize --automake --copy --install --force
+  run aclocal -I m4
+  run autoheader
+  run autoconf
+  run automake --add-missing --copy -Woverride
+  export LIBTOOLIZE=true
+  run autoreconf --install -I m4
+}
+
+do_autoclean() {
+  cd "${basedir}" || die "can not cd into ${basedir}"
+  try mkdir -p "${builddir}"
+  run rm -rf "${autom4te_cachedir}"
+  run rm -f "${autom4te_cfg}"
+  run rm -f "${basedir}/tags"
+  run rm -f "${basedir}/configure" "${basedir}/configure~"
+  run rm -f "${basedir}/aclocal.m4"
+  run rm -f "${basedir}/config.log"
+  run rm -f "${basedir}/config.status"
+  run rm -f "${basedir}/include/config.h.in"
+  run rm -f "${basedir}/include/config.h"
+  run rm -f "${basedir}/include/stamp-h1"
+  run rm -f "${buildaux}/compile"
+  run rm -f "${buildaux}/config.guess"
+  run rm -f "${buildaux}/config.sub"
+  run rm -f "${buildaux}/depcomp"
+  run rm -f "${buildaux}/install-sh"
+  run rm -f "${buildaux}/ltmain.sh"
+  run rm -f "${buildaux}/missing"
+  run rm -f "${buildaux}/py-compile"
+  run rm -f "${macrodir}/lt~obsolete.m4"
+  run rm -f "${macrodir}/ltoptions.m4"
+  run rm -f "${macrodir}/ltsugar.m4"
+  run rm -f "${macrodir}/ltversion.m4"
+  run rm -f "${macrodir}/libtool.m4"
+  run find "${basedir}" -type f -name Makefile.in -exec rm -f {} +
+  run find "${basedir}" -type f -name Makefile -exec rm -f {} +
+  run find "${builddir}" -depth -mindepth 1 -exec rm -rf {} +
+  run find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
+  run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
+  run find "${basedir}" -type d -name .deps -exec rm -rf {} +
+}
+
+do_autoregen() {
+  do_autoclean
+  do_autogen
+}
+
+do_version() {
+  "${basedir}/version.sh"
+}
+
+
+arg=${1:-}
+case "$arg" in
+  -h|--help)
+    echo "${self} [--autogen|--autoclean|--version]"
+    ;;
+  -c|--autoclean)
+    do_autoclean
+    ;;
+  -g|--autogen)
+    do_prerequisite
+    do_autogen
+    ;;
+  -r|--autoregen)
+    do_prerequisite
+    do_autoregen
+    ;;
+  -v|--version)
+    do_version
+    ;;
+  *)
+    do_prerequisite
+    do_autogen
+    ;;
+esac
+

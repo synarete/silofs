@@ -1,1 +1,1 @@
-SUBDIRS = unitests vfstests
+SUBDIRS = unitests vfstests citests

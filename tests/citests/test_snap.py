@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: GPL-3.0
+from . import ctx
+
+
+def test_snap_basic(tc: ctx.TestCtx) -> None:
+    tc.exec_setup_fs()
+    tds = tc.make_tds(128, "A", 2**20)
+    tds.do_makedirs()
+    tds.do_write()
+    tds.do_read()
+    tc.exec_snap("snap1")
+    tds.do_read()
+    tds = tc.make_tds(128, "A", 2**20)
+    tds.do_write()
+    tc.exec_snap("snap2")
+    tds.do_read()
+    tds.do_unlink()
+    tc.exec_rmfs("snap1")
+    tc.exec_rmfs("snap2")
+    tc.exec_umount()
+
+
+def test_snap_reload(tc: ctx.TestCtx) -> None:
+    tc.exec_init()
+    tc.exec_mkfs(32, "main")
+    tc.exec_mount("main")
+    tds = tc.make_tds(128, "A", 2**20)
+    tds.do_makedirs()
+    tds.do_write()
+    tds.do_read()
+    tc.exec_snap("snap1")
+    tds.do_read()
+    tds = tc.make_tds(128, "A", 2**20)
+    tds.do_write()
+    tc.exec_snap("snap2")
+    tds.do_read()
+    tds.do_unlink()
+    tc.exec_umount()
+    tc.exec_rmfs("snap1")
+    tc.exec_mount("snap2")
+    tc.exec_rmfs("main")
+    tds.do_read()
+    tds = tc.make_tds(128, "A", 2**20)
+    tds.do_write()
+    tds.do_read()
+    tds.do_unlink()
+    tc.exec_umount()
+    tc.exec_rmfs("snap2")

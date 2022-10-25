@@ -3,7 +3,7 @@ Summary: The Silo File-System
 Version: @VERSION@
 Release: @RELEASE@.@REVISION@%{?dist}
 License: GPLv3
-Group: Development/Tools
+Group: Applications/Archiving
 URL: https://synarete.github.io/silofs
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
@@ -15,12 +15,12 @@ Requires: libunwind-devel
 %{?systemd_requires}
 
 %description
-Silofs is a user-space file-system with unique approach to the problem of
-archiving large volumes of data as cloud objects: it implements a fully
-functional file system on top of binary large objects (*blobs*), which serve
-both for I/O operations and data packing. Combined with built-in snapshot
-capabilities, users can easily archive and restore their data as cloud friendly
-format.
+Silofs is a user-space file-system with unique approach to the problem
+of archiving large volumes of data as cloud objects: it implements a
+fully functional file system on top of binary large objects (*blobs*),
+which serve both for I/O operations and data packing. Combined with
+built-in snapshot capabilities, compression and encryption, users can
+easily archive and restore their data as cloud friendly format.
 
 %package devel
 Summary: Silofs testing utilities and development files

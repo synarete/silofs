@@ -103,12 +103,13 @@ Whenever adding new entries to this file, the `silofs-mountd.service`
 must be restarted for changes to take effect.
 
 The first step after installation, and before mounting any `Silofs`
-file-system, should be to add new entries to `silofs-mountd.service`:
+file-system, the administrator of the host machine should add new
+entries to `silofs-mountd.service` (as a privileged user):
 
 ``` sh
 $ echo '/path/to/mntdir' >> /etc/silofs/mountd.conf
-$ sudo systemctl restart silofs-mountd.service
-$ sudo systemctl enable silofs-mountd.service
+$ systemctl restart silofs-mountd.service
+$ systemctl enable silofs-mountd.service
 ```
 
 ## Usage
@@ -145,12 +146,17 @@ $ silofs mkfs --size=100G /path/to/repo/myfs
 After the file-system creation completed successfully, it may be mounted
 on a valid mount-path, using the `silofs mount` sub command. Note that
 you **do not** need to be a privileged user to execute this command; the
-actual `mount` system call is performed by an auxiliary
-`silofs-mountd.service` daemon, as described in [Preparation](#preparation):
+actual `mount` system call is performed by an auxiliary daemon process
+`silofs-mountd.service`, as described in [Preparation](#preparation).
+However, to enhanced security the user which executes `silofs mount`
+must have read-write access to the mount-point directory:
 
 ``` sh
-$ # ensure mounting service is alive
+$ # ensure mounting service is active
 $ systemctl status silofs-mountd.service
+
+$ # make me owner of mount-point
+$ sudo chown $(id -u):$(id -g) /path/to/mntdir
 
 $ # mount a file-system using daemon process
 $ silofs mount /path/to/repo/myfs /path/to/mntdir

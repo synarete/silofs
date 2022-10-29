@@ -54,7 +54,8 @@ do_autoclean() {
   run rm -rf "${autom4te_cachedir}"
   run rm -f "${autom4te_cfg}"
   run rm -f "${basedir}/tags"
-  run rm -f "${basedir}/configure" "${basedir}/configure~"
+  run rm -f "${basedir}/configure"
+  run rm -f "${basedir}/configure~"
   run rm -f "${basedir}/aclocal.m4"
   run rm -f "${basedir}/config.log"
   run rm -f "${basedir}/config.status"
@@ -76,10 +77,10 @@ do_autoclean() {
   run rm -f "${macrodir}/libtool.m4"
   run find "${basedir}" -type f -name Makefile.in -exec rm -f {} +
   run find "${basedir}" -type f -name Makefile -exec rm -f {} +
-  run find "${builddir}" -depth -mindepth 1 -exec rm -rf {} +
   run find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
   run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
   run find "${basedir}" -type d -name .deps -exec rm -rf {} +
+  run find "${builddir}" -depth -mindepth 1 -exec rm -rf {} +
 }
 
 do_autoregen() {

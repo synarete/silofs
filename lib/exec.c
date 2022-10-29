@@ -1482,5 +1482,9 @@ int silofs_fse_unref_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
+	err = fse_shut_uber(fse);
+	if (err) {
+		return err;
+	}
 	return 0;
 }

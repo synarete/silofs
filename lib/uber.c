@@ -603,6 +603,20 @@ static void ubc_forget_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool ubc_blobid_rw_mode(const struct silofs_uber_ctx *ub_ctx,
+                               const struct silofs_blobid *blobid)
+{
+	const struct silofs_sb_info *sbi = ub_ctx->uber->ub_sbi;
+
+	return likely(sbi) ? silofs_sbi_ismutable_blobid(sbi, blobid) : true;
+}
+
+static bool ubc_bkaddr_rw_mode(const struct silofs_uber_ctx *ub_ctx,
+                               const struct silofs_bkaddr *bkaddr)
+{
+	return ubc_blobid_rw_mode(ub_ctx, &bkaddr->blobid);
+}
+
 static int ubc_lookup_blob(const struct silofs_uber_ctx *ub_ctx,
                            const struct silofs_blobid *blobid)
 {
@@ -615,9 +629,10 @@ static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
                           struct silofs_blobref_info **out_bri)
 {
 	int err;
+	const bool rw_mode = ubc_blobid_rw_mode(ub_ctx, blobid);
 
-	err = silofs_repos_stage_blob(ub_ctx->repos, ub_ctx->repo_mode,
-	                              blobid, out_bri);
+	err = silofs_repos_stage_blob(ub_ctx->repos, rw_mode,
+	                              ub_ctx->repo_mode, blobid, out_bri);
 	if (err && (err != -ENOENT)) {
 		log_dbg("stage blob failed: err=%d", err);
 	}
@@ -659,9 +674,10 @@ static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                             struct silofs_ubk_info **out_ubki)
 {
 	int err;
+	const bool rw_mode = ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
 
 	bri_incref(bri);
-	err = silofs_repos_spawn_ubk(ub_ctx->repos,
+	err = silofs_repos_spawn_ubk(ub_ctx->repos, rw_mode,
 	                             ub_ctx->repo_mode, bkaddr, out_ubki);
 	bri_decref(bri);
 	return err;
@@ -740,7 +756,7 @@ static int ubc_stage_attach_sbi_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sbi_incref(sbi);
-	err = silofs_repos_stage_ubk(ub_ctx->repos, ub_ctx->repo_mode,
+	err = silofs_repos_stage_ubk(ub_ctx->repos, true, ub_ctx->repo_mode,
 	                             sbi_bkaddr(sbi), &ubki);
 	if (!err) {
 		sbi_attach_to(sbi, ubki);
@@ -881,11 +897,13 @@ static int ubc_stage_attach_sni_bk(const struct silofs_uber_ctx *ub_ctx,
                                    struct silofs_spnode_info *sni)
 {
 	struct silofs_ubk_info *ubki = NULL;
+	const struct silofs_bkaddr *bkaddr = sni_bkaddr(sni);
+	const bool rw_mode = ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
 	int err;
 
 	sni_incref(sni);
-	err = silofs_repos_stage_ubk(ub_ctx->repos, ub_ctx->repo_mode,
-	                             sni_bkaddr(sni), &ubki);
+	err = silofs_repos_stage_ubk(ub_ctx->repos, rw_mode,
+	                             ub_ctx->repo_mode, bkaddr, &ubki);
 	if (!err) {
 		sni_attach_to(sni, ubki);
 	}
@@ -1041,11 +1059,13 @@ static int ubc_stage_attach_sli_bk(const struct silofs_uber_ctx *ub_ctx,
                                    struct silofs_spleaf_info *sli)
 {
 	struct silofs_ubk_info *ubki = NULL;
+	const struct silofs_bkaddr *bkaddr = sli_bkaddr(sli);
+	const bool rw_mode = ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
 	int err;
 
 	sli_incref(sli);
-	err = silofs_repos_stage_ubk(ub_ctx->repos, ub_ctx->repo_mode,
-	                             sli_bkaddr(sli), &ubki);
+	err = silofs_repos_stage_ubk(ub_ctx->repos, rw_mode,
+	                             ub_ctx->repo_mode, bkaddr, &ubki);
 	if (!err) {
 		sli_attach_to(sli, ubki);
 	}
@@ -1180,8 +1200,10 @@ static int ubc_stage_ubk_of(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_bkaddr *bkaddr,
                             struct silofs_ubk_info **out_ubki)
 {
-	return silofs_repos_stage_ubk(ub_ctx->repos, ub_ctx->repo_mode,
-	                              bkaddr, out_ubki);
+	const bool rw_mode = ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
+
+	return silofs_repos_stage_ubk(ub_ctx->repos, rw_mode,
+	                              ub_ctx->repo_mode, bkaddr, out_ubki);
 }
 
 int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,

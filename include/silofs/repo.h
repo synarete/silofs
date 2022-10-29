@@ -33,6 +33,7 @@ struct silofs_blobref_info {
 	struct silofs_iovref            br_ior;
 	struct silofs_blob_fdsz         br_fdsz;
 	bool                            br_locked;
+	bool                            br_rdonly;
 };
 
 /* repository init config */
@@ -158,7 +159,7 @@ int silofs_repos_spawn_blob(struct silofs_repos *repos,
                             const struct silofs_blobid *blobid,
                             struct silofs_blobref_info **out_bri);
 
-int silofs_repos_stage_blob(struct silofs_repos *repos,
+int silofs_repos_stage_blob(struct silofs_repos *repos, bool rw,
                             enum silofs_repo_mode repo_mode,
                             const struct silofs_blobid *blobid,
                             struct silofs_blobref_info **out_bri);
@@ -174,12 +175,12 @@ int silofs_repos_require_blob(struct silofs_repos *repos,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_stage_ubk(struct silofs_repos *repos,
+int silofs_repos_stage_ubk(struct silofs_repos *repos, bool rw,
                            enum silofs_repo_mode repo_mode,
                            const struct silofs_bkaddr *bkaddr,
                            struct silofs_ubk_info **out_ubki);
 
-int silofs_repos_spawn_ubk(struct silofs_repos *repos,
+int silofs_repos_spawn_ubk(struct silofs_repos *repos, bool rw,
                            enum silofs_repo_mode repo_mode,
                            const struct silofs_bkaddr *bkaddr,
                            struct silofs_ubk_info **out_ubki);

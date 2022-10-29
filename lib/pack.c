@@ -927,14 +927,14 @@ static int pac_require_restored_ubk(const struct silofs_pack_ctx *pa_ctx,
 
 	err = silofs_repos_lookup_blob(pa_ctx->repos, repo_mode, blobid);
 	if (!err) {
-		err = silofs_repos_stage_blob(pa_ctx->repos, repo_mode,
-		                              blobid, &bri);
+		err = silofs_repos_stage_blob(pa_ctx->repos, true,
+		                              repo_mode, blobid, &bri);
 		if (err) {
 			return err;
 		}
 		bri_incref(bri);
-		err = silofs_repos_stage_ubk(pa_ctx->repos, repo_mode,
-		                             bkaddr, out_ubki);
+		err = silofs_repos_stage_ubk(pa_ctx->repos, true,
+		                             repo_mode, bkaddr, out_ubki);
 	} else if (err == -ENOENT) {
 		err = silofs_repos_spawn_blob(pa_ctx->repos, repo_mode,
 		                              blobid, &bri);
@@ -942,8 +942,8 @@ static int pac_require_restored_ubk(const struct silofs_pack_ctx *pa_ctx,
 			return err;
 		}
 		bri_incref(bri);
-		err = silofs_repos_spawn_ubk(pa_ctx->repos, repo_mode,
-		                             bkaddr, out_ubki);
+		err = silofs_repos_spawn_ubk(pa_ctx->repos, true,
+		                             repo_mode, bkaddr, out_ubki);
 	}
 	bri_decref(bri);
 	return err;
@@ -980,8 +980,8 @@ static int pac_load_warm_blob(const struct silofs_pack_ctx *pa_ctx,
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_LOCAL;
 	int err;
 
-	err = silofs_repos_stage_blob(pa_ctx->repos, repo_mode,
-	                              &pb->pb_blobid, &bri);
+	err = silofs_repos_stage_blob(pa_ctx->repos, true,
+	                              repo_mode, &pb->pb_blobid, &bri);
 	if (err) {
 		return err;
 	}
@@ -1005,8 +1005,8 @@ static int pac_save_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 		if (!pa_ctx->forced) {
 			return 0; /* ok -- already exists */
 		}
-		err = silofs_repos_stage_blob(pa_ctx->repos, repo_mode,
-		                              &pb->pb_blobid, &bri);
+		err = silofs_repos_stage_blob(pa_ctx->repos, true,
+		                              repo_mode, &pb->pb_blobid, &bri);
 	} else {
 		err = silofs_repos_spawn_blob(pa_ctx->repos, repo_mode,
 		                              &pb->pb_blobid, &bri);
@@ -1476,8 +1476,8 @@ static int pac_load_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_ATTIC;
 	int err;
 
-	err = silofs_repos_stage_blob(pa_ctx->repos, repo_mode,
-	                              &pb->pb_blobid, &bri);
+	err = silofs_repos_stage_blob(pa_ctx->repos, true,
+	                              repo_mode, &pb->pb_blobid, &bri);
 	if (err) {
 		return err;
 	}
@@ -1505,8 +1505,8 @@ static int pac_save_warm_blob(const struct silofs_pack_ctx *pa_ctx,
 		if (!pa_ctx->forced) {
 			return 0; /* ok -- already exists */
 		}
-		err = silofs_repos_stage_blob(pa_ctx->repos, repo_mode,
-		                              &pb->pb_blobid, &bri);
+		err = silofs_repos_stage_blob(pa_ctx->repos, true,
+		                              repo_mode, &pb->pb_blobid, &bri);
 	} else {
 		err = silofs_repos_spawn_blob(pa_ctx->repos, repo_mode,
 		                              &pb->pb_blobid, &bri);

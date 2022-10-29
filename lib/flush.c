@@ -287,6 +287,7 @@ static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
 	if (err) {
 		return err;
 	}
+	silofs_assert(!bri->br_rdonly);
 	oaddr_setup(&oaddr, blobid, sgv->off, sgv->len);
 	err = silofs_bri_storev(bri, &oaddr, sgv->iov, sgv->cnt);
 	if (err) {

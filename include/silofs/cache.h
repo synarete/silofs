@@ -162,8 +162,6 @@ void silofs_cache_forget_vi(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bri_datasync(const struct silofs_blobref_info *bri);
-
 void silofs_bri_incref(struct silofs_blobref_info *bri);
 
 void silofs_bri_decref(struct silofs_blobref_info *bri);

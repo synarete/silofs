@@ -10,39 +10,39 @@
 
 ## Overview
 
-Silofs *("stored in large objects file-system")* is a `GNU/Linux`
-utility with unique approach to the problem of archiving large volumes
-of data: it implements a fully functional file-system on top of binary
-large objects (*blobs*), which serve both for I/O operations and data
+Silofs *("stored in large objects file-system")* is a GNU/Linux utility
+with unique approach to the problem of archiving large volumes of data:
+it implements a fully functional file-system on top of binary large
+objects (*blobs*), which serve both for I/O operations and data
 packing. Combined with built-in snapshot capabilities, compression and
 encryption, users can incrementally archive their data into cloud
 friendly format.
 
-Silofs is implemented using Linux's `FUSE` bridge, allowing normal
-users to mount an isolated storage area. When mounted, the users can
-manipulate their data as they would normally do with any other `POSIX`
+Silofs is implemented using Linux's FUSE bridge, allowing normal users
+to mount an isolated storage area. When mounted, the users can
+manipulate their data as they would normally do with any other POSIX
 file-system. Occasionally, they may take a full file-system snapshot
 (online or offline) and pack it as a compressed and encrypted archive.
-Following ``UNIX`` philosophy of "make each program do one thing well",
-the actual shipment of the archive to the cloud should be made by other
-tools (e.g. [rclone](https://rclone.org/)). When needed, at any future
-point in time, this archive can be restored and reassembled as fully
-functional Silofs file-system on the original host or any other Linux
-machine.
+Following UNIX philosophy of "make each program do one thing well", the
+actual shipment of the archive to the cloud should be made by other
+tools (such as [rclone](https://rclone.org/)). When needed at any
+future point in time, this archive can be restored and reassembled as
+fully functional Silofs file-system on the original host or any other
+Linux machine.
 
-Being a `FUSE` based file-system, Silofs trades performance with
+Being a FUSE based file-system, Silofs trades performance with
 functionality and ease of use. It does not intend to replace the high
 performance in-kernel file-systems, or any of the numerous backup
-solutions, but rather serve as an efficient archive solution for large
-volumes of data, which need to be shipped to remote cloud storage.
-See [Why Silofs?](#why-silofs) for more details.
+solutions, but rather serve as an efficient modern archive solution for
+large volumes of data, which need to be shipped to external cloud
+storage. See [Why Silofs?](#why-silofs) for more details.
 
 ## Build and Install
 
-The first step in building `silofs` from source is to clone it from
+The first step of building `silofs` from source is to clone it from
 [Github](https://github.com/synarete/silofs). Depending on your system,
 you may need to install additional development packages in order to
-compile it. On `rpm` or `deb` based systems, an appropriate install
+compile it. On *rpm* or *deb* based systems, an appropriate install
 scripts may be found under the *dist* directory in the source tree:
 
 ``` sh
@@ -57,7 +57,7 @@ $ sudo dist/install-deb-deps.sh
 ```
 
 Once all build-dependencies are installed on your local build machine,
-you may bootstrap the project and execute the standard *GNU/autotools*
+you may bootstrap the project and execute the standard GNU/autotools
 build process with `configure`, `make` and `make install`:
 
 ``` sh
@@ -67,7 +67,7 @@ $ make
 $ sudo make install
 ```
 
-Alternatively, when running over `rpm` or `deb` based systems, you may
+Alternatively, when running over *rpm* or *deb* based systems, you may
 try installation via package managers. Helper scripts are provided to
 build packages directly from source:
 
@@ -99,9 +99,9 @@ user have valid access, may be used as mount points for `silofs`.
 Whenever adding new entries to this file, the `silofs-mountd.service`
 must be restarted for changes to take effect.
 
-The first step after installation, and before mounting any `Silofs`
-file-system, the administrator of the host machine should add new
-entries to `silofs-mountd.service` (as a privileged user):
+The first step after installation, and before mounting any Silofs
+file-system instance, the administrator of the host machine should add
+new entries to `silofs-mountd.service` (as a privileged user):
 
 ``` sh
 $ echo '/path/to/mntdir' >> /etc/silofs/mountd.conf
@@ -130,9 +130,9 @@ new file-system layout within this repository using the `silofs mkfs`
 sub command. The name of the file system is defined by the boot
 configuration file-name within the root directory of the repository.
 The capacity-size (in bytes) of the newly formatted file-system may be
-defined in Giga-bytes or Tera-bytes units (using the `G` or `T` suffix)
-within the range of `[2G..64T]`. For example, creating a `100G`
-file-system called `myfs` with:
+defined in Giga-bytes or Tera-bytes units (using the G or T suffix),
+from 2G up to 64T. For example, creating a 100G file-system called
+`myfs` with:
 
 ``` sh
 $ silofs mkfs --size=100G /path/to/repo/myfs
@@ -177,8 +177,8 @@ hello, world
 ```
 
 Like any other local file-system, Silofs serves requests as long as it
-is mounted. However, being a `FUSE` based file system you can also
-monitor its resource utilization using standard command-line tools:
+is mounted. However, as a FUSE based file system you can also monitor
+its resource utilization using standard command-line tools:
 
 ``` sh
 $ top -p $(pgrep -f "silofs mount")
@@ -239,7 +239,7 @@ myfs snap1 snap2
 ```
 
 In both bases, the newly created snapshot may be mounted as an ordinary
-`Silofs` file-system:
+Silofs file-system:
 
 ``` sh
 $ silofs mount /path/to/repo/snap2 /path/to/mntdir
@@ -257,7 +257,7 @@ hello, world2
 ### Archive
 
 The Silofs functionality which has been presented so far is what one
-would expect from any descent `POSIX` file-system (with the exception of
+would expect from any descent POSIX file-system (with the exception of
 writable snapshots which are not that common in the Linux world).
 However, what makes Silofs different is the way in which it performs
 archive (and restore) into (and from) blobs representation.
@@ -302,7 +302,7 @@ in case of hardware failure.
 After the archive process has completed (which make take some time,
 depending on your data size and local hardware performance), users may
 safely ship the entire attic repository onto a different host (e.g.,
-using `rsync`) or to remote cloud provider (e.g., using `rclone`). There
+using *rsync*) or to remote cloud provider (e.g., using *rclone*). There
 is not need to worry about possible security breach, as all the blobs
 are fully encrypted.
 
@@ -333,8 +333,8 @@ $ silofs lsmnt
 
 ## Why Silofs?
 
-There are numerous archive and backup tools in the `GNU/Linux` world,
-from the classic `tar` utility to modern complex applications (such as
+There are numerous archive and backup tools in the GNU/Linux world,
+from the classic *tar* utility to modern complex applications (such as
 [restic](https://restic.net), [duplicity](https://duplicity.gitlab.io)
 and many more). Most, if not all, use the method of traversing an
 existing file-system namespace during their operational cycle and
@@ -367,9 +367,9 @@ $ stat -c "%h %s" ./b
 ```
 
 From the file-system\'s perspective, the sequence of operations in
-`step2` represents four simple and relatively lightweight meta-data
+*step2* represents four simple and relatively lightweight meta-data
 operations. However, without hints from the underlying file-system, many
-archive tools may be fooled to think that between `step1` and `step2` a
+archive tools may be fooled to think that between *step1* and *step2* a
 new file was created, thus wasting costly storage space. Even more
 sophisticated modern backup applications, which typically use content
 addressable mechanism to cope with this problem, fail to produce optimal

@@ -1,4 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
 IFS=$'\n\t'
 self=$(readlink -f "$0")
 base=$(dirname "${self}")

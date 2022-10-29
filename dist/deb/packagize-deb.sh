@@ -1,12 +1,15 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+export LC_ALL=C
+unset CDPATH
+
 self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
 run() { echo "$self:" "$@" >&2; try "$@"; }
-
-export LC_ALL=C
-unset CDPATH
 
 name=silofs
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")

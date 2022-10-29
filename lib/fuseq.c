@@ -75,7 +75,7 @@ static void fuseq_lock_op(struct silofs_fuseq *fq);
 static void fuseq_unlock_op(struct silofs_fuseq *fq);
 static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq);
 static int fuseq_exec_op(struct silofs_fuseq *fq, struct silofs_oper_ctx *opc);
-
+static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq);
 
 /* FUSE types per 7.34 */
 struct fuse_setxattr1_in {
@@ -1609,7 +1609,7 @@ static int do_init(struct silofs_fuseq_worker *fqw, ino_t ino,
 	/*
 	 * TODO-0018: Enable more capabilities
 	 *
-	 * XXX: When enabring FUSE_WRITEBACK_CACHE fstests fails with
+	 * XXX: When enabling FUSE_WRITEBACK_CACHE fstests fails with
 	 * metadata (st_ctime,st_blocks) issues. Also, bugs in
 	 * 'test_truncate_zero'. Needs further investigation.
 	 */
@@ -2657,7 +2657,7 @@ static int do_ioc_notimpl(struct silofs_fuseq_worker *fqw, ino_t ino,
 	unused(ino);
 	unused(in);
 
-	return fuseq_reply_err(fqw, -ENOSYS); /* XXX maybe -ENOTTY */
+	return fuseq_reply_err(fqw, -ENOTTY);
 }
 
 static int do_ioc_getflags(struct silofs_fuseq_worker *fqw, ino_t ino,
@@ -2762,57 +2762,63 @@ out:
 	return fuseq_reply_ioctl(fqw, 0, clone_out, sizeof(*clone_out), err);
 }
 
-static int check_ioctl_flags(int flags)
+static int fuseq_check_ioctl_flags(struct silofs_fuseq_worker *fqw,
+                                   const struct silofs_fuseq_in *in)
 {
+	const int flags = (int)(in->u.ioctl.arg.flags);
+
 	if (flags & FUSE_IOCTL_COMPAT) {
 		return -ENOSYS;
 	}
 	if ((flags & FUSE_IOCTL_DIR) && (flags & FUSE_IOCTL_UNRESTRICTED)) {
 		return -ENOTTY;
 	}
+	unused(fqw);
 	return 0;
 }
 
-static int do_ioctl_bad_flags(struct silofs_fuseq_worker *fqw, int err)
+static int fuseq_check_ioctl_in_size(struct silofs_fuseq_worker *fqw,
+                                     const struct silofs_fuseq_in *in)
 {
-	return fuseq_reply_err(fqw, err);
+	const size_t in_size = in->u.ioctl.arg.in_size;
+	const size_t bsz_max = fuseq_bufsize_max(fqw->fq);
+
+	return (in_size < bsz_max) ? 0 : -EINVAL;
 }
 
 static int do_ioctl(struct silofs_fuseq_worker *fqw, ino_t ino,
                     const struct silofs_fuseq_in *in)
 {
-	const void *in_buf;
-	size_t in_size;
 	long cmd;
-	int flags;
+	int err;
 	int ret;
-	int err = 0;
 
-	cmd = (long)(in->u.ioctl.arg.cmd);
-	flags = (int)(in->u.ioctl.arg.flags);
-	in_size = in->u.ioctl.arg.in_size;
-	in_buf = in_size ? in->u.ioctl.buf : NULL;
-	unused(in_buf); /* XXX */
-
-	err = check_ioctl_flags(flags);
+	err = fuseq_check_ioctl_flags(fqw, in);
 	if (err) {
-		ret = do_ioctl_bad_flags(fqw, err);
-	} else {
-		switch (cmd) {
-		case FS_IOC_GETFLAGS:
-			ret = do_ioc_getflags(fqw, ino, in);
-			break;
-		case SILOFS_FS_IOC_QUERY:
-			ret = do_ioc_query(fqw, ino, in);
-			break;
-		case SILOFS_FS_IOC_CLONE:
-			ret = do_ioc_clone(fqw, ino, in);
-			break;
-		default:
-			ret = do_ioc_notimpl(fqw, ino, in);
-			break;
-		}
+		ret = fuseq_reply_err(fqw, err);
+		goto out;
 	}
+	err = fuseq_check_ioctl_in_size(fqw, in);
+	if (err) {
+		ret = fuseq_reply_err(fqw, err);
+		goto out;
+	}
+	cmd = (long)(in->u.ioctl.arg.cmd);
+	switch (cmd) {
+	case FS_IOC_GETFLAGS:
+		ret = do_ioc_getflags(fqw, ino, in);
+		break;
+	case SILOFS_FS_IOC_QUERY:
+		ret = do_ioc_query(fqw, ino, in);
+		break;
+	case SILOFS_FS_IOC_CLONE:
+		ret = do_ioc_clone(fqw, ino, in);
+		break;
+	default:
+		ret = do_ioc_notimpl(fqw, ino, in);
+		break;
+	}
+out:
 	return ret;
 }
 
@@ -3451,7 +3457,6 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 	const size_t outbuf_max = sizeof(*fqw->outb);
 
 	unused(fqw); /* make clangscan happy */
-
 	return max(inbuf_max, outbuf_max);
 }
 

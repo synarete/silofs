@@ -20,12 +20,13 @@
 .. |Silofs| replace:: ``Silofs``
 
 
-|Silofs| is a user-space file-system which takes a unique approach to the
-problem of archiving large volumes of data as cloud objects. Instead of
-traversing an existing namespace, it implements a fully functional file
-system on top of binary large objects (*blobs*), which serve both for I/O
-operations and data packing. Combined with built-in snapshot capabilities,
-users can easily archive their data into cloud friendly format.
+|Silofs| *("stored in large objects file-system")* is a GNU/Linux utility
+with unique approach to the problem of archiving large volumes of data:
+it implements a fully functional file-system on top of binary large
+objects (*blobs*), which serve both for I/O operations and data
+packing. Combined with built-in snapshot capabilities, compression and
+encryption, users can incrementally archive their data into cloud
+friendly format.
 
 Source code: Github_
 

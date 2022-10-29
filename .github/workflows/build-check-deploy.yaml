@@ -92,8 +92,8 @@ jobs:
         run: sudo ./dist/install-deb-deps.sh
       - name: Run clang static-analyzer
         run: ./scripts/clangscanbuild.sh
-  install-and-mount:
-    name: Install and mount
+  install-as-package:
+    name: Install as deb package
     runs-on: ubuntu-22.04
     needs:
       - build-check
@@ -123,7 +123,7 @@ jobs:
       - name: Make file-system
         run: |
           silofs init ./build/repo
-          silofs mkfs -s 16G ./build/repo/test
+          silofs mkfs -s 8G ./build/repo/test
       - name: Mount file-system
         run: |
           silofs mount ./build/repo/test /mnt/test
@@ -135,11 +135,63 @@ jobs:
         run: silofs umount /mnt/test
       - name: Cleanups
         run: rm -rf ./build/repo
+  install-by-autotools:
+    name: Install via autotools
+    runs-on: ubuntu-22.04
+    needs:
+      - build-check
+      - build-devel
+      - static-analyze
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Build and install
+        run: |
+          ./bootstrap
+          ./configure --sysconfdir=/etc
+          make
+          sudo make install
+      - name: Verify installation
+        run: silofs --version
+      - name: Prepare service
+        run: |
+          sudo mkdir -p /mnt/test
+          sudo chmod 700 /mnt/test
+          sudo chown $(id -u):$(id -g) /mnt/test
+          sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
+          sudo systemctl restart silofs-mountd.service
+          sudo systemctl status silofs-mountd.service
+          sleep 10
+      - name: Make file-system
+        run: |
+          silofs init ./build/repo
+          silofs mkfs -s 8G ./build/repo/test
+      - name: Mount file-system
+        run: |
+          silofs mount ./build/repo/test /mnt/test
+          mkdir /mnt/test/A
+          echo "hello, world" > /mnt/test/A/hello
+          cat /mnt/test/A/hello
+          silofs lsmnt
+      - name: Umount file-system
+        run: silofs umount /mnt/test
+      - name: Cleanups
+        run: rm -rf ./build/repo
+      - name: Remove installation
+        run: |
+          sudo systemctl stop silofs-mountd.service
+          sleep 1
+          sudo make uninstall
+          make clean
   done:
     name: End workflow
     runs-on: ubuntu-22.04
     needs:
-      - install-and-mount
+      - install-as-package
+      - install-by-autotools
     steps:
       - name: Done
         run: date

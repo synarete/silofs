@@ -58,16 +58,13 @@ $ sudo dist/install-deb-deps.sh
 
 Once all build-dependencies are installed on your local build machine,
 you may bootstrap the project and execute the standard *GNU/autotools*
-build process with `configure`, `make` and `make install`. It is
-recommended (thou not mandatory) to execute this flow from within the
-*build* sub-directory:
+build process with `configure`, `make` and `make install`:
 
 ``` sh
 $ ./bootstrap
-$ cd build
-$ ../configure
+$ ./configure --sysconfdir=/etc
 $ make
-$ make install
+$ sudo make install
 ```
 
 Alternatively, when running over `rpm` or `deb` based systems, you may

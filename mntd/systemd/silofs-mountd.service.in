@@ -7,7 +7,7 @@ WantedBy=multi-user.target
 
 [Service]
 CapabilityBoundingSet=CAP_SYS_ADMIN
-ExecStart=silofs-mountd -f /etc/silofs/mountd.conf
+ExecStart=silofs-mountd -f @SYSCONFDIR@/silofs/mountd.conf
 LimitNPROC=1
 LimitFSIZE=0
 MemoryDenyWriteExecute=yes

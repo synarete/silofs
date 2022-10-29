@@ -140,13 +140,14 @@ $ silofs mkfs --size=100G /path/to/repo/myfs
 
 ### Mount
 
-After the file-system creation completed successfully, it may be mounted
-on a valid mount-path, using the `silofs mount` sub command. Note that
-you **do not** need to be a privileged user to execute this command; the
-actual `mount` system call is performed by an auxiliary daemon process
-`silofs-mountd.service`, as described in [Preparation](#preparation).
-However, to enhanced security the user which executes `silofs mount`
-must have read-write access to the mount-point directory:
+After the file-system creation completed successfully, it may be
+mounted on a valid mount-path, using the `silofs mount` sub command.
+Note that you **do not** need to be a privileged user to execute this
+command; the actual `mount` system call is performed by an auxiliary
+daemon process `silofs-mountd.service`, as described in
+[Preparation](#preparation). However, to enhanced security the user
+which executes `silofs mount` must have read-write access to the
+mount-point directory:
 
 ``` sh
 $ # ensure mounting service is active
@@ -187,10 +188,11 @@ $ du -sh /path/to/repo/
 ```
 
 When done using this mounted file-system (which may take as long as
-needed, from few seconds up to many month of system uptime) the user may
-unmount the file-system using the `silofs umount` sub-command. Same as
-in the mount case, there is no need for elevated privileges. The actual
-`umount` system call is issued by the `silofs-mountd.service` daemon:
+needed, from few seconds up to many month of system uptime) the user
+may unmount the file-system using the `silofs umount` sub-command. Same
+as in the mount case, there is no need for elevated privileges. The
+actual `umount` system call is issued by the `silofs-mountd.service`
+daemon:
 
 ``` sh
 $ silofs lsmnt
@@ -269,8 +271,8 @@ However, those new blobs are not stored within the same repository as
 the original blobs, but rather in a newly created repository, which is
 marked with *attic* mode. As the process of archiving also encrypts the
 target blobs, the user needs to provide a secure password. The password
-itself is **never** stored within the repository so it is very important
-to remember or store it in a secure place:
+itself is **never** stored within the repository so it is very
+important to remember or store it in a secure place:
 
 ``` sh
 $ silofs init --attic /path/to/attic
@@ -288,23 +290,23 @@ re-enter password: ********
 ...
 ```
 
-Note the in the last example we archived the main file-system as well as
-its snapshots. When using the same password for all archive operations
-only the difference blobs between each snapshot are added to the attic
-repository.
+Note the in the last example we archived the main file-system as well
+as its snapshots. When using the same password for all archive
+operations only the difference blobs between each snapshot are added to
+the attic repository.
 
 Another observation is that the attic repository does not need to share
 the same underlying file-system as the source repository, or even the
 same physical block device. Indeed, using different storage device for
-source and attic repositories may reduce the overall risk of losing data
-in case of hardware failure.
+source and attic repositories may reduce the overall risk of losing
+data in case of hardware failure.
 
 After the archive process has completed (which make take some time,
 depending on your data size and local hardware performance), users may
 safely ship the entire attic repository onto a different host (e.g.,
-using *rsync*) or to remote cloud provider (e.g., using *rclone*). There
-is not need to worry about possible security breach, as all the blobs
-are fully encrypted.
+using *rsync*) or to remote cloud provider (e.g., using *rclone*).
+There is not need to worry about possible security breach, as all the
+blobs are fully encrypted.
 
 ### Restore
 
@@ -317,9 +319,9 @@ operation requires source archive, located within *attic* repository,
 and target raw repository on which the file-system\'s blobs are
 reconstructed. The user would also need to provide the password used
 upon archive creation so that Silofs would be able to decrypt and
-decompress the archived blobs. In the following example data is restored
-into newly created (empty) repository, but it may very well operate on
-existing repository:
+decompress the archived blobs. In the following example data is
+restored into newly created (empty) repository, but it may very well
+operate on existing repository:
 
 ``` sh
 $ silofs init /path/to/repo2
@@ -345,8 +347,8 @@ scale well for very large volumes of data. The action of detecting what
 changed and re-pack it efficiently may become costly, with respect to
 both resource utilization during archive process as well as the final
 archive size. As the capacity of modern storage devices increase to the
-scale of many terabytes, the solution to this problem requires different
-approach.
+scale of many terabytes, the solution to this problem requires
+different approach.
 
 As a demonstrative example, consider the following set of changes to a
 single file:
@@ -368,12 +370,13 @@ $ stat -c "%h %s" ./b
 
 From the file-system\'s perspective, the sequence of operations in
 *step2* represents four simple and relatively lightweight meta-data
-operations. However, without hints from the underlying file-system, many
-archive tools may be fooled to think that between *step1* and *step2* a
-new file was created, thus wasting costly storage space. Even more
-sophisticated modern backup applications, which typically use content
-addressable mechanism to cope with this problem, fail to produce optimal
-results beyond a certain volume size and namespace complexity.
+operations. However, without hints from the underlying file-system,
+many archive tools may be fooled to think that between *step1* and
+*step2* a new file was created, thus wasting costly storage space. Even
+more sophisticated modern backup applications, which typically use
+content addressable mechanism to cope with this problem, fail to
+produce optimal results beyond a certain volume size and namespace
+complexity.
 
 Compared to those tools, Silofs does not need any special hints, as it
 implements the file-system itself, using cloud friendly meta-data

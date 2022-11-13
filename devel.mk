@@ -99,14 +99,14 @@ CFLAGS += -Wshadow -Wfloat-equal -Wwrite-strings -Wpointer-arith
 CFLAGS += -Wcast-align -Wsign-compare -Wredundant-decls -Wformat
 CFLAGS += -Wmissing-include-dirs -Wmissing-declarations -Wswitch -Wswitch-enum
 CFLAGS += -Wswitch-default -Wcomment -Wparentheses -Wsequence-point
-CFLAGS += -Wpointer-arith -Wdisabled-optimization -Wmain -Wundef
+CFLAGS += -Wpointer-arith -Wpointer-sign -Wdisabled-optimization -Wmain -Wundef
 CFLAGS += -Wunknown-pragmas -Wunused-macros -Wendif-labels
 CFLAGS += -Wvla -Waddress -Woverlength-strings -Wconversion -Wsign-conversion
 CFLAGS += -Wunreachable-code -Wwrite-strings -Wlarger-than=4096
 CFLAGS += -Wframe-larger-than=4096 -Wmissing-field-initializers
 CFLAGS += -Wstrict-aliasing=2 -Warray-bounds -Winline -Wcast-qual
 CFLAGS += -Wmissing-noreturn # -Wsuggest-attribute=const -Wpadded
-CFLAGS += -fPIC -fwrapv -fstrict-aliasing
+CFLAGS += -fPIC -fwrapv -fstrict-aliasing -fsigned-char
 CFLAGS += -fstack-protector -fstack-protector-strong # -fstack-check
 CFLAGS += -fasynchronous-unwind-tables
 

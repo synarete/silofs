@@ -26,7 +26,7 @@ easily archive and restore their data as cloud friendly format.
 Summary: Silofs testing utilities and development files
 Group: Development/Tools
 Requires: %{name}%{?_isa} = %{version}-%{release}
-Requires: python3-pyxattr
+Requires: python3
 
 %description devel
 Various testing programs for silofs.

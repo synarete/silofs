@@ -31,6 +31,9 @@
 #define SILOFS_LOG_DEFAULT \
 	(SILOFS_LOG_ERROR | SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT)
 
+#define SILOFS_LOG_CONTROL \
+	(SILOFS_LOG_STDOUT | SILOFS_LOG_SYSLOG | SILOFS_LOG_FILINE)
+
 static const int *silofs_g_logmaskp = NULL;
 
 static int log_mask_now(void)
@@ -115,9 +118,11 @@ void silofs_logf(int flags, const char *file, int line, const char *fmt, ...)
 	size_t len;
 	int saved_errno;
 	int log_mask;
+	int ctl_mask;
 
 	log_mask = log_mask_now();
-	if ((log_mask & SILOFS_LOG_FILINE) && file && line) {
+	ctl_mask = SILOFS_LOG_FILINE;
+	if ((log_mask & ctl_mask) && file && line) {
 		file = basename_of(file);
 	} else {
 		file = NULL;
@@ -133,7 +138,9 @@ void silofs_logf(int flags, const char *file, int line, const char *fmt, ...)
 			len = sizeof(msg) - 1;
 		}
 		msg[len] = '\0';
-		log_msg(flags | log_mask, msg, file, line);
+
+		ctl_mask = SILOFS_LOG_CONTROL;
+		log_msg(flags | (log_mask & ctl_mask), msg, file, line);
 		errno = saved_errno;
 	}
 }

@@ -125,7 +125,6 @@ class CmdSilofs(CmdExec):
     ) -> None:
         args = ["mount", repodir_name, mntpoint]
         if allow_hostids:
-            args.append("--allow-other")
             args.append("--allow-hostids")
         self.execute2(args)
 

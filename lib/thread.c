@@ -83,11 +83,10 @@ static void *silofs_thread_start(void *arg)
 	return th;
 }
 
-int silofs_thread_create(struct silofs_thread *th,
-                         silofs_execute_fn exec, const char *name)
+int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
+                         void *arg, const char *name)
 {
 	pthread_attr_t attr;
-	void *(*start)(void *arg) = silofs_thread_start;
 	size_t nlen = 0;
 	int err;
 
@@ -101,12 +100,13 @@ int silofs_thread_create(struct silofs_thread *th,
 
 	memset(th, 0, sizeof(*th));
 	th->exec = exec;
+	th->arg = arg;
 	if (name != NULL) {
 		nlen = silofs_min(strlen(name), sizeof(th->name) - 1);
 		memcpy(th->name, name, nlen);
 	}
 
-	err = pthread_create(&th->pth, &attr, start, th);
+	err = pthread_create(&th->pth, &attr, silofs_thread_start, th);
 	pthread_attr_destroy(&attr);
 
 	return err;

@@ -25,20 +25,21 @@ struct silofs_thread;
 typedef int (*silofs_execute_fn)(struct silofs_thread *);
 
 struct silofs_thread {
-	silofs_execute_fn exec;
-	pthread_t       pth;
-	char            name[32];
-	time_t          start_time;
-	time_t          finish_time;
-	int             status;
+	char                    name[32];
+	pthread_t               pth;
+	silofs_execute_fn       exec;
+	void                   *arg;
+	time_t                  start_time;
+	time_t                  finish_time;
+	int                     status;
 };
 
 struct silofs_mutex {
-	pthread_mutex_t mutex;
+	pthread_mutex_t         mutex;
 };
 
 struct silofs_cond {
-	pthread_cond_t  cond;
+	pthread_cond_t          cond;
 };
 
 struct silofs_lock {
@@ -51,8 +52,8 @@ struct silofs_lock {
 
 int silofs_thread_sigblock_common(void);
 
-int silofs_thread_create(struct silofs_thread *th,
-                         silofs_execute_fn exec, const char *name);
+int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
+                         void *arg, const char *name);
 
 int silofs_thread_join(struct silofs_thread *th);
 

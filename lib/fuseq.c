@@ -3996,7 +3996,7 @@ static int fuseq_exec_thread(struct silofs_fuseq_worker *fqw)
 	int err;
 
 	snprintf(name, sizeof(name) - 1, "silofs-%u", fqw->worker_index + 1);
-	err = silofs_thread_create(&fqw->th, fuseq_start, name);
+	err = silofs_thread_create(&fqw->th, fuseq_start, NULL, name);
 	if (err) {
 		fuseq_log_err("failed to create fuse worker: "\
 		              "%s err=%d", name, err);

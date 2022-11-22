@@ -274,7 +274,8 @@ void cmd_delpass(char **pass);
 /* file-system root parameters */
 void cmd_default_fs_cargs(struct silofs_fs_cargs *fsca);
 
-void cmd_setup_fs_cargs(struct silofs_fs_cargs *fsca, uid_t suid, gid_t sgid);
+void cmd_setup_fs_cargs(struct silofs_fs_cargs *fsca,
+                        uid_t suid, gid_t sgid, bool no_root);
 
 void cmd_reset_fs_cargs(struct silofs_fs_cargs *fsca);
 

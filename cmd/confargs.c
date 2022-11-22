@@ -727,22 +727,44 @@ void cmd_default_fs_cargs(struct silofs_fs_cargs *fsca)
 	fsca->pack = false;
 }
 
-void cmd_setup_fs_cargs(struct silofs_fs_cargs *fsca, uid_t suid, gid_t sgid)
+void cmd_setup_fs_cargs(struct silofs_fs_cargs *fsca,
+                        uid_t suid, gid_t sgid, bool no_root)
 {
-	const struct silofs_id uid = {
-		.id.u.uid = getuid(),
-		.id.u.suid = suid,
-		.id_type = SILOFS_IDTYPE_UID,
+	const uid_t uid = getuid();
+	const gid_t gid = getgid();
+	const struct silofs_id uids[] = {
+		{
+			.id.u.uid = 0,
+			.id.u.suid = 0,
+			.id_type = SILOFS_IDTYPE_UID,
+		},
+		{
+			.id.u.uid = uid,
+			.id.u.suid = suid,
+			.id_type = SILOFS_IDTYPE_UID,
+		},
 	};
-	const struct silofs_id gid = {
-		.id.g.gid = getgid(),
-		.id.g.sgid = sgid,
-		.id_type = SILOFS_IDTYPE_GID,
+	const struct silofs_id gids[] = {
+		{
+			.id.g.gid = 0,
+			.id.g.sgid = 0,
+			.id_type = SILOFS_IDTYPE_GID,
+		},
+		{
+			.id.g.gid = gid,
+			.id.g.sgid = sgid,
+			.id_type = SILOFS_IDTYPE_GID,
+		},
 	};
 
 	silofs_uuid_generate(&fsca->uuid);
-	cmd_dup_ids(&uid, 1, &fsca->ids.uids, &fsca->ids.nuids);
-	cmd_dup_ids(&gid, 1, &fsca->ids.gids, &fsca->ids.ngids);
+	if ((uid == 0) || no_root) {
+		cmd_dup_ids(uids + 1, 1, &fsca->ids.uids, &fsca->ids.nuids);
+		cmd_dup_ids(gids + 1, 1, &fsca->ids.gids, &fsca->ids.ngids);
+	} else {
+		cmd_dup_ids(uids, 2, &fsca->ids.uids, &fsca->ids.nuids);
+		cmd_dup_ids(gids, 2, &fsca->ids.gids, &fsca->ids.ngids);
+	}
 }
 
 void cmd_reset_fs_cargs(struct silofs_fs_cargs *fsca)

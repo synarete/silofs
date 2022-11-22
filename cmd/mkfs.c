@@ -23,6 +23,7 @@ static const char *cmd_mkfs_help_desc[] = {
 	"  -s, --size=nbytes            Capacity size limit",
 	"  -u, --uid=suid               Map owner uid to suid",
 	"  -g, --gid=suid               Map owner gid to sgid",
+	"  -R, --no-root                Ignore root user",
 	"  -F, --force                  Force overwrite if already exists",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
@@ -37,6 +38,7 @@ struct cmd_mkfs_in_args {
 	long    fs_size;
 	uid_t   suid;
 	gid_t   sgid;
+	bool    no_root;
 	bool    force;
 };
 
@@ -57,6 +59,7 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 		{ "size", required_argument, NULL, 's' },
 		{ "suid", required_argument, NULL, 'U' },
 		{ "sgid", required_argument, NULL, 'G' },
+		{ "no-root", no_argument, NULL, 'R' },
 		{ "force", no_argument, NULL, 'F' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
@@ -66,7 +69,7 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	ctx->in_args.suid = getuid();
 	ctx->in_args.sgid = getgid();
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:U:G:V:Fh", opts);
+		opt_chr = cmd_getopt("s:U:G:V:RFh", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
@@ -76,6 +79,8 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 			ctx->in_args.sgid = cmd_parse_str_as_gid(optarg);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
+		} else if (opt_chr == 'R') {
+			ctx->in_args.no_root = true;
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'h') {
@@ -138,7 +143,8 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_setup_fs_cargs(&fs_args->ca, ctx->in_args.suid, ctx->in_args.sgid);
+	cmd_setup_fs_cargs(&fs_args->ca, ctx->in_args.suid,
+	                   ctx->in_args.sgid, ctx->in_args.no_root);
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;

@@ -35,13 +35,14 @@ static const char *cmd_mount_help_desc[] = {
 	"  -X, --noexec                 Do not allow programs execution",
 	"  -S, --nosuid                 Do not honor special bits",
 	"      --nodev                  Do not allow access to device files",
-	"      --nokcopy                Do not copy data by in-kernel copy",
 	"  -i  --allow-hostids          Use local host uid/gid",
 	"  -A  --no-allow-other         Do not allow other users",
 	"  -W  --writeback-cache        Enable write-back cache mode",
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
+	"  -K, --nokcopy                No in-kernel data copy (devel)",
+	/* "  -P, --noconcp                No concurrent data copy (devel)", */
 	NULL
 };
 
@@ -61,6 +62,7 @@ struct cmd_mount_in_args {
 	bool    nodev;
 	bool    rdonly;
 	bool    nokcopy;
+	bool    noconcp;
 };
 
 struct cmd_mount_ctx {
@@ -86,6 +88,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "nosuid", no_argument, NULL, 'S' },
 		{ "nodev", no_argument, NULL, 'Z' },
 		{ "nokcopy", no_argument, NULL, 'K' },
+		{ "noconcp", no_argument, NULL, 'P' },
 		{ "allow-hostids", no_argument, NULL, 'i' },
 		{ "no-allow-other", no_argument, NULL, 'A' },
 		{ "writeback-cache", no_argument, NULL, 'W' },
@@ -97,7 +100,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZKiAWDV:Ch", opts);
+		opt_chr = cmd_getopt("rXSZKPiAWDV:Ch", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -108,6 +111,8 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			ctx->in_args.nodev = true;
 		} else if (opt_chr == 'K') {
 			ctx->in_args.nokcopy = true;
+		} else if (opt_chr == 'P') {
+			ctx->in_args.noconcp = true;
 		} else if (opt_chr == 'A') {
 			ctx->in_args.no_allowother = true;
 		} else if (opt_chr == 'i') {
@@ -155,7 +160,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->nodev = args->nodev;
 	fs_args->rdonly = args->rdonly;
 	fs_args->kcopy = !args->nokcopy;
-	fs_args->concp = true;
+	fs_args->concp = !args->noconcp;
 	fs_args->pedantic = false;
 }
 

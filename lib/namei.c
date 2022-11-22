@@ -2091,7 +2091,7 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static const struct silofs_repos *repos_of(const struct silofs_fs_uber *uber)
+static struct silofs_repos *repos_of(const struct silofs_fs_uber *uber)
 {
 	return uber->ub_repos;
 }
@@ -2262,7 +2262,7 @@ static int check_clone(const struct silofs_fs_ctx *fs_ctx,
 static int do_post_clone_updates(const struct silofs_fs_ctx *fs_ctx,
                                  const struct silofs_bootsecs *bsecs)
 {
-	const struct silofs_repos *repos = NULL;
+	struct silofs_repos *repos = NULL;
 	const struct silofs_bootsec *bsec = NULL;
 	const enum silofs_repo_mode ns = SILOFS_REPO_LOCAL;
 	int err = 0;

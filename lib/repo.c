@@ -1390,6 +1390,7 @@ static int repo_init(struct silofs_repo *repo,
 	}
 	err = repo_init_mdigest(repo);
 	if (err) {
+		repo_fini_cache(repo);
 		return err;
 	}
 	return 0;
@@ -1410,6 +1411,16 @@ static void repo_drop_cache(struct silofs_repo *repo)
 	if (cache->c_inited) {
 		silofs_cache_drop(cache);
 	}
+}
+
+static void repo_pre_op(struct silofs_repo *repo)
+{
+	silofs_unused(repo);
+}
+
+static void repo_post_op(struct silofs_repo *repo)
+{
+	silofs_unused(repo);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2265,7 +2276,9 @@ void silofs_repos_drop_cache(struct silofs_repos *repos)
 	for (size_t i = 0; i < ARRAY_SIZE(repos->repo); ++i) {
 		repo = &repos->repo[i];
 		if (repo_enabled(repo)) {
+			repo_pre_op(repo);
 			repo_drop_cache(repo);
+			repo_post_op(repo);
 		}
 	}
 }
@@ -2277,7 +2290,9 @@ void silofs_repos_relax_cache(struct silofs_repos *repos, int flags)
 	for (size_t i = 0; i < ARRAY_SIZE(repos->repo); ++i) {
 		repo = &repos->repo[i];
 		if (repo_enabled(repo)) {
+			repo_pre_op(repo);
 			repo_relax_cache(repo, flags);
+			repo_post_op(repo);
 		}
 	}
 }
@@ -2289,53 +2304,75 @@ void silofs_repos_pre_forkfs(struct silofs_repos *repos)
 	for (size_t i = 0; i < ARRAY_SIZE(repos->repo); ++i) {
 		repo = &repos->repo[i];
 		if (repo_enabled(repo)) {
+			repo_pre_op(repo);
 			silofs_cache_forget_uaddrs(&repo->re_cache);
+			repo_post_op(repo);
 		}
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_save_bootsec(const struct silofs_repos *repos,
+int silofs_repos_save_bootsec(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_uuid *uuid,
                               const struct silofs_bootsec *bsec)
 {
-	const struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_save_bootsec(repo, uuid, bsec);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_save_bootsec(repo, uuid, bsec);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
-int silofs_repos_load_bootsec(const struct silofs_repos *repos,
+int silofs_repos_load_bootsec(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_uuid *uuid,
                               struct silofs_bootsec *out_bsec)
 {
-	const struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_load_bootsec(repo, uuid, out_bsec);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_load_bootsec(repo, uuid, out_bsec);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
-int silofs_repos_stat_bootsec(const struct silofs_repos *repos,
+int silofs_repos_stat_bootsec(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_uuid *uuid)
 {
-	const struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_stat_bootsec(repo, uuid);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_stat_bootsec(repo, uuid);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
-int silofs_repos_unlink_bootsec(const struct silofs_repos *repos,
+int silofs_repos_unlink_bootsec(struct silofs_repos *repos,
                                 enum silofs_repo_mode repo_mode,
                                 const struct silofs_uuid *uuid)
 {
-	const struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_unlink_bootsec(repo, uuid);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_unlink_bootsec(repo, uuid);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2345,9 +2382,14 @@ int silofs_repos_lookup_blob(struct silofs_repos *repos,
                              const struct silofs_blobid *blobid)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_lookup_blob(repo, blobid);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_lookup_blob(repo, blobid);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 int silofs_repos_spawn_blob(struct silofs_repos *repos,
@@ -2356,9 +2398,14 @@ int silofs_repos_spawn_blob(struct silofs_repos *repos,
                             struct silofs_blobref_info **out_bri)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_spawn_blob(repo, blobid, out_bri);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_spawn_blob(repo, blobid, out_bri);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 int silofs_repos_stage_blob(struct silofs_repos *repos, bool rw,
@@ -2367,9 +2414,14 @@ int silofs_repos_stage_blob(struct silofs_repos *repos, bool rw,
                             struct silofs_blobref_info **out_bri)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_stage_blob(repo, rw, blobid, out_bri);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_stage_blob(repo, rw, blobid, out_bri);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 int silofs_repos_remove_blob(struct silofs_repos *repos,
@@ -2377,9 +2429,14 @@ int silofs_repos_remove_blob(struct silofs_repos *repos,
                              const struct silofs_blobid *blobid)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_remove_blob(repo, blobid);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_remove_blob(repo, blobid);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 int silofs_repos_require_blob(struct silofs_repos *repos,
@@ -2388,9 +2445,14 @@ int silofs_repos_require_blob(struct silofs_repos *repos,
                               struct silofs_blobref_info **out_bri)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_require_blob(repo, true, blobid, out_bri);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_require_blob(repo, true, blobid, out_bri);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2401,9 +2463,14 @@ int silofs_repos_stage_ubk(struct silofs_repos *repos, bool rw,
                            struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_stage_ubk(repo, rw, bkaddr, out_ubki);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 int silofs_repos_spawn_ubk(struct silofs_repos *repos, bool rw,
@@ -2412,9 +2479,14 @@ int silofs_repos_spawn_ubk(struct silofs_repos *repos, bool rw,
                            struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
+		repo_post_op(repo);
+	}
+	return ret;
 }
 
 int silofs_repos_require_ubk(struct silofs_repos *repos,
@@ -2423,7 +2495,12 @@ int silofs_repos_require_ubk(struct silofs_repos *repos,
                              struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
+	int ret = -SILOFS_ENOREPO;
 
-	return unlikely(repo == NULL) ? -SILOFS_ENOREPO :
-	       repo_require_ubk(repo, true, bkaddr, out_ubki);
+	if (likely(repo != NULL)) {
+		repo_pre_op(repo);
+		ret = repo_require_ubk(repo, true, bkaddr, out_ubki);
+		repo_post_op(repo);
+	}
+	return ret;
 }

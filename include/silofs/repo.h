@@ -130,21 +130,21 @@ void silofs_repos_pre_forkfs(struct silofs_repos *repos);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_save_bootsec(const struct silofs_repos *repos,
+int silofs_repos_save_bootsec(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_uuid *uuid,
                               const struct silofs_bootsec *bsec);
 
-int silofs_repos_load_bootsec(const struct silofs_repos *repos,
+int silofs_repos_load_bootsec(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_uuid *uuid,
                               struct silofs_bootsec *out_bsec);
 
-int silofs_repos_stat_bootsec(const struct silofs_repos *repos,
+int silofs_repos_stat_bootsec(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_uuid *uuid);
 
-int silofs_repos_unlink_bootsec(const struct silofs_repos *repos,
+int silofs_repos_unlink_bootsec(struct silofs_repos *repos,
                                 enum silofs_repo_mode repo_mode,
                                 const struct silofs_uuid *uuid);
 

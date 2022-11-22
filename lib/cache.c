@@ -32,6 +32,9 @@
 
 #define CACHE_RETRY 2
 
+
+static void cache_pre_op(struct silofs_cache *cache);
+static void cache_post_op(struct silofs_cache *cache);
 static void cache_drop_uamap(struct silofs_cache *cache);
 static void cache_evict_some(struct silofs_cache *cache);
 static void cache_dirtify_ui(struct silofs_cache *cache,
@@ -1309,7 +1312,12 @@ struct silofs_blobref_info *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
                          const struct silofs_blobid *blobid)
 {
-	return cache_find_relru_bri(cache, blobid);
+	struct silofs_blobref_info *bri;
+
+	cache_pre_op(cache);
+	bri = cache_find_relru_bri(cache, blobid);
+	cache_post_op(cache);
+	return bri;
 }
 
 static struct silofs_blobref_info *
@@ -1379,7 +1387,12 @@ struct silofs_blobref_info *
 silofs_cache_spawn_blob(struct silofs_cache *cache,
                         const struct silofs_blobid *blobid)
 {
-	return cache_require_bri(cache, blobid);
+	struct silofs_blobref_info *bri;
+
+	cache_pre_op(cache);
+	bri = cache_require_bri(cache, blobid);
+	cache_post_op(cache);
+	return bri;
 }
 
 
@@ -1391,7 +1404,7 @@ static void cache_try_evict_bri(struct silofs_cache *cache,
 	}
 }
 
-void silofs_cache_evict_blob(struct silofs_cache *cache,
+static void cache_evict_blob(struct silofs_cache *cache,
                              struct silofs_blobref_info *bri, bool now)
 {
 	if (now) {
@@ -1399,6 +1412,14 @@ void silofs_cache_evict_blob(struct silofs_cache *cache,
 	} else {
 		cache_try_evict_bri(cache, bri);
 	}
+}
+
+void silofs_cache_evict_blob(struct silofs_cache *cache,
+                             struct silofs_blobref_info *bri, bool now)
+{
+	cache_pre_op(cache);
+	cache_evict_blob(cache, bri, now);
+	cache_post_op(cache);
 }
 
 static struct silofs_blobref_info *
@@ -1490,9 +1511,12 @@ static size_t cache_blobs_overflow(const struct silofs_cache *cache)
 
 void silofs_cache_relax_blobs(struct silofs_cache *cache)
 {
-	const size_t cnt = cache_blobs_overflow(cache);
+	size_t cnt;
 
+	cache_pre_op(cache);
+	cnt = cache_blobs_overflow(cache);
 	cache_shrink_or_relru_bris(cache, cnt, true);
+	cache_post_op(cache);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1571,12 +1595,20 @@ static void cache_evict_ubki(struct silofs_cache *cache,
 	cache_del_ubki(cache, ubki);
 }
 
-void silofs_cache_forget_ubk(struct silofs_cache *cache,
+static void cache_forget_ubk(struct silofs_cache *cache,
                              struct silofs_ubk_info *ubki)
 {
 	if (ubki_is_evictable(ubki)) {
 		cache_evict_ubki(cache, ubki);
 	}
+}
+
+void silofs_cache_forget_ubk(struct silofs_cache *cache,
+                             struct silofs_ubk_info *ubki)
+{
+	cache_pre_op(cache);
+	cache_forget_ubk(cache, ubki);
+	cache_post_op(cache);
 }
 
 static struct silofs_ubk_info *
@@ -1746,14 +1778,24 @@ struct silofs_ubk_info *
 silofs_cache_lookup_ubk(struct silofs_cache *cache,
                         const struct silofs_bkaddr *bkaddr)
 {
-	return cache_find_relru_ubki(cache, bkaddr);
+	struct silofs_ubk_info *ubki;
+
+	cache_pre_op(cache);
+	ubki = cache_find_relru_ubki(cache, bkaddr);
+	cache_post_op(cache);
+	return ubki;
 }
 
 struct silofs_ubk_info *
 silofs_cache_spawn_ubk(struct silofs_cache *cache,
                        const struct silofs_bkaddr *bkaddr)
 {
-	return cache_require_ubki(cache, bkaddr);
+	struct silofs_ubk_info *ubki;
+
+	cache_pre_op(cache);
+	ubki = cache_require_ubki(cache, bkaddr);
+	cache_post_op(cache);
+	return ubki;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1933,9 +1975,8 @@ static void cache_track_uaddr_of(struct silofs_cache *cache,
 	}
 }
 
-struct silofs_unode_info *
-silofs_cache_lookup_ui(struct silofs_cache *cache,
-                       const struct silofs_uaddr *uaddr)
+static struct silofs_unode_info *
+cache_lookup_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *ui;
 
@@ -1943,6 +1984,18 @@ silofs_cache_lookup_ui(struct silofs_cache *cache,
 	if (ui != NULL) {
 		cache_track_uaddr_of(cache, ui);
 	}
+	return ui;
+}
+
+struct silofs_unode_info *
+silofs_cache_lookup_ui(struct silofs_cache *cache,
+                       const struct silofs_uaddr *uaddr)
+{
+	struct silofs_unode_info *ui;
+
+	cache_pre_op(cache);
+	ui = cache_lookup_ui(cache, uaddr);
+	cache_post_op(cache);
 	return ui;
 }
 
@@ -1972,9 +2025,8 @@ static void cache_store_ui(struct silofs_cache *cache,
 	cache_store_ui_lrumap(cache, ui);
 }
 
-struct silofs_unode_info *
-silofs_cache_spawn_ui(struct silofs_cache *cache,
-                      const struct silofs_uaddr *uaddr)
+static struct silofs_unode_info *
+cache_spawn_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *ui;
 
@@ -1987,31 +2039,64 @@ silofs_cache_spawn_ui(struct silofs_cache *cache,
 	return ui;
 }
 
-void silofs_cache_forget_ui(struct silofs_cache *cache,
-                            struct silofs_unode_info *ui)
+struct silofs_unode_info *
+silofs_cache_spawn_ui(struct silofs_cache *cache,
+                      const struct silofs_uaddr *uaddr)
+{
+	struct silofs_unode_info *ui;
+
+	cache_pre_op(cache);
+	ui = cache_spawn_ui(cache, uaddr);
+	cache_post_op(cache);
+	return ui;
+}
+
+static void
+cache_forget_ui(struct silofs_cache *cache, struct silofs_unode_info *ui)
 {
 	ui_undirtify(ui);
 	cache_forget_uaddr(cache, ui_uaddr(ui));
 	cache_evict_ui(cache, ui);
 }
 
-struct silofs_unode_info *
-silofs_cache_find_ui_by(struct silofs_cache *cache,
-                        const struct silofs_uakey *uakey)
+void silofs_cache_forget_ui(struct silofs_cache *cache,
+                            struct silofs_unode_info *ui)
+{
+	cache_pre_op(cache);
+	cache_forget_ui(cache, ui);
+	cache_post_op(cache);
+}
+
+static struct silofs_unode_info *
+cache_find_ui_by(struct silofs_cache *cache, const struct silofs_uakey *uakey)
 {
 	const struct silofs_uaddr *uaddr;
 	struct silofs_unode_info *ui = NULL;
 
 	uaddr = cache_lookup_uaddr_by(cache, uakey);
 	if (uaddr != NULL) {
-		ui = silofs_cache_lookup_ui(cache, uaddr);
+		ui = cache_lookup_ui(cache, uaddr);
 	}
+	return ui;
+}
+
+struct silofs_unode_info *
+silofs_cache_find_ui_by(struct silofs_cache *cache,
+                        const struct silofs_uakey *uakey)
+{
+	struct silofs_unode_info *ui;
+
+	cache_pre_op(cache);
+	ui = cache_find_ui_by(cache, uakey);
+	cache_post_op(cache);
 	return ui;
 }
 
 void silofs_cache_forget_uaddrs(struct silofs_cache *cache)
 {
+	cache_pre_op(cache);
 	cache_drop_uamap(cache);
+	cache_post_op(cache);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2094,7 +2179,9 @@ static void cache_evict_vbki(struct silofs_cache *cache,
 void silofs_cache_forget_vbk(struct silofs_cache *cache,
                              struct silofs_vbk_info *vbki)
 {
+	cache_pre_op(cache);
 	cache_evict_vbki(cache, vbki);
+	cache_post_op(cache);
 }
 
 static struct silofs_vbk_info *
@@ -2264,14 +2351,24 @@ struct silofs_vbk_info *
 silofs_cache_lookup_vbk(struct silofs_cache *cache,
                         loff_t voff, enum silofs_stype vspace)
 {
-	return cache_find_relru_vbki(cache, voff, vspace);
+	struct silofs_vbk_info *vbki;
+
+	cache_pre_op(cache);
+	vbki = cache_find_relru_vbki(cache, voff, vspace);
+	cache_post_op(cache);
+	return vbki;
 }
 
 struct silofs_vbk_info *
 silofs_cache_spawn_vbk(struct silofs_cache *cache,
                        loff_t voff, enum silofs_stype vspace)
 {
-	return cache_require_vbki(cache, voff, vspace);
+	struct silofs_vbk_info *vbki;
+
+	cache_pre_op(cache);
+	vbki = cache_require_vbki(cache, voff, vspace);
+	cache_post_op(cache);
+	return vbki;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2435,7 +2532,12 @@ struct silofs_vnode_info *
 silofs_cache_lookup_vi(struct silofs_cache *cache,
                        const struct silofs_vaddr *vaddr)
 {
-	return cache_find_relru_vi(cache, vaddr);
+	struct silofs_vnode_info *vi;
+
+	cache_pre_op(cache);
+	vi = cache_find_relru_vi(cache, vaddr);
+	cache_post_op(cache);
+	return vi;
 }
 
 static struct silofs_vnode_info *
@@ -2462,7 +2564,7 @@ static void cache_unmap_vi(struct silofs_cache *cache,
 	}
 }
 
-void silofs_cache_forget_vi(struct silofs_cache *cache,
+static void cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
 	vi_undirtify(vi);
@@ -2474,9 +2576,16 @@ void silofs_cache_forget_vi(struct silofs_cache *cache,
 	}
 }
 
-struct silofs_vnode_info *
-silofs_cache_spawn_vi(struct silofs_cache *cache,
-                      const struct silofs_vaddr *vaddr)
+void silofs_cache_forget_vi(struct silofs_cache *cache,
+                            struct silofs_vnode_info *vi)
+{
+	cache_pre_op(cache);
+	cache_forget_vi(cache, vi);
+	cache_post_op(cache);
+}
+
+static struct silofs_vnode_info *
+cache_spawn_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vi;
 
@@ -2485,6 +2594,18 @@ silofs_cache_spawn_vi(struct silofs_cache *cache,
 		si_set_cache(&vi->v_si, cache);
 		cache_store_vi(cache, vi);
 	}
+	return vi;
+}
+
+struct silofs_vnode_info *
+silofs_cache_spawn_vi(struct silofs_cache *cache,
+                      const struct silofs_vaddr *vaddr)
+{
+	struct silofs_vnode_info *vi;
+
+	cache_pre_op(cache);
+	vi = cache_spawn_vi(cache, vaddr);
+	cache_post_op(cache);
 	return vi;
 }
 
@@ -2601,7 +2722,9 @@ void silofs_cache_shrink_once(struct silofs_cache *cache)
 	const size_t memsz_data = cache->mem_size_hint;
 
 	if ((8 * memsz_ubkis) > memsz_data) {
+		cache_pre_op(cache);
 		cache_shrink_some(cache, 0);
+		cache_post_op(cache);
 	}
 }
 
@@ -2983,6 +3106,16 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	cache->c_alloc = NULL;
 }
 
+static void cache_pre_op(struct silofs_cache *cache)
+{
+	silofs_unused(cache);
+}
+
+static void cache_post_op(struct silofs_cache *cache)
+{
+	silofs_unused(cache);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi)
@@ -3057,7 +3190,7 @@ cache_fill_into_dset_by(const struct silofs_cache *cache,
 	}
 }
 
-void silofs_cache_fill_into_dset(const struct silofs_cache *cache,
+static void cache_fill_into_dset(const struct silofs_cache *cache,
                                  struct silofs_dset *dset, silofs_dqid_t dqid)
 {
 	if (dqid == SILOFS_DQID_ALL) {
@@ -3072,7 +3205,15 @@ void silofs_cache_fill_into_dset(const struct silofs_cache *cache,
 	}
 }
 
-void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
+void silofs_cache_fill_into_dset(struct silofs_cache *cache,
+                                 struct silofs_dset *dset, silofs_dqid_t dqid)
+{
+	cache_pre_op(cache);
+	cache_fill_into_dset(cache, dset, dqid);
+	cache_post_op(cache);
+}
+
+static void cache_undirtify_by_dset(struct silofs_cache *cache,
                                     const struct silofs_dset *dset)
 {
 	struct silofs_snode_info *si_next = NULL;
@@ -3084,4 +3225,12 @@ void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
 		si->s_ds_next = NULL;
 		si = si_next;
 	}
+}
+
+void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
+                                    const struct silofs_dset *dset)
+{
+	cache_pre_op(cache);
+	cache_undirtify_by_dset(cache, dset);
+	cache_post_op(cache);
 }

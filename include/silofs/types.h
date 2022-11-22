@@ -461,12 +461,12 @@ struct silofs_fs_uber {
 	struct silofs_crypto           *ub_crypto;
 	struct silofs_repos            *ub_repos;
 	struct silofs_idsmap           *ub_idsm;
+	struct silofs_mutex             ub_fs_lock;
 	struct silofs_piper             ub_piper;
 	struct silofs_oper_stat         ub_ops;
 	struct silofs_blobref_info     *ub_sb_bri;
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_uaddr             ub_sb_addr;
-	struct silofs_lock              ub_lock;
 	iconv_t                         ub_iconv;
 	time_t                          ub_initime;
 };

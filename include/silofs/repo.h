@@ -50,7 +50,6 @@ struct silofs_repo {
 	struct silofs_repocfg           re_cfg;
 	struct silofs_cache             re_cache;
 	struct silofs_mdigest           re_mdigest;
-	const char                     *re_root_dir;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
 	int                             re_blobs_dfd;
@@ -84,9 +83,13 @@ int silofs_bri_pwriten(const struct silofs_blobref_info *bri, loff_t off,
 int silofs_bri_preadn(const struct silofs_blobref_info *bri,
                       loff_t off, void *buf, size_t len);
 
-int silofs_bri_load_bk(const struct silofs_blobref_info *bri,
-                       const struct silofs_bkaddr *bkaddr,
-                       struct silofs_block *bk);
+int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
+                        const struct silofs_bkaddr *bkaddr,
+                        struct silofs_ubk_info *ubki);
+
+int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
+                        const struct silofs_bkaddr *bkaddr,
+                        struct silofs_vbk_info *vbki);
 
 int silofs_bri_store_bk(const struct silofs_blobref_info *bri,
                         const struct silofs_bkaddr *bkaddr,

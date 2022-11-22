@@ -85,10 +85,9 @@ static size_t uber_calc_iopen_limit(const struct silofs_fs_uber *uber)
 	return div_round_up(lim, align) * align;
 }
 
-static void uber_init_commons(struct silofs_fs_uber *uber,
-                              struct silofs_alloc *alloc,
-                              struct silofs_repos *repos,
-                              struct silofs_idsmap *idsm)
+static void
+uber_init_commons(struct silofs_fs_uber *uber, struct silofs_alloc *alloc,
+                  struct silofs_repos *repos, struct silofs_idsmap *idsm)
 {
 	uber->ub_initime = silofs_time_now_monotonic();
 	uber->ub_alloc = alloc;
@@ -115,6 +114,16 @@ static void uber_fini_commons(struct silofs_fs_uber *uber)
 	uber->ub_sbi = NULL;
 }
 
+static int uber_init_fs_lock(struct silofs_fs_uber *uber)
+{
+	return silofs_mutex_init(&uber->ub_fs_lock);
+}
+
+static void uber_fini_fs_lock(struct silofs_fs_uber *uber)
+{
+	silofs_mutex_fini(&uber->ub_fs_lock);
+}
+
 static int uber_init_piper(struct silofs_fs_uber *uber)
 {
 	return silofs_piper_init(&uber->ub_piper, SILOFS_BK_SIZE);
@@ -123,16 +132,6 @@ static int uber_init_piper(struct silofs_fs_uber *uber)
 static void uber_fini_piper(struct silofs_fs_uber *uber)
 {
 	silofs_piper_fini(&uber->ub_piper);
-}
-
-static int uber_init_lock(struct silofs_fs_uber *uber)
-{
-	return silofs_lock_init(&uber->ub_lock);
-}
-
-static void uber_fini_lock(struct silofs_fs_uber *uber)
-{
-	silofs_lock_fini(&uber->ub_lock);
 }
 
 static int uber_init_iconv(struct silofs_fs_uber *uber)
@@ -153,17 +152,19 @@ static void uber_fini_iconv(struct silofs_fs_uber *uber)
 	}
 }
 
-int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_alloc *alloc,
-                     struct silofs_repos *repos, struct silofs_idsmap *idsm)
+int silofs_uber_init(struct silofs_fs_uber *uber,
+                     struct silofs_alloc *alloc,
+                     struct silofs_repos *repos,
+                     struct silofs_idsmap *idsm)
 {
 	int err;
 
 	uber_init_commons(uber, alloc, repos, idsm);
-	err = uber_init_piper(uber);
+	err = uber_init_fs_lock(uber);
 	if (err) {
-		goto out_err;
+		return err;
 	}
-	err = uber_init_lock(uber);
+	err = uber_init_piper(uber);
 	if (err) {
 		goto out_err;
 	}
@@ -182,8 +183,8 @@ void silofs_uber_fini(struct silofs_fs_uber *uber)
 	uber_bind_bri(uber, NULL);
 	uber_bind_sbi(uber, NULL);
 	uber_fini_iconv(uber);
-	uber_fini_lock(uber);
 	uber_fini_piper(uber);
+	uber_fini_fs_lock(uber);
 	uber_fini_commons(uber);
 }
 
@@ -714,27 +715,12 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
 	return 0;
 }
 
-static int ubc_lookup_cache_ubk(const struct silofs_uber_ctx *ub_ctx,
-                                const struct silofs_bkaddr *bkaddr,
-                                struct silofs_ubk_info **out_ubki)
-{
-	*out_ubki = silofs_cache_lookup_ubk(ub_ctx->cache, bkaddr);
-	return (*out_ubki == NULL) ? -ENOENT : 0;
-}
-
 static int ubc_do_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                                  const struct silofs_bkaddr *bkaddr,
                                  struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_repos *repos = ub_ctx->repos;
-	enum silofs_repo_mode mode = ub_ctx->repo_mode;
-	int ret;
-
-	ret = ubc_lookup_cache_ubk(ub_ctx, bkaddr, out_ubki);
-	if (ret != 0) {
-		ret = silofs_repos_require_ubk(repos, mode, bkaddr, out_ubki);
-	}
-	return ret;
+	return silofs_repos_require_ubk(ub_ctx->repos,
+	                                ub_ctx->repo_mode, bkaddr, out_ubki);
 }
 
 static int ubc_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
@@ -774,18 +760,10 @@ static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
                                const struct silofs_bkaddr *bkaddr,
                                struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_repos *repos = ub_ctx->repos;
-	enum silofs_repo_mode mode = ub_ctx->repo_mode;
-	int ret;
-	bool rw;
+	const bool rw = sb ? true : ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
 
-	ret = ubc_lookup_cache_ubk(ub_ctx, bkaddr, out_ubki);
-	if (ret) {
-		rw = sb ? true : ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
-		ret = silofs_repos_stage_ubk(repos, rw, mode,
-		                             bkaddr, out_ubki);
-	}
-	return ret;
+	return silofs_repos_stage_ubk(ub_ctx->repos, rw, ub_ctx->repo_mode,
+	                              bkaddr, out_ubki);
 }
 
 int silofs_stage_ubk_at(struct silofs_fs_uber *uber, bool warm,

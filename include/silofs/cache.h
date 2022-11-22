@@ -206,6 +206,11 @@ void silofs_ui_attach_to(struct silofs_unode_info *ui,
 
 bool silofs_si_isevictable(const struct silofs_snode_info *si);
 
+void silofs_si_incref(struct silofs_snode_info *si);
+
+void silofs_si_decref(struct silofs_snode_info *si);
+
+
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);

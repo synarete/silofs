@@ -2306,7 +2306,7 @@ static int sbi_spawn_load_vbk(struct silofs_sb_info *sbi,
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_load_bk(bri, &voa->oaddr.bka, vbki->vbk);
+	err = silofs_bri_load_vbk(bri, &voa->oaddr.bka, vbki);
 	if (err) {
 		sbi_forget_cached_vbki(sbi, vbki);
 		return err;

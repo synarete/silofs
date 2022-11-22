@@ -53,6 +53,9 @@ struct silofs_fs_env_obj {
 	struct silofs_fs_env    fs_env;
 };
 
+/* local functions */
+static void fse_fini(struct silofs_fs_env *fse);
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -433,33 +436,36 @@ static int fse_init(struct silofs_fs_env *fse,
 	fse_init_commons(fse, args);
 	err = fse_init_passwd(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = fse_init_qalloc(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = fse_init_crypto(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = fse_init_repos(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = fse_init_idsmap(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = fse_init_uber(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = fse_init_fuseq(fse);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	return 0;
+out_err:
+	fse_fini(fse);
+	return err;
 }
 
 static void fse_fini_commons(struct silofs_fs_env *fse)
@@ -478,6 +484,16 @@ static void fse_fini(struct silofs_fs_env *fse)
 	fse_fini_qalloc(fse);
 	fse_fini_passwd(fse);
 	fse_fini_commons(fse);
+}
+
+static void fse_lock(struct silofs_fs_env *fse)
+{
+	silofs_mutex_lock(&fse->fs_uber->ub_fs_lock);
+}
+
+static void fse_unlock(struct silofs_fs_env *fse)
+{
+	silofs_mutex_unlock(&fse->fs_uber->ub_fs_lock);
 }
 
 int silofs_fse_new(const struct silofs_fs_args *args,
@@ -647,7 +663,12 @@ static int fse_shut_uber(struct silofs_fs_env *fse)
 
 int silofs_fse_close_repo(struct silofs_fs_env *fse)
 {
-	return silofs_repos_close(fse->fs_repos);
+	int ret;
+
+	fse_lock(fse);
+	ret = silofs_repos_close(fse->fs_repos);
+	fse_unlock(fse);
+	return ret;
 }
 
 int silofs_fse_exec_fs(struct silofs_fs_env *fse)
@@ -1124,12 +1145,22 @@ static int fse_format_supers(struct silofs_fs_env *fse)
 
 int silofs_fse_format_repos(struct silofs_fs_env *fse)
 {
-	return silofs_repos_format(fse->fs_repos);
+	int ret;
+
+	fse_lock(fse);
+	ret = silofs_repos_format(fse->fs_repos);
+	fse_unlock(fse);
+	return ret;
 }
 
 int silofs_fse_open_repos(struct silofs_fs_env *fse)
 {
-	return silofs_repos_open(fse->fs_repos);
+	int ret;
+
+	fse_lock(fse);
+	ret = silofs_repos_open(fse->fs_repos);
+	fse_unlock(fse);
+	return ret;
 }
 
 static enum silofs_repo_mode repo_mode_of(bool warm_repo)
@@ -1210,7 +1241,7 @@ static const struct silofs_creds *creds_of(const struct silofs_fs_ctx *fs_ctx)
 	return &fs_ctx->fsc_oper.op_creds;
 }
 
-int silofs_fse_format_fs(struct silofs_fs_env *fse,
+static int fse_format_fs(struct silofs_fs_env *fse,
                          struct silofs_uuid *out_uuid)
 {
 	struct silofs_bootsec bsec;
@@ -1234,7 +1265,18 @@ int silofs_fse_format_fs(struct silofs_fs_env *fse,
 		return err;
 	}
 	silofs_bootsec_uuid(&bsec, out_uuid);
-	return err;
+	return 0;
+}
+
+int silofs_fse_format_fs(struct silofs_fs_env *fse,
+                         struct silofs_uuid *out_uuid)
+{
+	int ret;
+
+	fse_lock(fse);
+	ret = fse_format_fs(fse, out_uuid);
+	fse_unlock(fse);
+	return ret;
 }
 
 static int fse_reload_root_sblob(struct silofs_fs_env *fse,
@@ -1244,7 +1286,7 @@ static int fse_reload_root_sblob(struct silofs_fs_env *fse,
 	return silofs_uber_reload_sblob(fse->fs_uber);
 }
 
-int silofs_fse_boot_fs(struct silofs_fs_env *fse,
+static int fse_boot_fs(struct silofs_fs_env *fse,
                        const struct silofs_uuid *uuid)
 {
 	struct silofs_bootsec bsec;
@@ -1269,7 +1311,18 @@ int silofs_fse_boot_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-int silofs_fse_open_fs(struct silofs_fs_env *fse)
+int silofs_fse_boot_fs(struct silofs_fs_env *fse,
+                       const struct silofs_uuid *uuid)
+{
+	int ret;
+
+	fse_lock(fse);
+	ret = fse_boot_fs(fse, uuid);
+	fse_unlock(fse);
+	return ret;
+}
+
+static int fse_open_fs(struct silofs_fs_env *fse)
 {
 	int err;
 
@@ -1292,6 +1345,16 @@ int silofs_fse_open_fs(struct silofs_fs_env *fse)
 	return 0;
 }
 
+int silofs_fse_open_fs(struct silofs_fs_env *fse)
+{
+	int ret;
+
+	fse_lock(fse);
+	ret = fse_open_fs(fse);
+	fse_unlock(fse);
+	return ret;
+}
+
 bool silofs_fse_served_clean(const struct silofs_fs_env *fse)
 {
 	const struct silofs_fuseq *fq = fse->fs_fuseq;
@@ -1299,7 +1362,7 @@ bool silofs_fse_served_clean(const struct silofs_fs_env *fse)
 	return fq && fq->fq_got_init && fq->fq_got_destroy;
 }
 
-int silofs_fse_close_fs(struct silofs_fs_env *fse)
+static int fse_close_fs(struct silofs_fs_env *fse)
 {
 	int err;
 
@@ -1317,6 +1380,16 @@ int silofs_fse_close_fs(struct silofs_fs_env *fse)
 	}
 	fse_drop_caches(fse);
 	return err;
+}
+
+int silofs_fse_close_fs(struct silofs_fs_env *fse)
+{
+	int ret;
+
+	fse_lock(fse);
+	ret = fse_close_fs(fse);
+	fse_unlock(fse);
+	return ret;
 }
 
 int silofs_fse_poke_fs(struct silofs_fs_env *fse, bool warm,
@@ -1451,9 +1524,6 @@ int silofs_fse_unref_fs(struct silofs_fs_env *fse,
 	struct silofs_bootsec bsec;
 	int err;
 
-	if (fse->fs_args.withfuse) {
-		return -EINVAL;
-	}
 	err = fse_reload_bootsec(fse, true, uuid, &bsec);
 	if (err) {
 		return err;

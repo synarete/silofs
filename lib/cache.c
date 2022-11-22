@@ -838,6 +838,20 @@ static void si_decref(struct silofs_snode_info *si)
 	ce_decref(&si->s_ce);
 }
 
+void silofs_si_incref(struct silofs_snode_info *si)
+{
+	if (likely(si != NULL)) {
+		si_incref(si);
+	}
+}
+
+void silofs_si_decref(struct silofs_snode_info *si)
+{
+	if (likely(si != NULL)) {
+		si_decref(si);
+	}
+}
+
 static void si_remove_from_lrumap(struct silofs_snode_info *si,
                                   struct silofs_lrumap *lm)
 {

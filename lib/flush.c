@@ -39,6 +39,7 @@ struct silofs_flush_ctx {
 
 struct silofs_sgvec {
 	struct iovec iov[SILOFS_NKB_IN_BK];
+	struct silofs_snode_info *si[SILOFS_NKB_IN_BK];
 	struct silofs_blobid blobid;
 	loff_t off;
 	size_t len;
@@ -78,8 +79,10 @@ static bool sgvec_isappendable(const struct silofs_sgvec *sgv,
 }
 
 static int sgvec_append(struct silofs_sgvec *sgv,
-                        const struct silofs_oaddr *oaddr, const void *dat)
+                        const struct silofs_oaddr *oaddr,
+                        struct silofs_snode_info *si)
 {
+	const void *dat = si->s_view;
 	const size_t idx = sgv->cnt;
 
 	if (idx == 0) {
@@ -88,6 +91,7 @@ static int sgvec_append(struct silofs_sgvec *sgv,
 	}
 	sgv->iov[idx].iov_base = unconst(dat);
 	sgv->iov[idx].iov_len = oaddr->len;
+	sgv->si[idx] = si;
 	sgv->len += oaddr->len;
 	sgv->cnt += 1;
 	return 0;
@@ -122,13 +126,27 @@ static int sgvec_populate(struct silofs_sgvec *sgv,
 		if (!sgvec_isappendable(sgv, &oaddr)) {
 			break;
 		}
-		err = sgvec_append(sgv, &oaddr, si->s_view);
+		err = sgvec_append(sgv, &oaddr, si);
 		if (err) {
 			return err;
 		}
 		*siq = si->s_ds_next;
 	}
 	return 0;
+}
+
+static void sgvec_increfs(struct silofs_sgvec *sgv)
+{
+	for (size_t i = 0; i < sgv->cnt; ++i) {
+		silofs_si_incref(sgv->si[i]);
+	}
+}
+
+static void sgvec_decrefs(struct silofs_sgvec *sgv)
+{
+	for (size_t i = 0; i < sgv->cnt; ++i) {
+		silofs_si_decref(sgv->si[i]);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -274,9 +292,22 @@ static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx)
 	dset_clear_map(&fl_ctx->dset);
 }
 
+static int flc_store_sgv_at(const struct silofs_flush_ctx *fl_ctx,
+                            struct silofs_blobref_info *bri,
+                            const struct silofs_oaddr *oaddr,
+                            const struct silofs_sgvec *sgv)
+{
+	int ret;
 
-static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
-                         const struct silofs_sgvec *sgv)
+	bri_incref(bri);
+	ret = silofs_bri_storev(bri, oaddr, sgv->iov, sgv->cnt);
+	bri_decref(bri);
+	unused(fl_ctx);
+	return ret;
+}
+
+static int flc_do_store_sgv(const struct silofs_flush_ctx *fl_ctx,
+                            const struct silofs_sgvec *sgv)
 {
 	struct silofs_oaddr oaddr = { .pos = -1 };
 	const struct silofs_blobid *blobid = &sgv->blobid;
@@ -289,11 +320,22 @@ static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
 	}
 	silofs_assert(!bri->br_rdonly);
 	oaddr_setup(&oaddr, blobid, sgv->off, sgv->len);
-	err = silofs_bri_storev(bri, &oaddr, sgv->iov, sgv->cnt);
+	err = flc_store_sgv_at(fl_ctx, bri, &oaddr, sgv);
 	if (err) {
 		return err;
 	}
 	return 0;
+}
+
+static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
+                         struct silofs_sgvec *sgv)
+{
+	int ret;
+
+	sgvec_increfs(sgv);
+	ret = flc_do_store_sgv(fl_ctx, sgv);
+	sgvec_decrefs(sgv);
+	return ret;
 }
 
 static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)

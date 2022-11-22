@@ -1153,13 +1153,7 @@ static int fuseq_reply_read_buf(struct silofs_fuseq_worker *fqw,
 static int fuseq_rdwr_post(const struct silofs_fuseq_worker *fqw,
                            const struct silofs_iovec *iov, size_t cnt)
 {
-	int err;
-
-	fuseq_lock_fs(fqw->fq);
-	/* non-atomic decrefs; required mutex-lock */
-	err = silofs_fs_rdwr_post(fs_ctx_of(fqw), iov, cnt);
-	fuseq_unlock_fs(fqw->fq);
-	return err;
+	return silofs_fs_rdwr_post(fs_ctx_of(fqw), iov, cnt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3895,9 +3889,7 @@ static int fuseq_do_timeout(const struct silofs_fuseq_worker *fqw)
 	if (!flags) {
 		return 0;
 	}
-	fuseq_lock_fs(fqw->fq);
 	err = silofs_fs_timedout(fs_ctx_self(fqw), flags);
-	fuseq_unlock_fs(fqw->fq);
 	if (err) {
 		fuseq_log_warn("timeout failure: err=%d", err);
 		return err;
@@ -4081,12 +4073,12 @@ static void fuseq_unlock_ch(struct silofs_fuseq *fq)
 
 static void fuseq_lock_fs(struct silofs_fuseq *fq)
 {
-	silofs_mutex_lock(&fq->fq_uber->ub_lock.mu);
+	silofs_mutex_lock(&fq->fq_uber->ub_fs_lock);
 }
 
 static void fuseq_unlock_fs(struct silofs_fuseq *fq)
 {
-	silofs_mutex_unlock(&fq->fq_uber->ub_lock.mu);
+	silofs_mutex_unlock(&fq->fq_uber->ub_fs_lock);
 }
 
 static void fuseq_lock_op(struct silofs_fuseq *fq)
@@ -4547,16 +4539,10 @@ static silofs_opc_fn hook_of(const struct silofs_oper_ctx *opc)
 
 static int fuseq_exec_op(struct silofs_fuseq *fq, struct silofs_oper_ctx *opc)
 {
-	silofs_opc_fn hook = NULL;
-	int ret = -ENOSYS;
+	silofs_opc_fn hook = hook_of(opc);
 
-	hook = hook_of(opc);
-	if (hook != NULL) {
-		fuseq_lock_fs(fq);
-		ret = hook(opc);
-		fuseq_unlock_fs(fq);
-	}
-	return ret;
+	silofs_unused(fq);
+	return likely(hook != NULL) ? hook(opc) : -ENOSYS;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

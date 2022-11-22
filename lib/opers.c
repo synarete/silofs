@@ -35,14 +35,22 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void op_lock_fs(const struct silofs_fs_ctx *fs_ctx)
+{
+	silofs_mutex_lock(&fs_ctx->fsc_uber->ub_fs_lock);
+}
+
+static void op_unlock_fs(const struct silofs_fs_ctx *fs_ctx)
+{
+	silofs_mutex_unlock(&fs_ctx->fsc_uber->ub_fs_lock);
+}
+
 static int op_start(const struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
 
-	if (unlikely(uber == NULL)) {
-		return -EINVAL;
-	}
+	op_lock_fs(fs_ctx);
 	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, 0);
 	if (unlikely(err)) {
 		return err;
@@ -65,7 +73,7 @@ static int op_finish(const struct silofs_fs_ctx *fs_ctx, int err)
 		         fs_ctx->fsc_uber->ub_ops.op_count,
 		         fs_ctx->fsc_oper.op_code, dif, err);
 	}
-	/* TODO: maybe extra flush-relax? */
+	op_unlock_fs(fs_ctx);
 	return err;
 }
 
@@ -1527,7 +1535,12 @@ out:
 int silofs_fs_rdwr_post(const struct silofs_fs_ctx *fs_ctx,
                         const struct silofs_iovec *iov, size_t cnt)
 {
-	return silofs_do_rdwr_post(fs_ctx, iov, cnt);
+	int ret;
+
+	op_lock_fs(fs_ctx);
+	ret = silofs_do_rdwr_post(fs_ctx, iov, cnt);
+	op_unlock_fs(fs_ctx);
+	return ret;
 }
 
 int silofs_fs_timedout(const struct silofs_fs_ctx *fs_ctx, int flags)
@@ -1535,12 +1548,13 @@ int silofs_fs_timedout(const struct silofs_fs_ctx *fs_ctx, int flags)
 	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
 
+	op_lock_fs(fs_ctx);
 	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, flags);
-	if (err) {
-		return err;
+	if (!err) {
+		silofs_uber_relax_caches(uber, flags);
 	}
-	silofs_uber_relax_caches(uber, flags);
-	return 0;
+	op_unlock_fs(fs_ctx);
+	return err;
 }
 
 int silofs_fs_inspect(struct silofs_fs_ctx *fs_ctx)

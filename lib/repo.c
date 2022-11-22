@@ -706,7 +706,7 @@ static int bri_load_bb(const struct silofs_blobref_info *bri,
 	return 0;
 }
 
-int silofs_bri_load_bk(const struct silofs_blobref_info *bri,
+static int bri_load_bk(const struct silofs_blobref_info *bri,
                        const struct silofs_bkaddr *bkaddr,
                        struct silofs_block *bk)
 {
@@ -716,6 +716,20 @@ int silofs_bri_load_bk(const struct silofs_blobref_info *bri,
 	silofs_bytebuf_init(&bb, bk, sizeof(*bk));
 	silofs_oaddr_of_bk(&bk_oaddr, &bkaddr->blobid, bkaddr->lba);
 	return bri_load_bb(bri, &bk_oaddr, &bb);
+}
+
+int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
+                        const struct silofs_bkaddr *bkaddr,
+                        struct silofs_ubk_info *ubki)
+{
+	return bri_load_bk(bri, bkaddr, ubki->ubk);
+}
+
+int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
+                        const struct silofs_bkaddr *bkaddr,
+                        struct silofs_vbk_info *vbki)
+{
+	return bri_load_bk(bri, bkaddr, vbki->vbk);
 }
 
 int silofs_bri_store_bk(const struct silofs_blobref_info *bri,
@@ -1916,7 +1930,7 @@ static int repo_stage_ubk_at(struct silofs_repo *repo, bool rw,
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_load_bk(bri, bkaddr, ubki->ubk);
+	err = silofs_bri_load_ubk(bri, bkaddr, ubki);
 	if (err) {
 		repo_forget_cached_ubki(repo, ubki);
 		return err;

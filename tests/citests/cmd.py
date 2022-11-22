@@ -4,6 +4,7 @@ import shlex
 import shutil
 import subprocess
 import typing
+import threading
 
 
 class CmdError(Exception):
@@ -197,13 +198,32 @@ class CmdVfstests(CmdExec):
     def version(self) -> str:
         return self.execute(["-v"])
 
-    def run(self, basedir: str, rand: bool = False) -> None:
+    def run(
+        self, basedir: str, rand: bool = False, nostatvfs: bool = False
+    ) -> None:
         args = [basedir]
         if rand:
-            args.append("-r")
+            args.append("--random")
+        if nostatvfs:
+            args.append("--nostatvfs")
         ret = self.execute3(args, wdir="/")
         if ret != 0:
             raise CmdError("vfstests failed")
+
+    def make_thread(
+        self, basedir: str, rand: bool = False, nostatvfs: bool = False
+    ) -> threading.Thread:
+        target = CmdVfstests.start_run
+        args = (self, basedir, rand, nostatvfs)
+        return threading.Thread(target=target, args=args, daemon=True)
+
+    @staticmethod
+    def start_run(*args) -> None:
+        obj = args[0]
+        basedir = args[1]
+        rand = args[2]
+        nostatvfs = args[3]
+        obj.run(basedir, rand, nostatvfs)
 
 
 class CmdGit(CmdExec):

@@ -23,6 +23,7 @@ TESTS = [
     test_io.test_reload_n,
     test_self.test_unit_tests,
     test_self.test_vfs_tests,
+    test_self.test_vfs_tests2,
     test_snap.test_snap_basic,
     test_snap.test_snap_reload,
     test_fsck.test_fsck_basic,

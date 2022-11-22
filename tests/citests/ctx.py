@@ -5,6 +5,7 @@ import typing
 import random
 import datetime
 import shutil
+import time
 
 from . import cmd
 from . import expect
@@ -75,6 +76,10 @@ class TestBaseCtx:
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.seed = 0
+
+    @staticmethod
+    def suspend(nsec: int) -> None:
+        time.sleep(nsec)
 
     def make_basepath(self) -> str:
         return self.make_path(self.name)

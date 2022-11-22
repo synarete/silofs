@@ -97,7 +97,6 @@ static void uber_init_commons(struct silofs_fs_uber *uber,
 	uber->ub_iconv = (iconv_t)(-1);
 	uber->ub_sb_bri = NULL;
 	uber->ub_sbi = NULL;
-	uber->ub_slock_fd = -1;
 
 	uber->ub_ops.op_iopen_max = 0;
 	uber->ub_ops.op_iopen = 0;
@@ -108,7 +107,6 @@ static void uber_init_commons(struct silofs_fs_uber *uber,
 
 static void uber_fini_commons(struct silofs_fs_uber *uber)
 {
-	silofs_sys_closefd(&uber->ub_slock_fd);
 	uber->ub_repos = NULL;
 	uber->ub_alloc = NULL;
 	uber->ub_idsm = NULL;
@@ -125,6 +123,16 @@ static int uber_init_piper(struct silofs_fs_uber *uber)
 static void uber_fini_piper(struct silofs_fs_uber *uber)
 {
 	silofs_piper_fini(&uber->ub_piper);
+}
+
+static int uber_init_lock(struct silofs_fs_uber *uber)
+{
+	return silofs_lock_init(&uber->ub_lock);
+}
+
+static void uber_fini_lock(struct silofs_fs_uber *uber)
+{
+	silofs_lock_fini(&uber->ub_lock);
 }
 
 static int uber_init_iconv(struct silofs_fs_uber *uber)
@@ -155,6 +163,10 @@ int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_alloc *alloc,
 	if (err) {
 		goto out_err;
 	}
+	err = uber_init_lock(uber);
+	if (err) {
+		goto out_err;
+	}
 	err = uber_init_iconv(uber);
 	if (err) {
 		goto out_err;
@@ -170,6 +182,7 @@ void silofs_uber_fini(struct silofs_fs_uber *uber)
 	uber_bind_bri(uber, NULL);
 	uber_bind_sbi(uber, NULL);
 	uber_fini_iconv(uber);
+	uber_fini_lock(uber);
 	uber_fini_piper(uber);
 	uber_fini_commons(uber);
 }

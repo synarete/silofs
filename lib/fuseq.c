@@ -3692,28 +3692,19 @@ static int fuseq_init_locks(struct silofs_fuseq *fq)
 	if (err) {
 		return err;
 	}
-	err = silofs_mutex_init(&fq->fq_fs_lock);
-	if (err) {
-		goto err1;
-	}
 	err = silofs_mutex_init(&fq->fq_op_lock);
 	if (err) {
-		goto err2;
+		silofs_mutex_fini(&fq->fq_ch_lock);
+		return err;
 	}
 	fq->fq_init_locks = true;
 	return 0;
-err2:
-	silofs_mutex_fini(&fq->fq_fs_lock);
-err1:
-	silofs_mutex_fini(&fq->fq_ch_lock);
-	return err;
 }
 
 static void fuseq_fini_locks(struct silofs_fuseq *fq)
 {
 	if (fq->fq_init_locks) {
 		silofs_mutex_fini(&fq->fq_op_lock);
-		silofs_mutex_fini(&fq->fq_fs_lock);
 		silofs_mutex_fini(&fq->fq_ch_lock);
 	}
 }
@@ -4090,12 +4081,12 @@ static void fuseq_unlock_ch(struct silofs_fuseq *fq)
 
 static void fuseq_lock_fs(struct silofs_fuseq *fq)
 {
-	silofs_mutex_lock(&fq->fq_fs_lock);
+	silofs_mutex_lock(&fq->fq_uber->ub_lock.mu);
 }
 
 static void fuseq_unlock_fs(struct silofs_fuseq *fq)
 {
-	silofs_mutex_unlock(&fq->fq_fs_lock);
+	silofs_mutex_unlock(&fq->fq_uber->ub_lock.mu);
 }
 
 static void fuseq_lock_op(struct silofs_fuseq *fq)

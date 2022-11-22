@@ -60,7 +60,6 @@ struct silofs_fuseq {
 	struct silofs_fuseq_workset     fq_ws;
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
-	struct silofs_mutex             fq_fs_lock;
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_fs_uber          *fq_uber;
 	struct silofs_alloc            *fq_alloc;

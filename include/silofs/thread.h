@@ -41,6 +41,11 @@ struct silofs_cond {
 	pthread_cond_t  cond;
 };
 
+struct silofs_lock {
+	struct silofs_cond      co;
+	struct silofs_mutex     mu;
+	long flags;
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -70,13 +75,20 @@ int silofs_cond_init(struct silofs_cond *cond);
 
 void silofs_cond_fini(struct silofs_cond *cond);
 
-void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex);
+void silofs_cond_wait(struct silofs_cond *cond,
+                      struct silofs_mutex *mutex);
 
-int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
+int silofs_cond_timedwait(struct silofs_cond *cond,
+                          struct silofs_mutex *mutex,
                           const struct timespec *ts);
 
 void silofs_cond_signal(struct silofs_cond *cond);
 
 void silofs_cond_broadcast(struct silofs_cond *cond);
+
+
+int silofs_lock_init(struct silofs_lock *lock);
+
+void silofs_lock_fini(struct silofs_lock *lock);
 
 #endif /* SILOFS_THREAD_H_ */

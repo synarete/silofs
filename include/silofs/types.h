@@ -466,9 +466,9 @@ struct silofs_fs_uber {
 	struct silofs_blobref_info     *ub_sb_bri;
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_uaddr             ub_sb_addr;
+	struct silofs_lock              ub_lock;
 	iconv_t                         ub_iconv;
 	time_t                          ub_initime;
-	int                             ub_slock_fd;
 };
 
 /* file-system's input id vectors */

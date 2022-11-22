@@ -292,3 +292,33 @@ void silofs_cond_broadcast(struct silofs_cond *cond)
 	}
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+#define SILOFS_LOCKF_INIT       (1L)
+
+int silofs_lock_init(struct silofs_lock *lock)
+{
+	int err;
+
+	memset(lock, 0, sizeof(*lock));
+	err = silofs_cond_init(&lock->co);
+	if (err) {
+		return err;
+	}
+	err = silofs_mutex_init(&lock->mu);
+	if (err) {
+		silofs_cond_fini(&lock->co);
+		return err;
+	}
+	lock->flags |= SILOFS_LOCKF_INIT;
+	return 0;
+}
+
+void silofs_lock_fini(struct silofs_lock *lock)
+{
+	if (lock->flags & SILOFS_LOCKF_INIT) {
+		silofs_mutex_fini(&lock->mu);
+		silofs_cond_fini(&lock->co);
+		lock->flags &= ~SILOFS_LOCKF_INIT;
+	}
+}

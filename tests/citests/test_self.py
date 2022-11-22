@@ -11,7 +11,7 @@ def test_unit_tests(tc: ctx.TestCtx) -> None:
     tds.do_write()
     ut_root = tc.do_mkdirs(dname2)
     tc.cmd.unitests.version()
-    tc.cmd.unitests.run(ut_root)
+    tc.cmd.unitests.run(ut_root, level=2)
     tc.do_rmtree(dname2)
     tds.do_read()
     tds.do_unlink()

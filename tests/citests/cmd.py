@@ -174,8 +174,8 @@ class CmdUnitests(CmdExec):
     def version(self) -> str:
         return self.execute(["-v"])
 
-    def run(self, basedir: str, level: int = 1) -> None:
-        args = [basedir, f"--level={level}"]
+    def run(self, basedir: str, level: int = 1, kcopy: int = 1) -> None:
+        args = [basedir, f"--level={level} --kcopy={kcopy}"]
         ret = self.execute3(args)
         if ret != 0:
             raise CmdError("unitests failed")

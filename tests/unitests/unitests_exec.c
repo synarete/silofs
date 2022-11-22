@@ -402,12 +402,17 @@ static void ut_do_execute_tests(bool kcopy)
 	ut_execute_tests_cycle(&args);
 }
 
+
 void ut_execute_tests(void)
 {
-	bool kcopy = true;
-
-	ut_do_execute_tests(kcopy);
-	ut_do_execute_tests(!kcopy);
+	if (ut_globals.kcopy_mode == 0) {
+		ut_do_execute_tests(false);
+	} else if (ut_globals.kcopy_mode == 1) {
+		ut_do_execute_tests(true);
+	} else {
+		ut_do_execute_tests(true);
+		ut_do_execute_tests(false);
+	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

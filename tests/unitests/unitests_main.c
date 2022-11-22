@@ -85,6 +85,7 @@ static void ut_setup_globals(int argc, char *argv[])
 	ut_globals.version = silofs_version.string;
 	ut_globals.pedantic = false;
 	ut_globals.run_level = 1;
+	ut_globals.kcopy_mode = -1;
 
 	umask(0002);
 	setlocale(LC_ALL, "");
@@ -106,6 +107,7 @@ static void ut_show_help_and_exit(void)
 	printf("%s <testdir> \n\n", program_invocation_short_name);
 	puts("options:");
 	puts(" -l, --level=0|1|2     Run level");
+	puts(" -k, --kcopy=0|1       In-kernel copy-mode");
 	puts(" -p, --pedantic        Run in pedantic mode");
 	puts(" -v, --version         Show version info");
 	exit(EXIT_SUCCESS);
@@ -131,12 +133,24 @@ static void ut_set_run_level(const char *level)
 	}
 }
 
+static void ut_set_kcopy_mode(const char *kcopy)
+{
+	if (!strcmp(kcopy, "0")) {
+		ut_globals.kcopy_mode = 0;
+	} else if (!strcmp(kcopy, "1")) {
+		ut_globals.kcopy_mode = 1;
+	} else {
+		error(EXIT_FAILURE, 0, "illegal kcopy mode: %s", kcopy);
+	}
+}
+
 static void ut_parse_args(void)
 {
 	int opt_chr = 1;
 	int opt_index;
 	struct option long_opts[] = {
 		{ "level", required_argument, NULL, 'l' },
+		{ "kcopy", required_argument, NULL, 'k' },
 		{ "pedantic", no_argument, NULL, 'p' },
 		{ "version", no_argument, NULL, 'v' },
 		{ "help", no_argument, NULL, 'h' },
@@ -146,9 +160,11 @@ static void ut_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:pvh", long_opts, &opt_index);
+		                      "l:k:pvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
+		} else if (opt_chr == 'k') {
+			ut_set_kcopy_mode(optarg);
 		} else if (opt_chr == 'p') {
 			ut_globals.pedantic = true;
 		} else if (opt_chr == 'v') {

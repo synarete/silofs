@@ -53,3 +53,24 @@ def test_reload(tc: ctx.TestCtx) -> None:
     tds.do_read()
     tds.do_unlink()
     tc.exec_umount()
+
+
+def test_reload_n(tc: ctx.TestCtx) -> None:
+    tds_all: list[ctx.TestDataSet] = []
+    tc.exec_setup_fs(64)
+    tc.exec_umount()
+    for i in range(0, 20):
+        tc.exec_mount()
+        for tds in tds_all:
+            tds.do_read()
+        tds = tc.make_tds(i + 1, f"x{i}", 2**20 + i)
+        tds.do_makedirs()
+        tds.do_write()
+        tds.do_read()
+        tds_all.append(tds)
+        tc.exec_umount()
+    tc.exec_mount()
+    for tds in tds_all:
+        tds.do_read()
+        tds.do_unlink()
+    tc.exec_umount()

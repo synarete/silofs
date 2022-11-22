@@ -1310,16 +1310,13 @@ static void sbi_update_ctlflags(struct silofs_sb_info *sbi,
                                 const struct silofs_fs_args *args)
 {
 	if (args->kcopy) {
-		sbi->sb_ctl_flags |= SILOFS_F_KCOPY;
+		sbi->sb_ctl_flags |= SILOFS_SBCF_KCOPY;
 	}
 	if (args->allowother) {
-		sbi->sb_ctl_flags |= SILOFS_F_ALLOWOTHER;
-	}
-	if (args->allowhostids) {
-		sbi->sb_ctl_flags |= SILOFS_F_ALLOWHOSTIDS;
+		sbi->sb_ctl_flags |= SILOFS_SBCF_ALLOWOTHER;
 	}
 	if (args->allowadmin) {
-		sbi->sb_ctl_flags |= SILOFS_F_ALLOWADMIN;
+		sbi->sb_ctl_flags |= SILOFS_SBCF_ALLOWADMIN;
 	}
 }
 

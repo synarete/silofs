@@ -51,23 +51,26 @@ enum silofs_stage_mode {
 	SILOFS_STAGE_RW         = SILOFS_BIT(2),
 };
 
-/* control flags */
+/* common control flags */
 enum silofs_flags {
-	SILOFS_F_KCOPY          = SILOFS_BIT(0),
 	SILOFS_F_FSYNC          = SILOFS_BIT(1),
 	SILOFS_F_RELEASE        = SILOFS_BIT(2),
 	SILOFS_F_NOW            = SILOFS_BIT(3),
 	SILOFS_F_BLKDEV         = SILOFS_BIT(4),
 	SILOFS_F_MEMFD          = SILOFS_BIT(5),
-	SILOFS_F_ALLOWOTHER     = SILOFS_BIT(6),
-	SILOFS_F_ALLOWHOSTIDS   = SILOFS_BIT(7),
-	SILOFS_F_ALLOWADMIN     = SILOFS_BIT(8),
-	SILOFS_F_NLOOKUP        = SILOFS_BIT(9),
-	SILOFS_F_BRINGUP        = SILOFS_BIT(10),
-	SILOFS_F_OPSTART        = SILOFS_BIT(11),
-	SILOFS_F_TIMEOUT        = SILOFS_BIT(12),
-	SILOFS_F_IDLE           = SILOFS_BIT(13),
-	SILOFS_F_WALKFS         = SILOFS_BIT(14),
+	SILOFS_F_BRINGUP        = SILOFS_BIT(6),
+	SILOFS_F_OPSTART        = SILOFS_BIT(7),
+	SILOFS_F_TIMEOUT        = SILOFS_BIT(8),
+	SILOFS_F_IDLE           = SILOFS_BIT(9),
+	SILOFS_F_WALKFS         = SILOFS_BIT(10),
+};
+
+/* super-block control flags */
+enum silofs_sbctl_flags {
+	SILOFS_SBCF_KCOPY       = SILOFS_BIT(1),
+	SILOFS_SBCF_NLOOKUP     = SILOFS_BIT(2),
+	SILOFS_SBCF_ALLOWOTHER  = SILOFS_BIT(3),
+	SILOFS_SBCF_ALLOWADMIN  = SILOFS_BIT(4),
 };
 
 /* inode's attributes masks */

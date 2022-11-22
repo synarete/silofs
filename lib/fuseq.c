@@ -3801,7 +3801,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	uid = sbi->sb_owner.uid;
 	gid = sbi->sb_owner.gid;
 	ms_flags = sbi->sb_ms_flags;
-	allow_other = (sbi->sb_ctl_flags & SILOFS_F_ALLOWOTHER) > 0;
+	allow_other = (sbi->sb_ctl_flags & SILOFS_SBCF_ALLOWOTHER) > 0;
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
@@ -3817,7 +3817,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 		              max_read, ms_flags, (int)allow_other, err);
 		return err;
 	}
-	sbi->sb_ctl_flags |= SILOFS_F_NLOOKUP;
+	sbi->sb_ctl_flags |= SILOFS_SBCF_NLOOKUP;
 
 	fq->fq_fs_owner = sbi->sb_owner.uid;
 	fq->fq_fuse_fd = fd;

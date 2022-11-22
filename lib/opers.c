@@ -143,18 +143,16 @@ static bool op_cap_sys_admin(const struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_creds *creds = creds_of(fs_ctx);
 	const struct silofs_sb_info *sbi = sbi_of(fs_ctx);
-	const unsigned long mask = SILOFS_F_ALLOWADMIN;
 
-	return ((sbi->sb_ctl_flags & mask) == mask) &&
+	return (sbi->sb_ctl_flags & SILOFS_SBCF_ALLOWADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->xcred);
 }
 
 static bool op_allow_other(const struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_sb_info *sbi = sbi_of(fs_ctx);
-	const unsigned long mask = SILOFS_F_ALLOWOTHER;
 
-	return ((sbi->sb_ctl_flags & mask) == mask);
+	return (sbi->sb_ctl_flags & SILOFS_SBCF_ALLOWOTHER) > 0;
 }
 
 static int op_authorize(const struct silofs_fs_ctx *fs_ctx)

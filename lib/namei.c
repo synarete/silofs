@@ -66,7 +66,7 @@ static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_sb_info *sbi = ii_sbi(ii);
 
-	return ((sbi->sb_ctl_flags & SILOFS_F_NLOOKUP) != 0);
+	return ((sbi->sb_ctl_flags & SILOFS_SBCF_NLOOKUP) != 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)

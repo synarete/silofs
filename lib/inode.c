@@ -744,18 +744,20 @@ int silofs_do_chmod(const struct silofs_fs_ctx *fs_ctx,
 	return err;
 }
 
-static int check_chown_uid(const struct silofs_fs_ctx *fs_ctx,
-                           const struct silofs_inode_info *ii, uid_t uid)
+static int check_cap_chown(const struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_creds *creds = creds_of(fs_ctx);
 
+	return silofs_user_cap_chown(&creds->xcred) ? 0 : -EPERM;
+}
+
+static int check_chown_uid(const struct silofs_fs_ctx *fs_ctx,
+                           const struct silofs_inode_info *ii, uid_t uid)
+{
 	if (uid_eq(uid, ii_uid(ii))) {
 		return 0;
 	}
-	if (silofs_user_cap_chown(&creds->xcred)) {
-		return 0;
-	}
-	return -EPERM;
+	return check_cap_chown(fs_ctx);
 }
 
 static int check_chown_gid(const struct silofs_fs_ctx *fs_ctx,
@@ -769,10 +771,7 @@ static int check_chown_gid(const struct silofs_fs_ctx *fs_ctx,
 	if (user_isowner(&creds->icred, ii)) {
 		return 0;
 	}
-	if (silofs_user_cap_chown(&creds->xcred)) {
-		return 0;
-	}
-	return -EPERM;
+	return check_cap_chown(fs_ctx);
 }
 
 static int check_chown(const struct silofs_fs_ctx *fs_ctx,

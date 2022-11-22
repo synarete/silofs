@@ -1229,7 +1229,7 @@ static int fic_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
 
 static bool fic_has_kcopy_mode(const struct silofs_file_ctx *f_ctx)
 {
-	return ((f_ctx->sbi->sb_ctl_flags & SILOFS_F_KCOPY) > 0);
+	return ((f_ctx->sbi->sb_ctl_flags & SILOFS_SBCF_KCOPY) > 0);
 }
 
 static bool fic_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)

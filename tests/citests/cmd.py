@@ -16,15 +16,17 @@ class CmdExec:
     def __init__(self, prog: str) -> None:
         self.prog = prog
         self.xbin = self.find_executable(prog)
+        self.cwd = "/"
 
-    def execute(self, args, wdir=None) -> str:
+    def execute(self, args, wdir: str = "") -> str:
         """Execute command as sub-process, raise upon failure"""
         cmd = self._make_cmd(args)
+        cwd = self._make_cwd(wdir)
         with subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=wdir,
+            cwd=cwd,
             shell=False,
             env=os.environ.copy(),
         ) as proc:
@@ -39,34 +41,39 @@ class CmdExec:
             ret = out.decode("UTF-8")
         return ret.strip()
 
-    def execute2(self, args, sh: bool = False, wdir: str = None) -> None:
+    def execute2(self, args, sh: bool = False, wdir: str = "") -> None:
         """Run command as sub-process without output, raise upon failure"""
         cmd = self._make_cmd(args)
-        proc = subprocess.run(shlex.split(cmd), check=True, shell=sh, cwd=wdir)
+        cwd = self._make_cwd(wdir)
+        proc = subprocess.run(shlex.split(cmd), check=True, shell=sh, cwd=cwd)
         if proc.returncode != 0:
             raise CmdError("failed: " + cmd)
 
-    def execute3(self, args, sh: bool = False, wdir=None) -> int:
+    def execute3(self, args, sh: bool = False, wdir: str = "") -> int:
         """Execute command as sub-process and return its exit status code"""
         cmd = self._make_cmd(args)
+        cwd = self._make_cwd(wdir)
         with subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            cwd=wdir,
+            cwd=cwd,
             shell=sh,
             env=os.environ.copy(),
         ) as proc:
             ret = proc.wait()
         return ret
 
-    def execute4(self, args, wdir=None) -> None:
-        ret = self.execute3(args, wdir)
+    def execute4(self, args, wdir: str = "") -> None:
+        ret = self.execute3(args, False, wdir)
         if ret != 0:
             raise CmdError("failed: " + self._make_cmd(args))
 
     def _make_cmd(self, args: typing.Iterable[str]) -> str:
         return self.xbin + " " + " ".join(args)
+
+    def _make_cwd(self, wdir: str = "") -> str:
+        return wdir if len(wdir) > 0 else self.cwd
 
     @staticmethod
     def find_executable(name: str) -> str:

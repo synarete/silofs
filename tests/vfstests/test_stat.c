@@ -30,7 +30,7 @@ static void test_stat_simple(struct vt_env *vte)
 
 	vt_mkdir(path0, 0700);
 	vt_stat(path0, &st);
-	vt_expect_true(S_ISDIR(st.st_mode));
+	vt_expect_dir(st.st_mode);
 	vt_expect_eq((int)(st.st_mode & ~ifmt), 0700);
 	vt_expect_eq((long)st.st_nlink, 2);
 	vt_stat_noent(path1);
@@ -52,12 +52,12 @@ static void test_stat_notdir(struct vt_env *vte)
 
 	vt_mkdir(path0, 0700);
 	vt_stat(path0, &st);
-	vt_expect_true(S_ISDIR(st.st_mode));
+	vt_expect_dir(st.st_mode);
 	vt_open(path1, O_CREAT | O_RDWR, 0644, &fd);
 	vt_stat(path1, &st);
-	vt_expect_true(S_ISREG(st.st_mode));
-	vt_expect_false(S_ISREG(st.st_size));
-	vt_expect_false(S_ISREG(st.st_blocks));
+	vt_expect_reg(st.st_mode);
+	vt_expect_eq(st.st_size, 0);
+	vt_expect_eq(st.st_blocks, 0);
 	vt_stat_err(path2, -ENOTDIR);
 	vt_unlink(path1);
 	vt_rmdir(path0);

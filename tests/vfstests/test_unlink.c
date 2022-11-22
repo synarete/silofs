@@ -29,7 +29,7 @@ static void test_unlink_reg(struct vt_env *vte)
 	vt_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	vt_close(fd);
 	vt_lstat(path, &st);
-	vt_expect_true(S_ISREG(st.st_mode));
+	vt_expect_reg(st.st_mode);
 	vt_unlink(path);
 	vt_unlink_noent(path);
 	vt_lstat_err(path, -ENOENT);
@@ -98,7 +98,7 @@ static void test_unlink_isdir(struct vt_env *vte)
 
 	vt_mkdir(path, 0700);
 	vt_stat(path, &st);
-	vt_expect_true(S_ISDIR(st.st_mode));
+	vt_expect_dir(st.st_mode);
 	vt_unlink_err(path, -EISDIR);
 	vt_rmdir(path);
 }

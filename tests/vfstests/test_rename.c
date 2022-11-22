@@ -34,7 +34,7 @@ static void test_rename_simple(struct vt_env *vte)
 	vt_mkdir(path0, 0755);
 	vt_creat(path1, 0644, &fd);
 	vt_stat(path1, &st[0]);
-	vt_expect_true(S_ISREG(st[0].st_mode));
+	vt_expect_reg(st[0].st_mode);
 	vt_expect_eq((st[0].st_mode & ~ifmt), 0644);
 	vt_expect_eq(st[0].st_nlink, 1);
 
@@ -44,7 +44,7 @@ static void test_rename_simple(struct vt_env *vte)
 	vt_fstat(fd, &st[0]);
 	vt_expect_eq(st[0].st_ino, ino);
 	vt_stat(path2, &st[1]);
-	vt_expect_true(S_ISREG(st[1].st_mode));
+	vt_expect_reg(st[1].st_mode);
 	vt_expect_eq((st[1].st_mode & ~ifmt), 0644);
 	vt_expect_eq(st[1].st_nlink, 1);
 
@@ -126,15 +126,15 @@ static void test_rename_notdirto(struct vt_env *vte)
 	vt_close(fd);
 	vt_rename_err(path0, path1, -ENOTDIR);
 	vt_lstat(path0, &st[0]);
-	vt_expect_true(S_ISDIR(st[0].st_mode));
+	vt_expect_dir(st[0].st_mode);
 	vt_unlink(path1);
 
 	vt_symlink("test-rename-notdirto", path1);
 	vt_rename_err(path0, path1, -ENOTDIR);
 	vt_lstat(path0, &st[0]);
-	vt_expect_true(S_ISDIR(st[0].st_mode));
+	vt_expect_dir(st[0].st_mode);
 	vt_lstat(path1, &st[1]);
-	vt_expect_true(S_ISLNK(st[1].st_mode));
+	vt_expect_lnk(st[1].st_mode);
 	vt_unlink(path1);
 	vt_rmdir(path0);
 }
@@ -156,13 +156,13 @@ static void test_rename_isdirto(struct vt_env *vte)
 	vt_close(fd);
 	vt_rename_err(path1, path0, -EISDIR);
 	vt_lstat(path0, &st[0]);
-	vt_expect_true(S_ISDIR(st[0].st_mode));
+	vt_expect_dir(st[0].st_mode);
 	vt_unlink(path1);
 
 	vt_mkfifo(path1, 0644);
 	vt_rename_err(path1, path0, -EISDIR);
 	vt_lstat(path0, &st[0]);
-	vt_expect_true(S_ISDIR(st[0].st_mode));
+	vt_expect_dir(st[0].st_mode);
 	vt_lstat(path1, &st[1]);
 	vt_expect_true(S_ISFIFO(st[1].st_mode));
 	vt_unlink(path1);
@@ -170,7 +170,7 @@ static void test_rename_isdirto(struct vt_env *vte)
 	vt_symlink("test-rename-isdirto", path1);
 	vt_rename_err(path1, path0, -EISDIR);
 	vt_lstat(path0, &st[0]);
-	vt_expect_true(S_ISDIR(st[0].st_mode));
+	vt_expect_dir(st[0].st_mode);
 	vt_lstat(path1, &st[1]);
 	vt_expect_lnk(st[1].st_mode);
 	vt_unlink(path1);

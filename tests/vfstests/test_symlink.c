@@ -30,7 +30,7 @@ static void test_symlink_simple(struct vt_env *vte)
 
 	vt_creat(path0, 0600, &fd);
 	vt_stat(path0, &st[0]);
-	vt_expect_true(S_ISREG(st[0].st_mode));
+	vt_expect_reg(st[0].st_mode);
 	vt_expect_eq((st[0].st_mode & ~ifmt), 0600);
 
 	vt_symlink(path0, path1);
@@ -38,7 +38,7 @@ static void test_symlink_simple(struct vt_env *vte)
 	vt_expect_eq(st[0].st_ino, st[1].st_ino);
 	vt_lstat(path1, &st[1]);
 	vt_expect_ne(st[0].st_ino, st[1].st_ino);
-	vt_expect_true(S_ISLNK(st[1].st_mode));
+	vt_expect_lnk(st[1].st_mode);
 	vt_expect_eq((st[1].st_mode & ~ifmt), 0777);
 	vt_unlink(path1);
 	vt_stat_noent(path1);
@@ -67,7 +67,7 @@ static void test_symlink_readlink(struct vt_env *vte)
 	vt_creat(path0, 0600, &fd);
 	vt_symlink(path0, path1);
 	vt_lstat(path1, &st);
-	vt_expect_true(S_ISLNK(st.st_mode));
+	vt_expect_lnk(st.st_mode);
 	vt_expect_eq(st.st_size, strlen(path0));
 
 	vt_readlink(path1, buf, bsz, &nch);
@@ -102,7 +102,7 @@ static void test_symlink_readlink_atime(struct vt_env *vte)
 	vt_mkdir(path0, 0700);
 	vt_symlink(path0, path1);
 	vt_lstat(path1, &st);
-	vt_expect_true(S_ISLNK(st.st_mode));
+	vt_expect_lnk(st.st_mode);
 	vt_expect_eq(st.st_size, strlen(path0));
 
 	atime[0] = st.st_atim.tv_sec;
@@ -153,7 +153,7 @@ static void test_symlink_anylen_(struct vt_env *vte, size_t len)
 
 	vt_symlink(path1, path0);
 	vt_lstat(path0, &st);
-	vt_expect_true(S_ISLNK(st.st_mode));
+	vt_expect_lnk(st.st_mode);
 	vt_expect_eq((st.st_mode & ~ifmt), 0777);
 	vt_readlink(path0, lnkbuf, len, &nch);
 	vt_expect_eq(len, nch);

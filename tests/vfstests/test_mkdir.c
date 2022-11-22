@@ -371,7 +371,7 @@ static void test_rmdir_mctime(struct vt_env *vte)
 	vt_mkdir(path1, 0700);
 	vt_mkdir(path2, 0700);
 	vt_stat(path1, &st[0]);
-	vt_expect_true(S_ISDIR(st[0].st_mode));
+	vt_expect_dir(st[0].st_mode);
 	vt_suspends(vte, 2);
 	vt_rmdir(path2);
 	vt_stat_err(path2, -ENOENT);
@@ -400,13 +400,13 @@ static void test_rmdir_openat(struct vt_env *vte)
 	vt_mkdirat(dfd1, name, 0700);
 	vt_openat(dfd1, name, O_DIRECTORY | O_RDONLY, 0, &dfd2);
 	vt_fstat(dfd1, &st);
-	vt_expect_true(S_ISDIR(st.st_mode));
+	vt_expect_dir(st.st_mode);
 	vt_fstat(dfd2, &st);
-	vt_expect_true(S_ISDIR(st.st_mode));
+	vt_expect_dir(st.st_mode);
 	vt_expect_eq(st.st_nlink, 2);
 	vt_rmdir(path2);
 	vt_fstat(dfd2, &st);
-	vt_expect_true(S_ISDIR(st.st_mode));
+	vt_expect_dir(st.st_mode);
 	vt_expect_le(st.st_nlink, 1); /* TODO: why not eq 1 ? */
 	vt_rmdir(path1);
 	vt_close(dfd1);

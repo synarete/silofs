@@ -62,7 +62,7 @@ static void test_fiemap_simple(struct vt_env *vte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct vt_tdef vt_local_tests[] = {
-	VT_DEFTESTF(test_fiemap_simple, VT_IGNORE),
+	VT_DEFTESTF(test_fiemap_simple, VT_F_IGNORE),
 };
 
 const struct vt_tests vt_test_fiemap = VT_DEFTESTS(vt_local_tests);

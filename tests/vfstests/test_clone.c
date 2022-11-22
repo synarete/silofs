@@ -63,8 +63,8 @@ static void test_clone_file_range_large(struct vt_env *vte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct vt_tdef vt_local_tests[] = {
-	VT_DEFTESTF(test_clone_file_range_small, VT_IGNORE),
-	VT_DEFTESTF(test_clone_file_range_large, VT_IGNORE),
+	VT_DEFTESTF(test_clone_file_range_small, VT_F_IGNORE),
+	VT_DEFTESTF(test_clone_file_range_large, VT_F_IGNORE),
 };
 
 const struct vt_tests vt_test_clone = VT_DEFTESTS(vt_local_tests);

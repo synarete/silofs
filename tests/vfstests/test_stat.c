@@ -71,12 +71,12 @@ static void test_stat_notdir(struct vt_env *vte)
  */
 static void test_stat_statvfs(struct vt_env *vte)
 {
-	int fd = -1;
 	struct statvfs stv[2];
 	const char *path0 = vt_new_path_unique(vte);
 	const char *path1 = vt_new_path_under(vte, path0);
 	const char *path2 = vt_new_path_under(vte, path1);
 	const char *path3 = vt_new_path_under(vte, path0);
+	int fd = -1;
 
 	vt_mkdir(path0, 0750);
 	vt_creat(path1, 0644, &fd);
@@ -92,7 +92,6 @@ static void test_stat_statvfs(struct vt_env *vte)
 	vt_unlink(path1);
 	vt_rmdir(path0);
 }
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
@@ -136,7 +135,7 @@ out:
 static const struct vt_tdef vt_local_tests[] = {
 	VT_DEFTEST(test_stat_simple),
 	VT_DEFTEST(test_stat_notdir),
-	VT_DEFTEST(test_stat_statvfs),
+	VT_DEFTESTF(test_stat_statvfs, VT_F_STAVFS),
 	VT_DEFTEST(test_statx_btime),
 };
 

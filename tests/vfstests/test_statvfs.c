@@ -256,13 +256,13 @@ static void test_statvfs_bfree(struct vt_env *vte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct vt_tdef vt_local_tests[] = {
-	VT_DEFTEST(test_statvfs_simple),
-	VT_DEFTEST(test_statvfs_reg),
-	VT_DEFTEST(test_statvfs_dir),
-	VT_DEFTEST(test_statvfs_notdir),
-	VT_DEFTEST(test_statvfs_ffree),
-	VT_DEFTEST(test_statvfs_ffree_seq),
-	VT_DEFTEST(test_statvfs_bfree),
+	VT_DEFTESTF(test_statvfs_simple, VT_F_STAVFS),
+	VT_DEFTESTF(test_statvfs_reg, VT_F_STAVFS),
+	VT_DEFTESTF(test_statvfs_dir, VT_F_STAVFS),
+	VT_DEFTESTF(test_statvfs_notdir, VT_F_STAVFS),
+	VT_DEFTESTF(test_statvfs_ffree, VT_F_STAVFS),
+	VT_DEFTESTF(test_statvfs_ffree_seq, VT_F_STAVFS),
+	VT_DEFTESTF(test_statvfs_bfree, VT_F_STAVFS),
 };
 
 const struct vt_tests vt_test_statvfs = VT_DEFTESTS(vt_local_tests);

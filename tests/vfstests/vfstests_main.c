@@ -126,13 +126,14 @@ static void vt_setup_globals(int argc, char *argv[])
 
 static int vt_tests_mask(void)
 {
-	int mask = VT_NORMAL | VT_VERIFY;
+	int mask = VT_F_NORMAL | VT_F_STAVFS;
 
 	if (vt_g_globals.no_check_statvfs) {
-		mask &= ~VT_VERIFY;
+		mask &= ~VT_F_STAVFS;
+		mask |= VT_F_NOSTAVFS;
 	}
 	if (vt_g_globals.random_order) {
-		mask |= VT_RANDOM;
+		mask |= VT_F_RANDOM;
 	}
 	return mask;
 }

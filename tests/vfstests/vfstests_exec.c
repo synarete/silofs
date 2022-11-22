@@ -72,7 +72,7 @@ static void statvfs_of(const struct vt_env *vte, struct statvfs *stvfs)
 	vt_statvfs(vte->params.workdir, stvfs);
 }
 
-static void list_test(struct vt_env *vte, const struct vt_tdef *tdef)
+static void vt_list_test(struct vt_env *vte, const struct vt_tdef *tdef)
 {
 	FILE *fp = stdout;
 
@@ -81,7 +81,7 @@ static void list_test(struct vt_env *vte, const struct vt_tdef *tdef)
 	fflush(fp);
 }
 
-static void start_test(struct vt_env *vte, const struct vt_tdef *tdef)
+static void vt_start_test(struct vt_env *vte, const struct vt_tdef *tdef)
 {
 	FILE *fp = stdout;
 
@@ -93,7 +93,7 @@ static void start_test(struct vt_env *vte, const struct vt_tdef *tdef)
 	statvfs_of(vte, &vte->stvfs);
 }
 
-static void finish_test(struct vt_env *vte)
+static void vt_finish_test(struct vt_env *vte)
 {
 	FILE *fp = stdout;
 	struct timespec dur;
@@ -132,24 +132,24 @@ static void verify_consistent_statvfs(const struct statvfs *stv_beg,
 	vt_expect_lt(bfree_dif, 4096);
 }
 
-static void verify_fsstat(const struct vt_env *vte)
+static void vt_verify_fsstat(const struct vt_env *vte)
 {
 	struct statvfs stvfs_end;
+	const int f_nostatvfs = VT_F_NOSTAVFS;
 
-	if (mask_of(vte) & VT_VERIFY) {
+	if ((mask_of(vte) & f_nostatvfs) != f_nostatvfs) {
 		sleep(1); /* TODO: race in FUSE? */
 		statvfs_of(vte, &stvfs_end);
 		verify_consistent_statvfs(&vte->stvfs, &stvfs_end);
 	}
 }
 
-static void exec_test(struct vt_env *vte,
-                      const struct vt_tdef *tdef)
+static void vt_exec_test(struct vt_env *vte, const struct vt_tdef *tdef)
 {
-	start_test(vte, tdef);
+	vt_start_test(vte, tdef);
 	tdef->hook(vte);
-	verify_fsstat(vte);
-	finish_test(vte);
+	vt_verify_fsstat(vte);
+	vt_finish_test(vte);
 }
 
 static void vt_runtests(struct vt_env *vte)
@@ -160,18 +160,18 @@ static void vt_runtests(struct vt_env *vte)
 
 	for (size_t i = 0; i < tests->len; ++i) {
 		tdef = &tests->arr[i];
-		if (tdef->flags & VT_IGNORE) {
+		if (tdef->flags & VT_F_IGNORE) {
 			continue;
 		}
 		if (params->listtests) {
-			list_test(vte, tdef);
+			vt_list_test(vte, tdef);
 		} else if (params->testname) {
 			if (strstr(tdef->name, params->testname)) {
-				exec_test(vte, tdef);
+				vt_exec_test(vte, tdef);
 			}
 		} else if (tdef->flags) {
 			if (mask_of(vte) & tdef->flags) {
-				exec_test(vte, tdef);
+				vt_exec_test(vte, tdef);
 			}
 		}
 	}
@@ -254,7 +254,7 @@ static void vt_clone_tests(struct vt_env *vte)
 	}
 	vte->tests.arr = arr;
 	vte->tests.len = len;
-	if (mask_of(vte) & VT_RANDOM) {
+	if (mask_of(vte) & VT_F_RANDOM) {
 		random_shuffle_tests(vte);
 	}
 }

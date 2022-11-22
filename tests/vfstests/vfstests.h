@@ -103,12 +103,12 @@
 
 /* Tests control flags */
 enum vt_flags {
-	VT_IGNORE       = (1 << 1),
-	VT_NORMAL       = (1 << 2),
-	VT_STAVFS       = (1 << 3),
-	VT_TMPFILE      = (1 << 4),
-	VT_VERIFY       = (1 << 5),
-	VT_RANDOM       = (1 << 6),
+	VT_F_NORMAL     = (1 << 1),
+	VT_F_IGNORE     = (1 << 2),
+	VT_F_STAVFS     = (1 << 3),
+	VT_F_NOSTAVFS   = (1 << 4),
+	VT_F_TMPFILE    = (1 << 5),
+	VT_F_RANDOM     = (1 << 6),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -484,7 +484,7 @@ extern const struct vt_tests vt_test_namespace;
 	{ .hook = (fn_), .name = VT_STR(fn_), .flags = (fl_) }
 
 #define VT_DEFTEST(fn_) \
-	VT_DEFTESTF(fn_, VT_NORMAL)
+	VT_DEFTESTF(fn_, VT_F_NORMAL)
 
 #define VT_DEFTESTS(a_) \
 	{ .arr = (a_), .len = VT_ARRAY_SIZE(a_) }

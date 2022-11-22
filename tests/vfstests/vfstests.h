@@ -152,12 +152,13 @@ struct vt_params {
 
 /* Tests execution environment context */
 struct vt_env {
+	struct silofs_mutex     mutex;
 	struct silofs_prandgen  prng;
 	struct vt_params        params;
 	const struct vt_tdef   *currtest;
 	struct statvfs          stvfs;
 	struct timespec         ts_start;
-	size_t  seqn;
+	uint64_t seqn;
 	time_t  start;
 	pid_t   pid;
 	uid_t   uid;

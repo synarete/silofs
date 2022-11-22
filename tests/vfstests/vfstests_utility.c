@@ -24,115 +24,12 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void *malloc_ok(size_t nbytes)
-{
-	void *mem;
-
-	mem = malloc(nbytes);
-	if (mem == NULL) {
-		error(1, errno, "malloc failure: nbytes=%lu", nbytes);
-		abort(); /* make clang-scan happy */
-	}
-	return mem;
-}
-
-static struct vt_mchunk *malloc_chunk(struct vt_env *vte, size_t nbytes)
-{
-	struct vt_mchunk *mchunk = NULL;
-
-	mchunk = (struct vt_mchunk *)malloc_ok(sizeof(*mchunk));
-	mchunk->data = malloc_ok(nbytes);
-	mchunk->size = nbytes + sizeof(*mchunk);
-	mchunk->next = vte->malloc_list;
-	mchunk->magic  = MCHUNK_MAGIC;
-
-	vte->malloc_list = mchunk;
-	vte->nbytes_alloc += mchunk->size;
-
-	return mchunk;
-}
-
-static void free_mchunk(struct vt_env *vte, struct vt_mchunk *mchunk)
-{
-	void *data = mchunk->data;
-
-	silofs_assert_not_null(data);
-	silofs_assert(vte->nbytes_alloc >= mchunk->size);
-	silofs_assert_eq(mchunk->magic, MCHUNK_MAGIC);
-
-	vte->nbytes_alloc -= mchunk->size;
-	free(mchunk->data);
-	silofs_memffff(mchunk, sizeof(*mchunk));
-	free(mchunk);
-}
-
-static void *do_malloc(struct vt_env *vte, size_t sz)
-{
-	struct vt_mchunk *mchunk;
-
-	mchunk = malloc_chunk(vte, sz);
-	return mchunk->data;
-}
-
-static void *do_zalloc(struct vt_env *vte, size_t sz)
-{
-	void *ptr;
-
-	ptr = do_malloc(vte, sz);
-	memset(ptr, 0, sz);
-
-	return ptr;
-}
-
-char *vt_strdup(struct vt_env *vte, const char *str)
-{
-	char *str2;
-	const size_t len = strlen(str);
-
-	str2 = do_malloc(vte, len + 1);
-	memcpy(str2, str, len);
-	str2[len] = '\0';
-
-	return str2;
-}
-
-char *vt_strcat(struct vt_env *vte, const char *str1, const char *str2)
-{
-	char *str;
-	const size_t len1 = strlen(str1);
-	const size_t len2 = strlen(str2);
-
-	str = do_malloc(vte, len1 + len2 + 1);
-	memcpy(str, str1, len1);
-	memcpy(str + len1, str2, len2);
-	str[len1 + len2] = '\0';
-
-	return str;
-}
-
-void vt_freeall(struct vt_env *vte)
-{
-	struct vt_mchunk *mnext = NULL;
-	struct vt_mchunk *mchunk = vte->malloc_list;
-
-	while (mchunk != NULL) {
-		mnext = mchunk->next;
-		free_mchunk(vte, mchunk);
-		mchunk = mnext;
-	}
-	silofs_assert_eq(vte->nbytes_alloc, 0);
-
-	vte->nbytes_alloc = 0;
-	vte->malloc_list = NULL;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void vte_init(struct vt_env *vte, const struct vt_params *params)
 {
 	memset(vte, 0, sizeof(*vte));
 	memcpy(&vte->params, params, sizeof(vte->params));
 	silofs_prandgen_init(&vte->prng);
+	silofs_mutex_init(&vte->mutex);
 	vte->currtest = NULL;
 	vte->start = time(NULL);
 	vte->seqn = 0;
@@ -148,22 +45,164 @@ void vte_init(struct vt_env *vte, const struct vt_params *params)
 void vte_fini(struct vt_env *vte)
 {
 	vt_freeall(vte);
+	silofs_mutex_fini(&vte->mutex);
 	memset(vte, 0, sizeof(*vte));
+}
+
+static void vte_lock(struct vt_env *vte)
+{
+	silofs_mutex_lock(&vte->mutex);
+}
+
+static void vte_unlock(struct vt_env *vte)
+{
+	silofs_mutex_unlock(&vte->mutex);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vte_fill_random(struct vt_env *vte, void *buf, size_t bsz)
+static void *malloc_ok(size_t nbytes)
+{
+	void *mem;
+
+	mem = malloc(nbytes);
+	if (mem == NULL) {
+		error(1, errno, "malloc failure: nbytes=%lu", nbytes);
+		abort(); /* make clang-scan happy */
+	}
+	return mem;
+}
+
+static struct vt_mchunk *vt_malloc_chunk(struct vt_env *vte, size_t nbytes)
+{
+	struct vt_mchunk *mchunk = NULL;
+
+	mchunk = (struct vt_mchunk *)malloc_ok(sizeof(*mchunk));
+	mchunk->data = malloc_ok(nbytes);
+	mchunk->size = nbytes + sizeof(*mchunk);
+	mchunk->next = vte->malloc_list;
+	mchunk->magic  = MCHUNK_MAGIC;
+
+	vte->malloc_list = mchunk;
+	vte->nbytes_alloc += mchunk->size;
+
+	return mchunk;
+}
+
+static void vt_free_mchunk(struct vt_env *vte, struct vt_mchunk *mchunk)
+{
+	void *data = mchunk->data;
+
+	silofs_assert_not_null(data);
+	silofs_assert(vte->nbytes_alloc >= mchunk->size);
+	silofs_assert_eq(mchunk->magic, MCHUNK_MAGIC);
+
+	vte->nbytes_alloc -= mchunk->size;
+	free(mchunk->data);
+	silofs_memffff(mchunk, sizeof(*mchunk));
+	free(mchunk);
+}
+
+static void *vt_do_malloc(struct vt_env *vte, size_t sz)
+{
+	struct vt_mchunk *mchunk;
+
+	mchunk = vt_malloc_chunk(vte, sz);
+	return mchunk->data;
+}
+
+static void *vt_do_zalloc(struct vt_env *vte, size_t sz)
+{
+	void *ptr;
+
+	ptr = vt_do_malloc(vte, sz);
+	memset(ptr, 0, sz);
+
+	return ptr;
+}
+
+static char *vt_do_strdup(struct vt_env *vte, const char *str)
+{
+	char *str2;
+	const size_t len = strlen(str);
+
+	str2 = vt_do_malloc(vte, len + 1);
+	memcpy(str2, str, len);
+	str2[len] = '\0';
+
+	return str2;
+}
+
+char *vt_strdup(struct vt_env *vte, const char *str)
+{
+	char *dup;
+
+	vte_lock(vte);
+	dup = vt_do_strdup(vte, str);
+	vte_unlock(vte);
+	return dup;
+}
+
+static char *vt_do_strcat(struct vt_env *vte,
+                          const char *str1, const char *str2)
+{
+	char *str;
+	const size_t len1 = strlen(str1);
+	const size_t len2 = strlen(str2);
+
+	str = vt_do_malloc(vte, len1 + len2 + 1);
+	memcpy(str, str1, len1);
+	memcpy(str + len1, str2, len2);
+	str[len1 + len2] = '\0';
+
+	return str;
+}
+
+char *vt_strcat(struct vt_env *vte, const char *str1, const char *str2)
+{
+	char *str;
+
+	vte_lock(vte);
+	str = vt_do_strcat(vte, str1, str2);
+	vte_unlock(vte);
+	return str;
+}
+
+static void vt_do_freeall(struct vt_env *vte)
+{
+	struct vt_mchunk *mnext = NULL;
+	struct vt_mchunk *mchunk = vte->malloc_list;
+
+	while (mchunk != NULL) {
+		mnext = mchunk->next;
+		vt_free_mchunk(vte, mchunk);
+		mchunk = mnext;
+	}
+	silofs_assert_eq(vte->nbytes_alloc, 0);
+
+	vte->nbytes_alloc = 0;
+	vte->malloc_list = NULL;
+}
+
+void vt_freeall(struct vt_env *vte)
+{
+	vte_lock(vte);
+	vt_do_freeall(vte);
+	vte_unlock(vte);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void vt_do_fill_random(struct vt_env *vte, void *buf, size_t bsz)
 {
 	silofs_prandgen_take(&vte->prng, buf, bsz);
 }
 
-void vt_suspend(const struct vt_env *vte, int sec,
-                int part)
+void vt_suspend(const struct vt_env *vte, int sec, int part)
 {
-	int err;
 	struct timespec rem = { 0, 0 };
 	struct timespec req = { sec, (long)part * 1000000LL };
+	int err;
 
 	err = nanosleep(&req, &rem);
 	while (err && (errno == EINTR)) {
@@ -178,15 +217,14 @@ void vt_suspends(const struct vt_env *vte, int sec)
 	vt_suspend(vte, sec, 0);
 }
 
-static char *joinpath(struct vt_env *vte, const char *s1,
-                      const char *s2)
+static char *vt_do_joinpath(struct vt_env *vte, const char *s1, const char *s2)
 {
 	char *path;
 	const size_t len1 = strlen(s1);
 	const size_t len2 = strlen(s2);
 	const size_t msz = len1 + len2 + 2;
 
-	path = (char *)do_malloc(vte, msz);
+	path = (char *)vt_do_malloc(vte, msz);
 	strncpy(path, s1, len1 + 1);
 	path[len1] = '/';
 	strncpy(path + len1 + 1, s2, len2 + 1);
@@ -197,7 +235,12 @@ static char *joinpath(struct vt_env *vte, const char *s1,
 char *vt_new_path_nested(struct vt_env *vte,
                          const char *base, const char *name)
 {
-	return joinpath(vte, base, name);
+	char *ret;
+
+	vte_lock(vte);
+	ret = vt_do_joinpath(vte, base, name);
+	vte_unlock(vte);
+	return ret;
 }
 
 char *vt_new_path_name(struct vt_env *vte, const char *name)
@@ -234,17 +277,25 @@ char *vt_new_pathf(struct vt_env *vte, const char *p, const char *fmt, ...)
 
 void *vt_new_buf_zeros(struct vt_env *vte, size_t bsz)
 {
-	return do_zalloc(vte, bsz);
+	void *ret;
+
+	vte_lock(vte);
+	ret = vt_do_zalloc(vte, bsz);
+	vte_unlock(vte);
+	return ret;
 }
 
 void *vt_new_buf_rands(struct vt_env *vte, size_t bsz)
 {
-	void *buf = NULL;
+	void *buf;
 
-	if (bsz > 0) {
-		buf = do_malloc(vte, bsz);
-		vte_fill_random(vte, buf, bsz);
+	if (bsz == 0) {
+		return NULL;
 	}
+	vte_lock(vte);
+	buf = vt_do_malloc(vte, bsz);
+	vt_do_fill_random(vte, buf, bsz);
+	vte_unlock(vte);
 	return buf;
 }
 
@@ -252,12 +303,14 @@ long vt_lrand(struct vt_env *vte)
 {
 	long r = 0;
 
-	vte_fill_random(vte, &r, sizeof(r));
+	vte_lock(vte);
+	vt_do_fill_random(vte, &r, sizeof(r));
+	vte_unlock(vte);
 	return r;
 }
 
 /* Generates ordered sequence of integers [base..base+n) */
-static void vt_create_seq(long *arr, size_t n, long base)
+static void make_seq(long *arr, size_t n, long base)
 {
 	for (size_t i = 0; i < n; ++i) {
 		arr[i] = base++;
@@ -268,7 +321,7 @@ static long *vt_new_seq(struct vt_env *vte, size_t cnt, long base)
 {
 	long *arr = vt_new_buf_zeros(vte, cnt * sizeof(*arr));
 
-	vt_create_seq(arr, cnt, base);
+	make_seq(arr, cnt, base);
 	return arr;
 }
 
@@ -370,10 +423,20 @@ char *vt_make_rand_name(struct vt_env *vte, size_t name_len)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static uint64_t vt_next_seqn(struct vt_env *vte)
+{
+	uint64_t ret;
+
+	vte_lock(vte);
+	ret = ++vte->seqn;
+	vte_unlock(vte);
+	return ret;
+}
+
 char *vt_make_xname_unique(struct vt_env *vte, size_t nlen,
                            char *buf, size_t bsz)
 {
-	const uint32_t seq = (uint32_t)(++vte->seqn);
+	const uint32_t seq = (uint32_t)vt_next_seqn(vte);
 	const uint32_t rnd = (uint32_t)vt_lrand(vte);
 	const uint32_t val = seq ^ rnd ^ (uint32_t)vte->pid;
 	ssize_t len;
@@ -390,7 +453,7 @@ char *vt_make_xname_unique(struct vt_env *vte, size_t nlen,
 
 char *vt_new_name_unique(struct vt_env *vte)
 {
-	const uint32_t seq = (uint32_t)(++vte->seqn);
+	const uint32_t seq = (uint32_t)vt_next_seqn(vte);
 	const uint32_t rnd = (uint32_t)vt_lrand(vte);
 	const uint32_t val = seq ^ rnd ^ (uint32_t)vte->pid;
 
@@ -418,5 +481,5 @@ long vt_xtimestamp_diff(const struct statx_timestamp *ts1,
 
 size_t vt_page_size(void)
 {
-	return (size_t)sysconf(_SC_PAGE_SIZE);
+	return (size_t)silofs_sc_page_size();
 }

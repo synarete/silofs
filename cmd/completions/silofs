@@ -180,7 +180,7 @@ _silofs_main() {
 }
 
 
-_silofs() {
+_silofs_completions() {
   local IFS=$' \t\n'
   local cur prev words cword
   _init_completion || return
@@ -195,7 +195,7 @@ _silofs() {
   fi
 }
 
-complete -o bashdefault -o default -F _silofs silofs
+complete -o bashdefault -o default -o nospace -F _silofs_completions silofs
 
 # vim: filetype=sh
 

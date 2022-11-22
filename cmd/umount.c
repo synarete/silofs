@@ -137,7 +137,9 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 
 	mnt_flags = cmd_umount_mnt_flags(ctx);
 	err = silofs_mntrpc_umount(mntpath, uid, gid, mnt_flags);
-	if (err) {
+	if (err == -SILOFS_EUMOUNT) {
+		cmd_dief(err, "umount not permitted by caller: %s", mntpath);
+	} else if (err) {
 		cmd_dief(err, "umount failed: %s lazy=%d force=%d",
 		         mntpath, ctx->in_args.lazy, ctx->in_args.force);
 	}

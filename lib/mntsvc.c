@@ -395,7 +395,7 @@ static int do_fuse_umount(const struct silofs_mntparams *mntp)
 
 static int mntmsg_status(const struct silofs_mntmsg *mmsg)
 {
-	return -((int)mmsg->mn_status);
+	return -abs((int)mmsg->mn_status);
 }
 
 static void mntmsg_set_status(struct silofs_mntmsg *mmsg, int status)

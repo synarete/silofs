@@ -24,6 +24,7 @@ silofs_vfstests_SOURCES += test_fsync.c
 silofs_vfstests_SOURCES += test_link.c
 silofs_vfstests_SOURCES += test_lseek.c
 silofs_vfstests_SOURCES += test_mkdir.c
+silofs_vfstests_SOURCES += test_mmap_mt.c
 silofs_vfstests_SOURCES += test_mmap.c
 silofs_vfstests_SOURCES += test_namespace.c
 silofs_vfstests_SOURCES += test_open.c

@@ -58,6 +58,7 @@ static const struct vt_tests *const vt_testsbl[]  = {
 	VT_METATEST(vt_test_copy_file_range),
 	VT_METATEST(vt_test_tmpfile),
 	VT_METATEST(vt_test_mmap),
+	VT_METATEST(vt_test_mmap_mt),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

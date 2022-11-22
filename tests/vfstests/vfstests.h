@@ -64,6 +64,7 @@
 
 #define vt_expect_true(p)       silofs_expect(p)
 #define vt_expect_false(p)      silofs_expect(!(p))
+#define vt_expect_ok(err)       silofs_expect_ok(err)
 #define vt_expect_err(err, x)   silofs_expect_err(err, x)
 #define vt_expect_eq(a, b)      silofs_expect_eq(a, b)
 #define vt_expect_ne(a, b)      silofs_expect_ne(a, b)
@@ -478,6 +479,7 @@ extern const struct vt_tests vt_test_fallocate;
 extern const struct vt_tests vt_test_clone;
 extern const struct vt_tests vt_test_copy_file_range;
 extern const struct vt_tests vt_test_mmap;
+extern const struct vt_tests vt_test_mmap_mt;
 extern const struct vt_tests vt_test_namespace;
 
 /* Test-define helper macros */

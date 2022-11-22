@@ -433,20 +433,20 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 
 static size_t ce_refcnt(const struct silofs_cache_elem *ce)
 {
-	silofs_assert_ge(ce->ce_refcnt, 0);
-	return (size_t)ce->ce_refcnt;
+	const int rc = silofs_atomic_get(&ce->ce_refcnt);
+
+	silofs_assert_ge(rc, 0);
+	return (size_t)rc;
 }
 
 static void ce_incref(struct silofs_cache_elem *ce)
 {
-	/* silofs_atomic_add(&ce->ce_refcnt, 1); */
-	ce->ce_refcnt++;
+	silofs_atomic_add(&ce->ce_refcnt, 1);
 }
 
 static void ce_decref(struct silofs_cache_elem *ce)
 {
-	ce->ce_refcnt--;
-	silofs_assert_ge(ce->ce_refcnt, 0);
+	silofs_atomic_sub(&ce->ce_refcnt, 1);
 }
 
 static bool ce_is_evictable(const struct silofs_cache_elem *ce)

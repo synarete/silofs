@@ -18,9 +18,9 @@
 #define SILOFS_ATOMIC_H_
 
 /* Atomic operations on integers with relaxed semantics */
-#define SILOFS_ATOMIC_MODEL     __ATOMIC_RELAXED
+#define SILOFS_ATOMIC_MODEL     __ATOMIC_SEQ_CST
 
-static inline int silofs_atomic_get(int *ptr)
+static inline int silofs_atomic_get(const int *ptr)
 {
 	return __atomic_load_n(ptr, SILOFS_ATOMIC_MODEL);
 }

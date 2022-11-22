@@ -180,6 +180,7 @@ COMPILER_PRIVATE = """
     __RESTRICT
     __EXTENSIONS__
     __ATOMIC_RELAXED
+    __ATOMIC_SEQ_CST
     __atomic_load_n
     __atomic_store_n
     __atomic_add_fetch

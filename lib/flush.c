@@ -300,7 +300,7 @@ static int flc_store_sgv_at(const struct silofs_flush_ctx *fl_ctx,
 	int ret;
 
 	bri_incref(bri);
-	ret = silofs_bri_storev(bri, oaddr, sgv->iov, sgv->cnt);
+	ret = silofs_bri_pwritevn(bri, oaddr, sgv->iov, sgv->cnt);
 	bri_decref(bri);
 	unused(fl_ctx);
 	return ret;

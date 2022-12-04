@@ -497,52 +497,70 @@ static int bri_check_range(const struct silofs_blobref_info *bri,
 }
 
 static void bri_setup_iovec(const struct silofs_blobref_info *bri,
-                            loff_t off, size_t len,
-                            struct silofs_iovec *iov)
+                            loff_t off, size_t len, struct silofs_iovec *siov)
 {
-	iov->iov_off = off;
-	iov->iov_len = len;
-	iov->iov_base = NULL;
-	iov->iov_fd = bri->br_fd;
-	iov->iov_ref = NULL;
+	siov->iov_off = off;
+	siov->iov_len = len;
+	siov->iov_base = NULL;
+	siov->iov_fd = bri->br_fd;
+	siov->iov_ref = NULL;
 }
 
 static void bri_setup_iovec_ref(struct silofs_blobref_info *bri,
-                                struct silofs_iovec *iov)
+                                struct silofs_iovec *siov)
 {
-	iov->iov_ref = &bri->br_ior;
+	siov->iov_ref = &bri->br_ior;
 }
 
 static int bri_iovec_at(const struct silofs_blobref_info *bri,
-                        loff_t off, size_t len, struct silofs_iovec *iov)
+                        loff_t off, size_t len, struct silofs_iovec *siov)
 {
 	int err;
 
 	err = bri_check_range(bri, off, len);
 	if (!err) {
-		bri_setup_iovec(bri, off, len, iov);
+		bri_setup_iovec(bri, off, len, siov);
 	}
 	return err;
 }
 
 static int bri_iovec_of(const struct silofs_blobref_info *bri,
                         const struct silofs_oaddr *oaddr,
-                        struct silofs_iovec *iov)
+                        struct silofs_iovec *siov)
 {
-	return bri_iovec_at(bri, oaddr->pos, oaddr->len, iov);
+	return bri_iovec_at(bri, oaddr->pos, oaddr->len, siov);
 }
 
 int silofs_bri_resolve(struct silofs_blobref_info *bri,
                        const struct silofs_oaddr *oaddr,
-                       struct silofs_iovec *iov)
+                       struct silofs_iovec *siov)
 {
 	int err;
 
-	err = bri_iovec_of(bri, oaddr, iov);
+	err = bri_iovec_of(bri, oaddr, siov);
 	if (err) {
 		return err;
 	}
-	bri_setup_iovec_ref(bri, iov);
+	bri_setup_iovec_ref(bri, siov);
+	return 0;
+}
+
+static int bri_store_by(const struct silofs_blobref_info *bri,
+                        const struct silofs_iovec *siov,
+                        const void *ptr, size_t len)
+{
+	int err;
+
+	if (unlikely(bri->br_fd != siov->iov_fd)) {
+		return -EINVAL;
+	}
+	if (unlikely(len != siov->iov_len)) {
+		return -EINVAL;
+	}
+	err = do_pwriten(siov->iov_fd, ptr, len, siov->iov_off);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -550,17 +568,31 @@ static int bri_store_bb(const struct silofs_blobref_info *bri,
                         const struct silofs_oaddr *oaddr,
                         const struct silofs_bytebuf *bb)
 {
-	struct silofs_iovec iov = { .iov_off = -1 };
+	struct silofs_iovec siov = { .iov_off = -1 };
 	int err;
 
-	err = bri_iovec_of(bri, oaddr, &iov);
+	err = bri_iovec_of(bri, oaddr, &siov);
 	if (err) {
 		return err;
 	}
-	if (bb->len < iov.iov_len) {
-		return -EINVAL;
+	err = bri_store_by(bri, &siov, bb->ptr, siov.iov_len);
+	if (err) {
+		return err;
 	}
-	err = do_pwriten(iov.iov_fd, bb->ptr, iov.iov_len, iov.iov_off);
+	return 0;
+}
+
+int silofs_bri_pwriten(const struct silofs_blobref_info *bri,
+                       loff_t off, const void *buf, size_t len)
+{
+	struct silofs_iovec siov = { .iov_off = -1 };
+	int err;
+
+	err = bri_iovec_at(bri, off, len, &siov);
+	if (err) {
+		return err;
+	}
+	err = bri_store_by(bri, &siov, buf, len);
 	if (err) {
 		return err;
 	}
@@ -577,76 +609,15 @@ static size_t iovec_length(const struct iovec *iov, size_t cnt)
 	return len;
 }
 
-int silofs_bri_storev2(const struct silofs_blobref_info *bri, loff_t off,
-                       const struct iovec *iov, size_t cnt)
-{
-	struct silofs_iovec siov = { .iov_off = -1 };
-	const size_t len = iovec_length(iov, cnt);
-	int err;
-
-	err = bri_iovec_at(bri, off, len, &siov);
-	if (err) {
-		return err;
-	}
-	if (len != siov.iov_len) {
-		return -EINVAL;
-	}
-	err = do_pwritevn(siov.iov_fd, iov, cnt, siov.iov_off);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_bri_pwriten(const struct silofs_blobref_info *bri,
-                       loff_t off, const void *buf, size_t len)
-{
-	struct silofs_iovec iov = { .iov_off = -1 };
-	int err;
-
-	err = bri_iovec_at(bri, off, len, &iov);
-	if (err) {
-		return err;
-	}
-	if (len != iov.iov_len) {
-		return -EINVAL;
-	}
-	err = do_pwriten(iov.iov_fd, buf, len, iov.iov_off);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_bri_preadn(const struct silofs_blobref_info *bri,
-                      loff_t off, void *buf, size_t len)
-{
-	struct silofs_iovec iov = { .iov_off = -1 };
-	int err;
-
-	err = bri_iovec_at(bri, off, len, &iov);
-	if (err) {
-		return err;
-	}
-	if (len != iov.iov_len) {
-		return -EINVAL;
-	}
-	err = do_preadn(iov.iov_fd, buf, len, iov.iov_off);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int check_oaddr_iovec(const struct silofs_oaddr *oaddr,
                              const struct iovec *iov, size_t cnt)
 {
 	return (iovec_length(iov, cnt) == oaddr->len) ? 0 : -EINVAL;
 }
 
-int silofs_bri_storev(const struct silofs_blobref_info *bri,
-                      const struct silofs_oaddr *oaddr,
-                      const struct iovec *iov, size_t cnt)
+int silofs_bri_pwritevn(const struct silofs_blobref_info *bri,
+                        const struct silofs_oaddr *oaddr,
+                        const struct iovec *iov, size_t cnt)
 {
 	struct silofs_iovec siov = { .iov_off = -1 };
 	int err;
@@ -666,27 +637,47 @@ int silofs_bri_storev(const struct silofs_blobref_info *bri,
 	return 0;
 }
 
+int silofs_bri_preadn(const struct silofs_blobref_info *bri,
+                      loff_t off, void *buf, size_t len)
+{
+	struct silofs_iovec siov = { .iov_off = -1 };
+	int err;
+
+	err = bri_iovec_at(bri, off, len, &siov);
+	if (err) {
+		return err;
+	}
+	if (len != siov.iov_len) {
+		return -EINVAL;
+	}
+	err = do_preadn(siov.iov_fd, buf, len, siov.iov_off);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int bri_load_bb(const struct silofs_blobref_info *bri,
                        const struct silofs_oaddr *oaddr,
                        struct silofs_bytebuf *bb)
 {
-	struct silofs_iovec iov = { .iov_off = -1 };
+	struct silofs_iovec siov = { .iov_off = -1 };
 	void *bobj = NULL;
 	int err;
 
-	err = bri_iovec_of(bri, oaddr, &iov);
+	err = bri_iovec_of(bri, oaddr, &siov);
 	if (err) {
 		return err;
 	}
-	if (!silofs_bytebuf_has_free(bb, !iov.iov_len)) {
+	if (!silofs_bytebuf_has_free(bb, !siov.iov_len)) {
 		return -EINVAL;
 	}
 	bobj = silofs_bytebuf_end(bb);
-	err = do_preadn(iov.iov_fd, bobj, iov.iov_len, iov.iov_off);
+	err = do_preadn(siov.iov_fd, bobj, siov.iov_len, siov.iov_off);
 	if (err) {
 		return err;
 	}
-	bb->len += iov.iov_len;
+	bb->len += siov.iov_len;
 	return 0;
 }
 

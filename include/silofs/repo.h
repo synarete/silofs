@@ -64,12 +64,9 @@ silofs_bri_new(struct silofs_alloc *alloc,
 void silofs_bri_del(struct silofs_blobref_info *bri,
                     struct silofs_alloc *alloc);
 
-int silofs_bri_storev(const struct silofs_blobref_info *bri,
-                      const struct silofs_oaddr *oaddr,
-                      const struct iovec *iov, size_t cnt);
-
-int silofs_bri_storev2(const struct silofs_blobref_info *bri, loff_t off,
-                       const struct iovec *iov, size_t cnt);
+int silofs_bri_pwritevn(const struct silofs_blobref_info *bri,
+                        const struct silofs_oaddr *oaddr,
+                        const struct iovec *iov, size_t cnt);
 
 int silofs_bri_pwriten(const struct silofs_blobref_info *bri, loff_t off,
                        const void *buf, size_t len);

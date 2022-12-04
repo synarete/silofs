@@ -71,9 +71,6 @@ int silofs_bri_pwritevn(const struct silofs_blobref_info *bri,
 int silofs_bri_pwriten(const struct silofs_blobref_info *bri, loff_t off,
                        const void *buf, size_t len);
 
-int silofs_bri_preadn(const struct silofs_blobref_info *bri,
-                      loff_t off, void *buf, size_t len);
-
 int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
                         const struct silofs_bkaddr *bkaddr,
                         struct silofs_ubk_info *ubki);
@@ -99,6 +96,10 @@ int silofs_bri_resolve(struct silofs_blobref_info *bri,
 int silofs_bri_flock(struct silofs_blobref_info *bri);
 
 int silofs_bri_funlock(struct silofs_blobref_info *bri);
+
+
+int silofs_bri_read_blob(const struct silofs_blobref_info *bri,
+                         void *buf, size_t len);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

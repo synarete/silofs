@@ -39,6 +39,7 @@
 #define SILOFS_ENORX            SILOFS_DEFERR2(7)
 #define SILOFS_ENOTX            SILOFS_DEFERR2(8)
 #define SILOFS_ECSUM            SILOFS_DEFERR2(9)
+#define SILOFS_ERDONLY          SILOFS_DEFERR2(10)
 
 /* internal error */
 #define SILOFS_EBUG             SILOFS_DEFERR2(1111)

@@ -985,7 +985,7 @@ static int pac_load_warm_blob(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_preadn(bri, 0, pb->pb_blob, pb->pb_blobid.size);
+	err = silofs_bri_read_blob(bri, pb->pb_blob, pb->pb_blobid.size);
 	if (err) {
 		return err;
 	}
@@ -1481,7 +1481,7 @@ static int pac_load_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_preadn(bri, 0, pb->pb_blob, pb->pb_blobid.size);
+	err = silofs_bri_read_blob(bri, pb->pb_blob, pb->pb_blobid.size);
 	if (err) {
 		return err;
 	}
@@ -2124,5 +2124,3 @@ out:
 	pac_fini(&pa_ctx);
 	return err;
 }
-
-

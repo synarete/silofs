@@ -249,6 +249,7 @@
 #define off_align(off, align)           silofs_off_align(off, align)
 #define off_align_to_bk(off)            silofs_off_align_to_bk(off)
 #define off_next(off, len)              silofs_off_next(off, len)
+#define off_next_bk(off)                silofs_off_next_bk(off)
 #define off_to_lba(off)                 silofs_off_to_lba(off)
 #define off_diff(off, end)              silofs_off_diff(off, end)
 #define off_len(beg, end)               silofs_off_len(beg, end)

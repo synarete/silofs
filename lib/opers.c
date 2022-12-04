@@ -1559,6 +1559,8 @@ int silofs_fs_timedout(const struct silofs_fs_ctx *fs_ctx, int flags)
 
 	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, flags);
 	ok_or_goto_out(err);
+
+	silofs_uber_relax_caches(uber, flags);
 out:
 	return op_finish(fs_ctx, false, err);
 }

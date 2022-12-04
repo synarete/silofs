@@ -52,7 +52,8 @@ struct silofs_qalloc {
 	struct silofs_slab       slabs[32];
 	struct silofs_list_head  free_pgs;
 	struct silofs_alloc_stat alst;
-	struct silofs_alloc   alloc;
+	struct silofs_alloc      alloc;
+	struct silofs_mutex      mutex;
 	void   *mem_data;
 	void   *mem_meta;
 	int     memfd_data;
@@ -91,8 +92,8 @@ void silofs_qalloc_zfree(struct silofs_qalloc *qal, void *ptr, size_t nbytes);
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat);
 
-int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
-                          size_t len, struct silofs_iovec *iov);
+int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
+                          void *ptr, size_t len, struct silofs_iovec *iov);
 
 int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
                          const void *ptr, size_t nbytes);

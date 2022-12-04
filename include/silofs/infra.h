@@ -36,11 +36,11 @@
 #include <silofs/time.h>
 #include <silofs/random.h>
 #include <silofs/iovec.h>
+#include <silofs/thread.h>
 #include <silofs/qalloc.h>
 #include <silofs/logging.h>
 #include <silofs/pipe.h>
 #include <silofs/socket.h>
-#include <silofs/thread.h>
 #include <silofs/syscall.h>
 
 #endif /* SILOFS_INFRA_H_ */

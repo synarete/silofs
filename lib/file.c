@@ -753,10 +753,9 @@ fic_iovec_by_alloc(const struct silofs_file_ctx *f_ctx,
                    void *bk_start, loff_t off_in_bk, size_t len,
                    struct silofs_iovec *out_iov)
 {
-	const struct silofs_alloc *alloc = sbi_alloc(f_ctx->sbi);
 	void *base = base_of(bk_start, off_in_bk);
 
-	return silofs_allocresolve(alloc, base, len, out_iov);
+	return silofs_allocresolve(sbi_alloc(f_ctx->sbi), base, len, out_iov);
 }
 
 static int fic_stage_ubk(const struct silofs_file_ctx *f_ctx,

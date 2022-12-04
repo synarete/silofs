@@ -2029,10 +2029,9 @@ static void fill_prstats(const struct silofs_sb_info *sbi,
 {
 	struct silofs_alloc_stat alst;
 	const struct silofs_fs_uber *uber = sbi_uber(sbi);
-	const struct silofs_alloc *alloc = sbi_alloc(sbi);
 	const struct silofs_cache *cache = sbi_cache(sbi);
 
-	silofs_allocstat(alloc, &alst);
+	silofs_allocstat(sbi_alloc(sbi), &alst);
 	silofs_memzero(qus, sizeof(*qus));
 	qus->msflags = sbi->sb_ms_flags;
 	qus->uptime = silofs_uber_uptime(uber);

@@ -24,6 +24,7 @@
 #include <silofs/panic.h>
 #include <silofs/logging.h>
 #include <silofs/random.h>
+#include <silofs/thread.h>
 #include <silofs/qalloc.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -108,7 +109,7 @@ static void static_assert_alloc_sizes(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_qalloc *alloc_to_qal(const struct silofs_alloc *alloc)
+static struct silofs_qalloc *alloc_to_qalloc(const struct silofs_alloc *alloc)
 {
 	const struct silofs_qalloc *qal;
 
@@ -118,14 +119,14 @@ static struct silofs_qalloc *alloc_to_qal(const struct silofs_alloc *alloc)
 
 static void *qal_malloc(struct silofs_alloc *aif, size_t nbytes)
 {
-	struct silofs_qalloc *qal = alloc_to_qal(aif);
+	struct silofs_qalloc *qal = alloc_to_qalloc(aif);
 
 	return silofs_qalloc_malloc(qal, nbytes);
 }
 
 static void qal_free(struct silofs_alloc *aif, void *ptr, size_t nbytes)
 {
-	struct silofs_qalloc *qal = alloc_to_qal(aif);
+	struct silofs_qalloc *qal = alloc_to_qalloc(aif);
 
 	silofs_qalloc_free(qal, ptr, nbytes);
 }
@@ -133,15 +134,15 @@ static void qal_free(struct silofs_alloc *aif, void *ptr, size_t nbytes)
 static void qal_stat(const struct silofs_alloc *alloc,
                      struct silofs_alloc_stat *out_stat)
 {
-	const struct silofs_qalloc *qal = alloc_to_qal(alloc);
+	const struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
 
 	silofs_qalloc_stat(qal, out_stat);
 }
 
-static int qal_resolve(const struct silofs_alloc *alloc, void *ptr,
-                       size_t len, struct silofs_iovec *iov)
+static int qal_resolve(const struct silofs_alloc *alloc,
+                       void *ptr, size_t len, struct silofs_iovec *iov)
 {
-	const struct silofs_qalloc *qal = alloc_to_qal(alloc);
+	const struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
 
 	return silofs_qalloc_resolve(qal, ptr, len, iov);
 }
@@ -178,14 +179,13 @@ void silofs_allocstat(const struct silofs_alloc *alloc,
 int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
                         size_t len, struct silofs_iovec *iov)
 {
-	int ret;
+	int ret = -ENOTSUP;
 
 	if (alloc->resolve_fn != NULL) {
 		ret = alloc->resolve_fn(alloc, ptr, len, iov);
 	} else {
 		memset(iov, 0, sizeof(*iov));
 		iov->iov_fd = -1;
-		ret = -ENOTSUP;
 	}
 	return ret;
 }
@@ -616,29 +616,43 @@ static void qalloc_fini_interface(struct silofs_qalloc *qal)
 	qal->alloc.resolve_fn = NULL;
 }
 
+static int qalloc_init_mutex(struct silofs_qalloc *qal)
+{
+	return silofs_mutex_init(&qal->mutex);
+}
+
+static void qalloc_fini_mutex(struct silofs_qalloc *qal)
+{
+	silofs_mutex_fini(&qal->mutex);
+}
+
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 {
-	size_t npgs;
+	const size_t pgsz = QALLOC_PAGE_SIZE;
+	const size_t npgs = memsize / pgsz;
 	int err;
+
+	qal->alst.page_size = pgsz;
+	qal->alst.npages_used = 0;
+	qal->alst.nbytes_used = 0;
+	qal->mode = mode;
 
 	err = check_memsize(memsize);
 	if (err) {
 		return err;
 	}
-	qal->alst.page_size = QALLOC_PAGE_SIZE;
-	qal->alst.npages_used = 0;
-	qal->alst.nbytes_used = 0;
-	qal->mode = false;
-
-	npgs = memsize / qal->alst.page_size;
+	err = qalloc_init_mutex(qal);
+	if (err) {
+		return err;
+	}
 	err = qalloc_init_memfd(qal, npgs);
 	if (err) {
+		qalloc_fini_mutex(qal);
 		return err;
 	}
 	qalloc_init_pages(qal);
 	qalloc_init_slabs(qal);
 	qalloc_init_interface(qal);
-	qal->mode = mode;
 	return 0;
 }
 
@@ -647,7 +661,25 @@ int silofs_qalloc_fini(struct silofs_qalloc *qal)
 	/* TODO: release all pending memory-elements in slabs */
 	qalloc_fini_slabs(qal);
 	qalloc_fini_interface(qal);
+	qalloc_fini_mutex(qal);
 	return qalloc_fini_memfd(qal);
+}
+
+static struct silofs_mutex *qalloc_mutex(const struct silofs_qalloc *qal)
+{
+	const struct silofs_mutex *mutex = &qal->mutex;
+
+	return silofs_unconst(mutex);
+}
+
+static void qalloc_lock(const struct silofs_qalloc *qal)
+{
+	silofs_mutex_lock(qalloc_mutex(qal));
+}
+
+static void qalloc_unlock(const struct silofs_qalloc *qal)
+{
+	silofs_mutex_unlock(qalloc_mutex(qal));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -934,16 +966,24 @@ static int qalloc_malloc(struct silofs_qalloc *qal,
 	return 0;
 }
 
+static void qalloc_require_malloc_ok(const struct silofs_qalloc *qal,
+                                     size_t nbytes, int err)
+{
+	if (err) {
+		silofs_log_debug("malloc failed: nbytes=%lu memsz_data=%lu "
+		                 "err=%d", nbytes, qal->alst.memsz_data, err);
+	}
+}
+
 void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes)
 {
 	void *ptr = NULL;
 	int err;
 
+	qalloc_lock(qal);
 	err = qalloc_malloc(qal, nbytes, &ptr);
-	if (err) {
-		silofs_log_debug("malloc failed: nbytes=%lu err=%d",
-		                 nbytes, err);
-	}
+	qalloc_unlock(qal);
+	qalloc_require_malloc_ok(qal, nbytes, err);
 	return ptr;
 }
 
@@ -1201,15 +1241,23 @@ static int qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 	return err;
 }
 
+static void qalloc_require_free_ok(const struct silofs_qalloc *qal,
+                                   const void *ptr, size_t nbytes, int err)
+{
+	if (err) {
+		silofs_panic("free error: ptr=%p nbytes=%lu memsz_data=%lu "
+		             "err=%d", ptr, nbytes, qal->alst.memsz_data, err);
+	}
+}
+
 void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 {
 	int err;
 
+	qalloc_lock(qal);
 	err = qalloc_free(qal, ptr, nbytes);
-	if (err) {
-		silofs_panic("free error: ptr=%p nbytes=%lu err=%d",
-		             ptr, nbytes, err);
-	}
+	qalloc_unlock(qal);
+	qalloc_require_free_ok(qal, ptr, nbytes, err);
 }
 
 void silofs_qalloc_zfree(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
@@ -1253,27 +1301,40 @@ int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
 	return err;
 }
 
+static int qalloc_resolve_iov(const struct silofs_qalloc *qal,
+                              void *ptr, size_t len, struct silofs_iovec *iov)
+{
+	const void *base = qalloc_base_of(qal, ptr, len);
+	int ret = -ERANGE;
+
+	if ((base != NULL) && (base <= ptr)) {
+		iov->iov_off = qalloc_ptr_to_off(qal, ptr);
+		iov->iov_len = len;
+		iov->iov_base = ptr;
+		iov->iov_fd = qal->memfd_data;
+		iov->iov_ref = NULL;
+		ret = 0;
+	}
+	return ret;
+}
+
 int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
                           void *ptr, size_t len, struct silofs_iovec *iov)
 {
-	const void *base;
+	int err;
 
-	base = qalloc_base_of(qal, ptr, len);
-	if ((base == NULL) || (base > ptr)) {
-		return -ERANGE;
-	}
-	iov->iov_off = qalloc_ptr_to_off(qal, ptr);
-	iov->iov_len = len;
-	iov->iov_base = ptr;
-	iov->iov_fd = qal->memfd_data;
-	iov->iov_ref = NULL;
-	return 0;
+	qalloc_lock(qal);
+	err = qalloc_resolve_iov(qal, ptr, len, iov);
+	qalloc_unlock(qal);
+	return err;
 }
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat)
 {
+	qalloc_lock(qal);
 	memcpy(out_stat, &qal->alst, sizeof(*out_stat));
+	qalloc_unlock(qal);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -74,3 +74,20 @@ def test_reload_n(tc: ctx.TestCtx) -> None:
         tds.do_read()
         tds.do_unlink()
     tc.exec_umount()
+
+
+def test_rw_nokcopy(tc: ctx.TestCtx) -> None:
+    tc.exec_init()
+    tc.exec_mkfs(32)
+    tc.exec_mount(nokcopy=True)
+    tds = tc.make_tds(16, "E", 2**20)
+    tds.do_makedirs()
+    tds.do_write()
+    tds.do_read()
+    tds.do_unlink()
+    tds = tc.make_tds(1024, "F", 4096)
+    tds.do_makedirs()
+    tds.do_write()
+    tds.do_read()
+    tds.do_unlink()
+    tc.exec_umount()

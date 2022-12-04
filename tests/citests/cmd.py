@@ -129,11 +129,17 @@ class CmdSilofs(CmdExec):
         self.execute2(["mkfs", "-s", str(size), repodir_name])
 
     def mount(
-        self, repodir_name: str, mntpoint: str, allow_hostids: bool = False
+        self,
+        repodir_name: str,
+        mntpoint: str,
+        allow_hostids: bool = False,
+        nokcopy: bool = False,
     ) -> None:
         args = ["mount", repodir_name, mntpoint]
         if allow_hostids:
             args.append("--allow-hostids")
+        if nokcopy:
+            args.append("--nokcopy")
         self.execute2(args)
 
     def umount(self, mntpoint: str) -> None:

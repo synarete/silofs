@@ -147,9 +147,16 @@ class TestCtx(TestBaseCtx):
         size = gsize * gibi
         self.cmd.silofs.mkfs(self._repodir_name(name), size)
 
-    def exec_mount(self, name: str = "", allow_hostids: bool = False) -> None:
+    def exec_mount(
+        self,
+        name: str = "",
+        allow_hostids: bool = False,
+        nokcopy: bool = False,
+    ) -> None:
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.mount(repodir_name, self.cfg.mntdir, allow_hostids)
+        self.cmd.silofs.mount(
+            repodir_name, self.cfg.mntdir, allow_hostids, nokcopy
+        )
 
     def exec_umount(self) -> None:
         self.cmd.silofs.umount(self.mntpoint())

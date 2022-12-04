@@ -21,6 +21,7 @@ TESTS = [
     test_io.test_rw_rands,
     test_io.test_reload,
     test_io.test_reload_n,
+    test_io.test_rw_nokcopy,
     test_self.test_unit_tests,
     test_self.test_vfs_tests,
     test_self.test_vfs_tests2,

@@ -142,9 +142,9 @@ static int ut_open(struct ut_env *ute, ino_t ino, int flags)
 	return silofs_fs_open(fs_ctx_of(ute), ino, flags);
 }
 
-static int ut_release(struct ut_env *ute, ino_t ino)
+static int ut_release(struct ut_env *ute, ino_t ino, bool flush)
 {
-	return silofs_fs_release(fs_ctx_of(ute), ino, 0, false);
+	return silofs_fs_release(fs_ctx_of(ute), ino, 0, flush);
 }
 
 static int ut_truncate(struct ut_env *ute, ino_t ino,
@@ -1035,7 +1035,15 @@ void ut_release_ok(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_release(ute, ino);
+	err = ut_release(ute, ino, false);
+	ut_expect_ok(err);
+}
+
+void ut_release_flush_ok(struct ut_env *ute, ino_t ino)
+{
+	int err;
+
+	err = ut_release(ute, ino, true);
 	ut_expect_ok(err);
 }
 

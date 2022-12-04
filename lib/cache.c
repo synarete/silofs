@@ -2802,8 +2802,10 @@ static size_t flush_threshold_of(silofs_dqid_t dqid, int flags)
 	const size_t mega = SILOFS_UMEGA;
 	const size_t factor = dqid_specific(dqid) ? 8 : 1;
 
-	if (flags & (SILOFS_F_NOW | SILOFS_F_RELEASE)) {
+	if (flags & SILOFS_F_NOW) {
 		threshold = 0;
+	} else if (flags & SILOFS_F_RELEASE) {
+		threshold = mega / 8;
 	} else if (flags & SILOFS_F_FSYNC) {
 		threshold = mega / 2;
 	} else if (flags & (SILOFS_F_TIMEOUT | SILOFS_F_IDLE)) {

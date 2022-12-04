@@ -624,6 +624,7 @@ out:
 int silofs_fs_releasedir(struct silofs_fs_ctx *fs_ctx, ino_t ino, int o_flags)
 {
 	struct silofs_inode_info *dir_ii = NULL;
+	const bool flush = (o_flags & O_SYNC) > 0;
 	int err;
 
 	unused(o_flags); /* TODO: useme */
@@ -640,7 +641,7 @@ int silofs_fs_releasedir(struct silofs_fs_ctx *fs_ctx, ino_t ino, int o_flags)
 	err = op_stage_rdo_inode(fs_ctx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_releasedir(fs_ctx, dir_ii);
+	err = silofs_do_releasedir(fs_ctx, dir_ii, flush);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, false, err);
@@ -983,7 +984,6 @@ int silofs_fs_release(struct silofs_fs_ctx *fs_ctx,
 	int err;
 
 	/* TODO: useme */
-	unused(flush);
 	unused(o_flags);
 
 	err = op_start(fs_ctx);
@@ -998,7 +998,7 @@ int silofs_fs_release(struct silofs_fs_ctx *fs_ctx,
 	err = op_stage_rdo_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_release(fs_ctx, ii);
+	err = silofs_do_release(fs_ctx, ii, flush);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, false, err);

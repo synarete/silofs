@@ -38,12 +38,14 @@ static void ut_file_simple2_(struct ut_env *ute, loff_t off)
 	ino_t ino;
 	ino_t dino;
 	const char *name = UT_NAME;
+	const size_t bsz = UT_MEGA / 4;
+	void *buf = ut_randbuf(ute, bsz);
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_write_read(ute, ino, name, strlen(name), off);
-	ut_fsync_ok(ute, ino, true);
-	ut_remove_file(ute, dino, name, ino);
+	ut_write_read(ute, ino, buf, bsz, off);
+	ut_release_flush_ok(ute, ino);
+	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 

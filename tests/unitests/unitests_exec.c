@@ -410,8 +410,8 @@ void ut_execute_tests(void)
 	} else if (ut_globals.kcopy_mode == 1) {
 		ut_do_execute_tests(true);
 	} else {
-		ut_do_execute_tests(true);
 		ut_do_execute_tests(false);
+		ut_do_execute_tests(true);
 	}
 }
 

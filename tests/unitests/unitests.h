@@ -350,6 +350,8 @@ void ut_create_special(struct ut_env *ute, ino_t parent,
 
 void ut_release_ok(struct ut_env *ute, ino_t ino);
 
+void ut_release_flush_ok(struct ut_env *ute, ino_t ino);
+
 void ut_release_file(struct ut_env *ute, ino_t ino);
 
 void ut_fsync_ok(struct ut_env *ute, ino_t ino, bool datasync);

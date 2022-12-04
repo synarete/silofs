@@ -41,7 +41,7 @@ int silofs_do_open(const struct silofs_fs_ctx *fs_ctx,
                    struct silofs_inode_info *ii, int flags);
 
 int silofs_do_release(const struct silofs_fs_ctx *fs_ctx,
-                      struct silofs_inode_info *ii);
+                      struct silofs_inode_info *ii, bool flush);
 
 int silofs_do_mkdir(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_inode_info *dir_ii,
@@ -92,7 +92,7 @@ int silofs_do_opendir(const struct silofs_fs_ctx *fs_ctx,
                       struct silofs_inode_info *dir_ii);
 
 int silofs_do_releasedir(const struct silofs_fs_ctx *fs_ctx,
-                         struct silofs_inode_info *dir_ii);
+                         struct silofs_inode_info *dir_ii, bool flush);
 
 int silofs_do_fsyncdir(const struct silofs_fs_ctx *fs_ctx,
                        struct silofs_inode_info *dir_ii, bool dsync);

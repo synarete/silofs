@@ -1532,15 +1532,16 @@ static int check_releasedir(const struct silofs_inode_info *dir_ii)
 	return 0;
 }
 
-static int do_releasedir(struct silofs_inode_info *dir_ii)
+static int do_releasedir(struct silofs_inode_info *dir_ii, bool flush)
 {
+	const int flags = flush ? SILOFS_F_NOW : SILOFS_F_RELEASE;
 	int err;
 
 	err = check_releasedir(dir_ii);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(dir_ii, SILOFS_F_RELEASE);
+	err = flush_dirty_of(dir_ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1549,12 +1550,12 @@ static int do_releasedir(struct silofs_inode_info *dir_ii)
 }
 
 int silofs_do_releasedir(const struct silofs_fs_ctx *fs_ctx,
-                         struct silofs_inode_info *dir_ii)
+                         struct silofs_inode_info *dir_ii, bool flush)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_releasedir(dir_ii);
+	err = do_releasedir(dir_ii, flush);
 	ii_decref(dir_ii);
 
 	return !err ? try_prune_inode(fs_ctx, dir_ii, false) : err;
@@ -1580,15 +1581,16 @@ static int check_release(const struct silofs_inode_info *ii)
 	return check_notdir_and_opened(ii);
 }
 
-static int do_release(struct silofs_inode_info *ii)
+static int do_release(struct silofs_inode_info *ii, bool flush)
 {
+	const int flags = flush ? SILOFS_F_NOW : SILOFS_F_RELEASE;
 	int err;
 
 	err = check_release(ii);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(ii, SILOFS_F_RELEASE);
+	err = flush_dirty_of(ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1597,12 +1599,12 @@ static int do_release(struct silofs_inode_info *ii)
 }
 
 int silofs_do_release(const struct silofs_fs_ctx *fs_ctx,
-                      struct silofs_inode_info *ii)
+                      struct silofs_inode_info *ii, bool flush)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_release(ii);
+	err = do_release(ii, flush);
 	ii_decref(ii);
 
 	return !err ? try_prune_inode(fs_ctx, ii, false) : err;

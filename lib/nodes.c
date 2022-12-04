@@ -228,11 +228,6 @@ static void si_fini(struct silofs_snode_info *si)
 	si->s_vtbl = NULL;
 }
 
-static void si_seal_noop(struct silofs_snode_info *si)
-{
-	silofs_unused(si);
-}
-
 static bool si_evictable(const struct silofs_snode_info *si)
 {
 	return silofs_si_isevictable(si);
@@ -453,9 +448,8 @@ static void vi_seal_as_si(struct silofs_snode_info *si)
 {
 	struct silofs_vnode_info *vi = silofs_vi_from_si(si);
 
-	if (!vi_isdata(vi)) {
-		vi_seal_meta(vi);
-	}
+	silofs_assert(!vi_isdata(vi));
+	vi_seal_meta(vi);
 }
 
 static bool vi_has_stype(const struct silofs_vnode_info *vi,
@@ -1450,10 +1444,18 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 	}
 }
 
+static void fli_seal_as_si(struct silofs_snode_info *si)
+{
+	const struct silofs_vnode_info *vi = silofs_vi_from_si(si);
+
+	/* no-op for data leaves */
+	silofs_assert(vi_isdata(vi));
+}
+
 static const struct silofs_snode_vtbl fli_vtbl = {
 	.del = fli_delete_as_si,
 	.evictable = si_evictable,
-	.seal = si_seal_noop, /* no-op for data leaves */
+	.seal = fli_seal_as_si,
 	.resolve = vi_resolve_as_si,
 };
 

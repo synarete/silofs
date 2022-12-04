@@ -20,18 +20,12 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* blob-reference using file-descriptor and fixed-size */
-struct silofs_blob_fdsz {
-	int fd;
-	int sz;
-};
-
 /* blob-reference cache-entry */
 struct silofs_blobref_info {
 	struct silofs_cache_elem        br_ce;
 	struct silofs_blobid            br_blobid;
 	struct silofs_iovref            br_ior;
-	struct silofs_blob_fdsz         br_fdsz;
+	int                             br_fd;
 	bool                            br_locked;
 	bool                            br_rdonly;
 };

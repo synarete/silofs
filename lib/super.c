@@ -91,7 +91,7 @@ int silofs_sb_check_version(const struct silofs_super_block *sb)
 		return -EINVAL;
 	}
 	if (sb_version(sb) != SILOFS_FMT_VERSION) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -518,7 +518,7 @@ static int verify_sproot(const struct silofs_uaddr *uaddr)
 	    (uaddr->height != (SILOFS_HEIGHT_SUPER - 1))) {
 		log_err("bad spnode root: stype=%d height=%d",
 		        (int)uaddr->stype, (int)uaddr->height);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -548,7 +548,7 @@ static int verify_sb_self(const struct silofs_super_block *sb)
 
 	sb_self(sb, &uaddr);
 	if (uaddr_isnull(&uaddr) || !stype_issuper(uaddr.stype)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -559,7 +559,7 @@ static int verify_sb_origin(const struct silofs_super_block *sb)
 
 	sb_origin(sb, &uaddr);
 	if (!uaddr_isnull(&uaddr) && !stype_issuper(uaddr.stype)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -570,7 +570,7 @@ static int verify_sb_height(const struct silofs_super_block *sb)
 
 	if (height != SILOFS_HEIGHT_SUPER) {
 		log_err("illegal sb height: height=%lu", height);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -840,7 +840,7 @@ static int sbi_resolve_itable_root(struct silofs_sb_info *sbi,
 	if (vaddr_isnull(&vaddr) || !stype_isitnode(stype)) {
 		log_err("non valid itable-root: off=0x%lx stype=%d",
 		        vaddr_off(&vaddr), stype);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	vaddr_assign(out_vaddr, &vaddr);
 	return 0;

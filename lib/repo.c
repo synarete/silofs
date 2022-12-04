@@ -1108,7 +1108,7 @@ repo_objs_open_blob(const struct silofs_repo *repo, bool rw,
 	return 0;
 out_err:
 	/*
-	 * TODO-0032: Consider using EFSCORRUPTED
+	 * TODO-0032: Consider using SILOFS_EFSCORRUPTED
 	 *
 	 * When higher layer wants to open a blob, it should exist. Do not
 	 * return -ENOENT as this may be interpreted as non-error by caller.
@@ -1587,7 +1587,7 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
 	}
 	if (st.st_size < min_size) {
 		log_warn("illegal size: %s %ld", name, st.st_size);
-		return -EUCLEAN;
+		return -SILOFS_EBADREPO;
 	}
 	return 0;
 }
@@ -2199,7 +2199,7 @@ static int repo_stat_bootsec(const struct silofs_repo *repo,
 		return err;
 	}
 	if (st.st_size != sizeof(struct silofs_bootsec1k)) {
-		return -EUCLEAN;
+		return -SILOFS_EBADBOOT;
 	}
 	return 0;
 }

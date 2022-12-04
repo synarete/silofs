@@ -830,7 +830,7 @@ static int dtn_verify_des(const struct silofs_dtree_node *dtn)
 
 	for (de = de_beg; de < de_end; ++de) {
 		if (de_isactive(de) && !de_isvalid(de)) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 	}
 	return 0;
@@ -843,7 +843,7 @@ static int dtn_verify_names(const struct silofs_dtree_node *dtn)
 
 	while (chr < end) {
 		if ((*chr == 0) || (*chr == '/')) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 		chr++;
 	}
@@ -922,7 +922,7 @@ dni_check_child_depth(const struct silofs_dnode_info *dni,
 		log_err("illegal-tree-depth: voff=0x%lx "
 		        "parent_depth=%u child_depth=%u ",
 		        vaddr_off(vaddr), parent_depth, child_depth);
-		err = -EFSCORRUPTED;
+		err = -SILOFS_EFSCORRUPTED;
 	}
 	return err;
 }
@@ -1208,7 +1208,7 @@ static int dic_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 	}
 	if (h_ino != d_ino) {
 		log_err("bad dnode: h_ino=%lu d_ino=%lu", h_ino, d_ino);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	dni->dn_vi.v_recheck = true;
 	return 0;
@@ -1726,7 +1726,7 @@ static int dic_check_stage_parent(struct silofs_dir_ctx *d_ctx)
 		return -ENOENT;
 	}
 	if (!ino_isvalid(parent)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	err = dic_stage_inode(d_ctx, parent, &d_ctx->parent_ii);
 	if (err) {
@@ -2341,9 +2341,9 @@ static int verify_dtn_index(silofs_dtn_index_t dtn_index, bool has_tree)
 	int err;
 
 	if (has_tree) {
-		err = dtn_index_isvalid(dtn_index) ? 0 : -EFSCORRUPTED;
+		err = dtn_index_isvalid(dtn_index) ? 0 : -SILOFS_EFSCORRUPTED;
 	} else {
-		err = dtn_index_isnull(dtn_index) ? 0 : -EFSCORRUPTED;
+		err = dtn_index_isnull(dtn_index) ? 0 : -SILOFS_EFSCORRUPTED;
 	}
 	return err;
 }
@@ -2393,7 +2393,7 @@ static int verify_childs_of(const struct silofs_dtree_node *dtn)
 			return err;
 		}
 		if (!stype_isequal(vaddr_stype(&vaddr), SILOFS_STYPE_DTNODE)) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 	}
 	return 0;

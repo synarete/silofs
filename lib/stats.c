@@ -63,14 +63,15 @@ static int verify_gauge(ssize_t val)
 	const ssize_t val_max = LONG_MAX / 2;
 	const ssize_t val_min = -val_max;
 
-	return ((val_min <= val) && (val <= val_max)) ? 0 : -EFSCORRUPTED;
+	return ((val_min <= val) && (val <= val_max)) ?
+	       0 : -SILOFS_EFSCORRUPTED;
 }
 
 static int verify_size(size_t sz)
 {
 	const size_t sz_max = ULONG_MAX / 4;
 
-	return (sz <= sz_max) ? 0 : -EFSCORRUPTED;
+	return (sz <= sz_max) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

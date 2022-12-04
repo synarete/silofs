@@ -938,7 +938,7 @@ static int stgc_do_stage_spnode5(struct silofs_stage_ctx *stg_ctx)
 
 	err = silofs_sbi_sproot_of(stg_ctx->sbi, stg_ctx->vspace, &uaddr);
 	if (err) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	err = stgc_stage_spnode_at(stg_ctx, &uaddr, &stg_ctx->sni5);
 	if (err) {
@@ -2426,7 +2426,7 @@ static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
 out:
 	bri_decref(bri_dst);
 	bri_decref(bri_src);
-	return (ret == -ENOENT) ? -EFSCORRUPTED : ret;
+	return (ret == -ENOENT) ? -SILOFS_EFSCORRUPTED : ret;
 }
 
 static int stgc_kcopy_bk(const struct silofs_stage_ctx *stg_ctx,

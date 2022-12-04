@@ -1568,11 +1568,11 @@ bool silofs_namestr_isequal(const struct silofs_namestr *nstr,
 
 int silofs_verify_ino(ino_t ino)
 {
-	return !ino_isnull(ino) ? 0 : -EFSCORRUPTED;
+	return !ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 int silofs_verify_off(loff_t off)
 {
-	return (off_isnull(off) || (off >= 0)) ? 0 : -EFSCORRUPTED;
+	return (off_isnull(off) || (off >= 0)) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 

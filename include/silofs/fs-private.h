@@ -26,18 +26,6 @@
 #include <silofs/types.h>
 #include <silofs/nodes.h>
 
-
-/* error-codes borrowed from XFS */
-#ifndef ENOATTR
-#define ENOATTR         ENODATA /* Attribute not found */
-#endif
-#ifndef EFSCORRUPTED
-#define EFSCORRUPTED    EUCLEAN /* File-system is corrupted */
-#endif
-#ifndef EFSBADCRC
-#define EFSBADCRC       EBADMSG /* Bad CRC detected */
-#endif
-
 /* common macros */
 #define likely(x_)                      silofs_likely(x_)
 #define unlikely(x_)                    silofs_unlikely(x_)

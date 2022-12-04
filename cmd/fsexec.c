@@ -61,8 +61,14 @@ static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
 	if (err == SILOFS_ENOREPO) {
 		cmd_dief(err, "%s%smissing repo: %s",
 		         xmsg, xtag, repodir_name);
+	} else if (err == SILOFS_EBADREPO) {
+		cmd_dief(err, "%s%sillegal repo: %s",
+		         xmsg, xtag, repodir_name);
 	} else if (err == SILOFS_ENOBOOT) {
 		cmd_dief(err, "%s%smissing boot: %s",
+		         xmsg, xtag, repodir_name);
+	} else if (err == SILOFS_EBADBOOT) {
+		cmd_dief(err, "%s%scorrupted boot: %s",
 		         xmsg, xtag, repodir_name);
 	} else if (err == SILOFS_EATTIC) {
 		cmd_dief(err, "%s%sattic repo: %s",

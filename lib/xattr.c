@@ -22,6 +22,11 @@
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 
+/* error-code borrowed from XFS */
+#ifndef ENOATTR
+#define ENOATTR         ENODATA /* Attribute not found */
+#endif
+
 #define XATTR_DATA_MAX \
 	(SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 
@@ -266,11 +271,11 @@ static int xe_verify(const struct silofs_xattr_entry *xe)
 
 	name_len = xe_name_len(xe);
 	if (!name_len || (name_len > SILOFS_NAME_MAX)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	value_size = xe_value_size(xe);
 	if (value_size > SILOFS_XATTR_VALUE_MAX) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -289,7 +294,7 @@ static int xe_verify_range(const struct silofs_xattr_entry *xe,
 		}
 		nents = xe_nents(itr);
 		if (!nents || ((xe + nents) > end)) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 		itr += nents;
 	}
@@ -530,7 +535,7 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 	}
 	if (ino != xa_ino) {
 		log_err("bad xanode ino: ino=%lu xa_ino=%lu", ino, xa_ino);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	xai->xan_vi.v_recheck = true;
 	return 0;

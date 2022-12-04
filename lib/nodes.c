@@ -109,13 +109,13 @@ static int hdr_verify_base(const struct silofs_header *hdr,
 	const size_t psz = stype_size(stype);
 
 	if (hdr_magic(hdr) != SILOFS_STYPE_MAGIC) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	if (hdr_stype(hdr) != stype) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	if (hsz != psz) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -142,7 +142,7 @@ static int hdr_verify_checksum(const struct silofs_header *hdr)
 	}
 	csum = hdr_calc_chekcsum(hdr);
 	if (csum != hdr_csum(hdr)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSBADCRC;
 	}
 	return 0;
 }
@@ -1629,7 +1629,7 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_LAST:
 	default:
 		log_err("illegal sub-type: stype=%d", (int)stype);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }

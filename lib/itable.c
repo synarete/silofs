@@ -457,7 +457,7 @@ static void itni_setup(struct silofs_itnode_info *itni,
 
 static int itni_check_root(const struct silofs_itnode_info *itni)
 {
-	return itn_isroot(itni->itn) ? 0 : -EFSCORRUPTED;
+	return itn_isroot(itni->itn) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 static void itni_resolve_child_at(const struct silofs_itnode_info *itni,
@@ -1433,11 +1433,11 @@ static int verify_itable_entry(const struct silofs_itable_entry *ite)
 	stype = vaddr_stype(&vaddr);
 	if (stype_isnone(stype)) {
 		if (!ino_isnull(ino)) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 	} else {
 		if (!stype_isinode(stype)) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 	}
 	return 0;
@@ -1445,7 +1445,7 @@ static int verify_itable_entry(const struct silofs_itable_entry *ite)
 
 static int verify_count(size_t count, size_t expected)
 {
-	return (count == expected) ? 0 : -EFSCORRUPTED;
+	return (count == expected) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 static int verify_itnode_entries(const struct silofs_itable_node *itn)
@@ -1491,7 +1491,7 @@ static int verify_itnode_childs(const struct silofs_itable_node *itn)
 		}
 		stype = vaddr_stype(&vaddr);
 		if (!stype_isequal(stype, SILOFS_STYPE_ITNODE)) {
-			return -EFSCORRUPTED;
+			return -SILOFS_EFSCORRUPTED;
 		}
 		nchilds++;
 	}
@@ -1516,7 +1516,7 @@ static int verify_itnode_parent(const struct silofs_itable_node *itn)
 	}
 	stype = vaddr_stype(&vaddr);
 	if (!stype_isequal(stype, SILOFS_STYPE_ITNODE)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }

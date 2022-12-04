@@ -575,7 +575,7 @@ static int fse_reload_rootdir(struct silofs_fs_env *fse)
 	}
 	if (!ii_isdir(ii)) {
 		log_err("root-inode is not-a-dir: mode=0%o", ii_mode(ii));
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -609,7 +609,7 @@ static int fse_reload_inodes_table(struct silofs_fs_env *fse)
 	err = silofs_sbi_reload_itable(fse_sbi(fse));
 	if (err) {
 		log_err("failed to load inodes-table: err=%d", err);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -878,7 +878,7 @@ static int fse_format_claim_vspace_of(const struct silofs_fs_env *fse,
 	if (voa.vaddr.voff != voff_exp) {
 		log_err("wrong first voff: vspace=%d expected-voff=%ld "
 		        "got-voff=%ld", vspace, voff_exp, voa.vaddr.voff);
-		return -EFSCORRUPTED; /* TODO: should be internal */
+		return -SILOFS_EFSCORRUPTED; /* TODO: should be internal */
 	}
 	err = silofs_sbi_reclaim_vspace(sbi, &voa.vaddr);
 	if (err) {
@@ -925,7 +925,7 @@ static int fse_reload_base_vspace_of(const struct silofs_fs_env *fse,
 	err = silofs_sbi_stage_spmaps_at(sbi, &vaddr, stg_mode, &sni, &sli);
 	if (err) {
 		log_err("failed to reload: vspace=%d err=%d", vspace, err);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -969,7 +969,7 @@ static int fse_format_zero_vspace_of(const struct silofs_fs_env *fse,
 	voff = vaddr_off(vi_vaddr(vi));
 	if (voff != 0) {
 		log_err("bad offset: vspace=%d voff=%ld", vspace, voff);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }

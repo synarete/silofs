@@ -619,7 +619,7 @@ static int check_xaccess_parent(const struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	if (!ii_isdir(parent_ii)) {
-		return -EFSCORRUPTED; /* XXX */
+		return -SILOFS_EFSCORRUPTED; /* XXX */
 	}
 	err = silofs_do_access(fs_ctx, parent_ii, X_OK);
 	if (err) {
@@ -936,7 +936,7 @@ static int check_parent_dir_ii(const struct silofs_inode_info *ii)
 		return err;
 	}
 	if (!ii_isdir(parent_ii)) {
-		return -EFSCORRUPTED; /* XXX */
+		return -SILOFS_EFSCORRUPTED; /* XXX */
 	}
 	return 0;
 }

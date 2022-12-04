@@ -1425,12 +1425,12 @@ static int fic_recheck_finode(const struct silofs_file_ctx *f_ctx,
 	}
 	if ((height < 2) || (height > 16)) {
 		log_err("illegal height: height=%lu ino=%lu", height, f_ino);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	/* TODO: refine me when having FICLONE + meta-data */
 	if (r_ino != f_ino) {
 		log_err("bad finode ino: r_ino=%lu f_ino=%lu", r_ino, f_ino);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	fni->fn_vi.v_recheck = true;
 	return 0;
@@ -1750,7 +1750,7 @@ static int fic_stage_by_tree_map(const struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	}
-	return -EFSCORRUPTED;
+	return -SILOFS_EFSCORRUPTED;
 }
 
 static int fic_read_leaf_by_copy(struct silofs_file_ctx *f_ctx,
@@ -2359,7 +2359,7 @@ static int fic_require_tree_path(const struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	}
-	return -EFSCORRUPTED;
+	return -SILOFS_EFSCORRUPTED;
 }
 
 static int fic_require_tree(const struct silofs_file_ctx *f_ctx,
@@ -3439,7 +3439,7 @@ static int fic_reserve_leaves(struct silofs_file_ctx *f_ctx)
 			return err;
 		}
 	}
-	return -EFSCORRUPTED;
+	return -SILOFS_EFSCORRUPTED;
 }
 
 static int fic_reserve_by_tree_map(struct silofs_file_ctx *f_ctx)
@@ -4368,25 +4368,25 @@ int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn)
 		return err;
 	}
 	if ((ftn_beg(ftn) < 0) || (ftn_end(ftn) < 0)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	if (ftn_beg(ftn) >= ftn_end(ftn)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	if ((height <= 1) || (height > 7)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	spbh = ftn_span_by_height(ftn, height);
 	if (span != spbh) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	child_stype = ftn_child_stype(ftn);
 	ftn_child_stype_by_height(ftn, height, &expect_stype);
 	if (!stype_isequal(child_stype, expect_stype)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	if (ftn_isbottom(ftn) && !stype_isdatabk(child_stype)) {
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }

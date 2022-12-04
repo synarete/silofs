@@ -18,6 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/fsdef.h>
 #include <silofs/ioctls.h>
+#include <silofs/errors.h>
 #include <silofs/types.h>
 #include <silofs/address.h>
 #include <silofs/crypto.h>
@@ -339,12 +340,12 @@ static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
 	magic = bsec1k_magic(bsc);
 	if (magic != SILOFS_BOOT_RECORD_MAGIC) {
 		log_dbg("bad bootsec magic: 0x%lx", magic);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	version = bsec1k_version(bsc);
 	if (version != SILOFS_FMT_VERSION) {
 		log_dbg("bad bootsec version: %lu", version);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -358,7 +359,7 @@ static int bsec1k_check_sb_uaddr(const struct silofs_bootsec1k *bsc)
 	    (uaddr.height != SILOFS_HEIGHT_SUPER)) {
 		log_dbg("bad bootsec sb-uaddr: stype=%d height=%d",
 		        (int)uaddr.stype, (int)uaddr.height);
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
@@ -433,7 +434,8 @@ static int bsec1k_check_hash(const struct silofs_bootsec1k *bsc,
 	bsec1k_hash(bsc, &hash[0]);
 	bsec1k_calc_hash(bsc, md, &hash[1]);
 
-	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -EFSCORRUPTED;
+	return silofs_hash256_isequal(&hash[0], &hash[1]) ?
+	       0 : -SILOFS_EFSCORRUPTED;
 }
 
 int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,

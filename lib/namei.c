@@ -122,7 +122,7 @@ static int dii_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
 		*out_hash = dii_namehash_by_xxh64(dir_ii, nbuf->name, nlen);
 		break;
 	default:
-		return -EFSCORRUPTED;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }

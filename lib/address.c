@@ -924,10 +924,6 @@ void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
 {
 	silofs_bkaddr_by_off(&oaddr->bka, blobid, off);
 	if (blobid->size && !off_isnull(off)) {
-		silofs_assert_lt(off, blobid->size);
-		silofs_assert_le(off_end(off, len), blobid->size);
-		silofs_assert_le(len, SILOFS_BK_SIZE);
-
 		oaddr->len = len;
 		oaddr->pos = silofs_blobid_pos(blobid, off);
 	} else {

@@ -238,12 +238,12 @@ static void dsek_mkfifo(struct silofs_dset *dset)
 	const struct silofs_avl *avl = &dset->ds_avl;
 
 	dset->ds_siq = NULL;
+	itr = silofs_avl_begin(avl);
 	end = silofs_avl_end(avl);
-	itr = silofs_avl_rbegin(avl);
 	while (itr != end) {
 		si = avl_node_to_si(itr);
 		dset_push_front_siq(dset, si);
-		itr = silofs_avl_prev(avl, itr);
+		itr = silofs_avl_next(avl, itr);
 	}
 }
 

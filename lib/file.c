@@ -762,8 +762,8 @@ static int fic_stage_ubk(const struct silofs_file_ctx *f_ctx,
                          const struct silofs_vaddr *vaddr,
                          struct silofs_ubk_info **out_ubki)
 {
-	return silofs_sbi_stage_ubk_at(f_ctx->sbi, vaddr,
-	                               f_ctx->stg_mode, out_ubki);
+	return silofs_stage_ubk_of(f_ctx->task, vaddr,
+	                           f_ctx->stg_mode, out_ubki);
 }
 
 static int
@@ -1294,7 +1294,7 @@ fic_probe_unwritten_at(const struct silofs_file_ctx *f_ctx,
 
 	*out_res = false;
 	if (!vaddr_isnull(vaddr)) {
-		err = silofs_sbi_test_unwritten(f_ctx->sbi, vaddr, out_res);
+		err = silofs_test_unwritten_at(f_ctx->task, vaddr, out_res);
 	}
 	return err;
 }
@@ -1325,8 +1325,8 @@ static int fic_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
-	err = silofs_sbi_stage_vnode(f_ctx->sbi, vaddr, f_ctx->stg_mode,
-	                             ii_ino(f_ctx->ii), &vi);
+	err = silofs_stage_vnode(f_ctx->task, vaddr, f_ctx->stg_mode,
+	                         ii_ino(f_ctx->ii), &vi);
 	if (err) {
 		return err;
 	}
@@ -1444,8 +1444,8 @@ static int fic_stage_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
-	err = silofs_sbi_stage_vnode(f_ctx->sbi, vaddr, f_ctx->stg_mode,
-	                             ii_ino(f_ctx->ii), &vi);
+	err = silofs_stage_vnode(f_ctx->task, vaddr, f_ctx->stg_mode,
+	                         ii_ino(f_ctx->ii), &vi);
 	if (err) {
 		return err;
 	}
@@ -2036,9 +2036,7 @@ int silofs_do_read(const struct silofs_task *task,
 static int fic_clear_unwritten_at(const struct silofs_file_ctx *f_ctx,
                                   const struct silofs_vaddr *vaddr)
 {
-	silofs_assert(vaddr_isdata(vaddr));
-
-	return silofs_sbi_clear_unwritten(f_ctx->sbi, vaddr);
+	return silofs_clear_unwritten_at(f_ctx->task, vaddr);
 }
 
 static int fic_clear_unwritten_of(const struct silofs_file_ctx *f_ctx,
@@ -2063,7 +2061,7 @@ static int fic_claim_data_space(const struct silofs_file_ctx *f_ctx,
 	int err;
 
 	dqid = ino_to_dqid(ii_ino(f_ctx->ii));
-	err = silofs_sbi_claim_vspace(f_ctx->sbi, stype, dqid, &voa);
+	err = silofs_claim_vspace(f_ctx->task, stype, dqid, &voa);
 	if (err) {
 		return err;
 	}
@@ -2074,13 +2072,13 @@ static int fic_claim_data_space(const struct silofs_file_ctx *f_ctx,
 static int fic_share_data_space(const struct silofs_file_ctx *f_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_sbi_addref_vspace(f_ctx->sbi, vaddr);
+	return silofs_addref_vspace(f_ctx->task, vaddr);
 }
 
 static int fic_reclaim_data_space(const struct silofs_file_ctx *f_ctx,
                                   const struct silofs_vaddr *vaddr)
 {
-	return silofs_sbi_reclaim_vspace(f_ctx->sbi, vaddr);
+	return silofs_reclaim_vspace(f_ctx->task, vaddr);
 }
 
 static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
@@ -2091,7 +2089,7 @@ static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
 
 	silofs_assert(vaddr_isdata(vaddr));
 
-	err = silofs_sbi_test_lastref(f_ctx->sbi, vaddr, &last);
+	err = silofs_test_lastref_at(f_ctx->task, vaddr, &last);
 	if (err) {
 		return err;
 	}
@@ -2101,7 +2099,7 @@ static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	}
-	err = silofs_sbi_remove_vnode_at(f_ctx->sbi, vaddr);
+	err = silofs_remove_vnode_at(f_ctx->task, vaddr);
 	if (err) {
 		return err;
 	}
@@ -2115,8 +2113,8 @@ static int fic_spawn_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
-	err = silofs_sbi_spawn_vnode(f_ctx->sbi, SILOFS_STYPE_FTNODE,
-	                             ii_ino(f_ctx->ii), &vi);
+	err = silofs_spawn_vnode(f_ctx->task, SILOFS_STYPE_FTNODE,
+	                         ii_ino(f_ctx->ii), &vi);
 	if (err) {
 		return err;
 	}
@@ -2129,7 +2127,7 @@ static int fic_spawn_finode(const struct silofs_file_ctx *f_ctx,
 static int fic_remove_finode(const struct silofs_file_ctx *f_ctx,
                              struct silofs_finode_info *fni)
 {
-	return silofs_sbi_remove_vnode(f_ctx->sbi, &fni->fn_vi);
+	return silofs_remove_vnode(f_ctx->task, &fni->fn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2495,10 +2493,9 @@ fpr_write_to_leaf(const struct silofs_fpos_ref *fpr, size_t *out_len)
 
 static int fpr_detect_shared(struct silofs_fpos_ref *fpr)
 {
-	struct silofs_sb_info *sbi = fpr->f_ctx->sbi;
-
 	return (!fpr->tree || !fpr->has_data || fpr->shared) ? 0 :
-	       silofs_sbi_test_shared(sbi, &fpr->vaddr, &fpr->shared);
+	       silofs_test_shared_at(fpr->f_ctx->task, &fpr->vaddr,
+	                             &fpr->shared);
 }
 
 static int
@@ -2960,11 +2957,13 @@ static int fic_drop_data_and_meta(struct silofs_file_ctx *f_ctx)
 	return 0;
 }
 
-int silofs_drop_reg(struct silofs_inode_info *ii)
+int silofs_drop_reg(const struct silofs_task *task,
+                    struct silofs_inode_info *ii)
 {
 	struct silofs_file_ctx f_ctx = {
-		.uber = ii_uber(ii),
-		.sbi = ii_sbi(ii),
+		.task = task,
+		.uber = task->t_uber,
+		.sbi = task_sbi(task),
 		.ii = ii,
 		.stg_mode = SILOFS_STAGE_RW,
 	};
@@ -3038,7 +3037,7 @@ static int fpr_discard_entire(const struct silofs_fpos_ref *fpr)
 
 static int fpr_discard_by_set_unwritten(const struct silofs_fpos_ref *fpr)
 {
-	return silofs_sbi_mark_unwritten(fpr->f_ctx->sbi, &fpr->vaddr);
+	return silofs_mark_unwritten_at(fpr->f_ctx->task, &fpr->vaddr);
 }
 
 static int fpr_discard_data_at(struct silofs_fpos_ref *fpr)

@@ -28,8 +28,9 @@ struct silofs_ino_set {
 };
 
 struct silofs_it_ctx {
-	struct silofs_sb_info *sbi;
-	struct silofs_itable_info  *itbi;
+	const struct silofs_task       *task;
+	struct silofs_sb_info          *sbi;
+	struct silofs_itable_info      *itbi;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -549,8 +550,13 @@ static struct silofs_itable_info *itbi_of(const struct silofs_sb_info *sbi)
 	return unconst(itbi);
 }
 
-static const struct silofs_vaddr *itbi_root(const struct silofs_itable_info
-                *itbi)
+static struct silofs_itable_info *itbi_of2(const struct silofs_task *task)
+{
+	return itbi_of(task_sbi(task));
+}
+
+static const struct silofs_vaddr *
+itbi_root(const struct silofs_itable_info *itbi)
 {
 	return &itbi->it_root_itb;
 }
@@ -726,6 +732,15 @@ static int itbi_resolve_real_ino(const struct silofs_itable_info *itbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void itc_setup(struct silofs_it_ctx *it_ctx,
+                      const struct silofs_task *task)
+{
+	silofs_memzero(it_ctx, sizeof(*it_ctx));
+	it_ctx->task = task;
+	it_ctx->sbi = task_sbi(task);
+	it_ctx->itbi = itbi_of(it_ctx->sbi);
+}
+
 static const struct silofs_vaddr *
 itc_treeroot(const struct silofs_it_ctx *it_ctx)
 {
@@ -783,7 +798,7 @@ static int itc_spawn_itnode(const struct silofs_it_ctx *it_ctx,
 	struct silofs_itnode_info *itni = NULL;
 	int err;
 
-	err = silofs_sbi_spawn_vnode(it_ctx->sbi, SILOFS_STYPE_ITNODE, 0, &vi);
+	err = silofs_spawn_vnode(it_ctx->task, SILOFS_STYPE_ITNODE, 0, &vi);
 	if (err) {
 		return err;
 	}
@@ -810,7 +825,7 @@ static int itc_spawn_setup_itnode(const struct silofs_it_ctx *it_ctx,
 static int itc_remove_itnode(const struct silofs_it_ctx *it_ctx,
                              struct silofs_itnode_info *itni)
 {
-	return silofs_sbi_remove_vnode(it_ctx->sbi, &itni->itn_vi);
+	return silofs_remove_vnode(it_ctx->task, &itni->itn_vi);
 }
 
 static int recheck_itnode(struct silofs_itnode_info *itni)
@@ -832,11 +847,12 @@ static int itc_stage_itnode(const struct silofs_it_ctx *it_ctx,
 	struct silofs_itnode_info *itni = NULL;
 	int err;
 
-	err = silofs_sbi_stage_vnode(it_ctx->sbi, vaddr, stg_mode, 0, &vi);
+	err = silofs_stage_vnode(it_ctx->task, vaddr, stg_mode, 0, &vi);
 	if (err) {
 		return err;
 	}
 	itni = silofs_itni_from_vi(vi);
+
 	silofs_itni_rebind_view(itni);
 	err = recheck_itnode(itni);
 	if (err) {
@@ -1109,17 +1125,15 @@ static int itc_next_iaddr_for(const struct silofs_it_ctx *it_ctx,
 	return 0;
 }
 
-int silofs_acquire_ino(struct silofs_sb_info *sbi,
+int silofs_acquire_ino(const struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
                        struct silofs_iaddr *out_iaddr)
 {
-	const struct silofs_it_ctx it_ctx = {
-		.sbi = sbi,
-		.itbi = itbi_of(sbi),
-	};
+	struct silofs_it_ctx it_ctx;
 	struct silofs_iaddr iaddr;
 	int err;
 
+	itc_setup(&it_ctx, task);
 	err = itc_next_iaddr_for(&it_ctx, vaddr, &iaddr);
 	if (err) {
 		return err;
@@ -1133,15 +1147,13 @@ int silofs_acquire_ino(struct silofs_sb_info *sbi,
 	return 0;
 }
 
-int silofs_discard_ino(struct silofs_sb_info *sbi, ino_t xino)
+int silofs_discard_ino(const struct silofs_task *task, ino_t xino)
 {
-	const struct silofs_it_ctx it_ctx = {
-		.sbi = sbi,
-		.itbi = itbi_of(sbi),
-	};
+	struct silofs_it_ctx it_ctx;
 	ino_t ino;
 	int err;
 
+	itc_setup(&it_ctx, task);
 	err = itc_resolvs_real_ino(&it_ctx, xino, &ino);
 	if (err) {
 		return err;
@@ -1154,16 +1166,14 @@ int silofs_discard_ino(struct silofs_sb_info *sbi, ino_t xino)
 	return 0;
 }
 
-int silofs_resolve_iaddr(struct silofs_sb_info *sbi, ino_t xino,
+int silofs_resolve_iaddr(const struct silofs_task *task, ino_t xino,
                          struct silofs_iaddr *out_iaddr)
 {
-	const struct silofs_it_ctx it_ctx = {
-		.sbi = sbi,
-		.itbi = itbi_of(sbi),
-	};
+	struct silofs_it_ctx it_ctx;
 	ino_t ino;
 	int err;
 
+	itc_setup(&it_ctx, task);
 	err = itc_resolvs_real_ino(&it_ctx, xino, &ino);
 	if (err) {
 		return err;
@@ -1185,12 +1195,13 @@ int silofs_resolve_iaddr(struct silofs_sb_info *sbi, ino_t xino,
 static int itc_scan_subtree(const struct silofs_it_ctx *it_ctx,
                             struct silofs_itnode_info *itni);
 
-int silofs_format_itable_root(struct silofs_sb_info *sbi,
+int silofs_format_itable_root(const struct silofs_task *task,
                               struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_it_ctx it_ctx = {
-		.sbi = sbi,
-		.itbi = itbi_of(sbi),
+		.task = task,
+		.sbi = task_sbi(task),
+		.itbi = itbi_of2(task),
 	};
 	struct silofs_itnode_info *itni = NULL;
 	int err;
@@ -1290,8 +1301,7 @@ static int itc_parse_itable_top(const struct silofs_it_ctx *it_ctx,
 static int itc_stage_rdonly_inode(const struct silofs_it_ctx *it_ctx,
                                   ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_sbi_stage_inode(it_ctx->sbi, ino,
-	                              SILOFS_STAGE_RO, out_ii);
+	return silofs_stage_inode(it_ctx->task, ino, SILOFS_STAGE_RO, out_ii);
 }
 
 static int itc_scan_stage_root_inode_by(const struct silofs_it_ctx *it_ctx,
@@ -1362,35 +1372,10 @@ static int itc_reload_scan_itable(const struct silofs_it_ctx *it_ctx,
 	return 0;
 }
 
-int silofs_reload_itable_at(struct silofs_sb_info *sbi,
-                            const struct silofs_vaddr *vaddr)
+static int itc_bind_rootdir(const struct silofs_it_ctx *it_ctx,
+                            const struct silofs_inode_info *ii)
 {
-	struct silofs_inode_info *root_ii = NULL;
-	struct silofs_it_ctx it_ctx = {
-		.sbi = sbi,
-		.itbi = itbi_of(sbi),
-	};
-	int err;
-
-	err = itc_reload_scan_itable(&it_ctx, vaddr);
-	if (err) {
-		return err;
-	}
-	err = itc_scan_stage_root_inode(&it_ctx, &root_ii);
-	if (err) {
-		return err;
-	}
-	err = silofs_bind_rootdir(it_ctx.sbi, root_ii);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_bind_rootdir(struct silofs_sb_info *sbi,
-                        const struct silofs_inode_info *ii)
-{
-	struct silofs_itable_info *itbi = itbi_of(sbi);
+	struct silofs_itable_info *itbi = it_ctx->itbi;
 	const ino_t ino = ii_ino(ii);
 	int err;
 
@@ -1401,13 +1386,43 @@ int silofs_bind_rootdir(struct silofs_sb_info *sbi,
 	return err;
 }
 
-void silofs_drop_itable_cache(struct silofs_sb_info *sbi)
+int silofs_bind_rootdir_to(const struct silofs_task *task,
+                           const struct silofs_inode_info *ii)
 {
-	struct silofs_it_ctx it_ctx = {
-		.sbi = sbi,
-		.itbi = itbi_of(sbi),
-	};
+	struct silofs_it_ctx it_ctx;
 
+	itc_setup(&it_ctx, task);
+	return itc_bind_rootdir(&it_ctx, ii);
+}
+
+int silofs_reload_itable_at(const struct silofs_task *task,
+                            const struct silofs_vaddr *vaddr)
+{
+	struct silofs_it_ctx it_ctx;
+	struct silofs_inode_info *root_ii = NULL;
+	int err;
+
+	itc_setup(&it_ctx, task);
+	err = itc_reload_scan_itable(&it_ctx, vaddr);
+	if (err) {
+		return err;
+	}
+	err = itc_scan_stage_root_inode(&it_ctx, &root_ii);
+	if (err) {
+		return err;
+	}
+	err = itc_bind_rootdir(&it_ctx, root_ii);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+void silofs_drop_itable_cache(const struct silofs_task *task)
+{
+	struct silofs_it_ctx it_ctx;
+
+	itc_setup(&it_ctx, task);
 	itc_drop_cache(&it_ctx);
 }
 
@@ -1415,6 +1430,15 @@ void silofs_relax_inomap_of(struct silofs_sb_info *sbi, int flags)
 {
 	silofs_inomap_relax(&sbi->sb_itbi.it_inomap, flags);
 }
+
+void silofs_relax_inomap(const struct silofs_task *task, int flags)
+{
+	struct silofs_it_ctx it_ctx;
+
+	itc_setup(&it_ctx, task);
+	silofs_inomap_relax(&it_ctx.itbi->it_inomap, flags);
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

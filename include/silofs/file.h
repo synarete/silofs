@@ -22,7 +22,8 @@
 
 void silofs_setup_reg(struct silofs_inode_info *ii);
 
-int silofs_drop_reg(struct silofs_inode_info *ii);
+int silofs_drop_reg(const struct silofs_task *task,
+                    struct silofs_inode_info *ii);
 
 int silofs_do_write(const struct silofs_task *task,
                     struct silofs_inode_info *ii,

@@ -274,12 +274,11 @@ static int spawn_inode(const struct silofs_task *task,
                        mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii)
 {
-	struct silofs_sb_info *sbi = ii_sbi(parent_dii);
 	const ino_t parent_ino = ii_ino(parent_dii);
 	const mode_t parent_mode = ii_mode(parent_dii);
 
-	return silofs_sbi_spawn_inode(sbi, creds_of(task), parent_ino,
-	                              parent_mode, mode, rdev, out_ii);
+	return silofs_spawn_inode(task, parent_ino, parent_mode,
+	                          mode, rdev, out_ii);
 }
 
 static int spawn_dir_inode(const struct silofs_task *task,
@@ -328,11 +327,6 @@ static int spawn_inode_by_mode(const struct silofs_task *task,
 		err = -EOPNOTSUPP;
 	}
 	return err;
-}
-
-static int remove_inode(struct silofs_inode_info *ii)
-{
-	return silofs_sbi_remove_inode(ii_sbi(ii), ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -530,7 +524,6 @@ static int stage_by_name(const struct silofs_task *task,
                          enum silofs_stage_mode stg_mode,
                          struct silofs_inode_info **out_ii)
 {
-	struct silofs_sb_info *sbi = ii_sbi(dir_ii);
 	ino_t ino;
 	int err;
 
@@ -538,7 +531,7 @@ static int stage_by_name(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_stage_inode(sbi, ino, stg_mode, out_ii);
+	err = silofs_stage_inode(task, ino, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}
@@ -688,7 +681,7 @@ static int do_add_dentry(const struct silofs_task *task,
 	}
 	err = silofs_add_dentry(task, dir_ii, &name, ii);
 	if (err && del_upon_failure) {
-		remove_inode(ii);
+		silofs_remove_inode(task, ii);
 	}
 	return err;
 }
@@ -951,35 +944,37 @@ int silofs_do_open(const struct silofs_task *task,
 	return err;
 }
 
-static int drop_ispecific(struct silofs_inode_info *ii)
+static int drop_ispecific(const struct silofs_task *task,
+                          struct silofs_inode_info *ii)
 {
 	int err;
 
 	if (ii_isdir(ii)) {
-		err = silofs_drop_dir(ii);
+		err = silofs_drop_dir(task, ii);
 	} else if (ii_isreg(ii)) {
-		err = silofs_drop_reg(ii);
+		err = silofs_drop_reg(task, ii);
 	} else if (ii_islnk(ii)) {
-		err = silofs_drop_symlink(ii);
+		err = silofs_drop_symlink(task, ii);
 	} else {
 		err = 0;
 	}
 	return err;
 }
 
-static int drop_unlinked(struct silofs_inode_info *ii)
+static int drop_unlinked(const struct silofs_task *task,
+                         struct silofs_inode_info *ii)
 {
 	int err;
 
-	err = silofs_drop_xattr(ii);
+	err = silofs_drop_xattr(task, ii);
 	if (err) {
 		return err;
 	}
-	err = drop_ispecific(ii);
+	err = drop_ispecific(task, ii);
 	if (err) {
 		return err;
 	}
-	err = remove_inode(ii);
+	err = silofs_remove_inode(task, ii);
 	if (err) {
 		return err;
 	}
@@ -1036,7 +1031,7 @@ static int try_prune_inode(const struct silofs_task *task,
 		ii_undirtify(ii);
 	}
 	if (ii_isdropable(ii)) {
-		return drop_unlinked(ii);
+		return drop_unlinked(task, ii);
 	}
 	if (update_ctime) {
 		ii_update_itimes(ii, creds_of(task), SILOFS_IATTR_CTIME);
@@ -1372,7 +1367,7 @@ static int create_lnk_inode(const struct silofs_task *task,
 	}
 	err = silofs_setup_symlink(task, *out_ii, linkpath);
 	if (err) {
-		remove_inode(*out_ii);
+		silofs_remove_inode(task, *out_ii);
 		return err;
 	}
 	return 0;
@@ -1451,21 +1446,6 @@ int silofs_do_symlink(const struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static silofs_dqid_t ii_dqid(const struct silofs_inode_info *ii)
-{
-	return ii->i_vi.v_si.s_dqid;
-}
-
-static int flush_dirty_of(const struct silofs_inode_info *ii, int flags)
-{
-	return silofs_uber_flush_dirty(ii_uber(ii), ii_dqid(ii), flags);
-}
-
-static int flush_dirty_now(struct silofs_uber *uber)
-{
-	return silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, SILOFS_F_NOW);
-}
-
 static int check_opendir(const struct silofs_task *task,
                          struct silofs_inode_info *dir_ii)
 {
@@ -1532,7 +1512,8 @@ static int check_releasedir(const struct silofs_inode_info *dir_ii)
 	return 0;
 }
 
-static int do_releasedir(struct silofs_inode_info *dir_ii, bool flush)
+static int do_releasedir(const struct silofs_task *task,
+                         struct silofs_inode_info *dir_ii, bool flush)
 {
 	const int flags = flush ? SILOFS_F_NOW : SILOFS_F_RELEASE;
 	int err;
@@ -1541,7 +1522,7 @@ static int do_releasedir(struct silofs_inode_info *dir_ii, bool flush)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(dir_ii, flags);
+	err = silofs_flush_dirty_of(task, dir_ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1555,7 +1536,7 @@ int silofs_do_releasedir(const struct silofs_task *task,
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_releasedir(dir_ii, flush);
+	err = do_releasedir(task, dir_ii, flush);
 	ii_decref(dir_ii);
 
 	return !err ? try_prune_inode(task, dir_ii, false) : err;
@@ -1581,7 +1562,8 @@ static int check_release(const struct silofs_inode_info *ii)
 	return check_notdir_and_opened(ii);
 }
 
-static int do_release(struct silofs_inode_info *ii, bool flush)
+static int do_release(const struct silofs_task *task,
+                      struct silofs_inode_info *ii, bool flush)
 {
 	const int flags = flush ? SILOFS_F_NOW : SILOFS_F_RELEASE;
 	int err;
@@ -1590,7 +1572,7 @@ static int do_release(struct silofs_inode_info *ii, bool flush)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(ii, flags);
+	err = silofs_flush_dirty_of(task, ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1604,7 +1586,7 @@ int silofs_do_release(const struct silofs_task *task,
 	int err;
 
 	ii_incref(ii);
-	err = do_release(ii, flush);
+	err = do_release(task, ii, flush);
 	ii_decref(ii);
 
 	return !err ? try_prune_inode(task, ii, false) : err;
@@ -1625,7 +1607,8 @@ static int check_fsyncdir(const struct silofs_inode_info *dir_ii)
 	return 0;
 }
 
-static int do_fsyncdir(const struct silofs_inode_info *dir_ii)
+static int do_fsyncdir(const struct silofs_task *task,
+                       const struct silofs_inode_info *dir_ii)
 {
 	int err;
 
@@ -1633,7 +1616,7 @@ static int do_fsyncdir(const struct silofs_inode_info *dir_ii)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(dir_ii, SILOFS_F_FSYNC);
+	err = silofs_flush_dirty_of(task, dir_ii, SILOFS_F_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1646,12 +1629,10 @@ int silofs_do_fsyncdir(const struct silofs_task *task,
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_fsyncdir(dir_ii);
+	err = do_fsyncdir(task, dir_ii);
 	ii_decref(dir_ii);
 
-	silofs_unused(task);
 	silofs_unused(dsync);
-
 	return err;
 }
 
@@ -1660,7 +1641,8 @@ static int check_fsync(const struct silofs_inode_info *ii)
 	return check_notdir_and_opened(ii);
 }
 
-static int do_fsync(const struct silofs_inode_info *ii)
+static int do_fsync(const struct silofs_task *task,
+                    const struct silofs_inode_info *ii)
 {
 	int err;
 
@@ -1668,7 +1650,7 @@ static int do_fsync(const struct silofs_inode_info *ii)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(ii, SILOFS_F_FSYNC);
+	err = silofs_flush_dirty_of(task, ii, SILOFS_F_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1688,12 +1670,10 @@ int silofs_do_fsync(const struct silofs_task *task,
 	int err;
 
 	ii_incref(ii);
-	err = do_fsync(ii);
+	err = do_fsync(task, ii);
 	ii_decref(ii);
 
-	silofs_unused(task);
 	silofs_unused(datasync);
-
 	return err;
 }
 
@@ -1704,7 +1684,7 @@ int silofs_do_flush(const struct silofs_task *task,
 	const uid_t uid = creds->xcred.uid;
 	const int flags = (uid == 0) ? SILOFS_F_NOW : 0;
 
-	return flush_dirty_of(ii, flags);
+	return silofs_flush_dirty_of(task, ii, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2290,7 +2270,7 @@ static int do_clone(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
@@ -2298,7 +2278,7 @@ static int do_clone(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
@@ -2323,15 +2303,13 @@ int silofs_do_clone(const struct silofs_task *task,
 
 int silofs_do_inspect(const struct silofs_task *task)
 {
-	struct silofs_uber *uber = task->t_uber;
-	struct silofs_sb_info *sbi = uber->ub_sbi;
 	int err;
 
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
-	err = silofs_walk_inspect_fs(sbi);
+	err = silofs_walk_inspect_fs(task_sbi(task));
 	if (err) {
 		return err;
 	}
@@ -2340,15 +2318,13 @@ int silofs_do_inspect(const struct silofs_task *task)
 
 int silofs_do_unrefs(const struct silofs_task *task)
 {
-	struct silofs_uber *uber = task->t_uber;
-	struct silofs_sb_info *sbi = uber->ub_sbi;
 	int err;
 
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
-	err = silofs_walk_unref_fs(sbi);
+	err = silofs_walk_unref_fs(task_sbi(task));
 	if (err) {
 		return err;
 	}
@@ -2373,7 +2349,7 @@ int silofs_do_pack(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
@@ -2381,7 +2357,7 @@ int silofs_do_pack(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
@@ -2400,7 +2376,7 @@ int silofs_do_unpack(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
@@ -2408,7 +2384,7 @@ int silofs_do_unpack(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_now(uber);
+	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}

@@ -38,7 +38,8 @@ int silofs_do_listxattr(const struct silofs_task *task,
                         struct silofs_inode_info *ii,
                         struct silofs_listxattr_ctx *lxa_ctx);
 
-int silofs_drop_xattr(struct silofs_inode_info *ii);
+int silofs_drop_xattr(const struct silofs_task *task,
+                      struct silofs_inode_info *ii);
 
 int silofs_verify_inode_xattr(const struct silofs_inode *inode);
 

@@ -51,16 +51,15 @@ static void op_unlock_fs(const struct silofs_task *task)
 static int op_flush(const struct silofs_task *task,
                     ino_t ino, int op_flags, int fl_flags)
 {
-	struct silofs_uber *uber = task->t_uber;
 	silofs_dqid_t dqid;
 	int ret = 0;
 
 	if (op_flags & OP_F_ANY) {
 		dqid = SILOFS_DQID_ALL;
-		ret = silofs_uber_flush_dirty(uber, dqid, fl_flags);
+		ret = silofs_flush_dirty(task, dqid, fl_flags);
 	} else if (op_flags & OP_F_INO) {
 		dqid = silofs_ino_to_dqid(ino);
-		ret = silofs_uber_flush_dirty(uber, dqid, fl_flags);
+		ret = silofs_flush_dirty(task, dqid, fl_flags);
 	}
 	return ret;
 }
@@ -72,7 +71,7 @@ static int op_start(const struct silofs_task *task, ino_t ino)
 	op_lock_fs(task);
 	uber->ub_ops.op_time = task->t_oper.op_creds.ts.tv_sec;
 	uber->ub_ops.op_count++;
-	silofs_uber_relax_caches(uber, SILOFS_F_OPSTART);
+	silofs_relax_caches(task, SILOFS_F_OPSTART);
 	return op_flush(task, ino, OP_F_ANY, SILOFS_F_OPSTART);
 }
 
@@ -138,7 +137,7 @@ idsm_of(const struct silofs_task *task)
 
 static const struct silofs_sb_info *sbi_of(const struct silofs_task *task)
 {
-	return task->t_uber->ub_sbi;
+	return task_sbi(task);
 }
 
 static const struct silofs_creds *creds_of(const struct silofs_task *task)
@@ -255,22 +254,19 @@ static int
 op_stage_cacheonly_inode(const struct silofs_task *task,
                          ino_t ino, struct silofs_inode_info **out_ii)
 {
-	return silofs_sbi_stage_cached_ii(task->t_uber->ub_sbi,
-	                                  ino, out_ii);
+	return silofs_stage_cached_inode(task, ino, out_ii);
 }
 
 static int op_stage_rdo_inode(const struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return silofs_sbi_stage_inode(task->t_uber->ub_sbi,
-	                              ino, SILOFS_STAGE_RO, out_ii);
+	return silofs_stage_inode(task, ino, SILOFS_STAGE_RO, out_ii);
 }
 
 static int op_stage_mut_inode(const struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return silofs_sbi_stage_inode(task->t_uber->ub_sbi,
-	                              ino, SILOFS_STAGE_RW, out_ii);
+	return silofs_stage_inode(task, ino, SILOFS_STAGE_RW, out_ii);
 }
 
 static int
@@ -1567,16 +1563,15 @@ int silofs_fs_rdwr_post(const struct silofs_task *task,
 
 int silofs_fs_timedout(const struct silofs_task *task, int flags)
 {
-	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = op_start(task, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
-	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, flags);
+	err = silofs_flush_dirty(task, SILOFS_DQID_ALL, flags);
 	ok_or_goto_out(err);
 
-	silofs_uber_relax_caches(uber, flags);
+	silofs_relax_caches(task, flags);
 out:
 	return op_finish(task, SILOFS_INO_NULL, 0, err);
 }

@@ -605,7 +605,6 @@ static int check_xaccess_parent(const struct silofs_task *task,
                                 const struct silofs_inode_info *ii)
 {
 	struct silofs_inode_info *parent_ii = NULL;
-	struct silofs_sb_info *sbi = ii_sbi(ii);
 	ino_t parent;
 	int err;
 
@@ -613,8 +612,7 @@ static int check_xaccess_parent(const struct silofs_task *task,
 		return 0;
 	}
 	parent = ii_parent(ii);
-	err = silofs_sbi_stage_inode(sbi, parent,
-	                             SILOFS_STAGE_RO, &parent_ii);
+	err = silofs_stage_inode(task, parent, SILOFS_STAGE_RO, &parent_ii);
 	if (err) {
 		return err;
 	}
@@ -916,12 +914,12 @@ int silofs_do_utimens(const struct silofs_task *task,
 	return err;
 }
 
-static int check_parent_dir_ii(const struct silofs_inode_info *ii)
+static int check_parent_dir_ii(const struct silofs_task *task,
+                               const struct silofs_inode_info *ii)
 {
-	int err;
-	ino_t parent;
 	struct silofs_inode_info *parent_ii = NULL;
-	struct silofs_sb_info *sbi = ii_sbi(ii);
+	ino_t parent;
+	int err;
 
 	if (!ii_isdir(ii) || ii_isrootd(ii)) {
 		return 0;
@@ -930,8 +928,7 @@ static int check_parent_dir_ii(const struct silofs_inode_info *ii)
 	if (ino_isnull(parent)) {
 		return ii->i_nopen ? 0 : -ENOENT;
 	}
-	err = silofs_sbi_stage_inode(sbi, parent,
-	                             SILOFS_STAGE_RO, &parent_ii);
+	err = silofs_stage_inode(task, parent, SILOFS_STAGE_RO, &parent_ii);
 	if (err) {
 		return err;
 	}
@@ -1058,14 +1055,7 @@ static void silofs_statx_of(const struct silofs_inode_info *ii,
 static int check_getattr(const struct silofs_task *task,
                          const struct silofs_inode_info *ii)
 {
-	int err;
-
-	unused(task);
-	err = check_parent_dir_ii(ii);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return check_parent_dir_ii(task, ii);
 }
 
 static int do_getattr(const struct silofs_task *task,

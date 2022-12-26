@@ -17,29 +17,28 @@
 #ifndef SILOFS_SPCLAIM_H_
 #define SILOFS_SPCLAIM_H_
 
-int silofs_sbi_claim_vnode(struct silofs_sb_info *sbi,
-                           enum silofs_stype stype, silofs_dqid_t dqid,
-                           struct silofs_vnode_info **out_vi);
 
-int silofs_sbi_claim_inode(struct silofs_sb_info *sbi,
-                           struct silofs_inode_info **out_ii);
+int silofs_claim_vspace(const struct silofs_task *task,
+                        enum silofs_stype stype, silofs_dqid_t dqid,
+                        struct silofs_voaddr *out_voa);
 
-int silofs_sbi_claim_vspace(struct silofs_sb_info *sbi,
-                            enum silofs_stype stype, silofs_dqid_t dqid,
-                            struct silofs_voaddr *out_ova);
+int silofs_reclaim_vspace(const struct silofs_task *task,
+                          const struct silofs_vaddr *vaddr);
 
-int silofs_sbi_reclaim_vspace(struct silofs_sb_info *sbi,
-                              const struct silofs_vaddr *vaddr);
+int silofs_claim_vnode(const struct silofs_task *task,
+                       enum silofs_stype stype, silofs_dqid_t dqid,
+                       struct silofs_vnode_info **out_vi);
 
-int silofs_sbi_addref_vspace(struct silofs_sb_info *sbi,
-                             const struct silofs_vaddr *vaddr);
+int silofs_claim_inode(const struct silofs_task *task,
+                       struct silofs_inode_info **out_ii);
 
-int silofs_sbi_recache_vspace(struct silofs_sb_info *sbi,
-                              const struct silofs_vaddr *vaddr);
+int silofs_addref_vspace(const struct silofs_task *task,
+                         const struct silofs_vaddr *vaddr);
 
-int silofs_sbi_rescan_free_vspace(struct silofs_sb_info *sbi,
-                                  enum silofs_stype stype);
+int silofs_rescan_vspace_of(const struct silofs_task *task,
+                            enum silofs_stype stype);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+int silofs_recache_vspace(const struct silofs_task *task,
+                          const struct silofs_vaddr *vaddr);
 
 #endif /* SILOFS_SPCLAIM_H_ */

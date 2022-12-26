@@ -56,7 +56,8 @@ int silofs_do_readdirplus(const struct silofs_task *task,
                           struct silofs_inode_info *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx);
 
-int silofs_drop_dir(struct silofs_inode_info *dir_ii);
+int silofs_drop_dir(const struct silofs_task *task,
+                    struct silofs_inode_info *dir_ii);
 
 
 #endif /* SILOFS_DIR_H_ */

@@ -42,7 +42,7 @@ struct silofs_dir_entry_info {
 };
 
 struct silofs_dir_ctx {
-	const struct silofs_task     *task;
+	const struct silofs_task       *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *dir_ii;
 	struct silofs_inode_info       *parent_ii;
@@ -1223,8 +1223,8 @@ static int dic_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
-	ret = silofs_sbi_stage_vnode(d_ctx->sbi, vaddr, d_ctx->stg_mode,
-	                             ii_ino(d_ctx->dir_ii), &vi);
+	ret = silofs_stage_vnode(d_ctx->task, vaddr, d_ctx->stg_mode,
+	                         ii_ino(d_ctx->dir_ii), &vi);
 	if (ret) {
 		goto out;
 	}
@@ -1271,8 +1271,8 @@ static int dic_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_sbi_spawn_vnode(d_ctx->sbi, SILOFS_STYPE_DTNODE,
-	                             ii_ino(d_ctx->dir_ii), &vi);
+	err = silofs_spawn_vnode(d_ctx->task, SILOFS_STYPE_DTNODE,
+	                         ii_ino(d_ctx->dir_ii), &vi);
 	if (err) {
 		return err;
 	}
@@ -1285,7 +1285,7 @@ static int dic_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 static int dic_remove_dnode(const struct silofs_dir_ctx *d_ctx,
                             struct silofs_dnode_info *dni)
 {
-	return silofs_sbi_remove_vnode(d_ctx->sbi, &dni->dn_vi);
+	return silofs_remove_vnode(d_ctx->task, &dni->dn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1711,8 +1711,7 @@ int silofs_add_dentry(const struct silofs_task *task,
 static int dic_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
                            struct silofs_inode_info **out_ii)
 {
-	return silofs_sbi_stage_inode(d_ctx->sbi, ino,
-	                              d_ctx->stg_mode, out_ii);
+	return silofs_stage_inode(d_ctx->task, ino, d_ctx->stg_mode, out_ii);
 }
 
 static int dic_check_stage_parent(struct silofs_dir_ctx *d_ctx)
@@ -2227,13 +2226,15 @@ static int dic_finalize_tree(struct silofs_dir_ctx *d_ctx)
 	return 0;
 }
 
-int silofs_drop_dir(struct silofs_inode_info *dir_ii)
+int silofs_drop_dir(const struct silofs_task *task,
+                    struct silofs_inode_info *dir_ii)
 {
-	int err;
 	struct silofs_dir_ctx d_ctx = {
-		.sbi = ii_sbi(dir_ii),
+		.task = task,
+		.sbi = task_sbi(task),
 		.dir_ii = dir_ii,
 	};
+	int err;
 
 	ii_incref(dir_ii);
 	err = dic_finalize_tree(&d_ctx);

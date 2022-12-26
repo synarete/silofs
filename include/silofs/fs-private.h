@@ -149,6 +149,9 @@
 #define bri_incref(bri)                 silofs_bri_incref(bri)
 #define bri_decref(bri)                 silofs_bri_decref(bri)
 
+#define task_sbi(task)                  silofs_task_sbi(task)
+#define task_creds(task)                silofs_task_creds(task)
+
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
@@ -387,5 +390,18 @@ silofs_sbi_blobid(const struct silofs_sb_info *sbi)
 	return &sbi->sb_ui.u_uaddr.oaddr.bka.blobid;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static inline struct silofs_sb_info *
+silofs_task_sbi(const struct silofs_task *task)
+{
+	return task->t_uber->ub_sbi;
+}
+
+static inline const struct silofs_creds *
+silofs_task_creds(const struct silofs_task *task)
+{
+	return &task->t_oper.op_creds;
+}
 
 #endif /* SILOFS_PRIVATE_H_ */

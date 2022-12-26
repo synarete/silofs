@@ -531,3 +531,27 @@ int silofs_uber_flush_dirty(struct silofs_uber *uber,
 	}
 	return err;
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static silofs_dqid_t ii_dqid(const struct silofs_inode_info *ii)
+{
+	return ii->i_vi.v_si.s_dqid;
+}
+
+int silofs_flush_dirty(const struct silofs_task *task,
+                       silofs_dqid_t dqid, int flags)
+{
+	return silofs_uber_flush_dirty(task->t_uber, dqid, flags);
+}
+
+int silofs_flush_dirty_of(const struct silofs_task *task,
+                          const struct silofs_inode_info *ii, int flags)
+{
+	return silofs_flush_dirty(task, ii_dqid(ii), flags);
+}
+
+int silofs_flush_dirty_now(const struct silofs_task *task)
+{
+	return silofs_flush_dirty(task, SILOFS_DQID_ALL, SILOFS_F_NOW);
+}

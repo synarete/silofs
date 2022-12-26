@@ -25,8 +25,8 @@
 #include <limits.h>
 #include <time.h>
 
-#define OP_F_FLUSH_ALL  1
-#define OP_F_FLUSH_INO  2
+#define OP_F_ANY  1
+#define OP_F_INO  2
 
 #define status_ok(err_) ((err_) == 0)
 
@@ -48,15 +48,32 @@ static void op_unlock_fs(const struct silofs_fs_ctx *fs_ctx)
 	silofs_mutex_unlock(&fs_ctx->fsc_uber->ub_fs_lock);
 }
 
-static int op_start(const struct silofs_fs_ctx *fs_ctx)
+static int op_flush(const struct silofs_fs_ctx *fs_ctx,
+                    ino_t ino, int op_flags, int fl_flags)
+{
+	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
+	silofs_dqid_t dqid;
+	int ret = 0;
+
+	if (op_flags & OP_F_ANY) {
+		dqid = SILOFS_DQID_ALL;
+		ret = silofs_uber_flush_dirty(uber, dqid, fl_flags);
+	} else if (op_flags & OP_F_INO) {
+		dqid = silofs_ino_to_dqid(ino);
+		ret = silofs_uber_flush_dirty(uber, dqid, fl_flags);
+	}
+	return ret;
+}
+
+static int op_start(const struct silofs_fs_ctx *fs_ctx, ino_t ino)
 {
 	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 
 	op_lock_fs(fs_ctx);
-	silofs_uber_relax_caches(uber, SILOFS_F_OPSTART);
 	uber->ub_ops.op_time = fs_ctx->fsc_oper.op_creds.ts.tv_sec;
 	uber->ub_ops.op_count++;
-	return 0;
+	silofs_uber_relax_caches(uber, SILOFS_F_OPSTART);
+	return op_flush(fs_ctx, ino, OP_F_ANY, SILOFS_F_OPSTART);
 }
 
 static void op_probe_duration(const struct silofs_fs_ctx *fs_ctx, int status)
@@ -73,28 +90,12 @@ static void op_probe_duration(const struct silofs_fs_ctx *fs_ctx, int status)
 	}
 }
 
-static int
-op_flush(const struct silofs_fs_ctx *fs_ctx, ino_t ino, int op_flags)
-{
-	silofs_dqid_t dqid;
-	int ret = 0;
-
-	if (op_flags & OP_F_FLUSH_ALL) {
-		dqid = SILOFS_DQID_ALL;
-		ret = silofs_uber_flush_dirty(fs_ctx->fsc_uber, dqid, 0);
-	} else if (op_flags & OP_F_FLUSH_INO) {
-		dqid = silofs_ino_to_dqid(ino);
-		ret = silofs_uber_flush_dirty(fs_ctx->fsc_uber, dqid, 0);
-	}
-	return ret;
-}
-
 static int op_finish(const struct silofs_fs_ctx *fs_ctx,
                      ino_t ino, int op_flags, int err)
 {
 	op_probe_duration(fs_ctx, err);
 	if (!err) {
-		err = op_flush(fs_ctx, ino, op_flags);
+		err = op_flush(fs_ctx, ino, op_flags, 0);
 	}
 	op_unlock_fs(fs_ctx);
 	return err;
@@ -293,7 +294,7 @@ int silofs_fs_forget(struct silofs_fs_ctx *fs_ctx, ino_t ino, size_t nlookup)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -319,7 +320,7 @@ int silofs_fs_statfs(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -345,7 +346,7 @@ int silofs_fs_lookup(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -378,7 +379,7 @@ int silofs_fs_getattr(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -404,7 +405,7 @@ int silofs_fs_access(struct silofs_fs_ctx *fs_ctx, ino_t ino, int mode)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -430,7 +431,7 @@ int silofs_fs_mkdir(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -454,7 +455,7 @@ int silofs_fs_mkdir(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, parent, OP_F_INO, err);
 }
 
 int silofs_fs_rmdir(struct silofs_fs_ctx *fs_ctx,
@@ -464,7 +465,7 @@ int silofs_fs_rmdir(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -482,7 +483,7 @@ int silofs_fs_rmdir(struct silofs_fs_ctx *fs_ctx,
 	err = silofs_do_rmdir(fs_ctx, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, parent, OP_F_INO, err);
 }
 
 int silofs_fs_symlink(struct silofs_fs_ctx *fs_ctx, ino_t parent,
@@ -495,7 +496,7 @@ int silofs_fs_symlink(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -522,7 +523,7 @@ int silofs_fs_symlink(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, parent, OP_F_INO, err);
 }
 
 int silofs_fs_readlink(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -531,7 +532,7 @@ int silofs_fs_readlink(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -556,7 +557,7 @@ int silofs_fs_unlink(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -574,7 +575,7 @@ int silofs_fs_unlink(struct silofs_fs_ctx *fs_ctx,
 	err = silofs_do_unlink(fs_ctx, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, parent, OP_F_INO, err);
 }
 
 int silofs_fs_link(struct silofs_fs_ctx *fs_ctx, ino_t ino, ino_t parent,
@@ -585,7 +586,7 @@ int silofs_fs_link(struct silofs_fs_ctx *fs_ctx, ino_t ino, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -612,7 +613,7 @@ int silofs_fs_link(struct silofs_fs_ctx *fs_ctx, ino_t ino, ino_t parent,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, parent, OP_F_ANY, err);
 }
 
 int silofs_fs_opendir(struct silofs_fs_ctx *fs_ctx, ino_t ino)
@@ -620,7 +621,7 @@ int silofs_fs_opendir(struct silofs_fs_ctx *fs_ctx, ino_t ino)
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -644,9 +645,7 @@ int silofs_fs_releasedir(struct silofs_fs_ctx *fs_ctx, ino_t ino, int o_flags)
 	const bool flush = (o_flags & O_SYNC) > 0;
 	int err;
 
-	unused(o_flags); /* TODO: useme */
-
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -670,7 +669,7 @@ int silofs_fs_readdir(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -727,7 +726,7 @@ int silofs_fs_readdirplus(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -750,7 +749,7 @@ int silofs_fs_fsyncdir(struct silofs_fs_ctx *fs_ctx, ino_t ino, bool datasync)
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -765,7 +764,7 @@ int silofs_fs_fsyncdir(struct silofs_fs_ctx *fs_ctx, ino_t ino, bool datasync)
 	err = silofs_do_fsyncdir(fs_ctx, dir_ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_chmod(struct silofs_fs_ctx *fs_ctx, ino_t ino, mode_t mode,
@@ -775,7 +774,7 @@ int silofs_fs_chmod(struct silofs_fs_ctx *fs_ctx, ino_t ino, mode_t mode,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -797,7 +796,7 @@ int silofs_fs_chmod(struct silofs_fs_ctx *fs_ctx, ino_t ino, mode_t mode,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_chown(struct silofs_fs_ctx *fs_ctx, ino_t ino, uid_t uid,
@@ -807,7 +806,7 @@ int silofs_fs_chown(struct silofs_fs_ctx *fs_ctx, ino_t ino, uid_t uid,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -832,7 +831,7 @@ int silofs_fs_chown(struct silofs_fs_ctx *fs_ctx, ino_t ino, uid_t uid,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_utimens(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -842,7 +841,7 @@ int silofs_fs_utimens(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -864,7 +863,7 @@ int silofs_fs_utimens(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_truncate(struct silofs_fs_ctx *fs_ctx,
@@ -873,7 +872,7 @@ int silofs_fs_truncate(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -894,7 +893,7 @@ int silofs_fs_truncate(struct silofs_fs_ctx *fs_ctx,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_create(struct silofs_fs_ctx *fs_ctx, ino_t parent,
@@ -908,7 +907,7 @@ int silofs_fs_create(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 
 	unused(o_flags); /* XXX use me */
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -932,7 +931,7 @@ int silofs_fs_create(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, parent, OP_F_INO, err);
 }
 
 int silofs_fs_open(struct silofs_fs_ctx *fs_ctx, ino_t ino, int o_flags)
@@ -940,7 +939,7 @@ int silofs_fs_open(struct silofs_fs_ctx *fs_ctx, ino_t ino, int o_flags)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -967,7 +966,7 @@ int silofs_fs_mknod(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -991,7 +990,7 @@ int silofs_fs_mknod(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	err = op_rmap_stat(fs_ctx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, parent, OP_F_INO, err);
 }
 
 int silofs_fs_release(struct silofs_fs_ctx *fs_ctx,
@@ -1003,7 +1002,7 @@ int silofs_fs_release(struct silofs_fs_ctx *fs_ctx,
 	/* TODO: useme */
 	unused(o_flags);
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1026,7 +1025,7 @@ int silofs_fs_flush(struct silofs_fs_ctx *fs_ctx, ino_t ino)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1041,7 +1040,7 @@ int silofs_fs_flush(struct silofs_fs_ctx *fs_ctx, ino_t ino)
 	err = silofs_do_flush(fs_ctx, ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_fsync(struct silofs_fs_ctx *fs_ctx, ino_t ino, bool datasync)
@@ -1049,7 +1048,7 @@ int silofs_fs_fsync(struct silofs_fs_ctx *fs_ctx, ino_t ino, bool datasync)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1064,7 +1063,7 @@ int silofs_fs_fsync(struct silofs_fs_ctx *fs_ctx, ino_t ino, bool datasync)
 	err = silofs_do_fsync(fs_ctx, ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_rename(struct silofs_fs_ctx *fs_ctx, ino_t parent,
@@ -1077,7 +1076,7 @@ int silofs_fs_rename(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	struct silofs_inode_info *newp_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1102,7 +1101,7 @@ int silofs_fs_rename(struct silofs_fs_ctx *fs_ctx, ino_t parent,
 	                       newp_ii, &newnstr, flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, parent, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, parent, OP_F_ANY, err);
 }
 
 int silofs_fs_read(struct silofs_fs_ctx *fs_ctx, ino_t ino, void *buf,
@@ -1111,7 +1110,7 @@ int silofs_fs_read(struct silofs_fs_ctx *fs_ctx, ino_t ino, void *buf,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1135,7 +1134,7 @@ int silofs_fs_read_iter(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1159,7 +1158,7 @@ int silofs_fs_write(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1174,7 +1173,7 @@ int silofs_fs_write(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = silofs_do_write(fs_ctx, ii, buf, len, off, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_write_iter(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1183,7 +1182,7 @@ int silofs_fs_write_iter(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1198,7 +1197,7 @@ int silofs_fs_write_iter(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = silofs_do_write_iter(fs_ctx, ii, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_fallocate(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1207,7 +1206,7 @@ int silofs_fs_fallocate(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1222,7 +1221,7 @@ int silofs_fs_fallocate(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = silofs_do_fallocate(fs_ctx, ii, mode, offset, length);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_lseek(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1231,7 +1230,7 @@ int silofs_fs_lseek(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1257,7 +1256,7 @@ int silofs_fs_copy_file_range(struct silofs_fs_ctx *fs_ctx, ino_t ino_in,
 	struct silofs_inode_info *ii_out = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino_in);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1276,7 +1275,7 @@ int silofs_fs_copy_file_range(struct silofs_fs_ctx *fs_ctx, ino_t ino_in,
 	                                off_out, len, flags, out_ncp);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino_in, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, ino_in, OP_F_ANY, err);
 }
 
 int silofs_fs_setxattr(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1287,7 +1286,7 @@ int silofs_fs_setxattr(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1306,7 +1305,7 @@ int silofs_fs_setxattr(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	                         value, size, flags, kill_sgid);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_getxattr(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1317,7 +1316,7 @@ int silofs_fs_getxattr(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1347,7 +1346,7 @@ int silofs_fs_listxattr(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1372,7 +1371,7 @@ int silofs_fs_removexattr(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1390,7 +1389,7 @@ int silofs_fs_removexattr(struct silofs_fs_ctx *fs_ctx,
 	err = silofs_do_removexattr(fs_ctx, ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_INO, err);
+	return op_finish(fs_ctx, ino, OP_F_INO, err);
 }
 
 int silofs_fs_statx(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1399,7 +1398,7 @@ int silofs_fs_statx(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1426,7 +1425,7 @@ int silofs_fs_fiemap(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1449,7 +1448,7 @@ int silofs_fs_syncfs(struct silofs_fs_ctx *fs_ctx, ino_t ino)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1461,7 +1460,7 @@ int silofs_fs_syncfs(struct silofs_fs_ctx *fs_ctx, ino_t ino)
 	err = op_stage_mut_inode(fs_ctx, ino, &ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, ino, OP_F_ANY, err);
 }
 
 int silofs_fs_query(struct silofs_fs_ctx *fs_ctx, ino_t ino,
@@ -1471,7 +1470,7 @@ int silofs_fs_query(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1495,7 +1494,7 @@ int silofs_fs_clone(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1510,7 +1509,7 @@ int silofs_fs_clone(struct silofs_fs_ctx *fs_ctx, ino_t ino,
 	err = silofs_do_clone(fs_ctx, dir_ii, flags, out_bsecs);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, ino, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, ino, OP_F_ANY, err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1522,7 +1521,7 @@ int silofs_fs_pack(struct silofs_fs_ctx *fs_ctx,
 {
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1531,7 +1530,7 @@ int silofs_fs_pack(struct silofs_fs_ctx *fs_ctx,
 	err = silofs_do_pack(fs_ctx, ivkey, bsec_src, bsec_dst);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, SILOFS_INO_NULL, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, SILOFS_INO_NULL, OP_F_ANY, err);
 }
 
 int silofs_fs_unpack(struct silofs_fs_ctx *fs_ctx,
@@ -1541,7 +1540,7 @@ int silofs_fs_unpack(struct silofs_fs_ctx *fs_ctx,
 {
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1550,7 +1549,7 @@ int silofs_fs_unpack(struct silofs_fs_ctx *fs_ctx,
 	err = silofs_do_unpack(fs_ctx, ivkey, bsec_src, bsec_dst);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, SILOFS_INO_NULL, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, SILOFS_INO_NULL, OP_F_ANY, err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1571,7 +1570,7 @@ int silofs_fs_timedout(const struct silofs_fs_ctx *fs_ctx, int flags)
 	struct silofs_fs_uber *uber = fs_ctx->fsc_uber;
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, flags);
@@ -1586,7 +1585,7 @@ int silofs_fs_inspect(struct silofs_fs_ctx *fs_ctx)
 {
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1605,7 +1604,7 @@ int silofs_fs_unrefs(struct silofs_fs_ctx *fs_ctx)
 {
 	int err;
 
-	err = op_start(fs_ctx);
+	err = op_start(fs_ctx, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = op_authorize(fs_ctx);
@@ -1617,5 +1616,5 @@ int silofs_fs_unrefs(struct silofs_fs_ctx *fs_ctx)
 	err = silofs_do_unrefs(fs_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(fs_ctx, SILOFS_INO_NULL, OP_F_FLUSH_ALL, err);
+	return op_finish(fs_ctx, SILOFS_INO_NULL, OP_F_ANY, err);
 }

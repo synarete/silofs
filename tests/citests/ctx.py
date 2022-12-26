@@ -151,11 +151,11 @@ class TestCtx(TestBaseCtx):
         self,
         name: str = "",
         allow_hostids: bool = False,
-        nokcopy: bool = False,
+        kcopy: bool = False,
     ) -> None:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.mount(
-            repodir_name, self.cfg.mntdir, allow_hostids, nokcopy
+            repodir_name, self.cfg.mntdir, allow_hostids, kcopy
         )
 
     def exec_umount(self) -> None:

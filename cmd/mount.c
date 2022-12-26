@@ -41,8 +41,10 @@ static const char *cmd_mount_help_desc[] = {
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
-	"  -K, --nokcopy                No in-kernel data copy (devel)",
-	/* "  -P, --noconcp                No concurrent data copy (devel)", */
+	/*
+	"  -K, --kcopy                  In-kernel data copy (devel)",
+	"  -P, --noconcp                No concurrent data copy (devel)",
+	*/
 	NULL
 };
 
@@ -61,7 +63,7 @@ struct cmd_mount_in_args {
 	bool    nosuid;
 	bool    nodev;
 	bool    rdonly;
-	bool    nokcopy;
+	bool    kcopy;
 	bool    noconcp;
 };
 
@@ -87,14 +89,14 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "noexec", no_argument, NULL, 'X' },
 		{ "nosuid", no_argument, NULL, 'S' },
 		{ "nodev", no_argument, NULL, 'Z' },
-		{ "nokcopy", no_argument, NULL, 'K' },
-		{ "noconcp", no_argument, NULL, 'P' },
 		{ "allow-hostids", no_argument, NULL, 'i' },
 		{ "no-allow-other", no_argument, NULL, 'A' },
 		{ "writeback-cache", no_argument, NULL, 'W' },
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "coredump", no_argument, NULL, 'C' },
+		{ "kcopy", no_argument, NULL, 'K' },
+		{ "noconcp", no_argument, NULL, 'P' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
@@ -110,7 +112,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		} else if (opt_chr == 'Z') {
 			ctx->in_args.nodev = true;
 		} else if (opt_chr == 'K') {
-			ctx->in_args.nokcopy = true;
+			ctx->in_args.kcopy = true;
 		} else if (opt_chr == 'P') {
 			ctx->in_args.noconcp = true;
 		} else if (opt_chr == 'A') {
@@ -159,7 +161,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->nosuid = args->nosuid;
 	fs_args->nodev = args->nodev;
 	fs_args->rdonly = args->rdonly;
-	fs_args->kcopy = !args->nokcopy;
+	fs_args->kcopy = args->kcopy;
 	fs_args->concp = !args->noconcp;
 	fs_args->pedantic = false;
 }

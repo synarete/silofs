@@ -133,13 +133,13 @@ class CmdSilofs(CmdExec):
         repodir_name: str,
         mntpoint: str,
         allow_hostids: bool = False,
-        nokcopy: bool = False,
+        kcopy: bool = False,
     ) -> None:
         args = ["mount", repodir_name, mntpoint]
         if allow_hostids:
             args.append("--allow-hostids")
-        if nokcopy:
-            args.append("--nokcopy")
+        if kcopy:
+            args.append("--kcopy")
         self.execute2(args)
 
     def umount(self, mntpoint: str) -> None:

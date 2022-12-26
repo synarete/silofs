@@ -2992,6 +2992,30 @@ static void cache_fini_nil_bk(struct silofs_cache *cache)
 	}
 }
 
+static int cache_init_flush_buf(struct silofs_cache *cache)
+{
+	struct silofs_alloc *alloc = cache->c_alloc;
+	struct silofs_flushbuf *flush_buf;
+
+	flush_buf = silofs_allocate(alloc, sizeof(*flush_buf));
+	if (flush_buf == NULL) {
+		return -ENOMEM;
+	}
+	cache->c_flush_buf = flush_buf;
+	return 0;
+}
+
+static void cache_fini_flush_buf(struct silofs_cache *cache)
+{
+	struct silofs_alloc *alloc = cache->c_alloc;
+	struct silofs_flushbuf *flush_buf = cache->c_flush_buf;
+
+	if (flush_buf != NULL) {
+		silofs_deallocate(alloc, flush_buf, sizeof(*flush_buf));
+		cache->c_flush_buf = NULL;
+	}
+}
+
 static size_t cache_htbl_size(const struct silofs_cache *cache, size_t div)
 {
 	const size_t hwant = cache->mem_size_hint / div;
@@ -3081,9 +3105,9 @@ int silofs_cache_init(struct silofs_cache *cache,
 
 	cache->c_alloc = alloc;
 	cache->c_nil_bk = NULL;
+	cache->c_flush_buf = NULL;
 	cache->mem_size_hint = msz_hint;
 	dqs_init(&cache->c_dqs);
-
 	err = cache_init_mdigest(cache);
 	if (err) {
 		return err;
@@ -3097,6 +3121,10 @@ int silofs_cache_init(struct silofs_cache *cache,
 		goto out_err;
 	}
 	err = cache_init_nil_bk(cache);
+	if (err) {
+		goto out_err;
+	}
+	err = cache_init_flush_buf(cache);
 	if (err) {
 		goto out_err;
 	}
@@ -3116,6 +3144,7 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	dqs_fini(&cache->c_dqs);
 	cache_fini_lrumaps(cache);
 	cache_fini_nil_bk(cache);
+	cache_fini_flush_buf(cache);
 	cache_fini_uamap(cache);
 	cache_fini_spamaps(cache);
 	cache_fini_mdigest(cache);

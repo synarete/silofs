@@ -431,6 +431,11 @@ struct silofs_oper_stat {
 	/* TODO: Have counter per-operation */
 };
 
+/* output flush-buffer */
+struct silofs_flushbuf {
+	uint8_t b[SILOFS_MEGA];
+};
+
 /* dirty-vnodes set */
 typedef void (*silofs_dset_add_fn)(struct silofs_dset *dset,
                                    struct silofs_snode_info *si);

@@ -295,12 +295,15 @@ static void cipher_fini(struct silofs_cipher *ci)
 static int chiper_verify(const struct silofs_cipher *ci,
                          const struct silofs_ivkey *ivkey)
 {
-	const unsigned int algo = ivkey->algo;
-	const unsigned int mode = ivkey->mode;
-
 	silofs_unused(ci);
-	if ((algo != GCRY_CIPHER_AES256) || (mode != GCRY_CIPHER_MODE_GCM)) {
-		log_warn("illegal chipher-algo-mode: %d", algo, mode);
+	if (ivkey->algo != GCRY_CIPHER_AES256) {
+		log_warn("unsupported chipher-algo: %d", ivkey->algo);
+		return -EOPNOTSUPP;
+	}
+	if ((ivkey->mode != GCRY_CIPHER_MODE_GCM) &&
+	    (ivkey->mode != GCRY_CIPHER_MODE_CBC) &&
+	    (ivkey->mode != GCRY_CIPHER_MODE_XTS)) {
+		log_warn("unsupported chipher-mode: %d", ivkey->mode);
 		return -EOPNOTSUPP;
 	}
 	return 0;
@@ -571,7 +574,7 @@ void silofs_ivkey_init(struct silofs_ivkey *ivkey)
 {
 	memset(ivkey, 0, sizeof(*ivkey));
 	ivkey->algo = SILOFS_CIPHER_AES256;
-	ivkey->mode = SILOFS_CIPHER_MODE_GCM;
+	ivkey->mode = SILOFS_CIPHER_MODE_XTS;
 }
 
 void silofs_ivkey_fini(struct silofs_ivkey *ivkey)

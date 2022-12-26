@@ -404,6 +404,7 @@ enum silofs_cipher_algo {
 enum silofs_cipher_mode {
 	SILOFS_CIPHER_MODE_CBC  = 3,
 	SILOFS_CIPHER_MODE_GCM  = 9,
+	SILOFS_CIPHER_MODE_XTS  = 13,
 };
 
 /* hash-function type (libgcrypt values) */

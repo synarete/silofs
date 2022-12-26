@@ -154,7 +154,7 @@ static const struct silofs_cipher_args s_default_cip_args = {
 		}
 	},
 	.cipher_algo = SILOFS_CIPHER_AES256,
-	.cipher_mode = SILOFS_CIPHER_MODE_GCM,
+	.cipher_mode = SILOFS_CIPHER_MODE_XTS,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

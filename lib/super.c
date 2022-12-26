@@ -835,14 +835,11 @@ static int sbi_resolve_itable_root(const struct silofs_sb_info *sbi,
                                    struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_vaddr vaddr;
-	enum silofs_stype stype;
 
 	sb_itable_root(sbi->sb, &vaddr);
-
-	stype = vaddr_stype(&vaddr);
-	if (vaddr_isnull(&vaddr) || !stype_isitnode(stype)) {
-		log_err("non valid itable-root: off=0x%lx stype=%d",
-		        vaddr_off(&vaddr), stype);
+	if (vaddr_isnull(&vaddr) || !stype_isitnode(vaddr.stype)) {
+		log_err("non valid itable-root: "\
+		        "off=0x%lx stype=%d", vaddr.off, vaddr.stype);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	vaddr_assign(out_vaddr, &vaddr);

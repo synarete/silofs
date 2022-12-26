@@ -68,7 +68,7 @@ static ino_t iaddr_ino(const struct silofs_iaddr *iaddr)
 
 static loff_t iaddr_voff(const struct silofs_iaddr *iaddr)
 {
-	return vaddr_off(&iaddr->vaddr);
+	return iaddr->vaddr.off;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -624,7 +624,7 @@ static int itbi_set_rootdir(struct silofs_itable_info *itbi, ino_t ino,
 		iaddr_setup(&itbi->it_root_dir, ino, vaddr);
 	} else {
 		log_err("illegal root-ino: ino=%ld off=%ld",
-		        ino, vaddr_off(vaddr));
+		        ino, vaddr->off);
 		err = -EINVAL;
 	}
 	return err;
@@ -1444,23 +1444,22 @@ void silofs_relax_inomap(const struct silofs_task *task, int flags)
 
 static int verify_itable_entry(const struct silofs_itable_entry *ite)
 {
-	int err;
-	enum silofs_stype stype;
 	struct silofs_vaddr vaddr;
-	const ino_t ino = ite_ino(ite);
+	ino_t ino;
+	int err;
 
 	ite_vaddr(ite, &vaddr);
-	err = silofs_verify_off(vaddr_off(&vaddr));
+	err = silofs_verify_off(vaddr.off);
 	if (err) {
 		return err;
 	}
-	stype = vaddr_stype(&vaddr);
-	if (stype_isnone(stype)) {
+	if (stype_isnone(vaddr.stype)) {
+		ino = ite_ino(ite);
 		if (!ino_isnull(ino)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 	} else {
-		if (!stype_isinode(stype)) {
+		if (!stype_isinode(vaddr.stype)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 	}
@@ -1496,25 +1495,21 @@ static int verify_itnode_entries(const struct silofs_itable_node *itn)
 
 static int verify_itnode_childs(const struct silofs_itable_node *itn)
 {
-	int err;
-	loff_t off;
-	size_t nchilds = 0;
-	enum silofs_stype stype;
 	struct silofs_vaddr vaddr;
 	const size_t nchilds_max = itn_nchilds_max(itn);
+	size_t nchilds = 0;
+	int err;
 
 	for (size_t slot = 0; slot < nchilds_max; ++slot) {
 		itn_child_at(itn, slot, &vaddr);
 		if (vaddr_isnull(&vaddr)) {
 			continue;
 		}
-		off = vaddr_off(&vaddr);
-		err = silofs_verify_off(off);
+		err = silofs_verify_off(vaddr.off);
 		if (err) {
 			return err;
 		}
-		stype = vaddr_stype(&vaddr);
-		if (!stype_isequal(stype, SILOFS_STYPE_ITNODE)) {
+		if (!stype_isequal(vaddr.stype, SILOFS_STYPE_ITNODE)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 		nchilds++;
@@ -1525,21 +1520,17 @@ static int verify_itnode_childs(const struct silofs_itable_node *itn)
 static int verify_itnode_parent(const struct silofs_itable_node *itn)
 {
 	struct silofs_vaddr vaddr;
-	loff_t off;
-	enum silofs_stype stype;
 	int err;
 
 	itn_parent(itn, &vaddr);
 	if (vaddr_isnull(&vaddr)) {
 		return 0;
 	}
-	off = vaddr_off(&vaddr);
-	err = silofs_verify_off(off);
+	err = silofs_verify_off(vaddr.off);
 	if (err) {
 		return err;
 	}
-	stype = vaddr_stype(&vaddr);
-	if (!stype_isequal(stype, SILOFS_STYPE_ITNODE)) {
+	if (!stype_isequal(vaddr.stype, SILOFS_STYPE_ITNODE)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

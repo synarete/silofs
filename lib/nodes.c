@@ -189,7 +189,7 @@ static loff_t uaddr_bk_pos(const struct silofs_uaddr *uaddr)
 
 static loff_t vaddr_bk_pos(const struct silofs_vaddr *vaddr)
 {
-	return silofs_off_in_bk(vaddr_off(vaddr));
+	return silofs_off_in_bk(vaddr->off);
 }
 
 static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr)
@@ -1418,7 +1418,7 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_STYPE_LAST:
 	default:
 		log_crit("illegal vaddr stype: stype=%d voff=%ld",
-		         (int)vaddr->stype, (long)vaddr->voff);
+		         (int)vaddr->stype, (long)vaddr->off);
 		break;
 	}
 	return vi;

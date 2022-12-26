@@ -257,7 +257,7 @@ struct silofs_uaddr {
 
 /* logical addressing of virtual elements */
 struct silofs_vaddr {
-	loff_t                  voff;
+	loff_t                  off;
 	enum silofs_stype       stype;
 	unsigned int            len;
 };

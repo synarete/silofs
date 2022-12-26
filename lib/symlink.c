@@ -280,7 +280,7 @@ slc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
                         const struct silofs_symval_desc *sv_dsc,
                         struct silofs_bytebuf *buf)
 {
-	struct silofs_vaddr vaddr = { .voff = -1 };
+	struct silofs_vaddr vaddr = { .off = -1 };
 	struct silofs_symval_info *syi = NULL;
 	const struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 	size_t len;
@@ -426,7 +426,7 @@ slc_bind_symval_part(struct silofs_symlnk_ctx *sl_ctx, size_t slot,
 	const struct silofs_creds *creds = &sl_ctx->task->t_oper.op_creds;
 
 	lnk_set_value_part(lnk_ii, slot, vaddr);
-	ii_update_iblocks(lnk_ii, creds, vaddr_stype(vaddr), 1);
+	ii_update_iblocks(lnk_ii, creds, vaddr->stype, 1);
 }
 
 static int slc_assign_symval_parts(struct silofs_symlnk_ctx *sl_ctx,

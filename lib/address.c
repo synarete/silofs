@@ -936,7 +936,7 @@ static void oaddr_setup_by(struct silofs_oaddr *oaddr,
                            const struct silofs_blobid *blobid,
                            const struct silofs_vaddr *vaddr)
 {
-	const loff_t bpos = silofs_blobid_pos(blobid, vaddr->voff);
+	const loff_t bpos = silofs_blobid_pos(blobid, vaddr->off);
 
 	silofs_oaddr_setup(oaddr, blobid, bpos, vaddr->len);
 }
@@ -1134,16 +1134,6 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
-enum silofs_stype silofs_uaddr_vspace(const struct silofs_uaddr *uaddr)
-{
-	return uaddr->oaddr.bka.blobid.vspace;
-}
-
-silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr)
-{
-	return silofs_off_to_lba(uaddr->voff);
-}
-
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 {
@@ -1179,7 +1169,7 @@ void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_vaddr s_vaddr_none = {
-	.voff = SILOFS_OFF_NULL,
+	.off = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
 	.len = 0,
 };
@@ -1187,16 +1177,6 @@ static const struct silofs_vaddr s_vaddr_none = {
 const struct silofs_vaddr *silofs_vaddr_none(void)
 {
 	return &s_vaddr_none;
-}
-
-loff_t silofs_vaddr_off(const struct silofs_vaddr *vaddr)
-{
-	return vaddr->voff;
-}
-
-enum silofs_stype silofs_vaddr_stype(const struct silofs_vaddr *vaddr)
-{
-	return vaddr->stype;
 }
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
@@ -1208,7 +1188,7 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = vaddr1->voff - vaddr2->voff;
+	cmp = vaddr1->off - vaddr2->off;
 	if (cmp) {
 		return cmp;
 	}
@@ -1223,7 +1203,7 @@ void silofs_vaddr_setup(struct silofs_vaddr *vaddr,
                         enum silofs_stype stype, loff_t voff)
 {
 	vaddr->stype = stype;
-	vaddr->voff = voff;
+	vaddr->off = voff;
 	vaddr->len = (unsigned int)stype_size(stype);
 }
 
@@ -1237,20 +1217,20 @@ void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
                          const struct silofs_vaddr *other)
 {
 	vaddr->stype = other->stype;
-	vaddr->voff = other->voff;
+	vaddr->off = other->off;
 	vaddr->len = other->len;
 }
 
 void silofs_vaddr_reset(struct silofs_vaddr *vaddr)
 {
 	vaddr->stype = SILOFS_STYPE_NONE;
-	vaddr->voff = SILOFS_OFF_NULL;
+	vaddr->off = SILOFS_OFF_NULL;
 	vaddr->len = 0;
 }
 
 bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr)
 {
-	return !vaddr->len || off_isnull(vaddr->voff) ||
+	return !vaddr->len || off_isnull(vaddr->off) ||
 	       stype_isnone(vaddr->stype);
 }
 
@@ -1261,12 +1241,7 @@ bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)
 
 bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr)
 {
-	return stype_isequal(vaddr_stype(vaddr), SILOFS_STYPE_DATABK);
-}
-
-silofs_lba_t silofs_vaddr_lba(const struct silofs_vaddr *vaddr)
-{
-	return off_to_lba(vaddr->voff);
+	return stype_isequal(vaddr->stype, SILOFS_STYPE_DATABK);
 }
 
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
@@ -1327,7 +1302,7 @@ loff_t silofs_vaddr56_parse(const struct silofs_vaddr56 *vadr)
 void silofs_vaddr64_set(struct silofs_vaddr64 *vadr,
                         const struct silofs_vaddr *vaddr)
 {
-	vadr->voff_stype = cpu_to_voff_stype(vaddr->voff, vaddr->stype);
+	vadr->voff_stype = cpu_to_voff_stype(vaddr->off, vaddr->stype);
 }
 
 void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,

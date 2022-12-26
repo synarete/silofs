@@ -57,7 +57,7 @@ static bool stage_rw(enum silofs_stage_mode stg_mode)
 
 static loff_t vaddr_bk_voff(const struct silofs_vaddr *vaddr)
 {
-	return off_align_to_bk(vaddr->voff);
+	return off_align_to_bk(vaddr->off);
 }
 
 static void voaddr_by(struct silofs_voaddr *voa,
@@ -107,7 +107,7 @@ static int stgc_lookup_cached_vbki(const struct silofs_stage_ctx *stg_ctx,
 {
 	struct silofs_cache *cache = stgc_cache(stg_ctx);
 
-	*out_vbki = silofs_cache_lookup_vbk(cache, vaddr->voff, vaddr->stype);
+	*out_vbki = silofs_cache_lookup_vbk(cache, vaddr->off, vaddr->stype);
 	return (*out_vbki != NULL) ? 0 : -ENOENT;
 }
 
@@ -363,7 +363,7 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 	stg_ctx->vspace = vaddr->stype;
 	stg_ctx->bk_voff = vaddr_bk_voff(vaddr);
 	stg_ctx->bk_lba = off_to_lba(stg_ctx->bk_voff);
-	stg_ctx->voff = vaddr->voff;
+	stg_ctx->voff = vaddr->off;
 }
 
 static void stgc_setup2(struct silofs_stage_ctx *stg_ctx,
@@ -2257,7 +2257,7 @@ static int stgc_spawn_vbki_by(const struct silofs_stage_ctx *stg_ctx,
 	int ret;
 
 	bri_incref(bri);
-	ret = stgc_spawn_vbki(stg_ctx, vaddr->voff, vaddr->stype, out_vbki);
+	ret = stgc_spawn_vbki(stg_ctx, vaddr->off, vaddr->stype, out_vbki);
 	bri_decref(bri);
 	return ret;
 }
@@ -2386,7 +2386,7 @@ static int stgc_require_clone_bkaddr(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_resolve_main_ubk(stg_ctx->sli, vaddr->voff, out_bkaddr_dst);
+	silofs_sli_resolve_main_ubk(stg_ctx->sli, vaddr->off, out_bkaddr_dst);
 	return 0;
 }
 
@@ -2411,7 +2411,7 @@ static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_rebind_ubk(stg_ctx->sli, src_voa->vaddr.voff, &bkaddr_dst);
+	silofs_sli_rebind_ubk(stg_ctx->sli, src_voa->vaddr.off, &bkaddr_dst);
 	return 0;
 }
 

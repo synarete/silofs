@@ -490,7 +490,7 @@ static void dtn_child(const struct silofs_dtree_node *dtn,
 static void dtn_set_child(struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord,
                           const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr56_set(&dtn->dn_child[ord], vaddr_off(vaddr));
+	silofs_vaddr56_set(&dtn->dn_child[ord], vaddr->off);
 }
 
 static void dtn_reset_childs(struct silofs_dtree_node *dtn)
@@ -907,7 +907,7 @@ static void dni_setup_dnode(struct silofs_dnode_info *dni, ino_t ino,
                             const struct silofs_vaddr *parent,
                             silofs_dtn_index_t dtn_index)
 {
-	dtn_setup(dni->dtn, ino, dtn_index, vaddr_off(parent));
+	dtn_setup(dni->dtn, ino, dtn_index, parent->off);
 }
 
 static int
@@ -921,7 +921,7 @@ dni_check_child_depth(const struct silofs_dnode_info *dni,
 	if ((parent_depth + 1) != child_depth) {
 		log_err("illegal-tree-depth: voff=0x%lx "
 		        "parent_depth=%u child_depth=%u ",
-		        vaddr_off(vaddr), parent_depth, child_depth);
+		        vaddr->off, parent_depth, child_depth);
 		err = -SILOFS_EFSCORRUPTED;
 	}
 	return err;
@@ -1111,7 +1111,7 @@ static void dir_set_htree_root(struct silofs_inode_info *dir_ii,
 {
 	struct silofs_inode_dir *idr = dir_ispec_of(dir_ii);
 
-	idr_set_htree_root(idr, vaddr_off(vaddr));
+	idr_set_htree_root(idr, vaddr->off);
 	idr_set_last_index(idr, DTREE_INDEX_ROOT);
 }
 
@@ -1348,7 +1348,7 @@ static int dic_stage_tree_root(const struct silofs_dir_ctx *d_ctx,
 static int dic_spawn_tree_root(const struct silofs_dir_ctx *d_ctx,
                                struct silofs_dnode_info **out_dni)
 {
-	struct silofs_vaddr vaddr = { .voff = -1 };
+	struct silofs_vaddr vaddr = { .off = -1 };
 	const silofs_dtn_index_t dtn_index = DTREE_INDEX_ROOT;
 	int err;
 
@@ -1925,7 +1925,7 @@ static int dic_next_node(struct silofs_dir_ctx *d_ctx,
                          const struct silofs_dnode_info *dni,
                          silofs_dtn_index_t *out_dtn_index)
 {
-	struct silofs_vaddr vaddr = { .voff = -1 };
+	struct silofs_vaddr vaddr = { .off = -1 };
 	struct silofs_dnode_info *parent_dni = NULL;
 	silofs_dtn_index_t next_dtn_index;
 	silofs_dtn_index_t curr_dtn_index;
@@ -2389,11 +2389,11 @@ static int verify_childs_of(const struct silofs_dtree_node *dtn)
 		if (vaddr_isnull(&vaddr)) {
 			continue;
 		}
-		err = silofs_verify_off(vaddr_off(&vaddr));
+		err = silofs_verify_off(vaddr.off);
 		if (err) {
 			return err;
 		}
-		if (!stype_isequal(vaddr_stype(&vaddr), SILOFS_STYPE_DTNODE)) {
+		if (!stype_isequal(vaddr.stype, SILOFS_STYPE_DTNODE)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 	}

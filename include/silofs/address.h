@@ -256,10 +256,6 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
 
-enum silofs_stype silofs_uaddr_vspace(const struct silofs_uaddr *uaddr);
-
-silofs_lba_t silofs_uaddr_lba(const struct silofs_uaddr *uaddr);
-
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
@@ -280,10 +276,6 @@ void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
 
 const struct silofs_vaddr *silofs_vaddr_none(void);
 
-loff_t silofs_vaddr_off(const struct silofs_vaddr *vaddr);
-
-enum silofs_stype silofs_vaddr_stype(const struct silofs_vaddr *vaddr);
-
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
                           const struct silofs_vaddr *vaddr2);
 
@@ -303,8 +295,6 @@ bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr);
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr);
 
 bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr);
-
-silofs_lba_t silofs_vaddr_lba(const struct silofs_vaddr *vaddr);
 
 
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,

@@ -40,16 +40,12 @@ static void vrange_of_spnode(struct silofs_vrange *vrange,
 
 static size_t nkbs_of(const struct silofs_vaddr *vaddr)
 {
-	return stype_nkbs(vaddr_stype(vaddr));
+	return stype_nkbs(vaddr->stype);
 }
 
 static size_t kbn_of(const struct silofs_vaddr *vaddr)
 {
-	const loff_t kb_size = SILOFS_KB_SIZE;
-	const loff_t nkb_in_bk = SILOFS_NKB_IN_BK;
-	const loff_t off = vaddr_off(vaddr);
-
-	return (size_t)((off / kb_size) % nkb_in_bk);
+	return (size_t)((vaddr->off / SILOFS_KB_SIZE) % SILOFS_NKB_IN_BK);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -569,7 +565,7 @@ static struct silofs_bk_ref *
 spleaf_bkr_by_vaddr(const struct silofs_spmap_leaf *sl,
                     const struct silofs_vaddr *vaddr)
 {
-	return spleaf_bkr_by_voff(sl, vaddr->voff);
+	return spleaf_bkr_by_voff(sl, vaddr->off);
 }
 
 static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *sl,
@@ -1010,7 +1006,7 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
 bool silofs_sli_has_shared_refcnt(const struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr)
 {
-	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->voff);
+	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->off);
 
 	return (refcnt > SILOFS_NKB_IN_BK);
 }
@@ -1018,7 +1014,7 @@ bool silofs_sli_has_shared_refcnt(const struct silofs_spleaf_info *sli,
 bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
                             const struct silofs_vaddr *vaddr)
 {
-	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->voff);
+	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->off);
 
 	return (refcnt > 0);
 }
@@ -1026,7 +1022,7 @@ bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
 bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
                                 const struct silofs_vaddr *vaddr)
 {
-	const size_t cnt = spleaf_refcnt_at(sli->sl, vaddr->voff);
+	const size_t cnt = spleaf_refcnt_at(sli->sl, vaddr->off);
 	const size_t nkb = nkbs_of(vaddr);
 
 	return (nkb == cnt);

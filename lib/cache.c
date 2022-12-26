@@ -149,7 +149,7 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	const uint64_t h = twang_mix64((uint64_t)vaddr->voff);
+	const uint64_t h = twang_mix64((uint64_t)vaddr->off);
 
 	return silofs_rotate64(h, vaddr->stype % 59) ^ vaddr->len;
 }

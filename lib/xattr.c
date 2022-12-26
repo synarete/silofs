@@ -450,12 +450,12 @@ static void ixa_setup(struct silofs_inode_xattr *ixa)
 
 static int ixa_verify(const struct silofs_inode_xattr *ixa)
 {
-	struct silofs_vaddr vaddr = { .voff = -1 };
+	struct silofs_vaddr vaddr = { .off = -1 };
 	int err;
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(ixa->ix_vaddr); ++slot) {
 		ixa_vaddr(ixa, slot, &vaddr);
-		err = silofs_verify_off(vaddr_off(&vaddr));
+		err = silofs_verify_off(vaddr.off);
 		if (err) {
 			return err;
 		}

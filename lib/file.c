@@ -677,7 +677,7 @@ fni_assign_child_by_pos(struct silofs_finode_info *parent_fni,
 	size_t child_slot;
 
 	child_slot = fni_child_slot_of(parent_fni, file_pos);
-	ftn_set_child(parent_fni->ftn, child_slot, vaddr_off(vaddr));
+	ftn_set_child(parent_fni->ftn, child_slot, vaddr->off);
 }
 
 static void
@@ -823,7 +823,7 @@ static int fic_iovec_by_vaddr(const struct silofs_file_ctx *f_ctx,
                               const struct silofs_vaddr *vaddr, bool all,
                               struct silofs_iovec *out_iov)
 {
-	const enum silofs_stype stype = vaddr_stype(vaddr);
+	const enum silofs_stype stype = vaddr->stype;
 	loff_t off_within;
 	size_t len;
 
@@ -1053,7 +1053,7 @@ static bool fic_has_tree_root(const struct silofs_file_ctx *f_ctx)
 	struct silofs_vaddr vaddr;
 
 	fic_tree_root_of(f_ctx, &vaddr);
-	return stype_isftnode(vaddr_stype(&vaddr));
+	return stype_isftnode(vaddr.stype);
 }
 
 static void fic_set_tree_root_at(const struct silofs_file_ctx *f_ctx,
@@ -2156,7 +2156,7 @@ static void fic_update_iattr_blocks(const struct silofs_file_ctx *f_ctx,
 {
 	const struct silofs_creds *creds = &f_ctx->task->t_oper.op_creds;
 
-	ii_update_iblocks(f_ctx->ii, creds, vaddr_stype(vaddr), dif);
+	ii_update_iblocks(f_ctx->ii, creds, vaddr->stype, dif);
 }
 
 static int fic_spawn_setup_finode(const struct silofs_file_ctx *f_ctx,
@@ -2274,7 +2274,7 @@ static void fic_bind_sub_tree(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 
 	fic_tree_root_of(f_ctx, &vaddr);
-	ftn_set_child(fni->ftn, 0, vaddr_off(&vaddr));
+	ftn_set_child(fni->ftn, 0, vaddr.off);
 	fni_difnify(fni);
 
 	fic_update_tree_root(f_ctx, fni_vaddr(fni));
@@ -2980,7 +2980,7 @@ int silofs_drop_reg(const struct silofs_task *task,
 static int fpr_zero_data_leaf_range(struct silofs_fpos_ref *fpr)
 {
 	const struct silofs_vaddr *vaddr = &fpr->vaddr;
-	const enum silofs_stype stype = vaddr_stype(vaddr);
+	const enum silofs_stype stype = vaddr->stype;
 	const loff_t file_pos = fpr->file_pos;
 	const loff_t off_in_bk = off_in_data(file_pos, stype);
 	const size_t len = len_of_data(file_pos, fpr->f_ctx->end, stype);
@@ -3586,7 +3586,7 @@ static bool fic_emit_fiemap_ext(struct silofs_file_ctx *f_ctx,
 	struct fiemap *fm = f_ctx->fm;
 
 	end = off_min(off_end(f_ctx->off, vaddr->len), f_ctx->end);
-	len = len_of_data(f_ctx->off, end, vaddr_stype(vaddr));
+	len = len_of_data(f_ctx->off, end, vaddr->stype);
 	if (len == 0) {
 		return false;
 	}
@@ -3600,7 +3600,7 @@ static bool fic_emit_fiemap_ext(struct silofs_file_ctx *f_ctx,
 	fm_ext = &fm->fm_extents[fm->fm_mapped_extents++];
 	fm_ext->fe_flags = FIEMAP_EXTENT_DATA_ENCRYPTED;
 	fm_ext->fe_logical = (uint64_t)(f_ctx->off);
-	fm_ext->fe_physical = (uint64_t)(vaddr_off(vaddr));
+	fm_ext->fe_physical = (uint64_t)(vaddr->off);
 	fm_ext->fe_length = len;
 	return true;
 }

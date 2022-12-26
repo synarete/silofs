@@ -65,7 +65,7 @@ static int resolve_oaddr_of_vnode(const struct silofs_task *task,
 	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RO, &voa);
 	if (err) {
 		log_warn("failed to resolve voaddr: stype=%d off=%ld err=%d",
-		         vaddr->stype, vaddr->voff, err);
+		         vaddr->stype, vaddr->off, err);
 		return err;
 	}
 	oaddr_assign(out_oaddr, &voa.oaddr);

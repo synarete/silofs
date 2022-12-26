@@ -134,7 +134,7 @@ static loff_t sbi_vspace_end(const struct silofs_sb_info *sbi)
 static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
                                  const struct silofs_vaddr *vaddr)
 {
-	const loff_t vaddr_beg = vaddr_off(vaddr);
+	const loff_t vaddr_beg = vaddr->off;
 	const loff_t vaddr_end = off_end(vaddr_beg, vaddr->len);
 	const loff_t vspace_end = sbi_vspace_end(sbi);
 
@@ -144,7 +144,7 @@ static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
 static void sbi_update_voff_last(struct silofs_sb_info *sbi,
                                  const struct silofs_vaddr *vaddr)
 {
-	sbi_set_voff_last_of(sbi, vaddr_stype(vaddr), vaddr_off(vaddr));
+	sbi_set_voff_last_of(sbi, vaddr->stype, vaddr->off);
 }
 
 static void sbi_update_space_stats(struct silofs_sb_info *sbi,
@@ -507,7 +507,7 @@ static int spac_claim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	if (err) {
 		return err;
 	}
-	voff = spa_ctx->voa.vaddr.voff;
+	voff = spa_ctx->voa.vaddr.off;
 	err = spac_require_rw_spmaps_of(spa_ctx, voff);
 	if (err) {
 		return err;
@@ -623,7 +623,7 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx)
 	shared = spac_is_shared_databk(spa_ctx);
 	if (!shared) {
 		ret = silofs_spamaps_store(&cache->c_spam, vaddr->stype,
-		                           vaddr->voff, vaddr->len);
+		                           vaddr->off, vaddr->len);
 	}
 	return ret;
 }
@@ -658,7 +658,7 @@ static int spac_reclaim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	loff_t voff;
 	int err;
 
-	voff = spa_ctx->voa.vaddr.voff;
+	voff = spa_ctx->voa.vaddr.off;
 	err = spac_require_rw_spmaps_of(spa_ctx, voff);
 	if (err) {
 		return err;
@@ -675,7 +675,7 @@ int silofs_reclaim_vspace(const struct silofs_task *task,
 {
 	struct silofs_spalloc_ctx spa_ctx;
 
-	spac_setup2(&spa_ctx, task, vaddr_stype(vaddr));
+	spac_setup2(&spa_ctx, task, vaddr->stype);
 	vaddr_assign(&spa_ctx.voa.vaddr, vaddr);
 	return spac_reclaim_vspace(&spa_ctx);
 }
@@ -702,7 +702,7 @@ int silofs_addref_vspace(const struct silofs_task *task,
 
 	spac_setup2(&spa_ctx, task, vaddr->stype);
 	vaddr_assign(&spa_ctx.voa.vaddr, vaddr);
-	err = spac_require_rw_spmaps_of(&spa_ctx, vaddr->voff);
+	err = spac_require_rw_spmaps_of(&spa_ctx, vaddr->off);
 	if (err) {
 		return err;
 	}

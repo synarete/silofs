@@ -934,9 +934,9 @@ static int fse_format_claim_vspace_of(const struct silofs_fs_env *fse,
 		log_err("failed to claim: vspace=%d err=%d", vspace, err);
 		return err;
 	}
-	if (voa.vaddr.voff != voff_exp) {
+	if (voa.vaddr.off != voff_exp) {
 		log_err("wrong first voff: vspace=%d expected-voff=%ld "
-		        "got-voff=%ld", vspace, voff_exp, voa.vaddr.voff);
+		        "got-voff=%ld", vspace, voff_exp, voa.vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	err = silofs_reclaim_vspace(task, &voa.vaddr);
@@ -1023,7 +1023,7 @@ fse_format_zero_vspace_of(const struct silofs_fs_env *fse,
                           enum silofs_stype vspace)
 {
 	struct silofs_vnode_info *vi = NULL;
-	loff_t voff;
+	const struct silofs_vaddr *vaddr = NULL;
 	int err;
 
 	err = silofs_spawn_vnode(task, vspace, 0, &vi);
@@ -1031,9 +1031,9 @@ fse_format_zero_vspace_of(const struct silofs_fs_env *fse,
 		log_err("failed to spawn: vspace=%d err=%d", vspace, err);
 		return err;
 	}
-	voff = vaddr_off(vi_vaddr(vi));
-	if (voff != 0) {
-		log_err("bad offset: vspace=%d voff=%ld", vspace, voff);
+	vaddr = vi_vaddr(vi);
+	if (vaddr->off != 0) {
+		log_err("bad offset: vspace=%d off=%ld", vspace, vaddr->off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	silofs_unused(fse);

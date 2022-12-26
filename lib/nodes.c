@@ -290,16 +290,9 @@ struct silofs_unode_info *silofs_ui_from_si(const struct silofs_snode_info *si)
 	return ui_unconst(ui);
 }
 
-static void ui_seal(struct silofs_unode_info *ui)
+void silofs_seal_unode(struct silofs_unode_info *ui)
 {
 	hdr_set_csum(&ui->u_si.s_view->hdr, si_calc_chekcsum(&ui->u_si));
-}
-
-static void ui_seal_as_si(struct silofs_snode_info *si)
-{
-	struct silofs_unode_info *ui = silofs_ui_from_si(si);
-
-	ui_seal(ui);
 }
 
 void silofs_ui_bind_uber(struct silofs_unode_info *ui,
@@ -401,17 +394,9 @@ static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
 	return csum;
 }
 
-static void vi_seal_meta(struct silofs_vnode_info *vi)
+void silofs_seal_vnode(struct silofs_vnode_info *vi)
 {
 	hdr_set_csum(&vi->v_si.s_view->hdr, vi_calc_chekcsum(vi));
-}
-
-static void vi_seal_as_si(struct silofs_snode_info *si)
-{
-	struct silofs_vnode_info *vi = silofs_vi_from_si(si);
-
-	silofs_assert(!vi_isdata(vi));
-	vi_seal_meta(vi);
 }
 
 static bool vi_has_stype(const struct silofs_vnode_info *vi,
@@ -522,7 +507,6 @@ sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 static const struct silofs_snode_vtbl sbi_vtbl = {
 	.del = sbi_delete_as_si,
 	.evictable = si_evictable,
-	.seal = ui_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -616,7 +600,6 @@ silofs_sni_from_ui(const struct silofs_unode_info *ui)
 static const struct silofs_snode_vtbl sni_vtbl = {
 	.del = sni_delete_as_si,
 	.evictable = si_evictable,
-	.seal = ui_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -710,7 +693,6 @@ silofs_sli_from_ui(const struct silofs_unode_info *ui)
 static const struct silofs_snode_vtbl sli_vtbl = {
 	.del = sli_delete_as_si,
 	.evictable = si_evictable,
-	.seal = ui_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -805,7 +787,6 @@ void silofs_itni_rebind_view(struct silofs_itnode_info *itni)
 static const struct silofs_snode_vtbl itni_vtbl = {
 	.del = itni_delete_as_si,
 	.evictable = si_evictable,
-	.seal = vi_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -911,7 +892,6 @@ void silofs_ii_rebind_view(struct silofs_inode_info *ii, ino_t ino)
 static const struct silofs_snode_vtbl ii_vtbl = {
 	.del = ii_delete_as_si,
 	.evictable = ii_evictable_as_si,
-	.seal = vi_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1005,7 +985,6 @@ void silofs_xai_rebind_view(struct silofs_xanode_info *xai)
 static const struct silofs_snode_vtbl xai_vtbl = {
 	.del = xai_delete_as_si,
 	.evictable = si_evictable,
-	.seal = vi_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1099,7 +1078,6 @@ void silofs_syi_rebind_view(struct silofs_symval_info *syi)
 static const struct silofs_snode_vtbl syi_vtbl = {
 	.del = syi_delete_as_si,
 	.evictable = si_evictable,
-	.seal = vi_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1196,7 +1174,6 @@ void silofs_dni_rebind_view(struct silofs_dnode_info *dni)
 static const struct silofs_snode_vtbl dni_vtbl = {
 	.del = dni_delete_as_si,
 	.evictable = si_evictable,
-	.seal = vi_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1290,7 +1267,6 @@ void silofs_fni_rebind_view(struct silofs_finode_info *fni)
 static const struct silofs_snode_vtbl fni_vtbl = {
 	.del = fni_delete_as_si,
 	.evictable = si_evictable,
-	.seal = vi_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1397,18 +1373,9 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 	}
 }
 
-static void fli_seal_as_si(struct silofs_snode_info *si)
-{
-	const struct silofs_vnode_info *vi = silofs_vi_from_si(si);
-
-	/* no-op for data leaves */
-	silofs_assert(vi_isdata(vi));
-}
-
 static const struct silofs_snode_vtbl fli_vtbl = {
 	.del = fli_delete_as_si,
 	.evictable = si_evictable,
-	.seal = fli_seal_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

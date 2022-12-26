@@ -95,22 +95,33 @@ static int si_resolve_oaddr(const struct silofs_snode_info *si,
 	const enum silofs_stype stype = si->s_stype;
 	int err = 0;
 
-	if (stype_isvnode(stype)) {
-		err = vi_resolve_as_si(si, out_oaddr);
-		if (err) {
-			log_warn("failed to resolve vnode oaddr: " \
-			         "stype=%d err=%d", stype, err);
-		}
-	} else if (stype_isunode(stype)) {
+	if (stype_isunode(stype)) {
 		err = ui_resolve_as_si(si, out_oaddr);
 		if (err) {
 			log_warn("failed to resolve unode oaddr: " \
+			         "stype=%d err=%d", stype, err);
+		}
+	} else if (stype_isvnode(stype)) {
+		err = vi_resolve_as_si(si, out_oaddr);
+		if (err) {
+			log_warn("failed to resolve vnode oaddr: " \
 			         "stype=%d err=%d", stype, err);
 		}
 	} else {
 		silofs_panic("corrupted snode: stype=%d", stype);
 	}
 	return err;
+}
+
+static void si_seal_meta(struct silofs_snode_info *si)
+{
+	const enum silofs_stype stype = si->s_stype;
+
+	if (stype_isunode(stype)) {
+		silofs_seal_unode(silofs_ui_from_si(si));
+	} else if (stype_isvnode(stype) && !stype_isdata(stype)) {
+		silofs_seal_vnode(silofs_vi_from_si(si));
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -293,7 +304,7 @@ static void dset_seal_all(const struct silofs_dset *dset)
 	struct silofs_snode_info *si = dset->ds_siq;
 
 	while (si != NULL) {
-		si->s_vtbl->seal(si);
+		si_seal_meta(si);
 		si = si->s_ds_next;
 	}
 }

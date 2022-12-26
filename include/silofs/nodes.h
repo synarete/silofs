@@ -26,7 +26,6 @@ struct silofs_vnode_info;
 struct silofs_snode_vtbl {
 	void (*del)(struct silofs_snode_info *si, struct silofs_alloc *alloc);
 	bool (*evictable)(const struct silofs_snode_info *si);
-	void (*seal)(struct silofs_snode_info *si);
 };
 
 /* snode */
@@ -247,6 +246,12 @@ int silofs_verify_view_by(const union silofs_view *view,
                           const enum silofs_stype stype);
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_seal_vnode(struct silofs_vnode_info *vi);
+
+void silofs_seal_unode(struct silofs_unode_info *ui);
 
 
 #endif /* SILOFS_NODES_H_ */

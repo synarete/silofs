@@ -684,16 +684,17 @@ static int fse_reload_fs_meta(struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int fse_flush_dirty(const struct silofs_fs_env *fse)
+static int fse_flush_dirty(const struct silofs_fs_env *fse,
+                           const struct silofs_task *task)
 {
-	struct silofs_uber *uber = fse->fs_uber;
 	int err;
 
-	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, SILOFS_F_NOW);
+	err = silofs_flush_dirty(task, SILOFS_DQID_ALL, SILOFS_F_NOW);
 	if (err) {
 		log_err("failed to flush-dirty: err=%d", err);
 	}
 	silofs_burnstack();
+	silofs_unused(fse);
 	return err;
 }
 
@@ -757,7 +758,7 @@ static int fse_flush_and_drop_caches(const struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_flush_dirty(fse);
+	err = fse_flush_dirty(fse, &task);
 	if (err) {
 		return err;
 	}
@@ -1070,7 +1071,7 @@ static int fse_format_inodes_table(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_flush_dirty(fse);
+	err = fse_flush_dirty(fse, task);
 	if (err) {
 		return err;
 	}
@@ -1093,7 +1094,7 @@ static int fse_format_rootdir(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_flush_dirty(fse);
+	err = fse_flush_dirty(fse, task);
 	if (err) {
 		return err;
 	}
@@ -1125,7 +1126,7 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_flush_dirty(fse);
+	err = fse_flush_dirty(fse, task);
 	if (err) {
 		return err;
 	}
@@ -1375,16 +1376,12 @@ bool silofs_fse_served_clean(const struct silofs_fs_env *fse)
 	return fq && fq->fq_got_init && fq->fq_got_destroy;
 }
 
-static int fse_close_fs(struct silofs_fs_env *fse)
+static int fse_close_fs(struct silofs_fs_env *fse,
+                        const struct silofs_task *task)
 {
-	struct silofs_task task;
 	int err;
 
-	err = fse_make_self_task(fse, &task);
-	if (err) {
-		return err;
-	}
-	err = fse_flush_dirty(fse);
+	err = fse_flush_dirty(fse, task);
 	if (err) {
 		return err;
 	}
@@ -1392,22 +1389,26 @@ static int fse_close_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_flush_dirty(fse);
+	err = fse_flush_dirty(fse, task);
 	if (err) {
 		return err;
 	}
-	fse_drop_caches(fse, &task);
+	fse_drop_caches(fse, task);
 	return err;
 }
 
 int silofs_fse_close_fs(struct silofs_fs_env *fse)
 {
-	int ret;
+	struct silofs_task task;
+	int err;
 
 	fse_lock(fse);
-	ret = fse_close_fs(fse);
+	err = fse_make_self_task(fse, &task);
+	if (!err) {
+		err = fse_close_fs(fse, &task);
+	}
 	fse_unlock(fse);
-	return ret;
+	return err;
 }
 
 int silofs_fse_poke_fs(struct silofs_fs_env *fse, bool warm,

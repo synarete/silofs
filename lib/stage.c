@@ -139,6 +139,18 @@ static size_t sbi_num_cached_dirty(const struct silofs_sb_info *sbi)
 	return silofs_cache_accum_ndirty(sbi_cache(sbi));
 }
 
+static int stgc_commit_dirty(const struct silofs_stage_ctx *stg_ctx)
+{
+	int err;
+
+	err = silofs_flush_dirty(stg_ctx->task, SILOFS_DQID_ALL, SILOFS_F_NOW);
+	if (err) {
+		log_dbg("commit dirty failure: ndirty=%lu err=%d",
+		        sbi_num_cached_dirty(stg_ctx->sbi), err);
+	}
+	return err;
+}
+
 static int sbi_commit_dirty(const struct silofs_sb_info *sbi)
 {
 	struct silofs_uber *uber = sbi_uber(sbi);
@@ -373,7 +385,7 @@ static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
-	err = sbi_commit_dirty(stg_ctx->sbi);
+	err = stgc_commit_dirty(stg_ctx);
 	if (err) {
 		return err;
 	}

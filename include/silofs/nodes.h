@@ -27,8 +27,6 @@ struct silofs_snode_vtbl {
 	void (*del)(struct silofs_snode_info *si, struct silofs_alloc *alloc);
 	bool (*evictable)(const struct silofs_snode_info *si);
 	void (*seal)(struct silofs_snode_info *si);
-	int (*resolve)(const struct silofs_snode_info *si,
-	               struct silofs_oaddr *out_oaddr);
 };
 
 /* snode */

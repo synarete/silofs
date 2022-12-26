@@ -27,13 +27,14 @@
 
 
 struct silofs_flush_ctx {
-	struct silofs_dset      dset;
-	struct silofs_alloc    *alloc;
-	struct silofs_uber     *uber;
-	struct silofs_repo     *repo;
-	struct silofs_cache    *cache;
-	struct silofs_flushbuf *flush_buf;
-	silofs_dqid_t           dqid;
+	struct silofs_dset        dset;
+	const struct silofs_task *task;
+	struct silofs_alloc      *alloc;
+	struct silofs_uber       *uber;
+	struct silofs_repo       *repo;
+	struct silofs_cache      *cache;
+	struct silofs_flushbuf   *flush_buf;
+	silofs_dqid_t             dqid;
 	int flags;
 	bool warm;
 	bool use_buf;
@@ -49,6 +50,70 @@ struct silofs_sgvec {
 	size_t cnt;
 	size_t lim;
 };
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int vi_resolve(const struct silofs_vnode_info *vi,
+                      struct silofs_oaddr *out_oaddr)
+{
+	struct silofs_voaddr voa;
+	struct silofs_sb_info *sbi = vi_sbi(vi);
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
+	int err;
+
+	err = silofs_sbi_resolve_voa(sbi, vi_vaddr(vi), stg_mode, &voa);
+	if (!err) {
+		oaddr_assign(out_oaddr, &voa.oaddr);
+	}
+	return err;
+}
+
+static int vi_resolve_as_si(const struct silofs_snode_info *si,
+                            struct silofs_oaddr *out_oaddr)
+{
+	return vi_resolve(silofs_vi_from_si(si), out_oaddr);
+}
+
+static int ui_resolve(const struct silofs_unode_info *ui,
+                      struct silofs_oaddr *out_oaddr)
+{
+	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
+
+	oaddr_assign(out_oaddr, &uaddr->oaddr);
+	return 0;
+}
+
+static int ui_resolve_as_si(const struct silofs_snode_info *si,
+                            struct silofs_oaddr *out_oaddr)
+{
+	return ui_resolve(silofs_ui_from_si(si), out_oaddr);
+}
+
+static int si_resolve_oaddr(const struct silofs_snode_info *si,
+                            struct silofs_oaddr *out_oaddr)
+{
+	const enum silofs_stype stype = si->s_stype;
+	int err = 0;
+
+	if (stype_isvnode(stype)) {
+		err = vi_resolve_as_si(si, out_oaddr);
+		if (err) {
+			log_warn("failed to resolve vnode oaddr: " \
+			         "stype=%d err=%d", stype, err);
+		}
+	} else if (stype_isunode(stype)) {
+		err = ui_resolve_as_si(si, out_oaddr);
+		if (err) {
+			log_warn("failed to resolve unode oaddr: " \
+			         "stype=%d err=%d", stype, err);
+		}
+	} else {
+		silofs_panic("corrupted snode: stype=%d", stype);
+	}
+	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void sgvec_setup(struct silofs_sgvec *sgv, size_t lim)
 {
@@ -97,19 +162,6 @@ static int sgvec_append(struct silofs_sgvec *sgv,
 	sgv->len += oaddr->len;
 	sgv->cnt += 1;
 	return 0;
-}
-
-static int si_resolve_oaddr(const struct silofs_snode_info *si,
-                            struct silofs_oaddr *out_oaddr)
-{
-	int err;
-
-	err = si->s_vtbl->resolve(si, out_oaddr);
-	if (err) {
-		log_warn("failed to resolve oaddr: stype=%d err=%d",
-		         si->s_stype, err);
-	}
-	return err;
 }
 
 static int sgvec_populate(struct silofs_sgvec *sgv,
@@ -512,6 +564,19 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	return 0;
 }
 
+static int flc_setup2(struct silofs_flush_ctx *fl_ctx,
+                      const struct silofs_task *task,
+                      silofs_dqid_t dqid, int flags)
+{
+	int err;
+
+	err = flc_setup(fl_ctx, task->t_uber, dqid, flags);
+	if (!err) {
+		fl_ctx->task = task;
+	}
+	return err;
+}
+
 int silofs_uber_flush_dirty(struct silofs_uber *uber,
                             silofs_dqid_t dqid, int flags)
 {
@@ -542,7 +607,21 @@ static silofs_dqid_t ii_dqid(const struct silofs_inode_info *ii)
 int silofs_flush_dirty(const struct silofs_task *task,
                        silofs_dqid_t dqid, int flags)
 {
-	return silofs_uber_flush_dirty(task->t_uber, dqid, flags);
+	struct silofs_flush_ctx fl_ctx = { .flags = -1 };
+	int err;
+
+	err = flc_setup2(&fl_ctx, task, dqid, flags);
+	if (err) {
+		return err;
+	}
+	if (!flc_need_flush(&fl_ctx)) {
+		return 0;
+	}
+	err = flc_flush_dirty_of(&fl_ctx);
+	if (err) {
+		log_dbg("failed to flush: err=%d", err);
+	}
+	return err;
 }
 
 int silofs_flush_dirty_of(const struct silofs_task *task,

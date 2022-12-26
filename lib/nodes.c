@@ -290,21 +290,6 @@ struct silofs_unode_info *silofs_ui_from_si(const struct silofs_snode_info *si)
 	return ui_unconst(ui);
 }
 
-static int ui_resolve(const struct silofs_unode_info *ui,
-                      struct silofs_oaddr *out_oaddr)
-{
-	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
-
-	oaddr_assign(out_oaddr, &uaddr->oaddr);
-	return 0;
-}
-
-static int ui_resolve_as_si(const struct silofs_snode_info *si,
-                            struct silofs_oaddr *out_oaddr)
-{
-	return ui_resolve(silofs_ui_from_si(si), out_oaddr);
-}
-
 static void ui_seal(struct silofs_unode_info *ui)
 {
 	hdr_set_csum(&ui->u_si.s_view->hdr, si_calc_chekcsum(&ui->u_si));
@@ -400,29 +385,6 @@ struct silofs_vnode_info *silofs_vi_from_si(const struct silofs_snode_info *si)
 bool silofs_vi_isdata(const struct silofs_vnode_info *vi)
 {
 	return silofs_stype_isdata(vi_stype(vi));
-}
-
-static int vi_resolve(const struct silofs_vnode_info *vi,
-                      struct silofs_oaddr *out_oaddr)
-{
-	struct silofs_voaddr voa;
-	struct silofs_sb_info *sbi = vi_sbi(vi);
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
-	int err;
-
-	err = silofs_sbi_resolve_voa(sbi, vi_vaddr(vi), stg_mode, &voa);
-	if (!err) {
-		oaddr_assign(out_oaddr, &voa.oaddr);
-	}
-	return err;
-}
-
-static int vi_resolve_as_si(const struct silofs_snode_info *si,
-                            struct silofs_oaddr *out_oaddr)
-{
-	const struct silofs_vnode_info *vi = silofs_vi_from_si(si);
-
-	return (likely(vi != NULL)) ? vi_resolve(vi, out_oaddr) : -ENOENT;
 }
 
 static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
@@ -561,7 +523,6 @@ static const struct silofs_snode_vtbl sbi_vtbl = {
 	.del = sbi_delete_as_si,
 	.evictable = si_evictable,
 	.seal = ui_seal_as_si,
-	.resolve = ui_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -656,7 +617,6 @@ static const struct silofs_snode_vtbl sni_vtbl = {
 	.del = sni_delete_as_si,
 	.evictable = si_evictable,
 	.seal = ui_seal_as_si,
-	.resolve = ui_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -751,7 +711,6 @@ static const struct silofs_snode_vtbl sli_vtbl = {
 	.del = sli_delete_as_si,
 	.evictable = si_evictable,
 	.seal = ui_seal_as_si,
-	.resolve = ui_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -847,7 +806,6 @@ static const struct silofs_snode_vtbl itni_vtbl = {
 	.del = itni_delete_as_si,
 	.evictable = si_evictable,
 	.seal = vi_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -954,7 +912,6 @@ static const struct silofs_snode_vtbl ii_vtbl = {
 	.del = ii_delete_as_si,
 	.evictable = ii_evictable_as_si,
 	.seal = vi_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1049,7 +1006,6 @@ static const struct silofs_snode_vtbl xai_vtbl = {
 	.del = xai_delete_as_si,
 	.evictable = si_evictable,
 	.seal = vi_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1144,7 +1100,6 @@ static const struct silofs_snode_vtbl syi_vtbl = {
 	.del = syi_delete_as_si,
 	.evictable = si_evictable,
 	.seal = vi_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1242,7 +1197,6 @@ static const struct silofs_snode_vtbl dni_vtbl = {
 	.del = dni_delete_as_si,
 	.evictable = si_evictable,
 	.seal = vi_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1337,7 +1291,6 @@ static const struct silofs_snode_vtbl fni_vtbl = {
 	.del = fni_delete_as_si,
 	.evictable = si_evictable,
 	.seal = vi_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1456,7 +1409,6 @@ static const struct silofs_snode_vtbl fli_vtbl = {
 	.del = fli_delete_as_si,
 	.evictable = si_evictable,
 	.seal = fli_seal_as_si,
-	.resolve = vi_resolve_as_si,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -351,28 +351,20 @@ enum silofs_height sni_child_height(const struct silofs_spnode_info *sni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
-                       struct silofs_sb_info *sbi,
+                       const struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
                        enum silofs_stage_mode stg_mode)
 {
 	memset(stg_ctx, 0, sizeof(*stg_ctx));
-	stg_ctx->uber = sbi_uber(sbi);
-	stg_ctx->sbi = sbi;
+	stg_ctx->task = task;
+	stg_ctx->uber = task->t_uber;
+	stg_ctx->sbi = task->t_uber->ub_sbi;
 	stg_ctx->vaddr = vaddr;
 	stg_ctx->stg_mode = stg_mode;
 	stg_ctx->vspace = vaddr->stype;
 	stg_ctx->bk_voff = vaddr_bk_voff(vaddr);
 	stg_ctx->bk_lba = off_to_lba(stg_ctx->bk_voff);
 	stg_ctx->voff = vaddr->off;
-}
-
-static void stgc_setup2(struct silofs_stage_ctx *stg_ctx,
-                        const struct silofs_task *task,
-                        const struct silofs_vaddr *vaddr,
-                        enum silofs_stage_mode stg_mode)
-{
-	stgc_setup(stg_ctx, task_sbi(task), vaddr, stg_mode);
-	stg_ctx->task = task;
 }
 
 static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
@@ -2192,7 +2184,7 @@ int silofs_stage_spnode1_at(const struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	err = stgc_stage_spnodes_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2210,7 +2202,7 @@ int silofs_stage_spmaps_at(const struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	err = stgc_stage_spmaps_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2229,7 +2221,7 @@ int silofs_require_spmaps_at(const struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	err = stgc_check_may_rdwr(&stg_ctx);
 	if (err) {
 		return err;
@@ -2450,7 +2442,7 @@ int silofs_resolve_voaddr_of(const struct silofs_task *task,
 {
 	struct silofs_stage_ctx stg_ctx;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	return stgc_resolve_inspect_voaddr(&stg_ctx, out_voa);
 }
 
@@ -2463,7 +2455,7 @@ int silofs_stage_ubk_of(const struct silofs_task *task,
 	struct silofs_voaddr voa;
 	int err;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	err = stgc_resolve_inspect_voaddr(&stg_ctx, &voa);
 	if (err) {
 		return err;
@@ -2483,7 +2475,7 @@ int silofs_require_stable_at(const struct silofs_task *task,
 {
 	struct silofs_stage_ctx stg_ctx;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	return stgc_stage_stable_spmaps_of(&stg_ctx);
 }
 
@@ -2500,7 +2492,7 @@ int silofs_stage_vnode_at(const struct silofs_task *task,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	stgc_setup2(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
 	err = stgc_resolve_inspect_voaddr(&stg_ctx, &voa);
 	if (err) {
 		return err;

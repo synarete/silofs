@@ -29,7 +29,7 @@
 struct silofs_flush_ctx {
 	struct silofs_dset      dset;
 	struct silofs_alloc    *alloc;
-	struct silofs_fs_uber  *uber;
+	struct silofs_uber     *uber;
 	struct silofs_repo     *repo;
 	struct silofs_cache    *cache;
 	struct silofs_flushbuf *flush_buf;
@@ -491,7 +491,7 @@ static bool flc_need_flush(const struct silofs_flush_ctx *fl_ctx)
 }
 
 static int flc_setup(struct silofs_flush_ctx *fl_ctx,
-                     struct silofs_fs_uber *uber,
+                     struct silofs_uber *uber,
                      silofs_dqid_t dqid, int flags)
 {
 	struct silofs_repo *repo;
@@ -512,7 +512,7 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	return 0;
 }
 
-int silofs_uber_flush_dirty(struct silofs_fs_uber *uber,
+int silofs_uber_flush_dirty(struct silofs_uber *uber,
                             silofs_dqid_t dqid, int flags)
 {
 	struct silofs_flush_ctx fl_ctx = { .flags = -1 };

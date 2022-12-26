@@ -35,7 +35,7 @@ struct silofs_snode_vtbl {
 struct silofs_snode_info {
 	struct silofs_cache_elem        s_ce;
 	const struct silofs_snode_vtbl *s_vtbl;
-	struct silofs_fs_uber          *s_uber;
+	struct silofs_uber             *s_uber;
 	struct silofs_mdigest          *s_md;
 	struct silofs_list_head         s_dq_lh;
 	struct silofs_avl_node          s_ds_an;
@@ -218,7 +218,7 @@ struct silofs_unode_info *
 silofs_ui_from_si(const struct silofs_snode_info *si);
 
 void silofs_ui_bind_uber(struct silofs_unode_info *ui,
-                         struct silofs_fs_uber *uber);
+                         struct silofs_uber *uber);
 
 void silofs_ui_seal_meta(struct silofs_unode_info *ui);
 

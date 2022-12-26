@@ -21,7 +21,7 @@
 
 
 struct silofs_stage_ctx {
-	struct silofs_fs_uber          *uber;
+	struct silofs_uber             *uber;
 	struct silofs_sb_info          *sbi;
 	struct silofs_spnode_info      *sni5;
 	struct silofs_spnode_info      *sni4;
@@ -72,7 +72,7 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
                        struct silofs_sb_info *sbi,
                        struct silofs_vbk_info *vbki)
 {
-	struct silofs_fs_uber *uber = sbi_uber(sbi);
+	struct silofs_uber *uber = sbi_uber(sbi);
 
 	vi->v_si.s_uber = uber;
 	/* TODO: move to lower level */
@@ -140,7 +140,7 @@ static size_t sbi_num_cached_dirty(const struct silofs_sb_info *sbi)
 
 static int sbi_commit_dirty(const struct silofs_sb_info *sbi)
 {
-	struct silofs_fs_uber *uber = sbi_uber(sbi);
+	struct silofs_uber *uber = sbi_uber(sbi);
 	int err;
 
 	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, SILOFS_F_NOW);
@@ -218,7 +218,7 @@ static int sbi_stage_blob(const struct silofs_sb_info *sbi,
                           const struct silofs_blobid *blobid,
                           struct silofs_blobref_info **out_bri)
 {
-	struct silofs_fs_uber *uber = sbi_uber(sbi);
+	struct silofs_uber *uber = sbi_uber(sbi);
 	int err;
 
 	err = silofs_stage_blob_at(uber, true, blobid, out_bri);

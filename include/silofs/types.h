@@ -454,7 +454,7 @@ struct silofs_oper {
 };
 
 /* top-level pseudo meta node */
-struct silofs_fs_uber {
+struct silofs_uber {
 	const struct silofs_fs_args    *ub_args;
 	const struct silofs_ivkey      *ub_ivkey;
 	struct silofs_alloc            *ub_alloc;
@@ -473,9 +473,9 @@ struct silofs_fs_uber {
 
 /* file-system oper-execution task-context */
 struct silofs_task {
-	struct silofs_fs_uber          *t_uber;
-	struct silofs_oper              t_oper;
-	volatile int                    t_interrupt;
+	struct silofs_uber     *t_uber;
+	struct silofs_oper      t_oper;
+	volatile int            t_interrupt;
 };
 
 /* file-system's input id vectors */
@@ -533,7 +533,7 @@ struct silofs_fs_env {
 	struct silofs_crypto   *fs_crypto;
 	struct silofs_repos    *fs_repos;
 	struct silofs_idsmap   *fs_idsmap;
-	struct silofs_fs_uber  *fs_uber;
+	struct silofs_uber     *fs_uber;
 	struct silofs_fuseq    *fs_fuseq;
 	struct silofs_password *fs_passwd;
 	struct silofs_uaddr     fs_sb_addr;

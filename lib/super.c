@@ -710,7 +710,7 @@ static void sbi_forget_cached_ii(struct silofs_sb_info *sbi,
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi)
 {
-	const struct silofs_fs_uber *uber = sbi_uber(sbi);
+	const struct silofs_uber *uber = sbi_uber(sbi);
 
 	log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
 	silofs_itbi_reinit(&sbi->sb_itbi);
@@ -1329,7 +1329,7 @@ static void sbi_setup_by_args(struct silofs_sb_info *sbi,
 }
 
 void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
-                          struct silofs_fs_uber *uber)
+                          struct silofs_uber *uber)
 {
 	silofs_ui_bind_uber(&sbi->sb_ui, uber);
 	sbi_setup_by_args(sbi, uber->ub_args);

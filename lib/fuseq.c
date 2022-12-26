@@ -589,7 +589,7 @@ static void fill_fuse_open(struct fuse_open_out *open, int noflush)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_fs_uber *uber_of(const struct silofs_fuseq_worker *fqw)
+static struct silofs_uber *uber_of(const struct silofs_fuseq_worker *fqw)
 {
 	return fqw->fq->fq_uber;
 }
@@ -613,7 +613,7 @@ static struct silofs_task *task_of(const struct silofs_fuseq_worker *fqw)
 static struct silofs_task *task_self(const struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_task *task = task_of(fqw);
-	struct silofs_fs_uber *uber = uber_of(fqw);
+	struct silofs_uber *uber = uber_of(fqw);
 	struct silofs_creds *creds = &task->t_oper.op_creds;
 
 	task->t_uber = uber;
@@ -2566,7 +2566,7 @@ static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
                                 struct silofs_fuseq_wr_iter *fq_rwi,
                                 size_t len, loff_t off)
 {
-	const struct silofs_fs_uber *uber = uber_of(fqw);
+	const struct silofs_uber *uber = uber_of(fqw);
 	const bool concp = uber->ub_args->concp;
 
 	fq_rwi->fqw = fqw;
@@ -3771,7 +3771,7 @@ void silofs_fuseq_fini(struct silofs_fuseq *fq)
 }
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
-                       struct silofs_fs_uber *uber, const char *path)
+                       struct silofs_uber *uber, const char *path)
 {
 	const size_t max_read = fq->fq_coni.buffsize;
 	const char *sock = SILOFS_MNTSOCK_NAME;

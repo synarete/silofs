@@ -21,7 +21,7 @@
 
 struct silofs_unretask {
 	struct silofs_visitor   vis;
-	struct silofs_fs_uber  *uber;
+	struct silofs_uber     *uber;
 	struct silofs_uaddr     sb_uaddr;
 	enum silofs_repo_mode   repo_mode;
 };

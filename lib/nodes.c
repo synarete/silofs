@@ -318,7 +318,7 @@ static void ui_seal_as_si(struct silofs_snode_info *si)
 }
 
 void silofs_ui_bind_uber(struct silofs_unode_info *ui,
-                         struct silofs_fs_uber *uber)
+                         struct silofs_uber *uber)
 {
 	ui->u_si.s_uber = uber;
 }

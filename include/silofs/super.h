@@ -46,7 +46,7 @@ void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
                            struct silofs_stats_info *sti);
 
 void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
-                          struct silofs_fs_uber *uber);
+                          struct silofs_uber *uber);
 
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);

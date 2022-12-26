@@ -33,7 +33,7 @@ struct silofs_fs_core {
 	struct silofs_qalloc    qalloc;
 	struct silofs_crypto    crypto;
 	struct silofs_repos     repos;
-	struct silofs_fs_uber   uber;
+	struct silofs_uber      uber;
 	struct silofs_idsmap    idsm;
 	struct silofs_password  passwd;
 };
@@ -325,7 +325,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 		.idsm = fse->fs_idsmap,
 		.ivkey = &fse->fs_ivkey,
 	};
-	struct silofs_fs_uber *uber;
+	struct silofs_uber *uber;
 	int err;
 
 	uber = &fse_obj_of(fse)->fs_core.c.uber;
@@ -645,7 +645,7 @@ static int fse_reload_fs_meta(struct silofs_fs_env *fse)
 
 static int fse_flush_dirty(const struct silofs_fs_env *fse)
 {
-	struct silofs_fs_uber *uber = fse->fs_uber;
+	struct silofs_uber *uber = fse->fs_uber;
 	int err;
 
 	err = silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, SILOFS_F_NOW);
@@ -658,7 +658,7 @@ static int fse_flush_dirty(const struct silofs_fs_env *fse)
 
 static int fse_shut_uber(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_uber *uber = fse->fs_uber;
+	struct silofs_uber *uber = fse->fs_uber;
 	int err;
 
 	if ((uber == NULL) || (uber->ub_sbi == NULL)) {
@@ -815,7 +815,7 @@ static int fse_verify_bootsec(const struct silofs_fs_env *fse,
 
 static int fse_reload_supers(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_uber *uber = fse->fs_uber;
+	struct silofs_uber *uber = fse->fs_uber;
 	int err;
 
 	err = silofs_uber_reload_supers(uber);
@@ -1132,7 +1132,7 @@ static int fse_make_self_ctx(struct silofs_fs_env *fse,
 
 static int fse_format_supers(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_uber *uber = fse->fs_uber;
+	struct silofs_uber *uber = fse->fs_uber;
 	const size_t cap_want = uber->ub_args->capacity;
 	size_t capacity = 0;
 	int err;

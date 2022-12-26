@@ -25,7 +25,7 @@
 
 struct silofs_walk_ctx {
 	struct silofs_visitor      *vis;
-	struct silofs_fs_uber      *uber;
+	struct silofs_uber         *uber;
 	struct silofs_sb_info      *sbi;
 	struct silofs_spnode_info  *sni5;
 	struct silofs_spnode_info  *sni4;

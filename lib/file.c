@@ -43,7 +43,7 @@
 
 struct silofs_file_ctx {
 	const struct silofs_task       *task;
-	struct silofs_fs_uber          *uber;
+	struct silofs_uber             *uber;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *ii;
 	struct silofs_rwiter_ctx       *rwi_ctx;
@@ -3901,7 +3901,7 @@ static size_t fpr_copy_range_length(const struct silofs_fpos_ref *fpr_src,
 	return min(len_src, len_dst);
 }
 
-static struct silofs_fs_uber *fic_uber(const struct silofs_file_ctx *f_ctx)
+static struct silofs_uber *fic_uber(const struct silofs_file_ctx *f_ctx)
 {
 	return sbi_uber(f_ctx->sbi);
 }
@@ -3916,7 +3916,7 @@ fic_kcopy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
 	struct silofs_iovec iov_dst = { .iov_off = -1, .iov_fd = -1 };
 	struct silofs_ubk_info *ubki_src = NULL;
 	struct silofs_ubk_info *ubki_dst = NULL;
-	struct silofs_fs_uber *uber = NULL;
+	struct silofs_uber *uber = NULL;
 	int err;
 	bool all;
 

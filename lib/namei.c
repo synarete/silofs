@@ -38,7 +38,7 @@ union silofs_utf32_name_buf {
 } silofs_aligned64;
 
 
-static int check_utf8_name(const struct silofs_fs_uber *uber,
+static int check_utf8_name(const struct silofs_uber *uber,
                            const struct silofs_namestr *nstr)
 {
 	union silofs_utf32_name_buf unb;
@@ -213,7 +213,7 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
-	const struct silofs_fs_uber *uber = ii_uber(ii);
+	const struct silofs_uber *uber = ii_uber(ii);
 	const size_t total_iopen_max = uber->ub_ops.op_iopen_max;
 	const size_t iopen_max = total_iopen_max / 2;
 
@@ -228,7 +228,7 @@ static int check_open_limit(const struct silofs_inode_info *ii)
 
 static void update_nopen(struct silofs_inode_info *ii, int n)
 {
-	struct silofs_fs_uber *uber = ii_uber(ii);
+	struct silofs_uber *uber = ii_uber(ii);
 
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
@@ -1461,7 +1461,7 @@ static int flush_dirty_of(const struct silofs_inode_info *ii, int flags)
 	return silofs_uber_flush_dirty(ii_uber(ii), ii_dqid(ii), flags);
 }
 
-static int flush_dirty_now(struct silofs_fs_uber *uber)
+static int flush_dirty_now(struct silofs_uber *uber)
 {
 	return silofs_uber_flush_dirty(uber, SILOFS_DQID_ALL, SILOFS_F_NOW);
 }
@@ -2030,7 +2030,7 @@ static void fill_prstats(const struct silofs_sb_info *sbi,
                          struct silofs_query_prstats *qus)
 {
 	struct silofs_alloc_stat alst;
-	const struct silofs_fs_uber *uber = sbi_uber(sbi);
+	const struct silofs_uber *uber = sbi_uber(sbi);
 	const struct silofs_cache *cache = sbi_cache(sbi);
 
 	silofs_allocstat(sbi_alloc(sbi), &alst);
@@ -2092,7 +2092,7 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static struct silofs_repos *repos_of(const struct silofs_fs_uber *uber)
+static struct silofs_repos *repos_of(const struct silofs_uber *uber)
 {
 	return uber->ub_repos;
 }
@@ -2100,7 +2100,7 @@ static struct silofs_repos *repos_of(const struct silofs_fs_uber *uber)
 static void fill_query_bootsec(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	const struct silofs_fs_uber *uber = NULL;
+	const struct silofs_uber *uber = NULL;
 	const struct silofs_repo *repo = NULL;
 	const struct silofs_bootpath *bpath = NULL;
 	size_t bsz;
@@ -2283,7 +2283,7 @@ static int do_clone(const struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
                     struct silofs_bootsecs *out_bsecs)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = check_clone(task, dir_ii, flags);
@@ -2323,7 +2323,7 @@ int silofs_do_clone(const struct silofs_task *task,
 
 int silofs_do_inspect(const struct silofs_task *task)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	struct silofs_sb_info *sbi = uber->ub_sbi;
 	int err;
 
@@ -2340,7 +2340,7 @@ int silofs_do_inspect(const struct silofs_task *task)
 
 int silofs_do_unrefs(const struct silofs_task *task)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	struct silofs_sb_info *sbi = uber->ub_sbi;
 	int err;
 
@@ -2366,7 +2366,7 @@ int silofs_do_pack(const struct silofs_task *task,
                    const struct silofs_bootsec *bsec_src,
                    struct silofs_bootsec *bsec_dst)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = check_pack(task);
@@ -2393,7 +2393,7 @@ int silofs_do_unpack(const struct silofs_task *task,
                      const struct silofs_bootsec *bsec_src,
                      struct silofs_bootsec *bsec_dst)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = check_pack(task);

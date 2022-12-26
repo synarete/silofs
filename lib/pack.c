@@ -57,7 +57,7 @@ struct silofs_pack_ctx {
 	const struct silofs_bootsec    *warm_bsec;
 	const struct silofs_bootsec    *cold_bsec;
 	const struct silofs_ivkey      *ivkey;
-	struct silofs_fs_uber          *uber;
+	struct silofs_uber             *uber;
 	struct silofs_repos            *repos;
 	const struct silofs_cipher     *cipher;
 	const struct silofs_mdigest    *mdigest;
@@ -802,7 +802,7 @@ static int pac_init_repos(struct silofs_pack_ctx *pa_ctx)
 
 static int
 pac_init(struct silofs_pack_ctx *pa_ctx, bool de,
-         struct silofs_fs_uber *uber, const struct silofs_ivkey *ivkey)
+         struct silofs_uber *uber, const struct silofs_ivkey *ivkey)
 {
 	int err;
 
@@ -1430,7 +1430,7 @@ static void pac_assign_cold_bootsec(struct silofs_pack_ctx *pa_ctx,
 	silofs_bootsec_set_keyhash(bsec, &hash);
 }
 
-int silofs_uber_pack_fs(struct silofs_fs_uber *uber,
+int silofs_uber_pack_fs(struct silofs_uber *uber,
                         const struct silofs_ivkey *ivkey,
                         const struct silofs_bootsec *warm_bsec,
                         struct silofs_bootsec *out_cold_bsec)
@@ -2092,7 +2092,7 @@ static void pac_reassign_warm_bootsec(struct silofs_pack_ctx *pa_ctx,
 	silofs_bootsec_clear_keyhash(bsec);
 }
 
-int silofs_uber_unpack_fs(struct silofs_fs_uber *uber,
+int silofs_uber_unpack_fs(struct silofs_uber *uber,
                           const struct silofs_ivkey *ivkey,
                           const struct silofs_bootsec *cold_bsec,
                           struct silofs_bootsec *out_warm_bsec)

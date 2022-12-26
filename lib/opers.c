@@ -51,7 +51,7 @@ static void op_unlock_fs(const struct silofs_task *task)
 static int op_flush(const struct silofs_task *task,
                     ino_t ino, int op_flags, int fl_flags)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	silofs_dqid_t dqid;
 	int ret = 0;
 
@@ -67,7 +67,7 @@ static int op_flush(const struct silofs_task *task,
 
 static int op_start(const struct silofs_task *task, ino_t ino)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 
 	op_lock_fs(task);
 	uber->ub_ops.op_time = task->t_oper.op_creds.ts.tv_sec;
@@ -1567,7 +1567,7 @@ int silofs_fs_rdwr_post(const struct silofs_task *task,
 
 int silofs_fs_timedout(const struct silofs_task *task, int flags)
 {
-	struct silofs_fs_uber *uber = task->t_uber;
+	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = op_start(task, SILOFS_INO_NULL);

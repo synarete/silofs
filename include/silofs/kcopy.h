@@ -17,11 +17,11 @@
 #ifndef SILOFS_KCOPY_H_
 #define SILOFS_KCOPY_H_
 
-int silofs_kcopy_by_splice(struct silofs_fs_uber *uber,
+int silofs_kcopy_by_splice(struct silofs_uber *uber,
                            int fd_src, loff_t off_src,
                            int fd_dst, loff_t off_dst, size_t len);
 
-int silofs_kcopy_by_iovec(struct silofs_fs_uber *uber,
+int silofs_kcopy_by_iovec(struct silofs_uber *uber,
                           const struct silofs_iovec *iov_src,
                           const struct silofs_iovec *iov_dst, size_t len);
 

@@ -40,8 +40,10 @@
 #define QALLOC_MALLOC_SIZE_MAX  (64 * SILOFS_UMEGA)
 #define QALLOC_PAGE_SIZE        (4 * SILOFS_KILO)
 
-#define MPAGE_NSEGS             (QALLOC_PAGE_SIZE / MSLAB_SEG_SIZE)
-#define MPAGES_IN_HOLE          (32)
+#define MPAGE_SIZE              QALLOC_PAGE_SIZE
+#define MPAGE_NSEGS             (MPAGE_SIZE / MSLAB_SEG_SIZE)
+#define MPAGES_LARGE_CHUNK      (32)
+#define MPAGES_HOLE             ((2 * SILOFS_MEGA) / MPAGE_SIZE)
 
 #define MSLAB_SEG_SIZE          (32)
 #define MSLAB_SIZE_MIN          MSLAB_SEG_SIZE
@@ -76,7 +78,7 @@ struct silofs_slab_seg {
 
 union silofs_page {
 	struct silofs_slab_seg seg[MPAGE_NSEGS];
-	uint8_t data[QALLOC_PAGE_SIZE];
+	uint8_t data[MPAGE_SIZE];
 } silofs_packed_aligned64;
 
 
@@ -86,7 +88,8 @@ struct silofs_page_info {
 	union silofs_page       *pg;
 	size_t  pg_index;
 	size_t  pg_count; /* num pages free/used */
-	int     pg_free;
+	short   pg_free;
+	short   pg_hole;
 	int     slab_index;
 	int     slab_nused;
 	int     slab_nelems;
@@ -100,7 +103,7 @@ static void static_assert_alloc_sizes(void)
 	const struct silofs_qalloc *qal = NULL;
 
 	STATICASSERT_SIZEOF(struct silofs_slab_seg, MSLAB_SEG_SIZE);
-	STATICASSERT_SIZEOF(union silofs_page, QALLOC_PAGE_SIZE);
+	STATICASSERT_SIZEOF(union silofs_page, MPAGE_SIZE);
 	STATICASSERT_SIZEOF(struct silofs_page_info, 64);
 	STATICASSERT_SIZEOF_LE(struct silofs_slab_seg, SILOFS_CACHELINE_SIZE);
 	STATICASSERT_SIZEOF_GE(struct silofs_page_info, SILOFS_CACHELINE_SIZE);
@@ -559,12 +562,11 @@ static void qalloc_add_free(struct silofs_qalloc *qal,
                             struct silofs_page_info *pgi,
                             struct silofs_page_info *prev, size_t npgs)
 {
-	const size_t threshold = MPAGES_IN_HOLE;
 	struct silofs_list_head *free_list = &qal->free_pgs;
 
 	pgi_update(pgi, prev, npgs);
 	qalloc_update(qal, pgi, npgs);
-	if (npgs >= threshold) {
+	if (npgs >= MPAGES_LARGE_CHUNK) {
 		pgi_push_head(pgi, free_list);
 	} else {
 		pgi_push_tail(pgi, free_list);
@@ -628,7 +630,7 @@ static void qalloc_fini_mutex(struct silofs_qalloc *qal)
 
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 {
-	const size_t pgsz = QALLOC_PAGE_SIZE;
+	const size_t pgsz = MPAGE_SIZE;
 	const size_t npgs = memsize / pgsz;
 	int err;
 
@@ -686,12 +688,12 @@ static void qalloc_unlock(const struct silofs_qalloc *qal)
 
 static size_t nbytes_to_npgs(size_t nbytes)
 {
-	return (nbytes + QALLOC_PAGE_SIZE - 1) / QALLOC_PAGE_SIZE;
+	return (nbytes + MPAGE_SIZE - 1) / MPAGE_SIZE;
 }
 
 static size_t npgs_to_nbytes(size_t npgs)
 {
-	return npgs * QALLOC_PAGE_SIZE;
+	return npgs * MPAGE_SIZE;
 }
 
 static loff_t qalloc_ptr_to_off(const struct silofs_qalloc *qal,
@@ -779,10 +781,9 @@ static struct silofs_page_info *
 qalloc_search_free_list(struct silofs_qalloc *qal, size_t npgs)
 {
 	struct silofs_page_info *pgi = NULL;
-	const size_t threshold = MPAGES_IN_HOLE;
 
 	if ((qal->alst.npages_used + npgs) <= qal->alst.npages_tota) {
-		if (npgs >= threshold) {
+		if (npgs >= MPAGES_LARGE_CHUNK) {
 			pgi = qalloc_search_free_from_head(qal, npgs);
 		} else {
 			pgi = qalloc_search_free_from_tail(qal, npgs);
@@ -801,22 +802,16 @@ qalloc_alloc_npgs(struct silofs_qalloc *qal, size_t npgs)
 	if (pgi == NULL) {
 		return NULL;
 	}
-	silofs_assert_eq(pgi->slab_index, MSLAB_INDEX_NONE);
-	silofs_assert_ge(pgi->pg_count, npgs);
 
 	pgi_unlink(pgi);
 	pgi->pg_free = 0;
-	if (pgi->pg_count == npgs) {
-		return pgi;
+	if (pgi->pg_count > npgs) {
+		pgi_next = qalloc_next(qal, pgi, npgs);
+		qalloc_add_free(qal, pgi_next, pgi, pgi->pg_count - npgs);
+		pgi_next->pg_hole = pgi->pg_hole;
+		pgi->pg_count = npgs;
 	}
-	pgi_next = qalloc_next(qal, pgi, npgs);
-	silofs_assert_not_null(pgi_next);
-	silofs_assert_eq(pgi_next->slab_index, MSLAB_INDEX_NONE);
-	silofs_assert_eq(pgi_next->pg_count, 0);
-	silofs_assert_eq(pgi_next->pg_free, 1);
-	qalloc_add_free(qal, pgi_next, pgi, pgi->pg_count - npgs);
-
-	pgi->pg_count = npgs;
+	pgi->pg_hole = 0;
 	return pgi;
 }
 
@@ -1013,33 +1008,34 @@ static int qalloc_check_free(const struct silofs_qalloc *qal,
 	return 0;
 }
 
-static void
-qalloc_punch_hole_at(const struct silofs_qalloc *qal,
-                     const struct silofs_page_info *pgi, size_t npgs)
+static void qalloc_punch_hole_at(const struct silofs_qalloc *qal,
+                                 struct silofs_page_info *pgi, size_t npgs)
 {
 	size_t off;
 	size_t len;
-	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	int mode;
 	int err;
 
 	off = npgs_to_nbytes(pgi->pg_index);
 	len = npgs_to_nbytes(npgs);
+	mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 	err = silofs_sys_fallocate(qal->memfd_data, mode,
 	                           (loff_t)off, (loff_t)len);
 	if (err) {
-		silofs_panic("failed to punch-hole in memory: "
-		             "off=0x%lx len=%lu err=%d", off, len, err);
+		silofs_panic("failed to punch-hole in memory: off=%ld "
+		             "len=%lu mode=0x%x err=%d", off, len, mode, err);
 	}
 }
 
-static void
-qalloc_release_npgs(const struct silofs_qalloc *qal,
-                    const struct silofs_page_info *pgi, size_t npgs)
+static void qalloc_update_released(const struct silofs_qalloc *qal,
+                                   struct silofs_page_info *pgi,
+                                   size_t npgs, size_t npgs_not_hole)
 {
-	const size_t threshold = MPAGES_IN_HOLE;
-
-	if (npgs >= threshold) {
+	if (npgs_not_hole >= MPAGES_HOLE) {
 		qalloc_punch_hole_at(qal, pgi, npgs);
+		pgi->pg_hole = 1;
+	} else {
+		pgi->pg_hole = 0;
 	}
 }
 
@@ -1048,16 +1044,21 @@ static int qalloc_free_npgs(struct silofs_qalloc *qal,
 {
 	struct silofs_page_info *pgi_next;
 	struct silofs_page_info *pgi_prev;
+	size_t npgs_not_hole = npgs;
 
 	pgi_next = qalloc_next(qal, pgi, npgs);
 	if (pgi_next && pgi_next->pg_free) {
-		silofs_assert_gt(pgi_next->pg_count, 0);
+		if (!pgi_next->pg_hole) {
+			npgs_not_hole += pgi_next->pg_count;
+		}
 		npgs += pgi_next->pg_count;
 		pgi_unlink_mute(pgi_next);
 	}
 	pgi_prev = pgi->prev;
 	if (pgi_prev && pgi_prev->pg_free) {
-		silofs_assert_gt(pgi_prev->pg_count, 0);
+		if (!pgi_prev->pg_hole) {
+			npgs_not_hole += pgi_prev->pg_count;
+		}
 		npgs += pgi_prev->pg_count;
 		pgi_mute(pgi);
 		pgi = pgi_prev;
@@ -1065,7 +1066,7 @@ static int qalloc_free_npgs(struct silofs_qalloc *qal,
 		pgi_unlink_mute(pgi);
 	}
 
-	qalloc_release_npgs(qal, pgi, npgs);
+	qalloc_update_released(qal, pgi, npgs, npgs_not_hole);
 	qalloc_add_free(qal, pgi, pgi_prev, npgs);
 	return 0;
 }

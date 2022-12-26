@@ -152,7 +152,7 @@ static void fse_init_commons(struct silofs_fs_env *fse,
 
 static int fse_init_qalloc(struct silofs_fs_env *fse)
 {
-	struct silofs_qalloc *qalloc = &fse_obj_of(fse)->fs_core.c.qalloc;
+	struct silofs_qalloc *qalloc;
 	size_t memsize = 0;
 	int mode;
 	int err;
@@ -162,6 +162,7 @@ static int fse_init_qalloc(struct silofs_fs_env *fse)
 		return err;
 	}
 	mode = fse->fs_args.pedantic ? 1 : 0;
+	qalloc = &fse_obj_of(fse)->fs_core.c.qalloc;
 	err = silofs_qalloc_init(qalloc, memsize, mode);
 	if (err) {
 		return err;
@@ -182,9 +183,10 @@ static void fse_fini_qalloc(struct silofs_fs_env *fse)
 
 static int fse_init_crypto(struct silofs_fs_env *fse)
 {
-	struct silofs_crypto *crypto = &fse_obj_of(fse)->fs_core.c.crypto;
+	struct silofs_crypto *crypto;
 	int err;
 
+	crypto = &fse_obj_of(fse)->fs_core.c.crypto;
 	err = silofs_crypto_init(crypto);
 	if (!err) {
 		fse->fs_crypto = crypto;
@@ -261,18 +263,20 @@ static int fse_init_repos(struct silofs_fs_env *fse)
 {
 	struct silofs_repocfg rcfg[2];
 	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
+	struct silofs_repos *repos;
 	int err;
 
 	silofs_memzero(rcfg, sizeof(rcfg));
-	fse->fs_repos = &fse_obj->fs_core.c.repos;
 	err = fse_make_repocfg(fse, rcfg);
 	if (err) {
 		return err;
 	}
-	err = silofs_repos_init(fse->fs_repos, rcfg);
+	repos = &fse_obj->fs_core.c.repos;
+	err = silofs_repos_init(repos, rcfg);
 	if (err) {
 		return err;
 	}
+	fse->fs_repos = repos;
 	return 0;
 }
 
@@ -315,11 +319,16 @@ static void fse_fini_idsmap(struct silofs_fs_env *fse)
 
 static int fse_init_uber(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_uber *uber = &fse_obj_of(fse)->fs_core.c.uber;
+	const struct silofs_uber_args args = {
+		.alloc = fse->fs_alloc,
+		.repos = fse->fs_repos,
+		.idsm = fse->fs_idsmap,
+	};
+	struct silofs_fs_uber *uber;
 	int err;
 
-	err = silofs_uber_init(uber, fse->fs_alloc,
-	                       fse->fs_repos, fse->fs_idsmap);
+	uber = &fse_obj_of(fse)->fs_core.c.uber;
+	err = silofs_uber_init(uber, &args);
 	if (!err) {
 		uber->ub_args = &fse->fs_args;
 		fse->fs_uber = uber;
@@ -409,9 +418,10 @@ static int fse_check_args(const struct silofs_fs_args *args)
 
 static int fse_init_passwd(struct silofs_fs_env *fse)
 {
-	struct silofs_password *passwd = &fse_obj_of(fse)->fs_core.c.passwd;
+	struct silofs_password *passwd;
 	int err;
 
+	passwd = &fse_obj_of(fse)->fs_core.c.passwd;
 	err = silofs_password_setup(passwd, fse->fs_args.passwd);
 	if (err) {
 		return err;

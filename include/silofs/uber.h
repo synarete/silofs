@@ -19,9 +19,15 @@
 
 #include <silofs/types.h>
 
+struct silofs_uber_args {
+	struct silofs_alloc    *alloc;
+	struct silofs_repos    *repos;
+	struct silofs_idsmap   *idsm;
+};
 
-int silofs_uber_init(struct silofs_fs_uber *uber, struct silofs_alloc *alloc,
-                     struct silofs_repos *repos, struct silofs_idsmap *idsm);
+
+int silofs_uber_init(struct silofs_fs_uber *uber,
+                     const struct silofs_uber_args *args);
 
 void silofs_uber_fini(struct silofs_fs_uber *uber);
 

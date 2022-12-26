@@ -193,12 +193,12 @@ struct silofs_iattr {
 	struct silofs_itimes ia_t;
 };
 
-/* encryption tuple (key, iv, algo, mode) */
-struct silofs_kivam {
+/* encryption tuple (IV, key, cipher-algo, mode) */
+struct silofs_ivkey {
 	struct silofs_key       key;
 	struct silofs_iv        iv;
-	unsigned int            cipher_algo;
-	unsigned int            cipher_mode;
+	unsigned int            algo;
+	unsigned int            mode;
 };
 
 /* space-tree id */
@@ -520,7 +520,7 @@ struct silofs_fs_args {
 /* file-system environment context */
 struct silofs_fs_env {
 	struct silofs_fs_args   fs_args;
-	struct silofs_kivam     fs_kivam;
+	struct silofs_ivkey     fs_ivkey;
 	struct silofs_qalloc   *fs_qalloc;
 	struct silofs_alloc    *fs_alloc;
 	struct silofs_crypto   *fs_crypto;

@@ -524,12 +524,12 @@ int silofs_fs_inspect(struct silofs_fs_ctx *fs_ctx);
 int silofs_fs_unrefs(struct silofs_fs_ctx *fs_ctx);
 
 int silofs_fs_pack(struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_kivam *kivam,
+                   const struct silofs_ivkey *ivkey,
                    const struct silofs_bootsec *src_bsec,
                    struct silofs_bootsec *dst_bsec);
 
 int silofs_fs_unpack(struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_kivam *kivam,
+                     const struct silofs_ivkey *ivkey,
                      const struct silofs_bootsec *src_bsec,
                      struct silofs_bootsec *dst_bsec);
 

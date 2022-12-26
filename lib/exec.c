@@ -141,7 +141,7 @@ static void fse_init_commons(struct silofs_fs_env *fse,
                              const struct silofs_fs_args *fs_args)
 {
 	silofs_memzero(fse, sizeof(*fse));
-	silofs_kivam_init(&fse->fs_kivam);
+	silofs_ivkey_init(&fse->fs_ivkey);
 	fs_args_assign(&fse->fs_args, fs_args);
 	fse->fs_args.uid = getuid();
 	fse->fs_args.gid = getgid();
@@ -470,7 +470,7 @@ out_err:
 
 static void fse_fini_commons(struct silofs_fs_env *fse)
 {
-	silofs_kivam_fini(&fse->fs_kivam);
+	silofs_ivkey_fini(&fse->fs_ivkey);
 	fse->fs_uber = NULL;
 }
 
@@ -749,7 +749,7 @@ static int fse_derive_main_key(struct silofs_fs_env *fse,
 		return 0;
 	}
 	silofs_bootsec_cipher_args(bsec, &cip_args);
-	err = silofs_derive_kivam(&cip_args, pswd, md, &fse->fs_kivam);
+	err = silofs_derive_ivkey(&cip_args, pswd, md, &fse->fs_ivkey);
 	if (err) {
 		log_err("failed to derive main-key: err=%d", err);
 		return err;
@@ -778,9 +778,9 @@ static int fse_check_super_block(const struct silofs_fs_env *fse,
 static void fse_key_hash(const struct silofs_fs_env *fse,
                          struct silofs_hash256 *out_hash)
 {
-	const struct silofs_kivam *kivam = &fse->fs_kivam;
+	const struct silofs_ivkey *ivkey = &fse->fs_ivkey;
 
-	silofs_calc_key_hash(&kivam->key, fse_mdigest(fse), out_hash);
+	silofs_calc_key_hash(&ivkey->key, fse_mdigest(fse), out_hash);
 }
 
 static int fse_verify_bootsec(const struct silofs_fs_env *fse,
@@ -1428,7 +1428,7 @@ int silofs_fse_pack_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_pack(&fs_ctx, &fse->fs_kivam, &bsec_src, &bsec_dst);
+	err = silofs_fs_pack(&fs_ctx, &fse->fs_ivkey, &bsec_src, &bsec_dst);
 	if (err) {
 		return err;
 	}
@@ -1468,7 +1468,7 @@ int silofs_fse_unpack_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unpack(&fs_ctx, &fse->fs_kivam, &bsec_src, &bsec_dst);
+	err = silofs_fs_unpack(&fs_ctx, &fse->fs_ivkey, &bsec_src, &bsec_dst);
 	if (err) {
 		return err;
 	}

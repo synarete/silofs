@@ -117,12 +117,12 @@ int silofs_do_inspect(const struct silofs_fs_ctx *fs_ctx);
 int silofs_do_unrefs(const struct silofs_fs_ctx *fs_ctx);
 
 int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_kivam *kivam,
+                   const struct silofs_ivkey *ivkey,
                    const struct silofs_bootsec *src_bsec,
                    struct silofs_bootsec *dst_bsec);
 
 int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_kivam *kivam,
+                     const struct silofs_ivkey *ivkey,
                      const struct silofs_bootsec *src_bsec,
                      struct silofs_bootsec *dst_bsec);
 

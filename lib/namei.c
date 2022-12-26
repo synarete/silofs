@@ -2362,7 +2362,7 @@ static int check_pack(const struct silofs_fs_ctx *fs_ctx)
 }
 
 int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_kivam *kivam,
+                   const struct silofs_ivkey *ivkey,
                    const struct silofs_bootsec *bsec_src,
                    struct silofs_bootsec *bsec_dst)
 {
@@ -2377,7 +2377,7 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_pack_fs(uber, kivam, bsec_src, bsec_dst);
+	err = silofs_uber_pack_fs(uber, ivkey, bsec_src, bsec_dst);
 	if (err) {
 		return err;
 	}
@@ -2389,7 +2389,7 @@ int silofs_do_pack(const struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_kivam *kivam,
+                     const struct silofs_ivkey *ivkey,
                      const struct silofs_bootsec *bsec_src,
                      struct silofs_bootsec *bsec_dst)
 {
@@ -2404,7 +2404,7 @@ int silofs_do_unpack(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_unpack_fs(uber, kivam, bsec_src, bsec_dst);
+	err = silofs_uber_unpack_fs(uber, ivkey, bsec_src, bsec_dst);
 	if (err) {
 		return err;
 	}

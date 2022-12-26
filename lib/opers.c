@@ -1499,7 +1499,7 @@ out:
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fs_pack(struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_kivam *kivam,
+                   const struct silofs_ivkey *ivkey,
                    const struct silofs_bootsec *bsec_src,
                    struct silofs_bootsec *bsec_dst)
 {
@@ -1511,14 +1511,14 @@ int silofs_fs_pack(struct silofs_fs_ctx *fs_ctx,
 	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_pack(fs_ctx, kivam, bsec_src, bsec_dst);
+	err = silofs_do_pack(fs_ctx, ivkey, bsec_src, bsec_dst);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, true, err);
 }
 
 int silofs_fs_unpack(struct silofs_fs_ctx *fs_ctx,
-                     const struct silofs_kivam *kivam,
+                     const struct silofs_ivkey *ivkey,
                      const struct silofs_bootsec *bsec_src,
                      struct silofs_bootsec *bsec_dst)
 {
@@ -1530,7 +1530,7 @@ int silofs_fs_unpack(struct silofs_fs_ctx *fs_ctx,
 	err = op_authorize(fs_ctx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_unpack(fs_ctx, kivam, bsec_src, bsec_dst);
+	err = silofs_do_unpack(fs_ctx, ivkey, bsec_src, bsec_dst);
 	ok_or_goto_out(err);
 out:
 	return op_finish(fs_ctx, true, err);

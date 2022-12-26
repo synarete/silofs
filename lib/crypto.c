@@ -293,10 +293,10 @@ static void cipher_fini(struct silofs_cipher *ci)
 }
 
 static int chiper_verify(const struct silofs_cipher *ci,
-                         const struct silofs_kivam *kivam)
+                         const struct silofs_ivkey *ivkey)
 {
-	const unsigned int algo = kivam->cipher_algo;
-	const unsigned int mode = kivam->cipher_mode;
+	const unsigned int algo = ivkey->algo;
+	const unsigned int mode = ivkey->mode;
 
 	silofs_unused(ci);
 	if ((algo != GCRY_CIPHER_AES256) || (mode != GCRY_CIPHER_MODE_GCM)) {
@@ -307,14 +307,14 @@ static int chiper_verify(const struct silofs_cipher *ci,
 }
 
 static int cipher_prepare(const struct silofs_cipher *ci,
-                          const struct silofs_kivam *kivam)
+                          const struct silofs_ivkey *ivkey)
 {
 	size_t blklen;
 	gcry_error_t err;
-	const struct silofs_iv *iv = &kivam->iv;
-	const struct silofs_key *key = &kivam->key;
+	const struct silofs_iv *iv = &ivkey->iv;
+	const struct silofs_key *key = &ivkey->key;
 
-	blklen = gcry_cipher_get_algo_blklen((int)kivam->cipher_algo);
+	blklen = gcry_cipher_get_algo_blklen((int)ivkey->algo);
 	if (blklen > sizeof(iv->iv)) {
 		log_warn("bad blklen: %lu", blklen);
 		return -EINVAL;
@@ -376,16 +376,16 @@ static int cipher_decrypt(const struct silofs_cipher *ci,
 }
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_kivam *kivam,
+                       const struct silofs_ivkey *ivkey,
                        const void *in_dat, void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = chiper_verify(ci, kivam);
+	err = chiper_verify(ci, ivkey);
 	if (err) {
 		return err;
 	}
-	err = cipher_prepare(ci, kivam);
+	err = cipher_prepare(ci, ivkey);
 	if (err) {
 		return err;
 	}
@@ -397,16 +397,16 @@ int silofs_encrypt_buf(const struct silofs_cipher *ci,
 }
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_kivam *kivam,
+                       const struct silofs_ivkey *ivkey,
                        const void *in_dat, void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = chiper_verify(ci, kivam);
+	err = chiper_verify(ci, ivkey);
 	if (err) {
 		return err;
 	}
-	err = cipher_prepare(ci, kivam);
+	err = cipher_prepare(ci, ivkey);
 	if (err) {
 		return err;
 	}
@@ -508,10 +508,10 @@ static int derive_key(const struct silofs_kdf_desc *kdf,
 	return ret;
 }
 
-int silofs_derive_kivam(const struct silofs_cipher_args *cip_args,
+int silofs_derive_ivkey(const struct silofs_cipher_args *cip_args,
                         const struct silofs_password *pp,
                         const struct silofs_mdigest *md,
-                        struct silofs_kivam *kivam)
+                        struct silofs_ivkey *ivkey)
 {
 	int err;
 
@@ -519,19 +519,19 @@ int silofs_derive_kivam(const struct silofs_cipher_args *cip_args,
 	if (err) {
 		goto out;
 	}
-	err = derive_iv(&cip_args->kdf.kdf_iv, pp, md, &kivam->iv);
+	err = derive_iv(&cip_args->kdf.kdf_iv, pp, md, &ivkey->iv);
 	if (err) {
 		goto out;
 	}
-	err = derive_key(&cip_args->kdf.kdf_key, pp, md, &kivam->key);
+	err = derive_key(&cip_args->kdf.kdf_key, pp, md, &ivkey->key);
 	if (err) {
 		goto out;
 	}
-	kivam->cipher_algo = cip_args->cipher_algo;
-	kivam->cipher_mode = cip_args->cipher_mode;
+	ivkey->algo = cip_args->cipher_algo;
+	ivkey->mode = cip_args->cipher_mode;
 out:
 	if (err) {
-		silofs_memzero(kivam, sizeof(*kivam));
+		silofs_memzero(ivkey, sizeof(*ivkey));
 	}
 	return err;
 }
@@ -565,22 +565,22 @@ void silofs_crypto_fini(struct silofs_crypto *crypto)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_kivam_init(struct silofs_kivam *kivam)
+void silofs_ivkey_init(struct silofs_ivkey *ivkey)
 {
-	memset(kivam, 0, sizeof(*kivam));
-	kivam->cipher_algo = SILOFS_CIPHER_AES256;
-	kivam->cipher_mode = SILOFS_CIPHER_MODE_GCM;
+	memset(ivkey, 0, sizeof(*ivkey));
+	ivkey->algo = SILOFS_CIPHER_AES256;
+	ivkey->mode = SILOFS_CIPHER_MODE_GCM;
 }
 
-void silofs_kivam_fini(struct silofs_kivam *kivam)
+void silofs_ivkey_fini(struct silofs_ivkey *ivkey)
 {
-	memset(kivam, 0xC3, sizeof(*kivam));
+	memset(ivkey, 0xC3, sizeof(*ivkey));
 }
 
-void silofs_kivam_copyto(const struct silofs_kivam *kivam,
-                         struct silofs_kivam *other)
+void silofs_ivkey_copyto(const struct silofs_ivkey *ivkey,
+                         struct silofs_ivkey *other)
 {
-	memcpy(other, kivam, sizeof(*other));
+	memcpy(other, ivkey, sizeof(*other));
 }
 
 void silofs_gcry_randomize(void *buf, size_t len, bool very_strong)

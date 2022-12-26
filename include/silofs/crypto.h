@@ -30,10 +30,10 @@ int silofs_crypto_init(struct silofs_crypto *crypto);
 
 void silofs_crypto_fini(struct silofs_crypto *crypto);
 
-int silofs_derive_kivam(const struct silofs_cipher_args *cip_args,
+int silofs_derive_ivkey(const struct silofs_cipher_args *cip_args,
                         const struct silofs_password *pp,
                         const struct silofs_mdigest *md,
-                        struct silofs_kivam *kivam);
+                        struct silofs_ivkey *ivkey);
 
 
 void silofs_blake2s128_of(const struct silofs_mdigest *md,
@@ -60,11 +60,11 @@ void silofs_crc32_of(const struct silofs_mdigest *md,
                      const void *buf, size_t bsz, uint32_t *out_crc32);
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_kivam *kivam,
+                       const struct silofs_ivkey *ivkey,
                        const void *in_dat, void *out_dat, size_t dat_len);
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_kivam *kivam,
+                       const struct silofs_ivkey *ivkey,
                        const void *in_dat, void *out_dat, size_t dat_len);
 
 
@@ -73,12 +73,12 @@ int silofs_password_setup(struct silofs_password *pp, const void *pass);
 void silofs_password_reset(struct silofs_password *pp);
 
 
-void silofs_kivam_init(struct silofs_kivam *kivam);
+void silofs_ivkey_init(struct silofs_ivkey *ivkey);
 
-void silofs_kivam_fini(struct silofs_kivam *kivam);
+void silofs_ivkey_fini(struct silofs_ivkey *ivkey);
 
-void silofs_kivam_copyto(const struct silofs_kivam *kivam,
-                         struct silofs_kivam *other);
+void silofs_ivkey_copyto(const struct silofs_ivkey *ivkey,
+                         struct silofs_ivkey *other);
 
 void silofs_gcry_randomize(void *buf, size_t len, bool very_strong);
 

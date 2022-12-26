@@ -542,7 +542,7 @@ int silofs_crypto_init(struct silofs_crypto *crypto)
 {
 	int err;
 
-	memset(crypto, 0, sizeof(*crypto));
+	silofs_memzero(crypto, sizeof(*crypto));
 	err = silofs_mdigest_init(&crypto->md);
 	if (err) {
 		return err;
@@ -552,15 +552,17 @@ int silofs_crypto_init(struct silofs_crypto *crypto)
 		silofs_mdigest_fini(&crypto->md);
 		return err;
 	}
+	crypto->set = 1;
 	return 0;
 }
 
 void silofs_crypto_fini(struct silofs_crypto *crypto)
 {
-	cipher_fini(&crypto->ci);
-	silofs_mdigest_fini(&crypto->md);
-
-	memset(crypto, 0xEF, sizeof(*crypto));
+	if (crypto->set) {
+		cipher_fini(&crypto->ci);
+		silofs_mdigest_fini(&crypto->md);
+		silofs_memzero(crypto, sizeof(*crypto));
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

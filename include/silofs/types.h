@@ -141,6 +141,7 @@ struct silofs_cipher {
 struct silofs_crypto {
 	struct silofs_mdigest   md;
 	struct silofs_cipher    ci;
+	unsigned int            set;
 };
 
 /* cryptographic-cipher arguments */
@@ -458,10 +459,10 @@ struct silofs_fs_ctx {
 struct silofs_fs_uber {
 	const struct silofs_fs_args    *ub_args;
 	struct silofs_alloc            *ub_alloc;
-	struct silofs_crypto           *ub_crypto;
 	struct silofs_repos            *ub_repos;
 	struct silofs_idsmap           *ub_idsm;
 	struct silofs_mutex             ub_fs_lock;
+	struct silofs_crypto            ub_crypto;
 	struct silofs_piper             ub_piper;
 	struct silofs_oper_stat         ub_ops;
 	struct silofs_blobref_info     *ub_sb_bri;

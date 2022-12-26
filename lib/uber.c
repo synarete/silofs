@@ -123,6 +123,16 @@ static void uber_fini_fs_lock(struct silofs_fs_uber *uber)
 	silofs_mutex_fini(&uber->ub_fs_lock);
 }
 
+static int uber_init_crypto(struct silofs_fs_uber *uber)
+{
+	return silofs_crypto_init(&uber->ub_crypto);
+}
+
+static void uber_fini_crypto(struct silofs_fs_uber *uber)
+{
+	silofs_crypto_fini(&uber->ub_crypto);
+}
+
 static int uber_init_piper(struct silofs_fs_uber *uber)
 {
 	return silofs_piper_init(&uber->ub_piper, SILOFS_BK_SIZE);
@@ -161,6 +171,10 @@ int silofs_uber_init(struct silofs_fs_uber *uber,
 	if (err) {
 		return err;
 	}
+	err = uber_init_crypto(uber);
+	if (err) {
+		goto out_err;
+	}
 	err = uber_init_piper(uber);
 	if (err) {
 		goto out_err;
@@ -181,6 +195,7 @@ void silofs_uber_fini(struct silofs_fs_uber *uber)
 	uber_bind_sbi(uber, NULL);
 	uber_fini_iconv(uber);
 	uber_fini_piper(uber);
+	uber_fini_crypto(uber);
 	uber_fini_fs_lock(uber);
 	uber_fini_commons(uber);
 }

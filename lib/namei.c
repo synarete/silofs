@@ -2309,7 +2309,7 @@ int silofs_do_inspect(const struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_walk_inspect_fs(task_sbi(task));
+	err = silofs_walk_inspect_fs(task, task_sbi(task));
 	if (err) {
 		return err;
 	}
@@ -2324,7 +2324,7 @@ int silofs_do_unrefs(const struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_walk_unref_fs(task_sbi(task));
+	err = silofs_walk_unref_fs(task, task_sbi(task));
 	if (err) {
 		return err;
 	}
@@ -2342,7 +2342,6 @@ int silofs_do_pack(const struct silofs_task *task,
                    const struct silofs_bootsec *bsec_src,
                    struct silofs_bootsec *bsec_dst)
 {
-	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = check_pack(task);
@@ -2353,7 +2352,7 @@ int silofs_do_pack(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_pack_fs(uber, ivkey, bsec_src, bsec_dst);
+	err = silofs_pack_fs(task, ivkey, bsec_src, bsec_dst);
 	if (err) {
 		return err;
 	}
@@ -2369,7 +2368,6 @@ int silofs_do_unpack(const struct silofs_task *task,
                      const struct silofs_bootsec *bsec_src,
                      struct silofs_bootsec *bsec_dst)
 {
-	struct silofs_uber *uber = task->t_uber;
 	int err;
 
 	err = check_pack(task);
@@ -2380,7 +2378,7 @@ int silofs_do_unpack(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_unpack_fs(uber, ivkey, bsec_src, bsec_dst);
+	err = silofs_unpack_fs(task, ivkey, bsec_src, bsec_dst);
 	if (err) {
 		return err;
 	}

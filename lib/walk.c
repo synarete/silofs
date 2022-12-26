@@ -24,6 +24,7 @@
 
 
 struct silofs_walk_ctx {
+	const struct silofs_task   *task;
 	struct silofs_visitor      *vis;
 	struct silofs_uber         *uber;
 	struct silofs_sb_info      *sbi;
@@ -114,7 +115,7 @@ static void wac_resetup(struct silofs_walk_ctx *wa_ctx,
 
 static void wac_relax_cache(const struct silofs_walk_ctx *wa_ctx)
 {
-	silofs_uber_relax_caches(wa_ctx->uber, SILOFS_F_WALKFS);
+	silofs_relax_caches(wa_ctx->task, SILOFS_F_WALKFS);
 }
 
 static void wac_push_height(struct silofs_walk_ctx *wa_ctx)
@@ -786,12 +787,14 @@ static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 	return 0;
 }
 
-int silofs_walk_space_tree(struct silofs_sb_info *sbi,
+int silofs_walk_space_tree(const struct silofs_task *task,
+                           struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis, bool warm)
 {
 	struct silofs_walk_ctx wa_ctx = {
+		.task = task,
 		.vis = vis,
-		.uber = sbi_uber(sbi),
+		.uber = task->t_uber,
 		.sbi = sbi,
 		.height = SILOFS_HEIGHT_SUPER,
 		.warm = warm,

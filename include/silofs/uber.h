@@ -36,9 +36,6 @@ time_t silofs_uber_uptime(const struct silofs_uber *uber);
 
 void silofs_uber_shut(struct silofs_uber *uber);
 
-void silofs_uber_relax_caches(const struct silofs_uber *uber, int flags);
-
-
 void silofs_uber_set_sbaddr(struct silofs_uber *uber,
                             const struct silofs_uaddr *sb_addr);
 

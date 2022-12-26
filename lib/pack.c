@@ -57,6 +57,7 @@ struct silofs_pack_ctx {
 	const struct silofs_bootsec    *warm_bsec;
 	const struct silofs_bootsec    *cold_bsec;
 	const struct silofs_ivkey      *ivkey;
+	const struct silofs_task       *task;
 	struct silofs_uber             *uber;
 	struct silofs_repos            *repos;
 	const struct silofs_cipher     *cipher;
@@ -802,12 +803,13 @@ static int pac_init_repos(struct silofs_pack_ctx *pa_ctx)
 
 static int
 pac_init(struct silofs_pack_ctx *pa_ctx, bool de,
-         struct silofs_uber *uber, const struct silofs_ivkey *ivkey)
+         const struct silofs_task *task, const struct silofs_ivkey *ivkey)
 {
 	int err;
 
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
-	pa_ctx->uber = uber;
+	pa_ctx->task = task;
+	pa_ctx->uber = task->t_uber;
 	pa_ctx->ivkey = ivkey;
 
 	pac_bind_to(pa_ctx, NULL);
@@ -1407,15 +1409,10 @@ static int pack_post(struct silofs_visitor *vis,
 
 static int pac_walk_space_pack(struct silofs_pack_ctx *pa_ctx)
 {
-	int ret;
-
 	pa_ctx->vis.exec_hook = pack_exec;
 	pa_ctx->vis.post_hook = pack_post;
-	ret = silofs_walk_space_tree(pa_ctx->sbi, &pa_ctx->vis, true);
-	pa_ctx->vis.exec_hook = NULL;
-	pa_ctx->vis.post_hook = NULL;
-
-	return ret;
+	return silofs_walk_space_tree(pa_ctx->task, pa_ctx->sbi,
+	                              &pa_ctx->vis, true);
 }
 
 static void pac_assign_cold_bootsec(struct silofs_pack_ctx *pa_ctx,
@@ -1430,15 +1427,15 @@ static void pac_assign_cold_bootsec(struct silofs_pack_ctx *pa_ctx,
 	silofs_bootsec_set_keyhash(bsec, &hash);
 }
 
-int silofs_uber_pack_fs(struct silofs_uber *uber,
-                        const struct silofs_ivkey *ivkey,
-                        const struct silofs_bootsec *warm_bsec,
-                        struct silofs_bootsec *out_cold_bsec)
+int silofs_pack_fs(const struct silofs_task *task,
+                   const struct silofs_ivkey *ivkey,
+                   const struct silofs_bootsec *warm_bsec,
+                   struct silofs_bootsec *out_cold_bsec)
 {
 	struct silofs_pack_ctx pa_ctx;
 	int err;
 
-	err = pac_init(&pa_ctx, false, uber, ivkey);
+	err = pac_init(&pa_ctx, false, task, ivkey);
 	if (err) {
 		return err;
 	}
@@ -2074,14 +2071,10 @@ static int unpack_post(struct silofs_visitor *vis,
 
 static int pac_walk_space_unpack(struct silofs_pack_ctx *pa_ctx)
 {
-	int ret;
-
 	pa_ctx->vis.exec_hook = unpack_exec;
 	pa_ctx->vis.post_hook = unpack_post;
-	ret = silofs_walk_space_tree(pa_ctx->sbi, &pa_ctx->vis, false);
-	pa_ctx->vis.exec_hook = NULL;
-	pa_ctx->vis.post_hook = NULL;
-	return ret;
+	return silofs_walk_space_tree(pa_ctx->task, pa_ctx->sbi,
+	                              &pa_ctx->vis, false);
 }
 
 static void pac_reassign_warm_bootsec(struct silofs_pack_ctx *pa_ctx,
@@ -2092,20 +2085,20 @@ static void pac_reassign_warm_bootsec(struct silofs_pack_ctx *pa_ctx,
 	silofs_bootsec_clear_keyhash(bsec);
 }
 
-int silofs_uber_unpack_fs(struct silofs_uber *uber,
-                          const struct silofs_ivkey *ivkey,
-                          const struct silofs_bootsec *cold_bsec,
-                          struct silofs_bootsec *out_warm_bsec)
+int silofs_unpack_fs(const struct silofs_task *task,
+                     const struct silofs_ivkey *ivkey,
+                     const struct silofs_bootsec *cold_bsec,
+                     struct silofs_bootsec *out_warm_bsec)
 {
 	struct silofs_pack_ctx pa_ctx;
 	int err;
 
-	err = pac_init(&pa_ctx, true, uber, ivkey);
+	err = pac_init(&pa_ctx, true, task, ivkey);
 	if (err) {
 		return err;
 	}
 	pa_ctx.cold_bsec = cold_bsec;
-	pa_ctx.forced = uber->ub_args->restore_forced;
+	pa_ctx.forced = task->t_uber->ub_args->restore_forced;
 
 	err = pac_exec_restore_at_uber(&pa_ctx);
 	if (err) {

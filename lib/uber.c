@@ -1295,16 +1295,6 @@ int silofs_stage_blob_at(struct silofs_uber *uber, bool warm,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_uber_relax_caches(const struct silofs_uber *uber, int flags)
-{
-	if (uber->ub_sbi) {
-		silofs_relax_inomap_of(uber->ub_sbi, flags);
-	}
-	if (uber->ub_repos) {
-		silofs_repos_relax_cache(uber->ub_repos, flags);
-	}
-}
-
 void silofs_relax_caches(const struct silofs_task *task, int flags)
 {
 	const struct silofs_uber *uber = task->t_uber;

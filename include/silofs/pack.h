@@ -21,14 +21,14 @@
 #include <silofs/types.h>
 
 
-int silofs_uber_pack_fs(struct silofs_uber *uber,
-                        const struct silofs_ivkey *ivkey,
-                        const struct silofs_bootsec *warm_bsec,
-                        struct silofs_bootsec *out_cold_bsec);
+int silofs_pack_fs(const struct silofs_task *task,
+                   const struct silofs_ivkey *ivkey,
+                   const struct silofs_bootsec *warm_bsec,
+                   struct silofs_bootsec *out_cold_bsec);
 
-int silofs_uber_unpack_fs(struct silofs_uber *uber,
-                          const struct silofs_ivkey *ivkey,
-                          const struct silofs_bootsec *cold_bsec,
-                          struct silofs_bootsec *out_warm_bsec);
+int silofs_unpack_fs(const struct silofs_task *task,
+                     const struct silofs_ivkey *ivkey,
+                     const struct silofs_bootsec *cold_bsec,
+                     struct silofs_bootsec *out_warm_bsec);
 
 #endif /* SILOFS_PACK_H_ */

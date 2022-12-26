@@ -105,13 +105,14 @@ static void spvi_fini(struct silofs_space_visitor *spvi)
 	silofs_memffff(spvi, sizeof(*spvi));
 }
 
-int silofs_walk_inspect_fs(struct silofs_sb_info *sbi)
+int silofs_walk_inspect_fs(const struct silofs_task *task,
+                           struct silofs_sb_info *sbi)
 {
 	struct silofs_space_visitor spvi;
 	int ret;
 
 	spvi_init(&spvi);
-	ret = silofs_walk_space_tree(sbi, &spvi.vis, true);
+	ret = silofs_walk_space_tree(task, sbi, &spvi.vis, true);
 	spvi_fini(&spvi);
 	return ret;
 }

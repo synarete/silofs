@@ -20,18 +20,27 @@
 #include <silofs/fs-private.h>
 #include <limits.h>
 
-/* local variables forward declarations */
-static const struct silofs_snode_vtbl sbi_vtbl;
-static const struct silofs_snode_vtbl sni_vtbl;
-static const struct silofs_snode_vtbl sli_vtbl;
-static const struct silofs_snode_vtbl itni_vtbl;
-static const struct silofs_snode_vtbl ii_vtbl;
-static const struct silofs_snode_vtbl xai_vtbl;
-static const struct silofs_snode_vtbl syi_vtbl;
-static const struct silofs_snode_vtbl dni_vtbl;
-static const struct silofs_snode_vtbl fni_vtbl;
-static const struct silofs_snode_vtbl fli_vtbl;
-
+/* local functions forward declarations */
+static void sbi_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void sni_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void sli_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void itni_delete_as_si(struct silofs_snode_info *si,
+                              struct silofs_alloc *alloc);
+static void ii_delete_as_si(struct silofs_snode_info *si,
+                            struct silofs_alloc *alloc);
+static void xai_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void syi_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void dni_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void fni_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
+static void fli_delete_as_si(struct silofs_snode_info *si,
+                             struct silofs_alloc *alloc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -200,7 +209,7 @@ static uint32_t calc_data_checksum(const void *dat, size_t len,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
-                    const struct silofs_snode_vtbl *vtbl)
+                    silofs_snode_del_fn del_fn)
 {
 	silofs_ce_init(&si->s_ce);
 	lh_init(&si->s_dq_lh);
@@ -211,7 +220,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_uber = NULL;
 	si->s_md = NULL;
 	si->s_view = NULL;
-	si->s_vtbl = vtbl;
+	si->s_del_hook = del_fn;
 	si->s_noflush = false;
 }
 
@@ -225,7 +234,7 @@ static void si_fini(struct silofs_snode_info *si)
 	si->s_uber = NULL;
 	si->s_md = NULL;
 	si->s_view = NULL;
-	si->s_vtbl = NULL;
+	si->s_del_hook = NULL;
 }
 
 static bool si_evictable(const struct silofs_snode_info *si)
@@ -258,9 +267,9 @@ static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)
 
 static void ui_init(struct silofs_unode_info *ui,
                     const struct silofs_uaddr *uaddr,
-                    const struct silofs_snode_vtbl *vtbl)
+                    silofs_snode_del_fn del_fn)
 {
-	si_init(&ui->u_si, uaddr->stype, vtbl);
+	si_init(&ui->u_si, uaddr->stype, del_fn);
 	lh_init(&ui->u_pack_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
 	ui->u_repo = NULL;
@@ -347,9 +356,9 @@ static void vi_iov_post(struct silofs_iovref *iovr)
 
 static void vi_init(struct silofs_vnode_info *vi,
                     const struct silofs_vaddr *vaddr,
-                    const struct silofs_snode_vtbl *vtbl)
+                    silofs_snode_del_fn del_fn)
 {
-	si_init(&vi->v_si, vaddr->stype, vtbl);
+	si_init(&vi->v_si, vaddr->stype, del_fn);
 	vaddr_assign(&vi->v_vaddr, vaddr);
 	silofs_iovref_init(&vi->v_iovr, vi_iov_pre, vi_iov_post);
 	vi->v_recheck = false;
@@ -438,7 +447,7 @@ static int sbi_init(struct silofs_sb_info *sbi,
 	sbi->sb_ctl_flags = 0;
 	sbi->sb_ms_flags = 0;
 
-	ui_init(&sbi->sb_ui, uaddr, &sbi_vtbl);
+	ui_init(&sbi->sb_ui, uaddr, sbi_delete_as_si);
 	return silofs_sbi_xinit(sbi, alloc);
 }
 
@@ -504,11 +513,6 @@ sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	return sbi;
 }
 
-static const struct silofs_snode_vtbl sbi_vtbl = {
-	.del = sbi_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_unode_info *
@@ -525,7 +529,7 @@ sni_to_ui(const struct silofs_spnode_info *sni)
 static void sni_init(struct silofs_spnode_info *sni,
                      const struct silofs_uaddr *uaddr)
 {
-	ui_init(&sni->sn_ui, uaddr, &sni_vtbl);
+	ui_init(&sni->sn_ui, uaddr, sni_delete_as_si);
 	sni->sn = NULL;
 	sni->sn_nactive_subs = 0;
 }
@@ -597,11 +601,6 @@ silofs_sni_from_ui(const struct silofs_unode_info *ui)
 	return unconst(sni);
 }
 
-static const struct silofs_snode_vtbl sni_vtbl = {
-	.del = sni_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_unode_info *
@@ -618,7 +617,7 @@ sli_to_ui(const struct silofs_spleaf_info *sli)
 static void sli_init(struct silofs_spleaf_info *sli,
                      const struct silofs_uaddr *uaddr)
 {
-	ui_init(&sli->sl_ui, uaddr, &sli_vtbl);
+	ui_init(&sli->sl_ui, uaddr, sli_delete_as_si);
 	sli->sl = NULL;
 	sli->sl_nused_bytes = 0;
 }
@@ -690,11 +689,6 @@ silofs_sli_from_ui(const struct silofs_unode_info *ui)
 	return unconst(sli);
 }
 
-static const struct silofs_snode_vtbl sli_vtbl = {
-	.del = sli_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -711,7 +705,7 @@ itni_to_vi(const struct silofs_itnode_info *itni)
 static void itni_init(struct silofs_itnode_info *itni,
                       const struct silofs_vaddr *vaddr)
 {
-	vi_init(&itni->itn_vi, vaddr, &itni_vtbl);
+	vi_init(&itni->itn_vi, vaddr, itni_delete_as_si);
 	itni->itn = NULL;
 }
 
@@ -784,11 +778,6 @@ void silofs_itni_rebind_view(struct silofs_itnode_info *itni)
 	itni->itn = &itni->itn_vi.v_si.s_view->itn;
 }
 
-static const struct silofs_snode_vtbl itni_vtbl = {
-	.del = itni_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_inode_info *ii_from_si(const struct silofs_snode_info *si)
@@ -799,7 +788,7 @@ static struct silofs_inode_info *ii_from_si(const struct silofs_snode_info *si)
 static void ii_init(struct silofs_inode_info *ii,
                     const struct silofs_vaddr *vaddr)
 {
-	vi_init(&ii->i_vi, vaddr, &ii_vtbl);
+	vi_init(&ii->i_vi, vaddr, ii_delete_as_si);
 	ii->inode = NULL;
 	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = 0;
@@ -889,11 +878,6 @@ void silofs_ii_rebind_view(struct silofs_inode_info *ii, ino_t ino)
 	ii->i_ino = ino;
 }
 
-static const struct silofs_snode_vtbl ii_vtbl = {
-	.del = ii_delete_as_si,
-	.evictable = ii_evictable_as_si,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -910,7 +894,7 @@ xai_to_vi(const struct silofs_xanode_info *xai)
 static void xai_init(struct silofs_xanode_info *xai,
                      const struct silofs_vaddr *vaddr)
 {
-	vi_init(&xai->xan_vi, vaddr, &xai_vtbl);
+	vi_init(&xai->xan_vi, vaddr, xai_delete_as_si);
 	xai->xan = NULL;
 }
 
@@ -982,11 +966,6 @@ void silofs_xai_rebind_view(struct silofs_xanode_info *xai)
 	xai->xan = &xai->xan_vi.v_si.s_view->xan;
 }
 
-static const struct silofs_snode_vtbl xai_vtbl = {
-	.del = xai_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -1003,7 +982,7 @@ syi_to_vi(const struct silofs_symval_info *syi)
 static void syi_init(struct silofs_symval_info *syi,
                      const struct silofs_vaddr *vaddr)
 {
-	vi_init(&syi->sy_vi, vaddr, &syi_vtbl);
+	vi_init(&syi->sy_vi, vaddr, syi_delete_as_si);
 	syi->syv = NULL;
 }
 
@@ -1075,11 +1054,6 @@ void silofs_syi_rebind_view(struct silofs_symval_info *syi)
 	syi->syv = &syi->sy_vi.v_si.s_view->sym;
 }
 
-static const struct silofs_snode_vtbl syi_vtbl = {
-	.del = syi_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -1096,7 +1070,7 @@ dni_to_vi(const struct silofs_dnode_info *dni)
 static void dni_init(struct silofs_dnode_info *dni,
                      const struct silofs_vaddr *vaddr)
 {
-	vi_init(&dni->dn_vi, vaddr, &dni_vtbl);
+	vi_init(&dni->dn_vi, vaddr, dni_delete_as_si);
 	dni->dtn = NULL;
 }
 
@@ -1171,11 +1145,6 @@ void silofs_dni_rebind_view(struct silofs_dnode_info *dni)
 	dni->dtn = &dni->dn_vi.v_si.s_view->dtn;
 }
 
-static const struct silofs_snode_vtbl dni_vtbl = {
-	.del = dni_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -1192,7 +1161,7 @@ fni_to_vi(const struct silofs_finode_info *fni)
 static void fni_init(struct silofs_finode_info *fni,
                      const struct silofs_vaddr *vaddr)
 {
-	vi_init(&fni->fn_vi, vaddr, &fni_vtbl);
+	vi_init(&fni->fn_vi, vaddr, fni_delete_as_si);
 	fni->ftn = NULL;
 }
 
@@ -1264,11 +1233,6 @@ void silofs_fni_rebind_view(struct silofs_finode_info *fni)
 	fni->ftn = &fni->fn_vi.v_si.s_view->ftn;
 }
 
-static const struct silofs_snode_vtbl fni_vtbl = {
-	.del = fni_delete_as_si,
-	.evictable = si_evictable,
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -1285,7 +1249,7 @@ fli_to_vi(const struct silofs_fileaf_info *fli)
 static void fli_init(struct silofs_fileaf_info *fli,
                      const struct silofs_vaddr *vaddr)
 {
-	vi_init(&fli->fl_vi, vaddr, &fli_vtbl);
+	vi_init(&fli->fl_vi, vaddr, fli_delete_as_si);
 	fli->flu.db = NULL;
 }
 
@@ -1373,10 +1337,13 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 	}
 }
 
-static const struct silofs_snode_vtbl fli_vtbl = {
-	.del = fli_delete_as_si,
-	.evictable = si_evictable,
-};
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_test_evictable(const struct silofs_snode_info *si)
+{
+	return stype_isinode(si->s_stype) ?
+	       ii_evictable_as_si(si) : si_evictable(si);
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

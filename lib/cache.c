@@ -866,7 +866,9 @@ static void si_remove_from_lrumap(struct silofs_snode_info *si,
 
 static void si_delete(struct silofs_snode_info *si, struct silofs_alloc *alloc)
 {
-	si->s_vtbl->del(si, alloc);
+	silofs_snode_del_fn del = si->s_del_hook;
+
+	del(si, alloc);
 }
 
 static int visit_evictable_ti(struct silofs_cache_elem *ce, void *arg)
@@ -875,8 +877,8 @@ static int visit_evictable_ti(struct silofs_cache_elem *ce, void *arg)
 	struct silofs_snode_info *si = si_from_ce(ce);
 
 	c_ctx->count++;
-	if (si->s_vtbl->evictable(si)) {
-		c_ctx->si = si; /* fount evictable */
+	if (silofs_test_evictable(si)) {
+		c_ctx->si = si; /* found candiadtae for eviction */
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {
@@ -970,7 +972,7 @@ void silofs_ui_attach_to(struct silofs_unode_info *ui,
 
 static bool ui_is_evictable(const struct silofs_unode_info *ui)
 {
-	return ui->u_si.s_vtbl->evictable(&ui->u_si);
+	return silofs_test_evictable(&ui->u_si);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1059,7 +1061,7 @@ void silofs_vi_attach_to(struct silofs_vnode_info *vi,
 
 static bool vi_is_evictable(const struct silofs_vnode_info *vi)
 {
-	return vi->v_si.s_vtbl->evictable(&vi->v_si);
+	return silofs_test_evictable(&vi->v_si);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1901,10 +1903,10 @@ static struct silofs_unode_info *cache_get_lru_ui(struct silofs_cache *cache)
 static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
                                     struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *ti = &ui->u_si;
+	struct silofs_snode_info *si = &ui->u_si;
 	bool evicted;
 
-	if (ti->s_vtbl->evictable(ti)) {
+	if (silofs_test_evictable(si)) {
 		cache_evict_ui(cache, ui);
 		evicted = true;
 	} else {
@@ -2486,7 +2488,7 @@ static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
 	struct silofs_snode_info *si = &vi->v_si;
 	bool evicted;
 
-	if (si->s_vtbl->evictable(si)) {
+	if (silofs_test_evictable(si)) {
 		cache_evict_vi(cache, vi);
 		evicted = true;
 	} else {

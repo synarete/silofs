@@ -22,15 +22,14 @@ struct silofs_unode_info;
 struct silofs_vnode_info;
 
 
-/* nodes' vtbl */
-struct silofs_snode_vtbl {
-	void (*del)(struct silofs_snode_info *si, struct silofs_alloc *alloc);
-	bool (*evictable)(const struct silofs_snode_info *si);
-};
+/* nodes' delete hook */
+typedef void (*silofs_snode_del_fn)(struct silofs_snode_info *si,
+                                    struct silofs_alloc *alloc);
 
 /* snode */
 struct silofs_snode_info {
 	struct silofs_cache_elem        s_ce;
+	silofs_snode_del_fn             s_del_hook;
 	const struct silofs_snode_vtbl *s_vtbl;
 	struct silofs_uber             *s_uber;
 	struct silofs_mdigest          *s_md;
@@ -252,6 +251,8 @@ union silofs_view *silofs_make_view_of(struct silofs_header *hdr);
 void silofs_seal_vnode(struct silofs_vnode_info *vi);
 
 void silofs_seal_unode(struct silofs_unode_info *ui);
+
+bool silofs_test_evictable(const struct silofs_snode_info *si);
 
 
 #endif /* SILOFS_NODES_H_ */

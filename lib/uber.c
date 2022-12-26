@@ -89,6 +89,7 @@ static void uber_init_commons(struct silofs_fs_uber *uber,
                               const struct silofs_uber_args *args)
 {
 	uber->ub_initime = silofs_time_now_monotonic();
+	uber->ub_ivkey = args->ivkey;
 	uber->ub_alloc = args->alloc;
 	uber->ub_repos = args->repos;
 	uber->ub_idsm = args->idsm;
@@ -105,8 +106,9 @@ static void uber_init_commons(struct silofs_fs_uber *uber,
 
 static void uber_fini_commons(struct silofs_fs_uber *uber)
 {
-	uber->ub_repos = NULL;
+	uber->ub_ivkey = NULL;
 	uber->ub_alloc = NULL;
+	uber->ub_repos = NULL;
 	uber->ub_idsm = NULL;
 	uber->ub_iconv = (iconv_t)(-1);
 	uber->ub_sb_bri = NULL;

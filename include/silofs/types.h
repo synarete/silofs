@@ -458,6 +458,7 @@ struct silofs_fs_ctx {
 /* top-level pseudo meta node */
 struct silofs_fs_uber {
 	const struct silofs_fs_args    *ub_args;
+	const struct silofs_ivkey      *ub_ivkey;
 	struct silofs_alloc            *ub_alloc;
 	struct silofs_repos            *ub_repos;
 	struct silofs_idsmap           *ub_idsm;

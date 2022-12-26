@@ -323,6 +323,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 		.alloc = fse->fs_alloc,
 		.repos = fse->fs_repos,
 		.idsm = fse->fs_idsmap,
+		.ivkey = &fse->fs_ivkey,
 	};
 	struct silofs_fs_uber *uber;
 	int err;

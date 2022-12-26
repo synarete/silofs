@@ -23,6 +23,7 @@ struct silofs_uber_args {
 	struct silofs_alloc    *alloc;
 	struct silofs_repos    *repos;
 	struct silofs_idsmap   *idsm;
+	const struct silofs_ivkey *ivkey;
 };
 
 

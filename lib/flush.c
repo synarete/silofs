@@ -42,9 +42,10 @@ struct silofs_flush_ctx {
 
 
 struct silofs_sgvec {
-	struct iovec iov[SILOFS_NKB_IN_BK];
+	struct iovec              iov[SILOFS_NKB_IN_BK];
 	struct silofs_snode_info *si[SILOFS_NKB_IN_BK];
-	struct silofs_blobid blobid;
+	struct silofs_blobid      blobid;
+	const struct silofs_task *task;
 	loff_t off;
 	size_t len;
 	size_t cnt;
@@ -53,64 +54,50 @@ struct silofs_sgvec {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int vi_resolve(const struct silofs_vnode_info *vi,
-                      struct silofs_oaddr *out_oaddr)
+static int resolve_oaddr_of_vnode(const struct silofs_task *task,
+                                  const struct silofs_vnode_info *vi,
+                                  struct silofs_oaddr *out_oaddr)
 {
 	struct silofs_voaddr voa;
-	struct silofs_sb_info *sbi = vi_sbi(vi);
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
+	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
 	int err;
 
-	err = silofs_sbi_resolve_voa(sbi, vi_vaddr(vi), stg_mode, &voa);
-	if (!err) {
-		oaddr_assign(out_oaddr, &voa.oaddr);
+	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RO, &voa);
+	if (err) {
+		log_warn("failed to resolve voaddr: stype=%d off=%ld err=%d",
+		         vaddr->stype, vaddr->voff, err);
+		return err;
 	}
-	return err;
+	oaddr_assign(out_oaddr, &voa.oaddr);
+	return 0;
 }
 
-static int vi_resolve_as_si(const struct silofs_snode_info *si,
-                            struct silofs_oaddr *out_oaddr)
-{
-	return vi_resolve(silofs_vi_from_si(si), out_oaddr);
-}
-
-static int ui_resolve(const struct silofs_unode_info *ui,
-                      struct silofs_oaddr *out_oaddr)
+static void resolve_oaddr_of_unode(const struct silofs_unode_info *ui,
+                                   struct silofs_oaddr *out_oaddr)
 {
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 
 	oaddr_assign(out_oaddr, &uaddr->oaddr);
-	return 0;
 }
 
-static int ui_resolve_as_si(const struct silofs_snode_info *si,
+static int resolve_oaddr_of(const struct silofs_task *task,
+                            const struct silofs_snode_info *si,
                             struct silofs_oaddr *out_oaddr)
 {
-	return ui_resolve(silofs_ui_from_si(si), out_oaddr);
-}
+	const struct silofs_unode_info *ui = NULL;
+	const struct silofs_vnode_info *vi = NULL;
+	int ret = 0;
 
-static int si_resolve_oaddr(const struct silofs_snode_info *si,
-                            struct silofs_oaddr *out_oaddr)
-{
-	const enum silofs_stype stype = si->s_stype;
-	int err = 0;
-
-	if (stype_isunode(stype)) {
-		err = ui_resolve_as_si(si, out_oaddr);
-		if (err) {
-			log_warn("failed to resolve unode oaddr: " \
-			         "stype=%d err=%d", stype, err);
-		}
-	} else if (stype_isvnode(stype)) {
-		err = vi_resolve_as_si(si, out_oaddr);
-		if (err) {
-			log_warn("failed to resolve vnode oaddr: " \
-			         "stype=%d err=%d", stype, err);
-		}
+	if (stype_isunode(si->s_stype)) {
+		ui = silofs_ui_from_si(si);
+		resolve_oaddr_of_unode(ui, out_oaddr);
+	} else if (stype_isvnode(si->s_stype)) {
+		vi = silofs_vi_from_si(si);
+		ret = resolve_oaddr_of_vnode(task, vi, out_oaddr);
 	} else {
-		silofs_panic("corrupted snode: stype=%d", stype);
+		silofs_panic("corrupted snode: stype=%d", si->s_stype);
 	}
-	return err;
+	return ret;
 }
 
 static void si_seal_meta(struct silofs_snode_info *si)
@@ -126,8 +113,10 @@ static void si_seal_meta(struct silofs_snode_info *si)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sgvec_setup(struct silofs_sgvec *sgv, size_t lim)
+static void sgvec_setup(struct silofs_sgvec *sgv,
+                        const struct silofs_task *task, size_t lim)
 {
+	sgv->task = task;
 	sgv->blobid.size = 0;
 	sgv->off = -1;
 	sgv->lim = lim;
@@ -184,7 +173,7 @@ static int sgvec_populate(struct silofs_sgvec *sgv,
 
 	while (*siq != NULL) {
 		si = *siq;
-		err = si_resolve_oaddr(si, &oaddr);
+		err = resolve_oaddr_of(sgv->task, si, &oaddr);
 		if (err) {
 			return err;
 		}
@@ -476,7 +465,7 @@ static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 	int err;
 
 	while (siq != NULL) {
-		sgvec_setup(&sgv, lim);
+		sgvec_setup(&sgv, fl_ctx->task, lim);
 		err = sgvec_populate(&sgv, &siq);
 		if (err) {
 			return err;
@@ -554,15 +543,17 @@ static bool flc_need_flush(const struct silofs_flush_ctx *fl_ctx)
 }
 
 static int flc_setup(struct silofs_flush_ctx *fl_ctx,
-                     struct silofs_uber *uber,
+                     const struct silofs_task *task,
                      silofs_dqid_t dqid, int flags)
 {
-	struct silofs_repo *repo;
+	struct silofs_repo *repo = NULL;
+	struct silofs_uber *uber = task->t_uber;
 
 	repo = silofs_repos_get(uber->ub_repos, SILOFS_REPO_LOCAL);
 	if (unlikely(repo == NULL)) {
 		return -SILOFS_ENOREPO;
 	}
+	fl_ctx->task = task;
 	fl_ctx->uber = uber;
 	fl_ctx->dqid = dqid;
 	fl_ctx->flags = flags;
@@ -573,39 +564,6 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	fl_ctx->alloc = fl_ctx->cache->c_alloc;
 	fl_ctx->flush_buf = fl_ctx->cache->c_flush_buf;
 	return 0;
-}
-
-static int flc_setup2(struct silofs_flush_ctx *fl_ctx,
-                      const struct silofs_task *task,
-                      silofs_dqid_t dqid, int flags)
-{
-	int err;
-
-	err = flc_setup(fl_ctx, task->t_uber, dqid, flags);
-	if (!err) {
-		fl_ctx->task = task;
-	}
-	return err;
-}
-
-int silofs_uber_flush_dirty(struct silofs_uber *uber,
-                            silofs_dqid_t dqid, int flags)
-{
-	struct silofs_flush_ctx fl_ctx = { .flags = -1 };
-	int err;
-
-	err = flc_setup(&fl_ctx, uber, dqid, flags);
-	if (err) {
-		return err;
-	}
-	if (!flc_need_flush(&fl_ctx)) {
-		return 0;
-	}
-	err = flc_flush_dirty_of(&fl_ctx);
-	if (err) {
-		log_dbg("failed to flush: err=%d", err);
-	}
-	return err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -621,7 +579,7 @@ int silofs_flush_dirty(const struct silofs_task *task,
 	struct silofs_flush_ctx fl_ctx = { .flags = -1 };
 	int err;
 
-	err = flc_setup2(&fl_ctx, task, dqid, flags);
+	err = flc_setup(&fl_ctx, task, dqid, flags);
 	if (err) {
 		return err;
 	}

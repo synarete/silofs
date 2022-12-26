@@ -313,11 +313,8 @@ static int spac_check_within_vspace(struct silofs_spalloc_ctx *spa_ctx,
 
 static int spac_resolve_oaddr(struct silofs_spalloc_ctx *spa_ctx)
 {
-	const struct silofs_vaddr *vaddr = &spa_ctx->voa.vaddr;
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
-
-	return silofs_sbi_resolve_voa(spa_ctx->sbi, vaddr,
-	                              stg_mode, &spa_ctx->voa);
+	return silofs_resolve_voaddr_of(spa_ctx->task, &spa_ctx->voa.vaddr,
+	                                SILOFS_STAGE_RO, &spa_ctx->voa);
 }
 
 static int

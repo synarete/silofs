@@ -898,7 +898,7 @@ resolve_stage_vnode(const struct silofs_task *task,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_sbi_resolve_voa(sbi, vaddr, stg_mode, &voa);
+	err = silofs_resolve_voaddr_of(task, vaddr, stg_mode, &voa);
 	if (err) {
 		return err;
 	}
@@ -936,8 +936,8 @@ int silofs_stage_inode(const struct silofs_task *task, ino_t ino,
 	if (err) {
 		return err;
 	}
-	err = silofs_sbi_resolve_voa(sbi, &iaddr.vaddr,
-	                             stg_mode, &ivoa.voa);
+	err = silofs_resolve_voaddr_of(task, &iaddr.vaddr,
+	                               stg_mode, &ivoa.voa);
 	if (err) {
 		return err;
 	}
@@ -1062,8 +1062,7 @@ static int reclaim_vspace(const struct silofs_task *task,
 	struct silofs_voaddr voa;
 	int err;
 
-	err = silofs_sbi_resolve_voa(task_sbi(task), vaddr,
-	                             SILOFS_STAGE_RO, &voa);
+	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RO, &voa);
 	if (err) {
 		return err;
 	}

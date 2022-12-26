@@ -878,7 +878,7 @@ static int visit_evictable_ti(struct silofs_cache_elem *ce, void *arg)
 
 	c_ctx->count++;
 	if (silofs_test_evictable(si)) {
-		c_ctx->si = si; /* found candiadtae for eviction */
+		c_ctx->si = si; /* found candidate for eviction */
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {

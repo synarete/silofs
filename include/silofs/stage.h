@@ -60,9 +60,9 @@ int silofs_require_stable_at(const struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stage_mode stg_mode);
 
-int silofs_sbi_resolve_voa(struct silofs_sb_info *sbi,
-                           const struct silofs_vaddr *vaddr,
-                           enum silofs_stage_mode stg_mode,
-                           struct silofs_voaddr *out_ova);
+int silofs_resolve_voaddr_of(const struct silofs_task *task,
+                             const struct silofs_vaddr *vaddr,
+                             enum silofs_stage_mode stg_mode,
+                             struct silofs_voaddr *out_voa);
 
 #endif /* SILOFS_STAGE_H_ */

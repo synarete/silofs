@@ -855,7 +855,7 @@ static int fic_require_mutable_vaddr(const struct silofs_file_ctx *f_ctx,
 	struct silofs_voaddr voa;
 	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RW;
 
-	return silofs_sbi_resolve_voa(f_ctx->sbi, vaddr, stg_mode, &voa);
+	return silofs_resolve_voaddr_of(f_ctx->task, vaddr, stg_mode, &voa);
 }
 
 static size_t fic_io_length(const struct silofs_file_ctx *f_ctx)

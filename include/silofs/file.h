@@ -24,44 +24,44 @@ void silofs_setup_reg(struct silofs_inode_info *ii);
 
 int silofs_drop_reg(struct silofs_inode_info *ii);
 
-int silofs_do_write(const struct silofs_fs_ctx *op,
+int silofs_do_write(const struct silofs_task *task,
                     struct silofs_inode_info *ii,
                     const void *buf, size_t len,
                     loff_t off, size_t *out_len);
 
-int silofs_do_write_iter(const struct silofs_fs_ctx *op,
+int silofs_do_write_iter(const struct silofs_task *task,
                          struct silofs_inode_info *ii,
                          struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_do_read_iter(const struct silofs_fs_ctx *op,
+int silofs_do_read_iter(const struct silofs_task *task,
                         struct silofs_inode_info *ii,
                         struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_do_read(const struct silofs_fs_ctx *op,
+int silofs_do_read(const struct silofs_task *task,
                    struct silofs_inode_info *ii,
                    void *buf, size_t len, loff_t off, size_t *out_len);
 
-int silofs_do_lseek(const struct silofs_fs_ctx *op,
+int silofs_do_lseek(const struct silofs_task *task,
                     struct silofs_inode_info *ii,
                     loff_t off, int whence, loff_t *out_off);
 
-int silofs_do_fallocate(const struct silofs_fs_ctx *op,
+int silofs_do_fallocate(const struct silofs_task *task,
                         struct silofs_inode_info *ii,
                         int mode, loff_t off, loff_t length);
 
-int silofs_do_truncate(const struct silofs_fs_ctx *op,
+int silofs_do_truncate(const struct silofs_task *task,
                        struct silofs_inode_info *ii, loff_t off);
 
-int silofs_do_fiemap(const struct silofs_fs_ctx *op,
+int silofs_do_fiemap(const struct silofs_task *task,
                      struct silofs_inode_info *ii, struct fiemap *fm);
 
-int silofs_do_copy_file_range(const struct silofs_fs_ctx *op,
+int silofs_do_copy_file_range(const struct silofs_task *task,
                               struct silofs_inode_info *ii_in,
                               struct silofs_inode_info *ii_out,
                               loff_t off_in, loff_t off_out, size_t len,
                               int flags, size_t *out_ncp);
 
-int silofs_do_rdwr_post(const struct silofs_fs_ctx *op,
+int silofs_do_rdwr_post(const struct silofs_task *task,
                         const struct silofs_iovec *iov, size_t cnt);
 
 

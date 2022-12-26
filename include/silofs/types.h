@@ -453,13 +453,6 @@ struct silofs_oper {
 	int                             op_code;
 };
 
-/* file-system oper-execution context */
-struct silofs_fs_ctx {
-	struct silofs_fs_uber          *fsc_uber;
-	struct silofs_oper              fsc_oper;
-	volatile int                    fsc_interrupt;
-};
-
 /* top-level pseudo meta node */
 struct silofs_fs_uber {
 	const struct silofs_fs_args    *ub_args;
@@ -476,6 +469,13 @@ struct silofs_fs_uber {
 	struct silofs_uaddr             ub_sb_addr;
 	iconv_t                         ub_iconv;
 	time_t                          ub_initime;
+};
+
+/* file-system oper-execution task-context */
+struct silofs_task {
+	struct silofs_fs_uber          *t_uber;
+	struct silofs_oper              t_oper;
+	volatile int                    t_interrupt;
 };
 
 /* file-system's input id vectors */

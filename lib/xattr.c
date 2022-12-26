@@ -54,7 +54,7 @@ struct silofs_xentry_info {
 };
 
 struct silofs_xattr_ctx {
-	const struct silofs_fs_ctx     *fs_ctx;
+	const struct silofs_task       *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_listxattr_ctx    *lxa_ctx;
 	struct silofs_inode_info       *ii;
@@ -639,7 +639,7 @@ static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
 	if (!is_valid_xflags(xa_ctx->flags)) {
 		return -EINVAL;
 	}
-	err = silofs_do_access(xa_ctx->fs_ctx, ii, access_mode);
+	err = silofs_do_access(xa_ctx->task, ii, access_mode);
 	if (err) {
 		return err;
 	}
@@ -749,14 +749,14 @@ static int xac_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 	return ret;
 }
 
-int silofs_do_getxattr(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_getxattr(const struct silofs_task *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name,
                        void *buf, size_t size, size_t *out_size)
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.sbi = ii_sbi(ii),
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.ii = ii,
 		.name = name,
 		.value.ptr = buf,
@@ -948,7 +948,7 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 {
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *ii = xa_ctx->ii;
-	const struct silofs_creds *creds = &xa_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &xa_ctx->task->t_oper.op_creds;
 
 	silofs_iattr_setup(&iattr, ii_ino(ii));
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
@@ -982,7 +982,7 @@ static int xac_setxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_setxattr(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_setxattr(const struct silofs_task *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name,
                        const void *value, size_t size,
@@ -990,7 +990,7 @@ int silofs_do_setxattr(const struct silofs_fs_ctx *fs_ctx,
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.sbi = ii_sbi(ii),
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.ii = ii,
 		.name = name,
 		.value.ptr = unconst(value),
@@ -1015,7 +1015,7 @@ int silofs_do_setxattr(const struct silofs_fs_ctx *fs_ctx,
 static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 {
 	struct silofs_xentry_info xei = { .xe = NULL };
-	const struct silofs_creds *creds = &xa_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &xa_ctx->task->t_oper.op_creds;
 	int err;
 
 	err = xac_check_op(xa_ctx, W_OK);
@@ -1041,13 +1041,13 @@ static int xac_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_removexattr(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_removexattr(const struct silofs_task *task,
                           struct silofs_inode_info *ii,
                           const struct silofs_namestr *name)
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.sbi = ii_sbi(ii),
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.ii = ii,
 		.name = name,
 		.stg_mode = SILOFS_STAGE_RW,
@@ -1175,12 +1175,12 @@ static int xac_listxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_listxattr(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_listxattr(const struct silofs_task *task,
                         struct silofs_inode_info *ii,
                         struct silofs_listxattr_ctx *lxa_ctx)
 {
 	struct silofs_xattr_ctx xa_ctx = {
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.sbi = ii_sbi(ii),
 		.ii = ii,
 		.lxa_ctx = lxa_ctx,

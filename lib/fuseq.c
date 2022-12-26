@@ -601,23 +601,23 @@ static struct silofs_oper_ctx *op_ctx_of(const struct silofs_fuseq_worker *fqw)
 
 static void op_ctx_set_umask(struct silofs_oper_ctx *opc, mode_t umask)
 {
-	opc->opc_fsc.fsc_oper.op_creds.xcred.umask = umask;
-	opc->opc_fsc.fsc_oper.op_creds.icred.umask = umask;
+	opc->opc_task.t_oper.op_creds.xcred.umask = umask;
+	opc->opc_task.t_oper.op_creds.icred.umask = umask;
 }
 
-static struct silofs_fs_ctx *fs_ctx_of(const struct silofs_fuseq_worker *fqw)
+static struct silofs_task *task_of(const struct silofs_fuseq_worker *fqw)
 {
-	return &fqw->opc->opc_fsc;
+	return &fqw->opc->opc_task;
 }
 
-static struct silofs_fs_ctx *fs_ctx_self(const struct silofs_fuseq_worker *fqw)
+static struct silofs_task *task_self(const struct silofs_fuseq_worker *fqw)
 {
-	struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
+	struct silofs_task *task = task_of(fqw);
 	struct silofs_fs_uber *uber = uber_of(fqw);
-	struct silofs_creds *creds = &fs_ctx->fsc_oper.op_creds;
+	struct silofs_creds *creds = &task->t_oper.op_creds;
 
-	fs_ctx->fsc_uber = uber;
-	fs_ctx->fsc_interrupt = 0;
+	task->t_uber = uber;
+	task->t_interrupt = 0;
 	creds->xcred.uid = uber->ub_args->uid;
 	creds->xcred.gid = uber->ub_args->gid;
 	creds->xcred.pid = getpid();
@@ -628,10 +628,10 @@ static struct silofs_fs_ctx *fs_ctx_self(const struct silofs_fuseq_worker *fqw)
 	creds->icred.umask = uber->ub_args->umask;
 	creds->ts.tv_sec = silofs_time_now();
 	creds->ts.tv_nsec = 0;
-	fs_ctx->fsc_oper.op_unique = 0;
-	fs_ctx->fsc_oper.op_code = 0;
+	task->t_oper.op_unique = 0;
+	task->t_oper.op_code = 0;
 
-	return fs_ctx;
+	return task;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -649,11 +649,11 @@ static void fuseq_fill_out_header(struct silofs_fuseq_worker *fqw,
                                   struct fuse_out_header *out_hdr,
                                   size_t len, int err)
 {
-	const struct silofs_fs_ctx *fs_ctx = fs_ctx_of(fqw);
+	const struct silofs_task *task = task_of(fqw);
 
 	out_hdr->len = (uint32_t)len;
 	out_hdr->error = -abs(err);
-	out_hdr->unique = fs_ctx->fsc_oper.op_unique;
+	out_hdr->unique = task->t_oper.op_unique;
 }
 
 static int fuseq_send_msg(struct silofs_fuseq_worker *fqw,
@@ -740,9 +740,9 @@ static int fuseq_reply_status(struct silofs_fuseq_worker *fqw, int status)
 
 static int fuseq_reply_none(struct silofs_fuseq_worker *fqw)
 {
-	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+	struct silofs_task *task = task_of(fqw);
 
-	fsc->fsc_oper.op_unique = 0;
+	task->t_oper.op_unique = 0;
 	return 0;
 }
 
@@ -901,9 +901,9 @@ static int fuseq_reply_ioctl_ok(struct silofs_fuseq_worker *fqw, int result,
 
 static bool fuseq_interrupted(const struct silofs_fuseq_worker *fqw)
 {
-	const struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+	const struct silofs_task *task = task_of(fqw);
 
-	return fsc->fsc_interrupt > 0;
+	return task->t_interrupt > 0;
 }
 
 static int fuseq_reply_attr(struct silofs_fuseq_worker *fqw,
@@ -1153,7 +1153,7 @@ static int fuseq_reply_read_buf(struct silofs_fuseq_worker *fqw,
 static int fuseq_rdwr_post(const struct silofs_fuseq_worker *fqw,
                            const struct silofs_iovec *iov, size_t cnt)
 {
-	return silofs_fs_rdwr_post(fs_ctx_of(fqw), iov, cnt);
+	return silofs_fs_rdwr_post(task_of(fqw), iov, cnt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2300,7 +2300,7 @@ static int do_statx(struct silofs_fuseq_worker *fqw, ino_t ino,
 	struct statx stx = { .stx_mask = 0 };
 
 	fuseq_lock_fs(fqw);
-	err = silofs_fs_statx(uber_of(fqw), fs_ctx_of(fqw),
+	err = silofs_fs_statx(uber_of(fqw), task_of(fqw),
 	                      ino, request_mask, &stx);
 	fuseq_unlock_fs(fqw);
 
@@ -2666,7 +2666,7 @@ static int do_ioc_getflags(struct silofs_fuseq_worker *fqw, ino_t ino,
 		err = -EINVAL;
 		goto out;
 	}
-	opc->opc_fsc.fsc_oper.op_code = FUSE_GETATTR;
+	opc->opc_task.t_oper.op_code = FUSE_GETATTR;
 	opc->opc_in.getattr.ino = ino;
 	err = fuseq_exec_op(fqw->fq, opc);
 	if (err) {
@@ -2904,7 +2904,7 @@ static int fuseq_resolve_cmd(struct silofs_fuseq_worker *fqw, unsigned int opc)
 
 static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
 {
-	const struct silofs_fs_ctx *fsc = NULL;
+	const struct silofs_task *task = NULL;
 
 	if (!fqw->fq->fq_deny_others) {
 		return 0;
@@ -2913,8 +2913,8 @@ static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
 		return 0;
 	}
 
-	fsc = fs_ctx_of(fqw);
-	switch (fsc->fsc_oper.op_code) {
+	task = task_of(fqw);
+	switch (task->t_oper.op_code) {
 	case FUSE_INIT:
 	case FUSE_READ:
 	case FUSE_WRITE:
@@ -2935,22 +2935,22 @@ static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
 static void fuseq_assign_curr_oper(struct silofs_fuseq_worker *fqw,
                                    const struct fuse_in_header *hdr)
 {
-	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+	struct silofs_task *fsc = task_of(fqw);
 
-	fsc->fsc_uber = fqw->fq->fq_uber;
-	fsc->fsc_oper.op_creds.xcred.uid = (uid_t)(hdr->uid);
-	fsc->fsc_oper.op_creds.xcred.gid = (gid_t)(hdr->gid);
-	fsc->fsc_oper.op_creds.xcred.pid = (pid_t)(hdr->pid);
-	fsc->fsc_oper.op_creds.xcred.umask = 0;
-	fsc->fsc_oper.op_unique = hdr->unique;
-	fsc->fsc_oper.op_code = (int)hdr->opcode;
-	fsc->fsc_interrupt = 0;
+	fsc->t_uber = fqw->fq->fq_uber;
+	fsc->t_oper.op_creds.xcred.uid = (uid_t)(hdr->uid);
+	fsc->t_oper.op_creds.xcred.gid = (gid_t)(hdr->gid);
+	fsc->t_oper.op_creds.xcred.pid = (pid_t)(hdr->pid);
+	fsc->t_oper.op_creds.xcred.umask = 0;
+	fsc->t_oper.op_unique = hdr->unique;
+	fsc->t_oper.op_code = (int)hdr->opcode;
+	fsc->t_interrupt = 0;
 }
 
 static int fuseq_assign_curr_xtime(struct silofs_fuseq_worker *fqw)
 {
-	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
-	struct silofs_creds *creds = &fsc->fsc_oper.op_creds;
+	struct silofs_task *task = task_of(fqw);
+	struct silofs_creds *creds = &task->t_oper.op_creds;
 	const bool is_realtime = (fqw->cmd->realtime > 0);
 
 	return silofs_ts_gettime(&creds->ts, is_realtime);
@@ -2989,22 +2989,22 @@ static int fuseq_process_hdr(struct silofs_fuseq_worker *fqw)
 static void fuseq_enq_active_op(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq_workset *fq_ws = &fqw->fq->fq_ws;
-	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+	struct silofs_task *task = task_of(fqw);
 
 	fuseq_lock_op(fqw->fq);
 	listq_push_front(&fq_ws->fws_curropsq, &fqw->lh);
-	fsc->fsc_interrupt = 0;
+	task->t_interrupt = 0;
 	fuseq_unlock_op(fqw->fq);
 }
 
 static void fuseq_dec_active_op(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq_workset *fq_ws = &fqw->fq->fq_ws;
-	struct silofs_fs_ctx *fsc = fs_ctx_of(fqw);
+	struct silofs_task *task = task_of(fqw);
 
 	fuseq_lock_op(fqw->fq);
 	listq_remove(&fq_ws->fws_curropsq, &fqw->lh);
-	fsc->fsc_interrupt = 0;
+	task->t_interrupt = 0;
 	fuseq_unlock_op(fqw->fq);
 }
 
@@ -3024,8 +3024,8 @@ static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq)
 	itr = lsq->ls.next;
 	while (itr != &lsq->ls) {
 		fqw_other = fuseq_worker_of(itr);
-		if (fqw_other->opc->opc_fsc.fsc_oper.op_unique == unq) {
-			fqw_other->opc->opc_fsc.fsc_interrupt++;
+		if (fqw_other->opc->opc_task.t_oper.op_unique == unq) {
+			fqw_other->opc->opc_task.t_interrupt++;
 			break;
 		}
 		itr = itr->next;
@@ -3889,7 +3889,7 @@ static int fuseq_do_timeout(const struct silofs_fuseq_worker *fqw)
 	if (!flags) {
 		return 0;
 	}
-	err = silofs_fs_timedout(fs_ctx_self(fqw), flags);
+	err = silofs_fs_timedout(task_self(fqw), flags);
 	if (err) {
 		fuseq_log_warn("timeout failure: err=%d", err);
 		return err;
@@ -4096,14 +4096,14 @@ static void fuseq_unlock_op(struct silofs_fuseq *fq)
 
 typedef int (*silofs_opc_fn)(struct silofs_oper_ctx *);
 
-static struct silofs_fs_ctx *opc_fs_ctx(struct silofs_oper_ctx *opc)
+static struct silofs_task *opc_task(struct silofs_oper_ctx *opc)
 {
-	return &opc->opc_fsc;
+	return &opc->opc_task;
 }
 
 static int opc_setattr(struct silofs_oper_ctx *opc)
 {
-	struct silofs_fs_ctx *fs_ctx = opc_fs_ctx(opc);
+	struct silofs_task *task = opc_task(opc);
 	const struct stat *tms = &opc->opc_in.setattr.tims;
 	struct stat *out_st = &opc->opc_out.setattr.st;
 	loff_t size;
@@ -4114,33 +4114,33 @@ static int opc_setattr(struct silofs_oper_ctx *opc)
 	int err;
 
 	ino = opc->opc_in.setattr.ino;
-	err = silofs_fs_getattr(fs_ctx, ino, out_st);
+	err = silofs_fs_getattr(task, ino, out_st);
 	if (!err && opc->opc_in.setattr.set_amtime_now) {
-		err = silofs_fs_utimens(fs_ctx, ino, tms, out_st);
+		err = silofs_fs_utimens(task, ino, tms, out_st);
 	}
 	if (!err && opc->opc_in.setattr.set_mode) {
 		mode = opc->opc_in.setattr.mode;
-		err = silofs_fs_chmod(fs_ctx, ino, mode, tms, out_st);
+		err = silofs_fs_chmod(task, ino, mode, tms, out_st);
 	}
 	if (!err && opc->opc_in.setattr.set_uid_gid) {
 		uid = opc->opc_in.setattr.uid;
 		gid = opc->opc_in.setattr.gid;
-		err = silofs_fs_chown(fs_ctx, ino, uid, gid, tms, out_st);
+		err = silofs_fs_chown(task, ino, uid, gid, tms, out_st);
 	}
 	if (!err && opc->opc_in.setattr.set_size) {
 		size = opc->opc_in.setattr.size;
-		err = silofs_fs_truncate(fs_ctx, ino, size, out_st);
+		err = silofs_fs_truncate(task, ino, size, out_st);
 	}
 	if (!err && opc->opc_in.setattr.set_amctime &&
 	    !opc->opc_in.setattr.set_nontime) {
-		err = silofs_fs_utimens(fs_ctx, ino, tms, out_st);
+		err = silofs_fs_utimens(task, ino, tms, out_st);
 	}
 	return err;
 }
 
 static int opc_lookup(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_lookup(opc_fs_ctx(opc),
+	return silofs_fs_lookup(opc_task(opc),
 	                        opc->opc_in.lookup.parent,
 	                        opc->opc_in.lookup.name,
 	                        &opc->opc_out.lookup.st);
@@ -4148,7 +4148,7 @@ static int opc_lookup(struct silofs_oper_ctx *opc)
 
 static int opc_forget(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_forget(opc_fs_ctx(opc),
+	return silofs_fs_forget(opc_task(opc),
 	                        opc->opc_in.forget.ino,
 	                        opc->opc_in.forget.nlookup);
 }
@@ -4156,7 +4156,7 @@ static int opc_forget(struct silofs_oper_ctx *opc)
 static int opc_forget_one(struct silofs_oper_ctx *opc,
                           const struct fuse_forget_one *one)
 {
-	return silofs_fs_forget(opc_fs_ctx(opc),
+	return silofs_fs_forget(opc_task(opc),
 	                        (ino_t)(one->nodeid), one->nlookup);
 }
 
@@ -4173,14 +4173,14 @@ static int opc_batch_forget(struct silofs_oper_ctx *opc)
 
 static int opc_getattr(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_getattr(opc_fs_ctx(opc),
+	return silofs_fs_getattr(opc_task(opc),
 	                         opc->opc_in.getattr.ino,
 	                         &opc->opc_out.getattr.st);
 }
 
 static int opc_readlink(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_readlink(opc_fs_ctx(opc),
+	return silofs_fs_readlink(opc_task(opc),
 	                          opc->opc_in.readlink.ino,
 	                          opc->opc_in.readlink.ptr,
 	                          opc->opc_in.readlink.lim,
@@ -4189,7 +4189,7 @@ static int opc_readlink(struct silofs_oper_ctx *opc)
 
 static int opc_symlink(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_symlink(opc_fs_ctx(opc),
+	return silofs_fs_symlink(opc_task(opc),
 	                         opc->opc_in.symlink.parent,
 	                         opc->opc_in.symlink.name,
 	                         opc->opc_in.symlink.symval,
@@ -4198,7 +4198,7 @@ static int opc_symlink(struct silofs_oper_ctx *opc)
 
 static int opc_mknod(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_mknod(opc_fs_ctx(opc),
+	return silofs_fs_mknod(opc_task(opc),
 	                       opc->opc_in.mknod.parent,
 	                       opc->opc_in.mknod.name,
 	                       opc->opc_in.mknod.mode,
@@ -4208,7 +4208,7 @@ static int opc_mknod(struct silofs_oper_ctx *opc)
 
 static int opc_mkdir(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_mkdir(opc_fs_ctx(opc),
+	return silofs_fs_mkdir(opc_task(opc),
 	                       opc->opc_in.mkdir.parent,
 	                       opc->opc_in.mkdir.name,
 	                       opc->opc_in.mkdir.mode,
@@ -4217,21 +4217,21 @@ static int opc_mkdir(struct silofs_oper_ctx *opc)
 
 static int opc_unlink(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_unlink(opc_fs_ctx(opc),
+	return silofs_fs_unlink(opc_task(opc),
 	                        opc->opc_in.unlink.parent,
 	                        opc->opc_in.unlink.name);
 }
 
 static int opc_rmdir(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_rmdir(opc_fs_ctx(opc),
+	return silofs_fs_rmdir(opc_task(opc),
 	                       opc->opc_in.rmdir.parent,
 	                       opc->opc_in.rmdir.name);
 }
 
 static int opc_rename(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_rename(opc_fs_ctx(opc),
+	return silofs_fs_rename(opc_task(opc),
 	                        opc->opc_in.rename.parent,
 	                        opc->opc_in.rename.name,
 	                        opc->opc_in.rename.newparent,
@@ -4241,7 +4241,7 @@ static int opc_rename(struct silofs_oper_ctx *opc)
 
 static int opc_link(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_link(opc_fs_ctx(opc),
+	return silofs_fs_link(opc_task(opc),
 	                      opc->opc_in.link.ino,
 	                      opc->opc_in.link.parent,
 	                      opc->opc_in.link.name,
@@ -4250,21 +4250,21 @@ static int opc_link(struct silofs_oper_ctx *opc)
 
 static int opc_open(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_open(opc_fs_ctx(opc),
+	return silofs_fs_open(opc_task(opc),
 	                      opc->opc_in.open.ino,
 	                      opc->opc_in.open.o_flags);
 }
 
 static int opc_statfs(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_statfs(opc_fs_ctx(opc),
+	return silofs_fs_statfs(opc_task(opc),
 	                        opc->opc_in.statfs.ino,
 	                        &opc->opc_out.statfs.stv);
 }
 
 static int opc_release(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_release(opc_fs_ctx(opc),
+	return silofs_fs_release(opc_task(opc),
 	                         opc->opc_in.release.ino,
 	                         opc->opc_in.release.o_flags,
 	                         opc->opc_in.release.flush);
@@ -4272,14 +4272,14 @@ static int opc_release(struct silofs_oper_ctx *opc)
 
 static int opc_fsync(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_fsync(opc_fs_ctx(opc),
+	return silofs_fs_fsync(opc_task(opc),
 	                       opc->opc_in.fsync.ino,
 	                       opc->opc_in.fsync.datasync);
 }
 
 static int opc_setxattr(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_setxattr(opc_fs_ctx(opc),
+	return silofs_fs_setxattr(opc_task(opc),
 	                          opc->opc_in.setxattr.ino,
 	                          opc->opc_in.setxattr.name,
 	                          opc->opc_in.setxattr.value,
@@ -4290,7 +4290,7 @@ static int opc_setxattr(struct silofs_oper_ctx *opc)
 
 static int opc_getxattr(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_getxattr(opc_fs_ctx(opc),
+	return silofs_fs_getxattr(opc_task(opc),
 	                          opc->opc_in.getxattr.ino,
 	                          opc->opc_in.getxattr.name,
 	                          opc->opc_in.getxattr.buf,
@@ -4300,66 +4300,66 @@ static int opc_getxattr(struct silofs_oper_ctx *opc)
 
 static int opc_listxattr(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_listxattr(opc_fs_ctx(opc),
+	return silofs_fs_listxattr(opc_task(opc),
 	                           opc->opc_in.listxattr.ino,
 	                           opc->opc_in.listxattr.lxa_ctx);
 }
 
 static int opc_removexattr(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_removexattr(opc_fs_ctx(opc),
+	return silofs_fs_removexattr(opc_task(opc),
 	                             opc->opc_in.removexattr.ino,
 	                             opc->opc_in.removexattr.name);
 }
 
 static int opc_flush(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_flush(opc_fs_ctx(opc), opc->opc_in.flush.ino);
+	return silofs_fs_flush(opc_task(opc), opc->opc_in.flush.ino);
 }
 
 static int opc_opendir(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_opendir(opc_fs_ctx(opc), opc->opc_in.opendir.ino);
+	return silofs_fs_opendir(opc_task(opc), opc->opc_in.opendir.ino);
 }
 
 static int opc_readdir(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_readdir(opc_fs_ctx(opc),
+	return silofs_fs_readdir(opc_task(opc),
 	                         opc->opc_in.readdir.ino,
 	                         opc->opc_in.readdir.rd_ctx);
 }
 
 static int opc_readdirplus(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_readdirplus(opc_fs_ctx(opc),
+	return silofs_fs_readdirplus(opc_task(opc),
 	                             opc->opc_in.readdir.ino,
 	                             opc->opc_in.readdir.rd_ctx);
 }
 
 static int opc_releasedir(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_releasedir(opc_fs_ctx(opc),
+	return silofs_fs_releasedir(opc_task(opc),
 	                            opc->opc_in.releasedir.ino,
 	                            opc->opc_in.releasedir.o_flags);
 }
 
 static int opc_fsyncdir(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_fsyncdir(opc_fs_ctx(opc),
+	return silofs_fs_fsyncdir(opc_task(opc),
 	                          opc->opc_in.fsyncdir.ino,
 	                          opc->opc_in.fsyncdir.datasync);
 }
 
 static int opc_access(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_access(opc_fs_ctx(opc),
+	return silofs_fs_access(opc_task(opc),
 	                        opc->opc_in.access.ino,
 	                        opc->opc_in.access.mask);
 }
 
 static int opc_create(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_create(opc_fs_ctx(opc),
+	return silofs_fs_create(opc_task(opc),
 	                        opc->opc_in.create.parent,
 	                        opc->opc_in.create.name,
 	                        opc->opc_in.create.o_flags,
@@ -4369,7 +4369,7 @@ static int opc_create(struct silofs_oper_ctx *opc)
 
 static int opc_fallocate(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_fallocate(opc_fs_ctx(opc),
+	return silofs_fs_fallocate(opc_task(opc),
 	                           opc->opc_in.fallocate.ino,
 	                           opc->opc_in.fallocate.mode,
 	                           opc->opc_in.fallocate.off,
@@ -4378,7 +4378,7 @@ static int opc_fallocate(struct silofs_oper_ctx *opc)
 
 static int opc_lseek(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_lseek(opc_fs_ctx(opc),
+	return silofs_fs_lseek(opc_task(opc),
 	                       opc->opc_in.lseek.ino,
 	                       opc->opc_in.lseek.off,
 	                       opc->opc_in.lseek.whence,
@@ -4387,7 +4387,7 @@ static int opc_lseek(struct silofs_oper_ctx *opc)
 
 static int opc_copy_file_range(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_copy_file_range(opc_fs_ctx(opc),
+	return silofs_fs_copy_file_range(opc_task(opc),
 	                                 opc->opc_in.copy_file_range.ino_in,
 	                                 opc->opc_in.copy_file_range.off_in,
 	                                 opc->opc_in.copy_file_range.ino_out,
@@ -4399,7 +4399,7 @@ static int opc_copy_file_range(struct silofs_oper_ctx *opc)
 
 static int opc_read_buf(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_read(opc_fs_ctx(opc),
+	return silofs_fs_read(opc_task(opc),
 	                      opc->opc_in.read.ino,
 	                      opc->opc_in.read.buf,
 	                      opc->opc_in.read.len,
@@ -4409,7 +4409,7 @@ static int opc_read_buf(struct silofs_oper_ctx *opc)
 
 static int opc_read_iter(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_read_iter(opc_fs_ctx(opc),
+	return silofs_fs_read_iter(opc_task(opc),
 	                           opc->opc_in.read.ino,
 	                           opc->opc_in.read.rwi_ctx);
 }
@@ -4423,7 +4423,7 @@ static int opc_read(struct silofs_oper_ctx *opc)
 
 static int opc_write_buf(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_write(opc_fs_ctx(opc),
+	return silofs_fs_write(opc_task(opc),
 	                       opc->opc_in.write.ino,
 	                       opc->opc_in.write.buf,
 	                       opc->opc_in.write.len,
@@ -4433,7 +4433,7 @@ static int opc_write_buf(struct silofs_oper_ctx *opc)
 
 static int opc_write_iter(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_write_iter(opc_fs_ctx(opc),
+	return silofs_fs_write_iter(opc_task(opc),
 	                            opc->opc_in.write.ino,
 	                            opc->opc_in.write.rwi_ctx);
 }
@@ -4446,12 +4446,12 @@ static int opc_write(struct silofs_oper_ctx *opc)
 
 static int opc_syncfs(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_syncfs(opc_fs_ctx(opc), opc->opc_in.syncfs.ino);
+	return silofs_fs_syncfs(opc_task(opc), opc->opc_in.syncfs.ino);
 }
 
 static int opc_ioctl_query(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_query(opc_fs_ctx(opc),
+	return silofs_fs_query(opc_task(opc),
 	                       opc->opc_in.query.ino,
 	                       opc->opc_in.query.qtype,
 	                       &opc->opc_out.query.qry);
@@ -4459,7 +4459,7 @@ static int opc_ioctl_query(struct silofs_oper_ctx *opc)
 
 static int opc_ioctl_clone(struct silofs_oper_ctx *opc)
 {
-	return silofs_fs_clone(opc_fs_ctx(opc),
+	return silofs_fs_clone(opc_task(opc),
 	                       opc->opc_in.clone.ino,
 	                       opc->opc_in.clone.flags,
 	                       &opc->opc_out.clone.bsecs);
@@ -4522,7 +4522,7 @@ static const silofs_opc_fn silofs_opc_tbl[] = {
 
 static int opcode_of(const struct silofs_oper_ctx *opc)
 {
-	return opc->opc_fsc.fsc_oper.op_code;
+	return opc->opc_task.t_oper.op_code;
 }
 
 static silofs_opc_fn hook_of(const struct silofs_oper_ctx *opc)

@@ -19,7 +19,7 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
-struct silofs_unrefs_ctx {
+struct silofs_unretask {
 	struct silofs_visitor   vis;
 	struct silofs_fs_uber  *uber;
 	struct silofs_uaddr     sb_uaddr;
@@ -42,12 +42,12 @@ static int sli_resolve_blob_of(const struct silofs_spleaf_info *sli,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_repos *unrc_repos(const struct silofs_unrefs_ctx *unr_ctx)
+static struct silofs_repos *unrc_repos(const struct silofs_unretask *unr_ctx)
 {
 	return unr_ctx->uber->ub_repos;
 }
 
-static bool unrc_is_blobid_of(const struct silofs_unrefs_ctx *unr_ctx,
+static bool unrc_is_blobid_of(const struct silofs_unretask *unr_ctx,
                               const struct silofs_blobid *blobid)
 {
 	const struct silofs_treeid *treeid =
@@ -56,7 +56,7 @@ static bool unrc_is_blobid_of(const struct silofs_unrefs_ctx *unr_ctx,
 	return silofs_blobid_has_treeid(blobid, treeid);
 }
 
-static int unrc_exec_unrefs_at(struct silofs_unrefs_ctx *unr_ctx,
+static int unrc_exec_unrefs_at(struct silofs_unretask *unr_ctx,
                                const struct silofs_space_iter *spit)
 {
 	silofs_unused(unr_ctx);
@@ -64,14 +64,14 @@ static int unrc_exec_unrefs_at(struct silofs_unrefs_ctx *unr_ctx,
 	return 0;
 }
 
-static int unrc_remove_blob_of(const struct silofs_unrefs_ctx *unr_ctx,
+static int unrc_remove_blob_of(const struct silofs_unretask *unr_ctx,
                                const struct silofs_blobid *blobid)
 {
 	return silofs_repos_remove_blob(unrc_repos(unr_ctx),
 	                                unr_ctx->repo_mode, blobid);
 }
 
-static int unrc_try_remove_blob_of(const struct silofs_unrefs_ctx *unr_ctx,
+static int unrc_try_remove_blob_of(const struct silofs_unretask *unr_ctx,
                                    const struct silofs_blobid *blobid)
 {
 	int err;
@@ -87,7 +87,7 @@ static int unrc_try_remove_blob_of(const struct silofs_unrefs_ctx *unr_ctx,
 }
 
 static int
-unrc_post_unrefs_at_blob_of(struct silofs_unrefs_ctx *unr_ctx,
+unrc_post_unrefs_at_blob_of(struct silofs_unretask *unr_ctx,
                             const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_blobid blobid;
@@ -104,7 +104,7 @@ unrc_post_unrefs_at_blob_of(struct silofs_unrefs_ctx *unr_ctx,
 	return 0;
 }
 
-static int unrc_post_unrefs_at_spleaf(struct silofs_unrefs_ctx *unr_ctx,
+static int unrc_post_unrefs_at_spleaf(struct silofs_unretask *unr_ctx,
                                       const struct silofs_spleaf_info *sli)
 {
 	struct silofs_vrange vrange = { .beg = -1 };
@@ -124,7 +124,7 @@ static int unrc_post_unrefs_at_spleaf(struct silofs_unrefs_ctx *unr_ctx,
 }
 
 static int
-unrc_post_unrefs_at_spnode(struct silofs_unrefs_ctx *unr_ctx,
+unrc_post_unrefs_at_spnode(struct silofs_unretask *unr_ctx,
                            const struct silofs_spnode_info *sni)
 {
 	struct silofs_uaddr uaddr;
@@ -149,7 +149,7 @@ unrc_post_unrefs_at_spnode(struct silofs_unrefs_ctx *unr_ctx,
 }
 
 static int
-unrc_post_unrefs_at_super(struct silofs_unrefs_ctx *unr_ctx,
+unrc_post_unrefs_at_super(struct silofs_unretask *unr_ctx,
                           const struct silofs_space_iter *spit)
 {
 	struct silofs_uaddr uaddr;
@@ -166,7 +166,7 @@ unrc_post_unrefs_at_super(struct silofs_unrefs_ctx *unr_ctx,
 	return 0;
 }
 
-static int unrc_post_unrefs_at(struct silofs_unrefs_ctx *unr_ctx,
+static int unrc_post_unrefs_at(struct silofs_unretask *unr_ctx,
                                const struct silofs_space_iter *spit)
 {
 	int err;
@@ -204,9 +204,9 @@ static int unrc_post_unrefs_at(struct silofs_unrefs_ctx *unr_ctx,
 }
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_unrefs_ctx *unr_ctx_of(struct silofs_visitor *vis)
+static struct silofs_unretask *unr_ctx_of(struct silofs_visitor *vis)
 {
-	return container_of(vis, struct silofs_unrefs_ctx, vis);
+	return container_of(vis, struct silofs_unretask, vis);
 }
 
 static int unrc_visit_exec_hook(struct silofs_visitor *vis,
@@ -221,7 +221,7 @@ static int unrc_visit_post_hook(struct silofs_visitor *vis,
 	return unrc_post_unrefs_at(unr_ctx_of(vis), uit);
 }
 
-static void unrc_init(struct silofs_unrefs_ctx *unr_ctx,
+static void unrc_init(struct silofs_unretask *unr_ctx,
                       const struct silofs_sb_info *sbi)
 {
 	const struct silofs_uaddr *uaddr = sbi_uaddr(sbi);
@@ -240,13 +240,13 @@ static void unrc_init(struct silofs_unrefs_ctx *unr_ctx,
 	unr_ctx->repo_mode = SILOFS_REPO_LOCAL;
 }
 
-static void unrc_fini(struct silofs_unrefs_ctx *unr_ctx)
+static void unrc_fini(struct silofs_unretask *unr_ctx)
 {
 	silofs_memffff(unr_ctx, sizeof(*unr_ctx));
 	unr_ctx->uber = NULL;
 }
 
-static int unrc_remove_super(const struct silofs_unrefs_ctx *unr_ctx)
+static int unrc_remove_super(const struct silofs_unretask *unr_ctx)
 {
 	const struct silofs_blobid *blobid = uaddr_blobid(&unr_ctx->sb_uaddr);
 
@@ -255,7 +255,7 @@ static int unrc_remove_super(const struct silofs_unrefs_ctx *unr_ctx)
 
 int silofs_walk_unref_fs(struct silofs_sb_info *sbi)
 {
-	struct silofs_unrefs_ctx unr_ctx;
+	struct silofs_unretask unr_ctx;
 	int err;
 
 	unrc_init(&unr_ctx, sbi);

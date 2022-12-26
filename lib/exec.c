@@ -1079,10 +1079,10 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 }
 
 static void fse_make_self_xcred(struct silofs_fs_env *fse,
-                                struct silofs_fs_ctx *fs_ctx)
+                                struct silofs_task *task)
 {
 	const struct silofs_fs_args *args = &fse->fs_args;
-	struct silofs_creds *creds = &fs_ctx->fsc_oper.op_creds;
+	struct silofs_creds *creds = &task->t_oper.op_creds;
 
 	creds->xcred.uid = args->uid;
 	creds->xcred.gid = args->gid;
@@ -1091,11 +1091,11 @@ static void fse_make_self_xcred(struct silofs_fs_env *fse,
 }
 
 static int fse_make_self_icred(struct silofs_fs_env *fse,
-                               struct silofs_fs_ctx *fs_ctx)
+                               struct silofs_task *task)
 {
 	const struct silofs_idsmap *idsm = fse->fs_idsmap;
-	const struct silofs_ucred *xcred = &fs_ctx->fsc_oper.op_creds.xcred;
-	struct silofs_ucred *icred = &fs_ctx->fsc_oper.op_creds.icred;
+	const struct silofs_ucred *xcred = &task->t_oper.op_creds.xcred;
+	struct silofs_ucred *icred = &task->t_oper.op_creds.icred;
 	int err = 0;
 
 	icred->uid = xcred->uid;
@@ -1110,16 +1110,16 @@ static int fse_make_self_icred(struct silofs_fs_env *fse,
 }
 
 static int fse_make_self_ctx(struct silofs_fs_env *fse,
-                             struct silofs_fs_ctx *fs_ctx)
+                             struct silofs_task *task)
 {
-	struct silofs_creds *creds = &fs_ctx->fsc_oper.op_creds;
+	struct silofs_creds *creds = &task->t_oper.op_creds;
 	int err;
 
-	silofs_memzero(fs_ctx, sizeof(*fs_ctx));
-	fs_ctx->fsc_uber = fse->fs_uber;
-	fs_ctx->fsc_oper.op_unique = 0;
-	fse_make_self_xcred(fse, fs_ctx);
-	err = fse_make_self_icred(fse, fs_ctx);
+	silofs_memzero(task, sizeof(*task));
+	task->t_uber = fse->fs_uber;
+	task->t_oper.op_unique = 0;
+	fse_make_self_xcred(fse, task);
+	err = fse_make_self_icred(fse, task);
 	if (err) {
 		return err;
 	}
@@ -1247,19 +1247,19 @@ static int fse_fill_save_bootsec(const struct silofs_fs_env *fse,
 	return fse_save_bootsec(fse, true, out_bsec);
 }
 
-static const struct silofs_creds *creds_of(const struct silofs_fs_ctx *fs_ctx)
+static const struct silofs_creds *creds_of(const struct silofs_task *task)
 {
-	return &fs_ctx->fsc_oper.op_creds;
+	return &task->t_oper.op_creds;
 }
 
 static int fse_format_fs(struct silofs_fs_env *fse,
                          struct silofs_uuid *out_uuid)
 {
 	struct silofs_bootsec bsec;
-	struct silofs_fs_ctx fs_ctx;
+	struct silofs_task task;
 	int err;
 
-	err = fse_make_self_ctx(fse, &fs_ctx);
+	err = fse_make_self_ctx(fse, &task);
 	if (err) {
 		return err;
 	}
@@ -1267,7 +1267,7 @@ static int fse_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_format_meta(fse, creds_of(&fs_ctx));
+	err = fse_format_meta(fse, creds_of(&task));
 	if (err) {
 		return err;
 	}
@@ -1415,7 +1415,7 @@ int silofs_fse_pack_fs(struct silofs_fs_env *fse,
                        const struct silofs_uuid *uuid,
                        struct silofs_uuid *out_uuid)
 {
-	struct silofs_fs_ctx fs_ctx;
+	struct silofs_task task;
 	struct silofs_bootsec bsec_src;
 	struct silofs_bootsec bsec_dst;
 	int err;
@@ -1435,11 +1435,11 @@ int silofs_fse_pack_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_make_self_ctx(fse, &fs_ctx);
+	err = fse_make_self_ctx(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_pack(&fs_ctx, &fse->fs_ivkey, &bsec_src, &bsec_dst);
+	err = silofs_fs_pack(&task, &fse->fs_ivkey, &bsec_src, &bsec_dst);
 	if (err) {
 		return err;
 	}
@@ -1455,7 +1455,7 @@ int silofs_fse_unpack_fs(struct silofs_fs_env *fse,
                          const struct silofs_uuid *uuid,
                          struct silofs_uuid *out_uuid)
 {
-	struct silofs_fs_ctx fs_ctx;
+	struct silofs_task task;
 	struct silofs_bootsec bsec_src;
 	struct silofs_bootsec bsec_dst;
 	int err;
@@ -1475,11 +1475,11 @@ int silofs_fse_unpack_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_make_self_ctx(fse, &fs_ctx);
+	err = fse_make_self_ctx(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unpack(&fs_ctx, &fse->fs_ivkey, &bsec_src, &bsec_dst);
+	err = silofs_fs_unpack(&task, &fse->fs_ivkey, &bsec_src, &bsec_dst);
 	if (err) {
 		return err;
 	}
@@ -1495,15 +1495,15 @@ int silofs_fse_fork_fs(struct silofs_fs_env *fse,
                        struct silofs_uuid *out_new,
                        struct silofs_uuid *out_alt)
 {
-	struct silofs_fs_ctx fs_ctx;
+	struct silofs_task task;
 	struct silofs_bootsecs bsecs;
 	int err;
 
-	err = fse_make_self_ctx(fse, &fs_ctx);
+	err = fse_make_self_ctx(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_clone(&fs_ctx, SILOFS_INO_ROOT, 0, &bsecs);
+	err = silofs_fs_clone(&task, SILOFS_INO_ROOT, 0, &bsecs);
 	if (err) {
 		return err;
 	}
@@ -1514,14 +1514,14 @@ int silofs_fse_fork_fs(struct silofs_fs_env *fse,
 
 int silofs_fse_inspect_fs(struct silofs_fs_env *fse)
 {
-	struct silofs_fs_ctx fs_ctx;
+	struct silofs_task task;
 	int err;
 
-	err = fse_make_self_ctx(fse, &fs_ctx);
+	err = fse_make_self_ctx(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_inspect(&fs_ctx);
+	err = silofs_fs_inspect(&task);
 	if (err) {
 		return err;
 	}
@@ -1531,7 +1531,7 @@ int silofs_fse_inspect_fs(struct silofs_fs_env *fse)
 int silofs_fse_unref_fs(struct silofs_fs_env *fse,
                         const struct silofs_uuid *uuid)
 {
-	struct silofs_fs_ctx fs_ctx;
+	struct silofs_task task;
 	struct silofs_bootsec bsec;
 	int err;
 
@@ -1551,11 +1551,11 @@ int silofs_fse_unref_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_make_self_ctx(fse, &fs_ctx);
+	err = fse_make_self_ctx(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unrefs(&fs_ctx);
+	err = silofs_fs_unrefs(&task);
 	if (err) {
 		return err;
 	}

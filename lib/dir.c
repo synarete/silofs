@@ -42,7 +42,7 @@ struct silofs_dir_entry_info {
 };
 
 struct silofs_dir_ctx {
-	const struct silofs_fs_ctx     *fs_ctx;
+	const struct silofs_task     *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *dir_ii;
 	struct silofs_inode_info       *parent_ii;
@@ -1308,7 +1308,7 @@ static void dic_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
 	silofs_dtn_index_t last_dtn_index;
 	const long dif = new_node ? 1 : -1;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	const struct silofs_creds *creds = &d_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &d_ctx->task->t_oper.op_creds;
 
 	dir_update_last_index(dir_ii, dtn_index, new_node);
 	last_dtn_index = dir_last_index(dir_ii);
@@ -1480,14 +1480,14 @@ out:
 	return ret;
 }
 
-int silofs_lookup_dentry(const struct silofs_fs_ctx *fs_ctx,
+int silofs_lookup_dentry(const struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name,
                          struct silofs_ino_dt *out_idt)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.sbi = ii_sbi(dir_ii),
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
 		.stg_mode = SILOFS_STAGE_RO,
@@ -1593,7 +1593,7 @@ static void dic_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *child_ii = d_ctx->child_ii;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	const struct silofs_creds *creds = &d_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &d_ctx->task->t_oper.op_creds;
 
 	silofs_iattr_setup(&iattr, ii_ino(child_ii));
 	iattr.ia_nlink = i_nlink_new(child_ii, dif);
@@ -1689,14 +1689,14 @@ out:
 	return ret;
 }
 
-int silofs_add_dentry(const struct silofs_fs_ctx *fs_ctx,
+int silofs_add_dentry(const struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_qstr *name,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.sbi = ii_sbi(dir_ii),
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.dir_ii = dir_ii,
 		.child_ii = ii,
 		.name = name,
@@ -2038,7 +2038,7 @@ static int dic_iterate(struct silofs_dir_ctx *d_ctx)
 static int dic_readdir_emit(struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_iattr iattr;
-	const struct silofs_creds *creds = &d_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &d_ctx->task->t_oper.op_creds;
 	int err = 0;
 	bool ok = true;
 
@@ -2072,7 +2072,7 @@ static int dic_readdir_emit(struct silofs_dir_ctx *d_ctx)
  */
 static int dic_check_raccess(const struct silofs_dir_ctx *d_ctx)
 {
-	return silofs_do_access(d_ctx->fs_ctx, d_ctx->dir_ii, R_OK);
+	return silofs_do_access(d_ctx->task, d_ctx->dir_ii, R_OK);
 }
 
 static int dic_check_dir_io(const struct silofs_dir_ctx *d_ctx)
@@ -2114,12 +2114,12 @@ out:
 	return ret;
 }
 
-int silofs_do_readdir(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_readdir(const struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.sbi = ii_sbi(dir_ii),
 		.rd_ctx = rd_ctx,
 		.dir_ii = dir_ii,
@@ -2131,12 +2131,12 @@ int silofs_do_readdir(const struct silofs_fs_ctx *fs_ctx,
 	return dic_readdir(&d_ctx);
 }
 
-int silofs_do_readdirplus(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_readdirplus(const struct silofs_task *task,
                           struct silofs_inode_info *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.sbi = ii_sbi(dir_ii),
 		.rd_ctx = rd_ctx,
 		.dir_ii = dir_ii,
@@ -2319,13 +2319,13 @@ out:
 	return ret;
 }
 
-int silofs_remove_dentry(const struct silofs_fs_ctx *fs_ctx,
+int silofs_remove_dentry(const struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.sbi = ii_sbi(dir_ii),
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
 		.stg_mode = SILOFS_STAGE_RW,

@@ -33,7 +33,7 @@ struct silofs_symval_desc {
 };
 
 struct silofs_symlnk_ctx {
-	const struct silofs_fs_ctx     *fs_ctx;
+	const struct silofs_task       *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *lnk_ii;
 	const struct silofs_str        *symval;
@@ -342,12 +342,12 @@ static int slc_readlink_of(const struct silofs_symlnk_ctx *sl_ctx,
 	return 0;
 }
 
-int silofs_do_readlink(const struct silofs_fs_ctx *fs_ctx,
+int silofs_do_readlink(const struct silofs_task *task,
                        struct silofs_inode_info *lnk_ii,
                        void *ptr, size_t lim, size_t *out_len)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.sbi = ii_sbi(lnk_ii),
 		.lnk_ii = lnk_ii,
 		.stg_mode = SILOFS_STAGE_RO,
@@ -423,7 +423,7 @@ slc_bind_symval_part(struct silofs_symlnk_ctx *sl_ctx, size_t slot,
 {
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 	const struct silofs_vaddr *vaddr = syi_vaddr(syi);
-	const struct silofs_creds *creds = &sl_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &sl_ctx->task->t_oper.op_creds;
 
 	lnk_set_value_part(lnk_ii, slot, vaddr);
 	ii_update_iblocks(lnk_ii, creds, vaddr_stype(vaddr), 1);
@@ -475,7 +475,7 @@ static void slc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	struct silofs_iattr iattr = { .ia_flags = 0 };
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
-	const struct silofs_creds *creds = &sl_ctx->fs_ctx->fsc_oper.op_creds;
+	const struct silofs_creds *creds = &sl_ctx->task->t_oper.op_creds;
 
 	silofs_iattr_setup(&iattr, ii_ino(lnk_ii));
 	iattr.ia_size = symval_length(sl_ctx->symval);
@@ -502,12 +502,12 @@ out:
 	return ret;
 }
 
-int silofs_setup_symlink(const struct silofs_fs_ctx *fs_ctx,
+int silofs_setup_symlink(const struct silofs_task *task,
                          struct silofs_inode_info *lnk_ii,
                          const struct silofs_str *symval)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
-		.fs_ctx = fs_ctx,
+		.task = task,
 		.sbi = ii_sbi(lnk_ii),
 		.lnk_ii = lnk_ii,
 		.symval = symval,

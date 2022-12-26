@@ -23,11 +23,11 @@ void silofs_setup_symlnk(struct silofs_inode_info *lnk_ii);
 
 int silofs_drop_symlink(struct silofs_inode_info *lnk_ii);
 
-int silofs_do_readlink(const struct silofs_fs_ctx *op,
+int silofs_do_readlink(const struct silofs_task *task,
                        struct silofs_inode_info *lnk_ii,
                        void *ptr, size_t lim, size_t *out_len);
 
-int silofs_setup_symlink(const struct silofs_fs_ctx *op,
+int silofs_setup_symlink(const struct silofs_task *task,
                          struct silofs_inode_info *lnk_ii,
                          const struct silofs_str *symval);
 

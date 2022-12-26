@@ -103,7 +103,7 @@ struct ut_env {
 	struct silofs_uuid       uuid[2];
 	struct ut_args          *args;
 	struct silofs_fs_env    *fs_env;
-	struct silofs_fs_ctx     fs_ctx;
+	struct silofs_task     task;
 	struct timespec          ts_start;
 	struct statvfs           stvfs[2];
 	struct silofs_spacestats spst[2];
@@ -221,7 +221,7 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute);
 
 struct ut_dvec *ut_new_dvec(struct ut_env *, loff_t, size_t);
 
-const struct silofs_fs_ctx *ut_fs_ctx_of(struct ut_env *ute);
+const struct silofs_task *ut_task_of(struct ut_env *ute);
 
 /* no-fail operations wrappers */
 void ut_access_ok(struct ut_env *ute, ino_t ino, int mode);

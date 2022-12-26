@@ -26,162 +26,162 @@
 #include <limits.h>
 
 
-static struct silofs_fs_ctx *fs_ctx_of(struct ut_env *ute)
+static struct silofs_task *task_of(struct ut_env *ute)
 {
-	struct silofs_fs_ctx *fs_ctx = &ute->fs_ctx;
+	struct silofs_task *task = &ute->task;
 
-	fs_ctx->fsc_uber = ute->fs_env->fs_uber;
-	fs_ctx->fsc_oper.op_creds.xcred.uid = getuid();
-	fs_ctx->fsc_oper.op_creds.xcred.gid = getgid();
-	fs_ctx->fsc_oper.op_creds.xcred.pid = getpid();
-	fs_ctx->fsc_oper.op_creds.xcred.umask = 0002;
-	fs_ctx->fsc_oper.op_unique = ute->unique_opid++;
-	silofs_ts_gettime(&fs_ctx->fsc_oper.op_creds.ts, true);
-	return fs_ctx;
+	task->t_uber = ute->fs_env->fs_uber;
+	task->t_oper.op_creds.xcred.uid = getuid();
+	task->t_oper.op_creds.xcred.gid = getgid();
+	task->t_oper.op_creds.xcred.pid = getpid();
+	task->t_oper.op_creds.xcred.umask = 0002;
+	task->t_oper.op_unique = ute->unique_opid++;
+	silofs_ts_gettime(&task->t_oper.op_creds.ts, true);
+	return task;
 }
 
-const struct silofs_fs_ctx *ut_fs_ctx_of(struct ut_env *ute)
+const struct silofs_task *ut_task_of(struct ut_env *ute)
 {
-	return fs_ctx_of(ute);
+	return task_of(ute);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 {
-	return silofs_fs_statfs(fs_ctx_of(ute), ino, st);
+	return silofs_fs_statfs(task_of(ute), ino, st);
 }
 
 static int ut_statx(struct ut_env *ute, ino_t ino,
                     unsigned int request_mask, struct statx *stx)
 {
-	return silofs_fs_statx(fs_ctx_of(ute), ino, request_mask, stx);
+	return silofs_fs_statx(task_of(ute), ino, request_mask, stx);
 }
 
 static int ut_access(struct ut_env *ute, ino_t ino, int mode)
 {
-	return silofs_fs_access(fs_ctx_of(ute), ino, mode);
+	return silofs_fs_access(task_of(ute), ino, mode);
 }
 
 static int ut_getattr(struct ut_env *ute, ino_t ino, struct stat *st)
 {
-	return silofs_fs_getattr(fs_ctx_of(ute), ino, st);
+	return silofs_fs_getattr(task_of(ute), ino, st);
 }
 
 static int ut_lookup(struct ut_env *ute, ino_t parent,
                      const char *name, struct stat *st)
 {
-	return silofs_fs_lookup(fs_ctx_of(ute), parent, name, st);
+	return silofs_fs_lookup(task_of(ute), parent, name, st);
 }
 
 static int ut_utimens(struct ut_env *ute, ino_t ino,
                       const struct stat *utimes, struct stat *st)
 {
-	return silofs_fs_utimens(fs_ctx_of(ute), ino, utimes, st);
+	return silofs_fs_utimens(task_of(ute), ino, utimes, st);
 }
 
 static int ut_mkdir(struct ut_env *ute, ino_t parent,
                     const char *name, mode_t mode, struct stat *out_st)
 {
-	return silofs_fs_mkdir(fs_ctx_of(ute), parent,
+	return silofs_fs_mkdir(task_of(ute), parent,
 	                       name, mode | S_IFDIR, out_st);
 }
 
 static int ut_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 {
-	return silofs_fs_rmdir(fs_ctx_of(ute), parent, name);
+	return silofs_fs_rmdir(task_of(ute), parent, name);
 }
 
 static int ut_opendir(struct ut_env *ute, ino_t ino)
 {
-	return silofs_fs_opendir(fs_ctx_of(ute), ino);
+	return silofs_fs_opendir(task_of(ute), ino);
 }
 
 static int ut_releasedir(struct ut_env *ute, ino_t ino)
 {
-	return silofs_fs_releasedir(fs_ctx_of(ute), ino, 0);
+	return silofs_fs_releasedir(task_of(ute), ino, 0);
 }
 
 static int ut_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 {
-	return silofs_fs_fsyncdir(fs_ctx_of(ute), ino, datasync);
+	return silofs_fs_fsyncdir(task_of(ute), ino, datasync);
 }
 
 
 static int ut_symlink(struct ut_env *ute, ino_t parent,
                       const char *name, const char *val, struct stat *out_st)
 {
-	return silofs_fs_symlink(fs_ctx_of(ute), parent, name, val, out_st);
+	return silofs_fs_symlink(task_of(ute), parent, name, val, out_st);
 }
 
 static int ut_readlink(struct ut_env *ute,
                        ino_t ino, char *buf, size_t len, size_t *out_len)
 {
-	return silofs_fs_readlink(fs_ctx_of(ute), ino, buf, len, out_len);
+	return silofs_fs_readlink(task_of(ute), ino, buf, len, out_len);
 }
 
 static int ut_link(struct ut_env *ute, ino_t ino, ino_t parent,
                    const char *name, struct stat *out_st)
 {
-	return silofs_fs_link(fs_ctx_of(ute), ino, parent, name, out_st);
+	return silofs_fs_link(task_of(ute), ino, parent, name, out_st);
 }
 
 static int ut_unlink(struct ut_env *ute, ino_t parent, const char *name)
 {
-	return silofs_fs_unlink(fs_ctx_of(ute), parent, name);
+	return silofs_fs_unlink(task_of(ute), parent, name);
 }
 
 static int ut_create(struct ut_env *ute, ino_t parent,
                      const char *name, mode_t mode, struct stat *out_st)
 {
-	return silofs_fs_create(fs_ctx_of(ute), parent, name, 0, mode, out_st);
+	return silofs_fs_create(task_of(ute), parent, name, 0, mode, out_st);
 }
 
 static int ut_open(struct ut_env *ute, ino_t ino, int flags)
 {
-	return silofs_fs_open(fs_ctx_of(ute), ino, flags);
+	return silofs_fs_open(task_of(ute), ino, flags);
 }
 
 static int ut_release(struct ut_env *ute, ino_t ino, bool flush)
 {
-	return silofs_fs_release(fs_ctx_of(ute), ino, 0, flush);
+	return silofs_fs_release(task_of(ute), ino, 0, flush);
 }
 
 static int ut_truncate(struct ut_env *ute, ino_t ino,
                        loff_t length, struct stat *out_st)
 {
-	return silofs_fs_truncate(fs_ctx_of(ute), ino, length, out_st);
+	return silofs_fs_truncate(task_of(ute), ino, length, out_st);
 }
 
 static int ut_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 {
-	return silofs_fs_fsync(fs_ctx_of(ute), ino, datasync);
+	return silofs_fs_fsync(task_of(ute), ino, datasync);
 }
 
 static int ut_rename(struct ut_env *ute, ino_t parent,
                      const char *name, ino_t newparent,
                      const char *newname, int flags)
 {
-	return silofs_fs_rename(fs_ctx_of(ute), parent, name,
+	return silofs_fs_rename(task_of(ute), parent, name,
 	                        newparent, newname, flags);
 }
 
 static int ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 {
-	return silofs_fs_fiemap(fs_ctx_of(ute), ino, fm);
+	return silofs_fs_fiemap(task_of(ute), ino, fm);
 }
 
 static int ut_lseek(struct ut_env *ute, ino_t ino,
                     loff_t off, int whence, loff_t *out)
 {
-	return silofs_fs_lseek(fs_ctx_of(ute), ino, off, whence, out);
+	return silofs_fs_lseek(task_of(ute), ino, off, whence, out);
 }
 
 static int ut_copy_file_range(struct ut_env *ute, ino_t ino_in,
                               loff_t off_in, ino_t ino_out, loff_t off_out,
                               size_t len, size_t *out_len)
 {
-	return silofs_fs_copy_file_range(fs_ctx_of(ute), ino_in, off_in,
+	return silofs_fs_copy_file_range(task_of(ute), ino_in, off_in,
 	                                 ino_out, off_out, len, 0, out_len);
 }
 
@@ -189,25 +189,25 @@ static int ut_query(struct ut_env *ute, ino_t ino,
                     enum silofs_query_type qtype,
                     struct silofs_ioc_query *out_qry)
 {
-	return silofs_fs_query(fs_ctx_of(ute), ino, qtype, out_qry);
+	return silofs_fs_query(task_of(ute), ino, qtype, out_qry);
 }
 
 static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
                    size_t len, loff_t off, size_t *out_len)
 {
-	return silofs_fs_read(fs_ctx_of(ute), ino, buf, len, off, out_len);
+	return silofs_fs_read(task_of(ute), ino, buf, len, off, out_len);
 }
 
 static int ut_fallocate(struct ut_env *ute, ino_t ino,
                         int mode, loff_t offset, loff_t len)
 {
-	return silofs_fs_fallocate(fs_ctx_of(ute), ino, mode, offset, len);
+	return silofs_fs_fallocate(task_of(ute), ino, mode, offset, len);
 }
 
 static int ut_write(struct ut_env *ute, ino_t ino, const void *buf,
                     size_t len, off_t off, size_t *out_len)
 {
-	return silofs_fs_write(fs_ctx_of(ute), ino, buf, len, off, out_len);
+	return silofs_fs_write(task_of(ute), ino, buf, len, off, out_len);
 }
 
 struct ut_write_iter {
@@ -305,7 +305,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	int err1;
 	int err2;
 	int err3;
-	const bool concp = ute->fs_ctx.fsc_uber->ub_args->concp;
+	const bool concp = ute->task.t_uber->ub_args->concp;
 	struct ut_write_iter wri = {
 		.dat = buf,
 		.dat_len = 0,
@@ -318,11 +318,11 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 		concp ? ut_write_iter_concp_actor : ut_write_iter_actor,
 	};
 
-	err1 = silofs_fs_write_iter(fs_ctx_of(ute), ino, &wri.rwi);
+	err1 = silofs_fs_write_iter(task_of(ute), ino, &wri.rwi);
 	err2 = ut_write_iter_copy_rem(&wri);
 	*out_len = wri.dat_len;
 
-	err3 = silofs_fs_rdwr_post(fs_ctx_of(ute), wri.iov, wri.cnt);
+	err3 = silofs_fs_rdwr_post(task_of(ute), wri.iov, wri.cnt);
 	return err1 || err2 || err3;
 }
 
@@ -371,7 +371,7 @@ static int ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
 	ut_rd_ctx->plus = 0;
 	rd_ctx->pos = doff;
 	rd_ctx->actor = filldir;
-	return silofs_fs_readdir(fs_ctx_of(ute), ino, rd_ctx);
+	return silofs_fs_readdir(task_of(ute), ino, rd_ctx);
 }
 
 static int ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
@@ -383,14 +383,14 @@ static int ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
 	ut_rd_ctx->plus = 1;
 	rd_ctx->pos = doff;
 	rd_ctx->actor = filldir;
-	return silofs_fs_readdirplus(fs_ctx_of(ute), ino, rd_ctx);
+	return silofs_fs_readdirplus(task_of(ute), ino, rd_ctx);
 }
 
 static int ut_setxattr(struct ut_env *ute, ino_t ino,
                        const char *name, const void *value,
                        size_t size, int flags)
 {
-	return silofs_fs_setxattr(fs_ctx_of(ute), ino, name, value,
+	return silofs_fs_setxattr(task_of(ute), ino, name, value,
 	                          size, flags, false);
 }
 
@@ -398,13 +398,13 @@ static int ut_getxattr(struct ut_env *ute, ino_t ino,
                        const char *name, void *buf,
                        size_t size, size_t *out_size)
 {
-	return silofs_fs_getxattr(fs_ctx_of(ute), ino,
+	return silofs_fs_getxattr(task_of(ute), ino,
 	                          name, buf, size, out_size);
 }
 
 static int ut_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 {
-	return silofs_fs_removexattr(fs_ctx_of(ute), ino, name);
+	return silofs_fs_removexattr(task_of(ute), ino, name);
 }
 
 static struct ut_listxattr_ctx *
@@ -440,7 +440,7 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 	ut_lxa_ctx->ute = ute;
 	ut_lxa_ctx->lxa_ctx.actor = fillxent;
 
-	return silofs_fs_listxattr(fs_ctx_of(ute), ino, lxa_ctx);
+	return silofs_fs_listxattr(task_of(ute), ino, lxa_ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

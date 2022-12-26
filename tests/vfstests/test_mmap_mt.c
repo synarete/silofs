@@ -54,7 +54,7 @@ test_mmap_mt_seq_at_(struct vt_env *vte, const struct vt_mmap_mt_ctx *mmtc)
 	uint8_t *buf = vt_new_buf_zeros(vte, bsz);
 	const uint8_t *src = NULL;
 	uint8_t *dst = NULL;
-	uint8_t dat = 'A' + (uint8_t)indx;
+	uint8_t dat = (uint8_t)('A' + (int)indx);
 	size_t seg;
 	loff_t pos;
 

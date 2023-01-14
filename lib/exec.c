@@ -33,7 +33,7 @@ struct silofs_fs_core {
 	struct silofs_qalloc    qalloc;
 	struct silofs_crypto    crypto;
 	struct silofs_repos     repos;
-	struct silofs_flusher   flusher;
+	struct silofs_flushers  flushers;
 	struct silofs_uber      uber;
 	struct silofs_idsmap    idsm;
 	struct silofs_password  passwd;
@@ -289,29 +289,29 @@ static void fse_fini_repos(struct silofs_fs_env *fse)
 	}
 }
 
-static int fse_init_flusher(struct silofs_fs_env *fse)
+static int fse_init_flushers(struct silofs_fs_env *fse)
 {
 	const struct silofs_fs_args *fs_args = &fse->fs_args;
-	struct silofs_flusher *flsh;
+	struct silofs_flushers *fls;
 	int err;
 
 	if (!fs_args->withflsh) {
 		return 0;
 	}
-	flsh = &fse_obj_of(fse)->fs_core.c.flusher;
-	err = silofs_flusher_init(flsh);
+	fls = &fse_obj_of(fse)->fs_core.c.flushers;
+	err = silofs_flushers_init(fls, fse->fs_alloc);
 	if (err) {
 		return err;
 	}
-	fse->fs_flusher = flsh;
+	fse->fs_flushers = fls;
 	return 0;
 }
 
-static void fse_fini_flusher(struct silofs_fs_env *fse)
+static void fse_fini_flushers(struct silofs_fs_env *fse)
 {
-	if (fse->fs_flusher != NULL) {
-		silofs_flusher_fini(fse->fs_flusher);
-		fse->fs_flusher = NULL;
+	if (fse->fs_flushers != NULL) {
+		silofs_flushers_fini(fse->fs_flushers);
+		fse->fs_flushers = NULL;
 	}
 }
 
@@ -349,7 +349,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 	const struct silofs_uber_args args = {
 		.alloc = fse->fs_alloc,
 		.repos = fse->fs_repos,
-		.flsh = fse->fs_flusher,
+		.fls = fse->fs_flushers,
 		.idsm = fse->fs_idsmap,
 		.ivkey = &fse->fs_ivkey,
 	};
@@ -487,7 +487,7 @@ static int fse_init_subs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_init_flusher(fse);
+	err = fse_init_flushers(fse);
 	if (err) {
 		return err;
 	}
@@ -530,7 +530,7 @@ static void fse_fini(struct silofs_fs_env *fse)
 	fse_fini_fuseq(fse);
 	fse_fini_uber(fse);
 	fse_fini_idsmap(fse);
-	fse_fini_flusher(fse);
+	fse_fini_flushers(fse);
 	fse_fini_repos(fse);
 	fse_fini_crypto(fse);
 	fse_fini_qalloc(fse);
@@ -723,6 +723,46 @@ int silofs_fse_close_repo(struct silofs_fs_env *fse)
 
 	fse_lock(fse);
 	ret = silofs_repos_close(fse->fs_repos);
+	fse_unlock(fse);
+	return ret;
+}
+
+static int fse_start_flushers(struct silofs_fs_env *fse)
+{
+	int ret = 0;
+
+	if (fse->fs_flushers != NULL) {
+		ret = silofs_flushers_start(fse->fs_flushers);
+	}
+	return ret;
+}
+
+int silofs_fse_start_fls(struct silofs_fs_env *fse)
+{
+	int ret;
+
+	fse_lock(fse);
+	ret = fse_start_flushers(fse);
+	fse_unlock(fse);
+	return ret;
+}
+
+static int fse_stop_flushers(struct silofs_fs_env *fse)
+{
+	int ret = 0;
+
+	if (fse->fs_flushers != NULL) {
+		ret = silofs_flushers_stop(fse->fs_flushers);
+	}
+	return ret;
+}
+
+int silofs_fse_stop_fls(struct silofs_fs_env *fse)
+{
+	int ret;
+
+	fse_lock(fse);
+	ret = fse_stop_flushers(fse);
 	fse_unlock(fse);
 	return ret;
 }
@@ -1331,26 +1371,6 @@ int silofs_fse_boot_fs(struct silofs_fs_env *fse,
 	return ret;
 }
 
-static int fse_start_flusher(struct silofs_fs_env *fse)
-{
-	int ret = 0;
-
-	if (fse->fs_flusher != NULL) {
-		ret = silofs_flusher_start(fse->fs_flusher);
-	}
-	return ret;
-}
-
-static int fse_stop_flusher(struct silofs_fs_env *fse)
-{
-	int ret = 0;
-
-	if (fse->fs_flusher != NULL) {
-		ret = silofs_flusher_stop(fse->fs_flusher);
-	}
-	return ret;
-}
-
 static int fse_open_fs(struct silofs_fs_env *fse)
 {
 	struct silofs_task task;
@@ -1373,10 +1393,6 @@ static int fse_open_fs(struct silofs_fs_env *fse)
 		return err;
 	}
 	err = fse_reload_fs_meta(fse, &task);
-	if (err) {
-		return err;
-	}
-	err = fse_start_flusher(fse);
 	if (err) {
 		return err;
 	}
@@ -1413,10 +1429,6 @@ static int fse_close_fs(struct silofs_fs_env *fse, struct silofs_task *task)
 		return err;
 	}
 	err = flush_dirty_now(task);
-	if (err) {
-		return err;
-	}
-	err = fse_stop_flusher(fse);
 	if (err) {
 		return err;
 	}

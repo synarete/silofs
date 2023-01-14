@@ -46,6 +46,11 @@ int silofs_fse_close_fs(struct silofs_fs_env *fse);
 
 int silofs_fse_exec_fs(struct silofs_fs_env *fse);
 
+int silofs_fse_start_fls(struct silofs_fs_env *fse);
+
+int silofs_fse_stop_fls(struct silofs_fs_env *fse);
+
+
 int silofs_fse_fork_fs(struct silofs_fs_env *fse,
                        struct silofs_uuid *out_new,
                        struct silofs_uuid *out_alt);

@@ -417,21 +417,22 @@ void silofs_task_fini(struct silofs_task *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_flusher_init(struct silofs_flusher *flsh)
+static int flusher_init(struct silofs_flusher *flsh, int indx)
 {
 	memset(flsh, 0, sizeof(*flsh));
-	flsh->flsh_active = 0;
-	silofs_listq_init(&flsh->flsh_cq);
-	return silofs_lock_init(&flsh->flsh_lk);
+	flsh->fl_active = 0;
+	flsh->fl_index = indx;
+	silofs_listq_init(&flsh->fl_cq);
+	return silofs_lock_init(&flsh->fl_lk);
 }
 
-void silofs_flusher_fini(struct silofs_flusher *flsh)
+static void flusher_fini(struct silofs_flusher *flsh)
 {
-	silofs_lock_fini(&flsh->flsh_lk);
-	silofs_listq_fini(&flsh->flsh_cq);
+	silofs_lock_fini(&flsh->fl_lk);
+	silofs_listq_fini(&flsh->fl_cq);
 }
 
-static int flusher_start(struct silofs_thread *th)
+static int flusher_do_start(struct silofs_thread *th)
 {
 	struct silofs_flusher *flsh = th->arg;
 	int err;
@@ -444,33 +445,40 @@ static int flusher_start(struct silofs_thread *th)
 
 static void flusher_reset_th(struct silofs_flusher *flsh)
 {
-	struct silofs_thread *th = &flsh->flsh_th;
+	struct silofs_thread *th = &flsh->fl_th;
 
 	silofs_memzero(th, sizeof(*th));
 }
 
-int silofs_flusher_start(struct silofs_flusher *flsh)
+static void flusher_make_thread_name(const struct silofs_flusher *flsh,
+                                     char *name_buf, size_t name_bsz)
 {
-	const char *th_name = "silofs-flush";
-	silofs_execute_fn fn = flusher_start;
+	snprintf(name_buf, name_bsz, "silofs-flush%d", flsh->fl_index);
+}
+
+static int flusher_start(struct silofs_flusher *flsh)
+{
+	char name[32] = "";
+	struct silofs_thread *th = &flsh->fl_th;
 	int ret = 0;
 
-	if (!flsh->flsh_active) {
-		flsh->flsh_active = 1;
+	if (!flsh->fl_active) {
+		flsh->fl_active = 1;
 		flusher_reset_th(flsh);
-		ret = silofs_thread_create(&flsh->flsh_th, fn, flsh, th_name);
+		flusher_make_thread_name(flsh, name, sizeof(name) - 1);
+		ret = silofs_thread_create(th, flusher_do_start, flsh, name);
 	}
 	return ret;
 }
 
-int silofs_flusher_stop(struct silofs_flusher *flsh)
+static int flusher_stop(struct silofs_flusher *flsh)
 {
 	int ret = 0;
 
-	if (flsh->flsh_active) {
-		flsh->flsh_active = 0;
-		ret = silofs_thread_join(&flsh->flsh_th);
-		silofs_assert_eq(flsh->flsh_cq.sz, 0);
+	if (flsh->fl_active) {
+		flsh->fl_active = 0;
+		ret = silofs_thread_join(&flsh->fl_th);
+		silofs_assert_eq(flsh->fl_cq.sz, 0);
 		flusher_reset_th(flsh);
 	}
 	return ret;
@@ -481,20 +489,20 @@ flusher_pop_cmi(struct silofs_flusher *flsh)
 {
 	struct silofs_list_head *lh;
 
-	lh = listq_pop_front(&flsh->flsh_cq);
+	lh = listq_pop_front(&flsh->fl_cq);
 	return cmi_from_flh(lh);
 }
 
 static void
 flusher_push_cmi(struct silofs_flusher *flsh, struct silofs_commit_info *cmi)
 {
-	listq_push_back(&flsh->flsh_cq, &cmi->flh);
+	listq_push_back(&flsh->fl_cq, &cmi->flh);
 }
 
-void silofs_flusher_enqueue(struct silofs_flusher *flsh,
+static void flusher_enqueue(struct silofs_flusher *flsh,
                             struct silofs_commit_info *cmi)
 {
-	struct silofs_lock *lock = &flsh->flsh_lk;
+	struct silofs_lock *lock = &flsh->fl_lk;
 
 	cmi->async = 1;
 	silofs_mutex_lock(&lock->mu);
@@ -506,7 +514,7 @@ void silofs_flusher_enqueue(struct silofs_flusher *flsh,
 static struct silofs_commit_info *flusher_dequeue(struct silofs_flusher *flsh)
 {
 	struct silofs_commit_info *cmi = NULL;
-	struct silofs_lock *lock = &flsh->flsh_lk;
+	struct silofs_lock *lock = &flsh->fl_lk;
 	int err;
 
 	silofs_mutex_lock(&lock->mu);
@@ -525,11 +533,135 @@ static int flusher_execute(struct silofs_flusher *flsh)
 {
 	struct silofs_commit_info *cmi;
 
-	while (flsh->flsh_active) {
+	while (flsh->fl_active) {
 		cmi = flusher_dequeue(flsh);
 		if (cmi != NULL) {
 			cmi_execute_and_signal(cmi);
 		}
 	}
 	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int flushers_init_set(struct silofs_flushers *fls, unsigned int cnt)
+{
+	struct silofs_flusher *flsh;
+	struct silofs_flusher *flsh_arr;
+	unsigned int init_cnt = 0;
+	int err;
+
+	flsh_arr = silofs_allocate(fls->fls_alloc, cnt * sizeof(*flsh));
+	if (flsh_arr == NULL) {
+		return -ENOMEM;
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		flsh = &flsh_arr[i];
+		err = flusher_init(flsh, (int)(i + 1));
+		if (err) {
+			goto out_err;
+		}
+		init_cnt++;
+	}
+	fls->fls_set = flsh_arr;
+	fls->fls_count = init_cnt;
+	return 0;
+out_err:
+	for (size_t i = 0; i < init_cnt; ++i) {
+		flsh = &flsh_arr[i];
+		flusher_fini(flsh);
+	}
+	silofs_deallocate(fls->fls_alloc, flsh_arr, cnt * sizeof(*flsh));
+	return err;
+}
+
+int silofs_flushers_init(struct silofs_flushers *fls,
+                         struct silofs_alloc *alloc)
+{
+	fls->fls_alloc = alloc;
+	fls->fls_set = NULL;
+	fls->fls_count = 0;
+	fls->fls_active = 0;
+	return flushers_init_set(fls, 4);
+}
+
+static void flushers_fini_set(struct silofs_flushers *fls)
+{
+	struct silofs_flusher *flsh;
+
+	for (size_t i = 0; i < fls->fls_count; ++i) {
+		flsh = &fls->fls_set[i];
+		flusher_fini(flsh);
+	}
+	silofs_deallocate(fls->fls_alloc, fls->fls_set,
+	                  fls->fls_count * sizeof(*flsh));
+	fls->fls_set = NULL;
+	fls->fls_count = 0;
+}
+
+void silofs_flushers_fini(struct silofs_flushers *fls)
+{
+	flushers_fini_set(fls);
+	fls->fls_alloc = NULL;
+}
+
+int silofs_flushers_start(struct silofs_flushers *fls)
+{
+	struct silofs_flusher *flsh;
+	unsigned int start_cnt = 0;
+	int err;
+
+	for (size_t i = 0; i < fls->fls_count; ++i) {
+		flsh = &fls->fls_set[i];
+		err = flusher_start(flsh);
+		if (err) {
+			goto out_err;
+		}
+		start_cnt++;
+	}
+	fls->fls_active = 1;
+	return 0;
+
+out_err:
+	for (size_t i = 0; i < start_cnt; ++i) {
+		flsh = &fls->fls_set[i];
+		flusher_stop(flsh);
+	}
+	return err;
+}
+
+int silofs_flushers_stop(struct silofs_flushers *fls)
+{
+	struct silofs_flusher *flsh;
+	int ret = 0;
+	int err;
+
+	fls->fls_active = 0;
+	for (size_t i = 0; i < fls->fls_count; ++i) {
+		flsh = &fls->fls_set[i];
+		err = flusher_stop(flsh);
+		if (err && (ret == 0)) {
+			ret = err;
+		}
+	}
+	return ret;
+}
+
+static struct silofs_flusher *
+flushers_sub(const struct silofs_flushers *fls,
+             const struct silofs_commit_info *cmi)
+{
+	uint64_t h[2];
+	uint64_t idx;
+
+	silofs_assert_not_null(fls->fls_set);
+	silofs_blobid_as_u128(&cmi->bid, h);
+	idx = (h[0] ^ h[1]) % fls->fls_count;
+	return &fls->fls_set[idx];
+}
+
+void silofs_flushers_enqueue(struct silofs_flushers *fls,
+                             struct silofs_commit_info *cmi)
+{
+	flusher_enqueue(flushers_sub(fls, cmi), cmi);
 }

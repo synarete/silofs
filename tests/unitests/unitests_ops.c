@@ -1912,6 +1912,9 @@ void ut_open_fs_ok(struct ut_env *ute)
 
 	err = silofs_fse_open_fs(ute->fs_env);
 	ut_expect_ok(err);
+
+	err = silofs_fse_start_fls(ute->fs_env);
+	ut_expect_ok(err);
 }
 
 void ut_open_fs2_ok(struct ut_env *ute)
@@ -1923,11 +1926,17 @@ void ut_open_fs2_ok(struct ut_env *ute)
 
 	err = silofs_fse_open_fs(ute->fs_env);
 	ut_expect_ok(err);
+
+	err = silofs_fse_start_fls(ute->fs_env);
+	ut_expect_ok(err);
 }
 
 void ut_close_fs_ok(struct ut_env *ute)
 {
 	int err;
+
+	err = silofs_fse_stop_fls(ute->fs_env);
+	ut_expect_ok(err);
 
 	err = silofs_fse_close_fs(ute->fs_env);
 	ut_expect_ok(err);

@@ -3893,12 +3893,18 @@ out:
 	return err;
 }
 
+static void fuseq_make_thread_name(const struct silofs_fuseq_worker *fqw,
+                                   char *name_buf, size_t name_bsz)
+{
+	snprintf(name_buf, name_bsz, "silofs-exec%u", fqw->worker_index + 1);
+}
+
 static int fuseq_exec_thread(struct silofs_fuseq_worker *fqw)
 {
 	char name[32] = "";
 	int err;
 
-	snprintf(name, sizeof(name) - 1, "silofs-%u", fqw->worker_index + 1);
+	fuseq_make_thread_name(fqw, name, sizeof(name) - 1);
 	err = silofs_thread_create(&fqw->th, fuseq_start, NULL, name);
 	if (err) {
 		fuseq_log_err("failed to create fuse worker: "\

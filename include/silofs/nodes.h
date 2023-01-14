@@ -41,7 +41,6 @@ struct silofs_snode_info {
 	silofs_dqid_t                   s_dqid;
 	enum silofs_stype               s_stype;
 	volatile bool                   s_noflush;
-	bool                            s_ghost;
 };
 
 /* unode */
@@ -225,6 +224,9 @@ void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
 void silofs_fill_csum_meta(union silofs_view *view);
 
 int silofs_verify_csum_meta(const union silofs_view *view);
+
+
+struct silofs_bk_info *silofs_bki_of(const struct silofs_snode_info *si);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

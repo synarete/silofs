@@ -25,12 +25,19 @@ struct silofs_task {
 	volatile int            t_interrupt;
 };
 
+/* commit's reference within underlying block */
+struct silofs_commit_ref {
+	struct silofs_bk_info      *bki;
+	const union silofs_view    *view;
+	size_t                      len;
+};
+
 /* flush commit control object */
 struct silofs_commit_info {
 	struct silofs_list_head     tlh;
 	struct silofs_task         *task;
 	struct silofs_blobref_info *bri;
-	struct silofs_snode_info   *si[32];
+	struct silofs_commit_ref    ref[32];
 	struct silofs_blobid        bid;
 	void  *buf;
 	loff_t off;
@@ -38,7 +45,6 @@ struct silofs_commit_info {
 	size_t cnt;
 	int status;
 	bool done;
-	bool refs;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -73,9 +79,6 @@ int silofs_task_make_commit(struct silofs_task *task,
                             struct silofs_commit_info **out_cmi);
 
 int silofs_task_let_complete(struct silofs_task *task);
-
-void silofs_task_forget_ghosts(struct silofs_task *task);
-
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 

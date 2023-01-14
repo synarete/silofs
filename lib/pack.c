@@ -528,7 +528,7 @@ static int pe_assign_to_blob(const struct silofs_pack_elem *pe,
 	size_t pb_size;
 
 	ui_resolve_pos(pe->pe_ui, &off_in_bk, &len);
-	ubk_src = pe->pe_ui->u_ubki->ubk;
+	ubk_src = pe->pe_ui->u_ubki->ubk_base.bk;
 	ubk_dst = pblob_ubk_at(pb, slot);
 	copy_unode(ubk_src, ubk_dst, off_in_bk, len);
 
@@ -1548,7 +1548,7 @@ static int pac_refill_view_of(struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_block *ubk_src,
                               struct silofs_unode_info *ui)
 {
-	struct silofs_block *ubk_dst = ui->u_ubki->ubk;
+	struct silofs_block *ubk_dst = ui->u_ubki->ubk_base.bk;
 	loff_t off_in_bk;
 	size_t len;
 	int err;

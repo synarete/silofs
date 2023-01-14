@@ -748,7 +748,7 @@ int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
 	if (err) {
 		return err;
 	}
-	err = bri_load_bk(bri, bkaddr, ubki->ubk);
+	err = bri_load_bk(bri, bkaddr, ubki->ubk_base.bk);
 	if (err) {
 		return err;
 	}
@@ -765,7 +765,7 @@ int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
 	if (err) {
 		return err;
 	}
-	err = bri_load_bk(bri, bkaddr, vbki->vbk);
+	err = bri_load_bk(bri, bkaddr, vbki->vbk_base.bk);
 	if (err) {
 		return err;
 	}

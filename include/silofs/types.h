@@ -334,11 +334,16 @@ struct silofs_cache_elem {
 	bool    ce_forgot;
 };
 
-/* uber-block info */
+/* block-info base */
+struct silofs_bk_info {
+	struct silofs_cache_elem        bk_ce;
+	struct silofs_block            *bk;
+};
+
+/* u-addressing block info */
 struct silofs_ubk_info {
-	struct silofs_cache_elem        ubk_ce;
+	struct silofs_bk_info           ubk_base;
 	struct silofs_bkaddr            ubk_addr;
-	struct silofs_block            *ubk;
 	struct silofs_blobref_info     *ubk_bri;
 };
 
@@ -348,10 +353,9 @@ struct silofs_vbk_addr {
 	enum silofs_stype               vbk_vspace;
 };
 
-/* virtual-block info */
+/* v-addressing block info */
 struct silofs_vbk_info {
-	struct silofs_cache_elem        vbk_ce;
-	struct silofs_block            *vbk;
+	struct silofs_bk_info           vbk_base;
 	struct silofs_vbk_addr          vbk_addr;
 };
 

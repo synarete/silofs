@@ -223,7 +223,6 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
 	si->s_noflush = false;
-	si->s_ghost = false;
 }
 
 static void si_fini(struct silofs_snode_info *si)
@@ -1458,14 +1457,14 @@ void silofs_ui_bind_view(struct silofs_unode_info *ui)
 {
 	const loff_t bk_pos = uaddr_bk_pos(ui_uaddr(ui));
 
-	si_bind_view(&ui->u_si, ui->u_ubki->ubk, bk_pos);
+	si_bind_view(&ui->u_si, ui->u_ubki->ubk_base.bk, bk_pos);
 }
 
 void silofs_vi_bind_view(struct silofs_vnode_info *vi)
 {
 	const loff_t bk_pos = vaddr_bk_pos(vi_vaddr(vi));
 
-	si_bind_view(&vi->v_si, vi->v_vbki->vbk, bk_pos);
+	si_bind_view(&vi->v_si, vi->v_vbki->vbk_base.bk, bk_pos);
 }
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr)
@@ -1592,6 +1591,24 @@ void silofs_vi_set_dqid(struct silofs_vnode_info *vi, silofs_dqid_t dqid)
 	if (vi->v_si.s_dqid == SILOFS_DQID_DFL) {
 		vi->v_si.s_dqid = dqid;
 	}
+}
+
+struct silofs_bk_info *silofs_bki_of(const struct silofs_snode_info *si)
+{
+	struct silofs_bk_info *bki = NULL;
+	const struct silofs_unode_info *ui = NULL;
+	const struct silofs_vnode_info *vi = NULL;
+
+	if (stype_isunode(si->s_stype)) {
+		ui = silofs_ui_from_si(si);
+		silofs_assert_not_null(ui->u_ubki);
+		bki = &ui->u_ubki->ubk_base;
+	} else if (stype_isvnode(si->s_stype)) {
+		vi = silofs_vi_from_si(si);
+		silofs_assert_not_null(vi->v_vbki);
+		bki = &vi->v_vbki->vbk_base;
+	}
+	return bki;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

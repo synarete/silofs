@@ -228,4 +228,9 @@ void silofs_ubki_incref(struct silofs_ubk_info *ubki);
 void silofs_ubki_decref(struct silofs_ubk_info *ubki);
 
 
+void silofs_bki_incref(struct silofs_bk_info *bki);
+
+void silofs_bki_decref(struct silofs_bk_info *bki);
+
+
 #endif /* SILOFS_CACHE_H_ */

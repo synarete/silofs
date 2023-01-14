@@ -643,22 +643,91 @@ static bool bri_is_evictable(const struct silofs_blobref_info *bri)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_bk_info *bki_from_ce(const struct silofs_cache_elem *ce)
+{
+	const struct silofs_bk_info *bki = NULL;
+
+	if (ce != NULL) {
+		bki = container_of2(ce, struct silofs_bk_info, bk_ce);
+	}
+	return unconst(bki);
+}
+
+static struct silofs_cache_elem *bki_to_ce(const struct silofs_bk_info *bki)
+{
+	const struct silofs_cache_elem *ce = &bki->bk_ce;
+
+	return unconst(ce);
+}
+
+static void bki_init(struct silofs_bk_info *bki, struct silofs_block *bk)
+{
+	silofs_ce_init(&bki->bk_ce);
+	bki->bk = bk;
+}
+
+static void bki_fini(struct silofs_bk_info *bki)
+{
+	silofs_ce_fini(&bki->bk_ce);
+	bki->bk = NULL;
+}
+
+static void bki_incref(struct silofs_bk_info *bki)
+{
+	ce_incref(bki_to_ce(bki));
+}
+
+void silofs_bki_incref(struct silofs_bk_info *bki)
+{
+	if (likely(bki != NULL)) {
+		bki_incref(bki);
+	}
+}
+
+static void bki_decref(struct silofs_bk_info *bki)
+{
+	ce_decref(bki_to_ce(bki));
+}
+
+void silofs_bki_decref(struct silofs_bk_info *bki)
+{
+	if (likely(bki != NULL)) {
+		bki_decref(bki);
+	}
+}
+
+static bool bki_is_evictable(const struct silofs_bk_info *bki)
+{
+	return ce_is_evictable(bki_to_ce(bki));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_ubk_info *
+ubki_from_base(const struct silofs_bk_info *bki)
+{
+	const struct silofs_ubk_info *ubki = NULL;
+
+	if (bki != NULL) {
+		ubki = container_of2(bki, struct silofs_ubk_info, ubk_base);
+	}
+	return unconst(ubki);
+}
+
 static struct silofs_ubk_info *
 ubki_from_ce(const struct silofs_cache_elem *ce)
 {
 	const struct silofs_ubk_info *ubki = NULL;
 
 	if (ce != NULL) {
-		ubki = container_of2(ce, struct silofs_ubk_info, ubk_ce);
+		ubki = ubki_from_base(bki_from_ce(ce));
 	}
 	return unconst(ubki);
 }
 
 static struct silofs_cache_elem *ubki_to_ce(const struct silofs_ubk_info *ubki)
 {
-	const struct silofs_cache_elem *ce = &ubki->ubk_ce;
-
-	return unconst(ce);
+	return bki_to_ce(&ubki->ubk_base);
 }
 
 static void ubki_set_addr(struct silofs_ubk_info *ubki,
@@ -673,31 +742,29 @@ static void ubki_set_addr(struct silofs_ubk_info *ubki,
 static void ubki_init(struct silofs_ubk_info *ubki, struct silofs_block *ubk,
                       const struct silofs_bkaddr *bkaddr)
 {
-	silofs_ce_init(&ubki->ubk_ce);
+	bki_init(&ubki->ubk_base, ubk);
 	ubki_set_addr(ubki, bkaddr);
-	ubki->ubk = ubk;
 	ubki->ubk_bri = NULL;
 }
 
 static void ubki_fini(struct silofs_ubk_info *ubki)
 {
-	silofs_ce_fini(&ubki->ubk_ce);
-	ubki->ubk = NULL;
+	bki_fini(&ubki->ubk_base);
 }
 
 static void ubki_incref(struct silofs_ubk_info *ubki)
 {
-	ce_incref(ubki_to_ce(ubki));
+	bki_incref(&ubki->ubk_base);
 }
 
 static void ubki_decref(struct silofs_ubk_info *ubki)
 {
-	ce_decref(ubki_to_ce(ubki));
+	bki_decref(&ubki->ubk_base);
 }
 
 static bool ubki_is_evictable(const struct silofs_ubk_info *ubki)
 {
-	return ce_is_evictable(ubki_to_ce(ubki));
+	return bki_is_evictable(&ubki->ubk_base);
 }
 
 void silofs_ubki_attach(struct silofs_ubk_info *ubki,
@@ -722,18 +789,29 @@ static void ubki_detach(struct silofs_ubk_info *ubki)
 void silofs_ubki_incref(struct silofs_ubk_info *ubki)
 {
 	if (ubki != NULL) {
-		ubki_incref(ubki);
+		bki_incref(&ubki->ubk_base);
 	}
 }
 
 void silofs_ubki_decref(struct silofs_ubk_info *ubki)
 {
 	if (ubki != NULL) {
-		ubki_decref(ubki);
+		bki_decref(&ubki->ubk_base);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_vbk_info *
+vbki_from_base(const struct silofs_bk_info *bki)
+{
+	const struct silofs_vbk_info *vbki = NULL;
+
+	if (bki != NULL) {
+		vbki = container_of2(bki, struct silofs_vbk_info, vbk_base);
+	}
+	return unconst(vbki);
+}
 
 static struct silofs_vbk_info *
 vbki_from_ce(const struct silofs_cache_elem *ce)
@@ -741,16 +819,14 @@ vbki_from_ce(const struct silofs_cache_elem *ce)
 	const struct silofs_vbk_info *vbki = NULL;
 
 	if (ce != NULL) {
-		vbki = container_of2(ce, struct silofs_vbk_info, vbk_ce);
+		vbki = vbki_from_base(bki_from_ce(ce));
 	}
 	return unconst(vbki);
 }
 
 static struct silofs_cache_elem *vbki_to_ce(const struct silofs_vbk_info *vbki)
 {
-	const struct silofs_cache_elem *ce = &vbki->vbk_ce;
-
-	return unconst(ce);
+	return bki_to_ce(&vbki->vbk_base);
 }
 
 static void vbki_set_vbk_addr(struct silofs_vbk_info *vbki,
@@ -767,15 +843,13 @@ static void vbki_init(struct silofs_vbk_info *vbki,
                       struct silofs_block *bk,
                       loff_t voff, enum silofs_stype vspace)
 {
-	silofs_ce_init(&vbki->vbk_ce);
+	bki_init(&vbki->vbk_base, bk);
 	vbki_set_vbk_addr(vbki, voff, vspace);
-	vbki->vbk = bk;
 }
 
 static void vbki_fini(struct silofs_vbk_info *vbki)
 {
-	silofs_ce_fini(&vbki->vbk_ce);
-	vbki->vbk = NULL;
+	bki_fini(&vbki->vbk_base);
 }
 
 void silofs_vbki_incref(struct silofs_vbk_info *vbki)
@@ -1561,13 +1635,13 @@ cache_new_ubki(const struct silofs_cache *cache,
 static void cache_del_ubki(const struct silofs_cache *cache,
                            struct silofs_ubk_info *ubki)
 {
-	struct silofs_block *ubk = ubki->ubk;
+	struct silofs_block *bk = ubki->ubk_base.bk;
 	struct silofs_alloc *alloc = cache->c_alloc;
 
 	ubki_detach(ubki);
 	ubki_fini(ubki);
 	ubki_free(ubki, alloc);
-	bk_free(ubk, alloc);
+	bk_free(bk, alloc);
 }
 
 static int cache_init_ubki_lm(struct silofs_cache *cache, size_t htbl_size)
@@ -2140,7 +2214,7 @@ cache_new_vbki(const struct silofs_cache *cache,
 static void cache_del_vbki(const struct silofs_cache *cache,
                            struct silofs_vbk_info *vbki)
 {
-	struct silofs_block *bk = vbki->vbk;
+	struct silofs_block *bk = vbki->vbk_base.bk;
 
 	vbki_fini(vbki);
 	bk_free(bk, cache->c_alloc);

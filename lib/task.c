@@ -48,7 +48,7 @@ static bool cmi_isappendable(const struct silofs_commit_info *cmi,
 	if (cmi->cnt == 0) {
 		return true;
 	}
-	if (cmi->cnt == ARRAY_SIZE(cmi->si)) {
+	if (cmi->cnt == ARRAY_SIZE(cmi->ref)) {
 		return false;
 	}
 	if (oaddr->pos != off_end(cmi->off, cmi->len)) {
@@ -67,6 +67,8 @@ bool silofs_cmi_append_ref(struct silofs_commit_info *cmi,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_snode_info *si)
 {
+	struct silofs_commit_ref *ref;
+
 	if (!cmi_isappendable(cmi, oaddr)) {
 		return false;
 	}
@@ -74,15 +76,18 @@ bool silofs_cmi_append_ref(struct silofs_commit_info *cmi,
 		blobid_assign(&cmi->bid, &oaddr->bka.blobid);
 		cmi->off = oaddr->pos;
 	}
-	cmi->si[cmi->cnt] = si;
+	ref = &cmi->ref[cmi->cnt];
+	ref->bki = silofs_bki_of(si);
+	ref->view = si->s_view;
+	ref->len = si->s_view_len;
+	cmi->len += ref->len;
 	cmi->cnt += 1;
-	cmi->len += si->s_view_len;
 	return true;
 }
 
 int silofs_cmi_assign_buf(struct silofs_commit_info *cmi)
 {
-	const struct silofs_snode_info *si;
+	const struct silofs_commit_ref *ref;
 	uint8_t *dst = NULL;
 	int err;
 
@@ -92,9 +97,9 @@ int silofs_cmi_assign_buf(struct silofs_commit_info *cmi)
 	}
 	dst = cmi->buf;
 	for (size_t i = 0; i < cmi->cnt; ++i) {
-		si = cmi->si[i];
-		memcpy(dst, si->s_view, si->s_view_len);
-		dst += si->s_view_len;
+		ref = &cmi->ref[i];
+		memcpy(dst, ref->view, ref->len);
+		dst += ref->len;
 	}
 	return 0;
 }
@@ -125,51 +130,27 @@ int silofs_cmi_write_buf(const struct silofs_commit_info *cmi)
 
 void silofs_cmi_increfs(struct silofs_commit_info *cmi)
 {
-	struct silofs_snode_info *si;
+	struct silofs_commit_ref *ref;
 
-	if (!cmi->refs) {
-		for (size_t i = 0; i < cmi->cnt; ++i) {
-			si = cmi->si[i];
-			if (si != NULL) {
-				silofs_si_incref(si);
-			}
-		}
-		cmi->refs = true;
+	for (size_t i = 0; i < cmi->cnt; ++i) {
+		ref = &cmi->ref[i];
+		silofs_bki_incref(ref->bki);
 	}
 }
 
 static void cmi_decrefs(struct silofs_commit_info *cmi)
 {
-	struct silofs_snode_info *si;
+	struct silofs_commit_ref *ref;
 
-	if (cmi->refs) {
-		for (size_t i = 0; i < cmi->cnt; ++i) {
-			si = cmi->si[i];
-			if (si != NULL) {
-				silofs_si_decref(si);
-			}
-		}
-		cmi->refs = false;
-	}
-}
-
-static void cmi_dec_ghost_refs(struct silofs_commit_info *cmi)
-{
-	struct silofs_snode_info *si;
-
-	if (cmi->refs) {
-		for (size_t i = 0; i < cmi->cnt; ++i) {
-			si = cmi->si[i];
-			if (si && si->s_ghost) {
-				silofs_si_decref(si);
-				cmi->si[i] = NULL;
-			}
-		}
+	for (size_t i = 0; i < cmi->cnt; ++i) {
+		ref = &cmi->ref[i];
+		silofs_bki_decref(ref->bki);
 	}
 }
 
 static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 {
+	memset(cmi, 0, sizeof(*cmi));
 	list_head_init(&cmi->tlh);
 	cmi->task = task;
 	cmi->bri = NULL;
@@ -180,7 +161,6 @@ static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 	cmi->buf = NULL;
 	cmi->status = 0;
 	cmi->done = false;
-	cmi->refs = false;
 }
 
 static void cmi_fini(struct silofs_commit_info *cmi)
@@ -339,20 +319,6 @@ int silofs_task_let_complete(struct silofs_task *task)
 	err = task_wait_commits(task);
 	task_drop_commits(task);
 	return err;
-}
-
-void silofs_task_forget_ghosts(struct silofs_task *task)
-{
-	struct silofs_list_head *itr = NULL;
-	struct silofs_commit_info *cmi = NULL;
-	struct silofs_listq *pendq = &task->t_pendq;
-
-	itr = listq_front(pendq);
-	while (itr != NULL) {
-		cmi = cmi_from_tlh(itr);
-		cmi_dec_ghost_refs(cmi);
-		itr = listq_next(pendq, itr);
-	}
 }
 
 static struct silofs_alloc *task_alloc(const struct silofs_task *task)

@@ -105,7 +105,7 @@ static void spvi_fini(struct silofs_space_visitor *spvi)
 	silofs_memffff(spvi, sizeof(*spvi));
 }
 
-int silofs_walk_inspect_fs(const struct silofs_task *task,
+int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi)
 {
 	struct silofs_space_visitor spvi;

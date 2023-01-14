@@ -19,26 +19,26 @@
 
 void silofs_ii_setup_xattr(struct silofs_inode_info *ii);
 
-int silofs_do_getxattr(const struct silofs_task *task,
+int silofs_do_getxattr(struct silofs_task *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name,
                        void *buf, size_t size, size_t *out_size);
 
-int silofs_do_setxattr(const struct silofs_task *task,
+int silofs_do_setxattr(struct silofs_task *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name,
                        const void *value, size_t size,
                        int flags, bool kill_sgid);
 
-int silofs_do_removexattr(const struct silofs_task *task,
+int silofs_do_removexattr(struct silofs_task *task,
                           struct silofs_inode_info *ii,
                           const struct silofs_namestr *name);
 
-int silofs_do_listxattr(const struct silofs_task *task,
+int silofs_do_listxattr(struct silofs_task *task,
                         struct silofs_inode_info *ii,
                         struct silofs_listxattr_ctx *lxa_ctx);
 
-int silofs_drop_xattr(const struct silofs_task *task,
+int silofs_drop_xattr(struct silofs_task *task,
                       struct silofs_inode_info *ii);
 
 int silofs_verify_inode_xattr(const struct silofs_inode *inode);

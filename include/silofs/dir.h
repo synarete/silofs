@@ -34,29 +34,29 @@ int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn);
 void silofs_setup_dir(struct silofs_inode_info *dir_ii,
                       mode_t parent_mode, nlink_t nlink);
 
-int silofs_lookup_dentry(const struct silofs_task *task,
+int silofs_lookup_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name,
                          struct silofs_ino_dt *out_idt);
 
-int silofs_add_dentry(const struct silofs_task *task,
+int silofs_add_dentry(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_qstr *name,
                       struct silofs_inode_info *ii);
 
-int silofs_remove_dentry(const struct silofs_task *task,
+int silofs_remove_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name);
 
-int silofs_do_readdir(const struct silofs_task *task,
+int silofs_do_readdir(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       struct silofs_readdir_ctx *rd_ctx);
 
-int silofs_do_readdirplus(const struct silofs_task *task,
+int silofs_do_readdirplus(struct silofs_task *task,
                           struct silofs_inode_info *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx);
 
-int silofs_drop_dir(const struct silofs_task *task,
+int silofs_drop_dir(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii);
 
 

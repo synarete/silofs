@@ -42,7 +42,7 @@ struct silofs_dir_entry_info {
 };
 
 struct silofs_dir_ctx {
-	const struct silofs_task       *task;
+	struct silofs_task             *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *dir_ii;
 	struct silofs_inode_info       *parent_ii;
@@ -1480,7 +1480,7 @@ out:
 	return ret;
 }
 
-int silofs_lookup_dentry(const struct silofs_task *task,
+int silofs_lookup_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name,
                          struct silofs_ino_dt *out_idt)
@@ -1689,7 +1689,7 @@ out:
 	return ret;
 }
 
-int silofs_add_dentry(const struct silofs_task *task,
+int silofs_add_dentry(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_qstr *name,
                       struct silofs_inode_info *ii)
@@ -2113,7 +2113,7 @@ out:
 	return ret;
 }
 
-int silofs_do_readdir(const struct silofs_task *task,
+int silofs_do_readdir(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       struct silofs_readdir_ctx *rd_ctx)
 {
@@ -2130,7 +2130,7 @@ int silofs_do_readdir(const struct silofs_task *task,
 	return dic_readdir(&d_ctx);
 }
 
-int silofs_do_readdirplus(const struct silofs_task *task,
+int silofs_do_readdirplus(struct silofs_task *task,
                           struct silofs_inode_info *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx)
 {
@@ -2226,7 +2226,7 @@ static int dic_finalize_tree(struct silofs_dir_ctx *d_ctx)
 	return 0;
 }
 
-int silofs_drop_dir(const struct silofs_task *task,
+int silofs_drop_dir(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii)
 {
 	struct silofs_dir_ctx d_ctx = {
@@ -2320,7 +2320,7 @@ out:
 	return ret;
 }
 
-int silofs_remove_dentry(const struct silofs_task *task,
+int silofs_remove_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_qstr *name)
 {

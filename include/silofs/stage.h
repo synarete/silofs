@@ -23,44 +23,44 @@
 bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
                                  const struct silofs_blobid *blobid);
 
-int silofs_stage_ubk_of(const struct silofs_task *task,
+int silofs_stage_ubk_of(struct silofs_task *task,
                         const struct silofs_vaddr *vaddr,
                         enum silofs_stage_mode stg_mode,
                         struct silofs_ubk_info **out_ubki);
 
-int silofs_stage_spmaps_at(const struct silofs_task *task,
+int silofs_stage_spmaps_at(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stage_mode stg_mode,
                            struct silofs_spnode_info **out_sni,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_spnode1_at(const struct silofs_task *task,
+int silofs_stage_spnode1_at(struct silofs_task *task,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stage_mode stg_mode,
                             struct silofs_spnode_info **out_sni);
 
-int silofs_require_spmaps_at(const struct silofs_task *task,
+int silofs_require_spmaps_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stage_mode stg_mode,
                              struct silofs_spnode_info **out_sni,
                              struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_vnode_at(const struct silofs_task *task,
+int silofs_stage_vnode_at(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr,
                           enum silofs_stage_mode stg_mode,
                           silofs_dqid_t dqid, bool verify_view,
                           struct silofs_vnode_info **out_vi);
 
-int silofs_stage_inode_at(const struct silofs_task *task, ino_t ino,
+int silofs_stage_inode_at(struct silofs_task *task, ino_t ino,
                           const struct silofs_vaddr *vaddr,
                           enum silofs_stage_mode stg_mode,
                           struct silofs_inode_info **out_ii);
 
-int silofs_require_stable_at(const struct silofs_task *task,
+int silofs_require_stable_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stage_mode stg_mode);
 
-int silofs_resolve_voaddr_of(const struct silofs_task *task,
+int silofs_resolve_voaddr_of(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stage_mode stg_mode,
                              struct silofs_voaddr *out_voa);

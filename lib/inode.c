@@ -599,7 +599,7 @@ static int check_waccess(const struct silofs_task *task,
 	return silofs_do_access(task, ii, W_OK);
 }
 
-static int check_xaccess_parent(const struct silofs_task *task,
+static int check_xaccess_parent(struct silofs_task *task,
                                 const struct silofs_inode_info *ii)
 {
 	struct silofs_inode_info *parent_ii = NULL;
@@ -706,7 +706,7 @@ static void update_post_chmod(const struct silofs_task *task,
 	ii_update_iattrs(ii, creds, iattr);
 }
 
-static int do_chmod(const struct silofs_task *task,
+static int do_chmod(struct silofs_task *task,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes)
 {
@@ -728,7 +728,7 @@ static int do_chmod(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_do_chmod(const struct silofs_task *task,
+int silofs_do_chmod(struct silofs_task *task,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes)
 {
@@ -912,7 +912,7 @@ int silofs_do_utimens(const struct silofs_task *task,
 	return err;
 }
 
-static int check_parent_dir_ii(const struct silofs_task *task,
+static int check_parent_dir_ii(struct silofs_task *task,
                                const struct silofs_inode_info *ii)
 {
 	struct silofs_inode_info *parent_ii = NULL;
@@ -1050,13 +1050,13 @@ static void silofs_statx_of(const struct silofs_inode_info *ii,
  *
  * Have special mode where only root & self may read inode's attributes.
  */
-static int check_getattr(const struct silofs_task *task,
+static int check_getattr(struct silofs_task *task,
                          const struct silofs_inode_info *ii)
 {
 	return check_parent_dir_ii(task, ii);
 }
 
-static int do_getattr(const struct silofs_task *task,
+static int do_getattr(struct silofs_task *task,
                       const struct silofs_inode_info *ii,
                       struct stat *out_st)
 {
@@ -1070,7 +1070,7 @@ static int do_getattr(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_do_getattr(const struct silofs_task *task,
+int silofs_do_getattr(struct silofs_task *task,
                       struct silofs_inode_info *ii, struct stat *out_st)
 {
 	int err;
@@ -1081,7 +1081,7 @@ int silofs_do_getattr(const struct silofs_task *task,
 	return err;
 }
 
-static int do_statx(const struct silofs_task *task,
+static int do_statx(struct silofs_task *task,
                     const struct silofs_inode_info *ii,
                     unsigned int request_mask, struct statx *out_stx)
 {
@@ -1095,8 +1095,7 @@ static int do_statx(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_do_statx(const struct silofs_task *task,
-                    struct silofs_inode_info *ii,
+int silofs_do_statx(struct silofs_task *task, struct silofs_inode_info *ii,
                     unsigned int request_mask, struct statx *out_stx)
 {
 	int err;

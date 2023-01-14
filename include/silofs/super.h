@@ -99,53 +99,53 @@ void silofs_sbi_bind_cold_blob(struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_format_itable(const struct silofs_task *task);
+int silofs_format_itable(struct silofs_task *task);
 
-int silofs_reload_itable(const struct silofs_task *task);
+int silofs_reload_itable(struct silofs_task *task);
 
-int silofs_stage_vnode(const struct silofs_task *task,
+int silofs_stage_vnode(struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
                        enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi);
 
-int silofs_spawn_vnode(const struct silofs_task *task,
+int silofs_spawn_vnode(struct silofs_task *task,
                        enum silofs_stype stype, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi);
 
-int silofs_stage_inode(const struct silofs_task *task, ino_t ino,
+int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stage_mode stg_mode,
                        struct silofs_inode_info **out_ii);
 
-int silofs_stage_cached_inode(const struct silofs_task *task, ino_t ino,
+int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii);
 
-int silofs_spawn_inode(const struct silofs_task *task, ino_t parent_ino,
+int silofs_spawn_inode(struct silofs_task *task, ino_t parent_ino,
                        mode_t parent_mode, mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii);
 
-int silofs_remove_inode(const struct silofs_task *task,
+int silofs_remove_inode(struct silofs_task *task,
                         struct silofs_inode_info *ii);
 
-int silofs_remove_vnode(const struct silofs_task *task,
+int silofs_remove_vnode(struct silofs_task *task,
                         struct silofs_vnode_info *vi);
 
-int silofs_remove_vnode_at(const struct silofs_task *task,
+int silofs_remove_vnode_at(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr);
 
 
-int silofs_clear_unwritten_at(const struct silofs_task *task,
+int silofs_clear_unwritten_at(struct silofs_task *task,
                               const struct silofs_vaddr *vaddr);
 
-int silofs_mark_unwritten_at(const struct silofs_task *task,
+int silofs_mark_unwritten_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr);
 
-int silofs_test_unwritten_at(const struct silofs_task *task,
+int silofs_test_unwritten_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr, bool *out_res);
 
-int silofs_test_lastref_at(const struct silofs_task *task,
+int silofs_test_lastref_at(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr, bool *out_res);
 
-int silofs_test_shared_at(const struct silofs_task *task,
+int silofs_test_shared_at(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr, bool *out_res);
 
 

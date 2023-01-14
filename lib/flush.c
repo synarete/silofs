@@ -27,13 +27,13 @@
 
 
 struct silofs_flush_ctx {
-	struct silofs_dset        dset;
-	const struct silofs_task *task;
-	struct silofs_alloc      *alloc;
-	struct silofs_uber       *uber;
-	struct silofs_repo       *repo;
-	struct silofs_cache      *cache;
-	silofs_dqid_t             dqid;
+	struct silofs_dset      dset;
+	struct silofs_task     *task;
+	struct silofs_alloc    *alloc;
+	struct silofs_uber     *uber;
+	struct silofs_repo     *repo;
+	struct silofs_cache    *cache;
+	silofs_dqid_t           dqid;
 	int flags;
 };
 
@@ -50,7 +50,7 @@ static void si_seal_meta(struct silofs_snode_info *si)
 	}
 }
 
-static int resolve_oaddr_of_vnode(const struct silofs_task *task,
+static int resolve_oaddr_of_vnode(struct silofs_task *task,
                                   const struct silofs_vnode_info *vi,
                                   struct silofs_oaddr *out_oaddr)
 {
@@ -76,7 +76,7 @@ static void resolve_oaddr_of_unode(const struct silofs_unode_info *ui,
 	oaddr_assign(out_oaddr, &uaddr->oaddr);
 }
 
-static int resolve_oaddr_of(const struct silofs_task *task,
+static int resolve_oaddr_of(struct silofs_task *task,
                             const struct silofs_snode_info *si,
                             struct silofs_oaddr *out_oaddr)
 {
@@ -308,10 +308,9 @@ static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 
 	while (!err && (siq != NULL)) {
 		cmi = NULL;
-		err = silofs_task_new_commit(fl_ctx->task, &cmi);
+		err = silofs_task_make_commit(fl_ctx->task, &cmi);
 		if (!err) {
 			err = flc_flush_siq(fl_ctx, &siq, cmi);
-			silofs_task_del_commit(fl_ctx->task, cmi);
 		}
 	}
 	return err;
@@ -343,6 +342,8 @@ static int flc_collect_flush_dirty(struct silofs_flush_ctx *fl_ctx)
 static int flc_commit_last(const struct silofs_flush_ctx *fl_ctx)
 {
 	int ret = 0;
+
+	silofs_task_clear_commits(fl_ctx->task);
 
 	if (fl_ctx->flags & SILOFS_F_NOW) {
 		/*
@@ -382,8 +383,7 @@ static bool flc_need_flush(const struct silofs_flush_ctx *fl_ctx)
 }
 
 static int flc_setup(struct silofs_flush_ctx *fl_ctx,
-                     const struct silofs_task *task,
-                     silofs_dqid_t dqid, int flags)
+                     struct silofs_task *task, silofs_dqid_t dqid, int flags)
 {
 	struct silofs_repo *repo = NULL;
 	struct silofs_uber *uber = task->t_uber;
@@ -409,7 +409,7 @@ static silofs_dqid_t ii_dqid(const struct silofs_inode_info *ii)
 	return ii->i_vi.v_si.s_dqid;
 }
 
-int silofs_flush_dirty(const struct silofs_task *task,
+int silofs_flush_dirty(struct silofs_task *task,
                        silofs_dqid_t dqid, int flags)
 {
 	struct silofs_flush_ctx fl_ctx = { .flags = -1 };
@@ -429,13 +429,13 @@ int silofs_flush_dirty(const struct silofs_task *task,
 	return err;
 }
 
-int silofs_flush_dirty_of(const struct silofs_task *task,
+int silofs_flush_dirty_of(struct silofs_task *task,
                           const struct silofs_inode_info *ii, int flags)
 {
 	return silofs_flush_dirty(task, ii_dqid(ii), flags);
 }
 
-int silofs_flush_dirty_now(const struct silofs_task *task)
+int silofs_flush_dirty_now(struct silofs_task *task)
 {
 	return silofs_flush_dirty(task, SILOFS_DQID_ALL, SILOFS_F_NOW);
 }

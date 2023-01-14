@@ -23,7 +23,7 @@
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {
-	const struct silofs_task  *task;
+	struct silofs_task        *task;
 	struct silofs_sb_info     *sbi;
 	struct silofs_spnode_info *sni;
 	struct silofs_spleaf_info *sli;
@@ -243,7 +243,7 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
-                       const struct silofs_task *task,
+                       struct silofs_task *task,
                        enum silofs_stype stype, silofs_dqid_t dqid)
 {
 	silofs_memzero(spa_ctx, sizeof(*spa_ctx));
@@ -254,8 +254,7 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static void spac_setup2(struct silofs_spalloc_ctx *spa_ctx,
-                        const struct silofs_task *task,
-                        enum silofs_stype stype)
+                        struct silofs_task *task, enum silofs_stype stype)
 {
 	spac_setup(spa_ctx, task, stype, SILOFS_DQID_ALL);
 }
@@ -519,7 +518,7 @@ static int spac_claim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	return 0;
 }
 
-int silofs_claim_vspace(const struct silofs_task *task,
+int silofs_claim_vspace(struct silofs_task *task,
                         enum silofs_stype stype, silofs_dqid_t dqid,
                         struct silofs_voaddr *out_voa)
 {
@@ -544,7 +543,7 @@ static int spac_claim_mutable_vnode(const struct silofs_spalloc_ctx *spa_ctx,
 }
 
 /* TODO: cleanups and resource reclaim upon failure in every path */
-int silofs_claim_vnode(const struct silofs_task *task,
+int silofs_claim_vnode(struct silofs_task *task,
                        enum silofs_stype stype, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi)
 {
@@ -583,7 +582,7 @@ static int spac_claim_ispace(struct silofs_spalloc_ctx *spa_ctx,
 	return 0;
 }
 
-int silofs_claim_inode(const struct silofs_task *task,
+int silofs_claim_inode(struct silofs_task *task,
                        struct silofs_inode_info **out_ii)
 {
 	struct silofs_spalloc_ctx spa_ctx;
@@ -670,7 +669,7 @@ static int spac_reclaim_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	return 0;
 }
 
-int silofs_reclaim_vspace(const struct silofs_task *task,
+int silofs_reclaim_vspace(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spalloc_ctx spa_ctx;
@@ -694,7 +693,7 @@ static int spac_addref_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	return err;
 }
 
-int silofs_addref_vspace(const struct silofs_task *task,
+int silofs_addref_vspace(struct silofs_task *task,
                          const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spalloc_ctx spa_ctx;
@@ -715,7 +714,7 @@ int silofs_addref_vspace(const struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_recache_vspace(const struct silofs_task *task,
+int silofs_recache_vspace(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spalloc_ctx spa_ctx;
@@ -753,8 +752,7 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx)
 	return -ENOSPC;
 }
 
-int silofs_rescan_vspace_of(const struct silofs_task *task,
-                            enum silofs_stype stype)
+int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_stype stype)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	int err;

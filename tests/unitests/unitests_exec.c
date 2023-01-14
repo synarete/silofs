@@ -292,7 +292,7 @@ static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 
 static void ut_post_test(struct ut_env *ute)
 {
-	const struct silofs_task *task = ut_task_of(ute);
+	struct silofs_task *task = ut_task_of(ute);
 	int err;
 
 	err = silofs_fs_timedout(task, SILOFS_F_NOW);

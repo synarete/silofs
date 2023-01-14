@@ -47,16 +47,16 @@ struct silofs_visitor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walk_space_tree(const struct silofs_task *task,
+int silofs_walk_space_tree(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis, bool warm);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walk_inspect_fs(const struct silofs_task *task,
+int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi);
 
-int silofs_walk_unref_fs(const struct silofs_task *task,
+int silofs_walk_unref_fs(struct silofs_task *task,
                          struct silofs_sb_info *sbi);
 
 #endif /* SILOFS_WALK_H_ */

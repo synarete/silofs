@@ -24,7 +24,7 @@
 
 
 struct silofs_walk_ctx {
-	const struct silofs_task   *task;
+	struct silofs_task         *task;
 	struct silofs_visitor      *vis;
 	struct silofs_uber         *uber;
 	struct silofs_sb_info      *sbi;
@@ -787,7 +787,7 @@ static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 	return 0;
 }
 
-int silofs_walk_space_tree(const struct silofs_task *task,
+int silofs_walk_space_tree(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
                            struct silofs_visitor *vis, bool warm)
 {

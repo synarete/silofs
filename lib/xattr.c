@@ -54,7 +54,7 @@ struct silofs_xentry_info {
 };
 
 struct silofs_xattr_ctx {
-	const struct silofs_task       *task;
+	struct silofs_task             *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_listxattr_ctx    *lxa_ctx;
 	struct silofs_inode_info       *ii;
@@ -749,7 +749,7 @@ static int xac_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 	return ret;
 }
 
-int silofs_do_getxattr(const struct silofs_task *task,
+int silofs_do_getxattr(struct silofs_task *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name,
                        void *buf, size_t size, size_t *out_size)
@@ -982,7 +982,7 @@ static int xac_setxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_setxattr(const struct silofs_task *task,
+int silofs_do_setxattr(struct silofs_task *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name,
                        const void *value, size_t size,
@@ -1041,7 +1041,7 @@ static int xac_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_removexattr(const struct silofs_task *task,
+int silofs_do_removexattr(struct silofs_task *task,
                           struct silofs_inode_info *ii,
                           const struct silofs_namestr *name)
 {
@@ -1175,7 +1175,7 @@ static int xac_listxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_listxattr(const struct silofs_task *task,
+int silofs_do_listxattr(struct silofs_task *task,
                         struct silofs_inode_info *ii,
                         struct silofs_listxattr_ctx *lxa_ctx)
 {
@@ -1223,7 +1223,7 @@ static int xac_drop_xattr_slots(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_drop_xattr(const struct silofs_task *task,
+int silofs_drop_xattr(struct silofs_task *task,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_xattr_ctx xa_ctx = {

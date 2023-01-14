@@ -20,14 +20,15 @@
 /* execution-context task per file-system operation */
 struct silofs_task {
 	struct silofs_uber     *t_uber;
+	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
 	volatile int            t_interrupt;
 };
 
 /* flush commit control object */
 struct silofs_commit_info {
-	struct silofs_list_head     lh;
-	const struct silofs_task   *task;
+	struct silofs_list_head     tlh;
+	struct silofs_task         *task;
 	struct silofs_blobref_info *bri;
 	struct silofs_snode_info   *si[32];
 	struct silofs_blobid        bid;
@@ -67,11 +68,16 @@ void silofs_task_set_umask(struct silofs_task *task, mode_t umask);
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt);
 
-int silofs_task_new_commit(const struct silofs_task *task,
+int silofs_task_new_commit(struct silofs_task *task,
                            struct silofs_commit_info **out_cmi);
 
-void silofs_task_del_commit(const struct silofs_task *task,
+void silofs_task_del_commit(struct silofs_task *task,
                             struct silofs_commit_info *cmi);
+
+int silofs_task_make_commit(struct silofs_task *task,
+                            struct silofs_commit_info **out_cmi);
+
+void silofs_task_clear_commits(struct silofs_task *task);
 
 struct silofs_alloc *silofs_task_alloc(const struct silofs_task *task);
 

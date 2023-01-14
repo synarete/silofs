@@ -39,7 +39,7 @@ static struct silofs_task *task_of(struct ut_env *ute)
 	return task;
 }
 
-const struct silofs_task *ut_task_of(struct ut_env *ute)
+struct silofs_task *ut_task_of(struct ut_env *ute)
 {
 	return task_of(ute);
 }

@@ -53,29 +53,27 @@ void silofs_itbi_update_by(struct silofs_itable_info *itbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_acquire_ino(const struct silofs_task *task,
+int silofs_acquire_ino(struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
                        struct silofs_iaddr *out_iaddr);
 
-int silofs_discard_ino(const struct silofs_task *task, ino_t ino);
+int silofs_discard_ino(struct silofs_task *task, ino_t ino);
 
-int silofs_resolve_iaddr(const struct silofs_task *task,
+int silofs_resolve_iaddr(struct silofs_task *task,
                          ino_t xino, struct silofs_iaddr *out_iaddr);
 
-int silofs_format_itable_root(const struct silofs_task *task,
+int silofs_format_itable_root(struct silofs_task *task,
                               struct silofs_vaddr *out_vaddr);
 
-int silofs_bind_rootdir_to(const struct silofs_task *task,
+int silofs_bind_rootdir_to(struct silofs_task *task,
                            const struct silofs_inode_info *ii);
 
-int silofs_reload_itable_at(const struct silofs_task *task,
+int silofs_reload_itable_at(struct silofs_task *task,
                             const struct silofs_vaddr *vaddr);
 
-void silofs_drop_itable_cache(const struct silofs_task *task);
+void silofs_drop_itable_cache(struct silofs_task *task);
 
-void silofs_relax_inomap_of(struct silofs_sb_info *sbi, int flags);
-
-void silofs_relax_inomap(const struct silofs_task *task, int flags);
+void silofs_relax_inomap(struct silofs_task *task, int flags);
 
 int silofs_verify_itable_node(const struct silofs_itable_node *itn);
 

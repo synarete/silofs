@@ -517,7 +517,7 @@ int silofs_fs_clone(struct silofs_task *task, ino_t ino,
 int silofs_fs_rdwr_post(const struct silofs_task *task,
                         const struct silofs_iovec *iov, size_t cnt);
 
-int silofs_fs_timedout(const struct silofs_task *task, int flags);
+int silofs_fs_timedout(struct silofs_task *task, int flags);
 
 int silofs_fs_inspect(struct silofs_task *task);
 

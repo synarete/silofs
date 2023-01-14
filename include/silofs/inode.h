@@ -70,14 +70,13 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
 
-int silofs_do_getattr(const struct silofs_task *task,
+int silofs_do_getattr(struct silofs_task *task,
                       struct silofs_inode_info *ii, struct stat *out_st);
 
-int silofs_do_statx(const struct silofs_task *task,
-                    struct silofs_inode_info *ii,
+int silofs_do_statx(struct silofs_task *task, struct silofs_inode_info *ii,
                     unsigned int request_mask, struct statx *out_stx);
 
-int silofs_do_chmod(const struct silofs_task *task,
+int silofs_do_chmod(struct silofs_task *task,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes);
 

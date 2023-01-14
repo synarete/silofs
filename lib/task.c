@@ -129,10 +129,9 @@ void silofs_cmi_decrefs(const struct silofs_commit_info *cmi)
 	}
 }
 
-static void cmi_init(struct silofs_commit_info *cmi,
-                     const struct silofs_task *task)
+static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 {
-	list_head_init(&cmi->lh);
+	list_head_init(&cmi->tlh);
 	cmi->task = task;
 	cmi->bri = NULL;
 	cmi->bid.size = 0;
@@ -144,7 +143,7 @@ static void cmi_init(struct silofs_commit_info *cmi,
 
 static void cmi_fini(struct silofs_commit_info *cmi)
 {
-	list_head_fini(&cmi->lh);
+	list_head_fini(&cmi->tlh);
 	cmi_reset_buf(cmi);
 	silofs_cmi_bind_bri(cmi, NULL);
 	cmi->off = -1;
@@ -153,17 +152,28 @@ static void cmi_fini(struct silofs_commit_info *cmi)
 	cmi->task = NULL;
 }
 
+static struct silofs_commit_info *cmi_from_tlh(struct silofs_list_head *tlh)
+{
+	struct silofs_commit_info *cmi = NULL;
+
+	if (tlh != NULL) {
+		cmi = container_of(tlh, struct silofs_commit_info, tlh);
+	}
+	return cmi;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));
+	listq_init(&task->t_pendq);
 	task->t_uber = uber;
 }
 
 void silofs_task_fini(struct silofs_task *task)
 {
-	memset(task, 0xff, sizeof(*task));
+	listq_fini(&task->t_pendq);
 	task->t_uber = NULL;
 }
 
@@ -195,7 +205,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 	}
 }
 
-int silofs_task_new_commit(const struct silofs_task *task,
+int silofs_task_new_commit(struct silofs_task *task,
                            struct silofs_commit_info **out_cmi)
 {
 	struct silofs_commit_info *cmi;
@@ -209,13 +219,52 @@ int silofs_task_new_commit(const struct silofs_task *task,
 	return 0;
 }
 
-void silofs_task_del_commit(const struct silofs_task *task,
+void silofs_task_del_commit(struct silofs_task *task,
                             struct silofs_commit_info *cmi)
 {
 	cmi_fini(cmi);
 	silofs_deallocate(task_alloc(task), cmi, sizeof(*cmi));
 }
 
+static void task_push_commit(struct silofs_task *task,
+                             struct silofs_commit_info *cmi)
+{
+	listq_push_back(&task->t_pendq, &cmi->tlh);
+}
+
+static struct silofs_commit_info *task_pop_commit(struct silofs_task *task)
+{
+	struct silofs_list_head *tlh;
+
+	tlh = listq_pop_front(&task->t_pendq);
+	return cmi_from_tlh(tlh);
+}
+
+int silofs_task_make_commit(struct silofs_task *task,
+                            struct silofs_commit_info **out_cmi)
+{
+	struct silofs_commit_info *cmi = NULL;
+	int err;
+
+	err = silofs_task_new_commit(task, &cmi);
+	if (err) {
+		return err;
+	}
+	task_push_commit(task, cmi);
+	*out_cmi = cmi;
+	return 0;
+}
+
+void silofs_task_clear_commits(struct silofs_task *task)
+{
+	struct silofs_commit_info *cmi;
+
+	cmi = task_pop_commit(task);
+	while (cmi != NULL) {
+		silofs_task_del_commit(task, cmi);
+		cmi = task_pop_commit(task);
+	}
+}
 
 struct silofs_alloc *silofs_task_alloc(const struct silofs_task *task)
 {

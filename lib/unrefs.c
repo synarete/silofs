@@ -253,7 +253,7 @@ static int unrc_remove_super(const struct silofs_unref_ctx *unr_ctx)
 	return unrc_try_remove_blob_of(unr_ctx, blobid);
 }
 
-int silofs_walk_unref_fs(const struct silofs_task *task,
+int silofs_walk_unref_fs(struct silofs_task *task,
                          struct silofs_sb_info *sbi)
 {
 	struct silofs_unref_ctx unr_ctx;

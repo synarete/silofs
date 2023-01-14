@@ -884,7 +884,7 @@ static int sbi_check_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
 }
 
 static int
-resolve_stage_vnode(const struct silofs_task *task,
+resolve_stage_vnode(struct silofs_task *task,
                     const struct silofs_vaddr *vaddr,
                     enum silofs_stage_mode stg_mode,
                     silofs_dqid_t dqid,
@@ -916,7 +916,7 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_inode(const struct silofs_task *task, ino_t ino,
+int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stage_mode stg_mode,
                        struct silofs_inode_info **out_ii)
 {
@@ -958,7 +958,7 @@ int silofs_stage_inode(const struct silofs_task *task, ino_t ino,
 	return 0;
 }
 
-int silofs_stage_cached_inode(const struct silofs_task *task, ino_t ino,
+int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
 	struct silofs_iaddr iaddr = { .ino = ino };
@@ -987,7 +987,7 @@ static int sbi_check_itype(const struct silofs_sb_info *sbi, mode_t mode)
 	return (((mode & S_IFMT) | sup) == sup) ? 0 : -EOPNOTSUPP;
 }
 
-int silofs_spawn_vnode(const struct silofs_task *task,
+int silofs_spawn_vnode(struct silofs_task *task,
                        enum silofs_stype stype, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi)
 {
@@ -1002,7 +1002,7 @@ int silofs_spawn_vnode(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_spawn_inode(const struct silofs_task *task, ino_t parent_ino,
+int silofs_spawn_inode(struct silofs_task *task, ino_t parent_ino,
                        mode_t parent_mode, mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii)
 {
@@ -1022,7 +1022,7 @@ int silofs_spawn_inode(const struct silofs_task *task, ino_t parent_ino,
 	return 0;
 }
 
-static int discard_inode_at(const struct silofs_task *task,
+static int discard_inode_at(struct silofs_task *task,
                             const struct silofs_iaddr *iaddr)
 {
 	int err;
@@ -1038,7 +1038,7 @@ static int discard_inode_at(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_remove_inode(const struct silofs_task *task,
+int silofs_remove_inode(struct silofs_task *task,
                         struct silofs_inode_info *ii)
 {
 	struct silofs_iaddr iaddr;
@@ -1053,7 +1053,7 @@ int silofs_remove_inode(const struct silofs_task *task,
 	return 0;
 }
 
-static int reclaim_vspace(const struct silofs_task *task,
+static int reclaim_vspace(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_voaddr voa;
@@ -1070,7 +1070,7 @@ static int reclaim_vspace(const struct silofs_task *task,
 	return 0;
 }
 
-static int remove_vnode_of(const struct silofs_task *task,
+static int remove_vnode_of(struct silofs_task *task,
                            struct silofs_vnode_info *vi)
 {
 	int err;
@@ -1081,7 +1081,7 @@ static int remove_vnode_of(const struct silofs_task *task,
 	return err;
 }
 
-int silofs_remove_vnode(const struct silofs_task *task,
+int silofs_remove_vnode(struct silofs_task *task,
                         struct silofs_vnode_info *vi)
 {
 	int err;
@@ -1094,7 +1094,7 @@ int silofs_remove_vnode(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_remove_vnode_at(const struct silofs_task *task,
+int silofs_remove_vnode_at(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr)
 {
 	struct silofs_sb_info *sbi = task_sbi(task);
@@ -1110,37 +1110,37 @@ int silofs_remove_vnode_at(const struct silofs_task *task,
 	return err;
 }
 
-static int sbi_stage_spleaf(const struct silofs_task *task,
-                            const struct silofs_vaddr *vaddr,
-                            enum silofs_stage_mode stg_mode,
-                            struct silofs_spleaf_info **out_sli)
+static int stage_spleaf(struct silofs_task *task,
+                        const struct silofs_vaddr *vaddr,
+                        enum silofs_stage_mode stg_mode,
+                        struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spnode_info *sni = NULL;
 
 	return silofs_stage_spmaps_at(task, vaddr, stg_mode, &sni, out_sli);
 }
 
-static int sbi_stage_rdo_spleaf(const struct silofs_task *task,
-                                const struct silofs_vaddr *vaddr,
-                                struct silofs_spleaf_info **out_sli)
+static int stage_ro_spleaf(struct silofs_task *task,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_spleaf_info **out_sli)
 {
-	return sbi_stage_spleaf(task, vaddr, SILOFS_STAGE_RO, out_sli);
+	return stage_spleaf(task, vaddr, SILOFS_STAGE_RO, out_sli);
 }
 
-static int sbi_stage_mut_spleaf(const struct silofs_task *task,
-                                const struct silofs_vaddr *vaddr,
-                                struct silofs_spleaf_info **out_sli)
+static int stage_rw_spleaf(struct silofs_task *task,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_spleaf_info **out_sli)
 {
-	return sbi_stage_spleaf(task, vaddr, SILOFS_STAGE_RW, out_sli);
+	return stage_spleaf(task, vaddr, SILOFS_STAGE_RW, out_sli);
 }
 
-int silofs_test_unwritten_at(const struct silofs_task *task,
+int silofs_test_unwritten_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = sbi_stage_rdo_spleaf(task, vaddr, &sli);
+	err = stage_ro_spleaf(task, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1148,13 +1148,13 @@ int silofs_test_unwritten_at(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_clear_unwritten_at(const struct silofs_task *task,
+int silofs_clear_unwritten_at(struct silofs_task *task,
                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = sbi_stage_mut_spleaf(task, vaddr, &sli);
+	err = stage_rw_spleaf(task, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1162,13 +1162,13 @@ int silofs_clear_unwritten_at(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_mark_unwritten_at(const struct silofs_task *task,
+int silofs_mark_unwritten_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = sbi_stage_mut_spleaf(task, vaddr, &sli);
+	err = stage_rw_spleaf(task, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1176,13 +1176,13 @@ int silofs_mark_unwritten_at(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_test_lastref_at(const struct silofs_task *task,
+int silofs_test_lastref_at(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = sbi_stage_rdo_spleaf(task, vaddr, &sli);
+	err = stage_ro_spleaf(task, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1190,13 +1190,13 @@ int silofs_test_lastref_at(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_test_shared_at(const struct silofs_task *task,
+int silofs_test_shared_at(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = sbi_stage_rdo_spleaf(task, vaddr, &sli);
+	err = stage_ro_spleaf(task, vaddr, &sli);
 	if (err) {
 		return err;
 	}
@@ -1382,7 +1382,7 @@ void silofs_sbi_xfini(struct silofs_sb_info *sbi)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_stage_vnode(const struct silofs_task *task,
+int silofs_stage_vnode(struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
                        enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi)
@@ -1400,7 +1400,7 @@ int silofs_stage_vnode(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_format_itable(const struct silofs_task *task)
+int silofs_format_itable(struct silofs_task *task)
 {
 	struct silofs_vaddr vaddr;
 	int err;
@@ -1413,7 +1413,7 @@ int silofs_format_itable(const struct silofs_task *task)
 	return 0;
 }
 
-int silofs_reload_itable(const struct silofs_task *task)
+int silofs_reload_itable(struct silofs_task *task)
 {
 	struct silofs_vaddr vaddr;
 	int err;

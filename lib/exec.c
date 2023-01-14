@@ -549,7 +549,7 @@ void silofs_fse_del(struct silofs_fs_env *fse)
 }
 
 static void fse_drop_caches(const struct silofs_fs_env *fse,
-                            const struct silofs_task *task)
+                            struct silofs_task *task)
 {
 	if (fse->fs_uber && fse->fs_uber->ub_sbi) {
 		silofs_drop_itable_cache(task);
@@ -559,7 +559,7 @@ static void fse_drop_caches(const struct silofs_fs_env *fse,
 }
 
 static void fse_relax_cache(struct silofs_fs_env *fse,
-                            const struct silofs_task *task, bool drop_cache)
+                            struct silofs_task *task, bool drop_cache)
 {
 	silofs_repos_relax_cache(fse->fs_repos, SILOFS_F_BRINGUP);
 	if (drop_cache) {
@@ -572,7 +572,7 @@ static struct silofs_sb_info *fse_sbi(const struct silofs_fs_env *fse)
 	return fse->fs_uber->ub_sbi;
 }
 
-static int reload_rootdir(const struct silofs_task *task)
+static int reload_rootdir(struct silofs_task *task)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -589,7 +589,7 @@ static int reload_rootdir(const struct silofs_task *task)
 	return 0;
 }
 
-static int reload_free_vspace(const struct silofs_task *task)
+static int reload_free_vspace(struct silofs_task *task)
 {
 	enum silofs_stype stype;
 	int err;
@@ -626,7 +626,7 @@ static int fse_make_self_task(const struct silofs_fs_env *fse,
 }
 
 static int fse_reload_fs_meta(struct silofs_fs_env *fse,
-                              const struct silofs_task *task)
+                              struct silofs_task *task)
 {
 	int err;
 
@@ -644,7 +644,7 @@ static int fse_reload_fs_meta(struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int flush_dirty_now(const struct silofs_task *task)
+static int flush_dirty_now(struct silofs_task *task)
 {
 	int err;
 
@@ -708,7 +708,7 @@ void silofs_fse_halt(struct silofs_fs_env *fse, int signum)
 }
 
 static int fse_flush_and_drop_caches(const struct silofs_fs_env *fse,
-                                     const struct silofs_task *task)
+                                     struct silofs_task *task)
 {
 	int err;
 
@@ -843,7 +843,7 @@ static int fse_reload_supers(struct silofs_fs_env *fse)
 }
 
 static int fse_format_base_spmaps_of(const struct silofs_fs_env *fse,
-                                     const struct silofs_task *task,
+                                     struct silofs_task *task,
                                      const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spnode_info *sni = NULL;
@@ -866,7 +866,7 @@ static int fse_format_base_spmaps_of(const struct silofs_fs_env *fse,
 }
 
 static int fse_format_base_spmaps(const struct silofs_fs_env *fse,
-                                  const struct silofs_task *task)
+                                  struct silofs_task *task)
 {
 	struct silofs_vaddr vaddr;
 	enum silofs_stype stype;
@@ -885,7 +885,7 @@ static int fse_format_base_spmaps(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int format_claim_vspace_of(const struct silofs_task *task,
+static int format_claim_vspace_of(struct silofs_task *task,
                                   enum silofs_stype vspace)
 {
 	struct silofs_voaddr voa;
@@ -910,7 +910,7 @@ static int format_claim_vspace_of(const struct silofs_task *task,
 }
 
 static int fse_format_base_vspace(const struct silofs_fs_env *fse,
-                                  const struct silofs_task *task)
+                                  struct silofs_task *task)
 {
 	struct silofs_spacestats spst = { .capacity = 0 };
 	struct silofs_sb_info *sbi = fse_sbi(fse);
@@ -934,7 +934,7 @@ static int fse_format_base_vspace(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int reload_base_vspace_of(const struct silofs_task *task,
+static int reload_base_vspace_of(struct silofs_task *task,
                                  enum silofs_stype vspace)
 {
 	struct silofs_vaddr vaddr;
@@ -953,7 +953,7 @@ static int reload_base_vspace_of(const struct silofs_task *task,
 }
 
 static int fse_reload_base_vspace(const struct silofs_fs_env *fse,
-                                  const struct silofs_task *task)
+                                  struct silofs_task *task)
 {
 	enum silofs_stype stype;
 	int err = 0;
@@ -977,7 +977,7 @@ static int fse_reload_base_vspace(const struct silofs_fs_env *fse,
 	return err;
 }
 
-static int format_zero_vspace_of(const struct silofs_task *task,
+static int format_zero_vspace_of(struct silofs_task *task,
                                  enum silofs_stype vspace)
 {
 	struct silofs_vnode_info *vi = NULL;
@@ -998,7 +998,7 @@ static int format_zero_vspace_of(const struct silofs_task *task,
 }
 
 static int fse_format_zero_vspace(const struct silofs_fs_env *fse,
-                                  const struct silofs_task *task)
+                                  struct silofs_task *task)
 {
 	enum silofs_stype stype;
 	int err;
@@ -1019,7 +1019,7 @@ static int fse_format_zero_vspace(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int format_inodes_table(const struct silofs_task *task)
+static int format_inodes_table(struct silofs_task *task)
 {
 	int err;
 
@@ -1034,7 +1034,7 @@ static int format_inodes_table(const struct silofs_task *task)
 	return 0;
 }
 
-static int format_rootdir(const struct silofs_task *task)
+static int format_rootdir(struct silofs_task *task)
 {
 	struct silofs_inode_info *root_ii = NULL;
 	int err;
@@ -1057,7 +1057,7 @@ static int format_rootdir(const struct silofs_task *task)
 }
 
 static int fse_format_meta(const struct silofs_fs_env *fse,
-                           const struct silofs_task *task)
+                           struct silofs_task *task)
 {
 	int err;
 
@@ -1331,8 +1331,7 @@ bool silofs_fse_served_clean(const struct silofs_fs_env *fse)
 	return fq && fq->fq_got_init && fq->fq_got_destroy;
 }
 
-static int fse_close_fs(struct silofs_fs_env *fse,
-                        const struct silofs_task *task)
+static int fse_close_fs(struct silofs_fs_env *fse, struct silofs_task *task)
 {
 	int err;
 

@@ -48,7 +48,7 @@ static void op_unlock_fs(const struct silofs_task *task)
 	silofs_mutex_unlock(&task->t_uber->ub_fs_lock);
 }
 
-static int op_flush(const struct silofs_task *task,
+static int op_flush(struct silofs_task *task,
                     ino_t ino, int op_flags, int fl_flags)
 {
 	silofs_dqid_t dqid;
@@ -64,7 +64,7 @@ static int op_flush(const struct silofs_task *task,
 	return ret;
 }
 
-static int op_start(const struct silofs_task *task, ino_t ino)
+static int op_start(struct silofs_task *task, ino_t ino)
 {
 	struct silofs_uber *uber = task->t_uber;
 
@@ -88,7 +88,7 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	}
 }
 
-static int op_finish(const struct silofs_task *task,
+static int op_finish(struct silofs_task *task,
                      ino_t ino, int op_flags, int err)
 {
 	op_probe_duration(task, err);
@@ -249,27 +249,26 @@ static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-op_stage_cacheonly_inode(const struct silofs_task *task,
-                         ino_t ino, struct silofs_inode_info **out_ii)
+static int op_stage_cacheonly_inode(struct silofs_task *task, ino_t ino,
+                                    struct silofs_inode_info **out_ii)
 {
 	return silofs_stage_cached_inode(task, ino, out_ii);
 }
 
-static int op_stage_rdo_inode(const struct silofs_task *task, ino_t ino,
+static int op_stage_rdo_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
 	return silofs_stage_inode(task, ino, SILOFS_STAGE_RO, out_ii);
 }
 
-static int op_stage_mut_inode(const struct silofs_task *task, ino_t ino,
+static int op_stage_mut_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
 	return silofs_stage_inode(task, ino, SILOFS_STAGE_RW, out_ii);
 }
 
 static int
-op_stage_openable_inode(const struct silofs_task *task, ino_t ino,
+op_stage_openable_inode(struct silofs_task *task, ino_t ino,
                         int o_flags, struct silofs_inode_info **out_ii)
 {
 	int err;
@@ -1560,7 +1559,7 @@ int silofs_fs_rdwr_post(const struct silofs_task *task,
 	return ret;
 }
 
-int silofs_fs_timedout(const struct silofs_task *task, int flags)
+int silofs_fs_timedout(struct silofs_task *task, int flags)
 {
 	int err;
 

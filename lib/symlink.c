@@ -15,16 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/types.h>
-#include <silofs/address.h>
-#include <silofs/nodes.h>
-#include <silofs/spxmap.h>
-#include <silofs/cache.h>
-#include <silofs/super.h>
-#include <silofs/inode.h>
-#include <silofs/symlink.h>
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include <silofs/fs-private.h>
-
 
 struct silofs_symval_desc {
 	struct silofs_str head;

@@ -80,12 +80,11 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	const time_t now = silofs_time_now();
 	const time_t beg = task->t_oper.op_creds.ts.tv_sec;
 	const time_t dif = now - beg;
-	const int op_code = task->t_oper.op_code;
+	const uint32_t op_code = task->t_oper.op_code;
 
 	if (op_code && (beg < now) && (dif > 30)) {
-		log_warn("slow-oper: id=%ld code=%d duration=%ld status=%d",
-		         task->t_uber->ub_ops.op_count,
-		         task->t_oper.op_code, dif, status);
+		log_warn("slow-oper: id=%ld op_code=%u duration=%ld status=%d",
+		         task->t_uber->ub_ops.op_count, op_code, dif, status);
 	}
 }
 
@@ -1613,3 +1612,4 @@ int silofs_fs_unrefs(struct silofs_task *task)
 out:
 	return op_finish(task, SILOFS_INO_NULL, OP_F_ANY, err);
 }
+

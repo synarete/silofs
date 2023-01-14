@@ -28,15 +28,14 @@
 
 static struct silofs_task *task_of(struct ut_env *ute)
 {
+	const struct silofs_fs_args *args = &ute->args->fs_args;
 	struct silofs_task *task = &ute->task;
 
-	task->t_uber = ute->fs_env->fs_uber;
-	task->t_oper.op_creds.xcred.uid = getuid();
-	task->t_oper.op_creds.xcred.gid = getgid();
-	task->t_oper.op_creds.xcred.pid = getpid();
-	task->t_oper.op_creds.xcred.umask = 0002;
+	silofs_task_init(task, ute->fs_env->fs_uber);
+	silofs_task_set_umask(task, 0002);
+	silofs_task_set_creds(task, args->uid, args->gid, args->pid);
+	silofs_task_set_ts(task, true);
 	task->t_oper.op_unique = ute->unique_opid++;
-	silofs_ts_gettime(&task->t_oper.op_creds.ts, true);
 	return task;
 }
 

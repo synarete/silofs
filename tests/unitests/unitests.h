@@ -103,7 +103,7 @@ struct ut_env {
 	struct silofs_uuid       uuid[2];
 	struct ut_args          *args;
 	struct silofs_fs_env    *fs_env;
-	struct silofs_task     task;
+	struct silofs_task       task;
 	struct timespec          ts_start;
 	struct statvfs           stvfs[2];
 	struct silofs_spacestats spst[2];

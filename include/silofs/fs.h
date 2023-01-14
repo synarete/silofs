@@ -39,6 +39,7 @@
 #include <silofs/file.h>
 #include <silofs/symlink.h>
 #include <silofs/xattr.h>
+#include <silofs/task.h>
 #include <silofs/opers.h>
 #include <silofs/namei.h>
 #include <silofs/stage.h>

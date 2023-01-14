@@ -73,6 +73,7 @@ libsilofs_fs_la_SOURCES += stage.c
 libsilofs_fs_la_SOURCES += stats.c
 libsilofs_fs_la_SOURCES += super.c
 libsilofs_fs_la_SOURCES += symlink.c
+libsilofs_fs_la_SOURCES += task.c
 libsilofs_fs_la_SOURCES += uber.c
 libsilofs_fs_la_SOURCES += unrefs.c
 libsilofs_fs_la_SOURCES += walk.c

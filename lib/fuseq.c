@@ -599,12 +599,6 @@ static struct silofs_oper_ctx *op_ctx_of(const struct silofs_fuseq_worker *fqw)
 	return fqw->opc;
 }
 
-static void op_ctx_set_umask(struct silofs_oper_ctx *opc, mode_t umask)
-{
-	opc->opc_task.t_oper.op_creds.xcred.umask = umask;
-	opc->opc_task.t_oper.op_creds.icred.umask = umask;
-}
-
 static struct silofs_task *task_of(const struct silofs_fuseq_worker *fqw)
 {
 	return &fqw->opc->opc_task;
@@ -614,23 +608,12 @@ static struct silofs_task *task_self(const struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_task *task = task_of(fqw);
 	struct silofs_uber *uber = uber_of(fqw);
-	struct silofs_creds *creds = &task->t_oper.op_creds;
+	const struct silofs_fs_args *args = uber->ub_args;
 
-	task->t_uber = uber;
-	task->t_interrupt = 0;
-	creds->xcred.uid = uber->ub_args->uid;
-	creds->xcred.gid = uber->ub_args->gid;
-	creds->xcred.pid = getpid();
-	creds->xcred.umask = uber->ub_args->umask;
-	creds->icred.uid = uber->ub_args->uid;
-	creds->icred.gid = uber->ub_args->gid;
-	creds->icred.pid = getpid();
-	creds->icred.umask = uber->ub_args->umask;
-	creds->ts.tv_sec = silofs_time_now();
-	creds->ts.tv_nsec = 0;
-	task->t_oper.op_unique = 0;
-	task->t_oper.op_code = 0;
-
+	silofs_task_init(task, uber);
+	silofs_task_set_ts(task, false);
+	silofs_task_set_umask(task, args->umask);
+	silofs_task_set_creds(task, args->uid, args->gid, args->pid);
 	return task;
 }
 
@@ -1864,7 +1847,7 @@ static int do_mknod(struct silofs_fuseq_worker *fqw, ino_t ino,
 	opc->opc_in.mknod.rdev = (dev_t)in->u.mknod.arg.rdev;
 	opc->opc_in.mknod.mode = (mode_t)in->u.mknod.arg.mode;
 	opc->opc_in.mknod.umask = (mode_t)in->u.mknod.arg.umask;
-	op_ctx_set_umask(opc, opc->opc_in.mknod.umask);
+	silofs_task_set_umask(&opc->opc_task, opc->opc_in.mknod.umask);
 
 	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_entry(fqw, &opc->opc_out.mknod.st, err);
@@ -1880,7 +1863,7 @@ static int do_mkdir(struct silofs_fuseq_worker *fqw, ino_t ino,
 	opc->opc_in.mkdir.name = in->u.mkdir.name;
 	opc->opc_in.mkdir.mode = (mode_t)(in->u.mkdir.arg.mode | S_IFDIR);
 	opc->opc_in.mkdir.umask = (mode_t)in->u.mkdir.arg.umask;
-	op_ctx_set_umask(opc, opc->opc_in.mkdir.umask);
+	silofs_task_set_umask(&opc->opc_task, opc->opc_in.mkdir.umask);
 
 	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_entry(fqw, &opc->opc_out.mkdir.st, err);
@@ -2203,7 +2186,7 @@ static int do_create(struct silofs_fuseq_worker *fqw, ino_t ino,
 	opc->opc_in.create.o_flags = (int)(in->u.create.arg.flags);
 	opc->opc_in.create.mode = (mode_t)(in->u.create.arg.mode);
 	opc->opc_in.create.umask = (mode_t)(in->u.create.arg.umask);
-	op_ctx_set_umask(opc, opc->opc_in.create.umask);
+	silofs_task_set_umask(&opc->opc_task, opc->opc_in.create.umask);
 	err = fuseq_exec_op(fqw->fq, opc);
 	return fuseq_reply_create(fqw, &opc->opc_out.create.st, err);
 }
@@ -2902,19 +2885,16 @@ static int fuseq_resolve_cmd(struct silofs_fuseq_worker *fqw, unsigned int opc)
 	return 0;
 }
 
-static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
+static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw,
+                            uid_t op_uid, uint32_t op_code)
 {
-	const struct silofs_task *task = NULL;
-
 	if (!fqw->fq->fq_deny_others) {
 		return 0;
 	}
-	if ((opuid == 0) || (opuid == fqw->fq->fq_fs_owner)) {
+	if ((op_uid == 0) || (op_uid == fqw->fq->fq_fs_owner)) {
 		return 0;
 	}
-
-	task = task_of(fqw);
-	switch (task->t_oper.op_code) {
+	switch (op_code) {
 	case FUSE_INIT:
 	case FUSE_READ:
 	case FUSE_WRITE:
@@ -2932,30 +2912,6 @@ static int fuseq_check_perm(const struct silofs_fuseq_worker *fqw, uid_t opuid)
 	return -EACCES;
 }
 
-static void fuseq_assign_curr_oper(struct silofs_fuseq_worker *fqw,
-                                   const struct fuse_in_header *hdr)
-{
-	struct silofs_task *fsc = task_of(fqw);
-
-	fsc->t_uber = fqw->fq->fq_uber;
-	fsc->t_oper.op_creds.xcred.uid = (uid_t)(hdr->uid);
-	fsc->t_oper.op_creds.xcred.gid = (gid_t)(hdr->gid);
-	fsc->t_oper.op_creds.xcred.pid = (pid_t)(hdr->pid);
-	fsc->t_oper.op_creds.xcred.umask = 0;
-	fsc->t_oper.op_unique = hdr->unique;
-	fsc->t_oper.op_code = (int)hdr->opcode;
-	fsc->t_interrupt = 0;
-}
-
-static int fuseq_assign_curr_xtime(struct silofs_fuseq_worker *fqw)
-{
-	struct silofs_task *task = task_of(fqw);
-	struct silofs_creds *creds = &task->t_oper.op_creds;
-	const bool is_realtime = (fqw->cmd->realtime > 0);
-
-	return silofs_ts_gettime(&creds->ts, is_realtime);
-}
-
 static struct silofs_fuseq_in *
 fuseq_in_of(const struct silofs_fuseq_worker *fqw)
 {
@@ -2964,26 +2920,57 @@ fuseq_in_of(const struct silofs_fuseq_worker *fqw)
 	return unconst(in);
 }
 
-static int fuseq_process_hdr(struct silofs_fuseq_worker *fqw)
+static void fuseq_setup_curr_task(struct silofs_fuseq_worker *fqw)
 {
-	int err;
 	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
 	const struct fuse_in_header *hdr = &in->u.hdr.hdr;
+	struct silofs_task *task = task_of(fqw);
 
-	fuseq_assign_curr_oper(fqw, hdr);
-	err = fuseq_resolve_cmd(fqw, hdr->opcode);
+	silofs_task_init(task, fqw->fq->fq_uber);
+	silofs_task_set_creds(task, hdr->uid, hdr->gid, (pid_t)hdr->pid);
+	task->t_oper.op_unique = hdr->unique;
+	task->t_oper.op_code = hdr->opcode;
+}
+
+static void fuseq_reset_curr_task(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_task *task = task_of(fqw);
+
+	silofs_task_fini(task);
+}
+
+static void fuseq_update_curr_task(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_task *task = task_of(fqw);
+	const bool rt = (fqw->cmd->realtime > 0);
+
+	silofs_task_set_ts(task, rt);
+}
+
+static int fuseq_check_curr_task(struct silofs_fuseq_worker *fqw)
+{
+	const struct silofs_task *task = task_of(fqw);
+	const unsigned int op_code = task->t_oper.op_code;
+	const uid_t uid = task->t_oper.op_creds.xcred.uid;
+	int err;
+
+	err = fuseq_resolve_cmd(fqw, op_code);
 	if (err) {
 		return err;
 	}
-	err = fuseq_check_perm(fqw, hdr->uid);
-	if (err) {
-		return err;
-	}
-	err = fuseq_assign_curr_xtime(fqw);
+	err = fuseq_check_perm(fqw, uid, op_code);
 	if (err) {
 		return err;
 	}
 	return 0;
+}
+
+static void fuseq_prep_by_curr_task(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_task *task = task_of(fqw);
+
+	fqw->fq->fq_times = task->t_oper.op_creds.ts.tv_sec;
+	fqw->fq->fq_nopers++;
 }
 
 static void fuseq_enq_active_op(struct silofs_fuseq_worker *fqw)
@@ -3059,14 +3046,16 @@ static int fuseq_exec_request(struct silofs_fuseq_worker *fqw)
 {
 	int err;
 
-	err = fuseq_process_hdr(fqw);
+	fuseq_setup_curr_task(fqw);
+	err = fuseq_check_curr_task(fqw);
 	if (err) {
 		err = fuseq_reply_err(fqw, err);
 	} else {
-		fqw->fq->fq_nopers++;
-		fqw->fq->fq_times = silofs_time_now();
+		fuseq_update_curr_task(fqw);
+		fuseq_prep_by_curr_task(fqw);
 		err = fuseq_call_oper(fqw);
 	}
+	fuseq_reset_curr_task(fqw);
 	return err;
 }
 
@@ -4520,15 +4509,14 @@ static const silofs_opc_fn silofs_opc_tbl[] = {
 };
 
 
-static int opcode_of(const struct silofs_oper_ctx *opc)
+static uint32_t opcode_of(const struct silofs_oper_ctx *opc)
 {
 	return opc->opc_task.t_oper.op_code;
 }
 
 static silofs_opc_fn hook_of(const struct silofs_oper_ctx *opc)
 {
-	const int opcode = opcode_of(opc);
-	const size_t slot = (size_t)opcode;
+	const size_t slot = opcode_of(opc);
 	silofs_opc_fn hook = NULL;
 
 	if (slot && (slot < ARRAY_SIZE(silofs_opc_tbl))) {

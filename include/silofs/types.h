@@ -445,7 +445,7 @@ struct silofs_dset {
 struct silofs_oper {
 	struct silofs_creds             op_creds;
 	uint64_t                        op_unique;
-	int                             op_code;
+	uint32_t                        op_code;
 };
 
 /* top-level pseudo meta node */

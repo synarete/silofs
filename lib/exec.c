@@ -607,56 +607,22 @@ static int reload_free_vspace(const struct silofs_task *task)
 	return 0;
 }
 
-static void fse_make_self_xcred(const struct silofs_fs_env *fse,
-                                struct silofs_task *task)
-{
-	const struct silofs_fs_args *args = &fse->fs_args;
-	struct silofs_creds *creds = &task->t_oper.op_creds;
-
-	creds->xcred.uid = args->uid;
-	creds->xcred.gid = args->gid;
-	creds->xcred.pid = args->pid;
-	creds->xcred.umask = args->umask;
-}
-
-static int fse_make_self_icred(const struct silofs_fs_env *fse,
-                               struct silofs_task *task)
-{
-	const struct silofs_idsmap *idsm = fse->fs_idsmap;
-	const struct silofs_ucred *xcred = &task->t_oper.op_creds.xcred;
-	struct silofs_ucred *icred = &task->t_oper.op_creds.icred;
-	int err = 0;
-
-	icred->uid = xcred->uid;
-	icred->gid = xcred->gid;
-	icred->pid = xcred->pid;
-	icred->umask = xcred->umask;
-	if (idsm->idm_size > 0) {
-		err = silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
-		                               &icred->uid, &icred->gid);
-	}
-	return err;
-}
-
 static int fse_make_self_task(const struct silofs_fs_env *fse,
                               struct silofs_task *task)
 {
-	struct silofs_creds *creds = &task->t_oper.op_creds;
-	int err;
+	const struct silofs_fs_args *args = &fse->fs_args;
+	const struct silofs_idsmap *idsm = fse->fs_idsmap;
+	const struct silofs_ucred *xcred = &task->t_oper.op_creds.xcred;
+	struct silofs_ucred *icred = &task->t_oper.op_creds.icred;
 
-	silofs_memzero(task, sizeof(*task));
-	task->t_uber = fse->fs_uber;
-	task->t_oper.op_unique = 0;
-	fse_make_self_xcred(fse, task);
-	err = fse_make_self_icred(fse, task);
-	if (err) {
-		return err;
-	}
-	err = silofs_ts_gettime(&creds->ts, true);
-	if (err) {
-		return err;
-	}
-	return 0;
+	silofs_task_init(task, fse->fs_uber);
+	silofs_task_set_ts(task, true);
+	silofs_task_set_umask(task, args->umask);
+	silofs_task_set_creds(task, args->uid, args->gid, args->pid);
+
+	return (idsm->idm_size == 0) ? 0 :
+	       silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
+	                                &icred->uid, &icred->gid);
 }
 
 static int fse_reload_fs_meta(struct silofs_fs_env *fse,

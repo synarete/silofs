@@ -36,6 +36,8 @@ struct silofs_commit_info {
 	loff_t off;
 	size_t len;
 	size_t cnt;
+	int status;
+	bool done;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -68,16 +70,10 @@ void silofs_task_set_umask(struct silofs_task *task, mode_t umask);
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt);
 
-int silofs_task_new_commit(struct silofs_task *task,
-                           struct silofs_commit_info **out_cmi);
-
-void silofs_task_del_commit(struct silofs_task *task,
-                            struct silofs_commit_info *cmi);
-
 int silofs_task_make_commit(struct silofs_task *task,
                             struct silofs_commit_info **out_cmi);
 
-void silofs_task_clear_commits(struct silofs_task *task);
+int silofs_task_let_complete(struct silofs_task *task);
 
 struct silofs_alloc *silofs_task_alloc(const struct silofs_task *task);
 

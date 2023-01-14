@@ -279,6 +279,8 @@ static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
 	}
 out:
 	silofs_cmi_decrefs(cmi);
+	cmi->status = err;
+	cmi->done = true;
 	return err;
 }
 
@@ -339,12 +341,11 @@ static int flc_collect_flush_dirty(struct silofs_flush_ctx *fl_ctx)
 	return err;
 }
 
-static int flc_commit_last(const struct silofs_flush_ctx *fl_ctx)
+static int flc_complete_commits(const struct silofs_flush_ctx *fl_ctx)
 {
-	int ret = 0;
+	int ret;
 
-	silofs_task_clear_commits(fl_ctx->task);
-
+	ret = silofs_task_let_complete(fl_ctx->task);
 	if (fl_ctx->flags & SILOFS_F_NOW) {
 		/*
 		 * TODO-0034: Issue flush sync to dirty blobs
@@ -353,9 +354,7 @@ static int flc_commit_last(const struct silofs_flush_ctx *fl_ctx)
 		 * kernel's in-cache data is flushed all the way to stable
 		 * storage.
 		 */
-		ret = 0;
 	}
-
 	return ret;
 }
 
@@ -365,12 +364,12 @@ static int flc_flush_dirty_of(struct silofs_flush_ctx *fl_ctx)
 
 	err = flc_collect_flush_dirty(fl_ctx);
 	if (err) {
-		log_warn("flush failure: err=%d", err);
+		log_warn("flush execute failure: err=%d", err);
 		return err;
 	}
-	err = flc_commit_last(fl_ctx);
+	err = flc_complete_commits(fl_ctx);
 	if (err) {
-		log_warn("commit-last failure: err=%d", err);
+		log_warn("flush complete failure: err=%d", err);
 		return err;
 	}
 	return 0;

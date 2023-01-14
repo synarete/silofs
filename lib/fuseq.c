@@ -3876,7 +3876,7 @@ static int fuseq_start(struct silofs_thread *th)
 	struct silofs_fuseq_worker *fqw = thread_to_fuseq_worker(th);
 	int err;
 
-	fuseq_log_info("exec worker: %s", th->name);
+	fuseq_log_info("start worker: %s", th->name);
 	err = silofs_thread_sigblock_common();
 	if (err) {
 		fuseq_log_warn("unable to block signals: "\
@@ -3889,7 +3889,7 @@ static int fuseq_start(struct silofs_thread *th)
 		goto out;
 	}
 out:
-	fuseq_log_info("done worker: %s", th->name);
+	fuseq_log_info("finish worker: %s", th->name);
 	return err;
 }
 

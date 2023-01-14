@@ -18,6 +18,7 @@
 #include <silofs/macros.h>
 #include <silofs/utility.h>
 #include <silofs/panic.h>
+#include <silofs/time.h>
 #include <silofs/thread.h>
 #include <unistd.h>
 #include <signal.h>
@@ -270,6 +271,16 @@ int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
 		silofs_panic("pthread_cond_timedwait: %d", err);
 	}
 	return -err;
+}
+
+int silofs_cond_ntimedwait(struct silofs_cond *cond,
+                           struct silofs_mutex *mutex, time_t nsec)
+{
+	struct timespec ts;
+
+	silofs_mclock_now(&ts);
+	ts.tv_sec += nsec;
+	return silofs_cond_timedwait(cond, mutex, &ts);
 }
 
 void silofs_cond_signal(struct silofs_cond *cond)

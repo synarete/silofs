@@ -36,16 +36,26 @@ struct silofs_commit_ref {
 /* flush commit control object */
 struct silofs_commit_info {
 	struct silofs_list_head     tlh;
+	struct silofs_list_head     flh;
 	struct silofs_task         *task;
 	struct silofs_blobref_info *bri;
 	struct silofs_commit_ref    ref[32];
 	struct silofs_blobid        bid;
-	void  *buf;
-	loff_t off;
-	size_t len;
-	size_t cnt;
-	int status;
-	bool done;
+	void           *buf;
+	loff_t          off;
+	size_t          len;
+	size_t          cnt;
+	volatile int    status;
+	volatile int    async;
+	volatile int    done;
+};
+
+/* flusher-thread control object */
+struct silofs_flusher {
+	struct silofs_thread    flsh_th;
+	struct silofs_listq     flsh_cq;
+	struct silofs_lock      flsh_lk;
+	volatile int            flsh_active;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -84,5 +94,19 @@ int silofs_task_let_complete(struct silofs_task *task);
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_flusher_init(struct silofs_flusher *flsh);
+
+void silofs_flusher_fini(struct silofs_flusher *flsh);
+
+int silofs_flusher_start(struct silofs_flusher *flsh);
+
+int silofs_flusher_stop(struct silofs_flusher *flsh);
+
+void silofs_flusher_enqueue(struct silofs_flusher *flsh,
+                            struct silofs_commit_info *cmi);
+
 
 #endif /* SILOFS_TASK_H_ */

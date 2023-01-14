@@ -32,12 +32,23 @@ struct silofs_flush_ctx {
 	struct silofs_alloc    *alloc;
 	struct silofs_uber     *uber;
 	struct silofs_repo     *repo;
+	struct silofs_flusher  *flsh;
 	struct silofs_cache    *cache;
 	silofs_dqid_t           dqid;
 	int flags;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_flusher *flusher_of(const struct silofs_uber *uber)
+{
+	struct silofs_flusher *flsh = NULL;
+
+	if ((uber->ub_flsh != NULL) && uber->ub_flsh->flsh_active) {
+		flsh = uber->ub_flsh;
+	}
+	return flsh;
+}
 
 static void si_seal_meta(struct silofs_snode_info *si)
 {
@@ -260,8 +271,8 @@ static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx)
 	dset_clear_map(&fl_ctx->dset);
 }
 
-static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
-                          struct silofs_commit_info *cmi)
+static int flc_prep_commit(const struct silofs_flush_ctx *fl_ctx,
+                           struct silofs_commit_info *cmi)
 {
 	const struct silofs_blobid *blobid = &cmi->bid;
 	struct silofs_blobref_info *bri = NULL;
@@ -270,16 +281,43 @@ static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
 	silofs_cmi_increfs(cmi);
 	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &bri);
 	if (err) {
-		goto out;
+		return 0;
 	}
 	silofs_cmi_bind_bri(cmi, bri);
-	err = silofs_cmi_write_buf(cmi);
-	if (err) {
-		goto out;
+	return 0;
+}
+
+static int flc_commit_now(const struct silofs_flush_ctx *fl_ctx,
+                          struct silofs_commit_info *cmi)
+{
+	silofs_assert_null(fl_ctx->flsh);
+	cmi->status = silofs_cmi_write_buf(cmi);
+	cmi->done = 1;
+	cmi->async = 0;
+	return cmi->status;
+}
+
+static int flc_commit_async(const struct silofs_flush_ctx *fl_ctx,
+                            struct silofs_commit_info *cmi)
+{
+	silofs_assert_not_null(fl_ctx->flsh);
+	silofs_assert_eq(cmi->status, 0);
+	silofs_flusher_enqueue(fl_ctx->flsh, cmi);
+	return 0;
+}
+
+static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
+                          struct silofs_commit_info *cmi)
+{
+	const int async_mode = (fl_ctx->flsh != NULL);
+	int err;
+
+	err = flc_prep_commit(fl_ctx, cmi);
+	if (!err) {
+		err = async_mode ?
+		      flc_commit_async(fl_ctx, cmi) :
+		      flc_commit_now(fl_ctx, cmi);
 	}
-out:
-	cmi->status = err;
-	cmi->done = true;
 	return err;
 }
 
@@ -395,6 +433,7 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	fl_ctx->dqid = dqid;
 	fl_ctx->flags = flags;
 	fl_ctx->repo = repo;
+	fl_ctx->flsh = flusher_of(uber);
 	fl_ctx->cache = &repo->re_cache;
 	fl_ctx->alloc = fl_ctx->cache->c_alloc;
 	return 0;

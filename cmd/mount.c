@@ -151,6 +151,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->repodir = args->repodir_real;
 	fs_args->name = args->name;
 	fs_args->mntdir = args->mntpoint_real;
+	fs_args->withflsh = true;
 	fs_args->withfuse = true;
 	fs_args->allowother = !args->no_allowother;
 	fs_args->allowhostids = args->allowhostids;

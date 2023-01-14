@@ -21,6 +21,9 @@
 
 /* local functions */
 static struct silofs_alloc *task_alloc(const struct silofs_task *task);
+static void task_signal_done(struct silofs_task *task,
+                             struct silofs_commit_info *cmi);
+static int flusher_execute(struct silofs_flusher *flsh);
 
 
 static struct silofs_alloc *cmi_alloc(const struct silofs_commit_info *cmi)
@@ -152,6 +155,7 @@ static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 {
 	memset(cmi, 0, sizeof(*cmi));
 	list_head_init(&cmi->tlh);
+	list_head_init(&cmi->flh);
 	cmi->task = task;
 	cmi->bri = NULL;
 	cmi->bid.size = 0;
@@ -160,11 +164,13 @@ static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 	cmi->cnt = 0;
 	cmi->buf = NULL;
 	cmi->status = 0;
-	cmi->done = false;
+	cmi->async = 0;
+	cmi->done = 0;
 }
 
 static void cmi_fini(struct silofs_commit_info *cmi)
 {
+	list_head_fini(&cmi->tlh);
 	list_head_fini(&cmi->tlh);
 	cmi_reset_buf(cmi);
 	cmi_unbind_bri(cmi);
@@ -183,6 +189,22 @@ static struct silofs_commit_info *cmi_from_tlh(struct silofs_list_head *tlh)
 		cmi = container_of(tlh, struct silofs_commit_info, tlh);
 	}
 	return cmi;
+}
+
+static struct silofs_commit_info *cmi_from_flh(struct silofs_list_head *flh)
+{
+	struct silofs_commit_info *cmi = NULL;
+
+	if (flh != NULL) {
+		cmi = container_of(flh, struct silofs_commit_info, flh);
+	}
+	return cmi;
+}
+
+static void cmi_execute_and_signal(struct silofs_commit_info *cmi)
+{
+	cmi->status = silofs_cmi_write_buf(cmi);
+	task_signal_done(cmi->task, cmi);
 }
 
 static struct silofs_commit_info *cmi_new(struct silofs_task *task)
@@ -265,6 +287,12 @@ static struct silofs_commit_info *task_pop_commit(struct silofs_task *task)
 	return cmi_from_tlh(tlh);
 }
 
+static void task_unlink_commit(struct silofs_task *task,
+                               struct silofs_commit_info *cmi)
+{
+	listq_remove(&task->t_pendq, &cmi->tlh);
+}
+
 int silofs_task_make_commit(struct silofs_task *task,
                             struct silofs_commit_info **out_cmi)
 {
@@ -280,23 +308,58 @@ int silofs_task_make_commit(struct silofs_task *task,
 	return 0;
 }
 
+static void task_signal_done(struct silofs_task *task,
+                             struct silofs_commit_info *cmi)
+{
+	struct silofs_lock *lock = &task->t_lock;
+
+	silofs_mutex_lock(&lock->mu);
+	cmi->done = 1;
+	silofs_cond_signal(&lock->co);
+	silofs_mutex_unlock(&lock->mu);
+}
+
+static bool task_wait_commit(struct silofs_task *task,
+                             struct silofs_commit_info *cmi)
+{
+	struct silofs_lock *lock = &task->t_lock;
+	bool done = false;
+	int err = 0;
+
+	silofs_mutex_lock(&lock->mu);
+	done = (cmi->done > 0);
+	if (cmi->async && !done) {
+		err = silofs_cond_ntimedwait(&lock->co, &lock->mu, 1);
+		if (!err) {
+			done = (cmi->done > 0);
+		}
+	}
+	silofs_mutex_unlock(&lock->mu);
+	return done;
+}
+
 static int task_wait_commits(struct silofs_task *task)
 {
 	struct silofs_list_head *itr = NULL;
 	struct silofs_commit_info *cmi = NULL;
 	struct silofs_listq *pendq = &task->t_pendq;
 	int ret = 0;
+	bool done;
 
 	itr = listq_front(pendq);
 	while (itr != NULL) {
 		cmi = cmi_from_tlh(itr);
-		if (!cmi->done) {
-			/* XXX TODO */
+		done = task_wait_commit(task, cmi);
+		if (!done) {
+			continue;
 		}
 		if (!ret && cmi->status) {
 			ret = cmi->status;
 		}
-		itr = listq_next(pendq, itr);
+		task_unlink_commit(task, cmi);
+		task_del_commit(task, cmi);
+
+		itr = listq_front(pendq);
 	}
 	return ret;
 }
@@ -352,3 +415,121 @@ void silofs_task_fini(struct silofs_task *task)
 	task->t_uber = NULL;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_flusher_init(struct silofs_flusher *flsh)
+{
+	memset(flsh, 0, sizeof(*flsh));
+	flsh->flsh_active = 0;
+	silofs_listq_init(&flsh->flsh_cq);
+	return silofs_lock_init(&flsh->flsh_lk);
+}
+
+void silofs_flusher_fini(struct silofs_flusher *flsh)
+{
+	silofs_lock_fini(&flsh->flsh_lk);
+	silofs_listq_fini(&flsh->flsh_cq);
+}
+
+static int flusher_start(struct silofs_thread *th)
+{
+	struct silofs_flusher *flsh = th->arg;
+	int err;
+
+	log_info("start flusher: %s", th->name);
+	err = flusher_execute(flsh);
+	log_info("finish flusher: %s", th->name);
+	return err;
+}
+
+static void flusher_reset_th(struct silofs_flusher *flsh)
+{
+	struct silofs_thread *th = &flsh->flsh_th;
+
+	silofs_memzero(th, sizeof(*th));
+}
+
+int silofs_flusher_start(struct silofs_flusher *flsh)
+{
+	const char *th_name = "silofs-flush";
+	silofs_execute_fn fn = flusher_start;
+	int ret = 0;
+
+	if (!flsh->flsh_active) {
+		flsh->flsh_active = 1;
+		flusher_reset_th(flsh);
+		ret = silofs_thread_create(&flsh->flsh_th, fn, flsh, th_name);
+	}
+	return ret;
+}
+
+int silofs_flusher_stop(struct silofs_flusher *flsh)
+{
+	int ret = 0;
+
+	if (flsh->flsh_active) {
+		flsh->flsh_active = 0;
+		ret = silofs_thread_join(&flsh->flsh_th);
+		silofs_assert_eq(flsh->flsh_cq.sz, 0);
+		flusher_reset_th(flsh);
+	}
+	return ret;
+}
+
+static struct silofs_commit_info *
+flusher_pop_cmi(struct silofs_flusher *flsh)
+{
+	struct silofs_list_head *lh;
+
+	lh = listq_pop_front(&flsh->flsh_cq);
+	return cmi_from_flh(lh);
+}
+
+static void
+flusher_push_cmi(struct silofs_flusher *flsh, struct silofs_commit_info *cmi)
+{
+	listq_push_back(&flsh->flsh_cq, &cmi->flh);
+}
+
+void silofs_flusher_enqueue(struct silofs_flusher *flsh,
+                            struct silofs_commit_info *cmi)
+{
+	struct silofs_lock *lock = &flsh->flsh_lk;
+
+	cmi->async = 1;
+	silofs_mutex_lock(&lock->mu);
+	flusher_push_cmi(flsh, cmi);
+	silofs_cond_signal(&lock->co);
+	silofs_mutex_unlock(&lock->mu);
+}
+
+static struct silofs_commit_info *flusher_dequeue(struct silofs_flusher *flsh)
+{
+	struct silofs_commit_info *cmi = NULL;
+	struct silofs_lock *lock = &flsh->flsh_lk;
+	int err;
+
+	silofs_mutex_lock(&lock->mu);
+	cmi = flusher_pop_cmi(flsh);
+	if (cmi == NULL) {
+		err = silofs_cond_ntimedwait(&lock->co, &lock->mu, 1);
+		if (!err) {
+			cmi = flusher_pop_cmi(flsh);
+		}
+	}
+	silofs_mutex_unlock(&lock->mu);
+	return cmi;
+}
+
+static int flusher_execute(struct silofs_flusher *flsh)
+{
+	struct silofs_commit_info *cmi;
+
+	while (flsh->flsh_active) {
+		cmi = flusher_dequeue(flsh);
+		if (cmi != NULL) {
+			cmi_execute_and_signal(cmi);
+		}
+	}
+	return 0;
+}

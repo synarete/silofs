@@ -341,19 +341,19 @@ static int flc_collect_flush_dirty(struct silofs_flush_ctx *fl_ctx)
 	return err;
 }
 
+/*
+ * TODO-0034: Issue flush sync to dirty blobs
+ *
+ * Implement fsync at blobs level and ensure that all of kernel's in-cache
+ * data is flushed all the way to stable storage.
+ */
 static int flc_complete_commits(const struct silofs_flush_ctx *fl_ctx)
 {
-	int ret;
+	int ret = 0;
 
-	ret = silofs_task_let_complete(fl_ctx->task);
-	if (fl_ctx->flags & SILOFS_F_NOW) {
-		/*
-		 * TODO-0034: Issue flush sync to dirty blobs
-		 *
-		 * Implement fsync at blobs level and ensure that all of
-		 * kernel's in-cache data is flushed all the way to stable
-		 * storage.
-		 */
+	if ((fl_ctx->flags & SILOFS_F_NOW) &&
+	    (fl_ctx->dqid == SILOFS_DQID_ALL)) {
+		ret = silofs_task_let_complete(fl_ctx->task);
 	}
 	return ret;
 }

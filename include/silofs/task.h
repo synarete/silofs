@@ -23,6 +23,7 @@ struct silofs_task {
 	struct silofs_uber     *t_uber;
 	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
+	long                    t_id;
 	volatile int            t_interrupt;
 };
 

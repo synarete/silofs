@@ -404,6 +404,7 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 	memset(task, 0, sizeof(*task));
 	listq_init(&task->t_pendq);
 	task->t_uber = uber;
+	task->t_id = silofs_atomic_addl(&uber->ub_task_id, 1);
 	return silofs_lock_init(&task->t_lock);
 }
 
@@ -651,7 +652,7 @@ static struct silofs_commitq *
 commitqs_sub(const struct silofs_commitqs *cqs,
              const struct silofs_commit_info *cmi)
 {
-	const size_t idx = cmi->task->t_oper.op_unique % cqs->cqs_count;
+	const size_t idx = (size_t)(cmi->task->t_id) % cqs->cqs_count;
 
 	return &cqs->cqs_set[idx];
 }

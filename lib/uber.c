@@ -89,6 +89,7 @@ static void uber_init_commons(struct silofs_uber *uber,
                               const struct silofs_uber_args *args)
 {
 	uber->ub_initime = silofs_time_now_monotonic();
+	uber->ub_task_id = 0;
 	uber->ub_ivkey = args->ivkey;
 	uber->ub_alloc = args->alloc;
 	uber->ub_repos = args->repos;

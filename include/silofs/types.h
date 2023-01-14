@@ -470,6 +470,7 @@ struct silofs_uber {
 	struct silofs_ucred             ub_owner;
 	iconv_t                         ub_iconv;
 	time_t                          ub_initime;
+	long                            ub_task_id;
 };
 
 /* file-system's input id vectors */

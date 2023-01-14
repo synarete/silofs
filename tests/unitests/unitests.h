@@ -221,7 +221,10 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute);
 
 struct ut_dvec *ut_new_dvec(struct ut_env *, loff_t, size_t);
 
-struct silofs_task *ut_task_of(struct ut_env *ute);
+
+void ut_setup_task(struct ut_env *ute, struct silofs_task *task);
+
+void ut_release_task(struct ut_env *ute, struct silofs_task *task);
 
 /* no-fail operations wrappers */
 void ut_access_ok(struct ut_env *ute, ino_t ino, int mode);

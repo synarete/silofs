@@ -60,12 +60,13 @@ struct silofs_fuseq {
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
+	struct silofs_mutex             fq_ctl_lock;
 	struct silofs_uber             *fq_uber;
 	struct silofs_alloc            *fq_alloc;
 	size_t                          fq_nopers;
 	size_t                          fq_nopers_done;
 	uid_t                           fq_fs_owner;
-	time_t                          fq_times;
+	time_t                          fq_time_stamp;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

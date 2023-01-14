@@ -194,7 +194,7 @@ hash_to_child_dtn_index(uint64_t hash, silofs_dtn_index_t parent_dtn_index)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define DOFF_SHIFT 14
+#define DOFF_SHIFT 13
 
 static void
 encode_doffset(uint64_t dtn_index, uint64_t slot, uint64_t *out_doff)
@@ -217,8 +217,7 @@ static loff_t make_doffset(size_t dtn_index, size_t slot)
 {
 	uint64_t doff;
 
-	STATICASSERT_LT(SILOFS_DIR_NODE_NENTS, 1 << 10);
-	STATICASSERT_LE(SILOFS_DIR_NODE_SIZE, 1 << DOFF_SHIFT);
+	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DOFF_SHIFT);
 
 	encode_doffset(dtn_index, slot, &doff);
 	return (loff_t)((doff << 2) | 2);

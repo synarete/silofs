@@ -144,6 +144,7 @@
 #define bri_incref(bri)                 silofs_bri_incref(bri)
 #define bri_decref(bri)                 silofs_bri_decref(bri)
 
+#define task_alloc(task)                silofs_task_alloc(task)
 #define task_sbi(task)                  silofs_task_sbi(task)
 #define task_creds(task)                silofs_task_creds(task)
 
@@ -386,6 +387,12 @@ silofs_sbi_blobid(const struct silofs_sb_info *sbi)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static inline struct silofs_alloc *
+silofs_task_alloc(const struct silofs_task *task)
+{
+	return task->t_uber->ub_alloc;
+}
 
 static inline struct silofs_sb_info *
 silofs_task_sbi(const struct silofs_task *task)

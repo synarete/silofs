@@ -220,6 +220,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_uber = NULL;
 	si->s_md = NULL;
 	si->s_view = NULL;
+	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
 	si->s_noflush = false;
 }
@@ -1449,6 +1450,7 @@ static void si_bind_view(struct silofs_snode_info *si,
                          struct silofs_block *bk, long bk_pos)
 {
 	si->s_view = make_view(opaque_view_of(bk, bk_pos));
+	si->s_view_len = stype_size(si->s_stype);
 }
 
 void silofs_ui_bind_view(struct silofs_unode_info *ui)

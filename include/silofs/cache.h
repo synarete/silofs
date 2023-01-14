@@ -51,8 +51,8 @@ struct silofs_cache {
 	struct silofs_dirtyqs   c_dqs;
 	struct silofs_spamaps   c_spam;
 	struct silofs_uamap     c_uam;
-	size_t mem_size_hint;
-	bool c_inited;
+	size_t                  c_mem_size_hint;
+	bool                    c_inited;
 };
 
 

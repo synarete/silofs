@@ -32,7 +32,7 @@ struct silofs_flush_ctx {
 	struct silofs_alloc    *alloc;
 	struct silofs_uber     *uber;
 	struct silofs_repo     *repo;
-	struct silofs_flushers *fls;
+	struct silofs_commitqs *cqs;
 	struct silofs_cache    *cache;
 	silofs_dqid_t           dqid;
 	int flags;
@@ -40,14 +40,14 @@ struct silofs_flush_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_flushers *flushers_of(const struct silofs_uber *uber)
+static struct silofs_commitqs *commitqs_of(const struct silofs_uber *uber)
 {
-	struct silofs_flushers *fls = NULL;
+	struct silofs_commitqs *cqs = NULL;
 
-	if ((uber->ub_fls != NULL) && uber->ub_fls->fls_active) {
-		fls = uber->ub_fls;
+	if ((uber->ub_cqs != NULL) && uber->ub_cqs->cqs_active) {
+		cqs = uber->ub_cqs;
 	}
-	return fls;
+	return cqs;
 }
 
 static void si_seal_meta(struct silofs_snode_info *si)
@@ -290,7 +290,7 @@ static int flc_prep_commit(const struct silofs_flush_ctx *fl_ctx,
 static int flc_commit_now(const struct silofs_flush_ctx *fl_ctx,
                           struct silofs_commit_info *cmi)
 {
-	silofs_assert_null(fl_ctx->fls);
+	silofs_assert_null(fl_ctx->cqs);
 	cmi->status = silofs_cmi_write_buf(cmi);
 	cmi->done = 1;
 	cmi->async = 0;
@@ -300,16 +300,16 @@ static int flc_commit_now(const struct silofs_flush_ctx *fl_ctx,
 static int flc_commit_async(const struct silofs_flush_ctx *fl_ctx,
                             struct silofs_commit_info *cmi)
 {
-	silofs_assert_not_null(fl_ctx->fls);
+	silofs_assert_not_null(fl_ctx->cqs);
 	silofs_assert_eq(cmi->status, 0);
-	silofs_flushers_enqueue(fl_ctx->fls, cmi);
+	silofs_commitqs_enqueue(fl_ctx->cqs, cmi);
 	return 0;
 }
 
 static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
                           struct silofs_commit_info *cmi)
 {
-	const int async_mode = (fl_ctx->fls != NULL);
+	const int async_mode = (fl_ctx->cqs != NULL);
 	int err;
 
 	err = flc_prep_commit(fl_ctx, cmi);
@@ -433,7 +433,7 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	fl_ctx->dqid = dqid;
 	fl_ctx->flags = flags;
 	fl_ctx->repo = repo;
-	fl_ctx->fls = flushers_of(uber);
+	fl_ctx->cqs = commitqs_of(uber);
 	fl_ctx->cache = &repo->re_cache;
 	fl_ctx->alloc = fl_ctx->cache->c_alloc;
 	return 0;

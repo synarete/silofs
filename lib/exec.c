@@ -33,7 +33,7 @@ struct silofs_fs_core {
 	struct silofs_qalloc    qalloc;
 	struct silofs_crypto    crypto;
 	struct silofs_repos     repos;
-	struct silofs_flushers  flushers;
+	struct silofs_commitqs  commitqs;
 	struct silofs_uber      uber;
 	struct silofs_idsmap    idsm;
 	struct silofs_password  passwd;
@@ -289,29 +289,29 @@ static void fse_fini_repos(struct silofs_fs_env *fse)
 	}
 }
 
-static int fse_init_flushers(struct silofs_fs_env *fse)
+static int fse_init_commitqs(struct silofs_fs_env *fse)
 {
 	const struct silofs_fs_args *fs_args = &fse->fs_args;
-	struct silofs_flushers *fls;
+	struct silofs_commitqs *cqs;
 	int err;
 
 	if (!fs_args->withflsh) {
 		return 0;
 	}
-	fls = &fse_obj_of(fse)->fs_core.c.flushers;
-	err = silofs_flushers_init(fls, fse->fs_alloc);
+	cqs = &fse_obj_of(fse)->fs_core.c.commitqs;
+	err = silofs_commitqs_init(cqs, fse->fs_alloc);
 	if (err) {
 		return err;
 	}
-	fse->fs_flushers = fls;
+	fse->fs_commitqs = cqs;
 	return 0;
 }
 
-static void fse_fini_flushers(struct silofs_fs_env *fse)
+static void fse_fini_commitqs(struct silofs_fs_env *fse)
 {
-	if (fse->fs_flushers != NULL) {
-		silofs_flushers_fini(fse->fs_flushers);
-		fse->fs_flushers = NULL;
+	if (fse->fs_commitqs != NULL) {
+		silofs_commitqs_fini(fse->fs_commitqs);
+		fse->fs_commitqs = NULL;
 	}
 }
 
@@ -349,7 +349,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 	const struct silofs_uber_args args = {
 		.alloc = fse->fs_alloc,
 		.repos = fse->fs_repos,
-		.fls = fse->fs_flushers,
+		.cqs = fse->fs_commitqs,
 		.idsm = fse->fs_idsmap,
 		.ivkey = &fse->fs_ivkey,
 	};
@@ -487,7 +487,7 @@ static int fse_init_subs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_init_flushers(fse);
+	err = fse_init_commitqs(fse);
 	if (err) {
 		return err;
 	}
@@ -530,7 +530,7 @@ static void fse_fini(struct silofs_fs_env *fse)
 	fse_fini_fuseq(fse);
 	fse_fini_uber(fse);
 	fse_fini_idsmap(fse);
-	fse_fini_flushers(fse);
+	fse_fini_commitqs(fse);
 	fse_fini_repos(fse);
 	fse_fini_crypto(fse);
 	fse_fini_qalloc(fse);
@@ -727,12 +727,12 @@ int silofs_fse_close_repo(struct silofs_fs_env *fse)
 	return ret;
 }
 
-static int fse_start_flushers(struct silofs_fs_env *fse)
+static int fse_start_commitqs(struct silofs_fs_env *fse)
 {
 	int ret = 0;
 
-	if (fse->fs_flushers != NULL) {
-		ret = silofs_flushers_start(fse->fs_flushers);
+	if (fse->fs_commitqs != NULL) {
+		ret = silofs_commitqs_start(fse->fs_commitqs);
 	}
 	return ret;
 }
@@ -742,17 +742,17 @@ int silofs_fse_start_fls(struct silofs_fs_env *fse)
 	int ret;
 
 	fse_lock(fse);
-	ret = fse_start_flushers(fse);
+	ret = fse_start_commitqs(fse);
 	fse_unlock(fse);
 	return ret;
 }
 
-static int fse_stop_flushers(struct silofs_fs_env *fse)
+static int fse_stop_commitqs(struct silofs_fs_env *fse)
 {
 	int ret = 0;
 
-	if (fse->fs_flushers != NULL) {
-		ret = silofs_flushers_stop(fse->fs_flushers);
+	if (fse->fs_commitqs != NULL) {
+		ret = silofs_commitqs_stop(fse->fs_commitqs);
 	}
 	return ret;
 }
@@ -762,7 +762,7 @@ int silofs_fse_stop_fls(struct silofs_fs_env *fse)
 	int ret;
 
 	fse_lock(fse);
-	ret = fse_stop_flushers(fse);
+	ret = fse_stop_commitqs(fse);
 	fse_unlock(fse);
 	return ret;
 }

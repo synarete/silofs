@@ -458,7 +458,7 @@ struct silofs_uber {
 	const struct silofs_ivkey      *ub_ivkey;
 	struct silofs_alloc            *ub_alloc;
 	struct silofs_repos            *ub_repos;
-	struct silofs_flushers         *ub_fls;
+	struct silofs_commitqs         *ub_cqs;
 	struct silofs_idsmap           *ub_idsm;
 	struct silofs_mutex             ub_fs_lock;
 	struct silofs_crypto            ub_crypto;
@@ -527,7 +527,7 @@ struct silofs_fs_env {
 	struct silofs_alloc    *fs_alloc;
 	struct silofs_crypto   *fs_crypto;
 	struct silofs_repos    *fs_repos;
-	struct silofs_flushers *fs_flushers;
+	struct silofs_commitqs *fs_commitqs;
 	struct silofs_idsmap   *fs_idsmap;
 	struct silofs_uber     *fs_uber;
 	struct silofs_fuseq    *fs_fuseq;

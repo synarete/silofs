@@ -1316,8 +1316,7 @@ static void cache_undirtify_vi(struct silofs_cache *cache,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_blobref_info *
-cache_new_bri(const struct silofs_cache *cache,
-              const struct silofs_blobid *blobid)
+cache_new_bri(struct silofs_cache *cache, const struct silofs_blobid *blobid)
 {
 	return silofs_bri_new(cache->c_alloc, blobid);
 }
@@ -2809,7 +2808,7 @@ void silofs_cache_shrink_once(struct silofs_cache *cache)
 {
 	const size_t bk_size = SILOFS_BK_SIZE;
 	const size_t memsz_ubkis = bk_size * cache->c_ubki_lm.lm_htbl_sz;
-	const size_t memsz_data = cache->mem_size_hint;
+	const size_t memsz_data = cache->c_mem_size_hint;
 
 	if ((8 * memsz_ubkis) > memsz_data) {
 		cache_pre_op(cache);
@@ -3072,7 +3071,7 @@ static void cache_fini_nil_bk(struct silofs_cache *cache)
 
 static size_t cache_htbl_size(const struct silofs_cache *cache, size_t div)
 {
-	const size_t hwant = cache->mem_size_hint / div;
+	const size_t hwant = cache->c_mem_size_hint / div;
 	const size_t limit = silofs_clamp(hwant, 1U << 14, 1U << 20);
 
 	return htbl_prime_size(limit);
@@ -3159,7 +3158,7 @@ int silofs_cache_init(struct silofs_cache *cache,
 
 	cache->c_alloc = alloc;
 	cache->c_nil_bk = NULL;
-	cache->mem_size_hint = msz_hint;
+	cache->c_mem_size_hint = msz_hint;
 	dqs_init(&cache->c_dqs);
 	err = cache_init_mdigest(cache);
 	if (err) {

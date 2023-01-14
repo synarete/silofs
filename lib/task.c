@@ -23,7 +23,7 @@
 static struct silofs_alloc *task_alloc(const struct silofs_task *task);
 static void task_signal_done(struct silofs_task *task,
                              struct silofs_commit_info *cmi);
-static int flusher_execute(struct silofs_flusher *flsh);
+static int commitq_execute(struct silofs_commitq *cq);
 
 
 static struct silofs_alloc *cmi_alloc(const struct silofs_commit_info *cmi)
@@ -417,124 +417,124 @@ void silofs_task_fini(struct silofs_task *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int flusher_init(struct silofs_flusher *flsh, int indx)
+static int commitq_init(struct silofs_commitq *cq, int indx)
 {
-	memset(flsh, 0, sizeof(*flsh));
-	flsh->fl_active = 0;
-	flsh->fl_index = indx;
-	silofs_listq_init(&flsh->fl_cq);
-	return silofs_lock_init(&flsh->fl_lk);
+	memset(cq, 0, sizeof(*cq));
+	cq->cq_active = 0;
+	cq->cq_index = indx;
+	silofs_listq_init(&cq->cq_ls);
+	return silofs_lock_init(&cq->cq_lk);
 }
 
-static void flusher_fini(struct silofs_flusher *flsh)
+static void commitq_fini(struct silofs_commitq *cq)
 {
-	silofs_lock_fini(&flsh->fl_lk);
-	silofs_listq_fini(&flsh->fl_cq);
+	silofs_lock_fini(&cq->cq_lk);
+	silofs_listq_fini(&cq->cq_ls);
 }
 
-static int flusher_do_start(struct silofs_thread *th)
+static int commitq_do_start(struct silofs_thread *th)
 {
-	struct silofs_flusher *flsh = th->arg;
+	struct silofs_commitq *cq = th->arg;
 	int err;
 
-	log_info("start flusher: %s", th->name);
-	err = flusher_execute(flsh);
-	log_info("finish flusher: %s", th->name);
+	log_info("start commitq worker: %s", th->name);
+	err = commitq_execute(cq);
+	log_info("finish commitq worker: %s", th->name);
 	return err;
 }
 
-static void flusher_reset_th(struct silofs_flusher *flsh)
+static void commitq_reset_th(struct silofs_commitq *cq)
 {
-	struct silofs_thread *th = &flsh->fl_th;
+	struct silofs_thread *th = &cq->cq_th;
 
 	silofs_memzero(th, sizeof(*th));
 }
 
-static void flusher_make_thread_name(const struct silofs_flusher *flsh,
+static void commitq_make_thread_name(const struct silofs_commitq *cq,
                                      char *name_buf, size_t name_bsz)
 {
-	snprintf(name_buf, name_bsz, "silofs-flush%d", flsh->fl_index);
+	snprintf(name_buf, name_bsz, "silofs-cq%d", cq->cq_index);
 }
 
-static int flusher_start(struct silofs_flusher *flsh)
+static int commitq_start(struct silofs_commitq *cq)
 {
 	char name[32] = "";
-	struct silofs_thread *th = &flsh->fl_th;
+	struct silofs_thread *th = &cq->cq_th;
 	int ret = 0;
 
-	if (!flsh->fl_active) {
-		flsh->fl_active = 1;
-		flusher_reset_th(flsh);
-		flusher_make_thread_name(flsh, name, sizeof(name) - 1);
-		ret = silofs_thread_create(th, flusher_do_start, flsh, name);
+	if (!cq->cq_active) {
+		cq->cq_active = 1;
+		commitq_reset_th(cq);
+		commitq_make_thread_name(cq, name, sizeof(name) - 1);
+		ret = silofs_thread_create(th, commitq_do_start, cq, name);
 	}
 	return ret;
 }
 
-static int flusher_stop(struct silofs_flusher *flsh)
+static int commitq_stop(struct silofs_commitq *cq)
 {
 	int ret = 0;
 
-	if (flsh->fl_active) {
-		flsh->fl_active = 0;
-		ret = silofs_thread_join(&flsh->fl_th);
-		silofs_assert_eq(flsh->fl_cq.sz, 0);
-		flusher_reset_th(flsh);
+	if (cq->cq_active) {
+		cq->cq_active = 0;
+		ret = silofs_thread_join(&cq->cq_th);
+		silofs_assert_eq(cq->cq_ls.sz, 0);
+		commitq_reset_th(cq);
 	}
 	return ret;
 }
 
 static struct silofs_commit_info *
-flusher_pop_cmi(struct silofs_flusher *flsh)
+commitq_pop_cmi(struct silofs_commitq *cq)
 {
 	struct silofs_list_head *lh;
 
-	lh = listq_pop_front(&flsh->fl_cq);
+	lh = listq_pop_front(&cq->cq_ls);
 	return cmi_from_flh(lh);
 }
 
 static void
-flusher_push_cmi(struct silofs_flusher *flsh, struct silofs_commit_info *cmi)
+commitq_push_cmi(struct silofs_commitq *cq, struct silofs_commit_info *cmi)
 {
-	listq_push_back(&flsh->fl_cq, &cmi->flh);
+	listq_push_back(&cq->cq_ls, &cmi->flh);
 }
 
-static void flusher_enqueue(struct silofs_flusher *flsh,
+static void commitq_enqueue(struct silofs_commitq *cq,
                             struct silofs_commit_info *cmi)
 {
-	struct silofs_lock *lock = &flsh->fl_lk;
+	struct silofs_lock *lock = &cq->cq_lk;
 
 	cmi->async = 1;
 	silofs_mutex_lock(&lock->mu);
-	flusher_push_cmi(flsh, cmi);
+	commitq_push_cmi(cq, cmi);
 	silofs_cond_signal(&lock->co);
 	silofs_mutex_unlock(&lock->mu);
 }
 
-static struct silofs_commit_info *flusher_dequeue(struct silofs_flusher *flsh)
+static struct silofs_commit_info *commitq_dequeue(struct silofs_commitq *cq)
 {
 	struct silofs_commit_info *cmi = NULL;
-	struct silofs_lock *lock = &flsh->fl_lk;
+	struct silofs_lock *lock = &cq->cq_lk;
 	int err;
 
 	silofs_mutex_lock(&lock->mu);
-	cmi = flusher_pop_cmi(flsh);
+	cmi = commitq_pop_cmi(cq);
 	if (cmi == NULL) {
 		err = silofs_cond_ntimedwait(&lock->co, &lock->mu, 1);
 		if (!err) {
-			cmi = flusher_pop_cmi(flsh);
+			cmi = commitq_pop_cmi(cq);
 		}
 	}
 	silofs_mutex_unlock(&lock->mu);
 	return cmi;
 }
 
-static int flusher_execute(struct silofs_flusher *flsh)
+static int commitq_execute(struct silofs_commitq *cq)
 {
 	struct silofs_commit_info *cmi;
 
-	while (flsh->fl_active) {
-		cmi = flusher_dequeue(flsh);
+	while (cq->cq_active) {
+		cmi = commitq_dequeue(cq);
 		if (cmi != NULL) {
 			cmi_execute_and_signal(cmi);
 		}
@@ -544,110 +544,102 @@ static int flusher_execute(struct silofs_flusher *flsh)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int flushers_init_set(struct silofs_flushers *fls, unsigned int cnt)
+static int commitqs_init_set(struct silofs_commitqs *cqs, unsigned int cnt)
 {
-	struct silofs_flusher *flsh;
-	struct silofs_flusher *flsh_arr;
+	struct silofs_commitq *cq;
+	struct silofs_commitq *cq_arr;
 	unsigned int init_cnt = 0;
 	int err;
 
-	flsh_arr = silofs_allocate(fls->fls_alloc, cnt * sizeof(*flsh));
-	if (flsh_arr == NULL) {
+	cq_arr = silofs_allocate(cqs->cqs_alloc, cnt * sizeof(*cq));
+	if (cq_arr == NULL) {
 		return -ENOMEM;
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		flsh = &flsh_arr[i];
-		err = flusher_init(flsh, (int)(i + 1));
+		cq = &cq_arr[i];
+		err = commitq_init(cq, (int)(i + 1));
 		if (err) {
 			goto out_err;
 		}
 		init_cnt++;
 	}
-	fls->fls_set = flsh_arr;
-	fls->fls_count = init_cnt;
+	cqs->cqs_set = cq_arr;
+	cqs->cqs_count = init_cnt;
 	return 0;
 out_err:
 	for (size_t i = 0; i < init_cnt; ++i) {
-		flsh = &flsh_arr[i];
-		flusher_fini(flsh);
+		cq = &cq_arr[i];
+		commitq_fini(cq);
 	}
-	silofs_deallocate(fls->fls_alloc, flsh_arr, cnt * sizeof(*flsh));
+	silofs_deallocate(cqs->cqs_alloc, cq_arr, cnt * sizeof(*cq));
 	return err;
 }
 
-static uint32_t calc_num_flushers(void)
-{
-	const int npr = (int)silofs_sc_nproc_onln();
-	const int cnt = silofs_clamp32(npr / 2, 2, 8);
-
-	return (uint32_t)(cnt & ~1);
-}
-
-int silofs_flushers_init(struct silofs_flushers *fls,
+int silofs_commitqs_init(struct silofs_commitqs *cqs,
                          struct silofs_alloc *alloc)
 {
-	fls->fls_alloc = alloc;
-	fls->fls_set = NULL;
-	fls->fls_count = 0;
-	fls->fls_active = 0;
-	return flushers_init_set(fls, calc_num_flushers());
+	cqs->cqs_alloc = alloc;
+	cqs->cqs_set = NULL;
+	cqs->cqs_count = 0;
+	cqs->cqs_active = 0;
+	return commitqs_init_set(cqs, silofs_num_worker_threads());
 }
 
-static void flushers_fini_set(struct silofs_flushers *fls)
+static void commitqs_fini_set(struct silofs_commitqs *cqs)
 {
-	struct silofs_flusher *flsh;
+	struct silofs_commitq *cq;
 
-	for (size_t i = 0; i < fls->fls_count; ++i) {
-		flsh = &fls->fls_set[i];
-		flusher_fini(flsh);
+	for (size_t i = 0; i < cqs->cqs_count; ++i) {
+		cq = &cqs->cqs_set[i];
+		commitq_fini(cq);
 	}
-	silofs_deallocate(fls->fls_alloc, fls->fls_set,
-	                  fls->fls_count * sizeof(*flsh));
-	fls->fls_set = NULL;
-	fls->fls_count = 0;
+	silofs_deallocate(cqs->cqs_alloc, cqs->cqs_set,
+	                  cqs->cqs_count * sizeof(*cq));
+	cqs->cqs_set = NULL;
+	cqs->cqs_count = 0;
 }
 
-void silofs_flushers_fini(struct silofs_flushers *fls)
+void silofs_commitqs_fini(struct silofs_commitqs *cqs)
 {
-	flushers_fini_set(fls);
-	fls->fls_alloc = NULL;
+	commitqs_fini_set(cqs);
+	cqs->cqs_alloc = NULL;
 }
 
-int silofs_flushers_start(struct silofs_flushers *fls)
+int silofs_commitqs_start(struct silofs_commitqs *cqs)
 {
-	struct silofs_flusher *flsh;
+	struct silofs_commitq *cq;
 	unsigned int start_cnt = 0;
 	int err;
 
-	for (size_t i = 0; i < fls->fls_count; ++i) {
-		flsh = &fls->fls_set[i];
-		err = flusher_start(flsh);
+	for (size_t i = 0; i < cqs->cqs_count; ++i) {
+		cq = &cqs->cqs_set[i];
+		err = commitq_start(cq);
 		if (err) {
 			goto out_err;
 		}
 		start_cnt++;
 	}
-	fls->fls_active = 1;
+	cqs->cqs_active = 1;
 	return 0;
 
 out_err:
 	for (size_t i = 0; i < start_cnt; ++i) {
-		flsh = &fls->fls_set[i];
-		flusher_stop(flsh);
+		cq = &cqs->cqs_set[i];
+		commitq_stop(cq);
 	}
 	return err;
 }
 
-int silofs_flushers_stop(struct silofs_flushers *fls)
+int silofs_commitqs_stop(struct silofs_commitqs *cqs)
 {
-	struct silofs_flusher *flsh;
+	struct silofs_commitq *cq;
 	int ret = 0;
 	int err;
 
-	fls->fls_active = 0;
-	for (size_t i = 0; i < fls->fls_count; ++i) {
-		flsh = &fls->fls_set[i];
-		err = flusher_stop(flsh);
+	cqs->cqs_active = 0;
+	for (size_t i = 0; i < cqs->cqs_count; ++i) {
+		cq = &cqs->cqs_set[i];
+		err = commitq_stop(cq);
 		if (err && (ret == 0)) {
 			ret = err;
 		}
@@ -655,21 +647,28 @@ int silofs_flushers_stop(struct silofs_flushers *fls)
 	return ret;
 }
 
-static struct silofs_flusher *
-flushers_sub(const struct silofs_flushers *fls,
+static struct silofs_commitq *
+commitqs_sub(const struct silofs_commitqs *cqs,
              const struct silofs_commit_info *cmi)
 {
-	uint64_t h[2];
-	uint64_t idx;
+	const size_t idx = cmi->task->t_oper.op_unique % cqs->cqs_count;
 
-	silofs_assert_not_null(fls->fls_set);
-	silofs_blobid_as_u128(&cmi->bid, h);
-	idx = (h[0] ^ h[1]) % fls->fls_count;
-	return &fls->fls_set[idx];
+	return &cqs->cqs_set[idx];
 }
 
-void silofs_flushers_enqueue(struct silofs_flushers *fls,
+void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
                              struct silofs_commit_info *cmi)
 {
-	flusher_enqueue(flushers_sub(fls, cmi), cmi);
+	commitq_enqueue(commitqs_sub(cqs, cmi), cmi);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+uint32_t silofs_num_worker_threads(void)
+{
+	const long npr = silofs_sc_nproc_onln();
+	const long cnt = silofs_clamp32((int)npr, 2, 16);
+	const long nth = (((cnt + 1) / 2) * 2);
+
+	return (uint32_t)nth;
 }

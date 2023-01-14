@@ -3486,14 +3486,8 @@ static void fuseq_fini_worker(struct silofs_fuseq_worker *fqw)
 static int fuseq_init_workers_limit(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
-	const int nprocs = (int)silofs_sc_nproc_onln();
-	const int nlimit = silofs_clamp32(nprocs, 2, 16);
 
-	if (nprocs <= 0) {
-		fuseq_log_err("nprocs=%d", nprocs);
-		return -ENOMEDIUM;
-	}
-	fws->fws_nlimit = (unsigned int)(nlimit & ~1);
+	fws->fws_nlimit = silofs_num_worker_threads();
 	fws->fws_navail = 0;
 	fws->fws_nactive = 0;
 	return 0;
@@ -3871,7 +3865,7 @@ static int fuseq_start(struct silofs_thread *th)
 	struct silofs_fuseq_worker *fqw = thread_to_fuseq_worker(th);
 	int err;
 
-	fuseq_log_info("start worker: %s", th->name);
+	fuseq_log_info("start fuseq worker: %s", th->name);
 	err = silofs_thread_sigblock_common();
 	if (err) {
 		fuseq_log_warn("unable to block signals: "\
@@ -3884,14 +3878,14 @@ static int fuseq_start(struct silofs_thread *th)
 		goto out;
 	}
 out:
-	fuseq_log_info("finish worker: %s", th->name);
+	fuseq_log_info("finish fuseq worker: %s", th->name);
 	return err;
 }
 
 static void fuseq_make_thread_name(const struct silofs_fuseq_worker *fqw,
                                    char *name_buf, size_t name_bsz)
 {
-	snprintf(name_buf, name_bsz, "silofs-exec%u", fqw->worker_index + 1);
+	snprintf(name_buf, name_bsz, "silofs-fq%u", fqw->worker_index + 1);
 }
 
 static int fuseq_exec_thread(struct silofs_fuseq_worker *fqw)

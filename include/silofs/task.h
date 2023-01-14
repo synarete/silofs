@@ -50,21 +50,21 @@ struct silofs_commit_info {
 	volatile int    done;
 };
 
-/* flusher-thread control object */
-struct silofs_flusher {
-	struct silofs_thread    fl_th;
-	struct silofs_listq     fl_cq;
-	struct silofs_lock      fl_lk;
-	volatile int            fl_active;
-	int                     fl_index;
+/* commits flush queue control object */
+struct silofs_commitq {
+	struct silofs_thread    cq_th;
+	struct silofs_listq     cq_ls;
+	struct silofs_lock      cq_lk;
+	volatile int            cq_active;
+	int                     cq_index;
 };
 
-/* flushers set */
-struct silofs_flushers {
-	struct silofs_alloc    *fls_alloc;
-	struct silofs_flusher  *fls_set;
-	unsigned int            fls_count;
-	volatile int            fls_active;
+/* commits flush set */
+struct silofs_commitqs {
+	struct silofs_alloc    *cqs_alloc;
+	struct silofs_commitq  *cqs_set;
+	unsigned int            cqs_count;
+	volatile int            cqs_active;
 };
 
 
@@ -107,16 +107,20 @@ const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_flushers_init(struct silofs_flushers *fls,
+int silofs_commitqs_init(struct silofs_commitqs *cqs,
                          struct silofs_alloc *alloc);
 
-void silofs_flushers_fini(struct silofs_flushers *fls);
+void silofs_commitqs_fini(struct silofs_commitqs *cqs);
 
-int silofs_flushers_start(struct silofs_flushers *fls);
+int silofs_commitqs_start(struct silofs_commitqs *cqs);
 
-int silofs_flushers_stop(struct silofs_flushers *fls);
+int silofs_commitqs_stop(struct silofs_commitqs *cqs);
 
-void silofs_flushers_enqueue(struct silofs_flushers *fls,
+void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
                              struct silofs_commit_info *cmi);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+uint32_t silofs_num_worker_threads(void);
 
 #endif /* SILOFS_TASK_H_ */

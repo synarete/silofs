@@ -706,6 +706,10 @@ static int check_sysconf(void)
 	if (page_shift == 0) {
 		return -EOPNOTSUPP;
 	}
+	val = silofs_sc_nproc_onln();
+	if (val <= 0) {
+		return errno_or_errnum(ENOMEDIUM);
+	}
 	return 0;
 }
 

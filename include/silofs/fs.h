@@ -29,6 +29,7 @@
 #include <silofs/crypto.h>
 #include <silofs/spxmap.h>
 #include <silofs/cache.h>
+#include <silofs/task.h>
 #include <silofs/repo.h>
 #include <silofs/super.h>
 #include <silofs/stats.h>
@@ -39,7 +40,6 @@
 #include <silofs/file.h>
 #include <silofs/symlink.h>
 #include <silofs/xattr.h>
-#include <silofs/task.h>
 #include <silofs/opers.h>
 #include <silofs/namei.h>
 #include <silofs/stage.h>

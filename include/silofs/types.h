@@ -466,13 +466,6 @@ struct silofs_uber {
 	time_t                          ub_initime;
 };
 
-/* file-system oper-execution task-context */
-struct silofs_task {
-	struct silofs_uber     *t_uber;
-	struct silofs_oper      t_oper;
-	volatile int            t_interrupt;
-};
-
 /* file-system's input id vectors */
 struct silofs_ids {
 	struct silofs_id       *uids;

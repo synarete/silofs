@@ -37,20 +37,18 @@ struct silofs_flush_ctx {
 	int flags;
 };
 
-
-struct silofs_sgvec {
-	struct silofs_list_head     lh;
-	struct silofs_blobid        blobid;
-	struct silofs_snode_info   *si[32];
-	const struct silofs_task   *task;
-	struct silofs_blobref_info *bri;
-	void  *buf;
-	loff_t off;
-	size_t len;
-	size_t cnt;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void si_seal_meta(struct silofs_snode_info *si)
+{
+	const enum silofs_stype stype = si->s_stype;
+
+	if (stype_isunode(stype)) {
+		silofs_seal_unode(silofs_ui_from_si(si));
+	} else if (stype_isvnode(stype) && !stype_isdata(stype)) {
+		silofs_seal_vnode(silofs_vi_from_si(si));
+	}
+}
 
 static int resolve_oaddr_of_vnode(const struct silofs_task *task,
                                   const struct silofs_vnode_info *vi,
@@ -98,97 +96,8 @@ static int resolve_oaddr_of(const struct silofs_task *task,
 	return ret;
 }
 
-static void si_seal_meta(struct silofs_snode_info *si)
-{
-	const enum silofs_stype stype = si->s_stype;
-
-	if (stype_isunode(stype)) {
-		silofs_seal_unode(silofs_ui_from_si(si));
-	} else if (stype_isvnode(stype) && !stype_isdata(stype)) {
-		silofs_seal_vnode(silofs_vi_from_si(si));
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_alloc *sgvec_alloc(const struct silofs_sgvec *sgv)
-{
-	return task_alloc(sgv->task);
-}
-
-static int sgvec_allocate_buf(struct silofs_sgvec *sgv)
-{
-	sgv->buf = silofs_allocate(sgvec_alloc(sgv), sgv->len);
-	return unlikely(sgv->buf == NULL) ? -ENOMEM : 0;
-}
-
-static void sgvec_deallocate_buf(struct silofs_sgvec *sgv)
-{
-	if (likely(sgv->buf != NULL)) {
-		silofs_deallocate(sgvec_alloc(sgv), sgv->buf, sgv->len);
-	}
-	sgv->buf = NULL;
-}
-
-static bool sgvec_isappendable(const struct silofs_sgvec *sgv,
-                               const struct silofs_oaddr *oaddr)
-{
-	if (sgv->cnt == 0) {
-		return true;
-	}
-	if (sgv->cnt == ARRAY_SIZE(sgv->si)) {
-		return false;
-	}
-	if (oaddr->pos != off_end(sgv->off, sgv->len)) {
-		return false;
-	}
-	if ((sgv->len + oaddr->len) > SILOFS_MEGA) {
-		return false;
-	}
-	if (!blobid_isequal(&oaddr->bka.blobid, &sgv->blobid)) {
-		return false;
-	}
-	return true;
-}
-
-static bool sgvec_append_ref(struct silofs_sgvec *sgv,
-                             const struct silofs_oaddr *oaddr,
-                             struct silofs_snode_info *si)
-{
-	if (!sgvec_isappendable(sgv, oaddr)) {
-		return false;
-	}
-	if (sgv->cnt == 0) {
-		blobid_assign(&sgv->blobid, &oaddr->bka.blobid);
-		sgv->off = oaddr->pos;
-	}
-	sgv->si[sgv->cnt] = si;
-	sgv->cnt += 1;
-	sgv->len += si->s_view_len;
-	return true;
-}
-
-static int sgvec_assign_buf(struct silofs_sgvec *sgv)
-{
-	const struct silofs_snode_info *si;
-	uint8_t *dst = NULL;
-	int err;
-
-	err = sgvec_allocate_buf(sgv);
-	if (err) {
-		return err;
-	}
-	dst = sgv->buf;
-	for (size_t i = 0; i < sgv->cnt; ++i) {
-		si = sgv->si[i];
-		memcpy(dst, si->s_view, si->s_view_len);
-		dst += si->s_view_len;
-	}
-	return 0;
-}
-
-static int sgvec_populate(struct silofs_sgvec *sgv,
-                          struct silofs_snode_info **siq)
+static int populate_commit(struct silofs_snode_info **siq,
+                           struct silofs_commit_info *cmi)
 {
 	struct silofs_oaddr oaddr;
 	struct silofs_snode_info *si;
@@ -196,72 +105,16 @@ static int sgvec_populate(struct silofs_sgvec *sgv,
 
 	while (*siq != NULL) {
 		si = *siq;
-		err = resolve_oaddr_of(sgv->task, si, &oaddr);
+		err = resolve_oaddr_of(cmi->task, si, &oaddr);
 		if (err) {
 			return err;
 		}
-		if (!sgvec_append_ref(sgv, &oaddr, si)) {
+		if (!silofs_cmi_append_ref(cmi, &oaddr, si)) {
 			break;
 		}
 		*siq = si->s_ds_next;
 	}
-	return sgvec_assign_buf(sgv);
-}
-
-static void sgvec_bind_bri(struct silofs_sgvec *sgv,
-                           struct silofs_blobref_info *bri)
-{
-	if (sgv->bri != NULL) {
-		bri_decref(sgv->bri);
-		sgv->bri = NULL;
-	}
-	if (bri != NULL) {
-		sgv->bri = bri;
-		bri_incref(sgv->bri);
-		silofs_assert(!bri->br_rdonly);
-	}
-}
-
-static int sgvec_write_buf(const struct silofs_sgvec *sgv)
-{
-	return silofs_bri_pwriten(sgv->bri, sgv->off, sgv->buf, sgv->len);
-}
-
-static void sgvec_increfs(const struct silofs_sgvec *sgv)
-{
-	for (size_t i = 0; i < sgv->cnt; ++i) {
-		silofs_si_incref(sgv->si[i]);
-	}
-}
-
-static void sgvec_decrefs(const struct silofs_sgvec *sgv)
-{
-	for (size_t i = 0; i < sgv->cnt; ++i) {
-		silofs_si_decref(sgv->si[i]);
-	}
-}
-
-static void sgvec_init(struct silofs_sgvec *sgv,
-                       const struct silofs_task *task)
-{
-	list_head_init(&sgv->lh);
-	sgv->task = task;
-	sgv->blobid.size = 0;
-	sgv->off = -1;
-	sgv->len = 0;
-	sgv->cnt = 0;
-	sgv->buf = NULL;
-}
-
-static void sgvec_fini(struct silofs_sgvec *sgv)
-{
-	list_head_fini(&sgv->lh);
-	sgvec_deallocate_buf(sgv);
-	sgvec_bind_bri(sgv, NULL);
-	sgv->off = -1;
-	sgv->len = 0;
-	sgv->cnt = 0;
-	sgv->task = NULL;
+	return silofs_cmi_assign_buf(cmi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -407,39 +260,39 @@ static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx)
 	dset_clear_map(&fl_ctx->dset);
 }
 
-static int flc_store_sgv(const struct silofs_flush_ctx *fl_ctx,
-                         struct silofs_sgvec *sgv)
+static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
+                          struct silofs_commit_info *cmi)
 {
-	const struct silofs_blobid *blobid = &sgv->blobid;
+	const struct silofs_blobid *blobid = &cmi->bid;
 	struct silofs_blobref_info *bri = NULL;
 	int err;
 
-	sgvec_increfs(sgv);
+	silofs_cmi_increfs(cmi);
 	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &bri);
 	if (err) {
 		goto out;
 	}
-	sgvec_bind_bri(sgv, bri);
-	err = sgvec_write_buf(sgv);
+	silofs_cmi_bind_bri(cmi, bri);
+	err = silofs_cmi_write_buf(cmi);
 	if (err) {
 		goto out;
 	}
 out:
-	sgvec_decrefs(sgv);
+	silofs_cmi_decrefs(cmi);
 	return err;
 }
 
 static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
                          struct silofs_snode_info **siq,
-                         struct silofs_sgvec *sgv)
+                         struct silofs_commit_info *cmi)
 {
 	int err;
 
-	err = sgvec_populate(sgv, siq);
+	err = populate_commit(siq, cmi);
 	if (err) {
 		return err;
 	}
-	err = flc_store_sgv(fl_ctx, sgv);
+	err = flc_commit_one(fl_ctx, cmi);
 	if (err) {
 		return err;
 	}
@@ -448,15 +301,18 @@ static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
 
 static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 {
-	struct silofs_sgvec sgv;
+	struct silofs_commit_info *cmi = NULL;
 	struct silofs_dset *dset = &fl_ctx->dset;
 	struct silofs_snode_info *siq = dset->ds_siq;
 	int err = 0;
 
 	while (!err && (siq != NULL)) {
-		sgvec_init(&sgv, fl_ctx->task);
-		err = flc_flush_siq(fl_ctx, &siq, &sgv);
-		sgvec_fini(&sgv);
+		cmi = NULL;
+		err = silofs_task_new_commit(fl_ctx->task, &cmi);
+		if (!err) {
+			err = flc_flush_siq(fl_ctx, &siq, cmi);
+			silofs_task_del_commit(fl_ctx->task, cmi);
+		}
 	}
 	return err;
 }

@@ -17,6 +17,45 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
+/* execution-context task per file-system operation */
+struct silofs_task {
+	struct silofs_uber     *t_uber;
+	struct silofs_oper      t_oper;
+	volatile int            t_interrupt;
+};
+
+/* flush commit control object */
+struct silofs_commit_info {
+	struct silofs_list_head     lh;
+	const struct silofs_task   *task;
+	struct silofs_blobref_info *bri;
+	struct silofs_snode_info   *si[32];
+	struct silofs_blobid        bid;
+	void  *buf;
+	loff_t off;
+	size_t len;
+	size_t cnt;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_cmi_append_ref(struct silofs_commit_info *cmi,
+                           const struct silofs_oaddr *oaddr,
+                           struct silofs_snode_info *si);
+
+int silofs_cmi_assign_buf(struct silofs_commit_info *cmi);
+
+void silofs_cmi_bind_bri(struct silofs_commit_info *cmi,
+                         struct silofs_blobref_info *bri);
+
+int silofs_cmi_write_buf(const struct silofs_commit_info *cmi);
+
+void silofs_cmi_increfs(const struct silofs_commit_info *cmi);
+
+void silofs_cmi_decrefs(const struct silofs_commit_info *cmi);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_task_init(struct silofs_task *task, struct silofs_uber *uber);
 
 void silofs_task_fini(struct silofs_task *task);
@@ -27,6 +66,12 @@ void silofs_task_set_creds(struct silofs_task *task,
 void silofs_task_set_umask(struct silofs_task *task, mode_t umask);
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt);
+
+int silofs_task_new_commit(const struct silofs_task *task,
+                           struct silofs_commit_info **out_cmi);
+
+void silofs_task_del_commit(const struct silofs_task *task,
+                            struct silofs_commit_info *cmi);
 
 struct silofs_alloc *silofs_task_alloc(const struct silofs_task *task);
 

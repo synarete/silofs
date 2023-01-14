@@ -19,6 +19,9 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
+/* local functions */
+static struct silofs_alloc *task_alloc(const struct silofs_task *task);
+
 
 static struct silofs_alloc *cmi_alloc(const struct silofs_commit_info *cmi)
 {
@@ -110,22 +113,58 @@ void silofs_cmi_bind_bri(struct silofs_commit_info *cmi,
 	}
 }
 
+static void cmi_unbind_bri(struct silofs_commit_info *cmi)
+{
+	silofs_cmi_bind_bri(cmi, NULL);
+}
+
 int silofs_cmi_write_buf(const struct silofs_commit_info *cmi)
 {
 	return silofs_bri_pwriten(cmi->bri, cmi->off, cmi->buf, cmi->len);
 }
 
-void silofs_cmi_increfs(const struct silofs_commit_info *cmi)
+void silofs_cmi_increfs(struct silofs_commit_info *cmi)
 {
-	for (size_t i = 0; i < cmi->cnt; ++i) {
-		silofs_si_incref(cmi->si[i]);
+	struct silofs_snode_info *si;
+
+	if (!cmi->refs) {
+		for (size_t i = 0; i < cmi->cnt; ++i) {
+			si = cmi->si[i];
+			if (si != NULL) {
+				silofs_si_incref(si);
+			}
+		}
+		cmi->refs = true;
 	}
 }
 
-void silofs_cmi_decrefs(const struct silofs_commit_info *cmi)
+static void cmi_decrefs(struct silofs_commit_info *cmi)
 {
-	for (size_t i = 0; i < cmi->cnt; ++i) {
-		silofs_si_decref(cmi->si[i]);
+	struct silofs_snode_info *si;
+
+	if (cmi->refs) {
+		for (size_t i = 0; i < cmi->cnt; ++i) {
+			si = cmi->si[i];
+			if (si != NULL) {
+				silofs_si_decref(si);
+			}
+		}
+		cmi->refs = false;
+	}
+}
+
+static void cmi_dec_ghost_refs(struct silofs_commit_info *cmi)
+{
+	struct silofs_snode_info *si;
+
+	if (cmi->refs) {
+		for (size_t i = 0; i < cmi->cnt; ++i) {
+			si = cmi->si[i];
+			if (si && si->s_ghost) {
+				silofs_si_decref(si);
+				cmi->si[i] = NULL;
+			}
+		}
 	}
 }
 
@@ -141,13 +180,14 @@ static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 	cmi->buf = NULL;
 	cmi->status = 0;
 	cmi->done = false;
+	cmi->refs = false;
 }
 
 static void cmi_fini(struct silofs_commit_info *cmi)
 {
 	list_head_fini(&cmi->tlh);
 	cmi_reset_buf(cmi);
-	silofs_cmi_bind_bri(cmi, NULL);
+	cmi_unbind_bri(cmi);
 	cmi->off = -1;
 	cmi->len = 0;
 	cmi->cnt = 0;
@@ -163,6 +203,26 @@ static struct silofs_commit_info *cmi_from_tlh(struct silofs_list_head *tlh)
 		cmi = container_of(tlh, struct silofs_commit_info, tlh);
 	}
 	return cmi;
+}
+
+static struct silofs_commit_info *cmi_new(struct silofs_task *task)
+{
+	struct silofs_commit_info *cmi;
+	struct silofs_alloc *alloc = task_alloc(task);
+
+	cmi = silofs_allocate(alloc, sizeof(*cmi));
+	if (likely(cmi != NULL)) {
+		cmi_init(cmi, task);
+	}
+	return cmi;
+}
+
+static void cmi_del(struct silofs_commit_info *cmi)
+{
+	struct silofs_alloc *alloc = task_alloc(cmi->task);
+
+	cmi_fini(cmi);
+	silofs_deallocate(alloc, cmi, sizeof(*cmi));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -198,22 +258,17 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 static int task_new_commit(struct silofs_task *task,
                            struct silofs_commit_info **out_cmi)
 {
-	struct silofs_commit_info *cmi;
-
-	cmi = silofs_allocate(task_alloc(task), sizeof(*cmi));
-	if (cmi == NULL) {
-		return -ENOMEM;
-	}
-	cmi_init(cmi, task);
-	*out_cmi = cmi;
-	return 0;
+	*out_cmi = cmi_new(task);
+	return likely(*out_cmi != NULL) ? 0 : -ENOMEM;
 }
 
 static void task_del_commit(struct silofs_task *task,
                             struct silofs_commit_info *cmi)
 {
-	cmi_fini(cmi);
-	silofs_deallocate(task_alloc(task), cmi, sizeof(*cmi));
+	silofs_assert_eq(task, cmi->task);
+	cmi_decrefs(cmi);
+	cmi_unbind_bri(cmi);
+	cmi_del(cmi);
 }
 
 static void task_push_commit(struct silofs_task *task,
@@ -286,7 +341,21 @@ int silofs_task_let_complete(struct silofs_task *task)
 	return err;
 }
 
-struct silofs_alloc *silofs_task_alloc(const struct silofs_task *task)
+void silofs_task_forget_ghosts(struct silofs_task *task)
+{
+	struct silofs_list_head *itr = NULL;
+	struct silofs_commit_info *cmi = NULL;
+	struct silofs_listq *pendq = &task->t_pendq;
+
+	itr = listq_front(pendq);
+	while (itr != NULL) {
+		cmi = cmi_from_tlh(itr);
+		cmi_dec_ghost_refs(cmi);
+		itr = listq_next(pendq, itr);
+	}
+}
+
+static struct silofs_alloc *task_alloc(const struct silofs_task *task)
 {
 	return task->t_uber->ub_alloc;
 }

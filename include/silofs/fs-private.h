@@ -144,7 +144,6 @@
 #define bri_incref(bri)                 silofs_bri_incref(bri)
 #define bri_decref(bri)                 silofs_bri_decref(bri)
 
-#define task_alloc(t)                   silofs_task_alloc(t)
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_creds(t)                   silofs_task_creds(t)
 

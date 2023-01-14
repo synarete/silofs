@@ -108,14 +108,4 @@ int silofs_stage_blob_at(struct silofs_uber *uber, bool warm,
 
 void silofs_relax_caches(struct silofs_task *task, int flags);
 
-
-int silofs_flush_dirty(struct silofs_task *task,
-                       silofs_dqid_t dqid, int flags);
-
-int silofs_flush_dirty_of(struct silofs_task *task,
-                          const struct silofs_inode_info *ii, int flags);
-
-int silofs_flush_dirty_now(struct silofs_task *task);
-
-
 #endif /* SILOFS_UBER_H_ */

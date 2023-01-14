@@ -1024,11 +1024,18 @@ static bool ii_isdropable(const struct silofs_inode_info *ii)
 	return true;
 }
 
+static void ii_set_ghost(struct silofs_inode_info *ii)
+{
+	ii->i_vi.v_si.s_ghost = true;
+}
+
 static int try_prune_inode(struct silofs_task *task,
                            struct silofs_inode_info *ii, bool update_ctime)
 {
 	if (!ii->i_nopen && ii_isnlink_orphan(ii)) {
 		ii_undirtify(ii);
+		ii_set_ghost(ii);
+		silofs_task_forget_ghosts(task);
 	}
 	if (ii_isdropable(ii)) {
 		return drop_unlinked(task, ii);

@@ -35,6 +35,7 @@ nobase_include_HEADERS += silofs/dir.h
 nobase_include_HEADERS += silofs/errors.h
 nobase_include_HEADERS += silofs/exec.h
 nobase_include_HEADERS += silofs/file.h
+nobase_include_HEADERS += silofs/flush.h
 nobase_include_HEADERS += silofs/fuseq.h
 nobase_include_HEADERS += silofs/idmap.h
 nobase_include_HEADERS += silofs/inode.h

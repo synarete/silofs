@@ -223,6 +223,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
 	si->s_noflush = false;
+	si->s_ghost = false;
 }
 
 static void si_fini(struct silofs_snode_info *si)

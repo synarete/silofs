@@ -278,7 +278,6 @@ static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
 		goto out;
 	}
 out:
-	silofs_cmi_decrefs(cmi);
 	cmi->status = err;
 	cmi->done = true;
 	return err;

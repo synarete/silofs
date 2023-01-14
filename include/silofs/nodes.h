@@ -41,6 +41,7 @@ struct silofs_snode_info {
 	silofs_dqid_t                   s_dqid;
 	enum silofs_stype               s_stype;
 	volatile bool                   s_noflush;
+	bool                            s_ghost;
 };
 
 /* unode */

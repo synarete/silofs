@@ -46,6 +46,7 @@
 #include <silofs/spmaps.h>
 #include <silofs/spclaim.h>
 #include <silofs/uber.h>
+#include <silofs/flush.h>
 #include <silofs/kcopy.h>
 #include <silofs/exec.h>
 #include <silofs/walk.h>

@@ -38,6 +38,7 @@ struct silofs_commit_info {
 	size_t cnt;
 	int status;
 	bool done;
+	bool refs;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -53,9 +54,7 @@ void silofs_cmi_bind_bri(struct silofs_commit_info *cmi,
 
 int silofs_cmi_write_buf(const struct silofs_commit_info *cmi);
 
-void silofs_cmi_increfs(const struct silofs_commit_info *cmi);
-
-void silofs_cmi_decrefs(const struct silofs_commit_info *cmi);
+void silofs_cmi_increfs(struct silofs_commit_info *cmi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -75,14 +74,11 @@ int silofs_task_make_commit(struct silofs_task *task,
 
 int silofs_task_let_complete(struct silofs_task *task);
 
-struct silofs_alloc *silofs_task_alloc(const struct silofs_task *task);
+void silofs_task_forget_ghosts(struct silofs_task *task);
+
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
 
 #endif /* SILOFS_TASK_H_ */
-
-
-
-

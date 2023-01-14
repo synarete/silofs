@@ -33,11 +33,8 @@ struct silofs_flush_ctx {
 	struct silofs_uber       *uber;
 	struct silofs_repo       *repo;
 	struct silofs_cache      *cache;
-	struct silofs_flushbuf   *flush_buf;
 	silofs_dqid_t             dqid;
 	int flags;
-	bool warm;
-	bool use_buf;
 };
 
 
@@ -378,33 +375,19 @@ static int flc_store_sgv_buf(const struct silofs_flush_ctx *fl_ctx,
                              const struct silofs_oaddr *oaddr,
                              const struct silofs_sgvec *sgv)
 {
-	struct silofs_flushbuf *flush_buf = fl_ctx->flush_buf;
-	void *buf = flush_buf->b;
-	size_t len;
-	int err;
+	void *buf = NULL;
+	const size_t len = sgv->len;
+	int ret;
 
-	len = sgv->len;
-	if (len > sizeof(flush_buf->b)) {
-		err = flc_allocate(fl_ctx, len, &buf);
-		if (err) {
-			return err;
-		}
-	}
-	sgvec_copyto(sgv, buf);
-	err = silofs_bri_pwriten(bri, oaddr->pos, buf, len);
-	if (len > sizeof(flush_buf->b)) {
-		flc_deallocate(fl_ctx, buf, len);
-	}
-	return err;
-}
+	silofs_assert_eq(sgv->off, oaddr->pos);
 
-static int flc_store_sgv_iov(const struct silofs_flush_ctx *fl_ctx,
-                             struct silofs_blobref_info *bri,
-                             const struct silofs_oaddr *oaddr,
-                             const struct silofs_sgvec *sgv)
-{
-	unused(fl_ctx);
-	return silofs_bri_pwritevn(bri, oaddr, sgv->iov, sgv->cnt);
+	ret = flc_allocate(fl_ctx, len, &buf);
+	if (ret == 0) {
+		sgvec_copyto(sgv, buf);
+		ret = silofs_bri_pwriten(bri, oaddr->pos, buf, len);
+	}
+	flc_deallocate(fl_ctx, buf, len);
+	return ret;
 }
 
 static int flc_store_sgv_at(const struct silofs_flush_ctx *fl_ctx,
@@ -415,11 +398,7 @@ static int flc_store_sgv_at(const struct silofs_flush_ctx *fl_ctx,
 	int ret;
 
 	bri_incref(bri);
-	if (fl_ctx->use_buf) {
-		ret = flc_store_sgv_buf(fl_ctx, bri, oaddr, sgv);
-	} else {
-		ret = flc_store_sgv_iov(fl_ctx, bri, oaddr, sgv);
-	}
+	ret = flc_store_sgv_buf(fl_ctx, bri, oaddr, sgv);
 	bri_decref(bri);
 	return ret;
 }
@@ -432,7 +411,7 @@ static int flc_do_store_sgv(const struct silofs_flush_ctx *fl_ctx,
 	struct silofs_blobref_info *bri = NULL;
 	int err;
 
-	err = silofs_stage_blob_at(fl_ctx->uber, fl_ctx->warm, blobid, &bri);
+	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &bri);
 	if (err) {
 		return err;
 	}
@@ -461,11 +440,10 @@ static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 	struct silofs_sgvec sgv;
 	struct silofs_dset *dset = &fl_ctx->dset;
 	struct silofs_snode_info *siq = dset->ds_siq;
-	const size_t lim = sizeof(fl_ctx->flush_buf->b);
 	int err;
 
 	while (siq != NULL) {
-		sgvec_setup(&sgv, fl_ctx->task, lim);
+		sgvec_setup(&sgv, fl_ctx->task, SILOFS_MEGA);
 		err = sgvec_populate(&sgv, &siq);
 		if (err) {
 			return err;
@@ -557,12 +535,9 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	fl_ctx->uber = uber;
 	fl_ctx->dqid = dqid;
 	fl_ctx->flags = flags;
-	fl_ctx->warm = true;
-	fl_ctx->use_buf = true;
 	fl_ctx->repo = repo;
 	fl_ctx->cache = &repo->re_cache;
 	fl_ctx->alloc = fl_ctx->cache->c_alloc;
-	fl_ctx->flush_buf = fl_ctx->cache->c_flush_buf;
 	return 0;
 }
 

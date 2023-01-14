@@ -575,6 +575,14 @@ out_err:
 	return err;
 }
 
+static uint32_t calc_num_flushers(void)
+{
+	const int npr = (int)silofs_sc_nproc_onln();
+	const int cnt = silofs_clamp32(npr / 2, 2, 8);
+
+	return (uint32_t)(cnt & ~1);
+}
+
 int silofs_flushers_init(struct silofs_flushers *fls,
                          struct silofs_alloc *alloc)
 {
@@ -582,7 +590,7 @@ int silofs_flushers_init(struct silofs_flushers *fls,
 	fls->fls_set = NULL;
 	fls->fls_count = 0;
 	fls->fls_active = 0;
-	return flushers_init_set(fls, 4);
+	return flushers_init_set(fls, calc_num_flushers());
 }
 
 static void flushers_fini_set(struct silofs_flushers *fls)

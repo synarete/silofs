@@ -3483,22 +3483,17 @@ static void fuseq_fini_worker(struct silofs_fuseq_worker *fqw)
 	fqw->fq  = NULL;
 }
 
-static int32_t clamp32(int32_t x, int32_t x_min, int32_t x_max)
-{
-	return silofs_max32(silofs_min32(x, x_max), x_min);
-}
-
 static int fuseq_init_workers_limit(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	const int nprocs = (int)silofs_sc_nproc_onln();
-	const int nlimit = clamp32(nprocs, 1, 16);
+	const int nlimit = silofs_clamp32(nprocs, 2, 16);
 
 	if (nprocs <= 0) {
 		fuseq_log_err("nprocs=%d", nprocs);
 		return -ENOMEDIUM;
 	}
-	fws->fws_nlimit = (unsigned int)nlimit;
+	fws->fws_nlimit = (unsigned int)(nlimit & ~1);
 	fws->fws_navail = 0;
 	fws->fws_nactive = 0;
 	return 0;

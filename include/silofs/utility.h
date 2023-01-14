@@ -45,6 +45,11 @@ static inline int32_t silofs_max32(int32_t x, int32_t y)
 	return x > y ? x : y;
 }
 
+static inline int32_t silofs_clamp32(int32_t x, int32_t x_min, int32_t x_max)
+{
+	return silofs_max32(silofs_min32(x, x_max), x_min);
+}
+
 static inline int64_t silofs_max64(int64_t x, int64_t y)
 {
 	return x > y ? x : y;

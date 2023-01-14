@@ -1879,11 +1879,11 @@ static void cache_remove_ui(struct silofs_cache *cache,
 static void cache_evict_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *ti = &ui->u_si;
+	struct silofs_snode_info *si = &ui->u_si;
 
 	cache_remove_ui(cache, ui);
 	ui_detach_bk(ui);
-	si_delete(ti, cache->c_alloc);
+	si_delete(si, cache->c_alloc);
 }
 
 static void cache_store_ui_lrumap(struct silofs_cache *cache,
@@ -2452,11 +2452,11 @@ static void cache_remove_vi(struct silofs_cache *cache,
 static void cache_evict_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_snode_info *ti = &vi->v_si;
+	struct silofs_snode_info *si = &vi->v_si;
 
 	cache_remove_vi(cache, vi);
 	vi_detach_bk(vi);
-	si_delete(ti, cache->c_alloc);
+	si_delete(si, cache->c_alloc);
 }
 
 static void cache_store_vi_lrumap(struct silofs_cache *cache,

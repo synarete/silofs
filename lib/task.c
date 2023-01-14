@@ -336,17 +336,19 @@ const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
 	return &task->t_oper.op_creds;
 }
 
-void silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
+int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));
 	listq_init(&task->t_pendq);
 	task->t_uber = uber;
+	return silofs_lock_init(&task->t_lock);
 }
 
 void silofs_task_fini(struct silofs_task *task)
 {
 	task_drop_commits(task);
 	listq_fini(&task->t_pendq);
+	silofs_lock_fini(&task->t_lock);
 	task->t_uber = NULL;
 }
 

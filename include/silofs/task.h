@@ -19,6 +19,7 @@
 
 /* execution-context task per file-system operation */
 struct silofs_task {
+	struct silofs_lock      t_lock;
 	struct silofs_uber     *t_uber;
 	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
@@ -64,7 +65,7 @@ void silofs_cmi_increfs(struct silofs_commit_info *cmi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_task_init(struct silofs_task *task, struct silofs_uber *uber);
+int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber);
 
 void silofs_task_fini(struct silofs_task *task);
 

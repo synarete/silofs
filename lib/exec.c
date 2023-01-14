@@ -614,8 +614,12 @@ static int fse_make_self_task(const struct silofs_fs_env *fse,
 	const struct silofs_idsmap *idsm = fse->fs_idsmap;
 	const struct silofs_ucred *xcred = &task->t_oper.op_creds.xcred;
 	struct silofs_ucred *icred = &task->t_oper.op_creds.icred;
+	int err;
 
-	silofs_task_init(task, fse->fs_uber);
+	err = silofs_task_init(task, fse->fs_uber);
+	if (err) {
+		return err;
+	}
 	silofs_task_set_ts(task, true);
 	silofs_task_set_umask(task, args->umask);
 	silofs_task_set_creds(task, args->uid, args->gid, args->pid);

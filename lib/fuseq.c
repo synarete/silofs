@@ -2755,27 +2755,36 @@ fuseq_in_of(const struct silofs_fuseq_worker *fqw)
 	return unconst(in);
 }
 
-static void fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
-                             struct silofs_task *task)
+static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
+                            struct silofs_task *task)
 {
 	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
 	const struct fuse_in_header *hdr = &in->u.hdr.hdr;
+	const pid_t pid = (pid_t)hdr->pid;
+	int err;
 
-	silofs_task_init(task, fqw->fq->fq_uber);
-	silofs_task_set_creds(task, hdr->uid, hdr->gid, (pid_t)hdr->pid);
-	task->t_oper.op_unique = hdr->unique;
-	task->t_oper.op_code = hdr->opcode;
+	err = silofs_task_init(task, fqw->fq->fq_uber);
+	if (!err) {
+		silofs_task_set_creds(task, hdr->uid, hdr->gid, pid);
+		task->t_oper.op_unique = hdr->unique;
+		task->t_oper.op_code = hdr->opcode;
+	}
+	return err;
 }
 
-static void fuseq_setup_self_task(const struct silofs_fuseq_worker *fqw,
-                                  struct silofs_task *task)
+static int fuseq_setup_self_task(const struct silofs_fuseq_worker *fqw,
+                                 struct silofs_task *task)
 {
 	const struct silofs_fs_args *args = fqw->fq->fq_uber->ub_args;
+	int err;
 
-	silofs_task_init(task, fqw->fq->fq_uber);
-	silofs_task_set_ts(task, false);
-	silofs_task_set_umask(task, args->umask);
-	silofs_task_set_creds(task, args->uid, args->gid, args->pid);
+	err = silofs_task_init(task, fqw->fq->fq_uber);
+	if (!err) {
+		silofs_task_set_ts(task, false);
+		silofs_task_set_umask(task, args->umask);
+		silofs_task_set_creds(task, args->uid, args->gid, args->pid);
+	}
+	return err;
 }
 
 static void fuseq_update_task(const struct silofs_fuseq_worker *fqw,
@@ -2908,7 +2917,10 @@ static int fuseq_exec_request(struct silofs_fuseq_worker *fqw)
 	int err;
 	int err2;
 
-	fuseq_setup_task(fqw, &task);
+	err = fuseq_setup_task(fqw, &task);
+	if (err) {
+		return err;
+	}
 	err = fuseq_check_task(fqw, &task);
 	if (err) {
 		err = fuseq_reply_err(fqw, &task, err);
@@ -3741,13 +3753,15 @@ static int fuseq_timeout_flags(const struct silofs_fuseq_worker *fqw)
 static int fuseq_do_timeout_with(struct silofs_fuseq_worker *fqw, int flags)
 {
 	struct silofs_task task;
-	int err1;
-	int err2;
+	int err1 = 0;
+	int err2 = 0;
 
-	fuseq_setup_self_task(fqw, &task);
-	fuseq_update_task(fqw, &task);
-	err1 = silofs_fs_timedout(&task, flags);
-	err2 = fuseq_finish_task(fqw, &task);
+	err1 = fuseq_setup_self_task(fqw, &task);
+	if (!err1) {
+		fuseq_update_task(fqw, &task);
+		err1 = silofs_fs_timedout(&task, flags);
+		err2 = fuseq_finish_task(fqw, &task);
+	}
 	return err1 ? err1 : err2;
 }
 

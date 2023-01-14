@@ -1421,8 +1421,8 @@ static int dic_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 static int dic_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dir_entry_info *dei)
 {
-	int err = -ENOENT;
 	struct silofs_dnode_info *root_dni;
+	int err;
 
 	if (!dir_has_htree(d_ctx->dir_ii)) {
 		return -ENOENT;
@@ -1486,8 +1486,8 @@ int silofs_lookup_dentry(const struct silofs_task *task,
                          struct silofs_ino_dt *out_idt)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.sbi = ii_sbi(dir_ii),
 		.task = task,
+		.sbi = task_sbi(task),
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
 		.stg_mode = SILOFS_STAGE_RO,
@@ -1670,8 +1670,8 @@ static int dic_insert_dentry(struct silofs_dir_ctx *d_ctx,
 
 static int dic_add_dentry(struct silofs_dir_ctx *d_ctx)
 {
+	struct silofs_dnode_info *root_dni = NULL;
 	int ret;
-	struct silofs_dnode_info *root_dni;
 
 	ii_incref(d_ctx->dir_ii);
 	ii_incref(d_ctx->child_ii);
@@ -1695,8 +1695,8 @@ int silofs_add_dentry(const struct silofs_task *task,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.sbi = ii_sbi(dir_ii),
 		.task = task,
+		.sbi = task_sbi(task),
 		.dir_ii = dir_ii,
 		.child_ii = ii,
 		.name = name,
@@ -1716,8 +1716,8 @@ static int dic_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
 
 static int dic_check_stage_parent(struct silofs_dir_ctx *d_ctx)
 {
-	int err;
 	ino_t parent;
+	int err;
 
 	parent = ii_parent(d_ctx->dir_ii);
 	if (ino_isnull(parent)) {
@@ -2002,9 +2002,9 @@ static int dic_iterate_tree_nodes(struct silofs_dir_ctx *d_ctx,
 
 static int dic_iterate_tree(struct silofs_dir_ctx *d_ctx)
 {
-	int err;
 	struct silofs_dnode_info *root_dni = NULL;
 	const size_t start_index = dic_curr_node_index_of(d_ctx);
+	int err;
 
 	if (!dic_isindex_inrange(d_ctx, start_index)) {
 		return dic_readdir_eos(d_ctx);
@@ -2119,7 +2119,7 @@ int silofs_do_readdir(const struct silofs_task *task,
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task = task,
-		.sbi = ii_sbi(dir_ii),
+		.sbi = task_sbi(task),
 		.rd_ctx = rd_ctx,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
@@ -2136,7 +2136,7 @@ int silofs_do_readdirplus(const struct silofs_task *task,
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task = task,
-		.sbi = ii_sbi(dir_ii),
+		.sbi = task_sbi(task),
 		.rd_ctx = rd_ctx,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
@@ -2157,15 +2157,15 @@ static int dic_discard_childs_of(struct silofs_dir_ctx *d_ctx,
 {
 	struct silofs_vaddr child_vaddr;
 	silofs_dtn_ord_t ord;
-	int err = 0;
+	int ret = 0;
 
 	dni_incref(dni);
-	for (ord = 0; (ord < DTREE_FANOUT) && !err; ++ord) {
+	for (ord = 0; (ord < DTREE_FANOUT) && !ret; ++ord) {
 		dtn_child_by_ord(dni->dtn, ord, &child_vaddr);
-		err = dic_discard_recursively(d_ctx, &child_vaddr);
+		ret = dic_discard_recursively(d_ctx, &child_vaddr);
 	}
 	dni_decref(dni);
-	return err;
+	return ret;
 }
 
 static int dic_discard_tree_at(struct silofs_dir_ctx *d_ctx,
@@ -2187,8 +2187,8 @@ static int dic_discard_tree_at(struct silofs_dir_ctx *d_ctx,
 static int dic_discard_recursively(struct silofs_dir_ctx *d_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
+	struct silofs_dnode_info *dni = NULL;
 	int err;
-	struct silofs_dnode_info *dni;
 
 	if (vaddr_isnull(vaddr)) {
 		return 0;
@@ -2206,9 +2206,9 @@ static int dic_discard_recursively(struct silofs_dir_ctx *d_ctx,
 
 static int dic_finalize_tree(struct silofs_dir_ctx *d_ctx)
 {
-	int err;
-	struct silofs_dnode_info *root_dni;
+	struct silofs_dnode_info *root_dni = NULL;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
+	int err;
 
 	if (!dir_has_htree(dir_ii)) {
 		return 0;
@@ -2325,8 +2325,8 @@ int silofs_remove_dentry(const struct silofs_task *task,
                          const struct silofs_qstr *name)
 {
 	struct silofs_dir_ctx d_ctx = {
-		.sbi = ii_sbi(dir_ii),
 		.task = task,
+		.sbi = task_sbi(task),
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
 		.stg_mode = SILOFS_STAGE_RW,
@@ -2351,9 +2351,9 @@ static int verify_dtn_index(silofs_dtn_index_t dtn_index, bool has_tree)
 
 static int verify_dir_root(const struct silofs_inode *inode)
 {
-	int err;
-	loff_t root_off;
 	const struct silofs_inode_dir *idr = idr_of(inode);
+	loff_t root_off;
+	int err;
 
 	root_off = idr_htree_root(idr);
 	err = silofs_verify_off(root_off);

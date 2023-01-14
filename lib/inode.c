@@ -388,9 +388,7 @@ static ino_t rootd_ino(const struct silofs_sb_info *sbi)
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii)
 {
-	const struct silofs_sb_info *sbi = ii_sbi(ii);
-
-	return ii_isdir(ii) && (ii_ino(ii) == rootd_ino(sbi));
+	return ii_isdir(ii) && (ii_ino(ii) == rootd_ino(ii_sbi(ii)));
 }
 
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)

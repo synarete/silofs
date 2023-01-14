@@ -732,8 +732,8 @@ static int check_mknod(const struct silofs_task *task,
                        const struct silofs_namestr *name,
                        mode_t mode, dev_t rdev)
 {
-	int err;
 	const struct silofs_sb_info *sbi = ii_sbi(dir_ii);
+	int err;
 
 	err = check_dir_can_add(task, dir_ii, name);
 	if (err) {
@@ -2114,10 +2114,10 @@ static int do_query_statx(const struct silofs_task *task,
                           struct silofs_inode_info *ii,
                           struct silofs_ioc_query *query)
 {
-	int err;
-	enum silofs_dirf dflags;
 	const unsigned int req_mask = STATX_ALL | STATX_BTIME;
 	const enum silofs_inodef iflags = silofs_ii_flags(ii);
+	enum silofs_dirf dflags;
+	int err;
 
 	err = silofs_do_statx(task, ii, req_mask, &query->u.statx.stx);
 	if (err) {
@@ -2229,7 +2229,7 @@ static int check_clone(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = check_fsowner(task, ii_sbi(ii));
+	err = check_fsowner(task, task_sbi(task));
 	if (err) {
 		return err;
 	}

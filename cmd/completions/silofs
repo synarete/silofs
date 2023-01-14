@@ -64,7 +64,7 @@ _silofs_show() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
   else
-    COMPREPLY+=( $(compgen -W 'version boot prstats spstats statx' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'version boot proc spstats statx' -- "$cur") )
   fi
 }
 

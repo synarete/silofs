@@ -23,7 +23,7 @@ static const char *cmd_show_help_desc[] = {
 	"sub commands:",
 	"  version      Show mounted file-system's version",
 	"  boot         Show back-end repo dir-path and fs-name",
-	"  prstats      Show current internal resources usage",
+	"  proc         Show state of active mount daemon",
 	"  spstats      Show space-allocations stats",
 	"  statx        Show extended file stats",
 	NULL
@@ -71,7 +71,7 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
 	[SILOFS_QUERY_BOOTSEC]  = "boot",
-	[SILOFS_QUERY_PRSTATS]  = "prstats",
+	[SILOFS_QUERY_PROC]     = "proc",
 	[SILOFS_QUERY_SPSTATS]  = "spstats",
 	[SILOFS_QUERY_STATX]    = "statx",
 };
@@ -204,6 +204,11 @@ static void print_msflags(unsigned long msflags)
 	printf("mount-flags: %s\n", mntfstr);
 }
 
+static void print_pid(const char *name, pid_t pid)
+{
+	printf("%s: %ld\n", name, (long)pid);
+}
+
 static void print_time(const char *name, time_t tm)
 {
 	printf("%s: %ld\n", name, tm);
@@ -223,18 +228,19 @@ static void print_count1(const char *name, size_t cnt)
 	printf("%s: %lu\n", name, cnt);
 }
 
-static void cmd_show_prstats(struct cmd_show_ctx *ctx)
+static void cmd_show_proc(struct cmd_show_ctx *ctx)
 {
-	const struct silofs_query_prstats *qfsca = &ctx->query.u.prstats;
+	const struct silofs_query_proc *qpr = &ctx->query.u.proc;
 
 	cmd_show_do_ioctl_query(ctx);
-	print_time("uptime", (time_t)qfsca->uptime);
-	print_msflags(qfsca->msflags);
-	print_count1("memsz_max", qfsca->memsz_max);
-	print_count1("memsz_cur", qfsca->memsz_cur);
-	print_count1("bopen_cur", qfsca->bopen_cur);
-	print_count1("iopen_max", qfsca->iopen_max);
-	print_count1("iopen_cur", qfsca->iopen_cur);
+	print_pid("pid", (pid_t)qpr->pid);
+	print_time("uptime", (time_t)qpr->uptime);
+	print_msflags(qpr->msflags);
+	print_count1("memsz_max", qpr->memsz_max);
+	print_count1("memsz_cur", qpr->memsz_cur);
+	print_count1("bopen_cur", qpr->bopen_cur);
+	print_count1("iopen_max", qpr->iopen_max);
+	print_count1("iopen_cur", qpr->iopen_cur);
 }
 
 static void print_spacestats(const struct silofs_spacestats *spst)
@@ -324,8 +330,8 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_BOOTSEC:
 		cmd_show_boot(ctx);
 		break;
-	case SILOFS_QUERY_PRSTATS:
-		cmd_show_prstats(ctx);
+	case SILOFS_QUERY_PROC:
+		cmd_show_proc(ctx);
 		break;
 	case SILOFS_QUERY_SPSTATS:
 		cmd_show_spstats(ctx);

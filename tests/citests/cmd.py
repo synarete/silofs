@@ -151,8 +151,8 @@ class CmdSilofs(CmdExec):
     def show_boot(self, pathname: str) -> str:
         return self.execute(["show", "boot", pathname])
 
-    def show_prstats(self, pathname: str) -> str:
-        return self.execute(["show", "prstats", pathname])
+    def show_proc(self, pathname: str) -> str:
+        return self.execute(["show", "proc", pathname])
 
     def show_spstats(self, pathname: str) -> str:
         return self.execute(["show", "spstats", pathname])

@@ -2006,22 +2006,25 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
-static void fill_prstats(const struct silofs_sb_info *sbi,
-                         struct silofs_query_prstats *qus)
+static void fill_proc(const struct silofs_sb_info *sbi,
+                      struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
 	const struct silofs_uber *uber = sbi_uber(sbi);
 	const struct silofs_cache *cache = sbi_cache(sbi);
 
 	silofs_allocstat(sbi_alloc(sbi), &alst);
-	silofs_memzero(qus, sizeof(*qus));
-	qus->msflags = sbi->sb_ms_flags;
-	qus->uptime = silofs_uber_uptime(uber);
-	qus->iopen_max = uber->ub_ops.op_iopen_max;
-	qus->iopen_cur = uber->ub_ops.op_iopen;
-	qus->memsz_max = alst.memsz_data;
-	qus->memsz_cur = alst.nbytes_used;
-	qus->bopen_cur = cache->c_bri_lm.lm_lru.sz;
+	silofs_memzero(qpr, sizeof(*qpr));
+	qpr->uid = uber->ub_owner.uid;
+	qpr->gid = uber->ub_owner.gid;
+	qpr->pid = uber->ub_owner.pid;
+	qpr->msflags = sbi->sb_ms_flags;
+	qpr->uptime = silofs_uber_uptime(uber);
+	qpr->iopen_max = uber->ub_ops.op_iopen_max;
+	qpr->iopen_cur = uber->ub_ops.op_iopen;
+	qpr->memsz_max = alst.memsz_data;
+	qpr->memsz_cur = alst.nbytes_used;
+	qpr->bopen_cur = cache->c_bri_lm.lm_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2098,10 +2101,10 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 	}
 }
 
-static void fill_query_prstats(const struct silofs_inode_info *ii,
-                               struct silofs_ioc_query *query)
+static void fill_query_proc(const struct silofs_inode_info *ii,
+                            struct silofs_ioc_query *query)
 {
-	fill_prstats(ii_sbi(ii), &query->u.prstats);
+	fill_proc(ii_sbi(ii), &query->u.proc);
 }
 
 static void fill_query_spstats(const struct silofs_inode_info *ii,
@@ -2147,8 +2150,8 @@ static int do_query_subcmd(struct silofs_task *task,
 	case SILOFS_QUERY_BOOTSEC:
 		fill_query_bootsec(ii, query);
 		break;
-	case SILOFS_QUERY_PRSTATS:
-		fill_query_prstats(ii, query);
+	case SILOFS_QUERY_PROC:
+		fill_query_proc(ii, query);
 		break;
 	case SILOFS_QUERY_SPSTATS:
 		fill_query_spstats(ii, query);

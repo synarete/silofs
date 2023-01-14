@@ -87,36 +87,36 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_query_prstats(struct ut_env *ute, ino_t ino,
-                             struct silofs_query_prstats *out_prst)
+static void ut_query_proc(struct ut_env *ute, ino_t ino,
+                          struct silofs_query_proc *out_qpr)
 {
 	struct silofs_ioc_query query = { .qtype = 0 };
 
-	ut_query_ok(ute, ino, SILOFS_QUERY_PRSTATS, &query);
-	memcpy(out_prst, &query.u.prstats, sizeof(*out_prst));
+	ut_query_ok(ute, ino, SILOFS_QUERY_PROC, &query);
+	memcpy(out_qpr, &query.u.proc, sizeof(*out_qpr));
 }
 
-static void ut_ioctl_query_prstats(struct ut_env *ute)
+static void ut_ioctl_query_proc(struct ut_env *ute)
 {
-	struct silofs_query_prstats prst = { .uptime = -1 };
+	struct silofs_query_proc qpr = { .uptime = -1 };
 	const char *name = UT_NAME;
 	size_t iopen;
 	ino_t dino;
 	ino_t ino;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_query_prstats(ute, dino, &prst);
-	ut_expect_ge(prst.uptime, 0);
-	ut_expect_lt(prst.iopen_cur, prst.iopen_max);
-	ut_expect_eq(prst.iopen_cur, 0);
-	ut_expect_lt(prst.memsz_cur, prst.memsz_max);
-	iopen = prst.iopen_cur;
+	ut_query_proc(ute, dino, &qpr);
+	ut_expect_ge(qpr.uptime, 0);
+	ut_expect_lt(qpr.iopen_cur, qpr.iopen_max);
+	ut_expect_eq(qpr.iopen_cur, 0);
+	ut_expect_lt(qpr.memsz_cur, qpr.memsz_max);
+	iopen = qpr.iopen_cur;
 	ut_create_file(ute, dino, name, &ino);
-	ut_query_prstats(ute, dino, &prst);
-	ut_expect_eq(prst.iopen_cur, iopen + 1);
+	ut_query_proc(ute, dino, &qpr);
+	ut_expect_eq(qpr.iopen_cur, iopen + 1);
 	ut_remove_file(ute, dino, name, ino);
-	ut_query_prstats(ute, dino, &prst);
-	ut_expect_eq(prst.iopen_cur, iopen);
+	ut_query_proc(ute, dino, &qpr);
+	ut_expect_eq(qpr.iopen_cur, iopen);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -125,7 +125,7 @@ static void ut_ioctl_query_prstats(struct ut_env *ute)
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_ioctl_query_version),
 	UT_DEFTEST(ut_ioctl_query_statfsx),
-	UT_DEFTEST(ut_ioctl_query_prstats),
+	UT_DEFTEST(ut_ioctl_query_proc),
 };
 
 const struct ut_testdefs ut_tdefs_ioctl = UT_MKTESTS(ut_local_tests);

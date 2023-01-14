@@ -76,7 +76,7 @@ def test_show(tc: ctx.TestCtx) -> None:
     tc.expect.eq(vers2, vers1.split()[1])
     bsec = tc.cmd.silofs.show_boot(base)
     tc.expect.gt(len(bsec), 1)
-    prst = tc.cmd.silofs.show_prstats(base)
+    prst = tc.cmd.silofs.show_proc(base)
     tc.expect.gt(len(prst), 1)
     spst = tc.cmd.silofs.show_spstats(base)
     tc.expect.gt(len(spst), 1)

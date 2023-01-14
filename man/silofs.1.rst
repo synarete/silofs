@@ -192,8 +192,8 @@ parameter may be one of the following commands:
     Reports the version number of the currently mounted file-system.
   - *boot*
     Reports the back-end repo dirpath and name of the file-system.
-  - *prstats*
-    Show current internal resources usage.
+  - *proc*
+    Show state of active mount daemon.
   - *spstats*
     Show space-allocations stats.
   - *statx*

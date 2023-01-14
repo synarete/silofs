@@ -103,6 +103,10 @@ static void uber_init_commons(struct silofs_uber *uber,
 	uber->ub_ops.op_time = silofs_time_now();
 	uber->ub_ops.op_count = 0;
 	uber->ub_ops.op_iopen_max = uber_calc_iopen_limit(uber);
+
+	uber->ub_owner.uid = getuid();
+	uber->ub_owner.gid = getgid();
+	uber->ub_owner.pid = getpid();
 }
 
 static void uber_fini_commons(struct silofs_uber *uber)

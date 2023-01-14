@@ -20,29 +20,28 @@
 
 /* fuse-q machinery */
 struct silofs_fuseq_conn_info {
-	int     proto_major;
-	int     proto_minor;
-	int     cap_kern;
-	int     cap_want;
-	size_t  pagesize;
-	size_t  buffsize;
-	size_t  max_write;
-	size_t  max_read;
-	size_t  max_readahead;
-	size_t  max_background;
-	size_t  congestion_threshold;
-	size_t  time_gran;
-	size_t  max_inlen;
+	uint32_t        proto_major;
+	uint32_t        proto_minor;
+	uint32_t        cap_kern;
+	uint32_t        cap_want;
+	size_t          pagesize;
+	size_t          buffsize;
+	size_t          max_write;
+	size_t          max_read;
+	size_t          max_readahead;
+	size_t          max_background;
+	size_t          congestion_threshold;
+	size_t          time_gran;
+	size_t          max_inlen;
 } silofs_aligned64;
 
 struct silofs_fuseq_worker {
 	struct silofs_list_head         lh;
 	struct silofs_fuseq            *fq;
-	const struct silofs_fuseq_cmd  *cmd;
 	struct silofs_fuseq_inb        *inb;
 	struct silofs_fuseq_outb       *outb;
 	struct silofs_fuseq_rw_iter    *rwi;
-	struct silofs_oper_ctx         *opc;
+	struct silofs_oper_args        *args;
 	struct silofs_piper             piper;
 	struct silofs_thread            th;
 	unsigned int                    worker_index;
@@ -64,6 +63,7 @@ struct silofs_fuseq {
 	struct silofs_uber             *fq_uber;
 	struct silofs_alloc            *fq_alloc;
 	size_t                          fq_nopers;
+	size_t                          fq_nopers_done;
 	uid_t                           fq_fs_owner;
 	time_t                          fq_times;
 	volatile int                    fq_active;

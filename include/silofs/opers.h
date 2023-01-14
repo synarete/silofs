@@ -28,34 +28,34 @@ struct silofs_task;
 struct silofs_ioc_query;
 struct silofs_ioc_iterfs;
 
-struct silofs_opc_lookup_in {
+struct silofs_op_lookup_in {
 	ino_t parent;
 	const char *name;
 };
 
-struct silofs_opc_lookup_out {
+struct silofs_op_lookup_out {
 	struct stat st;
 };
 
-struct silofs_opc_forget_in {
+struct silofs_op_forget_in {
 	ino_t ino;
 	size_t nlookup;
 };
 
-struct silofs_opc_batch_forget_in {
+struct silofs_op_batch_forget_in {
 	const struct fuse_forget_one *one;
 	size_t count;
 };
 
-struct silofs_opc_getattr_in {
+struct silofs_op_getattr_in {
 	ino_t ino;
 };
 
-struct silofs_opc_getattr_out {
+struct silofs_op_getattr_out {
 	struct stat st;
 };
 
-struct silofs_opc_setattr_in {
+struct silofs_op_setattr_in {
 	struct stat tims;
 	ino_t ino;
 	uid_t uid;
@@ -70,31 +70,31 @@ struct silofs_opc_setattr_in {
 	bool set_nontime;
 };
 
-struct silofs_opc_setattr_out {
+struct silofs_op_setattr_out {
 	struct stat st;
 };
 
-struct silofs_opc_readlink_in {
+struct silofs_op_readlink_in {
 	ino_t ino;
 	char *ptr;
 	size_t lim;
 };
 
-struct silofs_opc_readlink_out {
+struct silofs_op_readlink_out {
 	size_t len;
 };
 
-struct silofs_opc_symlink_in {
+struct silofs_op_symlink_in {
 	ino_t parent;
 	const char *name;
 	const char *symval;
 };
 
-struct silofs_opc_symlink_out {
+struct silofs_op_symlink_out {
 	struct stat st;
 };
 
-struct silofs_opc_mknod_in {
+struct silofs_op_mknod_in {
 	ino_t parent;
 	const char *name;
 	dev_t rdev;
@@ -102,32 +102,32 @@ struct silofs_opc_mknod_in {
 	mode_t umask;
 };
 
-struct silofs_opc_mknod_out {
+struct silofs_op_mknod_out {
 	struct stat st;
 };
 
-struct silofs_opc_mkdir_in {
+struct silofs_op_mkdir_in {
 	ino_t parent;
 	const char *name;
 	mode_t mode;
 	mode_t umask;
 };
 
-struct silofs_opc_mkdir_out {
+struct silofs_op_mkdir_out {
 	struct stat st;
 };
 
-struct silofs_opc_unlink_in {
+struct silofs_op_unlink_in {
 	ino_t parent;
 	const char *name;
 };
 
-struct silofs_opc_rmdir_in {
+struct silofs_op_rmdir_in {
 	ino_t parent;
 	const char *name;
 };
 
-struct silofs_opc_rename_in {
+struct silofs_op_rename_in {
 	ino_t parent;
 	const char *name;
 	ino_t newparent;
@@ -135,42 +135,42 @@ struct silofs_opc_rename_in {
 	int flags;
 };
 
-struct silofs_opc_link_in {
+struct silofs_op_link_in {
 	ino_t ino;
 	ino_t parent;
 	const char *name;
 };
 
-struct silofs_opc_link_out {
+struct silofs_op_link_out {
 	struct stat st;
 };
 
-struct silofs_opc_open_in {
+struct silofs_op_open_in {
 	ino_t ino;
 	int o_flags;
 	int noflush;
 };
 
-struct silofs_opc_statfs_in {
+struct silofs_op_statfs_in {
 	ino_t ino;
 };
 
-struct silofs_opc_statfs_out {
+struct silofs_op_statfs_out {
 	struct statvfs stv;
 };
 
-struct silofs_opc_release_in {
+struct silofs_op_release_in {
 	ino_t ino;
 	int o_flags;
 	bool flush;
 };
 
-struct silofs_opc_fsync_in {
+struct silofs_op_fsync_in {
 	ino_t ino;
 	bool datasync;
 };
 
-struct silofs_opc_setxattr_in {
+struct silofs_op_setxattr_in {
 	ino_t ino;
 	const char *name;
 	const void *value;
@@ -179,57 +179,57 @@ struct silofs_opc_setxattr_in {
 	bool kill_sgid;
 };
 
-struct silofs_opc_getxattr_in {
+struct silofs_op_getxattr_in {
 	ino_t ino;
 	const char *name;
 	void *buf;
 	size_t size;
 };
 
-struct silofs_opc_getxattr_out {
+struct silofs_op_getxattr_out {
 	size_t size;
 };
 
-struct silofs_opc_listxattr_in {
+struct silofs_op_listxattr_in {
 	ino_t ino;
 	struct silofs_listxattr_ctx *lxa_ctx;
 };
 
-struct silofs_opc_removexattr_in {
+struct silofs_op_removexattr_in {
 	ino_t ino;
 	const char *name;
 };
 
-struct silofs_opc_flush_in {
+struct silofs_op_flush_in {
 	ino_t ino;
 };
 
-struct silofs_opc_opendir_in {
+struct silofs_op_opendir_in {
 	ino_t ino;
 	int o_flags;
 };
 
-struct silofs_opc_readdir_in {
+struct silofs_op_readdir_in {
 	ino_t ino;
 	struct silofs_readdir_ctx *rd_ctx;
 };
 
-struct silofs_opc_releasedir_in {
+struct silofs_op_releasedir_in {
 	ino_t ino;
 	int o_flags;
 };
 
-struct silofs_opc_fsyncdir_in {
+struct silofs_op_fsyncdir_in {
 	ino_t ino;
 	int datasync;
 };
 
-struct silofs_opc_access_in {
+struct silofs_op_access_in {
 	ino_t ino;
 	int mask;
 };
 
-struct silofs_opc_create_in {
+struct silofs_op_create_in {
 	ino_t parent;
 	const char *name;
 	int o_flags;
@@ -237,28 +237,28 @@ struct silofs_opc_create_in {
 	mode_t umask;
 };
 
-struct silofs_opc_create_out {
+struct silofs_op_create_out {
 	struct stat st;
 };
 
-struct silofs_opc_fallocate_in {
+struct silofs_op_fallocate_in {
 	ino_t ino;
 	int mode;
 	loff_t off;
 	loff_t len;
 };
 
-struct silofs_opc_lseek_in {
+struct silofs_op_lseek_in {
 	ino_t ino;
 	loff_t off;
 	int whence;
 };
 
-struct silofs_opc_lseek_out {
+struct silofs_op_lseek_out {
 	loff_t off;
 };
 
-struct silofs_opc_copy_file_range_in {
+struct silofs_op_copy_file_range_in {
 	ino_t ino_in;
 	loff_t off_in;
 	ino_t ino_out;
@@ -267,11 +267,11 @@ struct silofs_opc_copy_file_range_in {
 	int flags;
 };
 
-struct silofs_opc_copy_file_range_out {
+struct silofs_op_copy_file_range_out {
 	size_t  ncp;
 };
 
-struct silofs_opc_read_in {
+struct silofs_op_read_in {
 	ino_t ino;
 	void *buf;
 	size_t len;
@@ -279,11 +279,11 @@ struct silofs_opc_read_in {
 	struct silofs_rwiter_ctx *rwi_ctx;
 };
 
-struct silofs_opc_read_out {
+struct silofs_op_read_out {
 	size_t nrd;
 };
 
-struct silofs_opc_write_in {
+struct silofs_op_write_in {
 	ino_t ino;
 	const void *buf;
 	size_t len;
@@ -291,96 +291,95 @@ struct silofs_opc_write_in {
 	struct silofs_rwiter_ctx *rwi_ctx;
 };
 
-struct silofs_opc_write_out {
+struct silofs_op_write_out {
 	size_t nwr;
 };
 
-struct silofs_opc_syncfs_in {
+struct silofs_op_syncfs_in {
 	ino_t ino;
 };
 
-struct silofs_opc_query_in {
+struct silofs_op_query_in {
 	ino_t ino;
 	enum silofs_query_type qtype;
 };
 
-struct silofs_opc_query_out {
+struct silofs_op_query_out {
 	struct silofs_ioc_query qry;
 };
 
-struct silofs_opc_clone_in {
+struct silofs_op_clone_in {
 	ino_t ino;
 	int flags;
 };
 
-struct silofs_opc_clone_out {
+struct silofs_op_clone_out {
 	struct silofs_bootsecs bsecs;
 };
 
-union silofs_oper_ctx_in {
-	struct silofs_opc_lookup_in             lookup;
-	struct silofs_opc_forget_in             forget;
-	struct silofs_opc_batch_forget_in       batch_forget;
-	struct silofs_opc_getattr_in            getattr;
-	struct silofs_opc_setattr_in            setattr;
-	struct silofs_opc_readlink_in           readlink;
-	struct silofs_opc_symlink_in            symlink;
-	struct silofs_opc_mknod_in              mknod;
-	struct silofs_opc_mkdir_in              mkdir;
-	struct silofs_opc_unlink_in             unlink;
-	struct silofs_opc_rmdir_in              rmdir;
-	struct silofs_opc_rename_in             rename;
-	struct silofs_opc_link_in               link;
-	struct silofs_opc_open_in               open;
-	struct silofs_opc_statfs_in             statfs;
-	struct silofs_opc_release_in            release;
-	struct silofs_opc_fsync_in              fsync;
-	struct silofs_opc_setxattr_in           setxattr;
-	struct silofs_opc_getxattr_in           getxattr;
-	struct silofs_opc_listxattr_in          listxattr;
-	struct silofs_opc_removexattr_in        removexattr;
-	struct silofs_opc_flush_in              flush;
-	struct silofs_opc_opendir_in            opendir;
-	struct silofs_opc_readdir_in            readdir;
-	struct silofs_opc_releasedir_in         releasedir;
-	struct silofs_opc_fsyncdir_in           fsyncdir;
-	struct silofs_opc_access_in             access;
-	struct silofs_opc_create_in             create;
-	struct silofs_opc_fallocate_in          fallocate;
-	struct silofs_opc_lseek_in              lseek;
-	struct silofs_opc_copy_file_range_in    copy_file_range;
-	struct silofs_opc_read_in               read;
-	struct silofs_opc_write_in              write;
-	struct silofs_opc_syncfs_in             syncfs;
-	struct silofs_opc_query_in              query;
-	struct silofs_opc_clone_in              clone;
+union silofs_oper_args_in {
+	struct silofs_op_lookup_in              lookup;
+	struct silofs_op_forget_in              forget;
+	struct silofs_op_batch_forget_in        batch_forget;
+	struct silofs_op_getattr_in             getattr;
+	struct silofs_op_setattr_in             setattr;
+	struct silofs_op_readlink_in            readlink;
+	struct silofs_op_symlink_in             symlink;
+	struct silofs_op_mknod_in               mknod;
+	struct silofs_op_mkdir_in               mkdir;
+	struct silofs_op_unlink_in              unlink;
+	struct silofs_op_rmdir_in               rmdir;
+	struct silofs_op_rename_in              rename;
+	struct silofs_op_link_in                link;
+	struct silofs_op_open_in                open;
+	struct silofs_op_statfs_in              statfs;
+	struct silofs_op_release_in             release;
+	struct silofs_op_fsync_in               fsync;
+	struct silofs_op_setxattr_in            setxattr;
+	struct silofs_op_getxattr_in            getxattr;
+	struct silofs_op_listxattr_in           listxattr;
+	struct silofs_op_removexattr_in         removexattr;
+	struct silofs_op_flush_in               flush;
+	struct silofs_op_opendir_in             opendir;
+	struct silofs_op_readdir_in             readdir;
+	struct silofs_op_releasedir_in          releasedir;
+	struct silofs_op_fsyncdir_in            fsyncdir;
+	struct silofs_op_access_in              access;
+	struct silofs_op_create_in              create;
+	struct silofs_op_fallocate_in           fallocate;
+	struct silofs_op_lseek_in               lseek;
+	struct silofs_op_copy_file_range_in     copy_file_range;
+	struct silofs_op_read_in                read;
+	struct silofs_op_write_in               write;
+	struct silofs_op_syncfs_in              syncfs;
+	struct silofs_op_query_in               query;
+	struct silofs_op_clone_in               clone;
 } silofs_aligned64;
 
-union silofs_oper_ctx_out {
-	struct silofs_opc_lookup_out            lookup;
-	struct silofs_opc_getattr_out           getattr;
-	struct silofs_opc_setattr_out           setattr;
-	struct silofs_opc_readlink_out          readlink;
-	struct silofs_opc_symlink_out           symlink;
-	struct silofs_opc_mknod_out             mknod;
-	struct silofs_opc_mkdir_out             mkdir;
-	struct silofs_opc_link_out              link;
-	struct silofs_opc_statfs_out            statfs;
-	struct silofs_opc_getxattr_out          getxattr;
-	struct silofs_opc_create_out            create;
-	struct silofs_opc_lseek_out             lseek;
-	struct silofs_opc_copy_file_range_out   copy_file_range;
-	struct silofs_opc_read_out              read;
-	struct silofs_opc_write_out             write;
-	struct silofs_opc_query_out             query;
-	struct silofs_opc_clone_out             clone;
+union silofs_oper_args_out {
+	struct silofs_op_lookup_out             lookup;
+	struct silofs_op_getattr_out            getattr;
+	struct silofs_op_setattr_out            setattr;
+	struct silofs_op_readlink_out           readlink;
+	struct silofs_op_symlink_out            symlink;
+	struct silofs_op_mknod_out              mknod;
+	struct silofs_op_mkdir_out              mkdir;
+	struct silofs_op_link_out               link;
+	struct silofs_op_statfs_out             statfs;
+	struct silofs_op_getxattr_out           getxattr;
+	struct silofs_op_create_out             create;
+	struct silofs_op_lseek_out              lseek;
+	struct silofs_op_copy_file_range_out    copy_file_range;
+	struct silofs_op_read_out               read;
+	struct silofs_op_write_out              write;
+	struct silofs_op_query_out              query;
+	struct silofs_op_clone_out              clone;
 } silofs_aligned64;
 
-struct silofs_oper_ctx {
-	union silofs_oper_ctx_in        opc_in;
-	union silofs_oper_ctx_out       opc_out;
-	struct silofs_task              opc_task;
-	long opc_ioc_cmd;
+struct silofs_oper_args {
+	union silofs_oper_args_in               in;
+	union silofs_oper_args_out              out;
+	long ioc_cmd;
 } silofs_aligned64;
 
 

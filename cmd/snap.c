@@ -33,7 +33,7 @@ static const char *cmd_snap_help_desc[] = {
 	"",
 	"options:",
 	"  -n, --name=snapname          Result snapshot name",
-	"  -L, --offline                Operate on non-mounted file-system"
+	"  -L, --offline                Operate on non-mounted file-system",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };

@@ -28,7 +28,7 @@
 /* Local functions forward declarations */
 static void cmd_setup_globals(int argc, char *argv[]);
 static void cmd_parse_global_args(void);
-static void cmd_boot_libsilofs(void);
+static void cmd_init_libsilofs(void);
 static void cmd_resolve_caps(void);
 static void cmd_execute_sub(void);
 static void cmd_clean_postexec(void);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	cmd_parse_global_args();
 
 	/* Common library initializations */
-	cmd_boot_libsilofs();
+	cmd_init_libsilofs();
 
 	/* Resolve process capabilities */
 	cmd_resolve_caps();
@@ -117,7 +117,7 @@ static void cmd_setup_globals(int argc, char *argv[])
 	error_print_progname = cmd_error_print_progname;
 }
 
-static void cmd_boot_libsilofs(void)
+static void cmd_init_libsilofs(void)
 {
 	int err;
 
@@ -130,9 +130,9 @@ static void cmd_boot_libsilofs(void)
 
 static void cmd_resolve_caps(void)
 {
-	int err = 1;
 	cap_t cap;
 	cap_flag_value_t flag = CAP_CLEAR;
+	int err = 1;
 
 	cap = cap_get_pid(getpid());
 	if (cap != NULL) {

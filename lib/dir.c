@@ -636,7 +636,6 @@ dtn_de_at_slot(const struct silofs_dtree_node *dtn, size_t slot)
 {
 	const size_t nde = dtn_nde(dtn);
 
-	silofs_assert_le(slot, ARRAY_SIZE(dtn->dn_data.de));
 	return (slot < nde) ? &dtn->dn_data.de[slot] : dtn_de_end(dtn);
 }
 

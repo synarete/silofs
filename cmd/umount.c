@@ -37,7 +37,8 @@ struct cmd_umount_in_args {
 
 struct cmd_umount_ctx {
 	struct cmd_umount_in_args in_args;
-	long pad;
+	struct silofs_ioc_query   query;
+	bool notconn;
 };
 
 static struct cmd_umount_ctx *cmd_umount_ctx;
@@ -92,6 +93,24 @@ static void cmd_umount_start(struct cmd_umount_ctx *ctx)
 	atexit(cmd_umount_atexit);
 }
 
+static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
+{
+	int fd = -1;
+	int err;
+
+	err = silofs_sys_open(ctx->in_args.mntpoint_real, O_RDONLY, 0, &fd);
+	if (err) {
+		cmd_dief(err, "failed to open: %s",
+		         ctx->in_args.mntpoint_real);
+	}
+	ctx->query.qtype = SILOFS_QUERY_PROC;
+	err = silofs_sys_ioctlp(fd, SILOFS_FS_IOC_QUERY, &ctx->query);
+	if (err) {
+		cmd_dief(err, "ioctl error: %s", ctx->in_args.mntpoint_real);
+	}
+	silofs_sys_close(fd);
+}
+
 static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 {
 	struct stat st;
@@ -102,10 +121,12 @@ static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 	if ((err == -ENOTCONN) && ctx->in_args.force) {
 		silofs_log_debug("transport endpoint not connected: %s",
 		                 ctx->in_args.mntpoint);
+		ctx->notconn = true;
 		return;
 	}
 	cmd_realpath(ctx->in_args.mntpoint, &ctx->in_args.mntpoint_real);
 	cmd_check_mntdir(ctx->in_args.mntpoint_real, false);
+	cmd_umount_probe_proc(ctx);
 }
 
 static const char *cmd_umount_dirpath(const struct cmd_umount_ctx *ctx)
@@ -172,12 +193,28 @@ static void cmd_umount_probe_statvfs(const struct cmd_umount_ctx *ctx)
 	}
 }
 
+static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
+{
+	pid_t pid;
+	pid_t pgid;
+	int retry = 30;
+
+	pid = (pid_t)(ctx->query.u.proc.pid);
+	if (!ctx->notconn && (pid > 0)) {
+		pgid = getpgid(pid);
+		while ((--retry > 0) && (pgid > 0)) {
+			sleep(1);
+			pgid = getpgid(pid);
+		}
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_execute_umount(void)
 {
 	struct cmd_umount_ctx ctx = {
-		.pad = 0,
+		.query.qtype = 0,
 	};
 
 	/* Do all cleanups upon exits */
@@ -194,6 +231,9 @@ void cmd_execute_umount(void)
 
 	/* Post-umount checks */
 	cmd_umount_probe_statvfs(&ctx);
+
+	/* Wait for server process to terminate */
+	cmd_umount_wait_nopid(&ctx);
 
 	/* Post execution cleanups */
 	cmd_umount_finalize(&ctx);

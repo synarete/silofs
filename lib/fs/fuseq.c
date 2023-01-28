@@ -43,6 +43,7 @@
 #error "wrong FUSE_KERNEL_MINOR_VERSION"
 #endif
 
+#define fuseq_log_dbg(fmt, ...)  silofs_log_debug("fuseq: " fmt, __VA_ARGS__)
 #define fuseq_log_info(fmt, ...) silofs_log_info("fuseq: " fmt, __VA_ARGS__)
 #define fuseq_log_warn(fmt, ...) silofs_log_warn("fuseq: " fmt, __VA_ARGS__)
 #define fuseq_log_err(fmt, ...)  silofs_log_error("fuseq: " fmt, __VA_ARGS__)
@@ -3934,7 +3935,7 @@ static int fuseq_start_workers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	int err;
 
-	fuseq_log_info("start workers: nworkers=%d", fws->fws_navail);
+	fuseq_log_dbg("start workers: nworkers=%d", fws->fws_navail);
 	fq->fq_active = 1;
 	fws->fws_nactive = 0;
 	for (size_t i = 0; i < fws->fws_navail; ++i) {
@@ -3951,7 +3952,7 @@ static void fuseq_finish_workers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 
-	fuseq_log_info("finish workers: nworkers=%d", fws->fws_nactive);
+	fuseq_log_dbg("finish workers: nworkers=%d", fws->fws_nactive);
 	fq->fq_active = 0;
 	for (size_t i = 0; i < fws->fws_nactive; ++i) {
 		fuseq_join_thread(&fws->fws_workers[i]);
@@ -3962,13 +3963,11 @@ int silofs_fuseq_exec(struct silofs_fuseq *fq)
 {
 	int err;
 
-	fuseq_log_info("exec: nprocs=%ld", silofs_sc_nproc_onln());
 	err = fuseq_start_workers(fq);
 	if (!err) {
 		fuseq_suspend_while_active(fq);
 	}
 	fuseq_finish_workers(fq);
-	fuseq_log_info("done: nprocs=%ld", silofs_sc_nproc_onln());
 	return err;
 }
 

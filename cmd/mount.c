@@ -379,6 +379,7 @@ static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 	silofs_log_info("modes: rdonly=%d noexec=%d nodev=%d nosuid=%d",
 	                (int)ctx->in_args.rdonly, (int)ctx->in_args.noexec,
 	                (int)ctx->in_args.nodev, (int)ctx->in_args.nosuid);
+	silofs_log_info("nprocs: %u", silofs_sc_nproc_onln());
 }
 
 static void cmd_mount_trace_finish(const struct cmd_mount_ctx *ctx)

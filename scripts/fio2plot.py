@@ -58,7 +58,7 @@ class FioArgs:
         args += ["--ioengine={}".format(self.ioengine)]
         args += ["--time_based"] + ["--runtime={}".format(self.runtime)]
         args += ["--sync=0", "--direct=0", "--thinktime=0"]
-        args += ["--thinktime=0", "--norandommap", "--group_reporting"]
+        args += ["--norandommap", "--group_reporting"]
         args += ["--randrepeat=1", "--unlink=1", "--fsync_on_close=1"]
         args += ["--minimal"]
         return args

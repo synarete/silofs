@@ -141,10 +141,7 @@ static void vbki_free(struct silofs_vbk_info *vbki,
 
 static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 {
-	uint64_t h[2];
-
-	silofs_blobid_as_u128(blobid, h);
-	return silofs_hash_xxh64(h, sizeof(h), blobid->vspace);
+	return silofs_blobid_hash(blobid);
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
@@ -156,7 +153,7 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
+	return silofs_blobid_hash(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
 }
 
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)

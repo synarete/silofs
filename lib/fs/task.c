@@ -659,8 +659,17 @@ static struct silofs_commitq *
 commitqs_sub(const struct silofs_commitqs *cqs,
              const struct silofs_commit_info *cmi)
 {
-	const size_t idx = (size_t)(cmi->task->t_id) % cqs->cqs_count;
+	const struct silofs_blobid *blobid = &cmi->bri->br_blobid;
+	const enum silofs_stype stype = blobid->vspace;
+	uint64_t hash;
+	size_t idx;
 
+	if (!stype_isdata(stype) || (cqs->cqs_count < 2)) {
+		idx = 0;
+	} else {
+		hash = silofs_blobid_hash(blobid);
+		idx = (hash % (cqs->cqs_count - 1)) + 1;
+	}
 	return &cqs->cqs_set[idx];
 }
 

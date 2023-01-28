@@ -60,7 +60,7 @@ struct silofs_commitq {
 	int                     cq_index;
 };
 
-/* commits flush set */
+/* commit-queues flush set */
 struct silofs_commitqs {
 	struct silofs_alloc    *cqs_alloc;
 	struct silofs_commitq  *cqs_set;

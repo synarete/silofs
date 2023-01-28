@@ -721,6 +721,14 @@ void silofs_blobid_as_u128(const struct silofs_blobid *blobid, uint64_t h[2])
 	h[1] = blobid_as_u64_by_meta(blobid);
 }
 
+uint64_t silofs_blobid_hash(const struct silofs_blobid *blobid)
+{
+	uint64_t h[2];
+
+	silofs_blobid_as_u128(blobid, h);
+	return silofs_hash_xxh64(h, sizeof(h), blobid->vspace);
+}
+
 void silofs_blobid_make_ta(struct silofs_blobid *blobid,
                            const struct silofs_treeid *treeid,
                            loff_t voff, enum silofs_stype vspace,

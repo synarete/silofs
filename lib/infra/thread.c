@@ -137,14 +137,23 @@ int silofs_mutex_init(struct silofs_mutex *mutex)
 	pthread_mutexattr_t attr;
 	int err;
 
-	pthread_mutexattr_init(&attr);
+	err = pthread_mutexattr_init(&attr);
+	if (err) {
+		return silofs_pthread_err(err, "pthread_mutexattr_init");
+	}
 	err = pthread_mutexattr_settype(&attr, SILOFS_MUTEX_KIND);
 	if (err) {
+		pthread_mutexattr_destroy(&attr);
 		return silofs_pthread_err(err, "pthread_mutexattr_settype");
 	}
 	err = pthread_mutex_init(&mutex->mutex, &attr);
-	pthread_mutexattr_destroy(&attr);
 	if (err) {
+		pthread_mutexattr_destroy(&attr);
+		return silofs_pthread_err(err, "pthread_mutex_init");
+	}
+	err = pthread_mutexattr_destroy(&attr);
+	if (err) {
+		pthread_mutex_destroy(&mutex->mutex);
 		return silofs_pthread_err(err, "pthread_mutexattr_destroy");
 	}
 	return 0;
@@ -236,6 +245,7 @@ int silofs_cond_init(struct silofs_cond *cond)
 	}
 	err = pthread_condattr_destroy(&attr);
 	if (err) {
+		pthread_cond_destroy(&cond->cond);
 		return silofs_pthread_err(err, "pthread_condattr_destroy");
 	}
 	return 0;
@@ -305,31 +315,117 @@ void silofs_cond_broadcast(struct silofs_cond *cond)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define SILOFS_LOCKF_INIT       (1L)
-
-int silofs_lock_init(struct silofs_lock *lock)
+int silofs_rwlock_init(struct silofs_rwlock *rwlock)
 {
+	pthread_rwlockattr_t attr;
 	int err;
 
-	memset(lock, 0, sizeof(*lock));
-	err = silofs_cond_init(&lock->co);
+	err = pthread_rwlockattr_init(&attr);
 	if (err) {
-		return err;
+		return silofs_pthread_err(err, "pthread_rwlockattr_init");
 	}
-	err = silofs_mutex_init(&lock->mu);
+	err = pthread_rwlock_init(&rwlock->rwlock, &attr);
 	if (err) {
-		silofs_cond_fini(&lock->co);
-		return err;
+		pthread_rwlockattr_destroy(&attr);
+		return silofs_pthread_err(err, "pthread_rwlock_init");
 	}
-	lock->flags |= SILOFS_LOCKF_INIT;
+	err = pthread_rwlockattr_destroy(&attr);
+	if (err) {
+		pthread_rwlock_destroy(&rwlock->rwlock);
+		return silofs_pthread_err(err, "pthread_rwlockattr_destroy");
+	}
 	return 0;
 }
 
-void silofs_lock_fini(struct silofs_lock *lock)
+void silofs_rwlock_fini(struct silofs_rwlock *rwlock)
 {
-	if (lock->flags & SILOFS_LOCKF_INIT) {
-		silofs_mutex_fini(&lock->mu);
-		silofs_cond_fini(&lock->co);
-		lock->flags &= ~SILOFS_LOCKF_INIT;
+	int err;
+
+	err = pthread_rwlock_destroy(&rwlock->rwlock);
+	if (err) {
+		silofs_panic("pthread_rwlock_destroy: %d", err);
+	}
+}
+
+void silofs_rwlock_rdlock(struct silofs_rwlock *rwlock)
+{
+	int err;
+
+	err = pthread_rwlock_rdlock(&rwlock->rwlock);
+	if (err) {
+		silofs_panic("pthread_rwlock_rdlock: %d", err);
+	}
+}
+
+bool silofs_rwlock_tryrdlock(struct silofs_rwlock *rwlock)
+{
+	int err;
+
+	err = pthread_rwlock_tryrdlock(&rwlock->rwlock);
+	if (err && (err != EBUSY)) {
+		silofs_panic("pthread_rwlock_tryrdlock: %d", err);
+	}
+	return (err == 0);
+}
+
+void silofs_rwlock_wrlock(struct silofs_rwlock *rwlock)
+{
+	int err;
+
+	err = pthread_rwlock_wrlock(&rwlock->rwlock);
+	if (err) {
+		silofs_panic("pthread_rwlock_wrlock: %d", err);
+	}
+}
+
+bool silofs_rwlock_trywrlock(struct silofs_rwlock *rwlock)
+{
+	int err;
+
+	err = pthread_rwlock_trywrlock(&rwlock->rwlock);
+	if (err && (err != EBUSY)) {
+		silofs_panic("pthread_rwlock_trywrlock: %d", err);
+	}
+	return (err == 0);
+}
+
+void silofs_rwlock_unlock(struct silofs_rwlock *rwlock)
+{
+	int err;
+
+	err = pthread_rwlock_unlock(&rwlock->rwlock);
+	if (err) {
+		silofs_panic("silofs_rwlock_unlock: %d", err);
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+#define SILOFS_MUCOF_INIT       (1L)
+
+int silofs_muco_init(struct silofs_muco *mocu)
+{
+	int err;
+
+	memset(mocu, 0, sizeof(*mocu));
+	err = silofs_cond_init(&mocu->co);
+	if (err) {
+		return err;
+	}
+	err = silofs_mutex_init(&mocu->mu);
+	if (err) {
+		silofs_cond_fini(&mocu->co);
+		return err;
+	}
+	mocu->flags |= SILOFS_MUCOF_INIT;
+	return 0;
+}
+
+void silofs_muco_fini(struct silofs_muco *mocu)
+{
+	if (mocu->flags & SILOFS_MUCOF_INIT) {
+		silofs_mutex_fini(&mocu->mu);
+		silofs_cond_fini(&mocu->co);
+		mocu->flags &= ~SILOFS_MUCOF_INIT;
 	}
 }

@@ -42,7 +42,11 @@ struct silofs_cond {
 	pthread_cond_t          cond;
 };
 
-struct silofs_lock {
+struct silofs_rwlock {
+	pthread_rwlock_t        rwlock;
+};
+
+struct silofs_muco {
 	struct silofs_cond      co;
 	struct silofs_mutex     mu;
 	long flags;
@@ -90,8 +94,23 @@ void silofs_cond_signal(struct silofs_cond *cond);
 void silofs_cond_broadcast(struct silofs_cond *cond);
 
 
-int silofs_lock_init(struct silofs_lock *lock);
+int silofs_rwlock_init(struct silofs_rwlock *rwlock);
 
-void silofs_lock_fini(struct silofs_lock *lock);
+void silofs_rwlock_fini(struct silofs_rwlock *rwlock);
+
+void silofs_rwlock_rdlock(struct silofs_rwlock *rwlock);
+
+bool silofs_rwlock_tryrdlock(struct silofs_rwlock *rwlock);
+
+void silofs_rwlock_wrlock(struct silofs_rwlock *rwlock);
+
+bool silofs_rwlock_trywrlock(struct silofs_rwlock *rwlock);
+
+void silofs_rwlock_unlock(struct silofs_rwlock *rwlock);
+
+
+int silofs_muco_init(struct silofs_muco *muco);
+
+void silofs_muco_fini(struct silofs_muco *muco);
 
 #endif /* SILOFS_THREAD_H_ */

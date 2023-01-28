@@ -23,7 +23,7 @@ struct silofs_task {
 	struct silofs_uber     *t_uber;
 	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
-	long                    t_id;
+	uint64_t                t_apex_cid;
 	volatile int            t_interrupt;
 };
 
@@ -42,6 +42,7 @@ struct silofs_commit_info {
 	struct silofs_blobref_info *bri;
 	struct silofs_commit_ref    ref[32];
 	struct silofs_blobid        bid;
+	uint64_t        commit_id;
 	void           *buf;
 	loff_t          off;
 	size_t          len;

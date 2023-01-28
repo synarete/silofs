@@ -173,6 +173,7 @@ static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 	cmi->task = task;
 	cmi->bri = NULL;
 	cmi->bid.size = 0;
+	cmi->commit_id = 0;
 	cmi->off = -1;
 	cmi->len = 0;
 	cmi->cnt = 0;
@@ -307,6 +308,15 @@ static void task_unlink_commit(struct silofs_task *task,
 	listq_remove(&task->t_pendq, &cmi->tlh);
 }
 
+static void task_set_commit_id(struct silofs_task *task,
+                               struct silofs_commit_info *cmi)
+{
+	cmi->commit_id = ++(task->t_uber->ub_commit_id);
+	if (likely(cmi->commit_id > task->t_apex_cid)) {
+		task->t_apex_cid = cmi->commit_id;
+	}
+}
+
 int silofs_task_make_commit(struct silofs_task *task,
                             struct silofs_commit_info **out_cmi)
 {
@@ -317,6 +327,7 @@ int silofs_task_make_commit(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
+	task_set_commit_id(task, cmi);
 	task_push_commit(task, cmi);
 	*out_cmi = cmi;
 	return 0;
@@ -418,7 +429,8 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 	memset(task, 0, sizeof(*task));
 	listq_init(&task->t_pendq);
 	task->t_uber = uber;
-	task->t_id = silofs_atomic_addl(&uber->ub_task_id, 1);
+	task->t_apex_cid = 0;
+	task->t_interrupt = 0;
 	return silofs_lock_init(&task->t_lock);
 }
 

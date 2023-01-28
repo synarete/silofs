@@ -86,8 +86,8 @@ bool silofs_cache_need_flush(const struct silofs_cache *cache,
 
 size_t silofs_cache_accum_ndirty(const struct silofs_cache *cache);
 
-void silofs_cache_fill_into_dset(struct silofs_cache *cache,
-                                 struct silofs_dset *dset, silofs_dqid_t dqid);
+void silofs_cache_fill_dsets(struct silofs_cache *cache,
+                             struct silofs_dsets *dsets, silofs_dqid_t dqid);
 
 void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
                                     const struct silofs_dset *dset);

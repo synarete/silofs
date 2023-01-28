@@ -1565,8 +1565,7 @@ static bool cache_evict_or_relru_bri(struct silofs_cache *cache,
 }
 
 static size_t
-cache_shrink_or_relru_bris(struct silofs_cache *cache, size_t cnt,
-                           bool force)
+cache_shrink_or_relru_bris(struct silofs_cache *cache, size_t cnt, bool force)
 {
 	struct silofs_blobref_info *bri;
 	const size_t n = min(cnt, cache->c_bri_lm.lm_lru.sz);
@@ -3273,41 +3272,57 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-cache_fill_into_dset_by(const struct silofs_cache *cache,
-                        struct silofs_dset *dset, silofs_dqid_t dqid)
+static struct silofs_dset *
+dset_of(struct silofs_dsets *dsets, enum silofs_stype stype)
 {
+	const size_t idx = (size_t)stype;
+
+	return likely(idx < ARRAY_SIZE(dsets->dset)) ?
+	       &dsets->dset[idx] : NULL;
+}
+
+
+static void
+cache_fill_into_dsets_by(const struct silofs_cache *cache,
+                         struct silofs_dsets *dsets, silofs_dqid_t dqid)
+{
+	struct silofs_dset *dset;
 	struct silofs_snode_info *si = NULL;
 
 	si = cache_dq_front_si(cache, dqid);
 	while (si != NULL) {
 		if (!si->s_noflush) {
-			dset->ds_add_fn(dset, si);
+			dset = dset_of(dsets, si->s_stype);
+			if (likely(dset != NULL)) {
+				dset->ds_add_fn(dset, si);
+			}
 		}
 		si = cache_dq_next_si(cache, si);
 	}
 }
 
-static void cache_fill_into_dset(const struct silofs_cache *cache,
-                                 struct silofs_dset *dset, silofs_dqid_t dqid)
+static void
+cache_fill_into_dsets(const struct silofs_cache *cache,
+                      struct silofs_dsets *dsets, silofs_dqid_t dqid)
 {
 	if (dqid == SILOFS_DQID_ALL) {
 		for (size_t i = 0; i < ARRAY_SIZE(cache->c_dqs.dq); ++i) {
-			cache_fill_into_dset_by(cache, dset, i);
+			cache_fill_into_dsets_by(cache, dsets, i);
 		}
 	} else if (dqid == SILOFS_DQID_DFL) {
-		cache_fill_into_dset_by(cache, dset, SILOFS_DQID_DFL);
+		cache_fill_into_dsets_by(cache, dsets, SILOFS_DQID_DFL);
 	} else {
-		cache_fill_into_dset_by(cache, dset, dqid);
-		cache_fill_into_dset_by(cache, dset, SILOFS_DQID_DFL);
+		cache_fill_into_dsets_by(cache, dsets, dqid);
+		cache_fill_into_dsets_by(cache, dsets, SILOFS_DQID_DFL);
 	}
 }
 
-void silofs_cache_fill_into_dset(struct silofs_cache *cache,
-                                 struct silofs_dset *dset, silofs_dqid_t dqid)
+void silofs_cache_fill_dsets(struct silofs_cache *cache,
+                             struct silofs_dsets *dsets,
+                             silofs_dqid_t dqid)
 {
 	cache_pre_op(cache);
-	cache_fill_into_dset(cache, dset, dqid);
+	cache_fill_into_dsets(cache, dsets, dqid);
 	cache_post_op(cache);
 }
 

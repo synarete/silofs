@@ -27,7 +27,7 @@
 
 
 struct silofs_flush_ctx {
-	struct silofs_dset      dset;
+	struct silofs_dsets     dsets;
 	struct silofs_task     *task;
 	struct silofs_alloc    *alloc;
 	struct silofs_uber     *uber;
@@ -200,7 +200,7 @@ static void dset_seal_all(const struct silofs_dset *dset)
 	}
 }
 
-static void dsek_mkfifo(struct silofs_dset *dset)
+static void dset_mkfifo(struct silofs_dset *dset)
 {
 	struct silofs_snode_info *si;
 	const struct silofs_avl_node *end;
@@ -219,47 +219,74 @@ static void dsek_mkfifo(struct silofs_dset *dset)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void flc_init_dset(struct silofs_flush_ctx *fl_ctx)
+static void dsets_init(struct silofs_dsets *dsets)
 {
-	dset_init(&fl_ctx->dset);
+	for (size_t i = 0; i < ARRAY_SIZE(dsets->dset); ++i) {
+		dset_init(&dsets->dset[i]);
+	}
 }
 
-static void flc_fini_dset(struct silofs_flush_ctx *fl_ctx)
+static void dsets_fini(struct silofs_dsets *dsets)
 {
-	dset_fini(&fl_ctx->dset);
+	for (size_t i = 0; i < ARRAY_SIZE(dsets->dset); ++i) {
+		dset_fini(&dsets->dset[i]);
+	}
 }
 
-static void flc_make_fifo_dset(struct silofs_flush_ctx *fl_ctx)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void flc_init_dsets(struct silofs_flush_ctx *fl_ctx)
 {
-	dsek_mkfifo(&fl_ctx->dset);
+	dsets_init(&fl_ctx->dsets);
 }
 
-static void flc_seal_dset(const struct silofs_flush_ctx *fl_ctx)
+static void flc_fini_dsets(struct silofs_flush_ctx *fl_ctx)
 {
-	dset_seal_all(&fl_ctx->dset);
+	dsets_fini(&fl_ctx->dsets);
 }
 
-static void flc_fill_dset(struct silofs_flush_ctx *fl_ctx)
+static struct silofs_dset *
+flc_dset_of(struct silofs_flush_ctx *fl_ctx, enum silofs_stype stype)
 {
-	silofs_cache_fill_into_dset(fl_ctx->cache,
-	                            &fl_ctx->dset, fl_ctx->dqid);
+	struct silofs_dsets *dsets = &fl_ctx->dsets;
+	const size_t idx = (size_t)stype;
+
+	return likely(idx < ARRAY_SIZE(dsets->dset)) ?
+	       &dsets->dset[idx] : &dsets->dset[0];
 }
 
-static void flc_populate_dset(struct silofs_flush_ctx *fl_ctx)
+static bool flc_has_dirty_dset(struct silofs_flush_ctx *fl_ctx,
+                               enum silofs_stype stype)
 {
-	flc_fill_dset(fl_ctx);
-	flc_make_fifo_dset(fl_ctx);
-	flc_seal_dset(fl_ctx);
+	const struct silofs_dset *dset;
+
+	dset = flc_dset_of(fl_ctx, stype);
+	return dset->ds_avl.size > 0;
 }
 
-static void flc_undirtify_dset(struct silofs_flush_ctx *fl_ctx)
+static void flc_make_fifo_dset(struct silofs_flush_ctx *fl_ctx,
+                               enum silofs_stype stype)
 {
-	silofs_cache_undirtify_by_dset(fl_ctx->cache, &fl_ctx->dset);
+	dset_mkfifo(flc_dset_of(fl_ctx, stype));
 }
 
-static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx)
+static void flc_seal_dset(struct silofs_flush_ctx *fl_ctx,
+                          enum silofs_stype stype)
 {
-	dset_clear_map(&fl_ctx->dset);
+	dset_seal_all(flc_dset_of(fl_ctx, stype));
+}
+
+static void flc_undirtify_dset(struct silofs_flush_ctx *fl_ctx,
+                               enum silofs_stype stype)
+{
+	silofs_cache_undirtify_by_dset(fl_ctx->cache,
+	                               flc_dset_of(fl_ctx, stype));
+}
+
+static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx,
+                             enum silofs_stype stype)
+{
+	dset_clear_map(flc_dset_of(fl_ctx, stype));
 }
 
 static int flc_prep_commit(const struct silofs_flush_ctx *fl_ctx,
@@ -313,10 +340,11 @@ static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
 	return 0;
 }
 
-static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
+static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx,
+                          enum silofs_stype stype)
 {
 	struct silofs_commit_info *cmi = NULL;
-	struct silofs_dset *dset = &fl_ctx->dset;
+	struct silofs_dset *dset = flc_dset_of(fl_ctx, stype);
 	struct silofs_snode_info *siq = dset->ds_siq;
 	int err;
 
@@ -334,26 +362,47 @@ static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 	return 0;
 }
 
-static int flc_collect_flush_dset(struct silofs_flush_ctx *fl_ctx)
+static int flc_process_dset_of(struct silofs_flush_ctx *fl_ctx,
+                               enum silofs_stype stype)
 {
-	int err;
+	int ret = 0;
 
-	flc_populate_dset(fl_ctx);
-	err = flc_flush_dset(fl_ctx);
-	if (!err) {
-		flc_undirtify_dset(fl_ctx);
+	if (flc_has_dirty_dset(fl_ctx, stype)) {
+		flc_make_fifo_dset(fl_ctx, stype);
+		flc_seal_dset(fl_ctx, stype);
+		ret = flc_flush_dset(fl_ctx, stype);
+		if (!ret) {
+			flc_undirtify_dset(fl_ctx, stype);
+		}
+		flc_cleanup_dset(fl_ctx, stype);
 	}
-	flc_cleanup_dset(fl_ctx);
-	return err;
+	return ret;
+}
+
+static void flc_fill_dsets(struct silofs_flush_ctx *fl_ctx)
+{
+	silofs_cache_fill_dsets(fl_ctx->cache, &fl_ctx->dsets, fl_ctx->dqid);
+}
+
+static int flc_process_dsets(struct silofs_flush_ctx *fl_ctx)
+{
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	int ret = 0;
+
+	while ((ret == 0) && (++stype < SILOFS_STYPE_LAST)) {
+		ret = flc_process_dset_of(fl_ctx, stype);
+	}
+	return ret;
 }
 
 static int flc_collect_flush_dirty(struct silofs_flush_ctx *fl_ctx)
 {
 	int err;
 
-	flc_init_dset(fl_ctx);
-	err = flc_collect_flush_dset(fl_ctx);
-	flc_fini_dset(fl_ctx);
+	flc_init_dsets(fl_ctx);
+	flc_fill_dsets(fl_ctx);
+	err = flc_process_dsets(fl_ctx);
+	flc_fini_dsets(fl_ctx);
 	return err;
 }
 

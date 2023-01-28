@@ -435,7 +435,7 @@ struct silofs_oper_stat {
 	/* TODO: Have counter per-operation */
 };
 
-/* dirty-vnodes set */
+/* dirty-nodes set */
 typedef void (*silofs_dset_add_fn)(struct silofs_dset *dset,
                                    struct silofs_snode_info *si);
 
@@ -443,6 +443,10 @@ struct silofs_dset {
 	silofs_dset_add_fn              ds_add_fn;
 	struct silofs_snode_info       *ds_siq;
 	struct silofs_avl               ds_avl;
+};
+
+struct silofs_dsets {
+	struct silofs_dset dset[SILOFS_STYPE_LAST];
 };
 
 /* current operation */

@@ -197,10 +197,11 @@ static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 {
 	pid_t pid;
 	pid_t pgid;
-	int retry = 30;
+	int retry;
 
 	pid = (pid_t)(ctx->query.u.proc.pid);
 	if (!ctx->notconn && (pid > 0)) {
+		retry = ctx->in_args.lazy ? 3 : 30;
 		pgid = getpgid(pid);
 		while ((--retry > 0) && (pgid > 0)) {
 			sleep(1);

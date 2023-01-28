@@ -1287,40 +1287,35 @@ int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
 	return err;
 }
 
-static int qalloc_resolve_iov(const struct silofs_qalloc *qal,
-                              void *ptr, size_t len, struct silofs_iovec *iov)
-{
-	const void *base = qalloc_base_of(qal, ptr, len);
-	int ret = -ERANGE;
-
-	if ((base != NULL) && (base <= ptr)) {
-		iov->iov_off = qalloc_ptr_to_off(qal, ptr);
-		iov->iov_len = len;
-		iov->iov_base = ptr;
-		iov->iov_fd = qal->memfd_data;
-		iov->iov_ref = NULL;
-		ret = 0;
-	}
-	return ret;
-}
-
+/*
+ * Do not use qalloc_lock/unlock for qalloc_resolve and qalloc_stat as those
+ * operations need to be fast and are executed on the data-path. As such, it is
+ * better to avoid the heavy locking involved with alloc/dealloc path.
+ */
 int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
                           void *ptr, size_t len, struct silofs_iovec *iov)
 {
-	int err;
+	const void *base;
 
-	qalloc_lock(qal);
-	err = qalloc_resolve_iov(qal, ptr, len, iov);
-	qalloc_unlock(qal);
-	return err;
+	base = qalloc_base_of(qal, ptr, len);
+	if (silofs_unlikely(base == NULL)) {
+		return -ERANGE;
+	}
+	if (silofs_unlikely(base > ptr)) {
+		return -ERANGE;
+	}
+	iov->iov_off = qalloc_ptr_to_off(qal, ptr);
+	iov->iov_len = len;
+	iov->iov_base = ptr;
+	iov->iov_fd = qal->memfd_data;
+	iov->iov_ref = NULL;
+	return 0;
 }
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat)
 {
-	qalloc_lock(qal);
 	memcpy(out_stat, &qal->alst, sizeof(*out_stat));
-	qalloc_unlock(qal);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

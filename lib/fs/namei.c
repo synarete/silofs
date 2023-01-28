@@ -1950,7 +1950,6 @@ static int do_rename(struct silofs_task *task,
                      struct silofs_inode_info *newdir_ii,
                      const struct silofs_namestr *newname, int flags)
 {
-	int err;
 	struct silofs_dentry_ref cur_dref = {
 		.dir_ii = dir_ii,
 		.name = name,
@@ -1959,6 +1958,7 @@ static int do_rename(struct silofs_task *task,
 		.dir_ii = newdir_ii,
 		.name = newname,
 	};
+	int err;
 
 	err = check_stage_rename_at(task, &cur_dref, false);
 	if (err) {

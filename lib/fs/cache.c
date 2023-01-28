@@ -349,8 +349,7 @@ void silofs_ce_init(struct silofs_cache_elem *ce)
 
 void silofs_ce_fini(struct silofs_cache_elem *ce)
 {
-	silofs_assert_ge(ce->ce_refcnt, 0);
-	silofs_assert_lt(ce->ce_refcnt, INT_MAX / 2);
+	silofs_assert_eq(ce->ce_refcnt, 0);
 	silofs_assert(!ce->ce_mapped);
 	silofs_assert(!ce->ce_dirty);
 
@@ -646,20 +645,20 @@ bri_to_ce(const struct silofs_blobref_info *bri)
 void silofs_bri_incref(struct silofs_blobref_info *bri)
 {
 	if (likely(bri != NULL)) {
-		ce_incref(bri_to_ce(bri));
+		ce_incref_atomic(bri_to_ce(bri));
 	}
 }
 
 void silofs_bri_decref(struct silofs_blobref_info *bri)
 {
 	if (likely(bri != NULL)) {
-		ce_decref(bri_to_ce(bri));
+		ce_decref_atomic(bri_to_ce(bri));
 	}
 }
 
 static bool bri_is_evictable(const struct silofs_blobref_info *bri)
 {
-	return ce_is_evictable(bri_to_ce(bri));
+	return ce_is_evictable_atomic(bri_to_ce(bri));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

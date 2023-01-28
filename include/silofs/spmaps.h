@@ -141,9 +141,6 @@ void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
 bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
                               const struct silofs_treeid *treeid);
 
-int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
-                               const struct silofs_vaddr *vaddr);
-
 void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
                               const struct silofs_spleaf_info *sli_other);
 

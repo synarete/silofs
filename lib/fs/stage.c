@@ -2119,6 +2119,20 @@ static int stgc_stage_spmaps_of(struct silofs_stage_ctx *stg_ctx)
 	return 0;
 }
 
+static int stgc_check_stable_vaddr(const struct silofs_stage_ctx *stg_ctx)
+{
+	const struct silofs_vaddr *vaddr = stg_ctx->vaddr;
+	int ret = 0;
+	bool allocated;
+
+	allocated = silofs_sli_has_allocated_space(stg_ctx->sli, vaddr);
+	if (!allocated) {
+		log_err("non-stable vaddr: off=0x%lx stype=%d",
+		        vaddr->off, vaddr->stype);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
 
 static int stgc_stage_stable_spmaps_of(struct silofs_stage_ctx *stg_ctx)
 {
@@ -2128,7 +2142,7 @@ static int stgc_stage_stable_spmaps_of(struct silofs_stage_ctx *stg_ctx)
 	if (err) {
 		return err;
 	}
-	err = silofs_sli_check_stable_at(stg_ctx->sli, stg_ctx->vaddr);
+	err = stgc_check_stable_vaddr(stg_ctx);
 	if (err) {
 		return err;
 	}

@@ -181,6 +181,7 @@ static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 
 	err = silofs_sys_pwriten(fd, buf, cnt, off);
 	if (err) {
+		silofs_assert_ne(err, -EBADF);
 		log_warn("pwriten error: fd=%d cnt=%lu off=%ld err=%d",
 		         fd, cnt, off, err);
 	}
@@ -193,6 +194,7 @@ static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, loff_t off)
 
 	err = silofs_sys_pwritevn(fd, iov, (int)cnt, off);
 	if (err) {
+		silofs_assert_ne(err, -EBADF);
 		log_warn("pwritevn error: fd=%d iov_cnt=%lu off=%ld err=%d",
 		         fd, cnt, off, err);
 	}
@@ -205,6 +207,7 @@ static int do_preadn(int fd, void *buf, size_t cnt, loff_t off)
 
 	err = silofs_sys_preadn(fd, buf, cnt, off);
 	if (err) {
+		silofs_assert_ne(err, -EBADF);
 		log_warn("preadn error: fd=%d cnt=%lu off=%ld err=%d",
 		         fd, cnt, off, err);
 	}
@@ -248,6 +251,8 @@ static int do_fstat(int fd, struct stat *st)
 
 	err = silofs_sys_fstat(fd, st);
 	if (err && (err != -ENOENT)) {
+		silofs_assert_gt(fd, 0);
+		silofs_assert_ne(err, -EBADF);
 		log_warn("fstat error: fd=%d err=%d", fd, err);
 	}
 	return err;

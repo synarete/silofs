@@ -1105,12 +1105,6 @@ bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
 	return true;
 }
 
-int silofs_sli_check_stable_at(const struct silofs_spleaf_info *sli,
-                               const struct silofs_vaddr *vaddr)
-{
-	return sli_is_allocated_at(sli, vaddr) ? 0 : -SILOFS_EFSCORRUPTED;
-}
-
 void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
                               const struct silofs_spleaf_info *sli_other)
 {

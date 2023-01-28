@@ -79,8 +79,6 @@ int silofs_cmi_assign_buf(struct silofs_commit_info *cmi);
 void silofs_cmi_bind_bri(struct silofs_commit_info *cmi,
                          struct silofs_blobref_info *bri);
 
-int silofs_cmi_write_buf(const struct silofs_commit_info *cmi);
-
 void silofs_cmi_increfs(struct silofs_commit_info *cmi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

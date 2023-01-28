@@ -129,9 +129,10 @@ static void cmi_unbind_bri(struct silofs_commit_info *cmi)
 	silofs_cmi_bind_bri(cmi, NULL);
 }
 
-int silofs_cmi_write_buf(const struct silofs_commit_info *cmi)
+static int cmi_pwrite_buf(const struct silofs_commit_info *cmi)
 {
-	return silofs_bri_pwriten(cmi->bri, cmi->off, cmi->buf, cmi->len);
+	return silofs_bri_pwriten(cmi->bri, cmi->off,
+	                          cmi->buf, cmi->len, true);
 }
 
 void silofs_cmi_increfs(struct silofs_commit_info *cmi)
@@ -207,7 +208,7 @@ cmi_from_cq_lh(struct silofs_list_head *cq_lh)
 
 static void cmi_apply(struct silofs_commit_info *cmi)
 {
-	cmi->status = silofs_cmi_write_buf(cmi);
+	cmi->status = cmi_pwrite_buf(cmi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -551,9 +552,11 @@ static void task_drop_commits(struct silofs_task *task)
 
 int silofs_task_let_complete(struct silofs_task *task, bool all)
 {
-	const uint64_t cid = all ? SILOFS_CID_ALL : task->t_apex_cid;
-
-	commitqs_apply(task->t_cqs, cid);
+	if (all) {
+		commitqs_apply(task->t_cqs, SILOFS_CID_ALL);
+	} else if (task->t_apex_cid) {
+		commitqs_apply(task->t_cqs, task->t_apex_cid);
+	}
 	return 0;
 }
 

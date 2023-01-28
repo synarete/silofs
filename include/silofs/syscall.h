@@ -141,6 +141,8 @@ int silofs_sys_fsync(int fd);
 
 int silofs_sys_fdatasync(int fd);
 
+int silofs_sys_sync_file_range(int fd, loff_t off, loff_t nb, unsigned int fl);
+
 int silofs_sys_fallocate(int fd, int mode, loff_t off, loff_t len);
 
 int silofs_sys_truncate(const char *path, loff_t len);

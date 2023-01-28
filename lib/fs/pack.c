@@ -951,6 +951,12 @@ static int pac_require_restored_ubk(const struct silofs_pack_ctx *pa_ctx,
 	return err;
 }
 
+static int store_obj_at(const struct silofs_blobref_info *bri,
+                        const struct silofs_oaddr *oaddr, const void *dat)
+{
+	return silofs_bri_pwriten(bri, oaddr->pos, dat, oaddr->len, false);
+}
+
 static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_unode_info *ui,
                                   const struct silofs_bkaddr *bkaddr_dst)
@@ -968,7 +974,7 @@ static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
 	uaddr_setup(&uaddr_dst, &bkaddr_dst->blobid, uaddr_src->oaddr.pos,
 	            uaddr_src->stype, uaddr_src->height, uaddr_src->voff);
 	bri = ubki_dst->ubk_bri;
-	err = silofs_bri_store_obj(bri, &uaddr_dst.oaddr, ui->u_si.s_view);
+	err = store_obj_at(bri, &uaddr_dst.oaddr, ui->u_si.s_view);
 	if (err) {
 		return err;
 	}
@@ -1016,7 +1022,8 @@ static int pac_save_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_pwriten(bri, 0, pb->pb_blob, pb->pb_blobid.size);
+	err = silofs_bri_pwriten(bri, 0, pb->pb_blob,
+	                         pb->pb_blobid.size, false);
 	if (err) {
 		return err;
 	}
@@ -1512,7 +1519,8 @@ static int pac_save_warm_blob(const struct silofs_pack_ctx *pa_ctx,
 		return err;
 	}
 	silofs_assert_ge(pb->pb_blobid.size, SILOFS_BK_SIZE);
-	err = silofs_bri_pwriten(bri, 0, pb->pb_blob, pb->pb_blobid.size);
+	err = silofs_bri_pwriten(bri, 0, pb->pb_blob,
+	                         pb->pb_blobid.size, false);
 	if (err) {
 		return err;
 	}

@@ -160,7 +160,6 @@ static int errno_or_generic_error(void)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/* POSIX */
 
 int silofs_sys_mount(const char *source, const char *target, const char *fstyp,
                      unsigned long mntflags, const void *data)
@@ -337,6 +336,11 @@ int silofs_sys_fdatasync(int fd)
 	return ok_or_errno(fdatasync(fd));
 }
 
+int silofs_sys_sync_file_range(int fd, loff_t off, loff_t nb, unsigned int fl)
+{
+	return ok_or_errno(sync_file_range(fd, off, nb, fl));
+}
+
 int silofs_sys_fallocate(int fd, int mode, loff_t off, loff_t len)
 {
 	return ok_or_errno(fallocate(fd, mode, off, len));
@@ -445,7 +449,6 @@ int silofs_sys_flock(int fd, int operation)
 	return ok_or_errno(flock(fd, operation));
 }
 
-/* RDWR */
 int silofs_sys_read(int fd, void *buf, size_t cnt, size_t *nrd)
 {
 	return size_or_errno(read(fd, buf, cnt), nrd);
@@ -514,7 +517,6 @@ int silofs_sys_vmsplice(int fd, const struct iovec *iov, size_t nr_segs,
 	return size_or_errno(vmsplice(fd, iov, nr_segs, flags), nsp);
 }
 
-/* FIEMAP */
 int silofs_sys_ioctlp(int fd, unsigned long int cmd, void *ptr)
 {
 	return ok_or_errno(ioctl(fd, cmd, ptr));
@@ -525,7 +527,6 @@ int silofs_sys_fiemap(int fd, struct fiemap *fm)
 	return silofs_sys_ioctlp(fd, FS_IOC_FIEMAP, fm);
 }
 
-/* XATTR */
 int silofs_sys_setxattr(const char *path, const char *name,
                         const void *value, size_t size, int flags)
 {
@@ -596,7 +597,6 @@ int silofs_sys_flistxattr(int fd, char *list, size_t size, size_t *out_size)
 	return size_or_errno(flistxattr(fd, list, size), out_size);
 }
 
-/* MMAP */
 int silofs_sys_mmap(void *addr, size_t length, int prot, int flags,
                     int fd, off_t offset, void **out_addr)
 {
@@ -663,7 +663,6 @@ int silofs_sys_sbrk(intptr_t increment, void **out_addr)
 	return differ_or_errno(sbrk(increment), (void *)(-1), out_addr);
 }
 
-/* RLIMITS */
 int silofs_sys_getrlimit(int resource, struct rlimit *rlim)
 {
 	return ok_or_errno(getrlimit((__rlimit_resource_t)resource, rlim));
@@ -674,14 +673,12 @@ int silofs_sys_setrlimit(int resource, const struct rlimit *rlim)
 	return ok_or_errno(setrlimit((__rlimit_resource_t)resource, rlim));
 }
 
-/* PRCTL */
 int silofs_sys_prctl(int option, unsigned long arg2, unsigned long arg3,
                      unsigned long arg4, unsigned long arg5)
 {
 	return val_or_errno(prctl(option, arg2, arg3, arg4, arg5));
 }
 
-/* SYSCALL */
 int silofs_sys_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
                                loff_t *off_out, size_t len, unsigned int flags,
                                size_t *out_ncp)
@@ -695,7 +692,6 @@ int silofs_sys_memfd_create(const char *name, unsigned int flags, int *fd)
 	return fd_or_errno(memfd_create(name, flags), fd);
 }
 
-/* IOCTLS */
 int silofs_sys_ioctl_blkgetsize64(int fd, size_t *sz)
 {
 	return ok_or_errno(ioctl(fd, BLKGETSIZE64, sz));
@@ -706,7 +702,6 @@ int silofs_sys_ioctl_ficlone(int dest_fd, int src_fd)
 	return ok_or_errno(ioctl(dest_fd, FICLONE, src_fd));
 }
 
-/* GETDENTS */
 struct linux_dirent64_view {
 	ino64_t        d_ino;
 	off64_t        d_off;
@@ -768,20 +763,17 @@ out:
 	return 0;
 }
 
-/* SIGNALS */
 int silofs_sys_sigaction(int signum, const struct sigaction *act,
                          struct sigaction *oldact)
 {
 	return ok_or_errno(sigaction(signum, act, oldact));
 }
 
-/* CLOCK */
 int silofs_sys_clock_gettime(clockid_t clock_id, struct timespec *tp)
 {
 	return ok_or_errno(clock_gettime(clock_id, tp));
 }
 
-/* FCNTL */
 int silofs_sys_fcntl_flock(int fd, int cmd, struct flock *fl)
 {
 	return ok_or_errno(fcntl(fd, cmd, fl));
@@ -807,7 +799,6 @@ int silofs_sys_fcntl_getpipesz(int fd, int *out_pipesize)
 	return val_or_errno2(fcntl(fd, F_GETPIPE_SZ), out_pipesize);
 }
 
-/* SELECT/POLL */
 int silofs_sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
                        fd_set *exceptfds, const struct timespec *timeout,
                        const sigset_t *sigmask, int *out_nfds)
@@ -822,7 +813,6 @@ int silofs_sys_poll(struct pollfd *fds, nfds_t nfds,
 	return nfds_or_errno(poll(fds, nfds, timeout), out_nfds);
 }
 
-/* SOCKET */
 int silofs_sys_socket(int domain, int type, int protocol, int *out_sd)
 {
 	return fd_or_errno(socket(domain, type, protocol), out_sd);
@@ -904,13 +894,11 @@ int silofs_sys_getsockopt(int sd, int level, int optname,
 	return ok_or_errno(getsockopt(sd, level, optname, optval, optlen));
 }
 
-/* PIPE */
 int silofs_sys_pipe2(int pipefd[2], int flags)
 {
 	return ok_or_errno(pipe2(pipefd, flags));
 }
 
-/* SETEUID/SETEGID et.al. */
 int silofs_sys_seteuid(uid_t euid)
 {
 	return ok_or_errno(seteuid(euid));

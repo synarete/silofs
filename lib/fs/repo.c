@@ -175,6 +175,19 @@ static int do_fdatasync(int fd)
 	return err;
 }
 
+static int do_sync_file_range(int fd, loff_t off,
+                              loff_t nbytes, unsigned int flags)
+{
+	int err;
+
+	err = silofs_sys_sync_file_range(fd, off, nbytes, flags);
+	if (err && (err != -ENOSYS)) {
+		log_warn("sync_file_range error: fd=%d off=%ld nbytes=%ld "
+		         "flags=%u err=%d", fd, off, nbytes, flags, err);
+	}
+	return err;
+}
+
 static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 {
 	int err;
@@ -564,6 +577,25 @@ static int bri_store_by(const struct silofs_blobref_info *bri,
 	return 0;
 }
 
+static int bri_sync_by(const struct silofs_blobref_info *bri,
+                       const struct silofs_iovec *siov)
+{
+	unsigned int flags;
+	int err;
+
+	if (unlikely(bri->br_fd != siov->iov_fd)) {
+		return -EINVAL;
+	}
+	flags = SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE |
+	        SYNC_FILE_RANGE_WAIT_AFTER;
+	err = do_sync_file_range(bri->br_fd, siov->iov_off,
+	                         (loff_t)siov->iov_len, flags);
+	if (err && (err != -ENOSYS)) {
+		return err;
+	}
+	return 0;
+}
+
 static int bri_require_bk_at(const struct silofs_blobref_info *bri, loff_t off)
 {
 	struct stat st;
@@ -591,7 +623,7 @@ static int bri_require_bk_at(const struct silofs_blobref_info *bri, loff_t off)
 }
 
 int silofs_bri_pwriten(const struct silofs_blobref_info *bri,
-                       loff_t off, const void *buf, size_t len)
+                       loff_t off, const void *buf, size_t len, bool sync)
 {
 	struct silofs_iovec siov = { .iov_off = -1 };
 	int err;
@@ -607,6 +639,12 @@ int silofs_bri_pwriten(const struct silofs_blobref_info *bri,
 	err = bri_store_by(bri, &siov, buf, len);
 	if (err) {
 		return err;
+	}
+	if (sync) {
+		err = bri_sync_by(bri, &siov);
+		if (err) {
+			return err;
+		}
 	}
 	return 0;
 }
@@ -775,22 +813,6 @@ int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
 		return err;
 	}
 	return 0;
-}
-
-int silofs_bri_store_bk(const struct silofs_blobref_info *bri,
-                        const struct silofs_bkaddr *bkaddr,
-                        const struct silofs_block *bk)
-{
-	struct silofs_oaddr bk_oaddr;
-
-	silofs_oaddr_of_bk(&bk_oaddr, &bkaddr->blobid, bkaddr->lba);
-	return silofs_bri_store_obj(bri, &bk_oaddr, bk);
-}
-
-int silofs_bri_store_obj(const struct silofs_blobref_info *bri,
-                         const struct silofs_oaddr *oaddr, const void *dat)
-{
-	return silofs_bri_pwriten(bri, oaddr->pos, dat, oaddr->len);
 }
 
 static int bri_trim_by_ftruncate(const struct silofs_blobref_info *bri)

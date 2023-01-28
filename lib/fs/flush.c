@@ -32,7 +32,6 @@ struct silofs_flush_ctx {
 	struct silofs_alloc    *alloc;
 	struct silofs_uber     *uber;
 	struct silofs_repo     *repo;
-	struct silofs_commitqs *cqs;
 	struct silofs_cache    *cache;
 	silofs_dqid_t           dqid;
 	int flags;
@@ -97,9 +96,9 @@ static int resolve_oaddr_of(struct silofs_task *task,
 	return ret;
 }
 
-static int flc_populate_commit(struct silofs_flush_ctx *fl_ctx,
-                               struct silofs_snode_info **siq,
-                               struct silofs_commit_info *cmi)
+static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
+                            struct silofs_snode_info **siq,
+                            struct silofs_submitq_entry *sqe)
 {
 	struct silofs_oaddr oaddr;
 	struct silofs_snode_info *si;
@@ -111,12 +110,12 @@ static int flc_populate_commit(struct silofs_flush_ctx *fl_ctx,
 		if (err) {
 			return err;
 		}
-		if (!silofs_cmi_append_ref(cmi, &oaddr, si)) {
+		if (!silofs_sqe_append_ref(sqe, &oaddr, si)) {
 			break;
 		}
 		*siq = si->s_ds_next;
 	}
-	return silofs_cmi_assign_buf(cmi);
+	return silofs_sqe_assign_buf(sqe);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -289,51 +288,51 @@ static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx,
 	dset_clear_map(flc_dset_of(fl_ctx, stype));
 }
 
-static int flc_prep_commit(const struct silofs_flush_ctx *fl_ctx,
-                           struct silofs_commit_info *cmi)
+static int flc_prep_sqe(const struct silofs_flush_ctx *fl_ctx,
+                        struct silofs_submitq_entry *sqe)
 {
-	const struct silofs_blobid *blobid = &cmi->bid;
+	const struct silofs_blobid *blobid = &sqe->bid;
 	struct silofs_blobref_info *bri = NULL;
 	int err;
 
-	silofs_cmi_increfs(cmi);
+	silofs_sqe_increfs(sqe);
 	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &bri);
 	if (err) {
-		return 0;
+		return err;
 	}
-	silofs_cmi_bind_bri(cmi, bri);
+	silofs_sqe_bind_bri(sqe, bri);
 	return 0;
 }
 
-static void flc_enq_commit(const struct silofs_flush_ctx *fl_ctx,
-                           struct silofs_commit_info *cmi)
+static void flc_enqueue_sqe(const struct silofs_flush_ctx *fl_ctx,
+                            struct silofs_submitq_entry *sqe)
 {
-	silofs_commitqs_enqueue(fl_ctx->cqs, cmi);
+	silofs_task_enq_sqe(fl_ctx->task, sqe);
 }
 
-static int flc_pend_commit(const struct silofs_flush_ctx *fl_ctx,
-                           struct silofs_commit_info *cmi)
+static int flc_pend_sqe(const struct silofs_flush_ctx *fl_ctx,
+                        struct silofs_submitq_entry *cmi)
 {
 	int err;
 
-	err = flc_prep_commit(fl_ctx, cmi);
+	err = flc_prep_sqe(fl_ctx, cmi);
 	if (!err) {
-		flc_enq_commit(fl_ctx, cmi);
+		flc_enqueue_sqe(fl_ctx, cmi);
 	}
 	return err;
 }
 
 static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
                          struct silofs_snode_info **siq,
-                         struct silofs_commit_info *cmi)
+                         struct silofs_submitq_entry *cmi)
 {
 	int err;
 
-	err = flc_populate_commit(fl_ctx, siq, cmi);
+	err = flc_populate_sqe(fl_ctx, siq, cmi);
 	if (err) {
 		return err;
 	}
-	err = flc_pend_commit(fl_ctx, cmi);
+	err = flc_pend_sqe(fl_ctx, cmi);
 	if (err) {
 		return err;
 	}
@@ -343,19 +342,19 @@ static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
 static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx,
                           enum silofs_stype stype)
 {
-	struct silofs_commit_info *cmi = NULL;
+	struct silofs_submitq_entry *cmi = NULL;
 	struct silofs_dset *dset = flc_dset_of(fl_ctx, stype);
 	struct silofs_snode_info *siq = dset->ds_siq;
 	int err;
 
 	while (siq != NULL) {
-		err = silofs_task_mk_commit(fl_ctx->task, &cmi);
+		err = silofs_task_mk_sqe(fl_ctx->task, &cmi);
 		if (err) {
 			return err;
 		}
 		err = flc_flush_siq(fl_ctx, &siq, cmi);
 		if (err) {
-			silofs_task_rm_commit(fl_ctx->task, cmi);
+			silofs_task_rm_sqe(fl_ctx->task, cmi);
 			return err;
 		}
 	}
@@ -418,7 +417,7 @@ static int flc_complete_commits(const struct silofs_flush_ctx *fl_ctx)
 
 	if ((fl_ctx->flags & SILOFS_F_NOW) &&
 	    (fl_ctx->dqid == SILOFS_DQID_ALL)) {
-		ret = silofs_task_let_complete(fl_ctx->task, true);
+		ret = silofs_task_submit(fl_ctx->task, true);
 	}
 	return ret;
 }
@@ -461,7 +460,6 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	fl_ctx->dqid = dqid;
 	fl_ctx->flags = flags;
 	fl_ctx->repo = repo;
-	fl_ctx->cqs = uber->ub_cqs;
 	fl_ctx->cache = &repo->re_cache;
 	fl_ctx->alloc = fl_ctx->cache->c_alloc;
 	return 0;

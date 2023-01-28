@@ -146,13 +146,13 @@ static size_t stgc_num_cached_dirty(const struct silofs_stage_ctx *stg_ctx)
 	return silofs_cache_accum_ndirty(stgc_cache(stg_ctx));
 }
 
-static int stgc_commit_dirty(const struct silofs_stage_ctx *stg_ctx)
+static int stgc_flush_dirty_now(const struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
 	err = silofs_flush_dirty(stg_ctx->task, SILOFS_DQID_ALL, SILOFS_F_NOW);
 	if (err) {
-		log_dbg("commit dirty failure: ndirty=%lu err=%d",
+		log_dbg("flush dirty failed: ndirty=%lu err=%d",
 		        stgc_num_cached_dirty(stg_ctx), err);
 	}
 	return err;
@@ -168,7 +168,7 @@ static int stgc_spawn_vbki(const struct silofs_stage_ctx *stg_ctx,
 	if (!err) {
 		goto out_ok;
 	}
-	err = stgc_commit_dirty(stg_ctx);
+	err = stgc_flush_dirty_now(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -193,7 +193,7 @@ static int stgc_spawn_vi(const struct silofs_stage_ctx *stg_ctx,
 	if (!err) {
 		goto out_ok;
 	}
-	err = stgc_commit_dirty(stg_ctx);
+	err = stgc_flush_dirty_now(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -210,15 +210,16 @@ out_err:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stgc_commit_and_relax(const struct silofs_stage_ctx *stg_ctx)
+static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
-	err = stgc_commit_dirty(stg_ctx);
-	if (!err) {
-		silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
+	err = stgc_flush_dirty_now(stg_ctx);
+	if (err) {
+		return err;
 	}
-	return err;
+	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
+	return 0;
 }
 
 static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
@@ -234,7 +235,7 @@ static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
 	if (!is_low_resource_error(err)) {
 		return err;
 	}
-	err = stgc_commit_and_relax(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		return err;
 	}
@@ -365,18 +366,6 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 	stg_ctx->bk_voff = vaddr_bk_voff(vaddr);
 	stg_ctx->bk_lba = off_to_lba(stg_ctx->bk_voff);
 	stg_ctx->voff = vaddr->off;
-}
-
-static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
-{
-	int err;
-
-	err = stgc_commit_dirty(stg_ctx);
-	if (err) {
-		return err;
-	}
-	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
-	return 0;
 }
 
 static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,

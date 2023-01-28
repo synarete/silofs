@@ -22,21 +22,21 @@
 #define SILOFS_COMMIT_LEN_MAX   (2 * SILOFS_MEGA)
 #define SILOFS_CID_ALL          (UINT64_MAX)
 
-static int cmi_setup_buf(struct silofs_commit_info *cmi)
+static int sqe_setup_buf(struct silofs_submitq_entry *sqe)
 {
-	cmi->buf = silofs_allocate(cmi->alloc, cmi->len);
-	return unlikely(cmi->buf == NULL) ? -ENOMEM : 0;
+	sqe->buf = silofs_allocate(sqe->alloc, sqe->len);
+	return unlikely(sqe->buf == NULL) ? -ENOMEM : 0;
 }
 
-static void cmi_reset_buf(struct silofs_commit_info *cmi)
+static void sqe_reset_buf(struct silofs_submitq_entry *sqe)
 {
-	if (likely(cmi->buf != NULL)) {
-		silofs_deallocate(cmi->alloc, cmi->buf, cmi->len);
+	if (likely(sqe->buf != NULL)) {
+		silofs_deallocate(sqe->alloc, sqe->buf, sqe->len);
 	}
-	cmi->buf = NULL;
+	sqe->buf = NULL;
 }
 
-static bool cmi_isappendable(const struct silofs_commit_info *cmi,
+static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
                              const struct silofs_oaddr *oaddr)
 {
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
@@ -44,403 +44,271 @@ static bool cmi_isappendable(const struct silofs_commit_info *cmi,
 	loff_t end;
 	loff_t nxt;
 
-	if (cmi->cnt == 0) {
+	if (sqe->cnt == 0) {
 		return true;
 	}
-	if (cmi->cnt == ARRAY_SIZE(cmi->ref)) {
+	if (sqe->cnt == ARRAY_SIZE(sqe->ref)) {
 		return false;
 	}
-	end = off_end(cmi->off, cmi->len);
+	end = off_end(sqe->off, sqe->len);
 	if (oaddr->pos != end) {
 		return false;
 	}
-	len = cmi->len + oaddr->len;
+	len = sqe->len + oaddr->len;
 	if (len > (size_t)len_max) {
 		return false;
 	}
-	nxt = off_next(cmi->off, len_max);
-	end = off_end(cmi->off, len);
+	nxt = off_next(sqe->off, len_max);
+	end = off_end(sqe->off, len);
 	if (end > nxt) {
 		return false;
 	}
-	if (!blobid_isequal(&oaddr->bka.blobid, &cmi->bid)) {
+	if (!blobid_isequal(&oaddr->bka.blobid, &sqe->bid)) {
 		return false;
 	}
 	return true;
 }
 
-bool silofs_cmi_append_ref(struct silofs_commit_info *cmi,
+bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_snode_info *si)
 {
-	struct silofs_commit_ref *ref;
+	struct silofs_submit_ref *ref;
 
-	if (!cmi_isappendable(cmi, oaddr)) {
+	if (!sqe_isappendable(sqe, oaddr)) {
 		return false;
 	}
-	if (cmi->cnt == 0) {
-		blobid_assign(&cmi->bid, &oaddr->bka.blobid);
-		cmi->off = oaddr->pos;
+	if (sqe->cnt == 0) {
+		blobid_assign(&sqe->bid, &oaddr->bka.blobid);
+		sqe->off = oaddr->pos;
 	}
-	ref = &cmi->ref[cmi->cnt];
+	ref = &sqe->ref[sqe->cnt];
 	ref->bki = silofs_bki_of(si);
 	ref->view = si->s_view;
 	ref->len = si->s_view_len;
-	cmi->len += ref->len;
-	cmi->cnt += 1;
+	sqe->len += ref->len;
+	sqe->cnt += 1;
 	return true;
 }
 
-int silofs_cmi_assign_buf(struct silofs_commit_info *cmi)
+int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
 {
-	const struct silofs_commit_ref *ref;
+	const struct silofs_submit_ref *ref;
 	uint8_t *dst = NULL;
 	int err;
 
-	err = cmi_setup_buf(cmi);
+	err = sqe_setup_buf(sqe);
 	if (err) {
 		return err;
 	}
-	dst = cmi->buf;
-	for (size_t i = 0; i < cmi->cnt; ++i) {
-		ref = &cmi->ref[i];
+	dst = sqe->buf;
+	for (size_t i = 0; i < sqe->cnt; ++i) {
+		ref = &sqe->ref[i];
 		memcpy(dst, ref->view, ref->len);
 		dst += ref->len;
 	}
 	return 0;
 }
 
-void silofs_cmi_bind_bri(struct silofs_commit_info *cmi,
+void silofs_sqe_bind_bri(struct silofs_submitq_entry *sqe,
                          struct silofs_blobref_info *bri)
 {
-	if (cmi->bri != NULL) {
-		bri_decref(cmi->bri);
-		cmi->bri = NULL;
+	if (sqe->bri != NULL) {
+		bri_decref(sqe->bri);
+		sqe->bri = NULL;
 	}
 	if (bri != NULL) {
-		cmi->bri = bri;
-		bri_incref(cmi->bri);
+		sqe->bri = bri;
+		bri_incref(sqe->bri);
 		silofs_assert(!bri->br_rdonly);
 	}
 }
 
-static void cmi_unbind_bri(struct silofs_commit_info *cmi)
+static void sqe_unbind_bri(struct silofs_submitq_entry *sqe)
 {
-	silofs_cmi_bind_bri(cmi, NULL);
+	silofs_sqe_bind_bri(sqe, NULL);
 }
 
-static int cmi_pwrite_buf(const struct silofs_commit_info *cmi)
+static int sqe_pwrite_buf(const struct silofs_submitq_entry *sqe)
 {
-	return silofs_bri_pwriten(cmi->bri, cmi->off,
-	                          cmi->buf, cmi->len, true);
+	return silofs_bri_pwriten(sqe->bri, sqe->off,
+	                          sqe->buf, sqe->len, true);
 }
 
-void silofs_cmi_increfs(struct silofs_commit_info *cmi)
+void silofs_sqe_increfs(struct silofs_submitq_entry *sqe)
 {
-	struct silofs_commit_ref *ref;
+	struct silofs_submit_ref *ref;
 
-	for (size_t i = 0; i < cmi->cnt; ++i) {
-		ref = &cmi->ref[i];
+	for (size_t i = 0; i < sqe->cnt; ++i) {
+		ref = &sqe->ref[i];
 		silofs_bki_incref(ref->bki);
 	}
 }
 
-static void cmi_decrefs(struct silofs_commit_info *cmi)
+static void sqe_decrefs(struct silofs_submitq_entry *sqe)
 {
-	struct silofs_commit_ref *ref;
+	struct silofs_submit_ref *ref;
 
-	for (size_t i = 0; i < cmi->cnt; ++i) {
-		ref = &cmi->ref[i];
+	for (size_t i = 0; i < sqe->cnt; ++i) {
+		ref = &sqe->ref[i];
 		silofs_bki_decref(ref->bki);
 	}
 }
 
-static void cmi_init(struct silofs_commit_info *cmi,
-                     struct silofs_alloc *alloc)
+static int sqe_init(struct silofs_submitq_entry *sqe,
+                    struct silofs_alloc *alloc, uint64_t uniq_id)
 {
-	memset(cmi, 0, sizeof(*cmi));
-	list_head_init(&cmi->tlh);
-	list_head_init(&cmi->cq_lh);
-	cmi->alloc = alloc;
-	cmi->bri = NULL;
-	cmi->bid.size = 0;
-	cmi->commit_id = 0;
-	cmi->off = -1;
-	cmi->len = 0;
-	cmi->cnt = 0;
-	cmi->buf = NULL;
-	cmi->status = 0;
+	memset(sqe, 0, sizeof(*sqe));
+	list_head_init(&sqe->qlh);
+	list_head_init(&sqe->tlh);
+	sqe->alloc = alloc;
+	sqe->bri = NULL;
+	sqe->bid.size = 0;
+	sqe->uniq_id = uniq_id;
+	sqe->off = -1;
+	sqe->len = 0;
+	sqe->cnt = 0;
+	sqe->buf = NULL;
+	sqe->status = 0;
+	return silofs_mutex_init(&sqe->mu);
 }
 
-static void cmi_fini(struct silofs_commit_info *cmi)
+static void sqe_fini(struct silofs_submitq_entry *sqe)
 {
-	list_head_fini(&cmi->tlh);
-	list_head_fini(&cmi->cq_lh);
-	cmi_reset_buf(cmi);
-	cmi_unbind_bri(cmi);
-	cmi->off = -1;
-	cmi->len = 0;
-	cmi->cnt = 0;
-	cmi->alloc = NULL;
-	cmi->status = -1;
+	silofs_mutex_fini(&sqe->mu);
+	list_head_fini(&sqe->qlh);
+	list_head_fini(&sqe->tlh);
+	sqe_reset_buf(sqe);
+	sqe_unbind_bri(sqe);
+	sqe->off = -1;
+	sqe->len = 0;
+	sqe->cnt = 0;
+	sqe->alloc = NULL;
+	sqe->status = -1;
 }
 
-static struct silofs_commit_info *cmi_from_tlh(struct silofs_list_head *tlh)
+static struct silofs_submitq_entry *sqe_from_tlh(struct silofs_list_head *tlh)
 {
-	struct silofs_commit_info *cmi = NULL;
+	struct silofs_submitq_entry *sqe = NULL;
 
 	if (tlh != NULL) {
-		cmi = container_of(tlh, struct silofs_commit_info, tlh);
+		sqe = container_of(tlh, struct silofs_submitq_entry, tlh);
 	}
-	return cmi;
+	return sqe;
 }
 
-static struct silofs_commit_info *
-cmi_from_cq_lh(struct silofs_list_head *cq_lh)
+static struct silofs_submitq_entry *sqe_from_qlh(struct silofs_list_head *qlh)
 {
-	struct silofs_commit_info *cmi = NULL;
+	struct silofs_submitq_entry *sqe = NULL;
 
-	if (cq_lh != NULL) {
-		cmi = container_of(cq_lh, struct silofs_commit_info, cq_lh);
+	if (qlh != NULL) {
+		sqe = container_of(qlh, struct silofs_submitq_entry, qlh);
 	}
-	return cmi;
+	return sqe;
 }
 
-static void cmi_apply(struct silofs_commit_info *cmi)
+static void sqe_apply(struct silofs_submitq_entry *sqe)
 {
-	cmi->status = cmi_pwrite_buf(cmi);
+	sqe->status = sqe_pwrite_buf(sqe);
+}
+
+static void sqe_lock(struct silofs_submitq_entry *sqe)
+{
+	silofs_mutex_lock(&sqe->mu);
+}
+
+static void sqe_unlock(struct silofs_submitq_entry *sqe)
+{
+	silofs_mutex_unlock(&sqe->mu);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int commitq_init(struct silofs_commitq *cq, int indx)
+int silofs_submitq_init(struct silofs_submitq *smq)
 {
-	memset(cq, 0, sizeof(*cq));
-	cq->cq_index = indx;
-	silofs_listq_init(&cq->cq_ls);
-	return silofs_mutex_init(&cq->cq_lk);
+	memset(smq, 0, sizeof(*smq));
+	silofs_listq_init(&smq->smq_listq);
+	smq->smq_apex_id = 1;
+	return silofs_mutex_init(&smq->smq_mutex);
 }
 
-static void commitq_fini(struct silofs_commitq *cq)
+void silofs_submitq_fini(struct silofs_submitq *smq)
 {
-	silofs_mutex_fini(&cq->cq_lk);
-	silofs_listq_fini(&cq->cq_ls);
+	silofs_mutex_fini(&smq->smq_mutex);
+	silofs_listq_fini(&smq->smq_listq);
+	smq->smq_apex_id = 0;
 }
 
-static struct silofs_commit_info *commitq_front_cmi(struct silofs_commitq *cq)
+static struct silofs_submitq_entry *submitq_front_sqe(struct silofs_submitq
+                *smq)
 {
 	struct silofs_list_head *lh;
 
-	lh = listq_front(&cq->cq_ls);
-	return cmi_from_cq_lh(lh);
+	lh = listq_front(&smq->smq_listq);
+	return sqe_from_qlh(lh);
 }
 
-static void commitq_unlink_cmi(struct silofs_commitq *cq,
-                               struct silofs_commit_info *cmi)
+static void submitq_unlink_sqe(struct silofs_submitq *smq,
+                               struct silofs_submitq_entry *sqe)
 {
-	listq_remove(&cq->cq_ls, &cmi->cq_lh);
+	listq_remove(&smq->smq_listq, &sqe->qlh);
 }
 
-static void
-commitq_push_cmi(struct silofs_commitq *cq, struct silofs_commit_info *cmi)
+static void submitq_push_sqe(struct silofs_submitq *smq,
+                             struct silofs_submitq_entry *sqe)
 {
-	listq_push_back(&cq->cq_ls, &cmi->cq_lh);
+	listq_push_back(&smq->smq_listq, &sqe->qlh);
 }
 
-static void commitq_enq(struct silofs_commitq *cq,
-                        struct silofs_commit_info *cmi)
+static void submitq_enqueue(struct silofs_submitq *smq,
+                            struct silofs_submitq_entry *sqe)
 {
-	silofs_mutex_lock(&cq->cq_lk);
-	commitq_push_cmi(cq, cmi);
-	silofs_mutex_unlock(&cq->cq_lk);
+	silofs_mutex_lock(&smq->smq_mutex);
+	submitq_push_sqe(smq, sqe);
+	silofs_mutex_unlock(&smq->smq_mutex);
 }
 
-static struct silofs_commit_info *
-commitq_apply_one_locked(struct silofs_commitq *cq, uint64_t commit_id)
+static struct silofs_submitq_entry *
+submitq_get_locked_sqe(struct silofs_submitq *smq, uint64_t id)
 {
-	struct silofs_commit_info *cmi;
+	struct silofs_submitq_entry *sqe;
 
-	cmi = commitq_front_cmi(cq);
-	if (cmi == NULL) {
+	sqe = submitq_front_sqe(smq);
+	if (sqe == NULL) {
 		return NULL;
 	}
-	if (cmi->commit_id > commit_id) {
+	if (sqe->uniq_id > id) {
 		return NULL;
 	}
-	cmi_apply(cmi);
-	commitq_unlink_cmi(cq, cmi);
-	return cmi;
+	sqe_lock(sqe);
+	return sqe;
 }
 
-static struct silofs_commit_info *
-commitq_apply_one(struct silofs_commitq *cq, uint64_t commit_id)
+static struct silofs_submitq_entry *
+submitq_dequeue_locked_sqe(struct silofs_submitq *smq, uint64_t id)
 {
-	struct silofs_commit_info *cmi;
+	struct silofs_submitq_entry *sqe;
 
-	silofs_mutex_lock(&cq->cq_lk);
-	cmi = commitq_apply_one_locked(cq, commit_id);
-	silofs_mutex_unlock(&cq->cq_lk);
-	return cmi;
+	silofs_mutex_lock(&smq->smq_mutex);
+	sqe = submitq_get_locked_sqe(smq, id);
+	if (sqe != NULL) {
+		submitq_unlink_sqe(smq, sqe);
+	}
+	silofs_mutex_unlock(&smq->smq_mutex);
+	return sqe;
 }
 
-static int commitq_apply(struct silofs_commitq *cq, uint64_t commit_id)
+static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 {
-	struct silofs_commit_info *cmi;
-	bool apply_more = true;
+	struct silofs_submitq_entry *sqe;
 
-	while (apply_more) {
-		cmi = commitq_apply_one(cq, commit_id);
-		apply_more = (cmi != NULL);
+	sqe = submitq_dequeue_locked_sqe(smq, id);
+	while (sqe != NULL) {
+		sqe_apply(sqe);
+		sqe_unlock(sqe);
+		sqe = submitq_dequeue_locked_sqe(smq, id);
 	}
 	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int commitqs_init_set(struct silofs_commitqs *cqs)
-{
-	struct silofs_commitq *cq;
-	unsigned int init_cnt = 0;
-	int err;
-
-	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
-		cq = &cqs->cqs_set[i];
-		err = commitq_init(cq, (int)(i + 1));
-		if (err) {
-			goto out_err;
-		}
-		init_cnt++;
-	}
-	return 0;
-out_err:
-	for (size_t i = 0; i < init_cnt; ++i) {
-		cq = &cqs->cqs_set[i];
-		commitq_fini(cq);
-	}
-	return err;
-}
-
-int silofs_commitqs_init(struct silofs_commitqs *cqs,
-                         struct silofs_alloc *alloc)
-{
-	int err;
-
-	cqs->cqs_alloc = alloc;
-	cqs->cqs_apex_cid = 1;
-	cqs->cqs_active = 0;
-	err = silofs_rwlock_init(&cqs->cqs_rwlock);
-	if (err) {
-		return err;
-	}
-	err = commitqs_init_set(cqs);
-	if (err) {
-		silofs_rwlock_fini(&cqs->cqs_rwlock);
-		return err;
-	}
-	return 0;
-}
-
-static void commitqs_fini_set(struct silofs_commitqs *cqs)
-{
-	struct silofs_commitq *cq;
-
-	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
-		cq = &cqs->cqs_set[i];
-		commitq_fini(cq);
-	}
-}
-
-void silofs_commitqs_fini(struct silofs_commitqs *cqs)
-{
-	commitqs_fini_set(cqs);
-	silofs_rwlock_fini(&cqs->cqs_rwlock);
-	cqs->cqs_alloc = NULL;
-}
-
-
-static struct silofs_commit_info *
-commitqs_new_cmi(struct silofs_commitqs *cqs)
-{
-	struct silofs_commit_info *cmi;
-
-	cmi = silofs_allocate(cqs->cqs_alloc, sizeof(*cmi));
-	if (likely(cmi != NULL)) {
-		cmi_init(cmi, cqs->cqs_alloc);
-		cmi->commit_id = cqs->cqs_apex_cid++;
-	}
-	return cmi;
-}
-
-static void commitqs_del_cmi(struct silofs_commitqs *cqs,
-                             struct silofs_commit_info *cmi)
-{
-	cmi_fini(cmi);
-	silofs_deallocate(cqs->cqs_alloc, cmi, sizeof(*cmi));
-}
-
-static struct silofs_commitq *
-commitqs_sub(struct silofs_commitqs *cqs,
-             const struct silofs_commit_info *cmi)
-{
-	const enum silofs_stype stype = cmi->bid.vspace;
-	size_t idx;
-
-	switch (stype) {
-	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPNODE:
-	case SILOFS_STYPE_SPLEAF:
-		idx = 3;
-		break;
-	case SILOFS_STYPE_ITNODE:
-	case SILOFS_STYPE_INODE:
-		idx = 2;
-		break;
-	case SILOFS_STYPE_XANODE:
-	case SILOFS_STYPE_DTNODE:
-	case SILOFS_STYPE_FTNODE:
-	case SILOFS_STYPE_SYMVAL:
-		idx = 1;
-		break;
-	case SILOFS_STYPE_DATA1K:
-	case SILOFS_STYPE_DATA4K:
-	case SILOFS_STYPE_DATABK:
-	case SILOFS_STYPE_ANONBK:
-	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_LAST:
-	default:
-		idx = 0;
-		break;
-	}
-	return &cqs->cqs_set[idx];
-}
-
-void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
-                             struct silofs_commit_info *cmi)
-{
-	commitq_enq(commitqs_sub(cqs, cmi), cmi);
-}
-
-static void commitqs_lock(struct silofs_commitqs *cqs, bool noncon)
-{
-	if (noncon) {
-		silofs_rwlock_wrlock(&cqs->cqs_rwlock);
-	} else {
-		silofs_rwlock_rdlock(&cqs->cqs_rwlock);
-	}
-}
-
-static void commitqs_unlock(struct silofs_commitqs *cqs)
-{
-	silofs_rwlock_unlock(&cqs->cqs_rwlock);
-}
-
-static void commitqs_apply(struct silofs_commitqs *cqs, uint64_t commit_id)
-{
-	commitqs_lock(cqs, commit_id == SILOFS_CID_ALL);
-	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
-		commitq_apply(&cqs->cqs_set[i], commit_id);
-	}
-	commitqs_unlock(cqs);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -473,89 +341,125 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 	}
 }
 
-static int task_new_commit(struct silofs_task *task,
-                           struct silofs_commit_info **out_cmi)
+static int task_new_sqe(struct silofs_task *task,
+                        struct silofs_submitq_entry **out_sqe)
 {
-	*out_cmi = commitqs_new_cmi(task->t_cqs);
-	return likely(*out_cmi != NULL) ? 0 : -ENOMEM;
-}
-
-static void task_del_commit(struct silofs_task *task,
-                            struct silofs_commit_info *cmi)
-{
-	cmi_decrefs(cmi);
-	cmi_unbind_bri(cmi);
-	commitqs_del_cmi(task->t_cqs, cmi);
-}
-
-static void task_push_commit(struct silofs_task *task,
-                             struct silofs_commit_info *cmi)
-{
-	listq_push_back(&task->t_pendq, &cmi->tlh);
-}
-
-static struct silofs_commit_info *task_pop_commit(struct silofs_task *task)
-{
-	struct silofs_list_head *tlh;
-
-	tlh = listq_pop_front(&task->t_pendq);
-	return cmi_from_tlh(tlh);
-}
-
-static void task_update_by_commit(struct silofs_task *task,
-                                  struct silofs_commit_info *cmi)
-{
-	if (cmi->commit_id > task->t_apex_cid) {
-		task->t_apex_cid = cmi->commit_id;
-	}
-}
-
-int silofs_task_mk_commit(struct silofs_task *task,
-                          struct silofs_commit_info **out_cmi)
-{
-	struct silofs_commit_info *cmi = NULL;
+	struct silofs_alloc *alloc = task->t_uber->ub_alloc;
+	struct silofs_submitq_entry *sqe;
 	int err;
 
-	err = task_new_commit(task, &cmi);
+	sqe = silofs_allocate(alloc, sizeof(*sqe));
+	if (unlikely(sqe == NULL)) {
+		return -ENOMEM;
+	}
+	err = sqe_init(sqe, alloc, task->t_submitq->smq_apex_id++);
 	if (err) {
+		silofs_deallocate(alloc, sqe, sizeof(*sqe));
 		return err;
 	}
-	task_update_by_commit(task, cmi);
-	task_push_commit(task, cmi);
-	*out_cmi = cmi;
+	*out_sqe = sqe;
 	return 0;
 }
 
-static void task_unlink_commit(struct silofs_task *task,
-                               struct silofs_commit_info *cmi)
+static void task_del_sqe(struct silofs_task *task,
+                         struct silofs_submitq_entry *sqe)
 {
-	listq_remove(&task->t_pendq, &cmi->tlh);
+	struct silofs_alloc *alloc = task->t_uber->ub_alloc;
+
+	sqe_fini(sqe);
+	silofs_deallocate(alloc, sqe, sizeof(*sqe));
 }
 
-void silofs_task_rm_commit(struct silofs_task *task,
-                           struct silofs_commit_info *cmi)
+static void task_link_sqe(struct silofs_task *task,
+                          struct silofs_submitq_entry *sqe)
 {
-	task_unlink_commit(task, cmi);
-	task_del_commit(task, cmi);
+	listq_push_back(&task->t_pendq, &sqe->tlh);
 }
 
-static void task_drop_commits(struct silofs_task *task)
+static void task_unlink_sqe(struct silofs_task *task,
+                            struct silofs_submitq_entry *sqe)
 {
-	struct silofs_commit_info *cmi;
+	listq_remove(&task->t_pendq, &sqe->tlh);
+}
 
-	cmi = task_pop_commit(task);
-	while (cmi != NULL) {
-		task_del_commit(task, cmi);
-		cmi = task_pop_commit(task);
+static struct silofs_submitq_entry *task_front_sqe(struct silofs_task *task)
+{
+	struct silofs_list_head *tlh;
+
+	tlh = listq_front(&task->t_pendq);
+	return sqe_from_tlh(tlh);
+}
+
+static void task_update_by(struct silofs_task *task,
+                           struct silofs_submitq_entry *sqe)
+{
+	if (sqe->uniq_id > task->t_apex_id) {
+		task->t_apex_id = sqe->uniq_id;
 	}
 }
 
-int silofs_task_let_complete(struct silofs_task *task, bool all)
+int silofs_task_mk_sqe(struct silofs_task *task,
+                       struct silofs_submitq_entry **out_sqe)
+{
+	struct silofs_submitq_entry *sqe = NULL;
+	int err;
+
+	err = task_new_sqe(task, &sqe);
+	if (err) {
+		return err;
+	}
+	task_update_by(task, sqe);
+	task_link_sqe(task, sqe);
+	*out_sqe = sqe;
+	return 0;
+}
+
+static void task_remove_sqe(struct silofs_task *task,
+                            struct silofs_submitq_entry *sqe)
+{
+	sqe_lock(sqe);
+	sqe_decrefs(sqe);
+	sqe_unbind_bri(sqe);
+	sqe_unlock(sqe);
+	task_unlink_sqe(task, sqe);
+}
+
+static void task_remove_del_sqe(struct silofs_task *task,
+                                struct silofs_submitq_entry *sqe)
+{
+	task_remove_sqe(task, sqe);
+	task_del_sqe(task, sqe);
+}
+
+void silofs_task_rm_sqe(struct silofs_task *task,
+                        struct silofs_submitq_entry *sqe)
+{
+	task_remove_del_sqe(task, sqe);
+}
+
+void silofs_task_enq_sqe(struct silofs_task *task,
+                         struct silofs_submitq_entry *sqe)
+{
+	submitq_enqueue(task->t_submitq, sqe);
+}
+
+static void task_drop_sqes(struct silofs_task *task)
+{
+	struct silofs_submitq_entry *sqe;
+
+	sqe = task_front_sqe(task);
+	while (sqe != NULL) {
+		task_remove_del_sqe(task, sqe);
+		sqe = task_front_sqe(task);
+	}
+}
+
+int silofs_task_submit(struct silofs_task *task, bool all)
 {
 	if (all) {
-		commitqs_apply(task->t_cqs, SILOFS_CID_ALL);
-	} else if (task->t_apex_cid) {
-		commitqs_apply(task->t_cqs, task->t_apex_cid);
+		submitq_apply(task->t_submitq, SILOFS_CID_ALL);
+	} else if (task->t_apex_id) {
+		submitq_apply(task->t_submitq, task->t_apex_id);
 	}
 	return 0;
 }
@@ -570,18 +474,18 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 	memset(task, 0, sizeof(*task));
 	listq_init(&task->t_pendq);
 	task->t_uber = uber;
-	task->t_cqs = uber->ub_cqs;
-	task->t_apex_cid = 0;
+	task->t_submitq = uber->ub_submitq;
+	task->t_apex_id = 0;
 	task->t_interrupt = 0;
 	return 0;
 }
 
 void silofs_task_fini(struct silofs_task *task)
 {
-	task_drop_commits(task);
+	task_drop_sqes(task);
 	listq_fini(&task->t_pendq);
 	task->t_uber = NULL;
-	task->t_cqs = NULL;
+	task->t_submitq = NULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

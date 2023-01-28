@@ -463,7 +463,10 @@ static void ce_incref_atomic(struct silofs_cache_elem *ce)
 
 static void ce_decref_atomic(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_sub(&ce->ce_refcnt, 1);
+	int rc;
+
+	rc = silofs_atomic_sub(&ce->ce_refcnt, 1);
+	silofs_assert_ge(rc, 0);
 }
 
 static bool ce_is_evictable_atomic(const struct silofs_cache_elem *ce)

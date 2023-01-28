@@ -92,7 +92,7 @@ static int op_finish(struct silofs_task *task,
                      ino_t ino, int op_flags, int err)
 {
 	op_probe_duration(task, err);
-	if (!err && (task->t_apex_cid > 0)) {
+	if (!err && (task->t_apex_id > 0)) {
 		err = op_flush(task, ino, op_flags, SILOFS_F_OPFINISH);
 	}
 	op_unlock_fs(task);
@@ -131,7 +131,7 @@ static int symval_to_str(const char *symval, struct silofs_str *str)
 static const struct silofs_idsmap *
 idsm_of(const struct silofs_task *task)
 {
-	return task->t_uber->ub_idsm;
+	return task->t_uber->ub_idsmap;
 }
 
 static const struct silofs_sb_info *sbi_of(const struct silofs_task *task)

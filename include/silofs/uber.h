@@ -22,8 +22,8 @@
 struct silofs_uber_args {
 	struct silofs_alloc    *alloc;
 	struct silofs_repos    *repos;
-	struct silofs_commitqs *cqs;
-	struct silofs_idsmap   *idsm;
+	struct silofs_submitq  *submitq;
+	struct silofs_idsmap   *idsmap;
 	const struct silofs_ivkey *ivkey;
 };
 

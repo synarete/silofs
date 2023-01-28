@@ -20,30 +20,31 @@
 /* execution-context task per file-system operation */
 struct silofs_task {
 	struct silofs_uber     *t_uber;
-	struct silofs_commitqs *t_cqs;
+	struct silofs_submitq  *t_submitq;
 	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
-	uint64_t                t_apex_cid;
+	uint64_t                t_apex_id;
 	volatile int            t_interrupt;
 };
 
-/* commit's reference within underlying block */
-struct silofs_commit_ref {
+/* submit reference into view within underlying block */
+struct silofs_submit_ref {
 	struct silofs_bk_info      *bki;
 	const union silofs_view    *view;
 	size_t                      len;
 };
 
-/* flush commit control object */
-struct silofs_commit_info {
+/* submission queue entry */
+struct silofs_submitq_entry {
+	struct silofs_mutex         mu;
+	struct silofs_list_head     qlh;
 	struct silofs_list_head     tlh;
-	struct silofs_list_head     cq_lh;
 	struct silofs_alloc        *alloc;
 	struct silofs_task         *task;
 	struct silofs_blobref_info *bri;
-	struct silofs_commit_ref    ref[32];
+	struct silofs_submit_ref    ref[32];
 	struct silofs_blobid        bid;
-	uint64_t        commit_id;
+	uint64_t        uniq_id;
 	void           *buf;
 	loff_t          off;
 	size_t          len;
@@ -51,17 +52,17 @@ struct silofs_commit_info {
 	volatile int    status;
 };
 
-/* commits flush queue control object */
-struct silofs_commitq {
-	struct silofs_listq     cq_ls;
-	struct silofs_mutex     cq_lk;
-	int                     cq_index;
+/* submission flush queue */
+struct silofs_submitq {
+	struct silofs_listq     smq_listq;
+	struct silofs_mutex     smq_mutex;
+	uint64_t                smq_apex_id;
 };
 
 /* commit-queues flush set */
 struct silofs_commitqs {
 	struct silofs_rwlock    cqs_rwlock;
-	struct silofs_commitq   cqs_set[4];
+	struct silofs_submitq   cqs_set[4];
 	struct silofs_alloc    *cqs_alloc;
 	uint64_t                cqs_apex_cid;
 	volatile int            cqs_active;
@@ -70,16 +71,16 @@ struct silofs_commitqs {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_cmi_append_ref(struct silofs_commit_info *cmi,
+bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_snode_info *si);
 
-int silofs_cmi_assign_buf(struct silofs_commit_info *cmi);
+int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe);
 
-void silofs_cmi_bind_bri(struct silofs_commit_info *cmi,
+void silofs_sqe_bind_bri(struct silofs_submitq_entry *sqe,
                          struct silofs_blobref_info *bri);
 
-void silofs_cmi_increfs(struct silofs_commit_info *cmi);
+void silofs_sqe_increfs(struct silofs_submitq_entry *sqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -94,25 +95,24 @@ void silofs_task_set_umask(struct silofs_task *task, mode_t umask);
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt);
 
-int silofs_task_mk_commit(struct silofs_task *task,
-                          struct silofs_commit_info **out_cmi);
+int silofs_task_mk_sqe(struct silofs_task *task,
+                       struct silofs_submitq_entry **out_sqe);
 
-void silofs_task_rm_commit(struct silofs_task *task,
-                           struct silofs_commit_info *cmi);
+void silofs_task_rm_sqe(struct silofs_task *task,
+                        struct silofs_submitq_entry *sqe);
 
-int silofs_task_let_complete(struct silofs_task *task, bool all);
+void silofs_task_enq_sqe(struct silofs_task *task,
+                         struct silofs_submitq_entry *sqe);
+
+int silofs_task_submit(struct silofs_task *task, bool all);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_commitqs_init(struct silofs_commitqs *cqs,
-                         struct silofs_alloc *alloc);
+int silofs_submitq_init(struct silofs_submitq *smq);
 
-void silofs_commitqs_fini(struct silofs_commitqs *cqs);
-
-void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
-                             struct silofs_commit_info *cmi);
+void silofs_submitq_fini(struct silofs_submitq *smq);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

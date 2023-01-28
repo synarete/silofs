@@ -33,7 +33,7 @@ struct silofs_fs_core {
 	struct silofs_qalloc    qalloc;
 	struct silofs_crypto    crypto;
 	struct silofs_repos     repos;
-	struct silofs_commitqs  commitqs;
+	struct silofs_submitq   submitq;
 	struct silofs_uber      uber;
 	struct silofs_idsmap    idsm;
 	struct silofs_password  passwd;
@@ -289,25 +289,25 @@ static void fse_fini_repos(struct silofs_fs_env *fse)
 	}
 }
 
-static int fse_init_commitqs(struct silofs_fs_env *fse)
+static int fse_init_submitq(struct silofs_fs_env *fse)
 {
-	struct silofs_commitqs *cqs;
+	struct silofs_submitq *smq;
 	int err;
 
-	cqs = &fse_obj_of(fse)->fs_core.c.commitqs;
-	err = silofs_commitqs_init(cqs, fse->fs_alloc);
+	smq = &fse_obj_of(fse)->fs_core.c.submitq;
+	err = silofs_submitq_init(smq);
 	if (err) {
 		return err;
 	}
-	fse->fs_commitqs = cqs;
+	fse->fs_submitq = smq;
 	return 0;
 }
 
-static void fse_fini_commitqs(struct silofs_fs_env *fse)
+static void fse_fini_submitq(struct silofs_fs_env *fse)
 {
-	if (fse->fs_commitqs != NULL) {
-		silofs_commitqs_fini(fse->fs_commitqs);
-		fse->fs_commitqs = NULL;
+	if (fse->fs_submitq != NULL) {
+		silofs_submitq_fini(fse->fs_submitq);
+		fse->fs_submitq = NULL;
 	}
 }
 
@@ -345,8 +345,8 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 	const struct silofs_uber_args args = {
 		.alloc = fse->fs_alloc,
 		.repos = fse->fs_repos,
-		.cqs = fse->fs_commitqs,
-		.idsm = fse->fs_idsmap,
+		.submitq = fse->fs_submitq,
+		.idsmap = fse->fs_idsmap,
 		.ivkey = &fse->fs_ivkey,
 	};
 	struct silofs_uber *uber;
@@ -483,7 +483,7 @@ static int fse_init_subs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_init_commitqs(fse);
+	err = fse_init_submitq(fse);
 	if (err) {
 		return err;
 	}
@@ -526,7 +526,7 @@ static void fse_fini(struct silofs_fs_env *fse)
 	fse_fini_fuseq(fse);
 	fse_fini_uber(fse);
 	fse_fini_idsmap(fse);
-	fse_fini_commitqs(fse);
+	fse_fini_submitq(fse);
 	fse_fini_repos(fse);
 	fse_fini_crypto(fse);
 	fse_fini_qalloc(fse);
@@ -671,7 +671,7 @@ static int fse_done_self_task(const struct silofs_fs_env *fse,
 {
 	int err;
 
-	err = silofs_task_let_complete(task, true);
+	err = silofs_task_submit(task, true);
 	silofs_task_fini(task);
 	silofs_unused(fse);
 	return err;

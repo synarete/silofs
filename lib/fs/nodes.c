@@ -1608,6 +1608,7 @@ struct silofs_bk_info *silofs_bki_of(const struct silofs_snode_info *si)
 		silofs_assert_not_null(vi->v_vbki);
 		bki = &vi->v_vbki->vbk_base;
 	}
+	silofs_assert_not_null(bki);
 	return bki;
 }
 

@@ -987,11 +987,6 @@ void silofs_ui_dirtify(struct silofs_unode_info *ui)
 	cache_dirtify_ui(ui_cache(ui), ui);
 }
 
-void silofs_ui_undirtify(struct silofs_unode_info *ui)
-{
-	cache_undirtify_ui(ui_cache(ui), ui);
-}
-
 static struct silofs_unode_info *ui_from_ce(struct silofs_cache_elem *ce)
 {
 	struct silofs_unode_info *ui = NULL;
@@ -2143,7 +2138,7 @@ silofs_cache_spawn_ui(struct silofs_cache *cache,
 static void
 cache_forget_ui(struct silofs_cache *cache, struct silofs_unode_info *ui)
 {
-	ui_undirtify(ui);
+	cache_undirtify_ui(cache, ui);
 	cache_forget_uaddr(cache, ui_uaddr(ui));
 	cache_evict_ui(cache, ui);
 }
@@ -2656,7 +2651,7 @@ static void cache_unmap_vi(struct silofs_cache *cache,
 static void cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
-	vi_undirtify(vi);
+	cache_undirtify_vi(cache, vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
 		vi->v_si.s_ce.ce_forgot = true;
@@ -3215,7 +3210,7 @@ void silofs_vi_dirtify(struct silofs_vnode_info *vi)
 	cache_dirtify_vi(vi_cache(vi), vi);
 }
 
-void silofs_vi_undirtify(struct silofs_vnode_info *vi)
+static void vi_undirtify(struct silofs_vnode_info *vi)
 {
 	cache_undirtify_vi(vi_cache(vi), vi);
 }
@@ -3228,7 +3223,7 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii)
 
 void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
-	silofs_vi_undirtify(ii_to_vi(ii));
+	vi_undirtify(ii_to_vi(ii));
 }
 
 size_t silofs_ii_refcnt(const struct silofs_inode_info *ii)

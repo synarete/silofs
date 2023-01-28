@@ -169,8 +169,6 @@ void silofs_bri_decref(struct silofs_blobref_info *bri);
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi);
 
-void silofs_vi_undirtify(struct silofs_vnode_info *vi);
-
 void silofs_vi_incref(struct silofs_vnode_info *vi);
 
 void silofs_vi_decref(struct silofs_vnode_info *vi);
@@ -197,8 +195,6 @@ void silofs_ui_incref(struct silofs_unode_info *ui);
 void silofs_ui_decref(struct silofs_unode_info *ui);
 
 void silofs_ui_dirtify(struct silofs_unode_info *ui);
-
-void silofs_ui_undirtify(struct silofs_unode_info *ui);
 
 void silofs_ui_attach_to(struct silofs_unode_info *ui,
                          struct silofs_ubk_info *ubki);

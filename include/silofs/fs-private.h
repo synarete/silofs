@@ -170,7 +170,6 @@
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)
 #define ui_dirtify(ui)                  silofs_ui_dirtify(ui)
-#define ui_undirtify(ui)                silofs_ui_undirtify(ui)
 #define ui_stype(ui)                    silofs_ui_stype(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
 #define ui_oaddr(ui)                    silofs_ui_oaddr(ui)
@@ -184,7 +183,6 @@
 #define vi_incref(vi)                   silofs_vi_incref(vi)
 #define vi_decref(vi)                   silofs_vi_decref(vi)
 #define vi_dirtify(vi)                  silofs_vi_dirtify(vi)
-#define vi_undirtify(vi)                silofs_vi_undirtify(vi)
 #define vi_isdata(vi)                   silofs_vi_isdata(vi)
 
 #define ii_unconst(ii)                  silofs_ii_unconst(ii)

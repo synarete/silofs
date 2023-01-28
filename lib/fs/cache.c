@@ -66,7 +66,7 @@ static const unsigned int silofs_primes[] = {
 	402653189, 805306457, 1610612741, 3221225473, 4294967291
 };
 
-static size_t htbl_prime_size(size_t lim)
+static size_t htbl_cap_as_prime(size_t lim)
 {
 	size_t p = 11;
 
@@ -447,13 +447,10 @@ static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 	return !ce->ce_dirty && !ce_refcnt(ce);
 }
 
-
 static int ce_refcnt_atomic(const struct silofs_cache_elem *ce)
 {
-	const int rc = silofs_atomic_get(&ce->ce_refcnt);
-
-	silofs_assert_ge(rc, 0);
-	return rc;
+	silofs_assert_ge(ce->ce_refcnt, 0);
+	return silofs_atomic_get(&ce->ce_refcnt);
 }
 
 static void ce_incref_atomic(struct silofs_cache_elem *ce)
@@ -463,10 +460,8 @@ static void ce_incref_atomic(struct silofs_cache_elem *ce)
 
 static void ce_decref_atomic(struct silofs_cache_elem *ce)
 {
-	int rc;
-
-	rc = silofs_atomic_sub(&ce->ce_refcnt, 1);
-	silofs_assert_ge(rc, 0);
+	silofs_assert_ge(ce->ce_refcnt, 1);
+	silofs_atomic_sub(&ce->ce_refcnt, 1);
 }
 
 static bool ce_is_evictable_atomic(const struct silofs_cache_elem *ce)
@@ -1341,9 +1336,9 @@ static void cache_del_bri(const struct silofs_cache *cache,
 	silofs_bri_del(bri, cache->c_alloc);
 }
 
-static int cache_init_bri_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_bri_lm(struct silofs_cache *cache, size_t cap)
 {
-	return lrumap_init(&cache->c_bri_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_bri_lm, cache->c_alloc, cap);
 }
 
 static void cache_fini_bri_lm(struct silofs_cache *cache)
@@ -1611,6 +1606,11 @@ static size_t cache_blobs_overflow(const struct silofs_cache *cache)
 	return (cur > bar) ? (cur - bar) : 0;
 }
 
+static bool cache_blobs_has_overflow(const struct silofs_cache *cache)
+{
+	return cache_blobs_overflow(cache) > 0;
+}
+
 void silofs_cache_relax_blobs(struct silofs_cache *cache)
 {
 	size_t cnt;
@@ -1656,9 +1656,9 @@ static void cache_del_ubki(const struct silofs_cache *cache,
 	bk_free(bk, alloc);
 }
 
-static int cache_init_ubki_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_ubki_lm(struct silofs_cache *cache, size_t cap)
 {
-	return lrumap_init(&cache->c_ubki_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_ubki_lm, cache->c_alloc, cap);
 }
 
 static void cache_fini_ubki_lm(struct silofs_cache *cache)
@@ -1902,9 +1902,9 @@ silofs_cache_spawn_ubk(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int cache_init_ui_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_ui_lm(struct silofs_cache *cache, size_t cap)
 {
-	return lrumap_init(&cache->c_ui_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_ui_lm, cache->c_alloc, cap);
 }
 
 static void cache_fini_ui_lm(struct silofs_cache *cache)
@@ -2233,9 +2233,9 @@ static void cache_del_vbki(const struct silofs_cache *cache,
 	vbki_free(vbki, cache->c_alloc);
 }
 
-static int cache_init_vbki_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_vbki_lm(struct silofs_cache *cache, size_t cap)
 {
-	return lrumap_init(&cache->c_vbki_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_vbki_lm, cache->c_alloc, cap);
 }
 
 static void cache_fini_vbki_lm(struct silofs_cache *cache)
@@ -2475,9 +2475,9 @@ silofs_cache_spawn_vbk(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int cache_init_vi_lm(struct silofs_cache *cache, size_t htbl_size)
+static int cache_init_vi_lm(struct silofs_cache *cache, size_t cap)
 {
-	return lrumap_init(&cache->c_vi_lm, cache->c_alloc, htbl_size);
+	return lrumap_init(&cache->c_vi_lm, cache->c_alloc, cap);
 }
 
 static void cache_fini_vi_lm(struct silofs_cache *cache)
@@ -2722,14 +2722,20 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
 	actual += cache_shrink_or_relru_vis(cache, count, false);
 
+	count = lrumap_overpop(&cache->c_vbki_lm) + extra;
+	actual += cache_shrink_or_relru_vbkis(cache, count, false);
+	if (actual && (shift < 1)) {
+		return actual;
+	}
+
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
 	actual += cache_shrink_or_relru_uis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_ubki_lm) + extra;
 	actual += cache_shrink_or_relru_ubkis(cache, count, false);
-
-	count = lrumap_overpop(&cache->c_vbki_lm) + extra;
-	actual += cache_shrink_or_relru_vbkis(cache, count, false);
+	if (actual && (shift < 2)) {
+		return actual;
+	}
 
 	count = lrumap_overpop(&cache->c_bri_lm) + extra;
 	actual += cache_shrink_or_relru_bris(cache, count, false);
@@ -2737,7 +2743,7 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 	return actual;
 }
 
-static size_t cache_lrumaps_overpop(const struct silofs_cache *cache)
+static bool cache_lrumaps_has_overpop(const struct silofs_cache *cache)
 {
 	const struct silofs_lrumap *lms[] = {
 		&cache->c_vi_lm,
@@ -2746,12 +2752,12 @@ static size_t cache_lrumaps_overpop(const struct silofs_cache *cache)
 		&cache->c_vbki_lm,
 		&cache->c_bri_lm
 	};
-	size_t ovp = 0;
+	bool has_overpop = false;
 
-	for (size_t i = 0; i < ARRAY_SIZE(lms); ++i) {
-		ovp += lrumap_overpop(lms[i]);
+	for (size_t i = 0; i < ARRAY_SIZE(lms) && !has_overpop; ++i) {
+		has_overpop = (lrumap_overpop(lms[i]) > 0);
 	}
-	return ovp;
+	return has_overpop;
 }
 
 static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
@@ -2768,15 +2774,16 @@ static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
 
 static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 {
-	const size_t blobs_over = cache_blobs_overflow(cache);
-	const size_t lrumaps_over = cache_lrumaps_overpop(cache);
-	const uint64_t mem_press = cache_memory_pressure(cache);
-	size_t niter;
+	uint64_t mem_press;
+	size_t niter = 0;
 
-	niter = min(lrumaps_over, 64);
-	if (flags & SILOFS_F_WALKFS) {
-		niter += silofs_popcount64(mem_press >> 1);
+	if (cache_lrumaps_has_overpop(cache)) {
+		niter += 1;
 	}
+	if (cache_blobs_has_overflow(cache)) {
+		niter += 1;
+	}
+	mem_press = cache_memory_pressure(cache);
 	if (flags & SILOFS_F_BRINGUP) {
 		niter += silofs_popcount64(mem_press >> 3);
 	}
@@ -2784,19 +2791,16 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 		niter += silofs_popcount64(mem_press >> 4);
 	}
 	if (flags & SILOFS_F_TIMEOUT) {
-		niter += silofs_popcount64(mem_press >> 8);
+		niter += min(silofs_popcount64(mem_press >> 8), 2);
 	}
 	if (flags & SILOFS_F_OPSTART) {
-		niter += silofs_popcount64(mem_press >> 16);
-	}
-	if ((flags & (SILOFS_F_IDLE | SILOFS_F_WALKFS))) {
-		niter += (mem_press & ~1UL) ? 2 : 1;
+		niter += min(silofs_popcount64(mem_press >> 16), 4);
 	}
 	if (flags & SILOFS_F_NOW) {
-		niter += 1;
+		niter += min(silofs_popcount64(mem_press >> 20), 8);
 	}
-	if (flags && blobs_over) {
-		niter += 2;
+	if (flags & SILOFS_F_WALKFS) {
+		niter += (mem_press & 3);
 	}
 	return niter;
 }
@@ -2814,7 +2818,12 @@ static void cache_relax_niter(struct silofs_cache *cache, size_t niter)
 
 void silofs_cache_relax(struct silofs_cache *cache, int flags)
 {
-	cache_relax_niter(cache, cache_calc_niter(cache, flags));
+	size_t niter;
+
+	niter = cache_calc_niter(cache, flags);
+	if (niter > 0) {
+		cache_relax_niter(cache, niter);
+	}
 }
 
 void silofs_cache_shrink_once(struct silofs_cache *cache)
@@ -3085,14 +3094,6 @@ static void cache_fini_nil_bk(struct silofs_cache *cache)
 	}
 }
 
-static size_t cache_htbl_size(const struct silofs_cache *cache, size_t div)
-{
-	const size_t hwant = cache->c_mem_size_hint / div;
-	const size_t limit = silofs_clamp(hwant, 1U << 14, 1U << 20);
-
-	return htbl_prime_size(limit);
-}
-
 static void cache_fini_lrumaps(struct silofs_cache *cache)
 {
 	cache_fini_vi_lm(cache);
@@ -3102,32 +3103,36 @@ static void cache_fini_lrumaps(struct silofs_cache *cache)
 	cache_fini_bri_lm(cache);
 }
 
+static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
+{
+	const size_t mem_size = cache->c_mem_size_hint;
+	const size_t cap_max = mem_size / sizeof(struct silofs_list_head);
+
+	return silofs_max(cap_max / 256, 8192);
+}
+
 static int cache_init_lrumaps(struct silofs_cache *cache)
 {
+	const size_t cap = cache_calc_htbl_cap(cache);
 	int err;
-	size_t hsize;
 
-	hsize = cache_htbl_size(cache, sizeof(struct silofs_block));
-	err = cache_init_bri_lm(cache, hsize);
+	err = cache_init_bri_lm(cache, htbl_cap_as_prime(cap));
 	if (err) {
 		goto out_err;
 	}
-	hsize = cache_htbl_size(cache, sizeof(struct silofs_block));
-	err = cache_init_vbki_lm(cache, hsize);
+	err = cache_init_ubki_lm(cache, cap);
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_ubki_lm(cache, hsize);
+	err = cache_init_vbki_lm(cache, cap);
 	if (err) {
 		goto out_err;
 	}
-	hsize = cache_htbl_size(cache, sizeof(struct silofs_data_block4));
-	err = cache_init_vi_lm(cache, hsize);
+	err = cache_init_ui_lm(cache, cap);
 	if (err) {
 		goto out_err;
 	}
-	hsize = cache_htbl_size(cache, sizeof(struct silofs_block));
-	err = cache_init_ui_lm(cache, hsize);
+	err = cache_init_vi_lm(cache, cap);
 	if (err) {
 		goto out_err;
 	}

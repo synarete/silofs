@@ -870,19 +870,6 @@ static int sbi_check_stage(const struct silofs_sb_info *sbi,
 	return err;
 }
 
-static int sbi_check_stage_vnode(struct silofs_sb_info *sbi,
-                                 const struct silofs_vaddr *vaddr,
-                                 enum silofs_stage_mode stg_mode)
-{
-	return vaddr_isnull(vaddr) ? -ENOENT : sbi_check_stage(sbi, stg_mode);
-}
-
-static int sbi_check_stage_inode(struct silofs_sb_info *sbi, ino_t ino,
-                                 enum silofs_stage_mode stg_mode)
-{
-	return ino_isnull(ino) ? -ENOENT : sbi_check_stage(sbi, stg_mode);
-}
-
 static int
 resolve_stage_vnode(struct silofs_task *task,
                     const struct silofs_vaddr *vaddr,
@@ -916,6 +903,17 @@ out_ok:
 	return 0;
 }
 
+static int check_stage_inode(const struct silofs_task *task, ino_t ino,
+                             enum silofs_stage_mode stg_mode)
+{
+	int ret = -ENOENT;
+
+	if (!ino_isnull(ino)) {
+		ret = sbi_check_stage(task_sbi(task), stg_mode);
+	}
+	return ret;
+}
+
 int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stage_mode stg_mode,
                        struct silofs_inode_info **out_ii)
@@ -925,7 +923,7 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
 	struct silofs_sb_info *sbi = task_sbi(task);
 	int err;
 
-	err = sbi_check_stage_inode(sbi, ino, stg_mode);
+	err = check_stage_inode(task, ino, stg_mode);
 	if (err) {
 		return err;
 	}
@@ -1382,6 +1380,18 @@ void silofs_sbi_xfini(struct silofs_sb_info *sbi)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static int check_stage_vnode(const struct silofs_task *task,
+                             const struct silofs_vaddr *vaddr,
+                             enum silofs_stage_mode stg_mode)
+{
+	int ret =  -ENOENT;
+
+	if (!vaddr_isnull(vaddr)) {
+		ret = sbi_check_stage(task_sbi(task), stg_mode);
+	}
+	return ret;
+}
+
 int silofs_stage_vnode(struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
                        enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
@@ -1389,7 +1399,7 @@ int silofs_stage_vnode(struct silofs_task *task,
 {
 	int err;
 
-	err = sbi_check_stage_vnode(task_sbi(task), vaddr, stg_mode);
+	err = check_stage_vnode(task, vaddr, stg_mode);
 	if (err) {
 		return err;
 	}

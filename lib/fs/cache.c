@@ -431,27 +431,48 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	ce_lru(ce, lru);
 }
 
-static size_t ce_refcnt(const struct silofs_cache_elem *ce)
+static int ce_refcnt(const struct silofs_cache_elem *ce)
 {
-	const int rc = silofs_atomic_get(&ce->ce_refcnt);
-
-	silofs_assert_ge(rc, 0);
-	return (size_t)rc;
+	return ce->ce_refcnt;
 }
 
 static void ce_incref(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_add(&ce->ce_refcnt, 1);
+	ce->ce_refcnt++;
 }
 
 static void ce_decref(struct silofs_cache_elem *ce)
 {
-	silofs_atomic_sub(&ce->ce_refcnt, 1);
+	ce->ce_refcnt--;
 }
 
 static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 {
 	return !ce->ce_dirty && !ce_refcnt(ce);
+}
+
+
+static int ce_refcnt_atomic(const struct silofs_cache_elem *ce)
+{
+	const int rc = silofs_atomic_get(&ce->ce_refcnt);
+
+	silofs_assert_ge(rc, 0);
+	return rc;
+}
+
+static void ce_incref_atomic(struct silofs_cache_elem *ce)
+{
+	silofs_atomic_add(&ce->ce_refcnt, 1);
+}
+
+static void ce_decref_atomic(struct silofs_cache_elem *ce)
+{
+	silofs_atomic_sub(&ce->ce_refcnt, 1);
+}
+
+static bool ce_is_evictable_atomic(const struct silofs_cache_elem *ce)
+{
+	return !ce->ce_dirty && !ce_refcnt_atomic(ce);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -674,7 +695,7 @@ static void bki_fini(struct silofs_bk_info *bki)
 
 static void bki_incref(struct silofs_bk_info *bki)
 {
-	ce_incref(bki_to_ce(bki));
+	ce_incref_atomic(bki_to_ce(bki));
 }
 
 void silofs_bki_incref(struct silofs_bk_info *bki)
@@ -686,7 +707,7 @@ void silofs_bki_incref(struct silofs_bk_info *bki)
 
 static void bki_decref(struct silofs_bk_info *bki)
 {
-	ce_decref(bki_to_ce(bki));
+	ce_decref_atomic(bki_to_ce(bki));
 }
 
 void silofs_bki_decref(struct silofs_bk_info *bki)
@@ -698,7 +719,7 @@ void silofs_bki_decref(struct silofs_bk_info *bki)
 
 static bool bki_is_evictable(const struct silofs_bk_info *bki)
 {
-	return ce_is_evictable(bki_to_ce(bki));
+	return ce_is_evictable_atomic(bki_to_ce(bki));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -788,14 +809,14 @@ static void ubki_detach(struct silofs_ubk_info *ubki)
 
 void silofs_ubki_incref(struct silofs_ubk_info *ubki)
 {
-	if (ubki != NULL) {
+	if (likely(ubki != NULL)) {
 		bki_incref(&ubki->ubk_base);
 	}
 }
 
 void silofs_ubki_decref(struct silofs_ubk_info *ubki)
 {
-	if (ubki != NULL) {
+	if (likely(ubki != NULL)) {
 		bki_decref(&ubki->ubk_base);
 	}
 }
@@ -854,17 +875,21 @@ static void vbki_fini(struct silofs_vbk_info *vbki)
 
 void silofs_vbki_incref(struct silofs_vbk_info *vbki)
 {
-	ce_incref(vbki_to_ce(vbki));
+	if (likely(vbki != NULL)) {
+		bki_incref(&vbki->vbk_base);
+	}
 }
 
 void silofs_vbki_decref(struct silofs_vbk_info *vbki)
 {
-	ce_decref(vbki_to_ce(vbki));
+	if (likely(vbki != NULL)) {
+		bki_decref(&vbki->vbk_base);
+	}
 }
 
 static bool vbki_is_evictable(const struct silofs_vbk_info *vbki)
 {
-	return ce_is_evictable(vbki_to_ce(vbki));
+	return bki_is_evictable(&vbki->vbk_base);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1080,14 +1105,9 @@ static int visit_evictable_vi(struct silofs_cache_elem *ce, void *arg)
 	return ret;
 }
 
-size_t silofs_vi_refcnt(const struct silofs_vnode_info *vi)
+int silofs_vi_refcnt(const struct silofs_vnode_info *vi)
 {
-	size_t refcnt = 0;
-
-	if (likely(vi != NULL)) {
-		refcnt = ce_refcnt(vi_to_ce(vi));
-	}
-	return refcnt;
+	return likely(vi != NULL) ? ce_refcnt(vi_to_ce(vi)) : 0;
 }
 
 void silofs_vi_incref(struct silofs_vnode_info *vi)
@@ -3224,11 +3244,6 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii)
 void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
 	vi_undirtify(ii_to_vi(ii));
-}
-
-size_t silofs_ii_refcnt(const struct silofs_inode_info *ii)
-{
-	return silofs_vi_refcnt(ii_to_vi(ii));
 }
 
 void silofs_ii_incref(struct silofs_inode_info *ii)

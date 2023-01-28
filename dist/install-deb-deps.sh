@@ -4,6 +4,7 @@ apt-get install -y \
   clang \
   clang-tools \
   git \
+  gitlint \
   astyle \
   make \
   automake \

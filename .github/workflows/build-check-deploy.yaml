@@ -11,7 +11,7 @@ on:
 jobs:
   prepare:
     name: Prepare environment
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: echo "repo ${{ github.repository }} "
@@ -27,9 +27,21 @@ jobs:
         run: ./scripts/requiredeps.sh
       - name: Require install tool
         run: apt --version
+  gitlint:
+    name: Lint commit message
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/install-deb-deps.sh
+      - name: Check commit message
+        run: gitlint --config .gitlint.conf --target ./ lint
   codelint:
     name: Lint code style
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: prepare
     steps:
       - uses: actions/checkout@v3
@@ -43,8 +55,11 @@ jobs:
         run: ./astyleall.sh
   build-devel:
     name: Build with developer flags
-    needs: codelint
-    runs-on: ubuntu-22.04
+    needs:
+      - prepare
+      - codelint
+      - gitlint
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Update
@@ -63,8 +78,11 @@ jobs:
           make -f devel.mk O=2
   build-check:
     name: Build and check
-    needs: codelint
-    runs-on: ubuntu-22.04
+    needs:
+      - prepare
+      - codelint
+      - gitlint
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Update
@@ -81,9 +99,11 @@ jobs:
         run: make check
   static-analyze:
     name: Run static-code analysis
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
+      - prepare
       - codelint
+      - gitlint
     steps:
       - uses: actions/checkout@v3
       - name: Update
@@ -94,7 +114,7 @@ jobs:
         run: ./scripts/clangscanbuild.sh
   install-as-package:
     name: Install as deb package
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - build-check
       - build-devel
@@ -137,7 +157,7 @@ jobs:
         run: rm -rf ./build/repo
   install-by-autotools:
     name: Install via autotools
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - build-check
       - build-devel
@@ -188,7 +208,7 @@ jobs:
           make clean
   done:
     name: End workflow
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - install-as-package
       - install-by-autotools

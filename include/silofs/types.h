@@ -60,9 +60,10 @@ enum silofs_flags {
 	SILOFS_F_MEMFD          = SILOFS_BIT(5),
 	SILOFS_F_BRINGUP        = SILOFS_BIT(6),
 	SILOFS_F_OPSTART        = SILOFS_BIT(7),
-	SILOFS_F_TIMEOUT        = SILOFS_BIT(8),
-	SILOFS_F_IDLE           = SILOFS_BIT(9),
-	SILOFS_F_WALKFS         = SILOFS_BIT(10),
+	SILOFS_F_OPFINISH       = SILOFS_BIT(8),
+	SILOFS_F_TIMEOUT        = SILOFS_BIT(9),
+	SILOFS_F_IDLE           = SILOFS_BIT(10),
+	SILOFS_F_WALKFS         = SILOFS_BIT(11),
 };
 
 /* super-block control flags */

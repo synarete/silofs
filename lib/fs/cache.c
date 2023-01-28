@@ -2784,7 +2784,7 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 		niter += silofs_popcount64(mem_press >> 8);
 	}
 	if (flags & SILOFS_F_OPSTART) {
-		niter += silofs_popcount64(mem_press >> 20);
+		niter += silofs_popcount64(mem_press >> 16);
 	}
 	if ((flags & (SILOFS_F_IDLE | SILOFS_F_WALKFS))) {
 		niter += (mem_press & ~1UL) ? 2 : 1;
@@ -2885,20 +2885,22 @@ static size_t flush_threshold_of(silofs_dqid_t dqid, int flags)
 {
 	size_t threshold;
 	const size_t mega = SILOFS_UMEGA;
-	const size_t factor = dqid_specific(dqid) ? 4 : 1;
+	const size_t factor = dqid_specific(dqid) ? 2 : 1;
 
 	if (flags & SILOFS_F_NOW) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = mega / 8;
-	} else if (flags & SILOFS_F_FSYNC) {
 		threshold = mega / 2;
-	} else if (flags & (SILOFS_F_TIMEOUT | SILOFS_F_IDLE)) {
+	} else if (flags & SILOFS_F_FSYNC) {
 		threshold = mega;
-	} else if (flags & SILOFS_F_OPSTART) {
-		threshold = 4 * mega;
+	} else if (flags & (SILOFS_F_IDLE)) {
+		threshold = 8 * mega;
+	} else if (flags & SILOFS_F_TIMEOUT) {
+		threshold = 16 * mega;
+	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
+		threshold = 32 * mega;
 	} else {
-		threshold = 2 * mega;
+		threshold = 64 * mega;
 	}
 	return threshold / factor;
 }
@@ -2938,9 +2940,10 @@ static bool cache_dq_need_flush(const struct silofs_cache *cache,
 
 static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
 {
-	const uint64_t mem_press = cache_memory_pressure(cache);
+	const uint64_t mem_press_mask = cache_memory_pressure(cache);
+	const uint32_t mem_press_level = silofs_popcount64(mem_press_mask);
 
-	return silofs_popcount64(mem_press) > 12;
+	return (mem_press_level > 20);
 }
 
 bool silofs_cache_need_flush(const struct silofs_cache *cache,

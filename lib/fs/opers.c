@@ -92,8 +92,8 @@ static int op_finish(struct silofs_task *task,
                      ino_t ino, int op_flags, int err)
 {
 	op_probe_duration(task, err);
-	if (!err) {
-		err = op_flush(task, ino, op_flags, 0);
+	if (!err && (task->t_apex_cid > 0)) {
+		err = op_flush(task, ino, op_flags, SILOFS_F_OPFINISH);
 	}
 	op_unlock_fs(task);
 	return err;

@@ -576,6 +576,13 @@ out_err:
 	return err;
 }
 
+static uint32_t commitqs_nworkers(void)
+{
+	const uint32_t nworkers = silofs_num_worker_threads();
+
+	return (nworkers > 2) ? (nworkers / 2) : 1;
+}
+
 int silofs_commitqs_init(struct silofs_commitqs *cqs,
                          struct silofs_alloc *alloc)
 {
@@ -583,7 +590,7 @@ int silofs_commitqs_init(struct silofs_commitqs *cqs,
 	cqs->cqs_set = NULL;
 	cqs->cqs_count = 0;
 	cqs->cqs_active = 0;
-	return commitqs_init_set(cqs, silofs_num_worker_threads());
+	return commitqs_init_set(cqs, commitqs_nworkers());
 }
 
 static void commitqs_fini_set(struct silofs_commitqs *cqs)

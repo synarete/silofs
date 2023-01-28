@@ -19,6 +19,8 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
+#define SILOFS_COMMIT_LEN_MAX (2 * SILOFS_MEGA)
+
 /* local functions */
 static struct silofs_alloc *task_alloc(const struct silofs_task *task);
 static void task_signal_done(struct silofs_task *task,
@@ -48,16 +50,28 @@ static void cmi_reset_buf(struct silofs_commit_info *cmi)
 static bool cmi_isappendable(const struct silofs_commit_info *cmi,
                              const struct silofs_oaddr *oaddr)
 {
+	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
+	size_t len;
+	loff_t end;
+	loff_t nxt;
+
 	if (cmi->cnt == 0) {
 		return true;
 	}
 	if (cmi->cnt == ARRAY_SIZE(cmi->ref)) {
 		return false;
 	}
-	if (oaddr->pos != off_end(cmi->off, cmi->len)) {
+	end = off_end(cmi->off, cmi->len);
+	if (oaddr->pos != end) {
 		return false;
 	}
-	if ((cmi->len + oaddr->len) > SILOFS_MEGA) {
+	len = cmi->len + oaddr->len;
+	if (len > (size_t)len_max) {
+		return false;
+	}
+	nxt = off_next(cmi->off, len_max);
+	end = off_end(cmi->off, len);
+	if (end > nxt) {
 		return false;
 	}
 	if (!blobid_isequal(&oaddr->bka.blobid, &cmi->bid)) {
@@ -500,8 +514,8 @@ commitq_push_cmi(struct silofs_commitq *cq, struct silofs_commit_info *cmi)
 	listq_push_back(&cq->cq_ls, &cmi->flh);
 }
 
-static void commitq_enqueue(struct silofs_commitq *cq,
-                            struct silofs_commit_info *cmi)
+static void commitq_enq(struct silofs_commitq *cq,
+                        struct silofs_commit_info *cmi)
 {
 	struct silofs_lock *lock = &cq->cq_lk;
 
@@ -512,7 +526,7 @@ static void commitq_enqueue(struct silofs_commitq *cq,
 	silofs_mutex_unlock(&lock->mu);
 }
 
-static struct silofs_commit_info *commitq_dequeue(struct silofs_commitq *cq)
+static struct silofs_commit_info *commitq_deq(struct silofs_commitq *cq)
 {
 	struct silofs_commit_info *cmi = NULL;
 	struct silofs_lock *lock = &cq->cq_lk;
@@ -535,7 +549,7 @@ static int commitq_execute(struct silofs_commitq *cq)
 	struct silofs_commit_info *cmi;
 
 	while (cq->cq_active) {
-		cmi = commitq_dequeue(cq);
+		cmi = commitq_deq(cq);
 		if (cmi != NULL) {
 			cmi_execute_and_signal(cmi);
 		}
@@ -659,24 +673,17 @@ static struct silofs_commitq *
 commitqs_sub(const struct silofs_commitqs *cqs,
              const struct silofs_commit_info *cmi)
 {
-	const struct silofs_blobid *blobid = &cmi->bri->br_blobid;
-	const enum silofs_stype stype = blobid->vspace;
-	uint64_t hash;
-	size_t idx;
+	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
+	const ssize_t seg = cmi->off / len_max;
+	const size_t idx = (size_t)seg % cqs->cqs_count;
 
-	if (!stype_isdata(stype) || (cqs->cqs_count < 2)) {
-		idx = 0;
-	} else {
-		hash = silofs_blobid_hash(blobid);
-		idx = (hash % (cqs->cqs_count - 1)) + 1;
-	}
 	return &cqs->cqs_set[idx];
 }
 
 void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
                              struct silofs_commit_info *cmi)
 {
-	commitq_enqueue(commitqs_sub(cqs, cmi), cmi);
+	commitq_enq(commitqs_sub(cqs, cmi), cmi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

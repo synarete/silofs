@@ -21,28 +21,16 @@
 
 #define SILOFS_COMMIT_LEN_MAX (2 * SILOFS_MEGA)
 
-/* local functions */
-static struct silofs_alloc *task_alloc(const struct silofs_task *task);
-static void task_signal_done(struct silofs_task *task,
-                             struct silofs_commit_info *cmi);
-static int commitq_execute(struct silofs_commitq *cq);
-
-
-static struct silofs_alloc *cmi_alloc(const struct silofs_commit_info *cmi)
-{
-	return task_alloc(cmi->task);
-}
-
 static int cmi_setup_buf(struct silofs_commit_info *cmi)
 {
-	cmi->buf = silofs_allocate(cmi_alloc(cmi), cmi->len);
+	cmi->buf = silofs_allocate(cmi->alloc, cmi->len);
 	return unlikely(cmi->buf == NULL) ? -ENOMEM : 0;
 }
 
 static void cmi_reset_buf(struct silofs_commit_info *cmi)
 {
 	if (likely(cmi->buf != NULL)) {
-		silofs_deallocate(cmi_alloc(cmi), cmi->buf, cmi->len);
+		silofs_deallocate(cmi->alloc, cmi->buf, cmi->len);
 	}
 	cmi->buf = NULL;
 }
@@ -165,12 +153,13 @@ static void cmi_decrefs(struct silofs_commit_info *cmi)
 	}
 }
 
-static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
+static void cmi_init(struct silofs_commit_info *cmi,
+                     struct silofs_alloc *alloc)
 {
 	memset(cmi, 0, sizeof(*cmi));
 	list_head_init(&cmi->tlh);
-	list_head_init(&cmi->flh);
-	cmi->task = task;
+	list_head_init(&cmi->cq_lh);
+	cmi->alloc = alloc;
 	cmi->bri = NULL;
 	cmi->bid.size = 0;
 	cmi->commit_id = 0;
@@ -179,20 +168,18 @@ static void cmi_init(struct silofs_commit_info *cmi, struct silofs_task *task)
 	cmi->cnt = 0;
 	cmi->buf = NULL;
 	cmi->status = 0;
-	cmi->async = 0;
-	cmi->done = 0;
 }
 
 static void cmi_fini(struct silofs_commit_info *cmi)
 {
 	list_head_fini(&cmi->tlh);
-	list_head_fini(&cmi->tlh);
+	list_head_fini(&cmi->cq_lh);
 	cmi_reset_buf(cmi);
 	cmi_unbind_bri(cmi);
 	cmi->off = -1;
 	cmi->len = 0;
 	cmi->cnt = 0;
-	cmi->task = NULL;
+	cmi->alloc = NULL;
 	cmi->status = -1;
 }
 
@@ -206,40 +193,198 @@ static struct silofs_commit_info *cmi_from_tlh(struct silofs_list_head *tlh)
 	return cmi;
 }
 
-static struct silofs_commit_info *cmi_from_flh(struct silofs_list_head *flh)
+static struct silofs_commit_info *
+cmi_from_cq_lh(struct silofs_list_head *cq_lh)
 {
 	struct silofs_commit_info *cmi = NULL;
 
-	if (flh != NULL) {
-		cmi = container_of(flh, struct silofs_commit_info, flh);
+	if (cq_lh != NULL) {
+		cmi = container_of(cq_lh, struct silofs_commit_info, cq_lh);
 	}
 	return cmi;
 }
 
-static void cmi_execute_and_signal(struct silofs_commit_info *cmi)
+static void cmi_apply(struct silofs_commit_info *cmi)
 {
 	cmi->status = silofs_cmi_write_buf(cmi);
-	task_signal_done(cmi->task, cmi);
 }
 
-static struct silofs_commit_info *cmi_new(struct silofs_task *task)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int commitq_init(struct silofs_commitq *cq, int indx)
+{
+	memset(cq, 0, sizeof(*cq));
+	cq->cq_index = indx;
+	silofs_listq_init(&cq->cq_ls);
+	return silofs_mutex_init(&cq->cq_lk);
+}
+
+static void commitq_fini(struct silofs_commitq *cq)
+{
+	silofs_mutex_fini(&cq->cq_lk);
+	silofs_listq_fini(&cq->cq_ls);
+}
+
+static struct silofs_commit_info *commitq_front_cmi(struct silofs_commitq *cq)
+{
+	struct silofs_list_head *lh;
+
+	lh = listq_front(&cq->cq_ls);
+	return cmi_from_cq_lh(lh);
+}
+
+static void commitq_unlink_cmi(struct silofs_commitq *cq,
+                               struct silofs_commit_info *cmi)
+{
+	listq_remove(&cq->cq_ls, &cmi->cq_lh);
+}
+
+static void
+commitq_push_cmi(struct silofs_commitq *cq, struct silofs_commit_info *cmi)
+{
+	listq_push_back(&cq->cq_ls, &cmi->cq_lh);
+}
+
+static void commitq_enq(struct silofs_commitq *cq,
+                        struct silofs_commit_info *cmi)
+{
+	silofs_mutex_lock(&cq->cq_lk);
+	commitq_push_cmi(cq, cmi);
+	silofs_mutex_unlock(&cq->cq_lk);
+}
+
+static struct silofs_commit_info *
+commitq_apply_one_locked(struct silofs_commitq *cq, uint64_t commit_id)
 {
 	struct silofs_commit_info *cmi;
-	struct silofs_alloc *alloc = task_alloc(task);
 
-	cmi = silofs_allocate(alloc, sizeof(*cmi));
+	cmi = commitq_front_cmi(cq);
+	if (cmi == NULL) {
+		return NULL;
+	}
+	if (cmi->commit_id > commit_id) {
+		return NULL;
+	}
+	cmi_apply(cmi);
+	commitq_unlink_cmi(cq, cmi);
+	return cmi;
+}
+
+static struct silofs_commit_info *
+commitq_apply_one(struct silofs_commitq *cq, uint64_t commit_id)
+{
+	struct silofs_commit_info *cmi;
+
+	silofs_mutex_lock(&cq->cq_lk);
+	cmi = commitq_apply_one_locked(cq, commit_id);
+	silofs_mutex_unlock(&cq->cq_lk);
+	return cmi;
+}
+
+static int commitq_apply(struct silofs_commitq *cq, uint64_t commit_id)
+{
+	struct silofs_commit_info *cmi;
+	bool apply_more = true;
+
+	while (apply_more) {
+		cmi = commitq_apply_one(cq, commit_id);
+		apply_more = (cmi != NULL);
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int commitqs_init_set(struct silofs_commitqs *cqs)
+{
+	struct silofs_commitq *cq;
+	unsigned int init_cnt = 0;
+	int err;
+
+	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
+		cq = &cqs->cqs_set[i];
+		err = commitq_init(cq, (int)(i + 1));
+		if (err) {
+			goto out_err;
+		}
+		init_cnt++;
+	}
+	return 0;
+out_err:
+	for (size_t i = 0; i < init_cnt; ++i) {
+		cq = &cqs->cqs_set[i];
+		commitq_fini(cq);
+	}
+	return err;
+}
+
+int silofs_commitqs_init(struct silofs_commitqs *cqs,
+                         struct silofs_alloc *alloc)
+{
+	cqs->cqs_alloc = alloc;
+	cqs->cqs_apex_cid = 1;
+	cqs->cqs_active = 0;
+	return commitqs_init_set(cqs);
+}
+
+static void commitqs_fini_set(struct silofs_commitqs *cqs)
+{
+	struct silofs_commitq *cq;
+
+	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
+		cq = &cqs->cqs_set[i];
+		commitq_fini(cq);
+	}
+}
+
+void silofs_commitqs_fini(struct silofs_commitqs *cqs)
+{
+	commitqs_fini_set(cqs);
+	cqs->cqs_alloc = NULL;
+}
+
+
+static struct silofs_commit_info *
+commitqs_new_cmi(struct silofs_commitqs *cqs)
+{
+	struct silofs_commit_info *cmi;
+
+	cmi = silofs_allocate(cqs->cqs_alloc, sizeof(*cmi));
 	if (likely(cmi != NULL)) {
-		cmi_init(cmi, task);
+		cmi_init(cmi, cqs->cqs_alloc);
+		cmi->commit_id = cqs->cqs_apex_cid++;
 	}
 	return cmi;
 }
 
-static void cmi_del(struct silofs_commit_info *cmi)
+static void commitqs_del_cmi(struct silofs_commitqs *cqs,
+                             struct silofs_commit_info *cmi)
 {
-	struct silofs_alloc *alloc = task_alloc(cmi->task);
-
 	cmi_fini(cmi);
-	silofs_deallocate(alloc, cmi, sizeof(*cmi));
+	silofs_deallocate(cqs->cqs_alloc, cmi, sizeof(*cmi));
+}
+
+static struct silofs_commitq *
+commitqs_sub(struct silofs_commitqs *cqs,
+             const struct silofs_commit_info *cmi)
+{
+	const enum silofs_stype stype = cmi->bid.vspace;
+	const size_t idx = stype_isdata(stype) ? 0 : 1;
+
+	return &cqs->cqs_set[idx];
+}
+
+void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
+                             struct silofs_commit_info *cmi)
+{
+	commitq_enq(commitqs_sub(cqs, cmi), cmi);
+}
+
+static void commitqs_apply(struct silofs_commitqs *cqs, uint64_t commit_id)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
+		commitq_apply(&cqs->cqs_set[i], commit_id);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -275,17 +420,16 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 static int task_new_commit(struct silofs_task *task,
                            struct silofs_commit_info **out_cmi)
 {
-	*out_cmi = cmi_new(task);
+	*out_cmi = commitqs_new_cmi(task->t_cqs);
 	return likely(*out_cmi != NULL) ? 0 : -ENOMEM;
 }
 
 static void task_del_commit(struct silofs_task *task,
                             struct silofs_commit_info *cmi)
 {
-	silofs_assert_eq(task, cmi->task);
 	cmi_decrefs(cmi);
 	cmi_unbind_bri(cmi);
-	cmi_del(cmi);
+	commitqs_del_cmi(task->t_cqs, cmi);
 }
 
 static void task_push_commit(struct silofs_task *task,
@@ -302,23 +446,16 @@ static struct silofs_commit_info *task_pop_commit(struct silofs_task *task)
 	return cmi_from_tlh(tlh);
 }
 
-static void task_unlink_commit(struct silofs_task *task,
-                               struct silofs_commit_info *cmi)
+static void task_update_by_commit(struct silofs_task *task,
+                                  struct silofs_commit_info *cmi)
 {
-	listq_remove(&task->t_pendq, &cmi->tlh);
-}
-
-static void task_set_commit_id(struct silofs_task *task,
-                               struct silofs_commit_info *cmi)
-{
-	cmi->commit_id = ++(task->t_uber->ub_commit_id);
-	if (likely(cmi->commit_id > task->t_apex_cid)) {
+	if (cmi->commit_id > task->t_apex_cid) {
 		task->t_apex_cid = cmi->commit_id;
 	}
 }
 
-int silofs_task_make_commit(struct silofs_task *task,
-                            struct silofs_commit_info **out_cmi)
+int silofs_task_mk_commit(struct silofs_task *task,
+                          struct silofs_commit_info **out_cmi)
 {
 	struct silofs_commit_info *cmi = NULL;
 	int err;
@@ -327,66 +464,23 @@ int silofs_task_make_commit(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	task_set_commit_id(task, cmi);
+	task_update_by_commit(task, cmi);
 	task_push_commit(task, cmi);
 	*out_cmi = cmi;
 	return 0;
 }
 
-static void task_signal_done(struct silofs_task *task,
-                             struct silofs_commit_info *cmi)
+static void task_unlink_commit(struct silofs_task *task,
+                               struct silofs_commit_info *cmi)
 {
-	struct silofs_lock *lock = &task->t_lock;
-
-	silofs_mutex_lock(&lock->mu);
-	cmi->done = 1;
-	silofs_cond_signal(&lock->co);
-	silofs_mutex_unlock(&lock->mu);
+	listq_remove(&task->t_pendq, &cmi->tlh);
 }
 
-static bool task_wait_commit(struct silofs_task *task,
-                             struct silofs_commit_info *cmi)
+void silofs_task_rm_commit(struct silofs_task *task,
+                           struct silofs_commit_info *cmi)
 {
-	struct silofs_lock *lock = &task->t_lock;
-	bool done = false;
-	int err = 0;
-
-	silofs_mutex_lock(&lock->mu);
-	done = (cmi->done > 0);
-	if (cmi->async && !done) {
-		err = silofs_cond_ntimedwait(&lock->co, &lock->mu, 1);
-		if (!err) {
-			done = (cmi->done > 0);
-		}
-	}
-	silofs_mutex_unlock(&lock->mu);
-	return done;
-}
-
-static int task_wait_commits(struct silofs_task *task)
-{
-	struct silofs_list_head *itr = NULL;
-	struct silofs_commit_info *cmi = NULL;
-	struct silofs_listq *pendq = &task->t_pendq;
-	int ret = 0;
-	bool done;
-
-	itr = listq_front(pendq);
-	while (itr != NULL) {
-		cmi = cmi_from_tlh(itr);
-		done = task_wait_commit(task, cmi);
-		if (!done) {
-			continue;
-		}
-		if (!ret && cmi->status) {
-			ret = cmi->status;
-		}
-		task_unlink_commit(task, cmi);
-		task_del_commit(task, cmi);
-
-		itr = listq_front(pendq);
-	}
-	return ret;
+	task_unlink_commit(task, cmi);
+	task_del_commit(task, cmi);
 }
 
 static void task_drop_commits(struct silofs_task *task)
@@ -400,18 +494,12 @@ static void task_drop_commits(struct silofs_task *task)
 	}
 }
 
-int silofs_task_let_complete(struct silofs_task *task)
+int silofs_task_let_complete(struct silofs_task *task, bool all)
 {
-	int err;
+	const uint64_t cid = all ? UINT64_MAX : task->t_apex_cid;
 
-	err = task_wait_commits(task);
-	task_drop_commits(task);
-	return err;
-}
-
-static struct silofs_alloc *task_alloc(const struct silofs_task *task)
-{
-	return task->t_uber->ub_alloc;
+	commitqs_apply(task->t_cqs, cid);
+	return 0;
 }
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
@@ -419,283 +507,23 @@ struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 	return task->t_uber->ub_sbi;
 }
 
-const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
-{
-	return &task->t_oper.op_creds;
-}
-
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));
 	listq_init(&task->t_pendq);
 	task->t_uber = uber;
+	task->t_cqs = uber->ub_cqs;
 	task->t_apex_cid = 0;
 	task->t_interrupt = 0;
-	return silofs_lock_init(&task->t_lock);
+	return 0;
 }
 
 void silofs_task_fini(struct silofs_task *task)
 {
 	task_drop_commits(task);
 	listq_fini(&task->t_pendq);
-	silofs_lock_fini(&task->t_lock);
 	task->t_uber = NULL;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int commitq_init(struct silofs_commitq *cq, int indx)
-{
-	memset(cq, 0, sizeof(*cq));
-	cq->cq_active = 0;
-	cq->cq_index = indx;
-	silofs_listq_init(&cq->cq_ls);
-	return silofs_lock_init(&cq->cq_lk);
-}
-
-static void commitq_fini(struct silofs_commitq *cq)
-{
-	silofs_lock_fini(&cq->cq_lk);
-	silofs_listq_fini(&cq->cq_ls);
-}
-
-static int commitq_do_start(struct silofs_thread *th)
-{
-	struct silofs_commitq *cq = th->arg;
-	int err;
-
-	log_info("start commitq worker: %s", th->name);
-	err = commitq_execute(cq);
-	log_info("finish commitq worker: %s", th->name);
-	return err;
-}
-
-static void commitq_reset_th(struct silofs_commitq *cq)
-{
-	struct silofs_thread *th = &cq->cq_th;
-
-	silofs_memzero(th, sizeof(*th));
-}
-
-static void commitq_make_thread_name(const struct silofs_commitq *cq,
-                                     char *name_buf, size_t name_bsz)
-{
-	snprintf(name_buf, name_bsz, "silofs-cq%d", cq->cq_index);
-}
-
-static int commitq_start(struct silofs_commitq *cq)
-{
-	char name[32] = "";
-	struct silofs_thread *th = &cq->cq_th;
-	int ret = 0;
-
-	if (!cq->cq_active) {
-		cq->cq_active = 1;
-		commitq_reset_th(cq);
-		commitq_make_thread_name(cq, name, sizeof(name) - 1);
-		ret = silofs_thread_create(th, commitq_do_start, cq, name);
-	}
-	return ret;
-}
-
-static int commitq_stop(struct silofs_commitq *cq)
-{
-	int ret = 0;
-
-	if (cq->cq_active) {
-		cq->cq_active = 0;
-		ret = silofs_thread_join(&cq->cq_th);
-		silofs_assert_eq(cq->cq_ls.sz, 0);
-		commitq_reset_th(cq);
-	}
-	return ret;
-}
-
-static struct silofs_commit_info *
-commitq_pop_cmi(struct silofs_commitq *cq)
-{
-	struct silofs_list_head *lh;
-
-	lh = listq_pop_front(&cq->cq_ls);
-	return cmi_from_flh(lh);
-}
-
-static void
-commitq_push_cmi(struct silofs_commitq *cq, struct silofs_commit_info *cmi)
-{
-	listq_push_back(&cq->cq_ls, &cmi->flh);
-}
-
-static void commitq_enq(struct silofs_commitq *cq,
-                        struct silofs_commit_info *cmi)
-{
-	struct silofs_lock *lock = &cq->cq_lk;
-
-	cmi->async = 1;
-	silofs_mutex_lock(&lock->mu);
-	commitq_push_cmi(cq, cmi);
-	silofs_cond_signal(&lock->co);
-	silofs_mutex_unlock(&lock->mu);
-}
-
-static struct silofs_commit_info *commitq_deq(struct silofs_commitq *cq)
-{
-	struct silofs_commit_info *cmi = NULL;
-	struct silofs_lock *lock = &cq->cq_lk;
-	int err;
-
-	silofs_mutex_lock(&lock->mu);
-	cmi = commitq_pop_cmi(cq);
-	if (cmi == NULL) {
-		err = silofs_cond_ntimedwait(&lock->co, &lock->mu, 1);
-		if (!err) {
-			cmi = commitq_pop_cmi(cq);
-		}
-	}
-	silofs_mutex_unlock(&lock->mu);
-	return cmi;
-}
-
-static int commitq_execute(struct silofs_commitq *cq)
-{
-	struct silofs_commit_info *cmi;
-
-	while (cq->cq_active) {
-		cmi = commitq_deq(cq);
-		if (cmi != NULL) {
-			cmi_execute_and_signal(cmi);
-		}
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int commitqs_init_set(struct silofs_commitqs *cqs, unsigned int cnt)
-{
-	struct silofs_commitq *cq;
-	struct silofs_commitq *cq_arr;
-	unsigned int init_cnt = 0;
-	int err;
-
-	cq_arr = silofs_allocate(cqs->cqs_alloc, cnt * sizeof(*cq));
-	if (cq_arr == NULL) {
-		return -ENOMEM;
-	}
-	for (size_t i = 0; i < cnt; ++i) {
-		cq = &cq_arr[i];
-		err = commitq_init(cq, (int)(i + 1));
-		if (err) {
-			goto out_err;
-		}
-		init_cnt++;
-	}
-	cqs->cqs_set = cq_arr;
-	cqs->cqs_count = init_cnt;
-	return 0;
-out_err:
-	for (size_t i = 0; i < init_cnt; ++i) {
-		cq = &cq_arr[i];
-		commitq_fini(cq);
-	}
-	silofs_deallocate(cqs->cqs_alloc, cq_arr, cnt * sizeof(*cq));
-	return err;
-}
-
-static uint32_t commitqs_nworkers(void)
-{
-	const uint32_t nworkers = silofs_num_worker_threads();
-
-	return (nworkers > 2) ? (nworkers / 2) : 1;
-}
-
-int silofs_commitqs_init(struct silofs_commitqs *cqs,
-                         struct silofs_alloc *alloc)
-{
-	cqs->cqs_alloc = alloc;
-	cqs->cqs_set = NULL;
-	cqs->cqs_count = 0;
-	cqs->cqs_active = 0;
-	return commitqs_init_set(cqs, commitqs_nworkers());
-}
-
-static void commitqs_fini_set(struct silofs_commitqs *cqs)
-{
-	struct silofs_commitq *cq;
-
-	for (size_t i = 0; i < cqs->cqs_count; ++i) {
-		cq = &cqs->cqs_set[i];
-		commitq_fini(cq);
-	}
-	silofs_deallocate(cqs->cqs_alloc, cqs->cqs_set,
-	                  cqs->cqs_count * sizeof(*cq));
-	cqs->cqs_set = NULL;
-	cqs->cqs_count = 0;
-}
-
-void silofs_commitqs_fini(struct silofs_commitqs *cqs)
-{
-	commitqs_fini_set(cqs);
-	cqs->cqs_alloc = NULL;
-}
-
-int silofs_commitqs_start(struct silofs_commitqs *cqs)
-{
-	struct silofs_commitq *cq;
-	unsigned int start_cnt = 0;
-	int err;
-
-	for (size_t i = 0; i < cqs->cqs_count; ++i) {
-		cq = &cqs->cqs_set[i];
-		err = commitq_start(cq);
-		if (err) {
-			goto out_err;
-		}
-		start_cnt++;
-	}
-	cqs->cqs_active = 1;
-	return 0;
-
-out_err:
-	for (size_t i = 0; i < start_cnt; ++i) {
-		cq = &cqs->cqs_set[i];
-		commitq_stop(cq);
-	}
-	return err;
-}
-
-int silofs_commitqs_stop(struct silofs_commitqs *cqs)
-{
-	struct silofs_commitq *cq;
-	int ret = 0;
-	int err;
-
-	cqs->cqs_active = 0;
-	for (size_t i = 0; i < cqs->cqs_count; ++i) {
-		cq = &cqs->cqs_set[i];
-		err = commitq_stop(cq);
-		if (err && (ret == 0)) {
-			ret = err;
-		}
-	}
-	return ret;
-}
-
-static struct silofs_commitq *
-commitqs_sub(const struct silofs_commitqs *cqs,
-             const struct silofs_commit_info *cmi)
-{
-	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
-	const ssize_t seg = cmi->off / len_max;
-	const size_t idx = (size_t)seg % cqs->cqs_count;
-
-	return &cqs->cqs_set[idx];
-}
-
-void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
-                             struct silofs_commit_info *cmi)
-{
-	commitq_enq(commitqs_sub(cqs, cmi), cmi);
+	task->t_cqs = NULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

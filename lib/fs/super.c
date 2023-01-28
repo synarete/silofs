@@ -1000,6 +1000,11 @@ int silofs_spawn_vnode(struct silofs_task *task,
 	return 0;
 }
 
+static const struct silofs_creds *task_creds(const struct silofs_task *task)
+{
+	return &task->t_oper.op_creds;
+}
+
 int silofs_spawn_inode(struct silofs_task *task, ino_t parent_ino,
                        mode_t parent_mode, mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii)

@@ -392,7 +392,6 @@ static void ut_do_execute_tests(bool kcopy)
 			.mntdir = "/",
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,
-			.withflsh = true,
 			.restore_forced = true,
 			.kcopy = kcopy,
 			.pedantic = ut_globals.pedantic,

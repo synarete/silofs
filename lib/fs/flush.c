@@ -40,16 +40,6 @@ struct silofs_flush_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_commitqs *commitqs_of(const struct silofs_uber *uber)
-{
-	struct silofs_commitqs *cqs = NULL;
-
-	if ((uber->ub_cqs != NULL) && uber->ub_cqs->cqs_active) {
-		cqs = uber->ub_cqs;
-	}
-	return cqs;
-}
-
 static void si_seal_meta(struct silofs_snode_info *si)
 {
 	const enum silofs_stype stype = si->s_stype;
@@ -107,8 +97,9 @@ static int resolve_oaddr_of(struct silofs_task *task,
 	return ret;
 }
 
-static int populate_commit(struct silofs_snode_info **siq,
-                           struct silofs_commit_info *cmi)
+static int flc_populate_commit(struct silofs_flush_ctx *fl_ctx,
+                               struct silofs_snode_info **siq,
+                               struct silofs_commit_info *cmi)
 {
 	struct silofs_oaddr oaddr;
 	struct silofs_snode_info *si;
@@ -116,7 +107,7 @@ static int populate_commit(struct silofs_snode_info **siq,
 
 	while (*siq != NULL) {
 		si = *siq;
-		err = resolve_oaddr_of(cmi->task, si, &oaddr);
+		err = resolve_oaddr_of(fl_ctx->task, si, &oaddr);
 		if (err) {
 			return err;
 		}
@@ -287,36 +278,20 @@ static int flc_prep_commit(const struct silofs_flush_ctx *fl_ctx,
 	return 0;
 }
 
-static int flc_commit_now(const struct silofs_flush_ctx *fl_ctx,
-                          struct silofs_commit_info *cmi)
+static void flc_enq_commit(const struct silofs_flush_ctx *fl_ctx,
+                           struct silofs_commit_info *cmi)
 {
-	silofs_assert_null(fl_ctx->cqs);
-	cmi->status = silofs_cmi_write_buf(cmi);
-	cmi->done = 1;
-	cmi->async = 0;
-	return cmi->status;
-}
-
-static int flc_commit_async(const struct silofs_flush_ctx *fl_ctx,
-                            struct silofs_commit_info *cmi)
-{
-	silofs_assert_not_null(fl_ctx->cqs);
-	silofs_assert_eq(cmi->status, 0);
 	silofs_commitqs_enqueue(fl_ctx->cqs, cmi);
-	return 0;
 }
 
-static int flc_commit_one(const struct silofs_flush_ctx *fl_ctx,
-                          struct silofs_commit_info *cmi)
+static int flc_pend_commit(const struct silofs_flush_ctx *fl_ctx,
+                           struct silofs_commit_info *cmi)
 {
-	const int async_mode = (fl_ctx->cqs != NULL);
 	int err;
 
 	err = flc_prep_commit(fl_ctx, cmi);
 	if (!err) {
-		err = async_mode ?
-		      flc_commit_async(fl_ctx, cmi) :
-		      flc_commit_now(fl_ctx, cmi);
+		flc_enq_commit(fl_ctx, cmi);
 	}
 	return err;
 }
@@ -327,11 +302,11 @@ static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
 {
 	int err;
 
-	err = populate_commit(siq, cmi);
+	err = flc_populate_commit(fl_ctx, siq, cmi);
 	if (err) {
 		return err;
 	}
-	err = flc_commit_one(fl_ctx, cmi);
+	err = flc_pend_commit(fl_ctx, cmi);
 	if (err) {
 		return err;
 	}
@@ -343,16 +318,20 @@ static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx)
 	struct silofs_commit_info *cmi = NULL;
 	struct silofs_dset *dset = &fl_ctx->dset;
 	struct silofs_snode_info *siq = dset->ds_siq;
-	int err = 0;
+	int err;
 
-	while (!err && (siq != NULL)) {
-		cmi = NULL;
-		err = silofs_task_make_commit(fl_ctx->task, &cmi);
-		if (!err) {
-			err = flc_flush_siq(fl_ctx, &siq, cmi);
+	while (siq != NULL) {
+		err = silofs_task_mk_commit(fl_ctx->task, &cmi);
+		if (err) {
+			return err;
+		}
+		err = flc_flush_siq(fl_ctx, &siq, cmi);
+		if (err) {
+			silofs_task_rm_commit(fl_ctx->task, cmi);
+			return err;
 		}
 	}
-	return err;
+	return 0;
 }
 
 static int flc_collect_flush_dset(struct silofs_flush_ctx *fl_ctx)
@@ -390,7 +369,7 @@ static int flc_complete_commits(const struct silofs_flush_ctx *fl_ctx)
 
 	if ((fl_ctx->flags & SILOFS_F_NOW) &&
 	    (fl_ctx->dqid == SILOFS_DQID_ALL)) {
-		ret = silofs_task_let_complete(fl_ctx->task);
+		ret = silofs_task_let_complete(fl_ctx->task, true);
 	}
 	return ret;
 }
@@ -433,7 +412,7 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	fl_ctx->dqid = dqid;
 	fl_ctx->flags = flags;
 	fl_ctx->repo = repo;
-	fl_ctx->cqs = commitqs_of(uber);
+	fl_ctx->cqs = uber->ub_cqs;
 	fl_ctx->cache = &repo->re_cache;
 	fl_ctx->alloc = fl_ctx->cache->c_alloc;
 	return 0;

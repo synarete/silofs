@@ -503,7 +503,6 @@ struct silofs_fs_args {
 	mode_t                  umask;
 	size_t                  capacity;
 	size_t                  memwant;
-	bool                    withflsh;
 	bool                    withfuse;
 	bool                    pedantic;
 	bool                    allowother;

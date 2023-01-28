@@ -2817,7 +2817,7 @@ static int fuseq_finish_task(struct silofs_fuseq_worker *fqw,
 {
 	int err;
 
-	err = silofs_task_let_complete(task);
+	err = silofs_task_let_complete(task, false);
 	silofs_task_fini(task);
 	silofs_unused(fqw);
 	return err;
@@ -3900,7 +3900,7 @@ out:
 static void fuseq_make_thread_name(const struct silofs_fuseq_worker *fqw,
                                    char *name_buf, size_t name_bsz)
 {
-	snprintf(name_buf, name_bsz, "silofs-fq%u", fqw->worker_index + 1);
+	snprintf(name_buf, name_bsz, "silofs-worker%u", fqw->worker_index + 1);
 }
 
 static int fuseq_exec_thread(struct silofs_fuseq_worker *fqw)

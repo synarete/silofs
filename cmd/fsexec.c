@@ -185,14 +185,8 @@ void cmd_exec_fs(struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = silofs_fse_start_fls(fse);
-	cmd_require_ok(fse, err, "failed to start flushers");
-
 	err = silofs_fse_exec_fs(fse);
 	cmd_require_ok(fse, err, "failed to exec fs");
-
-	err = silofs_fse_stop_fls(fse);
-	cmd_require_ok(fse, err, "failed to stop flushers");
 }
 
 void cmd_fork_fs(struct silofs_fs_env *fse,

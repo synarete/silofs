@@ -19,8 +19,8 @@
 
 /* execution-context task per file-system operation */
 struct silofs_task {
-	struct silofs_lock      t_lock;
 	struct silofs_uber     *t_uber;
+	struct silofs_commitqs *t_cqs;
 	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
 	uint64_t                t_apex_cid;
@@ -37,7 +37,8 @@ struct silofs_commit_ref {
 /* flush commit control object */
 struct silofs_commit_info {
 	struct silofs_list_head     tlh;
-	struct silofs_list_head     flh;
+	struct silofs_list_head     cq_lh;
+	struct silofs_alloc        *alloc;
 	struct silofs_task         *task;
 	struct silofs_blobref_info *bri;
 	struct silofs_commit_ref    ref[32];
@@ -48,24 +49,20 @@ struct silofs_commit_info {
 	size_t          len;
 	size_t          cnt;
 	volatile int    status;
-	volatile int    async;
-	volatile int    done;
 };
 
 /* commits flush queue control object */
 struct silofs_commitq {
-	struct silofs_thread    cq_th;
 	struct silofs_listq     cq_ls;
-	struct silofs_lock      cq_lk;
-	volatile int            cq_active;
+	struct silofs_mutex     cq_lk;
 	int                     cq_index;
 };
 
 /* commit-queues flush set */
 struct silofs_commitqs {
+	struct silofs_commitq   cqs_set[2];
 	struct silofs_alloc    *cqs_alloc;
-	struct silofs_commitq  *cqs_set;
-	unsigned int            cqs_count;
+	uint64_t                cqs_apex_cid;
 	volatile int            cqs_active;
 };
 
@@ -98,14 +95,15 @@ void silofs_task_set_umask(struct silofs_task *task, mode_t umask);
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt);
 
-int silofs_task_make_commit(struct silofs_task *task,
-                            struct silofs_commit_info **out_cmi);
+int silofs_task_mk_commit(struct silofs_task *task,
+                          struct silofs_commit_info **out_cmi);
 
-int silofs_task_let_complete(struct silofs_task *task);
+void silofs_task_rm_commit(struct silofs_task *task,
+                           struct silofs_commit_info *cmi);
+
+int silofs_task_let_complete(struct silofs_task *task, bool all);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
-
-const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -113,10 +111,6 @@ int silofs_commitqs_init(struct silofs_commitqs *cqs,
                          struct silofs_alloc *alloc);
 
 void silofs_commitqs_fini(struct silofs_commitqs *cqs);
-
-int silofs_commitqs_start(struct silofs_commitqs *cqs);
-
-int silofs_commitqs_stop(struct silofs_commitqs *cqs);
 
 void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
                              struct silofs_commit_info *cmi);

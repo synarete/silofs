@@ -19,7 +19,8 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
-#define SILOFS_COMMIT_LEN_MAX (2 * SILOFS_MEGA)
+#define SILOFS_COMMIT_LEN_MAX   (2 * SILOFS_MEGA)
+#define SILOFS_CID_ALL          (UINT64_MAX)
 
 static int cmi_setup_buf(struct silofs_commit_info *cmi)
 {
@@ -321,10 +322,21 @@ out_err:
 int silofs_commitqs_init(struct silofs_commitqs *cqs,
                          struct silofs_alloc *alloc)
 {
+	int err;
+
 	cqs->cqs_alloc = alloc;
 	cqs->cqs_apex_cid = 1;
 	cqs->cqs_active = 0;
-	return commitqs_init_set(cqs);
+	err = silofs_rwlock_init(&cqs->cqs_rwlock);
+	if (err) {
+		return err;
+	}
+	err = commitqs_init_set(cqs);
+	if (err) {
+		silofs_rwlock_fini(&cqs->cqs_rwlock);
+		return err;
+	}
+	return 0;
 }
 
 static void commitqs_fini_set(struct silofs_commitqs *cqs)
@@ -340,6 +352,7 @@ static void commitqs_fini_set(struct silofs_commitqs *cqs)
 void silofs_commitqs_fini(struct silofs_commitqs *cqs)
 {
 	commitqs_fini_set(cqs);
+	silofs_rwlock_fini(&cqs->cqs_rwlock);
 	cqs->cqs_alloc = NULL;
 }
 
@@ -369,8 +382,34 @@ commitqs_sub(struct silofs_commitqs *cqs,
              const struct silofs_commit_info *cmi)
 {
 	const enum silofs_stype stype = cmi->bid.vspace;
-	const size_t idx = stype_isdata(stype) ? 0 : 1;
+	size_t idx;
 
+	switch (stype) {
+	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_SPNODE:
+	case SILOFS_STYPE_SPLEAF:
+		idx = 3;
+		break;
+	case SILOFS_STYPE_ITNODE:
+	case SILOFS_STYPE_INODE:
+		idx = 2;
+		break;
+	case SILOFS_STYPE_XANODE:
+	case SILOFS_STYPE_DTNODE:
+	case SILOFS_STYPE_FTNODE:
+	case SILOFS_STYPE_SYMVAL:
+		idx = 1;
+		break;
+	case SILOFS_STYPE_DATA1K:
+	case SILOFS_STYPE_DATA4K:
+	case SILOFS_STYPE_DATABK:
+	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_LAST:
+	default:
+		idx = 0;
+		break;
+	}
 	return &cqs->cqs_set[idx];
 }
 
@@ -380,11 +419,27 @@ void silofs_commitqs_enqueue(struct silofs_commitqs *cqs,
 	commitq_enq(commitqs_sub(cqs, cmi), cmi);
 }
 
+static void commitqs_lock(struct silofs_commitqs *cqs, bool noncon)
+{
+	if (noncon) {
+		silofs_rwlock_wrlock(&cqs->cqs_rwlock);
+	} else {
+		silofs_rwlock_rdlock(&cqs->cqs_rwlock);
+	}
+}
+
+static void commitqs_unlock(struct silofs_commitqs *cqs)
+{
+	silofs_rwlock_unlock(&cqs->cqs_rwlock);
+}
+
 static void commitqs_apply(struct silofs_commitqs *cqs, uint64_t commit_id)
 {
+	commitqs_lock(cqs, commit_id == SILOFS_CID_ALL);
 	for (size_t i = 0; i < ARRAY_SIZE(cqs->cqs_set); ++i) {
 		commitq_apply(&cqs->cqs_set[i], commit_id);
 	}
+	commitqs_unlock(cqs);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -496,7 +551,7 @@ static void task_drop_commits(struct silofs_task *task)
 
 int silofs_task_let_complete(struct silofs_task *task, bool all)
 {
-	const uint64_t cid = all ? UINT64_MAX : task->t_apex_cid;
+	const uint64_t cid = all ? SILOFS_CID_ALL : task->t_apex_cid;
 
 	commitqs_apply(task->t_cqs, cid);
 	return 0;

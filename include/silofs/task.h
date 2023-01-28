@@ -60,7 +60,8 @@ struct silofs_commitq {
 
 /* commit-queues flush set */
 struct silofs_commitqs {
-	struct silofs_commitq   cqs_set[2];
+	struct silofs_rwlock    cqs_rwlock;
+	struct silofs_commitq   cqs_set[4];
 	struct silofs_alloc    *cqs_alloc;
 	uint64_t                cqs_apex_cid;
 	volatile int            cqs_active;

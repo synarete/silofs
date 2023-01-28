@@ -32,12 +32,12 @@ class FioArgs:
         self.numjobs = numjobs
         self.bs = 64
         self.bs_size = self.bs * consts.kibi
-        self.rwmixwrite = 60
+        self.rwmixwrite = 70
         self.readwrite = "rw"
         self.ioengine = "psync"
         self.fallocate = "keep"
         self.size = consts.gibi
-        self.runtime = 20
+        self.runtime = 30
         self.base = os.path.basename(self.wdir)
         self.name = self.make_name()
 
@@ -233,7 +233,7 @@ def plot_fio_bw(fio_info_dict: dict[str, list[FioInfo]]) -> None:
     mpl.style.use("bmh")
     fig, ax = plt.subplots()
     fig.set_facecolor("ghostwhite")
-    fig.suptitle("Silofs I/O Performance vs Host File-System", fontsize="xx-large")
+    fig.suptitle("Silofs I/O Performance vs Local FS", fontsize="xx-large")
     ax.set_title(title_of(fio_info_dict), fontsize="x-large", pad=15)
     ax.set_xlabel("File-system/Jobs", fontsize="large", labelpad=15)
     ax.set_ylabel("Write bandwidth (MB/s)", fontsize="large", labelpad=15)

@@ -2085,8 +2085,6 @@ static int fic_del_data_space(const struct silofs_file_ctx *f_ctx,
 	int err;
 	bool last = false;
 
-	silofs_assert(vaddr_isdata(vaddr));
-
 	err = silofs_test_lastref_at(f_ctx->task, vaddr, &last);
 	if (err) {
 		return err;

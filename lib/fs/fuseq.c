@@ -627,6 +627,20 @@ static int fuseq_reply_buf(struct silofs_fuseq_worker *fqw,
 	return fuseq_reply_arg(fqw, task, buf, bsz);
 }
 
+static int sanitize_err(int err, uint32_t opcode)
+{
+	int err2 = abs(err);
+
+	if (unlikely(err2 >= SILOFS_ERRBASE2)) {
+		fuseq_log_err("internal error: err=%d op=%u", err, opcode);
+		err2 = EUCLEAN;
+	} else if (unlikely(err2 >= SILOFS_ERRBASE)) {
+		fuseq_log_warn("unexpected error: err=%d op=%u", err, opcode);
+		err2 = (err2 - SILOFS_ERRBASE);
+	}
+	return err2;
+}
+
 static int fuseq_reply_err(struct silofs_fuseq_worker *fqw,
                            const struct silofs_task *task, int err)
 {
@@ -637,6 +651,7 @@ static int fuseq_reply_err(struct silofs_fuseq_worker *fqw,
 	iov[0].iov_base = &hdr;
 	iov[0].iov_len = hdrsz;
 
+	err = sanitize_err(err, task->t_oper.op_code);
 	fill_out_header_by(&hdr, task, hdrsz, err);
 	return fuseq_send_msg(fqw, iov, 1);
 }

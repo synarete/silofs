@@ -1057,8 +1057,8 @@ static int do_remove_and_prune(struct silofs_task *task,
                                const struct silofs_namestr *nstr,
                                struct silofs_inode_info *ii)
 {
-	int err;
 	struct silofs_qstr name;
+	int err;
 
 	err = assign_namehash(dir_ii, nstr, &name);
 	if (err) {
@@ -1107,8 +1107,8 @@ static int do_unlink(struct silofs_task *task,
                      struct silofs_inode_info *dir_ii,
                      const struct silofs_namestr *nstr)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
 	err = check_prepare_unlink(task, dir_ii, nstr, &ii);
 	if (err) {

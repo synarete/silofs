@@ -1,19 +1,13 @@
 #!/usr/bin/env bash
-set -o errexit
-set -o nounset
-set -o pipefail
-
 IFS=$'\n\t'
 self=$(readlink -f "$0")
 base=$(dirname "${self}")
 datenow=$(date +%Y%m%d)
 
-print() {
-  echo -n "$@" | tr -d ' \t\v\n' ;
-}
-
+# Detect if within git repo
 cd "${base}" || exit 1
-gittop=$(git rev-parse --show-toplevel > /dev/null 2>&1 && print "git-repo")
+export GIT_DIR="${base}/.git"
+gittop=$(git rev-parse --show-toplevel > /dev/null 2>&1 && echo -n "git-repo")
 
 if [ -n "${gittop}" ]; then
   gitrevision=$(git describe --abbrev=7 --always --dirty=+)
@@ -21,6 +15,15 @@ if [ -n "${gittop}" ]; then
 else
   gitrevision=""
 fi
+
+# Detect version string sub-components
+set -o errexit
+set -o nounset
+set -o pipefail
+
+print() {
+  echo -n "$@" | tr -d ' \t\v\n' ;
+}
 
 version=${SILOFS_VERSION:-1}
 if [ -e "${base}/VERSION" ]; then

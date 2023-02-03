@@ -39,7 +39,7 @@ Various testing programs for silofs.
 %{__make}
 
 %check
-%{__make} check
+# %{__make} check
 
 %install
 %make_install

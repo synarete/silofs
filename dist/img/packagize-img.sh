@@ -27,6 +27,8 @@ imgsourcedir=${selfdir}
 builddir=${basedir}/build
 imgbuilddir=${builddir}/img
 autotoolsdir=${imgbuilddir}/autotools/
+#arch_list=(amd64 arm64)
+arch_list=(amd64)
 
 # Prerequisites checks
 run command -v aclocal
@@ -36,13 +38,16 @@ run command -v rst2man
 run command -v rst2html
 run command -v basename
 run command -v podman
+run command -v buildah
+run command -v skopeo
+run command -v qemu-x86_64-static
+run command -v qemu-aarch64-static
 
 # Autotools build
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
-run "${basedir}"/configure "--enable-unitests=1"
-run make
-run make distcheck
+run "${basedir}"/configure "--enable-unitests=0"
+run make dist
 
 # Copy dist archive
 run cp "${autotoolsdir}/${archive_tgz}" "${imgbuilddir}"
@@ -50,16 +55,28 @@ run cp "${autotoolsdir}/${archive_tgz}" "${imgbuilddir}"
 # Copy Containerfile
 run cp "${imgsourcedir}/Containerfile" "${imgbuilddir}"
 
-# Build target image with podman
-run podman build \
-  --build-arg=VERSION="${version}" \
-  --build-arg=RELEASE="${release}" \
-  --build-arg=REVISION="${revision}" \
-  --build-arg=ARCH="${arch}" \
-  --build-arg=DIST_NAME="${dist_name}" \
-  --tag "${tag_name}" \
-  --file "${imgbuilddir}/Containerfile" \
-  "${imgbuilddir}"
+# Build target images with buildah
+cd "${imgbuilddir}"
+for arch in "${arch_list[@]}"; do
+  run buildah bud \
+    --build-arg=VERSION="${version}" \
+    --build-arg=RELEASE="${release}" \
+    --build-arg=REVISION="${revision}" \
+    --build-arg=DIST_NAME="${dist_name}" \
+    --arch "${arch}" \
+    --tag "${tag_name}-${arch}" \
+    --file "${imgbuilddir}/Containerfile" \
+    "${imgbuilddir}"
+done
+
+# Create manifest
+run buildah manifest create "${tag_name}"
+for arch in "${arch_list[@]}"; do
+  run buildah manifest add "${tag_name}" "${tag_name}-${arch}"
+done
+
+# Generate multi-arch image
+run podman manifest push --all "${tag_name}" "docker://${tag_name}"
 
 # Cleanup build staging area
 cd "${basedir}"

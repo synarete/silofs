@@ -73,6 +73,10 @@ int silofs_password_setup(struct silofs_password *pp, const void *pass);
 void silofs_password_reset(struct silofs_password *pp);
 
 
+void silofs_iv_mkxor(struct silofs_iv *iv,
+                     const struct silofs_iv *iv1,
+                     const struct silofs_iv *iv2);
+
 void silofs_ivkey_init(struct silofs_ivkey *ivkey);
 
 void silofs_ivkey_fini(struct silofs_ivkey *ivkey);

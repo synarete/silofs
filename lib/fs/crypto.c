@@ -570,6 +570,15 @@ void silofs_crypto_fini(struct silofs_crypto *crypto)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_iv_mkxor(struct silofs_iv *iv,
+                     const struct silofs_iv *iv1, const struct silofs_iv *iv2)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
+		iv->iv[i] = iv1->iv[i] ^ iv2->iv[i];
+	}
+}
+
+
 void silofs_ivkey_init(struct silofs_ivkey *ivkey)
 {
 	memset(ivkey, 0, sizeof(*ivkey));

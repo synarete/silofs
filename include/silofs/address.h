@@ -185,6 +185,9 @@ void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
 
 bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
 
+void silofs_bkaddr_as_iv(const struct silofs_bkaddr *bkaddr,
+                         struct silofs_iv *out_iv);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_oaddr *silofs_oaddr_none(void);

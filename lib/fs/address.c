@@ -914,6 +914,27 @@ bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
 	       silofs_blobid_isnull(&bkaddr->blobid);
 }
 
+void silofs_bkaddr_as_iv(const struct silofs_bkaddr *bkaddr,
+                         struct silofs_iv *out_iv)
+{
+	const struct silofs_blobid *blobid = &bkaddr->blobid;
+	const uint64_t lba = (uint64_t)(bkaddr->lba);
+
+	STATICASSERT_EQ(sizeof(blobid->u.ta.treeid), sizeof(*out_iv));
+	STATICASSERT_EQ(sizeof(blobid->u.ta.treeid.uuid), sizeof(out_iv->iv));
+	STATICASSERT_GT(sizeof(out_iv->iv), sizeof(lba));
+
+	memcpy(out_iv->iv, &blobid->u.ta.treeid.uuid, sizeof(out_iv->iv));
+	out_iv->iv[0] ^= (uint8_t)(lba & 0xFF);
+	out_iv->iv[1] ^= (uint8_t)((lba >> 8) & 0xFF);
+	out_iv->iv[2] ^= (uint8_t)((lba >> 16) & 0xFF);
+	out_iv->iv[3] ^= (uint8_t)((lba >> 24) & 0xFF);
+	out_iv->iv[4] ^= (uint8_t)((lba >> 32) & 0xFF);
+	out_iv->iv[5] ^= (uint8_t)((lba >> 40) & 0xFF);
+	out_iv->iv[6] ^= (uint8_t)((lba >> 48) & 0xFF);
+	out_iv->iv[7] ^= (uint8_t)((lba >> 56) & 0xFF);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_oaddr s_oaddr_none = {

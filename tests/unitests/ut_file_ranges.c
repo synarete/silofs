@@ -103,9 +103,9 @@ rzigzag(struct ut_env *ute, const struct ut_ranges *ranges)
 static void ut_write_read_n(struct ut_env *ute,
                             const struct ut_dvecs *dvecs, ino_t ino)
 {
-	void *buf;
-	loff_t off;
-	size_t len;
+	void *buf = NULL;
+	loff_t off = -1;
+	size_t len = 0;
 	const struct ut_dvec *dvec;
 
 	for (size_t i = 0; i < dvecs->count; ++i) {
@@ -129,8 +129,8 @@ static void ut_write_read_n(struct ut_env *ute,
 static void ut_rdwr_file1(struct ut_env *ute,
                           const struct ut_dvecs *drefs)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -145,8 +145,8 @@ static void ut_rdwr_file2(struct ut_env *ute,
                           const struct ut_dvecs *drefs1,
                           const struct ut_dvecs *drefs2)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -252,8 +252,8 @@ static void ut_file_xranges_(struct ut_env *ute,
 
 static void ut_file_xranges(struct ut_env *ute)
 {
-	const struct ut_ranges *r1;
-	const struct ut_ranges *r2;
+	const struct ut_ranges *r1 = NULL;
+	const struct ut_ranges *r2 = NULL;
 
 	for (size_t j = 0; j < UT_ARRAY_SIZE(s_ranges_defs) - 1; ++j) {
 		r1 = &s_ranges_defs[j];

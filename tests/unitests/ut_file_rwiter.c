@@ -21,8 +21,8 @@
 
 static void ut_file_write_iter_(struct ut_env *ute, loff_t off, size_t bsz)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
 
@@ -66,10 +66,10 @@ static void ut_file_write_iter_unaligned(struct ut_env *ute)
 static void ut_file_write_iter_sparse_(struct ut_env *ute,
                                        const loff_t *offs, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
-	loff_t off;
-	loff_t val;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	loff_t off = -1;
+	loff_t val = -1;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);

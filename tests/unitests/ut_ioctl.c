@@ -22,8 +22,8 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 {
 	struct silofs_ioc_query query = { .reserved = 0 };
 	const char *name = UT_NAME;
-	ino_t dino;
-	ino_t ino;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_ok(ute, dino, SILOFS_QUERY_VERSION, &query);
@@ -41,7 +41,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 {
 	struct silofs_spacestats spst = { .btime = -1, .ctime = -1 };
 	const char *name = UT_NAME;
-	ino_t dino;
+	ino_t dino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_spst_ok(ute, dino, &spst);
@@ -100,9 +100,9 @@ static void ut_ioctl_query_proc(struct ut_env *ute)
 {
 	struct silofs_query_proc qpr = { .uptime = -1 };
 	const char *name = UT_NAME;
-	size_t iopen;
-	ino_t dino;
-	ino_t ino;
+	size_t iopen = 0;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_proc(ute, dino, &qpr);

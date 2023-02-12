@@ -19,7 +19,7 @@
 
 static void ut_rootd_getattr(struct ut_env *ute)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 
 	ut_getattr_ok(ute, UT_ROOT_INO, &st);
 	ut_expect(S_ISDIR(st.st_mode));
@@ -37,11 +37,11 @@ static void ut_rootd_access(struct ut_env *ute)
 
 static void ut_statfs_empty(struct ut_env *ute)
 {
-	size_t capacity;
-	size_t fs_size;
-	size_t used_bytes;
-	size_t used_files;
-	struct statvfs stv;
+	size_t capacity = 0;
+	size_t fs_size = 0;
+	size_t used_bytes = 0;
+	size_t used_files = 0;
+	struct statvfs stv = { .f_bsize = 0 };
 
 	ut_statfs_ok(ute, UT_ROOT_INO, &stv);
 	ut_expect_le(stv.f_bsize, UT_64K); /* TODO: needs to be eq one day */
@@ -67,12 +67,12 @@ static void ut_statfs_empty(struct ut_env *ute)
 
 static void ut_statfs_files_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
-	fsfilcnt_t ffree;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	fsfilcnt_t ffree = 0;
 	const char *name = UT_NAME;
 	const char *fname = NULL;
-	struct statvfs stv;
+	struct statvfs stv = { .f_bsize = 0 };
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs_ok(ute, dino, &stv);
@@ -110,12 +110,12 @@ static void ut_statfs_files(struct ut_env *ute)
 
 static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
-	fsfilcnt_t ffree;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	fsfilcnt_t ffree = 0;
 	const char *name = UT_NAME;
 	const char *dname = NULL;
-	struct statvfs stv;
+	struct statvfs stv = { .f_bsize = 0 };
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs_ok(ute, dino, &stv);
@@ -144,6 +144,7 @@ static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 
 static void ut_statfs_dirs(struct ut_env *ute)
 {
+	ut_statfs_dirs_(ute, 1);
 	ut_statfs_dirs_(ute, 10);
 	ut_statfs_dirs_(ute, 1000);
 }

@@ -19,10 +19,10 @@
 
 static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
 {
-	ino_t ino;
-	ino_t dino;
-	loff_t off_data;
-	loff_t off_hole;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	loff_t off_data = -1;
+	loff_t off_hole = -1;
 	char d = 'd';
 	struct stat st;
 	const char *name = UT_NAME;
@@ -60,12 +60,12 @@ static void ut_file_lseek_simple(struct ut_env *ute)
 static void ut_file_lseek_holes_(struct ut_env *ute,
                                  loff_t base_off, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
-	loff_t off;
-	loff_t off_data;
-	loff_t off_hole;
-	struct stat st;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	loff_t off = -1;
+	loff_t off_data = -1;
+	loff_t off_hole = -1;
+	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
 	const size_t bsz = UT_BK_SIZE;
 	void *buf = ut_randbuf(ute, bsz);
@@ -104,12 +104,12 @@ static void ut_file_lseek_holes(struct ut_env *ute)
 static void ut_file_lseek_sparse_(struct ut_env *ute,
                                   loff_t off_base, loff_t step, size_t nsteps)
 {
-	ino_t ino;
-	ino_t dino;
-	loff_t off;
-	loff_t off_data;
-	loff_t off_hole;
-	loff_t off_next;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	loff_t off = -1;
+	loff_t off_data = -1;
+	loff_t off_hole = -1;
+	loff_t off_next = -1;
 	const loff_t head1_lsize = SILOFS_FILE_HEAD1_LEAF_SIZE;
 	const loff_t head2_lsize = SILOFS_FILE_HEAD2_LEAF_SIZE;
 	const loff_t tree_lsize = SILOFS_FILE_TREE_LEAF_SIZE;

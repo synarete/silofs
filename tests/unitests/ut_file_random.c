@@ -53,9 +53,9 @@ static unsigned long *random_indices(struct ut_env *ute, size_t cnt)
 static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
                                const struct ut_ioparams *params)
 {
-	size_t *idx;
-	struct ut_dvec *dvec;
-	struct ut_dvec **dvecs;
+	size_t *idx = NULL;
+	struct ut_dvec *dvec = NULL;
+	struct ut_dvec **dvecs = NULL;
 	const size_t cnt = params->count;
 
 	dvecs = new_dvecs(ute, params);
@@ -89,9 +89,9 @@ static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
 static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
                                 const struct ut_ioparams *params)
 {
-	size_t *idx;
-	struct ut_dvec *dvec;
-	struct ut_dvec **dvecs;
+	size_t *idx = NULL;
+	struct ut_dvec *dvec = NULL;
+	struct ut_dvec **dvecs = NULL;
 	const size_t cnt = params->count;
 
 	dvecs = new_dvecs(ute, params);
@@ -127,8 +127,8 @@ static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
 static void ut_file_random_(struct ut_env *ute,
                             const struct ut_ioparams *params)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -219,7 +219,7 @@ static void ut_file_random_unaligned(struct ut_env *ute)
 
 static void ut_file_random_random(struct ut_env *ute)
 {
-	uint64_t rand;
+	uint64_t rand = 0;
 	struct ut_ioparams params;
 
 	for (size_t i = 0; i < 10; i++) {

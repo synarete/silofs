@@ -112,10 +112,10 @@ make_names_ulongs_seq(struct ut_env *ute, size_t cnt)
 
 static void ut_mkdir_simple(struct ut_env *ute)
 {
-	ino_t ino;
+	ino_t ino = 0;
 	const char *name = UT_NAME;
 	const ino_t parent = UT_ROOT_INO;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	struct statvfs stv[2];
 
 	ut_statfs_rootd_ok(ute, &stv[0]);
@@ -140,8 +140,8 @@ static void ut_mkdir_simple(struct ut_env *ute)
 
 static void ut_mkdir_subdirs_(struct ut_env *ute, size_t cnt)
 {
-	ino_t sino;
-	ino_t dino;
+	ino_t sino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 	const struct ut_namesarr *na = make_names(ute, cnt);
 
@@ -168,8 +168,8 @@ static void ut_mkdir_subdirs(struct ut_env *ute)
 
 static void ut_mkdir_reloaded(struct ut_env *ute)
 {
-	ino_t ino;
-	struct stat st;
+	ino_t ino = 0;
+	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
 	const ino_t parent = UT_ROOT_INO;
 
@@ -205,12 +205,12 @@ static void ut_mkdir_reloaded(struct ut_env *ute)
 
 static void ut_mkdir_multi_(struct ut_env *ute, size_t cnt)
 {
-	ino_t dino;
-	ino_t child_ino;
+	ino_t dino = 0;
+	ino_t child_ino = 0;
 	loff_t size = 0;
 	blkcnt_t blkcnt = 0;
-	struct stat st;
-	struct statvfs stv;
+	struct stat st = { .st_size = -1 };
+	struct statvfs stv = { .f_bsize = 0 };
 	const char *dname = UT_NAME;
 	const ino_t root_ino = UT_ROOT_INO;
 	struct ut_namesarr *na = make_names(ute, cnt + 1);
@@ -260,10 +260,10 @@ static void ut_mkdir_multi_link_max(struct ut_env *ute)
 
 static void ut_mkdir_link_max(struct ut_env *ute)
 {
-	ino_t child_ino;
-	ino_t dino;
-	struct stat st;
-	struct statvfs stv;
+	ino_t child_ino = 0;
+	ino_t dino = 0;
+	struct stat st = { .st_size = -1 };
+	struct statvfs stv = { .f_bsize = 0 };
 	const char *dname = UT_NAME;
 	const size_t nlink_max = SILOFS_LINK_MAX;
 	const struct ut_namesarr *na = make_names(ute, nlink_max);
@@ -292,12 +292,12 @@ static void ut_mkdir_link_max(struct ut_env *ute)
 
 static void ut_dir_create_seq_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 	const char *fname = NULL;
 	const struct ut_namesarr *na = make_names_ulongs_seq(ute, cnt);
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 
 	ut_mkdir_at_root(ute, name, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -322,8 +322,8 @@ static void ut_dir_create_seq_many(struct ut_env *ute)
 
 static void ut_dir_link_any_names_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 	const long *idx = ut_randseq(ute, cnt, 0);
 	const struct ut_namesarr *na = make_names_any_len(ute, cnt);
@@ -350,8 +350,8 @@ static void ut_dir_link_any_names(struct ut_env *ute)
 
 static void ut_dir_link_long_names_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	long *idx = NULL;
 	const char *name = UT_NAME;
 	const struct ut_namesarr *na = make_names_max_len(ute, cnt);
@@ -393,10 +393,10 @@ static const char *make_lname(struct ut_env *ute, size_t len, int tag)
 
 static void ut_dir_link_unlink_mixed_(struct ut_env *ute, size_t nfiles)
 {
-	size_t len;
-	ino_t ino;
-	ino_t dino;
-	struct stat st;
+	size_t len = 0;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	struct stat st = { .st_size = -1 };
 	const char *dname = UT_NAME;
 	const char *fname = UT_NAME;
 	const char *lname = NULL;
@@ -450,9 +450,9 @@ static const char *make_xname(struct ut_env *ute, size_t x)
 
 static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
-	loff_t dsize;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	loff_t dsize = -1;
 	blkcnt_t blocks = 0;
 	blkcnt_t nfrg = UT_BK_SIZE / 512;
 	const char *dname = UT_NAME;
@@ -513,10 +513,10 @@ static void ut_dir_stat_large(struct ut_env *ute)
 
 static void ut_rmdir_when_open(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
-	ino_t parentd;
-	struct stat st;
+	ino_t ino = 0;
+	ino_t dino = 0;
+	ino_t parentd = 0;
+	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &parentd);

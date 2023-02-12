@@ -18,9 +18,10 @@
 #include <silofs/fs.h>
 
 
-int silofs_kcopy_by_splice(struct silofs_uber *uber,
-                           int fd_src, loff_t off_src,
-                           int fd_dst, loff_t off_dst, size_t len)
+static int
+silofs_kcopy_by_splice(struct silofs_uber *uber,
+                       int fd_src, loff_t off_src,
+                       int fd_dst, loff_t off_dst, size_t len)
 {
 	struct silofs_piper *piper = &uber->ub_piper;
 	int err;

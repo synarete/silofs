@@ -22,8 +22,8 @@
 static void ut_snap_write_sparse_(struct ut_env *ute,
                                   const loff_t *offs, size_t cnt, size_t bsz)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t ino = 0;
+	ino_t dino = 0;
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
 
@@ -64,9 +64,9 @@ static void ut_snap_write_sparse(struct ut_env *ute)
 
 static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 {
-	ino_t dino;
-	ino_t ino_src;
-	ino_t ino_dst;
+	ino_t dino = 0;
+	ino_t ino_src = 0;
+	ino_t ino_dst = 0;
 	const loff_t end = off + (long)len;
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
@@ -80,6 +80,7 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_trunacate_file(ute, ino_dst, end);
 	ut_snap_ok(ute, dino);
 	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_read_verify(ute, ino_src, buf, len, off);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, end - 1);
 	ut_trunacate_file(ute, ino_dst, end);
@@ -88,6 +89,8 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_read_zero(ute, ino_dst, end - 1);
 	ut_snap_ok(ute, dino);
 	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_read_verify(ute, ino_src, buf, len, off);
+	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, off + 1);
 	ut_trunacate_file(ute, ino_dst, end);
 	ut_read_verify(ute, ino_src, buf, len, off);
@@ -102,7 +105,10 @@ static void ut_snap_copy_range(struct ut_env *ute)
 {
 	ut_snap_copy_range_(ute, 0, UT_1K);
 	ut_snap_copy_range_(ute, 0, UT_4K);
+	ut_snap_copy_range_(ute, UT_4K, UT_4K);
+	ut_snap_copy_range_(ute, 2 * UT_4K, 2 * UT_4K);
 	ut_snap_copy_range_(ute, UT_64K, UT_64K);
+	ut_snap_copy_range_(ute, 4 * UT_4K, 4 * UT_64K);
 	ut_snap_copy_range_(ute, UT_MEGA, UT_MEGA);
 	ut_snap_copy_range_(ute, UT_GIGA, 2 * UT_64K);
 	ut_snap_copy_range_(ute, 1, UT_MEGA);

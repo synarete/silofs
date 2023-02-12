@@ -2818,7 +2818,8 @@ static int fuseq_finish_task(struct silofs_fuseq_worker *fqw,
 {
 	int err;
 
-	err = silofs_task_submit(task, false);
+	silofs_task_submit(task, false);
+	err = silofs_task_complete(task);
 	silofs_task_fini(task);
 	silofs_unused(fqw);
 	return err;

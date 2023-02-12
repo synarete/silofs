@@ -1226,8 +1226,8 @@ static int do_mkdir(struct silofs_task *task,
                     const struct silofs_namestr *name, mode_t mode,
                     struct silofs_inode_info **out_ii)
 {
+	struct silofs_inode_info *ii = NULL;
 	int err;
-	struct silofs_inode_info *ii;
 
 	err = check_mkdir(task, dir_ii, name);
 	if (err) {

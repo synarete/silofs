@@ -17,6 +17,9 @@
 #ifndef SILOFS_FLUSH_H_
 #define SILOFS_FLUSH_H_
 
+bool silofs_need_flush_dirty(struct silofs_task *task,
+                             silofs_dqid_t dqid, int flags);
+
 int silofs_flush_dirty(struct silofs_task *task,
                        silofs_dqid_t dqid, int flags);
 

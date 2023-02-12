@@ -32,8 +32,8 @@ static void sqe_reset_buf(struct silofs_submitq_entry *sqe)
 {
 	if (likely(sqe->buf != NULL)) {
 		silofs_deallocate(sqe->alloc, sqe->buf, sqe->len);
+		sqe->buf = NULL;
 	}
-	sqe->buf = NULL;
 }
 
 static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
@@ -162,6 +162,7 @@ static int sqe_init(struct silofs_submitq_entry *sqe,
 	list_head_init(&sqe->qlh);
 	list_head_init(&sqe->tlh);
 	sqe->alloc = alloc;
+	sqe->task = NULL;
 	sqe->bri = NULL;
 	sqe->bid.size = 0;
 	sqe->uniq_id = uniq_id;
@@ -207,9 +208,10 @@ static struct silofs_submitq_entry *sqe_from_qlh(struct silofs_list_head *qlh)
 	return sqe;
 }
 
-static void sqe_apply(struct silofs_submitq_entry *sqe)
+static int sqe_apply(struct silofs_submitq_entry *sqe)
 {
 	sqe->status = sqe_pwrite_buf(sqe);
+	return sqe->status;
 }
 
 static void sqe_lock(struct silofs_submitq_entry *sqe)
@@ -301,14 +303,19 @@ submitq_dequeue_locked_sqe(struct silofs_submitq *smq, uint64_t id)
 static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 {
 	struct silofs_submitq_entry *sqe;
+	int ret = 0;
+	int err;
 
 	sqe = submitq_dequeue_locked_sqe(smq, id);
 	while (sqe != NULL) {
-		sqe_apply(sqe);
+		err = sqe_apply(sqe);
+		if (err && !ret) {
+			ret = err;
+		}
 		sqe_unlock(sqe);
 		sqe = submitq_dequeue_locked_sqe(smq, id);
 	}
-	return 0;
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -374,12 +381,16 @@ static void task_link_sqe(struct silofs_task *task,
                           struct silofs_submitq_entry *sqe)
 {
 	listq_push_back(&task->t_pendq, &sqe->tlh);
+	sqe->task = task;
 }
 
 static void task_unlink_sqe(struct silofs_task *task,
                             struct silofs_submitq_entry *sqe)
 {
-	listq_remove(&task->t_pendq, &sqe->tlh);
+	if (sqe->task == task) {
+		listq_remove(&task->t_pendq, &sqe->tlh);
+		sqe->task = NULL;
+	}
 }
 
 static struct silofs_submitq_entry *task_front_sqe(struct silofs_task *task)
@@ -419,6 +430,7 @@ static void task_remove_sqe(struct silofs_task *task,
 {
 	sqe_lock(sqe);
 	sqe_decrefs(sqe);
+	sqe_reset_buf(sqe);
 	sqe_unbind_bri(sqe);
 	sqe_unlock(sqe);
 	task_unlink_sqe(task, sqe);
@@ -443,25 +455,38 @@ void silofs_task_enq_sqe(struct silofs_task *task,
 	submitq_enqueue(task->t_submitq, sqe);
 }
 
-static void task_drop_sqes(struct silofs_task *task)
+int silofs_task_submit(struct silofs_task *task, bool all)
+{
+	int ret = 0;
+
+	if (all) {
+		ret = submitq_apply(task->t_submitq, SILOFS_CID_ALL);
+	} else if (task->t_apex_id) {
+		ret = submitq_apply(task->t_submitq, task->t_apex_id);
+	}
+	return ret;
+}
+
+static int task_drop_sqes(struct silofs_task *task)
 {
 	struct silofs_submitq_entry *sqe;
+	int ret = 0;
 
 	sqe = task_front_sqe(task);
 	while (sqe != NULL) {
+		if (sqe->status && (ret == 0)) {
+			ret = sqe->status;
+		}
 		task_remove_del_sqe(task, sqe);
 		sqe = task_front_sqe(task);
 	}
+	return ret;
 }
 
-int silofs_task_submit(struct silofs_task *task, bool all)
+int silofs_task_complete(struct silofs_task *task)
 {
-	if (all) {
-		submitq_apply(task->t_submitq, SILOFS_CID_ALL);
-	} else if (task->t_apex_id) {
-		submitq_apply(task->t_submitq, task->t_apex_id);
-	}
-	return 0;
+	task->t_may_flush = 0;
+	return task_drop_sqes(task);
 }
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
@@ -477,6 +502,7 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 	task->t_submitq = uber->ub_submitq;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
+	task->t_may_flush = 0;
 	return 0;
 }
 

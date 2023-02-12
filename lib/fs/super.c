@@ -940,6 +940,12 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
 	if (!err) {
 		return 0;
 	}
+	/*
+	 * TODO:
+	 *  - First check if free address in-memory mapping.
+	 *  - Instead of stable, check allocated
+	 */
+
 	err = silofs_require_stable_at(task, &ivoa.voa.vaddr, stg_mode);
 	if (err) {
 		return err;

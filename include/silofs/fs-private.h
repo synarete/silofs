@@ -48,6 +48,7 @@
 #define min(x, y)                       silofs_min(x, y)
 #define min3(x, y, z)                   silofs_min3(x, y, z)
 #define max(x, y)                       silofs_max(x, y)
+#define clamp(x, y, z)                  silofs_clamp(x, y, z)
 #define div_round_up(n, d)              silofs_div_round_up(n, d)
 
 #define log_dbg(fmt, ...)               silofs_log_debug(fmt, __VA_ARGS__)

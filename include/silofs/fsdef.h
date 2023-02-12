@@ -160,9 +160,6 @@
 /* on-disk size of space-node/leaf mapping */
 #define SILOFS_SPMAP_SIZE               (8 * SILOFS_KILO)
 
-/* on-disk size of inode's head */
-#define SILOFS_INODE_SIZE               SILOFS_KB_SIZE
-
 
 /* bits-shift for inode-table children fan-out */
 #define SILOFS_ITNODE_SHIFT             (7)
@@ -176,8 +173,11 @@
 /* on-disk size of inode-table node */
 #define SILOFS_ITNODE_SIZE              (8192)
 
-/* on-disk size of inode's head */
-#define SILOFS_INODE_SIZE               SILOFS_KB_SIZE
+/* on-disk size-shift of inode */
+#define SILOFS_INODE_SHIFT              (10)
+
+/* on-disk size of inode */
+#define SILOFS_INODE_SIZE               (1 << SILOFS_INODE_SHIFT)
 
 
 /* height-limit of file-mapping radix-tree */

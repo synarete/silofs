@@ -25,6 +25,7 @@ struct silofs_task {
 	struct silofs_oper      t_oper;
 	uint64_t                t_apex_id;
 	volatile int            t_interrupt;
+	int                     t_may_flush;
 };
 
 /* submit reference into view within underlying block */
@@ -105,6 +106,8 @@ void silofs_task_enq_sqe(struct silofs_task *task,
                          struct silofs_submitq_entry *sqe);
 
 int silofs_task_submit(struct silofs_task *task, bool all);
+
+int silofs_task_complete(struct silofs_task *task);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 

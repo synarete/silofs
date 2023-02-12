@@ -311,28 +311,28 @@ static void flc_enqueue_sqe(const struct silofs_flush_ctx *fl_ctx,
 }
 
 static int flc_pend_sqe(const struct silofs_flush_ctx *fl_ctx,
-                        struct silofs_submitq_entry *cmi)
+                        struct silofs_submitq_entry *sqe)
 {
 	int err;
 
-	err = flc_prep_sqe(fl_ctx, cmi);
+	err = flc_prep_sqe(fl_ctx, sqe);
 	if (!err) {
-		flc_enqueue_sqe(fl_ctx, cmi);
+		flc_enqueue_sqe(fl_ctx, sqe);
 	}
 	return err;
 }
 
 static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
                          struct silofs_snode_info **siq,
-                         struct silofs_submitq_entry *cmi)
+                         struct silofs_submitq_entry *sqe)
 {
 	int err;
 
-	err = flc_populate_sqe(fl_ctx, siq, cmi);
+	err = flc_populate_sqe(fl_ctx, siq, sqe);
 	if (err) {
 		return err;
 	}
-	err = flc_pend_sqe(fl_ctx, cmi);
+	err = flc_pend_sqe(fl_ctx, sqe);
 	if (err) {
 		return err;
 	}
@@ -342,19 +342,19 @@ static int flc_flush_siq(struct silofs_flush_ctx *fl_ctx,
 static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx,
                           enum silofs_stype stype)
 {
-	struct silofs_submitq_entry *cmi = NULL;
+	struct silofs_submitq_entry *sqe = NULL;
 	struct silofs_dset *dset = flc_dset_of(fl_ctx, stype);
 	struct silofs_snode_info *siq = dset->ds_siq;
 	int err;
 
 	while (siq != NULL) {
-		err = silofs_task_mk_sqe(fl_ctx->task, &cmi);
+		err = silofs_task_mk_sqe(fl_ctx->task, &sqe);
 		if (err) {
 			return err;
 		}
-		err = flc_flush_siq(fl_ctx, &siq, cmi);
+		err = flc_flush_siq(fl_ctx, &siq, sqe);
 		if (err) {
-			silofs_task_rm_sqe(fl_ctx->task, cmi);
+			silofs_task_rm_sqe(fl_ctx->task, sqe);
 			return err;
 		}
 	}
@@ -470,6 +470,20 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 static silofs_dqid_t ii_dqid(const struct silofs_inode_info *ii)
 {
 	return ii->i_vi.v_si.s_dqid;
+}
+
+bool silofs_need_flush_dirty(struct silofs_task *task,
+                             silofs_dqid_t dqid, int flags)
+{
+	struct silofs_flush_ctx fl_ctx = { .flags = -1 };
+	int err;
+	bool ret = false;
+
+	err = flc_setup(&fl_ctx, task, dqid, flags);
+	if (!err) {
+		ret = flc_need_flush(&fl_ctx);
+	}
+	return ret;
 }
 
 int silofs_flush_dirty(struct silofs_task *task,

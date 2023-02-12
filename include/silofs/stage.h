@@ -56,13 +56,15 @@ int silofs_stage_inode_at(struct silofs_task *task, ino_t ino,
                           enum silofs_stage_mode stg_mode,
                           struct silofs_inode_info **out_ii);
 
-int silofs_require_stable_at(struct silofs_task *task,
-                             const struct silofs_vaddr *vaddr,
-                             enum silofs_stage_mode stg_mode);
-
 int silofs_resolve_voaddr_of(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stage_mode stg_mode,
                              struct silofs_voaddr *out_voa);
+
+int silofs_require_stable_at(struct silofs_task *task,
+                             const struct silofs_vaddr *vaddr);
+
+int silofs_check_stable_at(struct silofs_task *task,
+                           const struct silofs_vaddr *vaddr);
 
 #endif /* SILOFS_STAGE_H_ */

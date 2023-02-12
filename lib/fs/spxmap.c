@@ -74,6 +74,11 @@ static loff_t spe_end(const struct silofs_spa_entry *spe)
 	return off_end(spe->spe_voff, spe->spe_len);
 }
 
+static bool spe_is_within(const struct silofs_spa_entry *spe, loff_t voff)
+{
+	return (voff >= spe->spe_voff) && (voff < spe_end(spe));
+}
+
 static void spe_chop_head(struct silofs_spa_entry *spe, size_t len)
 {
 	silofs_assert_lt(len, spe->spe_len);
@@ -299,7 +304,6 @@ static int spamap_merge_vspace(struct silofs_spamap *spa,
 
 static int spamap_insert_vspace(struct silofs_spamap *spa,
                                 loff_t off, size_t len)
-
 {
 	struct silofs_spa_entry *spe;
 	struct silofs_spa_entry *spe_max = NULL;
@@ -341,6 +345,26 @@ static int spamap_add_vspace(struct silofs_spamap *spa, loff_t off, size_t len)
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+static int spamap_find_baseof(const struct silofs_spamap *spa,
+                              loff_t off, loff_t *out_base_off)
+{
+	struct silofs_spa_entry *spe;
+
+	spe = spmap_lower_bound_spe(spa, off);
+	if (spe == NULL) {
+		return -ENOENT;
+	}
+	spe = spmap_prev_of(spa, spe);
+	if (spe == NULL) {
+		return -ENOENT;
+	}
+	if (!spe_is_within(spe, off)) {
+		return -ENOENT;
+	}
+	*out_base_off = spe->spe_voff;
 	return 0;
 }
 
@@ -427,6 +451,12 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_stype stype)
 	return ret;
 }
 
+static const struct silofs_spamap *
+spamaps_sub_map2(const struct silofs_spamaps *spam, enum silofs_stype stype)
+{
+	return spamaps_sub_map(unconst(spam), stype);
+}
+
 int silofs_spamaps_store(struct silofs_spamaps *spam,
                          enum silofs_stype stype, loff_t voff, size_t len)
 {
@@ -449,6 +479,19 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_stype stype,
 	spa = spamaps_sub_map(spam, stype);
 	if (spa != NULL) {
 		err = spamap_pop_vspace(spa, len, out_voff);
+	}
+	return err;
+}
+
+int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
+                          enum silofs_stype stype, loff_t voff, loff_t *out)
+{
+	const struct silofs_spamap *spa;
+	int err = -ENOENT;
+
+	spa = spamaps_sub_map2(spam, stype);
+	if (spa != NULL) {
+		err = spamap_find_baseof(spa, voff, out);
 	}
 	return err;
 }

@@ -80,6 +80,9 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_stype stype,
 int silofs_spamaps_store(struct silofs_spamaps *spam,
                          enum silofs_stype stype, loff_t voff, size_t len);
 
+int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
+                          enum silofs_stype stype, loff_t voff, loff_t *out);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_uakey_setup(struct silofs_uakey *uakey, loff_t voff,

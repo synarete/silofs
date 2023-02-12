@@ -118,9 +118,53 @@ static void ut_snap_copy_range(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
+{
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
+	ino_t dino = 0;
+	const char *dname = UT_NAME;
+	const char *name1 = UT_NAME_AT;
+	const char *name2 = UT_NAME_AT;
+	void *buf1 = ut_randbuf(ute, bsz);
+	void *buf2 = ut_randbuf(ute, bsz);
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	for (size_t i = 0; i < 4; ++i) {
+		ut_create_file(ute, dino, name1, &ino1);
+		ut_create_file(ute, dino, name2, &ino2);
+		ut_write_read(ute, ino1, buf1, bsz, off);
+		ut_write_read(ute, ino2, buf2, bsz, off);
+		ut_snap_ok(ute, dino);
+		ut_read_verify(ute, ino1, buf1, bsz, off);
+		ut_read_verify(ute, ino2, buf2, bsz, off);
+		ut_release_file(ute, ino1);
+		ut_rename_replace(ute, dino, name1, dino, name2);
+		ut_release_file(ute, ino2);
+		ut_open_rdonly(ute, ino1);
+		ut_read_verify(ute, ino1, buf1, bsz, off);
+		ut_release_file(ute, ino1);
+		ut_unlink_ok(ute, dino, name2);
+	}
+	ut_rmdir_at_root(ute, dname);
+}
+
+static void ut_snap_rename_io(struct ut_env *ute)
+{
+	ut_snap_rename_io_(ute, 0, UT_1K - 1);
+	ut_snap_rename_io_(ute, UT_1K - 1, UT_1K + 3);
+	ut_snap_rename_io_(ute, 2 * UT_4K, 2 * UT_4K);
+	ut_snap_rename_io_(ute, UT_64K, UT_64K);
+	ut_snap_rename_io_(ute, UT_MEGA, UT_MEGA);
+	ut_snap_rename_io_(ute, UT_TERA - 7, UT_MEGA + 11);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_snap_write_sparse),
 	UT_DEFTEST(ut_snap_copy_range),
+	UT_DEFTEST(ut_snap_rename_io),
 };
 
 const struct ut_testdefs ut_tdefs_snap_io = UT_MKTESTS(ut_local_tests);

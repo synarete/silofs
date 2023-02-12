@@ -48,72 +48,61 @@ struct silofs_bt_info {
 
 #ifdef SILOFS_WITH_LIBUNWIND
 
-/* On aarch64 those two are too big to be allocated on stack */
-struct silofs_bt_concur {
-	unw_context_t context;
-	unw_cursor_t  cursor;
+struct silofs_bt_ctx {
+	unw_context_t   context;
+	unw_cursor_t    cursor;
+	unw_word_t      ip;
+	unw_word_t      sp;
+	unw_word_t      off;
+	char            sym[512];
 };
 
 static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))
 {
-	int err;
-	int lim = 64;
-	unw_word_t ip;
-	unw_word_t sp;
-	unw_word_t off;
-	unw_context_t *context;
-	unw_cursor_t *cursor;
-	struct silofs_bt_concur *cc;
+	struct silofs_bt_ctx bt_ctx;
 	struct silofs_bt_info bti;
-	char sym[512];
+	int err;
 
-	cc = (struct silofs_bt_concur *)malloc(sizeof(*cc));
-	if (cc == NULL) {
-		return -ENOMEM;
-	}
-	context = &cc->context;
-	cursor = &cc->cursor;
-
-	err = unw_getcontext(context);
+	memset(&bt_ctx, 0, sizeof(bt_ctx));
+	err = unw_getcontext(&bt_ctx.context);
 	if (err != UNW_ESUCCESS) {
-		goto out;
+		return err;
 	}
-	err = unw_init_local(cursor, context);
+	err = unw_init_local(&bt_ctx.cursor, &bt_ctx.context);
 	if (err != UNW_ESUCCESS) {
-		goto out;
+		return err;
 	}
-	memset(sym, 0, sizeof(sym));
-	while (lim-- > 0) {
-		ip = sp = off = 0;
-		err = unw_step(cursor);
+	for (int step = 0; step < 64; ++step) {
+		bt_ctx.ip = 0;
+		bt_ctx.sp = 0;
+		bt_ctx.off = 0;
+		err = unw_step(&bt_ctx.cursor);
 		if (err <= 0) {
 			break;
 		}
-		err = unw_get_reg(cursor, UNW_REG_IP, &ip);
+		err = unw_get_reg(&bt_ctx.cursor, UNW_REG_IP, &bt_ctx.ip);
 		if (err) {
-			break;
+			return err;
 		}
-		err = unw_get_reg(cursor, UNW_REG_SP, &sp);
+		err = unw_get_reg(&bt_ctx.cursor, UNW_REG_SP, &bt_ctx.sp);
 		if (err) {
-			break;
+			return err;
 		}
-		off = 0;
-		err = unw_get_proc_name(cursor, sym, sizeof(sym) - 1, &off);
+		err = unw_get_proc_name(&bt_ctx.cursor, bt_ctx.sym,
+		                        sizeof(bt_ctx.sym) - 1, &bt_ctx.off);
 		if (err) {
-			sym[0] = '\0';
+			bt_ctx.sym[0] = '\0';
 		}
-		bti.ip = (void *)ip;
-		bti.sp = (long)sp;
-		bti.sym = sym;
-		bti.off = (long)off;
+		bti.ip = (void *)bt_ctx.ip;
+		bti.sp = (long)bt_ctx.sp;
+		bti.sym = bt_ctx.sym;
+		bti.off = (long)bt_ctx.off;
 		err = bt_cb(&bti);
 		if (err) {
-			break;
+			return err;
 		}
 	}
-out:
-	free(cc);
-	return err;
+	return 0;
 }
 #else
 static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))

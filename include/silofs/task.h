@@ -44,7 +44,7 @@ struct silofs_submitq_entry {
 	struct silofs_task         *task;
 	struct silofs_blobref_info *bri;
 	struct silofs_submit_ref    ref[32];
-	struct silofs_blobid        bid;
+	struct silofs_blobid        blobid;
 	uint64_t        uniq_id;
 	void           *buf;
 	loff_t          off;

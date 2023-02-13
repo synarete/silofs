@@ -63,7 +63,7 @@ static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
 	if (end > nxt) {
 		return false;
 	}
-	if (!blobid_isequal(&oaddr->bka.blobid, &sqe->bid)) {
+	if (!blobid_isequal(&oaddr->bka.blobid, &sqe->blobid)) {
 		return false;
 	}
 	return true;
@@ -79,7 +79,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 		return false;
 	}
 	if (sqe->cnt == 0) {
-		blobid_assign(&sqe->bid, &oaddr->bka.blobid);
+		blobid_assign(&sqe->blobid, &oaddr->bka.blobid);
 		sqe->off = oaddr->pos;
 	}
 	ref = &sqe->ref[sqe->cnt];
@@ -164,7 +164,7 @@ static int sqe_init(struct silofs_submitq_entry *sqe,
 	sqe->alloc = alloc;
 	sqe->task = NULL;
 	sqe->bri = NULL;
-	sqe->bid.size = 0;
+	sqe->blobid.size = 0;
 	sqe->uniq_id = uniq_id;
 	sqe->off = -1;
 	sqe->len = 0;

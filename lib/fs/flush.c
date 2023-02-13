@@ -291,7 +291,7 @@ static void flc_cleanup_dset(struct silofs_flush_ctx *fl_ctx,
 static int flc_prep_sqe(const struct silofs_flush_ctx *fl_ctx,
                         struct silofs_submitq_entry *sqe)
 {
-	const struct silofs_blobid *blobid = &sqe->bid;
+	const struct silofs_blobid *blobid = &sqe->blobid;
 	struct silofs_blobref_info *bri = NULL;
 	int err;
 

@@ -93,6 +93,12 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
 	silofs_vi_attach_to(vi, vbki);
 }
 
+static void vi_update_oaddr(struct silofs_vnode_info *vi,
+                            const struct silofs_oaddr *oaddr)
+{
+	oaddr_assign(&vi->v_oaddr, oaddr);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_cache *stgc_cache(const struct silofs_stage_ctx *stg_ctx)
@@ -261,18 +267,21 @@ out_ok:
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
-                              const struct silofs_vaddr *vaddr,
+                              const struct silofs_voaddr *voaddr,
                               struct silofs_vbk_info *vbki,
                               struct silofs_vnode_info **out_vi)
 {
+	struct silofs_vnode_info *vi = NULL;
 	int err;
 
 	silofs_vbki_incref(vbki);
-	err = stgc_spawn_vi(stg_ctx, vaddr, out_vi);
+	err = stgc_spawn_vi(stg_ctx, &voaddr->vaddr, &vi);
 	if (!err) {
-		vi_bind_to(*out_vi, stg_ctx->sbi, vbki);
+		vi_bind_to(vi, stg_ctx->sbi, vbki);
+		vi_update_oaddr(vi, &voaddr->oaddr);
 	}
 	silofs_vbki_decref(vbki);
+	*out_vi = vi;
 	return err;
 }
 
@@ -2729,7 +2738,7 @@ int silofs_stage_vnode_at(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stgc_spawn_bind_vi(&stg_ctx, vaddr, vbki, &vi);
+	err = stgc_spawn_bind_vi(&stg_ctx, &voa, vbki, &vi);
 	if (err) {
 		return err;
 	}

@@ -359,6 +359,7 @@ static void vi_init(struct silofs_vnode_info *vi,
 {
 	si_init(&vi->v_si, vaddr->stype, del_fn);
 	vaddr_assign(&vi->v_vaddr, vaddr);
+	oaddr_reset(&vi->v_oaddr);
 	silofs_iovref_init(&vi->v_iovr, vi_iov_pre, vi_iov_post);
 	vi->v_recheck = false;
 	vi->v_verified = false;

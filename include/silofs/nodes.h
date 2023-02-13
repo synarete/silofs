@@ -88,6 +88,7 @@ struct silofs_spleaf_info {
 struct silofs_vnode_info {
 	struct silofs_snode_info        v_si;
 	struct silofs_vaddr             v_vaddr;
+	struct silofs_oaddr             v_oaddr;
 	struct silofs_iovref            v_iovr;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_sb_info          *v_sbi;

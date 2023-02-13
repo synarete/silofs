@@ -58,11 +58,12 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 
 static void *ut_malloc_safe(size_t size)
 {
-	void *ptr;
+	void *ptr = NULL;
+	int err;
 
-	ptr = malloc(size);
-	if (ptr == NULL) {
-		error(EXIT_FAILURE, errno, "malloc failed: size=%lu", size);
+	err = posix_memalign(&ptr, 64, size);
+	if (err || (ptr == NULL)) {
+		error(EXIT_FAILURE, err, "malloc failed: size=%lu", size);
 		abort(); /* makes gcc '-fanalyzer' happy */
 	}
 	return ptr;
@@ -71,7 +72,7 @@ static void *ut_malloc_safe(size_t size)
 static void ut_free_safe(void *ptr, size_t size)
 {
 	if (ptr != NULL) {
-		memset(ptr, 0xFF, size);
+		memset(ptr, 0xFF, ut_min(size, 64));
 		free(ptr);
 	}
 }
@@ -415,39 +416,17 @@ void ut_execute_tests(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-
-static size_t aligned_size(size_t sz, size_t a)
-{
-	return ((sz + a - 1) / a) * a;
-}
-
-static size_t malloc_total_size(size_t nbytes)
-{
-	size_t total_size;
-	struct ut_malloc_chunk *mchunk = NULL;
-	const size_t mchunk_size = sizeof(*mchunk);
-	const size_t base_size = sizeof(mchunk->base);
-
-	total_size = mchunk_size;
-	if (nbytes > base_size) {
-		total_size += aligned_size(nbytes - base_size, mchunk_size);
-	}
-	return total_size;
-}
-
 static struct ut_malloc_chunk *
 ut_malloc_chunk(struct ut_env *ute, size_t nbytes)
 {
-	size_t total_size;
 	struct ut_malloc_chunk *mchunk;
 
-	total_size = malloc_total_size(nbytes);
-	mchunk = (struct ut_malloc_chunk *)ut_malloc_safe(total_size);
-	mchunk->size = total_size;
+	mchunk = (struct ut_malloc_chunk *)ut_malloc_safe(sizeof(*mchunk));
+	mchunk->data = ut_malloc_safe(nbytes);
+	mchunk->size = nbytes;
 	mchunk->next = ute->malloc_list;
-	mchunk->data = mchunk->base;
 	ute->malloc_list = mchunk;
-	ute->nbytes_alloc += total_size;
+	ute->nbytes_alloc += nbytes + sizeof(*mchunk);
 
 	return mchunk;
 }
@@ -455,11 +434,12 @@ ut_malloc_chunk(struct ut_env *ute, size_t nbytes)
 static void ut_free(struct ut_env *ute,
                     struct ut_malloc_chunk *mchunk)
 {
-	silofs_assert_ge(ute->nbytes_alloc, mchunk->size);
+	silofs_assert_ge(ute->nbytes_alloc, mchunk->size + sizeof(*mchunk));
 
+	ut_free_safe(mchunk->data, mchunk->size);
 	ute->nbytes_alloc -= mchunk->size;
-	memset(mchunk, 0xFC, mchunk->size);
-	free(mchunk);
+	ut_free_safe(mchunk, sizeof(*mchunk));
+	ute->nbytes_alloc -= sizeof(*mchunk);
 }
 
 void *ut_malloc(struct ut_env *ute, size_t nbytes)

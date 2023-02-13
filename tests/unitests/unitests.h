@@ -88,7 +88,6 @@ struct ut_malloc_chunk {
 	struct ut_malloc_chunk *next;
 	size_t  size;
 	void   *data;
-	uint8_t base[32];
 };
 
 struct ut_args {

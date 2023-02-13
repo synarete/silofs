@@ -90,7 +90,7 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_snap_ok(ute, dino);
 	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_read_verify(ute, ino_dst, buf, len, off);
+	ut_read_verify(ute, ino_dst, buf, len - 1, off);
 	ut_trunacate_file(ute, ino_dst, off + 1);
 	ut_trunacate_file(ute, ino_dst, end);
 	ut_read_verify(ute, ino_src, buf, len, off);

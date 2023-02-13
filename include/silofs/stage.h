@@ -23,6 +23,9 @@
 bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
                                  const struct silofs_blobid *blobid);
 
+bool silofs_sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_oaddr *oaddr);
+
 int silofs_stage_ubk_of(struct silofs_task *task,
                         const struct silofs_vaddr *vaddr,
                         enum silofs_stage_mode stg_mode,
@@ -60,6 +63,11 @@ int silofs_resolve_voaddr_of(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stage_mode stg_mode,
                              struct silofs_voaddr *out_voa);
+
+int silofs_resolve_oaddr_of(struct silofs_task *task,
+                            const struct silofs_vaddr *vaddr,
+                            enum silofs_stage_mode stg_mode,
+                            struct silofs_oaddr *out_oaddr);
 
 int silofs_require_stable_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr);

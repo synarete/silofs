@@ -3233,7 +3233,9 @@ static void cache_post_op(struct silofs_cache *cache)
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi)
 {
-	cache_dirtify_vi(vi_cache(vi), vi);
+	if (likely(vi != NULL)) {
+		cache_dirtify_vi(vi_cache(vi), vi);
+	}
 }
 
 static void vi_undirtify(struct silofs_vnode_info *vi)
@@ -3243,13 +3245,17 @@ static void vi_undirtify(struct silofs_vnode_info *vi)
 
 void silofs_ii_dirtify(struct silofs_inode_info *ii)
 {
-	silofs_assert_gt(ii->i_vi.v_si.s_dqid, 0);
-	silofs_vi_dirtify(ii_to_vi(ii));
+	if (likely(ii != NULL)) {
+		silofs_assert_gt(ii->i_vi.v_si.s_dqid, 0);
+		silofs_vi_dirtify(ii_to_vi(ii));
+	}
 }
 
 void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
-	vi_undirtify(ii_to_vi(ii));
+	if (likely(ii != NULL)) {
+		vi_undirtify(ii_to_vi(ii));
+	}
 }
 
 void silofs_ii_incref(struct silofs_inode_info *ii)

@@ -743,7 +743,7 @@ static int bri_load_bb(const struct silofs_blobref_info *bri,
 	if (err) {
 		return err;
 	}
-	silofs_assert_eq(st.st_size % SILOFS_BK_SIZE, 0);
+	silofs_assert_eq(st.st_size % SILOFS_KB_SIZE, 0);
 
 	bobj = silofs_bytebuf_end(bb);
 	end = off_end(siov.iov_off, siov.iov_len);

@@ -54,18 +54,15 @@ static int resolve_oaddr_of_vnode(struct silofs_task *task,
                                   const struct silofs_vnode_info *vi,
                                   struct silofs_oaddr *out_oaddr)
 {
-	struct silofs_voaddr voa;
 	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
 	int err;
 
-	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RO, &voa);
+	err = silofs_resolve_oaddr_of(task, vaddr, SILOFS_STAGE_RO, out_oaddr);
 	if (err) {
 		log_warn("failed to resolve voaddr: stype=%d off=%ld err=%d",
 		         vaddr->stype, vaddr->off, err);
-		return err;
 	}
-	oaddr_assign(out_oaddr, &voa.oaddr);
-	return 0;
+	return err;
 }
 
 static void resolve_oaddr_of_unode(const struct silofs_unode_info *ui,
@@ -93,7 +90,25 @@ static int resolve_oaddr_of(struct silofs_task *task,
 	} else {
 		silofs_panic("corrupted snode: stype=%d", si->s_stype);
 	}
+	silofs_assert_ok(ret);
 	return ret;
+}
+
+static int flc_check_resolved_oaddr(const struct silofs_flush_ctx *fl_ctx,
+                                    const struct silofs_snode_info *si,
+                                    const struct silofs_oaddr *oaddr)
+{
+	const struct silofs_sb_info *sbi = fl_ctx->uber->ub_sbi;
+	const struct silofs_blobid *blobid = &oaddr->bka.blobid;
+	int err = 0;
+	bool mut;
+
+	if (stype_isvnode(si->s_stype)) {
+		mut = silofs_sbi_ismutable_blobid(sbi, blobid);
+		err = mut ? 0 : -EROFS;
+	}
+	silofs_assert_ok(err);
+	return err;
 }
 
 static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
@@ -107,6 +122,10 @@ static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
 	while (*siq != NULL) {
 		si = *siq;
 		err = resolve_oaddr_of(fl_ctx->task, si, &oaddr);
+		if (err) {
+			return err;
+		}
+		err = flc_check_resolved_oaddr(fl_ctx, si, &oaddr);
 		if (err) {
 			return err;
 		}

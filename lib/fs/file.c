@@ -66,6 +66,7 @@ struct silofs_fpos_ref {
 	const struct silofs_file_ctx *f_ctx;
 	struct silofs_finode_info *fni;
 	struct silofs_vaddr vaddr;
+	struct silofs_oaddr oaddr;
 	loff_t  file_pos;
 	size_t  slot_idx;
 	bool    head1;
@@ -874,6 +875,8 @@ static bool fic_has_more_io(const struct silofs_file_ctx *f_ctx)
 static void fpr_reset(struct silofs_fpos_ref *fpr)
 {
 	memset(fpr, 0, sizeof(*fpr));
+	vaddr_reset(&fpr->vaddr);
+	oaddr_reset(&fpr->oaddr);
 }
 
 static void fpr_setup(struct silofs_fpos_ref *fpr,
@@ -887,6 +890,7 @@ static void fpr_setup(struct silofs_fpos_ref *fpr,
 	const bool target = !vaddr_isnull(vaddr);
 
 	vaddr_assign(&fpr->vaddr, vaddr);
+	oaddr_reset(&fpr->oaddr);
 	fpr->f_ctx = f_ctx;
 	fpr->fni = parent;
 	fpr->slot_idx = UINT_MAX;
@@ -932,6 +936,19 @@ static int fpr_require_mutable(const struct silofs_fpos_ref *fpr)
 
 	if (!vaddr_isnull(vaddr)) {
 		ret = fic_require_mutable_vaddr(fpr->f_ctx, vaddr);
+	}
+	return ret;
+}
+
+static int fpr_resolve_oaddr(struct silofs_fpos_ref *fpr)
+{
+	const struct silofs_vaddr *vaddr = &fpr->vaddr;
+	int ret = 0;
+
+	if (!vaddr_isnull(vaddr)) {
+		ret = silofs_resolve_oaddr_of(fpr->f_ctx->task, &fpr->vaddr,
+		                              fpr->f_ctx->stg_mode,
+		                              &fpr->oaddr);
 	}
 	return ret;
 }
@@ -4142,15 +4159,22 @@ static int fpr_share_leaf(const struct silofs_fpos_ref *fpr_src,
 	return 0;
 }
 
+static bool fpr_ismutable(const struct silofs_fpos_ref *fpr)
+{
+	return oaddr_isnull(&fpr->oaddr) ||
+	       silofs_sbi_ismutable_oaddr(fpr->f_ctx->sbi, &fpr->oaddr);
+}
+
 static bool fpr_may_share_leaf(const struct silofs_fpos_ref *fpr_src,
                                const struct silofs_fpos_ref *fpr_dst)
 {
 	return (fpr_src->has_data && fpr_src->tree && !fpr_src->partial &&
-	        fpr_dst->tree && !fpr_dst->partial);
+	        fpr_dst->tree && !fpr_dst->partial &&
+	        fpr_ismutable(fpr_src) && fpr_ismutable(fpr_dst));
 }
 
 static int
-fpr_copy_range_at_leaf(const struct silofs_fpos_ref *fpr_src,
+fpr_copy_range_at_leaf(struct silofs_fpos_ref *fpr_src,
                        struct silofs_fpos_ref *fpr_dst, size_t len)
 {
 	int err;
@@ -4169,6 +4193,10 @@ fpr_copy_range_at_leaf(const struct silofs_fpos_ref *fpr_src,
 			return err;
 		}
 	} else if (fpr_src->has_data && !fpr_dst->has_data) {
+		err = fpr_resolve_oaddr(fpr_src);
+		if (err) {
+			return err;
+		}
 		if (fpr_may_share_leaf(fpr_src, fpr_dst)) {
 			err = fpr_require_tree(fpr_dst);
 			if (err) {
@@ -4194,6 +4222,14 @@ fpr_copy_range_at_leaf(const struct silofs_fpos_ref *fpr_src,
 		}
 	} else if (fpr_src->has_data && fpr_dst->has_data) {
 		err = fpr_require_mutable(fpr_dst);
+		if (err) {
+			return err;
+		}
+		err = fpr_resolve_oaddr(fpr_src);
+		if (err) {
+			return err;
+		}
+		err = fpr_resolve_oaddr(fpr_dst);
 		if (err) {
 			return err;
 		}

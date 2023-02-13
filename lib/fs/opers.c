@@ -292,6 +292,23 @@ static int op_stage_mut_inode(struct silofs_task *task, ino_t ino,
 	return silofs_stage_inode(task, ino, SILOFS_STAGE_RW, out_ii);
 }
 
+static int op_stage_mut_inode2(struct silofs_task *task,
+                               ino_t ino1, ino_t ino2,
+                               struct silofs_inode_info **out_ii1,
+                               struct silofs_inode_info **out_ii2)
+{
+	int err;
+
+	err = op_stage_mut_inode(task, ino1, out_ii1);
+	if (!err) {
+		ii_incref(*out_ii1);
+		err = op_stage_mut_inode(task, ino2, out_ii2);
+		ii_decref(*out_ii1);
+	}
+	return err;
+}
+
+
 static int
 op_stage_openable_inode(struct silofs_task *task, ino_t ino,
                         int o_flags, struct silofs_inode_info **out_ii)
@@ -1092,7 +1109,7 @@ int silofs_fs_rename(struct silofs_task *task, ino_t parent,
 {
 	struct silofs_namestr nstr;
 	struct silofs_namestr newnstr;
-	struct silofs_inode_info *parent_ii = NULL;
+	struct silofs_inode_info *curp_ii = NULL;
 	struct silofs_inode_info *newp_ii = NULL;
 	int err;
 
@@ -1105,20 +1122,16 @@ int silofs_fs_rename(struct silofs_task *task, ino_t parent,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, &parent_ii);
+	err = op_stage_mut_inode2(task, parent, newparent, &curp_ii, &newp_ii);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, newparent, &newp_ii);
+	err = silofs_make_namestr_by(&nstr, curp_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, parent_ii, name);
+	err = silofs_make_namestr_by(&newnstr, newp_ii, newname);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&newnstr, parent_ii, newname);
-	ok_or_goto_out(err);
-
-	err = silofs_do_rename(task, parent_ii, &nstr,
-	                       newp_ii, &newnstr, flags);
+	err = silofs_do_rename(task, curp_ii, &nstr, newp_ii, &newnstr, flags);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, parent, OP_F_ANY, err);
@@ -1285,10 +1298,7 @@ int silofs_fs_copy_file_range(struct silofs_task *task, ino_t ino_in,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino_in, &ii_in);
-	ok_or_goto_out(err);
-
-	err = op_stage_mut_inode(task, ino_out, &ii_out);
+	err = op_stage_mut_inode2(task, ino_in, ino_out, &ii_in, &ii_out);
 	ok_or_goto_out(err);
 
 	err = silofs_do_copy_file_range(task, ii_in, ii_out, off_in,

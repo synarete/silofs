@@ -36,6 +36,12 @@ struct silofs_stage_ctx {
 	loff_t                          voff;
 	enum silofs_stage_mode          stg_mode;
 	enum silofs_stype               vspace;
+	bool                            has_view;
+};
+
+struct silofs_vis {
+	struct silofs_vaddrs vas;
+	struct silofs_vnode_info *vis[SILOFS_NKB_IN_BK];
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -58,6 +64,11 @@ static bool stage_rw(enum silofs_stage_mode stg_mode)
 static loff_t vaddr_bk_voff(const struct silofs_vaddr *vaddr)
 {
 	return off_align_to_bk(vaddr->off);
+}
+
+static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
+{
+	return silofs_off_to_ino(vaddr->off);
 }
 
 static void voaddr_by(struct silofs_voaddr *voa,
@@ -276,6 +287,12 @@ bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
 	return blobid_has_treeid(blobid, &treeid);
 }
 
+bool silofs_sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_oaddr *oaddr)
+{
+	return silofs_sbi_ismutable_blobid(sbi, &oaddr->bka.blobid);
+}
+
 static bool sbi_ismutable_bkaddr(const struct silofs_sb_info *sbi,
                                  const struct silofs_bkaddr *bkaddr)
 {
@@ -354,7 +371,7 @@ enum silofs_height sni_child_height(const struct silofs_spnode_info *sni)
 static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
                        struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,
-                       enum silofs_stage_mode stg_mode)
+                       enum silofs_stage_mode stg_mode, bool has_view)
 {
 	memset(stg_ctx, 0, sizeof(*stg_ctx));
 	stg_ctx->task = task;
@@ -366,6 +383,7 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 	stg_ctx->bk_voff = vaddr_bk_voff(vaddr);
 	stg_ctx->bk_lba = off_to_lba(stg_ctx->bk_voff);
 	stg_ctx->voff = vaddr->off;
+	stg_ctx->has_view = has_view;
 }
 
 static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
@@ -1807,7 +1825,7 @@ stgc_require_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	 * TODO-0047: Do not use underlying repo to detect if vdata-blob exists
 	 *
 	 * Multiple space-leaf share the same underlying vdata blob. Use in
-	 * memory logic to detect if one of them has alredy spawned their
+	 * memory logic to detect if one of them has already spawned their
 	 * common main-blob.
 	 */
 	stgc_make_blobid_of_vdata(stg_ctx, voff, &blobid);
@@ -2157,7 +2175,7 @@ int silofs_stage_spnode1_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode, true);
 	err = stgc_stage_spnodes_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2175,7 +2193,7 @@ int silofs_stage_spmaps_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode, true);
 	err = stgc_stage_spmaps_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2194,7 +2212,7 @@ int silofs_require_spmaps_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode, true);
 	err = stgc_check_may_rdwr(&stg_ctx);
 	if (err) {
 		return err;
@@ -2231,7 +2249,7 @@ int silofs_require_stable_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_RO);
+	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_RO, false);
 	err = stgc_stage_spmaps_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2258,7 +2276,7 @@ int silofs_check_stable_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_RO);
+	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_RO, false);
 	err = stgc_stage_spmaps_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2413,8 +2431,8 @@ static int stgc_require_clone_bkaddr(const struct silofs_stage_ctx *stg_ctx,
 	return 0;
 }
 
-static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
-                             const struct silofs_voaddr *src_voa)
+static int stgc_clone_rebind_vblock(const struct silofs_stage_ctx *stg_ctx,
+                                    const struct silofs_voaddr *src_voa)
 {
 	struct silofs_bkaddr bkaddr_dst = { .lba = SILOFS_LBA_NULL };
 	struct silofs_iovec iov_src = { .iov_fd = -1 };
@@ -2430,9 +2448,11 @@ static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = stgc_kcopy_bk(stg_ctx, &iov_src, &iov_dst);
-	if (err) {
-		return err;
+	if (task_has_kcopy(stg_ctx->task)) {
+		err = stgc_kcopy_bk(stg_ctx, &iov_src, &iov_dst);
+		if (err) {
+			return err;
+		}
 	}
 	silofs_sli_rebind_ubk(stg_ctx->sli, src_voa->vaddr.off, &bkaddr_dst);
 	return 0;
@@ -2442,13 +2462,167 @@ static int stgc_stage_vblock_by(const struct silofs_stage_ctx *stg_ctx,
                                 const struct silofs_voaddr *voaddr,
                                 struct silofs_vbk_info **out_vbki)
 {
-	const enum silofs_stype stype = voaddr->vaddr.stype;
+	const struct silofs_vaddr *vaddr = &voaddr->vaddr;
 	int ret = 0;
 
 	*out_vbki = NULL;
-	if (!task_has_kcopy(stg_ctx->task) || !stype_isdata(stype)) {
+	if (!task_has_kcopy(stg_ctx->task) || !stype_isdata(vaddr->stype)) {
 		ret = stgc_stage_vblock(stg_ctx, voaddr, out_vbki);
+		/*
+		 * Special case: trying to stage vbk which is located beyond
+		 * the current end-of-blob range and the blob is opened in read
+		 * only mode. Ignore it.
+		 */
+		if (ret == -SILOFS_ERDONLY) {
+			ret = 0;
+		}
 	}
+	return ret;
+}
+
+static int
+stgc_pre_clone_stage_inode_at(const struct silofs_stage_ctx *stg_ctx,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_vnode_info **out_vi)
+{
+	struct silofs_inode_info *ii = NULL;
+	ino_t ino;
+	int err;
+
+	*out_vi = NULL;
+	ino = vaddr_to_ino(vaddr);
+	err = silofs_stage_inode(stg_ctx->task, ino, SILOFS_STAGE_RO, &ii);
+	if (err) {
+		return err;
+	}
+	if (!ii->i_vi.v_si.s_noflush) {
+		*out_vi = &ii->i_vi;
+	}
+	return 0;
+}
+
+static int
+stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_vnode_info **out_vi)
+{
+	struct silofs_vnode_info *vi = NULL;
+	int err;
+
+	*out_vi = NULL;
+	err = silofs_stage_vnode(stg_ctx->task, vaddr, SILOFS_STAGE_RO,
+	                         SILOFS_DQID_DFL, &vi);
+	if (err == -SILOFS_ERDONLY) {
+		return 0; /* special case: out-of-blob range */
+	}
+	if (err) {
+		return err;
+	}
+	if (!vi->v_si.s_noflush) {
+		*out_vi = vi;
+	}
+	return 0;
+}
+
+static bool stgc_has_vaddr(const struct silofs_stage_ctx *stg_ctx,
+                           const struct silofs_vaddr *vaddr)
+{
+	return vaddr_isequal(stg_ctx->vaddr, vaddr);
+}
+
+static int stgc_pre_clone_stage_at(const struct silofs_stage_ctx *stg_ctx,
+                                   const struct silofs_vaddr *vaddr,
+                                   struct silofs_vnode_info **out_vi)
+{
+	int err = 0;
+
+	if (vaddr->off == 0) {
+		/* ignore off=0 which is allocated-as-numb once upon format */
+		*out_vi = NULL;
+	} else if (stgc_has_vaddr(stg_ctx, vaddr) && !stg_ctx->has_view) {
+		/* ignore current may-not-be-stable vaddr */
+		*out_vi = NULL;
+	} else if (stype_isinode(vaddr->stype)) {
+		/* inode case */
+		err = stgc_pre_clone_stage_inode_at(stg_ctx, vaddr, out_vi);
+	} else {
+		/* normal case */
+		err = stgc_pre_clone_stage_vnode_at(stg_ctx, vaddr, out_vi);
+	}
+	return err;
+}
+
+static int stgc_do_pre_clone_vblock(struct silofs_stage_ctx *stg_ctx,
+                                    const struct silofs_vaddr *vaddr,
+                                    struct silofs_vis *vis)
+{
+	const silofs_lba_t lba = off_to_lba(vaddr->off);
+	int err;
+
+	STATICASSERT_EQ(ARRAY_SIZE(vis->vis), ARRAY_SIZE(vis->vas.vaddr));
+
+	silofs_sli_vaddrs_at(stg_ctx->sli, vaddr->stype, lba, &vis->vas);
+	for (size_t i = 0; i < vis->vas.count; ++i) {
+		err = stgc_pre_clone_stage_at(stg_ctx, &vis->vas.vaddr[i],
+		                              &vis->vis[i]);
+		if (err) {
+			return err;
+		}
+		vi_incref(vis->vis[i]);
+	}
+	return 0;
+}
+
+static int stgc_pre_clone_vblock(struct silofs_stage_ctx *stg_ctx,
+                                 const struct silofs_vaddr *vaddr,
+                                 struct silofs_vis *vis)
+{
+	int err;
+
+	stgc_increfs(stg_ctx, SILOFS_HEIGHT_SPLEAF);
+	err = stgc_do_pre_clone_vblock(stg_ctx, vaddr, vis);
+	stgc_decrefs(stg_ctx, SILOFS_HEIGHT_SPLEAF);
+	return err;
+}
+
+static void stgc_post_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
+                                   const struct silofs_vis *vis)
+{
+	struct silofs_vnode_info *vi;
+	const bool kcopy_mode = task_has_kcopy(stg_ctx->task);
+
+	for (size_t i = 0; i < vis->vas.count; ++i) {
+		vi = vis->vis[i];
+		if (!kcopy_mode) {
+			vi_dirtify(vi);
+		}
+		vi_decref(vi);
+	}
+}
+
+static int stgc_clone_vblock(struct silofs_stage_ctx *stg_ctx,
+                             const struct silofs_voaddr *src_voa)
+{
+	struct silofs_vis vis = { .vas.count = 0 };
+	int err;
+
+	err = stgc_pre_clone_vblock(stg_ctx, &src_voa->vaddr, &vis);
+	if (!err) {
+		err = stgc_clone_rebind_vblock(stg_ctx, src_voa);
+	}
+	stgc_post_clone_vblock(stg_ctx, &vis);
+	return err;
+}
+
+static int stgc_clone_vblock_of(struct silofs_stage_ctx *stg_ctx,
+                                const struct silofs_voaddr *src_voa,
+                                struct silofs_vbk_info *vbki)
+{
+	int ret;
+
+	silofs_vbki_incref(vbki); /* may be NULL */
+	ret = stgc_clone_vblock(stg_ctx, src_voa);
+	silofs_vbki_decref(vbki);
 	return ret;
 }
 
@@ -2474,18 +2648,15 @@ static int stgc_resolve_inspect_voaddr(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_vbki_incref(vbki);
-	err = stgc_clone_vblock(stg_ctx, out_voa);
+	err = stgc_clone_vblock_of(stg_ctx, out_voa, vbki);
 	if (err) {
-		goto out;
+		return err;
 	}
 	err = stgc_voaddr_at(stg_ctx, out_voa);
 	if (err) {
-		goto out;
+		return err;
 	}
-out:
-	silofs_vbki_decref(vbki);
-	return err;
+	return 0;
 }
 
 int silofs_resolve_voaddr_of(struct silofs_task *task,
@@ -2495,8 +2666,23 @@ int silofs_resolve_voaddr_of(struct silofs_task *task,
 {
 	struct silofs_stage_ctx stg_ctx;
 
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode, true);
 	return stgc_resolve_inspect_voaddr(&stg_ctx, out_voa);
+}
+
+int silofs_resolve_oaddr_of(struct silofs_task *task,
+                            const struct silofs_vaddr *vaddr,
+                            enum silofs_stage_mode stg_mode,
+                            struct silofs_oaddr *out_oaddr)
+{
+	struct silofs_voaddr voaddr;
+	int err;
+
+	err = silofs_resolve_voaddr_of(task, vaddr, stg_mode, &voaddr);
+	if (!err) {
+		oaddr_assign(out_oaddr, &voaddr.oaddr);
+	}
+	return err;
 }
 
 int silofs_stage_ubk_of(struct silofs_task *task,
@@ -2508,7 +2694,7 @@ int silofs_stage_ubk_of(struct silofs_task *task,
 	struct silofs_voaddr voa;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode, false);
 	err = stgc_resolve_inspect_voaddr(&stg_ctx, &voa);
 	if (err) {
 		return err;
@@ -2534,7 +2720,7 @@ int silofs_stage_vnode_at(struct silofs_task *task,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode, verify_view);
 	err = stgc_resolve_inspect_voaddr(&stg_ctx, &voa);
 	if (err) {
 		return err;

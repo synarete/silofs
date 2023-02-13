@@ -2931,20 +2931,29 @@ cache_accum_ndirty_of(const struct silofs_cache *cache, silofs_dqid_t dqid)
 
 size_t silofs_cache_accum_ndirty(const struct silofs_cache *cache)
 {
-	return cache_accum_ndirty_of(cache, SILOFS_DQID_ALL);
+	return cache->c_dqs.dq_accum_nbytes_total;
 }
 
 static bool cache_dq_need_flush(const struct silofs_cache *cache,
                                 silofs_dqid_t dqid, int flags)
 {
+	const size_t mega = SILOFS_MEGA;
 	size_t threshold = 0;
 	size_t accum_ndirty;
 
-	accum_ndirty = cache_accum_ndirty_of(cache, dqid);
-	if (accum_ndirty) {
-		threshold = flush_threshold_of(dqid, flags);
+	accum_ndirty = silofs_cache_accum_ndirty(cache);
+	if (accum_ndirty > (8 * mega)) {
+		return true;
 	}
-	return (accum_ndirty > threshold);
+	accum_ndirty = cache_accum_ndirty_of(cache, dqid);
+	if (!accum_ndirty) {
+		return false;
+	}
+	threshold = flush_threshold_of(dqid, flags);
+	if (accum_ndirty > threshold) {
+		return true;
+	}
+	return false;
 }
 
 static bool cache_mem_press_need_flush(const struct silofs_cache *cache)

@@ -86,15 +86,25 @@ static int op_start(struct silofs_task *task, ino_t ino)
 	return 0;
 }
 
-static int op_start2(struct silofs_task *task, ino_t ino)
+static int op_start1(struct silofs_task *task, ino_t ino)
 {
 	int ret;
 
 	ret = op_start(task, ino);
 	if (ret == 0) {
-		task->t_may_flush = 1;
 		silofs_relax_caches(task, SILOFS_F_OPSTART);
+	}
+	return ret;
+}
+
+static int op_start2(struct silofs_task *task, ino_t ino)
+{
+	int ret;
+
+	ret = op_start1(task, ino);
+	if (ret == 0) {
 		ret = op_flush(task, ino, OP_F_ANY, SILOFS_F_OPSTART);
+		task->t_may_flush = (ret == 0);
 	}
 	return ret;
 }
@@ -569,7 +579,7 @@ int silofs_fs_readlink(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -706,7 +716,7 @@ int silofs_fs_readdir(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1143,7 +1153,7 @@ int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1167,7 +1177,7 @@ int silofs_fs_read_iter(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1346,7 +1356,7 @@ int silofs_fs_getxattr(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);

@@ -27,8 +27,6 @@ static void sni_delete_as_si(struct silofs_snode_info *si,
                              struct silofs_alloc *alloc);
 static void sli_delete_as_si(struct silofs_snode_info *si,
                              struct silofs_alloc *alloc);
-static void itni_delete_as_si(struct silofs_snode_info *si,
-                              struct silofs_alloc *alloc);
 static void ii_delete_as_si(struct silofs_snode_info *si,
                             struct silofs_alloc *alloc);
 static void xai_delete_as_si(struct silofs_snode_info *si,
@@ -440,8 +438,7 @@ silofs_sbi_from_ui(const struct silofs_unode_info *ui)
 }
 
 static int sbi_init(struct silofs_sb_info *sbi,
-                    const struct silofs_uaddr *uaddr,
-                    struct silofs_alloc *alloc)
+                    const struct silofs_uaddr *uaddr)
 {
 	silofs_memzero(sbi, sizeof(*sbi));
 	sbi->sb = NULL;
@@ -449,12 +446,11 @@ static int sbi_init(struct silofs_sb_info *sbi,
 	sbi->sb_ms_flags = 0;
 
 	ui_init(&sbi->sb_ui, uaddr, sbi_delete_as_si);
-	return silofs_sbi_xinit(sbi, alloc);
+	return 0;
 }
 
 static void sbi_fini(struct silofs_sb_info *sbi)
 {
-	silofs_sbi_xfini(sbi);
 	ui_fini(&sbi->sb_ui);
 	silofs_memffff(sbi, sizeof(*sbi));
 }
@@ -506,7 +502,7 @@ sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	if (sbi == NULL) {
 		return NULL;
 	}
-	err = sbi_init(sbi, uaddr, alloc);
+	err = sbi_init(sbi, uaddr);
 	if (err) {
 		sbi_free(sbi, alloc);
 		return NULL;
@@ -688,95 +684,6 @@ silofs_sli_from_ui(const struct silofs_unode_info *ui)
 		sli = container_of2(ui, struct silofs_spleaf_info, sl_ui);
 	}
 	return unconst(sli);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_vnode_info *
-itni_to_vi(const struct silofs_itnode_info *itni)
-{
-	const struct silofs_vnode_info *vi = NULL;
-
-	if (likely(itni != NULL)) {
-		vi = &itni->itn_vi;
-	}
-	return vi_unconst(vi);
-}
-
-static void itni_init(struct silofs_itnode_info *itni,
-                      const struct silofs_vaddr *vaddr)
-{
-	vi_init(&itni->itn_vi, vaddr, itni_delete_as_si);
-	itni->itn = NULL;
-}
-
-static void itni_fini(struct silofs_itnode_info *itni)
-{
-	vi_fini(&itni->itn_vi);
-	itni->itn = NULL;
-}
-
-static struct silofs_itnode_info *itni_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_itnode_info *itni;
-
-	itni = silofs_allocate(alloc, sizeof(*itni));
-	return itni;
-}
-
-static void itni_free(struct silofs_itnode_info *itni,
-                      struct silofs_alloc *alloc)
-{
-	silofs_deallocate(alloc, itni, sizeof(*itni));
-}
-
-static void itni_delete(struct silofs_itnode_info *itni,
-                        struct silofs_alloc *alloc)
-{
-	itni_fini(itni);
-	itni_free(itni, alloc);
-}
-
-static void itni_delete_as_vi(struct silofs_vnode_info *vi,
-                              struct silofs_alloc *alloc)
-{
-	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		itni_delete(silofs_itni_from_vi(vi), alloc);
-	}
-}
-
-static void itni_delete_as_si(struct silofs_snode_info *si,
-                              struct silofs_alloc *alloc)
-{
-	if (likely(si != NULL)) { /* make gcc-analyzer happy */
-		itni_delete_as_vi(silofs_vi_from_si(si), alloc);
-	}
-}
-
-static struct silofs_itnode_info *
-itni_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
-{
-	struct silofs_itnode_info *itni;
-
-	itni = itni_malloc(alloc);
-	if (itni != NULL) {
-		itni_init(itni, vaddr);
-	}
-	return itni;
-}
-
-struct silofs_itnode_info *silofs_itni_from_vi(struct silofs_vnode_info *vi)
-{
-	struct silofs_itnode_info *itni = NULL;
-
-	silofs_assert(vi_has_stype(vi, SILOFS_STYPE_ITNODE));
-	itni = container_of(vi, struct silofs_itnode_info, itn_vi);
-	return itni;
-}
-
-void silofs_itni_rebind_view(struct silofs_itnode_info *itni)
-{
-	itni->itn = &itni->itn_vi.v_si.s_view->itn;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1363,7 +1270,7 @@ silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_STYPE_SPLEAF:
 		ui = sli_to_ui(sli_new(alloc, uaddr));
 		break;
-	case SILOFS_STYPE_ITNODE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_SYMVAL:
@@ -1388,9 +1295,6 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	struct silofs_vnode_info *vi = NULL;
 
 	switch (vaddr->stype) {
-	case SILOFS_STYPE_ITNODE:
-		vi = itni_to_vi(itni_new(alloc, vaddr));
-		break;
 	case SILOFS_STYPE_INODE:
 		vi = ii_to_vi(ii_new(alloc, vaddr));
 		break;
@@ -1416,6 +1320,7 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		log_crit("illegal vaddr stype: stype=%d voff=%ld",
@@ -1496,8 +1401,6 @@ static int view_verify_sub(const union silofs_view *view,
 		return silofs_verify_spmap_node(&view->sn);
 	case SILOFS_STYPE_SPLEAF:
 		return silofs_verify_spmap_leaf(&view->sl);
-	case SILOFS_STYPE_ITNODE:
-		return silofs_verify_itable_node(&view->itn);
 	case SILOFS_STYPE_INODE:
 		return silofs_verify_inode(&view->in);
 	case SILOFS_STYPE_XANODE:
@@ -1514,6 +1417,7 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_ANONBK:
 		break;
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		log_err("illegal sub-type: stype=%d", (int)stype);

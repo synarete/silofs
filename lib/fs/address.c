@@ -336,7 +336,7 @@ bool silofs_stype_isunode(enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 		ret = true;
 		break;
-	case SILOFS_STYPE_ITNODE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_SYMVAL:
@@ -360,7 +360,6 @@ bool silofs_stype_isvnode(enum silofs_stype stype)
 	bool ret;
 
 	switch (stype) {
-	case SILOFS_STYPE_ITNODE:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_SYMVAL:
@@ -376,6 +375,7 @@ bool silofs_stype_isvnode(enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = false;
@@ -398,7 +398,7 @@ bool silofs_stype_isdata(enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_ITNODE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_DTNODE:
@@ -422,8 +422,6 @@ size_t silofs_stype_size(enum silofs_stype stype)
 		return sizeof(struct silofs_spmap_node);
 	case SILOFS_STYPE_SPLEAF:
 		return sizeof(struct silofs_spmap_leaf);
-	case SILOFS_STYPE_ITNODE:
-		return sizeof(struct silofs_itable_node);
 	case SILOFS_STYPE_INODE:
 		return sizeof(struct silofs_inode);
 	case SILOFS_STYPE_XANODE:
@@ -442,6 +440,7 @@ size_t silofs_stype_size(enum silofs_stype stype)
 	case SILOFS_STYPE_ANONBK:
 		return sizeof(struct silofs_data_block);
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		break;

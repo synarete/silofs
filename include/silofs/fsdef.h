@@ -161,18 +161,6 @@
 #define SILOFS_SPMAP_SIZE               (8 * SILOFS_KILO)
 
 
-/* bits-shift for inode-table children fan-out */
-#define SILOFS_ITNODE_SHIFT             (7)
-
-/* number of children per inode-table node */
-#define SILOFS_ITNODE_NSLOTS            (1 << SILOFS_ITNODE_SHIFT)
-
-/* number of entries in inode-table node */
-#define SILOFS_ITNODE_NENTS             (441)
-
-/* on-disk size of inode-table node */
-#define SILOFS_ITNODE_SIZE              (8192)
-
 /* on-disk size-shift of inode */
 #define SILOFS_INODE_SHIFT              (10)
 
@@ -331,7 +319,7 @@ enum silofs_stype {
 	SILOFS_STYPE_SUPER      = 1,
 	SILOFS_STYPE_SPNODE     = 2,
 	SILOFS_STYPE_SPLEAF     = 3,
-	SILOFS_STYPE_ITNODE     = 4,
+	SILOFS_STYPE_RESERVED   = 4,
 	SILOFS_STYPE_INODE      = 5,
 	SILOFS_STYPE_XANODE     = 6,
 	SILOFS_STYPE_SYMVAL     = 7,
@@ -603,7 +591,7 @@ struct silofs_header {
 
 
 struct silofs_sb_sproots {
-	struct silofs_uaddr64b          sb_sproot_itnode;
+	struct silofs_uaddr64b          sb_sproot_reserved;
 	struct silofs_uaddr64b          sb_sproot_inode;
 	struct silofs_uaddr64b          sb_sproot_xanode;
 	struct silofs_uaddr64b          sb_sproot_dtnode;
@@ -617,7 +605,7 @@ struct silofs_sb_sproots {
 
 
 struct silofs_sb_blobids {
-	struct silofs_blobid40b         sb_blobid_itnode;
+	struct silofs_blobid40b         sb_blobid_reserved;
 	struct silofs_blobid40b         sb_blobid_inode;
 	struct silofs_blobid40b         sb_blobid_xanode;
 	struct silofs_blobid40b         sb_blobid_dtnode;
@@ -634,7 +622,7 @@ struct silofs_space_gauges {
 	uint64_t                        sg_nsuper;
 	uint64_t                        sg_nspnode;
 	uint64_t                        sg_nspleaf;
-	uint64_t                        sg_nitnode;
+	uint64_t                        sg_reserved;
 	uint64_t                        sg_ninode;
 	uint64_t                        sg_nxanode;
 	uint64_t                        sg_ndtnode;
@@ -643,7 +631,7 @@ struct silofs_space_gauges {
 	uint64_t                        sg_ndata1k;
 	uint64_t                        sg_ndata4k;
 	uint64_t                        sg_ndatabk;
-	uint64_t                        sg_reserved[20];
+	uint64_t                        sg_reserved2[20];
 } silofs_packed_aligned64;
 
 
@@ -652,7 +640,8 @@ struct silofs_space_stats {
 	uint64_t                        sp_ctime;
 	uint64_t                        sp_capacity;
 	uint64_t                        sp_vspacesize;
-	uint8_t                         sp_reserved[224];
+	uint64_t                        sp_generation;
+	uint8_t                         sp_reserved[216];
 	struct silofs_space_gauges      sp_blobs;
 	struct silofs_space_gauges      sp_bks;
 	struct silofs_space_gauges      sp_objs;
@@ -677,11 +666,11 @@ struct silofs_super_block {
 	struct silofs_uaddr64b          sb_orig_uaddr;
 	struct silofs_treeid128         sb_treeid;
 	struct silofs_vrange128         sb_vrange;
-	struct silofs_vaddr64           sb_itable_root;
+	uint64_t                        sb_reserved4a;
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
 	uint64_t                        sb_pack_time;
-	uint8_t                         sb_reserved4[320];
+	uint8_t                         sb_reserved4b[320];
 	/* 1K..2K */
 	struct silofs_sb_sproots        sb_sproot_uaddr;
 	/* 2K..3K */
@@ -735,26 +724,6 @@ struct silofs_spmap_leaf {
 	struct silofs_vrange128         sl_vrange;
 	uint8_t                         sl_reserved2[304];
 	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
-} silofs_packed_aligned64;
-
-
-struct silofs_itable_entry {
-	uint64_t                        ite_ino;
-	struct silofs_vaddr64           ite_vaddr;
-} silofs_packed_aligned16;
-
-
-struct silofs_itable_node {
-	struct silofs_header            it_hdr;
-	struct silofs_vaddr64           it_parent;
-	uint16_t                        it_depth;
-	uint16_t                        it_nents;
-	uint16_t                        it_nchilds;
-	uint16_t                        it_pad;
-	uint8_t                         it_reserved1[32];
-	struct silofs_itable_entry      ite[SILOFS_ITNODE_NENTS];
-	uint8_t                         it_reserved2[48];
-	struct silofs_vaddr64           it_child[SILOFS_ITNODE_NSLOTS];
 } silofs_packed_aligned64;
 
 
@@ -821,7 +790,8 @@ struct silofs_inode {
 	uint32_t                        i_rdev_major;
 	uint32_t                        i_rdev_minor;
 	uint64_t                        i_revision;
-	uint8_t                         i_reserved1[24];
+	uint64_t                        i_generation;
+	uint8_t                         i_reserved1[16];
 	struct silofs_inode_times       i_tm;
 	uint8_t                         i_reserved2[64];
 	struct silofs_inode_xattr       i_xa;
@@ -945,7 +915,6 @@ union silofs_view {
 	struct silofs_ftree_node        ftn;
 	struct silofs_xattr_node        xan;
 	struct silofs_symlnk_value      sym;
-	struct silofs_itable_node       itn;
 	struct silofs_data_block1       db1;
 	struct silofs_data_block4       db4;
 	struct silofs_data_block        db;

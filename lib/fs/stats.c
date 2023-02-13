@@ -102,9 +102,6 @@ spg_gauge_of(const struct silofs_space_gauges *spg, enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 		ret = &spg->sg_nspleaf;
 		break;
-	case SILOFS_STYPE_ITNODE:
-		ret = &spg->sg_nitnode;
-		break;
 	case SILOFS_STYPE_INODE:
 		ret = &spg->sg_ninode;
 		break;
@@ -131,6 +128,7 @@ spg_gauge_of(const struct silofs_space_gauges *spg, enum silofs_stype stype)
 		break;
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -253,12 +251,31 @@ static void spst_set_vspacesize(struct silofs_space_stats *spst, size_t vsz)
 	spst->sp_vspacesize = silofs_cpu_to_le64(vsz);
 }
 
+static uint64_t spst_generation(const struct silofs_space_stats *spst)
+{
+	return silofs_le64_to_cpu(spst->sp_generation);
+}
+
+static void spst_set_generation(struct silofs_space_stats *spst, uint64_t gen)
+{
+	spst->sp_generation = silofs_cpu_to_le64(gen);
+}
+
+static uint64_t spst_inc_generation(struct silofs_space_stats *spst)
+{
+	uint64_t next_gen = spst_generation(spst) + 1;
+
+	spst_set_generation(spst, next_gen);
+	return next_gen;
+}
+
 static void spst_init(struct silofs_space_stats *spst)
 {
 	spst_set_btime(spst, silofs_time_now());
 	spst_set_ctime(spst, silofs_time_now());
 	spst_set_capacity(spst, 0);
 	spst_set_vspacesize(spst, SILOFS_VSPACE_SIZE_MAX);
+	spst_set_generation(spst, 0);
 	spg_bzero_all(&spst->sp_objs);
 	spg_bzero_all(&spst->sp_bks);
 	spg_bzero_all(&spst->sp_blobs);
@@ -278,6 +295,7 @@ static void spst_make_clone(struct silofs_space_stats *spst,
 	spst_set_ctime(spst, spst_ctime(spst_other));
 	spst_set_capacity(spst, spst_capacity(spst_other));
 	spst_set_vspacesize(spst, spst_vspacesize(spst_other));
+	spst_set_generation(spst, spst_generation(spst_other));
 	spg_make_clone(&spst->sp_objs, &spst_other->sp_objs);
 	spg_make_clone(&spst->sp_bks, &spst_other->sp_bks);
 	spg_make_clone(&spst->sp_blobs, &spst_other->sp_blobs);
@@ -290,6 +308,7 @@ static void spst_export_to(const struct silofs_space_stats *spst,
 	sst->ctime = spst_ctime(spst);
 	sst->capacity = spst_capacity(spst);
 	sst->vspacesize = spst_vspacesize(spst);
+	sst->generation = spst_generation(spst);
 	spg_export_to(&spst->sp_objs, &sst->objs);
 	spg_export_to(&spst->sp_bks, &sst->bks);
 	spg_export_to(&spst->sp_blobs, &sst->blobs);
@@ -362,9 +381,6 @@ spgs_gauge_of(const struct silofs_spacegauges *spgs, enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 		ret = &spgs->nspleaf;
 		break;
-	case SILOFS_STYPE_ITNODE:
-		ret = &spgs->nitnode;
-		break;
 	case SILOFS_STYPE_INODE:
 		ret = &spgs->ninode;
 		break;
@@ -391,6 +407,7 @@ spgs_gauge_of(const struct silofs_spacegauges *spgs, enum silofs_stype stype)
 		break;
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -496,6 +513,7 @@ void silofs_spacestats_export(const struct silofs_spacestats *spst,
 	out_spst->sp_ctime = silofs_cpu_to_time(spst->ctime);
 	out_spst->sp_capacity = silofs_cpu_to_le64(spst->capacity);
 	out_spst->sp_vspacesize = silofs_cpu_to_le64(spst->vspacesize);
+	out_spst->sp_generation = silofs_cpu_to_le64(spst->generation);
 	spgs_export(&spst->blobs, &out_spst->sp_blobs);
 	spgs_export(&spst->bks, &out_spst->sp_bks);
 	spgs_export(&spst->objs, &out_spst->sp_objs);
@@ -509,6 +527,7 @@ void silofs_spacestats_import(struct silofs_spacestats *spst,
 	spst->ctime = silofs_time_to_cpu(in_spst->sp_ctime);
 	spst->capacity = silofs_le64_to_cpu(in_spst->sp_capacity);
 	spst->vspacesize = silofs_le64_to_cpu(in_spst->sp_vspacesize);
+	spst->generation = silofs_le64_to_cpu(in_spst->sp_generation);
 	spgs_import(&spst->blobs, &in_spst->sp_blobs);
 	spgs_import(&spst->bks, &in_spst->sp_bks);
 	spgs_import(&spst->objs, &in_spst->sp_objs);
@@ -631,6 +650,12 @@ static fsfilcnt_t sti_inodes_used(const struct silofs_stats_info *sti)
 static fsfilcnt_t sti_inodes_max(const struct silofs_stats_info *sti)
 {
 	return (silofs_sti_capacity(sti) / SILOFS_INODE_SIZE) >> 2;
+}
+
+void silofs_sti_next_generation(struct silofs_stats_info *sti, uint64_t *out)
+{
+	*out = spst_inc_generation(sti->spst_curr);
+	sti_dirtify(sti);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

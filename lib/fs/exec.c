@@ -585,23 +585,15 @@ void silofs_fse_del(struct silofs_fs_env *fse)
 	silofs_burnstack();
 }
 
-static void fse_drop_caches(const struct silofs_fs_env *fse,
-                            struct silofs_task *task)
+static void drop_cache(struct silofs_task *task)
 {
-	if (fse->fs_uber && fse->fs_uber->ub_sbi) {
-		silofs_drop_itable_cache(task);
-	}
-	silofs_repos_drop_cache(fse->fs_repos);
+	silofs_repos_drop_cache(task->t_uber->ub_repos);
 	silofs_burnstack();
 }
 
-static void fse_relax_cache(struct silofs_fs_env *fse,
-                            struct silofs_task *task, bool drop_cache)
+static void relax_cache(struct silofs_task *task)
 {
-	silofs_repos_relax_cache(fse->fs_repos, SILOFS_F_BRINGUP);
-	if (drop_cache) {
-		fse_drop_caches(fse, task);
-	}
+	silofs_repos_relax_cache(task->t_uber->ub_repos, SILOFS_F_BRINGUP);
 }
 
 static struct silofs_sb_info *fse_sbi(const struct silofs_fs_env *fse)
@@ -677,22 +669,17 @@ static int finish_self_task(struct silofs_task *task)
 	return err1 ? err1 : err2;
 }
 
-static int fse_reload_fs_meta(struct silofs_fs_env *fse,
-                              struct silofs_task *task)
+static int reload_fs_meta(struct silofs_task *task)
 {
 	int err;
 
-	err = silofs_reload_itable(task);
-	if (err) {
-		log_err("failed to reload inodes-table: err=%d", err);
-		return err;
-	}
 	err = reload_rootdir(task);
 	if (err) {
 		log_err("failed to reload root dir: err=%d", err);
 		return err;
 	}
-	fse_relax_cache(fse, task, true);
+	relax_cache(task);
+	drop_cache(task);
 	return 0;
 }
 
@@ -759,14 +746,13 @@ void silofs_fse_halt(struct silofs_fs_env *fse, int signum)
 	}
 }
 
-static int fse_flush_and_drop_caches(const struct silofs_fs_env *fse,
-                                     struct silofs_task *task)
+static int flush_and_drop_cache(struct silofs_task *task)
 {
 	int err;
 
 	err = flush_dirty_now(task);
 	if (!err) {
-		fse_drop_caches(fse, task);
+		drop_cache(task);
 	}
 	return err;
 }
@@ -780,7 +766,7 @@ static int fse_sync_drop_once(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_flush_and_drop_caches(fse, &task);
+	err = flush_and_drop_cache(&task);
 	if (err) {
 		return err;
 	}
@@ -913,9 +899,8 @@ static int fse_reload_supers(struct silofs_fs_env *fse)
 	return 0;
 }
 
-static int fse_format_base_spmaps_of(const struct silofs_fs_env *fse,
-                                     struct silofs_task *task,
-                                     const struct silofs_vaddr *vaddr)
+static int format_base_spmaps_of(struct silofs_task *task,
+                                 const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
@@ -928,7 +913,7 @@ static int fse_format_base_spmaps_of(const struct silofs_fs_env *fse,
 		        vaddr->stype, err);
 		return err;
 	}
-	err = fse_flush_and_drop_caches(fse, task);
+	err = flush_and_drop_cache(task);
 	if (err) {
 		return err;
 	}
@@ -936,8 +921,7 @@ static int fse_format_base_spmaps_of(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int fse_format_base_spmaps(const struct silofs_fs_env *fse,
-                                  struct silofs_task *task)
+static int format_base_spmaps(struct silofs_task *task)
 {
 	struct silofs_vaddr vaddr;
 	enum silofs_stype stype;
@@ -948,7 +932,7 @@ static int fse_format_base_spmaps(const struct silofs_fs_env *fse,
 			continue;
 		}
 		vaddr_setup(&vaddr, stype, 0);
-		err = fse_format_base_spmaps_of(fse, task, &vaddr);
+		err = format_base_spmaps_of(task, &vaddr);
 		if (err) {
 			return err;
 		}
@@ -996,7 +980,7 @@ static int fse_format_base_vspace(const struct silofs_fs_env *fse,
 		if (err) {
 			return err;
 		}
-		err = fse_flush_and_drop_caches(fse, task);
+		err = flush_and_drop_cache(task);
 		if (err) {
 			return err;
 		}
@@ -1023,8 +1007,7 @@ static int reload_base_vspace_of(struct silofs_task *task,
 	return 0;
 }
 
-static int fse_reload_base_vspace(const struct silofs_fs_env *fse,
-                                  struct silofs_task *task)
+static int reload_base_vspace(struct silofs_task *task)
 {
 	enum silofs_stype stype;
 	int err = 0;
@@ -1037,7 +1020,7 @@ static int fse_reload_base_vspace(const struct silofs_fs_env *fse,
 		if (err) {
 			break;
 		}
-		err = fse_flush_and_drop_caches(fse, task);
+		err = flush_and_drop_cache(task);
 		if (err) {
 			break;
 		}
@@ -1068,8 +1051,7 @@ static int format_zero_vspace_of(struct silofs_task *task,
 	return 0;
 }
 
-static int fse_format_zero_vspace(const struct silofs_fs_env *fse,
-                                  struct silofs_task *task)
+static int format_zero_vspace(struct silofs_task *task)
 {
 	enum silofs_stype stype;
 	int err;
@@ -1082,25 +1064,10 @@ static int fse_format_zero_vspace(const struct silofs_fs_env *fse,
 		if (err) {
 			return err;
 		}
-		err = fse_flush_and_drop_caches(fse, task);
+		err = flush_and_drop_cache(task);
 		if (err) {
 			return err;
 		}
-	}
-	return 0;
-}
-
-static int format_inodes_table(struct silofs_task *task)
-{
-	int err;
-
-	err = silofs_format_itable(task);
-	if (err) {
-		return err;
-	}
-	err = flush_dirty_now(task);
-	if (err) {
-		return err;
 	}
 	return 0;
 }
@@ -1115,11 +1082,11 @@ static int format_rootdir(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	silofs_ii_fixup_as_rootdir(root_ii);
-	err = silofs_bind_rootdir_to(task, root_ii);
-	if (err) {
-		return err;
+	if (root_ii->i_ino != SILOFS_INO_ROOT) {
+		log_err("format root-dir failed: ino=%ld", root_ii->i_ino);
+		return -SILOFS_EFSCORRUPTED;
 	}
+	silofs_ii_fixup_as_rootdir(root_ii);
 	err = flush_dirty_now(task);
 	if (err) {
 		return err;
@@ -1132,7 +1099,7 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 {
 	int err;
 
-	err = fse_format_base_spmaps(fse, task);
+	err = format_base_spmaps(task);
 	if (err) {
 		return err;
 	}
@@ -1140,11 +1107,7 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_format_zero_vspace(fse, task);
-	if (err) {
-		return err;
-	}
-	err = format_inodes_table(task);
+	err = format_zero_vspace(task);
 	if (err) {
 		return err;
 	}
@@ -1374,7 +1337,7 @@ static int fse_open_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_reload_base_vspace(fse, &task);
+	err = reload_base_vspace(&task);
 	if (err) {
 		return err;
 	}
@@ -1382,7 +1345,7 @@ static int fse_open_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_reload_fs_meta(fse, &task);
+	err = reload_fs_meta(&task);
 	if (err) {
 		return err;
 	}
@@ -1426,7 +1389,7 @@ static int fse_close_fs(struct silofs_fs_env *fse, struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	fse_drop_caches(fse, task);
+	drop_cache(task);
 	return err;
 }
 

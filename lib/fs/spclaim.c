@@ -40,8 +40,13 @@ static void ivoaddr_setup(struct silofs_ivoaddr *ivoa, ino_t ino,
 }
 
 static void ivoaddr_setup2(struct silofs_ivoaddr *ivoa,
-                           ino_t ino, const struct silofs_voaddr *voa)
+                           const struct silofs_voaddr *voa)
 {
+	ino_t ino;
+
+	ino = silofs_off_to_ino(voa->vaddr.off);
+	silofs_assert(!ino_isnull(ino));
+
 	ivoaddr_setup(ivoa, ino, &voa->vaddr, &voa->oaddr);
 }
 
@@ -61,9 +66,6 @@ sbi_vspa_by_stype(const struct silofs_sb_info *sbi, enum silofs_stype stype)
 		break;
 	case SILOFS_STYPE_DATABK:
 		ret = &sbi->sb_vspa.databk;
-		break;
-	case SILOFS_STYPE_ITNODE:
-		ret = &sbi->sb_vspa.itnode;
 		break;
 	case SILOFS_STYPE_INODE:
 		ret = &sbi->sb_vspa.inode;
@@ -85,6 +87,7 @@ sbi_vspa_by_stype(const struct silofs_sb_info *sbi, enum silofs_stype stype)
 	case SILOFS_STYPE_SPLEAF:
 	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -580,7 +583,6 @@ int silofs_claim_vnode(struct silofs_task *task,
 static int spac_claim_ispace(struct silofs_spalloc_ctx *spa_ctx,
                              struct silofs_ivoaddr *out_ivoa)
 {
-	struct silofs_iaddr iaddr;
 	struct silofs_voaddr voa;
 	int err;
 
@@ -588,11 +590,7 @@ static int spac_claim_ispace(struct silofs_spalloc_ctx *spa_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_acquire_ino(spa_ctx->task, &voa.vaddr, &iaddr);
-	if (err) {
-		return err;
-	}
-	ivoaddr_setup2(out_ivoa, iaddr.ino, &voa);
+	ivoaddr_setup2(out_ivoa, &voa);
 	return 0;
 }
 

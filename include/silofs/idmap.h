@@ -82,7 +82,7 @@ int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
                             struct silofs_creds *creds);
 
 int silofs_idsmap_rmap_stat(const struct silofs_idsmap *idsm,
-                            struct stat *st);
+                            struct silofs_stat *st);
 
 int silofs_idsmap_rmap_statx(const struct silofs_idsmap *idsm,
                              struct statx *stx);

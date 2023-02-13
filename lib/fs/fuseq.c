@@ -340,10 +340,10 @@ struct silofs_fuseq_diter {
 	char   buf[8 * SILOFS_UKILO];
 	struct silofs_namebuf de_name;
 	struct silofs_readdir_ctx rd_ctx;
+	struct silofs_stat de_attr;
 	size_t bsz;
 	size_t len;
 	size_t ndes;
-	struct stat de_attr;
 	loff_t de_off;
 	size_t de_nlen;
 	ino_t  de_ino;
@@ -467,20 +467,21 @@ static void fuse_attr_to_timespec(uint64_t sec, uint32_t nsec,
 	ts->tv_nsec = (long)nsec;
 }
 
-static void stat_to_fuse_attr(const struct stat *st, struct fuse_attr *attr)
+static void stat_to_fuse_attr(const struct silofs_stat *st,
+                              struct fuse_attr *attr)
 {
-	attr->ino = st->st_ino;
-	attr->mode = st->st_mode;
-	attr->nlink = (uint32_t)st->st_nlink;
-	attr->uid = st->st_uid;
-	attr->gid = st->st_gid;
-	attr->rdev = (uint32_t)st->st_rdev;
-	attr->size = (uint64_t)st->st_size;
-	attr->blksize = (uint32_t)st->st_blksize;
-	attr->blocks = (uint64_t)st->st_blocks;
-	ts_to_fuse_attr(&st->st_atim, &attr->atime, &attr->atimensec);
-	ts_to_fuse_attr(&st->st_mtim, &attr->mtime, &attr->mtimensec);
-	ts_to_fuse_attr(&st->st_ctim, &attr->ctime, &attr->ctimensec);
+	attr->ino = st->st.st_ino;
+	attr->mode = st->st.st_mode;
+	attr->nlink = (uint32_t)st->st.st_nlink;
+	attr->uid = st->st.st_uid;
+	attr->gid = st->st.st_gid;
+	attr->rdev = (uint32_t)st->st.st_rdev;
+	attr->size = (uint64_t)st->st.st_size;
+	attr->blksize = (uint32_t)st->st.st_blksize;
+	attr->blocks = (uint64_t)st->st.st_blocks;
+	ts_to_fuse_attr(&st->st.st_atim, &attr->atime, &attr->atimensec);
+	ts_to_fuse_attr(&st->st.st_mtim, &attr->mtime, &attr->mtimensec);
+	ts_to_fuse_attr(&st->st.st_ctim, &attr->ctime, &attr->ctimensec);
 }
 
 static void
@@ -509,17 +510,19 @@ statfs_to_fuse_kstatfs(const struct statvfs *stv, struct fuse_kstatfs *kstfs)
 	kstfs->namelen = (uint32_t)stv->f_namemax;
 }
 
-static void fill_fuse_entry(struct fuse_entry_out *ent, const struct stat *st)
+static void fill_fuse_entry(struct fuse_entry_out *ent,
+                            const struct silofs_stat *st)
 {
 	memset(ent, 0, sizeof(*ent));
-	ent->nodeid = st->st_ino;
-	ent->generation = 0;
+	ent->nodeid = st->st.st_ino;
+	ent->generation = st->gen;
 	ent->entry_valid = UINT_MAX;
 	ent->attr_valid = UINT_MAX;
 	stat_to_fuse_attr(st, &ent->attr);
 }
 
-static void fill_fuse_attr(struct fuse_attr_out *attr, const struct stat *st)
+static void fill_fuse_attr(struct fuse_attr_out *attr,
+                           const struct silofs_stat *st)
 {
 	memset(attr, 0, sizeof(*attr));
 	attr->attr_valid = UINT_MAX;
@@ -677,7 +680,7 @@ static int fuseq_reply_none(struct silofs_fuseq_worker *fqw)
 
 static int fuseq_reply_entry_ok(struct silofs_fuseq_worker *fqw,
                                 const struct silofs_task *task,
-                                const struct stat *st)
+                                const struct silofs_stat *st)
 {
 	struct fuse_entry_out arg;
 
@@ -687,7 +690,7 @@ static int fuseq_reply_entry_ok(struct silofs_fuseq_worker *fqw,
 
 static int fuseq_reply_create_ok(struct silofs_fuseq_worker *fqw,
                                  const struct silofs_task *task,
-                                 const struct stat *st)
+                                 const struct silofs_stat *st)
 {
 	struct fuseq_create_out {
 		struct fuse_entry_out ent;
@@ -701,7 +704,7 @@ static int fuseq_reply_create_ok(struct silofs_fuseq_worker *fqw,
 
 static int fuseq_reply_attr_ok(struct silofs_fuseq_worker *fqw,
                                const struct silofs_task *task,
-                               const struct stat *st)
+                               const struct silofs_stat *st)
 {
 	struct fuse_attr_out arg;
 
@@ -839,7 +842,7 @@ static bool task_interrupted(const struct silofs_task *task)
 
 static int fuseq_reply_attr(struct silofs_fuseq_worker *fqw,
                             const struct silofs_task *task,
-                            const struct stat *st, int err)
+                            const struct silofs_stat *st, int err)
 {
 	int ret;
 
@@ -855,7 +858,7 @@ static int fuseq_reply_attr(struct silofs_fuseq_worker *fqw,
 
 static int fuseq_reply_entry(struct silofs_fuseq_worker *fqw,
                              const struct silofs_task *task,
-                             const struct stat *st, int err)
+                             const struct silofs_stat *st, int err)
 {
 	int ret;
 
@@ -871,7 +874,7 @@ static int fuseq_reply_entry(struct silofs_fuseq_worker *fqw,
 
 static int fuseq_reply_create(struct silofs_fuseq_worker *fqw,
                               const struct silofs_task *task,
-                              const struct stat *st, int err)
+                              const struct silofs_stat *st, int err)
 {
 	int ret;
 
@@ -1346,7 +1349,7 @@ emit_direntonly(void *buf, size_t bsz, const char *name, size_t nlen,
 
 static int
 emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
-                const struct stat *attr, loff_t off, size_t *out_sz)
+                const struct silofs_stat *st, loff_t off, size_t *out_sz)
 {
 	size_t entlen;
 	size_t entlen_padded;
@@ -1360,12 +1363,12 @@ emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
 	}
 
 	memset(&fdp->entry_out, 0, sizeof(fdp->entry_out));
-	fill_fuse_entry(&fdp->entry_out, attr);
+	fill_fuse_entry(&fdp->entry_out, st);
 
-	fde->ino = attr->st_ino;
+	fde->ino = st->st.st_ino;
 	fde->off = (uint64_t)off;
 	fde->namelen = (uint32_t)nlen;
-	fde->type =  IFTODT(attr->st_mode);
+	fde->type =  IFTODT(st->st.st_mode);
 	memcpy(fde->name, name, nlen);
 	memset(fde->name + nlen, 0, entlen_padded - entlen);
 
@@ -4018,7 +4021,7 @@ typedef int (*silofs_oper_fn)(struct silofs_task *, struct silofs_oper_args *);
 static int op_setattr(struct silofs_task *task, struct silofs_oper_args *args)
 {
 	const struct stat *tms = &args->in.setattr.tims;
-	struct stat *out_st = &args->out.setattr.st;
+	struct silofs_stat *out_st = &args->out.setattr.st;
 	loff_t size;
 	mode_t mode;
 	uid_t uid;

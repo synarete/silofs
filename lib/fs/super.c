@@ -185,9 +185,6 @@ sb_mainblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 		ret = &sb->sb_main_blobid.sb_blobid_databk;
 		break;
-	case SILOFS_STYPE_ITNODE:
-		ret = &sb->sb_main_blobid.sb_blobid_itnode;
-		break;
 	case SILOFS_STYPE_INODE:
 		ret = &sb->sb_main_blobid.sb_blobid_inode;
 		break;
@@ -208,6 +205,7 @@ sb_mainblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -278,9 +276,6 @@ sb_cold_blobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 		ret = &sb->sb_cold_blobid.sb_blobid_databk;
 		break;
-	case SILOFS_STYPE_ITNODE:
-		ret = &sb->sb_cold_blobid.sb_blobid_itnode;
-		break;
 	case SILOFS_STYPE_INODE:
 		ret = &sb->sb_cold_blobid.sb_blobid_inode;
 		break;
@@ -301,6 +296,7 @@ sb_cold_blobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -362,9 +358,6 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	const struct silofs_uaddr64b *ret;
 
 	switch (stype) {
-	case SILOFS_STYPE_ITNODE:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_itnode;
-		break;
 	case SILOFS_STYPE_INODE:
 		ret = &sb->sb_sproot_uaddr.sb_sproot_inode;
 		break;
@@ -394,6 +387,7 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
+	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -489,22 +483,9 @@ static void sb_set_clone_time(struct silofs_super_block *sb, time_t btime)
 	sb->sb_clone_time = silofs_cpu_to_le64((uint64_t)btime);
 }
 
-static void sb_itable_root(const struct silofs_super_block *sb,
-                           struct silofs_vaddr *out_vaddr)
-{
-	silofs_vaddr64_parse(&sb->sb_itable_root, out_vaddr);
-}
-
-static void sb_set_itable_root(struct silofs_super_block *sb,
-                               const struct silofs_vaddr *vaddr)
-{
-	silofs_vaddr64_set(&sb->sb_itable_root, vaddr);
-}
-
 static void sb_setup_fresh(struct silofs_super_block *sb)
 {
 	sb_set_birth_time(sb, silofs_time_now());
-	sb_set_itable_root(sb, silofs_vaddr_none());
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -716,7 +697,6 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 	const struct silofs_uber *uber = sbi_uber(sbi);
 
 	log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
-	silofs_itbi_reinit(&sbi->sb_itbi);
 	return 0;
 }
 
@@ -828,24 +808,6 @@ void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
 	sbi_dirtify(sbi);
 }
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int sbi_resolve_itable_root(const struct silofs_sb_info *sbi,
-                                   struct silofs_vaddr *out_vaddr)
-{
-	struct silofs_vaddr vaddr;
-
-	sb_itable_root(sbi->sb, &vaddr);
-	if (vaddr_isnull(&vaddr) || !stype_isitnode(vaddr.stype)) {
-		log_err("non valid itable-root: "\
-		        "off=0x%lx stype=%d", vaddr.off, vaddr.stype);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	vaddr_assign(out_vaddr, &vaddr);
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int ii_check_stage_mode(const struct silofs_inode_info *ii,
@@ -944,6 +906,24 @@ static int check_stable_at(struct silofs_task *task,
 	return 0;
 }
 
+static int resolve_iaddr(ino_t ino, struct silofs_iaddr *out_iaddr)
+{
+	const ino_t ino_max = SILOFS_INO_MAX;
+	const ino_t ino_root = SILOFS_INO_ROOT;
+	loff_t voff;
+
+	if ((ino < ino_root) || (ino > ino_max)) {
+		return -EINVAL;
+	}
+	voff = silofs_ino_to_off(ino);
+	if (off_isnull(voff)) {
+		return -EINVAL;
+	}
+	vaddr_setup(&out_iaddr->vaddr, SILOFS_STYPE_INODE, voff);
+	out_iaddr->ino = ino;
+	return 0;
+}
+
 int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stage_mode stg_mode,
                        struct silofs_inode_info **out_ii)
@@ -957,7 +937,7 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
 	if (err) {
 		return err;
 	}
-	err = silofs_resolve_iaddr(task, ino, &iaddr);
+	err = resolve_iaddr(ino, &iaddr);
 	if (err) {
 		return err;
 	}
@@ -992,7 +972,7 @@ int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
 	struct silofs_iaddr iaddr = { .ino = ino };
 	int err;
 
-	err = silofs_resolve_iaddr(task, ino, &iaddr);
+	err = resolve_iaddr(ino, &iaddr);
 	if (err) {
 		return err;
 	}
@@ -1001,18 +981,6 @@ int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
 		return err;
 	}
 	return 0;
-}
-
-static int sbi_check_itype(const struct silofs_sb_info *sbi, mode_t mode)
-{
-	const mode_t sup = S_IFDIR | S_IFREG | S_IFLNK |
-	                   S_IFSOCK | S_IFIFO | S_IFCHR | S_IFBLK;
-
-	/*
-	 * TODO-0031: Filter supported modes based on mount flags
-	 */
-	silofs_unused(sbi);
-	return (((mode & S_IFMT) | sup) == sup) ? 0 : -EOPNOTSUPP;
 }
 
 int silofs_spawn_vnode(struct silofs_task *task,
@@ -1035,13 +1003,36 @@ static const struct silofs_creds *task_creds(const struct silofs_task *task)
 	return &task->t_oper.op_creds;
 }
 
+static uint64_t make_next_generation(struct silofs_task *task)
+{
+	struct silofs_sb_info *sbi = task_sbi(task);
+	uint64_t gen = 0;
+
+	silofs_sti_next_generation(&sbi->sb_sti, &gen);
+	silofs_assert_gt(gen, 0);
+	return gen;
+}
+
+static int check_itype(const struct silofs_task *task, mode_t mode)
+{
+	/*
+	 * TODO-0031: Filter supported modes based on mount flags
+	 */
+	const mode_t sup = S_IFDIR | S_IFREG | S_IFLNK |
+	                   S_IFSOCK | S_IFIFO | S_IFCHR | S_IFBLK;
+
+	silofs_unused(task);
+	return (((mode & S_IFMT) | sup) == sup) ? 0 : -EOPNOTSUPP;
+}
+
 int silofs_spawn_inode(struct silofs_task *task, ino_t parent_ino,
                        mode_t parent_mode, mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii)
 {
+	uint64_t gen;
 	int err;
 
-	err = sbi_check_itype(task_sbi(task), mode);
+	err = check_itype(task, mode);
 	if (err) {
 		return err;
 	}
@@ -1049,26 +1040,18 @@ int silofs_spawn_inode(struct silofs_task *task, ino_t parent_ino,
 	if (err) {
 		return err;
 	}
+	gen = make_next_generation(task);
 	silofs_ii_stamp_mark_visible(*out_ii);
 	silofs_ii_setup_by(*out_ii, task_creds(task),
-	                   parent_ino, parent_mode, mode, rdev);
+	                   parent_ino, parent_mode, mode, rdev, gen);
 	return 0;
 }
 
 static int discard_inode_at(struct silofs_task *task,
                             const struct silofs_iaddr *iaddr)
 {
-	int err;
-
-	err = silofs_discard_ino(task, iaddr->ino);
-	if (err) {
-		return err;
-	}
-	err = silofs_reclaim_vspace(task, &iaddr->vaddr);
-	if (err) {
-		return err;
-	}
-	return 0;
+	silofs_assert_eq(iaddr->ino, silofs_off_to_ino(iaddr->vaddr.off));
+	return silofs_reclaim_vspace(task, &iaddr->vaddr);
 }
 
 int silofs_remove_inode(struct silofs_task *task,
@@ -1372,7 +1355,6 @@ static void sbi_update_by(struct silofs_sb_info *sbi,
                           const struct silofs_sb_info *sbi_other)
 {
 	ucred_copyto(&sbi_other->sb_owner, &sbi->sb_owner);
-	silofs_itbi_update_by(&sbi->sb_itbi, &sbi_other->sb_itbi);
 	sbi->sb_ctl_flags = sbi_other->sb_ctl_flags;
 	sbi->sb_ms_flags = sbi_other->sb_ms_flags;
 }
@@ -1392,25 +1374,6 @@ void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
 	sb_set_self(sb, sbi_uaddr(sbi));
 	sb_set_origin(sb, sbi_uaddr(sbi_other));
 	sbi_dirtify(sbi);
-}
-
-static void sbi_set_itable_root(struct silofs_sb_info *sbi,
-                                const struct silofs_vaddr *vaddr)
-{
-	sb_set_itable_root(sbi->sb, vaddr);
-	sbi_dirtify(sbi);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_sbi_xinit(struct silofs_sb_info *sbi, struct silofs_alloc *alloc)
-{
-	return silofs_itbi_init(&sbi->sb_itbi, alloc);
-}
-
-void silofs_sbi_xfini(struct silofs_sb_info *sbi)
-{
-	silofs_itbi_fini(&sbi->sb_itbi);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1444,34 +1407,3 @@ int silofs_stage_vnode(struct silofs_task *task,
 	}
 	return 0;
 }
-
-int silofs_format_itable(struct silofs_task *task)
-{
-	struct silofs_vaddr vaddr;
-	int err;
-
-	err = silofs_format_itable_root(task, &vaddr);
-	if (err) {
-		return err;
-	}
-	sbi_set_itable_root(task_sbi(task), &vaddr);
-	return 0;
-}
-
-int silofs_reload_itable(struct silofs_task *task)
-{
-	struct silofs_vaddr vaddr;
-	int err;
-
-	err = sbi_resolve_itable_root(task_sbi(task), &vaddr);
-	if (err) {
-		return err;
-	}
-	err = silofs_reload_itable_at(task, &vaddr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-

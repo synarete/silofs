@@ -416,10 +416,10 @@ int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
 }
 
 int silofs_idsmap_rmap_stat(const struct silofs_idsmap *idsm,
-                            struct stat *st)
+                            struct silofs_stat *st)
 {
-	return silofs_idsmap_rmap_uidgid(idsm, st->st_uid, st->st_gid,
-	                                 &st->st_uid, &st->st_gid);
+	return silofs_idsmap_rmap_uidgid(idsm, st->st.st_uid, st->st.st_gid,
+	                                 &st->st.st_uid, &st->st.st_gid);
 }
 
 int silofs_idsmap_rmap_statx(const struct silofs_idsmap *idsm,

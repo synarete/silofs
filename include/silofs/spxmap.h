@@ -32,7 +32,6 @@ struct silofs_spamaps {
 	struct silofs_spamap    spa_data1k;
 	struct silofs_spamap    spa_data4k;
 	struct silofs_spamap    spa_databk;
-	struct silofs_spamap    spa_itnode;
 	struct silofs_spamap    spa_inode;
 	struct silofs_spamap    spa_xanode;
 	struct silofs_spamap    spa_dtnode;

@@ -30,10 +30,6 @@ int silofs_verify_super_block(const struct silofs_super_block *sb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_sbi_xinit(struct silofs_sb_info *sbi, struct silofs_alloc *alloc);
-
-void silofs_sbi_xfini(struct silofs_sb_info *sbi);
-
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi);
@@ -98,10 +94,6 @@ void silofs_sbi_bind_cold_blob(struct silofs_sb_info *sbi,
                                const struct silofs_blobid *blobid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_format_itable(struct silofs_task *task);
-
-int silofs_reload_itable(struct silofs_task *task);
 
 int silofs_stage_vnode(struct silofs_task *task,
                        const struct silofs_vaddr *vaddr,

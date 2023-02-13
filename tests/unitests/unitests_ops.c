@@ -86,38 +86,51 @@ static int ut_access(struct ut_env *ute, ino_t ino, int mode)
 	return ret;
 }
 
-static int ut_getattr(struct ut_env *ute, ino_t ino, struct stat *st)
+static void assign_stat(struct stat *st, const struct silofs_stat *sst)
+{
+	if (st != NULL) {
+		memcpy(st, &sst->st, sizeof(*st));
+	}
+}
+
+static int ut_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_getattr(&task, ino, st);
+	ret = silofs_fs_getattr(&task, ino, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
 static int ut_lookup(struct ut_env *ute, ino_t parent,
-                     const char *name, struct stat *st)
+                     const char *name, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_lookup(&task, parent, name, st);
+	ret = silofs_fs_lookup(&task, parent, name, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
 static int ut_utimens(struct ut_env *ute, ino_t ino,
-                      const struct stat *utimes, struct stat *st)
+                      const struct stat *utimes, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_utimens(&task, ino, utimes, st);
+	ret = silofs_fs_utimens(&task, ino, utimes, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
@@ -125,12 +138,13 @@ static int ut_mkdir(struct ut_env *ute, ino_t parent,
                     const char *name, mode_t mode, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_mkdir(&task, parent,
-	                      name, mode | S_IFDIR, out_st);
+	ret = silofs_fs_mkdir(&task, parent, name, mode | S_IFDIR, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
@@ -183,11 +197,13 @@ static int ut_symlink(struct ut_env *ute, ino_t parent,
                       const char *name, const char *val, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_symlink(&task, parent, name, val, out_st);
+	ret = silofs_fs_symlink(&task, parent, name, val, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
@@ -207,11 +223,13 @@ static int ut_link(struct ut_env *ute, ino_t ino, ino_t parent,
                    const char *name, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_link(&task, ino, parent, name, out_st);
+	ret = silofs_fs_link(&task, ino, parent, name, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
@@ -230,11 +248,13 @@ static int ut_create(struct ut_env *ute, ino_t parent,
                      const char *name, mode_t mode, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_create(&task, parent, name, 0, mode, out_st);
+	ret = silofs_fs_create(&task, parent, name, 0, mode, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 
@@ -264,11 +284,13 @@ static int ut_truncate(struct ut_env *ute, ino_t ino,
                        loff_t length, struct stat *out_st)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_truncate(&task, ino, length, out_st);
+	ret = silofs_fs_truncate(&task, ino, length, &st);
 	ut_release_task(ute, &task);
+	assign_stat(out_st, &st);
 	return ret;
 }
 

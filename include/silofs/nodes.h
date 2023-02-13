@@ -66,7 +66,6 @@ struct silofs_stats_info {
 struct silofs_sb_info {
 	struct silofs_unode_info        sb_ui;
 	struct silofs_stats_info        sb_sti;
-	struct silofs_itable_info       sb_itbi;
 	struct silofs_super_block      *sb;
 	struct silofs_ucred             sb_owner;
 	struct silofs_vspalloc_hints    sb_vspa;
@@ -97,12 +96,6 @@ struct silofs_vnode_info {
 	struct silofs_sb_info          *v_sbi;
 	bool                            v_recheck;
 	bool                            v_verified;
-};
-
-/* itable */
-struct silofs_itnode_info {
-	struct silofs_vnode_info        itn_vi;
-	struct silofs_itable_node      *itn;
 };
 
 /* inode */
@@ -162,12 +155,6 @@ silofs_sni_from_ui(const struct silofs_unode_info *ui);
 
 struct silofs_spleaf_info *
 silofs_sli_from_ui(const struct silofs_unode_info *ui);
-
-
-
-struct silofs_itnode_info *silofs_itni_from_vi(struct silofs_vnode_info *vi);
-
-void silofs_itni_rebind_view(struct silofs_itnode_info *itni);
 
 
 struct silofs_inode_info *

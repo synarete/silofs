@@ -167,6 +167,14 @@ struct silofs_creds {
 	struct timespec         ts;
 };
 
+
+/* extended inode stat */
+struct silofs_stat {
+	struct stat             st;
+	uint64_t                gen;
+};
+
+
 /* space-addressing */
 typedef loff_t          silofs_lba_t;
 
@@ -366,7 +374,6 @@ struct silofs_spacegauges {
 	ssize_t nsuper;
 	ssize_t nspnode;
 	ssize_t nspleaf;
-	ssize_t nitnode;
 	ssize_t ninode;
 	ssize_t nxanode;
 	ssize_t ndtnode;
@@ -379,10 +386,11 @@ struct silofs_spacegauges {
 
 /* space accounting per sub-kind + sub-type */
 struct silofs_spacestats {
-	time_t btime;
-	time_t ctime;
-	size_t capacity;
-	size_t vspacesize;
+	time_t          btime;
+	time_t          ctime;
+	size_t          capacity;
+	size_t          vspacesize;
+	uint64_t        generation;
 	struct silofs_spacegauges blobs;
 	struct silofs_spacegauges bks;
 	struct silofs_spacegauges objs;
@@ -393,7 +401,6 @@ struct silofs_vspalloc_hints {
 	loff_t data1k;
 	loff_t data4k;
 	loff_t databk;
-	loff_t itnode;
 	loff_t inode;
 	loff_t xanode;
 	loff_t dirnode;
@@ -407,24 +414,6 @@ struct silofs_inoent {
 	struct silofs_list_head lru_lh;
 	ino_t   ino;
 	loff_t  voff;
-};
-
-/* in-memory hash-map of ino-to-voff mapping */
-struct silofs_inomap {
-	struct silofs_listq      im_lru;
-	struct silofs_alloc     *im_alloc;
-	struct silofs_list_head *im_htbl;
-	size_t im_htbl_nelems;
-};
-
-/* inodes-table reference */
-struct silofs_itable_info {
-	struct silofs_inomap    it_inomap;
-	struct silofs_vaddr     it_root_itb;
-	struct silofs_iaddr     it_root_dir;
-	ino_t  it_apex_ino;
-	size_t it_ninodes;
-	size_t it_ninodes_max;
 };
 
 /* operations counters */
@@ -555,7 +544,7 @@ typedef int (*silofs_filldir_fn)(struct silofs_readdir_ctx *rd_ctx,
                                  const struct silofs_readdir_info *rdi);
 
 struct silofs_readdir_info {
-	struct stat     attr;
+	struct silofs_stat attr;
 	const char     *name;
 	size_t          namelen;
 	ino_t           ino;

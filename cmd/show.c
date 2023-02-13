@@ -259,7 +259,6 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "nsuper", spst->blobs.nsuper);
 	print_count(prefix, "nspnode", spst->blobs.nspnode);
 	print_count(prefix, "nspleaf", spst->blobs.nspleaf);
-	print_count(prefix, "nitnode", spst->blobs.nitnode);
 	print_count(prefix, "ninode", spst->blobs.ninode);
 	print_count(prefix, "nxanode", spst->blobs.nxanode);
 	print_count(prefix, "ndtnode", spst->blobs.ndtnode);
@@ -272,7 +271,6 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "nsuper", spst->bks.nsuper);
 	print_count(prefix, "nspnode", spst->bks.nspnode);
 	print_count(prefix, "nspleaf", spst->bks.nspleaf);
-	print_count(prefix, "nitnode", spst->bks.nitnode);
 	print_count(prefix, "ninode", spst->bks.ninode);
 	print_count(prefix, "nxanode", spst->bks.nxanode);
 	print_count(prefix, "ndtnode", spst->bks.ndtnode);
@@ -285,7 +283,6 @@ static void print_spacestats(const struct silofs_spacestats *spst)
 	print_count(prefix, "nsuper", spst->objs.nsuper);
 	print_count(prefix, "nspnode", spst->objs.nspnode);
 	print_count(prefix, "nspleaf", spst->objs.nspleaf);
-	print_count(prefix, "nitnode", spst->objs.nitnode);
 	print_count(prefix, "ninode", spst->objs.ninode);
 	print_count(prefix, "nxanode", spst->objs.nxanode);
 	print_count(prefix, "ndtnode", spst->objs.ndtnode);

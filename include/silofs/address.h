@@ -527,6 +527,20 @@ static inline silofs_dqid_t silofs_ino_to_dqid(ino_t ino)
 	return silofs_ino_isnull(ino) ? SILOFS_DQID_DFL : ino;
 }
 
+static inline loff_t silofs_ino_to_off(ino_t ino)
+{
+	return silofs_ino_isnull(ino) ? SILOFS_OFF_NULL :
+	       (loff_t)(ino << SILOFS_INODE_SHIFT);
+}
+
+static inline ino_t silofs_off_to_ino(loff_t off)
+{
+	return silofs_off_isnull(off) ? SILOFS_INO_NULL :
+	       (ino_t)(off >> SILOFS_INODE_SHIFT);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 /*
  * TODO-0043: Map uig/gid "nobody" to host values
  *
@@ -584,11 +598,6 @@ static inline bool silofs_stype_isspnode(enum silofs_stype stype)
 static inline bool silofs_stype_isspleaf(enum silofs_stype stype)
 {
 	return silofs_stype_isequal(stype, SILOFS_STYPE_SPLEAF);
-}
-
-static inline bool silofs_stype_isitnode(enum silofs_stype stype)
-{
-	return silofs_stype_isequal(stype, SILOFS_STYPE_ITNODE);
 }
 
 static inline bool silofs_stype_isinode(enum silofs_stype stype)

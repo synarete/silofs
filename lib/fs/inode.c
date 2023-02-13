@@ -204,6 +204,16 @@ static void inode_set_revision(struct silofs_inode *inode, long r)
 	inode->i_revision = silofs_cpu_to_le64((uint64_t)r);
 }
 
+static uint64_t inode_generation(const struct silofs_inode *inode)
+{
+	return silofs_le64_to_cpu(inode->i_generation);
+}
+
+static void inode_set_generation(struct silofs_inode *inode, uint64_t gen)
+{
+	inode->i_generation = silofs_cpu_to_le64(gen);
+}
+
 static void inode_inc_revision(struct silofs_inode *inode)
 {
 	inode_set_revision(inode, inode_revision(inode) + 1);
@@ -339,6 +349,11 @@ blkcnt_t silofs_ii_blocks(const struct silofs_inode_info *ii)
 	return inode_blocks(ii->inode);
 }
 
+uint64_t silofs_ii_generation(const struct silofs_inode_info *ii)
+{
+	return inode_generation(ii->inode);
+}
+
 static dev_t ii_rdev(const struct silofs_inode_info *ii)
 {
 	const struct silofs_inode *inode = ii->inode;
@@ -381,14 +396,9 @@ bool silofs_ii_issock(const struct silofs_inode_info *ii)
 	return S_ISSOCK(ii_mode(ii));
 }
 
-static ino_t rootd_ino(const struct silofs_sb_info *sbi)
-{
-	return sbi->sb_itbi.it_root_dir.ino;
-}
-
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii)
 {
-	return ii_isdir(ii) && (ii_ino(ii) == rootd_ino(ii_sbi(ii)));
+	return ii_isdir(ii) && (ii_ino(ii) == SILOFS_INO_ROOT);
 }
 
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
@@ -466,8 +476,8 @@ static void silofs_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
  * TODO-0010: Store timezone in inode
  */
 static void inode_setup_common(struct silofs_inode *inode,
-                               const struct silofs_ucred *ucred,
-                               ino_t ino, ino_t parent, mode_t mode)
+                               const struct silofs_ucred *ucred, ino_t ino,
+                               ino_t parent, mode_t mode, uint64_t gen)
 {
 	inode_set_ino(inode, ino);
 	inode_set_parent(inode, parent);
@@ -480,14 +490,18 @@ static void inode_setup_common(struct silofs_inode *inode,
 	inode_set_blocks(inode, 0);
 	inode_set_nlink(inode, 0);
 	inode_set_revision(inode, 0);
+	inode_set_generation(inode, gen);
 }
 
 static void ii_setup_inode(struct silofs_inode_info *ii,
                            const struct silofs_ucred *ucred,
                            ino_t parent_ino, mode_t parent_mode,
-                           mode_t mode, dev_t rdev)
+                           mode_t mode, dev_t rdev, uint64_t gen)
 {
-	inode_setup_common(ii->inode, ucred, ii_ino(ii), parent_ino, mode);
+	struct silofs_inode *inode = ii->inode;
+	const ino_t ino = ii_ino(ii);
+
+	inode_setup_common(inode, ucred, ino, parent_ino, mode, gen);
 	silofs_ii_setup_xattr(ii);
 	if (ii_isdir(ii)) {
 		silofs_setup_dir(ii, parent_mode, 1);
@@ -506,10 +520,13 @@ void silofs_ii_stamp_mark_visible(struct silofs_inode_info *ii)
 }
 
 void silofs_ii_setup_by(struct silofs_inode_info *ii,
-                        const struct silofs_creds *creds, ino_t parent,
-                        mode_t parent_mode, mode_t mode, dev_t rdev)
+                        const struct silofs_creds *creds,
+                        ino_t parent, mode_t parent_mode,
+                        mode_t mode, dev_t rdev, uint64_t gen)
 {
-	ii_setup_inode(ii, &creds->icred, parent, parent_mode, mode, rdev);
+	const struct silofs_ucred *ucred = &creds->icred;
+
+	ii_setup_inode(ii, ucred, parent, parent_mode, mode, rdev, gen);
 	ii_update_itimes(ii, creds, SILOFS_IATTR_TIMES);
 	ii_dirtify(ii);
 }
@@ -965,25 +982,26 @@ static blkcnt_t stat_blocks_of(const struct silofs_inode_info *ii)
 	return (blkcnt_t)div_round_up(nbytes, frg_size);
 }
 
-void silofs_stat_of(const struct silofs_inode_info *ii, struct stat *st)
+void silofs_ii_statof(const struct silofs_inode_info *ii,
+                      struct silofs_stat *st)
 {
 	struct silofs_itimes tms;
 
 	silofs_memzero(st, sizeof(*st));
-	st->st_ino = ii_xino(ii);
-	st->st_mode = ii_mode(ii);
-	st->st_nlink = ii_nlink(ii);
-	st->st_uid = ii_uid(ii);
-	st->st_gid = ii_gid(ii);
-	st->st_rdev = ii_rdev(ii);
-	st->st_size = ii_size(ii);
-	st->st_blocks = stat_blocks_of(ii);
-	st->st_blksize = stat_blksize_of(ii);
-
+	st->st.st_ino = ii_xino(ii);
+	st->st.st_mode = ii_mode(ii);
+	st->st.st_nlink = ii_nlink(ii);
+	st->st.st_uid = ii_uid(ii);
+	st->st.st_gid = ii_gid(ii);
+	st->st.st_rdev = ii_rdev(ii);
+	st->st.st_size = ii_size(ii);
+	st->st.st_blocks = stat_blocks_of(ii);
+	st->st.st_blksize = stat_blksize_of(ii);
+	st->gen = ii_generation(ii);
 	silofs_ii_times(ii, &tms);
-	assign_ts(&st->st_atim, &ii->i_atime_lazy);
-	assign_ts(&st->st_ctim, &tms.ctime);
-	assign_ts(&st->st_mtim, &tms.mtime);
+	assign_ts(&st->st.st_atim, &ii->i_atime_lazy);
+	assign_ts(&st->st.st_ctim, &tms.ctime);
+	assign_ts(&st->st.st_mtim, &tms.mtime);
 }
 
 static void silofs_statx_of(const struct silofs_inode_info *ii,
@@ -1058,7 +1076,7 @@ static int check_getattr(struct silofs_task *task,
 
 static int do_getattr(struct silofs_task *task,
                       const struct silofs_inode_info *ii,
-                      struct stat *out_st)
+                      struct silofs_stat *out_st)
 {
 	int err;
 
@@ -1066,12 +1084,13 @@ static int do_getattr(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	silofs_stat_of(ii, out_st);
+	silofs_ii_statof(ii, out_st);
 	return 0;
 }
 
 int silofs_do_getattr(struct silofs_task *task,
-                      struct silofs_inode_info *ii, struct stat *out_st)
+                      struct silofs_inode_info *ii,
+                      struct silofs_stat *out_st)
 {
 	int err;
 

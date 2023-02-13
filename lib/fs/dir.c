@@ -1765,7 +1765,7 @@ static bool dic_emit(struct silofs_dir_ctx *d_ctx, const char *name,
 {
 	struct silofs_readdir_ctx *rd_ctx = d_ctx->rd_ctx;
 	struct silofs_readdir_info rdi = {
-		.attr.st_ino = ino,
+		.attr.st.st_ino = ino,
 		.name = name,
 		.namelen = nlen,
 		.ino = ino,
@@ -1787,16 +1787,16 @@ static bool dic_emit_dirent(struct silofs_dir_ctx *d_ctx,
                             const struct silofs_dir_entry *de, loff_t doff,
                             const struct silofs_inode_info *ii)
 {
+	struct silofs_stat st = { .gen = 0 };
 	const ino_t ino = de_ino(de);
 	const mode_t dt = de_dt(de);
 	const size_t nlen = de_name_len(de);
 	const char *name = dtn_name_of(dtn, de);
 	const struct stat *attr = NULL;
-	struct stat st;
 
 	if (ii != NULL) {
-		silofs_stat_of(ii, &st);
-		attr = &st;
+		silofs_ii_statof(ii, &st);
+		attr = &st.st;
 	}
 
 	d_ctx->rd_ctx->pos = doff;
@@ -1806,12 +1806,13 @@ static bool dic_emit_dirent(struct silofs_dir_ctx *d_ctx,
 static bool dic_emit_ii(struct silofs_dir_ctx *d_ctx, const char *name,
                         size_t nlen, const struct silofs_inode_info *ii)
 {
+	struct silofs_stat st = { .gen = 0 };
 	const ino_t xino = ii_xino(ii);
 	const mode_t mode = ii_mode(ii);
-	struct stat attr;
+	const struct stat *attr = &st.st;
 
-	silofs_stat_of(ii, &attr);
-	return dic_emit(d_ctx, name, nlen, xino, IFTODT(mode), &attr);
+	silofs_ii_statof(ii, &st);
+	return dic_emit(d_ctx, name, nlen, xino, IFTODT(mode), attr);
 }
 
 static int dic_stage_inode_of_de(const struct silofs_dir_ctx *d_ctx,

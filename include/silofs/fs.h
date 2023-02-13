@@ -34,7 +34,6 @@
 #include <silofs/super.h>
 #include <silofs/stats.h>
 #include <silofs/idmap.h>
-#include <silofs/itable.h>
 #include <silofs/inode.h>
 #include <silofs/dir.h>
 #include <silofs/file.h>

@@ -1306,9 +1306,6 @@ void silofs_relax_caches(struct silofs_task *task, int flags)
 {
 	const struct silofs_uber *uber = task->t_uber;
 
-	if (uber->ub_sbi) {
-		silofs_relax_inomap(task, flags);
-	}
 	if (uber->ub_repos) {
 		silofs_repos_relax_cache(uber->ub_repos, flags);
 	}

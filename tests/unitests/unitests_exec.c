@@ -177,7 +177,6 @@ static void ut_check_valid_spacecounts(const struct silofs_spacegauges *spc)
 	ut_expect_ge(spc->nsuper, 1);
 	ut_expect_ge(spc->nspnode, 4);
 	ut_expect_ge(spc->nspleaf, 4);
-	ut_expect_ge(spc->nitnode, 1);
 	ut_expect_ge(spc->ninode, 1);
 	ut_expect_ge(spc->nxanode, 0);
 	ut_expect_ge(spc->nxanode, 0);
@@ -195,7 +194,6 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 	ut_expect_le(spst1->blobs.nsuper,  spst2->blobs.nsuper);
 	ut_expect_le(spst1->blobs.nspnode, spst2->blobs.nspnode);
 	ut_expect_le(spst1->blobs.nspleaf, spst2->blobs.nspleaf);
-	ut_expect_le(spst1->blobs.nitnode, spst2->blobs.nitnode);
 	ut_expect_le(spst1->blobs.ninode,  spst2->blobs.ninode);
 	ut_expect_le(spst1->blobs.nxanode, spst2->blobs.nxanode);
 	ut_expect_le(spst1->blobs.ndtnode, spst2->blobs.ndtnode);
@@ -208,7 +206,6 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 	ut_expect_le(spst1->bks.nsuper,  spst2->bks.nsuper);
 	ut_expect_le(spst1->bks.nspnode, spst2->bks.nspnode);
 	ut_expect_le(spst1->bks.nspleaf, spst2->bks.nspleaf);
-	ut_expect_le(spst1->bks.nitnode, spst2->bks.nitnode);
 	ut_expect_le(spst1->bks.ninode,  spst2->bks.ninode);
 	ut_expect_le(spst1->bks.nxanode, spst2->bks.nxanode);
 	ut_expect_le(spst1->bks.ndtnode, spst2->bks.ndtnode);
@@ -221,7 +218,6 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 	ut_expect_le(spst1->objs.nsuper,  spst2->objs.nsuper);
 	ut_expect_le(spst1->objs.nspnode, spst2->objs.nspnode);
 	ut_expect_le(spst1->objs.nspleaf, spst2->objs.nspleaf);
-	ut_expect_le(spst1->objs.nitnode, spst2->objs.nitnode);
 	ut_expect_eq(spst1->objs.ninode,  spst2->objs.ninode);
 	ut_expect_eq(spst1->objs.nxanode, spst2->objs.nxanode);
 	ut_expect_eq(spst1->objs.ndtnode, spst2->objs.ndtnode);

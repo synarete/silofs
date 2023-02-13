@@ -100,7 +100,8 @@ int silofs_do_fsyncdir(struct silofs_task *task,
 int silofs_do_fsync(struct silofs_task *task,
                     struct silofs_inode_info *ii, bool datasync);
 
-int silofs_do_flush(struct silofs_task *task, struct silofs_inode_info *ii);
+int silofs_do_flush(struct silofs_task *task,
+                    struct silofs_inode_info *ii, bool now);
 
 int silofs_do_query(struct silofs_task *task,
                     struct silofs_inode_info *ii,

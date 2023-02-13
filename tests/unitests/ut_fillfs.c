@@ -63,7 +63,7 @@ static void ut_fillfs_simple(struct ut_env *ute)
 		nwr = 0;
 		off = st.st_size;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
-		ut_flush_ok(ute, ino);
+		ut_flush_ok(ute, ino, false);
 	}
 	for (size_t i = 0; i < 10; ++i) {
 		ut_getattr_reg(ute, ino, &st);

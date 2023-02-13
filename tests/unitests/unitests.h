@@ -372,7 +372,7 @@ void ut_open_rdwr(struct ut_env *ute, ino_t ino);
 void ut_remove_link(struct ut_env *ute,
                     ino_t parent, const char *name);
 
-void ut_flush_ok(struct ut_env *ute, ino_t ino);
+void ut_flush_ok(struct ut_env *ute, ino_t ino, bool now);
 
 void ut_write_ok(struct ut_env *ute, ino_t ino,
                  const void *buf, size_t bsz, loff_t off);

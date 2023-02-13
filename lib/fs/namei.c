@@ -1678,13 +1678,9 @@ int silofs_do_fsync(struct silofs_task *task,
 }
 
 int silofs_do_flush(struct silofs_task *task,
-                    struct silofs_inode_info *ii)
+                    struct silofs_inode_info *ii, bool now)
 {
-	const struct silofs_creds *creds = creds_of(task);
-	const uid_t uid = creds->xcred.uid;
-	const int flags = (uid == 0) ? SILOFS_F_NOW : 0;
-
-	return silofs_flush_dirty_of(task, ii, flags);
+	return silofs_flush_dirty_of(task, ii, now ? SILOFS_F_NOW : 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

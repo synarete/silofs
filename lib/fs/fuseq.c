@@ -4246,7 +4246,8 @@ static int op_removexattr(struct silofs_task *task,
 
 static int op_flush(struct silofs_task *task, struct silofs_oper_args *args)
 {
-	return silofs_fs_flush(task, args->in.flush.ino);
+	return silofs_fs_flush(task, args->in.flush.ino,
+	                       args->in.flush.ino == 0);
 }
 
 static int op_opendir(struct silofs_task *task, struct silofs_oper_args *args)

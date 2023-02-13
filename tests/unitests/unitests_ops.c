@@ -369,13 +369,13 @@ static int ut_query(struct ut_env *ute, ino_t ino,
 	return ret;
 }
 
-static int ut_flush(struct ut_env *ute, ino_t ino)
+static int ut_flush(struct ut_env *ute, ino_t ino, bool now)
 {
 	struct silofs_task task;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_flush(&task, ino);
+	ret = silofs_fs_flush(&task, ino, now);
 	ut_release_task(ute, &task);
 	return ret;
 }
@@ -1371,11 +1371,11 @@ void ut_remove_link(struct ut_env *ute,
 	ut_unlink_err(ute, parent, name, -ENOENT);
 }
 
-void ut_flush_ok(struct ut_env *ute, ino_t ino)
+void ut_flush_ok(struct ut_env *ute, ino_t ino, bool now)
 {
 	int err;
 
-	err = ut_flush(ute, ino);
+	err = ut_flush(ute, ino, now);
 	ut_expect_ok(err);
 }
 

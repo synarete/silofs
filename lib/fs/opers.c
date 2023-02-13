@@ -1040,7 +1040,7 @@ out:
 	return op_finish(task, ino, 0, err);
 }
 
-int silofs_fs_flush(struct silofs_task *task, ino_t ino)
+int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -1057,7 +1057,7 @@ int silofs_fs_flush(struct silofs_task *task, ino_t ino)
 	err = op_stage_rdo_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_flush(task, ii);
+	err = silofs_do_flush(task, ii, now);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, OP_F_INO, err);

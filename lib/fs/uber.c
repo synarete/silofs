@@ -436,13 +436,13 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 	int err;
 
 	uber_pre_forkfs(uber);
-
 	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_alt);
 	if (err) {
 		return err;
 	}
 	sbi_export_bootsec(sbi_alt, &out_bsecs->bsec[1]);
 
+	uber_pre_forkfs(uber);
 	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_new);
 	if (err) {
 		return err;

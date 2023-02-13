@@ -460,7 +460,7 @@ int silofs_fs_mknod(struct silofs_task *task, ino_t parent,
 int silofs_fs_release(struct silofs_task *task,
                       ino_t ino, int o_flags, bool flush);
 
-int silofs_fs_flush(struct silofs_task *task, ino_t ino);
+int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now);
 
 int silofs_fs_fsync(struct silofs_task *task, ino_t ino, bool datasync);
 

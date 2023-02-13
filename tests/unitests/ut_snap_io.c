@@ -110,6 +110,7 @@ static void ut_snap_copy_range(struct ut_env *ute)
 	ut_snap_copy_range_(ute, UT_64K, UT_64K);
 	ut_snap_copy_range_(ute, 4 * UT_4K, 4 * UT_64K);
 	ut_snap_copy_range_(ute, UT_MEGA, UT_MEGA);
+	ut_snap_copy_range_(ute, 2 * UT_MEGA, UT_MEGA / 2);
 	ut_snap_copy_range_(ute, UT_GIGA, 2 * UT_64K);
 	ut_snap_copy_range_(ute, 1, UT_MEGA);
 	ut_snap_copy_range_(ute, UT_GIGA - 1, (3 * UT_64K) + 3);

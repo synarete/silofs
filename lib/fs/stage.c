@@ -2438,9 +2438,24 @@ static int stgc_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 	return 0;
 }
 
+static int stgc_stage_vblock_by(const struct silofs_stage_ctx *stg_ctx,
+                                const struct silofs_voaddr *voaddr,
+                                struct silofs_vbk_info **out_vbki)
+{
+	const enum silofs_stype stype = voaddr->vaddr.stype;
+	int ret = 0;
+
+	*out_vbki = NULL;
+	if (!task_has_kcopy(stg_ctx->task) || !stype_isdata(stype)) {
+		ret = stgc_stage_vblock(stg_ctx, voaddr, out_vbki);
+	}
+	return ret;
+}
+
 static int stgc_resolve_inspect_voaddr(struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_voaddr *out_voa)
 {
+	struct silofs_vbk_info *vbki = NULL;
 	int err;
 
 	err = stgc_resolve_voaddr(stg_ctx, out_voa);
@@ -2455,15 +2470,22 @@ static int stgc_resolve_inspect_voaddr(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = stgc_clone_vblock(stg_ctx, out_voa);
+	err = stgc_stage_vblock_by(stg_ctx, out_voa, &vbki);
 	if (err) {
 		return err;
+	}
+	silofs_vbki_incref(vbki);
+	err = stgc_clone_vblock(stg_ctx, out_voa);
+	if (err) {
+		goto out;
 	}
 	err = stgc_voaddr_at(stg_ctx, out_voa);
 	if (err) {
-		return err;
+		goto out;
 	}
-	return 0;
+out:
+	silofs_vbki_decref(vbki);
+	return err;
 }
 
 int silofs_resolve_voaddr_of(struct silofs_task *task,

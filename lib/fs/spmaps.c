@@ -821,6 +821,8 @@ static void spleaf_rebind_ubk(struct silofs_spmap_leaf *sl, loff_t voff,
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(sl, voff);
 
 	bkr_set_uref_blobid(bkr, &bkaddr->blobid);
+
+	silofs_assert_gt(bkr_refcnt(bkr), 0);
 }
 
 static void spleaf_resolve_cold(const struct silofs_spmap_leaf *sl,

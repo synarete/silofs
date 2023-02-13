@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <limits.h>
 
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -606,13 +605,13 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 {
+	const struct silofs_uber *uber = sbi_uber(sbi);
 	const unsigned long ms_mask = MS_RDONLY;
-	const enum silofs_superf sf_mask = SILOFS_SUPERF_FOSSIL;
 
-	if ((sbi->sb_ms_flags & ms_mask) == ms_mask) {
+	if ((uber->ub_ms_flags & ms_mask) == ms_mask) {
 		return -EROFS;
 	}
-	if (silofs_sb_test_flags(sbi->sb, sf_mask)) {
+	if (silofs_sb_test_flags(sbi->sb, SILOFS_SUPERF_FOSSIL)) {
 		return -EROFS;
 	}
 	return 0;
@@ -1193,77 +1192,9 @@ int silofs_test_shared_at(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sbi_update_owner(struct silofs_sb_info *sbi,
-                             const struct silofs_fs_args *args)
-{
-	sbi->sb_owner.uid = args->uid;
-	sbi->sb_owner.gid = args->gid;
-	sbi->sb_owner.pid = args->pid;
-	sbi->sb_owner.umask = args->umask;
-}
-
-static void sbi_update_mntflags(struct silofs_sb_info *sbi,
-                                const struct silofs_fs_args *args)
-{
-	unsigned long ms_flag_with = 0;
-	unsigned long ms_flag_dont = 0;
-
-	if (args->lazytime) {
-		ms_flag_with |= MS_LAZYTIME;
-	} else {
-		ms_flag_dont |= MS_LAZYTIME;
-	}
-	if (args->noexec) {
-		ms_flag_with |= MS_NOEXEC;
-	} else {
-		ms_flag_dont |= MS_NOEXEC;
-	}
-	if (args->nosuid) {
-		ms_flag_with |= MS_NOSUID;
-	} else {
-		ms_flag_dont |= MS_NOSUID;
-	}
-	if (args->nodev) {
-		ms_flag_with |= MS_NODEV;
-	} else {
-		ms_flag_dont |= MS_NODEV;
-	}
-	if (args->rdonly) {
-		ms_flag_with |= MS_RDONLY;
-	} else {
-		ms_flag_dont |= MS_RDONLY;
-	}
-	sbi->sb_ms_flags |= ms_flag_with;
-	sbi->sb_ms_flags &= ~ms_flag_dont;
-}
-
-static void sbi_update_ctlflags(struct silofs_sb_info *sbi,
-                                const struct silofs_fs_args *args)
-{
-	if (args->kcopy) {
-		sbi->sb_ctl_flags |= SILOFS_SBCF_KCOPY;
-	}
-	if (args->allowother) {
-		sbi->sb_ctl_flags |= SILOFS_SBCF_ALLOWOTHER;
-	}
-	if (args->allowadmin) {
-		sbi->sb_ctl_flags |= SILOFS_SBCF_ALLOWADMIN;
-	}
-}
-
-static void sbi_setup_by_args(struct silofs_sb_info *sbi,
-                              const struct silofs_fs_args *args)
-{
-	sbi_update_owner(sbi, args);
-	sbi_update_mntflags(sbi, args);
-	sbi_update_ctlflags(sbi, args);
-}
-
-void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
-                          struct silofs_uber *uber)
+void silofs_sbi_bind_uber(struct silofs_sb_info *sbi, struct silofs_uber *uber)
 {
 	silofs_ui_bind_uber(&sbi->sb_ui, uber);
-	sbi_setup_by_args(sbi, uber->ub_args);
 }
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
@@ -1316,27 +1247,12 @@ void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi)
 	sbi_dirtify(sbi);
 }
 
-static void ucred_copyto(const struct silofs_ucred *ucred,
-                         struct silofs_ucred *other)
-{
-	memcpy(other, ucred, sizeof(*other));
-}
-
-static void sbi_update_by(struct silofs_sb_info *sbi,
-                          const struct silofs_sb_info *sbi_other)
-{
-	ucred_copyto(&sbi_other->sb_owner, &sbi->sb_owner);
-	sbi->sb_ctl_flags = sbi_other->sb_ctl_flags;
-	sbi->sb_ms_flags = sbi_other->sb_ms_flags;
-}
-
 void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other)
 {
 	struct silofs_super_block *sb = sbi->sb;
 	const struct silofs_super_block *sb_other = sbi_other->sb;
 
-	sbi_update_by(sbi, sbi_other);
 	sb_assign(sb, sb_other);
 	sb_clone_sproots(sb, sb_other);
 	sb_generate_treeid(sb);

@@ -2417,7 +2417,7 @@ static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
                                 struct silofs_fuseq_wr_iter *fq_rwi,
                                 size_t len, loff_t off)
 {
-	const bool concp = fqw->fq->fq_uber->ub_args->concp;
+	const bool concp = fqw->fq->fq_uber->ub.fs_args->concp;
 
 	fq_rwi->fqw = fqw;
 	fq_rwi->nwr = 0;
@@ -2805,7 +2805,7 @@ static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
 static int fuseq_setup_self_task(const struct silofs_fuseq_worker *fqw,
                                  struct silofs_task *task)
 {
-	const struct silofs_fs_args *args = fqw->fq->fq_uber->ub_args;
+	const struct silofs_fs_args *args = fqw->fq->fq_uber->ub.fs_args;
 	int err;
 
 	err = silofs_task_init(task, fqw->fq->fq_uber);
@@ -3668,7 +3668,6 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 {
 	const size_t max_read = fq->fq_coni.buffsize;
 	const char *sock = SILOFS_MNTSOCK_NAME;
-	struct silofs_sb_info *sbi = uber->ub_sbi;
 	uint64_t ms_flags;
 	uid_t uid;
 	gid_t gid;
@@ -3676,10 +3675,10 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	int err;
 	bool allow_other;
 
-	uid = sbi->sb_owner.uid;
-	gid = sbi->sb_owner.gid;
-	ms_flags = sbi->sb_ms_flags;
-	allow_other = (sbi->sb_ctl_flags & SILOFS_SBCF_ALLOWOTHER) > 0;
+	uid = uber->ub_owner.uid;
+	gid = uber->ub_owner.gid;
+	ms_flags = uber->ub_ms_flags;
+	allow_other = (uber->ub_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
@@ -3695,9 +3694,8 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 		              max_read, ms_flags, (int)allow_other, err);
 		return err;
 	}
-	sbi->sb_ctl_flags |= SILOFS_SBCF_NLOOKUP;
 
-	fq->fq_fs_owner = sbi->sb_owner.uid;
+	fq->fq_fs_owner = uber->ub_owner.uid;
 	fq->fq_fuse_fd = fd;
 	fq->fq_mount = true;
 	fq->fq_uber = uber;

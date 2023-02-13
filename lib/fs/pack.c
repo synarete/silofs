@@ -740,7 +740,7 @@ static int pac_decode_blob_from(struct silofs_pack_ctx *pa_ctx,
 
 static struct silofs_alloc *pac_alloc(const struct silofs_pack_ctx *pa_ctx)
 {
-	return pa_ctx->uber->ub_alloc;
+	return pa_ctx->uber->ub.alloc;
 }
 
 static int pac_init_crypto(struct silofs_pack_ctx *pa_ctx)
@@ -786,7 +786,7 @@ static void pac_bind_to(struct silofs_pack_ctx *pa_ctx,
 
 static int pac_init_repos(struct silofs_pack_ctx *pa_ctx)
 {
-	struct silofs_repos *repos = pa_ctx->uber->ub_repos;
+	struct silofs_repos *repos = pa_ctx->uber->ub.repos;
 	struct silofs_repo *repo = NULL;
 
 	repo = silofs_repos_get(repos, SILOFS_REPO_ATTIC);
@@ -2106,7 +2106,7 @@ int silofs_unpack_fs(struct silofs_task *task,
 		return err;
 	}
 	pa_ctx.cold_bsec = cold_bsec;
-	pa_ctx.forced = task->t_uber->ub_args->restore_forced;
+	pa_ctx.forced = task->t_uber->ub.fs_args->restore_forced;
 
 	err = pac_exec_restore_at_uber(&pa_ctx);
 	if (err) {

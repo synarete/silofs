@@ -358,7 +358,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 static int task_new_sqe(struct silofs_task *task,
                         struct silofs_submitq_entry **out_sqe)
 {
-	struct silofs_alloc *alloc = task->t_uber->ub_alloc;
+	struct silofs_alloc *alloc = task->t_uber->ub.alloc;
 	struct silofs_submitq_entry *sqe;
 	int err;
 
@@ -378,7 +378,7 @@ static int task_new_sqe(struct silofs_task *task,
 static void task_del_sqe(struct silofs_task *task,
                          struct silofs_submitq_entry *sqe)
 {
-	struct silofs_alloc *alloc = task->t_uber->ub_alloc;
+	struct silofs_alloc *alloc = task->t_uber->ub.alloc;
 
 	sqe_fini(sqe);
 	silofs_deallocate(alloc, sqe, sizeof(*sqe));
@@ -503,9 +503,7 @@ struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 
 bool silofs_task_has_kcopy(const struct silofs_task *task)
 {
-	const struct silofs_sb_info *sbi = silofs_task_sbi(task);
-
-	return (sbi != NULL) && ((sbi->sb_ctl_flags & SILOFS_SBCF_KCOPY) > 0);
+	return ((task->t_uber->ub_ctl_flags & SILOFS_UBF_KCOPY) > 0);
 }
 
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
@@ -513,7 +511,7 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 	memset(task, 0, sizeof(*task));
 	listq_init(&task->t_pendq);
 	task->t_uber = uber;
-	task->t_submitq = uber->ub_submitq;
+	task->t_submitq = uber->ub.submitq;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
 	task->t_may_flush = 0;

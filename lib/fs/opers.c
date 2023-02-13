@@ -166,7 +166,7 @@ static int symval_to_str(const char *symval, struct silofs_str *str)
 static const struct silofs_idsmap *
 idsm_of(const struct silofs_task *task)
 {
-	return task->t_uber->ub_idsmap;
+	return task->t_uber->ub.idsmap;
 }
 
 static const struct silofs_sb_info *sbi_of(const struct silofs_task *task)
@@ -199,25 +199,21 @@ static bool op_is_admin(const struct silofs_task *task)
 static bool op_is_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
-	const struct silofs_sb_info *sbi = sbi_of(task);
 
-	return uid_eq(creds->xcred.uid, sbi->sb_owner.uid);
+	return uid_eq(creds->xcred.uid, task->t_uber->ub_owner.uid);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
-	const struct silofs_sb_info *sbi = sbi_of(task);
 
-	return (sbi->sb_ctl_flags & SILOFS_SBCF_ALLOWADMIN) &&
+	return (task->t_uber->ub_ctl_flags & SILOFS_UBF_ALLOWADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->xcred);
 }
 
 static bool op_allow_other(const struct silofs_task *task)
 {
-	const struct silofs_sb_info *sbi = sbi_of(task);
-
-	return (sbi->sb_ctl_flags & SILOFS_SBCF_ALLOWOTHER) > 0;
+	return (task->t_uber->ub_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
 }
 
 static int op_authorize(const struct silofs_task *task)

@@ -342,20 +342,20 @@ static void fse_fini_idsmap(struct silofs_fs_env *fse)
 
 static int fse_init_uber(struct silofs_fs_env *fse)
 {
-	const struct silofs_uber_args args = {
+	const struct silofs_uber_base ub_base = {
+		.fs_args = &fse->fs_args,
+		.ivkey = &fse->fs_ivkey,
 		.alloc = fse->fs_alloc,
 		.repos = fse->fs_repos,
 		.submitq = fse->fs_submitq,
 		.idsmap = fse->fs_idsmap,
-		.ivkey = &fse->fs_ivkey,
 	};
 	struct silofs_uber *uber;
 	int err;
 
 	uber = &fse_obj_of(fse)->fs_core.c.uber;
-	err = silofs_uber_init(uber, &args);
+	err = silofs_uber_init(uber, &ub_base);
 	if (!err) {
-		uber->ub_args = &fse->fs_args;
 		fse->fs_uber = uber;
 	}
 	return err;
@@ -589,13 +589,13 @@ void silofs_fse_del(struct silofs_fs_env *fse)
 
 static void drop_cache(struct silofs_task *task)
 {
-	silofs_repos_drop_cache(task->t_uber->ub_repos);
+	silofs_repos_drop_cache(task->t_uber->ub.repos);
 	silofs_burnstack();
 }
 
 static void relax_cache(struct silofs_task *task)
 {
-	silofs_repos_relax_cache(task->t_uber->ub_repos, SILOFS_F_BRINGUP);
+	silofs_repos_relax_cache(task->t_uber->ub.repos, SILOFS_F_BRINGUP);
 }
 
 static struct silofs_sb_info *fse_sbi(const struct silofs_fs_env *fse)
@@ -1127,7 +1127,7 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 static int fse_format_super(struct silofs_fs_env *fse)
 {
 	struct silofs_uber *uber = fse->fs_uber;
-	const size_t cap_want = uber->ub_args->capacity;
+	const size_t cap_want = uber->ub.fs_args->capacity;
 	size_t capacity = 0;
 	int err;
 

@@ -364,7 +364,7 @@ silofs_sbi_uber(const struct silofs_sb_info *sbi)
 static inline struct silofs_alloc *
 silofs_sbi_alloc(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_si.s_uber->ub_alloc;
+	return sbi->sb_ui.u_si.s_uber->ub.alloc;
 }
 
 static inline struct silofs_cache *

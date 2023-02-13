@@ -44,7 +44,7 @@ static int sli_resolve_blob_of(const struct silofs_spleaf_info *sli,
 
 static struct silofs_repos *unrc_repos(const struct silofs_unref_ctx *unr_ctx)
 {
-	return unr_ctx->uber->ub_repos;
+	return unr_ctx->uber->ub.repos;
 }
 
 static bool unrc_is_blobid_of(const struct silofs_unref_ctx *unr_ctx,

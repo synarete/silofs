@@ -509,7 +509,7 @@ static int flc_setup(struct silofs_flush_ctx *fl_ctx,
 	struct silofs_repo *repo = NULL;
 	struct silofs_uber *uber = task->t_uber;
 
-	repo = silofs_repos_get(uber->ub_repos, SILOFS_REPO_LOCAL);
+	repo = silofs_repos_get(uber->ub.repos, SILOFS_REPO_LOCAL);
 	if (unlikely(repo == NULL)) {
 		return -SILOFS_ENOREPO;
 	}

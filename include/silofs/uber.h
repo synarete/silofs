@@ -19,17 +19,8 @@
 
 #include <silofs/types.h>
 
-struct silofs_uber_args {
-	struct silofs_alloc    *alloc;
-	struct silofs_repos    *repos;
-	struct silofs_submitq  *submitq;
-	struct silofs_idsmap   *idsmap;
-	const struct silofs_ivkey *ivkey;
-};
-
-
 int silofs_uber_init(struct silofs_uber *uber,
-                     const struct silofs_uber_args *args);
+                     const struct silofs_uber_base *base);
 
 void silofs_uber_fini(struct silofs_uber *uber);
 

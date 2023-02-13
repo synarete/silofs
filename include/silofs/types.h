@@ -67,12 +67,12 @@ enum silofs_flags {
 	SILOFS_F_URGENT         = SILOFS_BIT(12),
 };
 
-/* super-block control flags */
-enum silofs_sbctl_flags {
-	SILOFS_SBCF_KCOPY       = SILOFS_BIT(1),
-	SILOFS_SBCF_NLOOKUP     = SILOFS_BIT(2),
-	SILOFS_SBCF_ALLOWOTHER  = SILOFS_BIT(3),
-	SILOFS_SBCF_ALLOWADMIN  = SILOFS_BIT(4),
+/* uber-block control flags */
+enum silofs_ubctl_flags {
+	SILOFS_UBF_KCOPY        = SILOFS_BIT(1),
+	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(2),
+	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(3),
+	SILOFS_UBF_ALLOWADMIN   = SILOFS_BIT(4),
 };
 
 /* inode's attributes masks */
@@ -453,14 +453,19 @@ struct silofs_oper {
 	uint32_t                        op_code;
 };
 
+/* base members of uber-block (provided) */
+struct silofs_uber_base {
+	const struct silofs_fs_args    *fs_args;
+	const struct silofs_ivkey      *ivkey;
+	struct silofs_alloc            *alloc;
+	struct silofs_repos            *repos;
+	struct silofs_submitq          *submitq;
+	struct silofs_idsmap           *idsmap;
+};
+
 /* top-level pseudo meta node */
 struct silofs_uber {
-	const struct silofs_fs_args    *ub_args;
-	const struct silofs_ivkey      *ub_ivkey;
-	struct silofs_alloc            *ub_alloc;
-	struct silofs_repos            *ub_repos;
-	struct silofs_submitq          *ub_submitq;
-	struct silofs_idsmap           *ub_idsmap;
+	struct silofs_uber_base         ub;
 	struct silofs_mutex             ub_fs_lock;
 	struct silofs_crypto            ub_crypto;
 	struct silofs_piper             ub_piper;
@@ -469,6 +474,8 @@ struct silofs_uber {
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_uaddr             ub_sb_addr;
 	struct silofs_ucred             ub_owner;
+	unsigned long                   ub_ctl_flags;
+	unsigned long                   ub_ms_flags;
 	iconv_t                         ub_iconv;
 	time_t                          ub_initime;
 	uint64_t                        ub_commit_id;

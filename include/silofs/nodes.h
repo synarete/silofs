@@ -67,10 +67,7 @@ struct silofs_sb_info {
 	struct silofs_unode_info        sb_ui;
 	struct silofs_stats_info        sb_sti;
 	struct silofs_super_block      *sb;
-	struct silofs_ucred             sb_owner;
 	struct silofs_vspalloc_hints    sb_vspa;
-	unsigned long                   sb_ctl_flags;
-	unsigned long                   sb_ms_flags;
 };
 
 /* space-node */

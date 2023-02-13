@@ -441,11 +441,8 @@ static int sbi_init(struct silofs_sb_info *sbi,
                     const struct silofs_uaddr *uaddr)
 {
 	silofs_memzero(sbi, sizeof(*sbi));
-	sbi->sb = NULL;
-	sbi->sb_ctl_flags = 0;
-	sbi->sb_ms_flags = 0;
-
 	ui_init(&sbi->sb_ui, uaddr, sbi_delete_as_si);
+	sbi->sb = NULL;
 	return 0;
 }
 

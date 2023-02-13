@@ -17,6 +17,9 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
 
 struct silofs_uber_ctx {
 	struct silofs_uber     *uber;
@@ -74,49 +77,109 @@ static void uber_bind_sbi(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void uber_update_owner(struct silofs_uber *uber)
+{
+	const struct silofs_fs_args *fs_args = uber->ub.fs_args;
+
+	uber->ub_owner.uid = fs_args->uid;
+	uber->ub_owner.gid = fs_args->gid;
+	uber->ub_owner.pid = fs_args->pid;
+	uber->ub_owner.umask = fs_args->umask;
+}
+
+static void uber_update_mntflags(struct silofs_uber *uber)
+{
+	const struct silofs_fs_args *fs_args = uber->ub.fs_args;
+	unsigned long ms_flag_with = 0;
+	unsigned long ms_flag_dont = 0;
+
+	if (fs_args->lazytime) {
+		ms_flag_with |= MS_LAZYTIME;
+	} else {
+		ms_flag_dont |= MS_LAZYTIME;
+	}
+	if (fs_args->noexec) {
+		ms_flag_with |= MS_NOEXEC;
+	} else {
+		ms_flag_dont |= MS_NOEXEC;
+	}
+	if (fs_args->nosuid) {
+		ms_flag_with |= MS_NOSUID;
+	} else {
+		ms_flag_dont |= MS_NOSUID;
+	}
+	if (fs_args->nodev) {
+		ms_flag_with |= MS_NODEV;
+	} else {
+		ms_flag_dont |= MS_NODEV;
+	}
+	if (fs_args->rdonly) {
+		ms_flag_with |= MS_RDONLY;
+	} else {
+		ms_flag_dont |= MS_RDONLY;
+	}
+	uber->ub_ms_flags |= ms_flag_with;
+	uber->ub_ms_flags &= ~ms_flag_dont;
+}
+
+static void uber_update_ctlflags(struct silofs_uber *uber)
+{
+	const struct silofs_fs_args *fs_args = uber->ub.fs_args;
+
+	if (fs_args->kcopy) {
+		uber->ub_ctl_flags |= SILOFS_UBF_KCOPY;
+	}
+	if (fs_args->allowother) {
+		uber->ub_ctl_flags |= SILOFS_UBF_ALLOWOTHER;
+	}
+	if (fs_args->allowadmin) {
+		uber->ub_ctl_flags |= SILOFS_UBF_ALLOWADMIN;
+	}
+	if (fs_args->withfuse) {
+		uber->ub_ctl_flags |= SILOFS_UBF_NLOOKUP;
+	}
+}
+
+static void uber_update_by_fs_args(struct silofs_uber *uber)
+{
+	uber_update_owner(uber);
+	uber_update_mntflags(uber);
+	uber_update_ctlflags(uber);
+}
+
 static size_t uber_calc_iopen_limit(const struct silofs_uber *uber)
 {
 	struct silofs_alloc_stat st;
 	const size_t align = 128;
 	size_t lim;
 
-	silofs_allocstat(uber->ub_alloc, &st);
+	silofs_allocstat(uber->ub.alloc, &st);
 	lim = (st.memsz_data / (2 * SILOFS_BK_SIZE));
 	return div_round_up(lim, align) * align;
 }
 
 static void uber_init_commons(struct silofs_uber *uber,
-                              const struct silofs_uber_args *args)
+                              const struct silofs_uber_base *ub_base)
 {
+	memcpy(&uber->ub, ub_base, sizeof(uber->ub));
 	uber->ub_initime = silofs_time_now_monotonic();
 	uber->ub_commit_id = 0;
-	uber->ub_ivkey = args->ivkey;
-	uber->ub_alloc = args->alloc;
-	uber->ub_repos = args->repos;
-	uber->ub_submitq = args->submitq;
-	uber->ub_idsmap = args->idsmap;
 	uber->ub_iconv = (iconv_t)(-1);
 	uber->ub_sb_bri = NULL;
 	uber->ub_sbi = NULL;
+	uber->ub_ctl_flags = 0;
+	uber->ub_ms_flags = 0;
 
 	uber->ub_ops.op_iopen_max = 0;
 	uber->ub_ops.op_iopen = 0;
 	uber->ub_ops.op_time = silofs_time_now();
 	uber->ub_ops.op_count = 0;
 	uber->ub_ops.op_iopen_max = uber_calc_iopen_limit(uber);
-
-	uber->ub_owner.uid = getuid();
-	uber->ub_owner.gid = getgid();
-	uber->ub_owner.pid = getpid();
 }
 
 static void uber_fini_commons(struct silofs_uber *uber)
 {
-	uber->ub_ivkey = NULL;
-	uber->ub_alloc = NULL;
-	uber->ub_repos = NULL;
-	uber->ub_submitq = NULL;
-	uber->ub_idsmap = NULL;
+	memset(&uber->ub, 0, sizeof(uber->ub));
 	uber->ub_iconv = (iconv_t)(-1);
 	uber->ub_sb_bri = NULL;
 	uber->ub_sbi = NULL;
@@ -171,11 +234,13 @@ static void uber_fini_iconv(struct silofs_uber *uber)
 }
 
 int silofs_uber_init(struct silofs_uber *uber,
-                     const struct silofs_uber_args *args)
+                     const struct silofs_uber_base *ub_base)
 {
 	int err;
 
-	uber_init_commons(uber, args);
+	uber_init_commons(uber, ub_base);
+	uber_update_by_fs_args(uber);
+
 	err = uber_init_fs_lock(uber);
 	if (err) {
 		return err;
@@ -424,7 +489,7 @@ static void sbi_export_bootsec(const struct silofs_sb_info *sbi,
 
 static void uber_pre_forkfs(struct silofs_uber *uber)
 {
-	silofs_repos_pre_forkfs(uber->ub_repos);
+	silofs_repos_pre_forkfs(uber->ub.repos);
 }
 
 int silofs_uber_forkfs(struct silofs_uber *uber,
@@ -561,9 +626,9 @@ static void ubc_setup(struct silofs_uber_ctx *ub_ctx, bool warm)
 	enum silofs_repo_mode repo_mode;
 
 	repo_mode = warm ? SILOFS_REPO_LOCAL : SILOFS_REPO_ATTIC;
-	repo = silofs_repos_get(uber->ub_repos, repo_mode);
+	repo = silofs_repos_get(uber->ub.repos, repo_mode);
 	ub_ctx->uber = uber;
-	ub_ctx->repos = uber->ub_repos;
+	ub_ctx->repos = uber->ub.repos;
 	ub_ctx->repo = repo;
 	ub_ctx->repo_mode = repo_mode;
 	ub_ctx->cache = &repo->re_cache;
@@ -1306,8 +1371,8 @@ void silofs_relax_caches(struct silofs_task *task, int flags)
 {
 	const struct silofs_uber *uber = task->t_uber;
 
-	if (uber->ub_repos) {
-		silofs_repos_relax_cache(uber->ub_repos, flags);
+	if (uber->ub.repos) {
+		silofs_repos_relax_cache(uber->ub.repos, flags);
 	}
 }
 

@@ -64,9 +64,9 @@ static int check_utf8_name(const struct silofs_uber *uber,
 
 static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
-	const struct silofs_sb_info *sbi = ii_sbi(ii);
+	const struct silofs_uber *uber = ii_uber(ii);
 
-	return ((sbi->sb_ctl_flags & SILOFS_SBCF_NLOOKUP) != 0);
+	return ((uber->ub_ctl_flags & SILOFS_UBF_NLOOKUP) > 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -732,7 +732,6 @@ static int check_mknod(struct silofs_task *task,
                        const struct silofs_namestr *name,
                        mode_t mode, dev_t rdev)
 {
-	const struct silofs_sb_info *sbi = ii_sbi(dir_ii);
 	int err;
 
 	err = check_dir_can_add(task, dir_ii, name);
@@ -753,7 +752,7 @@ static int check_mknod(struct silofs_task *task,
 		if (rdev == 0) {
 			return -EINVAL;
 		}
-		if (sbi->sb_ms_flags & MS_NODEV) {
+		if (task->t_uber->ub_ms_flags & MS_NODEV) {
 			return -EOPNOTSUPP;
 		}
 	} else {
@@ -2014,7 +2013,7 @@ static void fill_proc(const struct silofs_sb_info *sbi,
 	qpr->uid = uber->ub_owner.uid;
 	qpr->gid = uber->ub_owner.gid;
 	qpr->pid = uber->ub_owner.pid;
-	qpr->msflags = sbi->sb_ms_flags;
+	qpr->msflags = uber->ub_ms_flags;
 	qpr->uptime = silofs_uber_uptime(uber);
 	qpr->iopen_max = uber->ub_ops.op_iopen_max;
 	qpr->iopen_cur = uber->ub_ops.op_iopen;
@@ -2073,7 +2072,7 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 
 static struct silofs_repos *repos_of(const struct silofs_uber *uber)
 {
-	return uber->ub_repos;
+	return uber->ub.repos;
 }
 
 static void fill_query_bootsec(const struct silofs_inode_info *ii,
@@ -2196,12 +2195,12 @@ int silofs_do_query(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int check_fsowner(const struct silofs_task *task,
-                         const struct silofs_sb_info *sbi)
+static int check_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
+	const uid_t owner_uid = task->t_uber->ub_owner.uid;
 
-	return uid_eq(creds->xcred.uid, sbi->sb_owner.uid) ? 0 : -EPERM;
+	return uid_eq(creds->xcred.uid, owner_uid) ? 0 : -EPERM;
 }
 
 static int check_clone_flags(int flags)
@@ -2228,7 +2227,7 @@ static int check_clone(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = check_fsowner(task, task_sbi(task));
+	err = check_fsowner(task);
 	if (err) {
 		return err;
 	}

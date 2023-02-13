@@ -138,6 +138,7 @@
 #define vaddr_assign(va, oth)           silofs_vaddr_assign(va, oth)
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
+#define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
 
 #define vrange_next(vrng, o)            silofs_vrange_next(vrng, o)
 
@@ -145,6 +146,8 @@
 #define bri_decref(bri)                 silofs_bri_decref(bri)
 
 #define task_sbi(t)                     silofs_task_sbi(t)
+#define task_has_kcopy(t)               silofs_task_has_kcopy(t)
+
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)

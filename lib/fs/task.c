@@ -494,6 +494,13 @@ struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 	return task->t_uber->ub_sbi;
 }
 
+bool silofs_task_has_kcopy(const struct silofs_task *task)
+{
+	const struct silofs_sb_info *sbi = silofs_task_sbi(task);
+
+	return (sbi != NULL) && ((sbi->sb_ctl_flags & SILOFS_SBCF_KCOPY) > 0);
+}
+
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));

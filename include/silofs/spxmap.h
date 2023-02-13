@@ -28,7 +28,7 @@ struct silofs_splifo {
 
 /* in-memory map of previously-allocated now-free space */
 struct silofs_spamap {
-	struct silofs_splifo	spa_lifo;
+	struct silofs_splifo    spa_lifo;
 	struct silofs_alloc    *spa_alloc;
 	struct silofs_avl       spa_avl;
 	unsigned int            spa_cap_max;

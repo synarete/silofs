@@ -110,6 +110,8 @@ CFLAGS += -fPIC -fwrapv -fstrict-aliasing -fsigned-char
 CFLAGS += -fstack-protector -fstack-protector-strong # -fstack-check
 CFLAGS += -fasynchronous-unwind-tables
 CFLAGS += -fsanitize=pointer-overflow -fsanitize=alignment -fsanitize=bounds
+CFLAGS += -fsanitize=object-size -fsanitize-address-use-after-scope
+
 
 # Have 'pedantic' flag only when not using private fuse header
 ifneq (,$(wildcard "$(TOP)/include/linux/fuse.h"))

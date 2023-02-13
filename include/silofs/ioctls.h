@@ -28,22 +28,21 @@
 #include <unistd.h>
 #include <silofs/fsdef.h>
 
+/* maximal size of ioctl input argument */
+#define SILOFS_IOC_SIZE_MAX     (2048)
+
+/* supported ioctl commands */
+#define SILOFS_IOC_QUERY        _IOWR('S', 1, struct silofs_ioc_query)
+#define SILOFS_IOC_CLONE        _IOWR('S', 2, struct silofs_ioc_clone)
 
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
 	SILOFS_QUERY_VERSION    = 1,
 	SILOFS_QUERY_BOOTSEC    = 2,
-	SILOFS_QUERY_PROC    = 3,
+	SILOFS_QUERY_PROC       = 3,
 	SILOFS_QUERY_SPSTATS    = 4,
 	SILOFS_QUERY_STATX      = 5,
 };
-
-enum silofs_tweak_type {
-	SILOFS_TWEAK_NONE       = 0,
-	SILOFS_TWEAK_IFLAGS     = 1,
-	SILOFS_TWEAK_DIRFLAGS   = 2,
-};
-
 
 struct silofs_query_version {
 	char     string[SILOFS_NAME_MAX + 1];
@@ -101,29 +100,9 @@ struct silofs_ioc_query {
 	union silofs_query_u u;
 };
 
-struct silofs_tweak_flags {
-	int32_t  flags;
-};
-
-union silofs_tweak_u {
-	struct silofs_tweak_flags       iflags;
-	struct silofs_tweak_flags       dirflags;
-};
-
-struct silofs_ioc_tweak {
-	int32_t  ttype;
-	uint32_t reserved;
-	union silofs_tweak_u u;
-};
-
 struct silofs_ioc_clone {
 	struct silofs_uuid uuid_new;
 	struct silofs_uuid uuid_alt;
 };
-
-
-#define SILOFS_FS_IOC_QUERY     _IOWR('S', 1, struct silofs_ioc_query)
-#define SILOFS_FS_IOC_TWEAK     _IOWR('S', 2, struct silofs_ioc_tweak)
-#define SILOFS_FS_IOC_CLONE     _IOWR('S', 3, struct silofs_ioc_clone)
 
 #endif /* SILOFS_IOCTLS_H_ */

@@ -2793,14 +2793,14 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	if (flags & SILOFS_F_TIMEOUT) {
 		niter += min(silofs_popcount64(mem_press >> 8), 2);
 	}
-	if (flags & SILOFS_F_OPSTART) {
+	if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
 		niter += min(silofs_popcount64(mem_press >> 16), 4);
 	}
 	if (flags & SILOFS_F_NOW) {
 		niter += min(silofs_popcount64(mem_press >> 20), 8);
 	}
 	if (flags & SILOFS_F_WALKFS) {
-		niter += (mem_press & 3);
+		niter += (mem_press & 7);
 	}
 	return niter;
 }

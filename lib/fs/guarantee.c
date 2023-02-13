@@ -63,6 +63,9 @@
 #define REQUIRE_SIZEOF(type, size) \
 	REQUIRE_EQ(sizeof(type), size)
 
+#define REQUIRE_SIZEOF_LE(type, size) \
+	REQUIRE_LE(sizeof(type), size)
+
 #define REQUIRE_SIZEOF_BK(type) \
 	REQUIRE_BK_SIZE(sizeof(type))
 
@@ -312,6 +315,8 @@ static void guarantee_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
 	REQUIRE_SIZEOF(struct silofs_ioc_clone, 32);
+	REQUIRE_SIZEOF_LE(struct silofs_ioc_query, SILOFS_IOC_SIZE_MAX);
+	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }
 
 static void guarantee_defs_consistency(void)

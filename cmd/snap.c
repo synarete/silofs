@@ -201,7 +201,7 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 	if (err) {
 		cmd_dief(err, "failed to open: %s", path);
 	}
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_QUERY, qry);
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		cmd_dief(err, "ioctl error: %s", path);
 	}
@@ -223,7 +223,7 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "syncfs error: %s", dirpath);
 	}
 
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_CLONE, ctx->ioc_clone);
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_CLONE, ctx->ioc_clone);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		cmd_dief(err, "ioctl error: %s", dirpath);

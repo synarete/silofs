@@ -104,7 +104,7 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 		         ctx->in_args.mntpoint_real);
 	}
 	ctx->query.qtype = SILOFS_QUERY_PROC;
-	err = silofs_sys_ioctlp(fd, SILOFS_FS_IOC_QUERY, &ctx->query);
+	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->query);
 	if (err) {
 		cmd_dief(err, "ioctl error: %s", ctx->in_args.mntpoint_real);
 	}

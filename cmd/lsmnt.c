@@ -106,7 +106,7 @@ static void cmd_lsmnt_exec_mi(struct cmd_lsmnt_ctx *ctx,
 		goto out;
 	}
 	qry->qtype = SILOFS_QUERY_BOOTSEC;
-	err = silofs_sys_ioctlp(dfd, SILOFS_FS_IOC_QUERY, qry);
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}

@@ -137,7 +137,7 @@ static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
 		cmd_dief(err, "failed to open: %s",
 		         ctx->in_args.pathname_real);
 	}
-	err = silofs_sys_ioctlp(fd, SILOFS_FS_IOC_QUERY, &ctx->query);
+	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->query);
 	if (err) {
 		cmd_dief(err, "ioctl error: %s", ctx->in_args.pathname_real);
 	}

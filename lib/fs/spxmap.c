@@ -596,7 +596,7 @@ static enum silofs_stype uaddr_vspace(const struct silofs_uaddr *uaddr)
 	return uaddr->oaddr.bka.blobid.vspace;
 }
 
-void silofs_uakey_setup(struct silofs_uakey *uakey, loff_t voff,
+static void uakey_setup(struct silofs_uakey *uakey, loff_t voff,
                         enum silofs_height height, enum silofs_stype vspace)
 {
 	uakey->voff = voff;
@@ -607,15 +607,15 @@ void silofs_uakey_setup(struct silofs_uakey *uakey, loff_t voff,
 void silofs_uakey_setup_by(struct silofs_uakey *uakey,
                            const struct silofs_uaddr *uaddr)
 {
-	silofs_uakey_setup(uakey, uaddr->voff,
-	                   uaddr->height, uaddr_vspace(uaddr));
+	uakey_setup(uakey, uaddr->voff,
+	            uaddr->height, uaddr_vspace(uaddr));
 }
 
 void silofs_uakey_setup_by2(struct silofs_uakey *uakey,
                             const struct silofs_vrange *vrange,
                             enum silofs_stype vspace)
 {
-	silofs_uakey_setup(uakey, vrange->beg, vrange->height, vspace);
+	uakey_setup(uakey, vrange->beg, vrange->height, vspace);
 }
 
 static bool uakey_isequal(const struct silofs_uakey *uakey1,

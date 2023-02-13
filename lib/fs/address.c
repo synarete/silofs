@@ -485,6 +485,12 @@ static bool treeid_isequal(const struct silofs_treeid *treeid1,
 	return (treeid_compare(treeid1, treeid2) == 0);
 }
 
+bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
+                           const struct silofs_treeid *treeid2)
+{
+	return treeid_isequal(treeid1, treeid2);
+}
+
 static void treeid_as_u64(const struct silofs_treeid *treeid,
                           uint64_t *out_u1, uint64_t *out_u2)
 {
@@ -1225,6 +1231,12 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 		return cmp;
 	}
 	return 0;
+}
+
+bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
+                          const struct silofs_vaddr *vaddr2)
+{
+	return (silofs_vaddr_compare(vaddr1, vaddr2) == 0);
 }
 
 void silofs_vaddr_setup(struct silofs_vaddr *vaddr,

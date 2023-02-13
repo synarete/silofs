@@ -92,9 +92,6 @@ int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_uakey_setup(struct silofs_uakey *uakey, loff_t voff,
-                        enum silofs_height height, enum silofs_stype vspace);
-
 void silofs_uakey_setup_by(struct silofs_uakey *uakey,
                            const struct silofs_uaddr *uaddr);
 

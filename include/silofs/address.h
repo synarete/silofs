@@ -238,6 +238,9 @@ void silofs_voaddr_assign(struct silofs_voaddr *voa,
 
 void silofs_treeid_generate(struct silofs_treeid *treeid);
 
+bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
+                           const struct silofs_treeid *treeid2);
+
 void silofs_treeid128_set(struct silofs_treeid128 *treeid196,
                           const struct silofs_treeid *treeid);
 
@@ -282,6 +285,9 @@ void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
 const struct silofs_vaddr *silofs_vaddr_none(void);
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
+                          const struct silofs_vaddr *vaddr2);
+
+bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
                           const struct silofs_vaddr *vaddr2);
 
 void silofs_vaddr_setup(struct silofs_vaddr *vaddr,

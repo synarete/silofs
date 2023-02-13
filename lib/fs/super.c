@@ -146,6 +146,7 @@ static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr64b_set(&sb->sb_self_uaddr, uaddr);
+	sb_set_treeid(sb, &uaddr->oaddr.bka.blobid.u.ta.treeid);
 }
 
 static void sb_origin(const struct silofs_super_block *sb,

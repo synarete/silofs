@@ -19,12 +19,20 @@
 
 #include <silofs/infra.h>
 
-/* in-mempry map of previously-allocated now-free space */
+/* in-memory short lifo of previously-allocated now-free space */
+struct silofs_splifo {
+	loff_t spl_lifo[512];
+	unsigned int spl_size;
+	unsigned int spl_ulen;
+};
+
+/* in-memory map of previously-allocated now-free space */
 struct silofs_spamap {
+	struct silofs_splifo	spa_lifo;
 	struct silofs_alloc    *spa_alloc;
 	struct silofs_avl       spa_avl;
-	enum silofs_stype       spa_stype;
 	unsigned int            spa_cap_max;
+	enum silofs_stype       spa_stype;
 };
 
 /* in-mempry map of previously-allocated now-free space byte stype */

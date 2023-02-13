@@ -876,36 +876,6 @@ static int check_stage_inode(const struct silofs_task *task, ino_t ino,
 	return ret;
 }
 
-static const struct silofs_spamaps *
-task_spamaps(const struct silofs_task *task)
-{
-	const struct silofs_sb_info *sbi = task_sbi(task);
-	const struct silofs_cache *cache = sbi_cache(sbi);
-
-	return &cache->c_spam;
-}
-
-static int check_stable_at(struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr)
-{
-	const struct silofs_spamaps *spam = task_spamaps(task);
-	loff_t base = SILOFS_OFF_NULL;
-	int err;
-
-	/* Fast path: if address is within cached free range it can not be
-	 * allocated and therefore non-stable. */
-	err = silofs_spamaps_baseof(spam, vaddr->stype, vaddr->off, &base);
-	if (!err) {
-		return -ENOENT;
-	}
-	/* Slow path: check allocation state by mapping. */
-	err = silofs_check_stable_at(task, vaddr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int resolve_iaddr(ino_t ino, struct silofs_iaddr *out_iaddr)
 {
 	const ino_t ino_max = SILOFS_INO_MAX;
@@ -950,7 +920,7 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
 	if (!err) {
 		return 0;
 	}
-	err = check_stable_at(task, &ivoa.voa.vaddr);
+	err = silofs_check_stable_at(task, &ivoa.voa.vaddr);
 	if (err) {
 		return err;
 	}

@@ -553,6 +553,8 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 	void *mem = NULL;
 	int err;
 
+	STATICASSERT_LE(sizeof(*fse_obj), 128 * SILOFS_KILO);
+
 	err = fse_check_args(args);
 	if (err) {
 		return err;

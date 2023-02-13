@@ -64,6 +64,7 @@ enum silofs_flags {
 	SILOFS_F_TIMEOUT        = SILOFS_BIT(9),
 	SILOFS_F_IDLE           = SILOFS_BIT(10),
 	SILOFS_F_WALKFS         = SILOFS_BIT(11),
+	SILOFS_F_URGENT         = SILOFS_BIT(12),
 };
 
 /* super-block control flags */

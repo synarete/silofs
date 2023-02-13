@@ -111,6 +111,45 @@ static int flc_check_resolved_oaddr(const struct silofs_flush_ctx *fl_ctx,
 	return err;
 }
 
+static void flc_relax_cache_now(const struct silofs_flush_ctx *fl_ctx)
+{
+	silofs_cache_relax(fl_ctx->cache, SILOFS_F_NOW | SILOFS_F_URGENT);
+}
+
+static int flc_make_sqe(struct silofs_flush_ctx *fl_ctx,
+                        struct silofs_submitq_entry **out_sqe)
+{
+	int retry = 4;
+	int err;
+
+	err = silofs_task_mk_sqe(fl_ctx->task, out_sqe);
+	while ((err == -ENOMEM) && (retry-- > 0)) {
+		flc_relax_cache_now(fl_ctx);
+		err = silofs_task_mk_sqe(fl_ctx->task, out_sqe);
+	}
+	return err;
+}
+
+static void flc_del_sqe(struct silofs_flush_ctx *fl_ctx,
+                        struct silofs_submitq_entry *sqe)
+{
+	silofs_task_rm_sqe(fl_ctx->task, sqe);
+}
+
+static int flc_setup_sqe_buf(struct silofs_flush_ctx *fl_ctx,
+                             struct silofs_submitq_entry *sqe)
+{
+	int retry = 4;
+	int err;
+
+	err = silofs_sqe_assign_buf(sqe);
+	while ((err == -ENOMEM) && (retry-- > 0)) {
+		flc_relax_cache_now(fl_ctx);
+		err = silofs_sqe_assign_buf(sqe);
+	}
+	return err;
+}
+
 static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
                             struct silofs_snode_info **siq,
                             struct silofs_submitq_entry *sqe)
@@ -134,7 +173,7 @@ static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
 		}
 		*siq = si->s_ds_next;
 	}
-	return silofs_sqe_assign_buf(sqe);
+	return flc_setup_sqe_buf(fl_ctx, sqe);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -367,13 +406,13 @@ static int flc_flush_dset(struct silofs_flush_ctx *fl_ctx,
 	int err;
 
 	while (siq != NULL) {
-		err = silofs_task_mk_sqe(fl_ctx->task, &sqe);
+		err = flc_make_sqe(fl_ctx, &sqe);
 		if (err) {
 			return err;
 		}
 		err = flc_flush_siq(fl_ctx, &siq, sqe);
 		if (err) {
-			silofs_task_rm_sqe(fl_ctx->task, sqe);
+			flc_del_sqe(fl_ctx, sqe);
 			return err;
 		}
 	}

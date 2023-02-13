@@ -30,7 +30,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#define CACHE_RETRY 2
+#define CACHE_RETRY 4
 
 
 static void cache_pre_op(struct silofs_cache *cache);
@@ -2724,18 +2724,12 @@ static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 
 	count = lrumap_overpop(&cache->c_vbki_lm) + extra;
 	actual += cache_shrink_or_relru_vbkis(cache, count, false);
-	if (actual && (shift < 1)) {
-		return actual;
-	}
 
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
 	actual += cache_shrink_or_relru_uis(cache, count, false);
 
 	count = lrumap_overpop(&cache->c_ubki_lm) + extra;
 	actual += cache_shrink_or_relru_ubkis(cache, count, false);
-	if (actual && (shift < 2)) {
-		return actual;
-	}
 
 	count = lrumap_overpop(&cache->c_bri_lm) + extra;
 	actual += cache_shrink_or_relru_bris(cache, count, false);
@@ -2791,16 +2785,19 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 		niter += silofs_popcount64(mem_press >> 4);
 	}
 	if (flags & SILOFS_F_TIMEOUT) {
-		niter += min(silofs_popcount64(mem_press >> 8), 2);
+		niter += min(silofs_popcount64(mem_press >> 8), 1);
 	}
 	if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		niter += min(silofs_popcount64(mem_press >> 16), 4);
+		niter += min(silofs_popcount64(mem_press >> 10), 2);
 	}
 	if (flags & SILOFS_F_NOW) {
-		niter += min(silofs_popcount64(mem_press >> 20), 8);
+		niter += min(silofs_popcount64(mem_press >> 12), 8);
 	}
 	if (flags & SILOFS_F_WALKFS) {
 		niter += (mem_press & 7);
+	}
+	if (flags & SILOFS_F_URGENT) {
+		niter += 4;
 	}
 	return niter;
 }
@@ -2897,14 +2894,14 @@ static size_t flush_threshold_of(silofs_dqid_t dqid, int flags)
 {
 	size_t threshold;
 	const size_t mega = SILOFS_UMEGA;
-	const size_t factor = dqid_specific(dqid) ? 2 : 1;
+	const size_t factor = dqid_specific(dqid) ? 8 : 1;
 
 	if (flags & SILOFS_F_NOW) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = mega / 2;
-	} else if (flags & SILOFS_F_FSYNC) {
 		threshold = mega;
+	} else if (flags & SILOFS_F_FSYNC) {
+		threshold = 2 * mega;
 	} else if (flags & (SILOFS_F_IDLE)) {
 		threshold = 8 * mega;
 	} else if (flags & SILOFS_F_TIMEOUT) {
@@ -2955,7 +2952,7 @@ static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
 	const uint64_t mem_press_mask = cache_memory_pressure(cache);
 	const uint32_t mem_press_level = silofs_popcount64(mem_press_mask);
 
-	return (mem_press_level > 20);
+	return (mem_press_level > 18);
 }
 
 bool silofs_cache_need_flush(const struct silofs_cache *cache,

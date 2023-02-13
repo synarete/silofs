@@ -93,13 +93,13 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 	/* zero implies default value */
 	if (mem_want == 0) {
-		mem_want = 2 * SILOFS_GIGA;
+		mem_want = 4 * SILOFS_GIGA;
 	}
 
 	page_size = (size_t)silofs_sc_page_size();
 	phys_pages = (size_t)silofs_sc_phys_pages();
 	mem_total = (page_size * phys_pages);
-	mem_floor = SILOFS_UGIGA / 8;
+	mem_floor = SILOFS_UGIGA / 4;
 	if (mem_total < mem_floor) {
 		return -ENOMEM;
 	}
@@ -113,7 +113,7 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 	mem_glim = 64 * SILOFS_UGIGA;
 	mem_ceil = silofs_min3(mem_glim, mem_rlim, mem_total / 4);
 	mem_uget = silofs_clamp(mem_want, mem_floor, mem_ceil);
-	*out_mem_size = align_down(mem_uget, SILOFS_UMEGA);
+	*out_mem_size = align_down(mem_uget, 2 * SILOFS_UMEGA);
 	return 0;
 }
 

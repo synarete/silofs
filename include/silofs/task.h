@@ -50,6 +50,7 @@ struct silofs_submitq_entry {
 	loff_t          off;
 	size_t          len;
 	size_t          cnt;
+	int             hold_refs;
 	volatile int    status;
 };
 

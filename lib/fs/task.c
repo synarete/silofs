@@ -139,9 +139,12 @@ void silofs_sqe_increfs(struct silofs_submitq_entry *sqe)
 {
 	struct silofs_submit_ref *ref;
 
-	for (size_t i = 0; i < sqe->cnt; ++i) {
-		ref = &sqe->ref[i];
-		silofs_bki_incref(ref->bki);
+	if (!sqe->hold_refs) {
+		for (size_t i = 0; i < sqe->cnt; ++i) {
+			ref = &sqe->ref[i];
+			silofs_bki_incref(ref->bki);
+		}
+		sqe->hold_refs = 1;
 	}
 }
 
@@ -149,9 +152,12 @@ static void sqe_decrefs(struct silofs_submitq_entry *sqe)
 {
 	struct silofs_submit_ref *ref;
 
-	for (size_t i = 0; i < sqe->cnt; ++i) {
-		ref = &sqe->ref[i];
-		silofs_bki_decref(ref->bki);
+	if (sqe->hold_refs) {
+		for (size_t i = 0; i < sqe->cnt; ++i) {
+			ref = &sqe->ref[i];
+			silofs_bki_decref(ref->bki);
+		}
+		sqe->hold_refs = 0;
 	}
 }
 
@@ -170,6 +176,7 @@ static int sqe_init(struct silofs_submitq_entry *sqe,
 	sqe->len = 0;
 	sqe->cnt = 0;
 	sqe->buf = NULL;
+	sqe->hold_refs = 0;
 	sqe->status = 0;
 	return silofs_mutex_init(&sqe->mu);
 }

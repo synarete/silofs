@@ -481,6 +481,26 @@ static int bkr_find_free(const struct silofs_bk_ref *bkr,
 	return -ENOSPC;
 }
 
+static void bkr_make_vaddrs(const struct silofs_bk_ref *bkr,
+                            enum silofs_stype stype, loff_t voff_base,
+                            struct silofs_vaddrs *vas)
+{
+	const size_t nkb = stype_nkbs(stype);
+	const size_t nkb_in_bk = SILOFS_NKB_IN_BK;
+	const uint64_t allocated = bkr_allocated(bkr);
+	uint64_t mask;
+	loff_t voff;
+
+	vas->count = 0;
+	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
+		mask = mask_of(kbn, nkb);
+		if ((allocated & mask) == mask) {
+			voff = off_end(voff_base, kbn * SILOFS_KB_SIZE);
+			vaddr_setup(&vas->vaddr[vas->count++], stype, voff);
+		}
+	}
+}
+
 static void bkr_clone_from(struct silofs_bk_ref *bkr,
                            const struct silofs_bk_ref *bkr_other)
 {
@@ -701,6 +721,15 @@ spleaf_find_free(const struct silofs_spmap_leaf *sl, enum silofs_stype stype,
 		}
 	}
 	return err;
+}
+
+static void spleaf_make_vaddrs(const struct silofs_spmap_leaf *sl,
+                               enum silofs_stype stype, silofs_lba_t lba,
+                               struct silofs_vaddrs *vas)
+{
+	const struct silofs_bk_ref *bkr = spleaf_bkr_by_lba(sl, lba);
+
+	bkr_make_vaddrs(bkr, stype, lba_to_off(lba), vas);
 }
 
 static void spleaf_main_blobid(const struct silofs_spmap_leaf *sl,
@@ -1072,6 +1101,13 @@ void silofs_sli_mark_unwritten_at(struct silofs_spleaf_info *sli,
 		spleaf_set_unwritten_at(sl, vaddr);
 		sli_dirtify(sli);
 	}
+}
+
+void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
+                          enum silofs_stype stype, silofs_lba_t lba,
+                          struct silofs_vaddrs *vas)
+{
+	spleaf_make_vaddrs(sli->sl, stype, lba, vas);
 }
 
 void silofs_sli_main_blob(const struct silofs_spleaf_info *sli,

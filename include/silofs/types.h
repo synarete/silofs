@@ -271,6 +271,12 @@ struct silofs_vaddr {
 	unsigned int            len;
 };
 
+/* set of addresses within single vblock */
+struct silofs_vaddrs {
+	struct silofs_vaddr     vaddr[SILOFS_NKB_IN_BK];
+	size_t                  count;
+};
+
 /* inodes addressing: ino to logical address mapping */
 struct silofs_iaddr {
 	ino_t                   ino;

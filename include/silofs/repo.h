@@ -22,9 +22,11 @@
 
 /* blob-reference cache-entry */
 struct silofs_blobref_info {
+	struct silofs_namebuf           br_nb;
 	struct silofs_cache_elem        br_ce;
 	struct silofs_blobid            br_blobid;
 	struct silofs_iovref            br_ior;
+	ssize_t                         br_size;
 	int                             br_fd;
 	bool                            br_locked;
 	bool                            br_rdonly;
@@ -64,18 +66,14 @@ silofs_bri_new(struct silofs_alloc *alloc,
 void silofs_bri_del(struct silofs_blobref_info *bri,
                     struct silofs_alloc *alloc);
 
-int silofs_bri_pwritevn(const struct silofs_blobref_info *bri,
-                        const struct silofs_oaddr *oaddr,
-                        const struct iovec *iov, size_t cnt);
-
-int silofs_bri_pwriten(const struct silofs_blobref_info *bri, loff_t off,
+int silofs_bri_pwriten(struct silofs_blobref_info *bri, loff_t off,
                        const void *buf, size_t len, bool sync);
 
-int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
+int silofs_bri_load_ubk(struct silofs_blobref_info *bri,
                         const struct silofs_bkaddr *bkaddr,
                         struct silofs_ubk_info *ubki);
 
-int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
+int silofs_bri_load_vbk(struct silofs_blobref_info *bri,
                         const struct silofs_bkaddr *bkaddr,
                         struct silofs_vbk_info *vbki);
 

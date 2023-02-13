@@ -201,19 +201,6 @@ static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 	return err;
 }
 
-static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, loff_t off)
-{
-	int err;
-
-	err = silofs_sys_pwritevn(fd, iov, (int)cnt, off);
-	if (err) {
-		silofs_assert_ne(err, -EBADF);
-		log_warn("pwritevn error: fd=%d iov_cnt=%lu off=%ld err=%d",
-		         fd, cnt, off, err);
-	}
-	return err;
-}
-
 static int do_preadn(int fd, void *buf, size_t cnt, loff_t off)
 {
 	int err;
@@ -470,6 +457,7 @@ static void bri_init(struct silofs_blobref_info *bri,
 	silofs_ce_init(&bri->br_ce);
 	silofs_iovref_init(&bri->br_ior, bri_iov_pre, bri_iov_post);
 	silofs_ckey_by_blobid(&bri->br_ce.ce_ckey, &bri->br_blobid);
+	bri->br_size = 0;
 	bri->br_fd = -1;
 	bri->br_locked = false;
 	bri->br_rdonly = false;
@@ -480,18 +468,19 @@ static void bri_fini(struct silofs_blobref_info *bri)
 	blobid_reset(&bri->br_blobid);
 	silofs_ce_fini(&bri->br_ce);
 	silofs_iovref_fini(&bri->br_ior);
+	bri->br_size = -1;
 	bri->br_fd = -1;
-}
-
-static void bri_set_fd(struct silofs_blobref_info *bri, int fd, bool rw)
-{
-	bri->br_fd = fd;
-	bri->br_rdonly = !rw;
 }
 
 static ssize_t bri_capacity(const struct silofs_blobref_info *bri)
 {
 	return (ssize_t)blobid_size(&bri->br_blobid);
+}
+
+static void bri_bindto(struct silofs_blobref_info *bri, int fd, bool rw)
+{
+	bri->br_fd = fd;
+	bri->br_rdonly = !rw;
 }
 
 static int bri_check_range(const struct silofs_blobref_info *bri,
@@ -504,13 +493,73 @@ static int bri_check_range(const struct silofs_blobref_info *bri,
 		return -EINVAL;
 	}
 	if (end > (cap + SILOFS_BK_SIZE)) {
-		return -EINVAL;
+		return -SILOFS_EBLOB;
 	}
 	return 0;
 }
 
-static void bri_setup_iovec(const struct silofs_blobref_info *bri,
-                            loff_t off, size_t len, struct silofs_iovec *siov)
+static int bri_inspect_size(struct silofs_blobref_info *bri)
+{
+	struct stat st;
+	ssize_t cap;
+	int err;
+
+	err = do_fstat(bri->br_fd, &st);
+	if (err) {
+		return err;
+	}
+	if (st.st_size % SILOFS_BK_SIZE) {
+		log_warn("blob-size not aligned: blob=%s size=%ld",
+		         bri->br_nb.name, st.st_size);
+		return -SILOFS_EBLOB;
+	}
+	cap = bri_capacity(bri);
+	if (st.st_size > (cap + SILOFS_BK_SIZE)) {
+		log_warn("blob-size mismatch: blob=%s size=%ld cap=%ld",
+		         bri->br_nb.name, st.st_size, cap);
+		return -SILOFS_EBLOB;
+	}
+	bri->br_size = st.st_size;
+	return 0;
+}
+
+static int bri_check_writable(const struct silofs_blobref_info *bri)
+{
+	return bri->br_rdonly ? -SILOFS_ERDONLY : 0;
+}
+
+static int bri_reassign_size(struct silofs_blobref_info *bri, loff_t off)
+{
+	loff_t len;
+	int err;
+
+	err = bri_check_range(bri, off, 0);
+	if (err) {
+		return err;
+	}
+	err = bri_check_writable(bri);
+	if (err) {
+		return err;
+	}
+	len = off_align_to_bk(off + SILOFS_BK_SIZE - 1);
+	err = do_ftruncate(bri->br_fd, len);
+	if (err) {
+		return err;
+	}
+	bri->br_size = len;
+	return 0;
+}
+
+static int bri_require_size_ge(struct silofs_blobref_info *bri,
+                               loff_t off, size_t len)
+{
+	const loff_t end = off_end(off, len);
+
+	return (bri->br_size >= end) ? 0 : bri_reassign_size(bri, end);
+}
+
+static void bri_make_iovec(const struct silofs_blobref_info *bri,
+                           loff_t off, size_t len, struct silofs_iovec *siov)
 {
 	siov->iov_off = off;
 	siov->iov_len = len;
@@ -532,7 +581,7 @@ static int bri_iovec_at(const struct silofs_blobref_info *bri,
 
 	err = bri_check_range(bri, off, len);
 	if (!err) {
-		bri_setup_iovec(bri, off, len, siov);
+		bri_make_iovec(bri, off, len, siov);
 	}
 	return err;
 }
@@ -558,7 +607,7 @@ int silofs_bri_resolve(struct silofs_blobref_info *bri,
 	return 0;
 }
 
-static int bri_store_by(const struct silofs_blobref_info *bri,
+static int bri_store_by(struct silofs_blobref_info *bri,
                         const struct silofs_iovec *siov,
                         const void *ptr, size_t len)
 {
@@ -569,6 +618,10 @@ static int bri_store_by(const struct silofs_blobref_info *bri,
 	}
 	if (unlikely(len != siov->iov_len)) {
 		return -EINVAL;
+	}
+	err = bri_require_size_ge(bri, siov->iov_off, len);
+	if (err) {
+		return err;
 	}
 	err = do_pwriten(siov->iov_fd, ptr, len, siov->iov_off);
 	if (err) {
@@ -596,39 +649,13 @@ static int bri_sync_by(const struct silofs_blobref_info *bri,
 	return 0;
 }
 
-static int bri_require_bk_at(const struct silofs_blobref_info *bri, loff_t off)
-{
-	struct stat st;
-	ssize_t cap;
-	loff_t end;
-	int err;
-
-	err = do_fstat(bri->br_fd, &st);
-	if (err) {
-		return err;
-	}
-	end = off_next_bk(off);
-	cap = bri_capacity(bri);
-	if ((end <= st.st_size) || (end > cap)) {
-		return 0;
-	}
-	if (bri->br_rdonly) {
-		return -SILOFS_ERDONLY;
-	}
-	err = do_ftruncate(bri->br_fd, end);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_bri_pwriten(const struct silofs_blobref_info *bri,
-                       loff_t off, const void *buf, size_t len, bool sync)
+int silofs_bri_pwriten(struct silofs_blobref_info *bri, loff_t off,
+                       const void *buf, size_t len, bool sync)
 {
 	struct silofs_iovec siov = { .iov_off = -1 };
 	int err;
 
-	err = bri_require_bk_at(bri, off);
+	err = bri_require_size_ge(bri, off, len);
 	if (err) {
 		return err;
 	}
@@ -649,52 +676,9 @@ int silofs_bri_pwriten(const struct silofs_blobref_info *bri,
 	return 0;
 }
 
-static size_t iovec_length(const struct iovec *iov, size_t cnt)
-{
-	size_t len = 0;
-
-	for (size_t i = 0; i < cnt; ++i) {
-		len += iov[i].iov_len;
-	}
-	return len;
-}
-
-static int check_oaddr_iovec(const struct silofs_oaddr *oaddr,
-                             const struct iovec *iov, size_t cnt)
-{
-	return (iovec_length(iov, cnt) == oaddr->len) ? 0 : -EINVAL;
-}
-
-int silofs_bri_pwritevn(const struct silofs_blobref_info *bri,
-                        const struct silofs_oaddr *oaddr,
-                        const struct iovec *iov, size_t cnt)
-{
-	struct silofs_iovec siov = { .iov_off = -1 };
-	int err;
-
-	err = check_oaddr_iovec(oaddr, iov, cnt);
-	if (err) {
-		return err;
-	}
-	err = bri_iovec_of(bri, oaddr, &siov);
-	if (err) {
-		return err;
-	}
-	err = bri_require_bk_at(bri, siov.iov_off);
-	if (err) {
-		return err;
-	}
-	err = do_pwritevn(siov.iov_fd, iov, cnt, siov.iov_off);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 int silofs_bri_read_blob(const struct silofs_blobref_info *bri,
                          void *buf, size_t len)
 {
-	struct stat st;
 	uint8_t *dat;
 	size_t bsz;
 	size_t rem;
@@ -705,12 +689,8 @@ int silofs_bri_read_blob(const struct silofs_blobref_info *bri,
 	if (err) {
 		return err;
 	}
-	err = do_fstat(bri->br_fd, &st);
-	if (err) {
-		return err;
-	}
-	bsz = (size_t)st.st_size;
-	cnt = min(len, (size_t)bsz);
+	bsz = (size_t)bri->br_size;
+	cnt = min(len, bsz);
 	dat = buf;
 	err = do_preadn(bri->br_fd, dat, cnt, 0);
 	if (err) {
@@ -772,16 +752,16 @@ static int bri_load_bk(const struct silofs_blobref_info *bri,
 	return bri_load_bb(bri, &oaddr, &bb);
 }
 
-static int bri_require_bk_of(const struct silofs_blobref_info *bri,
+static int bri_require_bk_of(struct silofs_blobref_info *bri,
                              const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_oaddr oaddr;
 
 	silofs_oaddr_of_bk(&oaddr, &bkaddr->blobid, bkaddr->lba);
-	return bri_require_bk_at(bri, oaddr.pos);
+	return bri_require_size_ge(bri, oaddr.pos, oaddr.len);
 }
 
-int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
+int silofs_bri_load_ubk(struct silofs_blobref_info *bri,
                         const struct silofs_bkaddr *bkaddr,
                         struct silofs_ubk_info *ubki)
 {
@@ -798,7 +778,7 @@ int silofs_bri_load_ubk(const struct silofs_blobref_info *bri,
 	return 0;
 }
 
-int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
+int silofs_bri_load_vbk(struct silofs_blobref_info *bri,
                         const struct silofs_bkaddr *bkaddr,
                         struct silofs_vbk_info *vbki)
 {
@@ -817,20 +797,13 @@ int silofs_bri_load_vbk(const struct silofs_blobref_info *bri,
 
 static int bri_trim_by_ftruncate(const struct silofs_blobref_info *bri)
 {
-	struct stat st;
-	int fd;
 	int err;
 
-	fd = bri->br_fd;
-	err = do_fstat(fd, &st);
+	err = do_ftruncate(bri->br_fd, 0);
 	if (err) {
 		return err;
 	}
-	err = do_ftruncate(fd, 0);
-	if (err) {
-		return err;
-	}
-	err = do_ftruncate(fd, st.st_size);
+	err = do_ftruncate(bri->br_fd, bri->br_size);
 	if (err) {
 		return err;
 	}
@@ -951,6 +924,16 @@ static int repo_spawn_cached_bri(struct silofs_repo *repo,
 	return 0;
 }
 
+static void repo_forget_cached_bri(struct silofs_repo *repo,
+                                   struct silofs_blobref_info *bri)
+{
+	struct silofs_cache *cache = &repo->re_cache;
+
+	if (likely(cache->c_inited)) {
+		silofs_cache_evict_blob(cache, bri, true);
+	}
+}
+
 static void repo_try_evict_cached_bri(struct silofs_repo *repo,
                                       struct silofs_blobref_info *bri)
 {
@@ -1049,121 +1032,75 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	return make_pathname(&hash, idx, out_nb);
 }
 
-static int
-repo_objs_create_blob(const struct silofs_repo *repo,
-                      const struct silofs_blobid *blobid, int *out_fd)
+static int repo_objs_setup_pathname_of(const struct silofs_repo *repo,
+                                       struct silofs_blobref_info *bri)
 {
-	struct silofs_namebuf nb;
-	struct stat st;
-	size_t bsz = 0;
-	long len = 0;
-	int dfd = -1;
-	int fd = -1;
+	return repo_objs_sub_pathname_of(repo, &bri->br_blobid, &bri->br_nb);
+}
+
+static int repo_objs_require_noblob(const struct silofs_repo *repo,
+                                    const struct silofs_namebuf *nb)
+{
+	struct stat st = { .st_size = 0 };
+	const int dfd = repo_blobs_dfd(repo);
 	int err;
 
-	bsz = blobid_size(blobid);
-	len = (long)max(bsz, SILOFS_BK_SIZE);
-	if (len >= INT_MAX) {
-		log_err("illegal blob size: name=%s bsz=%lu", nb.name, bsz);
-		return -EINVAL;
-	}
-	err = repo_objs_sub_pathname_of(repo, blobid, &nb);
-	if (err) {
-		return err;
-	}
-	dfd = repo_blobs_dfd(repo);
-	err = do_fstatat(dfd, nb.name, &st, 0);
+	err = do_fstatat(dfd, nb->name, &st, 0);
 	if (err == 0) {
-		log_err("blob already exists: name=%s", nb.name);
+		log_err("blob already exists: name=%s", nb->name);
 		return -EEXIST;
 	}
 	if (err != -ENOENT) {
-		log_err("can not create blob: name=%s err=%d", nb.name, err);
+		log_err("blob stat error: name=%s err=%d", nb->name, err);
 		return err;
 	}
-	err = do_openat(dfd, nb.name, O_CREAT | O_RDWR | O_TRUNC, 0600, &fd);
-	if (err) {
-		return err;
-	}
-	len = (long)min(bsz, SILOFS_BK_SIZE);
-	err = do_ftruncate(fd, len);
-	if (err) {
-		goto out_err;
-	}
-	*out_fd = fd;
 	return 0;
-out_err:
-	do_unlinkat(dfd, nb.name, 0);
-	do_closefd(&fd);
-	return err;
 }
 
-static int
-repo_objs_open_blob(const struct silofs_repo *repo, bool rw,
-                    const struct silofs_blobid *blobid, int *out_fd)
+static int repo_objs_create_blob_of(const struct silofs_repo *repo,
+                                    struct silofs_blobref_info *bri)
 {
-	struct silofs_namebuf nb;
-	struct stat st;
-	int o_flags = 0;
-	int len = 0;
-	int dfd = -1;
+	const int dfd = repo_blobs_dfd(repo);
+	const int o_flags = O_CREAT | O_RDWR | O_TRUNC;
 	int fd = -1;
 	int err;
 
-	err = repo_objs_sub_pathname_of(repo, blobid, &nb);
+	err = do_openat(dfd, bri->br_nb.name, o_flags, 0600, &fd);
 	if (err) {
 		return err;
 	}
-	dfd = repo_blobs_dfd(repo);
-	err = do_fstatat(dfd, nb.name, &st, 0);
+	bri_bindto(bri, fd, true);
+	err = bri_reassign_size(bri, SILOFS_BK_SIZE);
 	if (err) {
-		goto out_err;
+		do_unlinkat(dfd, bri->br_nb.name, 0);
+		return err;
 	}
-	len = (int)blobid_size(blobid);
-	if (st.st_size > len) {
-		log_warn("blob-size mismatch: %s len=%d st_size=%ld",
-		         nb.name, len, st.st_size);
-		err = -EIO;
-		goto out_err;
-	}
-	o_flags = rw ? O_RDWR : O_RDONLY;
-	err = do_openat(dfd, nb.name, o_flags, 0600, &fd);
-	if (err) {
-		goto out_err;
-	}
-	*out_fd = fd;
 	return 0;
-out_err:
-	/*
-	 * TODO-0032: Consider using SILOFS_EFSCORRUPTED
-	 *
-	 * When higher layer wants to open a blob, it should exist. Do not
-	 * return -ENOENT as this may be interpreted as non-error by caller.
-	 */
-	if (err == -ENOENT) {
-		return -EIO;
-	}
-	return err;
 }
 
-static int repo_objs_close_blob(const struct silofs_repo *repo,
-                                const struct silofs_blobid *blobid, int *pfd)
+static int repo_objs_open_blob_of(const struct silofs_repo *repo,
+                                  struct silofs_blobref_info *bri, bool rw)
 {
-	struct silofs_namebuf nb;
-	struct stat st;
-	int dfd = -1;
+	const int o_flags = rw ? O_RDWR : O_RDONLY;
+	const int dfd = repo_blobs_dfd(repo);
+	int fd = -1;
 	int err;
 
-	err = repo_objs_sub_pathname_of(repo, blobid, &nb);
+	silofs_assert_lt(bri->br_fd, 0);
+
+	err = do_openat(dfd, bri->br_nb.name, o_flags, 0600, &fd);
 	if (err) {
-		return err;
+		/*
+		 * TODO-0032: Consider using SILOFS_EFSCORRUPTED
+		 *
+		 * When higher layer wants to open a blob, it should exist.
+		 * Do not return -ENOENT as this may be interpreted as no-error
+		 * by caller.
+		 */
+		return (err == -ENOENT) ? -EIO : err;
 	}
-	dfd = repo_blobs_dfd(repo);
-	err = do_fstatat(dfd, nb.name, &st, 0);
-	if (err) {
-		log_warn("missing blob: name=%s err=%d", nb.name, err);
-	}
-	err = do_closefd(pfd);
+	bri_bindto(bri, fd, rw);
+	err = bri_inspect_size(bri);
 	if (err) {
 		return err;
 	}
@@ -1195,28 +1132,34 @@ static int repo_objs_unlink_blob(const struct silofs_repo *repo,
 	return 0;
 }
 
-static int repo_objs_open_blob_of(struct silofs_repo *repo, bool rw,
-                                  const struct silofs_blobid *blobid,
-                                  struct silofs_blobref_info **out_bri)
+static int repo_objs_open_blob(struct silofs_repo *repo, bool rw,
+                               const struct silofs_blobid *blobid,
+                               struct silofs_blobref_info **out_bri)
 {
-	int fd = -1;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
 	err = repo_objs_relax_cached_bris(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_objs_open_blob(repo, rw, blobid, &fd);
+	err = repo_spawn_cached_bri(repo, blobid, &bri);
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_cached_bri(repo, blobid, out_bri);
+	err = repo_objs_setup_pathname_of(repo, bri);
 	if (err) {
-		repo_objs_close_blob(repo, blobid, &fd);
-		return err;
+		goto out_err;
 	}
-	bri_set_fd(*out_bri, fd, rw);
+	err = repo_objs_open_blob_of(repo, bri, rw);
+	if (err) {
+		goto out_err;
+	}
+	*out_bri = bri;
 	return 0;
+out_err:
+	repo_forget_cached_bri(repo, bri);
+	return err;
 }
 
 static int repo_objs_stat_blob(const struct silofs_repo *repo,
@@ -1238,7 +1181,7 @@ static int repo_objs_stat_blob(const struct silofs_repo *repo,
 		return err;
 	}
 	len = blobid_size(blobid);
-	if (out_st->st_size > (loff_t)len) {
+	if (out_st->st_size > (loff_t)(len + SILOFS_BK_SIZE)) {
 		log_warn("blob-size mismatch: %s len=%lu st_size=%ld",
 		         nb.name, len, out_st->st_size);
 		return -EIO;
@@ -1246,28 +1189,38 @@ static int repo_objs_stat_blob(const struct silofs_repo *repo,
 	return 0;
 }
 
-static int repo_objs_create_blob_at(struct silofs_repo *repo,
-                                    const struct silofs_blobid *blobid,
-                                    struct silofs_blobref_info **out_bri)
+static int repo_objs_create_blob(struct silofs_repo *repo,
+                                 const struct silofs_blobid *blobid,
+                                 struct silofs_blobref_info **out_bri)
 {
-	int fd = -1;
+	struct silofs_blobref_info *bri = NULL;
 	int err;
 
 	err = repo_objs_relax_cached_bris(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_objs_create_blob(repo, blobid, &fd);
+	err = repo_spawn_cached_bri(repo, blobid, &bri);
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_cached_bri(repo, blobid, out_bri);
+	err = repo_objs_setup_pathname_of(repo, bri);
 	if (err) {
-		repo_objs_close_blob(repo, blobid, &fd);
-		return err;
+		goto out_err;
 	}
-	bri_set_fd(*out_bri, fd, true);
+	err = repo_objs_require_noblob(repo, &bri->br_nb);
+	if (err) {
+		goto out_err;
+	}
+	err = repo_objs_create_blob_of(repo, bri);
+	if (err) {
+		goto out_err;
+	}
+	*out_bri = bri;
 	return 0;
+out_err:
+	repo_forget_cached_bri(repo, bri);
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1330,7 +1283,6 @@ static int repo_spawn_blob(struct silofs_repo *repo,
                            const struct silofs_blobid *blobid,
                            struct silofs_blobref_info **out_bri)
 {
-	struct stat st;
 	int err;
 
 	err = repo_check_open_rw(repo);
@@ -1341,14 +1293,7 @@ static int repo_spawn_blob(struct silofs_repo *repo,
 	if (!err) {
 		return 0; /* cache hit */
 	}
-	err = repo_objs_stat_blob(repo, blobid, &st);
-	if (!err) {
-		return -EEXIST;
-	}
-	if (err != -ENOENT) {
-		return err;
-	}
-	err = repo_objs_create_blob_at(repo, blobid, out_bri);
+	err = repo_objs_create_blob(repo, blobid, out_bri);
 	if (err) {
 		return err;
 	}
@@ -1369,7 +1314,7 @@ static int repo_stage_blob(struct silofs_repo *repo, bool rw,
 	if (!err) {
 		return 0; /* cache hit */
 	}
-	err = repo_objs_open_blob_of(repo, rw, blobid, out_bri);
+	err = repo_objs_open_blob(repo, rw, blobid, out_bri);
 	if (err) {
 		return err;
 	}

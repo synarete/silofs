@@ -951,10 +951,16 @@ static int pac_require_restored_ubk(const struct silofs_pack_ctx *pa_ctx,
 	return err;
 }
 
-static int store_obj_at(const struct silofs_blobref_info *bri,
+static int store_obj_at(struct silofs_blobref_info *bri,
                         const struct silofs_oaddr *oaddr, const void *dat)
 {
 	return silofs_bri_pwriten(bri, oaddr->pos, dat, oaddr->len, false);
+}
+
+static int store_obj_of(struct silofs_blobref_info *bri,
+                        const struct silofs_uaddr *uaddr, const void *dat)
+{
+	return store_obj_at(bri, &uaddr->oaddr, dat);
 }
 
 static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
@@ -962,7 +968,6 @@ static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
                                   const struct silofs_bkaddr *bkaddr_dst)
 {
 	struct silofs_uaddr uaddr_dst = { .voff = -1 };
-	const struct silofs_blobref_info *bri = NULL;
 	struct silofs_ubk_info *ubki_dst = NULL;
 	const struct silofs_uaddr *uaddr_src = ui_uaddr(ui);
 	int err;
@@ -973,8 +978,7 @@ static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
 	}
 	uaddr_setup(&uaddr_dst, &bkaddr_dst->blobid, uaddr_src->oaddr.pos,
 	            uaddr_src->stype, uaddr_src->height, uaddr_src->voff);
-	bri = ubki_dst->ubk_bri;
-	err = store_obj_at(bri, &uaddr_dst.oaddr, ui->u_si.s_view);
+	err = store_obj_of(ubki_dst->ubk_bri, &uaddr_dst, ui->u_si.s_view);
 	if (err) {
 		return err;
 	}

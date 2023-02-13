@@ -1040,13 +1040,13 @@ int silofs_remove_inode(struct silofs_task *task,
 	return 0;
 }
 
-static int reclaim_vspace(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr)
+static int reclaim_vspace_at(struct silofs_task *task,
+                             const struct silofs_vaddr *vaddr)
 {
 	struct silofs_voaddr voa;
 	int err;
 
-	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RO, &voa);
+	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RW, &voa);
 	if (err) {
 		return err;
 	}
@@ -1063,7 +1063,7 @@ static int remove_vnode_of(struct silofs_task *task,
 	int err;
 
 	vi_incref(vi);
-	err = reclaim_vspace(task, vi_vaddr(vi));
+	err = reclaim_vspace_at(task, vi_vaddr(vi));
 	vi_decref(vi);
 	return err;
 }
@@ -1092,7 +1092,7 @@ int silofs_remove_vnode_at(struct silofs_task *task,
 	if (!err) {
 		err = silofs_remove_vnode(task, vi);
 	} else {
-		err = reclaim_vspace(task, vaddr);
+		err = reclaim_vspace_at(task, vaddr);
 	}
 	return err;
 }

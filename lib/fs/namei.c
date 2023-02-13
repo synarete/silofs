@@ -2019,7 +2019,7 @@ static void fill_proc(const struct silofs_sb_info *sbi,
 	qpr->iopen_cur = uber->ub_ops.op_iopen;
 	qpr->memsz_max = alst.memsz_data;
 	qpr->memsz_cur = alst.nbytes_used;
-	qpr->bopen_cur = cache->c_bri_lm.lm_lru.sz;
+	qpr->bopen_cur = cache->c_blobf_lm.lm_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

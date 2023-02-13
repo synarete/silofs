@@ -923,44 +923,44 @@ static int pac_require_restored_ubk(const struct silofs_pack_ctx *pa_ctx,
                                     struct silofs_ubk_info **out_ubki)
 {
 	const struct silofs_blobid *blobid = &bkaddr->blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_LOCAL;
 	int err;
 
 	err = silofs_repos_lookup_blob(pa_ctx->repos, repo_mode, blobid);
 	if (!err) {
 		err = silofs_repos_stage_blob(pa_ctx->repos, true,
-		                              repo_mode, blobid, &bri);
+		                              repo_mode, blobid, &blobf);
 		if (err) {
 			return err;
 		}
-		bri_incref(bri);
+		blobf_incref(blobf);
 		err = silofs_repos_stage_ubk(pa_ctx->repos, true,
 		                             repo_mode, bkaddr, out_ubki);
 	} else if (err == -ENOENT) {
 		err = silofs_repos_spawn_blob(pa_ctx->repos, repo_mode,
-		                              blobid, &bri);
+		                              blobid, &blobf);
 		if (err) {
 			return err;
 		}
-		bri_incref(bri);
+		blobf_incref(blobf);
 		err = silofs_repos_spawn_ubk(pa_ctx->repos, true,
 		                             repo_mode, bkaddr, out_ubki);
 	}
-	bri_decref(bri);
+	blobf_decref(blobf);
 	return err;
 }
 
-static int store_obj_at(struct silofs_blobref_info *bri,
+static int store_obj_at(struct silofs_blobf *blobf,
                         const struct silofs_oaddr *oaddr, const void *dat)
 {
-	return silofs_bri_pwriten(bri, oaddr->pos, dat, oaddr->len, false);
+	return silofs_blobf_pwriten(blobf, oaddr->pos, dat, oaddr->len, false);
 }
 
-static int store_obj_of(struct silofs_blobref_info *bri,
+static int store_obj_of(struct silofs_blobf *blobf,
                         const struct silofs_uaddr *uaddr, const void *dat)
 {
-	return store_obj_at(bri, &uaddr->oaddr, dat);
+	return store_obj_at(blobf, &uaddr->oaddr, dat);
 }
 
 static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
@@ -978,7 +978,7 @@ static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
 	}
 	uaddr_setup(&uaddr_dst, &bkaddr_dst->blobid, uaddr_src->oaddr.pos,
 	            uaddr_src->stype, uaddr_src->height, uaddr_src->voff);
-	err = store_obj_of(ubki_dst->ubk_bri, &uaddr_dst, ui->u_si.s_view);
+	err = store_obj_of(ubki_dst->ubk_blobf, &uaddr_dst, ui->u_si.s_view);
 	if (err) {
 		return err;
 	}
@@ -988,16 +988,16 @@ static int pac_restore_unode_into(const struct silofs_pack_ctx *pa_ctx,
 static int pac_load_warm_blob(const struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_pack_blob *pb)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_LOCAL;
 	int err;
 
 	err = silofs_repos_stage_blob(pa_ctx->repos, true,
-	                              repo_mode, &pb->pb_blobid, &bri);
+	                              repo_mode, &pb->pb_blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_read_blob(bri, pb->pb_blob, pb->pb_blobid.size);
+	err = silofs_blobf_read_blob(blobf, pb->pb_blob, pb->pb_blobid.size);
 	if (err) {
 		return err;
 	}
@@ -1007,7 +1007,7 @@ static int pac_load_warm_blob(const struct silofs_pack_ctx *pa_ctx,
 static int pac_save_cold_blob(const struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_pack_blob *pb)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_ATTIC;
 	int err;
 
@@ -1017,17 +1017,17 @@ static int pac_save_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 		if (!pa_ctx->forced) {
 			return 0; /* ok -- already exists */
 		}
-		err = silofs_repos_stage_blob(pa_ctx->repos, true,
-		                              repo_mode, &pb->pb_blobid, &bri);
+		err = silofs_repos_stage_blob(pa_ctx->repos, true, repo_mode,
+		                              &pb->pb_blobid, &blobf);
 	} else {
 		err = silofs_repos_spawn_blob(pa_ctx->repos, repo_mode,
-		                              &pb->pb_blobid, &bri);
+		                              &pb->pb_blobid, &blobf);
 	}
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_pwriten(bri, 0, pb->pb_blob,
-	                         pb->pb_blobid.size, false);
+	err = silofs_blobf_pwriten(blobf, 0, pb->pb_blob,
+	                           pb->pb_blobid.size, false);
 	if (err) {
 		return err;
 	}
@@ -1480,16 +1480,16 @@ static int pac_check_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 static int pac_load_cold_blob(const struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_pack_blob *pb)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_ATTIC;
 	int err;
 
 	err = silofs_repos_stage_blob(pa_ctx->repos, true,
-	                              repo_mode, &pb->pb_blobid, &bri);
+	                              repo_mode, &pb->pb_blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_read_blob(bri, pb->pb_blob, pb->pb_blobid.size);
+	err = silofs_blobf_read_blob(blobf, pb->pb_blob, pb->pb_blobid.size);
 	if (err) {
 		return err;
 	}
@@ -1503,7 +1503,7 @@ static int pac_load_cold_blob(const struct silofs_pack_ctx *pa_ctx,
 static int pac_save_warm_blob(const struct silofs_pack_ctx *pa_ctx,
                               const struct silofs_pack_blob *pb)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const enum silofs_repo_mode repo_mode = SILOFS_REPO_LOCAL;
 	int err;
 
@@ -1513,18 +1513,18 @@ static int pac_save_warm_blob(const struct silofs_pack_ctx *pa_ctx,
 		if (!pa_ctx->forced) {
 			return 0; /* ok -- already exists */
 		}
-		err = silofs_repos_stage_blob(pa_ctx->repos, true,
-		                              repo_mode, &pb->pb_blobid, &bri);
+		err = silofs_repos_stage_blob(pa_ctx->repos, true, repo_mode,
+		                              &pb->pb_blobid, &blobf);
 	} else {
 		err = silofs_repos_spawn_blob(pa_ctx->repos, repo_mode,
-		                              &pb->pb_blobid, &bri);
+		                              &pb->pb_blobid, &blobf);
 	}
 	if (err) {
 		return err;
 	}
 	silofs_assert_ge(pb->pb_blobid.size, SILOFS_BK_SIZE);
-	err = silofs_bri_pwriten(bri, 0, pb->pb_blob,
-	                         pb->pb_blobid.size, false);
+	err = silofs_blobf_pwriten(blobf, 0, pb->pb_blob,
+	                           pb->pb_blobid.size, false);
 	if (err) {
 		return err;
 	}
@@ -1632,10 +1632,10 @@ static int pac_refill_shadow_spleaf(struct silofs_pack_ctx *pa_ctx,
 
 static int pac_require_blob_of(struct silofs_pack_ctx *pa_ctx,
                                const struct silofs_blobid *blobid,
-                               struct silofs_blobref_info **out_bri)
+                               struct silofs_blobf **out_blobf)
 {
 	return silofs_repos_require_blob(pa_ctx->repos,
-	                                 SILOFS_REPO_LOCAL, blobid, out_bri);
+	                                 SILOFS_REPO_LOCAL, blobid, out_blobf);
 }
 
 static int pac_make_shadow_super(struct silofs_pack_ctx *pa_ctx,
@@ -1965,11 +1965,11 @@ static int pac_exec_restore_at(struct silofs_pack_ctx *pa_ctx,
 static int pac_post_restore_at_unode(struct silofs_pack_ctx *pa_ctx,
                                      const struct silofs_unode_info *ui)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const struct silofs_bkaddr *bkaddr = ui_bkaddr(ui);
 	int err;
 
-	err = pac_require_blob_of(pa_ctx, &bkaddr->blobid, &bri);
+	err = pac_require_blob_of(pa_ctx, &bkaddr->blobid, &blobf);
 	if (err) {
 		return err;
 	}

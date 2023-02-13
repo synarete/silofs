@@ -360,7 +360,7 @@ struct silofs_bk_info {
 struct silofs_ubk_info {
 	struct silofs_bk_info           ubk_base;
 	struct silofs_bkaddr            ubk_addr;
-	struct silofs_blobref_info     *ubk_bri;
+	struct silofs_blobf            *ubk_blobf;
 };
 
 /* virtual-block addressing */
@@ -470,7 +470,7 @@ struct silofs_uber {
 	struct silofs_crypto            ub_crypto;
 	struct silofs_piper             ub_piper;
 	struct silofs_oper_stat         ub_ops;
-	struct silofs_blobref_info     *ub_sb_bri;
+	struct silofs_blobf            *ub_sb_blobf;
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_uaddr             ub_sb_addr;
 	struct silofs_ucred             ub_owner;

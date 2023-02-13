@@ -42,7 +42,7 @@ struct silofs_submitq_entry {
 	struct silofs_list_head     tlh;
 	struct silofs_alloc        *alloc;
 	struct silofs_task         *task;
-	struct silofs_blobref_info *bri;
+	struct silofs_blobf        *blobf;
 	struct silofs_submit_ref    ref[32];
 	struct silofs_blobid        blobid;
 	uint64_t        uniq_id;
@@ -79,8 +79,8 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 
 int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe);
 
-void silofs_sqe_bind_bri(struct silofs_submitq_entry *sqe,
-                         struct silofs_blobref_info *bri);
+void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,
+                           struct silofs_blobf *blobf);
 
 void silofs_sqe_increfs(struct silofs_submitq_entry *sqe);
 

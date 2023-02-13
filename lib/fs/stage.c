@@ -112,10 +112,10 @@ static void stgc_log_cache_stat(const struct silofs_stage_ctx *stg_ctx)
 	const size_t dq_accum_nbytes = silofs_cache_accum_ndirty(cache);
 
 	log_dbg("cache-stat: dq_accum_nbytes=%lu " \
-	        "ubki=%lu ui=%lu vbki=%lu vi=%lu bri=%lu",
+	        "ubki=%lu ui=%lu vbki=%lu vi=%lu blobf=%lu",
 	        dq_accum_nbytes, cache->c_ubki_lm.lm_lru.sz,
 	        cache->c_ui_lm.lm_lru.sz, cache->c_vbki_lm.lm_lru.sz,
-	        cache->c_vi_lm.lm_lru.sz, cache->c_bri_lm.lm_lru.sz);
+	        cache->c_vi_lm.lm_lru.sz, cache->c_blobf_lm.lm_lru.sz);
 }
 
 static int stgc_lookup_cached_vbki(const struct silofs_stage_ctx *stg_ctx,
@@ -241,11 +241,11 @@ static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
 
 static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
                               const struct silofs_blobid *blobid,
-                              struct silofs_blobref_info **out_bri)
+                              struct silofs_blobf **out_blobf)
 {
 	int err;
 
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bri);
+	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -256,7 +256,7 @@ static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bri);
+	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -398,11 +398,11 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
                            const struct silofs_blobid *blobid,
                            enum silofs_stype stype_sub,
-                           struct silofs_blobref_info **out_bri)
+                           struct silofs_blobf **out_blobf)
 {
 	int err;
 
-	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_bri);
+	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -413,7 +413,7 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_bri);
+	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -424,11 +424,11 @@ out_ok:
 
 static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
                            const struct silofs_blobid *blobid,
-                           struct silofs_blobref_info **out_bri)
+                           struct silofs_blobf **out_blobf)
 {
 	int err;
 
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bri);
+	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -439,7 +439,7 @@ static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_bri);
+	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -488,27 +488,27 @@ static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const enum silofs_height height = SILOFS_HEIGHT_SUPER - 1;
 	int err;
 
 	stgc_make_blobid_of_spmaps(stg_ctx, 0, height, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &bri);
+	err = stgc_spawn_blob(stg_ctx, &blobid, SILOFS_STYPE_SPNODE, &blobf);
 	if (err) {
 		return err;
 	}
 	silofs_sbi_bind_main_blob(stg_ctx->sbi, stg_ctx->vspace,
-	                          &bri->br_blobid);
+	                          &blobf->b_blobid);
 	return 0;
 }
 
 static int stgc_stage_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 
 	silofs_sbi_main_blob(stg_ctx->sbi, stg_ctx->vspace, &blobid);
-	return stgc_stage_blob(stg_ctx, &blobid, &bri);
+	return stgc_stage_blob(stg_ctx, &blobid, &blobf);
 }
 
 static int stgc_require_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
@@ -529,18 +529,18 @@ static int stgc_spawn_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const loff_t voff = silofs_sni_base_voff(sni);
 	const enum silofs_height height = sni_child_height(sni);
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
 	stgc_make_blobid_of_spmaps(stg_ctx, voff, height, &blobid);
-	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &bri);
+	err = stgc_spawn_blob(stg_ctx, &blobid, stype, &blobf);
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_blob(sni, &bri->br_blobid);
+	silofs_sni_bind_main_blob(sni, &blobf->b_blobid);
 	return 0;
 }
 
@@ -548,10 +548,10 @@ static int stgc_stage_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 
 	silofs_sni_main_blob(sni, &blobid);
-	return stgc_stage_blob(stg_ctx, &blobid, &bri);
+	return stgc_stage_blob(stg_ctx, &blobid, &blobf);
 }
 
 static int
@@ -1822,13 +1822,13 @@ stgc_require_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
                               struct silofs_spleaf_info *sli)
 {
 	struct silofs_blobid blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	const loff_t voff = silofs_sli_base_voff(sli);
 	int err;
 
 	silofs_sli_main_blob(sli, &blobid);
 	if (!blobid_isnull(&blobid)) {
-		return stgc_stage_blob(stg_ctx, &blobid, &bri);
+		return stgc_stage_blob(stg_ctx, &blobid, &blobf);
 	}
 	/*
 	 * TODO-0047: Do not use underlying repo to detect if vdata-blob exists
@@ -1838,19 +1838,19 @@ stgc_require_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	 * common main-blob.
 	 */
 	stgc_make_blobid_of_vdata(stg_ctx, voff, &blobid);
-	err = stgc_stage_blob(stg_ctx, &blobid, &bri);
+	err = stgc_stage_blob(stg_ctx, &blobid, &blobf);
 	if (!err) {
 		goto out_ok;
 	}
 	if (err != -ENOENT) {
 		return err;
 	}
-	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->vspace, &bri);
+	err = stgc_spawn_blob(stg_ctx, &blobid, stg_ctx->vspace, &blobf);
 	if (err) {
 		return err;
 	}
 out_ok:
-	silofs_sli_bind_main_blob(sli, &bri->br_blobid);
+	silofs_sli_bind_main_blob(sli, &blobf->b_blobid);
 	return 0;
 }
 
@@ -2300,31 +2300,31 @@ int silofs_check_stable_at(struct silofs_task *task,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int stgc_spawn_vbki_by(const struct silofs_stage_ctx *stg_ctx,
-                              struct silofs_blobref_info *bri,
+                              struct silofs_blobf *blobf,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_vbk_info **out_vbki)
 {
 	int ret;
 
-	bri_incref(bri);
+	blobf_incref(blobf);
 	ret = stgc_spawn_vbki(stg_ctx, vaddr->off, vaddr->stype, out_vbki);
-	bri_decref(bri);
+	blobf_decref(blobf);
 	return ret;
 }
 
 static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
-                               struct silofs_blobref_info *bri,
+                               struct silofs_blobf *blobf,
                                const struct silofs_voaddr *voa,
                                struct silofs_vbk_info **out_vbki)
 {
 	struct silofs_vbk_info *vbki = NULL;
 	int err;
 
-	err = stgc_spawn_vbki_by(stg_ctx, bri, &voa->vaddr, &vbki);
+	err = stgc_spawn_vbki_by(stg_ctx, blobf, &voa->vaddr, &vbki);
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_load_vbk(bri, &voa->oaddr.bka, vbki);
+	err = silofs_blobf_load_vbk(blobf, &voa->oaddr.bka, vbki);
 	if (err) {
 		stgc_forget_cached_vbki(stg_ctx, vbki);
 		return err;
@@ -2337,14 +2337,14 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
                                const struct silofs_voaddr *voa,
                                struct silofs_vbk_info **out_vbki)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = stgc_stage_blob_of(stg_ctx, &voa->oaddr.bka.blobid, &bri);
+	err = stgc_stage_blob_of(stg_ctx, &voa->oaddr.bka.blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = stgc_spawn_load_vbk(stg_ctx, bri, voa, out_vbki);
+	err = stgc_spawn_load_vbk(stg_ctx, blobf, voa, out_vbki);
 	if (err) {
 		return err;
 	}
@@ -2370,15 +2370,15 @@ static int stgc_stage_vblock(const struct silofs_stage_ctx *stg_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int bri_resolve_bk(struct silofs_blobref_info *bri,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_iovec *iov)
+static int blobf_resolve_bk(struct silofs_blobf *blobf,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_iovec *iov)
 {
 	struct silofs_oaddr oaddr;
 	const loff_t off = lba_to_off(bkaddr->lba);
 
 	silofs_oaddr_setup(&oaddr, &bkaddr->blobid, off, SILOFS_BK_SIZE);
-	return silofs_bri_resolve(bri, &oaddr, iov);
+	return silofs_blobf_resolve(blobf, &oaddr, iov);
 }
 
 static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
@@ -2387,34 +2387,34 @@ static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
                             struct silofs_iovec *out_iov_src,
                             struct silofs_iovec *out_iov_dst)
 {
-	struct silofs_blobref_info *bri_src = NULL;
-	struct silofs_blobref_info *bri_dst = NULL;
+	struct silofs_blobf *blobf_src = NULL;
+	struct silofs_blobf *blobf_dst = NULL;
 	int ret;
 
-	ret = stgc_stage_blob_of(stg_ctx, &bkaddr_src->blobid, &bri_src);
+	ret = stgc_stage_blob_of(stg_ctx, &bkaddr_src->blobid, &blobf_src);
 	if (ret) {
 		goto out;
 	}
-	bri_incref(bri_src);
+	blobf_incref(blobf_src);
 
-	ret = stgc_stage_blob_of(stg_ctx, &bkaddr_dst->blobid, &bri_dst);
+	ret = stgc_stage_blob_of(stg_ctx, &bkaddr_dst->blobid, &blobf_dst);
 	if (ret) {
 		goto out;
 	}
-	bri_incref(bri_dst);
+	blobf_incref(blobf_dst);
 
-	ret = bri_resolve_bk(bri_src, bkaddr_src, out_iov_src);
+	ret = blobf_resolve_bk(blobf_src, bkaddr_src, out_iov_src);
 	if (ret) {
 		goto out;
 	}
 
-	ret = bri_resolve_bk(bri_dst, bkaddr_dst, out_iov_dst);
+	ret = blobf_resolve_bk(blobf_dst, bkaddr_dst, out_iov_dst);
 	if (ret) {
 		goto out;
 	}
 out:
-	bri_decref(bri_dst);
-	bri_decref(bri_src);
+	blobf_decref(blobf_dst);
+	blobf_decref(blobf_src);
 	return (ret == -ENOENT) ? -SILOFS_EFSCORRUPTED : ret;
 }
 

@@ -367,15 +367,15 @@ static int flc_prep_sqe(const struct silofs_flush_ctx *fl_ctx,
                         struct silofs_submitq_entry *sqe)
 {
 	const struct silofs_blobid *blobid = &sqe->blobid;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	int err;
 
 	silofs_sqe_increfs(sqe);
-	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &bri);
+	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	silofs_sqe_bind_bri(sqe, bri);
+	silofs_sqe_bind_blobf(sqe, blobf);
 	return 0;
 }
 

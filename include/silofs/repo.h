@@ -20,16 +20,17 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* blob-reference cache-entry */
-struct silofs_blobref_info {
-	struct silofs_namebuf           br_nb;
-	struct silofs_cache_elem        br_ce;
-	struct silofs_blobid            br_blobid;
-	struct silofs_iovref            br_ior;
-	ssize_t                         br_size;
-	int                             br_fd;
-	bool                            br_locked;
-	bool                            br_rdonly;
+/* blob control file */
+struct silofs_blobf {
+	struct silofs_namebuf           b_name;
+	struct silofs_cache_elem        b_ce;
+	struct silofs_mutex             b_mutex;
+	struct silofs_blobid            b_blobid;
+	struct silofs_iovref            b_iovref;
+	ssize_t                         b_size;
+	int                             b_fd;
+	bool                            b_flocked;
+	bool                            b_rdonly;
 };
 
 /* repository init config */
@@ -59,38 +60,37 @@ struct silofs_repos {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_blobref_info *
-silofs_bri_new(struct silofs_alloc *alloc,
-               const struct silofs_blobid *blobid);
+struct silofs_blobf *
+silofs_blobf_new(struct silofs_alloc *alloc,
+                 const struct silofs_blobid *blobid);
 
-void silofs_bri_del(struct silofs_blobref_info *bri,
-                    struct silofs_alloc *alloc);
+void silofs_blobf_del(struct silofs_blobf *blobf,
+                      struct silofs_alloc *alloc);
 
-int silofs_bri_pwriten(struct silofs_blobref_info *bri, loff_t off,
-                       const void *buf, size_t len, bool sync);
+int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
+                         const void *buf, size_t len, bool sync);
 
-int silofs_bri_load_ubk(struct silofs_blobref_info *bri,
-                        const struct silofs_bkaddr *bkaddr,
-                        struct silofs_ubk_info *ubki);
+int silofs_blobf_load_ubk(struct silofs_blobf *blobf,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info *ubki);
 
-int silofs_bri_load_vbk(struct silofs_blobref_info *bri,
-                        const struct silofs_bkaddr *bkaddr,
-                        struct silofs_vbk_info *vbki);
+int silofs_blobf_load_vbk(struct silofs_blobf *blobf,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_vbk_info *vbki);
 
-int silofs_bri_trim_nbks(const struct silofs_blobref_info *bri,
-                         const struct silofs_bkaddr *bkaddr, size_t cnt);
+int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
+                           const struct silofs_bkaddr *bkaddr, size_t cnt);
 
-int silofs_bri_resolve(struct silofs_blobref_info *bri,
-                       const struct silofs_oaddr *oaddr,
-                       struct silofs_iovec *iov);
+int silofs_blobf_resolve(struct silofs_blobf *blobf,
+                         const struct silofs_oaddr *oaddr,
+                         struct silofs_iovec *iov);
 
-int silofs_bri_flock(struct silofs_blobref_info *bri);
+int silofs_blobf_flock(struct silofs_blobf *blobf);
 
-int silofs_bri_funlock(struct silofs_blobref_info *bri);
+int silofs_blobf_funlock(struct silofs_blobf *blobf);
 
 
-int silofs_bri_read_blob(const struct silofs_blobref_info *bri,
-                         void *buf, size_t len);
+int silofs_blobf_read_blob(struct silofs_blobf *blobf, void *buf, size_t len);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -143,12 +143,12 @@ int silofs_repos_lookup_blob(struct silofs_repos *repos,
 int silofs_repos_spawn_blob(struct silofs_repos *repos,
                             enum silofs_repo_mode repo_mode,
                             const struct silofs_blobid *blobid,
-                            struct silofs_blobref_info **out_bri);
+                            struct silofs_blobf **out_blobf);
 
 int silofs_repos_stage_blob(struct silofs_repos *repos, bool rw,
                             enum silofs_repo_mode repo_mode,
                             const struct silofs_blobid *blobid,
-                            struct silofs_blobref_info **out_bri);
+                            struct silofs_blobf **out_blobf);
 
 int silofs_repos_remove_blob(struct silofs_repos *repos,
                              enum silofs_repo_mode repo_mode,
@@ -157,7 +157,7 @@ int silofs_repos_remove_blob(struct silofs_repos *repos,
 int silofs_repos_require_blob(struct silofs_repos *repos,
                               enum silofs_repo_mode repo_mode,
                               const struct silofs_blobid *blobid,
-                              struct silofs_blobref_info **out_bri);
+                              struct silofs_blobf **out_blobf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

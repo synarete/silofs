@@ -37,28 +37,28 @@ static const struct silofs_blobid *blobid_of(const struct silofs_uaddr *uaddr)
 	return &uaddr->oaddr.bka.blobid;
 }
 
-static struct silofs_blobref_info *
+static struct silofs_blobf *
 sbi_blobref(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_ubki->ubk_bri;
+	return sbi->sb_ui.u_ubki->ubk_blobf;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void uber_bind_bri(struct silofs_uber *uber,
-                          struct silofs_blobref_info *bri_new)
+static void uber_bind_blobf(struct silofs_uber *uber,
+                            struct silofs_blobf *blobf_new)
 {
-	struct silofs_blobref_info *bri_cur = uber->ub_sb_bri;
+	struct silofs_blobf *blobf_cur = uber->ub_sb_blobf;
 
-	if (bri_cur != NULL) {
-		silofs_bri_funlock(bri_cur);
-		silofs_bri_decref(bri_cur);
+	if (blobf_cur != NULL) {
+		silofs_blobf_funlock(blobf_cur);
+		silofs_blobf_decref(blobf_cur);
 	}
-	if (bri_new != NULL) {
-		silofs_bri_incref(bri_new);
-		silofs_bri_flock(bri_new);
+	if (blobf_new != NULL) {
+		silofs_blobf_incref(blobf_new);
+		silofs_blobf_flock(blobf_new);
 	}
-	uber->ub_sb_bri = bri_new;
+	uber->ub_sb_blobf = blobf_new;
 }
 
 static void uber_bind_sbi(struct silofs_uber *uber,
@@ -165,7 +165,7 @@ static void uber_init_commons(struct silofs_uber *uber,
 	uber->ub_initime = silofs_time_now_monotonic();
 	uber->ub_commit_id = 0;
 	uber->ub_iconv = (iconv_t)(-1);
-	uber->ub_sb_bri = NULL;
+	uber->ub_sb_blobf = NULL;
 	uber->ub_sbi = NULL;
 	uber->ub_ctl_flags = 0;
 	uber->ub_ms_flags = 0;
@@ -181,7 +181,7 @@ static void uber_fini_commons(struct silofs_uber *uber)
 {
 	memset(&uber->ub, 0, sizeof(uber->ub));
 	uber->ub_iconv = (iconv_t)(-1);
-	uber->ub_sb_bri = NULL;
+	uber->ub_sb_blobf = NULL;
 	uber->ub_sbi = NULL;
 }
 
@@ -265,7 +265,7 @@ out_err:
 
 void silofs_uber_fini(struct silofs_uber *uber)
 {
-	uber_bind_bri(uber, NULL);
+	uber_bind_blobf(uber, NULL);
 	uber_bind_sbi(uber, NULL);
 	uber_fini_iconv(uber);
 	uber_fini_piper(uber);
@@ -414,18 +414,18 @@ int silofs_uber_reload_super(struct silofs_uber *uber)
 int silofs_uber_reload_sblob(struct silofs_uber *uber)
 {
 	const struct silofs_uaddr *sb_uaddr = &uber->ub_sb_addr;
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = silofs_stage_blob_at(uber, true, blobid_of(sb_uaddr), &bri);
+	err = silofs_stage_blob_at(uber, true, blobid_of(sb_uaddr), &blobf);
 	if (err) {
 		return err;
 	}
-	err = silofs_bri_flock(bri);
+	err = silofs_blobf_flock(blobf);
 	if (err) {
 		return err;
 	}
-	uber_bind_bri(uber, bri);
+	uber_bind_blobf(uber, blobf);
 	return 0;
 }
 
@@ -446,14 +446,14 @@ static void sbi_make_clone(struct silofs_sb_info *sbi_new,
 void silofs_uber_shut(struct silofs_uber *uber)
 {
 	uber_bind_sbi(uber, NULL);
-	uber_bind_bri(uber, NULL);
+	uber_bind_blobf(uber, NULL);
 }
 
 static void uber_rebind_root_sb(struct silofs_uber *uber,
                                 struct silofs_sb_info *sbi)
 {
 	silofs_uber_set_sbaddr(uber, sbi_uaddr(sbi));
-	uber_bind_bri(uber, sbi_blobref(sbi));
+	uber_bind_blobf(uber, sbi_blobref(sbi));
 	uber_bind_sbi(uber, sbi);
 }
 
@@ -714,13 +714,13 @@ static int ubc_lookup_blob(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_blobid *blobid,
-                          struct silofs_blobref_info **out_bri)
+                          struct silofs_blobf **out_blobf)
 {
 	int err;
 	const bool rw_mode = ubc_blobid_rw_mode(ub_ctx, blobid);
 
 	err = silofs_repos_stage_blob(ub_ctx->repos, rw_mode,
-	                              ub_ctx->repo_mode, blobid, out_bri);
+	                              ub_ctx->repo_mode, blobid, out_blobf);
 	if (err && (err != -ENOENT)) {
 		log_dbg("stage blob failed: err=%d", err);
 	}
@@ -729,12 +729,12 @@ static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_blobid *blobid,
-                          struct silofs_blobref_info **out_bri)
+                          struct silofs_blobf **out_blobf)
 {
 	int err;
 
 	err = silofs_repos_spawn_blob(ub_ctx->repos, ub_ctx->repo_mode,
-	                              blobid, out_bri);
+	                              blobid, out_blobf);
 	if (err && (err != -ENOENT)) {
 		log_dbg("spawn blob failed: err=%d", err);
 	}
@@ -743,31 +743,31 @@ static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_blobid *blobid,
-                            struct silofs_blobref_info **out_bri)
+                            struct silofs_blobf **out_blobf)
 {
 	int err;
 
 	err = ubc_lookup_blob(ub_ctx, blobid);
 	if (!err) {
-		err = ubc_stage_blob(ub_ctx, blobid, out_bri);
+		err = ubc_stage_blob(ub_ctx, blobid, out_blobf);
 	} else if (err == -ENOENT) {
-		err = ubc_spawn_blob(ub_ctx, blobid, out_bri);
+		err = ubc_spawn_blob(ub_ctx, blobid, out_blobf);
 	}
 	return err;
 }
 
 static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_bkaddr *bkaddr,
-                            struct silofs_blobref_info *bri,
+                            struct silofs_blobf *blobf,
                             struct silofs_ubk_info **out_ubki)
 {
 	int err;
 	const bool rw_mode = ubc_bkaddr_rw_mode(ub_ctx, bkaddr);
 
-	bri_incref(bri);
+	blobf_incref(blobf);
 	err = silofs_repos_spawn_ubk(ub_ctx->repos, rw_mode,
 	                             ub_ctx->repo_mode, bkaddr, out_ubki);
-	bri_decref(bri);
+	blobf_decref(blobf);
 	return err;
 }
 
@@ -775,14 +775,14 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &bri);
+	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, bri, out_ubki);
+	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, blobf, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -799,14 +799,14 @@ static int ubc_do_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
 
 static int ubc_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                               const struct silofs_bkaddr *bkaddr,
-                              struct silofs_blobref_info *bri,
+                              struct silofs_blobf *blobf,
                               struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
-	bri_incref(bri);
+	blobf_incref(blobf);
 	err = ubc_do_require_ubk_at(ub_ctx, bkaddr, out_ubki);
-	bri_decref(bri);
+	blobf_decref(blobf);
 	return err;
 }
 
@@ -814,14 +814,14 @@ static int ubc_require_ubk(const struct silofs_uber_ctx *ub_ctx,
                            const struct silofs_bkaddr *bkaddr,
                            struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_blobref_info *bri = NULL;
+	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &bri);
+	err = ubc_require_blob(ub_ctx, &bkaddr->blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_ubk_at(ub_ctx, bkaddr, bri, out_ubki);
+	err = ubc_require_ubk_at(ub_ctx, bkaddr, blobf, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -1329,7 +1329,7 @@ static int ubc_require_no_blob(const struct silofs_uber_ctx *ub_ctx,
 
 int silofs_spawn_blob_at(struct silofs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blobref_info **out_bri)
+                         struct silofs_blobf **out_blobf)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
@@ -1339,7 +1339,7 @@ int silofs_spawn_blob_at(struct silofs_uber *uber, bool warm,
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_blob(&ub_ctx, blobid, out_bri);
+	err = ubc_spawn_blob(&ub_ctx, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -1348,7 +1348,7 @@ int silofs_spawn_blob_at(struct silofs_uber *uber, bool warm,
 
 int silofs_stage_blob_at(struct silofs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blobref_info **out_bri)
+                         struct silofs_blobf **out_blobf)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
@@ -1358,7 +1358,7 @@ int silofs_stage_blob_at(struct silofs_uber *uber, bool warm,
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_blob(&ub_ctx, blobid, out_bri);
+	err = ubc_stage_blob(&ub_ctx, blobid, out_blobf);
 	if (err) {
 		return err;
 	}

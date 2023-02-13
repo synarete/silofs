@@ -43,7 +43,7 @@ struct silofs_cache {
 	struct silofs_mdigest   c_mdigest;
 	struct silofs_alloc    *c_alloc;
 	struct silofs_block    *c_nil_bk;
-	struct silofs_lrumap    c_bri_lm;
+	struct silofs_lrumap    c_blobf_lm;
 	struct silofs_lrumap    c_ubki_lm;
 	struct silofs_lrumap    c_vbki_lm;
 	struct silofs_lrumap    c_ui_lm;
@@ -93,16 +93,16 @@ void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
                                     const struct silofs_dset *dset);
 
 
-struct silofs_blobref_info *
+struct silofs_blobf *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
                          const struct silofs_blobid *blobid);
 
-struct silofs_blobref_info *
+struct silofs_blobf *
 silofs_cache_spawn_blob(struct silofs_cache *cache,
                         const struct silofs_blobid *blobid);
 
 void silofs_cache_evict_blob(struct silofs_cache *cache,
-                             struct silofs_blobref_info *bri, bool now);
+                             struct silofs_blobf *blobf, bool now);
 
 void silofs_cache_relax_blobs(struct silofs_cache *cache);
 
@@ -162,9 +162,9 @@ void silofs_cache_forget_vi(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bri_incref(struct silofs_blobref_info *bri);
+void silofs_blobf_incref(struct silofs_blobf *blobf);
 
-void silofs_bri_decref(struct silofs_blobref_info *bri);
+void silofs_blobf_decref(struct silofs_blobf *blobf);
 
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi);
@@ -215,7 +215,7 @@ void silofs_vbki_decref(struct silofs_vbk_info *vbki);
 
 
 void silofs_ubki_attach(struct silofs_ubk_info *ubki,
-                        struct silofs_blobref_info *bri);
+                        struct silofs_blobf *blobf);
 
 void silofs_ubki_incref(struct silofs_ubk_info *ubki);
 

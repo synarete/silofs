@@ -784,7 +784,7 @@ fic_iovec_by_blob(const struct silofs_file_ctx *f_ctx,
 	silofs_voaddr_setup_by(&voa, &ubki->ubk_addr.blobid, vaddr);
 	voa.oaddr.pos += off_within;
 	voa.oaddr.len = len;
-	err = silofs_bri_resolve(ubki->ubk_bri, &voa.oaddr, out_iov);
+	err = silofs_blobf_resolve(ubki->ubk_blobf, &voa.oaddr, out_iov);
 	if (err) {
 		return err;
 	}

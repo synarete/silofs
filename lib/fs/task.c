@@ -110,29 +110,29 @@ int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
 	return 0;
 }
 
-void silofs_sqe_bind_bri(struct silofs_submitq_entry *sqe,
-                         struct silofs_blobref_info *bri)
+void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,
+                           struct silofs_blobf *blobf)
 {
-	if (sqe->bri != NULL) {
-		bri_decref(sqe->bri);
-		sqe->bri = NULL;
+	if (sqe->blobf != NULL) {
+		blobf_decref(sqe->blobf);
+		sqe->blobf = NULL;
 	}
-	if (bri != NULL) {
-		sqe->bri = bri;
-		bri_incref(sqe->bri);
-		silofs_assert(!bri->br_rdonly);
+	if (blobf != NULL) {
+		sqe->blobf = blobf;
+		blobf_incref(sqe->blobf);
+		silofs_assert(!blobf->b_rdonly);
 	}
 }
 
-static void sqe_unbind_bri(struct silofs_submitq_entry *sqe)
+static void sqe_unbind_blobf(struct silofs_submitq_entry *sqe)
 {
-	silofs_sqe_bind_bri(sqe, NULL);
+	silofs_sqe_bind_blobf(sqe, NULL);
 }
 
 static int sqe_pwrite_buf(const struct silofs_submitq_entry *sqe)
 {
-	return silofs_bri_pwriten(sqe->bri, sqe->off,
-	                          sqe->buf, sqe->len, true);
+	return silofs_blobf_pwriten(sqe->blobf, sqe->off,
+	                            sqe->buf, sqe->len, true);
 }
 
 void silofs_sqe_increfs(struct silofs_submitq_entry *sqe)
@@ -169,7 +169,7 @@ static int sqe_init(struct silofs_submitq_entry *sqe,
 	list_head_init(&sqe->tlh);
 	sqe->alloc = alloc;
 	sqe->task = NULL;
-	sqe->bri = NULL;
+	sqe->blobf = NULL;
 	sqe->blobid.size = 0;
 	sqe->uniq_id = uniq_id;
 	sqe->off = -1;
@@ -187,7 +187,7 @@ static void sqe_fini(struct silofs_submitq_entry *sqe)
 	list_head_fini(&sqe->qlh);
 	list_head_fini(&sqe->tlh);
 	sqe_reset_buf(sqe);
-	sqe_unbind_bri(sqe);
+	sqe_unbind_blobf(sqe);
 	sqe->off = -1;
 	sqe->len = 0;
 	sqe->cnt = 0;
@@ -438,7 +438,7 @@ static void task_remove_sqe(struct silofs_task *task,
 	sqe_lock(sqe);
 	sqe_decrefs(sqe);
 	sqe_reset_buf(sqe);
-	sqe_unbind_bri(sqe);
+	sqe_unbind_blobf(sqe);
 	sqe_unlock(sqe);
 	task_unlink_sqe(task, sqe);
 }

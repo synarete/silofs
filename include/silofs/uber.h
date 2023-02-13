@@ -90,11 +90,11 @@ int silofs_stage_ubk_at(struct silofs_uber *uber, bool warm,
 
 int silofs_spawn_blob_at(struct silofs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blobref_info **out_bri);
+                         struct silofs_blobf **out_blobf);
 
 int silofs_stage_blob_at(struct silofs_uber *uber, bool warm,
                          const struct silofs_blobid *blobid,
-                         struct silofs_blobref_info **out_bri);
+                         struct silofs_blobf **out_blobf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

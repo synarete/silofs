@@ -854,7 +854,7 @@ static int fic_require_mutable_vaddr(const struct silofs_file_ctx *f_ctx,
                                      const struct silofs_vaddr *vaddr)
 {
 	struct silofs_voaddr voa;
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RW;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_COW;
 
 	return silofs_resolve_voaddr_of(f_ctx->task, vaddr, stg_mode, &voa);
 }
@@ -2005,7 +2005,7 @@ int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
 		.ii = ii,
 		.op_mask = OP_READ,
 		.with_backref = 1,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 	int ret;
 
@@ -2034,7 +2034,7 @@ int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
 		.ii = ii,
 		.op_mask = OP_READ,
 		.with_backref = 0,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 	int ret;
 
@@ -2710,7 +2710,7 @@ int silofs_do_write_iter(struct silofs_task *task,
 		.ii = ii,
 		.op_mask = OP_WRITE,
 		.with_backref = 1,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 	int ret;
 
@@ -2740,7 +2740,7 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 		.ii = ii,
 		.op_mask = OP_WRITE,
 		.with_backref = 0,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 	int ret;
 
@@ -2975,7 +2975,7 @@ int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii)
 		.uber = task->t_uber,
 		.sbi = task_sbi(task),
 		.ii = ii,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 	int ret;
 
@@ -3235,7 +3235,7 @@ int silofs_do_truncate(struct silofs_task *task,
 		.off = off,
 		.end = off_end(off, len),
 		.op_mask = OP_TRUNC,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 	int ret;
 
@@ -3352,7 +3352,7 @@ int silofs_do_lseek(struct silofs_task *task,
 		.end = ii_size(ii),
 		.op_mask = OP_LSEEK,
 		.whence = whence,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 	int ret;
 
@@ -3575,7 +3575,7 @@ int silofs_do_fallocate(struct silofs_task *task,
 		.end = off_end(off, (size_t)len),
 		.op_mask = OP_FALLOC,
 		.fl_mode = mode,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 	int ret;
 
@@ -3769,7 +3769,7 @@ int silofs_do_fiemap(struct silofs_task *task,
 		.fm_flags = (int)(fm->fm_flags),
 		.fm_stop = 0,
 		.whence = SEEK_DATA,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 	int ret;
 
@@ -4346,7 +4346,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 		.op_mask = OP_COPY_RANGE,
 		.cp_flags = flags,
 		.with_backref = 0,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 	struct silofs_file_ctx f_ctx_dst = {
 		.task = task,
@@ -4360,7 +4360,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 		.op_mask = OP_COPY_RANGE,
 		.cp_flags = flags,
 		.with_backref = 0,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 	int ret;
 

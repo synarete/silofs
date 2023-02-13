@@ -218,7 +218,7 @@ time_t silofs_uber_uptime(const struct silofs_uber *uber)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void make_supers_blobid(struct silofs_blobid *out_blobid)
+static void make_super_blobid(struct silofs_blobid *out_blobid)
 {
 	struct silofs_treeid treeid;
 
@@ -266,14 +266,14 @@ static int uber_spawn_super_of(struct silofs_uber *uber,
 	struct silofs_blobid blobid = { .size = 0 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
 
-	make_supers_blobid(&blobid);
+	make_super_blobid(&blobid);
 	make_super_uaddr(&blobid, &uaddr);
 
 	return uber_spawn_super_at(uber, &uaddr, out_sbi);
 }
 
-static int uber_spawn_supers(struct silofs_uber *uber, size_t capacity,
-                             struct silofs_sb_info **out_sbi)
+static int uber_spawn_super(struct silofs_uber *uber, size_t capacity,
+                            struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -302,14 +302,14 @@ static int uber_stage_super_at(struct silofs_uber *uber,
 	return 0;
 }
 
-static int uber_stage_supers(struct silofs_uber *uber,
-                             const struct silofs_uaddr *uaddr,
-                             struct silofs_sb_info **out_sbi)
+static int uber_stage_super(struct silofs_uber *uber,
+                            const struct silofs_uaddr *uaddr,
+                            struct silofs_sb_info **out_sbi)
 {
 	return uber_stage_super_at(uber, uaddr, out_sbi);
 }
 
-static void sbi_account_supers_of(struct silofs_sb_info *sbi)
+static void sbi_account_super_of(struct silofs_sb_info *sbi)
 {
 	struct silofs_stats_info *sti = &sbi->sb_sti;
 
@@ -318,27 +318,27 @@ static void sbi_account_supers_of(struct silofs_sb_info *sbi)
 	silofs_sti_update_objs(sti, SILOFS_STYPE_SUPER, 1);
 }
 
-int silofs_uber_format_supers(struct silofs_uber *uber, size_t capacity)
+int silofs_uber_format_super(struct silofs_uber *uber, size_t capacity)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = uber_spawn_supers(uber, capacity, &sbi);
+	err = uber_spawn_super(uber, capacity, &sbi);
 	if (err) {
 		return err;
 	}
-	sbi_account_supers_of(sbi);
+	sbi_account_super_of(sbi);
 	uber_bind_sbi(uber, sbi);
 	return 0;
 }
 
-int silofs_uber_reload_supers(struct silofs_uber *uber)
+int silofs_uber_reload_super(struct silofs_uber *uber)
 {
 	const struct silofs_uaddr *sb_uaddr = &uber->ub_sb_addr;
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = uber_stage_supers(uber, sb_uaddr, &sbi);
+	err = uber_stage_super(uber, sb_uaddr, &sbi);
 	if (err) {
 		return err;
 	}
@@ -375,7 +375,7 @@ static void sbi_make_clone(struct silofs_sb_info *sbi_new,
 	silofs_sti_renew_stats(sti_new);
 	silofs_sbi_setup_ctime(sbi_new);
 
-	sbi_account_supers_of(sbi_new);
+	sbi_account_super_of(sbi_new);
 }
 
 void silofs_uber_shut(struct silofs_uber *uber)
@@ -392,14 +392,14 @@ static void uber_rebind_root_sb(struct silofs_uber *uber,
 	uber_bind_sbi(uber, sbi);
 }
 
-static int uber_clone_rebind_supers(struct silofs_uber *uber,
-                                    const struct silofs_sb_info *sbi_cur,
-                                    struct silofs_sb_info **out_sbi)
+static int uber_clone_rebind_super(struct silofs_uber *uber,
+                                   const struct silofs_sb_info *sbi_cur,
+                                   struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = uber_spawn_supers(uber, 0, &sbi);
+	err = uber_spawn_super(uber, 0, &sbi);
 	if (err) {
 		return err;
 	}
@@ -436,14 +436,14 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 	int err;
 
 	uber_pre_forkfs(uber);
-	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_alt);
+	err = uber_clone_rebind_super(uber, sbi_cur, &sbi_alt);
 	if (err) {
 		return err;
 	}
 	sbi_export_bootsec(sbi_alt, &out_bsecs->bsec[1]);
 
 	uber_pre_forkfs(uber);
-	err = uber_clone_rebind_supers(uber, sbi_cur, &sbi_new);
+	err = uber_clone_rebind_super(uber, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}

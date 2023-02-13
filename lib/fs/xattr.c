@@ -762,7 +762,7 @@ int silofs_do_getxattr(struct silofs_task *task,
 		.value.ptr = buf,
 		.value.len = 0,
 		.value.cap = size,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 
 	return xac_getxattr(&xa_ctx, out_size);
@@ -999,7 +999,7 @@ int silofs_do_setxattr(struct silofs_task *task,
 		.size = size,
 		.flags = flags,
 		.kill_sgid = kill_sgid,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 
 	return xac_setxattr(&xa_ctx);
@@ -1050,7 +1050,7 @@ int silofs_do_removexattr(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.name = name,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 
 	return xac_removexattr(&xa_ctx);
@@ -1185,7 +1185,7 @@ int silofs_do_listxattr(struct silofs_task *task,
 		.ii = ii,
 		.lxa_ctx = lxa_ctx,
 		.keep_iter = true,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 
 	return xac_listxattr(&xa_ctx);
@@ -1230,7 +1230,7 @@ int silofs_drop_xattr(struct silofs_task *task,
 		.task = task,
 		.sbi = task_sbi(task),
 		.ii = ii,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 
 	return xac_drop_xattr_slots(&xa_ctx);

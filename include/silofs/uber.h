@@ -40,9 +40,9 @@ void silofs_uber_shut(struct silofs_uber *uber);
 void silofs_uber_set_sbaddr(struct silofs_uber *uber,
                             const struct silofs_uaddr *sb_addr);
 
-int silofs_uber_format_supers(struct silofs_uber *uber, size_t capacity);
+int silofs_uber_format_super(struct silofs_uber *uber, size_t capacity);
 
-int silofs_uber_reload_supers(struct silofs_uber *uber);
+int silofs_uber_reload_super(struct silofs_uber *uber);
 
 int silofs_uber_reload_sblob(struct silofs_uber *uber);
 

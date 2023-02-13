@@ -816,7 +816,7 @@ static int ii_check_stage_mode(const struct silofs_inode_info *ii,
 {
 	int err = 0;
 
-	if (stg_mode & SILOFS_STAGE_RW) {
+	if (stg_mode & SILOFS_STAGE_COW) {
 		err = silof_ii_isimmutable(ii) ? -EACCES : 0;
 	}
 	return err;
@@ -827,7 +827,7 @@ static int sbi_check_stage(const struct silofs_sb_info *sbi,
 {
 	int err = 0;
 
-	if (stg_mode & SILOFS_STAGE_RW) {
+	if (stg_mode & SILOFS_STAGE_COW) {
 		err = silof_sbi_check_mut_fs(sbi);
 	}
 	return err;
@@ -1046,7 +1046,7 @@ static int reclaim_vspace_at(struct silofs_task *task,
 	struct silofs_voaddr voa;
 	int err;
 
-	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_RW, &voa);
+	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_COW, &voa);
 	if (err) {
 		return err;
 	}
@@ -1111,14 +1111,14 @@ static int stage_ro_spleaf(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_spleaf_info **out_sli)
 {
-	return stage_spleaf(task, vaddr, SILOFS_STAGE_RO, out_sli);
+	return stage_spleaf(task, vaddr, SILOFS_STAGE_CUR, out_sli);
 }
 
 static int stage_rw_spleaf(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_spleaf_info **out_sli)
 {
-	return stage_spleaf(task, vaddr, SILOFS_STAGE_RW, out_sli);
+	return stage_spleaf(task, vaddr, SILOFS_STAGE_COW, out_sli);
 }
 
 int silofs_test_unwritten_at(struct silofs_task *task,

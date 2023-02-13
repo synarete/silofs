@@ -53,12 +53,12 @@ static bool is_low_resource_error(int err)
 
 static bool stage_ro(enum silofs_stage_mode stg_mode)
 {
-	return (stg_mode & SILOFS_STAGE_RO) > 0;
+	return (stg_mode & SILOFS_STAGE_CUR) > 0;
 }
 
 static bool stage_rw(enum silofs_stage_mode stg_mode)
 {
-	return (stg_mode & SILOFS_STAGE_RW) > 0;
+	return (stg_mode & SILOFS_STAGE_COW) > 0;
 }
 
 static loff_t vaddr_bk_voff(const struct silofs_vaddr *vaddr)
@@ -2249,7 +2249,7 @@ int silofs_require_stable_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_RO, false);
+	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_CUR, false);
 	err = stgc_stage_spmaps_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2276,7 +2276,7 @@ int silofs_check_stable_at(struct silofs_task *task,
 	struct silofs_stage_ctx stg_ctx;
 	int err;
 
-	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_RO, false);
+	stgc_setup(&stg_ctx, task, vaddr, SILOFS_STAGE_CUR, false);
 	err = stgc_stage_spmaps_of(&stg_ctx);
 	if (err) {
 		return err;
@@ -2491,7 +2491,7 @@ stgc_pre_clone_stage_inode_at(const struct silofs_stage_ctx *stg_ctx,
 
 	*out_vi = NULL;
 	ino = vaddr_to_ino(vaddr);
-	err = silofs_stage_inode(stg_ctx->task, ino, SILOFS_STAGE_RO, &ii);
+	err = silofs_stage_inode(stg_ctx->task, ino, SILOFS_STAGE_CUR, &ii);
 	if (err) {
 		return err;
 	}
@@ -2510,7 +2510,7 @@ stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	*out_vi = NULL;
-	err = silofs_stage_vnode(stg_ctx->task, vaddr, SILOFS_STAGE_RO,
+	err = silofs_stage_vnode(stg_ctx->task, vaddr, SILOFS_STAGE_CUR,
 	                         SILOFS_DQID_DFL, &vi);
 	if (err == -SILOFS_ERDONLY) {
 		return 0; /* special case: out-of-blob range */

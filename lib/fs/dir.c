@@ -1488,7 +1488,7 @@ int silofs_lookup_dentry(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 
 	return dic_lookup_dentry(&d_ctx, out_idt);
@@ -1698,7 +1698,7 @@ int silofs_add_dentry(struct silofs_task *task,
 		.dir_ii = dir_ii,
 		.child_ii = ii,
 		.name = name,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 
 	return dic_add_dentry(&d_ctx);
@@ -2123,7 +2123,7 @@ int silofs_do_readdir(struct silofs_task *task,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
 		.readdir_plus = 0,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 
 	return dic_readdir(&d_ctx);
@@ -2140,7 +2140,7 @@ int silofs_do_readdirplus(struct silofs_task *task,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
 		.readdir_plus = 1,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 
 	return dic_readdir(&d_ctx);
@@ -2328,7 +2328,7 @@ int silofs_remove_dentry(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
-		.stg_mode = SILOFS_STAGE_RW,
+		.stg_mode = SILOFS_STAGE_COW,
 	};
 
 	return dic_remove_dentry(&d_ctx);

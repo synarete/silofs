@@ -549,7 +549,7 @@ static int do_lookup(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(task, dir_ii, name, SILOFS_STAGE_RO, out_ii);
+	err = stage_by_name(task, dir_ii, name, SILOFS_STAGE_CUR, out_ii);
 	if (err) {
 		return err;
 	}
@@ -1087,7 +1087,7 @@ static int check_prepare_unlink(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(task, dir_ii, nstr, SILOFS_STAGE_RW, &ii);
+	err = stage_by_name(task, dir_ii, nstr, SILOFS_STAGE_COW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1311,7 +1311,7 @@ static int check_prepare_rmdir(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(task, dir_ii, name, SILOFS_STAGE_RW, &ii);
+	err = stage_by_name(task, dir_ii, name, SILOFS_STAGE_COW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1929,7 +1929,7 @@ static int check_stage_rename_at(struct silofs_task *task,
 		return err;
 	}
 	err = stage_by_name(task, dref->dir_ii, dref->name,
-	                    SILOFS_STAGE_RW, &dref->ii);
+	                    SILOFS_STAGE_COW, &dref->ii);
 	if (err) {
 		return ((err == -ENOENT) && new_de) ? 0 : err;
 	}

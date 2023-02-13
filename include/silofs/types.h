@@ -47,8 +47,8 @@ struct silofs_listxattr_ctx;
 
 /* stage-elements mode */
 enum silofs_stage_mode {
-	SILOFS_STAGE_RO         = SILOFS_BIT(1),
-	SILOFS_STAGE_RW         = SILOFS_BIT(2),
+	SILOFS_STAGE_CUR        = SILOFS_BIT(1),
+	SILOFS_STAGE_COW        = SILOFS_BIT(2),
 };
 
 /* common control flags */

@@ -343,7 +343,7 @@ int silofs_do_readlink(struct silofs_task *task,
 		.task = task,
 		.sbi = task_sbi(task),
 		.lnk_ii = lnk_ii,
-		.stg_mode = SILOFS_STAGE_RO,
+		.stg_mode = SILOFS_STAGE_CUR,
 	};
 	struct silofs_bytebuf sl;
 	int err;
@@ -504,7 +504,7 @@ int silofs_setup_symlink(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.lnk_ii = lnk_ii,
 		.symval = symval,
-		.stg_mode = SILOFS_STAGE_RW
+		.stg_mode = SILOFS_STAGE_COW
 	};
 
 	return slc_symlink(&sl_ctx);

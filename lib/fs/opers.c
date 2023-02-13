@@ -293,13 +293,13 @@ static int op_stage_cacheonly_inode(struct silofs_task *task, ino_t ino,
 static int op_stage_rdo_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(task, ino, SILOFS_STAGE_RO, out_ii);
+	return silofs_stage_inode(task, ino, SILOFS_STAGE_CUR, out_ii);
 }
 
 static int op_stage_mut_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(task, ino, SILOFS_STAGE_RW, out_ii);
+	return silofs_stage_inode(task, ino, SILOFS_STAGE_COW, out_ii);
 }
 
 static int op_stage_mut_inode2(struct silofs_task *task,

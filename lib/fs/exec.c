@@ -608,7 +608,7 @@ static int reload_rootdir(struct silofs_task *task)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = silofs_stage_inode(task, SILOFS_INO_ROOT, SILOFS_STAGE_RO, &ii);
+	err = silofs_stage_inode(task, SILOFS_INO_ROOT, SILOFS_STAGE_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -883,14 +883,14 @@ static int fse_verify_bootsec(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int fse_reload_supers(struct silofs_fs_env *fse)
+static int fse_reload_super(struct silofs_fs_env *fse)
 {
 	struct silofs_uber *uber = fse->fs_uber;
 	int err;
 
-	err = silofs_uber_reload_supers(uber);
+	err = silofs_uber_reload_super(uber);
 	if (err) {
-		log_err("failed to reload supers: err=%d", err);
+		log_err("failed to reload super: err=%d", err);
 		return err;
 	}
 	err = fse_check_super_block(fse, uber->ub_sbi);
@@ -906,7 +906,7 @@ static int format_base_spmaps_of(struct silofs_task *task,
 {
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RW;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_COW;
 	int err;
 
 	err = silofs_require_spmaps_at(task, vaddr, stg_mode, &sni, &sli);
@@ -997,7 +997,7 @@ static int reload_base_vspace_of(struct silofs_task *task,
 	struct silofs_vaddr vaddr;
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_RO;
+	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_CUR;
 	int err;
 
 	vaddr_setup(&vaddr, vspace, 0);
@@ -1124,7 +1124,7 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int fse_format_supers(struct silofs_fs_env *fse)
+static int fse_format_super(struct silofs_fs_env *fse)
 {
 	struct silofs_uber *uber = fse->fs_uber;
 	const size_t cap_want = uber->ub_args->capacity;
@@ -1136,7 +1136,7 @@ static int fse_format_supers(struct silofs_fs_env *fse)
 		log_err("illegal capacity: cap=%lu err=%d", cap_want, err);
 		return err;
 	}
-	err = silofs_uber_format_supers(uber, capacity);
+	err = silofs_uber_format_super(uber, capacity);
 	if (err) {
 		return err;
 	}
@@ -1252,7 +1252,7 @@ static int fse_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_format_supers(fse);
+	err = fse_format_super(fse);
 	if (err) {
 		return err;
 	}
@@ -1335,7 +1335,7 @@ static int fse_open_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_reload_supers(fse);
+	err = fse_reload_super(fse);
 	if (err) {
 		return err;
 	}
@@ -1571,7 +1571,7 @@ int silofs_fse_unref_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_supers(fse);
+	err = fse_reload_super(fse);
 	if (err) {
 		return err;
 	}

@@ -55,14 +55,6 @@ int silofs_fse_inspect_fs(struct silofs_fs_env *fse);
 int silofs_fse_unref_fs(struct silofs_fs_env *fse,
                         const struct silofs_uuid *uuid);
 
-int silofs_fse_pack_fs(struct silofs_fs_env *fse,
-                       const struct silofs_uuid *uuid,
-                       struct silofs_uuid *out_uuid);
-
-int silofs_fse_unpack_fs(struct silofs_fs_env *fse,
-                         const struct silofs_uuid *uuid,
-                         struct silofs_uuid *out_uuid);
-
 void silofs_fse_halt(struct silofs_fs_env *fse, int signum);
 
 int silofs_fse_sync_drop(struct silofs_fs_env *fse);

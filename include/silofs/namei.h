@@ -116,14 +116,4 @@ int silofs_do_inspect(struct silofs_task *task);
 
 int silofs_do_unrefs(struct silofs_task *task);
 
-int silofs_do_pack(struct silofs_task *task,
-                   const struct silofs_ivkey *ivkey,
-                   const struct silofs_bootsec *src_bsec,
-                   struct silofs_bootsec *dst_bsec);
-
-int silofs_do_unpack(struct silofs_task *task,
-                     const struct silofs_ivkey *ivkey,
-                     const struct silofs_bootsec *src_bsec,
-                     struct silofs_bootsec *dst_bsec);
-
 #endif /* SILOFS_NAMEI_H_ */

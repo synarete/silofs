@@ -61,7 +61,6 @@ libsilofs_fs_la_SOURCES += fs/mntsvc.c
 libsilofs_fs_la_SOURCES += fs/namei.c
 libsilofs_fs_la_SOURCES += fs/nodes.c
 libsilofs_fs_la_SOURCES += fs/opers.c
-libsilofs_fs_la_SOURCES += fs/pack.c
 libsilofs_fs_la_SOURCES += fs/repo.c
 libsilofs_fs_la_SOURCES += fs/spclaim.c
 libsilofs_fs_la_SOURCES += fs/spmaps.c

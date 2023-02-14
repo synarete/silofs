@@ -45,7 +45,6 @@ nobase_include_HEADERS += silofs/mntsvc.h
 nobase_include_HEADERS += silofs/namei.h
 nobase_include_HEADERS += silofs/nodes.h
 nobase_include_HEADERS += silofs/opers.h
-nobase_include_HEADERS += silofs/pack.h
 nobase_include_HEADERS += silofs/repo.h
 nobase_include_HEADERS += silofs/spclaim.h
 nobase_include_HEADERS += silofs/spmaps.h

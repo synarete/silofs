@@ -2329,64 +2329,6 @@ int silofs_do_unrefs(struct silofs_task *task)
 	return 0;
 }
 
-static int check_pack(const struct silofs_task *task)
-{
-	silofs_unused(task);
-	return 0;
-}
-
-int silofs_do_pack(struct silofs_task *task,
-                   const struct silofs_ivkey *ivkey,
-                   const struct silofs_bootsec *bsec_src,
-                   struct silofs_bootsec *bsec_dst)
-{
-	int err;
-
-	err = check_pack(task);
-	if (err) {
-		return err;
-	}
-	err = silofs_flush_dirty_now(task);
-	if (err) {
-		return err;
-	}
-	err = silofs_pack_fs(task, ivkey, bsec_src, bsec_dst);
-	if (err) {
-		return err;
-	}
-	err = silofs_flush_dirty_now(task);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_do_unpack(struct silofs_task *task,
-                     const struct silofs_ivkey *ivkey,
-                     const struct silofs_bootsec *bsec_src,
-                     struct silofs_bootsec *bsec_dst)
-{
-	int err;
-
-	err = check_pack(task);
-	if (err) {
-		return err;
-	}
-	err = silofs_flush_dirty_now(task);
-	if (err) {
-		return err;
-	}
-	err = silofs_unpack_fs(task, ivkey, bsec_src, bsec_dst);
-	if (err) {
-		return err;
-	}
-	err = silofs_flush_dirty_now(task);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,

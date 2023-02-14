@@ -1550,46 +1550,6 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_fs_pack(struct silofs_task *task,
-                   const struct silofs_ivkey *ivkey,
-                   const struct silofs_bootsec *bsec_src,
-                   struct silofs_bootsec *bsec_dst)
-{
-	int err;
-
-	err = op_start2(task, SILOFS_INO_NULL);
-	ok_or_goto_out(err);
-
-	err = op_authorize(task);
-	ok_or_goto_out(err);
-
-	err = silofs_do_pack(task, ivkey, bsec_src, bsec_dst);
-	ok_or_goto_out(err);
-out:
-	return op_finish(task, SILOFS_INO_NULL, OP_F_ANY, err);
-}
-
-int silofs_fs_unpack(struct silofs_task *task,
-                     const struct silofs_ivkey *ivkey,
-                     const struct silofs_bootsec *bsec_src,
-                     struct silofs_bootsec *bsec_dst)
-{
-	int err;
-
-	err = op_start2(task, SILOFS_INO_NULL);
-	ok_or_goto_out(err);
-
-	err = op_authorize(task);
-	ok_or_goto_out(err);
-
-	err = silofs_do_unpack(task, ivkey, bsec_src, bsec_dst);
-	ok_or_goto_out(err);
-out:
-	return op_finish(task, SILOFS_INO_NULL, OP_F_ANY, err);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_fs_rdwr_post(const struct silofs_task *task,
                         const struct silofs_iovec *iov, size_t cnt)
 {

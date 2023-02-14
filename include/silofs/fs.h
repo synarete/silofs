@@ -49,7 +49,6 @@
 #include <silofs/kcopy.h>
 #include <silofs/exec.h>
 #include <silofs/walk.h>
-#include <silofs/pack.h>
 #include <silofs/mntsvc.h>
 
 #endif /* SILOFS_FS_H_ */

@@ -306,13 +306,6 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE    = 2,
 };
 
-/* blobs sub-types */
-enum silofs_blobtype {
-	SILOFS_BLOBTYPE_NONE    = 0,
-	SILOFS_BLOBTYPE_TA      = 1,
-	SILOFS_BLOBTYPE_CA      = 2,
-};
-
 /* file-system logical-elements types */
 enum silofs_stype {
 	SILOFS_STYPE_NONE       = 0,
@@ -471,34 +464,15 @@ struct silofs_treeid128 {
 	struct silofs_uuid              uuid;
 } silofs_packed_aligned8;
 
-
-struct silofs_blobid32b_ta {
-	struct silofs_treeid128         treeid;
-	int64_t                         voff;
-	uint8_t                         pad[8];
-} silofs_packed_aligned8;
-
-
-struct silofs_blobid32b_ca {
-	uint8_t                         hash[SILOFS_HASH256_LEN];
-} silofs_packed_aligned8;
-
-
-union silofs_blobid32b_u {
-	struct silofs_blobid32b_ta      ta;
-	struct silofs_blobid32b_ca      ca;
-} silofs_packed_aligned8;
-
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_blobid40b {
-	union silofs_blobid32b_u        u;
+	struct silofs_treeid128         treeid;
+	int64_t                         voff;
 	uint32_t                        size;
 	uint8_t                         vspace;
 	uint8_t                         height;
-	uint8_t                         btype;
-	uint8_t                         pmode;
+	uint8_t                         pad[10];
 } silofs_packed_aligned8;
 
 

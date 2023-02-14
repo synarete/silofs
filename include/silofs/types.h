@@ -217,30 +217,13 @@ struct silofs_treeid {
 	struct silofs_uuid      uuid;
 };
 
-/* tree-addressing blob-id */
-struct silofs_blobid_ta {
-	struct silofs_treeid    treeid;
-	loff_t                  voff;
-};
-
-/* content-addressing blob-id */
-struct silofs_blobid_ca {
-	uint8_t hash[SILOFS_HASH256_LEN];
-};
-
-/* union of possible blob addressing */
-union silofs_blobid_u {
-	struct silofs_blobid_ta ta;
-	struct silofs_blobid_ca ca;
-};
-
 /* blob identifier */
 struct silofs_blobid {
-	union silofs_blobid_u   u;
+	struct silofs_treeid    treeid;
+	loff_t                  voff;
 	size_t                  size;
 	enum silofs_stype       vspace;
 	enum silofs_height      height;
-	enum silofs_blobtype    btype;
 };
 
 /* block address within blob */

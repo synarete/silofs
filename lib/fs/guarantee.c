@@ -163,8 +163,6 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);
-	REQUIRE_SIZEOF(struct silofs_blobid32b_ta, 32);
-	REQUIRE_SIZEOF(struct silofs_blobid32b_ca, 32);
 	REQUIRE_SIZEOF(struct silofs_blobid40b, 40);
 	REQUIRE_SIZEOF(struct silofs_oaddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);

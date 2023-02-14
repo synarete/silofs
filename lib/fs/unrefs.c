@@ -51,7 +51,7 @@ static bool unrc_is_blobid_of(const struct silofs_unref_ctx *unr_ctx,
                               const struct silofs_blobid *blobid)
 {
 	const struct silofs_treeid *treeid =
-		        &unr_ctx->sb_uaddr.oaddr.bka.blobid.u.ta.treeid;
+		        &unr_ctx->sb_uaddr.oaddr.bka.blobid.treeid;
 
 	return silofs_blobid_has_treeid(blobid, treeid);
 }

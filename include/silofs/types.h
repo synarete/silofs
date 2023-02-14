@@ -241,7 +241,6 @@ struct silofs_blobid {
 	enum silofs_stype       vspace;
 	enum silofs_height      height;
 	enum silofs_blobtype    btype;
-	enum silofs_pack        pmode;
 };
 
 /* block address within blob */

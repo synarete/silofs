@@ -410,13 +410,6 @@ enum silofs_kdf_algos {
 	SILOFS_KDF_SCRYPT       = 48
 };
 
-/* space packing modes */
-enum silofs_pack {
-	SILOFS_PACK_NONE        = 0,
-	SILOFS_PACK_SIMPLE      = 1,
-	SILOFS_PACK_ZSTD        = 2,
-};
-
 /* repository sub-type */
 enum silofs_repo_mode {
 	SILOFS_REPO_NONE        = 0,

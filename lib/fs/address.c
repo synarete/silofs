@@ -519,7 +519,6 @@ static const struct silofs_blobid s_blobid_none = {
 	.vspace = SILOFS_STYPE_NONE,
 	.height = SILOFS_HEIGHT_LAST,
 	.btype = SILOFS_BLOBTYPE_NONE,
-	.pmode = SILOFS_PACK_NONE,
 };
 
 const struct silofs_blobid *silofs_blobid_none(void)
@@ -595,7 +594,6 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 	blobid->vspace = other->vspace;
 	blobid->height = other->height;
 	blobid->btype = other->btype;
-	blobid->pmode = other->pmode;
 	switch (other->btype) {
 	case SILOFS_BLOBTYPE_TA:
 		blobid_assign_ta(blobid, other);
@@ -656,10 +654,6 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (int)(blobid2->pmode) - (int)(blobid1->pmode);
-	if (cmp) {
-		return cmp;
-	}
 	cmp = (long)(blobid2->size) - (long)(blobid1->size);
 	if (cmp) {
 		return cmp;
@@ -704,7 +698,6 @@ static uint64_t blobid_as_u64_by_meta(const struct silofs_blobid *blobid)
 {
 	return blobid->size ^
 	       (((uint64_t)blobid->btype << 24) |
-	        ((uint64_t)blobid->pmode << 16) |
 	        ((uint64_t)blobid->height << 8) |
 	        ((uint64_t)blobid->vspace));
 }
@@ -745,24 +738,8 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
 	blobid->u.ta.voff = off_align(voff, blob_size);
 	blobid->size = (size_t)blob_size;
 	blobid->btype = SILOFS_BLOBTYPE_TA;
-	blobid->pmode = SILOFS_PACK_NONE;
 	blobid->height = height;
 	blobid->vspace = vspace;
-}
-
-void silofs_blobid_make_ca(struct silofs_blobid *blobid,
-                           const struct silofs_hash256 *hash,
-                           size_t size, enum silofs_stype vspace,
-                           enum silofs_height height, enum silofs_pack pmode)
-{
-	STATICASSERT_EQ(sizeof(blobid->u.ca.hash), sizeof(hash->hash));
-
-	memcpy(blobid->u.ca.hash, hash->hash, sizeof(blobid->u.ca.hash));
-	blobid->size = size;
-	blobid->vspace = vspace;
-	blobid->height = height;
-	blobid->btype = SILOFS_BLOBTYPE_CA;
-	blobid->pmode = pmode;
 }
 
 void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40)
@@ -772,7 +749,6 @@ void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40)
 	blobid40->vspace = SILOFS_STYPE_NONE;
 	blobid40->height = SILOFS_HEIGHT_LAST;
 	blobid40->btype = SILOFS_BLOBTYPE_NONE;
-	blobid40->pmode = SILOFS_PACK_NONE;
 }
 
 static void blobid40b_set_ta(struct silofs_blobid40b *blobid40,
@@ -800,7 +776,6 @@ void silofs_blobid40b_set(struct silofs_blobid40b *blobid40,
 	blobid40->vspace = (uint8_t)blobid->vspace;
 	blobid40->height = (uint8_t)blobid->height;
 	blobid40->btype = (uint8_t)blobid->btype;
-	blobid40->pmode = (uint8_t)blobid->pmode;
 	switch (blobid->btype) {
 	case SILOFS_BLOBTYPE_TA:
 		blobid40b_set_ta(blobid40, blobid);
@@ -838,7 +813,6 @@ void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid40,
 	blobid->vspace = (enum silofs_stype)blobid40->vspace;
 	blobid->height = (enum silofs_height)blobid40->height;
 	blobid->btype = (enum silofs_blobtype)blobid40->btype;
-	blobid->pmode = (enum silofs_pack)blobid40->pmode;
 	switch (blobid->btype) {
 	case SILOFS_BLOBTYPE_TA:
 		blobid40b_parse_ta(blobid40, blobid);

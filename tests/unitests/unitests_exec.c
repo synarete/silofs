@@ -51,7 +51,6 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_fillfs),
 	UT_DEFTGRP(ut_tdefs_snap_basic),
 	UT_DEFTGRP(ut_tdefs_snap_io),
-	UT_DEFTGRP(ut_tdefs_pack),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

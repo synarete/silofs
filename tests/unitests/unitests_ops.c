@@ -2008,19 +2008,3 @@ void ut_fork_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_pack_fs_ok(struct ut_env *ute)
-{
-	int err;
-
-	err = silofs_fse_pack_fs(ute->fs_env, &ute->uuid[0], &ute->uuid[1]);
-	ut_expect_ok(err);
-}
-
-void ut_unpack_fs_ok(struct ut_env *ute)
-{
-	int err;
-
-	err = silofs_fse_unpack_fs(ute->fs_env, &ute->uuid[1], &ute->uuid[0]);
-	ut_expect_ok(err);
-}
-

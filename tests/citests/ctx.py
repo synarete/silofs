@@ -177,16 +177,6 @@ class TestCtx(TestBaseCtx):
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.fsck(repodir_name)
 
-    def exec_archive(self, name: str, arname: str) -> None:
-        repodir_name = self._repodir_name(name)
-        atticdir_name = self._atticdir_name(arname)
-        self.cmd.silofs.archive(repodir_name, atticdir_name, self.password)
-
-    def exec_restore(self, arname: str, name: str) -> None:
-        atticdir_arname = self._atticdir_name(arname)
-        repodir_name = self._repodir_name(name)
-        self.cmd.silofs.restore(atticdir_arname, repodir_name, self.password)
-
     def do_mkdirs(self, name: str) -> str:
         base = self.make_path(name)
         os.makedirs(base, exist_ok=False)

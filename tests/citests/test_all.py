@@ -4,7 +4,6 @@ from . import test_basic
 from . import test_io
 from . import test_snap
 from . import test_fsck
-from . import test_pack
 from . import test_self
 from . import test_xprogs
 
@@ -29,8 +28,6 @@ TESTS = [
     test_snap.test_snap_reload,
     test_fsck.test_fsck_basic,
     test_fsck.test_fsck_snap,
-    test_pack.test_pack_simple,
-    test_pack.test_pack_multi,
     test_xprogs.test_postgresql,
     test_xprogs.test_rsync,
     test_xprogs.test_gitscm,

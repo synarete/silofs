@@ -16,7 +16,6 @@ silofs_citests_PYTHON += test_all.py
 silofs_citests_PYTHON += test_basic.py
 silofs_citests_PYTHON += test_fsck.py
 silofs_citests_PYTHON += test_io.py
-silofs_citests_PYTHON += test_pack.py
 silofs_citests_PYTHON += test_self.py
 silofs_citests_PYTHON += test_snap.py
 silofs_citests_PYTHON += test_xprogs.py

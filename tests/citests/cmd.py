@@ -172,12 +172,6 @@ class CmdSilofs(CmdExec):
     def fsck(self, repodir_name: str) -> None:
         self.execute2(["fsck", repodir_name])
 
-    def archive(self, repodir_name: str, atticdir_name: str, pw: str) -> None:
-        self.execute2(["archive", "-p", pw, repodir_name, atticdir_name])
-
-    def restore(self, atticdir_name: str, repodir_name: str, pw: str) -> None:
-        self.execute2(["restore", "-p", pw, atticdir_name, repodir_name])
-
 
 class CmdUnitests(CmdExec):
     """Wrapper over silofs-unitests command-line front-end"""

@@ -198,26 +198,6 @@ void cmd_fork_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "failed to fork fs");
 }
 
-void cmd_pack_fs(struct silofs_fs_env *fse,
-                 const struct silofs_uuid *uuid,
-                 struct silofs_uuid *out_uuid)
-{
-	int err;
-
-	err = silofs_fse_pack_fs(fse, uuid, out_uuid);
-	cmd_require_ok(fse, err, "archive error");
-}
-
-void cmd_unpack_fs(struct silofs_fs_env *fse,
-                   const struct silofs_uuid *uuid,
-                   struct silofs_uuid *out_uuid)
-{
-	int err;
-
-	err = silofs_fse_unpack_fs(fse, uuid, out_uuid);
-	cmd_require_ok(fse, err, "restore error");
-}
-
 void cmd_unref_fs(struct silofs_fs_env *fse,
                   const struct silofs_uuid *uuid)
 {

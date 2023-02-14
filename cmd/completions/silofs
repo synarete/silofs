@@ -77,24 +77,6 @@ _silofs_snap() {
   fi
 }
 
-_silofs_archive() {
-  local cur prev words cword
-  _init_completion || return
-
-  if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-V --verbose= -h' -- "$cur") )
-  fi
-}
-
-_silofs_restore() {
-  local cur prev words cword
-  _init_completion || return
-
-  if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-V --verbose= -h' -- "$cur") )
-  fi
-}
-
 _silofs_rmfs() {
   local cur prev words cword
   _init_completion || return
@@ -151,12 +133,6 @@ _silofs_subcmd() {
     "rmfs")
       _silofs_rmfs
       ;;
-    "archive")
-      _silofs_archive
-      ;;
-    "restore")
-      _silofs_restore
-      ;;
     "prune")
       _silofs_prune
       ;;
@@ -175,7 +151,7 @@ _silofs_main() {
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'lsmnt show snap rmfs' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'archive restore prune fsck' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'prune fsck' -- "$cur") )
   fi
 }
 

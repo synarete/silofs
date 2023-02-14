@@ -85,10 +85,6 @@ void cmd_execute_rmfs(void);
 
 void cmd_execute_lsmnt(void);
 
-void cmd_execute_archive(void);
-
-void cmd_execute_restore(void);
-
 void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
@@ -228,12 +224,6 @@ void cmd_exec_fs(struct silofs_fs_env *fse);
 
 void cmd_fork_fs(struct silofs_fs_env *fse,
                  struct silofs_uuid *out_uuid1, struct silofs_uuid *out_uuid2);
-
-void cmd_pack_fs(struct silofs_fs_env *fse,
-                 const struct silofs_uuid *uuid, struct silofs_uuid *out);
-
-void cmd_unpack_fs(struct silofs_fs_env *fse,
-                   const struct silofs_uuid *uuid, struct silofs_uuid *out);
 
 void cmd_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 

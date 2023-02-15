@@ -21,7 +21,6 @@ class TestConfig:
         self.basedir = os.path.realpath(basedir)
         self.mntdir = os.path.realpath(mntdir)
         self.repodir = os.path.join(self.basedir, "repo")
-        self.atticdir = os.path.join(self.basedir, "attic")
 
 
 # pylint: disable=R0903
@@ -115,9 +114,6 @@ class TestBaseCtx:
     def repodir(self) -> str:
         return self.cfg.repodir
 
-    def atticdir(self) -> str:
-        return self.cfg.atticdir
-
     def mntpoint(self) -> str:
         return self.cfg.mntdir
 
@@ -125,11 +121,6 @@ class TestBaseCtx:
         if not name:
             name = self.name
         return os.path.join(self.repodir(), name)
-
-    def _atticdir_name(self, name: str = "") -> str:
-        if not name:
-            name = self.name
-        return os.path.join(self.atticdir(), name)
 
 
 class TestCtx(TestBaseCtx):
@@ -139,8 +130,7 @@ class TestCtx(TestBaseCtx):
         self.password = "123456"
 
     def exec_init(self) -> None:
-        self.cmd.silofs.init(self.cfg.repodir, False)
-        self.cmd.silofs.init(self.cfg.atticdir, True)
+        self.cmd.silofs.init(self.cfg.repodir)
 
     def exec_mkfs(self, gsize: int = 2, name: str = ""):
         gibi = 2**30

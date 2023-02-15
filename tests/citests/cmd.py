@@ -119,10 +119,8 @@ class CmdSilofs(CmdExec):
     def version(self) -> str:
         return self.execute(["-v"])
 
-    def init(self, repodir: str, attic: bool = False) -> None:
+    def init(self, repodir: str) -> None:
         args = ["init", repodir]
-        if attic:
-            args.append("--attic")
         self.execute2(args)
 
     def mkfs(self, repodir_name: str, size: int) -> None:

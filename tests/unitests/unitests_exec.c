@@ -383,8 +383,6 @@ static void ut_do_execute_tests(bool kcopy)
 			.umask = 0002,
 			.repodir = ut_globals.test_dir_repo,
 			.name = "unitests",
-			.atticdir = ut_globals.test_dir_attic,
-			.arname = "unitests-archive",
 			.mntdir = "/",
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,

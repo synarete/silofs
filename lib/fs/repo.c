@@ -64,33 +64,23 @@ static void rmeta_set_version(struct silofs_repo_meta *rm, uint32_t v)
 	rm->rm_version = silofs_cpu_to_le32(v);
 }
 
-static enum silofs_repo_mode rmeta_mode(const struct silofs_repo_meta *rm)
+static void rmeta_set_mode(struct silofs_repo_meta *rm, uint32_t repo_mode)
 {
-	const uint32_t mode = silofs_le32_to_cpu(rm->rm_mode);
-
-	return (enum silofs_repo_mode)mode;
+	rm->rm_mode = silofs_cpu_to_le32(repo_mode);
 }
 
-static void rmeta_set_mode(struct silofs_repo_meta *rm,
-                           enum silofs_repo_mode repo_mode)
-{
-	rm->rm_mode = silofs_cpu_to_le32((uint32_t)repo_mode);
-}
-
-static void rmeta_init(struct silofs_repo_meta *rm,
-                       enum silofs_repo_mode repo_mode)
+static void rmeta_init(struct silofs_repo_meta *rm)
 {
 	silofs_memzero(rm, sizeof(*rm));
 	rmeta_set_magic(rm, SILOFS_REPO_META_MAGIC);
 	rmeta_set_version(rm, SILOFS_REPO_VERSION);
-	rmeta_set_mode(rm, repo_mode);
+	rmeta_set_mode(rm, 1);
 }
 
 static int rmeta_check(const struct silofs_repo_meta *rm)
 {
 	uint64_t magic;
 	uint32_t version;
-	enum silofs_repo_mode repo_mode;
 
 	magic = rmeta_magic(rm);
 	if (magic != SILOFS_REPO_META_MAGIC) {
@@ -100,16 +90,6 @@ static int rmeta_check(const struct silofs_repo_meta *rm)
 	version = rmeta_version(rm);
 	if (version != SILOFS_REPO_VERSION) {
 		log_dbg("bad repo meta: version=%lx", version);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	repo_mode = rmeta_mode(rm);
-	switch (repo_mode) {
-	case SILOFS_REPO_LOCAL:
-	case SILOFS_REPO_ATTIC:
-		break;
-	case SILOFS_REPO_NONE:
-	default:
-		log_dbg("bad repo meta: repo_mode=%d", (int)repo_mode);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -1230,10 +1210,6 @@ static int repo_objs_open_blob(struct silofs_repo *repo, bool rw,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = repo_objs_relax_cached_blobfs(repo);
-	if (err) {
-		return err;
-	}
 	err = repo_spawn_cached_blobf(repo, blobid, &blobf);
 	if (err) {
 		return err;
@@ -1287,10 +1263,6 @@ static int repo_objs_create_blob(struct silofs_repo *repo,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = repo_objs_relax_cached_blobfs(repo);
-	if (err) {
-		return err;
-	}
 	err = repo_spawn_cached_blobf(repo, blobid, &blobf);
 	if (err) {
 		return err;
@@ -1452,8 +1424,7 @@ static int repo_require_blob(struct silofs_repo *repo, bool rw,
 
 static bool repo_enabled(const struct silofs_repo *repo)
 {
-	return (repo != NULL) && repo->re_cache.c_inited &&
-	       (repo->re_cfg.rc_repo_mode != SILOFS_REPO_NONE);
+	return repo && repo->re_cache.c_inited;
 }
 
 static int repo_init_cache(struct silofs_repo *repo)
@@ -1490,7 +1461,6 @@ static void repocfg_assign(struct silofs_repocfg *rcfg,
 	silofs_bootpath_assign(&rcfg->rc_bootpath, &other->rc_bootpath);
 	rcfg->rc_alloc = other->rc_alloc;
 	rcfg->rc_memhint = other->rc_memhint;
-	rcfg->rc_repo_mode = other->rc_repo_mode;
 	rcfg->rc_rdonly = other->rc_rdonly;
 }
 
@@ -1534,7 +1504,7 @@ static void repo_drop_cache(struct silofs_repo *repo)
 
 static void repo_pre_op(struct silofs_repo *repo)
 {
-	silofs_unused(repo);
+	repo_objs_relax_cached_blobfs(repo);
 }
 
 static void repo_post_op(struct silofs_repo *repo)
@@ -1722,7 +1692,7 @@ static int repo_format_meta(const struct silofs_repo *repo)
 	int fd = -1;
 	int err;
 
-	rmeta_init(&rmeta, repo->re_cfg.rc_repo_mode);
+	rmeta_init(&rmeta);
 	err = do_openat(dfd, name, O_RDWR, 0600, &fd);
 	if (err) {
 		return err;
@@ -1744,25 +1714,6 @@ out:
 	return err;
 }
 
-static int repo_require_meta_mode(const struct silofs_repo *repo,
-                                  const struct silofs_repo_meta *rmeta)
-{
-	const enum silofs_repo_mode want = repo->re_cfg.rc_repo_mode;
-	const enum silofs_repo_mode have = rmeta_mode(rmeta);
-
-	if (want == have) {
-		return 0;
-	}
-	if ((want == SILOFS_REPO_LOCAL) && (have == SILOFS_REPO_ATTIC)) {
-		return -SILOFS_EATTIC;
-	}
-	if ((want == SILOFS_REPO_ATTIC) && (have == SILOFS_REPO_LOCAL)) {
-		return -SILOFS_ENOATTIC;
-	}
-	log_dbg("repo mode mismatch: want=%d have=%d", (int)want, (int)have);
-	return -SILOFS_EFSCORRUPTED;
-}
-
 static int repo_require_meta(const struct silofs_repo *repo)
 {
 	struct silofs_repo_meta rmeta;
@@ -1771,7 +1722,7 @@ static int repo_require_meta(const struct silofs_repo *repo)
 	int fd = -1;
 	int err;
 
-	rmeta_init(&rmeta, repo->re_cfg.rc_repo_mode);
+	rmeta_init(&rmeta);
 	err = do_openat(dfd, name, O_RDONLY, 0, &fd);
 	if (err) {
 		return err;
@@ -1781,10 +1732,6 @@ static int repo_require_meta(const struct silofs_repo *repo)
 		goto out;
 	}
 	err = rmeta_check(&rmeta);
-	if (err) {
-		goto out;
-	}
-	err = repo_require_meta_mode(repo, &rmeta);
 	if (err) {
 		goto out;
 	}
@@ -2285,345 +2232,218 @@ static int repo_unlink_bootsec(const struct silofs_repo *repo,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define check_ok_or_bailout(err_) \
-	do { if (err_) return (err_); } while (0)
-
-int silofs_repos_init(struct silofs_repos *repos,
-                      const struct silofs_repocfg rcfg[2])
+int silofs_repo_init(struct silofs_repo *repo,
+                     const struct silofs_repocfg *rcfg)
 {
-	int err;
-
-	if (rcfg[0].rc_repo_mode != SILOFS_REPO_NONE) {
-		err = repo_init(&repos->repo[0], &rcfg[0]);
-		if (err) {
-			return err;
-		}
-	}
-	if (rcfg[1].rc_repo_mode != SILOFS_REPO_NONE) {
-		err = repo_init(&repos->repo[1], &rcfg[1]);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
+	return repo_init(repo, rcfg);
 }
 
-struct silofs_repo *silofs_repos_get(const struct silofs_repos *repos,
-                                     enum silofs_repo_mode repo_mode)
+void silofs_repo_fini(struct silofs_repo *repo)
 {
-	const struct silofs_repo *repo;
-
-	switch (repo_mode) {
-	case SILOFS_REPO_LOCAL:
-		repo = &repos->repo[0];
-		break;
-	case SILOFS_REPO_ATTIC:
-		repo = &repos->repo[1];
-		break;
-	default:
-	case SILOFS_REPO_NONE:
-		repo = NULL;
-		break;
-	}
-	return repo_enabled(repo) ? unconst(repo) : NULL;
-}
-
-void silofs_repos_fini(struct silofs_repos *repos)
-{
-	struct silofs_repo *repo = NULL;
-
-	repo = silofs_repos_get(repos, SILOFS_REPO_LOCAL);
-	if (repo_enabled(repo)) {
-		repo_fini(repo);
-	}
-	repo = silofs_repos_get(repos, SILOFS_REPO_ATTIC);
 	if (repo_enabled(repo)) {
 		repo_fini(repo);
 	}
 }
 
-int silofs_repos_format(struct silofs_repos *repos)
+int silofs_repo_format(struct silofs_repo *repo)
 {
-	struct silofs_repo *repo = NULL;
-	int err;
-
-	repo = silofs_repos_get(repos, SILOFS_REPO_LOCAL);
-	if (repo_enabled(repo)) {
-		err = repo_format(repo);
-		check_ok_or_bailout(err);
-	}
-	repo = silofs_repos_get(repos, SILOFS_REPO_ATTIC);
-	if (repo_enabled(repo)) {
-		err = repo_format(repo);
-		check_ok_or_bailout(err);
-	}
-	return 0;
-}
-
-int silofs_repos_open(struct silofs_repos *repos)
-{
-	struct silofs_repo *repo = NULL;
-	int err;
-
-	repo = silofs_repos_get(repos, SILOFS_REPO_LOCAL);
-	if (repo_enabled(repo)) {
-		err = repo_open(repo);
-		check_ok_or_bailout(err);
-	}
-	repo = silofs_repos_get(repos, SILOFS_REPO_ATTIC);
-	if (repo_enabled(repo)) {
-		err = repo_open(repo);
-		check_ok_or_bailout(err);
-	}
-	return 0;
-}
-
-int silofs_repos_close(struct silofs_repos *repos)
-{
-	struct silofs_repo *repo = NULL;
 	int err = 0;
 
-	for (size_t i = 0; !err && (i < ARRAY_SIZE(repos->repo)); ++i) {
-		repo = &repos->repo[i];
-		if (repo_enabled(repo)) {
-			err = repo_close(repo);
-		}
+	if (repo_enabled(repo)) {
+		err = repo_format(repo);
 	}
 	return err;
 }
 
-void silofs_repos_drop_cache(struct silofs_repos *repos)
+int silofs_repo_open(struct silofs_repo *repo)
 {
-	struct silofs_repo *repo = NULL;
+	int err = 0;
 
-	for (size_t i = 0; i < ARRAY_SIZE(repos->repo); ++i) {
-		repo = &repos->repo[i];
-		if (repo_enabled(repo)) {
-			repo_pre_op(repo);
-			repo_drop_cache(repo);
-			repo_post_op(repo);
-		}
+	if (repo_enabled(repo)) {
+		err = repo_open(repo);
+	}
+	return err;
+}
+
+int silofs_repo_close(struct silofs_repo *repo)
+{
+	int err = 0;
+
+	if (repo_enabled(repo)) {
+		err = repo_close(repo);
+	}
+	return err;
+}
+
+void silofs_repo_drop_cache(struct silofs_repo *repo)
+{
+	if (repo_enabled(repo)) {
+		repo_pre_op(repo);
+		repo_drop_cache(repo);
+		repo_post_op(repo);
 	}
 }
 
-void silofs_repos_relax_cache(struct silofs_repos *repos, int flags)
+void silofs_repo_relax_cache(struct silofs_repo *repo, int flags)
 {
-	struct silofs_repo *repo = NULL;
-
-	for (size_t i = 0; i < ARRAY_SIZE(repos->repo); ++i) {
-		repo = &repos->repo[i];
-		if (repo_enabled(repo)) {
-			repo_pre_op(repo);
-			repo_relax_cache(repo, flags);
-			repo_post_op(repo);
-		}
+	if (repo_enabled(repo)) {
+		repo_pre_op(repo);
+		repo_relax_cache(repo, flags);
+		repo_post_op(repo);
 	}
 }
 
-void silofs_repos_pre_forkfs(struct silofs_repos *repos)
+void silofs_repo_pre_forkfs(struct silofs_repo *repo)
 {
-	struct silofs_repo *repo = NULL;
-
-	for (size_t i = 0; i < ARRAY_SIZE(repos->repo); ++i) {
-		repo = &repos->repo[i];
-		if (repo_enabled(repo)) {
-			repo_pre_op(repo);
-			silofs_cache_forget_uaddrs(&repo->re_cache);
-			repo_post_op(repo);
-		}
+	if (repo_enabled(repo)) {
+		repo_pre_op(repo);
+		silofs_cache_forget_uaddrs(&repo->re_cache);
+		repo_post_op(repo);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_save_bootsec(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_uuid *uuid,
-                              const struct silofs_bootsec *bsec)
+int silofs_repo_save_bootsec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             const struct silofs_bootsec *bsec)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_save_bootsec(repo, uuid, bsec);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_save_bootsec(repo, uuid, bsec);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_load_bootsec(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_uuid *uuid,
-                              struct silofs_bootsec *out_bsec)
+int silofs_repo_load_bootsec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             struct silofs_bootsec *out_bsec)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_load_bootsec(repo, uuid, out_bsec);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_load_bootsec(repo, uuid, out_bsec);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_stat_bootsec(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_uuid *uuid)
+int silofs_repo_stat_bootsec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_stat_bootsec(repo, uuid);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_stat_bootsec(repo, uuid);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_unlink_bootsec(struct silofs_repos *repos,
-                                enum silofs_repo_mode repo_mode,
-                                const struct silofs_uuid *uuid)
+int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
+                               const struct silofs_uuid *uuid)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_unlink_bootsec(repo, uuid);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_unlink_bootsec(repo, uuid);
+	repo_post_op(repo);
 	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_lookup_blob(struct silofs_repos *repos,
-                             enum silofs_repo_mode repo_mode,
-                             const struct silofs_blobid *blobid)
+int silofs_repo_lookup_blob(struct silofs_repo *repo,
+                            const struct silofs_blobid *blobid)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_lookup_blob(repo, blobid);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_lookup_blob(repo, blobid);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_spawn_blob(struct silofs_repos *repos,
-                            enum silofs_repo_mode repo_mode,
-                            const struct silofs_blobid *blobid,
-                            struct silofs_blobf **out_blobf)
+int silofs_repo_spawn_blob(struct silofs_repo *repo,
+                           const struct silofs_blobid *blobid,
+                           struct silofs_blobf **out_blobf)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_spawn_blob(repo, blobid, out_blobf);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_spawn_blob(repo, blobid, out_blobf);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_stage_blob(struct silofs_repos *repos, bool rw,
-                            enum silofs_repo_mode repo_mode,
-                            const struct silofs_blobid *blobid,
-                            struct silofs_blobf **out_blobf)
+int silofs_repo_stage_blob(struct silofs_repo *repo, bool rw,
+                           const struct silofs_blobid *blobid,
+                           struct silofs_blobf **out_blobf)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_stage_blob(repo, rw, blobid, out_blobf);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_stage_blob(repo, rw, blobid, out_blobf);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_remove_blob(struct silofs_repos *repos,
-                             enum silofs_repo_mode repo_mode,
-                             const struct silofs_blobid *blobid)
+int silofs_repo_remove_blob(struct silofs_repo *repo,
+                            const struct silofs_blobid *blobid)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_remove_blob(repo, blobid);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_remove_blob(repo, blobid);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_require_blob(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_blobid *blobid,
-                              struct silofs_blobf **out_blobf)
+int silofs_repo_require_blob(struct silofs_repo *repo,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_blobf **out_blobf)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_require_blob(repo, true, blobid, out_blobf);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_require_blob(repo, true, blobid, out_blobf);
+	repo_post_op(repo);
 	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_stage_ubk(struct silofs_repos *repos, bool rw,
-                           enum silofs_repo_mode repo_mode,
-                           const struct silofs_bkaddr *bkaddr,
-                           struct silofs_ubk_info **out_ubki)
+int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_spawn_ubk(struct silofs_repos *repos, bool rw,
-                           enum silofs_repo_mode repo_mode,
-                           const struct silofs_bkaddr *bkaddr,
-                           struct silofs_ubk_info **out_ubki)
+int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
+	repo_post_op(repo);
 	return ret;
 }
 
-int silofs_repos_require_ubk(struct silofs_repos *repos,
-                             enum silofs_repo_mode repo_mode,
-                             const struct silofs_bkaddr *bkaddr,
-                             struct silofs_ubk_info **out_ubki)
+int silofs_repo_require_ubk(struct silofs_repo *repo,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_repo *repo = silofs_repos_get(repos, repo_mode);
-	int ret = -SILOFS_ENOREPO;
+	int ret;
 
-	if (likely(repo != NULL)) {
-		repo_pre_op(repo);
-		ret = repo_require_ubk(repo, true, bkaddr, out_ubki);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	ret = repo_require_ubk(repo, true, bkaddr, out_ubki);
+	repo_post_op(repo);
 	return ret;
 }

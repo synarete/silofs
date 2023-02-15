@@ -371,7 +371,7 @@ static int flc_prep_sqe(const struct silofs_flush_ctx *fl_ctx,
 	int err;
 
 	silofs_sqe_increfs(sqe);
-	err = silofs_stage_blob_at(fl_ctx->uber, true, blobid, &blobf);
+	err = silofs_stage_blob_at(fl_ctx->uber, blobid, &blobf);
 	if (err) {
 		return err;
 	}
@@ -523,13 +523,9 @@ static bool flc_need_flush(const struct silofs_flush_ctx *fl_ctx)
 static int flc_setup(struct silofs_flush_ctx *fl_ctx,
                      struct silofs_task *task, silofs_dqid_t dqid, int flags)
 {
-	struct silofs_repo *repo = NULL;
 	struct silofs_uber *uber = task->t_uber;
+	struct silofs_repo *repo = uber->ub.repo;
 
-	repo = silofs_repos_get(uber->ub.repos, SILOFS_REPO_LOCAL);
-	if (unlikely(repo == NULL)) {
-		return -SILOFS_ENOREPO;
-	}
 	fl_ctx->task = task;
 	fl_ctx->uber = uber;
 	fl_ctx->dqid = dqid;

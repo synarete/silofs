@@ -33,16 +33,15 @@ struct silofs_blobf {
 	bool                            b_rdonly;
 };
 
-/* repository init config */
+/* repoitory init config */
 struct silofs_repocfg {
 	struct silofs_bootpath          rc_bootpath;
 	struct silofs_alloc            *rc_alloc;
 	size_t                          rc_memhint;
-	enum silofs_repo_mode           rc_repo_mode;
 	bool                            rc_rdonly;
 };
 
-/* blobs repository */
+/* blobs repoitory */
 struct silofs_repo {
 	struct silofs_repocfg           re_cfg;
 	struct silofs_cache             re_cache;
@@ -51,11 +50,6 @@ struct silofs_repo {
 	int                             re_dots_dfd;
 	int                             re_blobs_dfd;
 	bool                            re_rw;
-};
-
-/* repository pair */
-struct silofs_repos {
-	struct silofs_repo              repo[2];
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -94,86 +88,71 @@ int silofs_blobf_read_blob(struct silofs_blobf *blobf, void *buf, size_t len);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_repo *
-silofs_repos_get(const struct silofs_repos *repos, enum silofs_repo_mode rt);
+int silofs_repo_init(struct silofs_repo *repo,
+                     const struct silofs_repocfg *rcfg);
 
-int silofs_repos_init(struct silofs_repos *repos,
-                      const struct silofs_repocfg rcfg[2]);
+void silofs_repo_fini(struct silofs_repo *repo);
 
-void silofs_repos_fini(struct silofs_repos *repos);
+int silofs_repo_format(struct silofs_repo *repo);
 
-int silofs_repos_format(struct silofs_repos *repos);
+int silofs_repo_open(struct silofs_repo *repo);
 
-int silofs_repos_open(struct silofs_repos *repos);
+int silofs_repo_close(struct silofs_repo *repo);
 
-int silofs_repos_close(struct silofs_repos *repos);
+void silofs_repo_drop_cache(struct silofs_repo *repo);
 
-void silofs_repos_drop_cache(struct silofs_repos *repos);
+void silofs_repo_relax_cache(struct silofs_repo *repo, int flags);
 
-void silofs_repos_relax_cache(struct silofs_repos *repos, int flags);
-
-void silofs_repos_pre_forkfs(struct silofs_repos *repos);
+void silofs_repo_pre_forkfs(struct silofs_repo *repo);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_save_bootsec(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_uuid *uuid,
-                              const struct silofs_bootsec *bsec);
+int silofs_repo_save_bootsec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             const struct silofs_bootsec *bsec);
 
-int silofs_repos_load_bootsec(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_uuid *uuid,
-                              struct silofs_bootsec *out_bsec);
+int silofs_repo_load_bootsec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             struct silofs_bootsec *out_bsec);
 
-int silofs_repos_stat_bootsec(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_uuid *uuid);
+int silofs_repo_stat_bootsec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid);
 
-int silofs_repos_unlink_bootsec(struct silofs_repos *repos,
-                                enum silofs_repo_mode repo_mode,
-                                const struct silofs_uuid *uuid);
+int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
+                               const struct silofs_uuid *uuid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_lookup_blob(struct silofs_repos *repos,
-                             enum silofs_repo_mode repo_mode,
-                             const struct silofs_blobid *blobid);
+int silofs_repo_lookup_blob(struct silofs_repo *repo,
+                            const struct silofs_blobid *blobid);
 
-int silofs_repos_spawn_blob(struct silofs_repos *repos,
-                            enum silofs_repo_mode repo_mode,
-                            const struct silofs_blobid *blobid,
-                            struct silofs_blobf **out_blobf);
+int silofs_repo_spawn_blob(struct silofs_repo *repo,
+                           const struct silofs_blobid *blobid,
+                           struct silofs_blobf **out_blobf);
 
-int silofs_repos_stage_blob(struct silofs_repos *repos, bool rw,
-                            enum silofs_repo_mode repo_mode,
-                            const struct silofs_blobid *blobid,
-                            struct silofs_blobf **out_blobf);
+int silofs_repo_stage_blob(struct silofs_repo *repo, bool rw,
+                           const struct silofs_blobid *blobid,
+                           struct silofs_blobf **out_blobf);
 
-int silofs_repos_remove_blob(struct silofs_repos *repos,
-                             enum silofs_repo_mode repo_mode,
-                             const struct silofs_blobid *blobid);
+int silofs_repo_remove_blob(struct silofs_repo *repo,
+                            const struct silofs_blobid *blobid);
 
-int silofs_repos_require_blob(struct silofs_repos *repos,
-                              enum silofs_repo_mode repo_mode,
-                              const struct silofs_blobid *blobid,
-                              struct silofs_blobf **out_blobf);
+int silofs_repo_require_blob(struct silofs_repo *repo,
+                             const struct silofs_blobid *blobid,
+                             struct silofs_blobf **out_blobf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repos_stage_ubk(struct silofs_repos *repos, bool rw,
-                           enum silofs_repo_mode repo_mode,
-                           const struct silofs_bkaddr *bkaddr,
-                           struct silofs_ubk_info **out_ubki);
+int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info **out_ubki);
 
-int silofs_repos_spawn_ubk(struct silofs_repos *repos, bool rw,
-                           enum silofs_repo_mode repo_mode,
-                           const struct silofs_bkaddr *bkaddr,
-                           struct silofs_ubk_info **out_ubki);
+int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info **out_ubki);
 
-int silofs_repos_require_ubk(struct silofs_repos *repos,
-                             enum silofs_repo_mode repo_mode,
-                             const struct silofs_bkaddr *bkaddr,
-                             struct silofs_ubk_info **out_ubki);
+int silofs_repo_require_ubk(struct silofs_repo *repo,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_ubk_info **out_ubki);
 
 #endif /* SILOFS_REPO_H_ */

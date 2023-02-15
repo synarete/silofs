@@ -23,7 +23,6 @@ struct silofs_unref_ctx {
 	struct silofs_visitor   vis;
 	struct silofs_uber     *uber;
 	struct silofs_uaddr     sb_uaddr;
-	enum silofs_repo_mode   repo_mode;
 };
 
 
@@ -42,9 +41,9 @@ static int sli_resolve_blob_of(const struct silofs_spleaf_info *sli,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_repos *unrc_repos(const struct silofs_unref_ctx *unr_ctx)
+static struct silofs_repo *unrc_repo(const struct silofs_unref_ctx *unr_ctx)
 {
-	return unr_ctx->uber->ub.repos;
+	return unr_ctx->uber->ub.repo;
 }
 
 static bool unrc_is_blobid_of(const struct silofs_unref_ctx *unr_ctx,
@@ -67,8 +66,7 @@ static int unrc_exec_unrefs_at(struct silofs_unref_ctx *unr_ctx,
 static int unrc_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
                                const struct silofs_blobid *blobid)
 {
-	return silofs_repos_remove_blob(unrc_repos(unr_ctx),
-	                                unr_ctx->repo_mode, blobid);
+	return silofs_repo_remove_blob(unrc_repo(unr_ctx), blobid);
 }
 
 static int unrc_try_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
@@ -231,13 +229,6 @@ static void unrc_init(struct silofs_unref_ctx *unr_ctx,
 	unr_ctx->vis.post_hook = unrc_visit_post_hook;
 	unr_ctx->uber = sbi_uber(sbi);
 	uaddr_assign(&unr_ctx->sb_uaddr, uaddr);
-
-	/*
-	 * TODO-0053: Support unref-fs for attic repository.
-	 *
-	 * Walk-and-unref archived file-system in attic repository.
-	 */
-	unr_ctx->repo_mode = SILOFS_REPO_LOCAL;
 }
 
 static void unrc_fini(struct silofs_unref_ctx *unr_ctx)
@@ -260,7 +251,7 @@ int silofs_walk_unref_fs(struct silofs_task *task,
 	int err;
 
 	unrc_init(&unr_ctx, sbi);
-	err = silofs_walk_space_tree(task, sbi, &unr_ctx.vis, true);
+	err = silofs_walk_space_tree(task, sbi, &unr_ctx.vis);
 	if (!err) {
 		err = unrc_remove_super(&unr_ctx);
 	}

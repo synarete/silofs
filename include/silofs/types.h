@@ -440,7 +440,7 @@ struct silofs_uber_base {
 	const struct silofs_fs_args    *fs_args;
 	const struct silofs_ivkey      *ivkey;
 	struct silofs_alloc            *alloc;
-	struct silofs_repos            *repos;
+	struct silofs_repo            *repo;
 	struct silofs_submitq          *submitq;
 	struct silofs_idsmap           *idsmap;
 };
@@ -475,7 +475,6 @@ struct silofs_ids {
 struct silofs_fs_cargs {
 	struct silofs_uuid      uuid;
 	struct silofs_ids       ids;
-	bool pack;
 };
 
 /* file-system input arguments */
@@ -483,8 +482,6 @@ struct silofs_fs_args {
 	struct silofs_fs_cargs  ca;
 	const char             *repodir;
 	const char             *name;
-	const char             *atticdir;
-	const char             *arname;
 	const char             *mntdir;
 	const char             *passwd;
 	uid_t                   uid;
@@ -516,7 +513,7 @@ struct silofs_fs_env {
 	struct silofs_qalloc   *fs_qalloc;
 	struct silofs_alloc    *fs_alloc;
 	struct silofs_crypto   *fs_crypto;
-	struct silofs_repos    *fs_repos;
+	struct silofs_repo    *fs_repo;
 	struct silofs_submitq  *fs_submitq;
 	struct silofs_idsmap   *fs_idsmap;
 	struct silofs_uber     *fs_uber;

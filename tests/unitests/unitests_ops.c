@@ -1918,7 +1918,7 @@ void ut_format_repo_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fse_format_repos(ute->fs_env);
+	err = silofs_fse_format_repo(ute->fs_env);
 	ut_expect_ok(err);
 }
 
@@ -1926,7 +1926,7 @@ void ut_open_repo_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fse_open_repos(ute->fs_env);
+	err = silofs_fse_open_repo(ute->fs_env);
 	ut_expect_ok(err);
 }
 

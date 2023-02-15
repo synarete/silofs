@@ -245,7 +245,7 @@ static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
 {
 	int err;
 
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
+	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -256,7 +256,7 @@ static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
+	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -402,7 +402,7 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 {
 	int err;
 
-	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_blobf);
+	err = silofs_spawn_blob_at(stg_ctx->uber, blobid, out_blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -413,7 +413,7 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_blob_at(stg_ctx->uber, true, blobid, out_blobf);
+	err = silofs_spawn_blob_at(stg_ctx->uber, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -428,7 +428,7 @@ static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
 {
 	int err;
 
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
+	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -439,7 +439,7 @@ static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_blob_at(stg_ctx->uber, true, blobid, out_blobf);
+	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -717,7 +717,7 @@ static int stgc_do_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode_at(stg_ctx->uber, true, uaddr, out_sni);
+	return silofs_stage_spnode_at(stg_ctx->uber, uaddr, out_sni);
 }
 
 static int stgc_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
@@ -753,7 +753,7 @@ static int stgc_do_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spnode_info **out_sni)
 {
-	return silofs_spawn_spnode_at(stg_ctx->uber, true, uaddr, out_sni);
+	return silofs_spawn_spnode_at(stg_ctx->uber, uaddr, out_sni);
 }
 
 static int stgc_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
@@ -794,7 +794,7 @@ static int stgc_do_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_at(stg_ctx->uber, true, uaddr, out_sli);
+	return silofs_stage_spleaf_at(stg_ctx->uber, uaddr, out_sli);
 }
 
 static int stgc_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
@@ -830,7 +830,7 @@ static int stgc_do_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spleaf_info **out_sli)
 {
-	return silofs_spawn_spleaf_at(stg_ctx->uber, true, uaddr, out_sli);
+	return silofs_spawn_spleaf_at(stg_ctx->uber, uaddr, out_sli);
 }
 
 static int stgc_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
@@ -2031,7 +2031,7 @@ static int stgc_do_stage_ubk_at(const struct silofs_stage_ctx *stg_ctx,
                                 const struct silofs_bkaddr *bkaddr,
                                 struct silofs_ubk_info **out_ubki)
 {
-	return silofs_stage_ubk_at(stg_ctx->uber, true, bkaddr, out_ubki);
+	return silofs_stage_ubk_at(stg_ctx->uber, bkaddr, out_ubki);
 }
 
 static int stgc_stage_ubk_at(const struct silofs_stage_ctx *stg_ctx,

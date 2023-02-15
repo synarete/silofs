@@ -49,7 +49,7 @@ struct silofs_visitor {
 
 int silofs_walk_space_tree(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
-                           struct silofs_visitor *vis, bool warm);
+                           struct silofs_visitor *vis);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

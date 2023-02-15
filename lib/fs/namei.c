@@ -2070,30 +2070,26 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static struct silofs_repos *repos_of(const struct silofs_uber *uber)
+static struct silofs_repo *repo_of(const struct silofs_uber *uber)
 {
-	return uber->ub.repos;
+	return uber->ub.repo;
 }
 
 static void fill_query_bootsec(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	const struct silofs_uber *uber = NULL;
-	const struct silofs_repo *repo = NULL;
+	const struct silofs_uber *uber = ii_uber(ii);
+	const struct silofs_repo *repo = uber->ub.repo;
 	const struct silofs_bootpath *bpath = NULL;
 	size_t bsz;
 
-	uber = ii_uber(ii);
-	repo = silofs_repos_get(repos_of(uber), SILOFS_REPO_LOCAL);
-	if (likely(repo != NULL)) {
-		bpath = &repo->re_cfg.rc_bootpath;
+	bpath = &repo->re_cfg.rc_bootpath;
 
-		bsz = sizeof(query->u.bootsec.repo);
-		fill_strbuf(query->u.bootsec.repo, bsz, &bpath->repodir);
+	bsz = sizeof(query->u.bootsec.repo);
+	fill_strbuf(query->u.bootsec.repo, bsz, &bpath->repodir);
 
-		bsz = sizeof(query->u.bootsec.name);
-		fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
-	}
+	bsz = sizeof(query->u.bootsec.name);
+	fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
@@ -2241,15 +2237,14 @@ static int check_clone(const struct silofs_task *task,
 static int do_post_clone_updates(const struct silofs_task *task,
                                  const struct silofs_bootsecs *bsecs)
 {
-	struct silofs_repos *repos = NULL;
+	struct silofs_repo *repo = NULL;
 	const struct silofs_bootsec *bsec = NULL;
-	const enum silofs_repo_mode ns = SILOFS_REPO_LOCAL;
 	int err = 0;
 
-	repos = repos_of(task->t_uber);
+	repo = repo_of(task->t_uber);
 	for (size_t i = 0; i < ARRAY_SIZE(bsecs->bsec); ++i) {
 		bsec = &bsecs->bsec[i];
-		err = silofs_repos_save_bootsec(repos, ns, &bsec->uuid, bsec);
+		err = silofs_repo_save_bootsec(repo, &bsec->uuid, bsec);
 		if (err) {
 			break;
 		}

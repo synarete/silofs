@@ -37,7 +37,6 @@ struct silofs_walk_ctx {
 	enum silofs_height height;
 	enum silofs_stype  vspace;
 	loff_t voff;
-	bool warm;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -200,16 +199,14 @@ static int wac_stage_spnode_at(const struct silofs_walk_ctx *wa_ctx,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode_at(wa_ctx->uber, wa_ctx->warm,
-	                              uaddr, out_sni);
+	return silofs_stage_spnode_at(wa_ctx->uber, uaddr, out_sni);
 }
 
 static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_at(wa_ctx->uber, wa_ctx->warm,
-	                              uaddr, out_sli);
+	return silofs_stage_spleaf_at(wa_ctx->uber, uaddr, out_sli);
 }
 
 static int wac_stage_spnode5(struct silofs_walk_ctx *wa_ctx)
@@ -789,7 +786,7 @@ static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 
 int silofs_walk_space_tree(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
-                           struct silofs_visitor *vis, bool warm)
+                           struct silofs_visitor *vis)
 {
 	struct silofs_walk_ctx wa_ctx = {
 		.task = task,
@@ -797,7 +794,6 @@ int silofs_walk_space_tree(struct silofs_task *task,
 		.uber = task->t_uber,
 		.sbi = sbi,
 		.height = SILOFS_HEIGHT_SUPER,
-		.warm = warm,
 	};
 	int err;
 

@@ -112,7 +112,7 @@ int silofs_walk_inspect_fs(struct silofs_task *task,
 	int ret;
 
 	spvi_init(&spvi);
-	ret = silofs_walk_space_tree(task, sbi, &spvi.vis, true);
+	ret = silofs_walk_space_tree(task, sbi, &spvi.vis);
 	spvi_fini(&spvi);
 	return ret;
 }

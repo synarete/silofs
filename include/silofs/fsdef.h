@@ -53,19 +53,19 @@
 /* max size of mount-path (including null) */
 #define SILOFS_MNTPATH_MAX              (1920)
 
-/* max path-length of repository-path (including null) */
+/* max path-length of repoitory-path (including null) */
 #define SILOFS_REPOPATH_MAX             (1536)
 
-/* size of repository meta-file descriptor */
+/* size of repoitory meta-file descriptor */
 #define SILOFS_REPO_METADATA_SIZE       SILOFS_KILO
 
-/* repository meta descriptor-file name */
+/* repoitory meta descriptor-file name */
 #define SILOFS_REPO_METAFILE_NAME       "meta"
 
-/* repository meta sub-dir name */
+/* repoitory meta sub-dir name */
 #define SILOFS_REPO_DOTSDIR_NAME        ".silofs"
 
-/* repository objects sub-directory name */
+/* repoitory objects sub-directory name */
 #define SILOFS_REPO_BLOBS_DIRNAME       "blobs"
 
 /* number of sub-dirs within objects directories */
@@ -401,13 +401,6 @@ enum silofs_kdf_algos {
 	SILOFS_KDF_NONE         = 0,
 	SILOFS_KDF_PBKDF2       = 34,
 	SILOFS_KDF_SCRYPT       = 48
-};
-
-/* repository sub-type */
-enum silofs_repo_mode {
-	SILOFS_REPO_NONE        = 0,
-	SILOFS_REPO_LOCAL       = 1,
-	SILOFS_REPO_ATTIC       = 2,
 };
 
 /* unix-domain socket for mount daemon */

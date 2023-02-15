@@ -25,9 +25,9 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 
 void silofs_fse_del(struct silofs_fs_env *fse);
 
-int silofs_fse_format_repos(struct silofs_fs_env *fse);
+int silofs_fse_format_repo(struct silofs_fs_env *fse);
 
-int silofs_fse_open_repos(struct silofs_fs_env *fse);
+int silofs_fse_open_repo(struct silofs_fs_env *fse);
 
 int silofs_fse_close_repo(struct silofs_fs_env *fse);
 
@@ -39,7 +39,7 @@ int silofs_fse_boot_fs(struct silofs_fs_env *fse,
 
 int silofs_fse_open_fs(struct silofs_fs_env *fse);
 
-int silofs_fse_poke_fs(struct silofs_fs_env *fse, bool warm,
+int silofs_fse_poke_fs(struct silofs_fs_env *fse,
                        const struct silofs_uuid *uuid);
 
 int silofs_fse_close_fs(struct silofs_fs_env *fse);

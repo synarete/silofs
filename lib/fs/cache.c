@@ -1564,8 +1564,8 @@ static bool cache_evict_or_relru_blobf(struct silofs_cache *cache,
 }
 
 static size_t
-cache_shrink_or_relru_blobfs(struct silofs_cache *cache, size_t cnt,
-                             bool force)
+cache_shrink_or_relru_blobfs(struct silofs_cache *cache,
+                             size_t cnt, bool force)
 {
 	struct silofs_blobf *blobf;
 	const size_t n = min(cnt, cache->c_blobf_lm.lm_lru.sz);
@@ -1615,12 +1615,13 @@ static bool cache_blobs_has_overflow(const struct silofs_cache *cache)
 
 void silofs_cache_relax_blobs(struct silofs_cache *cache)
 {
-	size_t cnt;
+	const size_t cnt = cache_blobs_overflow(cache);
 
-	cache_pre_op(cache);
-	cnt = cache_blobs_overflow(cache);
-	cache_shrink_or_relru_blobfs(cache, cnt, true);
-	cache_post_op(cache);
+	if (cnt > 0) {
+		cache_pre_op(cache);
+		cache_shrink_or_relru_blobfs(cache, cnt, true);
+		cache_post_op(cache);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

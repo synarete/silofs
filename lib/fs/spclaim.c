@@ -228,7 +228,7 @@ static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
 	if (!silofs_sbi_ismutable_blobid(sbi, &blobid)) {
 		return 0;
 	}
-	err = silofs_stage_blob_at(sbi_uber(sbi), true, &blobid, &blobf);
+	err = silofs_stage_blob_at(sbi_uber(sbi), &blobid, &blobf);
 	if (err) {
 		log_err("failed to stage unused blob: err=%d", err);
 		return err;

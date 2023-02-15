@@ -42,57 +42,57 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_super_at(struct silofs_uber *uber, bool warm,
+int silofs_spawn_super_at(struct silofs_uber *uber,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi);
 
-int silofs_stage_super_at(struct silofs_uber *uber, bool warm,
+int silofs_stage_super_at(struct silofs_uber *uber,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi);
 
-int silofs_shadow_super_at(struct silofs_uber *uber, bool warm,
+int silofs_shadow_super_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_sb_info **out_sbi);
 
 
-int silofs_spawn_spnode_at(struct silofs_uber *uber, bool warm,
+int silofs_spawn_spnode_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni);
 
-int silofs_stage_spnode_at(struct silofs_uber *uber, bool warm,
+int silofs_stage_spnode_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni);
 
-int silofs_shadow_spnode_at(struct silofs_uber *uber, bool warm,
+int silofs_shadow_spnode_at(struct silofs_uber *uber,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spnode_info **out_sni);
 
 
-int silofs_spawn_spleaf_at(struct silofs_uber *uber, bool warm,
+int silofs_spawn_spleaf_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_spleaf_at(struct silofs_uber *uber, bool warm,
+int silofs_stage_spleaf_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_shadow_spleaf_at(struct silofs_uber *uber, bool warm,
+int silofs_shadow_spleaf_at(struct silofs_uber *uber,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_spleaf_info **out_sli);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_stage_ubk_at(struct silofs_uber *uber, bool warm,
+int silofs_stage_ubk_at(struct silofs_uber *uber,
                         const struct silofs_bkaddr *bkaddr,
                         struct silofs_ubk_info **out_ubki);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_blob_at(struct silofs_uber *uber, bool warm,
+int silofs_spawn_blob_at(struct silofs_uber *uber,
                          const struct silofs_blobid *blobid,
                          struct silofs_blobf **out_blobf);
 
-int silofs_stage_blob_at(struct silofs_uber *uber, bool warm,
+int silofs_stage_blob_at(struct silofs_uber *uber,
                          const struct silofs_blobid *blobid,
                          struct silofs_blobf **out_blobf);
 

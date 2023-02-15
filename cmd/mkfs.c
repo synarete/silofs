@@ -205,7 +205,7 @@ void cmd_execute_mkfs(void)
 	/* Prepare environment */
 	cmd_mkfs_setup_fs_env(&ctx);
 
-	/* Open repository */
+	/* Open repoitory */
 	cmd_mkfs_open_repo(&ctx);
 
 	/* Do actual mkfs */
@@ -217,7 +217,7 @@ void cmd_execute_mkfs(void)
 	/* Post-format cleanups */
 	cmd_mkfs_shutdown_fs(&ctx);
 
-	/* Close repository */
+	/* Close repoitory */
 	cmd_mkfs_close_repo(&ctx);
 
 	/* Post execution cleanups */

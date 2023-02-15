@@ -147,7 +147,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	struct silofs_fs_cargs *fsca = &ctx->fs_args.ca;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(fsca, false, args->repodir_real, args->name);
+	cmd_load_fs_cargs_for(fsca, args->repodir_real, args->name);
 	fs_args->repodir = args->repodir_real;
 	fs_args->name = args->name;
 	fs_args->mntdir = args->mntpoint_real;
@@ -253,7 +253,7 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_require_bsec(struct cmd_mount_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, true, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
@@ -430,7 +430,7 @@ void cmd_execute_mount(void)
 	/* Require valid mount-point */
 	cmd_mount_prepare_mntpoint(&ctx);
 
-	/* Require minimal repository validity */
+	/* Require minimal repoitory validity */
 	cmd_mount_prepare_repo(&ctx);
 
 	/* Load and setup source boot-params */
@@ -439,7 +439,7 @@ void cmd_execute_mount(void)
 	/* Setup boot environment instance */
 	cmd_mount_setup_fs_env(&ctx);
 
-	/* Open repository first time */
+	/* Open repoitory first time */
 	cmd_mount_open_repo(&ctx);
 
 	/* Load-verify bootsec */
@@ -448,7 +448,7 @@ void cmd_execute_mount(void)
 	/* Require boot + lock-able file-system */
 	cmd_mount_boot_fs(&ctx);
 
-	/* Close repository */
+	/* Close repoitory */
 	cmd_mount_close_repo(&ctx);
 
 	/* Destroy boot environment instance */
@@ -460,7 +460,7 @@ void cmd_execute_mount(void)
 	/* Setup main environment instance */
 	cmd_mount_setup_fs_env(&ctx);
 
-	/* Re-open repository */
+	/* Re-open repoitory */
 	cmd_mount_open_repo(&ctx);
 
 	/* Re-load and verify bootsec */
@@ -487,7 +487,7 @@ void cmd_execute_mount(void)
 	/* Report end-of-mount */
 	cmd_mount_trace_finish(&ctx);
 
-	/* Close repository */
+	/* Close repoitory */
 	cmd_mount_close_repo(&ctx);
 
 	/* Destroy main environment instance */

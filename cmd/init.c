@@ -17,10 +17,9 @@
 #include "cmd.h"
 
 static const char *cmd_init_help_desc[] = {
-	"init [--arttic] <repodir>",
+	"init <repodir>",
 	"",
 	"options:",
-	"  -a, --attic                  Create archiving repository",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };
@@ -28,7 +27,6 @@ static const char *cmd_init_help_desc[] = {
 struct cmd_init_in_args {
 	char   *repodir;
 	char   *repodir_real;
-	bool    attic;
 };
 
 struct cmd_init_ctx {
@@ -45,17 +43,14 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "attic", no_argument, NULL, 'a' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("aV:h", opts);
-		if (opt_chr == 'a') {
-			ctx->in_args.attic = true;
-		} else if (opt_chr == 'V') {
+		opt_chr = cmd_getopt("V:h", opts);
+		if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_init_help_desc);
@@ -112,13 +107,8 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 {
 	cmd_init_fs_args(&ctx->fs_args);
 	cmd_default_fs_cargs(&ctx->fs_args.ca);
-	if (ctx->in_args.attic) {
-		ctx->fs_args.atticdir = ctx->in_args.repodir_real;
-		ctx->fs_args.arname = "silofs";
-	} else {
-		ctx->fs_args.repodir = ctx->in_args.repodir_real;
-		ctx->fs_args.name = "silofs";
-	}
+	ctx->fs_args.repodir = ctx->in_args.repodir_real;
+	ctx->fs_args.name = "silofs";
 }
 
 static void cmd_init_setup_fs_env(struct cmd_init_ctx *ctx)
@@ -159,7 +149,7 @@ void cmd_execute_init(void)
 	/* Prepare environment */
 	cmd_init_setup_fs_env(&ctx);
 
-	/* Format repository layout */
+	/* Format repoitory layout */
 	cmd_init_format_repo(&ctx);
 
 	/* Post-format cleanups */

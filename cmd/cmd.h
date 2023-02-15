@@ -212,11 +212,9 @@ void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid);
 
 void cmd_close_fs(struct silofs_fs_env *fse);
 
-void cmd_require_fs(struct silofs_fs_env *fse, bool warm,
-                    const struct silofs_uuid *uuid);
+void cmd_require_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 
-void cmd_boot_fs(struct silofs_fs_env *fse,
-                 const struct silofs_uuid *uuid);
+void cmd_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 
 void cmd_open_fs(struct silofs_fs_env *fse);
 
@@ -285,7 +283,7 @@ void cmd_unlink_fs_cargs(const struct silofs_fs_cargs *fsca,
 void cmd_update_fs_cargs(struct silofs_fs_cargs *fsca,
                          const struct silofs_uuid *uu);
 
-void cmd_load_fs_cargs_for(struct silofs_fs_cargs *fsca, bool archive,
+void cmd_load_fs_cargs_for(struct silofs_fs_cargs *fsca,
                            const char *dirpath, const char *name);
 
 #endif /* SILOFS_CMD_H_ */

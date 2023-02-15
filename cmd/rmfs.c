@@ -90,7 +90,7 @@ static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 	struct silofs_fs_cargs *fsca = &ctx->fs_args.ca;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(fsca, false, args->repodir_real, args->name);
+	cmd_load_fs_cargs_for(fsca, args->repodir_real, args->name);
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
@@ -112,7 +112,7 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_require_bsec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, true, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
@@ -181,7 +181,7 @@ void cmd_execute_rmfs(void)
 	/* Setup execution context */
 	cmd_rmfs_setup_fs_env(&ctx);
 
-	/* Open-validate repository */
+	/* Open-validate repoitory */
 	cmd_rmfs_open_repo(&ctx);
 
 	/* Require valid reference */
@@ -193,7 +193,7 @@ void cmd_execute_rmfs(void)
 	/* Unlink boot-configuration */
 	cmd_rmfs_unlink_fsargs(&ctx);
 
-	/* Close repository */
+	/* Close repoitory */
 	cmd_rmfs_close_repo(&ctx);
 
 	/* Post execution cleanups */

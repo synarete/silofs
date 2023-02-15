@@ -116,7 +116,7 @@ static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 	const char *name = ctx->in_args.name;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(&fs_args->ca, false, repodir, name);
+	cmd_load_fs_cargs_for(&fs_args->ca, repodir, name);
 	fs_args->repodir = repodir;
 	fs_args->name = name;
 }
@@ -134,7 +134,7 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_require_bsec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, true, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
@@ -180,7 +180,7 @@ void cmd_execute_fsck(void)
 	/* Setup execution environment */
 	cmd_fsck_setup_fs_env(&ctx);
 
-	/* Open repository */
+	/* Open repoitory */
 	cmd_fsck_open_repo(&ctx);
 
 	/* Require source bootsec */
@@ -195,7 +195,7 @@ void cmd_execute_fsck(void)
 	/* Do actual fsck */
 	cmd_fsck_execute(&ctx);
 
-	/* Close repository */
+	/* Close repoitory */
 	cmd_fsck_close_repo(&ctx);
 
 	/* Destroy environment instance */

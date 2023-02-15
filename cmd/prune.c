@@ -91,7 +91,7 @@ static void cmd_prune_prepare(struct cmd_prune_ctx *ctx)
 /*
  * TODO-0050: Implement prune
  *
- * Prune repository under full locking.
+ * Prune repoitory under full locking.
  */
 
 

@@ -132,18 +132,6 @@ cmd_parse_gid_by_value(const struct silofs_substr *ss, gid_t *out_gid)
 	*out_gid = cmd_parse_str_as_gid(str);
 }
 
-static void
-cmd_parse_bool_by_value(const struct silofs_substr *ss, bool *out_val)
-{
-	char str[64] = "";
-
-	if (ss->len >= sizeof(str)) {
-		cmd_die_by(ss, "not a boolean");
-	}
-	substr_copyto(ss, str, sizeof(str));
-	*out_val = cmd_parse_str_as_bool(str);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t cmd_sysconf(int key)
@@ -421,14 +409,6 @@ static void cmd_append_uuid_conf(const struct silofs_uuid *uuid, char **conf)
 	cmd_append_conf_line(conf, line);
 }
 
-static void cmd_append_pack_conf(bool val, char **conf)
-{
-	char line[40] = "";
-
-	snprintf(line, sizeof(line) - 1, "pack = %d\n", val ? 1 : 0);
-	cmd_append_conf_line(conf, line);
-}
-
 static void cmd_append_id_conf(const char *name, uint32_t id, char **conf)
 {
 	char line[512] = "";
@@ -578,18 +558,6 @@ static void cmd_parse_uuid_line(struct silofs_fs_cargs *fsca,
 	memcpy(&fsca->uuid, uu, sizeof(fsca->uuid));
 }
 
-static void cmd_parse_pack_line(struct silofs_fs_cargs *fsca,
-                                const struct silofs_substr *line)
-{
-	struct silofs_substr ss;
-	struct silofs_substr_pair ssp;
-
-	substr_split_by(line, '=', &ssp);
-	substr_strip_ws(&ssp.second, &ss);
-
-	cmd_parse_bool_by_value(&ss, &fsca->pack);
-}
-
 static void cmd_parse_user_line(struct silofs_fs_cargs *fsca,
                                 const struct silofs_substr *line)
 {
@@ -617,8 +585,6 @@ static void cmd_parse_fs_line(struct silofs_fs_cargs *fsca,
 
 	if (substr_isequal(key, "uuid")) {
 		cmd_parse_uuid_line(fsca, line);
-	} else if (substr_isequal(key, "pack")) {
-		cmd_parse_pack_line(fsca, line);
 	}
 	/* should ignore? */
 }
@@ -701,9 +667,6 @@ cmd_unparse_fs_cargs(const struct silofs_fs_cargs *fsca, char **conf)
 {
 	cmd_append_section("fs", conf);
 	cmd_append_uuid_conf(&fsca->uuid, conf);
-	if (fsca->pack) {
-		cmd_append_pack_conf(fsca->pack, conf);
-	}
 	cmd_append_newline(conf);
 
 	cmd_append_section("users", conf);
@@ -724,7 +687,6 @@ void cmd_default_fs_cargs(struct silofs_fs_cargs *fsca)
 	silofs_uuid_generate(&fsca->uuid);
 	cmd_default_uids(&fsca->ids.uids, &fsca->ids.nuids);
 	cmd_default_gids(&fsca->ids.gids, &fsca->ids.ngids);
-	fsca->pack = false;
 }
 
 void cmd_setup_fs_cargs(struct silofs_fs_cargs *fsca,
@@ -829,13 +791,8 @@ void cmd_update_fs_cargs(struct silofs_fs_cargs *fsca,
 	silofs_uuid_assign(&fsca->uuid, uu);
 }
 
-void cmd_load_fs_cargs_for(struct silofs_fs_cargs *fsca, bool archive,
+void cmd_load_fs_cargs_for(struct silofs_fs_cargs *fsca,
                            const char *dirpath, const char *name)
 {
 	cmd_load_fs_cargs2(fsca, dirpath, name);
-	if (archive && !fsca->pack) {
-		cmd_dief(0, "not an archive: %s/%s", dirpath, name);
-	} else if (!archive && fsca->pack) {
-		cmd_dief(0, "unexpected archive: %s/%s", dirpath, name);
-	}
 }

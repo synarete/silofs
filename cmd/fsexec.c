@@ -43,21 +43,14 @@ static void cmd_repodir_name(const struct silofs_fs_env *fse, char **out_path)
 	cmd_join_path(fse->fs_args.repodir, fse->fs_args.name, out_path);
 }
 
-static void cmd_atticdir_name(const struct silofs_fs_env *fse, char **out_path)
-{
-	cmd_join_path(fse->fs_args.atticdir, fse->fs_args.arname, out_path);
-}
-
 static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
                                    int err, const char *msg)
 {
 	char *repodir_name = NULL;
-	char *atticdir_name = NULL;
 	const char *xmsg = msg ? msg : "";
 	const char *xtag = msg ? ": " : "";
 
 	cmd_repodir_name(fse, &repodir_name);
-	cmd_atticdir_name(fse, &atticdir_name);
 	if (err == SILOFS_ENOREPO) {
 		cmd_dief(err, "%s%smissing repo: %s",
 		         xmsg, xtag, repodir_name);
@@ -70,12 +63,6 @@ static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
 	} else if (err == SILOFS_EBADBOOT) {
 		cmd_dief(err, "%s%scorrupted boot: %s",
 		         xmsg, xtag, repodir_name);
-	} else if (err == SILOFS_EATTIC) {
-		cmd_dief(err, "%s%sattic repo: %s",
-		         xmsg, xtag, repodir_name);
-	} else if (err == SILOFS_ENOATTIC) {
-		cmd_dief(err, "%s%snot an attic repo: %s",
-		         xmsg, xtag, atticdir_name);
 	} else if (err == SILOFS_EMOUNT) {
 		cmd_dief(err, "%s%scan not mount: %s",
 		         xmsg, xtag, repodir_name);
@@ -105,7 +92,6 @@ static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
 		         xmsg, xtag, repodir_name);
 	}
 	cmd_pstrfree(&repodir_name);
-	cmd_pstrfree(&atticdir_name);
 }
 
 static void cmd_require_ok(const struct silofs_fs_env *fse,
@@ -120,7 +106,7 @@ void cmd_format_repo(struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = silofs_fse_format_repos(fse);
+	err = silofs_fse_format_repo(fse);
 	cmd_require_ok(fse, err, "failed to format repo");
 }
 
@@ -128,7 +114,7 @@ void cmd_open_repo(struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = silofs_fse_open_repos(fse);
+	err = silofs_fse_open_repo(fse);
 	cmd_require_ok(fse, err, "failed to open repo");
 }
 
@@ -140,12 +126,11 @@ void cmd_close_repo(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "failed to close repo");
 }
 
-void cmd_require_fs(struct silofs_fs_env *fse, bool warm,
-                    const struct silofs_uuid *uuid)
+void cmd_require_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 {
 	int err;
 
-	err = silofs_fse_poke_fs(fse, warm, uuid);
+	err = silofs_fse_poke_fs(fse, uuid);
 	cmd_require_ok(fse, err, "failed to poke fs");
 }
 

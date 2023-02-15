@@ -244,7 +244,7 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 	const char *name = ctx->in_args.name;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(&fs_args->ca, false, repodir, name);
+	cmd_load_fs_cargs_for(&fs_args->ca, repodir, name);
 	fs_args->repodir = repodir;
 	fs_args->name = name;
 }
@@ -266,7 +266,7 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_require_bsec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, true, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
@@ -359,7 +359,7 @@ void cmd_execute_snap(void)
 	/* Setup execution environment */
 	cmd_snap_setup_fs_env(&ctx);
 
-	/* Open repository */
+	/* Open repoitory */
 	cmd_snap_open_repo(&ctx);
 
 	/* Require source bootsec */
@@ -368,7 +368,7 @@ void cmd_execute_snap(void)
 	/* Do actual snap (offline|online) */
 	cmd_snap_execute(&ctx);
 
-	/* Close repository */
+	/* Close repoitory */
 	cmd_snap_close_repo(&ctx);
 
 	/* Re-save boot-params */

@@ -182,7 +182,7 @@ static void cmd_mount_halt_by_signal(int signum)
 
 	ctx = cmd_mount_ctx;
 	if (ctx && ctx->fs_env) {
-		silofs_fse_halt(ctx->fs_env, signum);
+		silofs_halt_fs(ctx->fs_env, signum);
 	}
 }
 

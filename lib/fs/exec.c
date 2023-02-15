@@ -674,7 +674,7 @@ static int fse_shut_uber(struct silofs_fs_env *fse)
 	return 0;
 }
 
-int silofs_fse_close_repo(struct silofs_fs_env *fse)
+int silofs_close_repo(struct silofs_fs_env *fse)
 {
 	int ret;
 
@@ -684,7 +684,7 @@ int silofs_fse_close_repo(struct silofs_fs_env *fse)
 	return ret;
 }
 
-int silofs_fse_exec_fs(struct silofs_fs_env *fse)
+int silofs_exec_fs(struct silofs_fs_env *fse)
 {
 	struct silofs_fuseq *fq = fse->fs_fuseq;
 	const char *mount_point = fse->fs_args.mntdir;
@@ -701,7 +701,7 @@ int silofs_fse_exec_fs(struct silofs_fs_env *fse)
 	return err;
 }
 
-void silofs_fse_halt(struct silofs_fs_env *fse, int signum)
+void silofs_halt_fs(struct silofs_fs_env *fse, int signum)
 {
 	fse->fs_signum = signum;
 	if (fse->fs_fuseq != NULL) {
@@ -740,7 +740,7 @@ static int fse_sync_drop_once(struct silofs_fs_env *fse)
 	return 0;
 }
 
-int silofs_fse_sync_drop(struct silofs_fs_env *fse)
+int silofs_sync_fs(struct silofs_fs_env *fse)
 {
 	int err;
 
@@ -755,8 +755,8 @@ int silofs_fse_sync_drop(struct silofs_fs_env *fse)
 	return 0;
 }
 
-void silofs_fse_stats(const struct silofs_fs_env *fse,
-                      struct silofs_fs_stats *st)
+void silofs_stat_fs(const struct silofs_fs_env *fse,
+                    struct silofs_fs_stats *st)
 {
 	struct silofs_alloc_stat alst = { .nbytes_used = 0 };
 	const struct silofs_repo *repo = fse->fs_repo;
@@ -1106,7 +1106,7 @@ static int fse_format_super(struct silofs_fs_env *fse)
 	return 0;
 }
 
-int silofs_fse_format_repo(struct silofs_fs_env *fse)
+int silofs_format_repo(struct silofs_fs_env *fse)
 {
 	int ret;
 
@@ -1116,7 +1116,7 @@ int silofs_fse_format_repo(struct silofs_fs_env *fse)
 	return ret;
 }
 
-int silofs_fse_open_repo(struct silofs_fs_env *fse)
+int silofs_open_repo(struct silofs_fs_env *fse)
 {
 	int ret;
 
@@ -1219,8 +1219,7 @@ static int fse_format_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-int silofs_fse_format_fs(struct silofs_fs_env *fse,
-                         struct silofs_uuid *out_uuid)
+int silofs_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid)
 {
 	int ret;
 
@@ -1262,8 +1261,7 @@ static int fse_boot_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-int silofs_fse_boot_fs(struct silofs_fs_env *fse,
-                       const struct silofs_uuid *uuid)
+int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 {
 	int ret;
 
@@ -1305,7 +1303,7 @@ static int fse_open_fs(struct silofs_fs_env *fse)
 	return 0;
 }
 
-int silofs_fse_open_fs(struct silofs_fs_env *fse)
+int silofs_open_fs(struct silofs_fs_env *fse)
 {
 	int ret;
 
@@ -1342,7 +1340,7 @@ static int fse_close_fs(struct silofs_fs_env *fse, struct silofs_task *task)
 	return err;
 }
 
-int silofs_fse_close_fs(struct silofs_fs_env *fse)
+int silofs_close_fs(struct silofs_fs_env *fse)
 {
 	struct silofs_task task;
 	int err = 0;
@@ -1358,17 +1356,16 @@ int silofs_fse_close_fs(struct silofs_fs_env *fse)
 	return err ? err : err2;
 }
 
-int silofs_fse_poke_fs(struct silofs_fs_env *fse,
-                       const struct silofs_uuid *uuid)
+int silofs_poke_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 {
 	struct silofs_bootsec bsec;
 
 	return fse_load_bootsec_of(fse, uuid, &bsec);
 }
 
-int silofs_fse_fork_fs(struct silofs_fs_env *fse,
-                       struct silofs_uuid *out_new,
-                       struct silofs_uuid *out_alt)
+int silofs_fork_fs(struct silofs_fs_env *fse,
+                   struct silofs_uuid *out_new,
+                   struct silofs_uuid *out_alt)
 {
 	struct silofs_task task;
 	struct silofs_bootsecs bsecs;
@@ -1391,7 +1388,7 @@ int silofs_fse_fork_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-int silofs_fse_inspect_fs(struct silofs_fs_env *fse)
+int silofs_inspect_fs(struct silofs_fs_env *fse)
 {
 	struct silofs_task task;
 	int err;
@@ -1411,8 +1408,7 @@ int silofs_fse_inspect_fs(struct silofs_fs_env *fse)
 	return 0;
 }
 
-int silofs_fse_unref_fs(struct silofs_fs_env *fse,
-                        const struct silofs_uuid *uuid)
+int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 {
 	struct silofs_task task;
 	struct silofs_bootsec bsec;

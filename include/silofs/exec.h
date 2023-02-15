@@ -25,43 +25,40 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 
 void silofs_fse_del(struct silofs_fs_env *fse);
 
-int silofs_fse_format_repo(struct silofs_fs_env *fse);
-
-int silofs_fse_open_repo(struct silofs_fs_env *fse);
-
-int silofs_fse_close_repo(struct silofs_fs_env *fse);
-
-int silofs_fse_format_fs(struct silofs_fs_env *fse,
-                         struct silofs_uuid *out_uuid);
-
-int silofs_fse_boot_fs(struct silofs_fs_env *fse,
-                       const struct silofs_uuid *uuid);
-
-int silofs_fse_open_fs(struct silofs_fs_env *fse);
-
-int silofs_fse_poke_fs(struct silofs_fs_env *fse,
-                       const struct silofs_uuid *uuid);
-
-int silofs_fse_close_fs(struct silofs_fs_env *fse);
-
-int silofs_fse_exec_fs(struct silofs_fs_env *fse);
-
-int silofs_fse_fork_fs(struct silofs_fs_env *fse,
-                       struct silofs_uuid *out_new,
-                       struct silofs_uuid *out_alt);
-
-int silofs_fse_inspect_fs(struct silofs_fs_env *fse);
-
-int silofs_fse_unref_fs(struct silofs_fs_env *fse,
-                        const struct silofs_uuid *uuid);
-
-void silofs_fse_halt(struct silofs_fs_env *fse, int signum);
-
-int silofs_fse_sync_drop(struct silofs_fs_env *fse);
-
-void silofs_fse_stats(const struct silofs_fs_env *fse,
-                      struct silofs_fs_stats *st);
-
 bool silofs_fse_served_clean(const struct silofs_fs_env *fse);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_format_repo(struct silofs_fs_env *fse);
+
+int silofs_open_repo(struct silofs_fs_env *fse);
+
+int silofs_close_repo(struct silofs_fs_env *fse);
+
+int silofs_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid);
+
+int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+
+int silofs_open_fs(struct silofs_fs_env *fse);
+
+int silofs_poke_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+
+int silofs_close_fs(struct silofs_fs_env *fse);
+
+int silofs_exec_fs(struct silofs_fs_env *fse);
+
+int silofs_fork_fs(struct silofs_fs_env *fse,
+                   struct silofs_uuid *out_new, struct silofs_uuid *out_alt);
+
+int silofs_inspect_fs(struct silofs_fs_env *fse);
+
+int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+
+void silofs_halt_fs(struct silofs_fs_env *fse, int signum);
+
+int silofs_sync_fs(struct silofs_fs_env *fse);
+
+void silofs_stat_fs(const struct silofs_fs_env *fse,
+                    struct silofs_fs_stats *st);
 
 #endif /* SILOFS_EXEC_H_ */

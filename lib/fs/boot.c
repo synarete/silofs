@@ -320,18 +320,6 @@ static void bsec1k_set_sb_uaddr(struct silofs_bootsec1k *bsc,
 	silofs_uaddr64b_set(&bsc->bs_sb_uaddr, uaddr);
 }
 
-static void bsec1k_sb_cold(const struct silofs_bootsec1k *bsc,
-                           struct silofs_blobid *out_blobid)
-{
-	silofs_blobid40b_parse(&bsc->bs_sb_cold, out_blobid);
-}
-
-static void bsec1k_set_sb_cold(struct silofs_bootsec1k *bsc,
-                               const struct silofs_blobid *blobid)
-{
-	silofs_blobid40b_set(&bsc->bs_sb_cold, blobid);
-}
-
 static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
 {
 	uint64_t magic;
@@ -458,7 +446,6 @@ void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
                          struct silofs_bootsec *bsec)
 {
 	bsec1k_sb_uaddr(bsc, &bsec->sb_uaddr);
-	bsec1k_sb_cold(bsc, &bsec->sb_cold);
 	bsec1k_uuid(bsc, &bsec->uuid);
 	bsec1k_cipher_args(bsc, &bsec->cip_args);
 	bsec->flags = bsec1k_flags(bsc);
@@ -472,7 +459,6 @@ void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
 {
 	silofs_bsec1k_init(bsc);
 	bsec1k_set_sb_uaddr(bsc, &bsec->sb_uaddr);
-	bsec1k_set_sb_cold(bsc, &bsec->sb_cold);
 	bsec1k_set_uuid(bsc, &bsec->uuid);
 	bsec1k_set_flags(bsc, bsec->flags);
 	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
@@ -494,7 +480,6 @@ void silofs_bootsec_init(struct silofs_bootsec *bsec)
 {
 	silofs_memzero(bsec, sizeof(*bsec));
 	silofs_uaddr_reset(&bsec->sb_uaddr);
-	silofs_blobid_reset(&bsec->sb_cold);
 	silofs_default_cip_args(&bsec->cip_args);
 	silofs_uuid_generate(&bsec->uuid);
 	bsec->flags = SILOFS_BOOTF_NONE;
@@ -527,18 +512,6 @@ void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
                                  const struct silofs_uaddr *sb_uaddr)
 {
 	silofs_uaddr_assign(&bsec->sb_uaddr, sb_uaddr);
-}
-
-void silofs_bootsec_sb_cold(const struct silofs_bootsec *bsec,
-                            struct silofs_blobid *out_blobid)
-{
-	silofs_blobid_assign(out_blobid, &bsec->sb_cold);
-}
-
-void silofs_bootsec_set_sb_cold(struct silofs_bootsec *bsec,
-                                const struct silofs_blobid *blobid)
-{
-	silofs_blobid_assign(&bsec->sb_cold, blobid);
 }
 
 void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,

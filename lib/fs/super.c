@@ -261,97 +261,6 @@ static void sb_reset_main_blobids(struct silofs_super_block *sb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_blobid40b *
-sb_cold_blobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
-{
-	const struct silofs_blobid40b *ret;
-
-	switch (stype) {
-	case SILOFS_STYPE_DATA1K:
-		ret = &sb->sb_cold_blobid.sb_blobid_data1k;
-		break;
-	case SILOFS_STYPE_DATA4K:
-		ret = &sb->sb_cold_blobid.sb_blobid_data4k;
-		break;
-	case SILOFS_STYPE_DATABK:
-		ret = &sb->sb_cold_blobid.sb_blobid_databk;
-		break;
-	case SILOFS_STYPE_INODE:
-		ret = &sb->sb_cold_blobid.sb_blobid_inode;
-		break;
-	case SILOFS_STYPE_XANODE:
-		ret = &sb->sb_cold_blobid.sb_blobid_xanode;
-		break;
-	case SILOFS_STYPE_DTNODE:
-		ret = &sb->sb_cold_blobid.sb_blobid_dtnode;
-		break;
-	case SILOFS_STYPE_FTNODE:
-		ret = &sb->sb_cold_blobid.sb_blobid_ftnode;
-		break;
-	case SILOFS_STYPE_SYMVAL:
-		ret = &sb->sb_cold_blobid.sb_blobid_symval;
-		break;
-	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_ANONBK:
-	case SILOFS_STYPE_SUPER:
-	case SILOFS_STYPE_SPNODE:
-	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_RESERVED:
-	case SILOFS_STYPE_LAST:
-	default:
-		ret = NULL;
-		break;
-	}
-	return ret;
-}
-
-static struct silofs_blobid40b *
-sb_cold_blobid_by2(struct silofs_super_block *sb, enum silofs_stype stype)
-{
-	const struct silofs_blobid40b *bid = sb_cold_blobid_by(sb, stype);
-
-	return unconst(bid);
-}
-
-static void sb_cold_blobid(const struct silofs_super_block *sb,
-                           enum silofs_stype stype,
-                           struct silofs_blobid *out_blobid)
-{
-	const struct silofs_blobid40b *bid = sb_cold_blobid_by(sb, stype);
-
-	if (likely(bid != NULL)) {
-		silofs_blobid40b_parse(bid, out_blobid);
-	} else {
-		silofs_blobid_reset(out_blobid);
-	}
-}
-
-static void sb_set_cold_blobid(struct silofs_super_block *sb,
-                               enum silofs_stype stype,
-                               const struct silofs_blobid *blobid)
-{
-	struct silofs_blobid40b *bid = sb_cold_blobid_by2(sb, stype);
-
-	if (likely(bid != NULL)) {
-		silofs_blobid40b_set(bid, blobid);
-	}
-}
-
-static void sb_reset_cold_blobids(struct silofs_super_block *sb)
-{
-	struct silofs_blobid40b *bid;
-	enum silofs_stype stype;
-
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
-		bid = sb_cold_blobid_by2(sb, stype);
-		if (bid != NULL) {
-			silofs_blobid40b_reset(bid);
-		}
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct silofs_uaddr64b *
 sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 {
@@ -468,7 +377,6 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_reset_sproots(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobids(sb);
-	sb_reset_cold_blobids(sb);
 	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
 	silofs_uaddr64b_reset(&sb->sb_orig_uaddr);
 }
@@ -731,22 +639,6 @@ bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
 
 	silofs_sbi_main_blob(sbi, vspace, &blob_id);
 	return (blobid_size(&blob_id) > 0);
-}
-
-int silofs_sbi_cold_blob(const struct silofs_sb_info *sbi,
-                         enum silofs_stype vspace,
-                         struct silofs_blobid *out_blobid)
-{
-	sb_cold_blobid(sbi->sb, vspace, out_blobid);
-	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;
-}
-
-void silofs_sbi_bind_cold_blob(struct silofs_sb_info *sbi,
-                               enum silofs_stype vspace,
-                               const struct silofs_blobid *blobid)
-{
-	sb_set_cold_blobid(sbi->sb, vspace, blobid);
-	silofs_ui_seal_meta(&sbi->sb_ui);
 }
 
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
@@ -1257,7 +1149,6 @@ void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
 	sb_clone_sproots(sb, sb_other);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobids(sb);
-	sb_reset_cold_blobids(sb);
 	sb_set_self(sb, sbi_uaddr(sbi));
 	sb_set_origin(sb, sbi_uaddr(sbi_other));
 	sbi_dirtify(sbi);

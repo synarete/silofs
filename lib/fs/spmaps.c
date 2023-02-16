@@ -155,24 +155,11 @@ static void spnode_set_main_blobid(struct silofs_spmap_node *sn,
 	silofs_blobid40b_set(&sn->sn_main_blobid, blobid);
 }
 
-static void spnode_cold_blobid(const struct silofs_spmap_node *sn,
-                               struct silofs_blobid *out_blobid)
-{
-	silofs_blobid40b_parse(&sn->sn_cold_blobid, out_blobid);
-}
-
-static void spnode_set_cold_blobid(struct silofs_spmap_node *sn,
-                                   const struct silofs_blobid *blobid)
-{
-	silofs_blobid40b_set(&sn->sn_cold_blobid, blobid);
-}
-
 static void spnode_init(struct silofs_spmap_node *sn,
                         const struct silofs_vrange *vrange)
 {
 	spnode_set_vrange(sn, vrange);
 	silofs_blobid40b_reset(&sn->sn_main_blobid);
-	silofs_blobid40b_reset(&sn->sn_cold_blobid);
 	silofs_uaddr64b_reset(&sn->sn_parent);
 	silofs_uaddr64b_reset(&sn->sn_self);
 	spr_initn(sn->sn_subref, ARRAY_SIZE(sn->sn_subref));
@@ -290,18 +277,6 @@ static void bkr_set_uref_blobid(struct silofs_bk_ref *bkr,
                                 const struct silofs_blobid *blobid)
 {
 	silofs_blobid40b_set(&bkr->br_uref_blobid, blobid);
-}
-
-static void bkr_cold_blobid(const struct silofs_bk_ref *bkr,
-                            struct silofs_blobid *out_blobid)
-{
-	silofs_blobid40b_parse(&bkr->br_cold_blobid, out_blobid);
-}
-
-static void bkr_set_cold_blobid(struct silofs_bk_ref *bkr,
-                                const struct silofs_blobid *blobid)
-{
-	silofs_blobid40b_set(&bkr->br_cold_blobid, blobid);
 }
 
 static size_t bkr_refcnt(const struct silofs_bk_ref *bkr)
@@ -442,9 +417,9 @@ static void bkr_clear_alloc_state(struct silofs_bk_ref *bkr)
 
 static void bkr_reset(struct silofs_bk_ref *bkr)
 {
+	memset(bkr, 0, sizeof(*bkr));
 	bkr_clear_alloc_state(bkr);
 	silofs_blobid40b_reset(&bkr->br_uref_blobid);
-	silofs_blobid40b_reset(&bkr->br_cold_blobid);
 }
 
 static void bkr_init(struct silofs_bk_ref *bkr)
@@ -825,22 +800,6 @@ static void spleaf_rebind_ubk(struct silofs_spmap_leaf *sl, loff_t voff,
 	silofs_assert_gt(bkr_refcnt(bkr), 0);
 }
 
-static void spleaf_resolve_cold(const struct silofs_spmap_leaf *sl,
-                                loff_t voff, struct silofs_blobid *out_blobid)
-{
-	const struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(sl, voff);
-
-	bkr_cold_blobid(bkr, out_blobid);
-}
-
-static void spleaf_rebind_cold(struct silofs_spmap_leaf *sl, loff_t voff,
-                               const struct silofs_blobid *blobid)
-{
-	struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(sl, voff);
-
-	bkr_set_cold_blobid(bkr, blobid);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_unode_info *sli_ui(struct silofs_spleaf_info *sli)
@@ -1176,25 +1135,6 @@ void silofs_sli_rebind_ubk(struct silofs_spleaf_info *sli, loff_t voff,
 	sli_dirtify(sli);
 }
 
-int silofs_sli_resolve_cold(const struct silofs_spleaf_info *sli,
-                            loff_t voff, struct silofs_blobid *out_blobid)
-{
-	if (!sli_is_inrange(sli, voff)) {
-		return -SILOFS_ERANGE;
-	}
-	spleaf_resolve_cold(sli->sl, voff, out_blobid);
-	if (blobid_isnull(out_blobid)) {
-		return -ENOENT;
-	}
-	return 0;
-}
-
-void silofs_sli_rebind_cold(struct silofs_spleaf_info *sli, loff_t voff,
-                            const struct silofs_blobid *blobid)
-{
-	spleaf_rebind_cold(sli->sl, voff, blobid);
-}
-
 void silofs_sli_seal_meta(struct silofs_spleaf_info *sli)
 {
 	silofs_ui_seal_meta(&sli->sl_ui);
@@ -1384,20 +1324,6 @@ bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni)
 
 	silofs_sni_main_blob(sni, &blobid);
 	return (blobid_size(&blobid) > 0);
-}
-
-int silofs_sni_cold_blob(const struct silofs_spnode_info *sni,
-                         struct silofs_blobid *out_blobid)
-{
-	spnode_cold_blobid(sni->sn, out_blobid);
-	return !blobid_isnull(out_blobid) ? 0 : -ENOENT;
-}
-
-void silofs_sni_bind_cold_blob(struct silofs_spnode_info *sni,
-                               const struct silofs_blobid *blobid)
-{
-	spnode_set_cold_blobid(sni->sn, blobid);
-	silofs_ui_seal_meta(&sni->sn_ui);
 }
 
 static loff_t

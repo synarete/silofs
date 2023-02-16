@@ -69,12 +69,6 @@ bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni);
 void silofs_sni_resolve_main_at(const struct silofs_spnode_info *sni,
                                 loff_t voff, struct silofs_uaddr *out_ua);
 
-int silofs_sni_cold_blob(const struct silofs_spnode_info *sni,
-                         struct silofs_blobid *out_blobid);
-
-void silofs_sni_bind_cold_blob(struct silofs_spnode_info *sni,
-                               const struct silofs_blobid *blobid);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_uaddr *
@@ -157,13 +151,6 @@ int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
 
 void silofs_sli_rebind_ubk(struct silofs_spleaf_info *sli, loff_t voff,
                            const struct silofs_bkaddr *bkaddr);
-
-
-int silofs_sli_resolve_cold(const struct silofs_spleaf_info *sli,
-                            loff_t voff, struct silofs_blobid *out_blobid);
-
-void silofs_sli_rebind_cold(struct silofs_spleaf_info *sli, loff_t voff,
-                            const struct silofs_blobid *blobid);
 
 void silofs_sli_seal_meta(struct silofs_spleaf_info *sli);
 

@@ -3210,7 +3210,6 @@ int silofs_cache_init(struct silofs_cache *cache,
 	if (err) {
 		goto out_err;
 	}
-	cache->c_inited = true;
 	return 0;
 out_err:
 	silofs_cache_fini(cache);

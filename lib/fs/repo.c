@@ -42,6 +42,7 @@ static const struct silofs_repo_defs repo_defs = {
 /* local functions */
 static int repo_close(struct silofs_repo *repo);
 
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static uint64_t rmeta_magic(const struct silofs_repo_meta *rm)
@@ -966,61 +967,33 @@ static int repo_lookup_cached_blobf(struct silofs_repo *repo,
                                     const struct silofs_blobid *blobid,
                                     struct silofs_blobf **out_blobf)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (unlikely(!cache->c_inited)) {
-		return -ENOENT;
-	}
-	*out_blobf = silofs_cache_lookup_blob(cache, blobid);
-	if (*out_blobf == NULL) {
-		return -ENOENT;
-	}
-	return 0;
+	*out_blobf = silofs_cache_lookup_blob(&repo->re_cache, blobid);
+	return (*out_blobf == NULL) ? -ENOENT : 0;
 }
 
 static int repo_spawn_cached_blobf(struct silofs_repo *repo,
                                    const struct silofs_blobid *blobid,
                                    struct silofs_blobf **out_blobf)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (unlikely(!cache->c_inited)) {
-		return -ENOENT;
-	}
-	*out_blobf = silofs_cache_spawn_blob(cache, blobid);
-	if (*out_blobf == NULL) {
-		return -ENOMEM;
-	}
-	return 0;
+	*out_blobf = silofs_cache_spawn_blob(&repo->re_cache, blobid);
+	return (*out_blobf == NULL) ? -ENOMEM : 0;
 }
 
 static void repo_forget_cached_blobf(struct silofs_repo *repo,
                                      struct silofs_blobf *blobf)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (likely(cache->c_inited)) {
-		silofs_cache_evict_blob(cache, blobf, true);
-	}
+	silofs_cache_evict_blob(&repo->re_cache, blobf, true);
 }
 
 static void repo_try_evict_cached_blobf(struct silofs_repo *repo,
                                         struct silofs_blobf *blobf)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (likely(cache->c_inited)) {
-		silofs_cache_evict_blob(cache, blobf, false);
-	}
+	silofs_cache_evict_blob(&repo->re_cache, blobf, false);
 }
 
 static int repo_objs_relax_cached_blobfs(struct silofs_repo *repo)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (cache->c_inited) {
-		silofs_cache_relax_blobs(cache);
-	}
+	silofs_cache_relax_blobs(&repo->re_cache);
 	return 0;
 }
 
@@ -1422,11 +1395,6 @@ static int repo_require_blob(struct silofs_repo *repo, bool rw,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool repo_enabled(const struct silofs_repo *repo)
-{
-	return repo && repo->re_cache.c_inited;
-}
-
 static int repo_init_cache(struct silofs_repo *repo)
 {
 	struct silofs_cache *cache = &repo->re_cache;
@@ -1438,11 +1406,12 @@ static int repo_init_cache(struct silofs_repo *repo)
 
 static void repo_fini_cache(struct silofs_repo *repo)
 {
-	struct silofs_cache *cache = &repo->re_cache;
+	silofs_cache_fini(&repo->re_cache);
+}
 
-	if (cache->c_inited) {
-		silofs_cache_fini(cache);
-	}
+static void repo_drop_cache(struct silofs_repo *repo)
+{
+	silofs_cache_drop(&repo->re_cache);
 }
 
 static int repo_init_mdigest(struct silofs_repo *repo)
@@ -1464,7 +1433,7 @@ static void repocfg_assign(struct silofs_repocfg *rcfg,
 	rcfg->rc_rdonly = other->rc_rdonly;
 }
 
-static int repo_init(struct silofs_repo *repo,
+int silofs_repo_init(struct silofs_repo *repo,
                      const struct silofs_repocfg *rcfg)
 {
 	int err;
@@ -1485,31 +1454,22 @@ static int repo_init(struct silofs_repo *repo,
 	return 0;
 }
 
-static void repo_fini(struct silofs_repo *repo)
+void silofs_repo_fini(struct silofs_repo *repo)
 {
 	repo_close(repo);
+	repo_drop_cache(repo);
 	repo_fini_cache(repo);
 	repo_fini_mdigest(repo);
-	silofs_memzero(repo, sizeof(*repo));
 }
 
-static void repo_drop_cache(struct silofs_repo *repo)
+static void repo_relax_cache(struct silofs_repo *repo, int flags)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (cache->c_inited) {
-		silofs_cache_drop(cache);
-	}
+	silofs_cache_relax(&repo->re_cache, flags);
 }
 
 static void repo_pre_op(struct silofs_repo *repo)
 {
 	repo_objs_relax_cached_blobfs(repo);
-}
-
-static void repo_post_op(struct silofs_repo *repo)
-{
-	silofs_unused(repo);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1751,7 +1711,7 @@ static int repo_format_blobs_subs(struct silofs_repo *repo)
 	return repo_objs_format(repo);
 }
 
-static int repo_format(struct silofs_repo *repo)
+int silofs_repo_format(struct silofs_repo *repo)
 {
 	int err;
 
@@ -1786,7 +1746,7 @@ static int repo_format(struct silofs_repo *repo)
 	return 0;
 }
 
-static int repo_open(struct silofs_repo *repo)
+int silofs_repo_open(struct silofs_repo *repo)
 {
 	int err;
 
@@ -1832,9 +1792,6 @@ static int repo_close(struct silofs_repo *repo)
 {
 	int err;
 
-	if (repo->re_root_dfd < 0) {
-		return 0;
-	}
 	err = repo_close_blobs_dir(repo);
 	if (err) {
 		return err;
@@ -1847,19 +1804,23 @@ static int repo_close(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	repo_drop_cache(repo);
 	return 0;
 }
 
-static void repo_relax_cache(struct silofs_repo *repo, int flags)
+int silofs_repo_close(struct silofs_repo *repo)
 {
-	struct silofs_cache *cache = &repo->re_cache;
+	int err;
 
-	if (cache->c_inited) {
-		silofs_cache_relax(cache, flags);
+	if (repo->re_root_dfd < 0) {
+		return 0;
 	}
+	err = repo_close(repo);
+	if (err) {
+		return err;
+	}
+	repo_drop_cache(repo);
+	return 0;
 }
-
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -1867,42 +1828,22 @@ static int repo_lookup_cached_ubki(struct silofs_repo *repo,
                                    const struct silofs_bkaddr *bkaddr,
                                    struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (unlikely(!cache->c_inited)) {
-		return -ENOENT;
-	}
-	*out_ubki = silofs_cache_lookup_ubk(cache, bkaddr);
-	if (*out_ubki == NULL) {
-		return -ENOENT;
-	}
-	return 0;
+	*out_ubki = silofs_cache_lookup_ubk(&repo->re_cache, bkaddr);
+	return (*out_ubki == NULL) ? -ENOENT : 0;
 }
 
 static void repo_forget_cached_ubki(struct silofs_repo *repo,
                                     struct silofs_ubk_info *ubki)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (likely(cache->c_inited)) {
-		silofs_cache_forget_ubk(cache, ubki);
-	}
+	silofs_cache_forget_ubk(&repo->re_cache, ubki);
 }
 
 static int repo_spawn_cached_ubki(struct silofs_repo *repo,
                                   const struct silofs_bkaddr *bkaddr,
                                   struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_cache *cache = &repo->re_cache;
-
-	if (unlikely(!cache->c_inited)) {
-		return -ENOENT;
-	}
-	*out_ubki = silofs_cache_spawn_ubk(cache, bkaddr);
-	if (*out_ubki == NULL) {
-		return -ENOMEM;
-	}
-	return 0;
+	*out_ubki = silofs_cache_spawn_ubk(&repo->re_cache, bkaddr);
+	return (*out_ubki == NULL) ? -ENOMEM : 0;
 }
 
 static int repo_spawn_attach_ubki(struct silofs_repo *repo,
@@ -2230,76 +2171,22 @@ static int repo_unlink_bootsec(const struct silofs_repo *repo,
 	return 0;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_repo_init(struct silofs_repo *repo,
-                     const struct silofs_repocfg *rcfg)
-{
-	return repo_init(repo, rcfg);
-}
-
-void silofs_repo_fini(struct silofs_repo *repo)
-{
-	if (repo_enabled(repo)) {
-		repo_fini(repo);
-	}
-}
-
-int silofs_repo_format(struct silofs_repo *repo)
-{
-	int err = 0;
-
-	if (repo_enabled(repo)) {
-		err = repo_format(repo);
-	}
-	return err;
-}
-
-int silofs_repo_open(struct silofs_repo *repo)
-{
-	int err = 0;
-
-	if (repo_enabled(repo)) {
-		err = repo_open(repo);
-	}
-	return err;
-}
-
-int silofs_repo_close(struct silofs_repo *repo)
-{
-	int err = 0;
-
-	if (repo_enabled(repo)) {
-		err = repo_close(repo);
-	}
-	return err;
-}
-
 void silofs_repo_drop_cache(struct silofs_repo *repo)
 {
-	if (repo_enabled(repo)) {
-		repo_pre_op(repo);
-		repo_drop_cache(repo);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	repo_drop_cache(repo);
 }
 
 void silofs_repo_relax_cache(struct silofs_repo *repo, int flags)
 {
-	if (repo_enabled(repo)) {
-		repo_pre_op(repo);
-		repo_relax_cache(repo, flags);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	repo_relax_cache(repo, flags);
 }
 
 void silofs_repo_pre_forkfs(struct silofs_repo *repo)
 {
-	if (repo_enabled(repo)) {
-		repo_pre_op(repo);
-		silofs_cache_forget_uaddrs(&repo->re_cache);
-		repo_post_op(repo);
-	}
+	repo_pre_op(repo);
+	silofs_cache_forget_uaddrs(&repo->re_cache);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2312,7 +2199,6 @@ int silofs_repo_save_bootsec(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_save_bootsec(repo, uuid, bsec);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2324,7 +2210,6 @@ int silofs_repo_load_bootsec(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_load_bootsec(repo, uuid, out_bsec);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2335,7 +2220,6 @@ int silofs_repo_stat_bootsec(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_stat_bootsec(repo, uuid);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2346,7 +2230,6 @@ int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_unlink_bootsec(repo, uuid);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2359,7 +2242,6 @@ int silofs_repo_lookup_blob(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_lookup_blob(repo, blobid);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2371,7 +2253,6 @@ int silofs_repo_spawn_blob(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_spawn_blob(repo, blobid, out_blobf);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2383,7 +2264,6 @@ int silofs_repo_stage_blob(struct silofs_repo *repo, bool rw,
 
 	repo_pre_op(repo);
 	ret = repo_stage_blob(repo, rw, blobid, out_blobf);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2394,7 +2274,6 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_remove_blob(repo, blobid);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2406,7 +2285,6 @@ int silofs_repo_require_blob(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_require_blob(repo, true, blobid, out_blobf);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2420,7 +2298,6 @@ int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
 
 	repo_pre_op(repo);
 	ret = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2432,7 +2309,6 @@ int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
 
 	repo_pre_op(repo);
 	ret = repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
-	repo_post_op(repo);
 	return ret;
 }
 
@@ -2444,6 +2320,5 @@ int silofs_repo_require_ubk(struct silofs_repo *repo,
 
 	repo_pre_op(repo);
 	ret = repo_require_ubk(repo, true, bkaddr, out_ubki);
-	repo_post_op(repo);
 	return ret;
 }

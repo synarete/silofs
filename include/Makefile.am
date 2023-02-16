@@ -40,7 +40,6 @@ nobase_include_HEADERS += silofs/fuseq.h
 nobase_include_HEADERS += silofs/idmap.h
 nobase_include_HEADERS += silofs/inode.h
 nobase_include_HEADERS += silofs/ioctls.h
-nobase_include_HEADERS += silofs/kcopy.h
 nobase_include_HEADERS += silofs/mntsvc.h
 nobase_include_HEADERS += silofs/namei.h
 nobase_include_HEADERS += silofs/nodes.h

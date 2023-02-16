@@ -150,7 +150,6 @@ struct ut_globals {
 	char           *test_dir_repo;
 	char           *test_dir_attic;
 	struct timespec start_ts;
-	int             kcopy_mode;
 	bool            pedantic;
 };
 

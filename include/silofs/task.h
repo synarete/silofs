@@ -112,8 +112,6 @@ int silofs_task_complete(struct silofs_task *task);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
-bool silofs_task_has_kcopy(const struct silofs_task *task);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_submitq_init(struct silofs_submitq *smq);

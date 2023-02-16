@@ -146,7 +146,6 @@
 #define blobf_decref(blobf)                 silofs_blobf_decref(blobf)
 
 #define task_sbi(t)                     silofs_task_sbi(t)
-#define task_has_kcopy(t)               silofs_task_has_kcopy(t)
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)

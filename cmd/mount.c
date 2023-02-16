@@ -42,7 +42,6 @@ static const char *cmd_mount_help_desc[] = {
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
 	/*
-	"  -K, --kcopy                  In-kernel data copy (devel)",
 	"  -P, --noconcp                No concurrent data copy (devel)",
 	*/
 	NULL
@@ -63,7 +62,6 @@ struct cmd_mount_in_args {
 	bool    nosuid;
 	bool    nodev;
 	bool    rdonly;
-	bool    kcopy;
 	bool    noconcp;
 };
 
@@ -95,14 +93,13 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "coredump", no_argument, NULL, 'C' },
-		{ "kcopy", no_argument, NULL, 'K' },
 		{ "noconcp", no_argument, NULL, 'P' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZKPiAWDV:Ch", opts);
+		opt_chr = cmd_getopt("rXSZPiAWDV:Ch", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -111,8 +108,6 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			ctx->in_args.nosuid = true;
 		} else if (opt_chr == 'Z') {
 			ctx->in_args.nodev = true;
-		} else if (opt_chr == 'K') {
-			ctx->in_args.kcopy = true;
 		} else if (opt_chr == 'P') {
 			ctx->in_args.noconcp = true;
 		} else if (opt_chr == 'A') {
@@ -161,7 +156,6 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->nosuid = args->nosuid;
 	fs_args->nodev = args->nodev;
 	fs_args->rdonly = args->rdonly;
-	fs_args->kcopy = args->kcopy;
 	fs_args->concp = !args->noconcp;
 	fs_args->pedantic = false;
 }

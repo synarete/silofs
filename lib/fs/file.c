@@ -236,7 +236,7 @@ static bool fl_mode_zero_range(int fl_mode)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void fli_difnify(struct silofs_fileaf_info *fli)
+static void fli_dirtify(struct silofs_fileaf_info *fli)
 {
 	vi_dirtify(&fli->fl_vi);
 }
@@ -1243,11 +1243,6 @@ static int fic_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
                                    struct silofs_finode_info *parent_fni,
                                    struct silofs_fpos_ref *out_fpr);
 
-static bool fic_has_kcopy_mode(const struct silofs_file_ctx *f_ctx)
-{
-	return task_has_kcopy(f_ctx->task);
-}
-
 static bool fic_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 {
 	const loff_t mapping_size =
@@ -1360,11 +1355,8 @@ static int fic_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 static void fic_dirtify_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	fli_difnify(fli);
-	if (!fic_has_kcopy_mode(f_ctx)) {
-		/* for data checksum, need to do:  */
-		/* vi_dirtify(sli); */
-	}
+	fli_dirtify(fli);
+	unused(f_ctx);
 }
 
 static void fic_zero_fileaf_sub(const struct silofs_file_ctx *f_ctx,
@@ -1382,29 +1374,14 @@ fic_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
                          const struct silofs_vaddr *vaddr,
                          loff_t off_in_bk, size_t len)
 {
-	struct silofs_iovec iov = {
-		.iov_fd = -1,
-		.iov_base = NULL
-	};
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
-	if (fic_has_kcopy_mode(f_ctx)) {
-		err = fic_iovec_by_blob(f_ctx, vaddr, off_in_bk, len, &iov);
-		if (err) {
-			return err;
-		}
-		err = silofs_iovec_copy_from(&iov, fic_nil_block(f_ctx));
-		if (err) {
-			return err;
-		}
-	} else {
-		err = fic_stage_fileaf(f_ctx, vaddr, &fli);
-		if (err) {
-			return err;
-		}
-		fic_zero_fileaf_sub(f_ctx, fli, off_in_bk, len);
+	err = fic_stage_fileaf(f_ctx, vaddr, &fli);
+	if (err) {
+		return err;
 	}
+	fic_zero_fileaf_sub(f_ctx, fli, off_in_bk, len);
 	return 0;
 }
 
@@ -1709,13 +1686,6 @@ fic_import_data_by_fileaf(const struct silofs_file_ctx *f_ctx,
 	return fic_call_rw_actor(f_ctx, fli, fli_vaddr(fli), out_sz);
 }
 
-static int fic_import_data_by_vaddr(const struct silofs_file_ctx *f_ctx,
-                                    const struct silofs_vaddr *vaddr,
-                                    size_t *out_size)
-{
-	return fic_call_rw_actor(f_ctx, NULL, vaddr, out_size);
-}
-
 static void fic_child_of_current_pos(const struct silofs_file_ctx *f_ctx,
                                      struct silofs_finode_info *parent_fni,
                                      struct silofs_fpos_ref *out_fpr)
@@ -1782,13 +1752,6 @@ static int fic_read_leaf_by_copy(struct silofs_file_ctx *f_ctx,
 }
 
 static int
-fic_read_leaf_at(struct silofs_file_ctx *f_ctx,
-                 const struct silofs_fpos_ref *fpr, size_t *out_sz)
-{
-	return fic_export_data_by_vaddr(f_ctx, &fpr->vaddr, out_sz);
-}
-
-static int
 fic_read_leaf_as_zeros(struct silofs_file_ctx *f_ctx, size_t *out_sz)
 {
 	return fic_export_data_by_vaddr(f_ctx, NULL, out_sz);
@@ -1809,11 +1772,6 @@ static int fic_read_from_leaf(struct silofs_file_ctx *f_ctx,
 	}
 	if (unwritten) {
 		err = fic_read_leaf_as_zeros(f_ctx, out_len);
-		if (err) {
-			return err;
-		}
-	} else if (fic_has_kcopy_mode(f_ctx)) {
-		err = fic_read_leaf_at(f_ctx, fpr, out_len);
 		if (err) {
 			return err;
 		}
@@ -2418,23 +2376,6 @@ fic_write_leaf_by_copy(const struct silofs_file_ctx *f_ctx,
 	return err;
 }
 
-static int
-fic_write_leaf_at(const struct silofs_file_ctx *f_ctx,
-                  const struct silofs_fpos_ref *fpr, size_t *out_sz)
-{
-	int err;
-
-	err = fic_import_data_by_vaddr(f_ctx, &fpr->vaddr, out_sz);
-	if (err) {
-		return err;
-	}
-	err = fic_clear_unwritten_at(f_ctx, &fpr->vaddr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int fpr_prepare_unwritten_leaf(const struct silofs_fpos_ref *fpr)
 {
 	int err;
@@ -2486,20 +2427,13 @@ fpr_write_to_leaf(const struct silofs_fpos_ref *fpr, size_t *out_len)
 	if (err) {
 		return err;
 	}
-	if (fic_has_kcopy_mode(fpr->f_ctx)) {
-		err = fic_write_leaf_at(fpr->f_ctx, fpr, out_len);
-		if (err) {
-			return err;
-		}
-	} else {
-		err = fpr_stage_fileaf_at(fpr, &fli);
-		if (err) {
-			return err;
-		}
-		err = fic_write_leaf_by_copy(fpr->f_ctx, fli, out_len);
-		if (err) {
-			return err;
-		}
+	err = fpr_stage_fileaf_at(fpr, &fli);
+	if (err) {
+		return err;
+	}
+	err = fic_write_leaf_by_copy(fpr->f_ctx, fli, out_len);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
@@ -3910,70 +3844,11 @@ static size_t fpr_copy_range_length(const struct silofs_fpos_ref *fpr_src,
 	return min(len_src, len_dst);
 }
 
-static struct silofs_uber *fic_uber(const struct silofs_file_ctx *f_ctx)
-{
-	return sbi_uber(f_ctx->sbi);
-}
-
 static int
-fic_kcopy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
-                    const struct silofs_file_ctx *f_ctx_dst,
-                    const struct silofs_vaddr *vaddr_src,
-                    const struct silofs_vaddr *vaddr_dst, size_t len)
-{
-	struct silofs_iovec iov_src = { .iov_off = -1, .iov_fd = -1 };
-	struct silofs_iovec iov_dst = { .iov_off = -1, .iov_fd = -1 };
-	struct silofs_ubk_info *ubki_src = NULL;
-	struct silofs_ubk_info *ubki_dst = NULL;
-	struct silofs_uber *uber = NULL;
-	int err;
-	bool all;
-
-	err = fic_stage_ubk(f_ctx_src, vaddr_src, &ubki_src);
-	if (err) {
-		goto out;
-	}
-	silofs_ubki_incref(ubki_src);
-
-	err = fic_stage_ubk(f_ctx_dst, vaddr_dst, &ubki_dst);
-	if (err) {
-		goto out;
-	}
-	silofs_ubki_incref(ubki_dst);
-
-	all = (len == vaddr_src->len);
-	err = fic_iovec_by_vaddr(f_ctx_src, vaddr_src, all, &iov_src);
-	if (err) {
-		goto out;
-	}
-
-	all = (len == vaddr_dst->len);
-	err = fic_iovec_by_vaddr(f_ctx_dst, vaddr_dst, all, &iov_dst);
-	if (err) {
-		goto out;
-	}
-
-	uber = fic_uber(f_ctx_src);
-	err = silofs_kcopy_by_iovec(uber, &iov_src, &iov_dst, len);
-	if (err) {
-		goto out;
-	}
-
-	err = fic_clear_unwritten_at(f_ctx_dst, vaddr_dst);
-	if (err) {
-		goto out;
-	}
-out:
-	silofs_ubki_decref(ubki_dst);
-	silofs_ubki_decref(ubki_src);
-	return err;
-}
-
-static int
-fic_mcopy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
-                    const struct silofs_file_ctx *f_ctx_dst,
-                    const struct silofs_vaddr *vaddr_src,
-                    const struct silofs_vaddr *vaddr_dst, size_t len)
+fic_copy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
+                   const struct silofs_file_ctx *f_ctx_dst,
+                   const struct silofs_vaddr *vaddr_src,
+                   const struct silofs_vaddr *vaddr_dst, size_t len)
 {
 	struct silofs_iovec iov_src = { .iov_off = -1, .iov_fd = -1 };
 	struct silofs_iovec iov_dst = { .iov_off = -1, .iov_fd = -1 };
@@ -4014,25 +3889,6 @@ fic_mcopy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
 		return err;
 	}
 	return 0;
-}
-
-static int
-fic_copy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
-                   const struct silofs_file_ctx *f_ctx_dst,
-                   const struct silofs_vaddr *vaddr_src,
-                   const struct silofs_vaddr *vaddr_dst, size_t len)
-{
-	int err;
-	const bool kcopy = fic_has_kcopy_mode(f_ctx_dst);
-
-	if (kcopy) {
-		err = fic_kcopy_data_leaf(f_ctx_src, f_ctx_dst,
-		                          vaddr_src, vaddr_dst, len);
-	} else {
-		err = fic_mcopy_data_leaf(f_ctx_src, f_ctx_dst,
-		                          vaddr_src, vaddr_dst, len);
-	}
-	return err;
 }
 
 static int fpr_copy_leaf(const struct silofs_fpos_ref *fpr_src,

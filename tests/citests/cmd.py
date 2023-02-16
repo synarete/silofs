@@ -131,13 +131,10 @@ class CmdSilofs(CmdExec):
         repodir_name: str,
         mntpoint: str,
         allow_hostids: bool = False,
-        kcopy: bool = False,
     ) -> None:
         args = ["mount", repodir_name, mntpoint]
         if allow_hostids:
             args.append("--allow-hostids")
-        if kcopy:
-            args.append("--kcopy")
         self.execute2(args)
 
     def umount(self, mntpoint: str) -> None:
@@ -180,8 +177,8 @@ class CmdUnitests(CmdExec):
     def version(self) -> str:
         return self.execute(["-v"])
 
-    def run(self, basedir: str, level: int = 1, kcopy: int = 1) -> None:
-        args = [basedir, f"--level={level} --kcopy={kcopy}"]
+    def run(self, basedir: str, level: int = 1) -> None:
+        args = [basedir, f"--level={level}"]
         ret = self.execute3(args)
         if ret != 0:
             raise CmdError("unitests failed")

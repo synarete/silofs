@@ -349,8 +349,7 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 
 static void ut_print_tests_start(const struct ut_args *args)
 {
-	printf("  %s %s kcopy=%d\n", args->program, args->version,
-	       (int)args->fs_args.kcopy);
+	printf("  %s %s\n", args->program, args->version);
 }
 
 #define MKID_UID(h, s) \
@@ -359,7 +358,7 @@ static void ut_print_tests_start(const struct ut_args *args)
 #define MKID_GID(h, s) \
 	{ .id.g.gid = h, .id.g.sgid = s, .id_type = SILOFS_IDTYPE_GID }
 
-static void ut_do_execute_tests(bool kcopy)
+void ut_execute_tests(void)
 {
 	struct silofs_id uids[] = {
 		MKID_UID(0, 100000),
@@ -387,7 +386,6 @@ static void ut_do_execute_tests(bool kcopy)
 			.capacity = SILOFS_CAPACITY_SIZE_MIN,
 			.memwant = UT_GIGA,
 			.restore_forced = true,
-			.kcopy = kcopy,
 			.pedantic = ut_globals.pedantic,
 		},
 		.program = ut_globals.program,
@@ -396,19 +394,6 @@ static void ut_do_execute_tests(bool kcopy)
 
 	ut_print_tests_start(&args);
 	ut_execute_tests_cycle(&args);
-}
-
-
-void ut_execute_tests(void)
-{
-	if (ut_globals.kcopy_mode == 0) {
-		ut_do_execute_tests(false);
-	} else if (ut_globals.kcopy_mode == 1) {
-		ut_do_execute_tests(true);
-	} else {
-		ut_do_execute_tests(false);
-		ut_do_execute_tests(true);
-	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

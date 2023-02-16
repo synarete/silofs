@@ -69,7 +69,6 @@ enum silofs_flags {
 
 /* uber-block control flags */
 enum silofs_ubctl_flags {
-	SILOFS_UBF_KCOPY        = SILOFS_BIT(1),
 	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(2),
 	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(3),
 	SILOFS_UBF_ALLOWADMIN   = SILOFS_BIT(4),
@@ -450,7 +449,6 @@ struct silofs_uber {
 	struct silofs_uber_base         ub;
 	struct silofs_mutex             ub_fs_lock;
 	struct silofs_crypto            ub_crypto;
-	struct silofs_piper             ub_piper;
 	struct silofs_oper_stat         ub_ops;
 	struct silofs_blobf            *ub_sb_blobf;
 	struct silofs_sb_info          *ub_sbi;
@@ -501,7 +499,6 @@ struct silofs_fs_args {
 	bool                    nosuid;
 	bool                    nodev;
 	bool                    rdonly;
-	bool                    kcopy;
 	bool                    concp;
 	bool                    restore_forced;
 };

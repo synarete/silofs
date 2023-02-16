@@ -124,9 +124,6 @@ static void uber_update_ctlflags(struct silofs_uber *uber)
 {
 	const struct silofs_fs_args *fs_args = uber->ub.fs_args;
 
-	if (fs_args->kcopy) {
-		uber->ub_ctl_flags |= SILOFS_UBF_KCOPY;
-	}
 	if (fs_args->allowother) {
 		uber->ub_ctl_flags |= SILOFS_UBF_ALLOWOTHER;
 	}
@@ -203,16 +200,6 @@ static void uber_fini_crypto(struct silofs_uber *uber)
 	silofs_crypto_fini(&uber->ub_crypto);
 }
 
-static int uber_init_piper(struct silofs_uber *uber)
-{
-	return silofs_piper_init(&uber->ub_piper, SILOFS_BK_SIZE);
-}
-
-static void uber_fini_piper(struct silofs_uber *uber)
-{
-	silofs_piper_fini(&uber->ub_piper);
-}
-
 static int uber_init_iconv(struct silofs_uber *uber)
 {
 	/* Using UTF32LE to avoid BOM (byte-order-mark) character */
@@ -247,10 +234,6 @@ int silofs_uber_init(struct silofs_uber *uber,
 	if (err) {
 		goto out_err;
 	}
-	err = uber_init_piper(uber);
-	if (err) {
-		goto out_err;
-	}
 	err = uber_init_iconv(uber);
 	if (err) {
 		goto out_err;
@@ -266,7 +249,6 @@ void silofs_uber_fini(struct silofs_uber *uber)
 	uber_bind_blobf(uber, NULL);
 	uber_bind_sbi(uber, NULL);
 	uber_fini_iconv(uber);
-	uber_fini_piper(uber);
 	uber_fini_crypto(uber);
 	uber_fini_fs_lock(uber);
 	uber_fini_commons(uber);

@@ -56,7 +56,6 @@ libsilofs_fs_la_SOURCES += fs/guarantee.c
 libsilofs_fs_la_SOURCES += fs/idmap.c
 libsilofs_fs_la_SOURCES += fs/inode.c
 libsilofs_fs_la_SOURCES += fs/inspect.c
-libsilofs_fs_la_SOURCES += fs/kcopy.c
 libsilofs_fs_la_SOURCES += fs/mntsvc.c
 libsilofs_fs_la_SOURCES += fs/namei.c
 libsilofs_fs_la_SOURCES += fs/nodes.c

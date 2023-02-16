@@ -2422,14 +2422,6 @@ out:
 	return (ret == -ENOENT) ? -SILOFS_EFSCORRUPTED : ret;
 }
 
-static int stgc_kcopy_bk(const struct silofs_stage_ctx *stg_ctx,
-                         const struct silofs_iovec *iov_src,
-                         const struct silofs_iovec *iov_dst)
-{
-	return silofs_kcopy_by_iovec(stg_ctx->uber, iov_src,
-	                             iov_dst, SILOFS_BK_SIZE);
-}
-
 static int stgc_require_clone_bkaddr(const struct silofs_stage_ctx *stg_ctx,
                                      const struct silofs_vaddr *vaddr,
                                      struct silofs_bkaddr *out_bkaddr_dst)
@@ -2461,12 +2453,6 @@ static int stgc_clone_rebind_vblock(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	if (task_has_kcopy(stg_ctx->task)) {
-		err = stgc_kcopy_bk(stg_ctx, &iov_src, &iov_dst);
-		if (err) {
-			return err;
-		}
-	}
 	silofs_sli_rebind_ubk(stg_ctx->sli, src_voa->vaddr.off, &bkaddr_dst);
 	return 0;
 }
@@ -2479,7 +2465,7 @@ static int stgc_stage_vblock_by(const struct silofs_stage_ctx *stg_ctx,
 	int ret = 0;
 
 	*out_vbki = NULL;
-	if (!task_has_kcopy(stg_ctx->task) || !stype_isdata(vaddr->stype)) {
+	if (!stype_isdata(vaddr->stype)) {
 		ret = stgc_stage_vblock(stg_ctx, voaddr, out_vbki);
 		/*
 		 * Special case: trying to stage vbk which is located beyond
@@ -2602,15 +2588,13 @@ static void stgc_post_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_vis *vis)
 {
 	struct silofs_vnode_info *vi;
-	const bool kcopy_mode = task_has_kcopy(stg_ctx->task);
 
 	for (size_t i = 0; i < vis->vas.count; ++i) {
 		vi = vis->vis[i];
-		if (!kcopy_mode) {
-			vi_dirtify(vi);
-		}
+		vi_dirtify(vi);
 		vi_decref(vi);
 	}
+	unused(stg_ctx);
 }
 
 static int stgc_clone_vblock(struct silofs_stage_ctx *stg_ctx,

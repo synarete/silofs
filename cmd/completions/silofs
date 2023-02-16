@@ -31,7 +31,7 @@ _silofs_mount() {
     COMPREPLY+=( $(compgen -W '-D --nodaemon -C --coredump -h ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-r --rdonly -A --no-allow-other ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-W --writeback-cache ' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-X --noexec -K --kcopy ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-X --noexec ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-V --verbose= ' -- "$cur") )
   fi
 }

@@ -396,8 +396,7 @@ static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_blobf *
-blobf_unconst(const struct silofs_blobf *blobf)
+static struct silofs_blobf *blobf_unconst(const struct silofs_blobf *blobf)
 {
 	union {
 		const struct silofs_blobf *p;
@@ -442,12 +441,12 @@ static int blobf_init(struct silofs_blobf *blobf,
 	blobf->b_fd = -1;
 	blobf->b_flocked = false;
 	blobf->b_rdonly = false;
-	return silofs_mutex_init(&blobf->b_mutex);
+	return silofs_rwlock_init(&blobf->b_rwlock);
 }
 
 static void blobf_fini(struct silofs_blobf *blobf)
 {
-	silofs_mutex_fini(&blobf->b_mutex);
+	silofs_rwlock_fini(&blobf->b_rwlock);
 	blobid_reset(&blobf->b_blobid);
 	silofs_ce_fini(&blobf->b_ce);
 	silofs_iovref_fini(&blobf->b_iovref);
@@ -455,19 +454,34 @@ static void blobf_fini(struct silofs_blobf *blobf)
 	blobf->b_fd = -1;
 }
 
-static void blobf_lock(struct silofs_blobf *blobf)
+static void blobf_rdlock(struct silofs_blobf *blobf)
 {
-	silofs_mutex_lock(&blobf->b_mutex);
+	silofs_rwlock_rdlock(&blobf->b_rwlock);
+}
+
+static void blobf_wrlock(struct silofs_blobf *blobf)
+{
+	silofs_rwlock_wrlock(&blobf->b_rwlock);
 }
 
 static void blobf_unlock(struct silofs_blobf *blobf)
 {
-	silofs_mutex_unlock(&blobf->b_mutex);
+	silofs_rwlock_unlock(&blobf->b_rwlock);
 }
 
 static ssize_t blobf_capacity(const struct silofs_blobf *blobf)
 {
 	return (ssize_t)blobid_size(&blobf->b_blobid);
+}
+
+static ssize_t blobf_size(const struct silofs_blobf *blobf)
+{
+	return silofs_atomic_getl(&blobf->b_size);
+}
+
+static void blobf_set_size(struct silofs_blobf *blobf, ssize_t sz)
+{
+	silofs_atomic_setl(&blobf->b_size, sz);
 }
 
 static void blobf_bindto(struct silofs_blobf *blobf, int fd, bool rw)
@@ -512,7 +526,7 @@ static int blobf_inspect_size(struct silofs_blobf *blobf)
 		         blobf->b_name.name, st.st_size, cap);
 		return -SILOFS_EBLOB;
 	}
-	blobf->b_size = st.st_size;
+	blobf_set_size(blobf, st.st_size);
 	return 0;
 }
 
@@ -523,7 +537,7 @@ static int blobf_check_writable(const struct silofs_blobf *blobf)
 
 static int blobf_reassign_size(struct silofs_blobf *blobf, loff_t off)
 {
-	loff_t len;
+	ssize_t len;
 	int err;
 
 	err = blobf_check_range(blobf, off, 0);
@@ -539,7 +553,7 @@ static int blobf_reassign_size(struct silofs_blobf *blobf, loff_t off)
 	if (err) {
 		return err;
 	}
-	blobf->b_size = len;
+	blobf_set_size(blobf, len);
 	return 0;
 }
 
@@ -547,8 +561,18 @@ static int blobf_require_size_ge(struct silofs_blobf *blobf,
                                  loff_t off, size_t len)
 {
 	const loff_t end = off_end(off, len);
+	const ssize_t bsz = blobf_size(blobf);
 
-	return (blobf->b_size >= end) ? 0 : blobf_reassign_size(blobf, end);
+	return (bsz >= end) ? 0 : blobf_reassign_size(blobf, end);
+}
+
+static int blobf_check_size_ge(struct silofs_blobf *blobf,
+                               loff_t off, size_t len)
+{
+	const loff_t end = off_end(off, len);
+	const ssize_t bsz = blobf_size(blobf);
+
+	return (bsz >= end) ? 0 : -SILOFS_ERANGE;
 }
 
 static void blobf_make_iovec(const struct silofs_blobf *blobf,
@@ -606,7 +630,7 @@ int silofs_blobf_resolve(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_lock(blobf);
+	blobf_rdlock(blobf);
 	ret = blobf_resolve(blobf, oaddr, siov);
 	blobf_unlock(blobf);
 	return ret;
@@ -686,7 +710,7 @@ int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
 {
 	int ret;
 
-	blobf_lock(blobf);
+	blobf_wrlock(blobf);
 	ret = blobf_pwriten(blobf, off, buf, len, sync);
 	blobf_unlock(blobf);
 	return ret;
@@ -705,7 +729,7 @@ static int blobf_read_blob(const struct silofs_blobf *blobf,
 	if (err) {
 		return err;
 	}
-	bsz = (size_t)blobf->b_size;
+	bsz = (size_t)blobf_size(blobf);
 	cnt = min(len, bsz);
 	dat = buf;
 	err = do_preadn(blobf->b_fd, dat, cnt, 0);
@@ -722,7 +746,7 @@ int silofs_blobf_read_blob(struct silofs_blobf *blobf, void *buf, size_t len)
 {
 	int ret;
 
-	blobf_lock(blobf);
+	blobf_rdlock(blobf);
 	ret = blobf_read_blob(blobf, buf, len);
 	blobf_unlock(blobf);
 	return ret;
@@ -787,60 +811,44 @@ static int blobf_require_bk_of(struct silofs_blobf *blobf,
 	return blobf_require_size_ge(blobf, oaddr.pos, oaddr.len);
 }
 
-static int blobf_load_ubk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info *ubki)
+static int blobf_check_bk_of(struct silofs_blobf *blobf,
+                             const struct silofs_bkaddr *bkaddr)
+{
+	struct silofs_oaddr oaddr;
+
+	silofs_oaddr_of_bk(&oaddr, &bkaddr->blobid, bkaddr->lba);
+	return blobf_check_size_ge(blobf, oaddr.pos, oaddr.len);
+}
+
+static int blobf_load_bk_at(struct silofs_blobf *blobf,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_bk_info *bki)
 {
 	int err;
 
-	err = blobf_require_bk_of(blobf, bkaddr);
+	err = blobf_check_bk_of(blobf, bkaddr);
+	/* XXX HACK FIXME */
+	if (err == -SILOFS_ERANGE) {
+		err = blobf_require_bk_of(blobf, bkaddr);
+	}
 	if (err) {
 		return err;
 	}
-	err = blobf_load_bk(blobf, bkaddr, ubki->ubk_base.bk);
+	err = blobf_load_bk(blobf, bkaddr, bki->bk);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_blobf_load_ubk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info *ubki)
+int silofs_blobf_load_bk(struct silofs_blobf *blobf,
+                         const struct silofs_bkaddr *bkaddr,
+                         struct silofs_bk_info *bki)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_load_ubk(blobf, bkaddr, ubki);
-	blobf_unlock(blobf);
-	return ret;
-}
-
-static int blobf_load_vbk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_vbk_info *vbki)
-{
-	int err;
-
-	err = blobf_require_bk_of(blobf, bkaddr);
-	if (err) {
-		return err;
-	}
-	err = blobf_load_bk(blobf, bkaddr, vbki->vbk_base.bk);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_blobf_load_vbk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_vbk_info *vbki)
-{
-	int ret;
-
-	blobf_lock(blobf);
-	ret = blobf_load_vbk(blobf, bkaddr, vbki);
+	blobf_rdlock(blobf);
+	ret = blobf_load_bk_at(blobf, bkaddr, bki);
 	blobf_unlock(blobf);
 	return ret;
 }
@@ -853,7 +861,7 @@ static int blobf_trim_by_ftruncate(const struct silofs_blobf *blobf)
 	if (err) {
 		return err;
 	}
-	err = do_ftruncate(blobf->b_fd, blobf->b_size);
+	err = do_ftruncate(blobf->b_fd, blobf_size(blobf));
 	if (err) {
 		return err;
 	}
@@ -896,8 +904,19 @@ int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_lock(blobf);
+	blobf_wrlock(blobf);
 	ret = blobf_trim_nbks(blobf, bkaddr, cnt);
+	blobf_unlock(blobf);
+	return ret;
+}
+
+int silofs_blobf_require_bk(struct silofs_blobf *blobf,
+                            const struct silofs_bkaddr *bkaddr)
+{
+	int ret;
+
+	blobf_wrlock(blobf);
+	ret = blobf_require_bk_of(blobf, bkaddr);
 	blobf_unlock(blobf);
 	return ret;
 }
@@ -906,7 +925,7 @@ int silofs_blobf_flock(struct silofs_blobf *blobf)
 {
 	int err = 0;
 
-	blobf_lock(blobf);
+	blobf_wrlock(blobf);
 	if (!blobf->b_flocked) {
 		err = do_flock(blobf->b_fd, LOCK_EX | LOCK_NB);
 		blobf->b_flocked = (err == 0);
@@ -919,7 +938,7 @@ int silofs_blobf_funlock(struct silofs_blobf *blobf)
 {
 	int err = 0;
 
-	blobf_lock(blobf);
+	blobf_wrlock(blobf);
 	if (blobf->b_flocked) {
 		err = do_flock(blobf->b_fd, LOCK_UN);
 		blobf->b_flocked = !(err == 0);
@@ -1927,7 +1946,7 @@ static int repo_stage_ubk_at(struct silofs_repo *repo, bool rw,
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_load_ubk(blobf, bkaddr, ubki);
+	err = silofs_blobf_load_bk(blobf, bkaddr, &ubki->ubk_base);
 	if (err) {
 		repo_forget_cached_ubki(repo, ubki);
 		return err;

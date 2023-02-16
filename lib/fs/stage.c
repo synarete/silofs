@@ -2324,7 +2324,7 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_load_vbk(blobf, &voa->oaddr.bka, vbki);
+	err = silofs_blobf_load_bk(blobf, &voa->oaddr.bka, &vbki->vbk_base);
 	if (err) {
 		stgc_forget_cached_vbki(stg_ctx, vbki);
 		return err;
@@ -2341,6 +2341,10 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	err = stgc_stage_blob_of(stg_ctx, &voa->oaddr.bka.blobid, &blobf);
+	if (err) {
+		return err;
+	}
+	err = silofs_blobf_require_bk(blobf, &voa->oaddr.bka);
 	if (err) {
 		return err;
 	}

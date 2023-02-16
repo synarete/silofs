@@ -810,6 +810,10 @@ static int ubc_require_ubk(const struct silofs_uber_ctx *ub_ctx,
 	if (err) {
 		return err;
 	}
+	err = silofs_blobf_require_bk(blobf, bkaddr);
+	if (err) {
+		return err;
+	}
 	err = ubc_require_ubk_at(ub_ctx, bkaddr, blobf, out_ubki);
 	if (err) {
 		return err;

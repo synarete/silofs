@@ -24,10 +24,10 @@
 struct silofs_blobf {
 	struct silofs_namebuf           b_name;
 	struct silofs_cache_elem        b_ce;
-	struct silofs_mutex             b_mutex;
+	struct silofs_rwlock            b_rwlock;
 	struct silofs_blobid            b_blobid;
 	struct silofs_iovref            b_iovref;
-	ssize_t                         b_size;
+	long                            b_size;
 	int                             b_fd;
 	bool                            b_flocked;
 	bool                            b_rdonly;
@@ -63,16 +63,15 @@ void silofs_blobf_del(struct silofs_blobf *blobf,
 int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
                          const void *buf, size_t len, bool sync);
 
-int silofs_blobf_load_ubk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info *ubki);
-
-int silofs_blobf_load_vbk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_vbk_info *vbki);
+int silofs_blobf_load_bk(struct silofs_blobf *blobf,
+                         const struct silofs_bkaddr *bkaddr,
+                         struct silofs_bk_info *bki);
 
 int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
                            const struct silofs_bkaddr *bkaddr, size_t cnt);
+
+int silofs_blobf_require_bk(struct silofs_blobf *blobf,
+                            const struct silofs_bkaddr *bkaddr);
 
 int silofs_blobf_resolve(struct silofs_blobf *blobf,
                          const struct silofs_oaddr *oaddr,

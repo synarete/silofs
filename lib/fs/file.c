@@ -759,38 +759,6 @@ fic_iovec_by_alloc(const struct silofs_file_ctx *f_ctx,
 	return silofs_allocresolve(sbi_alloc(f_ctx->sbi), base, len, out_iov);
 }
 
-static int fic_stage_ubk(const struct silofs_file_ctx *f_ctx,
-                         const struct silofs_vaddr *vaddr,
-                         struct silofs_ubk_info **out_ubki)
-{
-	return silofs_stage_ubk_of(f_ctx->task, vaddr,
-	                           f_ctx->stg_mode, out_ubki);
-}
-
-static int
-fic_iovec_by_blob(const struct silofs_file_ctx *f_ctx,
-                  const struct silofs_vaddr *vaddr,
-                  loff_t off_within, size_t len,
-                  struct silofs_iovec *out_iov)
-{
-	struct silofs_voaddr voa;
-	struct silofs_ubk_info *ubki = NULL;
-	int err;
-
-	err = fic_stage_ubk(f_ctx, vaddr, &ubki);
-	if (err) {
-		return err;
-	}
-	silofs_voaddr_setup_by(&voa, &ubki->ubk_addr.blobid, vaddr);
-	voa.oaddr.pos += off_within;
-	voa.oaddr.len = len;
-	err = silofs_blobf_resolve(ubki->ubk_blobf, &voa.oaddr, out_iov);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int
 fic_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
                     struct silofs_fileaf_info *fli, bool all,
@@ -818,24 +786,6 @@ fic_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
 		out_iov->iov_ref = &fli->fl_vi.v_iovr;
 	}
 	return 0;
-}
-
-static int fic_iovec_by_vaddr(const struct silofs_file_ctx *f_ctx,
-                              const struct silofs_vaddr *vaddr, bool all,
-                              struct silofs_iovec *out_iov)
-{
-	const enum silofs_stype stype = vaddr->stype;
-	loff_t off_within;
-	size_t len;
-
-	if (all) {
-		off_within = 0;
-		len = stype_size(stype);
-	} else {
-		off_within = off_in_data(f_ctx->off, stype);
-		len = len_of_data(f_ctx->off, f_ctx->end, stype);
-	}
-	return fic_iovec_by_blob(f_ctx, vaddr, off_within, len, out_iov);
 }
 
 static int fic_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
@@ -1628,10 +1578,9 @@ static int fic_resolve_iovec(const struct silofs_file_ctx *f_ctx,
 
 	if (fli != NULL) {
 		err = fic_iovec_by_fileaf(f_ctx, fli, false, out_iov);
-	} else if ((vaddr != NULL) && !vaddr_isnull(vaddr)) {
-		err = fic_iovec_by_vaddr(f_ctx, vaddr, false, out_iov);
 	} else {
 		stype = off_to_data_stype(f_ctx->off);
+		silofs_assert((vaddr == NULL) || (stype == vaddr->stype));
 		err = fic_iovec_by_nilbk(f_ctx, stype, out_iov);
 	}
 	return err;

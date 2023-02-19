@@ -2027,43 +2027,6 @@ static int stgc_require_spleaf(struct silofs_stage_ctx *stg_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stgc_do_stage_ubk_at(const struct silofs_stage_ctx *stg_ctx,
-                                const struct silofs_bkaddr *bkaddr,
-                                struct silofs_ubk_info **out_ubki)
-{
-	return silofs_stage_ubk_at(stg_ctx->uber, bkaddr, out_ubki);
-}
-
-static int stgc_stage_ubk_at(const struct silofs_stage_ctx *stg_ctx,
-                             const struct silofs_bkaddr *bkaddr,
-                             struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	err = stgc_do_stage_ubk_at(stg_ctx, bkaddr, out_ubki);
-	if (!err) {
-		goto out_ok;
-	}
-	if (!is_low_resource_error(err)) {
-		goto out_err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_do_stage_ubk_at(stg_ctx, bkaddr, out_ubki);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	return 0;
-out_err:
-	stgc_log_cache_stat(stg_ctx);
-	return err;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static int stgc_stage_spnodes_of(struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
@@ -2680,27 +2643,6 @@ int silofs_resolve_oaddr_of(struct silofs_task *task,
 		oaddr_assign(out_oaddr, &voaddr.oaddr);
 	}
 	return err;
-}
-
-int silofs_stage_ubk_of(struct silofs_task *task,
-                        const struct silofs_vaddr *vaddr,
-                        enum silofs_stage_mode stg_mode,
-                        struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_stage_ctx stg_ctx;
-	struct silofs_voaddr voa;
-	int err;
-
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode, false);
-	err = stgc_resolve_inspect_voaddr(&stg_ctx, &voa);
-	if (err) {
-		return err;
-	}
-	err = stgc_stage_ubk_at(&stg_ctx, &voa.oaddr.bka, out_ubki);
-	if (err) {
-		return err;
-	}
-	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -347,9 +347,10 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 	ute_del(ute);
 }
 
-static void ut_print_tests_start(const struct ut_args *args)
+static void ut_print_tests_info(const struct ut_args *args, int pre)
 {
-	printf("  %s %s\n", args->program, args->version);
+	printf("  %s %s %s\n", args->program, args->version,
+	       pre ? "++++++++" : "--------");
 }
 
 #define MKID_UID(h, s) \
@@ -392,8 +393,9 @@ void ut_execute_tests(void)
 		.version = ut_globals.version
 	};
 
-	ut_print_tests_start(&args);
+	ut_print_tests_info(&args, 1);
 	ut_execute_tests_cycle(&args);
+	ut_print_tests_info(&args, 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

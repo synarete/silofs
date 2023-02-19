@@ -180,8 +180,14 @@ void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
 
 bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
 
-void silofs_bkaddr_as_iv(const struct silofs_bkaddr *bkaddr,
-                         struct silofs_iv *out_iv);
+
+void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48);
+
+void silofs_bkaddr48b_set(struct silofs_bkaddr48b *bkaddr48,
+                          const struct silofs_bkaddr *bkaddr);
+
+void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
+                            struct silofs_bkaddr *bkaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -190,6 +196,9 @@ const struct silofs_oaddr *silofs_oaddr_none(void);
 void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *blobid,
                         loff_t off, size_t len);
+
+void silofs_oaddr_setup_bk(struct silofs_oaddr *oaddr,
+                           const struct silofs_bkaddr *bkaddr);
 
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *blobid, silofs_lba_t lba);
@@ -348,6 +357,11 @@ void silofs_vrange128_set(struct silofs_vrange128 *vrng,
 
 void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
                             struct silofs_vrange *vrange);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_iv_of(struct silofs_iv *iv, const struct silofs_bkaddr *bkaddr,
+                  enum silofs_stype stype, enum silofs_height height);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

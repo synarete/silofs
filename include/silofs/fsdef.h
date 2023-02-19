@@ -469,6 +469,13 @@ struct silofs_blobid40b {
 } silofs_packed_aligned8;
 
 
+struct silofs_bkaddr48b {
+	struct silofs_blobid40b         blobid;
+	uint32_t                        lba;
+	uint32_t                        pad;
+} silofs_packed_aligned8;
+
+
 struct silofs_oaddr48b {
 	struct silofs_blobid40b         blobid;
 	uint32_t                        pos;
@@ -628,8 +635,7 @@ struct silofs_super_block {
 	uint64_t                        sb_reserved4a;
 	uint64_t                        sb_birth_time;
 	uint64_t                        sb_clone_time;
-	uint64_t                        sb_pack_time;
-	uint8_t                         sb_reserved4b[320];
+	uint8_t                         sb_reserved4b[328];
 	/* 1K..2K */
 	struct silofs_sb_sproots        sb_sproot_uaddr;
 	/* 2K..3K */
@@ -664,11 +670,11 @@ struct silofs_spmap_node {
 
 
 struct silofs_bk_ref {
-	struct silofs_blobid40b         br_uref_blobid;
+	struct silofs_bkaddr48b         br_uref;
 	uint64_t                        br_allocated;
 	uint64_t                        br_unwritten;
 	uint64_t                        br_refcnt;
-	uint8_t                         br_reserved[56];
+	uint8_t                         br_reserved[48];
 } silofs_packed_aligned8;
 
 

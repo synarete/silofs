@@ -203,7 +203,7 @@ static void guarantee_persistent_types_members(void)
 	REQUIRE_NBITS(struct silofs_header, h_stype, 8);
 	REQUIRE_NBITS(struct silofs_bk_ref, br_allocated, SILOFS_NKB_IN_BK);
 	REQUIRE_NBITS(struct silofs_bk_ref, br_unwritten, SILOFS_NKB_IN_BK);
-	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, br_reserved, 56);
+	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, br_reserved, 48);
 	REQUIRE_NELEMS(struct silofs_ftree_node,
 	               fn_child, SILOFS_FILE_NODE_NCHILDS);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
@@ -214,10 +214,10 @@ static void guarantee_persistent_types_members(void)
 static void guarantee_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_ulink, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_uref_blobid, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 40);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 48);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 56);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_uref, 0);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 48);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 56);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, br_refcnt, 64);
 }
 
 static void guarantee_persistent_types_alignment2(void)
@@ -245,7 +245,6 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_vrange, 656);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_birth_time, 680);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_clone_time, 688);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_pack_time, 696);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_uaddr, 1024);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_blobid, 2048);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_curr, 4096);

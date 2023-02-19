@@ -118,6 +118,7 @@
 #define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
 #define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
 #define oaddr_setup(oa, bid, o, l)      silofs_oaddr_setup(oa, bid, o, l)
+#define oaddr_setup_bk(oa, bka)         silofs_oaddr_setup_bk(oa, bka)
 #define oaddr_setup_by(oa, bid, va)     silofs_oaddr_setup_by(oa, bid, va)
 #define oaddr_isvalid(oa)               silofs_oaddr_isvalid(oa)
 #define oaddr_isnull(oa)                silofs_oaddr_isnull(oa)

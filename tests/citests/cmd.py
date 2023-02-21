@@ -8,7 +8,10 @@ import threading
 
 
 class CmdError(Exception):
-    pass
+    def __init__(self, msg: str, out: str = "", ret: int = 0) -> None:
+        Exception.__init__(self, msg)
+        self.output = out[-1024:]
+        self.retcode = ret
 
 
 class CmdExec:
@@ -19,10 +22,15 @@ class CmdExec:
         self.xbin = self.find_executable(prog)
         self.cwd = "/"
 
-    def execute(self, args, wdir: str = "") -> str:
-        """Execute command as sub-process, raise upon failure"""
+    def execute_sub(self, args, wdir: str = "", timeout: int = 5) -> str:
+        """Execute command via subprocess.
+
+        Execute command as sub-process and return its output. Raises CmdError
+        upon failure.
+        """
         cmd = self._make_cmd(args)
         cwd = self._make_cwd(wdir)
+        txt = ""
         with subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.PIPE,
@@ -30,45 +38,26 @@ class CmdExec:
             cwd=cwd,
             shell=False,
             env=os.environ.copy(),
+            universal_newlines=True,
         ) as proc:
             try:
-                std_out, std_err = proc.communicate(timeout=30)
+                std_out, std_err = proc.communicate(timeout=timeout)
+                out = std_err or std_out
+                txt = out.strip()
             except subprocess.TimeoutExpired:
                 proc.kill()
-            std_out, std_err = proc.communicate()
-            if proc.returncode != 0:
-                raise CmdError("failed: " + cmd)
-            out = std_err or std_out
-            ret = out.decode("UTF-8")
-        return ret.strip()
+            ret = proc.returncode
+            if ret != 0:
+                raise CmdError("failed: " + cmd, txt, ret)
+        return txt
 
-    def execute2(self, args, sh: bool = False, wdir: str = "") -> None:
+    def execute_run(self, args, wdir: str = "") -> None:
         """Run command as sub-process without output, raise upon failure"""
         cmd = self._make_cmd(args)
         cwd = self._make_cwd(wdir)
-        proc = subprocess.run(shlex.split(cmd), check=True, shell=sh, cwd=cwd)
+        proc = subprocess.run(shlex.split(cmd), check=True, cwd=cwd)
         if proc.returncode != 0:
-            raise CmdError("failed: " + cmd)
-
-    def execute3(self, args, sh: bool = False, wdir: str = "") -> int:
-        """Execute command as sub-process and return its exit status code"""
-        cmd = self._make_cmd(args)
-        cwd = self._make_cwd(wdir)
-        with subprocess.Popen(
-            shlex.split(cmd),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            cwd=cwd,
-            shell=sh,
-            env=os.environ.copy(),
-        ) as proc:
-            ret = proc.wait()
-        return ret
-
-    def execute4(self, args, wdir: str = "") -> None:
-        ret = self.execute3(args, False, wdir)
-        if ret != 0:
-            raise CmdError("failed: " + self._make_cmd(args))
+            raise CmdError("failed: " + cmd, ret=proc.returncode)
 
     def _make_cmd(self, args: typing.Iterable[str]) -> str:
         return self.xbin + " " + " ".join(args)
@@ -107,7 +96,7 @@ class CmdShell(CmdExec):
     def run_ok(self, cmd: str, wdir=None) -> None:
         ret = self.run(cmd, wdir)
         if ret != 0:
-            raise CmdError("failed: " + cmd)
+            raise CmdError("failed: " + cmd, ret=ret)
 
 
 class CmdSilofs(CmdExec):
@@ -117,14 +106,14 @@ class CmdSilofs(CmdExec):
         CmdExec.__init__(self, "silofs")
 
     def version(self) -> str:
-        return self.execute(["-v"])
+        return self.execute_sub(["-v"])
 
     def init(self, repodir: str) -> None:
         args = ["init", repodir]
-        self.execute2(args)
+        self.execute_sub(args)
 
     def mkfs(self, repodir_name: str, size: int) -> None:
-        self.execute2(["mkfs", "-s", str(size), repodir_name])
+        self.execute_sub(["mkfs", "-s", str(size), repodir_name])
 
     def mount(
         self,
@@ -135,37 +124,37 @@ class CmdSilofs(CmdExec):
         args = ["mount", repodir_name, mntpoint]
         if allow_hostids:
             args.append("--allow-hostids")
-        self.execute2(args)
+        self.execute_run(args)
 
     def umount(self, mntpoint: str) -> None:
-        self.execute2(["umount", mntpoint])
+        self.execute_run(["umount", mntpoint])
 
     def show_version(self, pathname: str) -> str:
-        return self.execute(["show", "version", pathname])
+        return self.execute_sub(["show", "version", pathname])
 
     def show_boot(self, pathname: str) -> str:
-        return self.execute(["show", "boot", pathname])
+        return self.execute_sub(["show", "boot", pathname])
 
     def show_proc(self, pathname: str) -> str:
-        return self.execute(["show", "proc", pathname])
+        return self.execute_sub(["show", "proc", pathname])
 
     def show_spstats(self, pathname: str) -> str:
-        return self.execute(["show", "spstats", pathname])
+        return self.execute_sub(["show", "spstats", pathname])
 
     def show_statx(self, pathname: str) -> str:
-        return self.execute(["show", "statx", pathname])
+        return self.execute_sub(["show", "statx", pathname])
 
     def snap(self, name: str, pathname: str) -> None:
-        return self.execute2(["snap", "-n", name, pathname])
+        self.execute_sub(["snap", "-n", name, pathname])
 
     def snap2(self, name: str, repodir_name: str) -> None:
-        self.execute2(["snap", "-n", name, "--offline", repodir_name])
+        self.execute_sub(["snap", "-n", name, "--offline", repodir_name])
 
     def rmfs(self, repodir_name: str) -> None:
-        self.execute2(["rmfs", repodir_name])
+        self.execute_sub(["rmfs", repodir_name])
 
     def fsck(self, repodir_name: str) -> None:
-        self.execute2(["fsck", repodir_name])
+        self.execute_sub(["fsck", repodir_name])
 
 
 class CmdUnitests(CmdExec):
@@ -175,13 +164,11 @@ class CmdUnitests(CmdExec):
         CmdExec.__init__(self, "silofs-unitests")
 
     def version(self) -> str:
-        return self.execute(["-v"])
+        return self.execute_sub(["-v"])
 
     def run(self, basedir: str, level: int = 1) -> None:
         args = [basedir, f"--level={level}"]
-        ret = self.execute3(args)
-        if ret != 0:
-            raise CmdError("unitests failed")
+        self.execute_sub(args, timeout=1200)
 
 
 class CmdVfstests(CmdExec):
@@ -191,7 +178,7 @@ class CmdVfstests(CmdExec):
         CmdExec.__init__(self, "silofs-vfstests")
 
     def version(self) -> str:
-        return self.execute(["-v"])
+        return self.execute_sub(["-v"])
 
     def run(
         self, basedir: str, rand: bool = False, nostatvfs: bool = False
@@ -201,9 +188,7 @@ class CmdVfstests(CmdExec):
             args.append("--random")
         if nostatvfs:
             args.append("--nostatvfs")
-        ret = self.execute3(args, wdir="/")
-        if ret != 0:
-            raise CmdError("vfstests failed")
+        self.execute_sub(args, wdir="/", timeout=1200)
 
     def make_thread(
         self, basedir: str, rand: bool = False, nostatvfs: bool = False
@@ -228,10 +213,15 @@ class CmdGit(CmdExec):
         CmdExec.__init__(self, "git")
 
     def version(self) -> str:
-        return self.execute(["version"])
+        return self.execute_sub(["version"])
 
     def clone(self, repo: str, dpath: str) -> int:
-        return self.execute3(["clone", repo, dpath])
+        ret = 0
+        try:
+            self.execute_sub(["clone", repo, dpath], timeout=60)
+        except CmdError as ex:
+            ret = ex.retcode
+        return ret
 
 
 # pylint: disable=R0903

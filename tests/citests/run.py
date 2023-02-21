@@ -55,7 +55,7 @@ def _exec_test(td: ctx.TestDef, tc: ctx.TestCtx) -> None:
     td.hook(tc)
 
 
-def run_tests(cfg: ctx.TestConfig) -> None:
+def _do_run_tests(cfg: ctx.TestConfig) -> None:
     _validate_config(cfg)
     _pre_run_tests()
     for td in test_all.get_tests_defs():
@@ -64,3 +64,13 @@ def run_tests(cfg: ctx.TestConfig) -> None:
         _exec_test(td, tc)
         _post_test(tc)
     _post_run_tests()
+
+
+def run_tests(cfg: ctx.TestConfig) -> None:
+    try:
+        _do_run_tests(cfg)
+    except cmd.CmdError as cex:
+        print(cex.output)
+        print(cex.retcode)
+        print(cex)
+        sys.exit(1)

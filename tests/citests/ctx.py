@@ -11,10 +11,6 @@ from . import cmd
 from . import expect
 
 
-class TestException(Exception):
-    pass
-
-
 # pylint: disable=R0903
 class TestConfig:
     def __init__(self, basedir: str, mntdir: str) -> None:

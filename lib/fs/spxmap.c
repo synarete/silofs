@@ -437,6 +437,16 @@ static void spamap_clear(struct silofs_spamap *spa)
 	splifo_clear(&spa->spa_lifo);
 }
 
+static loff_t spamap_get_hint(const struct silofs_spamap *spa)
+{
+	return spa->spa_hint;
+}
+
+static void spamap_set_hint(struct silofs_spamap *spa, loff_t off)
+{
+	spa->spa_hint = off;
+}
+
 static void spamap_init(struct silofs_spamap *spa, enum silofs_stype stype,
                         struct silofs_alloc *alloc)
 {
@@ -445,6 +455,7 @@ static void spamap_init(struct silofs_spamap *spa, enum silofs_stype stype,
 	spa->spa_alloc = alloc;
 	spa->spa_cap_max = spamap_capacity(stype);
 	spa->spa_stype = stype;
+	spa->spa_hint = 0;
 }
 
 static void spamap_fini(struct silofs_spamap *spa)
@@ -534,6 +545,7 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_stype stype,
 	return err;
 }
 
+/* TODO: unused; remove me */
 int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
                           enum silofs_stype stype, loff_t voff, loff_t *out)
 {
@@ -545,6 +557,30 @@ int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
 		err = spamap_find_baseof(spa, voff, out);
 	}
 	return err;
+}
+
+loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
+                               enum silofs_stype stype)
+{
+	const struct silofs_spamap *spa;
+	loff_t hint = 0;;
+
+	spa = spamaps_sub_map2(spam, stype);
+	if (spa != NULL) {
+		hint = spamap_get_hint(spa);
+	}
+	return hint;
+}
+
+void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
+                             enum silofs_stype stype, loff_t off)
+{
+	struct silofs_spamap *spa;
+
+	spa = spamaps_sub_map(spam, stype);
+	if (spa != NULL) {
+		spamap_set_hint(spa, off);
+	}
 }
 
 void silofs_spamaps_drop(struct silofs_spamaps *spam)

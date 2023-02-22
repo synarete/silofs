@@ -384,18 +384,6 @@ struct silofs_spacestats {
 	struct silofs_spacegauges objs;
 };
 
-/* v-space allocation hints */
-struct silofs_vspalloc_hints {
-	loff_t data1k;
-	loff_t data4k;
-	loff_t databk;
-	loff_t inode;
-	loff_t xanode;
-	loff_t dirnode;
-	loff_t filenode;
-	loff_t symval;
-};
-
 /* in-memory mapping from ino to voff */
 struct silofs_inoent {
 	struct silofs_list_head htb_lh;
@@ -439,7 +427,7 @@ struct silofs_uber_base {
 	const struct silofs_fs_args    *fs_args;
 	const struct silofs_ivkey      *ivkey;
 	struct silofs_alloc            *alloc;
-	struct silofs_repo            *repo;
+	struct silofs_repo             *repo;
 	struct silofs_submitq          *submitq;
 	struct silofs_idsmap           *idsmap;
 };

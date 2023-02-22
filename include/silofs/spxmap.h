@@ -31,6 +31,7 @@ struct silofs_spamap {
 	struct silofs_splifo    spa_lifo;
 	struct silofs_alloc    *spa_alloc;
 	struct silofs_avl       spa_avl;
+	loff_t                  spa_hint;
 	unsigned int            spa_cap_max;
 	enum silofs_stype       spa_stype;
 };
@@ -89,6 +90,13 @@ int silofs_spamaps_store(struct silofs_spamaps *spam,
 
 int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
                           enum silofs_stype stype, loff_t voff, loff_t *out);
+
+
+loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
+                               enum silofs_stype stype);
+
+void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
+                             enum silofs_stype stype, loff_t off);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

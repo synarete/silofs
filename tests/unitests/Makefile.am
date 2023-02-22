@@ -45,6 +45,7 @@ silofs_unitests_SOURCES += ut_reload.c
 silofs_unitests_SOURCES += ut_rename.c
 silofs_unitests_SOURCES += ut_snap_basic.c
 silofs_unitests_SOURCES += ut_snap_io.c
+silofs_unitests_SOURCES += ut_statfs.c
 silofs_unitests_SOURCES += ut_strings.c
 silofs_unitests_SOURCES += ut_super.c
 silofs_unitests_SOURCES += ut_symlink.c

@@ -212,33 +212,34 @@ static void test_statvfs_ffree_seq(struct vt_env *vte)
 /*
  * Expects statvfs(3p) to change statvfs.f_bfree upon write/trim.
  */
-static void test_statvfs_bfree_(struct vt_env *vte, loff_t off)
+static void test_statvfs_bfree_(struct vt_env *vte, loff_t off, size_t bsz)
 {
-	int fd = -1;
-	size_t bsz = VT_UMEGA;
 	struct stat st[2];
 	struct statvfs stv[2];
 	const char *path0 = vt_new_path_unique(vte);
 	const char *path1 = vt_new_path_under(vte, path0);
 	void *buf1 = vt_new_buf_rands(vte, bsz);
 	void *buf2 = vt_new_buf_rands(vte, bsz);
+	int fd = -1;
 
 	vt_mkdir(path0, 0700);
 	vt_open(path1, O_CREAT | O_RDWR, 0600, &fd);
 	vt_fstat(fd, &st[0]);
 	vt_fstatvfs(fd, &stv[0]);
-	vt_pwriten(fd, buf1, bsz, off);
-	vt_preadn(fd, buf2, bsz, off);
-	vt_expect_eqm(buf1, buf2, bsz);
-	vt_fstat(fd, &st[1]);
-	vt_fstatvfs(fd, &stv[1]);
-	vt_expect_gt(st[1].st_blocks, st[0].st_blocks);
-	vt_expect_gt(stv[0].f_bfree, stv[1].f_bfree);
-	vt_ftruncate(fd, 0);
-	vt_fstat(fd, &st[1]);
-	vt_fstatvfs(fd, &stv[1]);
-	vt_expect_eq(st[1].st_blocks, st[0].st_blocks);
-	vt_expect_eq(stv[1].f_bfree, stv[0].f_bfree);
+	for (size_t i = 0; i < 2; ++i) {
+		vt_pwriten(fd, buf1, bsz, off);
+		vt_preadn(fd, buf2, bsz, off);
+		vt_expect_eqm(buf1, buf2, bsz);
+		vt_fstat(fd, &st[1]);
+		vt_fstatvfs(fd, &stv[1]);
+		vt_expect_gt(st[1].st_blocks, st[0].st_blocks);
+		vt_expect_gt(stv[0].f_bfree, stv[1].f_bfree);
+		vt_ftruncate(fd, 0);
+		vt_fstat(fd, &st[1]);
+		vt_fstatvfs(fd, &stv[1]);
+		vt_expect_eq(st[1].st_blocks, st[0].st_blocks);
+		vt_expect_eq(stv[1].f_bfree, stv[0].f_bfree);
+	}
 	vt_close(fd);
 	vt_unlink(path1);
 	vt_rmdir(path0);
@@ -246,11 +247,13 @@ static void test_statvfs_bfree_(struct vt_env *vte, loff_t off)
 
 static void test_statvfs_bfree(struct vt_env *vte)
 {
-	test_statvfs_bfree_(vte, 0);
-	test_statvfs_bfree_(vte, VT_MEGA);
-	test_statvfs_bfree_(vte, VT_MEGA + 1);
-	test_statvfs_bfree_(vte, VT_TERA - 11);
-	test_statvfs_bfree_(vte, VT_FILESIZE_MAX - VT_UMEGA);
+	test_statvfs_bfree_(vte, 0, VT_UMEGA);
+	test_statvfs_bfree_(vte, VT_KILO, VT_UMEGA - 1);
+	test_statvfs_bfree_(vte, VT_BK_SIZE, 2 * VT_BK_SIZE);
+	test_statvfs_bfree_(vte, VT_MEGA, VT_UMEGA);
+	test_statvfs_bfree_(vte, VT_MEGA + 1, VT_UMEGA);
+	test_statvfs_bfree_(vte, VT_TERA - 11, VT_UMEGA + 111);
+	test_statvfs_bfree_(vte, VT_FILESIZE_MAX - VT_UMEGA, VT_UMEGA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

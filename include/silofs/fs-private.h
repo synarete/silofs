@@ -142,9 +142,10 @@
 #define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
 
 #define vrange_next(vrng, o)            silofs_vrange_next(vrng, o)
+#define vrange_within(vrng, o)          silofs_vrange_within(vrng, o)
 
-#define blobf_incref(blobf)                 silofs_blobf_incref(blobf)
-#define blobf_decref(blobf)                 silofs_blobf_decref(blobf)
+#define blobf_incref(blobf)             silofs_blobf_incref(blobf)
+#define blobf_decref(blobf)             silofs_blobf_decref(blobf)
 
 #define task_sbi(t)                     silofs_task_sbi(t)
 

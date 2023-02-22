@@ -37,7 +37,4 @@ int silofs_addref_vspace(struct silofs_task *task,
 
 int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_stype stype);
 
-int silofs_recache_vspace(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr);
-
 #endif /* SILOFS_SPCLAIM_H_ */

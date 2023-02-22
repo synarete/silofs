@@ -2024,24 +2024,21 @@ static void fill_proc(const struct silofs_sb_info *sbi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int do_statvfs(const struct silofs_task *task,
-                      const struct silofs_inode_info *ii,
-                      struct statvfs *out_stv)
+static int do_statvfs(const struct silofs_task *task, struct statvfs *out_stv)
 {
-	const struct silofs_sb_info *sbi = ii_sbi(ii);
+	const struct silofs_sb_info *sbi = task_sbi(task);
 
 	silofs_sti_fill_statvfs(&sbi->sb_sti, out_stv);
-	unused(task);
 	return 0;
 }
 
-int silofs_do_statvfs(const struct silofs_task *op,
+int silofs_do_statvfs(const struct silofs_task *task,
                       struct silofs_inode_info *ii, struct statvfs *out_stv)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_statvfs(op, ii, out_stv);
+	err = do_statvfs(task, out_stv);
 	ii_decref(ii);
 	return err;
 }

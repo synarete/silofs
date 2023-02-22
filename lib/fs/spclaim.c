@@ -143,12 +143,6 @@ static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
 	return (vaddr_end <= vspace_end);
 }
 
-static void sbi_update_voff_last(struct silofs_sb_info *sbi,
-                                 const struct silofs_vaddr *vaddr)
-{
-	sbi_set_voff_last_of(sbi, vaddr->stype, vaddr->off);
-}
-
 static void sbi_update_space_stats(struct silofs_sb_info *sbi,
                                    const struct silofs_vaddr *vaddr,
                                    ssize_t nobjs_take, ssize_t nbks_take)
@@ -171,7 +165,6 @@ static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
 
 	silofs_sli_mark_allocated_space(sli, vaddr);
 	sbi_update_space_stats(sbi, vaddr, 1, first_bk ? 1 : 0);
-	sbi_update_voff_last(sbi, vaddr);
 }
 
 static bool sli_is_shared_databk(const struct silofs_spleaf_info *sli,
@@ -480,10 +473,19 @@ spac_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	return 0;
 }
 
+static void
+spac_update_voff_hint(const struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+{
+	sbi_set_voff_last_of(spa_ctx->sbi, spa_ctx->stype, voff);
+}
+
 static void spac_mark_allocated(const struct silofs_spalloc_ctx *spa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
+	silofs_assert_eq(spa_ctx->stype, vaddr->stype);
+
 	sbi_mark_allocated_at(spa_ctx->sbi, spa_ctx->sli, vaddr);
+	spac_update_voff_hint(spa_ctx, vaddr->off);
 }
 
 static int
@@ -628,13 +630,13 @@ static bool spac_is_shared_databk(const struct silofs_spalloc_ctx *spa_ctx,
 static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
-	struct silofs_cache *cache = spac_cache(spa_ctx);
+	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 	int ret = 0;
 	bool shared;
 
 	shared = spac_is_shared_databk(spa_ctx, vaddr);
 	if (!shared) {
-		ret = silofs_spamaps_store(&cache->c_spam, vaddr->stype,
+		ret = silofs_spamaps_store(spam, vaddr->stype,
 		                           vaddr->off, vaddr->len);
 	}
 	return ret;
@@ -727,21 +729,6 @@ int silofs_addref_vspace(struct silofs_task *task,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_recache_vspace(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr)
-{
-	struct silofs_spalloc_ctx spa_ctx;
-
-	spac_setup2(&spa_ctx, task, vaddr->stype);
-	return spac_try_recache_vspace(&spa_ctx, vaddr);
-}
-
-static void
-spac_update_voff_hint(const struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
-{
-	sbi_set_voff_last_of(spa_ctx->sbi, spa_ctx->stype, voff);
-}
 
 static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
                                    struct silofs_vaddr *out_vaddr)

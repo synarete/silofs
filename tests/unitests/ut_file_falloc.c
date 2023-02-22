@@ -47,7 +47,7 @@ static void ut_file_fallocate_unaligned(struct ut_env *ute)
 	ut_file_fallocate_simple_(ute, 5 * UT_MEGA, UT_UMEGA / 5);
 	ut_file_fallocate_simple_(ute, 7 * UT_GIGA, UT_UMEGA / 7);
 	ut_file_fallocate_simple_(ute, UT_TERA, UT_UMEGA / 11);
-	ut_file_fallocate_simple_(ute, UT_FSIZE_MAX / 2, UT_UMEGA);
+	ut_file_fallocate_simple_(ute, UT_FILESIZE_MAX / 2, UT_UMEGA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -159,7 +159,7 @@ static void ut_file_fallocate_unwritten(struct ut_env *ute)
 	ut_file_fallocate_unwritten_(ute, UT_MEGA - 111, UT_UMEGA + 1111);
 	ut_file_fallocate_unwritten_(ute, UT_GIGA - 1111, UT_UMEGA + 111);
 	ut_file_fallocate_unwritten_(ute, UT_TERA - 11111, UT_UMEGA + 11);
-	ut_file_fallocate_unwritten_(ute, UT_FSIZE_MAX - 111111, 111111);
+	ut_file_fallocate_unwritten_(ute, UT_FILESIZE_MAX - 111111, 111111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -189,8 +189,8 @@ static void ut_file_fallocate_drop_caches(struct ut_env *ute)
 	ut_file_fallocate_drop_caches_(ute, 3, UT_UMEGA / 3);
 	ut_file_fallocate_drop_caches_(ute, 5 * UT_MEGA + 5, UT_UMEGA / 5);
 	ut_file_fallocate_drop_caches_(ute, UT_TERA / 11, UT_UMEGA / 11);
-	ut_file_fallocate_drop_caches_(ute, UT_FSIZE_MAX / 2, UT_UMEGA);
-	ut_file_fallocate_drop_caches_(ute, UT_FSIZE_MAX - UT_UMEGA - 11,
+	ut_file_fallocate_drop_caches_(ute, UT_FILESIZE_MAX / 2, UT_UMEGA);
+	ut_file_fallocate_drop_caches_(ute, UT_FILESIZE_MAX - UT_UMEGA - 11,
 	                               UT_UMEGA + 11);
 }
 
@@ -513,7 +513,7 @@ static void ut_file_fallocate_sparse(struct ut_env *ute)
 	ut_file_fallocate_sparse_(ute, UT_MEGA, UT_GIGA);
 	ut_file_fallocate_sparse_(ute, 11 * UT_MEGA - 1, UT_GIGA);
 	ut_file_fallocate_sparse_(ute, UT_TERA - 11, UT_GIGA);
-	ut_file_fallocate_sparse_(ute, UT_FSIZE_MAX / 2, UT_GIGA);
+	ut_file_fallocate_sparse_(ute, UT_FILESIZE_MAX / 2, UT_GIGA);
 }
 
 

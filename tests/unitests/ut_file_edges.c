@@ -102,7 +102,7 @@ static void ut_file_edges_special(struct ut_env *ute)
 	const loff_t bkssz = (loff_t)bksz;
 	const loff_t filemap_sz = (UT_FILEMAP_NCHILDS * UT_BK_SIZE);
 	const loff_t filemap_sz2 = filemap_sz * UT_FILEMAP_NCHILDS;
-	const loff_t filesize_max = UT_FSIZE_MAX;
+	const loff_t filesize_max = UT_FILESIZE_MAX;
 
 	ut_file_edges_1_(ute, filemap_sz, bksz);
 	ut_file_edges_1_(ute, filemap_sz, 2 * bksz);
@@ -176,8 +176,8 @@ static void ut_file_edges_fmapping(struct ut_env *ute)
 		UT_BK_SIZE * 2 * UT_FILEMAP_NCHILDS,
 		UT_BK_SIZE *((2 * UT_FILEMAP_NCHILDS) + 1),
 		UT_BK_SIZE *UT_FILEMAP_NCHILDS * UT_FILEMAP_NCHILDS,
-		UT_FSIZE_MAX / 2,
-		UT_FSIZE_MAX - UT_BK_SIZE
+		UT_FILESIZE_MAX / 2,
+		UT_FILESIZE_MAX - UT_BK_SIZE
 	};
 	const size_t off_arr_len = UT_ARRAY_SIZE(off_arr);
 

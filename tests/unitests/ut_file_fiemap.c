@@ -115,7 +115,7 @@ static void ut_file_fiemap_simple(struct ut_env *ute)
 	ut_file_fiemap_simple_(ute, UT_GIGA - UT_BK_SIZE, UT_MEGA);
 	ut_file_fiemap_simple_(ute, UT_TERA - UT_BK_SIZE, 2 * UT_BK_SIZE);
 	ut_file_fiemap_simple_(ute,
-	                       UT_FSIZE_MAX - UT_MEGA + 1, UT_MEGA - 1);
+	                       UT_FILESIZE_MAX - UT_MEGA + 1, UT_MEGA - 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

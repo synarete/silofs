@@ -183,9 +183,9 @@ static void ut_file_iosize_max(struct ut_env *ute)
 	ut_file_data_(ute, UT_GIGA - 1, UT_IOSIZE_MAX);
 	ut_file_data_(ute, UT_TERA, UT_IOSIZE_MAX);
 	ut_file_data_(ute, UT_TERA - 1, UT_IOSIZE_MAX);
-	ut_file_data_(ute, UT_FSIZE_MAX - UT_IOSIZE_MAX - 1,
+	ut_file_data_(ute, UT_FILESIZE_MAX - UT_IOSIZE_MAX - 1,
 	              UT_IOSIZE_MAX);
-	ut_file_data_(ute, UT_FSIZE_MAX - UT_IOSIZE_MAX, UT_IOSIZE_MAX);
+	ut_file_data_(ute, UT_FILESIZE_MAX - UT_IOSIZE_MAX, UT_IOSIZE_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -218,8 +218,8 @@ static void ut_file_unlinked(struct ut_env *ute)
 	ut_file_unlinked_(ute, UT_GIGA - 1, UT_MEGA + 2);
 	ut_file_unlinked_(ute, UT_TERA, UT_MEGA);
 	ut_file_unlinked_(ute, UT_TERA - 1, UT_MEGA + 2);
-	ut_file_unlinked_(ute, UT_FSIZE_MAX - UT_MEGA - 1, UT_KILO);
-	ut_file_unlinked_(ute, UT_FSIZE_MAX - UT_MEGA, UT_MEGA);
+	ut_file_unlinked_(ute, UT_FILESIZE_MAX - UT_MEGA - 1, UT_KILO);
+	ut_file_unlinked_(ute, UT_FILESIZE_MAX - UT_MEGA, UT_MEGA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -266,8 +266,8 @@ static void ut_file_tricky(struct ut_env *ute)
 	const loff_t nch = (loff_t)UT_FILEMAP_NCHILDS;
 	const loff_t off1 = (loff_t)(UT_BK_SIZE * UT_FILEMAP_NCHILDS);
 	const loff_t off2 = off1 * nch;
-	const loff_t off3 = (loff_t)UT_FSIZE_MAX / 2;
-	const loff_t off4 = (loff_t)UT_FSIZE_MAX - (loff_t)bsz;
+	const loff_t off3 = (loff_t)UT_FILESIZE_MAX / 2;
+	const loff_t off4 = (loff_t)UT_FILESIZE_MAX - (loff_t)bsz;
 
 	ut_file_multi_(ute, bsz, off1, 2 * off1, 4 * off1, 8 * off1);
 	ut_file_multi_(ute, bsz, off1, off2, off3, off4);
@@ -407,7 +407,7 @@ static void ut_file_sequence(struct ut_env *ute)
 	ut_file_sequence_(ute, UT_TERA - 11, UT_UMEGA + 1111);
 	ut_file_sequence_(ute, UT_TERA + 111,
 	                  (11 * UT_BK_SIZE) + 11);
-	ut_file_sequence_(ute, UT_FSIZE_MAX / 2 - 1, UT_UMEGA + 1);
+	ut_file_sequence_(ute, UT_FILESIZE_MAX / 2 - 1, UT_UMEGA + 1);
 }
 
 static void ut_file_sequence_long(struct ut_env *ute)
@@ -419,7 +419,7 @@ static void ut_file_sequence_long(struct ut_env *ute)
 
 static void ut_file_sequence_at_end(struct ut_env *ute)
 {
-	const loff_t fsize_max = UT_FSIZE_MAX;
+	const loff_t fsize_max = UT_FILESIZE_MAX;
 
 	ut_file_sequence_(ute, fsize_max - UT_BK_SIZE, UT_BK_SIZE);
 	ut_file_sequence_(ute, fsize_max - (3 * UT_BK_SIZE) - 1,
@@ -495,12 +495,12 @@ static void ut_file_unaligned(struct ut_env *ute)
 	ut_file_unaligned_(ute, UT_TERA, 8 * UT_BK_SIZE);
 	ut_file_unaligned_(ute, UT_TERA - 11, (8 * UT_BK_SIZE));
 	ut_file_unaligned_(ute, UT_TERA - 11, UT_UMEGA);
-	ut_file_unaligned_(ute, UT_FSIZE_MAX / 2, UT_UMEGA);
+	ut_file_unaligned_(ute, UT_FILESIZE_MAX / 2, UT_UMEGA);
 }
 
 static void ut_file_unaligned_at_end(struct ut_env *ute)
 {
-	const loff_t fsize_max = UT_FSIZE_MAX;
+	const loff_t fsize_max = UT_FILESIZE_MAX;
 
 	ut_file_unaligned_(ute, fsize_max - 11111, 11111);
 	ut_file_unaligned_(ute, fsize_max - UT_MEGA - 1, UT_MEGA + 1);
@@ -554,7 +554,7 @@ static void ut_file_firstlast(struct ut_env *ute)
 	ut_file_firstlast_(ute, UT_TERA, 2 * UT_BK_SIZE);
 	ut_file_firstlast_(ute, UT_TERA - 11, UT_BK_SIZE + 11);
 	ut_file_firstlast_(ute, UT_TERA - 111, UT_BK_SIZE + 1111);
-	ut_file_firstlast_(ute, UT_FSIZE_MAX / 2, UT_UMEGA + 1);
+	ut_file_firstlast_(ute, UT_FILESIZE_MAX / 2, UT_UMEGA + 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -608,7 +608,7 @@ static void ut_file_zigzag(struct ut_env *ute)
 	ut_file_zigzag_(ute, UT_TERA, 2 * UT_BK_SIZE);
 	ut_file_zigzag_(ute, UT_TERA - 11, UT_BK_SIZE + 11);
 	ut_file_zigzag_(ute, UT_TERA - 111, UT_BK_SIZE + 1111);
-	ut_file_zigzag_(ute, UT_FSIZE_MAX / 2, UT_UMEGA + 1);
+	ut_file_zigzag_(ute, UT_FILESIZE_MAX / 2, UT_UMEGA + 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

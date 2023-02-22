@@ -77,7 +77,7 @@ static void ut_file_trunc_unaligned(struct ut_env *ute)
 	ut_file_trunc_data_(ute, 13 * UT_GIGA - 13, 13 * UT_BK_SIZE + 13);
 	ut_file_trunc_data_(ute, UT_TERA - 11111, UT_BK_SIZE + 111111);
 	ut_file_trunc_data_(ute, UT_TERA - 1111111, UT_BK_SIZE + 1111111);
-	ut_file_trunc_data_(ute, UT_FSIZE_MAX - UT_MEGA - 1, UT_UMEGA);
+	ut_file_trunc_data_(ute, UT_FILESIZE_MAX - UT_MEGA - 1, UT_UMEGA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -277,7 +277,7 @@ static void ut_file_trunc_tail(struct ut_env *ute)
 	ut_file_trunc_tail_(ute, UT_MEGA, UT_UMEGA);
 	ut_file_trunc_tail_(ute, UT_MEGA - 1, UT_UMEGA + 8);
 	ut_file_trunc_tail_(ute, UT_GIGA - 1, UT_UMEGA + 16);
-	ut_file_trunc_tail_(ute, UT_FSIZE_MAX - UT_MEGA - 1, UT_UMEGA);
+	ut_file_trunc_tail_(ute, UT_FILESIZE_MAX - UT_MEGA - 1, UT_UMEGA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -318,7 +318,7 @@ static void ut_file_trunc_void(struct ut_env *ute)
 	ut_file_trunc_void_(ute, UT_MEGA, UT_KILO);
 	ut_file_trunc_void_(ute, UT_MEGA - 11, UT_KILO + 1);
 	ut_file_trunc_void_(ute, UT_GIGA - 11, UT_UMEGA + 111);
-	ut_file_trunc_void_(ute, UT_FSIZE_MAX - UT_MEGA - 1, UT_MEGA);
+	ut_file_trunc_void_(ute, UT_FILESIZE_MAX - UT_MEGA - 1, UT_MEGA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -363,8 +363,8 @@ static void ut_file_trunc_zero_size(struct ut_env *ute)
 	ut_file_trunc_zero_size_(ute, 111 * UT_GIGA - 111, UT_BK_SIZE);
 	ut_file_trunc_zero_size_(ute, UT_TERA, UT_UMEGA);
 	ut_file_trunc_zero_size_(ute, UT_TERA + 1111111, UT_UMEGA - 1);
-	ut_file_trunc_zero_size_(ute, UT_FSIZE_MAX - UT_MEGA, UT_UMEGA);
-	ut_file_trunc_zero_size_(ute, UT_FSIZE_MAX - UT_MEGA - 1,
+	ut_file_trunc_zero_size_(ute, UT_FILESIZE_MAX - UT_MEGA, UT_UMEGA);
+	ut_file_trunc_zero_size_(ute, UT_FILESIZE_MAX - UT_MEGA - 1,
 	                         UT_UMEGA + 1);
 }
 

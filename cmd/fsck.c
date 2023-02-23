@@ -73,7 +73,7 @@ static void cmd_fsck_destroy_fs_env(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_fs_cargs(&ctx->fs_args.ca);
+	cmd_reset_fs_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -112,13 +112,15 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
-	const char *repodir = ctx->in_args.repodir_real;
-	const char *name = ctx->in_args.name;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(&fs_args->ca, repodir, name);
-	fs_args->repodir = repodir;
-	fs_args->name = name;
+	fs_args->repodir = ctx->in_args.repodir_real;
+	fs_args->name = ctx->in_args.name;
+}
+
+static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
+{
+	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_fsck_setup_fs_env(struct cmd_fsck_ctx *ctx)
@@ -134,12 +136,12 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_require_bsec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
@@ -174,13 +176,16 @@ void cmd_execute_fsck(void)
 	/* Verify user's arguments */
 	cmd_fsck_prepare(&ctx);
 
-	/* Load-require boot-params */
+	/* Setup input arguments */
 	cmd_fsck_setup_fs_args(&ctx);
+
+	/* Require ids-map */
+	cmd_fsck_load_fsids(&ctx);
 
 	/* Setup execution environment */
 	cmd_fsck_setup_fs_env(&ctx);
 
-	/* Open repoitory */
+	/* Open repository */
 	cmd_fsck_open_repo(&ctx);
 
 	/* Require source bootsec */
@@ -195,7 +200,7 @@ void cmd_execute_fsck(void)
 	/* Do actual fsck */
 	cmd_fsck_execute(&ctx);
 
-	/* Close repoitory */
+	/* Close repository */
 	cmd_fsck_close_repo(&ctx);
 
 	/* Destroy environment instance */

@@ -20,6 +20,9 @@ static const char *cmd_init_help_desc[] = {
 	"init <repodir>",
 	"",
 	"options:",
+	"  -u, --uid=suid               Map owner uid to suid",
+	"  -g, --gid=suid               Map owner gid to sgid",
+	"  -R, --no-root                Ignore root user",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };
@@ -27,6 +30,9 @@ static const char *cmd_init_help_desc[] = {
 struct cmd_init_in_args {
 	char   *repodir;
 	char   *repodir_real;
+	uid_t   suid;
+	gid_t   sgid;
+	bool    no_root;
 };
 
 struct cmd_init_ctx {
@@ -43,14 +49,25 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
+		{ "uid", required_argument, NULL, 'u' },
+		{ "gid", required_argument, NULL, 'g' },
+		{ "no-root", no_argument, NULL, 'R' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
+	ctx->in_args.suid = getuid();
+	ctx->in_args.sgid = getgid();
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("V:h", opts);
-		if (opt_chr == 'V') {
+		opt_chr = cmd_getopt("u:g:RV:h", opts);
+		if (opt_chr == 'u') {
+			ctx->in_args.suid = cmd_parse_str_as_uid(optarg);
+		} else if (opt_chr == 'g') {
+			ctx->in_args.sgid = cmd_parse_str_as_gid(optarg);
+		} else if (opt_chr == 'R') {
+			ctx->in_args.no_root = true;
+		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_init_help_desc);
@@ -67,7 +84,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_fs_cargs(&ctx->fs_args.ca);
+	cmd_reset_fs_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx = NULL;
@@ -105,8 +122,11 @@ static void cmd_init_prepare(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 {
-	cmd_init_fs_args(&ctx->fs_args);
-	cmd_default_fs_cargs(&ctx->fs_args.ca);
+	struct silofs_fs_args *fs_args = &ctx->fs_args;
+
+	cmd_init_fs_args(fs_args);
+	cmd_setup_fs_ids(&fs_args->ids, ctx->in_args.suid,
+	                 ctx->in_args.sgid, ctx->in_args.no_root);
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
 	ctx->fs_args.name = "silofs";
 }
@@ -126,6 +146,11 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 	cmd_close_repo(ctx->fs_env);
 }
 
+static void cmd_init_save_idmap(const struct cmd_init_ctx *ctx)
+{
+	cmd_save_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_execute_init(void)
@@ -143,17 +168,20 @@ void cmd_execute_init(void)
 	/* Verify user's arguments */
 	cmd_init_prepare(&ctx);
 
-	/* Setup default input arguments */
+	/* Setup input arguments */
 	cmd_init_setup_fs_args(&ctx);
 
 	/* Prepare environment */
 	cmd_init_setup_fs_env(&ctx);
 
-	/* Format repoitory layout */
+	/* Format repository layout */
 	cmd_init_format_repo(&ctx);
 
 	/* Post-format cleanups */
 	cmd_init_close_repo(&ctx);
+
+	/* Store ids-map configuration file */
+	cmd_init_save_idmap(&ctx);
 
 	/* Post execution cleanups */
 	cmd_init_finalize(&ctx);

@@ -119,7 +119,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	silofs_uuid_generate(&ute->args->fs_args.ca.uuid);
+	silofs_uuid_generate(&ute->args->fs_args.uuid);
 	err = silofs_fse_new(&ute->args->fs_args, &ute->fs_env);
 	silofs_assert_ok(err);
 }
@@ -372,11 +372,11 @@ void ut_execute_tests(void)
 	};
 	struct ut_args args = {
 		.fs_args = {
-			.ca = {
-				.ids.uids = uids,
-				.ids.nuids = UT_ARRAY_SIZE(uids),
-				.ids.gids = gids,
-				.ids.ngids = UT_ARRAY_SIZE(gids),
+			.ids = {
+				.uids = uids,
+				.nuids = UT_ARRAY_SIZE(uids),
+				.gids = gids,
+				.ngids = UT_ARRAY_SIZE(gids),
 			},
 			.uid = getuid(),
 			.gid = getgid(),

@@ -563,7 +563,7 @@ loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
                                enum silofs_stype stype)
 {
 	const struct silofs_spamap *spa;
-	loff_t hint = 0;;
+	loff_t hint = 0;
 
 	spa = spamaps_sub_map2(spam, stype);
 	if (spa != NULL) {

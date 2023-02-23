@@ -449,7 +449,7 @@ struct silofs_uber {
 	uint64_t                        ub_commit_id;
 };
 
-/* file-system's input id vectors */
+/* file-system's input ids */
 struct silofs_ids {
 	struct silofs_id       *uids;
 	struct silofs_id       *gids;
@@ -457,15 +457,10 @@ struct silofs_ids {
 	size_t                  ngids;
 };
 
-/* file-system's input config-file arguments */
-struct silofs_fs_cargs {
-	struct silofs_uuid      uuid;
-	struct silofs_ids       ids;
-};
-
 /* file-system input arguments */
 struct silofs_fs_args {
-	struct silofs_fs_cargs  ca;
+	struct silofs_uuid      uuid;
+	struct silofs_ids       ids;
 	const char             *repodir;
 	const char             *name;
 	const char             *mntdir;

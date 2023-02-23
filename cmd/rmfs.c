@@ -85,14 +85,19 @@ static void cmd_rmfs_lock_fs(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 {
-	const struct cmd_rmfs_in_args *args = &ctx->in_args;
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
-	struct silofs_fs_cargs *fsca = &ctx->fs_args.ca;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(fsca, args->repodir_real, args->name);
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
+}
+
+static void cmd_rmfs_load_ids(struct cmd_rmfs_ctx *ctx)
+{
+	cmd_load_fs_uuid(&ctx->fs_args.uuid,
+	                 ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_reset_fs_ids(&ctx->fs_args.ids);
+	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_rmfs_setup_fs_env(struct cmd_rmfs_ctx *ctx)
@@ -112,18 +117,17 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_require_bsec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_unref_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_rmfs_unlink_fsargs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unlink_fs_cargs(&ctx->fs_args.ca, ctx->in_args.repodir_real,
-	                    ctx->in_args.name);
+	cmd_unlink_fs_uuid(ctx->in_args.repodir_real, ctx->in_args.name);
 }
 
 static void cmd_rmfs_destroy_fs_env(struct cmd_rmfs_ctx *ctx)
@@ -175,13 +179,16 @@ void cmd_execute_rmfs(void)
 	/* Require lockable */
 	cmd_rmfs_lock_fs(&ctx);
 
-	/* Load config-params file */
+	/* Setup input arguments */
 	cmd_rmfs_setup_fs_args(&ctx);
+
+	/* Require ids-map */
+	cmd_rmfs_load_ids(&ctx);
 
 	/* Setup execution context */
 	cmd_rmfs_setup_fs_env(&ctx);
 
-	/* Open-validate repoitory */
+	/* Open-validate repository */
 	cmd_rmfs_open_repo(&ctx);
 
 	/* Require valid reference */
@@ -193,7 +200,7 @@ void cmd_execute_rmfs(void)
 	/* Unlink boot-configuration */
 	cmd_rmfs_unlink_fsargs(&ctx);
 
-	/* Close repoitory */
+	/* Close repository */
 	cmd_rmfs_close_repo(&ctx);
 
 	/* Post execution cleanups */

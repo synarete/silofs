@@ -9,7 +9,8 @@ _silofs_init() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-h -a --attic' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-h -u, --uid= -g, --gid=' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-R, --no-root' -- "$cur") )
   fi
 }
 
@@ -19,7 +20,6 @@ _silofs_mkfs() {
 
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-s --size= -F --force -h' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-U --suid= -G --sgid=' -- "$cur") )
   fi
 }
 

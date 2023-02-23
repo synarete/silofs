@@ -33,7 +33,7 @@ struct silofs_blobf {
 	bool                            b_rdonly;
 };
 
-/* repoitory init config */
+/* repository init config */
 struct silofs_repocfg {
 	struct silofs_bootpath          rc_bootpath;
 	struct silofs_alloc            *rc_alloc;
@@ -41,7 +41,7 @@ struct silofs_repocfg {
 	bool                            rc_rdonly;
 };
 
-/* blobs repoitory */
+/* blobs repository */
 struct silofs_repo {
 	struct silofs_repocfg           re_cfg;
 	struct silofs_cache             re_cache;

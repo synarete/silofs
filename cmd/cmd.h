@@ -258,32 +258,25 @@ void cmd_getpass2(const char *path, char **out_pass);
 
 void cmd_delpass(char **pass);
 
+/* ids-mapping via conf file */
+void cmd_reset_fs_ids(struct silofs_ids *ids);
 
-/* file-system root parameters */
-void cmd_default_fs_cargs(struct silofs_fs_cargs *fsca);
+void cmd_default_fs_ids(struct silofs_ids *ids);
 
-void cmd_setup_fs_cargs(struct silofs_fs_cargs *fsca,
-                        uid_t suid, gid_t sgid, bool no_root);
+void cmd_setup_fs_ids(struct silofs_ids *ids,
+                      uid_t suid, gid_t sgid, bool no_root);
 
-void cmd_reset_fs_cargs(struct silofs_fs_cargs *fsca);
+void cmd_load_fs_idsmap(struct silofs_ids *ids, const char *repodir);
 
-void cmd_load_fs_cargs1(struct silofs_fs_cargs *fsca, const char *path);
+void cmd_save_fs_idsmap(const struct silofs_ids *ids, const char *repodir);
 
-void cmd_load_fs_cargs2(struct silofs_fs_cargs *fsca,
-                        const char *dirpath, const char *name);
+/* fs-uuid file */
+void cmd_load_fs_uuid(struct silofs_uuid *fs_uuid,
+                      const char *repodir, const char *name);
 
-void cmd_save_fs_cargs1(const struct silofs_fs_cargs *fsca, const char *path);
+void cmd_save_fs_uuid(const struct silofs_uuid *fs_uuid,
+                      const char *repodir, const char *name);
 
-void cmd_save_fs_cargs2(const struct silofs_fs_cargs *fsca,
-                        const char *dirpath, const char *name);
-
-void cmd_unlink_fs_cargs(const struct silofs_fs_cargs *fsca,
-                         const char *dirpath, const char *name);
-
-void cmd_update_fs_cargs(struct silofs_fs_cargs *fsca,
-                         const struct silofs_uuid *uu);
-
-void cmd_load_fs_cargs_for(struct silofs_fs_cargs *fsca,
-                           const char *dirpath, const char *name);
+void cmd_unlink_fs_uuid(const char *repodir, const char *name);
 
 #endif /* SILOFS_CMD_H_ */

@@ -137,27 +137,31 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 {
-	const struct cmd_mount_in_args *args = &ctx->in_args;
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
-	struct silofs_fs_cargs *fsca = &ctx->fs_args.ca;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(fsca, args->repodir_real, args->name);
-	fs_args->repodir = args->repodir_real;
-	fs_args->name = args->name;
-	fs_args->mntdir = args->mntpoint_real;
+	fs_args->repodir = ctx->in_args.repodir_real;
+	fs_args->name = ctx->in_args.name;
+	fs_args->mntdir = ctx->in_args.mntpoint_real;
 	fs_args->withfuse = true;
-	fs_args->allowother = !args->no_allowother;
-	fs_args->allowhostids = args->allowhostids;
+	fs_args->allowother = !ctx->in_args.no_allowother;
+	fs_args->allowhostids = ctx->in_args.allowhostids;
 	fs_args->allowadmin = true;
-	fs_args->wbackcache = args->wbackcache;
-	fs_args->lazytime = args->lazytime;
-	fs_args->noexec = args->noexec;
-	fs_args->nosuid = args->nosuid;
-	fs_args->nodev = args->nodev;
-	fs_args->rdonly = args->rdonly;
-	fs_args->concp = !args->noconcp;
+	fs_args->wbackcache = ctx->in_args.wbackcache;
+	fs_args->lazytime = ctx->in_args.lazytime;
+	fs_args->noexec = ctx->in_args.noexec;
+	fs_args->nosuid = ctx->in_args.nosuid;
+	fs_args->nodev = ctx->in_args.nodev;
+	fs_args->rdonly = ctx->in_args.rdonly;
+	fs_args->concp = !ctx->in_args.noconcp;
 	fs_args->pedantic = false;
+}
+
+static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
+{
+	cmd_load_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	                 ctx->in_args.name);
+	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_mount_setup_fs_env(struct cmd_mount_ctx *ctx)
@@ -188,7 +192,7 @@ static void cmd_mount_enable_signals(void)
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_fs_env(ctx);
-	cmd_reset_fs_cargs(&ctx->fs_args.ca);
+	cmd_reset_fs_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -247,12 +251,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_require_bsec(struct cmd_mount_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -424,16 +428,19 @@ void cmd_execute_mount(void)
 	/* Require valid mount-point */
 	cmd_mount_prepare_mntpoint(&ctx);
 
-	/* Require minimal repoitory validity */
+	/* Require minimal repository validity */
 	cmd_mount_prepare_repo(&ctx);
 
-	/* Load and setup source boot-params */
+	/* Setup input arguments */
 	cmd_mount_setup_fs_args(&ctx);
+
+	/* Require fs-uuid and ids-map */
+	cmd_mount_load_fsids(&ctx);
 
 	/* Setup boot environment instance */
 	cmd_mount_setup_fs_env(&ctx);
 
-	/* Open repoitory first time */
+	/* Open repository first time */
 	cmd_mount_open_repo(&ctx);
 
 	/* Load-verify bootsec */
@@ -442,7 +449,7 @@ void cmd_execute_mount(void)
 	/* Require boot + lock-able file-system */
 	cmd_mount_boot_fs(&ctx);
 
-	/* Close repoitory */
+	/* Close repository */
 	cmd_mount_close_repo(&ctx);
 
 	/* Destroy boot environment instance */
@@ -454,7 +461,7 @@ void cmd_execute_mount(void)
 	/* Setup main environment instance */
 	cmd_mount_setup_fs_env(&ctx);
 
-	/* Re-open repoitory */
+	/* Re-open repository */
 	cmd_mount_open_repo(&ctx);
 
 	/* Re-load and verify bootsec */
@@ -481,7 +488,7 @@ void cmd_execute_mount(void)
 	/* Report end-of-mount */
 	cmd_mount_trace_finish(&ctx);
 
-	/* Close repoitory */
+	/* Close repository */
 	cmd_mount_close_repo(&ctx);
 
 	/* Destroy main environment instance */

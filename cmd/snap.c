@@ -111,8 +111,10 @@ static void cmd_snap_malloc_ioc(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_free_ioc(struct cmd_snap_ctx *ctx)
 {
-	cmd_zfree(ctx->ioc_clone, sizeof(*ctx->ioc_clone));
-	ctx->ioc_clone = NULL;
+	if (ctx->ioc_clone != NULL) {
+		cmd_zfree(ctx->ioc_clone, sizeof(*ctx->ioc_clone));
+		ctx->ioc_clone = NULL;
+	}
 }
 
 static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
@@ -123,7 +125,7 @@ static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
 static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
-	cmd_reset_fs_cargs(&ctx->fs_args.ca);
+	cmd_reset_fs_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -240,13 +242,17 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
-	const char *repodir = ctx->in_args.repodir_real;
-	const char *name = ctx->in_args.name;
 
 	cmd_init_fs_args(fs_args);
-	cmd_load_fs_cargs_for(&fs_args->ca, repodir, name);
-	fs_args->repodir = repodir;
-	fs_args->name = name;
+	fs_args->repodir = ctx->in_args.repodir_real;
+	fs_args->name = ctx->in_args.name;
+}
+
+static void cmd_snap_load_fsids(struct cmd_snap_ctx *ctx)
+{
+	cmd_load_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	                 ctx->in_args.name);
+	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_snap_setup_fs_env(struct cmd_snap_ctx *ctx)
@@ -266,12 +272,12 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_require_bsec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
@@ -289,16 +295,12 @@ static void cmd_snap_shutdown_fs(struct cmd_snap_ctx *ctx)
 	cmd_close_fs(ctx->fs_env);
 }
 
-static void cmd_snap_save_fs_cargs(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_fs_uuids(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_fs_cargs *ca = &ctx->fs_args.ca;
-	const char *repodir = ctx->in_args.repodir_real;
-
-	cmd_update_fs_cargs(ca, &ctx->uuid_new);
-	cmd_save_fs_cargs2(ca, repodir, ctx->in_args.name);
-
-	cmd_update_fs_cargs(ca, &ctx->uuid_alt);
-	cmd_save_fs_cargs2(ca, repodir, ctx->in_args.snapname);
+	cmd_save_fs_uuid(&ctx->uuid_new, ctx->in_args.repodir_real,
+	                 ctx->in_args.name);
+	cmd_save_fs_uuid(&ctx->uuid_alt, ctx->in_args.repodir_real,
+	                 ctx->in_args.snapname);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -353,13 +355,16 @@ void cmd_execute_snap(void)
 	/* Verify user's arguments */
 	cmd_snap_prepare(&ctx);
 
-	/* Load-require source boot-params */
+	/* Setup input arguments */
 	cmd_snap_setup_fs_args(&ctx);
+
+	/* Require ids-map */
+	cmd_snap_load_fsids(&ctx);
 
 	/* Setup execution environment */
 	cmd_snap_setup_fs_env(&ctx);
 
-	/* Open repoitory */
+	/* Open repository */
 	cmd_snap_open_repo(&ctx);
 
 	/* Require source bootsec */
@@ -368,11 +373,11 @@ void cmd_execute_snap(void)
 	/* Do actual snap (offline|online) */
 	cmd_snap_execute(&ctx);
 
-	/* Close repoitory */
+	/* Close repository */
 	cmd_snap_close_repo(&ctx);
 
-	/* Re-save boot-params */
-	cmd_snap_save_fs_cargs(&ctx);
+	/* Re-save top-level fs-uuid refs */
+	cmd_snap_save_fs_uuids(&ctx);
 
 	/* Delete environment */
 	cmd_snap_destroy_env(&ctx);

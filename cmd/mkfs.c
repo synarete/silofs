@@ -21,9 +21,6 @@ static const char *cmd_mkfs_help_desc[] = {
 	"",
 	"options:",
 	"  -s, --size=nbytes            Capacity size limit",
-	"  -u, --uid=suid               Map owner uid to suid",
-	"  -g, --gid=suid               Map owner gid to sgid",
-	"  -R, --no-root                Ignore root user",
 	"  -F, --force                  Force overwrite if already exists",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
@@ -36,9 +33,6 @@ struct cmd_mkfs_in_args {
 	char   *name;
 	char   *size;
 	long    fs_size;
-	uid_t   suid;
-	gid_t   sgid;
-	bool    no_root;
 	bool    force;
 };
 
@@ -57,30 +51,19 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "size", required_argument, NULL, 's' },
-		{ "suid", required_argument, NULL, 'U' },
-		{ "sgid", required_argument, NULL, 'G' },
-		{ "no-root", no_argument, NULL, 'R' },
 		{ "force", no_argument, NULL, 'F' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
-	ctx->in_args.suid = getuid();
-	ctx->in_args.sgid = getgid();
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:U:G:V:RFh", opts);
+		opt_chr = cmd_getopt("s:V:Fh", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
-		} else if (opt_chr == 'U') {
-			ctx->in_args.suid = cmd_parse_str_as_uid(optarg);
-		} else if (opt_chr == 'G') {
-			ctx->in_args.sgid = cmd_parse_str_as_gid(optarg);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
-		} else if (opt_chr == 'R') {
-			ctx->in_args.no_root = true;
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'h') {
@@ -104,7 +87,7 @@ static void cmd_mkfs_destroy_fs_env(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_env(ctx);
-	cmd_reset_fs_cargs(&ctx->fs_args.ca);
+	cmd_reset_fs_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
@@ -143,11 +126,14 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_setup_fs_cargs(&fs_args->ca, ctx->in_args.suid,
-	                   ctx->in_args.sgid, ctx->in_args.no_root);
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;
+}
+
+static void cmd_mkfs_load_fsids(struct cmd_mkfs_ctx *ctx)
+{
+	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_mkfs_setup_fs_env(struct cmd_mkfs_ctx *ctx)
@@ -167,14 +153,13 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fs_env, &ctx->fs_args.ca.uuid);
+	cmd_format_fs(ctx->fs_env, &ctx->fs_args.uuid);
 }
 
-static void cmd_mkfs_save_fs_cargs(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_fs_uuid(struct cmd_mkfs_ctx *ctx)
 {
-	const struct cmd_mkfs_in_args *args = &ctx->in_args;
-
-	cmd_save_fs_cargs2(&ctx->fs_args.ca, args->repodir_real, args->name);
+	cmd_save_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	                 ctx->in_args.name);
 }
 
 static void cmd_mkfs_shutdown_fs(struct cmd_mkfs_ctx *ctx)
@@ -202,22 +187,25 @@ void cmd_execute_mkfs(void)
 	/* Setup input arguments */
 	cmd_mkfs_setup_fs_args(&ctx);
 
+	/* Require ids-map */
+	cmd_mkfs_load_fsids(&ctx);
+
 	/* Prepare environment */
 	cmd_mkfs_setup_fs_env(&ctx);
 
-	/* Open repoitory */
+	/* Open repository */
 	cmd_mkfs_open_repo(&ctx);
 
 	/* Do actual mkfs */
 	cmd_mkfs_format_fs(&ctx);
 
-	/* Save top-level boot-params */
-	cmd_mkfs_save_fs_cargs(&ctx);
+	/* Save top-level fs-uuid */
+	cmd_mkfs_save_fs_uuid(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_shutdown_fs(&ctx);
 
-	/* Close repoitory */
+	/* Close repository */
 	cmd_mkfs_close_repo(&ctx);
 
 	/* Post execution cleanups */

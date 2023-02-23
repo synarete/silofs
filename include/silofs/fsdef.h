@@ -53,20 +53,23 @@
 /* max size of mount-path (including null) */
 #define SILOFS_MNTPATH_MAX              (1920)
 
-/* max path-length of repoitory-path (including null) */
+/* max path-length of repository-path (including null) */
 #define SILOFS_REPOPATH_MAX             (1536)
 
-/* size of repoitory meta-file descriptor */
+/* size of repository meta-file descriptor */
 #define SILOFS_REPO_METADATA_SIZE       SILOFS_KILO
 
-/* repoitory meta descriptor-file name */
-#define SILOFS_REPO_METAFILE_NAME       "meta"
+/* repository meta sub-dir name */
+#define SILOFS_REPO_DOTS_DIRNAME        ".silofs"
 
-/* repoitory meta sub-dir name */
-#define SILOFS_REPO_DOTSDIR_NAME        ".silofs"
-
-/* repoitory objects sub-directory name */
+/* repository objects sub-directory name */
 #define SILOFS_REPO_BLOBS_DIRNAME       "blobs"
+
+/* repository meta descriptor-file name */
+#define SILOFS_REPO_META_FILENAME       "meta"
+
+/* repository default ids-mapping config file-name */
+#define SILOFS_REPO_IDMAP_FILENAME      "idmap.conf"
 
 /* number of sub-dirs within objects directories */
 #define SILOFS_REPO_OBJSDIR_NSUBS       (256)

@@ -283,7 +283,7 @@ static int fse_init_idsmap(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = silofs_idsmap_populate(idsm, &fs_args->ca.ids);
+	err = silofs_idsmap_populate(idsm, &fs_args->ids);
 	if (err) {
 		silofs_idsmap_fini(idsm);
 		return err;

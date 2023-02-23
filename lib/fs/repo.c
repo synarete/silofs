@@ -33,8 +33,8 @@ struct silofs_repo_defs {
 };
 
 static const struct silofs_repo_defs repo_defs = {
-	.re_dots_name   = SILOFS_REPO_DOTSDIR_NAME,
-	.re_meta_name   = SILOFS_REPO_METAFILE_NAME,
+	.re_dots_name   = SILOFS_REPO_DOTS_DIRNAME,
+	.re_meta_name   = SILOFS_REPO_META_FILENAME,
 	.re_blobs_name  = SILOFS_REPO_BLOBS_DIRNAME,
 	.re_objs_nsubs  = SILOFS_REPO_OBJSDIR_NSUBS,
 };

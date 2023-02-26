@@ -64,4 +64,3 @@ AC_DEFUN([AX_C___ATTRIBUTE__], [
     AC_DEFINE([HAVE___ATTRIBUTE__], 1, [define if your compiler has __attribute__])
   fi
 ])
-

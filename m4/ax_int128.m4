@@ -16,7 +16,7 @@
 #
 # LICENSE
 #
-#   Copyright (c) 2020 Reuben Thomas <rrt@sc3d.org>
+#   Copyright (c) 2019 Reuben Thomas <rrt@sc3d.org>
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice

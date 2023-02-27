@@ -96,15 +96,14 @@ static void cmd_fsck_start(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 {
-	struct cmd_fsck_in_args *args = &ctx->in_args;
-
-	cmd_check_exists(args->repodir_name);
-	cmd_check_isreg(args->repodir_name, false);
-	cmd_split_path(args->repodir_name, &args->repodir, &args->name);
-	cmd_check_nonemptydir(args->repodir, false);
-	cmd_realpath(args->repodir, &args->repodir_real);
-	cmd_check_repopath(args->repodir_real);
-	cmd_check_fsname(args->name);
+	cmd_check_exists(ctx->in_args.repodir_name);
+	cmd_check_isreg(ctx->in_args.repodir_name, false);
+	cmd_split_path(ctx->in_args.repodir_name,
+	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_check_nonemptydir(ctx->in_args.repodir, false);
+	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repopath(ctx->in_args.repodir_real);
+	cmd_check_fsname(ctx->in_args.name);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -120,6 +119,8 @@ static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
 {
+	cmd_load_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	                 ctx->in_args.name);
 	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
@@ -127,7 +128,6 @@ static void cmd_fsck_setup_fs_env(struct cmd_fsck_ctx *ctx)
 {
 	cmd_new_env(&ctx->fs_env, &ctx->fs_args);
 }
-
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 {

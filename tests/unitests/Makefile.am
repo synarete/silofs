@@ -31,6 +31,7 @@ silofs_unitests_SOURCES += ut_file_edges.c
 silofs_unitests_SOURCES += ut_file_falloc.c
 silofs_unitests_SOURCES += ut_file_fiemap.c
 silofs_unitests_SOURCES += ut_file_lseek.c
+silofs_unitests_SOURCES += ut_file_mthreads.c
 silofs_unitests_SOURCES += ut_file_random.c
 silofs_unitests_SOURCES += ut_file_ranges.c
 silofs_unitests_SOURCES += ut_file_records.c

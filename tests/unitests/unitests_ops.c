@@ -25,6 +25,11 @@
 #include <utime.h>
 #include <limits.h>
 
+static uint64_t ut_unique_opid(struct ut_env *ute)
+{
+	return (uint64_t)silofs_atomic_addl(&ute->unique_opid, 1);
+}
+
 void ut_setup_task(struct ut_env *ute, struct silofs_task *task)
 {
 	const struct silofs_fs_args *args = &ute->args->fs_args;
@@ -35,7 +40,7 @@ void ut_setup_task(struct ut_env *ute, struct silofs_task *task)
 	silofs_task_set_umask(task, 0002);
 	silofs_task_set_creds(task, args->uid, args->gid, args->pid);
 	silofs_task_set_ts(task, true);
-	task->t_oper.op_unique = ute->unique_opid++;
+	task->t_oper.op_unique = ut_unique_opid(ute);
 }
 
 void ut_release_task(struct ut_env *ute, struct silofs_task *task)
@@ -1240,27 +1245,15 @@ void ut_create_ok(struct ut_env *ute, ino_t parent,
 static void ut_create_new(struct ut_env *ute, ino_t parent,
                           const char *name, mode_t mode, ino_t *out_ino)
 {
-	ino_t ino;
 	struct stat st;
-	struct statvfs stv[2];
+	ino_t ino = 0;
 
-	ut_statfs_ok(ute, parent, &stv[0]);
 	ut_create_ok(ute, parent, name, mode, &st);
-
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
 	ut_expect_ne(ino, SILOFS_INO_NULL);
 	ut_expect_eq(st.st_nlink, 1);
 	ut_expect_eq(st.st_mode & S_IFMT, mode & S_IFMT);
-
-	ut_getattr_ok(ute, parent, &st);
-	ut_expect_eq(st.st_ino, parent);
-	ut_expect_gt(st.st_size, 0);
-
-	ut_statfs_ok(ute, ino, &stv[1]);
-	ut_expect_eq(stv[1].f_ffree + 1, stv[0].f_ffree);
-	ut_expect_le(stv[1].f_bfree, stv[0].f_bfree);
-
 	*out_ino = ino;
 }
 
@@ -1351,14 +1344,9 @@ void ut_open_rdwr(struct ut_env *ute, ino_t ino)
 void ut_remove_file(struct ut_env *ute, ino_t parent,
                     const char *name, ino_t ino)
 {
-	struct statvfs stv[2];
-
-	ut_statfs_ok(ute, ino, &stv[0]);
 	ut_release_ok(ute, ino);
 	ut_unlink_ok(ute, parent, name);
 	ut_unlink_err(ute, parent, name, -ENOENT);
-	ut_statfs_ok(ute, parent, &stv[1]);
-	ut_expect_eq(stv[0].f_ffree + 1, stv[1].f_ffree);
 }
 
 void ut_remove_link(struct ut_env *ute,

@@ -108,7 +108,7 @@ static void kvl_random_shuffle(struct ut_kvl *kvl)
 
 	for (size_t i = 0, j = npos; i < kvl->count / 2; ++i, ++j) {
 		if (j >= npos) {
-			silofs_prandgen_take(&ute->prng, pos, sizeof(pos));
+			ut_randfill(ute, pos, sizeof(pos));
 			j = 0;
 		}
 		kvl_swap(kvl, i, pos[j] % kvl->count);

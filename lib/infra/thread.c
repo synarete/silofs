@@ -100,6 +100,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
 	}
 
 	memset(th, 0, sizeof(*th));
+	th->status = 0;
 	th->exec = exec;
 	th->arg = arg;
 	if (name != NULL) {

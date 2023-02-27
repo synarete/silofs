@@ -102,14 +102,14 @@ struct ut_env {
 	struct silofs_uuid       uuid[2];
 	struct ut_args          *args;
 	struct silofs_fs_env    *fs_env;
-	struct silofs_task       task;
 	struct timespec          ts_start;
 	struct statvfs           stvfs[2];
 	struct silofs_spacestats spst[2];
+	struct silofs_mutex      mutex;
 	struct ut_malloc_chunk  *malloc_list;
-	uint64_t                 unique_opid;
 	size_t                   ualloc_start;
 	size_t                   nbytes_alloc;
+	long                     unique_opid;
 	int                      run_level;
 };
 
@@ -182,6 +182,7 @@ extern const struct ut_testdefs ut_tdefs_file_fallocate;
 extern const struct ut_testdefs ut_tdefs_file_fiemap;
 extern const struct ut_testdefs ut_tdefs_file_lseek;
 extern const struct ut_testdefs ut_tdefs_file_copy_range;
+extern const struct ut_testdefs ut_tdefs_file_mthreads;
 extern const struct ut_testdefs ut_tdefs_inspect;
 extern const struct ut_testdefs ut_tdefs_reload;
 extern const struct ut_testdefs ut_tdefs_fillfs;

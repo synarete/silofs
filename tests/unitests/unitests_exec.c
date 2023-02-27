@@ -47,6 +47,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_file_lseek),
 	UT_DEFTGRP(ut_tdefs_file_fiemap),
 	UT_DEFTGRP(ut_tdefs_file_copy_range),
+	UT_DEFTGRP(ut_tdefs_file_mthreads),
 	UT_DEFTGRP(ut_tdefs_inspect),
 	UT_DEFTGRP(ut_tdefs_reload),
 	UT_DEFTGRP(ut_tdefs_fillfs),
@@ -88,6 +89,7 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 	ute->unique_opid = 1;
 	ute->run_level = ut_globals.run_level;
 	silofs_prandgen_init(&ute->prng);
+	silofs_mutex_init(&ute->mutex);
 }
 
 static void ute_cleanup(struct ut_env *ute)
@@ -102,7 +104,18 @@ static void ute_fini(struct ut_env *ute)
 {
 	ut_freeall(ute);
 	ute_cleanup(ute);
+	silofs_mutex_fini(&ute->mutex);
 	memset(ute, 0xFF, sizeof(*ute));
+}
+
+static void ute_lock(struct ut_env *ute)
+{
+	silofs_mutex_lock(&ute->mutex);
+}
+
+static void ute_unlock(struct ut_env *ute)
+{
+	silofs_mutex_unlock(&ute->mutex);
 }
 
 static void ute_setup_random_passwd(struct ut_env *ute)
@@ -402,7 +415,7 @@ void ut_execute_tests(void)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct ut_malloc_chunk *
-ut_malloc_chunk(struct ut_env *ute, size_t nbytes)
+ut_do_malloc_chunk(struct ut_env *ute, size_t nbytes)
 {
 	struct ut_malloc_chunk *mchunk;
 
@@ -412,12 +425,22 @@ ut_malloc_chunk(struct ut_env *ute, size_t nbytes)
 	mchunk->next = ute->malloc_list;
 	ute->malloc_list = mchunk;
 	ute->nbytes_alloc += nbytes + sizeof(*mchunk);
-
 	return mchunk;
 }
 
-static void ut_free(struct ut_env *ute,
-                    struct ut_malloc_chunk *mchunk)
+static struct ut_malloc_chunk *
+ut_malloc_chunk(struct ut_env *ute, size_t nbytes)
+{
+	struct ut_malloc_chunk *mchunk;
+
+	ute_lock(ute);
+	mchunk = ut_do_malloc_chunk(ute, nbytes);
+	ute_unlock(ute);
+	return mchunk;
+}
+
+static void ut_do_free(struct ut_env *ute,
+                       struct ut_malloc_chunk *mchunk)
 {
 	silofs_assert_ge(ute->nbytes_alloc, mchunk->size + sizeof(*mchunk));
 
@@ -461,20 +484,28 @@ char *ut_strndup(struct ut_env *ute, const char *str,
 	return str2;
 }
 
-void ut_freeall(struct ut_env *ute)
+static void ut_do_freeall(struct ut_env *ute)
 {
-	struct ut_malloc_chunk *mnext;
-	struct ut_malloc_chunk *mchunk = ute->malloc_list;
+	struct ut_malloc_chunk *mnext = NULL;
+	struct ut_malloc_chunk *mchunk = NULL;
 
+	mchunk = ute->malloc_list;
 	while (mchunk != NULL) {
 		mnext = mchunk->next;
-		ut_free(ute, mchunk);
+		ut_do_free(ute, mchunk);
 		mchunk = mnext;
 	}
 	silofs_assert_eq(ute->nbytes_alloc, 0);
 
 	ute->nbytes_alloc = 0;
 	ute->malloc_list = NULL;
+}
+
+void ut_freeall(struct ut_env *ute)
+{
+	ute_lock(ute);
+	ut_do_freeall(ute);
+	ute_unlock(ute);
 }
 
 const char *ut_make_name(struct ut_env *ute, const char *pre, size_t idx)
@@ -498,7 +529,9 @@ void *ut_zerobuf(struct ut_env *ute, size_t bsz)
 
 void ut_randfill(struct ut_env *ute, void *buf, size_t bsz)
 {
+	ute_lock(ute);
 	silofs_prandgen_take(&ute->prng, buf, bsz);
+	ute_unlock(ute);
 }
 
 void *ut_randbuf(struct ut_env *ute, size_t bsz)
@@ -623,7 +656,9 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 {
 	uint64_t rnd;
 
+	ute_lock(ute);
 	silofs_prandgen_take_u64(&ute->prng, &rnd);
+	ute_unlock(ute);
 	return rnd;
 }
 

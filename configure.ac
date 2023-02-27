@@ -2,7 +2,7 @@ dnl SPDX-License-Identifier: GPL-3.0-or-later
 m4_define(SILOFS_VERSION, m4_esyscmd([./version.sh --version]))
 AC_PREREQ([2.69])
 AC_INIT([silofs],[SILOFS_VERSION],[synarete@xxxxxxxx])
-AC_COPYRIGHT([Copyright (C) 2020-2022, Shachar Sharon])
+AC_COPYRIGHT([Copyright (C) 2020-2023, Shachar Sharon])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([cmd/main.c])

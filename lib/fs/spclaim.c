@@ -24,6 +24,7 @@
 /* space-allocation context */
 struct silofs_spalloc_ctx {
 	struct silofs_task        *task;
+	struct silofs_uber        *uber;
 	struct silofs_sb_info     *sbi;
 	struct silofs_spnode_info *sni;
 	struct silofs_spleaf_info *sli;
@@ -146,52 +147,6 @@ static void sbi_clear_allocate_at(struct silofs_sb_info *sbi,
 	}
 }
 
-/*
- * optional operation: in case of data-leaf where no vspace is in-use,
- * reclaim (TRIM) the underlying object space.
- */
-static void sli_base_bkaddr(const struct silofs_spleaf_info *sli,
-                            struct silofs_bkaddr *out_bkaddr)
-{
-	struct silofs_vrange vrange;
-
-	silofs_sli_vspace_range(sli, &vrange);
-	silofs_sli_resolve_main_ubk(sli, vrange.beg, out_bkaddr);
-}
-
-static int sbi_vspace_reclaimed_at(const struct silofs_sb_info *sbi,
-                                   const struct silofs_spleaf_info *sli)
-{
-	struct silofs_blobid blobid;
-	struct silofs_bkaddr bkaddr;
-	struct silofs_blobf *blobf = NULL;
-	const size_t cnt = ARRAY_SIZE(sli->sl->sl_subref);
-	int err;
-
-	if (sli->sl_nused_bytes) {
-		return 0;
-	}
-	silofs_sli_main_blob(sli, &blobid);
-	if (blobid_isnull(&blobid)) {
-		return 0;
-	}
-	if (!silofs_sbi_ismutable_blobid(sbi, &blobid)) {
-		return 0;
-	}
-	err = silofs_stage_blob_at(sbi_uber(sbi), &blobid, &blobf);
-	if (err) {
-		log_err("failed to stage unused blob: err=%d", err);
-		return err;
-	}
-	sli_base_bkaddr(sli, &bkaddr);
-	err = silofs_blobf_trim_nbks(blobf, &bkaddr, cnt);
-	if (err && (err != -ENOTSUP)) {
-		log_err("trim blob failure: err=%d", err);
-		return err;
-	}
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
@@ -200,6 +155,7 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 {
 	silofs_memzero(spa_ctx, sizeof(*spa_ctx));
 	spa_ctx->task = task;
+	spa_ctx->uber = task->t_uber;
 	spa_ctx->sbi = task_sbi(task);
 	spa_ctx->stype = stype;
 	spa_ctx->dqid = dqid;
@@ -579,16 +535,70 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 	return ret;
 }
 
+static bool spac_ismutable_blobid(const struct silofs_spalloc_ctx *spa_ctx,
+                                  const struct silofs_blobid *blobid)
+{
+	return silofs_sbi_ismutable_blobid(spa_ctx->sbi, blobid);
+}
+
+static int
+spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
+                        struct silofs_bkaddr *out_bkaddr_base, size_t *out_cnt)
+{
+	struct silofs_vrange vrange;
+	struct silofs_blobid blobid;
+	struct silofs_spleaf_info *sli = spa_ctx->sli;
+
+	silofs_sli_main_blob(sli, &blobid);
+	if (blobid_isnull(&blobid)) {
+		return -ENOENT;
+	}
+	silofs_sli_vspace_range(sli, &vrange);
+	silofs_sli_resolve_main_ubk(sli, vrange.beg, out_bkaddr_base);
+	*out_cnt = ARRAY_SIZE(sli->sl->sl_subref);
+	return 0;
+}
+
+/*
+ * optional operation: in case of data-leaf where no vspace is in-use,
+ * reclaim (TRIM) the underlying object space.
+ */
+static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
+{
+	struct silofs_bkaddr bkaddr = { .lba = -1 };
+	struct silofs_blobf *blobf = NULL;
+	size_t cnt = 0;
+	int err;
+
+	if (spa_ctx->sli->sl_nused_bytes) {
+		return 0; /* still has in-use blocks: no-op */
+	}
+	err = spac_resolve_main_range(spa_ctx, &bkaddr, &cnt);
+	if (err) {
+		return 0; /* not on main blob: no-op */
+	}
+	if (!spac_ismutable_blobid(spa_ctx, &bkaddr.blobid)) {
+		return 0; /* non mutable blob */
+	}
+	err = silofs_stage_blob_at(spa_ctx->uber, &bkaddr.blobid, &blobf);
+	if (err) {
+		log_err("failed to stage blob: err=%d", err);
+		return err;
+	}
+	err = silofs_blobf_trim_nbks(blobf, &bkaddr, cnt);
+	if (err && (err != -ENOTSUP)) {
+		log_err("failed to trim blob: nbks=%lu err=%d", cnt, err);
+		return err;
+	}
+	return 0;
+}
+
 static void spac_reclaim_vspace_of(const struct silofs_spalloc_ctx *spa_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
-	struct silofs_sb_info *sbi = spa_ctx->sbi;
-	struct silofs_spleaf_info *sli = spa_ctx->sli;
-
-	sbi_clear_allocate_at(sbi, sli, vaddr);
-	sbi_vspace_reclaimed_at(sbi, sli);
-
+	sbi_clear_allocate_at(spa_ctx->sbi, spa_ctx->sli, vaddr);
 	spac_try_recache_vspace(spa_ctx, vaddr);
+	spac_try_reclaim_vblob(spa_ctx);
 }
 
 static int spac_resolve_and_reclaim(struct silofs_spalloc_ctx *spa_ctx,

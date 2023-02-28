@@ -95,8 +95,8 @@
 /* maximal file-system capacity, in bytes (64T) */
 #define SILOFS_CAPACITY_SIZE_MAX        (64L * SILOFS_TERA)
 
-/* maximal size of virtual address space (4P) */
-#define SILOFS_VSPACE_SIZE_MAX          (1L << 52)
+/* maximal size of virtual address space (256P) */
+#define SILOFS_VSPACE_SIZE_MAX          (1L << 58)
 
 
 /* bits-shift of small (1K) block-size */
@@ -118,9 +118,9 @@
 
 
 /* maximal number of blocks within single blob */
-#define SILOFS_NBK_IN_BLOB_MAX          (64L)
+#define SILOFS_NBK_IN_BLOB_MAX          (128L)
 
-/* maximal size in bytes of single blob (4M) */
+/* maximal size in bytes of single blob (8M) */
 #define SILOFS_BLOB_SIZE_MAX \
 	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BK_SIZE)
 
@@ -149,16 +149,16 @@
 #define SILOFS_SB_SIZE                  (8 * SILOFS_KILO)
 
 /* bits-shift for space-mapping children fan-out */
-#define SILOFS_SPMAP_SHIFT              (6)
+#define SILOFS_SPMAP_SHIFT              (7)
 
 /* number of children per space-mapping node/leaf */
 #define SILOFS_SPMAP_NCHILDS            (1L << SILOFS_SPMAP_SHIFT)
 
 /* number of space-maps per block */
-#define SILOFS_NSPMAP_IN_BK             (8)
+#define SILOFS_NSPMAP_IN_BK             (4)
 
 /* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE               (8 * SILOFS_KILO)
+#define SILOFS_SPMAP_SIZE               (16 * SILOFS_KILO)
 
 
 /* on-disk size-shift of inode */
@@ -665,6 +665,7 @@ struct silofs_spmap_node {
 	struct silofs_uaddr64b          sn_parent;
 	struct silofs_uaddr64b          sn_self;
 	uint8_t                         sn_reserved3[256];
+	uint8_t                         sn_reserved4[512];
 	struct silofs_spmap_ref         sn_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 
@@ -686,6 +687,7 @@ struct silofs_spmap_leaf {
 	struct silofs_uaddr64b          sl_self;
 	struct silofs_vrange128         sl_vrange;
 	uint8_t                         sl_reserved2[304];
+	uint8_t                         sl_reserved3[512];
 	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 

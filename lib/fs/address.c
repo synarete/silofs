@@ -250,10 +250,11 @@ static uint64_t cpu_to_len_height(size_t len, enum silofs_height height)
 {
 	uint64_t val;
 
-	silofs_assert_lt(len, (1L << 54));
+	silofs_assert_le(len, (1L << 58));
+	silofs_assert_lt(height, 0xF);
 	silofs_assert_le(height, SILOFS_HEIGHT_SUPER);
 
-	val = ((uint64_t)len << 8) | (height & 0xFF);
+	val = ((uint64_t)len << 4) | (height & 0xF);
 	return silofs_cpu_to_le64(val);
 }
 
@@ -262,10 +263,11 @@ static void len_height_to_cpu(uint64_t len_height,
 {
 	const uint64_t val = silofs_le64_to_cpu(len_height);
 
-	*out_len = val >> 8;
-	*out_height = (enum silofs_height)(val & 0xFF);
+	*out_len = val >> 4;
+	*out_height = (enum silofs_height)(val & 0xF);
 
-	silofs_assert_lt(*out_len, (1L << 54));
+	silofs_assert_le(*out_len, (1L << 58));
+	silofs_assert_lt(*out_height, 0xF);
 	silofs_assert_le(*out_height, SILOFS_HEIGHT_SUPER);
 }
 

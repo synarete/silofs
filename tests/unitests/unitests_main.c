@@ -214,20 +214,13 @@ static void ut_setup_args(void)
 		      "no access: %s", ut_globals.test_dir_real);
 	}
 	ut_globals.test_dir_repo = ut_join(ut_globals.test_dir_real, "repo");
-	ut_globals.test_dir_attic = ut_join(ut_globals.test_dir_real, "attic");
 }
 
 static void ut_prepare(void)
 {
-	const char *path;
+	const char *path = ut_globals.test_dir_repo;
 	int err;
 
-	path = ut_globals.test_dir_repo;
-	err = silofs_sys_mkdir(path, 0700);
-	if (err && (err != -EEXIST)) {
-		error(EXIT_FAILURE, -err, "mkdir failed: %s", path);
-	}
-	path = ut_globals.test_dir_attic;
 	err = silofs_sys_mkdir(path, 0700);
 	if (err && (err != -EEXIST)) {
 		error(EXIT_FAILURE, -err, "mkdir failed: %s", path);
@@ -256,7 +249,6 @@ static void ut_atexit(void)
 {
 	ut_pfree(&ut_globals.test_dir_real);
 	ut_pfree(&ut_globals.test_dir_repo);
-	ut_pfree(&ut_globals.test_dir_attic);
 }
 
 

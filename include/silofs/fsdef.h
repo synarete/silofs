@@ -118,9 +118,9 @@
 
 
 /* maximal number of blocks within single blob */
-#define SILOFS_NBK_IN_BLOB_MAX          (1024L)
+#define SILOFS_NBK_IN_BLOB_MAX          (64L)
 
-/* maximal size in bytes of single blob (64M) */
+/* maximal size in bytes of single blob (4M) */
 #define SILOFS_BLOB_SIZE_MAX \
 	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BK_SIZE)
 
@@ -140,9 +140,6 @@
 
 /* export ino towards vfs of root inode */
 #define SILOFS_INO_ROOT                 (1)
-
-/* max number of "pseudo" inodes */
-#define SILOFS_INO_PSEUDO_MAX           ((1L << 16) - 1)
 
 /* max valid ino number */
 #define SILOFS_INO_MAX                  ((1L << 56) - 1)

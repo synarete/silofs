@@ -148,7 +148,6 @@ struct ut_globals {
 	const char     *test_dir;
 	char           *test_dir_real;
 	char           *test_dir_repo;
-	char           *test_dir_attic;
 	struct timespec start_ts;
 	bool            pedantic;
 };

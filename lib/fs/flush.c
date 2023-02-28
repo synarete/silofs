@@ -167,9 +167,9 @@ static int flc_setup_sqe_buf(struct silofs_flush_ctx *fl_ctx,
 	return err;
 }
 
-static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
-                            struct silofs_snode_info **siq,
-                            struct silofs_submitq_entry *sqe)
+static int flc_populate_sqe_refs(struct silofs_flush_ctx *fl_ctx,
+                                 struct silofs_snode_info **siq,
+                                 struct silofs_submitq_entry *sqe)
 {
 	struct silofs_oaddr oaddr;
 	struct silofs_snode_info *si;
@@ -190,7 +190,21 @@ static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
 		}
 		*siq = si->s_ds_next;
 	}
-	return flc_setup_sqe_buf(fl_ctx, sqe);
+	return 0;
+}
+
+static int flc_populate_sqe(struct silofs_flush_ctx *fl_ctx,
+                            struct silofs_snode_info **siq,
+                            struct silofs_submitq_entry *sqe)
+{
+	int err;
+
+	err = flc_populate_sqe_refs(fl_ctx, siq, sqe);
+	if (!err) {
+		silofs_sqe_increfs(sqe);
+		err = flc_setup_sqe_buf(fl_ctx, sqe);
+	}
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -370,7 +384,6 @@ static int flc_prep_sqe(const struct silofs_flush_ctx *fl_ctx,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	silofs_sqe_increfs(sqe);
 	err = silofs_stage_blob_at(fl_ctx->uber, blobid, &blobf);
 	if (err) {
 		return err;

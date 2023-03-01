@@ -855,10 +855,6 @@ union silofs_block_u {
 	uint8_t bk[SILOFS_BK_SIZE];
 	struct silofs_data_block1       db1[SILOFS_NKB_IN_BK];
 	struct silofs_data_block        db;
-	struct silofs_header            hdr;
-	struct silofs_super_block       sb;
-	struct silofs_spmap_node        sn;
-	struct silofs_spmap_leaf        sl;
 } silofs_packed_aligned64;
 
 

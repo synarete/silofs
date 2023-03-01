@@ -363,6 +363,8 @@ void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
 void silofs_iv_of_oaddr(struct silofs_iv *iv,
                         const struct silofs_oaddr *oaddr);
 
+void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv2);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_check_fs_capacity(size_t cap_size);

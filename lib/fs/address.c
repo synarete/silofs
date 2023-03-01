@@ -1376,6 +1376,13 @@ void silofs_iv_of_oaddr(struct silofs_iv *iv, const struct silofs_oaddr *oaddr)
 	iv->iv[15] ^= (uint8_t)((oaddr->pos >> 56) & 0xFF);
 }
 
+void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv2)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
+		iv->iv[i] ^= iv2->iv[i];
+	}
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_check_fs_capacity(size_t cap_size)

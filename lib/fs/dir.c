@@ -1666,22 +1666,30 @@ static int dic_insert_dentry(struct silofs_dir_ctx *d_ctx,
 	return err;
 }
 
-static int dic_add_dentry(struct silofs_dir_ctx *d_ctx)
+static int dic_do_add_dentry(struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_dnode_info *root_dni = NULL;
+	int err;
+
+	err = dic_require_tree_root(d_ctx, &root_dni);
+	if (err) {
+		return err;
+	}
+	err = dic_insert_dentry(d_ctx, root_dni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+
+static int dic_add_dentry(struct silofs_dir_ctx *d_ctx)
+{
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
 	ii_incref(d_ctx->child_ii);
-	ret = dic_require_tree_root(d_ctx, &root_dni);
-	if (ret) {
-		goto out;
-	}
-	ret = dic_insert_dentry(d_ctx, root_dni);
-	if (ret) {
-		goto out;
-	}
-out:
+	ret = dic_do_add_dentry(d_ctx);
 	ii_decref(d_ctx->child_ii);
 	ii_decref(d_ctx->dir_ii);
 	return ret;

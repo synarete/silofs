@@ -672,8 +672,8 @@ static int do_add_dentry(struct silofs_task *task,
                          struct silofs_inode_info *ii,
                          bool del_upon_failure)
 {
-	int err;
 	struct silofs_qstr name;
+	int err;
 
 	err = assign_namehash(dir_ii, nstr, &name);
 	if (err) {
@@ -1939,6 +1939,20 @@ static int check_stage_rename_at(struct silofs_task *task,
 	return 0;
 }
 
+static int check_stage_rename_at2(struct silofs_task *task,
+                                  struct silofs_dentry_ref *dref,
+                                  struct silofs_dentry_ref *dalt, bool new_de)
+{
+	int ret;
+
+	ii_incref(dalt->dir_ii);
+	ii_incref(dalt->ii);
+	ret = check_stage_rename_at(task, dref, new_de);
+	ii_decref(dalt->ii);
+	ii_decref(dalt->dir_ii);
+	return ret;
+}
+
 static int do_rename(struct silofs_task *task,
                      struct silofs_inode_info *dir_ii,
                      const struct silofs_namestr *name,
@@ -1959,7 +1973,7 @@ static int do_rename(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = check_stage_rename_at(task, &new_dref, true);
+	err = check_stage_rename_at2(task, &new_dref, &cur_dref, true);
 	if (err) {
 		return err;
 	}

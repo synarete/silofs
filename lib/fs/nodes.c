@@ -220,6 +220,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_view = NULL;
 	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
+	si->s_view_dec = false;
 	si->s_noflush = false;
 }
 
@@ -1534,4 +1535,45 @@ int silofs_verify_csum_meta(const union silofs_view *view)
 	return view_verify_checksum(view);
 }
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void update_iv_of(struct silofs_ivkey *ivkey,
+                         const struct silofs_oaddr *oaddr)
+{
+	struct silofs_iv iv;
+
+	memset(&iv, 0, sizeof(iv));
+	silofs_iv_of_oaddr(&iv, oaddr);
+	silofs_iv_xor_with(&ivkey->iv, &iv);
+}
+
+static void resolve_ivkey_of(const struct silofs_uber *uber,
+                             const struct silofs_oaddr *oaddr,
+                             struct silofs_ivkey *ivkey)
+{
+	silofs_ivkey_copyto(uber->ub.ivkey, ivkey);
+	update_iv_of(ivkey, oaddr);
+}
+
+int silofs_encrypt_view_tobuf(const struct silofs_uber *uber,
+                              const struct silofs_oaddr *oaddr,
+                              const union silofs_view *view, void *buf)
+{
+	struct silofs_ivkey ivkey;
+
+	resolve_ivkey_of(uber, oaddr, &ivkey);
+	return silofs_encrypt_buf(&uber->ub_crypto.ci, &ivkey,
+	                          view, buf, oaddr->len);
+}
+
+int silofs_decrypt_view_inplace(const struct silofs_uber *uber,
+                                const struct silofs_oaddr *oaddr,
+                                union silofs_view *view)
+{
+	struct silofs_ivkey ivkey;
+
+	resolve_ivkey_of(uber, oaddr, &ivkey);
+	return silofs_decrypt_buf(&uber->ub_crypto.ci, &ivkey,
+	                          view, view, oaddr->len);
+}
 

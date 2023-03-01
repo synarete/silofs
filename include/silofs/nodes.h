@@ -40,6 +40,7 @@ struct silofs_snode_info {
 	size_t                          s_view_len;
 	silofs_dqid_t                   s_dqid;
 	enum silofs_stype               s_stype;
+	bool                            s_view_dec;
 	volatile bool                   s_noflush;
 };
 
@@ -242,5 +243,15 @@ void silofs_seal_unode(struct silofs_unode_info *ui);
 
 bool silofs_test_evictable(const struct silofs_snode_info *si);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+
+int silofs_encrypt_view_tobuf(const struct silofs_uber *uber,
+                              const struct silofs_oaddr *oaddr,
+                              const union silofs_view *view, void *buf);
+
+int silofs_decrypt_view_inplace(const struct silofs_uber *uber,
+                                const struct silofs_oaddr *oaddr,
+                                union silofs_view *view);
 
 #endif /* SILOFS_NODES_H_ */

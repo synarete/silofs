@@ -33,7 +33,7 @@ struct silofs_submit_ref {
 	struct silofs_oaddr         oaddr;
 	struct silofs_bk_info      *bki;
 	const union silofs_view    *view;
-	size_t                      len;
+	enum silofs_stype           stype;
 };
 
 /* submission queue entry */

@@ -75,6 +75,8 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 {
 	struct silofs_submit_ref *ref;
 
+	silofs_assert_eq(oaddr->len, si->s_view_len);
+
 	if (!sqe_isappendable(sqe, oaddr)) {
 		return false;
 	}
@@ -86,8 +88,8 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 	oaddr_assign(&ref->oaddr, oaddr);
 	ref->bki = silofs_bki_of(si);
 	ref->view = si->s_view;
-	ref->len = si->s_view_len;
-	sqe->len += ref->len;
+	ref->stype = si->s_stype;
+	sqe->len += oaddr->len;
 	sqe->cnt += 1;
 	return true;
 }
@@ -105,8 +107,8 @@ int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
 	dst = sqe->buf;
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &sqe->ref[i];
-		memcpy(dst, ref->view, ref->len);
-		dst += ref->len;
+		memcpy(dst, ref->view, ref->oaddr.len);
+		dst += ref->oaddr.len;
 	}
 	return 0;
 }

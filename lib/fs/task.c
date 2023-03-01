@@ -83,6 +83,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 		sqe->off = oaddr->pos;
 	}
 	ref = &sqe->ref[sqe->cnt];
+	oaddr_assign(&ref->oaddr, oaddr);
 	ref->bki = silofs_bki_of(si);
 	ref->view = si->s_view;
 	ref->len = si->s_view_len;

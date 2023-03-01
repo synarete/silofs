@@ -456,7 +456,7 @@ stgc_make_blobid_of_spmaps(const struct silofs_stage_ctx *stg_ctx,
 	const enum silofs_stype vspace = stg_ctx->vspace;
 
 	silofs_sbi_treeid(stg_ctx->sbi, &treeid);
-	silofs_blobid_make_ta(out_blobid, &treeid, voff, vspace, height);
+	silofs_blobid_setup(out_blobid, &treeid, voff, vspace, height);
 }
 
 static void
@@ -473,7 +473,7 @@ stgc_make_blobid_of_vdata(const struct silofs_stage_ctx *stg_ctx,
 	voff_base = off_align(voff, blob_size);
 
 	silofs_sbi_treeid(stg_ctx->sbi, &treeid);
-	silofs_blobid_make_ta(out_blobid, &treeid, voff_base, vspace, height);
+	silofs_blobid_setup(out_blobid, &treeid, voff_base, vspace, height);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -140,10 +140,10 @@ void silofs_blobid_as_u128(const struct silofs_blobid *blobid, uint64_t h[2]);
 uint64_t silofs_blobid_hash(const struct silofs_blobid *blobid);
 
 
-void silofs_blobid_make_ta(struct silofs_blobid *blobid,
-                           const struct silofs_treeid *treeid,
-                           loff_t voff, enum silofs_stype vspace,
-                           enum silofs_height height);
+void silofs_blobid_setup(struct silofs_blobid *blobid,
+                         const struct silofs_treeid *treeid,
+                         loff_t voff, enum silofs_stype vspace,
+                         enum silofs_height height);
 
 void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40);
 
@@ -360,8 +360,8 @@ void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_iv_of(struct silofs_iv *iv, const struct silofs_bkaddr *bkaddr,
-                  enum silofs_stype stype, enum silofs_height height);
+void silofs_iv_of_oaddr(struct silofs_iv *iv,
+                        const struct silofs_oaddr *oaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

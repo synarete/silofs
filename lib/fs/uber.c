@@ -268,8 +268,8 @@ static void make_super_blobid(struct silofs_blobid *out_blobid)
 	struct silofs_treeid treeid;
 
 	silofs_treeid_generate(&treeid);
-	silofs_blobid_make_ta(out_blobid, &treeid, 0,
-	                      SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
+	silofs_blobid_setup(out_blobid, &treeid, 0,
+	                    SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
 }
 
 static void make_super_uaddr(const struct silofs_blobid *blobid,

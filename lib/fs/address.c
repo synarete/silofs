@@ -661,10 +661,10 @@ uint64_t silofs_blobid_hash(const struct silofs_blobid *blobid)
 	return silofs_hash_xxh64(h, sizeof(h), blobid->vspace);
 }
 
-void silofs_blobid_make_ta(struct silofs_blobid *blobid,
-                           const struct silofs_treeid *treeid,
-                           loff_t voff, enum silofs_stype vspace,
-                           enum silofs_height height)
+void silofs_blobid_setup(struct silofs_blobid *blobid,
+                         const struct silofs_treeid *treeid,
+                         loff_t voff, enum silofs_stype vspace,
+                         enum silofs_height height)
 {
 	const ssize_t blob_size = silofs_height_to_blob_size(height);
 
@@ -673,6 +673,27 @@ void silofs_blobid_make_ta(struct silofs_blobid *blobid,
 	blobid->size = (size_t)blob_size;
 	blobid->height = height;
 	blobid->vspace = vspace;
+}
+
+static void blobid_as_iv(const struct silofs_blobid *blobid,
+                         struct silofs_iv *out_iv)
+{
+	STATICASSERT_EQ(sizeof(blobid->treeid), sizeof(*out_iv));
+	STATICASSERT_EQ(sizeof(blobid->treeid.uuid), sizeof(out_iv->iv));
+	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
+
+	memcpy(out_iv->iv, &blobid->treeid.uuid, sizeof(out_iv->iv));
+	out_iv->iv[0] ^= (uint8_t)(blobid->voff & 0xFF);
+	out_iv->iv[1] ^= (uint8_t)((blobid->voff >> 8) & 0xFF);
+	out_iv->iv[2] ^= (uint8_t)((blobid->voff >> 16) & 0xFF);
+	out_iv->iv[3] ^= (uint8_t)((blobid->voff >> 24) & 0xFF);
+	out_iv->iv[4] ^= (uint8_t)((blobid->voff >> 32) & 0xFF);
+	out_iv->iv[5] ^= (uint8_t)((blobid->voff >> 40) & 0xFF);
+	out_iv->iv[6] ^= (uint8_t)((blobid->voff >> 48) & 0xFF);
+	out_iv->iv[7] ^= (uint8_t)((blobid->voff >> 56) & 0xFF);
+
+	out_iv->iv[14] ^= (uint8_t)blobid->vspace;
+	out_iv->iv[15] ^= (uint8_t)blobid->height;
 }
 
 void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40)
@@ -782,28 +803,6 @@ bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
 	return lba_isnull(bkaddr->lba) ||
 	       silofs_blobid_isnull(&bkaddr->blobid);
 }
-
-static void bkaddr_as_iv(const struct silofs_bkaddr *bkaddr,
-                         struct silofs_iv *out_iv)
-{
-	const struct silofs_blobid *blobid = &bkaddr->blobid;
-	const uint64_t lba = (uint64_t)(bkaddr->lba);
-
-	STATICASSERT_EQ(sizeof(blobid->treeid), sizeof(*out_iv));
-	STATICASSERT_EQ(sizeof(blobid->treeid.uuid), sizeof(out_iv->iv));
-	STATICASSERT_GT(sizeof(out_iv->iv), sizeof(lba));
-
-	memcpy(out_iv->iv, &blobid->treeid.uuid, sizeof(out_iv->iv));
-	out_iv->iv[0] ^= (uint8_t)(lba & 0xFF);
-	out_iv->iv[1] ^= (uint8_t)((lba >> 8) & 0xFF);
-	out_iv->iv[2] ^= (uint8_t)((lba >> 16) & 0xFF);
-	out_iv->iv[3] ^= (uint8_t)((lba >> 24) & 0xFF);
-	out_iv->iv[4] ^= (uint8_t)((lba >> 32) & 0xFF);
-	out_iv->iv[5] ^= (uint8_t)((lba >> 40) & 0xFF);
-	out_iv->iv[6] ^= (uint8_t)((lba >> 48) & 0xFF);
-	out_iv->iv[7] ^= (uint8_t)((lba >> 56) & 0xFF);
-}
-
 
 void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48)
 {
@@ -1362,12 +1361,19 @@ void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_iv_of(struct silofs_iv *iv, const struct silofs_bkaddr *bkaddr,
-                  enum silofs_stype stype, enum silofs_height height)
+void silofs_iv_of_oaddr(struct silofs_iv *iv, const struct silofs_oaddr *oaddr)
 {
-	bkaddr_as_iv(bkaddr, iv);
-	iv->iv[8] ^= (uint8_t)stype;
-	iv->iv[9] ^= (uint8_t)height;
+	STATICASSERT_GE(ARRAY_SIZE(iv->iv), 16);
+
+	blobid_as_iv(&oaddr->bka.blobid, iv);
+	iv->iv[8] ^= (uint8_t)(oaddr->pos & 0xFF);
+	iv->iv[9] ^= (uint8_t)((oaddr->pos >> 8) & 0xFF);
+	iv->iv[10] ^= (uint8_t)((oaddr->pos >> 16) & 0xFF);
+	iv->iv[11] ^= (uint8_t)((oaddr->pos >> 24) & 0xFF);
+	iv->iv[12] ^= (uint8_t)((oaddr->pos >> 32) & 0xFF);
+	iv->iv[13] ^= (uint8_t)((oaddr->pos >> 40) & 0xFF);
+	iv->iv[14] ^= (uint8_t)((oaddr->pos >> 48) & 0xFF);
+	iv->iv[15] ^= (uint8_t)((oaddr->pos >> 56) & 0xFF);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -1175,14 +1175,13 @@ static int fse_save_bootsec(const struct silofs_fs_env *fse,
 	return fse_save_bootsec_of(fse, &bsec->uuid, bsec);
 }
 
-static int fse_fill_save_bootsec(const struct silofs_fs_env *fse,
-                                 struct silofs_bootsec *out_bsec)
+static int fse_update_save_bootsec(const struct silofs_fs_env *fse,
+                                   struct silofs_bootsec *bsec)
 {
 	const struct silofs_sb_info *sbi = fse->fs_uber->ub_sbi;
 
-	silofs_bootsec_init(out_bsec);
-	silofs_bootsec_set_sb_uaddr(out_bsec, sbi_uaddr(sbi));
-	return fse_save_bootsec(fse, out_bsec);
+	silofs_bootsec_set_sb_uaddr(bsec, sbi_uaddr(sbi));
+	return fse_save_bootsec(fse, bsec);
 }
 
 static int fse_format_fs(struct silofs_fs_env *fse,
@@ -1192,7 +1191,12 @@ static int fse_format_fs(struct silofs_fs_env *fse,
 	struct silofs_task task;
 	int err;
 
+	silofs_bootsec_init(&bsec);
 	err = fse_make_self_task(fse, &task);
+	if (err) {
+		return err;
+	}
+	err = fse_derive_main_key(fse, &bsec);
 	if (err) {
 		return err;
 	}
@@ -1204,7 +1208,7 @@ static int fse_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_fill_save_bootsec(fse, &bsec);
+	err = fse_update_save_bootsec(fse, &bsec);
 	if (err) {
 		return err;
 	}

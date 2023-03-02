@@ -142,6 +142,7 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 		ut_release_file(ute, ino1);
 		ut_rename_replace(ute, dino, name1, dino, name2);
 		ut_release_file(ute, ino2);
+		ut_getattr_noent(ute, ino2);
 		ut_open_rdonly(ute, ino1);
 		ut_read_verify(ute, ino1, buf1, bsz, off);
 		ut_release_file(ute, ino1);

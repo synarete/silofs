@@ -1155,43 +1155,42 @@ void ut_rename_move(struct ut_env *ute, ino_t parent, const char *name,
 	ut_lookup_noent(ute, newparent, newname);
 	ut_rename_ok(ute, parent, name, newparent, newname, 0);
 	ut_lookup_noent(ute, parent, name);
+	ut_getattr_ok(ute, st.st_ino, &st);
 	ut_lookup_ok(ute, newparent, newname, &st);
 }
 
 void ut_rename_replace(struct ut_env *ute, ino_t parent, const char *name,
                        ino_t newparent, const char *newname)
 {
-	struct stat st;
+	struct stat st[2];
 
-	ut_lookup_ok(ute, parent, name, &st);
-	ut_lookup_ok(ute, newparent, newname, &st);
+	ut_lookup_ok(ute, parent, name, &st[0]);
+	ut_lookup_ok(ute, newparent, newname, &st[1]);
 	ut_rename_ok(ute, parent, name, newparent, newname, 0);
 	ut_lookup_noent(ute, parent, name);
-	ut_lookup_ok(ute, newparent, newname, &st);
+	ut_getattr_ok(ute, st[0].st_ino, &st[0]);
+	ut_lookup_ok(ute, newparent, newname, &st[1]);
 }
 
 void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
                         ino_t newparent, const char *newname)
 {
-	struct stat st1;
-	struct stat st2;
-	struct stat st3;
-	struct stat st4;
+	struct stat st[4];
 	const int flags = RENAME_EXCHANGE;
 
-	ut_lookup_ok(ute, parent, name, &st1);
-	ut_expect_gt(st1.st_nlink, 0);
-	ut_lookup_ok(ute, newparent, newname, &st2);
-	ut_expect_gt(st2.st_nlink, 0);
+	ut_lookup_ok(ute, parent, name, &st[0]);
+	ut_expect_gt(st[0].st_nlink, 0);
+	ut_lookup_ok(ute, newparent, newname, &st[1]);
+	ut_expect_gt(st[1].st_nlink, 0);
 	ut_rename_ok(ute, parent, name, newparent, newname, flags);
-	ut_lookup_ok(ute, parent, name, &st3);
-	ut_lookup_ok(ute, newparent, newname, &st4);
-	ut_expect_eq(st1.st_ino, st4.st_ino);
-	ut_expect_eq(st1.st_mode, st4.st_mode);
-	ut_expect_eq(st1.st_nlink, st4.st_nlink);
-	ut_expect_eq(st2.st_ino, st3.st_ino);
-	ut_expect_eq(st2.st_mode, st3.st_mode);
-	ut_expect_eq(st2.st_nlink, st3.st_nlink);
+	ut_lookup_ok(ute, parent, name, &st[2]);
+	ut_lookup_ok(ute, newparent, newname, &st[3]);
+	ut_expect_eq(st[0].st_ino, st[3].st_ino);
+	ut_expect_eq(st[0].st_mode, st[3].st_mode);
+	ut_expect_eq(st[0].st_nlink, st[3].st_nlink);
+	ut_expect_eq(st[1].st_ino, st[2].st_ino);
+	ut_expect_eq(st[1].st_mode, st[2].st_mode);
+	ut_expect_eq(st[1].st_nlink, st[2].st_nlink);
 }
 
 void ut_symlink_ok(struct ut_env *ute, ino_t parent,

@@ -622,6 +622,21 @@ static inline bool silofs_stype_isinode(enum silofs_stype stype)
 	return silofs_stype_isequal(stype, SILOFS_STYPE_INODE);
 }
 
+static inline bool silofs_stype_isxanode(enum silofs_stype stype)
+{
+	return silofs_stype_isequal(stype, SILOFS_STYPE_XANODE);
+}
+
+static inline bool silofs_stype_issymval(enum silofs_stype stype)
+{
+	return silofs_stype_isequal(stype, SILOFS_STYPE_SYMVAL);
+}
+
+static inline bool silofs_stype_isdtnode(enum silofs_stype stype)
+{
+	return silofs_stype_isequal(stype, SILOFS_STYPE_DTNODE);
+}
+
 static inline bool silofs_stype_isftnode(enum silofs_stype stype)
 {
 	return silofs_stype_isequal(stype, SILOFS_STYPE_FTNODE);

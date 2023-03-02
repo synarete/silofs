@@ -945,6 +945,7 @@ static void dei_setup(struct silofs_dir_entry_info *dei,
 	dei->de = unconst(de);
 	dei->ino_dt.ino = de_ino(de);
 	dei->ino_dt.dt = de_dt(de);
+	dei->ino_dt.pad = 0;
 }
 
 static mode_t ii_dtype_of(const struct silofs_inode_info *ii)

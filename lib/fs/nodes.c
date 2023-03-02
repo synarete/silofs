@@ -1555,25 +1555,25 @@ static void resolve_ivkey_of(const struct silofs_uber *uber,
 	update_iv_of(ivkey, oaddr);
 }
 
-int silofs_encrypt_view_tobuf(const struct silofs_uber *uber,
-                              const struct silofs_oaddr *oaddr,
-                              const union silofs_view *view, void *buf)
+int silofs_encrypt_view(const struct silofs_uber *uber,
+                        const struct silofs_oaddr *oaddr,
+                        const union silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
 
 	resolve_ivkey_of(uber, oaddr, &ivkey);
 	return silofs_encrypt_buf(&uber->ub_crypto.ci, &ivkey,
-	                          view, buf, oaddr->len);
+	                          view, ptr, oaddr->len);
 }
 
-int silofs_decrypt_view_inplace(const struct silofs_uber *uber,
-                                const struct silofs_oaddr *oaddr,
-                                union silofs_view *view)
+int silofs_decrypt_view(const struct silofs_uber *uber,
+                        const struct silofs_oaddr *oaddr,
+                        const union silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
 
 	resolve_ivkey_of(uber, oaddr, &ivkey);
 	return silofs_decrypt_buf(&uber->ub_crypto.ci, &ivkey,
-	                          view, view, oaddr->len);
+	                          view, ptr, oaddr->len);
 }
 

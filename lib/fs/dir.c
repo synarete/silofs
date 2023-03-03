@@ -2256,24 +2256,29 @@ int silofs_drop_dir(struct silofs_task *task,
  * Currently, we drop tree only when its empty. Try to squeeze it up and
  * remove empty leaf nodes.
  */
+static int dic_do_erase_dentry(struct silofs_dir_ctx *d_ctx,
+                               const struct silofs_dir_entry_info *dei)
+{
+	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
+
+	dtn_remove(dei->dni->dtn, dei->de);
+	dir_dec_ndents(dir_ii);
+	dic_update_nlink(d_ctx, -1);
+	if (!dir_ndents(dir_ii)) {
+		return dic_finalize_tree(d_ctx);
+	}
+	dni_dirtify(dei->dni);
+	return 0;
+}
+
 static int dic_erase_dentry(struct silofs_dir_ctx *d_ctx,
                             const struct silofs_dir_entry_info *dei)
 {
-	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
 	int ret;
 
 	ii_incref(d_ctx->child_ii);
-
-	dtn_remove(dei->dni->dtn, dei->de);
-	dni_dirtify(dei->dni);
-
-	dir_dec_ndents(dir_ii);
-	dic_update_nlink(d_ctx, -1);
-
-	ret = !dir_ndents(dir_ii) ? dic_finalize_tree(d_ctx) : 0;
-
+	ret = dic_do_erase_dentry(d_ctx, dei);
 	ii_decref(d_ctx->child_ii);
-
 	return ret;
 }
 
@@ -2305,25 +2310,32 @@ static int dic_stage_child_by_de(struct silofs_dir_ctx *d_ctx,
 	return err;
 }
 
-static int dic_remove_dentry(struct silofs_dir_ctx *d_ctx)
+static int dic_do_remove_dentry(struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_dir_entry_info dei;
+	int err;
+
+	err = dic_check_and_lookup_by_name(d_ctx, &dei);
+	if (err) {
+		return err;
+	}
+	err = dic_stage_child_by_de(d_ctx, &dei);
+	if (err) {
+		return err;
+	}
+	err = dic_erase_dentry(d_ctx, &dei);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int dic_remove_dentry(struct silofs_dir_ctx *d_ctx)
+{
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
-	ret = dic_check_and_lookup_by_name(d_ctx, &dei);
-	if (ret) {
-		goto out;
-	}
-	ret = dic_stage_child_by_de(d_ctx, &dei);
-	if (ret) {
-		goto out;
-	}
-	ret = dic_erase_dentry(d_ctx, &dei);
-	if (ret) {
-		goto out;
-	}
-out:
+	ret = dic_do_remove_dentry(d_ctx);
 	ii_decref(d_ctx->dir_ii);
 	return ret;
 }

@@ -335,6 +335,7 @@ struct silofs_cache_elem {
 struct silofs_bk_info {
 	struct silofs_cache_elem        bk_ce;
 	struct silofs_block            *bk;
+	uint64_t                        bk_view;
 };
 
 /* u-addressing block info */

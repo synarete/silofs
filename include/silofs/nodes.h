@@ -37,6 +37,7 @@ struct silofs_snode_info {
 	struct silofs_avl_node          s_ds_an;
 	struct silofs_snode_info       *s_ds_next;
 	union silofs_view              *s_view;
+	loff_t                          s_view_pos;
 	size_t                          s_view_len;
 	silofs_dqid_t                   s_dqid;
 	enum silofs_stype               s_stype;

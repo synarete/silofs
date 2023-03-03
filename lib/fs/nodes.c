@@ -1354,6 +1354,7 @@ static void si_bind_view(struct silofs_snode_info *si,
                          struct silofs_block *bk, long bk_pos)
 {
 	si->s_view = make_view(opaque_view_of(bk, bk_pos));
+	si->s_view_pos = bk_pos;
 	si->s_view_len = stype_size(si->s_stype);
 }
 

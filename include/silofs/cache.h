@@ -225,5 +225,11 @@ void silofs_bki_incref(struct silofs_bk_info *bki);
 
 void silofs_bki_decref(struct silofs_bk_info *bki);
 
+bool silofs_bki_has_view_at(const struct silofs_bk_info *bki,
+                            loff_t view_pos, size_t view_len);
+
+void silofs_bki_set_view_at(struct silofs_bk_info *bki,
+                            loff_t view_pos, size_t view_len);
+
 
 #endif /* SILOFS_CACHE_H_ */

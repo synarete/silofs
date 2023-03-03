@@ -37,6 +37,7 @@ struct silofs_stage_ctx {
 	enum silofs_stage_mode          stg_mode;
 	enum silofs_stype               vspace;
 	bool                            has_view;
+	bool                            with_enc;
 };
 
 struct silofs_vis {
@@ -153,7 +154,9 @@ static int stgc_spawn_cached_vi(const struct silofs_stage_ctx *stg_ctx,
 static void stgc_forget_cached_vi(const struct silofs_stage_ctx *stg_ctx,
                                   struct silofs_vnode_info *vi)
 {
-	silofs_cache_forget_vi(stgc_cache(stg_ctx), vi);
+	if (vi != NULL) {
+		silofs_cache_forget_vi(stgc_cache(stg_ctx), vi);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -283,6 +286,30 @@ static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
 	silofs_vbki_decref(vbki);
 	*out_vi = vi;
 	return err;
+}
+
+static int stgc_decrypt_view_of(const struct silofs_stage_ctx *stg_ctx,
+                                struct silofs_vnode_info *vi)
+{
+	const struct silofs_oaddr *oaddr = &vi->v_oaddr;
+	struct silofs_bk_info *bki = &vi->v_vbki->vbk_base;
+	union silofs_view *view = vi->v_si.s_view;
+	const loff_t view_pos = vi->v_si.s_view_pos;
+	const size_t view_len = vi->v_si.s_view_len;
+	int err;
+
+	if (!stg_ctx->with_enc) {
+		return 0;
+	}
+	if (silofs_bki_has_view_at(bki, view_pos, view_len)) {
+		return 0;
+	}
+	err = silofs_decrypt_view(stg_ctx->uber, oaddr, view, view);
+	if (err) {
+		return err;
+	}
+	silofs_bki_set_view_at(bki, view_pos, view_len);
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -2647,6 +2674,46 @@ int silofs_resolve_oaddr_of(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int stgc_stage_vnode_at(struct silofs_stage_ctx *stg_ctx,
+                               struct silofs_vnode_info **out_vi)
+{
+	struct silofs_voaddr voa;
+	struct silofs_vbk_info *vbki = NULL;
+	struct silofs_vnode_info *vi = NULL;
+	int err;
+
+	err = stgc_resolve_inspect_voaddr(stg_ctx, &voa);
+	if (err) {
+		goto out_err;
+	}
+	err = stgc_stage_vblock(stg_ctx, &voa, &vbki);
+	if (err) {
+		goto out_err;
+	}
+	err = stgc_spawn_bind_vi(stg_ctx, &voa, vbki, &vi);
+	if (err) {
+		goto out_err;
+	}
+	err = stgc_decrypt_view_of(stg_ctx, vi);
+	if (err) {
+		goto out_err;
+	}
+	if (!stg_ctx->has_view) {
+		goto out_ok;
+	}
+	err = silofs_vi_verify_view(vi);
+	if (err) {
+		goto out_err;
+	}
+out_ok:
+	*out_vi = vi;
+	return 0;
+out_err:
+	stgc_forget_cached_vi(stg_ctx, vi);
+	*out_vi = NULL;
+	return err;
+}
+
 int silofs_stage_vnode_at(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr,
                           enum silofs_stage_mode stg_mode,
@@ -2654,36 +2721,14 @@ int silofs_stage_vnode_at(struct silofs_task *task,
                           struct silofs_vnode_info **out_vi)
 {
 	struct silofs_stage_ctx stg_ctx;
-	struct silofs_voaddr voa;
-	struct silofs_vbk_info *vbki = NULL;
-	struct silofs_vnode_info *vi = NULL;
 	int err;
 
 	stgc_setup(&stg_ctx, task, vaddr, stg_mode, verify_view);
-	err = stgc_resolve_inspect_voaddr(&stg_ctx, &voa);
-	if (err) {
-		return err;
+	err = stgc_stage_vnode_at(&stg_ctx, out_vi);
+	if (!err) {
+		silofs_vi_set_dqid(*out_vi, dqid);
 	}
-	err = stgc_stage_vblock(&stg_ctx, &voa, &vbki);
-	if (err) {
-		return err;
-	}
-	err = stgc_spawn_bind_vi(&stg_ctx, &voa, vbki, &vi);
-	if (err) {
-		return err;
-	}
-	if (!verify_view) {
-		goto out_ok;
-	}
-	err = silofs_vi_verify_view(vi);
-	if (err) {
-		stgc_forget_cached_vi(&stg_ctx, vi);
-		return err;
-	}
-out_ok:
-	silofs_vi_set_dqid(vi, dqid);
-	*out_vi = vi;
-	return 0;
+	return err;
 }
 
 int silofs_stage_inode_at(struct silofs_task *task, ino_t ino,

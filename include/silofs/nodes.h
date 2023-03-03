@@ -41,7 +41,6 @@ struct silofs_snode_info {
 	size_t                          s_view_len;
 	silofs_dqid_t                   s_dqid;
 	enum silofs_stype               s_stype;
-	bool                            s_view_dec;
 	volatile bool                   s_noflush;
 };
 

@@ -220,7 +220,6 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_view = NULL;
 	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
-	si->s_view_dec = false;
 	si->s_noflush = false;
 }
 

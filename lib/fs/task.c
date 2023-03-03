@@ -100,21 +100,18 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 
 int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
 {
-	const struct silofs_submit_ref *ref;
+	const struct silofs_submit_ref *ref = NULL;
 	uint8_t *dst = NULL;
 	int err;
 
 	err = sqe_setup_buf(sqe);
-	if (err) {
-		return err;
-	}
 	dst = sqe->buf;
-	for (size_t i = 0; i < sqe->cnt; ++i) {
+	for (size_t i = 0; (i < sqe->cnt) && !err; ++i) {
 		ref = &sqe->ref[i];
 		memcpy(dst, ref->view, ref->oaddr.len);
 		dst += ref->oaddr.len;
 	}
-	return 0;
+	return err;
 }
 
 void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,

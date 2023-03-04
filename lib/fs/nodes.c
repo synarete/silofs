@@ -217,6 +217,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_ds_next = NULL;
 	si->s_uber = NULL;
 	si->s_md = NULL;
+	si->s_bki = NULL;
 	si->s_view = NULL;
 	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
@@ -232,6 +233,7 @@ static void si_fini(struct silofs_snode_info *si)
 	si->s_ds_next = NULL;
 	si->s_uber = NULL;
 	si->s_md = NULL;
+	si->s_bki = NULL;
 	si->s_view = NULL;
 	si->s_del_hook = NULL;
 }

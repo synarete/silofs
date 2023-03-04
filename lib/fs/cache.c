@@ -1063,6 +1063,7 @@ static void ui_attach_bk(struct silofs_unode_info *ui,
 {
 	ubki_incref(ubki);
 	ui->u_ubki = ubki;
+	ui->u_si.s_bki = &ubki->ubk_base;
 }
 
 static void ui_detach_bk(struct silofs_unode_info *ui)
@@ -1072,6 +1073,7 @@ static void ui_detach_bk(struct silofs_unode_info *ui)
 	if (ubki != NULL) {
 		ubki_decref(ubki);
 		ui->u_ubki = NULL;
+		ui->u_si.s_bki = NULL;
 	}
 }
 
@@ -1160,6 +1162,7 @@ static void vi_attach_bk(struct silofs_vnode_info *vi,
 {
 	silofs_vbki_incref(vbki);
 	vi->v_vbki = vbki;
+	vi->v_si.s_bki = &vbki->vbk_base;
 }
 
 static void vi_detach_bk(struct silofs_vnode_info *vi)
@@ -1169,6 +1172,7 @@ static void vi_detach_bk(struct silofs_vnode_info *vi)
 	if (vbki != NULL) {
 		silofs_vbki_decref(vbki);
 		vi->v_vbki = NULL;
+		vi->v_si.s_bki = NULL;
 	}
 }
 

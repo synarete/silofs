@@ -29,13 +29,13 @@ typedef void (*silofs_snode_del_fn)(struct silofs_snode_info *si,
 /* snode */
 struct silofs_snode_info {
 	struct silofs_cache_elem        s_ce;
-	silofs_snode_del_fn             s_del_hook;
-	const struct silofs_snode_vtbl *s_vtbl;
-	struct silofs_uber             *s_uber;
-	struct silofs_mdigest          *s_md;
 	struct silofs_list_head         s_dq_lh;
 	struct silofs_avl_node          s_ds_an;
+	silofs_snode_del_fn             s_del_hook;
+	struct silofs_uber             *s_uber;
+	struct silofs_mdigest          *s_md;
 	struct silofs_snode_info       *s_ds_next;
+	struct silofs_bk_info          *s_bki;
 	union silofs_view              *s_view;
 	loff_t                          s_view_pos;
 	size_t                          s_view_len;

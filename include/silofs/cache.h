@@ -203,6 +203,10 @@ void silofs_si_incref(struct silofs_snode_info *si);
 
 void silofs_si_decref(struct silofs_snode_info *si);
 
+bool silofs_si_has_bkview(const struct silofs_snode_info *si);
+
+void silofs_si_set_bkview(const struct silofs_snode_info *si);
+
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
@@ -224,12 +228,5 @@ void silofs_ubki_decref(struct silofs_ubk_info *ubki);
 void silofs_bki_incref(struct silofs_bk_info *bki);
 
 void silofs_bki_decref(struct silofs_bk_info *bki);
-
-bool silofs_bki_has_view_at(const struct silofs_bk_info *bki,
-                            loff_t view_pos, size_t view_len);
-
-void silofs_bki_set_view_at(struct silofs_bk_info *bki,
-                            loff_t view_pos, size_t view_len);
-
 
 #endif /* SILOFS_CACHE_H_ */

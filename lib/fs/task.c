@@ -98,20 +98,37 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 	return true;
 }
 
+static int sqe_encrypt_into_buf(struct silofs_submitq_entry *sqe)
+{
+	const struct silofs_uber *uber = sqe->task->t_uber;
+	const struct silofs_submit_ref *ref = NULL;
+	uint8_t *dst = sqe->buf;
+	int err;
+
+	for (size_t i = 0; i < sqe->cnt; ++i) {
+		ref = &sqe->ref[i];
+		err = silofs_encrypt_view(uber, &ref->oaddr, ref->view, dst);
+		if (err) {
+			return err;
+		}
+		dst += ref->oaddr.len;
+	}
+	return 0;
+}
+
 int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
 {
-	const struct silofs_submit_ref *ref = NULL;
-	uint8_t *dst = NULL;
 	int err;
 
 	err = sqe_setup_buf(sqe);
-	dst = sqe->buf;
-	for (size_t i = 0; (i < sqe->cnt) && !err; ++i) {
-		ref = &sqe->ref[i];
-		memcpy(dst, ref->view, ref->oaddr.len);
-		dst += ref->oaddr.len;
+	if (err) {
+		return err;
 	}
-	return err;
+	err = sqe_encrypt_into_buf(sqe);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,

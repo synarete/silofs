@@ -1022,6 +1022,8 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         loff_t bpos, enum silofs_stype stype,
                         enum silofs_height height, loff_t voff)
 {
+	silofs_assert_eq(height, blobid->height);
+
 	silofs_oaddr_setup(&uaddr->oaddr, blobid, bpos, stype_size(stype));
 	uaddr->voff = voff;
 	uaddr->stype = stype;

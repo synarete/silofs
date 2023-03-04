@@ -506,6 +506,16 @@ static void ui_stamp_mark_visible(struct silofs_unode_info *ui)
 	ui->u_verified = true;
 }
 
+static bool ui_has_bkview(const struct silofs_unode_info *ui)
+{
+	return silofs_si_has_bkview(&ui->u_si);
+}
+
+static void ui_set_bkview(struct silofs_unode_info *ui)
+{
+	silofs_si_set_bkview(&ui->u_si);
+}
+
 static const struct silofs_bkaddr *
 sbi_bkaddr(const struct silofs_sb_info *sbi)
 {
@@ -535,6 +545,7 @@ static int sbi_verify_view(struct silofs_sb_info *sbi)
 static void sbi_set_spawned(struct silofs_sb_info *sbi)
 {
 	ui_stamp_mark_visible(&sbi->sb_ui);
+	ui_set_bkview(&sbi->sb_ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -565,6 +576,7 @@ static int sni_verify_view(struct silofs_spnode_info *sni)
 static void sni_set_spawned(struct silofs_spnode_info *sni)
 {
 	ui_stamp_mark_visible(&sni->sn_ui);
+	ui_set_bkview(&sni->sn_ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -595,6 +607,7 @@ static int sli_verify_view(struct silofs_spleaf_info *sli)
 static void sli_set_spawned(struct silofs_spleaf_info *sli)
 {
 	ui_stamp_mark_visible(&sli->sl_ui);
+	ui_set_bkview(&sli->sl_ui);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -823,6 +836,32 @@ int silofs_stage_ubk_at(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int ubc_decrypt_view_inplace(const struct silofs_uber_ctx *ub_ctx,
+                                    struct silofs_unode_info *ui)
+{
+	union silofs_view *view = ui->u_si.s_view;
+
+	return silofs_decrypt_view(ub_ctx->uber, ui_oaddr(ui), view, view);
+}
+
+static int ubc_decrypt_view_of(const struct silofs_uber_ctx *ub_ctx,
+                               struct silofs_unode_info *ui)
+{
+	int err;
+
+	if (ui_has_bkview(ui)) {
+		return 0;
+	}
+	err = ubc_decrypt_view_inplace(ub_ctx, ui);
+	if (err) {
+		return err;
+	}
+	ui_set_bkview(ui);
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void ubc_forget_cached_sbi(const struct silofs_uber_ctx *ub_ctx,
                                   struct silofs_sb_info *sbi)
 {
@@ -913,6 +952,12 @@ int silofs_spawn_super_at(struct silofs_uber *uber,
 	return ubc_spawn_super_at(&ub_ctx, uaddr, out_sbi);
 }
 
+static int ubc_decrypt_view_of_sbi(const struct silofs_uber_ctx *ub_ctx,
+                                   struct silofs_sb_info *sbi)
+{
+	return ubc_decrypt_view_of(ub_ctx, &sbi->sb_ui);
+}
+
 static int ubc_stage_super_at(const struct silofs_uber_ctx *ub_ctx,
                               const struct silofs_uaddr *uaddr,
                               struct silofs_sb_info **out_sbi)
@@ -928,6 +973,10 @@ static int ubc_stage_super_at(const struct silofs_uber_ctx *ub_ctx,
 		goto out_ok;
 	}
 	err = ubc_stage_attach_sbi_bk(ub_ctx, sbi);
+	if (err) {
+		goto out_err;
+	}
+	err = ubc_decrypt_view_of_sbi(ub_ctx, sbi);
 	if (err) {
 		goto out_err;
 	}
@@ -1047,6 +1096,12 @@ int silofs_spawn_spnode_at(struct silofs_uber *uber,
 	return ubc_spawn_spnode_at(&ub_ctx, uaddr, out_sni);
 }
 
+static int ubc_decrypt_view_of_sni(const struct silofs_uber_ctx *ub_ctx,
+                                   struct silofs_spnode_info *sni)
+{
+	return ubc_decrypt_view_of(ub_ctx, &sni->sn_ui);
+}
+
 static int ubc_stage_spnode_at(const struct silofs_uber_ctx *ub_ctx,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spnode_info **out_sni)
@@ -1062,6 +1117,10 @@ static int ubc_stage_spnode_at(const struct silofs_uber_ctx *ub_ctx,
 		goto out_ok;
 	}
 	err = ubc_stage_attach_sni_bk(ub_ctx, sni);
+	if (err) {
+		goto out_err;
+	}
+	err = ubc_decrypt_view_of_sni(ub_ctx, sni);
 	if (err) {
 		goto out_err;
 	}
@@ -1183,6 +1242,12 @@ int silofs_spawn_spleaf_at(struct silofs_uber *uber,
 	return ubc_spawn_spleaf_at(&ub_ctx, uaddr, out_sli);
 }
 
+static int ubc_decrypt_view_of_sli(const struct silofs_uber_ctx *ub_ctx,
+                                   struct silofs_spleaf_info *sli)
+{
+	return ubc_decrypt_view_of(ub_ctx, &sli->sl_ui);
+}
+
 static int ubc_stage_spleaf_at(const struct silofs_uber_ctx *ub_ctx,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_spleaf_info **out_sli)
@@ -1198,6 +1263,10 @@ static int ubc_stage_spleaf_at(const struct silofs_uber_ctx *ub_ctx,
 		goto out_ok;
 	}
 	err = ubc_stage_attach_sli_bk(ub_ctx, sli);
+	if (err) {
+		goto out_err;
+	}
+	err = ubc_decrypt_view_of_sli(ub_ctx, sli);
 	if (err) {
 		goto out_err;
 	}

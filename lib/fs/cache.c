@@ -737,7 +737,7 @@ static uint64_t bk_view_mask_of(loff_t off, size_t len)
 	return mask;
 }
 
-bool silofs_bki_has_view_at(const struct silofs_bk_info *bki,
+static bool bki_has_view_at(const struct silofs_bk_info *bki,
                             loff_t view_pos, size_t view_len)
 {
 	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
@@ -745,7 +745,7 @@ bool silofs_bki_has_view_at(const struct silofs_bk_info *bki,
 	return ((bki->bk_view & view_mask) == view_mask);
 }
 
-void silofs_bki_set_view_at(struct silofs_bk_info *bki,
+static void bki_set_view_at(struct silofs_bk_info *bki,
                             loff_t view_pos, size_t view_len)
 {
 	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
@@ -982,6 +982,22 @@ void silofs_si_decref(struct silofs_snode_info *si)
 	}
 }
 
+bool silofs_si_has_bkview(const struct silofs_snode_info *si)
+{
+	const struct silofs_bk_info *bki = si->s_bki;
+
+	silofs_assert_not_null(bki);
+	return bki_has_view_at(bki, si->s_view_pos, si->s_view_len);
+}
+
+void silofs_si_set_bkview(const struct silofs_snode_info *si)
+{
+	struct silofs_bk_info *bki = si->s_bki;
+
+	silofs_assert_not_null(bki);
+	bki_set_view_at(bki, si->s_view_pos, si->s_view_len);
+}
+
 static void si_remove_from_lrumap(struct silofs_snode_info *si,
                                   struct silofs_lrumap *lm)
 {
@@ -1001,7 +1017,7 @@ static void si_delete(struct silofs_snode_info *si, struct silofs_alloc *alloc)
 	del(si, alloc);
 }
 
-static int visit_evictable_ti(struct silofs_cache_elem *ce, void *arg)
+static int visit_evictable_si(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
 	struct silofs_snode_info *si = si_from_ce(ce);
@@ -1082,7 +1098,7 @@ static int visit_evictable_ui(struct silofs_cache_elem *ce, void *arg)
 	struct silofs_cache_ctx *c_ctx = arg;
 	int ret;
 
-	ret = visit_evictable_ti(ce, arg);
+	ret = visit_evictable_si(ce, arg);
 	if (ret && (c_ctx->si != NULL)) {
 		c_ctx->ui = silofs_ui_from_si(c_ctx->si);
 	}
@@ -1131,7 +1147,7 @@ static int visit_evictable_vi(struct silofs_cache_elem *ce, void *arg)
 	int ret;
 	struct silofs_cache_ctx *c_ctx = arg;
 
-	ret = visit_evictable_ti(ce, arg);
+	ret = visit_evictable_si(ce, arg);
 	if (ret && (c_ctx->si != NULL)) {
 		c_ctx->vi = silofs_vi_from_si(c_ctx->si);
 	}

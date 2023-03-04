@@ -559,11 +559,6 @@ static void relax_cache(struct silofs_task *task)
 	silofs_repo_relax_cache(task->t_uber->ub.repo, SILOFS_F_BRINGUP);
 }
 
-static struct silofs_sb_info *fse_sbi(const struct silofs_fs_env *fse)
-{
-	return fse->fs_uber->ub_sbi;
-}
-
 static int reload_rootdir(struct silofs_task *task)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -921,11 +916,10 @@ static int format_claim_vspace_of(struct silofs_task *task,
 	return 0;
 }
 
-static int fse_format_base_vspace(const struct silofs_fs_env *fse,
-                                  struct silofs_task *task)
+static int format_base_vspace(struct silofs_task *task)
 {
 	struct silofs_spacestats spst = { .capacity = 0 };
-	struct silofs_sb_info *sbi = fse_sbi(fse);
+	struct silofs_sb_info *sbi = task_sbi(task);
 	enum silofs_stype stype;
 	int err;
 
@@ -1051,8 +1045,7 @@ static int format_rootdir(struct silofs_task *task)
 	return 0;
 }
 
-static int fse_format_meta(const struct silofs_fs_env *fse,
-                           struct silofs_task *task)
+static int format_meta(struct silofs_task *task)
 {
 	int err;
 
@@ -1060,7 +1053,7 @@ static int fse_format_meta(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_format_base_vspace(fse, task);
+	err = format_base_vspace(task);
 	if (err) {
 		return err;
 	}
@@ -1204,7 +1197,7 @@ static int fse_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_format_meta(fse, &task);
+	err = format_meta(&task);
 	if (err) {
 		return err;
 	}

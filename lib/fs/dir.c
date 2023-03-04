@@ -438,11 +438,6 @@ static void dtn_inc_nde(struct silofs_dtree_node *dtn)
 	dtn_set_nde(dtn, dtn_nde(dtn) + 1);
 }
 
-static void dtn_dec_nde(struct silofs_dtree_node *dtn)
-{
-	dtn_set_nde(dtn, dtn_nde(dtn) - 1);
-}
-
 static size_t dtn_nnb(const struct silofs_dtree_node *dtn)
 {
 	return silofs_le16_to_cpu(dtn->dn_nnb);
@@ -606,8 +601,7 @@ dtn_search(const struct silofs_dtree_node *dtn,
 	const struct silofs_dir_entry *de_end = dtn_de_end(dtn);
 
 	for (de = de_beg; de < de_end; ++de) {
-		if (de_isactive(de) &&
-		    dtn_de_has_name(dtn, de, name)) {
+		if (de_isactive(de) && dtn_de_has_name(dtn, de, name)) {
 			return de;
 		}
 	}
@@ -685,7 +679,7 @@ static size_t dtn_insert_name_pos(struct silofs_dtree_node *dtn, size_t nlen)
 
 	silofs_assert_lt(nnb + nlen, sizeof(dtn->dn_data.nb));
 
-	return sizeof(dtn->dn_data.nb) - nnb - nlen;
+	return sizeof(dtn->dn_data.nb) - (nnb + nlen);
 }
 
 static struct silofs_dir_entry *
@@ -721,24 +715,45 @@ static void dtn_insert(struct silofs_dtree_node *dtn,
 	dtn_add_nnb(dtn, name_len);
 }
 
-static void dtn_punch_name_at(struct silofs_dtree_node *dtn,
+static bool dtn_punch_name_at(struct silofs_dtree_node *dtn,
                               size_t name_pos, size_t name_len)
 {
-	char *beg = dtn_names_beg(dtn);
+	char *names_beg = dtn_names_beg(dtn);
 	char *name = dtn_name_at(dtn, name_pos);
-	const size_t cnt = (size_t)(name - beg);
+	size_t mv_len;
+	bool ret = false;
 
-	silofs_assert_ge(name, beg);
-	memmove((name + name_len) - cnt, beg, cnt);
+	silofs_assert_ge(name, names_beg);
+	if (name > names_beg) {
+		mv_len = (size_t)(name - names_beg);
+		if (name_len >= mv_len) {
+			memcpy(name + (name_len - mv_len), names_beg, mv_len);
+		} else {
+			memmove((name + name_len) - mv_len, names_beg, mv_len);
+		}
+		ret = true;
+	}
+	return ret;
 }
 
-static void dtn_punch_de_name(struct silofs_dtree_node *dtn,
+static bool dtn_punch_de_name(struct silofs_dtree_node *dtn,
                               const struct silofs_dir_entry *de)
 {
 	const size_t name_len = de_name_len(de);
 	const size_t name_pos = de_name_pos(de);
 
-	dtn_punch_name_at(dtn, name_pos, name_len);
+	return dtn_punch_name_at(dtn, name_pos, name_len);
+}
+
+static bool dtn_remove_de_name(struct silofs_dtree_node *dtn,
+                               struct silofs_dir_entry *de)
+{
+	const size_t name_len = de_name_len(de);
+	bool punched;
+
+	punched = dtn_punch_de_name(dtn, de);
+	dtn_sub_nnb(dtn, name_len);
+	return punched;
 }
 
 static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
@@ -763,16 +778,19 @@ static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
 
 static void dtn_trim_nonactive_des(struct silofs_dtree_node *dtn)
 {
-	struct silofs_dir_entry *de_end;
-	struct silofs_dir_entry *de;
+	struct silofs_dir_entry *de_beg = dtn_de_begin(dtn);
+	struct silofs_dir_entry *de = dtn_de_end(dtn);
+	const size_t nde_curr = dtn_nde(dtn);
+	size_t nde_trim = 0;
 
-	for (size_t nde = dtn_nde(dtn); nde > 0; --nde) {
-		de_end = dtn_de_end(dtn);
-		de = de_end - 1;
+	while (de-- > de_beg) {
 		if (de_isactive(de)) {
 			break;
 		}
-		dtn_dec_nde(dtn);
+		nde_trim++;
+	}
+	if (nde_trim > 0) {
+		dtn_set_nde(dtn, nde_curr - nde_trim);
 	}
 }
 
@@ -781,12 +799,14 @@ static void dtn_remove(struct silofs_dtree_node *dtn,
 {
 	const size_t name_len = de_name_len(de);
 	const size_t name_pos = de_name_pos(de);
+	bool punched;
 
-	dtn_punch_de_name(dtn, de);
+	punched = dtn_remove_de_name(dtn, de);
 	de_deactivate(de);
 
-	dtn_sub_nnb(dtn, name_len);
-	dtn_remove_fixup(dtn, name_pos, name_len);
+	if (punched) {
+		dtn_remove_fixup(dtn, name_pos, name_len);
+	}
 	dtn_trim_nonactive_des(dtn);
 }
 
@@ -1417,14 +1437,26 @@ static int dic_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 	return ret;
 }
 
+static int dic_check_may_lookup(const struct silofs_dir_ctx *d_ctx)
+{
+	if (!dir_ndents(d_ctx->dir_ii)) {
+		return -ENOENT;
+	}
+	if (!dir_has_htree(d_ctx->dir_ii)) {
+		return -ENOENT;
+	}
+	return 0;
+}
+
 static int dic_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dir_entry_info *dei)
 {
 	struct silofs_dnode_info *root_dni;
 	int err;
 
-	if (!dir_has_htree(d_ctx->dir_ii)) {
-		return -ENOENT;
+	err = dic_check_may_lookup(d_ctx);
+	if (err) {
+		return err;
 	}
 	err = dic_stage_tree_root(d_ctx, &root_dni);
 	if (err) {

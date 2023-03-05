@@ -17,6 +17,7 @@ class TestConfig:
         self.basedir = os.path.realpath(basedir)
         self.mntdir = os.path.realpath(mntdir)
         self.repodir = os.path.join(self.basedir, "repo")
+        self.password = "12345678"
 
 
 # pylint: disable=R0903
@@ -102,6 +103,15 @@ class TestBaseCtx:
             tds.append(self.make_td(sub, str(idx), sz))
         return TestDataSet(self.expect, tds)
 
+    def do_mkdirs(self, name: str) -> str:
+        base = self.make_path(name)
+        os.makedirs(base, exist_ok=False)
+        return base
+
+    def do_rmtree(self, name: str) -> None:
+        base = self.make_path(name)
+        shutil.rmtree(base)
+
     def _seed_random(self):
         if self.seed == 0:
             self.seed = datetime.datetime.now().second
@@ -118,12 +128,14 @@ class TestBaseCtx:
             name = self.name
         return os.path.join(self.repodir(), name)
 
+    def _passwd(self) -> str:
+        return self.cfg.password
+
 
 class TestCtx(TestBaseCtx):
     def __init__(self, name: str, cfg: TestConfig) -> None:
         TestBaseCtx.__init__(self, name, cfg)
         self.cmd = cmd.Cmds()
-        self.password = "123456"
 
     def exec_init(self) -> None:
         self.cmd.silofs.init(self.cfg.repodir)
@@ -131,7 +143,7 @@ class TestCtx(TestBaseCtx):
     def exec_mkfs(self, gsize: int = 2, name: str = ""):
         gibi = 2**30
         size = gsize * gibi
-        self.cmd.silofs.mkfs(self._repodir_name(name), size)
+        self.cmd.silofs.mkfs(self._repodir_name(name), size, self._passwd())
 
     def exec_mount(
         self,
@@ -139,7 +151,9 @@ class TestCtx(TestBaseCtx):
         allow_hostids: bool = False,
     ) -> None:
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.mount(repodir_name, self.cfg.mntdir, allow_hostids)
+        self.cmd.silofs.mount(
+            repodir_name, self.cfg.mntdir, self._passwd(), allow_hostids
+        )
 
     def exec_umount(self) -> None:
         self.cmd.silofs.umount(self.mntpoint())
@@ -154,20 +168,11 @@ class TestCtx(TestBaseCtx):
 
     def exec_rmfs(self, name: str = "") -> None:
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.rmfs(repodir_name)
+        self.cmd.silofs.rmfs(repodir_name, self._passwd())
 
     def exec_fsck(self, name: str = "") -> None:
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.fsck(repodir_name)
-
-    def do_mkdirs(self, name: str) -> str:
-        base = self.make_path(name)
-        os.makedirs(base, exist_ok=False)
-        return base
-
-    def do_rmtree(self, name: str) -> None:
-        base = self.make_path(name)
-        shutil.rmtree(base)
+        self.cmd.silofs.fsck(repodir_name, self._passwd())
 
 
 class TestDef:

@@ -41,9 +41,6 @@ static const char *cmd_mount_help_desc[] = {
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
-	/*
-	"  -P, --noconcp                No concurrent data copy (devel)",
-	*/
 	NULL
 };
 
@@ -54,6 +51,7 @@ struct cmd_mount_in_args {
 	char   *name;
 	char   *mntpoint;
 	char   *mntpoint_real;
+	char   *password;
 	bool    no_allowother;
 	bool    allowhostids;
 	bool    wbackcache;
@@ -93,13 +91,13 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "coredump", no_argument, NULL, 'C' },
-		{ "noconcp", no_argument, NULL, 'P' },
+		{ "password", required_argument, NULL, 'p' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZPiAWDV:Ch", opts);
+		opt_chr = cmd_getopt("rXSZiAWDV:Cp:h", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -122,6 +120,8 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'C') {
 			cmd_globals.allow_coredump = true;
+		} else if (opt_chr == 'p') {
+			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_mount_help_desc);
 		} else if (opt_chr > 0) {
@@ -140,6 +140,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
+	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->mntdir = ctx->in_args.mntpoint_real;
@@ -166,6 +167,7 @@ static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_fs_env(struct cmd_mount_ctx *ctx)
 {
+	ctx->fs_args.passwd = ctx->in_args.password;
 	cmd_new_env(&ctx->fs_env, &ctx->fs_args);
 }
 
@@ -199,6 +201,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.mntpoint);
 	cmd_pstrfree(&ctx->in_args.mntpoint_real);
 	cmd_pstrfree(&ctx->in_args.name);
+	cmd_delpass(&ctx->in_args.password);
 	cmd_close_syslog();
 	cmd_mount_ctx = NULL;
 }
@@ -228,15 +231,21 @@ static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
-	struct cmd_mount_in_args *args = &ctx->in_args;
+	cmd_check_exists(ctx->in_args.repodir_name);
+	cmd_check_isreg(ctx->in_args.repodir_name, false);
+	cmd_split_path(ctx->in_args.repodir_name,
+	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_check_nonemptydir(ctx->in_args.repodir, true);
+	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repopath(ctx->in_args.repodir_real);
+	cmd_check_fsname(ctx->in_args.name);
+}
 
-	cmd_check_exists(args->repodir_name);
-	cmd_check_isreg(args->repodir_name, false);
-	cmd_split_path(args->repodir_name, &args->repodir, &args->name);
-	cmd_check_nonemptydir(args->repodir, true);
-	cmd_realpath(args->repodir, &args->repodir_real);
-	cmd_check_repopath(args->repodir_real);
-	cmd_check_fsname(args->name);
+static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
+{
+	if (ctx->in_args.password == NULL) {
+		cmd_getpass(NULL, &ctx->in_args.password);
+	}
 }
 
 static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
@@ -430,6 +439,9 @@ void cmd_execute_mount(void)
 
 	/* Require minimal repository validity */
 	cmd_mount_prepare_repo(&ctx);
+
+	/* Require password */
+	cmd_mount_getpass(&ctx);
 
 	/* Setup input arguments */
 	cmd_mount_setup_fs_args(&ctx);

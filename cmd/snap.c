@@ -46,6 +46,7 @@ struct cmd_snap_in_args {
 	char   *snapname;
 	char   *dirpath;
 	char   *dirpath_real;
+	char   *password;
 	bool    offline;
 };
 
@@ -125,6 +126,7 @@ static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
 static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
+	cmd_delpass(&ctx->in_args.password);
 	cmd_reset_fs_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -193,6 +195,13 @@ static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)
 	}
 }
 
+static void cmd_snap_getpass(struct cmd_snap_ctx *ctx)
+{
+	if ((ctx->in_args.password == NULL) && !ctx->online) {
+		cmd_getpass(NULL, &ctx->in_args.password);
+	}
+}
+
 static void
 cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 {
@@ -244,6 +253,7 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
+	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
@@ -354,6 +364,9 @@ void cmd_execute_snap(void)
 
 	/* Verify user's arguments */
 	cmd_snap_prepare(&ctx);
+
+	/* Require password (off-line mode) */
+	cmd_snap_getpass(&ctx);
 
 	/* Setup input arguments */
 	cmd_snap_setup_fs_args(&ctx);

@@ -29,6 +29,7 @@ struct cmd_rmfs_in_args {
 	char   *repodir;
 	char   *repodir_real;
 	char   *name;
+	char   *password;
 };
 
 struct cmd_rmfs_ctx {
@@ -46,14 +47,17 @@ static void cmd_rmfs_getopt(struct cmd_rmfs_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
+		{ "password", required_argument, NULL, 'p' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("V:h", opts);
-		if (opt_chr == 'V') {
+		opt_chr = cmd_getopt("p:V:h", opts);
+		if (opt_chr == 'p') {
+			cmd_getoptarg("--password", &ctx->in_args.password);
+		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_rmfs_help_desc);
@@ -77,6 +81,13 @@ static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.name);
 }
 
+static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
+{
+	if (ctx->in_args.password == NULL) {
+		cmd_getpass(NULL, &ctx->in_args.password);
+	}
+}
+
 static void cmd_rmfs_lock_fs(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_lockf(ctx->in_args.repodir_real,
@@ -90,6 +101,7 @@ static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 	cmd_init_fs_args(fs_args);
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
+	fs_args->passwd = ctx->in_args.password;
 }
 
 static void cmd_rmfs_load_ids(struct cmd_rmfs_ctx *ctx)
@@ -138,6 +150,7 @@ static void cmd_rmfs_destroy_fs_env(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_rmfs_destroy_fs_env(ctx);
+	cmd_delpass(&ctx->in_args.password);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -175,6 +188,9 @@ void cmd_execute_rmfs(void)
 
 	/* Verify user's arguments */
 	cmd_rmfs_prepare(&ctx);
+
+	/* Require password */
+	cmd_rmfs_getpass(&ctx);
 
 	/* Require lockable */
 	cmd_rmfs_lock_fs(&ctx);

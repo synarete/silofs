@@ -32,6 +32,7 @@ struct cmd_mkfs_in_args {
 	char   *repodir_real;
 	char   *name;
 	char   *size;
+	char   *password;
 	long    fs_size;
 	bool    force;
 };
@@ -52,13 +53,14 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	const struct option opts[] = {
 		{ "size", required_argument, NULL, 's' },
 		{ "force", no_argument, NULL, 'F' },
+		{ "password", required_argument, NULL, 'p' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:V:Fh", opts);
+		opt_chr = cmd_getopt("s:V:Fp:h", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
@@ -66,6 +68,8 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
+		} else if (opt_chr == 'p') {
+			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_mkfs_help_desc);
 		} else if (opt_chr > 0) {
@@ -92,6 +96,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
+	cmd_delpass(&ctx->in_args.password);
 	cmd_mkfs_ctx = NULL;
 }
 
@@ -121,11 +126,19 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 	cmd_check_fsname(args->name);
 }
 
+static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
+{
+	if (ctx->in_args.password == NULL) {
+		cmd_getpass2(NULL, &ctx->in_args.password);
+	}
+}
+
 static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
+	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;
@@ -183,6 +196,9 @@ void cmd_execute_mkfs(void)
 
 	/* Verify user's arguments */
 	cmd_mkfs_prepare(&ctx);
+
+	/* Require password */
+	cmd_mkfs_getpass(&ctx);
 
 	/* Setup input arguments */
 	cmd_mkfs_setup_fs_args(&ctx);

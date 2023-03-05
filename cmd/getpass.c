@@ -187,9 +187,9 @@ static void close_password_file(int fd, const char *path)
 
 static char *getpass_from_file(const char *path)
 {
-	int fd;
-	size_t len = 0;
 	char buf[1024] = "";
+	size_t len = 0;
+	int fd;
 
 	fd = open_password_file(path);
 	read_password_buf(fd, buf, sizeof(buf), &len);
@@ -198,7 +198,7 @@ static char *getpass_from_file(const char *path)
 	return cmd_strdup(buf);
 }
 
-static char *silofs_do_getpass(const char *path, bool repeat)
+static char *do_getpass(const char *path, bool repeat)
 {
 	char *pass = NULL;
 	char *pass2 = NULL;
@@ -224,12 +224,12 @@ static char *silofs_do_getpass(const char *path, bool repeat)
 
 void cmd_getpass(const char *path, char **out_pass)
 {
-	*out_pass = silofs_do_getpass(path, false);
+	*out_pass = do_getpass(path, false);
 }
 
 void cmd_getpass2(const char *path, char **out_pass)
 {
-	*out_pass = silofs_do_getpass(path, true);
+	*out_pass = do_getpass(path, true);
 }
 
 void cmd_delpass(char **pass)

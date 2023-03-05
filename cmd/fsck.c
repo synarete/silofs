@@ -29,6 +29,7 @@ struct cmd_fsck_in_args {
 	char   *repodir;
 	char   *repodir_real;
 	char   *name;
+	char   *password;
 };
 
 struct cmd_fsck_ctx {
@@ -45,13 +46,16 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
+		{ "password", required_argument, NULL, 'p' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("h", opts);
-		if (opt_chr == 'V') {
+		opt_chr = cmd_getopt("p:h", opts);
+		if (opt_chr == 'p') {
+			cmd_getoptarg("--password", &ctx->in_args.password);
+		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_fsck_help_desc);
@@ -78,6 +82,7 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
+	cmd_delpass(&ctx->in_args.password);
 	cmd_fsck_ctx = NULL;
 }
 
@@ -106,13 +111,19 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.name);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
+{
+	if (ctx->in_args.password == NULL) {
+		cmd_getpass(NULL, &ctx->in_args.password);
+	}
+}
 
 static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
+	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
@@ -175,6 +186,9 @@ void cmd_execute_fsck(void)
 
 	/* Verify user's arguments */
 	cmd_fsck_prepare(&ctx);
+
+	/* Require password */
+	cmd_fsck_getpass(&ctx);
 
 	/* Setup input arguments */
 	cmd_fsck_setup_fs_args(&ctx);

@@ -1412,6 +1412,10 @@ int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 	if (err) {
 		return err;
 	}
+	err = fse_derive_main_key(fse, &bsec);
+	if (err) {
+		return err;
+	}
 	err = fse_verify_bootsec(fse, &bsec);
 	if (err) {
 		return err;

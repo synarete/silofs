@@ -112,18 +112,24 @@ class CmdSilofs(CmdExec):
         args = ["init", repodir]
         self.execute_sub(args)
 
-    def mkfs(self, repodir_name: str, size: int) -> None:
-        self.execute_sub(["mkfs", "-s", str(size), repodir_name])
+    def mkfs(self, repodir_name: str, size: int, password: str) -> None:
+        args = ["mkfs", "-s", str(size), repodir_name]
+        if password:
+            args = args + ["--password", password]
+        self.execute_sub(args)
 
     def mount(
         self,
         repodir_name: str,
         mntpoint: str,
+        password: str,
         allow_hostids: bool = False,
     ) -> None:
         args = ["mount", repodir_name, mntpoint]
         if allow_hostids:
-            args.append("--allow-hostids")
+            args = args + ["--allow-hostids"]
+        if password:
+            args = args + ["--password", password]
         self.execute_run(args)
 
     def umount(self, mntpoint: str) -> None:
@@ -147,14 +153,23 @@ class CmdSilofs(CmdExec):
     def snap(self, name: str, pathname: str) -> None:
         self.execute_sub(["snap", "-n", name, pathname])
 
-    def snap2(self, name: str, repodir_name: str) -> None:
-        self.execute_sub(["snap", "-n", name, "--offline", repodir_name])
+    def snap2(self, name: str, repodir_name: str, password: str) -> None:
+        args = ["snap", "-n", name, "--offline", repodir_name]
+        if password:
+            args = args + ["--password", password]
+        self.execute_sub(args)
 
-    def rmfs(self, repodir_name: str) -> None:
-        self.execute_sub(["rmfs", repodir_name])
+    def rmfs(self, repodir_name: str, password: str) -> None:
+        args = ["rmfs", repodir_name]
+        if password:
+            args = args + ["--password", password]
+        self.execute_sub(args)
 
-    def fsck(self, repodir_name: str) -> None:
-        self.execute_sub(["fsck", repodir_name])
+    def fsck(self, repodir_name: str, password: str) -> None:
+        args = ["fsck", repodir_name]
+        if password:
+            args = args + ["--password", password]
+        self.execute_sub(args)
 
 
 class CmdUnitests(CmdExec):

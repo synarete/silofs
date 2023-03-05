@@ -50,10 +50,6 @@ int silofs_stage_super_at(struct silofs_uber *uber,
                           const struct silofs_uaddr *uaddr,
                           struct silofs_sb_info **out_sbi);
 
-int silofs_shadow_super_at(struct silofs_uber *uber,
-                           const struct silofs_uaddr *uaddr,
-                           struct silofs_sb_info **out_sbi);
-
 
 int silofs_spawn_spnode_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
@@ -63,10 +59,6 @@ int silofs_stage_spnode_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spnode_info **out_sni);
 
-int silofs_shadow_spnode_at(struct silofs_uber *uber,
-                            const struct silofs_uaddr *uaddr,
-                            struct silofs_spnode_info **out_sni);
-
 
 int silofs_spawn_spleaf_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
@@ -75,10 +67,6 @@ int silofs_spawn_spleaf_at(struct silofs_uber *uber,
 int silofs_stage_spleaf_at(struct silofs_uber *uber,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_spleaf_info **out_sli);
-
-int silofs_shadow_spleaf_at(struct silofs_uber *uber,
-                            const struct silofs_uaddr *uaddr,
-                            struct silofs_spleaf_info **out_sli);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

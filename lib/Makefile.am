@@ -48,6 +48,7 @@ libsilofs_fs_la_SOURCES += fs/boot.c
 libsilofs_fs_la_SOURCES += fs/cache.c
 libsilofs_fs_la_SOURCES += fs/crypto.c
 libsilofs_fs_la_SOURCES += fs/dir.c
+libsilofs_fs_la_SOURCES += fs/encdec.c
 libsilofs_fs_la_SOURCES += fs/exec.c
 libsilofs_fs_la_SOURCES += fs/file.c
 libsilofs_fs_la_SOURCES += fs/flush.c

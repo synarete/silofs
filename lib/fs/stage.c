@@ -288,38 +288,10 @@ static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
 	return err;
 }
 
-static int stgc_decrypt_view_inplace(const struct silofs_stage_ctx *stg_ctx,
-                                     const struct silofs_oaddr *oaddr,
-                                     struct silofs_snode_info *si)
+static int stgc_restore_view_of(const struct silofs_stage_ctx *stg_ctx,
+                                struct silofs_vnode_info *vi)
 {
-	union silofs_view *view = si->s_view;
-
-	return silofs_decrypt_view(stg_ctx->uber, oaddr, view, view);
-}
-
-static int stgc_decrypt_view_of(const struct silofs_stage_ctx *stg_ctx,
-                                const struct silofs_oaddr *oaddr,
-                                struct silofs_snode_info *si)
-{
-	int err;
-
-	if (silofs_si_has_bkview(si)) {
-		return 0;
-	}
-	if (stg_ctx->has_view) {
-		err = stgc_decrypt_view_inplace(stg_ctx, oaddr, si);
-		if (err) {
-			return err;
-		}
-	}
-	silofs_si_set_bkview(si);
-	return 0;
-}
-
-static int stgc_decrypt_view_of_vi(const struct silofs_stage_ctx *stg_ctx,
-                                   struct silofs_vnode_info *vi)
-{
-	return stgc_decrypt_view_of(stg_ctx, &vi->v_oaddr, &vi->v_si);
+	return silofs_restore_vi_view(stg_ctx->uber, vi, stg_ctx->has_view);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -2704,7 +2676,7 @@ static int stgc_stage_vnode_at(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		goto out_err;
 	}
-	err = stgc_decrypt_view_of_vi(stg_ctx, vi);
+	err = stgc_restore_view_of(stg_ctx, vi);
 	if (err) {
 		goto out_err;
 	}

@@ -203,10 +203,6 @@ void silofs_si_incref(struct silofs_snode_info *si);
 
 void silofs_si_decref(struct silofs_snode_info *si);
 
-bool silofs_si_has_bkview(const struct silofs_snode_info *si);
-
-void silofs_si_set_bkview(const struct silofs_snode_info *si);
-
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 

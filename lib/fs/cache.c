@@ -717,42 +717,6 @@ static bool bki_is_evictable(const struct silofs_bk_info *bki)
 	return ce_is_evictable_atomic(bki_to_ce(bki));
 }
 
-static uint64_t bk_view_mask_of(loff_t off, size_t len)
-{
-	const ssize_t kb_size = SILOFS_KB_SIZE;
-	const loff_t  pos = silofs_off_in_bk(off);
-	const ssize_t idx = pos / kb_size;
-	const ssize_t nkb = (ssize_t)len / kb_size;
-	uint64_t mask = 0;
-
-	STATICASSERT_EQ(8 * sizeof(mask), SILOFS_NKB_IN_BK);
-	silofs_assert_ge(len, SILOFS_KB_SIZE);
-	silofs_assert_le(len, SILOFS_BK_SIZE);
-
-	if ((idx == 0) && (nkb == SILOFS_NKB_IN_BK)) {
-		mask = ~mask;
-	} else {
-		mask = ((1UL << nkb) - 1) << idx;
-	}
-	return mask;
-}
-
-static bool bki_has_view_at(const struct silofs_bk_info *bki,
-                            loff_t view_pos, size_t view_len)
-{
-	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
-
-	return ((bki->bk_view & view_mask) == view_mask);
-}
-
-static void bki_set_view_at(struct silofs_bk_info *bki,
-                            loff_t view_pos, size_t view_len)
-{
-	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
-
-	bki->bk_view |= view_mask;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_ubk_info *
@@ -980,22 +944,6 @@ void silofs_si_decref(struct silofs_snode_info *si)
 	if (likely(si != NULL)) {
 		si_decref(si);
 	}
-}
-
-bool silofs_si_has_bkview(const struct silofs_snode_info *si)
-{
-	const struct silofs_bk_info *bki = si->s_bki;
-
-	silofs_assert_not_null(bki);
-	return bki_has_view_at(bki, si->s_view_pos, si->s_view_len);
-}
-
-void silofs_si_set_bkview(const struct silofs_snode_info *si)
-{
-	struct silofs_bk_info *bki = si->s_bki;
-
-	silofs_assert_not_null(bki);
-	bki_set_view_at(bki, si->s_view_pos, si->s_view_len);
 }
 
 static void si_remove_from_lrumap(struct silofs_snode_info *si,

@@ -243,15 +243,4 @@ void silofs_seal_unode(struct silofs_unode_info *ui);
 
 bool silofs_test_evictable(const struct silofs_snode_info *si);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-
-int silofs_encrypt_view(const struct silofs_uber *uber,
-                        const struct silofs_oaddr *oaddr,
-                        const union silofs_view *view, void *ptr);
-
-int silofs_decrypt_view(const struct silofs_uber *uber,
-                        const struct silofs_oaddr *oaddr,
-                        const union silofs_view *view, void *ptr);
-
 #endif /* SILOFS_NODES_H_ */

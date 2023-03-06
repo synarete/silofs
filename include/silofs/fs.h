@@ -29,6 +29,7 @@
 #include <silofs/crypto.h>
 #include <silofs/spxmap.h>
 #include <silofs/cache.h>
+#include <silofs/encdec.h>
 #include <silofs/task.h>
 #include <silofs/repo.h>
 #include <silofs/super.h>

@@ -273,8 +273,7 @@ silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_blobid *blobid,
-                        loff_t bpos, enum silofs_stype stype,
-                        enum silofs_height height, loff_t voff);
+                        loff_t bpos, enum silofs_stype stype, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr);
 

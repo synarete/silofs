@@ -487,8 +487,7 @@ struct silofs_uaddr64b {
 	struct silofs_oaddr48b          oaddr;
 	int64_t                         voff;
 	uint8_t                         stype;
-	uint8_t                         height;
-	uint8_t                         reserved[6];
+	uint8_t                         reserved[7];
 } silofs_packed_aligned8;
 
 

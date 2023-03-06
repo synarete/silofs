@@ -1358,8 +1358,9 @@ void silofs_sni_resolve_main_at(const struct silofs_spnode_info *sni,
 	silofs_assert(sni_is_inrange(sni, voff));
 
 	silofs_sni_main_blob(sni, &blobid);
-	uaddr_setup(out_uaddr, &blobid, bpos,
-	            sni_child_stype(sni), sni_child_height(sni), base);
+	silofs_assert_lt(blobid.height, SILOFS_HEIGHT_SUPER);
+	silofs_assert_ge(blobid.height, SILOFS_HEIGHT_SPLEAF);
+	uaddr_setup(out_uaddr, &blobid, bpos, sni_child_stype(sni), base);
 }
 
 void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,

@@ -678,8 +678,8 @@ void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
 	const loff_t base = sbi_base_voff_of_child(sbi, voff);
 
 	silofs_sbi_main_blob(sbi, vspace, &blobid);
-	uaddr_setup(out_uaddr, &blobid, bpos,
-	            SILOFS_STYPE_SPNODE, SILOFS_HEIGHT_SUPER - 1, base);
+	silofs_assert_eq(blobid.height, SILOFS_HEIGHT_SUPER - 1);
+	uaddr_setup(out_uaddr, &blobid, bpos, SILOFS_STYPE_SPNODE, base);
 }
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,

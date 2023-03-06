@@ -408,6 +408,7 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 	inode_set_parent(inode, ii_ino(ii));
 	inode_set_nlink(inode, 2);
 	inode_set_flags(inode, SILOFS_INODEF_ROOTD);
+	ii_dirtify(ii);
 }
 
 bool silofs_is_rootdir(const struct silofs_inode_info *ii)

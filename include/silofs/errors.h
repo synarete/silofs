@@ -42,6 +42,7 @@
 #define SILOFS_ECSUM            SILOFS_DEFERR2(9)
 #define SILOFS_ERDONLY          SILOFS_DEFERR2(10)
 #define SILOFS_EBLOB            SILOFS_DEFERR2(11)
+#define SILOFS_ENOTDONE         SILOFS_DEFERR2(12)
 
 /* internal error */
 #define SILOFS_EBUG             SILOFS_DEFERR2(1111)

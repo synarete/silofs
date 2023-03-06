@@ -493,8 +493,7 @@ struct silofs_fs_env {
 	struct silofs_ivkey     fs_ivkey;
 	struct silofs_qalloc   *fs_qalloc;
 	struct silofs_alloc    *fs_alloc;
-	struct silofs_crypto   *fs_crypto;
-	struct silofs_repo    *fs_repo;
+	struct silofs_repo     *fs_repo;
 	struct silofs_submitq  *fs_submitq;
 	struct silofs_idsmap   *fs_idsmap;
 	struct silofs_uber     *fs_uber;

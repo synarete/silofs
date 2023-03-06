@@ -70,7 +70,7 @@ struct cmd_mount_ctx {
 	pid_t                   child_pid;
 	time_t                  start_time;
 	int                     halt_signal;
-	bool                    clean_ending;
+	int                     post_exec_status;
 };
 
 static struct cmd_mount_ctx *cmd_mount_ctx;
@@ -273,7 +273,7 @@ static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 	ctx->start_time = silofs_time_now();
 	cmd_exec_fs(ctx->fs_env);
 	ctx->halt_signal = ctx->fs_env->fs_signum;
-	ctx->clean_ending = silofs_fse_served_clean(ctx->fs_env);
+	ctx->post_exec_status = silofs_post_exec_fs(ctx->fs_env);
 }
 
 static void cmd_mount_shutdown_fs(struct cmd_mount_ctx *ctx)
@@ -408,7 +408,7 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 {
 	int err;
 
-	if ((ctx->halt_signal > 0) && !ctx->clean_ending) {
+	if ((ctx->halt_signal > 0) && (ctx->post_exec_status != 0)) {
 		err = silofs_mntrpc_umount(ctx->in_args.mntpoint_real,
 		                           getuid(), getgid(), MNT_DETACH);
 		if (err) {
@@ -425,7 +425,7 @@ void cmd_execute_mount(void)
 	struct cmd_mount_ctx ctx = {
 		.fs_env = NULL,
 		.halt_signal = -1,
-		.clean_ending = true,
+		.post_exec_status = 0,
 	};
 
 	/* Do all cleanups upon exits */

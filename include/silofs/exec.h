@@ -25,8 +25,6 @@ int silofs_fse_new(const struct silofs_fs_args *args,
 
 void silofs_fse_del(struct silofs_fs_env *fse);
 
-bool silofs_fse_served_clean(const struct silofs_fs_env *fse);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_format_repo(struct silofs_fs_env *fse);
@@ -46,6 +44,8 @@ int silofs_poke_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 int silofs_close_fs(struct silofs_fs_env *fse);
 
 int silofs_exec_fs(struct silofs_fs_env *fse);
+
+int silofs_post_exec_fs(const struct silofs_fs_env *fse);
 
 int silofs_fork_fs(struct silofs_fs_env *fse,
                    struct silofs_uuid *out_new, struct silofs_uuid *out_alt);

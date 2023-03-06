@@ -511,6 +511,4 @@ void cmd_execute_mount(void)
 
 	/* Finalize resource allocations */
 	cmd_mount_finalize(&ctx);
-
-	/* Return to main for global cleanups */
 }

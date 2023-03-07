@@ -52,6 +52,8 @@ Various testing programs for silofs.
 %{_bindir}/%{name}
 %{_sbindir}/%{name}-mountd
 %{_sbindir}/*.%{name}
+%exclude %{_libdir}/lib%{name}*.so.*
+%exclude %{_libdir}/lib%{name}_*.*a
 %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man8/%{name}-*.8*
@@ -71,7 +73,7 @@ Various testing programs for silofs.
 %{_bindir}/%{name}-citests
 %{_prefix}/lib/python3*/site-packages/%{name}/*
 %exclude %{_includedir}/*
-%exclude %{_libdir}/lib%{name}*.*
+%exclude %{_libdir}/lib%{name}*.so
 
 
 %post

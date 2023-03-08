@@ -640,11 +640,12 @@ static void spleaf_add_allocated_at(struct silofs_spmap_leaf *sl,
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
 	silofs_assert(bkr_test_allocated_at(bkr, kbn, nkb));
+	silofs_assert_ge(bkr_refcnt(bkr), nkb);
 	bkr_inc_refcnt(bkr, nkb);
 }
 
-static void spleaf_dec_allocated_at(struct silofs_spmap_leaf *sl,
-                                    const struct silofs_vaddr *vaddr)
+static void spleaf_unref_allocated_at(struct silofs_spmap_leaf *sl,
+                                      const struct silofs_vaddr *vaddr)
 {
 	const size_t kbn = kbn_of(vaddr);
 	const size_t nkb = nkbs_of(vaddr);
@@ -652,7 +653,7 @@ static void spleaf_dec_allocated_at(struct silofs_spmap_leaf *sl,
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
 	bkr_dec_refcnt(bkr, nkb);
-	if (!bkr_refcnt(bkr) || (nkb < nkb_in_bk)) {
+	if ((nkb < nkb_in_bk) || !bkr_refcnt(bkr)) {
 		bkr_clear_allocated_at(bkr, kbn, nkb);
 	}
 }
@@ -967,6 +968,8 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 	struct silofs_spmap_leaf *sl = sli->sl;
 
 	sli->sl_nused_bytes += vaddr->len;
+	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
+
 	spleaf_set_allocated_at(sl, vaddr);
 	if (vaddr_isdata(vaddr)) {
 		spleaf_set_unwritten_at(sl, vaddr);
@@ -977,6 +980,10 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 void silofs_sli_reref_allocated_space(struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr *vaddr)
 {
+	silofs_assert_eq(vaddr->stype, SILOFS_STYPE_DATABK);
+	silofs_assert_ge(sli->sl_nused_bytes, SILOFS_BK_SIZE);
+	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
+
 	spleaf_add_allocated_at(sli->sl, vaddr);
 	sli_dirtify(sli);
 }
@@ -986,8 +993,9 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
 
-	spleaf_dec_allocated_at(sl, vaddr);
+	spleaf_unref_allocated_at(sl, vaddr);
 	if (!spleaf_is_allocated_at(sl, vaddr)) {
+		silofs_assert_ge(sli->sl_nused_bytes, vaddr->len);
 		sli->sl_nused_bytes -= vaddr->len;
 	}
 	if (!spleaf_has_allocated_with(sl, vaddr)) {

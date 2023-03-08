@@ -119,32 +119,16 @@ static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
                                   struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr)
 {
-	const bool first_bk = !silofs_sli_has_refs_at(sli, vaddr);
+	const bool first_ref_on_bk = !silofs_sli_has_refs_at(sli, vaddr);
 
 	silofs_sli_mark_allocated_space(sli, vaddr);
-	sbi_update_space_stats(sbi, vaddr, 1, first_bk ? 1 : 0);
+	sbi_update_space_stats(sbi, vaddr, 1, first_ref_on_bk ? 1 : 0);
 }
 
 static bool sli_is_shared_databk(const struct silofs_spleaf_info *sli,
                                  const struct silofs_vaddr *vaddr)
 {
-	bool shared = false;
-
-	if (vaddr_isdatabk(vaddr)) {
-		shared = silofs_sli_has_refs_at(sli, vaddr);
-	}
-	return shared;
-}
-
-static void sbi_clear_allocate_at(struct silofs_sb_info *sbi,
-                                  struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr)
-{
-	silofs_sli_unref_allocated_space(sli, vaddr);
-
-	if (!sli_is_shared_databk(sli, vaddr)) {
-		sbi_update_space_stats(sbi, vaddr, -1, 0);
-	}
+	return vaddr_isdatabk(vaddr) && silofs_sli_has_refs_at(sli, vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -578,7 +562,7 @@ static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
 		return 0; /* not on main blob: no-op */
 	}
 	if (!spac_ismutable_blobid(spa_ctx, &bkaddr.blobid)) {
-		return 0; /* non mutable blob */
+		return 0; /* not a mutable blob */
 	}
 	err = silofs_stage_blob_at(spa_ctx->uber, &bkaddr.blobid, &blobf);
 	if (err) {
@@ -593,10 +577,20 @@ static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
 	return 0;
 }
 
+static void spac_clear_allocate_at(const struct silofs_spalloc_ctx *spa_ctx,
+                                   const struct silofs_vaddr *vaddr)
+{
+	silofs_sli_unref_allocated_space(spa_ctx->sli, vaddr);
+
+	if (!sli_is_shared_databk(spa_ctx->sli, vaddr)) {
+		sbi_update_space_stats(spa_ctx->sbi, vaddr, -1, 0);
+	}
+}
+
 static void spac_reclaim_vspace_of(const struct silofs_spalloc_ctx *spa_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
-	sbi_clear_allocate_at(spa_ctx->sbi, spa_ctx->sli, vaddr);
+	spac_clear_allocate_at(spa_ctx, vaddr);
 	spac_try_recache_vspace(spa_ctx, vaddr);
 	spac_try_reclaim_vblob(spa_ctx);
 }

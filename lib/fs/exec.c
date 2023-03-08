@@ -221,7 +221,7 @@ static int fse_init_submitq(struct silofs_fs_env *fse)
 	int err;
 
 	smq = &fse_obj_of(fse)->fs_core.c.submitq;
-	err = silofs_submitq_init(smq);
+	err = silofs_submitq_init(smq, fse->fs_alloc);
 	if (err) {
 		return err;
 	}
@@ -553,14 +553,12 @@ static int make_task(const struct silofs_fs_env *fse,
 
 static int term_task(struct silofs_task *task, int status)
 {
-	int err1;
-	int err2;
+	int err;
 
-	err1 = silofs_task_submit(task, true);
-	err2 = silofs_task_complete(task);
+	err = silofs_task_submit(task, true);
 	silofs_task_fini(task);
 	silofs_burnstack();
-	return status ? status : (err1 ? err1 : err2);
+	return status ? status : err;
 }
 
 static void drop_cache(const struct silofs_fs_env *fse)

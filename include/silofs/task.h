@@ -21,7 +21,6 @@
 struct silofs_task {
 	struct silofs_uber     *t_uber;
 	struct silofs_submitq  *t_submitq;
-	struct silofs_listq     t_pendq;
 	struct silofs_oper      t_oper;
 	uint64_t                t_apex_id;
 	volatile int            t_interrupt;
@@ -38,11 +37,9 @@ struct silofs_submit_ref {
 
 /* submission queue entry */
 struct silofs_submitq_entry {
-	struct silofs_mutex         mu;
 	struct silofs_list_head     qlh;
-	struct silofs_list_head     tlh;
 	struct silofs_alloc        *alloc;
-	struct silofs_task         *task;
+	const struct silofs_uber   *uber;
 	struct silofs_blobf        *blobf;
 	struct silofs_submit_ref    ref[32];
 	struct silofs_blobid        blobid;
@@ -59,16 +56,8 @@ struct silofs_submitq_entry {
 struct silofs_submitq {
 	struct silofs_listq     smq_listq;
 	struct silofs_mutex     smq_mutex;
+	struct silofs_alloc    *smq_alloc;
 	uint64_t                smq_apex_id;
-};
-
-/* commit-queues flush set */
-struct silofs_commitqs {
-	struct silofs_rwlock    cqs_rwlock;
-	struct silofs_submitq   cqs_set[4];
-	struct silofs_alloc    *cqs_alloc;
-	uint64_t                cqs_apex_cid;
-	volatile int            cqs_active;
 };
 
 
@@ -98,26 +87,29 @@ void silofs_task_set_umask(struct silofs_task *task, mode_t umask);
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt);
 
-int silofs_task_mk_sqe(struct silofs_task *task,
-                       struct silofs_submitq_entry **out_sqe);
 
-void silofs_task_rm_sqe(struct silofs_task *task,
-                        struct silofs_submitq_entry *sqe);
-
-void silofs_task_enq_sqe(struct silofs_task *task,
-                         struct silofs_submitq_entry *sqe);
+void silofs_task_update_by(struct silofs_task *task,
+                           struct silofs_submitq_entry *sqe);
 
 int silofs_task_submit(struct silofs_task *task, bool all);
-
-int silofs_task_complete(struct silofs_task *task);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_submitq_init(struct silofs_submitq *smq);
+int silofs_submitq_init(struct silofs_submitq *smq,
+                        struct silofs_alloc *alloc);
 
 void silofs_submitq_fini(struct silofs_submitq *smq);
+
+void silofs_submitq_enqueue(struct silofs_submitq *smq,
+                            struct silofs_submitq_entry *sqe);
+
+int silofs_submitq_new_sqe(struct silofs_submitq *smq,
+                           struct silofs_submitq_entry **out_sqe);
+
+void silofs_submitq_del_sqe(struct silofs_submitq *smq,
+                            struct silofs_submitq_entry *sqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

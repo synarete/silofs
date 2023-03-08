@@ -269,8 +269,8 @@ void silofs_submitq_fini(struct silofs_submitq *smq)
 	smq->smq_apex_id = 0;
 }
 
-static struct silofs_submitq_entry *submitq_front_sqe(struct silofs_submitq
-                *smq)
+static struct silofs_submitq_entry *
+submitq_front_sqe(struct silofs_submitq *smq)
 {
 	struct silofs_list_head *lh;
 

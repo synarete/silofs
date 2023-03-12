@@ -359,7 +359,7 @@ spac_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 static void spac_mark_allocated(struct silofs_spalloc_ctx *spa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_eq(spa_ctx->stype, vaddr->stype);
+	silofs_expect_eq(spa_ctx->stype, vaddr->stype);
 
 	sbi_mark_allocated_at(spa_ctx->sbi, spa_ctx->sli, vaddr);
 	spac_set_hint(spa_ctx, vaddr->off);

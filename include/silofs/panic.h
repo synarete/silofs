@@ -17,6 +17,13 @@
 #ifndef SILOFS_PANIC_H_
 #define SILOFS_PANIC_H_
 
+/*
+ * TODO-0052: Define and use bug_on macros
+ *
+ * Define a set of complementary bug_on" macros to the "expect" one. Same logic
+ * (though negative), but a meaningful naming within code itself.
+ */
+
 /* expect-or-die */
 void silofs_expect_true_(int cond, const char *fl, int ln);
 void silofs_expect_cond_(int cond, const char *str, const char *fl, int ln);

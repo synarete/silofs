@@ -314,9 +314,10 @@ static void ftn_inc_refcnt(struct silofs_ftree_node *ftn)
 
 static void ftn_dec_refcnt(struct silofs_ftree_node *ftn)
 {
-	silofs_assert_gt(ftn_refcnt(ftn), 0);
+	const size_t refcnt = ftn_refcnt(ftn);
 
-	ftn_set_refcnt(ftn, ftn_refcnt(ftn) - 1);
+	silofs_expect_gt(refcnt, 0);
+	ftn_set_refcnt(ftn, refcnt - 1);
 }
 
 static ino_t ftn_ino(const struct silofs_ftree_node *ftn)
@@ -373,8 +374,8 @@ static bool ftn_isbottom(const struct silofs_ftree_node *ftn)
 {
 	const size_t height = ftn_height(ftn);
 
-	silofs_assert_gt(height, 1);
-	silofs_assert_le(height, SILOFS_FILE_HEIGHT_MAX);
+	silofs_expect_gt(height, 1);
+	silofs_expect_le(height, SILOFS_FILE_HEIGHT_MAX);
 
 	return (height == 2);
 }

@@ -176,9 +176,9 @@ static bool dtn_index_valid_depth(silofs_dtn_index_t dtn_index)
 static silofs_dtn_ord_t
 hash_to_child_ord(uint64_t hash, silofs_dtn_depth_t depth)
 {
-	silofs_assert_gt(depth, 0);
-	silofs_assert_lt(depth, sizeof(hash));
-	silofs_assert_le(depth, DTREE_DEPTH_MAX);
+	silofs_expect_gt(depth, 0);
+	silofs_expect_lt(depth, sizeof(hash));
+	silofs_expect_le(depth, DTREE_DEPTH_MAX);
 
 	return (hash >> (8 * (depth - 1))) % DTREE_FANOUT;
 }
@@ -538,8 +538,8 @@ static char *dtn_name_at(const struct silofs_dtree_node *dtn, size_t name_pos)
 {
 	const void *dat = &dtn->dn_data.nb[name_pos];
 
-	silofs_assert_gt(name_pos, 0);
-	silofs_assert_le(name_pos, ARRAY_SIZE(dtn->dn_data.nb));
+	silofs_expect_gt(name_pos, 0);
+	silofs_expect_le(name_pos, ARRAY_SIZE(dtn->dn_data.nb));
 	return unconst(dat);
 }
 
@@ -677,8 +677,7 @@ static size_t dtn_insert_name_pos(struct silofs_dtree_node *dtn, size_t nlen)
 {
 	const size_t nnb = dtn_nnb(dtn);
 
-	silofs_assert_lt(nnb + nlen, sizeof(dtn->dn_data.nb));
-
+	silofs_expect_lt(nnb + nlen, sizeof(dtn->dn_data.nb));
 	return sizeof(dtn->dn_data.nb) - (nnb + nlen);
 }
 

@@ -296,9 +296,11 @@ static void bkr_inc_refcnt(struct silofs_bk_ref *bkr, size_t n)
 
 static void bkr_dec_refcnt(struct silofs_bk_ref *bkr, size_t n)
 {
-	silofs_assert_ge(bkr_refcnt(bkr), n);
+	const size_t refnct = bkr_refcnt(bkr);
 
-	bkr_set_refcnt(bkr, bkr_refcnt(bkr) - n);
+	silofs_expect_ge(refnct, n);
+
+	bkr_set_refcnt(bkr, refnct - n);
 }
 
 static uint64_t bkr_allocated(const struct silofs_bk_ref *bkr)
@@ -380,7 +382,7 @@ static bool bkr_test_unwritten_at(const struct silofs_bk_ref *bkr,
 	const uint64_t mask = mask_of(kbn, nkb);
 	const uint64_t unwritten = bkr_unwritten(bkr);
 
-	silofs_assert(((unwritten & mask) == mask) ||
+	silofs_expect(((unwritten & mask) == mask) ||
 	              ((unwritten & mask) == 0));
 
 	return (unwritten & mask) == mask;
@@ -1025,6 +1027,8 @@ bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
 {
 	const size_t cnt = spleaf_refcnt_at(sli->sl, vaddr->off);
 	const size_t nkb = nkbs_of(vaddr);
+
+	silofs_expect_ge(cnt, nkb);
 
 	return (nkb == cnt);
 }

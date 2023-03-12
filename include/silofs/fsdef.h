@@ -252,16 +252,16 @@
 #define SILOFS_SYMLNK_MAX               SILOFS_PATH_MAX
 
 /* max size of within-inode symbolic-link value  */
-#define SILOFS_SYMLNK_HEAD_MAX          (472)
+#define SILOFS_SYMLNK_HEAD_MAX          (480)
 
 /* max size of symbolic-link part  */
-#define SILOFS_SYMLNK_PART_MAX          (960)
+#define SILOFS_SYMLNK_PART_MAX          (4032)
 
 /* number of possible symbolic-link parts  */
-#define SILOFS_SYMLNK_NPARTS            (5)
+#define SILOFS_SYMLNK_NPARTS            (2)
 
-/* on-disk size of symlink tail-value */
-#define SILOFS_SYMLNK_VAL_SIZE          SILOFS_KB_SIZE
+/* on-disk size of symbolik-link tail-value */
+#define SILOFS_SYMLNK_VAL_SIZE          (4096)
 
 
 /* number of extended-attributes entries in indirect node */
@@ -719,6 +719,7 @@ struct silofs_inode_dir {
 struct silofs_inode_lnk {
 	uint8_t                         l_head[SILOFS_SYMLNK_HEAD_MAX];
 	struct silofs_vaddr64           l_tail[SILOFS_SYMLNK_NPARTS];
+	uint8_t                         l_reserved[16];
 } silofs_packed_aligned64;
 
 

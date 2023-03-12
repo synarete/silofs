@@ -143,7 +143,7 @@ static void guarantee_persistent_types_nk(void)
 	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
 	REQUIRE_SIZEOF_8K(struct silofs_ftree_node);
-	REQUIRE_SIZEOF_1K(struct silofs_symlnk_value);
+	REQUIRE_SIZEOF_4K(struct silofs_symlnk_value);
 	REQUIRE_SIZEOF_1K(struct silofs_data_block1);
 	REQUIRE_SIZEOF_4K(struct silofs_data_block4);
 	REQUIRE_SIZEOF_64K(struct silofs_data_block);
@@ -180,7 +180,6 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_bk_ref, 120);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF_KB(struct silofs_inode);
-	REQUIRE_SIZEOF_KB(struct silofs_symlnk_value);
 	REQUIRE_SIZEOF_BK(struct silofs_data_block);
 	REQUIRE_SIZEOF_BK(struct silofs_block);
 	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);

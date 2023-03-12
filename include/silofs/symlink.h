@@ -32,6 +32,6 @@ int silofs_setup_symlink(struct silofs_task *task,
                          struct silofs_inode_info *lnk_ii,
                          const struct silofs_str *symval);
 
-int silofs_verify_symlnk_value(const struct silofs_symlnk_value *lnv);
+int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv);
 
 #endif /* SILOFS_SYMLINK_H_ */

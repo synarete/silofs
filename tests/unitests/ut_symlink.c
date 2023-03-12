@@ -24,12 +24,12 @@ static const char *make_symname(struct ut_env *ute, size_t idx)
 
 static char *make_symval(struct ut_env *ute, char c, size_t len)
 {
-	char *val;
 	const size_t vsz = SILOFS_PATH_MAX;
 	const size_t name_max = UT_NAME_MAX;
+	char *val = NULL;
 
-	ut_expect_lt(len, vsz);
-	val = ut_zerobuf(ute, vsz);
+	ut_expect_le(len, vsz);
+	val = ut_zerobuf(ute, vsz + 1);
 	for (size_t i = 0; i < len; ++i) {
 		if (i % name_max) {
 			val[i] = c;
@@ -215,7 +215,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 static void ut_symlink_and_io(struct ut_env *ute)
 {
 	ut_symlink_and_io_(ute, 128);
-	ut_symlink_and_io_(ute, SILOFS_PATH_MAX - 1);
+	ut_symlink_and_io_(ute, SILOFS_SYMLNK_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -288,6 +288,7 @@ static void ut_symlink_and_io2(struct ut_env *ute)
 	ut_symlink_and_io2_(ute, 11);
 	ut_symlink_and_io2_(ute, 111);
 	ut_symlink_and_io2_(ute, 1111);
+	ut_symlink_and_io2_(ute, SILOFS_SYMLNK_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -296,12 +297,13 @@ static blkcnt_t symval_length_to_blocks(size_t len)
 {
 	size_t nparts = 0;
 	blkcnt_t blkcnt = 0;
-	const size_t kb_size = SILOFS_KB_SIZE;
+	const size_t val_size = SILOFS_SYMLNK_VAL_SIZE;
 	const size_t head_len = SILOFS_SYMLNK_HEAD_MAX;
+	const size_t factor = val_size / 512;
 
 	if (len > head_len) {
-		nparts = silofs_div_round_up(len - head_len, kb_size);
-		blkcnt = (blkcnt_t)(2 * nparts);
+		nparts = silofs_div_round_up(len - head_len, val_size);
+		blkcnt = (blkcnt_t)(factor * nparts);
 	}
 	return blkcnt;
 }

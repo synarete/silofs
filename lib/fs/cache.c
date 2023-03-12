@@ -2898,24 +2898,32 @@ static bool dqid_specific(silofs_dqid_t dqid)
 	return (dqid != SILOFS_DQID_DFL) && (dqid != SILOFS_DQID_ALL);
 }
 
-static size_t flush_threshold_of(silofs_dqid_t dqid, int flags)
+static size_t
+cache_flush_threshold_of(const struct silofs_cache *cache,
+                         silofs_dqid_t dqid, int flags)
 {
-	size_t threshold;
+	struct silofs_alloc_stat st;
+	const size_t kilo = SILOFS_UKILO;
 	const size_t mega = SILOFS_UMEGA;
 	const size_t factor = dqid_specific(dqid) ? 8 : 1;
+	size_t memsize_data;
+	size_t threshold;
+
+	silofs_allocstat(cache->c_alloc, &st);
+	memsize_data = st.memsz_data;
 
 	if (flags & SILOFS_F_NOW) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = mega;
+		threshold = memsize_data / kilo / 4;
 	} else if (flags & SILOFS_F_FSYNC) {
-		threshold = 2 * mega;
+		threshold = memsize_data / kilo / 2;
 	} else if (flags & (SILOFS_F_IDLE)) {
-		threshold = 8 * mega;
+		threshold = memsize_data / kilo;
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		threshold = 16 * mega;
+		threshold = 2 * memsize_data / kilo;
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		threshold = 32 * mega;
+		threshold = 4 * memsize_data / kilo;
 	} else {
 		threshold = 64 * mega;
 	}
@@ -2957,7 +2965,7 @@ static bool cache_dq_need_flush(const struct silofs_cache *cache,
 	if (!accum_ndirty) {
 		return false;
 	}
-	threshold = flush_threshold_of(dqid, flags);
+	threshold = cache_flush_threshold_of(cache, dqid, flags);
 	if (accum_ndirty > threshold) {
 		return true;
 	}

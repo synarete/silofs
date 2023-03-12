@@ -203,9 +203,9 @@ static void silofs_abort(void)
 
 __attribute__((__noreturn__))
 static void
-silofs_fatal_at(const char *msg, const char *fl, int ln)
+silofs_fatal_at_(const char *msg, const char *fl, int ln)
 {
-	silofs_panicf(fl, ln, "failure: `%s'", msg);
+	silofs_panicf(fl, ln, "fatal: '%s'", msg);
 	silofs_unreachable();
 }
 
@@ -216,7 +216,14 @@ static void silofs_fatal_op(long a, const char *op, long b,
 	struct silofs_fatal_msg fm;
 
 	fmtmsg(&fm, "'%ld %s %ld'", a, op, b);
-	silofs_fatal_at(fm.str, fl, ln);
+	silofs_fatal_at_(fm.str, fl, ln);
+}
+
+void silofs_expect_cond_(int cond, const char *str, const char *fl, int ln)
+{
+	if (silofs_unlikely(!cond)) {
+		silofs_fatal_at_(str, fl, ln);
+	}
 }
 
 void silofs_expect_true_(int cond, const char *fl, int ln)
@@ -225,14 +232,7 @@ void silofs_expect_true_(int cond, const char *fl, int ln)
 
 	if (silofs_unlikely(!cond)) {
 		fmtmsg(&fm, "not-true: %d", cond);
-		silofs_fatal_at(fm.str, fl, ln);
-	}
-}
-
-void silofs_expect_cond_(int cond, const char *str, const char *fl, int ln)
-{
-	if (silofs_unlikely(!cond)) {
-		silofs_fatal_at(str, fl, ln);
+		silofs_fatal_at_(fm.str, fl, ln);
 	}
 }
 
@@ -284,7 +284,7 @@ void silofs_expect_ok_(int err, const char *fl, int ln)
 
 	if (silofs_unlikely(err != 0)) {
 		fmtmsg(&fm, "err=%d", err);
-		silofs_fatal_at(fm.str, fl, ln);
+		silofs_fatal_at_(fm.str, fl, ln);
 	}
 }
 
@@ -294,14 +294,14 @@ void silofs_expect_err_(int err, int exp, const char *fl, int ln)
 
 	if (silofs_unlikely(err != exp)) {
 		fmtmsg(&fm, "err=%d exp=%d", err, exp);
-		silofs_fatal_at(fm.str, fl, ln);
+		silofs_fatal_at_(fm.str, fl, ln);
 	}
 }
 
 void silofs_expect_not_null_(const void *ptr, const char *fl, int ln)
 {
 	if (silofs_unlikely(ptr == NULL)) {
-		silofs_fatal_at("NULL pointer", fl, ln);
+		silofs_fatal_at_("NULL pointer", fl, ln);
 	}
 }
 
@@ -311,7 +311,7 @@ void silofs_expect_null_(const void *ptr, const char *fl, int ln)
 
 	if (silofs_unlikely(ptr != NULL)) {
 		fmtmsg(&fm, "not NULL ptr=%p", ptr);
-		silofs_fatal_at(fm.str, fl, ln);
+		silofs_fatal_at_(fm.str, fl, ln);
 	}
 }
 
@@ -322,7 +322,7 @@ void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln)
 
 	if (silofs_unlikely(cmp != 0)) {
 		fmtmsg(&msg, "str-not-equal: %s != %s", s, z);
-		silofs_fatal_at(msg.str, fl, ln);
+		silofs_fatal_at_(msg.str, fl, ln);
 	}
 }
 
@@ -374,7 +374,7 @@ static void silofs_die_not_eqm(const uint8_t *p, const uint8_t *q,
 		mem_to_str(q, n, s2, sizeof(s2));
 		fmtmsg(&fm, "memory-not-equal: %s != %s ", s1, s2);
 	}
-	silofs_fatal_at(fm.str, fl, ln);
+	silofs_fatal_at_(fm.str, fl, ln);
 }
 
 void silofs_expect_eqm_(const void *p, const void *q,

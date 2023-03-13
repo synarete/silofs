@@ -505,6 +505,20 @@ static void xai_dirtify(struct silofs_xanode_info *xai)
 	vi_dirtify(&xai->xan_vi);
 }
 
+static void xai_incref(struct silofs_xanode_info *xai)
+{
+	if (likely(xai != NULL)) {
+		vi_incref(&xai->xan_vi);
+	}
+}
+
+static void xai_decref(struct silofs_xanode_info *xai)
+{
+	if (likely(xai != NULL)) {
+		vi_decref(&xai->xan_vi);
+	}
+}
+
 static void xai_setup_node(struct silofs_xanode_info *xai, ino_t ino)
 {
 	xan_setup(xai->xan, ino);
@@ -921,27 +935,47 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 	return err;
 }
 
-static int xac_setxattr_new(struct silofs_xattr_ctx *xa_ctx)
+static int xac_setxattr_do_apply_on(struct silofs_xattr_ctx *xa_ctx,
+                                    struct silofs_xentry_info *xei)
+{
+	int ret;
+
+	if (xa_ctx->flags == XATTR_CREATE) {
+		ret = xac_setxattr_create(xa_ctx, xei);
+	} else if (xa_ctx->flags == XATTR_REPLACE) {
+		ret = xac_setxattr_replace(xa_ctx, xei);
+	} else if (xei->xe) { /* implicit replace */
+		xa_ctx->flags = XATTR_REPLACE;
+		ret = xac_setxattr_replace(xa_ctx, xei);
+	} else {
+		/* by-default, create */
+		ret = xac_setxattr_create(xa_ctx, xei);
+	}
+	return ret;
+}
+
+static int xac_setxattr_apply_on(struct silofs_xattr_ctx *xa_ctx,
+                                 struct silofs_xentry_info *xei)
+{
+	struct silofs_xanode_info *xai = xei->xai;
+	int ret;
+
+	xai_incref(xai);
+	ret = xac_setxattr_do_apply_on(xa_ctx, xei);
+	xai_decref(xai);
+	return ret;
+}
+
+static int xac_setxattr_apply(struct silofs_xattr_ctx *xa_ctx)
 {
 	struct silofs_xentry_info xei = { .xe = NULL };
 	int err;
 
 	err = xac_lookup_entry(xa_ctx, &xei);
-	if (err && (err != -ENOATTR)) {
-		return err;
+	if ((err == 0) || (err == -ENOATTR)) {
+		err = xac_setxattr_apply_on(xa_ctx, &xei);
 	}
-	if (xa_ctx->flags == XATTR_CREATE) {
-		return xac_setxattr_create(xa_ctx, &xei);
-	}
-	if (xa_ctx->flags == XATTR_REPLACE) {
-		return xac_setxattr_replace(xa_ctx, &xei);
-	}
-	if (xei.xe) { /* implicit replace */
-		xa_ctx->flags = XATTR_REPLACE;
-		return xac_setxattr_replace(xa_ctx, &xei);
-	}
-	/* by-default, create */
-	return xac_setxattr_create(xa_ctx, &xei);
+	return err;
 }
 
 static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
@@ -964,7 +998,7 @@ static int xac_do_setxattr(struct silofs_xattr_ctx *xa_ctx)
 	if (err) {
 		return err;
 	}
-	err = xac_setxattr_new(xa_ctx);
+	err = xac_setxattr_apply(xa_ctx);
 	if (err) {
 		return err;
 	}

@@ -170,12 +170,24 @@ static int stgc_flush_dirty_now(const struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
-	err = silofs_flush_dirty(stg_ctx->task, SILOFS_DQID_ALL, SILOFS_F_NOW);
+	err = silofs_flush_dirty_now(stg_ctx->task);
 	if (err) {
 		log_dbg("flush dirty failed: ndirty=%lu err=%d",
 		        stgc_num_cached_dirty(stg_ctx), err);
 	}
 	return err;
+}
+
+static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
+{
+	int err;
+
+	err = stgc_flush_dirty_now(stg_ctx);
+	if (err) {
+		return err;
+	}
+	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
+	return 0;
 }
 
 static int stgc_spawn_vbki(const struct silofs_stage_ctx *stg_ctx,
@@ -188,7 +200,7 @@ static int stgc_spawn_vbki(const struct silofs_stage_ctx *stg_ctx,
 	if (!err) {
 		goto out_ok;
 	}
-	err = stgc_flush_dirty_now(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -213,7 +225,7 @@ static int stgc_spawn_vi(const struct silofs_stage_ctx *stg_ctx,
 	if (!err) {
 		goto out_ok;
 	}
-	err = stgc_flush_dirty_now(stg_ctx);
+	err = stgc_flush_and_relax(stg_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -229,18 +241,6 @@ out_err:
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
-{
-	int err;
-
-	err = stgc_flush_dirty_now(stg_ctx);
-	if (err) {
-		return err;
-	}
-	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
-	return 0;
-}
 
 static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
                               const struct silofs_blobid *blobid,

@@ -652,7 +652,7 @@ static int exec_flush_dirty_now(const struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty(&task, SILOFS_DQID_ALL, SILOFS_F_NOW);
+	err = silofs_flush_dirty_now(&task);
 	return term_task(&task, err);
 }
 

@@ -153,18 +153,24 @@ static void spac_setup2(struct silofs_spalloc_ctx *spa_ctx,
 
 static void spac_increfs(const struct silofs_spalloc_ctx *spa_ctx)
 {
+	silofs_assert_not_null(spa_ctx->sni);
+	silofs_assert_not_null(spa_ctx->sli);
+
 	sni_incref(spa_ctx->sni);
 	sli_incref(spa_ctx->sli);
 }
 
 static void spac_decrefs(const struct silofs_spalloc_ctx *spa_ctx)
 {
+	silofs_assert_not_null(spa_ctx->sni);
+	silofs_assert_not_null(spa_ctx->sli);
+
 	sni_decref(spa_ctx->sni);
 	sli_decref(spa_ctx->sli);
 }
 
 static int
-spac_stage_ro_spnode1_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spac_stage_curr_spnode1_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	struct silofs_vaddr vaddr;
 	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_CUR;
@@ -175,7 +181,7 @@ spac_stage_ro_spnode1_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 }
 
 static int
-spac_stage_ro_spmaps_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
+spac_stage_cur_spmaps_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 {
 	struct silofs_vaddr vaddr;
 	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_CUR;
@@ -253,7 +259,7 @@ static int spac_require_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
 {
 	int err;
 
-	err = spac_stage_ro_spnode1_of(spa_ctx, voff);
+	err = spac_stage_curr_spnode1_of(spa_ctx, voff);
 	if (err && (err != -ENOENT)) {
 		return err;
 	}
@@ -433,8 +439,13 @@ static int spac_claim_mutable_vnode(const struct silofs_spalloc_ctx *spa_ctx,
                                     const struct silofs_vaddr *vaddr,
                                     struct silofs_vnode_info **out_vi)
 {
-	return silofs_stage_vnode_at(spa_ctx->task, vaddr, SILOFS_STAGE_COW,
-	                             spa_ctx->dqid, false, out_vi);
+	int ret;
+
+	spac_increfs(spa_ctx);
+	ret = silofs_stage_vnode_at(spa_ctx->task, vaddr, SILOFS_STAGE_COW,
+	                            spa_ctx->dqid, false, out_vi);
+	spac_decrefs(spa_ctx);
+	return ret;
 }
 
 /* TODO: cleanups and resource reclaim upon failure in every path */
@@ -679,7 +690,7 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	int err;
 
 	while (voff < vend) {
-		err = spac_stage_ro_spmaps_of(spa_ctx, voff);
+		err = spac_stage_cur_spmaps_of(spa_ctx, voff);
 		if (err) {
 			return err;
 		}

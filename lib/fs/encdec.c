@@ -27,14 +27,16 @@ static uint64_t bk_view_mask_of(loff_t off, size_t len)
 	const loff_t  pos = silofs_off_in_bk(off);
 	const ssize_t idx = pos / kb_size;
 	const ssize_t nkb = (ssize_t)len / kb_size;
-	uint64_t mask = 0;
+	const uint64_t zeros = 0;
+	uint64_t mask;
 
 	STATICASSERT_EQ(8 * sizeof(mask), SILOFS_NKB_IN_BK);
 	silofs_assert_ge(len, SILOFS_KB_SIZE);
 	silofs_assert_le(len, SILOFS_BK_SIZE);
 
-	if ((idx == 0) && (nkb == SILOFS_NKB_IN_BK)) {
-		mask = ~mask;
+	if (nkb == SILOFS_NKB_IN_BK) {
+		silofs_assert_eq(idx, 0);
+		mask = ~zeros;
 	} else {
 		mask = ((1UL << nkb) - 1) << idx;
 	}

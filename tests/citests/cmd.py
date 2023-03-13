@@ -153,7 +153,9 @@ class CmdSilofs(CmdExec):
     def snap(self, name: str, pathname: str) -> None:
         self.execute_sub(["snap", "-n", name, pathname])
 
-    def snap2(self, name: str, repodir_name: str, password: str) -> None:
+    def snap_offline(
+        self, name: str, repodir_name: str, password: str
+    ) -> None:
         args = ["snap", "-n", name, "--offline", repodir_name]
         if password:
             args = args + ["--password", password]

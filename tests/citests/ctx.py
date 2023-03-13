@@ -103,6 +103,13 @@ class TestBaseCtx:
             tds.append(self.make_td(sub, str(idx), sz))
         return TestDataSet(self.expect, tds)
 
+    def create_data(self, cnt: int, sub: str, sz: int) -> TestDataSet:
+        tds = self.make_tds(cnt, sub, sz)
+        tds.do_makedirs()
+        tds.do_write()
+        tds.do_read()
+        return tds
+
     def do_mkdirs(self, name: str) -> str:
         base = self.make_path(name)
         os.makedirs(base, exist_ok=False)
@@ -165,6 +172,11 @@ class TestCtx(TestBaseCtx):
 
     def exec_snap(self, name: str) -> None:
         self.cmd.silofs.snap(name, self.mntpoint())
+
+    def exec_snap_offline(self, mainname: str, snapname: str) -> None:
+        self.cmd.silofs.snap_offline(
+            snapname, self._repodir_name(mainname), self._passwd()
+        )
 
     def exec_rmfs(self, name: str = "") -> None:
         repodir_name = self._repodir_name(name)

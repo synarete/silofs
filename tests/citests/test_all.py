@@ -25,6 +25,7 @@ TESTS = [
     test_self.test_vfs_tests2,
     test_snap.test_snap_basic,
     test_snap.test_snap_reload,
+    test_snap.test_snap_offlineline,
     test_fsck.test_fsck_basic,
     test_fsck.test_fsck_snap,
     test_xprogs.test_postgresql,

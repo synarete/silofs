@@ -33,7 +33,7 @@ static const char *cmd_snap_help_desc[] = {
 	"",
 	"options:",
 	"  -n, --name=snapname          Result snapshot name",
-	"  -L, --offline                Operate on non-mounted file-system",
+	"  -X, --offline                Operate on non-mounted file-system",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };
@@ -57,7 +57,6 @@ struct cmd_snap_ctx {
 	struct silofs_ioc_clone *ioc_clone;
 	struct silofs_uuid       uuid_new;
 	struct silofs_uuid       uuid_alt;
-	bool                     online;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -73,19 +72,21 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "name", required_argument, NULL, 'n' },
-		{ "offline", no_argument, NULL, 'o' },
+		{ "offline", no_argument, NULL, 'X' },
+		{ "password", required_argument, NULL, 'p' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("n:V:ho", opts);
+		opt_chr = cmd_getopt("n:XV:h", opts);
 		if (opt_chr == 'n') {
 			ctx->in_args.snapname = cmd_strdup(optarg);
-			ctx->online = true;
-		} else if (opt_chr == 'o') {
+		} else if (opt_chr == 'X') {
 			ctx->in_args.offline = true;
+		} else if (opt_chr == 'p') {
+			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
@@ -188,16 +189,16 @@ static void cmd_snap_prepare_offline(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)
 {
-	if (ctx->online) {
-		cmd_snap_prepare_online(ctx);
-	} else {
+	if (ctx->in_args.offline) {
 		cmd_snap_prepare_offline(ctx);
+	} else {
+		cmd_snap_prepare_online(ctx);
 	}
 }
 
 static void cmd_snap_getpass(struct cmd_snap_ctx *ctx)
 {
-	if ((ctx->in_args.password == NULL) && !ctx->online) {
+	if ((ctx->in_args.password == NULL) && ctx->in_args.offline) {
 		cmd_getpass(NULL, &ctx->in_args.password);
 	}
 }
@@ -338,12 +339,12 @@ static void cmd_snap_offline(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_execute(struct cmd_snap_ctx *ctx)
 {
-	if (ctx->online) {
-		/* Execute snap via ioctl to live file-system */
-		cmd_snap_online(ctx);
-	} else {
+	if (ctx->in_args.offline) {
 		/* Execute snap directly on off-line file-system */
 		cmd_snap_offline(ctx);
+	} else {
+		/* Execute snap via ioctl to live file-system */
+		cmd_snap_online(ctx);
 	}
 }
 

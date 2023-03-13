@@ -64,12 +64,12 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg("--password", &ctx->in_args.password);
+		} else if (opt_chr == 'V') {
+			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_mkfs_help_desc);
 		} else if (opt_chr > 0) {

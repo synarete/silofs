@@ -73,7 +73,7 @@ _silofs_snap() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-o --offline -n --name= -h' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-X --offline -n --name= -h' -- "$cur") )
   fi
 }
 

@@ -36,6 +36,7 @@ struct silofs_stage_ctx {
 	loff_t                          voff;
 	enum silofs_stage_mode          stg_mode;
 	enum silofs_stype               vspace;
+	unsigned int                    retry;
 	bool                            has_view;
 	bool                            with_enc;
 };
@@ -178,93 +179,75 @@ static int stgc_flush_dirty_now(const struct silofs_stage_ctx *stg_ctx)
 	return err;
 }
 
-static int stgc_flush_and_relax(const struct silofs_stage_ctx *stg_ctx)
+static void stgc_relax_caches_now(const struct silofs_stage_ctx *stg_ctx)
+{
+	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
+}
+
+static int
+stgc_try_evict_some(const struct silofs_stage_ctx *stg_ctx, bool flush_dirty)
 {
 	int err;
 
-	err = stgc_flush_dirty_now(stg_ctx);
-	if (err) {
-		return err;
+	if (flush_dirty) {
+		err = stgc_flush_dirty_now(stg_ctx);
+		if (err) {
+			stgc_log_cache_stat(stg_ctx);
+			return err;
+		}
 	}
-	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
+	stgc_relax_caches_now(stg_ctx);
 	return 0;
 }
 
-static int stgc_spawn_vbki(const struct silofs_stage_ctx *stg_ctx,
-                           loff_t voff, enum silofs_stype vspace,
-                           struct silofs_vbk_info **out_vbki)
+static int stgc_do_spawn_vbki(const struct silofs_stage_ctx *stg_ctx,
+                              loff_t voff, enum silofs_stype vspace,
+                              struct silofs_vbk_info **out_vbki)
 {
-	int err;
+	int err = -ENOMEM;
 
-	err = stgc_spawn_cached_vbki(stg_ctx, voff, vspace, out_vbki);
-	if (!err) {
-		goto out_ok;
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = stgc_spawn_cached_vbki(stg_ctx, voff, vspace, out_vbki);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
 	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_spawn_cached_vbki(stg_ctx, voff, vspace, out_vbki);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	return 0;
-out_err:
-	stgc_log_cache_stat(stg_ctx);
 	return err;
 }
 
-static int stgc_spawn_vi(const struct silofs_stage_ctx *stg_ctx,
-                         const struct silofs_vaddr *vaddr,
-                         struct silofs_vnode_info **out_vi)
+static int stgc_do_spawn_vi(const struct silofs_stage_ctx *stg_ctx,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vnode_info **out_vi)
 {
-	int err;
+	int err = -ENOMEM;
 
-	err = stgc_spawn_cached_vi(stg_ctx, vaddr, out_vi);
-	if (!err) {
-		goto out_ok;
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = stgc_spawn_cached_vi(stg_ctx, vaddr, out_vi);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
 	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_spawn_cached_vi(stg_ctx, vaddr, out_vi);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	return 0;
-out_err:
-	stgc_log_cache_stat(stg_ctx);
 	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stgc_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
+static int stgc_do_stage_blob(const struct silofs_stage_ctx *stg_ctx,
                               const struct silofs_blobid *blobid,
                               struct silofs_blobf **out_blobf)
 {
-	int err;
+	int err = -ENOMEM;
 
-	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
-	if (!err) {
-		goto out_ok;
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
 	}
-	if (!is_low_resource_error(err)) {
-		return err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		return err;
-	}
-	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
-	if (err) {
-		return err;
-	}
-out_ok:
-	return 0;
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -278,7 +261,7 @@ static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	silofs_vbki_incref(vbki);
-	err = stgc_spawn_vi(stg_ctx, &voaddr->vaddr, &vi);
+	err = stgc_do_spawn_vi(stg_ctx, &voaddr->vaddr, &vi);
 	if (!err) {
 		vi_bind_to(vi, stg_ctx->sbi, vbki);
 		vi_update_oaddr(vi, &voaddr->oaddr);
@@ -402,6 +385,23 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 	stg_ctx->bk_lba = off_to_lba(stg_ctx->bk_voff);
 	stg_ctx->voff = vaddr->off;
 	stg_ctx->has_view = has_view;
+	stg_ctx->retry = 3;
+}
+
+static int stgc_do_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
+                              const struct silofs_blobid *blobid,
+                              struct silofs_blobf **out_blobf)
+{
+	int err = -ENOMEM;
+
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = silofs_spawn_blob_at(stg_ctx->uber, blobid, out_blobf);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
+	}
+	return err;
 }
 
 static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
@@ -411,49 +411,11 @@ static int stgc_spawn_blob(const struct silofs_stage_ctx *stg_ctx,
 {
 	int err;
 
-	err = silofs_spawn_blob_at(stg_ctx->uber, blobid, out_blobf);
+	err = stgc_do_spawn_blob(stg_ctx, blobid, out_blobf);
 	if (!err) {
-		goto out_ok;
+		silofs_sti_update_blobs(&stg_ctx->sbi->sb_sti, stype_sub, 1);
 	}
-	if (!is_low_resource_error(err)) {
-		return err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		return err;
-	}
-	err = silofs_spawn_blob_at(stg_ctx->uber, blobid, out_blobf);
-	if (err) {
-		return err;
-	}
-out_ok:
-	silofs_sti_update_blobs(&stg_ctx->sbi->sb_sti, stype_sub, 1);
-	return 0;
-}
-
-static int stgc_stage_blob(const struct silofs_stage_ctx *stg_ctx,
-                           const struct silofs_blobid *blobid,
-                           struct silofs_blobf **out_blobf)
-{
-	int err;
-
-	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
-	if (!err) {
-		goto out_ok;
-	}
-	if (!is_low_resource_error(err)) {
-		return err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		return err;
-	}
-	err = silofs_stage_blob_at(stg_ctx->uber, blobid, out_blobf);
-	if (err) {
-		return err;
-	}
-out_ok:
-	return 0;
+	return err;
 }
 
 static void
@@ -517,7 +479,7 @@ static int stgc_stage_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
 	struct silofs_blobf *blobf = NULL;
 
 	silofs_sbi_main_blob(stg_ctx->sbi, stg_ctx->vspace, &blobid);
-	return stgc_stage_blob(stg_ctx, &blobid, &blobf);
+	return stgc_do_stage_blob(stg_ctx, &blobid, &blobf);
 }
 
 static int stgc_require_super_main_blob(const struct silofs_stage_ctx *stg_ctx)
@@ -560,7 +522,7 @@ static int stgc_stage_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_blobf *blobf = NULL;
 
 	silofs_sni_main_blob(sni, &blobid);
-	return stgc_stage_blob(stg_ctx, &blobid, &blobf);
+	return stgc_do_stage_blob(stg_ctx, &blobid, &blobf);
 }
 
 static int
@@ -726,7 +688,16 @@ static int stgc_do_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode_at(stg_ctx->uber, uaddr, out_sni);
+	int err = -ENOMEM;
+
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = silofs_stage_spnode_at(stg_ctx->uber, uaddr, out_sni);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
+	}
+	return err;
 }
 
 static int stgc_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
@@ -737,24 +708,8 @@ static int stgc_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
 
 	err = stgc_do_stage_spnode_at(stg_ctx, uaddr, out_sni);
 	if (!err) {
-		goto out_ok;
+		stgc_bind_sni_to_uber(stg_ctx, *out_sni);
 	}
-	if (err != -ENOMEM) {
-		goto out_err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_do_stage_spnode_at(stg_ctx, uaddr, out_sni);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	stgc_bind_sni_to_uber(stg_ctx, *out_sni);
-	return 0;
-out_err:
-	stgc_log_cache_stat(stg_ctx);
 	return err;
 }
 
@@ -762,7 +717,16 @@ static int stgc_do_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spnode_info **out_sni)
 {
-	return silofs_spawn_spnode_at(stg_ctx->uber, uaddr, out_sni);
+	int err = -ENOMEM;
+
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = silofs_spawn_spnode_at(stg_ctx->uber, uaddr, out_sni);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
+	}
+	return err;
 }
 
 static int stgc_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
@@ -773,23 +737,8 @@ static int stgc_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
 
 	err = stgc_do_spawn_spnode_at(stg_ctx, uaddr, out_sni);
 	if (!err) {
-		goto out_ok;
+		stgc_bind_sni_to_uber(stg_ctx, *out_sni);
 	}
-	if (err != -ENOMEM) {
-		goto out_err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_do_spawn_spnode_at(stg_ctx, uaddr, out_sni);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	stgc_bind_sni_to_uber(stg_ctx, *out_sni);
-	return 0;
-out_err:
 	return err;
 }
 
@@ -803,7 +752,16 @@ static int stgc_do_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_at(stg_ctx->uber, uaddr, out_sli);
+	int err = -ENOMEM;
+
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = silofs_stage_spleaf_at(stg_ctx->uber, uaddr, out_sli);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
+	}
+	return err;
 }
 
 static int stgc_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
@@ -814,24 +772,8 @@ static int stgc_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
 
 	err = stgc_do_stage_spleaf_at(stg_ctx, uaddr, out_sli);
 	if (!err) {
-		goto out_ok;
+		stgc_bind_sli_to_uber(stg_ctx, *out_sli);
 	}
-	if (err != -ENOMEM) {
-		goto out_err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_do_stage_spleaf_at(stg_ctx, uaddr, out_sli);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	stgc_bind_sli_to_uber(stg_ctx, *out_sli);
-	return 0;
-out_err:
-	stgc_log_cache_stat(stg_ctx);
 	return err;
 }
 
@@ -839,7 +781,16 @@ static int stgc_do_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
                                    const struct silofs_uaddr *uaddr,
                                    struct silofs_spleaf_info **out_sli)
 {
-	return silofs_spawn_spleaf_at(stg_ctx->uber, uaddr, out_sli);
+	int err = -ENOMEM;
+
+	for (size_t i = 0; i < stg_ctx->retry; ++i) {
+		err = silofs_spawn_spleaf_at(stg_ctx->uber, uaddr, out_sli);
+		if (!is_low_resource_error(err)) {
+			break;
+		}
+		stgc_try_evict_some(stg_ctx, i > 0);
+	}
+	return err;
 }
 
 static int stgc_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
@@ -850,23 +801,8 @@ static int stgc_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
 
 	err = stgc_do_spawn_spleaf_at(stg_ctx, uaddr, out_sli);
 	if (!err) {
-		goto out_ok;
+		stgc_bind_sli_to_uber(stg_ctx, *out_sli);
 	}
-	if (err != -ENOMEM) {
-		goto out_err;
-	}
-	err = stgc_flush_and_relax(stg_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = stgc_do_spawn_spleaf_at(stg_ctx, uaddr, out_sli);
-	if (err) {
-		goto out_err;
-	}
-out_ok:
-	stgc_bind_sli_to_uber(stg_ctx, *out_sli);
-	return 0;
-out_err:
 	return err;
 }
 
@@ -1837,7 +1773,7 @@ stgc_require_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 
 	silofs_sli_main_blob(sli, &blobid);
 	if (!blobid_isnull(&blobid)) {
-		return stgc_stage_blob(stg_ctx, &blobid, &blobf);
+		return stgc_do_stage_blob(stg_ctx, &blobid, &blobf);
 	}
 	/*
 	 * TODO-0047: Do not use underlying repo to detect if vdata-blob exists
@@ -1847,7 +1783,7 @@ stgc_require_spleaf_main_blob(const struct silofs_stage_ctx *stg_ctx,
 	 * common main-blob.
 	 */
 	stgc_make_blobid_of_vdata(stg_ctx, voff, &blobid);
-	err = stgc_stage_blob(stg_ctx, &blobid, &blobf);
+	err = stgc_do_stage_blob(stg_ctx, &blobid, &blobf);
 	if (!err) {
 		goto out_ok;
 	}
@@ -2279,7 +2215,7 @@ static int stgc_spawn_vbki_by(const struct silofs_stage_ctx *stg_ctx,
 	int ret;
 
 	blobf_incref(blobf);
-	ret = stgc_spawn_vbki(stg_ctx, vaddr->off, vaddr->stype, out_vbki);
+	ret = stgc_do_spawn_vbki(stg_ctx, vaddr->off, vaddr->stype, out_vbki);
 	blobf_decref(blobf);
 	return ret;
 }
@@ -2312,7 +2248,7 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = stgc_stage_blob_of(stg_ctx, &voa->oaddr.bka.blobid, &blobf);
+	err = stgc_do_stage_blob(stg_ctx, &voa->oaddr.bka.blobid, &blobf);
 	if (err) {
 		return err;
 	}
@@ -2367,13 +2303,13 @@ static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_blobf *blobf_dst = NULL;
 	int ret;
 
-	ret = stgc_stage_blob_of(stg_ctx, &bkaddr_src->blobid, &blobf_src);
+	ret = stgc_do_stage_blob(stg_ctx, &bkaddr_src->blobid, &blobf_src);
 	if (ret) {
 		goto out;
 	}
 	blobf_incref(blobf_src);
 
-	ret = stgc_stage_blob_of(stg_ctx, &bkaddr_dst->blobid, &blobf_dst);
+	ret = stgc_do_stage_blob(stg_ctx, &bkaddr_dst->blobid, &blobf_dst);
 	if (ret) {
 		goto out;
 	}

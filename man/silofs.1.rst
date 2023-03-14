@@ -26,13 +26,18 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
-**silofs** *("stored in large objects file-system")* is a utility with
-unique approach to the problem of archiving large volumes of data: it
-implements a fully functional file-system on top of binary large
-objects (*blobs*), which serve both for I/O operations and data
-packing. Combined with built-in snapshot capabilities, compression and
-encryption, users can incrementally archive their data into cloud
-friendly format.
+**silofs** *("stored in large objects file-system")* is a GNU/Linux
+user-space file system designed for storing large volumes of data over
+encrypted blobs. It let normal users create an isolated storage area,
+with its own private key, and mount it on a local host machine. Once
+mounted, users may manipulate their data as they would normally do with
+any other POSIX file-system, plus take full volume snapshots (online or
+offline). At the same time the actual data is securely stored within
+local repository on top of regular files which serve as opaque storage
+blobs. Having this type of layered model allow file-system's owner to
+easily backup or archive the entire repository into remote machine or
+cloud storage using tools like **rsync** or **rclone**, but without
+compromising their data integrity.
 
 
 OPTIONS
@@ -60,17 +65,7 @@ init
 
 Create an empty **silofs** repository under *repodir*. Input *repodir*
 must be a pathname to an empty directory within local host's
-file-system, which **silofs** uses as a local object-storage. When the
-*-a*, *--attic* option is specified the newly created repository is set
-with archiving mode. See the **silofs archive** and **silofs restore**
-sub commands.
-
-..
-
-|
-| *-a*, *--attic*
-|  Define an archiving repository.
-|
+file-system, which **silofs** uses as a local blobs storage.
 
 ..
 
@@ -88,6 +83,11 @@ repository. The actual meta-data objects which compose the newly
 created file system, as well as any future writes to this file-system
 are stored within the special *repodir/.silofs* directory, using object
 representations.
+
+Upon formatting a new silofs file-system the user is requested to
+provided a password which is used to derive the main key and IV used
+for objects' encryption. This password, no longer than 255 characters
+in size, is later required for mounting this file system instance.
 
 ..
 
@@ -116,6 +116,11 @@ protocol. The actual **mount**\(2) system call is performed by
 auxiliary privileged system-service daemon, which must have valid
 configuration entry for *mountpoint* and the current user.
 See **silofs-mountd**\(8) for more details.
+
+Upon mounting an existing silofs file-system the user is requested to
+provided the password which was used upon **silofs mkfs**. Without
+providing a valid password, the **silofs mount** command will fail.
+
 ..
 
 |
@@ -217,6 +222,9 @@ snapshot to a non-mounted file system using offline mode. In both
 cases, a boot config is created under *repodir/snapname* upon
 successful completion.
 
+Upon executin **silofs snap** in offline mode, the user is requested to
+provided the password which was used upon **silofs mkfs**. Without
+providing a valid password, the **silofs snap** command will fail.
 ..
 
 |
@@ -238,52 +246,12 @@ Removes the file-system from the repository. The file-system referenced
 by *repodir/name* may have been created by either **mkfs** or **snap**,
 and it must **not** be active or mounted up **rmfs**. This operation
 removes also all blobs which are associated by this file-system and are
-shared with any other file-system.
+not shared with any other file-system.
 
 
-..
-
-archive
--------
-**silofs archive** *repodir/name* *atticdir/archive*
-
-Archive the file-system referenced by *repodir/name* as encrypted and
-compressed blobs under the *atticdir* repository. The root of the newly
-created archive is referenced by *atticdir/archive*. The *atticdir*
-must be a valid silofs repository which has been initialized in *attic*
-mode.
-
-Upon running this command the user is requested to provide the secure
-password which is used upon encryption of archived blobs.
-
-..
-
-|
-| -P, --password-file=*file*
-|  Provide password via external file.
-|
-
-..
-
-restore
--------
-**silofs restore** *atticdir/archive* *repodir/name*
-
-Restore previously archived file-system referenced by
-*atticdir/archive* as raw uncompressed blobs under the *repodir*
-repository. The root of the newly created file-system is referenced by
-*repodir/name*. Restore decrypts and uncompress every blob which is
-part of the archive.
-
-Upon running this command the user is requested to provide the secure
-password which was used upon the encryption of archived blobs.
-
-..
-
-|
-| -P, --password-file=*file*
-|  Provide password via external file.
-|
+Upon removing an existing silofs file-system the user is requested to
+provided the password which was used upon **silofs mkfs**. Without
+providing a valid password, the **silofs rmfs** command will fail.
 
 ..
 
@@ -298,7 +266,7 @@ Still a work-in-progress.
 SEE ALSO
 ========
 
-**silofs-mountd**\(8), **mount**\(8)
+**silofs-mountd**\(8), **mount**\(8), **rsync**\(1)
 
 ..
 

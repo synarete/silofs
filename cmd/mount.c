@@ -41,6 +41,7 @@ static const char *cmd_mount_help_desc[] = {
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
+	"  -M, --std-alloc              Use standard C allocator",
 	NULL
 };
 
@@ -61,6 +62,7 @@ struct cmd_mount_in_args {
 	bool    nodev;
 	bool    rdonly;
 	bool    noconcp;
+	bool    stdalloc;
 };
 
 struct cmd_mount_ctx {
@@ -91,13 +93,14 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "coredump", no_argument, NULL, 'C' },
+		{ "std-alloc", no_argument, NULL, 'M' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZiAWDV:Cp:h", opts);
+		opt_chr = cmd_getopt("rXSZiAWDV:CMp:h", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -120,6 +123,8 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'C') {
 			cmd_globals.allow_coredump = true;
+		} else if (opt_chr == 'M') {
+			ctx->in_args.stdalloc = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'h') {
@@ -155,6 +160,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->nodev = ctx->in_args.nodev;
 	fs_args->rdonly = ctx->in_args.rdonly;
 	fs_args->concp = !ctx->in_args.noconcp;
+	fs_args->stdalloc = ctx->in_args.stdalloc;
 	fs_args->pedantic = false;
 }
 

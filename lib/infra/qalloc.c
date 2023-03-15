@@ -25,6 +25,7 @@
 #include <silofs/logging.h>
 #include <silofs/random.h>
 #include <silofs/thread.h>
+#include <silofs/atomic.h>
 #include <silofs/qalloc.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -978,17 +979,6 @@ void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes)
 	return ptr;
 }
 
-void *silofs_qalloc_zmalloc(struct silofs_qalloc *qal, size_t nbytes)
-{
-	void *ptr;
-
-	ptr = silofs_qalloc_malloc(qal, nbytes);
-	if (ptr != NULL) {
-		memset(ptr, 0, nbytes);
-	}
-	return ptr;
-}
-
 static int qalloc_check_free(const struct silofs_qalloc *qal,
                              const void *ptr, size_t nbytes)
 {
@@ -1245,14 +1235,6 @@ void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 	qalloc_require_free_ok(qal, ptr, nbytes, err);
 }
 
-void silofs_qalloc_zfree(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
-{
-	if (ptr != NULL) {
-		memset(ptr, 0, nbytes);
-		silofs_qalloc_free(qal, ptr, nbytes);
-	}
-}
-
 static int qalloc_check_by_slab(const struct silofs_qalloc *qal,
                                 const void *ptr, size_t nbytes)
 {
@@ -1399,34 +1381,93 @@ void silofs_burnstack(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void *cstd_alloc_malloc(struct silofs_alloc *alloc, size_t size)
+static struct silofs_cstdalloc *
+alloc_to_cstdalloc(const struct silofs_alloc *alloc)
+{
+	const struct silofs_cstdalloc *cal;
+
+	cal = silofs_container_of2(alloc, struct silofs_cstdalloc, alloc);
+	return silofs_unconst(cal);
+}
+
+static void *cstdalloc_malloc(struct silofs_cstdalloc *cal, size_t size)
 {
 	void *mem = NULL;
 	int err;
 
-	silofs_unused(alloc);
 	err = cstd_memalign(size, &mem);
-	return err ? NULL : mem;
+	if (err) {
+		return NULL;
+	}
+	silofs_atomic_addul(&cal->nbytes_use, size);
+	return mem;
 }
 
-static void cstd_alloc_free(struct silofs_alloc *alloc, void *ptr, size_t size)
+static void cstdalloc_free(struct silofs_cstdalloc *cal,
+                           void *ptr, size_t size)
 {
-	silofs_unused(alloc);
-	cstd_memfree(ptr, size);
+	if ((ptr != NULL) && (size > 0)) {
+		cstd_memfree(ptr, size);
+		silofs_atomic_addul(&cal->nbytes_use, size);
+	}
 }
 
-static struct silofs_alloc cstd_alloc = {
-	.malloc_fn = cstd_alloc_malloc,
-	.free_fn = cstd_alloc_free,
-	.stat_fn = NULL,
-	.resolve_fn = NULL
-};
-
-struct silofs_alloc *silofs_cstd_alloc(void)
+static int cstdalloc_resolve(struct silofs_cstdalloc *cal,
+                             void *ptr, size_t len, struct silofs_iovec *iov)
 {
-	return &cstd_alloc;
+	memset(iov, 0, sizeof(*iov));
+	iov->iov_base = ptr;
+	iov->iov_len = len;
+	iov->iov_fd = -1;
+	silofs_unused(cal);
+	return 0;
 }
 
+static void cstdalloc_stat(struct silofs_cstdalloc *cal,
+                           struct silofs_alloc_stat *out_stat)
+{
+	out_stat->nbytes_max = silofs_atomic_getul(&cal->nbytes_max);
+	out_stat->nbytes_use = silofs_atomic_getul(&cal->nbytes_use);
+}
+
+static void *cal_malloc(struct silofs_alloc *alloc, size_t size)
+{
+	return cstdalloc_malloc(alloc_to_cstdalloc(alloc), size);
+}
+
+static void cal_free(struct silofs_alloc *alloc, void *ptr, size_t size)
+{
+	cstdalloc_free(alloc_to_cstdalloc(alloc), ptr, size);
+}
+
+static void cal_stat(const struct silofs_alloc *alloc,
+                     struct silofs_alloc_stat *out_stat)
+{
+	cstdalloc_stat(alloc_to_cstdalloc(alloc), out_stat);
+}
+
+static int cal_resolve(const struct silofs_alloc *alloc, void *ptr,
+                       size_t len, struct silofs_iovec *iov)
+{
+	return cstdalloc_resolve(alloc_to_cstdalloc(alloc), ptr, len, iov);
+}
+
+int silofs_cstdalloc_init(struct silofs_cstdalloc *cal, size_t memsize)
+{
+	silofs_memzero(cal, sizeof(*cal));
+	cal->alloc.malloc_fn = cal_malloc;
+	cal->alloc.free_fn = cal_free;
+	cal->alloc.stat_fn = cal_stat;
+	cal->alloc.resolve_fn = cal_resolve;
+	cal->nbytes_max = memsize;
+	return 0;
+}
+
+int silofs_cstdalloc_fini(struct silofs_cstdalloc *cal)
+{
+	silofs_memzero(cal, sizeof(*cal));
+	return 0;
+}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

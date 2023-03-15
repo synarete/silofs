@@ -66,6 +66,13 @@ struct silofs_qalloc {
 	int                     mode;
 };
 
+/* allocator via standard C malloc/free */
+struct silofs_cstdalloc {
+	struct silofs_alloc     alloc;
+	unsigned long           nbytes_max;
+	unsigned long           nbytes_use;
+
+};
 
 /* allocation via interface */
 void *silofs_allocate(struct silofs_alloc *alloc, size_t size);
@@ -79,7 +86,9 @@ int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
                         size_t len, struct silofs_iovec *iov);
 
 /* allocator via standard C malloc/free */
-struct silofs_alloc *silofs_cstd_alloc(void);
+int silofs_cstdalloc_init(struct silofs_cstdalloc *cal, size_t memsize);
+
+int silofs_cstdalloc_fini(struct silofs_cstdalloc *cal);
 
 /* quick allocator */
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode);
@@ -88,11 +97,7 @@ int silofs_qalloc_fini(struct silofs_qalloc *qal);
 
 void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes);
 
-void *silofs_qalloc_zmalloc(struct silofs_qalloc *qal, size_t nbytes);
-
 void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes);
-
-void silofs_qalloc_zfree(struct silofs_qalloc *qal, void *ptr, size_t nbytes);
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat);

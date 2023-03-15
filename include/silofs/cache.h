@@ -70,7 +70,7 @@ void silofs_ce_fini(struct silofs_cache_elem *ce);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_cache_init(struct silofs_cache *cache,
-                      struct silofs_alloc *alloc, size_t msz_hint);
+                      struct silofs_alloc *alloc);
 
 void silofs_cache_fini(struct silofs_cache *cache);
 

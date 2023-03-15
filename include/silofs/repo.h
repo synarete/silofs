@@ -37,7 +37,6 @@ struct silofs_blobf {
 struct silofs_repocfg {
 	struct silofs_bootpath          rc_bootpath;
 	struct silofs_alloc            *rc_alloc;
-	size_t                          rc_memhint;
 	bool                            rc_rdonly;
 };
 

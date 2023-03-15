@@ -138,12 +138,27 @@ static void ut_del_qalloc(struct silofs_qalloc *qal)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_del_mrecords(struct ut_env *ute, struct silofs_list_head *lst)
+{
+	struct ut_mrecord *mr = NULL;
+	struct silofs_list_head *lnk = NULL;
+	int cnt = 0;
+
+	lnk = (cnt++ & 1) ? lst->next : lst->prev;
+	while (lnk != lst) {
+		silofs_list_head_remove(lnk);
+		mr = link_to_mrecord(lnk);
+		mrecord_del(mr);
+		lnk = (cnt++ & 1) ? lst->next : lst->prev;
+	}
+	ut_unused(ute);
+}
+
 static void ut_qalloc_nbks_simple(struct ut_env *ute)
 {
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal;
-	struct ut_mrecord *mr;
-	struct silofs_list_head *lnk = NULL;
+	struct ut_mrecord *mr = NULL;
 	const size_t sizes[] = {
 		UT_BK_SIZE - 1, UT_BK_SIZE, UT_BK_SIZE + 1,
 		2 * UT_BK_SIZE, 8 * UT_BK_SIZE - 1
@@ -156,11 +171,8 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 		memset(mr->dat, (int)i, mr->dat_len);
 		silofs_list_push_back(&lst, &mr->link);
 	}
-	lnk = lst.next;
-	while (lnk != &lst) {
-		link_mrecord_del(lnk);
-		lnk = lst.next;
-	}
+
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 
@@ -176,18 +188,17 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 	size_t msz = 0;
 	size_t rem = 0;
 	size_t total = 0;
-	struct silofs_qalloc *qal;
-	struct ut_mrecord *mr;
+	struct silofs_qalloc *qal = NULL;
+	struct ut_mrecord *mr = NULL;
 	struct silofs_list_head lst;
-	struct silofs_list_head *lnk;
 	const size_t bk_size =  UT_BK_SIZE;
-	struct silofs_alloc_stat qast;
+	struct silofs_alloc_stat alst;
 
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 32 * UT_UMEGA);
-	silofs_qalloc_stat(qal, &qast);
-	while (total < qast.memsz_data) {
-		rem = qast.memsz_data - total;
+	silofs_qalloc_stat(qal, &alst);
+	while (total < alst.nbytes_max) {
+		rem = alst.nbytes_max - total;
 		msz = sizeof(*mr) + (bk_size / 2) + (total % 10000);
 		msz = silofs_clamp(msz, (bk_size / 2) + 1, rem);
 
@@ -195,13 +206,10 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 		silofs_list_push_back(&lst, &mr->link);
 
 		total += align_up(msz, bk_size);
-		silofs_qalloc_stat(qal, &qast);
+		silofs_qalloc_stat(qal, &alst);
 	}
-	lnk = lst.next;
-	while (lnk != &lst) {
-		link_mrecord_del(lnk);
-		lnk = lst.next;
-	}
+
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 
@@ -211,9 +219,8 @@ static void ut_qalloc_slab_elems(struct ut_env *ute)
 {
 	size_t val = 0;
 	size_t msz = 0;
-	struct silofs_qalloc *qal;
-	struct ut_mrecord *mr;
-	struct silofs_list_head *lnk;
+	struct silofs_qalloc *qal = NULL;
+	struct ut_mrecord *mr = NULL;
 	struct silofs_list_head lst;
 	const size_t pg_size = SILOFS_PAGE_SIZE_MIN;
 
@@ -230,11 +237,8 @@ static void ut_qalloc_slab_elems(struct ut_env *ute)
 			link_mrecord_del(lst.next);
 		}
 	}
-	lnk = lst.next;
-	while (lnk != &lst) {
-		link_mrecord_del(lnk);
-		lnk = lst.next->next;
-	}
+
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 
@@ -248,31 +252,27 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 	size_t val_max = 100000;
 	struct silofs_qalloc *qal = NULL;
 	const size_t bk_size = UT_BK_SIZE;
-	struct ut_mrecord *ai = NULL;
-	struct silofs_list_head *lnk = NULL;
+	struct ut_mrecord *mr = NULL;
 	struct silofs_list_head lst;
 
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 256 * UT_UMEGA);
 	for (val = 0; val < val_max; val += 100) {
-		msz = silofs_clamp(val, sizeof(*ai), 11 * bk_size);
-		ai = mrecord_new(qal, msz);
-		silofs_list_push_back(&lst, &ai->link);
+		msz = silofs_clamp(val, sizeof(*mr), 11 * bk_size);
+		mr = mrecord_new(qal, msz);
+		silofs_list_push_back(&lst, &mr->link);
 
 		if ((val % 11) == 1) {
 			link_mrecord_del(lst.next);
 		}
 
 		val2 = (val_max - val) / 2;
-		msz = silofs_clamp(val2, sizeof(*ai), 11 * bk_size);
-		ai = mrecord_new(qal, msz);
-		silofs_list_push_back(&lst, &ai->link);
+		msz = silofs_clamp(val2, sizeof(*mr), 11 * bk_size);
+		mr = mrecord_new(qal, msz);
+		silofs_list_push_back(&lst, &mr->link);
 	}
-	lnk = lst.next;
-	while (lnk != &lst) {
-		link_mrecord_del(lnk);
-		lnk = lst.next->next;
-	}
+
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 

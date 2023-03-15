@@ -2768,7 +2768,7 @@ static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
 	uint64_t nbits;
 
 	silofs_allocstat(cache->c_alloc, &st);
-	nbits = min((64UL * st.npages_used) / st.npages_tota, 63);
+	nbits = min((64UL * st.nbytes_use) / st.nbytes_max, 63);
 
 	/* returns memory-pressure represented as bit-mask */
 	return ((1UL << nbits) - 1);
@@ -2906,24 +2906,24 @@ cache_flush_threshold_of(const struct silofs_cache *cache,
 	const size_t kilo = SILOFS_UKILO;
 	const size_t mega = SILOFS_UMEGA;
 	const size_t factor = dqid_specific(dqid) ? 8 : 1;
-	size_t memsize_data;
+	size_t memsize_used;
 	size_t threshold;
 
 	silofs_allocstat(cache->c_alloc, &st);
-	memsize_data = st.memsz_data;
+	memsize_used = st.nbytes_use;
 
 	if (flags & SILOFS_F_NOW) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = memsize_data / kilo / 4;
+		threshold = memsize_used / kilo / 4;
 	} else if (flags & SILOFS_F_FSYNC) {
-		threshold = memsize_data / kilo / 2;
+		threshold = memsize_used / kilo / 2;
 	} else if (flags & (SILOFS_F_IDLE)) {
-		threshold = memsize_data / kilo;
+		threshold = memsize_used / kilo;
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		threshold = 2 * memsize_data / kilo;
+		threshold = 2 * memsize_used / kilo;
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		threshold = 4 * memsize_data / kilo;
+		threshold = 4 * memsize_used / kilo;
 	} else {
 		threshold = 64 * mega;
 	}
@@ -3195,13 +3195,16 @@ static void cache_fini_mdigest(struct silofs_cache *cache)
 }
 
 int silofs_cache_init(struct silofs_cache *cache,
-                      struct silofs_alloc *alloc, size_t msz_hint)
+                      struct silofs_alloc *alloc)
 {
+	struct silofs_alloc_stat st;
 	int err;
+
+	silofs_allocstat(alloc, &st);
 
 	cache->c_alloc = alloc;
 	cache->c_nil_bk = NULL;
-	cache->c_mem_size_hint = msz_hint;
+	cache->c_mem_size_hint = st.nbytes_max;
 	dqs_init(&cache->c_dqs);
 	err = cache_init_mdigest(cache);
 	if (err) {

@@ -1418,9 +1418,8 @@ static int repo_init_cache(struct silofs_repo *repo)
 {
 	struct silofs_cache *cache = &repo->re_cache;
 	struct silofs_alloc *alloc = repo->re_cfg.rc_alloc;
-	const size_t memsz_hint = repo->re_cfg.rc_memhint;
 
-	return silofs_cache_init(cache, alloc, memsz_hint);
+	return silofs_cache_init(cache, alloc);
 }
 
 static void repo_fini_cache(struct silofs_repo *repo)
@@ -1448,7 +1447,6 @@ static void repocfg_assign(struct silofs_repocfg *rcfg,
 {
 	silofs_bootpath_assign(&rcfg->rc_bootpath, &other->rc_bootpath);
 	rcfg->rc_alloc = other->rc_alloc;
-	rcfg->rc_memhint = other->rc_memhint;
 	rcfg->rc_rdonly = other->rc_rdonly;
 }
 

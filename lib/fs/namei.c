@@ -2031,8 +2031,8 @@ static void fill_proc(const struct silofs_sb_info *sbi,
 	qpr->uptime = silofs_uber_uptime(uber);
 	qpr->iopen_max = uber->ub_ops.op_iopen_max;
 	qpr->iopen_cur = uber->ub_ops.op_iopen;
-	qpr->memsz_max = alst.memsz_data;
-	qpr->memsz_cur = alst.nbytes_used;
+	qpr->memsz_max = alst.nbytes_max;
+	qpr->memsz_cur = alst.nbytes_use;
 	qpr->bopen_cur = cache->c_blobf_lm.lm_lru.sz;
 }
 

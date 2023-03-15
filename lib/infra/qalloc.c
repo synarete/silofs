@@ -374,7 +374,7 @@ static void slab_free(struct silofs_slab *slab, struct silofs_slab_seg *seg)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int resolve_mem_sizes(size_t npgs, size_t *msz_data, size_t *msz_meta)
+static int calc_mem_sizes(size_t npgs, size_t *msz_data, size_t *msz_meta)
 {
 	const size_t npgs_max = UINT_MAX; /* TODO: proper upper limit */
 
@@ -386,8 +386,8 @@ static int resolve_mem_sizes(size_t npgs, size_t *msz_data, size_t *msz_meta)
 	return 0;
 }
 
-static int memfd_setup(const char *name, size_t size,
-                       int *out_fd, void **out_mem)
+static int memfd_setup(struct silofs_memfd *memfd,
+                       const char *name, size_t size)
 {
 	void *mem = NULL;
 	const int prot = PROT_READ | PROT_WRITE;
@@ -409,23 +409,25 @@ static int memfd_setup(const char *name, size_t size,
 		silofs_sys_close(fd);
 		return err;
 	}
-	*out_fd = fd;
-	*out_mem = mem;
+	memfd->fd = fd;
+	memfd->mem = mem;
 	return 0;
 }
 
-static int memfd_close(int fd, void *mem, size_t memsz)
+static int memfd_close(struct silofs_memfd *memfd, size_t memsz)
 {
 	int err;
 
-	err = silofs_sys_munmap(mem, memsz);
+	err = silofs_sys_munmap(memfd->mem, memsz);
 	if (err) {
 		return err;
 	}
-	err = silofs_sys_close(fd);
+	err = silofs_sys_close(memfd->fd);
 	if (err) {
 		return err;
 	}
+	memfd->mem = NULL;
+	memfd->fd = -1;
 	return 0;
 }
 
@@ -437,6 +439,12 @@ static uint32_t qalloc_unique_id(void)
 	return rand;
 }
 
+static int qalloc_setup_memsz_max(struct silofs_qalloc *qal, size_t npgs)
+{
+	return calc_mem_sizes(npgs, &qal->nbytes_data_max,
+	                      &qal->nbytes_meta_max);
+}
+
 static int qalloc_init_memfd(struct silofs_qalloc *qal, size_t npgs)
 {
 	char name[256] = "";
@@ -444,27 +452,23 @@ static int qalloc_init_memfd(struct silofs_qalloc *qal, size_t npgs)
 	const uint32_t uniq = qalloc_unique_id();
 	int err;
 
-	err = resolve_mem_sizes(npgs, &qal->alst.memsz_data,
-	                        &qal->alst.memsz_meta);
+	err = qalloc_setup_memsz_max(qal, npgs);
 	if (err) {
 		return err;
 	}
 	snprintf(name, sizeof(name) - 1, "silofs-mem-data-%d-%08x", pid, uniq);
-	err = memfd_setup(name, qal->alst.memsz_data,
-	                  &qal->memfd_data, &qal->mem_data);
+	err = memfd_setup(&qal->data, name, qal->nbytes_data_max);
 	if (err) {
 		return err;
 	}
 	snprintf(name, sizeof(name) - 1, "silofs-mem-meta-%d-%08x", pid, uniq);
-	err = memfd_setup(name, qal->alst.memsz_meta,
-	                  &qal->memfd_meta, &qal->mem_meta);
+	err = memfd_setup(&qal->meta, name, qal->nbytes_meta_max);
 	if (err) {
-		memfd_close(qal->memfd_data,
-		            qal->mem_data, qal->alst.memsz_data);
+		memfd_close(&qal->data, qal->nbytes_data_max);
 		return err;
 	}
-	qal->alst.nbytes_used = 0;
-	qal->alst.npages_tota = npgs;
+	qal->nbytes_data_use = 0;
+	qal->npages_data_max = npgs;
 	return 0;
 }
 
@@ -472,25 +476,19 @@ static int qalloc_fini_memfd(struct silofs_qalloc *qal)
 {
 	int err;
 
-	if (!qal->alst.npages_tota) {
+	if (!qal->npages_data_max) {
 		return 0;
 	}
-	err = memfd_close(qal->memfd_data, qal->mem_data,
-	                  qal->alst.memsz_data);
+	err = memfd_close(&qal->data, qal->nbytes_data_max);
 	if (err) {
 		return err;
 	}
-	err = memfd_close(qal->memfd_meta, qal->mem_meta,
-	                  qal->alst.memsz_meta);
+	err = memfd_close(&qal->meta, qal->nbytes_meta_max);
 	if (err) {
 		return err;
 	}
-	qal->memfd_data = -1;
-	qal->memfd_meta = -1;
-	qal->mem_data = NULL;
-	qal->mem_meta = NULL;
-	qal->alst.memsz_data = 0;
-	qal->alst.memsz_meta = 0;
+	qal->nbytes_data_max = 0;
+	qal->nbytes_meta_max = 0;
 	return 0;
 }
 
@@ -515,9 +513,9 @@ static void qalloc_fini_slabs(struct silofs_qalloc *qal)
 
 static void *qalloc_page_at(const struct silofs_qalloc *qal, size_t idx)
 {
-	union silofs_page *pg_arr = qal->mem_data;
+	union silofs_page *pg_arr = qal->data.mem;
 
-	silofs_assert_lt(idx, qal->alst.npages_tota);
+	silofs_assert_lt(idx, qal->npages_data_max);
 
 	return pg_arr + idx;
 }
@@ -525,9 +523,9 @@ static void *qalloc_page_at(const struct silofs_qalloc *qal, size_t idx)
 static struct silofs_page_info *
 qalloc_page_info_at(const struct silofs_qalloc *qal, size_t idx)
 {
-	struct silofs_page_info *pgi_arr = qal->mem_meta;
+	struct silofs_page_info *pgi_arr = qal->meta.mem;
 
-	silofs_assert_lt(idx, qal->alst.npages_tota);
+	silofs_assert_lt(idx, qal->npages_data_max);
 
 	return pgi_arr + idx;
 }
@@ -539,7 +537,7 @@ qalloc_next(const struct silofs_qalloc *qal,
 	const size_t idx_next = pgi->pg_index + npgs;
 	struct silofs_page_info *pgi_next = NULL;
 
-	if (idx_next < qal->alst.npages_tota) {
+	if (idx_next < qal->npages_data_max) {
 		pgi_next = qalloc_page_info_at(qal, idx_next);
 	}
 	return pgi_next;
@@ -576,15 +574,16 @@ static void qalloc_init_pages(struct silofs_qalloc *qal)
 	union silofs_page *pg;
 	struct silofs_page_info *pgi;
 
-	for (size_t i = 0; i < qal->alst.npages_tota; ++i) {
+	for (size_t i = 0; i < qal->npages_data_max; ++i) {
 		pg = qalloc_page_at(qal, i);
 		pgi = qalloc_page_info_at(qal, i);
 		pgi_init(pgi, pg, i);
+		qal->nbytes_meta_use += sizeof(*pgi);
 	}
 
 	silofs_list_init(&qal->free_pgs);
 	pgi = qalloc_page_info_at(qal, 0);
-	qalloc_add_free(qal, pgi, NULL, qal->alst.npages_tota);
+	qalloc_add_free(qal, pgi, NULL, qal->npages_data_max);
 }
 
 static int check_memsize(size_t memsize)
@@ -628,13 +627,11 @@ static void qalloc_fini_mutex(struct silofs_qalloc *qal)
 
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 {
-	const size_t pgsz = MPAGE_SIZE;
-	const size_t npgs = memsize / pgsz;
+	size_t npgs;
 	int err;
 
-	qal->alst.page_size = pgsz;
-	qal->alst.npages_used = 0;
-	qal->alst.nbytes_used = 0;
+	silofs_memzero(qal, sizeof(*qal));
+	qal->page_size = MPAGE_SIZE;
 	qal->mode = mode;
 
 	err = check_memsize(memsize);
@@ -645,6 +642,7 @@ int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 	if (err) {
 		return err;
 	}
+	npgs = memsize / qal->page_size;
 	err = qalloc_init_memfd(qal, npgs);
 	if (err) {
 		qalloc_fini_mutex(qal);
@@ -697,7 +695,7 @@ static size_t npgs_to_nbytes(size_t npgs)
 static loff_t qalloc_ptr_to_off(const struct silofs_qalloc *qal,
                                 const void *ptr)
 {
-	return (const char *)ptr - (const char *)qal->mem_data;
+	return (const char *)ptr - (const char *)qal->data.mem;
 }
 
 static size_t qalloc_ptr_to_pgn(const struct silofs_qalloc *qal,
@@ -705,7 +703,7 @@ static size_t qalloc_ptr_to_pgn(const struct silofs_qalloc *qal,
 {
 	const loff_t off = qalloc_ptr_to_off(qal, ptr);
 
-	return (size_t)off / qal->alst.page_size;
+	return (size_t)off / qal->page_size;
 }
 
 static bool qalloc_isinrange(const struct silofs_qalloc *qal,
@@ -714,7 +712,7 @@ static bool qalloc_isinrange(const struct silofs_qalloc *qal,
 	const loff_t off = qalloc_ptr_to_off(qal, ptr);
 	const loff_t end = off + (loff_t)nb;
 
-	return (off >= 0) && (end <= (loff_t)qal->alst.memsz_data);
+	return (off >= 0) && (end <= (loff_t)qal->nbytes_data_max);
 }
 
 static struct silofs_page_info *
@@ -722,7 +720,7 @@ qalloc_page_info_of(const struct silofs_qalloc *qal, const void *ptr)
 {
 	const size_t pgn = qalloc_ptr_to_pgn(qal, ptr);
 
-	silofs_assert_lt(pgn, qal->alst.npages_tota);
+	silofs_assert_lt(pgn, qal->npages_data_max);
 	return qalloc_page_info_at(qal, pgn);
 }
 
@@ -731,7 +729,7 @@ qalloc_slab_seg_of(const struct silofs_qalloc *qal, const void *ptr)
 {
 	loff_t off;
 	size_t idx;
-	struct silofs_slab_seg *seg = qal->mem_data;
+	struct silofs_slab_seg *seg = qal->data.mem;
 
 	off = qalloc_ptr_to_off(qal, ptr);
 	idx = (size_t)off / sizeof(*seg);
@@ -780,7 +778,7 @@ qalloc_search_free_list(struct silofs_qalloc *qal, size_t npgs)
 {
 	struct silofs_page_info *pgi = NULL;
 
-	if ((qal->alst.npages_used + npgs) <= qal->alst.npages_tota) {
+	if ((qal->npages_data_use + npgs) <= qal->npages_data_max) {
 		if (npgs >= MPAGES_LARGE_CHUNK) {
 			pgi = qalloc_search_free_from_head(qal, npgs);
 		} else {
@@ -893,7 +891,7 @@ static int qalloc_check_alloc(const struct silofs_qalloc *qal, size_t nbytes)
 {
 	const size_t nbytes_max = QALLOC_MALLOC_SIZE_MAX;
 
-	if (qal->mem_data == NULL) {
+	if (qal->data.mem == NULL) {
 		return -ENOMEM;
 	}
 	if (nbytes > nbytes_max) {
@@ -931,8 +929,8 @@ static int qalloc_alloc_multi_pg(struct silofs_qalloc *qal,
 		return -ENOMEM;
 	}
 	*out_ptr = pgi->pg->data;
-	qal->alst.npages_used += npgs;
-	silofs_assert_ge(qal->alst.npages_tota, qal->alst.npages_used);
+	qal->npages_data_use += npgs;
+	silofs_assert_ge(qal->npages_data_max, qal->npages_data_use);
 	return 0;
 }
 
@@ -953,7 +951,7 @@ static int qalloc_malloc(struct silofs_qalloc *qal,
 	if (err) {
 		return err;
 	}
-	qal->alst.nbytes_used += nbytes;
+	qal->nbytes_data_use += nbytes;
 	return 0;
 }
 
@@ -961,8 +959,9 @@ static void qalloc_require_malloc_ok(const struct silofs_qalloc *qal,
                                      size_t nbytes, int err)
 {
 	if (err) {
-		silofs_log_debug("malloc failed: nbytes=%lu memsz_data=%lu "
-		                 "err=%d", nbytes, qal->alst.memsz_data, err);
+		silofs_log_debug("malloc failed: nbytes=%lu "
+		                 "nbytes_data_max=%lu err=%d",
+		                 nbytes, qal->nbytes_data_max, err);
 	}
 }
 
@@ -992,7 +991,7 @@ void *silofs_qalloc_zmalloc(struct silofs_qalloc *qal, size_t nbytes)
 static int qalloc_check_free(const struct silofs_qalloc *qal,
                              const void *ptr, size_t nbytes)
 {
-	if ((qal->mem_data == NULL) || (ptr == NULL)) {
+	if ((qal->data.mem == NULL) || (ptr == NULL)) {
 		return -EINVAL;
 	}
 	if (!nbytes || (nbytes > QALLOC_MALLOC_SIZE_MAX)) {
@@ -1007,19 +1006,18 @@ static int qalloc_check_free(const struct silofs_qalloc *qal,
 static void qalloc_punch_hole_at(const struct silofs_qalloc *qal,
                                  struct silofs_page_info *pgi, size_t npgs)
 {
-	size_t off;
-	size_t len;
+	loff_t off;
+	ssize_t len;
 	int mode;
 	int err;
 
-	off = npgs_to_nbytes(pgi->pg_index);
-	len = npgs_to_nbytes(npgs);
+	off = (loff_t)npgs_to_nbytes(pgi->pg_index);
+	len = (ssize_t)npgs_to_nbytes(npgs);
 	mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	err = silofs_sys_fallocate(qal->memfd_data, mode,
-	                           (loff_t)off, (loff_t)len);
+	err = silofs_sys_fallocate(qal->data.fd, mode, off, len);
 	if (err) {
 		silofs_panic("failed to punch-hole in memory: off=%ld "
-		             "len=%lu mode=0x%x err=%d", off, len, mode, err);
+		             "len=%ld mode=0x%x err=%d", off, len, mode, err);
 	}
 }
 
@@ -1138,7 +1136,7 @@ static int qalloc_check_by_page(const struct silofs_qalloc *qal,
 	const struct silofs_page_info *pgi;
 
 	npgs = nbytes_to_npgs(nbytes);
-	if (qal->alst.npages_used < npgs) {
+	if (qal->npages_data_use < npgs) {
 		return -EINVAL;
 	}
 	pgi = qalloc_page_info_of(qal, ptr);
@@ -1165,16 +1163,16 @@ static int qalloc_free_multi_pg(struct silofs_qalloc *qal,
 	npgs = nbytes_to_npgs(nbytes);
 	pgi = qalloc_page_info_of(qal, ptr);
 	qalloc_free_npgs(qal, pgi, npgs);
-	qal->alst.npages_used -= npgs;
+	qal->npages_data_use -= npgs;
 	return 0;
 }
 
 static void *
 qalloc_base_of(const struct silofs_qalloc *qal, void *ptr, size_t len)
 {
+	struct silofs_slab_seg *seg = NULL;
+	const struct silofs_page_info *pgi = NULL;
 	void *base = NULL;
-	struct silofs_slab_seg *seg;
-	struct silofs_page_info *pgi;
 
 	if (!qalloc_isinrange(qal, ptr, len)) {
 		return NULL;
@@ -1196,7 +1194,7 @@ qalloc_base_of(const struct silofs_qalloc *qal, void *ptr, size_t len)
 static void
 qalloc_wreck_data(const struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 {
-	silofs_assert_ge(qal->alst.nbytes_used, nbytes);
+	silofs_assert_ge(qal->nbytes_data_use, nbytes);
 
 	if (qal->mode && ptr) {
 		memset(ptr, 0xF3, silofs_min(512, nbytes));
@@ -1223,7 +1221,7 @@ static int qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 	if (err) {
 		return err;
 	}
-	qal->alst.nbytes_used -= nbytes;
+	qal->nbytes_data_use -= nbytes;
 	return err;
 }
 
@@ -1232,7 +1230,7 @@ static void qalloc_require_free_ok(const struct silofs_qalloc *qal,
 {
 	if (err) {
 		silofs_panic("free error: ptr=%p nbytes=%lu memsz_data=%lu "
-		             "err=%d", ptr, nbytes, qal->alst.memsz_data, err);
+		             "err=%d", ptr, nbytes, qal->nbytes_data_max, err);
 	}
 }
 
@@ -1307,7 +1305,7 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
 	iov->iov_off = qalloc_ptr_to_off(qal, ptr);
 	iov->iov_len = len;
 	iov->iov_base = ptr;
-	iov->iov_fd = qal->memfd_data;
+	iov->iov_fd = qal->data.fd;
 	iov->iov_ref = NULL;
 	return 0;
 }
@@ -1315,7 +1313,8 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat)
 {
-	memcpy(out_stat, &qal->alst, sizeof(*out_stat));
+	out_stat->nbytes_max = qal->nbytes_meta_max + qal->nbytes_data_max;
+	out_stat->nbytes_use = qal->nbytes_meta_use + qal->nbytes_data_use;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

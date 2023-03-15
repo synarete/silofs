@@ -180,7 +180,6 @@ static int fse_make_repocfg(struct silofs_fs_env *fse,
 {
 	silofs_memzero(rcfg, sizeof(*rcfg));
 	rcfg->rc_alloc = fse->fs_alloc;
-	rcfg->rc_memhint = fse->fs_qalloc->alst.memsz_data;
 	rcfg->rc_rdonly = fse->fs_args.rdonly;
 	return silofs_bootpath_setup(&rcfg->rc_bootpath,
 	                             fse->fs_args.repodir, fse->fs_args.name);
@@ -188,7 +187,7 @@ static int fse_make_repocfg(struct silofs_fs_env *fse,
 
 static int fse_init_repo(struct silofs_fs_env *fse)
 {
-	struct silofs_repocfg rcfg = { .rc_memhint = 0 };
+	struct silofs_repocfg rcfg = { .rc_rdonly = false };
 	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
 	struct silofs_repo *repo;
 	int err;
@@ -750,12 +749,12 @@ int silofs_sync_fs(struct silofs_fs_env *fse)
 void silofs_stat_fs(const struct silofs_fs_env *fse,
                     struct silofs_fs_stats *st)
 {
-	struct silofs_alloc_stat alst = { .nbytes_used = 0 };
+	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_cache *cache = &fse->fs_repo->re_cache;
 
 	silofs_memzero(st, sizeof(*st));
 	silofs_allocstat(fse->fs_alloc, &alst);
-	st->nalloc_bytes = alst.nbytes_used;
+	st->nalloc_bytes = alst.nbytes_use;
 	st->ncache_ublocks += cache->c_ubki_lm.lm_htbl_sz;
 	st->ncache_vblocks += cache->c_vbki_lm.lm_htbl_sz;
 	st->ncache_unodes += cache->c_ui_lm.lm_htbl_sz;

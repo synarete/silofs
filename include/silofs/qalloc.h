@@ -21,12 +21,8 @@ struct silofs_iovec;
 
 /* allocator stats */
 struct silofs_alloc_stat {
-	size_t page_size;
-	size_t memsz_data;
-	size_t memsz_meta;
-	size_t npages_tota;
-	size_t npages_used;
-	size_t nbytes_used;
+	size_t nbytes_max;
+	size_t nbytes_use;
 };
 
 /* allocator interface */
@@ -48,17 +44,26 @@ struct silofs_slab {
 	uint32_t elemsz;
 };
 
+struct silofs_memfd {
+	void   *mem;
+	int     fd;
+};
+
 struct silofs_qalloc {
-	struct silofs_slab       slabs[32];
-	struct silofs_list_head  free_pgs;
-	struct silofs_alloc_stat alst;
-	struct silofs_alloc      alloc;
-	struct silofs_mutex      mutex;
-	void   *mem_data;
-	void   *mem_meta;
-	int     memfd_data;
-	int     memfd_meta;
-	int     mode;
+	struct silofs_slab      slabs[32];
+	struct silofs_list_head free_pgs;
+	struct silofs_alloc     alloc;
+	struct silofs_mutex     mutex;
+	struct silofs_memfd     data;
+	struct silofs_memfd     meta;
+	size_t                  page_size;
+	size_t                  npages_data_max;
+	size_t                  npages_data_use;
+	size_t                  nbytes_data_max;
+	size_t                  nbytes_data_use;
+	size_t                  nbytes_meta_max;
+	size_t                  nbytes_meta_use;
+	int                     mode;
 };
 
 

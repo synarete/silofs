@@ -64,30 +64,14 @@ static size_t align_down(size_t sz, size_t align)
 	return (sz / align) * align;
 }
 
-static int getmemlimit(size_t *out_lim)
-{
-	int err;
-	struct rlimit rlim = {
-		.rlim_cur = 0
-	};
-
-	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
-	if (!err) {
-		*out_lim = rlim.rlim_cur;
-	}
-	return err;
-}
-
 static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 {
-	size_t mem_floor;
-	size_t mem_ceil;
-	size_t mem_rlim;
-	size_t mem_glim;
-	size_t page_size;
-	size_t phys_pages;
-	size_t mem_total;
-	size_t mem_uget;
+	const size_t mem_floor = SILOFS_UGIGA / 4;
+	const size_t mem_glim = 64 * SILOFS_UGIGA;
+	size_t mem_total = 0;
+	size_t mem_rlim = 0;
+	size_t mem_ceil = 0;
+	size_t mem_uget = 0;
 	int err;
 
 	/* zero implies default value */
@@ -95,21 +79,16 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 		mem_want = 4 * SILOFS_GIGA;
 	}
 
-	page_size = (size_t)silofs_sc_page_size();
-	phys_pages = (size_t)silofs_sc_phys_pages();
-	mem_total = (page_size * phys_pages);
-	mem_floor = SILOFS_UGIGA / 4;
-	if (mem_total < mem_floor) {
-		return -ENOMEM;
-	}
-	err = getmemlimit(&mem_rlim);
+	err = silofs_memory_limits(&mem_total, &mem_rlim);
 	if (err) {
 		return err;
+	}
+	if (mem_total < mem_floor) {
+		return -ENOMEM;
 	}
 	if (mem_rlim < mem_floor) {
 		return -ENOMEM;
 	}
-	mem_glim = 64 * SILOFS_UGIGA;
 	mem_ceil = silofs_min3(mem_glim, mem_rlim, mem_total / 4);
 	mem_uget = silofs_clamp(mem_want, mem_floor, mem_ceil);
 	*out_mem_size = align_down(mem_uget, 2 * SILOFS_UMEGA);

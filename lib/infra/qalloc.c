@@ -27,6 +27,7 @@
 #include <silofs/thread.h>
 #include <silofs/qalloc.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -1424,4 +1425,26 @@ static struct silofs_alloc cstd_alloc = {
 struct silofs_alloc *silofs_cstd_alloc(void)
 {
 	return &cstd_alloc;
+}
+
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int getmemlimit(size_t *out_lim)
+{
+	struct rlimit rlim = { .rlim_cur = 0 };
+	int err;
+
+	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
+	*out_lim = err ? 0 : rlim.rlim_cur;
+	return err;
+}
+
+int silofs_memory_limits(size_t *out_phy, size_t *out_as)
+{
+	const long page_size = silofs_sc_page_size();
+	const long phys_pages = silofs_sc_phys_pages();
+
+	*out_phy = (size_t)(page_size * phys_pages);
+	return getmemlimit(out_as);
 }

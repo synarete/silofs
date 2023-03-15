@@ -117,5 +117,7 @@ int silofs_zmalloc(size_t sz, void **out_mem);
 
 void silofs_zfree(void *mem, size_t sz);
 
+int silofs_memory_limits(size_t *out_phy, size_t *out_as);
+
 
 #endif /* SILOFS_QALLOC_H_ */

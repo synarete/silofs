@@ -2338,7 +2338,10 @@ static int fuseq_wr_iter_check(const struct silofs_fuseq_wr_iter *fq_wri,
 	if (!(fq_wri->cnt < ARRAY_SIZE(fq_wri->iov))) {
 		return -EINVAL;
 	}
-	if ((iov->iov_fd < 0) || (iov->iov_off < 0)) {
+	if (iov->iov_off < 0) {
+		return -EINVAL;
+	}
+	if ((iov->iov_fd < 0) && (iov->iov_base == NULL)) {
 		return -EINVAL;
 	}
 	if ((fq_wri->nwr + iov->iov_len) > fq_wri->nwr_max) {

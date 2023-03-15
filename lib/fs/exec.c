@@ -29,8 +29,13 @@
 
 #define ROUND_TO_4K(n)  SILOFS_ROUND_TO(n, (4 * SILOFS_KILO))
 
-struct silofs_fs_core {
+union silofs_fs_alloc_u {
 	struct silofs_qalloc    qalloc;
+	struct silofs_calloc    calloc;
+};
+
+struct silofs_fs_core {
+	union silofs_fs_alloc_u alloc_u;
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
 	struct silofs_uber      uber;
@@ -135,7 +140,7 @@ static int fse_init_qalloc(struct silofs_fs_env *fse)
 		return err;
 	}
 	mode = fse->fs_args.pedantic ? 1 : 0;
-	qalloc = &fse_obj_of(fse)->fs_core.c.qalloc;
+	qalloc = &fse_obj_of(fse)->fs_core.c.alloc_u.qalloc;
 	err = silofs_qalloc_init(qalloc, memsize, mode);
 	if (err) {
 		return err;
@@ -151,6 +156,56 @@ static void fse_fini_qalloc(struct silofs_fs_env *fse)
 		silofs_qalloc_fini(fse->fs_qalloc);
 		fse->fs_qalloc = NULL;
 		fse->fs_alloc = NULL;
+	}
+}
+
+static int fse_init_calloc(struct silofs_fs_env *fse)
+{
+	struct silofs_calloc *calloc;
+	size_t memsize = 0;
+	int err;
+
+	err = calc_mem_size(fse->fs_args.memwant, &memsize);
+	if (err) {
+		return err;
+	}
+	calloc = &fse_obj_of(fse)->fs_core.c.alloc_u.calloc;
+	err = silofs_calloc_init(calloc, memsize);
+	if (err) {
+		return err;
+	}
+	fse->fs_calloc = calloc;
+	fse->fs_alloc = &calloc->alloc;
+	return 0;
+}
+
+static void fse_fini_calloc(struct silofs_fs_env *fse)
+{
+	if (fse->fs_calloc != NULL) {
+		silofs_calloc_fini(fse->fs_calloc);
+		fse->fs_calloc = NULL;
+		fse->fs_alloc = NULL;
+	}
+}
+
+static int fse_init_alloc(struct silofs_fs_env *fse)
+{
+	int ret;
+
+	if (fse->fs_args.stdalloc) {
+		ret = fse_init_calloc(fse);
+	} else {
+		ret = fse_init_qalloc(fse);
+	}
+	return ret;
+}
+
+static void fse_fini_alloc(struct silofs_fs_env *fse)
+{
+	if (fse->fs_args.stdalloc) {
+		fse_fini_calloc(fse);
+	} else {
+		fse_fini_qalloc(fse);
 	}
 }
 
@@ -296,22 +351,21 @@ static int fse_init_fuseq(struct silofs_fs_env *fse)
 {
 	union silofs_fuseq_page *fqp = NULL;
 	const size_t fuseq_pg_size = sizeof(*fqp);
-	struct silofs_alloc *alloc = &fse->fs_qalloc->alloc;
 	void *mem = NULL;
 	int err;
 
 	if (!fse->fs_args.withfuse) {
 		return 0;
 	}
-	mem = silofs_allocate(alloc, fuseq_pg_size);
+	mem = silofs_allocate(fse->fs_alloc, fuseq_pg_size);
 	if (mem == NULL) {
 		log_warn("failed to allocate fuseq: size=%lu", fuseq_pg_size);
 		return -ENOMEM;
 	}
 	fqp = mem;
-	err = silofs_fuseq_init(&fqp->fuseq, alloc);
+	err = silofs_fuseq_init(&fqp->fuseq, fse->fs_alloc);
 	if (err) {
-		silofs_deallocate(alloc, mem, fuseq_pg_size);
+		silofs_deallocate(fse->fs_alloc, mem, fuseq_pg_size);
 		return err;
 	}
 	fse_bind_fuseq(fse, &fqp->fuseq);
@@ -321,7 +375,6 @@ static int fse_init_fuseq(struct silofs_fs_env *fse)
 static void fse_fini_fuseq(struct silofs_fs_env *fse)
 {
 	union silofs_fuseq_page *fuseq_pg = NULL;
-	struct silofs_alloc *alloc = &fse->fs_qalloc->alloc;
 
 	if (fse->fs_fuseq != NULL) {
 		fuseq_pg = fuseq_to_page(fse->fs_fuseq);
@@ -329,7 +382,7 @@ static void fse_fini_fuseq(struct silofs_fs_env *fse)
 		silofs_fuseq_fini(fse->fs_fuseq);
 		fse_bind_fuseq(fse, NULL);
 
-		silofs_deallocate(alloc, fuseq_pg, sizeof(*fuseq_pg));
+		silofs_deallocate(fse->fs_alloc, fuseq_pg, sizeof(*fuseq_pg));
 	}
 }
 
@@ -375,7 +428,7 @@ static int fse_init_subs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fse_init_qalloc(fse);
+	err = fse_init_alloc(fse);
 	if (err) {
 		return err;
 	}
@@ -428,7 +481,7 @@ static void fse_fini(struct silofs_fs_env *fse)
 	fse_fini_idsmap(fse);
 	fse_fini_submitq(fse);
 	fse_fini_repo(fse);
-	fse_fini_qalloc(fse);
+	fse_fini_alloc(fse);
 	fse_fini_passwd(fse);
 	fse_fini_commons(fse);
 }

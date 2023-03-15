@@ -1381,16 +1381,16 @@ void silofs_burnstack(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_cstdalloc *
-alloc_to_cstdalloc(const struct silofs_alloc *alloc)
+static struct silofs_calloc *
+alloc_to_calloc(const struct silofs_alloc *alloc)
 {
-	const struct silofs_cstdalloc *cal;
+	const struct silofs_calloc *cal;
 
-	cal = silofs_container_of2(alloc, struct silofs_cstdalloc, alloc);
+	cal = silofs_container_of2(alloc, struct silofs_calloc, alloc);
 	return silofs_unconst(cal);
 }
 
-static void *cstdalloc_malloc(struct silofs_cstdalloc *cal, size_t size)
+static void *calloc_malloc(struct silofs_calloc *cal, size_t size)
 {
 	void *mem = NULL;
 	int err;
@@ -1403,17 +1403,17 @@ static void *cstdalloc_malloc(struct silofs_cstdalloc *cal, size_t size)
 	return mem;
 }
 
-static void cstdalloc_free(struct silofs_cstdalloc *cal,
-                           void *ptr, size_t size)
+static void calloc_free(struct silofs_calloc *cal,
+                        void *ptr, size_t size)
 {
 	if ((ptr != NULL) && (size > 0)) {
 		cstd_memfree(ptr, size);
-		silofs_atomic_addul(&cal->nbytes_use, size);
+		silofs_atomic_subul(&cal->nbytes_use, size);
 	}
 }
 
-static int cstdalloc_resolve(struct silofs_cstdalloc *cal,
-                             void *ptr, size_t len, struct silofs_iovec *iov)
+static int calloc_resolve(struct silofs_calloc *cal,
+                          void *ptr, size_t len, struct silofs_iovec *iov)
 {
 	memset(iov, 0, sizeof(*iov));
 	iov->iov_base = ptr;
@@ -1423,8 +1423,8 @@ static int cstdalloc_resolve(struct silofs_cstdalloc *cal,
 	return 0;
 }
 
-static void cstdalloc_stat(struct silofs_cstdalloc *cal,
-                           struct silofs_alloc_stat *out_stat)
+static void calloc_stat(struct silofs_calloc *cal,
+                        struct silofs_alloc_stat *out_stat)
 {
 	out_stat->nbytes_max = silofs_atomic_getul(&cal->nbytes_max);
 	out_stat->nbytes_use = silofs_atomic_getul(&cal->nbytes_use);
@@ -1432,27 +1432,27 @@ static void cstdalloc_stat(struct silofs_cstdalloc *cal,
 
 static void *cal_malloc(struct silofs_alloc *alloc, size_t size)
 {
-	return cstdalloc_malloc(alloc_to_cstdalloc(alloc), size);
+	return calloc_malloc(alloc_to_calloc(alloc), size);
 }
 
 static void cal_free(struct silofs_alloc *alloc, void *ptr, size_t size)
 {
-	cstdalloc_free(alloc_to_cstdalloc(alloc), ptr, size);
+	calloc_free(alloc_to_calloc(alloc), ptr, size);
 }
 
 static void cal_stat(const struct silofs_alloc *alloc,
                      struct silofs_alloc_stat *out_stat)
 {
-	cstdalloc_stat(alloc_to_cstdalloc(alloc), out_stat);
+	calloc_stat(alloc_to_calloc(alloc), out_stat);
 }
 
 static int cal_resolve(const struct silofs_alloc *alloc, void *ptr,
                        size_t len, struct silofs_iovec *iov)
 {
-	return cstdalloc_resolve(alloc_to_cstdalloc(alloc), ptr, len, iov);
+	return calloc_resolve(alloc_to_calloc(alloc), ptr, len, iov);
 }
 
-int silofs_cstdalloc_init(struct silofs_cstdalloc *cal, size_t memsize)
+int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize)
 {
 	silofs_memzero(cal, sizeof(*cal));
 	cal->alloc.malloc_fn = cal_malloc;
@@ -1463,7 +1463,7 @@ int silofs_cstdalloc_init(struct silofs_cstdalloc *cal, size_t memsize)
 	return 0;
 }
 
-int silofs_cstdalloc_fini(struct silofs_cstdalloc *cal)
+int silofs_calloc_fini(struct silofs_calloc *cal)
 {
 	silofs_memzero(cal, sizeof(*cal));
 	return 0;

@@ -485,6 +485,7 @@ struct silofs_fs_args {
 	bool                    rdonly;
 	bool                    concp;
 	bool                    restore_forced;
+	bool                    stdalloc;
 };
 
 /* file-system environment context */
@@ -492,6 +493,7 @@ struct silofs_fs_env {
 	struct silofs_fs_args   fs_args;
 	struct silofs_ivkey     fs_ivkey;
 	struct silofs_qalloc   *fs_qalloc;
+	struct silofs_calloc   *fs_calloc;
 	struct silofs_alloc    *fs_alloc;
 	struct silofs_repo     *fs_repo;
 	struct silofs_submitq  *fs_submitq;

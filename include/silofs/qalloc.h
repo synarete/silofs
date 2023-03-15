@@ -67,7 +67,7 @@ struct silofs_qalloc {
 };
 
 /* allocator via standard C malloc/free */
-struct silofs_cstdalloc {
+struct silofs_calloc {
 	struct silofs_alloc     alloc;
 	unsigned long           nbytes_max;
 	unsigned long           nbytes_use;
@@ -86,9 +86,9 @@ int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
                         size_t len, struct silofs_iovec *iov);
 
 /* allocator via standard C malloc/free */
-int silofs_cstdalloc_init(struct silofs_cstdalloc *cal, size_t memsize);
+int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
 
-int silofs_cstdalloc_fini(struct silofs_cstdalloc *cal);
+int silofs_calloc_fini(struct silofs_calloc *cal);
 
 /* quick allocator */
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode);

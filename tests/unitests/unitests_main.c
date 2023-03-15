@@ -106,6 +106,7 @@ static void ut_show_help_and_exit(void)
 	printf("%s <testdir> \n\n", program_invocation_short_name);
 	puts("options:");
 	puts(" -l, --level=0|1|2     Run level");
+	puts(" -M, --std-alloc       Use C standard allocation functions");
 	puts(" -p, --pedantic        Run in pedantic mode");
 	puts(" -v, --version         Show version info");
 	exit(EXIT_SUCCESS);
@@ -137,6 +138,7 @@ static void ut_parse_args(void)
 	int opt_index;
 	struct option long_opts[] = {
 		{ "level", required_argument, NULL, 'l' },
+		{ "std-alloc", no_argument, NULL, 'M' },
 		{ "pedantic", no_argument, NULL, 'p' },
 		{ "version", no_argument, NULL, 'v' },
 		{ "help", no_argument, NULL, 'h' },
@@ -146,9 +148,11 @@ static void ut_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:pvh", long_opts, &opt_index);
+		                      "l:Mpvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
+		} else if (opt_chr == 'M') {
+			ut_globals.stdalloc = true;
 		} else if (opt_chr == 'p') {
 			ut_globals.pedantic = true;
 		} else if (opt_chr == 'v') {

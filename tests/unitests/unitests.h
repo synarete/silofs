@@ -149,6 +149,7 @@ struct ut_globals {
 	char           *test_dir_real;
 	char           *test_dir_repo;
 	struct timespec start_ts;
+	bool            stdalloc;
 	bool            pedantic;
 };
 

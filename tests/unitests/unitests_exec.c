@@ -268,8 +268,8 @@ static size_t ualloc_nbytes_now(const struct ut_env *ute)
 
 static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 {
-	const size_t bk_sz = UT_BK_SIZE;
 	size_t ualloc_now;
+	size_t ualloc_dif;
 
 	if (pre_execute) {
 		ut_statfs_rootd_ok(ute, &ute->stvfs[0]);
@@ -284,8 +284,9 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 
 		ut_drop_caches_fully(ute);
 		ualloc_now = ualloc_nbytes_now(ute);
-		/* XXX ut_expect_eq(ute->ualloc_start, ualloc_now); */
-		ut_expect_ge(ute->ualloc_start + (2 * bk_sz), ualloc_now);
+		ut_expect_ge(ualloc_now, ute->ualloc_start);
+		ualloc_dif = ualloc_now - ute->ualloc_start;
+		ut_expect_le(ualloc_dif,  2 * UT_BK_SIZE);
 	}
 }
 
@@ -402,6 +403,8 @@ void ut_execute_tests(void)
 			.memwant = UT_GIGA,
 			.restore_forced = true,
 			.pedantic = ut_globals.pedantic,
+			.stdalloc = ut_globals.stdalloc,
+
 		},
 		.program = ut_globals.program,
 		.version = ut_globals.version

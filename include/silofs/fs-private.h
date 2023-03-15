@@ -153,7 +153,6 @@
 #define task_sbi(t)                     silofs_task_sbi(t)
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
-#define sbi_alloc(sbi)                  silofs_sbi_alloc(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 #define sbi_blobid(sbi)                 silofs_sbi_blobid(sbi)
@@ -363,12 +362,6 @@ static inline struct silofs_uber *
 silofs_sbi_uber(const struct silofs_sb_info *sbi)
 {
 	return sbi->sb_ui.u_si.s_uber;
-}
-
-static inline struct silofs_alloc *
-silofs_sbi_alloc(const struct silofs_sb_info *sbi)
-{
-	return sbi->sb_ui.u_si.s_uber->ub.alloc;
 }
 
 static inline struct silofs_cache *

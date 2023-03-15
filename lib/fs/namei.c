@@ -2015,14 +2015,13 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
-static void fill_proc(const struct silofs_sb_info *sbi,
+static void fill_proc(const struct silofs_uber *uber,
                       struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
-	const struct silofs_uber *uber = sbi_uber(sbi);
-	const struct silofs_cache *cache = sbi_cache(sbi);
+	const struct silofs_cache *cache = &uber->ub.repo->re_cache;
 
-	silofs_allocstat(sbi_alloc(sbi), &alst);
+	silofs_allocstat(uber->ub.alloc, &alst);
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid = uber->ub_owner.uid;
 	qpr->gid = uber->ub_owner.gid;
@@ -2106,7 +2105,7 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 static void fill_query_proc(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	fill_proc(ii_sbi(ii), &query->u.proc);
+	fill_proc(ii_uber(ii), &query->u.proc);
 }
 
 static void fill_query_spstats(const struct silofs_inode_info *ii,

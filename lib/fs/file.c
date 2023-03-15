@@ -765,7 +765,7 @@ filc_iovec_by_alloc(const struct silofs_file_ctx *f_ctx,
 {
 	void *base = base_of(bk_start, off_in_bk);
 
-	return silofs_allocresolve(sbi_alloc(f_ctx->sbi), base, len, out_iov);
+	return silofs_allocresolve(f_ctx->uber->ub.alloc, base, len, out_iov);
 }
 
 static int

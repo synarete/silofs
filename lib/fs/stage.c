@@ -105,7 +105,7 @@ static void vi_update_oaddr(struct silofs_vnode_info *vi,
 
 static struct silofs_cache *stgc_cache(const struct silofs_stage_ctx *stg_ctx)
 {
-	return sbi_cache(stg_ctx->sbi);
+	return &stg_ctx->uber->ub.repo->re_cache;
 }
 
 static void stgc_log_cache_stat(const struct silofs_stage_ctx *stg_ctx)
@@ -619,11 +619,10 @@ static int stgc_find_cached_unode(const struct silofs_stage_ctx *stg_ctx,
 {
 	struct silofs_vrange vrange;
 	struct silofs_uakey uakey;
-	struct silofs_cache *cache = sbi_cache(stg_ctx->sbi);
 
 	silofs_vrange_of_spmap(&vrange, height, stg_ctx->bk_voff);
 	silofs_uakey_setup_by2(&uakey, &vrange, stg_ctx->vspace);
-	*out_ui = silofs_cache_find_ui_by(cache, &uakey);
+	*out_ui = silofs_cache_find_ui_by(stgc_cache(stg_ctx), &uakey);
 	return (*out_ui != NULL) ? 0 : -ENOENT;
 }
 
@@ -1907,7 +1906,7 @@ static int stgc_stage_spleaf_of(struct silofs_stage_ctx *stg_ctx)
 static struct silofs_spamaps *
 stgc_spamaps(const struct silofs_stage_ctx *stg_ctx)
 {
-	struct silofs_cache *cache = sbi_cache(stg_ctx->sbi);
+	struct silofs_cache *cache = stgc_cache(stg_ctx);
 
 	return &cache->c_spam;
 }

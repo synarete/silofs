@@ -143,10 +143,10 @@ jobs:
       - name: Make file-system
         run: |
           silofs init ./build/repo
-          silofs mkfs -s 8G ./build/repo/test
+          silofs mkfs -s 8G -p 12345678 ./build/repo/test
       - name: Mount file-system
         run: |
-          silofs mount ./build/repo/test /mnt/test
+          silofs mount -p 12345678 ./build/repo/test /mnt/test
           mkdir /mnt/test/A
           echo "hello, world" > /mnt/test/A/hello
           cat /mnt/test/A/hello
@@ -188,10 +188,10 @@ jobs:
       - name: Make file-system
         run: |
           silofs init ./build/repo
-          silofs mkfs -s 8G ./build/repo/test
+          silofs mkfs -s 8G -p 12345678 ./build/repo/test
       - name: Mount file-system
         run: |
-          silofs mount ./build/repo/test /mnt/test
+          silofs mount -p 12345678 ./build/repo/test /mnt/test
           mkdir /mnt/test/A
           echo "hello, world" > /mnt/test/A/hello
           cat /mnt/test/A/hello

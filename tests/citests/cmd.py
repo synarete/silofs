@@ -31,6 +31,7 @@ class CmdExec:
         cmd = self._make_cmd(args)
         cwd = self._make_cwd(wdir)
         txt = ""
+        exp = False
         with subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.PIPE,
@@ -46,7 +47,10 @@ class CmdExec:
                 txt = out.strip()
             except subprocess.TimeoutExpired:
                 proc.kill()
+                exp = True
             ret = proc.returncode
+            if exp:
+                raise CmdError("timedout: " + cmd, txt, ret)
             if ret != 0:
                 raise CmdError("failed: " + cmd, txt, ret)
         return txt

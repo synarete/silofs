@@ -1296,8 +1296,10 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat)
 {
-	out_stat->nbytes_max = qal->nbytes_meta_max + qal->nbytes_data_max;
-	out_stat->nbytes_use = qal->nbytes_meta_use + qal->nbytes_data_use;
+	silofs_memzero(out_stat, sizeof(*out_stat));
+	out_stat->nbytes_max = qal->nbytes_data_max;
+	out_stat->nbytes_use = qal->nbytes_data_use;
+	out_stat->nbytes_ext = qal->nbytes_meta_use;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1426,6 +1428,7 @@ static int calloc_resolve(struct silofs_calloc *cal,
 static void calloc_stat(struct silofs_calloc *cal,
                         struct silofs_alloc_stat *out_stat)
 {
+	silofs_memzero(out_stat, sizeof(*out_stat));
 	out_stat->nbytes_max = silofs_atomic_getul(&cal->nbytes_max);
 	out_stat->nbytes_use = silofs_atomic_getul(&cal->nbytes_use);
 }

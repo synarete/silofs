@@ -2898,32 +2898,22 @@ static bool dqid_specific(silofs_dqid_t dqid)
 	return (dqid != SILOFS_DQID_DFL) && (dqid != SILOFS_DQID_ALL);
 }
 
-static size_t
-cache_flush_threshold_of(const struct silofs_cache *cache,
-                         silofs_dqid_t dqid, int flags)
+static size_t flush_threshold_of(silofs_dqid_t dqid, int flags)
 {
-	struct silofs_alloc_stat st;
-	const size_t kilo = SILOFS_UKILO;
 	const size_t mega = SILOFS_UMEGA;
-	const size_t factor = dqid_specific(dqid) ? 8 : 1;
-	size_t memsize_used;
+	const size_t factor = dqid_specific(dqid) ? 2 : 1;
 	size_t threshold;
 
-	silofs_allocstat(cache->c_alloc, &st);
-	memsize_used = st.nbytes_use;
-
-	if (flags & SILOFS_F_NOW) {
+	if (flags & (SILOFS_F_NOW | SILOFS_F_IDLE)) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = memsize_used / kilo / 4;
+		threshold = mega;
 	} else if (flags & SILOFS_F_FSYNC) {
-		threshold = memsize_used / kilo / 2;
-	} else if (flags & (SILOFS_F_IDLE)) {
-		threshold = memsize_used / kilo;
+		threshold = 2 * mega;
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		threshold = 2 * memsize_used / kilo;
+		threshold = 4 * mega;
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		threshold = 4 * memsize_used / kilo;
+		threshold = 32 * mega;
 	} else {
 		threshold = 64 * mega;
 	}
@@ -2950,6 +2940,11 @@ size_t silofs_cache_accum_ndirty(const struct silofs_cache *cache)
 	return cache->c_dqs.dq_accum_nbytes_total;
 }
 
+static bool cache_has_accum_ndirty(const struct silofs_cache *cache)
+{
+	return silofs_cache_accum_ndirty(cache) > 0;
+}
+
 static bool cache_dq_need_flush(const struct silofs_cache *cache,
                                 silofs_dqid_t dqid, int flags)
 {
@@ -2965,31 +2960,34 @@ static bool cache_dq_need_flush(const struct silofs_cache *cache,
 	if (!accum_ndirty) {
 		return false;
 	}
-	threshold = cache_flush_threshold_of(cache, dqid, flags);
+	threshold = flush_threshold_of(dqid, flags);
 	if (accum_ndirty > threshold) {
 		return true;
 	}
 	return false;
 }
 
-static bool cache_mem_press_need_flush(const struct silofs_cache *cache)
+static bool cache_mem_usage_need_flush(const struct silofs_cache *cache)
 {
-	const uint64_t mem_press_mask = cache_memory_pressure(cache);
-	const uint32_t mem_press_level = silofs_popcount64(mem_press_mask);
+	struct silofs_alloc_stat st;
 
-	return (mem_press_level > 18);
+	silofs_allocstat(cache->c_alloc, &st);
+	return st.nbytes_use > (st.nbytes_max / 4);
 }
 
 bool silofs_cache_need_flush(const struct silofs_cache *cache,
                              silofs_dqid_t dqid, int flags)
 {
+	if (!cache_has_accum_ndirty(cache)) {
+		return false;
+	}
 	if (cache_blobs_overflow(cache)) {
 		return true;
 	}
-	if (cache_dq_need_flush(cache, dqid, flags)) {
+	if (cache_mem_usage_need_flush(cache)) {
 		return true;
 	}
-	if (cache_mem_press_need_flush(cache)) {
+	if (cache_dq_need_flush(cache, dqid, flags)) {
 		return true;
 	}
 	return false;

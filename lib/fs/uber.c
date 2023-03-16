@@ -1325,8 +1325,7 @@ void silofs_relax_caches(struct silofs_task *task, int flags)
 {
 	const struct silofs_uber *uber = task->t_uber;
 
-	if (uber->ub.repo) {
-		silofs_repo_relax_cache(uber->ub.repo, flags);
-	}
+	silofs_assert_not_null(uber->ub.repo);
+	silofs_repo_relax_cache(uber->ub.repo, flags);
 }
 

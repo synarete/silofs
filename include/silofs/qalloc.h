@@ -23,6 +23,7 @@ struct silofs_iovec;
 struct silofs_alloc_stat {
 	size_t nbytes_max;
 	size_t nbytes_use;
+	size_t nbytes_ext;
 };
 
 /* allocator interface */

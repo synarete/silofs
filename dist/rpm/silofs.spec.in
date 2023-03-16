@@ -1,26 +1,27 @@
 Name: silofs
-Summary: The Silo File-System
-Version: @VERSION@
-Release: @RELEASE@.@REVISION@%{?dist}
-License: GPLv3
-Group: Applications/Archiving
-URL: https://synarete.github.io/silofs
-Source: %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
-Requires: libcap-devel
-Requires: libuuid-devel
-Requires: libgcrypt-devel
-Requires: libunwind-devel
+Summary:        The Silo File-System
+Version:        @VERSION@
+Release:        @RELEASE@.@REVISION@%{?dist}
+License:        GPLv3
+Group:          Applications/Archiving
+URL:            https://synarete.github.io/silofs
+Source:         %{name}-%{version}.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
+Requires:       libcap-devel
+Requires:       libuuid-devel
+Requires:       libgcrypt-devel
+Requires:       libunwind-devel
 
 %{?systemd_requires}
 
 %description
-Silofs is a user-space file-system with unique approach to the problem
-of archiving large volumes of data as cloud objects: it implements a
-fully functional file system on top of binary large objects (*blobs*),
-which serve both for I/O operations and data packing. Combined with
-built-in snapshot capabilities, compression and encryption, users can
-easily archive and restore their data as cloud friendly format.
+Silofs is a user-space file-system designed for storing large volumes
+of data over encrypted blobs. It let normal users create an isolated
+storage area, with its own private key, and mount it on a local host
+machine. Once mounted, users may manipulate their data as they would
+normally do with any other POSIX file-system, plus take full volume
+snapshots. The actual data is securely stored within local repository
+on top of regular files which serve as opaque storage blobs.
 
 %package devel
 Summary: Silofs testing utilities and development files

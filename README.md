@@ -11,17 +11,17 @@
 ## Overview
 
 Silofs *("stored in large objects file-system")* is a GNU/Linux
-user-space file system designed for storing large volumes of data over
+user-space file-system designed for storing large volumes of data over
 encrypted blobs. It let normal users create an isolated storage area,
 with its own private key, and mount it on a local host machine. Once
 mounted, users may manipulate their data as they would normally do with
 any other POSIX file-system, plus take full volume snapshots (online or
-offline). At the same time the actual data is securely stored within
-local repository on top of regular files which serve as opaque storage
-blobs. Having this type of layered model allow file-system's owner to
-easily backup or archive the entire repository into remote machine or
+offline). The actual actual underlying data and meta-data is securely
+stored within local repository on top of regular files, which serve as
+opaque storage blobs. This layered model allow file-system's owner to
+easily backup or archive the entire repository onto remote machine or
 cloud storage using tools like [rsync](https://rsync.samba.org/)) or
-[rclone](https://rclone.org/)), but without compromising their data
+[rclone](https://rclone.org/)), yet without compromising their data
 integrity.
 
 Silofs is implemented using Linux's FUSE bridge, and as such it trades

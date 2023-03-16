@@ -139,7 +139,8 @@ static int fse_init_qalloc(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	mode = fse->fs_args.pedantic ? 1 : 0;
+	mode = fse->fs_args.pedantic ?
+	       SILOFS_QALLOC_PEDANTIC : SILOFS_QALLOC_NORMAL;
 	qalloc = &fse_obj_of(fse)->fs_core.c.alloc_u.qalloc;
 	err = silofs_qalloc_init(qalloc, memsize, mode);
 	if (err) {

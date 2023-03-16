@@ -37,33 +37,41 @@ struct silofs_alloc {
 };
 
 /* quick memory allocator */
-struct silofs_slab {
-	struct silofs_list_head free_list;
-	size_t   nfree;
-	size_t   nused;
-	uint32_t sindex;
-	uint32_t elemsz;
+enum silofs_qalloc_mode {
+	SILOFS_QALLOC_NONE      = 0,
+	SILOFS_QALLOC_NORMAL    = 1,
+	SILOFS_QALLOC_PEDANTIC  = 2,
 };
 
 struct silofs_memfd {
 	void   *mem;
+	size_t  msz;
 	int     fd;
 };
 
-struct silofs_qalloc {
-	struct silofs_slab      slabs[32];
+struct silofs_pgal {
 	struct silofs_list_head free_pgs;
-	struct silofs_alloc     alloc;
 	struct silofs_mutex     mutex;
 	struct silofs_memfd     data;
 	struct silofs_memfd     meta;
-	size_t                  page_size;
-	size_t                  npages_data_max;
-	size_t                  npages_data_use;
-	size_t                  nbytes_data_max;
-	size_t                  nbytes_data_use;
-	size_t                  nbytes_meta_max;
-	size_t                  nbytes_meta_use;
+	size_t                  npgs_max;
+	size_t                  npgs_use;
+};
+
+struct silofs_slab {
+	struct silofs_list_head free_list;
+	struct silofs_mutex     mutex;
+	size_t                  nfree;
+	size_t                  nused;
+	uint32_t                sindex;
+	uint32_t                elemsz;
+};
+
+struct silofs_qalloc {
+	struct silofs_alloc     alloc;
+	struct silofs_slab      slabs[64];
+	struct silofs_pgal      pgal;
+	size_t                  nbytes_use;
 	int                     mode;
 };
 

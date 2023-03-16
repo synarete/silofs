@@ -122,7 +122,7 @@ ut_new_qalloc(struct ut_env *ute, size_t sz)
 	struct silofs_qalloc *qal = NULL;
 
 	qal = ut_zalloc(ute, sizeof(*qal));
-	err = silofs_qalloc_init(qal, sz, 0);
+	err = silofs_qalloc_init(qal, sz, SILOFS_QALLOC_NORMAL);
 	ut_expect_ok(err);
 
 	return qal;

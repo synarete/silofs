@@ -1315,16 +1315,16 @@ void silofs_memffff(void *s, size_t n)
 
 static size_t alignment_of(size_t sz)
 {
+	const size_t al_min = 64;
+	const size_t al_max = 65536;
 	size_t al;
 
-	if (sz <= 512) {
-		al = 512;
-	} else if (sz <= 1024) {
-		al = 1024;
-	} else if (sz <= 2048) {
-		al = 2048;
+	if (sz <= al_min) {
+		al = al_min;
+	} else if (sz >= al_max) {
+		al = al_max;
 	} else {
-		al = (size_t)silofs_sc_page_size();
+		al = 1 << (64 - silofs_clz64(sz - 1));
 	}
 	return al;
 }

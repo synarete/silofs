@@ -60,6 +60,7 @@ struct silofs_pgal {
 
 struct silofs_slab {
 	struct silofs_list_head free_list;
+	struct silofs_pgal     *pgal;
 	struct silofs_mutex     mutex;
 	size_t                  nfree;
 	size_t                  nused;

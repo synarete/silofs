@@ -200,7 +200,6 @@
 #define ii_incref(ii)                   silofs_ii_incref(ii)
 #define ii_decref(ii)                   silofs_ii_decref(ii)
 #define ii_dirtify(ii)                  silofs_ii_dirtify(ii)
-#define ii_undirtify(ii)                silofs_ii_undirtify(ii)
 #define ii_xino(ii)                     silofs_ii_xino_of(ii)
 #define ii_parent(ii)                   silofs_ii_parent(ii)
 #define ii_uid(ii)                      silofs_ii_uid(ii)

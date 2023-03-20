@@ -890,7 +890,7 @@ static struct silofs_slab_seg *slab_alloc(struct silofs_slab *slab)
 	if (lh == NULL) {
 		return NULL;
 	}
-	silofs_list_head_init(lh);
+	silofs_list_head_fini(lh);
 
 	silofs_assert_gt(slab->nfree, 0);
 	slab->nfree--;

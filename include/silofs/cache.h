@@ -175,6 +175,9 @@ void silofs_vi_decref(struct silofs_vnode_info *vi);
 void silofs_vi_attach_to(struct silofs_vnode_info *vi,
                          struct silofs_vbk_info *vbki);
 
+void silofs_vi_bind_pii(struct silofs_vnode_info *vi,
+                        struct silofs_inode_info *ii);
+
 
 int silofs_vi_refcnt(const struct silofs_vnode_info *vi);
 

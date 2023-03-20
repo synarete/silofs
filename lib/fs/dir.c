@@ -1238,24 +1238,21 @@ static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 {
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_dnode_info *dni = NULL;
-	int ret;
+	int err;
 
-	ii_incref(d_ctx->dir_ii);
-	ret = silofs_stage_vnode(d_ctx->task, vaddr, d_ctx->stg_mode,
-	                         ii_ino(d_ctx->dir_ii), &vi);
-	if (ret) {
-		goto out;
+	err = silofs_stage_vnode_of(d_ctx->task, vaddr, d_ctx->stg_mode,
+	                            d_ctx->dir_ii, &vi);
+	if (err) {
+		return err;
 	}
 	dni = silofs_dni_from_vi(vi);
 	silofs_dni_rebind_view(dni);
-	ret = dirc_recheck_dnode(d_ctx, dni);
-	if (ret) {
-		goto out;
+	err = dirc_recheck_dnode(d_ctx, dni);
+	if (err) {
+		return err;
 	}
 	*out_dni = dni;
-out:
-	ii_decref(d_ctx->dir_ii);
-	return ret;
+	return 0;
 }
 
 static int dirc_stage_child(const struct silofs_dir_ctx *d_ctx,
@@ -1289,8 +1286,8 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(d_ctx->task, SILOFS_STYPE_DTNODE,
-	                         ii_ino(d_ctx->dir_ii), &vi);
+	err = silofs_spawn_vnode_of(d_ctx->task, SILOFS_STYPE_DTNODE,
+	                            d_ctx->dir_ii, &vi);
 	if (err) {
 		return err;
 	}

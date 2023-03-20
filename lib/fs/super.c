@@ -860,6 +860,22 @@ int silofs_spawn_vnode(struct silofs_task *task,
 	return 0;
 }
 
+int silofs_spawn_vnode_of(struct silofs_task *task,
+                          enum silofs_stype stype,
+                          struct silofs_inode_info *ii,
+                          struct silofs_vnode_info **out_vi)
+{
+	int err;
+
+	ii_incref(ii);
+	err = silofs_spawn_vnode(task, stype, ii_ino(ii), out_vi);
+	if (!err) {
+		silofs_vi_bind_pii(*out_vi, ii);
+	}
+	ii_decref(ii);
+	return err;
+}
+
 static const struct silofs_creds *task_creds(const struct silofs_task *task)
 {
 	return &task->t_oper.op_creds;
@@ -1185,3 +1201,21 @@ int silofs_stage_vnode(struct silofs_task *task,
 	}
 	return 0;
 }
+
+int silofs_stage_vnode_of(struct silofs_task *task,
+                          const struct silofs_vaddr *vaddr,
+                          enum silofs_stage_mode stg_mode,
+                          struct silofs_inode_info *ii,
+                          struct silofs_vnode_info **out_vi)
+{
+	int err;
+
+	ii_incref(ii);
+	err = silofs_stage_vnode(task, vaddr, stg_mode, ii_ino(ii), out_vi);
+	if (!err) {
+		silofs_vi_bind_pii(*out_vi, ii);
+	}
+	ii_decref(ii);
+	return err;
+}
+

@@ -92,9 +92,20 @@ int silofs_stage_vnode(struct silofs_task *task,
                        enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi);
 
+int silofs_stage_vnode_of(struct silofs_task *task,
+                          const struct silofs_vaddr *vaddr,
+                          enum silofs_stage_mode stg_mode,
+                          struct silofs_inode_info *ii,
+                          struct silofs_vnode_info **out_vi);
+
 int silofs_spawn_vnode(struct silofs_task *task,
                        enum silofs_stype stype, silofs_dqid_t dqid,
                        struct silofs_vnode_info **out_vi);
+
+int silofs_spawn_vnode_of(struct silofs_task *task,
+                          enum silofs_stype stype,
+                          struct silofs_inode_info *ii,
+                          struct silofs_vnode_info **out_vi);
 
 int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stage_mode stg_mode,

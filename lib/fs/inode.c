@@ -436,7 +436,8 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
 	const struct silofs_snode_info *si = &ii->i_vi.v_si;
 
-	return !ii->i_pinned && !ii->i_nopen && silofs_si_isevictable(si);
+	return !ii->i_active_vis.sz && !ii->i_pinned && !ii->i_nopen
+	       && silofs_si_isevictable(si);
 }
 
 /*

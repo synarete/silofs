@@ -1152,6 +1152,26 @@ static bool vi_is_evictable(const struct silofs_vnode_info *vi)
 	return silofs_test_evictable(&vi->v_si);
 }
 
+void silofs_vi_bind_pii(struct silofs_vnode_info *vi,
+                        struct silofs_inode_info *ii)
+{
+	if (vi->v_pii != NULL) {
+		silofs_ii_unlink_active_vi(vi->v_pii, vi);
+		silofs_ii_decref(vi->v_pii);
+		vi->v_pii = NULL;
+	}
+	if (ii != NULL) {
+		silofs_ii_link_active_vi(ii, vi);
+		silofs_ii_incref(ii);
+		vi->v_pii = ii;
+	}
+}
+
+static void vi_detach_pii(struct silofs_vnode_info *vi)
+{
+	silofs_vi_bind_pii(vi, NULL);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void dq_init(struct silofs_dirtyq *dq)
@@ -2550,6 +2570,7 @@ static void cache_evict_vi(struct silofs_cache *cache,
 
 	cache_remove_vi(cache, vi);
 	vi_detach_bk(vi);
+	vi_detach_pii(vi);
 	si_delete(si, cache->c_alloc);
 }
 

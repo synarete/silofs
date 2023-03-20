@@ -230,8 +230,8 @@ static int slc_do_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
-	err = silofs_stage_vnode(sl_ctx->task, vaddr, sl_ctx->stg_mode,
-	                         ii_ino(sl_ctx->lnk_ii), &vi);
+	err = silofs_stage_vnode_of(sl_ctx->task, vaddr, sl_ctx->stg_mode,
+	                            sl_ctx->lnk_ii, &vi);
 	if (err) {
 		return err;
 	}
@@ -366,8 +366,8 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(sl_ctx->task, SILOFS_STYPE_SYMVAL,
-	                         ii_ino(sl_ctx->lnk_ii), &vi);
+	err = silofs_spawn_vnode_of(sl_ctx->task, SILOFS_STYPE_SYMVAL,
+	                            sl_ctx->lnk_ii, &vi);
 	if (err) {
 		return err;
 	}

@@ -41,10 +41,10 @@ struct silofs_space_visitor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
-                              const struct silofs_space_iter *spit)
+static int spvis_visit_exec_at(struct silofs_space_visitor *spvis,
+                               const struct silofs_space_iter *spit)
 {
-	struct silofs_spacestats *spst = &spvi->spst;
+	struct silofs_spacestats *spst = &spvis->spst;
 
 	switch (spit->height) {
 	case SILOFS_HEIGHT_SPLEAF:
@@ -67,53 +67,53 @@ static int spvi_visit_exec_at(struct silofs_space_visitor *spvi,
 	return 0;
 }
 
-static int spvi_visit_post_at(struct silofs_space_visitor *spvi,
-                              const struct silofs_space_iter *spit)
+static int spvis_visit_post_at(struct silofs_space_visitor *spvis,
+                               const struct silofs_space_iter *spit)
 {
 	silofs_assert_not_null(spit->sbi);
-	silofs_unused(spvi);
+	silofs_unused(spvis);
 	return 0;
 }
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_space_visitor *spvi_of(struct silofs_visitor *vis)
+static struct silofs_space_visitor *spvis_of(struct silofs_visitor *vis)
 {
 	return container_of(vis, struct silofs_space_visitor, vis);
 }
 
-static int spvi_visit_exec_hook(struct silofs_visitor *vis,
-                                const struct silofs_space_iter *uit)
+static int spvis_visit_exec_hook(struct silofs_visitor *vis,
+                                 const struct silofs_space_iter *spit)
 {
-	return spvi_visit_exec_at(spvi_of(vis), uit);
+	return spvis_visit_exec_at(spvis_of(vis), spit);
 }
 
-static int spvi_visit_post_hook(struct silofs_visitor *vis,
-                                const struct silofs_space_iter *uit)
+static int spvis_visit_post_hook(struct silofs_visitor *vis,
+                                 const struct silofs_space_iter *spit)
 {
-	return spvi_visit_post_at(spvi_of(vis), uit);
+	return spvis_visit_post_at(spvis_of(vis), spit);
 }
 
-static void spvi_init(struct silofs_space_visitor *spvi)
+static void spvis_init(struct silofs_space_visitor *spvis)
 {
-	silofs_memzero(spvi, sizeof(*spvi));
-	spvi->vis.exec_hook = spvi_visit_exec_hook;
-	spvi->vis.post_hook = spvi_visit_post_hook;
+	silofs_memzero(spvis, sizeof(*spvis));
+	spvis->vis.exec_hook = spvis_visit_exec_hook;
+	spvis->vis.post_hook = spvis_visit_post_hook;
 }
 
-static void spvi_fini(struct silofs_space_visitor *spvi)
+static void spvis_fini(struct silofs_space_visitor *spvis)
 {
-	silofs_memffff(spvi, sizeof(*spvi));
+	silofs_memffff(spvis, sizeof(*spvis));
 }
 
 int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi)
 {
-	struct silofs_space_visitor spvi;
+	struct silofs_space_visitor spvis;
 	int ret;
 
-	spvi_init(&spvi);
-	ret = silofs_walk_space_tree(task, sbi, &spvi.vis);
-	spvi_fini(&spvi);
+	spvis_init(&spvis);
+	ret = silofs_walk_space_tree(task, sbi, &spvis.vis);
+	spvis_fini(&spvis);
 	return ret;
 }
 

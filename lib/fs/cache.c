@@ -97,6 +97,85 @@ static uint64_t twang_mix64(uint64_t key)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_dirtyq_init(struct silofs_dirtyq *dq)
+{
+	listq_init(&dq->dq_list);
+	dq->dq_accum = 0;
+}
+
+void silofs_dirtyq_fini(struct silofs_dirtyq *dq)
+{
+	listq_fini(&dq->dq_list);
+	dq->dq_accum = 0;
+}
+
+void silofs_dirtyq_append(struct silofs_dirtyq *dq,
+                          struct silofs_list_head *lh, size_t len)
+{
+	listq_push_back(&dq->dq_list, lh);
+	dq->dq_accum += len;
+}
+
+void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
+                          struct silofs_list_head *lh, size_t len)
+{
+	silofs_assert_ge(dq->dq_accum, len);
+
+	listq_remove(&dq->dq_list, lh);
+	dq->dq_accum -= len;
+}
+
+struct silofs_list_head *silofs_dirtyq_front(const struct silofs_dirtyq *dq)
+{
+	return listq_front(&dq->dq_list);
+}
+
+static struct silofs_list_head *
+dirtyq_next_of(const struct silofs_dirtyq *dq,
+               const struct silofs_list_head *lh)
+{
+	return listq_next(&dq->dq_list, lh);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void dirtyqs_init(struct silofs_dirtyqs *dqs)
+{
+	silofs_dirtyq_init(&dqs->dq_uis);
+	silofs_dirtyq_init(&dqs->dq_iis);
+	silofs_dirtyq_init(&dqs->dq_vis);
+	dqs->dq_accum_nbytes_total = 0;
+	for (size_t i = 0; i < ARRAY_SIZE(dqs->dq); ++i) {
+		silofs_dirtyq_init(&dqs->dq[i]);
+	}
+}
+
+static void dirtyqs_fini(struct silofs_dirtyqs *dqs)
+{
+	silofs_dirtyq_fini(&dqs->dq_uis);
+	silofs_dirtyq_fini(&dqs->dq_iis);
+	silofs_dirtyq_fini(&dqs->dq_vis);
+	dqs->dq_accum_nbytes_total = 0;
+
+	for (size_t i = 0; i < ARRAY_SIZE(dqs->dq); ++i) {
+		silofs_dirtyq_fini(&dqs->dq[i]);
+	}
+}
+
+static const struct silofs_dirtyq *
+dirtyqs_getq(const struct silofs_dirtyqs *dqs, silofs_dqid_t dqid)
+{
+	const size_t nqs = ARRAY_SIZE(dqs->dq);
+	size_t qidx = 0;
+
+	if ((dqid > 0) && (nqs > 1)) {
+		qidx = (dqid % (nqs - 1)) + 1;
+	}
+	return &dqs->dq[qidx];
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_block *bk_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_block *bk;
@@ -984,9 +1063,56 @@ static int visit_evictable_si(struct silofs_cache_elem *ce, void *arg)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
+{
+	silofs_assert_null(ui->u_dq);
+	ui->u_dq = dq;
+}
+
+static bool ui_isdirty(const struct silofs_unode_info *ui)
+{
+	return ui->u_si.s_ce.ce_dirty;
+}
+
 static struct silofs_cache *ui_cache(const struct silofs_unode_info *ui)
 {
 	return si_cache(&ui->u_si);
+}
+
+static void ui_do_dirtify(struct silofs_unode_info *ui)
+{
+	silofs_assert_not_null(ui->u_dq);
+
+	if (!ui_isdirty(ui)) {
+		cache_dirtify_ui(ui_cache(ui), ui);
+		silofs_dirtyq_append(ui->u_dq, &ui->u_dq_lh,
+		                     ui->u_si.s_view_len);
+	}
+}
+
+static void ui_do_undirtify(struct silofs_unode_info *ui)
+{
+	silofs_assert_not_null(ui->u_dq);
+
+	if (ui_isdirty(ui)) {
+		cache_undirtify_ui(ui_cache(ui), ui);
+		silofs_dirtyq_remove(ui->u_dq, &ui->u_dq_lh,
+		                     ui->u_si.s_view_len);
+	}
+}
+
+void silofs_ui_dirtify(struct silofs_unode_info *ui)
+{
+	if (likely(ui != NULL)) {
+		ui_do_dirtify(ui);
+	}
+}
+
+void silofs_ui_undirtify(struct silofs_unode_info *ui)
+{
+	if (likely(ui != NULL)) {
+		ui_do_undirtify(ui);
+	}
 }
 
 void silofs_ui_incref(struct silofs_unode_info *ui)
@@ -1001,11 +1127,6 @@ void silofs_ui_decref(struct silofs_unode_info *ui)
 	if (likely(ui != NULL)) {
 		si_decref(&ui->u_si);
 	}
-}
-
-void silofs_ui_dirtify(struct silofs_unode_info *ui)
-{
-	cache_dirtify_ui(ui_cache(ui), ui);
 }
 
 static struct silofs_unode_info *ui_from_ce(struct silofs_cache_elem *ce)
@@ -1068,6 +1189,12 @@ static bool ui_is_evictable(const struct silofs_unode_info *ui)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
+{
+	silofs_assert_null(vi->v_dq);
+	vi->v_dq = dq;
+}
 
 static struct silofs_cache *vi_cache(const struct silofs_vnode_info *vi)
 {
@@ -1175,81 +1302,10 @@ static void vi_detach_pii(struct silofs_vnode_info *vi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void dq_init(struct silofs_dirtyq *dq)
-{
-	listq_init(&dq->dq_list);
-	dq->dq_accum_nbytes = 0;
-}
-
-static void dq_fini(struct silofs_dirtyq *dq)
-{
-	listq_fini(&dq->dq_list);
-	dq->dq_accum_nbytes = 0;
-}
-
-static void dq_append(struct silofs_dirtyq *dq,
-                      struct silofs_list_head *lh, size_t len)
-{
-	listq_push_back(&dq->dq_list, lh);
-	dq->dq_accum_nbytes += len;
-}
-
-static void dq_remove(struct silofs_dirtyq *dq,
-                      struct silofs_list_head *lh, size_t len)
-{
-	silofs_assert_ge(dq->dq_accum_nbytes, len);
-
-	listq_remove(&dq->dq_list, lh);
-	dq->dq_accum_nbytes -= len;
-}
-
-static struct silofs_list_head *dq_front(const struct silofs_dirtyq *dq)
-{
-	return listq_front(&dq->dq_list);
-}
-
-static struct silofs_list_head *
-dq_next_of(const struct silofs_dirtyq *dq,
-           const struct silofs_list_head *lh)
-{
-	return listq_next(&dq->dq_list, lh);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void dqs_init(struct silofs_dirtyqs *dqs)
-{
-	dqs->dq_accum_nbytes_total = 0;
-	for (size_t i = 0; i < ARRAY_SIZE(dqs->dq); ++i) {
-		dq_init(&dqs->dq[i]);
-	}
-}
-
-static void dqs_fini(struct silofs_dirtyqs *dqs)
-{
-	for (size_t i = 0; i < ARRAY_SIZE(dqs->dq); ++i) {
-		dq_fini(&dqs->dq[i]);
-	}
-}
-
-static const struct silofs_dirtyq *
-dqs_dirtyq_of(const struct silofs_dirtyqs *dqs, silofs_dqid_t dqid)
-{
-	const size_t nqs = ARRAY_SIZE(dqs->dq);
-	size_t qidx = 0;
-
-	if ((dqid > 0) && (nqs > 1)) {
-		qidx = (dqid % (nqs - 1)) + 1;
-	}
-	return &dqs->dq[qidx];
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static struct silofs_dirtyq *
 cache_dirtyq_of(const struct silofs_cache *cache, silofs_dqid_t dqid)
 {
-	const struct silofs_dirtyq *dq = dqs_dirtyq_of(&cache->c_dqs, dqid);
+	const struct silofs_dirtyq *dq = dirtyqs_getq(&cache->c_dqs, dqid);
 
 	return unconst(dq);
 }
@@ -1273,7 +1329,7 @@ static void cache_dq_enq_si(struct silofs_cache *cache,
 	if (!si->s_ce.ce_dirty) {
 		nb = stype_size(si->s_stype);
 		dq = cache_dirtyq_of(cache, si->s_dqid);
-		dq_append(dq, &si->s_dq_lh, nb);
+		silofs_dirtyq_append(dq, &si->s_dq_lh, nb);
 		cache->c_dqs.dq_accum_nbytes_total += nb;
 		si->s_ce.ce_dirty = true;
 	}
@@ -1289,7 +1345,7 @@ static void cache_dq_dec_si(struct silofs_cache *cache,
 		nb = stype_size(si->s_stype);
 		silofs_assert_ge(cache->c_dqs.dq_accum_nbytes_total, nb);
 		dq = cache_dirtyq_of(cache, si->s_dqid);
-		dq_remove(dq, &si->s_dq_lh, nb);
+		silofs_dirtyq_remove(dq, &si->s_dq_lh, nb);
 		cache->c_dqs.dq_accum_nbytes_total -= nb;
 		si->s_ce.ce_dirty = false;
 	}
@@ -1312,7 +1368,7 @@ cache_dq_front_si(const struct silofs_cache *cache, silofs_dqid_t dqid)
 {
 	const struct silofs_dirtyq *dq = cache_dirtyq_of(cache, dqid);
 
-	return dq_lh_to_si(dq_front(dq));
+	return dq_lh_to_si(silofs_dirtyq_front(dq));
 }
 
 static struct silofs_snode_info *
@@ -1321,7 +1377,7 @@ cache_dq_next_si(const struct silofs_cache *cache,
 {
 	const struct silofs_dirtyq *dq = cache_dirtyq_of(cache, si->s_dqid);
 
-	return dq_lh_to_si(dq_next_of(dq, &si->s_dq_lh));
+	return dq_lh_to_si(dirtyq_next_of(dq, &si->s_dq_lh));
 }
 
 static void cache_dirtify_ui(struct silofs_cache *cache,
@@ -1931,6 +1987,22 @@ silofs_cache_spawn_ubk(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_dirtyq *
+cache_dirtyq_by(struct silofs_cache *cache, enum silofs_stype stype)
+{
+	struct silofs_dirtyq *dq;
+
+	if (stype_isinode(stype)) {
+		dq = &cache->c_dqs.dq_iis;
+	} else if (stype_isvnode(stype)) {
+		dq = &cache->c_dqs.dq_vis;
+	} else {
+		silofs_assert(stype_isunode(stype));
+		dq = &cache->c_dqs.dq_uis;
+	}
+	return dq;
+}
+
 static int cache_init_ui_lm(struct silofs_cache *cache, size_t cap)
 {
 	return lrumap_init(&cache->c_ui_lm, cache->c_alloc, cap);
@@ -1996,6 +2068,7 @@ static void cache_evict_ui(struct silofs_cache *cache,
 {
 	struct silofs_snode_info *si = &ui->u_si;
 
+	ui_do_undirtify(ui);
 	cache_remove_ui(cache, ui);
 	ui_detach_bk(ui);
 	si_delete(si, cache->c_alloc);
@@ -2164,6 +2237,7 @@ cache_spawn_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 	ui = cache_require_ui(cache, uaddr);
 	if (ui != NULL) {
 		si_set_cache(&ui->u_si, cache);
+		ui_set_dq(ui, cache_dirtyq_by(cache, uaddr->stype));
 		cache_store_ui(cache, ui);
 		cache_track_uaddr(cache, ui_uaddr(ui));
 	}
@@ -2185,7 +2259,6 @@ silofs_cache_spawn_ui(struct silofs_cache *cache,
 static void
 cache_forget_ui(struct silofs_cache *cache, struct silofs_unode_info *ui)
 {
-	cache_undirtify_ui(cache, ui);
 	cache_forget_uaddr(cache, ui_uaddr(ui));
 	cache_evict_ui(cache, ui);
 }
@@ -2724,6 +2797,7 @@ cache_spawn_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 	vi = cache_require_vi(cache, vaddr);
 	if (vi != NULL) {
 		si_set_cache(&vi->v_si, cache);
+		vi_set_dq(vi, cache_dirtyq_by(cache, vaddr->stype));
 		cache_store_vi(cache, vi);
 	}
 	return vi;
@@ -2952,7 +3026,7 @@ cache_accum_ndirty_of(const struct silofs_cache *cache, silofs_dqid_t dqid)
 		accum_ndirty = cache->c_dqs.dq_accum_nbytes_total;
 	} else {
 		dq = cache_dirtyq_of(cache, dqid);
-		accum_ndirty = dq->dq_accum_nbytes;
+		accum_ndirty = dq->dq_accum;
 	}
 	return accum_ndirty;
 }
@@ -3225,7 +3299,7 @@ int silofs_cache_init(struct silofs_cache *cache,
 	cache->c_alloc = alloc;
 	cache->c_nil_bk = NULL;
 	cache->c_mem_size_hint = st.nbytes_max;
-	dqs_init(&cache->c_dqs);
+	dirtyqs_init(&cache->c_dqs);
 	err = cache_init_mdigest(cache);
 	if (err) {
 		return err;
@@ -3254,7 +3328,7 @@ out_err:
 
 void silofs_cache_fini(struct silofs_cache *cache)
 {
-	dqs_fini(&cache->c_dqs);
+	dirtyqs_fini(&cache->c_dqs);
 	cache_fini_lrumaps(cache);
 	cache_fini_nil_bk(cache);
 	cache_fini_uamap(cache);
@@ -3275,19 +3349,28 @@ static void cache_post_op(struct silofs_cache *cache)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool vi_isdirty(const struct silofs_vnode_info *vi)
+{
+	return vi->v_si.s_ce.ce_dirty;
+}
+
 static void vi_do_dirtify(struct silofs_vnode_info *vi)
 {
-	cache_dirtify_vi(vi_cache(vi), vi);
-	if ((vi->v_pii != NULL) && !vi->v_iidirty) {
-		silofs_ii_link_dirty_vi(vi->v_pii, vi);
+	if (!vi_isdirty(vi)) {
+		cache_dirtify_vi(vi_cache(vi), vi);
+		if ((vi->v_pii != NULL) && !vi->v_iidirty) {
+			silofs_ii_link_dirty_vi(vi->v_pii, vi);
+		}
 	}
 }
 
 static void vi_do_undirtify(struct silofs_vnode_info *vi)
 {
-	cache_undirtify_vi(vi_cache(vi), vi);
-	if ((vi->v_pii != NULL) && vi->v_iidirty) {
-		silofs_ii_unlink_dirty_vi(vi->v_pii, vi);
+	if (vi_isdirty(vi)) {
+		cache_undirtify_vi(vi_cache(vi), vi);
+		if ((vi->v_pii != NULL) && vi->v_iidirty) {
+			silofs_ii_unlink_dirty_vi(vi->v_pii, vi);
+		}
 	}
 }
 
@@ -3298,18 +3381,43 @@ void silofs_vi_dirtify(struct silofs_vnode_info *vi)
 	}
 }
 
+void silofs_vi_undirtify(struct silofs_vnode_info *vi)
+{
+	if (likely(vi != NULL)) {
+		vi_do_undirtify(vi);
+	}
+}
+
+static bool ii_isdirty(const struct silofs_inode_info *ii)
+{
+	return vi_isdirty(&ii->i_vi);
+}
+
+static void ii_do_dirtify(struct silofs_inode_info *ii)
+{
+	if (!ii_isdirty(ii)) {
+		vi_do_dirtify(&ii->i_vi);
+	}
+}
+
+static void ii_do_undirtify(struct silofs_inode_info *ii)
+{
+	if (ii_isdirty(ii)) {
+		vi_do_undirtify(&ii->i_vi);
+	}
+}
+
 void silofs_ii_dirtify(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		silofs_assert_gt(ii->i_vi.v_si.s_dqid, 0);
-		silofs_vi_dirtify(ii_to_vi(ii));
+		ii_do_dirtify(ii);
 	}
 }
 
 void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		vi_do_undirtify(ii_to_vi(ii));
+		ii_do_undirtify(ii);
 	}
 }
 
@@ -3398,30 +3506,3 @@ void silofs_cache_fill_dsets(struct silofs_cache *cache,
 	cache_post_op(cache);
 }
 
-static void cache_undirtify_by_dset(struct silofs_cache *cache,
-                                    const struct silofs_dset *dset)
-{
-	struct silofs_snode_info *si_next = NULL;
-	struct silofs_snode_info *si = dset->ds_siq;
-	struct silofs_vnode_info *vi = NULL;
-
-	while (si != NULL) {
-		si_next = si->s_ds_next;
-		if (stype_isvnode(si->s_stype)) {
-			vi = silofs_vi_from_si(si);
-			vi_do_undirtify(vi);
-		} else {
-			cache_undirtify_si(cache, si);
-		}
-		si->s_ds_next = NULL;
-		si = si_next;
-	}
-}
-
-void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
-                                    const struct silofs_dset *dset)
-{
-	cache_pre_op(cache);
-	cache_undirtify_by_dset(cache, dset);
-	cache_post_op(cache);
-}

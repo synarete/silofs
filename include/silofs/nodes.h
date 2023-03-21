@@ -48,12 +48,11 @@ struct silofs_snode_info {
 struct silofs_unode_info {
 	struct silofs_uaddr             u_uaddr;
 	struct silofs_snode_info        u_si;
-	struct silofs_list_head         u_pack_lh;
+	struct silofs_dirtyq           *u_dq;
+	struct silofs_list_head         u_dq_lh;
 	struct silofs_repo             *u_repo;
 	struct silofs_ubk_info         *u_ubki;
 	bool                            u_verified;
-	bool                            u_in_pq;
-	char                            u_pad[6];
 };
 
 /* space-stats */
@@ -87,14 +86,15 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_snode_info        v_si;
-	struct silofs_list_head         v_alive_lh;
-	struct silofs_list_head         v_dirty_lh;
+	struct silofs_list_head         v_iq_lh;
+	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_oaddr             v_oaddr;
 	struct silofs_iovref            v_iovr;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_sb_info          *v_sbi;
 	struct silofs_inode_info       *v_pii;
+	struct silofs_dirtyq           *v_dq;
 	bool                            v_recheck;
 	bool                            v_verified;
 	bool                            v_iidirty;
@@ -103,8 +103,9 @@ struct silofs_vnode_info {
 /* inode */
 struct silofs_inode_info {
 	struct silofs_vnode_info        i_vi;
+	struct silofs_list_head         i_dq_lh;
 	struct silofs_listq             i_alive_vis;
-	struct silofs_listq             i_dirty_vis;
+	struct silofs_dirtyq            i_dirty_vis;
 	struct silofs_inode            *inode;
 	struct timespec                 i_atime_lazy;
 	ino_t  i_ino;
@@ -160,6 +161,9 @@ silofs_sni_from_ui(const struct silofs_unode_info *ui);
 struct silofs_spleaf_info *
 silofs_sli_from_ui(const struct silofs_unode_info *ui);
 
+
+struct silofs_inode_info *
+silofs_ii_from_si(const struct silofs_snode_info *si);
 
 struct silofs_inode_info *
 silofs_ii_from_vi(const struct silofs_vnode_info *vi);

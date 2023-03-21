@@ -434,7 +434,7 @@ static void silofs_ii_times(const struct silofs_inode_info *ii,
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	if (ii->i_alive_vis.sz || ii->i_dirty_vis.sz) {
+	if (ii->i_alive_vis.sz || ii->i_dirty_vis.dq_accum) {
 		return false;
 	}
 	if (ii->i_pinned || ii->i_nopen) {

@@ -320,6 +320,38 @@ static void dset_mkfifo(struct silofs_dset *dset)
 	}
 }
 
+static void dset_undirtify_all(const struct silofs_dset *dset)
+{
+	struct silofs_unode_info *ui = NULL;
+	struct silofs_inode_info *ii = NULL;
+	struct silofs_vnode_info *vi = NULL;
+	struct silofs_snode_info *si_next = NULL;
+	struct silofs_snode_info *si = dset->ds_siq;
+	enum silofs_stype stype;
+
+	while (si != NULL) {
+		si_next = si->s_ds_next;
+		stype = si->s_stype;
+
+		if (stype_isinode(stype)) {
+			ii = silofs_ii_from_si(si);
+			silofs_ii_undirtify(ii);
+		} else if (stype_isvnode(stype)) {
+			vi = silofs_vi_from_si(si);
+			silofs_vi_undirtify(vi);
+		} else {
+			silofs_assert(stype_isunode(stype));
+			ui = silofs_ui_from_si(si);
+			silofs_ui_undirtify(ui);
+		}
+		si->s_ds_next = NULL;
+		si = si_next;
+		ui = NULL;
+		ii = NULL;
+		vi = NULL;
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void dsets_init(struct silofs_dsets *dsets)
@@ -382,8 +414,7 @@ static void smc_seal_dset(struct silofs_submit_ctx *sm_ctx,
 static void smc_undirtify_dset(struct silofs_submit_ctx *sm_ctx,
                                enum silofs_stype stype)
 {
-	silofs_cache_undirtify_by_dset(sm_ctx->cache,
-	                               smc_dset_of(sm_ctx, stype));
+	dset_undirtify_all(smc_dset_of(sm_ctx, stype));
 }
 
 static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,

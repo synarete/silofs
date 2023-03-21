@@ -845,9 +845,9 @@ int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
 	return 0;
 }
 
-int silofs_spawn_vnode(struct silofs_task *task,
-                       enum silofs_stype stype, silofs_dqid_t dqid,
-                       struct silofs_vnode_info **out_vi)
+static int do_spawn_vnode(struct silofs_task *task,
+                          enum silofs_stype stype, silofs_dqid_t dqid,
+                          struct silofs_vnode_info **out_vi)
 {
 	int err;
 
@@ -866,10 +866,11 @@ int silofs_spawn_vnode_of(struct silofs_task *task,
                           struct silofs_vnode_info **out_vi)
 {
 	struct silofs_vnode_info *vi = NULL;
+	const silofs_dqid_t dqid = ii ? ii_ino(ii) : SILOFS_DQID_DFL;
 	int err;
 
 	ii_incref(ii);
-	err = silofs_spawn_vnode(task, stype, ii_ino(ii), &vi);
+	err = do_spawn_vnode(task, stype, dqid, &vi);
 	if (!err) {
 		silofs_assert_null(vi->v_pii);
 		silofs_vi_bind_pii(vi, ii);
@@ -1188,10 +1189,10 @@ static int check_stage_vnode(const struct silofs_task *task,
 	return ret;
 }
 
-int silofs_stage_vnode(struct silofs_task *task,
-                       const struct silofs_vaddr *vaddr,
-                       enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
-                       struct silofs_vnode_info **out_vi)
+static int do_stage_vnode(struct silofs_task *task,
+                          const struct silofs_vaddr *vaddr,
+                          enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
+                          struct silofs_vnode_info **out_vi)
 {
 	int err;
 
@@ -1213,10 +1214,11 @@ int silofs_stage_vnode_of(struct silofs_task *task,
                           struct silofs_vnode_info **out_vi)
 {
 	struct silofs_vnode_info *vi = NULL;
+	const silofs_dqid_t dqid = ii ? ii_ino(ii) : SILOFS_DQID_DFL;
 	int err;
 
 	ii_incref(ii);
-	err = silofs_stage_vnode(task, vaddr, stg_mode, ii_ino(ii), &vi);
+	err = do_stage_vnode(task, vaddr, stg_mode, dqid, &vi);
 	if (!err && (vi->v_pii == NULL)) {
 		silofs_vi_bind_pii(vi, ii);
 	}

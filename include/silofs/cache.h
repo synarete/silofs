@@ -18,16 +18,13 @@
 #define SILOFS_CACHE_H_
 
 
-/* dirty-queue of cached-elements */
-struct silofs_dirtyq {
-	struct silofs_listq     dq_list;
-	size_t dq_accum_nbytes;
-};
-
 /* dirty-queues of cached-elements by owner */
 struct silofs_dirtyqs {
-	struct silofs_dirtyq    dq[128];
+	struct silofs_dirtyq    dq_uis;
+	struct silofs_dirtyq    dq_iis;
+	struct silofs_dirtyq    dq_vis;
 	size_t dq_accum_nbytes_total;
+	struct silofs_dirtyq    dq[128];
 };
 
 /* LRU + hash-map */
@@ -54,6 +51,20 @@ struct silofs_cache {
 	size_t                  c_mem_size_hint;
 };
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_dirtyq_init(struct silofs_dirtyq *dq);
+
+void silofs_dirtyq_fini(struct silofs_dirtyq *dq);
+
+void silofs_dirtyq_append(struct silofs_dirtyq *dq,
+                          struct silofs_list_head *lh, size_t len);
+
+void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
+                          struct silofs_list_head *lh, size_t len);
+
+struct silofs_list_head *silofs_dirtyq_front(const struct silofs_dirtyq *dq);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -87,9 +98,6 @@ size_t silofs_cache_accum_ndirty(const struct silofs_cache *cache);
 
 void silofs_cache_fill_dsets(struct silofs_cache *cache,
                              struct silofs_dsets *dsets, silofs_dqid_t dqid);
-
-void silofs_cache_undirtify_by_dset(struct silofs_cache *cache,
-                                    const struct silofs_dset *dset);
 
 
 struct silofs_blobf *
@@ -168,6 +176,8 @@ void silofs_blobf_decref(struct silofs_blobf *blobf);
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi);
 
+void silofs_vi_undirtify(struct silofs_vnode_info *vi);
+
 void silofs_vi_incref(struct silofs_vnode_info *vi);
 
 void silofs_vi_decref(struct silofs_vnode_info *vi);
@@ -195,6 +205,8 @@ void silofs_ui_incref(struct silofs_unode_info *ui);
 void silofs_ui_decref(struct silofs_unode_info *ui);
 
 void silofs_ui_dirtify(struct silofs_unode_info *ui);
+
+void silofs_ui_undirtify(struct silofs_unode_info *ui);
 
 void silofs_ui_attach_to(struct silofs_unode_info *ui,
                          struct silofs_ubk_info *ubki);

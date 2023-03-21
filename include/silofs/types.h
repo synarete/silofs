@@ -402,6 +402,12 @@ struct silofs_oper_stat {
 	/* TODO: Have counter per-operation */
 };
 
+/* dirty-queue of cached-elements */
+struct silofs_dirtyq {
+	struct silofs_listq             dq_list;
+	size_t                          dq_accum;
+};
+
 /* dirty-nodes set */
 typedef void (*silofs_dset_add_fn)(struct silofs_dset *dset,
                                    struct silofs_snode_info *si);

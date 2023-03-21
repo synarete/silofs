@@ -2416,8 +2416,8 @@ stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	*out_vi = NULL;
-	err = silofs_stage_vnode(stg_ctx->task, vaddr, SILOFS_STAGE_CUR,
-	                         SILOFS_DQID_DFL, &vi);
+	err = silofs_stage_vnode_of(stg_ctx->task, vaddr,
+	                            SILOFS_STAGE_CUR, NULL, &vi);
 	if (err == -SILOFS_ERDONLY) {
 		return 0; /* special case: out-of-blob range */
 	}

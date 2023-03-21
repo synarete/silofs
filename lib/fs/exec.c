@@ -756,24 +756,24 @@ static int flush_and_drop_cache(const struct silofs_fs_env *fse)
 	return 0;
 }
 
-static int do_sync_fs(const struct silofs_fs_env *fse)
+static int do_sync_fs(const struct silofs_fs_env *fse, bool drop)
 {
 	int err;
 
 	err = exec_flush_dirty_now(fse);
-	if (!err) {
+	if (!err && drop) {
 		drop_cache(fse);
 	}
 	return err;
 }
 
-int silofs_sync_fs(struct silofs_fs_env *fse)
+int silofs_sync_fs(struct silofs_fs_env *fse, bool drop)
 {
 	int err = 0;
 
 	fse_lock(fse);
-	for (size_t i = 0; !err && (i < 2); ++i) {
-		err = do_sync_fs(fse);
+	for (size_t i = 0; !err && (i < 3); ++i) {
+		err = do_sync_fs(fse, drop);
 	}
 	fse_unlock(fse);
 	return err;
@@ -922,7 +922,7 @@ static int format_base_spmaps_of(const struct silofs_fs_env *fse,
 		        "stype=%d err=%d", vaddr->stype, err);
 		return err;
 	}
-	err = do_sync_fs(fse);
+	err = do_sync_fs(fse, false);
 	if (err) {
 		return err;
 	}

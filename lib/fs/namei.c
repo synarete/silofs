@@ -1023,12 +1023,18 @@ static bool ii_isdropable(const struct silofs_inode_info *ii)
 	return true;
 }
 
+static void ii_cleanup_orphan(struct silofs_inode_info *ii)
+{
+	silofs_ii_undirtify(ii);
+	silofs_ii_unlink_dirty_vis(ii);
+	silofs_ii_unlink_alive_vis(ii);
+}
+
 static int try_prune_inode(struct silofs_task *task,
                            struct silofs_inode_info *ii, bool update_ctime)
 {
 	if (!ii->i_nopen && ii_isnlink_orphan(ii)) {
-		silofs_ii_undirtify(ii);
-		silofs_ii_unlink_active_vis(ii);
+		ii_cleanup_orphan(ii);
 	}
 	if (ii_isdropable(ii)) {
 		return drop_unlinked(task, ii);

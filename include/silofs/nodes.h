@@ -87,7 +87,8 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_snode_info        v_si;
-	struct silofs_list_head         v_active_lh;
+	struct silofs_list_head         v_alive_lh;
+	struct silofs_list_head         v_dirty_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_oaddr             v_oaddr;
 	struct silofs_iovref            v_iovr;
@@ -96,12 +97,14 @@ struct silofs_vnode_info {
 	struct silofs_inode_info       *v_pii;
 	bool                            v_recheck;
 	bool                            v_verified;
+	bool                            v_iidirty;
 };
 
 /* inode */
 struct silofs_inode_info {
 	struct silofs_vnode_info        i_vi;
-	struct silofs_listq             i_active_vis;
+	struct silofs_listq             i_alive_vis;
+	struct silofs_listq             i_dirty_vis;
 	struct silofs_inode            *inode;
 	struct timespec                 i_atime_lazy;
 	ino_t  i_ino;
@@ -163,13 +166,21 @@ silofs_ii_from_vi(const struct silofs_vnode_info *vi);
 
 void silofs_ii_rebind_view(struct silofs_inode_info *ii, ino_t ino);
 
-void silofs_ii_link_active_vi(struct silofs_inode_info *ii,
-                              struct silofs_vnode_info *vi);
+void silofs_ii_link_alive_vi(struct silofs_inode_info *ii,
+                             struct silofs_vnode_info *vi);
 
-void silofs_ii_unlink_active_vi(struct silofs_inode_info *ii,
-                                struct silofs_vnode_info *vi);
+void silofs_ii_unlink_alive_vi(struct silofs_inode_info *ii,
+                               struct silofs_vnode_info *vi);
 
-void silofs_ii_unlink_active_vis(struct silofs_inode_info *ii);
+void silofs_ii_unlink_alive_vis(struct silofs_inode_info *ii);
+
+void silofs_ii_link_dirty_vi(struct silofs_inode_info *ii,
+                             struct silofs_vnode_info *vi);
+
+void silofs_ii_unlink_dirty_vi(struct silofs_inode_info *ii,
+                               struct silofs_vnode_info *vi);
+
+void silofs_ii_unlink_dirty_vis(struct silofs_inode_info *ii);
 
 
 struct silofs_xanode_info *silofs_xai_from_vi(struct silofs_vnode_info *vi);

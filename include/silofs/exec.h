@@ -56,7 +56,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 
 void silofs_halt_fs(struct silofs_fs_env *fse, int signum);
 
-int silofs_sync_fs(struct silofs_fs_env *fse);
+int silofs_sync_fs(struct silofs_fs_env *fse, bool drop);
 
 void silofs_stat_fs(const struct silofs_fs_env *fse,
                     struct silofs_fs_stats *st);

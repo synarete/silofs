@@ -33,6 +33,7 @@
 #define CACHE_RETRY 4
 
 
+static void vi_do_undirtify(struct silofs_vnode_info *vi);
 static void cache_pre_op(struct silofs_cache *cache);
 static void cache_post_op(struct silofs_cache *cache);
 static void cache_drop_uamap(struct silofs_cache *cache);
@@ -1156,12 +1157,12 @@ void silofs_vi_bind_pii(struct silofs_vnode_info *vi,
                         struct silofs_inode_info *ii)
 {
 	if (vi->v_pii != NULL) {
-		silofs_ii_unlink_active_vi(vi->v_pii, vi);
+		silofs_ii_unlink_alive_vi(vi->v_pii, vi);
 		silofs_ii_decref(vi->v_pii);
 		vi->v_pii = NULL;
 	}
 	if (ii != NULL) {
-		silofs_ii_link_active_vi(ii, vi);
+		silofs_ii_link_alive_vi(ii, vi);
 		silofs_ii_incref(ii);
 		vi->v_pii = ii;
 	}
@@ -2698,7 +2699,7 @@ static void cache_unmap_vi(struct silofs_cache *cache,
 static void cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
-	cache_undirtify_vi(cache, vi);
+	vi_do_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
 		vi->v_si.s_ce.ce_forgot = true;
@@ -3274,16 +3275,27 @@ static void cache_post_op(struct silofs_cache *cache)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_vi_dirtify(struct silofs_vnode_info *vi)
+static void vi_do_dirtify(struct silofs_vnode_info *vi)
 {
-	if (likely(vi != NULL)) {
-		cache_dirtify_vi(vi_cache(vi), vi);
+	cache_dirtify_vi(vi_cache(vi), vi);
+	if ((vi->v_pii != NULL) && !vi->v_iidirty) {
+		silofs_ii_link_dirty_vi(vi->v_pii, vi);
 	}
 }
 
-static void vi_undirtify(struct silofs_vnode_info *vi)
+static void vi_do_undirtify(struct silofs_vnode_info *vi)
 {
 	cache_undirtify_vi(vi_cache(vi), vi);
+	if ((vi->v_pii != NULL) && vi->v_iidirty) {
+		silofs_ii_unlink_dirty_vi(vi->v_pii, vi);
+	}
+}
+
+void silofs_vi_dirtify(struct silofs_vnode_info *vi)
+{
+	if (likely(vi != NULL)) {
+		vi_do_dirtify(vi);
+	}
 }
 
 void silofs_ii_dirtify(struct silofs_inode_info *ii)
@@ -3297,7 +3309,7 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii)
 void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		vi_undirtify(ii_to_vi(ii));
+		vi_do_undirtify(ii_to_vi(ii));
 	}
 }
 
@@ -3391,10 +3403,16 @@ static void cache_undirtify_by_dset(struct silofs_cache *cache,
 {
 	struct silofs_snode_info *si_next = NULL;
 	struct silofs_snode_info *si = dset->ds_siq;
+	struct silofs_vnode_info *vi = NULL;
 
 	while (si != NULL) {
 		si_next = si->s_ds_next;
-		cache_undirtify_si(cache, si);
+		if (stype_isvnode(si->s_stype)) {
+			vi = silofs_vi_from_si(si);
+			vi_do_undirtify(vi);
+		} else {
+			cache_undirtify_si(cache, si);
+		}
 		si->s_ds_next = NULL;
 		si = si_next;
 	}

@@ -1643,7 +1643,13 @@ static int
 filc_import_data_by_fileaf(const struct silofs_file_ctx *f_ctx,
                            struct silofs_fileaf_info *fli, size_t *out_sz)
 {
-	return filc_call_rw_actor(f_ctx, fli, fli_vaddr(fli), out_sz);
+	int err;
+
+	err = filc_call_rw_actor(f_ctx, fli, fli_vaddr(fli), out_sz);
+	if (!err) {
+		filc_dirtify_fileaf(f_ctx, fli);
+	}
+	return err;
 }
 
 static void filc_child_of_current_pos(const struct silofs_file_ctx *f_ctx,

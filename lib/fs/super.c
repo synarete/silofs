@@ -865,14 +865,18 @@ int silofs_spawn_vnode_of(struct silofs_task *task,
                           struct silofs_inode_info *ii,
                           struct silofs_vnode_info **out_vi)
 {
+	struct silofs_vnode_info *vi = NULL;
 	int err;
 
 	ii_incref(ii);
-	err = silofs_spawn_vnode(task, stype, ii_ino(ii), out_vi);
+	err = silofs_spawn_vnode(task, stype, ii_ino(ii), &vi);
 	if (!err) {
-		silofs_vi_bind_pii(*out_vi, ii);
+		silofs_assert_null(vi->v_pii);
+		silofs_vi_bind_pii(vi, ii);
+		vi_dirtify(vi);
 	}
 	ii_decref(ii);
+	*out_vi = vi;
 	return err;
 }
 
@@ -1208,14 +1212,16 @@ int silofs_stage_vnode_of(struct silofs_task *task,
                           struct silofs_inode_info *ii,
                           struct silofs_vnode_info **out_vi)
 {
+	struct silofs_vnode_info *vi = NULL;
 	int err;
 
 	ii_incref(ii);
-	err = silofs_stage_vnode(task, vaddr, stg_mode, ii_ino(ii), out_vi);
-	if (!err) {
-		silofs_vi_bind_pii(*out_vi, ii);
+	err = silofs_stage_vnode(task, vaddr, stg_mode, ii_ino(ii), &vi);
+	if (!err && (vi->v_pii == NULL)) {
+		silofs_vi_bind_pii(vi, ii);
 	}
 	ii_decref(ii);
+	*out_vi = vi;
 	return err;
 }
 

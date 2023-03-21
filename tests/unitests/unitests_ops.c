@@ -1812,7 +1812,7 @@ void ut_sync_drop(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_sync_fs(ute->fs_env);
+	err = silofs_sync_fs(ute->fs_env, true);
 	ut_expect_ok(err);
 }
 

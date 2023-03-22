@@ -443,24 +443,6 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	return silofs_si_isevictable(&ii->i_vi.v_si);
 }
 
-/*
- * TODO-0027: Support immutable inodes via explicit ioctl
- *
- * Special inode state, corrlates to STATX_ATTR_IMMUTABLE
- */
-bool silof_ii_isimmutable(const struct silofs_inode_info *ii)
-{
-	silofs_unused(ii);
-	return false;
-}
-
-void silofs_ii_iaddr(const struct silofs_inode_info *ii,
-                     struct silofs_iaddr *out_iaddr)
-{
-	vaddr_assign(&out_iaddr->vaddr, ii_vaddr(ii));
-	out_iaddr->ino = ii_ino(ii);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void silofs_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)

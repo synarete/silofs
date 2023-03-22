@@ -43,8 +43,9 @@
 #include <silofs/opers.h>
 #include <silofs/namei.h>
 #include <silofs/stage.h>
+#include <silofs/spawn.h>
 #include <silofs/spmaps.h>
-#include <silofs/spclaim.h>
+#include <silofs/claim.h>
 #include <silofs/uber.h>
 #include <silofs/flush.h>
 #include <silofs/exec.h>

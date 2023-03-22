@@ -1088,7 +1088,7 @@ static int exec_spawn_vnode(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode_of(&task, stype, NULL, out_vi);
+	err = silofs_spawn_vnode(&task, stype, NULL, out_vi);
 	return term_task(&task, err);
 }
 

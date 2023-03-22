@@ -92,7 +92,7 @@ static int op_start1(struct silofs_task *task, ino_t ino)
 
 	ret = op_start(task, ino);
 	if (ret == 0) {
-		silofs_relax_caches(task, SILOFS_F_OPSTART);
+		silofs_relax_cache_by(task, SILOFS_F_OPSTART);
 	}
 	return ret;
 }
@@ -127,7 +127,7 @@ static int op_finish(struct silofs_task *task,
 {
 	op_probe_duration(task, err);
 	if (!err && (task->t_may_flush || task->t_apex_id)) {
-		silofs_relax_caches(task, SILOFS_F_OPFINISH);
+		silofs_relax_cache_by(task, SILOFS_F_OPFINISH);
 		err = op_flush(task, ino, op_flags, SILOFS_F_OPFINISH);
 	}
 	op_unlock_fs(task);
@@ -1571,7 +1571,7 @@ int silofs_fs_timedout(struct silofs_task *task, int flags)
 	err = silofs_flush_dirty(task, SILOFS_DQID_ALL, flags);
 	ok_or_goto_out(err);
 
-	silofs_relax_caches(task, flags);
+	silofs_relax_cache_by(task, flags);
 out:
 	return op_finish(task, SILOFS_INO_NULL, 0, err);
 }

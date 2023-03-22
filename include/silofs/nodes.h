@@ -105,7 +105,7 @@ struct silofs_inode_info {
 	struct silofs_vnode_info        i_vi;
 	struct silofs_list_head         i_dq_lh;
 	struct silofs_listq             i_alive_vis;
-	struct silofs_dirtyq            i_dirty_vis;
+	struct silofs_dirtyq            i_dq_vis;
 	struct silofs_inode            *inode;
 	struct timespec                 i_atime_lazy;
 	ino_t  i_ino;

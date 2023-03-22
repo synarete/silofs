@@ -1298,8 +1298,8 @@ static int filc_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
-	err = silofs_stage_vnode(f_ctx->task, vaddr, f_ctx->stg_mode,
-	                         f_ctx->ii, &vi);
+	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
+	                         f_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -1399,8 +1399,8 @@ static int filc_stage_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
-	err = silofs_stage_vnode(f_ctx->task, vaddr, f_ctx->stg_mode,
-	                         f_ctx->ii, &vi);
+	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
+	                         f_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -2003,7 +2003,7 @@ static int filc_claim_data_space(const struct silofs_file_ctx *f_ctx,
 	int err;
 
 	dqid = ino_to_dqid(ii_ino(f_ctx->ii));
-	err = silofs_claim_vspace(f_ctx->task, stype, dqid, &voa);
+	err = silofs_claim_vspace(f_ctx->task, f_ctx->ii, stype, dqid, &voa);
 	if (err) {
 		return err;
 	}
@@ -2053,8 +2053,8 @@ static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(f_ctx->task, SILOFS_STYPE_FTNODE,
-	                         f_ctx->ii, &vi);
+	err = silofs_spawn_vnode(f_ctx->task, f_ctx->ii,
+	                         SILOFS_STYPE_FTNODE, &vi);
 	if (err) {
 		return err;
 	}

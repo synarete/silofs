@@ -719,7 +719,7 @@ static void ii_init(struct silofs_inode_info *ii,
 	vi_init(&ii->i_vi, vaddr, ii_delete_as_si);
 	list_head_init(&ii->i_dq_lh);
 	listq_init(&ii->i_alive_vis);
-	silofs_dirtyq_init(&ii->i_dirty_vis);
+	silofs_dirtyq_init(&ii->i_dq_vis);
 	ii->inode = NULL;
 	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = 0;
@@ -732,7 +732,7 @@ static void ii_fini(struct silofs_inode_info *ii)
 	vi_fini(&ii->i_vi);
 	list_head_fini(&ii->i_dq_lh);
 	listq_fini(&ii->i_alive_vis);
-	silofs_dirtyq_fini(&ii->i_dirty_vis);
+	silofs_dirtyq_fini(&ii->i_dq_vis);
 	ii->inode = NULL;
 	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = INT_MIN;
@@ -756,7 +756,7 @@ static void ii_delete(struct silofs_inode_info *ii,
                       struct silofs_alloc *alloc)
 {
 	silofs_assert_eq(ii->i_alive_vis.sz, 0);
-	silofs_assert_eq(ii->i_dirty_vis.dq_list.sz, 0);
+	silofs_assert_eq(ii->i_dq_vis.dq_list.sz, 0);
 	silofs_assert_ge(ii->i_nopen, 0);
 
 	ii_fini(ii);
@@ -854,7 +854,7 @@ void silofs_ii_link_dirty_vi(struct silofs_inode_info *ii,
 	silofs_assert(!vi->v_iidirty);
 	silofs_assert_gt(vaddr->len, 0);
 
-	silofs_dirtyq_append(&ii->i_dirty_vis, &vi->v_dq_lh, vaddr->len);
+	silofs_dirtyq_append(&ii->i_dq_vis, &vi->v_dq_lh, vaddr->len);
 	vi->v_iidirty = true;
 }
 
@@ -867,7 +867,7 @@ void silofs_ii_unlink_dirty_vi(struct silofs_inode_info *ii,
 	silofs_assert_eq(vi->v_pii, ii);
 	silofs_assert_gt(vaddr->len, 0);
 
-	silofs_dirtyq_remove(&ii->i_dirty_vis, &vi->v_dq_lh, vaddr->len);
+	silofs_dirtyq_remove(&ii->i_dq_vis, &vi->v_dq_lh, vaddr->len);
 	vi->v_iidirty = false;
 }
 
@@ -875,7 +875,7 @@ void silofs_ii_unlink_dirty_vis(struct silofs_inode_info *ii)
 {
 	struct silofs_vnode_info *vi;
 	struct silofs_list_head *lh;
-	struct silofs_dirtyq *dq = &ii->i_dirty_vis;
+	struct silofs_dirtyq *dq = &ii->i_dq_vis;
 
 	lh = silofs_dirtyq_front(dq);
 	while (lh != NULL) {

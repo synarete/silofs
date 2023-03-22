@@ -20,12 +20,13 @@
 #include <silofs/fs-private.h>
 
 static int do_spawn_vnode(struct silofs_task *task,
+                          struct silofs_inode_info *pii,
                           enum silofs_stype stype, silofs_dqid_t dqid,
                           struct silofs_vnode_info **out_vi)
 {
 	int err;
 
-	err = silofs_claim_vnode(task, stype, dqid, out_vi);
+	err = silofs_claim_vnode(task, pii, stype, dqid, out_vi);
 	if (err) {
 		return err;
 	}
@@ -35,22 +36,20 @@ static int do_spawn_vnode(struct silofs_task *task,
 }
 
 int silofs_spawn_vnode(struct silofs_task *task,
+                       struct silofs_inode_info *pii,
                        enum silofs_stype stype,
-                       struct silofs_inode_info *ii,
                        struct silofs_vnode_info **out_vi)
 {
 	struct silofs_vnode_info *vi = NULL;
-	const silofs_dqid_t dqid = ii ? ii_ino(ii) : SILOFS_DQID_DFL;
+	const silofs_dqid_t dqid = pii ? ii_ino(pii) : SILOFS_DQID_DFL;
 	int err;
 
-	ii_incref(ii);
-	err = do_spawn_vnode(task, stype, dqid, &vi);
+	ii_incref(pii);
+	err = do_spawn_vnode(task, pii, stype, dqid, &vi);
 	if (!err) {
-		silofs_assert_null(vi->v_pii);
-		silofs_vi_bind_pii(vi, ii);
-		vi_dirtify(vi);
+		silofs_assert_eq(vi->v_pii, pii);
 	}
-	ii_decref(ii);
+	ii_decref(pii);
 	*out_vi = vi;
 	return err;
 }

@@ -624,7 +624,7 @@ static int term_task(struct silofs_task *task, int status)
 
 static void drop_cache(const struct silofs_fs_env *fse)
 {
-	silofs_repo_drop_cache(fse->fs_repo);
+	silofs_cache_drop(fse->fs_cache);
 }
 
 static int exec_stage_rootdir_inode(const struct silofs_fs_env *fse,
@@ -989,7 +989,8 @@ static int exec_claim_vspace(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_claim_vspace(&task, stype, SILOFS_DQID_DFL, out_voa);
+	err = silofs_claim_vspace(&task, NULL, stype,
+	                          SILOFS_DQID_DFL, out_voa);
 	return term_task(&task, err);
 }
 
@@ -1117,7 +1118,7 @@ static int exec_spawn_vnode(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode(&task, stype, NULL, out_vi);
+	err = silofs_spawn_vnode(&task, NULL, stype, out_vi);
 	return term_task(&task, err);
 }
 

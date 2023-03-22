@@ -1451,11 +1451,6 @@ void silofs_repo_fini(struct silofs_repo *repo)
 	repo_fini_mdigest(repo);
 }
 
-static void repo_relax_cache(struct silofs_repo *repo, int flags)
-{
-	silofs_cache_relax(repo_cache(repo), flags);
-}
-
 static void repo_pre_op(struct silofs_repo *repo)
 {
 	repo_objs_relax_cached_blobfs(repo);
@@ -2158,18 +2153,6 @@ static int repo_unlink_bootsec(const struct silofs_repo *repo,
 		return err;
 	}
 	return 0;
-}
-
-void silofs_repo_drop_cache(struct silofs_repo *repo)
-{
-	repo_pre_op(repo);
-	repo_drop_cache(repo);
-}
-
-void silofs_repo_relax_cache(struct silofs_repo *repo, int flags)
-{
-	repo_pre_op(repo);
-	repo_relax_cache(repo, flags);
 }
 
 void silofs_repo_pre_forkfs(struct silofs_repo *repo)

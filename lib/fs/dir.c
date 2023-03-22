@@ -1240,8 +1240,8 @@ static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_stage_vnode(d_ctx->task, vaddr, d_ctx->stg_mode,
-	                         d_ctx->dir_ii, &vi);
+	err = silofs_stage_vnode(d_ctx->task, d_ctx->dir_ii,
+	                         vaddr, d_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -1286,8 +1286,8 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(d_ctx->task, SILOFS_STYPE_DTNODE,
-	                         d_ctx->dir_ii, &vi);
+	err = silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii,
+	                         SILOFS_STYPE_DTNODE, &vi);
 	if (err) {
 		return err;
 	}

@@ -1320,11 +1320,8 @@ int silofs_stage_blob_at(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_relax_caches(struct silofs_task *task, int flags)
+void silofs_relax_cache_by(struct silofs_task *task, int flags)
 {
-	const struct silofs_uber *uber = task->t_uber;
-
-	silofs_assert_not_null(uber->ub.repo);
-	silofs_repo_relax_cache(uber->ub.repo, flags);
+	silofs_cache_relax(task->t_uber->ub.cache, flags);
 }
 

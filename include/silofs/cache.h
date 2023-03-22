@@ -162,7 +162,8 @@ silofs_cache_lookup_vi(struct silofs_cache *cache,
 
 struct silofs_vnode_info *
 silofs_cache_spawn_vi(struct silofs_cache *cache,
-                      const struct silofs_vaddr *vaddr);
+                      const struct silofs_vaddr *vaddr,
+                      struct silofs_inode_info *pii);
 
 void silofs_cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi);

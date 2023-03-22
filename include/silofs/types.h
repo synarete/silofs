@@ -434,6 +434,7 @@ struct silofs_uber_base {
 	const struct silofs_fs_args    *fs_args;
 	const struct silofs_ivkey      *ivkey;
 	struct silofs_alloc            *alloc;
+	struct silofs_cache            *cache;
 	struct silofs_repo             *repo;
 	struct silofs_submitq          *submitq;
 	struct silofs_idsmap           *idsmap;
@@ -501,6 +502,7 @@ struct silofs_fs_env {
 	struct silofs_qalloc   *fs_qalloc;
 	struct silofs_calloc   *fs_calloc;
 	struct silofs_alloc    *fs_alloc;
+	struct silofs_cache    *fs_cache;
 	struct silofs_repo     *fs_repo;
 	struct silofs_submitq  *fs_submitq;
 	struct silofs_idsmap   *fs_idsmap;

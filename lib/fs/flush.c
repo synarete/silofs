@@ -591,7 +591,7 @@ static int smc_setup(struct silofs_submit_ctx *sm_ctx,
 	sm_ctx->dqid = dqid;
 	sm_ctx->flags = flags;
 	sm_ctx->repo = repo;
-	sm_ctx->cache = &repo->re_cache;
+	sm_ctx->cache = uber->ub.cache;
 	sm_ctx->submitq = uber->ub.submitq;
 	sm_ctx->alloc = sm_ctx->cache->c_alloc;
 	return 0;

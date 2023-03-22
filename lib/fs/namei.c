@@ -2026,7 +2026,7 @@ static void fill_proc(const struct silofs_uber *uber,
                       struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
-	const struct silofs_cache *cache = &uber->ub.repo->re_cache;
+	const struct silofs_cache *cache = uber->ub.cache;
 
 	silofs_allocstat(uber->ub.alloc, &alst);
 	silofs_memzero(qpr, sizeof(*qpr));
@@ -2100,7 +2100,7 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 	const struct silofs_bootpath *bpath = NULL;
 	size_t bsz;
 
-	bpath = &repo->re_cfg.rc_bootpath;
+	bpath = &repo->re.bootpath;
 
 	bsz = sizeof(query->u.bootsec.repo);
 	fill_strbuf(query->u.bootsec.repo, bsz, &bpath->repodir);

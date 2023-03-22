@@ -18,7 +18,8 @@
 #define SILOFS_REPO_H_
 
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/* repository control flags */
+#define SILOFS_REPOF_RDONLY     (1)
 
 /* blob control file */
 struct silofs_blobf {
@@ -33,17 +34,17 @@ struct silofs_blobf {
 	bool                            b_rdonly;
 };
 
-/* repository init config */
-struct silofs_repocfg {
-	struct silofs_bootpath          rc_bootpath;
-	struct silofs_alloc            *rc_alloc;
-	bool                            rc_rdonly;
+/* blob repository base config */
+struct silofs_repo_base {
+	struct silofs_bootpath          bootpath;
+	struct silofs_alloc            *alloc;
+	struct silofs_cache            *cache;
+	long                            flags;
 };
 
 /* blobs repository */
 struct silofs_repo {
-	struct silofs_repocfg           re_cfg;
-	struct silofs_cache             re_cache;
+	struct silofs_repo_base         re;
 	struct silofs_mdigest           re_mdigest;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
@@ -86,7 +87,7 @@ int silofs_blobf_read_blob(struct silofs_blobf *blobf, void *buf, size_t len);
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_repo_init(struct silofs_repo *repo,
-                     const struct silofs_repocfg *rcfg);
+                     const struct silofs_repo_base *repo_base);
 
 void silofs_repo_fini(struct silofs_repo *repo);
 

@@ -609,8 +609,7 @@ static void ubc_setup(struct silofs_uber_ctx *ub_ctx)
 
 	ub_ctx->uber = uber;
 	ub_ctx->repo = uber->ub.repo;
-	ub_ctx->repo = repo;
-	ub_ctx->cache = &repo->re_cache;
+	ub_ctx->cache = uber->ub.cache;
 	ub_ctx->mdigest = &repo->re_mdigest;
 }
 

@@ -36,6 +36,7 @@ union silofs_fs_alloc_u {
 
 struct silofs_fs_core {
 	union silofs_fs_alloc_u alloc_u;
+	struct silofs_cache     cache;
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
 	struct silofs_uber      uber;
@@ -210,30 +211,52 @@ static void fse_fini_alloc(struct silofs_fs_env *fse)
 	}
 }
 
-static int fse_make_repocfg(struct silofs_fs_env *fse,
-                            struct silofs_repocfg *rcfg)
+static int fse_make_repo_base(struct silofs_fs_env *fse,
+                              struct silofs_repo_base *re_base)
 {
-	silofs_memzero(rcfg, sizeof(*rcfg));
-	rcfg->rc_alloc = fse->fs_alloc;
-	rcfg->rc_rdonly = fse->fs_args.rdonly;
-	return silofs_bootpath_setup(&rcfg->rc_bootpath,
+	silofs_memzero(re_base, sizeof(*re_base));
+	re_base->alloc = fse->fs_alloc;
+	re_base->cache = fse->fs_cache;
+	re_base->flags = fse->fs_args.rdonly ? SILOFS_REPOF_RDONLY : 0;
+	return silofs_bootpath_setup(&re_base->bootpath,
 	                             fse->fs_args.repodir, fse->fs_args.name);
+}
+
+static int fse_init_cache(struct silofs_fs_env *fse)
+{
+	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
+	struct silofs_cache *cache = &fse_obj->fs_core.c.cache;
+	int err;
+
+	err = silofs_cache_init(cache, fse->fs_alloc);
+	if (err) {
+		return err;
+	}
+	fse->fs_cache = cache;
+	return 0;
+}
+
+static void fse_fini_cache(struct silofs_fs_env *fse)
+{
+	if (fse->fs_cache != NULL) {
+		silofs_cache_fini(fse->fs_cache);
+		fse->fs_cache = NULL;
+	}
 }
 
 static int fse_init_repo(struct silofs_fs_env *fse)
 {
-	struct silofs_repocfg rcfg = { .rc_rdonly = false };
+	struct silofs_repo_base re_base = { .flags = 0 };
 	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
 	struct silofs_repo *repo;
 	int err;
 
-	silofs_memzero(&rcfg, sizeof(rcfg));
-	err = fse_make_repocfg(fse, &rcfg);
+	err = fse_make_repo_base(fse, &re_base);
 	if (err) {
 		return err;
 	}
 	repo = &fse_obj->fs_core.c.repo;
-	err = silofs_repo_init(repo, &rcfg);
+	err = silofs_repo_init(repo, &re_base);
 	if (err) {
 		return err;
 	}
@@ -306,6 +329,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 		.fs_args = &fse->fs_args,
 		.ivkey = &fse->fs_ivkey,
 		.alloc = fse->fs_alloc,
+		.cache = fse->fs_cache,
 		.repo = fse->fs_repo,
 		.submitq = fse->fs_submitq,
 		.idsmap = fse->fs_idsmap,
@@ -433,6 +457,10 @@ static int fse_init_subs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
+	err = fse_init_cache(fse);
+	if (err) {
+		return err;
+	}
 	err = fse_init_repo(fse);
 	if (err) {
 		return err;
@@ -482,6 +510,7 @@ static void fse_fini(struct silofs_fs_env *fse)
 	fse_fini_idsmap(fse);
 	fse_fini_submitq(fse);
 	fse_fini_repo(fse);
+	fse_fini_cache(fse);
 	fse_fini_alloc(fse);
 	fse_fini_passwd(fse);
 	fse_fini_commons(fse);
@@ -783,7 +812,7 @@ void silofs_stat_fs(const struct silofs_fs_env *fse,
                     struct silofs_fs_stats *st)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
-	const struct silofs_cache *cache = &fse->fs_repo->re_cache;
+	const struct silofs_cache *cache = fse->fs_cache;
 
 	silofs_memzero(st, sizeof(*st));
 	silofs_allocstat(fse->fs_alloc, &alst);

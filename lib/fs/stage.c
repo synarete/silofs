@@ -105,7 +105,7 @@ static void vi_update_oaddr(struct silofs_vnode_info *vi,
 
 static struct silofs_cache *stgc_cache(const struct silofs_stage_ctx *stg_ctx)
 {
-	return &stg_ctx->uber->ub.repo->re_cache;
+	return stg_ctx->uber->ub.cache;
 }
 
 static void stgc_log_cache_stat(const struct silofs_stage_ctx *stg_ctx)
@@ -2676,7 +2676,7 @@ static int stage_inode_of(struct silofs_task *task, ino_t ino,
 
 static struct silofs_cache *task_cache(const struct silofs_task *task)
 {
-	return &task->t_uber->ub.repo->re_cache;
+	return task->t_uber->ub.cache;
 }
 
 /*

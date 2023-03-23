@@ -20,8 +20,10 @@ of data over encrypted blobs. It let normal users create an isolated
 storage area, with its own private key, and mount it on a local host
 machine. Once mounted, users may manipulate their data as they would
 normally do with any other POSIX file-system, plus take full volume
-snapshots. The actual data is securely stored within local repository
-on top of regular files which serve as opaque storage blobs.
+snapshots, while the actual data and meta-data is securely stored
+within local repository. The repository itself uses regular files as
+encrypted blobs, which are opaque to any user other the file-system's
+owner.
 
 %package devel
 Summary: Silofs testing utilities and development files

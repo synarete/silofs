@@ -27,17 +27,23 @@ DESCRIPTION
 ===========
 
 **silofs** *("stored in large objects file-system")* is a GNU/Linux
-user-space file system designed for storing large volumes of data over
+user-space file-system designed for storing large volumes of data over
 encrypted blobs. It let normal users create an isolated storage area,
 with its own private key, and mount it on a local host machine. Once
 mounted, users may manipulate their data as they would normally do with
 any other POSIX file-system, plus take full volume snapshots (online or
-offline). At the same time the actual data is securely stored within
-local repository on top of regular files which serve as opaque storage
-blobs. Having this type of layered model allow file-system's owner to
-easily backup or archive the entire repository into remote machine or
-cloud storage using tools like **rsync** or **rclone**, but without
-compromising their data integrity.
+offline), while the actual data and meta-data is securely stored within
+local repository. The repository itself uses regular files as encrypted
+blobs, which are opaque to any user other the file-system's owner. This
+layered model allows performing an efficient remote backup or archive
+using common utilities like **rsync** or **rclone**, yet without
+compromising the user's data integrity.
+
+**silofs** is implemented using Linux's FUSE bridge, and as such it
+trades performance with functionality and ease of use. It does not
+intend to compete with kernel-based file-systems in performance, or
+serve as yet another backup solutions. It is mainly designed to serve
+those who wish to easily archive their data into external cloud storage.
 
 
 OPTIONS

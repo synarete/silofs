@@ -16,13 +16,13 @@ encrypted blobs. It let normal users create an isolated storage area,
 with its own private key, and mount it on a local host machine. Once
 mounted, users may manipulate their data as they would normally do with
 any other POSIX file-system, plus take full volume snapshots (online or
-offline). The actual actual underlying data and meta-data is securely
-stored within local repository on top of regular files, which serve as
-opaque storage blobs. This layered model allow file-system's owner to
-easily backup or archive the entire repository onto remote machine or
-cloud storage using tools like [rsync](https://rsync.samba.org/)) or
-[rclone](https://rclone.org/)), yet without compromising their data
-integrity.
+offline), while the actual data and meta-data is securely stored within
+local repository. The repository itself uses regular files as encrypted
+blobs, which are opaque to any user other the file-system's owner. This
+layered model allows performing an efficient remote backup or archive
+using common utilities like [rsync](https://rsync.samba.org/)) or
+[rclone](https://rclone.org/)), yet without compromising the user's
+data integrity.
 
 Silofs is implemented using Linux's FUSE bridge, and as such it trades
 performance with functionality and ease of use. It does not intend to

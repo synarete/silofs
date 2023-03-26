@@ -27,14 +27,15 @@
 
 
 struct silofs_submit_ctx {
-	struct silofs_dsets     dsets;
-	struct silofs_task     *task;
-	struct silofs_alloc    *alloc;
-	struct silofs_uber     *uber;
-	struct silofs_repo     *repo;
-	struct silofs_cache    *cache;
-	struct silofs_submitq  *submitq;
-	silofs_dqid_t           dqid;
+	struct silofs_dsets             dsets;
+	struct silofs_task             *task;
+	struct silofs_inode_info       *ii;
+	struct silofs_uber             *uber;
+	struct silofs_repo             *repo;
+	struct silofs_alloc            *alloc;
+	struct silofs_cache            *cache;
+	struct silofs_dirtyqs          *dirtyqs;
+	struct silofs_submitq          *submitq;
 	int flags;
 };
 
@@ -67,17 +68,19 @@ static int refresh_cur_oaddr(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              struct silofs_oaddr *oaddr)
 {
-	enum silofs_stage_mode stg_mode = SILOFS_STAGE_CUR;
-	int err = 0;
+	int err;
 
-	if (!ismutable_oaddr(task, oaddr)) {
-		err = silofs_resolve_oaddr_of(task, vaddr, stg_mode, oaddr);
-		if (err) {
-			log_warn("failed to resolve vaddr: stype=%d off=%ld "
-			         "err=%d", vaddr->stype, vaddr->off, err);
-		}
+	if (ismutable_oaddr(task, oaddr)) {
+		return 0;
 	}
-	return err;
+	/* TODO: FIXME -- should be SILOFS_STAGE_CUR XXX */
+	err = silofs_resolve_oaddr_of(task, vaddr, SILOFS_STAGE_COW, oaddr);
+	if (err) {
+		log_warn("failed to resolve vaddr: stype=%d off=%ld "
+		         "err=%d", vaddr->stype, vaddr->off, err);
+		return err;
+	}
+	return 0;
 }
 
 static int refresh_vi_oaddr(struct silofs_task *task,
@@ -368,6 +371,132 @@ static void dsets_fini(struct silofs_dsets *dsets)
 	}
 }
 
+static struct silofs_dset *
+dsets_get_by(struct silofs_dsets *dsets, const enum silofs_stype stype)
+{
+	const unsigned int idx = (unsigned int)stype;
+
+	return likely(idx < ARRAY_SIZE(dsets->dset)) ?
+	       &dsets->dset[idx] : NULL;
+}
+
+static struct silofs_dset *
+dsets_get_by_vi(struct silofs_dsets *dsets, const struct silofs_vnode_info *vi)
+{
+	return dsets_get_by(dsets, vi_stype(vi));
+}
+
+static struct silofs_dset *
+dsets_get_by_ui(struct silofs_dsets *dsets, const struct silofs_unode_info *ui)
+{
+	return dsets_get_by(dsets, ui_stype(ui));
+}
+
+static void dsets_add_by_vi(struct silofs_dsets *dsets,
+                            struct silofs_vnode_info *vi)
+{
+	struct silofs_dset *dset = dsets_get_by_vi(dsets, vi);
+
+	dset->ds_add_fn(dset, &vi->v_si);
+}
+
+static void dsets_add_by_ui(struct silofs_dsets *dsets,
+                            struct silofs_unode_info *ui)
+{
+	struct silofs_dset *dset = dsets_get_by_ui(dsets, ui);
+
+	dset->ds_add_fn(dset, &ui->u_si);
+}
+
+static void dsets_fill_vis_of(struct silofs_dsets *dsets,
+                              struct silofs_dirtyq *dq)
+{
+	struct silofs_list_head *lh = NULL;
+	struct silofs_vnode_info *vi = NULL;
+
+	lh = silofs_dirtyq_front(dq);
+	while (lh != NULL) {
+		vi = silofs_vi_from_dirty_lh(lh);
+		silofs_assert_eq(vi->v_dq, dq);
+		if (!vi->v_si.s_noflush) {
+			dsets_add_by_vi(dsets, vi);
+		}
+		lh = silofs_dirtyq_next_of(dq, lh);
+	}
+}
+
+static void dsets_fill_by_ii(struct silofs_dsets *dsets,
+                             struct silofs_inode_info *ii)
+{
+	if (!ii->i_vi.v_si.s_noflush) {
+		dsets_fill_vis_of(dsets, &ii->i_dq_vis);
+		dsets_add_by_vi(dsets, &ii->i_vi);
+	}
+}
+
+static void dsets_fill_iis_of(struct silofs_dsets *dsets,
+                              struct silofs_dirtyq *dq)
+{
+	struct silofs_list_head *lh = NULL;
+	struct silofs_inode_info *ii = NULL;
+
+	lh = silofs_dirtyq_front(dq);
+	while (lh != NULL) {
+		ii = silofs_ii_from_dirty_lh(lh);
+		dsets_fill_by_ii(dsets, ii);
+		lh = silofs_dirtyq_next_of(dq, lh);
+	}
+}
+
+static void dsets_fill_uis_of(struct silofs_dsets *dsets,
+                              struct silofs_dirtyq *dq)
+{
+	struct silofs_list_head *lh = NULL;
+	struct silofs_unode_info *ui = NULL;
+
+	lh = silofs_dirtyq_front(dq);
+	while (lh != NULL) {
+		ui = silofs_ui_from_dirty_lh(lh);
+		dsets_add_by_ui(dsets, ui);
+		lh = silofs_dirtyq_next_of(dq, lh);
+	}
+}
+
+static void dsets_fill_alt(struct silofs_dsets *dsets,
+                           struct silofs_dirtyqs *dqs)
+{
+	dsets_fill_vis_of(dsets, &dqs->dq_vis);
+	dsets_fill_uis_of(dsets, &dqs->dq_uis);
+}
+
+static void dsets_fill_all(struct silofs_dsets *dsets,
+                           struct silofs_dirtyqs *dqs)
+{
+	dsets_fill_iis_of(dsets, &dqs->dq_iis);
+	dsets_fill_alt(dsets, dqs);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static size_t flush_threshold_of(int flags)
+{
+	const size_t mega = SILOFS_UMEGA;
+	size_t threshold;
+
+	if (flags & (SILOFS_F_NOW | SILOFS_F_IDLE | SILOFS_F_FSYNC)) {
+		threshold = 0;
+	} else if (flags & SILOFS_F_RELEASE) {
+		threshold = mega;
+	} else if (flags & SILOFS_F_TIMEOUT) {
+		threshold = 2 * mega;
+	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
+		threshold = 8 * mega;
+	} else {
+		threshold = 16 * mega;
+	}
+	return threshold;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void smc_init_dsets(struct silofs_submit_ctx *sm_ctx)
@@ -515,7 +644,14 @@ static int smc_process_dset_of(struct silofs_submit_ctx *sm_ctx,
 
 static void smc_fill_dsets(struct silofs_submit_ctx *sm_ctx)
 {
-	silofs_cache_fill_dsets(sm_ctx->cache, &sm_ctx->dsets, sm_ctx->dqid);
+	struct silofs_dsets *dsets = &sm_ctx->dsets;
+
+	if (sm_ctx->ii != NULL) {
+		dsets_fill_by_ii(dsets, sm_ctx->ii);
+		dsets_fill_alt(dsets, sm_ctx->dirtyqs);
+	} else {
+		dsets_fill_all(dsets, sm_ctx->dirtyqs);
+	}
 }
 
 static int smc_process_dsets(struct silofs_submit_ctx *sm_ctx)
@@ -550,14 +686,13 @@ static int smc_complete_commits(const struct silofs_submit_ctx *sm_ctx)
 {
 	int ret = 0;
 
-	if ((sm_ctx->flags & SILOFS_F_NOW) &&
-	    (sm_ctx->dqid == SILOFS_DQID_ALL)) {
+	if ((sm_ctx->flags & SILOFS_F_NOW) && sm_ctx->ii) {
 		ret = silofs_task_submit(sm_ctx->task, true);
 	}
 	return ret;
 }
 
-static int smc_flush_dirty_of(struct silofs_submit_ctx *sm_ctx)
+static int smc_do_flush_dirty(struct silofs_submit_ctx *sm_ctx)
 {
 	int err;
 
@@ -574,24 +709,69 @@ static int smc_flush_dirty_of(struct silofs_submit_ctx *sm_ctx)
 	return 0;
 }
 
+static int smc_flush_dirty(struct silofs_submit_ctx *sm_ctx)
+{
+	int err;
+
+	ii_incref(sm_ctx->ii);
+	err = smc_do_flush_dirty(sm_ctx);
+	ii_decref(sm_ctx->ii);
+	return err;
+}
+
+static bool smc_need_flush1(const struct silofs_submit_ctx *sm_ctx)
+{
+	struct silofs_alloc_stat st;
+
+	if (sm_ctx->flags & (SILOFS_F_NOW | SILOFS_F_URGENT)) {
+		return true;
+	}
+	if (silofs_cache_blobs_overflow(sm_ctx->cache)) {
+		return true;
+	}
+	silofs_allocstat(sm_ctx->alloc, &st);
+	if (st.nbytes_use > (st.nbytes_max / 4)) {
+		return true;
+	}
+	return false;
+}
+
+static bool smc_need_flush2(const struct silofs_submit_ctx *sm_ctx)
+{
+	const struct silofs_dirtyqs *dqs = sm_ctx->dirtyqs;
+	size_t accum_ndirty = 0;
+	size_t threshold = 0;
+
+	if (sm_ctx->ii != NULL) {
+		threshold = flush_threshold_of(sm_ctx->flags);
+		accum_ndirty = sm_ctx->ii->i_dq_vis.dq_accum;
+	} else {
+		threshold = 2 * flush_threshold_of(sm_ctx->flags);
+		accum_ndirty = dqs->dq_uis.dq_accum +
+		               dqs->dq_iis.dq_accum + dqs->dq_vis.dq_accum;
+	}
+	return (accum_ndirty > threshold);
+}
+
 static bool smc_need_flush(const struct silofs_submit_ctx *sm_ctx)
 {
-	return silofs_cache_need_flush(sm_ctx->cache, sm_ctx->dqid,
-	                               sm_ctx->flags);
+	return smc_need_flush1(sm_ctx) || smc_need_flush2(sm_ctx);
 }
 
 static int smc_setup(struct silofs_submit_ctx *sm_ctx,
-                     struct silofs_task *task, silofs_dqid_t dqid, int flags)
+                     struct silofs_task *task,
+                     struct silofs_inode_info *ii, int flags)
 {
 	struct silofs_uber *uber = task->t_uber;
 	struct silofs_repo *repo = uber->ub.repo;
 
 	sm_ctx->task = task;
+	sm_ctx->ii = ii;
 	sm_ctx->uber = uber;
-	sm_ctx->dqid = dqid;
 	sm_ctx->flags = flags;
 	sm_ctx->repo = repo;
 	sm_ctx->cache = uber->ub.cache;
+	sm_ctx->dirtyqs = &uber->ub.cache->c_dqs;
 	sm_ctx->submitq = uber->ub.submitq;
 	sm_ctx->alloc = sm_ctx->cache->c_alloc;
 	return 0;
@@ -599,39 +779,20 @@ static int smc_setup(struct silofs_submit_ctx *sm_ctx,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static silofs_dqid_t ii_dqid(const struct silofs_inode_info *ii)
-{
-	return ii->i_vi.v_si.s_dqid;
-}
-
-bool silofs_need_flush_dirty(struct silofs_task *task,
-                             silofs_dqid_t dqid, int flags)
-{
-	struct silofs_submit_ctx sm_ctx = { .flags = -1 };
-	int err;
-	bool ret = false;
-
-	err = smc_setup(&sm_ctx, task, dqid, flags);
-	if (!err) {
-		ret = smc_need_flush(&sm_ctx);
-	}
-	return ret;
-}
-
 int silofs_flush_dirty(struct silofs_task *task,
-                       silofs_dqid_t dqid, int flags)
+                       struct silofs_inode_info *ii, int flags)
 {
 	struct silofs_submit_ctx sm_ctx = { .flags = -1 };
 	int err;
 
-	err = smc_setup(&sm_ctx, task, dqid, flags);
+	err = smc_setup(&sm_ctx, task, ii, flags);
 	if (err) {
 		return err;
 	}
 	if (!smc_need_flush(&sm_ctx)) {
 		return 0;
 	}
-	err = smc_flush_dirty_of(&sm_ctx);
+	err = smc_flush_dirty(&sm_ctx);
 	if (err) {
 		log_dbg("failed to flush: err=%d", err);
 	}
@@ -639,12 +800,12 @@ int silofs_flush_dirty(struct silofs_task *task,
 }
 
 int silofs_flush_dirty_of(struct silofs_task *task,
-                          const struct silofs_inode_info *ii, int flags)
+                          struct silofs_inode_info *ii, int flags)
 {
-	return silofs_flush_dirty(task, ii_dqid(ii), flags);
+	return silofs_flush_dirty(task, ii, flags);
 }
 
 int silofs_flush_dirty_now(struct silofs_task *task)
 {
-	return silofs_flush_dirty(task, SILOFS_DQID_ALL, SILOFS_F_NOW);
+	return silofs_flush_dirty(task, NULL, SILOFS_F_NOW);
 }

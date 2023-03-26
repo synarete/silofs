@@ -881,9 +881,10 @@ dni_unconst(const struct silofs_dnode_info *dni)
 	return u.q;
 }
 
-static void dni_dirtify(struct silofs_dnode_info *dni)
+static void dni_dirtify(struct silofs_dnode_info *dni,
+                        struct silofs_inode_info *ii)
 {
-	vi_dirtify(&dni->dn_vi);
+	vi_dirtify(&dni->dn_vi, ii);
 }
 
 static void dni_incref(struct silofs_dnode_info *dni)
@@ -951,7 +952,6 @@ static void dni_bind_child_at(struct silofs_dnode_info *parent_dni,
 	const silofs_dtn_ord_t child_ord = dtn_index_to_child_ord(dtn_index);
 
 	dtn_set_child(parent_dni->dtn, child_ord, vaddr);
-	dni_dirtify(parent_dni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1293,6 +1293,7 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	}
 	dni = silofs_dni_from_vi(vi);
 	silofs_dni_rebind_view(dni);
+	dni_dirtify(dni, d_ctx->dir_ii);
 	*out_dni = dni;
 	return 0;
 }
@@ -1338,16 +1339,14 @@ static int dirc_spawn_setup_dnode(const struct silofs_dir_ctx *d_ctx,
                                   silofs_dtn_index_t dtn_index,
                                   struct silofs_dnode_info **out_dni)
 {
-	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
+	const ino_t d_ino = ii_ino(d_ctx->dir_ii);
 	int err;
 
 	err = dirc_spawn_dnode(d_ctx, out_dni);
 	if (err) {
 		return err;
 	}
-	dni_setup_dnode(*out_dni, ii_ino(dir_ii), parent, dtn_index);
-	dni_dirtify(*out_dni);
-
+	dni_setup_dnode(*out_dni, d_ino, parent, dtn_index);
 	dirc_update_isizeblocks(d_ctx, dtn_index, true);
 	return 0;
 }
@@ -1540,7 +1539,7 @@ static int dirc_spawn_child(const struct silofs_dir_ctx *d_ctx,
 	if (err) {
 		return err;
 	}
-	dni_dirtify(*out_dni);
+	dni_dirtify(*out_dni, d_ctx->dir_ii);
 	return 0;
 }
 
@@ -1562,6 +1561,7 @@ static int dirc_do_spawn_bind_child(const struct silofs_dir_ctx *d_ctx,
 		return err;
 	}
 	dni_bind_child_at(parent_dni, dni_vaddr(*out_dni), child_dtn_index);
+	dni_dirtify(parent_dni, d_ctx->dir_ii);
 	return 0;
 }
 
@@ -1653,7 +1653,7 @@ static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
 	}
 	dtn_insert(dni->dtn, d_ctx->name, ii_ino(ii), ii_dtype_of(ii));
 	dir_inc_ndents(d_ctx->dir_ii);
-	dni_dirtify(dni);
+	dni_dirtify(dni, d_ctx->dir_ii);
 	return 0;
 }
 
@@ -2297,15 +2297,13 @@ static int dirc_erase_empty_tree(struct silofs_dir_ctx *d_ctx)
 static int dirc_do_erase_dentry(struct silofs_dir_ctx *d_ctx,
                                 const struct silofs_dir_entry_info *dei)
 {
-	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-
 	dtn_remove(dei->dni->dtn, dei->de);
-	dir_dec_ndents(dir_ii);
+	dir_dec_ndents(d_ctx->dir_ii);
 	dirc_update_nlink(d_ctx, -1);
-	if (!dir_ndents(dir_ii)) {
+	if (!dir_ndents(d_ctx->dir_ii)) {
 		return dirc_erase_empty_tree(d_ctx);
 	}
-	dni_dirtify(dei->dni);
+	dni_dirtify(dei->dni, d_ctx->dir_ii);
 	return 0;
 }
 

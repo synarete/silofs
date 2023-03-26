@@ -25,8 +25,6 @@
 #include <limits.h>
 #include <time.h>
 
-#define OP_F_ANY  1
-#define OP_F_INO  2
 
 #define status_ok(err_) ((err_) == 0)
 
@@ -46,33 +44,6 @@ static void op_lock_fs(const struct silofs_task *task)
 static void op_unlock_fs(const struct silofs_task *task)
 {
 	silofs_mutex_unlock(&task->t_uber->ub_fs_lock);
-}
-
-static bool op_need_flush(struct silofs_task *task, ino_t ino,
-                          int op_flags, int fl_flags, silofs_dqid_t *out_dqid)
-{
-	bool ret = false;
-
-	if (op_flags & OP_F_ANY) {
-		*out_dqid = SILOFS_DQID_ALL;
-		ret = silofs_need_flush_dirty(task, *out_dqid, fl_flags);
-	} else if (op_flags & OP_F_INO) {
-		*out_dqid = silofs_ino_to_dqid(ino);
-		ret = silofs_need_flush_dirty(task, *out_dqid, fl_flags);
-	}
-	return ret;
-}
-
-static int op_flush(struct silofs_task *task,
-                    ino_t ino, int op_flags, int fl_flags)
-{
-	silofs_dqid_t dqid;
-	int ret = 0;
-
-	if (op_need_flush(task, ino, op_flags, fl_flags, &dqid)) {
-		ret = silofs_flush_dirty(task, dqid, fl_flags);
-	}
-	return ret;
 }
 
 static int op_start(struct silofs_task *task, ino_t ino)
@@ -97,16 +68,25 @@ static int op_start1(struct silofs_task *task, ino_t ino)
 	return ret;
 }
 
-static int op_start2(struct silofs_task *task, ino_t ino)
+static int op_try_flush(struct silofs_task *task, struct silofs_inode_info *ii)
 {
-	int ret;
+	return silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
+}
 
-	ret = op_start1(task, ino);
-	if (ret == 0) {
-		ret = op_flush(task, ino, OP_F_ANY, SILOFS_F_OPSTART);
-		task->t_may_flush = (ret == 0);
-	}
-	return ret;
+static int op_try_flush2(struct silofs_task *task,
+                         struct silofs_inode_info *ii1,
+                         struct silofs_inode_info *ii2)
+{
+	int err1;
+	int err2;
+
+	ii_incref(ii1);
+	ii_incref(ii2);
+	err1 = op_try_flush(task, ii1);
+	err2 = op_try_flush(task, ii2);
+	ii_decref(ii1);
+	ii_decref(ii2);
+	return err1 ? err1 : err2;
 }
 
 static void op_probe_duration(const struct silofs_task *task, int status)
@@ -122,15 +102,14 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	}
 }
 
-static int op_finish(struct silofs_task *task,
-                     ino_t ino, int op_flags, int err)
+static int op_finish(struct silofs_task *task, ino_t ino, int err)
 {
 	op_probe_duration(task, err);
-	if (!err && (task->t_may_flush || task->t_apex_id)) {
+	if (!err && task->t_apex_id) {
 		silofs_relax_cache_by(task, SILOFS_F_OPFINISH);
-		err = op_flush(task, ino, op_flags, SILOFS_F_OPFINISH);
 	}
 	op_unlock_fs(task);
+	unused(ino);
 	return err;
 }
 
@@ -286,7 +265,7 @@ static int op_stage_cacheonly_inode(struct silofs_task *task, ino_t ino,
 	return silofs_stage_cached_inode(task, ino, out_ii);
 }
 
-static int op_stage_rdo_inode(struct silofs_task *task, ino_t ino,
+static int op_stage_cur_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
 	return silofs_stage_inode(task, ino, SILOFS_STAGE_CUR, out_ii);
@@ -324,7 +303,7 @@ op_stage_openable_inode(struct silofs_task *task, ino_t ino,
 	if (o_flags & (O_RDWR | O_WRONLY | O_TRUNC | O_APPEND)) {
 		err = op_stage_mut_inode(task, ino, out_ii);
 	} else {
-		err = op_stage_rdo_inode(task, ino, out_ii);
+		err = op_stage_cur_inode(task, ino, out_ii);
 	}
 	return err;
 }
@@ -353,7 +332,7 @@ int silofs_fs_forget(struct silofs_task *task, ino_t ino, size_t nlookup)
 out_ok:
 	err = 0;
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_statfs(struct silofs_task *task,
@@ -371,13 +350,13 @@ int silofs_fs_statfs(struct silofs_task *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_statvfs(task, ii, stvfs);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_lookup(struct silofs_task *task, ino_t parent,
@@ -397,7 +376,7 @@ int silofs_fs_lookup(struct silofs_task *task, ino_t parent,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, parent, &dir_ii);
+	err = op_stage_cur_inode(task, parent, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
@@ -412,7 +391,7 @@ int silofs_fs_lookup(struct silofs_task *task, ino_t parent,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, 0, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_getattr(struct silofs_task *task,
@@ -430,7 +409,7 @@ int silofs_fs_getattr(struct silofs_task *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);
@@ -439,7 +418,7 @@ int silofs_fs_getattr(struct silofs_task *task,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_access(struct silofs_task *task, ino_t ino, int mode)
@@ -456,13 +435,13 @@ int silofs_fs_access(struct silofs_task *task, ino_t ino, int mode)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_access(task, ii, mode);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_mkdir(struct silofs_task *task, ino_t parent,
@@ -474,7 +453,7 @@ int silofs_fs_mkdir(struct silofs_task *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -487,6 +466,9 @@ int silofs_fs_mkdir(struct silofs_task *task, ino_t parent,
 	ok_or_goto_out(err);
 
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	ok_or_goto_out(err);
+
+	err = op_try_flush(task, dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_mkdir(task, dir_ii, &nstr, mode, &ii);
@@ -498,7 +480,7 @@ int silofs_fs_mkdir(struct silofs_task *task, ino_t parent,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_INO, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_rmdir(struct silofs_task *task,
@@ -508,7 +490,7 @@ int silofs_fs_rmdir(struct silofs_task *task,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -523,10 +505,13 @@ int silofs_fs_rmdir(struct silofs_task *task,
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, dir_ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_rmdir(task, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_INO, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_symlink(struct silofs_task *task, ino_t parent,
@@ -539,7 +524,7 @@ int silofs_fs_symlink(struct silofs_task *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -557,6 +542,9 @@ int silofs_fs_symlink(struct silofs_task *task, ino_t parent,
 	err = symval_to_str(symval, &value);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, dir_ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_symlink(task, dir_ii, &nstr, &value, &ii);
 	ok_or_goto_out(err);
 
@@ -566,7 +554,7 @@ int silofs_fs_symlink(struct silofs_task *task, ino_t parent,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_INO, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_readlink(struct silofs_task *task, ino_t ino,
@@ -584,13 +572,13 @@ int silofs_fs_readlink(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_readlink(task, ii, ptr, lim, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_unlink(struct silofs_task *task,
@@ -600,7 +588,7 @@ int silofs_fs_unlink(struct silofs_task *task,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -615,10 +603,13 @@ int silofs_fs_unlink(struct silofs_task *task,
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, dir_ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_unlink(task, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_INO, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_link(struct silofs_task *task, ino_t ino, ino_t parent,
@@ -629,7 +620,7 @@ int silofs_fs_link(struct silofs_task *task, ino_t ino, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -647,6 +638,9 @@ int silofs_fs_link(struct silofs_task *task, ino_t ino, ino_t parent,
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, dir_ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_link(task, dir_ii, &nstr, ii);
 	ok_or_goto_out(err);
 
@@ -656,7 +650,7 @@ int silofs_fs_link(struct silofs_task *task, ino_t ino, ino_t parent,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_ANY, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_opendir(struct silofs_task *task, ino_t ino)
@@ -673,13 +667,13 @@ int silofs_fs_opendir(struct silofs_task *task, ino_t ino)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_opendir(task, dir_ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_releasedir(struct silofs_task *task, ino_t ino, int o_flags)
@@ -697,13 +691,13 @@ int silofs_fs_releasedir(struct silofs_task *task, ino_t ino, int o_flags)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_releasedir(task, dir_ii, flush);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_readdir(struct silofs_task *task, ino_t ino,
@@ -721,13 +715,13 @@ int silofs_fs_readdir(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_readdir(task, dir_ii, rd_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 struct silofs_readdir_filter_ctx {
@@ -778,13 +772,13 @@ int silofs_fs_readdirplus(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_readdirplus(task, dir_ii, &rdf_ctx.rd_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_fsyncdir(struct silofs_task *task, ino_t ino, bool datasync)
@@ -792,7 +786,7 @@ int silofs_fs_fsyncdir(struct silofs_task *task, ino_t ino, bool datasync)
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -801,13 +795,13 @@ int silofs_fs_fsyncdir(struct silofs_task *task, ino_t ino, bool datasync)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_fsyncdir(task, dir_ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_chmod(struct silofs_task *task, ino_t ino, mode_t mode,
@@ -817,7 +811,7 @@ int silofs_fs_chmod(struct silofs_task *task, ino_t ino, mode_t mode,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -827,6 +821,9 @@ int silofs_fs_chmod(struct silofs_task *task, ino_t ino, mode_t mode,
 	ok_or_goto_out(err);
 
 	err = op_stage_mut_inode(task, ino, &ii);
+	ok_or_goto_out(err);
+
+	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
 	stat_to_itimes(st, &itimes);
@@ -839,7 +836,7 @@ int silofs_fs_chmod(struct silofs_task *task, ino_t ino, mode_t mode,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_chown(struct silofs_task *task, ino_t ino, uid_t uid, gid_t gid,
@@ -849,7 +846,7 @@ int silofs_fs_chown(struct silofs_task *task, ino_t ino, uid_t uid, gid_t gid,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -864,6 +861,9 @@ int silofs_fs_chown(struct silofs_task *task, ino_t ino, uid_t uid, gid_t gid,
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	stat_to_itimes(st, &itimes);
 	err = silofs_do_chown(task, ii, uid, gid, &itimes);
 	ok_or_goto_out(err);
@@ -874,7 +874,7 @@ int silofs_fs_chown(struct silofs_task *task, ino_t ino, uid_t uid, gid_t gid,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_utimens(struct silofs_task *task, ino_t ino,
@@ -906,7 +906,7 @@ int silofs_fs_utimens(struct silofs_task *task, ino_t ino,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_truncate(struct silofs_task *task,
@@ -915,7 +915,7 @@ int silofs_fs_truncate(struct silofs_task *task,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -927,6 +927,9 @@ int silofs_fs_truncate(struct silofs_task *task,
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_truncate(task, ii, len);
 	ok_or_goto_out(err);
 
@@ -936,7 +939,7 @@ int silofs_fs_truncate(struct silofs_task *task,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_create(struct silofs_task *task, ino_t parent,
@@ -950,7 +953,7 @@ int silofs_fs_create(struct silofs_task *task, ino_t parent,
 
 	unused(o_flags); /* XXX use me */
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -965,6 +968,9 @@ int silofs_fs_create(struct silofs_task *task, ino_t parent,
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, dir_ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_create(task, dir_ii, &nstr, mode, &ii);
 	ok_or_goto_out(err);
 
@@ -974,7 +980,7 @@ int silofs_fs_create(struct silofs_task *task, ino_t parent,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_INO, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_open(struct silofs_task *task, ino_t ino, int o_flags)
@@ -997,7 +1003,7 @@ int silofs_fs_open(struct silofs_task *task, ino_t ino, int o_flags)
 	err = silofs_do_open(task, ii, o_flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_mknod(struct silofs_task *task, ino_t parent,
@@ -1009,7 +1015,7 @@ int silofs_fs_mknod(struct silofs_task *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1024,6 +1030,9 @@ int silofs_fs_mknod(struct silofs_task *task, ino_t parent,
 	err = silofs_make_namestr_by(&nstr, dir_ii, name);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, dir_ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_mknod(task, dir_ii, &nstr, mode, rdev, &ii);
 	ok_or_goto_out(err);
 
@@ -1033,7 +1042,7 @@ int silofs_fs_mknod(struct silofs_task *task, ino_t parent,
 	err = op_rmap_stat(task, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_INO, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_release(struct silofs_task *task,
@@ -1045,7 +1054,7 @@ int silofs_fs_release(struct silofs_task *task,
 	/* TODO: useme */
 	unused(o_flags);
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1054,13 +1063,16 @@ int silofs_fs_release(struct silofs_task *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_release(task, ii, flush);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now)
@@ -1068,7 +1080,7 @@ int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1077,13 +1089,16 @@ int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
+	ok_or_goto_out(err);
+
+	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_flush(task, ii, now);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_fsync(struct silofs_task *task, ino_t ino, bool datasync)
@@ -1091,7 +1106,7 @@ int silofs_fs_fsync(struct silofs_task *task, ino_t ino, bool datasync)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1100,13 +1115,13 @@ int silofs_fs_fsync(struct silofs_task *task, ino_t ino, bool datasync)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_fsync(task, ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_rename(struct silofs_task *task, ino_t parent,
@@ -1115,11 +1130,11 @@ int silofs_fs_rename(struct silofs_task *task, ino_t parent,
 {
 	struct silofs_namestr nstr;
 	struct silofs_namestr newnstr;
-	struct silofs_inode_info *curp_ii = NULL;
-	struct silofs_inode_info *newp_ii = NULL;
+	struct silofs_inode_info *curd_ii = NULL;
+	struct silofs_inode_info *newd_ii = NULL;
 	int err;
 
-	err = op_start2(task, parent);
+	err = op_start1(task, parent);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1128,19 +1143,22 @@ int silofs_fs_rename(struct silofs_task *task, ino_t parent,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode2(task, parent, newparent, &curp_ii, &newp_ii);
+	err = op_stage_mut_inode2(task, parent, newparent, &curd_ii, &newd_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, curp_ii, name);
+	err = silofs_make_namestr_by(&nstr, curd_ii, name);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&newnstr, newp_ii, newname);
+	err = silofs_make_namestr_by(&newnstr, newd_ii, newname);
 	ok_or_goto_out(err);
 
-	err = silofs_do_rename(task, curp_ii, &nstr, newp_ii, &newnstr, flags);
+	err = op_try_flush2(task, curd_ii, newd_ii);
+	ok_or_goto_out(err);
+
+	err = silofs_do_rename(task, curd_ii, &nstr, newd_ii, &newnstr, flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, parent, OP_F_ANY, err);
+	return op_finish(task, parent, err);
 }
 
 int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf,
@@ -1158,13 +1176,13 @@ int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_read(task, ii, buf, len, off, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_read_iter(struct silofs_task *task, ino_t ino,
@@ -1182,13 +1200,13 @@ int silofs_fs_read_iter(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_read_iter(task, ii, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_write(struct silofs_task *task, ino_t ino,
@@ -1197,7 +1215,7 @@ int silofs_fs_write(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1209,10 +1227,13 @@ int silofs_fs_write(struct silofs_task *task, ino_t ino,
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_write(task, ii, buf, len, off, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_write_iter(struct silofs_task *task, ino_t ino,
@@ -1221,7 +1242,7 @@ int silofs_fs_write_iter(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1233,10 +1254,13 @@ int silofs_fs_write_iter(struct silofs_task *task, ino_t ino,
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_write_iter(task, ii, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_fallocate(struct silofs_task *task, ino_t ino,
@@ -1245,7 +1269,7 @@ int silofs_fs_fallocate(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1257,10 +1281,13 @@ int silofs_fs_fallocate(struct silofs_task *task, ino_t ino,
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_fallocate(task, ii, mode, offset, length);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_lseek(struct silofs_task *task, ino_t ino,
@@ -1278,13 +1305,13 @@ int silofs_fs_lseek(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_lseek(task, ii, off, whence, out_off);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_copy_file_range(struct silofs_task *task, ino_t ino_in,
@@ -1295,7 +1322,7 @@ int silofs_fs_copy_file_range(struct silofs_task *task, ino_t ino_in,
 	struct silofs_inode_info *ii_out = NULL;
 	int err;
 
-	err = op_start2(task, ino_in);
+	err = op_start1(task, ino_in);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1307,11 +1334,14 @@ int silofs_fs_copy_file_range(struct silofs_task *task, ino_t ino_in,
 	err = op_stage_mut_inode2(task, ino_in, ino_out, &ii_in, &ii_out);
 	ok_or_goto_out(err);
 
+	err = op_try_flush2(task, ii_in, ii_out);
+	ok_or_goto_out(err);
+
 	err = silofs_do_copy_file_range(task, ii_in, ii_out, off_in,
 	                                off_out, len, flags, out_ncp);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino_in, OP_F_ANY, err);
+	return op_finish(task, ino_in, err);
 }
 
 int silofs_fs_setxattr(struct silofs_task *task, ino_t ino,
@@ -1322,7 +1352,7 @@ int silofs_fs_setxattr(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1334,6 +1364,9 @@ int silofs_fs_setxattr(struct silofs_task *task, ino_t ino,
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = silofs_make_namestr_by(&nstr, ii, name);
 	ok_or_goto_out(err);
 
@@ -1341,7 +1374,7 @@ int silofs_fs_setxattr(struct silofs_task *task, ino_t ino,
 	                         value, size, flags, kill_sgid);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_getxattr(struct silofs_task *task, ino_t ino,
@@ -1364,7 +1397,7 @@ int silofs_fs_getxattr(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_make_namestr_by(&nstr, ii, name);
@@ -1373,7 +1406,7 @@ int silofs_fs_getxattr(struct silofs_task *task, ino_t ino,
 	err = silofs_do_getxattr(task, ii, &nstr, buf, size, out_size);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_listxattr(struct silofs_task *task, ino_t ino,
@@ -1391,13 +1424,13 @@ int silofs_fs_listxattr(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_listxattr(task, ii, lxa_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_removexattr(struct silofs_task *task,
@@ -1407,7 +1440,7 @@ int silofs_fs_removexattr(struct silofs_task *task,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1422,10 +1455,13 @@ int silofs_fs_removexattr(struct silofs_task *task,
 	err = silofs_make_namestr_by(&nstr, ii, name);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = silofs_do_removexattr(task, ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_INO, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_statx(struct silofs_task *task, ino_t ino,
@@ -1443,7 +1479,7 @@ int silofs_fs_statx(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_statx(task, ii, request_mask, out_stx);
@@ -1452,7 +1488,7 @@ int silofs_fs_statx(struct silofs_task *task, ino_t ino,
 	err = op_rmap_statx(task, out_stx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_fiemap(struct silofs_task *task,
@@ -1470,13 +1506,13 @@ int silofs_fs_fiemap(struct silofs_task *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_fiemap(task, ii, fm);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_syncfs(struct silofs_task *task, ino_t ino)
@@ -1484,7 +1520,7 @@ int silofs_fs_syncfs(struct silofs_task *task, ino_t ino)
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1493,10 +1529,13 @@ int silofs_fs_syncfs(struct silofs_task *task, ino_t ino)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
+	err = op_try_flush(task, ii);
+	ok_or_goto_out(err);
+
 	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_ANY, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_query(struct silofs_task *task, ino_t ino,
@@ -1515,13 +1554,13 @@ int silofs_fs_query(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &ii);
+	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_query(task, ii, qtype, out_qry);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, 0, err);
+	return op_finish(task, ino, err);
 }
 
 int silofs_fs_clone(struct silofs_task *task, ino_t ino,
@@ -1530,7 +1569,7 @@ int silofs_fs_clone(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
 
-	err = op_start2(task, ino);
+	err = op_start1(task, ino);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1539,13 +1578,16 @@ int silofs_fs_clone(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_rdo_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(task, ino, &dir_ii);
+	ok_or_goto_out(err);
+
+	err = op_try_flush(task, dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_clone(task, dir_ii, flags, out_bsecs);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, ino, OP_F_ANY, err);
+	return op_finish(task, ino, err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1565,22 +1607,22 @@ int silofs_fs_timedout(struct silofs_task *task, int flags)
 {
 	int err;
 
-	err = op_start2(task, SILOFS_INO_NULL);
+	err = op_start1(task, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
-	err = silofs_flush_dirty(task, SILOFS_DQID_ALL, flags);
+	err = silofs_flush_dirty(task, NULL, flags);
 	ok_or_goto_out(err);
 
 	silofs_relax_cache_by(task, flags);
 out:
-	return op_finish(task, SILOFS_INO_NULL, 0, err);
+	return op_finish(task, SILOFS_INO_NULL, err);
 }
 
 int silofs_fs_inspect(struct silofs_task *task)
 {
 	int err;
 
-	err = op_start2(task, SILOFS_INO_NULL);
+	err = op_start1(task, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1592,14 +1634,14 @@ int silofs_fs_inspect(struct silofs_task *task)
 	err = silofs_do_inspect(task);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, SILOFS_INO_NULL, 0, err);
+	return op_finish(task, SILOFS_INO_NULL, err);
 }
 
 int silofs_fs_unrefs(struct silofs_task *task)
 {
 	int err;
 
-	err = op_start2(task, SILOFS_INO_NULL);
+	err = op_start1(task, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
 	err = op_authorize(task);
@@ -1611,6 +1653,6 @@ int silofs_fs_unrefs(struct silofs_task *task)
 	err = silofs_do_unrefs(task);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, SILOFS_INO_NULL, OP_F_ANY, err);
+	return op_finish(task, SILOFS_INO_NULL, err);
 }
 

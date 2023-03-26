@@ -47,24 +47,22 @@ struct silofs_listxattr_ctx;
 
 /* stage-elements mode */
 enum silofs_stage_mode {
-	SILOFS_STAGE_CUR        = SILOFS_BIT(1),
-	SILOFS_STAGE_COW        = SILOFS_BIT(2),
+	SILOFS_STAGE_CUR        = SILOFS_BIT(0),
+	SILOFS_STAGE_COW        = SILOFS_BIT(1),
 };
 
 /* common control flags */
 enum silofs_flags {
-	SILOFS_F_FSYNC          = SILOFS_BIT(1),
-	SILOFS_F_RELEASE        = SILOFS_BIT(2),
-	SILOFS_F_NOW            = SILOFS_BIT(3),
-	SILOFS_F_BLKDEV         = SILOFS_BIT(4),
-	SILOFS_F_MEMFD          = SILOFS_BIT(5),
-	SILOFS_F_BRINGUP        = SILOFS_BIT(6),
-	SILOFS_F_OPSTART        = SILOFS_BIT(7),
-	SILOFS_F_OPFINISH       = SILOFS_BIT(8),
-	SILOFS_F_TIMEOUT        = SILOFS_BIT(9),
-	SILOFS_F_IDLE           = SILOFS_BIT(10),
-	SILOFS_F_WALKFS         = SILOFS_BIT(11),
-	SILOFS_F_URGENT         = SILOFS_BIT(12),
+	SILOFS_F_FSYNC          = SILOFS_BIT(0),
+	SILOFS_F_RELEASE        = SILOFS_BIT(1),
+	SILOFS_F_NOW            = SILOFS_BIT(2),
+	SILOFS_F_URGENT         = SILOFS_BIT(3),
+	SILOFS_F_BRINGUP        = SILOFS_BIT(4),
+	SILOFS_F_OPSTART        = SILOFS_BIT(5),
+	SILOFS_F_OPFINISH       = SILOFS_BIT(6),
+	SILOFS_F_TIMEOUT        = SILOFS_BIT(7),
+	SILOFS_F_IDLE           = SILOFS_BIT(8),
+	SILOFS_F_WALKFS         = SILOFS_BIT(9),
 };
 
 /* uber-block control flags */
@@ -285,13 +283,6 @@ struct silofs_vrange {
 	enum silofs_height      height;
 };
 
-/* dirty-queue id-number of snode (zero=no-owner) */
-typedef unsigned long silofs_dqid_t;
-
-/* dirty-queues special ids */
-#define SILOFS_DQID_DFL         (0)
-#define SILOFS_DQID_ALL         ((1UL << 56) - 1)
-
 /* caching-element's key type */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
@@ -404,7 +395,7 @@ struct silofs_oper_stat {
 
 /* dirty-queue of cached-elements */
 struct silofs_dirtyq {
-	struct silofs_listq             dq_list;
+	struct silofs_listq             dq;
 	size_t                          dq_accum;
 };
 

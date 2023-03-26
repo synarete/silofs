@@ -2155,12 +2155,6 @@ static int repo_unlink_bootsec(const struct silofs_repo *repo,
 	return 0;
 }
 
-void silofs_repo_pre_forkfs(struct silofs_repo *repo)
-{
-	repo_pre_op(repo);
-	silofs_cache_forget_uaddrs(repo_cache(repo));
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_save_bootsec(struct silofs_repo *repo,

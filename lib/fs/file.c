@@ -236,9 +236,10 @@ static bool fl_mode_zero_range(int fl_mode)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void fli_dirtify(struct silofs_fileaf_info *fli)
+static void fli_dirtify(struct silofs_fileaf_info *fli,
+                        struct silofs_inode_info *ii)
 {
-	vi_dirtify(&fli->fl_vi);
+	vi_dirtify(&fli->fl_vi, ii);
 }
 
 static void fli_incref(struct silofs_fileaf_info *fli)
@@ -628,9 +629,10 @@ static struct silofs_inode_file *ii_ifl_of(const struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fni_difnify(struct silofs_finode_info *fni)
+static void fni_difnify(struct silofs_finode_info *fni,
+                        struct silofs_inode_info *ii)
 {
-	vi_dirtify(&fni->fn_vi);
+	vi_dirtify(&fni->fn_vi, ii);
 }
 
 static void fni_incref(struct silofs_finode_info *fni)
@@ -696,7 +698,6 @@ fni_bind_child(struct silofs_finode_info *parent_fni,
 {
 	if (parent_fni != NULL) {
 		fni_assign_child_by_pos(parent_fni, file_pos, vaddr);
-		fni_difnify(parent_fni);
 	}
 }
 
@@ -704,16 +705,13 @@ static void fni_bind_finode(struct silofs_finode_info *parent_fni,
                             loff_t file_pos, struct silofs_finode_info *fni)
 {
 	fni_bind_child(parent_fni, file_pos, fni_vaddr(fni));
-
 	ftn_inc_refcnt(fni->ftn);
-	fni_difnify(fni);
 }
 
 static void
 fni_clear_subtree_mappings(struct silofs_finode_info *fni, size_t slot)
 {
 	ftn_reset_child(fni->ftn, slot);
-	fni_difnify(fni);
 }
 
 static void fni_setup(struct silofs_finode_info *fni,
@@ -721,7 +719,6 @@ static void fni_setup(struct silofs_finode_info *fni,
                       loff_t off, size_t height)
 {
 	ftn_init_by(fni->ftn, ii_ino(ii), off, height);
-	fni_difnify(fni);
 }
 
 static void fni_resolve_child_by_slot(const struct silofs_finode_info *fni,
@@ -752,8 +749,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_cache *cache = sbi_cache(f_ctx->sbi);
-	struct silofs_block *nil_bk = cache->c_nil_bk;
+	struct silofs_block *nil_bk = f_ctx->uber->ub.cache->c_nil_bk;
 
 	return nil_bk->u.bk;
 }
@@ -1316,8 +1312,7 @@ static int filc_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 static void filc_dirtify_fileaf(const struct silofs_file_ctx *f_ctx,
                                 struct silofs_fileaf_info *fli)
 {
-	fli_dirtify(fli);
-	unused(f_ctx);
+	fli_dirtify(fli, f_ctx->ii);
 }
 
 static void filc_zero_fileaf_sub(const struct silofs_file_ctx *f_ctx,
@@ -1999,11 +1994,9 @@ static int filc_claim_data_space(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_voaddr voa;
-	silofs_dqid_t dqid;
 	int err;
 
-	dqid = ino_to_dqid(ii_ino(f_ctx->ii));
-	err = silofs_claim_vspace(f_ctx->task, f_ctx->ii, stype, dqid, &voa);
+	err = silofs_claim_vspace(f_ctx->task, f_ctx->ii, stype, &voa);
 	if (err) {
 		return err;
 	}
@@ -2060,6 +2053,7 @@ static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
 	}
 	fni = silofs_fni_from_vi(vi);
 	silofs_fni_rebind_view(fni);
+	fni_difnify(fni, f_ctx->ii);
 	*out_fni = fni;
 	return 0;
 }
@@ -2111,6 +2105,7 @@ static int filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fni_setup(*out_fni, f_ctx->ii, off, height);
+	fni_difnify(*out_fni, f_ctx->ii);
 	return 0;
 }
 
@@ -2136,6 +2131,7 @@ static int filc_spawn_bind_finode(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fni_bind_finode(parent_fni, file_pos, *out_fni);
+	fni_difnify(parent_fni, f_ctx->ii);
 	return 0;
 }
 
@@ -2195,6 +2191,7 @@ filc_do_create_tree_leaf_space(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fni_bind_child(parent_fni, f_ctx->off, &vaddr);
+	fni_difnify(parent_fni, f_ctx->ii);
 	return 0;
 }
 
@@ -2216,7 +2213,7 @@ static void filc_bind_sub_tree(const struct silofs_file_ctx *f_ctx,
 
 	filc_tree_root_of(f_ctx, &vaddr);
 	ftn_set_child(fni->ftn, 0, vaddr.off);
-	fni_difnify(fni);
+	fni_difnify(fni, f_ctx->ii);
 
 	filc_update_tree_root(f_ctx, fni_vaddr(fni));
 	fni_bind_finode(NULL, 0, fni);
@@ -2958,6 +2955,7 @@ static int fpr_discard_entire(const struct silofs_fpos_ref *fpr)
 		filc_reset_head2_leaf_at(fpr->f_ctx, fpr->slot_idx);
 	} else if (fpr->tree && fpr->fni) { /* make clang-scan happy */
 		fni_clear_subtree_mappings(fpr->fni, fpr->slot_idx);
+		fni_difnify(fpr->fni, fpr->f_ctx->ii);
 	}
 	return 0;
 }
@@ -3323,6 +3321,7 @@ static int filc_create_bind_tree_leaf(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fni_bind_child(parent_fni, f_ctx->off, &fpr.vaddr);
+	fni_difnify(parent_fni, f_ctx->ii);
 	return 0;
 }
 
@@ -3904,6 +3903,7 @@ static void fpr_rebind_child(struct silofs_fpos_ref *fpr,
                              const struct silofs_vaddr *vaddr)
 {
 	fni_bind_child(fpr->fni, fpr->f_ctx->off, vaddr);
+	fni_difnify(fpr->fni, fpr->f_ctx->ii);
 	vaddr_assign(&fpr->vaddr, vaddr);
 }
 

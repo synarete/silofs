@@ -469,7 +469,7 @@ static void sbi_export_bootsec(const struct silofs_sb_info *sbi,
 
 static void uber_pre_forkfs(struct silofs_uber *uber)
 {
-	silofs_repo_pre_forkfs(uber->ub.repo);
+	silofs_cache_forget_uaddrs(uber->ub.cache);
 }
 
 int silofs_uber_forkfs(struct silofs_uber *uber,

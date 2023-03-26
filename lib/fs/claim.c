@@ -30,7 +30,6 @@ struct silofs_spalloc_ctx {
 	struct silofs_spleaf_info *sli;
 	struct silofs_inode_info  *pii;
 	enum silofs_stype          stype;
-	silofs_dqid_t              dqid;
 };
 
 static void ivoaddr_setup(struct silofs_ivoaddr *ivoa, ino_t ino,
@@ -57,7 +56,7 @@ static void ivoaddr_setup2(struct silofs_ivoaddr *ivoa,
 static struct silofs_cache *
 spac_cache(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	return sbi_cache(spa_ctx->sbi);
+	return spa_ctx->uber->ub.cache;
 }
 
 static struct silofs_spamaps *
@@ -137,7 +136,7 @@ static bool sli_is_shared_databk(const struct silofs_spleaf_info *sli,
 static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
                        struct silofs_task *task,
                        struct silofs_inode_info *pii,
-                       enum silofs_stype stype, silofs_dqid_t dqid)
+                       enum silofs_stype stype)
 {
 	silofs_memzero(spa_ctx, sizeof(*spa_ctx));
 	spa_ctx->task = task;
@@ -145,13 +144,12 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 	spa_ctx->sbi = task_sbi(task);
 	spa_ctx->pii = pii;
 	spa_ctx->stype = stype;
-	spa_ctx->dqid = dqid;
 }
 
 static void spac_setup2(struct silofs_spalloc_ctx *spa_ctx,
                         struct silofs_task *task, enum silofs_stype stype)
 {
-	spac_setup(spa_ctx, task, NULL, stype, SILOFS_DQID_ALL);
+	spac_setup(spa_ctx, task, NULL, stype);
 }
 
 static void spac_increfs(const struct silofs_spalloc_ctx *spa_ctx)
@@ -432,12 +430,12 @@ static int spac_claim_vspace(struct silofs_spalloc_ctx *spa_ctx,
 
 int silofs_claim_vspace(struct silofs_task *task,
                         struct silofs_inode_info *pii,
-                        enum silofs_stype stype, silofs_dqid_t dqid,
+                        enum silofs_stype stype,
                         struct silofs_voaddr *out_voa)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 
-	spac_setup(&spa_ctx, task, pii, stype, dqid);
+	spac_setup(&spa_ctx, task, pii, stype);
 	return spac_claim_vspace(&spa_ctx, out_voa);
 }
 
@@ -449,8 +447,7 @@ static int spac_claim_mutable_vnode(const struct silofs_spalloc_ctx *spa_ctx,
 
 	spac_increfs(spa_ctx);
 	ret = silofs_stage_vnode_at(spa_ctx->task, spa_ctx->pii, vaddr,
-	                            SILOFS_STAGE_COW, spa_ctx->dqid,
-	                            false, out_vi);
+	                            SILOFS_STAGE_COW, false, out_vi);
 	spac_decrefs(spa_ctx);
 	return ret;
 }
@@ -458,14 +455,14 @@ static int spac_claim_mutable_vnode(const struct silofs_spalloc_ctx *spa_ctx,
 /* TODO: cleanups and resource reclaim upon failure in every path */
 int silofs_claim_vnode(struct silofs_task *task,
                        struct silofs_inode_info *pii,
-                       enum silofs_stype stype, silofs_dqid_t dqid,
+                       enum silofs_stype stype,
                        struct silofs_vnode_info **out_vi)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	struct silofs_voaddr voa;
 	int err;
 
-	spac_setup(&spa_ctx, task, pii, stype, dqid);
+	spac_setup(&spa_ctx, task, pii, stype);
 	err = spac_claim_vspace(&spa_ctx, &voa);
 	if (err) {
 		return err;
@@ -506,7 +503,6 @@ int silofs_claim_inode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	spa_ctx.dqid = ivoa.ino;
 	err = spac_claim_mutable_vnode(&spa_ctx, &ivoa.voa.vaddr, &vi);
 	if (err) {
 		return err;

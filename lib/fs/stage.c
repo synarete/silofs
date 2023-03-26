@@ -84,15 +84,11 @@ static void voaddr_by(struct silofs_voaddr *voa,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void vi_bind_to(struct silofs_vnode_info *vi,
-                       struct silofs_sb_info *sbi,
-                       struct silofs_vbk_info *vbki)
+                       struct silofs_uber *uber, struct silofs_vbk_info *vbki)
 {
-	struct silofs_uber *uber = sbi_uber(sbi);
-
 	vi->v_si.s_uber = uber;
 	/* TODO: move to lower level */
 	vi->v_si.s_md = &vi->v_si.s_ce.ce_cache->c_mdigest;
-	vi->v_sbi = sbi;
 	silofs_vi_attach_to(vi, vbki);
 }
 
@@ -112,11 +108,12 @@ static struct silofs_cache *stgc_cache(const struct silofs_stage_ctx *stg_ctx)
 static void stgc_log_cache_stat(const struct silofs_stage_ctx *stg_ctx)
 {
 	const struct silofs_cache *cache = stgc_cache(stg_ctx);
-	const size_t dq_accum_nbytes = silofs_cache_accum_ndirty(cache);
+	const struct silofs_dirtyqs *dqs = &cache->c_dqs;
 
-	log_dbg("cache-stat: dq_accum_nbytes=%lu " \
-	        "ubki=%lu ui=%lu vbki=%lu vi=%lu blobf=%lu",
-	        dq_accum_nbytes, cache->c_ubki_lm.lm_lru.sz,
+	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "\
+	        "accum_vnodes=%lu ubki=%lu ui=%lu vbki=%lu vi=%lu blobf=%lu",
+	        dqs->dq_uis.dq_accum, dqs->dq_iis.dq_accum,
+	        dqs->dq_vis.dq_accum, cache->c_ubki_lm.lm_lru.sz,
 	        cache->c_ui_lm.lm_lru.sz, cache->c_vbki_lm.lm_lru.sz,
 	        cache->c_vi_lm.lm_lru.sz, cache->c_blobf_lm.lm_lru.sz);
 }
@@ -151,7 +148,7 @@ static int stgc_spawn_cached_vi(const struct silofs_stage_ctx *stg_ctx,
 {
 	struct silofs_cache *cache = stgc_cache(stg_ctx);
 
-	*out_vi = silofs_cache_spawn_vi(cache, vaddr, stg_ctx->pii);
+	*out_vi = silofs_cache_spawn_vi(cache, vaddr);
 	return (*out_vi == NULL) ? -ENOMEM : 0;
 }
 
@@ -165,19 +162,13 @@ static void stgc_forget_cached_vi(const struct silofs_stage_ctx *stg_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t stgc_num_cached_dirty(const struct silofs_stage_ctx *stg_ctx)
-{
-	return silofs_cache_accum_ndirty(stgc_cache(stg_ctx));
-}
-
 static int stgc_flush_dirty_now(const struct silofs_stage_ctx *stg_ctx)
 {
 	int err;
 
 	err = silofs_flush_dirty_now(stg_ctx->task);
 	if (err) {
-		log_dbg("flush dirty failed: ndirty=%lu err=%d",
-		        stgc_num_cached_dirty(stg_ctx), err);
+		log_dbg("flush dirty failed: err=%d", err);
 	}
 	return err;
 }
@@ -266,7 +257,7 @@ static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
 	silofs_vbki_incref(vbki);
 	err = stgc_do_spawn_vi(stg_ctx, &voaddr->vaddr, &vi);
 	if (!err) {
-		vi_bind_to(vi, stg_ctx->sbi, vbki);
+		vi_bind_to(vi, stg_ctx->uber, vbki);
 		vi_update_oaddr(vi, &voaddr->oaddr);
 	}
 	silofs_vbki_decref(vbki);
@@ -2467,19 +2458,22 @@ static int stgc_do_pre_clone_vblock(struct silofs_stage_ctx *stg_ctx,
                                     const struct silofs_vaddr *vaddr,
                                     struct silofs_vis *vis)
 {
+	struct silofs_vnode_info *vi = NULL;
+	const struct silofs_vaddr *vaddrj = NULL;
 	const silofs_lba_t lba = off_to_lba(vaddr->off);
 	int err;
 
 	STATICASSERT_EQ(ARRAY_SIZE(vis->vis), ARRAY_SIZE(vis->vas.vaddr));
 
 	silofs_sli_vaddrs_at(stg_ctx->sli, vaddr->stype, lba, &vis->vas);
-	for (size_t i = 0; i < vis->vas.count; ++i) {
-		err = stgc_pre_clone_stage_at(stg_ctx, &vis->vas.vaddr[i],
-		                              &vis->vis[i]);
+	for (size_t j = 0; j < vis->vas.count; ++j) {
+		vaddrj = &vis->vas.vaddr[j];
+		err = stgc_pre_clone_stage_at(stg_ctx, vaddrj, &vi);
 		if (err) {
 			return err;
 		}
-		vi_incref(vis->vis[i]);
+		vi_incref(vi);
+		vis->vis[j] = vi;
 	}
 	return 0;
 }
@@ -2503,10 +2497,10 @@ static void stgc_post_clone_vblock(const struct silofs_stage_ctx *stg_ctx,
 
 	for (size_t i = 0; i < vis->vas.count; ++i) {
 		vi = vis->vis[i];
-		vi_dirtify(vi);
+		vi_dirtify(vi, NULL);
 		vi_decref(vi);
 	}
-	unused(stg_ctx);
+	silofs_unused(stg_ctx);
 }
 
 static int stgc_clone_vblock(struct silofs_stage_ctx *stg_ctx,
@@ -2639,19 +2633,13 @@ out_err:
 int silofs_stage_vnode_at(struct silofs_task *task,
                           struct silofs_inode_info *pii,
                           const struct silofs_vaddr *vaddr,
-                          enum silofs_stage_mode stg_mode,
-                          silofs_dqid_t dqid, bool verify_view,
+                          enum silofs_stage_mode stg_mode, bool verify_view,
                           struct silofs_vnode_info **out_vi)
 {
 	struct silofs_stage_ctx stg_ctx;
-	int err;
 
 	stgc_setup(&stg_ctx, task, pii, vaddr, stg_mode, verify_view);
-	err = stgc_stage_vnode_at(&stg_ctx, out_vi);
-	if (!err) {
-		silofs_vi_set_dqid(*out_vi, dqid);
-	}
-	return err;
+	return stgc_stage_vnode_at(&stg_ctx, out_vi);
 }
 
 static int stage_inode_of(struct silofs_task *task, ino_t ino,
@@ -2661,12 +2649,9 @@ static int stage_inode_of(struct silofs_task *task, ino_t ino,
 {
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_inode_info *ii = NULL;
-	silofs_dqid_t dqid;
 	int err;
 
-	dqid = ino_to_dqid(ino);
-	err = silofs_stage_vnode_at(task, NULL, vaddr,
-	                            stg_mode, dqid, true, &vi);
+	err = silofs_stage_vnode_at(task, NULL, vaddr, stg_mode, true, &vi);
 	if (err) {
 		return err;
 	}
@@ -2731,7 +2716,6 @@ resolve_stage_vnode(struct silofs_task *task,
                     struct silofs_inode_info *pii,
                     const struct silofs_vaddr *vaddr,
                     enum silofs_stage_mode stg_mode,
-                    silofs_dqid_t dqid,
                     struct silofs_vnode_info **out_vi)
 {
 	struct silofs_voaddr voa;
@@ -2750,8 +2734,7 @@ resolve_stage_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_vnode_at(task, pii, vaddr,
-	                            stg_mode, dqid, true, &vi);
+	err = silofs_stage_vnode_at(task, pii, vaddr, stg_mode, true, &vi);
 	if (err) {
 		return err;
 	}
@@ -2776,7 +2759,7 @@ static int check_stage_vnode(const struct silofs_task *task,
 static int do_stage_vnode(struct silofs_task *task,
                           struct silofs_inode_info *pii,
                           const struct silofs_vaddr *vaddr,
-                          enum silofs_stage_mode stg_mode, silofs_dqid_t dqid,
+                          enum silofs_stage_mode stg_mode,
                           struct silofs_vnode_info **out_vi)
 {
 	int err;
@@ -2785,7 +2768,7 @@ static int do_stage_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = resolve_stage_vnode(task, pii, vaddr, stg_mode, dqid, out_vi);
+	err = resolve_stage_vnode(task, pii, vaddr, stg_mode, out_vi);
 	if (err) {
 		return err;
 	}
@@ -2798,17 +2781,11 @@ int silofs_stage_vnode(struct silofs_task *task,
                        enum silofs_stage_mode stg_mode,
                        struct silofs_vnode_info **out_vi)
 {
-	struct silofs_vnode_info *vi = NULL;
-	const silofs_dqid_t dqid = pii ? ii_ino(pii) : SILOFS_DQID_DFL;
 	int err;
 
 	ii_incref(pii);
-	err = do_stage_vnode(task, pii, vaddr, stg_mode, dqid, &vi);
-	if (!err && (vi->v_pii == NULL)) {
-		silofs_vi_bind_pii(vi, pii);
-	}
+	err = do_stage_vnode(task, pii, vaddr, stg_mode, out_vi);
 	ii_decref(pii);
-	*out_vi = vi;
 	return err;
 }
 

@@ -434,13 +434,9 @@ static void silofs_ii_times(const struct silofs_inode_info *ii,
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	bool ret;
+	bool ret = false;
 
-	if (ii->i_alive_vis.sz || ii->i_dq_vis.dq_list.sz) {
-		ret = false;
-	} else if (ii->i_pinned || ii->i_nopen) {
-		ret = false;
-	} else {
+	if (!ii->i_dq_vis.dq.sz && !ii->i_pinned && !ii->i_nopen) {
 		ret = silofs_si_isevictable(&ii->i_vi.v_si);
 	}
 	return ret;
@@ -506,7 +502,8 @@ static void ii_setup_inode(struct silofs_inode_info *ii,
 
 void silofs_ii_stamp_mark_visible(struct silofs_inode_info *ii)
 {
-	silofs_vi_stamp_mark_visible(ii_to_vi(ii));
+	silofs_stamp_meta_of(ii_to_vi(ii));
+	ii_dirtify(ii);
 }
 
 void silofs_ii_setup_by(struct silofs_inode_info *ii,

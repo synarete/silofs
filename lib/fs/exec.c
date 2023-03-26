@@ -989,8 +989,7 @@ static int exec_claim_vspace(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_claim_vspace(&task, NULL, stype,
-	                          SILOFS_DQID_DFL, out_voa);
+	err = silofs_claim_vspace(&task, NULL, stype, out_voa);
 	return term_task(&task, err);
 }
 
@@ -1119,6 +1118,9 @@ static int exec_spawn_vnode(const struct silofs_fs_env *fse,
 		return err;
 	}
 	err = silofs_spawn_vnode(&task, NULL, stype, out_vi);
+	if (!err) {
+		vi_dirtify(*out_vi, NULL);
+	}
 	return term_task(&task, err);
 }
 

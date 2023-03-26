@@ -199,6 +199,12 @@ syi_vaddr(const struct silofs_symval_info *syi)
 	return vi_vaddr(&syi->sy_vi);
 }
 
+static void syi_dirtify(struct silofs_symval_info *syi,
+                        struct silofs_inode_info *ii)
+{
+	vi_dirtify(&syi->sy_vi, ii);
+}
+
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
 	if (syi->sy_vi.v_recheck) {
@@ -373,6 +379,7 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	}
 	syi = silofs_syi_from_vi(vi);
 	silofs_syi_rebind_view(syi);
+	syi_dirtify(syi, sl_ctx->lnk_ii);
 	*out_syi = syi;
 	return 0;
 }

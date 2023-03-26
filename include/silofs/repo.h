@@ -97,8 +97,6 @@ int silofs_repo_open(struct silofs_repo *repo);
 
 int silofs_repo_close(struct silofs_repo *repo);
 
-void silofs_repo_pre_forkfs(struct silofs_repo *repo);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_save_bootsec(struct silofs_repo *repo,

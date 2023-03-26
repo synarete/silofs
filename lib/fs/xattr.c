@@ -500,9 +500,10 @@ xai_vaddr(const struct silofs_xanode_info *xai)
 	return vi_vaddr(&xai->xan_vi);
 }
 
-static void xai_dirtify(struct silofs_xanode_info *xai)
+static void xai_dirtify(struct silofs_xanode_info *xai,
+                        struct silofs_inode_info *ii)
 {
-	vi_dirtify(&xai->xan_vi);
+	vi_dirtify(&xai->xan_vi, ii);
 }
 
 static void xai_incref(struct silofs_xanode_info *xai)
@@ -532,7 +533,6 @@ static void xei_discard_entry(const struct silofs_xentry_info *xei)
 
 	if (xai != NULL) {
 		xan_remove(xai->xan, xei->xe);
-		xai_dirtify(xai);
 	}
 }
 
@@ -798,6 +798,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	}
 	xai = silofs_xai_from_vi(vi);
 	silofs_xai_rebind_view(xai);
+	xai_dirtify(xai, xa_ctx->ii);
 	*out_xai = xai;
 	return 0;
 }
@@ -854,7 +855,7 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 	}
 	xei->xai = xai;
 	xei->xe = xe;
-	xai_dirtify(xai);
+	xai_dirtify(xai, xa_ctx->ii);
 	return 0;
 }
 
@@ -931,6 +932,7 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 	err = xac_setxattr_create(xa_ctx, xei);
 	if (!err) {
 		xei_discard_entry(&xei_cur);
+		xai_dirtify(xei->xai, xa_ctx->ii);
 	}
 	return err;
 }
@@ -1061,6 +1063,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 		return err;
 	}
 	xei_discard_entry(&xei);
+	xai_dirtify(xei.xai, xa_ctx->ii);
 	ii_update_itimes(xa_ctx->ii, creds, SILOFS_IATTR_CTIME);
 	return 0;
 }

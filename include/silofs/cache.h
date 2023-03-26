@@ -23,8 +23,6 @@ struct silofs_dirtyqs {
 	struct silofs_dirtyq    dq_uis;
 	struct silofs_dirtyq    dq_iis;
 	struct silofs_dirtyq    dq_vis;
-	size_t dq_accum_nbytes_total;
-	struct silofs_dirtyq    dq[128];
 };
 
 /* LRU + hash-map */
@@ -64,7 +62,12 @@ void silofs_dirtyq_append(struct silofs_dirtyq *dq,
 void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
                           struct silofs_list_head *lh, size_t len);
 
-struct silofs_list_head *silofs_dirtyq_front(const struct silofs_dirtyq *dq);
+struct silofs_list_head *
+silofs_dirtyq_front(const struct silofs_dirtyq *dq);
+
+struct silofs_list_head *
+silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
+                      const struct silofs_list_head *lh);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -91,14 +94,6 @@ void silofs_cache_drop(struct silofs_cache *cache);
 
 void silofs_cache_shrink_once(struct silofs_cache *cache);
 
-bool silofs_cache_need_flush(const struct silofs_cache *cache,
-                             silofs_dqid_t dqid, int flags);
-
-size_t silofs_cache_accum_ndirty(const struct silofs_cache *cache);
-
-void silofs_cache_fill_dsets(struct silofs_cache *cache,
-                             struct silofs_dsets *dsets, silofs_dqid_t dqid);
-
 
 struct silofs_blobf *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
@@ -112,6 +107,8 @@ void silofs_cache_evict_blob(struct silofs_cache *cache,
                              struct silofs_blobf *blobf, bool now);
 
 void silofs_cache_relax_blobs(struct silofs_cache *cache);
+
+size_t silofs_cache_blobs_overflow(const struct silofs_cache *cache);
 
 
 struct silofs_ubk_info *
@@ -162,8 +159,7 @@ silofs_cache_lookup_vi(struct silofs_cache *cache,
 
 struct silofs_vnode_info *
 silofs_cache_spawn_vi(struct silofs_cache *cache,
-                      const struct silofs_vaddr *vaddr,
-                      struct silofs_inode_info *pii);
+                      const struct silofs_vaddr *vaddr);
 
 void silofs_cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi);
@@ -175,7 +171,8 @@ void silofs_blobf_incref(struct silofs_blobf *blobf);
 void silofs_blobf_decref(struct silofs_blobf *blobf);
 
 
-void silofs_vi_dirtify(struct silofs_vnode_info *vi);
+void silofs_vi_dirtify(struct silofs_vnode_info *vi,
+                       struct silofs_inode_info *ii);
 
 void silofs_vi_undirtify(struct silofs_vnode_info *vi);
 
@@ -185,9 +182,6 @@ void silofs_vi_decref(struct silofs_vnode_info *vi);
 
 void silofs_vi_attach_to(struct silofs_vnode_info *vi,
                          struct silofs_vbk_info *vbki);
-
-void silofs_vi_bind_pii(struct silofs_vnode_info *vi,
-                        struct silofs_inode_info *ii);
 
 
 int silofs_vi_refcnt(const struct silofs_vnode_info *vi);

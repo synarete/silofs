@@ -29,7 +29,6 @@ typedef void (*silofs_snode_del_fn)(struct silofs_snode_info *si,
 /* snode */
 struct silofs_snode_info {
 	struct silofs_cache_elem        s_ce;
-	struct silofs_list_head         s_dq_lh;
 	struct silofs_avl_node          s_ds_an;
 	silofs_snode_del_fn             s_del_hook;
 	struct silofs_uber             *s_uber;
@@ -39,7 +38,6 @@ struct silofs_snode_info {
 	union silofs_view              *s_view;
 	loff_t                          s_view_pos;
 	size_t                          s_view_len;
-	silofs_dqid_t                   s_dqid;
 	enum silofs_stype               s_stype;
 	volatile bool                   s_noflush;
 };
@@ -86,25 +84,19 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_snode_info        v_si;
-	struct silofs_list_head         v_iq_lh;
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_oaddr             v_oaddr;
 	struct silofs_iovref            v_iovr;
 	struct silofs_vbk_info         *v_vbki;
-	struct silofs_sb_info          *v_sbi;
-	struct silofs_inode_info       *v_pii;
 	struct silofs_dirtyq           *v_dq;
 	bool                            v_recheck;
 	bool                            v_verified;
-	bool                            v_iidirty;
 };
 
 /* inode */
 struct silofs_inode_info {
 	struct silofs_vnode_info        i_vi;
-	struct silofs_list_head         i_dq_lh;
-	struct silofs_listq             i_alive_vis;
 	struct silofs_dirtyq            i_dq_vis;
 	struct silofs_inode            *inode;
 	struct timespec                 i_atime_lazy;
@@ -168,23 +160,12 @@ silofs_ii_from_si(const struct silofs_snode_info *si);
 struct silofs_inode_info *
 silofs_ii_from_vi(const struct silofs_vnode_info *vi);
 
+struct silofs_inode_info *
+silofs_ii_from_dirty_lh(struct silofs_list_head *lh);
+
 void silofs_ii_rebind_view(struct silofs_inode_info *ii, ino_t ino);
 
-void silofs_ii_link_alive_vi(struct silofs_inode_info *ii,
-                             struct silofs_vnode_info *vi);
-
-void silofs_ii_unlink_alive_vi(struct silofs_inode_info *ii,
-                               struct silofs_vnode_info *vi);
-
-void silofs_ii_unlink_alive_vis(struct silofs_inode_info *ii);
-
-void silofs_ii_link_dirty_vi(struct silofs_inode_info *ii,
-                             struct silofs_vnode_info *vi);
-
-void silofs_ii_unlink_dirty_vi(struct silofs_inode_info *ii,
-                               struct silofs_vnode_info *vi);
-
-void silofs_ii_unlink_dirty_vis(struct silofs_inode_info *ii);
+void silofs_ii_undirtify_vis(struct silofs_inode_info *ii);
 
 
 struct silofs_xanode_info *silofs_xai_from_vi(struct silofs_vnode_info *vi);
@@ -213,17 +194,21 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli);
 
 
 struct silofs_vnode_info *
+silofs_vi_from_dirty_lh(struct silofs_list_head *lh);
+
+struct silofs_vnode_info *
 silofs_vi_from_si(const struct silofs_snode_info *si);
 
 bool silofs_vi_isdata(const struct silofs_vnode_info *vi);
 
-void silofs_vi_stamp_mark_visible(struct silofs_vnode_info *vi);
-
-void silofs_vi_set_dqid(struct silofs_vnode_info *vi, silofs_dqid_t dqid);
+void silofs_stamp_meta_of(struct silofs_vnode_info *vi);
 
 
 struct silofs_unode_info *
 silofs_ui_from_si(const struct silofs_snode_info *si);
+
+struct silofs_unode_info *
+silofs_ui_from_dirty_lh(struct silofs_list_head *lh);
 
 void silofs_ui_bind_uber(struct silofs_unode_info *ui,
                          struct silofs_uber *uber);

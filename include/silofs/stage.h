@@ -46,8 +46,7 @@ int silofs_require_spmaps_at(struct silofs_task *task,
 int silofs_stage_vnode_at(struct silofs_task *task,
                           struct silofs_inode_info *pii,
                           const struct silofs_vaddr *vaddr,
-                          enum silofs_stage_mode stg_mode,
-                          silofs_dqid_t dqid, bool verify_view,
+                          enum silofs_stage_mode stg_mode, bool verify_view,
                           struct silofs_vnode_info **out_vi);
 
 int silofs_resolve_voaddr_of(struct silofs_task *task,

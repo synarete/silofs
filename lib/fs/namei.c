@@ -943,10 +943,16 @@ int silofs_do_open(struct silofs_task *task,
 	return err;
 }
 
+static void ii_undirtify_all(struct silofs_inode_info *ii)
+{
+	silofs_ii_undirtify_vis(ii);
+	silofs_ii_undirtify(ii);
+}
+
 static int drop_ispecific(struct silofs_task *task,
                           struct silofs_inode_info *ii)
 {
-	int err;
+	int err = 0;
 
 	if (ii_isdir(ii)) {
 		err = silofs_drop_dir(task, ii);
@@ -954,8 +960,9 @@ static int drop_ispecific(struct silofs_task *task,
 		err = silofs_drop_reg(task, ii);
 	} else if (ii_islnk(ii)) {
 		err = silofs_drop_symlink(task, ii);
-	} else {
-		err = 0;
+	}
+	if (!err) {
+		ii_undirtify_all(ii);
 	}
 	return err;
 }
@@ -1023,18 +1030,11 @@ static bool ii_isdropable(const struct silofs_inode_info *ii)
 	return true;
 }
 
-static void ii_cleanup_orphan(struct silofs_inode_info *ii)
-{
-	silofs_ii_undirtify(ii);
-	silofs_ii_unlink_dirty_vis(ii);
-	silofs_ii_unlink_alive_vis(ii);
-}
-
 static int try_prune_inode(struct silofs_task *task,
                            struct silofs_inode_info *ii, bool update_ctime)
 {
 	if (!ii->i_nopen && ii_isnlink_orphan(ii)) {
-		ii_cleanup_orphan(ii);
+		ii_undirtify_all(ii);
 	}
 	if (ii_isdropable(ii)) {
 		return drop_unlinked(task, ii);
@@ -1045,10 +1045,10 @@ static int try_prune_inode(struct silofs_task *task,
 	return 0;
 }
 
-static int remove_dentry_of(struct silofs_task *task,
-                            struct silofs_inode_info *dir_ii,
-                            struct silofs_inode_info *ii,
-                            const struct silofs_qstr *name)
+static int remove_dentry(struct silofs_task *task,
+                         struct silofs_inode_info *dir_ii,
+                         struct silofs_inode_info *ii,
+                         const struct silofs_qstr *name)
 {
 	int err;
 
@@ -1058,10 +1058,10 @@ static int remove_dentry_of(struct silofs_task *task,
 	return err;
 }
 
-static int do_remove_and_prune(struct silofs_task *task,
-                               struct silofs_inode_info *dir_ii,
-                               const struct silofs_namestr *nstr,
-                               struct silofs_inode_info *ii)
+static int remove_dentry_of(struct silofs_task *task,
+                            struct silofs_inode_info *dir_ii,
+                            struct silofs_inode_info *ii,
+                            const struct silofs_namestr *nstr)
 {
 	struct silofs_qstr name;
 	int err;
@@ -1070,7 +1070,21 @@ static int do_remove_and_prune(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = remove_dentry_of(task, dir_ii, ii, &name);
+	err = remove_dentry(task, dir_ii, ii, &name);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int remove_de_and_prune(struct silofs_task *task,
+                               struct silofs_inode_info *dir_ii,
+                               struct silofs_inode_info *ii,
+                               const struct silofs_namestr *nstr)
+{
+	int err;
+
+	err = remove_dentry_of(task, dir_ii, ii, nstr);
 	if (err) {
 		return err;
 	}
@@ -1078,6 +1092,21 @@ static int do_remove_and_prune(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+static int remove_de_and_update(struct silofs_task *task,
+                                struct silofs_inode_info *dir_ii,
+                                struct silofs_inode_info *ii,
+                                const struct silofs_namestr *nstr)
+{
+	int err;
+
+	err = remove_dentry_of(task, dir_ii, ii, nstr);
+	if (err) {
+		return err;
+	}
+	ii_update_itimes(ii, creds_of(task), SILOFS_IATTR_CTIME);
 	return 0;
 }
 
@@ -1120,7 +1149,7 @@ static int do_unlink(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = do_remove_and_prune(task, dir_ii, nstr, ii);
+	err = remove_de_and_prune(task, dir_ii, ii, nstr);
 	if (err) {
 		return err;
 	}
@@ -1130,12 +1159,12 @@ static int do_unlink(struct silofs_task *task,
 
 int silofs_do_unlink(struct silofs_task *task,
                      struct silofs_inode_info *dir_ii,
-                     const struct silofs_namestr *name)
+                     const struct silofs_namestr *nstr)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_unlink(task, dir_ii, name);
+	err = do_unlink(task, dir_ii, nstr);
 	ii_decref(dir_ii);
 	return err;
 }
@@ -1331,16 +1360,16 @@ static int check_prepare_rmdir(struct silofs_task *task,
 
 static int do_rmdir(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii,
-                    const struct silofs_namestr *name)
+                    const struct silofs_namestr *nstr)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = check_prepare_rmdir(task, dir_ii, name, &ii);
+	err = check_prepare_rmdir(task, dir_ii, nstr, &ii);
 	if (err) {
 		return err;
 	}
-	err = do_remove_and_prune(task, dir_ii, name, ii);
+	err = remove_de_and_prune(task, dir_ii, ii, nstr);
 	if (err) {
 		return err;
 	}
@@ -1614,7 +1643,7 @@ static int check_fsyncdir(const struct silofs_inode_info *dir_ii)
 }
 
 static int do_fsyncdir(struct silofs_task *task,
-                       const struct silofs_inode_info *dir_ii)
+                       struct silofs_inode_info *dir_ii)
 {
 	int err;
 
@@ -1648,7 +1677,7 @@ static int check_fsync(const struct silofs_inode_info *ii)
 }
 
 static int do_fsync(struct silofs_task *task,
-                    const struct silofs_inode_info *ii)
+                    struct silofs_inode_info *ii)
 {
 	int err;
 
@@ -1717,18 +1746,32 @@ static int do_add_dentry_at(struct silofs_task *task,
 	return 0;
 }
 
-static int do_remove_and_prune_at(struct silofs_task *task,
+static int remove_de_and_prune_at(struct silofs_task *task,
                                   struct silofs_dentry_ref *dref)
 {
 	int err;
 
-	err = do_remove_and_prune(task, dref->dir_ii, dref->name, dref->ii);
+	err = remove_de_and_prune(task, dref->dir_ii, dref->ii, dref->name);
 	if (err) {
 		return err;
 	}
 	dref->ii = NULL;
 	return 0;
 }
+
+static int remove_de_and_update_at(struct silofs_task *task,
+                                   struct silofs_dentry_ref *dref)
+{
+	int err;
+
+	err = remove_de_and_update(task, dref->dir_ii, dref->ii, dref->name);
+	if (err) {
+		return err;
+	}
+	dref->ii = NULL;
+	return 0;
+}
+
 
 static int do_rename_move(struct silofs_task *task,
                           struct silofs_dentry_ref *cur_dref,
@@ -1741,7 +1784,7 @@ static int do_rename_move(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = do_remove_and_prune_at(task, cur_dref);
+	err = remove_de_and_update_at(task, cur_dref);
 	if (err) {
 		return err;
 	}
@@ -1768,7 +1811,7 @@ static int rename_move(struct silofs_task *task,
 static int rename_unlink(struct silofs_task *task,
                          struct silofs_dentry_ref *dref)
 {
-	return do_remove_and_prune_at(task, dref);
+	return remove_de_and_prune_at(task, dref);
 }
 
 static int do_rename_replace(struct silofs_task *task,
@@ -1778,11 +1821,11 @@ static int do_rename_replace(struct silofs_task *task,
 	struct silofs_inode_info *ii = cur_dref->ii;
 	int err;
 
-	err = do_remove_and_prune_at(task, cur_dref);
+	err = remove_de_and_prune_at(task, new_dref);
 	if (err) {
 		return err;
 	}
-	err = do_remove_and_prune_at(task, new_dref);
+	err = remove_de_and_update_at(task, cur_dref);
 	if (err) {
 		return err;
 	}
@@ -1814,11 +1857,11 @@ static int do_rename_exchange(struct silofs_task *task,
 	struct silofs_inode_info *ii2 = dref2->ii;
 	int err;
 
-	err = do_remove_and_prune_at(task, dref1);
+	err = remove_de_and_update_at(task, dref1);
 	if (err) {
 		return err;
 	}
-	err = do_remove_and_prune_at(task, dref2);
+	err = remove_de_and_update_at(task, dref2);
 	if (err) {
 		return err;
 	}

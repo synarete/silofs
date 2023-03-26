@@ -538,11 +538,6 @@ static inline bool silofs_ino_isnull(ino_t ino)
 	return (ino == SILOFS_INO_NULL);
 }
 
-static inline silofs_dqid_t silofs_ino_to_dqid(ino_t ino)
-{
-	return silofs_ino_isnull(ino) ? SILOFS_DQID_DFL : ino;
-}
-
 static inline loff_t silofs_ino_to_off(ino_t ino)
 {
 	return silofs_ino_isnull(ino) ? SILOFS_OFF_NULL :

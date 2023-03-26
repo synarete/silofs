@@ -21,17 +21,17 @@
 
 static int do_spawn_vnode(struct silofs_task *task,
                           struct silofs_inode_info *pii,
-                          enum silofs_stype stype, silofs_dqid_t dqid,
+                          enum silofs_stype stype,
                           struct silofs_vnode_info **out_vi)
 {
 	int err;
 
-	err = silofs_claim_vnode(task, pii, stype, dqid, out_vi);
+	err = silofs_claim_vnode(task, pii, stype, out_vi);
 	if (err) {
 		return err;
 	}
-	silofs_vi_stamp_mark_visible(*out_vi);
-	silofs_vi_set_dqid(*out_vi, dqid);
+	silofs_stamp_meta_of(*out_vi);
+	vi_dirtify(*out_vi, pii);
 	return 0;
 }
 
@@ -40,17 +40,11 @@ int silofs_spawn_vnode(struct silofs_task *task,
                        enum silofs_stype stype,
                        struct silofs_vnode_info **out_vi)
 {
-	struct silofs_vnode_info *vi = NULL;
-	const silofs_dqid_t dqid = pii ? ii_ino(pii) : SILOFS_DQID_DFL;
 	int err;
 
 	ii_incref(pii);
-	err = do_spawn_vnode(task, pii, stype, dqid, &vi);
-	if (!err) {
-		silofs_assert_eq(vi->v_pii, pii);
-	}
+	err = do_spawn_vnode(task, pii, stype, out_vi);
 	ii_decref(pii);
-	*out_vi = vi;
 	return err;
 }
 
@@ -176,12 +170,6 @@ int silofs_remove_vnode_at(struct silofs_task *task,
 	return err;
 }
 
-static void forget_cached_ii(const struct silofs_task *task,
-                             struct silofs_inode_info *ii)
-{
-	forget_cached_vi(task, &ii->i_vi);
-}
-
 static int reclaim_ispace_at(struct silofs_task *task,
                              const struct silofs_iaddr *iaddr)
 {
@@ -206,6 +194,15 @@ static int remove_inode_of(struct silofs_task *task,
 	err = reclaim_ispace_at(task, &iaddr);
 	ii_decref(ii);
 	return err;
+}
+
+static void forget_cached_ii(const struct silofs_task *task,
+                             struct silofs_inode_info *ii)
+{
+	silofs_assert_eq(ii->i_dq_vis.dq.sz, 0);
+
+	silofs_ii_undirtify(ii);
+	forget_cached_vi(task, &ii->i_vi);
 }
 
 int silofs_remove_inode(struct silofs_task *task,

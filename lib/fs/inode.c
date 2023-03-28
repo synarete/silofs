@@ -434,13 +434,16 @@ static void silofs_ii_times(const struct silofs_inode_info *ii,
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	if (ii->i_alive_vis.sz || ii->i_dq_vis.dq_accum) {
-		return false;
+	bool ret;
+
+	if (ii->i_alive_vis.sz || ii->i_dq_vis.dq_list.sz) {
+		ret = false;
+	} else if (ii->i_pinned || ii->i_nopen) {
+		ret = false;
+	} else {
+		ret = silofs_si_isevictable(&ii->i_vi.v_si);
 	}
-	if (ii->i_pinned || ii->i_nopen) {
-		return false;
-	}
-	return silofs_si_isevictable(&ii->i_vi.v_si);
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

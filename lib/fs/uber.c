@@ -503,7 +503,7 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 static void ui_stamp_mark_visible(struct silofs_unode_info *ui)
 {
 	silofs_zero_stamp_meta(ui->u_si.s_view, ui_stype(ui));
-	ui->u_verified = true;
+	ui->u_si.s_flags |= SILOFS_SIF_VERIFIED;
 }
 
 static const struct silofs_bkaddr *

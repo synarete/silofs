@@ -1279,10 +1279,11 @@ static int fpr_probe_unwritten(const struct silofs_fpos_ref *fpr,
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	if (!fli->fl_vi.v_recheck) {
-		fli->fl_vi.v_recheck = true;
+	if (fli->fl_vi.v_si.s_flags & SILOFS_SIF_RECHECK) {
+		return 0;
 	}
 	silofs_unused(f_ctx);
+	fli->fl_vi.v_si.s_flags |= SILOFS_SIF_RECHECK;
 	return 0;
 }
 
@@ -1370,7 +1371,7 @@ static int filc_recheck_finode(const struct silofs_file_ctx *f_ctx,
 	const ino_t f_ino = ii_ino(f_ctx->ii);
 	const size_t height = ftn_height(fni->ftn);
 
-	if (fni->fn_vi.v_recheck) {
+	if (fni->fn_vi.v_si.s_flags & SILOFS_SIF_RECHECK) {
 		return 0;
 	}
 	if ((height < 2) || (height > 16)) {
@@ -1382,7 +1383,7 @@ static int filc_recheck_finode(const struct silofs_file_ctx *f_ctx,
 		log_err("bad finode ino: r_ino=%lu f_ino=%lu", r_ino, f_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	fni->fn_vi.v_recheck = true;
+	fni->fn_vi.v_si.s_flags |= SILOFS_SIF_RECHECK;
 	return 0;
 }
 

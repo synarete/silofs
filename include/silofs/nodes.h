@@ -22,6 +22,14 @@ struct silofs_unode_info;
 struct silofs_vnode_info;
 
 
+enum silofs_siflags {
+	SILOFS_SIF_NONE         = 0x00,
+	SILOFS_SIF_NOFLUSH      = 0x01,
+	SILOFS_SIF_VERIFIED     = 0x02,
+	SILOFS_SIF_RECHECK      = 0x04,
+	SILOFS_SIF_PINNED       = 0x08,
+};
+
 /* nodes' delete hook */
 typedef void (*silofs_snode_del_fn)(struct silofs_snode_info *si,
                                     struct silofs_alloc *alloc);
@@ -38,7 +46,7 @@ struct silofs_snode_info {
 	loff_t                          s_view_pos;
 	size_t                          s_view_len;
 	enum silofs_stype               s_stype;
-	volatile bool                   s_noflush;
+	int                             s_flags;
 };
 
 /* unode */
@@ -48,7 +56,6 @@ struct silofs_unode_info {
 	struct silofs_dirtyq           *u_dq;
 	struct silofs_list_head         u_dq_lh;
 	struct silofs_ubk_info         *u_ubki;
-	bool                            u_verified;
 };
 
 /* space-stats */
@@ -88,8 +95,6 @@ struct silofs_vnode_info {
 	struct silofs_iovref            v_iovr;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_dirtyq           *v_dq;
-	bool                            v_recheck;
-	bool                            v_verified;
 };
 
 /* inode */
@@ -101,7 +106,6 @@ struct silofs_inode_info {
 	ino_t  i_ino;
 	long   i_nopen;
 	long   i_nlookup;
-	bool   i_pinned;
 };
 
 /* xattr */
@@ -237,6 +241,8 @@ int silofs_ui_verify_view(struct silofs_unode_info *ui);
 void silofs_vi_bind_view(struct silofs_vnode_info *vi);
 
 int silofs_vi_verify_view(struct silofs_vnode_info *vi);
+
+bool silofs_vi_may_flush(const struct silofs_vnode_info *vi);
 
 
 int silofs_verify_view_by(const union silofs_view *view,

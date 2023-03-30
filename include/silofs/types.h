@@ -293,6 +293,14 @@ enum silofs_ckey_type {
 	SILOFS_CKEY_VBKADDR
 };
 
+/* caching-element's control flags */
+enum silofs_ce_flags {
+	SILOFS_CEF_NONE         = 0x00,
+	SILOFS_CEF_DIRTY        = 0x01,
+	SILOFS_CEF_MAPPED       = 0x02,
+	SILOFS_CEF_FORGOT       = 0x04,
+};
+
 /* caching-element's key, up to 256-bits */
 union silofs_ckey_u {
 	const struct silofs_bkaddr *bkaddr;
@@ -315,11 +323,9 @@ struct silofs_cache_elem {
 	struct silofs_list_head ce_lru_lh;
 	struct silofs_ckey      ce_ckey;
 	struct silofs_cache    *ce_cache;
+	int     ce_flags;
 	int     ce_refcnt;
 	int     ce_hitcnt;
-	bool    ce_dirty;
-	bool    ce_mapped;
-	bool    ce_forgot;
 };
 
 /* block-info base */

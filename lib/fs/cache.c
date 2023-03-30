@@ -413,18 +413,15 @@ void silofs_ce_init(struct silofs_cache_elem *ce)
 	list_head_init(&ce->ce_htb_lh);
 	list_head_init(&ce->ce_lru_lh);
 	ce->ce_cache = NULL;
+	ce->ce_flags = 0;
 	ce->ce_refcnt = 0;
 	ce->ce_hitcnt = 0;
-	ce->ce_mapped = false;
-	ce->ce_forgot = false;
-	ce->ce_dirty = false;
 }
 
 void silofs_ce_fini(struct silofs_cache_elem *ce)
 {
 	silofs_assert_eq(ce->ce_refcnt, 0);
-	silofs_assert(!ce->ce_mapped);
-	silofs_assert(!ce->ce_dirty);
+	silofs_assert_eq(ce->ce_flags, 0);
 
 	ckey_reset(&ce->ce_ckey);
 	list_head_fini(&ce->ce_htb_lh);
@@ -434,21 +431,31 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 	ce->ce_cache = NULL;
 }
 
+static bool ce_is_mapped(const struct silofs_cache_elem *ce)
+{
+	return (ce->ce_flags & SILOFS_CEF_MAPPED) > 0;
+}
+
+static void ce_set_mapped(struct silofs_cache_elem *ce, bool mapped)
+{
+	if (mapped) {
+		ce->ce_flags |= SILOFS_CEF_MAPPED;
+	} else {
+		ce->ce_flags &= ~SILOFS_CEF_MAPPED;
+	}
+}
+
 static void ce_hmap(struct silofs_cache_elem *ce,
                     struct silofs_list_head *hlst)
 {
-	silofs_assert(!ce->ce_mapped);
-
 	list_push_front(hlst, &ce->ce_htb_lh);
-	ce->ce_mapped = true;
+	ce_set_mapped(ce, true);
 }
 
 static void ce_hunmap(struct silofs_cache_elem *ce)
 {
-	silofs_assert(ce->ce_mapped);
-
 	list_head_remove(&ce->ce_htb_lh);
-	ce->ce_mapped = false;
+	ce_set_mapped(ce, false);
 }
 
 static struct silofs_list_head *
@@ -518,9 +525,23 @@ static void ce_decref(struct silofs_cache_elem *ce)
 	ce->ce_refcnt--;
 }
 
+static bool ce_is_dirty(const struct silofs_cache_elem *ce)
+{
+	return (ce->ce_flags & SILOFS_CEF_DIRTY) > 0;
+}
+
+static void ce_set_dirty(struct silofs_cache_elem *ce, bool dirty)
+{
+	if (dirty) {
+		ce->ce_flags |= SILOFS_CEF_DIRTY;
+	} else {
+		ce->ce_flags &= ~SILOFS_CEF_DIRTY;
+	}
+}
+
 static bool ce_is_evictable(const struct silofs_cache_elem *ce)
 {
-	return !ce->ce_dirty && !ce_refcnt(ce);
+	return !ce_is_dirty(ce) && !ce_refcnt(ce);
 }
 
 static int ce_refcnt_atomic(const struct silofs_cache_elem *ce)
@@ -542,7 +563,7 @@ static void ce_decref_atomic(struct silofs_cache_elem *ce)
 
 static bool ce_is_evictable_atomic(const struct silofs_cache_elem *ce)
 {
-	return !ce->ce_dirty && !ce_refcnt_atomic(ce);
+	return !ce_is_dirty(ce) && !ce_refcnt_atomic(ce);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -990,7 +1011,12 @@ static void si_set_cache(struct silofs_snode_info *si,
 
 bool silofs_si_isevictable(const struct silofs_snode_info *si)
 {
-	return ce_is_evictable(si_to_ce(si));
+	bool ret = false;
+
+	if (!(si->s_flags & SILOFS_SIF_PINNED)) {
+		ret = ce_is_evictable(si_to_ce(si));
+	}
+	return ret;
 }
 
 static void si_incref(struct silofs_snode_info *si)
@@ -1022,7 +1048,7 @@ static void si_remove_from_lrumap(struct silofs_snode_info *si,
 {
 	struct silofs_cache_elem *ce = si_to_ce(si);
 
-	if (ce->ce_mapped) {
+	if (ce_is_mapped(ce)) {
 		lrumap_remove(lm, ce);
 	} else {
 		lrumap_unlru(lm, ce);
@@ -1062,7 +1088,7 @@ static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 
 static bool ui_isdirty(const struct silofs_unode_info *ui)
 {
-	return ui->u_si.s_ce.ce_dirty;
+	return ce_is_dirty(&ui->u_si.s_ce);
 }
 
 static void ui_do_dirtify(struct silofs_unode_info *ui)
@@ -1072,7 +1098,7 @@ static void ui_do_dirtify(struct silofs_unode_info *ui)
 	if (!ui_isdirty(ui)) {
 		silofs_dirtyq_append(ui->u_dq, &ui->u_dq_lh,
 		                     ui->u_si.s_view_len);
-		ui->u_si.s_ce.ce_dirty = true;
+		ce_set_dirty(&ui->u_si.s_ce, true);
 	}
 }
 
@@ -1083,7 +1109,7 @@ static void ui_do_undirtify(struct silofs_unode_info *ui)
 	if (ui_isdirty(ui)) {
 		silofs_dirtyq_remove(ui->u_dq, &ui->u_dq_lh,
 		                     ui->u_si.s_view_len);
-		ui->u_si.s_ce.ce_dirty = false;
+		ce_set_dirty(&ui->u_si.s_ce, false);
 	}
 }
 
@@ -2623,8 +2649,10 @@ cache_require_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 static void cache_unmap_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	if (vi->v_si.s_ce.ce_mapped) {
-		lrumap_unmap(&cache->c_vi_lm, vi_to_ce(vi));
+	struct silofs_cache_elem *ce = vi_to_ce(vi);
+
+	if (ce_is_mapped(ce)) {
+		lrumap_unmap(&cache->c_vi_lm, ce);
 	}
 }
 
@@ -2634,7 +2662,7 @@ static void cache_forget_vi(struct silofs_cache *cache,
 	vi_do_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
-		vi->v_si.s_ce.ce_forgot = true;
+		vi->v_si.s_ce.ce_flags |= SILOFS_CEF_FORGOT;
 	} else {
 		cache_evict_vi(cache, vi);
 	}
@@ -3086,12 +3114,12 @@ static void cache_post_op(struct silofs_cache *cache)
 
 static bool vi_isdirty(const struct silofs_vnode_info *vi)
 {
-	return vi->v_si.s_ce.ce_dirty;
+	return ce_is_dirty(&vi->v_si.s_ce);
 }
 
 static void vi_set_dirty(struct silofs_vnode_info *vi, bool dirty)
 {
-	vi->v_si.s_ce.ce_dirty = dirty;
+	ce_set_dirty(&vi->v_si.s_ce, dirty);
 }
 
 static void vi_do_dirtify(struct silofs_vnode_info *vi,

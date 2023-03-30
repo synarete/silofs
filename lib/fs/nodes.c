@@ -218,7 +218,7 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_view = NULL;
 	si->s_view_len = 0;
 	si->s_del_hook = del_fn;
-	si->s_noflush = false;
+	si->s_flags = SILOFS_SIF_NONE;
 }
 
 static void si_fini(struct silofs_snode_info *si)
@@ -270,7 +270,6 @@ static void ui_init(struct silofs_unode_info *ui,
 	uaddr_assign(&ui->u_uaddr, uaddr);
 	ui->u_ubki = NULL;
 	ui->u_dq = NULL;
-	ui->u_verified = false;
 }
 
 static void ui_fini(struct silofs_unode_info *ui)
@@ -348,12 +347,21 @@ silofs_vi_from_dirty_lh(struct silofs_list_head *lh)
 	return vi;
 }
 
+static void vi_set_noflush(struct silofs_vnode_info *vi, bool noflush)
+{
+	if (noflush) {
+		vi->v_si.s_flags |= SILOFS_SIF_NOFLUSH;
+	} else {
+		vi->v_si.s_flags &= ~SILOFS_SIF_NOFLUSH;
+	}
+}
+
 static void vi_iov_pre(struct silofs_iovref *iovr)
 {
 	struct silofs_vnode_info *vi = vi_from_iovref(iovr);
 
 	silofs_vi_incref(vi);
-	vi->v_si.s_noflush = true;
+	vi_set_noflush(vi, true);
 }
 
 static void vi_iov_post(struct silofs_iovref *iovr)
@@ -361,7 +369,7 @@ static void vi_iov_post(struct silofs_iovref *iovr)
 	struct silofs_vnode_info *vi = vi_from_iovref(iovr);
 
 	silofs_vi_decref(vi);
-	vi->v_si.s_noflush = false;
+	vi_set_noflush(vi, false);
 }
 
 static void vi_init(struct silofs_vnode_info *vi,
@@ -373,8 +381,6 @@ static void vi_init(struct silofs_vnode_info *vi,
 	vaddr_assign(&vi->v_vaddr, vaddr);
 	oaddr_reset(&vi->v_oaddr);
 	silofs_iovref_init(&vi->v_iovr, vi_iov_pre, vi_iov_post);
-	vi->v_recheck = false;
-	vi->v_verified = false;
 	vi->v_vbki = NULL;
 	vi->v_dq = NULL;
 }
@@ -435,6 +441,11 @@ static bool vi_has_stype(const struct silofs_vnode_info *vi,
                          enum silofs_stype stype)
 {
 	return vi_stype(vi) == stype;
+}
+
+bool silofs_vi_may_flush(const struct silofs_vnode_info *vi)
+{
+	return !(vi->v_si.s_flags & SILOFS_SIF_NOFLUSH);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -718,7 +729,6 @@ static void ii_init(struct silofs_inode_info *ii,
 	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = 0;
 	ii->i_nlookup = 0;
-	ii->i_pinned = false;
 }
 
 static void ii_fini(struct silofs_inode_info *ii)
@@ -1500,14 +1510,14 @@ int silofs_ui_verify_view(struct silofs_unode_info *ui)
 {
 	int err;
 
-	if (ui->u_verified) {
+	if (ui->u_si.s_flags & SILOFS_SIF_VERIFIED) {
 		return 0;
 	}
 	err = si_verify_view(&ui->u_si);
 	if (err) {
 		return err;
 	}
-	ui->u_verified = true;
+	ui->u_si.s_flags |= SILOFS_SIF_VERIFIED;
 	return 0;
 }
 
@@ -1515,14 +1525,14 @@ int silofs_vi_verify_view(struct silofs_vnode_info *vi)
 {
 	int err;
 
-	if (vi->v_verified) {
+	if (vi->v_si.s_flags & SILOFS_SIF_VERIFIED) {
 		return 0;
 	}
 	err = si_verify_view(&vi->v_si);
 	if (err) {
 		return err;
 	}
-	vi->v_verified = true;
+	vi->v_si.s_flags |= SILOFS_SIF_VERIFIED;
 	return 0;
 }
 
@@ -1552,7 +1562,7 @@ void silofs_stamp_meta_of(struct silofs_vnode_info *vi)
 	if (!stype_isdata(stype)) {
 		silofs_zero_stamp_meta(vi->v_si.s_view, stype);
 	}
-	vi->v_verified = true;
+	vi->v_si.s_flags |= SILOFS_SIF_VERIFIED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

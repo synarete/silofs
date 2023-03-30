@@ -418,7 +418,7 @@ static void dsets_fill_vis_of(struct silofs_dsets *dsets,
 	while (lh != NULL) {
 		vi = silofs_vi_from_dirty_lh(lh);
 		silofs_assert_eq(vi->v_dq, dq);
-		if (!vi->v_si.s_noflush) {
+		if (vi_may_flush(vi)) {
 			dsets_add_by_vi(dsets, vi);
 		}
 		lh = silofs_dirtyq_next_of(dq, lh);
@@ -428,7 +428,7 @@ static void dsets_fill_vis_of(struct silofs_dsets *dsets,
 static void dsets_fill_by_ii(struct silofs_dsets *dsets,
                              struct silofs_inode_info *ii)
 {
-	if (!ii->i_vi.v_si.s_noflush) {
+	if (vi_may_flush(&ii->i_vi)) {
 		dsets_fill_vis_of(dsets, &ii->i_dq_vis);
 		dsets_add_by_vi(dsets, &ii->i_vi);
 	}

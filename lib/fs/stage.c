@@ -2395,7 +2395,7 @@ stgc_pre_clone_stage_inode_at(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	if (!ii->i_vi.v_si.s_noflush) {
+	if (vi_may_flush(&ii->i_vi)) {
 		*out_vi = &ii->i_vi;
 	}
 	return 0;
@@ -2413,12 +2413,13 @@ stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
 	err = silofs_stage_vnode(stg_ctx->task, NULL, vaddr,
 	                         SILOFS_STAGE_CUR, &vi);
 	if (err == -SILOFS_ERDONLY) {
+		/* TODO: should not have this case XXX */
 		return 0; /* special case: out-of-blob range */
 	}
 	if (err) {
 		return err;
 	}
-	if (!vi->v_si.s_noflush) {
+	if (vi_may_flush(vi)) {
 		*out_vi = vi;
 	}
 	return 0;
@@ -2676,7 +2677,7 @@ static struct silofs_cache *task_cache(const struct silofs_task *task)
 static int fixup_cached_vi(const struct silofs_task *task,
                            struct silofs_vnode_info *vi)
 {
-	if (!vi->v_si.s_ce.ce_forgot) {
+	if (!(vi->v_si.s_ce.ce_flags & SILOFS_CEF_FORGOT)) {
 		return 0;
 	}
 	if (silofs_vi_refcnt(vi)) {

@@ -624,8 +624,7 @@ static int ubc_stage_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 static void ubc_bind_spawned_ui(const struct silofs_uber_ctx *ub_ctx,
                                 struct silofs_unode_info *ui)
 {
-	ui->u_si.s_md = ub_ctx->mdigest;
-	ui->u_repo = ub_ctx->repo;
+	ui->u_si.s_uber = ub_ctx->uber;
 }
 
 static int ubc_spawn_cached_ui(const struct silofs_uber_ctx *ub_ctx,

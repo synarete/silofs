@@ -86,10 +86,8 @@ static void voaddr_by(struct silofs_voaddr *voa,
 static void vi_bind_to(struct silofs_vnode_info *vi,
                        struct silofs_uber *uber, struct silofs_vbk_info *vbki)
 {
-	vi->v_si.s_uber = uber;
-	/* TODO: move to lower level */
-	vi->v_si.s_md = &vi->v_si.s_ce.ce_cache->c_mdigest;
 	silofs_vi_attach_to(vi, vbki);
+	vi->v_si.s_uber = uber;
 }
 
 static void vi_update_oaddr(struct silofs_vnode_info *vi,

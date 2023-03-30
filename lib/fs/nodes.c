@@ -214,7 +214,6 @@ static void si_init(struct silofs_snode_info *si, enum silofs_stype stype,
 	si->s_stype = stype;
 	si->s_ds_next = NULL;
 	si->s_uber = NULL;
-	si->s_md = NULL;
 	si->s_bki = NULL;
 	si->s_view = NULL;
 	si->s_view_len = 0;
@@ -229,7 +228,6 @@ static void si_fini(struct silofs_snode_info *si)
 	si->s_stype = SILOFS_STYPE_NONE;
 	si->s_ds_next = NULL;
 	si->s_uber = NULL;
-	si->s_md = NULL;
 	si->s_bki = NULL;
 	si->s_view = NULL;
 	si->s_del_hook = NULL;
@@ -270,7 +268,6 @@ static void ui_init(struct silofs_unode_info *ui,
 	si_init(&ui->u_si, uaddr->stype, del_fn);
 	lh_init(&ui->u_dq_lh);
 	uaddr_assign(&ui->u_uaddr, uaddr);
-	ui->u_repo = NULL;
 	ui->u_ubki = NULL;
 	ui->u_dq = NULL;
 	ui->u_verified = false;
@@ -281,7 +278,6 @@ static void ui_fini(struct silofs_unode_info *ui)
 	uaddr_reset(&ui->u_uaddr);
 	lh_fini(&ui->u_dq_lh);
 	si_fini(&ui->u_si);
-	ui->u_repo = NULL;
 	ui->u_ubki = NULL;
 	ui->u_dq = NULL;
 }
@@ -408,6 +404,14 @@ bool silofs_vi_isdata(const struct silofs_vnode_info *vi)
 	return silofs_stype_isdata(vi_stype(vi));
 }
 
+static const struct silofs_mdigest *
+vi_mdigest(const struct silofs_vnode_info *vi)
+{
+	const struct silofs_uber *uber = vi_uber(vi);
+
+	return &uber->ub_crypto.md;
+}
+
 static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
 {
 	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
@@ -415,7 +419,7 @@ static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
 	uint32_t csum;
 
 	if (vaddr_isdata(vaddr)) {
-		csum = calc_data_checksum(view, vaddr->len, vi->v_si.s_md);
+		csum = calc_data_checksum(view, vaddr->len, vi_mdigest(vi));
 	} else {
 		csum = calc_meta_chekcsum(&view->hdr);
 	}

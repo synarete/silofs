@@ -3033,16 +3033,6 @@ static void cache_fini_uamap(struct silofs_cache *cache)
 	silofs_uamap_fini(&cache->c_uam);
 }
 
-static int cache_init_mdigest(struct silofs_cache *cache)
-{
-	return silofs_mdigest_init(&cache->c_mdigest);
-}
-
-static void cache_fini_mdigest(struct silofs_cache *cache)
-{
-	silofs_mdigest_fini(&cache->c_mdigest);
-}
-
 int silofs_cache_init(struct silofs_cache *cache,
                       struct silofs_alloc *alloc)
 {
@@ -3055,10 +3045,6 @@ int silofs_cache_init(struct silofs_cache *cache,
 	cache->c_nil_bk = NULL;
 	cache->c_mem_size_hint = st.nbytes_max;
 	dirtyqs_init(&cache->c_dqs);
-	err = cache_init_mdigest(cache);
-	if (err) {
-		return err;
-	}
 	err = cache_init_spamaps(cache);
 	if (err) {
 		goto out_err;
@@ -3088,7 +3074,6 @@ void silofs_cache_fini(struct silofs_cache *cache)
 	cache_fini_nil_bk(cache);
 	cache_fini_uamap(cache);
 	cache_fini_spamaps(cache);
-	cache_fini_mdigest(cache);
 	cache->c_alloc = NULL;
 }
 

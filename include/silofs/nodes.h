@@ -32,7 +32,6 @@ struct silofs_snode_info {
 	struct silofs_avl_node          s_ds_an;
 	silofs_snode_del_fn             s_del_hook;
 	struct silofs_uber             *s_uber;
-	struct silofs_mdigest          *s_md;
 	struct silofs_snode_info       *s_ds_next;
 	struct silofs_bk_info          *s_bki;
 	union silofs_view              *s_view;
@@ -48,7 +47,6 @@ struct silofs_unode_info {
 	struct silofs_snode_info        u_si;
 	struct silofs_dirtyq           *u_dq;
 	struct silofs_list_head         u_dq_lh;
-	struct silofs_repo             *u_repo;
 	struct silofs_ubk_info         *u_ubki;
 	bool                            u_verified;
 };

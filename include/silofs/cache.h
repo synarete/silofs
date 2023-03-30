@@ -35,7 +35,6 @@ struct silofs_lrumap {
 
 /* in-memory caching */
 struct silofs_cache {
-	struct silofs_mdigest   c_mdigest;
 	struct silofs_alloc    *c_alloc;
 	struct silofs_block    *c_nil_bk;
 	struct silofs_lrumap    c_blobf_lm;

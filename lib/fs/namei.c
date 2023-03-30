@@ -86,9 +86,11 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_mdigest *
-dii_mdigest(const struct silofs_inode_info *ii)
+dii_mdigest(const struct silofs_inode_info *dii)
 {
-	return ii->i_vi.v_si.s_md;
+	const struct silofs_uber *uber = ii_uber(dii);
+
+	return &uber->ub_crypto.md;
 }
 
 static uint64_t

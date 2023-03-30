@@ -597,8 +597,8 @@ static int errno_or_errnum(int errnum)
 
 static int check_endianess32(uint32_t val, const char *str)
 {
-	const uint32_t val_le = htole32(val);
 	char buf[16] = "";
+	const uint32_t val_le = htole32(val);
 
 	for (size_t i = 0; i < 4; ++i) {
 		buf[i] = (char)(val_le >> (i * 8));
@@ -608,8 +608,8 @@ static int check_endianess32(uint32_t val, const char *str)
 
 static int check_endianess64(uint64_t val, const char *str)
 {
-	const uint64_t val_le = htole64(val);
 	char buf[16] = "";
+	const uint64_t val_le = htole64(val);
 
 	for (size_t i = 0; i < 8; ++i) {
 		buf[i] = (char)(val_le >> (i * 8));
@@ -651,7 +651,8 @@ static int check_sysconf(void)
 	const long page_size_min = SILOFS_PAGE_SIZE_MIN;
 	const long page_shift_min = SILOFS_PAGE_SHIFT_MIN;
 	const long page_shift_max = SILOFS_PAGE_SHIFT_MAX;
-	const long cl_size_min = SILOFS_CACHELINE_SIZE;
+	const long cl_size_min = SILOFS_CACHELINE_SIZE_MIN;
+	const long cl_size_max = SILOFS_CACHELINE_SIZE_MAX;
 
 	errno = 0;
 	val = silofs_sc_phys_pages();
@@ -663,7 +664,7 @@ static int check_sysconf(void)
 		return errno_or_errnum(ENOMEM);
 	}
 	val = silofs_sc_l1_dcache_linesize();
-	if ((val != cl_size_min) || (val % cl_size_min)) {
+	if ((val < cl_size_min) || (val > cl_size_max)) {
 		return errno_or_errnum(EOPNOTSUPP);
 	}
 	val = silofs_sc_page_size();
@@ -705,8 +706,8 @@ static int check_system_page_size(void)
 
 static int check_proc_rlimits(void)
 {
-	int err;
 	struct rlimit rlim;
+	int err;
 
 	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
 	if (err) {

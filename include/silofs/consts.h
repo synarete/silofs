@@ -36,8 +36,9 @@
 #define SILOFS_PAGE_SHIFT_MAX   (16)
 #define SILOFS_PAGE_SIZE_MAX    (1U << SILOFS_PAGE_SHIFT_MAX)
 
-/* minimal required size for system LEVELx_CACHE_LINESIZE */
-#define SILOFS_CACHELINE_SHIFT  (6)
-#define SILOFS_CACHELINE_SIZE   (1U << SILOFS_CACHELINE_SHIFT)
+/* valid sizes for system LEVELx_CACHE_LINESIZE */
+#define SILOFS_CACHELINE_SIZE_MIN       (32)
+#define SILOFS_CACHELINE_SIZE_MAX       (256)
+#define SILOFS_CACHELINE_SIZE_DFL       (64)
 
 #endif /* SILOFS_CONSTS_H_ */

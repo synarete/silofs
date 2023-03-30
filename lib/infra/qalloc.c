@@ -93,7 +93,7 @@ struct silofs_page_info {
 	int     slab_index;
 	int     slab_nused;
 	int     slab_nelems;
-} __attribute__((__aligned__(SILOFS_CACHELINE_SIZE)));
+} __attribute__((__aligned__(SILOFS_CACHELINE_SIZE_DFL)));
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -105,8 +105,10 @@ static void static_assert_alloc_sizes(void)
 	STATICASSERT_SIZEOF(struct silofs_slab_seg, MSLAB_SEG_SIZE);
 	STATICASSERT_SIZEOF(union silofs_page, MPAGE_SIZE);
 	STATICASSERT_SIZEOF(struct silofs_page_info, 64);
-	STATICASSERT_SIZEOF_LE(struct silofs_slab_seg, SILOFS_CACHELINE_SIZE);
-	STATICASSERT_SIZEOF_GE(struct silofs_page_info, SILOFS_CACHELINE_SIZE);
+	STATICASSERT_SIZEOF_LE(struct silofs_slab_seg,
+	                       SILOFS_CACHELINE_SIZE_MAX);
+	STATICASSERT_SIZEOF_GE(struct silofs_page_info,
+	                       SILOFS_CACHELINE_SIZE_DFL);
 	STATICASSERT_EQ(SILOFS_ARRAY_SIZE(qal->slabs), QALLOC_NSLABS);
 }
 

@@ -7,14 +7,16 @@ Group:          Applications/Archiving
 URL:            https://synarete.github.io/silofs
 Source:         %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
-BuildRequires:  libcap-devel
-BuildRequires:  libuuid-devel
-BuildRequires:  libgcrypt-devel
-BuildRequires:  libunwind-devel
 Requires:       libcap
 Requires:       libuuid
 Requires:       libgcrypt
 Requires:       libunwind
+%if 0%{?fedora} >= 36
+BuildRequires:  libcap-devel
+BuildRequires:  libuuid-devel
+BuildRequires:  libgcrypt-devel
+BuildRequires:  libunwind-devel
+%endif
 
 %{?systemd_requires}
 

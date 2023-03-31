@@ -239,7 +239,7 @@ deb: reset
 	$(call report, $@)
 	@$(TOP)/dist/deb/packagize-deb.sh
 
-img: reset bootstrap
+image: reset bootstrap
 	$(call report, $@)
 	@$(TOP)/dist/img/packagize-img.sh
 

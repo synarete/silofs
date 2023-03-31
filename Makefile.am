@@ -12,6 +12,7 @@ EXTRA_DIST += TODO
 EXTRA_DIST += common.mk.in
 EXTRA_DIST += sedsub.mk.in
 EXTRA_DIST += build-aux/autom4te.cfg.in
+EXTRA_DIST += devel.mk
 
 BUILT_SOURCES = REVISION
 CLEANFILES = REVISION

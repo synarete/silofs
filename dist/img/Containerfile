@@ -4,8 +4,9 @@ ARG VERSION
 ARG RELEASE
 ARG REVISION
 ARG DIST_NAME
+ARG ARCH
 
-RUN echo $VERSION $RELEASE $REVISION $DIST_NAME
+RUN echo $VERSION $RELEASE $REVISION $DIST_NAME $ARCH
 
 WORKDIR /workspace
 COPY $DIST_NAME.tar.gz .
@@ -15,10 +16,12 @@ RUN $DIST_NAME/dist/rpm/packagize-rpm.sh
 
 # Target: install from rpm
 FROM registry.fedoraproject.org/fedora-toolbox:36
+ARG VERSION
 ARG DIST_NAME
 
 WORKDIR /
-COPY --from=builder /workspace/$DIST_NAME/build/dist/silofs-*.rpm /tmp
-RUN dnf install -y /tmp/silofs-*.rpm
+COPY --from=builder /workspace/$DIST_NAME/build/dist/silofs-$VERSION-*.rpm /tmp
+RUN dnf install -y /tmp/silofs-$VERSION-*.rpm
 RUN rm -rf /tmp/*.rpm
 
+ENTRYPOINT ["/bin/bash"]

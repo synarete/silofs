@@ -20,15 +20,14 @@ release=$(try "${version_sh}" --release)
 revision=$(try "${version_sh}" --revision)
 dist_name="${name}-${version}"
 archive_tgz="${dist_name}.tar.gz"
-arch=$(try uname -m)
 tag_name="${name}-toolbox:v${version}"
+registry="${SILOFS_REGISTRY:-}"
 
 imgsourcedir=${selfdir}
 builddir=${basedir}/build
 imgbuilddir=${builddir}/img
 autotoolsdir=${imgbuilddir}/autotools/
-#arch_list=(amd64 arm64)
-arch_list=(amd64)
+arch_list=(amd64 arm64)
 
 # Prerequisites checks
 run command -v aclocal
@@ -42,6 +41,7 @@ run command -v buildah
 run command -v skopeo
 run command -v qemu-x86_64-static
 run command -v qemu-aarch64-static
+
 
 # Autotools build
 run mkdir -p "${autotoolsdir}"
@@ -63,6 +63,7 @@ for arch in "${arch_list[@]}"; do
     --build-arg=RELEASE="${release}" \
     --build-arg=REVISION="${revision}" \
     --build-arg=DIST_NAME="${dist_name}" \
+    --build-arg=ARCH="${arch}" \
     --arch "${arch}" \
     --tag "${tag_name}-${arch}" \
     --file "${imgbuilddir}/Containerfile" \
@@ -75,12 +76,14 @@ for arch in "${arch_list[@]}"; do
   run buildah manifest add "${tag_name}" "${tag_name}-${arch}"
 done
 
-# Generate multi-arch image
-run podman manifest push --all "${tag_name}" "docker://${tag_name}"
+# Push multi-arch image to registry
+if [ -n "$registry" ]; then
+  run podman manifest push --all "${tag_name}" "${registry}/${tag_name}"
+fi
 
 # Cleanup build staging area
 cd "${basedir}"
-#run rm -rf "${imgbuilddir}"
+run rm -rf "${imgbuilddir}"
 
 # Bye ;)
 exit 0

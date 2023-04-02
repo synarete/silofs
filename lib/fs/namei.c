@@ -279,8 +279,8 @@ static int spawn_inode(struct silofs_task *task,
 	const ino_t parent_ino = ii_ino(parent_dii);
 	const mode_t parent_mode = ii_mode(parent_dii);
 
-	return silofs_spawn_inode(task, parent_ino, parent_mode,
-	                          mode, rdev, out_ii);
+	return silofs_spawn_inode_of(task, parent_ino, parent_mode,
+	                             mode, rdev, out_ii);
 }
 
 static int spawn_dir_inode(struct silofs_task *task,
@@ -523,7 +523,7 @@ static int lookup_by_name(struct silofs_task *task,
 static int stage_by_name(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name,
-                         enum silofs_stage_mode stg_mode,
+                         enum silofs_stg_mode stg_mode,
                          struct silofs_inode_info **out_ii)
 {
 	ino_t ino;
@@ -533,7 +533,7 @@ static int stage_by_name(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_inode(task, ino, stg_mode, out_ii);
+	err = silofs_stage_ii(task, ino, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}
@@ -551,7 +551,7 @@ static int do_lookup(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(task, dir_ii, name, SILOFS_STAGE_CUR, out_ii);
+	err = stage_by_name(task, dir_ii, name, SILOFS_STG_CUR, out_ii);
 	if (err) {
 		return err;
 	}
@@ -683,7 +683,7 @@ static int do_add_dentry(struct silofs_task *task,
 	}
 	err = silofs_add_dentry(task, dir_ii, &name, ii);
 	if (err && del_upon_failure) {
-		silofs_remove_inode(task, ii);
+		silofs_remove_inode_by(task, ii);
 	}
 	return err;
 }
@@ -982,7 +982,7 @@ static int drop_unlinked(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_remove_inode(task, ii);
+	err = silofs_remove_inode_by(task, ii);
 	if (err) {
 		return err;
 	}
@@ -1124,7 +1124,7 @@ static int check_prepare_unlink(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(task, dir_ii, nstr, SILOFS_STAGE_COW, &ii);
+	err = stage_by_name(task, dir_ii, nstr, SILOFS_STG_COW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1348,7 +1348,7 @@ static int check_prepare_rmdir(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = stage_by_name(task, dir_ii, name, SILOFS_STAGE_COW, &ii);
+	err = stage_by_name(task, dir_ii, name, SILOFS_STG_COW, &ii);
 	if (err) {
 		return err;
 	}
@@ -1404,7 +1404,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	}
 	err = silofs_setup_symlink(task, *out_ii, linkpath);
 	if (err) {
-		silofs_remove_inode(task, *out_ii);
+		silofs_remove_inode_by(task, *out_ii);
 		return err;
 	}
 	return 0;
@@ -1980,7 +1980,7 @@ static int check_stage_rename_at(struct silofs_task *task,
 		return err;
 	}
 	err = stage_by_name(task, dref->dir_ii, dref->name,
-	                    SILOFS_STAGE_COW, &dref->ii);
+	                    SILOFS_STG_COW, &dref->ii);
 	if (err) {
 		return ((err == -ENOENT) && new_de) ? 0 : err;
 	}

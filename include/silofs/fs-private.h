@@ -138,6 +138,7 @@
 #define vaddr_isnull(va)                silofs_vaddr_isnull(va)
 #define vaddr_isdata(va)                silofs_vaddr_isdata(va)
 #define vaddr_isdatabk(va)              silofs_vaddr_isdatabk(va)
+#define vaddr_isinode(va)               silofs_vaddr_isinode(va)
 #define vaddr_reset(va)                 silofs_vaddr_reset(va)
 #define vaddr_assign(va, oth)           silofs_vaddr_assign(va, oth)
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)

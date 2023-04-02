@@ -638,7 +638,7 @@ static int exec_stage_rootdir_inode(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_inode(&task, ino, SILOFS_STAGE_CUR, out_ii);
+	err = silofs_stage_ii(&task, ino, SILOFS_STG_CUR, out_ii);
 	return term_task(&task, err);
 }
 
@@ -929,7 +929,7 @@ static int exec_require_spmaps_of(const struct silofs_fs_env *fse,
 	struct silofs_task task;
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
-	enum silofs_stage_mode stg_mode = SILOFS_STAGE_COW;
+	enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
 	int err;
 
 	err = make_task(fse, &task);
@@ -989,7 +989,7 @@ static int exec_claim_vspace(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_claim_vspace(&task, NULL, stype, out_voa);
+	err = silofs_claim_vspace(&task, stype, out_voa);
 	return term_task(&task, err);
 }
 
@@ -1059,7 +1059,7 @@ static int exec_stage_spmaps_at(const struct silofs_fs_env *fse,
 	struct silofs_task task;
 	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
-	const enum silofs_stage_mode stg_mode = SILOFS_STAGE_CUR;
+	const enum silofs_stg_mode stg_mode = SILOFS_STG_CUR;
 	int err;
 
 	err = make_task(fse, &task);
@@ -1117,7 +1117,7 @@ static int exec_spawn_vnode(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode(&task, NULL, stype, out_vi);
+	err = silofs_spawn_vnode_of(&task, NULL, stype, out_vi);
 	if (!err) {
 		vi_dirtify(*out_vi, NULL);
 	}
@@ -1170,13 +1170,14 @@ static int exec_spawn_rootdir_inode(const struct silofs_fs_env *fse,
 {
 	struct silofs_task task;
 	const mode_t mode = S_IFDIR | 0755;
+	const ino_t ino = SILOFS_INO_NULL;
 	int err;
 
 	err = make_task(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_inode(&task, SILOFS_INO_NULL, 0, mode, 0, out_ii);
+	err = silofs_spawn_inode_of(&task, ino, 0, mode, 0, out_ii);
 	return term_task(&task, err);
 }
 

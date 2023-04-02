@@ -45,10 +45,12 @@ struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_listxattr_ctx;
 
-/* stage-elements mode */
-enum silofs_stage_mode {
-	SILOFS_STAGE_CUR        = SILOFS_BIT(0),
-	SILOFS_STAGE_COW        = SILOFS_BIT(1),
+/* stage operation control flags */
+enum silofs_stg_mode {
+	SILOFS_STG_CUR          = SILOFS_BIT(0), /* stage current (normal) */
+	SILOFS_STG_COW          = SILOFS_BIT(1), /* copy-on-write */
+	SILOFS_STG_RAW          = SILOFS_BIT(2), /* not-set-yet */
+	SILOFS_STG_UNW          = SILOFS_BIT(3), /* unwritten mode */
 };
 
 /* common control flags */
@@ -67,9 +69,9 @@ enum silofs_flags {
 
 /* uber-block control flags */
 enum silofs_ubctl_flags {
-	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(2),
-	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(3),
-	SILOFS_UBF_ALLOWADMIN   = SILOFS_BIT(4),
+	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(0),
+	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(1),
+	SILOFS_UBF_ALLOWADMIN   = SILOFS_BIT(2),
 };
 
 /* inode's attributes masks */

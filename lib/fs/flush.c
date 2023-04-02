@@ -73,8 +73,8 @@ static int refresh_cur_oaddr(struct silofs_task *task,
 	if (ismutable_oaddr(task, oaddr)) {
 		return 0;
 	}
-	/* TODO: FIXME -- should be SILOFS_STAGE_CUR XXX */
-	err = silofs_resolve_oaddr_of(task, vaddr, SILOFS_STAGE_COW, oaddr);
+	/* TODO: FIXME -- should be SILOFS_STG_NOR XXX */
+	err = silofs_resolve_oaddr_of(task, vaddr, SILOFS_STG_COW, oaddr);
 	if (err) {
 		log_warn("failed to resolve vaddr: stype=%d off=%ld "
 		         "err=%d", vaddr->stype, vaddr->off, err);

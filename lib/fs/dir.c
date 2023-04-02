@@ -49,7 +49,7 @@ struct silofs_dir_ctx {
 	struct silofs_inode_info       *child_ii;
 	struct silofs_readdir_ctx      *rd_ctx;
 	const struct silofs_qstr       *name;
-	enum silofs_stage_mode          stg_mode;
+	enum silofs_stg_mode          stg_mode;
 	int keep_iter;
 	int readdir_plus;
 };
@@ -1240,8 +1240,8 @@ static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_stage_vnode(d_ctx->task, d_ctx->dir_ii,
-	                         vaddr, d_ctx->stg_mode, &vi);
+	err = silofs_stage_vi(d_ctx->task, d_ctx->dir_ii,
+	                      vaddr, d_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -1286,8 +1286,8 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii,
-	                         SILOFS_STYPE_DTNODE, &vi);
+	err = silofs_spawn_vnode_of(d_ctx->task, d_ctx->dir_ii,
+	                            SILOFS_STYPE_DTNODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -1301,7 +1301,7 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 static int dirc_remove_dnode(const struct silofs_dir_ctx *d_ctx,
                              struct silofs_dnode_info *dni)
 {
-	return silofs_remove_vnode(d_ctx->task, &dni->dn_vi);
+	return silofs_remove_vnode_by(d_ctx->task, &dni->dn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1517,7 +1517,7 @@ int silofs_lookup_dentry(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
-		.stg_mode = SILOFS_STAGE_CUR,
+		.stg_mode = SILOFS_STG_CUR,
 	};
 
 	return dirc_lookup_dentry(&d_ctx, out_idt);
@@ -1736,7 +1736,7 @@ int silofs_add_dentry(struct silofs_task *task,
 		.dir_ii = dir_ii,
 		.child_ii = ii,
 		.name = name,
-		.stg_mode = SILOFS_STAGE_COW,
+		.stg_mode = SILOFS_STG_COW,
 	};
 
 	return dirc_add_dentry(&d_ctx);
@@ -1747,7 +1747,7 @@ int silofs_add_dentry(struct silofs_task *task,
 static int dirc_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
                             struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(d_ctx->task, ino, d_ctx->stg_mode, out_ii);
+	return silofs_stage_ii(d_ctx->task, ino, d_ctx->stg_mode, out_ii);
 }
 
 static int dirc_check_stage_parent(struct silofs_dir_ctx *d_ctx)
@@ -2161,7 +2161,7 @@ int silofs_do_readdir(struct silofs_task *task,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
 		.readdir_plus = 0,
-		.stg_mode = SILOFS_STAGE_CUR,
+		.stg_mode = SILOFS_STG_CUR,
 	};
 
 	return dirc_readdir(&d_ctx);
@@ -2178,7 +2178,7 @@ int silofs_do_readdirplus(struct silofs_task *task,
 		.dir_ii = dir_ii,
 		.keep_iter = true,
 		.readdir_plus = 1,
-		.stg_mode = SILOFS_STAGE_CUR,
+		.stg_mode = SILOFS_STG_CUR,
 	};
 
 	return dirc_readdir(&d_ctx);
@@ -2385,7 +2385,7 @@ int silofs_remove_dentry(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.dir_ii = ii_unconst(dir_ii),
 		.name = name,
-		.stg_mode = SILOFS_STAGE_COW,
+		.stg_mode = SILOFS_STG_COW,
 	};
 
 	return dirc_remove_dentry(&d_ctx);

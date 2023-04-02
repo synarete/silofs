@@ -19,26 +19,43 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
+/* TODO: cleanups and resource reclaim upon failure in every path */
+static int stage_raw_vnode(struct silofs_task *task,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vi)
+{
+	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW | SILOFS_STG_RAW;
+
+	return silofs_stage_vnode_at(task, vaddr, stg_mode, out_vi);
+}
+
 static int do_spawn_vnode(struct silofs_task *task,
                           struct silofs_inode_info *pii,
                           enum silofs_stype stype,
                           struct silofs_vnode_info **out_vi)
 {
+	struct silofs_voaddr voa = { .oaddr.pos = -1 };
+	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_claim_vnode(task, pii, stype, out_vi);
+	err = silofs_claim_vspace(task, stype, &voa);
 	if (err) {
 		return err;
 	}
-	silofs_stamp_meta_of(*out_vi);
-	vi_dirtify(*out_vi, pii);
+	err = stage_raw_vnode(task, &voa.vaddr, &vi);
+	if (err) {
+		return err;
+	}
+	silofs_stamp_meta_of(vi);
+	vi_dirtify(vi, pii);
+	*out_vi = vi;
 	return 0;
 }
 
-int silofs_spawn_vnode(struct silofs_task *task,
-                       struct silofs_inode_info *pii,
-                       enum silofs_stype stype,
-                       struct silofs_vnode_info **out_vi)
+int silofs_spawn_vnode_of(struct silofs_task *task,
+                          struct silofs_inode_info *pii,
+                          enum silofs_stype stype,
+                          struct silofs_vnode_info **out_vi)
 {
 	int err;
 
@@ -77,26 +94,56 @@ static int check_itype(const struct silofs_task *task, mode_t mode)
 	return (((mode & S_IFMT) | sup) == sup) ? 0 : -EOPNOTSUPP;
 }
 
-int silofs_spawn_inode(struct silofs_task *task, ino_t parent,
-                       mode_t parent_mode, mode_t mode, dev_t rdev,
+static int claim_inode(struct silofs_task *task,
                        struct silofs_inode_info **out_ii)
 {
-	const struct silofs_creds *creds = task_creds(task);
+	struct silofs_ivoaddr ivoa;
+	struct silofs_vnode_info *vi = NULL;
 	struct silofs_inode_info *ii = NULL;
-	uint64_t gen;
+	int err;
+
+	err = silofs_claim_ispace(task, &ivoa);
+	if (err) {
+		return err;
+	}
+	err = stage_raw_vnode(task, &ivoa.voa.vaddr, &vi);
+	if (err) {
+		return err;
+	}
+	ii = silofs_ii_from_vi(vi);
+	silofs_ii_rebind_view(ii, ivoa.ino);
+	*out_ii = ii;
+	return 0;
+}
+
+static void setup_new_inode(struct silofs_task *task,
+                            struct silofs_inode_info *ii,
+                            ino_t parent_ino, mode_t parent_mode,
+                            mode_t mode, dev_t rdev)
+{
+	const uint64_t gen = make_next_generation(task);
+
+	silofs_ii_stamp_mark_visible(ii);
+	silofs_ii_setup_by(ii, task_creds(task), parent_ino,
+	                   parent_mode, mode, rdev, gen);
+}
+
+int silofs_spawn_inode_of(struct silofs_task *task, ino_t parent_ino,
+                          mode_t parent_mode, mode_t mode, dev_t rdev,
+                          struct silofs_inode_info **out_ii)
+{
+	struct silofs_inode_info *ii = NULL;
 	int err;
 
 	err = check_itype(task, mode);
 	if (err) {
 		return err;
 	}
-	err = silofs_claim_inode(task, &ii);
+	err = claim_inode(task, &ii);
 	if (err) {
 		return err;
 	}
-	gen = make_next_generation(task);
-	silofs_ii_stamp_mark_visible(ii);
-	silofs_ii_setup_by(ii, creds, parent, parent_mode, mode, rdev, gen);
+	setup_new_inode(task, ii, parent_ino, parent_mode, mode, rdev);
 	*out_ii = ii;
 	return 0;
 }
@@ -120,7 +167,7 @@ static int reclaim_vspace_at(struct silofs_task *task,
 	struct silofs_voaddr voa;
 	int err;
 
-	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STAGE_COW, &voa);
+	err = silofs_resolve_voaddr_of(task, vaddr, SILOFS_STG_COW, &voa);
 	if (err) {
 		return err;
 	}
@@ -142,8 +189,8 @@ static int remove_vnode_of(struct silofs_task *task,
 	return err;
 }
 
-int silofs_remove_vnode(struct silofs_task *task,
-                        struct silofs_vnode_info *vi)
+int silofs_remove_vnode_by(struct silofs_task *task,
+                           struct silofs_vnode_info *vi)
 {
 	int err;
 
@@ -155,15 +202,15 @@ int silofs_remove_vnode(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_remove_vnode_at(struct silofs_task *task,
+int silofs_remove_vnode_of(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_lookup_cached_vi(task, vaddr, &vi);
+	err = silofs_stage_cached_vi(task, vaddr, &vi);
 	if (!err) {
-		err = silofs_remove_vnode(task, vi);
+		err = silofs_remove_vnode_by(task, vi);
 	} else {
 		err = reclaim_vspace_at(task, vaddr);
 	}
@@ -205,8 +252,8 @@ static void forget_cached_ii(const struct silofs_task *task,
 	forget_cached_vi(task, &ii->i_vi);
 }
 
-int silofs_remove_inode(struct silofs_task *task,
-                        struct silofs_inode_info *ii)
+int silofs_remove_inode_by(struct silofs_task *task,
+                           struct silofs_inode_info *ii)
 {
 	int err;
 

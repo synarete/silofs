@@ -30,7 +30,7 @@ struct silofs_symlnk_ctx {
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *lnk_ii;
 	const struct silofs_str        *symval;
-	enum silofs_stage_mode         stg_mode;
+	enum silofs_stg_mode         stg_mode;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -236,8 +236,8 @@ static int slc_do_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
-	err = silofs_stage_vnode(sl_ctx->task, sl_ctx->lnk_ii,
-	                         vaddr, sl_ctx->stg_mode, &vi);
+	err = silofs_stage_vi(sl_ctx->task, sl_ctx->lnk_ii,
+	                      vaddr, sl_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -349,7 +349,7 @@ int silofs_do_readlink(struct silofs_task *task,
 		.task = task,
 		.sbi = task_sbi(task),
 		.lnk_ii = lnk_ii,
-		.stg_mode = SILOFS_STAGE_CUR,
+		.stg_mode = SILOFS_STG_CUR,
 	};
 	struct silofs_bytebuf sl;
 	int err;
@@ -372,8 +372,8 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(sl_ctx->task, sl_ctx->lnk_ii,
-	                         SILOFS_STYPE_SYMVAL, &vi);
+	err = silofs_spawn_vnode_of(sl_ctx->task, sl_ctx->lnk_ii,
+	                            SILOFS_STYPE_SYMVAL, &vi);
 	if (err) {
 		return err;
 	}
@@ -387,7 +387,7 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_at(sl_ctx->task, vaddr);
+	return silofs_remove_vnode_of(sl_ctx->task, vaddr);
 }
 
 static int slc_create_symval(struct silofs_symlnk_ctx *sl_ctx,
@@ -511,7 +511,7 @@ int silofs_setup_symlink(struct silofs_task *task,
 		.sbi = task_sbi(task),
 		.lnk_ii = lnk_ii,
 		.symval = symval,
-		.stg_mode = SILOFS_STAGE_COW
+		.stg_mode = SILOFS_STG_COW
 	};
 
 	return slc_symlink(&sl_ctx);

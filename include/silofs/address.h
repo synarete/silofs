@@ -310,6 +310,8 @@ bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr);
 
 bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr);
 
+bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr);
+
 
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_stype stype,

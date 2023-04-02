@@ -262,19 +262,19 @@ static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
 static int op_stage_cacheonly_inode(struct silofs_task *task, ino_t ino,
                                     struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_cached_inode(task, ino, out_ii);
+	return silofs_stage_cached_ii(task, ino, out_ii);
 }
 
 static int op_stage_cur_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(task, ino, SILOFS_STAGE_CUR, out_ii);
+	return silofs_stage_ii(task, ino, SILOFS_STG_CUR, out_ii);
 }
 
 static int op_stage_mut_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode(task, ino, SILOFS_STAGE_COW, out_ii);
+	return silofs_stage_ii(task, ino, SILOFS_STG_COW, out_ii);
 }
 
 static int op_stage_mut_inode2(struct silofs_task *task,

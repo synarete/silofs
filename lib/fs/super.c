@@ -625,30 +625,29 @@ void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
 	sbi_dirtify(sbi);
 }
 
+bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
+                                 const struct silofs_blobid *blobid)
+{
+	struct silofs_treeid treeid;
+
+	silofs_sbi_treeid(sbi, &treeid);
+	return blobid_has_treeid(blobid, &treeid);
+}
+
+bool silofs_sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_oaddr *oaddr)
+{
+	return silofs_sbi_ismutable_blobid(sbi, &oaddr->bka.blobid);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stage_spleaf(struct silofs_task *task,
                         const struct silofs_vaddr *vaddr,
-                        enum silofs_stage_mode stg_mode,
+                        enum silofs_stg_mode stg_mode,
                         struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_spnode_info *sni = NULL;
-
-	return silofs_stage_spmaps_at(task, vaddr, stg_mode, &sni, out_sli);
-}
-
-static int stage_ro_spleaf(struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_spleaf_info **out_sli)
-{
-	return stage_spleaf(task, vaddr, SILOFS_STAGE_CUR, out_sli);
-}
-
-static int stage_rw_spleaf(struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_spleaf_info **out_sli)
-{
-	return stage_spleaf(task, vaddr, SILOFS_STAGE_COW, out_sli);
+	return silofs_stage_spleaf_of(task, vaddr, stg_mode, out_sli);
 }
 
 int silofs_test_unwritten_at(struct silofs_task *task,
@@ -657,7 +656,7 @@ int silofs_test_unwritten_at(struct silofs_task *task,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = stage_ro_spleaf(task, vaddr, &sli);
+	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
 	if (err) {
 		return err;
 	}
@@ -671,7 +670,7 @@ int silofs_clear_unwritten_at(struct silofs_task *task,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = stage_rw_spleaf(task, vaddr, &sli);
+	err = stage_spleaf(task, vaddr, SILOFS_STG_COW, &sli);
 	if (err) {
 		return err;
 	}
@@ -685,7 +684,7 @@ int silofs_mark_unwritten_at(struct silofs_task *task,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = stage_rw_spleaf(task, vaddr, &sli);
+	err = stage_spleaf(task, vaddr, SILOFS_STG_COW, &sli);
 	if (err) {
 		return err;
 	}
@@ -699,7 +698,7 @@ int silofs_test_lastref_at(struct silofs_task *task,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = stage_ro_spleaf(task, vaddr, &sli);
+	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
 	if (err) {
 		return err;
 	}
@@ -713,7 +712,7 @@ int silofs_test_shared_at(struct silofs_task *task,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = stage_ro_spleaf(task, vaddr, &sli);
+	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
 	if (err) {
 		return err;
 	}

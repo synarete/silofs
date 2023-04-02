@@ -182,14 +182,14 @@ static int decrypt_vi_view_inplace(const struct silofs_uber *uber,
 }
 
 int silofs_restore_vi_view(const struct silofs_uber *uber,
-                           struct silofs_vnode_info *vi, bool has_enc_view)
+                           struct silofs_vnode_info *vi, bool raw)
 {
 	int err;
 
 	if (vi_has_bkview(vi)) {
 		return 0;
 	}
-	if (has_enc_view) {
+	if (!raw) {
 		err = decrypt_vi_view_inplace(uber, vi);
 		if (err) {
 			return err;

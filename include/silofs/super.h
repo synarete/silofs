@@ -67,6 +67,7 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
+
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
                        struct silofs_treeid *out_treeid);
 
@@ -84,6 +85,13 @@ bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
 void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
                               loff_t voff, enum silofs_stype vspace,
                               struct silofs_uaddr *out_uaddr);
+
+
+bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
+                                 const struct silofs_blobid *blobid);
+
+bool silofs_sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_oaddr *oaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

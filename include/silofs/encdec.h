@@ -27,6 +27,6 @@ int silofs_restore_ui_view(const struct silofs_uber *uber,
                            struct silofs_unode_info *ui);
 
 int silofs_restore_vi_view(const struct silofs_uber *uber,
-                           struct silofs_vnode_info *vi, bool has_enc_view);
+                           struct silofs_vnode_info *vi, bool raw);
 
 #endif /* SILOFS_ENCDEC_H_ */

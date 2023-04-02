@@ -1187,6 +1187,11 @@ bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr)
 	return stype_isequal(vaddr->stype, SILOFS_STYPE_DATABK);
 }
 
+bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr)
+{
+	return stype_isequal(vaddr->stype, SILOFS_STYPE_INODE);
+}
+
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_stype stype,
                             loff_t voff_base, size_t bn, size_t kbn)

@@ -19,20 +19,14 @@
 
 
 int silofs_claim_vspace(struct silofs_task *task,
-                        struct silofs_inode_info *pii,
                         enum silofs_stype stype,
                         struct silofs_voaddr *out_voa);
 
 int silofs_reclaim_vspace(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr);
 
-int silofs_claim_vnode(struct silofs_task *task,
-                       struct silofs_inode_info *pii,
-                       enum silofs_stype stype,
-                       struct silofs_vnode_info **out_vi);
-
-int silofs_claim_inode(struct silofs_task *task,
-                       struct silofs_inode_info **out_ii);
+int silofs_claim_ispace(struct silofs_task *task,
+                        struct silofs_ivoaddr *out_ivoa);
 
 int silofs_addref_vspace(struct silofs_task *task,
                          const struct silofs_vaddr *vaddr);

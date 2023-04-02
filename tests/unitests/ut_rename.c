@@ -375,6 +375,99 @@ static void ut_rename_override(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_ino_to_str(struct ut_env *ute, ino_t ino, char *s, size_t n)
+{
+	snprintf(s, n - 1, "user.ino=%ld", (long)ino);
+	ut_unused(ute);
+}
+
+static void ut_setxattr_ino(struct ut_env *ute, ino_t ino)
+{
+	char str[64] = "";
+	struct ut_keyval kv = {
+		.name = str,
+		.value = &ino,
+		.size = sizeof(ino),
+	};
+
+	ut_ino_to_str(ute, ino, str, sizeof(str));
+	ut_setxattr_create(ute, ino, &kv);
+}
+
+static void ut_getxattr_ino(struct ut_env *ute, ino_t ino)
+{
+	char str[64] = "";
+	struct ut_keyval kv = {
+		.name = str,
+		.value = &ino,
+		.size = sizeof(ino),
+	};
+
+	ut_ino_to_str(ute, ino, str, sizeof(str));
+	ut_getxattr_value(ute, ino, &kv);
+}
+
+static void ut_rename_with_xattr_(struct ut_env *ute, size_t cnt,
+                                  loff_t off_base, size_t bsz)
+{
+	ino_t dino = 0;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
+	void *buf1 = ut_randbuf(ute, bsz);
+	void *buf2 = ut_randbuf(ute, bsz);
+	const char *name1 = NULL;
+	const char *name2 = NULL;
+	const char *name3 = NULL;
+	const char *dname = ut_make_name(ute, UT_NAME, 0);
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	for (size_t i = 0; i < cnt; ++i) {
+		name1 = ut_make_name(ute, dname, i);
+		name2 = ut_make_name(ute, dname, i + cnt);
+		ut_create_file(ute, dino, name1, &ino1);
+		ut_create_file(ute, dino, name2, &ino2);
+		ut_write_ok(ute, ino1, buf1, bsz, off_base + (loff_t)i);
+		ut_write_ok(ute, ino2, buf2, bsz, off_base + (loff_t)(i + 1));
+		ut_setxattr_ino(ute, ino1);
+		ut_setxattr_ino(ute, ino2);
+		ut_release_file(ute, ino1);
+		ut_release_file(ute, ino2);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		name1 = ut_make_name(ute, dname, i);
+		name2 = ut_make_name(ute, dname, i + cnt);
+		name3 = ut_make_name(ute, dname, i + (2 * cnt));
+		ut_lookup_ino(ute, dino, name1, &ino1);
+		ut_lookup_ino(ute, dino, name2, &ino2);
+		ut_getxattr_ino(ute, ino1);
+		ut_getxattr_ino(ute, ino2);
+		ut_rename_replace(ute, dino, name1, dino, name2);
+		ut_rename_move(ute, dino, name2, dino, name3);
+		ut_lookup_ino(ute, dino, name3, &ino1);
+		ut_getxattr_ino(ute, ino1);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		name3 = ut_make_name(ute, dname, i + (2 * cnt));
+		ut_lookup_ino(ute, dino, name3, &ino1);
+		ut_open_rdonly(ute, ino1);
+		ut_read_verify(ute, ino1, buf1, bsz, off_base + (loff_t)i);
+		ut_getxattr_ino(ute, ino1);
+		ut_release_file(ute, ino1);
+		ut_unlink_file(ute, dino, name3);
+	}
+	ut_rmdir_at_root(ute, dname);
+}
+
+static void ut_rename_with_xattr(struct ut_env *ute)
+{
+	ut_rename_with_xattr_(ute, 11, 11, UT_KILO + 11);
+	ut_rename_with_xattr_(ute, 111, UT_BK_SIZE - 1, UT_BK_SIZE + 11);
+	ut_rename_with_xattr_(ute, 1111, UT_GIGA - 11, UT_1K + 1111);
+	ut_rename_with_xattr_(ute, 111, UT_TERA - 111, UT_BK_SIZE + 111);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_rename_within_same_dir),
 	UT_DEFTEST(ut_rename_toggle_between_dirs),
@@ -385,6 +478,7 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_rename_exchange_simple),
 	UT_DEFTEST(ut_rename_exchange_same),
 	UT_DEFTEST(ut_rename_override),
+	UT_DEFTEST(ut_rename_with_xattr),
 };
 
 const struct ut_testdefs ut_tdefs_rename = UT_MKTESTS(ut_local_tests);

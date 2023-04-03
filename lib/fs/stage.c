@@ -2064,7 +2064,7 @@ static int stgc_resolve_voaddr(struct silofs_stage_ctx *stg_ctx,
 	return 0;
 }
 
-int silofs_stage_spnode1_at(struct silofs_task *task,
+int silofs_stage_spnode1_of(struct silofs_task *task,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stg_mode stg_mode,
                             struct silofs_spnode_info **out_sni)
@@ -2081,7 +2081,7 @@ int silofs_stage_spnode1_at(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_stage_spmaps_at(struct silofs_task *task,
+int silofs_stage_spmaps_of(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stg_mode stg_mode,
                            struct silofs_spnode_info **out_sni,
@@ -2107,10 +2107,10 @@ int silofs_stage_spleaf_of(struct silofs_task *task,
 {
 	struct silofs_spnode_info *sni = NULL;
 
-	return silofs_stage_spmaps_at(task, vaddr, stg_mode, &sni, out_sli);
+	return silofs_stage_spmaps_of(task, vaddr, stg_mode, &sni, out_sli);
 }
 
-int silofs_require_spmaps_at(struct silofs_task *task,
+int silofs_require_spmaps_of(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode,
                              struct silofs_spnode_info **out_sni,
@@ -2620,7 +2620,7 @@ out_err:
 	return err;
 }
 
-int silofs_stage_vnode_at(struct silofs_task *task,
+int silofs_stage_vnode_of(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr,
                           enum silofs_stg_mode stg_mode,
                           struct silofs_vnode_info **out_vi)
@@ -2640,7 +2640,7 @@ static int stage_inode_of(struct silofs_task *task, ino_t ino,
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = silofs_stage_vnode_at(task, vaddr, stg_mode, &vi);
+	err = silofs_stage_vnode_of(task, vaddr, stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -2722,7 +2722,7 @@ resolve_stage_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_vnode_at(task, vaddr, stg_mode, &vi);
+	err = silofs_stage_vnode_of(task, vaddr, stg_mode, &vi);
 	if (err) {
 		return err;
 	}

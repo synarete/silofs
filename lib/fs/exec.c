@@ -936,7 +936,7 @@ static int exec_require_spmaps_of(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_require_spmaps_at(&task, vaddr, stg_mode, &sni, &sli);
+	err = silofs_require_spmaps_of(&task, vaddr, stg_mode, &sni, &sli);
 	return term_task(&task, err);
 }
 
@@ -1066,7 +1066,7 @@ static int exec_stage_spmaps_at(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_spmaps_at(&task, vaddr, stg_mode, &sni, &sli);
+	err = silofs_stage_spmaps_of(&task, vaddr, stg_mode, &sni, &sli);
 	return term_task(&task, err);
 }
 

@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 
-int silofs_stage_spmaps_at(struct silofs_task *task,
+int silofs_stage_spmaps_of(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stg_mode stg_mode,
                            struct silofs_spnode_info **out_sni,
@@ -30,18 +30,18 @@ int silofs_stage_spleaf_of(struct silofs_task *task,
                            enum silofs_stg_mode stg_mode,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_spnode1_at(struct silofs_task *task,
+int silofs_stage_spnode1_of(struct silofs_task *task,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stg_mode stg_mode,
                             struct silofs_spnode_info **out_sni);
 
-int silofs_require_spmaps_at(struct silofs_task *task,
+int silofs_require_spmaps_of(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode,
                              struct silofs_spnode_info **out_sni,
                              struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_vnode_at(struct silofs_task *task,
+int silofs_stage_vnode_of(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr,
                           enum silofs_stg_mode stg_mode,
                           struct silofs_vnode_info **out_vi);

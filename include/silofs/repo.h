@@ -73,6 +73,9 @@ int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
 int silofs_blobf_require_bk(struct silofs_blobf *blobf,
                             const struct silofs_bkaddr *bkaddr);
 
+int silofs_blobf_check_bk(struct silofs_blobf *blobf,
+                          const struct silofs_bkaddr *bkaddr);
+
 int silofs_blobf_resolve(struct silofs_blobf *blobf,
                          const struct silofs_oaddr *oaddr,
                          struct silofs_iovec *iov);

@@ -921,6 +921,17 @@ int silofs_blobf_require_bk(struct silofs_blobf *blobf,
 	return ret;
 }
 
+int silofs_blobf_check_bk(struct silofs_blobf *blobf,
+                          const struct silofs_bkaddr *bkaddr)
+{
+	int ret;
+
+	blobf_wrlock(blobf);
+	ret = blobf_check_bk_of(blobf, bkaddr);
+	blobf_unlock(blobf);
+	return ret;
+}
+
 int silofs_blobf_flock(struct silofs_blobf *blobf)
 {
 	int err = 0;

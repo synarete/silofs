@@ -50,7 +50,6 @@ enum silofs_stg_mode {
 	SILOFS_STG_CUR          = SILOFS_BIT(0), /* stage current (normal) */
 	SILOFS_STG_COW          = SILOFS_BIT(1), /* copy-on-write */
 	SILOFS_STG_RAW          = SILOFS_BIT(2), /* not-set-yet */
-	SILOFS_STG_UNW          = SILOFS_BIT(3), /* unwritten mode */
 };
 
 /* common control flags */

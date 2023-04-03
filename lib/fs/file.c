@@ -858,6 +858,7 @@ static void fpr_setup(struct silofs_fpos_ref *fpr,
 	fpr->has_target = target;
 	fpr->has_data = data && target;
 	fpr->has_hole = !fpr->has_data;
+	fpr->unwritten = true;
 
 	if (head1) {
 		fpr->slot_idx = off_to_head1_slot(file_pos);
@@ -1256,23 +1257,17 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 	ii_update_iattrs(ii, &f_ctx->task->t_oper.op_creds, &iattr);
 }
 
-static int
-filc_probe_unwritten_at(const struct silofs_file_ctx *f_ctx,
-                        const struct silofs_vaddr *vaddr, bool *out_res)
-{
-	int err = 0;
-
-	*out_res = false;
-	if (!vaddr_isnull(vaddr)) {
-		err = silofs_test_unwritten_at(f_ctx->task, vaddr, out_res);
-	}
-	return err;
-}
-
 static int fpr_probe_unwritten(struct silofs_fpos_ref *fpr)
 {
-	return filc_probe_unwritten_at(fpr->f_ctx, &fpr->vaddr,
-	                               &fpr->unwritten);
+	const struct silofs_vaddr *vaddr = &fpr->vaddr;
+	struct silofs_task *task = fpr->f_ctx->task;
+	int ret = 0;
+
+	fpr->unwritten = true;
+	if (!vaddr_isnull(vaddr)) {
+		ret = silofs_test_unwritten_at(task, vaddr, &fpr->unwritten);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2348,14 +2343,11 @@ static int fpr_prepare_unwritten_leaf(struct silofs_fpos_ref *fpr)
 {
 	int err;
 
-	if (!fpr->partial) {
-		return 0;
-	}
 	err = fpr_probe_unwritten(fpr);
 	if (err) {
 		return err;
 	}
-	if (!fpr->unwritten) {
+	if (!fpr->unwritten || !fpr->partial) {
 		return 0;
 	}
 	err = filc_zero_data_leaf_at(fpr->f_ctx, &fpr->vaddr);
@@ -2402,7 +2394,6 @@ fpr_write_to_leaf(struct silofs_fpos_ref *fpr, size_t *out_len)
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
-	*out_len = 0;
 	err = fpr_prepare_unwritten_leaf(fpr);
 	if (err) {
 		return err;
@@ -2415,14 +2406,19 @@ fpr_write_to_leaf(struct silofs_fpos_ref *fpr, size_t *out_len)
 	if (err) {
 		return err;
 	}
+	fpr->unwritten = false;
 	return 0;
 }
 
 static int fpr_detect_shared(struct silofs_fpos_ref *fpr)
 {
-	return (!fpr->tree || !fpr->has_data || fpr->shared) ? 0 :
-	       silofs_test_shared_at(fpr->f_ctx->task, &fpr->vaddr,
-	                             &fpr->shared);
+	struct silofs_task *task = fpr->f_ctx->task;
+	int ret = 0;
+
+	if (fpr->tree && fpr->has_data && !fpr->shared) {
+		ret = silofs_test_shared_at(task, &fpr->vaddr, &fpr->shared);
+	}
+	return ret;
 }
 
 static int
@@ -2446,6 +2442,7 @@ filc_do_write_to_tree_leaves(struct silofs_file_ctx *f_ctx,
 		if (err) {
 			return err;
 		}
+		len = 0;
 		err = fpr_write_to_leaf(&fpr, &len);
 		if (err) {
 			return err;
@@ -2530,6 +2527,7 @@ static int filc_write_by_head_leaves(struct silofs_file_ctx *f_ctx)
 		if (err) {
 			return err;
 		}
+		len = 0;
 		err = fpr_write_to_leaf(&fpr, &len);
 		if (err) {
 			return err;
@@ -2541,6 +2539,7 @@ static int filc_write_by_head_leaves(struct silofs_file_ctx *f_ctx)
 		if (err) {
 			return err;
 		}
+		len = 0;
 		err = fpr_write_to_leaf(&fpr, &len);
 		if (err) {
 			return err;
@@ -3826,11 +3825,25 @@ static size_t fpr_copy_range_length(const struct silofs_fpos_ref *fpr_src,
 	return min(len_src, len_dst);
 }
 
+
+static int fpr_clear_unwritten_of(struct silofs_fpos_ref *fpr,
+                                  struct silofs_fileaf_info *fli)
+{
+	int err;
+
+	if (fpr->unwritten) {
+		err = filc_clear_unwritten_of(fpr->f_ctx, fli);
+		if (err) {
+			return err;
+		}
+		fpr->unwritten = false;
+	}
+	return 0;
+}
+
 static int
-filc_copy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
-                    const struct silofs_file_ctx *f_ctx_dst,
-                    const struct silofs_vaddr *vaddr_src,
-                    const struct silofs_vaddr *vaddr_dst, size_t len)
+fpr_copy_data_leaf(struct silofs_fpos_ref *fpr_src,
+                   struct silofs_fpos_ref *fpr_dst, size_t len)
 {
 	struct silofs_iovec iov_src = { .iov_off = -1, .iov_fd = -1 };
 	struct silofs_iovec iov_dst = { .iov_off = -1, .iov_fd = -1 };
@@ -3839,26 +3852,26 @@ filc_copy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
 	int err;
 	bool all;
 
-	err = filc_stage_fileaf(f_ctx_src, vaddr_src, &fli_src);
+	err = filc_stage_fileaf(fpr_src->f_ctx, &fpr_src->vaddr, &fli_src);
 	if (err) {
 		goto out;
 	}
 	fli_incref(fli_src);
 
-	err = filc_stage_fileaf(f_ctx_dst, vaddr_dst, &fli_dst);
+	err = filc_stage_fileaf(fpr_dst->f_ctx, &fpr_dst->vaddr, &fli_dst);
 	if (err) {
 		goto out;
 	}
 	fli_incref(fli_dst);
 
-	all = (len == vaddr_src->len);
-	err = filc_iovec_by_fileaf(f_ctx_src, fli_src, all, &iov_src);
+	all = (len == fpr_src->vaddr.len);
+	err = filc_iovec_by_fileaf(fpr_src->f_ctx, fli_src, all, &iov_src);
 	if (err) {
 		goto out;
 	}
 
-	all = (len == vaddr_dst->len);
-	err = filc_iovec_by_fileaf(f_ctx_dst, fli_dst, all, &iov_dst);
+	all = (len == fpr_dst->vaddr.len);
+	err = filc_iovec_by_fileaf(fpr_dst->f_ctx, fli_dst, all, &iov_dst);
 	if (err) {
 		goto out;
 	}
@@ -3868,7 +3881,7 @@ filc_copy_data_leaf(const struct silofs_file_ctx *f_ctx_src,
 		goto out;
 	}
 
-	err = filc_clear_unwritten_of(f_ctx_dst, fli_dst);
+	err = fpr_clear_unwritten_of(fpr_dst, fli_dst);
 	if (err) {
 		goto out;
 	}
@@ -3891,8 +3904,7 @@ static int fpr_copy_leaf(struct silofs_fpos_ref *fpr_src,
 	if (err) {
 		return err;
 	}
-	err = filc_copy_data_leaf(fpr_src->f_ctx, fpr_dst->f_ctx,
-	                          &fpr_src->vaddr, &fpr_dst->vaddr, len);
+	err = fpr_copy_data_leaf(fpr_src, fpr_dst, len);
 	if (err) {
 		return err;
 	}
@@ -3909,10 +3921,9 @@ static void fpr_rebind_child(struct silofs_fpos_ref *fpr,
 
 static int fpr_unshare_leaf(struct silofs_fpos_ref *fpr)
 {
-	const struct silofs_file_ctx *f_ctx = fpr->f_ctx;
-	struct silofs_vaddr vaddr_cur;
-	struct silofs_vaddr vaddr_new;
-	size_t len;
+	struct silofs_fpos_ref fpr_new = { .f_ctx = NULL };
+	const enum silofs_stype stype = fpr->vaddr.stype;
+	const size_t len = fpr->vaddr.len;
 	int err;
 
 	silofs_assert(fpr->has_data);
@@ -3920,22 +3931,21 @@ static int fpr_unshare_leaf(struct silofs_fpos_ref *fpr)
 	if (!fpr->shared || !fpr->tree) {
 		return 0;
 	}
-	vaddr_assign(&vaddr_cur, &fpr->vaddr);
-	err = filc_claim_data_space(f_ctx, vaddr_cur.stype, &vaddr_new);
+	fpr_setup(&fpr_new, fpr->f_ctx, fpr->fni, &fpr->vaddr, fpr->file_pos);
+	err = filc_claim_data_space(fpr->f_ctx, stype, &fpr_new.vaddr);
 	if (err) {
 		return err;
 	}
-	len = vaddr_cur.len;
-	err = filc_copy_data_leaf(f_ctx, f_ctx, &vaddr_cur, &vaddr_new, len);
+	err = fpr_copy_data_leaf(fpr, &fpr_new, len);
 	if (err) {
-		filc_reclaim_data_space(f_ctx, &vaddr_new);
+		filc_reclaim_data_space(fpr->f_ctx, &fpr_new.vaddr);
 		return err;
 	}
-	err = filc_reclaim_data_space(f_ctx, &vaddr_cur);
+	err = filc_reclaim_data_space(fpr->f_ctx, &fpr->vaddr);
 	if (err) {
 		return err;
 	}
-	fpr_rebind_child(fpr, &vaddr_new);
+	fpr_rebind_child(fpr, &fpr_new.vaddr);
 	return 0;
 }
 

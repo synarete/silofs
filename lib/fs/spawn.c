@@ -26,7 +26,7 @@ static int stage_raw_vnode(struct silofs_task *task,
 {
 	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW | SILOFS_STG_RAW;
 
-	return silofs_stage_vnode_of(task, vaddr, stg_mode, out_vi);
+	return silofs_stage_vnode(task, NULL, vaddr, stg_mode, out_vi);
 }
 
 static int do_spawn_vnode(struct silofs_task *task,
@@ -208,7 +208,7 @@ int silofs_remove_vnode_of(struct silofs_task *task,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_stage_cached_vi(task, vaddr, &vi);
+	err = silofs_stage_cached_vnode(task, vaddr, &vi);
 	if (!err) {
 		err = silofs_remove_vnode_by(task, vi);
 	} else {

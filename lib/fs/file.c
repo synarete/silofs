@@ -1291,8 +1291,8 @@ static int filc_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
-	err = silofs_stage_vi(f_ctx->task, f_ctx->ii, vaddr,
-	                      f_ctx->stg_mode, &vi);
+	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
+	                         f_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -1391,8 +1391,8 @@ static int filc_stage_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
-	err = silofs_stage_vi(f_ctx->task, f_ctx->ii, vaddr,
-	                      f_ctx->stg_mode, &vi);
+	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
+	                         f_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}

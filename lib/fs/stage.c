@@ -2388,7 +2388,7 @@ stgc_pre_clone_stage_inode_at(const struct silofs_stage_ctx *stg_ctx,
 
 	*out_vi = NULL;
 	ino = vaddr_to_ino(vaddr);
-	err = silofs_stage_ii(stg_ctx->task, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode(stg_ctx->task, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		return err;
 	}
@@ -2407,8 +2407,8 @@ stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
 	int err;
 
 	*out_vi = NULL;
-	err = silofs_stage_vi(stg_ctx->task, NULL, vaddr,
-	                      SILOFS_STG_CUR, &vi);
+	err = silofs_stage_vnode(stg_ctx->task, NULL, vaddr,
+	                         SILOFS_STG_CUR, &vi);
 	if (err == -SILOFS_ERDONLY) {
 		/* TODO: should not have this case XXX */
 		return 0; /* special case: out-of-blob range */
@@ -2620,39 +2620,6 @@ out_err:
 	return err;
 }
 
-int silofs_stage_vnode_of(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr,
-                          enum silofs_stg_mode stg_mode,
-                          struct silofs_vnode_info **out_vi)
-{
-	struct silofs_stage_ctx stg_ctx;
-
-	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
-	return stgc_stage_vnode_at(&stg_ctx, out_vi);
-}
-
-static int stage_inode_of(struct silofs_task *task, ino_t ino,
-                          const struct silofs_vaddr *vaddr,
-                          enum silofs_stg_mode stg_mode,
-                          struct silofs_inode_info **out_ii)
-{
-	struct silofs_vnode_info *vi = NULL;
-	struct silofs_inode_info *ii = NULL;
-	int err;
-
-	err = silofs_stage_vnode_of(task, vaddr, stg_mode, &vi);
-	if (err) {
-		return err;
-	}
-	ii = silofs_ii_from_vi(vi);
-
-	silofs_ii_rebind_view(ii, ino);
-	silofs_ii_refresh_atime(ii, true);
-	*out_ii = ii;
-	return 0;
-}
-
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_cache *task_cache(const struct silofs_task *task)
@@ -2677,9 +2644,9 @@ static int fixup_cached_vi(const struct silofs_task *task,
 	return -ENOENT;
 }
 
-int silofs_stage_cached_vi(const struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vi)
+int silofs_stage_cached_vnode(const struct silofs_task *task,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_vnode_info **out_vi)
 {
 	struct silofs_cache *cache = task_cache(task);
 	struct silofs_vnode_info *vi;
@@ -2700,6 +2667,17 @@ int silofs_stage_cached_vi(const struct silofs_task *task,
 	return 0;
 }
 
+static int stage_vnode_at(struct silofs_task *task,
+                          const struct silofs_vaddr *vaddr,
+                          enum silofs_stg_mode stg_mode,
+                          struct silofs_vnode_info **out_vi)
+{
+	struct silofs_stage_ctx stg_ctx;
+
+	stgc_setup(&stg_ctx, task, vaddr, stg_mode);
+	return stgc_stage_vnode_at(&stg_ctx, out_vi);
+}
+
 static int
 resolve_stage_vnode(struct silofs_task *task,
                     const struct silofs_vaddr *vaddr,
@@ -2714,7 +2692,7 @@ resolve_stage_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_cached_vi(task, vaddr, &vi);
+	err = silofs_stage_cached_vnode(task, vaddr, &vi);
 	if (!err) {
 		goto out_ok;  /* cache hit */
 	}
@@ -2722,12 +2700,33 @@ resolve_stage_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_vnode_of(task, vaddr, stg_mode, &vi);
+	err = stage_vnode_at(task, vaddr, stg_mode, &vi);
 	if (err) {
 		return err;
 	}
 out_ok:
 	*out_vi = vi;
+	return 0;
+}
+
+static int resolve_stage_inode(struct silofs_task *task, ino_t ino,
+                               const struct silofs_vaddr *vaddr,
+                               enum silofs_stg_mode stg_mode,
+                               struct silofs_inode_info **out_ii)
+{
+	struct silofs_vnode_info *vi = NULL;
+	struct silofs_inode_info *ii = NULL;
+	int err;
+
+	err = resolve_stage_vnode(task, vaddr, stg_mode, &vi);
+	if (err) {
+		return err;
+	}
+	ii = silofs_ii_from_vi(vi);
+
+	silofs_ii_rebind_view(ii, ino);
+	silofs_ii_refresh_atime(ii, true);
+	*out_ii = ii;
 	return 0;
 }
 
@@ -2762,11 +2761,11 @@ static int do_stage_vnode(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_stage_vi(struct silofs_task *task,
-                    struct silofs_inode_info *pii,
-                    const struct silofs_vaddr *vaddr,
-                    enum silofs_stg_mode stg_mode,
-                    struct silofs_vnode_info **out_vi)
+int silofs_stage_vnode(struct silofs_task *task,
+                       struct silofs_inode_info *pii,
+                       const struct silofs_vaddr *vaddr,
+                       enum silofs_stg_mode stg_mode,
+                       struct silofs_vnode_info **out_vi)
 {
 	int err;
 
@@ -2785,7 +2784,7 @@ static int lookup_cached_ii(const struct silofs_task *task,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_stage_cached_vi(task, vaddr, &vi);
+	err = silofs_stage_cached_vnode(task, vaddr, &vi);
 	if (err) {
 		return err;
 	}
@@ -2846,9 +2845,9 @@ static int ii_check_post_stage(const struct silofs_inode_info *ii,
 	return 0;
 }
 
-int silofs_stage_ii(struct silofs_task *task, ino_t ino,
-                    enum silofs_stg_mode stg_mode,
-                    struct silofs_inode_info **out_ii)
+int silofs_stage_inode(struct silofs_task *task, ino_t ino,
+                       enum silofs_stg_mode stg_mode,
+                       struct silofs_inode_info **out_ii)
 {
 	struct silofs_iaddr iaddr = { .ino = ino };
 	struct silofs_ivoaddr ivoa = { .ino = ino };
@@ -2877,7 +2876,7 @@ int silofs_stage_ii(struct silofs_task *task, ino_t ino,
 	if (err) {
 		return err;
 	}
-	err = stage_inode_of(task, ino, vaddr, stg_mode, &ii);
+	err = resolve_stage_inode(task, ino, vaddr, stg_mode, &ii);
 	if (err) {
 		return err;
 	}
@@ -2890,8 +2889,8 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_cached_ii(struct silofs_task *task, ino_t ino,
-                           struct silofs_inode_info **out_ii)
+int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
+                              struct silofs_inode_info **out_ii)
 {
 	struct silofs_iaddr iaddr = { .ino = ino };
 	int err;

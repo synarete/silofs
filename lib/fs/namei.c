@@ -533,7 +533,7 @@ static int stage_by_name(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_ii(task, ino, stg_mode, out_ii);
+	err = silofs_stage_inode(task, ino, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}

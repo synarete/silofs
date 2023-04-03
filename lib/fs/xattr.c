@@ -562,8 +562,8 @@ static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	struct silofs_xanode_info *xai = NULL;
 	int err;
 
-	err = silofs_stage_vi(xa_ctx->task, xa_ctx->ii,
-	                      vaddr, xa_ctx->stg_mode, &vi);
+	err = silofs_stage_vnode(xa_ctx->task, xa_ctx->ii,
+	                         vaddr, xa_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}

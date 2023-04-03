@@ -236,8 +236,8 @@ static int slc_do_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
-	err = silofs_stage_vi(sl_ctx->task, sl_ctx->lnk_ii,
-	                      vaddr, sl_ctx->stg_mode, &vi);
+	err = silofs_stage_vnode(sl_ctx->task, sl_ctx->lnk_ii,
+	                         vaddr, sl_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}

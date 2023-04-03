@@ -614,7 +614,7 @@ static int check_xaccess_parent(struct silofs_task *task,
 		return 0;
 	}
 	parent = ii_parent(ii);
-	err = silofs_stage_ii(task, parent, SILOFS_STG_CUR, &parent_ii);
+	err = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
 	if (err) {
 		return err;
 	}
@@ -930,7 +930,7 @@ static int check_parent_dir_ii(struct silofs_task *task,
 	if (ino_isnull(parent)) {
 		return ii->i_nopen ? 0 : -ENOENT;
 	}
-	err = silofs_stage_ii(task, parent, SILOFS_STG_CUR, &parent_ii);
+	err = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
 	if (err) {
 		return err;
 	}

@@ -638,7 +638,7 @@ static int exec_stage_rootdir_inode(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_ii(&task, ino, SILOFS_STG_CUR, out_ii);
+	err = silofs_stage_inode(&task, ino, SILOFS_STG_CUR, out_ii);
 	return term_task(&task, err);
 }
 

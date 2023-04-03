@@ -1240,8 +1240,8 @@ static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_stage_vi(d_ctx->task, d_ctx->dir_ii,
-	                      vaddr, d_ctx->stg_mode, &vi);
+	err = silofs_stage_vnode(d_ctx->task, d_ctx->dir_ii,
+	                         vaddr, d_ctx->stg_mode, &vi);
 	if (err) {
 		return err;
 	}
@@ -1747,7 +1747,7 @@ int silofs_add_dentry(struct silofs_task *task,
 static int dirc_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
                             struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_ii(d_ctx->task, ino, d_ctx->stg_mode, out_ii);
+	return silofs_stage_inode(d_ctx->task, ino, d_ctx->stg_mode, out_ii);
 }
 
 static int dirc_check_stage_parent(struct silofs_dir_ctx *d_ctx)

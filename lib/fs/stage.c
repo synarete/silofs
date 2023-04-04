@@ -2365,14 +2365,7 @@ static int stgc_stage_vblock_by(const struct silofs_stage_ctx *stg_ctx,
 	*out_vbki = NULL;
 	if (!stype_isdata(vaddr->stype)) {
 		ret = stgc_stage_vblock(stg_ctx, voaddr, out_vbki);
-		/*
-		 * Special case: trying to stage vbk which is located beyond
-		 * the current end-of-blob range and the blob is opened in read
-		 * only mode. Ignore it.
-		 */
-		if (ret == -SILOFS_ERDONLY) {
-			ret = 0;
-		}
+		silofs_assert_ne(ret, -SILOFS_ERDONLY);
 	}
 	return ret;
 }
@@ -2409,10 +2402,7 @@ stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
 	*out_vi = NULL;
 	err = silofs_stage_vnode(stg_ctx->task, NULL, vaddr,
 	                         SILOFS_STG_CUR, &vi);
-	if (err == -SILOFS_ERDONLY) {
-		/* TODO: should not have this case XXX */
-		return 0; /* special case: out-of-blob range */
-	}
+	silofs_assert_ne(err, -SILOFS_ERDONLY);
 	if (err) {
 		return err;
 	}

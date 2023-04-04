@@ -1149,7 +1149,7 @@ static int repo_objs_create_blob_of(const struct silofs_repo *repo,
 		return err;
 	}
 	blobf_bindto(blobf, fd, true);
-	err = blobf_reassign_size(blobf, SILOFS_BK_SIZE);
+	err = blobf_reassign_size(blobf, blobf_capacity(blobf));
 	if (err) {
 		do_unlinkat(dfd, blobf->b_name.name, 0);
 		return err;

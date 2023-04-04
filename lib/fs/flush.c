@@ -41,14 +41,14 @@ struct silofs_submit_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void si_seal_meta(struct silofs_snode_info *si)
+static void lni_seal_meta(struct silofs_lnode_info *lni)
 {
-	const enum silofs_stype stype = si->s_stype;
+	const enum silofs_stype stype = lni->stype;
 
 	if (stype_isunode(stype)) {
-		silofs_seal_unode(silofs_ui_from_si(si));
+		silofs_seal_unode(silofs_ui_from_lni(lni));
 	} else if (stype_isvnode(stype) && !stype_isdata(stype)) {
-		silofs_seal_vnode(silofs_vi_from_si(si));
+		silofs_seal_vnode(silofs_vi_from_lni(lni));
 	}
 }
 
@@ -90,7 +90,7 @@ static int refresh_vi_oaddr(struct silofs_task *task,
 }
 
 static int resolve_oaddr_of(struct silofs_task *task,
-                            struct silofs_snode_info *si,
+                            struct silofs_lnode_info *lni,
                             struct silofs_oaddr *out_oaddr)
 {
 	const struct silofs_unode_info *ui = NULL;
@@ -98,25 +98,25 @@ static int resolve_oaddr_of(struct silofs_task *task,
 	const struct silofs_oaddr *oaddr = NULL;
 	int err;
 
-	if (stype_isunode(si->s_stype)) {
-		ui = silofs_ui_from_si(si);
+	if (stype_isunode(lni->stype)) {
+		ui = silofs_ui_from_lni(lni);
 		oaddr = &ui->u_uaddr.oaddr;
-	} else if (stype_isvnode(si->s_stype)) {
-		vi = silofs_vi_from_si(si);
+	} else if (stype_isvnode(lni->stype)) {
+		vi = silofs_vi_from_lni(lni);
 		oaddr = &vi->v_oaddr;
 		err = refresh_vi_oaddr(task, vi);
 		if (err) {
 			return err;
 		}
 	} else {
-		silofs_panic("corrupted snode: stype=%d", si->s_stype);
+		silofs_panic("corrupted snode: stype=%d", lni->stype);
 	}
 	oaddr_assign(out_oaddr, oaddr);
 	return 0;
 }
 
 static int smc_check_resolved_oaddr(const struct silofs_submit_ctx *sm_ctx,
-                                    const struct silofs_snode_info *si,
+                                    const struct silofs_lnode_info *lni,
                                     const struct silofs_oaddr *oaddr)
 {
 	const struct silofs_sb_info *sbi = sm_ctx->uber->ub_sbi;
@@ -124,7 +124,7 @@ static int smc_check_resolved_oaddr(const struct silofs_submit_ctx *sm_ctx,
 	int err = 0;
 	bool mut;
 
-	if (stype_isvnode(si->s_stype)) {
+	if (stype_isvnode(lni->stype)) {
 		mut = silofs_sbi_ismutable_blobid(sbi, blobid);
 		err = mut ? 0 : -EROFS;
 	}
@@ -186,38 +186,38 @@ static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
 }
 
 static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
-                                 struct silofs_snode_info **siq,
+                                 struct silofs_lnode_info **lnisq,
                                  struct silofs_submitq_entry *sqe)
 {
 	struct silofs_oaddr oaddr;
-	struct silofs_snode_info *si;
+	struct silofs_lnode_info *lni;
 	int err;
 
-	while (*siq != NULL) {
-		si = *siq;
-		err = resolve_oaddr_of(sm_ctx->task, si, &oaddr);
+	while (*lnisq != NULL) {
+		lni = *lnisq;
+		err = resolve_oaddr_of(sm_ctx->task, lni, &oaddr);
 		if (err) {
 			return err;
 		}
-		err = smc_check_resolved_oaddr(sm_ctx, si, &oaddr);
+		err = smc_check_resolved_oaddr(sm_ctx, lni, &oaddr);
 		if (err) {
 			return err;
 		}
-		if (!silofs_sqe_append_ref(sqe, &oaddr, si)) {
+		if (!silofs_sqe_append_ref(sqe, &oaddr, lni)) {
 			break;
 		}
-		*siq = si->s_ds_next;
+		*lnisq = lni->ds_next;
 	}
 	return 0;
 }
 
 static int smc_populate_sqe(struct silofs_submit_ctx *sm_ctx,
-                            struct silofs_snode_info **siq,
+                            struct silofs_lnode_info **lnisq,
                             struct silofs_submitq_entry *sqe)
 {
 	int err;
 
-	err = smc_populate_sqe_refs(sm_ctx, siq, sqe);
+	err = smc_populate_sqe_refs(sm_ctx, lnisq, sqe);
 	if (!err) {
 		silofs_sqe_increfs(sqe);
 		err = smc_setup_sqe_buf(sm_ctx, sqe);
@@ -235,34 +235,34 @@ static long ckey_compare(const void *x, const void *y)
 	return silofs_ckey_compare(ckey_x, ckey_y);
 }
 
-static struct silofs_snode_info *
-avl_node_to_si(const struct silofs_avl_node *an)
+static struct silofs_lnode_info *
+avl_node_to_lni(const struct silofs_avl_node *an)
 {
-	const struct silofs_snode_info *si;
+	const struct silofs_lnode_info *lni;
 
-	si = container_of2(an, struct silofs_snode_info, s_ds_an);
-	return unconst(si);
+	lni = container_of2(an, struct silofs_lnode_info, ds_an);
+	return unconst(lni);
 }
 
-static const void *si_getkey(const struct silofs_avl_node *an)
+static const void *lni_getkey(const struct silofs_avl_node *an)
 {
-	const struct silofs_snode_info *si = avl_node_to_si(an);
+	const struct silofs_lnode_info *lni = avl_node_to_lni(an);
 
-	return &si->s_ce.ce_ckey;
+	return &lni->ce.ce_ckey;
 }
 
-static void si_visit_reinit(struct silofs_avl_node *an, void *p)
+static void lni_visit_reinit(struct silofs_avl_node *an, void *p)
 {
-	struct silofs_snode_info *si = avl_node_to_si(an);
+	struct silofs_lnode_info *lni = avl_node_to_lni(an);
 
-	silofs_avl_node_init(&si->s_ds_an);
+	silofs_avl_node_init(&lni->ds_an);
 	unused(p);
 }
 
 static void dset_clear_map(struct silofs_dset *dset)
 {
 	const struct silofs_avl_node_functor fn = {
-		.fn = si_visit_reinit,
+		.fn = lni_visit_reinit,
 		.ctx = NULL
 	};
 
@@ -270,55 +270,55 @@ static void dset_clear_map(struct silofs_dset *dset)
 }
 
 static void dset_add_dirty(struct silofs_dset *dset,
-                           struct silofs_snode_info *si)
+                           struct silofs_lnode_info *lni)
 {
-	silofs_avl_insert(&dset->ds_avl, &si->s_ds_an);
+	silofs_avl_insert(&dset->ds_avl, &lni->ds_an);
 }
 
 static void dset_init(struct silofs_dset *dset)
 {
-	silofs_avl_init(&dset->ds_avl, si_getkey, ckey_compare, dset);
-	dset->ds_siq = NULL;
+	silofs_avl_init(&dset->ds_avl, lni_getkey, ckey_compare, dset);
+	dset->ds_lnisq = NULL;
 	dset->ds_add_fn = dset_add_dirty;
 }
 
 static void dset_fini(struct silofs_dset *dset)
 {
 	silofs_avl_fini(&dset->ds_avl);
-	dset->ds_siq = NULL;
+	dset->ds_lnisq = NULL;
 	dset->ds_add_fn = NULL;
 }
 
-static void dset_push_front_siq(struct silofs_dset *dset,
-                                struct silofs_snode_info *si)
+static void dset_push_frontq(struct silofs_dset *dset,
+                             struct silofs_lnode_info *lni)
 {
-	si->s_ds_next = dset->ds_siq;
-	dset->ds_siq = si;
+	lni->ds_next = dset->ds_lnisq;
+	dset->ds_lnisq = lni;
 }
 
 static void dset_seal_all(const struct silofs_dset *dset)
 {
-	struct silofs_snode_info *si = dset->ds_siq;
+	struct silofs_lnode_info *lni = dset->ds_lnisq;
 
-	while (si != NULL) {
-		si_seal_meta(si);
-		si = si->s_ds_next;
+	while (lni != NULL) {
+		lni_seal_meta(lni);
+		lni = lni->ds_next;
 	}
 }
 
 static void dset_mkfifo(struct silofs_dset *dset)
 {
-	struct silofs_snode_info *si;
+	struct silofs_lnode_info *lni;
 	const struct silofs_avl_node *end;
 	const struct silofs_avl_node *itr;
 	const struct silofs_avl *avl = &dset->ds_avl;
 
-	dset->ds_siq = NULL;
+	dset->ds_lnisq = NULL;
 	itr = silofs_avl_begin(avl);
 	end = silofs_avl_end(avl);
 	while (itr != end) {
-		si = avl_node_to_si(itr);
-		dset_push_front_siq(dset, si);
+		lni = avl_node_to_lni(itr);
+		dset_push_frontq(dset, lni);
 		itr = silofs_avl_next(avl, itr);
 	}
 }
@@ -328,27 +328,27 @@ static void dset_undirtify_all(const struct silofs_dset *dset)
 	struct silofs_unode_info *ui = NULL;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_vnode_info *vi = NULL;
-	struct silofs_snode_info *si_next = NULL;
-	struct silofs_snode_info *si = dset->ds_siq;
+	struct silofs_lnode_info *lni_next = NULL;
+	struct silofs_lnode_info *lni = dset->ds_lnisq;
 	enum silofs_stype stype;
 
-	while (si != NULL) {
-		si_next = si->s_ds_next;
-		stype = si->s_stype;
+	while (lni != NULL) {
+		lni_next = lni->ds_next;
+		stype = lni->stype;
 
 		if (stype_isinode(stype)) {
-			ii = silofs_ii_from_si(si);
+			ii = silofs_ii_from_lni(lni);
 			silofs_ii_undirtify(ii);
 		} else if (stype_isvnode(stype)) {
-			vi = silofs_vi_from_si(si);
+			vi = silofs_vi_from_lni(lni);
 			silofs_vi_undirtify(vi);
 		} else {
 			silofs_assert(stype_isunode(stype));
-			ui = silofs_ui_from_si(si);
+			ui = silofs_ui_from_lni(lni);
 			silofs_ui_undirtify(ui);
 		}
-		si->s_ds_next = NULL;
-		si = si_next;
+		lni->ds_next = NULL;
+		lni = lni_next;
 		ui = NULL;
 		ii = NULL;
 		vi = NULL;
@@ -397,7 +397,7 @@ static void dsets_add_by_vi(struct silofs_dsets *dsets,
 {
 	struct silofs_dset *dset = dsets_get_by_vi(dsets, vi);
 
-	dset->ds_add_fn(dset, &vi->v_si);
+	dset->ds_add_fn(dset, &vi->v);
 }
 
 static void dsets_add_by_ui(struct silofs_dsets *dsets,
@@ -405,7 +405,7 @@ static void dsets_add_by_ui(struct silofs_dsets *dsets,
 {
 	struct silofs_dset *dset = dsets_get_by_ui(dsets, ui);
 
-	dset->ds_add_fn(dset, &ui->u_si);
+	dset->ds_add_fn(dset, &ui->u);
 }
 
 static void dsets_fill_vis_of(struct silofs_dsets *dsets,
@@ -587,12 +587,12 @@ static int smc_pend_sqe(const struct silofs_submit_ctx *sm_ctx,
 }
 
 static int smc_flush_siq(struct silofs_submit_ctx *sm_ctx,
-                         struct silofs_snode_info **siq,
+                         struct silofs_lnode_info **lnisq,
                          struct silofs_submitq_entry *sqe)
 {
 	int err;
 
-	err = smc_populate_sqe(sm_ctx, siq, sqe);
+	err = smc_populate_sqe(sm_ctx, lnisq, sqe);
 	if (err) {
 		return err;
 	}
@@ -608,15 +608,15 @@ static int smc_flush_dset(struct silofs_submit_ctx *sm_ctx,
 {
 	struct silofs_submitq_entry *sqe = NULL;
 	struct silofs_dset *dset = smc_dset_of(sm_ctx, stype);
-	struct silofs_snode_info *siq = dset->ds_siq;
+	struct silofs_lnode_info *lnisq = dset->ds_lnisq;
 	int err;
 
-	while (siq != NULL) {
+	while (lnisq != NULL) {
 		err = smc_make_sqe(sm_ctx, &sqe);
 		if (err) {
 			return err;
 		}
-		err = smc_flush_siq(sm_ctx, &siq, sqe);
+		err = smc_flush_siq(sm_ctx, &lnisq, sqe);
 		if (err) {
 			smc_del_sqe(sm_ctx, sqe);
 			return err;

@@ -84,7 +84,7 @@ static void vi_bind_to(struct silofs_vnode_info *vi,
                        struct silofs_uber *uber, struct silofs_vbk_info *vbki)
 {
 	silofs_vi_attach_to(vi, vbki);
-	vi->v_si.s_uber = uber;
+	vi->v.uber = uber;
 }
 
 static void vi_update_oaddr(struct silofs_vnode_info *vi,
@@ -2624,7 +2624,7 @@ static struct silofs_cache *task_cache(const struct silofs_task *task)
 static int fixup_cached_vi(const struct silofs_task *task,
                            struct silofs_vnode_info *vi)
 {
-	if (!(vi->v_si.s_ce.ce_flags & SILOFS_CEF_FORGOT)) {
+	if (!(vi->v.ce.ce_flags & SILOFS_CEF_FORGOT)) {
 		return 0;
 	}
 	if (silofs_vi_refcnt(vi)) {

@@ -502,8 +502,8 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 
 static void ui_stamp_mark_visible(struct silofs_unode_info *ui)
 {
-	silofs_zero_stamp_meta(ui->u_si.s_view, ui_stype(ui));
-	ui->u_si.s_flags |= SILOFS_SIF_VERIFIED;
+	silofs_zero_stamp_meta(ui->u.view, ui_stype(ui));
+	ui->u.flags |= SILOFS_SIF_VERIFIED;
 }
 
 static const struct silofs_bkaddr *
@@ -521,7 +521,7 @@ static void sbi_attach_to(struct silofs_sb_info *sbi,
                           struct silofs_ubk_info *ubki)
 {
 	silofs_ui_attach_to(&sbi->sb_ui, ubki);
-	sbi->sb = &sbi->sb_ui.u_si.s_view->sb;
+	sbi->sb = &sbi->sb_ui.u.view->sb;
 	sbi->sb_sti.spst_curr = &sbi->sb->sb_space_stats_curr;
 	sbi->sb_sti.spst_base = &sbi->sb->sb_space_stats_base;
 	sbi->sb_sti.sbi = sbi;
@@ -555,7 +555,7 @@ static void sni_attach_to(struct silofs_spnode_info *sni,
                           struct silofs_ubk_info *ubki)
 {
 	silofs_ui_attach_to(&sni->sn_ui, ubki);
-	sni->sn = &sni->sn_ui.u_si.s_view->sn;
+	sni->sn = &sni->sn_ui.u.view->sn;
 }
 
 static int sni_verify_view(struct silofs_spnode_info *sni)
@@ -586,7 +586,7 @@ static void sli_attach_to(struct silofs_spleaf_info *sli,
                           struct silofs_ubk_info *ubki)
 {
 	silofs_ui_attach_to(&sli->sl_ui, ubki);
-	sli->sl = &sli->sl_ui.u_si.s_view->sl;
+	sli->sl = &sli->sl_ui.u.view->sl;
 }
 
 static int sli_verify_view(struct silofs_spleaf_info *sli)
@@ -624,7 +624,7 @@ static int ubc_stage_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 static void ubc_bind_spawned_ui(const struct silofs_uber_ctx *ub_ctx,
                                 struct silofs_unode_info *ui)
 {
-	ui->u_si.s_uber = ub_ctx->uber;
+	ui->u.uber = ub_ctx->uber;
 }
 
 static int ubc_spawn_cached_ui(const struct silofs_uber_ctx *ub_ctx,

@@ -17,7 +17,7 @@
 #ifndef SILOFS_NODES_H_
 #define SILOFS_NODES_H_
 
-struct silofs_snode_info;
+struct silofs_lnode_info;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 
@@ -31,28 +31,28 @@ enum silofs_siflags {
 };
 
 /* nodes' delete hook */
-typedef void (*silofs_snode_del_fn)(struct silofs_snode_info *si,
+typedef void (*silofs_lnode_del_fn)(struct silofs_lnode_info *lni,
                                     struct silofs_alloc *alloc);
 
-/* snode */
-struct silofs_snode_info {
-	struct silofs_cache_elem        s_ce;
-	struct silofs_avl_node          s_ds_an;
-	silofs_snode_del_fn             s_del_hook;
-	struct silofs_uber             *s_uber;
-	struct silofs_snode_info       *s_ds_next;
-	struct silofs_bk_info          *s_bki;
-	union silofs_view              *s_view;
-	loff_t                          s_view_pos;
-	size_t                          s_view_len;
-	enum silofs_stype               s_stype;
-	int                             s_flags;
+/* lnode: base object of all logiacal-nodes */
+struct silofs_lnode_info {
+	struct silofs_cache_elem        ce;
+	struct silofs_avl_node          ds_an;
+	silofs_lnode_del_fn             del_hook;
+	struct silofs_uber             *uber;
+	struct silofs_lnode_info       *ds_next;
+	struct silofs_bk_info          *bki;
+	union silofs_view              *view;
+	loff_t                          view_pos;
+	size_t                          view_len;
+	enum silofs_stype               stype;
+	int                             flags;
 };
 
 /* unode */
 struct silofs_unode_info {
+	struct silofs_lnode_info        u;
 	struct silofs_uaddr             u_uaddr;
-	struct silofs_snode_info        u_si;
 	struct silofs_dirtyq           *u_dq;
 	struct silofs_list_head         u_dq_lh;
 	struct silofs_ubk_info         *u_ubki;
@@ -88,7 +88,7 @@ struct silofs_spleaf_info {
 
 /* vnode */
 struct silofs_vnode_info {
-	struct silofs_snode_info        v_si;
+	struct silofs_lnode_info        v;
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_oaddr             v_oaddr;
@@ -157,7 +157,7 @@ silofs_sli_from_ui(const struct silofs_unode_info *ui);
 
 
 struct silofs_inode_info *
-silofs_ii_from_si(const struct silofs_snode_info *si);
+silofs_ii_from_lni(const struct silofs_lnode_info *lni);
 
 struct silofs_inode_info *
 silofs_ii_from_vi(const struct silofs_vnode_info *vi);
@@ -199,7 +199,7 @@ struct silofs_vnode_info *
 silofs_vi_from_dirty_lh(struct silofs_list_head *lh);
 
 struct silofs_vnode_info *
-silofs_vi_from_si(const struct silofs_snode_info *si);
+silofs_vi_from_lni(const struct silofs_lnode_info *lni);
 
 bool silofs_vi_isdata(const struct silofs_vnode_info *vi);
 
@@ -207,7 +207,7 @@ void silofs_stamp_meta_of(struct silofs_vnode_info *vi);
 
 
 struct silofs_unode_info *
-silofs_ui_from_si(const struct silofs_snode_info *si);
+silofs_ui_from_lni(const struct silofs_lnode_info *lni);
 
 struct silofs_unode_info *
 silofs_ui_from_dirty_lh(struct silofs_list_head *lh);
@@ -224,7 +224,7 @@ void silofs_fill_csum_meta(union silofs_view *view);
 int silofs_verify_csum_meta(const union silofs_view *view);
 
 
-struct silofs_bk_info *silofs_bki_of(const struct silofs_snode_info *si);
+struct silofs_bk_info *silofs_bki_of(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -256,6 +256,6 @@ void silofs_seal_vnode(struct silofs_vnode_info *vi);
 
 void silofs_seal_unode(struct silofs_unode_info *ui);
 
-bool silofs_test_evictable(const struct silofs_snode_info *si);
+bool silofs_test_evictable(const struct silofs_lnode_info *lni);
 
 #endif /* SILOFS_NODES_H_ */

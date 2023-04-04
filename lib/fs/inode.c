@@ -437,7 +437,7 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	bool ret = false;
 
 	if (!ii->i_dq_vis.dq.sz && !ii->i_nopen) {
-		ret = silofs_si_isevictable(&ii->i_vi.v_si);
+		ret = silofs_lni_isevictable(&ii->i_vi.v);
 	}
 	return ret;
 }

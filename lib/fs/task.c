@@ -38,7 +38,7 @@ static void sqe_reset_buf(struct silofs_submitq_entry *sqe)
 
 static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
                              const struct silofs_oaddr *oaddr,
-                             const struct silofs_snode_info *si)
+                             const struct silofs_lnode_info *lni)
 {
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
 	size_t len;
@@ -51,7 +51,7 @@ static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
 	if (sqe->cnt == ARRAY_SIZE(sqe->ref)) {
 		return false;
 	}
-	if (si->s_stype != sqe->ref[0].stype) {
+	if (lni->stype != sqe->ref[0].stype) {
 		return false;
 	}
 	end = off_end(sqe->off, sqe->len);
@@ -75,13 +75,13 @@ static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
 
 bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
                            const struct silofs_oaddr *oaddr,
-                           struct silofs_snode_info *si)
+                           struct silofs_lnode_info *lni)
 {
 	struct silofs_submit_ref *ref;
 
-	silofs_assert_eq(oaddr->len, si->s_view_len);
+	silofs_assert_eq(oaddr->len, lni->view_len);
 
-	if (!sqe_isappendable(sqe, oaddr, si)) {
+	if (!sqe_isappendable(sqe, oaddr, lni)) {
 		return false;
 	}
 	if (sqe->cnt == 0) {
@@ -90,9 +90,9 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 	}
 	ref = &sqe->ref[sqe->cnt];
 	oaddr_assign(&ref->oaddr, oaddr);
-	ref->bki = silofs_bki_of(si);
-	ref->view = si->s_view;
-	ref->stype = si->s_stype;
+	ref->bki = silofs_bki_of(lni);
+	ref->view = lni->view;
+	ref->stype = lni->stype;
 	sqe->len += oaddr->len;
 	sqe->cnt += 1;
 	return true;

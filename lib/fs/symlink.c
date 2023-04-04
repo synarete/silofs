@@ -207,11 +207,11 @@ static void syi_dirtify(struct silofs_symval_info *syi,
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
-	if (syi->sy_vi.v_si.s_flags & SILOFS_SIF_RECHECK) {
+	if (syi->sy_vi.v.flags & SILOFS_SIF_RECHECK) {
 		return 0;
 	}
 	/* TODO: recheck */
-	syi->sy_vi.v_si.s_flags |= SILOFS_SIF_RECHECK;
+	syi->sy_vi.v.flags |= SILOFS_SIF_RECHECK;
 	return 0;
 }
 

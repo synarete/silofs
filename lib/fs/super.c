@@ -736,7 +736,7 @@ void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 
 static void sbi_zero_stamp_view(struct silofs_sb_info *sbi)
 {
-	union silofs_view *view = sbi->sb_ui.u_si.s_view;
+	union silofs_view *view = sbi->sb_ui.u.view;
 
 	silofs_zero_stamp_meta(view, SILOFS_STYPE_SUPER);
 }

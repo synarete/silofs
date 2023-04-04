@@ -61,20 +61,20 @@ static void bki_set_view_at(struct silofs_bk_info *bki,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool si_has_bkview(const struct silofs_snode_info *si)
+static bool lni_has_bkview(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_bk_info *bki = si->s_bki;
+	const struct silofs_bk_info *bki = lni->bki;
 
 	silofs_assert_not_null(bki);
-	return bki_has_view_at(bki, si->s_view_pos, si->s_view_len);
+	return bki_has_view_at(bki, lni->view_pos, lni->view_len);
 }
 
-static void si_set_bkview(const struct silofs_snode_info *si)
+static void lni_set_bkview(const struct silofs_lnode_info *lni)
 {
-	struct silofs_bk_info *bki = si->s_bki;
+	struct silofs_bk_info *bki = lni->bki;
 
 	silofs_assert_not_null(bki);
-	bki_set_view_at(bki, si->s_view_pos, si->s_view_len);
+	bki_set_view_at(bki, lni->view_pos, lni->view_len);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -124,18 +124,18 @@ silofs_decrypt_view(const struct silofs_uber *uber,
 
 static bool ui_has_bkview(const struct silofs_unode_info *ui)
 {
-	return si_has_bkview(&ui->u_si);
+	return lni_has_bkview(&ui->u);
 }
 
 static void ui_set_bkview(struct silofs_unode_info *ui)
 {
-	si_set_bkview(&ui->u_si);
+	lni_set_bkview(&ui->u);
 }
 
 static int decrypt_ui_view_inplace(const struct silofs_uber *uber,
                                    struct silofs_unode_info *ui)
 {
-	union silofs_view *view = ui->u_si.s_view;
+	union silofs_view *view = ui->u.view;
 
 	return silofs_decrypt_view(uber, ui_oaddr(ui), view, view);
 }
@@ -158,25 +158,25 @@ int silofs_restore_ui_view(const struct silofs_uber *uber,
 
 void silofs_ui_set_bkview(struct silofs_unode_info *ui)
 {
-	si_set_bkview(&ui->u_si);
+	lni_set_bkview(&ui->u);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool vi_has_bkview(const struct silofs_vnode_info *vi)
 {
-	return si_has_bkview(&vi->v_si);
+	return lni_has_bkview(&vi->v);
 }
 
 static void vi_set_bkview(struct silofs_vnode_info *vi)
 {
-	si_set_bkview(&vi->v_si);
+	lni_set_bkview(&vi->v);
 }
 
 static int decrypt_vi_view_inplace(const struct silofs_uber *uber,
                                    struct silofs_vnode_info *vi)
 {
-	union silofs_view *view = vi->v_si.s_view;
+	union silofs_view *view = vi->v.view;
 
 	return silofs_decrypt_view(uber, &vi->v_oaddr, view, view);
 }

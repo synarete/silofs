@@ -65,7 +65,7 @@ struct silofs_submitq {
 
 bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
                            const struct silofs_oaddr *oaddr,
-                           struct silofs_snode_info *si);
+                           struct silofs_lnode_info *lni);
 
 int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe);
 

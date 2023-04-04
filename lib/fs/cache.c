@@ -45,7 +45,7 @@ struct silofs_cache_ctx {
 	struct silofs_blobf      *blobf;
 	struct silofs_ubk_info   *ubki;
 	struct silofs_vbk_info   *vbki;
-	struct silofs_snode_info *si;
+	struct silofs_lnode_info *lni;
 	struct silofs_unode_info *ui;
 	struct silofs_vnode_info *vi;
 	size_t limit;
@@ -986,67 +986,68 @@ static bool vbki_is_evictable(const struct silofs_vbk_info *vbki)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_snode_info *si_from_ce(const struct silofs_cache_elem *ce)
+static struct silofs_lnode_info *
+lni_from_ce(const struct silofs_cache_elem *ce)
 {
-	const struct silofs_snode_info *si = NULL;
+	const struct silofs_lnode_info *lni = NULL;
 
 	if (likely(ce != NULL)) {
-		si = container_of2(ce, struct silofs_snode_info, s_ce);
+		lni = container_of2(ce, struct silofs_lnode_info, ce);
 	}
-	return unconst(si);
+	return unconst(lni);
 }
 
-static struct silofs_cache_elem *si_to_ce(const struct silofs_snode_info *si)
+static struct silofs_cache_elem *lni_to_ce(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_cache_elem *ce = &si->s_ce;
+	const struct silofs_cache_elem *ce = &lni->ce;
 
 	return unconst(ce);
 }
 
-static void si_set_cache(struct silofs_snode_info *si,
-                         struct silofs_cache *cache)
+static void lni_set_cache(struct silofs_lnode_info *lni,
+                          struct silofs_cache *cache)
 {
-	si->s_ce.ce_cache = cache;
+	lni->ce.ce_cache = cache;
 }
 
-bool silofs_si_isevictable(const struct silofs_snode_info *si)
+bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 {
 	bool ret = false;
 
-	if (!(si->s_flags & SILOFS_SIF_PINNED)) {
-		ret = ce_is_evictable(si_to_ce(si));
+	if (!(lni->flags & SILOFS_SIF_PINNED)) {
+		ret = ce_is_evictable(lni_to_ce(lni));
 	}
 	return ret;
 }
 
-static void si_incref(struct silofs_snode_info *si)
+static void lni_incref(struct silofs_lnode_info *lni)
 {
-	ce_incref(&si->s_ce);
+	ce_incref(&lni->ce);
 }
 
-static void si_decref(struct silofs_snode_info *si)
+static void lni_decref(struct silofs_lnode_info *lni)
 {
-	ce_decref(&si->s_ce);
+	ce_decref(&lni->ce);
 }
 
-void silofs_si_incref(struct silofs_snode_info *si)
+void silofs_lni_incref(struct silofs_lnode_info *lni)
 {
-	if (likely(si != NULL)) {
-		si_incref(si);
+	if (likely(lni != NULL)) {
+		lni_incref(lni);
 	}
 }
 
-void silofs_si_decref(struct silofs_snode_info *si)
+void silofs_lni_decref(struct silofs_lnode_info *lni)
 {
-	if (likely(si != NULL)) {
-		si_decref(si);
+	if (likely(lni != NULL)) {
+		lni_decref(lni);
 	}
 }
 
-static void si_remove_from_lrumap(struct silofs_snode_info *si,
-                                  struct silofs_lrumap *lm)
+static void lni_remove_from_lrumap(struct silofs_lnode_info *lni,
+                                   struct silofs_lrumap *lm)
 {
-	struct silofs_cache_elem *ce = si_to_ce(si);
+	struct silofs_cache_elem *ce = lni_to_ce(lni);
 
 	if (ce_is_mapped(ce)) {
 		lrumap_remove(lm, ce);
@@ -1055,21 +1056,22 @@ static void si_remove_from_lrumap(struct silofs_snode_info *si,
 	}
 }
 
-static void si_delete(struct silofs_snode_info *si, struct silofs_alloc *alloc)
+static void lni_delete(struct silofs_lnode_info *lni,
+                       struct silofs_alloc *alloc)
 {
-	silofs_snode_del_fn del = si->s_del_hook;
+	silofs_lnode_del_fn del = lni->del_hook;
 
-	del(si, alloc);
+	del(lni, alloc);
 }
 
 static int visit_evictable_si(struct silofs_cache_elem *ce, void *arg)
 {
 	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_snode_info *si = si_from_ce(ce);
+	struct silofs_lnode_info *lni = lni_from_ce(ce);
 
 	c_ctx->count++;
-	if (silofs_test_evictable(si)) {
-		c_ctx->si = si; /* found candidate for eviction */
+	if (silofs_test_evictable(lni)) {
+		c_ctx->lni = lni; /* found candidate for eviction */
 		return 1;
 	}
 	if (c_ctx->count >= c_ctx->limit) {
@@ -1088,7 +1090,7 @@ static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 
 static bool ui_isdirty(const struct silofs_unode_info *ui)
 {
-	return ce_is_dirty(&ui->u_si.s_ce);
+	return ce_is_dirty(&ui->u.ce);
 }
 
 static void ui_do_dirtify(struct silofs_unode_info *ui)
@@ -1097,8 +1099,8 @@ static void ui_do_dirtify(struct silofs_unode_info *ui)
 
 	if (!ui_isdirty(ui)) {
 		silofs_dirtyq_append(ui->u_dq, &ui->u_dq_lh,
-		                     ui->u_si.s_view_len);
-		ce_set_dirty(&ui->u_si.s_ce, true);
+		                     ui->u.view_len);
+		ce_set_dirty(&ui->u.ce, true);
 	}
 }
 
@@ -1108,8 +1110,8 @@ static void ui_do_undirtify(struct silofs_unode_info *ui)
 
 	if (ui_isdirty(ui)) {
 		silofs_dirtyq_remove(ui->u_dq, &ui->u_dq_lh,
-		                     ui->u_si.s_view_len);
-		ce_set_dirty(&ui->u_si.s_ce, false);
+		                     ui->u.view_len);
+		ce_set_dirty(&ui->u.ce, false);
 	}
 }
 
@@ -1130,14 +1132,14 @@ void silofs_ui_undirtify(struct silofs_unode_info *ui)
 void silofs_ui_incref(struct silofs_unode_info *ui)
 {
 	if (likely(ui != NULL)) {
-		si_incref(&ui->u_si);
+		lni_incref(&ui->u);
 	}
 }
 
 void silofs_ui_decref(struct silofs_unode_info *ui)
 {
 	if (likely(ui != NULL)) {
-		si_decref(&ui->u_si);
+		lni_decref(&ui->u);
 	}
 }
 
@@ -1146,14 +1148,14 @@ static struct silofs_unode_info *ui_from_ce(struct silofs_cache_elem *ce)
 	struct silofs_unode_info *ui = NULL;
 
 	if (ce != NULL) {
-		ui = silofs_ui_from_si(si_from_ce(ce));
+		ui = silofs_ui_from_lni(lni_from_ce(ce));
 	}
 	return ui;
 }
 
 static struct silofs_cache_elem *ui_to_ce(struct silofs_unode_info *ui)
 {
-	return si_to_ce(&ui->u_si);
+	return lni_to_ce(&ui->u);
 }
 
 static void ui_attach_bk(struct silofs_unode_info *ui,
@@ -1161,7 +1163,7 @@ static void ui_attach_bk(struct silofs_unode_info *ui,
 {
 	ubki_incref(ubki);
 	ui->u_ubki = ubki;
-	ui->u_si.s_bki = &ubki->ubk_base;
+	ui->u.bki = &ubki->ubk_base;
 }
 
 static void ui_detach_bk(struct silofs_unode_info *ui)
@@ -1171,7 +1173,7 @@ static void ui_detach_bk(struct silofs_unode_info *ui)
 	if (ubki != NULL) {
 		ubki_decref(ubki);
 		ui->u_ubki = NULL;
-		ui->u_si.s_bki = NULL;
+		ui->u.bki = NULL;
 	}
 }
 
@@ -1181,8 +1183,8 @@ static int visit_evictable_ui(struct silofs_cache_elem *ce, void *arg)
 	int ret;
 
 	ret = visit_evictable_si(ce, arg);
-	if (ret && (c_ctx->si != NULL)) {
-		c_ctx->ui = silofs_ui_from_si(c_ctx->si);
+	if (ret && (c_ctx->lni != NULL)) {
+		c_ctx->ui = silofs_ui_from_lni(c_ctx->lni);
 	}
 	return ret;
 }
@@ -1197,7 +1199,13 @@ void silofs_ui_attach_to(struct silofs_unode_info *ui,
 
 static bool ui_is_evictable(const struct silofs_unode_info *ui)
 {
-	return silofs_test_evictable(&ui->u_si);
+	return silofs_test_evictable(&ui->u);
+}
+
+
+static void ui_delete(struct silofs_unode_info *ui, struct silofs_alloc *alloc)
+{
+	lni_delete(&ui->u, alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1232,14 +1240,14 @@ static struct silofs_vnode_info *vi_from_ce(struct silofs_cache_elem *ce)
 	struct silofs_vnode_info *vi = NULL;
 
 	if (ce != NULL) {
-		vi = silofs_vi_from_si(si_from_ce(ce));
+		vi = silofs_vi_from_lni(lni_from_ce(ce));
 	}
 	return vi;
 }
 
 static struct silofs_cache_elem *vi_to_ce(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_cache_elem *ce = &vi->v_si.s_ce;
+	const struct silofs_cache_elem *ce = &vi->v.ce;
 
 	return unconst(ce);
 }
@@ -1250,8 +1258,8 @@ static int visit_evictable_vi(struct silofs_cache_elem *ce, void *arg)
 	struct silofs_cache_ctx *c_ctx = arg;
 
 	ret = visit_evictable_si(ce, arg);
-	if (ret && (c_ctx->si != NULL)) {
-		c_ctx->vi = silofs_vi_from_si(c_ctx->si);
+	if (ret && (c_ctx->lni != NULL)) {
+		c_ctx->vi = silofs_vi_from_lni(c_ctx->lni);
 	}
 	return ret;
 }
@@ -1280,7 +1288,7 @@ static void vi_attach_bk(struct silofs_vnode_info *vi,
 {
 	silofs_vbki_incref(vbki);
 	vi->v_vbki = vbki;
-	vi->v_si.s_bki = &vbki->vbk_base;
+	vi->v.bki = &vbki->vbk_base;
 }
 
 static void vi_detach_bk(struct silofs_vnode_info *vi)
@@ -1290,7 +1298,7 @@ static void vi_detach_bk(struct silofs_vnode_info *vi)
 	if (vbki != NULL) {
 		silofs_vbki_decref(vbki);
 		vi->v_vbki = NULL;
-		vi->v_si.s_bki = NULL;
+		vi->v.bki = NULL;
 	}
 }
 
@@ -1303,7 +1311,12 @@ void silofs_vi_attach_to(struct silofs_vnode_info *vi,
 
 static bool vi_is_evictable(const struct silofs_vnode_info *vi)
 {
-	return silofs_test_evictable(&vi->v_si);
+	return silofs_test_evictable(&vi->v);
+}
+
+static void vi_delete(struct silofs_vnode_info *vi, struct silofs_alloc *alloc)
+{
+	lni_delete(&vi->v, alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1945,18 +1958,16 @@ cache_find_relru_ui(struct silofs_cache *cache,
 static void cache_remove_ui(struct silofs_cache *cache,
                             struct silofs_unode_info *ui)
 {
-	si_remove_from_lrumap(&ui->u_si, &cache->c_ui_lm);
+	lni_remove_from_lrumap(&ui->u, &cache->c_ui_lm);
 }
 
 static void cache_evict_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *si = &ui->u_si;
-
 	ui_do_undirtify(ui);
 	cache_remove_ui(cache, ui);
 	ui_detach_bk(ui);
-	si_delete(si, cache->c_alloc);
+	ui_delete(ui, cache->c_alloc);
 }
 
 static void cache_store_ui_lrumap(struct silofs_cache *cache,
@@ -1976,10 +1987,9 @@ static struct silofs_unode_info *cache_get_lru_ui(struct silofs_cache *cache)
 static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
                                     struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *si = &ui->u_si;
 	bool evicted;
 
-	if (silofs_test_evictable(si)) {
+	if (ui_is_evictable(ui)) {
 		cache_evict_ui(cache, ui);
 		evicted = true;
 	} else {
@@ -2106,10 +2116,7 @@ cache_require_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 static void cache_store_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	struct silofs_snode_info *si = &ui->u_si;
-	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
-
-	ckey_by_uaddr(&si->s_ce.ce_ckey, uaddr);
+	ckey_by_uaddr(&ui->u.ce.ce_ckey, ui_uaddr(ui));
 	cache_store_ui_lrumap(cache, ui);
 }
 
@@ -2130,7 +2137,7 @@ cache_spawn_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 
 	ui = cache_require_ui(cache, uaddr);
 	if (ui != NULL) {
-		si_set_cache(&ui->u_si, cache);
+		lni_set_cache(&ui->u, cache);
 		cache_set_dq_of_ui(cache, ui);
 		cache_store_ui(cache, ui);
 		cache_track_uaddr(cache, ui_uaddr(ui));
@@ -2521,17 +2528,15 @@ cache_find_relru_vi(struct silofs_cache *cache,
 static void cache_remove_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
-	si_remove_from_lrumap(&vi->v_si, &cache->c_vi_lm);
+	lni_remove_from_lrumap(&vi->v, &cache->c_vi_lm);
 }
 
 static void cache_evict_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_snode_info *si = &vi->v_si;
-
 	cache_remove_vi(cache, vi);
 	vi_detach_bk(vi);
-	si_delete(si, cache->c_alloc);
+	vi_delete(vi, cache->c_alloc);
 }
 
 static void cache_store_vi_lrumap(struct silofs_cache *cache,
@@ -2543,9 +2548,7 @@ static void cache_store_vi_lrumap(struct silofs_cache *cache,
 static void cache_store_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	struct silofs_snode_info *si = &vi->v_si;
-
-	ckey_by_vaddr(&si->s_ce.ce_ckey, &vi->v_vaddr);
+	ckey_by_vaddr(&vi->v.ce.ce_ckey, &vi->v_vaddr);
 	cache_store_vi_lrumap(cache, vi);
 }
 
@@ -2560,10 +2563,9 @@ static struct silofs_vnode_info *cache_get_lru_vi(struct silofs_cache *cache)
 static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
                                     struct silofs_vnode_info *vi)
 {
-	struct silofs_snode_info *si = &vi->v_si;
 	bool evicted;
 
-	if (silofs_test_evictable(si)) {
+	if (vi_is_evictable(vi)) {
 		cache_evict_vi(cache, vi);
 		evicted = true;
 	} else {
@@ -2662,7 +2664,7 @@ static void cache_forget_vi(struct silofs_cache *cache,
 	vi_do_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
-		vi->v_si.s_ce.ce_flags |= SILOFS_CEF_FORGOT;
+		vi->v.ce.ce_flags |= SILOFS_CEF_FORGOT;
 	} else {
 		cache_evict_vi(cache, vi);
 	}
@@ -2682,7 +2684,7 @@ cache_spawn_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 
 	vi = cache_require_vi(cache, vaddr);
 	if (vi != NULL) {
-		si_set_cache(&vi->v_si, cache);
+		lni_set_cache(&vi->v, cache);
 		cache_store_vi(cache, vi);
 	}
 	return vi;
@@ -3114,12 +3116,12 @@ static void cache_post_op(struct silofs_cache *cache)
 
 static bool vi_isdirty(const struct silofs_vnode_info *vi)
 {
-	return ce_is_dirty(&vi->v_si.s_ce);
+	return ce_is_dirty(&vi->v.ce);
 }
 
 static void vi_set_dirty(struct silofs_vnode_info *vi, bool dirty)
 {
-	ce_set_dirty(&vi->v_si.s_ce, dirty);
+	ce_set_dirty(&vi->v.ce, dirty);
 }
 
 static void vi_do_dirtify(struct silofs_vnode_info *vi,
@@ -3202,13 +3204,13 @@ void silofs_ii_decref(struct silofs_inode_info *ii)
 void silofs_sbi_incref(struct silofs_sb_info *sbi)
 {
 	if (likely(sbi != NULL)) {
-		si_incref(&sbi->sb_ui.u_si);
+		lni_incref(&sbi->sb_ui.u);
 	}
 }
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi)
 {
 	if (likely(sbi != NULL)) {
-		si_decref(&sbi->sb_ui.u_si);
+		lni_decref(&sbi->sb_ui.u);
 	}
 }

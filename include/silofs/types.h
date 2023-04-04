@@ -36,7 +36,7 @@
 
 /* types forward declarations */
 struct silofs_dset;
-struct silofs_snode_info;
+struct silofs_lnode_info;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 struct silofs_inode_info;
@@ -408,11 +408,11 @@ struct silofs_dirtyq {
 
 /* dirty-nodes set */
 typedef void (*silofs_dset_add_fn)(struct silofs_dset *dset,
-                                   struct silofs_snode_info *si);
+                                   struct silofs_lnode_info *lni);
 
 struct silofs_dset {
 	silofs_dset_add_fn              ds_add_fn;
-	struct silofs_snode_info       *ds_siq;
+	struct silofs_lnode_info       *ds_lnisq;
 	struct silofs_avl               ds_avl;
 };
 

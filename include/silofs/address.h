@@ -493,9 +493,9 @@ static inline loff_t silofs_off_align(loff_t off, ssize_t align)
 	return (off / align) * align;
 }
 
-static inline loff_t silofs_off_align_to_bk(loff_t off)
+static inline loff_t silofs_off_align_to_lbk(loff_t off)
 {
-	return silofs_off_align(off, SILOFS_BK_SIZE);
+	return silofs_off_align(off, SILOFS_LBK_SIZE);
 }
 
 static inline loff_t silofs_off_next(loff_t off, ssize_t len)
@@ -508,9 +508,9 @@ static inline loff_t silofs_off_next_n(loff_t off, ssize_t len, size_t n)
 	return silofs_off_align(off + ((ssize_t)n * len), len);
 }
 
-static inline loff_t silofs_off_next_bk(loff_t off)
+static inline loff_t silofs_off_next_lbk(loff_t off)
 {
-	return silofs_off_next(off, SILOFS_BK_SIZE);
+	return silofs_off_next(off, SILOFS_LBK_SIZE);
 }
 
 static inline ssize_t silofs_off_diff(loff_t beg, loff_t end)

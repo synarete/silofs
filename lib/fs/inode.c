@@ -951,7 +951,7 @@ static int check_parent_dir_ii(struct silofs_task *task,
  */
 static blksize_t stat_blksize_of(const struct silofs_inode_info *ii)
 {
-	blksize_t bsz = SILOFS_BK_SIZE;
+	blksize_t bsz = SILOFS_LBK_SIZE;
 
 	if (ii_isreg(ii) && (ii_size(ii) < bsz)) {
 		bsz = SILOFS_FILE_HEAD2_LEAF_SIZE;

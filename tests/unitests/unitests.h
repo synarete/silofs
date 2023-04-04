@@ -568,7 +568,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define UT_8K                   (8 * SILOFS_KILO)
 #define UT_64K                  (64 * SILOFS_KILO)
 
-#define UT_BK_SIZE              SILOFS_BK_SIZE
+#define UT_BK_SIZE              SILOFS_LBK_SIZE
 #define UT_FILESIZE_MAX            SILOFS_FILE_SIZE_MAX
 #define UT_IOSIZE_MAX           SILOFS_IO_SIZE_MAX
 #define UT_FILEMAP_NCHILDS      SILOFS_FILE_NODE_NCHILDS
@@ -608,7 +608,7 @@ static inline loff_t ut_off_aligned(loff_t off, loff_t align)
 
 static inline loff_t ut_off_baligned(loff_t off)
 {
-	return ut_off_aligned(off, SILOFS_BK_SIZE);
+	return ut_off_aligned(off, SILOFS_LBK_SIZE);
 }
 
 static inline size_t ut_off_len(loff_t beg, loff_t end)

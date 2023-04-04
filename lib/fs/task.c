@@ -90,7 +90,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 	}
 	ref = &sqe->ref[sqe->cnt];
 	oaddr_assign(&ref->oaddr, oaddr);
-	ref->bki = silofs_bki_of(lni);
+	ref->lbki = lni->lbki;
 	ref->view = lni->view;
 	ref->stype = lni->stype;
 	sqe->len += oaddr->len;
@@ -163,7 +163,7 @@ void silofs_sqe_increfs(struct silofs_submitq_entry *sqe)
 	if (!sqe->hold_refs) {
 		for (size_t i = 0; i < sqe->cnt; ++i) {
 			ref = &sqe->ref[i];
-			silofs_bki_incref(ref->bki);
+			silofs_lbki_incref(ref->lbki);
 		}
 		sqe->hold_refs = 1;
 	}
@@ -176,7 +176,7 @@ static void sqe_decrefs(struct silofs_submitq_entry *sqe)
 	if (sqe->hold_refs) {
 		for (size_t i = 0; i < sqe->cnt; ++i) {
 			ref = &sqe->ref[i];
-			silofs_bki_decref(ref->bki);
+			silofs_lbki_decref(ref->lbki);
 		}
 		sqe->hold_refs = 0;
 	}

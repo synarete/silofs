@@ -41,7 +41,7 @@ struct silofs_stage_ctx {
 
 struct silofs_vis {
 	struct silofs_vaddrs vas;
-	struct silofs_vnode_info *vis[SILOFS_NKB_IN_BK];
+	struct silofs_vnode_info *vis[SILOFS_NKB_IN_LBK];
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -63,7 +63,7 @@ static bool stage_cow(enum silofs_stg_mode stg_mode)
 
 static loff_t vaddr_bk_voff(const struct silofs_vaddr *vaddr)
 {
-	return off_align_to_bk(vaddr->off);
+	return off_align_to_lbk(vaddr->off);
 }
 
 static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
@@ -2222,7 +2222,7 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_load_bk(blobf, &voa->oaddr.bka, &vbki->vbk_base);
+	err = silofs_blobf_load_bk(blobf, &voa->oaddr.bka, &vbki->vbk);
 	if (err) {
 		stgc_forget_cached_vbki(stg_ctx, vbki);
 		return err;
@@ -2279,7 +2279,7 @@ static int blobf_resolve_bk(struct silofs_blobf *blobf,
 	struct silofs_oaddr oaddr;
 	const loff_t off = lba_to_off(bkaddr->lba);
 
-	silofs_oaddr_setup(&oaddr, &bkaddr->blobid, off, SILOFS_BK_SIZE);
+	silofs_oaddr_setup(&oaddr, &bkaddr->blobid, off, SILOFS_LBK_SIZE);
 	return silofs_blobf_resolve(blobf, &oaddr, iov);
 }
 

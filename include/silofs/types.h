@@ -254,7 +254,7 @@ struct silofs_vaddr {
 
 /* set of addresses within single vblock */
 struct silofs_vaddrs {
-	struct silofs_vaddr     vaddr[SILOFS_NKB_IN_BK];
+	struct silofs_vaddr     vaddr[SILOFS_NKB_IN_LBK];
 	size_t                  count;
 };
 
@@ -329,16 +329,16 @@ struct silofs_cache_elem {
 	int     ce_hitcnt;
 };
 
-/* block-info base */
-struct silofs_bk_info {
-	struct silofs_cache_elem        bk_ce;
-	struct silofs_block            *bk;
-	uint64_t                        bk_view;
+/* logical-block base info */
+struct silofs_lbk_info {
+	struct silofs_cache_elem        lbk_ce;
+	struct silofs_lblock           *lbk;
+	uint64_t                        lbk_view;
 };
 
 /* u-addressing block info */
 struct silofs_ubk_info {
-	struct silofs_bk_info           ubk_base;
+	struct silofs_lbk_info          ubk;
 	struct silofs_bkaddr            ubk_addr;
 	struct silofs_blobf            *ubk_blobf;
 };
@@ -351,7 +351,7 @@ struct silofs_vbk_addr {
 
 /* v-addressing block info */
 struct silofs_vbk_info {
-	struct silofs_bk_info           vbk_base;
+	struct silofs_lbk_info           vbk;
 	struct silofs_vbk_addr          vbk_addr;
 };
 

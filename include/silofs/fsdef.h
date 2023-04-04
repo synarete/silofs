@@ -105,24 +105,24 @@
 /* small ("sector") meta-block size (1K) */
 #define SILOFS_KB_SIZE                  (1 << SILOFS_KB_SHIFT)
 
-/* number of 1K blocks in block */
-#define SILOFS_NKB_IN_BK \
-	(SILOFS_BK_SIZE / SILOFS_KB_SIZE)
+/* number of 1K blocks in logical block */
+#define SILOFS_NKB_IN_LBK \
+	(SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
 
 
 /* bits-shift of logical block */
-#define SILOFS_BK_SHIFT                 (16)
+#define SILOFS_LBK_SHIFT                (16)
 
 /* logical block size (64K) */
-#define SILOFS_BK_SIZE                  (1L << SILOFS_BK_SHIFT)
+#define SILOFS_LBK_SIZE                 (1L << SILOFS_LBK_SHIFT)
 
 
-/* maximal number of blocks within single blob */
-#define SILOFS_NBK_IN_BLOB_MAX          (128L)
+/* maximal number of logical blocks within single blob */
+#define SILOFS_NLBK_IN_BLOB_MAX          (128L)
 
 /* maximal size in bytes of single blob (8M) */
 #define SILOFS_BLOB_SIZE_MAX \
-	(SILOFS_NBK_IN_BLOB_MAX * SILOFS_BK_SIZE)
+	(SILOFS_NLBK_IN_BLOB_MAX * SILOFS_LBK_SIZE)
 
 
 /* non-valid ("NIL") logical byte address */
@@ -187,7 +187,7 @@
 #define SILOFS_FILE_HEAD2_NLEAF         (15)
 
 /* file's tree-mapping block-sizes */
-#define SILOFS_FILE_TREE_LEAF_SIZE      SILOFS_BK_SIZE
+#define SILOFS_FILE_TREE_LEAF_SIZE      SILOFS_LBK_SIZE
 
 /* number of mapping-slots per single file tree node */
 #define SILOFS_FILE_NODE_NCHILDS        (1LL << SILOFS_FILE_MAP_SHIFT)
@@ -198,7 +198,7 @@
 
 /* maximum size in bytes of regular file */
 #define SILOFS_FILE_SIZE_MAX \
-	((SILOFS_BK_SIZE * SILOFS_FILE_LEAVES_MAX) - 1)
+	((SILOFS_LBK_SIZE * SILOFS_FILE_LEAVES_MAX) - 1)
 
 /* on-disk size of file's radix-tree-node */
 #define SILOFS_FILE_RTNODE_SIZE         (8192)
@@ -206,7 +206,7 @@
 /* max number of callbacks for read-write iter operations */
 #define SILOFS_FILE_NITER_MAX \
 	(SILOFS_FILE_HEAD1_NLEAF + SILOFS_FILE_HEAD2_NLEAF + \
-	 (SILOFS_IO_SIZE_MAX / SILOFS_BK_SIZE))
+	 (SILOFS_IO_SIZE_MAX / SILOFS_LBK_SIZE))
 
 
 /* base size of empty directory */
@@ -275,7 +275,8 @@
 
 
 /* max size of single I/O operation */
-#define SILOFS_IO_SIZE_MAX              ((2UL * SILOFS_UMEGA) - SILOFS_BK_SIZE)
+#define SILOFS_IO_SIZE_MAX \
+	((2UL * SILOFS_UMEGA) - SILOFS_LBK_SIZE)
 
 
 /* cryptographic key size */
@@ -834,32 +835,33 @@ struct silofs_ftree_node {
 
 /* 1K data block */
 struct silofs_data_block1 {
-	uint8_t dat[SILOFS_KB_SIZE];
+	uint8_t dat[1024];
 } silofs_packed_aligned64;
 
 
 /* 4K data block */
 struct silofs_data_block4 {
-	uint8_t dat[4 * SILOFS_KB_SIZE];
+	uint8_t dat[4096];
 } silofs_packed_aligned64;
 
 
 /* 64K data block */
-struct silofs_data_block {
-	uint8_t dat[SILOFS_BK_SIZE];
+struct silofs_data_block64 {
+	uint8_t dat[65536];
 } silofs_packed_aligned64;
 
 
-/* single 64K block unit */
-union silofs_block_u {
-	uint8_t bk[SILOFS_BK_SIZE];
-	struct silofs_data_block1       db1[SILOFS_NKB_IN_BK];
-	struct silofs_data_block        db;
+/* single logical block unit */
+union silofs_lblock_u {
+	uint8_t bk[SILOFS_LBK_SIZE];
+	struct silofs_data_block1       dbk1[SILOFS_NKB_IN_LBK];
+	struct silofs_data_block4       dbk4[SILOFS_NKB_IN_LBK / 4];
+	struct silofs_data_block64      dbk64;
 } silofs_packed_aligned64;
 
 
-struct silofs_block {
-	union silofs_block_u u;
+struct silofs_lblock {
+	union silofs_lblock_u u;
 } silofs_packed_aligned64;
 
 
@@ -876,10 +878,10 @@ union silofs_view {
 	struct silofs_ftree_node        ftn;
 	struct silofs_xattr_node        xan;
 	struct silofs_symlnk_value      sym;
-	struct silofs_data_block1       db1;
-	struct silofs_data_block4       db4;
-	struct silofs_data_block        db;
-	struct silofs_block             bk;
+	struct silofs_data_block1       dbk1;
+	struct silofs_data_block4       dbk4;
+	struct silofs_data_block64      dbk64;
+	struct silofs_lblock            lbk;
 } silofs_packed_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

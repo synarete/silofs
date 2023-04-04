@@ -29,7 +29,7 @@ static blkcnt_t datasize_to_nfrgs_min(size_t dsz)
 
 static blkcnt_t datasize_to_nfrgs_max(size_t dsz)
 {
-	return datasize_to_nbytes(dsz, SILOFS_BK_SIZE) / 512;
+	return datasize_to_nbytes(dsz, SILOFS_LBK_SIZE) / 512;
 }
 
 static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
@@ -40,10 +40,10 @@ static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 	blkcnt_t blocks_max;
 
 	ut_getattr_ok(ute, ino, &st);
-	if (st.st_size < SILOFS_BK_SIZE) {
+	if (st.st_size < SILOFS_LBK_SIZE) {
 		ut_expect_eq(st.st_blksize, SILOFS_FILE_HEAD2_LEAF_SIZE);
 	} else {
-		ut_expect_eq(st.st_blksize, SILOFS_BK_SIZE);
+		ut_expect_eq(st.st_blksize, SILOFS_LBK_SIZE);
 	}
 	blocks = st.st_blocks;
 	blocks_min = datasize_to_nfrgs_min(dsz);

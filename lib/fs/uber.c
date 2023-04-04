@@ -149,7 +149,7 @@ static size_t uber_calc_iopen_limit(const struct silofs_uber *uber)
 	size_t lim;
 
 	silofs_allocstat(uber->ub.alloc, &st);
-	lim = (st.nbytes_max / (2 * SILOFS_BK_SIZE));
+	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
 	return div_round_up(lim, align) * align;
 }
 

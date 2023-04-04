@@ -65,7 +65,7 @@ int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
 
 int silofs_blobf_load_bk(struct silofs_blobf *blobf,
                          const struct silofs_bkaddr *bkaddr,
-                         struct silofs_bk_info *bki);
+                         struct silofs_lbk_info *lbki);
 
 int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
                            const struct silofs_bkaddr *bkaddr, size_t cnt);

@@ -41,7 +41,7 @@ struct silofs_lnode_info {
 	silofs_lnode_del_fn             del_hook;
 	struct silofs_uber             *uber;
 	struct silofs_lnode_info       *ds_next;
-	struct silofs_bk_info          *bki;
+	struct silofs_lbk_info         *lbki;
 	union silofs_view              *view;
 	loff_t                          view_pos;
 	size_t                          view_len;
@@ -136,7 +136,7 @@ struct silofs_finode_info {
 union silofs_fileaf_u {
 	struct silofs_data_block1      *db1;
 	struct silofs_data_block4      *db4;
-	struct silofs_data_block       *db;
+	struct silofs_data_block64       *db;
 };
 
 struct silofs_fileaf_info {
@@ -222,9 +222,6 @@ void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
 void silofs_fill_csum_meta(union silofs_view *view);
 
 int silofs_verify_csum_meta(const union silofs_view *view);
-
-
-struct silofs_bk_info *silofs_bki_of(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

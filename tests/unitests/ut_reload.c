@@ -153,7 +153,7 @@ static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 
 static void ut_reload_io(struct ut_env *ute)
 {
-	ut_reload_io_(ute, 1, SILOFS_BK_SIZE);
+	ut_reload_io_(ute, 1, SILOFS_LBK_SIZE);
 	ut_reload_io_(ute, 10, SILOFS_GIGA);
 	ut_reload_io_(ute, 100, SILOFS_MEGA);
 }

@@ -665,7 +665,7 @@ bool silofs_sti_mayalloc_some(const struct silofs_stats_info *sti,
 {
 	const size_t nbytes_used = silofs_sti_bytes_used(sti);
 	const size_t nbytes_cap = silofs_sti_capacity(sti);
-	const size_t nbytes_pad = SILOFS_BK_SIZE;
+	const size_t nbytes_pad = SILOFS_LBK_SIZE;
 
 	return ((nbytes_want + nbytes_used + nbytes_pad) < nbytes_cap);
 }

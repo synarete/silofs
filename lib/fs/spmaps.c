@@ -45,7 +45,7 @@ static size_t nkbs_of(const struct silofs_vaddr *vaddr)
 
 static size_t kbn_of(const struct silofs_vaddr *vaddr)
 {
-	return (size_t)((vaddr->off / SILOFS_KB_SIZE) % SILOFS_NKB_IN_BK);
+	return (size_t)((vaddr->off / SILOFS_KB_SIZE) % SILOFS_NKB_IN_LBK);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -256,9 +256,9 @@ spnode_has_child_at(const struct silofs_spmap_node *sn, loff_t voff)
 static uint64_t mask_of(size_t kbn, size_t nkb)
 {
 	uint64_t mask;
-	const size_t nkb_in_bk = SILOFS_NKB_IN_BK;
+	const size_t nkb_in_lbk = SILOFS_NKB_IN_LBK;
 
-	mask = (nkb < nkb_in_bk) ? (((1UL << nkb) - 1UL) << kbn) : ~0UL;
+	mask = (nkb < nkb_in_lbk) ? (((1UL << nkb) - 1UL) << kbn) : ~0UL;
 	return mask;
 }
 
@@ -323,7 +323,7 @@ static bool bkr_test_allocated_at(const struct silofs_bk_ref *bkr,
 
 static bool bkr_test_allocated_bk(const struct silofs_bk_ref *bkr)
 {
-	return bkr_test_allocated_at(bkr, 0, SILOFS_NKB_IN_BK);
+	return bkr_test_allocated_at(bkr, 0, SILOFS_NKB_IN_LBK);
 }
 
 static void bkr_set_allocated_at(struct silofs_bk_ref *bkr,
@@ -353,7 +353,7 @@ static size_t bkr_usecnt(const struct silofs_bk_ref *bkr)
 
 static size_t bkr_freecnt(const struct silofs_bk_ref *bkr)
 {
-	return SILOFS_NKB_IN_BK - bkr_usecnt(bkr);
+	return SILOFS_NKB_IN_LBK - bkr_usecnt(bkr);
 }
 
 static bool bkr_isfull(const struct silofs_bk_ref *bkr)
@@ -445,7 +445,7 @@ static int bkr_find_free(const struct silofs_bk_ref *bkr,
                          size_t nkb, size_t *out_kbn)
 {
 	uint64_t mask;
-	const size_t nkb_in_bk = SILOFS_NKB_IN_BK;
+	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
 	const uint64_t allocated = bkr_allocated(bkr);
 
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
@@ -463,7 +463,7 @@ static void bkr_make_vaddrs(const struct silofs_bk_ref *bkr,
                             struct silofs_vaddrs *vas)
 {
 	const size_t nkb = stype_nkbs(stype);
-	const size_t nkb_in_bk = SILOFS_NKB_IN_BK;
+	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
 	const uint64_t allocated = bkr_allocated(bkr);
 	uint64_t mask;
 	loff_t voff;
@@ -651,7 +651,7 @@ static void spleaf_unref_allocated_at(struct silofs_spmap_leaf *sl,
 {
 	const size_t kbn = kbn_of(vaddr);
 	const size_t nkb = nkbs_of(vaddr);
-	const size_t nkb_in_bk = SILOFS_NKB_IN_BK;
+	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
 	bkr_dec_refcnt(bkr, nkb);
@@ -983,7 +983,7 @@ void silofs_sli_reref_allocated_space(struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->stype, SILOFS_STYPE_DATABK);
-	silofs_assert_ge(sli->sl_nused_bytes, SILOFS_BK_SIZE);
+	silofs_assert_ge(sli->sl_nused_bytes, SILOFS_LBK_SIZE);
 	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
 
 	spleaf_add_allocated_at(sli->sl, vaddr);
@@ -1011,7 +1011,7 @@ bool silofs_sli_has_shared_refcnt(const struct silofs_spleaf_info *sli,
 {
 	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->off);
 
-	return (refcnt > SILOFS_NKB_IN_BK);
+	return (refcnt > SILOFS_NKB_IN_LBK);
 }
 
 bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,

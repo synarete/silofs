@@ -224,7 +224,7 @@ static void lni_init(struct silofs_lnode_info *lni,
 	lni->stype = stype;
 	lni->ds_next = NULL;
 	lni->uber = NULL;
-	lni->bki = NULL;
+	lni->lbki = NULL;
 	lni->view = NULL;
 	lni->view_len = 0;
 	lni->del_hook = del_fn;
@@ -238,7 +238,7 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	lni->stype = SILOFS_STYPE_NONE;
 	lni->ds_next = NULL;
 	lni->uber = NULL;
-	lni->bki = NULL;
+	lni->lbki = NULL;
 	lni->view = NULL;
 	lni->del_hook = NULL;
 }
@@ -1304,11 +1304,11 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 	const enum silofs_stype stype = fli_stype(fli);
 
 	if (stype_isequal(stype, SILOFS_STYPE_DATA1K)) {
-		fli->flu.db1 = &fli->fl_vi.v.view->db1;
+		fli->flu.db1 = &fli->fl_vi.v.view->dbk1;
 	} else if (stype_isequal(stype, SILOFS_STYPE_DATA4K)) {
-		fli->flu.db4 = &fli->fl_vi.v.view->db4;
+		fli->flu.db4 = &fli->fl_vi.v.view->dbk4;
 	} else if (stype_isequal(stype, SILOFS_STYPE_DATABK)) {
-		fli->flu.db = &fli->fl_vi.v.view->db;
+		fli->flu.db = &fli->fl_vi.v.view->dbk64;
 	} else {
 		silofs_panic("illegal file leaf: stype=%d", (int)stype);
 	}
@@ -1402,11 +1402,11 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const void *
-opaque_view_of(const struct silofs_block *bk, long bk_pos)
+opaque_view_of(const struct silofs_lblock *lbk, long bk_pos)
 {
 	silofs_assert_ge(bk_pos, 0);
-	silofs_assert_lt(bk_pos, SILOFS_BK_SIZE);
-	return &bk->u.bk[bk_pos];
+	silofs_assert_lt(bk_pos, SILOFS_LBK_SIZE);
+	return &lbk->u.bk[bk_pos];
 }
 
 static union silofs_view *make_view(const void *opaque_view)
@@ -1421,10 +1421,10 @@ static union silofs_view *make_view(const void *opaque_view)
 }
 
 static void lni_bind_view(struct silofs_lnode_info *lni,
-                          struct silofs_block *bk, long bk_pos)
+                          struct silofs_lblock *lbk, long lbk_pos)
 {
-	lni->view = make_view(opaque_view_of(bk, bk_pos));
-	lni->view_pos = bk_pos;
+	lni->view = make_view(opaque_view_of(lbk, lbk_pos));
+	lni->view_pos = lbk_pos;
 	lni->view_len = stype_size(lni->stype);
 }
 
@@ -1432,14 +1432,14 @@ void silofs_ui_bind_view(struct silofs_unode_info *ui)
 {
 	const loff_t bk_pos = uaddr_bk_pos(ui_uaddr(ui));
 
-	lni_bind_view(&ui->u, ui->u_ubki->ubk_base.bk, bk_pos);
+	lni_bind_view(&ui->u, ui->u_ubki->ubk.lbk, bk_pos);
 }
 
 void silofs_vi_bind_view(struct silofs_vnode_info *vi)
 {
 	const loff_t bk_pos = vaddr_bk_pos(vi_vaddr(vi));
 
-	lni_bind_view(&vi->v, vi->v_vbki->vbk_base.bk, bk_pos);
+	lni_bind_view(&vi->v, vi->v_vbki->vbk.lbk, bk_pos);
 }
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr)
@@ -1547,25 +1547,6 @@ int silofs_vi_verify_view(struct silofs_vnode_info *vi)
 	}
 	vi->v.flags |= SILOFS_SIF_VERIFIED;
 	return 0;
-}
-
-struct silofs_bk_info *silofs_bki_of(const struct silofs_lnode_info *lni)
-{
-	struct silofs_bk_info *bki = NULL;
-	const struct silofs_unode_info *ui = NULL;
-	const struct silofs_vnode_info *vi = NULL;
-
-	if (stype_isunode(lni->stype)) {
-		ui = silofs_ui_from_lni(lni);
-		silofs_assert_not_null(ui->u_ubki);
-		bki = &ui->u_ubki->ubk_base;
-	} else if (stype_isvnode(lni->stype)) {
-		vi = silofs_vi_from_lni(lni);
-		silofs_assert_not_null(vi->v_vbki);
-		bki = &vi->v_vbki->vbk_base;
-	}
-	silofs_assert_not_null(bki);
-	return bki;
 }
 
 void silofs_stamp_meta_of(struct silofs_vnode_info *vi)

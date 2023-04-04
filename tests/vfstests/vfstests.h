@@ -55,7 +55,7 @@
 #define VT_64K                  (64 * SILOFS_KILO)
 
 #define VT_FRGSIZE              (512) /* Fragment size (see stat(2)) */
-#define VT_BK_SIZE              SILOFS_BK_SIZE
+#define VT_BK_SIZE              SILOFS_LBK_SIZE
 #define VT_FILEMAP_NCHILD       SILOFS_FILE_NODE_NCHILDS
 #define VT_FILESIZE_MAX         SILOFS_FILE_SIZE_MAX
 #define VT_IOSIZE_MAX           SILOFS_IO_SIZE_MAX

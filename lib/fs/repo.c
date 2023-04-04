@@ -499,7 +499,7 @@ static int blobf_check_range(const struct silofs_blobf *blobf,
 	if (off < 0) {
 		return -EINVAL;
 	}
-	if (end > (cap + SILOFS_BK_SIZE)) {
+	if (end > (cap + SILOFS_LBK_SIZE)) {
 		return -SILOFS_EBLOB;
 	}
 	return 0;
@@ -515,13 +515,13 @@ static int blobf_inspect_size(struct silofs_blobf *blobf)
 	if (err) {
 		return err;
 	}
-	if (st.st_size % SILOFS_BK_SIZE) {
+	if (st.st_size % SILOFS_LBK_SIZE) {
 		log_warn("blob-size not aligned: blob=%s size=%ld",
 		         blobf->b_name.name, st.st_size);
 		return -SILOFS_EBLOB;
 	}
 	cap = blobf_capacity(blobf);
-	if (st.st_size > (cap + SILOFS_BK_SIZE)) {
+	if (st.st_size > (cap + SILOFS_LBK_SIZE)) {
 		log_warn("blob-size mismatch: blob=%s size=%ld cap=%ld",
 		         blobf->b_name.name, st.st_size, cap);
 		return -SILOFS_EBLOB;
@@ -548,7 +548,7 @@ static int blobf_reassign_size(struct silofs_blobf *blobf, loff_t off)
 	if (err) {
 		return err;
 	}
-	len = off_align_to_bk(off + SILOFS_BK_SIZE - 1);
+	len = off_align_to_lbk(off + SILOFS_LBK_SIZE - 1);
 	err = do_ftruncate(blobf->b_fd, len);
 	if (err) {
 		return err;
@@ -792,12 +792,12 @@ out:
 
 static int blobf_load_bk(const struct silofs_blobf *blobf,
                          const struct silofs_bkaddr *bkaddr,
-                         struct silofs_block *bk)
+                         struct silofs_lblock *lbk)
 {
 	struct silofs_oaddr oaddr;
 	struct silofs_bytebuf bb;
 
-	silofs_bytebuf_init(&bb, bk, sizeof(*bk));
+	silofs_bytebuf_init(&bb, lbk, sizeof(*lbk));
 	silofs_oaddr_of_bk(&oaddr, &bkaddr->blobid, bkaddr->lba);
 	return blobf_load_bb(blobf, &oaddr, &bb);
 }
@@ -822,7 +822,7 @@ static int blobf_check_bk_of(struct silofs_blobf *blobf,
 
 static int blobf_load_bk_at(struct silofs_blobf *blobf,
                             const struct silofs_bkaddr *bkaddr,
-                            struct silofs_bk_info *bki)
+                            struct silofs_lbk_info *lbki)
 {
 	int err;
 
@@ -834,7 +834,7 @@ static int blobf_load_bk_at(struct silofs_blobf *blobf,
 	if (err) {
 		return err;
 	}
-	err = blobf_load_bk(blobf, bkaddr, bki->bk);
+	err = blobf_load_bk(blobf, bkaddr, lbki->lbk);
 	if (err) {
 		return err;
 	}
@@ -843,12 +843,12 @@ static int blobf_load_bk_at(struct silofs_blobf *blobf,
 
 int silofs_blobf_load_bk(struct silofs_blobf *blobf,
                          const struct silofs_bkaddr *bkaddr,
-                         struct silofs_bk_info *bki)
+                         struct silofs_lbk_info *lbki)
 {
 	int ret;
 
 	blobf_rdlock(blobf);
-	ret = blobf_load_bk_at(blobf, bkaddr, bki);
+	ret = blobf_load_bk_at(blobf, bkaddr, lbki);
 	blobf_unlock(blobf);
 	return ret;
 }
@@ -1256,7 +1256,7 @@ static int repo_objs_stat_blob(const struct silofs_repo *repo,
 		return err;
 	}
 	len = blobid_size(blobid);
-	if (out_st->st_size > (loff_t)(len + SILOFS_BK_SIZE)) {
+	if (out_st->st_size > (loff_t)(len + SILOFS_LBK_SIZE)) {
 		log_warn("blob-size mismatch: %s len=%lu st_size=%ld",
 		         nb.name, len, out_st->st_size);
 		return -EIO;
@@ -1922,7 +1922,7 @@ static int repo_stage_ubk_at(struct silofs_repo *repo, bool rw,
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_load_bk(blobf, bkaddr, &ubki->ubk_base);
+	err = silofs_blobf_load_bk(blobf, bkaddr, &ubki->ubk);
 	if (err) {
 		repo_forget_cached_ubki(repo, ubki);
 		return err;

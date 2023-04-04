@@ -58,7 +58,7 @@
 	SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
 
 #define REQUIRE_BK_SIZE(a) \
-	REQUIRE_EQ(a, SILOFS_BK_SIZE)
+	REQUIRE_EQ(a, SILOFS_LBK_SIZE)
 
 #define REQUIRE_SIZEOF(type, size) \
 	REQUIRE_EQ(sizeof(type), size)
@@ -146,7 +146,7 @@ static void guarantee_persistent_types_nk(void)
 	REQUIRE_SIZEOF_4K(struct silofs_symlnk_value);
 	REQUIRE_SIZEOF_1K(struct silofs_data_block1);
 	REQUIRE_SIZEOF_4K(struct silofs_data_block4);
-	REQUIRE_SIZEOF_64K(struct silofs_data_block);
+	REQUIRE_SIZEOF_64K(struct silofs_data_block64);
 }
 
 static void guarantee_persistent_types_size(void)
@@ -180,8 +180,8 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_bk_ref, 120);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF_KB(struct silofs_inode);
-	REQUIRE_SIZEOF_BK(struct silofs_data_block);
-	REQUIRE_SIZEOF_BK(struct silofs_block);
+	REQUIRE_SIZEOF_BK(struct silofs_data_block64);
+	REQUIRE_SIZEOF_BK(struct silofs_lblock);
 	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
@@ -203,8 +203,8 @@ static void guarantee_persistent_types_size(void)
 static void guarantee_persistent_types_members(void)
 {
 	REQUIRE_NBITS(struct silofs_header, h_stype, 8);
-	REQUIRE_NBITS(struct silofs_bk_ref, br_allocated, SILOFS_NKB_IN_BK);
-	REQUIRE_NBITS(struct silofs_bk_ref, br_unwritten, SILOFS_NKB_IN_BK);
+	REQUIRE_NBITS(struct silofs_bk_ref, br_allocated, SILOFS_NKB_IN_LBK);
+	REQUIRE_NBITS(struct silofs_bk_ref, br_unwritten, SILOFS_NKB_IN_LBK);
 	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, br_reserved, 48);
 	REQUIRE_NELEMS(struct silofs_ftree_node,
 	               fn_child, SILOFS_FILE_NODE_NCHILDS);
@@ -317,14 +317,14 @@ static void guarantee_ioctl_types_size(void)
 static void guarantee_defs_consistency(void)
 {
 	REQUIRE_EQ(CHAR_BIT, 8);
-	REQUIRE_EQ(SILOFS_NSPMAP_IN_BK * SILOFS_SPMAP_SIZE, SILOFS_BK_SIZE);
+	REQUIRE_EQ(SILOFS_NSPMAP_IN_BK * SILOFS_SPMAP_SIZE, SILOFS_LBK_SIZE);
 	REQUIRE_LT(SILOFS_DIR_TREE_DEPTH_MAX, SILOFS_HASH256_LEN);
 	REQUIRE_LT(SILOFS_DIR_TREE_INDEX_MAX, INT32_MAX);
 	REQUIRE_GT(SILOFS_DIR_ENTRIES_MAX, SILOFS_LINK_MAX);
 	REQUIRE_LT(SILOFS_XATTR_VALUE_MAX, SILOFS_XATTR_NODE_SIZE);
 	REQUIRE_EQ(SILOFS_FILE_SIZE_MAX, 64 * SILOFS_TERA - 1);
 	REQUIRE_EQ(SILOFS_BLOB_SIZE_MAX, 8 * SILOFS_MEGA);
-	REQUIRE_EQ(SILOFS_BK_SIZE * SILOFS_SPMAP_NCHILDS,
+	REQUIRE_EQ(SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS,
 	           SILOFS_BLOB_SIZE_MAX);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 64 * SILOFS_TERA);

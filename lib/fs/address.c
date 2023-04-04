@@ -37,7 +37,7 @@ ssize_t silofs_height_to_blob_size(enum silofs_height height)
 	default:
 	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_VDATA:
-		elemsz = SILOFS_BK_SIZE;
+		elemsz = SILOFS_LBK_SIZE;
 		nelems = SILOFS_SPMAP_NCHILDS;
 		factor = blob_size_max / (elemsz * nelems);
 		break;
@@ -59,8 +59,6 @@ ssize_t silofs_height_to_blob_size(enum silofs_height height)
 
 ssize_t silofs_height_to_space_span(enum silofs_height height)
 {
-	const ssize_t bk_size = SILOFS_BK_SIZE;
-	const ssize_t shift = SILOFS_SPMAP_SHIFT;
 	ssize_t shift_fac;
 	ssize_t span;
 
@@ -91,8 +89,8 @@ ssize_t silofs_height_to_space_span(enum silofs_height height)
 		shift_fac = 6;
 		break;
 	}
-	span = (1L << (shift * shift_fac)) * bk_size;
-	silofs_assert_ge(span, SILOFS_BK_SIZE);
+	span = (1L << (SILOFS_SPMAP_SHIFT * shift_fac)) * SILOFS_LBK_SIZE;
+	silofs_assert_ge(span, SILOFS_LBK_SIZE);
 	silofs_assert_le(span, SILOFS_VSPACE_SIZE_MAX);
 
 	return span;
@@ -276,7 +274,7 @@ static void len_height_to_cpu(uint64_t len_height,
 loff_t silofs_lba_to_off(silofs_lba_t lba)
 {
 	return !silofs_lba_isnull(lba) ?
-	       (lba * SILOFS_BK_SIZE) : SILOFS_OFF_NULL;
+	       (lba * SILOFS_LBK_SIZE) : SILOFS_OFF_NULL;
 }
 
 silofs_lba_t silofs_lba_plus(silofs_lba_t lba, size_t nbk)
@@ -299,19 +297,19 @@ static loff_t off_within(loff_t off, size_t bsz)
 silofs_lba_t silofs_off_to_lba(loff_t off)
 {
 	return !silofs_off_isnull(off) ?
-	       (off / SILOFS_BK_SIZE) : SILOFS_LBA_NULL;
+	       (off / SILOFS_LBK_SIZE) : SILOFS_LBA_NULL;
 }
 
 loff_t silofs_off_in_bk(loff_t off)
 {
 	STATICASSERT_LT(SILOFS_OFF_NULL, 0);
 
-	return off_within(off, SILOFS_BK_SIZE);
+	return off_within(off, SILOFS_LBK_SIZE);
 }
 
 static size_t spleaf_span(void)
 {
-	return SILOFS_SPMAP_NCHILDS * SILOFS_BK_SIZE;
+	return SILOFS_SPMAP_NCHILDS * SILOFS_LBK_SIZE;
 }
 
 loff_t silofs_off_to_spleaf_start(loff_t voff)
@@ -440,7 +438,7 @@ size_t silofs_stype_size(enum silofs_stype stype)
 		return sizeof(struct silofs_data_block4);
 	case SILOFS_STYPE_DATABK:
 	case SILOFS_STYPE_ANONBK:
-		return sizeof(struct silofs_data_block);
+		return sizeof(struct silofs_data_block64);
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
@@ -869,7 +867,7 @@ void silofs_oaddr_setup_bk(struct silofs_oaddr *oaddr,
 {
 	const loff_t off = lba_to_off(bkaddr->lba);
 
-	silofs_oaddr_setup(oaddr, &bkaddr->blobid, off, SILOFS_BK_SIZE);
+	silofs_oaddr_setup(oaddr, &bkaddr->blobid, off, SILOFS_LBK_SIZE);
 }
 
 static void oaddr_setup_by(struct silofs_oaddr *oaddr,
@@ -939,7 +937,7 @@ bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
 void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
                         const struct silofs_blobid *blobid, silofs_lba_t lba)
 {
-	silofs_oaddr_setup(oaddr, blobid, lba_to_off(lba), SILOFS_BK_SIZE);
+	silofs_oaddr_setup(oaddr, blobid, lba_to_off(lba), SILOFS_LBK_SIZE);
 }
 
 

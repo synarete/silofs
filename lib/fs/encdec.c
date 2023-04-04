@@ -30,11 +30,11 @@ static uint64_t bk_view_mask_of(loff_t off, size_t len)
 	const uint64_t zeros = 0;
 	uint64_t mask;
 
-	STATICASSERT_EQ(8 * sizeof(mask), SILOFS_NKB_IN_BK);
+	STATICASSERT_EQ(8 * sizeof(mask), SILOFS_NKB_IN_LBK);
 	silofs_assert_ge(len, SILOFS_KB_SIZE);
-	silofs_assert_le(len, SILOFS_BK_SIZE);
+	silofs_assert_le(len, SILOFS_LBK_SIZE);
 
-	if (nkb == SILOFS_NKB_IN_BK) {
+	if (nkb == SILOFS_NKB_IN_LBK) {
 		silofs_assert_eq(idx, 0);
 		mask = ~zeros;
 	} else {
@@ -43,38 +43,35 @@ static uint64_t bk_view_mask_of(loff_t off, size_t len)
 	return mask;
 }
 
-static bool bki_has_view_at(const struct silofs_bk_info *bki,
-                            loff_t view_pos, size_t view_len)
+static bool lbki_has_view_at(const struct silofs_lbk_info *lbki,
+                             loff_t view_pos, size_t view_len)
 {
 	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
 
-	return ((bki->bk_view & view_mask) == view_mask);
+	return ((lbki->lbk_view & view_mask) == view_mask);
 }
 
-static void bki_set_view_at(struct silofs_bk_info *bki,
-                            loff_t view_pos, size_t view_len)
+static void lbki_set_view_at(struct silofs_lbk_info *lbki,
+                             loff_t view_pos, size_t view_len)
 {
 	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
 
-	bki->bk_view |= view_mask;
+	lbki->lbk_view |= view_mask;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool lni_has_bkview(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_bk_info *bki = lni->bki;
-
-	silofs_assert_not_null(bki);
-	return bki_has_view_at(bki, lni->view_pos, lni->view_len);
+	return lbki_has_view_at(lni->lbki, lni->view_pos, lni->view_len);
 }
 
 static void lni_set_bkview(const struct silofs_lnode_info *lni)
 {
-	struct silofs_bk_info *bki = lni->bki;
+	struct silofs_lbk_info *bki = lni->lbki;
 
 	silofs_assert_not_null(bki);
-	bki_set_view_at(bki, lni->view_pos, lni->view_len);
+	lbki_set_view_at(bki, lni->view_pos, lni->view_len);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

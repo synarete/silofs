@@ -36,7 +36,7 @@ struct silofs_lrumap {
 /* in-memory caching */
 struct silofs_cache {
 	struct silofs_alloc    *c_alloc;
-	struct silofs_block    *c_nil_bk;
+	struct silofs_lblock   *c_nil_lbk;
 	struct silofs_lrumap    c_blobf_lm;
 	struct silofs_lrumap    c_ubki_lm;
 	struct silofs_lrumap    c_vbki_lm;
@@ -230,8 +230,8 @@ void silofs_ubki_incref(struct silofs_ubk_info *ubki);
 void silofs_ubki_decref(struct silofs_ubk_info *ubki);
 
 
-void silofs_bki_incref(struct silofs_bk_info *bki);
+void silofs_lbki_incref(struct silofs_lbk_info *lbki);
 
-void silofs_bki_decref(struct silofs_bk_info *bki);
+void silofs_lbki_decref(struct silofs_lbk_info *lbki);
 
 #endif /* SILOFS_CACHE_H_ */

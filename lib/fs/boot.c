@@ -693,7 +693,7 @@ static int check_system_page_size(void)
 	const size_t page_shift[] = { 12, 13, 14, 16 };
 
 	page_size = silofs_sc_page_size();
-	if (page_size > SILOFS_BK_SIZE) {
+	if (page_size > SILOFS_LBK_SIZE) {
 		return -EOPNOTSUPP;
 	}
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(page_shift); ++i) {

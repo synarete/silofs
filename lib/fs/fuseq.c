@@ -89,7 +89,7 @@ struct silofs_fuseq_hdr_in {
 struct silofs_fuseq_cmd_in {
 	struct fuse_in_header   hdr;
 	uint8_t cmd[SILOFS_IO_SIZE_MAX];
-	uint8_t tail[SILOFS_BK_SIZE - sizeof(struct fuse_in_header)];
+	uint8_t tail[SILOFS_LBK_SIZE - sizeof(struct fuse_in_header)];
 };
 
 struct silofs_fuseq_init_in {
@@ -382,7 +382,7 @@ struct silofs_fuseq_rd_iter {
 };
 
 struct silofs_fuseq_iob {
-	uint8_t b[SILOFS_BK_SIZE + SILOFS_IO_SIZE_MAX];
+	uint8_t b[SILOFS_LBK_SIZE + SILOFS_IO_SIZE_MAX];
 };
 
 union silofs_fuseq_inb_u {
@@ -3268,24 +3268,23 @@ static int fuseq_recv_request(struct silofs_fuseq_worker *fqw)
 static void *iob_new(struct silofs_alloc *alloc, size_t len)
 {
 	void *iob;
-	const size_t bk_size = SILOFS_BK_SIZE;
 
 	silofs_assert_le(len, 2 * SILOFS_MEGA);
-	silofs_assert_ge(len, SILOFS_BK_SIZE);
+	silofs_assert_ge(len, SILOFS_LBK_SIZE);
 
 	iob = silofs_allocate(alloc, len);
 	if (iob != NULL) {
-		silofs_memzero(iob, min(len, bk_size));
+		silofs_memzero(iob, min(len, SILOFS_LBK_SIZE));
 	}
 	return iob;
 }
 
 static void iob_del(struct silofs_alloc *alloc, void *iob, size_t len)
 {
-	const size_t bk_size = SILOFS_BK_SIZE;
+	const size_t bk_size = SILOFS_LBK_SIZE;
 
 	silofs_assert_le(len, 2 * SILOFS_MEGA);
-	silofs_assert_ge(len, SILOFS_BK_SIZE);
+	silofs_assert_ge(len, SILOFS_LBK_SIZE);
 
 	silofs_memffff(iob, min(len, min(len, bk_size)));
 	silofs_deallocate(alloc, iob, len);

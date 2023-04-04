@@ -89,7 +89,7 @@ static int fpr_unshare_leaf(struct silofs_fpos_ref *fpr);
 
 static bool off_is_bk_aligned(loff_t off)
 {
-	return (off % SILOFS_BK_SIZE) == 0;
+	return (off % SILOFS_LBK_SIZE) == 0;
 }
 
 static loff_t off_in_data(loff_t off, enum silofs_stype stype)
@@ -496,7 +496,7 @@ static loff_t ftn_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
 	const size_t nbps = ftn_nbytes_per_slot(ftn);
 
 	next_off = off_end(ftn_beg(ftn), slot * nbps);
-	return off_align_to_bk(next_off);
+	return off_align_to_lbk(next_off);
 }
 
 static loff_t
@@ -750,7 +750,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_block *nil_bk = f_ctx->uber->ub.cache->c_nil_bk;
+	struct silofs_lblock *nil_bk = f_ctx->uber->ub.cache->c_nil_lbk;
 
 	return nil_bk->u.bk;
 }
@@ -1316,7 +1316,7 @@ static void filc_zero_fileaf_sub(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_fileaf_info *fli,
                                  loff_t off_in_db, size_t len)
 {
-	struct silofs_data_block *db = fli->flu.db;
+	struct silofs_data_block64 *db = fli->flu.db;
 
 	silofs_memzero(&db->dat[off_in_db], len);
 	filc_dirtify_fileaf(f_ctx, fli);

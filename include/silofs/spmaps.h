@@ -104,9 +104,6 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
 bool silofs_sli_has_allocated_space(const struct silofs_spleaf_info *sli,
                                     const struct silofs_vaddr *vaddr);
 
-size_t silofs_sli_nallocated_at(const struct silofs_spleaf_info *sli,
-                                const silofs_lba_t lba);
-
 
 bool silofs_sli_has_shared_refcnt(const struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr);

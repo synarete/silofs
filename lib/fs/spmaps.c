@@ -262,6 +262,49 @@ static uint64_t mask_of(size_t kbn, size_t nkb)
 	return mask;
 }
 
+static void bk_state_parse(const struct silofs_bk_state *bk_st_le,
+                           struct silofs_bk_state *bk_st)
+{
+	bk_st->state = silofs_le64_to_cpu(bk_st_le->state);
+}
+
+static void bk_state_set(struct silofs_bk_state *bk_st_le,
+                         const struct silofs_bk_state *bk_st)
+{
+	bk_st_le->state = silofs_cpu_to_le64(bk_st->state);
+}
+
+static void bk_state_mask_of(struct silofs_bk_state *bk_st,
+                             size_t kbn, size_t nkb)
+{
+	bk_st->state = mask_of(kbn, nkb);
+}
+
+static bool bk_state_has_any(const struct silofs_bk_state *bk_st)
+{
+	return (bk_st->state > 0);
+}
+
+static bool bk_state_has_mask(const struct silofs_bk_state *bk_st,
+                              const struct silofs_bk_state *bk_mask)
+{
+	return ((bk_st->state & bk_mask->state) == bk_mask->state);
+}
+
+static void bk_state_set_mask(struct silofs_bk_state *bk_st,
+                              const struct silofs_bk_state *bk_mask)
+{
+	bk_st->state |= bk_mask->state;
+}
+
+static void bk_state_unset_mask(struct silofs_bk_state *bk_st,
+                                const struct silofs_bk_state *bk_mask)
+{
+	bk_st->state &= ~(bk_mask->state);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_bk_ref *bkr_unconst(const struct silofs_bk_ref *bkr)
 {
 	return unconst(bkr);
@@ -303,22 +346,27 @@ static void bkr_dec_refcnt(struct silofs_bk_ref *bkr, size_t n)
 	bkr_set_refcnt(bkr, refnct - n);
 }
 
-static uint64_t bkr_allocated(const struct silofs_bk_ref *bkr)
+static void bkr_allocated(const struct silofs_bk_ref *bkr,
+                          struct silofs_bk_state *bk_st)
 {
-	return silofs_le64_to_cpu(bkr->br_allocated);
+	bk_state_parse(&bkr->br_allocated, bk_st);
 }
 
-static void bkr_set_allocated(struct silofs_bk_ref *bkr, uint64_t allocated)
+static void bkr_set_allocated(struct silofs_bk_ref *bkr,
+                              const struct silofs_bk_state *bk_st)
 {
-	bkr->br_allocated = silofs_cpu_to_le64(allocated);
+	bk_state_set(&bkr->br_allocated, bk_st);
 }
 
 static bool bkr_test_allocated_at(const struct silofs_bk_ref *bkr,
                                   size_t kbn, size_t nkb)
 {
-	const uint64_t mask = mask_of(kbn, nkb);
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 
-	return ((bkr_allocated(bkr) & mask) == mask);
+	bkr_allocated(bkr, &bk_st);
+	bk_state_mask_of(&bk_mask, kbn, nkb);
+	return bk_state_has_mask(&bk_st, &bk_mask);
 }
 
 static bool bkr_test_allocated_bk(const struct silofs_bk_ref *bkr)
@@ -329,26 +377,33 @@ static bool bkr_test_allocated_bk(const struct silofs_bk_ref *bkr)
 static void bkr_set_allocated_at(struct silofs_bk_ref *bkr,
                                  size_t kbn, size_t nkb)
 {
-	const uint64_t mask = mask_of(kbn, nkb);
-	const uint64_t allocated = bkr_allocated(bkr);
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 
-	bkr_set_allocated(bkr, allocated | mask);
+	bkr_allocated(bkr, &bk_st);
+	bk_state_mask_of(&bk_mask, kbn, nkb);
+	bk_state_set_mask(&bk_st, &bk_mask);
+	bkr_set_allocated(bkr, &bk_st);
 }
 
 static void bkr_clear_allocated_at(struct silofs_bk_ref *bkr,
                                    size_t kbn, size_t nkb)
 {
-	const uint64_t mask = mask_of(kbn, nkb);
-	const uint64_t allocated = bkr_allocated(bkr);
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 
-	bkr_set_allocated(bkr, allocated & ~mask);
+	bkr_allocated(bkr, &bk_st);
+	bk_state_mask_of(&bk_mask, kbn, nkb);
+	bk_state_unset_mask(&bk_st, &bk_mask);
+	bkr_set_allocated(bkr, &bk_st);
 }
 
 static size_t bkr_usecnt(const struct silofs_bk_ref *bkr)
 {
-	const uint64_t allocated = bkr_allocated(bkr);
+	struct silofs_bk_state bk_st;
 
-	return silofs_popcount64(allocated);
+	bkr_allocated(bkr, &bk_st);
+	return silofs_popcount64(bk_st.state);
 }
 
 static size_t bkr_freecnt(const struct silofs_bk_ref *bkr)
@@ -363,58 +418,66 @@ static bool bkr_isfull(const struct silofs_bk_ref *bkr)
 
 static bool bkr_isunused(const struct silofs_bk_ref *bkr)
 {
-	return (bkr_usecnt(bkr) == 0);
+	struct silofs_bk_state bk_st;
+
+	bkr_allocated(bkr, &bk_st);
+	return !bk_state_has_any(&bk_st);
 }
 
-static uint64_t bkr_unwritten(const struct silofs_bk_ref *bkr)
+static void bkr_unwritten(const struct silofs_bk_ref *bkr,
+                          struct silofs_bk_state *bk_st)
 {
-	return silofs_le64_to_cpu(bkr->br_unwritten);
+	bk_state_parse(&bkr->br_unwritten, bk_st);
 }
 
-static void bkr_set_unwritten(struct silofs_bk_ref *bkr, uint64_t unwritten)
+static void bkr_set_unwritten(struct silofs_bk_ref *bkr,
+                              const struct silofs_bk_state *bk_st)
 {
-	bkr->br_unwritten = silofs_cpu_to_le64(unwritten);
+	bk_state_set(&bkr->br_unwritten, bk_st);
 }
 
 static bool bkr_test_unwritten_at(const struct silofs_bk_ref *bkr,
                                   size_t kbn, size_t nkb)
 {
-	const uint64_t mask = mask_of(kbn, nkb);
-	const uint64_t unwritten = bkr_unwritten(bkr);
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 
-	silofs_expect(((unwritten & mask) == mask) ||
-	              ((unwritten & mask) == 0));
-
-	return (unwritten & mask) == mask;
+	bkr_unwritten(bkr, &bk_st);
+	bk_state_mask_of(&bk_mask, kbn, nkb);
+	return bk_state_has_mask(&bk_st, &bk_mask);
 }
 
 static void bkr_set_unwritten_at(struct silofs_bk_ref *bkr,
                                  size_t kbn, size_t nkb)
 {
-	const uint64_t mask = mask_of(kbn, nkb);
-	const uint64_t unwritten = bkr_unwritten(bkr);
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 
-	silofs_assert(!bkr_test_unwritten_at(bkr, kbn, nkb));
-
-	bkr_set_unwritten(bkr, unwritten | mask);
+	bkr_unwritten(bkr, &bk_st);
+	bk_state_mask_of(&bk_mask, kbn, nkb);
+	bk_state_set_mask(&bk_st, &bk_mask);
+	bkr_set_unwritten(bkr, &bk_st);
 }
 
 static void bkr_clear_unwritten_at(struct silofs_bk_ref *bkr,
                                    size_t kbn, size_t nkb)
 {
-	const uint64_t mask = mask_of(kbn, nkb);
-	const uint64_t unwritten = bkr_unwritten(bkr);
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 
-	silofs_assert(bkr_test_unwritten_at(bkr, kbn, nkb));
-
-	bkr_set_unwritten(bkr, unwritten & ~mask);
+	bkr_unwritten(bkr, &bk_st);
+	bk_state_mask_of(&bk_mask, kbn, nkb);
+	bk_state_unset_mask(&bk_st, &bk_mask);
+	bkr_set_unwritten(bkr, &bk_st);
 }
 
 static void bkr_clear_alloc_state(struct silofs_bk_ref *bkr)
 {
+	struct silofs_bk_state bk_st = { .state = 0 };
+
 	bkr_set_refcnt(bkr, 0);
-	bkr_set_allocated(bkr, 0);
-	bkr_set_unwritten(bkr, 0);
+	bkr_set_allocated(bkr, &bk_st);
+	bkr_set_unwritten(bkr, &bk_st);
 }
 
 static void bkr_reset(struct silofs_bk_ref *bkr)
@@ -444,13 +507,14 @@ static bool bkr_may_alloc(const struct silofs_bk_ref *bkr, size_t nkb)
 static int bkr_find_free(const struct silofs_bk_ref *bkr,
                          size_t nkb, size_t *out_kbn)
 {
-	uint64_t mask;
+	struct silofs_bk_state bk_st;
 	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-	const uint64_t allocated = bkr_allocated(bkr);
+	uint64_t mask;
 
+	bkr_allocated(bkr, &bk_st);
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
 		mask = mask_of(kbn, nkb);
-		if ((allocated & mask) == 0) {
+		if ((bk_st.state & mask) == 0) {
 			*out_kbn = kbn;
 			return 0;
 		}
@@ -462,16 +526,17 @@ static void bkr_make_vaddrs(const struct silofs_bk_ref *bkr,
                             enum silofs_stype stype, loff_t voff_base,
                             struct silofs_vaddrs *vas)
 {
+	struct silofs_bk_state bk_st;
 	const size_t nkb = stype_nkbs(stype);
 	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-	const uint64_t allocated = bkr_allocated(bkr);
 	uint64_t mask;
 	loff_t voff;
 
+	bkr_allocated(bkr, &bk_st);
 	vas->count = 0;
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
 		mask = mask_of(kbn, nkb);
-		if ((allocated & mask) == mask) {
+		if ((bk_st.state & mask) == mask) {
 			voff = off_end(voff_base, kbn * SILOFS_KB_SIZE);
 			vaddr_setup(&vas->vaddr[vas->count++], stype, voff);
 		}
@@ -482,12 +547,20 @@ static void bkr_clone_from(struct silofs_bk_ref *bkr,
                            const struct silofs_bk_ref *bkr_other)
 {
 	struct silofs_bkaddr bkaddr;
+	struct silofs_bk_state bk_st;
+	size_t refcnt;
 
 	bkr_uref(bkr_other, &bkaddr);
 	bkr_set_uref(bkr, &bkaddr);
-	bkr_set_allocated(bkr, bkr_allocated(bkr_other));
-	bkr_set_unwritten(bkr, bkr_unwritten(bkr_other));
-	bkr_set_refcnt(bkr, bkr_refcnt(bkr_other));
+
+	bkr_allocated(bkr_other, &bk_st);
+	bkr_set_allocated(bkr, &bk_st);
+
+	bkr_unwritten(bkr_other, &bk_st);
+	bkr_set_unwritten(bkr, &bk_st);
+
+	refcnt = bkr_refcnt(bkr_other);
+	bkr_set_refcnt(bkr, refcnt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -579,9 +652,11 @@ static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *sl,
 static bool spleaf_has_allocated_with(const struct silofs_spmap_leaf *sl,
                                       const struct silofs_vaddr *vaddr)
 {
+	struct silofs_bk_state bk_st;
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	return bkr_allocated(bkr) > 0;
+	bkr_allocated(bkr, &bk_st);
+	return bk_st.state > 0;
 }
 
 static bool spleaf_test_unwritten_at(const struct silofs_spmap_leaf *sl,
@@ -613,14 +688,6 @@ static size_t spleaf_refcnt_at(const struct silofs_spmap_leaf *sl, loff_t voff)
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(sl, voff);
 
 	return bkr_refcnt(bkr);
-}
-
-static size_t
-spleaf_allocated_at(const struct silofs_spmap_leaf *sl, silofs_lba_t lba)
-{
-	const struct silofs_bk_ref *bkr = spleaf_bkr_by_lba(sl, lba);
-
-	return bkr_allocated(bkr);
 }
 
 static void spleaf_set_allocated_at(struct silofs_spmap_leaf *sl,
@@ -1031,12 +1098,6 @@ bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
 	silofs_expect_ge(cnt, nkb);
 
 	return (nkb == cnt);
-}
-
-size_t silofs_sli_nallocated_at(const struct silofs_spleaf_info *sli,
-                                const silofs_lba_t lba)
-{
-	return spleaf_allocated_at(sli->sl, lba);
 }
 
 static bool sli_is_allocated_at(const struct silofs_spleaf_info *sli,

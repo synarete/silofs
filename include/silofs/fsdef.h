@@ -669,10 +669,15 @@ struct silofs_spmap_node {
 } silofs_packed_aligned64;
 
 
+struct silofs_bk_state {
+	uint64_t        state;
+} silofs_packed_aligned8;
+
+
 struct silofs_bk_ref {
 	struct silofs_bkaddr48b         br_uref;
-	uint64_t                        br_allocated;
-	uint64_t                        br_unwritten;
+	struct silofs_bk_state          br_allocated;
+	struct silofs_bk_state          br_unwritten;
 	uint64_t                        br_refcnt;
 	uint8_t                         br_reserved[48];
 } silofs_packed_aligned8;

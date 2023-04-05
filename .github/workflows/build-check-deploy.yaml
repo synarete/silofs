@@ -2,12 +2,15 @@
 name: "Silofs: build and deploy"
 on:
   push:
+    tags:
+      - 'v0*'
     branches:
-      - '*'
+      - $default-branch
       - '!_*'
       - '!gh-pages'
   pull_request:
-    branches: [$default-branch]
+    branches:
+      - $default-branch
 jobs:
   prepare:
     name: Prepare environment

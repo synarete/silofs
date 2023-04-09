@@ -134,7 +134,7 @@ static int smc_check_resolved_oaddr(const struct silofs_submit_ctx *sm_ctx,
 
 static void smc_relax_cache_now(const struct silofs_submit_ctx *sm_ctx)
 {
-	silofs_cache_relax(sm_ctx->cache, SILOFS_F_NOW | SILOFS_F_URGENT);
+	silofs_cache_relax(sm_ctx->cache, SILOFS_F_NOW);
 }
 
 static int smc_do_make_sqe(struct silofs_submit_ctx *sm_ctx,
@@ -480,19 +480,20 @@ static void dsets_fill_all(struct silofs_dsets *dsets,
 
 static size_t flush_threshold_of(int flags)
 {
-	const size_t mega = SILOFS_UMEGA;
 	size_t threshold;
 
-	if (flags & (SILOFS_F_NOW | SILOFS_F_IDLE | SILOFS_F_FSYNC)) {
+	if (flags & (SILOFS_F_NOW | SILOFS_F_IDLE)) {
 		threshold = 0;
-	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = mega;
+	} else if (flags & SILOFS_F_FSYNC) {
+		threshold = 0;
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		threshold = 2 * mega;
+		threshold = SILOFS_BLOB_SIZE_MAX / 4;
+	} else if (flags & SILOFS_F_RELEASE) {
+		threshold = SILOFS_BLOB_SIZE_MAX / 2;
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		threshold = 8 * mega;
+		threshold = 2 * SILOFS_BLOB_SIZE_MAX;
 	} else {
-		threshold = 16 * mega;
+		threshold = 4 * SILOFS_BLOB_SIZE_MAX;
 	}
 	return threshold;
 }
@@ -646,11 +647,11 @@ static void smc_fill_dsets(struct silofs_submit_ctx *sm_ctx)
 {
 	struct silofs_dsets *dsets = &sm_ctx->dsets;
 
-	if (sm_ctx->ii != NULL) {
+	if ((sm_ctx->ii == NULL) || (sm_ctx->flags & SILOFS_F_NOW)) {
+		dsets_fill_all(dsets, sm_ctx->dirtyqs);
+	} else {
 		dsets_fill_by_ii(dsets, sm_ctx->ii);
 		dsets_fill_alt(dsets, sm_ctx->dirtyqs);
-	} else {
-		dsets_fill_all(dsets, sm_ctx->dirtyqs);
 	}
 }
 
@@ -723,7 +724,7 @@ static bool smc_need_flush1(const struct silofs_submit_ctx *sm_ctx)
 {
 	struct silofs_alloc_stat st;
 
-	if (sm_ctx->flags & (SILOFS_F_NOW | SILOFS_F_URGENT)) {
+	if (sm_ctx->flags & SILOFS_F_NOW) {
 		return true;
 	}
 	if (silofs_cache_blobs_overflow(sm_ctx->cache)) {
@@ -739,14 +740,13 @@ static bool smc_need_flush1(const struct silofs_submit_ctx *sm_ctx)
 static bool smc_need_flush2(const struct silofs_submit_ctx *sm_ctx)
 {
 	const struct silofs_dirtyqs *dqs = sm_ctx->dirtyqs;
-	size_t accum_ndirty = 0;
-	size_t threshold = 0;
+	size_t accum_ndirty;
+	size_t threshold;
 
+	threshold = flush_threshold_of(sm_ctx->flags);
 	if (sm_ctx->ii != NULL) {
-		threshold = flush_threshold_of(sm_ctx->flags);
 		accum_ndirty = sm_ctx->ii->i_dq_vis.dq_accum;
 	} else {
-		threshold = 2 * flush_threshold_of(sm_ctx->flags);
 		accum_ndirty = dqs->dq_uis.dq_accum +
 		               dqs->dq_iis.dq_accum + dqs->dq_vis.dq_accum;
 	}

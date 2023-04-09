@@ -692,7 +692,7 @@ static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
 static void pgal_update_released(const struct silofs_pgal *pgal,
                                  struct silofs_page_info *pgi, size_t npgs)
 {
-	if (npgs >= (4 * MPAGES_LARGE_CHUNK)) {
+	if (npgs >= MPAGES_LARGE_CHUNK) {
 		pgal_punch_hole_at(pgal, pgi, npgs);
 	}
 }

@@ -2766,26 +2766,19 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 		niter += 1;
 	}
 	mem_press = cache_memory_pressure(cache);
-	if (flags & SILOFS_F_BRINGUP) {
-		niter += silofs_popcount64(mem_press >> 3);
-	}
-	if (flags & SILOFS_F_IDLE) {
-		niter += silofs_popcount64(mem_press >> 4);
-	}
-	if (flags & SILOFS_F_TIMEOUT) {
-		niter += min(silofs_popcount64(mem_press >> 8), 1);
-	}
-	if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		niter += min(silofs_popcount64(mem_press >> 10), 2);
-	}
 	if (flags & SILOFS_F_NOW) {
-		niter += min(silofs_popcount64(mem_press >> 12), 8);
+		niter += clamp(silofs_popcount64(mem_press >> 12), 2, 12);
 	}
-	if (flags & SILOFS_F_WALKFS) {
+	if (flags & (SILOFS_F_BRINGUP | SILOFS_F_FSYNC | SILOFS_F_RELEASE)) {
+		niter += silofs_popcount64(mem_press >> 4);
+	} else if (flags & SILOFS_F_IDLE) {
+		niter += clamp(silofs_popcount64(mem_press >> 4), 2, 8);
+	} else if (flags & SILOFS_F_TIMEOUT) {
+		niter += clamp(silofs_popcount64(mem_press >> 8), 1, 3);
+	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
+		niter += min(silofs_popcount64(mem_press >> 10), 4);
+	} else if (flags & SILOFS_F_WALKFS) {
 		niter += (mem_press & 7);
-	}
-	if (flags & SILOFS_F_URGENT) {
-		niter += 4;
 	}
 	return niter;
 }

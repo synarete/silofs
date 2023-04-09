@@ -54,10 +54,9 @@ enum silofs_stg_mode {
 
 /* common control flags */
 enum silofs_flags {
-	SILOFS_F_FSYNC          = SILOFS_BIT(0),
-	SILOFS_F_RELEASE        = SILOFS_BIT(1),
-	SILOFS_F_NOW            = SILOFS_BIT(2),
-	SILOFS_F_URGENT         = SILOFS_BIT(3),
+	SILOFS_F_NOW            = SILOFS_BIT(0),
+	SILOFS_F_FSYNC          = SILOFS_BIT(1),
+	SILOFS_F_RELEASE        = SILOFS_BIT(2),
 	SILOFS_F_BRINGUP        = SILOFS_BIT(4),
 	SILOFS_F_OPSTART        = SILOFS_BIT(5),
 	SILOFS_F_OPFINISH       = SILOFS_BIT(6),

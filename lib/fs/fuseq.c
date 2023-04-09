@@ -3760,10 +3760,10 @@ static int fuseq_timeout_flags(const struct silofs_fuseq_worker *fqw)
 	int flags = 0;
 
 	dif = fuseq_dif_time_stamp(fqw);
-	if (dif > 10) {
+	if (dif > 4) {
 		flags |= SILOFS_F_TIMEOUT;
 	}
-	if (dif > 20) {
+	if (dif > 8) {
 		flags |= SILOFS_F_IDLE;
 	}
 	return flags;

@@ -120,7 +120,7 @@
 /* maximal number of logical blocks within single blob */
 #define SILOFS_NLBK_IN_BLOB_MAX          (64L)
 
-/* maximal size in bytes of single blob (8M) */
+/* maximal size in bytes of single blob (4M) */
 #define SILOFS_BLOB_SIZE_MAX \
 	(SILOFS_NLBK_IN_BLOB_MAX * SILOFS_LBK_SIZE)
 

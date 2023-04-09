@@ -20,7 +20,6 @@ class TestConfig:
         self.password = "12345678"
 
 
-# pylint: disable=R0903
 class TestData:
     def __init__(self, path: str, data: bytes) -> None:
         self.path = path
@@ -29,6 +28,17 @@ class TestData:
 
     def fsize(self) -> int:
         return self.base + len(self.data)
+
+    def do_write(self) -> None:
+        with open(self.path, "wb") as f:
+            f.write(self.data)
+
+    def do_read(self) -> bytes:
+        with open(self.path, "rb") as f:
+            return f.read(len(self.data))
+
+    def prune_data(self) -> None:
+        self.data = bytes(0)
 
 
 class TestDataSet:
@@ -44,15 +54,13 @@ class TestDataSet:
 
     def do_write(self) -> None:
         for td in self.tds:
-            with open(td.path, "wb") as f:
-                f.write(td.data)
-                self.expect.is_reg(td.path)
+            td.do_write()
+            self.expect.is_reg(td.path)
 
     def do_read(self) -> None:
         for td in self.tds:
-            with open(td.path, "rb") as f:
-                rdat = f.read(len(td.data))
-                self.expect.eq(rdat, td.data)
+            rdat = td.do_read()
+            self.expect.eq(rdat, td.data)
 
     def do_stat(self) -> None:
         for td in self.tds:
@@ -64,6 +72,10 @@ class TestDataSet:
         for td in self.tds:
             self.expect.is_reg(td.path)
             os.unlink(td.path)
+
+    def prune_data(self) -> None:
+        for td in self.tds:
+            td.prune_data()
 
 
 class TestBaseCtx:

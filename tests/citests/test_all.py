@@ -2,6 +2,7 @@
 from . import ctx
 from . import test_basic
 from . import test_io
+from . import test_fillfs
 from . import test_snap
 from . import test_fsck
 from . import test_self
@@ -20,6 +21,7 @@ TESTS = [
     test_io.test_rw_rands,
     test_io.test_reload,
     test_io.test_reload_n,
+    test_fillfs.test_fill_data,
     test_self.test_unit_tests,
     test_self.test_vfs_tests,
     test_self.test_vfs_tests2,

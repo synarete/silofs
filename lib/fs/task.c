@@ -313,32 +313,33 @@ static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
                              struct silofs_submitq_entry **out_sqe)
 {
 	struct silofs_submitq_entry *sqe;
-	int err = -ENOENT;
+	int ret = 0;
 
-	*out_sqe = NULL;
 	silofs_mutex_lock(&smq->smq_mutex);
 	sqe = submitq_get_sqe(smq, id);
 	if (sqe != NULL) {
 		submitq_unlink_sqe(smq, sqe);
-		err = sqe_apply(sqe);
+		ret = sqe_apply(sqe);
 	}
 	silofs_mutex_unlock(&smq->smq_mutex);
 	*out_sqe = sqe;
-	return err;
+	return ret;
 }
 
 static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 {
 	struct silofs_submitq_entry *sqe = NULL;
-	int err = 0;
+	int ret = 0;
 
-	while (!err) {
-		err = submitq_apply_one(smq, id, &sqe);
-		if (sqe != NULL) {
-			silofs_submitq_del_sqe(smq, sqe);
+	while (ret == 0) {
+		sqe = NULL;
+		ret = submitq_apply_one(smq, id, &sqe);
+		if (sqe == NULL) {
+			break;
 		}
+		silofs_submitq_del_sqe(smq, sqe);
 	}
-	return err;
+	return ret;
 }
 
 int silofs_submitq_new_sqe(struct silofs_submitq *smq,
@@ -397,14 +398,14 @@ void silofs_task_update_by(struct silofs_task *task,
 
 int silofs_task_submit(struct silofs_task *task, bool all)
 {
-	int err = 0;
+	int ret = 0;
 
 	if (all) {
-		err = submitq_apply(task->t_submitq, SILOFS_CID_ALL);
+		ret = submitq_apply(task->t_submitq, SILOFS_CID_ALL);
 	} else if (task->t_apex_id) {
-		err = submitq_apply(task->t_submitq, task->t_apex_id);
+		ret = submitq_apply(task->t_submitq, task->t_apex_id);
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return ret;
 }
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)

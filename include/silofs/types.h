@@ -411,7 +411,8 @@ typedef void (*silofs_dset_add_fn)(struct silofs_dset *dset,
 
 struct silofs_dset {
 	silofs_dset_add_fn              ds_add_fn;
-	struct silofs_lnode_info       *ds_lnisq;
+	struct silofs_lnode_info       *ds_preq;
+	struct silofs_lnode_info       *ds_postq;
 	struct silofs_avl               ds_avl;
 };
 

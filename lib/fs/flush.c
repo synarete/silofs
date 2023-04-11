@@ -39,6 +39,8 @@ struct silofs_submit_ctx {
 	int flags;
 };
 
+static void dset_moveq(struct silofs_dset *dset);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void lni_seal_meta(struct silofs_lnode_info *lni)
@@ -154,15 +156,14 @@ static int smc_do_make_sqe(struct silofs_submit_ctx *sm_ctx,
 static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
                         struct silofs_submitq_entry **out_sqe)
 {
-	struct silofs_submitq_entry *sqe = NULL;
 	int err;
 
-	err = smc_do_make_sqe(sm_ctx, &sqe);
-	if (!err) {
-		sqe->uber = sm_ctx->uber;
+	err = smc_do_make_sqe(sm_ctx, out_sqe);
+	if (err) {
+		return err;
 	}
-	*out_sqe = sqe;
-	return err;
+	(*out_sqe)->uber = sm_ctx->uber;
+	return 0;
 }
 
 static void smc_del_sqe(struct silofs_submit_ctx *sm_ctx,
@@ -186,15 +187,14 @@ static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
 }
 
 static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
-                                 struct silofs_lnode_info **lnisq,
+                                 struct silofs_dset *dset,
                                  struct silofs_submitq_entry *sqe)
 {
 	struct silofs_oaddr oaddr;
-	struct silofs_lnode_info *lni;
+	struct silofs_lnode_info *lni = dset->ds_preq;
 	int err;
 
-	while (*lnisq != NULL) {
-		lni = *lnisq;
+	while (lni != NULL) {
 		err = resolve_oaddr_of(sm_ctx->task, lni, &oaddr);
 		if (err) {
 			return err;
@@ -206,18 +206,19 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
 		if (!silofs_sqe_append_ref(sqe, &oaddr, lni)) {
 			break;
 		}
-		*lnisq = lni->ds_next;
+		dset_moveq(dset);
+		lni = dset->ds_preq;
 	}
 	return 0;
 }
 
-static int smc_populate_sqe(struct silofs_submit_ctx *sm_ctx,
-                            struct silofs_lnode_info **lnisq,
-                            struct silofs_submitq_entry *sqe)
+static int smc_populate_sqe_by(struct silofs_submit_ctx *sm_ctx,
+                               struct silofs_dset *dset,
+                               struct silofs_submitq_entry *sqe)
 {
 	int err;
 
-	err = smc_populate_sqe_refs(sm_ctx, lnisq, sqe);
+	err = smc_populate_sqe_refs(sm_ctx, dset, sqe);
 	if (!err) {
 		silofs_sqe_increfs(sqe);
 		err = smc_setup_sqe_buf(sm_ctx, sqe);
@@ -278,27 +279,51 @@ static void dset_add_dirty(struct silofs_dset *dset,
 static void dset_init(struct silofs_dset *dset)
 {
 	silofs_avl_init(&dset->ds_avl, lni_getkey, ckey_compare, dset);
-	dset->ds_lnisq = NULL;
+	dset->ds_preq = NULL;
+	dset->ds_postq = NULL;
 	dset->ds_add_fn = dset_add_dirty;
 }
 
 static void dset_fini(struct silofs_dset *dset)
 {
 	silofs_avl_fini(&dset->ds_avl);
-	dset->ds_lnisq = NULL;
+	dset->ds_preq = NULL;
+	dset->ds_postq = NULL;
 	dset->ds_add_fn = NULL;
 }
 
-static void dset_push_frontq(struct silofs_dset *dset,
-                             struct silofs_lnode_info *lni)
+static void dset_push_preq(struct silofs_dset *dset,
+                           struct silofs_lnode_info *lni)
 {
-	lni->ds_next = dset->ds_lnisq;
-	dset->ds_lnisq = lni;
+	silofs_assert_null(lni->ds_next);
+
+	lni->ds_next = dset->ds_preq;
+	dset->ds_preq = lni;
+}
+
+static void dset_push_postq(struct silofs_dset *dset,
+                            struct silofs_lnode_info *lni)
+{
+	silofs_assert_null(lni->ds_next);
+
+	lni->ds_next = dset->ds_postq;
+	dset->ds_postq = lni;
+}
+
+static void dset_moveq(struct silofs_dset *dset)
+{
+	struct silofs_lnode_info *lni = dset->ds_preq;
+
+	if (lni != NULL) {
+		dset->ds_preq = dset->ds_preq->ds_next;
+		lni->ds_next = NULL;
+		dset_push_postq(dset, lni);
+	}
 }
 
 static void dset_seal_all(const struct silofs_dset *dset)
 {
-	struct silofs_lnode_info *lni = dset->ds_lnisq;
+	struct silofs_lnode_info *lni = dset->ds_preq;
 
 	while (lni != NULL) {
 		lni_seal_meta(lni);
@@ -313,12 +338,13 @@ static void dset_mkfifo(struct silofs_dset *dset)
 	const struct silofs_avl_node *itr;
 	const struct silofs_avl *avl = &dset->ds_avl;
 
-	dset->ds_lnisq = NULL;
+	silofs_assert_null(dset->ds_preq);
+
 	itr = silofs_avl_begin(avl);
 	end = silofs_avl_end(avl);
 	while (itr != end) {
 		lni = avl_node_to_lni(itr);
-		dset_push_frontq(dset, lni);
+		dset_push_preq(dset, lni);
 		itr = silofs_avl_next(avl, itr);
 	}
 }
@@ -329,7 +355,7 @@ static void dset_undirtify_all(const struct silofs_dset *dset)
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_vnode_info *vi = NULL;
 	struct silofs_lnode_info *lni_next = NULL;
-	struct silofs_lnode_info *lni = dset->ds_lnisq;
+	struct silofs_lnode_info *lni = dset->ds_postq;
 	enum silofs_stype stype;
 
 	while (lni != NULL) {
@@ -575,49 +601,39 @@ static void smc_enqueue_sqe(const struct silofs_submit_ctx *sm_ctx,
 	silofs_task_update_by(sm_ctx->task, sqe);
 }
 
-static int smc_pend_sqe(const struct silofs_submit_ctx *sm_ctx,
-                        struct silofs_submitq_entry *sqe)
+static int smc_enqueue_dset_into(struct silofs_submit_ctx *sm_ctx,
+                                 struct silofs_dset *dset,
+                                 struct silofs_submitq_entry *sqe)
 {
 	int err;
 
+	err = smc_populate_sqe_by(sm_ctx, dset, sqe);
+	if (err) {
+		return err;
+	}
 	err = smc_prep_sqe(sm_ctx, sqe);
-	if (!err) {
-		smc_enqueue_sqe(sm_ctx, sqe);
-	}
-	return err;
-}
-
-static int smc_flush_siq(struct silofs_submit_ctx *sm_ctx,
-                         struct silofs_lnode_info **lnisq,
-                         struct silofs_submitq_entry *sqe)
-{
-	int err;
-
-	err = smc_populate_sqe(sm_ctx, lnisq, sqe);
 	if (err) {
 		return err;
 	}
-	err = smc_pend_sqe(sm_ctx, sqe);
-	if (err) {
-		return err;
-	}
+	smc_enqueue_sqe(sm_ctx, sqe);
 	return 0;
 }
 
-static int smc_flush_dset(struct silofs_submit_ctx *sm_ctx,
-                          enum silofs_stype stype)
+static int smc_enqueue_dset_of(struct silofs_submit_ctx *sm_ctx,
+                               enum silofs_stype stype)
 {
-	struct silofs_submitq_entry *sqe = NULL;
-	struct silofs_dset *dset = smc_dset_of(sm_ctx, stype);
-	struct silofs_lnode_info *lnisq = dset->ds_lnisq;
+	struct silofs_dset *dset;
+	struct silofs_submitq_entry *sqe;
 	int err;
 
-	while (lnisq != NULL) {
+	dset = smc_dset_of(sm_ctx, stype);
+	while (dset->ds_preq != NULL) {
+		sqe = NULL;
 		err = smc_make_sqe(sm_ctx, &sqe);
 		if (err) {
 			return err;
 		}
-		err = smc_flush_siq(sm_ctx, &lnisq, sqe);
+		err = smc_enqueue_dset_into(sm_ctx, dset, sqe);
 		if (err) {
 			smc_del_sqe(sm_ctx, sqe);
 			return err;
@@ -629,18 +645,19 @@ static int smc_flush_dset(struct silofs_submit_ctx *sm_ctx,
 static int smc_process_dset_of(struct silofs_submit_ctx *sm_ctx,
                                enum silofs_stype stype)
 {
-	int ret = 0;
+	int err;
 
 	if (smc_has_dirty_dset(sm_ctx, stype)) {
 		smc_make_fifo_dset(sm_ctx, stype);
 		smc_seal_dset(sm_ctx, stype);
-		ret = smc_flush_dset(sm_ctx, stype);
-		if (!ret) {
-			smc_undirtify_dset(sm_ctx, stype);
+		err = smc_enqueue_dset_of(sm_ctx, stype);
+		if (err) {
+			return err;
 		}
+		smc_undirtify_dset(sm_ctx, stype);
 		smc_cleanup_dset(sm_ctx, stype);
 	}
-	return ret;
+	return 0;
 }
 
 static void smc_fill_dsets(struct silofs_submit_ctx *sm_ctx)

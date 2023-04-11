@@ -717,6 +717,17 @@ static int exec_flush_dirty_now(const struct silofs_fs_env *fse)
 	return term_task(&task, err);
 }
 
+static int flush_any_dirty(const struct silofs_fs_env *fse)
+{
+	int err;
+
+	err = exec_flush_dirty_now(fse);
+	if (err) {
+		log_err("failed to flush dirty: err=%d", err);
+	}
+	return err;
+}
+
 static int shutdown_uber(struct silofs_fs_env *fse)
 {
 	struct silofs_uber *uber = fse->fs_uber;
@@ -776,9 +787,8 @@ static int flush_and_drop_cache(const struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = exec_flush_dirty_now(fse);
+	err = flush_any_dirty(fse);
 	if (err) {
-		log_err("failed to flush dirty: err=%d", err);
 		return err;
 	}
 	drop_cache(fse);
@@ -789,7 +799,7 @@ static int do_sync_fs(const struct silofs_fs_env *fse, bool drop)
 {
 	int err;
 
-	err = exec_flush_dirty_now(fse);
+	err = flush_any_dirty(fse);
 	if (!err && drop) {
 		drop_cache(fse);
 	}
@@ -940,8 +950,8 @@ static int exec_require_spmaps_of(const struct silofs_fs_env *fse,
 	return term_task(&task, err);
 }
 
-static int format_base_spmaps_of(const struct silofs_fs_env *fse,
-                                 const struct silofs_vaddr *vaddr)
+static int format_base_vspmaps_of(const struct silofs_fs_env *fse,
+                                  const struct silofs_vaddr *vaddr)
 {
 	int err;
 
@@ -959,7 +969,7 @@ static int format_base_spmaps_of(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int format_base_spmaps(const struct silofs_fs_env *fse)
+static int format_base_vspmaps(const struct silofs_fs_env *fse)
 {
 	struct silofs_vaddr vaddr;
 	enum silofs_stype stype;
@@ -970,7 +980,7 @@ static int format_base_spmaps(const struct silofs_fs_env *fse)
 			continue;
 		}
 		vaddr_setup(&vaddr, stype, 0);
-		err = format_base_spmaps_of(fse, &vaddr);
+		err = format_base_vspmaps_of(fse, &vaddr);
 		if (err) {
 			return err;
 		}
@@ -1007,8 +1017,8 @@ static int exec_reclaim_vspace(const struct silofs_fs_env *fse,
 	return term_task(&task, err);
 }
 
-static int format_claim_vspace_of(const struct silofs_fs_env *fse,
-                                  enum silofs_stype vspace)
+static int claim_reclaim_vspace_of(const struct silofs_fs_env *fse,
+                                   enum silofs_stype vspace)
 {
 	struct silofs_voaddr voa;
 	const loff_t voff_exp = 0;
@@ -1032,7 +1042,7 @@ static int format_claim_vspace_of(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int format_base_vspace(const struct silofs_fs_env *fse)
+static int claim_reclaim_vspace(const struct silofs_fs_env *fse)
 {
 	enum silofs_stype stype;
 	int err;
@@ -1041,7 +1051,7 @@ static int format_base_vspace(const struct silofs_fs_env *fse)
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
-		err = format_claim_vspace_of(fse, stype);
+		err = claim_reclaim_vspace_of(fse, stype);
 		if (err) {
 			return err;
 		}
@@ -1181,7 +1191,7 @@ static int exec_spawn_rootdir_inode(const struct silofs_fs_env *fse,
 	return term_task(&task, err);
 }
 
-static int format_rootdir_inode(const struct silofs_fs_env *fse)
+static int format_rootdir(const struct silofs_fs_env *fse)
 {
 	struct silofs_inode_info *root_ii = NULL;
 	int err;
@@ -1195,27 +1205,23 @@ static int format_rootdir_inode(const struct silofs_fs_env *fse)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	silofs_ii_fixup_as_rootdir(root_ii);
-	return flush_and_drop_cache(fse);
+
+	err = flush_and_drop_cache(fse);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-static int format_meta(const struct silofs_fs_env *fse)
+static int check_capacity(const struct silofs_fs_env *fse)
 {
+	const size_t cap_want = fse->fs_args.capacity;
+	size_t capacity = 0;
 	int err;
 
-	err = format_base_spmaps(fse);
+	err = silofs_calc_fs_capacity(cap_want, &capacity);
 	if (err) {
-		return err;
-	}
-	err = format_base_vspace(fse);
-	if (err) {
-		return err;
-	}
-	err = format_zero_vspace(fse);
-	if (err) {
-		return err;
-	}
-	err = format_rootdir_inode(fse);
-	if (err) {
+		log_err("illegal capacity: cap=%lu err=%d", cap_want, err);
 		return err;
 	}
 	return 0;
@@ -1229,7 +1235,6 @@ static int format_super(const struct silofs_fs_env *fse)
 
 	err = silofs_calc_fs_capacity(cap_want, &capacity);
 	if (err) {
-		log_err("illegal capacity: cap=%lu err=%d", cap_want, err);
 		return err;
 	}
 	err = silofs_uber_format_super(fse->fs_uber, capacity);
@@ -1239,6 +1244,33 @@ static int format_super(const struct silofs_fs_env *fse)
 	err = check_superblock(fse);
 	if (err) {
 		log_err("internal sb format: err=%d", err);
+		return err;
+	}
+	err = flush_any_dirty(fse);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int format_vmeta(const struct silofs_fs_env *fse)
+{
+	int err;
+
+	err = format_base_vspmaps(fse);
+	if (err) {
+		return err;
+	}
+	err = claim_reclaim_vspace(fse);
+	if (err) {
+		return err;
+	}
+	err = format_zero_vspace(fse);
+	if (err) {
+		return err;
+	}
+	err = flush_any_dirty(fse);
+	if (err) {
 		return err;
 	}
 	return 0;
@@ -1346,11 +1378,19 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
+	err = check_capacity(fse);
+	if (err) {
+		return err;
+	}
 	err = format_super(fse);
 	if (err) {
 		return err;
 	}
-	err = format_meta(fse);
+	err = format_vmeta(fse);
+	if (err) {
+		return err;
+	}
+	err = format_rootdir(fse);
 	if (err) {
 		return err;
 	}
@@ -1451,15 +1491,11 @@ static int do_close_fs(struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = exec_flush_dirty_now(fse);
+	err = flush_any_dirty(fse);
 	if (err) {
 		return err;
 	}
 	err = shutdown_uber(fse);
-	if (err) {
-		return err;
-	}
-	err = exec_flush_dirty_now(fse);
 	if (err) {
 		return err;
 	}

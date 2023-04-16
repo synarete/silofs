@@ -57,7 +57,7 @@
 #define REQUIRE_GE(a, b) \
 	SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
 
-#define REQUIRE_BK_SIZE(a) \
+#define REQUIRE_LBK_SIZE(a) \
 	REQUIRE_EQ(a, SILOFS_LBK_SIZE)
 
 #define REQUIRE_SIZEOF(type, size) \
@@ -65,9 +65,6 @@
 
 #define REQUIRE_SIZEOF_LE(type, size) \
 	REQUIRE_LE(sizeof(type), size)
-
-#define REQUIRE_SIZEOF_BK(type) \
-	REQUIRE_BK_SIZE(sizeof(type))
 
 #define REQUIRE_SIZEOF_KB(type) \
 	REQUIRE_SIZEOF(type, SILOFS_KB_SIZE)
@@ -86,6 +83,9 @@
 
 #define REQUIRE_SIZEOF_64K(type) \
 	REQUIRE_SIZEOF_NK(type, 64)
+
+#define REQUIRE_SIZEOF_LBK(type) \
+	REQUIRE_LBK_SIZE(sizeof(type))
 
 #define REQUIRE_MEMBER_SIZE(type, f, size) \
 	REQUIRE_EQ(MEMBER_SIZE(type, f), size)
@@ -177,8 +177,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_bk_ref, 120);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF_KB(struct silofs_inode);
-	REQUIRE_SIZEOF_BK(struct silofs_data_block64);
-	REQUIRE_SIZEOF_BK(struct silofs_lblock);
+	REQUIRE_SIZEOF_LBK(struct silofs_lblock);
 	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
@@ -194,6 +193,7 @@ static void guarantee_persistent_types_size(void)
 	REQUIRE_SIZEOF(union silofs_dtree_data, SILOFS_DIR_NODE_NBUF_SIZE);
 	REQUIRE_SIZEOF(struct silofs_dtree_node, SILOFS_DIR_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_data_block4, SILOFS_FILE_HEAD2_LEAF_SIZE);
+	REQUIRE_SIZEOF(struct silofs_data_block64, SILOFS_FILE_TREE_LEAF_SIZE);
 	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METADATA_SIZE);
 }
 
@@ -202,7 +202,7 @@ static void guarantee_persistent_types_members(void)
 	REQUIRE_NBITS(struct silofs_header, h_stype, 8);
 	REQUIRE_NBITS(struct silofs_bk_ref, br_allocated, SILOFS_NKB_IN_LBK);
 	REQUIRE_NBITS(struct silofs_bk_ref, br_unwritten, SILOFS_NKB_IN_LBK);
-	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, br_reserved, 48);
+	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, br_refcnt, 8);
 	REQUIRE_NELEMS(struct silofs_ftree_node,
 	               fn_child, SILOFS_FILE_NODE_NCHILDS);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
@@ -314,7 +314,7 @@ static void guarantee_ioctl_types_size(void)
 static void guarantee_defs_consistency(void)
 {
 	REQUIRE_EQ(CHAR_BIT, 8);
-	REQUIRE_EQ(SILOFS_NSPMAP_IN_BK * SILOFS_SPMAP_SIZE, SILOFS_LBK_SIZE);
+	REQUIRE_EQ(SILOFS_NSPMAP_IN_LBK * SILOFS_SPMAP_SIZE, SILOFS_LBK_SIZE);
 	REQUIRE_LT(SILOFS_DIR_TREE_DEPTH_MAX, SILOFS_HASH256_LEN);
 	REQUIRE_LT(SILOFS_DIR_TREE_INDEX_MAX, INT32_MAX);
 	REQUIRE_GT(SILOFS_DIR_ENTRIES_MAX, SILOFS_LINK_MAX);

@@ -104,15 +104,11 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
 bool silofs_sli_has_allocated_space(const struct silofs_spleaf_info *sli,
                                     const struct silofs_vaddr *vaddr);
 
+bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
+                                   const struct silofs_vaddr *vaddr);
 
-bool silofs_sli_has_shared_refcnt(const struct silofs_spleaf_info *sli,
+bool silofs_sli_is_last_allocated(const struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr);
-
-bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
-                            const struct silofs_vaddr *vaddr);
-
-bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
-                                const struct silofs_vaddr *vaddr);
 
 bool silofs_sli_has_unwritten_at(const struct silofs_spleaf_info *sli,
                                  const struct silofs_vaddr *vaddr);
@@ -122,6 +118,9 @@ void silofs_sli_clear_unwritten_at(struct silofs_spleaf_info *sli,
 
 void silofs_sli_mark_unwritten_at(struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr);
+
+size_t silofs_sli_dbkref_at(const struct silofs_spleaf_info *sli,
+                            const struct silofs_vaddr *vaddr);
 
 void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
                           enum silofs_stype stype, silofs_lba_t lba,

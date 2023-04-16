@@ -104,11 +104,12 @@ int silofs_mark_unwritten_at(struct silofs_task *task,
 int silofs_test_unwritten_at(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr, bool *out_res);
 
-int silofs_test_lastref_at(struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr, bool *out_res);
+int silofs_test_last_allocated(struct silofs_task *task,
+                               const struct silofs_vaddr *vaddr,
+                               bool *out_res);
 
-int silofs_test_shared_at(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr, bool *out_res);
+int silofs_test_shared_dbkref(struct silofs_task *task,
+                              const struct silofs_vaddr *vaddr, bool *out_res);
 
 
 

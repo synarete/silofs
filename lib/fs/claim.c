@@ -118,16 +118,10 @@ static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
                                   struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr)
 {
-	const bool first_ref_on_bk = !silofs_sli_has_refs_at(sli, vaddr);
+	const bool first = !silofs_sli_has_allocated_with(sli, vaddr);
 
 	silofs_sli_mark_allocated_space(sli, vaddr);
-	sbi_update_space_stats(sbi, vaddr, 1, first_ref_on_bk ? 1 : 0);
-}
-
-static bool sli_is_shared_databk(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr)
-{
-	return vaddr_isdatabk(vaddr) && silofs_sli_has_refs_at(sli, vaddr);
+	sbi_update_space_stats(sbi, vaddr, 1, first ? 1 : 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -448,10 +442,12 @@ int silofs_claim_ispace(struct silofs_task *task,
 	return spac_claim_ispace(&spa_ctx, out_ivoa);
 }
 
-static bool spac_is_shared_databk(const struct silofs_spalloc_ctx *spa_ctx,
-                                  const struct silofs_vaddr *vaddr)
+static bool spac_has_dbkref_at(const struct silofs_spalloc_ctx *spa_ctx,
+                               const struct silofs_vaddr *vaddr)
 {
-	return sli_is_shared_databk(spa_ctx->sli, vaddr);
+	const size_t cnt = silofs_sli_dbkref_at(spa_ctx->sli, vaddr);
+
+	return (cnt > 0);
 }
 
 static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
@@ -459,10 +455,8 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 {
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 	int ret = 0;
-	bool shared;
 
-	shared = spac_is_shared_databk(spa_ctx, vaddr);
-	if (!shared) {
+	if (!spac_has_dbkref_at(spa_ctx, vaddr)) {
 		ret = silofs_spamaps_store(spam, vaddr->stype,
 		                           vaddr->off, vaddr->len);
 	}
@@ -532,7 +526,7 @@ static void spac_clear_allocate_at(const struct silofs_spalloc_ctx *spa_ctx,
 {
 	silofs_sli_unref_allocated_space(spa_ctx->sli, vaddr);
 
-	if (!sli_is_shared_databk(spa_ctx->sli, vaddr)) {
+	if (!spac_has_dbkref_at(spa_ctx, vaddr)) {
 		sbi_update_space_stats(spa_ctx->sbi, vaddr, -1, 0);
 	}
 }

@@ -280,6 +280,12 @@ static void bk_state_mask_of(struct silofs_bk_state *bk_st,
 	bk_st->state = mask_of(kbn, nkb);
 }
 
+static void bk_state_mask_of_other(struct silofs_bk_state *bk_st,
+                                   size_t kbn, size_t nkb)
+{
+	bk_st->state = ~mask_of(kbn, nkb);
+}
+
 static bool bk_state_has_any(const struct silofs_bk_state *bk_st)
 {
 	return (bk_st->state > 0);
@@ -289,6 +295,12 @@ static bool bk_state_has_mask(const struct silofs_bk_state *bk_st,
                               const struct silofs_bk_state *bk_mask)
 {
 	return ((bk_st->state & bk_mask->state) == bk_mask->state);
+}
+
+static bool bk_state_has_mask_any(const struct silofs_bk_state *bk_st,
+                                  const struct silofs_bk_state *bk_mask)
+{
+	return ((bk_st->state & bk_mask->state) > 0);
 }
 
 static void bk_state_set_mask(struct silofs_bk_state *bk_st,
@@ -327,28 +339,28 @@ static void bkr_set_uref(struct silofs_bk_ref *bkr,
 	silofs_bkaddr48b_set(&bkr->br_uref, bkaddr);
 }
 
-static size_t bkr_refcnt(const struct silofs_bk_ref *bkr)
+static size_t bkr_dbkref(const struct silofs_bk_ref *bkr)
 {
-	return silofs_le64_to_cpu(bkr->br_refcnt);
+	return silofs_le64_to_cpu(bkr->br_dbkref);
 }
 
-static void bkr_set_refcnt(struct silofs_bk_ref *bkr, size_t refcnt)
+static void bkr_set_dbkref(struct silofs_bk_ref *bkr, size_t val)
 {
-	bkr->br_refcnt = silofs_cpu_to_le64(refcnt);
+	bkr->br_dbkref = silofs_cpu_to_le64(val);
 }
 
-static void bkr_inc_refcnt(struct silofs_bk_ref *bkr, size_t n)
+static void bkr_inc_dbkref(struct silofs_bk_ref *bkr)
 {
-	bkr_set_refcnt(bkr, bkr_refcnt(bkr) + n);
+	bkr_set_dbkref(bkr, bkr_dbkref(bkr) + 1);
 }
 
-static void bkr_dec_refcnt(struct silofs_bk_ref *bkr, size_t n)
+static void bkr_dec_dbkref(struct silofs_bk_ref *bkr)
 {
-	const size_t refnct = bkr_refcnt(bkr);
+	const size_t cur = bkr_dbkref(bkr);
 
-	silofs_expect_ge(refnct, n);
+	silofs_expect_ge(cur, 1);
 
-	bkr_set_refcnt(bkr, refnct - n);
+	bkr_set_dbkref(bkr, cur - 1);
 }
 
 static void bkr_allocated(const struct silofs_bk_ref *bkr,
@@ -377,6 +389,17 @@ static bool bkr_test_allocated_at(const struct silofs_bk_ref *bkr,
 static bool bkr_test_allocated_bk(const struct silofs_bk_ref *bkr)
 {
 	return bkr_test_allocated_at(bkr, 0, SILOFS_NKB_IN_LBK);
+}
+
+static bool bkr_test_allocated_other(const struct silofs_bk_ref *bkr,
+                                     size_t kbn, size_t nkb)
+{
+	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
+
+	bkr_allocated(bkr, &bk_st);
+	bk_state_mask_of_other(&bk_mask, kbn, nkb);
+	return bk_state_has_mask_any(&bk_st, &bk_mask);
 }
 
 static void bkr_set_allocated_at(struct silofs_bk_ref *bkr,
@@ -480,7 +503,7 @@ static void bkr_clear_alloc_state(struct silofs_bk_ref *bkr)
 {
 	struct silofs_bk_state bk_st = { .state = 0 };
 
-	bkr_set_refcnt(bkr, 0);
+	bkr_set_dbkref(bkr, 0);
 	bkr_set_allocated(bkr, &bk_st);
 	bkr_set_unwritten(bkr, &bk_st);
 }
@@ -553,7 +576,7 @@ static void bkr_clone_from(struct silofs_bk_ref *bkr,
 {
 	struct silofs_bkaddr bkaddr;
 	struct silofs_bk_state bk_st;
-	size_t refcnt;
+	size_t dbkref;
 
 	bkr_uref(bkr_other, &bkaddr);
 	bkr_set_uref(bkr, &bkaddr);
@@ -564,8 +587,8 @@ static void bkr_clone_from(struct silofs_bk_ref *bkr,
 	bkr_unwritten(bkr_other, &bk_st);
 	bkr_set_unwritten(bkr, &bk_st);
 
-	refcnt = bkr_refcnt(bkr_other);
-	bkr_set_refcnt(bkr, refcnt);
+	dbkref = bkr_dbkref(bkr_other);
+	bkr_set_dbkref(bkr, dbkref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -649,19 +672,49 @@ static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *sl,
 	const size_t kbn = kbn_of(vaddr);
 	const size_t nkb = nkbs_of(vaddr);
 	const struct silofs_bk_ref *bkr;
+	bool ret;
 
 	bkr = spleaf_bkr_by_vaddr(sl, vaddr);
-	return bkr_test_allocated_at(bkr, kbn, nkb);
+	if (vaddr_isdatabk(vaddr)) {
+		ret = (bkr_dbkref(bkr) > 0);
+	} else {
+		ret = bkr_test_allocated_at(bkr, kbn, nkb);
+	}
+	return ret;
 }
 
 static bool spleaf_has_allocated_with(const struct silofs_spmap_leaf *sl,
                                       const struct silofs_vaddr *vaddr)
 {
-	struct silofs_bk_state bk_st;
-	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
+	const size_t kbn = kbn_of(vaddr);
+	const size_t nkb = nkbs_of(vaddr);
+	const struct silofs_bk_ref *bkr;
+	bool ret;
 
-	bkr_allocated(bkr, &bk_st);
-	return bk_st.state > 0;
+	bkr = spleaf_bkr_by_vaddr(sl, vaddr);
+	if (vaddr_isdatabk(vaddr)) {
+		ret = (bkr_dbkref(bkr) > 0);
+	} else {
+		ret = bkr_test_allocated_other(bkr, kbn, nkb);
+	}
+	return ret;
+}
+
+static bool spleaf_is_last_allocated(const struct silofs_spmap_leaf *sl,
+                                     const struct silofs_vaddr *vaddr)
+{
+	const size_t kbn = kbn_of(vaddr);
+	const size_t nkb = nkbs_of(vaddr);
+	const struct silofs_bk_ref *bkr;
+	bool ret;
+
+	bkr = spleaf_bkr_by_vaddr(sl, vaddr);
+	if (vaddr_isdatabk(vaddr)) {
+		ret = (bkr_dbkref(bkr) == 1);
+	} else {
+		ret = !bkr_test_allocated_other(bkr, kbn, nkb);
+	}
+	return ret;
 }
 
 static bool spleaf_test_unwritten_at(const struct silofs_spmap_leaf *sl,
@@ -688,34 +741,27 @@ static void spleaf_clear_unwritten_at(struct silofs_spmap_leaf *sl,
 	bkr_clear_unwritten_at(bkr, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
-static size_t spleaf_refcnt_at(const struct silofs_spmap_leaf *sl, loff_t voff)
+static size_t spleaf_dbkref_at(const struct silofs_spmap_leaf *sl,
+                               const struct silofs_vaddr *vaddr)
 {
-	const struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(sl, voff);
+	const struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	return bkr_refcnt(bkr);
+	silofs_assert_eq(vaddr->stype, SILOFS_STYPE_DATABK);
+
+	return bkr_dbkref(bkr);
 }
 
-static void spleaf_set_allocated_at(struct silofs_spmap_leaf *sl,
+static void spleaf_ref_allocated_at(struct silofs_spmap_leaf *sl,
                                     const struct silofs_vaddr *vaddr)
 {
 	const size_t kbn = kbn_of(vaddr);
 	const size_t nkb = nkbs_of(vaddr);
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	bkr_inc_refcnt(bkr, nkb);
 	bkr_set_allocated_at(bkr, kbn, nkb);
-}
-
-static void spleaf_add_allocated_at(struct silofs_spmap_leaf *sl,
-                                    const struct silofs_vaddr *vaddr)
-{
-	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkbs_of(vaddr);
-	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
-
-	silofs_assert(bkr_test_allocated_at(bkr, kbn, nkb));
-	silofs_assert_ge(bkr_refcnt(bkr), nkb);
-	bkr_inc_refcnt(bkr, nkb);
+	if (vaddr_isdatabk(vaddr)) {
+		bkr_inc_dbkref(bkr);
+	}
 }
 
 static void spleaf_unref_allocated_at(struct silofs_spmap_leaf *sl,
@@ -723,11 +769,12 @@ static void spleaf_unref_allocated_at(struct silofs_spmap_leaf *sl,
 {
 	const size_t kbn = kbn_of(vaddr);
 	const size_t nkb = nkbs_of(vaddr);
-	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_vaddr(sl, vaddr);
 
-	bkr_dec_refcnt(bkr, nkb);
-	if ((nkb < nkb_in_bk) || !bkr_refcnt(bkr)) {
+	if (vaddr_isdatabk(vaddr)) {
+		bkr_dec_dbkref(bkr);
+	}
+	if (!bkr_dbkref(bkr) || (nkb < SILOFS_NKB_IN_LBK)) {
 		bkr_clear_allocated_at(bkr, kbn, nkb);
 	}
 }
@@ -825,9 +872,7 @@ static size_t spleaf_calc_total_usecnt(const struct silofs_spmap_leaf *sl)
 
 	for (size_t slot = 0; slot < nslots; ++slot) {
 		bkr = spleaf_subref_at(sl, slot);
-		if (bkr_refcnt(bkr)) {
-			usecnt_sum += bkr_usecnt(bkr);
-		}
+		usecnt_sum += bkr_usecnt(bkr);
 	}
 	return usecnt_sum;
 }
@@ -874,7 +919,7 @@ static void spleaf_rebind_uref(struct silofs_spmap_leaf *sl, loff_t voff,
 {
 	struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(sl, voff);
 
-	silofs_assert_gt(bkr_refcnt(bkr), 0);
+	silofs_assert_gt(bkr_usecnt(bkr), 0);
 	bkr_set_uref(bkr, bkaddr);
 }
 
@@ -943,6 +988,7 @@ void silofs_sli_update_staged(struct silofs_spleaf_info *sli)
 	const struct silofs_spmap_leaf *sl = sli->sl;
 
 	sli->sl_nused_bytes = spleaf_sum_nbytes_used(sl);
+	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
 }
 
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
@@ -1044,7 +1090,7 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 	sli->sl_nused_bytes += vaddr->len;
 	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
 
-	spleaf_set_allocated_at(sl, vaddr);
+	spleaf_ref_allocated_at(sl, vaddr);
 	if (vaddr_isdata(vaddr)) {
 		spleaf_set_unwritten_at(sl, vaddr);
 	}
@@ -1058,7 +1104,7 @@ void silofs_sli_reref_allocated_space(struct silofs_spleaf_info *sli,
 	silofs_assert_ge(sli->sl_nused_bytes, SILOFS_LBK_SIZE);
 	silofs_assert_le(sli->sl_nused_bytes, SILOFS_BLOB_SIZE_MAX);
 
-	spleaf_add_allocated_at(sli->sl, vaddr);
+	spleaf_ref_allocated_at(sli->sl, vaddr);
 	sli_dirtify(sli);
 }
 
@@ -1066,55 +1112,46 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
+	const bool last = spleaf_is_last_allocated(sl, vaddr);
 
 	spleaf_unref_allocated_at(sl, vaddr);
 	if (!spleaf_is_allocated_at(sl, vaddr)) {
 		silofs_assert_ge(sli->sl_nused_bytes, vaddr->len);
 		sli->sl_nused_bytes -= vaddr->len;
 	}
-	if (!spleaf_has_allocated_with(sl, vaddr)) {
+	if (last) {
 		spleaf_renew_bk_at(sl, vaddr);
 	}
 	sli_dirtify(sli);
 }
 
-bool silofs_sli_has_shared_refcnt(const struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr)
-{
-	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->off);
-
-	return (refcnt > SILOFS_NKB_IN_LBK);
-}
-
-bool silofs_sli_has_refs_at(const struct silofs_spleaf_info *sli,
+size_t silofs_sli_dbkref_at(const struct silofs_spleaf_info *sli,
                             const struct silofs_vaddr *vaddr)
 {
-	const size_t refcnt = spleaf_refcnt_at(sli->sl, vaddr->off);
+	size_t dbkref = 0;
 
-	return (refcnt > 0);
+	if (vaddr_isdatabk(vaddr)) {
+		dbkref = spleaf_dbkref_at(sli->sl, vaddr);
+	}
+	return dbkref;
 }
 
-bool silofs_sli_has_last_refcnt(const struct silofs_spleaf_info *sli,
-                                const struct silofs_vaddr *vaddr)
+bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
+                                   const struct silofs_vaddr *vaddr)
 {
-	const size_t cnt = spleaf_refcnt_at(sli->sl, vaddr->off);
-	const size_t nkb = nkbs_of(vaddr);
-
-	silofs_expect_ge(cnt, nkb);
-
-	return (nkb == cnt);
+	return spleaf_has_allocated_with(sli->sl, vaddr);
 }
 
-static bool sli_is_allocated_at(const struct silofs_spleaf_info *sli,
-                                const struct silofs_vaddr *vaddr)
+bool silofs_sli_is_last_allocated(const struct silofs_spleaf_info *sli,
+                                  const struct silofs_vaddr *vaddr)
 {
-	return spleaf_is_allocated_at(sli->sl, vaddr);
+	return spleaf_is_last_allocated(sli->sl, vaddr);
 }
 
 bool silofs_sli_has_allocated_space(const struct silofs_spleaf_info *sli,
                                     const struct silofs_vaddr *vaddr)
 {
-	return sli_is_allocated_at(sli, vaddr);
+	return spleaf_is_allocated_at(sli->sl, vaddr);
 }
 
 bool silofs_sli_has_unwritten_at(const struct silofs_spleaf_info *sli,
@@ -1463,10 +1500,10 @@ static int verify_spnode_height(enum silofs_height height)
 
 static int verify_bk_ref(const struct silofs_bk_ref *bkr)
 {
-	size_t refcnt;
+	size_t val;
 
-	refcnt = bkr_refcnt(bkr);
-	if (refcnt >= INT_MAX) {
+	val = bkr_dbkref(bkr);
+	if (val >= INT_MAX) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

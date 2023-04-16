@@ -692,8 +692,8 @@ int silofs_mark_unwritten_at(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_test_lastref_at(struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr, bool *out_res)
+int silofs_test_last_allocated(struct silofs_task *task,
+                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
@@ -702,14 +702,15 @@ int silofs_test_lastref_at(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	*out_res = silofs_sli_has_last_refcnt(sli, vaddr);
+	*out_res = silofs_sli_is_last_allocated(sli, vaddr);
 	return 0;
 }
 
-int silofs_test_shared_at(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr, bool *out_res)
+int silofs_test_shared_dbkref(struct silofs_task *task,
+                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
+	size_t dbkref = 0;
 	int err;
 
 	*out_res = false;
@@ -720,7 +721,8 @@ int silofs_test_shared_at(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	*out_res = silofs_sli_has_shared_refcnt(sli, vaddr);
+	dbkref = silofs_sli_dbkref_at(sli, vaddr);
+	*out_res = (dbkref > 1);
 	return 0;
 }
 

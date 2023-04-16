@@ -1257,17 +1257,36 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 	ii_update_iattrs(ii, &f_ctx->task->t_oper.op_creds, &iattr);
 }
 
-static int fpr_probe_unwritten(struct silofs_fpos_ref *fpr)
+static int fpr_update_unwritten(struct silofs_fpos_ref *fpr)
 {
 	const struct silofs_vaddr *vaddr = &fpr->vaddr;
 	struct silofs_task *task = fpr->f_ctx->task;
-	int ret = 0;
 
 	fpr->unwritten = true;
-	if (!vaddr_isnull(vaddr)) {
-		ret = silofs_test_unwritten_at(task, vaddr, &fpr->unwritten);
+	if (vaddr_isnull(vaddr)) {
+		return 0;
 	}
-	return ret;
+	return silofs_test_unwritten_at(task, vaddr, &fpr->unwritten);
+}
+
+static void fpr_update_partial(struct silofs_fpos_ref *fpr, size_t len)
+{
+	if (len > 0) {
+		if (fpr->head1) {
+			fpr->partial = (len < SILOFS_FILE_HEAD1_LEAF_SIZE);
+		} else if (fpr->head2) {
+			fpr->partial = (len < SILOFS_FILE_HEAD2_LEAF_SIZE);
+		} else {
+			silofs_assert(fpr->tree);
+			fpr->partial = (len < SILOFS_FILE_TREE_LEAF_SIZE);
+		}
+	}
+}
+
+static int fpr_update_pre_write_leaf(struct silofs_fpos_ref *fpr, size_t len)
+{
+	fpr_update_partial(fpr, len);
+	return fpr_update_unwritten(fpr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1723,7 +1742,7 @@ filc_read_from_leaf(struct silofs_file_ctx *f_ctx,
 	int err;
 
 	*out_len = 0;
-	err = fpr_probe_unwritten(fpr);
+	err = fpr_update_unwritten(fpr);
 	if (err) {
 		return err;
 	}
@@ -2018,7 +2037,7 @@ static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
 	int err;
 	bool last = false;
 
-	err = silofs_test_lastref_at(f_ctx->task, vaddr, &last);
+	err = silofs_test_last_allocated(f_ctx->task, vaddr, &last);
 	if (err) {
 		return err;
 	}
@@ -2339,18 +2358,20 @@ filc_write_leaf_by_copy(const struct silofs_file_ctx *f_ctx,
 	return err;
 }
 
-static int fpr_prepare_unwritten_leaf(struct silofs_fpos_ref *fpr)
+static int
+filc_pre_write_leaf(const struct silofs_file_ctx *f_ctx,
+                    struct silofs_fpos_ref *fpr, size_t len)
 {
 	int err;
 
-	err = fpr_probe_unwritten(fpr);
+	err = fpr_update_pre_write_leaf(fpr, len);
 	if (err) {
 		return err;
 	}
 	if (!fpr->unwritten || !fpr->partial) {
 		return 0;
 	}
-	err = filc_zero_data_leaf_at(fpr->f_ctx, &fpr->vaddr);
+	err = filc_zero_data_leaf_at(f_ctx, &fpr->vaddr);
 	if (err) {
 		return err;
 	}
@@ -2394,7 +2415,7 @@ fpr_write_to_leaf(struct silofs_fpos_ref *fpr, size_t *out_len)
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
-	err = fpr_prepare_unwritten_leaf(fpr);
+	err = filc_pre_write_leaf(fpr->f_ctx, fpr, 0);
 	if (err) {
 		return err;
 	}
@@ -2413,10 +2434,11 @@ fpr_write_to_leaf(struct silofs_fpos_ref *fpr, size_t *out_len)
 static int fpr_detect_shared(struct silofs_fpos_ref *fpr)
 {
 	struct silofs_task *task = fpr->f_ctx->task;
+	const struct silofs_vaddr *vaddr = &fpr->vaddr;
 	int ret = 0;
 
 	if (fpr->tree && fpr->has_data && !fpr->shared) {
-		ret = silofs_test_shared_at(task, &fpr->vaddr, &fpr->shared);
+		ret = silofs_test_shared_dbkref(task, vaddr, &fpr->shared);
 	}
 	return ret;
 }
@@ -3896,11 +3918,11 @@ static int fpr_copy_leaf(struct silofs_fpos_ref *fpr_src,
 {
 	int err;
 
-	err = fpr_prepare_unwritten_leaf(fpr_dst);
+	err = filc_pre_write_leaf(fpr_dst->f_ctx, fpr_dst, len);
 	if (err) {
 		return err;
 	}
-	err = fpr_prepare_unwritten_leaf(fpr_src);
+	err = filc_pre_write_leaf(fpr_src->f_ctx, fpr_src, len);
 	if (err) {
 		return err;
 	}

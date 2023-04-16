@@ -215,7 +215,7 @@ static void silofs_fatal_op(long a, const char *op, long b,
 {
 	struct silofs_fatal_msg fm;
 
-	fmtmsg(&fm, "'%ld %s %ld'", a, op, b);
+	fmtmsg(&fm, "%ld %s %ld", a, op, b);
 	silofs_fatal_at_(fm.str, fl, ln);
 }
 

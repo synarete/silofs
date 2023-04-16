@@ -64,9 +64,9 @@ static loff_t ut_off_end(loff_t off, size_t len)
 
 static void ut_file_copy_range1_(struct ut_env *ute, loff_t off, size_t len)
 {
-	ino_t dino;
-	ino_t ino_src;
-	ino_t ino_dst;
+	ino_t dino = 0;
+	ino_t ino_src = 0;
+	ino_t ino_dst = 0;
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;

@@ -303,6 +303,11 @@ static void bk_state_unset_mask(struct silofs_bk_state *bk_st,
 	bk_st->state &= ~(bk_mask->state);
 }
 
+static size_t bk_state_popcount(const struct silofs_bk_state *bk_st)
+{
+	return silofs_popcount64(bk_st->state);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_bk_ref *bkr_unconst(const struct silofs_bk_ref *bkr)
@@ -403,7 +408,7 @@ static size_t bkr_usecnt(const struct silofs_bk_ref *bkr)
 	struct silofs_bk_state bk_st;
 
 	bkr_allocated(bkr, &bk_st);
-	return silofs_popcount64(bk_st.state);
+	return bk_state_popcount(&bk_st);
 }
 
 static size_t bkr_freecnt(const struct silofs_bk_ref *bkr)

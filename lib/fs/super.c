@@ -712,6 +712,10 @@ int silofs_test_shared_at(struct silofs_task *task,
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
+	*out_res = false;
+	if (!vaddr_isdatabk(vaddr)) {
+		return 0;
+	}
 	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
 	if (err) {
 		return err;

@@ -20,7 +20,8 @@ release=$(try "${version_sh}" --release)
 revision=$(try "${version_sh}" --revision)
 dist_name="${name}-${version}"
 archive_tgz="${dist_name}.tar.gz"
-tag_name="${name}-toolbox:v${version}"
+image_tag="v${version}"
+image_name="${name}-toolbox:${image_tag}"
 registry="${SILOFS_REGISTRY:-}"
 
 imgsourcedir=${selfdir}
@@ -55,30 +56,32 @@ run cp "${autotoolsdir}/${archive_tgz}" "${imgbuilddir}"
 # Copy Containerfile
 run cp "${imgsourcedir}/Containerfile" "${imgbuilddir}"
 
-# Build target images with buildah
+# Create manifest
+run buildah manifest create "${image_name}"
+
+# Build target images with buildah and add to manifest
 cd "${imgbuilddir}"
 for arch in "${arch_list[@]}"; do
   run buildah bud \
+    --manifest "${image_name}" \
     --build-arg=VERSION="${version}" \
     --build-arg=RELEASE="${release}" \
     --build-arg=REVISION="${revision}" \
     --build-arg=DIST_NAME="${dist_name}" \
     --build-arg=ARCH="${arch}" \
     --arch "${arch}" \
-    --tag "${tag_name}-${arch}" \
+    --tag "${image_name}-${arch}" \
     --file "${imgbuilddir}/Containerfile" \
     "${imgbuilddir}"
 done
 
-# Create manifest
-run buildah manifest create "${tag_name}"
-for arch in "${arch_list[@]}"; do
-  run buildah manifest add "${tag_name}" "${tag_name}-${arch}"
-done
+# Inspect manifest (post operation)
+run buildah manifest inspect "${image_name}"
 
 # Push multi-arch image to registry
 if [ -n "$registry" ]; then
-  run podman manifest push --all "${tag_name}" "${registry}/${tag_name}"
+  run podman manifest push --all \
+  	"${image_name}" "docker://${registry}/${image_name}"
 fi
 
 # Cleanup build staging area

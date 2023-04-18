@@ -7,8 +7,9 @@ EXTRA_DIST += silofs.css
 EXTRA_DIST += silofs.rst
 
 if HAVE_RST2HTML
-
-dist_doc_DATA = index.html silofs.html
+dist_doc_DATA = $(NULL)
+dist_doc_DATA += index.html
+dist_doc_DATA += silofs.html
 CLEANFILES = $(dist_doc_DATA)
 
 all-local: $(dist_doc_DATA)
@@ -20,10 +21,10 @@ rst2html = @RST2HTML@
 
 %.html: %.rst
 	@echo "  RST2HTML $@" && \
-	  $(rst2html) --stylesheet=$(srcdir)/silofs.css < "$<" > "$@" ;
+	  $(rst2html) --stylesheet=$(srcdir)/silofs.css < $< > $@ ;
 
 index.html: index.html.in
-	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;
+	@echo "  SED      $@"; $(PATSUBST) $< > $@ ;
 
 endif
 

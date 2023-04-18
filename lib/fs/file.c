@@ -4186,12 +4186,38 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
 	return 0;
 }
 
-static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
-                           struct silofs_file_ctx *f_ctx_dst, size_t *out_ncp)
+static int filc_flush_dirty_now(struct silofs_file_ctx *f_ctx)
+{
+	return silofs_flush_dirty(f_ctx->task, f_ctx->ii, SILOFS_F_NOW);
+}
+
+static int filc_pre_copy_range(struct silofs_file_ctx *f_ctx_src,
+                               struct silofs_file_ctx *f_ctx_dst)
+{
+	int err;
+
+	err = filc_flush_dirty_now(f_ctx_src);
+	if (err) {
+		return err;
+	}
+	err = filc_flush_dirty_now(f_ctx_dst);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int
+filc_do_copy_range(struct silofs_file_ctx *f_ctx_src,
+                   struct silofs_file_ctx *f_ctx_dst, size_t *out_ncp)
 {
 	int err;
 
 	err = filc_check_copy_range(f_ctx_src, f_ctx_dst);
+	if (err) {
+		return err;
+	}
+	err = filc_pre_copy_range(f_ctx_src, f_ctx_dst);
 	if (err) {
 		return err;
 	}
@@ -4202,6 +4228,19 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 	filc_update_post_io(f_ctx_dst, false);
 	*out_ncp = filc_io_length(f_ctx_dst);
 	return 0;
+}
+
+static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
+                           struct silofs_file_ctx *f_ctx_dst, size_t *out_ncp)
+{
+	int ret;
+
+	filc_incref(f_ctx_src);
+	filc_incref(f_ctx_dst);
+	ret = filc_do_copy_range(f_ctx_src, f_ctx_dst, out_ncp);
+	filc_decref(f_ctx_dst);
+	filc_decref(f_ctx_src);
+	return ret;
 }
 
 int silofs_do_copy_file_range(struct silofs_task *task,
@@ -4238,14 +4277,8 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STG_COW,
 	};
-	int ret;
 
-	filc_incref(&f_ctx_src);
-	filc_incref(&f_ctx_dst);
-	ret = filc_copy_range(&f_ctx_src, &f_ctx_dst, out_ncp);
-	filc_decref(&f_ctx_dst);
-	filc_decref(&f_ctx_src);
-	return ret;
+	return filc_copy_range(&f_ctx_src, &f_ctx_dst, out_ncp);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

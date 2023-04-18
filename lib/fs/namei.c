@@ -1559,7 +1559,7 @@ static int do_releasedir(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty_of(task, dir_ii, flags);
+	err = silofs_flush_dirty(task, dir_ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1609,7 +1609,7 @@ static int do_release(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty_of(task, ii, flags);
+	err = silofs_flush_dirty(task, ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1653,7 +1653,7 @@ static int do_fsyncdir(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty_of(task, dir_ii, SILOFS_F_FSYNC);
+	err = silofs_flush_dirty(task, dir_ii, SILOFS_F_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1687,7 +1687,7 @@ static int do_fsync(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty_of(task, ii, SILOFS_F_FSYNC);
+	err = silofs_flush_dirty(task, ii, SILOFS_F_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1717,7 +1717,7 @@ int silofs_do_fsync(struct silofs_task *task,
 int silofs_do_flush(struct silofs_task *task,
                     struct silofs_inode_info *ii, bool now)
 {
-	return silofs_flush_dirty_of(task, ii, now ? SILOFS_F_NOW : 0);
+	return silofs_flush_dirty(task, ii, now ? SILOFS_F_NOW : 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

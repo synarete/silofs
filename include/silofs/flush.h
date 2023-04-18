@@ -20,9 +20,6 @@
 int silofs_flush_dirty(struct silofs_task *task,
                        struct silofs_inode_info *ii, int flags);
 
-int silofs_flush_dirty_of(struct silofs_task *task,
-                          struct silofs_inode_info *ii, int flags);
-
 int silofs_flush_dirty_now(struct silofs_task *task);
 
 #endif /* SILOFS_FLUSH_H_ */

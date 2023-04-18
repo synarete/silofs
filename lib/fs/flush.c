@@ -816,12 +816,6 @@ int silofs_flush_dirty(struct silofs_task *task,
 	return err;
 }
 
-int silofs_flush_dirty_of(struct silofs_task *task,
-                          struct silofs_inode_info *ii, int flags)
-{
-	return silofs_flush_dirty(task, ii, flags);
-}
-
 int silofs_flush_dirty_now(struct silofs_task *task)
 {
 	return silofs_flush_dirty(task, NULL, SILOFS_F_NOW);

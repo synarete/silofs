@@ -11,26 +11,26 @@
 ## Overview
 
 Silofs *("stored in large objects file-system")* is a user-space
-file-system which is designed for storing and archiving large volumes
-of data as encrypted blobs. Normal users can use silofs to create an
-isolated storage area, with its own private key, and mount it on local
-host. Once mounted, users may manipulate their data as they would do
-with any other POSIX file-system, while the actual data and meta-data
-is transparently encrypted and stored within local repository.
-
-Silofs repository is implemented using regular local files, but their
-content is opaque to any process which does not know their encryption
-key. Thus, common utilities such as [rsync](https://rsync.samba.org/)
-or [rclone](https://rclone.org/) may be used to backup or archive the
-content of the repository, yet without compromising the user's data
-integrity.
+file-system for storing large volumes of data as encrypted blobs.
+It allows normal users to create an isolated storage area, with its
+own private key, and mount it on local host. Once mounted, the users
+may manipulate their data as they would do with any other POSIX
+file-system, while the actual data and meta-data are transparently
+encrypted and stored within a local repository as opaque blobs. Any
+other process or user can not view the content of those blobs, even
+though it may access them as regular files. This model allows common
+Linux utilities such as [rsync](https://rsync.samba.org/) and
+[rclone](https://rclone.org/) to backup or archive the content of the
+repository remotely, yet without compromising the underlying user's
+data integrity.
 
 Silofs is implemented using Linux's FUSE bridge, and as such it trades
-performance with functionality and ease of use. It is mainly designed
-to serve those who wish to easily archive their data into external
-cloud storage. It does not intend to compete with kernel-based
-file-systems in performance, or serve as yet another backup solutions.
-See [Why Silofs?](#why-silofs) for more details.
+performance with functionality and ease of use. It is designed to serve
+those who wish to easily ship media content into external cloud storage
+for long-term archiving, but without revealing information on their
+private data, and without paying high costs and extra resources due to
+re-packing. See [Why Silofs?](#why-silofs) for more details.
+
 
 ## Build and Install
 

@@ -23,10 +23,8 @@
 
 static uint64_t bk_view_mask_of(loff_t off, size_t len)
 {
-	const ssize_t kb_size = SILOFS_KB_SIZE;
-	const loff_t  pos = silofs_off_in_bk(off);
-	const ssize_t idx = pos / kb_size;
-	const ssize_t nkb = (ssize_t)len / kb_size;
+	const ssize_t kbn = silofs_off_in_bk(off) / SILOFS_KB_SIZE;
+	const ssize_t nkb = (ssize_t)div_round_up(len, SILOFS_KB_SIZE);
 	const uint64_t zeros = 0;
 	uint64_t mask;
 
@@ -35,10 +33,10 @@ static uint64_t bk_view_mask_of(loff_t off, size_t len)
 	silofs_assert_le(len, SILOFS_LBK_SIZE);
 
 	if (nkb == SILOFS_NKB_IN_LBK) {
-		silofs_assert_eq(idx, 0);
+		silofs_assert_eq(kbn, 0);
 		mask = ~zeros;
 	} else {
-		mask = ((1UL << nkb) - 1) << idx;
+		mask = ((1UL << nkb) - 1) << kbn;
 	}
 	return mask;
 }

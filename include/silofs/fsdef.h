@@ -99,11 +99,8 @@
 #define SILOFS_VSPACE_SIZE_MAX          (1L << 52)
 
 
-/* bits-shift of small (1K) block-size */
-#define SILOFS_KB_SHIFT                 (10)
-
 /* small ("sector") meta-block size (1K) */
-#define SILOFS_KB_SIZE                  (1 << SILOFS_KB_SHIFT)
+#define SILOFS_KB_SIZE                  SILOFS_KILO
 
 /* number of 1K blocks in logical block */
 #define SILOFS_NKB_IN_LBK \

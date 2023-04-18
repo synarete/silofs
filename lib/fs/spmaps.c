@@ -253,37 +253,35 @@ spnode_has_child_at(const struct silofs_spmap_node *sn, loff_t voff)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t mask_of(size_t kbn, size_t nkb)
+static uint64_t mask_of(size_t ki, size_t nk)
 {
 	uint64_t mask;
-	const size_t nkb_in_lbk = SILOFS_NKB_IN_LBK;
+	const uint64_t zero = 0;
 
-	mask = (nkb < nkb_in_lbk) ? (((1UL << nkb) - 1UL) << kbn) : ~0UL;
+	if (nk < 64) {
+		mask = (((1UL << nk) - 1UL) << ki);
+	} else {
+		mask = ~zero;
+	}
 	return mask;
 }
 
-static void bk_state_parse(const struct silofs_bk_state *bk_st_le,
-                           struct silofs_bk_state *bk_st)
-{
-	bk_st->state = silofs_le64_to_cpu(bk_st_le->state);
-}
-
-static void bk_state_set(struct silofs_bk_state *bk_st_le,
-                         const struct silofs_bk_state *bk_st)
-{
-	bk_st_le->state = silofs_cpu_to_le64(bk_st->state);
-}
-
 static void bk_state_mask_of(struct silofs_bk_state *bk_st,
-                             size_t kbn, size_t nkb)
+                             size_t ki, size_t nk)
 {
-	bk_st->state = mask_of(kbn, nkb);
+	bk_st->state = 0;
+	if (ki < 64) {
+		bk_st->state = mask_of(ki, min(nk, 64 - ki));
+	}
 }
 
 static void bk_state_mask_of_other(struct silofs_bk_state *bk_st,
                                    size_t kbn, size_t nkb)
 {
-	bk_st->state = ~mask_of(kbn, nkb);
+	struct silofs_bk_state bk_st2;
+
+	bk_state_mask_of(&bk_st2, kbn, nkb);
+	bk_st->state = ~bk_st2.state;
 }
 
 static bool bk_state_has_any(const struct silofs_bk_state *bk_st)
@@ -295,6 +293,12 @@ static bool bk_state_has_mask(const struct silofs_bk_state *bk_st,
                               const struct silofs_bk_state *bk_mask)
 {
 	return ((bk_st->state & bk_mask->state) == bk_mask->state);
+}
+
+static bool bk_state_has_mask_none(const struct silofs_bk_state *bk_st,
+                                   const struct silofs_bk_state *bk_mask)
+{
+	return ((bk_st->state & bk_mask->state) == 0);
 }
 
 static bool bk_state_has_mask_any(const struct silofs_bk_state *bk_st,
@@ -318,6 +322,18 @@ static void bk_state_unset_mask(struct silofs_bk_state *bk_st,
 static size_t bk_state_popcount(const struct silofs_bk_state *bk_st)
 {
 	return silofs_popcount64(bk_st->state);
+}
+
+static void bk_state_parse(const struct silofs_bk_state *bk_st_le,
+                           struct silofs_bk_state *bk_st)
+{
+	bk_st->state = silofs_le64_to_cpu(bk_st_le->state);
+}
+
+static void bk_state_set(struct silofs_bk_state *bk_st_le,
+                         const struct silofs_bk_state *bk_st)
+{
+	bk_st_le->state = silofs_cpu_to_le64(bk_st->state);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -536,13 +552,13 @@ static int bkr_find_free(const struct silofs_bk_ref *bkr,
                          size_t nkb, size_t *out_kbn)
 {
 	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-	uint64_t mask;
 
 	bkr_allocated(bkr, &bk_st);
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
-		mask = mask_of(kbn, nkb);
-		if ((bk_st.state & mask) == 0) {
+		bk_state_mask_of(&bk_mask, kbn, nkb);
+		if (bk_state_has_mask_none(&bk_st, &bk_mask)) {
 			*out_kbn = kbn;
 			return 0;
 		}
@@ -555,16 +571,16 @@ static void bkr_make_vaddrs(const struct silofs_bk_ref *bkr,
                             struct silofs_vaddrs *vas)
 {
 	struct silofs_bk_state bk_st;
+	struct silofs_bk_state bk_mask;
 	const size_t nkb = stype_nkbs(stype);
 	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-	uint64_t mask;
 	loff_t voff;
 
 	bkr_allocated(bkr, &bk_st);
 	vas->count = 0;
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
-		mask = mask_of(kbn, nkb);
-		if ((bk_st.state & mask) == mask) {
+		bk_state_mask_of(&bk_mask, kbn, nkb);
+		if (bk_state_has_mask(&bk_st, &bk_mask)) {
 			voff = off_end(voff_base, kbn * SILOFS_KB_SIZE);
 			vaddr_setup(&vas->vaddr[vas->count++], stype, voff);
 		}

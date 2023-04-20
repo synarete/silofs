@@ -192,12 +192,12 @@ static loff_t uaddr_bk_pos(const struct silofs_uaddr *uaddr)
 {
 	silofs_assert_ge(uaddr->oaddr.pos, 0);
 
-	return silofs_off_in_bk(uaddr->oaddr.pos);
+	return silofs_off_in_lbk(uaddr->oaddr.pos);
 }
 
 static loff_t vaddr_bk_pos(const struct silofs_vaddr *vaddr)
 {
-	return silofs_off_in_bk(vaddr->off);
+	return silofs_off_in_lbk(vaddr->off);
 }
 
 static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr)

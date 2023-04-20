@@ -269,10 +269,18 @@ static uint64_t mask_of(size_t ki, size_t nk)
 static void bk_state_mask_of(struct silofs_bk_state *bk_st,
                              size_t ki, size_t nk)
 {
+	size_t nn;
+
 	bk_st->state = 0;
 	if (ki < 64) {
-		bk_st->state = mask_of(ki, min(nk, 64 - ki));
+		nn = min(nk, 64 - ki);
+		bk_st->state = mask_of(ki, nn);
 	}
+}
+
+static void bk_state_none(struct silofs_bk_state *bk_st)
+{
+	bk_st->state = 0;
 }
 
 static void bk_state_mask_of_other(struct silofs_bk_state *bk_st,
@@ -334,6 +342,11 @@ static void bk_state_set(struct silofs_bk_state *bk_st_le,
                          const struct silofs_bk_state *bk_st)
 {
 	bk_st_le->state = silofs_cpu_to_le64(bk_st->state);
+}
+
+void silofs_bk_state_init(struct silofs_bk_state *bk_st)
+{
+	bk_state_none(bk_st);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -517,11 +530,12 @@ static void bkr_clear_unwritten_at(struct silofs_bk_ref *bkr,
 
 static void bkr_clear_alloc_state(struct silofs_bk_ref *bkr)
 {
-	struct silofs_bk_state bk_st = { .state = 0 };
+	struct silofs_bk_state bk_st;
 
-	bkr_set_dbkref(bkr, 0);
+	bk_state_none(&bk_st);
 	bkr_set_allocated(bkr, &bk_st);
 	bkr_set_unwritten(bkr, &bk_st);
+	bkr_set_dbkref(bkr, 0);
 }
 
 static void bkr_reset(struct silofs_bk_ref *bkr)
@@ -1499,6 +1513,36 @@ void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
 {
 	spnode_clone_subrefs(sni->sn, sni_other->sn);
 	sni->sn_nactive_subs = sni_other->sn_nactive_subs;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void
+bk_state_mask_of_view(struct silofs_bk_state *bk_mask, loff_t off, size_t len)
+{
+	const loff_t roff = silofs_off_in_lbk(off);
+	const size_t ki = (size_t)(roff / SILOFS_KB_SIZE);
+	const size_t nk = div_round_up(len, SILOFS_KB_SIZE);
+
+	bk_state_mask_of(bk_mask, ki, nk);
+}
+
+bool silofs_lbki_has_view_at(const struct silofs_lbk_info *lbki,
+                             loff_t view_pos, size_t view_len)
+{
+	struct silofs_bk_state bk_mask;
+
+	bk_state_mask_of_view(&bk_mask, view_pos, view_len);
+	return bk_state_has_mask(&lbki->lbk_view, &bk_mask);
+}
+
+void silofs_lbki_set_view_at(struct silofs_lbk_info *lbki,
+                             loff_t view_pos, size_t view_len)
+{
+	struct silofs_bk_state bk_mask;
+
+	bk_state_mask_of_view(&bk_mask, view_pos, view_len);
+	bk_state_set_mask(&lbki->lbk_view, &bk_mask);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -300,7 +300,7 @@ silofs_lba_t silofs_off_to_lba(loff_t off)
 	       (off / SILOFS_LBK_SIZE) : SILOFS_LBA_NULL;
 }
 
-loff_t silofs_off_in_bk(loff_t off)
+loff_t silofs_off_in_lbk(loff_t off)
 {
 	STATICASSERT_LT(SILOFS_OFF_NULL, 0);
 

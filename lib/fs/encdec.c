@@ -21,47 +21,12 @@
 #include <limits.h>
 
 
-static uint64_t bk_view_mask_of(loff_t off, size_t len)
-{
-	const ssize_t kbn = silofs_off_in_bk(off) / SILOFS_KB_SIZE;
-	const ssize_t nkb = (ssize_t)div_round_up(len, SILOFS_KB_SIZE);
-	const uint64_t zeros = 0;
-	uint64_t mask;
-
-	STATICASSERT_EQ(8 * sizeof(mask), SILOFS_NKB_IN_LBK);
-	silofs_assert_ge(len, SILOFS_KB_SIZE);
-	silofs_assert_le(len, SILOFS_LBK_SIZE);
-
-	if (nkb == SILOFS_NKB_IN_LBK) {
-		silofs_assert_eq(kbn, 0);
-		mask = ~zeros;
-	} else {
-		mask = ((1UL << nkb) - 1) << kbn;
-	}
-	return mask;
-}
-
-static bool lbki_has_view_at(const struct silofs_lbk_info *lbki,
-                             loff_t view_pos, size_t view_len)
-{
-	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
-
-	return ((lbki->lbk_view & view_mask) == view_mask);
-}
-
-static void lbki_set_view_at(struct silofs_lbk_info *lbki,
-                             loff_t view_pos, size_t view_len)
-{
-	const uint64_t view_mask = bk_view_mask_of(view_pos, view_len);
-
-	lbki->lbk_view |= view_mask;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool lni_has_bkview(const struct silofs_lnode_info *lni)
 {
-	return lbki_has_view_at(lni->lbki, lni->view_pos, lni->view_len);
+	return silofs_lbki_has_view_at(lni->lbki, lni->view_pos,
+	                               lni->view_len);
 }
 
 static void lni_set_bkview(const struct silofs_lnode_info *lni)
@@ -69,7 +34,7 @@ static void lni_set_bkview(const struct silofs_lnode_info *lni)
 	struct silofs_lbk_info *bki = lni->lbki;
 
 	silofs_assert_not_null(bki);
-	lbki_set_view_at(bki, lni->view_pos, lni->view_len);
+	silofs_lbki_set_view_at(bki, lni->view_pos, lni->view_len);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

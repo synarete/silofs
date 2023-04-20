@@ -29,7 +29,7 @@ silofs_lba_t silofs_lba_plus(silofs_lba_t lba, size_t nbk);
 
 silofs_lba_t silofs_off_to_lba(loff_t off);
 
-loff_t silofs_off_in_bk(loff_t off);
+loff_t silofs_off_in_lbk(loff_t off);
 
 loff_t silofs_off_to_spleaf_start(loff_t voff);
 

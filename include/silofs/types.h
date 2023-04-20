@@ -332,7 +332,7 @@ struct silofs_cache_elem {
 struct silofs_lbk_info {
 	struct silofs_cache_elem        lbk_ce;
 	struct silofs_lblock           *lbk;
-	uint64_t                        lbk_view;
+	struct silofs_bk_state          lbk_view;
 };
 
 /* u-addressing block info */

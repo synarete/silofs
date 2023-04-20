@@ -20,6 +20,9 @@
 #include <silofs/fsdef.h>
 #include <silofs/types.h>
 
+
+void silofs_bk_state_init(struct silofs_bk_state *bk_st);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
@@ -149,6 +152,14 @@ void silofs_sli_rebind_ubk(struct silofs_spleaf_info *sli, loff_t voff,
                            const struct silofs_bkaddr *bkaddr);
 
 void silofs_sli_seal_meta(struct silofs_spleaf_info *sli);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_lbki_has_view_at(const struct silofs_lbk_info *lbki,
+                             loff_t view_pos, size_t view_len);
+
+void silofs_lbki_set_view_at(struct silofs_lbk_info *lbki,
+                             loff_t view_pos, size_t view_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

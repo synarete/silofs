@@ -16,18 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/types.h>
-#include <silofs/address.h>
-#include <silofs/nodes.h>
-#include <silofs/spxmap.h>
-#include <silofs/crypto.h>
-#include <silofs/cache.h>
-#include <silofs/boot.h>
-#include <silofs/repo.h>
+#include <silofs/fs.h>
 #include <silofs/fs-private.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <limits.h>
 
 #define CACHE_RETRY 4
@@ -775,8 +765,8 @@ static struct silofs_cache_elem *lbki_to_ce(const struct silofs_lbk_info *lbki)
 static void lbki_init(struct silofs_lbk_info *lbki, struct silofs_lblock *lbk)
 {
 	silofs_ce_init(&lbki->lbk_ce);
+	silofs_bk_state_init(&lbki->lbk_view);
 	lbki->lbk = lbk;
-	lbki->lbk_view = 0;
 }
 
 static void lbki_fini(struct silofs_lbk_info *lbki)

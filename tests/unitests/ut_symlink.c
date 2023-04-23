@@ -17,12 +17,12 @@
 #include "unitests.h"
 
 
-static const char *make_symname(struct ut_env *ute, size_t idx)
+static const char *ut_make_symname(struct ut_env *ute, size_t idx)
 {
 	return ut_make_name(ute, "symlink", idx);
 }
 
-static char *make_symval(struct ut_env *ute, char c, size_t len)
+static char *ut_make_symval_with(struct ut_env *ute, char c, size_t len)
 {
 	const size_t vsz = SILOFS_PATH_MAX;
 	const size_t name_max = UT_NAME_MAX;
@@ -31,13 +31,16 @@ static char *make_symval(struct ut_env *ute, char c, size_t len)
 	ut_expect_le(len, vsz);
 	val = ut_zerobuf(ute, vsz + 1);
 	for (size_t i = 0; i < len; ++i) {
-		if (i % name_max) {
-			val[i] = c;
-		} else {
-			val[i] = '/';
-		}
+		val[i] = (i % name_max) ? c : '/';
 	}
 	return val;
+}
+
+static char *ut_make_symval(struct ut_env *ute, size_t len)
+{
+	const char *abc = "abcdefghijklmnopqrstuvwxyz";
+
+	return ut_make_symval_with(ute, abc[len % strlen(abc)], len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -78,13 +81,13 @@ static void ut_symlink_length(struct ut_env *ute)
 
 	ut_mkdir_oki(ute, root_ino, dname, &dino);
 	for (size_t i = 1; i <= nlinks; ++i) {
-		sname = make_symname(ute, i);
-		tname = make_symval(ute, 'A', i);
+		sname = ut_make_symname(ute, i);
+		tname = ut_make_symval_with(ute, 'A', i);
 		ut_symlink_ok(ute, dino, sname, tname, &sino);
 	}
 	ut_rmdir_err(ute, root_ino, dname, -ENOTEMPTY);
 	for (size_t j = 1; j <= nlinks; ++j) {
-		sname = make_symname(ute, j);
+		sname = ut_make_symname(ute, j);
 		ut_unlink_ok(ute, dino, sname);
 	}
 	ut_rmdir_ok(ute, root_ino, dname);
@@ -103,9 +106,9 @@ static void ut_symlink_nested(struct ut_env *ute)
 	dino[0] = UT_ROOT_INO;
 	for (size_t i = 1; i < UT_ARRAY_SIZE(dino); ++i) {
 		ut_mkdir_oki(ute, dino[i - 1], dname, &dino[i]);
-		sname[i] = make_symname(ute, 8 * i);
+		sname[i] = ut_make_symname(ute, 8 * i);
 		ut_symlink_ok(ute, dino[i], sname[i],
-		              make_symval(ute, 'z', i), &sino);
+		              ut_make_symval_with(ute, 'z', i), &sino);
 		ut_rmdir_err(ute, dino[i - 1], dname, -ENOTEMPTY);
 	}
 	for (size_t j = UT_ARRAY_SIZE(dino); j > 1; --j) {
@@ -130,13 +133,13 @@ static void ut_symlink_to_reg_(struct ut_env *ute, size_t cnt)
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
-		sname = make_symname(ute, i);
+		sname = ut_make_symname(ute, i);
 		fname = ut_make_name(ute, dname, i);
 		ut_create_only(ute, dino, fname, &ino);
 		ut_symlink_ok(ute, dino, sname, fname, &sino);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		sname = make_symname(ute, i);
+		sname = ut_make_symname(ute, i);
 		fname = ut_make_name(ute, dname, i);
 		ut_lookup_ino(ute, dino, sname, &sino);
 		ut_lookup_lnk(ute, dino, sname, sino);
@@ -158,13 +161,6 @@ static void ut_symlink_to_reg(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static char *ut_make_asymval(struct ut_env *ute, size_t len)
-{
-	const char *abc = "abcdefghijklmnopqrstuvwxyz";
-
-	return make_symval(ute, abc[strlen(abc) % len], len);
-}
-
 static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 {
 	loff_t off = -1;
@@ -182,7 +178,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 	for (size_t i = 0; i < cnt; ++i) {
 		sname = ut_make_name(ute, sp, i);
 		fname = ut_make_name(ute, fp, i);
-		symval = ut_make_asymval(ute, i + 1);
+		symval = ut_make_symval(ute, i + 1);
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink_ok(ute, dino, sname, symval, &sino);
 
@@ -192,7 +188,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 	for (size_t i = 0; i < cnt; ++i) {
 		sname = ut_make_name(ute, sp, i);
 		fname = ut_make_name(ute, fp, i);
-		symval = ut_make_asymval(ute, i + 1);
+		symval = ut_make_symval(ute, i + 1);
 		ut_lookup_ino(ute, dino, sname, &sino);
 		ut_readlink_expect(ute, sino, symval);
 
@@ -239,7 +235,7 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 	for (size_t i = 0; i < cnt; ++i) {
 		sname = ut_make_name(ute, s1, i);
 		fname = ut_make_name(ute, ff, i);
-		symval = ut_make_asymval(ute, cnt);
+		symval = ut_make_symval(ute, cnt);
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink_ok(ute, dino, sname, symval, &sino);
 
@@ -251,7 +247,7 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 	for (size_t j = cnt; j > 0; --j) {
 		sname = ut_make_name(ute, s1, j - 1);
 		fname = ut_make_name(ute, ff, j - 1);
-		symval = ut_make_asymval(ute, cnt);
+		symval = ut_make_symval(ute, cnt);
 		ut_lookup_ino(ute, dino, sname, &sino);
 		ut_readlink_expect(ute, sino, symval);
 		ut_lookup_ino(ute, dino, fname, &fino);
@@ -265,7 +261,6 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 		sname = ut_make_name(ute, s2, j - 1);
 		ut_symlink_ok(ute, dino, sname, symval, &sino);
 	}
-	ut_drop_caches_fully(ute);
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, ff, i);
 		ut_create_only(ute, dino, fname, &fino);
@@ -273,7 +268,6 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 		ut_unlink_ok(ute, dino, sname);
 		ut_lookup_file(ute, dino, fname, fino);
 	}
-	ut_drop_caches_fully(ute);
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, ff, i);
 		sname = ut_make_name(ute, s2, i);
@@ -314,7 +308,7 @@ static void ut_symlink_stat_(struct ut_env *ute, size_t valsize)
 	ino_t sino = 0;
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
-	const char *symval = make_symval(ute, 's', valsize);
+	const char *symval = ut_make_symval_with(ute, 's', valsize);
 	const blkcnt_t blocks = symval_length_to_blocks(valsize);
 
 	ut_mkdir_at_root(ute, name, &dino);

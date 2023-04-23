@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/types.h>
+#include <silofs/errors.h>
 #include <silofs/address.h>
 #include <silofs/crypto.h>
 #include <silofs/fs-private.h>
@@ -298,13 +299,13 @@ static int chiper_verify(const struct silofs_cipher *ci,
 	silofs_unused(ci);
 	if (ivkey->algo != GCRY_CIPHER_AES256) {
 		log_warn("unsupported chipher-algo: %d", ivkey->algo);
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	if ((ivkey->mode != GCRY_CIPHER_MODE_GCM) &&
 	    (ivkey->mode != GCRY_CIPHER_MODE_CBC) &&
 	    (ivkey->mode != GCRY_CIPHER_MODE_XTS)) {
 		log_warn("unsupported chipher-mode: %d", ivkey->mode);
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	return 0;
 }
@@ -320,7 +321,7 @@ static int cipher_prepare(const struct silofs_cipher *ci,
 	blklen = gcry_cipher_get_algo_blklen((int)ivkey->algo);
 	if (blklen > sizeof(iv->iv)) {
 		log_warn("bad blklen: %lu", blklen);
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = gcry_cipher_reset(ci->cipher_hd);
 	if (err) {
@@ -437,7 +438,7 @@ int silofs_password_setup(struct silofs_password *pp, const void *pass)
 	const size_t passlen = (pass != NULL) ? strlen(pass) : 0;
 
 	if (passlen >= sizeof(pp->pass)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	password_setup(pp, pass, passlen);
 	return 0;
@@ -452,7 +453,7 @@ void silofs_password_reset(struct silofs_password *pp)
 static int password_check(const struct silofs_password *pp)
 {
 	if (!pp->passlen || (pp->passlen > sizeof(pp->pass))) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -467,7 +468,7 @@ static int derive_iv(const struct silofs_kdf_desc *kdf,
 	int ret = 0;
 
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_256) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	silofs_sha3_256_of(md, pp->pass, pp->passlen, &salt);
 
@@ -494,7 +495,7 @@ static int derive_key(const struct silofs_kdf_desc *kdf,
 	int ret = 0;
 
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_512) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	silofs_sha3_512_of(md, pp->pass, pp->passlen, &salt);
 

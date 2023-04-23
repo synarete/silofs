@@ -577,7 +577,7 @@ static int bkr_find_free(const struct silofs_bk_ref *bkr,
 			return 0;
 		}
 	}
-	return -ENOSPC;
+	return -SILOFS_ENOSPC;
 }
 
 static void bkr_make_vaddrs(const struct silofs_bk_ref *bkr,
@@ -824,7 +824,7 @@ spleaf_find_nfree_at(const struct silofs_spmap_leaf *sl,
 {
 	const size_t nkb = stype_nkbs(stype);
 	const struct silofs_bk_ref *bkr = spleaf_subref_at(sl, bn);
-	int err = -ENOSPC;
+	int err = -SILOFS_ENOSPC;
 
 	if (bkr_may_alloc(bkr, nkb)) {
 		err = bkr_find_free(bkr, nkb, out_kbn);
@@ -837,7 +837,7 @@ spleaf_find_free(const struct silofs_spmap_leaf *sl, enum silofs_stype stype,
                  size_t bn_beg, size_t bn_end, size_t *out_bn, size_t *out_kbn)
 {
 	size_t kbn = 0;
-	int err = -ENOSPC;
+	int err = -SILOFS_ENOSPC;
 
 	for (size_t bn = bn_beg; bn < bn_end; ++bn) {
 		err = spleaf_find_nfree_at(sl, stype, bn, &kbn);
@@ -1069,7 +1069,7 @@ static int sli_find_free_space_from(const struct silofs_spleaf_info *sli,
 	sli_vrange(sli, &vrange);
 	voff_beg = off_max(voff_from, vrange.beg);
 	if (voff_beg >= vrange.end) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	bn_beg = sli_voff_to_bn(sli, voff_beg);
 	bn_end = sli_voff_to_bn(sli, vrange.end);
@@ -1085,14 +1085,14 @@ static int sli_cap_allocate(const struct silofs_spleaf_info *sli,
                             enum silofs_stype stype)
 {
 	struct silofs_vrange vrange;
-	size_t nbytes_max;
+	size_t nlimit;
 	size_t nbytes;
 
 	sli_vrange(sli, &vrange);
-	nbytes_max = vrange.len;
+	nlimit = vrange.len;
 	nbytes = stype_size(stype);
 
-	return ((sli->sl_nused_bytes + nbytes) <= nbytes_max) ? 0 : -ENOSPC;
+	return ((sli->sl_nused_bytes + nbytes) <= nlimit) ? 0 : -SILOFS_ENOSPC;
 }
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
@@ -1271,7 +1271,7 @@ int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
 	}
 	spleaf_resolve_uref(sli->sl, voff, out_bkaddr);
 	if (bkaddr_isnull(out_bkaddr)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
@@ -1448,7 +1448,7 @@ int silofs_sni_subref_of(const struct silofs_spnode_info *sni, loff_t voff,
 	}
 	spnode_ulink_of(sni->sn, voff, out_uaddr);
 	if (uaddr_isnull(out_uaddr)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	return 0;
 }

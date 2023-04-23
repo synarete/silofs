@@ -217,7 +217,7 @@ static int wac_stage_spnode5(struct silofs_walk_ctx *wa_ctx)
 
 	sbi_vrange(wa_ctx->sbi, &vrange);
 	if (wa_ctx->voff > vrange.end) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = silofs_sbi_sproot_of(wa_ctx->sbi, wa_ctx->vspace, &uaddr);
 	check_ok_or_bailout(err);
@@ -357,12 +357,12 @@ static int wac_do_traverse_spnode1(struct silofs_walk_ctx *wa_ctx)
 			break;
 		}
 		err = wac_traverse_spnode1_child(wa_ctx);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
 		wa_ctx->voff = vrange_next(&vrange, voff);
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int wac_traverse_spnode1(struct silofs_walk_ctx *wa_ctx)
@@ -433,12 +433,12 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 			break;
 		}
 		err = wac_traverse_spnode2_child(wa_ctx);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
 		wa_ctx->voff = vrange_next(&vrange, voff);
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int wac_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
@@ -509,12 +509,12 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 			break;
 		}
 		err = wac_traverse_spnode3_child(wa_ctx);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
 		wa_ctx->voff = vrange_next(&vrange, voff);
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int wac_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
@@ -585,12 +585,12 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 			break;
 		}
 		err = wac_traverse_spnode4_child(wa_ctx);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
 		wa_ctx->voff = vrange_next(&vrange, voff);
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int wac_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
@@ -661,12 +661,12 @@ static int wac_do_traverse_spnode5(struct silofs_walk_ctx *wa_ctx)
 			break;
 		}
 		err = wac_traverse_spnode5_child(wa_ctx);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
 		wa_ctx->voff = vrange_next(&vrange, voff);
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int wac_traverse_spnode5(struct silofs_walk_ctx *wa_ctx)
@@ -737,7 +737,7 @@ static int wac_do_traverse_sptree(struct silofs_walk_ctx *wa_ctx)
 		goto out;
 	}
 out:
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int wac_traverse_sptree(struct silofs_walk_ctx *wa_ctx)

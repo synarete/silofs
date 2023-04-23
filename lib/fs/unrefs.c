@@ -63,22 +63,24 @@ static int unrc_exec_unrefs_at(struct silofs_unref_ctx *unr_ctx,
 	return 0;
 }
 
-static int unrc_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
-                               const struct silofs_blobid *blobid)
-{
-	return silofs_repo_remove_blob(unrc_repo(unr_ctx), blobid);
-}
-
 static int unrc_try_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
                                    const struct silofs_blobid *blobid)
 {
+	struct stat st = { .st_size = -1 };
+	struct silofs_repo *repo;
 	int err;
 
 	if (!unrc_is_blobid_of(unr_ctx, blobid)) {
 		return 0;
 	}
-	err = unrc_remove_blob_of(unr_ctx, blobid);
-	if (err && (err != -ENOENT)) {
+	repo = unrc_repo(unr_ctx);
+	err = silofs_repo_stat_blob(repo, blobid, &st);
+	if (err) {
+		return (err == -SILOFS_ENOENT) ? 0 : err;
+	}
+	err = silofs_repo_remove_blob(repo, blobid);
+	if (err) {
+		silofs_assert_ne(err, -ENOENT);
 		return err;
 	}
 	return 0;
@@ -134,7 +136,7 @@ unrc_post_unrefs_at_spnode(struct silofs_unref_ctx *unr_ctx,
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = silofs_sni_subref_of(sni, voff, &uaddr);
-		if (err == -ENOENT) {
+		if (err == -SILOFS_ENOENT) {
 			break;
 		}
 		err = unrc_try_remove_blob_of(unr_ctx, uaddr_blobid(&uaddr));

@@ -565,7 +565,7 @@ static int lrumap_init(struct silofs_lrumap *lm,
 
 	htbl = silofs_lista_new(alloc, cap);
 	if (htbl == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	listq_init(&lm->lm_lru);
 	lm->lm_htbl = htbl;
@@ -2959,7 +2959,7 @@ static int cache_init_nil_bk(struct silofs_cache *cache)
 
 	lbk = lbk_malloc(cache->c_alloc);
 	if (lbk == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	silofs_memzero(lbk, sizeof(*lbk));
 	cache->c_nil_lbk = lbk;

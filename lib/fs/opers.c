@@ -130,10 +130,10 @@ static int symval_to_str(const char *symval, struct silofs_str *str)
 
 	symlen = strnlen(symval, SILOFS_SYMLNK_MAX + 1);
 	if (symlen == 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (symlen > SILOFS_SYMLNK_MAX) {
-		return -ENAMETOOLONG;
+		return -SILOFS_ENAMETOOLONG;
 	}
 	str->str = symval;
 	str->len = symlen;
@@ -212,7 +212,7 @@ static int op_authorize(const struct silofs_task *task)
 	if (op_allow_other(task)) {
 		return 0; /* request by other users */
 	}
-	return -EPERM;
+	return -SILOFS_EPERM;
 }
 
 static int op_map_creds(struct silofs_task *task)
@@ -228,7 +228,7 @@ static int op_map_creds(struct silofs_task *task)
 	if (!op_is_admin(task)) {
 		ret = silofs_idsmap_map_creds(idsm_of(task), creds);
 	}
-	return (ret == -ENOENT) ? -EPERM : ret;
+	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
 static int op_map_uidgid(const struct silofs_task *task,
@@ -238,7 +238,7 @@ static int op_map_uidgid(const struct silofs_task *task,
 
 	ret = silofs_idsmap_map_uidgid(idsm_of(task),
 	                               uid, gid, out_uid, out_gid);
-	return (ret == -ENOENT) ? -EPERM : ret;
+	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
 static int op_rmap_stat(const struct silofs_task *task, struct silofs_stat *st)
@@ -246,7 +246,7 @@ static int op_rmap_stat(const struct silofs_task *task, struct silofs_stat *st)
 	int ret;
 
 	ret = silofs_idsmap_rmap_stat(idsm_of(task), st);
-	return (ret == -ENOENT) ? 0 : ret;
+	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 
 static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
@@ -254,7 +254,7 @@ static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
 	int ret;
 
 	ret = silofs_idsmap_rmap_statx(idsm_of(task), stx);
-	return (ret == -ENOENT) ? 0 : ret;
+	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1654,5 +1654,22 @@ int silofs_fs_unrefs(struct silofs_task *task)
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, SILOFS_INO_NULL, err);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_remap_status_code(int status)
+{
+	int ret = status;
+
+	if (ret) {
+		ret = abs(status);
+		if (ret >= SILOFS_ERRBASE2) {
+			ret = EUCLEAN;
+		} else if (ret >= SILOFS_ERRBASE) {
+			ret = (ret - SILOFS_ERRBASE);
+		}
+	}
+	return -ret;
 }
 

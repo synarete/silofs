@@ -637,10 +637,10 @@ static int sanitize_err(int err, uint32_t opcode)
 
 	if (unlikely(err2 >= SILOFS_ERRBASE2)) {
 		fuseq_log_err("internal error: err=%d op=%u", err, opcode);
-		err2 = EUCLEAN;
+		err2 = silofs_remap_status_code(err);
 	} else if (unlikely(err2 >= SILOFS_ERRBASE)) {
 		fuseq_log_warn("unexpected error: err=%d op=%u", err, opcode);
-		err2 = (err2 - SILOFS_ERRBASE);
+		err2 = silofs_remap_status_code(err);
 	}
 	return err2;
 }
@@ -1166,7 +1166,7 @@ fuseq_append_data_to_pipe(struct silofs_fuseq_worker *fqw,
 			              "fd=%d off=%ld len=%lu",
 			              iov->iov_fd, iov->iov_off,
 			              iov->iov_len);
-			err = -EINVAL;
+			err = -SILOFS_EINVAL;
 		}
 	}
 	return err;
@@ -1333,7 +1333,7 @@ emit_direntonly(void *buf, size_t bsz, const char *name, size_t nlen,
 	entlen = FUSE_NAME_OFFSET + nlen;
 	entlen_padded = FUSE_DIRENT_ALIGN(entlen);
 	if (entlen_padded > bsz) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 
 	fde->ino = ino;
@@ -1359,7 +1359,7 @@ emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
 	entlen = FUSE_NAME_OFFSET_DIRENTPLUS + nlen;
 	entlen_padded = FUSE_DIRENT_ALIGN(entlen);
 	if (entlen_padded > bsz) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 
 	memset(&fdp->entry_out, 0, sizeof(fdp->entry_out));
@@ -1387,7 +1387,7 @@ static int emit_dirent(struct silofs_fuseq_diter *di, loff_t off)
 	int err;
 
 	if (rem <= di->de_nlen) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = likely(di->plus) ?
 	      emit_direntplus(buf, rem, name, nlen, &di->de_attr, off, &cnt) :
@@ -2181,13 +2181,13 @@ static int fuseq_rd_iter_actor(struct silofs_rwiter_ctx *rwi,
 
 	fq_rdi = fuseq_rd_iter_of(rwi);
 	if ((iov->iov_fd > 0) && (iov->iov_off < 0)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (!(fq_rdi->cnt < ARRAY_SIZE(fq_rdi->iov))) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((fq_rdi->nrd + iov->iov_len) > fq_rdi->nrd_max) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	iovec_assign(&fq_rdi->iov[fq_rdi->cnt++], iov);
 	fq_rdi->nrd += iov->iov_len;
@@ -2324,7 +2324,7 @@ fuseq_extract_data_from_pipe(struct silofs_fuseq_worker *fqw,
 	} else {
 		fuseq_log_err("bad iovec entry: fd=%d off=%ld len=%lu",
 		              iov->iov_fd, iov->iov_off, iov->iov_len);
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 	}
 	return err;
 }
@@ -2336,16 +2336,16 @@ static int fuseq_wr_iter_check(const struct silofs_fuseq_wr_iter *fq_wri,
 		return -EROFS;
 	}
 	if (!(fq_wri->cnt < ARRAY_SIZE(fq_wri->iov))) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (iov->iov_off < 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((iov->iov_fd < 0) && (iov->iov_base == NULL)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((fq_wri->nwr + iov->iov_len) > fq_wri->nwr_max) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -2508,7 +2508,7 @@ static int do_ioc_getflags(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 
 	if (out_bufsz != sizeof(attr)) {
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		goto out;
 	}
 	fcc->task->t_oper.op_code = FUSE_GETATTR;
@@ -2538,7 +2538,7 @@ static int do_ioc_query(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 
 	if (bsz_in > sizeof(u)) {
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		goto out;
 	}
 	memcpy(u.buf, buf_in, bsz_in);
@@ -2551,11 +2551,11 @@ static int do_ioc_query(const struct silofs_fuseq_cmd_ctx *fcc)
 		goto out;
 	}
 	if (bsz_out != sizeof(*qry_in)) {
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		goto out;
 	}
 	if (bsz_in < sizeof(qry_in->qtype)) {
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		goto out;
 	}
 	err = do_exec_op(fcc);
@@ -2589,11 +2589,11 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 		goto out;
 	}
 	if ((bsz_in < bsz_in_min) || (bsz_in > bsz_in_max)) {
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		goto out;
 	}
 	if (bsz_out < bsz_out_min) {
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		goto out;
 	}
 	fcc->args->ioc_cmd = SILOFS_IOC_CLONE;
@@ -2632,7 +2632,7 @@ static int fuseq_check_ioctl_in_size(struct silofs_fuseq_worker *fqw,
 	const size_t in_size = in->u.ioctl.arg.in_size;
 	const size_t bsz_max = fuseq_bufsize_max(fqw->fq);
 
-	return (in_size < bsz_max) ? 0 : -EINVAL;
+	return (in_size < bsz_max) ? 0 : -SILOFS_EINVAL;
 }
 
 static int do_ioctl(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -3112,7 +3112,7 @@ static bool fuseq_has_long_write_in(const struct silofs_fuseq_worker *fqw)
  * fuse.ko requires user-space to transfer the entire message (header +
  * sub-command control + data payload) into user-space owned buffer: either
  * as in-memory buffer or via in-kernel pipe (splice-mode). When trying to
- * copy in smaller chunks, we get -EINVAL.
+ * copy in smaller chunks, we get -SILOFS_EINVAL.
  *
  * Do a two phase operation: first copy from common fuse-fd into thread-private
  * pipe under channel-lock, then release the lock and copy from private pipe
@@ -3193,7 +3193,7 @@ static int fuseq_recv_in_locked(struct silofs_fuseq_worker *fqw)
 
 	fuseq_lock_ch(fqw->fq);
 	err = fuseq_do_recv_in(fqw, &spliced);
-	if (err == -EINVAL) {
+	if (err == -SILOFS_EINVAL) {
 		fuseq_log_err("unexpected input error: fuse_fd=%d " \
 		              "err=%d", fqw->fq->fq_fuse_fd, err);
 		fqw->fq->fq_active = 0;
@@ -3403,13 +3403,13 @@ static int fuseq_init_bufs(struct silofs_fuseq_worker *fqw)
 
 	fqw->inb = inb_new(alloc);
 	if (fqw->inb == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	fqw->outb = outb_new(alloc);
 	if (fqw->outb == NULL) {
 		inb_del(fqw->inb, alloc);
 		fqw->inb = NULL;
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	return 0;
 }
@@ -3431,7 +3431,7 @@ static void fuseq_fini_bufs(struct silofs_fuseq_worker *fqw)
 static int fuseq_init_rwi(struct silofs_fuseq_worker *fqw)
 {
 	fqw->rwi = rwi_new(fuseq_alloc(fqw));
-	return (fqw->rwi != NULL) ? 0 : -ENOMEM;
+	return (fqw->rwi != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
 static void fuseq_fini_rwi(struct silofs_fuseq_worker *fqw)
@@ -3448,7 +3448,7 @@ static int fuseq_init_op_args(struct silofs_fuseq_worker *fqw)
 
 	op_args = silofs_allocate(fuseq_alloc(fqw), sizeof(*op_args));
 	if (op_args == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	silofs_memzero(op_args, sizeof(*op_args));
 	fqw->args = op_args;
@@ -3535,7 +3535,7 @@ static int fuseq_init_workers(struct silofs_fuseq *fq)
 	mem_size = fws->fws_nlimit * sizeof(*fws->fws_workers);
 	fws->fws_workers = silofs_allocate(fq->fq_alloc, mem_size);
 	if (fws->fws_workers == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	for (unsigned int i = 0; i < fws->fws_nlimit; ++i) {
 		err = fuseq_init_worker(&fws->fws_workers[i], fq, i);

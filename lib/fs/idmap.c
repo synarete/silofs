@@ -142,7 +142,7 @@ idsmap_itox_bin_by_id(const struct silofs_idsmap *idsm, uint32_t id)
 
 static int idsmap_default_status(const struct silofs_idsmap *idsm)
 {
-	return idsm->idm_allow_hotids ? 0 : -ENOENT;
+	return idsm->idm_allow_hotids ? 0 : -SILOFS_ENOENT;
 }
 
 static int idsmap_xtoi_uid(const struct silofs_idsmap *idsm,
@@ -241,7 +241,7 @@ static int idsmap_add_uid(struct silofs_idsmap *idsm, uid_t uid, uid_t suid)
 
 	ide = idsmap_new_id_mapping_by_uid(idsm, uid, suid);
 	if (ide == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	lst = idsmap_xtoi_bin_by_id(idsm, uid);
 	list_head_insert_after(lst, &ide->id_lh);
@@ -249,7 +249,7 @@ static int idsmap_add_uid(struct silofs_idsmap *idsm, uid_t uid, uid_t suid)
 
 	ide = idsmap_new_id_mapping_by_uid(idsm, uid, suid);
 	if (ide == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	lst = idsmap_itox_bin_by_id(idsm, suid);
 	list_head_insert_after(lst, &ide->id_lh);
@@ -278,7 +278,7 @@ static int idsmap_add_gid(struct silofs_idsmap *idsm, gid_t gid, gid_t sgid)
 
 	ide = idsmap_new_id_mapping_by_gid(idsm, gid, sgid);
 	if (ide == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	lst = idsmap_xtoi_bin_by_id(idsm, gid);
 	list_head_insert_after(lst, &ide->id_lh);
@@ -286,7 +286,7 @@ static int idsmap_add_gid(struct silofs_idsmap *idsm, gid_t gid, gid_t sgid)
 
 	ide = idsmap_new_id_mapping_by_gid(idsm, gid, sgid);
 	if (ide == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	lst = idsmap_itox_bin_by_id(idsm, sgid);
 	list_head_insert_after(lst, &ide->id_lh);

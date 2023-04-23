@@ -40,7 +40,7 @@ static int zcmpr_init_cctx(struct silofs_zcmpr *zc)
 
 	cctx = ZSTD_createCCtx();
 	if (cctx == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	zc->ctx = cctx;
 	zc->mode = ZCOMP_ZSTD_CCTX;
@@ -53,7 +53,7 @@ static int zcmpr_init_dctx(struct silofs_zcmpr *zc)
 
 	dctx = ZSTD_createDCtx();
 	if (dctx == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	zc->ctx = dctx;
 	zc->mode = ZCOMP_ZSTD_DCTX;
@@ -107,12 +107,12 @@ int silofs_zcmpr_compress(const struct silofs_zcmpr *zc,
 	int cl;
 
 	if (zc->mode != ZCOMP_ZSTD_CCTX) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	cl = compress_level_of(cl_in);
 	ret = ZSTD_compressCCtx(zc->ctx, dst, dst_cap, src, src_size, cl);
 	if (ZSTD_isError(ret)) {
-		return -EIO;
+		return -SILOFS_ECOMPRESS;
 	}
 	*out_sz = ret;
 	return 0;
@@ -125,11 +125,11 @@ int silofs_zcmpr_decompress(const struct silofs_zcmpr *zc,
 	size_t ret;
 
 	if (zc->mode != ZCOMP_ZSTD_DCTX) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	ret = ZSTD_decompressDCtx(zc->ctx, dst, dst_cap, src, src_size);
 	if (ZSTD_isError(ret)) {
-		return -EIO;
+		return -SILOFS_EDECOMPRESS;
 	}
 	*out_sz = ret;
 	return 0;

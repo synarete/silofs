@@ -25,7 +25,7 @@
 static int sqe_setup_buf(struct silofs_submitq_entry *sqe)
 {
 	sqe->buf = silofs_allocate(sqe->alloc, sqe->len);
-	return unlikely(sqe->buf == NULL) ? -ENOMEM : 0;
+	return unlikely(sqe->buf == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
 static void sqe_reset_buf(struct silofs_submitq_entry *sqe)
@@ -346,7 +346,7 @@ int silofs_submitq_new_sqe(struct silofs_submitq *smq,
                            struct silofs_submitq_entry **out_sqe)
 {
 	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_apex_id++);
-	return likely(*out_sqe != NULL) ? 0 : -ENOMEM;
+	return likely(*out_sqe != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
 void silofs_submitq_del_sqe(struct silofs_submitq *smq,

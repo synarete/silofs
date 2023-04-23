@@ -205,7 +205,7 @@ static int uber_init_iconv(struct silofs_uber *uber)
 	/* Using UTF32LE to avoid BOM (byte-order-mark) character */
 	uber->ub_iconv = iconv_open("UTF32LE", "UTF8");
 	if (uber->ub_iconv == (iconv_t)(-1)) {
-		return errno ? -errno : -EOPNOTSUPP;
+		return errno ? -errno : -SILOFS_EOPNOTSUPP;
 	}
 	return 0;
 }
@@ -618,7 +618,7 @@ static int ubc_stage_cached_ui(const struct silofs_uber_ctx *ub_ctx,
                                struct silofs_unode_info **out_ui)
 {
 	*out_ui = silofs_cache_lookup_ui(ub_ctx->cache, uaddr);
-	return (*out_ui == NULL) ? -ENOENT : 0;
+	return (*out_ui == NULL) ? -SILOFS_ENOENT : 0;
 }
 
 static void ubc_bind_spawned_ui(const struct silofs_uber_ctx *ub_ctx,
@@ -633,7 +633,7 @@ static int ubc_spawn_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 {
 	*out_ui = silofs_cache_spawn_ui(ub_ctx->cache, uaddr);
 	if (*out_ui == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	ubc_bind_spawned_ui(ub_ctx, *out_ui);
 	return 0;
@@ -646,7 +646,7 @@ static int ubc_require_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 	int ret;
 
 	ret = ubc_stage_cached_ui(ub_ctx, uaddr, out_ui);
-	if (ret == -ENOENT) {
+	if (ret == -SILOFS_ENOENT) {
 		ret = ubc_spawn_cached_ui(ub_ctx, uaddr, out_ui);
 	}
 	return ret;
@@ -688,7 +688,7 @@ static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
 	const bool rw_mode = ubc_blobid_rw_mode(ub_ctx, blobid);
 
 	err = silofs_repo_stage_blob(ub_ctx->repo, rw_mode, blobid, out_blobf);
-	if (err && (err != -ENOENT)) {
+	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage blob failed: err=%d", err);
 	}
 	return err;
@@ -701,7 +701,7 @@ static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	err = silofs_repo_spawn_blob(ub_ctx->repo, blobid, out_blobf);
-	if (err && (err != -ENOENT)) {
+	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn blob failed: err=%d", err);
 	}
 	return err;
@@ -716,7 +716,7 @@ static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,
 	err = ubc_lookup_blob(ub_ctx, blobid);
 	if (!err) {
 		err = ubc_stage_blob(ub_ctx, blobid, out_blobf);
-	} else if (err == -ENOENT) {
+	} else if (err == -SILOFS_ENOENT) {
 		err = ubc_spawn_blob(ub_ctx, blobid, out_blobf);
 	}
 	return err;
@@ -894,7 +894,7 @@ static int ubc_spawn_super_at(const struct silofs_uber_ctx *ub_ctx,
 		goto out_err;
 	}
 	if (sbi_is_stable(sbi)) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	err = ubc_spawn_attach_sbi_bk(ub_ctx, sbi);
 	if (err) {
@@ -1038,7 +1038,7 @@ static int ubc_spawn_spnode_at(const struct silofs_uber_ctx *ub_ctx,
 		goto out_err;
 	}
 	if (sni_is_stable(sni)) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	err = ubc_require_attach_sni_bk(ub_ctx, sni);
 	if (err) {
@@ -1184,7 +1184,7 @@ static int ubc_spawn_spleaf_at(const struct silofs_uber_ctx *ub_ctx,
 		goto out_err;
 	}
 	if (sli_is_stable(sli)) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	err = ubc_require_attach_sli_bk(ub_ctx, sli);
 	if (err) {
@@ -1271,9 +1271,9 @@ static int ubc_require_no_blob(const struct silofs_uber_ctx *ub_ctx,
 
 	err = ubc_lookup_blob(ub_ctx, blobid);
 	if (!err) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
-	if (err != -ENOENT) {
+	if (err != -SILOFS_ENOENT) {
 		return err;
 	}
 	return 0;

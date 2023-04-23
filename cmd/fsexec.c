@@ -38,19 +38,23 @@ void cmd_del_env(struct silofs_fs_env **pfse)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void cmd_repodir_name(const struct silofs_fs_env *fse, char **out_path)
+static char *cmd_repodir_name(const struct silofs_fs_env *fse)
 {
-	cmd_join_path(fse->fs_args.repodir, fse->fs_args.name, out_path);
+	char *ret = NULL;
+
+	cmd_join_path(fse->fs_args.repodir, fse->fs_args.name, &ret);
+	return ret;
 }
 
 static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
-                                   int err, const char *msg)
+                                   int status, const char *msg)
 {
-	char *repodir_name = NULL;
+	char *repodir_name = cmd_repodir_name(fse);
 	const char *xmsg = msg ? msg : "";
 	const char *xtag = msg ? ": " : "";
+	int err;
 
-	cmd_repodir_name(fse, &repodir_name);
+	err = abs(status);
 	if (err == SILOFS_ENOREPO) {
 		cmd_dief(err, "%s%smissing repo: %s",
 		         xmsg, xtag, repodir_name);
@@ -70,13 +74,16 @@ static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
 		cmd_dief(err, "%s%scan not umount: %s",
 		         xmsg, xtag, repodir_name);
 	} else if (err == SILOFS_EFSCORRUPTED) {
-		cmd_dief(err, "%s%scorrupted: %s",
+		cmd_dief(err, "%s%scorrupted file-system: %s",
 		         xmsg, xtag, repodir_name);
-	} else if (err == EWOULDBLOCK) {
+	}
+
+	err = abs(silofs_remap_status_code(status));
+	if (err == EWOULDBLOCK) {
 		cmd_dief(err, "%s%scan not lock: %s",
 		         xmsg, xtag, repodir_name);
 	} else if (err == EROFS) {
-		cmd_dief(err, "%s%sread-only: %s",
+		cmd_dief(err, "%s%sread-only file-system: %s",
 		         xmsg, xtag, repodir_name);
 	} else if (err == EUCLEAN) {
 		cmd_dief(err, "%s%sunclean: %s",
@@ -91,6 +98,7 @@ static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
 		cmd_dief(err, "%s%s%s",
 		         xmsg, xtag, repodir_name);
 	}
+
 	cmd_pstrfree(&repodir_name);
 }
 
@@ -98,7 +106,7 @@ static void cmd_require_ok(const struct silofs_fs_env *fse,
                            int status, const char *msg)
 {
 	if (status != 0) {
-		cmd_report_err_and_die(fse, abs(status), msg);
+		cmd_report_err_and_die(fse, status, msg);
 	}
 }
 

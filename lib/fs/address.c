@@ -1388,10 +1388,10 @@ void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv2)
 int silofs_check_fs_capacity(size_t cap_size)
 {
 	if (cap_size < SILOFS_CAPACITY_SIZE_MIN) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (cap_size > SILOFS_CAPACITY_SIZE_MAX) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }

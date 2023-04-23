@@ -18,6 +18,7 @@
 #include <silofs/consts.h>
 #include <silofs/syscall.h>
 #include <silofs/macros.h>
+#include <silofs/errors.h>
 #include <silofs/list.h>
 #include <silofs/utility.h>
 #include <silofs/iovec.h>
@@ -583,7 +584,7 @@ static int pgal_do_alloc_multi_pg(struct silofs_pgal *pgal,
 	npgs = nbytes_to_npgs(nbytes);
 	pgi = pgal_do_alloc_npgs(pgal, npgs);
 	if (pgi == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	*out_ptr = pgi->pg->data;
 	pgal->npgs_use += npgs;
@@ -932,7 +933,7 @@ static int slab_require_space(struct silofs_slab *slab)
 	}
 	pgi = pgal_alloc_npgs(slab->pgal, 1);
 	if (pgi == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	slab_expand(slab, pgi);
 	return 0;
@@ -967,7 +968,7 @@ static int slab_do_alloc_seg(struct silofs_slab *slab,
 	}
 	seg = slab_alloc_and_update(slab);
 	if (seg == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	*out_seg = seg;
 	return 0;
@@ -1194,11 +1195,13 @@ static int qalloc_alloc_by_slab(struct silofs_qalloc *qal, size_t nbytes,
                                 struct silofs_slab_seg **out_seg)
 {
 	struct silofs_slab *slab;
-	int err = -ENOMEM;
+	int err;
 
 	slab = qalloc_slab_of(qal, nbytes);
-	if (slab != NULL) {
+	if (silofs_likely(slab != NULL)) {
 		err = slab_alloc_seg(slab, out_seg);
+	} else {
+		err = -SILOFS_ENOMEM;
 	}
 	return err;
 }
@@ -1208,10 +1211,10 @@ static int qalloc_check_alloc(const struct silofs_qalloc *qal, size_t nbytes)
 	const size_t nbytes_max = QALLOC_MALLOC_SIZE_MAX;
 
 	if (qal->pgal.data.mem == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	if (nbytes > nbytes_max) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	if (!nbytes) {
 		return -EINVAL;

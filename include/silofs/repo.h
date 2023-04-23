@@ -118,6 +118,10 @@ int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_repo_stat_blob(struct silofs_repo *repo,
+                          const struct silofs_blobid *blobid,
+                          struct stat *out_st);
+
 int silofs_repo_lookup_blob(struct silofs_repo *repo,
                             const struct silofs_blobid *blobid);
 

@@ -158,7 +158,7 @@ int silofs_check_mntdir_fstype(long vfstype)
 
 	fsinfo = silofs_fsinfo_by_vfstype(vfstype);
 	if (fsinfo == NULL) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (fsinfo->isfuse || !fsinfo->allowed) {
 		return -SILOFS_EMOUNT;
@@ -180,7 +180,7 @@ static int silofs_check_mntpoint(const char *path,
 		 * 'allow_other' option; thus even privileged user can not
 		 * access to mount point. Fine with us
 		 *
-		 * TODO: at least type to parse '/proc/self/mounts'
+		 * TODO: at least try to parse '/proc/self/mounts'
 		 */
 		return 0;
 	}
@@ -188,16 +188,16 @@ static int silofs_check_mntpoint(const char *path,
 		return err;
 	}
 	if (!S_ISDIR(st.st_mode)) {
-		return -ENOTDIR;
+		return -SILOFS_ENOTDIR;
 	}
 	if (mounting && (st.st_nlink > 2)) {
-		return -ENOTEMPTY;
+		return -SILOFS_ENOTEMPTY;
 	}
 	if (mounting && (st.st_ino == SILOFS_INO_ROOT)) {
-		return -EBUSY;
+		return -SILOFS_EBUSY;
 	}
 	if (!mounting && (st.st_ino != SILOFS_INO_ROOT)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (!mounting) {
 		return 0;
@@ -265,7 +265,7 @@ static int check_canonical_path(const char *path)
 	int err = 0;
 
 	if (!path || !strlen(path)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	cpath = canonicalize_file_name(path);
 	if (cpath == NULL) {
@@ -273,7 +273,7 @@ static int check_canonical_path(const char *path)
 	}
 	if (strcmp(path, cpath) != 0) {
 		log_info("canonical-path-mismatch: '%s' '%s'", path, cpath);
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 	}
 	free(cpath);
 	return err;
@@ -317,7 +317,7 @@ static int check_fuse_dev(const char *devname)
 	}
 	if (!S_ISCHR(st.st_mode)) {
 		log_info("not-a-char-device: %s", devname);
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -352,7 +352,7 @@ static int format_mount_data(const struct silofs_mntparams *mntp,
 	               mntp->user_id, mntp->group_id,
 	               mntp->allowother ? "allow_other" : "");
 	if ((ret <= 0) || (ret >= dat_size)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	len = strlen(dat);
 	if (dat[len - 1] == ',') {
@@ -434,11 +434,11 @@ static int mntmsg_set_path(struct silofs_mntmsg *mmsg, const char *path)
 	size_t len;
 
 	if (path == NULL) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	len = strlen(path);
 	if (len >= sizeof(mmsg->mn_path)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	memcpy(mmsg->mn_path, path, len);
 	return 0;
@@ -504,13 +504,13 @@ static enum silofs_mntcmd mntmsg_cmd(const struct silofs_mntmsg *mmsg)
 static int mntmsg_check(const struct silofs_mntmsg *mmsg)
 {
 	if (mmsg->mn_magic != SILOFS_STYPE_MAGIC) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (mmsg->mn_version_major != silofs_version.major) {
-		return -EPROTO;
+		return -SILOFS_EPROTO;
 	}
 	if (mmsg->mn_version_minor > silofs_version.minor) {
-		return -EPROTO;
+		return -SILOFS_EPROTO;
 	}
 	switch (mntmsg_cmd(mmsg)) {
 	case SILOFS_MNTCMD_HANDSHAKE:
@@ -519,7 +519,7 @@ static int mntmsg_check(const struct silofs_mntmsg *mmsg)
 		break;
 	case SILOFS_MNTCMD_NONE:
 	default:
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -541,7 +541,7 @@ static int do_sendmsg(const struct silofs_socket *sock,
 		return err;
 	}
 	if (nbytes < sizeof(*msg)) {
-		return -ECOMM;
+		return -SILOFS_ECOMM;
 	}
 	return 0;
 }
@@ -602,7 +602,7 @@ static int do_recvmsg(const struct silofs_socket *sock, struct msghdr *msg)
 		return err;
 	}
 	if (nbytes < sizeof(*msg)) {
-		return -ECOMM;
+		return -SILOFS_ECOMM;
 	}
 	return 0;
 }
@@ -842,27 +842,27 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
 	        (MS_LAZYTIME | MS_NOEXEC | MS_NOSUID | MS_NODEV | MS_RDONLY);
 
 	if (mntp->flags & ~sup_mnt_mask) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	if ((mntp->root_mode & S_IRWXU) == 0) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	if ((mntp->root_mode & S_IFDIR) == 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((mntp->user_id != peer_cred->uid) ||
 	    (mntp->group_id != peer_cred->gid)) {
-		return -EACCES;
+		return -SILOFS_EACCES;
 	}
 	page_size = (size_t)silofs_sc_page_size();
 	if (mntp->max_read < (2 * page_size)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (mntp->max_read > (512 * page_size)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (mntp->path == NULL) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = mntsvc_check_mount_mntrule(msvc, mntp);
 	if (err) {
@@ -918,13 +918,13 @@ static int mntsvc_check_umount(const struct silofs_mntsvc *msvc,
 
 	unused(msvc);
 	if (!strlen(path)) {
-		return -EPERM;
+		return -SILOFS_EPERM;
 	}
 	if (mntp->flags & ~mnt_allow) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((mntp->flags | mnt_allow) != mnt_allow) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	/* TODO: for MNT_FORCE, require valid uig/gid */
 	err = check_umount_path(path, peer_cred->uid);
@@ -999,7 +999,7 @@ static void mntsvc_exec_request(struct silofs_mntsvc *msvc,
 		break;
 	case SILOFS_MNTCMD_NONE:
 	default:
-		err = -EOPNOTSUPP;
+		err = -SILOFS_EOPNOTSUPP;
 		break;
 	}
 	mntmsg_set_status(mmsg, err);
@@ -1127,7 +1127,7 @@ static int mntsrv_make_unixaddr(const struct silofs_mntsrv *msrv,
 	len = snprintf(buf, bsz, "%s/%s", base_path, sock_name);
 	if ((size_t)len >= bsz) {
 		log_err("invalid unix sock: %s/%s", base_path, sock_name);
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -1427,8 +1427,7 @@ static int mntclnt_handshake(const struct silofs_mntclnt *mclnt,
 	const struct silofs_socket *sock = &mclnt->mc_sock;
 	int err;
 
-	*out_status = -ECOMM;
-
+	*out_status = -SILOFS_ECOMM;
 	err = mntmsg_handshake(&mmsg, mntp);
 	if (err) {
 		return err;
@@ -1457,9 +1456,8 @@ static int mntclnt_mount(const struct silofs_mntclnt *mclnt,
 	const struct silofs_socket *sock = &mclnt->mc_sock;
 	int err;
 
-	*out_status = -ECOMM;
+	*out_status = -SILOFS_ECOMM;
 	*out_fd = -1;
-
 	err = mntmsg_mount(&mmsg, mntp);
 	if (err) {
 		return err;
@@ -1487,7 +1485,7 @@ static int mntclnt_umount(const struct silofs_mntclnt *mclnt,
 	const struct silofs_socket *sock = &mclnt->mc_sock;
 	int err;
 
-	*out_status = -ECOMM;
+	*out_status = -SILOFS_ECOMM;
 	err = mntmsg_umount(&mmsg, mntp);
 	if (err) {
 		return err;

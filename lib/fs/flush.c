@@ -128,7 +128,7 @@ static int smc_check_resolved_oaddr(const struct silofs_submit_ctx *sm_ctx,
 
 	if (stype_isvnode(lni->stype)) {
 		mut = silofs_sbi_ismutable_blobid(sbi, blobid);
-		err = mut ? 0 : -EROFS;
+		err = mut ? 0 : -SILOFS_EROFS;
 	}
 	silofs_assert_ok(err);
 	return err;
@@ -146,7 +146,7 @@ static int smc_do_make_sqe(struct silofs_submit_ctx *sm_ctx,
 	int err;
 
 	err = silofs_submitq_new_sqe(sm_ctx->submitq, out_sqe);
-	while ((err == -ENOMEM) && (retry-- > 0)) {
+	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
 		smc_relax_cache_now(sm_ctx);
 		err = silofs_submitq_new_sqe(sm_ctx->submitq, out_sqe);
 	}
@@ -179,7 +179,7 @@ static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
 	int err;
 
 	err = silofs_sqe_assign_buf(sqe);
-	while ((err == -ENOMEM) && (retry-- > 0)) {
+	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
 		smc_relax_cache_now(sm_ctx);
 		err = silofs_sqe_assign_buf(sqe);
 	}

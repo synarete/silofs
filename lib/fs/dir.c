@@ -1202,7 +1202,7 @@ static int search_dnode(const struct silofs_dnode_info *dni,
 
 	de = dtn_search(dni->dtn, name);
 	if (de == NULL) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	dei_setup(out_dei, dni, de);
 	return 0;
@@ -1400,11 +1400,11 @@ static int dirc_do_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *child_dni = NULL;
 	struct silofs_dnode_info *dni = root_dni;
 	silofs_dtn_depth_t depth;
-	int ret = -ENOENT;
+	int ret = -SILOFS_ENOENT;
 
 	for (depth = dtn_depth(dni->dtn); depth_isvalid(depth); ++depth) {
 		ret = search_dnode(dni, name, dei);
-		if (!ret || (ret != -ENOENT)) {
+		if (!ret || (ret != -SILOFS_ENOENT)) {
 			break;
 		}
 		ret = dirc_stage_child_by_name(d_ctx, dni, &child_dni);
@@ -1416,7 +1416,7 @@ static int dirc_do_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 		if (ret) {
 			break;
 		}
-		ret = -ENOENT;
+		ret = -SILOFS_ENOENT;
 	}
 	return ret;
 }
@@ -1436,10 +1436,10 @@ static int dirc_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 static int dirc_check_may_lookup(const struct silofs_dir_ctx *d_ctx)
 {
 	if (!dir_ndents(d_ctx->dir_ii)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	if (!dir_has_htree(d_ctx->dir_ii)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
@@ -1468,13 +1468,13 @@ static int dirc_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
 static int dirc_check_self_and_name(const struct silofs_dir_ctx *d_ctx)
 {
 	if (!ii_isdir(d_ctx->dir_ii)) {
-		return -ENOTDIR;
+		return -SILOFS_ENOTDIR;
 	}
 	if (d_ctx->name->s.len == 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (d_ctx->name->s.len > SILOFS_NAME_MAX) {
-		return -ENAMETOOLONG;
+		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;
 }
@@ -1533,7 +1533,7 @@ static int dirc_spawn_child(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	if (!dtn_index_valid_depth(dtn_index)) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	err = dirc_spawn_setup_dnode(d_ctx, parent, dtn_index, out_dni);
 	if (err) {
@@ -1649,7 +1649,7 @@ static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
 	const struct silofs_inode_info *ii = d_ctx->child_ii;
 
 	if (!dtn_may_insert(dni->dtn, d_ctx->name->s.len)) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	dtn_insert(dni->dtn, d_ctx->name, ii_ino(ii), ii_dtype_of(ii));
 	dir_inc_ndents(d_ctx->dir_ii);
@@ -1657,14 +1657,13 @@ static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
 	return 0;
 }
 
-static int dirc_add_to_tree(const struct silofs_dir_ctx *d_ctx,
-                            struct silofs_dnode_info *root_dni)
+static int dirc_do_add_to_tree(const struct silofs_dir_ctx *d_ctx,
+                               struct silofs_dnode_info *root_dni)
 {
 	struct silofs_dnode_info *dni = root_dni;
 	silofs_dtn_depth_t depth;
-	int ret = -ENOSPC;
+	int ret = -SILOFS_ENOSPC;
 
-	dni_incref(root_dni);
 	for (depth = dtn_depth(dni->dtn); depth_isvalid(depth); ++depth) {
 		ret = dirc_add_to_dnode(d_ctx, dni);
 		if (ret == 0) {
@@ -1678,8 +1677,18 @@ static int dirc_add_to_tree(const struct silofs_dir_ctx *d_ctx,
 		if (ret) {
 			break;
 		}
-		ret = -ENOSPC;
+		ret = -SILOFS_ENOSPC;
 	}
+	return ret;
+}
+
+static int dirc_add_to_tree(const struct silofs_dir_ctx *d_ctx,
+                            struct silofs_dnode_info *root_dni)
+{
+	int ret;
+
+	dni_incref(root_dni);
+	ret = dirc_do_add_to_tree(d_ctx, root_dni);
 	dni_decref(root_dni);
 	return ret;
 }
@@ -1758,7 +1767,7 @@ static int dirc_check_stage_parent(struct silofs_dir_ctx *d_ctx)
 	parent = ii_parent(d_ctx->dir_ii);
 	if (ino_isnull(parent)) {
 		/* special case: unlinked-but-open dir */
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	if (!ino_isvalid(parent)) {
 		return -SILOFS_EFSCORRUPTED;
@@ -1915,7 +1924,7 @@ static int dirc_stage_child_by_ord(struct silofs_dir_ctx *d_ctx,
 
 	dni_incref(dni);
 	if (ord >= DTREE_FANOUT) {
-		ret = -ENOENT;
+		ret = -SILOFS_ENOENT;
 		goto out;
 	}
 	dni_child_addr_by_ord(dni, ord, &vaddr);
@@ -1941,7 +1950,7 @@ dirc_stage_node_by_index(struct silofs_dir_ctx *d_ctx,
 
 	depth = dtn_index_depth(dtn_index);
 	if (depth >= ARRAY_SIZE(child_ord)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	for (silofs_dtn_depth_t d = depth; d > 0; --d) {
 		child_ord[d - 1] = dtn_index_to_child_ord(dtn_index);
@@ -2008,7 +2017,7 @@ static int dirc_do_iterate_tree_nodes(struct silofs_dir_ctx *d_ctx,
 		}
 		ret = dirc_stage_node_by_index(d_ctx, root_dni,
 		                               dtn_index, &dni);
-		if (ret == -ENOENT) {
+		if (ret == -SILOFS_ENOENT) {
 			dtn_index++;
 			ret = 0;
 			continue;
@@ -2116,10 +2125,10 @@ static int dirc_check_dir_io(const struct silofs_dir_ctx *d_ctx)
 	const struct silofs_inode_info *ii = d_ctx->dir_ii;
 
 	if (!ii_isdir(ii)) {
-		return -ENOTDIR;
+		return -SILOFS_ENOTDIR;
 	}
 	if (!ii->i_nopen) {
-		return -EBADF;
+		return -SILOFS_EBADF;
 	}
 	return 0;
 }

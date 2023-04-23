@@ -50,7 +50,7 @@ static int splifo_pop_vspace(struct silofs_splifo *spl,
                              size_t len, loff_t *out_off)
 {
 	if (!spl->spl_size || (spl->spl_ulen != len)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	*out_off = spl->spl_lifo[spl->spl_size - 1];
 	spl->spl_size--;
@@ -62,7 +62,7 @@ static int splifo_add_vspace(struct silofs_splifo *spl, loff_t off, size_t len)
 	const size_t size_max = ARRAY_SIZE(spl->spl_lifo);
 
 	if (!(spl->spl_size < size_max) || (spl->spl_ulen != len)) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	spl->spl_lifo[spl->spl_size] = off;
 	spl->spl_size++;
@@ -272,7 +272,7 @@ static int spamap_check_cap_add(const struct silofs_spamap *spa)
 	const size_t cap_cur = spa->spa_avl.size * spe_size;
 	const size_t cap_max = spa->spa_cap_max;
 
-	return (cap_cur < cap_max) ? 0 : -ENOMEM;
+	return (cap_cur < cap_max) ? 0 : -SILOFS_ENOMEM;
 }
 
 static int spamap_pop_vspace(struct silofs_spamap *spa,
@@ -287,10 +287,10 @@ static int spamap_pop_vspace(struct silofs_spamap *spa,
 	}
 	spe = spamap_minimal_spe(spa);
 	if (spe == NULL) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	if (len > spe->spe_len) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	*out_off = spe->spe_voff;
 	if (len < spe->spe_len) {
@@ -310,7 +310,7 @@ static int spamap_merge_vspace(struct silofs_spamap *spa,
 	struct silofs_spa_entry *spe_prev = NULL;
 	struct silofs_spa_entry *spe_next = NULL;
 	loff_t end;
-	int ret = -ENOENT;
+	int ret = -SILOFS_ENOENT;
 
 	end = off_end(off, len);
 	spmap_find_next_prev(spa, off, &spe_prev, &spe_next);
@@ -337,7 +337,7 @@ static int spamap_merge_vspace(struct silofs_spamap *spa,
 		spamap_evict_spe(spa, spe_next);
 		spe = spamap_new_spe(spa, off, off_ulen(off, end));
 		if (spe == NULL) {
-			return -ENOMEM;
+			return -SILOFS_ENOMEM;
 		}
 		spamap_insert_spe(spa, spe);
 	} else {
@@ -360,15 +360,15 @@ static int spamap_insert_vspace(struct silofs_spamap *spa,
 	}
 	spe_max = spamap_maximal_spe(spa);
 	if (spe_max == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	if (off > spe_max->spe_voff) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	spamap_delete_spe(spa, spe_max);
 	spe = spamap_new_spe(spa, off, len);
 	if (spe == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 out_ok:
 	spamap_insert_spe(spa, spe);
@@ -384,7 +384,7 @@ static int spamap_add_vspace(struct silofs_spamap *spa, loff_t off, size_t len)
 		return 0;
 	}
 	err = spamap_merge_vspace(spa, off, len);
-	if (err != -ENOENT) {
+	if (err != -SILOFS_ENOENT) {
 		return err;
 	}
 	err = spamap_check_cap_add(spa);
@@ -405,14 +405,14 @@ static int spamap_find_baseof(const struct silofs_spamap *spa,
 
 	spe = spmap_lower_bound_spe(spa, off);
 	if (spe == NULL) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	spe = spmap_prev_of(spa, spe);
 	if (spe == NULL) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	if (!spe_is_within(spe, off)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	*out_base_off = spe->spe_voff;
 	return 0;
@@ -523,7 +523,7 @@ int silofs_spamaps_store(struct silofs_spamaps *spam,
                          enum silofs_stype stype, loff_t voff, size_t len)
 {
 	struct silofs_spamap *spa;
-	int err = -EINVAL;
+	int err = -SILOFS_EINVAL;
 
 	spa = spamaps_sub_map(spam, stype);
 	if (spa != NULL) {
@@ -536,7 +536,7 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_stype stype,
                           size_t len, loff_t *out_voff)
 {
 	struct silofs_spamap *spa;
-	int err = -EINVAL;
+	int err = -SILOFS_EINVAL;
 
 	spa = spamaps_sub_map(spam, stype);
 	if (spa != NULL) {
@@ -550,7 +550,7 @@ int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
                           enum silofs_stype stype, loff_t voff, loff_t *out)
 {
 	const struct silofs_spamap *spa;
-	int err = -ENOENT;
+	int err = -SILOFS_ENOENT;
 
 	spa = spamaps_sub_map2(spam, stype);
 	if (spa != NULL) {
@@ -754,7 +754,7 @@ int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc)
 	uamap->uam_htbl_cap = 0;
 	uamap->uam_htbl = silofs_lista_new(alloc, cap);
 	if (uamap->uam_htbl == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	uamap->uam_htbl_cap = cap;
 	return 0;
@@ -884,7 +884,7 @@ int silofs_uamap_remove(struct silofs_uamap *uamap,
 	silofs_uakey_setup_by(&uakey, uaddr);
 	uaent = uamap_find(uamap, &uakey);
 	if (uaent == NULL) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	uamap_remove_del(uamap, uaent);
 	return 0;
@@ -915,7 +915,7 @@ static int uamap_remove_lru(struct silofs_uamap *uamap)
 
 	uaent = uamap_get_lru(uamap);
 	if (uaent == NULL) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	uamap_remove_del(uamap, uaent);
 	return 0;
@@ -935,7 +935,7 @@ int silofs_uamap_insert(struct silofs_uamap *uamap,
 
 	uaent = uaent_new(uamap->uam_alloc, uaddr);
 	if (uaent == NULL) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	uamap_refresh(uamap);
 	uamap_insert(uamap, uaent);

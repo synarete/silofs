@@ -662,18 +662,16 @@ static int check_chmod(const struct silofs_task *task,
                        struct silofs_inode_info *ii, mode_t mode)
 {
 	const struct silofs_creds *creds = creds_of(task);
+	int ret = -SILOFS_EPERM;
 
-	/* Must not change inode type */
-	if (itype_of(mode) && !has_itype(ii, mode)) {
-		return -EPERM;
+	if (!itype_of(mode) || has_itype(ii, mode)) {
+		if (user_isowner(&creds->icred, ii)) {
+			ret =  0;
+		} else if (silofs_user_cap_fowner(&creds->xcred)) {
+			ret = 0;
+		}
 	}
-	if (user_isowner(&creds->icred, ii)) {
-		return 0;
-	}
-	if (silofs_user_cap_fowner(&creds->xcred)) {
-		return 0;
-	}
-	return -EPERM;
+	return ret;
 }
 
 static void update_times_attr(const struct silofs_task *task,
@@ -748,7 +746,7 @@ static int check_cap_chown(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return silofs_user_cap_chown(&creds->xcred) ? 0 : -EPERM;
+	return silofs_user_cap_chown(&creds->xcred) ? 0 : -SILOFS_EPERM;
 }
 
 static int check_chown_uid(const struct silofs_task *task,
@@ -928,7 +926,7 @@ static int check_parent_dir_ii(struct silofs_task *task,
 	}
 	parent = ii_parent(ii);
 	if (ino_isnull(parent)) {
-		return ii->i_nopen ? 0 : -ENOENT;
+		return ii->i_nopen ? 0 : -SILOFS_ENOENT;
 	}
 	err = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
 	if (err) {

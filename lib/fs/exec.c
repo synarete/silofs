@@ -90,10 +90,10 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 		return err;
 	}
 	if (mem_total < mem_floor) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	if (mem_rlim < mem_floor) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	mem_ceil = silofs_min3(mem_glim, mem_rlim, mem_total / 4);
 	mem_uget = silofs_clamp(mem_want, mem_floor, mem_ceil);
@@ -385,7 +385,7 @@ static int fse_init_fuseq(struct silofs_fs_env *fse)
 	mem = silofs_allocate(fse->fs_alloc, fuseq_pg_size);
 	if (mem == NULL) {
 		log_warn("failed to allocate fuseq: size=%lu", fuseq_pg_size);
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	fqp = mem;
 	err = silofs_fuseq_init(&fqp->fuseq, fse->fs_alloc);
@@ -683,7 +683,8 @@ static int reload_free_vspace(const struct silofs_fs_env *fse)
 			continue;
 		}
 		err = exec_rescan_vspace_of(fse, stype);
-		if (err && (err != -ENOSPC) && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOSPC) &&
+		    (err != -SILOFS_ENOENT)) {
 			log_err("failed to reload free vspace: err=%d", err);
 			return err;
 		}
@@ -765,7 +766,7 @@ int silofs_exec_fs(struct silofs_fs_env *fse)
 	int err;
 
 	if (!fse->fs_args.withfuse || (fse->fs_fuseq == NULL)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = silofs_fuseq_mount(fq, fse->fs_uber, fse->fs_args.mntdir);
 	if (!err) {
@@ -873,7 +874,7 @@ static int check_superblock(const struct silofs_fs_env *fse)
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
 	if (fossil && !fse->fs_args.rdonly) {
-		return -EROFS;
+		return -SILOFS_EROFS;
 	}
 	return 0;
 }
@@ -1574,7 +1575,7 @@ int silofs_inspect_fs(struct silofs_fs_env *fse)
 static int exec_unref_fs(struct silofs_fs_env *fse)
 {
 	struct silofs_task task;
-	int err = 0;
+	int err;
 
 	err = make_task(fse, &task);
 	if (!err) {

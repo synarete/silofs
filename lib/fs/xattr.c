@@ -22,10 +22,6 @@
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 
-/* error-code borrowed from XFS */
-#ifndef ENOATTR
-#define ENOATTR         ENODATA /* Attribute not found */
-#endif
 
 #define XATTR_DATA_MAX \
 	(SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
@@ -625,11 +621,11 @@ static int check_xattr_name(const struct silofs_namestr *name)
 		return 0;
 	}
 	if (name->s.len > SILOFS_NAME_MAX) {
-		return -ENAMETOOLONG;
+		return -SILOFS_ENAMETOOLONG;
 	}
 	xap = search_prefix(name);
 	if (xap && (xap->flags & XATTRF_DISABLE)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -641,17 +637,17 @@ static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
 	int err;
 
 	if (S_ISCHR(mode) || S_ISBLK(mode)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = check_xattr_name(xa_ctx->name);
 	if (err) {
 		return err;
 	}
 	if (xa_ctx->size > SILOFS_XATTR_VALUE_MAX) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (!is_valid_xflags(xa_ctx->flags)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = silofs_do_access(xa_ctx->task, ii, access_mode);
 	if (err) {
@@ -670,7 +666,7 @@ xac_lookup_entry_at_node(const struct silofs_xattr_ctx *xa_ctx,
 	int err;
 
 	if (vaddr_isnull(vaddr)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = xac_stage_xanode(xa_ctx, vaddr, &xai);
 	if (err) {
@@ -678,7 +674,7 @@ xac_lookup_entry_at_node(const struct silofs_xattr_ctx *xa_ctx,
 	}
 	xe = xan_search(xai->xan, &xa_ctx->name->s);
 	if (xe == NULL) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	xei->xai = xai;
 	xei->xe = xe;
@@ -690,12 +686,12 @@ static int xac_lookup_entry_at_nodes(struct silofs_xattr_ctx *xa_ctx,
 {
 	struct silofs_vaddr vaddr;
 	const struct silofs_inode_info *ii = xa_ctx->ii;
-	int err = -ENOENT;
+	int err = -SILOFS_ENOENT;
 
 	for (size_t sloti = 0; sloti < ii_xa_nslots_max(ii); ++sloti) {
 		ii_xa_get_at(ii, sloti, &vaddr);
 		err = xac_lookup_entry_at_node(xa_ctx, &vaddr, xei);
-		if (err != -ENOENT) {
+		if (err != -SILOFS_ENOENT) {
 			break;
 		}
 	}
@@ -707,7 +703,7 @@ static int xac_lookup_entry_at_inode(struct silofs_xattr_ctx *xa_ctx,
 {
 	(void)xa_ctx;
 	(void)xei;
-	return -ENOENT;
+	return -SILOFS_ENOENT;
 }
 
 static int xac_lookup_entry(struct silofs_xattr_ctx *xa_ctx,
@@ -716,15 +712,15 @@ static int xac_lookup_entry(struct silofs_xattr_ctx *xa_ctx,
 	int err;
 
 	err = xac_lookup_entry_at_inode(xa_ctx, xei);
-	if (err != -ENOENT) {
+	if (err != -SILOFS_ENOENT) {
 		goto out;
 	}
 	err = xac_lookup_entry_at_nodes(xa_ctx, xei);
-	if (err != -ENOENT) {
+	if (err != -SILOFS_ENOENT) {
 		goto out;
 	}
 out:
-	return (err == -ENOENT) ? -ENOATTR : err;
+	return (err == -SILOFS_ENOENT) ? -SILOFS_ENODATA : err;
 }
 
 static int xac_do_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
@@ -746,7 +742,7 @@ static int xac_do_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 		goto out_ok;
 	}
 	if (buf->cap < (buf->len + *out_size)) {
-		return -ERANGE;
+		return -SILOFS_ERANGE;
 	}
 	xe_copy_value(xei.xe, buf);
 out_ok:
@@ -851,7 +847,7 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 
 	xe = xan_insert(xai->xan, &xa_ctx->name->s, &xa_ctx->value);
 	if (xe == NULL) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	xei->xai = xai;
 	xei->xe = xe;
@@ -889,7 +885,7 @@ static int xac_try_insert_at_inode(const struct silofs_xattr_ctx *xa_ctx,
 	 */
 	(void)xa_ctx;
 	(void)xei;
-	return -ENOSPC;
+	return -SILOFS_ENOSPC;
 }
 
 static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
@@ -898,10 +894,10 @@ static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
 	int err;
 
 	if ((xa_ctx->flags == XATTR_CREATE) && xei->xe) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	err = xac_try_insert_at_inode(xa_ctx, xei);
-	if (err != -ENOSPC) {
+	if (err != -SILOFS_ENOSPC) {
 		return err;
 	}
 	err = xac_try_insert_at_nodes(xa_ctx, xei);
@@ -927,7 +923,7 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 
 	/* TODO: Try replace in-place */
 	if ((xa_ctx->flags == XATTR_REPLACE) && !xei->xe) {
-		return -ENOATTR;
+		return -SILOFS_ENODATA;
 	}
 	err = xac_setxattr_create(xa_ctx, xei);
 	if (!err) {
@@ -974,7 +970,7 @@ static int xac_setxattr_apply(struct silofs_xattr_ctx *xa_ctx)
 	int err;
 
 	err = xac_lookup_entry(xa_ctx, &xei);
-	if ((err == 0) || (err == -ENOATTR)) {
+	if ((err == 0) || (err == -SILOFS_ENODATA)) {
 		err = xac_setxattr_apply_on(xa_ctx, &xei);
 	}
 	return err;

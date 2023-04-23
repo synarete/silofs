@@ -18,6 +18,7 @@
 #include <silofs/syscall.h>
 #include <silofs/utility.h>
 #include <silofs/logging.h>
+#include <silofs/errors.h>
 #include <silofs/pipe.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -213,7 +214,7 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
 		silofs_log_error("bad-splice: fd_in=%d off_in=%ld fd_out=%d "\
 		                 "cnt=%lu flags=%u nsp=%lu", fd, off_in,
 		                 pipe->fd[1], cnt, flags, nsp);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	pipe->pend += nsp;
 	return 0;
@@ -259,7 +260,7 @@ int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd,
 		silofs_log_error("bad-splice: fd_in=%d fd_out=%d off_out=%ld"\
 		                 "cnt=%lu flags=%u nsp=%lu",
 		                 pipe->fd[0], fd, off_out, cnt, flags, nsp);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	pipe->pend -= nsp;
 	return 0;
@@ -287,7 +288,7 @@ int silofs_pipe_vmsplice_to_iov(struct silofs_pipe *pipe,
 		silofs_log_error("bad-vmsplice: fd=%d cnt=%lu "
 		                 "flags=%u nsp=%lu", pipe->fd[1],
 		                 cnt, flags, nsp);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	pipe->pend -= nsp;
 	return 0;

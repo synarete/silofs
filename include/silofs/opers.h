@@ -524,4 +524,6 @@ int silofs_fs_inspect(struct silofs_task *task);
 
 int silofs_fs_unrefs(struct silofs_task *task);
 
+int silofs_remap_status_code(int status);
+
 #endif /* SILOFS_OPERS_H_ */

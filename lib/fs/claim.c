@@ -197,7 +197,7 @@ spac_require_rw_spmaps_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 static int spac_check_within_vspace(struct silofs_spalloc_ctx *spa_ctx,
                                     const struct silofs_vaddr *vaddr)
 {
-	return sbi_is_within_vspace(spa_ctx->sbi, vaddr) ? 0 : -ENOSPC;
+	return sbi_is_within_vspace(spa_ctx->sbi, vaddr) ? 0 : -SILOFS_ENOSPC;
 }
 
 static int spac_resolve_oaddr(struct silofs_spalloc_ctx *spa_ctx,
@@ -244,7 +244,7 @@ static int spac_require_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
 	int err;
 
 	err = spac_stage_curr_spnode1_of(spa_ctx, voff);
-	if (err && (err != -ENOENT)) {
+	if (err && (err != -SILOFS_ENOENT)) {
 		return err;
 	}
 	err = spac_require_rw_spmaps_of(spa_ctx, voff);
@@ -268,12 +268,12 @@ spac_require_vspace_by_spmaps(struct silofs_spalloc_ctx *spa_ctx,
 
 	while (voff < vend) {
 		err = spac_require_vspace_at(spa_ctx, voff, out_vaddr);
-		if (err != -ENOSPC) {
+		if (err != -SILOFS_ENOSPC) {
 			return err;
 		}
 		voff = silofs_off_to_spleaf_next(voff);
 	}
-	return -ENOSPC;
+	return -SILOFS_ENOSPC;
 }
 
 static int spac_claim_vspace_from_cache(struct silofs_spalloc_ctx *spa_ctx,
@@ -330,7 +330,7 @@ static int spac_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 			ok = silofs_sti_mayalloc_meta(sti, nb, new_file);
 		}
 	}
-	return ok ? 0 : -ENOSPC;
+	return ok ? 0 : -SILOFS_ENOSPC;
 }
 
 static int
@@ -338,10 +338,10 @@ spac_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
                             const struct silofs_vaddr *vaddr)
 {
 	if (vaddr_isnull(vaddr)) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	if (!sbi_is_within_vspace(spa_ctx->sbi, vaddr)) {
-		return -ENOSPC;
+		return -SILOFS_ENOSPC;
 	}
 	return 0;
 }
@@ -479,7 +479,7 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 
 	silofs_sli_main_blob(sli, &blobid);
 	if (blobid_isnull(&blobid)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	silofs_sli_vspace_range(sli, &vrange);
 	silofs_sli_resolve_main_ubk(sli, vrange.beg, out_bkaddr_base);
@@ -635,7 +635,7 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 		}
 		voff = silofs_off_to_spleaf_next(voff);
 	}
-	return -ENOSPC;
+	return -SILOFS_ENOSPC;
 }
 
 int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_stype stype)

@@ -87,7 +87,7 @@ static void sb_generate_uuid(struct silofs_super_block *sb)
 int silofs_sb_check_version(const struct silofs_super_block *sb)
 {
 	if (sb_magic(sb) != SILOFS_SUPER_MAGIC) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (sb_version(sb) != SILOFS_FMT_VERSION) {
 		return -SILOFS_EFSCORRUPTED;
@@ -517,10 +517,10 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 	const unsigned long ms_mask = MS_RDONLY;
 
 	if ((uber->ub_ms_flags & ms_mask) == ms_mask) {
-		return -EROFS;
+		return -SILOFS_EROFS;
 	}
 	if (silofs_sb_test_flags(sbi->sb, SILOFS_SUPERF_FOSSIL)) {
-		return -EROFS;
+		return -SILOFS_EROFS;
 	}
 	return 0;
 }
@@ -546,7 +546,7 @@ int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
                          struct silofs_blobid *out_blobid)
 {
 	sb_main_blobid(sbi->sb, vspace, out_blobid);
-	return blobid_isnull(out_blobid) ? -ENOENT : 0;
+	return blobid_isnull(out_blobid) ? -SILOFS_ENOENT : 0;
 }
 
 void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
@@ -612,7 +612,7 @@ int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          struct silofs_uaddr *out_uaddr)
 {
 	sb_sproot_of(sbi->sb, vstype, out_uaddr);
-	return !uaddr_isnull(out_uaddr) ? 0 : -ENOENT;
+	return !uaddr_isnull(out_uaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,

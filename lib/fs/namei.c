@@ -51,11 +51,11 @@ static int check_utf8_name(const struct silofs_uber *uber,
 
 	ret = iconv(uber->ub_iconv, &in, &len, &out, &outlen);
 	if ((ret != 0) || len || (outlen % 4)) {
-		return errno ? -errno : -EINVAL;
+		return errno ? -errno : -SILOFS_EINVAL;
 	}
 	datlen = sizeof(unb.dat) - outlen;
 	if (datlen == 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -139,7 +139,7 @@ dii_name_to_hash(const struct silofs_inode_info *dir_ii,
 	STATICASSERT_EQ(sizeof(nbuf.name) % 8, 0);
 
 	if (likely(nstr->s.len >= sizeof(nbuf.name))) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	silofs_memzero(&nbuf, sizeof(nbuf));
 	silofs_namebuf_assign_str(&nbuf, nstr);
@@ -189,26 +189,26 @@ static bool has_cap_fowner(const struct silofs_task *task)
 
 static int check_isdir(const struct silofs_inode_info *ii)
 {
-	return ii_isdir(ii) ? 0 : -ENOTDIR;
+	return ii_isdir(ii) ? 0 : -SILOFS_ENOTDIR;
 }
 
 static int check_notdir(const struct silofs_inode_info *ii)
 {
-	return ii_isdir(ii) ? -EISDIR : 0;
+	return ii_isdir(ii) ? -SILOFS_EISDIR : 0;
 }
 
 static int check_opened(const struct silofs_inode_info *ii)
 {
-	return !ii->i_nopen ? -EBADF : 0;
+	return !ii->i_nopen ? -SILOFS_EBADF : 0;
 }
 
 static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 {
 	if (ii_isdir(ii)) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (!ii_isreg(ii) && !ii_isfifo(ii)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -220,10 +220,10 @@ static int check_open_limit(const struct silofs_inode_info *ii)
 	const size_t iopen_max = total_iopen_max / 2;
 
 	if (uber->ub_ops.op_iopen >= total_iopen_max) {
-		return -EMFILE;
+		return -SILOFS_EMFILE;
 	}
 	if (ii->i_nopen >= (long)iopen_max) {
-		return -EMFILE;
+		return -SILOFS_EMFILE;
 	}
 	return 0;
 }
@@ -266,7 +266,7 @@ static int check_sticky(const struct silofs_task *task,
 	if (has_cap_fowner(task)) {
 		return 0;
 	}
-	return -EPERM;
+	return -SILOFS_EPERM;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -325,8 +325,10 @@ static int spawn_inode_by_mode(struct silofs_task *task,
 		err = spawn_lnk_inode(task, parent_dii, out_ii);
 	} else if (S_ISFIFO(mode) || S_ISSOCK(mode)) {
 		err = spawn_inode(task, parent_dii, mode, rdev, out_ii);
+	} else if (S_ISDIR(mode)) {
+		err = -SILOFS_EISDIR;
 	} else {
-		err = -EOPNOTSUPP;
+		err = -SILOFS_EOPNOTSUPP;
 	}
 	return err;
 }
@@ -389,7 +391,7 @@ static int do_access(const struct silofs_task *task,
 			rwx |= X_OK;
 		}
 	}
-	return ((rwx & mask) == mask) ? 0 : -EACCES;
+	return ((rwx & mask) == mask) ? 0 : -SILOFS_EACCES;
 }
 
 int silofs_do_access(const struct silofs_task *task,
@@ -575,13 +577,13 @@ int silofs_do_lookup(struct silofs_task *task,
 static int check_create_mode(mode_t mode)
 {
 	if (S_ISDIR(mode)) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (S_ISLNK(mode)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (!S_ISREG(mode) && !S_ISFIFO(mode) && !S_ISSOCK(mode)) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	return 0;
 }
@@ -595,9 +597,9 @@ static int check_nodent(struct silofs_task *task,
 
 	err = lookup_by_name(task, dir_ii, name, &ino);
 	if (err == 0) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
-	return (err == -ENOENT) ? 0 : err;
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 static int check_add_dentry(const struct silofs_inode_info *dir_ii,
@@ -613,11 +615,11 @@ static int check_add_dentry(const struct silofs_inode_info *dir_ii,
 	}
 	ndents = silofs_dir_ndentries(dir_ii);
 	if (!(ndents < ndents_max)) {
-		return -EMLINK;
+		return -SILOFS_EMLINK;
 	}
 	/* Special case for directory which is still held by open fd */
 	if (ii_nlink(dir_ii) < 2) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
@@ -741,25 +743,25 @@ static int check_mknod(struct silofs_task *task,
 		return err;
 	}
 	if (S_ISDIR(mode)) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (S_ISLNK(mode)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (!S_ISFIFO(mode) && !S_ISSOCK(mode) &&
 	    !S_ISCHR(mode) && !S_ISBLK(mode)) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	if (S_ISCHR(mode) || S_ISBLK(mode)) {
 		if (rdev == 0) {
-			return -EINVAL;
+			return -SILOFS_EINVAL;
 		}
 		if (task->t_uber->ub_ms_flags & MS_NODEV) {
-			return -EOPNOTSUPP;
+			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
 		if (rdev != 0) {
-			return -EINVAL; /* XXX see man 3p mknod */
+			return -SILOFS_EINVAL; /* XXX see man 3p mknod */
 		}
 	}
 	return 0;
@@ -872,14 +874,14 @@ static int o_flags_to_rwx(int o_flags)
 static int check_open_flags(const struct silofs_inode_info *ii, int o_flags)
 {
 	if (o_flags & O_DIRECTORY) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (o_flags & (O_CREAT | O_EXCL)) {
-		return -EEXIST; /* XXX ? */
+		return -SILOFS_EEXIST; /* XXX ? */
 	}
 	if (ii_isreg(ii) && (o_flags & O_TRUNC) &&
 	    !(o_flags & (O_WRONLY | O_RDWR))) {
-		return -EACCES;
+		return -SILOFS_EACCES;
 	}
 	return 0;
 }
@@ -1175,7 +1177,7 @@ static int check_nomlink(const struct silofs_inode_info *ii)
 {
 	const size_t link_max = SILOFS_LINK_MAX;
 
-	return (ii_nlink(ii) < link_max) ? 0 : -EMLINK;
+	return (ii_nlink(ii) < link_max) ? 0 : -SILOFS_EMLINK;
 }
 
 static int check_link(struct silofs_task *task,
@@ -1324,10 +1326,10 @@ static int check_rmdir_child(const struct silofs_task *task,
 		return err;
 	}
 	if (!dir_isempty(dir_ii)) {
-		return -ENOTEMPTY;
+		return -SILOFS_ENOTEMPTY;
 	}
 	if (ii_isrootd(dir_ii)) {
-		return -EBUSY;
+		return -SILOFS_EBUSY;
 	}
 	err = check_sticky(task, parent_ii, dir_ii);
 	if (err) {
@@ -1413,10 +1415,10 @@ static int create_lnk_inode(struct silofs_task *task,
 static int check_symval(const struct silofs_str *symval)
 {
 	if (symval->len == 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (symval->len > SILOFS_SYMLNK_MAX) {
-		return -ENAMETOOLONG;
+		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;
 }
@@ -1923,7 +1925,7 @@ static int check_rename_exchange(const struct silofs_dentry_ref *cur_dref,
 	const struct silofs_inode_info *old_ii = new_dref->ii;
 
 	if (ii == NULL) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = check_on_writable_fs(ii);
 	if (err) {
@@ -1949,16 +1951,16 @@ static int check_rename(const struct silofs_task *task,
 	const bool old_exists = (old_ii != NULL);
 
 	if (flags & RENAME_WHITEOUT) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((flags & RENAME_NOREPLACE) && old_exists) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	if ((flags & RENAME_EXCHANGE) && !old_exists) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	if (flags & RENAME_EXCHANGE) {
 		return check_rename_exchange(cur_dref, new_dref);
@@ -1982,7 +1984,7 @@ static int check_stage_rename_at(struct silofs_task *task,
 	err = stage_by_name(task, dref->dir_ii, dref->name,
 	                    SILOFS_STG_COW, &dref->ii);
 	if (err) {
-		return ((err == -ENOENT) && new_de) ? 0 : err;
+		return ((err == -SILOFS_ENOENT) && new_de) ? 0 : err;
 	}
 	err = check_sticky(task, dref->dir_ii, dref->ii);
 	if (err) {
@@ -2214,7 +2216,7 @@ static int do_query_subcmd(struct silofs_task *task,
 		break;
 	case SILOFS_QUERY_NONE:
 	default:
-		err = -EINVAL;
+		err = -SILOFS_EINVAL;
 		break;
 	}
 	return err;
@@ -2258,14 +2260,14 @@ static int check_fsowner(const struct silofs_task *task)
 	const struct silofs_creds *creds = creds_of(task);
 	const uid_t owner_uid = task->t_uber->ub_owner.uid;
 
-	return uid_eq(creds->xcred.uid, owner_uid) ? 0 : -EPERM;
+	return uid_eq(creds->xcred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
 }
 
 static int check_clone_flags(int flags)
 {
 	const int allow_flags = 0;
 
-	return (flags & ~allow_flags) ? -EINVAL : 0;
+	return (flags & ~allow_flags) ? -SILOFS_EINVAL : 0;
 }
 
 static int check_clone(const struct silofs_task *task,

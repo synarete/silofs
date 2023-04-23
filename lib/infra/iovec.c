@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/iovec.h>
 #include <silofs/syscall.h>
+#include <silofs/errors.h>
 #include <string.h>
 #include <errno.h>
 
@@ -33,7 +34,7 @@ int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf)
 		err = silofs_sys_preadn(iov->iov_fd, buf,
 		                        iov->iov_len, iov->iov_off);
 	} else {
-		err = -EIO;
+		err = -SILOFS_EIO;
 	}
 	return err;
 }
@@ -49,7 +50,7 @@ int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf)
 		err = silofs_sys_pwriten(iov->iov_fd, buf,
 		                         iov->iov_len, iov->iov_off);
 	} else {
-		err = -EIO;
+		err = -SILOFS_EIO;
 	}
 	return err;
 }

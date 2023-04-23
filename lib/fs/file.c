@@ -1086,17 +1086,17 @@ static int filc_check_reg(const struct silofs_file_ctx *f_ctx)
 	const struct silofs_inode_info *ii = f_ctx->ii;
 
 	if (ii_isdir(ii)) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (!ii_isreg(ii)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
 
 static int filc_check_isopen(const struct silofs_file_ctx *f_ctx)
 {
-	return f_ctx->ii->i_nopen ? 0 : -EBADF;
+	return f_ctx->ii->i_nopen ? 0 : -SILOFS_EBADF;
 }
 
 static int filc_check_seek_pos(const struct silofs_file_ctx *f_ctx)
@@ -1107,7 +1107,7 @@ static int filc_check_seek_pos(const struct silofs_file_ctx *f_ctx)
 
 	if ((whence == SEEK_DATA) || (whence == SEEK_HOLE)) {
 		if ((pos >= isz) || (pos < 0)) {
-			return -ENXIO;
+			return -SILOFS_ENXIO;
 		}
 	}
 	return 0;
@@ -1120,16 +1120,16 @@ static int filc_check_io_range(const struct silofs_file_ctx *f_ctx)
 	const ssize_t fsz_max = SILOFS_FILE_SIZE_MAX;
 
 	if (off < 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (off > fsz_max) {
-		return -EFBIG;
+		return -SILOFS_EFBIG;
 	}
 	if (slen > fsz_max) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((off + slen) < off) {
-		return -EOVERFLOW;
+		return -SILOFS_EOVERFLOW;
 	}
 	return 0;
 }
@@ -1140,10 +1140,10 @@ static int filc_check_io_end(const struct silofs_file_ctx *f_ctx)
 	const ssize_t fsz_max = SILOFS_FILE_SIZE_MAX;
 
 	if (end < 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (end > fsz_max) {
-		return -EFBIG;
+		return -SILOFS_EFBIG;
 	}
 	return 0;
 }
@@ -1172,10 +1172,10 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 	}
 	if (f_ctx->op_mask & (OP_READ | OP_WRITE)) {
 		if (f_ctx->len > SILOFS_IO_SIZE_MAX) {
-			return -EINVAL;
+			return -SILOFS_EINVAL;
 		}
 		if (!f_ctx->rwi_ctx) {
-			return -EINVAL;
+			return -SILOFS_EINVAL;
 		}
 	}
 	if (f_ctx->op_mask & OP_LSEEK) {
@@ -1186,11 +1186,11 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 	}
 	if (f_ctx->op_mask & OP_COPY_RANGE) {
 		if (f_ctx->cp_flags != 0) {
-			return -EINVAL;
+			return -SILOFS_EINVAL;
 		}
 		if (!off_is_bk_aligned(f_ctx->beg) &&
 		    (f_ctx->len > SILOFS_IO_SIZE_MAX)) {
-			return -EINVAL;
+			return -SILOFS_EINVAL;
 		}
 	}
 	return 0;
@@ -1370,7 +1370,7 @@ static int fpr_stage_fileaf_at(const struct silofs_fpos_ref *fpr,
 
 	*out_fli = NULL;
 	if (!fpr->has_data) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = filc_stage_fileaf(fpr->f_ctx, &fpr->vaddr, out_fli);
 	if (err) {
@@ -1471,7 +1471,7 @@ static int filc_seek_tree_at_leaves(struct silofs_file_ctx *f_ctx,
 			return 0;
 		}
 	}
-	return -ENOENT;
+	return -SILOFS_ENOENT;
 }
 
 static int
@@ -1485,7 +1485,7 @@ filc_seek_tree_recursive_at(struct silofs_file_ctx *f_ctx,
 
 	fni_resolve_child_by_slot(parent_fni, slot, &vaddr);
 	if (vaddr_isnull(&vaddr)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = filc_stage_finode(f_ctx, &vaddr, &fni);
 	if (err) {
@@ -1508,19 +1508,19 @@ static int filc_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
 
 	fni_incref(parent_fni);
 	if (!fni_isinrange(parent_fni, f_ctx->off)) {
-		ret = -ENOENT;
+		ret = -SILOFS_ENOENT;
 		goto out;
 	}
 	if (fni_isbottom(parent_fni)) {
 		ret = filc_seek_tree_at_leaves(f_ctx, parent_fni, out_fpr);
 		goto out;
 	}
-	ret = filc_is_seek_hole(f_ctx) ? 0 : -ENOENT;
+	ret = filc_is_seek_hole(f_ctx) ? 0 : -SILOFS_ENOENT;
 	start_slot = fni_child_slot_of(parent_fni, f_ctx->off);
 	for (size_t slot = start_slot; slot < nslots_max; ++slot) {
 		ret = filc_seek_tree_recursive_at(f_ctx, parent_fni,
 		                                  slot, out_fpr);
-		if (ret != -ENOENT) {
+		if (ret != -SILOFS_ENOENT) {
 			goto out;
 		}
 		filc_advance_to_next_tree_slot(f_ctx, parent_fni, slot);
@@ -1537,7 +1537,7 @@ static int filc_seek_by_tree_map(struct silofs_file_ctx *f_ctx,
 	int err;
 
 	if (!filc_has_tree_root(f_ctx)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = filc_stage_tree_root(f_ctx, &root_fni);
 	if (err) {
@@ -1567,7 +1567,7 @@ static int filc_seek_data_by_head_leaves(struct silofs_file_ctx *f_ctx,
 		}
 		filc_advance_to_next(f_ctx);
 	}
-	return -ENOENT;
+	return -SILOFS_ENOENT;
 }
 
 static int filc_seek_hole_by_head_leaves(struct silofs_file_ctx *f_ctx,
@@ -1587,7 +1587,7 @@ static int filc_seek_hole_by_head_leaves(struct silofs_file_ctx *f_ctx,
 		}
 		filc_advance_to_next(f_ctx);
 	}
-	return -ENOENT;
+	return -SILOFS_ENOENT;
 }
 
 static int filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
@@ -1693,14 +1693,14 @@ static int filc_stage_by_tree_map(const struct silofs_file_ctx *f_ctx,
 	int err;
 
 	if (!filc_has_tree_root(f_ctx)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = filc_stage_tree_root(f_ctx, &fni);
 	if (err) {
 		return err;
 	}
 	if (!fni_isinrange(fni, f_ctx->off)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	height = fni_height(fni);
 	while (height--) {
@@ -1753,10 +1753,7 @@ filc_read_from_leaf(struct silofs_file_ctx *f_ctx,
 		}
 	} else {
 		err = fpr_stage_fileaf_at(fpr, &fli);
-		/*
-		 * TODO-0042: Why ENOENT here? try use internal errors
-		 */
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			return err;
 		}
 		err = filc_read_leaf_by_copy(f_ctx, fli, out_len);
@@ -1809,7 +1806,7 @@ static int filc_read_by_tree_map(struct silofs_file_ctx *f_ctx)
 	while (filc_has_more_io(f_ctx)) {
 		parent_fni = NULL;
 		err = filc_stage_by_tree_map(f_ctx, &parent_fni);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			return err;
 		}
 		err = filc_read_from_tree_leaves(f_ctx, parent_fni);
@@ -1883,10 +1880,10 @@ static int read_iter_actor(struct silofs_rwiter_ctx *rwi,
 	int err;
 
 	if ((iov->iov_fd > 0) && (iov->iov_off < 0)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((rdi->dat_len + iov->iov_len) > rdi->dat_max) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = silofs_iovec_copy_into(iov, rdi->dat + rdi->dat_len);
 	if (err) {
@@ -2609,10 +2606,10 @@ static int write_iter_actor(struct silofs_rwiter_ctx *rwi,
 	int err;
 
 	if ((iov->iov_fd > 0) && (iov->iov_off < 0)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if ((wri->dat_len + iov->iov_len) > wri->dat_max) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = silofs_iovec_copy_from(iov, wri->dat + wri->dat_len);
 	if (err) {
@@ -3018,7 +3015,7 @@ static int filc_discard_by_tree_map(struct silofs_file_ctx *f_ctx)
 	}
 	while (filc_has_more_io(f_ctx)) {
 		err = filc_seek_by_tree_map(f_ctx, &fpr);
-		if (err == -ENOENT) {
+		if (err == -SILOFS_ENOENT) {
 			break;
 		}
 		if (err) {
@@ -3190,7 +3187,7 @@ static int filc_lseek_data_leaf(struct silofs_file_ctx *f_ctx,
 	int err;
 
 	err = filc_seek_data_by_head_leaves(f_ctx, fpr);
-	if (!err || (err != -ENOENT)) {
+	if (!err || (err != -SILOFS_ENOENT)) {
 		return err;
 	}
 	err = filc_seek_by_tree_map(f_ctx, fpr);
@@ -3202,20 +3199,21 @@ static int filc_lseek_data_leaf(struct silofs_file_ctx *f_ctx,
 
 static int filc_lseek_data(struct silofs_file_ctx *f_ctx)
 {
-	const loff_t isz = ii_size(f_ctx->ii);
-	struct silofs_fpos_ref fm = {
-		.fni = NULL,
-	};
+	struct silofs_fpos_ref fpr = { .fni = NULL };
+	loff_t isz;
 	int err;
 
-	err = filc_lseek_data_leaf(f_ctx, &fm);
-	if (err == 0) {
-		f_ctx->off = off_clamp(fm.file_pos, f_ctx->off, isz);
-	} else if (err == -ENOENT) {
+	isz = ii_size(f_ctx->ii);
+	err = filc_lseek_data_leaf(f_ctx, &fpr);
+	if (err == -SILOFS_ENOENT) {
 		f_ctx->off = isz;
-		err = -ENXIO;
+		return -SILOFS_ENXIO;
 	}
-	return err;
+	if (err) {
+		return err;
+	}
+	f_ctx->off = off_clamp(fpr.file_pos, f_ctx->off, isz);
+	return 0;
 }
 
 static int filc_lseek_hole_noleaf(struct silofs_file_ctx *f_ctx,
@@ -3224,7 +3222,7 @@ static int filc_lseek_hole_noleaf(struct silofs_file_ctx *f_ctx,
 	int err;
 
 	err = filc_seek_hole_by_head_leaves(f_ctx, fpr);
-	if (!err || (err != -ENOENT)) {
+	if (!err || (err != -SILOFS_ENOENT)) {
 		return err;
 	}
 	err = filc_seek_by_tree_map(f_ctx, fpr);
@@ -3243,7 +3241,7 @@ static int filc_lseek_hole(struct silofs_file_ctx *f_ctx)
 	err = filc_lseek_hole_noleaf(f_ctx, &fpr);
 	if (err == 0) {
 		f_ctx->off = off_clamp(fpr.file_pos, f_ctx->off, isz);
-	} else if (err == -ENOENT) {
+	} else if (err == -SILOFS_ENOENT) {
 		f_ctx->off = isz;
 		err = 0;
 	}
@@ -3253,7 +3251,7 @@ static int filc_lseek_hole(struct silofs_file_ctx *f_ctx)
 static int filc_lseek_notsupp(struct silofs_file_ctx *f_ctx)
 {
 	f_ctx->off = f_ctx->end;
-	return -EOPNOTSUPP;
+	return -SILOFS_EOPNOTSUPP;
 }
 
 static int filc_lseek(struct silofs_file_ctx *f_ctx)
@@ -3316,13 +3314,13 @@ static int filc_check_fl_mode(const struct silofs_file_ctx *f_ctx)
 	/* punch hole and zero range are mutually exclusive */
 	mask = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE;
 	if ((mode & mask) == mask) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	/* currently supported modes */
 	mask = FALLOC_FL_KEEP_SIZE |
 	       FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE;
 	if (mode & ~mask) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	return 0;
 }
@@ -3472,7 +3470,7 @@ static int filc_fallocate_op(struct silofs_file_ctx *f_ctx)
 	} else if (fl_mode_zero_range(fl_mode)) {
 		err = filc_fallocate_zero_range(f_ctx);
 	} else {
-		err = -EOPNOTSUPP;
+		err = -SILOFS_EOPNOTSUPP;
 	}
 	return err;
 }
@@ -3593,7 +3591,7 @@ static int filc_fiemap_by_tree_map(struct silofs_file_ctx *f_ctx)
 
 	while (filc_has_more_io(f_ctx)) {
 		err = filc_seek_by_tree_map(f_ctx, &fpr);
-		if (err == -ENOENT) {
+		if (err == -SILOFS_ENOENT) {
 			break;
 		}
 		if (err) {
@@ -3650,10 +3648,10 @@ static int filc_check_fm_flags(const struct silofs_file_ctx *f_ctx)
 	        FIEMAP_FLAG_SYNC | FIEMAP_FLAG_XATTR | FIEMAP_FLAG_CACHE;
 
 	if (f_ctx->fm_flags & ~fm_allowed) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	if (f_ctx->fm_flags & fm_allowed) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	return 0;
 }
@@ -3735,7 +3733,7 @@ filc_resolve_fpos_by_head_leaves(struct silofs_file_ctx *f_ctx,
 		filc_resolve_head2_leaf(f_ctx, out_fpr);
 	} else {
 		fpr_none(out_fpr, f_ctx, NULL, f_ctx->off);
-		err = -ENOENT;
+		err = -SILOFS_ENOENT;
 	}
 	return err;
 }
@@ -3753,7 +3751,7 @@ filc_resolve_fpos_recursive_at(struct silofs_file_ctx *f_ctx,
 	fpr_none(out_fpr, f_ctx, parent_fni, f_ctx->off);
 
 	if (vaddr_isnull(&vaddr)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = filc_stage_finode(f_ctx, &vaddr, &fni);
 	if (err) {
@@ -3774,7 +3772,7 @@ filc_do_resolve_fpos_recursive(struct silofs_file_ctx *f_ctx,
 	size_t slot;
 
 	if (!fni_isinrange(parent_fni, f_ctx->off)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	slot = fni_child_slot_of(parent_fni, f_ctx->off);
 	if (!fni_isbottom(parent_fni)) {
@@ -3805,7 +3803,7 @@ static int filc_resolve_fpos_by_tree_map(struct silofs_file_ctx *f_ctx,
 	int err;
 
 	if (!filc_has_tree_root(f_ctx)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT;
 	}
 	err = filc_stage_tree_root(f_ctx, &root_fni);
 	if (err) {
@@ -3824,7 +3822,7 @@ static int filc_resolve_fpos(struct silofs_file_ctx *f_ctx,
 	int err;
 
 	err = filc_resolve_fpos_by_head_leaves(f_ctx, out_fpr);
-	if (err == -ENOENT) {
+	if (err == -SILOFS_ENOENT) {
 		err = filc_resolve_fpos_by_tree_map(f_ctx, out_fpr);
 	}
 	return err;
@@ -4138,11 +4136,11 @@ static int filc_copy_range_iter(struct silofs_file_ctx *f_ctx_src,
 
 	while (filc_has_more_io(f_ctx_src) && filc_has_more_io(f_ctx_dst)) {
 		err = filc_resolve_fpos(f_ctx_src, &fpr_src);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			return err;
 		}
 		err = filc_resolve_fpos(f_ctx_dst, &fpr_dst);
-		if (err && (err != -ENOENT)) {
+		if (err && (err != -SILOFS_ENOENT)) {
 			return err;
 		}
 		len = fpr_copy_range_length(&fpr_src, &fpr_dst);
@@ -4181,7 +4179,7 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
 	/* don't allow overlapped copying within the same file. */
 	if ((f_ctx_src->ii == f_ctx_dst->ii) &&
 	    ((off_dst + len) > off_src) && (off_dst < (off_src + len))) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }

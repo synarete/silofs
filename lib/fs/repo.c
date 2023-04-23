@@ -175,7 +175,6 @@ static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 
 	err = silofs_sys_pwriten(fd, buf, cnt, off);
 	if (err) {
-		silofs_assert_ne(err, -EBADF);
 		log_warn("pwriten error: fd=%d cnt=%lu off=%ld err=%d",
 		         fd, cnt, off, err);
 	}
@@ -188,7 +187,6 @@ static int do_preadn(int fd, void *buf, size_t cnt, loff_t off)
 
 	err = silofs_sys_preadn(fd, buf, cnt, off);
 	if (err) {
-		silofs_assert_ne(err, -EBADF);
 		log_warn("preadn error: fd=%d cnt=%lu off=%ld err=%d",
 		         fd, cnt, off, err);
 	}
@@ -232,8 +230,6 @@ static int do_fstat(int fd, struct stat *st)
 
 	err = silofs_sys_fstat(fd, st);
 	if (err && (err != -ENOENT)) {
-		silofs_assert_gt(fd, 0);
-		silofs_assert_ne(err, -EBADF);
 		log_warn("fstat error: fd=%d err=%d", fd, err);
 	}
 	return err;
@@ -381,13 +377,13 @@ static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
 	silofs_memzero(out_nb, sizeof(*out_nb));
 	len = index_to_name(idx, nbuf, nmax);
 	if (len > (nmax / 2)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	nbuf[len++] = '/';
 	nlim = nmax - len - 1;
 	nlen = silofs_hash256_to_name(hash, nbuf + len, nlim);
 	if (nlen >= nlim) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	len += nlen;
 	nbuf[len] = '\0';
@@ -497,7 +493,7 @@ static int blobf_check_range(const struct silofs_blobf *blobf,
 	const loff_t cap = blobf_capacity(blobf);
 
 	if (off < 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (end > (cap + SILOFS_LBK_SIZE)) {
 		return -SILOFS_EBLOB;
@@ -643,10 +639,10 @@ static int blobf_store_by(struct silofs_blobf *blobf,
 	int err;
 
 	if (unlikely(blobf->b_fd != siov->iov_fd)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (unlikely(len != siov->iov_len)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = blobf_require_size_ge(blobf, siov->iov_off, len);
 	if (err) {
@@ -666,7 +662,7 @@ static int blobf_sync_by(const struct silofs_blobf *blobf,
 	int err;
 
 	if (unlikely(blobf->b_fd != siov->iov_fd)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	flags = SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE |
 	        SYNC_FILE_RANGE_WAIT_AFTER;
@@ -767,7 +763,7 @@ static int blobf_load_bb(const struct silofs_blobf *blobf,
 		return err;
 	}
 	if (!silofs_bytebuf_has_free(bb, !siov.iov_len)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	err = do_fstat(siov.iov_fd, &st);
 	if (err) {
@@ -1003,7 +999,7 @@ static int repo_lookup_cached_blobf(struct silofs_repo *repo,
                                     struct silofs_blobf **out_blobf)
 {
 	*out_blobf = silofs_cache_lookup_blob(repo_cache(repo), blobid);
-	return (*out_blobf == NULL) ? -ENOENT : 0;
+	return (*out_blobf == NULL) ? -SILOFS_ENOENT : 0;
 }
 
 static int repo_spawn_cached_blobf(struct silofs_repo *repo,
@@ -1011,7 +1007,7 @@ static int repo_spawn_cached_blobf(struct silofs_repo *repo,
                                    struct silofs_blobf **out_blobf)
 {
 	*out_blobf = silofs_cache_spawn_blob(repo_cache(repo), blobid);
-	return (*out_blobf == NULL) ? -ENOMEM : 0;
+	return (*out_blobf == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
 static void repo_forget_cached_blobf(struct silofs_repo *repo,
@@ -1052,7 +1048,7 @@ static int repo_objs_format_sub(const struct silofs_repo *repo, size_t idx)
 	if (!err) {
 		if (!S_ISDIR(st.st_mode)) {
 			log_err("exists but not dir: %s", nb.name);
-			return -ENOTDIR;
+			return -SILOFS_ENOTDIR;
 		}
 		err = do_faccessat(dfd, nb.name, R_OK | X_OK, 0);
 		if (err) {
@@ -1127,7 +1123,7 @@ static int repo_objs_require_noblob(const struct silofs_repo *repo,
 	err = do_fstatat(dfd, nb->name, &st, 0);
 	if (err == 0) {
 		log_err("blob already exists: name=%s", nb->name);
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	if (err != -ENOENT) {
 		log_err("blob stat error: name=%s err=%d", nb->name, err);
@@ -1173,10 +1169,8 @@ static int repo_objs_open_blob_of(const struct silofs_repo *repo,
 		 * TODO-0032: Consider using SILOFS_EFSCORRUPTED
 		 *
 		 * When higher layer wants to open a blob, it should exist.
-		 * Do not return -ENOENT as this may be interpreted as no-error
-		 * by caller.
 		 */
-		return (err == -ENOENT) ? -EIO : err;
+		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
 	}
 	blobf_bindto(blobf, fd, rw);
 	err = blobf_inspect_size(blobf);
@@ -1253,13 +1247,13 @@ static int repo_objs_stat_blob(const struct silofs_repo *repo,
 	dfd = repo_blobs_dfd(repo);
 	err = do_fstatat(dfd, nb.name, out_st, 0);
 	if (err) {
-		return err;
+		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
 	}
 	len = blobid_size(blobid);
 	if (out_st->st_size > (loff_t)(len + SILOFS_LBK_SIZE)) {
 		log_warn("blob-size mismatch: %s len=%lu st_size=%ld",
 		         nb.name, len, out_st->st_size);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	return 0;
 }
@@ -1298,7 +1292,7 @@ out_err:
 
 static int repo_check_open(const struct silofs_repo *repo)
 {
-	return likely(repo->re_root_dfd > 0) ? 0 : -EBADF;
+	return likely(repo->re_root_dfd > 0) ? 0 : -SILOFS_EBADF;
 }
 
 static int repo_check_writable(const struct silofs_repo *repo)
@@ -1308,7 +1302,7 @@ static int repo_check_writable(const struct silofs_repo *repo)
 	if (repo->re.flags & SILOFS_REPOF_RDONLY) {
 		bootpath = &repo->re.bootpath;
 		log_dbg("read-only repo: %s", bootpath->repodir.str);
-		return -EPERM;
+		return -SILOFS_EPERM;
 	}
 	return 0;
 }
@@ -1322,6 +1316,22 @@ static int repo_check_open_rw(const struct silofs_repo *repo)
 		return err;
 	}
 	err = repo_check_writable(repo);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int repo_stat_blob(struct silofs_repo *repo,
+                          const struct silofs_blobid *blobid, struct stat *st)
+{
+	int err;
+
+	err = repo_check_open(repo);
+	if (err) {
+		return err;
+	}
+	err = repo_objs_stat_blob(repo, blobid, st);
 	if (err) {
 		return err;
 	}
@@ -1488,7 +1498,7 @@ static int repo_create_skel_subdir(const struct silofs_repo *repo,
 	}
 	if ((st.st_mode & S_IRWXU) != S_IRWXU) {
 		log_warn("bad access: %s mode=0%o", name, st.st_mode);
-		return -EACCES;
+		return -SILOFS_EACCES;
 	}
 	return 0;
 }
@@ -1553,7 +1563,7 @@ static int repo_require_skel_subdir(const struct silofs_repo *repo,
 	}
 	if (!S_ISDIR(st.st_mode)) {
 		log_warn("not a directory: %s", name);
-		return -ENOTDIR;
+		return -SILOFS_ENOTDIR;
 	}
 	return 0;
 }
@@ -1571,7 +1581,7 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
 	}
 	if (!S_ISREG(st.st_mode)) {
 		log_warn("not a regular file: %s", name);
-		return S_ISDIR(st.st_mode) ? -EISDIR : -EINVAL;
+		return S_ISDIR(st.st_mode) ? -SILOFS_EISDIR : -SILOFS_EINVAL;
 	}
 	if (st.st_size < min_size) {
 		log_warn("illegal size: %s %ld", name, st.st_size);
@@ -1611,7 +1621,7 @@ static int repo_open_rootdir(struct silofs_repo *repo)
 	int err;
 
 	if (repo->re_root_dfd > 0) {
-		return -EALREADY;
+		return -SILOFS_EALREADY;
 	}
 	err = do_opendir(bootpath->repodir.str, &repo->re_root_dfd);
 	if (err) {
@@ -1824,7 +1834,7 @@ static int repo_lookup_cached_ubki(struct silofs_repo *repo,
                                    struct silofs_ubk_info **out_ubki)
 {
 	*out_ubki = silofs_cache_lookup_ubk(repo_cache(repo), bkaddr);
-	return (*out_ubki == NULL) ? -ENOENT : 0;
+	return (*out_ubki == NULL) ? -SILOFS_ENOENT : 0;
 }
 
 static void repo_forget_cached_ubki(struct silofs_repo *repo,
@@ -1838,7 +1848,7 @@ static int repo_spawn_cached_ubki(struct silofs_repo *repo,
                                   struct silofs_ubk_info **out_ubki)
 {
 	*out_ubki = silofs_cache_spawn_ubk(repo_cache(repo), bkaddr);
-	return (*out_ubki == NULL) ? -ENOMEM : 0;
+	return (*out_ubki == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
 static int repo_spawn_attach_ubki(struct silofs_repo *repo,
@@ -1868,7 +1878,7 @@ static int repo_spawn_ubk_at(struct silofs_repo *repo, bool rw,
 
 	err = repo_lookup_cached_ubki(repo, bkaddr, out_ubki);
 	if (!err) {
-		return -EEXIST;
+		return -SILOFS_EEXIST;
 	}
 	err = repo_require_blob(repo, rw, &bkaddr->blobid, &blobf);
 	if (err) {
@@ -1961,7 +1971,7 @@ static int repo_require_ubk(struct silofs_repo *repo, bool rw,
 	err = repo_lookup_blob(repo, &bkaddr->blobid);
 	if (!err) {
 		err = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
-	} else if (err == -ENOENT) {
+	} else if (err == -SILOFS_ENOENT) {
 		err = repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
 	}
 	return err;
@@ -2124,10 +2134,10 @@ static int repo_stat_bootsec1k(const struct silofs_repo *repo,
 	}
 	mode = out_st->st_mode;
 	if (S_ISDIR(mode)) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (!S_ISREG(mode)) {
-		return -ENOENT;
+		return -SILOFS_ENOENT   ;
 	}
 	return 0;
 }
@@ -2211,6 +2221,17 @@ int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_repo_stat_blob(struct silofs_repo *repo,
+                          const struct silofs_blobid *blobid,
+                          struct stat *out_st)
+{
+	int ret;
+
+	repo_pre_op(repo);
+	ret = repo_stat_blob(repo, blobid, out_st);
+	return ret;
+}
 
 int silofs_repo_lookup_blob(struct silofs_repo *repo,
                             const struct silofs_blobid *blobid)

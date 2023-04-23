@@ -67,7 +67,7 @@ static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
 	rem = len - str->len;
 	while (rem > 0) {
 		if (sv_dsc->nparts == ARRAY_SIZE(sv_dsc->parts)) {
-			return -ENAMETOOLONG;
+			return -SILOFS_ENAMETOOLONG;
 		}
 		str = &sv_dsc->parts[sv_dsc->nparts++];
 		str->len = part_size(rem);
@@ -182,7 +182,7 @@ static int lnk_get_value_part(const struct silofs_inode_info *lnk_ii,
                               size_t slot, struct silofs_vaddr *out_vaddr)
 {
 	iln_tail_part(iln_of(lnk_ii), slot, out_vaddr);
-	return !vaddr_isnull(out_vaddr) ? 0 : -ENOENT;
+	return !vaddr_isnull(out_vaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,
@@ -220,10 +220,10 @@ static int syi_recheck_symval(struct silofs_symval_info *syi)
 static int slc_check_symlnk(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	if (ii_isdir(sl_ctx->lnk_ii)) {
-		return -EISDIR;
+		return -SILOFS_EISDIR;
 	}
 	if (!ii_islnk(sl_ctx->lnk_ii)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -524,7 +524,7 @@ static int slc_drop_symval(const struct silofs_symlnk_ctx *sl_ctx)
 
 	for (size_t i = 0; i < SILOFS_SYMLNK_NPARTS; ++i) {
 		err = lnk_get_value_part(sl_ctx->lnk_ii, i, &vaddr);
-		if (err == -ENOENT) {
+		if (err == -SILOFS_ENOENT) {
 			break;
 		}
 		err = slc_remove_symval_at(sl_ctx, &vaddr);

@@ -91,7 +91,7 @@ static int check_itype(const struct silofs_task *task, mode_t mode)
 	                   S_IFSOCK | S_IFIFO | S_IFCHR | S_IFBLK;
 
 	silofs_unused(task);
-	return (((mode & S_IFMT) | sup) == sup) ? 0 : -EOPNOTSUPP;
+	return (((mode & S_IFMT) | sup) == sup) ? 0 : -SILOFS_EOPNOTSUPP;
 }
 
 static int claim_inode(struct silofs_task *task,

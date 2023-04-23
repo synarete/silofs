@@ -46,19 +46,19 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 
 	silofs_substr_init_rd(&ss, nstr->s.str, nstr->s.len);
 	if (!silofs_substr_isprint(&ss)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	n = silofs_substr_count_if(&ss, silofs_chr_isspace);
 	if (n > 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	n = silofs_substr_count_if(&ss, silofs_chr_iscntrl);
 	if (n > 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	n = silofs_substr_find_first_not_of(&ss, allowed);
 	if (n < ss.len) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -66,10 +66,10 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 static int check_name_len(const struct silofs_namestr *nstr)
 {
 	if (nstr->s.len == 0) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (nstr->s.len > SILOFS_NAME_MAX) {
-		return -ENAMETOOLONG;
+		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;
 }
@@ -77,13 +77,13 @@ static int check_name_len(const struct silofs_namestr *nstr)
 static int check_name_dat(const struct silofs_namestr *nstr)
 {
 	if (nstr->s.str == NULL) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (memchr(nstr->s.str, '/', nstr->s.len)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (nstr->s.str[nstr->s.len] != '\0') {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -112,10 +112,10 @@ static int check_fsname(const struct silofs_namestr *nstr)
 		return err;
 	}
 	if (nstr->s.str[0] == '.') {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	if (nstr->s.len > (SILOFS_NAME_MAX / 2)) {
-		return -ENAMETOOLONG;
+		return -SILOFS_ENAMETOOLONG;
 	}
 	err = check_ascii_fs_name(nstr);
 	if (err) {
@@ -379,7 +379,7 @@ static int bsec1k_check(const struct silofs_bootsec1k *bsc)
 	/* currently, requires default values */
 	bsec1k_cipher_args(bsc, &cip_args);
 	if (!cip_args_isequal(&cip_args, &s_default_cip_args)) {
-		return -EINVAL;
+		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
@@ -564,7 +564,7 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath,
 		ret = silofs_make_namestr(&bpath->name, name);
 	} else {
 		silofs_memzero(bpath, sizeof(*bpath));
-		ret = -EINVAL;
+		ret = -SILOFS_EINVAL;
 	}
 	return ret;
 }
@@ -657,19 +657,19 @@ static int check_sysconf(void)
 	errno = 0;
 	val = silofs_sc_phys_pages();
 	if (val <= 0) {
-		return errno_or_errnum(ENOMEM);
+		return errno_or_errnum(SILOFS_ENOMEM);
 	}
 	val = silofs_sc_avphys_pages();
 	if (val <= 0) {
-		return errno_or_errnum(ENOMEM);
+		return errno_or_errnum(SILOFS_ENOMEM);
 	}
 	val = silofs_sc_l1_dcache_linesize();
 	if ((val < cl_size_min) || (val > cl_size_max)) {
-		return errno_or_errnum(EOPNOTSUPP);
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
 	}
 	val = silofs_sc_page_size();
 	if ((val < page_size_min) || (val % page_size_min)) {
-		return errno_or_errnum(EOPNOTSUPP);
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
 	}
 	for (long shift = page_shift_min; shift <= page_shift_max; ++shift) {
 		if (val == (1L << shift)) {
@@ -678,11 +678,11 @@ static int check_sysconf(void)
 		}
 	}
 	if (page_shift == 0) {
-		return -EOPNOTSUPP;
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
 	}
 	val = silofs_sc_nproc_onln();
 	if (val <= 0) {
-		return errno_or_errnum(ENOMEDIUM);
+		return errno_or_errnum(SILOFS_ENOMEDIUM);
 	}
 	return 0;
 }
@@ -694,14 +694,14 @@ static int check_system_page_size(void)
 
 	page_size = silofs_sc_page_size();
 	if (page_size > SILOFS_LBK_SIZE) {
-		return -EOPNOTSUPP;
+		return -SILOFS_EOPNOTSUPP;
 	}
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(page_shift); ++i) {
 		if (page_size == (1L << page_shift[i])) {
 			return 0;
 		}
 	}
-	return -EOPNOTSUPP;
+	return -SILOFS_EOPNOTSUPP;
 }
 
 static int check_proc_rlimits(void)
@@ -714,14 +714,14 @@ static int check_proc_rlimits(void)
 		return err;
 	}
 	if (rlim.rlim_cur < SILOFS_MEGA) {
-		return -ENOMEM;
+		return -SILOFS_ENOMEM;
 	}
 	err = silofs_sys_getrlimit(RLIMIT_NOFILE, &rlim);
 	if (err) {
 		return err;
 	}
 	if (rlim.rlim_cur < 64) {
-		return -EMFILE;
+		return -SILOFS_EMFILE;
 	}
 	return 0;
 }

@@ -36,7 +36,7 @@ struct silofs_submit_ref {
 };
 
 /* submission queue entry */
-struct silofs_submitq_entry {
+struct silofs_submitq_ent {
 	struct silofs_list_head     qlh;
 	struct silofs_alloc        *alloc;
 	const struct silofs_uber   *uber;
@@ -48,6 +48,8 @@ struct silofs_submitq_entry {
 	loff_t          off;
 	size_t          len;
 	size_t          cnt;
+	uint32_t        tx_count;
+	uint32_t        tx_index;
 	int             hold_refs;
 	volatile int    status;
 };
@@ -63,16 +65,19 @@ struct silofs_submitq {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
+struct silofs_submitq_ent *
+silofs_sqe_from_qlh(struct silofs_list_head *qlh);
+
+bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_lnode_info *lni);
 
-int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe);
+int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe);
 
-void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,
+void silofs_sqe_bind_blobf(struct silofs_submitq_ent *sqe,
                            struct silofs_blobf *blobf);
 
-void silofs_sqe_increfs(struct silofs_submitq_entry *sqe);
+void silofs_sqe_increfs(struct silofs_submitq_ent *sqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -89,7 +94,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt);
 
 
 void silofs_task_update_by(struct silofs_task *task,
-                           struct silofs_submitq_entry *sqe);
+                           struct silofs_submitq_ent *sqe);
 
 int silofs_task_submit(struct silofs_task *task, bool all);
 
@@ -103,13 +108,13 @@ int silofs_submitq_init(struct silofs_submitq *smq,
 void silofs_submitq_fini(struct silofs_submitq *smq);
 
 void silofs_submitq_enqueue(struct silofs_submitq *smq,
-                            struct silofs_submitq_entry *sqe);
+                            struct silofs_submitq_ent *sqe);
 
 int silofs_submitq_new_sqe(struct silofs_submitq *smq,
-                           struct silofs_submitq_entry **out_sqe);
+                           struct silofs_submitq_ent **out_sqe);
 
 void silofs_submitq_del_sqe(struct silofs_submitq *smq,
-                            struct silofs_submitq_entry *sqe);
+                            struct silofs_submitq_ent *sqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

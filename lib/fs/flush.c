@@ -28,6 +28,7 @@
 
 struct silofs_submit_ctx {
 	struct silofs_dsets             dsets;
+	struct silofs_listq             txq;
 	struct silofs_task             *task;
 	struct silofs_inode_info       *ii;
 	struct silofs_uber             *uber;
@@ -42,6 +43,12 @@ struct silofs_submit_ctx {
 static void dset_moveq(struct silofs_dset *dset);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+
+static struct silofs_submitq_ent *sqe_from_qlh(struct silofs_list_head *qlh)
+{
+	return silofs_sqe_from_qlh(qlh);
+}
 
 static void lni_seal_meta(struct silofs_lnode_info *lni)
 {
@@ -140,7 +147,7 @@ static void smc_relax_cache_now(const struct silofs_submit_ctx *sm_ctx)
 }
 
 static int smc_do_make_sqe(struct silofs_submit_ctx *sm_ctx,
-                           struct silofs_submitq_entry **out_sqe)
+                           struct silofs_submitq_ent **out_sqe)
 {
 	int retry = 4;
 	int err;
@@ -154,7 +161,7 @@ static int smc_do_make_sqe(struct silofs_submit_ctx *sm_ctx,
 }
 
 static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
-                        struct silofs_submitq_entry **out_sqe)
+                        struct silofs_submitq_ent **out_sqe)
 {
 	int err;
 
@@ -167,13 +174,13 @@ static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
 }
 
 static void smc_del_sqe(struct silofs_submit_ctx *sm_ctx,
-                        struct silofs_submitq_entry *sqe)
+                        struct silofs_submitq_ent *sqe)
 {
 	silofs_submitq_del_sqe(sm_ctx->submitq, sqe);
 }
 
 static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
-                             struct silofs_submitq_entry *sqe)
+                             struct silofs_submitq_ent *sqe)
 {
 	int retry = 4;
 	int err;
@@ -188,7 +195,7 @@ static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
 
 static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
                                  struct silofs_dset *dset,
-                                 struct silofs_submitq_entry *sqe)
+                                 struct silofs_submitq_ent *sqe)
 {
 	struct silofs_oaddr oaddr;
 	struct silofs_lnode_info *lni = dset->ds_preq;
@@ -214,7 +221,7 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
 
 static int smc_populate_sqe_by(struct silofs_submit_ctx *sm_ctx,
                                struct silofs_dset *dset,
-                               struct silofs_submitq_entry *sqe)
+                               struct silofs_submitq_ent *sqe)
 {
 	int err;
 
@@ -580,7 +587,7 @@ static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,
 }
 
 static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
-                        struct silofs_submitq_entry *sqe)
+                        struct silofs_submitq_ent *sqe)
 {
 	const struct silofs_blobid *blobid = &sqe->blobid;
 	struct silofs_blobf *blobf = NULL;
@@ -594,16 +601,52 @@ static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
 	return 0;
 }
 
-static void smc_enqueue_sqe(const struct silofs_submit_ctx *sm_ctx,
-                            struct silofs_submitq_entry *sqe)
+static void smc_submit_sqe(const struct silofs_submit_ctx *sm_ctx,
+                           struct silofs_submitq_ent *sqe)
 {
 	silofs_submitq_enqueue(sm_ctx->submitq, sqe);
 	silofs_task_update_by(sm_ctx->task, sqe);
 }
 
+static void smc_submit_txq(struct silofs_submit_ctx *sm_ctx)
+{
+	struct silofs_listq *txq = &sm_ctx->txq;
+	struct silofs_submitq_ent *sqe;
+	struct silofs_list_head *qlh;
+	const uint32_t tx_count = (uint32_t)(txq->sz);
+	uint32_t tx_index = 0;
+
+	qlh = listq_pop_front(txq);
+	while (qlh != NULL) {
+		sqe = sqe_from_qlh(qlh);
+		sqe->tx_count = tx_count;
+		sqe->tx_index = ++tx_index;
+		smc_submit_sqe(sm_ctx, sqe);
+		qlh = listq_pop_front(txq);
+	}
+}
+
+static void smc_discard_txq(struct silofs_submit_ctx *sm_ctx)
+{
+	struct silofs_listq *txq = &sm_ctx->txq;
+	struct silofs_list_head *qlh;
+
+	qlh = listq_pop_front(txq);
+	while (qlh != NULL) {
+		smc_del_sqe(sm_ctx, sqe_from_qlh(qlh));
+		qlh = listq_pop_front(txq);
+	}
+}
+
+static void smc_enqueue_in_txq(struct silofs_submit_ctx *sm_ctx,
+                               struct silofs_submitq_ent *sqe)
+{
+	listq_push_back(&sm_ctx->txq, &sqe->qlh);
+}
+
 static int smc_enqueue_dset_into(struct silofs_submit_ctx *sm_ctx,
                                  struct silofs_dset *dset,
-                                 struct silofs_submitq_entry *sqe)
+                                 struct silofs_submitq_ent *sqe)
 {
 	int err;
 
@@ -615,7 +658,6 @@ static int smc_enqueue_dset_into(struct silofs_submit_ctx *sm_ctx,
 	if (err) {
 		return err;
 	}
-	smc_enqueue_sqe(sm_ctx, sqe);
 	return 0;
 }
 
@@ -623,7 +665,7 @@ static int smc_enqueue_dset_of(struct silofs_submit_ctx *sm_ctx,
                                enum silofs_stype stype)
 {
 	struct silofs_dset *dset;
-	struct silofs_submitq_entry *sqe;
+	struct silofs_submitq_ent *sqe;
 	int err;
 
 	dset = smc_dset_of(sm_ctx, stype);
@@ -638,6 +680,7 @@ static int smc_enqueue_dset_of(struct silofs_submit_ctx *sm_ctx,
 			smc_del_sqe(sm_ctx, sqe);
 			return err;
 		}
+		smc_enqueue_in_txq(sm_ctx, sqe);
 	}
 	return 0;
 }
@@ -654,6 +697,13 @@ static int smc_process_dset_of(struct silofs_submit_ctx *sm_ctx,
 		if (err) {
 			return err;
 		}
+		/*
+		 * TODO-0053: Undirtify nodes only if full-transaction
+		 *
+		 * When failed to complete transaction (e.g., due to ENOMEM)
+		 * should keep dirty nodes in cache until resources are avail
+		 * again.
+		 */
 		smc_undirtify_dset(sm_ctx, stype);
 		smc_cleanup_dset(sm_ctx, stype);
 	}
@@ -690,6 +740,11 @@ static int smc_collect_flush_dirty(struct silofs_submit_ctx *sm_ctx)
 	smc_init_dsets(sm_ctx);
 	smc_fill_dsets(sm_ctx);
 	err = smc_process_dsets(sm_ctx);
+	if (!err) {
+		smc_submit_txq(sm_ctx);
+	} else {
+		smc_discard_txq(sm_ctx);
+	}
 	smc_fini_dsets(sm_ctx);
 	return err;
 }
@@ -782,6 +837,7 @@ static int smc_setup(struct silofs_submit_ctx *sm_ctx,
 	struct silofs_uber *uber = task->t_uber;
 	struct silofs_repo *repo = uber->ub.repo;
 
+	listq_init(&sm_ctx->txq);
 	sm_ctx->task = task;
 	sm_ctx->ii = ii;
 	sm_ctx->uber = uber;

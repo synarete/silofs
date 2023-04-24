@@ -22,13 +22,13 @@
 #define SILOFS_COMMIT_LEN_MAX   (2 * SILOFS_MEGA)
 #define SILOFS_CID_ALL          (UINT64_MAX)
 
-static int sqe_setup_buf(struct silofs_submitq_entry *sqe)
+static int sqe_setup_buf(struct silofs_submitq_ent *sqe)
 {
 	sqe->buf = silofs_allocate(sqe->alloc, sqe->len);
 	return unlikely(sqe->buf == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
-static void sqe_reset_buf(struct silofs_submitq_entry *sqe)
+static void sqe_reset_buf(struct silofs_submitq_ent *sqe)
 {
 	if (likely(sqe->buf != NULL)) {
 		silofs_deallocate(sqe->alloc, sqe->buf, sqe->len);
@@ -36,7 +36,7 @@ static void sqe_reset_buf(struct silofs_submitq_entry *sqe)
 	}
 }
 
-static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
+static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
                              const struct silofs_oaddr *oaddr,
                              const struct silofs_lnode_info *lni)
 {
@@ -73,7 +73,7 @@ static bool sqe_isappendable(const struct silofs_submitq_entry *sqe,
 	return true;
 }
 
-bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
+bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_lnode_info *lni)
 {
@@ -98,7 +98,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_entry *sqe,
 	return true;
 }
 
-static int sqe_encrypt_into_buf(struct silofs_submitq_entry *sqe)
+static int sqe_encrypt_into_buf(struct silofs_submitq_ent *sqe)
 {
 	const struct silofs_submit_ref *ref = NULL;
 	uint8_t *dst = sqe->buf;
@@ -116,7 +116,7 @@ static int sqe_encrypt_into_buf(struct silofs_submitq_entry *sqe)
 	return 0;
 }
 
-int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
+int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe)
 {
 	int err;
 
@@ -131,7 +131,7 @@ int silofs_sqe_assign_buf(struct silofs_submitq_entry *sqe)
 	return 0;
 }
 
-void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,
+void silofs_sqe_bind_blobf(struct silofs_submitq_ent *sqe,
                            struct silofs_blobf *blobf)
 {
 	if (sqe->blobf != NULL) {
@@ -145,18 +145,18 @@ void silofs_sqe_bind_blobf(struct silofs_submitq_entry *sqe,
 	}
 }
 
-static void sqe_unbind_blobf(struct silofs_submitq_entry *sqe)
+static void sqe_unbind_blobf(struct silofs_submitq_ent *sqe)
 {
 	silofs_sqe_bind_blobf(sqe, NULL);
 }
 
-static int sqe_pwrite_buf(const struct silofs_submitq_entry *sqe)
+static int sqe_pwrite_buf(const struct silofs_submitq_ent *sqe)
 {
 	return silofs_blobf_pwriten(sqe->blobf, sqe->off,
 	                            sqe->buf, sqe->len, true);
 }
 
-void silofs_sqe_increfs(struct silofs_submitq_entry *sqe)
+void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
 {
 	struct silofs_submit_ref *ref;
 
@@ -169,7 +169,7 @@ void silofs_sqe_increfs(struct silofs_submitq_entry *sqe)
 	}
 }
 
-static void sqe_decrefs(struct silofs_submitq_entry *sqe)
+static void sqe_decrefs(struct silofs_submitq_ent *sqe)
 {
 	struct silofs_submit_ref *ref;
 
@@ -182,7 +182,7 @@ static void sqe_decrefs(struct silofs_submitq_entry *sqe)
 	}
 }
 
-static void sqe_init(struct silofs_submitq_entry *sqe,
+static void sqe_init(struct silofs_submitq_ent *sqe,
                      struct silofs_alloc *alloc, uint64_t uniq_id)
 {
 	memset(sqe, 0, sizeof(*sqe));
@@ -200,7 +200,7 @@ static void sqe_init(struct silofs_submitq_entry *sqe,
 	sqe->status = 0;
 }
 
-static void sqe_fini(struct silofs_submitq_entry *sqe)
+static void sqe_fini(struct silofs_submitq_ent *sqe)
 {
 	list_head_fini(&sqe->qlh);
 	sqe_reset_buf(sqe);
@@ -212,10 +212,10 @@ static void sqe_fini(struct silofs_submitq_entry *sqe)
 	sqe->status = -1;
 }
 
-static struct silofs_submitq_entry *
+static struct silofs_submitq_ent *
 sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 {
-	struct silofs_submitq_entry *sqe;
+	struct silofs_submitq_ent *sqe;
 
 	sqe = silofs_allocate(alloc, sizeof(*sqe));
 	if (likely(sqe != NULL)) {
@@ -224,24 +224,24 @@ sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 	return sqe;
 }
 
-static void sqe_del(struct silofs_submitq_entry *sqe,
+static void sqe_del(struct silofs_submitq_ent *sqe,
                     struct silofs_alloc *alloc)
 {
 	sqe_fini(sqe);
 	silofs_deallocate(alloc, sqe, sizeof(*sqe));
 }
 
-static struct silofs_submitq_entry *sqe_from_qlh(struct silofs_list_head *qlh)
+struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)
 {
-	struct silofs_submitq_entry *sqe = NULL;
+	struct silofs_submitq_ent *sqe = NULL;
 
 	if (qlh != NULL) {
-		sqe = container_of(qlh, struct silofs_submitq_entry, qlh);
+		sqe = container_of(qlh, struct silofs_submitq_ent, qlh);
 	}
 	return sqe;
 }
 
-static int sqe_apply(struct silofs_submitq_entry *sqe)
+static int sqe_apply(struct silofs_submitq_ent *sqe)
 {
 	sqe->status = sqe_pwrite_buf(sqe);
 	return sqe->status;
@@ -265,39 +265,39 @@ void silofs_submitq_fini(struct silofs_submitq *smq)
 	smq->smq_apex_id = 0;
 }
 
-static struct silofs_submitq_entry *
+static struct silofs_submitq_ent *
 submitq_front_sqe(struct silofs_submitq *smq)
 {
 	struct silofs_list_head *lh;
 
 	lh = listq_front(&smq->smq_listq);
-	return sqe_from_qlh(lh);
+	return silofs_sqe_from_qlh(lh);
 }
 
 static void submitq_unlink_sqe(struct silofs_submitq *smq,
-                               struct silofs_submitq_entry *sqe)
+                               struct silofs_submitq_ent *sqe)
 {
 	listq_remove(&smq->smq_listq, &sqe->qlh);
 }
 
 static void submitq_push_sqe(struct silofs_submitq *smq,
-                             struct silofs_submitq_entry *sqe)
+                             struct silofs_submitq_ent *sqe)
 {
 	listq_push_back(&smq->smq_listq, &sqe->qlh);
 }
 
 void silofs_submitq_enqueue(struct silofs_submitq *smq,
-                            struct silofs_submitq_entry *sqe)
+                            struct silofs_submitq_ent *sqe)
 {
 	silofs_mutex_lock(&smq->smq_mutex);
 	submitq_push_sqe(smq, sqe);
 	silofs_mutex_unlock(&smq->smq_mutex);
 }
 
-static struct silofs_submitq_entry *
+static struct silofs_submitq_ent *
 submitq_get_sqe(struct silofs_submitq *smq, uint64_t id)
 {
-	struct silofs_submitq_entry *sqe;
+	struct silofs_submitq_ent *sqe;
 
 	sqe = submitq_front_sqe(smq);
 	if (sqe == NULL) {
@@ -310,9 +310,9 @@ submitq_get_sqe(struct silofs_submitq *smq, uint64_t id)
 }
 
 static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
-                             struct silofs_submitq_entry **out_sqe)
+                             struct silofs_submitq_ent **out_sqe)
 {
-	struct silofs_submitq_entry *sqe;
+	struct silofs_submitq_ent *sqe;
 	int ret = 0;
 
 	silofs_mutex_lock(&smq->smq_mutex);
@@ -328,7 +328,7 @@ static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
 
 static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 {
-	struct silofs_submitq_entry *sqe = NULL;
+	struct silofs_submitq_ent *sqe = NULL;
 	int ret = 0;
 
 	while (ret == 0) {
@@ -343,14 +343,14 @@ static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 }
 
 int silofs_submitq_new_sqe(struct silofs_submitq *smq,
-                           struct silofs_submitq_entry **out_sqe)
+                           struct silofs_submitq_ent **out_sqe)
 {
 	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_apex_id++);
 	return likely(*out_sqe != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
 void silofs_submitq_del_sqe(struct silofs_submitq *smq,
-                            struct silofs_submitq_entry *sqe)
+                            struct silofs_submitq_ent *sqe)
 {
 	sqe_decrefs(sqe);
 	sqe_reset_buf(sqe);
@@ -389,7 +389,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 }
 
 void silofs_task_update_by(struct silofs_task *task,
-                           struct silofs_submitq_entry *sqe)
+                           struct silofs_submitq_ent *sqe)
 {
 	if (sqe->uniq_id > task->t_apex_id) {
 		task->t_apex_id = sqe->uniq_id;

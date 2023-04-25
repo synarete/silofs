@@ -2,7 +2,7 @@
 -include $(top_builddir)/sedsub.mk
 
 dist_bin_SCRIPTS = silofs-citests
-noinst_SCRIPTS = pylint.sh
+noinst_SCRIPTS = pycheck.sh
 
 silofs_citestsdir = $(pythondir)/silofs/citests
 silofs_citests_PYTHON = $(NULL)
@@ -24,15 +24,15 @@ silofs_citests_PYTHON += utils.py
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += silofs-citests.in
-EXTRA_DIST += pylint.sh
+EXTRA_DIST += pycheck.sh
 EXTRA_DIST += pylintrc
 
-CLEANFILES = pylint-citests silofs-citests
+CLEANFILES = pycheck-citests silofs-citests
 
 silofs-citests: silofs-citests.in
 	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ; chmod +x "$@" ;
 
-pylint-citests: $(silofs_citests_PYTHON)
-	@echo "  PYLINT   $@"; sh "$(srcdir)/pylint.sh" "$(srcdir)" > "$@" ;
+pycheck-citests: $(silofs_citests_PYTHON)
+	@echo "  PYCHECK  $@"; sh "$(srcdir)/pycheck.sh" "$(srcdir)" > "$@" ;
 
-all-local: pylint-citests
+all-local: pycheck-citests

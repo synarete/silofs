@@ -27,6 +27,7 @@
 
 
 struct silofs_submit_ctx {
+	struct silofs_submit_ref        refs[SILOFS_SUBENT_NREFS_MAX];
 	struct silofs_dsets             dsets;
 	struct silofs_listq             txq;
 	struct silofs_task             *task;
@@ -185,12 +186,29 @@ static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
 	int retry = 4;
 	int err;
 
-	err = silofs_sqe_assign_buf(sqe);
+	err = silofs_sqe_assign_buf(sqe, sm_ctx->refs);
 	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
 		smc_relax_cache_now(sm_ctx);
-		err = silofs_sqe_assign_buf(sqe);
+		err = silofs_sqe_assign_buf(sqe, sm_ctx->refs);
 	}
 	return err;
+}
+
+static bool smc_append_next_ref(struct silofs_submit_ctx *sm_ctx,
+                                struct silofs_submitq_ent *sqe,
+                                const struct silofs_oaddr *oaddr,
+                                struct silofs_lnode_info *lni)
+{
+	struct silofs_submit_ref *ref = &sm_ctx->refs[sqe->cnt];
+	bool ret;
+
+	ret = silofs_sqe_append_ref(sqe, oaddr, lni);
+	if (ret) {
+		oaddr_assign(&ref->oaddr, oaddr);
+		ref->view = lni->view;
+		ref->stype = lni->stype;
+	}
+	return ret;
 }
 
 static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
@@ -210,7 +228,7 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
 		if (err) {
 			return err;
 		}
-		if (!silofs_sqe_append_ref(sqe, &oaddr, lni)) {
+		if (!smc_append_next_ref(sm_ctx, sqe, &oaddr, lni)) {
 			break;
 		}
 		dset_moveq(dset);

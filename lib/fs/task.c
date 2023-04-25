@@ -48,10 +48,10 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == 0) {
 		return true;
 	}
-	if (sqe->cnt == ARRAY_SIZE(sqe->ref)) {
+	if (sqe->cnt == ARRAY_SIZE(sqe->lbki)) {
 		return false;
 	}
-	if (lni->stype != sqe->ref[0].stype) {
+	if (lni->stype != sqe->stype) {
 		return false;
 	}
 	end = off_end(sqe->off, sqe->len);
@@ -77,8 +77,6 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_lnode_info *lni)
 {
-	struct silofs_submit_ref *ref;
-
 	silofs_assert_eq(oaddr->len, lni->view_len);
 
 	if (!sqe_isappendable(sqe, oaddr, lni)) {
@@ -87,25 +85,22 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == 0) {
 		blobid_assign(&sqe->blobid, &oaddr->bka.blobid);
 		sqe->off = oaddr->pos;
+		sqe->stype = lni->stype;
 	}
-	ref = &sqe->ref[sqe->cnt];
-	oaddr_assign(&ref->oaddr, oaddr);
-	ref->lbki = lni->lbki;
-	ref->view = lni->view;
-	ref->stype = lni->stype;
-	sqe->len += oaddr->len;
-	sqe->cnt += 1;
+	sqe->lbki[sqe->cnt++] = lni->lbki;
+	sqe->len += (uint32_t)(oaddr->len);
 	return true;
 }
 
-static int sqe_encrypt_into_buf(struct silofs_submitq_ent *sqe)
+static int sqe_encrypt_into_buf(struct silofs_submitq_ent *sqe,
+                                const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref = NULL;
 	uint8_t *dst = sqe->buf;
 	int err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
-		ref = &sqe->ref[i];
+		ref = &refs_arr[i];
 		err = silofs_encrypt_view(sqe->uber, &ref->oaddr,
 		                          ref->view, dst);
 		if (err) {
@@ -116,7 +111,8 @@ static int sqe_encrypt_into_buf(struct silofs_submitq_ent *sqe)
 	return 0;
 }
 
-int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe)
+int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe,
+                          const struct silofs_submit_ref *refs_arr)
 {
 	int err;
 
@@ -124,7 +120,7 @@ int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe)
 	if (err) {
 		return err;
 	}
-	err = sqe_encrypt_into_buf(sqe);
+	err = sqe_encrypt_into_buf(sqe, refs_arr);
 	if (err) {
 		return err;
 	}
@@ -158,12 +154,9 @@ static int sqe_pwrite_buf(const struct silofs_submitq_ent *sqe)
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
 {
-	struct silofs_submit_ref *ref;
-
 	if (!sqe->hold_refs) {
 		for (size_t i = 0; i < sqe->cnt; ++i) {
-			ref = &sqe->ref[i];
-			silofs_lbki_incref(ref->lbki);
+			silofs_lbki_incref(sqe->lbki[i]);
 		}
 		sqe->hold_refs = 1;
 	}
@@ -171,12 +164,9 @@ void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
 
 static void sqe_decrefs(struct silofs_submitq_ent *sqe)
 {
-	struct silofs_submit_ref *ref;
-
 	if (sqe->hold_refs) {
 		for (size_t i = 0; i < sqe->cnt; ++i) {
-			ref = &sqe->ref[i];
-			silofs_lbki_decref(ref->lbki);
+			silofs_lbki_decref(sqe->lbki[i]);
 		}
 		sqe->hold_refs = 0;
 	}
@@ -216,6 +206,8 @@ static struct silofs_submitq_ent *
 sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 {
 	struct silofs_submitq_ent *sqe;
+
+	STATICASSERT_LE(sizeof(*sqe), 1024);
 
 	sqe = silofs_allocate(alloc, sizeof(*sqe));
 	if (likely(sqe != NULL)) {

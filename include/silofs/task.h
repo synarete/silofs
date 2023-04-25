@@ -17,6 +17,8 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
+#define SILOFS_SUBENT_NREFS_MAX (32)
+
 /* execution-context task per file-system operation */
 struct silofs_task {
 	struct silofs_uber     *t_uber;
@@ -30,28 +32,28 @@ struct silofs_task {
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
 	struct silofs_oaddr         oaddr;
-	struct silofs_lbk_info     *lbki;
 	const union silofs_view    *view;
 	enum silofs_stype           stype;
 };
 
 /* submission queue entry */
 struct silofs_submitq_ent {
-	struct silofs_list_head     qlh;
-	struct silofs_alloc        *alloc;
-	const struct silofs_uber   *uber;
-	struct silofs_blobf        *blobf;
-	struct silofs_submit_ref    ref[32];
-	struct silofs_blobid        blobid;
-	uint64_t        uniq_id;
-	void           *buf;
-	loff_t          off;
-	size_t          len;
-	size_t          cnt;
-	uint32_t        tx_count;
-	uint32_t        tx_index;
-	int             hold_refs;
-	volatile int    status;
+	struct silofs_lbk_info *lbki[SILOFS_SUBENT_NREFS_MAX];
+	struct silofs_list_head qlh;
+	struct silofs_uber     *uber;
+	struct silofs_alloc    *alloc;
+	struct silofs_blobf    *blobf;
+	struct silofs_blobid    blobid;
+	uint64_t                uniq_id;
+	void                   *buf;
+	loff_t                  off;
+	uint32_t                len;
+	uint32_t                cnt;
+	uint32_t                tx_count;
+	uint32_t                tx_index;
+	int                     hold_refs;
+	volatile int            status;
+	enum silofs_stype       stype;
 };
 
 /* submission flush queue */
@@ -72,7 +74,8 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_lnode_info *lni);
 
-int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe);
+int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe,
+                          const struct silofs_submit_ref *refs_arr);
 
 void silofs_sqe_bind_blobf(struct silofs_submitq_ent *sqe,
                            struct silofs_blobf *blobf);

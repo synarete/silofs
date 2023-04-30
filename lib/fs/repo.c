@@ -849,11 +849,8 @@ static int blobf_load_bk_at(struct silofs_blobf *blobf,
 	int err;
 
 	err = blobf_check_bk_of(blobf, bkaddr);
-	/* XXX HACK FIXME */
-	if (err == -SILOFS_ERANGE) {
-		err = blobf_require_bk_of(blobf, bkaddr);
-	}
 	if (err) {
+		silofs_assert_ne(err, -SILOFS_ERANGE);
 		return err;
 	}
 	err = blobf_load_bk(blobf, bkaddr, lbki->lbk);

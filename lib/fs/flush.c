@@ -180,16 +180,16 @@ static void smc_del_sqe(struct silofs_submit_ctx *sm_ctx,
 	silofs_submitq_del_sqe(sm_ctx->submitq, sqe);
 }
 
-static int smc_setup_sqe_buf(struct silofs_submit_ctx *sm_ctx,
-                             struct silofs_submitq_ent *sqe)
+static int smc_setup_sqe_by_refs(struct silofs_submit_ctx *sm_ctx,
+                                 struct silofs_submitq_ent *sqe)
 {
 	int retry = 4;
 	int err;
 
-	err = silofs_sqe_assign_buf(sqe, sm_ctx->refs);
+	err = silofs_sqe_assign_iovs(sqe, sm_ctx->refs);
 	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
 		smc_relax_cache_now(sm_ctx);
-		err = silofs_sqe_assign_buf(sqe, sm_ctx->refs);
+		err = silofs_sqe_assign_iovs(sqe, sm_ctx->refs);
 	}
 	return err;
 }
@@ -246,7 +246,7 @@ static int smc_populate_sqe_by(struct silofs_submit_ctx *sm_ctx,
 	err = smc_populate_sqe_refs(sm_ctx, dset, sqe);
 	if (!err) {
 		silofs_sqe_increfs(sqe);
-		err = smc_setup_sqe_buf(sm_ctx, sqe);
+		err = smc_setup_sqe_by_refs(sm_ctx, sqe);
 	}
 	return err;
 }

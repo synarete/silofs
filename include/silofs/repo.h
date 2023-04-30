@@ -63,6 +63,9 @@ void silofs_blobf_del(struct silofs_blobf *blobf,
 int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
                          const void *buf, size_t len, bool sync);
 
+int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
+                          const struct iovec *iov, size_t cnt, bool sync);
+
 int silofs_blobf_load_bk(struct silofs_blobf *blobf,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_lbk_info *lbki);

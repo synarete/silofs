@@ -22,17 +22,27 @@
 #define SILOFS_COMMIT_LEN_MAX   (2 * SILOFS_MEGA)
 #define SILOFS_CID_ALL          (UINT64_MAX)
 
-static int sqe_setup_buf(struct silofs_submitq_ent *sqe)
+static int sqe_setup_iov_at(struct silofs_submitq_ent *sqe,
+                            size_t idx, size_t len)
 {
-	sqe->buf = silofs_allocate(sqe->alloc, sqe->len);
-	return unlikely(sqe->buf == NULL) ? -SILOFS_ENOMEM : 0;
+	silofs_assert_lt(idx, ARRAY_SIZE(sqe->iov));
+	silofs_assert_null(sqe->iov[idx].iov_base);
+
+	sqe->iov[idx].iov_base = silofs_allocate(sqe->alloc, len);
+	if (sqe->iov[idx].iov_base == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	sqe->iov[idx].iov_len = len;
+	return 0;
 }
 
-static void sqe_reset_buf(struct silofs_submitq_ent *sqe)
+static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 {
-	if (likely(sqe->buf != NULL)) {
-		silofs_deallocate(sqe->alloc, sqe->buf, sqe->len);
-		sqe->buf = NULL;
+	for (size_t idx = 0; idx < sqe->cnt; ++idx) {
+		silofs_deallocate(sqe->alloc, sqe->iov[idx].iov_base,
+		                  sqe->iov[idx].iov_len);
+		sqe->iov[idx].iov_base = NULL;
+		sqe->iov[idx].iov_len = 0;
 	}
 }
 
@@ -92,39 +102,37 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	return true;
 }
 
-static int sqe_encrypt_into_buf(struct silofs_submitq_ent *sqe,
-                                const struct silofs_submit_ref *refs_arr)
+static int sqe_setup_encrypted_iovs(struct silofs_submitq_ent *sqe,
+                                    const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref = NULL;
-	uint8_t *dst = sqe->buf;
 	int err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
-		err = silofs_encrypt_view(sqe->uber, &ref->oaddr,
-		                          ref->view, dst);
+		err = sqe_setup_iov_at(sqe, i, ref->oaddr.len);
 		if (err) {
 			return err;
 		}
-		dst += ref->oaddr.len;
+		err = silofs_encrypt_view(sqe->uber, &ref->oaddr,
+		                          ref->view, sqe->iov[i].iov_base);
+		if (err) {
+			return err;
+		}
 	}
 	return 0;
 }
 
-int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe,
-                          const struct silofs_submit_ref *refs_arr)
+int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
+                           const struct silofs_submit_ref *refs_arr)
 {
 	int err;
 
-	err = sqe_setup_buf(sqe);
+	err = sqe_setup_encrypted_iovs(sqe, refs_arr);
 	if (err) {
-		return err;
+		sqe_reset_iovs(sqe);
 	}
-	err = sqe_encrypt_into_buf(sqe, refs_arr);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return err;
 }
 
 void silofs_sqe_bind_blobf(struct silofs_submitq_ent *sqe,
@@ -146,10 +154,10 @@ static void sqe_unbind_blobf(struct silofs_submitq_ent *sqe)
 	silofs_sqe_bind_blobf(sqe, NULL);
 }
 
-static int sqe_pwrite_buf(const struct silofs_submitq_ent *sqe)
+static int sqe_pwrite_iovs(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_blobf_pwriten(sqe->blobf, sqe->off,
-	                            sqe->buf, sqe->len, true);
+	return silofs_blobf_pwritevn(sqe->blobf, sqe->off,
+	                             sqe->iov, sqe->cnt, true);
 }
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
@@ -185,7 +193,6 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	sqe->off = -1;
 	sqe->len = 0;
 	sqe->cnt = 0;
-	sqe->buf = NULL;
 	sqe->hold_refs = 0;
 	sqe->status = 0;
 }
@@ -193,7 +200,7 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 static void sqe_fini(struct silofs_submitq_ent *sqe)
 {
 	list_head_fini(&sqe->qlh);
-	sqe_reset_buf(sqe);
+	sqe_reset_iovs(sqe);
 	sqe_unbind_blobf(sqe);
 	sqe->off = -1;
 	sqe->len = 0;
@@ -235,7 +242,7 @@ struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)
 
 static int sqe_apply(struct silofs_submitq_ent *sqe)
 {
-	sqe->status = sqe_pwrite_buf(sqe);
+	sqe->status = sqe_pwrite_iovs(sqe);
 	return sqe->status;
 }
 
@@ -345,7 +352,7 @@ void silofs_submitq_del_sqe(struct silofs_submitq *smq,
                             struct silofs_submitq_ent *sqe)
 {
 	sqe_decrefs(sqe);
-	sqe_reset_buf(sqe);
+	sqe_reset_iovs(sqe);
 	sqe_unbind_blobf(sqe);
 	sqe_del(sqe, smq->smq_alloc);
 }

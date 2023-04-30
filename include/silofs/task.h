@@ -38,6 +38,7 @@ struct silofs_submit_ref {
 
 /* submission queue entry */
 struct silofs_submitq_ent {
+	struct iovec            iov[SILOFS_SUBENT_NREFS_MAX];
 	struct silofs_lbk_info *lbki[SILOFS_SUBENT_NREFS_MAX];
 	struct silofs_list_head qlh;
 	struct silofs_uber     *uber;
@@ -45,7 +46,6 @@ struct silofs_submitq_ent {
 	struct silofs_blobf    *blobf;
 	struct silofs_blobid    blobid;
 	uint64_t                uniq_id;
-	void                   *buf;
 	loff_t                  off;
 	uint32_t                len;
 	uint32_t                cnt;
@@ -74,8 +74,8 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_oaddr *oaddr,
                            struct silofs_lnode_info *lni);
 
-int silofs_sqe_assign_buf(struct silofs_submitq_ent *sqe,
-                          const struct silofs_submit_ref *refs_arr);
+int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
+                           const struct silofs_submit_ref *refs_arr);
 
 void silofs_sqe_bind_blobf(struct silofs_submitq_ent *sqe,
                            struct silofs_blobf *blobf);

@@ -181,6 +181,18 @@ static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 	return err;
 }
 
+static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, loff_t off)
+{
+	int err;
+
+	err = silofs_sys_pwritevn(fd, iov, (int)cnt, off);
+	if (err) {
+		log_warn("pwritevn error: fd=%d cnt=%lu off=%ld err=%d",
+		         fd, cnt, off, err);
+	}
+	return err;
+}
+
 static int do_preadn(int fd, void *buf, size_t cnt, loff_t off)
 {
 	int err;
@@ -632,42 +644,15 @@ int silofs_blobf_resolve(struct silofs_blobf *blobf,
 	return ret;
 }
 
-static int blobf_store_by(struct silofs_blobf *blobf,
-                          const struct silofs_iovec *siov,
-                          const void *ptr, size_t len)
+static int blobf_sync_range(const struct silofs_blobf *blobf,
+                            loff_t off, size_t len)
 {
 	int err;
 
-	if (unlikely(blobf->b_fd != siov->iov_fd)) {
-		return -SILOFS_EINVAL;
-	}
-	if (unlikely(len != siov->iov_len)) {
-		return -SILOFS_EINVAL;
-	}
-	err = blobf_require_size_ge(blobf, siov->iov_off, len);
-	if (err) {
-		return err;
-	}
-	err = do_pwriten(siov->iov_fd, ptr, len, siov->iov_off);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int blobf_sync_by(const struct silofs_blobf *blobf,
-                         const struct silofs_iovec *siov)
-{
-	unsigned int flags;
-	int err;
-
-	if (unlikely(blobf->b_fd != siov->iov_fd)) {
-		return -SILOFS_EINVAL;
-	}
-	flags = SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE |
-	        SYNC_FILE_RANGE_WAIT_AFTER;
-	err = do_sync_file_range(blobf->b_fd, siov->iov_off,
-	                         (loff_t)siov->iov_len, flags);
+	err = do_sync_file_range(blobf->b_fd, off, (loff_t)len,
+	                         SYNC_FILE_RANGE_WAIT_BEFORE |
+	                         SYNC_FILE_RANGE_WRITE |
+	                         SYNC_FILE_RANGE_WAIT_AFTER);
 	if (err && (err != -ENOSYS)) {
 		return err;
 	}
@@ -675,28 +660,52 @@ static int blobf_sync_by(const struct silofs_blobf *blobf,
 }
 
 static int blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
-                         const void *buf, size_t len, bool sync)
+                         const void *buf, size_t len)
 {
-	struct silofs_iovec siov = { .iov_off = -1 };
 	int err;
 
 	err = blobf_require_size_ge(blobf, off, len);
 	if (err) {
 		return err;
 	}
-	err = blobf_iovec_at(blobf, off, len, &siov);
+	err = blobf_check_range(blobf, off, len);
 	if (err) {
 		return err;
 	}
-	err = blobf_store_by(blobf, &siov, buf, len);
+	err = do_pwriten(blobf->b_fd, buf, len, off);
 	if (err) {
 		return err;
 	}
-	if (sync) {
-		err = blobf_sync_by(blobf, &siov);
-		if (err) {
-			return err;
-		}
+	return 0;
+}
+
+static size_t length_of(const struct iovec *iov, size_t cnt)
+{
+	size_t len = 0;
+
+	for (size_t i = 0; i < cnt; ++i) {
+		len += iov[i].iov_len;
+	}
+	return len;
+}
+
+static int blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
+                          const struct iovec *iov, size_t cnt)
+{
+	const size_t len = length_of(iov, cnt);
+	int err;
+
+	err = blobf_require_size_ge(blobf, off, len);
+	if (err) {
+		return err;
+	}
+	err = blobf_check_range(blobf, off, len);
+	if (err) {
+		return err;
+	}
+	err = do_pwritevn(blobf->b_fd, iov, cnt, off);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
@@ -704,12 +713,29 @@ static int blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
 int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
                          const void *buf, size_t len, bool sync)
 {
-	int ret;
+	int err;
 
 	blobf_wrlock(blobf);
-	ret = blobf_pwriten(blobf, off, buf, len, sync);
+	err = blobf_pwriten(blobf, off, buf, len);
+	if (!err && sync) {
+		err = blobf_sync_range(blobf, off, len);
+	}
 	blobf_unlock(blobf);
-	return ret;
+	return err;
+}
+
+int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
+                          const struct iovec *iov, size_t cnt, bool sync)
+{
+	int err;
+
+	blobf_wrlock(blobf);
+	err = blobf_pwritevn(blobf, off, iov, cnt);
+	if (!err && sync) {
+		err = blobf_sync_range(blobf, off, length_of(iov, cnt));
+	}
+	blobf_unlock(blobf);
+	return err;
 }
 
 static int blobf_read_blob(const struct silofs_blobf *blobf,

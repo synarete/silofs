@@ -314,6 +314,11 @@ static void guarantee_ioctl_types_size(void)
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }
 
+static void guarantee_journal_types(void)
+{
+	REQUIRE_SIZEOF(struct silofs_journal_ent, 256);
+}
+
 static void guarantee_defs_consistency(void)
 {
 	REQUIRE_EQ(CHAR_BIT, 8);
@@ -356,7 +361,7 @@ static void guarantee_external_constants(void)
 	REQUIRE_EQ(SILOFS_KDF_SCRYPT, GCRY_KDF_SCRYPT);
 }
 
-static void guarantee_consistency(void)
+void silofs_lib_verify_defs(void)
 {
 	guarantee_fundamental_types_size();
 	guarantee_persistent_types_nk();
@@ -366,12 +371,8 @@ static void guarantee_consistency(void)
 	guarantee_persistent_types_alignment2();
 	guarantee_persistent_types_alignment3();
 	guarantee_ioctl_types_size();
+	guarantee_journal_types();
 	guarantee_defs_consistency();
 	guarantee_external_constants();
-}
-
-void silofs_lib_verify_defs(void)
-{
-	guarantee_consistency();
 }
 

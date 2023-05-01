@@ -48,6 +48,7 @@
 #include <silofs/claim.h>
 #include <silofs/uber.h>
 #include <silofs/flush.h>
+#include <silofs/journal.h>
 #include <silofs/exec.h>
 #include <silofs/walk.h>
 #include <silofs/mntsvc.h>

@@ -912,6 +912,25 @@ union silofs_view {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* journal reference entry */
+struct silofs_journal_ent {
+	uint64_t                        j_magic;
+	uint32_t                        j_entry_len;
+	uint32_t                        j_data_len;
+	uint64_t                        j_uniq_id;
+	int64_t                         j_src_off;
+	int64_t                         j_tgt_off;
+	uint32_t                        j_tx_count;
+	uint32_t                        j_tx_index;
+	uint8_t                         j_reserved1[16];
+	struct silofs_blobid40b         j_src_blobid;
+	struct silofs_blobid40b         j_tgt_blobid;
+	uint8_t                         j_reserved2[108];
+	uint32_t                        j_csum;
+} silofs_packed_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 /* repo meta record */
 struct silofs_repo_meta {
 	uint64_t                        rm_magic;

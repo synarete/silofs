@@ -95,8 +95,8 @@
 /* maximal file-system capacity, in bytes (64T) */
 #define SILOFS_CAPACITY_SIZE_MAX        (64L * SILOFS_TERA)
 
-/* maximal size of virtual address space (4P) */
-#define SILOFS_VSPACE_SIZE_MAX          (1L << 52)
+/* maximal size of virtual address space (256P) */
+#define SILOFS_VSPACE_SIZE_MAX          (1L << 58)
 
 
 /* small ("sector") meta-block size (1K) */
@@ -115,9 +115,9 @@
 
 
 /* maximal number of logical blocks within single blob */
-#define SILOFS_NLBK_IN_BLOB_MAX          (64L)
+#define SILOFS_NLBK_IN_BLOB_MAX         (128L)
 
-/* maximal size in bytes of single blob (4M) */
+/* maximal size in bytes of single blob (8M) */
 #define SILOFS_BLOB_SIZE_MAX \
 	(SILOFS_NLBK_IN_BLOB_MAX * SILOFS_LBK_SIZE)
 
@@ -146,13 +146,13 @@
 #define SILOFS_SB_SIZE                  (8 * SILOFS_KILO)
 
 /* bits-shift for space-mapping children fan-out */
-#define SILOFS_SPMAP_SHIFT              (6)
+#define SILOFS_SPMAP_SHIFT              (7)
 
 /* number of children per space-mapping node/leaf */
 #define SILOFS_SPMAP_NCHILDS            (1L << SILOFS_SPMAP_SHIFT)
 
 /* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE               (8 * SILOFS_KILO)
+#define SILOFS_SPMAP_SIZE               (16 * SILOFS_KILO)
 
 /* number of space-maps per logical-block */
 #define SILOFS_NSPMAP_IN_LBK            (SILOFS_LBK_SIZE / SILOFS_SPMAP_SIZE)
@@ -682,7 +682,7 @@ struct silofs_spmap_node {
 	uint8_t                         sn_reserved2[48];
 	struct silofs_uaddr64b          sn_parent;
 	struct silofs_uaddr64b          sn_self;
-	uint8_t                         sn_reserved3[256];
+	uint8_t                         sn_reserved3[768];
 	struct silofs_spmap_ref         sn_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 
@@ -708,7 +708,7 @@ struct silofs_spmap_leaf {
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
 	struct silofs_vrange128         sl_vrange;
-	uint8_t                         sl_reserved2[304];
+	uint8_t                         sl_reserved2[816];
 	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 

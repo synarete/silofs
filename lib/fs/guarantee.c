@@ -81,6 +81,9 @@
 #define REQUIRE_SIZEOF_8K(type) \
 	REQUIRE_SIZEOF_NK(type, 8)
 
+#define REQUIRE_SIZEOF_16K(type) \
+	REQUIRE_SIZEOF_NK(type, 16)
+
 #define REQUIRE_SIZEOF_64K(type) \
 	REQUIRE_SIZEOF_NK(type, 64)
 
@@ -134,8 +137,8 @@ static void guarantee_fundamental_types_size(void)
 static void guarantee_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
-	REQUIRE_SIZEOF_8K(struct silofs_spmap_node);
-	REQUIRE_SIZEOF_8K(struct silofs_spmap_leaf);
+	REQUIRE_SIZEOF_16K(struct silofs_spmap_node);
+	REQUIRE_SIZEOF_16K(struct silofs_spmap_leaf);
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
@@ -261,13 +264,13 @@ static void guarantee_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_vrange, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subref, 512);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subref, 1024);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_blobid, 24);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 512);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 1024);
 }
 
 static void guarantee_persistent_types_alignment3(void)
@@ -320,13 +323,13 @@ static void guarantee_defs_consistency(void)
 	REQUIRE_GT(SILOFS_DIR_ENTRIES_MAX, SILOFS_LINK_MAX);
 	REQUIRE_LT(SILOFS_XATTR_VALUE_MAX, SILOFS_XATTR_NODE_SIZE);
 	REQUIRE_EQ(SILOFS_FILE_SIZE_MAX, 64 * SILOFS_TERA - 1);
-	REQUIRE_EQ(SILOFS_BLOB_SIZE_MAX, 4 * SILOFS_MEGA);
+	REQUIRE_EQ(SILOFS_BLOB_SIZE_MAX, 8 * SILOFS_MEGA);
 	REQUIRE_EQ(SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS,
 	           SILOFS_BLOB_SIZE_MAX);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 64 * SILOFS_TERA);
 	REQUIRE_LT(SILOFS_CAPACITY_SIZE_MAX, SILOFS_VSPACE_SIZE_MAX);
-	REQUIRE_EQ(SILOFS_VSPACE_SIZE_MAX, 4 * SILOFS_PETA);
+	REQUIRE_EQ(SILOFS_VSPACE_SIZE_MAX, 256 * SILOFS_PETA);
 
 	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
 	           SILOFS_FILE_HEAD2_LEAF_SIZE);

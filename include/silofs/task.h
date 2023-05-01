@@ -17,7 +17,7 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
-#define SILOFS_SUBENT_NREFS_MAX (32)
+#define SILOFS_SUBENT_NREFS_MAX (16)
 
 /* execution-context task per file-system operation */
 struct silofs_task {

@@ -29,7 +29,7 @@
 struct silofs_submit_ctx {
 	struct silofs_submit_ref        refs[SILOFS_SUBENT_NREFS_MAX];
 	struct silofs_dsets             dsets;
-	struct silofs_listq             txq;
+	struct silofs_listq             txq[2];
 	struct silofs_task             *task;
 	struct silofs_inode_info       *ii;
 	struct silofs_uber             *uber;
@@ -38,6 +38,7 @@ struct silofs_submit_ctx {
 	struct silofs_cache            *cache;
 	struct silofs_dirtyqs          *dirtyqs;
 	struct silofs_submitq          *submitq;
+	uint32_t tx_count;
 	int flags;
 };
 
@@ -628,38 +629,52 @@ static void smc_submit_sqe(const struct silofs_submit_ctx *sm_ctx,
 
 static void smc_submit_txq(struct silofs_submit_ctx *sm_ctx)
 {
-	struct silofs_listq *txq = &sm_ctx->txq;
-	struct silofs_submitq_ent *sqe;
+	struct silofs_listq *txq;
 	struct silofs_list_head *qlh;
-	const uint32_t tx_count = (uint32_t)(txq->sz);
+	struct silofs_submitq_ent *sqe;
 	uint32_t tx_index = 0;
 
-	qlh = listq_pop_front(txq);
-	while (qlh != NULL) {
-		sqe = sqe_from_qlh(qlh);
-		sqe->tx_count = tx_count;
-		sqe->tx_index = ++tx_index;
-		smc_submit_sqe(sm_ctx, sqe);
+	for (size_t i = 0; i < ARRAY_SIZE(sm_ctx->txq); ++i) {
+		txq = &sm_ctx->txq[i];
 		qlh = listq_pop_front(txq);
+		while (qlh != NULL) {
+			sqe = sqe_from_qlh(qlh);
+			sqe->tx_count = sm_ctx->tx_count;
+			sqe->tx_index = ++tx_index;
+			smc_submit_sqe(sm_ctx, sqe);
+			qlh = listq_pop_front(txq);
+		}
 	}
 }
 
 static void smc_discard_txq(struct silofs_submit_ctx *sm_ctx)
 {
-	struct silofs_listq *txq = &sm_ctx->txq;
+	struct silofs_listq *txq;
 	struct silofs_list_head *qlh;
+	struct silofs_submitq_ent *sqe;
 
-	qlh = listq_pop_front(txq);
-	while (qlh != NULL) {
-		smc_del_sqe(sm_ctx, sqe_from_qlh(qlh));
+	for (size_t i = 0; i < ARRAY_SIZE(sm_ctx->txq); ++i) {
+		txq = &sm_ctx->txq[i];
 		qlh = listq_pop_front(txq);
+		while (qlh != NULL) {
+			sqe = sqe_from_qlh(qlh);
+			smc_del_sqe(sm_ctx, sqe);
+			qlh = listq_pop_front(txq);
+		}
 	}
+}
+
+static struct silofs_listq *
+smc_txq_of(struct silofs_submit_ctx *sm_ctx, enum silofs_stype stype)
+{
+	return stype_isdata(stype) ? &sm_ctx->txq[0] : &sm_ctx->txq[1];
 }
 
 static void smc_enqueue_in_txq(struct silofs_submit_ctx *sm_ctx,
                                struct silofs_submitq_ent *sqe)
 {
-	listq_push_back(&sm_ctx->txq, &sqe->qlh);
+	listq_push_back(smc_txq_of(sm_ctx, sqe->stype), &sqe->qlh);
+	sm_ctx->tx_count++;
 }
 
 static int smc_enqueue_dset_into(struct silofs_submit_ctx *sm_ctx,
@@ -855,10 +870,12 @@ static int smc_setup(struct silofs_submit_ctx *sm_ctx,
 	struct silofs_uber *uber = task->t_uber;
 	struct silofs_repo *repo = uber->ub.repo;
 
-	listq_init(&sm_ctx->txq);
+	listq_init(&sm_ctx->txq[0]);
+	listq_init(&sm_ctx->txq[1]);
 	sm_ctx->task = task;
 	sm_ctx->ii = ii;
 	sm_ctx->uber = uber;
+	sm_ctx->tx_count = 0;
 	sm_ctx->flags = flags;
 	sm_ctx->repo = repo;
 	sm_ctx->cache = uber->ub.cache;

@@ -119,7 +119,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void verify_fundamental_types_size(void)
+static void validate_fundamental_types_size(void)
 {
 	REQUIRE_SIZEOF(uint8_t, 1);
 	REQUIRE_SIZEOF(uint16_t, 2);
@@ -134,7 +134,7 @@ static void verify_fundamental_types_size(void)
 	REQUIRE_SIZEOF(ino_t, 8);
 }
 
-static void verify_persistent_types_nk(void)
+static void validate_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
 	REQUIRE_SIZEOF_16K(struct silofs_spmap_node);
@@ -149,7 +149,7 @@ static void verify_persistent_types_nk(void)
 	REQUIRE_SIZEOF_64K(struct silofs_data_block64);
 }
 
-static void verify_persistent_types_size(void)
+static void validate_persistent_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
@@ -200,7 +200,7 @@ static void verify_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METADATA_SIZE);
 }
 
-static void verify_persistent_types_members(void)
+static void validate_persistent_types_members(void)
 {
 	REQUIRE_NBITS(struct silofs_header, h_stype, 8);
 	REQUIRE_NBITS(struct silofs_bk_ref, br_allocated, SILOFS_NKB_IN_LBK);
@@ -213,7 +213,7 @@ static void verify_persistent_types_members(void)
 	               dn_child, SILOFS_DIR_NODE_NCHILDS);
 }
 
-static void verify_persistent_types_alignment1(void)
+static void validate_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_ulink, 0);
 	REQUIRE_OFFSET64(struct silofs_bk_ref, br_uref, 0);
@@ -222,7 +222,7 @@ static void verify_persistent_types_alignment1(void)
 	REQUIRE_OFFSET64(struct silofs_bk_ref, br_dbkref, 64);
 }
 
-static void verify_persistent_types_alignment2(void)
+static void validate_persistent_types_alignment2(void)
 {
 	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_magic, 0);
 	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_version, 8);
@@ -273,7 +273,7 @@ static void verify_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 1024);
 }
 
-static void verify_persistent_types_alignment3(void)
+static void validate_persistent_types_alignment3(void)
 {
 	REQUIRE_OFFSET(struct silofs_inode, i_hdr, 0);
 	REQUIRE_OFFSET(struct silofs_inode, i_ino, 16);
@@ -306,7 +306,7 @@ static void verify_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_symlnk_value, sy_value, 64);
 }
 
-static void verify_ioctl_types_size(void)
+static void validate_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
 	REQUIRE_SIZEOF(struct silofs_ioc_clone, 32);
@@ -314,12 +314,12 @@ static void verify_ioctl_types_size(void)
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }
 
-static void verify_journal_types(void)
+static void validate_journal_types(void)
 {
 	REQUIRE_SIZEOF(struct silofs_journal_ent, 256);
 }
 
-static void verify_defs_consistency(void)
+static void validate_defs_consistency(void)
 {
 	REQUIRE_EQ(CHAR_BIT, 8);
 	REQUIRE_EQ(SILOFS_NSPMAP_IN_LBK * SILOFS_SPMAP_SIZE, SILOFS_LBK_SIZE);
@@ -343,7 +343,7 @@ static void verify_defs_consistency(void)
 	           SILOFS_FILE_TREE_LEAF_SIZE);
 }
 
-static void verify_external_constants(void)
+static void validate_external_constants(void)
 {
 	REQUIRE_EQ(SILOFS_NAME_MAX, NAME_MAX);
 	REQUIRE_EQ(SILOFS_PATH_MAX, PATH_MAX);
@@ -361,18 +361,18 @@ static void verify_external_constants(void)
 	REQUIRE_EQ(SILOFS_KDF_SCRYPT, GCRY_KDF_SCRYPT);
 }
 
-void silofs_lib_verify_defs(void)
+void silofs_validate_fsdefs(void)
 {
-	verify_fundamental_types_size();
-	verify_persistent_types_nk();
-	verify_persistent_types_size();
-	verify_persistent_types_members();
-	verify_persistent_types_alignment1();
-	verify_persistent_types_alignment2();
-	verify_persistent_types_alignment3();
-	verify_ioctl_types_size();
-	verify_journal_types();
-	verify_defs_consistency();
-	verify_external_constants();
+	validate_fundamental_types_size();
+	validate_persistent_types_nk();
+	validate_persistent_types_size();
+	validate_persistent_types_members();
+	validate_persistent_types_alignment1();
+	validate_persistent_types_alignment2();
+	validate_persistent_types_alignment3();
+	validate_ioctl_types_size();
+	validate_journal_types();
+	validate_defs_consistency();
+	validate_external_constants();
 }
 

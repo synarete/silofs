@@ -726,42 +726,41 @@ static int check_proc_rlimits(void)
 	return 0;
 }
 
-static int g_boot_lib_once;
+static bool silofs_init_lib_once;
 
-int silofs_lib_setup(void)
+int silofs_init_lib(void)
 {
-	int err;
+	int err = 0;
 
-	silofs_lib_verify_defs();
+	silofs_validate_fsdefs();
 
-	if (g_boot_lib_once) {
-		return 0;
+	if (silofs_init_lib_once) {
+		goto out;
 	}
 	err = check_endianess();
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = check_sysconf();
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = check_system_page_size();
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = check_proc_rlimits();
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = silofs_init_gcrypt();
 	if (err) {
-		return err;
+		goto out;
 	}
+	silofs_init_lib_once = true;
+out:
 	silofs_burnstack();
-
-	g_boot_lib_once = 1;
-
-	return 0;
+	return err;
 }
 
 

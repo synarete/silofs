@@ -17,7 +17,7 @@ own private key, and mount it on local host. When mounted users may
 manipulate their data as they would do with any other file-system,
 while the actual data (and meta-data) is transparently encrypted and
 stored within a local repository as opaque blobs. Other processes,
-which have the appropriate UNIX credentials may access those blobs as
+which have the appropriate UNIX credentials, may access those blobs as
 regular files, but they can not view their content. This model allows
 common Linux utilities such as [rsync](https://rsync.samba.org/) and
 [rclone](https://rclone.org/) to backup or archive the content of the

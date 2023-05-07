@@ -22,15 +22,15 @@
 Silofs *("stored in large objects file-system")* is a user-space
 file-system for storing large volumes of data as encrypted blobs.
 It allows normal users to create an isolated storage area, with its
-own private key, and mount it on local host. Once mounted, the users
-may manipulate their data as they would do with any other POSIX
-file-system, while the actual data and meta-data are transparently
-encrypted and stored within a local repository as opaque blobs. Any
-other process or user can not view the content of those blobs, even
-though it may access them as regular files. This model allows common
-Linux utilities such as rsync_ and rclone_ to backup or archive the
-content of the repository remotely, yet without compromising the
-underlying user's data integrity.
+own private key, and mount it on local host. When mounted users may
+manipulate their data as they would do with any other file-system,
+while the actual data (and meta-data) is transparently encrypted and
+stored within a local repository as opaque blobs. Other processes,
+which have the appropriate UNIX credentials, may access those blobs as
+regular files, but they can not view their content. This model allows
+common Linux utilities such as rsync_ and rclone_ to backup or archive
+the content of the repository into remote location, yet without
+compromising the integrity of the underlying data.
 
 Silofs is implemented using Linux's FUSE bridge, and as such it trades
 performance with functionality and ease of use. It is designed to serve

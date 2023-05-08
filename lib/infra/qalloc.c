@@ -172,19 +172,17 @@ static int qal_resolve(const struct silofs_alloc *alloc,
 
 void *silofs_allocate(struct silofs_alloc *alloc, size_t size)
 {
-	void *ptr;
+	void *ptr = NULL;
 
-	if (alloc->malloc_fn != NULL) {
+	if (silofs_likely(alloc->malloc_fn != NULL) && size) {
 		ptr = alloc->malloc_fn(alloc, size);
-	} else {
-		ptr = NULL;
 	}
 	return ptr;
 }
 
 void silofs_deallocate(struct silofs_alloc *alloc, void *ptr, size_t size)
 {
-	if ((ptr != NULL) && (size > 0) && (alloc->free_fn != NULL)) {
+	if (silofs_likely((ptr != NULL) && size && (alloc->free_fn != NULL))) {
 		alloc->free_fn(alloc, ptr, size);
 	}
 }

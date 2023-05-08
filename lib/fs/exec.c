@@ -35,13 +35,13 @@ union silofs_fs_alloc_u {
 };
 
 struct silofs_fs_core {
+	struct silofs_password  passwd;
 	union silofs_fs_alloc_u alloc_u;
 	struct silofs_cache     cache;
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
-	struct silofs_uber      uber;
 	struct silofs_idsmap    idsm;
-	struct silofs_password  passwd;
+	struct silofs_uber      uber;
 };
 
 union silofs_fs_core_u {

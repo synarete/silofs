@@ -32,6 +32,9 @@
 /* boot-record magic-signature (ASCII: "@SILOFS@") */
 #define SILOFS_BOOT_RECORD_MAGIC        (0x4053464F4C495340L)
 
+/* journal-record magic-signature (ASCII: "%silofs%") */
+#define SILOFS_JOURNAL_MAGIC            (0x2573666F6C697325L)
+
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC              (0x4073666F6C697340L)
 
@@ -912,21 +915,32 @@ union silofs_view {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* journal reference entry */
-struct silofs_journal_ent {
-	uint64_t                        j_magic;
-	uint32_t                        j_entry_len;
-	uint32_t                        j_data_len;
-	uint64_t                        j_uniq_id;
-	int64_t                         j_src_off;
-	int64_t                         j_tgt_off;
-	uint32_t                        j_tx_count;
-	uint32_t                        j_tx_index;
-	uint8_t                         j_reserved1[16];
-	struct silofs_blobid40b         j_src_blobid;
-	struct silofs_blobid40b         j_tgt_blobid;
-	uint8_t                         j_reserved2[108];
-	uint32_t                        j_csum;
+/* journal meta record */
+struct silofs_journal_meta {
+	struct silofs_header            jm_hdr;
+	uint64_t                        jm_magic1;
+	uint32_t                        jm_version;
+	uint8_t                         jm_reserved[4060];
+	uint64_t                        jm_magic2;
+} silofs_packed_aligned64;
+
+/* journal log record */
+struct silofs_journal_rec {
+	struct silofs_header            jr_hdr;
+	uint64_t                        jr_magic;
+	uint64_t                        jr_uniq_id;
+	uint32_t                        jr_length;
+	uint32_t                        jr_tx_count;
+	uint32_t                        jr_tx_index;
+	uint8_t                         jr_reserved2[20];
+	struct silofs_blobid40b         jr_src_blobid;
+	int64_t                         jr_src_off;
+	uint8_t                         jr_reserved3[16];
+	struct silofs_blobid40b         jr_dst_blobid;
+	int64_t                         jr_dst_off;
+	uint8_t                         jr_reserved4[16];
+	uint8_t                         jr_reserved5[48];
+	uint64_t                        jr_csum;
 } silofs_packed_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

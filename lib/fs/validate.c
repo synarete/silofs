@@ -314,9 +314,24 @@ static void validate_ioctl_types_size(void)
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }
 
-static void validate_journal_types(void)
+static void validate_journal_types_size(void)
 {
-	REQUIRE_SIZEOF(struct silofs_journal_ent, 256);
+	REQUIRE_SIZEOF(struct silofs_journal_meta, 4096);
+	REQUIRE_SIZEOF(struct silofs_journal_rec, 256);
+}
+
+static void validate_journal_types_alignment(void)
+{
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_magic, 16);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_uniq_id, 24);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_length, 32);
+	REQUIRE_OFFSET(struct silofs_journal_rec, jr_tx_count, 36);
+	REQUIRE_OFFSET(struct silofs_journal_rec, jr_tx_index, 40);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_src_blobid, 64);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_src_off, 104);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_dst_blobid, 128);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_dst_off, 168);
 }
 
 static void validate_defs_consistency(void)
@@ -371,7 +386,8 @@ void silofs_validate_fsdefs(void)
 	validate_persistent_types_alignment2();
 	validate_persistent_types_alignment3();
 	validate_ioctl_types_size();
-	validate_journal_types();
+	validate_journal_types_size();
+	validate_journal_types_alignment();
 	validate_defs_consistency();
 	validate_external_constants();
 }

@@ -629,6 +629,10 @@ static int check_endianess(void)
 	if (err) {
 		return err;
 	}
+	err = check_endianess64(SILOFS_JOURNAL_MAGIC, "%silofs%");
+	if (err) {
+		return err;
+	}
 	err = check_endianess64(SILOFS_SUPER_MAGIC, "@silofs@");
 	if (err) {
 		return err;

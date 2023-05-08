@@ -17,3 +17,297 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint64_t jrec_magic(const struct silofs_journal_rec *jrec)
+{
+	return silofs_le64_to_cpu(jrec->jr_magic);
+}
+
+static void jrec_set_magic(struct silofs_journal_rec *jrec, uint64_t magic)
+{
+	jrec->jr_magic = silofs_cpu_to_le64(magic);
+}
+
+static uint64_t jrec_uniq_id(const struct silofs_journal_rec *jrec)
+{
+	return silofs_le64_to_cpu(jrec->jr_uniq_id);
+}
+
+static void jrec_set_uniq_id(struct silofs_journal_rec *jrec, uint64_t uniq_id)
+{
+	jrec->jr_uniq_id = silofs_cpu_to_le64(uniq_id);
+}
+
+static size_t jrec_length(const struct silofs_journal_rec *jrec)
+{
+	return silofs_le32_to_cpu(jrec->jr_length);
+}
+
+static void jrec_set_length(struct silofs_journal_rec *jrec, size_t len)
+{
+	jrec->jr_length = silofs_cpu_to_le32((uint32_t)len);
+}
+
+static size_t jrec_tx_count(const struct silofs_journal_rec *jrec)
+{
+	return silofs_le32_to_cpu(jrec->jr_tx_count);
+}
+
+static void jrec_set_tx_count(struct silofs_journal_rec *jrec, size_t tx_count)
+{
+	jrec->jr_tx_count = silofs_cpu_to_le32((uint32_t)tx_count);
+}
+
+static size_t jrec_tx_index(const struct silofs_journal_rec *jrec)
+{
+	return silofs_le32_to_cpu(jrec->jr_tx_index);
+}
+
+static void jrec_set_tx_index(struct silofs_journal_rec *jrec, size_t tx_index)
+{
+	jrec->jr_tx_index = silofs_cpu_to_le32((uint32_t)tx_index);
+}
+
+static void jrec_src_blobid(const struct silofs_journal_rec *jrec,
+                            struct silofs_blobid *out_blobid)
+{
+	silofs_blobid40b_parse(&jrec->jr_src_blobid, out_blobid);
+}
+
+static void jrec_set_src_blobid(struct silofs_journal_rec *jrec,
+                                const struct silofs_blobid *blobid)
+{
+	silofs_blobid40b_set(&jrec->jr_src_blobid, blobid);
+}
+
+static void jrec_dst_blobid(const struct silofs_journal_rec *jrec,
+                            struct silofs_blobid *out_blobid)
+{
+	silofs_blobid40b_parse(&jrec->jr_dst_blobid, out_blobid);
+}
+
+static void jrec_set_dst_blobid(struct silofs_journal_rec *jrec,
+                                const struct silofs_blobid *blobid)
+{
+	silofs_blobid40b_set(&jrec->jr_dst_blobid, blobid);
+}
+
+static loff_t jrec_src_off(const struct silofs_journal_rec *jrec)
+{
+	return silofs_off_to_cpu(jrec->jr_src_off);
+}
+
+static void jrec_set_src_off(struct silofs_journal_rec *jrec, loff_t off)
+{
+	jrec->jr_src_off = silofs_cpu_to_off(off);
+}
+
+static loff_t jrec_dst_off(const struct silofs_journal_rec *jrec)
+{
+	return silofs_off_to_cpu(jrec->jr_dst_off);
+}
+
+static void jrec_set_dst_off(struct silofs_journal_rec *jrec, loff_t off)
+{
+	jrec->jr_dst_off = silofs_cpu_to_off(off);
+}
+
+static uint64_t jrec_csum(const struct silofs_journal_rec *jrec)
+{
+	return silofs_le64_to_cpu(jrec->jr_csum);
+}
+
+static void jrec_set_csum(struct silofs_journal_rec *jrec, uint64_t csum)
+{
+	jrec->jr_csum = silofs_cpu_to_le64(csum);
+}
+
+static void jrec_setup(struct silofs_journal_rec *jrec)
+{
+	const struct silofs_blobid *blobid_none = silofs_blobid_none();
+
+	memset(jrec, 0, sizeof(*jrec));
+	jrec_set_magic(jrec, SILOFS_JOURNAL_MAGIC);
+	jrec_set_uniq_id(jrec, 0);
+	jrec_set_length(jrec, 0);
+	jrec_set_tx_count(jrec, 0);
+	jrec_set_tx_index(jrec, 0);
+	jrec_set_src_blobid(jrec, blobid_none);
+	jrec_set_src_off(jrec, SILOFS_OFF_NULL);
+	jrec_set_dst_blobid(jrec, blobid_none);
+	jrec_set_dst_off(jrec, SILOFS_OFF_NULL);
+	jrec_set_csum(jrec, 0);
+}
+
+void silofs_jrec_by_sqe(struct silofs_journal_rec *jrec,
+                        const struct silofs_submitq_ent *sqe)
+{
+	jrec_setup(jrec);
+	jrec_set_uniq_id(jrec, sqe->uniq_id);
+	jrec_set_length(jrec, sqe->len);
+	jrec_set_tx_count(jrec, sqe->tx_count);
+	jrec_set_tx_index(jrec, sqe->tx_index);
+	jrec_set_dst_off(jrec, sqe->off);
+	jrec_set_dst_blobid(jrec, &sqe->blobid);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static uint64_t calc_checksum_of(const struct silofs_journal_rec *jrec)
+{
+	const size_t len = offsetof(struct silofs_journal_rec, jr_csum);
+
+	return silofs_hash_xxh64(jrec, len, SILOFS_JOURNAL_MAGIC);
+}
+
+void silofs_seal_jrec(struct silofs_journal_rec *jrec)
+{
+	uint64_t csum;
+
+	csum = calc_checksum_of(jrec);
+	jrec_set_csum(jrec, csum);
+}
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int verify_jrec_csum(const struct silofs_journal_rec *jrec)
+{
+	const uint64_t csum_cur = jrec_csum(jrec);
+	const uint64_t csum_exp = calc_checksum_of(jrec);
+	int ret = 0;
+
+	if (csum_cur != csum_exp) {
+		log_err("corrupted journal-rec: " \
+		        "csum_cur=%lx csum_exp=%lx", csum_cur, csum_exp);
+		ret = -SILOFS_EFSBADCRC;
+	}
+	return ret;
+}
+
+static int verify_jrec_magic(const struct silofs_journal_rec *jrec)
+{
+	const uint64_t magic_cur = jrec_magic(jrec);
+	const uint64_t magic_exp = SILOFS_JOURNAL_MAGIC;
+	int ret = 0;
+
+	if (magic_cur != magic_exp) {
+		log_err("corrupted journal-rec: " \
+		        "magic_cur=%lx magic_exp=%lx", magic_cur, magic_exp);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
+
+static int verify_jrec_uniq_id(const struct silofs_journal_rec *jrec)
+{
+	const uint64_t uniq_id = jrec_uniq_id(jrec);
+	int ret = 0;
+
+	if (uniq_id == 0) {
+		log_err("illegal journal-rec: uniq_id=%lu", uniq_id);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
+
+static int verify_jrec_length(const struct silofs_journal_rec *jrec)
+{
+	const size_t len = jrec_length(jrec);
+	const size_t len_max = 32 * SILOFS_UMEGA;
+	int ret = 0;
+
+	if (len || (len >= len_max)) {
+		log_err("illegal journal-rec: len=%lu", len);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
+
+static int verify_jrec_tx(const struct silofs_journal_rec *jrec)
+{
+	const size_t tx_count = jrec_tx_count(jrec);
+	const size_t tx_index = jrec_tx_index(jrec);
+	int ret = 0;
+
+	if (!tx_count || !tx_index || (tx_index > tx_count)) {
+		log_err("illegal journal-rec: tx_index=%lu tx_count=%lu",
+		        tx_index, tx_count);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
+
+static bool
+blobid_has_off_within(const struct silofs_blobid *blobid, loff_t off)
+{
+	const size_t bsz = blobid->size;
+
+	return !off_isnull(off) && (off < (loff_t)bsz);
+}
+
+static int verify_jrec_src(const struct silofs_journal_rec *jrec)
+{
+	struct silofs_blobid src_blobid;
+	const loff_t src_off = jrec_src_off(jrec);
+	int ret = 0;
+
+	jrec_src_blobid(jrec, &src_blobid);
+	if (blobid_isnull(&src_blobid) ||
+	    !blobid_has_off_within(&src_blobid, src_off)) {
+		log_err("illegal journal-rec: src_off=%ld", src_off);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
+
+static int verify_jrec_dst(const struct silofs_journal_rec *jrec)
+{
+	struct silofs_blobid dst_blobid;
+	const loff_t dst_off = jrec_dst_off(jrec);
+	int ret = 0;
+
+	jrec_dst_blobid(jrec, &dst_blobid);
+	if (blobid_isnull(&dst_blobid) ||
+	    !blobid_has_off_within(&dst_blobid, dst_off)) {
+		log_err("illegal journal-rec: dst_off=%ld", dst_off);
+		ret = -SILOFS_EFSCORRUPTED;
+	}
+	return ret;
+}
+
+int silofs_verify_jrec(const struct silofs_journal_rec *jrec)
+{
+	int err;
+
+	err = verify_jrec_csum(jrec);
+	if (err) {
+		return err;
+	}
+	err = verify_jrec_magic(jrec);
+	if (err) {
+		return err;
+	}
+	err = verify_jrec_uniq_id(jrec);
+	if (err) {
+		return err;
+	}
+	err = verify_jrec_length(jrec);
+	if (err) {
+		return err;
+	}
+	err = verify_jrec_tx(jrec);
+	if (err) {
+		return err;
+	}
+	err = verify_jrec_src(jrec);
+	if (err) {
+		return err;
+	}
+	err = verify_jrec_dst(jrec);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+

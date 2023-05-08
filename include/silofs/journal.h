@@ -17,4 +17,11 @@
 #ifndef SILOFS_JOURNAL_H_
 #define SILOFS_JOURNAL_H_
 
+void silofs_seal_jrec(struct silofs_journal_rec *jrec);
+
+int silofs_verify_jrec(const struct silofs_journal_rec *jrec);
+
+void silofs_jrec_by_sqe(struct silofs_journal_rec *jrec,
+                        const struct silofs_submitq_ent *sqe);
+
 #endif /* SILOFS_JOURNAL_H_ */

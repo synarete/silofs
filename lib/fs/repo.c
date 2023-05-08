@@ -156,6 +156,17 @@ static int do_fdatasync(int fd)
 	return err;
 }
 
+static int do_fsync(int fd)
+{
+	int err;
+
+	err = silofs_sys_fsync(fd);
+	if (err && (err != -ENOSYS)) {
+		log_warn("fsync error: fd=%d err=%d", fd, err);
+	}
+	return err;
+}
+
 static int do_sync_file_range(int fd, loff_t off,
                               loff_t nbytes, unsigned int flags)
 {
@@ -977,6 +988,21 @@ int silofs_blobf_funlock(struct silofs_blobf *blobf)
 	return err;
 }
 
+static int blobf_fsync(struct silofs_blobf *blobf)
+{
+	int err;
+
+	blobf_wrlock(blobf);
+	err = do_fsync(blobf->b_fd);
+	blobf_unlock(blobf);
+	return err;
+}
+
+static int blobf_fsync2(struct silofs_blobf *blobf)
+{
+	return !blobf->b_rdonly ? blobf_fsync(blobf) : 0;
+}
+
 static int blobf_close(struct silofs_blobf *blobf)
 {
 	silofs_blobf_funlock(blobf);
@@ -1005,6 +1031,7 @@ silofs_blobf_new(struct silofs_alloc *alloc,
 void silofs_blobf_del(struct silofs_blobf *blobf,
                       struct silofs_alloc *alloc)
 {
+	blobf_fsync2(blobf);
 	blobf_close(blobf);
 	blobf_fini(blobf);
 	silofs_deallocate(alloc, blobf, sizeof(*blobf));

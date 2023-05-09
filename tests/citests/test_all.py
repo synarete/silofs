@@ -10,6 +10,7 @@ from . import test_xprogs
 
 
 TESTS = [
+    test_snap.test_snap_reload,
     test_basic.test_version,
     test_basic.test_init,
     test_basic.test_mkfs,
@@ -27,7 +28,7 @@ TESTS = [
     test_self.test_vfs_tests2,
     test_snap.test_snap_basic,
     test_snap.test_snap_reload,
-    test_snap.test_snap_offlineline,
+    test_snap.test_snap_offline,
     test_fsck.test_fsck_basic,
     test_fsck.test_fsck_snap,
     test_xprogs.test_postgresql,

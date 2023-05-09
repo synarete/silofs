@@ -106,17 +106,32 @@ class TestBaseCtx:
         self._seed_random()
         return random.randbytes(rsz)
 
-    def make_td(self, sub: str, name: str, sz: int) -> TestData:
-        return TestData(self.make_path(sub, name), self.make_rand(sz))
+    def make_bytes(self, bsz: int, val: str = "") -> bytes:
+        if not val:
+            ret = bytes(bsz)
+        else:
+            ret = bytes(bsz * val[0], "utf-8")
+        return ret
 
-    def make_tds(self, cnt: int, sub: str, sz: int) -> TestDataSet:
+    def make_td(self, sub: str, name: str, sz: int, val: str = "") -> TestData:
+        if val:
+            dat = self.make_bytes(sz, val)
+        else:
+            dat = self.make_rand(sz)
+        return TestData(self.make_path(sub, name), dat)
+
+    def make_tds(
+        self, cnt: int, sub: str, sz: int, val: str = ""
+    ) -> TestDataSet:
         tds = []
         for idx in range(0, cnt):
-            tds.append(self.make_td(sub, str(idx), sz))
+            tds.append(self.make_td(sub, str(idx), sz, val))
         return TestDataSet(self.expect, tds)
 
-    def create_data(self, cnt: int, sub: str, sz: int) -> TestDataSet:
-        tds = self.make_tds(cnt, sub, sz)
+    def create_data(
+        self, cnt: int, sub: str, sz: int, val: str = ""
+    ) -> TestDataSet:
+        tds = self.make_tds(cnt, sub, sz, val)
         tds.do_makedirs()
         tds.do_write()
         tds.do_read()

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0
 import sys
 import os
+import traceback
+from . import expect
 from . import cmd
 from . import ctx
 from . import utils
@@ -70,7 +72,10 @@ def run_tests(cfg: ctx.TestConfig) -> None:
     try:
         _do_run_tests(cfg)
     except cmd.CmdError as cex:
-        print(cex.output)
-        print(cex.retcode)
-        print(cex)
+        print(f"FATAL: {cex} {cex.retcode}: {cex.output}")
+        traceback.print_exc()
         sys.exit(1)
+    except expect.ExpectException as exp:
+        print(f"FATAL: {exp}")
+        traceback.print_exc()
+        sys.exit(2)

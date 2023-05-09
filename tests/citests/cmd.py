@@ -10,7 +10,7 @@ import threading
 class CmdError(Exception):
     def __init__(self, msg: str, out: str = "", ret: int = 0) -> None:
         Exception.__init__(self, msg)
-        self.output = out[-1024:]
+        self.output = out[-256:]
         self.retcode = ret
 
 

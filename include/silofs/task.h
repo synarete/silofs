@@ -103,6 +103,8 @@ int silofs_task_submit(struct silofs_task *task, bool all);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
+struct silofs_cache *silofs_task_cache(const struct silofs_task *task);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_submitq_init(struct silofs_submitq *smq,

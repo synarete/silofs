@@ -412,6 +412,11 @@ struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 	return task->t_uber->ub_sbi;
 }
 
+struct silofs_cache *silofs_task_cache(const struct silofs_task *task)
+{
+	return task->t_uber->ub.cache;
+}
+
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));

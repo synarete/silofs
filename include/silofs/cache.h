@@ -107,7 +107,9 @@ void silofs_cache_evict_blob(struct silofs_cache *cache,
 
 void silofs_cache_relax_blobs(struct silofs_cache *cache);
 
-size_t silofs_cache_blobs_overflow(const struct silofs_cache *cache);
+int silofs_cache_fsync_blobs(const struct silofs_cache *cache);
+
+bool silofs_cache_has_blobs_overflow(const struct silofs_cache *cache);
 
 
 struct silofs_ubk_info *

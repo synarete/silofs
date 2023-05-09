@@ -2316,6 +2316,21 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	return err;
 }
 
+static int flush_and_sync_blobs(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_flush_dirty_now(task);
+	if (err) {
+		return err;
+	}
+	err = silofs_cache_fsync_blobs(task_cache(task));
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
                     struct silofs_bootsecs *out_bsecs)
@@ -2327,7 +2342,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty_now(task);
+	err = flush_and_sync_blobs(task);
 	if (err) {
 		return err;
 	}
@@ -2335,7 +2350,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty_now(task);
+	err = flush_and_sync_blobs(task);
 	if (err) {
 		return err;
 	}

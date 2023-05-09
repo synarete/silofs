@@ -792,7 +792,7 @@ static int smc_complete_commits(const struct silofs_submit_ctx *sm_ctx)
 {
 	int ret = 0;
 
-	if ((sm_ctx->flags & SILOFS_F_NOW) && sm_ctx->ii) {
+	if (sm_ctx->flags & SILOFS_F_NOW) {
 		ret = silofs_task_submit(sm_ctx->task, true);
 	}
 	return ret;
@@ -832,7 +832,7 @@ static bool smc_need_flush1(const struct silofs_submit_ctx *sm_ctx)
 	if (sm_ctx->flags & SILOFS_F_NOW) {
 		return true;
 	}
-	if (silofs_cache_blobs_overflow(sm_ctx->cache)) {
+	if (silofs_cache_has_blobs_overflow(sm_ctx->cache)) {
 		return true;
 	}
 	silofs_allocstat(sm_ctx->alloc, &st);

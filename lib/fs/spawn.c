@@ -150,11 +150,6 @@ int silofs_spawn_inode_of(struct silofs_task *task, ino_t parent_ino,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_cache *task_cache(const struct silofs_task *task)
-{
-	return task->t_uber->ub.cache;
-}
-
 static void forget_cached_vi(const struct silofs_task *task,
                              struct silofs_vnode_info *vi)
 {

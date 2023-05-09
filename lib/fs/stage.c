@@ -2627,11 +2627,6 @@ out_err:
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_cache *task_cache(const struct silofs_task *task)
-{
-	return task->t_uber->ub.cache;
-}
-
 /*
  * Special case where data-node has been unmapped due to forget, yet it still
  * had a live ref-count due to on-going I/O operation.

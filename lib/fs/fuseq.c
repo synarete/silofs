@@ -636,10 +636,10 @@ static int sanitize_err(int err, uint32_t opcode)
 	int err2 = abs(err);
 
 	if (unlikely(err2 >= SILOFS_ERRBASE2)) {
-		fuseq_log_err("internal error: err=%d op=%u", err, opcode);
+		fuseq_log_err("unexpected internal error: "
+		              "err=%d op=%u", err, opcode);
 		err2 = silofs_remap_status_code(err);
-	} else if (unlikely(err2 >= SILOFS_ERRBASE)) {
-		fuseq_log_warn("unexpected error: err=%d op=%u", err, opcode);
+	} else if (err2 >= SILOFS_ERRBASE) {
 		err2 = silofs_remap_status_code(err);
 	}
 	return err2;

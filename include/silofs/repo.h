@@ -87,8 +87,7 @@ int silofs_blobf_flock(struct silofs_blobf *blobf);
 
 int silofs_blobf_funlock(struct silofs_blobf *blobf);
 
-
-int silofs_blobf_read_blob(struct silofs_blobf *blobf, void *buf, size_t len);
+int silofs_blobf_fsync(struct silofs_blobf *blobf);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

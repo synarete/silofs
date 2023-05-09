@@ -724,6 +724,14 @@ blobf_to_ce(const struct silofs_blobf *blobf)
 	return unconst(ce);
 }
 
+static struct silofs_blobf *
+blobf_from_lru_lh(const struct silofs_list_head *lru_lh)
+{
+	const struct silofs_cache_elem *ce = ce_from_lru_link(lru_lh);
+
+	return blobf_from_ce(ce);
+}
+
 void silofs_blobf_incref(struct silofs_blobf *blobf)
 {
 	if (likely(blobf != NULL)) {
@@ -1583,7 +1591,7 @@ cache_shrink_or_relru_blobfs(struct silofs_cache *cache,
  * Have explicit upper-limit to cached blobs, based on the process' rlimit
  * RLIMIT_NOFILE and memory limits.
  */
-size_t silofs_cache_blobs_overflow(const struct silofs_cache *cache)
+static size_t cache_blobs_overflow(const struct silofs_cache *cache)
 {
 	const size_t bar = 256;
 	const size_t cur = cache->c_blobf_lm.lm_lru.sz;
@@ -1591,19 +1599,37 @@ size_t silofs_cache_blobs_overflow(const struct silofs_cache *cache)
 	return (cur > bar) ? (cur - bar) : 0;
 }
 
-static bool cache_blobs_has_overflow(const struct silofs_cache *cache)
+bool silofs_cache_has_blobs_overflow(const struct silofs_cache *cache)
 {
-	return silofs_cache_blobs_overflow(cache) > 0;
+	return cache_blobs_overflow(cache) > 0;
 }
 
 void silofs_cache_relax_blobs(struct silofs_cache *cache)
 {
-	const size_t cnt = silofs_cache_blobs_overflow(cache);
+	const size_t cnt = cache_blobs_overflow(cache);
 
 	if (cnt > 0) {
 		cache_shrink_or_relru_blobfs(cache, cnt, true);
 		cache_post_op(cache);
 	}
+}
+
+int silofs_cache_fsync_blobs(const struct silofs_cache *cache)
+{
+	struct silofs_blobf *blobf = NULL;
+	const struct silofs_list_head *itr = NULL;
+	const struct silofs_listq *lru = &cache->c_blobf_lm.lm_lru;
+	int ret = 0;
+	int err;
+
+	itr = listq_front(lru);
+	while (itr != NULL) {
+		blobf = blobf_from_lru_lh(itr);
+		err = silofs_blobf_fsync(blobf);
+		ret = err || ret;
+		itr = listq_next(lru, itr);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2752,7 +2778,7 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	if (cache_lrumaps_has_overpop(cache)) {
 		niter += 1;
 	}
-	if (cache_blobs_has_overflow(cache)) {
+	if (silofs_cache_has_blobs_overflow(cache)) {
 		niter += 1;
 	}
 	mem_press = cache_memory_pressure(cache);

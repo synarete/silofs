@@ -749,42 +749,6 @@ int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
 	return err;
 }
 
-static int blobf_read_blob(const struct silofs_blobf *blobf,
-                           void *buf, size_t len)
-{
-	uint8_t *dat;
-	size_t bsz;
-	size_t rem;
-	size_t cnt;
-	int err;
-
-	err = blobf_check_range(blobf, 0, len);
-	if (err) {
-		return err;
-	}
-	bsz = (size_t)blobf_size(blobf);
-	cnt = min(len, bsz);
-	dat = buf;
-	err = do_preadn(blobf->b_fd, dat, cnt, 0);
-	if (err) {
-		return err;
-	}
-	dat += cnt;
-	rem = (len > bsz) ? (len - bsz) : 0;
-	silofs_memzero(dat, rem);
-	return 0;
-}
-
-int silofs_blobf_read_blob(struct silofs_blobf *blobf, void *buf, size_t len)
-{
-	int ret;
-
-	blobf_rdlock(blobf);
-	ret = blobf_read_blob(blobf, buf, len);
-	blobf_unlock(blobf);
-	return ret;
-}
-
 static int blobf_load_bb(const struct silofs_blobf *blobf,
                          const struct silofs_oaddr *oaddr,
                          struct silofs_bytebuf *bb)
@@ -1007,6 +971,11 @@ static int blobf_close(struct silofs_blobf *blobf)
 {
 	silofs_blobf_funlock(blobf);
 	return do_closefd(&blobf->b_fd);
+}
+
+int silofs_blobf_fsync(struct silofs_blobf *blobf)
+{
+	return blobf_fsync2(blobf);
 }
 
 struct silofs_blobf *

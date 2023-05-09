@@ -718,13 +718,24 @@ static int exec_flush_dirty_now(const struct silofs_fs_env *fse)
 	return term_task(&task, err);
 }
 
-static int flush_any_dirty(const struct silofs_fs_env *fse)
+static int flush_dirty(const struct silofs_fs_env *fse)
 {
 	int err;
 
 	err = exec_flush_dirty_now(fse);
 	if (err) {
 		log_err("failed to flush dirty: err=%d", err);
+	}
+	return err;
+}
+
+static int fsync_blobs(const struct silofs_fs_env *fse)
+{
+	int err;
+
+	err = silofs_cache_fsync_blobs(fse->fs_cache);
+	if (err) {
+		log_err("failed to fsync blobs: err=%d", err);
 	}
 	return err;
 }
@@ -788,7 +799,7 @@ static int flush_and_drop_cache(const struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = flush_any_dirty(fse);
+	err = flush_dirty(fse);
 	if (err) {
 		return err;
 	}
@@ -800,7 +811,7 @@ static int do_sync_fs(const struct silofs_fs_env *fse, bool drop)
 {
 	int err;
 
-	err = flush_any_dirty(fse);
+	err = flush_dirty(fse);
 	if (!err && drop) {
 		drop_cache(fse);
 	}
@@ -1247,7 +1258,7 @@ static int format_super(const struct silofs_fs_env *fse)
 		log_err("internal sb format: err=%d", err);
 		return err;
 	}
-	err = flush_any_dirty(fse);
+	err = flush_dirty(fse);
 	if (err) {
 		return err;
 	}
@@ -1270,7 +1281,7 @@ static int format_vmeta(const struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = flush_any_dirty(fse);
+	err = flush_dirty(fse);
 	if (err) {
 		return err;
 	}
@@ -1492,7 +1503,11 @@ static int do_close_fs(struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = flush_any_dirty(fse);
+	err = flush_dirty(fse);
+	if (err) {
+		return err;
+	}
+	err = fsync_blobs(fse);
 	if (err) {
 		return err;
 	}

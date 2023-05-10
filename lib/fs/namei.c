@@ -2318,13 +2318,14 @@ static int do_post_clone_updates(const struct silofs_task *task,
 
 static int flush_and_sync_blobs(struct silofs_task *task)
 {
+	const struct silofs_cache *cache = task_cache(task);
 	int err;
 
 	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
-	err = silofs_cache_fsync_blobs(task_cache(task));
+	err = silofs_cache_fsync_blobs(cache);
 	if (err) {
 		return err;
 	}
@@ -2397,6 +2398,33 @@ int silofs_do_unrefs(struct silofs_task *task)
 		return err;
 	}
 	err = silofs_walk_unref_fs(task, task_sbi(task));
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int check_syncfs(const struct silofs_inode_info *ii, int flags)
+{
+	if (!ii_isdir(ii) && !ii_isreg(ii)) {
+		return -SILOFS_EINVAL;
+	}
+	if (flags > 2) {
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+int silofs_do_syncfs(struct silofs_task *task,
+                     struct silofs_inode_info *ii, int flags)
+{
+	int err;
+
+	err = check_syncfs(ii, flags);
+	if (err) {
+		return err;
+	}
+	err = flush_and_sync_blobs(task);
 	if (err) {
 		return err;
 	}

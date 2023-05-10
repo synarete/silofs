@@ -238,6 +238,16 @@ providing a valid password, the **silofs snap** command will fail.
 
 ..
 
+sync
+----
+**silofs sync** [*pathname*]
+
+Synchronize cached writes to persistent storage blobs for all files in
+the file-system on which *pathname* resides.
+
+..
+
+
 rmfs
 ----
 **silofs rmfs** *repodir/name*

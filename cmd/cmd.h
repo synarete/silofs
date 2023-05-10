@@ -81,6 +81,8 @@ void cmd_execute_show(void);
 
 void cmd_execute_snap(void);
 
+void cmd_execute_sync(void);
+
 void cmd_execute_rmfs(void);
 
 void cmd_execute_lsmnt(void);

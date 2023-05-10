@@ -2496,6 +2496,13 @@ static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+union silofs_ioc_u {
+	uint8_t buf[SILOFS_IOC_SIZE_MAX];
+	struct silofs_ioc_query	qry;
+	struct silofs_ioc_clone cl;
+	struct silofs_ioc_sync 	syn;
+};
+
 static int do_ioc_notimpl(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	return fuseq_reply_err(fcc->fqw, fcc->task, -ENOTTY);
@@ -2526,22 +2533,19 @@ out:
 
 static int do_ioc_query(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	union {
-		uint8_t buf[SILOFS_IOC_SIZE_MAX];
-		struct silofs_ioc_query qry;
-	} u;
+	union silofs_ioc_u ioc_u;
 	const void *buf_in = fcc->in->u.ioctl.buf;
-	const struct silofs_ioc_query *qry_in = &u.qry;
+	const struct silofs_ioc_query *qry_in = &ioc_u.qry;
 	const size_t bsz_in = fcc->in->u.ioctl.arg.in_size;
 	const size_t bsz_out = fcc->in->u.ioctl.arg.out_size;
 	const int flags = (int)(fcc->in->u.ioctl.arg.flags);
 	int err;
 
-	if (bsz_in > sizeof(u)) {
+	if (bsz_in > sizeof(ioc_u)) {
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
-	memcpy(u.buf, buf_in, bsz_in);
+	memcpy(ioc_u.buf, buf_in, bsz_in);
 	fcc->args->ioc_cmd = SILOFS_IOC_QUERY;
 	fcc->args->in.query.ino = fcc->ino;
 	fcc->args->in.query.qtype = (enum silofs_query_type)qry_in->qtype;
@@ -2573,9 +2577,9 @@ static void uuid_of(const struct silofs_bootsecs *bsecs,
 
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	struct silofs_ioc_clone ioc_cl;
+	union silofs_ioc_u ioc_u;
 	void *buf_out = fcc->fqw->outb->u.iob.b;
-	struct silofs_ioc_clone *cl_out = &ioc_cl;
+	struct silofs_ioc_clone *cl_out = &ioc_u.cl;
 	const size_t bsz_in_min = 1;
 	const size_t bsz_in_max = sizeof(*cl_out);
 	const size_t bsz_out_min = sizeof(*cl_out);
@@ -2596,7 +2600,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
-	fcc->args->ioc_cmd = SILOFS_IOC_CLONE;
+	fcc->args->ioc_cmd = SILOFS_IOC_QUERY;
 	fcc->args->in.clone.ino = fcc->ino;
 	fcc->args->in.clone.flags = 0;
 	err = do_exec_op(fcc);
@@ -2610,6 +2614,35 @@ out:
 	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0,
 	                         cl_out, sizeof(*cl_out), err);
 }
+
+static int do_ioc_sync(const struct silofs_fuseq_cmd_ctx *fcc)
+{
+	union silofs_ioc_u ioc_u;
+	const void *buf_in = fcc->in->u.ioctl.buf;
+	const size_t bsz_in = fcc->in->u.ioctl.arg.in_size;
+	const size_t bsz_out = fcc->in->u.ioctl.arg.out_size;
+	int err;
+
+	if ((bsz_in < sizeof(ioc_u.syn)) || (bsz_in > sizeof(ioc_u))) {
+		err = -SILOFS_EINVAL;
+		goto out;
+	}
+	if (bsz_out > 0) {
+		err = -SILOFS_EINVAL;
+		goto out;
+	}
+	memcpy(&ioc_u.syn, buf_in, sizeof(ioc_u.syn));
+	fcc->args->ioc_cmd = SILOFS_IOC_SYNC;
+	fcc->args->in.syncfs.ino = fcc->ino;
+	fcc->args->in.syncfs.flags = (int)ioc_u.syn.flags;
+	err = do_exec_op(fcc);
+	if (err) {
+		goto out;
+	}
+out:
+	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0, NULL, 0, err);
+}
+
 
 static int fuseq_check_ioctl_flags(struct silofs_fuseq_worker *fqw,
                                    const struct silofs_fuseq_in *in)
@@ -2661,6 +2694,9 @@ static int do_ioctl(const struct silofs_fuseq_cmd_ctx *fcc)
 		break;
 	case SILOFS_IOC_CLONE:
 		ret = do_ioc_clone(fcc);
+		break;
+	case SILOFS_IOC_SYNC:
+		ret = do_ioc_sync(fcc);
 		break;
 	default:
 		ret = do_ioc_notimpl(fcc);
@@ -4389,7 +4425,9 @@ static int op_write(struct silofs_task *task, struct silofs_oper_args *args)
 
 static int op_syncfs(struct silofs_task *task, struct silofs_oper_args *args)
 {
-	return silofs_fs_syncfs(task, args->in.syncfs.ino);
+	return silofs_fs_syncfs(task,
+	                        args->in.syncfs.ino,
+	                        args->in.syncfs.flags);
 }
 
 static int op_ioctl_query(struct silofs_task *task,
@@ -4410,17 +4448,30 @@ static int op_ioctl_clone(struct silofs_task *task,
 	                       &args->out.clone.bsecs);
 }
 
+static int op_ioctl_sync(struct silofs_task *task,
+                          struct silofs_oper_args *args)
+{
+	return op_syncfs(task, args);
+}
+
 static int op_ioctl(struct silofs_task *task,
                     struct silofs_oper_args *args)
 {
 	int ret;
 
-	if (args->ioc_cmd == SILOFS_IOC_QUERY) {
+	switch (args->ioc_cmd) {
+	case SILOFS_IOC_QUERY:
 		ret = op_ioctl_query(task, args);
-	} else if (args->ioc_cmd == SILOFS_IOC_CLONE) {
+		break;
+	case SILOFS_IOC_CLONE:
 		ret = op_ioctl_clone(task, args);
-	} else {
+		break;
+	case SILOFS_IOC_SYNC:
+		ret = op_ioctl_sync(task, args);
+		break;
+	default:
 		ret = -ENOSYS;
+		break;
 	}
 	return ret;
 }

@@ -9,8 +9,8 @@ _silofs_init() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-h -u, --uid= -g, --gid=' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-R, --no-root' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-h -u --uid= -g --gid=' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-R --no-root' -- "$cur") )
   fi
 }
 
@@ -77,6 +77,15 @@ _silofs_snap() {
   fi
 }
 
+_silofs_sync() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h ' -- "$cur") )
+  fi
+}
+
 _silofs_rmfs() {
   local cur prev words cword
   _init_completion || return
@@ -130,6 +139,9 @@ _silofs_subcmd() {
     "snap")
       _silofs_snap
       ;;
+    "sync")
+      _silofs_sync
+      ;;
     "rmfs")
       _silofs_rmfs
       ;;
@@ -150,8 +162,8 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsmnt show snap rmfs' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'prune fsck' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show snap sync' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'rmfs prune fsck' -- "$cur") )
   fi
 }
 

@@ -297,6 +297,7 @@ struct silofs_op_write_out {
 
 struct silofs_op_syncfs_in {
 	ino_t ino;
+	int flags;
 };
 
 struct silofs_op_query_in {
@@ -316,6 +317,12 @@ struct silofs_op_clone_in {
 struct silofs_op_clone_out {
 	struct silofs_bootsecs bsecs;
 };
+
+struct silofs_op_sync_in {
+	ino_t ino;
+	int flags;
+};
+
 
 union silofs_oper_args_in {
 	struct silofs_op_lookup_in              lookup;
@@ -506,7 +513,7 @@ int silofs_fs_statx(struct silofs_task *task, ino_t ino,
 int silofs_fs_fiemap(struct silofs_task *task,
                      ino_t ino, struct fiemap *fm);
 
-int silofs_fs_syncfs(struct silofs_task *task, ino_t ino);
+int silofs_fs_syncfs(struct silofs_task *task, ino_t ino, int flags);
 
 int silofs_fs_query(struct silofs_task *task, ino_t ino,
                     enum silofs_query_type qtype,

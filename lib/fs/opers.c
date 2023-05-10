@@ -1515,7 +1515,7 @@ out:
 	return op_finish(task, ino, err);
 }
 
-int silofs_fs_syncfs(struct silofs_task *task, ino_t ino)
+int silofs_fs_syncfs(struct silofs_task *task, ino_t ino, int flags)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -1529,10 +1529,10 @@ int silofs_fs_syncfs(struct silofs_task *task, ino_t ino)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
+	err = op_stage_mut_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, &ii);
+	err = silofs_do_syncfs(task, ii, flags);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);

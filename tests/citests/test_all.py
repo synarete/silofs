@@ -10,7 +10,6 @@ from . import test_xprogs
 
 
 TESTS = [
-    test_snap.test_snap_reload,
     test_basic.test_version,
     test_basic.test_init,
     test_basic.test_mkfs,

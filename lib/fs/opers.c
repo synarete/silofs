@@ -1610,10 +1610,8 @@ int silofs_fs_timedout(struct silofs_task *task, int flags)
 	err = op_start1(task, SILOFS_INO_NULL);
 	ok_or_goto_out(err);
 
-	err = silofs_flush_dirty(task, NULL, flags);
+	err = silofs_do_timedout(task, flags);
 	ok_or_goto_out(err);
-
-	silofs_relax_cache_by(task, flags);
 out:
 	return op_finish(task, SILOFS_INO_NULL, err);
 }

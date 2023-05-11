@@ -2431,6 +2431,17 @@ int silofs_do_syncfs(struct silofs_task *task,
 	return 0;
 }
 
+int silofs_do_timedout(struct silofs_task *task, int flags)
+{
+	int err;
+
+	err = silofs_flush_dirty(task, NULL, flags);
+	if (!err) {
+		silofs_relax_cache_by(task, flags);
+	}
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,

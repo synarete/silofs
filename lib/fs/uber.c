@@ -1321,6 +1321,11 @@ int silofs_stage_blob_at(struct silofs_uber *uber,
 
 void silofs_relax_cache_by(struct silofs_task *task, int flags)
 {
-	silofs_cache_relax(task->t_uber->ub.cache, flags);
+	struct silofs_cache *cache = task_cache(task);
+
+	silofs_cache_relax(cache, flags);
+	if (flags & SILOFS_F_IDLE) {
+		silofs_cache_fsync_blobs(cache);
+	}
 }
 

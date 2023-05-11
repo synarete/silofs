@@ -2790,7 +2790,7 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	} else if (flags & SILOFS_F_IDLE) {
 		niter += clamp(silofs_popcount64(mem_press >> 4), 2, 8);
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		niter += clamp(silofs_popcount64(mem_press >> 8), 1, 3);
+		niter += clamp(silofs_popcount64(mem_press >> 8), 1, 4);
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
 		niter += min(silofs_popcount64(mem_press >> 10), 4);
 	} else if (flags & SILOFS_F_WALKFS) {

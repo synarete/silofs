@@ -115,6 +115,8 @@ int silofs_do_clone(struct silofs_task *task,
 int silofs_do_syncfs(struct silofs_task *task,
                      struct silofs_inode_info *ii, int flags);
 
+int silofs_do_timedout(struct silofs_task *task, int flags);
+
 int silofs_do_inspect(struct silofs_task *task);
 
 int silofs_do_unrefs(struct silofs_task *task);

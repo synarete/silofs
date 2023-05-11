@@ -2498,9 +2498,9 @@ static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 
 union silofs_ioc_u {
 	uint8_t buf[SILOFS_IOC_SIZE_MAX];
-	struct silofs_ioc_query	qry;
+	struct silofs_ioc_query qry;
 	struct silofs_ioc_clone cl;
-	struct silofs_ioc_sync 	syn;
+	struct silofs_ioc_sync  syn;
 };
 
 static int do_ioc_notimpl(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -2551,7 +2551,7 @@ static int do_ioc_query(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.query.qtype = (enum silofs_query_type)qry_in->qtype;
 
 	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
-		err = -ENOSYS;
+		err = -SILOFS_ENOSYS;
 		goto out;
 	}
 	if (bsz_out != sizeof(*qry_in)) {
@@ -2589,7 +2589,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 
 	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
-		err = -ENOSYS;
+		err = -SILOFS_ENOSYS;
 		goto out;
 	}
 	if ((bsz_in < bsz_in_min) || (bsz_in > bsz_in_max)) {
@@ -2600,7 +2600,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
-	fcc->args->ioc_cmd = SILOFS_IOC_QUERY;
+	fcc->args->ioc_cmd = SILOFS_IOC_CLONE;
 	fcc->args->in.clone.ino = fcc->ino;
 	fcc->args->in.clone.flags = 0;
 	err = do_exec_op(fcc);
@@ -2650,10 +2650,10 @@ static int fuseq_check_ioctl_flags(struct silofs_fuseq_worker *fqw,
 	const int flags = (int)(in->u.ioctl.arg.flags);
 
 	if (flags & FUSE_IOCTL_COMPAT) {
-		return -ENOSYS;
+		return -SILOFS_ENOSYS;
 	}
 	if ((flags & FUSE_IOCTL_DIR) && (flags & FUSE_IOCTL_UNRESTRICTED)) {
-		return -ENOTTY;
+		return -SILOFS_ENOSYS;
 	}
 	unused(fqw);
 	return 0;
@@ -2778,13 +2778,13 @@ fuseq_check_opcode(const struct silofs_fuseq_worker *fqw, uint32_t op_code)
 
 	if ((cmd_desc == NULL) || (cmd_desc->hook == NULL)) {
 		/* TODO: handle cases of FUSE_INTERUPT properly */
-		return -ENOSYS;
+		return -SILOFS_ENOSYS;
 	}
 	if (!fqw->fq->fq_got_init && (cmd_desc->code != FUSE_INIT)) {
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	if (fqw->fq->fq_got_init && (cmd_desc->code == FUSE_INIT)) {
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	return 0;
 }
@@ -2969,7 +2969,7 @@ static int fuseq_call_oper(struct silofs_fuseq_worker *fqw,
 		.in = in,
 		.ino = in->u.hdr.hdr.nodeid,
 	};
-	int err = -ENOSYS;
+	int err = -SILOFS_ENOSYS;
 
 	cmd_desc = cmd_desc_of(task->t_oper.op_code);
 	if (likely(cmd_desc != NULL)) {
@@ -3023,17 +3023,17 @@ static int fuseq_check_inhdr(const struct silofs_fuseq_worker *fqw,
 	if (nrd < len_min) {
 		fuseq_log_err("illegal in-length: "\
 		              "nrd=%lu len_min=%lu ", nrd, len_min);
-		return -EPROTO;
+		return -SILOFS_EPROTO;
 	}
 	if (len > len_max) {
 		fuseq_log_err("illegal header: opc=%d len=%lu len_max=%lu",
 		              opc, len, len_max);
-		return -EPROTO;
+		return -SILOFS_EPROTO;
 	}
 	if (full && (len != nrd)) {
 		fuseq_log_err("header length mismatch: "\
 		              "opc=%d nrd=%lu len=%lu ", opc, nrd, len);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	return 0;
 }
@@ -3046,12 +3046,12 @@ static int fuseq_check_pipe_pre(const struct silofs_fuseq_worker *fqw)
 	if (buffsize != pipe->size) {
 		fuseq_log_err("pipe-fuse mismatch: pipesize=%lu buffsize=%lu ",
 		              pipe->size, buffsize);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	if (pipe->pend != 0) {
 		fuseq_log_err("pipe not empty: pend=%lu fuse_fd=%d",
 		              pipe->pend, fqw->fq->fq_fuse_fd);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	return 0;
 }
@@ -3096,7 +3096,7 @@ static int fuseq_recv_copy_in(struct silofs_fuseq_worker *fqw)
 	}
 	if (len < sizeof(struct fuse_in_header)) {
 		fuseq_log_err("fuse read-in too-short: len=%lu", len);
-		return -EIO;
+		return -SILOFS_EIO;
 	}
 	return fuseq_check_inhdr(fqw, len, true);
 }
@@ -3224,7 +3224,7 @@ static int fuseq_do_recv_in(struct silofs_fuseq_worker *fqw, bool *out_spliced)
 
 static int fuseq_recv_in_locked(struct silofs_fuseq_worker *fqw)
 {
-	int err = -SILOFS_ENORX;
+	int err;
 	bool spliced = false;
 
 	fuseq_lock_ch(fqw->fq);
@@ -3267,7 +3267,7 @@ static int fuseq_read_or_splice_request(struct silofs_fuseq_worker *fqw)
 		return -SILOFS_ENORX;
 	}
 	if (err == -ENODEV) {
-		/* Filesystem unmounted, or connection aborted */
+		/* unmount or connection aborted */
 		fuseq_log_info("fuse connection aborted: err=%d", err);
 		return err;
 	}
@@ -3796,10 +3796,10 @@ static int fuseq_timeout_flags(const struct silofs_fuseq_worker *fqw)
 	int flags = 0;
 
 	dif = fuseq_dif_time_stamp(fqw);
-	if (dif > 4) {
+	if (dif > 5) {
 		flags |= SILOFS_F_TIMEOUT;
 	}
-	if (dif > 8) {
+	if (dif > 15) {
 		flags |= SILOFS_F_IDLE;
 	}
 	return flags;
@@ -3823,16 +3823,20 @@ static int fuseq_do_timeout_with(struct silofs_fuseq_worker *fqw, int flags)
 static int fuseq_do_timeout_locked(struct silofs_fuseq_worker *fqw)
 {
 	int flags;
-	int ret = 0;
+	int err;
 
 	flags = fuseq_timeout_flags(fqw);
-	if (flags) {
-		ret = fuseq_do_timeout_with(fqw, flags);
-		if (flags & SILOFS_F_IDLE) {
-			fuseq_set_time_stamp(fqw);
-		}
+	if (!flags) {
+		return 0;
 	}
-	return ret;
+	err = fuseq_do_timeout_with(fqw, flags);
+	if (err) {
+		return err;
+	}
+	if (flags & SILOFS_F_IDLE) {
+		fuseq_set_time_stamp(fqw);
+	}
+	return 0;
 }
 
 static int fuseq_do_timeout(struct silofs_fuseq_worker *fqw)
@@ -3911,11 +3915,8 @@ static int fuseq_sub_exec_loop(struct silofs_fuseq_worker *fqw)
 {
 	int err = 0;
 
-	while (fuseq_is_active(fqw->fq)) {
+	while (fuseq_is_active(fqw->fq) && !err) {
 		err = fuseq_sub_exec_once(fqw);
-		if (err) {
-			break;
-		}
 	}
 	return err;
 }
@@ -4449,7 +4450,7 @@ static int op_ioctl_clone(struct silofs_task *task,
 }
 
 static int op_ioctl_sync(struct silofs_task *task,
-                          struct silofs_oper_args *args)
+                         struct silofs_oper_args *args)
 {
 	return op_syncfs(task, args);
 }
@@ -4470,7 +4471,7 @@ static int op_ioctl(struct silofs_task *task,
 		ret = op_ioctl_sync(task, args);
 		break;
 	default:
-		ret = -ENOSYS;
+		ret = -SILOFS_ENOSYS;
 		break;
 	}
 	return ret;
@@ -4531,7 +4532,7 @@ static int exec_op(struct silofs_task *task, struct silofs_oper_args *args)
 {
 	silofs_oper_fn hook = hook_of(task->t_oper.op_code);
 
-	return likely(hook != NULL) ? hook(task, args) : -ENOSYS;
+	return likely(hook != NULL) ? hook(task, args) : -SILOFS_ENOSYS;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

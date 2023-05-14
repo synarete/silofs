@@ -16,7 +16,7 @@ def test_snap_basic(tc: ctx.TestCtx) -> None:
     tc.exec_umount()
 
 
-def test_snap_reload(tc: ctx.TestCtx) -> None:
+def test_snap_reload_twice(tc: ctx.TestCtx) -> None:
     tc.exec_init()
     tc.exec_mkfs(32, "main")
     tc.exec_mount("main")
@@ -43,6 +43,29 @@ def test_snap_reload(tc: ctx.TestCtx) -> None:
     tds2.do_unlink()
     tc.exec_umount()
     tc.exec_rmfs("snap2")
+
+
+def test_snap_reload_multi(tc: ctx.TestCtx) -> None:
+    tds = None
+    name = "main"
+    name_prev = ""
+    tc.exec_init()
+    tc.exec_mkfs(20, name)
+    for i in range(1, 20):
+        tc.exec_mount(name)
+        if tds:
+            tds.do_read()
+        if name_prev:
+            tc.exec_rmfs(name_prev)
+        if tds:
+            tds.do_read()
+        name_prev = name
+        name = f"snap{i}"
+        tds = tc.create_data(200, "A", 2**20)
+        tc.exec_snap(name)
+        tds2 = tc.create_data(200, "A", 2**20)
+        tc.exec_umount()
+    tc.exec_rmfs(name)
 
 
 def test_snap_offline(tc: ctx.TestCtx) -> None:

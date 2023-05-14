@@ -1,20 +1,22 @@
 #!/bin/sh
 dnf install -y \
+  automake \
+  bison \
+  expat-devel \
+  flex \
   gcc \
   git \
   make \
-  automake \
-  libtool \
-  flex \
-  bison \
-  perl-core \
+  libattr-devel \
   libcap-devel \
+  libcurl-devel \
+  libtool \
   libunwind-devel \
   libuuid-devel \
-  libattr-devel \
+  openssl-devel \
+  perl-core \
+  python3-setproctitle \
   readline-devel \
   zlib \
-  zlib-devel \
-  openssl-devel \
-  libcurl-devel \
-  expat-devel
+  zlib-devel
+

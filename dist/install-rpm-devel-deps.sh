@@ -22,5 +22,6 @@ dnf install -y \
   python3-mypy_extensions \
   python3-pygments \
   python3-pylint \
+  python3-setproctitle \
   kernel-headers \
   rpm-build

@@ -3,6 +3,7 @@ import sys
 
 from . import ctx
 from . import run
+from _ast import Try
 
 
 def _progname() -> str:
@@ -25,7 +26,17 @@ def _parseargs() -> tuple[str, str]:
     return (args[1], args[2])
 
 
+def _setproctitle() -> None:
+    try:
+        import setproctitle  # type: ignore
+
+        setproctitle.setproctitle("silofs-citests")
+    except ImportError:
+        pass
+
+
 def citests_main() -> None:
+    _setproctitle()
     basedir, mntdir = _parseargs()
     cfg = _makeconfig(basedir, mntdir)
     run.run_tests(cfg)

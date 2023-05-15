@@ -29,7 +29,6 @@ typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
 
 struct silofs_space_iter {
 	struct silofs_sb_info      *sbi;
-	struct silofs_spnode_info  *sni5;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;

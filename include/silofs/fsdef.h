@@ -118,9 +118,9 @@
 
 
 /* maximal number of logical blocks within single blob */
-#define SILOFS_NLBK_IN_BLOB_MAX         (128L)
+#define SILOFS_NLBK_IN_BLOB_MAX         (256L)
 
-/* maximal size in bytes of single blob (8M) */
+/* maximal size in bytes of single blob (16M) */
 #define SILOFS_BLOB_SIZE_MAX \
 	(SILOFS_NLBK_IN_BLOB_MAX * SILOFS_LBK_SIZE)
 
@@ -149,13 +149,13 @@
 #define SILOFS_SB_SIZE                  (8 * SILOFS_KILO)
 
 /* bits-shift for space-mapping children fan-out */
-#define SILOFS_SPMAP_SHIFT              (7)
+#define SILOFS_SPMAP_SHIFT              (8)
 
 /* number of children per space-mapping node/leaf */
 #define SILOFS_SPMAP_NCHILDS            (1L << SILOFS_SPMAP_SHIFT)
 
 /* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE               (16 * SILOFS_KILO)
+#define SILOFS_SPMAP_SIZE               (32 * SILOFS_KILO)
 
 /* number of space-maps per logical-block */
 #define SILOFS_NSPMAP_IN_LBK            (SILOFS_LBK_SIZE / SILOFS_SPMAP_SIZE)
@@ -356,8 +356,7 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE2   = 4,
 	SILOFS_HEIGHT_SPNODE3   = 5,
 	SILOFS_HEIGHT_SPNODE4   = 6,
-	SILOFS_HEIGHT_SPNODE5   = 7,
-	SILOFS_HEIGHT_SUPER     = 8,
+	SILOFS_HEIGHT_SUPER     = 7,
 	SILOFS_HEIGHT_LAST, /* keep last */
 };
 
@@ -686,6 +685,7 @@ struct silofs_spmap_node {
 	struct silofs_uaddr64b          sn_parent;
 	struct silofs_uaddr64b          sn_self;
 	uint8_t                         sn_reserved3[768];
+	uint8_t                         sn_reserved4[1024];
 	struct silofs_spmap_ref         sn_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 
@@ -712,6 +712,7 @@ struct silofs_spmap_leaf {
 	struct silofs_uaddr64b          sl_self;
 	struct silofs_vrange128         sl_vrange;
 	uint8_t                         sl_reserved2[816];
+	uint8_t                         sn_reserved3[1024];
 	struct silofs_bk_ref            sl_subref[SILOFS_SPMAP_NCHILDS];
 } silofs_packed_aligned64;
 

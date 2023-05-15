@@ -54,7 +54,6 @@ static int spvis_visit_exec_at(struct silofs_space_visitor *spvis,
 	case SILOFS_HEIGHT_SPNODE2:
 	case SILOFS_HEIGHT_SPNODE3:
 	case SILOFS_HEIGHT_SPNODE4:
-	case SILOFS_HEIGHT_SPNODE5:
 		spst->objs.nspnode++;
 		break;
 	case SILOFS_HEIGHT_NONE:

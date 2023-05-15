@@ -46,7 +46,6 @@ ssize_t silofs_height_to_blob_size(enum silofs_height height)
 	case SILOFS_HEIGHT_SPNODE2:
 	case SILOFS_HEIGHT_SPNODE3:
 	case SILOFS_HEIGHT_SPNODE4:
-	case SILOFS_HEIGHT_SPNODE5:
 	case SILOFS_HEIGHT_SUPER:
 	case SILOFS_HEIGHT_LAST:
 		elemsz = SILOFS_SPMAP_SIZE;
@@ -81,12 +80,9 @@ ssize_t silofs_height_to_space_span(enum silofs_height height)
 		shift_fac = 4;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
-		shift_fac = 5;
-		break;
-	case SILOFS_HEIGHT_SPNODE5:
 	case SILOFS_HEIGHT_SUPER:
 	case SILOFS_HEIGHT_LAST:
-		shift_fac = 6;
+		shift_fac = 5;
 		break;
 	}
 	span = (1L << (SILOFS_SPMAP_SHIFT * shift_fac)) * SILOFS_LBK_SIZE;

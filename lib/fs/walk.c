@@ -28,7 +28,6 @@ struct silofs_walk_ctx {
 	struct silofs_visitor      *vis;
 	struct silofs_uber         *uber;
 	struct silofs_sb_info      *sbi;
-	struct silofs_spnode_info  *sni5;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;
 	struct silofs_spnode_info  *sni2;
@@ -62,7 +61,6 @@ static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
 static void spit_increfs(const struct silofs_space_iter *spit)
 {
 	sbi_incref(spit->sbi);
-	sni_incref(spit->sni5);
 	sni_incref(spit->sni4);
 	sni_incref(spit->sni3);
 	sni_incref(spit->sni2);
@@ -77,7 +75,6 @@ static void spit_decrefs(const struct silofs_space_iter *spit)
 	sni_decref(spit->sni2);
 	sni_decref(spit->sni3);
 	sni_decref(spit->sni4);
-	sni_decref(spit->sni5);
 	sbi_decref(spit->sbi);
 }
 
@@ -88,7 +85,6 @@ static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
 {
 	silofs_memzero(spit, sizeof(*spit));
 	spit->sbi = wa_ctx->sbi;
-	spit->sni5 = wa_ctx->sni5;
 	spit->sni4 = wa_ctx->sni4;
 	spit->sni3 = wa_ctx->sni3;
 	spit->sni2 = wa_ctx->sni2;
@@ -103,7 +99,6 @@ static void wac_resetup(struct silofs_walk_ctx *wa_ctx,
                         enum silofs_stype vspace)
 {
 	wa_ctx->vspace = vspace;
-	wa_ctx->sni5 = NULL;
 	wa_ctx->sni4 = NULL;
 	wa_ctx->sni3 = NULL;
 	wa_ctx->sni2 = NULL;
@@ -209,7 +204,7 @@ static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
 	return silofs_stage_spleaf_at(wa_ctx->uber, uaddr, out_sli);
 }
 
-static int wac_stage_spnode5(struct silofs_walk_ctx *wa_ctx)
+static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_vrange vrange;
 	struct silofs_uaddr uaddr;
@@ -220,19 +215,6 @@ static int wac_stage_spnode5(struct silofs_walk_ctx *wa_ctx)
 		return -SILOFS_ENOENT;
 	}
 	err = silofs_sbi_sproot_of(wa_ctx->sbi, wa_ctx->vspace, &uaddr);
-	check_ok_or_bailout(err);
-
-	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni5);
-	check_ok_or_bailout(err);
-	return 0;
-}
-
-static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_uaddr uaddr;
-	int err;
-
-	err = silofs_sni_subref_of(wa_ctx->sni5, wa_ctx->voff, &uaddr);
 	check_ok_or_bailout(err);
 
 	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni4);
@@ -623,7 +605,7 @@ static void wac_depart_spnode4(struct silofs_walk_ctx *wa_ctx)
 	wa_ctx->sni4 = NULL;
 }
 
-static int wac_do_traverse_spnode5_child(struct silofs_walk_ctx *wa_ctx)
+static int wac_do_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
@@ -634,82 +616,6 @@ static int wac_do_traverse_spnode5_child(struct silofs_walk_ctx *wa_ctx)
 	check_ok_or_bailout(err);
 
 	wac_depart_spnode4(wa_ctx);
-	return 0;
-}
-
-static int wac_traverse_spnode5_child(struct silofs_walk_ctx *wa_ctx)
-{
-	int ret;
-
-	wac_push_height(wa_ctx);
-	ret = wac_do_traverse_spnode5_child(wa_ctx);
-	wac_pop_height(wa_ctx);
-	return ret;
-}
-
-static int wac_do_traverse_spnode5(struct silofs_walk_ctx *wa_ctx)
-{
-	struct silofs_vrange vrange;
-	loff_t voff;
-	int err = 0;
-
-	sni_vrange(wa_ctx->sni5, &vrange);
-	wa_ctx->voff = vrange.beg;
-	while (wa_ctx->voff < vrange.end) {
-		voff = wa_ctx->voff;
-		if (!sni_has_subref(wa_ctx->sni5, wa_ctx->voff)) {
-			break;
-		}
-		err = wac_traverse_spnode5_child(wa_ctx);
-		if (err && (err != -SILOFS_ENOENT)) {
-			break;
-		}
-		wa_ctx->voff = vrange_next(&vrange, voff);
-	}
-	return (err == -SILOFS_ENOENT) ? 0 : err;
-}
-
-static int wac_traverse_spnode5(struct silofs_walk_ctx *wa_ctx)
-{
-	int ret;
-
-	sni_incref(wa_ctx->sni5);
-	ret = wac_do_traverse_spnode5(wa_ctx);
-	sni_decref(wa_ctx->sni5);
-	return ret;
-}
-
-static int wac_traverse_at_spnode5(struct silofs_walk_ctx *wa_ctx)
-{
-	int err;
-
-	err = wac_visit_exec_at_unode(wa_ctx);
-	check_ok_or_bailout(err);
-
-	err = wac_traverse_spnode5(wa_ctx);
-	check_ok_or_bailout(err);
-
-	err = wac_visit_post_at_unode(wa_ctx);
-	check_ok_or_bailout(err);
-	return 0;
-}
-
-static void wac_depart_spnode5(struct silofs_walk_ctx *wa_ctx)
-{
-	wa_ctx->sni5 = NULL;
-}
-
-static int wac_do_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
-{
-	int err;
-
-	err = wac_stage_spnode5(wa_ctx);
-	check_ok_or_bailout(err);
-
-	err = wac_traverse_at_spnode5(wa_ctx);
-	check_ok_or_bailout(err);
-
-	wac_depart_spnode5(wa_ctx);
 	return 0;
 }
 

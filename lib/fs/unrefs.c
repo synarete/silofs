@@ -175,9 +175,6 @@ static int unrc_post_unrefs_at(struct silofs_unref_ctx *unr_ctx,
 	case SILOFS_HEIGHT_SUPER:
 		err = unrc_post_unrefs_at_super(unr_ctx, spit);
 		break;
-	case SILOFS_HEIGHT_SPNODE5:
-		err = unrc_post_unrefs_at_spnode(unr_ctx, spit->sni5);
-		break;
 	case SILOFS_HEIGHT_SPNODE4:
 		err = unrc_post_unrefs_at_spnode(unr_ctx, spit->sni4);
 		break;

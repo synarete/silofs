@@ -1422,7 +1422,7 @@ void ut_write_read(struct ut_env *ute, ino_t ino,
 
 void ut_write_read1(struct ut_env *ute, ino_t ino, loff_t off)
 {
-	const uint8_t dat[] = { 1 };
+	const uint8_t dat[1] = { 1 };
 
 	ut_write_read(ute, ino, dat, 1, off);
 }
@@ -1462,7 +1462,7 @@ void ut_read_ok(struct ut_env *ute, ino_t ino,
 
 void ut_read_zero(struct ut_env *ute, ino_t ino, loff_t off)
 {
-	uint8_t zero[] = { 0 };
+	uint8_t zero[1] = { 0 };
 
 	if (off >= 0) {
 		ut_read_verify(ute, ino, zero, 1, off);
@@ -1481,10 +1481,10 @@ void ut_read_zeros(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 
 void ut_trunacate_file(struct ut_env *ute, ino_t ino, loff_t off)
 {
-	int err;
+	struct stat st;
 	size_t nrd;
 	uint8_t buf[1] = { 0 };
-	struct stat st;
+	int err;
 
 	err = ut_truncate(ute, ino, off, &st);
 	ut_expect_ok(err);
@@ -1508,8 +1508,8 @@ void ut_trunacate_zero(struct ut_env *ute, ino_t ino)
 void ut_fallocate_reserve(struct ut_env *ute, ino_t ino,
                           loff_t off, loff_t len)
 {
-	int err;
 	struct stat st;
+	int err;
 
 	err = ut_fallocate(ute, ino, 0, off, len);
 	ut_expect_ok(err);
@@ -1522,9 +1522,9 @@ void ut_fallocate_reserve(struct ut_env *ute, ino_t ino,
 void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino,
                             loff_t off, loff_t len)
 {
-	int err;
 	struct stat st[2];
 	const int mode = FALLOC_FL_KEEP_SIZE;
+	int err;
 
 	err = ut_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
@@ -1544,9 +1544,9 @@ void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino,
 void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino,
                              loff_t off, loff_t len)
 {
-	int err;
 	struct stat st[2];
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	int err;
 
 	err = ut_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
@@ -1563,10 +1563,10 @@ void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino,
 void ut_fallocate_zero_range(struct ut_env *ute, ino_t ino,
                              loff_t off, loff_t len, bool keep_size)
 {
-	int err;
 	struct stat st[2];
-	int mode = FALLOC_FL_ZERO_RANGE;
 	const loff_t end = off + len;
+	int mode = FALLOC_FL_ZERO_RANGE;
+	int err;
 
 	if (keep_size) {
 		mode |= FALLOC_FL_KEEP_SIZE;
@@ -1624,7 +1624,7 @@ void ut_setxattr_rereplace(struct ut_env *ute, ino_t ino,
 void ut_setxattr_all(struct ut_env *ute, ino_t ino,
                      const struct ut_kvl *kvl)
 {
-	const struct ut_keyval *kv;
+	const struct ut_keyval *kv = NULL;
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
@@ -1637,9 +1637,9 @@ void ut_setxattr_all(struct ut_env *ute, ino_t ino,
 void ut_getxattr_value(struct ut_env *ute, ino_t ino,
                        const struct ut_keyval *kv)
 {
-	int err;
+	void *val = NULL;
 	size_t vsz;
-	void *val;
+	int err;
 
 	vsz = 0;
 	err = ut_getxattr(ute, ino, kv->name, NULL, 0, &vsz);
@@ -1656,9 +1656,9 @@ void ut_getxattr_nodata(struct ut_env *ute, ino_t ino,
                         const struct ut_keyval *kv)
 
 {
-	int err;
-	size_t bsz = 0;
 	char buf[256] = "";
+	size_t bsz = 0;
+	int err;
 
 	err = ut_getxattr(ute, ino, kv->name,
 	                  buf, sizeof(buf), &bsz);
@@ -1682,7 +1682,7 @@ void ut_removexattr_ok(struct ut_env *ute, ino_t ino,
 static struct ut_keyval *
 kvl_search(const struct ut_kvl *kvl, const char *name)
 {
-	struct ut_keyval *kv;
+	struct ut_keyval *kv = NULL;
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
@@ -1696,10 +1696,10 @@ kvl_search(const struct ut_kvl *kvl, const char *name)
 void ut_listxattr_ok(struct ut_env *ute, ino_t ino,
                      const struct ut_kvl *kvl)
 {
-	int err;
-	const char *name;
-	const struct ut_keyval *kv;
 	struct ut_listxattr_ctx ut_lxa_ctx;
+	const struct ut_keyval *kv = NULL;
+	const char *name = NULL;
+	int err;
 
 	err = ut_listxattr(ute, ino, &ut_lxa_ctx);
 	ut_expect_ok(err);
@@ -1758,8 +1758,8 @@ void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 static void ut_lseek_ok(struct ut_env *ute, ino_t ino,
                         loff_t off, int whence, loff_t *out_off)
 {
-	int err;
 	struct stat st;
+	int err;
 
 	ut_getattr_ok(ute, ino, &st);
 
@@ -1784,8 +1784,8 @@ void ut_lseek_hole(struct ut_env *ute,
 
 void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
 {
-	int err;
 	loff_t res_off = -1;
+	int err;
 
 	err = ut_lseek(ute, ino, off, SEEK_DATA, &res_off);
 	ut_expect_err(err, -ENXIO);
@@ -1794,8 +1794,8 @@ void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
 void ut_copy_file_range_ok(struct ut_env *ute, ino_t ino_in, loff_t off_in,
                            ino_t ino_out, loff_t off_out, size_t len)
 {
-	int err;
 	size_t cnt = 0;
+	int err;
 
 	err = ut_copy_file_range(ute, ino_in, off_in,
 	                         ino_out, off_out, len, &cnt);

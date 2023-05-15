@@ -3236,7 +3236,7 @@ static int filc_lseek_hole_noleaf(struct silofs_file_ctx *f_ctx,
 
 static int filc_lseek_hole(struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_fpos_ref fpr;
+	struct silofs_fpos_ref fpr = { .file_pos = -1 };
 	loff_t isz;
 	int err;
 

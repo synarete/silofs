@@ -3900,6 +3900,7 @@ fpr_copy_data_leaf(struct silofs_fpos_ref *fpr_src,
 	if (err) {
 		goto out;
 	}
+	fli_dirtify(fli_dst, fpr_dst->f_ctx->ii);
 
 	err = fpr_clear_unwritten_of(fpr_dst, fli_dst);
 	if (err) {

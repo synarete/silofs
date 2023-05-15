@@ -845,6 +845,7 @@ static void fpr_setup(struct silofs_fpos_ref *fpr,
 	const bool data = vaddr_isdata(vaddr);
 	const bool target = !vaddr_isnull(vaddr);
 
+	memset(fpr, 0, sizeof(*fpr));
 	vaddr_assign(&fpr->vaddr, vaddr);
 	oaddr_reset(&fpr->oaddr);
 	fpr->f_ctx = f_ctx;
@@ -1570,8 +1571,9 @@ static int filc_seek_data_by_head_leaves(struct silofs_file_ctx *f_ctx,
 	return -SILOFS_ENOENT;
 }
 
-static int filc_seek_hole_by_head_leaves(struct silofs_file_ctx *f_ctx,
-                struct silofs_fpos_ref *out_fpr)
+static int
+filc_seek_hole_by_head_leaves(struct silofs_file_ctx *f_ctx,
+                              struct silofs_fpos_ref *out_fpr)
 {
 	while (filc_has_head1_leaves_io(f_ctx)) {
 		filc_resolve_head1_leaf(f_ctx, out_fpr);
@@ -2985,8 +2987,8 @@ static int fpr_discard_by_set_unwritten(const struct silofs_fpos_ref *fpr)
 
 static int fpr_discard_data_at(struct silofs_fpos_ref *fpr)
 {
+	int err;
 	bool zero_range;
-	int err = 0;
 
 	if (!fpr->has_data) {
 		return 0;
@@ -3199,7 +3201,7 @@ static int filc_lseek_data_leaf(struct silofs_file_ctx *f_ctx,
 
 static int filc_lseek_data(struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_fpos_ref fpr = { .fni = NULL };
+	struct silofs_fpos_ref fpr;
 	loff_t isz;
 	int err;
 
@@ -3234,10 +3236,11 @@ static int filc_lseek_hole_noleaf(struct silofs_file_ctx *f_ctx,
 
 static int filc_lseek_hole(struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_fpos_ref fpr = { .fni = NULL };
-	const loff_t isz = ii_size(f_ctx->ii);
+	struct silofs_fpos_ref fpr;
+	loff_t isz;
 	int err;
 
+	isz = ii_size(f_ctx->ii);
 	err = filc_lseek_hole_noleaf(f_ctx, &fpr);
 	if (err == 0) {
 		f_ctx->off = off_clamp(fpr.file_pos, f_ctx->off, isz);
@@ -3586,7 +3589,7 @@ static int filc_fiemap_by_tree_leaves(struct silofs_file_ctx *f_ctx,
 
 static int filc_fiemap_by_tree_map(struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_fpos_ref fpr = { .file_pos = -1 };
+	struct silofs_fpos_ref fpr;
 	int err;
 
 	while (filc_has_more_io(f_ctx)) {
@@ -3942,27 +3945,25 @@ static void fpr_rebind_child(struct silofs_fpos_ref *fpr,
 
 static int fpr_unshare_leaf(struct silofs_fpos_ref *fpr)
 {
-	struct silofs_fpos_ref fpr_new = { .f_ctx = NULL };
-	const enum silofs_stype stype = fpr->vaddr.stype;
-	const size_t len = fpr->vaddr.len;
+	struct silofs_fpos_ref fpr_new;
+	const struct silofs_file_ctx *f_ctx = fpr->f_ctx;
 	int err;
 
 	silofs_assert(fpr->has_data);
-
 	if (!fpr->shared || !fpr->tree) {
 		return 0;
 	}
-	fpr_setup(&fpr_new, fpr->f_ctx, fpr->fni, &fpr->vaddr, fpr->file_pos);
-	err = filc_claim_data_space(fpr->f_ctx, stype, &fpr_new.vaddr);
+	fpr_setup(&fpr_new, f_ctx, fpr->fni, &fpr->vaddr, fpr->file_pos);
+	err = filc_claim_data_space(f_ctx, fpr->vaddr.stype, &fpr_new.vaddr);
 	if (err) {
 		return err;
 	}
-	err = fpr_copy_data_leaf(fpr, &fpr_new, len);
+	err = fpr_copy_data_leaf(fpr, &fpr_new, fpr->vaddr.len);
 	if (err) {
-		filc_reclaim_data_space(fpr->f_ctx, &fpr_new.vaddr);
+		filc_reclaim_data_space(f_ctx, &fpr_new.vaddr);
 		return err;
 	}
-	err = filc_reclaim_data_space(fpr->f_ctx, &fpr->vaddr);
+	err = filc_reclaim_data_space(f_ctx, &fpr->vaddr);
 	if (err) {
 		return err;
 	}

@@ -1036,16 +1036,20 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_env *fse,
 	const loff_t voff_exp = 0;
 	int err;
 
+	drop_cache(fse);
 	err = exec_claim_vspace(fse, vspace, &voa);
 	if (err) {
 		log_err("failed to claim: vspace=%d err=%d", vspace, err);
 		return err;
 	}
+
 	if (voa.vaddr.off != voff_exp) {
 		log_err("wrong first voff: vspace=%d expected-voff=%ld "
 		        "got-voff=%ld", vspace, voff_exp, voa.vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
+
+	drop_cache(fse);
 	err = exec_reclaim_vspace(fse, &voa);
 	if (err) {
 		log_err("failed to reclaim space: vspace=%d voff=%ld err=%d",

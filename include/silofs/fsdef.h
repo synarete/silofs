@@ -907,7 +907,7 @@ union silofs_view {
 	struct silofs_dtree_node        dtn;
 	struct silofs_ftree_node        ftn;
 	struct silofs_xattr_node        xan;
-	struct silofs_symlnk_value      sym;
+	struct silofs_symlnk_value      syv;
 	struct silofs_data_block1       dbk1;
 	struct silofs_data_block4       dbk4;
 	struct silofs_data_block64      dbk64;

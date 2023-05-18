@@ -571,6 +571,36 @@ void silofs_crypto_fini(struct silofs_crypto *crypto)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void randomize(void *ptr, size_t len, bool very_strong)
+{
+	const enum gcry_random_level random_level =
+	        very_strong ? GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM;
+
+	gcry_randomize(ptr, len, random_level);
+}
+
+void silofs_iv_reset(struct silofs_iv *iv)
+{
+	memset(iv, 0, sizeof(*iv));
+}
+
+void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other)
+{
+	memcpy(iv, iv_other, sizeof(*iv));
+}
+
+bool silofs_iv_isequal(const struct silofs_iv *iv,
+                       const struct silofs_iv *iv_other)
+{
+	return silofs_iv_compare(iv, iv_other) == 0;
+}
+
+long silofs_iv_compare(const struct silofs_iv *iv,
+                       const struct silofs_iv *iv_other)
+{
+	return memcmp(iv->iv, iv_other->iv, sizeof(iv->iv));
+}
+
 void silofs_iv_mkxor(struct silofs_iv *iv,
                      const struct silofs_iv *iv1, const struct silofs_iv *iv2)
 {
@@ -579,6 +609,10 @@ void silofs_iv_mkxor(struct silofs_iv *iv,
 	}
 }
 
+void silofs_iv_mkrand(struct silofs_iv *iv)
+{
+	randomize(iv->iv, sizeof(iv->iv), false);
+}
 
 void silofs_ivkey_init(struct silofs_ivkey *ivkey)
 {
@@ -597,12 +631,3 @@ void silofs_ivkey_copyto(const struct silofs_ivkey *ivkey,
 {
 	memcpy(other, ivkey, sizeof(*other));
 }
-
-void silofs_gcry_randomize(void *buf, size_t len, bool very_strong)
-{
-	const enum gcry_random_level random_level =
-	        very_strong ? GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM;
-
-	gcry_randomize(buf, len, random_level);
-}
-

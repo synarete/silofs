@@ -72,10 +72,25 @@ int silofs_password_setup(struct silofs_password *pp, const void *pass);
 
 void silofs_password_reset(struct silofs_password *pp);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_iv_reset(struct silofs_iv *iv);
+
+void silofs_iv_mkrand(struct silofs_iv *iv);
+
+void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other);
+
+bool silofs_iv_isequal(const struct silofs_iv *iv,
+                       const struct silofs_iv *iv_other);
+
+long silofs_iv_compare(const struct silofs_iv *iv,
+                       const struct silofs_iv *iv_other);
 
 void silofs_iv_mkxor(struct silofs_iv *iv,
                      const struct silofs_iv *iv1,
                      const struct silofs_iv *iv2);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_ivkey_init(struct silofs_ivkey *ivkey);
 
@@ -83,8 +98,5 @@ void silofs_ivkey_fini(struct silofs_ivkey *ivkey);
 
 void silofs_ivkey_copyto(const struct silofs_ivkey *ivkey,
                          struct silofs_ivkey *other);
-
-void silofs_gcry_randomize(void *buf, size_t len, bool very_strong);
-
 
 #endif /* SILOFS_CRYPTO_H_ */

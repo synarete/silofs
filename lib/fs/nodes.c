@@ -1028,7 +1028,7 @@ struct silofs_symval_info *silofs_syi_from_vi(struct silofs_vnode_info *vi)
 
 void silofs_syi_rebind_view(struct silofs_symval_info *syi)
 {
-	syi->syv = &syi->sy_vi.v.view->sym;
+	syi->syv = &syi->sy_vi.v.view->syv;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1480,7 +1480,7 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_FTNODE:
 		return silofs_verify_ftree_node(&view->ftn);
 	case SILOFS_STYPE_SYMVAL:
-		return silofs_verify_symlnk_value(&view->sym);
+		return silofs_verify_symlnk_value(&view->syv);
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:

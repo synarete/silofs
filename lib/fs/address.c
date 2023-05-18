@@ -822,10 +822,12 @@ void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
 {
 	struct silofs_blobid blobid;
 	silofs_lba_t lba;
+	ssize_t bsz;
 
 	silofs_blobid40b_parse(&bkaddr48->blobid, &blobid);
 	lba = silofs_le32_to_cpu(bkaddr48->lba);
-	if (lba_to_off(lba) < (ssize_t)blobid.size) {
+	bsz = (ssize_t)blobid.size;
+	if (!lba_isnull(lba) && (lba_to_off(lba) < bsz)) {
 		silofs_bkaddr_setup(bkaddr, &blobid, lba);
 	} else {
 		silofs_bkaddr_reset(bkaddr);

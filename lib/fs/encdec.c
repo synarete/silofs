@@ -39,6 +39,13 @@ static void lni_set_bkview(const struct silofs_lnode_info *lni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static void xor_iv_with(struct silofs_iv *iv, const struct silofs_iv *iv_other)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
+		iv->iv[i] ^= iv_other->iv[i];
+	}
+}
+
 static void update_iv_of(struct silofs_ivkey *ivkey,
                          const struct silofs_oaddr *oaddr)
 {
@@ -46,7 +53,7 @@ static void update_iv_of(struct silofs_ivkey *ivkey,
 
 	memset(&iv, 0, sizeof(iv));
 	silofs_iv_of_oaddr(&iv, oaddr);
-	silofs_iv_xor_with(&ivkey->iv, &iv);
+	xor_iv_with(&ivkey->iv, &iv);
 }
 
 static void resolve_ivkey_of(const struct silofs_uber *uber,

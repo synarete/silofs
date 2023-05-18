@@ -18,15 +18,15 @@
 #define SILOFS_SPCLAIM_H_
 
 
-int silofs_claim_vspace(struct silofs_task *task,
-                        enum silofs_stype stype,
-                        struct silofs_voaddr *out_voa);
+
+int silofs_claim_vspace(struct silofs_task *task, enum silofs_stype stype,
+                        struct silofs_vaddr *out_vaddr);
 
 int silofs_reclaim_vspace(struct silofs_task *task,
                           const struct silofs_vaddr *vaddr);
 
 int silofs_claim_ispace(struct silofs_task *task,
-                        struct silofs_ivoaddr *out_ivoa);
+                        struct silofs_vaddr *out_vaddr);
 
 int silofs_addref_vspace(struct silofs_task *task,
                          const struct silofs_vaddr *vaddr);

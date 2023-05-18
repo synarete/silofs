@@ -172,12 +172,13 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_bootsec1k, SILOFS_BOOTSEC_SIZE);
 	REQUIRE_SIZEOF(struct silofs_sb_sproots, 1024);
 	REQUIRE_SIZEOF(struct silofs_sb_blobids, 1024);
+	REQUIRE_SIZEOF(struct silofs_sb_rootivs, 512);
 	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
 	REQUIRE_SIZEOF(struct silofs_space_gauges, 256);
 	REQUIRE_SIZEOF(struct silofs_space_stats, 1024);
-	REQUIRE_SIZEOF(struct silofs_spmap_ref, 120);
+	REQUIRE_SIZEOF(struct silofs_spmap_ref, 96);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPMAP_SIZE);
-	REQUIRE_SIZEOF(struct silofs_bk_ref, 120);
+	REQUIRE_SIZEOF(struct silofs_bk_ref, 96);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF_KB(struct silofs_inode);
 	REQUIRE_SIZEOF_LBK(struct silofs_lblock);
@@ -215,7 +216,7 @@ static void validate_persistent_types_members(void)
 
 static void validate_persistent_types_alignment1(void)
 {
-	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_ulink, 0);
+	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
 	REQUIRE_OFFSET64(struct silofs_bk_ref, br_uref, 0);
 	REQUIRE_OFFSET64(struct silofs_bk_ref, br_allocated, 48);
 	REQUIRE_OFFSET64(struct silofs_bk_ref, br_unwritten, 56);
@@ -233,6 +234,7 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET(struct silofs_bootsec1k, bs_chiper_mode, 100);
 	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_key_hash, 128);
 	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_sb_uaddr, 256);
+	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_sb_riv, 320);
 	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_rands, 384);
 	REQUIRE_OFFSET64(struct silofs_bootsec1k, bs_reserved5, 512);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_hdr, 0);
@@ -247,8 +249,9 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_vrange, 656);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_birth_time, 680);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_clone_time, 688);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproot_uaddr, 1024);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproots, 1024);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_blobid, 2048);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_rootivs, 3072);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_curr, 4096);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_base, 5120);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_btime, 0);
@@ -264,13 +267,15 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_vrange, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subref, 2048);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subrefs, 4096);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_rivs, 28672);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_blobid, 24);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subref, 2048);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subrefs, 4096);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_rivs, 28672);
 }
 
 static void validate_persistent_types_alignment3(void)

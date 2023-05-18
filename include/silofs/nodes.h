@@ -52,9 +52,9 @@ struct silofs_lnode_info {
 /* unode */
 struct silofs_unode_info {
 	struct silofs_lnode_info        u;
-	struct silofs_uaddr             u_uaddr;
-	struct silofs_dirtyq           *u_dq;
+	struct silofs_ulink             u_ulink;
 	struct silofs_list_head         u_dq_lh;
+	struct silofs_dirtyq           *u_dq;
 	struct silofs_ubk_info         *u_ubki;
 };
 
@@ -91,7 +91,7 @@ struct silofs_vnode_info {
 	struct silofs_lnode_info        v;
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
-	struct silofs_oaddr             v_oaddr;
+	struct silofs_olink             v_olink;
 	struct silofs_iovref            v_iovr;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_dirtyq           *v_dq;
@@ -212,21 +212,15 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni);
 struct silofs_unode_info *
 silofs_ui_from_dirty_lh(struct silofs_list_head *lh);
 
-void silofs_ui_bind_uber(struct silofs_unode_info *ui,
-                         struct silofs_uber *uber);
-
-void silofs_ui_seal_meta(struct silofs_unode_info *ui);
+void silofs_ui_set_uber(struct silofs_unode_info *ui,
+                        struct silofs_uber *uber);
 
 void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
-
-void silofs_fill_csum_meta(union silofs_view *view);
-
-int silofs_verify_csum_meta(const union silofs_view *view);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_unode_info *
-silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr);
+silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink);
 
 struct silofs_vnode_info *
 silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);

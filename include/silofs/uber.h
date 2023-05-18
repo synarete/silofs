@@ -28,8 +28,8 @@ time_t silofs_uber_uptime(const struct silofs_uber *uber);
 
 void silofs_uber_shut(struct silofs_uber *uber);
 
-void silofs_uber_set_sbaddr(struct silofs_uber *uber,
-                            const struct silofs_uaddr *sb_addr);
+void silofs_uber_bind_child(struct silofs_uber *uber,
+                            const struct silofs_ulink *ulink);
 
 int silofs_uber_format_super(struct silofs_uber *uber, size_t capacity);
 
@@ -43,29 +43,29 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_super_at(struct silofs_uber *uber,
-                          const struct silofs_uaddr *uaddr,
+                          const struct silofs_ulink *ulink,
                           struct silofs_sb_info **out_sbi);
 
 int silofs_stage_super_at(struct silofs_uber *uber,
-                          const struct silofs_uaddr *uaddr,
+                          const struct silofs_ulink *ulink,
                           struct silofs_sb_info **out_sbi);
 
 
 int silofs_spawn_spnode_at(struct silofs_uber *uber,
-                           const struct silofs_uaddr *uaddr,
+                           const struct silofs_ulink *ulink,
                            struct silofs_spnode_info **out_sni);
 
 int silofs_stage_spnode_at(struct silofs_uber *uber,
-                           const struct silofs_uaddr *uaddr,
+                           const struct silofs_ulink *ulink,
                            struct silofs_spnode_info **out_sni);
 
 
 int silofs_spawn_spleaf_at(struct silofs_uber *uber,
-                           const struct silofs_uaddr *uaddr,
+                           const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli);
 
 int silofs_stage_spleaf_at(struct silofs_uber *uber,
-                           const struct silofs_uaddr *uaddr,
+                           const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -86,6 +86,6 @@ int silofs_stage_blob_at(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_relax_cache_by(struct silofs_task *task, int flags);
+void silofs_relax_cache_by(const struct silofs_task *task, int flags);
 
 #endif /* SILOFS_UBER_H_ */

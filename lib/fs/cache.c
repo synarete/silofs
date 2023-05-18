@@ -2052,9 +2052,9 @@ static void cache_drop_evictable_uis(struct silofs_cache *cache)
 
 static struct silofs_unode_info *
 cache_new_ui(const struct silofs_cache *cache,
-             const struct silofs_uaddr *uaddr)
+             const struct silofs_ulink *ulink)
 {
-	return silofs_new_ui(cache->c_alloc, uaddr);
+	return silofs_new_ui(cache->c_alloc, ulink);
 }
 
 static void cache_track_uaddr(struct silofs_cache *cache,
@@ -2112,13 +2112,13 @@ silofs_cache_lookup_ui(struct silofs_cache *cache,
 }
 
 static struct silofs_unode_info *
-cache_require_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
+cache_require_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		ui = cache_new_ui(cache, uaddr);
+		ui = cache_new_ui(cache, ulink);
 		if (ui != NULL) {
 			break;
 		}
@@ -2145,11 +2145,11 @@ static void cache_set_dq_of_ui(struct silofs_cache *cache,
 }
 
 static struct silofs_unode_info *
-cache_spawn_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
+cache_spawn_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui;
 
-	ui = cache_require_ui(cache, uaddr);
+	ui = cache_require_ui(cache, ulink);
 	if (ui != NULL) {
 		lni_set_cache(&ui->u, cache);
 		cache_set_dq_of_ui(cache, ui);
@@ -2161,11 +2161,11 @@ cache_spawn_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 
 struct silofs_unode_info *
 silofs_cache_spawn_ui(struct silofs_cache *cache,
-                      const struct silofs_uaddr *uaddr)
+                      const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui;
 
-	ui = cache_spawn_ui(cache, uaddr);
+	ui = cache_spawn_ui(cache, ulink);
 	cache_post_op(cache);
 	return ui;
 }

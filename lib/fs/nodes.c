@@ -135,11 +135,6 @@ static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr)
 	return silofs_hash_xxh32(payload, pl_size, SILOFS_STYPE_MAGIC);
 }
 
-static void hdr_calc_set_csum(struct silofs_header *hdr)
-{
-	hdr_set_csum(hdr, hdr_calc_chekcsum(hdr));
-}
-
 static int hdr_verify_checksum(const struct silofs_header *hdr)
 {
 	uint32_t csum;
@@ -272,32 +267,32 @@ static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)
 }
 
 static void ui_init(struct silofs_unode_info *ui,
-                    const struct silofs_uaddr *uaddr,
+                    const struct silofs_ulink *ulink,
                     silofs_lnode_del_fn del_fn)
 {
-	lni_init(&ui->u, uaddr->stype, del_fn);
+	lni_init(&ui->u, ulink->uaddr.stype, del_fn);
 	lh_init(&ui->u_dq_lh);
-	uaddr_assign(&ui->u_uaddr, uaddr);
+	ulink_assign(&ui->u_ulink, ulink);
 	ui->u_ubki = NULL;
 	ui->u_dq = NULL;
 }
 
 static void ui_fini(struct silofs_unode_info *ui)
 {
-	uaddr_reset(&ui->u_uaddr);
+	ulink_reset(&ui->u_ulink);
 	lh_fini(&ui->u_dq_lh);
 	lni_fini(&ui->u);
 	ui->u_ubki = NULL;
 	ui->u_dq = NULL;
 }
 
-struct silofs_unode_info *silofs_ui_from_lni(const struct silofs_lnode_info
-                *si)
+struct silofs_unode_info *
+silofs_ui_from_lni(const struct silofs_lnode_info *lni)
 {
 	const struct silofs_unode_info *ui = NULL;
 
-	if (likely(si != NULL)) {
-		ui = container_of2(si, struct silofs_unode_info, u);
+	if (likely(lni != NULL)) {
+		ui = container_of2(lni, struct silofs_unode_info, u);
 	}
 	return ui_unconst(ui);
 }
@@ -307,15 +302,10 @@ void silofs_seal_unode(struct silofs_unode_info *ui)
 	hdr_set_csum(&ui->u.view->hdr, lni_calc_chekcsum(&ui->u));
 }
 
-void silofs_ui_bind_uber(struct silofs_unode_info *ui,
-                         struct silofs_uber *uber)
+void silofs_ui_set_uber(struct silofs_unode_info *ui,
+                        struct silofs_uber *uber)
 {
 	ui->u.uber = uber;
-}
-
-void silofs_ui_seal_meta(struct silofs_unode_info *ui)
-{
-	silofs_fill_csum_meta(ui->u.view);
 }
 
 struct silofs_unode_info *
@@ -390,7 +380,7 @@ static void vi_init(struct silofs_vnode_info *vi,
 	lni_init(&vi->v, vaddr->stype, del_fn);
 	list_head_init(&vi->v_dq_lh);
 	vaddr_assign(&vi->v_vaddr, vaddr);
-	oaddr_reset(&vi->v_oaddr);
+	silofs_olink_reset(&vi->v_olink);
 	silofs_iovref_init(&vi->v_iovr, vi_iov_pre, vi_iov_post);
 	vi->v_vbki = NULL;
 	vi->v_dq = NULL;
@@ -406,13 +396,13 @@ static void vi_fini(struct silofs_vnode_info *vi)
 	vi->v_dq = NULL;
 }
 
-struct silofs_vnode_info *silofs_vi_from_lni(const struct silofs_lnode_info
-                *si)
+struct silofs_vnode_info *
+silofs_vi_from_lni(const struct silofs_lnode_info *lni)
 {
 	const struct silofs_vnode_info *vi = NULL;
 
-	if (likely(si != NULL)) {
-		vi = container_of2(si, struct silofs_vnode_info, v);
+	if (likely(lni != NULL)) {
+		vi = container_of2(lni, struct silofs_vnode_info, v);
 	}
 	return vi_unconst(vi);
 }
@@ -485,10 +475,10 @@ silofs_sbi_from_ui(const struct silofs_unode_info *ui)
 }
 
 static int sbi_init(struct silofs_sb_info *sbi,
-                    const struct silofs_uaddr *uaddr)
+                    const struct silofs_ulink *ulink)
 {
 	silofs_memzero(sbi, sizeof(*sbi));
-	ui_init(&sbi->sb_ui, uaddr, sbi_delete_by);
+	ui_init(&sbi->sb_ui, ulink, sbi_delete_by);
 	sbi->sb = NULL;
 	return 0;
 }
@@ -537,7 +527,7 @@ static void sbi_delete_by(struct silofs_lnode_info *lni,
 }
 
 static struct silofs_sb_info *
-sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+sbi_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
 	struct silofs_sb_info *sbi;
 	int err;
@@ -546,7 +536,7 @@ sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	if (sbi == NULL) {
 		return NULL;
 	}
-	err = sbi_init(sbi, uaddr);
+	err = sbi_init(sbi, ulink);
 	if (err) {
 		sbi_free(sbi, alloc);
 		return NULL;
@@ -568,9 +558,9 @@ sni_to_ui(const struct silofs_spnode_info *sni)
 }
 
 static void sni_init(struct silofs_spnode_info *sni,
-                     const struct silofs_uaddr *uaddr)
+                     const struct silofs_ulink *ulink)
 {
-	ui_init(&sni->sn_ui, uaddr, sni_delete_by);
+	ui_init(&sni->sn_ui, ulink, sni_delete_by);
 	sni->sn = NULL;
 	sni->sn_nactive_subs = 0;
 }
@@ -620,13 +610,13 @@ static void sni_delete_by(struct silofs_lnode_info *lni,
 }
 
 static struct silofs_spnode_info *
-sni_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+sni_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
 	struct silofs_spnode_info *sni;
 
 	sni = sni_malloc(alloc);
 	if (sni != NULL) {
-		sni_init(sni, uaddr);
+		sni_init(sni, ulink);
 	}
 	return sni;
 }
@@ -656,9 +646,9 @@ sli_to_ui(const struct silofs_spleaf_info *sli)
 }
 
 static void sli_init(struct silofs_spleaf_info *sli,
-                     const struct silofs_uaddr *uaddr)
+                     const struct silofs_ulink *ulink)
 {
-	ui_init(&sli->sl_ui, uaddr, sli_delete_by);
+	ui_init(&sli->sl_ui, ulink, sli_delete_by);
 	sli->sl = NULL;
 	sli->sl_nused_bytes = 0;
 }
@@ -708,13 +698,13 @@ static void sli_delete_by(struct silofs_lnode_info *lni,
 }
 
 static struct silofs_spleaf_info *
-sli_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+sli_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
 	struct silofs_spleaf_info *sli;
 
 	sli = sli_malloc(alloc);
 	if (sli != NULL) {
-		sli_init(sli, uaddr);
+		sli_init(sli, ulink);
 	}
 	return sli;
 }
@@ -1325,19 +1315,19 @@ bool silofs_test_evictable(const struct silofs_lnode_info *lni)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_unode_info *
-silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
+silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui;
 
-	switch (uaddr->stype) {
+	switch (ulink->uaddr.stype) {
 	case SILOFS_STYPE_SUPER:
-		ui = sbi_to_ui(sbi_new(alloc, uaddr));
+		ui = sbi_to_ui(sbi_new(alloc, ulink));
 		break;
 	case SILOFS_STYPE_SPNODE:
-		ui = sni_to_ui(sni_new(alloc, uaddr));
+		ui = sni_to_ui(sni_new(alloc, ulink));
 		break;
 	case SILOFS_STYPE_SPLEAF:
-		ui = sli_to_ui(sli_new(alloc, uaddr));
+		ui = sli_to_ui(sli_new(alloc, ulink));
 		break;
 	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
@@ -1567,14 +1557,4 @@ void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype)
 
 	silofs_memzero(view, len);
 	hdr_stamp(&view->hdr, stype, len);
-}
-
-void silofs_fill_csum_meta(union silofs_view *view)
-{
-	hdr_calc_set_csum(&view->hdr);
-}
-
-int silofs_verify_csum_meta(const union silofs_view *view)
-{
-	return view_verify_checksum(view);
 }

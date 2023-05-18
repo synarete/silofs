@@ -43,19 +43,19 @@ void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi);
 void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
                            struct silofs_stats_info *sti);
 
-void silofs_sbi_bind_uber(struct silofs_sb_info *sbi,
-                          struct silofs_uber *uber);
-
-
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          enum silofs_stype vstype,
                          struct silofs_uaddr *out_uaddr);
 
-void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
-                            enum silofs_stype vstype,
-                            const struct silofs_spnode_info *sni);
+int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
+                             enum silofs_stype vstype,
+                             struct silofs_ulink *out_ulink);
 
-void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
+void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
+                           enum silofs_stype vstype,
+                           const struct silofs_ulink *ulink);
+
+void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
 
 
@@ -82,10 +82,9 @@ void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
 bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
                               enum silofs_stype vspace);
 
-void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
-                              loff_t voff, enum silofs_stype vspace,
-                              struct silofs_uaddr *out_uaddr);
-
+void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
+                                loff_t voff, enum silofs_stype vspace,
+                                struct silofs_ulink *out_ulink);
 
 bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
                                  const struct silofs_blobid *blobid);

@@ -806,13 +806,10 @@ static int filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int filc_require_mutable_vaddr(const struct silofs_file_ctx *f_ctx,
-                                      const struct silofs_vaddr *vaddr)
+static int filc_require_mut_vaddr(const struct silofs_file_ctx *f_ctx,
+                                  const struct silofs_vaddr *vaddr)
 {
-	struct silofs_voaddr voa;
-	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
-
-	return silofs_resolve_voaddr_of(f_ctx->task, vaddr, stg_mode, &voa);
+	return silofs_require_mut_vaddr(f_ctx->task, vaddr);
 }
 
 static size_t filc_io_length(const struct silofs_file_ctx *f_ctx)
@@ -893,22 +890,26 @@ static int fpr_require_mutable(const struct silofs_fpos_ref *fpr)
 	int ret = 0;
 
 	if (!vaddr_isnull(vaddr)) {
-		ret = filc_require_mutable_vaddr(fpr->f_ctx, vaddr);
+		ret = filc_require_mut_vaddr(fpr->f_ctx, vaddr);
 	}
 	return ret;
 }
 
 static int fpr_resolve_oaddr(struct silofs_fpos_ref *fpr)
 {
-	const struct silofs_vaddr *vaddr = &fpr->vaddr;
-	int ret = 0;
+	struct silofs_olink olink;
+	int err;
 
-	if (!vaddr_isnull(vaddr)) {
-		ret = silofs_resolve_oaddr_of(fpr->f_ctx->task, &fpr->vaddr,
-		                              fpr->f_ctx->stg_mode,
-		                              &fpr->oaddr);
+	if (vaddr_isnull(&fpr->vaddr)) {
+		return 0;
 	}
-	return ret;
+	err = silofs_resolve_olink_of(fpr->f_ctx->task, &fpr->vaddr,
+	                              fpr->f_ctx->stg_mode, &olink);
+	if (err) {
+		return err;
+	}
+	oaddr_assign(&fpr->oaddr, &olink.oaddr);
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2007,15 +2008,7 @@ static int filc_claim_data_space(const struct silofs_file_ctx *f_ctx,
                                  enum silofs_stype stype,
                                  struct silofs_vaddr *out_vaddr)
 {
-	struct silofs_voaddr voa;
-	int err;
-
-	err = silofs_claim_vspace(f_ctx->task, stype, &voa);
-	if (err) {
-		return err;
-	}
-	vaddr_assign(out_vaddr, &voa.vaddr);
-	return 0;
+	return silofs_claim_vspace(f_ctx->task, stype, out_vaddr);
 }
 
 static int filc_share_data_space(const struct silofs_file_ctx *f_ctx,

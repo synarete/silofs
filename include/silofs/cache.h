@@ -126,7 +126,7 @@ void silofs_cache_forget_ubk(struct silofs_cache *cache,
 
 struct silofs_unode_info *
 silofs_cache_spawn_ui(struct silofs_cache *cache,
-                      const struct silofs_uaddr *uaddr);
+                      const struct silofs_ulink *ulink);
 
 void silofs_cache_forget_ui(struct silofs_cache *cache,
                             struct silofs_unode_info *ui);

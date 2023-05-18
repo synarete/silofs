@@ -134,6 +134,10 @@
 #define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
 #define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
 
+#define ulink_assign(ul, oth)           silofs_ulink_assign(ul, oth)
+#define ulink_assign2(ul, ua, iv)       silofs_ulink_assign2(ul, ua, iv)
+#define ulink_reset(ul)                 silofs_ulink_reset(ul)
+
 #define vaddr_none()                    silofs_vaddr_none()
 #define vaddr_isnull(va)                silofs_vaddr_isnull(va)
 #define vaddr_isdata(va)                silofs_vaddr_isdata(va)
@@ -156,30 +160,37 @@
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
+#define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 #define sbi_blobid(sbi)                 silofs_sbi_blobid(sbi)
 #define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)
 
+#define sni_ulink(sni)                  silofs_sni_ulink(sni)
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)
 #define sni_decref(sni)                 silofs_sni_decref(sni)
 #define sni_vrange(sni, vrng)           silofs_sni_vspace_range(sni, vrng)
 #define sni_slot_of(sni, o)             silofs_sni_slot_of(sni, o)
+#define sni_base_voff(sni)              silofs_sni_base_voff(sni)
 
+#define sli_ulink(sli)                  silofs_sli_ulink(sli)
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
 #define sli_incref(sli)                 silofs_sli_incref(sli)
 #define sli_decref(sli)                 silofs_sli_decref(sli)
 #define sli_vrange(sli, vrng)           silofs_sli_vspace_range(sli, vrng)
+#define sli_base_voff(sli)              silofs_sli_base_voff(sli)
 
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)
 #define ui_dirtify(ui)                  silofs_ui_dirtify(ui)
 #define ui_stype(ui)                    silofs_ui_stype(ui)
+#define ui_ulink(ui)                    silofs_ui_ulink(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
 #define ui_oaddr(ui)                    silofs_ui_oaddr(ui)
 #define ui_bkaddr(ui)                   silofs_ui_bkaddr(ui)
+#define ui_riv(ui)                      silofs_ui_riv(ui)
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)
@@ -255,27 +266,39 @@
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static inline const struct silofs_ulink *
+silofs_ui_ulink(const struct silofs_unode_info *ui)
+{
+	return &ui->u_ulink;
+}
+
+static inline const struct silofs_iv *
+silofs_ui_riv(const struct silofs_unode_info *ui)
+{
+	return &ui->u_ulink.riv;
+}
+
 static inline const struct silofs_uaddr *
 silofs_ui_uaddr(const struct silofs_unode_info *ui)
 {
-	return &ui->u_uaddr;
+	return &ui->u_ulink.uaddr;
 }
 
 static inline const struct silofs_oaddr *
 silofs_ui_oaddr(const struct silofs_unode_info *ui)
 {
-	return &ui->u_uaddr.oaddr;
+	return &ui->u_ulink.uaddr.oaddr;
 }
 
 static inline const struct silofs_bkaddr *
 silofs_ui_bkaddr(const struct silofs_unode_info *ui)
 {
-	return &ui->u_uaddr.oaddr.bka;
+	return &ui->u_ulink.uaddr.oaddr.bka;
 }
 
 static inline enum silofs_stype
 silofs_ui_stype(const struct silofs_unode_info *ui) {
-	return ui->u_uaddr.stype;
+	return ui->u_ulink.uaddr.stype;
 }
 
 static inline bool
@@ -372,16 +395,16 @@ silofs_sbi_cache(const struct silofs_sb_info *sbi)
 	return sbi->sb_ui.u.ce.ce_cache;
 }
 
+static inline const struct silofs_ulink *
+silofs_sbi_ulink(const struct silofs_sb_info *sbi)
+{
+	return silofs_ui_ulink(&sbi->sb_ui);
+}
+
 static inline const struct silofs_uaddr *
 silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 {
-	return &sbi->sb_ui.u_uaddr;
-}
-
-static inline const struct silofs_blobid *
-silofs_sbi_blobid(const struct silofs_sb_info *sbi)
-{
-	return &sbi->sb_ui.u_uaddr.oaddr.bka.blobid;
+	return silofs_ui_uaddr(&sbi->sb_ui);
 }
 
 #endif /* SILOFS_PRIVATE_H_ */

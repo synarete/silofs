@@ -244,6 +244,24 @@ struct silofs_uaddr {
 	enum silofs_height      height;
 };
 
+/* a pair of object-address and its associate (random) IV */
+struct silofs_olink {
+	struct silofs_oaddr     oaddr;
+	struct silofs_iv        riv;
+};
+
+/* a pair of unode-address and its associate (random) IV */
+struct silofs_ulink {
+	struct silofs_uaddr     uaddr;
+	struct silofs_iv        riv;
+};
+
+/* a pair of block-address and its associate (random) IV */
+struct silofs_blink {
+	struct silofs_bkaddr    bka;
+	struct silofs_iv        riv;
+};
+
 /* logical addressing of virtual elements */
 struct silofs_vaddr {
 	loff_t                  off;
@@ -255,24 +273,6 @@ struct silofs_vaddr {
 struct silofs_vaddrs {
 	struct silofs_vaddr     vaddr[SILOFS_NKB_IN_LBK];
 	size_t                  count;
-};
-
-/* inodes addressing: ino to logical address mapping */
-struct silofs_iaddr {
-	ino_t                   ino;
-	struct silofs_vaddr     vaddr;
-};
-
-/* vnode's object placement address */
-struct silofs_voaddr {
-	struct silofs_vaddr     vaddr;
-	struct silofs_oaddr     oaddr;
-};
-
-/* inode's placement address */
-struct silofs_ivoaddr {
-	ino_t                   ino;
-	struct silofs_voaddr    voa;
 };
 
 /* vspace address range [beg, end) */
@@ -446,7 +446,7 @@ struct silofs_uber {
 	struct silofs_oper_stat         ub_ops;
 	struct silofs_blobf            *ub_sb_blobf;
 	struct silofs_sb_info          *ub_sbi;
-	struct silofs_uaddr             ub_sb_addr;
+	struct silofs_ulink             ub_sb_ulink;
 	struct silofs_ucred             ub_owner;
 	unsigned long                   ub_ctl_flags;
 	unsigned long                   ub_ms_flags;

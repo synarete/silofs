@@ -601,17 +601,28 @@ long silofs_iv_compare(const struct silofs_iv *iv,
 	return memcmp(iv->iv, iv_other->iv, sizeof(iv->iv));
 }
 
-void silofs_iv_mkxor(struct silofs_iv *iv,
-                     const struct silofs_iv *iv1, const struct silofs_iv *iv2)
+static void iv_make_by_xor(struct silofs_iv *iv,
+                           const struct silofs_iv *iv1,
+                           const struct silofs_iv *iv2)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
 		iv->iv[i] = iv1->iv[i] ^ iv2->iv[i];
 	}
 }
 
+void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv_other)
+{
+	iv_make_by_xor(iv, iv, iv_other);
+}
+
 void silofs_iv_mkrand(struct silofs_iv *iv)
 {
 	randomize(iv->iv, sizeof(iv->iv), false);
+}
+
+void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs)
+{
+	randomize(ivs, nivs * sizeof(*ivs), false);
 }
 
 void silofs_ivkey_init(struct silofs_ivkey *ivkey)
@@ -626,8 +637,8 @@ void silofs_ivkey_fini(struct silofs_ivkey *ivkey)
 	memset(ivkey, 0xC3, sizeof(*ivkey));
 }
 
-void silofs_ivkey_copyto(const struct silofs_ivkey *ivkey,
-                         struct silofs_ivkey *other)
+void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
+                         const struct silofs_ivkey *other)
 {
-	memcpy(other, ivkey, sizeof(*other));
+	memcpy(ivkey, other, sizeof(*ivkey));
 }

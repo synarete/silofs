@@ -320,6 +320,19 @@ static void bsec1k_set_sb_uaddr(struct silofs_bootsec1k *bsc,
 	silofs_uaddr64b_set(&bsc->bs_sb_uaddr, uaddr);
 }
 
+static void bsec1k_sb_riv(const struct silofs_bootsec1k *bsc,
+                          struct silofs_iv *out_riv)
+{
+	silofs_iv_assign(out_riv, &bsc->bs_sb_riv);
+}
+
+static void bsec1k_set_sb_riv(struct silofs_bootsec1k *bsc,
+                              const struct silofs_iv *riv)
+{
+	silofs_iv_assign(&bsc->bs_sb_riv, riv);
+}
+
+
 static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
 {
 	uint64_t magic;
@@ -445,7 +458,8 @@ int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,
 void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
                          struct silofs_bootsec *bsec)
 {
-	bsec1k_sb_uaddr(bsc, &bsec->sb_uaddr);
+	bsec1k_sb_uaddr(bsc, &bsec->sb_ulink.uaddr);
+	bsec1k_sb_riv(bsc, &bsec->sb_ulink.riv);
 	bsec1k_uuid(bsc, &bsec->uuid);
 	bsec1k_cipher_args(bsc, &bsec->cip_args);
 	bsec->flags = bsec1k_flags(bsc);
@@ -458,7 +472,8 @@ void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
                        const struct silofs_bootsec *bsec)
 {
 	silofs_bsec1k_init(bsc);
-	bsec1k_set_sb_uaddr(bsc, &bsec->sb_uaddr);
+	bsec1k_set_sb_uaddr(bsc, &bsec->sb_ulink.uaddr);
+	bsec1k_set_sb_riv(bsc, &bsec->sb_ulink.riv);
 	bsec1k_set_uuid(bsc, &bsec->uuid);
 	bsec1k_set_flags(bsc, bsec->flags);
 	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
@@ -479,7 +494,7 @@ void silofs_bsec1k_setn(struct silofs_bootsec1k *bsc,
 void silofs_bootsec_init(struct silofs_bootsec *bsec)
 {
 	silofs_memzero(bsec, sizeof(*bsec));
-	silofs_uaddr_reset(&bsec->sb_uaddr);
+	silofs_ulink_reset(&bsec->sb_ulink);
 	silofs_default_cip_args(&bsec->cip_args);
 	silofs_uuid_generate(&bsec->uuid);
 	bsec->flags = SILOFS_BOOTF_NONE;
@@ -502,16 +517,16 @@ void silofs_bootsec_set_uuid(struct silofs_bootsec *bsec,
 	silofs_uuid_assign(&bsec->uuid, uuid);
 }
 
-void silofs_bootsec_sb_uaddr(const struct silofs_bootsec *bsec,
-                             struct silofs_uaddr *out_uaddr)
+void silofs_bootsec_sb_ulink(const struct silofs_bootsec *bsec,
+                             struct silofs_ulink *out_ulink)
 {
-	silofs_uaddr_assign(out_uaddr, &bsec->sb_uaddr);
+	silofs_ulink_assign(out_ulink, &bsec->sb_ulink);
 }
 
-void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
-                                 const struct silofs_uaddr *sb_uaddr)
+void silofs_bootsec_set_sb_ulink(struct silofs_bootsec *bsec,
+                                 const struct silofs_ulink *sb_ulink)
 {
-	silofs_uaddr_assign(&bsec->sb_uaddr, sb_uaddr);
+	silofs_ulink_assign(&bsec->sb_ulink, sb_ulink);
 }
 
 void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,

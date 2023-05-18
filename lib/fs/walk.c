@@ -51,9 +51,9 @@ static void sbi_vrange(const struct silofs_sb_info *sbi,
 
 static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_ulink ulink;
 
-	return silofs_sni_subref_of(sni, voff, &uaddr) == 0;
+	return silofs_sni_resolve_child(sni, voff, &ulink) == 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -191,85 +191,85 @@ static int wac_visit_post_at_unode(const struct silofs_walk_ctx *wa_ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int wac_stage_spnode_at(const struct silofs_walk_ctx *wa_ctx,
-                               const struct silofs_uaddr *uaddr,
+                               const struct silofs_ulink *ulink,
                                struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode_at(wa_ctx->uber, uaddr, out_sni);
+	return silofs_stage_spnode_at(wa_ctx->uber, ulink, out_sni);
 }
 
 static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
-                               const struct silofs_uaddr *uaddr,
+                               const struct silofs_ulink *ulink,
                                struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_at(wa_ctx->uber, uaddr, out_sli);
+	return silofs_stage_spleaf_at(wa_ctx->uber, ulink, out_sli);
 }
 
 static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
+	struct silofs_ulink ulink = { .uaddr.voff = -1 };
 	struct silofs_vrange vrange;
-	struct silofs_uaddr uaddr;
 	int err;
 
 	sbi_vrange(wa_ctx->sbi, &vrange);
 	if (wa_ctx->voff > vrange.end) {
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_sbi_sproot_of(wa_ctx->sbi, wa_ctx->vspace, &uaddr);
+	err = silofs_sbi_resolve_child(wa_ctx->sbi, wa_ctx->vspace, &ulink);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni4);
+	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni4);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spnode3(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_ulink ulink = { .uaddr.voff = -1 };
 	int err;
 
-	err = silofs_sni_subref_of(wa_ctx->sni4, wa_ctx->voff, &uaddr);
+	err = silofs_sni_resolve_child(wa_ctx->sni4, wa_ctx->voff, &ulink);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni3);
+	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni3);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spnode2(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_ulink ulink = { .uaddr.voff = -1 };
 	int err;
 
-	err = silofs_sni_subref_of(wa_ctx->sni3, wa_ctx->voff, &uaddr);
+	err = silofs_sni_resolve_child(wa_ctx->sni3, wa_ctx->voff, &ulink);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni2);
+	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni2);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spnode1(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_ulink ulink = { .uaddr.voff = -1 };
 	int err;
 
-	err = silofs_sni_subref_of(wa_ctx->sni2, wa_ctx->voff, &uaddr);
+	err = silofs_sni_resolve_child(wa_ctx->sni2, wa_ctx->voff, &ulink);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni1);
+	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni1);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spleaf(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_ulink ulink;
 	int err;
 
-	err = silofs_sni_subref_of(wa_ctx->sni1, wa_ctx->voff, &uaddr);
+	err = silofs_sni_resolve_child(wa_ctx->sni1, wa_ctx->voff, &ulink);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spleaf_at(wa_ctx, &uaddr, &wa_ctx->sli);
+	err = wac_stage_spleaf_at(wa_ctx, &ulink, &wa_ctx->sli);
 	check_ok_or_bailout(err);
 	return 0;
 }

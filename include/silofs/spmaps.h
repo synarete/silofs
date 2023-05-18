@@ -29,6 +29,9 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
 
+const struct silofs_ulink *
+silofs_sni_ulink(const struct silofs_spnode_info *sni);
+
 const struct silofs_uaddr *
 silofs_sni_uaddr(const struct silofs_spnode_info *sni);
 
@@ -41,19 +44,8 @@ void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
 
 void silofs_sni_update_staged(struct silofs_spnode_info *sni);
 
-void silofs_sni_clone_subrefs(struct silofs_spnode_info *sni,
-                              const struct silofs_spnode_info *sni_other);
-
-bool silofs_sni_has_child_at(const struct silofs_spnode_info *sni, loff_t off);
-
-int silofs_sni_subref_of(const struct silofs_spnode_info *sni, loff_t voff,
-                         struct silofs_uaddr *out_ulink);
-
-void silofs_sni_bind_child_spleaf(struct silofs_spnode_info *sni,
-                                  const struct silofs_spleaf_info *sli);
-
-void silofs_sni_bind_child_spnode(struct silofs_spnode_info *sni,
-                                  const struct silofs_spnode_info *sni_child);
+void silofs_sni_clone_from(struct silofs_spnode_info *sni,
+                           const struct silofs_spnode_info *sni_other);
 
 void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
                              struct silofs_vrange *vrange);
@@ -67,12 +59,20 @@ void silofs_sni_main_blob(const struct silofs_spnode_info *sni,
 void silofs_sni_bind_main_blob(struct silofs_spnode_info *sni,
                                const struct silofs_blobid *blobid);
 
-bool silofs_sni_has_main_blob(const struct silofs_spnode_info *sni);
+void silofs_sni_resolve_main(const struct silofs_spnode_info *sni,
+                             loff_t voff, struct silofs_ulink *out_ulink);
 
-void silofs_sni_resolve_main_at(const struct silofs_spnode_info *sni,
-                                loff_t voff, struct silofs_uaddr *out_ua);
+void silofs_sni_bind_child(struct silofs_spnode_info *sni, loff_t voff,
+                           const struct silofs_ulink *ulink);
+
+int silofs_sni_resolve_child(const struct silofs_spnode_info *sni,
+                             loff_t voff, struct silofs_ulink *out_ulink);
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_ulink *
+silofs_sli_ulink(const struct silofs_spleaf_info *sli);
 
 const struct silofs_uaddr *
 silofs_sli_uaddr(const struct silofs_spleaf_info *sli);
@@ -135,23 +135,18 @@ void silofs_sli_main_blob(const struct silofs_spleaf_info *sli,
 void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
                                const struct silofs_blobid *blobid);
 
-bool silofs_sli_has_main_blob(const struct silofs_spleaf_info *sli,
-                              const struct silofs_treeid *treeid);
-
-void silofs_sli_clone_subrefs(struct silofs_spleaf_info *sli,
-                              const struct silofs_spleaf_info *sli_other);
+void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
+                           const struct silofs_spleaf_info *sli_other);
 
 
-void silofs_sli_resolve_main_ubk(const struct silofs_spleaf_info *sli,
-                                 loff_t voff, struct silofs_bkaddr *out_bka);
+void silofs_sli_resolve_main(const struct silofs_spleaf_info *sli,
+                             loff_t voff, struct silofs_blink *out_blink);
 
-int silofs_sli_resolve_ubk(const struct silofs_spleaf_info *sli,
-                           loff_t voff, struct silofs_bkaddr *out_bkaddr);
+void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
+                           const struct silofs_blink *blink);
 
-void silofs_sli_rebind_ubk(struct silofs_spleaf_info *sli, loff_t voff,
-                           const struct silofs_bkaddr *bkaddr);
-
-void silofs_sli_seal_meta(struct silofs_spleaf_info *sli);
+int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
+                             loff_t voff, struct silofs_blink *out_blink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

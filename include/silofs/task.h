@@ -30,7 +30,7 @@ struct silofs_task {
 
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
-	struct silofs_oaddr         oaddr;
+	struct silofs_olink         olink;
 	const union silofs_view    *view;
 	enum silofs_stype           stype;
 };

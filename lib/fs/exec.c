@@ -1002,7 +1002,7 @@ static int format_base_vspmaps(const struct silofs_fs_env *fse)
 
 static int exec_claim_vspace(const struct silofs_fs_env *fse,
                              enum silofs_stype stype,
-                             struct silofs_voaddr *out_voa)
+                             struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_task task;
 	int err;
@@ -1011,12 +1011,12 @@ static int exec_claim_vspace(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_claim_vspace(&task, stype, out_voa);
+	err = silofs_claim_vspace(&task, stype, out_vaddr);
 	return term_task(&task, err);
 }
 
 static int exec_reclaim_vspace(const struct silofs_fs_env *fse,
-                               const struct silofs_voaddr *voa)
+                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_task task;
 	int err;
@@ -1025,35 +1025,35 @@ static int exec_reclaim_vspace(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_reclaim_vspace(&task, &voa->vaddr);
+	err = silofs_reclaim_vspace(&task, vaddr);
 	return term_task(&task, err);
 }
 
 static int claim_reclaim_vspace_of(const struct silofs_fs_env *fse,
                                    enum silofs_stype vspace)
 {
-	struct silofs_voaddr voa;
+	struct silofs_vaddr vaddr;
 	const loff_t voff_exp = 0;
 	int err;
 
 	drop_cache(fse);
-	err = exec_claim_vspace(fse, vspace, &voa);
+	err = exec_claim_vspace(fse, vspace, &vaddr);
 	if (err) {
 		log_err("failed to claim: vspace=%d err=%d", vspace, err);
 		return err;
 	}
 
-	if (voa.vaddr.off != voff_exp) {
+	if (vaddr.off != voff_exp) {
 		log_err("wrong first voff: vspace=%d expected-voff=%ld "
-		        "got-voff=%ld", vspace, voff_exp, voa.vaddr.off);
+		        "got-voff=%ld", vspace, voff_exp, vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 
 	drop_cache(fse);
-	err = exec_reclaim_vspace(fse, &voa);
+	err = exec_reclaim_vspace(fse, &vaddr);
 	if (err) {
 		log_err("failed to reclaim space: vspace=%d voff=%ld err=%d",
-		        vspace, voa.vaddr.off, err);
+		        vspace, vaddr.off, err);
 	}
 	return 0;
 }
@@ -1379,7 +1379,7 @@ static int update_save_bootsec(const struct silofs_fs_env *fse,
 {
 	const struct silofs_sb_info *sbi = fse->fs_uber->ub_sbi;
 
-	silofs_bootsec_set_sb_uaddr(bsec, sbi_uaddr(sbi));
+	silofs_bootsec_set_sb_ulink(bsec, sbi_ulink(sbi));
 	return save_bootsec(fse, bsec);
 }
 
@@ -1431,7 +1431,7 @@ int silofs_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid)
 static int fse_reload_root_sblob(struct silofs_fs_env *fse,
                                  const struct silofs_bootsec *bsec)
 {
-	silofs_uber_set_sbaddr(fse->fs_uber, &bsec->sb_uaddr);
+	silofs_uber_bind_child(fse->fs_uber, &bsec->sb_ulink);
 	return silofs_uber_reload_sblob(fse->fs_uber);
 }
 

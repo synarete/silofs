@@ -17,16 +17,17 @@
 #ifndef SILOFS_ENCDEC_H_
 #define SILOFS_ENCDEC_H_
 
-int silofs_encrypt_view(const struct silofs_uber *uber,
-                        const struct silofs_oaddr *oaddr,
-                        const union silofs_view *view, void *ptr);
-
 void silofs_ui_set_bkview(struct silofs_unode_info *ui);
 
-int silofs_restore_ui_view(const struct silofs_uber *uber,
-                           struct silofs_unode_info *ui);
+int silofs_encrypt_view(const struct silofs_uber *uber,
+                        const struct silofs_oaddr *oaddr,
+                        const struct silofs_iv *seediv,
+                        const union silofs_view *view, void *ptr);
 
-int silofs_restore_vi_view(const struct silofs_uber *uber,
-                           struct silofs_vnode_info *vi, bool raw);
+int silofs_restore_uview(const struct silofs_uber *uber,
+                         struct silofs_unode_info *ui);
+
+int silofs_restore_vview(const struct silofs_uber *uber,
+                         struct silofs_vnode_info *vi, bool raw);
 
 #endif /* SILOFS_ENCDEC_H_ */

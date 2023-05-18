@@ -41,15 +41,17 @@ int silofs_require_spmaps_of(struct silofs_task *task,
                              struct silofs_spnode_info **out_sni,
                              struct silofs_spleaf_info **out_sli);
 
-int silofs_resolve_voaddr_of(struct silofs_task *task,
-                             const struct silofs_vaddr *vaddr,
-                             enum silofs_stg_mode stg_mode,
-                             struct silofs_voaddr *out_voa);
-
-int silofs_resolve_oaddr_of(struct silofs_task *task,
+int silofs_resolve_olink_of(struct silofs_task *task,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stg_mode stg_mode,
-                            struct silofs_oaddr *out_oaddr);
+                            struct silofs_olink *out_olink);
+
+int silofs_require_stg_vaddr(struct silofs_task *task,
+                             enum silofs_stg_mode stg_mode,
+                             const struct silofs_vaddr *vaddr);
+
+int silofs_require_mut_vaddr(struct silofs_task *task,
+                             const struct silofs_vaddr *vaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -63,11 +65,16 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stg_mode stg_mode,
                        struct silofs_inode_info **out_ii);
 
-int silofs_stage_cached_vnode(const struct silofs_task *task,
+int silofs_stage_cached_vnode(struct silofs_task *task,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_vnode_info **out_vi);
 
 int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_refresh_olink_of(struct silofs_task *task,
+                            struct silofs_vnode_info *vi);
 
 #endif /* SILOFS_STAGE_H_ */

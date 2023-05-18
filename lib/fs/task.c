@@ -106,16 +106,20 @@ static int sqe_setup_encrypted_iovs(struct silofs_submitq_ent *sqe,
                                     const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref = NULL;
+	const struct silofs_olink *olink = NULL;
+	void *enc;
 	int err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
-		err = sqe_setup_iov_at(sqe, i, ref->oaddr.len);
+		olink = &ref->olink;
+		err = sqe_setup_iov_at(sqe, i, olink->oaddr.len);
 		if (err) {
 			return err;
 		}
-		err = silofs_encrypt_view(sqe->uber, &ref->oaddr,
-		                          ref->view, sqe->iov[i].iov_base);
+		enc = sqe->iov[i].iov_base;
+		err = silofs_encrypt_view(sqe->uber, &olink->oaddr,
+		                          &olink->riv, ref->view, enc);
 		if (err) {
 			return err;
 		}

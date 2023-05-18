@@ -44,6 +44,23 @@ struct silofs_submit_ctx {
 
 static void dset_moveq(struct silofs_dset *dset);
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int resolve_vnode(struct silofs_task *task,
+                         struct silofs_vnode_info *vi,
+                         struct silofs_olink *out_olink)
+{
+	int err;
+
+	err = silofs_refresh_olink_of(task, vi);
+	if (err) {
+		return err;
+	}
+	silofs_olink_assign(out_olink, &vi->v_olink);
+	return 0;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 
@@ -63,75 +80,42 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 	}
 }
 
-static bool ismutable_oaddr(const struct silofs_task *task,
-                            const struct silofs_oaddr *oaddr)
+static int resolve_unode(const struct silofs_task *task,
+                         const struct silofs_unode_info *ui,
+                         struct silofs_olink *out_olink)
 {
-	if (oaddr_isnull(oaddr)) {
-		return false;
-	}
-	if (!silofs_sbi_ismutable_oaddr(task_sbi(task), oaddr)) {
-		return false;
-	}
-	return true;
-}
-
-static int refresh_cur_oaddr(struct silofs_task *task,
-                             const struct silofs_vaddr *vaddr,
-                             struct silofs_oaddr *oaddr)
-{
-	int err;
-
-	if (ismutable_oaddr(task, oaddr)) {
-		return 0;
-	}
-	/* TODO: FIXME -- should be SILOFS_STG_NOR XXX */
-	err = silofs_resolve_oaddr_of(task, vaddr, SILOFS_STG_COW, oaddr);
-	if (err) {
-		log_warn("failed to resolve vaddr: stype=%d off=%ld "
-		         "err=%d", vaddr->stype, vaddr->off, err);
-		return err;
-	}
+	silofs_ulink_as_olink(ui_ulink(ui), out_olink);
+	silofs_unused(task);
 	return 0;
 }
 
-static int refresh_vi_oaddr(struct silofs_task *task,
-                            struct silofs_vnode_info *vi)
-{
-	return refresh_cur_oaddr(task, vi_vaddr(vi), &vi->v_oaddr);
-}
-
-static int resolve_oaddr_of(struct silofs_task *task,
-                            struct silofs_lnode_info *lni,
-                            struct silofs_oaddr *out_oaddr)
+static int resolve_lnode(struct silofs_task *task,
+                         struct silofs_lnode_info *lni,
+                         struct silofs_olink *out_olink)
 {
 	const struct silofs_unode_info *ui = NULL;
 	struct silofs_vnode_info *vi = NULL;
-	const struct silofs_oaddr *oaddr = NULL;
-	int err;
+	int ret;
 
 	if (stype_isunode(lni->stype)) {
 		ui = silofs_ui_from_lni(lni);
-		oaddr = &ui->u_uaddr.oaddr;
+		ret = resolve_unode(task, ui, out_olink);
 	} else if (stype_isvnode(lni->stype)) {
 		vi = silofs_vi_from_lni(lni);
-		oaddr = &vi->v_oaddr;
-		err = refresh_vi_oaddr(task, vi);
-		if (err) {
-			return err;
-		}
+		ret = resolve_vnode(task, vi, out_olink);
 	} else {
-		silofs_panic("corrupted snode: stype=%d", lni->stype);
+		silofs_panic("corrupted lnode: stype=%d", lni->stype);
+		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
 	}
-	oaddr_assign(out_oaddr, oaddr);
-	return 0;
+	return ret;
 }
 
-static int smc_check_resolved_oaddr(const struct silofs_submit_ctx *sm_ctx,
+static int smc_check_resolved_olink(const struct silofs_submit_ctx *sm_ctx,
                                     const struct silofs_lnode_info *lni,
-                                    const struct silofs_oaddr *oaddr)
+                                    const struct silofs_olink *olink)
 {
 	const struct silofs_sb_info *sbi = sm_ctx->uber->ub_sbi;
-	const struct silofs_blobid *blobid = &oaddr->bka.blobid;
+	const struct silofs_blobid *blobid = &olink->oaddr.bka.blobid;
 	int err = 0;
 	bool mut;
 
@@ -197,15 +181,15 @@ static int smc_setup_sqe_by_refs(struct silofs_submit_ctx *sm_ctx,
 
 static bool smc_append_next_ref(struct silofs_submit_ctx *sm_ctx,
                                 struct silofs_submitq_ent *sqe,
-                                const struct silofs_oaddr *oaddr,
+                                const struct silofs_olink *olink,
                                 struct silofs_lnode_info *lni)
 {
 	struct silofs_submit_ref *ref = &sm_ctx->refs[sqe->cnt];
 	bool ret;
 
-	ret = silofs_sqe_append_ref(sqe, oaddr, lni);
+	ret = silofs_sqe_append_ref(sqe, &olink->oaddr, lni);
 	if (ret) {
-		oaddr_assign(&ref->oaddr, oaddr);
+		silofs_olink_assign(&ref->olink, olink);
 		ref->view = lni->view;
 		ref->stype = lni->stype;
 	}
@@ -216,20 +200,20 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
                                  struct silofs_dset *dset,
                                  struct silofs_submitq_ent *sqe)
 {
-	struct silofs_oaddr oaddr;
+	struct silofs_olink olink;
 	struct silofs_lnode_info *lni = dset->ds_preq;
 	int err;
 
 	while (lni != NULL) {
-		err = resolve_oaddr_of(sm_ctx->task, lni, &oaddr);
+		err = resolve_lnode(sm_ctx->task, lni, &olink);
 		if (err) {
 			return err;
 		}
-		err = smc_check_resolved_oaddr(sm_ctx, lni, &oaddr);
+		err = smc_check_resolved_olink(sm_ctx, lni, &olink);
 		if (err) {
 			return err;
 		}
-		if (!smc_append_next_ref(sm_ctx, sqe, &oaddr, lni)) {
+		if (!smc_append_next_ref(sm_ctx, sqe, &olink, lni)) {
 			break;
 		}
 		dset_moveq(dset);

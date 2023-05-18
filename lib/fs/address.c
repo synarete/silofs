@@ -914,7 +914,8 @@ long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
 
 bool silofs_oaddr_isnull(const struct silofs_oaddr *oaddr)
 {
-	return off_isnull(oaddr->pos) || silofs_bkaddr_isnull(&oaddr->bka);
+	return silofs_off_isnull(oaddr->pos) ||
+	       silofs_bkaddr_isnull(&oaddr->bka);
 }
 
 bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr)
@@ -969,27 +970,36 @@ void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_voaddr_setup(struct silofs_voaddr *voa,
-                         const struct silofs_vaddr *vaddr,
-                         const struct silofs_oaddr *oaddr)
+void silofs_olink_assign(struct silofs_olink *olink,
+                         const struct silofs_olink *other)
 {
-	vaddr_assign(&voa->vaddr, vaddr);
-	oaddr_assign(&voa->oaddr, oaddr);
+	silofs_olink_assign2(olink, &other->oaddr, &other->riv);
 }
 
-void silofs_voaddr_setup_by(struct silofs_voaddr *voa,
-                            const struct silofs_blobid *blobid,
-                            const struct silofs_vaddr *vaddr)
+void silofs_olink_assign2(struct silofs_olink *olink,
+                          const struct silofs_oaddr *oaddr,
+                          const struct silofs_iv *riv)
 {
-	vaddr_assign(&voa->vaddr, vaddr);
-	oaddr_setup_by(&voa->oaddr, blobid, vaddr);
+	silofs_oaddr_assign(&olink->oaddr, oaddr);
+	silofs_iv_assign(&olink->riv, riv);
 }
 
-void silofs_voaddr_assign(struct silofs_voaddr *voa,
-                          const struct silofs_voaddr *other)
+void silofs_olink_setup(struct silofs_olink *olink,
+                        const struct silofs_blink *blink,
+                        const struct silofs_vaddr *vaddr)
 {
-	silofs_voaddr_setup(voa, &other->vaddr, &other->oaddr);
+	struct silofs_oaddr oaddr;
+
+	silofs_oaddr_setup_by(&oaddr, &blink->bka.blobid, vaddr);
+	silofs_olink_assign2(olink, &oaddr, &blink->riv);
 }
+
+void silofs_olink_reset(struct silofs_olink *olink)
+{
+	silofs_oaddr_reset(&olink->oaddr);
+	silofs_iv_reset(&olink->riv);
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1075,28 +1085,56 @@ silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 	return &uaddr->oaddr.bka.blobid;
 }
 
-void silofs_uaddr64b_reset(struct silofs_uaddr64b *uadr)
+void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 {
-	silofs_oaddr48b_reset(&uadr->oaddr);
-	uadr->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
-	uadr->stype = SILOFS_STYPE_NONE;
+	silofs_oaddr48b_reset(&uaddr64->oaddr);
+	uaddr64->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
+	uaddr64->stype = SILOFS_STYPE_NONE;
 }
 
-void silofs_uaddr64b_set(struct silofs_uaddr64b *uadr,
+void silofs_uaddr64b_set(struct silofs_uaddr64b *uaddr64,
                          const struct silofs_uaddr *uaddr)
 {
-	silofs_oaddr48b_set(&uadr->oaddr, &uaddr->oaddr);
-	uadr->voff = silofs_cpu_to_off(uaddr->voff);
-	uadr->stype = (uint8_t)uaddr->stype;
+	silofs_oaddr48b_set(&uaddr64->oaddr, &uaddr->oaddr);
+	uaddr64->voff = silofs_cpu_to_off(uaddr->voff);
+	uaddr64->stype = (uint8_t)uaddr->stype;
 }
 
-void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uadr,
+void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uaddr64,
                            struct silofs_uaddr *uaddr)
 {
-	silofs_oaddr48b_parse(&uadr->oaddr, &uaddr->oaddr);
-	uaddr->voff = silofs_off_to_cpu(uadr->voff);
-	uaddr->stype = (enum silofs_stype)(uadr->stype);
+	silofs_oaddr48b_parse(&uaddr64->oaddr, &uaddr->oaddr);
+	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
+	uaddr->stype = (enum silofs_stype)(uaddr64->stype);
 	uaddr->height = uaddr->oaddr.bka.blobid.height;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ulink_assign(struct silofs_ulink *ulink,
+                         const struct silofs_ulink *other)
+{
+	silofs_ulink_assign2(ulink, &other->uaddr, &other->riv);
+}
+
+void silofs_ulink_assign2(struct silofs_ulink *ulink,
+                          const struct silofs_uaddr *uaddr,
+                          const struct silofs_iv *iv)
+{
+	silofs_uaddr_assign(&ulink->uaddr, uaddr);
+	silofs_iv_assign(&ulink->riv, iv);
+}
+
+void silofs_ulink_reset(struct silofs_ulink *ulink)
+{
+	silofs_uaddr_reset(&ulink->uaddr);
+	silofs_iv_reset(&ulink->riv);
+}
+
+void silofs_ulink_as_olink(const struct silofs_ulink *ulink,
+                           struct silofs_olink *out_olink)
+{
+	silofs_olink_assign2(out_olink, &ulink->uaddr.oaddr, &ulink->riv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1359,26 +1397,21 @@ void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_iv_of_oaddr(struct silofs_iv *iv, const struct silofs_oaddr *oaddr)
+void silofs_oaddr_as_iv(const struct silofs_oaddr *oaddr,
+                        struct silofs_iv *out_iv)
 {
-	STATICASSERT_GE(ARRAY_SIZE(iv->iv), 16);
+	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
 
-	blobid_as_iv(&oaddr->bka.blobid, iv);
-	iv->iv[8] ^= (uint8_t)(oaddr->pos & 0xFF);
-	iv->iv[9] ^= (uint8_t)((oaddr->pos >> 8) & 0xFF);
-	iv->iv[10] ^= (uint8_t)((oaddr->pos >> 16) & 0xFF);
-	iv->iv[11] ^= (uint8_t)((oaddr->pos >> 24) & 0xFF);
-	iv->iv[12] ^= (uint8_t)((oaddr->pos >> 32) & 0xFF);
-	iv->iv[13] ^= (uint8_t)((oaddr->pos >> 40) & 0xFF);
-	iv->iv[14] ^= (uint8_t)((oaddr->pos >> 48) & 0xFF);
-	iv->iv[15] ^= (uint8_t)((oaddr->pos >> 56) & 0xFF);
-}
-
-void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv2)
-{
-	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
-		iv->iv[i] ^= iv2->iv[i];
-	}
+	memset(out_iv, 0, sizeof(*out_iv));
+	blobid_as_iv(&oaddr->bka.blobid, out_iv);
+	out_iv->iv[8] ^= (uint8_t)(oaddr->pos & 0xFF);
+	out_iv->iv[9] ^= (uint8_t)((oaddr->pos >> 8) & 0xFF);
+	out_iv->iv[10] ^= (uint8_t)((oaddr->pos >> 16) & 0xFF);
+	out_iv->iv[11] ^= (uint8_t)((oaddr->pos >> 24) & 0xFF);
+	out_iv->iv[12] ^= (uint8_t)((oaddr->pos >> 32) & 0xFF);
+	out_iv->iv[13] ^= (uint8_t)((oaddr->pos >> 40) & 0xFF);
+	out_iv->iv[14] ^= (uint8_t)((oaddr->pos >> 48) & 0xFF);
+	out_iv->iv[15] ^= (uint8_t)((oaddr->pos >> 56) & 0xFF);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

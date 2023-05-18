@@ -268,28 +268,28 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 
 	switch (stype) {
 	case SILOFS_STYPE_INODE:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_inode;
+		ret = &sb->sb_sproots.sb_sproot_inode;
 		break;
 	case SILOFS_STYPE_XANODE:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_xanode;
+		ret = &sb->sb_sproots.sb_sproot_xanode;
 		break;
 	case SILOFS_STYPE_DTNODE:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_dtnode;
+		ret = &sb->sb_sproots.sb_sproot_dtnode;
 		break;
 	case SILOFS_STYPE_FTNODE:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_ftnode;
+		ret = &sb->sb_sproots.sb_sproot_ftnode;
 		break;
 	case SILOFS_STYPE_SYMVAL:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_symval;
+		ret = &sb->sb_sproots.sb_sproot_symval;
 		break;
 	case SILOFS_STYPE_DATA1K:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_data1k;
+		ret = &sb->sb_sproots.sb_sproot_data1k;
 		break;
 	case SILOFS_STYPE_DATA4K:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_data4k;
+		ret = &sb->sb_sproots.sb_sproot_data4k;
 		break;
 	case SILOFS_STYPE_DATABK:
-		ret = &sb->sb_sproot_uaddr.sb_sproot_databk;
+		ret = &sb->sb_sproots.sb_sproot_databk;
 		break;
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_ANONBK:
@@ -308,19 +308,19 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 static struct silofs_uaddr64b *
 sb_sproot_by2(struct silofs_super_block *sb, enum silofs_stype stype)
 {
-	const struct silofs_uaddr64b *uadr = sb_sproot_by(sb, stype);
+	const struct silofs_uaddr64b *uaddr64 = sb_sproot_by(sb, stype);
 
-	return unconst(uadr);
+	return unconst(uaddr64);
 }
 
 static void sb_sproot_of(const struct silofs_super_block *sb,
                          enum silofs_stype stype,
                          struct silofs_uaddr *out_uaddr)
 {
-	const struct silofs_uaddr64b *uadr = sb_sproot_by(sb, stype);
+	const struct silofs_uaddr64b *uaddr64 = sb_sproot_by(sb, stype);
 
-	if (likely(uadr != NULL)) {
-		silofs_uaddr64b_parse(uadr, out_uaddr);
+	if (likely(uaddr64 != NULL)) {
+		silofs_uaddr64b_parse(uaddr64, out_uaddr);
 	} else {
 		silofs_uaddr_reset(out_uaddr);
 	}
@@ -330,22 +330,22 @@ static void sb_set_sproot_of(struct silofs_super_block *sb,
                              enum silofs_stype stype,
                              const struct silofs_uaddr *uaddr)
 {
-	struct silofs_uaddr64b *uadr = sb_sproot_by2(sb, stype);
+	struct silofs_uaddr64b *uaddr64 = sb_sproot_by2(sb, stype);
 
-	if (likely(uadr != NULL)) {
-		silofs_uaddr64b_set(uadr, uaddr);
+	if (likely(uaddr64 != NULL)) {
+		silofs_uaddr64b_set(uaddr64, uaddr);
 	}
 }
 
 static void sb_reset_sproots(struct silofs_super_block *sb)
 {
-	struct silofs_uaddr64b *uadr;
+	struct silofs_uaddr64b *uaddr64;
 	enum silofs_stype stype;
 
 	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
-		uadr = sb_sproot_by2(sb, stype);
-		if (uadr != NULL) {
-			silofs_uaddr64b_set(uadr, silofs_uaddr_none());
+		uaddr64 = sb_sproot_by2(sb, stype);
+		if (uaddr64 != NULL) {
+			silofs_uaddr64b_set(uaddr64, silofs_uaddr_none());
 		}
 	}
 }
@@ -366,6 +366,115 @@ static void sb_clone_sproots(struct silofs_super_block *sb,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static const struct silofs_iv *
+sb_rootiv_by(const struct silofs_super_block *sb, enum silofs_stype stype)
+{
+	const struct silofs_iv *ret;
+
+	switch (stype) {
+	case SILOFS_STYPE_INODE:
+		ret = &sb->sb_rootivs.sb_iv_inode;
+		break;
+	case SILOFS_STYPE_XANODE:
+		ret = &sb->sb_rootivs.sb_iv_xanode;
+		break;
+	case SILOFS_STYPE_DTNODE:
+		ret = &sb->sb_rootivs.sb_iv_dtnode;
+		break;
+	case SILOFS_STYPE_FTNODE:
+		ret = &sb->sb_rootivs.sb_iv_ftnode;
+		break;
+	case SILOFS_STYPE_SYMVAL:
+		ret = &sb->sb_rootivs.sb_iv_symval;
+		break;
+	case SILOFS_STYPE_DATA1K:
+		ret = &sb->sb_rootivs.sb_iv_data1k;
+		break;
+	case SILOFS_STYPE_DATA4K:
+		ret = &sb->sb_rootivs.sb_iv_data4k;
+		break;
+	case SILOFS_STYPE_DATABK:
+		ret = &sb->sb_rootivs.sb_iv_databk;
+		break;
+	case SILOFS_STYPE_NONE:
+	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_SUPER:
+	case SILOFS_STYPE_SPNODE:
+	case SILOFS_STYPE_SPLEAF:
+	case SILOFS_STYPE_RESERVED:
+	case SILOFS_STYPE_LAST:
+	default:
+		ret = NULL;
+		break;
+	}
+	return ret;
+}
+
+static struct silofs_iv *
+sb_rootiv_by2(struct silofs_super_block *sb, enum silofs_stype stype)
+{
+	const struct silofs_iv *ret = sb_rootiv_by(sb, stype);
+
+	return unconst(ret);
+}
+
+static void sb_rootiv_of(const struct silofs_super_block *sb,
+                         enum silofs_stype stype, struct silofs_iv *out_iv)
+{
+	const struct silofs_iv *iv = sb_rootiv_by(sb, stype);
+
+	if (likely(iv != NULL)) {
+		silofs_iv_assign(out_iv, iv);
+	} else {
+		silofs_iv_reset(out_iv);
+	}
+}
+
+static void sb_set_rootiv_of(struct silofs_super_block *sb,
+                             enum silofs_stype stype,
+                             const struct silofs_iv *iv_src)
+{
+	struct silofs_iv *iv_dst = sb_rootiv_by2(sb, stype);
+
+	if (likely(iv_dst != NULL)) {
+		silofs_iv_assign(iv_dst, iv_src);
+	}
+}
+
+static void sb_gen_rootiv_of(struct silofs_super_block *sb,
+                             enum silofs_stype stype)
+{
+	struct silofs_iv iv;
+
+	silofs_gen_random_ivs(&iv, 1);
+	sb_set_rootiv_of(sb, stype, &iv);
+}
+
+static void sb_gen_rootivs(struct silofs_super_block *sb)
+{
+	enum silofs_stype stype;
+
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+		sb_gen_rootiv_of(sb, stype);
+	}
+}
+
+static void sb_clone_rootivs(struct silofs_super_block *sb,
+                             const struct silofs_super_block *sb_other)
+{
+	struct silofs_iv iv;
+	enum silofs_stype stype;
+
+	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+		if (stype_isvnode(stype)) {
+			sb_rootiv_of(sb_other, stype, &iv);
+			sb_set_rootiv_of(sb, stype, &iv);
+		}
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void sb_init(struct silofs_super_block *sb)
 {
 	sb_set_magic(sb, SILOFS_SUPER_MAGIC);
@@ -375,6 +484,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_generate_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_sproots(sb);
+	sb_gen_rootivs(sb);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobids(sb);
 	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
@@ -594,34 +704,64 @@ sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 	return vrange.beg;
 }
 
-void silofs_sbi_main_child_at(const struct silofs_sb_info *sbi,
-                              loff_t voff, enum silofs_stype vspace,
-                              struct silofs_uaddr *out_uaddr)
+static void sbi_sproot_of(const struct silofs_sb_info *sbi,
+                          enum silofs_stype stype,
+                          struct silofs_uaddr *out_uaddr)
+{
+	sb_sproot_of(sbi->sb, stype, out_uaddr);
+}
+
+static void sbi_rootiv_of(const struct silofs_sb_info *sbi,
+                          enum silofs_stype stype, struct silofs_iv *out_iv)
+{
+	sb_rootiv_of(sbi->sb, stype, out_iv);
+}
+
+static void sbi_main_ulink(const struct silofs_sb_info *sbi,
+                           loff_t voff, enum silofs_stype vspace,
+                           struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_blobid blobid;
 	const loff_t bpos = sbi_bpos_of_child(sbi, voff);
 	const loff_t base = sbi_base_voff_of_child(sbi, voff);
 
 	silofs_sbi_main_blob(sbi, vspace, &blobid);
-	silofs_assert_eq(blobid.height, SILOFS_HEIGHT_SUPER - 1);
 	uaddr_setup(out_uaddr, &blobid, bpos, SILOFS_STYPE_SPNODE, base);
+
+	silofs_assert_eq(blobid.height, SILOFS_HEIGHT_SUPER - 1);
+}
+
+void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
+                                loff_t voff, enum silofs_stype vspace,
+                                struct silofs_ulink *out_ulink)
+{
+	sbi_main_ulink(sbi, voff, vspace, &out_ulink->uaddr);
+	sbi_rootiv_of(sbi, vspace, &out_ulink->riv);
 }
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          enum silofs_stype vstype,
                          struct silofs_uaddr *out_uaddr)
 {
-	sb_sproot_of(sbi->sb, vstype, out_uaddr);
+	sbi_sproot_of(sbi, vstype, out_uaddr);
 	return !uaddr_isnull(out_uaddr) ? 0 : -SILOFS_ENOENT;
 }
 
-void silofs_sbi_bind_sproot(struct silofs_sb_info *sbi,
-                            enum silofs_stype vstype,
-                            const struct silofs_spnode_info *sni)
+int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
+                             enum silofs_stype vstype,
+                             struct silofs_ulink *out_ulink)
 {
-	const struct silofs_uaddr *uaddr = sni_uaddr(sni);
+	sbi_sproot_of(sbi, vstype, &out_ulink->uaddr);
+	sbi_rootiv_of(sbi, vstype, &out_ulink->riv);
+	return !uaddr_isnull(&out_ulink->uaddr) ? 0 : -SILOFS_ENOENT;
+}
 
-	sb_set_sproot_of(sbi->sb, vstype, uaddr);
+void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
+                           enum silofs_stype vstype,
+                           const struct silofs_ulink *ulink)
+{
+	sb_set_sproot_of(sbi->sb, vstype, &ulink->uaddr);
+	sb_set_rootiv_of(sbi->sb, vstype, &ulink->riv);
 	sbi_dirtify(sbi);
 }
 
@@ -728,11 +868,6 @@ int silofs_test_shared_dbkref(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sbi_bind_uber(struct silofs_sb_info *sbi, struct silofs_uber *uber)
-{
-	silofs_ui_bind_uber(&sbi->sb_ui, uber);
-}
-
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 {
 	ui_dirtify(&sbi->sb_ui);
@@ -783,7 +918,7 @@ void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi)
 	sbi_dirtify(sbi);
 }
 
-void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
+void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other)
 {
 	struct silofs_super_block *sb = sbi->sb;
@@ -791,6 +926,7 @@ void silofs_sbi_make_clone(struct silofs_sb_info *sbi,
 
 	sb_assign(sb, sb_other);
 	sb_clone_sproots(sb, sb_other);
+	sb_clone_rootivs(sb, sb_other);
 	sb_generate_treeid(sb);
 	sb_reset_main_blobids(sb);
 	sb_set_self(sb, sbi_uaddr(sbi));

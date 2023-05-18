@@ -29,12 +29,12 @@ struct silofs_unref_ctx {
 static int sli_resolve_blob_of(const struct silofs_spleaf_info *sli,
                                loff_t voff, struct silofs_blobid *out_blobid)
 {
-	struct silofs_bkaddr bkaddr;
+	struct silofs_blink blink;
 	int ret;
 
-	ret = silofs_sli_resolve_ubk(sli, voff, &bkaddr);
+	ret = silofs_sli_resolve_child(sli, voff, &blink);
 	if (ret == 0) {
-		blobid_assign(out_blobid, &bkaddr.blobid);
+		blobid_assign(out_blobid, &blink.bka.blobid);
 	}
 	return ret;
 }
@@ -123,11 +123,17 @@ static int unrc_post_unrefs_at_spleaf(struct silofs_unref_ctx *unr_ctx,
 	return 0;
 }
 
+static const struct silofs_blobid *
+blobid_of(const struct silofs_ulink *ulink)
+{
+	return uaddr_blobid(&ulink->uaddr);
+}
+
 static int
 unrc_post_unrefs_at_spnode(struct silofs_unref_ctx *unr_ctx,
                            const struct silofs_spnode_info *sni)
 {
-	struct silofs_uaddr uaddr;
+	struct silofs_ulink ulink;
 	struct silofs_vrange vrange;
 	loff_t voff;
 	int err;
@@ -135,11 +141,11 @@ unrc_post_unrefs_at_spnode(struct silofs_unref_ctx *unr_ctx,
 	sni_vrange(sni, &vrange);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
-		err = silofs_sni_subref_of(sni, voff, &uaddr);
+		err = silofs_sni_resolve_child(sni, voff, &ulink);
 		if (err == -SILOFS_ENOENT) {
 			break;
 		}
-		err = unrc_try_remove_blob_of(unr_ctx, uaddr_blobid(&uaddr));
+		err = unrc_try_remove_blob_of(unr_ctx, blobid_of(&ulink));
 		if (err) {
 			return err;
 		}

@@ -27,7 +27,7 @@ struct silofs_bootpath {
 /* boot-sector in-memory representation */
 struct silofs_bootsec {
 	struct silofs_uuid              uuid;
-	struct silofs_uaddr             sb_uaddr;
+	struct silofs_ulink             sb_ulink;
 	struct silofs_cipher_args       cip_args;
 	struct silofs_hash256           key_hash;
 	enum silofs_bootf               flags;
@@ -71,11 +71,11 @@ void silofs_bootsec_uuid(const struct silofs_bootsec *bsec,
 void silofs_bootsec_set_uuid(struct silofs_bootsec *bsec,
                              const struct silofs_uuid *uuid);
 
-void silofs_bootsec_sb_uaddr(const struct silofs_bootsec *bsec,
-                             struct silofs_uaddr *out_uaddr);
+void silofs_bootsec_sb_ulink(const struct silofs_bootsec *bsec,
+                             struct silofs_ulink *out_ulink);
 
-void silofs_bootsec_set_sb_uaddr(struct silofs_bootsec *bsec,
-                                 const struct silofs_uaddr *sb_uaddr);
+void silofs_bootsec_set_sb_ulink(struct silofs_bootsec *bsec,
+                                 const struct silofs_ulink *sb_ulink);
 
 void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,
                                 const struct silofs_hash256 *hash);

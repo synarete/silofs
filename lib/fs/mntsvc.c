@@ -1134,16 +1134,16 @@ static int mntsrv_make_unixaddr(const struct silofs_mntsrv *msrv,
 
 static int mntsrv_bind_unix(struct silofs_mntsrv *msrv)
 {
-	char uadr[104] = "";
+	char un_addr[104] = "";
 	struct silofs_sockaddr saddr;
 	struct silofs_socket *sock = &msrv->ms_lsock;
 	int err;
 
-	err = mntsrv_make_unixaddr(msrv, uadr, sizeof(uadr));
+	err = mntsrv_make_unixaddr(msrv, un_addr, sizeof(un_addr));
 	if (err) {
 		return err;
 	}
-	err = silofs_sockaddr_unix(&saddr, uadr);
+	err = silofs_sockaddr_unix(&saddr, un_addr);
 	if (err) {
 		return err;
 	}
@@ -1151,7 +1151,7 @@ static int mntsrv_bind_unix(struct silofs_mntsrv *msrv)
 	if (err) {
 		return err;
 	}
-	log_info("bind-socket: %s", uadr);
+	log_info("bind-socket: %s", un_addr);
 	return 0;
 }
 

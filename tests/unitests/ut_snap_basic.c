@@ -93,17 +93,18 @@ static void ut_snap_overwrite(struct ut_env *ute)
 {
 	ino_t ino;
 	ino_t dino;
-	time_t val = silofs_time_now();
+	uint64_t val1 = (uint64_t)silofs_time_now();
+	uint64_t val2 = ~val1;
 	const char *name = UT_NAME;
 	const loff_t off = UT_GIGA;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_write_read(ute, ino, &val, sizeof(val), off);
+	ut_write_read(ute, ino, &val1, sizeof(val1), off);
 	ut_snap_ok(ute, dino);
-	ut_read_verify(ute, ino, &val, sizeof(val), off);
+	ut_read_verify(ute, ino, &val1, sizeof(val1), off);
 	ut_read_zero(ute, ino, off - 1);
-	ut_write_read(ute, ino, &val, sizeof(val), off);
+	ut_write_read(ute, ino, &val2, sizeof(val2), off);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }

@@ -9,6 +9,7 @@ lib*.la
 .deps
 .libs
 *~
+.notes.txt
 
 # Top-level excludes
 /.autom4te.cfg

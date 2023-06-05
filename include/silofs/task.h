@@ -26,7 +26,6 @@ struct silofs_task {
 	struct silofs_oper      t_oper;
 	uint64_t                t_apex_id;
 	volatile int            t_interrupt;
-	int                     t_may_flush;
 };
 
 /* submit reference into view within underlying block */

@@ -424,7 +424,6 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 	task->t_submitq = uber->ub.submitq;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
-	task->t_may_flush = 0;
 	return 0;
 }
 

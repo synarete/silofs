@@ -195,6 +195,7 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii);
 
 void silofs_ii_undirtify(struct silofs_inode_info *ii);
 
+bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 
 void silofs_ui_incref(struct silofs_unode_info *ui);
 

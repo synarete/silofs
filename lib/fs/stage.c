@@ -2726,8 +2726,7 @@ int silofs_refresh_olink_of(struct silofs_task *task,
 		return 0;
 	}
 	vaddr = vi_vaddr(vi);
-	/* TODO: FIXME -- should be SILOFS_STG_CUR XXX */
-	err = silofs_resolve_olink_of(task, vaddr, SILOFS_STG_COW, &olink);
+	err = silofs_resolve_olink_of(task, vaddr, SILOFS_STG_CUR, &olink);
 	if (err) {
 		log_warn("failed to refresh olink: stype=%d off=%ld err=%d",
 		         vaddr->stype, vaddr->off, err);

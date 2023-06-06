@@ -47,22 +47,6 @@ static void dset_moveq(struct silofs_dset *dset);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int resolve_vnode(struct silofs_task *task,
-                         struct silofs_vnode_info *vi,
-                         struct silofs_olink *out_olink)
-{
-	int err;
-
-	err = silofs_refresh_olink_of(task, vi);
-	if (err) {
-		return err;
-	}
-	silofs_olink_assign(out_olink, &vi->v_olink);
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 
 static struct silofs_submitq_ent *sqe_from_qlh(struct silofs_list_head *qlh)
 {
@@ -86,6 +70,20 @@ static int resolve_unode(const struct silofs_task *task,
 {
 	silofs_ulink_as_olink(ui_ulink(ui), out_olink);
 	silofs_unused(task);
+	return 0;
+}
+
+static int resolve_vnode(struct silofs_task *task,
+                         struct silofs_vnode_info *vi,
+                         struct silofs_olink *out_olink)
+{
+	int err;
+
+	err = silofs_refresh_olink_of(task, vi);
+	if (err) {
+		return err;
+	}
+	silofs_olink_assign(out_olink, &vi->v_olink);
 	return 0;
 }
 

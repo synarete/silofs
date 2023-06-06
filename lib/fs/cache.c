@@ -3193,6 +3193,16 @@ void silofs_ii_undirtify(struct silofs_inode_info *ii)
 	}
 }
 
+bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
+{
+	bool ret = false;
+
+	if (likely(ii != NULL)) {
+		ret = vi_isdirty(&ii->i_vi);
+	}
+	return ret;
+}
+
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
@@ -3206,7 +3216,6 @@ void silofs_ii_decref(struct silofs_inode_info *ii)
 		silofs_vi_decref(ii_to_vi(ii));
 	}
 }
-
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi)
 {

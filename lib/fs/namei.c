@@ -1551,6 +1551,17 @@ static int check_releasedir(const struct silofs_inode_info *dir_ii)
 	return 0;
 }
 
+static int flush_dirty_of(struct silofs_task *task,
+                          struct silofs_inode_info *ii, int flags)
+{
+	int ret = 0;
+
+	if (silofs_ii_isdirty(ii) || ii->i_dq_vis.dq_accum) {
+		ret = silofs_flush_dirty(task, ii, flags);
+	}
+	return ret;
+}
+
 static int do_releasedir(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii, bool flush)
 {
@@ -1561,7 +1572,7 @@ static int do_releasedir(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty(task, dir_ii, flags);
+	err = flush_dirty_of(task, dir_ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1611,7 +1622,7 @@ static int do_release(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty(task, ii, flags);
+	err = flush_dirty_of(task, ii, flags);
 	if (err) {
 		return err;
 	}
@@ -1655,7 +1666,7 @@ static int do_fsyncdir(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty(task, dir_ii, SILOFS_F_FSYNC);
+	err = flush_dirty_of(task, dir_ii, SILOFS_F_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1689,7 +1700,7 @@ static int do_fsync(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_flush_dirty(task, ii, SILOFS_F_FSYNC);
+	err = flush_dirty_of(task, ii, SILOFS_F_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1719,7 +1730,7 @@ int silofs_do_fsync(struct silofs_task *task,
 int silofs_do_flush(struct silofs_task *task,
                     struct silofs_inode_info *ii, bool now)
 {
-	return silofs_flush_dirty(task, ii, now ? SILOFS_F_NOW : 0);
+	return flush_dirty_of(task, ii, now ? SILOFS_F_NOW : 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

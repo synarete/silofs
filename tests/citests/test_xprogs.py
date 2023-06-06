@@ -43,6 +43,8 @@ def test_gitscm(tc: ctx.TestCtx) -> None:
     os.mkdir(base)
     ret = tc.cmd.git.clone(url, base)
     if ret == 0:
+        tc.cmd.sh.run_ok("make configure", base)
+        tc.cmd.sh.run_ok("./configure", base)
         tc.cmd.sh.run_ok("make", base)
         tc.cmd.sh.run_ok("make test", base)
         tc.cmd.sh.run_ok("make clean", base)

@@ -2080,10 +2080,15 @@ static int dirc_iterate(struct silofs_dir_ctx *d_ctx)
 	return dirc_readdir_eos(d_ctx);
 }
 
+static const struct silofs_creds *
+dirc_creds(const struct silofs_dir_ctx *d_ctx)
+{
+	return  &d_ctx->task->t_oper.op_creds;
+}
+
 static int dirc_readdir_emit(struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_iattr iattr;
-	const struct silofs_creds *creds = &d_ctx->task->t_oper.op_creds;
 	int err = 0;
 	bool ok = true;
 
@@ -2104,7 +2109,7 @@ static int dirc_readdir_emit(struct silofs_dir_ctx *d_ctx)
 
 	silofs_iattr_setup(&iattr, ii_ino(d_ctx->dir_ii));
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
-	ii_update_iattrs(d_ctx->dir_ii, creds, &iattr);
+	ii_update_iattrs(d_ctx->dir_ii, dirc_creds(d_ctx), &iattr);
 
 	return err;
 }

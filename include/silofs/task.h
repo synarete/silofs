@@ -98,7 +98,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt);
 void silofs_task_update_by(struct silofs_task *task,
                            struct silofs_submitq_ent *sqe);
 
-int silofs_task_submit(struct silofs_task *task, bool all);
+int silofs_task_submit(const struct silofs_task *task, bool all);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 

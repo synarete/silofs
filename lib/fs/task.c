@@ -399,7 +399,7 @@ void silofs_task_update_by(struct silofs_task *task,
 	}
 }
 
-int silofs_task_submit(struct silofs_task *task, bool all)
+int silofs_task_submit(const struct silofs_task *task, bool all)
 {
 	int ret = 0;
 

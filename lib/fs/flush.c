@@ -289,7 +289,6 @@ static void dset_init(struct silofs_dset *dset)
 	silofs_avl_init(&dset->ds_avl, lni_getkey, ckey_compare, dset);
 	dset->ds_preq = NULL;
 	dset->ds_postq = NULL;
-	dset->ds_add_fn = dset_add_dirty;
 }
 
 static void dset_fini(struct silofs_dset *dset)
@@ -297,7 +296,6 @@ static void dset_fini(struct silofs_dset *dset)
 	silofs_avl_fini(&dset->ds_avl);
 	dset->ds_preq = NULL;
 	dset->ds_postq = NULL;
-	dset->ds_add_fn = NULL;
 }
 
 static void dset_push_preq(struct silofs_dset *dset,
@@ -408,10 +406,9 @@ static void dsets_fini(struct silofs_dsets *dsets)
 static struct silofs_dset *
 dsets_get_by(struct silofs_dsets *dsets, const enum silofs_stype stype)
 {
-	const unsigned int idx = (unsigned int)stype;
+	const size_t idx = min((size_t)stype, (ARRAY_SIZE(dsets->dset) - 1));
 
-	return likely(idx < ARRAY_SIZE(dsets->dset)) ?
-	       &dsets->dset[idx] : NULL;
+	return &dsets->dset[idx];
 }
 
 static struct silofs_dset *
@@ -431,7 +428,7 @@ static void dsets_add_by_vi(struct silofs_dsets *dsets,
 {
 	struct silofs_dset *dset = dsets_get_by_vi(dsets, vi);
 
-	dset->ds_add_fn(dset, &vi->v);
+	dset_add_dirty(dset, &vi->v);
 }
 
 static void dsets_add_by_ui(struct silofs_dsets *dsets,
@@ -439,7 +436,7 @@ static void dsets_add_by_ui(struct silofs_dsets *dsets,
 {
 	struct silofs_dset *dset = dsets_get_by_ui(dsets, ui);
 
-	dset->ds_add_fn(dset, &ui->u);
+	dset_add_dirty(dset, &ui->u);
 }
 
 static void dsets_fill_vis_of(struct silofs_dsets *dsets,

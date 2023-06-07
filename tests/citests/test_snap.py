@@ -46,24 +46,24 @@ def test_snap_reload_twice(tc: ctx.TestCtx) -> None:
 
 
 def test_snap_reload_multi(tc: ctx.TestCtx) -> None:
-    tds = None
     name = "main"
     name_prev = ""
     tc.exec_init()
     tc.exec_mkfs(20, name)
+    tc.exec_mount(name)
+    tds = tc.create_data(200, "A", 2**20)
+    tc.exec_umount()
     for i in range(1, 20):
         tc.exec_mount(name)
-        if tds:
-            tds.do_read()
         if name_prev:
             tc.exec_rmfs(name_prev)
-        if tds:
-            tds.do_read()
+        tds.do_read()
         name_prev = name
         name = f"snap{i}"
         tds = tc.create_data(200, "A", 2**20)
         tc.exec_snap(name)
-        tds2 = tc.create_data(200, "A", 2**20)
+        tds.do_read()
+        tds = tc.create_data(200, "A", 2**20)
         tc.exec_umount()
     tc.exec_rmfs(name)
 

@@ -315,7 +315,7 @@ static void socket_destroy(struct silofs_socket *sock)
 
 static bool socket_isopen(const struct silofs_socket *sock)
 {
-	return (sock->fd > 0);
+	return (sock->fd >= 0);
 }
 
 static int socket_checkopen(const struct silofs_socket *sock)
@@ -344,7 +344,7 @@ int silofs_socket_open(struct silofs_socket *sock)
 
 static void socket_close(struct silofs_socket *sock)
 {
-	if (!socket_isopen(sock)) {
+	if (socket_isopen(sock)) {
 		silofs_sys_close((sock->fd));
 		sock->fd = -1;
 	}

@@ -58,12 +58,11 @@ def test_snap_reload_multi(tc: ctx.TestCtx) -> None:
         if name_prev:
             tc.exec_rmfs(name_prev)
         tds.do_read()
-        name_prev = name
-        name = f"snap{i}"
         tds = tc.create_data(200, "A", 2**20)
+        name, name_prev = f"snap{i}", name
         tc.exec_snap(name)
         tds.do_read()
-        tds = tc.create_data(200, "A", 2**20)
+        tds_over = tc.create_data(200, "A", 2**20)
         tc.exec_umount()
     tc.exec_rmfs(name)
 

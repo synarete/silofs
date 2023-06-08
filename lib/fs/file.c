@@ -788,9 +788,7 @@ filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	if (f_ctx->with_backref) {
-		out_iov->iov_ref = &fli->fl_vi.v_iovr;
-	}
+	out_iov->iov_ref = f_ctx->with_backref ? &fli->fl_vi.v_iovr : NULL;
 	return 0;
 }
 
@@ -1625,18 +1623,19 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 	};
 	int err;
 
+	*out_len = 0;
 	err = filc_resolve_iovec(f_ctx, fli, vaddr, &iov);
-	if (!err) {
-		if (f_ctx->with_backref) {
-			silofs_iovref_pre(iov.iov_ref);
-		}
-		err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iov);
-		if (err && f_ctx->with_backref) {
-			silofs_iovref_post(iov.iov_ref);
-		}
+	if (err) {
+		return err;
 	}
+	silofs_iovref_pre(iov.iov_ref);
+	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iov);
 	*out_len = iov.iov_len;
-	return err;
+	if (err) {
+		silofs_iovref_post(iov.iov_ref);
+		return err;
+	}
+	return 0;
 }
 
 static int

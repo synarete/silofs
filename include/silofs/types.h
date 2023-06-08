@@ -487,9 +487,9 @@ struct silofs_fs_args {
 	bool                    nosuid;
 	bool                    nodev;
 	bool                    rdonly;
-	bool                    concp;
-	bool                    restore_forced;
+	bool                    asyncwr;
 	bool                    stdalloc;
+	bool                    restore_forced;
 };
 
 /* file-system environment context */

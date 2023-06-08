@@ -39,9 +39,9 @@ static const char *cmd_mount_help_desc[] = {
 	"  -A  --no-allow-other         Do not allow other users",
 	"  -W  --writeback-cache        Enable write-back cache mode",
 	"  -D, --nodaemon               Do not run as daemon process",
-	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
-	"  -M, --std-alloc              Use standard C allocator",
+	"  -M, --stdalloc               Use standard C allocator",
+	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
 	NULL
 };
 
@@ -61,7 +61,7 @@ struct cmd_mount_in_args {
 	bool    nosuid;
 	bool    nodev;
 	bool    rdonly;
-	bool    noconcp;
+	bool    asyncwr;
 	bool    stdalloc;
 };
 
@@ -91,16 +91,17 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "no-allow-other", no_argument, NULL, 'A' },
 		{ "writeback-cache", no_argument, NULL, 'W' },
 		{ "nodaemon", no_argument, NULL, 'D' },
-		{ "verbose", required_argument, NULL, 'V' },
 		{ "coredump", no_argument, NULL, 'C' },
-		{ "std-alloc", no_argument, NULL, 'M' },
+		{ "asyncwr", no_argument, NULL, 'a' },
+		{ "stdalloc", no_argument, NULL, 'M' },
 		{ "password", required_argument, NULL, 'p' },
+		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZiAWDV:CMp:h", opts);
+		opt_chr = cmd_getopt("rXSZiAWDCaMp:V:h", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -109,8 +110,6 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			ctx->in_args.nosuid = true;
 		} else if (opt_chr == 'Z') {
 			ctx->in_args.nodev = true;
-		} else if (opt_chr == 'P') {
-			ctx->in_args.noconcp = true;
 		} else if (opt_chr == 'A') {
 			ctx->in_args.no_allowother = true;
 		} else if (opt_chr == 'i') {
@@ -119,14 +118,16 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			ctx->in_args.wbackcache = true;
 		} else if (opt_chr == 'D') {
 			cmd_globals.dont_daemonize = true;
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'C') {
 			cmd_globals.allow_coredump = true;
+		} else if (opt_chr == 'a') {
+			ctx->in_args.asyncwr = true;
 		} else if (opt_chr == 'M') {
 			ctx->in_args.stdalloc = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg("--password", &ctx->in_args.password);
+		} else if (opt_chr == 'V') {
+			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_mount_help_desc);
 		} else if (opt_chr > 0) {
@@ -159,7 +160,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->nosuid = ctx->in_args.nosuid;
 	fs_args->nodev = ctx->in_args.nodev;
 	fs_args->rdonly = ctx->in_args.rdonly;
-	fs_args->concp = !ctx->in_args.noconcp;
+	fs_args->asyncwr = ctx->in_args.asyncwr;
 	fs_args->stdalloc = ctx->in_args.stdalloc;
 	fs_args->pedantic = false;
 }
@@ -429,6 +430,11 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 void cmd_execute_mount(void)
 {
 	struct cmd_mount_ctx ctx = {
+		.in_args = {
+			.rdonly = false,
+			.asyncwr = false,
+			.stdalloc = false,
+		},
 		.fs_env = NULL,
 		.halt_signal = -1,
 		.post_exec_status = 0,

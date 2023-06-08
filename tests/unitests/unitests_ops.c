@@ -524,7 +524,7 @@ static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 
 static bool ut_with_concp(const struct ut_env *ute)
 {
-	return ute->args->fs_args.concp;
+	return ute->args->fs_args.asyncwr;
 }
 
 static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,

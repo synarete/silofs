@@ -403,6 +403,7 @@ void ut_execute_tests(void)
 			.memwant = UT_GIGA,
 			.restore_forced = true,
 			.pedantic = ut_globals.pedantic,
+			.asyncwr = ut_globals.asyncwr,
 			.stdalloc = ut_globals.stdalloc,
 
 		},

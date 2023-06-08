@@ -85,6 +85,7 @@ static void ut_setup_globals(int argc, char *argv[])
 	ut_globals.version = silofs_version.string;
 	ut_globals.pedantic = false;
 	ut_globals.run_level = 1;
+	ut_globals.asyncwr = false;
 	ut_globals.stdalloc = false;
 
 	umask(0002);

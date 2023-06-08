@@ -2370,7 +2370,7 @@ static int fuseq_wr_iter_actor(struct silofs_rwiter_ctx *rwi,
 	return 0;
 }
 
-static int fuseq_wr_iter_concp_actor(struct silofs_rwiter_ctx *rwi,
+static int fuseq_wr_iter_async_actor(struct silofs_rwiter_ctx *rwi,
                                      const struct silofs_iovec *iov)
 {
 	struct silofs_fuseq_wr_iter *fq_wri = fuseq_wr_iter_of(rwi);
@@ -2416,12 +2416,15 @@ static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 	return 0;
 }
 
+static bool fuseq_asyncwr_mode(const struct silofs_fuseq_worker *fqw)
+{
+	return fqw->fq->fq_uber->ub.fs_args->asyncwr;
+}
+
 static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
                                 struct silofs_fuseq_wr_iter *fq_rwi,
                                 size_t len, loff_t off)
 {
-	const bool concp = fqw->fq->fq_uber->ub.fs_args->concp;
-
 	fq_rwi->fqw = fqw;
 	fq_rwi->nwr = 0;
 	fq_rwi->cnt = 0;
@@ -2429,8 +2432,9 @@ static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
 	fq_rwi->nwr_max = len;
 	fq_rwi->rwi.len = len;
 	fq_rwi->rwi.off = off;
-	fq_rwi->rwi.actor =
-	        concp ? fuseq_wr_iter_concp_actor : fuseq_wr_iter_actor;
+	fq_rwi->rwi.actor = fuseq_asyncwr_mode(fqw) ?
+	                    fuseq_wr_iter_async_actor :
+	                    fuseq_wr_iter_actor;
 }
 
 static void *tail_of(const struct silofs_fuseq_in *in, size_t head_len)

@@ -1078,9 +1078,6 @@ int silofs_fs_release(struct silofs_task *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
-	ok_or_goto_out(err);
-
 	err = op_stage_opt_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
@@ -1105,9 +1102,6 @@ int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now)
 	ok_or_goto_out(err);
 
 	err = op_stage_cur_inode(task, ino, &ii);
-	ok_or_goto_out(err);
-
-	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_flush(task, ii, now);
@@ -1594,9 +1588,6 @@ int silofs_fs_clone(struct silofs_task *task, ino_t ino,
 	ok_or_goto_out(err);
 
 	err = op_stage_cur_inode(task, ino, &dir_ii);
-	ok_or_goto_out(err);
-
-	err = op_try_flush(task, dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_clone(task, dir_ii, flags, out_bsecs);

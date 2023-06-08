@@ -223,7 +223,7 @@ static void lni_init(struct silofs_lnode_info *lni,
 	lni->view = NULL;
 	lni->view_len = 0;
 	lni->del_hook = del_fn;
-	lni->flags = SILOFS_SIF_NONE;
+	lni->flags = SILOFS_LNF_NONE;
 }
 
 static void lni_fini(struct silofs_lnode_info *lni)
@@ -350,10 +350,12 @@ silofs_vi_from_dirty_lh(struct silofs_list_head *lh)
 
 static void vi_set_noflush(struct silofs_vnode_info *vi, bool noflush)
 {
+	const int flags = vi->v.flags;
+
 	if (noflush) {
-		vi->v.flags |= SILOFS_SIF_NOFLUSH;
+		vi->v.flags = flags | SILOFS_LNF_NOFLUSH;
 	} else {
-		vi->v.flags &= ~SILOFS_SIF_NOFLUSH;
+		vi->v.flags = flags & ~SILOFS_LNF_NOFLUSH;
 	}
 }
 
@@ -447,7 +449,7 @@ static bool vi_has_stype(const struct silofs_vnode_info *vi,
 
 bool silofs_vi_may_flush(const struct silofs_vnode_info *vi)
 {
-	return !(vi->v.flags & SILOFS_SIF_NOFLUSH);
+	return !(vi->v.flags & SILOFS_LNF_NOFLUSH);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1513,14 +1515,14 @@ int silofs_ui_verify_view(struct silofs_unode_info *ui)
 {
 	int err;
 
-	if (ui->u.flags & SILOFS_SIF_VERIFIED) {
+	if (ui->u.flags & SILOFS_LNF_VERIFIED) {
 		return 0;
 	}
 	err = lni_verify_view(&ui->u);
 	if (err) {
 		return err;
 	}
-	ui->u.flags |= SILOFS_SIF_VERIFIED;
+	ui->u.flags |= SILOFS_LNF_VERIFIED;
 	return 0;
 }
 
@@ -1528,14 +1530,14 @@ int silofs_vi_verify_view(struct silofs_vnode_info *vi)
 {
 	int err;
 
-	if (vi->v.flags & SILOFS_SIF_VERIFIED) {
+	if (vi->v.flags & SILOFS_LNF_VERIFIED) {
 		return 0;
 	}
 	err = lni_verify_view(&vi->v);
 	if (err) {
 		return err;
 	}
-	vi->v.flags |= SILOFS_SIF_VERIFIED;
+	vi->v.flags |= SILOFS_LNF_VERIFIED;
 	return 0;
 }
 
@@ -1546,7 +1548,7 @@ void silofs_stamp_meta_of(struct silofs_vnode_info *vi)
 	if (!stype_isdata(stype)) {
 		silofs_zero_stamp_meta(vi->v.view, stype);
 	}
-	vi->v.flags |= SILOFS_SIF_VERIFIED;
+	vi->v.flags |= SILOFS_LNF_VERIFIED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

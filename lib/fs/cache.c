@@ -1011,7 +1011,7 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 {
 	bool ret = false;
 
-	if (!(lni->flags & SILOFS_SIF_PINNED)) {
+	if (!(lni->flags & SILOFS_LNF_PINNED)) {
 		ret = ce_is_evictable(lni_to_ce(lni));
 	}
 	return ret;

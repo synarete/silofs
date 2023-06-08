@@ -22,12 +22,12 @@ struct silofs_unode_info;
 struct silofs_vnode_info;
 
 
-enum silofs_siflags {
-	SILOFS_SIF_NONE         = 0x00,
-	SILOFS_SIF_NOFLUSH      = 0x01,
-	SILOFS_SIF_VERIFIED     = 0x02,
-	SILOFS_SIF_RECHECK      = 0x04,
-	SILOFS_SIF_PINNED       = 0x08,
+enum silofs_lnflags {
+	SILOFS_LNF_NONE         = 0x00,
+	SILOFS_LNF_NOFLUSH      = 0x01,
+	SILOFS_LNF_VERIFIED     = 0x02,
+	SILOFS_LNF_RECHECK      = 0x04,
+	SILOFS_LNF_PINNED       = 0x08,
 };
 
 /* nodes' delete hook */
@@ -46,7 +46,7 @@ struct silofs_lnode_info {
 	loff_t                          view_pos;
 	size_t                          view_len;
 	enum silofs_stype               stype;
-	int                             flags;
+	enum silofs_lnflags             flags;
 };
 
 /* unode */

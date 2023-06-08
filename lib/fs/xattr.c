@@ -540,14 +540,14 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 	const ino_t ino = ii_ino(xa_ctx->ii);
 	const ino_t xa_ino = xan_ino(xai->xan);
 
-	if (xai->xan_vi.v.flags & SILOFS_SIF_RECHECK) {
+	if (xai->xan_vi.v.flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	if (ino != xa_ino) {
 		log_err("bad xanode ino: ino=%lu xa_ino=%lu", ino, xa_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	xai->xan_vi.v.flags |= SILOFS_SIF_RECHECK;
+	xai->xan_vi.v.flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,

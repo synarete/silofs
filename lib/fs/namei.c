@@ -824,7 +824,7 @@ static int do_mknod_special(struct silofs_task *task,
 
 	/* can not use 'nopen' as FUSE does not sent OPEN on fifo, and
 	 * therefore no RELEASE */
-	ii->i_vi.v.flags |= SILOFS_SIF_PINNED;
+	ii->i_vi.v.flags |= SILOFS_LNF_PINNED;
 
 	*out_ii = ii;
 	return 0;
@@ -2487,12 +2487,13 @@ static int try_forget_cached_ii(struct silofs_inode_info *ii)
 int silofs_do_forget(struct silofs_task *task,
                      struct silofs_inode_info *ii, size_t nlookup)
 {
+	const int flags = ii->i_vi.v.flags;
 	int err;
 
 	ii_sub_nlookup(ii, (long)nlookup);
-	if (ii->i_vi.v.flags & SILOFS_SIF_PINNED) {
+	if (flags & SILOFS_LNF_PINNED) {
 		/* case of prune special files created by MKNOD */
-		ii->i_vi.v.flags &= ~SILOFS_SIF_PINNED;
+		ii->i_vi.v.flags = flags & ~SILOFS_LNF_PINNED;
 		err = try_prune_inode(task, ii, false);
 	} else {
 		err = try_forget_cached_ii(ii);

@@ -2418,7 +2418,7 @@ static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 
 static bool fuseq_asyncwr_mode(const struct silofs_fuseq_worker *fqw)
 {
-	return fqw->fq->fq_uber->ub.fs_args->asyncwr;
+	return (fqw->fq->fq_uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
 }
 
 static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,

@@ -359,12 +359,26 @@ static void vi_set_noflush(struct silofs_vnode_info *vi, bool noflush)
 	}
 }
 
+static bool vi_asyncwr(const struct silofs_vnode_info *vi)
+{
+	const struct silofs_uber *uber = NULL;
+	bool ret = false;
+
+	if (vi_isdata(vi)) {
+		uber = vi_uber(vi);
+		ret = (uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
+	}
+	return ret;
+}
+
 static void vi_iov_pre(struct silofs_iovref *iovr)
 {
 	struct silofs_vnode_info *vi = vi_from_iovref(iovr);
 
 	silofs_vi_incref(vi);
-	vi_set_noflush(vi, true);
+	if (vi_asyncwr(vi)) {
+		vi_set_noflush(vi, true);
+	}
 }
 
 static void vi_iov_post(struct silofs_iovref *iovr)
@@ -372,7 +386,9 @@ static void vi_iov_post(struct silofs_iovref *iovr)
 	struct silofs_vnode_info *vi = vi_from_iovref(iovr);
 
 	silofs_vi_decref(vi);
-	vi_set_noflush(vi, false);
+	if (vi_asyncwr(vi)) {
+		vi_set_noflush(vi, false);
+	}
 }
 
 static void vi_init(struct silofs_vnode_info *vi,

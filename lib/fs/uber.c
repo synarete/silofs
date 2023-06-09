@@ -150,6 +150,9 @@ static void uber_update_ctlflags(struct silofs_uber *uber)
 	if (fs_args->withfuse) {
 		uber->ub_ctl_flags |= SILOFS_UBF_NLOOKUP;
 	}
+	if (fs_args->asyncwr) {
+		uber->ub_ctl_flags |= SILOFS_UBF_ASYNCWR;
+	}
 }
 
 static void uber_update_by_fs_args(struct silofs_uber *uber)

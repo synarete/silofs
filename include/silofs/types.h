@@ -70,6 +70,7 @@ enum silofs_ubctl_flags {
 	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(0),
 	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(1),
 	SILOFS_UBF_ALLOWADMIN   = SILOFS_BIT(2),
+	SILOFS_UBF_ASYNCWR      = SILOFS_BIT(3),
 };
 
 /* inode's attributes masks */

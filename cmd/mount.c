@@ -92,7 +92,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "writeback-cache", no_argument, NULL, 'W' },
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "coredump", no_argument, NULL, 'C' },
-		{ "asyncwr", no_argument, NULL, 'a' },
+		{ "asyncwr", required_argument, NULL, 'a' },
 		{ "stdalloc", no_argument, NULL, 'M' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "verbose", required_argument, NULL, 'V' },
@@ -101,7 +101,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZiAWDCaMp:V:h", opts);
+		opt_chr = cmd_getopt("rXSZiAWDCa:Mp:V:h", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -121,7 +121,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		} else if (opt_chr == 'C') {
 			cmd_globals.allow_coredump = true;
 		} else if (opt_chr == 'a') {
-			ctx->in_args.asyncwr = true;
+			ctx->in_args.asyncwr = cmd_parse_str_as_bool(optarg);
 		} else if (opt_chr == 'M') {
 			ctx->in_args.stdalloc = true;
 		} else if (opt_chr == 'p') {
@@ -432,7 +432,7 @@ void cmd_execute_mount(void)
 	struct cmd_mount_ctx ctx = {
 		.in_args = {
 			.rdonly = false,
-			.asyncwr = false,
+			.asyncwr = true,
 			.stdalloc = false,
 		},
 		.fs_env = NULL,

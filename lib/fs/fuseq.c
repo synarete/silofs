@@ -69,6 +69,8 @@ static void fuseq_unlock_op(struct silofs_fuseq *fq);
 static void fuseq_lock_ctl(struct silofs_fuseq *fq);
 static bool fuseq_trylock_ctl(struct silofs_fuseq *fq);
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq);
+static void fuseq_lock_cmd(struct silofs_fuseq *fq, bool cop);
+static void fuseq_unlock_cmd(struct silofs_fuseq *fq);
 static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq);
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq);
 
@@ -2965,10 +2967,36 @@ static void fuseq_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq)
 	silofs_unused(do_interrupt);
 }
 
+static bool is_unicmd(const struct silofs_fuseq_cmd_ctx *fcc,
+                      const struct silofs_task *task)
+{
+	long ioc_cmd;
+	bool ret = false;
+
+	if (task->t_oper.op_code == FUSE_IOCTL) {
+		ioc_cmd = (long)(fcc->in->u.ioctl.arg.cmd);
+		ret = (ioc_cmd == SILOFS_IOC_CLONE) ||
+		      (ioc_cmd == SILOFS_IOC_SYNC);
+	}
+	return ret;
+}
+
+static int fuseq_call_oper_of(const struct silofs_fuseq_cmd_ctx *fcc,
+                              const struct silofs_fuseq_cmd_desc *cd,
+                              struct silofs_task *task)
+{
+	int ret;
+
+	fuseq_lock_cmd(fcc->fqw->fq, is_unicmd(fcc, task));
+	ret = cd->hook(fcc);
+	fuseq_unlock_cmd(fcc->fqw->fq);
+	return ret;
+}
+
 static int fuseq_call_oper(struct silofs_fuseq_worker *fqw,
                            struct silofs_task *task)
 {
-	const struct silofs_fuseq_cmd_desc *cmd_desc = NULL;
+	const struct silofs_fuseq_cmd_desc *cd = NULL;
 	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
 	struct silofs_fuseq_cmd_ctx fcc = {
 		.fqw = fqw,
@@ -2979,10 +3007,10 @@ static int fuseq_call_oper(struct silofs_fuseq_worker *fqw,
 	};
 	int err = -SILOFS_ENOSYS;
 
-	cmd_desc = cmd_desc_of(task->t_oper.op_code);
-	if (likely(cmd_desc != NULL)) {
+	cd = cmd_desc_of(task->t_oper.op_code);
+	if (likely(cd != NULL)) {
 		fuseq_enq_active_op(fqw, task);
-		err = cmd_desc->hook(&fcc);
+		err = fuseq_call_oper_of(&fcc, cd, task);
 		fuseq_dec_active_op(fqw, task);
 	}
 	return err;
@@ -3614,26 +3642,37 @@ static int fuseq_init_locks(struct silofs_fuseq *fq)
 
 	err = silofs_mutex_init(&fq->fq_ch_lock);
 	if (err) {
-		return err;
+		goto out_err;
 	}
 	err = silofs_mutex_init(&fq->fq_op_lock);
 	if (err) {
-		silofs_mutex_fini(&fq->fq_ch_lock);
-		return err;
+		goto out_err1;
 	}
 	err = silofs_mutex_init(&fq->fq_ctl_lock);
 	if (err) {
-		silofs_mutex_fini(&fq->fq_op_lock);
-		silofs_mutex_fini(&fq->fq_ch_lock);
-		return err;
+		goto out_err2;
+	}
+	err = silofs_rwlock_init(&fq->fq_cmd_lock);
+	if (err) {
+		goto out_err3;
 	}
 	fq->fq_init_locks = true;
 	return 0;
+
+out_err3:
+	silofs_mutex_fini(&fq->fq_ctl_lock);
+out_err2:
+	silofs_mutex_fini(&fq->fq_op_lock);
+out_err1:
+	silofs_mutex_fini(&fq->fq_ch_lock);
+out_err:
+	return err;
 }
 
 static void fuseq_fini_locks(struct silofs_fuseq *fq)
 {
 	if (fq->fq_init_locks) {
+		silofs_rwlock_fini(&fq->fq_cmd_lock);
 		silofs_mutex_fini(&fq->fq_ctl_lock);
 		silofs_mutex_fini(&fq->fq_op_lock);
 		silofs_mutex_fini(&fq->fq_ch_lock);
@@ -4065,6 +4104,20 @@ static bool fuseq_trylock_ctl(struct silofs_fuseq *fq)
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq)
 {
 	silofs_mutex_unlock(&fq->fq_ctl_lock);
+}
+
+static void fuseq_lock_cmd(struct silofs_fuseq *fq, bool unicmd)
+{
+	if (unicmd) {
+		silofs_rwlock_wrlock(&fq->fq_cmd_lock);
+	} else {
+		silofs_rwlock_rdlock(&fq->fq_cmd_lock);
+	}
+}
+
+static void fuseq_unlock_cmd(struct silofs_fuseq *fq)
+{
+	silofs_rwlock_unlock(&fq->fq_cmd_lock);
 }
 
 

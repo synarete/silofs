@@ -61,6 +61,7 @@ struct silofs_fuseq {
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_mutex             fq_ctl_lock;
+	struct silofs_rwlock            fq_cmd_lock;
 	struct silofs_uber             *fq_uber;
 	struct silofs_alloc            *fq_alloc;
 	size_t                          fq_nopers;

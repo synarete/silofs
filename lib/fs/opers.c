@@ -297,13 +297,17 @@ static int op_stage_mut_inode2(struct silofs_task *task,
 	return err;
 }
 
-static int op_stage_opt_inode(struct silofs_task *task, ino_t ino,
+static int op_stage_opt_inode(struct silofs_task *task, ino_t ino, bool mut,
                               struct silofs_inode_info **out_ii)
 {
 	int err;
 
-	err = op_stage_cur_inode(task, ino, out_ii);
-	if (!err && silofs_ii_isdirty(*out_ii)) {
+	if (mut) {
+		err = op_stage_mut_inode(task, ino, out_ii);
+	} else {
+		err = op_stage_cur_inode(task, ino, out_ii);
+	}
+	if (!err && !mut && silofs_ii_isdirty(*out_ii)) {
 		err = op_stage_mut_inode(task, ino, out_ii);
 	}
 	return err;
@@ -706,7 +710,7 @@ int silofs_fs_releasedir(struct silofs_task *task, ino_t ino, int o_flags)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, &dir_ii);
+	err = op_stage_opt_inode(task, ino, flush, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_releasedir(task, dir_ii, flush);
@@ -810,7 +814,7 @@ int silofs_fs_fsyncdir(struct silofs_task *task, ino_t ino, bool datasync)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, &dir_ii);
+	err = op_stage_opt_inode(task, ino, datasync, &dir_ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_fsyncdir(task, dir_ii, datasync);
@@ -1078,7 +1082,7 @@ int silofs_fs_release(struct silofs_task *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, &ii);
+	err = op_stage_opt_inode(task, ino, flush, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_release(task, ii, flush);
@@ -1124,7 +1128,7 @@ int silofs_fs_fsync(struct silofs_task *task, ino_t ino, bool datasync)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, &ii);
+	err = op_stage_opt_inode(task, ino, datasync, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_fsync(task, ii, datasync);

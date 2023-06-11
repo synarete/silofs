@@ -1,5 +1,5 @@
 ---
-name: "Silofs: build and deploy"
+name: "Silofs CI"
 on:
   push:
     tags:
@@ -132,8 +132,8 @@ jobs:
         run: sudo apt-get install -y rpm
       - name: Build rpm package
         run: ./dist/rpm/packagize-rpm.sh
-  install-deb-package:
-    name: Install as deb package
+  build-install-deb-package:
+    name: Build and install deb package
     runs-on: ubuntu-latest
     needs:
       - build-check
@@ -175,8 +175,8 @@ jobs:
         run: silofs umount /mnt/test
       - name: Cleanups
         run: rm -rf ./build/repo
-  install-by-autotools:
-    name: Install via autotools
+  build-install-by-autotools:
+    name: Build and install by autotools
     runs-on: ubuntu-latest
     needs:
       - build-check
@@ -231,8 +231,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-rpm-package
-      - install-deb-package
-      - install-by-autotools
+      - build-install-deb-package
+      - build-install-by-autotools
     steps:
       - name: Done
         run: date

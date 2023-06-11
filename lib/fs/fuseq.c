@@ -2712,10 +2712,12 @@ out:
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+#define FUSEQ_CMD_MAX   (64)
+
 #define FUSEQ_CMD(opcode_, hook_, rtime_) \
 	[opcode_] = { hook_, SILOFS_STR(opcode_), opcode_, rtime_ }
 
-static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[] = {
+static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[FUSEQ_CMD_MAX] = {
 	FUSEQ_CMD(FUSE_LOOKUP, do_lookup, 0),
 	FUSEQ_CMD(FUSE_FORGET, do_forget, 0),
 	FUSEQ_CMD(FUSE_GETATTR, do_getattr, 0),
@@ -2768,6 +2770,8 @@ static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[] = {
 static const struct silofs_fuseq_cmd_desc *cmd_desc_of(uint32_t opc)
 {
 	const struct silofs_fuseq_cmd_desc *cmd = NULL;
+
+	STATICASSERT_EQ(ARRAY_SIZE(fuseq_cmd_tbl), FUSEQ_CMD_MAX);
 
 	if (opc && (opc < ARRAY_SIZE(fuseq_cmd_tbl))) {
 		cmd = &fuseq_cmd_tbl[opc];
@@ -4456,6 +4460,11 @@ static int op_ioctl_clone(struct silofs_task *task,
 static int op_ioctl_sync(struct silofs_task *task,
                          struct silofs_oper_args *args)
 {
+	/*
+	 * Currently (Linux kernel v6.3) fuse has 'fc->sync_fs = true' only for
+	 * fs/fuse/virtio_fs.c code-path. Thus, implement full sync-fs via
+	 * dedicated ioctl.
+	 */
 	return op_syncfs(task, args);
 }
 
@@ -4481,7 +4490,7 @@ static int op_ioctl(struct silofs_task *task,
 	return ret;
 }
 
-static const silofs_oper_fn silofs_op_tbl[] = {
+static const silofs_oper_fn silofs_op_tbl[FUSEQ_CMD_MAX] = {
 	[FUSE_LOOKUP]           = op_lookup,
 	[FUSE_FORGET]           = op_forget,
 	[FUSE_GETATTR]          = op_getattr,
@@ -4523,11 +4532,12 @@ static const silofs_oper_fn silofs_op_tbl[] = {
 
 static silofs_oper_fn hook_of(uint32_t op_code)
 {
-	const size_t slot = op_code;
 	silofs_oper_fn hook = NULL;
 
-	if (slot && (slot < ARRAY_SIZE(silofs_op_tbl))) {
-		hook = silofs_op_tbl[slot];
+	STATICASSERT_EQ(ARRAY_SIZE(silofs_op_tbl), FUSEQ_CMD_MAX);
+
+	if (op_code && (op_code < ARRAY_SIZE(silofs_op_tbl))) {
+		hook = silofs_op_tbl[op_code];
 	}
 	return hook;
 }

@@ -156,15 +156,13 @@ static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_ioc_query query = {
-		.qtype = SILOFS_QUERY_BOOTSEC,
-	};
+	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_BOOTSEC };
 	struct cmd_snap_in_args *args = &ctx->in_args;
 
 	cmd_check_isdir(args->dirpath, false);
 	cmd_realpath(args->dirpath, &args->dirpath_real);
 	cmd_check_fsname(args->snapname);
-
+	cmd_check_fusefs(args->dirpath_real);
 	cmd_snap_ioctl_query(args->dirpath_real, &query);
 	args->repodir = cmd_strdup(query.u.bootsec.repo);
 	args->name = cmd_strdup(query.u.bootsec.name);

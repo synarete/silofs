@@ -88,6 +88,7 @@ static void cmd_sync_prepare(struct cmd_sync_ctx *ctx)
 {
 	cmd_realpath(ctx->in_args.pathname, &ctx->in_args.pathname_real);
 	cmd_check_reg_or_dir(ctx->in_args.pathname_real);
+	cmd_check_fusefs(ctx->in_args.pathname_real);
 }
 
 static void cmd_sync_execute(struct cmd_sync_ctx *ctx)

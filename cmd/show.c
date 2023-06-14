@@ -116,6 +116,7 @@ static void cmd_show_prepare(struct cmd_show_ctx *ctx)
 {
 	cmd_realpath(ctx->in_args.pathname, &ctx->in_args.pathname_real);
 	cmd_check_reg_or_dir(ctx->in_args.pathname_real);
+	cmd_check_fusefs(ctx->in_args.pathname_real);
 }
 
 static void cmd_show_resolve_subcmd(struct cmd_show_ctx *ctx)

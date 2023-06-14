@@ -20,7 +20,6 @@
 #include <sys/time.h>
 #include <sys/vfs.h>
 #include <sys/stat.h>
-#include <sys/statvfs.h>
 #include <sys/resource.h>
 #include <sys/capability.h>
 #include <sys/prctl.h>
@@ -411,6 +410,16 @@ void cmd_check_mntdir(const char *path, bool mount)
 		if (st.st_ino != SILOFS_INO_ROOT) {
 			cmd_dief(0, "not a silofs mount-point: %s", path);
 		}
+	}
+}
+
+void cmd_check_fusefs(const char *path)
+{
+	struct statfs stfs;
+
+	cmd_statfs_ok(path, &stfs);
+	if (!silofs_is_fuse_fstype(stfs.f_type)) {
+		cmd_dief(0, "not on FUSE file-system: %s", path);
 	}
 }
 

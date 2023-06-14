@@ -124,6 +124,8 @@ void cmd_check_emptydir(const char *path, bool w_ok);
 
 void cmd_check_mntdir(const char *path, bool mount);
 
+void cmd_check_fusefs(const char *path);
+
 void cmd_check_isreg(const char *path, bool w_ok);
 
 void cmd_check_reg_or_dir(const char *path);

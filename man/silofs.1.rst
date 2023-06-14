@@ -47,7 +47,7 @@ OPTIONS
   Displays the current version of the locally installed  **silofs**.
 
 **-h, --help**
-  Displays list of avilable sub-commands. When using this option with
+  Displays list of available sub-commands. When using this option with
   command name displays command-specific help information.
 
 ..

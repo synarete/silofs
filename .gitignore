@@ -9,7 +9,6 @@ lib*.la
 .deps
 .libs
 *~
-.notes.txt
 
 # Top-level excludes
 /.autom4te.cfg
@@ -26,6 +25,7 @@ lib*.la
 /config.log
 /config.status
 /sedsub.mk
+/.notes
 
 # Editors and IDEs
 /.cproject

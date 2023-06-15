@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0
+import copy
 from . import ctx
 
 
@@ -93,3 +94,26 @@ def test_snap_offline(tc: ctx.TestCtx) -> None:
     tds.do_unlink()
     tc.exec_umount()
     tc.exec_rmfs("snap3")
+
+
+def test_snap_repeated(tc: ctx.TestCtx) -> None:
+    snaps = []
+    snap_tds = []
+    name = "main"
+    tc.exec_init()
+    tc.exec_mkfs(20, name)
+    tc.exec_mount(name)
+    for i in range(1, 20):
+        snap_name = f"snap{i}"
+        tds = tc.create_data(2, snap_name, 2**20)
+        snap_tds.append(tds)
+        tc.exec_snap(snap_name)
+        snaps.append((snap_name, copy.copy(snap_tds)))
+    tc.exec_umount()
+    for snap_name, snap_tds in snaps:
+        tc.exec_mount(snap_name)
+        for tds in snap_tds:
+            tds.do_read()
+            tds.do_unlink()
+        tc.exec_umount()
+        tc.exec_rmfs(snap_name)

@@ -30,6 +30,7 @@ TESTS = [
     test_snap.test_snap_reload_twice,
     test_snap.test_snap_reload_multi,
     test_snap.test_snap_offline,
+    test_snap.test_snap_repeated,
     test_fsck.test_fsck_basic,
     test_fsck.test_fsck_snap,
     test_xprogs.test_postgresql,

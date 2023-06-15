@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0
 import sys
 import os
+import datetime
 import traceback
 from . import expect
 from . import cmd
@@ -12,6 +13,12 @@ from . import test_all
 def _die(msg: str) -> None:
     print(msg)
     sys.exit(1)
+
+
+def _print(msg: str) -> None:
+    now = datetime.datetime.now()
+    ts = now.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] {msg}")
 
 
 def _require_empty_dir(dirpath: str) -> None:
@@ -30,8 +37,8 @@ def _report_prog() -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
     vers = cmds.silofs.version()
-    print(f"PROG: {prog}")
-    print(f"VERS: {vers}")
+    _print(f"PROG: {prog}")
+    _print(f"VERS: {vers}")
 
 
 def _pre_run_tests() -> None:
@@ -53,7 +60,7 @@ def _post_test(tc: ctx.TestCtx) -> None:
 
 
 def _exec_test(td: ctx.TestDef, tc: ctx.TestCtx) -> None:
-    print(f"TEST: {td.name}")
+    _print(f"TEST: {td.name}")
     td.hook(tc)
 
 
@@ -72,10 +79,10 @@ def run_tests(cfg: ctx.TestConfig) -> None:
     try:
         _do_run_tests(cfg)
     except cmd.CmdError as cex:
-        print(f"FATAL: {cex} {cex.retcode}: {cex.output}")
+        _print(f"FATAL: {cex} {cex.retcode}: {cex.output}")
         traceback.print_exc()
         sys.exit(1)
     except expect.ExpectException as exp:
-        print(f"FATAL: {exp}")
+        _print(f"FATAL: {exp}")
         traceback.print_exc()
         sys.exit(2)

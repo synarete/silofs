@@ -415,46 +415,11 @@ static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_blobf *blobf_unconst(const struct silofs_blobf *blobf)
-{
-	union {
-		const struct silofs_blobf *p;
-		struct silofs_blobf *q;
-	} u = {
-		.p = blobf
-	};
-	return u.q;
-}
-
-static struct silofs_blobf *
-blobf_from_iovref(const struct silofs_iovref *iovr)
-{
-	const struct silofs_blobf *blobf = NULL;
-
-	blobf = container_of2(iovr, struct silofs_blobf, b_iovref);
-	return blobf_unconst(blobf);
-}
-
-static void blobf_iov_pre(struct silofs_iovref *iovr)
-{
-	struct silofs_blobf *blobf = blobf_from_iovref(iovr);
-
-	silofs_blobf_incref(blobf);
-}
-
-static void blobf_iov_post(struct silofs_iovref *iovr)
-{
-	struct silofs_blobf *blobf = blobf_from_iovref(iovr);
-
-	silofs_blobf_decref(blobf);
-}
-
 static int blobf_init(struct silofs_blobf *blobf,
                       const struct silofs_blobid *blobid)
 {
 	blobid_assign(&blobf->b_blobid, blobid);
 	silofs_ce_init(&blobf->b_ce);
-	silofs_iovref_init(&blobf->b_iovref, blobf_iov_pre, blobf_iov_post);
 	silofs_ckey_by_blobid(&blobf->b_ce.ce_ckey, &blobf->b_blobid);
 	blobf->b_size = 0;
 	blobf->b_fd = -1;
@@ -468,7 +433,6 @@ static void blobf_fini(struct silofs_blobf *blobf)
 	silofs_rwlock_fini(&blobf->b_rwlock);
 	blobid_reset(&blobf->b_blobid);
 	silofs_ce_fini(&blobf->b_ce);
-	silofs_iovref_fini(&blobf->b_iovref);
 	blobf->b_size = -1;
 	blobf->b_fd = -1;
 }
@@ -604,12 +568,6 @@ static void blobf_make_iovec(const struct silofs_blobf *blobf,
 	siov->iov_ref = NULL;
 }
 
-static void blobf_setup_iovec_ref(struct silofs_blobf *blobf,
-                                  struct silofs_iovec *siov)
-{
-	siov->iov_ref = &blobf->b_iovref;
-}
-
 static int blobf_iovec_at(const struct silofs_blobf *blobf,
                           loff_t off, size_t len, struct silofs_iovec *siov)
 {
@@ -629,20 +587,6 @@ static int blobf_iovec_of(const struct silofs_blobf *blobf,
 	return blobf_iovec_at(blobf, oaddr->pos, oaddr->len, siov);
 }
 
-static int blobf_resolve(struct silofs_blobf *blobf,
-                         const struct silofs_oaddr *oaddr,
-                         struct silofs_iovec *siov)
-{
-	int err;
-
-	err = blobf_iovec_of(blobf, oaddr, siov);
-	if (err) {
-		return err;
-	}
-	blobf_setup_iovec_ref(blobf, siov);
-	return 0;
-}
-
 int silofs_blobf_resolve(struct silofs_blobf *blobf,
                          const struct silofs_oaddr *oaddr,
                          struct silofs_iovec *siov)
@@ -650,7 +594,7 @@ int silofs_blobf_resolve(struct silofs_blobf *blobf,
 	int ret;
 
 	blobf_rdlock(blobf);
-	ret = blobf_resolve(blobf, oaddr, siov);
+	ret = blobf_iovec_of(blobf, oaddr, siov);
 	blobf_unlock(blobf);
 	return ret;
 }

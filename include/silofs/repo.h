@@ -27,7 +27,6 @@ struct silofs_blobf {
 	struct silofs_cache_elem        b_ce;
 	struct silofs_rwlock            b_rwlock;
 	struct silofs_blobid            b_blobid;
-	struct silofs_iovref            b_iovref;
 	long                            b_size;
 	int                             b_fd;
 	bool                            b_flocked;

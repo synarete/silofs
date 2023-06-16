@@ -294,15 +294,22 @@ static int check_mount_path(const char *path, uid_t caller_uid)
 	return err;
 }
 
-static int check_umount_path(const char *path, uid_t caller_uid)
+static int check_umount_path(const char *path, uid_t caller_uid, bool force)
 {
 	int err;
 
 	err = silofs_check_mntpoint(path, caller_uid, false);
-	if (err && (err != -ENOTCONN)) {
-		log_info("illegal umount: %s %d", path, err);
+	if (err) {
+		if (err != -ENOTCONN) {
+			log_info("unable to umount: %s %d", path, err);
+			return err;
+		}
+		if (!force) {
+			log_info("cannot umount unforced: %s %d", path, err);
+			return err;
+		}
 	}
-	return err;
+	return 0;
 }
 
 static int check_fuse_dev(const char *devname)
@@ -915,8 +922,8 @@ static int mntsvc_check_umount(const struct silofs_mntsvc *msvc,
 	const struct ucred *peer_cred = &msvc->ms_peer_ucred;
 	const char *path = mntp->path;
 	int err;
+	bool force;
 
-	unused(msvc);
 	if (!strlen(path)) {
 		return -SILOFS_EPERM;
 	}
@@ -926,8 +933,8 @@ static int mntsvc_check_umount(const struct silofs_mntsvc *msvc,
 	if ((mntp->flags | mnt_allow) != mnt_allow) {
 		return -SILOFS_EINVAL;
 	}
-	/* TODO: for MNT_FORCE, require valid uig/gid */
-	err = check_umount_path(path, peer_cred->uid);
+	force = (mntp->flags & MNT_FORCE) > 0;
+	err = check_umount_path(path, peer_cred->uid, force);
 	if (err) {
 		return err;
 	}

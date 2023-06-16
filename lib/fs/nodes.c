@@ -40,6 +40,9 @@ static void fni_delete_by(struct silofs_lnode_info *lni,
 static void fli_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc);
 
+static int verify_view_by(const union silofs_view *view,
+                          const enum silofs_stype stype);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static uint32_t hdr_magic(const struct silofs_header *hdr)
@@ -250,7 +253,7 @@ static uint32_t lni_calc_chekcsum(const struct silofs_lnode_info *lni)
 
 static int lni_verify_view(struct silofs_lnode_info *lni)
 {
-	return silofs_verify_view_by(lni->view, lni->stype);
+	return verify_view_by(lni->view, lni->stype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -410,11 +413,6 @@ static bool vi_has_stype(const struct silofs_vnode_info *vi,
                          enum silofs_stype stype)
 {
 	return vi_stype(vi) == stype;
-}
-
-bool silofs_vi_may_flush(const struct silofs_vnode_info *vi)
-{
-	return (vi->v_asyncwr == 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1453,7 +1451,7 @@ static int view_verify_sub(const union silofs_view *view,
 	return 0;
 }
 
-int silofs_verify_view_by(const union silofs_view *view,
+static int verify_view_by(const union silofs_view *view,
                           const enum silofs_stype stype)
 {
 	int err;

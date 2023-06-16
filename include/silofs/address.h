@@ -105,7 +105,7 @@ bool silofs_stype_isvnode(enum silofs_stype stype);
 
 bool silofs_stype_isdata(enum silofs_stype stype);
 
-size_t silofs_stype_size(enum silofs_stype stype);
+uint32_t silofs_stype_size(enum silofs_stype stype);
 
 ssize_t silofs_stype_ssize(enum silofs_stype stype);
 

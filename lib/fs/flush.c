@@ -47,6 +47,14 @@ static void dset_moveq(struct silofs_dset *dset);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool vi_may_flush(const struct silofs_vnode_info *vi)
+{
+	const int asyncwr = silofs_atomic_get(&vi->v_asyncwr);
+
+	return (asyncwr == 0);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_submitq_ent *sqe_from_qlh(struct silofs_list_head *qlh)
 {
@@ -457,10 +465,8 @@ static void dsets_fill_vis_of(struct silofs_dsets *dsets,
 static void dsets_fill_by_ii(struct silofs_dsets *dsets,
                              struct silofs_inode_info *ii)
 {
-	if (vi_may_flush(&ii->i_vi)) {
-		dsets_fill_vis_of(dsets, &ii->i_dq_vis);
-		dsets_add_by_vi(dsets, &ii->i_vi);
-	}
+	dsets_fill_vis_of(dsets, &ii->i_dq_vis);
+	dsets_add_by_vi(dsets, &ii->i_vi);
 }
 
 static void dsets_fill_iis_of(struct silofs_dsets *dsets,

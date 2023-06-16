@@ -312,7 +312,7 @@ static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
 {
 	fli_incref(fli);
 	if (wr_mode && fli_asyncwr(fli)) {
-		fli->fl_vi.v_asyncwr++;
+		silofs_atomic_add(&fli->fl_vi.v_asyncwr, 1);
 	}
 }
 
@@ -320,8 +320,7 @@ static void fli_post_io(struct silofs_fileaf_info *fli, int wr_mode)
 {
 	fli_decref(fli);
 	if (wr_mode && fli_asyncwr(fli)) {
-		silofs_assert_gt(fli->fl_vi.v_asyncwr, 0);
-		fli->fl_vi.v_asyncwr--;
+		silofs_atomic_sub(&fli->fl_vi.v_asyncwr, 1);
 	}
 }
 

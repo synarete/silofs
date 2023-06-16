@@ -201,7 +201,6 @@
 #define vi_decref(vi)                   silofs_vi_decref(vi)
 #define vi_dirtify(vi, ii)              silofs_vi_dirtify(vi, ii)
 #define vi_isdata(vi)                   silofs_vi_isdata(vi)
-#define vi_may_flush(vi)                silofs_vi_may_flush(vi)
 
 #define ii_unconst(ii)                  silofs_ii_unconst(ii)
 #define ii_to_vi(ii)                    silofs_ii_to_vi(ii)

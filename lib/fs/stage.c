@@ -2212,9 +2212,7 @@ stgc_pre_clone_stage_inode_at(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	if (vi_may_flush(&ii->i_vi)) {
-		*out_vi = &ii->i_vi;
-	}
+	*out_vi = &ii->i_vi;
 	return 0;
 }
 
@@ -2229,13 +2227,11 @@ stgc_pre_clone_stage_vnode_at(const struct silofs_stage_ctx *stg_ctx,
 	*out_vi = NULL;
 	err = silofs_stage_vnode(stg_ctx->task, NULL, vaddr,
 	                         SILOFS_STG_CUR, &vi);
-	silofs_assert_ne(err, -SILOFS_ERDONLY);
 	if (err) {
+		silofs_assert_ne(err, -SILOFS_ERDONLY);
 		return err;
 	}
-	if (vi_may_flush(vi)) {
-		*out_vi = vi;
-	}
+	*out_vi = vi;
 	return 0;
 }
 

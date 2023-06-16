@@ -409,7 +409,7 @@ bool silofs_stype_isdata(enum silofs_stype stype)
 	return ret;
 }
 
-size_t silofs_stype_size(enum silofs_stype stype)
+uint32_t silofs_stype_size(enum silofs_stype stype)
 {
 	switch (stype) {
 	case SILOFS_STYPE_SUPER:

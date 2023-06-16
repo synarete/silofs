@@ -43,7 +43,7 @@ struct silofs_lnode_info {
 	struct silofs_lbk_info         *lbki;
 	union silofs_view              *view;
 	loff_t                          view_pos;
-	size_t                          view_len;
+	uint32_t                        view_len;
 	enum silofs_stype               stype;
 	enum silofs_lnflags             flags;
 };
@@ -88,12 +88,12 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info        v;
+	int                             v_asyncwr;
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_olink             v_olink;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_dirtyq           *v_dq;
-	long                            v_asyncwr;
 };
 
 /* inode */
@@ -231,12 +231,6 @@ int silofs_ui_verify_view(struct silofs_unode_info *ui);
 void silofs_vi_bind_view(struct silofs_vnode_info *vi);
 
 int silofs_vi_verify_view(struct silofs_vnode_info *vi);
-
-bool silofs_vi_may_flush(const struct silofs_vnode_info *vi);
-
-
-int silofs_verify_view_by(const union silofs_view *view,
-                          const enum silofs_stype stype);
 
 union silofs_view *silofs_make_view_of(struct silofs_header *hdr);
 

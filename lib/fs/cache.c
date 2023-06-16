@@ -500,22 +500,6 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	ce_lru(ce, lru);
 }
 
-static int ce_refcnt(const struct silofs_cache_elem *ce)
-{
-	return ce->ce_refcnt;
-}
-
-static void ce_incref(struct silofs_cache_elem *ce)
-{
-	ce->ce_refcnt++;
-}
-
-static void ce_decref(struct silofs_cache_elem *ce)
-{
-	silofs_assert_gt(ce->ce_refcnt, 0);
-	ce->ce_refcnt--;
-}
-
 static bool ce_is_dirty(const struct silofs_cache_elem *ce)
 {
 	return (ce->ce_flags & SILOFS_CEF_DIRTY) > 0;
@@ -528,11 +512,6 @@ static void ce_set_dirty(struct silofs_cache_elem *ce, bool dirty)
 	} else {
 		ce->ce_flags &= ~SILOFS_CEF_DIRTY;
 	}
-}
-
-static bool ce_is_evictable(const struct silofs_cache_elem *ce)
-{
-	return !ce_is_dirty(ce) && !ce_refcnt(ce);
 }
 
 static int ce_refcnt_atomic(const struct silofs_cache_elem *ce)
@@ -1013,19 +992,19 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 	bool ret = false;
 
 	if (!(lni->flags & SILOFS_LNF_PINNED)) {
-		ret = ce_is_evictable(lni_to_ce(lni));
+		ret = ce_is_evictable_atomic(lni_to_ce(lni));
 	}
 	return ret;
 }
 
 static void lni_incref(struct silofs_lnode_info *lni)
 {
-	ce_incref(&lni->ce);
+	ce_incref_atomic(&lni->ce);
 }
 
 static void lni_decref(struct silofs_lnode_info *lni)
 {
-	ce_decref(&lni->ce);
+	ce_decref_atomic(&lni->ce);
 }
 
 void silofs_lni_incref(struct silofs_lnode_info *lni)
@@ -1264,20 +1243,20 @@ static int visit_evictable_vi(struct silofs_cache_elem *ce, void *arg)
 
 int silofs_vi_refcnt(const struct silofs_vnode_info *vi)
 {
-	return likely(vi != NULL) ? ce_refcnt(vi_to_ce(vi)) : 0;
+	return likely(vi != NULL) ? ce_refcnt_atomic(vi_to_ce(vi)) : 0;
 }
 
 void silofs_vi_incref(struct silofs_vnode_info *vi)
 {
 	if (likely(vi != NULL)) {
-		ce_incref(vi_to_ce(vi));
+		ce_incref_atomic(vi_to_ce(vi));
 	}
 }
 
 void silofs_vi_decref(struct silofs_vnode_info *vi)
 {
 	if (likely(vi != NULL)) {
-		ce_decref(vi_to_ce(vi));
+		ce_decref_atomic(vi_to_ce(vi));
 	}
 }
 
@@ -1368,8 +1347,6 @@ static void cache_promote_lru_blobf(struct silofs_cache *cache,
 static void cache_evict_blobf(struct silofs_cache *cache,
                               struct silofs_blobf *blobf)
 {
-	silofs_assert(ce_is_evictable(blobf_to_ce(blobf)));
-
 	lrumap_remove(&cache->c_blobf_lm, blobf_to_ce(blobf));
 	cache_del_blobf(cache, blobf);
 }

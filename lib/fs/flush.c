@@ -355,35 +355,33 @@ static void dset_mkfifo(struct silofs_dset *dset)
 	}
 }
 
-static void dset_undirtify_all(const struct silofs_dset *dset)
+static void lni_undirtify(struct silofs_lnode_info *lni)
 {
 	struct silofs_unode_info *ui = NULL;
-	struct silofs_inode_info *ii = NULL;
 	struct silofs_vnode_info *vi = NULL;
+
+	if (stype_isvnode(lni->stype)) {
+		vi = silofs_vi_from_lni(lni);
+		silofs_vi_undirtify(vi);
+	} else {
+		silofs_assert(stype_isunode(lni->stype));
+		ui = silofs_ui_from_lni(lni);
+		silofs_ui_undirtify(ui);
+	}
+}
+
+static void dset_undirtify_all(const struct silofs_dset *dset)
+{
 	struct silofs_lnode_info *lni_next = NULL;
 	struct silofs_lnode_info *lni = dset->ds_postq;
-	enum silofs_stype stype;
 
 	while (lni != NULL) {
 		lni_next = lni->ds_next;
-		stype = lni->stype;
 
-		if (stype_isinode(stype)) {
-			ii = silofs_ii_from_lni(lni);
-			silofs_ii_undirtify(ii);
-		} else if (stype_isvnode(stype)) {
-			vi = silofs_vi_from_lni(lni);
-			silofs_vi_undirtify(vi);
-		} else {
-			silofs_assert(stype_isunode(stype));
-			ui = silofs_ui_from_lni(lni);
-			silofs_ui_undirtify(ui);
-		}
+		lni_undirtify(lni);
 		lni->ds_next = NULL;
+
 		lni = lni_next;
-		ui = NULL;
-		ii = NULL;
-		vi = NULL;
 	}
 }
 

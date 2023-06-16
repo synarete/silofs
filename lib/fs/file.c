@@ -1366,17 +1366,13 @@ static int filc_zero_data_leaf_at(const struct silofs_file_ctx *f_ctx,
 static int fpr_stage_fileaf_at(const struct silofs_fpos_ref *fpr,
                                struct silofs_fileaf_info **out_fli)
 {
-	int err;
+	int ret = -SILOFS_ENOENT;
 
 	*out_fli = NULL;
-	if (!fpr->has_data) {
-		return -SILOFS_ENOENT;
+	if (fpr->has_data) {
+		ret = filc_stage_fileaf(fpr->f_ctx, &fpr->vaddr, out_fli);
 	}
-	err = filc_stage_fileaf(fpr->f_ctx, &fpr->vaddr, out_fli);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return ret;
 }
 
 static int filc_recheck_finode(const struct silofs_file_ctx *f_ctx,
@@ -2003,11 +1999,28 @@ static int filc_clear_unwritten_of(const struct silofs_file_ctx *f_ctx,
 	return ret;
 }
 
+static int filc_claim_vspace(const struct silofs_file_ctx *f_ctx,
+                             enum silofs_stype stype,
+                             struct silofs_vaddr *out_vaddr)
+{
+	return silofs_claim_vspace(f_ctx->task, stype, out_vaddr);
+}
+
 static int filc_claim_data_space(const struct silofs_file_ctx *f_ctx,
                                  enum silofs_stype stype,
                                  struct silofs_vaddr *out_vaddr)
 {
-	return silofs_claim_vspace(f_ctx->task, stype, out_vaddr);
+	int err;
+
+	err = filc_claim_vspace(f_ctx, stype, out_vaddr);
+	if (err) {
+		return err;
+	}
+	err = filc_require_mut_vaddr(f_ctx, out_vaddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int filc_share_data_space(const struct silofs_file_ctx *f_ctx,
@@ -2334,7 +2347,7 @@ filc_do_write_leaf_by_copy(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	return err;
+	return 0;
 }
 
 static int

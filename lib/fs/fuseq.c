@@ -3425,8 +3425,6 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 
 static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 {
-	const struct silofs_fuseq_workset *fws = &fq->fq_ws;
-	const size_t nworkers_max = fws->fws_nlimit;
 	size_t pipe_size;
 	size_t buff_size;
 	size_t rdwr_size;
@@ -3448,10 +3446,12 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 	fq->fq_coni.max_write = rdwr_size;
 	fq->fq_coni.max_read = rdwr_size;
 	fq->fq_coni.max_readahead = rdwr_size;
-	fq->fq_coni.max_background = nworkers_max; /* XXX is it? */
-	fq->fq_coni.congestion_threshold = 2 * nworkers_max;
 	fq->fq_coni.time_gran = 1;
 	fq->fq_coni.max_inlen = buff_size;
+
+	/* values as defaults in libfuse:lib/fuse_lowlevel.c */
+	fq->fq_coni.max_background = (1 << 16) - 1;
+	fq->fq_coni.congestion_threshold = fq->fq_coni.max_background * 3 / 4;
 	return 0;
 }
 

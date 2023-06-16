@@ -47,6 +47,23 @@ static void dset_moveq(struct silofs_dset *dset);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool ui_issuper(const struct silofs_unode_info *ui)
+{
+	return stype_issuper(ui_stype(ui));
+}
+
+static const struct silofs_unode_info *
+ui_from(const struct silofs_lnode_info *lni)
+{
+	return silofs_ui_from_lni(lni);
+}
+
+static struct silofs_vnode_info *
+vi_from(struct silofs_lnode_info *lni)
+{
+	return silofs_vi_from_lni(lni);
+}
+
 static bool vi_may_flush(const struct silofs_vnode_info *vi)
 {
 	const int asyncwr = silofs_atomic_get(&vi->v_asyncwr);
@@ -72,65 +89,60 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 	}
 }
 
-static int resolve_unode(const struct silofs_task *task,
-                         const struct silofs_unode_info *ui,
-                         struct silofs_olink *out_olink)
+static int smc_require_mutable_olink(const struct silofs_submit_ctx *sm_ctx,
+                                     const struct silofs_olink *olink)
 {
-	silofs_ulink_as_olink(ui_ulink(ui), out_olink);
-	silofs_unused(task);
-	return 0;
+	int err = 0;
+	bool mut;
+
+	mut = silofs_sbi_ismutable_oaddr(sm_ctx->uber->ub_sbi, &olink->oaddr);
+	err = mut ? 0 : -SILOFS_EROFS;
+	silofs_assert_ok(err);
+	return err;
 }
 
-static int resolve_vnode(struct silofs_task *task,
-                         struct silofs_vnode_info *vi,
-                         struct silofs_olink *out_olink)
+static int smc_resolve_olink_of_ui(const struct silofs_submit_ctx *sm_ctx,
+                                   const struct silofs_unode_info *ui,
+                                   struct silofs_olink *out_olink)
+{
+	int ret = 0;
+
+	silofs_ulink_as_olink(ui_ulink(ui), out_olink);
+	if (!ui_issuper(ui)) {
+		ret = smc_require_mutable_olink(sm_ctx, out_olink);
+	}
+	return ret;
+}
+
+static int smc_resolve_olink_of_vi(const struct silofs_submit_ctx *sm_ctx,
+                                   struct silofs_vnode_info *vi,
+                                   struct silofs_olink *out_olink)
 {
 	int err;
 
-	err = silofs_refresh_olink_of(task, vi);
+	err = silofs_refresh_olink_of(sm_ctx->task, vi);
 	if (err) {
 		return err;
 	}
 	silofs_olink_assign(out_olink, &vi->v_olink);
-	return 0;
+	return smc_require_mutable_olink(sm_ctx, out_olink);
 }
 
-static int resolve_lnode(struct silofs_task *task,
-                         struct silofs_lnode_info *lni,
-                         struct silofs_olink *out_olink)
+static int smc_resolve_olink_of(const struct silofs_submit_ctx *sm_ctx,
+                                struct silofs_lnode_info *lni,
+                                struct silofs_olink *out_olink)
 {
-	const struct silofs_unode_info *ui = NULL;
-	struct silofs_vnode_info *vi = NULL;
 	int ret;
 
 	if (stype_isunode(lni->stype)) {
-		ui = silofs_ui_from_lni(lni);
-		ret = resolve_unode(task, ui, out_olink);
+		ret = smc_resolve_olink_of_ui(sm_ctx, ui_from(lni), out_olink);
 	} else if (stype_isvnode(lni->stype)) {
-		vi = silofs_vi_from_lni(lni);
-		ret = resolve_vnode(task, vi, out_olink);
+		ret = smc_resolve_olink_of_vi(sm_ctx, vi_from(lni), out_olink);
 	} else {
 		silofs_panic("corrupted lnode: stype=%d", lni->stype);
 		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
 	}
 	return ret;
-}
-
-static int smc_check_resolved_olink(const struct silofs_submit_ctx *sm_ctx,
-                                    const struct silofs_lnode_info *lni,
-                                    const struct silofs_olink *olink)
-{
-	const struct silofs_sb_info *sbi = sm_ctx->uber->ub_sbi;
-	const struct silofs_blobid *blobid = &olink->oaddr.bka.blobid;
-	int err = 0;
-	bool mut;
-
-	if (stype_isvnode(lni->stype)) {
-		mut = silofs_sbi_ismutable_blobid(sbi, blobid);
-		err = mut ? 0 : -SILOFS_EROFS;
-	}
-	silofs_assert_ok(err);
-	return err;
 }
 
 static void smc_relax_cache_now(const struct silofs_submit_ctx *sm_ctx)
@@ -165,26 +177,6 @@ static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
 	return 0;
 }
 
-static void smc_del_sqe(struct silofs_submit_ctx *sm_ctx,
-                        struct silofs_submitq_ent *sqe)
-{
-	silofs_submitq_del_sqe(sm_ctx->submitq, sqe);
-}
-
-static int smc_setup_sqe_by_refs(struct silofs_submit_ctx *sm_ctx,
-                                 struct silofs_submitq_ent *sqe)
-{
-	int retry = 4;
-	int err;
-
-	err = silofs_sqe_assign_iovs(sqe, sm_ctx->refs);
-	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
-		smc_relax_cache_now(sm_ctx);
-		err = silofs_sqe_assign_iovs(sqe, sm_ctx->refs);
-	}
-	return err;
-}
-
 static bool smc_append_next_ref(struct silofs_submit_ctx *sm_ctx,
                                 struct silofs_submitq_ent *sqe,
                                 const struct silofs_olink *olink,
@@ -211,11 +203,7 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
 	int err;
 
 	while (lni != NULL) {
-		err = resolve_lnode(sm_ctx->task, lni, &olink);
-		if (err) {
-			return err;
-		}
-		err = smc_check_resolved_olink(sm_ctx, lni, &olink);
+		err = smc_resolve_olink_of(sm_ctx, lni, &olink);
 		if (err) {
 			return err;
 		}
@@ -226,6 +214,26 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
 		lni = dset->ds_preq;
 	}
 	return 0;
+}
+
+static void smc_del_sqe(struct silofs_submit_ctx *sm_ctx,
+                        struct silofs_submitq_ent *sqe)
+{
+	silofs_submitq_del_sqe(sm_ctx->submitq, sqe);
+}
+
+static int smc_setup_sqe_by_refs(struct silofs_submit_ctx *sm_ctx,
+                                 struct silofs_submitq_ent *sqe)
+{
+	int retry = 4;
+	int err;
+
+	err = silofs_sqe_assign_iovs(sqe, sm_ctx->refs);
+	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
+		smc_relax_cache_now(sm_ctx);
+		err = silofs_sqe_assign_iovs(sqe, sm_ctx->refs);
+	}
+	return err;
 }
 
 static int smc_populate_sqe_by(struct silofs_submit_ctx *sm_ctx,

@@ -61,32 +61,3 @@ int silofs_iovec_copy_mem(const struct silofs_iovec *iov_src,
 	memcpy(iov_dst->iov_base, iov_src->iov_base, len);
 	return 0;
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_iovref_init(struct silofs_iovref *iovr,
-                        silofs_iovref_fn pre, silofs_iovref_fn post)
-{
-	iovr->pre = pre;
-	iovr->post = post;
-}
-
-void silofs_iovref_fini(struct silofs_iovref *iovr)
-{
-	iovr->pre = NULL;
-	iovr->post = NULL;
-}
-
-void silofs_iovref_pre(struct silofs_iovref *iovr)
-{
-	if (iovr && iovr->pre) {
-		iovr->pre(iovr);
-	}
-}
-
-void silofs_iovref_post(struct silofs_iovref *iovr)
-{
-	if (iovr && iovr->post) {
-		iovr->post(iovr);
-	}
-}

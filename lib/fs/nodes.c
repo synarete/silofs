@@ -330,15 +330,6 @@ static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
 	return u.q;
 }
 
-static struct silofs_vnode_info *
-vi_from_iovref(const struct silofs_iovref *iovr)
-{
-	const struct silofs_vnode_info *vi = NULL;
-
-	vi = container_of2(iovr, struct silofs_vnode_info, v_iovr);
-	return vi_unconst(vi);
-}
-
 struct silofs_vnode_info *
 silofs_vi_from_dirty_lh(struct silofs_list_head *lh)
 {
@@ -346,49 +337,6 @@ silofs_vi_from_dirty_lh(struct silofs_list_head *lh)
 
 	vi = container_of(lh, struct silofs_vnode_info, v_dq_lh);
 	return vi;
-}
-
-static void vi_set_noflush(struct silofs_vnode_info *vi, bool noflush)
-{
-	const int flags = vi->v.flags;
-
-	if (noflush) {
-		vi->v.flags = flags | SILOFS_LNF_NOFLUSH;
-	} else {
-		vi->v.flags = flags & ~SILOFS_LNF_NOFLUSH;
-	}
-}
-
-static bool vi_asyncwr(const struct silofs_vnode_info *vi)
-{
-	const struct silofs_uber *uber = NULL;
-	bool ret = false;
-
-	if (vi_isdata(vi)) {
-		uber = vi_uber(vi);
-		ret = (uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
-	}
-	return ret;
-}
-
-static void vi_iov_pre(struct silofs_iovref *iovr)
-{
-	struct silofs_vnode_info *vi = vi_from_iovref(iovr);
-
-	silofs_vi_incref(vi);
-	if (vi_asyncwr(vi)) {
-		vi_set_noflush(vi, true);
-	}
-}
-
-static void vi_iov_post(struct silofs_iovref *iovr)
-{
-	struct silofs_vnode_info *vi = vi_from_iovref(iovr);
-
-	silofs_vi_decref(vi);
-	if (vi_asyncwr(vi)) {
-		vi_set_noflush(vi, false);
-	}
 }
 
 static void vi_init(struct silofs_vnode_info *vi,
@@ -399,7 +347,6 @@ static void vi_init(struct silofs_vnode_info *vi,
 	list_head_init(&vi->v_dq_lh);
 	vaddr_assign(&vi->v_vaddr, vaddr);
 	silofs_olink_reset(&vi->v_olink);
-	silofs_iovref_init(&vi->v_iovr, vi_iov_pre, vi_iov_post);
 	vi->v_vbki = NULL;
 	vi->v_dq = NULL;
 }
@@ -409,7 +356,6 @@ static void vi_fini(struct silofs_vnode_info *vi)
 	lni_fini(&vi->v);
 	list_head_fini(&vi->v_dq_lh);
 	vaddr_reset(&vi->v_vaddr);
-	silofs_iovref_fini(&vi->v_iovr);
 	vi->v_vbki = NULL;
 	vi->v_dq = NULL;
 }

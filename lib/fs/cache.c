@@ -512,6 +512,7 @@ static void ce_incref(struct silofs_cache_elem *ce)
 
 static void ce_decref(struct silofs_cache_elem *ce)
 {
+	silofs_assert_gt(ce->ce_refcnt, 0);
 	ce->ce_refcnt--;
 }
 

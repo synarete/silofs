@@ -301,6 +301,42 @@ static size_t fli_len_within(const struct silofs_fileaf_info *fli,
 	return len_of_data(off, end, fli_stype(fli));
 }
 
+
+static void fli_set_noflush(struct silofs_fileaf_info *fli, bool noflush)
+{
+	struct silofs_vnode_info *vi = &fli->fl_vi;
+	const int flags = vi->v.flags;
+
+	if (noflush) {
+		vi->v.flags = flags | SILOFS_LNF_NOFLUSH;
+	} else {
+		vi->v.flags = flags & ~SILOFS_LNF_NOFLUSH;
+	}
+}
+
+static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
+{
+	const struct silofs_uber *uber = vi_uber(&fli->fl_vi);
+
+	return (uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
+}
+
+static void fli_pre_io(struct silofs_fileaf_info *fli)
+{
+	fli_incref(fli);
+	if (fli_asyncwr(fli)) {
+		fli_set_noflush(fli, true);
+	}
+}
+
+static void fli_post_io(struct silofs_fileaf_info *fli)
+{
+	fli_decref(fli);
+	if (fli_asyncwr(fli)) {
+		fli_set_noflush(fli, false);
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t ftn_refcnt(const struct silofs_ftree_node *ftn)
@@ -788,7 +824,7 @@ filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	out_iov->iov_ref = f_ctx->with_backref ? &fli->fl_vi.v_iovr : NULL;
+	out_iov->iov_ref = f_ctx->with_backref ? fli : NULL;
 	return 0;
 }
 
@@ -1605,17 +1641,35 @@ static int filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
 	return err;
 }
 
+static void iovref_pre(const struct silofs_iovec *iov)
+{
+	struct silofs_fileaf_info *fli = iov->iov_ref;
+
+	if (fli != NULL) {
+		fli_pre_io(fli);
+	}
+}
+
+static void iovref_post(const struct silofs_iovec *iov)
+{
+	struct silofs_fileaf_info *fli = iov->iov_ref;
+
+	if (fli != NULL) {
+		fli_post_io(fli);
+	}
+}
+
 static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
                               struct silofs_fileaf_info *fli,
                               const struct silofs_vaddr *vaddr,
                               size_t *out_len)
 {
 	struct silofs_iovec iov = {
+		.iov_ref = NULL,
 		.iov_base = NULL,
 		.iov_off = -1,
 		.iov_len = 0,
 		.iov_fd = -1,
-		.iov_ref = NULL,
 	};
 	int err;
 
@@ -1624,11 +1678,11 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_iovref_pre(iov.iov_ref);
+	iovref_pre(&iov);
 	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iov);
 	*out_len = iov.iov_len;
 	if (err) {
-		silofs_iovref_post(iov.iov_ref);
+		iovref_post(&iov);
 		return err;
 	}
 	return 0;
@@ -2698,7 +2752,7 @@ int silofs_do_rdwr_post(const struct silofs_task *task,
 {
 	silofs_unused(task);
 	for (size_t i = 0; i < cnt; ++i) {
-		silofs_iovref_post(iov[i].iov_ref);
+		iovref_post(&iov[i]);
 	}
 	return 0;
 }

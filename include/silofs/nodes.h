@@ -92,7 +92,6 @@ struct silofs_vnode_info {
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_olink             v_olink;
-	struct silofs_iovref            v_iovr;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_dirtyq           *v_dq;
 };

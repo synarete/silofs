@@ -19,25 +19,14 @@
 
 #include <stdlib.h>
 
-struct silofs_iovref;
-struct silofs_iovec;
-
-typedef void (*silofs_iovref_fn)(struct silofs_iovref *);
-
-/* extended iovec with optional file and back-context references */
+/* extended standard iovec with optional file-descriptor and back-references */
 struct silofs_iovec {
-	struct silofs_iovref *iov_ref;
+	void  *iov_ref;
 	void  *iov_base;
 	size_t iov_len;
 	loff_t iov_off;
 	int    iov_fd;
 };
-
-struct silofs_iovref {
-	silofs_iovref_fn pre;
-	silofs_iovref_fn post;
-};
-
 
 int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf);
 
@@ -45,15 +34,5 @@ int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf);
 
 int silofs_iovec_copy_mem(const struct silofs_iovec *iov_src,
                           const struct silofs_iovec *iov_dst, size_t len);
-
-
-void silofs_iovref_init(struct silofs_iovref *iovr,
-                        silofs_iovref_fn pre, silofs_iovref_fn post);
-
-void silofs_iovref_fini(struct silofs_iovref *iovr);
-
-void silofs_iovref_pre(struct silofs_iovref *iovr);
-
-void silofs_iovref_post(struct silofs_iovref *iovr);
 
 #endif /* SILOFS_IOVEC_H_ */

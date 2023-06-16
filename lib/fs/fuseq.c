@@ -2986,8 +2986,9 @@ static int fuseq_call_oper_of(const struct silofs_fuseq_cmd_ctx *fcc,
                               struct silofs_task *task)
 {
 	int ret;
+	const bool uni = is_unicmd(fcc, task);
 
-	fuseq_lock_cmd(fcc->fqw->fq, is_unicmd(fcc, task));
+	fuseq_lock_cmd(fcc->fqw->fq, uni);
 	ret = cd->hook(fcc);
 	fuseq_unlock_cmd(fcc->fqw->fq);
 	return ret;

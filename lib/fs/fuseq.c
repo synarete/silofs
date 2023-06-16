@@ -2486,9 +2486,9 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	if (!err1 || (err1 == -ENOSPC)) {
 		err2 = fuseq_wr_iter_copy_iov(fq_wri); /* unlocked */
 	}
+	do_rdwr_post(fcc->task, 1, fq_wri->iov, fq_wri->cnt);
 	ret = fuseq_reply_write(fcc->fqw, fcc->task,
 	                        fq_wri->nwr, err1 ? err1 : err2);
-	do_rdwr_post(fcc->task, 1, fq_wri->iov, fq_wri->cnt);
 	return ret;
 }
 

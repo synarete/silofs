@@ -46,10 +46,6 @@ int silofs_resolve_olink_of(struct silofs_task *task,
                             enum silofs_stg_mode stg_mode,
                             struct silofs_olink *out_olink);
 
-int silofs_require_stg_vaddr(struct silofs_task *task,
-                             enum silofs_stg_mode stg_mode,
-                             const struct silofs_vaddr *vaddr);
-
 int silofs_require_mut_vaddr(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr);
 

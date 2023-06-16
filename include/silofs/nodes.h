@@ -24,10 +24,9 @@ struct silofs_vnode_info;
 
 enum silofs_lnflags {
 	SILOFS_LNF_NONE         = 0x00,
-	SILOFS_LNF_NOFLUSH      = 0x01,
-	SILOFS_LNF_VERIFIED     = 0x02,
-	SILOFS_LNF_RECHECK      = 0x04,
-	SILOFS_LNF_PINNED       = 0x08,
+	SILOFS_LNF_VERIFIED     = 0x01,
+	SILOFS_LNF_RECHECK      = 0x02,
+	SILOFS_LNF_PINNED       = 0x04,
 };
 
 /* nodes' delete hook */
@@ -94,6 +93,7 @@ struct silofs_vnode_info {
 	struct silofs_olink             v_olink;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_dirtyq           *v_dq;
+	long                            v_asyncwr;
 };
 
 /* inode */
@@ -135,7 +135,7 @@ struct silofs_finode_info {
 union silofs_fileaf_u {
 	struct silofs_data_block1      *db1;
 	struct silofs_data_block4      *db4;
-	struct silofs_data_block64       *db;
+	struct silofs_data_block64     *db;
 };
 
 struct silofs_fileaf_info {

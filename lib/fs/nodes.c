@@ -349,10 +349,13 @@ static void vi_init(struct silofs_vnode_info *vi,
 	silofs_olink_reset(&vi->v_olink);
 	vi->v_vbki = NULL;
 	vi->v_dq = NULL;
+	vi->v_asyncwr = 0;
 }
 
 static void vi_fini(struct silofs_vnode_info *vi)
 {
+	silofs_assert_eq(vi->v_asyncwr, 0);
+
 	lni_fini(&vi->v);
 	list_head_fini(&vi->v_dq_lh);
 	vaddr_reset(&vi->v_vaddr);
@@ -411,7 +414,7 @@ static bool vi_has_stype(const struct silofs_vnode_info *vi,
 
 bool silofs_vi_may_flush(const struct silofs_vnode_info *vi)
 {
-	return !(vi->v.flags & SILOFS_LNF_NOFLUSH);
+	return (vi->v_asyncwr == 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

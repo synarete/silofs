@@ -301,19 +301,6 @@ static size_t fli_len_within(const struct silofs_fileaf_info *fli,
 	return len_of_data(off, end, fli_stype(fli));
 }
 
-
-static void fli_set_noflush(struct silofs_fileaf_info *fli, bool noflush)
-{
-	struct silofs_vnode_info *vi = &fli->fl_vi;
-	const int flags = vi->v.flags;
-
-	if (noflush) {
-		vi->v.flags = flags | SILOFS_LNF_NOFLUSH;
-	} else {
-		vi->v.flags = flags & ~SILOFS_LNF_NOFLUSH;
-	}
-}
-
 static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
 	const struct silofs_uber *uber = vi_uber(&fli->fl_vi);
@@ -325,7 +312,7 @@ static void fli_pre_io(struct silofs_fileaf_info *fli)
 {
 	fli_incref(fli);
 	if (fli_asyncwr(fli)) {
-		fli_set_noflush(fli, true);
+		fli->fl_vi.v_asyncwr++;
 	}
 }
 
@@ -333,7 +320,8 @@ static void fli_post_io(struct silofs_fileaf_info *fli)
 {
 	fli_decref(fli);
 	if (fli_asyncwr(fli)) {
-		fli_set_noflush(fli, false);
+		silofs_assert_gt(fli->fl_vi.v_asyncwr, 0);
+		fli->fl_vi.v_asyncwr--;
 	}
 }
 

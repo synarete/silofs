@@ -266,7 +266,7 @@ static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
 static int op_stage_cacheonly_inode(struct silofs_task *task, ino_t ino,
                                     struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_cached_inode(task, ino, out_ii);
+	return silofs_fetch_cached_inode(task, ino, out_ii);
 }
 
 static int op_stage_cur_inode(struct silofs_task *task, ino_t ino,

@@ -623,7 +623,7 @@ static void ubc_setup(struct silofs_uber_ctx *ub_ctx)
 	ub_ctx->mdigest = &repo->re_mdigest;
 }
 
-static int ubc_stage_cached_ui(const struct silofs_uber_ctx *ub_ctx,
+static int ubc_fetch_cached_ui(const struct silofs_uber_ctx *ub_ctx,
                                const struct silofs_uaddr *uaddr,
                                struct silofs_unode_info **out_ui)
 {
@@ -637,11 +637,11 @@ static void ubc_bind_spawned_ui(const struct silofs_uber_ctx *ub_ctx,
 	ui->u.uber = ub_ctx->uber;
 }
 
-static int ubc_spawn_cached_ui(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_ulink *ulink,
-                               struct silofs_unode_info **out_ui)
+static int ubc_create_cached_ui(const struct silofs_uber_ctx *ub_ctx,
+                                const struct silofs_ulink *ulink,
+                                struct silofs_unode_info **out_ui)
 {
-	*out_ui = silofs_cache_spawn_ui(ub_ctx->cache, ulink);
+	*out_ui = silofs_cache_create_ui(ub_ctx->cache, ulink);
 	if (*out_ui == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -655,9 +655,9 @@ static int ubc_require_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 {
 	int ret;
 
-	ret = ubc_stage_cached_ui(ub_ctx, &ulink->uaddr, out_ui);
+	ret = ubc_fetch_cached_ui(ub_ctx, &ulink->uaddr, out_ui);
 	if (ret == -SILOFS_ENOENT) {
-		ret = ubc_spawn_cached_ui(ub_ctx, ulink, out_ui);
+		ret = ubc_create_cached_ui(ub_ctx, ulink, out_ui);
 	}
 	return ret;
 }

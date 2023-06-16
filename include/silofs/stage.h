@@ -65,11 +65,11 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
                        enum silofs_stg_mode stg_mode,
                        struct silofs_inode_info **out_ii);
 
-int silofs_stage_cached_vnode(struct silofs_task *task,
+int silofs_fetch_cached_vnode(struct silofs_task *task,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_vnode_info **out_vi);
 
-int silofs_stage_cached_inode(struct silofs_task *task, ino_t ino,
+int silofs_fetch_cached_inode(struct silofs_task *task, ino_t ino,
                               struct silofs_inode_info **out_ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

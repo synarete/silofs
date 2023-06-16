@@ -99,8 +99,8 @@ silofs_cache_lookup_blob(struct silofs_cache *cache,
                          const struct silofs_blobid *blobid);
 
 struct silofs_blobf *
-silofs_cache_spawn_blob(struct silofs_cache *cache,
-                        const struct silofs_blobid *blobid);
+silofs_cache_create_blob(struct silofs_cache *cache,
+                         const struct silofs_blobid *blobid);
 
 void silofs_cache_evict_blob(struct silofs_cache *cache,
                              struct silofs_blobf *blobf, bool now);
@@ -117,23 +117,23 @@ silofs_cache_lookup_ubk(struct silofs_cache *cache,
                         const struct silofs_bkaddr *bkaddr);
 
 struct silofs_ubk_info *
-silofs_cache_spawn_ubk(struct silofs_cache *cache,
-                       const struct silofs_bkaddr *bkaddr);
+silofs_cache_create_ubk(struct silofs_cache *cache,
+                        const struct silofs_bkaddr *bkaddr);
 
 void silofs_cache_forget_ubk(struct silofs_cache *cache,
                              struct silofs_ubk_info *ubki);
 
 
 struct silofs_unode_info *
-silofs_cache_spawn_ui(struct silofs_cache *cache,
-                      const struct silofs_ulink *ulink);
+silofs_cache_lookup_ui(struct silofs_cache *cache,
+                       const struct silofs_uaddr *uaddr);
+
+struct silofs_unode_info *
+silofs_cache_create_ui(struct silofs_cache *cache,
+                       const struct silofs_ulink *ulink);
 
 void silofs_cache_forget_ui(struct silofs_cache *cache,
                             struct silofs_unode_info *ui);
-
-struct silofs_unode_info *
-silofs_cache_lookup_ui(struct silofs_cache *cache,
-                       const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
 silofs_cache_find_ui_by(struct silofs_cache *cache,
@@ -147,8 +147,8 @@ silofs_cache_lookup_vbk(struct silofs_cache *cache,
                         loff_t voff, enum silofs_stype vspace);
 
 struct silofs_vbk_info *
-silofs_cache_spawn_vbk(struct silofs_cache *cache,
-                       loff_t voff, enum silofs_stype vspace);
+silofs_cache_create_vbk(struct silofs_cache *cache,
+                        loff_t voff, enum silofs_stype vspace);
 
 void silofs_cache_forget_vbk(struct silofs_cache *cache,
                              struct silofs_vbk_info *vbki);
@@ -159,8 +159,8 @@ silofs_cache_lookup_vi(struct silofs_cache *cache,
                        const struct silofs_vaddr *vaddr);
 
 struct silofs_vnode_info *
-silofs_cache_spawn_vi(struct silofs_cache *cache,
-                      const struct silofs_vaddr *vaddr);
+silofs_cache_create_vi(struct silofs_cache *cache,
+                       const struct silofs_vaddr *vaddr);
 
 void silofs_cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi);

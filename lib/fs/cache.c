@@ -1374,8 +1374,8 @@ static void cache_evict_blobf(struct silofs_cache *cache,
 }
 
 static struct silofs_blobf *
-cache_spawn_blobf(struct silofs_cache *cache,
-                  const struct silofs_blobid *blobid)
+cache_create_blobf(struct silofs_cache *cache,
+                   const struct silofs_blobid *blobid)
 {
 	struct silofs_blobf *blobf;
 
@@ -1421,7 +1421,7 @@ cache_find_or_spawn_blobf(struct silofs_cache *cache,
 	if (blobf != NULL) {
 		return blobf;
 	}
-	blobf = cache_spawn_blobf(cache, blobid);
+	blobf = cache_create_blobf(cache, blobid);
 	if (blobf == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -1476,8 +1476,8 @@ cache_require_blobf(struct silofs_cache *cache,
 }
 
 struct silofs_blobf *
-silofs_cache_spawn_blob(struct silofs_cache *cache,
-                        const struct silofs_blobid *blobid)
+silofs_cache_create_blob(struct silofs_cache *cache,
+                         const struct silofs_blobid *blobid)
 {
 	struct silofs_blobf *blobf;
 
@@ -1723,8 +1723,8 @@ void silofs_cache_forget_ubk(struct silofs_cache *cache,
 }
 
 static struct silofs_ubk_info *
-cache_spawn_ubki(struct silofs_cache *cache,
-                 const struct silofs_bkaddr *bkaddr)
+cache_create_ubki(struct silofs_cache *cache,
+                  const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ubk_info *ubki;
 
@@ -1759,7 +1759,7 @@ cache_find_or_spawn_ubki(struct silofs_cache *cache,
 	if (ubki != NULL) {
 		return ubki;
 	}
-	ubki = cache_spawn_ubki(cache, bkaddr);
+	ubki = cache_create_ubki(cache, bkaddr);
 	if (ubki == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -1897,8 +1897,8 @@ silofs_cache_lookup_ubk(struct silofs_cache *cache,
 }
 
 struct silofs_ubk_info *
-silofs_cache_spawn_ubk(struct silofs_cache *cache,
-                       const struct silofs_bkaddr *bkaddr)
+silofs_cache_create_ubk(struct silofs_cache *cache,
+                        const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_ubk_info *ubki;
 
@@ -2145,7 +2145,7 @@ static void cache_set_dq_of_ui(struct silofs_cache *cache,
 }
 
 static struct silofs_unode_info *
-cache_spawn_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
+cache_create_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui;
 
@@ -2160,12 +2160,12 @@ cache_spawn_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 }
 
 struct silofs_unode_info *
-silofs_cache_spawn_ui(struct silofs_cache *cache,
-                      const struct silofs_ulink *ulink)
+silofs_cache_create_ui(struct silofs_cache *cache,
+                       const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui;
 
-	ui = cache_spawn_ui(cache, ulink);
+	ui = cache_create_ui(cache, ulink);
 	cache_post_op(cache);
 	return ui;
 }
@@ -2299,8 +2299,8 @@ void silofs_cache_forget_vbk(struct silofs_cache *cache,
 }
 
 static struct silofs_vbk_info *
-cache_spawn_vbki(struct silofs_cache *cache,
-                 loff_t voff, enum silofs_stype vspace)
+cache_create_vbki(struct silofs_cache *cache,
+                  loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_vbk_info *vbki;
 
@@ -2335,7 +2335,7 @@ cache_find_or_spawn_vbki(struct silofs_cache *cache,
 	if (vbki != NULL) {
 		return vbki;
 	}
-	vbki = cache_spawn_vbki(cache, voff, vspace);
+	vbki = cache_create_vbki(cache, voff, vspace);
 	if (vbki == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -2473,8 +2473,8 @@ silofs_cache_lookup_vbk(struct silofs_cache *cache,
 }
 
 struct silofs_vbk_info *
-silofs_cache_spawn_vbk(struct silofs_cache *cache,
-                       loff_t voff, enum silofs_stype vspace)
+silofs_cache_create_vbk(struct silofs_cache *cache,
+                        loff_t voff, enum silofs_stype vspace)
 {
 	struct silofs_vbk_info *vbki;
 
@@ -2692,7 +2692,7 @@ void silofs_cache_forget_vi(struct silofs_cache *cache,
 }
 
 static struct silofs_vnode_info *
-cache_spawn_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
+cache_create_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vi;
 
@@ -2705,12 +2705,12 @@ cache_spawn_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 }
 
 struct silofs_vnode_info *
-silofs_cache_spawn_vi(struct silofs_cache *cache,
-                      const struct silofs_vaddr *vaddr)
+silofs_cache_create_vi(struct silofs_cache *cache,
+                       const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vi;
 
-	vi = cache_spawn_vi(cache, vaddr);
+	vi = cache_create_vi(cache, vaddr);
 	cache_post_op(cache);
 	return vi;
 }

@@ -208,7 +208,7 @@ int silofs_remove_vnode_of(struct silofs_task *task,
 	struct silofs_vnode_info *vi = NULL;
 	int err;
 
-	err = silofs_stage_cached_vnode(task, vaddr, &vi);
+	err = silofs_fetch_cached_vnode(task, vaddr, &vi);
 	if (!err) {
 		err = silofs_remove_vnode_by(task, vi);
 	} else {

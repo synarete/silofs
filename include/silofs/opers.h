@@ -522,7 +522,7 @@ int silofs_fs_query(struct silofs_task *task, ino_t ino,
 int silofs_fs_clone(struct silofs_task *task, ino_t ino,
                     int flags, struct silofs_bootsecs *out_bsecs);
 
-int silofs_fs_rdwr_post(const struct silofs_task *task,
+int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt);
 
 int silofs_fs_timedout(struct silofs_task *task, int flags);

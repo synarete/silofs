@@ -2212,10 +2212,10 @@ static void fuseq_setup_rd_iter(struct silofs_fuseq_worker *fqw,
 	fq_rdi->rwi.actor = fuseq_rd_iter_actor;
 }
 
-static int do_rdwr_post(struct silofs_task *task,
+static int do_rdwr_post(struct silofs_task *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt)
 {
-	return silofs_fs_rdwr_post(task, iov, cnt);
+	return silofs_fs_rdwr_post(task, wr_mode, iov, cnt);
 }
 
 static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -2235,7 +2235,7 @@ static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	                    fq_rdi, len, fcc->args->in.read.off);
 	err = do_exec_op(fcc);
 	ret = fuseq_reply_read_iter(fq_rdi, err);
-	do_rdwr_post(fcc->task, fq_rdi->iov, fq_rdi->cnt);
+	do_rdwr_post(fcc->task, 0, fq_rdi->iov, fq_rdi->cnt);
 	return ret;
 }
 
@@ -2488,7 +2488,7 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 	ret = fuseq_reply_write(fcc->fqw, fcc->task,
 	                        fq_wri->nwr, err1 ? err1 : err2);
-	do_rdwr_post(fcc->task, fq_wri->iov, fq_wri->cnt);
+	do_rdwr_post(fcc->task, 1, fq_wri->iov, fq_wri->cnt);
 	return ret;
 }
 

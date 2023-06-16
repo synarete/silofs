@@ -308,18 +308,18 @@ static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 	return (uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
 }
 
-static void fli_pre_io(struct silofs_fileaf_info *fli)
+static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
 {
 	fli_incref(fli);
-	if (fli_asyncwr(fli)) {
+	if (wr_mode && fli_asyncwr(fli)) {
 		fli->fl_vi.v_asyncwr++;
 	}
 }
 
-static void fli_post_io(struct silofs_fileaf_info *fli)
+static void fli_post_io(struct silofs_fileaf_info *fli, int wr_mode)
 {
 	fli_decref(fli);
-	if (fli_asyncwr(fli)) {
+	if (wr_mode && fli_asyncwr(fli)) {
 		silofs_assert_gt(fli->fl_vi.v_asyncwr, 0);
 		fli->fl_vi.v_asyncwr--;
 	}
@@ -1629,21 +1629,21 @@ static int filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
 	return err;
 }
 
-static void iovref_pre(const struct silofs_iovec *iov)
+static void iovref_pre(const struct silofs_iovec *iov, int wr_mode)
 {
 	struct silofs_fileaf_info *fli = iov->iov_ref;
 
 	if (fli != NULL) {
-		fli_pre_io(fli);
+		fli_pre_io(fli, wr_mode);
 	}
 }
 
-static void iovref_post(const struct silofs_iovec *iov)
+static void iovref_post(const struct silofs_iovec *iov, int wr_mode)
 {
 	struct silofs_fileaf_info *fli = iov->iov_ref;
 
 	if (fli != NULL) {
-		fli_post_io(fli);
+		fli_post_io(fli, wr_mode);
 	}
 }
 
@@ -1659,6 +1659,7 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 		.iov_len = 0,
 		.iov_fd = -1,
 	};
+	int wr_mode = f_ctx->op_mask & OP_WRITE;
 	int err;
 
 	*out_len = 0;
@@ -1666,11 +1667,11 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	iovref_pre(&iov);
+	iovref_pre(&iov, wr_mode);
 	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iov);
 	*out_len = iov.iov_len;
 	if (err) {
-		iovref_post(&iov);
+		iovref_post(&iov, wr_mode);
 		return err;
 	}
 	return 0;
@@ -2735,12 +2736,12 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_rdwr_post(const struct silofs_task *task,
+int silofs_do_rdwr_post(const struct silofs_task *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt)
 {
 	silofs_unused(task);
 	for (size_t i = 0; i < cnt; ++i) {
-		iovref_post(&iov[i]);
+		iovref_post(&iov[i], wr_mode);
 	}
 	return 0;
 }

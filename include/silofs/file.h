@@ -57,7 +57,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
                               loff_t off_in, loff_t off_out, size_t len,
                               int flags, size_t *out_ncp);
 
-int silofs_do_rdwr_post(const struct silofs_task *task,
+int silofs_do_rdwr_post(const struct silofs_task *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt);
 
 

@@ -1602,13 +1602,13 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_fs_rdwr_post(const struct silofs_task *task,
+int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt)
 {
 	int ret;
 
 	op_lock_fs(task);
-	ret = silofs_do_rdwr_post(task, iov, cnt);
+	ret = silofs_do_rdwr_post(task, wr_mode, iov, cnt);
 	op_unlock_fs(task);
 	return ret;
 }

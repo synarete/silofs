@@ -555,7 +555,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	*out_len = wri.dat_len;
 
 	ut_setup_task(ute, &task);
-	err3 = silofs_fs_rdwr_post(&task, wri.iov, wri.cnt);
+	err3 = silofs_fs_rdwr_post(&task, 1, wri.iov, wri.cnt);
 	ut_release_task(ute, &task);
 
 	return sanitize_status(err1 || err2 || err3);

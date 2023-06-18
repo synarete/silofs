@@ -425,31 +425,27 @@ static int blobf_init(struct silofs_blobf *blobf,
 	blobf->b_fd = -1;
 	blobf->b_flocked = false;
 	blobf->b_rdonly = false;
-	return silofs_rwlock_init(&blobf->b_rwlock);
+	return 0;
 }
 
 static void blobf_fini(struct silofs_blobf *blobf)
 {
-	silofs_rwlock_fini(&blobf->b_rwlock);
 	blobid_reset(&blobf->b_blobid);
 	silofs_ce_fini(&blobf->b_ce);
 	blobf->b_size = -1;
 	blobf->b_fd = -1;
 }
 
-static void blobf_rdlock(struct silofs_blobf *blobf)
+static void blobf_lock(struct silofs_blobf *blobf)
 {
-	silofs_rwlock_rdlock(&blobf->b_rwlock);
-}
-
-static void blobf_wrlock(struct silofs_blobf *blobf)
-{
-	silofs_rwlock_wrlock(&blobf->b_rwlock);
+	/* no-op for now */
+	silofs_unused(blobf);
 }
 
 static void blobf_unlock(struct silofs_blobf *blobf)
 {
-	silofs_rwlock_unlock(&blobf->b_rwlock);
+	/* no-op for now */
+	silofs_unused(blobf);
 }
 
 static ssize_t blobf_capacity(const struct silofs_blobf *blobf)
@@ -593,7 +589,7 @@ int silofs_blobf_resolve(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_rdlock(blobf);
+	blobf_lock(blobf);
 	ret = blobf_iovec_of(blobf, oaddr, siov);
 	blobf_unlock(blobf);
 	return ret;
@@ -670,7 +666,7 @@ int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
 {
 	int err;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	err = blobf_pwriten(blobf, off, buf, len);
 	if (!err && sync) {
 		err = blobf_sync_range(blobf, off, len);
@@ -684,7 +680,7 @@ int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
 {
 	int err;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	err = blobf_pwritevn(blobf, off, iov, cnt);
 	if (!err && sync) {
 		err = blobf_sync_range(blobf, off, length_of(iov, cnt));
@@ -785,7 +781,7 @@ int silofs_blobf_load_bk(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_rdlock(blobf);
+	blobf_lock(blobf);
 	ret = blobf_load_bk_at(blobf, bkaddr, lbki);
 	blobf_unlock(blobf);
 	return ret;
@@ -842,7 +838,7 @@ int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	ret = blobf_trim_nbks(blobf, bkaddr, cnt);
 	blobf_unlock(blobf);
 	return ret;
@@ -853,7 +849,7 @@ int silofs_blobf_require_bk(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	ret = blobf_require_bk_of(blobf, bkaddr);
 	blobf_unlock(blobf);
 	return ret;
@@ -864,7 +860,7 @@ int silofs_blobf_check_bk(struct silofs_blobf *blobf,
 {
 	int ret;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	ret = blobf_check_bk_of(blobf, bkaddr);
 	blobf_unlock(blobf);
 	return ret;
@@ -874,7 +870,7 @@ int silofs_blobf_flock(struct silofs_blobf *blobf)
 {
 	int err = 0;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	if (!blobf->b_flocked) {
 		err = do_flock(blobf->b_fd, LOCK_EX | LOCK_NB);
 		blobf->b_flocked = (err == 0);
@@ -887,7 +883,7 @@ int silofs_blobf_funlock(struct silofs_blobf *blobf)
 {
 	int err = 0;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	if (blobf->b_flocked) {
 		err = do_flock(blobf->b_fd, LOCK_UN);
 		blobf->b_flocked = !(err == 0);
@@ -900,7 +896,7 @@ static int blobf_fsync(struct silofs_blobf *blobf)
 {
 	int err;
 
-	blobf_wrlock(blobf);
+	blobf_lock(blobf);
 	err = do_fsync(blobf->b_fd);
 	blobf_unlock(blobf);
 	return err;

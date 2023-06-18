@@ -25,7 +25,6 @@
 struct silofs_blobf {
 	struct silofs_namebuf           b_name;
 	struct silofs_cache_elem        b_ce;
-	struct silofs_rwlock            b_rwlock;
 	struct silofs_blobid            b_blobid;
 	long                            b_size;
 	int                             b_fd;

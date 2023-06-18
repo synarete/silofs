@@ -1407,9 +1407,6 @@ int silofs_fs_getxattr(struct silofs_task *task, ino_t ino,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
-	ok_or_goto_out(err);
-
 	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 

@@ -19,7 +19,8 @@ _silofs_mkfs() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-s --size= -F --force -h' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-s --size= -F --force' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-u --uid= -g --gid= -h' -- "$cur") )
   fi
 }
 

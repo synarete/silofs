@@ -102,6 +102,14 @@ range of **[2G..64T]**.
 | *-s*, *--size=SIZE*
 |  Size of new volume in bytes
 |
+| *-u*, *--uid=OWNER*
+|  Define explicit owner uid to root directory inode. If not defined,
+|  uses the uid of the calling process.
+|
+| *-g*, *--gid=OWNER*
+|  Define explicit owner gid to root directory inode. If not defined,
+|  uses the gid of the calling process.
+|
 
 ..
 

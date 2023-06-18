@@ -122,10 +122,6 @@ static void fse_init_commons(struct silofs_fs_env *fse,
 	silofs_memzero(fse, sizeof(*fse));
 	silofs_ivkey_init(&fse->fs_ivkey);
 	fs_args_assign(&fse->fs_args, fs_args);
-	fse->fs_args.uid = getuid();
-	fse->fs_args.gid = getgid();
-	fse->fs_args.pid = getpid();
-	fse->fs_args.umask = 0022;
 	fse->fs_signum = 0;
 }
 
@@ -847,8 +843,8 @@ void silofs_stat_fs(const struct silofs_fs_env *fse,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int derive_main_ivkey(struct silofs_fs_env *fse,
-                             const struct silofs_bootsec *bsec)
+static int derive_ivkey(struct silofs_fs_env *fse,
+                        const struct silofs_bootsec *bsec)
 {
 	struct silofs_mdigest mdigest = { .md_hd = NULL };
 	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
@@ -1243,7 +1239,25 @@ static int check_capacity(const struct silofs_fs_env *fse)
 	return 0;
 }
 
-static int format_super(const struct silofs_fs_env *fse)
+static int check_owner_ids(const struct silofs_fs_env *fse)
+{
+	const uid_t owner_uid = fse->fs_args.uid;
+	const gid_t owner_gid = fse->fs_args.gid;
+	uid_t suid;
+	gid_t sgid;
+	int err;
+
+	err = silofs_idsmap_map_uidgid(fse->fs_idsmap, owner_uid,
+	                               owner_gid, &suid, &sgid);
+	if (err) {
+		log_err("unable to map owner credentials: uid=%ld gid=%ld",
+		        (long)owner_uid, (long)owner_gid);
+		return err;
+	}
+	return 0;
+}
+
+static int format_umeta(const struct silofs_fs_env *fse)
 {
 	const size_t cap_want = fse->fs_args.capacity;
 	size_t capacity = 0;
@@ -1390,15 +1404,19 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	int err;
 
 	silofs_bootsec_init(&bsec);
-	err = derive_main_ivkey(fse, &bsec);
-	if (err) {
-		return err;
-	}
 	err = check_capacity(fse);
 	if (err) {
 		return err;
 	}
-	err = format_super(fse);
+	err = check_owner_ids(fse);
+	if (err) {
+		return err;
+	}
+	err = derive_ivkey(fse, &bsec);
+	if (err) {
+		return err;
+	}
+	err = format_umeta(fse);
 	if (err) {
 		return err;
 	}
@@ -1445,7 +1463,7 @@ static int do_boot_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = derive_main_ivkey(fse, &bsec);
+	err = derive_ivkey(fse, &bsec);
 	if (err) {
 		return err;
 	}
@@ -1613,7 +1631,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 	if (err) {
 		return err;
 	}
-	err = derive_main_ivkey(fse, &bsec);
+	err = derive_ivkey(fse, &bsec);
 	if (err) {
 		return err;
 	}

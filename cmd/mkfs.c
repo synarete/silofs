@@ -21,6 +21,8 @@ static const char *cmd_mkfs_help_desc[] = {
 	"",
 	"options:",
 	"  -s, --size=nbytes            Capacity size limit",
+	"  -u, --uid=owner-uid          Use user-id as owner of root-dir",
+	"  -g, --gid=owner-gid          Use group-id as owner of root-dir",
 	"  -F, --force                  Force overwrite if already exists",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
@@ -34,6 +36,8 @@ struct cmd_mkfs_in_args {
 	char   *size;
 	char   *password;
 	long    fs_size;
+	uid_t   owner_uid;
+	gid_t   owner_gid;
 	bool    force;
 };
 
@@ -52,6 +56,8 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "size", required_argument, NULL, 's' },
+		{ "uid", required_argument, NULL, 'u' },
+		{ "gid", required_argument, NULL, 'g' },
 		{ "force", no_argument, NULL, 'F' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "verbose", required_argument, NULL, 'V' },
@@ -60,10 +66,14 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:V:Fp:h", opts);
+		opt_chr = cmd_getopt("s:u:g:V:Fp:h", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
+		} else if (opt_chr == 'u') {
+			ctx->in_args.owner_uid = cmd_parse_str_as_uid(optarg);
+		} else if (opt_chr == 'g') {
+			ctx->in_args.owner_gid = cmd_parse_str_as_gid(optarg);
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'p') {
@@ -142,6 +152,8 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;
+	fs_args->uid = ctx->in_args.owner_uid;
+	fs_args->gid = ctx->in_args.owner_gid;
 }
 
 static void cmd_mkfs_load_fsids(struct cmd_mkfs_ctx *ctx)
@@ -185,6 +197,12 @@ static void cmd_mkfs_shutdown_fs(struct cmd_mkfs_ctx *ctx)
 void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
+		.in_args = {
+			.fs_size = 0,
+			.owner_uid = getuid(),
+			.owner_gid = getgid(),
+			.force = false,
+		},
 		.fs_env = NULL,
 	};
 

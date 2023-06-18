@@ -216,6 +216,7 @@ void cmd_execute_umount(void)
 {
 	struct cmd_umount_ctx ctx = {
 		.query.qtype = 0,
+		.query.u.proc.pid = 0,
 	};
 
 	/* Do all cleanups upon exits */

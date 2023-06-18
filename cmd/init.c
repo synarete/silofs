@@ -20,8 +20,8 @@ static const char *cmd_init_help_desc[] = {
 	"init <repodir>",
 	"",
 	"options:",
-	"  -u, --uid=suid               Map owner uid to suid",
-	"  -g, --gid=suid               Map owner gid to sgid",
+	"  -u, --uid=internal-uid       Map host-uid to intenral-uid",
+	"  -g, --gid=internal-gid       Map host-gid to internal-gid",
 	"  -R, --no-root                Ignore root user",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL

@@ -124,4 +124,6 @@ int silofs_uamap_insert(struct silofs_uamap *uamap,
 
 void silofs_uamap_drop_all(struct silofs_uamap *uamap);
 
+bool silofs_uamap_drop_lru(struct silofs_uamap *uamap);
+
 #endif /* SILOFS_SPXMAP_H_ */

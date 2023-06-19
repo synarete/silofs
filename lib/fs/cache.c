@@ -2697,7 +2697,7 @@ silofs_cache_create_vi(struct silofs_cache *cache,
 
 static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
 {
-	const size_t extra = silofs_clamp(1UL << shift, 1, 64);
+	const size_t extra = clamp(1UL << shift, 1, 64);
 	size_t actual = 0;
 	size_t count;
 
@@ -2777,24 +2777,37 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	return niter;
 }
 
-static void cache_relax_niter(struct silofs_cache *cache, size_t niter)
+static size_t cache_relax_niter(struct silofs_cache *cache, size_t niter)
 {
+	size_t total = 0;
+	size_t actual = 1;
 	int shift = 0;
 
-	for (size_t i = 0; i < niter; ++i) {
-		if (!cache_shrink_some(cache, shift++)) {
-			break;
-		}
+	for (size_t i = 0; (i < niter) && actual; ++i) {
+		actual = cache_shrink_some(cache, shift++);
+		total += actual;
+	}
+	return total;
+}
+
+static void cache_relax_uamap(struct silofs_cache *cache, int flags)
+{
+	struct silofs_uamap *uamap = &cache->c_uam;
+
+	if (flags & SILOFS_F_IDLE) {
+		silofs_uamap_drop_lru(uamap);
 	}
 }
 
 void silofs_cache_relax(struct silofs_cache *cache, int flags)
 {
 	size_t niter;
+	size_t total;
 
 	niter = cache_calc_niter(cache, flags);
-	if (niter > 0) {
-		cache_relax_niter(cache, niter);
+	total = cache_relax_niter(cache, niter);
+	if (!total) {
+		cache_relax_uamap(cache, flags);
 	}
 }
 

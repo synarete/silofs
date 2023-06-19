@@ -947,8 +947,13 @@ void silofs_uamap_drop_all(struct silofs_uamap *uamap)
 	bool keep_drop = true;
 
 	while (keep_drop) {
-		keep_drop = (uamap_remove_lru(uamap) == 0);
+		keep_drop = silofs_uamap_drop_lru(uamap);
 	}
+}
+
+bool silofs_uamap_drop_lru(struct silofs_uamap *uamap)
+{
+	return (uamap_remove_lru(uamap) == 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

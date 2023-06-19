@@ -157,7 +157,7 @@ static size_t cmd_getxx_bsz(void)
 
 static void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid)
 {
-	struct passwd pwd;
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
 	struct passwd *pw = NULL;
 	char *buf = NULL;
 	size_t bsz;
@@ -167,7 +167,10 @@ static void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid)
 	buf = cmd_zalloc(bsz);
 	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
 	if (err) {
-		cmd_dief(err, "unknown user name: %s", name);
+		cmd_dief(err, "failed to resolve user name: %s", name);
+	}
+	if (pw == NULL) {
+		cmd_dief(0, "unknown user name: %s", name);
 	}
 	*out_uid = pw->pw_uid;
 	cmd_zfree(buf, bsz);
@@ -175,7 +178,7 @@ static void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid)
 
 static void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid)
 {
-	struct group grp;
+	struct group grp = { .gr_gid = (gid_t)(-1) };
 	struct group *gr = NULL;
 	char *buf = NULL;
 	size_t bsz;
@@ -185,7 +188,10 @@ static void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid)
 	buf = cmd_zalloc(bsz);
 	err = getgrnam_r(name, &grp, buf, bsz, &gr);
 	if (err) {
-		cmd_dief(err, "unknown group name: %s", name);
+		cmd_dief(err, "failed to resolve group name: %s", name);
+	}
+	if (gr == NULL) {
+		cmd_dief(0, "unknown group name: %s", name);
 	}
 	*out_gid = gr->gr_gid;
 	cmd_zfree(buf, bsz);
@@ -193,19 +199,24 @@ static void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid)
 
 static void cmd_resolve_uid_to_name(uid_t uid, char *name, size_t nsz)
 {
-	struct passwd pwd;
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
 	struct passwd *pw = NULL;
 	char *buf = NULL;
 	size_t bsz;
+	size_t len;
 	int err;
 
 	bsz = cmd_getxx_bsz();
 	buf = cmd_zalloc(bsz);
 	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
 	if (err) {
-		cmd_dief(err, "unknown uid: %u", uid);
+		cmd_dief(err, "failed to resolve uid: %u", uid);
 	}
-	if (strlen(pw->pw_name) >= nsz) {
+	if ((pw == NULL) || (pw->pw_name == NULL)) {
+		cmd_dief(0, "unknown uid: %u", uid);
+	}
+	len = strlen(pw->pw_name);
+	if (!len || (len >= nsz)) {
 		cmd_dief(-ENAMETOOLONG, "bad user name: %s", pw->pw_name);
 	}
 	strncpy(name, pw->pw_name, nsz);
@@ -214,19 +225,24 @@ static void cmd_resolve_uid_to_name(uid_t uid, char *name, size_t nsz)
 
 static void cmd_resolve_gid_to_name(gid_t gid, char *name, size_t nsz)
 {
-	struct group grp;
+	struct group grp = { .gr_gid = (gid_t)(-1) };
 	struct group *gr = NULL;
 	char *buf = NULL;
 	size_t bsz;
+	size_t len;
 	int err;
 
 	bsz = cmd_getxx_bsz();
 	buf = cmd_zalloc(bsz);
 	err = getgrgid_r(gid, &grp, buf, bsz, &gr);
 	if (err) {
-		cmd_dief(err, "unknown gid: %u", gid);
+		cmd_dief(err, "failed to resolve gid: %u", gid);
 	}
-	if (strlen(gr->gr_name) >= nsz) {
+	if ((gr == NULL) || (gr->gr_name == NULL)) {
+		cmd_dief(0, "unknown gid: %u", gid);
+	}
+	len = strlen(gr->gr_name);
+	if (!len || (len >= nsz)) {
 		cmd_dief(-ENAMETOOLONG, "bad group name: %s", gr->gr_name);
 	}
 	strncpy(name, gr->gr_name, nsz);

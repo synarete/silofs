@@ -6,6 +6,7 @@ dnf install -y \
   flex \
   gcc \
   git \
+  git-email \
   make \
   libattr-devel \
   libcap-devel \

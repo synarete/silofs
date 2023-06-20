@@ -45,22 +45,23 @@ struct silofs_cache_ctx {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* prime-value for hash-table of n-elements */
-static const unsigned int silofs_primes[] = {
-	13, 53, 97, 193, 389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
-	98317, 147377, 196613, 294979, 393241, 589933, 786433, 1572869,
-	3145739, 6291469, 12582917, 25165843, 50331653, 100663319, 201326611,
-	402653189, 805306457, 1610612741, 3221225473, 4294967291
+static const unsigned int hcap_primes[] = {
+	13, 53, 97, 193, 389, 769, 1543, 3079, 4093, 6151, 8191, 12289, 16381,
+	24593, 32749, 49157, 65521, 98317, 131071, 147377, 196613, 294979,
+	393241, 589933, 786433, 1572869, 3145739, 6291469, 12582917, 25165843,
+	50331653, 100663319, 201326611, 402653189, 805306457, 1610612741,
+	3221225473, 4294967291
 };
 
 static size_t htbl_cap_as_prime(size_t lim)
 {
 	size_t p = 11;
 
-	for (size_t i = 0; i < ARRAY_SIZE(silofs_primes); ++i) {
-		if (silofs_primes[i] > lim) {
+	for (size_t i = 0; i < ARRAY_SIZE(hcap_primes); ++i) {
+		if (hcap_primes[i] > lim) {
 			break;
 		}
-		p = silofs_primes[i];
+		p = hcap_primes[i];
 	}
 	return p;
 }
@@ -668,19 +669,20 @@ static void lrumap_foreach_backward(struct silofs_lrumap *lm,
 
 static size_t lrumap_overpop(const struct silofs_lrumap *lm)
 {
+	const size_t fac = 4;
 	size_t ovp = 0;
 
-	if (lm->lm_htbl_sz > lm->lm_htbl_cap) {
-		ovp = (lm->lm_htbl_sz - lm->lm_htbl_cap);
-	} else if (lm->lm_lru.sz > lm->lm_htbl_sz) {
-		ovp = (lm->lm_lru.sz - lm->lm_htbl_sz);
+	if (lm->lm_htbl_sz > (fac * lm->lm_htbl_cap)) {
+		ovp = (lm->lm_htbl_sz - (fac * lm->lm_htbl_cap));
+	} else if (lm->lm_lru.sz > (fac * lm->lm_htbl_sz)) {
+		ovp = (lm->lm_lru.sz - (fac * lm->lm_htbl_sz));
 	}
 	return ovp;
 }
 
 static size_t lrumap_calc_search_evictable_max(const struct silofs_lrumap *lm)
 {
-	return silofs_clamp(lm->lm_htbl_sz / 4, 1, 16);
+	return clamp(lm->lm_htbl_sz / 4, 1, 16);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3004,34 +3006,35 @@ static void cache_fini_lrumaps(struct silofs_cache *cache)
 
 static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
 {
-	const size_t mem_size = cache->c_mem_size_hint;
-	const size_t cap_max = mem_size / sizeof(struct silofs_list_head);
+	const size_t base = 1 << 13;
+	const size_t hint = cache->c_mem_size_hint;
+	const size_t mult = clamp(hint / SILOFS_GIGA, 1, 32);
 
-	return silofs_max(cap_max / 256, 8192);
+	return base * mult;
 }
 
 static int cache_init_lrumaps(struct silofs_cache *cache)
 {
-	const size_t cap = cache_calc_htbl_cap(cache);
+	const size_t hcap = cache_calc_htbl_cap(cache);
 	int err;
 
-	err = cache_init_blobf_lm(cache, htbl_cap_as_prime(cap));
+	err = cache_init_blobf_lm(cache, htbl_cap_as_prime(hcap));
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_ubki_lm(cache, cap);
+	err = cache_init_ubki_lm(cache, hcap);
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_vbki_lm(cache, cap);
+	err = cache_init_vbki_lm(cache, hcap);
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_ui_lm(cache, cap);
+	err = cache_init_ui_lm(cache, hcap);
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_vi_lm(cache, cap);
+	err = cache_init_vi_lm(cache, hcap);
 	if (err) {
 		goto out_err;
 	}

@@ -18,7 +18,7 @@ class TestConfig:
         self.basedir = os.path.realpath(basedir)
         self.mntdir = os.path.realpath(mntdir)
         self.repodir = os.path.join(self.basedir, "repo")
-        self.password = "12345678"
+        self.password = "0123456789abcdef"
 
 
 class TestData:

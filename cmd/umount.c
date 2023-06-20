@@ -113,11 +113,11 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 
 static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 {
-	struct stat st;
+	struct statfs stfs;
 	int err;
 
 	cmd_check_mntsrv_conn();
-	err = silofs_sys_stat(ctx->in_args.mntpoint, &st);
+	err = silofs_sys_statfs(ctx->in_args.mntpoint, &stfs);
 	if ((err == -ENOTCONN) && ctx->in_args.force) {
 		silofs_log_debug("transport endpoint not connected: %s",
 		                 ctx->in_args.mntpoint);
@@ -125,6 +125,7 @@ static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 		return;
 	}
 	cmd_realpath(ctx->in_args.mntpoint, &ctx->in_args.mntpoint_real);
+	cmd_check_fusefs(ctx->in_args.mntpoint_real);
 	cmd_check_mntdir(ctx->in_args.mntpoint_real, false);
 	cmd_umount_probe_proc(ctx);
 }
@@ -166,7 +167,7 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 	}
 }
 
-static void cmd_umount_probe_statvfs(const struct cmd_umount_ctx *ctx)
+static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 {
 	struct statfs stfs;
 	const char *path = cmd_umount_dirpath(ctx);
@@ -174,8 +175,11 @@ static void cmd_umount_probe_statvfs(const struct cmd_umount_ctx *ctx)
 	int err;
 
 	for (size_t i = 0; i < 4; ++i) {
-		sleep(1);
-		memset(&stfs, 0, sizeof(stfs));
+		err = silofs_suspend_secs(1);
+		if (err) {
+			break;
+		}
+		stfs.f_type = 0;
 		err = silofs_sys_statfs(path, &stfs);
 		if (err) {
 			break;
@@ -232,7 +236,7 @@ void cmd_execute_umount(void)
 	cmd_umount_send_recv(&ctx);
 
 	/* Post-umount checks */
-	cmd_umount_probe_statvfs(&ctx);
+	cmd_umount_probe_post(&ctx);
 
 	/* Wait for server process to terminate */
 	cmd_umount_wait_nopid(&ctx);

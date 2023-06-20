@@ -3333,6 +3333,7 @@ static int fuseq_recv_request(struct silofs_fuseq_worker *fqw)
 	if (err) {
 		return err;
 	}
+	fqw->req_count++;
 	return 0;
 }
 
@@ -3346,9 +3347,6 @@ static void *iob_new(struct silofs_alloc *alloc, size_t len)
 	silofs_assert_ge(len, SILOFS_LBK_SIZE);
 
 	iob = silofs_allocate(alloc, len);
-	if (iob != NULL) {
-		silofs_memzero(iob, min(len, SILOFS_LBK_SIZE));
-	}
 	return iob;
 }
 
@@ -3501,6 +3499,32 @@ static void fuseq_fini_bufs(struct silofs_fuseq_worker *fqw)
 	}
 }
 
+static int fuseq_renew_bufs(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_alloc *alloc = fuseq_alloc(fqw);
+	struct silofs_fuseq_inb *inb = NULL;
+	struct silofs_fuseq_outb *outb = NULL;
+
+	inb = inb_new(alloc);
+	if (inb == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	if (fqw->inb != NULL) {
+		inb_del(fqw->inb, alloc);
+	}
+	fqw->inb = inb;
+
+	outb = outb_new(alloc);
+	if (outb == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	if (fqw->outb != NULL) {
+		outb_del(fqw->outb, alloc);
+	}
+	fqw->outb = outb;
+	return 0;
+}
+
 static int fuseq_init_rwi(struct silofs_fuseq_worker *fqw)
 {
 	fqw->rwi = rwi_new(fuseq_alloc(fqw));
@@ -3551,6 +3575,7 @@ static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
 	fqw->fq  = fq;
 	fqw->inb = NULL;
 	fqw->outb = NULL;
+	fqw->req_count = 0;
 	fqw->worker_index = idx;
 
 	err = fuseq_init_bufs(fqw);
@@ -3868,12 +3893,10 @@ static int fuseq_do_timeout_with(struct silofs_fuseq_worker *fqw, int flags)
 	return err1 ? err1 : err2;
 }
 
-static int fuseq_do_timeout_locked(struct silofs_fuseq_worker *fqw)
+static int fuseq_do_timeout_locked(struct silofs_fuseq_worker *fqw, int flags)
 {
-	int flags;
 	int err;
 
-	flags = fuseq_timeout_flags(fqw);
 	if (!flags) {
 		return 0;
 	}
@@ -3887,17 +3910,33 @@ static int fuseq_do_timeout_locked(struct silofs_fuseq_worker *fqw)
 	return 0;
 }
 
+static bool fuseq_timeout_trylock(const struct silofs_fuseq_worker *fqw)
+{
+	return fuseq_is_normal(fqw->fq) && fuseq_trylock_ctl(fqw->fq);
+}
+
+static void fuseq_timeout_unlock(const struct silofs_fuseq_worker *fqw)
+{
+	fuseq_unlock_ctl(fqw->fq);
+}
+
 static int fuseq_do_timeout(struct silofs_fuseq_worker *fqw)
 {
-	int ret = 0;
+	int flags = 0;
+	int err = 0;
+	bool idle = false;
 
-	if (fuseq_is_normal(fqw->fq)) {
-		if (fuseq_trylock_ctl(fqw->fq)) {
-			ret = fuseq_do_timeout_locked(fqw);
-			fuseq_unlock_ctl(fqw->fq);
-		}
+	if (fuseq_timeout_trylock(fqw)) {
+		flags = fuseq_timeout_flags(fqw);
+		err = fuseq_do_timeout_locked(fqw, flags);
+		fuseq_timeout_unlock(fqw);
+		idle = (flags & SILOFS_F_IDLE) > 0;
 	}
-	return ret;
+	if (!err && idle && fqw->req_count) {
+		err = fuseq_renew_bufs(fqw);
+		fqw->req_count = 0;
+	}
+	return err;
 }
 
 static bool fuseq_all_workers_active(const struct silofs_fuseq_worker *fqw)
@@ -3909,7 +3948,7 @@ static void fuseq_suspend(const struct silofs_fuseq_worker *fqw)
 {
 	/* TODO: tweak sleep based on state */
 	silofs_unused(fqw);
-	sleep(1);
+	silofs_suspend_secs(1);
 }
 
 static bool fuseq_allow_exec(const struct silofs_fuseq_worker *fqw)

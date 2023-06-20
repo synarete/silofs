@@ -44,6 +44,7 @@ struct silofs_fuseq_worker {
 	struct silofs_oper_args        *args;
 	struct silofs_piper             piper;
 	struct silofs_thread            th;
+	unsigned long                   req_count;
 	unsigned int                    worker_index;
 } silofs_aligned64;
 

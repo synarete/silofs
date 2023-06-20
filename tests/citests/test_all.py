@@ -21,6 +21,7 @@ TESTS = [
     test_io.test_rw_rands,
     test_io.test_reload,
     test_io.test_reload_n,
+    test_io.test_async_io,
     test_fillfs.test_fill_data,
     test_fillfs.test_fill_meta,
     test_self.test_unit_tests,

@@ -41,6 +41,10 @@ def test_vfs_tests(tc: ctx.TestCtx) -> None:
     tc.exec_rmfs(vt_snap_name)
 
 
+def run_vfstests(tc: ctx.TestCtx, base: str, rand: bool) -> None:
+    tc.cmd.vfstests.run(base, rand, True)
+
+
 def test_vfs_tests2(tc: ctx.TestCtx) -> None:
     vt_pre_dname = "pre-vfs-tests"
     vt_dname1 = "vfs-tests1"
@@ -53,17 +57,15 @@ def test_vfs_tests2(tc: ctx.TestCtx) -> None:
     tds.do_write()
     vt_root1 = tc.do_mkdirs(vt_dname1)
     vt_root2 = tc.do_mkdirs(vt_dname2)
-    th1 = tc.cmd.vfstests.make_thread(vt_root1, True, True)
-    th2 = tc.cmd.vfstests.make_thread(vt_root2, True, True)
-    th1.start()
-    th2.start()
+    fu1 = tc.executor.submit(run_vfstests, tc, vt_root1, True)
+    fu2 = tc.executor.submit(run_vfstests, tc, vt_root2, False)
     tc.exec_snap(vt_snap_name1)
     tds.do_read()
     tc.suspend(2)
     tc.exec_snap(vt_snap_name2)
     tds.do_read()
-    th1.join()
-    th2.join()
+    fu1.result()
+    fu2.result()
     tds.do_unlink()
     tc.do_rmtree(vt_pre_dname)
     tc.do_rmtree(vt_dname1)

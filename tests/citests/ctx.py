@@ -6,6 +6,7 @@ import random
 import datetime
 import shutil
 import time
+import concurrent.futures as futures
 
 from . import cmd
 from . import expect
@@ -52,6 +53,15 @@ class TestDataSet:
             os.makedirs(dpath, exist_ok=True)
             self.expect.is_dir(dpath)
 
+    def do_rmdirs(self) -> None:
+        dds = {}
+        for td in self.tds:
+            dpath = os.path.dirname(td.path)
+            if dpath not in dds:
+                self.expect.is_dir(dpath)
+                os.rmdir(dpath)
+                dds[dpath] = True
+
     def do_write(self) -> None:
         for td in self.tds:
             td.do_write()
@@ -83,6 +93,7 @@ class TestBaseCtx:
         self.name = name
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
+        self.executor = futures.ThreadPoolExecutor()
         self.seed = 0
 
     @staticmethod

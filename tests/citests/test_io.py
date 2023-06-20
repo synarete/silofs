@@ -74,3 +74,25 @@ def test_reload_n(tc: ctx.TestCtx) -> None:
         tds.do_read()
         tds.do_unlink()
     tc.exec_umount()
+
+
+def run_async_io(tds: ctx.TestDataSet, cnt: int) -> None:
+    for i in range(0, cnt):
+        tds.do_makedirs()
+        tds.do_write()
+        tds.do_read()
+        tds.do_unlink()
+        tds.do_rmdirs()
+
+
+def test_async_io(tc: ctx.TestCtx) -> None:
+    tc.exec_setup_fs(64)
+    fus = []
+    for i in range(0, 64):
+        sub = f"async-io{i}"
+        tds = tc.make_tds(16, sub, i + 2**20)
+        fui = tc.executor.submit(run_async_io, tds, i + 1)
+        fus.append(fui)
+    for fui in fus:
+        fui.result()
+    tc.exec_umount()

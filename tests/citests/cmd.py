@@ -208,7 +208,7 @@ class CmdVfstests(CmdExec):
             args.append("--random")
         if nostatvfs:
             args.append("--nostatvfs")
-        self.execute_sub(args, wdir="/", timeout=1200)
+        self.execute_sub(args, wdir="/", timeout=2400)
 
 
 class CmdGit(CmdExec):

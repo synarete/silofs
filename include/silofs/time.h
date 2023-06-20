@@ -33,4 +33,6 @@ void silofs_ts_copy(struct timespec *dst, const struct timespec *src);
 
 int silofs_ts_gettime(struct timespec *ts, int realtime);
 
+int silofs_suspend_secs(time_t secs);
+
 #endif /* SILOFS_TIME_H_ */

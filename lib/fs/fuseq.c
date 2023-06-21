@@ -523,6 +523,13 @@ static void fill_fuse_entry(struct fuse_entry_out *ent,
 	stat_to_fuse_attr(st, &ent->attr);
 }
 
+static void fill_fuse_noentry(struct fuse_entry_out *ent)
+{
+	memset(ent, 0, sizeof(*ent));
+	ent->nodeid = 0;
+	ent->entry_valid = UINT_MAX;
+}
+
 static void fill_fuse_attr(struct fuse_attr_out *attr,
                            const struct silofs_stat *st)
 {
@@ -644,7 +651,12 @@ static int sanitize_err(int err, uint32_t opcode)
 	} else if (err2 >= SILOFS_ERRBASE) {
 		err2 = silofs_remap_status_code(err);
 	}
-	return err2;
+	return -abs(err2);
+}
+
+static int sanitize_err_by(int err, const struct silofs_task *task)
+{
+	return sanitize_err(err, task->t_oper.op_code);
 }
 
 static int fuseq_reply_err(struct silofs_fuseq_worker *fqw,
@@ -657,8 +669,7 @@ static int fuseq_reply_err(struct silofs_fuseq_worker *fqw,
 	iov[0].iov_base = &hdr;
 	iov[0].iov_len = hdrsz;
 
-	err = sanitize_err(err, task->t_oper.op_code);
-	fill_out_header_by(&hdr, task, hdrsz, err);
+	fill_out_header_by(&hdr, task, hdrsz, sanitize_err_by(err, task));
 	return fuseq_send_msg(fqw, iov, 1);
 }
 
@@ -687,6 +698,15 @@ static int fuseq_reply_entry_ok(struct silofs_fuseq_worker *fqw,
 	struct fuse_entry_out arg;
 
 	fill_fuse_entry(&arg, st);
+	return fuseq_reply_arg(fqw, task, &arg, sizeof(arg));
+}
+
+static int fuseq_reply_lookup_noent(struct silofs_fuseq_worker *fqw,
+                                    const struct silofs_task *task)
+{
+	struct fuse_entry_out arg;
+
+	fill_fuse_noentry(&arg);
 	return fuseq_reply_arg(fqw, task, &arg, sizeof(arg));
 }
 
@@ -866,6 +886,25 @@ static int fuseq_reply_entry(struct silofs_fuseq_worker *fqw,
 
 	if (task_interrupted(task)) {
 		ret = fuseq_reply_intr(fqw, task);
+	} else if (unlikely(err)) {
+		ret = fuseq_reply_err(fqw, task, err);
+	} else {
+		ret = fuseq_reply_entry_ok(fqw, task, st);
+	}
+	return ret;
+}
+
+static int fuseq_reply_lookup(struct silofs_fuseq_worker *fqw,
+                              const struct silofs_task *task,
+                              const struct silofs_stat *st, int err)
+{
+	const int status = sanitize_err_by(err, task);
+	int ret;
+
+	if (task_interrupted(task)) {
+		ret = fuseq_reply_intr(fqw, task);
+	} else if (status == -ENOENT) {
+		ret = fuseq_reply_lookup_noent(fqw, task);
 	} else if (unlikely(err)) {
 		ret = fuseq_reply_err(fqw, task, err);
 	} else {
@@ -1704,8 +1743,8 @@ static int do_lookup(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.lookup.parent = fcc->ino;
 	fcc->args->in.lookup.name = fcc->in->u.lookup.name;
 	err = do_exec_op(fcc);
-	return fuseq_reply_entry(fcc->fqw, fcc->task,
-	                         &fcc->args->out.lookup.st, err);
+	return fuseq_reply_lookup(fcc->fqw, fcc->task,
+	                          &fcc->args->out.lookup.st, err);
 }
 
 static int do_forget(const struct silofs_fuseq_cmd_ctx *fcc)

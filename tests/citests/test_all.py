@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0
 from . import ctx
 from . import test_basic
-from . import test_io
 from . import test_fillfs
-from . import test_snap
 from . import test_fsck
+from . import test_io
 from . import test_self
+from . import test_snap
 from . import test_xprogs
 
 

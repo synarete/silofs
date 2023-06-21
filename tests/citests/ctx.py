@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0
-import os
+import concurrent.futures as futures
 import copy
-import typing
-import random
 import datetime
+import os
+import random
 import shutil
 import time
-import concurrent.futures as futures
+import typing
 
 from . import cmd
 from . import expect

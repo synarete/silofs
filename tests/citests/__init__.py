@@ -3,7 +3,6 @@ import sys
 
 from . import ctx
 from . import run
-from _ast import Try
 
 
 def _progname() -> str:

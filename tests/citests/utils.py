@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0
+import contextlib
 import os
 import shutil
 import urllib
 import urllib.request
-import contextlib
 
 
 def is_dir(dirpath: str) -> bool:

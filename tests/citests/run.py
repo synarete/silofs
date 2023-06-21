@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0
-import sys
-import os
 import datetime
+import os
+import sys
 import traceback
-from . import expect
+
 from . import cmd
 from . import ctx
-from . import utils
+from . import expect
 from . import test_all
+from . import utils
 
 
 def _die(msg: str) -> None:

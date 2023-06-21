@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
+
 from . import ctx
 
 
@@ -64,6 +65,7 @@ def test_snap_reload_multi(tc: ctx.TestCtx) -> None:
         tc.exec_snap(name)
         tds.do_read()
         tds_over = tc.create_data(200, "A", 2**20)
+        tds_over.do_read()
         tc.exec_umount()
     tc.exec_rmfs(name)
 

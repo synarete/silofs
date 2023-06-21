@@ -78,12 +78,13 @@ def test_reload_n(tc: ctx.TestCtx) -> None:
 
 
 def run_async_io(tds: ctx.TestDataSet, cnt: int) -> None:
-    for i in range(0, cnt):
+    while cnt > 0:
         tds.do_makedirs()
         tds.do_write()
         tds.do_read()
         tds.do_unlink()
         tds.do_rmdirs()
+        cnt = cnt - 1
 
 
 def test_async_io(tc: ctx.TestCtx) -> None:

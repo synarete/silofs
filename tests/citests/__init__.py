@@ -4,6 +4,12 @@ import sys
 from . import ctx
 from . import run
 
+setproctitle = None
+try:
+    from setproctitle import setproctitle  # type: ignore
+except ImportError:
+    pass
+
 
 def _progname() -> str:
     return "silofs-citests"
@@ -26,12 +32,8 @@ def _parseargs() -> tuple[str, str]:
 
 
 def _setproctitle() -> None:
-    try:
-        import setproctitle  # type: ignore
-
-        setproctitle.setproctitle("silofs-citests")
-    except ImportError:
-        pass
+    if setproctitle is not None:
+        setproctitle("silofs-citests")
 
 
 def citests_main() -> None:

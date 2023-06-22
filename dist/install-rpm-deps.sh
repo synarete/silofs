@@ -1,9 +1,8 @@
 #!/bin/sh
 dnf install -y \
-  gcc \
-  make \
   autoconf \
   automake \
+  gcc \
   libtool \
   libuuid-devel \
   libattr-devel \
@@ -11,8 +10,9 @@ dnf install -y \
   libunwind-devel \
   libgcrypt-devel \
   libzstd-devel \
+  make \
+  python3-docutils \
+  rpm-build \
   xxhash-libs \
   xxhash-devel \
-  python3-docutils \
-  rpm-build
 

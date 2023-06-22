@@ -1,5 +1,5 @@
 # Build: dist-archive --> rpm
-FROM registry.fedoraproject.org/fedora:36 as builder
+FROM fedora:latest as builder
 ARG VERSION
 ARG RELEASE
 ARG REVISION
@@ -12,10 +12,11 @@ WORKDIR /workspace
 COPY $DIST_NAME.tar.gz .
 RUN tar xvfz $DIST_NAME.tar.gz
 RUN $DIST_NAME/dist/install-rpm-deps.sh
+RUN $DIST_NAME/dist/install-rpm-extras.sh
 RUN $DIST_NAME/dist/rpm/packagize-rpm.sh
 
 # Target: install from rpm
-FROM registry.fedoraproject.org/fedora-toolbox:36
+FROM fedora:latest
 ARG VERSION
 ARG DIST_NAME
 
@@ -24,4 +25,3 @@ COPY --from=builder /workspace/$DIST_NAME/build/dist/silofs-$VERSION-*.rpm /tmp
 RUN dnf install -y /tmp/silofs-$VERSION-*.rpm
 RUN rm -rf /tmp/*.rpm
 
-ENTRYPOINT ["/bin/bash"]

@@ -10,9 +10,19 @@ Package: silofs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
 Description: Silofs
- Silofs
+ The Silo File-System
  .
- This package provides an implementation and documentation of Silofs
+ Silofs is a user-space file-system for storing large volumes of data
+ as encrypted blobs. It allows normal users to create an isolated
+ storage area, with its own private key, and mount it on local host.
+ When mounted, users may manipulate their data as they would do with any
+ other file-system, while the actual data is transparently encrypted and
+ stored within a local repository as opaque blobs. Other processes,
+ which have the appropriate UNIX credentials may access those blobs as
+ regular files, but they can not view their content. This model allows
+ common Linux utilities to backup or archive the content of the
+ repository into remote location without compromising the integrity of
+ the underlying data.
  .
 
 

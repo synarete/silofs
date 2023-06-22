@@ -1,7 +1,7 @@
 Upstream-Name: silofs
 Source: https://github.com/synarete/silofs
 
-Files: debian/*
+Files: *
 Copyright: Copyright (C) 2020-2023, Shachar Sharon <synarete@xxxxxxxx>
 License: GPLv3
  GPLv3

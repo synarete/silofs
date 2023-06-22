@@ -25,7 +25,8 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: |
+          sudo ./dist/deb/install-deb-deps.sh
       - name: Require build tools
         run: ./scripts/requiredeps.sh
       - name: Require install tool
@@ -39,7 +40,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo apt-get install -y git gitlint
       - name: Check commit message
         run: gitlint --config .gitlint.conf --target ./ lint
   codelint:
@@ -51,7 +52,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo apt-get install -y astyle python3
       - name: Check C-style
         run: ./cstylelint.sh
       - name: Verify code formatting
@@ -68,7 +69,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Build with GCC
         run: make -f devel.mk
       - name: Re-build with Clang
@@ -91,7 +92,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Bootstrap
         run: ./bootstrap
       - name: Configure
@@ -112,7 +113,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Run clang static-analyzer
         run: ./scripts/clangscanbuild.sh
   build-rpm-package:
@@ -127,7 +128,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Install rpm build tools
         run: sudo apt-get install -y rpm
       - name: Build rpm package
@@ -144,7 +145,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Packagize
         run: ./dist/deb/packagize-deb.sh
       - name: Install
@@ -187,7 +188,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./dist/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Build and install
         run: |
           ./bootstrap

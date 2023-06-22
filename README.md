@@ -45,10 +45,10 @@ $ git clone https://github.com/synarete/silofs
 $ cd silofs
 
 $ # on rpm-based system:
-$ sudo dist/install-rpm-deps.sh
+$ sudo dist/rpm/install-rpm-deps.sh
 
 $ # on deb-based system:
-$ sudo dist/install-deb-deps.sh
+$ sudo dist/deb/install-deb-deps.sh
 ```
 
 Once all build-dependencies are installed on your local build machine,

@@ -1,5 +1,5 @@
 # Build: dist-archive --> rpm
-FROM fedora:latest as builder
+FROM debian:latest as builder
 ARG VERSION
 ARG RELEASE
 ARG REVISION
@@ -9,19 +9,20 @@ ARG ARCH
 RUN echo $VERSION $RELEASE $REVISION $DIST_NAME $ARCH
 
 WORKDIR /workspace
+RUN apt-get update -y
 COPY $DIST_NAME.tar.gz .
 RUN tar xvfz $DIST_NAME.tar.gz
-RUN $DIST_NAME/dist/install-rpm-deps.sh
-RUN $DIST_NAME/dist/install-rpm-extras.sh
-RUN $DIST_NAME/dist/rpm/packagize-rpm.sh
+RUN $DIST_NAME/dist/deb/install-deb-deps.sh
+RUN $DIST_NAME/dist/deb/packagize-deb.sh
 
 # Target: install from rpm
-FROM fedora:latest
+FROM debian:latest
 ARG VERSION
 ARG DIST_NAME
 
 WORKDIR /
-COPY --from=builder /workspace/$DIST_NAME/build/dist/silofs-$VERSION-*.rpm /tmp
-RUN dnf install -y /tmp/silofs-$VERSION-*.rpm
+RUN apt-get update -y
+COPY --from=builder /workspace/$DIST_NAME/build/dist/silofs_$VERSION-*.deb /tmp
+RUN apt-get install -y /tmp/silofs_$VERSION-*.deb
 RUN rm -rf /tmp/*.rpm
 

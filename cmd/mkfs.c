@@ -101,7 +101,7 @@ static void cmd_mkfs_destroy_fs_env(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_env(ctx);
-	cmd_reset_fs_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);

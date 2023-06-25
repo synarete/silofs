@@ -9,8 +9,9 @@ _silofs_init() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-h -u --uid= -g --gid=' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-R --no-root' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-r --allow-root' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-u --allow-user= ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-g --allow-group= -h' -- "$cur") )
   fi
 }
 

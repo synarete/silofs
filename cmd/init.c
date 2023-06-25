@@ -20,9 +20,9 @@ static const char *cmd_init_help_desc[] = {
 	"init <repodir>",
 	"",
 	"options:",
-	"  -u, --uid=internal-uid       Map host-uid to intenral-uid",
-	"  -g, --gid=internal-gid       Map host-gid to internal-gid",
-	"  -R, --no-root                Ignore root user",
+	"  -r, --allow-root             Enable root user and group",
+	"  -u, --allow-user=username    Allow extra known user",
+	"  -g, --allow-group=groupname  Allow extra known group",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };
@@ -30,9 +30,11 @@ static const char *cmd_init_help_desc[] = {
 struct cmd_init_in_args {
 	char   *repodir;
 	char   *repodir_real;
-	uid_t   suid;
-	gid_t   sgid;
-	bool    no_root;
+	uid_t   root_uid;
+	gid_t   root_gid;
+	uid_t   extra_uid;
+	gid_t   extra_gid;
+	bool    allow_root;
 };
 
 struct cmd_init_ctx {
@@ -45,28 +47,43 @@ static struct cmd_init_ctx *cmd_init_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static uid_t cmd_uid_by_name(const char *name)
+{
+	uid_t ret = (uid_t)(-1);
+
+	cmd_resolve_uid_by_name(name, &ret);
+	return ret;
+}
+
+static gid_t cmd_gid_by_name(const char *name)
+{
+	gid_t ret = (gid_t)(-1);
+
+	cmd_resolve_gid_by_name(name, &ret);
+	return ret;
+}
+
 static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "uid", required_argument, NULL, 'u' },
-		{ "gid", required_argument, NULL, 'g' },
-		{ "no-root", no_argument, NULL, 'R' },
+		{ "allow-root", no_argument, NULL, 'r' },
+		{ "allow-user", required_argument, NULL, 'u' },
+		{ "allow-group", required_argument, NULL, 'g' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
-	ctx->in_args.suid = getuid();
-	ctx->in_args.sgid = getgid();
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("u:g:RV:h", opts);
-		if (opt_chr == 'u') {
-			ctx->in_args.suid = cmd_parse_str_as_uid(optarg);
+		opt_chr = cmd_getopt("ru:g:V:h", opts);
+		if (opt_chr == 'r') {
+			ctx->in_args.root_uid = cmd_uid_by_name("root");
+			ctx->in_args.root_gid = cmd_gid_by_name("root");
+		} else if (opt_chr == 'u') {
+			ctx->in_args.extra_uid = cmd_uid_by_name(optarg);
 		} else if (opt_chr == 'g') {
-			ctx->in_args.sgid = cmd_parse_str_as_gid(optarg);
-		} else if (opt_chr == 'R') {
-			ctx->in_args.no_root = true;
+			ctx->in_args.extra_gid = cmd_gid_by_name(optarg);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
@@ -84,7 +101,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_fs_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx = NULL;
@@ -125,8 +142,9 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_setup_fs_ids(&fs_args->ids, ctx->in_args.suid,
-	                 ctx->in_args.sgid, ctx->in_args.no_root);
+	cmd_setup_ids(&fs_args->ids,
+	              ctx->in_args.root_uid, ctx->in_args.root_gid,
+	              ctx->in_args.extra_uid, ctx->in_args.extra_gid);
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
 	ctx->fs_args.name = "silofs";
 }
@@ -156,6 +174,10 @@ static void cmd_init_save_idmap(const struct cmd_init_ctx *ctx)
 void cmd_execute_init(void)
 {
 	struct cmd_init_ctx ctx = {
+		.in_args.root_uid = (uid_t)(-1),
+		.in_args.root_gid = (gid_t)(-1),
+		.in_args.extra_uid = (uid_t)(-1),
+		.in_args.extra_gid = (gid_t)(-1),
 		.fs_env = NULL
 	};
 

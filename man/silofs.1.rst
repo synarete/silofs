@@ -60,7 +60,7 @@ COMMANDS
 
 init
 ----
-**silofs init** [--attic] *repodir*
+**silofs init** *repodir*
 
 
 Create an empty **silofs** repository under *repodir*. Input *repodir*

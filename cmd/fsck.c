@@ -77,7 +77,7 @@ static void cmd_fsck_destroy_fs_env(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_fs_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);

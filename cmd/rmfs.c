@@ -108,7 +108,7 @@ static void cmd_rmfs_load_ids(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_load_fs_uuid(&ctx->fs_args.uuid,
 	                 ctx->in_args.repodir_real, ctx->in_args.name);
-	cmd_reset_fs_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.ids);
 	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 

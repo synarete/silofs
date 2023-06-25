@@ -263,16 +263,19 @@ void cmd_getpass2(const char *path, char **out_pass);
 void cmd_delpass(char **pass);
 
 /* ids-mapping via conf file */
-void cmd_reset_fs_ids(struct silofs_ids *ids);
+void cmd_reset_ids(struct silofs_ids *ids);
 
-void cmd_default_fs_ids(struct silofs_ids *ids);
-
-void cmd_setup_fs_ids(struct silofs_ids *ids,
-                      uid_t suid, gid_t sgid, bool no_root);
+void cmd_setup_ids(struct silofs_ids *ids,
+                   uid_t root_uid, gid_t root_gid,
+                   uid_t extra_uid, gid_t extra_gid);
 
 void cmd_load_fs_idsmap(struct silofs_ids *ids, const char *repodir);
 
 void cmd_save_fs_idsmap(const struct silofs_ids *ids, const char *repodir);
+
+void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid);
+
+void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid);
 
 /* fs-uuid file */
 void cmd_load_fs_uuid(struct silofs_uuid *fs_uuid,

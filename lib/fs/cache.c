@@ -213,9 +213,11 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	const uint64_t h = twang_mix64((uint64_t)vaddr->off);
+	const uint64_t sip_key = 0x736f6d6570736575ULL;
+	const uint64_t off_len = (uint64_t)vaddr->off + (uint64_t)vaddr->len;
+	const uint64_t hval = twang_mix64(off_len ^ sip_key);
 
-	return silofs_rotate64(h, vaddr->stype % 59) ^ vaddr->len;
+	return silofs_rotate64(hval, 59 % vaddr->stype);
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
@@ -225,9 +227,10 @@ static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
-	const uint64_t pos = (uint64_t)(oaddr->pos);
+	const uint64_t sip_key = 0x646f72616e646f6dULL;
+	const uint64_t pos_len = (uint64_t)(oaddr->pos) + oaddr->len;
 
-	return hash_of_bkaddr(&oaddr->bka) ^ ((pos << 17) + oaddr->len);
+	return hash_of_bkaddr(&oaddr->bka) ^ pos_len ^ sip_key;
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
@@ -429,10 +432,12 @@ static bool ce_is_mapped(const struct silofs_cache_elem *ce)
 
 static void ce_set_mapped(struct silofs_cache_elem *ce, bool mapped)
 {
+	const int flags = ce->ce_flags;
+
 	if (mapped) {
-		ce->ce_flags |= SILOFS_CEF_MAPPED;
+		ce->ce_flags = flags | SILOFS_CEF_MAPPED;
 	} else {
-		ce->ce_flags &= ~SILOFS_CEF_MAPPED;
+		ce->ce_flags = flags & ~SILOFS_CEF_MAPPED;
 	}
 }
 
@@ -447,6 +452,20 @@ static void ce_hunmap(struct silofs_cache_elem *ce)
 {
 	list_head_remove(&ce->ce_htb_lh);
 	ce_set_mapped(ce, false);
+}
+
+static void ce_promote_hmap(struct silofs_cache_elem *ce,
+                            struct silofs_list_head *hlst)
+{
+	struct silofs_list_head *hlnk = &ce->ce_htb_lh;
+	const struct silofs_list_head *next = hlst->next;
+
+	silofs_assert(ce_is_mapped(ce));
+
+	if ((next != hlnk) && (next->next != hlnk)) {
+		list_head_remove(hlnk);
+		list_push_front(hlst, hlnk);
+	}
 }
 
 static struct silofs_list_head *
@@ -508,10 +527,12 @@ static bool ce_is_dirty(const struct silofs_cache_elem *ce)
 
 static void ce_set_dirty(struct silofs_cache_elem *ce, bool dirty)
 {
+	const int flags = ce->ce_flags;
+
 	if (dirty) {
-		ce->ce_flags |= SILOFS_CEF_DIRTY;
+		ce->ce_flags = flags | SILOFS_CEF_DIRTY;
 	} else {
-		ce->ce_flags &= ~SILOFS_CEF_DIRTY;
+		ce->ce_flags = flags & ~SILOFS_CEF_DIRTY;
 	}
 }
 
@@ -576,30 +597,35 @@ static size_t lrumap_key_to_bin(const struct silofs_lrumap *lm,
 	return ckey->hash % lm->lm_htbl_cap;
 }
 
+static struct silofs_list_head *
+lrumap_hlist_of(const struct silofs_lrumap *lm, const struct silofs_ckey *ckey)
+{
+	const size_t bin = lrumap_key_to_bin(lm, ckey);
+
+	return &lm->lm_htbl[bin];
+}
+
 static void lrumap_store(struct silofs_lrumap *lm,
                          struct silofs_cache_elem *ce)
 {
-	const size_t bin = lrumap_key_to_bin(lm, &ce->ce_ckey);
+	struct silofs_listq *lru = &lm->lm_lru;
+	struct silofs_list_head *hlst = lrumap_hlist_of(lm, &ce->ce_ckey);
 
-	ce_hmap(ce, &lm->lm_htbl[bin]);
-	ce_lru(ce, &lm->lm_lru);
+	ce_lru(ce, lru);
+	ce_hmap(ce, hlst);
 	lm->lm_htbl_sz += 1;
-
-	silofs_assert_ge(lm->lm_lru.sz, lm->lm_htbl_sz);
 }
 
 static struct silofs_cache_elem *
 lrumap_find(const struct silofs_lrumap *lm, const struct silofs_ckey *ckey)
 {
-	const struct silofs_list_head *lst;
+	const struct silofs_list_head *hlst;
 	const struct silofs_list_head *itr;
 	const struct silofs_cache_elem *ce;
-	size_t bin;
 
-	bin = lrumap_key_to_bin(lm, ckey);
-	lst = &lm->lm_htbl[bin];
-	itr = lst->next;
-	while (itr != lst) {
+	hlst = lrumap_hlist_of(lm, ckey);
+	itr = hlst->next;
+	while (itr != hlst) {
 		ce = ce_from_htb_link(itr);
 		if (ckey_isequal(&ce->ce_ckey, ckey)) {
 			return unconst(ce);
@@ -639,6 +665,21 @@ static void lrumap_promote_lru(struct silofs_lrumap *lm,
 		ce_relru(ce, &lm->lm_lru);
 		ce->ce_hitcnt = 0;
 	}
+}
+
+static void lrumap_promote_hlnk(struct silofs_lrumap *lm,
+                                struct silofs_cache_elem *ce)
+{
+	struct silofs_list_head *hlst = lrumap_hlist_of(lm, &ce->ce_ckey);
+
+	ce_promote_hmap(ce, hlst);
+}
+
+static void lrumap_promote(struct silofs_lrumap *lm,
+                           struct silofs_cache_elem *ce, bool now)
+{
+	lrumap_promote_lru(lm, ce, now);
+	lrumap_promote_hlnk(lm, ce);
 }
 
 static struct silofs_cache_elem *lrumap_get_lru(const struct silofs_lrumap *lm)
@@ -1340,10 +1381,10 @@ static void cache_store_blobf(struct silofs_cache *cache,
 	lrumap_store(&cache->c_blobf_lm, blobf_to_ce(blobf));
 }
 
-static void cache_promote_lru_blobf(struct silofs_cache *cache,
-                                    struct silofs_blobf *blobf, bool now)
+static void cache_promote_blobf(struct silofs_cache *cache,
+                                struct silofs_blobf *blobf, bool now)
 {
-	lrumap_promote_lru(&cache->c_blobf_lm, blobf_to_ce(blobf), now);
+	lrumap_promote(&cache->c_blobf_lm, blobf_to_ce(blobf), now);
 }
 
 static void cache_evict_blobf(struct silofs_cache *cache,
@@ -1375,7 +1416,7 @@ cache_find_relru_blobf(struct silofs_cache *cache,
 
 	blobf = cache_find_blobf(cache, blobid);
 	if (blobf != NULL) {
-		cache_promote_lru_blobf(cache, blobf, false);
+		cache_promote_blobf(cache, blobf, false);
 	}
 	return blobf;
 }
@@ -1528,7 +1569,7 @@ static bool cache_evict_or_relru_blobf(struct silofs_cache *cache,
 		cache_evict_blobf(cache, blobf);
 		evicted = true;
 	} else {
-		cache_promote_lru_blobf(cache, blobf, true);
+		cache_promote_blobf(cache, blobf, true);
 		evicted = false;
 	}
 	return evicted;
@@ -1674,10 +1715,10 @@ static void cache_store_ubki(struct silofs_cache *cache,
 	lrumap_store(&cache->c_ubki_lm, ubki_to_ce(ubki));
 }
 
-static void cache_promote_lru_ubki(struct silofs_cache *cache,
-                                   struct silofs_ubk_info *ubki, bool now)
+static void cache_promote_ubki(struct silofs_cache *cache,
+                               struct silofs_ubk_info *ubki, bool now)
 {
-	lrumap_promote_lru(&cache->c_ubki_lm, ubki_to_ce(ubki), now);
+	lrumap_promote(&cache->c_ubki_lm, ubki_to_ce(ubki), now);
 }
 
 static void cache_evict_ubki(struct silofs_cache *cache,
@@ -1724,7 +1765,7 @@ cache_find_relru_ubki(struct silofs_cache *cache,
 
 	ubki = cache_find_ubki(cache, bkaddr);
 	if (ubki != NULL) {
-		cache_promote_lru_ubki(cache, ubki, false);
+		cache_promote_ubki(cache, ubki, false);
 	}
 	return ubki;
 }
@@ -1836,7 +1877,7 @@ static bool cache_evict_or_relru_ubki(struct silofs_cache *cache,
 		cache_evict_ubki(cache, ubki);
 		evicted = true;
 	} else {
-		cache_promote_lru_ubki(cache, ubki, true);
+		cache_promote_ubki(cache, ubki, true);
 		evicted = false;
 	}
 	return evicted;
@@ -1930,10 +1971,10 @@ cache_find_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 	return ui_from_ce(ce);
 }
 
-static void cache_promote_lru_ui(struct silofs_cache *cache,
-                                 struct silofs_unode_info *ui, bool now)
+static void cache_promote_ui(struct silofs_cache *cache,
+                             struct silofs_unode_info *ui, bool now)
 {
-	lrumap_promote_lru(&cache->c_ui_lm, ui_to_ce(ui), now);
+	lrumap_promote(&cache->c_ui_lm, ui_to_ce(ui), now);
 }
 
 static struct silofs_unode_info *
@@ -1944,7 +1985,7 @@ cache_find_relru_ui(struct silofs_cache *cache,
 
 	ui = cache_find_ui(cache, uaddr);
 	if (ui != NULL) {
-		cache_promote_lru_ui(cache, ui, false);
+		cache_promote_ui(cache, ui, false);
 	}
 	return ui;
 }
@@ -1987,7 +2028,7 @@ static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
 		cache_evict_ui(cache, ui);
 		evicted = true;
 	} else {
-		cache_promote_lru_ui(cache, ui, true);
+		cache_promote_ui(cache, ui, true);
 		evicted = false;
 	}
 	return evicted;
@@ -2258,10 +2299,10 @@ static void cache_store_vbki(struct silofs_cache *cache,
 	lrumap_store(&cache->c_vbki_lm, vbki_to_ce(vbki));
 }
 
-static void cache_promote_lru_vbki(struct silofs_cache *cache,
-                                   struct silofs_vbk_info *vbki, bool now)
+static void cache_promote_vbki(struct silofs_cache *cache,
+                               struct silofs_vbk_info *vbki, bool now)
 {
-	lrumap_promote_lru(&cache->c_vbki_lm, vbki_to_ce(vbki), now);
+	lrumap_promote(&cache->c_vbki_lm, vbki_to_ce(vbki), now);
 }
 
 static void cache_evict_vbki(struct silofs_cache *cache,
@@ -2300,7 +2341,7 @@ cache_find_relru_vbki(struct silofs_cache *cache,
 
 	vbki = cache_find_vbki(cache, voff, vspace);
 	if (vbki != NULL) {
-		cache_promote_lru_vbki(cache, vbki, false);
+		cache_promote_vbki(cache, vbki, false);
 	}
 	return vbki;
 }
@@ -2412,7 +2453,7 @@ static bool cache_evict_or_relru_vbki(struct silofs_cache *cache,
 		cache_evict_vbki(cache, vbki);
 		evicted = true;
 	} else {
-		cache_promote_lru_vbki(cache, vbki, true);
+		cache_promote_vbki(cache, vbki, true);
 		evicted = false;
 	}
 	return evicted;
@@ -2500,10 +2541,10 @@ cache_find_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 	return vi_from_ce(ce);
 }
 
-static void cache_promote_lru_vi(struct silofs_cache *cache,
-                                 struct silofs_vnode_info *vi, bool now)
+static void cache_promote_vi(struct silofs_cache *cache,
+                             struct silofs_vnode_info *vi, bool now)
 {
-	lrumap_promote_lru(&cache->c_vi_lm, vi_to_ce(vi), now);
+	lrumap_promote(&cache->c_vi_lm, vi_to_ce(vi), now);
 }
 
 static struct silofs_vnode_info *
@@ -2514,7 +2555,7 @@ cache_find_relru_vi(struct silofs_cache *cache,
 
 	vi = cache_find_vi(cache, vaddr);
 	if (vi != NULL) {
-		cache_promote_lru_vi(cache, vi, false);
+		cache_promote_vi(cache, vi, false);
 	}
 	return vi;
 }
@@ -2563,7 +2604,7 @@ static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
 		cache_evict_vi(cache, vi);
 		evicted = true;
 	} else {
-		cache_promote_lru_vi(cache, vi, true);
+		cache_promote_vi(cache, vi, true);
 		evicted = false;
 	}
 	return evicted;
@@ -3006,7 +3047,7 @@ static void cache_fini_lrumaps(struct silofs_cache *cache)
 
 static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
 {
-	const size_t base = 1 << 13;
+	const size_t base = 1 << 16;
 	const size_t hint = cache->c_mem_size_hint;
 	const size_t mult = clamp(hint / SILOFS_GIGA, 1, 32);
 
@@ -3016,9 +3057,10 @@ static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
 static int cache_init_lrumaps(struct silofs_cache *cache)
 {
 	const size_t hcap = cache_calc_htbl_cap(cache);
+	const size_t hcap_prime = htbl_cap_as_prime(hcap);
 	int err;
 
-	err = cache_init_blobf_lm(cache, htbl_cap_as_prime(hcap));
+	err = cache_init_blobf_lm(cache, hcap_prime);
 	if (err) {
 		goto out_err;
 	}

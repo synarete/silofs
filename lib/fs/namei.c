@@ -883,6 +883,9 @@ static int check_open_flags(const struct silofs_inode_info *ii, int o_flags)
 	    !(o_flags & (O_WRONLY | O_RDWR))) {
 		return -SILOFS_EACCES;
 	}
+	if (ii_isdir(ii) && (o_flags & O_DIRECT)) {
+		return -SILOFS_EOPNOTSUPP;
+	}
 	return 0;
 }
 

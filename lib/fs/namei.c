@@ -1489,7 +1489,7 @@ int silofs_do_symlink(struct silofs_task *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int check_opendir(const struct silofs_task *task,
-                         struct silofs_inode_info *dir_ii)
+                         struct silofs_inode_info *dir_ii, int o_flags)
 {
 	int err;
 
@@ -1505,15 +1505,18 @@ static int check_opendir(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
+	if (o_flags & O_DIRECT) {
+		return -SILOFS_EOPNOTSUPP;
+	}
 	return 0;
 }
 
 static int do_opendir(const struct silofs_task *task,
-                      struct silofs_inode_info *dir_ii)
+                      struct silofs_inode_info *dir_ii, int o_flags)
 {
 	int err;
 
-	err = check_opendir(task, dir_ii);
+	err = check_opendir(task, dir_ii, o_flags);
 	if (err) {
 		return err;
 	}
@@ -1522,12 +1525,12 @@ static int do_opendir(const struct silofs_task *task,
 }
 
 int silofs_do_opendir(const struct silofs_task *task,
-                      struct silofs_inode_info *dir_ii)
+                      struct silofs_inode_info *dir_ii, int o_flags)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_opendir(task, dir_ii);
+	err = do_opendir(task, dir_ii, o_flags);
 	ii_decref(dir_ii);
 
 	return err;

@@ -672,7 +672,7 @@ out:
 	return op_finish(task, parent, err);
 }
 
-int silofs_fs_opendir(struct silofs_task *task, ino_t ino)
+int silofs_fs_opendir(struct silofs_task *task, ino_t ino, int o_flags)
 {
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
@@ -689,7 +689,7 @@ int silofs_fs_opendir(struct silofs_task *task, ino_t ino)
 	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_opendir(task, dir_ii);
+	err = silofs_do_opendir(task, dir_ii, o_flags);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);

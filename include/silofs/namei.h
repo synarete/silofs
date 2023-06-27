@@ -89,7 +89,7 @@ int silofs_do_lookup(struct silofs_task *task,
                      struct silofs_inode_info **out_ii);
 
 int silofs_do_opendir(const struct silofs_task *task,
-                      struct silofs_inode_info *dir_ii);
+                      struct silofs_inode_info *dir_ii, int o_flags);
 
 int silofs_do_releasedir(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii, bool flush);

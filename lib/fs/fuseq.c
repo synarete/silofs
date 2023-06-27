@@ -4432,7 +4432,8 @@ static int op_flush(struct silofs_task *task, struct silofs_oper_args *args)
 
 static int op_opendir(struct silofs_task *task, struct silofs_oper_args *args)
 {
-	return silofs_fs_opendir(task, args->in.opendir.ino);
+	return silofs_fs_opendir(task, args->in.opendir.ino,
+	                         args->in.opendir.o_flags);
 }
 
 static int op_readdir(struct silofs_task *task, struct silofs_oper_args *args)

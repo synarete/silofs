@@ -442,7 +442,7 @@ int silofs_fs_rename(struct silofs_task *task, ino_t parent,
                      const char *name, ino_t newparent,
                      const char *newname, int flags);
 
-int silofs_fs_opendir(struct silofs_task *task, ino_t ino);
+int silofs_fs_opendir(struct silofs_task *task, ino_t ino, int o_flags);
 
 int silofs_fs_releasedir(struct silofs_task *task, ino_t ino, int o_flags);
 

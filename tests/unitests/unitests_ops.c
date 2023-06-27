@@ -182,7 +182,7 @@ static int ut_opendir(struct ut_env *ute, ino_t ino)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_opendir(&task, ino);
+	ret = silofs_fs_opendir(&task, ino, 0);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }

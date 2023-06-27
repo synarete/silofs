@@ -2029,7 +2029,6 @@ static int do_opendir(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	int err;
 
-	/* TODO: use OPENDIR's o_flags */
 	fcc->args->in.opendir.ino = fcc->ino;
 	fcc->args->in.opendir.o_flags = (int)(fcc->in->u.opendir.arg.flags);
 	err = do_exec_op(fcc);
@@ -3858,7 +3857,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	fq->fq_uber = uber;
 
 	/* TODO: Looks like kernel needs time. why? */
-	sleep(1);
+	silofs_suspend_secs(1);
 
 	return 0;
 }

@@ -778,7 +778,7 @@ static size_t uamap_slot_of(const struct silofs_uamap *uamap,
 {
 	const uint32_t rot = (uint32_t)uakey->height & 0xF;
 	const uint64_t ukey = (uint64_t)(uakey->voff + uakey->vspace);
-	const uint64_t key = silofs_rotate64(ukey, rot);
+	const uint64_t key = silofs_lrotate64(ukey, rot);
 
 	return key % uamap->uam_htbl_cap;
 }

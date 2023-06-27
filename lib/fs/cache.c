@@ -81,6 +81,16 @@ static uint64_t twang_mix64(uint64_t key)
 	return key;
 }
 
+static uint64_t lrotate(uint64_t x, unsigned int n)
+{
+	return silofs_lrotate64(x, n);
+}
+
+static uint64_t rrotate(uint64_t x, unsigned int n)
+{
+	return silofs_rrotate64(x, n);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_dirtyq_init(struct silofs_dirtyq *dq)
@@ -214,10 +224,11 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
 	const uint64_t sip_key = 0x736f6d6570736575ULL;
-	const uint64_t off_len = (uint64_t)vaddr->off + (uint64_t)vaddr->len;
-	const uint64_t hval = twang_mix64(off_len ^ sip_key);
+	const uint64_t voff = (uint64_t)vaddr->off;
+	const uint64_t nlz = silofs_clz64(voff);
+	const uint32_t rot = (vaddr->stype + 11) % 61;
 
-	return silofs_rotate64(hval, 59 % vaddr->stype);
+	return (rrotate(voff, rot) ^ ((sip_key - vaddr->len) / (nlz + 1)));
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
@@ -230,17 +241,20 @@ static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 	const uint64_t sip_key = 0x646f72616e646f6dULL;
 	const uint64_t pos_len = (uint64_t)(oaddr->pos) + oaddr->len;
 
-	return hash_of_bkaddr(&oaddr->bka) ^ pos_len ^ sip_key;
+	return hash_of_bkaddr(&oaddr->bka) ^ ~pos_len ^ sip_key;
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
+	const uint64_t sip_key = 0x6c7967656e657261ULL;
 	const uint64_t voff = (uint64_t)uaddr->voff;
-	const uint64_t stype = (uint64_t)(uaddr->stype);
 	const uint64_t ohash = hash_of_oaddr(&uaddr->oaddr);
-	const uint32_t height = (uint32_t)uaddr->height;
+	const uint64_t nlz = silofs_clz64(voff);
+	const uint32_t lrot = (uint32_t)uaddr->height % 7;
+	const uint32_t rrot = (uaddr->stype + 13) % 59;
 
-	return silofs_rotate64(ohash + stype, height % 7) ^ voff;
+	return lrotate(ohash, lrot) ^
+	       rrotate(voff ^ (sip_key / (nlz + 1)), rrot);
 }
 
 static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)
@@ -454,18 +468,24 @@ static void ce_hunmap(struct silofs_cache_elem *ce)
 	ce_set_mapped(ce, false);
 }
 
+static bool ce_need_promote_hmap(const struct silofs_cache_elem *ce,
+                                 const struct silofs_list_head *hlst)
+{
+	const struct silofs_list_head *hlnk = &ce->ce_htb_lh;
+	const struct silofs_list_head *next = hlst->next;
+
+	return ((next != hlnk) && (next->next != hlnk));
+}
+
 static void ce_promote_hmap(struct silofs_cache_elem *ce,
                             struct silofs_list_head *hlst)
 {
 	struct silofs_list_head *hlnk = &ce->ce_htb_lh;
-	const struct silofs_list_head *next = hlst->next;
 
 	silofs_assert(ce_is_mapped(ce));
 
-	if ((next != hlnk) && (next->next != hlnk)) {
-		list_head_remove(hlnk);
-		list_push_front(hlst, hlnk);
-	}
+	list_head_remove(hlnk);
+	list_push_front(hlst, hlnk);
 }
 
 static struct silofs_list_head *
@@ -668,18 +688,20 @@ static void lrumap_promote_lru(struct silofs_lrumap *lm,
 }
 
 static void lrumap_promote_hlnk(struct silofs_lrumap *lm,
-                                struct silofs_cache_elem *ce)
+                                struct silofs_cache_elem *ce, bool lookup)
 {
 	struct silofs_list_head *hlst = lrumap_hlist_of(lm, &ce->ce_ckey);
 
-	ce_promote_hmap(ce, hlst);
+	if (lookup && ce_need_promote_hmap(ce, hlst)) {
+		ce_promote_hmap(ce, hlst);
+	}
 }
 
 static void lrumap_promote(struct silofs_lrumap *lm,
                            struct silofs_cache_elem *ce, bool now)
 {
 	lrumap_promote_lru(lm, ce, now);
-	lrumap_promote_hlnk(lm, ce);
+	lrumap_promote_hlnk(lm, ce, !now);
 }
 
 static struct silofs_cache_elem *lrumap_get_lru(const struct silofs_lrumap *lm)
@@ -3047,11 +3069,11 @@ static void cache_fini_lrumaps(struct silofs_cache *cache)
 
 static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
 {
-	const size_t base = 1 << 16;
-	const size_t hint = cache->c_mem_size_hint;
-	const size_t mult = clamp(hint / SILOFS_GIGA, 1, 32);
+	const size_t base = 64UL * SILOFS_KILO;
+	const size_t mem_hint_ngigs = cache->c_mem_size_hint / SILOFS_GIGA;
+	const size_t factor = clamp(mem_hint_ngigs, 1, 32);
 
-	return base * mult;
+	return base * factor;
 }
 
 static int cache_init_lrumaps(struct silofs_cache *cache)
@@ -3060,7 +3082,7 @@ static int cache_init_lrumaps(struct silofs_cache *cache)
 	const size_t hcap_prime = htbl_cap_as_prime(hcap);
 	int err;
 
-	err = cache_init_blobf_lm(cache, hcap_prime);
+	err = cache_init_blobf_lm(cache, hcap);
 	if (err) {
 		goto out_err;
 	}
@@ -3076,7 +3098,7 @@ static int cache_init_lrumaps(struct silofs_cache *cache)
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_vi_lm(cache, hcap);
+	err = cache_init_vi_lm(cache, hcap_prime);
 	if (err) {
 		goto out_err;
 	}

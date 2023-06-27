@@ -90,9 +90,14 @@ static inline uint64_t silofs_div_round_up(uint64_t n, uint64_t d)
 	return (n + d - 1) / d;
 }
 
-static inline uint64_t silofs_rotate64(uint64_t x, unsigned int b)
+static inline uint64_t silofs_lrotate64(uint64_t x, unsigned int n)
 {
-	return (x << b) | (x >> (64 - b));
+	return (x << n) | (x >> (64 - n));
+}
+
+static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
+{
+	return (x >> n) | (x << (64 - n));
 }
 
 static inline void *silofs_unconst(const void *p)

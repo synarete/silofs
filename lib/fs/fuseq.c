@@ -538,12 +538,15 @@ static void fill_fuse_attr(struct fuse_attr_out *attr,
 	stat_to_fuse_attr(st, &attr->attr);
 }
 
-static void fill_fuse_open(struct fuse_open_out *open, int noflush)
+static void fill_fuse_open(struct fuse_open_out *open, int noflush, int isdir)
 {
 	memset(open, 0, sizeof(*open));
-	open->open_flags = FOPEN_KEEP_CACHE | FOPEN_CACHE_DIR;
+	open->open_flags = FOPEN_KEEP_CACHE;
 	if (noflush) {
 		open->open_flags |= FOPEN_NOFLUSH;
+	}
+	if (isdir) {
+		open->open_flags = FOPEN_CACHE_DIR;
 	}
 }
 
@@ -720,7 +723,7 @@ static int fuseq_reply_create_ok(struct silofs_fuseq_worker *fqw,
 	} silofs_packed_aligned16 arg;
 
 	fill_fuse_entry(&arg.ent, st);
-	fill_fuse_open(&arg.open, 0);
+	fill_fuse_open(&arg.open, 0, 0);
 	return fuseq_reply_arg(fqw, task, &arg, sizeof(arg));
 }
 
@@ -759,18 +762,19 @@ static int fuseq_reply_readlink_ok(struct silofs_fuseq_worker *fqw,
 }
 
 static int fuseq_reply_open_ok(struct silofs_fuseq_worker *fqw,
-                               const struct silofs_task *task, int noflush)
+                               const struct silofs_task *task,
+                               int noflush, int isdir)
 {
 	struct fuse_open_out arg;
 
-	fill_fuse_open(&arg, noflush);
+	fill_fuse_open(&arg, noflush, isdir);
 	return fuseq_reply_arg(fqw, task, &arg, sizeof(arg));
 }
 
 static int fuseq_reply_opendir_ok(struct silofs_fuseq_worker *fqw,
                                   const struct silofs_task *task)
 {
-	return fuseq_reply_open_ok(fqw, task, 0);
+	return fuseq_reply_open_ok(fqw, task, 0, 1);
 }
 
 static int fuseq_reply_write_ok(struct silofs_fuseq_worker *fqw,
@@ -972,7 +976,7 @@ static int fuseq_reply_open(struct silofs_fuseq_worker *fqw,
 	} else if (unlikely(err)) {
 		ret = fuseq_reply_err(fqw, task, err);
 	} else {
-		ret = fuseq_reply_open_ok(fqw, task, noflush);
+		ret = fuseq_reply_open_ok(fqw, task, noflush, 0);
 	}
 	return ret;
 }

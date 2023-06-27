@@ -873,7 +873,7 @@ static int o_flags_to_rwx(int o_flags)
 
 static int check_open_flags(const struct silofs_inode_info *ii, int o_flags)
 {
-	if (o_flags & O_DIRECTORY) {
+	if (!ii_isdir(ii) && (o_flags & O_DIRECTORY)) {
 		return -SILOFS_EISDIR;
 	}
 	if (o_flags & (O_CREAT | O_EXCL)) {
@@ -1488,6 +1488,11 @@ int silofs_do_symlink(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int check_opendir_flags(const struct silofs_inode_info *ii, int o_flags)
+{
+	return (ii_isdir(ii) && (o_flags & O_DIRECT)) ? -SILOFS_EOPNOTSUPP : 0;
+}
+
 static int check_opendir(const struct silofs_task *task,
                          struct silofs_inode_info *dir_ii, int o_flags)
 {
@@ -1505,8 +1510,9 @@ static int check_opendir(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	if (o_flags & O_DIRECT) {
-		return -SILOFS_EOPNOTSUPP;
+	err = check_opendir_flags(dir_ii, o_flags);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
@@ -1536,13 +1542,19 @@ int silofs_do_opendir(const struct silofs_task *task,
 	return err;
 }
 
+static int check_releasedir_flags(int o_flags)
+{
+	return (o_flags & O_DIRECT) ? -SILOFS_EOPNOTSUPP : 0;
+}
+
 /*
  * TODO-0017: Shrink sparse dir-tree upon last close
  *
  * Try to shrink sparse dir hash-tree upon last close. Note that we should
  * not do so while dir is held open, as it may corrupt active readdir.
  */
-static int check_releasedir(const struct silofs_inode_info *dir_ii)
+static int
+check_releasedir(const struct silofs_inode_info *dir_ii, int o_flags)
 {
 	int err;
 
@@ -1551,6 +1563,10 @@ static int check_releasedir(const struct silofs_inode_info *dir_ii)
 		return err;
 	}
 	err = check_opened(dir_ii);
+	if (err) {
+		return err;
+	}
+	err = check_releasedir_flags(o_flags);
 	if (err) {
 		return err;
 	}
@@ -1568,17 +1584,32 @@ static int flush_dirty_of(struct silofs_task *task,
 	return ret;
 }
 
-static int do_releasedir(struct silofs_task *task,
-                         struct silofs_inode_info *dir_ii, bool flush)
+static int do_releasedir_flush(struct silofs_task *task,
+                               struct silofs_inode_info *dir_ii,
+                               int o_flags, bool flush)
 {
-	const int flags = flush ? SILOFS_F_NOW : SILOFS_F_RELEASE;
+	int flags = SILOFS_F_RELEASE;
+
+	if (o_flags & (O_SYNC | O_DSYNC)) {
+		flags |= SILOFS_F_FSYNC;
+	}
+	if (flush) {
+		flags |= SILOFS_F_NOW;
+	}
+	return flush_dirty_of(task, dir_ii, flags);
+}
+
+static int do_releasedir(struct silofs_task *task,
+                         struct silofs_inode_info *dir_ii,
+                         int o_flags, bool flush)
+{
 	int err;
 
-	err = check_releasedir(dir_ii);
+	err = check_releasedir(dir_ii, o_flags);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(task, dir_ii, flags);
+	err = do_releasedir_flush(task, dir_ii, o_flags, flush);
 	if (err) {
 		return err;
 	}
@@ -1587,12 +1618,13 @@ static int do_releasedir(struct silofs_task *task,
 }
 
 int silofs_do_releasedir(struct silofs_task *task,
-                         struct silofs_inode_info *dir_ii, bool flush)
+                         struct silofs_inode_info *dir_ii,
+                         int o_flags, bool flush)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_releasedir(task, dir_ii, flush);
+	err = do_releasedir(task, dir_ii, o_flags, flush);
 	ii_decref(dir_ii);
 
 	return !err ? try_prune_inode(task, dir_ii, false) : err;

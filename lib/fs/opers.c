@@ -713,7 +713,7 @@ int silofs_fs_releasedir(struct silofs_task *task, ino_t ino, int o_flags)
 	err = op_stage_opt_inode(task, ino, flush, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_releasedir(task, dir_ii, flush);
+	err = silofs_do_releasedir(task, dir_ii, o_flags, flush);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);

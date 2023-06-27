@@ -92,7 +92,8 @@ int silofs_do_opendir(const struct silofs_task *task,
                       struct silofs_inode_info *dir_ii, int o_flags);
 
 int silofs_do_releasedir(struct silofs_task *task,
-                         struct silofs_inode_info *dir_ii, bool flush);
+                         struct silofs_inode_info *dir_ii,
+                         int o_flags, bool flush);
 
 int silofs_do_fsyncdir(struct silofs_task *task,
                        struct silofs_inode_info *dir_ii, bool dsync);

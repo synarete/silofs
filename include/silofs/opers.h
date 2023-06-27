@@ -273,10 +273,11 @@ struct silofs_op_copy_file_range_out {
 
 struct silofs_op_read_in {
 	ino_t ino;
-	void *buf;
 	size_t len;
 	loff_t off;
+	void *buf;
 	struct silofs_rwiter_ctx *rwi_ctx;
+	int o_flags;
 };
 
 struct silofs_op_read_out {
@@ -285,10 +286,11 @@ struct silofs_op_read_out {
 
 struct silofs_op_write_in {
 	ino_t ino;
-	const void *buf;
 	size_t len;
 	loff_t off;
+	const void *buf;
 	struct silofs_rwiter_ctx *rwi_ctx;
+	int o_flags;
 };
 
 struct silofs_op_write_out {
@@ -496,15 +498,15 @@ int silofs_fs_copy_file_range(struct silofs_task *task, ino_t ino_in,
                               size_t len, int flags, size_t *out_ncp);
 
 int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf,
-                   size_t len, loff_t off, size_t *out_len);
+                   size_t len, loff_t off, int o_flags, size_t *out_len);
 
-int silofs_fs_read_iter(struct silofs_task *task, ino_t ino,
+int silofs_fs_read_iter(struct silofs_task *task, ino_t ino, int o_flags,
                         struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_fs_write(struct silofs_task *task, ino_t ino,
-                    const void *buf, size_t len, loff_t off, size_t *out_len);
+int silofs_fs_write(struct silofs_task *task, ino_t ino, const void *buf,
+                    size_t len, loff_t off, int o_flags, size_t *out_len);
 
-int silofs_fs_write_iter(struct silofs_task *task, ino_t ino,
+int silofs_fs_write_iter(struct silofs_task *task, ino_t ino, int o_flags,
                          struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_fs_statx(struct silofs_task *task, ino_t ino,

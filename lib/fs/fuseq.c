@@ -2270,10 +2270,11 @@ static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	len = min(fcc->in->u.read.arg.size, fcc->fqw->fq->fq_coni.max_read);
 	fcc->args->in.read.ino = fcc->ino;
-	fcc->args->in.read.buf = NULL;
 	fcc->args->in.read.off = (loff_t)(fcc->in->u.read.arg.offset);
 	fcc->args->in.read.len = len;
+	fcc->args->in.read.buf = NULL;
 	fcc->args->in.read.rwi_ctx = &fq_rdi->rwi;
+	fcc->args->in.read.o_flags = (int)(fcc->in->u.read.arg.flags);
 	fuseq_setup_rd_iter(fcc->fqw, fcc->task,
 	                    fq_rdi, len, fcc->args->in.read.off);
 	err = do_exec_op(fcc);
@@ -2290,10 +2291,11 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	len = min(fcc->in->u.read.arg.size, fcc->fqw->fq->fq_coni.max_read);
 	fcc->args->in.read.ino = fcc->ino;
-	fcc->args->in.read.buf = dab->buf;
 	fcc->args->in.read.off = (loff_t)(fcc->in->u.read.arg.offset);
 	fcc->args->in.read.len = len;
+	fcc->args->in.read.buf = dab->buf;
 	fcc->args->in.read.rwi_ctx = NULL;
+	fcc->args->in.read.o_flags = (int)(fcc->in->u.read.arg.flags);
 	fcc->args->out.read.nrd = 0;
 	err = do_exec_op(fcc);
 	return fuseq_reply_read_buf(fcc->fqw, fcc->task, dab->buf,
@@ -2497,10 +2499,11 @@ static int do_write_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	check_fh(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
 	fcc->args->in.write.ino = fcc->ino;
-	fcc->args->in.write.buf = tail_of(fcc->in, sizeof(fcc->in->u.write));
 	fcc->args->in.write.len = fcc->in->u.write.arg.size;
 	fcc->args->in.write.off = (loff_t)(fcc->in->u.write.arg.offset);
+	fcc->args->in.write.buf = tail_of(fcc->in, sizeof(fcc->in->u.write));
 	fcc->args->in.write.rwi_ctx = NULL;
+	fcc->args->in.write.o_flags = (int)(fcc->in->u.write.arg.flags);
 	fcc->args->out.write.nwr = 0;
 	err = do_exec_op(fcc);
 	ret = fuseq_reply_write(fcc->fqw, fcc->task,
@@ -2519,10 +2522,11 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	check_fh(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
 	len = min(fcc->in->u.write.arg.size, fcc->fqw->fq->fq_coni.max_write);
 	fcc->args->in.write.ino = fcc->ino;
-	fcc->args->in.write.buf = NULL;
 	fcc->args->in.write.len = len;
 	fcc->args->in.write.off = (loff_t)(fcc->in->u.write.arg.offset);
+	fcc->args->in.write.buf = NULL;
 	fcc->args->in.write.rwi_ctx = &fq_wri->rwi;
+	fcc->args->in.write.o_flags = (int)(fcc->in->u.write.arg.flags);
 	fcc->args->out.write.nwr = 0;
 	fuseq_setup_wr_iter(fcc->fqw, fq_wri, len, fcc->args->in.write.off);
 	err1 = do_exec_op(fcc);
@@ -4526,6 +4530,7 @@ static int op_read_buf(struct silofs_task *task, struct silofs_oper_args *args)
 	                      args->in.read.buf,
 	                      args->in.read.len,
 	                      args->in.read.off,
+	                      args->in.read.o_flags,
 	                      &args->out.read.nrd);
 }
 
@@ -4534,6 +4539,7 @@ static int op_read_iter(struct silofs_task *task,
 {
 	return silofs_fs_read_iter(task,
 	                           args->in.read.ino,
+	                           args->in.read.o_flags,
 	                           args->in.read.rwi_ctx);
 }
 
@@ -4552,6 +4558,7 @@ static int op_write_buf(struct silofs_task *task,
 	                       args->in.write.buf,
 	                       args->in.write.len,
 	                       args->in.write.off,
+	                       args->in.write.o_flags,
 	                       &args->out.write.nwr);
 }
 
@@ -4560,6 +4567,7 @@ static int op_write_iter(struct silofs_task *task,
 {
 	return silofs_fs_write_iter(task,
 	                            args->in.write.ino,
+	                            args->in.write.o_flags,
 	                            args->in.write.rwi_ctx);
 }
 

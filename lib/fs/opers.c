@@ -1175,7 +1175,7 @@ out:
 }
 
 int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf,
-                   size_t len, loff_t off, size_t *out_len)
+                   size_t len, loff_t off, int o_flags, size_t *out_len)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -1192,13 +1192,13 @@ int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf,
 	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_read(task, ii, buf, len, off, out_len);
+	err = silofs_do_read(task, ii, buf, len, off, o_flags, out_len);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);
 }
 
-int silofs_fs_read_iter(struct silofs_task *task, ino_t ino,
+int silofs_fs_read_iter(struct silofs_task *task, ino_t ino, int o_flags,
                         struct silofs_rwiter_ctx *rwi_ctx)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -1216,14 +1216,14 @@ int silofs_fs_read_iter(struct silofs_task *task, ino_t ino,
 	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_read_iter(task, ii, rwi_ctx);
+	err = silofs_do_read_iter(task, ii, o_flags, rwi_ctx);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);
 }
 
-int silofs_fs_write(struct silofs_task *task, ino_t ino,
-                    const void *buf, size_t len, loff_t off, size_t *out_len)
+int silofs_fs_write(struct silofs_task *task, ino_t ino, const void *buf,
+                    size_t len, loff_t off, int o_flags, size_t *out_len)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -1243,13 +1243,13 @@ int silofs_fs_write(struct silofs_task *task, ino_t ino,
 	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write(task, ii, buf, len, off, out_len);
+	err = silofs_do_write(task, ii, buf, len, off, o_flags, out_len);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);
 }
 
-int silofs_fs_write_iter(struct silofs_task *task, ino_t ino,
+int silofs_fs_write_iter(struct silofs_task *task, ino_t ino, int o_flags,
                          struct silofs_rwiter_ctx *rwi_ctx)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -1270,7 +1270,7 @@ int silofs_fs_write_iter(struct silofs_task *task, ino_t ino,
 	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write_iter(task, ii, rwi_ctx);
+	err = silofs_do_write_iter(task, ii, o_flags, rwi_ctx);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);

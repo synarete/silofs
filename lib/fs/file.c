@@ -59,6 +59,7 @@ struct silofs_file_ctx {
 	int     cp_flags;
 	int     whence;
 	int     with_backref;
+	int     o_flags;
 	enum silofs_stg_mode stg_mode;
 };
 
@@ -1187,6 +1188,11 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 	if (err) {
 		return err;
 	}
+	if ((f_ctx->op_mask & OP_WRITE) && f_ctx->o_flags) {
+		if (!(f_ctx->o_flags & (O_RDWR | O_WRONLY))) {
+			return -SILOFS_EPERM;
+		}
+	}
 	if (f_ctx->op_mask & (OP_WRITE | OP_FALLOC)) {
 		err = filc_check_io_end(f_ctx);
 		if (err) {
@@ -1215,6 +1221,9 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 		    (f_ctx->len > SILOFS_IO_SIZE_MAX)) {
 			return -SILOFS_EINVAL;
 		}
+	}
+	if (f_ctx->o_flags & O_DIRECTORY) {
+		return -SILOFS_ENOTDIR;
 	}
 	return 0;
 }
@@ -1967,7 +1976,8 @@ static int filc_read_iter(struct silofs_file_ctx *f_ctx)
 	return err;
 }
 
-int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
+int silofs_do_read_iter(struct silofs_task *task,
+                        struct silofs_inode_info *ii, int o_flags,
                         struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
@@ -1977,6 +1987,7 @@ int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
 		.ii = ii,
 		.op_mask = OP_READ,
 		.with_backref = 1,
+		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_CUR,
 	};
 	int ret;
@@ -1988,8 +1999,9 @@ int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
 	return ret;
 }
 
-int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
-                   void *buf, size_t len, loff_t off, size_t *out_len)
+int silofs_do_read(struct silofs_task *task,
+                   struct silofs_inode_info *ii, void *buf,
+                   size_t len, loff_t off,  int o_flags, size_t *out_len)
 {
 	struct silofs_read_iter rdi = {
 		.dat_len = 0,
@@ -2006,6 +2018,7 @@ int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
 		.ii = ii,
 		.op_mask = OP_READ,
 		.with_backref = 0,
+		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_CUR,
 	};
 	int ret;
@@ -2668,20 +2681,49 @@ static int write_iter_actor(struct silofs_rwiter_ctx *rwi,
 	return 0;
 }
 
+static int filc_flush_dirty_of(const struct silofs_file_ctx *f_ctx, int flags)
+{
+	return silofs_flush_dirty(f_ctx->task, f_ctx->ii, flags);
+}
+
+static int filc_flush_dirty_now(const struct silofs_file_ctx *f_ctx)
+{
+	return filc_flush_dirty_of(f_ctx, SILOFS_F_NOW);
+}
+
+static int filc_post_write_iter(const struct silofs_file_ctx *f_ctx)
+{
+	int ret = 0;
+
+	if (f_ctx->o_flags & (O_SYNC | O_DSYNC)) {
+		ret = filc_flush_dirty_of(f_ctx, SILOFS_F_FSYNC);
+	}
+	return ret;
+}
+
 static int filc_write_iter(struct silofs_file_ctx *f_ctx)
 {
 	int err;
 
 	err = filc_check_file_io(f_ctx);
-	if (!err) {
-		err = filc_write_data(f_ctx);
-		filc_update_post_io(f_ctx, !err && (f_ctx->off > f_ctx->beg));
+	if (err) {
+		return err;
 	}
+	err = filc_write_data(f_ctx);
+	if (err) {
+		goto out;
+	}
+	err = filc_post_write_iter(f_ctx);
+	if (err) {
+		goto out;
+	}
+out:
+	filc_update_post_io(f_ctx, !err && (f_ctx->off > f_ctx->beg));
 	return err;
 }
 
 int silofs_do_write_iter(struct silofs_task *task,
-                         struct silofs_inode_info *ii,
+                         struct silofs_inode_info *ii, int o_flags,
                          struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
@@ -2691,6 +2733,7 @@ int silofs_do_write_iter(struct silofs_task *task,
 		.ii = ii,
 		.op_mask = OP_WRITE,
 		.with_backref = 1,
+		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_COW,
 	};
 	int ret;
@@ -2703,8 +2746,9 @@ int silofs_do_write_iter(struct silofs_task *task,
 	return ret;
 }
 
-int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
-                    const void *buf, size_t len, loff_t off, size_t *out_len)
+int silofs_do_write(struct silofs_task *task,
+                    struct silofs_inode_info *ii, const void *buf,
+                    size_t len, loff_t off, int o_flags, size_t *out_len)
 {
 	struct silofs_write_iter wri = {
 		.rwi.actor = write_iter_actor,
@@ -2721,6 +2765,7 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 		.ii = ii,
 		.op_mask = OP_WRITE,
 		.with_backref = 0,
+		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_COW,
 	};
 	int ret;
@@ -4231,11 +4276,6 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
 		return -SILOFS_EINVAL;
 	}
 	return 0;
-}
-
-static int filc_flush_dirty_now(struct silofs_file_ctx *f_ctx)
-{
-	return silofs_flush_dirty(f_ctx->task, f_ctx->ii, SILOFS_F_NOW);
 }
 
 static int filc_pre_copy_range(struct silofs_file_ctx *f_ctx_src,

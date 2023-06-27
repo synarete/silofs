@@ -24,18 +24,21 @@ void silofs_setup_reg(struct silofs_inode_info *ii);
 
 int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii);
 
-int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
-                    const void *buf, size_t len, loff_t off, size_t *out_len);
+int silofs_do_write(struct silofs_task *task,
+                    struct silofs_inode_info *ii, const void *buf,
+                    size_t len, loff_t off, int o_flags, size_t *out_len);
 
 int silofs_do_write_iter(struct silofs_task *task,
-                         struct silofs_inode_info *ii,
+                         struct silofs_inode_info *ii, int o_flags,
                          struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
+int silofs_do_read_iter(struct silofs_task *task,
+                        struct silofs_inode_info *ii, int o_flags,
                         struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
-                   void *buf, size_t len, loff_t off, size_t *out_len);
+int silofs_do_read(struct silofs_task *task,
+                   struct silofs_inode_info *ii, void *buf,
+                   size_t len, loff_t off,  int o_flags, size_t *out_len);
 
 int silofs_do_lseek(struct silofs_task *task,
                     struct silofs_inode_info *ii,

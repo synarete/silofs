@@ -404,7 +404,7 @@ static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_read(&task, ino, buf, len, off, out_len);
+	ret = silofs_fs_read(&task, ino, buf, len, off, 0, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -428,7 +428,7 @@ static int ut_write(struct ut_env *ute, ino_t ino, const void *buf,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_write(&task, ino, buf, len, off, out_len);
+	ret = silofs_fs_write(&task, ino, buf, len, off, 0, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -548,7 +548,7 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	int err3;
 
 	ut_setup_task(ute, &task);
-	err1 = silofs_fs_write_iter(&task, ino, &wri.rwi);
+	err1 = silofs_fs_write_iter(&task, ino, 0, &wri.rwi);
 	ut_release_task(ute, &task);
 
 	err2 = ut_write_iter_copy_rem(&wri);

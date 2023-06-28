@@ -39,7 +39,7 @@
 #if FUSE_KERNEL_VERSION != 7
 #error "wrong FUSE_KERNEL_VERSION"
 #endif
-#if FUSE_KERNEL_MINOR_VERSION < 34
+#if FUSE_KERNEL_MINOR_VERSION < 36
 #error "wrong FUSE_KERNEL_MINOR_VERSION"
 #endif
 
@@ -1531,23 +1531,16 @@ static int check_init(const struct silofs_fuseq_worker *fqw,
 {
 	const unsigned int u_major = FUSE_KERNEL_VERSION;
 	const unsigned int u_minor = FUSE_KERNEL_MINOR_VERSION;
+	int ret = 0;
 
 	unused(fqw);
 	if ((arg->major != u_major) || (arg->minor < u_minor)) {
-		fuseq_log_warn("version mismatch: "\
+		fuseq_log_warn("unsupported fuse-protocol version: "\
 		               "kernel=%u.%u userspace=%u.%u",
 		               arg->major, arg->minor, u_major, u_minor);
+		ret = -EPROTO;
 	}
-	/*
-	 * XXX minor __should__ be 34, but allow 31 due to fuse version on
-	 * github's ubuntu-20.04 runners (fuse7.33) and RHEL8 (fuse7.31).
-	 */
-	if ((arg->major != 7) || (arg->minor < 31)) {
-		fuseq_log_err("unsupported fuse-protocol version: %u.%u",
-		              arg->major, arg->minor);
-		return -EPROTO;
-	}
-	return 0;
+	return ret;
 }
 
 static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -4711,7 +4704,7 @@ void silofs_guarantee_fuse_proto(void)
 	REQUIRE_SIZEOF(struct fuse_setxattr1_in, FUSE_COMPAT_SETXATTR_IN_SIZE);
 	REQUIRE_SIZEOF(struct silofs_fuseq_hdr_in, 40);
 	REQUIRE_OFFSET(struct silofs_fuseq_hdr_in, hdr, 0);
-	REQUIRE_SIZEOF(struct silofs_fuseq_init_in, 56);
+	REQUIRE_SIZEOF(struct silofs_fuseq_init_in, 104);
 	REQUIRE_BASEOF(struct silofs_fuseq_init_in, arg);
 	REQUIRE_SIZEOF(struct silofs_fuseq_setattr_in, 128);
 	REQUIRE_BASEOF(struct silofs_fuseq_setattr_in, arg);

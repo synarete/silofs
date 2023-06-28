@@ -51,6 +51,7 @@ static const struct vt_tests *const vt_testsbl[]  = {
 	VT_METATEST(vt_test_rw_sparse),
 	VT_METATEST(vt_test_rw_random),
 	VT_METATEST(vt_test_rw_large),
+	VT_METATEST(vt_test_rw_osync),
 	VT_METATEST(vt_test_unlinked_file),
 	VT_METATEST(vt_test_truncate_io),
 	VT_METATEST(vt_test_fallocate),

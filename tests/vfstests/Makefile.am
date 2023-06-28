@@ -32,6 +32,7 @@ silofs_vfstests_SOURCES += test_readdir.c
 silofs_vfstests_SOURCES += test_rename.c
 silofs_vfstests_SOURCES += test_rw_basic.c
 silofs_vfstests_SOURCES += test_rw_large.c
+silofs_vfstests_SOURCES += test_rw_osync.c
 silofs_vfstests_SOURCES += test_rw_random.c
 silofs_vfstests_SOURCES += test_rw_sequential.c
 silofs_vfstests_SOURCES += test_rw_sparse.c

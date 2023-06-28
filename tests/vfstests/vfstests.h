@@ -473,6 +473,7 @@ extern const struct vt_tests vt_test_rw_sequencial;
 extern const struct vt_tests vt_test_rw_sparse;
 extern const struct vt_tests vt_test_rw_random;
 extern const struct vt_tests vt_test_rw_large;
+extern const struct vt_tests vt_test_rw_osync;
 extern const struct vt_tests vt_test_unlinked_file;
 extern const struct vt_tests vt_test_truncate_io;
 extern const struct vt_tests vt_test_fallocate;

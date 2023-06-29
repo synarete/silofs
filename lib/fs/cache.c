@@ -86,11 +86,6 @@ static uint64_t lrotate(uint64_t x, unsigned int n)
 	return silofs_lrotate64(x, n);
 }
 
-static uint64_t rrotate(uint64_t x, unsigned int n)
-{
-	return silofs_rrotate64(x, n);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_dirtyq_init(struct silofs_dirtyq *dq)
@@ -223,12 +218,12 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	const uint64_t sip_key = 0x736f6d6570736575ULL;
-	const uint64_t voff = (uint64_t)vaddr->off;
-	const uint64_t nlz = silofs_clz64(voff);
-	const uint32_t rot = (vaddr->stype + 11) % 61;
+	const uint64_t d[2] = {
+		(uint64_t)vaddr->off,
+		(uint64_t)vaddr->stype ^ 0x736f6d6570736575ULL
+	};
 
-	return (rrotate(voff, rot) ^ ((sip_key - vaddr->len) / (nlz + 1)));
+	return silofs_hash_xxh64(d, sizeof(d), vaddr->len);
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
@@ -238,31 +233,29 @@ static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 
 static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
-	const uint64_t sip_key = 0x646f72616e646f6dULL;
 	const uint64_t pos_len = (uint64_t)(oaddr->pos) + oaddr->len;
 
-	return hash_of_bkaddr(&oaddr->bka) ^ ~pos_len ^ sip_key;
+	return hash_of_bkaddr(&oaddr->bka) ^ ~pos_len ^ 0x646f72616e646f6dULL;
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
-	const uint64_t sip_key = 0x6c7967656e657261ULL;
-	const uint64_t voff = (uint64_t)uaddr->voff;
-	const uint64_t ohash = hash_of_oaddr(&uaddr->oaddr);
-	const uint64_t nlz = silofs_clz64(voff);
-	const uint32_t lrot = (uint32_t)uaddr->height % 7;
-	const uint32_t rrot = (uaddr->stype + 13) % 59;
+	const uint64_t d[3] = {
+		(uint64_t)uaddr->voff,
+		(uint64_t)uaddr->stype ^ 0x6c7967656e657261ULL,
+		hash_of_oaddr(&uaddr->oaddr),
+	};
 
-	return lrotate(ohash, lrot) ^
-	       rrotate(voff ^ (sip_key / (nlz + 1)), rrot);
+	return silofs_hash_xxh64(d, sizeof(d), uaddr->height);
 }
 
 static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)
 {
 	const uint64_t voff = (uint64_t)(vbk_addr->vbk_voff);
 	const uint64_t vspc = (uint64_t)(vbk_addr->vbk_vspace);
+	const uint32_t lrot = silofs_clz64(voff);
 
-	return ~twang_mix64(voff + vspc);
+	return lrotate(twang_mix64(voff + vspc), lrot);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

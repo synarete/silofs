@@ -42,7 +42,7 @@ static void ut_atexit(void);
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
  *                                                                           *
- *                        Silofs unit-testing program                        *
+ *                  Silofs' unit-testing framework ("white-box")             *
  *                                                                           *
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

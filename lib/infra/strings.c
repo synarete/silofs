@@ -28,8 +28,8 @@
 static char *unconst_str(const char *s)
 {
 	union {
-		const void *p;
-		void *q;
+		const char *p;
+		char *q;
 	} u = {
 		.p = s
 	};

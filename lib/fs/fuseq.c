@@ -1531,16 +1531,23 @@ static int check_init(const struct silofs_fuseq_worker *fqw,
 {
 	const unsigned int u_major = FUSE_KERNEL_VERSION;
 	const unsigned int u_minor = FUSE_KERNEL_MINOR_VERSION;
-	int ret = 0;
 
 	unused(fqw);
 	if ((arg->major != u_major) || (arg->minor < u_minor)) {
-		fuseq_log_warn("unsupported fuse-protocol version: "\
+		fuseq_log_warn("version mismatch: "\
 		               "kernel=%u.%u userspace=%u.%u",
 		               arg->major, arg->minor, u_major, u_minor);
-		ret = -EPROTO;
 	}
-	return ret;
+	/*
+	 * XXX minor __should__ be 36, but allow 34 due to fuse version on
+	 * github's ubuntu-22.04 runners (fuse7.34).
+	 */
+	if ((arg->major != 7) || (arg->minor < 34)) {
+		fuseq_log_err("unsupported fuse-protocol version: %u.%u",
+		              arg->major, arg->minor);
+		return -EPROTO;
+	}
+	return 0;
 }
 
 static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)

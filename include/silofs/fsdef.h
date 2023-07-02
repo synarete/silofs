@@ -81,6 +81,10 @@
 /* max number of hard-links to file or sub-directories */
 #define SILOFS_LINK_MAX                 (32767)
 
+/* max number of supplementary groups per each uid (same as NFS) */
+#define SILOFS_NSGRP_MAX                (16)
+
+
 /* size of boot-sector file */
 #define SILOFS_BOOTSEC_SIZE             (1024)
 

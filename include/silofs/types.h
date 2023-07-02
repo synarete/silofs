@@ -324,9 +324,10 @@ struct silofs_cache_elem {
 	struct silofs_list_head ce_lru_lh;
 	struct silofs_ckey      ce_ckey;
 	struct silofs_cache    *ce_cache;
+	long                    ce_htb_hitcnt;
+	long                    ce_lru_hitcnt;
 	enum silofs_ce_flags    ce_flags;
-	int     ce_refcnt;
-	int     ce_hitcnt;
+	int                     ce_refcnt;
 };
 
 /* logical-block base info */

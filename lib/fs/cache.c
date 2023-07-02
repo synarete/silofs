@@ -416,7 +416,8 @@ void silofs_ce_init(struct silofs_cache_elem *ce)
 	ce->ce_cache = NULL;
 	ce->ce_flags = 0;
 	ce->ce_refcnt = 0;
-	ce->ce_hitcnt = 0;
+	ce->ce_htb_hitcnt = 0;
+	ce->ce_lru_hitcnt = 0;
 }
 
 void silofs_ce_fini(struct silofs_cache_elem *ce)
@@ -428,7 +429,8 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 	list_head_fini(&ce->ce_htb_lh);
 	list_head_fini(&ce->ce_lru_lh);
 	ce->ce_refcnt = INT_MIN;
-	ce->ce_hitcnt = -1;
+	ce->ce_htb_hitcnt = -1;
+	ce->ce_lru_hitcnt = -1;
 	ce->ce_cache = NULL;
 }
 
@@ -466,8 +468,14 @@ static bool ce_need_promote_hmap(const struct silofs_cache_elem *ce,
 {
 	const struct silofs_list_head *hlnk = &ce->ce_htb_lh;
 	const struct silofs_list_head *next = hlst->next;
+	const struct silofs_cache_elem *ce_next = NULL;
+	bool ret = false;
 
-	return ((next != hlnk) && (next->next != hlnk));
+	if (next != hlnk) {
+		ce_next = ce_from_htb_link(next);
+		ret = (ce->ce_htb_hitcnt > (ce_next->ce_htb_hitcnt + 4));
+	}
+	return ret;
 }
 
 static void ce_promote_hmap(struct silofs_cache_elem *ce,
@@ -521,7 +529,7 @@ static bool ce_need_relru(const struct silofs_cache_elem *ce,
 	if (lru->sz < 16) {
 		return false; /* don't bother in case of small LRU */
 	}
-	if (ce->ce_hitcnt < 4) {
+	if (ce->ce_lru_hitcnt < 4) {
 		return false; /* low hit count */
 	}
 	return true;
@@ -673,10 +681,10 @@ static void lrumap_promote_lru(struct silofs_lrumap *lm,
 {
 	struct silofs_listq *lru = &lm->lm_lru;
 
-	ce->ce_hitcnt++;
+	ce->ce_lru_hitcnt++;
 	if (now || ce_need_relru(ce, lru)) {
 		ce_relru(ce, &lm->lm_lru);
-		ce->ce_hitcnt = 0;
+		ce->ce_lru_hitcnt = 0;
 	}
 }
 
@@ -685,6 +693,7 @@ static void lrumap_promote_hlnk(struct silofs_lrumap *lm,
 {
 	struct silofs_list_head *hlst = lrumap_hlist_of(lm, &ce->ce_ckey);
 
+	ce->ce_htb_hitcnt++;
 	if (lookup && ce_need_promote_hmap(ce, hlst)) {
 		ce_promote_hmap(ce, hlst);
 	}

@@ -25,6 +25,20 @@ struct silofs_id_entry {
 	struct silofs_id        id;
 };
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_list_head *unconst_lh(const struct silofs_list_head *lh)
+{
+	union {
+		const struct silofs_list_head *p;
+		struct silofs_list_head *q;
+	} u = {
+		.p = lh
+	};
+	return u.q;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool idt_is_uid(enum silofs_idtype idt)
@@ -128,7 +142,7 @@ idsmap_xtoi_bin_by_id(const struct silofs_idsmap *idsm, uint32_t id)
 	const size_t slot = idsmap_id_to_slot(idsm, id);
 	const struct silofs_list_head *lst = &idsm->idm_xtoi[slot];
 
-	return unconst(lst);
+	return unconst_lh(lst);
 }
 
 static struct silofs_list_head *
@@ -137,7 +151,7 @@ idsmap_itox_bin_by_id(const struct silofs_idsmap *idsm, uint32_t id)
 	const size_t slot = idsmap_id_to_slot(idsm, id);
 	const struct silofs_list_head *lst = &idsm->idm_itox[slot];
 
-	return unconst(lst);
+	return unconst_lh(lst);
 }
 
 static int idsmap_default_status(const struct silofs_idsmap *idsm)

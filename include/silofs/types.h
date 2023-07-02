@@ -153,10 +153,12 @@ struct silofs_cipher_args {
 
 /* user-credentials */
 struct silofs_ucred {
-	uid_t  uid;
-	gid_t  gid;
-	pid_t  pid;
-	mode_t umask;
+	uid_t           uid;
+	gid_t           gid;
+	pid_t           pid;
+	mode_t          umask;
+	uint32_t        ngids;
+	gid_t           gids[SILOFS_NSGRP_MAX];
 };
 
 /* external-internal credentials + time */

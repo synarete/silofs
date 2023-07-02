@@ -1820,7 +1820,7 @@ static int do_mknod(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.mknod.rdev = (dev_t)fcc->in->u.mknod.arg.rdev;
 	fcc->args->in.mknod.mode = (mode_t)fcc->in->u.mknod.arg.mode;
 	fcc->args->in.mknod.umask = (mode_t)fcc->in->u.mknod.arg.umask;
-	silofs_task_set_umask(fcc->task, fcc->args->in.mknod.umask);
+	silofs_task_update_umask(fcc->task, fcc->args->in.mknod.umask);
 	err = do_exec_op(fcc);
 	return fuseq_reply_entry(fcc->fqw, fcc->task,
 	                         &fcc->args->out.mknod.st, err);
@@ -1835,7 +1835,7 @@ static int do_mkdir(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.mkdir.mode = (mode_t)(fcc->in->u.mkdir.arg.mode);
 	fcc->args->in.mkdir.mode |= S_IFDIR;
 	fcc->args->in.mkdir.umask = (mode_t)fcc->in->u.mkdir.arg.umask;
-	silofs_task_set_umask(fcc->task, fcc->args->in.mkdir.umask);
+	silofs_task_update_umask(fcc->task, fcc->args->in.mkdir.umask);
 	err = do_exec_op(fcc);
 	return fuseq_reply_entry(fcc->fqw, fcc->task,
 	                         &fcc->args->out.mkdir.st, err);
@@ -2114,7 +2114,7 @@ static int do_create(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.create.o_flags = (int)(fcc->in->u.create.arg.flags);
 	fcc->args->in.create.mode = (mode_t)(fcc->in->u.create.arg.mode);
 	fcc->args->in.create.umask = (mode_t)(fcc->in->u.create.arg.umask);
-	silofs_task_set_umask(fcc->task, fcc->args->in.create.umask);
+	silofs_task_update_umask(fcc->task, fcc->args->in.create.umask);
 	err = do_exec_op(fcc);
 	return fuseq_reply_create(fcc->fqw, fcc->task,
 	                          &fcc->args->out.create.st, err);
@@ -2890,7 +2890,7 @@ static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
 
 	err = silofs_task_init(task, fqw->fq->fq_uber);
 	if (!err) {
-		silofs_task_set_creds(task, hdr->uid, hdr->gid, pid);
+		silofs_task_set_creds(task, hdr->uid, hdr->gid, pid, 0);
 		task->t_oper.op_unique = hdr->unique;
 		task->t_oper.op_code = hdr->opcode;
 	}
@@ -2906,8 +2906,8 @@ static int fuseq_setup_self_task(const struct silofs_fuseq_worker *fqw,
 	err = silofs_task_init(task, fqw->fq->fq_uber);
 	if (!err) {
 		silofs_task_set_ts(task, false);
-		silofs_task_set_umask(task, args->umask);
-		silofs_task_set_creds(task, args->uid, args->gid, args->pid);
+		silofs_task_set_creds(task, args->uid, args->gid,
+		                      args->pid, args->umask);
 	}
 	return err;
 }

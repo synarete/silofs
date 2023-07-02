@@ -603,8 +603,8 @@ static int make_task(const struct silofs_fs_env *fse,
 		return err;
 	}
 	silofs_task_set_ts(task, true);
-	silofs_task_set_umask(task, fs_args->umask);
-	silofs_task_set_creds(task, fs_args->uid, fs_args->gid, fs_args->pid);
+	silofs_task_set_creds(task, fs_args->uid, fs_args->gid,
+	                      fs_args->pid, fs_args->umask);
 	return remap_creds(fse, task);
 }
 

@@ -2885,12 +2885,12 @@ static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
 {
 	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
 	const struct fuse_in_header *hdr = &in->u.hdr.hdr;
-	const pid_t pid = (pid_t)hdr->pid;
 	int err;
 
 	err = silofs_task_init(task, fqw->fq->fq_uber);
 	if (!err) {
-		silofs_task_set_creds(task, hdr->uid, hdr->gid, pid, 0);
+		silofs_task_set_creds(task, hdr->uid, hdr->gid, 0);
+		task->t_oper.op_pid = (pid_t)hdr->pid;
 		task->t_oper.op_unique = hdr->unique;
 		task->t_oper.op_code = hdr->opcode;
 	}
@@ -2900,16 +2900,18 @@ static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
 static int fuseq_setup_self_task(const struct silofs_fuseq_worker *fqw,
                                  struct silofs_task *task)
 {
-	const struct silofs_fs_args *args = fqw->fq->fq_uber->ub.fs_args;
+	const struct silofs_fs_args *fs_args = fqw->fq->fq_uber->ub.fs_args;
 	int err;
 
 	err = silofs_task_init(task, fqw->fq->fq_uber);
-	if (!err) {
-		silofs_task_set_ts(task, false);
-		silofs_task_set_creds(task, args->uid, args->gid,
-		                      args->pid, args->umask);
+	if (err) {
+		return err;
 	}
-	return err;
+	silofs_task_set_creds(task, fs_args->uid,
+	                      fs_args->gid, fs_args->umask);
+	silofs_task_set_ts(task, false);
+	task->t_oper.op_pid = fs_args->pid;
+	return 0;
 }
 
 static void fuseq_update_task(const struct silofs_fuseq_worker *fqw,

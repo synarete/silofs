@@ -155,7 +155,6 @@ struct silofs_cipher_args {
 struct silofs_ucred {
 	uid_t           uid;
 	gid_t           gid;
-	pid_t           pid;
 	mode_t          umask;
 	uint32_t        ngids;
 	gid_t           gids[SILOFS_NSGRP_MAX];
@@ -426,6 +425,7 @@ struct silofs_dsets {
 /* current operation */
 struct silofs_oper {
 	struct silofs_creds             op_creds;
+	pid_t                           op_pid;
 	uint64_t                        op_unique;
 	uint32_t                        op_code;
 };

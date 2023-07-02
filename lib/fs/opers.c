@@ -171,7 +171,7 @@ static bool op_is_kernel(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return !creds->xcred.pid && !creds->xcred.uid && !creds->xcred.gid;
+	return !task->t_oper.op_pid && !creds->xcred.uid && !creds->xcred.gid;
 }
 
 static bool op_is_admin(const struct silofs_task *task)
@@ -226,7 +226,6 @@ static int op_map_creds(struct silofs_task *task)
 
 	creds->icred.uid = creds->xcred.uid;
 	creds->icred.gid = creds->xcred.gid;
-	creds->icred.pid = creds->xcred.pid;
 	creds->icred.umask = creds->xcred.umask;
 
 	if (!op_is_admin(task)) {

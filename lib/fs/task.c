@@ -367,17 +367,15 @@ static void ucred_init(struct silofs_ucred *ucred)
 {
 	ucred->uid = (uid_t)(-1);
 	ucred->gid = (gid_t)(-1);
-	ucred->pid = 0;
 	ucred->umask = (mode_t)(-1);
 	ucred->ngids = 0;
 }
 
 static void ucred_setup(struct silofs_ucred *ucred,
-                        uid_t uid, gid_t gid, pid_t pid, mode_t umsk)
+                        uid_t uid, gid_t gid, mode_t umsk)
 {
 	ucred->uid = uid;
 	ucred->gid = gid;
-	ucred->pid = pid;
 	ucred->umask = umsk;
 }
 
@@ -389,10 +387,10 @@ static void ucred_update_umask(struct silofs_ucred *ucred, mode_t umsk)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_task_set_creds(struct silofs_task *task,
-                           uid_t uid, gid_t gid, pid_t pid, mode_t umsk)
+                           uid_t uid, gid_t gid, mode_t umsk)
 {
-	ucred_setup(&task->t_oper.op_creds.xcred, uid, gid, pid, umsk);
-	ucred_setup(&task->t_oper.op_creds.icred, uid, gid, pid, umsk);
+	ucred_setup(&task->t_oper.op_creds.xcred, uid, gid, umsk);
+	ucred_setup(&task->t_oper.op_creds.icred, uid, gid, umsk);
 }
 
 void silofs_task_update_umask(struct silofs_task *task, mode_t umask)

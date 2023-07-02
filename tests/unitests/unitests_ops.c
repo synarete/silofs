@@ -51,9 +51,10 @@ void ut_setup_task(struct ut_env *ute, struct silofs_task *task)
 
 	err = silofs_task_init(task, ute->fs_env->fs_uber);
 	ut_expect_ok(err);
-	silofs_task_set_creds(task, args->uid, args->gid, args->pid, 0002);
+	silofs_task_set_creds(task, args->uid, args->gid, 0002);
 	silofs_task_set_ts(task, true);
 	task->t_oper.op_unique = ut_unique_opid(ute);
+	task->t_oper.op_pid = getpid();
 }
 
 void ut_release_task(struct ut_env *ute, struct silofs_task *task)

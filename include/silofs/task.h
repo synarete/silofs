@@ -88,7 +88,7 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber);
 void silofs_task_fini(struct silofs_task *task);
 
 void silofs_task_set_creds(struct silofs_task *task,
-                           uid_t uid, gid_t gid, pid_t pid, mode_t umsk);
+                           uid_t uid, gid_t gid, mode_t umsk);
 
 void silofs_task_update_umask(struct silofs_task *task, mode_t umask);
 

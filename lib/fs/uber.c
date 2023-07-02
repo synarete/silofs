@@ -98,7 +98,6 @@ static void uber_update_owner(struct silofs_uber *uber)
 
 	uber->ub_owner.uid = fs_args->uid;
 	uber->ub_owner.gid = fs_args->gid;
-	uber->ub_owner.pid = fs_args->pid;
 	uber->ub_owner.umask = fs_args->umask;
 }
 

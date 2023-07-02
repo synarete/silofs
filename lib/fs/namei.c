@@ -2128,7 +2128,7 @@ static void fill_proc(const struct silofs_uber *uber,
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid = uber->ub_owner.uid;
 	qpr->gid = uber->ub_owner.gid;
-	qpr->pid = uber->ub_owner.pid;
+	qpr->pid = uber->ub.fs_args->pid;
 	qpr->msflags = uber->ub_ms_flags;
 	qpr->uptime = silofs_uber_uptime(uber);
 	qpr->iopen_max = uber->ub_ops.op_iopen_max;

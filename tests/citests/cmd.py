@@ -127,8 +127,11 @@ class CmdSilofs(CmdExec):
         mntpoint: str,
         password: str,
         allow_hostids: bool = False,
+        writeback_cache: bool = False,
     ) -> None:
+        wb_mode = int(writeback_cache)
         args = ["mount", repodir_name, mntpoint]
+        args = args + [f"--writeback-cache={wb_mode}"]
         if allow_hostids:
             args = args + ["--allow-hostids"]
         if password:

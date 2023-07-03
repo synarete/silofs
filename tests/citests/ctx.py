@@ -194,19 +194,26 @@ class TestCtx(TestBaseCtx):
         self,
         name: str = "",
         allow_hostids: bool = False,
+        writeback_cache: bool = True,
     ) -> None:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.mount(
-            repodir_name, self.cfg.mntdir, self._passwd(), allow_hostids
+            repodir_name,
+            self.cfg.mntdir,
+            self._passwd(),
+            allow_hostids,
+            writeback_cache,
         )
 
     def exec_umount(self) -> None:
         self.cmd.silofs.umount(self.mntpoint())
 
-    def exec_setup_fs(self, gsize: int = 2) -> None:
+    def exec_setup_fs(
+        self, gsize: int = 2, writeback_cache: bool = True
+    ) -> None:
         self.exec_init()
         self.exec_mkfs(gsize)
-        self.exec_mount()
+        self.exec_mount(writeback_cache=writeback_cache)
 
     def exec_snap(self, name: str) -> None:
         self.cmd.silofs.snap(name, self.mntpoint())

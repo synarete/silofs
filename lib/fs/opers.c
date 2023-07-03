@@ -146,12 +146,6 @@ static int symval_to_str(const char *symval, struct silofs_str *str)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_idsmap *
-idsm_of(const struct silofs_task *task)
-{
-	return task->t_uber->ub.idsmap;
-}
-
 static const struct silofs_sb_info *sbi_of(const struct silofs_task *task)
 {
 	return task_sbi(task);
@@ -229,7 +223,7 @@ static int op_map_creds(struct silofs_task *task)
 	creds->icred.umask = creds->xcred.umask;
 
 	if (!op_is_admin(task)) {
-		ret = silofs_idsmap_map_creds(idsm_of(task), creds);
+		ret = silofs_idsmap_map_creds(task_idsmap(task), creds);
 	}
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
@@ -239,7 +233,7 @@ static int op_map_uidgid(const struct silofs_task *task,
 {
 	int ret;
 
-	ret = silofs_idsmap_map_uidgid(idsm_of(task),
+	ret = silofs_idsmap_map_uidgid(task_idsmap(task),
 	                               uid, gid, out_uid, out_gid);
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
@@ -248,7 +242,7 @@ static int op_rmap_stat(const struct silofs_task *task, struct silofs_stat *st)
 {
 	int ret;
 
-	ret = silofs_idsmap_rmap_stat(idsm_of(task), st);
+	ret = silofs_idsmap_rmap_stat(task_idsmap(task), st);
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 
@@ -256,7 +250,7 @@ static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
 {
 	int ret;
 
-	ret = silofs_idsmap_rmap_statx(idsm_of(task), stx);
+	ret = silofs_idsmap_rmap_statx(task_idsmap(task), stx);
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 

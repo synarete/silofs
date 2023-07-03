@@ -157,6 +157,7 @@
 
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_cache(t)                   silofs_task_cache(t)
+#define task_idsmap(t)                  silofs_task_idsmap(t)
 
 #define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)

@@ -440,6 +440,12 @@ struct silofs_cache *silofs_task_cache(const struct silofs_task *task)
 	return task->t_uber->ub.cache;
 }
 
+const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
+{
+	return task->t_uber->ub.idsmap;
+}
+
+
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));

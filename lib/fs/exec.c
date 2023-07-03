@@ -578,17 +578,16 @@ int silofs_post_exec_fs(const struct silofs_fs_env *fse)
 	return ret;
 }
 
-static int remap_creds(const struct silofs_fs_env *fse,
-                       struct silofs_task *task)
+static int map_task_creds(struct silofs_task *task)
 {
+	const struct silofs_idsmap *idsm = task_idsmap(task);
 	const struct silofs_ucred *xcred = &task->t_oper.op_creds.xcred;
 	struct silofs_ucred *icred = &task->t_oper.op_creds.icred;
 
-	if (!fse->fs_idsmap->idm_size) {
+	if (!idsm->idm_size) {
 		return 0; /* using local ids */
 	}
-	return silofs_idsmap_map_uidgid(fse->fs_idsmap,
-	                                xcred->uid, xcred->gid,
+	return silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
 	                                &icred->uid, &icred->gid);
 }
 
@@ -603,8 +602,9 @@ static int make_task(const struct silofs_fs_env *fse,
 		return err;
 	}
 	silofs_task_set_ts(task, true);
-	silofs_task_set_creds(task, fs_args->uid, fs_args->gid, fs_args->umask);
-	return remap_creds(fse, task);
+	silofs_task_set_creds(task, fs_args->uid,
+	                      fs_args->gid, fs_args->umask);
+	return map_task_creds(task);
 }
 
 static int term_task(struct silofs_task *task, int status)

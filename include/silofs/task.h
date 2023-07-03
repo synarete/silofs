@@ -104,6 +104,8 @@ struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
 struct silofs_cache *silofs_task_cache(const struct silofs_task *task);
 
+const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_submitq_init(struct silofs_submitq *smq,

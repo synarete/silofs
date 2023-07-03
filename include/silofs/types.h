@@ -485,7 +485,7 @@ struct silofs_fs_args {
 	bool                    allowother;
 	bool                    allowhostids;
 	bool                    allowadmin;
-	bool                    wbackcache;
+	bool                    writeback_cache;
 	bool                    lazytime;
 	bool                    noexec;
 	bool                    nosuid;

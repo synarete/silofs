@@ -55,7 +55,7 @@ struct cmd_mount_in_args {
 	char   *password;
 	bool    no_allowother;
 	bool    allowhostids;
-	bool    wbackcache;
+	bool    writeback_cache;
 	bool    lazytime;
 	bool    noexec;
 	bool    nosuid;
@@ -89,7 +89,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "nodev", no_argument, NULL, 'Z' },
 		{ "allow-hostids", no_argument, NULL, 'i' },
 		{ "no-allow-other", no_argument, NULL, 'A' },
-		{ "writeback-cache", no_argument, NULL, 'W' },
+		{ "writeback-cache", required_argument, NULL, 'W' },
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "coredump", no_argument, NULL, 'C' },
 		{ "asyncwr", required_argument, NULL, 'a' },
@@ -101,7 +101,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZiAWDCa:Mp:V:h", opts);
+		opt_chr = cmd_getopt("rXSZiAW:DCa:Mp:V:h", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.rdonly = true;
 		} else if (opt_chr == 'x') {
@@ -115,13 +115,15 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		} else if (opt_chr == 'i') {
 			ctx->in_args.allowhostids = true;
 		} else if (opt_chr == 'W') {
-			ctx->in_args.wbackcache = true;
+			ctx->in_args.writeback_cache =
+			        cmd_parse_str_as_bool(optarg);
 		} else if (opt_chr == 'D') {
 			cmd_globals.dont_daemonize = true;
 		} else if (opt_chr == 'C') {
 			cmd_globals.allow_coredump = true;
 		} else if (opt_chr == 'a') {
-			ctx->in_args.asyncwr = cmd_parse_str_as_bool(optarg);
+			ctx->in_args.asyncwr =
+			        cmd_parse_str_as_bool(optarg);
 		} else if (opt_chr == 'M') {
 			ctx->in_args.stdalloc = true;
 		} else if (opt_chr == 'p') {
@@ -154,7 +156,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->allowother = !ctx->in_args.no_allowother;
 	fs_args->allowhostids = ctx->in_args.allowhostids;
 	fs_args->allowadmin = true;
-	fs_args->wbackcache = ctx->in_args.wbackcache;
+	fs_args->writeback_cache = ctx->in_args.writeback_cache;
 	fs_args->lazytime = ctx->in_args.lazytime;
 	fs_args->noexec = ctx->in_args.noexec;
 	fs_args->nosuid = ctx->in_args.nosuid;
@@ -434,6 +436,7 @@ void cmd_execute_mount(void)
 			.rdonly = false,
 			.asyncwr = true,
 			.stdalloc = false,
+			.writeback_cache = true,
 		},
 		.fs_env = NULL,
 		.halt_signal = -1,

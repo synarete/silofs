@@ -364,7 +364,7 @@ static void fse_bind_fuseq(struct silofs_fs_env *fse,
 {
 	fse->fs_fuseq = fuseq;
 	if (fuseq != NULL) {
-		fuseq->fq_writeback_cache = fse->fs_args.wbackcache;
+		fuseq->fq_writeback_cache = fse->fs_args.writeback_cache;
 	}
 }
 

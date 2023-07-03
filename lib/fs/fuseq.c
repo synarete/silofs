@@ -825,17 +825,15 @@ static int fuseq_reply_init_ok(struct silofs_fuseq_worker *fqw,
 		.flags = 0
 	};
 
-	if (coni->cap_kern & FUSE_MAX_PAGES) {
-		arg.flags |= FUSE_MAX_PAGES;
-		arg.max_pages = (uint16_t)min(max_pages, UINT16_MAX);
-	}
-	arg.flags |= FUSE_BIG_WRITES;
 	arg.flags |= (uint32_t)coni->cap_want;
 	arg.max_readahead = (uint32_t)coni->max_readahead;
 	arg.max_write = (uint32_t)coni->max_write;
 	arg.max_background = (uint16_t)coni->max_background;
 	arg.congestion_threshold = (uint16_t)coni->congestion_threshold;
 	arg.time_gran = (uint32_t)coni->time_gran;
+	if (coni->cap_want & FUSE_MAX_PAGES) {
+		arg.max_pages = (uint16_t)min(max_pages, UINT16_MAX);
+	}
 
 	return fuseq_reply_arg(fqw, task, &arg, sizeof(arg));
 }
@@ -1519,10 +1517,16 @@ static void diter_done(struct silofs_fuseq_diter *di)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void setup_cap_want(struct silofs_fuseq_conn_info *coni, uint32_t cap)
+#define update_cap_want(coni_, cap_) update_cap_want_(coni_, cap_, #cap_)
+
+static void update_cap_want_(struct silofs_fuseq_conn_info *coni,
+                             uint32_t cap, const char *cap_name)
 {
 	if (coni->cap_kern & cap) {
 		coni->cap_want |= cap;
+		fuseq_log_info("cap want: %s", cap_name);
+	} else {
+		fuseq_log_warn("cap not supported: %s", cap_name);
 	}
 }
 
@@ -1550,58 +1554,63 @@ static int check_init(const struct silofs_fuseq_worker *fqw,
 	return 0;
 }
 
+/*
+ * TODO-0018: Enable more capabilities
+ *
+ * When enabling FUSE_WRITEBACK_CACHE some tests fails with meta-data issues
+ * (inconsistency in st_ctime,st_blocks). Needs further investigation and
+ * probably a fix on kernel side.
+ */
+/*
+ * TODO-0025: Have support for ACLs
+ *
+ * Enable FUSE_POSIX_ACL (plus, "system." prefix in xattr)
+ */
+static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
+{
+	struct silofs_fuseq_conn_info *coni = &fcc->fqw->fq->fq_coni;
+	const uint32_t in_flags = fcc->in->u.init.arg.flags;
+	const int writeback_cache = fcc->fqw->fq->fq_writeback_cache;
+
+	coni->cap_kern = in_flags;
+	coni->cap_want |= FUSE_BIG_WRITES; /* same as in libfuse */
+	update_cap_want(coni, FUSE_ATOMIC_O_TRUNC);
+	update_cap_want(coni, FUSE_EXPORT_SUPPORT);
+	update_cap_want(coni, FUSE_SPLICE_WRITE);
+	update_cap_want(coni, FUSE_SPLICE_READ);
+	update_cap_want(coni, FUSE_HANDLE_KILLPRIV);
+	update_cap_want(coni, FUSE_MAX_PAGES);
+	update_cap_want(coni, FUSE_CACHE_SYMLINKS);
+	update_cap_want(coni, FUSE_DO_READDIRPLUS);
+	update_cap_want(coni, FUSE_SETXATTR_EXT);
+	if (writeback_cache) {
+		update_cap_want(coni, FUSE_WRITEBACK_CACHE);
+	}
+}
+
 static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_conn_info *coni = &fcc->fqw->fq->fq_coni;
 	const uint32_t in_major = fcc->in->u.init.arg.major;
 	const uint32_t in_minor = fcc->in->u.init.arg.minor;
 	const uint32_t in_flags = fcc->in->u.init.arg.flags;
-	int err = 0;
+	int err;
 	int ret;
 
 	fuseq_log_info("init: ino=%ld version=%d.%d flags=0x%x",
 	               fcc->ino, in_major, in_minor, in_flags);
 
 	err = check_init(fcc->fqw, &fcc->in->u.init.arg);
-	if (err) {
-		goto out;
+	if (!err) {
+		coni->proto_major = in_major;
+		coni->proto_minor = in_minor;
+		do_init_capabilities(fcc);
+		fcc->fqw->fq->fq_got_init = true;
 	}
-	fcc->fqw->fq->fq_got_init = true;
-	coni->proto_major = in_major;
-	coni->proto_minor = in_minor;
-	coni->cap_kern = in_flags;
-	coni->cap_want = 0;
-
-	/*
-	 * TODO-0018: Enable more capabilities
-	 *
-	 * XXX: When enabling FUSE_WRITEBACK_CACHE fstests fails with
-	 * metadata (st_ctime,st_blocks) issues. Also, bugs in
-	 * 'test_truncate_zero'. Needs further investigation.
-	 */
-	setup_cap_want(coni, FUSE_ATOMIC_O_TRUNC);
-	setup_cap_want(coni, FUSE_EXPORT_SUPPORT);
-	setup_cap_want(coni, FUSE_HANDLE_KILLPRIV);
-	setup_cap_want(coni, FUSE_CACHE_SYMLINKS);
-	setup_cap_want(coni, FUSE_DO_READDIRPLUS);
-	setup_cap_want(coni, FUSE_SPLICE_READ);
-	setup_cap_want(coni, FUSE_SPLICE_WRITE);
-	setup_cap_want(coni, FUSE_SETXATTR_EXT);
-	if (fcc->fqw->fq->fq_writeback_cache) {
-		setup_cap_want(coni, FUSE_WRITEBACK_CACHE);
-	}
-
-	/*
-	 * TODO-0025: Have support for ACLs
-	 *
-	 * Enable FUSE_POSIX_ACL (plus, "system." prefix in xattr)
-	 */
-	/* setup_cap_want(coni, FUSE_POSIX_ACL); */
-
-out:
 	ret = fuseq_reply_init(fcc->fqw, fcc->task, err);
 	if (!err && !ret) {
 		fcc->fqw->fq->fq_reply_init_ok = true;
+		fuseq_log_info("init-ok: version=%d.%d", in_major, in_minor);
 	}
 	return err ? err : ret;
 }
@@ -3471,6 +3480,7 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 
 static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 {
+	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
 	size_t pipe_size;
 	size_t buff_size;
 	size_t rdwr_size;
@@ -3487,17 +3497,20 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 	}
 	rdwr_size = buff_size - page_size;
 
-	fq->fq_coni.pagesize = page_size;
-	fq->fq_coni.buffsize = buff_size;
-	fq->fq_coni.max_write = rdwr_size;
-	fq->fq_coni.max_read = rdwr_size;
-	fq->fq_coni.max_readahead = rdwr_size;
-	fq->fq_coni.time_gran = 1;
-	fq->fq_coni.max_inlen = buff_size;
-
+	coni->proto_major = 0;
+	coni->proto_minor = 0;
+	coni->cap_kern = 0;
+	coni->cap_want = 0;
+	coni->pagesize = page_size;
+	coni->buffsize = buff_size;
+	coni->max_write = rdwr_size;
+	coni->max_read = rdwr_size;
+	coni->max_readahead = rdwr_size;
+	coni->time_gran = 1;
+	coni->max_inlen = buff_size;
 	/* values as defaults in libfuse:lib/fuse_lowlevel.c */
-	fq->fq_coni.max_background = (1 << 16) - 1;
-	fq->fq_coni.congestion_threshold = fq->fq_coni.max_background * 3 / 4;
+	coni->max_background = (1 << 16) - 1;
+	coni->congestion_threshold = fq->fq_coni.max_background * 3 / 4;
 	return 0;
 }
 
@@ -4067,7 +4080,7 @@ static int fuseq_start(struct silofs_thread *th)
 	struct silofs_fuseq_worker *fqw = thread_to_fuseq_worker(th);
 	int err;
 
-	fuseq_log_info("start fuseq worker: %s", th->name);
+	fuseq_log_info("start worker: %s", th->name);
 	err = silofs_thread_sigblock_common();
 	if (err) {
 		fuseq_log_warn("unable to block signals: "\
@@ -4080,7 +4093,7 @@ static int fuseq_start(struct silofs_thread *th)
 		goto out;
 	}
 out:
-	fuseq_log_info("finish fuseq worker: %s", th->name);
+	fuseq_log_info("finish worker: %s", th->name);
 	return err;
 }
 

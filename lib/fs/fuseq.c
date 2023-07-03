@@ -27,7 +27,7 @@
 #include <sys/mount.h>
 #include <sys/sysinfo.h>
 #include <linux/fs.h>
-#include <linux/fuse7.h>
+#include <linux/fuse_kernel.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -1540,7 +1540,7 @@ static int check_init(const struct silofs_fuseq_worker *fqw,
 	}
 	/*
 	 * XXX minor __should__ be 36, but allow 34 due to fuse version on
-	 * github's ubuntu-22.04 runners (fuse7.34).
+	 * github's ubuntu-22.04 runners (fuse-7.34).
 	 */
 	if ((arg->major != 7) || (arg->minor < 34)) {
 		fuseq_log_err("unsupported fuse-protocol version: %u.%u",

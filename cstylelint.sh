@@ -10,5 +10,5 @@ checkcstyle_py="${root}"/scripts/checkcstyle.py
 srcs=$(find "${root}/include" "${root}/lib" \
   "${root}/cmd" "${root}/mntd" \
   "${root}/tools" "${root}/tests" \
-  -type f -not -name "fuse7.h" -not -name "configs.h" -name "*.[ch]")
+  -type f -not -name "fuse_kernel.h" -not -name "configs.h" -name "*.[ch]")
 ${checkcstyle_py} ${srcs}

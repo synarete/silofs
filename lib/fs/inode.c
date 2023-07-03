@@ -29,28 +29,28 @@
 #include <limits.h>
 
 
-bool silofs_user_cap_fowner(const struct silofs_ucred *ucred)
+bool silofs_user_cap_fowner(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_FOWNER */
-	return uid_isroot(ucred->uid);
+	return uid_isroot(cred->uid);
 }
 
-bool silofs_user_cap_sys_admin(const struct silofs_ucred *ucred)
+bool silofs_user_cap_sys_admin(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_SYS_ADMIN */
-	return uid_isroot(ucred->uid);
+	return uid_isroot(cred->uid);
 }
 
-static bool silofs_user_cap_fsetid(const struct silofs_ucred *ucred)
+static bool silofs_user_cap_fsetid(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_SYS_ADMIN */
-	return uid_isroot(ucred->uid);
+	return uid_isroot(cred->uid);
 }
 
-static bool silofs_user_cap_chown(const struct silofs_ucred *ucred)
+static bool silofs_user_cap_chown(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_CHOWN */
-	return uid_isroot(ucred->uid);
+	return uid_isroot(cred->uid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -462,14 +462,14 @@ static void silofs_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
  * TODO-0010: Store timezone in inode
  */
 static void inode_setup_common(struct silofs_inode *inode,
-                               const struct silofs_ucred *ucred, ino_t ino,
+                               const struct silofs_cred *cred, ino_t ino,
                                ino_t parent, mode_t mode, uint64_t gen)
 {
 	inode_set_ino(inode, ino);
 	inode_set_parent(inode, parent);
-	inode_set_uid(inode, ucred->uid);
-	inode_set_gid(inode, ucred->gid);
-	inode_set_mode(inode, mode & ~ucred->umask);
+	inode_set_uid(inode, cred->uid);
+	inode_set_gid(inode, cred->gid);
+	inode_set_mode(inode, mode & ~cred->umask);
 	inode_set_flags(inode, 0);
 	inode_set_size(inode, 0);
 	inode_set_span(inode, 0);
@@ -480,14 +480,14 @@ static void inode_setup_common(struct silofs_inode *inode,
 }
 
 static void ii_setup_inode(struct silofs_inode_info *ii,
-                           const struct silofs_ucred *ucred,
+                           const struct silofs_cred *cred,
                            ino_t parent_ino, mode_t parent_mode,
                            mode_t mode, dev_t rdev, uint64_t gen)
 {
 	struct silofs_inode *inode = ii->inode;
 	const ino_t ino = ii_ino(ii);
 
-	inode_setup_common(inode, ucred, ino, parent_ino, mode, gen);
+	inode_setup_common(inode, cred, ino, parent_ino, mode, gen);
 	silofs_ii_setup_xattr(ii);
 	if (ii_isdir(ii)) {
 		silofs_setup_dir(ii, parent_mode, 1);
@@ -511,9 +511,9 @@ void silofs_ii_setup_by(struct silofs_inode_info *ii,
                         ino_t parent, mode_t parent_mode,
                         mode_t mode, dev_t rdev, uint64_t gen)
 {
-	const struct silofs_ucred *ucred = &creds->icred;
+	const struct silofs_cred *cred = &creds->icred;
 
-	ii_setup_inode(ii, ucred, parent, parent_mode, mode, rdev, gen);
+	ii_setup_inode(ii, cred, parent, parent_mode, mode, rdev, gen);
 	ii_update_itimes(ii, creds, SILOFS_IATTR_TIMES);
 	ii_dirtify(ii);
 }
@@ -584,10 +584,10 @@ static bool gid_isnull(gid_t gid)
 	return gid_eq(gid, gid_none);
 }
 
-static bool user_isowner(const struct silofs_ucred *ucred,
+static bool user_isowner(const struct silofs_cred *cred,
                          const struct silofs_inode_info *ii)
 {
-	return uid_eq(ucred->uid, ii_uid(ii));
+	return uid_eq(cred->uid, ii_uid(ii));
 }
 
 static bool has_itype(const struct silofs_inode_info *ii, mode_t mode)
@@ -699,10 +699,10 @@ static void update_post_chmod(const struct silofs_task *task,
 {
 	const gid_t gid = ii_gid(ii);
 	const struct silofs_creds *creds = &task->t_oper.op_creds;
-	const struct silofs_ucred *ucred = &creds->icred;
+	const struct silofs_cred *cred = &creds->icred;
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
-	if (!gid_eq(gid, ucred->gid) && !silofs_user_cap_fsetid(ucred)) {
+	if (!gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
 	ii_update_iattrs(ii, creds, iattr);

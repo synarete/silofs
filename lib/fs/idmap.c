@@ -400,8 +400,8 @@ int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm,
 int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
                             struct silofs_creds *creds)
 {
-	const struct silofs_ucred *xcred = &creds->xcred;
-	struct silofs_ucred *icred = &creds->icred;
+	const struct silofs_cred *xcred = &creds->xcred;
+	struct silofs_cred *icred = &creds->icred;
 
 	return silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
 	                                &icred->uid, &icred->gid);

@@ -363,25 +363,25 @@ void silofs_submitq_del_sqe(struct silofs_submitq *smq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ucred_init(struct silofs_ucred *ucred)
+static void cred_init(struct silofs_cred *cred)
 {
-	ucred->uid = (uid_t)(-1);
-	ucred->gid = (gid_t)(-1);
-	ucred->umask = (mode_t)(-1);
-	ucred->ngids = 0;
+	cred->uid = (uid_t)(-1);
+	cred->gid = (gid_t)(-1);
+	cred->umask = (mode_t)(-1);
+	cred->ngids = 0;
 }
 
-static void ucred_setup(struct silofs_ucred *ucred,
-                        uid_t uid, gid_t gid, mode_t umsk)
+static void cred_setup(struct silofs_cred *cred,
+                       uid_t uid, gid_t gid, mode_t umsk)
 {
-	ucred->uid = uid;
-	ucred->gid = gid;
-	ucred->umask = umsk;
+	cred->uid = uid;
+	cred->gid = gid;
+	cred->umask = umsk;
 }
 
-static void ucred_update_umask(struct silofs_ucred *ucred, mode_t umsk)
+static void cred_update_umask(struct silofs_cred *cred, mode_t umsk)
 {
-	ucred->umask = umsk;
+	cred->umask = umsk;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -389,14 +389,14 @@ static void ucred_update_umask(struct silofs_ucred *ucred, mode_t umsk)
 void silofs_task_set_creds(struct silofs_task *task,
                            uid_t uid, gid_t gid, mode_t umsk)
 {
-	ucred_setup(&task->t_oper.op_creds.xcred, uid, gid, umsk);
-	ucred_setup(&task->t_oper.op_creds.icred, uid, gid, umsk);
+	cred_setup(&task->t_oper.op_creds.xcred, uid, gid, umsk);
+	cred_setup(&task->t_oper.op_creds.icred, uid, gid, umsk);
 }
 
 void silofs_task_update_umask(struct silofs_task *task, mode_t umask)
 {
-	ucred_update_umask(&task->t_oper.op_creds.xcred, umask);
-	ucred_update_umask(&task->t_oper.op_creds.icred, umask);
+	cred_update_umask(&task->t_oper.op_creds.xcred, umask);
+	cred_update_umask(&task->t_oper.op_creds.icred, umask);
 }
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt)
@@ -449,8 +449,8 @@ const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));
-	ucred_init(&task->t_oper.op_creds.icred);
-	ucred_init(&task->t_oper.op_creds.xcred);
+	cred_init(&task->t_oper.op_creds.icred);
+	cred_init(&task->t_oper.op_creds.xcred);
 	task->t_uber = uber;
 	task->t_submitq = uber->ub.submitq;
 	task->t_apex_id = 0;

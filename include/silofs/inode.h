@@ -20,9 +20,9 @@
 #include <unistd.h>
 #include <silofs/types.h>
 
-bool silofs_user_cap_fowner(const struct silofs_ucred *ucred);
+bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 
-bool silofs_user_cap_sys_admin(const struct silofs_ucred *ucred);
+bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii);

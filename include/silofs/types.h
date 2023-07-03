@@ -152,7 +152,7 @@ struct silofs_cipher_args {
 };
 
 /* user-credentials */
-struct silofs_ucred {
+struct silofs_cred {
 	uid_t           uid;
 	gid_t           gid;
 	mode_t          umask;
@@ -162,8 +162,8 @@ struct silofs_ucred {
 
 /* external-internal credentials + time */
 struct silofs_creds {
-	struct silofs_ucred     xcred;
-	struct silofs_ucred     icred;
+	struct silofs_cred      xcred;
+	struct silofs_cred      icred;
 	struct timespec         ts;
 };
 
@@ -450,7 +450,7 @@ struct silofs_uber {
 	struct silofs_blobf            *ub_sb_blobf;
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_ulink             ub_sb_ulink;
-	struct silofs_ucred             ub_owner;
+	struct silofs_cred              ub_owner;
 	unsigned long                   ub_ctl_flags;
 	unsigned long                   ub_ms_flags;
 	iconv_t                         ub_iconv;

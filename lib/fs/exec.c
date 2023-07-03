@@ -581,8 +581,8 @@ int silofs_post_exec_fs(const struct silofs_fs_env *fse)
 static int map_task_creds(struct silofs_task *task)
 {
 	const struct silofs_idsmap *idsm = task_idsmap(task);
-	const struct silofs_ucred *xcred = &task->t_oper.op_creds.xcred;
-	struct silofs_ucred *icred = &task->t_oper.op_creds.icred;
+	const struct silofs_cred *xcred = &task->t_oper.op_creds.xcred;
+	struct silofs_cred *icred = &task->t_oper.op_creds.icred;
 
 	if (!idsm->idm_size) {
 		return 0; /* using local ids */

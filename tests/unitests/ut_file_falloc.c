@@ -587,7 +587,6 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_file_fallocate_aligned),
 	UT_DEFTEST(ut_file_fallocate_unaligned),
 	UT_DEFTEST(ut_file_fallocate_read),
-	UT_DEFTEST(ut_file_fallocate_read),
 	UT_DEFTEST(ut_file_fallocate_truncate),
 	UT_DEFTEST(ut_file_fallocate_unwritten),
 	UT_DEFTEST(ut_file_fallocate_drop_caches),

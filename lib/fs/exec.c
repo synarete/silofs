@@ -583,12 +583,13 @@ static int map_task_creds(struct silofs_task *task)
 	const struct silofs_idsmap *idsm = task_idsmap(task);
 	const struct silofs_cred *xcred = &task->t_oper.op_creds.xcred;
 	struct silofs_cred *icred = &task->t_oper.op_creds.icred;
+	int ret = 0;
 
-	if (!idsm->idm_size) {
-		return 0; /* using local ids */
+	if (idsm->idm_usize || idsm->idm_gsize) {
+		ret = silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
+		                               &icred->uid, &icred->gid);
 	}
-	return silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
-	                                &icred->uid, &icred->gid);
+	return ret;
 }
 
 static int make_task(const struct silofs_fs_env *fse,

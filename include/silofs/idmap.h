@@ -47,13 +47,31 @@ struct silofs_id {
 	enum silofs_idtype      id_type;
 };
 
+/* user-id host-to-fs bidirectional-mapping */
+struct silofs_uid_map {
+	uid_t host_uid;
+	uid_t fs_uid;
+};
+
+/* group-id host-to-fs bidirectional-mapping */
+struct silofs_gid_map {
+	gid_t host_gid;
+	gid_t fs_gid;
+};
+
 /* bi-directional id-mapping hash-table (external-internal) */
 struct silofs_idsmap {
-	struct silofs_list_head idm_xtoi[509];
-	struct silofs_list_head idm_itox[509];
-	struct silofs_alloc    *idm_alloc;
-	size_t idm_size;
+	struct silofs_alloc     *idm_alloc;
+	struct silofs_list_head *idm_uhtof;
+	struct silofs_list_head *idm_uftoh;
+	struct silofs_list_head *idm_ghtof;
+	struct silofs_list_head *idm_gftoh;
+	size_t  idm_uhcap;
+	size_t idm_usize;
+	size_t idm_ghcap;
+	size_t idm_gsize;
 	bool   idm_allow_hotids;
+
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -71,12 +89,12 @@ int silofs_idsmap_populate(struct silofs_idsmap *idsm,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm,
-                             uid_t uid, gid_t gid,
-                             uid_t *out_suid, gid_t *out_sgid);
+                             uid_t host_uid, gid_t host_gid,
+                             uid_t *out_fs_uid, gid_t *out_fs_gid);
 
 int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
-                              uid_t suid, gid_t sgid,
-                              uid_t *out_uid, gid_t *out_gid);
+                              uid_t fs_uid, gid_t fs_gid,
+                              uid_t *out_fs_uid, gid_t *out_fs_gid);
 
 int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
                             struct silofs_creds *creds);

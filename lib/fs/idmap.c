@@ -18,6 +18,8 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
+#define IDSMAP_HCAP     (509)
+
 
 /* in-memory host<-->silo uid/gid mapping entry */
 struct silofs_id_entry {
@@ -25,19 +27,19 @@ struct silofs_id_entry {
 	struct silofs_id        id;
 };
 
+/* in-memory host <--> silofs user-id mapping entry */
+struct silofs_umap_entry {
+	struct silofs_list_head um_htof_lh;
+	struct silofs_list_head um_ftoh_lh;
+	struct silofs_uid_map   um;
+};
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_list_head *unconst_lh(const struct silofs_list_head *lh)
-{
-	union {
-		const struct silofs_list_head *p;
-		struct silofs_list_head *q;
-	} u = {
-		.p = lh
-	};
-	return u.q;
-}
+/* in-memory host <--> silofs group-id mapping entry */
+struct silofs_gmap_entry {
+	struct silofs_list_head gm_htof_lh;
+	struct silofs_list_head gm_ftoh_lh;
+	struct silofs_gid_map   gm;
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -53,275 +55,624 @@ static bool idt_is_gid(enum silofs_idtype idt)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_id_entry *
-ide_by_lh(const struct silofs_list_head *lh)
+static struct silofs_umap_entry *
+unconst_ume(const struct silofs_umap_entry *ume)
 {
-	const struct silofs_id_entry *ide;
-
-	ide = container_of2(lh, struct silofs_id_entry, id_lh);
-	return unconst(ide);
+	union {
+		const struct silofs_umap_entry *p;
+		struct silofs_umap_entry *q;
+	} u = {
+		.p = ume
+	};
+	return u.q;
 }
 
-static void
-ide_init_by_uid(struct silofs_id_entry *ide, uid_t uid, uid_t suid)
+static struct silofs_umap_entry *
+ume_by_htof_lh(const struct silofs_list_head *lh)
 {
-	list_head_init(&ide->id_lh);
-	ide->id.id.u.uid = uid;
-	ide->id.id.u.suid = suid;
-	ide->id.id_type = SILOFS_IDTYPE_UID;
+	const struct silofs_umap_entry *ume;
+
+	ume = container_of2(lh, struct silofs_umap_entry, um_htof_lh);
+	return unconst_ume(ume);
 }
 
-static void
-ide_init_by_gid(struct silofs_id_entry *ide, gid_t gid, gid_t sgid)
+static struct silofs_umap_entry *
+ume_by_ftoh_lh(const struct silofs_list_head *lh)
 {
-	list_head_init(&ide->id_lh);
-	ide->id.id.g.gid = gid;
-	ide->id.id.g.sgid = sgid;
-	ide->id.id_type = SILOFS_IDTYPE_GID;
+	const struct silofs_umap_entry *ume;
+
+	ume = container_of2(lh, struct silofs_umap_entry, um_ftoh_lh);
+	return unconst_ume(ume);
 }
 
-static void ide_fini(struct silofs_id_entry *ide)
+static void ume_init(struct silofs_umap_entry *ume,
+                     uid_t host_uid, uid_t fs_uid)
 {
-	list_head_fini(&ide->id_lh);
-	ide->id.id_type = SILOFS_IDTYPE_NONE;
+	list_head_init(&ume->um_htof_lh);
+	list_head_init(&ume->um_ftoh_lh);
+	ume->um.host_uid = host_uid;
+	ume->um.fs_uid = fs_uid;
 }
 
-static bool ide_has_uid(const struct silofs_id_entry *ide, uid_t uid)
+static void ume_fini(struct silofs_umap_entry *ume)
 {
-	return idt_is_uid(ide->id.id_type) && uid_eq(ide->id.id.u.uid, uid);
+	list_head_fini(&ume->um_htof_lh);
+	list_head_fini(&ume->um_ftoh_lh);
+	ume->um.host_uid = (uid_t)(-1);
+	ume->um.fs_uid = (uid_t)(-1);
 }
 
-static bool ide_has_suid(const struct silofs_id_entry *ide, uid_t suid)
+static struct silofs_umap_entry *
+ume_new(struct silofs_alloc *alloc, uid_t host_uid, uid_t fs_uid)
 {
-	return idt_is_uid(ide->id.id_type) && uid_eq(ide->id.id.u.suid, suid);
+	struct silofs_umap_entry *ume;
+
+	ume = silofs_allocate(alloc, sizeof(*ume));
+	if (ume != NULL) {
+		ume_init(ume, host_uid, fs_uid);
+	}
+	return ume;
 }
 
-static bool ide_has_gid(const struct silofs_id_entry *ide, gid_t gid)
+static void ume_del(struct silofs_umap_entry *ume, struct silofs_alloc *alloc)
 {
-	return idt_is_gid(ide->id.id_type) && gid_eq(ide->id.id.g.gid, gid);
-}
-
-static bool ide_has_sgid(const struct silofs_id_entry *ide, gid_t sgid)
-{
-	return idt_is_gid(ide->id.id_type) && gid_eq(ide->id.id.g.sgid, sgid);
+	ume_fini(ume);
+	silofs_deallocate(alloc, ume, sizeof(*ume));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_gmap_entry *
+unconst_gme(const struct silofs_gmap_entry *gme)
+{
+	union {
+		const struct silofs_gmap_entry *p;
+		struct silofs_gmap_entry *q;
+	} u = {
+		.p = gme
+	};
+	return u.q;
+}
+
+static struct silofs_gmap_entry *
+gme_by_htof_lh(const struct silofs_list_head *lh)
+{
+	const struct silofs_gmap_entry *gme;
+
+	gme = container_of2(lh, struct silofs_gmap_entry, gm_htof_lh);
+	return unconst_gme(gme);
+}
+
+static struct silofs_gmap_entry *
+gme_by_ftoh_lh(const struct silofs_list_head *lh)
+{
+	const struct silofs_gmap_entry *gme;
+
+	gme = container_of2(lh, struct silofs_gmap_entry, gm_ftoh_lh);
+	return unconst_gme(gme);
+}
+
+static void gme_init(struct silofs_gmap_entry *gme,
+                     gid_t host_gid, gid_t fs_gid)
+{
+	list_head_init(&gme->gm_htof_lh);
+	list_head_init(&gme->gm_ftoh_lh);
+	gme->gm.host_gid = host_gid;
+	gme->gm.fs_gid = fs_gid;
+}
+
+static void gme_fini(struct silofs_gmap_entry *gme)
+{
+	list_head_fini(&gme->gm_htof_lh);
+	list_head_fini(&gme->gm_ftoh_lh);
+	gme->gm.host_gid = (gid_t)(-1);
+	gme->gm.fs_gid = (gid_t)(-1);
+}
+
+static struct silofs_gmap_entry *
+gme_new(struct silofs_alloc *alloc, gid_t host_gid, gid_t fs_gid)
+{
+	struct silofs_gmap_entry *gme;
+
+	gme = silofs_allocate(alloc, sizeof(*gme));
+	if (gme != NULL) {
+		gme_init(gme, host_gid, fs_gid);
+	}
+	return gme;
+}
+
+static void gme_del(struct silofs_gmap_entry *gme, struct silofs_alloc *alloc)
+{
+	gme_fini(gme);
+	silofs_deallocate(alloc, gme, sizeof(*gme));
+}
+
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int idsmap_init_uhmaps(struct silofs_idsmap *idsm)
+{
+	struct silofs_list_head *uhtof = NULL;
+	struct silofs_list_head *uftoh = NULL;
+	const size_t hcap = IDSMAP_HCAP;
+
+	idsm->idm_uhtof = NULL;
+	idsm->idm_uftoh = NULL;
+	idsm->idm_uhcap = 0;
+	idsm->idm_usize = 0;
+
+	uhtof = silofs_lista_new(idsm->idm_alloc, hcap);
+	if (uhtof == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	uftoh = silofs_lista_new(idsm->idm_alloc, hcap);
+	if (uftoh == NULL) {
+		silofs_lista_del(uhtof, hcap, idsm->idm_alloc);
+		return -SILOFS_ENOMEM;
+	}
+
+	idsm->idm_uhtof = uhtof;
+	idsm->idm_uftoh = uftoh;
+	idsm->idm_uhcap = hcap;
+	return 0;
+}
+
+static void idsmap_fini_uhmaps(struct silofs_idsmap *idsm)
+{
+	silofs_lista_del(idsm->idm_uhtof, idsm->idm_uhcap, idsm->idm_alloc);
+	silofs_lista_del(idsm->idm_uftoh, idsm->idm_uhcap, idsm->idm_alloc);
+	idsm->idm_uhtof = NULL;
+	idsm->idm_uftoh = NULL;
+	idsm->idm_uhcap = 0;
+	idsm->idm_usize = 0;
+}
+
+static int idsmap_init_ghmaps(struct silofs_idsmap *idsm)
+{
+	struct silofs_list_head *ghtof = NULL;
+	struct silofs_list_head *gftoh = NULL;
+	const size_t hcap = IDSMAP_HCAP;
+
+	idsm->idm_ghtof = NULL;
+	idsm->idm_gftoh = NULL;
+	idsm->idm_ghcap = 0;
+	idsm->idm_gsize = 0;
+
+	ghtof = silofs_lista_new(idsm->idm_alloc, hcap);
+	if (ghtof == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	gftoh = silofs_lista_new(idsm->idm_alloc, hcap);
+	if (gftoh == NULL) {
+		silofs_lista_del(ghtof, hcap, idsm->idm_alloc);
+		return -SILOFS_ENOMEM;
+	}
+
+	idsm->idm_ghtof = ghtof;
+	idsm->idm_gftoh = gftoh;
+	idsm->idm_ghcap = hcap;
+	return 0;
+}
+
+static void idsmap_fini_ghmaps(struct silofs_idsmap *idsm)
+{
+	silofs_lista_del(idsm->idm_ghtof, idsm->idm_ghcap, idsm->idm_alloc);
+	silofs_lista_del(idsm->idm_gftoh, idsm->idm_ghcap, idsm->idm_alloc);
+	idsm->idm_ghtof = NULL;
+	idsm->idm_gftoh = NULL;
+	idsm->idm_ghcap = 0;
+	idsm->idm_gsize = 0;
+}
+
+static int idsmap_init_hmaps(struct silofs_idsmap *idsm)
+{
+	int err;
+
+	err = idsmap_init_uhmaps(idsm);
+	if (err) {
+		return err;
+	}
+	err = idsmap_init_ghmaps(idsm);
+	if (err) {
+		idsmap_fini_uhmaps(idsm);
+		return err;
+	}
+	return 0;
+}
+
+static void idsmap_fini_hmaps(struct silofs_idsmap *idsm)
+{
+	idsmap_fini_uhmaps(idsm);
+	idsmap_fini_ghmaps(idsm);
+}
+
 int silofs_idsmap_init(struct silofs_idsmap *idsm,
                        struct silofs_alloc *alloc, bool allow_hostids)
 {
-	list_head_initn(idsm->idm_xtoi, ARRAY_SIZE(idsm->idm_xtoi));
-	list_head_initn(idsm->idm_itox, ARRAY_SIZE(idsm->idm_itox));
+	silofs_memzero(idsm, sizeof(*idsm));
 	idsm->idm_alloc = alloc;
-	idsm->idm_size = 0;
 	idsm->idm_allow_hotids = allow_hostids;
-	return 0;
+	return idsmap_init_hmaps(idsm);
 }
 
 void silofs_idsmap_fini(struct silofs_idsmap *idsm)
 {
 	silofs_idsmap_clear(idsm);
-	list_head_finin(idsm->idm_xtoi, ARRAY_SIZE(idsm->idm_xtoi));
-	list_head_finin(idsm->idm_itox, ARRAY_SIZE(idsm->idm_itox));
+	idsmap_fini_hmaps(idsm);
 	idsm->idm_alloc = NULL;
 }
 
-static size_t
-idsmap_id_to_slot(const struct silofs_idsmap *idsm, uint32_t id)
-{
-	STATICASSERT_EQ(ARRAY_SIZE(idsm->idm_xtoi),
-	                ARRAY_SIZE(idsm->idm_itox));
-
-	return id % ARRAY_SIZE(idsm->idm_xtoi);
-}
-
-static struct silofs_list_head *
-idsmap_xtoi_bin_by_id(const struct silofs_idsmap *idsm, uint32_t id)
-{
-	const size_t slot = idsmap_id_to_slot(idsm, id);
-	const struct silofs_list_head *lst = &idsm->idm_xtoi[slot];
-
-	return unconst_lh(lst);
-}
-
-static struct silofs_list_head *
-idsmap_itox_bin_by_id(const struct silofs_idsmap *idsm, uint32_t id)
-{
-	const size_t slot = idsmap_id_to_slot(idsm, id);
-	const struct silofs_list_head *lst = &idsm->idm_itox[slot];
-
-	return unconst_lh(lst);
-}
-
-static int idsmap_default_status(const struct silofs_idsmap *idsm)
+static int idsmap_noent_status(const struct silofs_idsmap *idsm)
 {
 	return idsm->idm_allow_hotids ? 0 : -SILOFS_ENOENT;
 }
 
-static int idsmap_xtoi_uid(const struct silofs_idsmap *idsm,
-                           uid_t uid, uid_t *out_suid)
-{
-	const struct silofs_list_head *lst;
-	const struct silofs_list_head *itr;
-	const struct silofs_id_entry *ide = NULL;
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-	*out_suid = uid;
-	lst = idsmap_xtoi_bin_by_id(idsm, uid);
-	for (itr = lst->next; itr != lst; itr = itr->next) {
-		ide = ide_by_lh(itr);
-		if (ide_has_uid(ide, uid)) {
-			*out_suid = ide->id.id.u.suid;
-			return 0;
-		}
-	}
-	return idsmap_default_status(idsm);
+static struct silofs_umap_entry *
+idsmap_new_ume(const struct silofs_idsmap *idsm, uid_t host_uid, uid_t fs_uid)
+{
+	return ume_new(idsm->idm_alloc, host_uid, fs_uid);
 }
 
-static int idsmap_itox_uid(const struct silofs_idsmap *idsm,
-                           uid_t suid, uid_t *out_uid)
+static void idsmap_del_ume(const struct silofs_idsmap *idsm,
+                           struct silofs_umap_entry *ume)
 {
-	const struct silofs_list_head *lst;
-	const struct silofs_list_head *itr;
-	const struct silofs_id_entry *ide = NULL;
-
-	*out_uid = suid;
-	lst = idsmap_itox_bin_by_id(idsm, suid);
-	for (itr = lst->next; itr != lst; itr = itr->next) {
-		ide = ide_by_lh(itr);
-		if (ide_has_suid(ide, suid)) {
-			*out_uid = ide->id.id.u.uid;
-			return 0;
-		}
-	}
-	return idsmap_default_status(idsm);
+	ume_del(ume, idsm->idm_alloc);
 }
 
-static int idsmap_xtoi_gid(const struct silofs_idsmap *idsm,
-                           gid_t gid, uid_t *out_sgid)
+static size_t
+idsmap_umap_slot_of(const struct silofs_idsmap *idsm, uid_t uid)
 {
-	const struct silofs_list_head *lst;
-	const struct silofs_list_head *itr;
-	const struct silofs_id_entry *ide = NULL;
-
-	*out_sgid = gid;
-	lst = idsmap_xtoi_bin_by_id(idsm, gid);
-	for (itr = lst->next; itr != lst; itr = itr->next) {
-		ide = ide_by_lh(itr);
-		if (ide_has_gid(ide, gid)) {
-			*out_sgid = ide->id.id.g.sgid;
-			return 0;
-		}
-	}
-	return idsmap_default_status(idsm);
+	return uid % idsm->idm_uhcap;
 }
 
-static int idsmap_itox_gid(const struct silofs_idsmap *idsm,
-                           gid_t sgid, uid_t *out_gid)
+static struct silofs_list_head *
+idsmap_uhtof_bin_at(const struct silofs_idsmap *idsm, size_t slot)
 {
-	const struct silofs_list_head *lst;
-	const struct silofs_list_head *itr;
-	const struct silofs_id_entry *ide = NULL;
-
-	*out_gid = sgid;
-	lst = idsmap_itox_bin_by_id(idsm, sgid);
-	for (itr = lst->next; itr != lst; itr = itr->next) {
-		ide = ide_by_lh(itr);
-		if (ide_has_sgid(ide, sgid)) {
-			*out_gid = ide->id.id.g.gid;
-			return 0;
-		}
-	}
-	return idsmap_default_status(idsm);
+	return &idsm->idm_uhtof[slot];
 }
 
-static struct silofs_id_entry *
-idsmap_new_id_mapping_by_uid(const struct silofs_idsmap *idsm,
-                             uid_t uid_host, uid_t suid)
+static struct silofs_list_head *
+idsmap_uftoh_bin_at(const struct silofs_idsmap *idsm, size_t slot)
 {
-	struct silofs_id_entry *ide;
-
-	ide = silofs_allocate(idsm->idm_alloc, sizeof(*ide));
-	if (ide != NULL) {
-		ide_init_by_uid(ide, uid_host, suid);
-	}
-	return ide;
+	return &idsm->idm_uftoh[slot];
 }
 
-static int idsmap_add_uid(struct silofs_idsmap *idsm, uid_t uid, uid_t suid)
+static struct silofs_list_head *
+idsmap_uhtof_bin_of(const struct silofs_idsmap *idsm, uid_t host_uid)
 {
-	struct silofs_list_head *lst;
-	struct silofs_id_entry *ide;
+	const size_t slot = idsmap_umap_slot_of(idsm, host_uid);
 
-	ide = idsmap_new_id_mapping_by_uid(idsm, uid, suid);
-	if (ide == NULL) {
-		return -SILOFS_ENOMEM;
-	}
-	lst = idsmap_xtoi_bin_by_id(idsm, uid);
-	list_head_insert_after(lst, &ide->id_lh);
-	idsm->idm_size++;
-
-	ide = idsmap_new_id_mapping_by_uid(idsm, uid, suid);
-	if (ide == NULL) {
-		return -SILOFS_ENOMEM;
-	}
-	lst = idsmap_itox_bin_by_id(idsm, suid);
-	list_head_insert_after(lst, &ide->id_lh);
-	idsm->idm_size++;
-
-	return 0;
+	return idsmap_uhtof_bin_at(idsm, slot);
 }
 
-static struct silofs_id_entry *
-idsmap_new_id_mapping_by_gid(struct silofs_idsmap *idsm,
-                             gid_t gid, gid_t sgid)
+static struct silofs_list_head *
+idsmap_uftoh_bin_of(const struct silofs_idsmap *idsm, uid_t host_uid)
 {
-	struct silofs_id_entry *ide;
+	const size_t slot = idsmap_umap_slot_of(idsm, host_uid);
 
-	ide = silofs_allocate(idsm->idm_alloc, sizeof(*ide));
-	if (ide != NULL) {
-		ide_init_by_gid(ide, gid, sgid);
-	}
-	return ide;
+	return idsmap_uftoh_bin_at(idsm, slot);
 }
 
-static int idsmap_add_gid(struct silofs_idsmap *idsm, gid_t gid, gid_t sgid)
+static int idsmap_insert_umap(struct silofs_idsmap *idsm,
+                              uid_t host_uid, uid_t fs_uid)
 {
+	struct silofs_umap_entry *ume = NULL;
 	struct silofs_list_head *lst = NULL;
-	struct silofs_id_entry *ide;
 
-	ide = idsmap_new_id_mapping_by_gid(idsm, gid, sgid);
-	if (ide == NULL) {
+	ume = idsmap_new_ume(idsm, host_uid, fs_uid);
+	if (ume == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	lst = idsmap_xtoi_bin_by_id(idsm, gid);
-	list_head_insert_after(lst, &ide->id_lh);
-	idsm->idm_size++;
 
-	ide = idsmap_new_id_mapping_by_gid(idsm, gid, sgid);
-	if (ide == NULL) {
-		return -SILOFS_ENOMEM;
-	}
-	lst = idsmap_itox_bin_by_id(idsm, sgid);
-	list_head_insert_after(lst, &ide->id_lh);
-	idsm->idm_size++;
+	lst = idsmap_uhtof_bin_of(idsm, host_uid);
+	list_head_insert_after(lst, &ume->um_htof_lh);
+
+	lst = idsmap_uftoh_bin_of(idsm, fs_uid);
+	list_head_insert_after(lst, &ume->um_ftoh_lh);
+
+	idsm->idm_usize++;
 
 	return 0;
 }
+
+static void idsmap_clear_umap_at(struct silofs_idsmap *idsm, size_t slot)
+{
+	struct silofs_umap_entry *ume;
+	struct silofs_list_head *itr;
+	struct silofs_list_head *lst;
+
+	lst = idsmap_uhtof_bin_at(idsm, slot);
+	itr = lst->next;
+	while (itr != lst) {
+		silofs_assert_gt(idsm->idm_usize, 0);
+
+		ume = ume_by_htof_lh(itr);
+		itr = itr->next;
+
+		list_head_remove(&ume->um_htof_lh);
+		list_head_remove(&ume->um_ftoh_lh);
+		idsmap_del_ume(idsm, ume);
+		idsm->idm_usize--;
+	}
+}
+
+static void idsmap_clear_umap(struct silofs_idsmap *idsm)
+{
+	for (size_t slot = 0; slot < idsm->idm_uhcap; ++slot) {
+		idsmap_clear_umap_at(idsm, slot);
+	}
+	silofs_assert_eq(idsm->idm_usize, 0);
+}
+
+
+static const struct silofs_umap_entry *
+idsmap_lookup_uhtof(const struct silofs_idsmap *idsm, uid_t host_uid)
+{
+	const struct silofs_umap_entry *ume;
+	const struct silofs_list_head *itr;
+	const struct silofs_list_head *lst;
+
+	lst = idsmap_uhtof_bin_of(idsm, host_uid);
+	itr = lst->next;
+	while (itr != lst) {
+		silofs_assert_gt(idsm->idm_usize, 0);
+
+		ume = ume_by_htof_lh(itr);
+		if (ume->um.host_uid == host_uid) {
+			return ume;
+		}
+		itr = itr->next;
+	}
+	return NULL;
+}
+
+static const struct silofs_umap_entry *
+idsmap_lookup_uftoh(const struct silofs_idsmap *idsm, uid_t fs_uid)
+{
+	const struct silofs_umap_entry *ume;
+	const struct silofs_list_head *itr;
+	const struct silofs_list_head *lst;
+
+	lst = idsmap_uftoh_bin_of(idsm, fs_uid);
+	itr = lst->next;
+	while (itr != lst) {
+		silofs_assert_gt(idsm->idm_usize, 0);
+
+		ume = ume_by_ftoh_lh(itr);
+		if (ume->um.fs_uid == fs_uid) {
+			return ume;
+		}
+		itr = itr->next;
+	}
+	return NULL;
+}
+
+static int idsmap_resolve_uhtof(const struct silofs_idsmap *idsm,
+                                uid_t host_uid, uid_t *out_fs_uid)
+{
+	const struct silofs_umap_entry *ume;
+	int ret;
+
+	ume = idsmap_lookup_uhtof(idsm, host_uid);
+	if (ume != NULL) {
+		*out_fs_uid = ume->um.fs_uid;
+		ret = 0;
+	} else {
+		*out_fs_uid = host_uid;
+		ret = idsmap_noent_status(idsm);
+	}
+	return ret;
+}
+
+static int idsmap_resolve_uftoh(const struct silofs_idsmap *idsm,
+                                uid_t fs_uid, uid_t *out_host_uid)
+{
+	const struct silofs_umap_entry *ume;
+	int ret;
+
+	ume = idsmap_lookup_uftoh(idsm, fs_uid);
+	if (ume != NULL) {
+		*out_host_uid = ume->um.host_uid;
+		ret = 0;
+	} else {
+		*out_host_uid = fs_uid;
+		ret = idsmap_noent_status(idsm);
+	}
+	return ret;
+}
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_gmap_entry *
+idsmap_new_gme(const struct silofs_idsmap *idsm, gid_t host_gid, gid_t fs_gid)
+{
+	return gme_new(idsm->idm_alloc, host_gid, fs_gid);
+}
+
+static void idsmap_del_gme(const struct silofs_idsmap *idsm,
+                           struct silofs_gmap_entry *gme)
+{
+	gme_del(gme, idsm->idm_alloc);
+}
+
+static size_t
+idsmap_gmap_slot_of(const struct silofs_idsmap *idsm, gid_t gid)
+{
+	return gid % idsm->idm_ghcap;
+}
+
+static struct silofs_list_head *
+idsmap_ghtof_bin_at(const struct silofs_idsmap *idsm, size_t slot)
+{
+	return &idsm->idm_ghtof[slot];
+}
+
+static struct silofs_list_head *
+idsmap_gftoh_bin_at(const struct silofs_idsmap *idsm, size_t slot)
+{
+	return &idsm->idm_gftoh[slot];
+}
+
+static struct silofs_list_head *
+idsmap_ghtof_bin_of(const struct silofs_idsmap *idsm, gid_t host_gid)
+{
+	const size_t slot = idsmap_gmap_slot_of(idsm, host_gid);
+
+	return idsmap_ghtof_bin_at(idsm, slot);
+}
+
+static struct silofs_list_head *
+idsmap_gftoh_bin_of(const struct silofs_idsmap *idsm, gid_t host_gid)
+{
+	const size_t slot = idsmap_gmap_slot_of(idsm, host_gid);
+
+	return idsmap_gftoh_bin_at(idsm, slot);
+}
+
+static int idsmap_insert_gmap(struct silofs_idsmap *idsm,
+                              gid_t host_gid, gid_t fs_gid)
+{
+	struct silofs_gmap_entry *gme = NULL;
+	struct silofs_list_head *lst = NULL;
+
+	gme = idsmap_new_gme(idsm, host_gid, fs_gid);
+	if (gme == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+
+	lst = idsmap_ghtof_bin_of(idsm, host_gid);
+	list_head_insert_after(lst, &gme->gm_htof_lh);
+
+	lst = idsmap_gftoh_bin_of(idsm, fs_gid);
+	list_head_insert_after(lst, &gme->gm_ftoh_lh);
+
+	idsm->idm_gsize++;
+
+	return 0;
+}
+
+static void idsmap_clear_gmap_at(struct silofs_idsmap *idsm, size_t slot)
+{
+	struct silofs_gmap_entry *gme;
+	struct silofs_list_head *itr;
+	struct silofs_list_head *lst;
+
+	lst = idsmap_ghtof_bin_at(idsm, slot);
+	itr = lst->next;
+	while (itr != lst) {
+		silofs_assert_gt(idsm->idm_gsize, 0);
+
+		gme = gme_by_htof_lh(itr);
+		itr = itr->next;
+
+		list_head_remove(&gme->gm_htof_lh);
+		list_head_remove(&gme->gm_ftoh_lh);
+		idsmap_del_gme(idsm, gme);
+		idsm->idm_gsize--;
+	}
+}
+
+static void idsmap_clear_gmap(struct silofs_idsmap *idsm)
+{
+	for (size_t slot = 0; slot < idsm->idm_ghcap; ++slot) {
+		idsmap_clear_gmap_at(idsm, slot);
+	}
+	silofs_assert_eq(idsm->idm_gsize, 0);
+}
+
+
+static const struct silofs_gmap_entry *
+idsmap_lookup_ghtof(const struct silofs_idsmap *idsm, gid_t host_gid)
+{
+	const struct silofs_gmap_entry *gme;
+	const struct silofs_list_head *itr;
+	const struct silofs_list_head *lst;
+
+	lst = idsmap_ghtof_bin_of(idsm, host_gid);
+	itr = lst->next;
+	while (itr != lst) {
+		silofs_assert_gt(idsm->idm_gsize, 0);
+
+		gme = gme_by_htof_lh(itr);
+		if (gme->gm.host_gid == host_gid) {
+			return gme;
+		}
+		itr = itr->next;
+	}
+	return NULL;
+}
+
+static const struct silofs_gmap_entry *
+idsmap_lookup_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid)
+{
+	const struct silofs_gmap_entry *gme;
+	const struct silofs_list_head *itr;
+	const struct silofs_list_head *lst;
+
+	lst = idsmap_gftoh_bin_of(idsm, fs_gid);
+	itr = lst->next;
+	while (itr != lst) {
+		silofs_assert_gt(idsm->idm_gsize, 0);
+
+		gme = gme_by_ftoh_lh(itr);
+		if (gme->gm.fs_gid == fs_gid) {
+			return gme;
+		}
+		itr = itr->next;
+	}
+	return NULL;
+}
+
+static int idsmap_resolve_ghtof(const struct silofs_idsmap *idsm,
+                                gid_t host_gid, gid_t *out_fs_gid)
+{
+	const struct silofs_gmap_entry *gme;
+	int ret;
+
+	gme = idsmap_lookup_ghtof(idsm, host_gid);
+	if (gme != NULL) {
+		*out_fs_gid = gme->gm.fs_gid;
+		ret = 0;
+	} else {
+		*out_fs_gid = host_gid;
+		ret = idsmap_noent_status(idsm);
+	}
+	return ret;
+}
+
+static int idsmap_resolve_gftoh(const struct silofs_idsmap *idsm,
+                                gid_t fs_gid, gid_t *out_host_gid)
+{
+	const struct silofs_gmap_entry *gme;
+	int ret;
+
+	gme = idsmap_lookup_gftoh(idsm, fs_gid);
+	if (gme != NULL) {
+		*out_host_gid = gme->gm.host_gid;
+		ret = 0;
+	} else {
+		*out_host_gid = fs_gid;
+		ret = idsmap_noent_status(idsm);
+	}
+	return ret;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int idsmap_add_id(struct silofs_idsmap *idsm,
                          const struct silofs_id *id)
 {
-	int err;
+	int ret = 0;
 
-	if (idt_is_uid(id->id_type)) {
-		err = idsmap_add_uid(idsm, id->id.u.uid, id->id.u.suid);
-	} else if (idt_is_gid(id->id_type)) {
-		err = idsmap_add_gid(idsm, id->id.g.gid, id->id.g.sgid);
-	} else {
-		err = 0;
+	if (idt_is_gid(id->id_type)) {
+		ret = idsmap_insert_gmap(idsm, id->id.g.gid, id->id.g.sgid);
+	} else if (idt_is_uid(id->id_type)) {
+		ret = idsmap_insert_umap(idsm, id->id.u.uid, id->id.u.suid);
 	}
-	return err;
+	return ret;
 }
 
 int silofs_idsmap_populate(struct silofs_idsmap *idsm,
@@ -341,57 +692,29 @@ int silofs_idsmap_populate(struct silofs_idsmap *idsm,
 	return err;
 }
 
-static void idsmap_del_id_mapping(const struct silofs_idsmap *idsm,
-                                  struct silofs_id_entry *ide)
-{
-	ide_fini(ide);
-	silofs_deallocate(idsm->idm_alloc, ide, sizeof(*ide));
-}
-
-static void idsmap_clear_at(struct silofs_idsmap *idsm,
-                            struct silofs_list_head *lst)
-{
-	struct silofs_list_head *itr;
-	struct silofs_id_entry *ide = NULL;
-
-	itr = lst->next;
-	while (itr != lst) {
-		ide = ide_by_lh(itr);
-		itr = itr->next;
-
-		list_head_remove(&ide->id_lh);
-		idsmap_del_id_mapping(idsm, ide);
-		idsm->idm_size--;
-	}
-}
-
 void silofs_idsmap_clear(struct silofs_idsmap *idsm)
 {
-	for (size_t i = 0; i < ARRAY_SIZE(idsm->idm_xtoi); ++i) {
-		idsmap_clear_at(idsm, &idsm->idm_xtoi[i]);
-	}
-	for (size_t i = 0; i < ARRAY_SIZE(idsm->idm_itox); ++i) {
-		idsmap_clear_at(idsm, &idsm->idm_itox[i]);
-	}
+	idsmap_clear_umap(idsm);
+	idsmap_clear_gmap(idsm);
 }
 
 int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm,
-                             uid_t uid, gid_t gid,
-                             uid_t *out_suid, gid_t *out_sgid)
+                             uid_t host_uid, gid_t host_gid,
+                             uid_t *out_fs_uid, gid_t *out_fs_gid)
 {
 	int err1;
 	int err2;
 
-	if (uid != (uid_t)(-1)) {
-		err1 = idsmap_xtoi_uid(idsm, uid, out_suid);
+	if (host_uid != (uid_t)(-1)) {
+		err1 = idsmap_resolve_uhtof(idsm, host_uid, out_fs_uid);
 	} else {
-		*out_suid = uid;
+		*out_fs_uid = host_uid;
 		err1 = 0;
 	}
-	if (gid != (gid_t)(-1)) {
-		err2 = idsmap_xtoi_gid(idsm, gid, out_sgid);
+	if (host_gid != (gid_t)(-1)) {
+		err2 = idsmap_resolve_ghtof(idsm, host_gid, out_fs_gid);
 	} else {
-		*out_sgid = gid;
+		*out_fs_gid = host_gid;
 		err2 = 0;
 	}
 	return err1 ? err1 : err2;
@@ -408,22 +731,22 @@ int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
 }
 
 int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
-                              uid_t suid, gid_t sgid,
-                              uid_t *out_uid, gid_t *out_gid)
+                              uid_t fs_uid, gid_t fs_gid,
+                              uid_t *out_host_uid, gid_t *out_host_gid)
 {
 	int err1;
 	int err2;
 
-	if (suid != (uid_t)(-1)) {
-		err1 = idsmap_itox_uid(idsm, suid, out_uid);
+	if (fs_uid != (uid_t)(-1)) {
+		err1 = idsmap_resolve_uftoh(idsm, fs_uid, out_host_uid);
 	} else {
-		*out_uid = suid;
+		*out_host_uid = fs_uid;
 		err1 = 0;
 	}
-	if (sgid != (gid_t)(-1)) {
-		err2 = idsmap_itox_gid(idsm, sgid, out_gid);
+	if (fs_gid != (gid_t)(-1)) {
+		err2 = idsmap_resolve_gftoh(idsm, fs_gid, out_host_gid);
 	} else {
-		*out_gid = sgid;
+		*out_host_gid = fs_gid;
 		err2 = 0;
 	}
 	return err1 ? err1 : err2;

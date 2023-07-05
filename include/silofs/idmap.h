@@ -17,44 +17,14 @@
 #ifndef SILOFS_IDMAP_H_
 #define SILOFS_IDMAP_H_
 
-enum silofs_idtype {
-	SILOFS_IDTYPE_NONE      = 0,
-	SILOFS_IDTYPE_UID       = 1,
-	SILOFS_IDTYPE_GID       = 2,
-};
-
-/* mapping between host uid and internal */
-struct silofs_uid_pair {
-	uid_t uid;
-	uid_t suid;
-};
-
-/* mapping between host gid and internal */
-struct silofs_gid_pair {
-	gid_t gid;
-	gid_t sgid;
-};
-
-/* user-or-group id-mapping */
-union silofs_id_u {
-	struct silofs_uid_pair  u;
-	struct silofs_gid_pair  g;
-};
-
-/* id-mapping */
-struct silofs_id {
-	union silofs_id_u       id;
-	enum silofs_idtype      id_type;
-};
-
 /* user-id host-to-fs bidirectional-mapping */
-struct silofs_uid_map {
+struct silofs_uids {
 	uid_t host_uid;
 	uid_t fs_uid;
 };
 
 /* group-id host-to-fs bidirectional-mapping */
-struct silofs_gid_map {
+struct silofs_gids {
 	gid_t host_gid;
 	gid_t fs_gid;
 };

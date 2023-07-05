@@ -251,56 +251,129 @@ static void cmd_resolve_gid_to_name(gid_t gid, char *name, size_t nsz)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_do_free_ids(struct silofs_id *ids, size_t nids)
+static struct silofs_uids *cmd_malloc_uids(size_t nuids)
 {
-	cmd_zfree(ids, nids * sizeof(ids[0]));
+	struct silofs_uids *uids;
+
+	uids = cmd_zalloc(nuids * sizeof(uids[0]));
+	return uids;
 }
 
-static void cmd_pfree_ids(struct silofs_id **ids_arr, size_t *nids)
+static void cmd_free_uids(struct silofs_uids *uids, size_t nuids)
 {
-	if (*ids_arr && *nids) {
-		cmd_do_free_ids(*ids_arr, *nids);
-		*ids_arr = NULL;
-		*nids = 0;
+	cmd_zfree(uids, nuids * sizeof(uids[0]));
+}
+
+static void cmd_pfree_uids(struct silofs_uids **puids, size_t *pnuids)
+{
+	if (*puids && *pnuids) {
+		cmd_free_uids(*puids, *pnuids);
+		*puids = NULL;
+		*pnuids = 0;
+	}
+}
+
+static void cmd_copy_uids(struct silofs_uids *uids_dst,
+                          const struct silofs_uids *uids_src, size_t nuids)
+{
+	if (uids_src && nuids) {
+		memcpy(uids_dst, uids_src, nuids * sizeof(uids_dst[0]));
 	}
 }
 
 static void
-cmd_extend_ids(struct silofs_id **pids_arr, size_t *pnids, size_t cnt)
+cmd_extend_uids(struct silofs_uids **puids, size_t *pnuids, size_t cnt)
 {
-	struct silofs_id *ids = NULL;
-	size_t nids = *pnids + cnt;
+	struct silofs_uids *uids = NULL;
+	size_t nuids = *pnuids + cnt;
 
-	ids = cmd_zalloc(nids * sizeof(ids[0]));
-	if (*pids_arr && *pnids) {
-		memcpy(ids, *pids_arr, *pnids * sizeof(ids[0]));
-		cmd_pfree_ids(pids_arr, pnids);
+	uids = cmd_malloc_uids(nuids);
+	cmd_copy_uids(uids, *puids, *pnuids);
+	cmd_pfree_uids(puids, pnuids);
+	*puids = uids;
+	*pnuids = nuids;
+}
+
+static void cmd_append_uids1(struct silofs_uids **puids, size_t *pnuids,
+                             const struct silofs_uids *uids)
+{
+	cmd_extend_uids(puids, pnuids, 1);
+	cmd_copy_uids(&(*puids)[*pnuids - 1], uids, 1);
+}
+
+static void cmd_dup_uids(const struct silofs_uids *uids, size_t nuids,
+                         struct silofs_uids **out_uids, size_t *out_nuids)
+{
+	*out_uids = NULL;
+	*out_nuids = 0;
+	if (uids && nuids) {
+		*out_uids = cmd_malloc_uids(nuids);
+		cmd_copy_uids(*out_uids, uids, nuids);
+		*out_nuids = nuids;
 	}
-	*pids_arr = ids;
-	*pnids = nids;
 }
 
-static void cmd_append_id1(struct silofs_id **pids_arr, size_t *pnids,
-                           const struct silofs_id *id)
-{
-	struct silofs_id *dst;
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-	cmd_extend_ids(pids_arr, pnids, 1);
-	dst = &(*pids_arr)[*pnids - 1];
-	memcpy(dst, id, sizeof(*dst));
+static struct silofs_gids *cmd_malloc_gids(size_t ngids)
+{
+	struct silofs_gids *gids;
+
+	gids = cmd_zalloc(ngids * sizeof(gids[0]));
+	return gids;
 }
 
-static void cmd_dup_ids(const struct silofs_id *ids, size_t nids,
-                        struct silofs_id **out_ids, size_t *out_nids)
+static void cmd_free_gids(struct silofs_gids *gids, size_t ngids)
 {
-	const size_t id_size = sizeof(*ids);
+	cmd_zfree(gids, ngids * sizeof(gids[0]));
+}
 
-	*out_ids = NULL;
-	*out_nids = 0;
-	if (ids && nids) {
-		*out_ids = cmd_zalloc(nids * id_size);
-		memcpy(*out_ids, ids, nids * id_size);
-		*out_nids = nids;
+static void cmd_pfree_gids(struct silofs_gids **pgids, size_t *pngids)
+{
+	if (*pgids && *pngids) {
+		cmd_free_gids(*pgids, *pngids);
+		*pgids = NULL;
+		*pngids = 0;
+	}
+}
+
+static void cmd_copy_gids(struct silofs_gids *gids_dst,
+                          const struct silofs_gids *gids_src, size_t ngids)
+{
+	if (gids_src && ngids) {
+		memcpy(gids_dst, gids_src, ngids * sizeof(gids_dst[0]));
+	}
+}
+
+static void
+cmd_extend_gids(struct silofs_gids **pgids, size_t *pngids, size_t cnt)
+{
+	struct silofs_gids *gids = NULL;
+	size_t ngids = *pngids + cnt;
+
+	gids = cmd_malloc_gids(ngids);
+	cmd_copy_gids(gids, *pgids, *pngids);
+	cmd_pfree_gids(pgids, pngids);
+	*pgids = gids;
+	*pngids = ngids;
+}
+
+static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
+                             const struct silofs_gids *gids)
+{
+	cmd_extend_gids(pgids, pngids, 1);
+	cmd_copy_gids(&(*pgids)[*pngids - 1], gids, 1);
+}
+
+static void cmd_dup_gids(const struct silofs_gids *gids, size_t ngids,
+                         struct silofs_gids **out_gids, size_t *out_ngids)
+{
+	*out_gids = NULL;
+	*out_ngids = 0;
+	if (gids && ngids) {
+		*out_gids = cmd_malloc_gids(ngids);
+		cmd_copy_gids(*out_gids, gids, ngids);
+		*out_ngids = ngids;
 	}
 }
 
@@ -330,54 +403,58 @@ cmd_parse_gid_by_name(const struct silofs_substr *name, gid_t *out_gid)
 	cmd_resolve_gid_by_name(buf, out_gid);
 }
 
-static void cmd_parse_user(const struct silofs_substr *name,
+static void cmd_parse_uids(const struct silofs_substr *name,
                            const struct silofs_substr *suid,
-                           struct silofs_id *out_id)
+                           struct silofs_uids *out_uids)
 {
-	cmd_parse_uid_by_name(name, &out_id->id.u.uid);
-	cmd_parse_uid_by_value(suid, &out_id->id.u.suid);
-	out_id->id_type = SILOFS_IDTYPE_UID;
+	cmd_parse_uid_by_name(name, &out_uids->fs_uid);
+	cmd_parse_uid_by_value(suid, &out_uids->host_uid);
 }
 
-static void cmd_parse_group(const struct silofs_substr *name,
-                            const struct silofs_substr *sgid,
-                            struct silofs_id *out_id)
+static void cmd_parse_gids(const struct silofs_substr *name,
+                           const struct silofs_substr *sgid,
+                           struct silofs_gids *out_gids)
 {
-	cmd_parse_gid_by_name(name, &out_id->id.g.gid);
-	cmd_parse_gid_by_value(sgid, &out_id->id.g.sgid);
-	out_id->id_type = SILOFS_IDTYPE_GID;
+	cmd_parse_gid_by_name(name, &out_gids->host_gid);
+	cmd_parse_gid_by_value(sgid, &out_gids->fs_gid);
 }
 
-static void cmd_parse_id(const struct silofs_substr *name,
-                         const struct silofs_substr *xxid,
-                         enum silofs_idtype id_type,
-                         struct silofs_id *out_id)
-{
-	if (id_type == SILOFS_IDTYPE_UID) {
-		cmd_parse_user(name, xxid, out_id);
-	} else if (id_type == SILOFS_IDTYPE_GID) {
-		cmd_parse_group(name, xxid, out_id);
-	}
-}
-
-static void cmd_parse_id_data(const struct silofs_substr *line,
-                              enum silofs_idtype id_type,
-                              struct silofs_id **ids_arr, size_t *nids)
+static void cmd_parse_uid_data(const struct silofs_substr *line,
+                               struct silofs_uids **uids, size_t *nuids)
 {
 	struct silofs_substr_pair ssp;
 	struct silofs_substr name;
-	struct silofs_substr xxid;
-	struct silofs_id id = { .id_type = SILOFS_IDTYPE_NONE };
+	struct silofs_substr suid;
+	struct silofs_uids uid;
 
 	substr_split_by(line, '=', &ssp);
 	substr_strip_ws(&ssp.first, &name);
-	substr_strip_ws(&ssp.second, &xxid);
+	substr_strip_ws(&ssp.second, &suid);
 
-	if (substr_isempty(&name) || substr_isempty(&xxid)) {
-		cmd_die_by(line, "missing id mapping");
+	if (substr_isempty(&name) || substr_isempty(&suid)) {
+		cmd_die_by(line, "missing user mapping");
 	}
-	cmd_parse_id(&name, &xxid, id_type, &id);
-	cmd_append_id1(ids_arr, nids, &id);
+	cmd_parse_uids(&name, &suid, &uid);
+	cmd_append_uids1(uids, nuids, &uid);
+}
+
+static void cmd_parse_gid_data(const struct silofs_substr *line,
+                               struct silofs_gids **gids, size_t *ngids)
+{
+	struct silofs_substr_pair ssp;
+	struct silofs_substr name;
+	struct silofs_substr sgid;
+	struct silofs_gids gid;
+
+	substr_split_by(line, '=', &ssp);
+	substr_strip_ws(&ssp.first, &name);
+	substr_strip_ws(&ssp.second, &sgid);
+
+	if (substr_isempty(&name) || substr_isempty(&sgid)) {
+		cmd_die_by(line, "missing gid mapping");
+	}
+	cmd_parse_gids(&name, &sgid, &gid);
+	cmd_append_gids1(gids, ngids, &gid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -418,20 +495,22 @@ static void cmd_append_id_conf(const char *name, uint32_t id, char **conf)
 	cmd_append_conf_line(conf, line);
 }
 
-static void cmd_append_user_conf(const struct silofs_id *id, char **conf)
+static void
+cmd_append_user_conf(const struct silofs_uids *uid, char **conf)
 {
 	char name[NAME_MAX + 1] = "";
 
-	cmd_resolve_uid_to_name(id->id.u.uid, name, sizeof(name));
-	cmd_append_id_conf(name, id->id.u.suid, conf);
+	cmd_resolve_uid_to_name(uid->host_uid, name, sizeof(name));
+	cmd_append_id_conf(name, uid->fs_uid, conf);
 }
 
-static void cmd_append_group_conf(const struct silofs_id *id, char **conf)
+static void
+cmd_append_group_conf(const struct silofs_gids *gid, char **conf)
 {
 	char name[NAME_MAX + 1] = "";
 
-	cmd_resolve_gid_to_name(id->id.g.gid, name, sizeof(name));
-	cmd_append_id_conf(name, id->id.g.sgid, conf);
+	cmd_resolve_gid_to_name(gid->fs_gid, name, sizeof(name));
+	cmd_append_id_conf(name, gid->host_gid, conf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -504,13 +583,13 @@ static void cmd_write_conf(const char *path, const char *conf)
 static void cmd_parse_name_to_uid(struct silofs_ids *ids,
                                   const struct silofs_substr *line)
 {
-	cmd_parse_id_data(line, SILOFS_IDTYPE_UID, &ids->uids, &ids->nuids);
+	cmd_parse_uid_data(line, &ids->uids, &ids->nuids);
 }
 
 static void cmd_parse_name_to_gid(struct silofs_ids *ids,
                                   const struct silofs_substr *line)
 {
-	cmd_parse_id_data(line, SILOFS_IDTYPE_GID, &ids->gids, &ids->ngids);
+	cmd_parse_gid_data(line, &ids->gids, &ids->ngids);
 }
 
 static void cmd_parse_conf_line(struct silofs_ids *ids, int sec_state,
@@ -602,65 +681,59 @@ void cmd_setup_ids(struct silofs_ids *ids,
 {
 	const uid_t self_uid = getuid();
 	const gid_t self_gid = getgid();
-	struct silofs_id uids[3];
-	struct silofs_id gids[3];
-	struct silofs_id *puid = NULL;
-	struct silofs_id *pgid = NULL;
+	struct silofs_uids uids[3];
+	struct silofs_gids gids[3];
+	struct silofs_uids *puid = NULL;
+	struct silofs_gids *pgid = NULL;
 	size_t nuids = 0;
 	size_t ngids = 0;
 
 	/* root (optional) */
 	if (root_uid != (uid_t)(-1)) {
 		puid = &uids[nuids++];
-		puid->id_type = SILOFS_IDTYPE_UID;
-		puid->id.u.uid = root_uid;
-		puid->id.u.suid = root_uid;
+		puid->host_uid = root_uid;
+		puid->fs_uid = root_uid;
 	}
 	if (root_gid != (gid_t)(-1)) {
 		pgid = &gids[ngids++];
-		pgid->id_type = SILOFS_IDTYPE_GID;
-		pgid->id.g.gid = 0;
-		pgid->id.g.sgid = 0;
+		pgid->host_gid = 0;
+		pgid->fs_gid = 0;
 	}
 
 	/* self (repo's owner) */
 	if (self_uid != root_uid) {
 		puid = &uids[nuids++];
-		puid->id_type = SILOFS_IDTYPE_UID;
-		puid->id.u.uid = self_uid;
-		puid->id.u.suid = self_uid;
+		puid->host_uid = self_uid;
+		puid->fs_uid = self_uid;
 	}
 	if (self_gid != root_gid) {
 		pgid = &gids[ngids++];
-		pgid->id_type = SILOFS_IDTYPE_GID;
-		pgid->id.g.gid = self_gid;
-		pgid->id.g.sgid = self_gid;
+		pgid->host_gid = self_gid;
+		pgid->fs_gid = self_gid;
 	}
 
 	/* extra (optional) */
 	if ((extra_uid != (uid_t)(-1)) &&
 	    (extra_uid != root_uid) && (extra_uid != self_uid)) {
 		puid = &uids[nuids++];
-		puid->id_type = SILOFS_IDTYPE_UID;
-		puid->id.u.uid = extra_uid;
-		puid->id.u.suid = extra_uid;
+		puid->host_uid = extra_uid;
+		puid->fs_uid = extra_uid;
 	}
 	if ((extra_gid != (gid_t)(-1)) &&
 	    (extra_gid != root_gid) && (extra_gid != self_gid)) {
 		pgid = &gids[ngids++];
-		pgid->id_type = SILOFS_IDTYPE_GID;
-		pgid->id.g.gid = extra_gid;
-		pgid->id.g.sgid = extra_gid;
+		pgid->host_gid = extra_gid;
+		pgid->fs_gid = extra_gid;
 	}
 
-	cmd_dup_ids(uids, nuids, &ids->uids, &ids->nuids);
-	cmd_dup_ids(gids, ngids, &ids->gids, &ids->ngids);
+	cmd_dup_uids(uids, nuids, &ids->uids, &ids->nuids);
+	cmd_dup_gids(gids, ngids, &ids->gids, &ids->ngids);
 }
 
 void cmd_reset_ids(struct silofs_ids *ids)
 {
-	cmd_pfree_ids(&ids->uids, &ids->nuids);
-	cmd_pfree_ids(&ids->gids, &ids->ngids);
+	cmd_pfree_uids(&ids->uids, &ids->nuids);
+	cmd_pfree_gids(&ids->gids, &ids->ngids);
 }
 
 static void cmd_load_fsids_at(struct silofs_ids *ids, const char *path)

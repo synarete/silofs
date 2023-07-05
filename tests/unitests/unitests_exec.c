@@ -368,19 +368,19 @@ static void ut_print_tests_info(const struct ut_args *args, int pre)
 	       pre ? "++++++++" : "--------");
 }
 
-#define MKID_UID(h, s) \
-	{ .id.u.uid = h, .id.u.suid = s, .id_type = SILOFS_IDTYPE_UID }
+#define MKID_UID(host_uid_, fs_uid_) \
+	{ .host_uid = host_uid_, .fs_uid = fs_uid_ }
 
-#define MKID_GID(h, s) \
-	{ .id.g.gid = h, .id.g.sgid = s, .id_type = SILOFS_IDTYPE_GID }
+#define MKID_GID(host_gid_, fs_gid_) \
+	{ .host_gid = host_gid_, .fs_gid = fs_gid_ }
 
 void ut_execute_tests(void)
 {
-	struct silofs_id uids[] = {
+	struct silofs_uids uids[] = {
 		MKID_UID(0, 100000),
 		MKID_UID(getuid(), 100001),
 	};
-	struct silofs_id gids[] = {
+	struct silofs_gids gids[] = {
 		MKID_GID(0, 100000),
 		MKID_GID(getgid(), 100001),
 	};

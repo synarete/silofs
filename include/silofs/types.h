@@ -460,8 +460,8 @@ struct silofs_uber {
 
 /* file-system's input ids */
 struct silofs_ids {
-	struct silofs_id       *uids;
-	struct silofs_id       *gids;
+	struct silofs_uids     *uids;
+	struct silofs_gids     *gids;
 	size_t                  nuids;
 	size_t                  ngids;
 };

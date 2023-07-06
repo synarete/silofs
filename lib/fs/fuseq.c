@@ -3081,11 +3081,11 @@ static int fuseq_exec_request(struct silofs_fuseq_worker *fqw)
 	int err2;
 
 	err = fuseq_setup_task(fqw, &task);
-	if (err) {
+	if (unlikely(err)) {
 		return err;
 	}
 	err = fuseq_check_task(fqw, &task);
-	if (err) {
+	if (unlikely(err)) {
 		err = fuseq_reply_err(fqw, &task, err);
 	} else {
 		fuseq_update_task(fqw, &task);
@@ -3114,17 +3114,17 @@ static int fuseq_check_inhdr(const struct silofs_fuseq_worker *fqw,
 	const size_t len_max = fqw->fq->fq_coni.max_inlen;
 	const int opc = (int)hdr->hdr.opcode;
 
-	if (nrd < len_min) {
+	if (unlikely(nrd < len_min)) {
 		fuseq_log_err("illegal in-length: "\
 		              "nrd=%lu len_min=%lu ", nrd, len_min);
 		return -SILOFS_EPROTO;
 	}
-	if (len > len_max) {
+	if (unlikely(len > len_max)) {
 		fuseq_log_err("illegal header: opc=%d len=%lu len_max=%lu",
 		              opc, len, len_max);
 		return -SILOFS_EPROTO;
 	}
-	if (full && (len != nrd)) {
+	if (unlikely(full && (len != nrd))) {
 		fuseq_log_err("header length mismatch: "\
 		              "opc=%d nrd=%lu len=%lu ", opc, nrd, len);
 		return -SILOFS_EIO;
@@ -3137,12 +3137,12 @@ static int fuseq_check_pipe_pre(const struct silofs_fuseq_worker *fqw)
 	const struct silofs_pipe *pipe = &fqw->piper.pipe;
 	const size_t buffsize = fqw->fq->fq_coni.buffsize;
 
-	if (buffsize != pipe->size) {
+	if (unlikely(buffsize != pipe->size)) {
 		fuseq_log_err("pipe-fuse mismatch: pipesize=%lu buffsize=%lu ",
 		              pipe->size, buffsize);
 		return -SILOFS_EIO;
 	}
-	if (pipe->pend != 0) {
+	if (unlikely(pipe->pend != 0)) {
 		fuseq_log_err("pipe not empty: pend=%lu fuse_fd=%d",
 		              pipe->pend, fqw->fq->fq_fuse_fd);
 		return -SILOFS_EIO;
@@ -3183,12 +3183,12 @@ static int fuseq_recv_copy_in(struct silofs_fuseq_worker *fqw)
 	if (err == -ETIMEDOUT) {
 		return err;
 	}
-	if (err) {
+	if (unlikely(err)) {
 		fuseq_log_err("read fuse-to-buff failed: fuse_fd=%d err=%d",
 		              fqw->fq->fq_fuse_fd, err);
 		return err;
 	}
-	if (len < sizeof(struct fuse_in_header)) {
+	if (unlikely(len < sizeof(struct fuse_in_header))) {
 		fuseq_log_err("fuse read-in too-short: len=%lu", len);
 		return -SILOFS_EIO;
 	}
@@ -3207,7 +3207,7 @@ static int fuseq_splice_into_pipe(struct silofs_fuseq_worker *fqw, size_t cnt)
 
 	err = silofs_pipe_splice_from_fd(pipe, fuse_fd,
 	                                 NULL, cnt, FUSEQ_SPLICE_FLAGS);
-	if (err) {
+	if (unlikely(err)) {
 		fuseq_log_err("fuse splice-in failed: "
 		              "fuse_fd=%d cnt=%lu err=%d", fuse_fd, cnt, err);
 	}
@@ -3223,7 +3223,7 @@ static int fuseq_copy_from_pipe_in(struct silofs_fuseq_worker *fqw,
 	int err;
 
 	err = silofs_pipe_copy_to_buf(pipe, tail_of(in, head_sz), cnt);
-	if (err) {
+	if (unlikely(err)) {
 		return err;
 	}
 	*out_ncp = pre - pipe->pend;
@@ -3271,18 +3271,18 @@ static int fuseq_copy_pipe_in(struct silofs_fuseq_worker *fqw)
 	}
 	rem = (size_t)hdr_in->hdr.len - ncp1;
 	err = fuseq_check_inhdr(fqw, ncp1, rem == 0);
-	if (err) {
+	if (unlikely(err)) {
 		return err;
 	}
 	if (!rem || fuseq_has_long_write_in(fqw)) {
 		return 0;
 	}
 	err = fuseq_copy_from_pipe_in(fqw, ncp1, rem, &ncp2);
-	if (err) {
+	if (unlikely(err)) {
 		return err;
 	}
 	err = fuseq_check_inhdr(fqw, ncp1 + ncp2, true);
-	if (err) {
+	if (unlikely(err)) {
 		return err;
 	}
 	return 0;

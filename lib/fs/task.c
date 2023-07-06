@@ -389,14 +389,14 @@ static void cred_update_umask(struct silofs_cred *cred, mode_t umsk)
 void silofs_task_set_creds(struct silofs_task *task,
                            uid_t uid, gid_t gid, mode_t umsk)
 {
-	cred_setup(&task->t_oper.op_creds.xcred, uid, gid, umsk);
-	cred_setup(&task->t_oper.op_creds.icred, uid, gid, umsk);
+	cred_setup(&task->t_oper.op_creds.host_cred, uid, gid, umsk);
+	cred_setup(&task->t_oper.op_creds.fs_cred, uid, gid, umsk);
 }
 
 void silofs_task_update_umask(struct silofs_task *task, mode_t umask)
 {
-	cred_update_umask(&task->t_oper.op_creds.xcred, umask);
-	cred_update_umask(&task->t_oper.op_creds.icred, umask);
+	cred_update_umask(&task->t_oper.op_creds.host_cred, umask);
+	cred_update_umask(&task->t_oper.op_creds.fs_cred, umask);
 }
 
 void silofs_task_set_ts(struct silofs_task *task, bool rt)
@@ -449,8 +449,8 @@ const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 {
 	memset(task, 0, sizeof(*task));
-	cred_init(&task->t_oper.op_creds.icred);
-	cred_init(&task->t_oper.op_creds.xcred);
+	cred_init(&task->t_oper.op_creds.fs_cred);
+	cred_init(&task->t_oper.op_creds.host_cred);
 	task->t_uber = uber;
 	task->t_submitq = uber->ub.submitq;
 	task->t_apex_id = 0;

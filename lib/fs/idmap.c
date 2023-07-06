@@ -25,14 +25,14 @@
 struct silofs_umap_entry {
 	struct silofs_list_head um_htof_lh;
 	struct silofs_list_head um_ftoh_lh;
-	struct silofs_uids      um_ids;
+	struct silofs_uids      um_uids;
 };
 
 /* in-memory host <--> silofs group-id mapping entry */
 struct silofs_gmap_entry {
 	struct silofs_list_head gm_htof_lh;
 	struct silofs_list_head gm_ftoh_lh;
-	struct silofs_gids      gm_ids;
+	struct silofs_gids      gm_gids;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -72,16 +72,16 @@ static void ume_init(struct silofs_umap_entry *ume,
 {
 	list_head_init(&ume->um_htof_lh);
 	list_head_init(&ume->um_ftoh_lh);
-	ume->um_ids.host_uid = host_uid;
-	ume->um_ids.fs_uid = fs_uid;
+	ume->um_uids.host_uid = host_uid;
+	ume->um_uids.fs_uid = fs_uid;
 }
 
 static void ume_fini(struct silofs_umap_entry *ume)
 {
 	list_head_fini(&ume->um_htof_lh);
 	list_head_fini(&ume->um_ftoh_lh);
-	ume->um_ids.host_uid = (uid_t)(-1);
-	ume->um_ids.fs_uid = (uid_t)(-1);
+	ume->um_uids.host_uid = (uid_t)(-1);
+	ume->um_uids.fs_uid = (uid_t)(-1);
 }
 
 static struct silofs_umap_entry *
@@ -139,16 +139,16 @@ static void gme_init(struct silofs_gmap_entry *gme,
 {
 	list_head_init(&gme->gm_htof_lh);
 	list_head_init(&gme->gm_ftoh_lh);
-	gme->gm_ids.host_gid = host_gid;
-	gme->gm_ids.fs_gid = fs_gid;
+	gme->gm_gids.host_gid = host_gid;
+	gme->gm_gids.fs_gid = fs_gid;
 }
 
 static void gme_fini(struct silofs_gmap_entry *gme)
 {
 	list_head_fini(&gme->gm_htof_lh);
 	list_head_fini(&gme->gm_ftoh_lh);
-	gme->gm_ids.host_gid = (gid_t)(-1);
-	gme->gm_ids.fs_gid = (gid_t)(-1);
+	gme->gm_gids.host_gid = (gid_t)(-1);
+	gme->gm_gids.fs_gid = (gid_t)(-1);
 }
 
 static struct silofs_gmap_entry *
@@ -402,7 +402,7 @@ idsmap_lookup_uhtof(const struct silofs_idsmap *idsm, uid_t host_uid)
 		silofs_assert_gt(idsm->idm_usize, 0);
 
 		ume = ume_by_htof_lh(itr);
-		if (ume->um_ids.host_uid == host_uid) {
+		if (ume->um_uids.host_uid == host_uid) {
 			return ume;
 		}
 		itr = itr->next;
@@ -423,7 +423,7 @@ idsmap_lookup_uftoh(const struct silofs_idsmap *idsm, uid_t fs_uid)
 		silofs_assert_gt(idsm->idm_usize, 0);
 
 		ume = ume_by_ftoh_lh(itr);
-		if (ume->um_ids.fs_uid == fs_uid) {
+		if (ume->um_uids.fs_uid == fs_uid) {
 			return ume;
 		}
 		itr = itr->next;
@@ -439,7 +439,7 @@ static int idsmap_resolve_uhtof(const struct silofs_idsmap *idsm,
 
 	ume = idsmap_lookup_uhtof(idsm, host_uid);
 	if (ume != NULL) {
-		*out_fs_uid = ume->um_ids.fs_uid;
+		*out_fs_uid = ume->um_uids.fs_uid;
 		ret = 0;
 	} else {
 		*out_fs_uid = host_uid;
@@ -456,7 +456,7 @@ static int idsmap_resolve_uftoh(const struct silofs_idsmap *idsm,
 
 	ume = idsmap_lookup_uftoh(idsm, fs_uid);
 	if (ume != NULL) {
-		*out_host_uid = ume->um_ids.host_uid;
+		*out_host_uid = ume->um_uids.host_uid;
 		ret = 0;
 	} else {
 		*out_host_uid = fs_uid;
@@ -579,7 +579,7 @@ idsmap_lookup_ghtof(const struct silofs_idsmap *idsm, gid_t host_gid)
 		silofs_assert_gt(idsm->idm_gsize, 0);
 
 		gme = gme_by_htof_lh(itr);
-		if (gme->gm_ids.host_gid == host_gid) {
+		if (gme->gm_gids.host_gid == host_gid) {
 			return gme;
 		}
 		itr = itr->next;
@@ -600,7 +600,7 @@ idsmap_lookup_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid)
 		silofs_assert_gt(idsm->idm_gsize, 0);
 
 		gme = gme_by_ftoh_lh(itr);
-		if (gme->gm_ids.fs_gid == fs_gid) {
+		if (gme->gm_gids.fs_gid == fs_gid) {
 			return gme;
 		}
 		itr = itr->next;
@@ -616,7 +616,7 @@ static int idsmap_resolve_ghtof(const struct silofs_idsmap *idsm,
 
 	gme = idsmap_lookup_ghtof(idsm, host_gid);
 	if (gme != NULL) {
-		*out_fs_gid = gme->gm_ids.fs_gid;
+		*out_fs_gid = gme->gm_gids.fs_gid;
 		ret = 0;
 	} else {
 		*out_fs_gid = host_gid;
@@ -633,7 +633,7 @@ static int idsmap_resolve_gftoh(const struct silofs_idsmap *idsm,
 
 	gme = idsmap_lookup_gftoh(idsm, fs_gid);
 	if (gme != NULL) {
-		*out_host_gid = gme->gm_ids.host_gid;
+		*out_host_gid = gme->gm_gids.host_gid;
 		ret = 0;
 	} else {
 		*out_host_gid = fs_gid;
@@ -704,8 +704,8 @@ int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm,
 int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
                             struct silofs_creds *creds)
 {
-	const struct silofs_cred *xcred = &creds->xcred;
-	struct silofs_cred *icred = &creds->icred;
+	const struct silofs_cred *xcred = &creds->host_cred;
+	struct silofs_cred *icred = &creds->fs_cred;
 
 	return silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
 	                                &icred->uid, &icred->gid);

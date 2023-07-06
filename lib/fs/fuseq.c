@@ -2948,7 +2948,7 @@ static int fuseq_check_task(struct silofs_fuseq_worker *fqw,
                             const struct silofs_task *task)
 {
 	const unsigned int op_code = task->t_oper.op_code;
-	const uid_t uid = task->t_oper.op_creds.xcred.uid;
+	const uid_t uid = task->t_oper.op_creds.host_cred.uid;
 	int err;
 
 	err = fuseq_check_opcode(fqw, op_code);

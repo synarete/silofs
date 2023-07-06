@@ -162,8 +162,8 @@ struct silofs_cred {
 
 /* external-internal credentials + time */
 struct silofs_creds {
-	struct silofs_cred      xcred;
-	struct silofs_cred      icred;
+	struct silofs_cred      host_cred;
+	struct silofs_cred      fs_cred;
 	struct timespec         ts;
 };
 

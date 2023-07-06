@@ -165,7 +165,8 @@ static bool op_is_kernel(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return !task->t_oper.op_pid && !creds->xcred.uid && !creds->xcred.gid;
+	return !task->t_oper.op_pid &&
+	       !creds->host_cred.uid && !creds->host_cred.gid;
 }
 
 static bool op_is_admin(const struct silofs_task *task)
@@ -177,7 +178,7 @@ static bool op_is_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return uid_eq(creds->xcred.uid, task->t_uber->ub_owner.uid);
+	return uid_eq(creds->host_cred.uid, task->t_uber->ub_owner.uid);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task *task)
@@ -185,7 +186,7 @@ static bool op_cap_sys_admin(const struct silofs_task *task)
 	const struct silofs_creds *creds = creds_of(task);
 
 	return (task->t_uber->ub_ctl_flags & SILOFS_UBF_ALLOWADMIN) &&
-	       silofs_user_cap_sys_admin(&creds->xcred);
+	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
 static bool op_allow_other(const struct silofs_task *task)
@@ -218,9 +219,9 @@ static int op_map_creds(struct silofs_task *task)
 	struct silofs_creds *creds = creds_of2(task);
 	int ret = 0;
 
-	creds->icred.uid = creds->xcred.uid;
-	creds->icred.gid = creds->xcred.gid;
-	creds->icred.umask = creds->xcred.umask;
+	creds->fs_cred.uid = creds->host_cred.uid;
+	creds->fs_cred.gid = creds->host_cred.gid;
+	creds->fs_cred.umask = creds->host_cred.umask;
 
 	if (!op_is_admin(task)) {
 		ret = silofs_idsmap_map_creds(task_idsmap(task), creds);

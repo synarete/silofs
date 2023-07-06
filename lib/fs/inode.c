@@ -511,7 +511,7 @@ void silofs_ii_setup_by(struct silofs_inode_info *ii,
                         ino_t parent, mode_t parent_mode,
                         mode_t mode, dev_t rdev, uint64_t gen)
 {
-	const struct silofs_cred *cred = &creds->icred;
+	const struct silofs_cred *cred = &creds->fs_cred;
 
 	ii_setup_inode(ii, cred, parent, parent_mode, mode, rdev, gen);
 	ii_update_itimes(ii, creds, SILOFS_IATTR_TIMES);
@@ -665,9 +665,9 @@ static int check_chmod(const struct silofs_task *task,
 	int ret = -SILOFS_EPERM;
 
 	if (!itype_of(mode) || has_itype(ii, mode)) {
-		if (user_isowner(&creds->icred, ii)) {
+		if (user_isowner(&creds->fs_cred, ii)) {
 			ret =  0;
-		} else if (silofs_user_cap_fowner(&creds->xcred)) {
+		} else if (silofs_user_cap_fowner(&creds->host_cred)) {
 			ret = 0;
 		}
 	}
@@ -699,7 +699,7 @@ static void update_post_chmod(const struct silofs_task *task,
 {
 	const gid_t gid = ii_gid(ii);
 	const struct silofs_creds *creds = &task->t_oper.op_creds;
-	const struct silofs_cred *cred = &creds->icred;
+	const struct silofs_cred *cred = &creds->fs_cred;
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
 	if (!gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
@@ -746,7 +746,7 @@ static int check_cap_chown(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return silofs_user_cap_chown(&creds->xcred) ? 0 : -SILOFS_EPERM;
+	return silofs_user_cap_chown(&creds->host_cred) ? 0 : -SILOFS_EPERM;
 }
 
 static int check_chown_uid(const struct silofs_task *task,
@@ -766,7 +766,7 @@ static int check_chown_gid(const struct silofs_task *task,
 	if (gid_eq(gid, ii_gid(ii))) {
 		return 0;
 	}
-	if (user_isowner(&creds->icred, ii)) {
+	if (user_isowner(&creds->fs_cred, ii)) {
 		return 0;
 	}
 	return check_cap_chown(task);
@@ -859,7 +859,7 @@ static int check_utimens(const struct silofs_task *task,
 	const struct silofs_creds *creds = creds_of(task);
 	int err;
 
-	if (user_isowner(&creds->icred, ii)) {
+	if (user_isowner(&creds->fs_cred, ii)) {
 		return 0;
 	}
 	/* TODO: check SILOFS_CAPF_FOWNER */

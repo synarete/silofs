@@ -177,14 +177,14 @@ static bool isowner(const struct silofs_task *task,
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return uid_eq(creds->icred.uid, ii_uid(ii));
+	return uid_eq(creds->fs_cred.uid, ii_uid(ii));
 }
 
 static bool has_cap_fowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return silofs_user_cap_fowner(&creds->xcred);
+	return silofs_user_cap_fowner(&creds->host_cred);
 }
 
 static int check_isdir(const struct silofs_inode_info *ii)
@@ -339,8 +339,8 @@ static int do_access(const struct silofs_task *task,
                      const struct silofs_inode_info *ii, int mode)
 {
 	const struct silofs_creds *creds = creds_of(task);
-	const uid_t uid = creds->icred.uid;
-	const gid_t gid = creds->icred.gid;
+	const uid_t uid = creds->fs_cred.uid;
+	const gid_t gid = creds->fs_cred.gid;
 	const uid_t i_uid = ii_uid(ii);
 	const gid_t i_gid = ii_gid(ii);
 	const mode_t i_mode = ii_mode(ii);
@@ -2309,7 +2309,7 @@ static int check_fsowner(const struct silofs_task *task)
 	const struct silofs_creds *creds = creds_of(task);
 	const uid_t owner_uid = task->t_uber->ub_owner.uid;
 
-	return uid_eq(creds->xcred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
+	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
 }
 
 static int check_clone_flags(int flags)

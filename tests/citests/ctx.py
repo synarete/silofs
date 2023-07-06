@@ -117,7 +117,8 @@ class TestBaseCtx:
         self._seed_random()
         return random.randbytes(rsz)
 
-    def make_bytes(self, bsz: int, val: str = "") -> bytes:
+    @staticmethod
+    def make_bytes(bsz: int, val: str = "") -> bytes:
         if not val:
             ret = bytes(bsz)
         else:

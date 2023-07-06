@@ -7,7 +7,7 @@ srcdir="${basedir}"
 _msg() { echo "$self: $*" >&2; }
 _die() { _msg "$*"; exit 1; }
 _try() { ( "$@" ) || _die "failed: $*"; }
-_run() { if [ "${VERBOSE:-0}" == "1" ]; then _msg "$@" ; fi; _try "$@"; }
+_run() { if [ "${VERBOSE:-1}" == "1" ]; then _msg "$@" ; fi; _try "$@"; }
 
 export LC_ALL=C
 unset CDPATH

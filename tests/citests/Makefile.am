@@ -33,6 +33,7 @@ silofs-citests: silofs-citests.in
 	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ; chmod +x "$@" ;
 
 pycheck-citests: $(silofs_citests_PYTHON)
-	@echo "  PYCHECK  $@"; sh "$(srcdir)/pycheck.sh" "$(srcdir)" > "$@" ;
+	@echo "  PYCHECK  $@"; \
+		VERBOSE=0 sh -c "$(srcdir)/pycheck.sh" "$(srcdir)" > "$@" ;
 
 all-local: pycheck-citests

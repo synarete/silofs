@@ -183,8 +183,8 @@ class TestCtx(TestBaseCtx):
         TestBaseCtx.__init__(self, name, cfg)
         self.cmd = cmd.Cmds()
 
-    def exec_init(self) -> None:
-        self.cmd.silofs.init(self.cfg.repodir)
+    def exec_init(self, sup_groups_user: str = "") -> None:
+        self.cmd.silofs.init(self.cfg.repodir, sup_groups_user)
 
     def exec_mkfs(self, gsize: int = 2, name: str = ""):
         gibi = 2**30

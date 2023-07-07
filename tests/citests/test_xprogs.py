@@ -22,16 +22,17 @@ def test_postgresql(tc: ctx.TestCtx) -> None:
 
 def test_rsync(tc: ctx.TestCtx) -> None:
     url = "git://git.samba.org/rsync.git"
-    tc.exec_init()
+    user = os.getlogin()
+    tc.exec_init(sup_groups_user=user)
     tc.exec_mkfs(16)
-    tc.exec_mount(allow_hostids=True)
+    tc.exec_mount(allow_hostids=True, writeback_cache=False)
     base = tc.make_path("rsync")
     os.mkdir(base)
     ret = tc.cmd.git.clone(url, base)
     if ret == 0:
-        tc.cmd.sh.run_ok("./configure --disable-md2man --disable-lz4", base)
+        tc.cmd.sh.run_ok("./configure --disable-md2man", base)
         tc.cmd.sh.run_ok("make", base)
-        tc.cmd.sh.run_ok("make check", base)  # still have 1 test failure
+        tc.cmd.sh.run_ok("make check", base)
         tc.cmd.sh.run_ok("make clean", base)
     shutil.rmtree(base)
     tc.exec_umount()

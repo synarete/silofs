@@ -5,7 +5,8 @@ on:
     tags:
       - 'v0*'
     branches:
-      - $default-branch
+      - main
+      - next
       - '!_*'
       - '!gh-pages'
   pull_request:

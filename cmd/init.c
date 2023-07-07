@@ -23,6 +23,7 @@ static const char *cmd_init_help_desc[] = {
 	"  -r, --allow-root             Enable root user and group",
 	"  -u, --allow-user=username    Allow extra known user",
 	"  -g, --allow-group=groupname  Allow extra known group",
+	"  -s, --sup-groups=username    Add username's supplementary groups",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };
@@ -30,6 +31,7 @@ static const char *cmd_init_help_desc[] = {
 struct cmd_init_in_args {
 	char   *repodir;
 	char   *repodir_real;
+	char   *sup_groups_user;
 	uid_t   root_uid;
 	gid_t   root_gid;
 	uid_t   extra_uid;
@@ -70,13 +72,14 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 		{ "allow-root", no_argument, NULL, 'r' },
 		{ "allow-user", required_argument, NULL, 'u' },
 		{ "allow-group", required_argument, NULL, 'g' },
+		{ "sup-groups", required_argument, NULL, 's' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("ru:g:V:h", opts);
+		opt_chr = cmd_getopt("ru:g:s:V:h", opts);
 		if (opt_chr == 'r') {
 			ctx->in_args.root_uid = cmd_uid_by_name("root");
 			ctx->in_args.root_gid = cmd_gid_by_name("root");
@@ -84,6 +87,8 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 			ctx->in_args.extra_uid = cmd_uid_by_name(optarg);
 		} else if (opt_chr == 'g') {
 			ctx->in_args.extra_gid = cmd_gid_by_name(optarg);
+		} else if (opt_chr == 's') {
+			ctx->in_args.sup_groups_user = cmd_strdup(optarg);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
@@ -104,6 +109,7 @@ static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 	cmd_reset_ids(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
+	cmd_pstrfree(&ctx->in_args.sup_groups_user);
 	cmd_init_ctx = NULL;
 }
 
@@ -145,6 +151,10 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	cmd_setup_ids(&fs_args->ids,
 	              ctx->in_args.root_uid, ctx->in_args.root_gid,
 	              ctx->in_args.extra_uid, ctx->in_args.extra_gid);
+	if (ctx->in_args.sup_groups_user != NULL) {
+		cmd_append_sup_gids(&fs_args->ids,
+		                    ctx->in_args.sup_groups_user);
+	}
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
 	ctx->fs_args.name = "silofs";
 }
@@ -178,6 +188,7 @@ void cmd_execute_init(void)
 		.in_args.root_gid = (gid_t)(-1),
 		.in_args.extra_uid = (uid_t)(-1),
 		.in_args.extra_gid = (gid_t)(-1),
+		.in_args.allow_root = false,
 		.fs_env = NULL
 	};
 

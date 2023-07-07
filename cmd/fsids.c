@@ -691,43 +691,66 @@ void cmd_setup_ids(struct silofs_ids *ids,
 	/* root (optional) */
 	if (root_uid != (uid_t)(-1)) {
 		puid = &uids[nuids++];
-		puid->host_uid = root_uid;
-		puid->fs_uid = root_uid;
+		puid->host_uid = puid->fs_uid = root_uid;
 	}
 	if (root_gid != (gid_t)(-1)) {
 		pgid = &gids[ngids++];
-		pgid->host_gid = 0;
-		pgid->fs_gid = 0;
+		pgid->host_gid = pgid->fs_gid = 0;
 	}
 
 	/* self (repo's owner) */
 	if (self_uid != root_uid) {
 		puid = &uids[nuids++];
-		puid->host_uid = self_uid;
-		puid->fs_uid = self_uid;
+		puid->host_uid = puid->fs_uid = self_uid;
 	}
 	if (self_gid != root_gid) {
 		pgid = &gids[ngids++];
-		pgid->host_gid = self_gid;
-		pgid->fs_gid = self_gid;
+		pgid->host_gid = pgid->fs_gid = self_gid;
 	}
 
 	/* extra (optional) */
 	if ((extra_uid != (uid_t)(-1)) &&
 	    (extra_uid != root_uid) && (extra_uid != self_uid)) {
 		puid = &uids[nuids++];
-		puid->host_uid = extra_uid;
-		puid->fs_uid = extra_uid;
+		puid->host_uid = puid->fs_uid = extra_uid;
 	}
 	if ((extra_gid != (gid_t)(-1)) &&
 	    (extra_gid != root_gid) && (extra_gid != self_gid)) {
 		pgid = &gids[ngids++];
-		pgid->host_gid = extra_gid;
-		pgid->fs_gid = extra_gid;
+		pgid->host_gid = pgid->fs_gid = extra_gid;
 	}
 
 	cmd_dup_uids(uids, nuids, &ids->uids, &ids->nuids);
 	cmd_dup_gids(gids, ngids, &ids->gids, &ids->ngids);
+}
+
+static bool cmd_has_host_gid(const struct silofs_ids *ids, gid_t gid)
+{
+	for (size_t i = 0; i < ids->ngids; ++i) {
+		if (ids->gids[i].host_gid == gid) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void cmd_append_sup_gids(struct silofs_ids *ids, const char *user)
+{
+	struct silofs_gids gids;
+	gid_t groups[64] = { (gid_t)(-1) };
+	int ngroups = (int)SILOFS_ARRAY_SIZE(groups);
+	int ret;
+
+	ret = getgrouplist(user, getgid(), groups, &ngroups);
+	if (ret < 0) {
+		cmd_dief(errno, "getgrouplist failure: ret=%d", ret);
+	}
+	for (int i = 0; i < ngroups; ++i) {
+		if (!cmd_has_host_gid(ids, groups[i])) {
+			gids.host_gid = gids.fs_gid = groups[i];
+			cmd_append_gids1(&ids->gids, &ids->ngids, &gids);
+		}
+	}
 }
 
 void cmd_reset_ids(struct silofs_ids *ids)

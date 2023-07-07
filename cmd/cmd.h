@@ -269,6 +269,8 @@ void cmd_setup_ids(struct silofs_ids *ids,
                    uid_t root_uid, gid_t root_gid,
                    uid_t extra_uid, gid_t extra_gid);
 
+void cmd_append_sup_gids(struct silofs_ids *ids, const char *user);
+
 void cmd_load_fs_idsmap(struct silofs_ids *ids, const char *repodir);
 
 void cmd_save_fs_idsmap(const struct silofs_ids *ids, const char *repodir);

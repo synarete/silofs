@@ -70,6 +70,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS],
   AX_SILOFS_CHECK_FUNCS([getpwnam_r])
   AX_SILOFS_CHECK_FUNCS([getgrnam_r])
   AX_SILOFS_CHECK_FUNCS([getgrent])
+  AX_SILOFS_CHECK_FUNCS([getgroups])
   AX_SILOFS_CHECK_FUNCS([getgrouplist])
   AX_SILOFS_CHECK_FUNCS([uuid_parse])
 ])

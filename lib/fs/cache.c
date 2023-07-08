@@ -218,12 +218,14 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	const uint64_t d[2] = {
+	const uint64_t d[4] = {
 		(uint64_t)vaddr->off,
-		(uint64_t)vaddr->stype ^ 0x736f6d6570736575ULL
+		(uint64_t)vaddr->stype,
+		(uint64_t)vaddr->len,
+		0x736f6d6570736575ULL,
 	};
 
-	return silofs_hash_xxh64(d, sizeof(d), vaddr->len);
+	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(d[0]));
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
@@ -240,13 +242,14 @@ static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
-	const uint64_t d[3] = {
+	const uint64_t d[4] = {
 		(uint64_t)uaddr->voff,
-		(uint64_t)uaddr->stype ^ 0x6c7967656e657261ULL,
+		(uint64_t)uaddr->stype | ((uint64_t)uaddr->height << 11),
 		hash_of_oaddr(&uaddr->oaddr),
+		0x6c7967656e657261ULL,
 	};
 
-	return silofs_hash_xxh64(d, sizeof(d), uaddr->height);
+	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(d[0]));
 }
 
 static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)

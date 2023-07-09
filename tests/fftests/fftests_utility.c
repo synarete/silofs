@@ -264,6 +264,17 @@ char *ft_new_path_under(struct ft_env *fte, const char *base)
 	return ft_new_path_nested(fte, base, name);
 }
 
+char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
+{
+	va_list ap;
+	char name[NAME_MAX + 1] = "";
+
+	va_start(ap, fmt);
+	vsnprintf(name, sizeof(name) - 1, fmt, ap);
+	va_end(ap);
+	return ft_strdup(fte, name);
+}
+
 char *ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...)
 {
 	va_list ap;

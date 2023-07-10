@@ -169,9 +169,9 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	cmd_load_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
 	                 ctx->in_args.name);
-	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_mount_setup_fs_env(struct cmd_mount_ctx *ctx)
@@ -203,7 +203,7 @@ static void cmd_mount_enable_signals(void)
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_fs_env(ctx);
-	cmd_reset_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.iconf.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -269,12 +269,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_require_bsec(struct cmd_mount_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

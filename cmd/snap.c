@@ -128,7 +128,7 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_reset_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.iconf.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -259,9 +259,9 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_load_fsids(struct cmd_snap_ctx *ctx)
 {
-	cmd_load_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	cmd_load_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
 	                 ctx->in_args.name);
-	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_snap_setup_fs_env(struct cmd_snap_ctx *ctx)
@@ -281,12 +281,12 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_require_bsec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)

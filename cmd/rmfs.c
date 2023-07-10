@@ -106,10 +106,10 @@ static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_load_ids(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_load_fs_uuid(&ctx->fs_args.uuid,
+	cmd_load_fs_uuid(&ctx->fs_args.iconf.uuid,
 	                 ctx->in_args.repodir_real, ctx->in_args.name);
-	cmd_reset_ids(&ctx->fs_args.ids);
-	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_reset_ids(&ctx->fs_args.iconf.ids);
+	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_rmfs_setup_fs_env(struct cmd_rmfs_ctx *ctx)
@@ -129,12 +129,12 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_require_bsec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_unref_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_rmfs_unlink_fsargs(struct cmd_rmfs_ctx *ctx)

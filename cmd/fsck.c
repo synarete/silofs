@@ -77,7 +77,7 @@ static void cmd_fsck_destroy_fs_env(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.iconf.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -130,9 +130,9 @@ static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
 {
-	cmd_load_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	cmd_load_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
 	                 ctx->in_args.name);
-	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_fsck_setup_fs_env(struct cmd_fsck_ctx *ctx)
@@ -147,12 +147,12 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_require_bsec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)

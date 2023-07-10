@@ -132,7 +132,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	silofs_uuid_generate(&ute->args->fs_args.uuid);
+	silofs_uuid_generate(&ute->args->fs_args.iconf.uuid);
 	err = silofs_fse_new(&ute->args->fs_args, &ute->fs_env);
 	silofs_assert_ok(err);
 }
@@ -368,52 +368,80 @@ static void ut_print_tests_info(const struct ut_args *args, int pre)
 	       pre ? "++++++++" : "--------");
 }
 
-#define MKID_UID(host_uid_, fs_uid_) \
-	{ .host_uid = host_uid_, .fs_uid = fs_uid_ }
+static struct silofs_uids *ut_new_uids(void)
+{
+	struct silofs_uids *uids;
 
-#define MKID_GID(host_gid_, fs_gid_) \
-	{ .host_gid = host_gid_, .fs_gid = fs_gid_ }
+	uids = ut_malloc_safe(2 * sizeof(*uids));
+	uids[0].host_uid = 0;
+	uids[0].fs_uid = 100000;
+	uids[1].host_uid = getuid();
+	uids[1].fs_uid = 100001;
+	return uids;
+}
+
+static void ut_del_uids(struct silofs_uids *uids)
+{
+	ut_free_safe(uids, 2 * sizeof(*uids));
+}
+
+static struct silofs_gids *ut_new_gids(void)
+{
+	struct silofs_gids *gids;
+
+	gids = ut_malloc_safe(2 * sizeof(*gids));
+	gids[0].host_gid = 0;
+	gids[0].fs_gid = 200000;
+	gids[1].host_gid = getgid();
+	gids[1].fs_gid = 200001;
+	return gids;
+}
+
+static void ut_del_gids(struct silofs_gids *gids)
+{
+	ut_free_safe(gids, 2 * sizeof(*gids));
+}
+
+static void ut_init_args(struct ut_args *args)
+{
+	memset(args, 0, sizeof(*args));
+	args->fs_args.iconf.ids.uids = ut_new_uids();
+	args->fs_args.iconf.ids.nuids = 2;
+	args->fs_args.iconf.ids.gids = ut_new_gids();
+	args->fs_args.iconf.ids.ngids = 2;
+	args->fs_args.uid = getuid();
+	args->fs_args.gid = getgid();
+	args->fs_args.pid = getpid();
+	args->fs_args.umask = 0002;
+	args->fs_args.repodir = ut_globals.test_dir_repo;
+	args->fs_args.name = "unitests";
+	args->fs_args.mntdir = "/";
+	args->fs_args.capacity = SILOFS_CAPACITY_SIZE_MIN;
+	args->fs_args.memwant = UT_GIGA;
+	args->fs_args.restore_forced = true;
+	args->fs_args.pedantic = ut_globals.pedantic;
+	args->fs_args.asyncwr = ut_globals.asyncwr;
+	args->fs_args.stdalloc = ut_globals.stdalloc;
+	args->program = ut_globals.program;
+	args->version = ut_globals.version;
+}
+
+static void ut_fini_args(struct ut_args *args)
+{
+	ut_del_uids(args->fs_args.iconf.ids.uids);
+	ut_del_gids(args->fs_args.iconf.ids.gids);
+	memset(args, 0, sizeof(*args));
+}
 
 void ut_execute_tests(void)
 {
-	struct silofs_uids uids[] = {
-		MKID_UID(0, 100000),
-		MKID_UID(getuid(), 100001),
-	};
-	struct silofs_gids gids[] = {
-		MKID_GID(0, 100000),
-		MKID_GID(getgid(), 100001),
-	};
-	struct ut_args args = {
-		.fs_args = {
-			.ids = {
-				.uids = uids,
-				.nuids = UT_ARRAY_SIZE(uids),
-				.gids = gids,
-				.ngids = UT_ARRAY_SIZE(gids),
-			},
-			.uid = getuid(),
-			.gid = getgid(),
-			.pid = getpid(),
-			.umask = 0002,
-			.repodir = ut_globals.test_dir_repo,
-			.name = "unitests",
-			.mntdir = "/",
-			.capacity = SILOFS_CAPACITY_SIZE_MIN,
-			.memwant = UT_GIGA,
-			.restore_forced = true,
-			.pedantic = ut_globals.pedantic,
-			.asyncwr = ut_globals.asyncwr,
-			.stdalloc = ut_globals.stdalloc,
+	struct ut_args args;
 
-		},
-		.program = ut_globals.program,
-		.version = ut_globals.version
-	};
-
+	ut_init_args(&args);
 	ut_print_tests_info(&args, 1);
 	ut_execute_tests_cycle(&args);
 	ut_print_tests_info(&args, 0);
+	ut_fini_args(&args);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

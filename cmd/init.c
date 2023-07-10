@@ -106,7 +106,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.iconf.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.sup_groups_user);
@@ -148,11 +148,11 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_setup_ids(&fs_args->ids,
+	cmd_setup_ids(&fs_args->iconf.ids,
 	              ctx->in_args.root_uid, ctx->in_args.root_gid,
 	              ctx->in_args.extra_uid, ctx->in_args.extra_gid);
 	if (ctx->in_args.sup_groups_user != NULL) {
-		cmd_append_sup_gids(&fs_args->ids,
+		cmd_append_sup_gids(&fs_args->iconf.ids,
 		                    ctx->in_args.sup_groups_user);
 	}
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
@@ -176,7 +176,7 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_idmap(const struct cmd_init_ctx *ctx)
 {
-	cmd_save_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_save_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

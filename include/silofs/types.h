@@ -466,10 +466,15 @@ struct silofs_ids {
 	size_t                  ngids;
 };
 
-/* file-system input arguments */
-struct silofs_fs_args {
+/* initialization configurations */
+struct silofs_iconf {
 	struct silofs_uuid      uuid;
 	struct silofs_ids       ids;
+};
+
+/* file-system input arguments */
+struct silofs_fs_args {
+	struct silofs_iconf     iconf;
 	const char             *repodir;
 	const char             *name;
 	const char             *mntdir;

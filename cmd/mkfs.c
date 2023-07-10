@@ -101,7 +101,7 @@ static void cmd_mkfs_destroy_fs_env(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_env(ctx);
-	cmd_reset_ids(&ctx->fs_args.ids);
+	cmd_reset_ids(&ctx->fs_args.iconf.ids);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
@@ -158,7 +158,7 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_load_fsids(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_load_fs_idsmap(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_mkfs_setup_fs_env(struct cmd_mkfs_ctx *ctx)
@@ -178,12 +178,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fs_env, &ctx->fs_args.uuid);
+	cmd_format_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
 static void cmd_mkfs_save_fs_uuid(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_save_fs_uuid(&ctx->fs_args.uuid, ctx->in_args.repodir_real,
+	cmd_save_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
 	                 ctx->in_args.name);
 }
 

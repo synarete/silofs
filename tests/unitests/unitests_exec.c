@@ -405,6 +405,7 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
+	silofs_uuid_generate(&args->fs_args.iconf.uuid);
 	args->fs_args.iconf.ids.uids = ut_new_uids();
 	args->fs_args.iconf.ids.nuids = 2;
 	args->fs_args.iconf.ids.gids = ut_new_gids();

@@ -22,9 +22,8 @@ def test_postgresql(tc: ctx.TestCtx) -> None:
 
 def test_rsync(tc: ctx.TestCtx) -> None:
     url = "git://git.samba.org/rsync.git"
-    user = os.getlogin()
-    tc.exec_init(sup_groups_user=user)
-    tc.exec_mkfs(16)
+    tc.exec_init()
+    tc.exec_mkfs(16, sup_groups=True)
     tc.exec_mount(allow_hostids=True, writeback_cache=False)
     base = tc.make_path("rsync")
     os.mkdir(base)

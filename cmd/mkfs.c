@@ -21,8 +21,9 @@ static const char *cmd_mkfs_help_desc[] = {
 	"",
 	"options:",
 	"  -s, --size=nbytes            Capacity size limit",
-	"  -u, --uid=owner-uid          Use user-id as owner of root-dir",
-	"  -g, --gid=owner-gid          Use group-id as owner of root-dir",
+	"  -u, --user=username          Make username the owner of root-dir",
+	"  -G, --sup-groups             Allow owner's supplementary groups",
+	"  -r, --allow-root             Allow root user and group",
 	"  -F, --force                  Force overwrite if already exists",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
@@ -35,9 +36,10 @@ struct cmd_mkfs_in_args {
 	char   *name;
 	char   *size;
 	char   *password;
+	char   *username;
 	long    fs_size;
-	uid_t   owner_uid;
-	gid_t   owner_gid;
+	bool    allow_root;
+	bool    with_sup_groups;
 	bool    force;
 };
 
@@ -56,8 +58,9 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "size", required_argument, NULL, 's' },
-		{ "uid", required_argument, NULL, 'u' },
-		{ "gid", required_argument, NULL, 'g' },
+		{ "user", required_argument, NULL, 'u' },
+		{ "sup-groups", no_argument, NULL, 'G' },
+		{ "allow-root", no_argument, NULL, 'r' },
 		{ "force", no_argument, NULL, 'F' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "verbose", required_argument, NULL, 'V' },
@@ -66,14 +69,16 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:u:g:V:Fp:h", opts);
+		opt_chr = cmd_getopt("s:u:GrFp:V:h", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
 		} else if (opt_chr == 'u') {
-			ctx->in_args.owner_uid = cmd_parse_str_as_uid(optarg);
-		} else if (opt_chr == 'g') {
-			ctx->in_args.owner_gid = cmd_parse_str_as_gid(optarg);
+			ctx->in_args.username = cmd_strdup(optarg);
+		} else if (opt_chr == 'G') {
+			ctx->in_args.with_sup_groups = true;
+		} else if (opt_chr == 'r') {
+			ctx->in_args.allow_root = true;
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'p') {
@@ -101,11 +106,12 @@ static void cmd_mkfs_destroy_fs_env(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_env(ctx);
-	cmd_reset_ids(&ctx->fs_args.iconf.ids);
+	cmd_iconf_reset(&ctx->fs_args.iconf);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
+	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_mkfs_ctx = NULL;
 }
@@ -136,6 +142,13 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 	cmd_check_fsname(args->name);
 }
 
+static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
+{
+	if (ctx->in_args.username == NULL) {
+		ctx->in_args.username = cmd_getlogin();
+	}
+}
+
 static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
@@ -146,19 +159,23 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	uid_t uid;
+	gid_t gid;
 
+	cmd_resolve_uidgid(ctx->in_args.username, &uid, &gid);
 	cmd_init_fs_args(fs_args);
+	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
+	if (ctx->in_args.allow_root) {
+		cmd_iconf_add_user(&fs_args->iconf, "root", false);
+	}
+	cmd_iconf_add_user(&fs_args->iconf, ctx->in_args.username,
+	                   ctx->in_args.with_sup_groups);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;
-	fs_args->uid = ctx->in_args.owner_uid;
-	fs_args->gid = ctx->in_args.owner_gid;
-}
-
-static void cmd_mkfs_load_fsids(struct cmd_mkfs_ctx *ctx)
-{
-	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
+	fs_args->uid = uid;
+	fs_args->gid = gid;
 }
 
 static void cmd_mkfs_setup_fs_env(struct cmd_mkfs_ctx *ctx)
@@ -181,10 +198,9 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 	cmd_format_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
 
-static void cmd_mkfs_save_fs_uuid(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_iconf(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_save_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
-	                 ctx->in_args.name);
+	cmd_iconf_save(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_mkfs_shutdown_fs(struct cmd_mkfs_ctx *ctx)
@@ -199,8 +215,6 @@ void cmd_execute_mkfs(void)
 	struct cmd_mkfs_ctx ctx = {
 		.in_args = {
 			.fs_size = 0,
-			.owner_uid = getuid(),
-			.owner_gid = getgid(),
 			.force = false,
 		},
 		.fs_env = NULL,
@@ -215,14 +229,14 @@ void cmd_execute_mkfs(void)
 	/* Verify user's arguments */
 	cmd_mkfs_prepare(&ctx);
 
+	/* Have proper file-system owner username */
+	cmd_mkfs_require_owner(&ctx);
+
 	/* Require password */
 	cmd_mkfs_getpass(&ctx);
 
 	/* Setup input arguments */
 	cmd_mkfs_setup_fs_args(&ctx);
-
-	/* Require ids-map */
-	cmd_mkfs_load_fsids(&ctx);
 
 	/* Prepare environment */
 	cmd_mkfs_setup_fs_env(&ctx);
@@ -234,7 +248,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_format_fs(&ctx);
 
 	/* Save top-level fs-uuid */
-	cmd_mkfs_save_fs_uuid(&ctx);
+	cmd_mkfs_save_iconf(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_shutdown_fs(&ctx);

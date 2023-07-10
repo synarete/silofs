@@ -77,7 +77,7 @@ static void cmd_fsck_destroy_fs_env(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_ids(&ctx->fs_args.iconf.ids);
+	cmd_iconf_reset(&ctx->fs_args.iconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -123,16 +123,15 @@ static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
+	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_load_iconf(struct cmd_fsck_ctx *ctx)
 {
-	cmd_load_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
-	                 ctx->in_args.name);
-	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
+	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_fsck_setup_fs_env(struct cmd_fsck_ctx *ctx)
@@ -194,7 +193,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_setup_fs_args(&ctx);
 
 	/* Require ids-map */
-	cmd_fsck_load_fsids(&ctx);
+	cmd_fsck_load_iconf(&ctx);
 
 	/* Setup execution environment */
 	cmd_fsck_setup_fs_env(&ctx);

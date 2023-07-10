@@ -20,10 +20,6 @@ static const char *cmd_init_help_desc[] = {
 	"init <repodir>",
 	"",
 	"options:",
-	"  -r, --allow-root             Enable root user and group",
-	"  -u, --allow-user=username    Allow extra known user",
-	"  -g, --allow-group=groupname  Allow extra known group",
-	"  -s, --sup-groups=username    Add username's supplementary groups",
 	"  -V, --verbose=level          Run in verbose mode (0..3)",
 	NULL
 };
@@ -31,12 +27,6 @@ static const char *cmd_init_help_desc[] = {
 struct cmd_init_in_args {
 	char   *repodir;
 	char   *repodir_real;
-	char   *sup_groups_user;
-	uid_t   root_uid;
-	gid_t   root_gid;
-	uid_t   extra_uid;
-	gid_t   extra_gid;
-	bool    allow_root;
 };
 
 struct cmd_init_ctx {
@@ -49,47 +39,18 @@ static struct cmd_init_ctx *cmd_init_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uid_t cmd_uid_by_name(const char *name)
-{
-	uid_t ret = (uid_t)(-1);
-
-	cmd_resolve_uid_by_name(name, &ret);
-	return ret;
-}
-
-static gid_t cmd_gid_by_name(const char *name)
-{
-	gid_t ret = (gid_t)(-1);
-
-	cmd_resolve_gid_by_name(name, &ret);
-	return ret;
-}
-
 static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "allow-root", no_argument, NULL, 'r' },
-		{ "allow-user", required_argument, NULL, 'u' },
-		{ "allow-group", required_argument, NULL, 'g' },
-		{ "sup-groups", required_argument, NULL, 's' },
 		{ "verbose", required_argument, NULL, 'V' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("ru:g:s:V:h", opts);
-		if (opt_chr == 'r') {
-			ctx->in_args.root_uid = cmd_uid_by_name("root");
-			ctx->in_args.root_gid = cmd_gid_by_name("root");
-		} else if (opt_chr == 'u') {
-			ctx->in_args.extra_uid = cmd_uid_by_name(optarg);
-		} else if (opt_chr == 'g') {
-			ctx->in_args.extra_gid = cmd_gid_by_name(optarg);
-		} else if (opt_chr == 's') {
-			ctx->in_args.sup_groups_user = cmd_strdup(optarg);
-		} else if (opt_chr == 'V') {
+		opt_chr = cmd_getopt("V:h", opts);
+		if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_init_help_desc);
@@ -106,10 +67,9 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
-	cmd_reset_ids(&ctx->fs_args.iconf.ids);
+	cmd_iconf_reset(&ctx->fs_args.iconf);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
-	cmd_pstrfree(&ctx->in_args.sup_groups_user);
 	cmd_init_ctx = NULL;
 }
 
@@ -146,17 +106,12 @@ static void cmd_init_prepare(struct cmd_init_ctx *ctx)
 static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	const char *name = "silofs";
 
 	cmd_init_fs_args(fs_args);
-	cmd_setup_ids(&fs_args->iconf.ids,
-	              ctx->in_args.root_uid, ctx->in_args.root_gid,
-	              ctx->in_args.extra_uid, ctx->in_args.extra_gid);
-	if (ctx->in_args.sup_groups_user != NULL) {
-		cmd_append_sup_gids(&fs_args->iconf.ids,
-		                    ctx->in_args.sup_groups_user);
-	}
+	cmd_iconf_setname(&fs_args->iconf, name);
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
-	ctx->fs_args.name = "silofs";
+	ctx->fs_args.name = name;
 }
 
 static void cmd_init_setup_fs_env(struct cmd_init_ctx *ctx)
@@ -174,23 +129,11 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 	cmd_close_repo(ctx->fs_env);
 }
 
-static void cmd_init_save_idmap(const struct cmd_init_ctx *ctx)
-{
-	cmd_save_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_execute_init(void)
 {
-	struct cmd_init_ctx ctx = {
-		.in_args.root_uid = (uid_t)(-1),
-		.in_args.root_gid = (gid_t)(-1),
-		.in_args.extra_uid = (uid_t)(-1),
-		.in_args.extra_gid = (gid_t)(-1),
-		.in_args.allow_root = false,
-		.fs_env = NULL
-	};
+	struct cmd_init_ctx ctx = { .fs_env = NULL };
 
 	/* Do all cleanups upon exits */
 	cmd_init_start(&ctx);
@@ -212,9 +155,6 @@ void cmd_execute_init(void)
 
 	/* Post-format cleanups */
 	cmd_init_close_repo(&ctx);
-
-	/* Store ids-map configuration file */
-	cmd_init_save_idmap(&ctx);
 
 	/* Post execution cleanups */
 	cmd_init_finalize(&ctx);

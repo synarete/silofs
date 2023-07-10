@@ -468,6 +468,7 @@ struct silofs_ids {
 
 /* initialization configurations */
 struct silofs_iconf {
+	struct silofs_namebuf   name;
 	struct silofs_uuid      uuid;
 	struct silofs_ids       ids;
 };

@@ -72,6 +72,8 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS],
   AX_SILOFS_CHECK_FUNCS([getgrent])
   AX_SILOFS_CHECK_FUNCS([getgroups])
   AX_SILOFS_CHECK_FUNCS([getgrouplist])
+  AX_SILOFS_CHECK_FUNCS([getlogin])
+  AX_SILOFS_CHECK_FUNCS([getlogin_r])
   AX_SILOFS_CHECK_FUNCS([uuid_parse])
 ])
 

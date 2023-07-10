@@ -111,16 +111,22 @@ class CmdSilofs(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def init(self, repodir: str, sup_groups_user: str) -> None:
+    def init(self, repodir: str) -> None:
         args = ["init", repodir]
-        if sup_groups_user:
-            args = args + [f"--sup-groups={sup_groups_user}"]
         self.execute_sub(args)
 
-    def mkfs(self, repodir_name: str, size: int, password: str) -> None:
+    def mkfs(
+        self,
+        repodir_name: str,
+        size: int,
+        password: str,
+        sup_groups: bool = False,
+    ) -> None:
         args = ["mkfs", "-s", str(size), repodir_name]
         if password:
             args = args + [f"--password={password}"]
+        if sup_groups:
+            args = args + ["--sup-groups"]
         self.execute_sub(args)
 
     def mount(

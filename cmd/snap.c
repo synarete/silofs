@@ -128,7 +128,7 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_reset_ids(&ctx->fs_args.iconf.ids);
+	cmd_iconf_reset(&ctx->fs_args.iconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -252,16 +252,15 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
+	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_snap_load_fsids(struct cmd_snap_ctx *ctx)
+static void cmd_snap_load_iconf(struct cmd_snap_ctx *ctx)
 {
-	cmd_load_fs_uuid(&ctx->fs_args.iconf.uuid, ctx->in_args.repodir_real,
-	                 ctx->in_args.name);
-	cmd_load_fs_idsmap(&ctx->fs_args.iconf.ids, ctx->in_args.repodir_real);
+	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_snap_setup_fs_env(struct cmd_snap_ctx *ctx)
@@ -304,12 +303,26 @@ static void cmd_snap_shutdown_fs(struct cmd_snap_ctx *ctx)
 	cmd_close_fs(ctx->fs_env);
 }
 
-static void cmd_snap_save_fs_uuids(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_snap_iconf(struct cmd_snap_ctx *ctx)
 {
-	cmd_save_fs_uuid(&ctx->uuid_new, ctx->in_args.repodir_real,
-	                 ctx->in_args.name);
-	cmd_save_fs_uuid(&ctx->uuid_alt, ctx->in_args.repodir_real,
-	                 ctx->in_args.snapname);
+	struct silofs_iconf snap_iconf;
+
+	cmd_iconf_clone(&snap_iconf, &ctx->fs_args.iconf);
+	cmd_iconf_setuuid(&snap_iconf, &ctx->uuid_alt);
+	cmd_iconf_setname(&snap_iconf,  ctx->in_args.snapname);
+	cmd_iconf_save(&snap_iconf, ctx->in_args.repodir_real);
+	cmd_iconf_reset(&snap_iconf);
+}
+
+static void cmd_snap_save_orig_iconf(struct cmd_snap_ctx *ctx)
+{
+	struct silofs_iconf orig_iconf;
+
+	cmd_iconf_clone(&orig_iconf, &ctx->fs_args.iconf);
+	cmd_iconf_setuuid(&orig_iconf, &ctx->uuid_new);
+	cmd_iconf_setname(&orig_iconf,  ctx->in_args.name);
+	cmd_iconf_save(&orig_iconf, ctx->in_args.repodir_real);
+	cmd_iconf_reset(&orig_iconf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -371,7 +384,7 @@ void cmd_execute_snap(void)
 	cmd_snap_setup_fs_args(&ctx);
 
 	/* Require ids-map */
-	cmd_snap_load_fsids(&ctx);
+	cmd_snap_load_iconf(&ctx);
 
 	/* Setup execution environment */
 	cmd_snap_setup_fs_env(&ctx);
@@ -388,8 +401,11 @@ void cmd_execute_snap(void)
 	/* Close repository */
 	cmd_snap_close_repo(&ctx);
 
-	/* Re-save top-level fs-uuid refs */
-	cmd_snap_save_fs_uuids(&ctx);
+	/* Save new snap iconf */
+	cmd_snap_save_snap_iconf(&ctx);
+
+	/* Re-save (overwrite) original iconf */
+	cmd_snap_save_orig_iconf(&ctx);
 
 	/* Delete environment */
 	cmd_snap_destroy_env(&ctx);

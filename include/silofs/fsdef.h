@@ -71,9 +71,6 @@
 /* repository meta descriptor-file name */
 #define SILOFS_REPO_META_FILENAME       "meta"
 
-/* repository default ids-mapping config file-name */
-#define SILOFS_REPO_IDMAP_FILENAME      "idmap.conf"
-
 /* number of sub-dirs within objects directories */
 #define SILOFS_REPO_OBJSDIR_NSUBS       (256)
 

@@ -213,6 +213,7 @@ void cmd_inspect_fs(struct silofs_fs_env *fse)
 void cmd_init_fs_args(struct silofs_fs_args *fs_args)
 {
 	memset(fs_args, 0, sizeof(*fs_args));
+	cmd_iconf_init(&fs_args->iconf);
 	fs_args->uid = getuid();
 	fs_args->gid = getgid();
 	fs_args->pid = getpid();

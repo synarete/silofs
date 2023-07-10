@@ -262,30 +262,31 @@ void cmd_getpass2(const char *path, char **out_pass);
 
 void cmd_delpass(char **pass);
 
-/* ids-mapping via conf file */
-void cmd_reset_ids(struct silofs_ids *ids);
+/* init configuration */
+void cmd_iconf_init(struct silofs_iconf *iconf);
 
-void cmd_setup_ids(struct silofs_ids *ids,
-                   uid_t root_uid, gid_t root_gid,
-                   uid_t extra_uid, gid_t extra_gid);
+void cmd_iconf_clone(struct silofs_iconf *iconf,
+                     const struct silofs_iconf *other);
 
-void cmd_append_sup_gids(struct silofs_ids *ids, const char *user);
+void cmd_iconf_reset(struct silofs_iconf *iconf);
 
-void cmd_load_fs_idsmap(struct silofs_ids *ids, const char *repodir);
+void cmd_iconf_setname(struct silofs_iconf *iconf, const char *name);
 
-void cmd_save_fs_idsmap(const struct silofs_ids *ids, const char *repodir);
+void cmd_iconf_setuuid(struct silofs_iconf *iconf,
+                       const struct silofs_uuid *uuid);
 
-void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid);
+void cmd_iconf_add_user(struct silofs_iconf *iconf,
+                        const char *user, bool with_sup_groups);
 
-void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid);
+void cmd_iconf_load(struct silofs_iconf *iconf, const char *repodir);
 
-/* fs-uuid file */
-void cmd_load_fs_uuid(struct silofs_uuid *fs_uuid,
-                      const char *repodir, const char *name);
+void cmd_iconf_save(const struct silofs_iconf *iconf, const char *repodir);
 
-void cmd_save_fs_uuid(const struct silofs_uuid *fs_uuid,
-                      const char *repodir, const char *name);
+void cmd_iconf_unlink(const struct silofs_iconf *iconf, const char *repodir);
 
-void cmd_unlink_fs_uuid(const char *repodir, const char *name);
+
+char *cmd_getlogin(void);
+
+void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid);
 
 #endif /* SILOFS_CMD_H_ */

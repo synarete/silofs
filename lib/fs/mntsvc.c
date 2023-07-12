@@ -233,9 +233,19 @@ static void close_fd(int *pfd)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool equal_path_by_strcmp(const char *path1, const char *path2)
+static bool equal_mntpath(const char *path1, const char *path2)
 {
-	return (strcmp(path1, path2) == 0);
+	struct silofs_substr sp1;
+	struct silofs_substr sp2;
+
+	silofs_substr_init(&sp1, path1);
+	silofs_substr_trim_chr(&sp1, '/', &sp1);
+
+	silofs_substr_init(&sp2, path2);
+	silofs_substr_trim_chr(&sp2, '/', &sp2);
+
+	return (sp1.len > 0) && (sp1.len == sp2.len) &&
+	       silofs_substr_nisequal(&sp1, sp2.str, sp2.len);
 }
 
 static bool equal_path_by_stat(const char *path1, const struct stat *st2)
@@ -822,7 +832,7 @@ mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 	}
 	for (size_t i = 0; i < mrules->nrules; ++i) {
 		mrule = &mrules->rules[i];
-		if (equal_path_by_strcmp(mrule->path, mntp->path)) {
+		if (equal_mntpath(mrule->path, mntp->path)) {
 			break;
 		}
 		mrule = NULL;

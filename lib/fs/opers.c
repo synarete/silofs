@@ -197,7 +197,7 @@ static bool op_allow_other(const struct silofs_task *task)
 static int op_authorize(const struct silofs_task *task)
 {
 	if (sbi_of(task) == NULL) {
-		return 0; /* case unpack */
+		return 0; /* case off-line operation XXX */
 	}
 	if (op_is_kernel(task)) {
 		return 0; /* request by kernel */
@@ -214,21 +214,6 @@ static int op_authorize(const struct silofs_task *task)
 	return -SILOFS_EPERM;
 }
 
-static int op_map_creds(struct silofs_task *task)
-{
-	struct silofs_creds *creds = creds_of2(task);
-	int ret = 0;
-
-	creds->fs_cred.uid = creds->host_cred.uid;
-	creds->fs_cred.gid = creds->host_cred.gid;
-	creds->fs_cred.umask = creds->host_cred.umask;
-
-	if (!op_is_admin(task)) {
-		ret = silofs_idsmap_map_creds(task_idsmap(task), creds);
-	}
-	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
-}
-
 static int op_map_uidgid(const struct silofs_task *task,
                          uid_t uid, gid_t gid, uid_t *out_uid, gid_t *out_gid)
 {
@@ -239,11 +224,31 @@ static int op_map_uidgid(const struct silofs_task *task,
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
+static int op_map_creds(struct silofs_task *task)
+{
+	struct silofs_creds *creds = creds_of2(task);
+	const struct silofs_cred *host_cred = &creds->host_cred;
+	struct silofs_cred *fs_cred = &creds->fs_cred;
+	int ret = 0;
+
+	fs_cred->uid = host_cred->uid;
+	fs_cred->gid = host_cred->gid;
+	fs_cred->umask = host_cred->umask;
+
+	if (!op_is_admin(task)) {
+		ret = op_map_uidgid(task, host_cred->uid, host_cred->gid,
+		                    &fs_cred->uid, &fs_cred->gid);
+	}
+	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
+}
+
 static int op_rmap_stat(const struct silofs_task *task, struct silofs_stat *st)
 {
 	int ret;
 
-	ret = silofs_idsmap_rmap_stat(task_idsmap(task), st);
+	ret = silofs_idsmap_rmap_uidgid(task_idsmap(task),
+	                                st->st.st_uid, st->st.st_gid,
+	                                &st->st.st_uid, &st->st.st_gid);
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 
@@ -251,7 +256,9 @@ static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
 {
 	int ret;
 
-	ret = silofs_idsmap_rmap_statx(task_idsmap(task), stx);
+	ret = silofs_idsmap_rmap_uidgid(task_idsmap(task),
+	                                stx->stx_uid, stx->stx_gid,
+	                                &stx->stx_uid, &stx->stx_gid);
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 

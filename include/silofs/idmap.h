@@ -41,7 +41,6 @@ struct silofs_idsmap {
 	size_t idm_ghcap;
 	size_t idm_gsize;
 	bool   idm_allow_hotids;
-
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -65,14 +64,5 @@ int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm,
 int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
                               uid_t fs_uid, gid_t fs_gid,
                               uid_t *out_fs_uid, gid_t *out_fs_gid);
-
-int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
-                            struct silofs_creds *creds);
-
-int silofs_idsmap_rmap_stat(const struct silofs_idsmap *idsm,
-                            struct silofs_stat *st);
-
-int silofs_idsmap_rmap_statx(const struct silofs_idsmap *idsm,
-                             struct statx *stx);
 
 #endif /* SILOFS_IDMAP_H_ */

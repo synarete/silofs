@@ -701,16 +701,6 @@ int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm,
 	return err1 ? err1 : err2;
 }
 
-int silofs_idsmap_map_creds(const struct silofs_idsmap *idsm,
-                            struct silofs_creds *creds)
-{
-	const struct silofs_cred *xcred = &creds->host_cred;
-	struct silofs_cred *icred = &creds->fs_cred;
-
-	return silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
-	                                &icred->uid, &icred->gid);
-}
-
 int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
                               uid_t fs_uid, gid_t fs_gid,
                               uid_t *out_host_uid, gid_t *out_host_gid)
@@ -733,16 +723,3 @@ int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
 	return err1 ? err1 : err2;
 }
 
-int silofs_idsmap_rmap_stat(const struct silofs_idsmap *idsm,
-                            struct silofs_stat *st)
-{
-	return silofs_idsmap_rmap_uidgid(idsm, st->st.st_uid, st->st.st_gid,
-	                                 &st->st.st_uid, &st->st.st_gid);
-}
-
-int silofs_idsmap_rmap_statx(const struct silofs_idsmap *idsm,
-                             struct statx *stx)
-{
-	return silofs_idsmap_rmap_uidgid(idsm, stx->stx_uid, stx->stx_gid,
-	                                 &stx->stx_uid, &stx->stx_gid);
-}

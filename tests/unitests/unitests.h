@@ -482,6 +482,7 @@ void ut_sync_drop(struct ut_env *ute);
 
 void ut_drop_caches_fully(struct ut_env *ute);
 
+void ut_timedout_ok(struct ut_env *ute);
 
 void ut_reload_fs_ok(struct ut_env *ute);
 

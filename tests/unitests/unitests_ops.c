@@ -711,6 +711,17 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
+static int ut_timedout(struct ut_env *ute)
+{
+	struct silofs_task task;
+	int ret;
+
+	ut_setup_task(ute, &task);
+	ret = silofs_fs_timedout(&task, SILOFS_F_TIMEOUT);
+	ut_release_task(ute, &task);
+	return sanitize_status(ret);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #define ut_expect_status(err_, status_) \
@@ -1841,6 +1852,14 @@ void ut_drop_caches_fully(struct ut_env *ute)
 	ut_expect_eq(st.ncache_unodes, 1);
 	ut_expect_eq(st.ncache_vblocks, 0);
 	ut_expect_eq(st.ncache_vnodes, 0);
+}
+
+void ut_timedout_ok(struct ut_env *ute)
+{
+	int err;
+
+	err = ut_timedout(ute);
+	ut_expect_ok(err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

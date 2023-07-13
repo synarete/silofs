@@ -64,6 +64,7 @@ static void ut_fillfs_simple(struct ut_env *ute)
 		off = st.st_size;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
 		ut_flush_ok(ute, ino, false);
+		ut_timedout_ok(ute);
 	}
 	for (size_t i = 0; i < 10; ++i) {
 		ut_getattr_reg(ute, ino, &st);
@@ -71,6 +72,7 @@ static void ut_fillfs_simple(struct ut_env *ute)
 		len = calc_wr_size(&stv2, bsz);
 		off = st.st_size;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
+		ut_timedout_ok(ute);
 	}
 	ut_release_file(ute, ino);
 	ut_unlink_file(ute, dino, name);
@@ -109,6 +111,7 @@ static void ut_fillfs_mixed(struct ut_env *ute)
 		ut_release_file(ute, ino);
 		ut_statfs_ok(ute, dino, &stv);
 		idx_end = idx;
+		ut_timedout_ok(ute);
 	}
 	idx = 0;
 	while (idx < idx_end) {
@@ -142,6 +145,7 @@ static void ut_fillfs_append_(struct ut_env *ute, ino_t ino, size_t bsz)
 		nwr = 0;
 		ut_write_nospc(ute, ino, buf, bsz, st.st_size, &nwr);
 		ut_statfs_ok(ute, ino, &stv);
+		ut_timedout_ok(ute);
 	}
 	ut_statfs_ok(ute, ino, &stv);
 	fs_size_bytes = stv.f_blocks * stv.f_frsize;

@@ -56,7 +56,7 @@
 	(SILOFS_CMD_TAIL_MAX / sizeof(struct fuse_forget_one))
 
 /* max size for read/write I/O copy-buffer in splice-pipe mode */
-#define FUSEQ_IOBUF_MAX SILOFS_PAGE_SIZE_MIN
+#define FUSEQ_RWITER_THRESH     (SILOFS_PAGE_SIZE_MIN)
 
 /* splice-mode flags */
 #define FUSEQ_SPLICE_FLAGS      (SPLICE_F_MOVE | SPLICE_F_NONBLOCK)
@@ -2310,7 +2310,7 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 	                            fcc->args->out.read.nrd, err);
 }
 
-static bool fuseq_cap_splice_out(const struct silofs_fuseq_worker *fqw)
+static bool fuseq_cap_read_iter(const struct silofs_fuseq_worker *fqw)
 {
 	return fuseq_cap_splice_write(fqw->fq);
 }
@@ -2318,11 +2318,12 @@ static bool fuseq_cap_splice_out(const struct silofs_fuseq_worker *fqw)
 static int do_read(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	const size_t rd_size = fcc->in->u.read.arg.size;
+	const size_t rd_iter_thresh = FUSEQ_RWITER_THRESH;
 	int ret;
 
 	check_fh(fcc->task, fcc->ino, fcc->in->u.read.arg.fh);
 
-	if ((rd_size > FUSEQ_IOBUF_MAX) && fuseq_cap_splice_out(fcc->fqw)) {
+	if ((rd_size >= rd_iter_thresh) && fuseq_cap_read_iter(fcc->fqw)) {
 		ret = do_read_iter(fcc);
 	} else {
 		ret = do_read_buf(fcc);
@@ -2549,10 +2550,11 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	const size_t wsz = fcc->in->u.write.arg.size;
+	const size_t wr_size = fcc->in->u.write.arg.size;
+	const size_t wr_iter_thresh = FUSEQ_RWITER_THRESH;
 
-	return (wsz <= FUSEQ_IOBUF_MAX) ?
-	       do_write_buf(fcc) : do_write_iter(fcc);
+	return (wr_size >= wr_iter_thresh) ?
+	       do_write_iter(fcc) : do_write_buf(fcc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3235,7 +3237,8 @@ static bool fuseq_has_long_write_in(const struct silofs_fuseq_worker *fqw)
 	const struct silofs_fuseq_in *in = fuseq_in_of(fqw);
 	const int opc = (int)in->u.hdr.hdr.opcode;
 
-	return (opc == FUSE_WRITE) && (in->u.write.arg.size > FUSEQ_IOBUF_MAX);
+	return (opc == FUSE_WRITE) &&
+	       (in->u.write.arg.size >= FUSEQ_RWITER_THRESH);
 }
 
 /*

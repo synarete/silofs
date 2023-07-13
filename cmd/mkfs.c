@@ -165,17 +165,35 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 	cmd_resolve_uidgid(ctx->in_args.username, &uid, &gid);
 	cmd_init_fs_args(fs_args);
 	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
-	if (ctx->in_args.allow_root) {
-		cmd_iconf_add_user(&fs_args->iconf, "root", false);
-	}
-	cmd_iconf_add_user(&fs_args->iconf, ctx->in_args.username,
-	                   ctx->in_args.with_sup_groups);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;
 	fs_args->uid = uid;
 	fs_args->gid = gid;
+}
+
+static void cmd_mkfs_update_iconf(struct cmd_mkfs_ctx *ctx)
+{
+	struct silofs_iconf *iconf = &ctx->fs_args.iconf;
+	const char *username = ctx->in_args.username;
+	bool with_sup_groups = ctx->in_args.with_sup_groups;
+	char *selfname = NULL;
+	char *rootname = NULL;
+
+	selfname = cmd_getpwuid(getuid());
+	rootname = cmd_getpwuid(0);
+	if (ctx->in_args.allow_root && strcmp(rootname, username)) {
+		cmd_iconf_add_user(iconf, rootname, false);
+	}
+	if (strcmp(selfname, username)) {
+		cmd_iconf_add_user(iconf, selfname, false);
+	}
+	if (strlen(username)) {
+		cmd_iconf_add_user(iconf, username, with_sup_groups);
+	}
+	cmd_pstrfree(&selfname);
+	cmd_pstrfree(&rootname);
 }
 
 static void cmd_mkfs_setup_fs_env(struct cmd_mkfs_ctx *ctx)
@@ -213,10 +231,7 @@ static void cmd_mkfs_shutdown_fs(struct cmd_mkfs_ctx *ctx)
 void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
-		.in_args = {
-			.fs_size = 0,
-			.force = false,
-		},
+		.in_args = { .fs_size = 0, },
 		.fs_env = NULL,
 	};
 
@@ -237,6 +252,9 @@ void cmd_execute_mkfs(void)
 
 	/* Setup input arguments */
 	cmd_mkfs_setup_fs_args(&ctx);
+
+	/* Add user-ids configuration */
+	cmd_mkfs_update_iconf(&ctx);
 
 	/* Prepare environment */
 	cmd_mkfs_setup_fs_env(&ctx);

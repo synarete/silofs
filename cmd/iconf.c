@@ -891,6 +891,14 @@ char *cmd_getlogin(void)
 	return cmd_strdup(name);
 }
 
+char *cmd_getpwuid(uid_t uid)
+{
+	char name[NAME_MAX + 1] = "";
+
+	cmd_resolve_uid_to_name(uid, name, sizeof(name) - 1);
+	return cmd_strdup(name);
+}
+
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 {
 	struct passwd pwd = { .pw_uid = (uid_t)(-1) };

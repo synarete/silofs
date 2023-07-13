@@ -37,7 +37,7 @@ static const char *cmd_mount_help_desc[] = {
 	"      --nodev                  Do not allow access to device files",
 	"  -i  --allow-hostids          Use local host uid/gid",
 	"  -A  --no-allow-other         Do not allow other users",
-	"  -W  --writeback-cache        Enable write-back cache mode",
+	"  -W  --writeback-cache=0|1    Write-back cache mode",
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
 	"  -M, --stdalloc               Use standard C allocator",

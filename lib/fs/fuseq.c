@@ -3508,9 +3508,14 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 	coni->max_readahead = rdwr_size;
 	coni->time_gran = 1;
 	coni->max_inlen = buff_size;
-	/* values as defaults in libfuse:lib/fuse_lowlevel.c */
+	/*
+	 * Follow similar values as those at libfuse:lib/fuse_lowlevel.c
+	 * However, libfuse has: congestion_threshold = max_background * 3 / 4
+	 * but it is hard to understand from its code or kernel code why it is
+	 * defined that way. Needs further investigation.
+	 */
 	coni->max_background = (1 << 16) - 1;
-	coni->congestion_threshold = fq->fq_coni.max_background * 3 / 4;
+	coni->congestion_threshold = fq->fq_coni.max_background / 2;
 	return 0;
 }
 

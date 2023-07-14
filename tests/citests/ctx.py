@@ -187,7 +187,11 @@ class TestCtx(TestBaseCtx):
         self.cmd.silofs.init(self.cfg.repodir)
 
     def exec_mkfs(
-        self, gsize: int = 2, name: str = "", sup_groups: bool = False
+        self,
+        gsize: int = 2,
+        name: str = "",
+        sup_groups: bool = False,
+        allow_root: bool = False,
     ):
         gibi = 2**30
         size = gsize * gibi

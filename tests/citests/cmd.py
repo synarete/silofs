@@ -121,12 +121,15 @@ class CmdSilofs(CmdExec):
         size: int,
         password: str,
         sup_groups: bool = False,
+        allow_root: bool = False,
     ) -> None:
         args = ["mkfs", "-s", str(size), repodir_name]
         if password:
             args = args + [f"--password={password}"]
         if sup_groups:
             args = args + ["--sup-groups"]
+        if allow_root:
+            args = args + ["--allow-root"]
         self.execute_sub(args)
 
     def mount(

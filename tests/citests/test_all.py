@@ -17,6 +17,7 @@ TESTS = [
     test_basic.test_hello_world,
     test_basic.test_fscapacity,
     test_basic.test_show,
+    test_basic.test_mkfs_mount_with_opts,
     test_io.test_rw_text,
     test_io.test_rw_rands,
     test_io.test_reload,

@@ -85,3 +85,16 @@ def test_show(tc: ctx.TestCtx) -> None:
     tc.expect.gt(len(stx), 1)
     os.rmdir(base)
     tc.exec_umount()
+
+
+def test_mkfs_mount_with_opts(tc: ctx.TestCtx) -> None:
+    fsname = "0123456789abcdef"
+    tc.exec_init()
+    tc.exec_mkfs(gsize=123, name=fsname, sup_groups=True, allow_root=True)
+    tc.exec_mount(name=fsname, allow_hostids=True, writeback_cache=False)
+    tds = tc.make_tds(1, "A", 2**21)
+    tds.do_makedirs()
+    tds.do_write()
+    tds.do_read()
+    tds.do_unlink()
+    tc.exec_umount()

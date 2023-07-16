@@ -285,9 +285,9 @@ void cmd_iconf_save(const struct silofs_iconf *iconf, const char *repodir);
 void cmd_iconf_unlink(const struct silofs_iconf *iconf, const char *repodir);
 
 
-char *cmd_getlogin(void);
-
 char *cmd_getpwuid(uid_t uid);
+
+char *cmd_getusername(void);
 
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid);
 

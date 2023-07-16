@@ -879,16 +879,20 @@ void cmd_iconf_setuuid(struct silofs_iconf *iconf,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-char *cmd_getlogin(void)
+static int cmd_try_getlogin(char **out_name)
 {
 	char name[LOGIN_NAME_MAX + 1] = "";
 	int err;
 
 	err = getlogin_r(name, sizeof(name) - 1);
-	if (err || !strlen(name)) {
-		cmd_dief(errno, "getlogin failed");
+	if (err) {
+		return err;
 	}
-	return cmd_strdup(name);
+	if (!strlen(name)) {
+		return -ENOENT;
+	}
+	*out_name = cmd_strdup(name);
+	return 0;
 }
 
 char *cmd_getpwuid(uid_t uid)
@@ -897,6 +901,18 @@ char *cmd_getpwuid(uid_t uid)
 
 	cmd_resolve_uid_to_name(uid, name, sizeof(name) - 1);
 	return cmd_strdup(name);
+}
+
+char *cmd_getusername(void)
+{
+	char *name = NULL;
+	int err;
+
+	err = cmd_try_getlogin(&name);
+	if (err) {
+		name = cmd_getpwuid(geteuid());
+	}
+	return name;
 }
 
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)

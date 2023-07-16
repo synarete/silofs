@@ -145,7 +145,7 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->in_args.username == NULL) {
-		ctx->in_args.username = cmd_getlogin();
+		ctx->in_args.username = cmd_getusername();
 	}
 }
 

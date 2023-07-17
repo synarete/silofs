@@ -487,8 +487,8 @@ bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
 	return treeid_isequal(treeid1, treeid2);
 }
 
-static void treeid_as_u64(const struct silofs_treeid *treeid,
-                          uint64_t *out_u1, uint64_t *out_u2)
+void silofs_treeid_as_u128(const struct silofs_treeid *treeid,
+                           uint64_t *out_u1, uint64_t *out_u2)
 {
 	STATICASSERT_EQ(sizeof(treeid->uuid.uu), 16);
 
@@ -631,7 +631,7 @@ static uint64_t blobid_as_u64_ta(const struct silofs_blobid *blobid)
 	uint64_t u2;
 	const uint64_t uoff = (uint64_t)(blobid->voff);
 
-	treeid_as_u64(&blobid->treeid, &u1, &u2);
+	silofs_treeid_as_u128(&blobid->treeid, &u1, &u2);
 	return uoff ^ u1 ^ u2;
 }
 

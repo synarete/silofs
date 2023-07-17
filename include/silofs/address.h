@@ -236,10 +236,13 @@ void silofs_treeid_generate(struct silofs_treeid *treeid);
 bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
                            const struct silofs_treeid *treeid2);
 
-void silofs_treeid128_set(struct silofs_treeid128 *treeid196,
+void silofs_treeid_as_u128(const struct silofs_treeid *treeid,
+                           uint64_t *out_u1, uint64_t *out_u2);
+
+void silofs_treeid128_set(struct silofs_treeid128 *treeid128,
                           const struct silofs_treeid *treeid);
 
-void silofs_treeid128_parse(const struct silofs_treeid128 *treeid196,
+void silofs_treeid128_parse(const struct silofs_treeid128 *treeid128,
                             struct silofs_treeid *treeid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

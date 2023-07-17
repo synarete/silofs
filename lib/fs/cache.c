@@ -216,40 +216,41 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 	return silofs_blobid_hash(blobid);
 }
 
-static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
-{
-	const uint64_t d[4] = {
-		(uint64_t)vaddr->off,
-		(uint64_t)vaddr->stype,
-		(uint64_t)vaddr->len,
-		0x736f6d6570736575ULL,
-	};
-
-	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(d[0]));
-}
-
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return silofs_blobid_hash(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
+	return hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
 }
 
-static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
+static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	const uint64_t pos_len = (uint64_t)(oaddr->pos) + oaddr->len;
+	uint64_t d[3];
+	uint64_t voff = (uint64_t)vaddr->off;
 
-	return hash_of_bkaddr(&oaddr->bka) ^ ~pos_len ^ 0x646f72616e646f6dULL;
+	d[0] = voff + vaddr->len - 1;
+	d[1] = 0xC0000001ULL / ((uint64_t)vaddr->stype + 1);
+	d[2] = 0x5D21C111ULL / (silofs_clz64(voff) + 1); /* M77232917 */
+
+	return silofs_hash_xxh64(d, sizeof(d), silofs_popcount64(voff));
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
-	const uint64_t d[4] = {
-		(uint64_t)uaddr->voff,
-		(uint64_t)uaddr->stype | ((uint64_t)uaddr->height << 11),
-		hash_of_oaddr(&uaddr->oaddr),
-		0x6c7967656e657261ULL,
-	};
+	uint64_t d[12];
+	uint64_t voff = (uint64_t)uaddr->voff;
 
-	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(d[0]));
+	silofs_treeid_as_u128(&uaddr->oaddr.bka.blobid.treeid, &d[0], &d[1]);
+	d[2] = (uint64_t)(uaddr->oaddr.bka.blobid.voff);
+	d[3] = uaddr->oaddr.bka.blobid.size;
+	d[4] = uaddr->oaddr.bka.blobid.vspace;
+	d[5] = uaddr->oaddr.bka.blobid.height;
+	d[6] = (uint64_t)(uaddr->oaddr.bka.lba);
+	d[7] = uaddr->oaddr.len;
+	d[8] = (uint64_t)(uaddr->oaddr.pos);
+	d[9] = 0x646f72616e646f6dULL + uaddr->height;
+	d[10] = 0x736f6d6570736575ULL - uaddr->stype;
+	d[11] = voff;
+
+	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(voff));
 }
 
 static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)
@@ -474,9 +475,9 @@ static bool ce_need_promote_hmap(const struct silofs_cache_elem *ce,
 	const struct silofs_cache_elem *ce_next = NULL;
 	bool ret = false;
 
-	if (next != hlnk) {
+	if ((next != hlnk) && (next->next != hlnk)) {
 		ce_next = ce_from_htb_link(next);
-		ret = (ce->ce_htb_hitcnt > (ce_next->ce_htb_hitcnt + 4));
+		ret = (ce->ce_htb_hitcnt > (ce_next->ce_htb_hitcnt + 2));
 	}
 	return ret;
 }

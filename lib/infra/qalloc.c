@@ -88,12 +88,13 @@ struct silofs_page_info {
 	struct silofs_list_head  lh;
 	struct silofs_page_info *prev;
 	union silofs_page       *pg;
-	size_t  pg_index;
-	size_t  pg_count; /* num pages free/used */
-	int     pg_free;
-	int     slab_index;
-	int     slab_nused;
-	int     slab_nelems;
+	uint64_t        pg_index;
+	uint64_t        pg_count; /* num pages free/used */
+	uint16_t        pg_free;
+	uint16_t        pg_reserved;
+	int32_t         slab_index;
+	int32_t         slab_nused;
+	int32_t         slab_nelems;
 } __attribute__((__aligned__(SILOFS_CACHELINE_SIZE_DFL)));
 
 
@@ -666,7 +667,6 @@ static int pgal_check_by_page(const struct silofs_pgal *pgal,
 	return 0;
 }
 
-
 static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
                                struct silofs_page_info *pgi, size_t npgs)
 {
@@ -691,7 +691,9 @@ static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
 static void pgal_update_released(const struct silofs_pgal *pgal,
                                  struct silofs_page_info *pgi, size_t npgs)
 {
-	if (npgs >= MPAGES_LARGE_CHUNK) {
+	const size_t npgs_punch_threshold = (SILOFS_UMEGA / MPAGE_SIZE);
+
+	if (npgs >= npgs_punch_threshold) {
 		pgal_punch_hole_at(pgal, pgi, npgs);
 	}
 }

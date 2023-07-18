@@ -494,3 +494,41 @@ size_t ft_page_size(void)
 {
 	return (size_t)silofs_sc_page_size();
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int ft_dirent_isdot(const struct dirent64 *dent)
+{
+	return (strcmp(".", dent->d_name) == 0);
+}
+
+int ft_dirent_isdotdot(const struct dirent64 *dent)
+{
+	return (strcmp("..", dent->d_name) == 0);
+}
+
+int ft_dirent_isxdot(const struct dirent64 *dent)
+{
+	return ft_dirent_isdot(dent) || ft_dirent_isdotdot(dent);
+}
+
+mode_t ft_dirent_gettype(const struct dirent64 *dent)
+{
+	const mode_t d_type = (mode_t)dent->d_type;
+
+	return DTTOIF(d_type);
+}
+
+int ft_dirent_isdir(const struct dirent64 *dent)
+{
+	const mode_t mode = ft_dirent_gettype(dent);
+
+	return S_ISDIR(mode);
+}
+
+int ft_dirent_isreg(const struct dirent64 *dent)
+{
+	const mode_t mode = ft_dirent_gettype(dent);
+
+	return S_ISREG(mode);
+}

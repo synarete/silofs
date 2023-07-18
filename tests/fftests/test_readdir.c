@@ -16,43 +16,6 @@
  */
 #include "fftests.h"
 
-
-static int isdot(const struct dirent64 *dent)
-{
-	return (strcmp(".", dent->d_name) == 0);
-}
-
-static int isdotdot(const struct dirent64 *dent)
-{
-	return (strcmp("..", dent->d_name) == 0);
-}
-
-static int is_dot_or_dotdot(const struct dirent64 *dent)
-{
-	return isdot(dent) || isdotdot(dent);
-}
-
-static mode_t dirent_gettype(const struct dirent64 *dent)
-{
-	const mode_t d_type = (mode_t)dent->d_type;
-
-	return DTTOIF(d_type);
-}
-
-static int dirent_isdir(const struct dirent64 *dent)
-{
-	const mode_t mode = dirent_gettype(dent);
-
-	return S_ISDIR(mode);
-}
-
-static int dirent_isreg(const struct dirent64 *dent)
-{
-	const mode_t mode = dirent_gettype(dent);
-
-	return S_ISREG(mode);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct ft_getdents_ctx {
@@ -146,10 +109,10 @@ static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 		ft_expect_eq(off, pos);
 		ft_getdent(dfd, &dent);
 		off = dent.d_off;
-		if (is_dot_or_dotdot(&dent)) {
+		if (ft_dirent_isxdot(&dent)) {
 			continue;
 		}
-		ft_expect_true(dirent_isreg(&dent));
+		ft_expect_true(ft_dirent_isreg(&dent));
 		cnt++;
 	}
 	for (size_t j = 0; j < lim; ++j) {
@@ -207,12 +170,12 @@ static void test_readdir_unlink_(struct ft_env *fte, size_t lim)
 		if (!strlen(dent.d_name)) {
 			break;
 		}
-		if (is_dot_or_dotdot(&dent)) {
+		if (ft_dirent_isxdot(&dent)) {
 			off = dent.d_off;
 			continue;
 		}
-		ft_expect_true(dirent_isreg(&dent));
-		ft_expect_false(dirent_isdir(&dent));
+		ft_expect_true(ft_dirent_isreg(&dent));
+		ft_expect_false(ft_dirent_isdir(&dent));
 
 		path1 = ft_new_path_nested(fte, path0, dent.d_name);
 		ft_stat(path1, &st);
@@ -283,10 +246,10 @@ static void test_readdir_getdents(struct ft_env *fte, size_t lim)
 		for (size_t j = 0; j < nde; ++j) {
 			dent = &dents[j];
 			off = dent->d_off;
-			if (is_dot_or_dotdot(dent)) {
+			if (ft_dirent_isxdot(dent)) {
 				continue;
 			}
-			ft_expect_true(dirent_isreg(dent));
+			ft_expect_true(ft_dirent_isreg(dent));
 			cmp = strncmp(dent->d_name, prefix, strlen(prefix));
 			ft_expect_eq(cmp, 0);
 			cnt++;
@@ -351,8 +314,8 @@ static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 		for (size_t i = 0; i < gd_ctx->ndents; ++i) {
 			dent = &gd_ctx->dents[i];
 			off = dent->d_off;
-			ft_expect_true(dirent_isdir(dent));
-			if (is_dot_or_dotdot(dent)) {
+			ft_expect_true(ft_dirent_isdir(dent));
+			if (ft_dirent_isxdot(dent)) {
 				continue;
 			}
 			cnt++;
@@ -364,8 +327,8 @@ static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 		ft_expect_gt(gd_ctx->ndents, 0);
 		for (size_t j = 0; j < gd_ctx->ndents; ++j) {
 			dent = &gd_ctx->dents[j];
-			ft_expect_true(dirent_isdir(dent));
-			if (is_dot_or_dotdot(dent)) {
+			ft_expect_true(ft_dirent_isdir(dent));
+			if (ft_dirent_isxdot(dent)) {
 				continue;
 			}
 			name = dent->d_name;
@@ -433,10 +396,10 @@ static void test_readdir_unlinkat_(struct ft_env *fte, size_t lim)
 		}
 		for (size_t j = 0; j < gd_ctx->ndents; ++j) {
 			dent = &gd_ctx->dents[j];
-			if (is_dot_or_dotdot(dent)) {
+			if (ft_dirent_isxdot(dent)) {
 				continue;
 			}
-			ft_expect_true(dirent_isreg(dent));
+			ft_expect_true(ft_dirent_isreg(dent));
 			ft_unlinkat(dfd1, dent->d_name, 0);
 			cnt++;
 		}
@@ -497,7 +460,7 @@ static void test_readdir_nox_(struct ft_env *fte, size_t cnt)
 	ft_expect_le(gd_ctx->ndents, cnt + 2);
 	for (size_t i = 0; i < gd_ctx->ndents; ++i) {
 		dent = &gd_ctx->dents[i];
-		if (is_dot_or_dotdot(dent)) {
+		if (ft_dirent_isxdot(dent)) {
 			continue;
 		}
 		ft_fstatat_err(dfd, dent->d_name, 0, -EACCES);
@@ -550,7 +513,7 @@ test_readdir_unlink_names_arr_(struct ft_env *fte,
 		for (size_t i = 0; i < gd_ctx->ndents; ++i) {
 			dent = &gd_ctx->dents[i];
 			doff = dent->d_off;
-			if (is_dot_or_dotdot(dent)) {
+			if (ft_dirent_isxdot(dent)) {
 				continue;
 			}
 			ft_unlinkat(dfd, dent->d_name, 0);

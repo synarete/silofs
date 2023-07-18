@@ -61,7 +61,7 @@ static void ft_show_program_version(void);
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
  *                                                                           *
- *            Silofs' functional file-system testing ("black-box")           *
+ *            Silofs' file-system functional testing ("black-box")           *
  *                                                                           *
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

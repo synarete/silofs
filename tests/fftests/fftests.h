@@ -228,6 +228,19 @@ long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
 
 size_t ft_page_size(void);
 
+/* Directory-entry helpers */
+int ft_dirent_isdot(const struct dirent64 *dent);
+
+int ft_dirent_isdotdot(const struct dirent64 *dent);
+
+int ft_dirent_isxdot(const struct dirent64 *dent);
+
+int ft_dirent_isdir(const struct dirent64 *dent);
+
+int ft_dirent_isreg(const struct dirent64 *dent);
+
+mode_t ft_dirent_gettype(const struct dirent64 *dent);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /* Wrapper over system calls */
 void ft_syncfs(int fd);

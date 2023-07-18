@@ -359,62 +359,6 @@ static void test_mkdir_tree_deep(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
- * Expects successful rmdir(3p) to update the last data modification and last
- * file status change time-stamps of the parent directory
- */
-static void test_rmdir_mctime(struct ft_env *fte)
-{
-	struct stat st[2];
-	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = ft_new_path_under(fte, path1);
-
-	ft_mkdir(path1, 0700);
-	ft_mkdir(path2, 0700);
-	ft_stat(path1, &st[0]);
-	ft_expect_dir(st[0].st_mode);
-	ft_suspends(fte, 2);
-	ft_rmdir(path2);
-	ft_stat_err(path2, -ENOENT);
-	ft_stat(path1, &st[1]);
-	ft_expect_mtime_gt(&st[0], &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
-	ft_rmdir(path1);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/*
- * Expects successful rmdir(3p) on empty directory while still referenced by
- * open file-descriptor.
- */
-static void test_rmdir_openat(struct ft_env *fte)
-{
-	int dfd1 = -1;
-	int dfd2 = -1;
-	struct stat st;
-	const char *name = ft_new_name_unique(fte);
-	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = ft_new_path_nested(fte, path1, name);
-
-	ft_mkdir(path1, 0700);
-	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
-	ft_mkdirat(dfd1, name, 0700);
-	ft_openat(dfd1, name, O_DIRECTORY | O_RDONLY, 0, &dfd2);
-	ft_fstat(dfd1, &st);
-	ft_expect_dir(st.st_mode);
-	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
-	ft_expect_eq(st.st_nlink, 2);
-	ft_rmdir(path2);
-	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
-	ft_expect_le(st.st_nlink, 1); /* TODO: why not eq 1 ? */
-	ft_rmdir(path1);
-	ft_close(dfd1);
-	ft_close(dfd2);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/*
  * Expects mkdir(3p) to preserve S_ISGID of parent directory
  */
 static void test_mkdir_setgid(struct ft_env *fte)
@@ -465,6 +409,116 @@ static void test_mkdirat_nested(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects successful rmdir(3p) to update the last data modification and last
+ * file status change time-stamps of the parent directory
+ */
+static void test_rmdir_mctime(struct ft_env *fte)
+{
+	struct stat st[2];
+	const char *path1 = ft_new_path_unique(fte);
+	const char *path2 = ft_new_path_under(fte, path1);
+
+	ft_mkdir(path1, 0700);
+	ft_mkdir(path2, 0700);
+	ft_stat(path1, &st[0]);
+	ft_expect_dir(st[0].st_mode);
+	ft_suspends(fte, 2);
+	ft_rmdir(path2);
+	ft_stat_err(path2, -ENOENT);
+	ft_stat(path1, &st[1]);
+	ft_expect_mtime_gt(&st[0], &st[1]);
+	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_rmdir(path1);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects successful rmdir(3p) on empty directory while still referenced by
+ * open file-descriptor.
+ */
+static void test_rmdir_openat(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	const char *name = ft_new_name_unique(fte);
+	const char *path1 = ft_new_path_unique(fte);
+	const char *path2 = ft_new_path_nested(fte, path1, name);
+	int dfd1 = -1;
+	int dfd2 = -1;
+
+	ft_mkdir(path1, 0700);
+	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
+	ft_mkdirat(dfd1, name, 0700);
+	ft_openat(dfd1, name, O_DIRECTORY | O_RDONLY, 0, &dfd2);
+	ft_fstat(dfd1, &st);
+	ft_expect_dir(st.st_mode);
+	ft_fstat(dfd2, &st);
+	ft_expect_dir(st.st_mode);
+	ft_expect_eq(st.st_nlink, 2);
+	ft_rmdir(path2);
+	ft_fstat(dfd2, &st);
+	ft_expect_dir(st.st_mode);
+	ft_expect_le(st.st_nlink, 1); /* TODO: why not eq 1 ? */
+	ft_rmdir(path1);
+	ft_close(dfd1);
+	ft_close(dfd2);
+}
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects successful getdents(2) after rmdir(3p) on empty directory while
+ * still referenced by open file-descriptor.
+ *
+ * Note: current FUSE implementation does not allow readdir on dfd2 (although
+ * you can do it on ext4 of xfs).
+ */
+static void test_rmdir_getdents(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	struct dirent64 dent = { .d_off = -1 };
+	const char *name2 = ft_new_name_unique(fte);
+	const char *name3 = ft_new_name_unique(fte);
+	const char *path1 = ft_new_path_unique(fte);
+	const char *path2 = ft_new_path_nested(fte, path1, name2);
+	loff_t pos = -1;
+	int dfd1 = -1;
+	int dfd2 = -1;
+	int fd3 = -1;
+
+	ft_mkdir(path1, 0700);
+	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
+	ft_mkdirat(dfd1, name2, 0700);
+	ft_openat(dfd1, name2, O_DIRECTORY | O_RDONLY, 0, &dfd2);
+	ft_openat(dfd1, name3, O_CREAT | O_RDWR, 0600, &fd3);
+	ft_fstat(dfd1, &st);
+	ft_expect_dir(st.st_mode);
+	ft_expect_eq(st.st_nlink, 3);
+	ft_fstat(dfd2, &st);
+	ft_expect_dir(st.st_mode);
+	ft_expect_eq(st.st_nlink, 2);
+	ft_rmdir(path2);
+	ft_unlinkat(dfd1, name3, 0);
+	ft_fstat(dfd2, &st);
+	ft_expect_dir(st.st_mode);
+	ft_fstat(dfd1, &st);
+	ft_expect_dir(st.st_mode);
+	ft_expect_eq(st.st_nlink, 2);
+	ft_getdent(dfd1, &dent);
+	ft_expect_true(ft_dirent_isdir(&dent));
+	ft_expect_true(ft_dirent_isdot(&dent));
+	ft_llseek(dfd1, dent.d_off, SEEK_SET, &pos);
+	ft_expect_eq(dent.d_off, pos);
+	ft_getdent(dfd1, &dent);
+	ft_expect_true(ft_dirent_isdir(&dent));
+	ft_expect_true(ft_dirent_isdotdot(&dent));
+	ft_rmdir(path1);
+	ft_close(dfd1);
+	ft_close(dfd2);
+	ft_close(fd3);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mkdir_rmdir),
@@ -476,10 +530,11 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mkdir_many_more),
 	FT_DEFTEST(test_mkdir_tree_wide),
 	FT_DEFTEST(test_mkdir_tree_deep),
-	FT_DEFTEST(test_rmdir_mctime),
-	FT_DEFTEST(test_rmdir_openat),
 	FT_DEFTEST(test_mkdir_setgid),
 	FT_DEFTEST(test_mkdirat_nested),
+	FT_DEFTEST(test_rmdir_mctime),
+	FT_DEFTEST(test_rmdir_openat),
+	FT_DEFTEST(test_rmdir_getdents),
 };
 
 const struct ft_tests ft_test_mkdir = FT_DEFTESTS(ft_local_tests);

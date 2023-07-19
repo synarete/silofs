@@ -22,13 +22,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 #
-
-import sys
+import collections
+import curses.ascii
 import os
 import re
 import stat
-import collections
-import curses.ascii
+import sys
+import typing
 
 # Globals:
 PROGNAME = os.path.basename(sys.argv[0])
@@ -269,7 +269,7 @@ def iscfile(path: str) -> bool:
 
 def ishfile(path: str) -> bool:
     ext = getext(path)
-    return len(ext) and getext(path) in (".h", ".hpp", ".hxx")
+    return (len(ext) > 0) and getext(path) in (".h", ".hpp", ".hxx")
 
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -282,15 +282,16 @@ class FileStripper:
     Replaces strings-content with white-spaces and replaces block-comments with
     white-spaces + holds a list of tuples: (line-number, stripped-line)
     """
-    def __init__(self, txt: str) -> str:
+
+    def __init__(self, txt: str) -> None:
         self.txt = self.strip_source(txt)
         self.xlines = self.lines_nums(self.txt.split("\n"))
 
-    def get(self) -> (str, list):
+    def get(self) -> tuple[str, list[tuple[int, str]]]:
         return (self.txt, self.xlines)
 
     @staticmethod
-    def lines_nums(lines: list) -> list:
+    def lines_nums(lines: list[str]) -> list[tuple[int, str]]:
         """Generators of (line-number, line) tuples list"""
         return list(zip(list(range(1, len(lines) + 1)), lines))
 
@@ -368,9 +369,11 @@ class FileStripper:
             if indx < 0:
                 out.append(dat)
                 break
-            com = dat[:indx + len(end)]
+            pos = indx + len(end)
+            com = dat[:pos]
             out.append(FileStripper.whiteout_dcomment(com))
-            dat = dat[indx + len(end):]
+            pos = indx + len(end)
+            dat = dat[pos:]
         return "".join(out)
 
 
@@ -379,8 +382,9 @@ class FileStripper:
 
 class Checker:
     """Utility base-class for checker objects"""
+
     def __init__(self) -> None:
-        self.msgs = []
+        self.msgs: list[tuple[int, str]] = []
 
     def info(self, msg, lnum=0) -> None:
         self.msgs.append((lnum, msg))
@@ -451,15 +455,16 @@ class Checker:
 
 class LineChecker(Checker):
     """Context-object for single source-line analyzing"""
+
     def __init__(self, lnum: int, line: str, ish: bool) -> None:
-        super(LineChecker, self).__init__()
+        super().__init__()
         self.lnum = lnum
         self.line = line
         self.toks = self._tokenize(line)
         self.ish = ish
 
     @staticmethod
-    def _tokenize(line: str) -> list:
+    def _tokenize(line: str) -> list[str]:
         """Converts delimiters to spaces and splits line into tokens"""
         wline = str(line)
         for c in " { * } [ ] ( ) ; : . ".split():
@@ -500,7 +505,7 @@ class LineChecker(Checker):
         """
         line_len = len(self.line.replace("\t", " " * TAB_WIDTH).rstrip("\n"))
         if line_len > LINELEN_MAX:
-            self.error("Long-line len={0}".format(line_len))
+            self.error(f"Long-line len={line_len}")
 
     def check_no_cxx_comments(self) -> None:
         """Avoid C++ style comments (be as portable as possible)"""
@@ -512,7 +517,8 @@ class LineChecker(Checker):
         """All characters should be ASCII-printable"""
         for c in self.line.strip():
             if not curses.ascii.isprint(c) and (c != "\t"):
-                self.error("Non-ASCII-printable ord={0}".format(ord(c)))
+                ord_c = ord(c)
+                self.error(f"Non-ASCII-printable ord={ord_c}")
 
     def check_only_indent_tabs(self) -> None:
         """Source line should have no tabs, except for indent"""
@@ -521,7 +527,7 @@ class LineChecker(Checker):
         if tcol > 0:
             line = self.line
             tcol = max(line.rfind("\t"), line.rfind("\v"))
-            self.warn("Tab-character at pos={0}".format(tcol))
+            self.warn(f"Tab-character at pos={tcol}")
 
     def check_no_multi_semicolon(self) -> None:
         """Should not have multiple ;;"""
@@ -534,7 +540,7 @@ class LineChecker(Checker):
         """Avoid having loooooong tokens"""
         for tok in self.toks:
             if len(tok) > TOKENLEN_MAX:
-                self.error("Long token: {0}".format(tok))
+                self.error(f"Long token: {tok}")
 
     def check_no_suspicious_semicolon(self) -> None:
         """Avoid having semicolon at the end of if, unless it is do-while"""
@@ -550,7 +556,7 @@ class LineChecker(Checker):
         line = self.line.strip()
         (i, j) = (line.find("#include"), line.find("../"))
         if (i == 0) and (j > 0):
-            self.error("Relative path in: {0}".format(line))
+            self.error(f"Relative path in: {line}")
 
     def check_no_sizeof_address(self) -> None:
         """Avoid using sizeof(&)"""
@@ -562,8 +568,8 @@ class LineChecker(Checker):
         check = False
         for tok in self.toks:
             if check and not tok.islower():
-                self.error("Non-valid-name {0}".format(tok))
-            check = (tok == "struct") or (tok == "union")
+                self.error(f"Non-valid-name {tok}")
+            check = tok in ("struct", "union")
 
     def check_no_mixed_case(self) -> None:
         """Names of function/struct/union/variable must be have same case"""
@@ -573,54 +579,57 @@ class LineChecker(Checker):
                 if (len(t) > 0) and t.isalnum() and t[0].isalpha():
                     names.append((t, tok))
         for name, tok in names:
-            if (self._has_mixed_case(name) and not self._is_private_name(tok)
-                    and not self._is_lib_name(tok)):
-                self.warn("Mixed-case: '{0}'".format(name))
+            if (
+                self._has_mixed_case(name)
+                and not self._is_private_name(tok)
+                and not self._is_lib_name(tok)
+            ):
+                self.warn(f"Mixed-case: '{name}'")
 
     def check_underscore_prefix(self) -> None:
         """Double-underscore prefix should be reserved for compiler/system"""
         for tok in self.toks:
             if (len(tok) > 2) and tok.startswith("__"):
                 if not self._is_private_name(tok):
-                    self.warn("Not a compiler/system built-in {0}".format(tok))
+                    self.warn(f"Not a compiler/system built-in {tok}")
 
     def check_no_insecure_functions(self) -> None:
         """Avoid insecure/unsafe functions"""
         insecure_funcs = INSECURE_FUNCS.split()
         for fn in insecure_funcs:
             if fn in self.toks and self._using_function(self.line, fn):
-                self.warn("Insecure-function: '{0}'".format(fn))
+                self.warn(f"Insecure-function: '{fn}'")
 
     def check_no_deprecated_functions(self) -> None:
         """Avoid deprecated functions"""
         deprecated_funcs = DEPRECATED_FUNCS.split()
         for fn in deprecated_funcs:
             if fn in self.toks and self._using_function(self.line, fn):
-                self.warn("Deprecated-function: '{0}'".format(fn))
+                self.warn(f"Deprecated-function: '{fn}'")
 
     def check_no_non_reentrant_func(self) -> None:
         """Avoid non-reentrant functions"""
         non_reentrant_funcs = NON_REENTRANT_FUNCS.split()
         for fn in non_reentrant_funcs:
             if fn in self.toks and self._using_function(self.line, fn):
-                self.warn("Non-reentrant {0} (use: {0}_r)".format(fn))
+                self.warn(f"Non-reentrant {fn} (use: {fn}_r)")
 
     def check_using_wrapper_functions(self) -> None:
         """Prefer wrapper functions"""
         wrapper_funcs = WRAPPER_FUNCS.split()
         for fn in wrapper_funcs:
             if fn in self.toks and self._using_function(self.line, fn):
-                self.info("Prefer wrapper function: '{0}'".format(fn))
+                self.info(f"Prefer wrapper function: '{fn}'")
 
     def check_no_reserved_tokens(self) -> None:
         """Avoid using reserved tokens which may confuse"""
         reserved_tokens = RESERVED_TOKENS.split()
         line = self.line
-        for rt in reserved_tokens:
-            tok1 = " " + rt
-            tok2 = rt + " "
+        for rtok in reserved_tokens:
+            tok1 = " " + rtok
+            tok2 = rtok + " "
             if tok1 in line or tok2 in line:
-                self.warn("Avoid using '{0}'".format(rt))
+                self.warn(f"Avoid using '{rtok}'")
 
     def check_no_excluded_keyword(self) -> None:
         """Avoid using some (C/C++) keywords in C files"""
@@ -630,7 +639,7 @@ class LineChecker(Checker):
         for ex in csource_exclude:
             word = " " + ex.strip(".-+%~><?^*")
             if word in self.toks:
-                self.warn("Avoid using '{0}' in C files".format(word))
+                self.warn(f"Avoid using '{word}' in C files")
 
     def check_no_static_inline(self) -> None:
         """Avoid using 'static inline ' function declaration within C source
@@ -647,16 +656,17 @@ class LineChecker(Checker):
 
 class FileChecker(Checker):
     """Context-context for entire source-file analyzing"""
+
     @staticmethod
     def create(path: str):
-        with open(path, "r") as inf:
+        with open(path, "r", encoding="UTF-8") as inf:
             dat = inf.read()
             ish = ishfile(path)
             chk = FileChecker(path, dat, ish)
         return chk
 
     def __init__(self, path: str, dat: str, ish: bool) -> None:
-        super(FileChecker, self).__init__()
+        super().__init__()
         self.path = path
         self.dat = dat
         self.ish = ish
@@ -686,14 +696,14 @@ class FileChecker(Checker):
         """Check limit number of lines per file"""
         lncnt = len(self.xlines)
         if lncnt > LINECNT_MAX:
-            self.error("Too-many source lines: {0}".format(lncnt))
+            self.error(f"Too-many source lines: {lncnt}")
 
     def check_block_size(self) -> None:
         """Check block-sizes within { and } is not larger then BLOCKSIZE_MAX"""
         if self.ish:
             return  # Ignore this check for headers
-        deque = collections.deque()
-        for (no, ln) in self.xlines:
+        deque: typing.Deque[int] = collections.deque()
+        for no, ln in self.xlines:
             for c in ln:
                 if c == "{":
                     deque.append(no)
@@ -705,7 +715,7 @@ class FileChecker(Checker):
                     except IndexError:
                         self.error("Block-error")
                     if dif > BLOCKSIZE_MAX:
-                        self.error("Block-overflow: {0}".format(dif), lnum=no0)
+                        self.error(f"Block-overflow: {dif}", lnum=no0)
 
     def check_pps_guards(self) -> None:
         """Check pre-processing guards match filename for .h files"""
@@ -713,20 +723,26 @@ class FileChecker(Checker):
             return
         name = os.path.split(self.path)[1]
         guard = name.upper().replace(".", "_").replace("-", "_") + "_"
-        ls1 = [(no, ln) for (no, ln) in self.xlines
-               if self._starts_with_pp(ln, "define")]
-        ls2 = [(no, ln) for (no, ln) in self.xlines
-               if self._starts_with_pp(ln, "ifndef")]
+        ls1 = [
+            (no, ln)
+            for (no, ln) in self.xlines
+            if self._starts_with_pp(ln, "define")
+        ]
+        ls2 = [
+            (no, ln)
+            for (no, ln) in self.xlines
+            if self._starts_with_pp(ln, "ifndef")
+        ]
         count1 = len([ln for (no, ln) in ls1 if guard in ln])
         count2 = len([ln for (no, ln) in ls2 if guard in ln])
         if (count1 != count2) or (count1 != 1):
-            self.warn("Pre-processing guard (use: {0})".format(guard))
+            self.warn(f"Pre-processing guard (use: {guard})")
 
     def check_lspace_between_func_decl(self) -> None:
         """Ensure at least single blank line between two functions
         declarations"""
         decl = 0
-        for (no, ln) in self.xlines:
+        for no, ln in self.xlines:
             if re.match(RE_FUNC_DECL, ln) is not None:
                 decl = decl + 1
             else:
@@ -737,7 +753,7 @@ class FileChecker(Checker):
     def check_nodup_includes(self) -> None:
         """Ensure no duplicated includes, have right order"""
         includes = {}
-        for (no, ln) in self.xlines:
+        for no, ln in self.xlines:
             if ln.strip().startswith("#include"):
                 inc = ln.split()[1]
                 inc = inc.strip('"<>')
@@ -745,21 +761,20 @@ class FileChecker(Checker):
                     includes[inc] = [(no, ln)]
                 else:
                     includes[inc].append((no, ln))
-        for i in includes.keys():
-            inc_i = includes[i]
-            if len(inc_i) > 1:
-                (no, ln) = inc_i[1]
-                self.warn("Multi include '{0}'".format(i), no)
+        for inc, vals in includes.items():
+            if len(vals) > 1:
+                (no, ln) = vals[1]
+                self.warn(f"Multi include '{inc}'", no)
 
     def check_std_includes(self) -> None:
         """STD headers include must be with <>"""
         std_headers = (C_HEADERS + SYS_HEADERS).split()
-        for (no, ln) in self.xlines:
+        for no, ln in self.xlines:
             if ln.strip().startswith("#include"):
                 inc = ln.split()[1]
                 hdr = inc.strip('"<>')
                 if hdr in std_headers and inc.startswith('"'):
-                    self.warn("Malformed include: '{0}'".format(hdr), no)
+                    self.warn(f"Malformed include: '{hdr}'", no)
 
     def check_includes_order(self) -> None:
         """Ensure system includes come first"""
@@ -767,12 +782,10 @@ class FileChecker(Checker):
         for no, ln in self.xlines:
             if ln.strip().startswith("#include"):
                 inc = ln.split()[1]
-                if inc.startswith('"') and not "config" in inc:
+                if inc.startswith('"') and "config" not in inc:
                     sys_includes = False
                 elif inc.startswith("<") and not sys_includes:
-                    self.warn(
-                        "Wrong include order: "
-                        "'#include {0}'".format(inc), no)
+                    self.warn(f"Wrong include order: '#include {inc}'", no)
 
     def check_includes_suffix(self) -> None:
         """Should not have non-headers includes"""
@@ -781,25 +794,25 @@ class FileChecker(Checker):
                 inc = ln.split()[1]
                 inc = inc.strip('<">')
                 if not inc.endswith(".h"):
-                    self.error("Wrong header suffix: '{0}'".format(inc), no)
+                    self.error(f"Wrong header suffix: '{inc}'", no)
 
     def check_enum_def(self) -> None:
         """Enum-names should be all upper-case + underscores"""
         enum_lines = []
         in_enum_def = False
-        for (no, ln) in self.xlines:
+        for no, ln in self.xlines:
             if in_enum_def:
                 enum_lines.append((no, ln))
             elif ln.startswith("enum ") and ("{" in ln):
                 in_enum_def = True
             if ("}" in ln) or (";" in ln):
                 in_enum_def = False
-        for (no, ln) in enum_lines:
+        for no, ln in enum_lines:
             toks = ln.strip("{[()]} \t\r\v\n").split()
             if len(toks):
-                t = toks[0].strip("=;:")
-                if len(t) and t.isalnum() and not t.isupper():
-                    self.error("Illegal enum-name {0}".format(t), lnum=no)
+                tok = toks[0].strip("=;:")
+                if len(tok) and tok.isalnum() and not tok.isupper():
+                    self.error(f"Illegal enum-name {tok}", lnum=no)
 
     def check_empty_lines(self) -> None:
         """Limit the number of consecutive empty lines"""
@@ -845,10 +858,12 @@ def report(path, lnum, msg) -> None:
 
 
 def isreg(path: str) -> bool:
+    ret = False
     try:
-        return stat.S_ISREG(os.stat(path).st_mode)
+        ret = stat.S_ISREG(os.stat(path).st_mode)
     except (NameError, OSError):
         pass
+    return ret
 
 
 def checkcstyle(files: list) -> int:
@@ -862,9 +877,9 @@ def checkcstyle(files: list) -> int:
     return num_reports
 
 
-def listfiles(path: str) -> list:
+def listfiles(path: str) -> list[str]:
     """Recursive listing for C source/header files"""
-    files = []
+    files: list[str] = []
     for ff in os.listdir(path):
         if str(ff) == "." or str(ff) == "..":
             continue
@@ -872,11 +887,11 @@ def listfiles(path: str) -> list:
         if os.path.isdir(pf):
             files = files + listfiles(pf)
         else:
-            files.append(pf)
+            files.append(str(pf))
     return files
 
 
-def resolvesources(sources: list) -> list:
+def resolvesources(sources: list[str]) -> list[str]:
     files = []
     if len(sources) == 0:
         files = listfiles(os.getcwd())
@@ -889,17 +904,7 @@ def resolvesources(sources: list) -> list:
     return list(set(files))
 
 
-def settitle(title: str) -> None:
-    try:
-        import setproctitle
-
-        setproctitle.setproctitle(title)
-    except ImportError:
-        pass
-
-
 def main() -> None:
-    settitle(PROGNAME)
     num_reports = checkcstyle(resolvesources(sys.argv[1:]))
     if num_reports > 0:
         sys.exit(1)

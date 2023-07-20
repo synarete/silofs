@@ -77,7 +77,7 @@ mrecord_new(struct silofs_qalloc *qal, size_t msz)
 		.iov_fd = -1
 	};
 
-	mem = silofs_qalloc_malloc(qal, msz);
+	mem = silofs_qalloc_malloc(qal, msz, 0);
 	ut_expect_not_null(mem);
 
 	err = silofs_qalloc_mcheck(qal, mem, msz);
@@ -101,7 +101,7 @@ static void mrecord_del(struct ut_mrecord *mr)
 	mrecord_check(mr);
 	err = silofs_qalloc_mcheck(qal, mr->mem, mr->len);
 	ut_expect_ok(err);
-	silofs_qalloc_free(qal, mr->mem, mr->len);
+	silofs_qalloc_free(qal, mr->mem, mr->len, 0);
 }
 
 static void link_mrecord_del(struct silofs_list_head *link)
@@ -297,7 +297,7 @@ static void ut_qalloc_small_sizes(struct ut_env *ute)
 	qal = ut_new_qalloc(ute, 32 * UT_UMEGA);
 	for (size_t i = 0; i < UT_ARRAY_SIZE(ptr); ++i) {
 		msz = small_alloc_size(i);
-		mem = silofs_qalloc_malloc(qal, msz);
+		mem = silofs_qalloc_malloc(qal, msz, 0);
 		ut_expect_not_null(mem);
 		memset(mem, (int)i, msz);
 		ptr[i] = mem;
@@ -305,7 +305,7 @@ static void ut_qalloc_small_sizes(struct ut_env *ute)
 	for (size_t i = 0; i < UT_ARRAY_SIZE(ptr); ++i) {
 		msz = small_alloc_size(i);
 		mem = ptr[i];
-		silofs_qalloc_free(qal, mem, msz);
+		silofs_qalloc_free(qal, mem, msz, 0);
 		ptr[i] = NULL;
 	}
 
@@ -313,7 +313,7 @@ static void ut_qalloc_small_sizes(struct ut_env *ute)
 	for (size_t i = 0; i < UT_ARRAY_SIZE(ptr); ++i) {
 		idx = (size_t)idx_arr[i];
 		msz = small_alloc_size(idx);
-		mem = silofs_qalloc_malloc(qal, msz);
+		mem = silofs_qalloc_malloc(qal, msz, 0);
 		ut_expect_not_null(mem);
 		memset(mem, (int)i, msz);
 		ptr[idx] = mem;
@@ -323,7 +323,7 @@ static void ut_qalloc_small_sizes(struct ut_env *ute)
 		idx = (size_t)idx_arr[i];
 		msz = small_alloc_size(idx);
 		mem = ptr[idx];
-		silofs_qalloc_free(qal, mem, msz);
+		silofs_qalloc_free(qal, mem, msz, 0);
 		ptr[idx] = NULL;
 	}
 	ut_del_qalloc(qal);
@@ -361,7 +361,7 @@ static void ut_qalloc_random_(struct ut_env *ute, size_t cnt)
 	iov = random_iovecs(ute, cnt, 1, 2 * pg_size);
 	for (size_t i = 0; i < cnt; ++i) {
 		msz = iov[i].iov_len;
-		mem = silofs_qalloc_malloc(qal, msz);
+		mem = silofs_qalloc_malloc(qal, msz, 0);
 		ut_expect_not_null(mem);
 		memset(mem, (int)i, msz);
 		err = silofs_qalloc_mcheck(qal, mem, msz);
@@ -373,7 +373,7 @@ static void ut_qalloc_random_(struct ut_env *ute, size_t cnt)
 		mem = iov[i].iov_base;
 		err = silofs_qalloc_mcheck(qal, mem, msz);
 		ut_expect_ok(err);
-		silofs_qalloc_free(qal, mem, msz);
+		silofs_qalloc_free(qal, mem, msz, 0);
 		iov[i].iov_base = NULL;
 	}
 	for (size_t i = 1; i < cnt; i += 3) {
@@ -381,13 +381,13 @@ static void ut_qalloc_random_(struct ut_env *ute, size_t cnt)
 		mem = iov[i].iov_base;
 		err = silofs_qalloc_mcheck(qal, mem, msz);
 		ut_expect_ok(err);
-		silofs_qalloc_free(qal, mem, msz);
+		silofs_qalloc_free(qal, mem, msz, 0);
 		iov[i].iov_len = 0;
 		iov[i].iov_base = NULL;
 	}
 	for (size_t i = 0; i < cnt; i += 3) {
 		msz = iov[i].iov_len;
-		mem = silofs_qalloc_malloc(qal, msz);
+		mem = silofs_qalloc_malloc(qal, msz, 0);
 		ut_expect_ok(err);
 		ut_expect_not_null(mem);
 		iov[i].iov_base = mem;
@@ -397,7 +397,7 @@ static void ut_qalloc_random_(struct ut_env *ute, size_t cnt)
 		mem = iov[i].iov_base;
 		err = silofs_qalloc_mcheck(qal, mem, msz);
 		ut_expect_ok(err);
-		silofs_qalloc_free(qal, mem, msz);
+		silofs_qalloc_free(qal, mem, msz, 0);
 		iov[i].iov_len = 0;
 		iov[i].iov_base = NULL;
 	}

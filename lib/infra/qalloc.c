@@ -133,6 +133,17 @@ static bool isslabsize(size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void apply_allocf(void *ptr, size_t size, int flags)
+{
+	if (silofs_likely(ptr != NULL)) {
+		if (flags & SILOFS_ALLOCF_BZERO) {
+			memset(ptr, 0, size);
+		}
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_qalloc *alloc_to_qalloc(const struct silofs_alloc *alloc)
 {
 	const struct silofs_qalloc *qal;
@@ -141,18 +152,19 @@ static struct silofs_qalloc *alloc_to_qalloc(const struct silofs_alloc *alloc)
 	return silofs_unconst(qal);
 }
 
-static void *qal_malloc(struct silofs_alloc *aif, size_t nbytes)
+static void *qal_malloc(struct silofs_alloc *aif, size_t nbytes, int flags)
 {
 	struct silofs_qalloc *qal = alloc_to_qalloc(aif);
 
-	return silofs_qalloc_malloc(qal, nbytes);
+	return silofs_qalloc_malloc(qal, nbytes, flags);
 }
 
-static void qal_free(struct silofs_alloc *aif, void *ptr, size_t nbytes)
+static void qal_free(struct silofs_alloc *aif,
+                     void *ptr, size_t nbytes, int flags)
 {
 	struct silofs_qalloc *qal = alloc_to_qalloc(aif);
 
-	silofs_qalloc_free(qal, ptr, nbytes);
+	silofs_qalloc_free(qal, ptr, nbytes, flags);
 }
 
 static void qal_stat(const struct silofs_alloc *alloc,
@@ -171,20 +183,21 @@ static int qal_resolve(const struct silofs_alloc *alloc,
 	return silofs_qalloc_resolve(qal, ptr, len, iov);
 }
 
-void *silofs_allocate(struct silofs_alloc *alloc, size_t size)
+void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags)
 {
 	void *ptr = NULL;
 
 	if (silofs_likely(alloc->malloc_fn != NULL) && size) {
-		ptr = alloc->malloc_fn(alloc, size);
+		ptr = alloc->malloc_fn(alloc, size, flags);
 	}
 	return ptr;
 }
 
-void silofs_deallocate(struct silofs_alloc *alloc, void *ptr, size_t size)
+void silofs_deallocate(struct silofs_alloc *alloc,
+                       void *ptr, size_t size, int flags)
 {
 	if (silofs_likely((ptr != NULL) && size && (alloc->free_fn != NULL))) {
-		alloc->free_fn(alloc, ptr, size);
+		alloc->free_fn(alloc, ptr, size, flags);
 	}
 }
 
@@ -688,18 +701,20 @@ static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
 	}
 }
 
-static void pgal_update_released(const struct silofs_pgal *pgal,
-                                 struct silofs_page_info *pgi, size_t npgs)
+static void
+pgal_update_released(const struct silofs_pgal *pgal,
+                     struct silofs_page_info *pgi, size_t npgs, int flags)
 {
 	const size_t npgs_punch_threshold = (SILOFS_UMEGA / MPAGE_SIZE);
 
-	if (npgs >= npgs_punch_threshold) {
+	if ((npgs >= npgs_punch_threshold) || (flags & SILOFS_ALLOCF_PUNCH)) {
 		pgal_punch_hole_at(pgal, pgi, npgs);
 	}
 }
 
-static int pgal_do_free_npgs(struct silofs_pgal *pgal,
-                             struct silofs_page_info *pgi, size_t npgs)
+static int
+pgal_do_free_npgs(struct silofs_pgal *pgal,
+                  struct silofs_page_info *pgi, size_t npgs, int flags)
 {
 	struct silofs_page_info *pgi_next;
 	struct silofs_page_info *pgi_prev;
@@ -718,24 +733,24 @@ static int pgal_do_free_npgs(struct silofs_pgal *pgal,
 		pgi_unlink_mute(pgi);
 	}
 
-	pgal_update_released(pgal, pgi, npgs);
+	pgal_update_released(pgal, pgi, npgs, flags);
 	pgal_add_free(pgal, pgi, pgi_prev, npgs);
 	return 0;
 }
 
 static int pgal_free_npgs(struct silofs_pgal *pgal,
-                          struct silofs_page_info *pgi, size_t npgs)
+                          struct silofs_page_info *pgi, size_t npgs, int flags)
 {
 	int err;
 
 	pgal_lock(pgal);
-	err = pgal_do_free_npgs(pgal, pgi, npgs);
+	err = pgal_do_free_npgs(pgal, pgi, npgs, flags);
 	pgal_unlock(pgal);
 	return err;
 }
 
 static int pgal_do_free_multi_pg(struct silofs_pgal *pgal,
-                                 void *ptr, size_t nbytes)
+                                 void *ptr, size_t nbytes, int flags)
 {
 	struct silofs_page_info *pgi;
 	size_t npgs;
@@ -747,18 +762,18 @@ static int pgal_do_free_multi_pg(struct silofs_pgal *pgal,
 	}
 	npgs = nbytes_to_npgs(nbytes);
 	pgi = pgal_page_info_of(pgal, ptr);
-	pgal_do_free_npgs(pgal, pgi, npgs);
+	pgal_do_free_npgs(pgal, pgi, npgs, flags);
 	pgal->npgs_use -= npgs;
 	return 0;
 }
 
 static int pgal_free_multi_pg(struct silofs_pgal *pgal,
-                              void *ptr, size_t nbytes)
+                              void *ptr, size_t nbytes, int flags)
 {
 	int err;
 
 	pgal_lock(pgal);
-	err = pgal_do_free_multi_pg(pgal, ptr, nbytes);
+	err = pgal_do_free_multi_pg(pgal, ptr, nbytes, flags);
 	pgal_unlock(pgal);
 	return err;
 }
@@ -986,7 +1001,7 @@ static int slab_alloc_seg(struct silofs_slab *slab,
 }
 
 static void slab_free_and_update(struct silofs_slab *slab,
-                                 struct silofs_slab_seg *seg)
+                                 struct silofs_slab_seg *seg, int flags)
 {
 	struct silofs_page_info *pgi = pgal_page_info_of(slab->pgal, seg);
 
@@ -999,7 +1014,7 @@ static void slab_free_and_update(struct silofs_slab *slab,
 	pgi->slab_nused -= 1;
 	if (!pgi->slab_nused) {
 		slab_shrink(slab, pgi);
-		pgal_free_npgs(slab->pgal, pgi, 1);
+		pgal_free_npgs(slab->pgal, pgi, 1, flags);
 	}
 }
 
@@ -1028,25 +1043,26 @@ static int slab_check_seg(const struct silofs_slab *slab,
 	return 0;
 }
 
-static int slab_do_free_seg(struct silofs_slab *slab,
-                            struct silofs_slab_seg *seg, size_t nbytes)
+static int
+slab_do_free_seg(struct silofs_slab *slab,
+                 struct silofs_slab_seg *seg, size_t nbytes, int flags)
 {
 	int err;
 
 	err = slab_check_seg(slab, seg, nbytes);
 	if (!err) {
-		slab_free_and_update(slab, seg);
+		slab_free_and_update(slab, seg, flags);
 	}
 	return err;
 }
 
 static int slab_free_seg(struct silofs_slab *slab,
-                         struct silofs_slab_seg *seg, size_t nbytes)
+                         struct silofs_slab_seg *seg, size_t nbytes, int flags)
 {
 	int err;
 
 	slab_lock(slab);
-	err = slab_do_free_seg(slab, seg, nbytes);
+	err = slab_do_free_seg(slab, seg, nbytes, flags);
 	slab_unlock(slab);
 	return err;
 }
@@ -1258,11 +1274,19 @@ static size_t qalloc_get_nbytes_use(const struct silofs_qalloc *qal)
 	return silofs_atomic_getul(&qal->nbytes_use);
 }
 
+static void qalloc_apply_flags(const struct silofs_qalloc *qal,
+                               void *ptr, size_t size, int flags)
+{
+	apply_allocf(ptr, size, flags);
+	silofs_unused(qal);
+}
+
 static int qalloc_malloc(struct silofs_qalloc *qal,
-                         size_t nbytes, void **out_ptr)
+                         size_t nbytes, int flags, void **out_ptr)
 {
 	int err;
 
+	*out_ptr = NULL;
 	err = qalloc_check_alloc(qal, nbytes);
 	if (err) {
 		return err;
@@ -1276,6 +1300,7 @@ static int qalloc_malloc(struct silofs_qalloc *qal,
 		return err;
 	}
 	qalloc_add_nbytes_use(qal, nbytes);
+	qalloc_apply_flags(qal, *out_ptr, nbytes, flags);
 	return 0;
 }
 
@@ -1289,12 +1314,12 @@ static void qalloc_require_malloc_ok(const struct silofs_qalloc *qal,
 	}
 }
 
-void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes)
+void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags)
 {
 	void *ptr = NULL;
 	int err;
 
-	err = qalloc_malloc(qal, nbytes, &ptr);
+	err = qalloc_malloc(qal, nbytes, flags, &ptr);
 	qalloc_require_malloc_ok(qal, nbytes, err);
 	return ptr;
 }
@@ -1328,32 +1353,33 @@ qalloc_check_slab_seg_of(const struct silofs_qalloc *qal,
 	return err;
 }
 
-static int qalloc_free_by_slab(struct silofs_qalloc *qal,
-                               struct silofs_slab_seg *seg, size_t nbytes)
+static int
+qalloc_free_by_slab(struct silofs_qalloc *qal,
+                    struct silofs_slab_seg *seg, size_t nbytes, int flags)
 {
 	struct silofs_slab *slab;
 	int err = -EINVAL;
 
 	slab = qalloc_slab_of(qal, nbytes);
 	if (slab != NULL) {
-		err = slab_free_seg(slab, seg, nbytes);
+		err = slab_free_seg(slab, seg, nbytes, flags);
 	}
 	return err;
 }
 
 static int qalloc_free_sub_pg(struct silofs_qalloc *qal,
-                              void *ptr, size_t nbytes)
+                              void *ptr, size_t nbytes, int flags)
 {
 	struct silofs_slab_seg *seg;
 
 	seg = pgal_slab_seg_of(&qal->pgal, ptr);
-	return qalloc_free_by_slab(qal, seg, nbytes);
+	return qalloc_free_by_slab(qal, seg, nbytes, flags);
 }
 
 static int qalloc_free_multi_pg(struct silofs_qalloc *qal,
-                                void *ptr, size_t nbytes)
+                                void *ptr, size_t nbytes, int flags)
 {
-	return pgal_free_multi_pg(&qal->pgal, ptr, nbytes);
+	return pgal_free_multi_pg(&qal->pgal, ptr, nbytes, flags);
 }
 
 static void
@@ -1366,7 +1392,8 @@ qalloc_wreck_data(const struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 	}
 }
 
-static int qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
+static int qalloc_free(struct silofs_qalloc *qal,
+                       void *ptr, size_t nbytes, int flags)
 {
 	int err;
 
@@ -1377,11 +1404,12 @@ static int qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
 	if (err) {
 		return err;
 	}
+	qalloc_apply_flags(qal, ptr, nbytes, flags);
 	qalloc_wreck_data(qal, ptr, nbytes);
 	if (isslabsize(nbytes)) {
-		err = qalloc_free_sub_pg(qal, ptr, nbytes);
+		err = qalloc_free_sub_pg(qal, ptr, nbytes, flags);
 	} else {
-		err = qalloc_free_multi_pg(qal, ptr, nbytes);
+		err = qalloc_free_multi_pg(qal, ptr, nbytes, flags);
 	}
 	if (err) {
 		return err;
@@ -1399,11 +1427,12 @@ static void qalloc_require_free_ok(const struct silofs_qalloc *qal,
 	}
 }
 
-void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes)
+void silofs_qalloc_free(struct silofs_qalloc *qal,
+                        void *ptr, size_t nbytes, int flags)
 {
 	int err;
 
-	err = qalloc_free(qal, ptr, nbytes);
+	err = qalloc_free(qal, ptr, nbytes, flags);
 	qalloc_require_free_ok(qal, ptr, nbytes, err);
 }
 
@@ -1570,23 +1599,32 @@ alloc_to_calloc(const struct silofs_alloc *alloc)
 	return silofs_unconst(cal);
 }
 
-static void *calloc_malloc(struct silofs_calloc *cal, size_t size)
+static void calloc_apply_flags(const struct silofs_calloc *cal,
+                               void *ptr, size_t size, int flags)
 {
-	void *mem = NULL;
+	apply_allocf(ptr, size, flags);
+	silofs_unused(cal);
+}
+
+static void *calloc_malloc(struct silofs_calloc *cal, size_t size, int flags)
+{
+	void *ptr = NULL;
 	int err;
 
-	err = cstd_memalign(size, &mem);
+	err = cstd_memalign(size, &ptr);
 	if (err) {
 		return NULL;
 	}
 	silofs_atomic_addul(&cal->nbytes_use, size);
-	return mem;
+	calloc_apply_flags(cal, ptr, size, flags);
+	return ptr;
 }
 
 static void calloc_free(struct silofs_calloc *cal,
-                        void *ptr, size_t size)
+                        void *ptr, size_t size, int flags)
 {
 	if ((ptr != NULL) && (size > 0)) {
+		calloc_apply_flags(cal, ptr, size, flags);
 		cstd_memfree(ptr, size);
 		silofs_atomic_subul(&cal->nbytes_use, size);
 	}
@@ -1611,14 +1649,15 @@ static void calloc_stat(struct silofs_calloc *cal,
 	out_stat->nbytes_use = silofs_atomic_getul(&cal->nbytes_use);
 }
 
-static void *cal_malloc(struct silofs_alloc *alloc, size_t size)
+static void *cal_malloc(struct silofs_alloc *alloc, size_t size, int flags)
 {
-	return calloc_malloc(alloc_to_calloc(alloc), size);
+	return calloc_malloc(alloc_to_calloc(alloc), size, flags);
 }
 
-static void cal_free(struct silofs_alloc *alloc, void *ptr, size_t size)
+static void cal_free(struct silofs_alloc *alloc,
+                     void *ptr, size_t size, int flags)
 {
-	calloc_free(alloc_to_calloc(alloc), ptr, size);
+	calloc_free(alloc_to_calloc(alloc), ptr, size, flags);
 }
 
 static void cal_stat(const struct silofs_alloc *alloc,

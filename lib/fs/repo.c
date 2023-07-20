@@ -925,13 +925,13 @@ silofs_blobf_new(struct silofs_alloc *alloc,
 	struct silofs_blobf *blobf;
 	int err;
 
-	blobf = silofs_allocate(alloc, sizeof(*blobf));
+	blobf = silofs_allocate(alloc, sizeof(*blobf), SILOFS_ALLOCF_BZERO);
 	if (blobf == NULL) {
 		return NULL;
 	}
 	err = blobf_init(blobf, blobid);
 	if (err) {
-		silofs_deallocate(alloc, blobf, sizeof(*blobf));
+		silofs_deallocate(alloc, blobf, sizeof(*blobf), 0);
 		return NULL;
 	}
 	return blobf;
@@ -943,7 +943,7 @@ void silofs_blobf_del(struct silofs_blobf *blobf,
 	blobf_fsync2(blobf);
 	blobf_close(blobf);
 	blobf_fini(blobf);
-	silofs_deallocate(alloc, blobf, sizeof(*blobf));
+	silofs_deallocate(alloc, blobf, sizeof(*blobf), 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

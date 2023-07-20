@@ -19,6 +19,12 @@
 
 struct silofs_iovec;
 
+/* allocation flags */
+enum silofs_allocf {
+	SILOFS_ALLOCF_BZERO     = 0x01,
+	SILOFS_ALLOCF_PUNCH     = 0x02,
+};
+
 /* allocator stats */
 struct silofs_alloc_stat {
 	size_t nbytes_max;
@@ -28,8 +34,9 @@ struct silofs_alloc_stat {
 
 /* allocator interface */
 struct silofs_alloc {
-	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size);
-	void (*free_fn)(struct silofs_alloc *alloc, void *ptr, size_t size);
+	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size, int flags);
+	void (*free_fn)(struct silofs_alloc *alloc,
+	                void *ptr, size_t size, int flags);
 	void (*stat_fn)(const struct silofs_alloc *alloc,
 	                struct silofs_alloc_stat *out_stat);
 	int (*resolve_fn)(const struct silofs_alloc *alloc,
@@ -85,9 +92,10 @@ struct silofs_calloc {
 };
 
 /* allocation via interface */
-void *silofs_allocate(struct silofs_alloc *alloc, size_t size);
+void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags);
 
-void silofs_deallocate(struct silofs_alloc *alloc, void *ptr, size_t size);
+void silofs_deallocate(struct silofs_alloc *alloc,
+                       void *ptr, size_t size, int flags);
 
 void silofs_allocstat(const struct silofs_alloc *alloc,
                       struct silofs_alloc_stat *out_stat);
@@ -105,9 +113,11 @@ int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode);
 
 int silofs_qalloc_fini(struct silofs_qalloc *qal);
 
-void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes);
+void *silofs_qalloc_malloc(struct silofs_qalloc *qal,
+                           size_t nbytes, int flags);
 
-void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes);
+void silofs_qalloc_free(struct silofs_qalloc *qal,
+                        void *ptr, size_t nbytes, int flags);
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat);

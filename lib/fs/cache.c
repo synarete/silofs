@@ -172,41 +172,41 @@ static struct silofs_lblock *lbk_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_lblock *lbk;
 
-	lbk = silofs_allocate(alloc, sizeof(*lbk));
+	lbk = silofs_allocate(alloc, sizeof(*lbk), 0);
 	return lbk;
 }
 
 static void lbk_free(struct silofs_lblock *lbk, struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, lbk, sizeof(*lbk));
+	silofs_deallocate(alloc, lbk, sizeof(*lbk), SILOFS_ALLOCF_PUNCH);
 }
 
 static struct silofs_ubk_info *ubki_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_ubk_info *ubki;
 
-	ubki = silofs_allocate(alloc, sizeof(*ubki));
+	ubki = silofs_allocate(alloc, sizeof(*ubki), 0);
 	return ubki;
 }
 
 static void ubki_free(struct silofs_ubk_info *ubki,
                       struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, ubki, sizeof(*ubki));
+	silofs_deallocate(alloc, ubki, sizeof(*ubki), 0);
 }
 
 static struct silofs_vbk_info *vbki_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_vbk_info *vbki;
 
-	vbki = silofs_allocate(alloc, sizeof(*vbki));
+	vbki = silofs_allocate(alloc, sizeof(*vbki), 0);
 	return vbki;
 }
 
 static void vbki_free(struct silofs_vbk_info *vbki,
                       struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, vbki, sizeof(*vbki));
+	silofs_deallocate(alloc, vbki, sizeof(*vbki), 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -133,7 +133,7 @@ spe_new(loff_t voff, size_t len, struct silofs_alloc *alloc)
 {
 	struct silofs_spa_entry *spe;
 
-	spe = silofs_allocate(alloc, sizeof(*spe));
+	spe = silofs_allocate(alloc, sizeof(*spe), 0);
 	if (spe != NULL) {
 		spe_init(spe, voff, len);
 	}
@@ -144,7 +144,7 @@ static void spe_del(struct silofs_spa_entry *spe,
                     struct silofs_alloc *alloc)
 {
 	spe_fini(spe);
-	silofs_deallocate(alloc, spe, sizeof(*spe));
+	silofs_deallocate(alloc, spe, sizeof(*spe), 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -690,7 +690,7 @@ uaent_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_uaent *uae = NULL;
 
-	uae = silofs_allocate(alloc, sizeof(*uae));
+	uae = silofs_allocate(alloc, sizeof(*uae), 0);
 	if (uae != NULL) {
 		uaent_init(uae, uaddr);
 	}
@@ -700,7 +700,7 @@ uaent_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 static void uaent_del(struct silofs_uaent *uae, struct silofs_alloc *alloc)
 {
 	uaent_fini(uae);
-	silofs_deallocate(alloc, uae, sizeof(*uae));
+	silofs_deallocate(alloc, uae, sizeof(*uae), 0);
 }
 
 
@@ -963,7 +963,7 @@ silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
 {
 	struct silofs_list_head *lista;
 
-	lista = silofs_allocate(alloc, sizeof(*lista) * nelems);
+	lista = silofs_allocate(alloc, sizeof(*lista) * nelems, 0);
 	if (lista != NULL) {
 		list_head_initn(lista, nelems);
 	}
@@ -974,7 +974,7 @@ void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
                       struct silofs_alloc *alloc)
 {
 	list_head_finin(lista, nelems);
-	silofs_deallocate(alloc, lista, sizeof(*lista) * nelems);
+	silofs_deallocate(alloc, lista, sizeof(*lista) * nelems, 0);
 }
 
 

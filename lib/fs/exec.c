@@ -378,7 +378,7 @@ static int fse_init_fuseq(struct silofs_fs_env *fse)
 	if (!fse->fs_args.withfuse) {
 		return 0;
 	}
-	mem = silofs_allocate(fse->fs_alloc, fuseq_pg_size);
+	mem = silofs_allocate(fse->fs_alloc, fuseq_pg_size, 0);
 	if (mem == NULL) {
 		log_warn("failed to allocate fuseq: size=%lu", fuseq_pg_size);
 		return -SILOFS_ENOMEM;
@@ -386,7 +386,7 @@ static int fse_init_fuseq(struct silofs_fs_env *fse)
 	fqp = mem;
 	err = silofs_fuseq_init(&fqp->fuseq, fse->fs_alloc);
 	if (err) {
-		silofs_deallocate(fse->fs_alloc, mem, fuseq_pg_size);
+		silofs_deallocate(fse->fs_alloc, mem, fuseq_pg_size, 0);
 		return err;
 	}
 	fse_bind_fuseq(fse, &fqp->fuseq);
@@ -403,7 +403,8 @@ static void fse_fini_fuseq(struct silofs_fs_env *fse)
 		silofs_fuseq_fini(fse->fs_fuseq);
 		fse_bind_fuseq(fse, NULL);
 
-		silofs_deallocate(fse->fs_alloc, fuseq_pg, sizeof(*fuseq_pg));
+		silofs_deallocate(fse->fs_alloc, fuseq_pg,
+		                  sizeof(*fuseq_pg), 0);
 	}
 }
 

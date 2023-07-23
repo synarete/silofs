@@ -15,7 +15,7 @@
 #
 
 # User options:
-# D = DEBUG (0|1)
+# D = DEBUG (0|1|2)
 # O = OPTLEVEL (0|1|2|3)
 # V = VERBOSE (0|1)
 # CC = COMPLIER (gcc|clang)
@@ -37,7 +37,7 @@ VERSION := $(shell $(TOP)/version.sh)
 CCS  := gcc clang
 CXXS := g++ clang++
 OPTS := 0 1 2 3
-DBGS := 0 1
+DBGS := 0 1 2
 VRBS := 0 1
 ANLZ := 0 1
 
@@ -79,7 +79,9 @@ endif
 CONFIGURE_OPTS += --prefix=$(PREFIX)
 CONFIGURE_OPTS += --disable-shared
 CONFIGURE_OPTS += --enable-unitests=2
-ifeq ($(D), 1)
+ifeq ($(D), 2)
+CONFIGURE_OPTS += --enable-debug=profile
+else ifeq ($(D), 1)
 CONFIGURE_OPTS += --enable-debug=yes
 else
 CONFIGURE_OPTS += --enable-debug=no
@@ -127,8 +129,11 @@ CFLAGS2 += -Wfree-nonheap-object -Wuninitialized
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)
-ifeq ($(D), 1)
+ifneq ($(D), 0)
 CFLAGS += -g -ggdb -fno-omit-frame-pointer
+endif
+ifeq ($(D), 2)
+CFLAGS += -pg
 endif
 
 # Optimization flags
@@ -174,7 +179,7 @@ CXXFLAGS += -D_GLIBCXX_ASSERTIONS
 
 # Helper functions: report action & sub-execute make in build directory
 define report
-	$(info $(NAME):$(1))
+	$(info $(NAME):$(1) $(2))
 endef
 
 define submakeat
@@ -214,12 +219,12 @@ dist: check
 .PHONY: configure bootstrap
 
 configure: bootstrap
-	$(call report, $@)
+	$(call report, $@, $(CONFIGURE_OPTS))
 	@if [ ! -e $(BUILDDIR)/config.status ]; then \
             cd $(BUILDDIR) && $(TOP)/configure $(CONFIGURE_OPTS); fi
 
 bootstrap:
-	$(call report, $@)
+	$(call report, $@, $(BUILDDIR))
 	@if [ ! -d $(BUILDDIR) ]; then $(MKDIR_P) $(BUILDDIR); fi
 	@if [ ! -e $(BUILDDIR)/config.status ]; then $(TOP)/bootstrap; fi
 

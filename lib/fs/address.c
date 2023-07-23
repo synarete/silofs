@@ -472,7 +472,10 @@ static void treeid_assign(struct silofs_treeid *treeid,
 static long treeid_compare(const struct silofs_treeid *treeid1,
                            const struct silofs_treeid *treeid2)
 {
-	return silofs_uuid_compare(&treeid1->uuid, &treeid2->uuid);
+	const struct silofs_uuid *uu1 = &treeid1->uuid;
+	const struct silofs_uuid *uu2 = &treeid2->uuid;
+
+	return memcmp(uu1->uu, uu2->uu, sizeof(uu1->uu));
 }
 
 static bool treeid_isequal(const struct silofs_treeid *treeid1,
@@ -1450,12 +1453,6 @@ void silofs_uuid_generate(struct silofs_uuid *uu)
 void silofs_uuid_assign(struct silofs_uuid *uu1, const struct silofs_uuid *uu2)
 {
 	uuid_copy(uu1->uu, uu2->uu);
-}
-
-long silofs_uuid_compare(const struct silofs_uuid *uu1,
-                         const struct silofs_uuid *uu2)
-{
-	return memcmp(uu1->uu, uu2->uu, sizeof(uu1->uu));
 }
 
 void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)

@@ -223,14 +223,14 @@ static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	uint64_t d[3];
-	uint64_t voff = (uint64_t)vaddr->off;
+	const uint64_t off = (uint64_t)(vaddr->off);
+	const uint64_t lz = silofs_clz64(off);
+	uint64_t hval;
 
-	d[0] = voff + vaddr->len - 1;
-	d[1] = 0xC0000001ULL / ((uint64_t)vaddr->stype + 1);
-	d[2] = 0x5D21C111ULL / (silofs_clz64(voff) + 1); /* M77232917 */
-
-	return silofs_hash_xxh64(d, sizeof(d), silofs_popcount64(voff));
+	hval = off;
+	hval ^= (0x5D21C111ULL / (lz + 1)); /* M77232917 */
+	hval ^= ((uint64_t)(vaddr->stype) << 43);
+	return hval;
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
@@ -616,18 +616,20 @@ static size_t lrumap_usage(const struct silofs_lrumap *lm)
 	return lm->lm_htbl_sz;
 }
 
-static size_t lrumap_key_to_bin(const struct silofs_lrumap *lm,
-                                const struct silofs_ckey *ckey)
+static size_t lrumap_key_to_slot(const struct silofs_lrumap *lm,
+                                 const struct silofs_ckey *ckey)
 {
-	return ckey->hash % lm->lm_htbl_cap;
+	const uint64_t hval = ckey->hash ^ (ckey->hash >> 32);
+
+	return hval % lm->lm_htbl_cap;
 }
 
 static struct silofs_list_head *
 lrumap_hlist_of(const struct silofs_lrumap *lm, const struct silofs_ckey *ckey)
 {
-	const size_t bin = lrumap_key_to_bin(lm, ckey);
+	const size_t slot = lrumap_key_to_slot(lm, ckey);
 
-	return &lm->lm_htbl[bin];
+	return &lm->lm_htbl[slot];
 }
 
 static void lrumap_store(struct silofs_lrumap *lm,

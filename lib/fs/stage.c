@@ -662,8 +662,8 @@ static int stgc_find_cached_unode(const struct silofs_stage_ctx *stg_ctx,
                                   enum silofs_height height,
                                   struct silofs_unode_info **out_ui)
 {
-	struct silofs_vrange vrange;
 	struct silofs_uakey uakey;
+	struct silofs_vrange vrange;
 
 	silofs_vrange_of_spmap(&vrange, height, stg_ctx->bk_voff);
 	silofs_uakey_setup_by2(&uakey, &vrange, stg_ctx->vspace);

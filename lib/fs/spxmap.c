@@ -662,6 +662,19 @@ static bool uakey_isequal(const struct silofs_uakey *uakey1,
 	        (uakey1->vspace == uakey2->vspace));
 }
 
+static uint64_t uakey_hash(const struct silofs_uakey *uakey)
+{
+	const uint64_t off = (uint64_t)(uakey->voff);
+	const uint64_t pc = silofs_popcount64(off);
+	uint64_t hval;
+
+	hval = off;
+	hval ^= (0x5D21C111ULL / (pc + 1));
+	hval ^= (uint64_t)(uakey->vspace);
+	hval ^= ((uint64_t)(uakey->height) << 43);
+	return hval;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uaent {
@@ -776,11 +789,9 @@ void silofs_uamap_fini(struct silofs_uamap *uamap)
 static size_t uamap_slot_of(const struct silofs_uamap *uamap,
                             const struct silofs_uakey *uakey)
 {
-	const uint32_t rot = (uint32_t)uakey->height & 0xF;
-	const uint64_t ukey = (uint64_t)(uakey->voff + uakey->vspace);
-	const uint64_t key = silofs_lrotate64(ukey, rot);
+	const uint64_t hval = uakey_hash(uakey);
 
-	return key % uamap->uam_htbl_cap;
+	return (hval ^ (hval >> 32)) % uamap->uam_htbl_cap;
 }
 
 static struct silofs_list_head *

@@ -705,9 +705,9 @@ static void
 pgal_update_released(const struct silofs_pgal *pgal,
                      struct silofs_page_info *pgi, size_t npgs, int flags)
 {
-	const size_t npgs_punch_threshold = (SILOFS_UMEGA / MPAGE_SIZE);
+	const size_t npgs_threshold = (flags & SILOFS_ALLOCF_PUNCH) ? 32 : 256;
 
-	if ((npgs >= npgs_punch_threshold) || (flags & SILOFS_ALLOCF_PUNCH)) {
+	if (npgs >= npgs_threshold) {
 		pgal_punch_hole_at(pgal, pgi, npgs);
 	}
 }

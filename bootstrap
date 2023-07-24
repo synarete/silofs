@@ -22,7 +22,7 @@ autom4te_cachedir="${buildaux}/autom4te.cache"
 
 
 do_requirebin() {
-   try command -v "$@" > /dev/null
+  try command -v "$@" > /dev/null
 }
 
 do_prerequisite() {

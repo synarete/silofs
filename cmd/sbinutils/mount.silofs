@@ -1,2 +1,109 @@
-#!/bin/sh
-silofs mount "$@"
+#!/bin/bash
+#
+# Silofs mounting helper script. Checks for the following conditions:
+#
+#   1) A systemd based host (have systemd-run and loginctl installed)
+#   2) The current $USER has linger enabled.
+#
+# If both conditions are true, execute mount via systemd-run; otherwise, call
+# silofs mount directly with the risk of abnormal termination by systemd in
+# the case of logout.
+#
+# To enable linger for specific user, run:
+#   $ sudo loginctl enable-linger $USER
+#
+
+_echo_status() {
+  echo -n "$1"
+}
+
+_echo_status_ok() {
+  _echo_status 0
+}
+
+_echo_status_err() {
+  _echo_status 1
+}
+
+_locate_command() {
+  command -v "$1"
+}
+
+_locate_silofs() {
+  _locate_command silofs
+}
+
+_locate_loginctl() {
+  _locate_command loginctl
+}
+
+_locate_systemd_run() {
+  _locate_command systemd-run
+}
+
+_check_systemd() {
+  local systemd_run_cmd
+  local loginctl_cmd
+
+  systemd_run_cmd=$(_locate_systemd_run)
+  loginctl_cmd=$(_locate_loginctl)
+  [[ -x "${systemd_run_cmd}" && -x "${loginctl_cmd}" ]] && _echo_status_ok
+}
+
+_check_systemd_run_scope() {
+  local systemd_run_cmd
+
+  systemd_run_cmd=$(_locate_systemd_run)
+  ${systemd_run_cmd} --quiet --scope --user -- /bin/true
+  _echo_status $?
+}
+
+_check_user_cap_linger() {
+  local loginctl_cmd
+  local cap_linger
+
+  loginctl_cmd=$(_locate_loginctl)
+  cap_linger=$(${loginctl_cmd} show-user "${USER}" | \
+               grep Linger | awk -F= '{print $2}' | tr -d '[:space:]')
+  [[ "${cap_linger}" == "yes" ]] && _echo_status_ok
+}
+
+_check_mount_by_systemd_run() {
+  if [[ "$(_check_systemd)" != "0" ]]; then
+    _echo_status_err
+  elif [[ "$(_check_systemd_run_scope)" != "0" ]]; then
+    _echo_status_err
+  elif [[ "$(_check_user_cap_linger)" != "0" ]]; then
+    _echo_status_err
+  else
+    _echo_status_ok
+  fi
+}
+
+_mount_silofs_by_systemd_run() {
+  local systemd_run_cmd
+  local silofs_cmd
+
+  systemd_run_cmd=$(_locate_systemd_run)
+  silofs_cmd=$(_locate_silofs)
+  ${systemd_run_cmd} --user --scope "${silofs_cmd}" mount "$@"
+}
+
+_mount_silofs_by_direct_call() {
+  local silofs_cmd
+
+  silofs_cmd=$(_locate_silofs)
+  ${silofs_cmd} mount "$@"
+}
+
+_mount_silofs() {
+  if [[ "$(_check_mount_by_systemd_run)" == "0" ]]; then
+    _mount_silofs_by_systemd_run "$@"
+  else
+    _mount_silofs_by_direct_call "$@"
+  fi
+  exit $?
+}
+
+_mount_silofs "$@"
+

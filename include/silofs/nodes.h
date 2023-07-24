@@ -31,7 +31,7 @@ enum silofs_lnflags {
 
 /* nodes' delete hook */
 typedef void (*silofs_lnode_del_fn)(struct silofs_lnode_info *lni,
-                                    struct silofs_alloc *alloc);
+                                    struct silofs_alloc *allocs, int flags);
 
 /* lnode: base object of all logiacal-nodes */
 struct silofs_lnode_info {

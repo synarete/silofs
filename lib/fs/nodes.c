@@ -22,23 +22,23 @@
 
 /* local functions forward declarations */
 static void sbi_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void sni_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void sli_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void ii_delete_by(struct silofs_lnode_info *lni,
-                         struct silofs_alloc *alloc);
+                         struct silofs_alloc *alloc, int flags);
 static void xai_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void syi_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void dni_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void fni_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 static void fli_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc);
+                          struct silofs_alloc *alloc, int flags);
 
 static int verify_view_by(const union silofs_view *view,
                           const enum silofs_stype stype);
@@ -462,31 +462,31 @@ static struct silofs_sb_info *sbi_malloc(struct silofs_alloc *alloc)
 }
 
 static void sbi_free(struct silofs_sb_info *sbi,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, sbi, sizeof(*sbi), SILOFS_ALLOCF_BZERO);
+	silofs_deallocate(alloc, sbi, sizeof(*sbi), flags);
 }
 
 static void sbi_delete(struct silofs_sb_info *sbi,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	sbi_fini(sbi);
-	sbi_free(sbi, alloc);
+	sbi_free(sbi, alloc, flags);
 }
 
 static void sbi_delete_as_ui(struct silofs_unode_info *ui,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sbi_delete(silofs_sbi_from_ui(ui), alloc);
+		sbi_delete(silofs_sbi_from_ui(ui), alloc, flags);
 	}
 }
 
 static void sbi_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		sbi_delete_as_ui(silofs_ui_from_lni(lni), alloc);
+		sbi_delete_as_ui(silofs_ui_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -502,7 +502,7 @@ sbi_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 	}
 	err = sbi_init(sbi, ulink);
 	if (err) {
-		sbi_free(sbi, alloc);
+		sbi_free(sbi, alloc, 0);
 		return NULL;
 	}
 	return sbi;
@@ -545,31 +545,31 @@ static struct silofs_spnode_info *sni_malloc(struct silofs_alloc *alloc)
 }
 
 static void sni_free(struct silofs_spnode_info *sni,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, sni, sizeof(*sni), 0);
+	silofs_deallocate(alloc, sni, sizeof(*sni), flags);
 }
 
 static void sni_delete(struct silofs_spnode_info *sni,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	sni_fini(sni);
-	sni_free(sni, alloc);
+	sni_free(sni, alloc, flags);
 }
 
 static void sni_delete_as_ui(struct silofs_unode_info *ui,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sni_delete(silofs_sni_from_ui(ui), alloc);
+		sni_delete(silofs_sni_from_ui(ui), alloc, flags);
 	}
 }
 
 static void sni_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		sni_delete_as_ui(silofs_ui_from_lni(lni), alloc);
+		sni_delete_as_ui(silofs_ui_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -633,31 +633,31 @@ static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc *alloc)
 }
 
 static void sli_free(struct silofs_spleaf_info *sli,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, sli, sizeof(*sli), 0);
+	silofs_deallocate(alloc, sli, sizeof(*sli), flags);
 }
 
 static void sli_delete(struct silofs_spleaf_info *sli,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	sli_fini(sli);
-	sli_free(sli, alloc);
+	sli_free(sli, alloc, flags);
 }
 
 static void sli_delete_as_ui(struct silofs_unode_info *ui,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sli_delete(silofs_sli_from_ui(ui), alloc);
+		sli_delete(silofs_sli_from_ui(ui), alloc, flags);
 	}
 }
 
 static void sli_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		sli_delete_as_ui(silofs_ui_from_lni(lni), alloc);
+		sli_delete_as_ui(silofs_ui_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -718,34 +718,34 @@ static struct silofs_inode_info *ii_malloc(struct silofs_alloc *alloc)
 }
 
 static void ii_free(struct silofs_inode_info *ii,
-                    struct silofs_alloc *alloc)
+                    struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, ii, sizeof(*ii), 0);
+	silofs_deallocate(alloc, ii, sizeof(*ii), flags);
 }
 
 static void ii_delete(struct silofs_inode_info *ii,
-                      struct silofs_alloc *alloc)
+                      struct silofs_alloc *alloc, int flags)
 {
 	silofs_assert_eq(ii->i_dq_vis.dq.sz, 0);
 	silofs_assert_ge(ii->i_nopen, 0);
 
 	ii_fini(ii);
-	ii_free(ii, alloc);
+	ii_free(ii, alloc, flags);
 }
 
 static void ii_delete_as_vi(struct silofs_vnode_info *vi,
-                            struct silofs_alloc *alloc)
+                            struct silofs_alloc *alloc, int flags)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		ii_delete(silofs_ii_from_vi(vi), alloc);
+		ii_delete(silofs_ii_from_vi(vi), alloc, flags);
 	}
 }
 
 static void ii_delete_by(struct silofs_lnode_info *lni,
-                         struct silofs_alloc *alloc)
+                         struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		ii_delete_as_vi(silofs_vi_from_lni(lni), alloc);
+		ii_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -844,31 +844,31 @@ static struct silofs_xanode_info *xai_malloc(struct silofs_alloc *alloc)
 }
 
 static void xai_free(struct silofs_xanode_info *xai,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, xai, sizeof(*xai), 0);
+	silofs_deallocate(alloc, xai, sizeof(*xai), flags);
 }
 
 static void xai_delete(struct silofs_xanode_info *xai,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	xai_fini(xai);
-	xai_free(xai, alloc);
+	xai_free(xai, alloc, flags);
 }
 
 static void xai_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		xai_delete(silofs_xai_from_vi(vi), alloc);
+		xai_delete(silofs_xai_from_vi(vi), alloc, flags);
 	}
 }
 
 static void xai_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		xai_delete_as_vi(silofs_vi_from_lni(lni), alloc);
+		xai_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -932,31 +932,31 @@ static struct silofs_symval_info *syi_malloc(struct silofs_alloc *alloc)
 }
 
 static void syi_free(struct silofs_symval_info *syi,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, syi, sizeof(*syi), 0);
+	silofs_deallocate(alloc, syi, sizeof(*syi), flags);
 }
 
 static void syi_delete(struct silofs_symval_info *syi,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	syi_fini(syi);
-	syi_free(syi, alloc);
+	syi_free(syi, alloc, flags);
 }
 
 static void syi_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		syi_delete(silofs_syi_from_vi(vi), alloc);
+		syi_delete(silofs_syi_from_vi(vi), alloc, flags);
 	}
 }
 
 static void syi_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		syi_delete_as_vi(silofs_vi_from_lni(lni), alloc);
+		syi_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -1020,31 +1020,31 @@ static struct silofs_dnode_info *dni_malloc(struct silofs_alloc *alloc)
 }
 
 static void dni_free(struct silofs_dnode_info *dni,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, dni, sizeof(*dni), 0);
+	silofs_deallocate(alloc, dni, sizeof(*dni), flags);
 }
 
 static void dni_delete(struct silofs_dnode_info *dni,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	dni_fini(dni);
-	dni_free(dni, alloc);
+	dni_free(dni, alloc, flags);
 }
 
 static void dni_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		dni_delete(silofs_dni_from_vi(vi), alloc);
+		dni_delete(silofs_dni_from_vi(vi), alloc, flags);
 	}
 }
 
 static void dni_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		dni_delete_as_vi(silofs_vi_from_lni(lni), alloc);
+		dni_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -1111,31 +1111,31 @@ static struct silofs_finode_info *fni_malloc(struct silofs_alloc *alloc)
 }
 
 static void fni_free(struct silofs_finode_info *fni,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, fni, sizeof(*fni), 0);
+	silofs_deallocate(alloc, fni, sizeof(*fni), flags);
 }
 
 static void fni_delete(struct silofs_finode_info *fni,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	fni_fini(fni);
-	fni_free(fni, alloc);
+	fni_free(fni, alloc, flags);
 }
 
 static void fni_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		fni_delete(silofs_fni_from_vi(vi), alloc);
+		fni_delete(silofs_fni_from_vi(vi), alloc, flags);
 	}
 }
 
 static void fni_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		fni_delete_as_vi(silofs_vi_from_lni(lni), alloc);
+		fni_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
 	}
 }
 
@@ -1199,31 +1199,31 @@ static struct silofs_fileaf_info *fli_malloc(struct silofs_alloc *alloc)
 }
 
 static void fli_free(struct silofs_fileaf_info *fli,
-                     struct silofs_alloc *alloc)
+                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, fli, sizeof(*fli), 0);
+	silofs_deallocate(alloc, fli, sizeof(*fli), flags);
 }
 
 static void fli_delete(struct silofs_fileaf_info *fli,
-                       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc, int flags)
 {
 	fli_fini(fli);
-	fli_free(fli, alloc);
+	fli_free(fli, alloc, flags);
 }
 
 static void fli_delete_as_vi(struct silofs_vnode_info *vi,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc *alloc, int flags)
 {
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		fli_delete(silofs_fli_from_vi(vi), alloc);
+		fli_delete(silofs_fli_from_vi(vi), alloc, flags);
 	}
 }
 
 static void fli_delete_by(struct silofs_lnode_info *lni,
-                          struct silofs_alloc *alloc)
+                          struct silofs_alloc *alloc, int flags)
 {
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		fli_delete_as_vi(silofs_vi_from_lni(lni), alloc);
+		fli_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
 	}
 }
 

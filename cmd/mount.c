@@ -31,10 +31,10 @@ static const char *cmd_mount_help_desc[] = {
 	"mount [options] <repodir/name> <mountpoint>",
 	"",
 	"options:",
+	"  -o, --opts=subopts           Comma-separated sub-options",
 	"  -r, --rdonly                 Mount in read-only mode",
 	"  -X, --noexec                 Do not allow programs execution",
 	"  -S, --nosuid                 Do not honor special bits",
-	"      --nodev                  Do not allow access to device files",
 	"  -i  --allow-hostids          Use local host uid/gid",
 	"  -A  --no-allow-other         Do not allow other users",
 	"  -W  --writeback-cache=0|1    Write-back cache mode",
@@ -79,14 +79,80 @@ static struct cmd_mount_ctx *cmd_mount_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+enum cmd_mount_subopts {
+	CMD_MOUNT_OPT_RO = 0,
+	CMD_MOUNT_OPT_RW,
+	CMD_MOUNT_OPT_DEV,
+	CMD_MOUNT_OPT_NODEV,
+	CMD_MOUNT_OPT_SUID,
+	CMD_MOUNT_OPT_NOSUID,
+	CMD_MOUNT_OPT_EXEC,
+	CMD_MOUNT_OPT_NOEXEC,
+};
+
+static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
+{
+	char subopts[256] = "";
+	char tok_ro[] = "ro";
+	char tok_rw[] = "rw";
+	char tok_dev[] = "dev";
+	char tok_nodev[] = "nodev";
+	char tok_suid[] = "suid";
+	char tok_nosuid[] = "nosuid";
+	char tok_exec[] = "exec";
+	char tok_noexec[] = "noexec";
+	char *const toks[] = {
+		[CMD_MOUNT_OPT_RO] = tok_ro,
+		[CMD_MOUNT_OPT_RW] = tok_rw,
+		[CMD_MOUNT_OPT_DEV] = tok_dev,
+		[CMD_MOUNT_OPT_NODEV] = tok_nodev,
+		[CMD_MOUNT_OPT_SUID] = tok_suid,
+		[CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
+		[CMD_MOUNT_OPT_EXEC] = tok_exec,
+		[CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
+		NULL
+	};
+	char *sopt;
+	char *sval;
+	int skey;
+	size_t len;
+
+	len = strlen(optarg);
+	if (len >= sizeof(subopts)) {
+		cmd_dief(0, "too many sub-options: %s", optarg);
+	}
+	memcpy(subopts, optarg, len);
+	sopt = subopts;
+	while (*sopt != '\0') {
+		sval = NULL;
+		skey = getsubopt(&sopt, toks, &sval);
+		if (skey == CMD_MOUNT_OPT_RO) {
+			ctx->in_args.rdonly = true;
+		} else if (skey == CMD_MOUNT_OPT_RW) {
+			ctx->in_args.rdonly = false;
+		} else if (skey == CMD_MOUNT_OPT_DEV) {
+			ctx->in_args.nodev = false;
+		} else if (skey == CMD_MOUNT_OPT_NODEV) {
+			ctx->in_args.nodev = true;
+		} else if (skey == CMD_MOUNT_OPT_SUID) {
+			ctx->in_args.nosuid = false;
+		} else if (skey == CMD_MOUNT_OPT_NOSUID) {
+			ctx->in_args.nosuid = true;
+		} else if (skey == CMD_MOUNT_OPT_EXEC) {
+			ctx->in_args.noexec = false;
+		} else if (skey == CMD_MOUNT_OPT_NOEXEC) {
+			ctx->in_args.noexec = true;
+		} else {
+			cmd_dief(0, "illegal sub-options: %s", optarg);
+		}
+	}
+}
+
 static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "rdonly", no_argument, NULL, 'r' },
-		{ "noexec", no_argument, NULL, 'X' },
-		{ "nosuid", no_argument, NULL, 'S' },
-		{ "nodev", no_argument, NULL, 'Z' },
+		{ "opts", required_argument, NULL, 'o' },
 		{ "allow-hostids", no_argument, NULL, 'i' },
 		{ "no-allow-other", no_argument, NULL, 'A' },
 		{ "writeback-cache", required_argument, NULL, 'W' },
@@ -101,15 +167,9 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("rXSZiAW:DCa:Mp:V:h", opts);
-		if (opt_chr == 'r') {
-			ctx->in_args.rdonly = true;
-		} else if (opt_chr == 'x') {
-			ctx->in_args.noexec = true;
-		} else if (opt_chr == 'S') {
-			ctx->in_args.nosuid = true;
-		} else if (opt_chr == 'Z') {
-			ctx->in_args.nodev = true;
+		opt_chr = cmd_getopt("o:AiW:DCa:Mp:V:h", opts);
+		if (opt_chr == 'o') {
+			cmd_mount_getsubopts(ctx);
 		} else if (opt_chr == 'A') {
 			ctx->in_args.no_allowother = true;
 		} else if (opt_chr == 'i') {

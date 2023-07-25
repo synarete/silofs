@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
-import datetime
-import os
+import pathlib
 import random
 import shutil
 import time
@@ -14,15 +13,15 @@ from . import expect
 
 # pylint: disable=R0903
 class TestConfig:
-    def __init__(self, basedir: str, mntdir: str) -> None:
-        self.basedir = os.path.realpath(basedir)
-        self.mntdir = os.path.realpath(mntdir)
-        self.repodir = os.path.join(self.basedir, "repo")
+    def __init__(self, basedir: pathlib.Path, mntdir: pathlib.Path) -> None:
+        self.basedir = basedir.resolve(strict=True)
+        self.mntdir = mntdir.resolve(strict=True)
+        self.repodir = self.basedir / "repo"
         self.password = "0123456789abcdef"
 
 
 class TestData:
-    def __init__(self, path: str, data: bytes) -> None:
+    def __init__(self, path: pathlib.Path, data: bytes) -> None:
         self.path = path
         self.data = data
         self.base = 0
@@ -31,12 +30,10 @@ class TestData:
         return self.base + len(self.data)
 
     def do_write(self) -> None:
-        with open(self.path, "wb") as f:
-            f.write(self.data)
+        self.path.write_bytes(self.data)
 
     def do_read(self) -> bytes:
-        with open(self.path, "rb") as f:
-            return f.read(len(self.data))
+        return self.path.read_bytes()
 
     def prune_data(self) -> None:
         self.data = bytes(0)
@@ -49,17 +46,17 @@ class TestDataSet:
 
     def do_makedirs(self) -> None:
         for td in self.tds:
-            dpath = os.path.dirname(td.path)
-            os.makedirs(dpath, exist_ok=True)
+            dpath = td.path.parent
+            dpath.mkdir(parents=True, exist_ok=True)
             self.expect.is_dir(dpath)
 
     def do_rmdirs(self) -> None:
         dds = {}
         for td in self.tds:
-            dpath = os.path.dirname(td.path)
+            dpath = td.path.parent
             if dpath not in dds:
                 self.expect.is_dir(dpath)
-                os.rmdir(dpath)
+                dpath.rmdir()
                 dds[dpath] = True
 
     def do_write(self) -> None:
@@ -74,14 +71,13 @@ class TestDataSet:
 
     def do_stat(self) -> None:
         for td in self.tds:
-            with open(td.path, "rb") as f:
-                st = os.fstat(f.fileno())
-                self.expect.eq(st.st_size, td.fsize())
+            st = td.path.stat()
+            self.expect.eq(st.st_size, td.fsize())
 
     def do_unlink(self) -> None:
         for td in self.tds:
             self.expect.is_reg(td.path)
-            os.unlink(td.path)
+            td.path.unlink()
 
     def prune_data(self) -> None:
         for td in self.tds:
@@ -94,27 +90,25 @@ class TestBaseCtx:
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
-        self.seed = 0
 
     @staticmethod
     def suspend(nsec: int) -> None:
         time.sleep(nsec)
 
-    def make_basepath(self) -> str:
+    def make_basepath(self) -> pathlib.Path:
         return self.make_path(self.name)
 
-    def make_path(self, *subs) -> str:
-        return os.path.join(self.mntpoint(), *subs)
+    def make_path(self, *subs) -> pathlib.Path:
+        return pathlib.Path(self.mntpoint(), *subs)
 
     def make_rands(self, cnt: int, rsz: int) -> list[bytes]:
-        self._seed_random()
         ret = []
         for _ in range(0, cnt):
             ret.append(self.make_rand(rsz))
         return ret
 
-    def make_rand(self, rsz: int) -> bytes:
-        self._seed_random()
+    @staticmethod
+    def make_rand(rsz: int) -> bytes:
         return random.randbytes(rsz)
 
     @staticmethod
@@ -149,30 +143,25 @@ class TestBaseCtx:
         tds.do_read()
         return tds
 
-    def do_mkdirs(self, name: str) -> str:
+    def do_mkdirs(self, name: str) -> pathlib.Path:
         base = self.make_path(name)
-        os.makedirs(base, exist_ok=False)
+        base.mkdir(parents=True, exist_ok=False)
         return base
 
     def do_rmtree(self, name: str) -> None:
         base = self.make_path(name)
         shutil.rmtree(base)
 
-    def _seed_random(self):
-        if self.seed == 0:
-            self.seed = datetime.datetime.now().second
-            random.seed(self.seed)
-
-    def repodir(self) -> str:
+    def repodir(self) -> pathlib.Path:
         return self.cfg.repodir
 
-    def mntpoint(self) -> str:
+    def mntpoint(self) -> pathlib.Path:
         return self.cfg.mntdir
 
-    def _repodir_name(self, name: str = "") -> str:
+    def _repodir_name(self, name: str = "") -> pathlib.Path:
         if not name:
             name = self.name
-        return os.path.join(self.repodir(), name)
+        return self.repodir() / name
 
     def _passwd(self) -> str:
         return self.cfg.password
@@ -196,7 +185,11 @@ class TestCtx(TestBaseCtx):
         gibi = 2**30
         size = gsize * gibi
         self.cmd.silofs.mkfs(
-            self._repodir_name(name), size, self._passwd(), sup_groups
+            self._repodir_name(name),
+            size,
+            self._passwd(),
+            sup_groups,
+            allow_root,
         )
 
     def exec_mount(

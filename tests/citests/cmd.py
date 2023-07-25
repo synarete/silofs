@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import os
+import pathlib
 import shlex
 import shutil
 import subprocess
@@ -62,19 +63,22 @@ class CmdExec:
         if proc.returncode != 0:
             raise CmdError("failed: " + cmd, ret=proc.returncode)
 
-    def _make_cmd(self, args: typing.Iterable[str]) -> str:
-        return self.xbin + " " + " ".join(args)
+    def _make_cmd(self, args: typing.Iterable[typing.Any]) -> str:
+        cmd_xbin = str(self.xbin)
+        cmd_args = [str(arg) for arg in args]
+        cmd = cmd_xbin + " " + " ".join(cmd_args)
+        return cmd.strip()
 
     def _make_cwd(self, wdir: str = "") -> str:
         return wdir if len(wdir) > 0 else self.cwd
 
     @staticmethod
-    def find_executable(name: str) -> str:
+    def find_executable(name: str) -> pathlib.Path:
         """locate executable program's path by name"""
         xbin = shutil.which(name)
         if not xbin:
             raise CmdError("failed to find " + name)
-        return str(xbin).strip()
+        return pathlib.Path(str(xbin).strip())
 
 
 class CmdShell(CmdExec):
@@ -111,13 +115,13 @@ class CmdSilofs(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def init(self, repodir: str) -> None:
+    def init(self, repodir: pathlib.Path) -> None:
         args = ["init", repodir]
         self.execute_sub(args)
 
     def mkfs(
         self,
-        repodir_name: str,
+        repodir_name: pathlib.Path,
         size: int,
         password: str,
         sup_groups: bool = False,
@@ -134,8 +138,8 @@ class CmdSilofs(CmdExec):
 
     def mount(
         self,
-        repodir_name: str,
-        mntpoint: str,
+        repodir_name: pathlib.Path,
+        mntpoint: pathlib.Path,
         password: str,
         allow_hostids: bool = False,
         writeback_cache: bool = False,
@@ -149,42 +153,42 @@ class CmdSilofs(CmdExec):
             args = args + ["--password", password]
         self.execute_run(args)
 
-    def umount(self, mntpoint: str) -> None:
+    def umount(self, mntpoint: pathlib.Path) -> None:
         self.execute_run(["umount", mntpoint])
 
-    def show_version(self, pathname: str) -> str:
+    def show_version(self, pathname: pathlib.Path) -> str:
         return self.execute_sub(["show", "version", pathname])
 
-    def show_boot(self, pathname: str) -> str:
+    def show_boot(self, pathname: pathlib.Path) -> str:
         return self.execute_sub(["show", "boot", pathname])
 
-    def show_proc(self, pathname: str) -> str:
+    def show_proc(self, pathname: pathlib.Path) -> str:
         return self.execute_sub(["show", "proc", pathname])
 
-    def show_spstats(self, pathname: str) -> str:
+    def show_spstats(self, pathname: pathlib.Path) -> str:
         return self.execute_sub(["show", "spstats", pathname])
 
-    def show_statx(self, pathname: str) -> str:
+    def show_statx(self, pathname: pathlib.Path) -> str:
         return self.execute_sub(["show", "statx", pathname])
 
-    def snap(self, name: str, pathname: str) -> None:
+    def snap(self, name: str, pathname: pathlib.Path) -> None:
         self.execute_sub(["snap", "-n", name, pathname])
 
     def snap_offline(
-        self, name: str, repodir_name: str, password: str
+        self, name: str, repodir_name: pathlib.Path, password: str
     ) -> None:
         args = ["snap", "-n", name, "--offline", repodir_name]
         if password:
             args = args + ["--password", password]
         self.execute_sub(args)
 
-    def rmfs(self, repodir_name: str, password: str) -> None:
+    def rmfs(self, repodir_name: pathlib.Path, password: str) -> None:
         args = ["rmfs", repodir_name]
         if password:
             args = args + ["--password", password]
         self.execute_sub(args)
 
-    def fsck(self, repodir_name: str, password: str) -> None:
+    def fsck(self, repodir_name: pathlib.Path, password: str) -> None:
         args = ["fsck", repodir_name]
         if password:
             args = args + ["--password", password]
@@ -200,7 +204,7 @@ class CmdUnitests(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def run(self, basedir: str, level: int = 1) -> None:
+    def run(self, basedir: pathlib.Path, level: int = 1) -> None:
         args = [basedir, f"--level={level}"]
         self.execute_sub(args, timeout=1200)
 
@@ -215,9 +219,12 @@ class CmdFftests(CmdExec):
         return self.execute_sub(["-v"])
 
     def run(
-        self, basedir: str, rand: bool = False, nostatvfs: bool = False
+        self,
+        basedir: pathlib.Path,
+        rand: bool = False,
+        nostatvfs: bool = False,
     ) -> None:
-        args = [basedir]
+        args = [str(basedir)]
         if rand:
             args.append("--random")
         if nostatvfs:
@@ -234,7 +241,7 @@ class CmdGit(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["version"])
 
-    def clone(self, repo: str, dpath: str) -> int:
+    def clone(self, repo: str, dpath: pathlib.Path) -> int:
         ret = 0
         try:
             self.execute_sub(["clone", repo, dpath], timeout=60)

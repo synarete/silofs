@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0
-import os
 
 from . import ctx
 
@@ -37,7 +36,7 @@ def test_hello_world(tc: ctx.TestCtx) -> None:
         lines = f.readlines()
     tc.expect.eq(len(lines), 1)
     tc.expect.eq(lines[0], data)
-    os.unlink(path)
+    path.unlink()
     tc.exec_umount()
 
 
@@ -55,21 +54,19 @@ def _test_fscapacity(tc: ctx.TestCtx, cap: int) -> None:
     base = tc.make_path(name)
     path = tc.make_path(name, "dat")
     wdat = tc.make_rand(2**20)
-    os.mkdir(base)
-    with open(path, "wb") as f:
-        f.write(wdat)
-    with open(path, "rb") as f:
-        rdat = f.read(len(wdat))
+    base.mkdir()
+    path.write_bytes(wdat)
+    rdat = path.read_bytes()
     tc.expect.eq(wdat, rdat)
-    os.unlink(path)
-    os.rmdir(base)
+    path.unlink()
+    base.rmdir()
     tc.exec_umount()
 
 
 def test_show(tc: ctx.TestCtx) -> None:
     tc.exec_setup_fs()
     base = tc.make_basepath()
-    os.mkdir(base)
+    base.mkdir()
     vers1 = tc.cmd.silofs.version()
     tc.expect.eq(len(vers1.split()), 2)
     vers2 = tc.cmd.silofs.show_version(base)
@@ -83,7 +80,7 @@ def test_show(tc: ctx.TestCtx) -> None:
     tc.expect.gt(len(spst), 1)
     stx = tc.cmd.silofs.show_statx(base)
     tc.expect.gt(len(stx), 1)
-    os.rmdir(base)
+    base.rmdir()
     tc.exec_umount()
 
 

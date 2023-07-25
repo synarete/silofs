@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0
 import datetime
-import os
+import pathlib
+import random
 import sys
 import traceback
 
@@ -22,10 +23,10 @@ def _print(msg: str) -> None:
     print(f"[{ts}] {msg}")
 
 
-def _require_empty_dir(dirpath: str) -> None:
-    if not os.path.isdir(dirpath):
+def _require_empty_dir(dirpath: pathlib.Path) -> None:
+    if not utils.is_dir(dirpath):
         _die(f"not a directory: {dirpath}")
-    if os.listdir(dirpath):
+    if not utils.is_empty_dir(dirpath):
         _die(f"not an empty directory: {dirpath}")
 
 
@@ -42,8 +43,15 @@ def _report_prog() -> None:
     _print(f"VERS: {vers}")
 
 
+def _seed_random() -> None:
+    now = datetime.datetime.now()
+    seed = int(now.year * now.day * now.hour * now.minute / (now.second + 1))
+    random.seed(seed)
+
+
 def _pre_run_tests() -> None:
     _report_prog()
+    _seed_random()
 
 
 def _post_run_tests() -> None:

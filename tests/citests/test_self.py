@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
+import pathlib
+
 from . import ctx
 
 
@@ -41,7 +43,7 @@ def test_func_tests(tc: ctx.TestCtx) -> None:
     tc.exec_rmfs(ff_snap_name)
 
 
-def run_fftests(tc: ctx.TestCtx, base: str, rand: bool) -> None:
+def run_fftests(tc: ctx.TestCtx, base: pathlib.Path, rand: bool) -> None:
     tc.cmd.fftests.run(base, rand, True)
 
 

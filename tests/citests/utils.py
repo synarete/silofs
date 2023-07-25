@@ -1,24 +1,25 @@
 # SPDX-License-Identifier: GPL-3.0
 import contextlib
 import os
+import pathlib
 import shutil
 import urllib
 import urllib.request
 
 
-def is_dir(dirpath: str) -> bool:
-    return os.path.isdir(dirpath)
+def is_dir(dirpath: pathlib.Path) -> bool:
+    return dirpath.is_dir()
 
 
-def is_reg(filepath: str) -> bool:
-    return os.path.isfile(filepath)
+def is_reg(filepath: pathlib.Path) -> bool:
+    return filepath.is_file()
 
 
-def is_empty_dir(dirpath: str) -> bool:
-    return is_dir(dirpath) and not os.listdir(dirpath)
+def is_empty_dir(dirpath: pathlib.Path) -> bool:
+    return is_dir(dirpath) and len(list(dirpath.iterdir())) == 0
 
 
-def empty_dir(dirpath: str) -> None:
+def empty_dir(dirpath: pathlib.Path) -> None:
     for name in os.listdir(dirpath):
         subpath = os.path.join(dirpath, name)
         if os.path.isdir(subpath):

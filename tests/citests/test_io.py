@@ -29,6 +29,7 @@ def test_rw_rands(tc: ctx.TestCtx) -> None:
     tds.do_makedirs()
     tds.do_write()
     tds.do_read()
+    tds.do_write()
     tds.do_unlink()
     tc.exec_umount()
 

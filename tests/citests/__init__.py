@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0
+import pathlib
 import sys
 
 from . import ctx
@@ -20,15 +21,17 @@ def _usage(exit_code: int) -> None:
     sys.exit(exit_code)
 
 
-def _makeconfig(basedir: str, mntdir: str) -> ctx.TestConfig:
+def _makeconfig(basedir: pathlib.Path, mntdir: pathlib.Path) -> ctx.TestConfig:
     return ctx.TestConfig(basedir, mntdir)
 
 
-def _parseargs() -> tuple[str, str]:
+def _parseargs() -> tuple[pathlib.Path, pathlib.Path]:
     args = sys.argv
     if len(args[1:]) != 2:
         _usage(1)
-    return (args[1], args[2])
+    test_dir = pathlib.Path(args[1])
+    mnt_point = pathlib.Path(args[2])
+    return (test_dir, mnt_point)
 
 
 def _setproctitle() -> None:

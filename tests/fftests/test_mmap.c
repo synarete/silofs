@@ -24,11 +24,11 @@
  */
 static void test_mmap_basic_(struct ft_env *fte, loff_t off, size_t nbk)
 {
-	int fd = -1;
-	size_t msz = FT_BK_SIZE * nbk;
 	void *buf = NULL;
 	void *addr = NULL;
 	const char *path = ft_new_path_unique(fte);
+	const size_t msz = FT_BK_SIZE * nbk;
+	int fd = -1;
 
 	buf = ft_new_buf_rands(fte, msz);
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -55,10 +55,10 @@ static void test_mmap_basic(struct ft_env *fte)
 
 static void test_mmap_simple_(struct ft_env *fte, loff_t off, size_t msz)
 {
-	int fd = -1;
 	void *addr = NULL;
 	void *mbuf = ft_new_buf_rands(fte, msz);
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)msz);
@@ -74,6 +74,47 @@ static void test_mmap_simple(struct ft_env *fte)
 {
 	test_mmap_simple_(fte, 0, FT_BK_SIZE);
 	test_mmap_simple_(fte, FT_GIGA, FT_MEGA);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/*
+ * Expects mmap(3p) to update mtime and ctime after write.
+ */
+static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t msz)
+{
+	struct stat st[3];
+	void *addr = NULL;
+	void *mbuf1 = ft_new_buf_rands(fte, msz / 2);
+	void *mbuf2 = ft_new_buf_rands(fte, msz);
+	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
+	ft_ftruncate(fd, off + (loff_t)msz);
+	ft_mmap(NULL, msz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_fstat(fd, &st[0]);
+	ft_suspends(fte, 1);
+	memcpy(addr, mbuf1, msz / 2);
+	ft_fstat(fd, &st[1]);
+	ft_expect_mtime_gt(&st[0], &st[1]);
+	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_suspends(fte, 1);
+	memcpy(addr, mbuf2, msz);
+	ft_msync(addr, msz, MS_SYNC);
+	ft_fstat(fd, &st[2]);
+	ft_expect_mtime_gt(&st[1], &st[2]);
+	ft_expect_ctime_gt(&st[1], &st[2]);
+	ft_munmap(addr, msz);
+	ft_close(fd);
+	ft_unlink(path);
+}
+
+static void test_mmap_mctime(struct ft_env *fte)
+{
+	test_mmap_mctime_(fte, 0, FT_MEGA);
+	test_mmap_mctime_(fte, FT_GIGA, FT_MEGA / 2);
+	test_mmap_mctime_(fte, FT_TERA, FT_MEGA / 4);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -642,6 +683,7 @@ static void test_mmap_madvise_dontneed(struct ft_env *fte)
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mmap_basic),
 	FT_DEFTEST(test_mmap_simple),
+	FT_DEFTEST(test_mmap_mctime),
 	FT_DEFTEST(test_mmap_fallocate),
 	FT_DEFTEST(test_mmap_sequential),
 	FT_DEFTEST(test_mmap_sparse),

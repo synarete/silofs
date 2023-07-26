@@ -14,6 +14,8 @@ dnf install -y \
   libtool \
   libunwind-devel \
   libuuid-devel \
+  lz4 \
+  lz4-devel \
   openssl-devel \
   perl-core \
   python3-setproctitle \

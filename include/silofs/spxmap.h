@@ -60,8 +60,8 @@ struct silofs_uamap {
 	struct silofs_listq      uam_lru;
 	struct silofs_alloc     *uam_alloc;
 	struct silofs_list_head *uam_htbl;
-	unsigned int             uam_htbl_cap;
-	unsigned int             uam_htbl_sz;
+	uint32_t                 uam_htbl_cap;
+	uint32_t                 uam_htbl_sz;
 };
 
 

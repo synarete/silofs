@@ -665,13 +665,13 @@ static bool uakey_isequal(const struct silofs_uakey *uakey1,
 static uint64_t uakey_hash(const struct silofs_uakey *uakey)
 {
 	const uint64_t off = (uint64_t)(uakey->voff);
-	const uint64_t pc = silofs_popcount64(off);
+	const uint64_t nlz = silofs_clz64(off);
 	uint64_t hval;
 
 	hval = off;
-	hval ^= (0x5D21C111ULL / (pc + 1));
-	hval ^= (uint64_t)(uakey->vspace);
-	hval ^= ((uint64_t)(uakey->height) << 43);
+	hval ^= (0x5D21C111ULL / (nlz + 1));
+	hval ^= ((uint64_t)(uakey->vspace) << 43);
+	hval ^= (uint64_t)(0xCAFEFEEDULL << (31 - uakey->height));
 	return hval;
 }
 
@@ -759,7 +759,7 @@ uaent_from_lru_lh(const struct silofs_list_head *lh)
 
 int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc)
 {
-	const unsigned int cap = 4093; /* TODO: cap based on memory size */
+	const unsigned int cap = 8191; /* TODO: cap based on memory size */
 
 	listq_init(&uamap->uam_lru);
 	uamap->uam_alloc = alloc;
@@ -790,8 +790,9 @@ static size_t uamap_slot_of(const struct silofs_uamap *uamap,
                             const struct silofs_uakey *uakey)
 {
 	const uint64_t hval = uakey_hash(uakey);
+	const uint32_t hval32 = (uint32_t)(hval ^ (hval >> 19) ^ (hval >> 37));
 
-	return (hval ^ (hval >> 32)) % uamap->uam_htbl_cap;
+	return hval32 % uamap->uam_htbl_cap;
 }
 
 static struct silofs_list_head *

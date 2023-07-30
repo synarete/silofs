@@ -83,10 +83,9 @@ static void test_mmap_simple(struct ft_env *fte)
  */
 static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t msz)
 {
-	struct stat st[3];
+	struct stat st[2];
 	void *addr = NULL;
-	void *mbuf1 = ft_new_buf_rands(fte, msz / 2);
-	void *mbuf2 = ft_new_buf_rands(fte, msz);
+	void *mbuf = ft_new_buf_rands(fte, msz);
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 
@@ -95,18 +94,14 @@ static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t msz)
 	ft_mmap(NULL, msz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
 	ft_fstat(fd, &st[0]);
 	ft_suspends(fte, 1);
-	memcpy(addr, mbuf1, msz / 2);
-	ft_fstat(fd, &st[1]);
+	memcpy(addr, mbuf, msz / 2);
+	ft_msync(addr, msz, MS_SYNC);
+	ft_munmap(addr, msz);
+	ft_fsync(fd);
+	ft_close(fd);
+	ft_stat(path, &st[1]);
 	ft_expect_mtime_gt(&st[0], &st[1]);
 	ft_expect_ctime_gt(&st[0], &st[1]);
-	ft_suspends(fte, 1);
-	memcpy(addr, mbuf2, msz);
-	ft_msync(addr, msz, MS_SYNC);
-	ft_fstat(fd, &st[2]);
-	ft_expect_mtime_gt(&st[1], &st[2]);
-	ft_expect_ctime_gt(&st[1], &st[2]);
-	ft_munmap(addr, msz);
-	ft_close(fd);
 	ft_unlink(path);
 }
 

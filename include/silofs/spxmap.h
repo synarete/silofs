@@ -116,8 +116,8 @@ const struct silofs_uaddr *
 silofs_uamap_lookup(const struct silofs_uamap *uamap,
                     const struct silofs_uakey *uakey);
 
-int silofs_uamap_remove(struct silofs_uamap *uamap,
-                        const struct silofs_uaddr *uaddr);
+void silofs_uamap_remove(struct silofs_uamap *uamap,
+                         const struct silofs_uakey *uakey);
 
 int silofs_uamap_insert(struct silofs_uamap *uamap,
                         const struct silofs_uaddr *uaddr);

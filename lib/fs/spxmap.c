@@ -670,7 +670,7 @@ static uint64_t uakey_hash(const struct silofs_uakey *uakey)
 
 	hval = off;
 	hval ^= (0x5D21C111ULL / (nlz + 1));
-	hval ^= ((uint64_t)(uakey->vspace) << 43);
+	hval ^= ~((uint64_t)(uakey->vspace) << 43);
 	hval ^= (uint64_t)(0xCAFEFEEDULL << (31 - uakey->height));
 	return hval;
 }
@@ -715,7 +715,6 @@ static void uaent_del(struct silofs_uaent *uae, struct silofs_alloc *alloc)
 	uaent_fini(uae);
 	silofs_deallocate(alloc, uae, sizeof(*uae), 0);
 }
-
 
 static bool uaent_has_mapping(const struct silofs_uaent *uaent,
                               const struct silofs_uakey *uakey)
@@ -887,19 +886,16 @@ static void uamap_remove_del(struct silofs_uamap *uamap,
 	uaent_del(uaent, uamap->uam_alloc);
 }
 
-int silofs_uamap_remove(struct silofs_uamap *uamap,
-                        const struct silofs_uaddr *uaddr)
+void silofs_uamap_remove(struct silofs_uamap *uamap,
+                         const struct silofs_uakey *uakey)
 {
-	struct silofs_uakey uakey;
 	struct silofs_uaent *uaent;
 
-	silofs_uakey_setup_by(&uakey, uaddr);
-	uaent = uamap_find(uamap, &uakey);
-	if (uaent == NULL) {
-		return -SILOFS_ENOENT;
+	uaent = uamap_find(uamap, uakey);
+	while (uaent != NULL) {
+		uamap_remove_del(uamap, uaent);
+		uaent = uamap_find(uamap, uakey);
 	}
-	uamap_remove_del(uamap, uaent);
-	return 0;
 }
 
 static struct silofs_uaent *uamap_get_lru(struct silofs_uamap *uamap)

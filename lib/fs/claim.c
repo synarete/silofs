@@ -44,7 +44,7 @@ spac_spamaps(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_cache *cache = spac_cache(spa_ctx);
 
-	return &cache->c_spam;
+	return &cache->c_spams;
 }
 
 static loff_t spac_get_hint(const struct silofs_spalloc_ctx *spa_ctx)

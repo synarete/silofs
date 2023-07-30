@@ -1729,7 +1729,7 @@ stgc_spamaps(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_cache *cache = stgc_cache(stg_ctx);
 
-	return &cache->c_spam;
+	return &cache->c_spams;
 }
 
 static void stgc_track_spawned_spleaf(const struct silofs_stage_ctx *stg_ctx,

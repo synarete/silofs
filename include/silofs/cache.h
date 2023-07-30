@@ -43,8 +43,8 @@ struct silofs_cache {
 	struct silofs_lrumap    c_ui_lm;
 	struct silofs_lrumap    c_vi_lm;
 	struct silofs_dirtyqs   c_dqs;
-	struct silofs_spamaps   c_spam;
-	struct silofs_uamap     c_uam;
+	struct silofs_spamaps   c_spams;
+	struct silofs_uamap     c_uamap;
 	size_t                  c_mem_size_hint;
 };
 
@@ -139,7 +139,7 @@ struct silofs_unode_info *
 silofs_cache_find_ui_by(struct silofs_cache *cache,
                         const struct silofs_uakey *uakey);
 
-void silofs_cache_forget_uaddrs(struct silofs_cache *cache);
+void silofs_cache_drop_uamap(struct silofs_cache *cache);
 
 
 struct silofs_vbk_info *

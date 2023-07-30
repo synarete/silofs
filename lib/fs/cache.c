@@ -2114,20 +2114,23 @@ cache_new_ui(const struct silofs_cache *cache,
 static void cache_track_uaddr(struct silofs_cache *cache,
                               const struct silofs_uaddr *uaddr)
 {
-	silofs_uamap_insert(&cache->c_uam, uaddr);
+	silofs_uamap_insert(&cache->c_uamap, uaddr);
 }
 
 static void cache_forget_uaddr(struct silofs_cache *cache,
                                const struct silofs_uaddr *uaddr)
 {
-	silofs_uamap_remove(&cache->c_uam, uaddr);
+	struct silofs_uakey uakey;
+
+	silofs_uakey_setup_by(&uakey, uaddr);
+	silofs_uamap_remove(&cache->c_uamap, &uakey);
 }
 
 static const struct silofs_uaddr *
 cache_lookup_uaddr_by(struct silofs_cache *cache,
                       const struct silofs_uakey *uakey)
 {
-	return silofs_uamap_lookup(&cache->c_uam, uakey);
+	return silofs_uamap_lookup(&cache->c_uamap, uakey);
 }
 
 static void cache_track_uaddr_of(struct silofs_cache *cache,
@@ -2262,7 +2265,7 @@ silofs_cache_find_ui_by(struct silofs_cache *cache,
 	return ui;
 }
 
-void silofs_cache_forget_uaddrs(struct silofs_cache *cache)
+void silofs_cache_drop_uamap(struct silofs_cache *cache)
 {
 	cache_drop_uamap(cache);
 	cache_post_op(cache);
@@ -2870,7 +2873,7 @@ static size_t cache_relax_niter(struct silofs_cache *cache, size_t niter)
 
 static void cache_relax_uamap(struct silofs_cache *cache, int flags)
 {
-	struct silofs_uamap *uamap = &cache->c_uam;
+	struct silofs_uamap *uamap = &cache->c_uamap;
 
 	if (flags & SILOFS_F_IDLE) {
 		silofs_uamap_drop_lru(uamap);
@@ -2935,12 +2938,12 @@ static void cache_drop_evictables(struct silofs_cache *cache)
 
 static void cache_drop_spcmaps(struct silofs_cache *cache)
 {
-	silofs_spamaps_drop(&cache->c_spam);
+	silofs_spamaps_drop(&cache->c_spams);
 }
 
 static void cache_drop_uamap(struct silofs_cache *cache)
 {
-	silofs_uamap_drop_all(&cache->c_uam);
+	silofs_uamap_drop_all(&cache->c_uamap);
 }
 
 void silofs_cache_drop(struct silofs_cache *cache)
@@ -3122,22 +3125,22 @@ out_err:
 
 static int cache_init_spamaps(struct silofs_cache *cache)
 {
-	return silofs_spamaps_init(&cache->c_spam, cache->c_alloc);
+	return silofs_spamaps_init(&cache->c_spams, cache->c_alloc);
 }
 
 static void cache_fini_spamaps(struct silofs_cache *cache)
 {
-	silofs_spamaps_fini(&cache->c_spam);
+	silofs_spamaps_fini(&cache->c_spams);
 }
 
 static int cache_init_uamap(struct silofs_cache *cache)
 {
-	return silofs_uamap_init(&cache->c_uam, cache->c_alloc);
+	return silofs_uamap_init(&cache->c_uamap, cache->c_alloc);
 }
 
 static void cache_fini_uamap(struct silofs_cache *cache)
 {
-	silofs_uamap_fini(&cache->c_uam);
+	silofs_uamap_fini(&cache->c_uamap);
 }
 
 int silofs_cache_init(struct silofs_cache *cache,

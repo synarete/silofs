@@ -36,7 +36,7 @@ struct cmd_rmfs_ctx {
 	struct cmd_rmfs_in_args   in_args;
 	struct silofs_fs_args     fs_args;
 	struct silofs_fs_env     *fs_env;
-	int                       lock_fd;
+	long                      pad;
 };
 
 static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
@@ -86,12 +86,6 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass(NULL, &ctx->in_args.password);
 	}
-}
-
-static void cmd_rmfs_lock_fs(struct cmd_rmfs_ctx *ctx)
-{
-	cmd_lockf(ctx->in_args.repodir_real,
-	          ctx->in_args.name, &ctx->lock_fd);
 }
 
 static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
@@ -153,7 +147,6 @@ static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
-	cmd_unlockf(&ctx->lock_fd);
 	cmd_rmfs_ctx = NULL;
 }
 
@@ -174,9 +167,7 @@ static void cmd_rmfs_start(struct cmd_rmfs_ctx *ctx)
 
 void cmd_execute_rmfs(void)
 {
-	struct cmd_rmfs_ctx ctx = {
-		.lock_fd = -1,
-	};
+	struct cmd_rmfs_ctx ctx = { .pad = -1 };
 
 	/* Do all cleanups upon exits */
 	cmd_rmfs_start(&ctx);
@@ -189,9 +180,6 @@ void cmd_execute_rmfs(void)
 
 	/* Require password */
 	cmd_rmfs_getpass(&ctx);
-
-	/* Require lockable */
-	cmd_rmfs_lock_fs(&ctx);
 
 	/* Setup input arguments */
 	cmd_rmfs_setup_fs_args(&ctx);

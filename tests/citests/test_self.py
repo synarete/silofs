@@ -4,9 +4,9 @@ import pathlib
 from . import ctx
 
 
-def test_unit_tests(tc: ctx.TestCtx) -> None:
-    ut_pre_dname = "pre-unit-tests"
-    ut_dname = "unit-tests"
+def test_unitests(tc: ctx.TestCtx) -> None:
+    ut_pre_dname = "pre-uniests"
+    ut_dname = "unitests"
     tc.exec_setup_fs(64, writeback_cache=False)
     tds = tc.make_tds(128, ut_pre_dname, 2**20)
     tds.do_makedirs()
@@ -21,7 +21,7 @@ def test_unit_tests(tc: ctx.TestCtx) -> None:
     tc.exec_umount()
 
 
-def test_func_tests(tc: ctx.TestCtx) -> None:
+def test_fftests(tc: ctx.TestCtx) -> None:
     ff_pre_dname = "pre-fftests"
     ff_dname = "fftests"
     ff_snap_name = "fftests-snap"
@@ -47,7 +47,7 @@ def run_fftests(tc: ctx.TestCtx, base: pathlib.Path, rand: bool) -> None:
     tc.cmd.fftests.run(base, rand, True)
 
 
-def test_func_tests2(tc: ctx.TestCtx) -> None:
+def test_fftests2(tc: ctx.TestCtx) -> None:
     ff_pre_dname = "pre-fftests"
     ff_dname1 = "fftests1"
     ff_dname2 = "fftests2"

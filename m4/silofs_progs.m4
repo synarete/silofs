@@ -41,11 +41,4 @@ AC_DEFUN([AX_SILOFS_WANT_CC],
   dnl AX_CFLAGS_WARN_ALL
 ])
 
-AC_DEFUN([AX_SILOFS_WANT_PYTHON],
-[
-  dnl RHEL8 comes with python3.6
-  AM_PATH_PYTHON([3.6])
-  AX_PYTHON
-])
-
 

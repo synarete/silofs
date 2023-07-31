@@ -2,6 +2,7 @@
 apt-get install -y \
   attr-dev \
   automake \
+  cdbs \
   clang \
   clang-tools \
   debhelper \

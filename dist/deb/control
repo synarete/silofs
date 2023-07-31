@@ -2,16 +2,19 @@ Source: silofs
 Section: utils
 Priority: optional
 Maintainer: Shachar Sharon <synarete@xxxxxxxx>
-Build-Depends: debhelper (>= 8.0.0), autotools-dev
+Build-Depends: debhelper (>= 9),
+               autotools-dev,
+               automake (>= 1.11),
+               autoconf (>= 2.62),
+               libtool (>= 2.2.6),
+               pkg-config (>= 0.11.0)
 Standards-Version: 3.9.3
 Homepage:  https://github.com/synarete/silofs
 
 Package: silofs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
-Description: Silofs
- The Silo File-System
- .
+Description: The Silo File-System
  Silofs is a user-space file-system for storing large volumes of data
  as encrypted blobs. It allows normal users to create an isolated
  storage area, with its own private key, and mount it on local host.
@@ -24,5 +27,6 @@ Description: Silofs
  repository into remote location without compromising the integrity of
  the underlying data.
  .
+ This package contains silofs core and testing utilities.
 
 

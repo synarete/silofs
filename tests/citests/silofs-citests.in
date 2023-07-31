@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0
-from site import getsitepackages
-
-# Allow import from non site-local directory
-_citestsdir = "@PYTHONDIR@"
-if _citestsdir not in getsitepackages():
-    import sys
-    sys.path.insert(0, _citestsdir)
 
 from silofs.citests import citests_main
-citests_main()
 
+__version__ = "@PACKAGE_VERSION@"
+citests_main()

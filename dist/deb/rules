@@ -1,8 +1,10 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-export DH_VERBOSE=1
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/rules/utils.mk
+include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/cdbs/1/rules/autoreconf.mk
 
-%:
-	dh $@  --with autotools-dev
-
+DEB_CONFIGURE_EXTRA_FLAGS := \
+  --with-python-site-packages=${prefix}/usr/lib/python3/dist-packages

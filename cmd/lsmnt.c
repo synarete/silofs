@@ -121,7 +121,7 @@ out:
 static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 {
 	struct cmd_proc_mntinfo *mi_list = NULL;
-	struct cmd_proc_mntinfo *mi_iter = NULL;
+	const struct cmd_proc_mntinfo *mi_iter = NULL;
 
 	mi_list = cmd_parse_mountinfo();
 	for (mi_iter = mi_list; mi_iter != NULL; mi_iter = mi_iter->next) {

@@ -33,10 +33,11 @@ struct cmd_rmfs_in_args {
 };
 
 struct cmd_rmfs_ctx {
+	struct silofs_ioc_query   ioc_qry;
+	long                      pad;
 	struct cmd_rmfs_in_args   in_args;
 	struct silofs_fs_args     fs_args;
 	struct silofs_fs_env     *fs_env;
-	long                      pad;
 };
 
 static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
@@ -86,6 +87,57 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass(NULL, &ctx->in_args.password);
 	}
+}
+
+static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
+                                    const struct cmd_proc_mntinfo *mi)
+{
+	struct stat st[2];
+	char *path[2] = { NULL, NULL };
+	struct silofs_ioc_query *qry = &ctx->ioc_qry;
+	int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
+	int dfd = -1;
+	int err = 0;
+
+	err = silofs_sys_openat(AT_FDCWD, mi->mntdir, o_flags, 0, &dfd);
+	if (err) {
+		goto out;
+	}
+	qry->qtype = SILOFS_QUERY_BOOTSEC;
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
+	if (err) {
+		goto out;
+	}
+	cmd_join_path(qry->u.bootsec.repo, qry->u.bootsec.name, &path[0]);
+	err = silofs_sys_stat(path[0], &st[0]);
+	if (err) {
+		goto out;
+	}
+	cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.name, &path[1]);
+	err = silofs_sys_stat(path[1], &st[1]);
+	if (err) {
+		goto out;
+	}
+	if ((st[0].st_ino == st[1].st_ino) &&
+	    (st[0].st_dev == st[1].st_dev)) {
+		cmd_dief(EBUSY, "currently mounted at: %s", mi->mntdir);
+	}
+out:
+	silofs_sys_closefd(&dfd);
+	cmd_pstrfree(&path[0]);
+	cmd_pstrfree(&path[1]);
+}
+
+static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
+{
+	struct cmd_proc_mntinfo *mi_list = NULL;
+	const struct cmd_proc_mntinfo *mi_iter = NULL;
+
+	mi_list = cmd_parse_mountinfo();
+	for (mi_iter = mi_list; mi_iter != NULL; mi_iter = mi_iter->next) {
+		cmd_rmfs_check_nomnt_at(ctx, mi_iter);
+	}
+	cmd_free_mountinfo(mi_list);
 }
 
 static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
@@ -167,7 +219,9 @@ static void cmd_rmfs_start(struct cmd_rmfs_ctx *ctx)
 
 void cmd_execute_rmfs(void)
 {
-	struct cmd_rmfs_ctx ctx = { .pad = -1 };
+	struct cmd_rmfs_ctx ctx = {
+		.ioc_qry.qtype = -1
+	};
 
 	/* Do all cleanups upon exits */
 	cmd_rmfs_start(&ctx);
@@ -177,6 +231,9 @@ void cmd_execute_rmfs(void)
 
 	/* Verify user's arguments */
 	cmd_rmfs_prepare(&ctx);
+
+	/* Ensure not and active mount */
+	cmd_rmfs_check_nomnt(&ctx);
 
 	/* Require password */
 	cmd_rmfs_getpass(&ctx);

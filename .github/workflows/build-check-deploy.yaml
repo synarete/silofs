@@ -26,8 +26,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: |
-          sudo ./dist/deb/install-deb-deps.sh
+        run: sudo ./dist/deb/install-deb-deps.sh
       - name: Require build tools
         run: ./scripts/requiredeps.sh
       - name: Require install tool
@@ -117,6 +116,20 @@ jobs:
         run: sudo ./dist/deb/install-deb-deps.sh
       - name: Run clang static-analyzer
         run: ./scripts/clangscanbuild.sh
+  check-py-code:
+    name: Check python code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: |
+          sudo ./dist/deb/install-deb-deps.sh
+          sudo ./dist/deb/install-deb-extras.sh
+      - uses: actions/setup-python@v4
+      - name: Run python checkers
+        run: ./tests/citests/pycheck.sh
   build-rpm-package:
     name: Build rpm package
     runs-on: ubuntu-latest
@@ -124,6 +137,7 @@ jobs:
       - build-check
       - build-devel
       - static-analyze
+      - check-py-code
     steps:
       - uses: actions/checkout@v3
       - name: Update
@@ -141,6 +155,7 @@ jobs:
       - build-check
       - build-devel
       - static-analyze
+      - check-py-code
     steps:
       - uses: actions/checkout@v3
       - name: Update
@@ -184,6 +199,7 @@ jobs:
       - build-check
       - build-devel
       - static-analyze
+      - check-py-code
     steps:
       - uses: actions/checkout@v3
       - name: Update

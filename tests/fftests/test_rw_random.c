@@ -21,19 +21,16 @@
  * Tests read-write data-consistency for a sequence of IOs at pseudo random
  * offsets.
  */
-static void test_random_(struct ft_env *fte, loff_t from,
-                         size_t len, size_t cnt, size_t niter)
+static void test_random_by_(struct ft_env *fte, int fd,
+                            loff_t from, size_t len, size_t cnt)
 {
-	int fd = -1;
-	loff_t pos = 0;
-	long seed = 0;
+	const long *pseq = ft_new_buf_randseq(fte, cnt, 0);
 	void *buf1 = NULL;
 	void *buf2 = ft_new_buf_zeros(fte, len);
-	const long *pseq = ft_new_buf_randseq(fte, cnt, 0);
-	const char *path = ft_new_path_unique(fte);
+	loff_t pos = 0;
+	long seed = 0;
 
-	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
-	for (size_t i = 0; i < niter; ++i) {
+	for (size_t i = 0; i < 2; ++i) {
 		for (size_t j = 0; j < cnt; ++j) {
 			pos = from + ((long)len * pseq[j]);
 			seed = (long)(i + j) + pos;
@@ -48,16 +45,30 @@ static void test_random_(struct ft_env *fte, loff_t from,
 			ft_expect_eqm(buf1, buf2, len);
 		}
 	}
-	ft_close(fd);
-	ft_unlink(path);
 }
-
 
 static void test_random_io(struct ft_env *fte, loff_t from,
                            size_t len, size_t cnt)
 {
-	test_random_(fte, from, len, cnt, 1);
-	test_random_(fte, from, len, cnt, 2);
+	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
+	test_random_by_(fte, fd, from, len, cnt);
+	ft_close(fd);
+	ft_unlink(path);
+}
+
+static void test_random_io_unlinked(struct ft_env *fte, loff_t from,
+                                    size_t len, size_t cnt)
+{
+	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
+	ft_unlink(path);
+	test_random_by_(fte, fd, from, len, cnt);
+	ft_close(fd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -284,6 +295,16 @@ static void test_random_unaligned_large(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void test_random_unlinked(struct ft_env *fte)
+{
+	test_random_io_unlinked(fte, 0, FT_UMEGA, 1);
+	test_random_io_unlinked(fte, FT_KILO - 11, FT_UMEGA + 111, 1);
+	test_random_io_unlinked(fte, FT_BK_SIZE, FT_UMEGA / 2, 2);
+	test_random_io_unlinked(fte, FT_TERA - 1, FT_UMEGA + 3, 2);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_random_aligned_blk1),
 	FT_DEFTEST(test_random_aligned_blk2),
@@ -297,6 +318,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_random_unaligned_mega2),
 	FT_DEFTEST(test_random_unaligned_small),
 	FT_DEFTEST(test_random_unaligned_large),
+	FT_DEFTEST(test_random_unlinked),
 };
 
 const struct ft_tests ft_test_rw_random = FT_DEFTESTS(ft_local_tests);

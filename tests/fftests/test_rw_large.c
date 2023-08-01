@@ -20,18 +20,15 @@
 /*
  * Expects read-write data-consistency upon n-gigbytes write in chunks of 1M
  */
-static void test_ngiga_rdwr_(struct ft_env *fte,
-                             loff_t off_base, size_t nskip)
+static void test_ngiga_rdwr_by_(struct ft_env *fte, int fd,
+                                loff_t off_base, size_t nskip)
 {
-	int fd;
-	loff_t off;
-	size_t num;
 	const size_t bsz = FT_MEGA;
 	const size_t cnt = FT_GIGA / bsz;
 	void *buf = ft_new_buf_rands(fte, bsz);
-	const char *path = ft_new_path_unique(fte);
+	size_t num = 0;
+	loff_t off = -1;
 
-	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
 		num = i + 1;
 		off = off_base + (loff_t)(i * (bsz + nskip));
@@ -47,8 +44,30 @@ static void test_ngiga_rdwr_(struct ft_env *fte,
 		ft_expect_eq(num, i + 1);
 		ft_preadn(fd, buf, bsz, off);
 	}
+}
+
+static void test_ngiga_rdwr_(struct ft_env *fte,
+                             loff_t off_base, size_t nskip)
+{
+	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
+	test_ngiga_rdwr_by_(fte, fd, off_base, nskip);
 	ft_close(fd);
 	ft_unlink(path);
+}
+
+static void test_ngiga_rdwr_unlinked_(struct ft_env *fte,
+                                      loff_t off_base, size_t nskip)
+{
+	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
+	ft_unlink(path);
+	test_ngiga_rdwr_by_(fte, fd, off_base, nskip);
+	ft_close(fd);
 }
 
 static void test_large_simple(struct ft_env *fte)
@@ -65,11 +84,19 @@ static void test_large_unaligned(struct ft_env *fte)
 	test_ngiga_rdwr_(fte, FT_TERA - 11, 11 * FT_MEGA + 1);
 }
 
+static void test_large_unlinked(struct ft_env *fte)
+{
+	test_ngiga_rdwr_unlinked_(fte, 1, 1);
+	test_ngiga_rdwr_unlinked_(fte, FT_MEGA - 5, 7 * FT_MEGA + 7);
+	test_ngiga_rdwr_unlinked_(fte, FT_TERA - 11, 11 * FT_MEGA + 1);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_large_simple),
 	FT_DEFTEST(test_large_unaligned),
+	FT_DEFTEST(test_large_unlinked),
 };
 
 const struct ft_tests ft_test_rw_large = FT_DEFTESTS(ft_local_tests);

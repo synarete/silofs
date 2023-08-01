@@ -80,10 +80,10 @@ run cp "${debsourcedir}"/rules "${debbuild_debiandir}"
 
 # Generate changelog
 run sed \
-  -e "s,[@]NAME[@],${name},g" \
-  -e "s,[@]VERSION[@],${version},g" \
-  -e "s,[@]RELEASE[@],${release},g" \
-  -e "s,[@]REVISION[@],${revision},g" \
+  -e "s,[@]PACKAGE_NAME[@],${name},g" \
+  -e "s,[@]PACKAGE_VERSION[@],${version},g" \
+  -e "s,[@]PACKAGE_RELEASE[@],${release},g" \
+  -e "s,[@]PACKAGE_REVISION[@],${revision},g" \
   "${debsourcedir}"/changelog.in > "${debbuild_debiandir}"/changelog
 
 # Build deb package

@@ -1,7 +1,7 @@
 Name: silofs
 Summary:        Silofs: Stored In Large Objects File-System
-Version:        @VERSION@
-Release:        @RELEASE@.@REVISION@%{?dist}
+Version:        @PACKAGE_VERSION@
+Release:        @PACKAGE_RELEASE@.@PACKAGE_REVISION@%{?dist}
 License:        GPLv3
 Group:          Applications/Archiving
 URL:            https://synarete.github.io/silofs
@@ -97,7 +97,7 @@ Various testing programs for silofs.
 %systemd_postun_with_restart %{name}-mountd.service
 
 %changelog
-* @RPMDATE@ Silofs <synarete@xxxxxxxx> @VERSION@-@RELEASE@.@REVISION@
-- Release @REVISION@
+* @RPMDATE@ Silofs <synarete@xxxxxxxx> @PACKAGE_VERSION@-@PACKAGE_RELEASE@.@PACKAGE_REVISION@
+- Release @PACKAGE_REVISION@
 
 

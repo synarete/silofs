@@ -3,4 +3,7 @@
 from silofs.citests import citests_main
 
 __version__ = "@PACKAGE_VERSION@"
+__release__ = "@PACKAGE_RELEASE@"
+__revision__ = "@PACKAGE_REVISION@"
+
 citests_main()

@@ -3,8 +3,8 @@
 PATSUBST = @SED@ \
   -e "s,[@]PACKAGE_NAME[@],$(name),g" \
   -e "s,[@]PACKAGE_VERSION[@],$(version),g" \
-  -e "s,[@]RELEASE[@],$(release),g" \
-  -e "s,[@]REVISION[@],$(revision),g" \
+  -e "s,[@]PACKAGE_RELEASE[@],$(release),g" \
+  -e "s,[@]PACKAGE_REVISION[@],$(revision),g" \
   -e "s,[@]PREFIX[@],$(DESTDIR)$(prefix),g" \
   -e "s,[@]BINDIR[@],$(DESTDIR)$(bindir),g" \
   -e "s,[@]SBINDIR[@],$(DESTDIR)$(sbindir),g" \

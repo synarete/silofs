@@ -455,6 +455,17 @@ static void ce_set_mapped(struct silofs_cache_elem *ce, bool mapped)
 	}
 }
 
+static void ce_set_forgot(struct silofs_cache_elem *ce, bool forgot)
+{
+	const int flags = ce->ce_flags;
+
+	if (forgot) {
+		ce->ce_flags = flags | SILOFS_CEF_FORGOT;
+	} else {
+		ce->ce_flags = flags & ~SILOFS_CEF_FORGOT;
+	}
+}
+
 static void ce_hmap(struct silofs_cache_elem *ce,
                     struct silofs_list_head *hlst)
 {
@@ -2600,6 +2611,7 @@ static void cache_remove_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
 	lni_remove_from_lrumap(&vi->v, &cache->c_vi_lm);
+	ce_set_forgot(&vi->v.ce, false);
 }
 
 static void cache_evict_vi(struct silofs_cache *cache,
@@ -2735,7 +2747,7 @@ static void cache_forget_vi(struct silofs_cache *cache,
 	vi_do_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
-		vi->v.ce.ce_flags |= SILOFS_CEF_FORGOT;
+		ce_set_forgot(&vi->v.ce, true);
 	} else {
 		cache_evict_vi(cache, vi, 0);
 	}

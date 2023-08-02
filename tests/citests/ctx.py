@@ -101,12 +101,6 @@ class TestBaseCtx:
     def make_path(self, *subs) -> pathlib.Path:
         return pathlib.Path(self.mntpoint(), *subs)
 
-    def make_rands(self, cnt: int, rsz: int) -> list[bytes]:
-        ret = []
-        for _ in range(0, cnt):
-            ret.append(self.make_rand(rsz))
-        return ret
-
     @staticmethod
     def make_rand(rsz: int) -> bytes:
         return random.randbytes(rsz)

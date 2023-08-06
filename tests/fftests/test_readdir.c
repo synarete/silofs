@@ -81,16 +81,16 @@ static void ft_getdents_from(struct ft_env *fte, int fd, loff_t off,
  */
 static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 {
-	int fd;
-	int dfd;
-	loff_t pos;
-	loff_t off = 0;
-	size_t cnt = 0;
-	size_t itr = 0;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	struct dirent64 dent = { .d_ino = 0 };
 	const char *path1 = NULL;
 	const char *path0 = ft_new_path_unique(fte);
+	loff_t pos = -1;
+	loff_t off = 0;
+	size_t cnt = 0;
+	size_t itr = 0;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -129,11 +129,12 @@ static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 
 static void test_readdir_basic(struct ft_env *fte)
 {
-	test_readdir_basic_(fte, 1);
-	test_readdir_basic_(fte, 2);
-	test_readdir_basic_(fte, 4);
-	test_readdir_basic_(fte, 32);
-	test_readdir_basic_(fte, 64);
+	const size_t lim[] = { 1, 2, 4, 32, 128 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
+		test_readdir_basic_(fte, lim[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -142,15 +143,15 @@ static void test_readdir_basic(struct ft_env *fte)
  */
 static void test_readdir_unlink_(struct ft_env *fte, size_t lim)
 {
-	int fd;
-	int dfd;
-	loff_t pos;
+	struct stat st = { .st_size = -1 };
+	struct dirent64 dent = { .d_ino = 0 };
+	const char *path1 = NULL;
+	const char *path0 = ft_new_path_unique(fte);
+	loff_t pos = -1;
 	loff_t off = 0;
 	size_t cnt = 0;
-	struct stat st;
-	struct dirent64 dent;
-	const char *path1;
-	const char *path0 = ft_new_path_unique(fte);
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -190,12 +191,12 @@ static void test_readdir_unlink_(struct ft_env *fte, size_t lim)
 
 static void test_readdir_unlink(struct ft_env *fte)
 {
-	test_readdir_unlink_(fte, 4);
-}
+	const size_t lim[] = { 4, 16, 128 };
 
-static void test_readdir_unlink_big(struct ft_env *fte)
-{
-	test_readdir_unlink_(fte, 128);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
+		test_readdir_unlink_(fte, lim[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -203,31 +204,30 @@ static void test_readdir_unlink_big(struct ft_env *fte)
  * Expects Linux getdents(2) to read all dir-entries of large dir. Read single
  * dentry at a time.
  */
-static const char *make_iname(struct ft_env *fte,
-                              const char *path,
-                              const char *name_prefix, size_t idx)
+static const char *
+make_iname(struct ft_env *fte, const char *path, const char *pref, size_t idx)
 {
-	return ft_new_pathf(fte, path, "%s-%08lx", name_prefix, idx);
+	return ft_new_pathf(fte, path, "%s-%08lx", pref, idx);
 }
 
-static void test_readdir_getdents(struct ft_env *fte, size_t lim)
+static void test_readdir_getdents_(struct ft_env *fte, size_t lim)
 {
-	int fd;
-	int dfd;
-	int cmp;
-	loff_t pos;
-	loff_t off = 0;
-	size_t nde;
-	size_t cnt = 0;
-	struct stat st;
-	struct dirent64 dents[8];
-	const struct dirent64 *dent;
 	char buf[1024];
+	struct dirent64 dents[8];
+	struct stat st = { .st_size = -1 };
 	const size_t bsz = sizeof(buf);
 	const size_t ndents = FT_ARRAY_SIZE(dents);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = NULL;
 	const char *prefix = ft_new_name_unique(fte);
+	const struct dirent64 *dent = NULL;
+	loff_t pos = -1;
+	loff_t off = 0;
+	size_t nde = 0;
+	size_t cnt = 0;
+	int cmp = 0;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -267,24 +267,14 @@ static void test_readdir_getdents(struct ft_env *fte, size_t lim)
 	ft_rmdir(path0);
 }
 
-static void test_readdir_small(struct ft_env *fte)
+static void test_readdir_getdents(struct ft_env *fte)
 {
-	test_readdir_getdents(fte, 16);
-}
+	const size_t lim[] = { 2, 32, 256, 8192, 32768 };
 
-static void test_readdir_normal(struct ft_env *fte)
-{
-	test_readdir_getdents(fte, 128);
-}
-
-static void test_readdir_big(struct ft_env *fte)
-{
-	test_readdir_getdents(fte, 8192);
-}
-
-static void test_readdir_large(struct ft_env *fte)
-{
-	test_readdir_getdents(fte, 32768);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
+		test_readdir_getdents_(fte, lim[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -293,14 +283,14 @@ static void test_readdir_large(struct ft_env *fte)
  */
 static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 {
-	int dfd;
-	size_t cnt = 0;
-	loff_t off = 0;
-	const struct dirent64 *dent;
+	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = NULL;
 	const char *name = NULL;
-	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
+	const struct dirent64 *dent = NULL;
+	loff_t off = 0;
+	size_t cnt = 0;
+	int dfd = -1;
 
 	ft_mkdir(path0, 0700);
 	for (size_t diri = 0; diri < lim; ++diri) {
@@ -343,32 +333,35 @@ static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 
 static void test_readdir_counted(struct ft_env *fte)
 {
-	test_readdir_counted_(fte, 64);
-	test_readdir_counted_(fte, 1024);
-}
+	const size_t lim[] = {
+		10,
+		100,
+		silofs_min(SILOFS_LINK_MAX - 2, 100000)
+	};
 
-static void test_readdir_counted_big(struct ft_env *fte)
-{
-	test_readdir_counted_(fte, 16 * 1024);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
+		test_readdir_counted_(fte, lim[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void test_readdir_unlinkat_(struct ft_env *fte, size_t lim)
 {
-	int fd = -1;
-	int dfd1 = -1;
-	int dfd2 = -1;
-	loff_t doff;
-	size_t cnt = 0;
-	size_t itr = 0;
-	struct stat st;
-	const char *name = NULL;
-	const struct dirent64 *dent;
+	struct stat st = { .st_size = -1 };
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
 	const char *fname = ft_new_name_unique(fte);
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
+	const struct dirent64 *dent = NULL;
+	const char *name = NULL;
+	loff_t doff = 0;
+	size_t cnt = 0;
+	size_t itr = 0;
+	int dfd1 = -1;
+	int dfd2 = -1;
+	int fd = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
@@ -416,19 +409,12 @@ static void test_readdir_unlinkat_(struct ft_env *fte, size_t lim)
 
 static void test_readdir_unlinkat(struct ft_env *fte)
 {
-	test_readdir_unlinkat_(fte, 8);
-	test_readdir_unlinkat_(fte, 64);
-	test_readdir_unlinkat_(fte, 512);
-}
+	const size_t lim[] = { 8, 64, 512, 8192, SILOFS_LINK_MAX - 1 };
 
-static void test_readdir_unlinkat_big(struct ft_env *fte)
-{
-	test_readdir_unlinkat_(fte, 8192);
-}
-
-static void test_readdir_unlinkat_large(struct ft_env *fte)
-{
-	test_readdir_unlinkat_(fte, SILOFS_LINK_MAX - 1);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
+		test_readdir_unlinkat_(fte, lim[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -438,12 +424,12 @@ static void test_readdir_unlinkat_large(struct ft_env *fte)
  */
 static void test_readdir_nox_(struct ft_env *fte, size_t cnt)
 {
-	int fd = -1;
-	int dfd = -1;
-	const char *name = NULL;
-	const struct dirent64 *dent = NULL;
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const char *path = ft_new_path_unique(fte);
+	const struct dirent64 *dent = NULL;
+	const char *name = NULL;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -478,8 +464,12 @@ static void test_readdir_nox_(struct ft_env *fte, size_t cnt)
 
 static void test_readdir_nox(struct ft_env *fte)
 {
-	test_readdir_nox_(fte, 10);
-	test_readdir_nox_(fte, 100);
+	const size_t cnt[] = { 10, 100 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_readdir_nox_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -491,20 +481,18 @@ static void
 test_readdir_unlink_names_arr_(struct ft_env *fte,
                                const char *names[], size_t cnt)
 {
-	int fd = -1;
-	int dfd = -1;
-	loff_t doff = 0;
-	size_t dcnt = 0;
-	const char *name = NULL;
-	const struct dirent64 *dent = NULL;
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const char *path = ft_new_path_unique(fte);
+	const struct dirent64 *dent = NULL;
+	loff_t doff = 0;
+	size_t dcnt = 0;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < cnt; ++i) {
-		name = names[i];
-		ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
+		ft_openat(dfd, names[i], O_CREAT | O_RDWR, 0600, &fd);
 		ft_close(fd);
 	}
 	while (doff >= 0) {
@@ -526,14 +514,14 @@ test_readdir_unlink_names_arr_(struct ft_env *fte,
 	ft_rmdir(path);
 }
 
-static void test_readdir_unlink_names_(struct ft_env *fte, size_t name_len)
+static void test_readdir_unlink_names_(struct ft_env *fte, size_t nlen)
 {
 	const char *names[256];
-	char *name_i;
+	char *name_i = NULL;
 	const size_t cnt = FT_ARRAY_SIZE(names);
 
 	for (size_t i = 0; i < cnt; ++i) {
-		name_i = ft_make_rand_name(fte, name_len);
+		name_i = ft_make_rand_name(fte, nlen);
 		name_i[0] = (char)('A' + ((int)i % 23));
 		names[i] = name_i;
 	}
@@ -542,8 +530,12 @@ static void test_readdir_unlink_names_(struct ft_env *fte, size_t name_len)
 
 static void test_readdir_unlink_names(struct ft_env *fte)
 {
-	test_readdir_unlink_names_(fte, SILOFS_NAME_MAX / 5);
-	test_readdir_unlink_names_(fte, SILOFS_NAME_MAX);
+	const size_t nlen[] = { SILOFS_NAME_MAX / 5, SILOFS_NAME_MAX };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(nlen); ++i) {
+		test_readdir_unlink_names_(fte, nlen[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -551,16 +543,9 @@ static void test_readdir_unlink_names(struct ft_env *fte)
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_readdir_basic),
 	FT_DEFTEST(test_readdir_unlink),
-	FT_DEFTEST(test_readdir_unlink_big),
-	FT_DEFTEST(test_readdir_small),
-	FT_DEFTEST(test_readdir_normal),
-	FT_DEFTEST(test_readdir_big),
-	FT_DEFTEST(test_readdir_large),
+	FT_DEFTEST(test_readdir_getdents),
 	FT_DEFTEST(test_readdir_counted),
-	FT_DEFTEST(test_readdir_counted_big),
 	FT_DEFTEST(test_readdir_unlinkat),
-	FT_DEFTEST(test_readdir_unlinkat_big),
-	FT_DEFTEST(test_readdir_unlinkat_large),
 	FT_DEFTEST(test_readdir_nox),
 	FT_DEFTEST(test_readdir_unlink_names),
 };

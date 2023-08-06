@@ -21,15 +21,21 @@
  * Tests read-write data-consistency for a sequence of IOs at pseudo random
  * offsets.
  */
-static void test_random_by_(struct ft_env *fte, int fd,
-                            loff_t from, size_t len, size_t cnt)
+static void test_random_(struct ft_env *fte,
+                         loff_t from, size_t len, size_t cnt, int unlinked)
 {
+	const char *path = ft_new_path_unique(fte);
 	const long *pseq = ft_new_buf_randseq(fte, cnt, 0);
 	void *buf1 = NULL;
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	loff_t pos = 0;
 	long seed = 0;
+	int fd = -1;
 
+	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
+	if (unlinked) {
+		ft_unlink(path);
+	}
 	for (size_t i = 0; i < 2; ++i) {
 		for (size_t j = 0; j < cnt; ++j) {
 			pos = from + ((long)len * pseq[j]);
@@ -45,280 +51,169 @@ static void test_random_by_(struct ft_env *fte, int fd,
 			ft_expect_eqm(buf1, buf2, len);
 		}
 	}
-}
-
-static void test_random_io(struct ft_env *fte, loff_t from,
-                           size_t len, size_t cnt)
-{
-	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
-
-	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
-	test_random_by_(fte, fd, from, len, cnt);
 	ft_close(fd);
-	ft_unlink(path);
-}
-
-static void test_random_io_unlinked(struct ft_env *fte, loff_t from,
-                                    size_t len, size_t cnt)
-{
-	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
-
-	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
-	ft_unlink(path);
-	test_random_by_(fte, fd, from, len, cnt);
-	ft_close(fd);
+	if (!unlinked) {
+		ft_unlink(path);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_random_aligned_blk(struct ft_env *fte, size_t cnt)
+static void test_random_aligned_bk(struct ft_env *fte)
 {
-	loff_t from;
-	const size_t len = FT_BK_SIZE;
-
-	from = 0;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_BK_SIZE;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_UMEGA;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UMEGA - FT_BK_SIZE);
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_UGIGA;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UGIGA - FT_BK_SIZE);
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UGIGA + FT_BK_SIZE);
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UGIGA - (len * cnt));
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)((FT_UGIGA) / 2);
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UTERA - (len * cnt));
-	test_random_io(fte, from, len, cnt);
-}
-
-static void test_random_aligned_blk1(struct ft_env *fte)
-{
-	test_random_aligned_blk(fte, 1);
-}
-
-static void test_random_aligned_blk2(struct ft_env *fte)
-{
-	test_random_aligned_blk(fte, 2);
-}
-
-static void test_random_aligned_blk63(struct ft_env *fte)
-{
-	test_random_aligned_blk(fte, 63);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void test_random_aligned_mega(struct ft_env *fte, size_t cnt)
-{
-	loff_t from;
-	const size_t bsz = FT_UMEGA;
-
-	from = 0;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_BK_SIZE;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_UMEGA;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UMEGA - FT_BK_SIZE);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_UGIGA;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - FT_BK_SIZE);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA + FT_BK_SIZE);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - FT_UMEGA);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - FT_UMEGA);
-	test_random_io(fte, from, bsz, 2 * cnt);
-	from = (loff_t)(2 * FT_UGIGA);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)((FT_UGIGA) / 2);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UTERA - (bsz * cnt));
-	test_random_io(fte, from, bsz, cnt);
-}
-
-static void test_random_aligned_mega1(struct ft_env *fte)
-{
-	test_random_aligned_mega(fte, 1);
-}
-
-static void test_random_aligned_mega2(struct ft_env *fte)
-{
-	test_random_aligned_mega(fte, 2);
-}
-
-static void test_random_aligned_mega3(struct ft_env *fte)
-{
-	test_random_aligned_mega(fte, 3);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void test_random_unaligned_blk(struct ft_env *fte,
-                                      size_t cnt)
-{
-	loff_t from;
 	const size_t bsz = FT_BK_SIZE;
+	const size_t cnt[] = { 1, 2, 63 };
+	const loff_t from[] = {
+		0,
+		FT_BK_SIZE,
+		FT_UMEGA,
+		FT_UMEGA - FT_BK_SIZE,
+		FT_UGIGA / 2,
+		FT_UGIGA,
+		FT_UGIGA - FT_BK_SIZE,
+		FT_UGIGA + FT_BK_SIZE,
+		FT_UGIGA - FT_MEGA,
+		FT_UTERA - (64 * FT_MEGA),
+	};
 
-	from = 1;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_BK_SIZE - 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_BK_SIZE + 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_UMEGA - 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UMEGA - FT_BK_SIZE - 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_UGIGA - 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - FT_BK_SIZE - 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA + FT_BK_SIZE + 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - (bsz * cnt) + 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)((FT_UGIGA * 13) / 11);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UTERA - (bsz * cnt) - 11);
-	test_random_io(fte, from, bsz, cnt);
-}
-
-static void test_random_unaligned_blk1(struct ft_env *fte)
-{
-	test_random_unaligned_blk(fte, 1);
-}
-
-static void test_random_unaligned_blk2(struct ft_env *fte)
-{
-	test_random_unaligned_blk(fte, 2);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
+		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
+			test_random_(fte, from[i], bsz, cnt[j], 0);
+			ft_relax_mem(fte);
+			test_random_(fte, from[i], bsz, cnt[j], 1);
+			ft_relax_mem(fte);
+		}
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_random_unaligned_mega(struct ft_env *fte, size_t cnt)
+static void test_random_aligned_mega(struct ft_env *fte)
 {
-	loff_t from;
 	const size_t bsz = FT_UMEGA;
+	const size_t cnt[] = { 1, 2, 4 };
+	const loff_t from[] = {
+		0,
+		FT_UMEGA,
+		FT_UGIGA,
+		FT_UGIGA - FT_MEGA,
+		FT_UGIGA + FT_MEGA,
+		2 * FT_UGIGA,
+		FT_UTERA - (64 * FT_MEGA),
+		FT_UTERA + FT_UGIGA + FT_MEGA,
+	};
 
-	from = 1;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_BK_SIZE - 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_BK_SIZE + 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_UMEGA - 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UMEGA - FT_BK_SIZE - 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)FT_UGIGA - 11;
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - FT_BK_SIZE - 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA + FT_BK_SIZE + 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UGIGA - (bsz * cnt) + 1);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)((FT_UGIGA * 13) / 11);
-	test_random_io(fte, from, bsz, cnt);
-	from = (loff_t)(FT_UTERA - (bsz * cnt) - 11);
-	test_random_io(fte, from, bsz, cnt);
-}
-
-static void test_random_unaligned_mega1(struct ft_env *fte)
-{
-	test_random_unaligned_mega(fte, 1);
-}
-
-static void test_random_unaligned_mega2(struct ft_env *fte)
-{
-	test_random_unaligned_mega(fte, 2);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
+		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
+			test_random_(fte, from[i], bsz, cnt[j], 0);
+			ft_relax_mem(fte);
+			test_random_(fte, from[i], bsz, cnt[j], 1);
+			ft_relax_mem(fte);
+		}
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_random_unaligned_(struct ft_env *fte, size_t len, size_t cnt)
+static void test_random_unaligned_bk(struct ft_env *fte)
 {
-	loff_t from;
+	const size_t bsz = FT_BK_SIZE;
+	const size_t cnt[] = { 1, 2, 4 };
+	const loff_t from[] = {
+		1,
+		FT_BK_SIZE - 11,
+		FT_BK_SIZE + 11,
+		FT_UMEGA - 11,
+		FT_UMEGA - FT_BK_SIZE - 1,
+		FT_UGIGA - 111,
+		FT_UGIGA - FT_BK_SIZE - 1,
+		FT_UGIGA + FT_BK_SIZE + 1,
+		FT_UTERA - 1111,
+		FT_UTERA - (11 * FT_UGIGA) + 111,
+	};
 
-	from = 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_BK_SIZE - 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_BK_SIZE + 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_UMEGA - 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_UMEGA / 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_UGIGA - 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)FT_UGIGA / 7;
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UGIGA + (len * cnt) - 7);
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)((FT_UGIGA / 7) - 7);
-	test_random_io(fte, from, len, cnt);
-	from = (loff_t)(FT_UTERA - (len * cnt) - 7);
-	test_random_io(fte, from, len, cnt);
-}
-
-static void test_random_unaligned_small(struct ft_env *fte)
-{
-	const size_t len = 7907;
-
-	test_random_unaligned_(fte, len, 1);
-	test_random_unaligned_(fte, len, 7);
-	test_random_unaligned_(fte, len, 79);
-	test_random_unaligned_(fte, len, 797);
-}
-
-static void test_random_unaligned_large(struct ft_env *fte)
-{
-	const size_t len = 66601;
-
-	test_random_unaligned_(fte, len, 1);
-	test_random_unaligned_(fte, len, 61);
-	test_random_unaligned_(fte, len, 661);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
+		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
+			test_random_(fte, from[i], bsz, cnt[j], 0);
+			ft_relax_mem(fte);
+			test_random_(fte, from[i], bsz, cnt[j], 1);
+			ft_relax_mem(fte);
+		}
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_random_unlinked(struct ft_env *fte)
+static void test_random_unaligned_mega(struct ft_env *fte)
 {
-	test_random_io_unlinked(fte, 0, FT_UMEGA, 1);
-	test_random_io_unlinked(fte, FT_KILO - 11, FT_UMEGA + 111, 1);
-	test_random_io_unlinked(fte, FT_BK_SIZE, FT_UMEGA / 2, 2);
-	test_random_io_unlinked(fte, FT_TERA - 1, FT_UMEGA + 3, 2);
+	const size_t bsz = FT_UMEGA;
+	const size_t cnt[] = { 1, 2, 3 };
+	const loff_t from[] = {
+		11,
+		FT_BK_SIZE - 11,
+		FT_UMEGA - 11,
+		FT_UMEGA - FT_BK_SIZE - 1,
+		11 * FT_UMEGA - 1,
+		FT_UGIGA - 111,
+		FT_UGIGA - FT_BK_SIZE - 1,
+		FT_UGIGA + FT_BK_SIZE + 1,
+		FT_UTERA - 1111,
+		FT_UTERA - (11 * FT_UGIGA) + 111,
+	};
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
+		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
+			test_random_(fte, from[i], bsz, cnt[j], 0);
+			ft_relax_mem(fte);
+			test_random_(fte, from[i], bsz, cnt[j], 1);
+			ft_relax_mem(fte);
+		}
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void test_random_unaligned_(struct ft_env *fte, size_t bsz)
+{
+	const size_t cnt[] = { 1, 7, 77 };
+	const loff_t from[] = {
+		7,
+		1023,
+		FT_BK_SIZE - 7,
+		FT_UMEGA - 7,
+		FT_UMEGA - FT_BK_SIZE - 7,
+		7 * FT_UMEGA - 7,
+		FT_UGIGA - 17,
+		FT_UGIGA - FT_BK_SIZE - 17,
+		FT_UGIGA + FT_BK_SIZE + 17,
+		FT_UTERA - 7,
+		FT_UTERA - (7 * FT_UGIGA) + 7,
+	};
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
+		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
+			test_random_(fte, from[i], bsz, cnt[j], 0);
+			ft_relax_mem(fte);
+			test_random_(fte, from[i], bsz, cnt[j], 1);
+			ft_relax_mem(fte);
+		}
+	}
+}
+
+static void test_random_unaligned(struct ft_env *fte)
+{
+	test_random_unaligned_(fte, 7907);
+	test_random_unaligned_(fte, 66601);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_random_aligned_blk1),
-	FT_DEFTEST(test_random_aligned_blk2),
-	FT_DEFTEST(test_random_aligned_blk63),
-	FT_DEFTEST(test_random_aligned_mega1),
-	FT_DEFTEST(test_random_aligned_mega2),
-	FT_DEFTEST(test_random_aligned_mega3),
-	FT_DEFTEST(test_random_unaligned_blk1),
-	FT_DEFTEST(test_random_unaligned_blk2),
-	FT_DEFTEST(test_random_unaligned_mega1),
-	FT_DEFTEST(test_random_unaligned_mega2),
-	FT_DEFTEST(test_random_unaligned_small),
-	FT_DEFTEST(test_random_unaligned_large),
-	FT_DEFTEST(test_random_unlinked),
+	FT_DEFTEST(test_random_aligned_bk),
+	FT_DEFTEST(test_random_aligned_mega),
+	FT_DEFTEST(test_random_unaligned_bk),
+	FT_DEFTEST(test_random_unaligned_mega),
+	FT_DEFTEST(test_random_unaligned),
 };
 
 const struct ft_tests ft_test_rw_random = FT_DEFTESTS(ft_local_tests);

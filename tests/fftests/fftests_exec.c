@@ -263,7 +263,9 @@ static void ft_clone_tests(struct ft_env *fte)
 
 static void ft_free_tests(struct ft_env *fte)
 {
-	free(silofs_unconst(fte->tests.arr));
+	void *arr = silofs_unconst(fte->tests.arr);
+
+	free(arr);
 	fte->tests.arr = NULL;
 	fte->tests.len = 0;
 }

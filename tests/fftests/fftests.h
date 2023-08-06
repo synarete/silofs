@@ -178,15 +178,17 @@ void fte_exec(struct ft_env *fte);
 
 void fte_fini(struct ft_env *fte);
 
+void ft_relax_mem(struct ft_env *fte);
+
 void ft_suspend(const struct ft_env *fte, int sec, int part);
 
 void ft_suspends(const struct ft_env *fte, int sec);
 
+void ft_freeall(struct ft_env *fte);
+
 char *ft_strdup(struct ft_env *fte, const char *str);
 
 char *ft_strcat(struct ft_env *fte, const char *str1, const char *str2);
-
-void ft_freeall(struct ft_env *fte);
 
 char *ft_strfmt(struct ft_env *fte, const char *fmt, ...);
 

@@ -20,7 +20,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#define MCHUNK_MAGIC 0x3AABE871
+#define MCHUNK_MAGIC 0x3A4BE8C1
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -189,6 +189,11 @@ void ft_freeall(struct ft_env *fte)
 	fte_lock(fte);
 	ft_do_freeall(fte);
 	fte_unlock(fte);
+}
+
+void ft_relax_mem(struct ft_env *fte)
+{
+	ft_freeall(fte);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

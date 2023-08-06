@@ -408,10 +408,12 @@ int silofs_uber_reload_sblob(struct silofs_uber *uber)
 
 	err = silofs_stage_blob_at(uber, blobid, &blobf);
 	if (err) {
+		log_warn("unable to stage sb-blob: err=%d", err);
 		return err;
 	}
 	err = silofs_blobf_flock(blobf);
 	if (err) {
+		log_warn("unable to lock sb-blob: err=%d", err);
 		return err;
 	}
 	uber_bind_blobf(uber, blobf);

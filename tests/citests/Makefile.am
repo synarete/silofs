@@ -12,6 +12,7 @@ silofs_citests_PYTHON += cmd.py
 silofs_citests_PYTHON += ctx.py
 silofs_citests_PYTHON += expect.py
 silofs_citests_PYTHON += run.py
+silofs_citests_PYTHON += start.py
 silofs_citests_PYTHON += test_all.py
 silofs_citests_PYTHON += test_fillfs.py
 silofs_citests_PYTHON += test_basic.py

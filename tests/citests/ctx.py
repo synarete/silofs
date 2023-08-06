@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
 import pathlib
-import random
 import shutil
 import time
 import typing
@@ -9,6 +8,7 @@ from concurrent import futures
 
 from . import cmd
 from . import expect
+from . import utils
 
 
 # pylint: disable=R0903
@@ -101,37 +101,17 @@ class TestBaseCtx:
     def make_path(self, *subs) -> pathlib.Path:
         return pathlib.Path(self.mntpoint(), *subs)
 
-    @staticmethod
-    def make_rand(rsz: int) -> bytes:
-        return random.randbytes(rsz)
+    def make_td(self, sub: str, name: str, sz: int) -> TestData:
+        return TestData(self.make_path(sub, name), utils.prandbytes(sz))
 
-    @staticmethod
-    def make_bytes(bsz: int, val: str = "") -> bytes:
-        if not val:
-            ret = bytes(bsz)
-        else:
-            ret = bytes(bsz * val[0], "utf-8")
-        return ret
-
-    def make_td(self, sub: str, name: str, sz: int, val: str = "") -> TestData:
-        if val:
-            dat = self.make_bytes(sz, val)
-        else:
-            dat = self.make_rand(sz)
-        return TestData(self.make_path(sub, name), dat)
-
-    def make_tds(
-        self, cnt: int, sub: str, sz: int, val: str = ""
-    ) -> TestDataSet:
+    def make_tds(self, cnt: int, sub: str, sz: int) -> TestDataSet:
         tds = []
         for idx in range(0, cnt):
-            tds.append(self.make_td(sub, str(idx), sz, val))
+            tds.append(self.make_td(sub, str(idx), sz))
         return TestDataSet(self.expect, tds)
 
-    def create_data(
-        self, cnt: int, sub: str, sz: int, val: str = ""
-    ) -> TestDataSet:
-        tds = self.make_tds(cnt, sub, sz, val)
+    def create_data(self, cnt: int, sub: str, sz: int) -> TestDataSet:
+        tds = self.make_tds(cnt, sub, sz)
         tds.do_makedirs()
         tds.do_write()
         tds.do_read()

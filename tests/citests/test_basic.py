@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0
 
 from . import ctx
+from . import utils
 
 
 def test_version(tc: ctx.TestCtx) -> None:
@@ -53,7 +54,7 @@ def _test_fscapacity(tc: ctx.TestCtx, cap: int) -> None:
     tc.exec_mount(name)
     base = tc.make_path(name)
     path = tc.make_path(name, "dat")
-    wdat = tc.make_rand(2**20)
+    wdat = utils.prandbytes(2**20)
     base.mkdir()
     path.write_bytes(wdat)
     rdat = path.read_bytes()

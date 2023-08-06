@@ -76,7 +76,7 @@
 
 
 /* max number of hard-links to file or sub-directories */
-#define SILOFS_LINK_MAX                 (32767)
+#define SILOFS_LINK_MAX                 ((1L << 15) - 1)
 
 /* max number of supplementary groups per each uid (same as NFS) */
 #define SILOFS_NSGRP_MAX                (16)

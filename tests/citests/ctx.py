@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
+import os
 import pathlib
 import shutil
 import time
@@ -35,8 +36,11 @@ class TestData:
     def do_read(self) -> bytes:
         return self.path.read_bytes()
 
-    def prune_data(self) -> None:
-        self.data = bytes(0)
+    def do_stat(self) -> os.stat_result:
+        return self.path.stat()
+
+    def do_unlink(self) -> None:
+        self.path.unlink()
 
 
 class TestDataSet:
@@ -62,7 +66,8 @@ class TestDataSet:
     def do_write(self) -> None:
         for td in self.tds:
             td.do_write()
-            self.expect.is_reg(td.path)
+            st = td.do_stat()
+            self.expect.eq(st.st_size, td.fsize())
 
     def do_read(self) -> None:
         for td in self.tds:
@@ -71,17 +76,19 @@ class TestDataSet:
 
     def do_stat(self) -> None:
         for td in self.tds:
-            st = td.path.stat()
+            st = td.do_stat()
             self.expect.eq(st.st_size, td.fsize())
 
     def do_unlink(self) -> None:
         for td in self.tds:
             self.expect.is_reg(td.path)
-            td.path.unlink()
+            td.do_unlink()
 
-    def prune_data(self) -> None:
+    def pathnames(self) -> list[pathlib.Path]:
+        ret = []
         for td in self.tds:
-            td.prune_data()
+            ret.append(td.path)
+        return ret
 
 
 class TestBaseCtx:

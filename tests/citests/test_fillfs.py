@@ -1,14 +1,25 @@
 # SPDX-License-Identifier: GPL-3.0
 import errno
+import pathlib
 
 from . import ctx
+
+
+def _expect_enospc(ex: OSError) -> None:
+    if ex.errno != errno.ENOSPC:
+        raise ex
+
+
+def _unlink_all(pathnames: list[pathlib.Path]) -> None:
+    for path in pathnames:
+        path.unlink()
 
 
 def test_fill_data(tc: ctx.TestCtx) -> None:
     tc.exec_setup_fs(2)
     enospc = 0
     for prefix in _subdirs_list(8, 1):
-        tds_all = {}
+        pathnames = []
         counter = 0
         while counter < 2**20 and enospc < 2:
             counter += 1
@@ -18,14 +29,11 @@ def test_fill_data(tc: ctx.TestCtx) -> None:
                 tds.do_makedirs()
                 tds.do_write()
                 tds.do_read()
-                tds.prune_data()
-                tds_all[name] = tds
+                pathnames.extend(tds.pathnames())
             except OSError as ex:
-                if ex.errno != errno.ENOSPC:
-                    raise ex
+                _expect_enospc(ex)
                 enospc += 1
-        for _, tds in tds_all.items():
-            tds.do_unlink()
+        _unlink_all(pathnames)
     tc.exec_umount()
     tc.exec_rmfs()
 
@@ -34,7 +42,7 @@ def test_fill_meta(tc: ctx.TestCtx) -> None:
     tc.exec_setup_fs(2)
     enospc = 0
     for prefix in _subdirs_list(16, 64):
-        tds_all = {}
+        pathnames = []
         counter = 0
         while counter < 2**20 and enospc < 2:
             counter += 1
@@ -44,14 +52,11 @@ def test_fill_meta(tc: ctx.TestCtx) -> None:
                 tds.do_makedirs()
                 tds.do_write()
                 tds.do_read()
-                tds.prune_data()
-                tds_all[name] = tds
+                pathnames.extend(tds.pathnames())
             except OSError as ex:
-                if ex.errno != errno.ENOSPC:
-                    raise ex
+                _expect_enospc(ex)
                 enospc += 1
-        for _, tds in tds_all.items():
-            tds.do_unlink()
+        _unlink_all(pathnames)
     tc.exec_umount()
     tc.exec_rmfs()
 

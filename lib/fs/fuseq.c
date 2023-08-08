@@ -2559,13 +2559,6 @@ static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-union silofs_ioc_u {
-	uint8_t buf[SILOFS_IOC_SIZE_MAX];
-	struct silofs_ioc_query qry;
-	struct silofs_ioc_clone cl;
-	struct silofs_ioc_sync  syn;
-};
-
 static int do_ioc_notimpl(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	return fuseq_reply_err(fcc->fqw, fcc->task, -ENOTTY);
@@ -2598,7 +2591,7 @@ static int do_ioc_query(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
 	const void *buf_in = fcc->in->u.ioctl.buf;
-	const struct silofs_ioc_query *qry_in = &ioc_u.qry;
+	const struct silofs_ioc_query *qry_in = &ioc_u.query;
 	const size_t bsz_in = fcc->in->u.ioctl.arg.in_size;
 	const size_t bsz_out = fcc->in->u.ioctl.arg.out_size;
 	const int flags = (int)(fcc->in->u.ioctl.arg.flags);
@@ -2642,7 +2635,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
 	void *buf_out = fcc->fqw->outb->u.iob.b;
-	struct silofs_ioc_clone *cl_out = &ioc_u.cl;
+	struct silofs_ioc_clone *cl_out = &ioc_u.clone;
 	const size_t bsz_in_min = 1;
 	const size_t bsz_in_max = sizeof(*cl_out);
 	const size_t bsz_out_min = sizeof(*cl_out);
@@ -2686,7 +2679,7 @@ static int do_ioc_sync(const struct silofs_fuseq_cmd_ctx *fcc)
 	const size_t bsz_out = fcc->in->u.ioctl.arg.out_size;
 	int err;
 
-	if ((bsz_in < sizeof(ioc_u.syn)) || (bsz_in > sizeof(ioc_u))) {
+	if ((bsz_in < sizeof(ioc_u.sync)) || (bsz_in > sizeof(ioc_u))) {
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
@@ -2694,10 +2687,10 @@ static int do_ioc_sync(const struct silofs_fuseq_cmd_ctx *fcc)
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
-	memcpy(&ioc_u.syn, buf_in, sizeof(ioc_u.syn));
+	memcpy(&ioc_u.sync, buf_in, sizeof(ioc_u.sync));
 	fcc->args->ioc_cmd = SILOFS_IOC_SYNC;
 	fcc->args->in.syncfs.ino = fcc->ino;
-	fcc->args->in.syncfs.flags = (int)ioc_u.syn.flags;
+	fcc->args->in.syncfs.flags = (int)ioc_u.sync.flags;
 	err = do_exec_op(fcc);
 	if (err) {
 		goto out;

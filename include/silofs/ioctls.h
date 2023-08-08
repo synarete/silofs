@@ -111,4 +111,11 @@ struct silofs_ioc_sync {
 	uint32_t pad[7];
 };
 
+union silofs_ioc_u {
+	uint8_t buf[SILOFS_IOC_SIZE_MAX];
+	struct silofs_ioc_query query;
+	struct silofs_ioc_clone clone;
+	struct silofs_ioc_sync  sync;
+};
+
 #endif /* SILOFS_IOCTLS_H_ */

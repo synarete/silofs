@@ -2411,6 +2411,36 @@ static int do_clone(struct silofs_task *task,
 	return 0;
 }
 
+static void do_post_clone_relax(struct silofs_task *task,
+                                struct silofs_sb_info *sbi)
+{
+	struct silofs_uber *uber = task->t_uber;
+	struct silofs_cache *cache = uber->ub.cache;
+
+	silofs_assert_ne(sbi, uber->ub_sbi);
+	silofs_assert_eq(sbi->sb_ui.u.ce.ce_refcnt, 0);
+	silofs_assert_eq(sbi->sb_ui.u.ce.ce_flags & SILOFS_CEF_DIRTY, 0);
+
+	silofs_cache_forget_ui(cache, &sbi->sb_ui);
+	silofs_cache_relax(cache, SILOFS_F_NOW);
+}
+
+static int do_clone_and_relex(struct silofs_task *task,
+                              struct silofs_inode_info *dir_ii, int flags,
+                              struct silofs_bootsecs *out_bsecs)
+{
+	struct silofs_sb_info *sbi_cur = task_sbi(task);
+	int err;
+
+	sbi_incref(sbi_cur);
+	err = do_clone(task, dir_ii, flags, out_bsecs);
+	sbi_decref(sbi_cur);
+	if (!err) {
+		do_post_clone_relax(task, sbi_cur);
+	}
+	return err;
+}
+
 int silofs_do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
                     struct silofs_bootsecs *out_bsecs)
@@ -2418,7 +2448,7 @@ int silofs_do_clone(struct silofs_task *task,
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_clone(task, dir_ii, flags, out_bsecs);
+	err = do_clone_and_relex(task, dir_ii, flags, out_bsecs);
 	ii_decref(dir_ii);
 	return err;
 }

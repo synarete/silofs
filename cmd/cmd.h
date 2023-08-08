@@ -232,7 +232,7 @@ void cmd_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 void cmd_inspect_fs(struct silofs_fs_env *fse);
 
 
-/* extra utilities */
+/* mount-info */
 struct cmd_proc_mntinfo {
 	struct cmd_proc_mntinfo *next;
 	const char *mntdir;
@@ -244,6 +244,14 @@ struct cmd_proc_mntinfo *cmd_parse_mountinfo(void);
 
 void cmd_free_mountinfo(struct cmd_proc_mntinfo *mi_list);
 
+/* ioctl helpers */
+union silofs_ioc_u *cmd_new_ioc(void);
+
+void cmd_del_iocp(union silofs_ioc_u **pioc);
+
+void cmd_reset_ioc(union silofs_ioc_u *ioc);
+
+/* misc */
 void cmd_trace_debug_info(void);
 
 /* file-system environment */

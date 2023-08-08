@@ -54,7 +54,7 @@ struct cmd_snap_ctx {
 	struct cmd_snap_in_args  in_args;
 	struct silofs_fs_args    fs_args;
 	struct silofs_fs_env    *fs_env;
-	struct silofs_ioc_clone *ioc_clone;
+	union silofs_ioc_u      *ioc;
 	struct silofs_uuid       uuid_new;
 	struct silofs_uuid       uuid_alt;
 };
@@ -106,19 +106,6 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_snap_malloc_ioc(struct cmd_snap_ctx *ctx)
-{
-	ctx->ioc_clone = cmd_zalloc(sizeof(*ctx->ioc_clone));
-}
-
-static void cmd_snap_free_ioc(struct cmd_snap_ctx *ctx)
-{
-	if (ctx->ioc_clone != NULL) {
-		cmd_zfree(ctx->ioc_clone, sizeof(*ctx->ioc_clone));
-		ctx->ioc_clone = NULL;
-	}
-}
-
 static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
@@ -136,7 +123,7 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.snapname);
 	cmd_pstrfree(&ctx->in_args.dirpath);
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
-	cmd_snap_free_ioc(ctx);
+	cmd_del_iocp(&ctx->ioc);
 	cmd_snap_ctx = NULL;
 }
 
@@ -149,7 +136,7 @@ static void cmd_snap_atexit(void)
 
 static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 {
-	cmd_snap_malloc_ioc(ctx);
+	ctx->ioc = cmd_new_ioc();
 	cmd_snap_ctx = ctx;
 	atexit(cmd_snap_atexit);
 }
@@ -218,12 +205,13 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 	silofs_sys_closefd(&dfd);
 }
 
-static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
+static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 {
 	const char *dirpath = ctx->in_args.dirpath_real;
 	int dfd = -1;
 	int err;
 
+	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
 	if (err) {
 		cmd_dief(err, "failed to open dir: %s", dirpath);
@@ -232,8 +220,7 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 	if (err) {
 		cmd_dief(err, "syncfs error: %s", dirpath);
 	}
-
-	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_CLONE, ctx->ioc_clone);
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_CLONE, &ctx->ioc->clone);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		cmd_dief(err, "ioctl error: %s", dirpath);
@@ -241,8 +228,26 @@ static void cmd_snap_by_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "failed to snap: %s",
 		         ctx->in_args.repodir_name);
 	}
-	silofs_uuid_assign(&ctx->uuid_new, &ctx->ioc_clone->uuid_new);
-	silofs_uuid_assign(&ctx->uuid_alt, &ctx->ioc_clone->uuid_alt);
+	silofs_uuid_assign(&ctx->uuid_new, &ctx->ioc->clone.uuid_new);
+	silofs_uuid_assign(&ctx->uuid_alt, &ctx->ioc->clone.uuid_alt);
+}
+
+static void cmd_snap_do_ioctl_sync(struct cmd_snap_ctx *ctx)
+{
+	const char *dirpath = ctx->in_args.dirpath_real;
+	int dfd = -1;
+	int err;
+
+	cmd_reset_ioc(ctx->ioc);
+	err = silofs_sys_open(dirpath, O_RDONLY, 0, &dfd);
+	if (err) {
+		cmd_dief(err, "failed to open: %s", dirpath);
+	}
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_SYNC, &ctx->ioc->sync);
+	if (err) {
+		cmd_dief(err, "ioctl error: %s", dirpath);
+	}
+	silofs_sys_close(dfd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -330,7 +335,10 @@ static void cmd_snap_save_orig_iconf(struct cmd_snap_ctx *ctx)
 static void cmd_snap_online(struct cmd_snap_ctx *ctx)
 {
 	/* Clone fs on server side via ioctl request */
-	cmd_snap_by_ioctl_clone(ctx);
+	cmd_snap_do_ioctl_clone(ctx);
+
+	/* Trigger another flush-sync on new file-system */
+	cmd_snap_do_ioctl_sync(ctx);
 }
 
 static void cmd_snap_offline(struct cmd_snap_ctx *ctx)
@@ -365,7 +373,7 @@ void cmd_execute_snap(void)
 {
 	struct cmd_snap_ctx ctx = {
 		.fs_env = NULL,
-		.ioc_clone = NULL,
+		.ioc = NULL,
 	};
 
 	/* Do all cleanups upon exits */

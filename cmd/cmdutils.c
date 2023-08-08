@@ -1154,6 +1154,29 @@ void cmd_free_mountinfo(struct cmd_proc_mntinfo *mi_list)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+union silofs_ioc_u *cmd_new_ioc(void)
+{
+	union silofs_ioc_u *ioc = NULL;
+
+	ioc = cmd_zalloc(sizeof(*ioc));
+	return  ioc;
+}
+
+void cmd_del_iocp(union silofs_ioc_u **pioc)
+{
+	if ((pioc != NULL) && (*pioc != NULL)) {
+		cmd_zfree(*pioc, sizeof(**pioc));
+		*pioc = NULL;
+	}
+}
+
+void cmd_reset_ioc(union silofs_ioc_u *ioc)
+{
+	memset(ioc, 0, sizeof(*ioc));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void cmd_trace_debug_info(void)
 {
 	silofs_log_debug("version: %s", silofs_version.string);

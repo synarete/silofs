@@ -32,7 +32,7 @@ struct cmd_sync_in_args {
 
 struct cmd_sync_ctx {
 	struct cmd_sync_in_args in_args;
-	struct silofs_ioc_sync  sync;
+	union silofs_ioc_u     *ioc;
 };
 
 static struct cmd_sync_ctx *cmd_sync_ctx;
@@ -68,6 +68,7 @@ static void cmd_sync_finalize(struct cmd_sync_ctx *ctx)
 {
 	cmd_pstrfree(&ctx->in_args.pathname_real);
 	cmd_pstrfree(&ctx->in_args.pathname);
+	cmd_del_iocp(&ctx->ioc);
 	cmd_sync_ctx = NULL;
 }
 
@@ -86,6 +87,7 @@ static void cmd_sync_start(struct cmd_sync_ctx *ctx)
 
 static void cmd_sync_prepare(struct cmd_sync_ctx *ctx)
 {
+	ctx->ioc = cmd_new_ioc();
 	cmd_realpath(ctx->in_args.pathname, &ctx->in_args.pathname_real);
 	cmd_check_reg_or_dir(ctx->in_args.pathname_real);
 	cmd_check_fusefs(ctx->in_args.pathname_real);
@@ -93,17 +95,18 @@ static void cmd_sync_prepare(struct cmd_sync_ctx *ctx)
 
 static void cmd_sync_execute(struct cmd_sync_ctx *ctx)
 {
+	const char *pathname = ctx->in_args.pathname_real;
 	int fd = -1;
 	int err;
 
-	err = silofs_sys_open(ctx->in_args.pathname_real, O_RDONLY, 0, &fd);
+	cmd_reset_ioc(ctx->ioc);
+	err = silofs_sys_open(pathname, O_RDONLY, 0, &fd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s",
-		         ctx->in_args.pathname_real);
+		cmd_dief(err, "failed to open: %s", pathname);
 	}
-	err = silofs_sys_ioctlp(fd, SILOFS_IOC_SYNC, &ctx->sync);
+	err = silofs_sys_ioctlp(fd, SILOFS_IOC_SYNC, &ctx->ioc->sync);
 	if (err) {
-		cmd_dief(err, "ioctl error: %s", ctx->in_args.pathname_real);
+		cmd_dief(err, "ioctl error: %s", pathname);
 	}
 	silofs_sys_close(fd);
 }
@@ -113,7 +116,7 @@ static void cmd_sync_execute(struct cmd_sync_ctx *ctx)
 void cmd_execute_sync(void)
 {
 	struct cmd_sync_ctx ctx = {
-		.sync.flags = 0
+		.ioc = NULL,
 	};
 
 	/* Do all cleanups upon exits */

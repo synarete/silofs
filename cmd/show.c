@@ -37,7 +37,7 @@ struct cmd_show_in_args {
 
 struct cmd_show_ctx {
 	struct cmd_show_in_args in_args;
-	struct silofs_ioc_query query;
+	union silofs_ioc_u     *ioc;
 	enum silofs_query_type  qtype;
 };
 
@@ -96,6 +96,7 @@ static void cmd_show_finalize(struct cmd_show_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.pathname_real);
 	cmd_pstrfree(&ctx->in_args.subcmd);
 	cmd_pstrfree(&ctx->in_args.pathname);
+	cmd_del_iocp(&ctx->ioc);
 	cmd_show_ctx = NULL;
 }
 
@@ -114,6 +115,7 @@ static void cmd_show_start(struct cmd_show_ctx *ctx)
 
 static void cmd_show_prepare(struct cmd_show_ctx *ctx)
 {
+	ctx->ioc = cmd_new_ioc();
 	cmd_realpath(ctx->in_args.pathname, &ctx->in_args.pathname_real);
 	cmd_check_reg_or_dir(ctx->in_args.pathname_real);
 	cmd_check_fusefs(ctx->in_args.pathname_real);
@@ -125,7 +127,7 @@ static void cmd_show_resolve_subcmd(struct cmd_show_ctx *ctx)
 	if (ctx->qtype == SILOFS_QUERY_NONE) {
 		cmd_dief(0, "unknown sub-command %s", ctx->in_args.subcmd);
 	}
-	ctx->query.qtype = (int32_t)ctx->qtype;
+	ctx->ioc->query.qtype = (int32_t)ctx->qtype;
 }
 
 static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
@@ -138,7 +140,7 @@ static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
 		cmd_dief(err, "failed to open: %s",
 		         ctx->in_args.pathname_real);
 	}
-	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->query);
+	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->ioc->query);
 	if (err) {
 		cmd_dief(err, "ioctl error: %s", ctx->in_args.pathname_real);
 	}
@@ -148,14 +150,14 @@ static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
 static void cmd_show_version(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s\n", ctx->query.u.version.string);
+	printf("%s\n", ctx->ioc->query.u.version.string);
 }
 
 static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s/%s\n", ctx->query.u.bootsec.repo,
-	       ctx->query.u.bootsec.name);
+	printf("%s/%s\n", ctx->ioc->query.u.bootsec.repo,
+	       ctx->ioc->query.u.bootsec.name);
 }
 
 struct silofs_msflag_name {
@@ -231,7 +233,7 @@ static void print_count1(const char *name, size_t cnt)
 
 static void cmd_show_proc(struct cmd_show_ctx *ctx)
 {
-	const struct silofs_query_proc *qpr = &ctx->query.u.proc;
+	const struct silofs_query_proc *qpr = &ctx->ioc->query.u.proc;
 
 	cmd_show_do_ioctl_query(ctx);
 	print_pid("pid", (pid_t)qpr->pid);
@@ -296,13 +298,13 @@ static void cmd_show_spstats(struct cmd_show_ctx *ctx)
 	struct silofs_spacestats spst;
 
 	cmd_show_do_ioctl_query(ctx);
-	silofs_spacestats_import(&spst, &ctx->query.u.spstats.spst);
+	silofs_spacestats_import(&spst, &ctx->ioc->query.u.spstats.spst);
 	print_spacestats(&spst);
 }
 
 static void cmd_show_statx(struct cmd_show_ctx *ctx)
 {
-	const struct silofs_query_statx *qstatx = &ctx->query.u.statx;
+	const struct silofs_query_statx *qstatx = &ctx->ioc->query.u.statx;
 	const struct statx *stx = &qstatx->stx;
 
 	cmd_show_do_ioctl_query(ctx);
@@ -348,7 +350,8 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 void cmd_execute_show(void)
 {
 	struct cmd_show_ctx ctx = {
-		.qtype = SILOFS_QUERY_NONE
+		.qtype = SILOFS_QUERY_NONE,
+		.ioc = NULL,
 	};
 
 	/* Do all cleanups upon exits */

@@ -13,16 +13,16 @@
 #   $ sudo loginctl enable-linger $USER
 #
 
-_echo_status() {
+_status() {
   echo -n "$1"
 }
 
-_echo_status_ok() {
-  _echo_status 0
+_status_ok() {
+  _status 0
 }
 
-_echo_status_err() {
-  _echo_status 1
+_status_err() {
+  _status 1
 }
 
 _locate_command() {
@@ -47,7 +47,7 @@ _check_systemd() {
 
   systemd_run_cmd=$(_locate_systemd_run)
   loginctl_cmd=$(_locate_loginctl)
-  [[ -x "${systemd_run_cmd}" && -x "${loginctl_cmd}" ]] && _echo_status_ok
+  [[ -x "${systemd_run_cmd}" && -x "${loginctl_cmd}" ]] && _status_ok
 }
 
 _check_systemd_run_scope() {
@@ -55,7 +55,7 @@ _check_systemd_run_scope() {
 
   systemd_run_cmd=$(_locate_systemd_run)
   ${systemd_run_cmd} --quiet --scope --user -- /bin/true
-  _echo_status $?
+  _status $?
 }
 
 _check_user_cap_linger() {
@@ -65,18 +65,18 @@ _check_user_cap_linger() {
   loginctl_cmd=$(_locate_loginctl)
   cap_linger=$(${loginctl_cmd} show-user "${USER}" | \
                grep Linger | awk -F= '{print $2}' | tr -d '[:space:]')
-  [[ "${cap_linger}" == "yes" ]] && _echo_status_ok
+  [[ "${cap_linger}" == "yes" ]] && _status_ok
 }
 
 _check_mount_by_systemd_run() {
   if [[ "$(_check_systemd)" != "0" ]]; then
-    _echo_status_err
+    _status_err
   elif [[ "$(_check_systemd_run_scope)" != "0" ]]; then
-    _echo_status_err
+    _status_err
   elif [[ "$(_check_user_cap_linger)" != "0" ]]; then
-    _echo_status_err
+    _status_err
   else
-    _echo_status_ok
+    _status_ok
   fi
 }
 

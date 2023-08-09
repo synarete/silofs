@@ -2786,26 +2786,27 @@ silofs_cache_create_vi(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t cache_shrink_some(struct silofs_cache *cache, int shift)
+static size_t
+cache_shrink_some(struct silofs_cache *cache, int shift, bool force)
 {
 	const size_t extra = clamp(1UL << shift, 1, 64);
 	size_t actual = 0;
 	size_t count;
 
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
-	actual += cache_shrink_or_relru_vis(cache, count, false);
+	actual += cache_shrink_or_relru_vis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_vbki_lm) + extra;
-	actual += cache_shrink_or_relru_vbkis(cache, count, false);
+	actual += cache_shrink_or_relru_vbkis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
-	actual += cache_shrink_or_relru_uis(cache, count, false);
+	actual += cache_shrink_or_relru_uis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_ubki_lm) + extra;
-	actual += cache_shrink_or_relru_ubkis(cache, count, false);
+	actual += cache_shrink_or_relru_ubkis(cache, count, force);
 
 	count = lrumap_overpop(&cache->c_blobf_lm) + extra;
-	actual += cache_shrink_or_relru_blobfs(cache, count, false);
+	actual += cache_shrink_or_relru_blobfs(cache, count, force);
 
 	return actual;
 }
@@ -2870,14 +2871,15 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	return niter;
 }
 
-static size_t cache_relax_niter(struct silofs_cache *cache, size_t niter)
+static size_t cache_relax_niter(struct silofs_cache *cache,
+                                size_t niter, bool force)
 {
 	size_t total = 0;
 	size_t actual = 1;
 	int shift = 0;
 
 	for (size_t i = 0; (i < niter) && actual; ++i) {
-		actual = cache_shrink_some(cache, shift++);
+		actual = cache_shrink_some(cache, shift++, force);
 		total += actual;
 	}
 	return total;
@@ -2896,9 +2898,10 @@ void silofs_cache_relax(struct silofs_cache *cache, int flags)
 {
 	size_t niter;
 	size_t total;
+	const bool force = (flags & SILOFS_F_NOW) > 0;
 
 	niter = cache_calc_niter(cache, flags);
-	total = cache_relax_niter(cache, niter);
+	total = cache_relax_niter(cache, niter, force);
 	if (!total) {
 		cache_relax_uamap(cache, flags);
 	}
@@ -2911,7 +2914,7 @@ void silofs_cache_shrink_once(struct silofs_cache *cache)
 	const size_t memsz_data = cache->c_mem_size_hint;
 
 	if ((8 * memsz_ubkis) > memsz_data) {
-		cache_shrink_some(cache, 0);
+		cache_shrink_some(cache, 0, false);
 		cache_post_op(cache);
 	}
 }
@@ -3057,7 +3060,7 @@ static void cache_evict_some(struct silofs_cache *cache)
 		evicted = true;
 	}
 	if (!evicted) {
-		cache_shrink_some(cache, 0);
+		cache_shrink_some(cache, 0, false);
 	}
 }
 

@@ -388,17 +388,34 @@ static void lni_undirtify(struct silofs_lnode_info *lni)
 
 static void dset_undirtify_all(const struct silofs_dset *dset)
 {
-	struct silofs_lnode_info *lni_next = NULL;
 	struct silofs_lnode_info *lni = dset->ds_postq;
 
 	while (lni != NULL) {
-		lni_next = lni->ds_next;
-
 		lni_undirtify(lni);
-		lni->ds_next = NULL;
+		lni = lni->ds_next;
+	}
+}
 
+static void dset_unlink_queues(struct silofs_dset *dset)
+{
+	struct silofs_lnode_info *lni_next = NULL;
+	struct silofs_lnode_info *lni = NULL;
+
+	lni = dset->ds_preq;
+	while (lni != NULL) {
+		lni_next = lni->ds_next;
+		lni->ds_next = NULL;
 		lni = lni_next;
 	}
+	dset->ds_preq = NULL;
+
+	lni = dset->ds_postq;
+	while (lni != NULL) {
+		lni_next = lni->ds_next;
+		lni->ds_next = NULL;
+		lni = lni_next;
+	}
+	dset->ds_postq = NULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -593,7 +610,10 @@ static void smc_undirtify_dset(struct silofs_submit_ctx *sm_ctx,
 static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,
                              enum silofs_stype stype)
 {
-	dset_clear_map(smc_dset_of(sm_ctx, stype));
+	struct silofs_dset *dset = smc_dset_of(sm_ctx, stype);
+
+	dset_unlink_queues(dset);
+	dset_clear_map(dset);
 }
 
 static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
@@ -714,24 +734,17 @@ static int smc_process_dset_of(struct silofs_submit_ctx *sm_ctx,
 {
 	int err;
 
-	if (smc_has_dirty_dset(sm_ctx, stype)) {
-		smc_make_fifo_dset(sm_ctx, stype);
-		smc_seal_dset(sm_ctx, stype);
-		err = smc_enqueue_dset_of(sm_ctx, stype);
-		if (err) {
-			return err;
-		}
-		/*
-		 * TODO-0053: Undirtify nodes only if full-transaction
-		 *
-		 * When failed to complete transaction (e.g., due to ENOMEM)
-		 * should keep dirty nodes in cache until resources are avail
-		 * again.
-		 */
-		smc_undirtify_dset(sm_ctx, stype);
-		smc_cleanup_dset(sm_ctx, stype);
+	if (!smc_has_dirty_dset(sm_ctx, stype)) {
+		return 0; /* no-op */
 	}
-	return 0;
+	smc_make_fifo_dset(sm_ctx, stype);
+	smc_seal_dset(sm_ctx, stype);
+	err = smc_enqueue_dset_of(sm_ctx, stype);
+	if (!err) {
+		smc_undirtify_dset(sm_ctx, stype);
+	}
+	smc_cleanup_dset(sm_ctx, stype);
+	return err;
 }
 
 static void smc_fill_dsets(struct silofs_submit_ctx *sm_ctx)

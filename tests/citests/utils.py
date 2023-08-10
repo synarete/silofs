@@ -1,11 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0
 import contextlib
+import inspect
 import os
 import pathlib
 import random
 import shutil
 import urllib
 import urllib.request
+
+
+def selfname() -> str:
+    return str(inspect.stack()[1][3])
 
 
 def is_dir(dirpath: pathlib.Path) -> bool:
@@ -22,11 +27,21 @@ def is_empty_dir(dirpath: pathlib.Path) -> bool:
 
 def empty_dir(dirpath: pathlib.Path) -> None:
     for name in os.listdir(dirpath):
-        subpath = os.path.join(dirpath, name)
-        if os.path.isdir(subpath):
-            shutil.rmtree(subpath)
+        subpath = dirpath / name
+        if is_dir(subpath):
+            rmtree_at(subpath)
         else:
-            os.remove(subpath)
+            rmfile_at(subpath)
+
+
+def rmtree_at(dirpath: pathlib.Path) -> None:
+    os.stat(dirpath)
+    shutil.rmtree(dirpath)
+
+
+def rmfile_at(path: pathlib.Path) -> None:
+    os.stat(path)
+    path.unlink(missing_ok=False)
 
 
 def try_urlopen(url: str, timeout: int = 5) -> bool:
@@ -45,7 +60,7 @@ def prandbytes(rsz: int) -> bytes:
     """Generate pseudo-random bytes array."""
     rnd = _random_bytearray(min(rsz, 1024))
     rba = bytearray(rnd)
-    while len(rba) > rsz:
+    while len(rba) < rsz:
         rem = rsz - len(rba)
         if rem <= 1024:
             rnd = _random_bytearray(rem)

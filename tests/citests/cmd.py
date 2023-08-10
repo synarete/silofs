@@ -7,6 +7,15 @@ import subprocess
 import typing
 
 
+def _find_executable(name: str) -> pathlib.Path:
+    """Locate executable program's path by name"""
+    xbin = shutil.which(name)
+    if not xbin:
+        raise CmdError(f"failed to find {name}")
+    path = pathlib.Path(str(xbin).strip())
+    return path
+
+
 class CmdError(Exception):
     def __init__(self, msg: str, out: str = "", ret: int = 0) -> None:
         Exception.__init__(self, msg)
@@ -19,7 +28,7 @@ class CmdExec:
 
     def __init__(self, prog: str) -> None:
         self.prog = prog
-        self.xbin = self.find_executable(prog)
+        self.xbin = _find_executable(prog)
         self.cwd = "/"
 
     def execute_sub(self, args, wdir: str = "", timeout: int = 5) -> str:
@@ -71,14 +80,6 @@ class CmdExec:
 
     def _make_cwd(self, wdir: str = "") -> str:
         return wdir if len(wdir) > 0 else self.cwd
-
-    @staticmethod
-    def find_executable(name: str) -> pathlib.Path:
-        """locate executable program's path by name"""
-        xbin = shutil.which(name)
-        if not xbin:
-            raise CmdError("failed to find " + name)
-        return pathlib.Path(str(xbin).strip())
 
 
 class CmdShell(CmdExec):

@@ -33,13 +33,21 @@ class Expect:
             sb = self._stringify(b)
             self.error(f"not greater-than: {sa} <= {sb}")
 
-    def is_dir(self, dirpath: pathlib.Path) -> None:
-        if not utils.is_dir(dirpath):
-            self.error(f"not a directory: {dirpath}")
+    def exists(self, path: pathlib.Path) -> None:
+        if not path.exists():
+            self.error(f"not exists: {path}")
 
-    def is_reg(self, filepath: pathlib.Path) -> None:
-        if not utils.is_reg(filepath):
-            self.error(f"not a regular file: {filepath}")
+    def not_exists(self, path: pathlib.Path) -> None:
+        if path.exists():
+            self.error(f"already exists: {path}")
+
+    def is_dir(self, path: pathlib.Path) -> None:
+        if not path.is_dir():
+            self.error(f"not a directory: {path}")
+
+    def is_reg(self, path: pathlib.Path) -> None:
+        if not path.is_file():
+            self.error(f"not a regular file: {path}")
 
     def empty_dir(self, dirpath: pathlib.Path) -> None:
         if not utils.is_empty_dir(dirpath):

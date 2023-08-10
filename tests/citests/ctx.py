@@ -2,7 +2,6 @@
 import copy
 import os
 import pathlib
-import shutil
 import time
 import typing
 from concurrent import futures
@@ -22,13 +21,14 @@ class TestConfig:
 
 
 class TestData:
-    def __init__(self, path: pathlib.Path, data: bytes) -> None:
+    def __init__(self, path: pathlib.Path, sz: int) -> None:
         self.path = path
-        self.data = data
         self.base = 0
+        self.size = sz
+        self.data = utils.prandbytes(sz)
 
     def fsize(self) -> int:
-        return self.base + len(self.data)
+        return self.base + self.size
 
     def do_write(self) -> None:
         self.path.write_bytes(self.data)
@@ -109,7 +109,7 @@ class TestBaseCtx:
         return pathlib.Path(self.mntpoint(), *subs)
 
     def make_td(self, sub: str, name: str, sz: int) -> TestData:
-        return TestData(self.make_path(sub, name), utils.prandbytes(sz))
+        return TestData(self.make_path(sub, name), sz)
 
     def make_tds(self, cnt: int, sub: str, sz: int) -> TestDataSet:
         tds = []
@@ -124,14 +124,22 @@ class TestBaseCtx:
         tds.do_read()
         return tds
 
-    def do_mkdirs(self, name: str) -> pathlib.Path:
-        base = self.make_path(name)
-        base.mkdir(parents=True, exist_ok=False)
-        return base
+    def create_fstree(self, name: str) -> pathlib.Path:
+        path = self.make_path(name)
+        self._create_fstree_at(self.make_path(name))
+        return path
 
-    def do_rmtree(self, name: str) -> None:
-        base = self.make_path(name)
-        shutil.rmtree(base)
+    def _create_fstree_at(self, path: pathlib.Path) -> None:
+        self.expect.not_exists(path)
+        path.mkdir(mode=0o700, parents=True, exist_ok=False)
+
+    def remove_fstree(self, name: str) -> None:
+        self._remove_fstree_at(self.make_path(name))
+
+    def _remove_fstree_at(self, path: pathlib.Path) -> None:
+        self.expect.exists(path)
+        self.expect.is_dir(path)
+        utils.rmtree_at(path)
 
     def repodir(self) -> pathlib.Path:
         return self.cfg.repodir

@@ -119,6 +119,10 @@ jobs:
   check-py-code:
     name: Check python code
     runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - codelint
+      - gitlint
     steps:
       - uses: actions/checkout@v3
       - name: Update

@@ -3149,7 +3149,7 @@ static int fuseq_wait_request(const struct silofs_fuseq_worker *fqw)
 {
 	const int fuse_fd = fqw->fq->fq_fuse_fd;
 
-	return silofs_sys_pollin_rfd(fuse_fd, 100 /* millisec */);
+	return silofs_sys_pollin_rfd(fuse_fd, 500 /* millisec */);
 }
 
 static int fuseq_recv_buf(const struct silofs_fuseq_worker *fqw,
@@ -3640,7 +3640,8 @@ static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
 	fqw->inb = NULL;
 	fqw->outb = NULL;
 	fqw->req_count = 0;
-	fqw->worker_index = idx;
+	fqw->windex = idx;
+	fqw->leader = (idx == 0);
 
 	err = fuseq_init_bufs(fqw);
 	if (err) {
@@ -3927,19 +3928,17 @@ static int fuseq_exec_one_request(struct silofs_fuseq_worker *fqw)
 	return 0;
 }
 
-static int fuseq_timeout_flags(const struct silofs_fuseq_worker *fqw)
+static void fuseq_resolve_timeout(const struct silofs_fuseq_worker *fqw,
+                                  time_t *out_dif, int *out_flags)
 {
-	time_t dif;
-	int flags = 0;
-
-	dif = fuseq_dif_time_stamp(fqw);
-	if (dif > 5) {
-		flags |= SILOFS_F_TIMEOUT;
+	*out_flags = 0;
+	*out_dif = fuseq_dif_time_stamp(fqw);
+	if (*out_dif > 5) {
+		*out_flags |= SILOFS_F_TIMEOUT;
 	}
-	if (dif > 15) {
-		flags |= SILOFS_F_IDLE;
+	if ((*out_dif > 10) && fqw->leader) {
+		*out_flags |= SILOFS_F_IDLE;
 	}
-	return flags;
 }
 
 static int fuseq_do_timeout_with(struct silofs_fuseq_worker *fqw, int flags)
@@ -3959,19 +3958,7 @@ static int fuseq_do_timeout_with(struct silofs_fuseq_worker *fqw, int flags)
 
 static int fuseq_do_timeout_locked(struct silofs_fuseq_worker *fqw, int flags)
 {
-	int err;
-
-	if (!flags) {
-		return 0;
-	}
-	err = fuseq_do_timeout_with(fqw, flags);
-	if (err) {
-		return err;
-	}
-	if (flags & SILOFS_F_IDLE) {
-		fuseq_set_time_stamp(fqw);
-	}
-	return 0;
+	return flags ? fuseq_do_timeout_with(fqw, flags) : 0;
 }
 
 static bool fuseq_timeout_trylock(const struct silofs_fuseq_worker *fqw)
@@ -3986,17 +3973,16 @@ static void fuseq_timeout_unlock(const struct silofs_fuseq_worker *fqw)
 
 static int fuseq_do_timeout(struct silofs_fuseq_worker *fqw)
 {
+	time_t dif = 0;
 	int flags = 0;
 	int err = 0;
-	bool idle = false;
 
 	if (fuseq_timeout_trylock(fqw)) {
-		flags = fuseq_timeout_flags(fqw);
+		fuseq_resolve_timeout(fqw, &dif, &flags);
 		err = fuseq_do_timeout_locked(fqw, flags);
 		fuseq_timeout_unlock(fqw);
-		idle = (flags & SILOFS_F_IDLE) > 0;
 	}
-	if (!err && idle && fqw->req_count) {
+	if (!err && (dif > 60) && fqw->req_count) {
 		err = fuseq_renew_bufs(fqw);
 		fqw->req_count = 0;
 	}
@@ -4022,7 +4008,7 @@ static bool fuseq_allow_exec(const struct silofs_fuseq_worker *fqw)
 		return false;
 	}
 	/* bootstrap case-2: only worker-0 may operate */
-	if (fqw->worker_index && !fuseq_is_normal(fqw->fq)) {
+	if (!fqw->leader && !fuseq_is_normal(fqw->fq)) {
 		return false;
 	}
 	return true;
@@ -4103,7 +4089,7 @@ out:
 static void fuseq_make_thread_name(const struct silofs_fuseq_worker *fqw,
                                    char *name_buf, size_t name_bsz)
 {
-	snprintf(name_buf, name_bsz, "silofs-worker%u", fqw->worker_index + 1);
+	snprintf(name_buf, name_bsz, "silofs-worker%u", fqw->windex + 1);
 }
 
 static int fuseq_exec_thread(struct silofs_fuseq_worker *fqw)

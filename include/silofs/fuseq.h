@@ -36,6 +36,7 @@ struct silofs_fuseq_conn_info {
 } silofs_aligned64;
 
 struct silofs_fuseq_worker {
+	struct silofs_thread            th;
 	struct silofs_list_head         lh;
 	struct silofs_fuseq            *fq;
 	struct silofs_fuseq_inb        *inb;
@@ -43,9 +44,9 @@ struct silofs_fuseq_worker {
 	struct silofs_fuseq_rw_iter    *rwi;
 	struct silofs_oper_args        *args;
 	struct silofs_piper             piper;
-	struct silofs_thread            th;
 	unsigned long                   req_count;
-	unsigned int                    worker_index;
+	unsigned int                    windex;
+	bool                            leader;
 } silofs_aligned64;
 
 struct silofs_fuseq_workset {

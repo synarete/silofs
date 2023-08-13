@@ -25,13 +25,13 @@ struct silofs_thread;
 typedef int (*silofs_execute_fn)(struct silofs_thread *);
 
 struct silofs_thread {
-	char                    name[32];
 	pthread_t               pth;
 	silofs_execute_fn       exec;
 	void                   *arg;
 	time_t                  start_time;
 	time_t                  finish_time;
 	int                     status;
+	char                    name[84];
 };
 
 struct silofs_mutex {

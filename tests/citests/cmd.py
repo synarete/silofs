@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0
+import copy
 import os
 import pathlib
 import shlex
 import shutil
 import subprocess
 import typing
+
+from . import log
 
 
 def _find_executable(name: str) -> pathlib.Path:
@@ -41,6 +44,7 @@ class CmdExec:
         cwd = self._make_cwd(wdir)
         txt = ""
         exp = False
+        log.printsl(f"SUB: {cmd}")
         with subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.PIPE,
@@ -68,6 +72,7 @@ class CmdExec:
         """Run command as sub-process without output, raise upon failure"""
         cmd = self._make_cmd(args)
         cwd = self._make_cwd(wdir)
+        log.printsl(f"RUN: {cmd}")
         proc = subprocess.run(shlex.split(cmd), check=True, cwd=cwd)
         if proc.returncode != 0:
             raise CmdError("failed: " + cmd, ret=proc.returncode)
@@ -87,24 +92,44 @@ class CmdShell(CmdExec):
 
     def __init__(self) -> None:
         CmdExec.__init__(self, "sh")
+        self.env = os.environ.copy()
 
-    @staticmethod
-    def run(cmd: str, wdir=None) -> int:
+    def run(
+        self,
+        cmd: str,
+        wdir: typing.Optional[pathlib.Path] = None,
+        xenv: typing.Optional[typing.Mapping[str, str]] = None,
+    ) -> int:
         with subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            cwd=wdir,
+            cwd=str(wdir),
             shell=True,
-            env=os.environ.copy(),
+            env=self._mkenv(xenv),
         ) as proc:
             ret = proc.wait()
         return ret
 
-    def run_ok(self, cmd: str, wdir=None) -> None:
-        ret = self.run(cmd, wdir)
+    def run_ok(
+        self,
+        cmd: str,
+        wdir: typing.Optional[pathlib.Path] = None,
+        xenv: typing.Optional[typing.Mapping[str, str]] = None,
+    ) -> None:
+        log.printsl(f"SH: {cmd}")
+        ret = self.run(cmd, wdir, xenv)
         if ret != 0:
             raise CmdError("failed: " + cmd, ret=ret)
+
+    def _mkenv(
+        self, xenv: typing.Optional[typing.Mapping[str, str]]
+    ) -> dict[str, str]:
+        env = copy.copy(self.env)
+        if xenv:
+            for key, val in xenv.items():
+                env[key] = val
+        return env
 
 
 class CmdSilofs(CmdExec):

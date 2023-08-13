@@ -4,10 +4,10 @@ from . import test_basic
 from . import test_fillfs
 from . import test_fsck
 from . import test_io
+from . import test_ltp
 from . import test_self
 from . import test_snap
 from . import test_xprogs
-
 
 TESTS = [
     test_basic.test_version,
@@ -38,6 +38,7 @@ TESTS = [
     test_xprogs.test_postgresql,
     test_xprogs.test_rsync,
     test_xprogs.test_gitscm,
+    test_ltp.test_ltp,
 ]
 
 

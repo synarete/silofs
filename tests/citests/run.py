@@ -8,19 +8,18 @@ import traceback
 from . import cmd
 from . import ctx
 from . import expect
+from . import log
 from . import test_all
 from . import utils
 
 
 def _die(msg: str) -> None:
-    print(msg)
+    log.println(msg)
     sys.exit(1)
 
 
 def _print(msg: str) -> None:
-    now = datetime.datetime.now()
-    ts = now.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{ts}] {msg}")
+    log.println(msg)
 
 
 def _require_empty_dir(dirpath: pathlib.Path) -> None:
@@ -35,6 +34,12 @@ def _validate_config(cfg: ctx.TestConfig) -> None:
     _require_empty_dir(cfg.mntdir)
 
 
+def _seed_random() -> None:
+    now = datetime.datetime.now()
+    seed = int(now.year * now.day * now.hour * now.minute / (now.second + 1))
+    random.seed(seed)
+
+
 def _report_prog() -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
@@ -43,19 +48,19 @@ def _report_prog() -> None:
     _print(f"VERS: {vers}")
 
 
-def _seed_random() -> None:
-    now = datetime.datetime.now()
-    seed = int(now.year * now.day * now.hour * now.minute / (now.second + 1))
-    random.seed(seed)
+def _report_done() -> None:
+    cmds = cmd.Cmds()
+    vers = cmds.silofs.version()
+    _print(f"DONE: {vers}")
 
 
 def _pre_run_tests() -> None:
-    _report_prog()
     _seed_random()
+    _report_prog()
 
 
 def _post_run_tests() -> None:
-    pass
+    _report_done()
 
 
 def _pre_test(tc: ctx.TestCtx) -> None:

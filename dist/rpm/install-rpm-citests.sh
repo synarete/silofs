@@ -18,6 +18,7 @@ dnf install -y \
   lz4-devel \
   openssl-devel \
   perl-core \
+  perl-libwww-perl \
   python3-setproctitle \
   readline-devel \
   zlib \

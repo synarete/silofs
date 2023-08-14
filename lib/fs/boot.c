@@ -35,6 +35,10 @@
 #include <limits.h>
 #include <endian.h>
 
+
+#define SILOFS_NOFILES_MIN      (512)
+
+
 static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 {
 	const char *allowed =
@@ -739,47 +743,57 @@ static int check_proc_rlimits(void)
 	if (err) {
 		return err;
 	}
-	if (rlim.rlim_cur < 64) {
-		return -SILOFS_EMFILE;
+	if (rlim.rlim_cur < SILOFS_NOFILES_MIN) {
+		return -SILOFS_ENFILE;
 	}
 	return 0;
 }
 
-static bool silofs_init_lib_once;
+static bool g_init_libsilofs_done;
 
-int silofs_init_lib(void)
+static int init_libsilofs(void)
 {
-	int err = 0;
+	int err;
 
-	silofs_validate_fsdefs();
-
-	if (silofs_init_lib_once) {
-		goto out;
-	}
 	err = check_endianess();
 	if (err) {
-		goto out;
+		return err;
 	}
 	err = check_sysconf();
 	if (err) {
-		goto out;
+		return err;
 	}
 	err = check_system_page_size();
 	if (err) {
-		goto out;
+		return err;
 	}
 	err = check_proc_rlimits();
 	if (err) {
-		goto out;
+		return err;
 	}
 	err = silofs_init_gcrypt();
 	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_init_lib(void)
+{
+	int ret = 0;
+
+	silofs_validate_fsdefs();
+	if (g_init_libsilofs_done) {
 		goto out;
 	}
-	silofs_init_lib_once = true;
+	ret = init_libsilofs();
+	if (ret) {
+		goto out;
+	}
+	g_init_libsilofs_done = true;
 out:
 	silofs_burnstack();
-	return err;
+	return ret;
 }
 
 

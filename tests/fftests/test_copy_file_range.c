@@ -36,6 +36,7 @@ ft_copy_range1(void (*fn)(struct ft_env *, loff_t, size_t),
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, args[i].off_src, args[i].len_src);
+		ft_relax_mem(fte);
 	}
 }
 
@@ -46,6 +47,7 @@ ft_copy_range2(void (*fn)(struct ft_env *, loff_t, size_t, loff_t, size_t),
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, args[i].off_src, args[i].len_src,
 		   args[i].off_dst, args[i].len_dst);
+		ft_relax_mem(fte);
 	}
 }
 
@@ -104,13 +106,13 @@ static void test_copy_file_range_(struct ft_env *fte,
                                   loff_t off_src, size_t len_src,
                                   loff_t off_dst, size_t len_dst)
 {
-	int fd_src = -1;
-	int fd_dst = -1;
 	const size_t len = ft_max(len_src, len_dst);
 	void *buf_src = ft_new_buf_rands(fte, len);
 	void *buf_dst = ft_new_buf_rands(fte, len);
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
+	int fd_src = -1;
+	int fd_dst = -1;
 
 	ft_open(path_src, O_CREAT | O_RDWR, 0600, &fd_src);
 	ft_open(path_dst, O_CREAT | O_RDWR, 0600, &fd_dst);

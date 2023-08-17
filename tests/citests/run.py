@@ -43,15 +43,16 @@ def _seed_random() -> None:
 def _report_prog() -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
-    vers = cmds.silofs.version()
     _print(f"PROG: {prog}")
+    vers = cmds.silofs.version()
     _print(f"VERS: {vers}")
 
 
 def _report_done() -> None:
     cmds = cmd.Cmds()
+    prog = cmds.silofs.xbin
     vers = cmds.silofs.version()
-    _print(f"DONE: {vers}")
+    _print(f"DONE: {prog} {vers}")
 
 
 def _pre_run_tests() -> None:
@@ -87,6 +88,12 @@ def _do_run_tests(cfg: ctx.TestConfig) -> None:
         _exec_test(td, tc)
         _post_test(tc)
     _post_run_tests()
+
+
+def make_config(basedir: pathlib.Path, mntdir: pathlib.Path) -> ctx.TestConfig:
+    _require_empty_dir(basedir)
+    _require_empty_dir(mntdir)
+    return ctx.TestConfig(basedir, mntdir)
 
 
 def run_tests(cfg: ctx.TestConfig) -> None:

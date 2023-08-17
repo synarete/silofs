@@ -2,7 +2,6 @@
 import pathlib
 import sys
 
-from . import ctx
 from . import run
 
 
@@ -13,10 +12,6 @@ def _progname() -> str:
 def _usage(exit_code: int) -> None:
     print(f"usage: {_progname()} test-dir mount-point")
     sys.exit(exit_code)
-
-
-def _makeconfig(basedir: pathlib.Path, mntdir: pathlib.Path) -> ctx.TestConfig:
-    return ctx.TestConfig(basedir, mntdir)
 
 
 def _parseargs() -> tuple[pathlib.Path, pathlib.Path]:
@@ -30,5 +25,5 @@ def _parseargs() -> tuple[pathlib.Path, pathlib.Path]:
 
 def start_citests() -> None:
     basedir, mntdir = _parseargs()
-    cfg = _makeconfig(basedir, mntdir)
+    cfg = run.make_config(basedir, mntdir)
     run.run_tests(cfg)

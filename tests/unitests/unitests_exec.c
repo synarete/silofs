@@ -541,6 +541,11 @@ void ut_freeall(struct ut_env *ute)
 	ute_unlock(ute);
 }
 
+void ut_relax_mem(struct ut_env *ute)
+{
+	ut_freeall(ute);
+}
+
 const char *ut_make_name(struct ut_env *ute, const char *pre, size_t idx)
 {
 	const char *name;

@@ -188,10 +188,10 @@ static void ut_create_nfiles(struct ut_env *ute, ino_t dino,
 static void ut_create_ninodes(struct ut_env *ute, ino_t dino,
                               const char *dname, size_t count)
 {
-	ino_t ino;
-	const char *name;
 	char s[256] = "";
 	struct stat st;
+	const char *name = NULL;
+	ino_t ino;
 
 	for (size_t i = 0; i < count; ++i) {
 		name = ut_make_name(ute, dname, i);
@@ -211,9 +211,9 @@ static void ut_create_ninodes(struct ut_env *ute, ino_t dino,
 
 static void ut_dir_list_simple_(struct ut_env *ute, size_t count)
 {
-	ino_t dino;
+	struct ut_dirlist *dl = NULL;
 	const char *name = UT_NAME;
-	struct ut_dirlist *dl;
+	ino_t dino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_nfiles(ute, dino, name, count);
@@ -227,9 +227,12 @@ static void ut_dir_list_simple_(struct ut_env *ute, size_t count)
 
 static void ut_dir_list_simple(struct ut_env *ute)
 {
-	ut_dir_list_simple_(ute, 1 << 4);
-	ut_dir_list_simple_(ute, 1 << 8);
-	ut_dir_list_simple_(ute, 1 << 10);
+	const size_t count[] = { 10, 100, 1000 };
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(count); ++i) {
+		ut_dir_list_simple_(ute, count[i]);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -259,10 +262,13 @@ static void ut_dir_list_repeated_(struct ut_env *ute,
 
 static void ut_dir_list_repeated(struct ut_env *ute)
 {
-	ut_dir_list_repeated_(ute, 1 << 4, 5);
-	ut_dir_list_repeated_(ute, 1 << 6, 4);
-	ut_dir_list_repeated_(ute, 1 << 10, 3);
-	ut_dir_list_repeated_(ute, 1 << 14, 2);
+	const size_t count[] = { 10, 100, 1000, 10000 };
+	const size_t nelems = UT_ARRAY_SIZE(count);
+
+	for (size_t i = 0; i < nelems; ++i) {
+		ut_dir_list_repeated_(ute, count[i], nelems - i + 1);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -306,8 +312,12 @@ static void ut_dir_list_sparse_(struct ut_env *ute, size_t count)
 
 static void ut_dir_list_sparse(struct ut_env *ute)
 {
-	ut_dir_list_sparse_(ute, 11);
-	ut_dir_list_sparse_(ute, 1111);
+	const size_t cnt[] = { 11, 111, 1111 };
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(cnt); ++i) {
+		ut_dir_list_sparse_(ute, cnt[i]);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

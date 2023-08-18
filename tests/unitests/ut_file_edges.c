@@ -186,6 +186,7 @@ static void ut_file_edges_fmapping(struct ut_env *ute)
 		ut_reverse_inplace(off_arr, off_arr_len);
 		ut_file_edges_fmapping_(ute, off_arr, off_arr_len);
 		ut_prandom_shuffle(ute, off_arr, off_arr_len);
+		ut_relax_mem(ute);
 	}
 }
 

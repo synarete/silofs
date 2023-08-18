@@ -42,8 +42,27 @@
 #error "this header must not be included out-side of unitests"
 #endif
 
+
+#define UT_MKRANGE0(pos_) \
+	{ .off = (pos_), .len = 0 }
+
+#define UT_MKRANGE1(pos_, cnt_) \
+	{ .off = (pos_), .len = (cnt_) }
+
+#define UT_MKRANGE2(pos1_, pos2_, cnt_) \
+	{ .off1 = (pos1_), .off2 = (pos2_), .len = (cnt_) }
+
+#define UT_MKRANGE1S(a_) \
+	{ .arr = (a_), .cnt = UT_ARRAY_SIZE(a_) }
+
 struct ut_range {
 	loff_t off;
+	size_t len;
+};
+
+struct ut_range2 {
+	loff_t off1;
+	loff_t off2;
 	size_t len;
 };
 
@@ -193,6 +212,8 @@ extern const struct ut_testdefs ut_tdefs_pack;
 
 /* exec */
 void ut_execute_tests(void);
+
+void ut_relax_mem(struct ut_env *ute);
 
 void ut_freeall(struct ut_env *ute);
 
@@ -571,7 +592,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define UT_64K                  (64 * SILOFS_KILO)
 
 #define UT_BK_SIZE              SILOFS_LBK_SIZE
-#define UT_FILESIZE_MAX            SILOFS_FILE_SIZE_MAX
+#define UT_FILESIZE_MAX         SILOFS_FILE_SIZE_MAX
 #define UT_IOSIZE_MAX           SILOFS_IO_SIZE_MAX
 #define UT_FILEMAP_NCHILDS      SILOFS_FILE_NODE_NCHILDS
 #define UT_ROOT_INO             SILOFS_INO_ROOT

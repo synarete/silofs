@@ -110,32 +110,39 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_snap_copy_range(struct ut_env *ute)
 {
-	ut_snap_copy_range_(ute, 0, UT_1K);
-	ut_snap_copy_range_(ute, 0, UT_4K);
-	ut_snap_copy_range_(ute, UT_4K, UT_4K);
-	ut_snap_copy_range_(ute, 2 * UT_4K, 2 * UT_4K);
-	ut_snap_copy_range_(ute, UT_64K, UT_64K);
-	ut_snap_copy_range_(ute, 4 * UT_4K, 4 * UT_64K);
-	ut_snap_copy_range_(ute, UT_MEGA, UT_MEGA);
-	ut_snap_copy_range_(ute, 2 * UT_MEGA, UT_MEGA / 2);
-	ut_snap_copy_range_(ute, UT_GIGA, 2 * UT_64K);
-	ut_snap_copy_range_(ute, 1, UT_MEGA);
-	ut_snap_copy_range_(ute, UT_GIGA - 1, (3 * UT_64K) + 3);
-	ut_snap_copy_range_(ute, UT_TERA - 7, UT_MEGA + 11);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(0, UT_1K),
+		UT_MKRANGE1(0, UT_4K),
+		UT_MKRANGE1(UT_4K, UT_4K),
+		UT_MKRANGE1(2 * UT_4K, 2 * UT_4K),
+		UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(4 * UT_4K, 4 * UT_64K),
+		UT_MKRANGE1(UT_MEGA, UT_MEGA),
+		UT_MKRANGE1(2 * UT_MEGA, UT_MEGA / 2),
+		UT_MKRANGE1(UT_GIGA, 2 * UT_64K),
+		UT_MKRANGE1(1, UT_MEGA),
+		UT_MKRANGE1(UT_GIGA - 1, (3 * UT_64K) + 3),
+		UT_MKRANGE1(UT_TERA - 7, UT_MEGA + 11),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_snap_copy_range_(ute, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 {
-	ino_t ino1 = 0;
-	ino_t ino2 = 0;
-	ino_t dino = 0;
 	const char *dname = UT_NAME;
 	const char *name1 = UT_NAME_AT;
 	const char *name2 = UT_NAME_AT;
 	void *buf1 = ut_randbuf(ute, bsz);
 	void *buf2 = ut_randbuf(ute, bsz);
+	ino_t dino = 0;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < 4; ++i) {
@@ -160,12 +167,19 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 
 static void ut_snap_rename_io(struct ut_env *ute)
 {
-	ut_snap_rename_io_(ute, 0, UT_1K - 1);
-	ut_snap_rename_io_(ute, UT_1K - 1, UT_1K + 3);
-	ut_snap_rename_io_(ute, 2 * UT_4K, 2 * UT_4K);
-	ut_snap_rename_io_(ute, UT_64K, UT_64K);
-	ut_snap_rename_io_(ute, UT_MEGA, UT_MEGA);
-	ut_snap_rename_io_(ute, UT_TERA - 7, UT_MEGA + 11);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(0, UT_1K - 1),
+		UT_MKRANGE1(UT_1K - 1, UT_1K + 3),
+		UT_MKRANGE1(2 * UT_4K, 2 * UT_4K),
+		UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(UT_MEGA, UT_MEGA),
+		UT_MKRANGE1(UT_TERA - 7, UT_MEGA + 11),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_snap_rename_io_(ute, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

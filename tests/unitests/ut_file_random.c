@@ -144,7 +144,7 @@ static void ut_file_random_arr_(struct ut_env *ute,
 {
 	for (size_t i = 0; i < nelems; ++i) {
 		ut_file_random_(ute, &arr[i]);
-		ut_freeall(ute);
+		ut_relax_mem(ute);
 	}
 }
 

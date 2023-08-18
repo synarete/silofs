@@ -20,11 +20,11 @@
 
 static void ut_snap_mkdir_rmdir(struct ut_env *ute)
 {
-	ino_t dino;
-	const ino_t rootd_ino = SILOFS_INO_ROOT;
-	const char *name = UT_NAME;
 	struct statvfs stvfs[2];
 	struct silofs_spacestats spst[2];
+	const ino_t rootd_ino = SILOFS_INO_ROOT;
+	ino_t dino = 0;
+	const char *name = UT_NAME;
 
 	ut_statfs_ok(ute, rootd_ino, &stvfs[0]);
 	ut_statsp_ok(ute, rootd_ino, &spst[0]);
@@ -40,9 +40,9 @@ static void ut_snap_mkdir_rmdir(struct ut_env *ute)
 
 static void ut_snap_create_remove(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -55,11 +55,11 @@ static void ut_snap_create_remove(struct ut_env *ute)
 
 static void ut_snap_write_read(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
 	time_t val = silofs_time_now();
 	const char *name = UT_NAME;
 	const loff_t off = (loff_t)(val & 0xFFFFFF);
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -74,10 +74,10 @@ static void ut_snap_write_read(struct ut_env *ute)
 
 static void ut_snap_write_post(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
 	const char *name = UT_NAME;
 	const loff_t off = UT_MEGA;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -91,12 +91,12 @@ static void ut_snap_write_post(struct ut_env *ute)
 
 static void ut_snap_overwrite(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
 	uint64_t val1 = (uint64_t)silofs_time_now();
 	uint64_t val2 = ~val1;
 	const char *name = UT_NAME;
 	const loff_t off = UT_GIGA;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -113,9 +113,9 @@ static void ut_snap_overwrite(struct ut_env *ute)
 
 static void ut_snap_reload(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -139,14 +139,14 @@ static void ut_snap_reload(struct ut_env *ute)
 
 static void ut_snap_reload_other(struct ut_env *ute)
 {
-	ino_t ino1;
-	ino_t ino2;
-	ino_t dino;
 	const loff_t off1[] = { 0, UT_GIGA };
 	const loff_t off2[] = { UT_MEGA, UT_1K };
 	const char *name = UT_NAME;
 	const char *str1 = ut_randstr(ute, UT_1K);
 	const char *str2 = ut_randstr(ute, UT_4K);
+	ino_t dino = 0;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino1);

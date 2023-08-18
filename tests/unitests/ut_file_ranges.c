@@ -16,9 +16,6 @@
  */
 #include "unitests.h"
 
-#define MKRANGE(pos_, cnt_) { .off = (pos_), .len = (cnt_) }
-#define MKRANGES(a_) { .arr = (a_), .cnt = UT_ARRAY_SIZE(a_) }
-
 
 struct ut_dvecs {
 	struct ut_dvec *dvec[64];
@@ -162,60 +159,60 @@ static void ut_rdwr_file2(struct ut_env *ute,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_range s_ut_ranges1[] = {
-	MKRANGE(1, 1),
-	MKRANGE(3, 4),
-	MKRANGE(8, 16),
-	MKRANGE(29, 31),
-	MKRANGE(127, 111),
+	UT_MKRANGE1(1, 1),
+	UT_MKRANGE1(3, 4),
+	UT_MKRANGE1(8, 16),
+	UT_MKRANGE1(29, 31),
+	UT_MKRANGE1(127, 111),
 };
 
 static const struct ut_range s_ut_ranges2[] = {
-	MKRANGE(UT_BK_SIZE, UT_BK_SIZE),
-	MKRANGE(UT_MEGA, UT_BK_SIZE),
-	MKRANGE(UT_GIGA, UT_BK_SIZE),
-	MKRANGE(UT_TERA, UT_BK_SIZE)
+	UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE),
+	UT_MKRANGE1(UT_MEGA, UT_BK_SIZE),
+	UT_MKRANGE1(UT_GIGA, UT_BK_SIZE),
+	UT_MKRANGE1(UT_TERA, UT_BK_SIZE)
 };
 
 static const struct ut_range s_ut_ranges3[] = {
-	MKRANGE(UT_BK_SIZE - 1, UT_BK_SIZE + 3),
-	MKRANGE(UT_MEGA - 1, UT_BK_SIZE + 3),
-	MKRANGE(UT_GIGA - 1, UT_BK_SIZE + 3),
-	MKRANGE(UT_TERA - 1, UT_BK_SIZE + 3)
+	UT_MKRANGE1(UT_BK_SIZE - 1, UT_BK_SIZE + 3),
+	UT_MKRANGE1(UT_MEGA - 1, UT_BK_SIZE + 3),
+	UT_MKRANGE1(UT_GIGA - 1, UT_BK_SIZE + 3),
+	UT_MKRANGE1(UT_TERA - 1, UT_BK_SIZE + 3)
 };
 
 static const struct ut_range s_ut_ranges4[] = {
-	MKRANGE(UT_BK_SIZE, UT_UMEGA),
-	MKRANGE(3 * UT_MEGA - 3, UT_UMEGA / 3),
-	MKRANGE(5 * UT_MEGA + 5, UT_UMEGA / 5),
-	MKRANGE(7 * UT_MEGA - 7, UT_UMEGA / 7),
-	MKRANGE(11 * UT_MEGA + 11, UT_UMEGA / 11),
-	MKRANGE(13 * UT_MEGA - 13, UT_UMEGA / 13),
+	UT_MKRANGE1(UT_BK_SIZE, UT_UMEGA),
+	UT_MKRANGE1(3 * UT_MEGA - 3, UT_UMEGA / 3),
+	UT_MKRANGE1(5 * UT_MEGA + 5, UT_UMEGA / 5),
+	UT_MKRANGE1(7 * UT_MEGA - 7, UT_UMEGA / 7),
+	UT_MKRANGE1(11 * UT_MEGA + 11, UT_UMEGA / 11),
+	UT_MKRANGE1(13 * UT_MEGA - 13, UT_UMEGA / 13),
 };
 
 static const struct ut_range s_ut_ranges5[] = {
-	MKRANGE(1, 11),
-	MKRANGE(23 * UT_BK_SIZE, 2 * UT_BK_SIZE),
-	MKRANGE(31 * UT_MEGA - 3, 3 * UT_BK_SIZE),
-	MKRANGE(677 * UT_MEGA - 3, 3 * UT_BK_SIZE),
-	MKRANGE(47 * UT_GIGA - 4, 4 * UT_BK_SIZE),
-	MKRANGE(977 * UT_GIGA - 4, 4 * UT_BK_SIZE),
-	MKRANGE(5 * UT_TERA - 5, 5 * UT_BK_SIZE),
+	UT_MKRANGE1(1, 11),
+	UT_MKRANGE1(23 * UT_BK_SIZE, 2 * UT_BK_SIZE),
+	UT_MKRANGE1(31 * UT_MEGA - 3, 3 * UT_BK_SIZE),
+	UT_MKRANGE1(677 * UT_MEGA - 3, 3 * UT_BK_SIZE),
+	UT_MKRANGE1(47 * UT_GIGA - 4, 4 * UT_BK_SIZE),
+	UT_MKRANGE1(977 * UT_GIGA - 4, 4 * UT_BK_SIZE),
+	UT_MKRANGE1(5 * UT_TERA - 5, 5 * UT_BK_SIZE),
 };
 
 static const struct ut_range s_ut_ranges6[] = {
-	MKRANGE((UT_MEGA / 23) - 23, UT_UMEGA),
-	MKRANGE(23 * UT_MEGA + 23, UT_UMEGA),
-	MKRANGE(113 * UT_GIGA - 113, UT_UMEGA),
-	MKRANGE(223 * UT_GIGA + 223, UT_UMEGA),
+	UT_MKRANGE1((UT_MEGA / 23) - 23, UT_UMEGA),
+	UT_MKRANGE1(23 * UT_MEGA + 23, UT_UMEGA),
+	UT_MKRANGE1(113 * UT_GIGA - 113, UT_UMEGA),
+	UT_MKRANGE1(223 * UT_GIGA + 223, UT_UMEGA),
 };
 
 static const struct ut_ranges s_ranges_defs[] = {
-	MKRANGES(s_ut_ranges1),
-	MKRANGES(s_ut_ranges2),
-	MKRANGES(s_ut_ranges3),
-	MKRANGES(s_ut_ranges4),
-	MKRANGES(s_ut_ranges5),
-	MKRANGES(s_ut_ranges6),
+	UT_MKRANGE1S(s_ut_ranges1),
+	UT_MKRANGE1S(s_ut_ranges2),
+	UT_MKRANGE1S(s_ut_ranges3),
+	UT_MKRANGE1S(s_ut_ranges4),
+	UT_MKRANGE1S(s_ut_ranges5),
+	UT_MKRANGE1S(s_ut_ranges6),
 };
 
 

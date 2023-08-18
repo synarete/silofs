@@ -39,6 +39,7 @@ ut_copy_range1(struct ut_env *ute,
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(ute, args[i].off_src, args[i].len_src);
+		ut_relax_mem(ute);
 	}
 }
 
@@ -50,6 +51,7 @@ ut_copy_range2(struct ut_env *ute,
 	for (size_t i = 0; i < na; ++i) {
 		fn(ute, args[i].off_src, args[i].len_src,
 		   args[i].off_dst, args[i].len_dst);
+		ut_relax_mem(ute);
 	}
 }
 

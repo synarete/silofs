@@ -38,6 +38,7 @@ struct cmd_umount_in_args {
 struct cmd_umount_ctx {
 	struct cmd_umount_in_args in_args;
 	struct silofs_ioc_query   query;
+	pid_t server_pid;
 	bool notconn;
 };
 
@@ -109,6 +110,7 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 		cmd_dief(err, "ioctl error: %s", ctx->in_args.mntpoint_real);
 	}
 	silofs_sys_close(fd);
+	ctx->server_pid = (pid_t)(ctx->query.u.proc.pid);
 }
 
 static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
@@ -199,17 +201,25 @@ static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 
 static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 {
-	pid_t pid;
-	pid_t pgid;
-	int retry;
+	char ppath[256] = "";
+	struct stat st = { .st_size = -1 };
+	const pid_t pid = ctx->server_pid;
+	const int retry_max = ctx->in_args.lazy ? 10 : 60;
+	int retry = 0;
+	int err = 0;
 
-	pid = (pid_t)(ctx->query.u.proc.pid);
-	if (!ctx->notconn && (pid > 0)) {
-		retry = ctx->in_args.lazy ? 3 : 30;
-		pgid = getpgid(pid);
-		while ((--retry > 0) && (pgid > 0)) {
-			sleep(1);
-			pgid = getpgid(pid);
+	snprintf(ppath, sizeof(ppath) - 1, "/proc/%ld/fd", (long)pid);
+	while ((retry++ < retry_max) && !err) {
+		err = silofs_suspend_secs(1);
+		if (err) {
+			break;
+		}
+		if (ctx->notconn || !pid) {
+			break;
+		}
+		err = silofs_sys_stat(ppath, &st);
+		if (err || !S_ISDIR(st.st_mode)) {
+			break;
 		}
 	}
 }
@@ -221,6 +231,7 @@ void cmd_execute_umount(void)
 	struct cmd_umount_ctx ctx = {
 		.query.qtype = 0,
 		.query.u.proc.pid = 0,
+		.server_pid = 0,
 	};
 
 	/* Do all cleanups upon exits */
@@ -244,5 +255,3 @@ void cmd_execute_umount(void)
 	/* Post execution cleanups */
 	cmd_umount_finalize(&ctx);
 }
-
-

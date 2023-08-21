@@ -7,6 +7,49 @@ from . import ctx
 from . import utils
 
 
+class LtpFsstressArgs:
+    def __init__(self) -> None:
+        self.count = 1
+        self.procs = 1
+        self.creat = 1
+        self.fdatasync = 0
+        self.fsync = 0
+        self.getdents = 0
+        self.link = 0
+        self.mkdir = 0
+        self.read = 0
+        self.readlink = 0
+        self.rename = 0
+        self.rmdir = 0
+        self.stat = 0
+        self.symlink = 0
+        self.sync = 0
+        self.truncate = 0
+        self.unlink = 0
+        self.write = 0
+
+    def make_cmd(self, fsstress: pathlib.Path, testdir: pathlib.Path) -> str:
+        cmd = f"{fsstress} -r -d {testdir} "
+        cmd = cmd + f"-n {self.count} -p {self.procs} "
+        cmd = cmd + f"-f creat={self.creat} "
+        cmd = cmd + f"-f fdatasync={self.fdatasync} "
+        cmd = cmd + f"-f fsync={self.fsync} "
+        cmd = cmd + f"-f getdents={self.getdents} "
+        cmd = cmd + f"-f link={self.link} "
+        cmd = cmd + f"-f mkdir={self.mkdir} "
+        cmd = cmd + f"-f read={self.read} "
+        cmd = cmd + f"-f readlink={self.readlink} "
+        cmd = cmd + f"-f rename={self.rename} "
+        cmd = cmd + f"-f rmdir={self.rmdir} "
+        cmd = cmd + f"-f stat={self.stat} "
+        cmd = cmd + f"-f symlink={self.symlink} "
+        cmd = cmd + f"-f sync={self.sync} "
+        cmd = cmd + f"-f truncate={self.truncate} "
+        cmd = cmd + f"-f unlink={self.unlink} "
+        cmd = cmd + f"-f write={self.write} "
+        return cmd
+
+
 class LtpConfig:
     def __init__(self, base: pathlib.Path) -> None:
         self.env = os.environ.copy()
@@ -49,7 +92,9 @@ def test_ltp(tc: ctx.TestCtx) -> None:
     ret = tc.cmd.git.clone(url, config.srcdir)
     if ret == 0:
         _install_ltp(tc, config)
-        _runltp_tests(tc, config)
+        _runltp_base_tests(tc, config)
+        _runltp_more_tests(tc, config)
+        _runltp_fsstress(tc, config)
     tc.remove_fstree(name)
     tc.exec_umount()
 
@@ -64,33 +109,53 @@ def _install_ltp(tc: ctx.TestCtx, config: LtpConfig) -> None:
     tc.cmd.sh.run_ok("make install", config.srcdir)
 
 
-def _runltp_tests(tc: ctx.TestCtx, config: LtpConfig):
-    _runltp_base_tests(tc, config)
-    _runltp_sh_tests(tc, config)
+def _runltp_base_tests(tc: ctx.TestCtx, config: LtpConfig) -> None:
+    _runltp_tests_by(tc, config, copy.copy(_LTP_TESTS))
 
 
-def _runltp_base_tests(tc: ctx.TestCtx, config: LtpConfig):
-    tests = copy.copy(_LTP_TESTS)
+def _runltp_more_tests(tc: ctx.TestCtx, config: LtpConfig) -> None:
+    _runltp_tests_by(tc, config, copy.copy(_LTP_TESTS_MORE))
+
+
+def _runltp_tests_by(
+    tc: ctx.TestCtx, config: LtpConfig, tests: list[str]
+) -> None:
     for test in tests:
-        exe = config.testcases_bin() / test
-        if _is_normal_test(exe):
-            tc.cmd.sh.run_ok(str(exe), config.base, config.mkenv())
+        test_path = config.testcases_bin() / test
+        if test_path.is_file():
+            tc.cmd.sh.run_ok(str(test_path), config.base, config.mkenv())
 
 
-def _runltp_sh_tests(tc: ctx.TestCtx, config: LtpConfig):
-    tests = copy.copy(_LTP_TESTS_SH)
-    for test in tests:
-        exe = config.testcases_bin() / test
-        if _is_shell_test(exe):
-            tc.cmd.sh.run_ok(str(exe), config.base, config.mkenv())
+def _runltp_fsstress(tc: ctx.TestCtx, config: LtpConfig) -> None:
+    args = LtpFsstressArgs()
+    args.count = 1000
+    args.procs = 10
+    args.creat = 1000
+    args.fdatasync = 1
+    args.fsync = 1
+    args.getdents = 10
+    args.link = 10
+    args.mkdir = 10
+    args.read = 1000
+    args.readlink = 10
+    args.rename = 10
+    args.rmdir = 10
+    args.stat = 100
+    args.symlink = 10
+    args.sync = 1
+    args.truncate = 10
+    args.unlink = 10
+    args.write = 1000
+    _runltp_fsstress_with(tc, config, args)
 
 
-def _is_shell_test(test_path: pathlib.Path) -> bool:
-    return test_path.is_file() and test_path.suffix == ".sh"
-
-
-def _is_normal_test(test_path: pathlib.Path) -> bool:
-    return test_path.is_file() and test_path.suffix == ""
+def _runltp_fsstress_with(
+    tc: ctx.TestCtx, config: LtpConfig, args: LtpFsstressArgs
+) -> None:
+    fsstress_path = config.testcases_bin() / "fsstress"
+    if fsstress_path.is_file():
+        cmd = args.make_cmd(fsstress_path, config.tmpdir)
+        tc.cmd.sh.run_ok(cmd, config.base, config.mkenv())
 
 
 _LTP_TESTS = [
@@ -105,68 +170,6 @@ _LTP_TESTS = [
     "creat03",
     "creat05",
     "creat07",
-    "ftruncate01",
-    "ftruncate03",
-    "getdents01",
-    "getdents02",
-    "link02",
-    "link03",
-    "link05",
-    "link08",
-    "linkat01",
-    "llseek01",
-    "llseek02",
-    "llseek03",
-    "lseek01",
-    "lseek02",
-    "lseek07",
-    "open01",
-    "open03",
-    "open04",
-    "open06",
-    "open07",
-    "open09",
-    "open13",
-    "openat01",
-    "openat02",
-    "openat201",
-    "openat202",
-    "openat203",
-    "preadv01",
-    "read01",
-    "rmdir01",
-    "symlink01",
-    "symlink04",
-    "symlink05",
-    "symlinkat01",
-    "truncate02",
-    "truncate02",
-    "unlink05",
-    "unlink07",
-    "unlinkat01",
-    "write01",
-    "write02",
-    "write03",
-    "write04",
-    "write05",
-    "write06",
-    "writev01",
-    "writev02",
-    "writev05",
-    "writev06",
-    "writev07",
-]
-
-_LTP_TESTS_SH = [
-    "file01.sh",
-    "ln_tests.sh",
-    "mv_tests.sh",
-]
-
-_LTP_TESTS_MORE = [
-    "aiodio_append",
-    "aiodio_sparse",
-    "close_range02",
     "dio_append",
     "dio_sparse",
     "diotest1",
@@ -213,10 +216,20 @@ _LTP_TESTS_MORE = [
     "futimesat01",
     "getdents01",
     "getdents02",
-    "growfiles",
+    "getdents02",
     "inode01",
     "inode02",
-    "lftest",
+    "link02",
+    "link03",
+    "link05",
+    "link08",
+    "linkat01",
+    "llseek01",
+    "llseek02",
+    "llseek03",
+    "lseek01",
+    "lseek02",
+    "lseek07",
     "lstat01",
     "lstat02",
     "madvise03",
@@ -239,8 +252,8 @@ _LTP_TESTS_MORE = [
     "mmap17",
     "mmap18",
     "mmap19",
-    "mmap20",
     "mmap2",
+    "mmap20",
     "mmap-corruption01",
     "mmapstress01",
     "mmapstress02",
@@ -254,8 +267,18 @@ _LTP_TESTS_MORE = [
     "munmap01",
     "munmap02",
     "munmap03",
-    "name_to_handle_at02",
-    "openfile",
+    "open01",
+    "open03",
+    "open04",
+    "open06",
+    "open07",
+    "open09",
+    "open13",
+    "openat01",
+    "openat02",
+    "openat201",
+    "openat202",
+    "openat203",
     "pread01",
     "pread02",
     "preadv01",
@@ -291,4 +314,32 @@ _LTP_TESTS_MORE = [
     "statvfs02",
     "statx02",
     "statx03",
+    "symlink01",
+    "symlink04",
+    "symlink05",
+    "symlinkat01",
+    "truncate02",
+    "unlink05",
+    "unlink07",
+    "unlinkat01",
+    "write01",
+    "write02",
+    "write03",
+    "write04",
+    "write05",
+    "write06",
+    "writev01",
+    "writev02",
+    "writev05",
+    "writev06",
+    "writev07",
+]
+
+_LTP_TESTS_MORE = [
+    "file01.sh",
+    "growfiles",
+    "lftest",
+    "ln_tests.sh",
+    "mv_tests.sh",
+    "openfile",
 ]

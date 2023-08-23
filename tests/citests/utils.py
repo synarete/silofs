@@ -3,6 +3,7 @@ import contextlib
 import inspect
 import os
 import pathlib
+import pprint
 import random
 import shutil
 import urllib
@@ -44,6 +45,27 @@ def rmfile_at(path: pathlib.Path) -> None:
     path.unlink(missing_ok=False)
 
 
+def fstype_of(path: pathlib.Path) -> str:
+    """Resolve file-system type of a given pathname"""
+    proc_mounts = pathlib.Path("/proc/mounts").read_text(encoding="utf-8")
+    lines = proc_mounts.split("\n")
+    st = path.stat()
+    for line in lines:
+        fields = line.split()
+        if len(fields) < 3:
+            continue
+        mntp = fields[1]
+        fs_type = fields[2]
+        try:
+            mntp_path = pathlib.Path(mntp)
+            mntp_st = mntp_path.stat()
+            if mntp_st.st_dev == st.st_dev:
+                return fs_type
+        except Exception:
+            continue
+    return "unknownfs"
+
+
 def try_urlopen(url: str, timeout: int = 5) -> bool:
     try:
         with contextlib.closing(urllib.request.urlopen(url, timeout=timeout)):
@@ -72,3 +94,8 @@ def prandbytes(rsz: int) -> bytes:
             rnd = _random_bytearray(1024)
             rba = rnd + rba + rnd + rba
     return rba[:rsz]
+
+
+def pformat(obj) -> str:
+    rep = pprint.pformat(vars(obj), indent=0)
+    return rep.replace("\n", " ")

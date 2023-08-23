@@ -7,6 +7,7 @@ from . import ctx
 from . import utils
 
 
+# pylint: disable=R0902,R0903
 class LtpFsstressArgs:
     def __init__(self) -> None:
         self.count = 1

@@ -10,7 +10,7 @@ import typing
 from . import log
 
 
-def _find_executable(name: str) -> pathlib.Path:
+def find_executable(name: str) -> pathlib.Path:
     """Locate executable program's path by name"""
     xbin = shutil.which(name)
     if not xbin:
@@ -29,9 +29,14 @@ class CmdError(Exception):
 class CmdExec:
     """Generic wrapper over command-line executor"""
 
-    def __init__(self, prog: str) -> None:
+    def __init__(
+        self, prog: str, xbin: typing.Optional[pathlib.Path] = None
+    ) -> None:
         self.prog = prog
-        self.xbin = _find_executable(prog)
+        if xbin:
+            self.xbin = xbin
+        else:
+            self.xbin = find_executable(prog)
         self.cwd = "/"
 
     def execute_sub(self, args, wdir: str = "", timeout: int = 5) -> str:
@@ -106,6 +111,7 @@ class CmdShell(CmdExec):
             stderr=subprocess.DEVNULL,
             cwd=str(wdir),
             shell=True,
+            universal_newlines=True,
             env=self._mkenv(xenv),
         ) as proc:
             ret = proc.wait()

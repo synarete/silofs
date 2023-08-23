@@ -2,6 +2,7 @@
 from . import ctx
 from . import test_basic
 from . import test_fillfs
+from . import test_fio
 from . import test_fsck
 from . import test_io
 from . import test_ltp
@@ -38,6 +39,8 @@ TESTS = [
     test_xprogs.test_postgresql,
     test_xprogs.test_rsync,
     test_xprogs.test_gitscm,
+    test_fio.test_fio_simple,
+    test_fio.test_fio_njobs,
     test_ltp.test_ltp,
 ]
 

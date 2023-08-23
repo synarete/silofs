@@ -100,7 +100,8 @@ def run_tests(cfg: ctx.TestConfig) -> None:
     try:
         _do_run_tests(cfg)
     except cmd.CmdError as cex:
-        _print(f"FATAL: {cex} {cex.retcode}: {cex.output}")
+        _print(f"FATAL: {cex} {cex.retcode}")
+        _print(f"FATAL: {cex.output}")
         traceback.print_exc()
         sys.exit(1)
     except expect.ExpectException as exp:

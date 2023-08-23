@@ -5,6 +5,7 @@ apt-get install -y \
   make \
   automake \
   libtool \
+  fio \
   flex \
   bison \
   libcap-dev \

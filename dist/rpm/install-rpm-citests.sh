@@ -3,6 +3,7 @@ dnf install -y \
   automake \
   bison \
   expat-devel \
+  fio \
   flex \
   gcc \
   git \

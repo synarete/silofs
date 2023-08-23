@@ -778,7 +778,7 @@ struct silofs_inode_file {
 } silofs_packed_aligned8;
 
 
-union silofs_inode_specific {
+union silofs_inode_tail {
 	struct silofs_inode_dir  d;
 	struct silofs_inode_file f;
 	struct silofs_inode_lnk  l;
@@ -807,7 +807,7 @@ struct silofs_inode {
 	struct silofs_inode_times       i_tm;
 	uint8_t                         i_reserved2[64];
 	struct silofs_inode_xattr       i_xa;
-	union silofs_inode_specific     i_sp;
+	union silofs_inode_tail         i_ta;
 } silofs_packed_aligned64;
 
 

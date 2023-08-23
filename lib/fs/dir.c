@@ -974,58 +974,58 @@ static mode_t ii_dtype_of(const struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_inode_dir *idr_of(const struct silofs_inode *inode)
+static struct silofs_inode_dir *indr_of(const struct silofs_inode *inode)
 {
 	struct silofs_inode *dir_inode = unconst(inode);
 
-	return &dir_inode->i_sp.d;
+	return &dir_inode->i_ta.d;
 }
 
-static uint64_t idr_seed(const struct silofs_inode_dir *idr)
+static uint64_t indr_seed(const struct silofs_inode_dir *indr)
 {
-	return silofs_le64_to_cpu(idr->d_seed);
+	return silofs_le64_to_cpu(indr->d_seed);
 }
 
-static void idr_set_seed(struct silofs_inode_dir *idr, size_t seed)
+static void indr_set_seed(struct silofs_inode_dir *indr, size_t seed)
 {
-	idr->d_seed = silofs_cpu_to_le64(seed);
+	indr->d_seed = silofs_cpu_to_le64(seed);
 }
 
-static uint64_t idr_ndents(const struct silofs_inode_dir *idr)
+static uint64_t indr_ndents(const struct silofs_inode_dir *indr)
 {
-	return silofs_le64_to_cpu(idr->d_ndents);
+	return silofs_le64_to_cpu(indr->d_ndents);
 }
 
-static void idr_set_ndents(struct silofs_inode_dir *idr, size_t n)
+static void indr_set_ndents(struct silofs_inode_dir *indr, size_t n)
 {
-	idr->d_ndents = silofs_cpu_to_le64(n);
+	indr->d_ndents = silofs_cpu_to_le64(n);
 }
 
-static void idr_inc_ndents(struct silofs_inode_dir *idr)
+static void indr_inc_ndents(struct silofs_inode_dir *indr)
 {
-	idr_set_ndents(idr, idr_ndents(idr) + 1);
+	indr_set_ndents(indr, indr_ndents(indr) + 1);
 }
 
-static void idr_dec_ndents(struct silofs_inode_dir *idr)
+static void indr_dec_ndents(struct silofs_inode_dir *indr)
 {
-	idr_set_ndents(idr, idr_ndents(idr) - 1);
+	indr_set_ndents(indr, indr_ndents(indr) - 1);
 }
 
-static silofs_dtn_index_t idr_last_index(const struct silofs_inode_dir *idr)
+static silofs_dtn_index_t indr_last_index(const struct silofs_inode_dir *indr)
 {
-	return silofs_le32_to_cpu(idr->d_last_index);
+	return silofs_le32_to_cpu(indr->d_last_index);
 }
 
-static void idr_set_last_index(struct silofs_inode_dir *idr, size_t index)
+static void indr_set_last_index(struct silofs_inode_dir *indr, size_t index)
 {
-	idr->d_last_index = silofs_cpu_to_le32((uint32_t)index);
+	indr->d_last_index = silofs_cpu_to_le32((uint32_t)index);
 }
 
-static void idr_update_last_index(struct silofs_inode_dir *idr,
-                                  silofs_dtn_index_t alt_index, bool add)
+static void indr_update_last_index(struct silofs_inode_dir *indr,
+                                   silofs_dtn_index_t alt_index, bool add)
 {
 	silofs_dtn_index_t new_index;
-	const silofs_dtn_index_t cur_index = idr_last_index(idr);
+	const silofs_dtn_index_t cur_index = indr_last_index(indr);
 	const silofs_dtn_index_t nil_index = DTREE_INDEX_NULL;
 
 	new_index = cur_index;
@@ -1038,49 +1038,49 @@ static void idr_update_last_index(struct silofs_inode_dir *idr,
 			new_index = !cur_index ? nil_index : cur_index - 1;
 		}
 	}
-	idr_set_last_index(idr, new_index);
+	indr_set_last_index(indr, new_index);
 }
 
-static loff_t idr_htree_root(const struct silofs_inode_dir *idr)
+static loff_t indr_htree_root(const struct silofs_inode_dir *indr)
 {
-	return silofs_off_to_cpu(idr->d_root);
+	return silofs_off_to_cpu(indr->d_root);
 }
 
-static void idr_set_htree_root(struct silofs_inode_dir *idr, loff_t off)
+static void indr_set_htree_root(struct silofs_inode_dir *indr, loff_t off)
 {
-	idr->d_root = silofs_cpu_to_off(off);
+	indr->d_root = silofs_cpu_to_off(off);
 }
 
-static enum silofs_dirf idr_flags(const struct silofs_inode_dir *idr)
+static enum silofs_dirf indr_flags(const struct silofs_inode_dir *indr)
 {
-	return silofs_le32_to_cpu(idr->d_flags);
+	return silofs_le32_to_cpu(indr->d_flags);
 }
 
-static void idr_set_flags(struct silofs_inode_dir *idr,
-                          enum silofs_dirf flags)
+static void indr_set_flags(struct silofs_inode_dir *indr,
+                           enum silofs_dirf flags)
 {
-	idr->d_flags = silofs_cpu_to_le32((uint32_t)flags);
+	indr->d_flags = silofs_cpu_to_le32((uint32_t)flags);
 }
 
-static enum silofs_dirhfn idr_hashfn(const struct silofs_inode_dir *idr)
+static enum silofs_dirhfn indr_hashfn(const struct silofs_inode_dir *indr)
 {
-	return (enum silofs_dirhfn)(idr->d_hashfn);
+	return (enum silofs_dirhfn)(indr->d_hashfn);
 }
 
-static void idr_set_hashfn(struct silofs_inode_dir *idr,
-                           enum silofs_dirhfn hfn)
+static void indr_set_hashfn(struct silofs_inode_dir *indr,
+                            enum silofs_dirhfn hfn)
 {
-	idr->d_hashfn = (uint8_t)hfn;
+	indr->d_hashfn = (uint8_t)hfn;
 }
 
-static void idr_setup(struct silofs_inode_dir *idr, uint64_t seed)
+static void indr_setup(struct silofs_inode_dir *indr, uint64_t seed)
 {
-	idr_set_seed(idr, seed);
-	idr_set_htree_root(idr, SILOFS_OFF_NULL);
-	idr_set_last_index(idr, DTREE_INDEX_NULL);
-	idr_set_ndents(idr, 0);
-	idr_set_flags(idr, SILOFS_DIRF_NAME_UTF8);
-	idr_set_hashfn(idr, SILOFS_DIRHASH_XXH64);
+	indr_set_seed(indr, seed);
+	indr_set_htree_root(indr, SILOFS_OFF_NULL);
+	indr_set_last_index(indr, DTREE_INDEX_NULL);
+	indr_set_ndents(indr, 0);
+	indr_set_flags(indr, SILOFS_DIRF_NAME_UTF8);
+	indr_set_hashfn(indr, SILOFS_DIRHASH_XXH64);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1088,29 +1088,29 @@ static void idr_setup(struct silofs_inode_dir *idr, uint64_t seed)
 static struct silofs_inode_dir *
 dir_ispec_of(const struct silofs_inode_info *dir_ii)
 {
-	return idr_of(dir_ii->inode);
+	return indr_of(dir_ii->inode);
 }
 
 static uint64_t dir_ndents(const struct silofs_inode_info *dir_ii)
 {
-	return idr_ndents(dir_ispec_of(dir_ii));
+	return indr_ndents(dir_ispec_of(dir_ii));
 }
 
 static void dir_inc_ndents(struct silofs_inode_info *dir_ii)
 {
-	idr_inc_ndents(dir_ispec_of(dir_ii));
+	indr_inc_ndents(dir_ispec_of(dir_ii));
 	ii_dirtify(dir_ii);
 }
 
 static void dir_dec_ndents(struct silofs_inode_info *dir_ii)
 {
-	idr_dec_ndents(dir_ispec_of(dir_ii));
+	indr_dec_ndents(dir_ispec_of(dir_ii));
 	ii_dirtify(dir_ii);
 }
 
 static loff_t dir_htree_root(const struct silofs_inode_info *dir_ii)
 {
-	return idr_htree_root(dir_ispec_of(dir_ii));
+	return indr_htree_root(dir_ispec_of(dir_ii));
 }
 
 static void dir_htree_root_addr(const struct silofs_inode_info *dir_ii,
@@ -1127,22 +1127,22 @@ static bool dir_has_htree(const struct silofs_inode_info *dir_ii)
 static void dir_set_htree_root(struct silofs_inode_info *dir_ii,
                                const struct silofs_vaddr *vaddr)
 {
-	struct silofs_inode_dir *idr = dir_ispec_of(dir_ii);
+	struct silofs_inode_dir *indr = dir_ispec_of(dir_ii);
 
-	idr_set_htree_root(idr, vaddr->off);
-	idr_set_last_index(idr, DTREE_INDEX_ROOT);
+	indr_set_htree_root(indr, vaddr->off);
+	indr_set_last_index(indr, DTREE_INDEX_ROOT);
 }
 
 static silofs_dtn_index_t
 dir_last_index(const struct silofs_inode_info *dir_ii)
 {
-	return idr_last_index(dir_ispec_of(dir_ii));
+	return indr_last_index(dir_ispec_of(dir_ii));
 }
 
 static void dir_update_last_index(struct silofs_inode_info *dir_ii,
                                   silofs_dtn_index_t alt_index, bool add)
 {
-	idr_update_last_index(dir_ispec_of(dir_ii), alt_index, add);
+	indr_update_last_index(dir_ispec_of(dir_ii), alt_index, add);
 }
 
 size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii)
@@ -1152,17 +1152,17 @@ size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii)
 
 uint64_t silofs_dir_seed(const struct silofs_inode_info *dir_ii)
 {
-	return idr_seed(dir_ispec_of(dir_ii));
+	return indr_seed(dir_ispec_of(dir_ii));
 }
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
 {
-	return idr_flags(dir_ispec_of(dir_ii));
+	return indr_flags(dir_ispec_of(dir_ii));
 }
 
 enum silofs_dirhfn silofs_dir_hfn(const struct silofs_inode_info *dir_ii)
 {
-	return idr_hashfn(dir_ispec_of(dir_ii));
+	return indr_hashfn(dir_ispec_of(dir_ii));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1188,7 +1188,7 @@ void silofs_setup_dir(struct silofs_inode_info *dir_ii,
 		SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE
 	};
 
-	idr_setup(idr_of(dir_ii->inode), unique_seed());
+	indr_setup(indr_of(dir_ii->inode), unique_seed());
 	ii_update_iattrs(dir_ii, NULL, &iattr);
 }
 
@@ -2421,16 +2421,16 @@ static int verify_dtn_index(silofs_dtn_index_t dtn_index, bool has_tree)
 
 static int verify_dir_root(const struct silofs_inode *inode)
 {
-	const struct silofs_inode_dir *idr = idr_of(inode);
+	const struct silofs_inode_dir *indr = indr_of(inode);
 	loff_t root_off;
 	int err;
 
-	root_off = idr_htree_root(idr);
+	root_off = indr_htree_root(indr);
 	err = silofs_verify_off(root_off);
 	if (err) {
 		return err;
 	}
-	err = verify_dtn_index(idr_last_index(idr), !off_isnull(root_off));
+	err = verify_dtn_index(indr_last_index(indr), !off_isnull(root_off));
 	if (err) {
 		return err;
 	}

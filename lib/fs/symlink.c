@@ -117,49 +117,49 @@ static void symv_init(struct silofs_symlnk_value *symv, ino_t parent,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const void *iln_head_value(const struct silofs_inode_lnk *iln)
+static const void *inln_head_value(const struct silofs_inode_lnk *inln)
 {
-	return iln->l_head;
+	return inln->l_head;
 }
 
-static void iln_set_head_value(struct silofs_inode_lnk *iln,
-                               const void *value, size_t length)
+static void inln_set_head_value(struct silofs_inode_lnk *inln,
+                                const void *value, size_t length)
 {
-	memcpy(iln->l_head, value, length);
+	memcpy(inln->l_head, value, length);
 }
 
-static void iln_tail_part(const struct silofs_inode_lnk *iln, size_t slot,
-                          struct silofs_vaddr *out_vaddr)
+static void inln_tail_part(const struct silofs_inode_lnk *inln, size_t slot,
+                           struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr64_parse(&iln->l_tail[slot], out_vaddr);
+	silofs_vaddr64_parse(&inln->l_tail[slot], out_vaddr);
 }
 
-static void iln_set_tail_part(struct silofs_inode_lnk *iln, size_t slot,
-                              const struct silofs_vaddr *vaddr)
+static void inln_set_tail_part(struct silofs_inode_lnk *inln, size_t slot,
+                               const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr64_set(&iln->l_tail[slot], vaddr);
+	silofs_vaddr64_set(&inln->l_tail[slot], vaddr);
 }
 
-static void iln_reset_tail_part(struct silofs_inode_lnk *iln, size_t slot)
+static void inln_reset_tail_part(struct silofs_inode_lnk *inln, size_t slot)
 {
-	iln_set_tail_part(iln, slot, vaddr_none());
+	inln_set_tail_part(inln, slot, vaddr_none());
 }
 
-static void iln_setup(struct silofs_inode_lnk *iln)
+static void inln_setup(struct silofs_inode_lnk *inln)
 {
-	memset(iln->l_head, 0, sizeof(iln->l_head));
-	for (size_t slot = 0; slot < ARRAY_SIZE(iln->l_tail); ++slot) {
-		iln_reset_tail_part(iln, slot);
+	memset(inln->l_head, 0, sizeof(inln->l_head));
+	for (size_t slot = 0; slot < ARRAY_SIZE(inln->l_tail); ++slot) {
+		inln_reset_tail_part(inln, slot);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_inode_lnk *iln_of(const struct silofs_inode_info *ii)
+static struct silofs_inode_lnk *inln_of(const struct silofs_inode_info *ii)
 {
 	struct silofs_inode *inode = ii->inode;
 
-	return &inode->i_sp.l;
+	return &inode->i_ta.l;
 }
 
 static size_t lnk_value_length(const struct silofs_inode_info *lnk_ii)
@@ -169,26 +169,26 @@ static size_t lnk_value_length(const struct silofs_inode_info *lnk_ii)
 
 static const void *lnk_value_head(const struct silofs_inode_info *lnk_ii)
 {
-	return iln_head_value(iln_of(lnk_ii));
+	return inln_head_value(inln_of(lnk_ii));
 }
 
 static void lnk_assign_value_head(const struct silofs_inode_info *lnk_ii,
                                   const void *val, size_t len)
 {
-	iln_set_head_value(iln_of(lnk_ii), val, len);
+	inln_set_head_value(inln_of(lnk_ii), val, len);
 }
 
 static int lnk_get_value_part(const struct silofs_inode_info *lnk_ii,
                               size_t slot, struct silofs_vaddr *out_vaddr)
 {
-	iln_tail_part(iln_of(lnk_ii), slot, out_vaddr);
+	inln_tail_part(inln_of(lnk_ii), slot, out_vaddr);
 	return !vaddr_isnull(out_vaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,
                                const struct silofs_vaddr *vaddr)
 {
-	iln_set_tail_part(iln_of(lnk_ii), slot, vaddr);
+	inln_set_tail_part(inln_of(lnk_ii), slot, vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -553,7 +553,7 @@ int silofs_drop_symlink(struct silofs_task *task,
 
 void silofs_setup_symlnk(struct silofs_inode_info *lnk_ii)
 {
-	iln_setup(iln_of(lnk_ii));
+	inln_setup(inln_of(lnk_ii));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

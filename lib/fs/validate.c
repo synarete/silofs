@@ -189,7 +189,7 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_inode_lnk, 512);
 	REQUIRE_SIZEOF(struct silofs_inode_times, 64);
 	REQUIRE_SIZEOF(struct silofs_inode_xattr, 256);
-	REQUIRE_SIZEOF(union silofs_inode_specific, 512);
+	REQUIRE_SIZEOF(union silofs_inode_tail, 512);
 	REQUIRE_SIZEOF(struct silofs_inode, SILOFS_INODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_symlnk_value, SILOFS_SYMLNK_VAL_SIZE);
 	REQUIRE_SIZEOF(struct silofs_xattr_node, SILOFS_XATTR_NODE_SIZE);
@@ -294,7 +294,7 @@ static void validate_persistent_types_alignment3(void)
 	REQUIRE_OFFSET(struct silofs_inode, i_attributes, 80);
 	REQUIRE_OFFSET64(struct silofs_inode, i_tm, 128);
 	REQUIRE_OFFSET64(struct silofs_inode, i_xa, 256);
-	REQUIRE_OFFSET64(struct silofs_inode, i_sp, 512);
+	REQUIRE_OFFSET64(struct silofs_inode, i_ta, 512);
 	REQUIRE_OFFSET(struct silofs_dir_entry, de_ino, 0);
 	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_hash, 8);
 	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len_dt, 12);

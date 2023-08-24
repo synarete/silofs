@@ -17,7 +17,7 @@ class TestConfig:
         self.basedir = basedir.resolve(strict=True)
         self.mntdir = mntdir.resolve(strict=True)
         self.repodir = self.basedir / "repo"
-        self.password = "0123456789abcdef"
+        self.password = "123456"
 
 
 class TestData:

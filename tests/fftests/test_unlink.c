@@ -22,9 +22,9 @@
  */
 static void test_unlink_reg(struct ft_env *fte)
 {
-	int fd = -1;
 	struct stat st;
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_close(fd);
@@ -37,10 +37,10 @@ static void test_unlink_reg(struct ft_env *fte)
 
 static void test_unlink_symlink(struct ft_env *fte)
 {
-	int fd;
 	struct stat st;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_creat(path0, 0600, &fd);
 	ft_close(fd);
@@ -72,11 +72,11 @@ static void test_unlink_fifo(struct ft_env *fte)
  */
 static void test_unlink_notdir(struct ft_env *fte)
 {
-	int fd = -1;
 	struct stat st;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
+	int fd = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_stat(path0, &st);

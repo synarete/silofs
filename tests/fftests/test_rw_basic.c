@@ -113,57 +113,54 @@ static void test_basic_seq_8m(struct ft_env *fte)
 /*
  * Expects read-write data-consistency for buffer-size
  */
-static void test_basic_rdwr(struct ft_env *fte, size_t bsz)
+static void test_basic_rdwr_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd = -1;
 	struct stat st;
 	void *buf1 = NULL;
-	void *buf2 = ft_new_buf_rands(fte, bsz);
+	void *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	for (size_t i = 0; i < 64; ++i) {
-		buf1 = ft_new_buf_rands(fte, bsz);
-		ft_pwriten(fd, buf1, bsz, 0);
+	for (size_t i = 0; i < 10; ++i) {
+		buf1 = ft_new_buf_rands(fte, len);
+		ft_pwriten(fd, buf1, len, off);
 		ft_fsync(fd);
-		ft_preadn(fd, buf2, bsz, 0);
+		ft_preadn(fd, buf2, len, off);
 		ft_fstat(fd, &st);
-		ft_expect_eq(st.st_size, bsz);
-		ft_expect_eqm(buf1, buf2, bsz);
+		ft_expect_eq(st.st_size, off + (ssize_t)len);
+		ft_expect_eqm(buf1, buf2, len);
 	}
-
 	ft_close(fd);
 	ft_unlink(path);
 }
 
-static void test_basic_rdwr_1k(struct ft_env *fte)
+static void test_basic_rdwr(struct ft_env *fte)
 {
-	test_basic_rdwr(fte, FT_UKILO);
-}
+	const struct ft_range range[] = {
+		/* aligned */
+		FT_MKRANGE(0, FT_1K),
+		FT_MKRANGE(FT_1K, FT_1K),
+		FT_MKRANGE(2 * FT_1K, 2 * FT_4K),
+		FT_MKRANGE(FT_4K, FT_4K),
+		FT_MKRANGE(FT_64K, FT_64K),
+		FT_MKRANGE(FT_64K - FT_4K, 4 * FT_64K),
+		FT_MKRANGE(FT_MEGA, FT_4K),
+		FT_MKRANGE(FT_GIGA, FT_MEGA),
+		FT_MKRANGE(FT_TERA, 8 * FT_MEGA),
+		/* unaligned */
+		FT_MKRANGE(FT_1K - 1, 2 * FT_1K),
+		FT_MKRANGE(FT_4K - 1, FT_4K + 3),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 3),
+		FT_MKRANGE(FT_MEGA - 1, FT_4K + 11),
+		FT_MKRANGE(FT_GIGA - 11, FT_MEGA + 111),
+		FT_MKRANGE(FT_TERA - 111, 11 * FT_MEGA - 1111),
+	};
 
-static void test_basic_rdwr_2k(struct ft_env *fte)
-{
-	test_basic_rdwr(fte, 2 * FT_UKILO);
-}
-
-static void test_basic_rdwr_4k(struct ft_env *fte)
-{
-	test_basic_rdwr(fte, 4 * FT_UKILO);
-}
-
-static void test_basic_rdwr_8k(struct ft_env *fte)
-{
-	test_basic_rdwr(fte, 8 * FT_UKILO);
-}
-
-static void test_basic_rdwr_1m(struct ft_env *fte)
-{
-	test_basic_rdwr(fte, FT_UMEGA);
-}
-
-static void test_basic_rdwr_8m(struct ft_env *fte)
-{
-	test_basic_rdwr(fte, 8 * FT_UMEGA);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_basic_rdwr_(fte, range[i].off, range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -172,12 +169,12 @@ static void test_basic_rdwr_8m(struct ft_env *fte)
  */
 static void test_basic_space(struct ft_env *fte)
 {
-	int fd;
-	loff_t off;
+	const char *path = ft_new_path_unique(fte);
 	size_t bsz = FT_UMEGA;
 	void *buf1 = NULL;
 	void *buf2 = NULL;
-	const char *path = ft_new_path_unique(fte);
+	loff_t off = -1;
+	int fd = -1;
 
 	for (size_t i = 0; i < 256; ++i) {
 		off  = (loff_t)i;
@@ -194,50 +191,51 @@ static void test_basic_space(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
- * Expects read-write data-consistency, reverse writes.
+ * Expects read-write data-consistency, reverse over-writes.
  */
-static void test_basic_reserve_at(struct ft_env *fte,
-                                  loff_t off, size_t ssz)
+static void
+test_basic_reserve_overwrite_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd;
-	loff_t pos = -1;
-	uint8_t buf[2] = { 0, 0 };
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
+	loff_t pos = -1;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd);
-	for (size_t i = 0; i < ssz; ++i) {
-		buf[0] = (uint8_t)i;
-		pos = off + (loff_t)(ssz - i - 1);
-		ft_pwriten(fd, buf, 1, pos);
+	for (size_t i = 0; i < len; ++i) {
+		pos = off + (ssize_t)(len - i - 1);
+		ft_pwriten(fd, buf1, i + 1, pos);
 	}
-	for (size_t i = 0; i < ssz; ++i) {
-		pos = off + (loff_t)(ssz - i - 1);
-		ft_preadn(fd, buf, 1, pos);
-		ft_expect_eq(buf[0], (uint8_t)i);
-		ft_expect_eq(buf[1], 0);
-	}
+	ft_preadn(fd, buf2, len, pos);
+	ft_expect_eqm(buf1, buf2, len);
 	ft_close(fd);
 	ft_unlink(path);
 }
 
-static void test_basic_reserve1(struct ft_env *fte)
+static void test_basic_reserve_overwrite(struct ft_env *fte)
 {
-	test_basic_reserve_at(fte, 0, FT_BK_SIZE);
-}
+	const struct ft_range range[] = {
+		/* aligned */
+		FT_MKRANGE(0, FT_1K),
+		FT_MKRANGE(FT_4K, FT_4K),
+		FT_MKRANGE(FT_64K, FT_64K),
+		FT_MKRANGE(FT_MEGA, FT_4K),
+		FT_MKRANGE(FT_GIGA, FT_4K),
+		FT_MKRANGE(FT_TERA, FT_64K),
+		/* unaligned */
+		FT_MKRANGE(FT_1K - 1, 2 * FT_1K),
+		FT_MKRANGE(FT_4K - 1, FT_4K + 3),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 3),
+		FT_MKRANGE(FT_MEGA - 1, FT_4K + 11),
+		FT_MKRANGE(FT_GIGA - 11, FT_4K + 111),
+		FT_MKRANGE(FT_TERA - 111, FT_4K + 1111),
+	};
 
-static void test_basic_reserve2(struct ft_env *fte)
-{
-	test_basic_reserve_at(fte, 100000, 2 * FT_BK_SIZE);
-}
-
-static void test_basic_reserve3(struct ft_env *fte)
-{
-	test_basic_reserve_at(fte, 9999999, FT_BK_SIZE - 1);
-}
-
-static void test_basic_reserve4(struct ft_env *fte)
-{
-	test_basic_reserve_at(fte,  100003, 7 * FT_BK_SIZE);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_basic_reserve_overwrite_(fte, range[i].off, range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -246,14 +244,14 @@ static void test_basic_reserve4(struct ft_env *fte)
  */
 static void test_basic_overlap(struct ft_env *fte)
 {
-	int fd;
-	loff_t off;
 	size_t cnt = 0;
 	size_t bsz = FT_UMEGA;
 	void *buf1 = ft_new_buf_rands(fte, bsz);
 	void *buf2 = ft_new_buf_rands(fte, bsz);
 	void *buf3 = ft_new_buf_zeros(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
+	loff_t off = -1;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, bsz, 0);
@@ -336,66 +334,67 @@ static void test_basic_rw_unaligned(struct ft_env *fte)
 /*
  * Expects successful write-read of single full large-chunk to regular file
  */
-static void test_basic_chunk_(struct ft_env *fte,
-                              loff_t off, size_t bsz)
+static void test_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd = -1;
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	ft_pwriten(fd, buf1, bsz, off);
-	ft_preadn(fd, buf2, bsz, off);
-	ft_expect_eqm(buf1, buf2, bsz);
+	ft_pwriten(fd, buf1, len, off);
+	ft_preadn(fd, buf2, len, off);
+	ft_expect_eqm(buf1, buf2, len);
 	ft_close(fd);
 	ft_unlink(path);
 }
 
-static void test_basic_chunk_x(struct ft_env *fte, size_t bsz)
+static void test_basic_chunk_aligned(struct ft_env *fte)
 {
-	test_basic_chunk_(fte, 0, bsz);
-	test_basic_chunk_(fte, FT_UMEGA, bsz);
-	test_basic_chunk_(fte, 1, bsz);
-	test_basic_chunk_(fte, FT_UMEGA - 1, bsz);
+	const struct ft_range range[] = {
+		FT_MKRANGE(0, FT_UMEGA),
+		FT_MKRANGE(FT_UMEGA, 2 * FT_UMEGA),
+		FT_MKRANGE(FT_GIGA, 4 * FT_UMEGA),
+		FT_MKRANGE(FT_TERA, 8 * FT_UMEGA),
+	};
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_basic_chunk_(fte, range[i].off,  range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
-static void test_basic_chunk_1m(struct ft_env *fte)
+static void test_basic_chunk_unaligned(struct ft_env *fte)
 {
-	test_basic_chunk_x(fte, FT_UMEGA);
-}
+	const struct ft_range range[] = {
+		FT_MKRANGE(1, FT_UMEGA),
+		FT_MKRANGE(FT_UMEGA - 1, 2 * FT_UMEGA + 2),
+		FT_MKRANGE(FT_GIGA - 1, 4 * FT_UMEGA + 4),
+		FT_MKRANGE(FT_TERA - 1, 8 * FT_UMEGA + 8),
+	};
 
-static void test_basic_chunk_2m(struct ft_env *fte)
-{
-	test_basic_chunk_x(fte, 2 * FT_UMEGA);
-}
-
-static void test_basic_chunk_4m(struct ft_env *fte)
-{
-	test_basic_chunk_x(fte, 4 * FT_UMEGA);
-}
-
-static void test_basic_chunk_8m(struct ft_env *fte)
-{
-	test_basic_chunk_x(fte, 8 * FT_UMEGA);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_basic_chunk_(fte, range[i].off,  range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects successful write-read of ascending files-offsets
  */
-static void test_basic_backword_byte_(struct ft_env *fte,
-                                      loff_t base_off, size_t len)
+static void
+test_basic_backword_byte_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd = -1;
-	loff_t pos = 0;
 	uint8_t val = 0;
 	const size_t vsz = sizeof(val);
 	const char *path = ft_new_path_unique(fte);
+	loff_t pos = 0;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = len; i > 0; --i) {
-		pos = base_off + (loff_t)(i - 1);
+		pos = off + (loff_t)(i - 1);
 		val = (uint8_t)i;
 		ft_pwriten(fd, &val, vsz, pos);
 		val = 0;
@@ -403,7 +402,7 @@ static void test_basic_backword_byte_(struct ft_env *fte,
 		ft_expect_eq(0xFF & i, val);
 	}
 	for (size_t i = len; i > 0; --i) {
-		pos = base_off + (loff_t)(i - 1);
+		pos = off + (loff_t)(i - 1);
 		ft_preadn(fd, &val, vsz, pos);
 		ft_expect_eq(0xFF & i, val);
 	}
@@ -413,16 +412,23 @@ static void test_basic_backword_byte_(struct ft_env *fte,
 
 static void test_basic_backword_byte(struct ft_env *fte)
 {
-	test_basic_backword_byte_(fte, 0, 11);
-	test_basic_backword_byte_(fte, 0, 111);
-	test_basic_backword_byte_(fte, 0, 1111);
-	test_basic_backword_byte_(fte, 0, 11111);
-	test_basic_backword_byte_(fte, FT_MEGA, 1111);
-	test_basic_backword_byte_(fte, FT_MEGA + 11, 1111);
-	test_basic_backword_byte_(fte, FT_GIGA, 1111);
-	test_basic_backword_byte_(fte, FT_GIGA + 11, 1111);
-	test_basic_backword_byte_(fte, FT_TERA, 1111);
-	test_basic_backword_byte_(fte, FT_TERA + 11, 1111);
+	const struct ft_range range[] = {
+		FT_MKRANGE(0, 11),
+		FT_MKRANGE(0, 111),
+		FT_MKRANGE(0, 1111),
+		FT_MKRANGE(0, 11111),
+		FT_MKRANGE(FT_MEGA, 1111),
+		FT_MKRANGE(FT_MEGA + 11, 1111),
+		FT_MKRANGE(FT_GIGA, 1111),
+		FT_MKRANGE(FT_GIGA + 11, 1111),
+		FT_MKRANGE(FT_TERA, 1111),
+		FT_MKRANGE(FT_TERA + 11, 1111),
+	};
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_basic_backword_byte_(fte, range[i].off,  range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
 static void test_basic_backword_ulong_(struct ft_env *fte, size_t cnt)
@@ -471,29 +477,19 @@ static void test_basic_backword_ulong(struct ft_env *fte)
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_basic_simple),
-	FT_DEFTEST(test_basic_rdwr_1k),
-	FT_DEFTEST(test_basic_rdwr_2k),
-	FT_DEFTEST(test_basic_rdwr_4k),
-	FT_DEFTEST(test_basic_rdwr_8k),
-	FT_DEFTEST(test_basic_rdwr_1m),
-	FT_DEFTEST(test_basic_rdwr_8m),
+	FT_DEFTEST(test_basic_rdwr),
 	FT_DEFTEST(test_basic_seq1),
 	FT_DEFTEST(test_basic_seq_1k),
 	FT_DEFTEST(test_basic_seq_8k),
 	FT_DEFTEST(test_basic_seq_1m),
 	FT_DEFTEST(test_basic_seq_8m),
 	FT_DEFTEST(test_basic_space),
-	FT_DEFTEST(test_basic_reserve1),
-	FT_DEFTEST(test_basic_reserve2),
-	FT_DEFTEST(test_basic_reserve3),
-	FT_DEFTEST(test_basic_reserve4),
+	FT_DEFTEST(test_basic_reserve_overwrite),
 	FT_DEFTEST(test_basic_overlap),
 	FT_DEFTEST(test_basic_rw_aligned),
 	FT_DEFTEST(test_basic_rw_unaligned),
-	FT_DEFTEST(test_basic_chunk_1m),
-	FT_DEFTEST(test_basic_chunk_2m),
-	FT_DEFTEST(test_basic_chunk_4m),
-	FT_DEFTEST(test_basic_chunk_8m),
+	FT_DEFTEST(test_basic_chunk_aligned),
+	FT_DEFTEST(test_basic_chunk_unaligned),
 	FT_DEFTEST(test_basic_backword_byte),
 	FT_DEFTEST(test_basic_backword_ulong),
 };

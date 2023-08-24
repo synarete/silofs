@@ -170,6 +170,12 @@ struct ft_env {
 	struct ft_tests   tests;
 };
 
+/* I/O range to test */
+struct ft_range {
+	loff_t off;
+	size_t len;
+};
+
 
 /* Sanity-testing utility */
 void fte_init(struct ft_env *fte, const struct ft_params *params);
@@ -509,6 +515,9 @@ extern const struct ft_tests ft_test_namespace;
 
 #define FT_DEFTESTS(a_) \
 	{ .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
+
+#define FT_MKRANGE(off_, len_) \
+	{ .off = off_, .len = len_ }
 
 #endif /* SILOFS_FFTESTS_H_ */
 

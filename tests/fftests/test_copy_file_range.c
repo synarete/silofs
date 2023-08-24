@@ -130,11 +130,11 @@ static void test_copy_file_range_(struct ft_env *fte,
                                   loff_t off_src, size_t len_src,
                                   loff_t off_dst, size_t len_dst)
 {
+	const char *path_src = ft_new_path_unique(fte);
+	const char *path_dst = ft_new_path_unique(fte);
 	const size_t len = ft_max(len_src, len_dst);
 	void *buf_src = ft_new_buf_rands(fte, len);
 	void *buf_dst = ft_new_buf_rands(fte, len);
-	const char *path_src = ft_new_path_unique(fte);
-	const char *path_dst = ft_new_path_unique(fte);
 	int fd_src = -1;
 	int fd_dst = -1;
 
@@ -180,11 +180,7 @@ static void test_copy_file_range_aligned(struct ft_env *fte)
 		COPYARGS2(FT_TERA, 3 * FT_64K, 0, FT_MEGA),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(args); ++i) {
-		test_copy_file_range_(fte,
-		                      args[i].off_src, args[i].len_src,
-		                      args[i].off_dst, args[i].len_dst);
-	}
+	ft_copy_range2(fte, test_copy_file_range_, args);
 }
 
 static void test_copy_file_range_unaligned(struct ft_env *fte)
@@ -222,14 +218,14 @@ static void test_copy_file_range_self_(struct ft_env *fte,
                                        loff_t off_src, size_t len_src,
                                        loff_t off_dst, size_t len_dst)
 {
-	int fd_src = -1;
-	int fd_dst = -1;
+	const char *path = ft_new_path_unique(fte);
 	const size_t len = ft_max(len_src, len_dst);
 	const size_t len_max = ft_max(len_src, len_dst);
 	const loff_t off_max = ft_off_end(ft_lmax(off_src, off_dst), len_max);
 	void *buf_src = ft_new_buf_rands(fte, len);
 	void *buf_dst = ft_new_buf_rands(fte, len);
-	const char *path = ft_new_path_unique(fte);
+	int fd_src = -1;
+	int fd_dst = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd_src);
 	ft_open(path, O_RDWR, 0600, &fd_dst);
@@ -288,16 +284,16 @@ test_copy_file_range_between_(struct ft_env *fte,
                               loff_t off_src, size_t len_src,
                               loff_t off_dst, size_t len_dst)
 {
-	int fd_src = -1;
-	int fd_dst = -1;
+	const char *path_src = ft_new_path_unique(fte);
+	const char *path_dst = ft_new_path_unique(fte);
 	const size_t len_max = ft_max(len_src, len_dst);
 	const size_t len_min = ft_min(len_src, len_dst);
 	void *buf_src = ft_new_buf_rands(fte, len_max);
 	void *buf_dst = ft_new_buf_rands(fte, len_max);
 	void *buf_alt = ft_new_buf_rands(fte, len_max);
 	void *buf_zeros = ft_new_buf_zeros(fte, len_max);
-	const char *path_src = ft_new_path_unique(fte);
-	const char *path_dst = ft_new_path_unique(fte);
+	int fd_src = -1;
+	int fd_dst = -1;
 
 	ft_open(path_src, O_CREAT | O_RDWR, 0600, &fd_src);
 	ft_open(path_dst, O_CREAT | O_RDWR, 0600, &fd_dst);
@@ -364,14 +360,14 @@ static void test_copy_file_range_between(struct ft_env *fte)
 static void
 test_copy_file_range_truncate_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd_src = -1;
-	int fd_dst = -1;
-	uint8_t byte;
-	const loff_t end = ft_off_end(off, len);
-	uint8_t *buf_src = ft_new_buf_rands(fte, len);
-	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
+	uint8_t *buf_src = ft_new_buf_rands(fte, len);
+	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
+	const loff_t end = ft_off_end(off, len);
+	int fd_src = -1;
+	int fd_dst = -1;
+	uint8_t byte = 0;
 
 	ft_open(path_src, O_CREAT | O_RDWR, 0600, &fd_src);
 	ft_open(path_dst, O_CREAT | O_RDWR, 0600, &fd_dst);
@@ -428,14 +424,14 @@ static void test_copy_file_range_truncate(struct ft_env *fte)
 static void
 test_copy_file_range_overwrite_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd_src = -1;
-	int fd_dst = -1;
-	const loff_t end = ft_off_end(off, len);
+	const char *path_src = ft_new_path_unique(fte);
+	const char *path_dst = ft_new_path_unique(fte);
 	uint8_t *buf_src = ft_new_buf_rands(fte, len);
 	uint8_t *buf_dst = ft_new_buf_rands(fte, len);
 	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
-	const char *path_src = ft_new_path_unique(fte);
-	const char *path_dst = ft_new_path_unique(fte);
+	const loff_t end = ft_off_end(off, len);
+	int fd_src = -1;
+	int fd_dst = -1;
 
 	ft_open(path_src, O_CREAT | O_RDWR, 0600, &fd_src);
 	ft_open(path_dst, O_CREAT | O_RDWR, 0600, &fd_dst);
@@ -504,16 +500,16 @@ static void test_copy_file_range_overwrite(struct ft_env *fte)
 static void
 test_copy_file_range_nfiles_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int dfd = -1;
-	int fd_src = -1;
-	int fd_dst = -1;
 	const loff_t end = ft_off_end(off, len);
-	const size_t nfiles = 256;
 	uint8_t *buf_src = ft_new_buf_rands(fte, len);
 	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
 	const char *name_src = ft_new_name_unique(fte);
 	const char *name_dst = NULL;
+	const size_t nfiles = 256;
+	int dfd = -1;
+	int fd_src = -1;
+	int fd_dst = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

@@ -557,12 +557,6 @@ void ft_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
 	                                     off_out, len, 0, out_ncp));
 }
 
-void ft_ioctl_ficlone(int dest_fd, int src_fd)
-{
-	expect_ok(silofs_sys_ioctl_ficlone(dest_fd, src_fd));
-}
-
-
 void ft_fiemap(int fd, struct fiemap *fm)
 {
 	expect_ok(silofs_sys_fiemap(fd, fm));

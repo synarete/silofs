@@ -452,8 +452,6 @@ void ft_getdents(int fd, void *buf, size_t bsz,
 void ft_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
                         loff_t *off_out, size_t len, size_t *out_ncp);
 
-void ft_ioctl_ficlone(int dest_fd, int src_fd);
-
 void ft_fiemap(int fd, struct fiemap *fm);
 
 /* Complex wrappers */
@@ -500,7 +498,6 @@ extern const struct ft_tests ft_test_rw_osync;
 extern const struct ft_tests ft_test_unlinked_file;
 extern const struct ft_tests ft_test_truncate_io;
 extern const struct ft_tests ft_test_fallocate;
-extern const struct ft_tests ft_test_clone;
 extern const struct ft_tests ft_test_copy_file_range;
 extern const struct ft_tests ft_test_mmap;
 extern const struct ft_tests ft_test_mmap_mt;

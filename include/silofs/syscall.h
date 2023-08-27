@@ -194,8 +194,6 @@ int silofs_sys_sbrk(intptr_t increment, void **out_addr);
 
 int silofs_sys_ioctl_blkgetsize64(int fd, size_t *sz);
 
-int silofs_sys_ioctl_ficlone(int dest_fd, int src_fd);
-
 int silofs_sys_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
                                loff_t *off_out, size_t len, unsigned int flags,
                                size_t *out_ncp);

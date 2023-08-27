@@ -55,7 +55,6 @@ static const struct ft_tests *const ft_testsbl[]  = {
 	FT_METATEST(ft_test_unlinked_file),
 	FT_METATEST(ft_test_truncate_io),
 	FT_METATEST(ft_test_fallocate),
-	FT_METATEST(ft_test_clone),
 	FT_METATEST(ft_test_copy_file_range),
 	FT_METATEST(ft_test_tmpfile),
 	FT_METATEST(ft_test_mmap),

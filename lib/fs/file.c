@@ -1371,8 +1371,8 @@ static int filc_zero_data_leaf_at(const struct silofs_file_ctx *f_ctx,
 	return filc_zero_data_leaf_range(f_ctx, vaddr, 0, vaddr->len);
 }
 
-static int filc_recheck_finode(const struct silofs_file_ctx *f_ctx,
-                               struct silofs_finode_info *fni)
+static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
+                            struct silofs_finode_info *fni)
 {
 	const ino_t r_ino = ftn_ino(fni->ftn);
 	const ino_t f_ino = ii_ino(f_ctx->ii);
@@ -1385,7 +1385,6 @@ static int filc_recheck_finode(const struct silofs_file_ctx *f_ctx,
 		log_err("illegal height: height=%lu ino=%lu", height, f_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	/* TODO: refine me when having FICLONE + meta-data */
 	if (r_ino != f_ino) {
 		log_err("bad finode ino: r_ino=%lu f_ino=%lu", r_ino, f_ino);
 		return -SILOFS_EFSCORRUPTED;
@@ -1409,7 +1408,7 @@ static int filc_stage_tree_node(const struct silofs_file_ctx *f_ctx,
 	}
 	fni = silofs_fni_from_vi(vi);
 	silofs_fni_rebind_view(fni);
-	err = filc_recheck_finode(f_ctx, fni);
+	err = filc_recheck_fni(f_ctx, fni);
 	if (err) {
 		return err;
 	}

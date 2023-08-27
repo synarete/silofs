@@ -14,7 +14,6 @@ silofs_fftests_SOURCES = $(NULL)
 silofs_fftests_SOURCES += test_access.c
 silofs_fftests_SOURCES += test_boundaries.c
 silofs_fftests_SOURCES += test_chmod_chown.c
-silofs_fftests_SOURCES += test_clone.c
 silofs_fftests_SOURCES += test_copy_file_range.c
 silofs_fftests_SOURCES += test_create.c
 silofs_fftests_SOURCES += test_fallocate.c

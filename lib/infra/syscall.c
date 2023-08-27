@@ -697,11 +697,6 @@ int silofs_sys_ioctl_blkgetsize64(int fd, size_t *sz)
 	return ok_or_errno(ioctl(fd, BLKGETSIZE64, sz));
 }
 
-int silofs_sys_ioctl_ficlone(int dest_fd, int src_fd)
-{
-	return ok_or_errno(ioctl(dest_fd, FICLONE, src_fd));
-}
-
 struct linux_dirent64_view {
 	ino64_t        d_ino;
 	off64_t        d_off;

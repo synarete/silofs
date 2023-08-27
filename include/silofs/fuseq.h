@@ -36,17 +36,18 @@ struct silofs_fuseq_conn_info {
 } silofs_aligned64;
 
 struct silofs_fuseq_worker {
-	struct silofs_thread            th;
-	struct silofs_list_head         lh;
-	struct silofs_fuseq            *fq;
-	struct silofs_fuseq_inb        *inb;
-	struct silofs_fuseq_outb       *outb;
-	struct silofs_fuseq_rw_iter    *rwi;
-	struct silofs_oper_args        *args;
-	struct silofs_piper             piper;
-	unsigned long                   req_count;
-	unsigned int                    windex;
-	bool                            leader;
+	struct silofs_thread            fw_th;
+	struct silofs_list_head         fw_lh;
+	struct silofs_fuseq            *fw_fq;
+	struct silofs_fuseq_inb        *fw_inb;
+	struct silofs_fuseq_outb       *fw_outb;
+	struct silofs_fuseq_rw_iter    *fw_rwi;
+	struct silofs_oper_args        *fw_args;
+	struct silofs_piper             fw_piper;
+	time_t                          fw_time_stamp;
+	unsigned long                   fw_req_count;
+	unsigned int                    fw_index;
+	int                             fw_leader;
 } silofs_aligned64;
 
 struct silofs_fuseq_workset {
@@ -69,7 +70,6 @@ struct silofs_fuseq {
 	size_t                          fq_nopers;
 	size_t                          fq_nopers_done;
 	uid_t                           fq_fs_owner;
-	time_t                          fq_time_stamp;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

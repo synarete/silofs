@@ -742,6 +742,99 @@ static void ut_file_copy_range_extend(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void
+ut_file_copy_range_empty_(struct ut_env *ute, loff_t off, size_t len)
+{
+	const char *name = UT_NAME;
+	const char *name_src = UT_NAME_AT;
+	const char *name_dst = UT_NAME_AT;
+	const loff_t end = ut_off_end(off, len);
+	ino_t ino_src = 0;
+	ino_t ino_dst = 0;
+	ino_t dino = 0;
+
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name_src, &ino_src);
+	ut_create_file(ute, dino, name_dst, &ino_dst);
+	ut_trunacate_file(ute, ino_src, end);
+	ut_copy_file_range_ok(ute, ino_src, 0, ino_dst, 0, (size_t)end);
+	ut_read_zeros(ute, ino_dst, off, len);
+	ut_remove_file(ute, dino, name_dst, ino_dst);
+	ut_remove_file(ute, dino, name_src, ino_src);
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_file_copy_range_empty(struct ut_env *ute)
+{
+	const struct ut_copy_range_args args[] = {
+		/* aligned */
+		COPYARGS1(UT_MEGA, UT_MEGA),
+		COPYARGS1(UT_GIGA, UT_MEGA),
+		COPYARGS1(4 * UT_GIGA, UT_MEGA),
+		COPYARGS1(64 * UT_GIGA, UT_MEGA),
+		COPYARGS1(UT_TERA, UT_MEGA),
+		/* unaligned */
+		COPYARGS1(UT_MEGA - 1, UT_MEGA + 11),
+		COPYARGS1(UT_GIGA - 11, UT_MEGA + 111),
+		COPYARGS1(11 * UT_GIGA - 11, UT_MEGA - 1111),
+		COPYARGS1(111 * UT_GIGA + 1, UT_MEGA + 11),
+		COPYARGS1(UT_TERA - 111, UT_MEGA + 1111),
+	};
+
+	ut_copy_range1(ute, ut_file_copy_range_empty_, args);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void
+ut_file_copy_range_sparse_(struct ut_env *ute, loff_t off, size_t len)
+{
+	const char *name = UT_NAME;
+	const char *name_src = UT_NAME_AT;
+	const char *name_dst = UT_NAME_AT;
+	const loff_t end = ut_off_end(off, len);
+	uint8_t b[2] = { 'A', 'B' };
+	ino_t ino_src = 0;
+	ino_t ino_dst = 0;
+	ino_t dino = 0;
+
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name_src, &ino_src);
+	ut_create_file(ute, dino, name_dst, &ino_dst);
+	ut_write_read(ute, ino_src, &b[0], 1, off);
+	ut_write_read(ute, ino_src, &b[1], 1, end - 1);
+	ut_copy_file_range_ok(ute, ino_src, 0, ino_dst, 0, (size_t)end);
+	ut_read_verify(ute, ino_dst, &b[0], 1, off);
+	ut_read_verify(ute, ino_dst, &b[1], 1, end - 1);
+	ut_read_zero(ute, ino_dst, off + 1);
+	ut_read_zero(ute, ino_dst, end - 2);
+	ut_remove_file(ute, dino, name_dst, ino_dst);
+	ut_remove_file(ute, dino, name_src, ino_src);
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_file_copy_range_sparse(struct ut_env *ute)
+{
+	const struct ut_copy_range_args args[] = {
+		/* aligned */
+		COPYARGS1(UT_MEGA, UT_MEGA),
+		COPYARGS1(UT_GIGA, UT_MEGA),
+		COPYARGS1(4 * UT_GIGA, UT_MEGA),
+		COPYARGS1(64 * UT_GIGA, UT_MEGA),
+		COPYARGS1(UT_TERA, UT_MEGA),
+		/* unaligned */
+		COPYARGS1(UT_MEGA - 1, UT_MEGA + 11),
+		COPYARGS1(UT_GIGA - 11, UT_MEGA + 111),
+		COPYARGS1(11 * UT_GIGA - 11, UT_MEGA - 1111),
+		COPYARGS1(111 * UT_GIGA + 1, UT_MEGA + 11),
+		COPYARGS1(UT_TERA - 111, UT_MEGA + 1111),
+	};
+
+	ut_copy_range1(ute, ut_file_copy_range_sparse_, args);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_file_copy_range_simple_aligned),
 	UT_DEFTEST(ut_file_copy_range_simple_unaligned),
@@ -757,6 +850,8 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_file_copy_range_into_hole),
 	UT_DEFTEST(ut_file_copy_range_mtime),
 	UT_DEFTEST(ut_file_copy_range_extend),
+	UT_DEFTEST(ut_file_copy_range_empty),
+	UT_DEFTEST(ut_file_copy_range_sparse),
 };
 
 const struct ut_testdefs ut_tdefs_file_copy_range = UT_MKTESTS(ut_local_tests);

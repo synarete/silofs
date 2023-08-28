@@ -43,6 +43,7 @@
 #error "wrong FUSE_KERNEL_MINOR_VERSION"
 #endif
 
+
 #define fuseq_log_dbg(fmt, ...)  silofs_log_debug("fuseq: " fmt, __VA_ARGS__)
 #define fuseq_log_info(fmt, ...) silofs_log_info("fuseq: " fmt, __VA_ARGS__)
 #define fuseq_log_warn(fmt, ...) silofs_log_warn("fuseq: " fmt, __VA_ARGS__)
@@ -60,6 +61,15 @@
 
 /* splice-mode flags */
 #define FUSEQ_SPLICE_FLAGS      (SPLICE_F_MOVE | SPLICE_F_NONBLOCK)
+
+/*
+ * Currently, there is limitation to output-size of FUSE_COPY_FILE_RANGE: the
+ * reply is using fuse_write_out.size which is uint32_t. Thus, we can not
+ * perform copy_file_range of more than UINT32_MAX (4G - 1), and should expect
+ * the calling user-space process to iterate on the entire range if it is
+ * greater than this limit. Define upper bound as 2G.
+ */
+#define FUSEQ_COPY_FILE_RANGE_MAX       (SILOFS_GIGA * 2)
 
 /* local functions */
 static void fuseq_lock_ch(struct silofs_fuseq *fq);
@@ -1048,6 +1058,8 @@ static int fuseq_reply_copy_file_range(struct silofs_fuseq_worker *fqw,
                                        size_t cnt, int err)
 {
 	int ret;
+
+	STATICASSERT_LT(FUSEQ_COPY_FILE_RANGE_MAX, UINT32_MAX);
 
 	if (task_interrupted(task)) {
 		ret = fuseq_reply_intr(fqw, task);
@@ -2173,11 +2185,14 @@ static int do_lseek(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static int do_copy_file_range(const struct silofs_fuseq_cmd_ctx *fcc)
 {
+	size_t len = 0;
 	size_t ncp = 0;
 	int err;
 
 	check_fh(fcc->task, fcc->ino,
 	         fcc->in->u.copy_file_range.arg.fh_in);
+	len = min(fcc->in->u.copy_file_range.arg.len,
+	          FUSEQ_COPY_FILE_RANGE_MAX);
 	fcc->args->in.copy_file_range.ino_in = fcc->ino;
 	fcc->args->in.copy_file_range.off_in =
 	        (loff_t)fcc->in->u.copy_file_range.arg.off_in;
@@ -2185,7 +2200,7 @@ static int do_copy_file_range(const struct silofs_fuseq_cmd_ctx *fcc)
 	        (ino_t)fcc->in->u.copy_file_range.arg.nodeid_out;
 	fcc->args->in.copy_file_range.off_out =
 	        (loff_t)fcc->in->u.copy_file_range.arg.off_out;
-	fcc->args->in.copy_file_range.len = fcc->in->u.copy_file_range.arg.len;
+	fcc->args->in.copy_file_range.len = len;
 	fcc->args->in.copy_file_range.flags =
 	        (int)fcc->in->u.copy_file_range.arg.flags;
 	fcc->args->out.copy_file_range.ncp = 0;

@@ -864,7 +864,7 @@ static bool filc_has_more_io(const struct silofs_file_ctx *f_ctx)
 
 static void flref_reset(struct silofs_fileaf_ref *flref)
 {
-	memset(flref, 0, sizeof(*flref));
+	silofs_memzero(flref, sizeof(*flref));
 	vaddr_reset(&flref->vaddr);
 	oaddr_reset(&flref->oaddr);
 }
@@ -874,7 +874,7 @@ static void flref_setup(struct silofs_fileaf_ref *flref,
                         const struct silofs_vaddr *vaddr,
                         loff_t file_pos, loff_t io_end)
 {
-	memset(flref, 0, sizeof(*flref));
+	silofs_memzero(flref, sizeof(*flref));
 	vaddr_assign(&flref->vaddr, vaddr);
 	oaddr_reset(&flref->oaddr);
 	flref->parent_fni = parent_fni;
@@ -902,6 +902,12 @@ static void flref_setup(struct silofs_fileaf_ref *flref,
 		flref->partial = off_is_partial_leaf(file_pos, io_end);
 		flref->seg_size = SILOFS_FILE_TREE_LEAF_SIZE;
 	}
+}
+
+static void flref_noent(struct silofs_fileaf_ref *flref,
+                        loff_t file_pos, loff_t io_end)
+{
+	flref_setup(flref, NULL, vaddr_none(), file_pos, io_end);
 }
 
 static void flref_update_partial(struct silofs_fileaf_ref *flref, size_t len)
@@ -1072,6 +1078,16 @@ static void filc_advance_by_nbytes(struct silofs_file_ctx *f_ctx, size_t len)
 {
 	silofs_assert_gt(len, 0);
 	filc_advance_to(f_ctx, off_end(f_ctx->off, len));
+}
+
+static void
+filc_advance_by_nbytes2(struct silofs_file_ctx *f_ctx1,
+                        struct silofs_file_ctx *f_ctx2, ssize_t len)
+{
+	if (len > 0) {
+		filc_advance_by_nbytes(f_ctx1, (size_t)len);
+		filc_advance_by_nbytes(f_ctx2, (size_t)len);
+	}
 }
 
 static void filc_advance_to_next(struct silofs_file_ctx *f_ctx)
@@ -3333,15 +3349,16 @@ int silofs_do_truncate(struct silofs_task *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int filc_lseek_data_leaf(struct silofs_file_ctx *f_ctx,
-                                struct silofs_fileaf_ref *flref)
+                                struct silofs_fileaf_ref *out_flref)
 {
 	int err;
 
-	err = filc_seek_data_by_heads(f_ctx, flref);
+	flref_reset(out_flref);
+	err = filc_seek_data_by_heads(f_ctx, out_flref);
 	if (!err || (err != -SILOFS_ENOENT)) {
 		return err;
 	}
-	err = filc_seek_by_tree(f_ctx, flref);
+	err = filc_seek_by_tree(f_ctx, out_flref);
 	if (err) {
 		return err;
 	}
@@ -3969,10 +3986,15 @@ static int filc_resolve_fpos(struct silofs_file_ctx *f_ctx,
 
 	flref_reset(out_flref);
 	err = filc_resolve_fpos_by_heads(f_ctx, out_flref);
-	if (err == -SILOFS_ENOENT) {
-		err = filc_resolve_fpos_by_tree(f_ctx, out_flref);
+	if (err != -SILOFS_ENOENT) {
+		return err;
 	}
-	return err;
+	err = filc_resolve_fpos_by_tree(f_ctx, out_flref);
+	if (err != -SILOFS_ENOENT) {
+		return err;
+	}
+	flref_noent(out_flref, f_ctx->off, f_ctx->end);
+	return -SILOFS_ENOENT;
 }
 
 static size_t filc_copy_length_of(const struct silofs_file_ctx *f_ctx)
@@ -4374,6 +4396,66 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
 	return 0;
 }
 
+static int
+filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, loff_t *out_off)
+{
+	struct silofs_fileaf_ref flref = {
+		.file_pos = -1,
+	};
+	struct silofs_file_ctx f_ctx_alt = {
+		.task = f_ctx->task,
+		.uber = f_ctx->uber,
+		.sbi = f_ctx->sbi,
+		.ii = f_ctx->ii,
+		.len = 0,
+		.beg = f_ctx->beg,
+		.off = f_ctx->off,
+		.end = f_ctx->end,
+		.op_mask = OP_LSEEK,
+		.whence = SEEK_DATA,
+		.stg_mode = SILOFS_STG_CUR,
+	};
+	int err;
+
+	err = filc_lseek_data_leaf(&f_ctx_alt, &flref);
+	if (!err) {
+		*out_off = flref.file_pos;
+	} else if (err == -SILOFS_ENOENT) {
+		*out_off = SILOFS_FILE_SIZE_MAX;
+		err = 0;
+	}
+	return err;
+}
+
+static int filc_set_copy_range_start(struct silofs_file_ctx *f_ctx_src,
+                                     struct silofs_file_ctx *f_ctx_dst)
+{
+	loff_t off_data_src = 0;
+	loff_t off_data_dst = 0;
+	ssize_t skip_src = 0;
+	ssize_t skip_dst = 0;
+	ssize_t skip = 0;
+	int err;
+
+	err = filc_lseek_data_pos(f_ctx_src, &off_data_src);
+	if (err) {
+		return err;
+	}
+	err = filc_lseek_data_pos(f_ctx_dst, &off_data_dst);
+	if (err) {
+		return err;
+	}
+	if (f_ctx_src->off < off_data_src) {
+		skip_src = off_len(f_ctx_src->off, off_data_src);
+	}
+	if (f_ctx_dst->off < off_data_dst) {
+		skip_dst = off_len(f_ctx_dst->off, off_data_dst);
+	}
+	skip = silofs_min64(skip_src, skip_dst);
+	filc_advance_by_nbytes2(f_ctx_src, f_ctx_dst, skip);
+	return 0;
+}
+
 static int filc_pre_copy_range(struct silofs_file_ctx *f_ctx_src,
                                struct silofs_file_ctx *f_ctx_dst)
 {
@@ -4400,6 +4482,10 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 		return err;
 	}
 	err = filc_pre_copy_range(f_ctx_src, f_ctx_dst);
+	if (err) {
+		return err;
+	}
+	err = filc_set_copy_range_start(f_ctx_src, f_ctx_dst);
 	if (err) {
 		return err;
 	}

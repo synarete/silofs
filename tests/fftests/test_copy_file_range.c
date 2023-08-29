@@ -91,11 +91,6 @@ static long ft_lmax(long a, long b)
 	return (a > b) ? a : b;
 }
 
-static loff_t ft_off_end(loff_t off, size_t len)
-{
-	return off + (long)len;
-}
-
 static void ft_close2(int fd1, int fd2)
 {
 	ft_close(fd1);

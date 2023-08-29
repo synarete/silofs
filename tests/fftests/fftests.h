@@ -304,6 +304,8 @@ void ft_rmdir_err(const char *path, int err);
 
 void ft_unlink(const char *path);
 
+void ft_unlink_n(const char **path_arr, size_t n);
+
 void ft_unlink_err(const char *path, int err);
 
 void ft_unlink_noent(const char *path);
@@ -399,6 +401,8 @@ void ft_access(const char *path, int mode);
 void ft_access_err(const char *path, int mode, int err);
 
 void ft_close(int fd);
+
+void ft_close_n(int *fds, size_t n);
 
 void ft_mmap(void *addr, size_t length, int prot, int flags,
              int fd, off_t offset, void **out);
@@ -503,6 +507,7 @@ extern const struct ft_tests ft_test_copy_file_range;
 extern const struct ft_tests ft_test_mmap;
 extern const struct ft_tests ft_test_mmap_mt;
 extern const struct ft_tests ft_test_namespace;
+extern const struct ft_tests ft_test_xstress_mt;
 
 /* Test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_) \
@@ -516,6 +521,9 @@ extern const struct ft_tests ft_test_namespace;
 
 #define FT_MKRANGE(off_, len_) \
 	{ .off = off_, .len = len_ }
+
+/* Common inline utility functions */
+#include "fftests-inline.h"
 
 #endif /* SILOFS_FFTESTS_H_ */
 

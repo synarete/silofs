@@ -537,3 +537,4 @@ int ft_dirent_isreg(const struct dirent64 *dent)
 
 	return S_ISREG(mode);
 }
+

@@ -380,7 +380,7 @@ static void silofs_die_not_eqm(const uint8_t *p, const uint8_t *q,
 void silofs_expect_eqm_(const void *p, const void *q,
                         size_t n, const char *fl, int ln)
 {
-	if (memcmp(p, q, n) != 0) {
+	if (n && (memcmp(p, q, n) != 0)) {
 		silofs_die_not_eqm(p, q, n, fl, ln);
 	}
 }

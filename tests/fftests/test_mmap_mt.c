@@ -115,8 +115,11 @@ static void test_mmap_mt_seq_(struct ft_env *fte, loff_t off,
 static void test_mmap_mt_seq(struct ft_env *fte)
 {
 	test_mmap_mt_seq_(fte, 0, FT_GIGA, FT_MEGA);
+	ft_relax_mem(fte);
 	test_mmap_mt_seq_(fte, FT_GIGA, FT_MEGA, FT_4K);
+	ft_relax_mem(fte);
 	test_mmap_mt_seq_(fte, FT_TERA, 4 * FT_MEGA, FT_MEGA / 4);
+	ft_relax_mem(fte);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

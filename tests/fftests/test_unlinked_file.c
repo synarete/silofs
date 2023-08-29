@@ -116,14 +116,14 @@ static void test_unlinked_complex2(struct ft_env *fte)
  */
 static void test_unlinked_multi(struct ft_env *fte)
 {
-	int fd1 = -1;
-	int fd2 = -1;
-	loff_t pos = 0;
 	const size_t bsz = FT_BK_SIZE;
-	const size_t cnt = FT_UKILO;
+	const size_t cnt = 1024;
 	void *buf1 = ft_new_buf_rands(fte, bsz);
 	void *buf2 = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
+	loff_t pos = 0;
+	int fd1 = -1;
+	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);
@@ -151,13 +151,13 @@ static void test_unlinked_multi(struct ft_env *fte)
  */
 static void test_unlinked_rename_(struct ft_env *fte, size_t cnt)
 {
-	int fd1 = -1;
-	int fd2 = -1;
 	loff_t pos = 0;
 	size_t val = 0;
 	const size_t vsz = sizeof(val);
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
+	int fd1 = -1;
+	int fd2 = -1;
 
 	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd1);
 	for (size_t i = cnt; i > 0; --i) {
@@ -186,9 +186,12 @@ static void test_unlinked_rename_(struct ft_env *fte, size_t cnt)
 
 static void test_unlinked_rename(struct ft_env *fte)
 {
-	test_unlinked_rename_(fte, 11);
-	test_unlinked_rename_(fte, 111);
-	test_unlinked_rename_(fte, 1111);
+	const size_t cnt[] = { 10, 100, 1000 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_unlinked_rename_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 

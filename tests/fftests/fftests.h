@@ -52,6 +52,7 @@
 
 #define FT_1K                   SILOFS_KILO
 #define FT_4K                   (4 * SILOFS_KILO)
+#define FT_8K                   (8 * SILOFS_KILO)
 #define FT_64K                  (64 * SILOFS_KILO)
 
 #define FT_FRGSIZE              (512) /* Fragment size (see stat(2)) */

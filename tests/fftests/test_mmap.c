@@ -48,9 +48,9 @@ static void test_mmap_basic(struct ft_env *fte)
 		FT_MKRANGE(0, FT_4K),
 		FT_MKRANGE(0, FT_8K),
 		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(FT_64K, FT_MEGA),
-		FT_MKRANGE(FT_GIGA, 2 * FT_MEGA),
-		FT_MKRANGE(FT_TERA, FT_MEGA),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G, 2 * FT_1M),
+		FT_MKRANGE(FT_1T, FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -87,10 +87,10 @@ static void test_mmap_simple(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
 		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(FT_64K, FT_MEGA),
-		FT_MKRANGE(FT_GIGA, 2 * FT_MEGA),
-		FT_MKRANGE(FT_TERA, FT_MEGA),
-		FT_MKRANGE(FT_TERA - FT_MEGA, 2 * FT_MEGA),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G, FT_2M),
+		FT_MKRANGE(FT_1T, FT_1M),
+		FT_MKRANGE(FT_1T - FT_1M, FT_2M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -131,10 +131,10 @@ static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_mctime(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_MEGA),
-		FT_MKRANGE(FT_64K, FT_MEGA),
-		FT_MKRANGE(FT_GIGA, FT_MEGA / 2),
-		FT_MKRANGE(FT_TERA, FT_MEGA / 4),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G, FT_1M / 2),
+		FT_MKRANGE(FT_1T, FT_1M / 4),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -179,10 +179,10 @@ static void test_mmap_fallocate(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
 		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(0, FT_MEGA),
-		FT_MKRANGE(FT_64K, FT_MEGA),
-		FT_MKRANGE(FT_GIGA, FT_MEGA),
-		FT_MKRANGE(FT_TERA, FT_MEGA),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(FT_1T, FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -225,10 +225,10 @@ static void test_mmap_sequential_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_sequential(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_MEGA),
-		FT_MKRANGE(FT_64K, FT_MEGA),
-		FT_MKRANGE(FT_GIGA, FT_MEGA),
-		FT_MKRANGE(FT_TERA, 2 * FT_MEGA),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(FT_1T, FT_2M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -241,7 +241,7 @@ static void test_mmap_sequential(struct ft_env *fte)
 
 static void test_mmap_sparse_(struct ft_env *fte, loff_t off, size_t len)
 {
-	const size_t stepsz = FT_UMEGA;
+	const size_t stepsz = FT_1M;
 	const size_t nsteps = len / stepsz;
 	const long *buf = ft_new_buf_randseq(fte, nsteps, off);
 	const char *path = ft_new_path_unique(fte);
@@ -270,10 +270,10 @@ static void test_mmap_sparse_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_sparse(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, 8 * FT_UMEGA),
-		FT_MKRANGE(FT_MEGA - FT_BK_SIZE, 16 * FT_UMEGA),
-		FT_MKRANGE(FT_GIGA - FT_UMEGA, 32 * FT_UMEGA),
-		FT_MKRANGE(FT_TERA - FT_GIGA, 64 * FT_UMEGA),
+		FT_MKRANGE(0, 8 * FT_1M),
+		FT_MKRANGE(FT_1M - FT_BK_SIZE, 16 * FT_1M),
+		FT_MKRANGE(FT_1G - FT_1M, 32 * FT_1M),
+		FT_MKRANGE(FT_1T - FT_1G, 64 * FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -286,7 +286,7 @@ static void test_mmap_sparse(struct ft_env *fte)
 
 static void test_mmap_msync_at(struct ft_env *fte, loff_t step)
 {
-	const size_t len = 2 * FT_UMEGA;
+	const size_t len = 2 * FT_1M;
 	const size_t page_size = ft_page_size();
 	const loff_t off = step * (loff_t)page_size;
 	void *buf = ft_new_buf_rands(fte, len);
@@ -357,10 +357,10 @@ static void test_mmap_unlinked_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_unlinked(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_MEGA),
-		FT_MKRANGE(FT_64K, FT_MEGA),
-		FT_MKRANGE(FT_GIGA - FT_MEGA, 2 * FT_MEGA),
-		FT_MKRANGE(FT_TERA - FT_MEGA, 2 * FT_MEGA),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G - FT_1M, 2 * FT_1M),
+		FT_MKRANGE(FT_1T - FT_1M, 2 * FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -405,9 +405,9 @@ static void test_mmap_twice_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_twice(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_MEGA),
-		FT_MKRANGE(FT_GIGA - FT_MEGA, 4 * FT_MEGA),
-		FT_MKRANGE(FT_TERA - FT_MEGA, 16 * FT_MEGA),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_1G - FT_1M, 4 * FT_1M),
+		FT_MKRANGE(FT_1T - FT_1M, 16 * FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -443,13 +443,13 @@ static void test_mmap_after_write_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_after_write(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_UMEGA),
-		FT_MKRANGE(0, 4 * FT_UMEGA),
-		FT_MKRANGE(FT_UMEGA, FT_UMEGA),
-		FT_MKRANGE(0, 3 * FT_UMEGA - 3),
-		FT_MKRANGE(FT_UMEGA, 7 * FT_UMEGA + 7),
-		FT_MKRANGE(FT_UGIGA, 11 * FT_UMEGA + 11),
-		FT_MKRANGE(FT_TERA, FT_UMEGA + 11111),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(0, 4 * FT_1M),
+		FT_MKRANGE(FT_1M, FT_1M),
+		FT_MKRANGE(0, 3 * FT_1M - 3),
+		FT_MKRANGE(FT_1M, 7 * FT_1M + 7),
+		FT_MKRANGE(FT_1G, 11 * FT_1M + 11),
+		FT_MKRANGE(FT_1T, FT_1M + 11111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -483,13 +483,13 @@ static void test_mmap_before_write_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_before_write(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_UMEGA),
-		FT_MKRANGE(0, 4 * FT_UMEGA),
-		FT_MKRANGE(FT_UMEGA, FT_UMEGA),
-		FT_MKRANGE(0, 3 * FT_UMEGA - 3),
-		FT_MKRANGE(FT_UMEGA, 7 * FT_UMEGA + 7),
-		FT_MKRANGE(FT_UGIGA, 11 * FT_UMEGA + 11),
-		FT_MKRANGE(FT_TERA, FT_UMEGA + 11111),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(0, 4 * FT_1M),
+		FT_MKRANGE(FT_1M, FT_1M),
+		FT_MKRANGE(0, 3 * FT_1M - 3),
+		FT_MKRANGE(FT_1M, 7 * FT_1M + 7),
+		FT_MKRANGE(FT_1G, 11 * FT_1M + 11),
+		FT_MKRANGE(FT_1T, FT_1M + 11111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -568,11 +568,11 @@ static void test_mmap_on_holes_(struct ft_env *fte,
 
 static void test_mmap_on_holes(struct ft_env *fte)
 {
-	test_mmap_on_holes_(fte, 0, FT_UMEGA, 3);
+	test_mmap_on_holes_(fte, 0, FT_1M, 3);
 	test_mmap_on_holes_(fte, FT_BK_SIZE + 5, 5 * FT_BK_SIZE + 5, 5);
 	test_mmap_on_holes_(fte, 111 * FT_BK_SIZE + 111, 11111, 111);
-	test_mmap_on_holes_(fte, FT_UMEGA, 5 * FT_UMEGA + 5, 5);
-	test_mmap_on_holes_(fte, FT_UGIGA, 11 * FT_UMEGA + 11, 11);
+	test_mmap_on_holes_(fte, FT_1M, 5 * FT_1M + 5, 5);
+	test_mmap_on_holes_(fte, FT_1G, 11 * FT_1M + 11, 11);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -586,7 +586,7 @@ static void test_mmap_rw_mixed_(struct ft_env *fte, size_t bsz)
 	loff_t off = -1;
 	void *addr = NULL;
 	char *data = NULL;
-	const size_t mlen = 4 * FT_UMEGA;
+	const size_t mlen = 4 * FT_1M;
 	const int prot = PROT_READ | PROT_WRITE;
 	const int flag = MAP_SHARED;
 	char *buf1 = ft_new_buf_rands(fte, bsz);
@@ -624,7 +624,7 @@ static void test_mmap_rw_mixed_(struct ft_env *fte, size_t bsz)
 
 static void test_mmap_rw_mixed(struct ft_env *fte)
 {
-	test_mmap_rw_mixed_(fte, 4 * FT_KILO);
+	test_mmap_rw_mixed_(fte, 4 * FT_1K);
 	test_mmap_rw_mixed_(fte, FT_BK_SIZE);
 }
 
@@ -655,8 +655,8 @@ static void test_mmap_private_(struct ft_env *fte, size_t mlen)
 
 static void test_mmap_private(struct ft_env *fte)
 {
-	test_mmap_private_(fte, FT_UMEGA);
-	test_mmap_private_(fte, 64 * FT_UMEGA);
+	test_mmap_private_(fte, FT_1M);
+	test_mmap_private_(fte, 64 * FT_1M);
 }
 
 static void test_mmap_private2_(struct ft_env *fte, size_t mlen)
@@ -690,8 +690,8 @@ static void test_mmap_private2_(struct ft_env *fte, size_t mlen)
 
 static void test_mmap_private2(struct ft_env *fte)
 {
-	test_mmap_private2_(fte, FT_UMEGA);
-	test_mmap_private2_(fte, 16 * FT_UMEGA);
+	test_mmap_private2_(fte, FT_1M);
+	test_mmap_private2_(fte, 16 * FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -724,8 +724,8 @@ static void test_mmap_madvise_simple_(struct ft_env *fte, size_t mlen)
 
 static void test_mmap_madvise_simple(struct ft_env *fte)
 {
-	test_mmap_madvise_simple_(fte, FT_UMEGA);
-	test_mmap_madvise_simple_(fte, 16 * FT_UMEGA);
+	test_mmap_madvise_simple_(fte, FT_1M);
+	test_mmap_madvise_simple_(fte, 16 * FT_1M);
 }
 
 static void test_mmap_madvise_dontneed_(struct ft_env *fte, size_t mlen)
@@ -758,8 +758,8 @@ static void test_mmap_madvise_dontneed_(struct ft_env *fte, size_t mlen)
 
 static void test_mmap_madvise_dontneed(struct ft_env *fte)
 {
-	test_mmap_madvise_dontneed_(fte, FT_UMEGA);
-	test_mmap_madvise_dontneed_(fte, 16 * FT_UMEGA);
+	test_mmap_madvise_dontneed_(fte, FT_1M);
+	test_mmap_madvise_dontneed_(fte, 16 * FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

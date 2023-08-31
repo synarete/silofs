@@ -203,8 +203,8 @@ static void test_rename_symlink_(struct ft_env *fte, size_t bsz)
 
 static void test_rename_symlink(struct ft_env *fte)
 {
-	test_rename_symlink_(fte, FT_KILO);
-	test_rename_symlink_(fte, FT_MEGA + FT_KILO + 1);
+	test_rename_symlink_(fte, FT_1K);
+	test_rename_symlink_(fte, FT_1M + FT_1K + 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -434,7 +434,7 @@ static void test_rename_override(struct ft_env *fte)
 {
 	test_rename_override_(fte, 1, FT_BK_SIZE);
 	test_rename_override_(fte, 3, FT_BK_SIZE);
-	test_rename_override_(fte, 7, FT_UMEGA);
+	test_rename_override_(fte, 7, FT_1M);
 	test_rename_override_(fte, 1024, FT_BK_SIZE);
 }
 
@@ -500,7 +500,7 @@ static void test_renameat_inplace_rw_(struct ft_env *fte, size_t cnt)
 	const char *name2 = NULL;
 	const char ch = 'B';
 	const char *path = ft_new_path_unique(fte);
-	const size_t bsz = cnt * FT_UKILO;
+	const size_t bsz = cnt * FT_1K;
 	void *buf1 = ft_new_buf_rands(fte, bsz);
 	void *buf2 = ft_new_buf_rands(fte, bsz);
 

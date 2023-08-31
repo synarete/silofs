@@ -28,9 +28,9 @@ static void test_truncate_simple(struct ft_env *fte)
 	struct stat st;
 	const loff_t offs[] = {
 		0, 1, FT_BK_SIZE,
-		FT_MEGA, FT_MEGA + 1, FT_GIGA, FT_GIGA - 1,
-		11 * FT_GIGA, 111 * FT_GIGA - 111,
-		FT_TERA, FT_TERA - 11, FT_FILESIZE_MAX
+		FT_1M, FT_1M + 1, FT_1G, FT_1G - 1,
+		11 * FT_1G, 111 * FT_1G - 111,
+		FT_1T, FT_1T - 11, FT_FILESIZE_MAX
 	};
 	const char *path = ft_new_path_unique(fte);
 
@@ -66,8 +66,8 @@ static void test_truncate_unaligned(struct ft_env *fte)
 	const char *dat = "ABCDEFGHIJKLMNOPQ";
 	const size_t len = strlen(dat);
 	const loff_t offs[] = {
-		17, 7177, 17 * FT_MEGA - 7, 17 * FT_GIGA - 7,
-		3 * FT_TERA - 7, FT_FILESIZE_MAX / 7,
+		17, 7177, 17 * FT_1M - 7, 17 * FT_1G - 7,
+		3 * FT_1T - 7, FT_FILESIZE_MAX / 7,
 	};
 	const char *path = ft_new_path_unique(fte);
 
@@ -105,8 +105,8 @@ static void test_truncate_zero(struct ft_env *fte)
 	size_t bsz = FT_BK_SIZE;
 	struct stat st;
 	const loff_t offs[] = {
-		FT_UMEGA, FT_UGIGA, FT_UTERA,
-		FT_UMEGA - 1, FT_UGIGA - 1, FT_UTERA - 1
+		FT_1M, FT_1G, FT_1T,
+		FT_1M - 1, FT_1G - 1, FT_1T - 1
 	};
 	const void *buf = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
@@ -190,7 +190,7 @@ static void test_truncate_mctimes_(struct ft_env *fte, loff_t off)
 static void test_truncate_mctimes(struct ft_env *fte)
 {
 	test_truncate_mctimes_(fte, 1);
-	test_truncate_mctimes_(fte, FT_TERA - 1);
+	test_truncate_mctimes_(fte, FT_1T - 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -200,7 +200,7 @@ static void test_truncate_mctimes(struct ft_env *fte)
 static void test_truncate_suid_sgid(struct ft_env *fte)
 {
 	int fd;
-	loff_t off = FT_UMEGA;
+	loff_t off = FT_1M;
 	struct stat st;
 	const mode_t mode = 0770;
 	const char *path = ft_new_path_unique(fte);

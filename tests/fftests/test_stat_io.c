@@ -16,47 +16,9 @@
  */
 #include "fftests.h"
 
-
-/* Common meta-info for io-tests */
-struct ft_ioargs {
-	loff_t off;
-	size_t bsz;
-	size_t cnt;
-};
-
-static const struct ft_ioargs s_aligned_ioargs[] = {
-	{ 0, 1, 0 },
-	{ 0, FT_BK_SIZE, 0 },
-	{ 0, FT_UMEGA, 0 },
-	{ FT_BK_SIZE, FT_BK_SIZE, 0 },
-	{ FT_BK_SIZE, 2 * FT_BK_SIZE, 0 },
-	{ FT_BK_SIZE, FT_UMEGA, 0 },
-	{ FT_UMEGA - FT_BK_SIZE, FT_BK_SIZE, 0 },
-	{ FT_UMEGA, FT_BK_SIZE, 0 },
-	{ FT_UMEGA - FT_BK_SIZE, 2 * FT_BK_SIZE, 0 },
-	{ FT_UGIGA, FT_BK_SIZE, 0 },
-	{ FT_UGIGA - FT_BK_SIZE, 2 * FT_BK_SIZE, 0 },
-	{ FT_UGIGA + FT_BK_SIZE, FT_BK_SIZE, 0 },
-};
-
-static const struct ft_ioargs s_unaligned_ioargs[] = {
-	{ 1, 2, 0 },
-	{ 1, FT_BK_SIZE - 2, 0 },
-	{ 1, FT_BK_SIZE + 2, 0 },
-	{ 1, FT_UMEGA - 2, 0 },
-	{ 1, FT_UMEGA + 2, 0 },
-	{ FT_BK_SIZE - 1, FT_BK_SIZE + 2, 0 },
-	{ FT_UMEGA - FT_BK_SIZE + 1, 2 * FT_BK_SIZE + 1, 0 },
-	{ FT_UMEGA - 1, FT_BK_SIZE + 11, 0 },
-	{ FT_UMEGA - FT_BK_SIZE - 1, 11 * FT_BK_SIZE, 0 },
-	{ FT_UGIGA - 1, FT_BK_SIZE + 2, 0 },
-	{ FT_UGIGA - FT_BK_SIZE - 1, 2 * FT_BK_SIZE + 2, 0 },
-	{ FT_UGIGA + FT_BK_SIZE + 1, FT_BK_SIZE - 1, 0 },
-};
-
 static blkcnt_t calc_nfrgs_of(loff_t off, loff_t len, blksize_t blksz)
 {
-	const loff_t frgsz = 512; /* see stat(2) */
+	const loff_t frgsz = FT_FRGSIZE;
 	const loff_t beg = (off / blksz) * blksz;
 	const loff_t end = ((off + len + blksz - 1) / blksz) * blksz;
 	const blkcnt_t nfrgs = (blkcnt_t)(end - beg) / frgsz;
@@ -72,40 +34,52 @@ static void ft_calc_stat_blkcnt(loff_t off, size_t nbytes,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+#define ft_test_stat(fte_, fn_, args_) \
+	ft_test_stat_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+
+static void ft_test_stat_(struct ft_env *fte,
+                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          const struct ft_range *range, size_t na)
+{
+	for (size_t i = 0; i < na; ++i) {
+		fn(fte, range[i].off, range[i].len);
+		ft_relax_mem(fte);
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects write to modify file's stat's size & blocks attributes properly.
  * Performs sequential write, followed by over-write on same region.
  */
-static void test_stat_write_(struct ft_env *fte,
-                             const struct ft_ioargs *ioargs)
+static void test_stat_write_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd = -1;
-	void *buf = NULL;
+	struct stat st = { .st_ino = 0 };
+	const char *path = ft_new_path_unique(fte);
 	blkcnt_t bcnt_min = 0;
 	blkcnt_t bcnt_max = 0;
-	struct stat st = { .st_ino = 0 };
-	const loff_t off = ioargs->off;
-	const size_t bsz = ioargs->bsz;
-	const char *path = ft_new_path_unique(fte);
+	void *buf = NULL;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st);
 	ft_expect_eq(st.st_size, 0);
 	ft_expect_eq(st.st_blocks, 0);
 
-	buf = ft_new_buf_rands(fte, bsz);
-	ft_pwriten(fd, buf, bsz, off);
+	buf = ft_new_buf_rands(fte, len);
+	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)bsz);
-	ft_calc_stat_blkcnt(off, bsz, &bcnt_min, &bcnt_max);
+	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_calc_stat_blkcnt(off, len, &bcnt_min, &bcnt_max);
 	ft_expect_ge(st.st_blocks, bcnt_min);
 	ft_expect_le(st.st_blocks, bcnt_max);
 
-	buf = ft_new_buf_rands(fte, bsz);
-	ft_pwriten(fd, buf, bsz, off);
+	buf = ft_new_buf_rands(fte, len);
+	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)bsz);
-	ft_calc_stat_blkcnt(off, bsz, &bcnt_min, &bcnt_max);
+	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_calc_stat_blkcnt(off, len, &bcnt_min, &bcnt_max);
 	ft_expect_ge(st.st_blocks, bcnt_min);
 	ft_expect_le(st.st_blocks, bcnt_max);
 
@@ -115,16 +89,42 @@ static void test_stat_write_(struct ft_env *fte,
 
 static void test_stat_write_aligned(struct ft_env *fte)
 {
-	for (size_t i = 0; i < FT_ARRAY_SIZE(s_aligned_ioargs); ++i) {
-		test_stat_write_(fte, &s_aligned_ioargs[i]);
-	}
+	const struct ft_range range[] = {
+		FT_MKRANGE(0, 1),
+		FT_MKRANGE(0, FT_64K),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_64K),
+		FT_MKRANGE(FT_64K, 2 * FT_64K),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1M - FT_64K, FT_64K),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1M - FT_64K, 2 * FT_64K),
+		FT_MKRANGE(FT_1G, FT_64K),
+		FT_MKRANGE(FT_1G - FT_64K, 2 * FT_64K),
+		FT_MKRANGE(FT_1G + FT_64K, FT_64K),
+	};
+
+	ft_test_stat(fte, test_stat_write_, range);
 }
 
 static void test_stat_write_unaligned(struct ft_env *fte)
 {
-	for (size_t i = 0; i < FT_ARRAY_SIZE(s_unaligned_ioargs); ++i) {
-		test_stat_write_(fte, &s_unaligned_ioargs[i]);
-	}
+	const struct ft_range range[] = {
+		FT_MKRANGE(1, 2),
+		FT_MKRANGE(1, FT_64K - 2),
+		FT_MKRANGE(1, FT_64K + 2),
+		FT_MKRANGE(1, FT_1M - 2),
+		FT_MKRANGE(1, FT_1M + 2),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1M - FT_64K + 1, 2 * FT_64K + 1),
+		FT_MKRANGE(FT_1M - 1, FT_64K + 11),
+		FT_MKRANGE(FT_1M - FT_64K - 1, 11 * FT_64K),
+		FT_MKRANGE(FT_1G - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1G - FT_64K - 1, 2 * FT_64K + 2),
+		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
+	};
+
+	ft_test_stat(fte, test_stat_write_, range);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -134,48 +134,71 @@ static void test_stat_write_unaligned(struct ft_env *fte)
  * properly. Performs sequential write, followed by fallocate-punch on same
  * data region.
  */
-static void test_stat_punch_(struct ft_env *fte,
-                             const struct ft_ioargs *ioargs)
+static void test_stat_punch_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd = -1;
+	struct stat st = { .st_size = -1 };
+	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	void *buf = ft_new_buf_rands(fte, len);
+	const char *path = ft_new_path_unique(fte);
 	blkcnt_t bcnt_min = 0;
 	blkcnt_t bcnt_max = 0;
-	struct stat st = { .st_ino = 0 };
-	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	const loff_t off = ioargs->off;
-	const size_t bsz = ioargs->bsz;
-	void *buf = ft_new_buf_rands(fte, bsz);
-	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st);
 	ft_expect_eq(st.st_size, 0);
 	ft_expect_eq(st.st_blocks, 0);
-	ft_pwriten(fd, buf, bsz, off);
+	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)bsz);
-	ft_calc_stat_blkcnt(off, bsz, &bcnt_min, &bcnt_max);
+	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_calc_stat_blkcnt(off, len, &bcnt_min, &bcnt_max);
 	ft_expect_ge(st.st_blocks, bcnt_min);
 	ft_expect_le(st.st_blocks, bcnt_max);
-	ft_fallocate(fd, mode, off, (loff_t)bsz);
+	ft_fallocate(fd, mode, off, (loff_t)len);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)bsz);
+	ft_expect_eq(st.st_size, off + (loff_t)len);
 	ft_close(fd);
 	ft_unlink(path);
 }
 
 static void test_stat_punch_aligned(struct ft_env *fte)
 {
-	for (size_t i = 0; i < FT_ARRAY_SIZE(s_aligned_ioargs); ++i) {
-		test_stat_punch_(fte, &s_aligned_ioargs[i]);
-	}
+	const struct ft_range range[] = {
+		FT_MKRANGE(0, 1),
+		FT_MKRANGE(0, FT_64K),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_64K),
+		FT_MKRANGE(FT_64K, 2 * FT_64K),
+		FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1M - FT_64K, FT_64K),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1M - FT_64K, 2 * FT_64K),
+		FT_MKRANGE(FT_1G, FT_64K),
+		FT_MKRANGE(FT_1G - FT_64K, 2 * FT_64K),
+		FT_MKRANGE(FT_1G + FT_64K, FT_64K),
+	};
+
+	ft_test_stat(fte, test_stat_punch_, range);
 }
 
 static void test_stat_punch_unaligned(struct ft_env *fte)
 {
-	for (size_t i = 0; i < FT_ARRAY_SIZE(s_unaligned_ioargs); ++i) {
-		test_stat_punch_(fte, &s_unaligned_ioargs[i]);
-	}
+	const struct ft_range range[] = {
+		FT_MKRANGE(1, 2),
+		FT_MKRANGE(1, FT_64K - 2),
+		FT_MKRANGE(1, FT_64K + 2),
+		FT_MKRANGE(1, FT_1M - 2),
+		FT_MKRANGE(1, FT_1M + 2),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1M - FT_64K + 1, 2 * FT_64K + 1),
+		FT_MKRANGE(FT_1M - 1, FT_64K + 11),
+		FT_MKRANGE(FT_1M - FT_64K - 1, 11 * FT_64K),
+		FT_MKRANGE(FT_1G - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1G - FT_64K - 1, 2 * FT_64K + 2),
+		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
+	};
+
+	ft_test_stat(fte, test_stat_punch_, range);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -184,17 +207,16 @@ static void test_stat_punch_unaligned(struct ft_env *fte)
  * Expects write to update the last data modification and last file status
  * change time-stamps, regardless of other files operation.
  */
-static void test_write_stat_(struct ft_env *fte,
-                             size_t nfiles)
+static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 {
-	int fd = -1;
-	int dfd = -1;
-	long dif;
-	loff_t off;
-	struct stat st;
+	char name[128] = "";
+	struct stat st = { .st_size = -1 };
 	struct stat *sts = ft_new_buf_zeros(fte, nfiles * sizeof(st));
 	const char *path = ft_new_path_unique(fte);
-	char name[128] = "";
+	loff_t off = -1;
+	long dif = 0;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -234,10 +256,14 @@ static void test_write_stat_(struct ft_env *fte,
 	ft_rmdir(path);
 }
 
-static void test_write_stat(struct ft_env *fte)
+static void test_stat_write_ctime(struct ft_env *fte)
 {
-	test_write_stat_(fte, 111);
-	test_write_stat_(fte, 11111);
+	const size_t nfiles[] = { 10, 100, 1000, 10000 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(nfiles); ++i) {
+		test_stat_write_ctime_(fte, nfiles[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -247,7 +273,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_stat_write_unaligned),
 	FT_DEFTEST(test_stat_punch_aligned),
 	FT_DEFTEST(test_stat_punch_unaligned),
-	FT_DEFTEST(test_write_stat),
+	FT_DEFTEST(test_stat_write_ctime),
 };
 
 const struct ft_tests ft_test_stat_io = FT_DEFTESTS(ft_local_tests);

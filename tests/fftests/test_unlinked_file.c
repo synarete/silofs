@@ -21,50 +21,51 @@
  * Tests data-consistency of I/O via fd where file's path is unlinked from
  * filesyatem's namespace. Data truncated to zero explicitly before close.
  */
-static void test_unlinked_simple_(struct ft_env *fte,
-                                  size_t bsz,
-                                  size_t cnt)
+static void test_unlinked_simple_(struct ft_env *fte, size_t len)
 {
-	int fd;
-	loff_t pos = -1;
-	size_t nwr;
-	size_t nrd;
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt = 100;
+	loff_t pos = -1;
+	size_t nwr = 0;
+	size_t nrd = 0;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);
-
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_unlink_noent(path);
-		ft_write(fd, buf1, bsz, &nwr);
-		ft_expect_eq(nwr, bsz);
+		ft_write(fd, buf1, len, &nwr);
+		ft_expect_eq(nwr, len);
 	}
 	ft_llseek(fd, 0, SEEK_SET, &pos);
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_unlink_noent(path);
-		ft_read(fd, buf2, bsz, &nrd);
-		ft_expect_eq(nrd, bsz);
-		ft_expect_eqm(buf1, buf2, bsz);
+		ft_read(fd, buf2, len, &nrd);
+		ft_expect_eq(nrd, len);
+		ft_expect_eqm(buf1, buf2, len);
 	}
-
 	ft_ftruncate(fd, 0);
 	ft_close(fd);
 	ft_unlink_noent(path);
 }
 
-
-static void test_unlinked_simple1(struct ft_env *fte)
+static void test_unlinked_simple(struct ft_env *fte)
 {
-	test_unlinked_simple_(fte, 1, 1);
-	test_unlinked_simple_(fte, FT_BK_SIZE, 2);
-	test_unlinked_simple_(fte, FT_BK_SIZE - 3, 3);
-}
+	const size_t len[] = {
+		1,
+		FT_1K,
+		FT_4K,
+		FT_64K,
+		FT_64K - 1,
+		3 * FT_64K + 3,
+	};
 
-static void test_unlinked_simple2(struct ft_env *fte)
-{
-	test_unlinked_simple_(fte, FT_BK_SIZE, FT_UKILO);
+	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {
+		test_unlinked_simple_(fte, len[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -73,40 +74,57 @@ static void test_unlinked_simple2(struct ft_env *fte)
  * filesyatem's namespace and data is truncated implicitly upon close.
  */
 static void test_unlinked_complex_(struct ft_env *fte,
-                                   loff_t base, size_t bsz, size_t cnt)
+                                   loff_t off, size_t len)
 {
-	int fd = -1;
-	loff_t pos = 0;
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
+	uint8_t *buf1 = ft_new_buf_rands(fte, len);
+	uint8_t *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt = 100;
+	loff_t pos = 0;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = base + (loff_t)(i * bsz);
-		ft_pwriten(fd, buf1, bsz, pos);
+		pos = off + (loff_t)(i * len);
+		buf1[0] = (uint8_t)i;
+		ft_pwriten(fd, buf1, len, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		pos = base + (loff_t)(j * bsz);
-		ft_preadn(fd, buf2, bsz, pos);
-		ft_expect_eqm(buf1, buf2, bsz);
+		pos = off + (loff_t)(j * len);
+		ft_preadn(fd, buf2, len, pos);
+		buf1[0] = (uint8_t)j;
+		ft_expect_eqm(buf1, buf2, len);
 	}
 	ft_close(fd);
 	ft_unlink_noent(path);
 }
 
-
-static void test_unlinked_complex1(struct ft_env *fte)
+static void test_unlinked_complex(struct ft_env *fte)
 {
-	test_unlinked_complex_(fte, 0, 1, 1);
-	test_unlinked_complex_(fte, 0, FT_BK_SIZE, 2);
-	test_unlinked_complex_(fte, 0, FT_BK_SIZE - 3, 3);
-}
+	const struct ft_range range[] = {
+		FT_MKRANGE(1, 2),
+		FT_MKRANGE(1, FT_64K - 2),
+		FT_MKRANGE(1, FT_64K + 2),
+		FT_MKRANGE(1, FT_1M - 2),
+		FT_MKRANGE(1, FT_1M + 2),
+		FT_MKRANGE(FT_1K, FT_64K),
+		FT_MKRANGE(FT_1K + 1, FT_64K - 11),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1M - FT_64K + 1, 2 * FT_64K + 1),
+		FT_MKRANGE(FT_1M - 1, FT_64K + 11),
+		FT_MKRANGE(FT_1M - FT_64K - 1, 11 * FT_64K),
+		FT_MKRANGE(FT_1G - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1G - FT_64K - 1, 2 * FT_64K + 2),
+		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
+		FT_MKRANGE(FT_1T + 1, FT_64K - 1),
+	};
 
-static void test_unlinked_complex2(struct ft_env *fte)
-{
-	test_unlinked_complex_(fte, 0, FT_BK_SIZE, FT_UKILO);
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_unlinked_complex_(fte, range[i].off, range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -114,13 +132,12 @@ static void test_unlinked_complex2(struct ft_env *fte)
  * Tests data-consistency of I/O via multiple fds where file's path is
  * unlinked from filesyatem's namespace.
  */
-static void test_unlinked_multi(struct ft_env *fte)
+static void test_unlinked_multi_(struct ft_env *fte, loff_t off, size_t len)
 {
-	const size_t bsz = FT_BK_SIZE;
-	const size_t cnt = 1024;
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt = 100;
 	loff_t pos = 0;
 	int fd1 = -1;
 	int fd2 = -1;
@@ -128,20 +145,41 @@ static void test_unlinked_multi(struct ft_env *fte)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);
 	ft_unlink(path);
-
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = (loff_t)(cnt * FT_UMEGA);
-		ft_pwriten(fd1, buf1, bsz, pos);
+		pos = off + (loff_t)(cnt * FT_1M);
+		ft_pwriten(fd1, buf1, len, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		pos = (loff_t)(cnt * FT_UMEGA);
-		ft_preadn(fd2, buf2, bsz, pos);
-		ft_expect_eqm(buf1, buf2, bsz);
+		pos = off + (loff_t)(cnt * FT_1M);
+		ft_preadn(fd2, buf2, len, pos);
+		ft_expect_eqm(buf1, buf2, len);
 	}
-
 	ft_unlink_noent(path);
 	ft_close(fd1);
 	ft_close(fd2);
+}
+
+static void test_unlinked_multi(struct ft_env *fte)
+{
+	const struct ft_range range[] = {
+		FT_MKRANGE(1, 2),
+		FT_MKRANGE(1, FT_64K - 2),
+		FT_MKRANGE(FT_1K, FT_64K),
+		FT_MKRANGE(FT_1K + 1, FT_64K - 11),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1M - FT_64K + 1, 2 * FT_64K + 1),
+		FT_MKRANGE(FT_1M - 1, FT_64K + 11),
+		FT_MKRANGE(FT_1M - FT_64K - 1, 11 * FT_64K),
+		FT_MKRANGE(FT_1G - 1, FT_64K + 2),
+		FT_MKRANGE(FT_1G - FT_64K - 1, 2 * FT_64K + 2),
+		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
+		FT_MKRANGE(FT_1T + 1, FT_64K - 1),
+	};
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
+		test_unlinked_multi_(fte, range[i].off, range[i].len);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -211,12 +249,12 @@ static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 		ft_unlink(path);
 		fds[i] = fd;
-		pos = (loff_t)((i * FT_UMEGA) + i);
+		pos = (loff_t)((i * FT_1M) + i);
 		ft_pwriten(fd, &fd, sizeof(fd), pos);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		fd = fds[i];
-		pos = (loff_t)((i * FT_UMEGA) + i);
+		pos = (loff_t)((i * FT_1M) + i);
 		ft_preadn(fd, &dat, sizeof(dat), pos);
 		ft_expect_eq(fd, dat);
 	}
@@ -229,17 +267,19 @@ static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 
 static void test_unlinked_same_path(struct ft_env *fte)
 {
-	test_unlinked_same_path_(fte, 10);
-	test_unlinked_same_path_(fte, 100);
+	const size_t cnt[] = { 10, 100 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_unlinked_same_path_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_unlinked_simple1),
-	FT_DEFTEST(test_unlinked_simple2),
-	FT_DEFTEST(test_unlinked_complex1),
-	FT_DEFTEST(test_unlinked_complex2),
+	FT_DEFTEST(test_unlinked_simple),
+	FT_DEFTEST(test_unlinked_complex),
 	FT_DEFTEST(test_unlinked_multi),
 	FT_DEFTEST(test_unlinked_rename),
 	FT_DEFTEST(test_unlinked_same_path),

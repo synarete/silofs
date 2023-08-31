@@ -22,11 +22,11 @@
  */
 static void test_symlink_simple(struct ft_env *fte)
 {
-	int fd = -1;
 	struct stat st[2];
 	const mode_t ifmt = S_IFMT;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_creat(path0, 0600, &fd);
 	ft_stat(path0, &st[0]);
@@ -54,15 +54,15 @@ static void test_symlink_simple(struct ft_env *fte)
  */
 static void test_symlink_readlink(struct ft_env *fte)
 {
-	int fd = -1;
-	size_t nch = 0;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	char buf1[2] = "";
 	const size_t bsz = SILOFS_PATH_MAX;
 	char *buf = ft_new_buf_zeros(fte, bsz);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
+	size_t nch = 0;
+	int fd = -1;
 
 	ft_creat(path0, 0600, &fd);
 	ft_symlink(path0, path1);
@@ -91,13 +91,13 @@ static void test_symlink_readlink(struct ft_env *fte)
  */
 static void test_symlink_readlink_atime(struct ft_env *fte)
 {
-	size_t nch = 0;
-	struct stat st;
-	time_t atime[2];
+	struct stat st = { .st_size = -1 };
 	const size_t bsz = SILOFS_PATH_MAX;
 	char *buf = ft_new_buf_zeros(fte, bsz);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
+	time_t atime[2];
+	size_t nch = 0;
 
 	ft_mkdir(path0, 0700);
 	ft_symlink(path0, path1);
@@ -144,12 +144,12 @@ static char *ft_new_path_dummy(struct ft_env *fte, size_t len)
 
 static void test_symlink_anylen_(struct ft_env *fte, size_t len)
 {
-	size_t nch = 0;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const mode_t ifmt = S_IFMT;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_dummy(fte, len);
 	char *lnkbuf = ft_new_buf_zeros(fte, len + 1);
+	size_t nch = 0;
 
 	ft_symlink(path1, path0);
 	ft_lstat(path0, &st);
@@ -167,6 +167,7 @@ static void test_symlink_anylen(struct ft_env *fte)
 
 	for (size_t i = 1; i < symval_len_max; ++i) {
 		test_symlink_anylen_(fte, i);
+		ft_relax_mem(fte);
 	}
 }
 
@@ -180,44 +181,44 @@ static void fill_name(char *name, size_t lim, size_t idx)
 	snprintf(name, lim, "%061lx", idx);
 }
 
-static void test_symlink_with_io_(struct ft_env *fte, size_t lim)
+static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 {
-	int dfd = -1;
-	int fd = -1;
-	size_t nch = 0;
-	loff_t off = 0;
-	char *symval = NULL;
-	struct stat st;
-	const mode_t ifmt = S_IFMT;
 	char name[SILOFS_NAME_MAX + 1] = "";
-	char *buf = ft_new_buf_zeros(fte, 2 * lim);
+	struct stat st = { .st_size = -1 };
+	char *symval = NULL;
+	char *buf = ft_new_buf_zeros(fte, 2 * cnt);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
+	const mode_t ifmt = S_IFMT;
+	size_t nch = 0;
+	loff_t off = -1;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd);
-	for (size_t i = 1; i < lim; ++i) {
+	for (size_t i = 1; i < cnt; ++i) {
 		fill_name(name, sizeof(name), i);
 		symval = ft_new_path_dummy(fte, i);
 		ft_symlinkat(symval, dfd, name);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
 		ft_expect_lnk(st.st_mode);
-		off = (loff_t)(i * lim);
+		off = (loff_t)(i * cnt);
 		ft_pwriten(fd, symval, i, off);
 	}
-	for (size_t i = 1; i < lim; ++i) {
+	for (size_t i = 1; i < cnt; ++i) {
 		fill_name(name, sizeof(name), i);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
 		ft_expect_lnk(st.st_mode);
 		symval = ft_new_path_dummy(fte, i + 1);
 		ft_readlinkat(dfd, name, symval, i + 1, &nch);
 		ft_expect_eq(nch, i);
-		off = (loff_t)(i * lim);
+		off = (loff_t)(i * cnt);
 		ft_preadn(fd, buf, i, off);
 		ft_expect_eqm(buf, symval, i);
 	}
-	for (size_t i = 1; i < lim; ++i) {
+	for (size_t i = 1; i < cnt; ++i) {
 		fill_name(name, sizeof(name), i);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
 		ft_expect_lnk(st.st_mode);
@@ -233,8 +234,12 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t lim)
 
 static void test_symlink_with_io(struct ft_env *fte)
 {
-	test_symlink_with_io_(fte, 32);
-	test_symlink_with_io_(fte, SILOFS_SYMLNK_MAX);
+	const size_t cnt[] = { 10, 100, SILOFS_SYMLNK_MAX };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_symlink_with_io_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

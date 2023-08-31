@@ -145,7 +145,7 @@ static void test_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
 
 static void test_sparse_overwrite(struct ft_env *fte)
 {
-	const loff_t base_off[] = { 0, 1, FT_UMEGA - 2, FT_UGIGA - 3 };
+	const loff_t base_off[] = { 0, 1, FT_1M - 2, FT_1G - 3 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(base_off); ++i) {
 		test_sparse_overwrite_(fte, base_off[i]);

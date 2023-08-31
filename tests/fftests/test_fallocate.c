@@ -24,9 +24,9 @@
  */
 static void test_fallocate_basic(struct ft_env *fte)
 {
-	int fd = -1;
-	loff_t len = FT_BK_SIZE;
 	const char *path = ft_new_path_unique(fte);
+	loff_t len = FT_64K;
+	int fd = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_fallocate(fd, 0, 0, len);
@@ -43,9 +43,9 @@ static void test_fallocate_basic(struct ft_env *fte)
  */
 static void test_fallocate_(struct ft_env *fte, loff_t off, ssize_t len)
 {
-	int fd = -1;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_fstat(fd, &st);
@@ -63,24 +63,24 @@ static void test_fallocate_(struct ft_env *fte, loff_t off, ssize_t len)
 static void test_fallocate_aligned(struct ft_env *fte)
 {
 	test_fallocate_(fte, 0, FT_BK_SIZE);
-	test_fallocate_(fte, 0, FT_UMEGA);
-	test_fallocate_(fte, FT_UMEGA, FT_BK_SIZE);
-	test_fallocate_(fte, FT_UGIGA, FT_UMEGA);
-	test_fallocate_(fte, FT_UTERA, FT_UMEGA);
+	test_fallocate_(fte, 0, FT_1M);
+	test_fallocate_(fte, FT_1M, FT_BK_SIZE);
+	test_fallocate_(fte, FT_1G, FT_1M);
+	test_fallocate_(fte, FT_1T, FT_1M);
 }
 
 static void test_fallocate_unaligned(struct ft_env *fte)
 {
 	test_fallocate_(fte, 0, 1);
 	test_fallocate_(fte, 0, FT_BK_SIZE - 1);
-	test_fallocate_(fte, 0, FT_UMEGA - 1);
+	test_fallocate_(fte, 0, FT_1M - 1);
 	test_fallocate_(fte, FT_BK_SIZE, FT_BK_SIZE - 1);
 	test_fallocate_(fte, 1, FT_BK_SIZE + 3);
 	test_fallocate_(fte, FT_BK_SIZE - 1, FT_BK_SIZE + 3);
-	test_fallocate_(fte, 1, FT_UMEGA + 3);
-	test_fallocate_(fte, FT_UMEGA - 1, FT_UMEGA + 3);
-	test_fallocate_(fte, FT_UGIGA - 11, FT_UMEGA + 11);
-	test_fallocate_(fte, FT_UTERA - 111, FT_UMEGA + 111);
+	test_fallocate_(fte, 1, FT_1M + 3);
+	test_fallocate_(fte, FT_1M - 1, FT_1M + 3);
+	test_fallocate_(fte, FT_1G - 11, FT_1M + 11);
+	test_fallocate_(fte, FT_1T - 111, FT_1M + 111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -118,14 +118,14 @@ static void test_fallocate_zeros(struct ft_env *fte)
 {
 	test_fallocate_zeros_(fte, 0, FT_BK_SIZE / 2);
 	test_fallocate_zeros_(fte, 0, FT_BK_SIZE);
-	test_fallocate_zeros_(fte, 0, FT_UMEGA);
-	test_fallocate_zeros_(fte, FT_UMEGA, FT_BK_SIZE);
-	test_fallocate_zeros_(fte, FT_UGIGA, FT_UMEGA);
-	test_fallocate_zeros_(fte, FT_UTERA, FT_UMEGA);
-	test_fallocate_zeros_(fte, 1, FT_UMEGA + 3);
-	test_fallocate_zeros_(fte, FT_UMEGA - 1, FT_UMEGA + 11);
-	test_fallocate_zeros_(fte, FT_UGIGA - 11, FT_UMEGA + 111);
-	test_fallocate_zeros_(fte, FT_UTERA - 111, FT_UMEGA + 1111);
+	test_fallocate_zeros_(fte, 0, FT_1M);
+	test_fallocate_zeros_(fte, FT_1M, FT_BK_SIZE);
+	test_fallocate_zeros_(fte, FT_1G, FT_1M);
+	test_fallocate_zeros_(fte, FT_1T, FT_1M);
+	test_fallocate_zeros_(fte, 1, FT_1M + 3);
+	test_fallocate_zeros_(fte, FT_1M - 1, FT_1M + 11);
+	test_fallocate_zeros_(fte, FT_1G - 11, FT_1M + 111);
+	test_fallocate_zeros_(fte, FT_1T - 111, FT_1M + 1111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -175,12 +175,12 @@ static void test_fallocate_truncate(struct ft_env *fte)
 	test_fallocate_truncate_(fte, FT_BK_SIZE / 2, FT_BK_SIZE);
 	test_fallocate_truncate_(fte, 0, FT_BK_SIZE);
 	test_fallocate_truncate_(fte, 11, FT_BK_SIZE);
-	test_fallocate_truncate_(fte, 11, FT_UMEGA + 111);
+	test_fallocate_truncate_(fte, 11, FT_1M + 111);
 	test_fallocate_truncate_(fte, 0, SILOFS_BLOB_SIZE_MAX);
-	test_fallocate_truncate_(fte, FT_MEGA - 1, SILOFS_BLOB_SIZE_MAX + 2);
-	test_fallocate_truncate_(fte, FT_GIGA, FT_UMEGA);
-	test_fallocate_truncate_(fte, FT_TERA - 2, SILOFS_BLOB_SIZE_MAX + 3);
-	test_fallocate_truncate_(fte, FT_TERA - 1111, FT_UMEGA + 1111);
+	test_fallocate_truncate_(fte, FT_1M - 1, SILOFS_BLOB_SIZE_MAX + 2);
+	test_fallocate_truncate_(fte, FT_1G, FT_1M);
+	test_fallocate_truncate_(fte, FT_1T - 2, SILOFS_BLOB_SIZE_MAX + 3);
+	test_fallocate_truncate_(fte, FT_1T - 1111, FT_1M + 1111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -246,12 +246,12 @@ static void test_fallocate_beyond(struct ft_env *fte)
 	test_fallocate_beyond_(fte, 0, FT_1K);
 	test_fallocate_beyond_(fte, 0, FT_4K);
 	test_fallocate_beyond_(fte, 0, FT_BK_SIZE);
-	test_fallocate_beyond_(fte, FT_MEGA, FT_BK_SIZE);
-	test_fallocate_beyond_(fte, FT_GIGA, 2 * FT_BK_SIZE);
-	test_fallocate_beyond_(fte, FT_TERA, FT_MEGA);
-	test_fallocate_beyond_(fte, FT_MEGA - 11, (11 * FT_BK_SIZE) + 111);
-	test_fallocate_beyond_(fte, FT_GIGA - 111, FT_MEGA + 1111);
-	test_fallocate_beyond_(fte, FT_TERA - 1111, FT_MEGA + 11111);
+	test_fallocate_beyond_(fte, FT_1M, FT_BK_SIZE);
+	test_fallocate_beyond_(fte, FT_1G, 2 * FT_BK_SIZE);
+	test_fallocate_beyond_(fte, FT_1T, FT_1M);
+	test_fallocate_beyond_(fte, FT_1M - 11, (11 * FT_BK_SIZE) + 111);
+	test_fallocate_beyond_(fte, FT_1G - 111, FT_1M + 1111);
+	test_fallocate_beyond_(fte, FT_1T - 1111, FT_1M + 11111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -300,8 +300,8 @@ test_fallocate_punch_into_hole_(struct ft_env *fte, loff_t base_off)
 	int fd;
 	size_t nrd;
 	struct stat st[2];
-	const size_t size = FT_UMEGA;
-	const loff_t zlen = FT_UMEGA / 4;
+	const size_t size = FT_1M;
+	const loff_t zlen = FT_1M / 4;
 	const loff_t off = base_off;
 	const loff_t off_end = base_off + (loff_t)size;
 	void *buf1 = ft_new_buf_rands(fte, size);
@@ -338,28 +338,28 @@ test_fallocate_punch_into_hole_(struct ft_env *fte, loff_t base_off)
 static void test_fallocate_punch_into_hole(struct ft_env *fte)
 {
 	test_fallocate_punch_into_hole_(fte, 0);
-	test_fallocate_punch_into_hole_(fte, FT_UMEGA);
-	test_fallocate_punch_into_hole_(fte, FT_UMEGA - 1);
-	test_fallocate_punch_into_hole_(fte, FT_UGIGA);
-	test_fallocate_punch_into_hole_(fte, FT_UGIGA + 1);
-	test_fallocate_punch_into_hole_(fte, FT_UTERA);
-	test_fallocate_punch_into_hole_(fte, FT_UTERA - 1);
+	test_fallocate_punch_into_hole_(fte, FT_1M);
+	test_fallocate_punch_into_hole_(fte, FT_1M - 1);
+	test_fallocate_punch_into_hole_(fte, FT_1G);
+	test_fallocate_punch_into_hole_(fte, FT_1G + 1);
+	test_fallocate_punch_into_hole_(fte, FT_1T);
+	test_fallocate_punch_into_hole_(fte, FT_1T - 1);
 	test_fallocate_punch_into_hole_(fte, FT_FILESIZE_MAX / 2);
 	test_fallocate_punch_into_hole_(fte, (FT_FILESIZE_MAX / 2) + 1);
 }
 
 static void test_fallocate_punch_into_allocated(struct ft_env *fte)
 {
-	int fd = -1;
-	loff_t pos;
-	size_t nrd = 0;
-	const size_t size = 20 * FT_UKILO;
-	const size_t nzeros = 4 * FT_UKILO;
+	const size_t size = 20 * FT_1K;
+	const size_t nzeros = 4 * FT_1K;
 	const loff_t off = (loff_t)nzeros;
 	const char *path = ft_new_path_unique(fte);
 	char *buf1 = ft_new_buf_rands(fte, size);
 	char *buf2 = ft_new_buf_zeros(fte, size);
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	size_t nrd = 0;
+	loff_t pos = -1;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_ftruncate(fd, (loff_t)size);
@@ -481,12 +481,12 @@ static void test_fallocate_zero_range(struct ft_env *fte)
 	test_fallocate_zero_range_(fte, 0, FT_1K);
 	test_fallocate_zero_range_(fte, 0, FT_4K);
 	test_fallocate_zero_range_(fte, 0, FT_BK_SIZE);
-	test_fallocate_zero_range_(fte, FT_MEGA, FT_BK_SIZE);
-	test_fallocate_zero_range_(fte, FT_GIGA, 2 * FT_BK_SIZE);
-	test_fallocate_zero_range_(fte, FT_TERA, FT_MEGA);
-	test_fallocate_zero_range_(fte, FT_MEGA - 11, FT_BK_SIZE + 111);
-	test_fallocate_zero_range_(fte, FT_GIGA - 111, FT_BK_SIZE + 11);
-	test_fallocate_zero_range_(fte, FT_TERA - 1111, FT_MEGA + 1);
+	test_fallocate_zero_range_(fte, FT_1M, FT_BK_SIZE);
+	test_fallocate_zero_range_(fte, FT_1G, 2 * FT_BK_SIZE);
+	test_fallocate_zero_range_(fte, FT_1T, FT_1M);
+	test_fallocate_zero_range_(fte, FT_1M - 11, FT_BK_SIZE + 111);
+	test_fallocate_zero_range_(fte, FT_1G - 111, FT_BK_SIZE + 11);
+	test_fallocate_zero_range_(fte, FT_1T - 1111, FT_1M + 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -537,13 +537,13 @@ static void test_fallocate_sparse_(struct ft_env *fte,
 
 static void test_fallocate_sparse(struct ft_env *fte)
 {
-	test_fallocate_sparse_(fte, 0, FT_UMEGA);
-	test_fallocate_sparse_(fte, 1, FT_UMEGA);
-	test_fallocate_sparse_(fte, FT_UMEGA, FT_UGIGA);
-	test_fallocate_sparse_(fte, 11 * FT_UMEGA + 1, FT_UGIGA);
-	test_fallocate_sparse_(fte, FT_UTERA - 111, FT_UGIGA);
-	test_fallocate_sparse_(fte, FT_FILESIZE_MAX / 2, FT_UGIGA);
-	test_fallocate_sparse_(fte, (FT_FILESIZE_MAX / 2) - 7,  FT_UGIGA + 77);
+	test_fallocate_sparse_(fte, 0, FT_1M);
+	test_fallocate_sparse_(fte, 1, FT_1M);
+	test_fallocate_sparse_(fte, FT_1M, FT_1G);
+	test_fallocate_sparse_(fte, 11 * FT_1M + 1, FT_1G);
+	test_fallocate_sparse_(fte, FT_1T - 111, FT_1G);
+	test_fallocate_sparse_(fte, FT_FILESIZE_MAX / 2, FT_1G);
+	test_fallocate_sparse_(fte, (FT_FILESIZE_MAX / 2) - 7,  FT_1G + 77);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

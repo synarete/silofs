@@ -23,7 +23,7 @@
  */
 static void test_truncate_basic_(struct ft_env *fte, size_t cnt)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	size_t nwr = 0;
 	loff_t off = -1;
@@ -51,7 +51,7 @@ static void test_truncate_basic_(struct ft_env *fte, size_t cnt)
 
 static void test_truncate_basic(struct ft_env *fte)
 {
-	const size_t cnt[] = { 111, 1111 };
+	const size_t cnt[] = { 100, 1000 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
 		test_truncate_basic_(fte, cnt[i]);
@@ -66,7 +66,7 @@ static void test_truncate_basic(struct ft_env *fte)
 static void test_truncate_tail_(struct ft_env *fte, loff_t base_off,
                                 size_t data_sz, size_t tail_sz)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	void *buf1 = ft_new_buf_rands(fte, data_sz);
 	void *buf2 = ft_new_buf_zeros(fte, data_sz);
 	const char *path = ft_new_path_unique(fte);
@@ -90,15 +90,15 @@ static void test_truncate_tail_(struct ft_env *fte, loff_t base_off,
 
 static void test_truncate_tail(struct ft_env *fte)
 {
-	test_truncate_tail_(fte, 0, FT_UMEGA, FT_BK_SIZE);
-	test_truncate_tail_(fte, 0, FT_UMEGA, 1);
-	test_truncate_tail_(fte, 0, FT_UMEGA, 11);
-	test_truncate_tail_(fte, 1, FT_UMEGA + 111, (7 * FT_BK_SIZE) - 7);
-	test_truncate_tail_(fte, FT_MEGA - 1, FT_UMEGA + 2, FT_UMEGA / 2);
-	test_truncate_tail_(fte, FT_GIGA - 11,
-	                    FT_UMEGA + 111, FT_UMEGA / 3);
+	test_truncate_tail_(fte, 0, FT_1M, FT_BK_SIZE);
+	test_truncate_tail_(fte, 0, FT_1M, 1);
+	test_truncate_tail_(fte, 0, FT_1M, 11);
+	test_truncate_tail_(fte, 1, FT_1M + 111, (7 * FT_BK_SIZE) - 7);
+	test_truncate_tail_(fte, FT_1M - 1, FT_1M + 2, FT_1M / 2);
+	test_truncate_tail_(fte, FT_1G - 11,
+	                    FT_1M + 111, FT_1M / 3);
 	test_truncate_tail_(fte, FT_FILESIZE_MAX / 3,
-	                    FT_UMEGA + 3, FT_UMEGA / 3);
+	                    FT_1M + 3, FT_1M / 3);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -107,7 +107,7 @@ static void test_truncate_tail(struct ft_env *fte)
  */
 static void test_truncate_extend_(struct ft_env *fte, loff_t off, size_t len)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
@@ -134,11 +134,11 @@ static void test_truncate_extend(struct ft_env *fte)
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(1, FT_64K),
 		FT_MKRANGE(FT_64K - 11, 11 * FT_64K),
-		FT_MKRANGE(0, FT_UMEGA),
-		FT_MKRANGE(1, FT_UMEGA),
-		FT_MKRANGE(FT_UMEGA - 1, FT_UMEGA + 2),
-		FT_MKRANGE(FT_UGIGA - 11, FT_UMEGA + 111),
-		FT_MKRANGE((11 * FT_UGIGA) - 111, FT_UMEGA + 1111),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(1, FT_1M),
+		FT_MKRANGE(FT_1M - 1, FT_1M + 2),
+		FT_MKRANGE(FT_1G - 11, FT_1M + 111),
+		FT_MKRANGE((11 * FT_1G) - 111, FT_1M + 1111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -153,7 +153,7 @@ static void test_truncate_extend(struct ft_env *fte)
  */
 static void test_truncate_zeros_(struct ft_env *fte, loff_t off, size_t len)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const loff_t end = off + (ssize_t)len;
 	int fd = -1;
@@ -181,10 +181,10 @@ static void test_truncate_zeros(struct ft_env *fte)
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(1, FT_64K),
 		FT_MKRANGE(11, FT_64K / 11),
-		FT_MKRANGE(FT_UMEGA, FT_UMEGA),
-		FT_MKRANGE(FT_UMEGA - 1, FT_UMEGA + 3),
-		FT_MKRANGE(FT_UGIGA - 11, FT_UMEGA + 111),
-		FT_MKRANGE(FT_UTERA - 111, FT_UGIGA + 1111),
+		FT_MKRANGE(FT_1M, FT_1M),
+		FT_MKRANGE(FT_1M - 1, FT_1M + 3),
+		FT_MKRANGE(FT_1G - 11, FT_1M + 111),
+		FT_MKRANGE(FT_1T - 111, FT_1G + 1111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {

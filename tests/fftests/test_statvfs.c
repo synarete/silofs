@@ -247,13 +247,13 @@ static void test_statvfs_bfree_(struct ft_env *fte, loff_t off, size_t bsz)
 
 static void test_statvfs_bfree(struct ft_env *fte)
 {
-	test_statvfs_bfree_(fte, 0, FT_UMEGA);
-	test_statvfs_bfree_(fte, FT_KILO, FT_UMEGA - 1);
+	test_statvfs_bfree_(fte, 0, FT_1M);
+	test_statvfs_bfree_(fte, FT_1K, FT_1M - 1);
 	test_statvfs_bfree_(fte, FT_BK_SIZE, 2 * FT_BK_SIZE);
-	test_statvfs_bfree_(fte, FT_MEGA, FT_UMEGA);
-	test_statvfs_bfree_(fte, FT_MEGA + 1, FT_UMEGA);
-	test_statvfs_bfree_(fte, FT_TERA - 11, FT_UMEGA + 111);
-	test_statvfs_bfree_(fte, FT_FILESIZE_MAX - FT_UMEGA, FT_UMEGA);
+	test_statvfs_bfree_(fte, FT_1M, FT_1M);
+	test_statvfs_bfree_(fte, FT_1M + 1, FT_1M);
+	test_statvfs_bfree_(fte, FT_1T - 11, FT_1M + 111);
+	test_statvfs_bfree_(fte, FT_FILESIZE_MAX - FT_1M, FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

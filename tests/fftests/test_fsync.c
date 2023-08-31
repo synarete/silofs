@@ -46,15 +46,15 @@ static void test_fsync_reg(struct ft_env *fte, loff_t base_off,
 
 static void test_fsync_reg_aligned(struct ft_env *fte)
 {
-	test_fsync_reg(fte, 0, FT_UKILO, FT_UMEGA, 64);
-	test_fsync_reg(fte, FT_UMEGA, FT_BK_SIZE, FT_UGIGA,
+	test_fsync_reg(fte, 0, FT_1K, FT_1M, 64);
+	test_fsync_reg(fte, FT_1M, FT_BK_SIZE, FT_1G,
 	               64);
 }
 
 static void test_fsync_reg_unaligned(struct ft_env *fte)
 {
-	test_fsync_reg(fte, 1, FT_UKILO - 1, FT_UMEGA + 1, 64);
-	test_fsync_reg(fte, FT_UMEGA - 1, 3 * FT_UKILO + 1, FT_UGIGA - 1, 64);
+	test_fsync_reg(fte, 1, FT_1K - 1, FT_1M + 1, 64);
+	test_fsync_reg(fte, FT_1M - 1, 3 * FT_1K + 1, FT_1G - 1, 64);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -144,8 +144,8 @@ static void test_fsync_dir_io_(struct ft_env *fte, size_t cnt, loff_t off_base)
 
 static void test_fsync_dir_io(struct ft_env *fte)
 {
-	test_fsync_dir_io_(fte, 128, FT_MEGA);
-	test_fsync_dir_io_(fte, 4096, FT_TERA);
+	test_fsync_dir_io_(fte, 128, FT_1M);
+	test_fsync_dir_io_(fte, 4096, FT_1T);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -59,8 +59,8 @@ static void test_lseek_simple_(struct ft_env *fte, size_t bsz)
 
 static void test_lseek_simple(struct ft_env *fte)
 {
-	test_lseek_simple_(fte, FT_UMEGA / 8);
-	test_lseek_simple_(fte, FT_UMEGA);
+	test_lseek_simple_(fte, FT_1M / 8);
+	test_lseek_simple_(fte, FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -95,7 +95,7 @@ static void test_lseek_data(struct ft_env *fte)
 {
 	test_lseek_data_(fte, FT_BK_SIZE);
 	test_lseek_data_(fte, 2 * FT_BK_SIZE);
-	test_lseek_data_(fte, FT_UMEGA);
+	test_lseek_data_(fte, FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -138,7 +138,7 @@ static void test_lseek_hole(struct ft_env *fte)
 {
 	test_lseek_hole_(fte, FT_BK_SIZE);
 	test_lseek_hole_(fte, 2 * FT_BK_SIZE);
-	test_lseek_hole_(fte, FT_UMEGA);
+	test_lseek_hole_(fte, FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -154,7 +154,7 @@ static void test_lseek_data_sparse_(struct ft_env *fte, size_t nsteps)
 	loff_t data_off;
 	const size_t size = FT_BK_SIZE;
 	const ssize_t ssize = (ssize_t)size;
-	const size_t step = FT_UMEGA;
+	const size_t step = FT_1M;
 	const void *buf1 = ft_new_buf_rands(fte, size);
 	const char *path = ft_new_path_unique(fte);
 
@@ -194,7 +194,7 @@ static void test_lseek_hole_sparse_(struct ft_env *fte, size_t nsteps)
 	loff_t hole_off = 0;
 	const size_t size = FT_BK_SIZE;
 	const ssize_t ssize = (loff_t)size;
-	const size_t step = FT_UMEGA;
+	const size_t step = FT_1M;
 	const void *buf1 = ft_new_buf_rands(fte, size);
 	const char *path = ft_new_path_unique(fte);
 

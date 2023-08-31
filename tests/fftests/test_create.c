@@ -22,8 +22,8 @@
  */
 static void test_create_simple_(struct ft_env *fte, size_t cnt)
 {
-	int fd = -1;
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_creat(path, 0600, &fd);
@@ -34,8 +34,12 @@ static void test_create_simple_(struct ft_env *fte, size_t cnt)
 
 static void test_create_simple(struct ft_env *fte)
 {
-	test_create_simple_(fte, 1);
-	test_create_simple_(fte, 111);
+	const size_t cnt[] = { 1, 10, 1000 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_create_simple_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -63,7 +67,7 @@ static void test_create_unlink_(struct ft_env *fte, size_t cnt)
 
 static void test_create_unlink(struct ft_env *fte)
 {
-	const size_t cnt[] = { 1, 2, 8, 128, 4096 };
+	const size_t cnt[] = { 10, 100, 10000 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
 		test_create_unlink_(fte, cnt[i]);
@@ -94,11 +98,11 @@ static void test_create_pwrite_(struct ft_env *fte, loff_t off, size_t len)
 static void test_create_pwrite(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_UMEGA),
+		FT_MKRANGE(0, FT_1M),
 		FT_MKRANGE(11, FT_64K),
-		FT_MKRANGE(FT_UMEGA, FT_64K),
-		FT_MKRANGE(FT_GIGA, FT_4K),
-		FT_MKRANGE(FT_TERA, FT_1K),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1G, FT_4K),
+		FT_MKRANGE(FT_1T, FT_1K),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {

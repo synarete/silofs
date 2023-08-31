@@ -51,8 +51,8 @@ static void test_basic_simple(struct ft_env *fte)
 {
 	test_basic_simple_(fte, FT_BK_SIZE, 256);
 	test_basic_simple_(fte, FT_BK_SIZE + 1, 256);
-	test_basic_simple_(fte, FT_UMEGA, 16);
-	test_basic_simple_(fte, FT_UMEGA - 1, 16);
+	test_basic_simple_(fte, FT_1M, 16);
+	test_basic_simple_(fte, FT_1M - 1, 16);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -91,22 +91,22 @@ static void test_basic_seq1(struct ft_env *fte)
 
 static void test_basic_seq_1k(struct ft_env *fte)
 {
-	test_basic_seq_(fte, FT_UKILO / sizeof(uint64_t));
+	test_basic_seq_(fte, FT_1K / sizeof(uint64_t));
 }
 
 static void test_basic_seq_8k(struct ft_env *fte)
 {
-	test_basic_seq_(fte, 8 * FT_UKILO / sizeof(uint64_t));
+	test_basic_seq_(fte, 8 * FT_1K / sizeof(uint64_t));
 }
 
 static void test_basic_seq_1m(struct ft_env *fte)
 {
-	test_basic_seq_(fte, FT_UMEGA / sizeof(uint64_t));
+	test_basic_seq_(fte, FT_1M / sizeof(uint64_t));
 }
 
 static void test_basic_seq_8m(struct ft_env *fte)
 {
-	test_basic_seq_(fte, (8 * FT_UMEGA) / sizeof(uint64_t));
+	test_basic_seq_(fte, (8 * FT_1M) / sizeof(uint64_t));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -145,16 +145,16 @@ static void test_basic_rdwr(struct ft_env *fte)
 		FT_MKRANGE(FT_4K, FT_4K),
 		FT_MKRANGE(FT_64K, FT_64K),
 		FT_MKRANGE(FT_64K - FT_4K, 4 * FT_64K),
-		FT_MKRANGE(FT_MEGA, FT_4K),
-		FT_MKRANGE(FT_GIGA, FT_MEGA),
-		FT_MKRANGE(FT_TERA, 8 * FT_MEGA),
+		FT_MKRANGE(FT_1M, FT_4K),
+		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(FT_1T, 8 * FT_1M),
 		/* unaligned */
 		FT_MKRANGE(FT_1K - 1, 2 * FT_1K),
 		FT_MKRANGE(FT_4K - 1, FT_4K + 3),
 		FT_MKRANGE(FT_64K - 1, FT_64K + 3),
-		FT_MKRANGE(FT_MEGA - 1, FT_4K + 11),
-		FT_MKRANGE(FT_GIGA - 11, FT_MEGA + 111),
-		FT_MKRANGE(FT_TERA - 111, 11 * FT_MEGA - 1111),
+		FT_MKRANGE(FT_1M - 1, FT_4K + 11),
+		FT_MKRANGE(FT_1G - 11, FT_1M + 111),
+		FT_MKRANGE(FT_1T - 111, 11 * FT_1M - 1111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -170,7 +170,7 @@ static void test_basic_rdwr(struct ft_env *fte)
 static void test_basic_space(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
-	size_t bsz = FT_UMEGA;
+	size_t bsz = FT_1M;
 	void *buf1 = NULL;
 	void *buf2 = NULL;
 	loff_t off = -1;
@@ -220,16 +220,16 @@ static void test_basic_reserve_overwrite(struct ft_env *fte)
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(FT_4K, FT_4K),
 		FT_MKRANGE(FT_64K, FT_64K),
-		FT_MKRANGE(FT_MEGA, FT_4K),
-		FT_MKRANGE(FT_GIGA, FT_4K),
-		FT_MKRANGE(FT_TERA, FT_64K),
+		FT_MKRANGE(FT_1M, FT_4K),
+		FT_MKRANGE(FT_1G, FT_4K),
+		FT_MKRANGE(FT_1T, FT_64K),
 		/* unaligned */
 		FT_MKRANGE(FT_1K - 1, 2 * FT_1K),
 		FT_MKRANGE(FT_4K - 1, FT_4K + 3),
 		FT_MKRANGE(FT_64K - 1, FT_64K + 3),
-		FT_MKRANGE(FT_MEGA - 1, FT_4K + 11),
-		FT_MKRANGE(FT_GIGA - 11, FT_4K + 111),
-		FT_MKRANGE(FT_TERA - 111, FT_4K + 1111),
+		FT_MKRANGE(FT_1M - 1, FT_4K + 11),
+		FT_MKRANGE(FT_1G - 11, FT_4K + 111),
+		FT_MKRANGE(FT_1T - 111, FT_4K + 1111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -245,7 +245,7 @@ static void test_basic_reserve_overwrite(struct ft_env *fte)
 static void test_basic_overlap(struct ft_env *fte)
 {
 	size_t cnt = 0;
-	size_t bsz = FT_UMEGA;
+	size_t bsz = FT_1M;
 	void *buf1 = ft_new_buf_rands(fte, bsz);
 	void *buf2 = ft_new_buf_rands(fte, bsz);
 	void *buf3 = ft_new_buf_zeros(fte, bsz);
@@ -312,9 +312,9 @@ static void test_basic_rw_aligned(struct ft_env *fte)
 {
 	const loff_t step = FT_BK_SIZE;
 
-	test_basic_rw(fte, 0, FT_UMEGA, step);
-	test_basic_rw(fte, 0, 2 * FT_UMEGA, step);
-	test_basic_rw(fte, FT_UGIGA - FT_UMEGA, FT_UMEGA, step);
+	test_basic_rw(fte, 0, FT_1M, step);
+	test_basic_rw(fte, 0, 2 * FT_1M, step);
+	test_basic_rw(fte, FT_1G - FT_1M, FT_1M, step);
 }
 
 static void test_basic_rw_unaligned(struct ft_env *fte)
@@ -322,12 +322,12 @@ static void test_basic_rw_unaligned(struct ft_env *fte)
 	const loff_t step1 = FT_BK_SIZE + 1;
 	const loff_t step2 = FT_BK_SIZE - 1;
 
-	test_basic_rw(fte, 0, FT_UMEGA, step1);
-	test_basic_rw(fte, 0, FT_UMEGA, step2);
-	test_basic_rw(fte, 0, 2 * FT_UMEGA, step1);
-	test_basic_rw(fte, 0, 2 * FT_UMEGA, step2);
-	test_basic_rw(fte, FT_UGIGA - FT_UMEGA, FT_UMEGA, step1);
-	test_basic_rw(fte, FT_UGIGA - FT_UMEGA, FT_UMEGA, step2);
+	test_basic_rw(fte, 0, FT_1M, step1);
+	test_basic_rw(fte, 0, FT_1M, step2);
+	test_basic_rw(fte, 0, 2 * FT_1M, step1);
+	test_basic_rw(fte, 0, 2 * FT_1M, step2);
+	test_basic_rw(fte, FT_1G - FT_1M, FT_1M, step1);
+	test_basic_rw(fte, FT_1G - FT_1M, FT_1M, step2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -352,10 +352,10 @@ static void test_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
 static void test_basic_chunk_aligned(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(0, FT_UMEGA),
-		FT_MKRANGE(FT_UMEGA, 2 * FT_UMEGA),
-		FT_MKRANGE(FT_GIGA, 4 * FT_UMEGA),
-		FT_MKRANGE(FT_TERA, 8 * FT_UMEGA),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_1M, 2 * FT_1M),
+		FT_MKRANGE(FT_1G, 4 * FT_1M),
+		FT_MKRANGE(FT_1T, 8 * FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -367,10 +367,10 @@ static void test_basic_chunk_aligned(struct ft_env *fte)
 static void test_basic_chunk_unaligned(struct ft_env *fte)
 {
 	const struct ft_range range[] = {
-		FT_MKRANGE(1, FT_UMEGA),
-		FT_MKRANGE(FT_UMEGA - 1, 2 * FT_UMEGA + 2),
-		FT_MKRANGE(FT_GIGA - 1, 4 * FT_UMEGA + 4),
-		FT_MKRANGE(FT_TERA - 1, 8 * FT_UMEGA + 8),
+		FT_MKRANGE(1, FT_1M),
+		FT_MKRANGE(FT_1M - 1, 2 * FT_1M + 2),
+		FT_MKRANGE(FT_1G - 1, 4 * FT_1M + 4),
+		FT_MKRANGE(FT_1T - 1, 8 * FT_1M + 8),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
@@ -417,12 +417,12 @@ static void test_basic_backword_byte(struct ft_env *fte)
 		FT_MKRANGE(0, 111),
 		FT_MKRANGE(0, 1111),
 		FT_MKRANGE(0, 11111),
-		FT_MKRANGE(FT_MEGA, 1111),
-		FT_MKRANGE(FT_MEGA + 11, 1111),
-		FT_MKRANGE(FT_GIGA, 1111),
-		FT_MKRANGE(FT_GIGA + 11, 1111),
-		FT_MKRANGE(FT_TERA, 1111),
-		FT_MKRANGE(FT_TERA + 11, 1111),
+		FT_MKRANGE(FT_1M, 1111),
+		FT_MKRANGE(FT_1M + 11, 1111),
+		FT_MKRANGE(FT_1G, 1111),
+		FT_MKRANGE(FT_1G + 11, 1111),
+		FT_MKRANGE(FT_1T, 1111),
+		FT_MKRANGE(FT_1T + 11, 1111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {

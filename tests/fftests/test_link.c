@@ -25,7 +25,7 @@ static size_t get_link_max(void)
 
 	ret = sysconf(_PC_LINK_MAX);
 	ft_expect_gt(ret, 0);
-	ft_expect_lt(ret, FT_UGIGA);
+	ft_expect_lt(ret, FT_1G);
 
 	return (size_t)((ret < lim) ? ret : lim);
 }

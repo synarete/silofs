@@ -30,8 +30,8 @@ static void test_ngiga_rdwr_by_(struct ft_env *fte, int fd,
 {
 	const loff_t off_base = args->off_base;
 	const size_t nskip = args->nskip;
-	const size_t bsz = FT_MEGA;
-	const size_t cnt = FT_GIGA / bsz;
+	const size_t bsz = FT_1M;
+	const size_t cnt = FT_1G / bsz;
 	void *buf = ft_new_buf_rands(fte, bsz);
 	size_t num = 0;
 	loff_t off = -1;
@@ -81,8 +81,8 @@ static void test_large_simple(struct ft_env *fte)
 {
 	const struct ft_rw_large_args args[] = {
 		{ 0, 0 },
-		{ 0, FT_MEGA },
-		{ FT_TERA, FT_GIGA },
+		{ 0, FT_1M },
+		{ FT_1T, FT_1G },
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(args); ++i) {
@@ -95,8 +95,8 @@ static void test_large_unaligned(struct ft_env *fte)
 {
 	const struct ft_rw_large_args args[] = {
 		{ 1, 1 },
-		{ FT_MEGA - 5, 7 * FT_MEGA + 7 },
-		{ FT_TERA - 11, 11 * FT_MEGA + 1 },
+		{ FT_1M - 5, 7 * FT_1M + 7 },
+		{ FT_1T - 11, 11 * FT_1M + 1 },
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(args); ++i) {
@@ -109,9 +109,9 @@ static void test_large_unlinked(struct ft_env *fte)
 {
 	const struct ft_rw_large_args args[] = {
 		{ 0, 0 },
-		{ FT_1K, FT_MEGA },
-		{ FT_MEGA - 5, 7 * FT_MEGA + 7 },
-		{ FT_TERA - 11, 11 * FT_MEGA + 1 },
+		{ FT_1K, FT_1M },
+		{ FT_1M - 5, 7 * FT_1M + 7 },
+		{ FT_1T - 11, 11 * FT_1M + 1 },
 	};
 
 

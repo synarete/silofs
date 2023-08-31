@@ -217,13 +217,13 @@ static void test_xstress_rw_trunc(struct ft_env *fte)
 	const struct ft_range range[] = {
 		/* aligned */
 		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(0, FT_MEGA),
-		FT_MKRANGE(FT_GIGA, FT_MEGA),
-		FT_MKRANGE(FT_TERA, FT_MEGA),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(FT_1T, FT_1M),
 		/* unaligned */
-		FT_MKRANGE(1, FT_MEGA),
-		FT_MKRANGE(FT_GIGA - 11, FT_MEGA + 111),
-		FT_MKRANGE(FT_TERA - 111, FT_MEGA + 1111),
+		FT_MKRANGE(1, FT_1M),
+		FT_MKRANGE(FT_1G - 11, FT_1M + 111),
+		FT_MKRANGE(FT_1T - 111, FT_1M + 1111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {

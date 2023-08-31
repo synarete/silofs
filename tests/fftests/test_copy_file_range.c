@@ -175,10 +175,10 @@ static void test_copy_file_range_aligned(struct ft_env *fte)
 		COPYARGS2(FT_1K, 2 * FT_4K, FT_4K, 3 * FT_4K),
 		COPYARGS2(0, FT_64K, 0, FT_64K),
 		COPYARGS2(FT_64K, FT_64K, FT_64K, FT_64K),
-		COPYARGS2(FT_MEGA, FT_64K, 0, FT_64K),
-		COPYARGS2(FT_MEGA, FT_64K, FT_GIGA, 2 * FT_64K),
-		COPYARGS2(FT_TERA, 3 * FT_64K, FT_MEGA, FT_64K),
-		COPYARGS2(FT_TERA, 3 * FT_64K, 0, FT_MEGA),
+		COPYARGS2(FT_1M, FT_64K, 0, FT_64K),
+		COPYARGS2(FT_1M, FT_64K, FT_1G, 2 * FT_64K),
+		COPYARGS2(FT_1T, 3 * FT_64K, FT_1M, FT_64K),
+		COPYARGS2(FT_1T, 3 * FT_64K, 0, FT_1M),
 	};
 
 	ft_copy_range2(fte, test_copy_file_range_, args);
@@ -200,11 +200,11 @@ static void test_copy_file_range_unaligned(struct ft_env *fte)
 		COPYARGS2(1, FT_4K, FT_1K + 1, FT_4K + 11),
 		COPYARGS2(1, FT_64K + 11, 11, FT_64K + 1),
 		COPYARGS2(FT_64K + 11, 11 * FT_64K, FT_64K + 1, FT_64K - 11),
-		COPYARGS2(FT_MEGA - 1, FT_64K - 2, 1, FT_64K - 3),
-		COPYARGS2(FT_MEGA + 11, FT_MEGA,
-		          FT_GIGA + 111, FT_MEGA + 1111),
-		COPYARGS2(FT_TERA + 111, FT_MEGA + 333, FT_MEGA - 111, 11111),
-		COPYARGS2(FT_TERA - 1111, 111111, 1, FT_MEGA + 1111),
+		COPYARGS2(FT_1M - 1, FT_64K - 2, 1, FT_64K - 3),
+		COPYARGS2(FT_1M + 11, FT_1M,
+		          FT_1G + 111, FT_1M + 1111),
+		COPYARGS2(FT_1T + 111, FT_1M + 333, FT_1M - 111, 11111),
+		COPYARGS2(FT_1T - 1111, 111111, 1, FT_1M + 1111),
 	};
 
 	ft_copy_range2(fte, test_copy_file_range_, args);
@@ -263,16 +263,16 @@ static void test_copy_file_range_self(struct ft_env *fte)
 		COPYARGS2(0, FT_1K, FT_4K, FT_4K),
 		COPYARGS2(FT_1K, FT_4K, FT_64K, FT_4K),
 		COPYARGS2(FT_64K, FT_64K, 4 * FT_64K, FT_4K),
-		COPYARGS2(FT_MEGA, FT_64K, FT_GIGA, FT_MEGA),
-		COPYARGS2(FT_GIGA, FT_MEGA, 0, FT_4K),
-		COPYARGS2(FT_GIGA, FT_MEGA, FT_TERA, FT_MEGA / 2),
+		COPYARGS2(FT_1M, FT_64K, FT_1G, FT_1M),
+		COPYARGS2(FT_1G, FT_1M, 0, FT_4K),
+		COPYARGS2(FT_1G, FT_1M, FT_1T, FT_1M / 2),
 		/* unaligned */
 		COPYARGS2(1, FT_1K - 1, 2 * FT_1K + 1, FT_1K + 1),
 		COPYARGS2(FT_4K + 1, FT_4K - 1, FT_64K - 1, FT_4K + 1),
-		COPYARGS2(2 * FT_64K + 11, FT_64K - 111, FT_MEGA - 1, 11111),
-		COPYARGS2(FT_MEGA - 1, 11111, 333, 33333),
-		COPYARGS2(FT_GIGA - 111, 11111, FT_64K - 11, FT_64K + 111),
-		COPYARGS2(FT_TERA - 1111, 11111, FT_64K - 111, FT_64K + 1111),
+		COPYARGS2(2 * FT_64K + 11, FT_64K - 111, FT_1M - 1, 11111),
+		COPYARGS2(FT_1M - 1, 11111, 333, 33333),
+		COPYARGS2(FT_1G - 111, 11111, FT_64K - 11, FT_64K + 111),
+		COPYARGS2(FT_1T - 1111, 11111, FT_64K - 111, FT_64K + 1111),
 	};
 
 	ft_copy_range2(fte, test_copy_file_range_self2_, args);
@@ -329,10 +329,10 @@ static void test_copy_file_range_between(struct ft_env *fte)
 		COPYARGS2(FT_1K, 2 * FT_4K, FT_4K, 3 * FT_4K),
 		COPYARGS2(0, FT_64K, 0, FT_64K),
 		COPYARGS2(FT_64K, FT_64K, FT_64K, FT_64K),
-		COPYARGS2(FT_MEGA, FT_64K, 0, FT_64K),
-		COPYARGS2(FT_MEGA, FT_64K, FT_GIGA, 2 * FT_64K),
-		COPYARGS2(FT_TERA, 3 * FT_64K, FT_MEGA, FT_64K),
-		COPYARGS2(FT_TERA, 3 * FT_64K, 0, FT_MEGA),
+		COPYARGS2(FT_1M, FT_64K, 0, FT_64K),
+		COPYARGS2(FT_1M, FT_64K, FT_1G, 2 * FT_64K),
+		COPYARGS2(FT_1T, 3 * FT_64K, FT_1M, FT_64K),
+		COPYARGS2(FT_1T, 3 * FT_64K, 0, FT_1M),
 		/* unaligned */
 		COPYARGS2(1, FT_1K - 1, 1, FT_1K - 1),
 		COPYARGS2(1, FT_1K - 1, 1, FT_1K - 1),
@@ -347,10 +347,10 @@ static void test_copy_file_range_between(struct ft_env *fte)
 		COPYARGS2(1, FT_4K, FT_1K + 1, FT_4K + 11),
 		COPYARGS2(1, FT_64K + 11, 11, FT_64K + 1),
 		COPYARGS2(FT_64K + 11, 11 * FT_64K, FT_64K + 1, FT_64K - 11),
-		COPYARGS2(FT_MEGA - 1, FT_64K - 2, 1, FT_64K - 3),
-		COPYARGS2(FT_MEGA + 11, FT_MEGA, FT_GIGA + 11, FT_MEGA + 1111),
-		COPYARGS2(FT_TERA + 111, FT_MEGA + 333, FT_MEGA - 111, 11111),
-		COPYARGS2(FT_TERA - 1111, 111111, 1, FT_MEGA + 1111),
+		COPYARGS2(FT_1M - 1, FT_64K - 2, 1, FT_64K - 3),
+		COPYARGS2(FT_1M + 11, FT_1M, FT_1G + 11, FT_1M + 1111),
+		COPYARGS2(FT_1T + 111, FT_1M + 333, FT_1M - 111, 11111),
+		COPYARGS2(FT_1T - 1111, 111111, 1, FT_1M + 1111),
 	};
 
 	ft_copy_range2(fte, test_copy_file_range_between_, args);
@@ -405,16 +405,16 @@ static void test_copy_file_range_truncate(struct ft_env *fte)
 		COPYARGS1(0, FT_64K),
 		COPYARGS1(FT_64K, FT_64K),
 		COPYARGS1(2 * FT_64K, 4 * FT_64K),
-		COPYARGS1(0, FT_MEGA),
-		COPYARGS1(FT_MEGA, FT_MEGA),
-		COPYARGS1(FT_GIGA, FT_64K),
-		COPYARGS1(FT_TERA, FT_4K),
+		COPYARGS1(0, FT_1M),
+		COPYARGS1(FT_1M, FT_1M),
+		COPYARGS1(FT_1G, FT_64K),
+		COPYARGS1(FT_1T, FT_4K),
 		COPYARGS1(1, FT_1K - 1),
 		COPYARGS1(FT_4K - 1, FT_4K + 3),
-		COPYARGS1(FT_64K - 3, FT_MEGA),
-		COPYARGS1((2 * FT_64K) - 3, FT_MEGA),
-		COPYARGS1(FT_GIGA - 3, FT_64K + 5),
-		COPYARGS1(FT_TERA - 3, FT_MEGA + 5),
+		COPYARGS1(FT_64K - 3, FT_1M),
+		COPYARGS1((2 * FT_64K) - 3, FT_1M),
+		COPYARGS1(FT_1G - 3, FT_64K + 5),
+		COPYARGS1(FT_1T - 3, FT_1M + 5),
 	};
 
 	ft_copy_range1(fte, test_copy_file_range_truncate_, args);
@@ -481,16 +481,16 @@ static void test_copy_file_range_overwrite(struct ft_env *fte)
 		COPYARGS1(0, FT_64K),
 		COPYARGS1(FT_64K, FT_64K),
 		COPYARGS1(2 * FT_64K, 4 * FT_64K),
-		COPYARGS1(0, FT_MEGA),
-		COPYARGS1(FT_MEGA, FT_MEGA),
-		COPYARGS1(FT_GIGA, FT_64K),
-		COPYARGS1(FT_TERA, FT_4K),
+		COPYARGS1(0, FT_1M),
+		COPYARGS1(FT_1M, FT_1M),
+		COPYARGS1(FT_1G, FT_64K),
+		COPYARGS1(FT_1T, FT_4K),
 		COPYARGS1(1, FT_1K - 1),
 		COPYARGS1(FT_4K - 1, FT_4K + 3),
-		COPYARGS1(FT_64K - 3, FT_MEGA),
-		COPYARGS1((2 * FT_64K) - 3, FT_MEGA),
-		COPYARGS1(FT_GIGA - 3, FT_64K + 5),
-		COPYARGS1(FT_TERA - 3, FT_MEGA + 5),
+		COPYARGS1(FT_64K - 3, FT_1M),
+		COPYARGS1((2 * FT_64K) - 3, FT_1M),
+		COPYARGS1(FT_1G - 3, FT_64K + 5),
+		COPYARGS1(FT_1T - 3, FT_1M + 5),
 	};
 
 	ft_copy_range1(fte, test_copy_file_range_overwrite_, args);
@@ -544,16 +544,16 @@ static void test_copy_file_range_nfiles(struct ft_env *fte)
 		COPYARGS1(0, FT_64K),
 		COPYARGS1(FT_64K, FT_64K),
 		COPYARGS1(2 * FT_64K, 4 * FT_64K),
-		COPYARGS1(0, FT_MEGA / 4),
-		COPYARGS1(FT_MEGA, FT_MEGA / 8),
-		COPYARGS1(FT_GIGA, FT_64K),
-		COPYARGS1(FT_TERA, FT_4K),
+		COPYARGS1(0, FT_1M / 4),
+		COPYARGS1(FT_1M, FT_1M / 8),
+		COPYARGS1(FT_1G, FT_64K),
+		COPYARGS1(FT_1T, FT_4K),
 		COPYARGS1(1, FT_1K - 1),
 		COPYARGS1(FT_4K - 1, FT_4K + 3),
-		COPYARGS1(FT_64K - 3, FT_MEGA / 16),
-		COPYARGS1((2 * FT_64K) - 3, FT_MEGA / 32),
-		COPYARGS1(FT_GIGA - 3, FT_64K + 5),
-		COPYARGS1(FT_TERA - 3, FT_MEGA + 5),
+		COPYARGS1(FT_64K - 3, FT_1M / 16),
+		COPYARGS1((2 * FT_64K) - 3, FT_1M / 32),
+		COPYARGS1(FT_1G - 3, FT_64K + 5),
+		COPYARGS1(FT_1T - 3, FT_1M + 5),
 	};
 
 	ft_copy_range1(fte, test_copy_file_range_nfiles_, args);
@@ -607,16 +607,16 @@ static void test_copy_file_range_mtime(struct ft_env *fte)
 		COPYARGS3(0, 0, FT_64K),
 		COPYARGS3(0, FT_64K, FT_64K),
 		COPYARGS3(FT_4K, FT_64K, 4 * FT_64K),
-		COPYARGS3(FT_64K, FT_64K, FT_MEGA),
-		COPYARGS3(FT_MEGA, FT_64K, FT_GIGA),
-		COPYARGS3(FT_GIGA, FT_MEGA, FT_MEGA),
-		COPYARGS3(FT_TERA, FT_GIGA, FT_MEGA / 2),
+		COPYARGS3(FT_64K, FT_64K, FT_1M),
+		COPYARGS3(FT_1M, FT_64K, FT_1G),
+		COPYARGS3(FT_1G, FT_1M, FT_1M),
+		COPYARGS3(FT_1T, FT_1G, FT_1M / 2),
 		/* unaligned */
 		COPYARGS3(1, 11, FT_64K),
 		COPYARGS3(1, FT_64K - 1, 3 * FT_64K + 3),
-		COPYARGS3(FT_MEGA - 1, FT_64K, FT_MEGA),
-		COPYARGS3(FT_GIGA - 1, FT_MEGA - 1, FT_MEGA + 11),
-		COPYARGS3(FT_TERA, FT_GIGA - 1, FT_MEGA + 11),
+		COPYARGS3(FT_1M - 1, FT_64K, FT_1M),
+		COPYARGS3(FT_1G - 1, FT_1M - 1, FT_1M + 11),
+		COPYARGS3(FT_1T, FT_1G - 1, FT_1M + 11),
 	};
 
 	ft_copy_range3(fte, test_copy_file_range_mtime_, args);
@@ -667,10 +667,10 @@ static void test_copy_file_range_extend(struct ft_env *fte)
 		COPYARGS1(FT_1K, FT_4K),
 		COPYARGS1(FT_1K, FT_64K),
 		COPYARGS1(FT_64K, FT_64K),
-		COPYARGS1(FT_64K, FT_MEGA),
-		COPYARGS1(FT_MEGA, FT_64K),
-		COPYARGS1(FT_GIGA, FT_MEGA),
-		COPYARGS1(FT_TERA, 2 * FT_64K),
+		COPYARGS1(FT_64K, FT_1M),
+		COPYARGS1(FT_1M, FT_64K),
+		COPYARGS1(FT_1G, FT_1M),
+		COPYARGS1(FT_1T, 2 * FT_64K),
 		/* unaligned */
 		COPYARGS1(1, FT_1K + 11),
 		COPYARGS1(11, FT_4K - 111),
@@ -678,10 +678,10 @@ static void test_copy_file_range_extend(struct ft_env *fte)
 		COPYARGS1(FT_1K + 1, FT_4K + 11),
 		COPYARGS1(FT_1K - 11, FT_64K + 111),
 		COPYARGS1(FT_64K - 1, FT_64K + 11),
-		COPYARGS1(FT_64K + 11, FT_MEGA - 111),
-		COPYARGS1(FT_MEGA - 111, FT_64K + 1111),
-		COPYARGS1(FT_GIGA + 11, FT_MEGA - 11111),
-		COPYARGS1(FT_TERA - 1111, 11 * FT_64K + 1),
+		COPYARGS1(FT_64K + 11, FT_1M - 111),
+		COPYARGS1(FT_1M - 111, FT_64K + 1111),
+		COPYARGS1(FT_1G + 11, FT_1M - 11111),
+		COPYARGS1(FT_1T - 1111, 11 * FT_64K + 1),
 	};
 
 	ft_copy_range1(fte, test_copy_file_range_extend_, args);
@@ -728,17 +728,17 @@ static void test_copy_file_range_sparse(struct ft_env *fte)
 {
 	const struct ft_copy_range_args args[] = {
 		/* aligned */
-		COPYARGS1(FT_MEGA, FT_64K),
-		COPYARGS1(FT_GIGA, FT_MEGA),
-		COPYARGS1(4 * FT_GIGA, 2 * FT_MEGA),
-		COPYARGS1(64 * FT_GIGA, 4 * FT_MEGA),
-		COPYARGS1(FT_TERA, FT_MEGA),
+		COPYARGS1(FT_1M, FT_64K),
+		COPYARGS1(FT_1G, FT_1M),
+		COPYARGS1(4 * FT_1G, 2 * FT_1M),
+		COPYARGS1(64 * FT_1G, 4 * FT_1M),
+		COPYARGS1(FT_1T, FT_1M),
 		/* unaligned */
-		COPYARGS1(FT_MEGA - 1, 11 * FT_64K + 1),
-		COPYARGS1(FT_GIGA - 11, FT_MEGA + 111),
-		COPYARGS1(11 * FT_GIGA - 11, FT_MEGA - 1111),
-		COPYARGS1(111 * FT_GIGA + 1, FT_MEGA + 11),
-		COPYARGS1(FT_TERA - 111, FT_MEGA + 1111),
+		COPYARGS1(FT_1M - 1, 11 * FT_64K + 1),
+		COPYARGS1(FT_1G - 11, FT_1M + 111),
+		COPYARGS1(11 * FT_1G - 11, FT_1M - 1111),
+		COPYARGS1(111 * FT_1G + 1, FT_1M + 11),
+		COPYARGS1(FT_1T - 111, FT_1M + 1111),
 	};
 
 	ft_copy_range1(fte, test_copy_file_range_sparse_, args);
@@ -781,17 +781,17 @@ static void test_copy_file_range_sparser(struct ft_env *fte)
 {
 	const struct ft_copy_range_args args[] = {
 		/* aligned */
-		COPYARGS1(FT_MEGA, FT_MEGA),
-		COPYARGS1(FT_GIGA, FT_MEGA),
-		COPYARGS1(4 * FT_GIGA, FT_MEGA),
-		COPYARGS1(64 * FT_GIGA, FT_MEGA),
-		COPYARGS1(FT_TERA, FT_MEGA),
+		COPYARGS1(FT_1M, FT_1M),
+		COPYARGS1(FT_1G, FT_1M),
+		COPYARGS1(4 * FT_1G, FT_1M),
+		COPYARGS1(64 * FT_1G, FT_1M),
+		COPYARGS1(FT_1T, FT_1M),
 		/* unaligned */
-		COPYARGS1(FT_MEGA - 1, FT_MEGA + 11),
-		COPYARGS1(FT_GIGA - 11, FT_MEGA + 111),
-		COPYARGS1(11 * FT_GIGA - 11, FT_MEGA - 1111),
-		COPYARGS1(111 * FT_GIGA + 1, FT_MEGA + 11),
-		COPYARGS1(FT_TERA - 111, FT_MEGA + 1111),
+		COPYARGS1(FT_1M - 1, FT_1M + 11),
+		COPYARGS1(FT_1G - 11, FT_1M + 111),
+		COPYARGS1(11 * FT_1G - 11, FT_1M - 1111),
+		COPYARGS1(111 * FT_1G + 1, FT_1M + 11),
+		COPYARGS1(FT_1T - 111, FT_1M + 1111),
 	};
 
 	ft_copy_range1(fte, test_copy_file_range_sparser_, args);
@@ -826,14 +826,14 @@ test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
 static void test_copy_file_range_empty(struct ft_env *fte)
 {
 	const loff_t len[] = {
-		FT_MEGA,
-		FT_GIGA,
-		4 * FT_GIGA,
-		64 * FT_GIGA,
-		FT_TERA,
-		11 * FT_MEGA - 11,
-		111 * FT_GIGA - 111,
-		FT_TERA + 111111,
+		FT_1M,
+		FT_1G,
+		4 * FT_1G,
+		64 * FT_1G,
+		FT_1T,
+		11 * FT_1M - 11,
+		111 * FT_1G - 111,
+		FT_1T + 111111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {

@@ -20,17 +20,17 @@
 /*
  * Expects read-write data-consistency when I/O at block boundaries
  */
-static void test_boundaries_(struct ft_env *fte, loff_t boff)
+static void test_boundaries_(struct ft_env *fte, loff_t base_off)
 {
-	int fd;
-	uint8_t byte;
-	uint64_t val1;
-	uint64_t val2;
-	loff_t off;
+	uint64_t val1 = 0;
+	uint64_t val2 = 0;
 	const long vsz = (long)sizeof(val1);
-	const loff_t off_beg = boff - vsz - 1;
-	const loff_t off_end = boff + vsz + 1;
+	const loff_t off_beg = base_off - vsz - 1;
+	const loff_t off_end = base_off + vsz + 1;
 	const char *path = ft_new_path_unique(fte);
+	loff_t off = -1;
+	int fd = -1;
+	uint8_t byte = 0;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (off = off_beg; off < off_end; ++off) {
@@ -58,15 +58,25 @@ static void test_boundaries_arr_(struct ft_env *fte,
 {
 	for (size_t i = 0; i < cnt; ++i) {
 		test_boundaries_(fte, arr[i]);
+		ft_relax_mem(fte);
 	}
 }
 
 static void test_boundaries_write_read(struct ft_env *fte)
 {
 	const loff_t offs[] = {
-		0, FT_KILO, FT_BK_SIZE, FT_MEGA,
-		2 * FT_MEGA + 1, FT_GIGA, 7 * FT_GIGA - 7,
-		FT_TERA, FT_TERA / 2 - 1,
+		0,
+		FT_1K,
+		FT_2K,
+		FT_4K,
+		FT_8K,
+		FT_64K,
+		FT_1M,
+		FT_2M + 1,
+		FT_1G,
+		7 * FT_1G - 7,
+		FT_1T,
+		FT_1T / 2 - 1,
 		FT_FILESIZE_MAX / 2,
 		FT_FILESIZE_MAX / 2 + 1,
 		FT_FILESIZE_MAX

@@ -19,7 +19,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct ft_getdents_ctx {
-	char buf[FT_UMEGA / 4];
+	char buf[FT_1M / 4];
 	struct dirent64 dents[1024];
 	size_t ndents;
 };

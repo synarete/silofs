@@ -89,22 +89,22 @@ static void test_tmpfile_rdwr_1k(struct ft_env *fte)
 
 static void test_tmpfile_rdwr_8k(struct ft_env *fte)
 {
-	test_buffer(fte, 8 * FT_UKILO);
+	test_buffer(fte, 8 * FT_1K);
 }
 
 static void test_tmpfile_rdwr_1m(struct ft_env *fte)
 {
-	test_buffer(fte, FT_UMEGA);
+	test_buffer(fte, FT_1M);
 }
 
 static void test_tmpfile_rdwr_8m(struct ft_env *fte)
 {
-	test_buffer(fte, 8 * FT_UMEGA);
+	test_buffer(fte, 8 * FT_1M);
 }
 
 static void test_tmpfile_rdwr_32m(struct ft_env *fte)
 {
-	test_buffer(fte, 32 * FT_UMEGA);
+	test_buffer(fte, 32 * FT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

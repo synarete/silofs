@@ -167,9 +167,9 @@ static void test_open_trunc(struct ft_env *fte)
 {
 	test_open_trunc_(fte, 0, FT_1K);
 	test_open_trunc_(fte, FT_1K, FT_4K);
-	test_open_trunc_(fte, FT_MEGA, FT_64K);
-	test_open_trunc_(fte, FT_GIGA - 7, 7 * FT_1K);
-	test_open_trunc_(fte, FT_TERA - 11, FT_MEGA + 111);
+	test_open_trunc_(fte, FT_1M, FT_64K);
+	test_open_trunc_(fte, FT_1G - 7, 7 * FT_1K);
+	test_open_trunc_(fte, FT_1T - 11, FT_1M + 111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

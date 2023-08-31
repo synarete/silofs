@@ -293,13 +293,13 @@ static void test_utimensat_io(struct ft_env *fte)
 	const struct ft_range range[] = {
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(FT_MEGA, FT_64K),
-		FT_MKRANGE(FT_GIGA, FT_MEGA),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1G, FT_1M),
 		FT_MKRANGE(FT_1K + 1, FT_4K - 7),
 		FT_MKRANGE(FT_64K - 1, FT_4K + 7),
-		FT_MKRANGE(FT_64K - 11, FT_MEGA + 17),
-		FT_MKRANGE(FT_MEGA - 111, FT_MEGA + 1111),
-		FT_MKRANGE(FT_TERA - 1111, 111111),
+		FT_MKRANGE(FT_64K - 11, FT_1M + 17),
+		FT_MKRANGE(FT_1M - 111, FT_1M + 1111),
+		FT_MKRANGE(FT_1T - 1111, 111111),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {

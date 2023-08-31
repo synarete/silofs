@@ -22,6 +22,13 @@
 
 #define MCHUNK_MAGIC 0x3A4BE8C1
 
+struct ft_mchunk {
+	struct ft_mchunk *next;
+	uint8_t      *data;
+	size_t        size;
+	unsigned long magic;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void fte_init(struct ft_env *fte, const struct ft_params *params)

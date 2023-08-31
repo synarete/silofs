@@ -44,11 +44,11 @@ static void test_stat_simple(struct ft_env *fte)
  */
 static void test_stat_notdir(struct ft_env *fte)
 {
-	int fd = -1;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
+	int fd = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_stat(path0, &st);
@@ -99,12 +99,12 @@ static void test_stat_statvfs(struct ft_env *fte)
  */
 static void test_statx_btime(struct ft_env *fte)
 {
-	int fd = -1;
-	int dfd = -1;
 	struct statx stx[2];
 	const char *name = ft_new_name_unique(fte);
 	const char *path = ft_new_path_unique(fte);
 	const int flags = AT_STATX_FORCE_SYNC;
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path, 0750);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

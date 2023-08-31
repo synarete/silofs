@@ -38,22 +38,15 @@
 
 
 /* Re-mapped macros */
-#define FT_KILO                 SILOFS_KILO
-#define FT_MEGA                 SILOFS_MEGA
-#define FT_GIGA                 SILOFS_GIGA
-#define FT_TERA                 SILOFS_TERA
-#define FT_PETA                 SILOFS_PETA
-
-#define FT_UKILO                SILOFS_UKILO
-#define FT_UMEGA                SILOFS_UMEGA
-#define FT_UGIGA                SILOFS_UGIGA
-#define FT_UTERA                SILOFS_UTERA
-#define FT_UPETA                SILOFS_UPETA
-
 #define FT_1K                   SILOFS_KILO
+#define FT_2K                   (2 * SILOFS_KILO)
 #define FT_4K                   (4 * SILOFS_KILO)
 #define FT_8K                   (8 * SILOFS_KILO)
 #define FT_64K                  (64 * SILOFS_KILO)
+#define FT_1M                   SILOFS_MEGA
+#define FT_2M                   (2 * SILOFS_MEGA)
+#define FT_1G                   SILOFS_GIGA
+#define FT_1T                   SILOFS_TERA
 
 #define FT_FRGSIZE              (512) /* Fragment size (see stat(2)) */
 #define FT_BK_SIZE              SILOFS_LBK_SIZE
@@ -116,13 +109,8 @@ enum ft_flags {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct ft_env;
+struct ft_mchunk;
 
-struct ft_mchunk {
-	struct ft_mchunk *next;
-	uint8_t      *data;
-	size_t        size;
-	unsigned long magic;
-};
 
 /* Test define */
 struct ft_tdef {
@@ -518,6 +506,10 @@ extern const struct ft_tests ft_test_xstress_mt;
 
 #define FT_DEFTESTS(a_) \
 	{ .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
+
+
+#define FT_MKRANGE0(off_) \
+	{ .off = off_, .len = 0 }
 
 #define FT_MKRANGE(off_, len_) \
 	{ .off = off_, .len = len_ }

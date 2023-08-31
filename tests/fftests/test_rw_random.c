@@ -66,14 +66,14 @@ static void test_random_aligned_bk(struct ft_env *fte)
 	const loff_t from[] = {
 		0,
 		FT_BK_SIZE,
-		FT_UMEGA,
-		FT_UMEGA - FT_BK_SIZE,
-		FT_UGIGA / 2,
-		FT_UGIGA,
-		FT_UGIGA - FT_BK_SIZE,
-		FT_UGIGA + FT_BK_SIZE,
-		FT_UGIGA - FT_MEGA,
-		FT_UTERA - (64 * FT_MEGA),
+		FT_1M,
+		FT_1M - FT_BK_SIZE,
+		FT_1G / 2,
+		FT_1G,
+		FT_1G - FT_BK_SIZE,
+		FT_1G + FT_BK_SIZE,
+		FT_1G - FT_1M,
+		FT_1T - (64 * FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
@@ -90,17 +90,17 @@ static void test_random_aligned_bk(struct ft_env *fte)
 
 static void test_random_aligned_mega(struct ft_env *fte)
 {
-	const size_t bsz = FT_UMEGA;
+	const size_t bsz = FT_1M;
 	const size_t cnt[] = { 1, 2, 4 };
 	const loff_t from[] = {
 		0,
-		FT_UMEGA,
-		FT_UGIGA,
-		FT_UGIGA - FT_MEGA,
-		FT_UGIGA + FT_MEGA,
-		2 * FT_UGIGA,
-		FT_UTERA - (64 * FT_MEGA),
-		FT_UTERA + FT_UGIGA + FT_MEGA,
+		FT_1M,
+		FT_1G,
+		FT_1G - FT_1M,
+		FT_1G + FT_1M,
+		2 * FT_1G,
+		FT_1T - (64 * FT_1M),
+		FT_1T + FT_1G + FT_1M,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
@@ -123,13 +123,13 @@ static void test_random_unaligned_bk(struct ft_env *fte)
 		1,
 		FT_BK_SIZE - 11,
 		FT_BK_SIZE + 11,
-		FT_UMEGA - 11,
-		FT_UMEGA - FT_BK_SIZE - 1,
-		FT_UGIGA - 111,
-		FT_UGIGA - FT_BK_SIZE - 1,
-		FT_UGIGA + FT_BK_SIZE + 1,
-		FT_UTERA - 1111,
-		FT_UTERA - (11 * FT_UGIGA) + 111,
+		FT_1M - 11,
+		FT_1M - FT_BK_SIZE - 1,
+		FT_1G - 111,
+		FT_1G - FT_BK_SIZE - 1,
+		FT_1G + FT_BK_SIZE + 1,
+		FT_1T - 1111,
+		FT_1T - (11 * FT_1G) + 111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
@@ -146,19 +146,19 @@ static void test_random_unaligned_bk(struct ft_env *fte)
 
 static void test_random_unaligned_mega(struct ft_env *fte)
 {
-	const size_t bsz = FT_UMEGA;
+	const size_t bsz = FT_1M;
 	const size_t cnt[] = { 1, 2, 3 };
 	const loff_t from[] = {
 		11,
 		FT_BK_SIZE - 11,
-		FT_UMEGA - 11,
-		FT_UMEGA - FT_BK_SIZE - 1,
-		11 * FT_UMEGA - 1,
-		FT_UGIGA - 111,
-		FT_UGIGA - FT_BK_SIZE - 1,
-		FT_UGIGA + FT_BK_SIZE + 1,
-		FT_UTERA - 1111,
-		FT_UTERA - (11 * FT_UGIGA) + 111,
+		FT_1M - 11,
+		FT_1M - FT_BK_SIZE - 1,
+		11 * FT_1M - 1,
+		FT_1G - 111,
+		FT_1G - FT_BK_SIZE - 1,
+		FT_1G + FT_BK_SIZE + 1,
+		FT_1T - 1111,
+		FT_1T - (11 * FT_1G) + 111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
@@ -180,14 +180,14 @@ static void test_random_unaligned_(struct ft_env *fte, size_t bsz)
 		7,
 		1023,
 		FT_BK_SIZE - 7,
-		FT_UMEGA - 7,
-		FT_UMEGA - FT_BK_SIZE - 7,
-		7 * FT_UMEGA - 7,
-		FT_UGIGA - 17,
-		FT_UGIGA - FT_BK_SIZE - 17,
-		FT_UGIGA + FT_BK_SIZE + 17,
-		FT_UTERA - 7,
-		FT_UTERA - (7 * FT_UGIGA) + 7,
+		FT_1M - 7,
+		FT_1M - FT_BK_SIZE - 7,
+		7 * FT_1M - 7,
+		FT_1G - 17,
+		FT_1G - FT_BK_SIZE - 17,
+		FT_1G + FT_BK_SIZE + 17,
+		FT_1T - 7,
+		FT_1T - (7 * FT_1G) + 7,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {

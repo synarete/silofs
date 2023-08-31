@@ -114,11 +114,11 @@ static void test_mmap_mt_seq_(struct ft_env *fte, loff_t off,
 
 static void test_mmap_mt_seq(struct ft_env *fte)
 {
-	test_mmap_mt_seq_(fte, 0, FT_GIGA, FT_MEGA);
+	test_mmap_mt_seq_(fte, 0, FT_1G, FT_1M);
 	ft_relax_mem(fte);
-	test_mmap_mt_seq_(fte, FT_GIGA, FT_MEGA, FT_4K);
+	test_mmap_mt_seq_(fte, FT_1G, FT_1M, FT_4K);
 	ft_relax_mem(fte);
-	test_mmap_mt_seq_(fte, FT_TERA, 4 * FT_MEGA, FT_MEGA / 4);
+	test_mmap_mt_seq_(fte, FT_1T, 4 * FT_1M, FT_1M / 4);
 	ft_relax_mem(fte);
 }
 

@@ -61,7 +61,7 @@ def fstype_of(path: pathlib.Path) -> str:
             mntp_st = mntp_path.stat()
             if mntp_st.st_dev == st.st_dev:
                 return fs_type
-        except Exception:
+        except OSError:
             continue
     return "unknownfs"
 

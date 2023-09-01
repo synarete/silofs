@@ -1,4 +1,4 @@
-	/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 /*
  * This file is part of silofs.
  *
@@ -81,6 +81,25 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 	if (!err && likely(ii != NULL) && has_nlookup_mode(ii)) {
 		ii->i_nlookup++;
 	}
+}
+
+static bool ii_ispinned(const struct silofs_inode_info *ii)
+{
+	const int flags = (int)(ii->i_vi.v.flags);
+
+	return (flags & SILOFS_LNF_PINNED) > 0;
+}
+
+static void ii_unpin(struct silofs_inode_info *ii)
+{
+	const int flags = (int)(ii->i_vi.v.flags);
+
+	ii->i_vi.v.flags = (enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
+}
+
+static void ii_set_pinned(struct silofs_inode_info *ii)
+{
+	ii->i_vi.v.flags |= SILOFS_LNF_PINNED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -824,7 +843,7 @@ static int do_mknod_special(struct silofs_task *task,
 
 	/* can not use 'nopen' as FUSE does not sent OPEN on fifo, and
 	 * therefore no RELEASE */
-	ii->i_vi.v.flags |= SILOFS_LNF_PINNED;
+	ii_set_pinned(ii);
 
 	*out_ii = ii;
 	return 0;
@@ -2555,14 +2574,12 @@ static int try_forget_cached_ii(struct silofs_inode_info *ii)
 int silofs_do_forget(struct silofs_task *task,
                      struct silofs_inode_info *ii, size_t nlookup)
 {
-	const int flags = (int)(ii->i_vi.v.flags);
 	int err;
 
 	ii_sub_nlookup(ii, (long)nlookup);
-	if (flags & SILOFS_LNF_PINNED) {
+	if (ii_ispinned(ii)) {
 		/* case of prune special files created by MKNOD */
-		ii->i_vi.v.flags =
-			(enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
+		ii_unpin(ii);
 		err = try_prune_inode(task, ii, false);
 	} else {
 		err = try_forget_cached_ii(ii);

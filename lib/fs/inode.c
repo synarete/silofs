@@ -1282,8 +1282,8 @@ void silofs_ii_update_isize(struct silofs_inode_info *ii,
 
 static int verify_inode_specific(const struct silofs_inode *inode)
 {
-	int err;
 	const mode_t mode = inode_mode(inode);
+	int err = 0;
 
 	if (S_ISDIR(mode)) {
 		err = silofs_verify_dir_inode(inode);
@@ -1294,11 +1294,61 @@ static int verify_inode_specific(const struct silofs_inode *inode)
 	return err;
 }
 
+static int verify_inode_head(const struct silofs_inode *inode)
+{
+	ino_t ino;
+	loff_t size;
+	nlink_t nlink;
+	mode_t mode;
+	int err;
+
+	ino = inode_ino(inode);
+	err = silofs_verify_ino(ino);
+	if (err) {
+		log_err("bad inode: ino=%ld", ino);
+		return err;
+	}
+	size = inode_size(inode);
+	if ((size < 0) || (size > (LONG_MAX / 2))) {
+		log_err("bad inode: ino=%ld size=%ld", ino, (long)size);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	nlink = inode_nlink(inode);
+	if (nlink > SILOFS_LINK_MAX) {
+		log_err("bad inode: ino=%ld nlink=%ld", ino, (long)nlink);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	mode = inode_mode(inode);
+	if ((mode & S_IFMT) == 0) {
+		log_err("bad inode: ino=%ld mode=0%lo", ino, (long)mode);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int verify_inode_flags(const struct silofs_inode *inode)
+{
+	const enum silofs_inodef flags = inode_flags(inode);
+	const mode_t mode = inode_mode(inode);
+	const ino_t ino = inode_ino(inode);
+
+	if ((flags & SILOFS_INODEF_ROOTD) && !S_ISDIR(mode)) {
+		log_err("bad inode: ino=%ld mode=0%lo flags=%x",
+		        ino, (long)mode, flags);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
 int silofs_verify_inode(const struct silofs_inode *inode)
 {
 	int err;
 
-	err = silofs_verify_ino(inode_ino(inode));
+	err = verify_inode_head(inode);
+	if (err) {
+		return err;
+	}
+	err = verify_inode_flags(inode);
 	if (err) {
 		return err;
 	}

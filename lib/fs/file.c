@@ -66,6 +66,7 @@ struct silofs_file_ctx {
 struct silofs_fileaf_ref {
 	struct silofs_oaddr oaddr;
 	struct silofs_vaddr vaddr;
+	struct silofs_inode_info  *ii;
 	struct silofs_finode_info *parent_fni;
 	loff_t  file_pos;
 	size_t  slot_idx;
@@ -870,13 +871,14 @@ static void flref_reset(struct silofs_fileaf_ref *flref)
 }
 
 static void flref_setup(struct silofs_fileaf_ref *flref,
+                        struct silofs_inode_info  *ii,
                         struct silofs_finode_info *parent_fni,
                         const struct silofs_vaddr *vaddr,
                         loff_t file_pos, loff_t io_end)
 {
-	silofs_memzero(flref, sizeof(*flref));
+	flref_reset(flref);
 	vaddr_assign(&flref->vaddr, vaddr);
-	oaddr_reset(&flref->oaddr);
+	flref->ii = ii;
 	flref->parent_fni = parent_fni;
 	flref->slot_idx = UINT_MAX;
 	flref->file_pos = file_pos;
@@ -905,9 +907,10 @@ static void flref_setup(struct silofs_fileaf_ref *flref,
 }
 
 static void flref_noent(struct silofs_fileaf_ref *flref,
+                        struct silofs_inode_info *ii,
                         loff_t file_pos, loff_t io_end)
 {
-	flref_setup(flref, NULL, vaddr_none(), file_pos, io_end);
+	flref_setup(flref, ii, NULL, vaddr_none(), file_pos, io_end);
 }
 
 static void flref_update_partial(struct silofs_fileaf_ref *flref, size_t len)
@@ -927,7 +930,7 @@ static void filc_resolve_child_at(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 
 	fni_resolve_child_by_slot(fni, slot, &vaddr);
-	flref_setup(out_flref, fni, &vaddr, file_pos, f_ctx->end);
+	flref_setup(out_flref, f_ctx->ii, fni, &vaddr, file_pos, f_ctx->end);
 }
 
 static void filc_resolve_child(const struct silofs_file_ctx *f_ctx,
@@ -940,7 +943,7 @@ static void filc_resolve_child(const struct silofs_file_ctx *f_ctx,
 		slot = fni_child_slot_of(fni, file_pos);
 		filc_resolve_child_at(f_ctx, fni, file_pos, slot, out_flref);
 	} else {
-		flref_setup(out_flref, NULL,
+		flref_setup(out_flref, f_ctx->ii, NULL,
 		            vaddr_none(), file_pos, f_ctx->end);
 	}
 }
@@ -991,7 +994,8 @@ static void filc_resolve_head1_leaf(const struct silofs_file_ctx *f_ctx,
 	const size_t slot = filc_head1_leaf_slot_of(f_ctx);
 
 	filc_head1_leaf_at(f_ctx, slot, &vaddr);
-	flref_setup(out_flref, NULL, &vaddr, f_ctx->off, f_ctx->end);
+	flref_setup(out_flref, f_ctx->ii, NULL,
+	            &vaddr, f_ctx->off, f_ctx->end);
 }
 
 static void
@@ -1024,7 +1028,8 @@ static void filc_resolve_head2_leaf(const struct silofs_file_ctx *f_ctx,
 	const size_t slot = filc_head2_leaf_slot_of(f_ctx);
 
 	filc_head2_leaf_at(f_ctx, slot, &vaddr);
-	flref_setup(out_flref, NULL, &vaddr, f_ctx->off, f_ctx->end);
+	flref_setup(out_flref, f_ctx->ii, NULL,
+	            &vaddr, f_ctx->off, f_ctx->end);
 }
 
 static void
@@ -2256,7 +2261,8 @@ static int filc_create_head1_leaf_space(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	flref_setup(out_flref, NULL, &vaddr, f_ctx->off, f_ctx->end);
+	flref_setup(out_flref, f_ctx->ii, NULL,
+	            &vaddr, f_ctx->off, f_ctx->end);
 	filc_update_head1_leaf_by(f_ctx, out_flref);
 	return 0;
 }
@@ -2271,7 +2277,8 @@ static int filc_create_head2_leaf_space(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	flref_setup(out_flref, NULL, &vaddr, f_ctx->off, f_ctx->end);
+	flref_setup(out_flref, f_ctx->ii, NULL,
+	            &vaddr, f_ctx->off, f_ctx->end);
 	filc_update_head2_leaf_by(f_ctx, out_flref);
 	return 0;
 }
@@ -3993,7 +4000,7 @@ static int filc_resolve_fpos(struct silofs_file_ctx *f_ctx,
 	if (err != -SILOFS_ENOENT) {
 		return err;
 	}
-	flref_noent(out_flref, f_ctx->off, f_ctx->end);
+	flref_noent(out_flref, f_ctx->ii, f_ctx->off, f_ctx->end);
 	return -SILOFS_ENOENT;
 }
 
@@ -4128,7 +4135,7 @@ static int filc_unshare_leaf_by(const struct silofs_file_ctx *f_ctx,
 	if (!flref->shared || !flref->tree) {
 		return 0;
 	}
-	flref_setup(&flref_new, flref->parent_fni,
+	flref_setup(&flref_new, f_ctx->ii, flref->parent_fni,
 	            &flref->vaddr, flref->file_pos, f_ctx->end);
 	err = filc_claim_data_space(f_ctx, flref->vaddr.stype,
 	                            &flref_new.vaddr);

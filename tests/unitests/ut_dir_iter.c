@@ -232,7 +232,7 @@ static void ut_dir_iter_fixed_names(struct ut_env *ute)
 
 	ut_dir_iter_names_(ute, dig_names, UT_ARRAY_SIZE(dig_names));
 	ut_dir_iter_names_(ute, abc_names, UT_ARRAY_SIZE(abc_names));
-};
+}
 
 static void ut_dir_iter_rand_names_(struct ut_env *ute, size_t name_len)
 {

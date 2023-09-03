@@ -278,6 +278,7 @@ static void mountd_sigaction_halt_handler(int signum)
 	}
 }
 
+__attribute__((__noreturn__))
 static void mountd_sigaction_term_handler(int signum)
 {
 	struct mountd_ctx *ctx = mountd_ctx;
@@ -290,6 +291,7 @@ static void mountd_sigaction_term_handler(int signum)
 	exit(EXIT_FAILURE);
 }
 
+__attribute__((__noreturn__))
 static void mountd_sigaction_abort_handler(int signum)
 {
 	struct mountd_ctx *ctx = mountd_ctx;

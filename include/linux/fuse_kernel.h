@@ -875,7 +875,11 @@ struct fuse_dirent {
 	uint64_t	off;
 	uint32_t	namelen;
 	uint32_t	type;
+#ifdef SILOFS_USE_FS_PRIVATE
+	char name[1];
+#else
 	char name[];
+#endif
 };
 
 /* Align variable length records to 64bit boundary */

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+	/* SPDX-License-Identifier: GPL-3.0-or-later */
 /*
  * This file is part of silofs.
  *
@@ -2555,13 +2555,14 @@ static int try_forget_cached_ii(struct silofs_inode_info *ii)
 int silofs_do_forget(struct silofs_task *task,
                      struct silofs_inode_info *ii, size_t nlookup)
 {
-	const int flags = ii->i_vi.v.flags;
+	const int flags = (int)(ii->i_vi.v.flags);
 	int err;
 
 	ii_sub_nlookup(ii, (long)nlookup);
 	if (flags & SILOFS_LNF_PINNED) {
 		/* case of prune special files created by MKNOD */
-		ii->i_vi.v.flags = flags & ~SILOFS_LNF_PINNED;
+		ii->i_vi.v.flags =
+			(enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
 		err = try_prune_inode(task, ii, false);
 	} else {
 		err = try_forget_cached_ii(ii);

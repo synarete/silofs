@@ -444,25 +444,30 @@ static bool ce_is_mapped(const struct silofs_cache_elem *ce)
 	return (ce->ce_flags & SILOFS_CEF_MAPPED) > 0;
 }
 
+static void ce_set_flags(struct silofs_cache_elem *ce, int flags)
+{
+	ce->ce_flags = (enum silofs_ce_flags)flags;
+}
+
 static void ce_set_mapped(struct silofs_cache_elem *ce, bool mapped)
 {
-	const int flags = ce->ce_flags;
+	const int flags = (int)(ce->ce_flags);
 
 	if (mapped) {
-		ce->ce_flags = flags | SILOFS_CEF_MAPPED;
+		ce_set_flags(ce, flags | SILOFS_CEF_MAPPED);
 	} else {
-		ce->ce_flags = flags & ~SILOFS_CEF_MAPPED;
+		ce_set_flags(ce, flags & ~SILOFS_CEF_MAPPED);
 	}
 }
 
 static void ce_set_forgot(struct silofs_cache_elem *ce, bool forgot)
 {
-	const int flags = ce->ce_flags;
+	const int flags = (int)(ce->ce_flags);
 
 	if (forgot) {
-		ce->ce_flags = flags | SILOFS_CEF_FORGOT;
+		ce_set_flags(ce, flags | SILOFS_CEF_FORGOT);
 	} else {
-		ce->ce_flags = flags & ~SILOFS_CEF_FORGOT;
+		ce_set_flags(ce, flags & ~SILOFS_CEF_FORGOT);
 	}
 }
 
@@ -559,17 +564,19 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 
 static bool ce_is_dirty(const struct silofs_cache_elem *ce)
 {
-	return (ce->ce_flags & SILOFS_CEF_DIRTY) > 0;
+	const int flags = (int)ce->ce_flags;
+
+	return (flags & SILOFS_CEF_DIRTY) > 0;
 }
 
 static void ce_set_dirty(struct silofs_cache_elem *ce, bool dirty)
 {
-	const int flags = ce->ce_flags;
+	const int flags = (int)ce->ce_flags;
 
 	if (dirty) {
-		ce->ce_flags = flags | SILOFS_CEF_DIRTY;
+		ce_set_flags(ce, flags | SILOFS_CEF_DIRTY);
 	} else {
-		ce->ce_flags = flags & ~SILOFS_CEF_DIRTY;
+		ce_set_flags(ce, flags & ~SILOFS_CEF_DIRTY);
 	}
 }
 

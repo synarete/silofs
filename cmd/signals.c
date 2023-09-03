@@ -41,6 +41,7 @@ static void sigaction_halt_handler(int signum)
 	}
 }
 
+__attribute__((__noreturn__))
 static void sigaction_term_handler(int signum)
 {
 	silofs_backtrace();
@@ -50,6 +51,7 @@ static void sigaction_term_handler(int signum)
 	exit(EXIT_FAILURE);
 }
 
+__attribute__((__noreturn__))
 static void sigaction_abort_handler(int signum)
 {
 	if (cmd_globals.sig_fatal) {

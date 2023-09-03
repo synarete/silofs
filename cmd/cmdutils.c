@@ -1095,7 +1095,7 @@ cmd_new_mntinfo(const struct silofs_substr *mntdir,
 	mi->mntargs = str;
 
 	return mi;
-};
+}
 
 static struct cmd_proc_mntinfo *
 cmd_new_mntinfo_of(const struct silofs_substr *line)

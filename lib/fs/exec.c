@@ -1188,19 +1188,26 @@ static int format_zero_vspace(const struct silofs_fs_env *fse)
 	return 0;
 }
 
-static int exec_spawn_rootdir_inode(const struct silofs_fs_env *fse,
-                                    struct silofs_inode_info **out_ii)
+static int do_spawn_rootdir(struct silofs_task *task,
+                            struct silofs_inode_info **out_ii)
+{
+	struct silofs_inew_params inp;
+
+	silofs_inew_params_of(task, NULL, S_IFDIR | 0755, 0, &inp);
+	return silofs_spawn_inode_of(task, &inp, out_ii);
+}
+
+static int exec_spawn_rootdir(const struct silofs_fs_env *fse,
+                              struct silofs_inode_info **out_ii)
 {
 	struct silofs_task task;
-	const mode_t mode = S_IFDIR | 0755;
-	const ino_t ino = SILOFS_INO_NULL;
 	int err;
 
 	err = make_task(fse, &task);
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_inode_of(&task, ino, 0, mode, 0, out_ii);
+	err = do_spawn_rootdir(&task, out_ii);
 	return term_task(&task, err);
 }
 
@@ -1209,7 +1216,7 @@ static int format_rootdir(const struct silofs_fs_env *fse)
 	struct silofs_inode_info *root_ii = NULL;
 	int err;
 
-	err = exec_spawn_rootdir_inode(fse, &root_ii);
+	err = exec_spawn_rootdir(fse, &root_ii);
 	if (err) {
 		return err;
 	}

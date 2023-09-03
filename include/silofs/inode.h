@@ -20,6 +20,15 @@
 #include <unistd.h>
 #include <silofs/types.h>
 
+struct silofs_inew_params {
+	struct silofs_creds creds;
+	ino_t           parent_ino;
+	mode_t          parent_mode;
+	mode_t          mode;
+	dev_t           rdev;
+};
+
+
 bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
@@ -86,8 +95,6 @@ int silofs_do_utimens(const struct silofs_task *task,
                       struct silofs_inode_info *ii,
                       const struct silofs_itimes *itimes);
 
-int silofs_verify_inode(const struct silofs_inode *inode);
-
 void silofs_ii_update_itimes(struct silofs_inode_info *ii,
                              const struct silofs_creds *creds,
                              enum silofs_iattr_flags attr_flags);
@@ -103,18 +110,21 @@ void silofs_ii_update_iattrs(struct silofs_inode_info *ii,
                              const struct silofs_creds *creds,
                              const struct silofs_iattr *iattr);
 
-void silofs_iattr_setup(struct silofs_iattr *iattr, ino_t ino);
-
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
+
+void silofs_ii_set_generation(struct silofs_inode_info *ii, uint64_t gen);
 
 void silofs_ii_stamp_mark_visible(struct silofs_inode_info *ii);
 
 void silofs_ii_setup_by(struct silofs_inode_info *ii,
-                        const struct silofs_creds *creds,
-                        ino_t parent, mode_t parent_mode,
-                        mode_t mode, dev_t rdev, uint64_t gen);
+                        const struct silofs_inew_params *args);
 
 void silofs_ii_statof(const struct silofs_inode_info *ii,
                       struct silofs_stat *st);
+
+void silofs_setup_iattr_of(struct silofs_iattr *iattr, ino_t ino);
+
+int silofs_verify_inode(const struct silofs_inode *inode);
+
 
 #endif /* SILOFS_INODE_H_ */

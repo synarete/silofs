@@ -368,7 +368,6 @@ static void cred_init(struct silofs_cred *cred)
 	cred->uid = (uid_t)(-1);
 	cred->gid = (gid_t)(-1);
 	cred->umask = (mode_t)(-1);
-	cred->ngids = 0;
 }
 
 static void cred_setup(struct silofs_cred *cred,
@@ -443,6 +442,11 @@ struct silofs_cache *silofs_task_cache(const struct silofs_task *task)
 const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 {
 	return task->t_uber->ub.idsmap;
+}
+
+const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
+{
+	return &task->t_oper.op_creds;
 }
 
 

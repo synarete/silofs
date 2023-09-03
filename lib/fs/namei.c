@@ -290,16 +290,33 @@ static int check_sticky(const struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_inew_params_of(const struct silofs_task *task,
+                           const struct silofs_inode_info *parent_dii,
+                           mode_t mode, dev_t rdev,
+                           struct silofs_inew_params *out_inp)
+{
+	struct silofs_creds *creds = &out_inp->creds;
+
+	memset(out_inp, 0, sizeof(*out_inp));
+	memcpy(creds, task_creds(task), sizeof(*creds));
+	out_inp->parent_ino = SILOFS_INO_NULL;
+	out_inp->mode = mode;
+	out_inp->rdev = rdev;
+	if (parent_dii != NULL) {
+		out_inp->parent_ino = ii_ino(parent_dii);
+		out_inp->parent_mode = ii_mode(parent_dii);
+	}
+}
+
 static int spawn_inode(struct silofs_task *task,
                        const struct silofs_inode_info *parent_dii,
                        mode_t mode, dev_t rdev,
                        struct silofs_inode_info **out_ii)
 {
-	const ino_t parent_ino = ii_ino(parent_dii);
-	const mode_t parent_mode = ii_mode(parent_dii);
+	struct silofs_inew_params inp;
 
-	return silofs_spawn_inode_of(task, parent_ino, parent_mode,
-	                             mode, rdev, out_ii);
+	silofs_inew_params_of(task, parent_dii, mode, rdev, &inp);
+	return silofs_spawn_inode_of(task, &inp, out_ii);
 }
 
 static int spawn_dir_inode(struct silofs_task *task,

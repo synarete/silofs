@@ -1265,7 +1265,7 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 	const loff_t end = f_ctx->end;
 	const size_t len = filc_io_length(f_ctx);
 
-	silofs_iattr_setup(&iattr, ii_ino(ii));
+	silofs_setup_iattr_of(&iattr, ii_ino(ii));
 	if (f_ctx->op_mask & OP_READ) {
 		iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	} else if (f_ctx->op_mask & (OP_WRITE | OP_COPY_RANGE)) {

@@ -73,21 +73,6 @@ int silofs_spawn_vnode_of(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_creds *task_creds(const struct silofs_task *task)
-{
-	return &task->t_oper.op_creds;
-}
-
-static uint64_t make_next_generation(struct silofs_task *task)
-{
-	struct silofs_sb_info *sbi = task_sbi(task);
-	uint64_t gen = 0;
-
-	silofs_sti_next_generation(&sbi->sb_sti, &gen);
-	silofs_assert_gt(gen, 0);
-	return gen;
-}
-
 static int check_itype(const struct silofs_task *task, mode_t mode)
 {
 	/*
@@ -122,26 +107,31 @@ static int claim_inode(struct silofs_task *task,
 	return 0;
 }
 
-static void setup_new_inode(struct silofs_task *task,
-                            struct silofs_inode_info *ii,
-                            ino_t parent_ino, mode_t parent_mode,
-                            mode_t mode, dev_t rdev)
+static void setup_new_inode(struct silofs_inode_info *ii,
+                            const struct silofs_inew_params *inp)
 {
-	const uint64_t gen = make_next_generation(task);
-
 	silofs_ii_stamp_mark_visible(ii);
-	silofs_ii_setup_by(ii, task_creds(task), parent_ino,
-	                   parent_mode, mode, rdev, gen);
+	silofs_ii_setup_by(ii, inp);
 }
 
-int silofs_spawn_inode_of(struct silofs_task *task, ino_t parent_ino,
-                          mode_t parent_mode, mode_t mode, dev_t rdev,
+static void setup_uniqe_generation(struct silofs_task *task,
+                                   struct silofs_inode_info *ii)
+{
+	struct silofs_sb_info *sbi = task_sbi(task);
+	uint64_t gen = 0;
+
+	silofs_sti_next_generation(&sbi->sb_sti, &gen);
+	silofs_ii_set_generation(ii, gen);
+}
+
+int silofs_spawn_inode_of(struct silofs_task *task,
+                          const struct silofs_inew_params *inp,
                           struct silofs_inode_info **out_ii)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = check_itype(task, mode);
+	err = check_itype(task, inp->mode);
 	if (err) {
 		return err;
 	}
@@ -149,7 +139,8 @@ int silofs_spawn_inode_of(struct silofs_task *task, ino_t parent_ino,
 	if (err) {
 		return err;
 	}
-	setup_new_inode(task, ii, parent_ino, parent_mode, mode, rdev);
+	setup_new_inode(ii, inp);
+	setup_uniqe_generation(task, ii);
 	*out_ii = ii;
 	return 0;
 }

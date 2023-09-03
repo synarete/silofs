@@ -375,6 +375,7 @@ enum silofs_superf {
 /* inode control flags */
 enum silofs_inodef {
 	SILOFS_INODEF_ROOTD     = 1,
+	SILOFS_INODEF_FTYPE2    = 2,
 };
 
 /* dir-inode control flags */

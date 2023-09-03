@@ -982,7 +982,7 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 	struct silofs_inode_info *ii = xa_ctx->ii;
 	const struct silofs_creds *creds = &xa_ctx->task->t_oper.op_creds;
 
-	silofs_iattr_setup(&iattr, ii_ino(ii));
+	silofs_setup_iattr_of(&iattr, ii_ino(ii));
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
 	silofs_ii_update_iattrs(ii, creds, &iattr);

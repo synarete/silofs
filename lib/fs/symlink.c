@@ -477,7 +477,7 @@ static void slc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 	const struct silofs_creds *creds = &sl_ctx->task->t_oper.op_creds;
 
-	silofs_iattr_setup(&iattr, ii_ino(lnk_ii));
+	silofs_setup_iattr_of(&iattr, ii_ino(lnk_ii));
 	iattr.ia_size = symval_length(sl_ctx->symval);
 	iattr.ia_flags = SILOFS_IATTR_MCTIME | SILOFS_IATTR_SIZE;
 	ii_update_iattrs(lnk_ii, creds, &iattr);

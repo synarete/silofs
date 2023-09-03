@@ -22,8 +22,8 @@ int silofs_spawn_vnode_of(struct silofs_task *task,
                           enum silofs_stype stype,
                           struct silofs_vnode_info **out_vi);
 
-int silofs_spawn_inode_of(struct silofs_task *task, ino_t parent_ino,
-                          mode_t parent_mode, mode_t mode, dev_t rdev,
+int silofs_spawn_inode_of(struct silofs_task *task,
+                          const struct silofs_inew_params *inp,
                           struct silofs_inode_info **out_ii);
 
 int silofs_remove_vnode_by(struct silofs_task *task,

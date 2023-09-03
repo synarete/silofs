@@ -94,7 +94,7 @@ endif
 
 
 # Developer's (pedantic) compilation flags
-CFLAGS += -Wall -Wextra -Winit-self -Winline
+CFLAGS += -pedantic -Wall -Wextra -Winit-self -Winline
 CFLAGS += -Wunused -Wunused-parameter -Wunused-result
 CFLAGS += -Wunused-local-typedefs -Wunused-label
 CFLAGS += -Wshadow -Wfloat-equal -Wwrite-strings -Wpointer-arith
@@ -111,15 +111,6 @@ CFLAGS += -Wmissing-noreturn # -Wsuggest-attribute=const -Wpadded
 CFLAGS += -fPIC -fwrapv -fstrict-aliasing -fsigned-char
 CFLAGS += -fstack-protector -fstack-protector-strong # -fstack-check
 CFLAGS += -fasynchronous-unwind-tables
-CFLAGS += -fsanitize=pointer-overflow -fsanitize=alignment -fsanitize=bounds
-CFLAGS += -fsanitize=object-size -fsanitize-address-use-after-scope
-
-
-# Have 'pedantic' flag only when not using private fuse header
-ifneq (,$(wildcard "$(TOP)/include/linux/fuse.h"))
-CFLAGS += -pedantic
-endif
-
 
 # C-Dialect compilation flags
 CFLAGS2 += -Wbad-function-cast -Wmissing-prototypes -Waggregate-return
@@ -162,6 +153,12 @@ CFLAGS += -Wswitch-unreachable -Wmaybe-uninitialized
 # CFLAGS += -Wstring-compare
 CFLAGS2 += -Wjump-misses-init -Wunsuffixed-float-constants
 CFLAGS2 += -Wold-style-declaration
+ifneq ($(D), 0)
+CFLAGS += -fsanitize-address-use-after-scope
+CFLAGS += -fsanitize=pointer-overflow
+CFLAGS += -fsanitize=alignment -fsanitize=bounds
+CFLAGS += -fsanitize=object-size
+endif
 ifeq ($(ANALYZER), 1)
 CFLAGS += -fanalyzer -Wno-analyzer-malloc-leak
 endif

@@ -33,8 +33,10 @@ lib*.la
 /.pydevproject
 /.settings
 /.vscode
+/.cache
 
 # External tools
 /cscope.files
 /cscope.out
 /.mypy_cache/
+/compile_commands.json

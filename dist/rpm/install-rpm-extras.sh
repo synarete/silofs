@@ -3,6 +3,8 @@ dnf install -y \
   astyle \
   clang \
   clang-analyzer \
+  clang-libs \
+  clang-tools-extra \
   git \
   python3-docutils \
   python3-flake8 \

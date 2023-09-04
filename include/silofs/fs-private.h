@@ -222,6 +222,7 @@
 #define ii_mode(ii)                     silofs_ii_mode(ii)
 #define ii_nlink(ii)                    silofs_ii_nlink(ii)
 #define ii_size(ii)                     silofs_ii_size(ii)
+#define ii_flags(ii)                    silofs_ii_flags(ii)
 #define ii_span(ii)                     silofs_ii_span(ii)
 #define ii_blocks(ii)                   silofs_ii_blocks(ii)
 #define ii_generation(ii)               silofs_ii_generation(ii)

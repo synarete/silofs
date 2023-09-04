@@ -777,6 +777,21 @@ static void *base_of(void *bk_start, loff_t off_in_bk)
 	return (uint8_t *)bk_start + off_in_bk;
 }
 
+static enum silofs_file_type ii_ftype(const struct silofs_inode_info *ii)
+{
+	const enum silofs_inodef iflags = ii_flags(ii);
+	enum silofs_file_type ftype = SILOFS_FILE_TYPE_NONE;
+
+	if (ii_isreg(ii)) {
+		if (iflags & SILOFS_INODEF_FTYPE2) {
+			ftype = SILOFS_FILE_TYPE2;
+		} else {
+			ftype = SILOFS_FILE_TYPE1;
+		}
+	}
+	return ftype;
+}
+
 static void filc_incref(const struct silofs_file_ctx *f_ctx)
 {
 	ii_incref(f_ctx->ii);
@@ -1119,12 +1134,14 @@ filc_advance_to_next_tree_slot(struct silofs_file_ctx *f_ctx,
 
 static int filc_check_reg(const struct silofs_file_ctx *f_ctx)
 {
-	const struct silofs_inode_info *ii = f_ctx->ii;
+	enum silofs_file_type ftype;
 
-	if (ii_isdir(ii)) {
+	if (ii_isdir(f_ctx->ii)) {
 		return -SILOFS_EISDIR;
 	}
-	if (!ii_isreg(ii)) {
+	ftype = ii_ftype(f_ctx->ii);
+	if ((ftype != SILOFS_FILE_TYPE1) &&
+	    (ftype != SILOFS_FILE_TYPE2)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;

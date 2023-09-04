@@ -21,11 +21,12 @@
 #include <silofs/types.h>
 
 struct silofs_inew_params {
-	struct silofs_creds creds;
-	ino_t           parent_ino;
-	mode_t          parent_mode;
-	mode_t          mode;
-	dev_t           rdev;
+	struct silofs_creds     creds;
+	mode_t                  mode;
+	dev_t                   rdev;
+	ino_t                   parent_ino;
+	mode_t                  parent_mode;
+	enum silofs_inodef      flags;
 };
 
 

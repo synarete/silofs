@@ -290,22 +290,46 @@ static int check_sticky(const struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_inew_params_of(const struct silofs_task *task,
-                           const struct silofs_inode_info *parent_dii,
-                           mode_t mode, dev_t rdev,
-                           struct silofs_inew_params *out_inp)
+static enum silofs_inodef mk_inode_flags(int flags, int mask)
 {
-	struct silofs_creds *creds = &out_inp->creds;
+	return (enum silofs_inodef)(flags & mask);
+}
 
-	memset(out_inp, 0, sizeof(*out_inp));
-	memcpy(creds, task_creds(task), sizeof(*creds));
-	out_inp->parent_ino = SILOFS_INO_NULL;
-	out_inp->mode = mode;
-	out_inp->rdev = rdev;
+static void inewp_reset(struct silofs_inew_params *inp)
+{
+	memset(inp, 0, sizeof(*inp));
+}
+
+static void inewp_set_creds(struct silofs_inew_params *inp,
+                            const struct silofs_creds *creds)
+{
+	memcpy(&inp->creds, creds, sizeof(inp->creds));
+}
+
+static void inewp_set_by_parent(struct silofs_inew_params *inp,
+                                const struct silofs_inode_info *parent_dii)
+{
+	const int mask = SILOFS_INODEF_FTYPE2;
+	const int ireg = S_ISREG(inp->mode);
+
 	if (parent_dii != NULL) {
-		out_inp->parent_ino = ii_ino(parent_dii);
-		out_inp->parent_mode = ii_mode(parent_dii);
+		inp->parent_ino = ii_ino(parent_dii);
+		inp->parent_mode = ii_mode(parent_dii);
+		inp->flags = !ireg ? 0 :
+		             mk_inode_flags(ii_flags(parent_dii), mask);
 	}
+}
+
+void silofs_inew_params_of(struct silofs_inew_params *inp,
+                           const struct silofs_creds *creds,
+                           const struct silofs_inode_info *parent_dii,
+                           mode_t mode, dev_t rdev)
+{
+	inewp_reset(inp);
+	inp->mode = mode;
+	inp->rdev = rdev;
+	inewp_set_creds(inp, creds);
+	inewp_set_by_parent(inp, parent_dii);
 }
 
 static int spawn_inode(struct silofs_task *task,
@@ -315,7 +339,7 @@ static int spawn_inode(struct silofs_task *task,
 {
 	struct silofs_inew_params inp;
 
-	silofs_inew_params_of(task, parent_dii, mode, rdev, &inp);
+	silofs_inew_params_of(&inp, task_creds(task), parent_dii, mode, rdev);
 	return silofs_spawn_inode_of(task, &inp, out_ii);
 }
 
@@ -2258,7 +2282,7 @@ static int do_query_statx(struct silofs_task *task,
                           struct silofs_ioc_query *query)
 {
 	const unsigned int req_mask = STATX_ALL | STATX_BTIME;
-	const enum silofs_inodef iflags = silofs_ii_flags(ii);
+	const enum silofs_inodef iflags = ii_flags(ii);
 	enum silofs_dirf dflags;
 	int err;
 

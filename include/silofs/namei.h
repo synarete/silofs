@@ -26,10 +26,10 @@ struct silofs_ioc_iterfs;
 struct silofs_inew_params;
 
 
-void silofs_inew_params_of(const struct silofs_task *task,
+void silofs_inew_params_of(struct silofs_inew_params *inp,
+                           const struct silofs_creds *creds,
                            const struct silofs_inode_info *parent_dii,
-                           mode_t mode, dev_t rdev,
-                           struct silofs_inew_params *out_args);
+                           mode_t mode, dev_t rdev);
 
 int silofs_make_namestr_by(struct silofs_namestr *nstr,
                            const struct silofs_inode_info *ii, const char *s);

@@ -99,6 +99,7 @@ enum silofs_iattr_flags {
 
 /* regual-file sub-types */
 enum silofs_file_type {
+	SILOFS_FILE_TYPE_NONE   = 0,
 	SILOFS_FILE_TYPE1       = 1,
 	SILOFS_FILE_TYPE2       = 2,
 };

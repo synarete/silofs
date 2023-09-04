@@ -230,6 +230,12 @@ static void inode_set_flags(struct silofs_inode *inode,
 	inode->i_flags = silofs_cpu_to_le32(flags);
 }
 
+static void inode_add_flags(struct silofs_inode *inode,
+                            enum silofs_inodef flags)
+{
+	inode_set_flags(inode, flags | inode_flags(inode));
+}
+
 static bool inode_has_flags(struct silofs_inode *inode,
                             enum silofs_inodef mask)
 {
@@ -407,7 +413,7 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 
 	inode_set_parent(inode, ii_ino(ii));
 	inode_set_nlink(inode, 2);
-	inode_set_flags(inode, SILOFS_INODEF_ROOTD);
+	inode_add_flags(inode, SILOFS_INODEF_ROOTD);
 	ii_dirtify(ii);
 }
 
@@ -469,7 +475,7 @@ static void inode_setup_common(struct silofs_inode *inode, ino_t ino,
 	inode_set_uid(inode, inp->creds.fs_cred.uid);
 	inode_set_gid(inode, inp->creds.fs_cred.gid);
 	inode_set_mode(inode, inp->mode & ~inp->creds.fs_cred.umask);
-	inode_set_flags(inode, 0);
+	inode_set_flags(inode, inp->flags);
 	inode_set_size(inode, 0);
 	inode_set_span(inode, 0);
 	inode_set_blocks(inode, 0);

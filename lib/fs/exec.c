@@ -1193,7 +1193,7 @@ static int do_spawn_rootdir(struct silofs_task *task,
 {
 	struct silofs_inew_params inp;
 
-	silofs_inew_params_of(task, NULL, S_IFDIR | 0755, 0, &inp);
+	silofs_inew_params_of(&inp, task_creds(task), NULL, S_IFDIR | 0755, 0);
 	return silofs_spawn_inode_of(task, &inp, out_ii);
 }
 

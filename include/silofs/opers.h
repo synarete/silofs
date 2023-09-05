@@ -297,11 +297,6 @@ struct silofs_op_write_out {
 	size_t nwr;
 };
 
-struct silofs_op_syncfs_in {
-	ino_t ino;
-	int flags;
-};
-
 struct silofs_op_query_in {
 	ino_t ino;
 	enum silofs_query_type qtype;
@@ -320,7 +315,7 @@ struct silofs_op_clone_out {
 	struct silofs_bootsecs bsecs;
 };
 
-struct silofs_op_sync_in {
+struct silofs_op_syncfs_in {
 	ino_t ino;
 	int flags;
 };

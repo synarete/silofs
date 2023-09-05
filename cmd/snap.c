@@ -232,7 +232,7 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	silofs_uuid_assign(&ctx->uuid_alt, &ctx->ioc->clone.uuid_alt);
 }
 
-static void cmd_snap_do_ioctl_sync(struct cmd_snap_ctx *ctx)
+static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
 {
 	const char *dirpath = ctx->in_args.dirpath_real;
 	int dfd = -1;
@@ -243,7 +243,7 @@ static void cmd_snap_do_ioctl_sync(struct cmd_snap_ctx *ctx)
 	if (err) {
 		cmd_dief(err, "failed to open: %s", dirpath);
 	}
-	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_SYNC, &ctx->ioc->sync);
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_SYNCFS, &ctx->ioc->syncfs);
 	if (err) {
 		cmd_dief(err, "ioctl error: %s", dirpath);
 	}
@@ -338,7 +338,7 @@ static void cmd_snap_online(struct cmd_snap_ctx *ctx)
 	cmd_snap_do_ioctl_clone(ctx);
 
 	/* Trigger another flush-sync on new file-system */
-	cmd_snap_do_ioctl_sync(ctx);
+	cmd_snap_do_ioctl_syncfs(ctx);
 }
 
 static void cmd_snap_offline(struct cmd_snap_ctx *ctx)

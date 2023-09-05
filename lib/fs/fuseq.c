@@ -2685,7 +2685,7 @@ out:
 	                         cl_out, sizeof(*cl_out), err);
 }
 
-static int do_ioc_sync(const struct silofs_fuseq_cmd_ctx *fcc)
+static int do_ioc_syncfs(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
 	const void *buf_in = fcc->in->u.ioctl.buf;
@@ -2693,7 +2693,7 @@ static int do_ioc_sync(const struct silofs_fuseq_cmd_ctx *fcc)
 	const size_t bsz_out = fcc->in->u.ioctl.arg.out_size;
 	int err;
 
-	if ((bsz_in < sizeof(ioc_u.sync)) || (bsz_in > sizeof(ioc_u))) {
+	if ((bsz_in < sizeof(ioc_u.syncfs)) || (bsz_in > sizeof(ioc_u))) {
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
@@ -2701,10 +2701,10 @@ static int do_ioc_sync(const struct silofs_fuseq_cmd_ctx *fcc)
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
-	memcpy(&ioc_u.sync, buf_in, sizeof(ioc_u.sync));
-	fcc->args->ioc_cmd = SILOFS_IOC_SYNC;
+	memcpy(&ioc_u.syncfs, buf_in, sizeof(ioc_u.syncfs));
+	fcc->args->ioc_cmd = SILOFS_IOC_SYNCFS;
 	fcc->args->in.syncfs.ino = fcc->ino;
-	fcc->args->in.syncfs.flags = (int)ioc_u.sync.flags;
+	fcc->args->in.syncfs.flags = (int)ioc_u.syncfs.flags;
 	err = do_exec_op(fcc);
 	if (err) {
 		goto out;
@@ -2765,8 +2765,8 @@ static int do_ioctl(const struct silofs_fuseq_cmd_ctx *fcc)
 	case SILOFS_IOC_CLONE:
 		ret = do_ioc_clone(fcc);
 		break;
-	case SILOFS_IOC_SYNC:
-		ret = do_ioc_sync(fcc);
+	case SILOFS_IOC_SYNCFS:
+		ret = do_ioc_syncfs(fcc);
 		break;
 	default:
 		ret = do_ioc_notimpl(fcc);
@@ -3042,7 +3042,7 @@ static bool is_unicmd(const struct silofs_fuseq_cmd_ctx *fcc,
 	if (task->t_oper.op_code == FUSE_IOCTL) {
 		ioc_cmd = (long)(fcc->in->u.ioctl.arg.cmd);
 		ret = (ioc_cmd == SILOFS_IOC_CLONE) ||
-		      (ioc_cmd == SILOFS_IOC_SYNC);
+		      (ioc_cmd == SILOFS_IOC_SYNCFS);
 	}
 	return ret;
 }
@@ -4665,7 +4665,7 @@ static int op_ioctl(struct silofs_task *task,
 	case SILOFS_IOC_CLONE:
 		ret = op_ioctl_clone(task, args);
 		break;
-	case SILOFS_IOC_SYNC:
+	case SILOFS_IOC_SYNCFS:
 		ret = op_ioctl_sync(task, args);
 		break;
 	default:

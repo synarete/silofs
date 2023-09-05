@@ -104,7 +104,7 @@ static void cmd_sync_execute(struct cmd_sync_ctx *ctx)
 	if (err) {
 		cmd_dief(err, "failed to open: %s", pathname);
 	}
-	err = silofs_sys_ioctlp(fd, SILOFS_IOC_SYNC, &ctx->ioc->sync);
+	err = silofs_sys_ioctlp(fd, SILOFS_IOC_SYNCFS, &ctx->ioc->syncfs);
 	if (err) {
 		cmd_dief(err, "ioctl error: %s", pathname);
 	}

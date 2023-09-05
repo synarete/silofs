@@ -34,7 +34,7 @@
 /* supported ioctl commands */
 #define SILOFS_IOC_QUERY        _IOWR('S', 1, struct silofs_ioc_query)
 #define SILOFS_IOC_CLONE        _IOWR('S', 2, struct silofs_ioc_clone)
-#define SILOFS_IOC_SYNC         _IOW('S', 3, struct silofs_ioc_sync)
+#define SILOFS_IOC_SYNCFS       _IOW('S', 3, struct silofs_ioc_syncfs)
 
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
@@ -106,16 +106,16 @@ struct silofs_ioc_clone {
 	struct silofs_uuid uuid_alt;
 };
 
-struct silofs_ioc_sync {
+struct silofs_ioc_syncfs {
 	uint32_t flags;
 	uint32_t pad[7];
 };
 
 union silofs_ioc_u {
 	uint8_t buf[SILOFS_IOC_SIZE_MAX];
-	struct silofs_ioc_query query;
-	struct silofs_ioc_clone clone;
-	struct silofs_ioc_sync  sync;
+	struct silofs_ioc_query         query;
+	struct silofs_ioc_clone         clone;
+	struct silofs_ioc_syncfs        syncfs;
 };
 
 #endif /* SILOFS_IOCTLS_H_ */

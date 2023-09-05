@@ -290,7 +290,7 @@ static int check_sticky(const struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static enum silofs_inodef mk_inode_flags(int flags, int mask)
+static enum silofs_inodef make_inodef(int flags, int mask)
 {
 	return (enum silofs_inodef)(flags & mask);
 }
@@ -310,13 +310,14 @@ static void inewp_set_by_parent(struct silofs_inew_params *inp,
                                 const struct silofs_inode_info *parent_dii)
 {
 	const int mask = SILOFS_INODEF_FTYPE2;
-	const int ireg = S_ISREG(inp->mode);
+	const mode_t mode = inp->mode;
 
 	if (parent_dii != NULL) {
 		inp->parent_ino = ii_ino(parent_dii);
 		inp->parent_mode = ii_mode(parent_dii);
-		inp->flags = !ireg ? 0 :
-		             mk_inode_flags(ii_flags(parent_dii), mask);
+		if (S_ISREG(mode) || S_ISDIR(mode)) {
+			inp->flags = make_inodef(ii_flags(parent_dii), mask);
+		}
 	}
 }
 

@@ -75,6 +75,9 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii);
 
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 
+void silofs_ii_update_iflags(struct silofs_inode_info *ii,
+                             int iflags_want, int iflags_dont);
+
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
 
 int silofs_do_getattr(struct silofs_task *task,

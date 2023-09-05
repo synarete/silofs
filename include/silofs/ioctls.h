@@ -35,6 +35,8 @@
 #define SILOFS_IOC_QUERY        _IOWR('S', 1, struct silofs_ioc_query)
 #define SILOFS_IOC_CLONE        _IOWR('S', 2, struct silofs_ioc_clone)
 #define SILOFS_IOC_SYNCFS       _IOW('S', 3, struct silofs_ioc_syncfs)
+#define SILOFS_IOC_TUNE         _IOW('S', 4, struct silofs_ioc_tune)
+
 
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
@@ -111,11 +113,18 @@ struct silofs_ioc_syncfs {
 	uint32_t pad[7];
 };
 
+struct silofs_ioc_tune {
+	uint32_t iflags_want;
+	uint32_t iflags_dont;
+	uint32_t pad[60];
+};
+
 union silofs_ioc_u {
 	uint8_t buf[SILOFS_IOC_SIZE_MAX];
 	struct silofs_ioc_query         query;
 	struct silofs_ioc_clone         clone;
 	struct silofs_ioc_syncfs        syncfs;
+	struct silofs_ioc_tune          tune;
 };
 
 #endif /* SILOFS_IOCTLS_H_ */

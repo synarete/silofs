@@ -320,6 +320,12 @@ struct silofs_op_syncfs_in {
 	int flags;
 };
 
+struct silofs_op_tune_in {
+	ino_t ino;
+	int iflags_want;
+	int iflags_dont;
+};
+
 
 union silofs_oper_args_in {
 	struct silofs_op_lookup_in              lookup;
@@ -358,6 +364,7 @@ union silofs_oper_args_in {
 	struct silofs_op_syncfs_in              syncfs;
 	struct silofs_op_query_in               query;
 	struct silofs_op_clone_in               clone;
+	struct silofs_op_tune_in                tune;
 } silofs_aligned64;
 
 union silofs_oper_args_out {
@@ -518,6 +525,9 @@ int silofs_fs_query(struct silofs_task *task, ino_t ino,
 
 int silofs_fs_clone(struct silofs_task *task, ino_t ino,
                     int flags, struct silofs_bootsecs *out_bsecs);
+
+int silofs_fs_tune(struct silofs_task *task, ino_t ino,
+                   int iflags_want, int iflags_dont);
 
 int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt);

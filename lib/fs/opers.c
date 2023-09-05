@@ -1598,6 +1598,30 @@ out:
 	return op_finish(task, ino, err);
 }
 
+int silofs_fs_tune(struct silofs_task *task, ino_t ino,
+                   int iflags_want, int iflags_dont)
+{
+	struct silofs_inode_info *dir_ii = NULL;
+	int err;
+
+	err = op_xstart(task, ino);
+	ok_or_goto_out(err);
+
+	err = op_authorize(task);
+	ok_or_goto_out(err);
+
+	err = op_map_creds(task);
+	ok_or_goto_out(err);
+
+	err = op_stage_mut_inode(task, ino, &dir_ii);
+	ok_or_goto_out(err);
+
+	err = silofs_do_tune(task, dir_ii, iflags_want, iflags_dont);
+	ok_or_goto_out(err);
+out:
+	return op_finish(task, ino, err);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,

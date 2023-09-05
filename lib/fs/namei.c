@@ -2514,6 +2514,81 @@ int silofs_do_clone(struct silofs_task *task,
 	return err;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int check_tune_mask(int iflags_mask)
+{
+	const int itune_mask = SILOFS_INODEF_FTYPE2;
+
+	if ((iflags_mask | itune_mask) != itune_mask) {
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+static int check_tune_flags(int iflags_want, int iflags_dont)
+{
+	int err;
+
+	err = check_tune_mask(iflags_want);
+	if (err) {
+		return err;
+	}
+	err = check_tune_mask(iflags_dont);
+	if (err) {
+		return err;
+	}
+	if (iflags_want & iflags_dont) {
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+static int check_tune(const struct silofs_task *task,
+                      struct silofs_inode_info *ii,
+                      int iflags_want, int iflags_dont)
+{
+	int err;
+
+	err = check_dir_waccess(task, ii);
+	if (err) {
+		return err;
+	}
+	err = check_tune_flags(iflags_want, iflags_dont);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int do_tune(struct silofs_task *task,
+                   struct silofs_inode_info *dir_ii,
+                   int iflags_want, int iflags_dont)
+{
+	int err;
+
+	err = check_tune(task, dir_ii, iflags_want, iflags_dont);
+	if (err) {
+		return err;
+	}
+	silofs_ii_update_iflags(dir_ii, iflags_want, iflags_dont);
+	return 0;
+}
+
+int silofs_do_tune(struct silofs_task *task,
+                   struct silofs_inode_info *dir_ii,
+                   int iflags_want, int iflags_dont)
+{
+	int err;
+
+	ii_incref(dir_ii);
+	err = do_tune(task, dir_ii, iflags_want, iflags_dont);
+	ii_decref(dir_ii);
+	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_do_inspect(struct silofs_task *task)
 {
 	int err;

@@ -338,7 +338,6 @@ union silofs_fuseq_in_u {
 	struct silofs_fuseq_read_in             read;
 	struct silofs_fuseq_write_in            write;
 	struct silofs_fuseq_copy_file_range_in  copy_file_range;
-	struct silofs_fuseq_syncfs_in           syncfs;
 };
 
 struct silofs_fuseq_in {
@@ -2713,6 +2712,34 @@ out:
 	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0, NULL, 0, err);
 }
 
+static int do_ioc_tune(const struct silofs_fuseq_cmd_ctx *fcc)
+{
+	union silofs_ioc_u ioc_u;
+	const void *buf_in = fcc->in->u.ioctl.buf;
+	const size_t bsz_in = fcc->in->u.ioctl.arg.in_size;
+	const size_t bsz_out = fcc->in->u.ioctl.arg.out_size;
+	int err;
+
+	if ((bsz_in < sizeof(ioc_u.tune)) || (bsz_in > sizeof(ioc_u))) {
+		err = -SILOFS_EINVAL;
+		goto out;
+	}
+	if (bsz_out > 0) {
+		err = -SILOFS_EINVAL;
+		goto out;
+	}
+	memcpy(&ioc_u.tune, buf_in, sizeof(ioc_u.tune));
+	fcc->args->ioc_cmd = SILOFS_IOC_TUNE;
+	fcc->args->in.tune.ino = fcc->ino;
+	fcc->args->in.tune.iflags_want = (int)ioc_u.tune.iflags_want;
+	fcc->args->in.tune.iflags_dont = (int)ioc_u.tune.iflags_dont;
+	err = do_exec_op(fcc);
+	if (err) {
+		goto out;
+	}
+out:
+	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0, NULL, 0, err);
+}
 
 static int fuseq_check_ioctl_flags(struct silofs_fuseq_worker *fqw,
                                    const struct silofs_fuseq_in *in)
@@ -2767,6 +2794,9 @@ static int do_ioctl(const struct silofs_fuseq_cmd_ctx *fcc)
 		break;
 	case SILOFS_IOC_SYNCFS:
 		ret = do_ioc_syncfs(fcc);
+		break;
+	case SILOFS_IOC_TUNE:
+		ret = do_ioc_tune(fcc);
 		break;
 	default:
 		ret = do_ioc_notimpl(fcc);
@@ -4642,8 +4672,8 @@ static int op_ioctl_clone(struct silofs_task *task,
 	                       &args->out.clone.bsecs);
 }
 
-static int op_ioctl_sync(struct silofs_task *task,
-                         struct silofs_oper_args *args)
+static int op_ioctl_syncfs(struct silofs_task *task,
+                           struct silofs_oper_args *args)
 {
 	/*
 	 * Currently (Linux kernel v6.3) fuse has 'fc->sync_fs = true' only for
@@ -4651,6 +4681,15 @@ static int op_ioctl_sync(struct silofs_task *task,
 	 * dedicated ioctl.
 	 */
 	return op_syncfs(task, args);
+}
+
+static int op_ioctl_tune(struct silofs_task *task,
+                         struct silofs_oper_args *args)
+{
+	return silofs_fs_tune(task,
+	                      args->in.tune.ino,
+	                      args->in.tune.iflags_want,
+	                      args->in.tune.iflags_dont);
 }
 
 static int op_ioctl(struct silofs_task *task,
@@ -4666,7 +4705,10 @@ static int op_ioctl(struct silofs_task *task,
 		ret = op_ioctl_clone(task, args);
 		break;
 	case SILOFS_IOC_SYNCFS:
-		ret = op_ioctl_sync(task, args);
+		ret = op_ioctl_syncfs(task, args);
+		break;
+	case SILOFS_IOC_TUNE:
+		ret = op_ioctl_tune(task, args);
 		break;
 	default:
 		ret = -SILOFS_ENOSYS;

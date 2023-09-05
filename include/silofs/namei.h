@@ -120,6 +120,10 @@ int silofs_do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
                     struct silofs_bootsecs *out_bsecs);
 
+int silofs_do_tune(struct silofs_task *task,
+                   struct silofs_inode_info *dir_ii,
+                   int iflags_want, int iflags_dont);
+
 int silofs_do_syncfs(struct silofs_task *task,
                      struct silofs_inode_info *ii, int flags);
 

@@ -55,8 +55,9 @@ do_autogen() {
 do_autoclean() {
   cd "${basedir}" || die "can not cd into ${basedir}"
   try mkdir -p "${builddir}"
-  run rm -rf "${autom4te_cachedir}"
   run rm -f "${autom4te_cfg}"
+  run rm -rf "${autom4te_cachedir}"
+  run rm -rf "${basedir}/.cache"
   run rm -f "${basedir}/tags"
   run rm -f "${basedir}/configure"
   run rm -f "${basedir}/configure~"

@@ -160,6 +160,7 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(show),
 	DEFCMD(snap),
 	DEFCMD(sync),
+	DEFCMD(tune),
 	DEFCMD(rmfs),
 	DEFCMD(prune),
 	DEFCMD(fsck),

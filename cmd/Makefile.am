@@ -32,5 +32,6 @@ silofs_SOURCES += show.c
 silofs_SOURCES += signals.c
 silofs_SOURCES += snap.c
 silofs_SOURCES += sync.c
+silofs_SOURCES += tune.c
 silofs_SOURCES += umount.c
 

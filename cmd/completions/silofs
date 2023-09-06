@@ -86,6 +86,15 @@ _silofs_sync() {
   fi
 }
 
+_silofs_tune() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-t --ftype= -h ' -- "$cur") )
+  fi
+}
+
 _silofs_rmfs() {
   local cur prev words cword
   _init_completion || return
@@ -142,6 +151,9 @@ _silofs_subcmd() {
     "sync")
       _silofs_sync
       ;;
+    "tune")
+      _silofs_tune
+      ;;
     "rmfs")
       _silofs_rmfs
       ;;
@@ -163,7 +175,7 @@ _silofs_main() {
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'lsmnt show snap sync' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'rmfs prune fsck' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck' -- "$cur") )
   fi
 }
 

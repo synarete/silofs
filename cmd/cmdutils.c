@@ -556,6 +556,30 @@ static long cmd_parse_str_as_long(const char *str)
 	return val;
 }
 
+uint32_t cmd_parse_str_as_uint32(const char *str)
+{
+	long val;
+
+	val = cmd_parse_str_as_long(str);
+	if ((val < 0) || (val > UINT32_MAX)) {
+		cmd_dief(0, "bad uint32 value: %s", str);
+	}
+	return (uint32_t)val;
+}
+
+uint32_t cmd_parse_str_as_uint32_within(const char *str,
+                                        uint32_t min_val, uint32_t max_val)
+{
+	uint32_t val;
+
+	val = cmd_parse_str_as_uint32(str);
+	if ((val < min_val) || (val > max_val)) {
+		cmd_dief(0, "%s is not within range [%u..%u]",
+		         str, min_val, max_val);
+	}
+	return val;
+}
+
 uid_t cmd_parse_str_as_uid(const char *str)
 {
 	long val;

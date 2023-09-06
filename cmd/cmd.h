@@ -83,6 +83,8 @@ void cmd_execute_snap(void);
 
 void cmd_execute_sync(void);
 
+void cmd_execute_tune(void);
+
 void cmd_execute_rmfs(void);
 
 void cmd_execute_lsmnt(void);
@@ -189,6 +191,11 @@ void cmd_print_help_and_exit(const char **help_strings);
 
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);
+
+uint32_t cmd_parse_str_as_uint32(const char *str);
+
+uint32_t cmd_parse_str_as_uint32_within(const char *str,
+                                        uint32_t min_val, uint32_t max_val);
 
 uid_t cmd_parse_str_as_uid(const char *str);
 

@@ -20,7 +20,8 @@
 #include <silofs/fs-private.h>
 #include <limits.h>
 
-#define CACHE_RETRY 4
+#define CE_MAGIC        (0xDEFEC8EDBADDCAFE)
+#define CACHE_RETRY     (4)
 
 
 static void vi_do_undirtify(struct silofs_vnode_info *vi);
@@ -401,6 +402,7 @@ ce_from_htb_link(const struct silofs_list_head *lh)
 	const struct silofs_cache_elem *ce;
 
 	ce = container_of2(lh, struct silofs_cache_elem, ce_htb_lh);
+	silofs_assert_eq(ce->ce_magic, CE_MAGIC);
 	return unconst(ce);
 }
 
@@ -410,6 +412,7 @@ ce_from_lru_link(const struct silofs_list_head *lh)
 	const struct silofs_cache_elem *ce;
 
 	ce = container_of2(lh, struct silofs_cache_elem, ce_lru_lh);
+	silofs_assert_eq(ce->ce_magic, CE_MAGIC);
 	return unconst(ce);
 }
 
@@ -419,6 +422,7 @@ void silofs_ce_init(struct silofs_cache_elem *ce)
 	list_head_init(&ce->ce_htb_lh);
 	list_head_init(&ce->ce_lru_lh);
 	ce->ce_cache = NULL;
+	ce->ce_magic = CE_MAGIC;
 	ce->ce_flags = 0;
 	ce->ce_refcnt = 0;
 	ce->ce_htb_hitcnt = 0;
@@ -429,6 +433,7 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 {
 	silofs_assert_eq(ce->ce_refcnt, 0);
 	silofs_assert_eq(ce->ce_flags, 0);
+	silofs_assert_eq(ce->ce_magic, CE_MAGIC);
 
 	ckey_reset(&ce->ce_ckey);
 	list_head_fini(&ce->ce_htb_lh);
@@ -437,6 +442,7 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 	ce->ce_htb_hitcnt = -1;
 	ce->ce_lru_hitcnt = -1;
 	ce->ce_cache = NULL;
+	ce->ce_magic = ULONG_MAX;
 }
 
 static bool ce_is_mapped(const struct silofs_cache_elem *ce)

@@ -160,12 +160,15 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 	struct silofs_qalloc *qal;
 	struct ut_mrecord *mr = NULL;
 	const size_t sizes[] = {
-		UT_BK_SIZE - 1, UT_BK_SIZE, UT_BK_SIZE + 1,
-		2 * UT_BK_SIZE, 8 * UT_BK_SIZE - 1
+		UT_BK_SIZE - 1,
+		UT_BK_SIZE,
+		UT_BK_SIZE + 1,
+		2 * UT_BK_SIZE,
+		8 * UT_BK_SIZE - 1
 	};
 
 	silofs_list_init(&lst);
-	qal = ut_new_qalloc(ute, 32 * UT_UMEGA);
+	qal = ut_new_qalloc(ute, 32 * UT_1M);
 	for (size_t i = 0; i < UT_ARRAY_SIZE(sizes); ++i) {
 		mr = mrecord_new(qal, sizes[i]);
 		memset(mr->dat, (int)i, mr->dat_len);
@@ -195,7 +198,7 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 	struct silofs_alloc_stat alst;
 
 	silofs_list_init(&lst);
-	qal = ut_new_qalloc(ute, 32 * UT_UMEGA);
+	qal = ut_new_qalloc(ute, 32 * UT_1M);
 	silofs_qalloc_stat(qal, &alst);
 	while (total < alst.nbytes_max) {
 		rem = alst.nbytes_max - total;
@@ -225,7 +228,7 @@ static void ut_qalloc_slab_elems(struct ut_env *ute)
 	const size_t pg_size = SILOFS_PAGE_SIZE_MIN;
 
 	silofs_list_init(&lst);
-	qal = ut_new_qalloc(ute, 64 * UT_UMEGA);
+	qal = ut_new_qalloc(ute, 64 * UT_1M);
 	for (size_t i = 0; i < 10000; ++i) {
 		val = (pg_size + i) % (pg_size / 2);
 		msz = silofs_clamp(val, sizeof(*mr), (pg_size / 2));
@@ -256,7 +259,7 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 	struct silofs_list_head lst;
 
 	silofs_list_init(&lst);
-	qal = ut_new_qalloc(ute, 256 * UT_UMEGA);
+	qal = ut_new_qalloc(ute, 256 * UT_1M);
 	for (val = 0; val < val_max; val += 100) {
 		msz = silofs_clamp(val, sizeof(*mr), 11 * bk_size);
 		mr = mrecord_new(qal, msz);
@@ -294,7 +297,7 @@ static void ut_qalloc_small_sizes(struct ut_env *ute)
 	long idx_arr[NALLOC_SMALL];
 	struct silofs_qalloc *qal;
 
-	qal = ut_new_qalloc(ute, 32 * UT_UMEGA);
+	qal = ut_new_qalloc(ute, 32 * UT_1M);
 	for (size_t i = 0; i < UT_ARRAY_SIZE(ptr); ++i) {
 		msz = small_alloc_size(i);
 		mem = silofs_qalloc_malloc(qal, msz, 0);

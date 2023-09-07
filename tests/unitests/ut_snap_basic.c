@@ -75,7 +75,7 @@ static void ut_snap_write_read(struct ut_env *ute)
 static void ut_snap_write_post(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	const loff_t off = UT_MEGA;
+	const loff_t off = UT_1M;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -94,7 +94,7 @@ static void ut_snap_overwrite(struct ut_env *ute)
 	uint64_t val1 = (uint64_t)silofs_time_now();
 	uint64_t val2 = ~val1;
 	const char *name = UT_NAME;
-	const loff_t off = UT_GIGA;
+	const loff_t off = UT_1G;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -119,18 +119,18 @@ static void ut_snap_reload(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_write_read_str(ute, ino, name, UT_KILO);
-	ut_write_read_str(ute, ino, name, UT_TERA);
-	ut_write_read_str(ute, ino, name, UT_MEGA);
+	ut_write_read_str(ute, ino, name, UT_1K);
+	ut_write_read_str(ute, ino, name, UT_1T);
+	ut_write_read_str(ute, ino, name, UT_1M);
 	ut_release_ok(ute, ino);
 	ut_snap_ok(ute, dino);
 	ut_reload_fs_ok(ute);
 	ut_inspect_fs_ok(ute);
 	ut_open_rdonly(ute, ino);
-	ut_read_verify_str(ute, ino, name, UT_MEGA);
-	ut_read_verify_str(ute, ino, name, UT_KILO);
-	ut_read_verify_str(ute, ino, name, UT_TERA);
-	ut_read_zeros(ute, ino, UT_GIGA, 1);
+	ut_read_verify_str(ute, ino, name, UT_1M);
+	ut_read_verify_str(ute, ino, name, UT_1K);
+	ut_read_verify_str(ute, ino, name, UT_1T);
+	ut_read_zeros(ute, ino, UT_1G, 1);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }
@@ -139,8 +139,8 @@ static void ut_snap_reload(struct ut_env *ute)
 
 static void ut_snap_reload_other(struct ut_env *ute)
 {
-	const loff_t off1[] = { 0, UT_GIGA };
-	const loff_t off2[] = { UT_MEGA, UT_1K };
+	const loff_t off1[] = { 0, UT_1G };
+	const loff_t off2[] = { UT_1M, UT_1K };
 	const char *name = UT_NAME;
 	const char *str1 = ut_randstr(ute, UT_1K);
 	const char *str2 = ut_randstr(ute, UT_4K);

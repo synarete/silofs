@@ -182,7 +182,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink_ok(ute, dino, sname, symval, &sino);
 
-		off = (loff_t)(i * UT_UMEGA + i);
+		off = (loff_t)(i * UT_1M + i);
 		ut_write_read_str(ute, fino, symval, off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
@@ -193,7 +193,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 		ut_readlink_expect(ute, sino, symval);
 
 		ut_lookup_ino(ute, dino, fname, &fino);
-		off = (loff_t)(i * UT_UMEGA + i);
+		off = (loff_t)(i * UT_1M + i);
 		ut_read_verify_str(ute, fino, symval, off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {

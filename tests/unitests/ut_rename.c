@@ -366,11 +366,11 @@ static void ut_rename_override_(struct ut_env *ute, size_t cnt,
 
 static void ut_rename_override(struct ut_env *ute)
 {
-	ut_rename_override_(ute, 1, 0, UT_KILO);
-	ut_rename_override_(ute, 11, 11, UT_KILO + 11);
+	ut_rename_override_(ute, 1, 0, UT_1K);
+	ut_rename_override_(ute, 11, 11, UT_1K + 11);
 	ut_rename_override_(ute, 111, UT_BK_SIZE - 1, UT_BK_SIZE + 11);
-	ut_rename_override_(ute, 1111, UT_GIGA - 11, UT_1K + 1111);
-	ut_rename_override_(ute, 11, UT_TERA - 111, UT_MEGA + 111);
+	ut_rename_override_(ute, 1111, UT_1G - 11, UT_1K + 1111);
+	ut_rename_override_(ute, 11, UT_1T - 111, UT_1M + 111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -460,10 +460,10 @@ static void ut_rename_with_xattr_(struct ut_env *ute, size_t cnt,
 
 static void ut_rename_with_xattr(struct ut_env *ute)
 {
-	ut_rename_with_xattr_(ute, 11, 11, UT_KILO + 11);
+	ut_rename_with_xattr_(ute, 11, 11, UT_1K + 11);
 	ut_rename_with_xattr_(ute, 111, UT_BK_SIZE - 1, UT_BK_SIZE + 11);
-	ut_rename_with_xattr_(ute, 1111, UT_GIGA - 11, UT_1K + 1111);
-	ut_rename_with_xattr_(ute, 111, UT_TERA - 111, UT_BK_SIZE + 111);
+	ut_rename_with_xattr_(ute, 1111, UT_1G - 11, UT_1K + 1111);
+	ut_rename_with_xattr_(ute, 111, UT_1T - 111, UT_BK_SIZE + 111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

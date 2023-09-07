@@ -230,12 +230,12 @@ static void ut_file_records_rand_(struct ut_env *ute,
 
 static void ut_file_records_rand_aligned(struct ut_env *ute)
 {
-	const loff_t base[] = { 0, UT_BK_SIZE, UT_UMEGA, UT_UGIGA, UT_UTERA };
+	const loff_t base[] = { 0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(base); ++i) {
 		ut_file_records_rand_(ute, base[i], UT_BK_SIZE, 512);
 		ut_file_records_rand_(ute, base[i], 8 * UT_BK_SIZE, 64);
-		ut_file_records_rand_(ute, base[i], UT_UMEGA, 8);
+		ut_file_records_rand_(ute, base[i], UT_1M, 8);
 	}
 }
 
@@ -253,14 +253,14 @@ static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 static void ut_file_records_rand_unaligned2(struct ut_env *ute)
 {
 	const loff_t base[] = {
-		UT_BK_SIZE - 2, UT_UMEGA - 2, UT_UGIGA - 2, UT_UTERA - 2
+		UT_BK_SIZE - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2
 	};
 	const size_t size_rec = record_base_size(NULL);
 	const size_t size_max = UT_IOSIZE_MAX - size_rec;
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(base); ++i) {
 		ut_file_records_rand_(ute, base[i], UT_BK_SIZE + 4, 64);
-		ut_file_records_rand_(ute, base[i], UT_UMEGA, 8);
+		ut_file_records_rand_(ute, base[i], UT_1M, 8);
 		ut_file_records_rand_(ute, base[i], size_max, 4);
 	}
 }

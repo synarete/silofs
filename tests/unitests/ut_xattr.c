@@ -509,10 +509,10 @@ static void ut_xattr_with_io_(struct ut_env *ute, loff_t base_off,
 
 static void ut_xattr_with_io(struct ut_env *ute)
 {
-	ut_xattr_with_io_(ute, 0, SILOFS_NAME_MAX, UT_KILO / 4);
-	ut_xattr_with_io_(ute, UT_KILO, SILOFS_NAME_MAX / 2, UT_KILO / 2);
-	ut_xattr_with_io_(ute, UT_MEGA, SILOFS_NAME_MAX / 4, UT_KILO);
-	ut_xattr_with_io_(ute, UT_TERA, SILOFS_NAME_MAX / 8, 2 * UT_KILO);
+	ut_xattr_with_io_(ute, 0, SILOFS_NAME_MAX, UT_1K / 4);
+	ut_xattr_with_io_(ute, UT_1K, SILOFS_NAME_MAX / 2, UT_1K / 2);
+	ut_xattr_with_io_(ute, UT_1M, SILOFS_NAME_MAX / 4, UT_1K);
+	ut_xattr_with_io_(ute, UT_1T, SILOFS_NAME_MAX / 8, 2 * UT_1K);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

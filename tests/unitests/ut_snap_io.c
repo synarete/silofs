@@ -49,15 +49,15 @@ static void ut_snap_write_sparse(struct ut_env *ute)
 {
 	const loff_t offs[] = {
 		1,
-		2 * UT_KILO - 1,
-		8 * UT_KILO - 1,
+		2 * UT_1K - 1,
+		8 * UT_1K - 1,
 		UT_BK_SIZE - 1,
-		UT_MEGA - 1,
-		UT_GIGA - 1,
-		UT_TERA - 1
+		UT_1M - 1,
+		UT_1G - 1,
+		UT_1T - 1
 	};
 
-	ut_snap_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_KILO);
+	ut_snap_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_1K);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -117,12 +117,12 @@ static void ut_snap_copy_range(struct ut_env *ute)
 		UT_MKRANGE1(2 * UT_4K, 2 * UT_4K),
 		UT_MKRANGE1(UT_64K, UT_64K),
 		UT_MKRANGE1(4 * UT_4K, 4 * UT_64K),
-		UT_MKRANGE1(UT_MEGA, UT_MEGA),
-		UT_MKRANGE1(2 * UT_MEGA, UT_MEGA / 2),
-		UT_MKRANGE1(UT_GIGA, 2 * UT_64K),
-		UT_MKRANGE1(1, UT_MEGA),
-		UT_MKRANGE1(UT_GIGA - 1, (3 * UT_64K) + 3),
-		UT_MKRANGE1(UT_TERA - 7, UT_MEGA + 11),
+		UT_MKRANGE1(UT_1M, UT_1M),
+		UT_MKRANGE1(2 * UT_1M, UT_1M / 2),
+		UT_MKRANGE1(UT_1G, 2 * UT_64K),
+		UT_MKRANGE1(1, UT_1M),
+		UT_MKRANGE1(UT_1G - 1, (3 * UT_64K) + 3),
+		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -172,8 +172,8 @@ static void ut_snap_rename_io(struct ut_env *ute)
 		UT_MKRANGE1(UT_1K - 1, UT_1K + 3),
 		UT_MKRANGE1(2 * UT_4K, 2 * UT_4K),
 		UT_MKRANGE1(UT_64K, UT_64K),
-		UT_MKRANGE1(UT_MEGA, UT_MEGA),
-		UT_MKRANGE1(UT_TERA - 7, UT_MEGA + 11),
+		UT_MKRANGE1(UT_1M, UT_1M),
+		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {

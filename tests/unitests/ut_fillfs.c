@@ -44,7 +44,7 @@ static void ut_fillfs_simple(struct ut_env *ute)
 	struct statvfs stv[2];
 	struct statvfs stv2;
 	const char *name = UT_NAME;
-	const size_t bsz = UT_UMEGA;
+	const size_t bsz = UT_1M;
 
 	ut_statfs_rootd_ok(ute, &stv[0]);
 	ut_mkdir_at_root(ute, name, &dino);
@@ -174,7 +174,7 @@ static void ut_fillfs_data_(struct ut_env *ute, size_t bsz)
 
 static void ut_fillfs_data(struct ut_env *ute)
 {
-	ut_fillfs_data_(ute, UT_UMEGA);
+	ut_fillfs_data_(ute, UT_1M);
 	ut_fillfs_data_(ute, 1111111);
 }
 

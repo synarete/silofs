@@ -50,9 +50,9 @@ static void ut_file_lseek_simple(struct ut_env *ute)
 {
 	ut_file_lseek_simple_(ute, 0);
 	ut_file_lseek_simple_(ute, 1);
-	ut_file_lseek_simple_(ute, UT_MEGA + 1);
-	ut_file_lseek_simple_(ute, UT_GIGA - 3);
-	ut_file_lseek_simple_(ute, UT_TERA + 5);
+	ut_file_lseek_simple_(ute, UT_1M + 1);
+	ut_file_lseek_simple_(ute, UT_1G - 3);
+	ut_file_lseek_simple_(ute, UT_1T + 5);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -94,9 +94,9 @@ static void ut_file_lseek_holes_(struct ut_env *ute,
 static void ut_file_lseek_holes(struct ut_env *ute)
 {
 	ut_file_lseek_holes_(ute, 0, 10);
-	ut_file_lseek_holes_(ute, UT_MEGA, 100);
-	ut_file_lseek_holes_(ute, UT_GIGA, 1000);
-	ut_file_lseek_holes_(ute, UT_TERA, 10000);
+	ut_file_lseek_holes_(ute, UT_1M, 100);
+	ut_file_lseek_holes_(ute, UT_1G, 1000);
+	ut_file_lseek_holes_(ute, UT_1T, 10000);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -154,9 +154,9 @@ static void ut_file_lseek_sparse(struct ut_env *ute)
 	ut_file_lseek_sparse_(ute, 0, 10 * UT_BK_SIZE, 10);
 	ut_file_lseek_sparse_(ute, UT_4K, 10 * UT_BK_SIZE, 10);
 	ut_file_lseek_sparse_(ute, UT_8K, 10 * UT_BK_SIZE, 10);
-	ut_file_lseek_sparse_(ute, UT_MEGA, UT_GIGA, 100);
-	ut_file_lseek_sparse_(ute, UT_GIGA, UT_MEGA, 1000);
-	ut_file_lseek_sparse_(ute, UT_TERA, 10 * UT_BK_SIZE, 10000);
+	ut_file_lseek_sparse_(ute, UT_1M, UT_1G, 100);
+	ut_file_lseek_sparse_(ute, UT_1G, UT_1M, 1000);
+	ut_file_lseek_sparse_(ute, UT_1T, 10 * UT_BK_SIZE, 10000);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

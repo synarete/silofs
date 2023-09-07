@@ -230,9 +230,9 @@ static void ut_reload_xattr_(struct ut_env *ute, loff_t off, size_t value_size)
 
 static void ut_reload_xattr(struct ut_env *ute)
 {
-	ut_reload_xattr_(ute, 0, UT_KILO / 4);
-	ut_reload_xattr_(ute, UT_GIGA, SILOFS_XATTR_VALUE_MAX / 2);
-	ut_reload_xattr_(ute, UT_TERA, SILOFS_XATTR_VALUE_MAX);
+	ut_reload_xattr_(ute, 0, UT_1K / 4);
+	ut_reload_xattr_(ute, UT_1G, SILOFS_XATTR_VALUE_MAX / 2);
+	ut_reload_xattr_(ute, UT_1T, SILOFS_XATTR_VALUE_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

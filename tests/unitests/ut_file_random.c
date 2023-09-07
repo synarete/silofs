@@ -127,9 +127,9 @@ static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
 static void ut_file_random_(struct ut_env *ute,
                             const struct ut_ioparams *params)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -157,8 +157,8 @@ static void ut_file_random_arr_(struct ut_env *ute,
 static void ut_file_random_simple(struct ut_env *ute)
 {
 	const struct ut_ioparams params[] = {
-		MKPARAMS(0, UT_UMEGA, 0, 10),
-		MKPARAMS(UT_GIGA, UT_UMEGA, 0, 20),
+		MKPARAMS(0, UT_1M, 0, 10),
+		MKPARAMS(UT_1G, UT_1M, 0, 20),
 	};
 
 	ut_file_random_arr(ute, params);
@@ -170,23 +170,23 @@ static void ut_file_random_aligned(struct ut_env *ute)
 {
 	const struct ut_ioparams params[] = {
 		MKPARAMS(0, UT_BK_SIZE, 0, 4),
-		MKPARAMS(0, UT_UMEGA, 0, 4),
+		MKPARAMS(0, UT_1M, 0, 4),
 		MKPARAMS(UT_BK_SIZE, UT_BK_SIZE, UT_BK_SIZE, 16),
-		MKPARAMS(UT_BK_SIZE, UT_UMEGA, UT_BK_SIZE, 16),
-		MKPARAMS(UT_MEGA, UT_BK_SIZE, UT_BK_SIZE, 16),
-		MKPARAMS(UT_MEGA, UT_BK_SIZE, UT_UMEGA, 32),
-		MKPARAMS(UT_MEGA, UT_UMEGA, UT_BK_SIZE, 16),
-		MKPARAMS(UT_MEGA, UT_UMEGA, UT_UMEGA, 32),
-		MKPARAMS(UT_MEGA - UT_BK_SIZE, UT_BK_SIZE, UT_GIGA, 64),
-		MKPARAMS(UT_MEGA - UT_BK_SIZE, UT_UMEGA / 2, UT_GIGA, 64),
-		MKPARAMS(UT_MEGA - UT_BK_SIZE, UT_UMEGA / 2, 0, 8),
-		MKPARAMS(UT_GIGA, UT_UMEGA, 0, 8),
-		MKPARAMS(UT_GIGA - UT_BK_SIZE, UT_UMEGA / 2, 0, 16),
-		MKPARAMS(UT_TERA - UT_BK_SIZE, UT_BK_SIZE, UT_BK_SIZE, 64),
-		MKPARAMS(UT_TERA - UT_BK_SIZE, UT_UMEGA / 2, 0, 64),
-		MKPARAMS(UT_FILESIZE_MAX - UT_MEGA, UT_BK_SIZE, 0, 16),
-		MKPARAMS(UT_FILESIZE_MAX - UT_GIGA, UT_UMEGA, UT_UMEGA, 8),
-		MKPARAMS(UT_FILESIZE_MAX - (16 * UT_MEGA), UT_UMEGA / 2, 0, 16)
+		MKPARAMS(UT_BK_SIZE, UT_1M, UT_BK_SIZE, 16),
+		MKPARAMS(UT_1M, UT_BK_SIZE, UT_BK_SIZE, 16),
+		MKPARAMS(UT_1M, UT_BK_SIZE, UT_1M, 32),
+		MKPARAMS(UT_1M, UT_1M, UT_BK_SIZE, 16),
+		MKPARAMS(UT_1M, UT_1M, UT_1M, 32),
+		MKPARAMS(UT_1M - UT_BK_SIZE, UT_BK_SIZE, UT_1G, 64),
+		MKPARAMS(UT_1M - UT_BK_SIZE, UT_1M / 2, UT_1G, 64),
+		MKPARAMS(UT_1M - UT_BK_SIZE, UT_1M / 2, 0, 8),
+		MKPARAMS(UT_1G, UT_1M, 0, 8),
+		MKPARAMS(UT_1G - UT_BK_SIZE, UT_1M / 2, 0, 16),
+		MKPARAMS(UT_1T - UT_BK_SIZE, UT_BK_SIZE, UT_BK_SIZE, 64),
+		MKPARAMS(UT_1T - UT_BK_SIZE, UT_1M / 2, 0, 64),
+		MKPARAMS(UT_FILESIZE_MAX - UT_1M, UT_BK_SIZE, 0, 16),
+		MKPARAMS(UT_FILESIZE_MAX - UT_1G, UT_1M, UT_1M, 8),
+		MKPARAMS(UT_FILESIZE_MAX - (16 * UT_1M), UT_1M / 2, 0, 16)
 	};
 
 	ut_file_random_arr(ute, params);
@@ -198,18 +198,18 @@ static void ut_file_random_unaligned(struct ut_env *ute)
 {
 	const struct ut_ioparams params[] = {
 		MKPARAMS(79, UT_BK_SIZE + 7, 1, 7),
-		MKPARAMS(79, UT_UMEGA / 7, 1, 7),
+		MKPARAMS(79, UT_1M / 7, 1, 7),
 		MKPARAMS(7907, UT_BK_SIZE + 17, 0, 17),
-		MKPARAMS(7907, UT_UMEGA / 17, 0, 17),
-		MKPARAMS(UT_MEGA / 77773, UT_BK_SIZE + 77773, 1, 773),
-		MKPARAMS(UT_MEGA / 77773, UT_UMEGA / 7, 1, 73),
-		MKPARAMS(UT_GIGA / 19777, UT_BK_SIZE + 19777, 173, 37),
-		MKPARAMS(UT_GIGA / 19, UT_UMEGA / 601, 601, 601),
-		MKPARAMS(UT_TERA / 77003, UT_BK_SIZE + 99971, 0, 661),
-		MKPARAMS(UT_TERA / 77003, UT_UMEGA / 101, 0, 101),
+		MKPARAMS(7907, UT_1M / 17, 0, 17),
+		MKPARAMS(UT_1M / 77773, UT_BK_SIZE + 77773, 1, 773),
+		MKPARAMS(UT_1M / 77773, UT_1M / 7, 1, 73),
+		MKPARAMS(UT_1G / 19777, UT_BK_SIZE + 19777, 173, 37),
+		MKPARAMS(UT_1G / 19, UT_1M / 601, 601, 601),
+		MKPARAMS(UT_1T / 77003, UT_BK_SIZE + 99971, 0, 661),
+		MKPARAMS(UT_1T / 77003, UT_1M / 101, 0, 101),
 		MKPARAMS(UT_FILESIZE_MAX / 100003, UT_BK_SIZE + 100003, 0, 13),
-		MKPARAMS(UT_FILESIZE_MAX / 100003, UT_UMEGA / 307, 307, 307),
-		MKPARAMS(UT_FILESIZE_MAX / 3, UT_UMEGA / 11, 11111, 11),
+		MKPARAMS(UT_FILESIZE_MAX / 100003, UT_1M / 307, 307, 307),
+		MKPARAMS(UT_FILESIZE_MAX / 3, UT_1M / 11, 11111, 11),
 	};
 
 	ut_file_random_arr(ute, params);
@@ -225,8 +225,8 @@ static void ut_file_random_random(struct ut_env *ute)
 	for (size_t i = 0; i < 10; i++) {
 		ut_randfill(ute, &rand, sizeof(rand));
 		params.offset = (loff_t)(rand % UT_FILESIZE_MAX) / 13;
-		params.length = (rand % UT_UMEGA) + UT_BK_SIZE;
-		params.nskip = (rand % UT_UGIGA) / 11;
+		params.length = (rand % UT_1M) + UT_BK_SIZE;
+		params.nskip = (rand % UT_1G) / 11;
 		params.count = (rand % 16) + 1;
 		ut_file_random_(ute, &params);
 	}

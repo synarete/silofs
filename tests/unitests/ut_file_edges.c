@@ -77,45 +77,64 @@ static void ut_file_edges_1_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_edges_aligned(struct ut_env *ute)
 {
-	ut_file_edges_1_(ute, UT_4K, UT_4K);
-	ut_file_edges_1_(ute, 2 * UT_4K, UT_4K);
-	ut_file_edges_1_(ute, UT_8K, UT_8K);
-	ut_file_edges_1_(ute, UT_8K, UT_BK_SIZE);
-	ut_file_edges_1_(ute, UT_BK_SIZE, UT_BK_SIZE);
-	ut_file_edges_1_(ute, UT_MEGA, 4 * UT_BK_SIZE);
-	ut_file_edges_1_(ute, UT_GIGA, 8 * UT_BK_SIZE);
-	ut_file_edges_1_(ute, UT_TERA, 16 * UT_BK_SIZE);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(UT_4K, UT_4K),
+		UT_MKRANGE1(2 * UT_4K, UT_4K),
+		UT_MKRANGE1(UT_8K, UT_8K),
+		UT_MKRANGE1(UT_8K, UT_64K),
+		UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(UT_1M, 4 * UT_64K),
+		UT_MKRANGE1(UT_1G, 8 * UT_64K),
+		UT_MKRANGE1(UT_1T, 16 * UT_64K),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_edges_1_(ute, range[i].off,  range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 static void ut_file_edges_unaligned(struct ut_env *ute)
 {
-	ut_file_edges_1_(ute, UT_8K - 1, UT_BK_SIZE + 11);
-	ut_file_edges_1_(ute, UT_BK_SIZE + 11, UT_BK_SIZE - 1);
-	ut_file_edges_1_(ute, UT_MEGA - 1111, 4 * UT_BK_SIZE + 1);
-	ut_file_edges_1_(ute, UT_GIGA - 11111, 8 * UT_BK_SIZE + 11);
-	ut_file_edges_1_(ute, UT_TERA - 111111, 16 * UT_BK_SIZE + 111);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(UT_8K - 1, UT_64K + 11),
+		UT_MKRANGE1(UT_64K + 11, UT_64K - 1),
+		UT_MKRANGE1(UT_1M - 1111, 4 * UT_64K + 1),
+		UT_MKRANGE1(UT_1G - 11111, 8 * UT_64K + 11),
+		UT_MKRANGE1(UT_1T - 111111, 16 * UT_64K + 111),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_edges_1_(ute, range[i].off,  range[i].len);
+		ut_relax_mem(ute);
+	}
 }
+
+#define FIMAP_SZ        (UT_FILEMAP_NCHILDS * UT_BK_SIZE)
+#define FIMAP_SZ2       (FIMAP_SZ * UT_FILEMAP_NCHILDS)
+#define FIMAP_SZ_MAX    (UT_FILESIZE_MAX)
 
 static void ut_file_edges_special(struct ut_env *ute)
 {
-	const size_t bksz = UT_BK_SIZE;
-	const loff_t bkssz = (loff_t)bksz;
-	const loff_t filemap_sz = (UT_FILEMAP_NCHILDS * UT_BK_SIZE);
-	const loff_t filemap_sz2 = filemap_sz * UT_FILEMAP_NCHILDS;
-	const loff_t filesize_max = UT_FILESIZE_MAX;
+	const struct ut_range range[] = {
+		UT_MKRANGE1(FIMAP_SZ, UT_64K),
+		UT_MKRANGE1(FIMAP_SZ, 2 * UT_64K),
+		UT_MKRANGE1(FIMAP_SZ - 11, UT_64K + 111),
+		UT_MKRANGE1(FIMAP_SZ - 111, 2 * UT_64K + 1111),
+		UT_MKRANGE1(2 * FIMAP_SZ, 2 * UT_64K),
+		UT_MKRANGE1(2 * FIMAP_SZ - 1, UT_64K + 2),
+		UT_MKRANGE1(FIMAP_SZ + FIMAP_SZ2, 2 * UT_64K),
+		UT_MKRANGE1(FIMAP_SZ + FIMAP_SZ2 - 2, UT_64K + 3),
+		UT_MKRANGE1(FIMAP_SZ2 - 2, UT_64K + 3),
+		UT_MKRANGE1(FIMAP_SZ_MAX / 2, UT_64K),
+		UT_MKRANGE1(FIMAP_SZ_MAX - (2 * UT_64K), UT_64K),
+		UT_MKRANGE1(FIMAP_SZ_MAX - UT_64K - 1, UT_64K),
+	};
 
-	ut_file_edges_1_(ute, filemap_sz, bksz);
-	ut_file_edges_1_(ute, filemap_sz, 2 * bksz);
-	ut_file_edges_1_(ute, filemap_sz - 11, bksz + 111);
-	ut_file_edges_1_(ute, filemap_sz - 111, 2 * bksz + 1111);
-	ut_file_edges_1_(ute, 2 * filemap_sz, 2 * bksz);
-	ut_file_edges_1_(ute, 2 * filemap_sz - 1, bksz + 2);
-	ut_file_edges_1_(ute, filemap_sz + filemap_sz2, 2 * bksz);
-	ut_file_edges_1_(ute, filemap_sz + filemap_sz2 - 2, bksz + 3);
-	ut_file_edges_1_(ute, filemap_sz2 - 2, bksz + 3);
-	ut_file_edges_1_(ute, filesize_max / 2, bksz);
-	ut_file_edges_1_(ute, filesize_max - (2 * bkssz), bksz);
-	ut_file_edges_1_(ute, filesize_max - bkssz - 1, bksz);
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_edges_1_(ute, range[i].off,  range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -125,12 +144,12 @@ static void ut_file_edges_special(struct ut_env *ute)
 static void ut_file_edges_fmapping_(struct ut_env *ute,
                                     const loff_t *off_arr, size_t cnt)
 {
-	ino_t ino;
-	ino_t dino;
-	loff_t off = -1;
-	const char *name = UT_NAME;
 	const size_t bsz = 512;
 	uint8_t *buf = ut_randbuf(ute, bsz);
+	const char *name = UT_NAME;
+	loff_t off = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

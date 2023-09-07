@@ -83,7 +83,7 @@ static void ut_file_stat_blocks_(struct ut_env *ute, loff_t off)
 	ut_file_stat_blocks_at_(ute, 1, off);
 	ut_file_stat_blocks_at_(ute, UT_BK_SIZE, off);
 	ut_file_stat_blocks_at_(ute, 2 * UT_BK_SIZE, off);
-	ut_file_stat_blocks_at_(ute, UT_UMEGA, off);
+	ut_file_stat_blocks_at_(ute, UT_1M, off);
 	ut_file_stat_blocks_at_(ute, UT_IOSIZE_MAX, off);
 	ut_file_stat_blocks_at_(ute, SILOFS_IO_SIZE_MAX, off);
 }
@@ -91,9 +91,9 @@ static void ut_file_stat_blocks_(struct ut_env *ute, loff_t off)
 static void ut_file_stat_blocks(struct ut_env *ute)
 {
 	ut_file_stat_blocks_(ute, 0);
-	ut_file_stat_blocks_(ute, UT_MEGA);
-	ut_file_stat_blocks_(ute, UT_GIGA);
-	ut_file_stat_blocks_(ute, UT_TERA);
+	ut_file_stat_blocks_(ute, UT_1M);
+	ut_file_stat_blocks_(ute, UT_1G);
+	ut_file_stat_blocks_(ute, UT_1T);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -137,8 +137,8 @@ static void ut_file_statvfs_(struct ut_env *ute,
 static void ut_file_statvfs(struct ut_env *ute)
 {
 	ut_file_statvfs_(ute, 0, UT_BK_SIZE);
-	ut_file_statvfs_(ute, UT_BK_SIZE - 1, UT_UMEGA + 2);
-	ut_file_statvfs_(ute, UT_IOSIZE_MAX - UT_MEGA - 1, UT_UMEGA + 2);
+	ut_file_statvfs_(ute, UT_BK_SIZE - 1, UT_1M + 2);
+	ut_file_statvfs_(ute, UT_IOSIZE_MAX - UT_1M - 1, UT_1M + 2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

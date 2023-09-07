@@ -168,42 +168,42 @@ static const struct ut_range s_ut_ranges1[] = {
 
 static const struct ut_range s_ut_ranges2[] = {
 	UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE),
-	UT_MKRANGE1(UT_MEGA, UT_BK_SIZE),
-	UT_MKRANGE1(UT_GIGA, UT_BK_SIZE),
-	UT_MKRANGE1(UT_TERA, UT_BK_SIZE)
+	UT_MKRANGE1(UT_1M, UT_BK_SIZE),
+	UT_MKRANGE1(UT_1G, UT_BK_SIZE),
+	UT_MKRANGE1(UT_1T, UT_BK_SIZE)
 };
 
 static const struct ut_range s_ut_ranges3[] = {
 	UT_MKRANGE1(UT_BK_SIZE - 1, UT_BK_SIZE + 3),
-	UT_MKRANGE1(UT_MEGA - 1, UT_BK_SIZE + 3),
-	UT_MKRANGE1(UT_GIGA - 1, UT_BK_SIZE + 3),
-	UT_MKRANGE1(UT_TERA - 1, UT_BK_SIZE + 3)
+	UT_MKRANGE1(UT_1M - 1, UT_BK_SIZE + 3),
+	UT_MKRANGE1(UT_1G - 1, UT_BK_SIZE + 3),
+	UT_MKRANGE1(UT_1T - 1, UT_BK_SIZE + 3)
 };
 
 static const struct ut_range s_ut_ranges4[] = {
-	UT_MKRANGE1(UT_BK_SIZE, UT_UMEGA),
-	UT_MKRANGE1(3 * UT_MEGA - 3, UT_UMEGA / 3),
-	UT_MKRANGE1(5 * UT_MEGA + 5, UT_UMEGA / 5),
-	UT_MKRANGE1(7 * UT_MEGA - 7, UT_UMEGA / 7),
-	UT_MKRANGE1(11 * UT_MEGA + 11, UT_UMEGA / 11),
-	UT_MKRANGE1(13 * UT_MEGA - 13, UT_UMEGA / 13),
+	UT_MKRANGE1(UT_BK_SIZE, UT_1M),
+	UT_MKRANGE1(3 * UT_1M - 3, UT_1M / 3),
+	UT_MKRANGE1(5 * UT_1M + 5, UT_1M / 5),
+	UT_MKRANGE1(7 * UT_1M - 7, UT_1M / 7),
+	UT_MKRANGE1(11 * UT_1M + 11, UT_1M / 11),
+	UT_MKRANGE1(13 * UT_1M - 13, UT_1M / 13),
 };
 
 static const struct ut_range s_ut_ranges5[] = {
 	UT_MKRANGE1(1, 11),
 	UT_MKRANGE1(23 * UT_BK_SIZE, 2 * UT_BK_SIZE),
-	UT_MKRANGE1(31 * UT_MEGA - 3, 3 * UT_BK_SIZE),
-	UT_MKRANGE1(677 * UT_MEGA - 3, 3 * UT_BK_SIZE),
-	UT_MKRANGE1(47 * UT_GIGA - 4, 4 * UT_BK_SIZE),
-	UT_MKRANGE1(977 * UT_GIGA - 4, 4 * UT_BK_SIZE),
-	UT_MKRANGE1(5 * UT_TERA - 5, 5 * UT_BK_SIZE),
+	UT_MKRANGE1(31 * UT_1M - 3, 3 * UT_BK_SIZE),
+	UT_MKRANGE1(677 * UT_1M - 3, 3 * UT_BK_SIZE),
+	UT_MKRANGE1(47 * UT_1G - 4, 4 * UT_BK_SIZE),
+	UT_MKRANGE1(977 * UT_1G - 4, 4 * UT_BK_SIZE),
+	UT_MKRANGE1(5 * UT_1T - 5, 5 * UT_BK_SIZE),
 };
 
 static const struct ut_range s_ut_ranges6[] = {
-	UT_MKRANGE1((UT_MEGA / 23) - 23, UT_UMEGA),
-	UT_MKRANGE1(23 * UT_MEGA + 23, UT_UMEGA),
-	UT_MKRANGE1(113 * UT_GIGA - 113, UT_UMEGA),
-	UT_MKRANGE1(223 * UT_GIGA + 223, UT_UMEGA),
+	UT_MKRANGE1((UT_1M / 23) - 23, UT_1M),
+	UT_MKRANGE1(23 * UT_1M + 23, UT_1M),
+	UT_MKRANGE1(113 * UT_1G - 113, UT_1M),
+	UT_MKRANGE1(223 * UT_1G + 223, UT_1M),
 };
 
 static const struct ut_ranges s_ranges_defs[] = {

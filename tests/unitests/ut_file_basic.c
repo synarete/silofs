@@ -36,7 +36,7 @@ static void ut_file_simple1_(struct ut_env *ute, loff_t off)
 static void ut_file_simple2_(struct ut_env *ute, loff_t off)
 {
 	const char *name = UT_NAME;
-	const size_t bsz = UT_MEGA / 4;
+	const size_t bsz = UT_1M / 4;
 	void *buf = ut_randbuf(ute, bsz);
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -52,7 +52,7 @@ static void ut_file_simple2_(struct ut_env *ute, loff_t off)
 static void ut_file_simple3_(struct ut_env *ute, loff_t off)
 {
 	const char *name = UT_NAME;
-	const size_t bsz = UT_MEGA;
+	const size_t bsz = UT_1M;
 	void *buf = ut_randbuf(ute, bsz);
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -91,17 +91,17 @@ static void ut_file_simple(struct ut_env *ute)
 		UT_MKRANGE0(UT_BK_SIZE),
 		UT_MKRANGE0(UT_BK_SIZE - 1),
 		UT_MKRANGE0(UT_BK_SIZE + 1),
-		UT_MKRANGE0(UT_MEGA),
-		UT_MKRANGE0(UT_MEGA - 1),
-		UT_MKRANGE0(UT_MEGA + 1),
-		UT_MKRANGE0(UT_MEGA),
-		UT_MKRANGE0(11 * UT_MEGA - 11),
-		UT_MKRANGE0(11 * UT_MEGA + 11),
-		UT_MKRANGE0(UT_GIGA),
-		UT_MKRANGE0(UT_GIGA - 3),
-		UT_MKRANGE0(11 * UT_GIGA - 11),
-		UT_MKRANGE0(UT_TERA),
-		UT_MKRANGE0(UT_TERA - 11),
+		UT_MKRANGE0(UT_1M),
+		UT_MKRANGE0(UT_1M - 1),
+		UT_MKRANGE0(UT_1M + 1),
+		UT_MKRANGE0(UT_1M),
+		UT_MKRANGE0(11 * UT_1M - 11),
+		UT_MKRANGE0(11 * UT_1M + 11),
+		UT_MKRANGE0(UT_1G),
+		UT_MKRANGE0(UT_1G - 3),
+		UT_MKRANGE0(11 * UT_1G - 11),
+		UT_MKRANGE0(UT_1T),
+		UT_MKRANGE0(UT_1T - 11),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -133,9 +133,9 @@ static void ut_file_minio_aligned(struct ut_env *ute)
 		UT_MKRANGE0(UT_4K),
 		UT_MKRANGE0(UT_8K),
 		UT_MKRANGE0(UT_BK_SIZE),
-		UT_MKRANGE0(UT_MEGA),
-		UT_MKRANGE0(UT_GIGA),
-		UT_MKRANGE0(UT_TERA),
+		UT_MKRANGE0(UT_1M),
+		UT_MKRANGE0(UT_1G),
+		UT_MKRANGE0(UT_1T),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -150,9 +150,9 @@ static void ut_file_minio_unaligned(struct ut_env *ute)
 		UT_MKRANGE0(UT_4K - 1),
 		UT_MKRANGE0(UT_8K - 1),
 		UT_MKRANGE0(UT_BK_SIZE - 1),
-		UT_MKRANGE0(UT_MEGA - 2),
-		UT_MKRANGE0(UT_GIGA - 3),
-		UT_MKRANGE0(UT_TERA - 4),
+		UT_MKRANGE0(UT_1M - 2),
+		UT_MKRANGE0(UT_1G - 3),
+		UT_MKRANGE0(UT_1T - 4),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -185,13 +185,13 @@ static void ut_file_data(struct ut_env *ute)
 		UT_MKRANGE1(0, 2 * UT_8K),
 		UT_MKRANGE1(3, 3 * UT_8K + 3),
 		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(0, UT_UMEGA),
-		UT_MKRANGE1(UT_MEGA, UT_BK_SIZE),
-		UT_MKRANGE1(UT_MEGA, UT_UMEGA),
-		UT_MKRANGE1(UT_MEGA - 3, 3 * UT_BK_SIZE + 7),
-		UT_MKRANGE1((11 * UT_MEGA) - 11, UT_UMEGA + UT_BK_SIZE + 1),
-		UT_MKRANGE1(111 * UT_GIGA, UT_UMEGA),
-		UT_MKRANGE1((111 * UT_GIGA) - 11, UT_UMEGA + 111),
+		UT_MKRANGE1(0, UT_1M),
+		UT_MKRANGE1(UT_1M, UT_BK_SIZE),
+		UT_MKRANGE1(UT_1M, UT_1M),
+		UT_MKRANGE1(UT_1M - 3, 3 * UT_BK_SIZE + 7),
+		UT_MKRANGE1((11 * UT_1M) - 11, UT_1M + UT_BK_SIZE + 1),
+		UT_MKRANGE1(111 * UT_1G, UT_1M),
+		UT_MKRANGE1((111 * UT_1G) - 11, UT_1M + 111),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -205,12 +205,12 @@ static void ut_file_iosize_max(struct ut_env *ute)
 	const struct ut_range range[] = {
 		UT_MKRANGE1(0, UT_IOSIZE_MAX),
 		UT_MKRANGE1(1, UT_IOSIZE_MAX),
-		UT_MKRANGE1(UT_MEGA, UT_IOSIZE_MAX),
-		UT_MKRANGE1(UT_MEGA - 1, UT_IOSIZE_MAX),
-		UT_MKRANGE1(UT_GIGA, UT_IOSIZE_MAX),
-		UT_MKRANGE1(UT_GIGA - 1, UT_IOSIZE_MAX),
-		UT_MKRANGE1(UT_TERA, UT_IOSIZE_MAX),
-		UT_MKRANGE1(UT_TERA - 1, UT_IOSIZE_MAX),
+		UT_MKRANGE1(UT_1M, UT_IOSIZE_MAX),
+		UT_MKRANGE1(UT_1M - 1, UT_IOSIZE_MAX),
+		UT_MKRANGE1(UT_1G, UT_IOSIZE_MAX),
+		UT_MKRANGE1(UT_1G - 1, UT_IOSIZE_MAX),
+		UT_MKRANGE1(UT_1T, UT_IOSIZE_MAX),
+		UT_MKRANGE1(UT_1T - 1, UT_IOSIZE_MAX),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_IOSIZE_MAX - 1,
 		            UT_IOSIZE_MAX),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_IOSIZE_MAX, UT_IOSIZE_MAX),
@@ -245,16 +245,16 @@ static void ut_file_unlinked_(struct ut_env *ute, loff_t off, size_t len)
 static void ut_file_unlinked(struct ut_env *ute)
 {
 	const struct ut_range range[] = {
-		UT_MKRANGE1(0, UT_MEGA / 8),
-		UT_MKRANGE1(1, UT_MEGA / 8),
-		UT_MKRANGE1(UT_MEGA, 8 * UT_KILO),
-		UT_MKRANGE1(UT_MEGA - 1, UT_KILO),
-		UT_MKRANGE1(UT_GIGA, UT_MEGA),
-		UT_MKRANGE1(UT_GIGA - 1, UT_MEGA + 2),
-		UT_MKRANGE1(UT_TERA, UT_MEGA),
-		UT_MKRANGE1(UT_TERA - 1, UT_MEGA + 2),
-		UT_MKRANGE1(UT_FILESIZE_MAX - UT_MEGA - 1, UT_KILO),
-		UT_MKRANGE1(UT_FILESIZE_MAX - UT_MEGA, UT_MEGA),
+		UT_MKRANGE1(0, UT_1M / 8),
+		UT_MKRANGE1(1, UT_1M / 8),
+		UT_MKRANGE1(UT_1M, 8 * UT_1K),
+		UT_MKRANGE1(UT_1M - 1, UT_1K),
+		UT_MKRANGE1(UT_1G, UT_1M),
+		UT_MKRANGE1(UT_1G - 1, UT_1M + 2),
+		UT_MKRANGE1(UT_1T, UT_1M),
+		UT_MKRANGE1(UT_1T - 1, UT_1M + 2),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1K),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M, UT_1M),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -294,11 +294,11 @@ static void ut_file_multi_(struct ut_env *ute, size_t bsz,
 
 static void ut_file_multi(struct ut_env *ute)
 {
-	ut_file_multi_(ute, UT_BK_SIZE, 0, UT_BK_SIZE, UT_MEGA, UT_GIGA);
+	ut_file_multi_(ute, UT_BK_SIZE, 0, UT_BK_SIZE, UT_1M, UT_1G);
 	ut_file_multi_(ute, UT_BK_SIZE,
-	               UT_BK_SIZE, UT_MEGA, UT_GIGA, UT_TERA);
+	               UT_BK_SIZE, UT_1M, UT_1G, UT_1T);
 	ut_file_multi_(ute, UT_BK_SIZE,
-	               UT_MEGA, UT_BK_SIZE, UT_TERA, UT_GIGA);
+	               UT_1M, UT_BK_SIZE, UT_1T, UT_1G);
 }
 
 static void ut_file_tricky(struct ut_env *ute)
@@ -339,21 +339,21 @@ static void ut_file_overwrite_simple(struct ut_env *ute)
 {
 	const struct ut_range range[] = {
 		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(0, UT_UMEGA),
+		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(1, UT_BK_SIZE),
-		UT_MKRANGE1(2, UT_UMEGA),
-		UT_MKRANGE1(UT_BK_SIZE, UT_UMEGA),
-		UT_MKRANGE1(UT_BK_SIZE + 1, UT_UMEGA),
-		UT_MKRANGE1(UT_BK_SIZE - 1, UT_UMEGA + 3),
-		UT_MKRANGE1(UT_MEGA, UT_UMEGA),
-		UT_MKRANGE1(UT_MEGA + 1, UT_UMEGA),
-		UT_MKRANGE1(UT_MEGA - 1, UT_UMEGA + 3),
-		UT_MKRANGE1(UT_GIGA, UT_UMEGA),
-		UT_MKRANGE1(UT_GIGA - 1, UT_UMEGA),
-		UT_MKRANGE1(UT_GIGA + 1, UT_UMEGA),
-		UT_MKRANGE1(UT_TERA, UT_UMEGA),
-		UT_MKRANGE1(UT_TERA - 1, UT_UMEGA),
-		UT_MKRANGE1(UT_TERA + 1, UT_UMEGA),
+		UT_MKRANGE1(2, UT_1M),
+		UT_MKRANGE1(UT_BK_SIZE, UT_1M),
+		UT_MKRANGE1(UT_BK_SIZE + 1, UT_1M),
+		UT_MKRANGE1(UT_BK_SIZE - 1, UT_1M + 3),
+		UT_MKRANGE1(UT_1M, UT_1M),
+		UT_MKRANGE1(UT_1M + 1, UT_1M),
+		UT_MKRANGE1(UT_1M - 1, UT_1M + 3),
+		UT_MKRANGE1(UT_1G, UT_1M),
+		UT_MKRANGE1(UT_1G - 1, UT_1M),
+		UT_MKRANGE1(UT_1G + 1, UT_1M),
+		UT_MKRANGE1(UT_1T, UT_1M),
+		UT_MKRANGE1(UT_1T - 1, UT_1M),
+		UT_MKRANGE1(UT_1T + 1, UT_1M),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -398,13 +398,13 @@ static void ut_file_overwrite_complex(struct ut_env *ute)
 {
 	const struct ut_range2 range[] = {
 		UT_MKRANGE2(0, 1, UT_64K),
-		UT_MKRANGE2(1, 2, UT_UMEGA),
-		UT_MKRANGE2(UT_MEGA, UT_MEGA + UT_64K, UT_UMEGA),
-		UT_MKRANGE2(UT_MEGA - 7, UT_MEGA - 5, (11 * UT_64K) + 11),
-		UT_MKRANGE2(UT_GIGA, UT_GIGA + UT_BK_SIZE, UT_UMEGA),
-		UT_MKRANGE2(UT_GIGA - 11111, UT_GIGA - 111, UT_64K + 11111),
-		UT_MKRANGE2(UT_TERA, UT_TERA + UT_64K, UT_UMEGA),
-		UT_MKRANGE2(UT_TERA - 111111, UT_TERA - 111, UT_UMEGA + 11),
+		UT_MKRANGE2(1, 2, UT_1M),
+		UT_MKRANGE2(UT_1M, UT_1M + UT_64K, UT_1M),
+		UT_MKRANGE2(UT_1M - 7, UT_1M - 5, (11 * UT_64K) + 11),
+		UT_MKRANGE2(UT_1G, UT_1G + UT_BK_SIZE, UT_1M),
+		UT_MKRANGE2(UT_1G - 11111, UT_1G - 111, UT_64K + 11111),
+		UT_MKRANGE2(UT_1T, UT_1T + UT_64K, UT_1M),
+		UT_MKRANGE2(UT_1T - 111111, UT_1T - 111, UT_1M + 11),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -449,15 +449,15 @@ static void ut_file_sequence(struct ut_env *ute)
 		UT_MKRANGE1(1, UT_BK_SIZE),
 		UT_MKRANGE1(7, UT_BK_SIZE + 7),
 		UT_MKRANGE1(UT_BK_SIZE - 11, UT_BK_SIZE + 111),
-		UT_MKRANGE1(UT_MEGA - 111, UT_UMEGA + 1111),
-		UT_MKRANGE1(UT_GIGA, UT_BK_SIZE),
-		UT_MKRANGE1(UT_GIGA - 1, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA - 1, UT_BK_SIZE + 111),
-		UT_MKRANGE1(UT_TERA - 11, UT_BK_SIZE + 1111),
-		UT_MKRANGE1(UT_TERA - 11, UT_UMEGA + 1111),
-		UT_MKRANGE1(UT_TERA + 111, (11 * UT_BK_SIZE) + 11),
-		UT_MKRANGE1(UT_FILESIZE_MAX / 2 - 1, UT_UMEGA + 1),
+		UT_MKRANGE1(UT_1M - 111, UT_1M + 1111),
+		UT_MKRANGE1(UT_1G, UT_BK_SIZE),
+		UT_MKRANGE1(UT_1G - 1, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T - 1, UT_BK_SIZE + 111),
+		UT_MKRANGE1(UT_1T - 11, UT_BK_SIZE + 1111),
+		UT_MKRANGE1(UT_1T - 11, UT_1M + 1111),
+		UT_MKRANGE1(UT_1T + 111, (11 * UT_BK_SIZE) + 11),
+		UT_MKRANGE1(UT_FILESIZE_MAX / 2 - 1, UT_1M + 1),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -469,9 +469,9 @@ static void ut_file_sequence(struct ut_env *ute)
 static void ut_file_sequence_long(struct ut_env *ute)
 {
 	const struct ut_range range[] = {
-		UT_MKRANGE1(UT_MEGA - 7, 111111),
-		UT_MKRANGE1(UT_GIGA - 77, 111111),
-		UT_MKRANGE1(UT_TERA - 777, 111111),
+		UT_MKRANGE1(UT_1M - 7, 111111),
+		UT_MKRANGE1(UT_1G - 77, 111111),
+		UT_MKRANGE1(UT_1T - 777, 111111),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -487,8 +487,8 @@ static void ut_file_sequence_at_end(struct ut_env *ute)
 		            UT_BK_SIZE),
 		UT_MKRANGE1(UT_FILESIZE_MAX - (3 * UT_BK_SIZE) - 1,
 		            2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_FILESIZE_MAX - (5 * UT_MEGA) - 5,
-		            4 * UT_UMEGA),
+		UT_MKRANGE1(UT_FILESIZE_MAX - (5 * UT_1M) - 5,
+		            4 * UT_1M),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -559,13 +559,13 @@ static void ut_file_unaligned(struct ut_env *ute)
 	const struct ut_range range[] = {
 		UT_MKRANGE1(0, 8 * UT_BK_SIZE),
 		UT_MKRANGE1(1, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(0, UT_UMEGA),
-		UT_MKRANGE1(UT_GIGA, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_GIGA - 1, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA - 11, (8 * UT_BK_SIZE)),
-		UT_MKRANGE1(UT_TERA - 11, UT_UMEGA),
-		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_UMEGA),
+		UT_MKRANGE1(0, UT_1M),
+		UT_MKRANGE1(UT_1G, 8 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1G - 1, 8 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T, 8 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T - 11, (8 * UT_BK_SIZE)),
+		UT_MKRANGE1(UT_1T - 11, UT_1M),
+		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -578,7 +578,7 @@ static void ut_file_unaligned_at_end(struct ut_env *ute)
 {
 	const struct ut_range range[] = {
 		UT_MKRANGE1(UT_FILESIZE_MAX - 11111, 11111),
-		UT_MKRANGE1(UT_FILESIZE_MAX - UT_MEGA - 1, UT_MEGA + 1),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M + 1),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -629,16 +629,16 @@ static void ut_file_firstlast(struct ut_env *ute)
 		UT_MKRANGE1(8, UT_BK_SIZE + 8),
 		UT_MKRANGE1(11, UT_BK_SIZE + 11),
 		UT_MKRANGE1(UT_BK_SIZE - 11, UT_BK_SIZE + 111),
-		UT_MKRANGE1(0, UT_UMEGA),
-		UT_MKRANGE1(1, UT_UMEGA),
-		UT_MKRANGE1(UT_MEGA - 1, UT_UMEGA + 11),
-		UT_MKRANGE1(UT_MEGA + 1, 2 * UT_UMEGA),
-		UT_MKRANGE1(UT_GIGA, UT_BK_SIZE),
-		UT_MKRANGE1(UT_GIGA - 1, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA - 11, UT_BK_SIZE + 11),
-		UT_MKRANGE1(UT_TERA - 111, UT_BK_SIZE + 1111),
-		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_UMEGA + 1),
+		UT_MKRANGE1(0, UT_1M),
+		UT_MKRANGE1(1, UT_1M),
+		UT_MKRANGE1(UT_1M - 1, UT_1M + 11),
+		UT_MKRANGE1(UT_1M + 1, 2 * UT_1M),
+		UT_MKRANGE1(UT_1G, UT_BK_SIZE),
+		UT_MKRANGE1(UT_1G - 1, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T - 11, UT_BK_SIZE + 11),
+		UT_MKRANGE1(UT_1T - 111, UT_BK_SIZE + 1111),
+		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M + 1),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -690,16 +690,16 @@ static void ut_file_zigzag(struct ut_env *ute)
 		UT_MKRANGE1(8, UT_BK_SIZE + 8),
 		UT_MKRANGE1(11, UT_BK_SIZE + 11),
 		UT_MKRANGE1(UT_BK_SIZE - 11, UT_BK_SIZE + 111),
-		UT_MKRANGE1(0, UT_UMEGA),
-		UT_MKRANGE1(1, UT_UMEGA),
-		UT_MKRANGE1(UT_MEGA - 1, UT_UMEGA + 11),
-		UT_MKRANGE1(UT_MEGA + 1, 2 * UT_UMEGA),
-		UT_MKRANGE1(UT_GIGA, UT_BK_SIZE),
-		UT_MKRANGE1(UT_GIGA - 1, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_TERA - 11, UT_BK_SIZE + 11),
-		UT_MKRANGE1(UT_TERA - 111, UT_BK_SIZE + 1111),
-		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_UMEGA + 1),
+		UT_MKRANGE1(0, UT_1M),
+		UT_MKRANGE1(1, UT_1M),
+		UT_MKRANGE1(UT_1M - 1, UT_1M + 11),
+		UT_MKRANGE1(UT_1M + 1, 2 * UT_1M),
+		UT_MKRANGE1(UT_1G, UT_BK_SIZE),
+		UT_MKRANGE1(UT_1G - 1, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1T - 11, UT_BK_SIZE + 11),
+		UT_MKRANGE1(UT_1T - 111, UT_BK_SIZE + 1111),
+		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M + 1),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -717,7 +717,7 @@ static void ut_file_with_hole_(struct ut_env *ute,
 	const ino_t root_ino = UT_ROOT_INO;
 	const loff_t hole_off1 = off1 + (loff_t)len;
 	const size_t hole_len = (size_t)(off2 - hole_off1);
-	const size_t nzeros = (hole_len < UT_UMEGA) ? hole_len : UT_UMEGA;
+	const size_t nzeros = (hole_len < UT_1M) ? hole_len : UT_1M;
 	const loff_t hole_off2 = off2 - (loff_t)nzeros;
 	void *buf1 = ut_randbuf(ute, len);
 	void *buf2 = ut_randbuf(ute, len);
@@ -739,21 +739,21 @@ static void ut_file_with_hole_(struct ut_env *ute,
 static void ut_file_with_hole(struct ut_env *ute)
 {
 	const struct ut_range2 range[] = {
-		UT_MKRANGE2(0, UT_MEGA, UT_BK_SIZE),
+		UT_MKRANGE2(0, UT_1M, UT_BK_SIZE),
 		UT_MKRANGE2(0, 2 * UT_BK_SIZE, UT_BK_SIZE),
 		UT_MKRANGE2(1, 3 * UT_BK_SIZE, UT_BK_SIZE),
-		UT_MKRANGE2(1, UT_MEGA - 1, UT_BK_SIZE),
-		UT_MKRANGE2(2, 2 * UT_MEGA - 2, UT_UMEGA),
-		UT_MKRANGE2(UT_MEGA + 1, UT_MEGA + UT_BK_SIZE + 2, UT_BK_SIZE),
-		UT_MKRANGE2(0, UT_GIGA, UT_UMEGA),
-		UT_MKRANGE2(1, UT_GIGA - 1, UT_UMEGA),
-		UT_MKRANGE2(2, 2 * UT_GIGA - 2, UT_IOSIZE_MAX),
-		UT_MKRANGE2(UT_GIGA + 1, UT_GIGA + UT_IOSIZE_MAX + 2,
+		UT_MKRANGE2(1, UT_1M - 1, UT_BK_SIZE),
+		UT_MKRANGE2(2, 2 * UT_1M - 2, UT_1M),
+		UT_MKRANGE2(UT_1M + 1, UT_1M + UT_BK_SIZE + 2, UT_BK_SIZE),
+		UT_MKRANGE2(0, UT_1G, UT_1M),
+		UT_MKRANGE2(1, UT_1G - 1, UT_1M),
+		UT_MKRANGE2(2, 2 * UT_1G - 2, UT_IOSIZE_MAX),
+		UT_MKRANGE2(UT_1G + 1, UT_1G + UT_IOSIZE_MAX + 2,
 		            UT_IOSIZE_MAX),
-		UT_MKRANGE2(0, UT_TERA, UT_UMEGA),
-		UT_MKRANGE2(1, UT_TERA - 1, UT_UMEGA),
-		UT_MKRANGE2(2, 2 * UT_TERA - 2, UT_UMEGA),
-		UT_MKRANGE2(UT_TERA + 1, UT_TERA + UT_MEGA + 2, UT_UMEGA),
+		UT_MKRANGE2(0, UT_1T, UT_1M),
+		UT_MKRANGE2(1, UT_1T - 1, UT_1M),
+		UT_MKRANGE2(2, 2 * UT_1T - 2, UT_1M),
+		UT_MKRANGE2(UT_1T + 1, UT_1T + UT_1M + 2, UT_1M),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
@@ -834,12 +834,12 @@ static void ut_file_read_behind(struct ut_env *ute)
 		UT_MKRANGE0(UT_8K),
 		UT_MKRANGE0(UT_BK_SIZE),
 		UT_MKRANGE0(UT_BK_SIZE + 1),
-		UT_MKRANGE0(UT_MEGA),
-		UT_MKRANGE0(UT_MEGA + 1),
-		UT_MKRANGE0(UT_GIGA),
-		UT_MKRANGE0(UT_GIGA - 1),
-		UT_MKRANGE0(UT_TERA),
-		UT_MKRANGE0(UT_TERA + 1),
+		UT_MKRANGE0(UT_1M),
+		UT_MKRANGE0(UT_1M + 1),
+		UT_MKRANGE0(UT_1G),
+		UT_MKRANGE0(UT_1G - 1),
+		UT_MKRANGE0(UT_1T),
+		UT_MKRANGE0(UT_1T + 1),
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {

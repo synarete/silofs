@@ -579,17 +579,13 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 	silofs_expect_eqm_(a, b, n, SILOFS_FL)
 
 /* aliases */
-#define UT_KILO                 SILOFS_KILO
-#define UT_MEGA                 SILOFS_MEGA
-#define UT_GIGA                 SILOFS_GIGA
-#define UT_TERA                 SILOFS_TERA
-#define UT_UMEGA                SILOFS_UMEGA
-#define UT_UGIGA                SILOFS_UGIGA
-#define UT_UTERA                SILOFS_UTERA
 #define UT_1K                   SILOFS_KILO
 #define UT_4K                   (4 * SILOFS_KILO)
 #define UT_8K                   (8 * SILOFS_KILO)
 #define UT_64K                  (64 * SILOFS_KILO)
+#define UT_1M                   SILOFS_MEGA
+#define UT_1G                   SILOFS_GIGA
+#define UT_1T                   SILOFS_TERA
 
 #define UT_BK_SIZE              SILOFS_LBK_SIZE
 #define UT_FILESIZE_MAX         SILOFS_FILE_SIZE_MAX

@@ -31,7 +31,6 @@ static struct fiemap *new_fiemap(struct ut_env *ute, size_t cnt)
 static struct fiemap *
 ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 {
-	loff_t pos;
 	struct fiemap fm0 = {
 		.fm_start = (uint64_t)off,
 		.fm_length = len,
@@ -41,6 +40,7 @@ ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 	const uint32_t magic = SILOFS_FSID_MAGIC;
 	struct fiemap *fm = NULL;
 	const struct fiemap_extent *fm_ext = NULL;
+	loff_t pos = -1;
 
 	ut_fiemap_ok(ute, ino, &fm0);
 	ut_expect_eq(magic, SILOFS_FSID_MAGIC);
@@ -71,35 +71,35 @@ ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_fiemap_simple_(struct ut_env *ute,
-                                   loff_t off, size_t bsz)
+                                   loff_t off, size_t len)
 {
-	ino_t ino;
-	ino_t dino;
 	const char *name = UT_NAME;
-	void *buf = ut_randbuf(ute, bsz);
+	void *buf = ut_randbuf(ute, len);
 	const struct fiemap *fm = NULL;
 	const struct fiemap_extent *fm_ext = NULL;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_write_read(ute, ino, buf, bsz, off);
+	ut_write_read(ute, ino, buf, len, off);
 
-	fm = ut_fiemap_of(ute, ino, off, bsz);
+	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_ge(fm->fm_mapped_extents, 1);
 
 	ut_trunacate_file(ute, ino, off + 1);
-	fm = ut_fiemap_of(ute, ino, off, bsz);
+	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_eq(fm->fm_mapped_extents, 1);
 	fm_ext = &fm->fm_extents[0];
 	ut_expect_eq(fm_ext->fe_logical, off);
 	ut_expect_eq(fm_ext->fe_length, 1);
 
 	ut_trunacate_file(ute, ino, off);
-	fm = ut_fiemap_of(ute, ino, off, bsz);
+	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_eq(fm->fm_mapped_extents, 0);
 
-	ut_trunacate_file(ute, ino, off + (loff_t)bsz);
-	fm = ut_fiemap_of(ute, ino, off, bsz);
+	ut_trunacate_file(ute, ino, off + (loff_t)len);
+	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_eq(fm->fm_mapped_extents, 0);
 
 	ut_remove_file(ute, dino, name, ino);
@@ -108,14 +108,20 @@ static void ut_file_fiemap_simple_(struct ut_env *ute,
 
 static void ut_file_fiemap_simple(struct ut_env *ute)
 {
-	ut_file_fiemap_simple_(ute, 0, 100);
-	ut_file_fiemap_simple_(ute, 0, UT_BK_SIZE);
-	ut_file_fiemap_simple_(ute, UT_BK_SIZE, UT_MEGA);
-	ut_file_fiemap_simple_(ute, UT_MEGA, UT_BK_SIZE);
-	ut_file_fiemap_simple_(ute, UT_GIGA - UT_BK_SIZE, UT_MEGA);
-	ut_file_fiemap_simple_(ute, UT_TERA - UT_BK_SIZE, 2 * UT_BK_SIZE);
-	ut_file_fiemap_simple_(ute,
-	                       UT_FILESIZE_MAX - UT_MEGA + 1, UT_MEGA - 1);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(0, 100),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(UT_64K, UT_1M),
+		UT_MKRANGE1(UT_1M, UT_64K),
+		UT_MKRANGE1(UT_1G - UT_64K, UT_1M),
+		UT_MKRANGE1(UT_1T - UT_64K, 2 * UT_64K),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M + 1, UT_1M - 1),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_fiemap_simple_(ute, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -123,10 +129,10 @@ static void ut_file_fiemap_simple(struct ut_env *ute)
 static void ut_file_fiemap_twoext_(struct ut_env *ute,
                                    loff_t off1, loff_t off2)
 {
-	ino_t ino;
-	ino_t dino;
 	const struct fiemap *fm = NULL;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -149,13 +155,13 @@ static void ut_file_fiemap_twoext_(struct ut_env *ute,
 
 static void ut_file_fiemap_twoext(struct ut_env *ute)
 {
-	ut_file_fiemap_twoext_(ute, 0, UT_MEGA);
-	ut_file_fiemap_twoext_(ute, 0, UT_GIGA);
-	ut_file_fiemap_twoext_(ute, 0, UT_TERA);
-	ut_file_fiemap_twoext_(ute, UT_BK_SIZE, UT_MEGA);
-	ut_file_fiemap_twoext_(ute, UT_BK_SIZE, UT_GIGA);
-	ut_file_fiemap_twoext_(ute, UT_MEGA, UT_GIGA);
-	ut_file_fiemap_twoext_(ute, UT_GIGA, UT_TERA);
+	ut_file_fiemap_twoext_(ute, 0, UT_1M);
+	ut_file_fiemap_twoext_(ute, 0, UT_1G);
+	ut_file_fiemap_twoext_(ute, 0, UT_1T);
+	ut_file_fiemap_twoext_(ute, UT_BK_SIZE, UT_1M);
+	ut_file_fiemap_twoext_(ute, UT_BK_SIZE, UT_1G);
+	ut_file_fiemap_twoext_(ute, UT_1M, UT_1G);
+	ut_file_fiemap_twoext_(ute, UT_1G, UT_1T);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -220,9 +226,9 @@ static void ut_file_fiemap_sparse(struct ut_env *ute)
 	ut_file_fiemap_sparse_(ute, 0, 100, 1);
 	ut_file_fiemap_sparse_(ute, 1, 1000, 1);
 	ut_file_fiemap_sparse_(ute, 0, UT_BK_SIZE, 8);
-	ut_file_fiemap_sparse_(ute, 1, UT_MEGA, 16);
-	ut_file_fiemap_sparse_(ute, UT_GIGA, UT_MEGA, 32);
-	ut_file_fiemap_sparse_(ute, UT_TERA - 1, UT_GIGA + 3, 64);
+	ut_file_fiemap_sparse_(ute, 1, UT_1M, 16);
+	ut_file_fiemap_sparse_(ute, UT_1G, UT_1M, 32);
+	ut_file_fiemap_sparse_(ute, UT_1T - 1, UT_1G + 3, 64);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -82,12 +82,12 @@ ut_join_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth)
 static void ut_file_mt_exec(struct ut_env *ute,
                             const struct ut_thread_args *args)
 {
-	ino_t ino = 0;
-	loff_t off;
 	const ino_t dino = args->dino;
 	const size_t bsz = args->len;
 	void *buf = ut_randbuf(ute, bsz);
 	const char *name = ut_randstr(ute, 100);
+	loff_t off = -1;
+	ino_t ino = 0;
 
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < args->cnt; ++i) {
@@ -122,11 +122,20 @@ static void ut_file_mt_simple_(struct ut_env *ute, size_t nth,
 
 static void ut_file_mt_simple(struct ut_env *ute)
 {
-	ut_file_mt_simple_(ute, 2, 0, 100);
-	ut_file_mt_simple_(ute, 4, UT_KILO - 1, 2 * UT_KILO + 3);
-	ut_file_mt_simple_(ute, 8, UT_BK_SIZE - 2, 4 * UT_BK_SIZE);
-	ut_file_mt_simple_(ute, 16, UT_MEGA - 3, UT_MEGA / 3);
-	ut_file_mt_simple_(ute, 32, UT_GIGA - 4, UT_MEGA + 8);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(0, 100),
+		UT_MKRANGE1(UT_1K - 1, 2 * UT_1K + 3),
+		UT_MKRANGE1(UT_64K - 2, 4 * UT_64K),
+		UT_MKRANGE1(UT_1M - 3, UT_1M / 3),
+		UT_MKRANGE1(UT_1G - 4, UT_1M + 8),
+	};
+	size_t nth = 2;
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_mt_simple_(ute, nth, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+		nth = ut_min(nth * 2, 32);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -151,11 +160,17 @@ static void ut_file_mt_many_(struct ut_env *ute, size_t nth,
 static void ut_file_mt_many(struct ut_env *ute)
 {
 	const size_t nth = (size_t)(2 * silofs_sc_nproc_onln());
+	const struct ut_range range[] = {
+		UT_MKRANGE1(1, 1000),
+		UT_MKRANGE1(UT_1K - 1, 2 * UT_1K + 3),
+		UT_MKRANGE1(UT_64K - 2, 4 * UT_64K),
+		UT_MKRANGE1(UT_1T - 4, UT_1M / 2),
+	};
 
-	ut_file_mt_many_(ute, nth, 1, 1000);
-	ut_file_mt_many_(ute, nth, UT_KILO - 1, 2 * UT_KILO + 3);
-	ut_file_mt_many_(ute, nth, UT_BK_SIZE - 2, 4 * UT_BK_SIZE);
-	ut_file_mt_many_(ute, nth, UT_TERA - 4, UT_MEGA / 2);
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_mt_many_(ute, nth, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -418,7 +418,7 @@ static void ut_init_args(struct ut_args *args)
 	args->fs_args.name = "unitests";
 	args->fs_args.mntdir = "/";
 	args->fs_args.capacity = SILOFS_CAPACITY_SIZE_MIN;
-	args->fs_args.memwant = UT_GIGA;
+	args->fs_args.memwant = UT_1G;
 	args->fs_args.restore_forced = true;
 	args->fs_args.pedantic = ut_globals.pedantic;
 	args->fs_args.asyncwr = ut_globals.asyncwr;

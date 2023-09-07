@@ -166,14 +166,14 @@ static void ut_statfs_bfree_(struct ut_env *ute, loff_t off, size_t bsz)
 
 static void ut_statfs_bfree(struct ut_env *ute)
 {
-	ut_statfs_bfree_(ute, 0, UT_UMEGA);
-	ut_statfs_bfree_(ute, UT_KILO, UT_UMEGA - 1);
-	ut_statfs_bfree_(ute, 8 * UT_KILO, UT_BK_SIZE - 1);
+	ut_statfs_bfree_(ute, 0, UT_1M);
+	ut_statfs_bfree_(ute, UT_1K, UT_1M - 1);
+	ut_statfs_bfree_(ute, 8 * UT_1K, UT_BK_SIZE - 1);
 	ut_statfs_bfree_(ute, UT_BK_SIZE, 2 * UT_BK_SIZE);
-	ut_statfs_bfree_(ute, UT_MEGA, UT_UMEGA);
-	ut_statfs_bfree_(ute, UT_MEGA + 1, UT_UMEGA);
-	ut_statfs_bfree_(ute, UT_TERA - 11, UT_UMEGA + 111);
-	ut_statfs_bfree_(ute, UT_FILESIZE_MAX - UT_UMEGA, UT_UMEGA);
+	ut_statfs_bfree_(ute, UT_1M, UT_1M);
+	ut_statfs_bfree_(ute, UT_1M + 1, UT_1M);
+	ut_statfs_bfree_(ute, UT_1T - 11, UT_1M + 111);
+	ut_statfs_bfree_(ute, UT_FILESIZE_MAX - UT_1M, UT_1M);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

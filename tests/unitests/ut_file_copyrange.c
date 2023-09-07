@@ -110,12 +110,12 @@ static void ut_file_copy_range_simple_aligned(struct ut_env *ute)
 		COPYARGS1(0, UT_4K),
 		COPYARGS1(UT_4K, 8 * UT_4K),
 		COPYARGS1(0, UT_64K),
-		COPYARGS1(UT_1K, UT_MEGA),
+		COPYARGS1(UT_1K, UT_1M),
 		COPYARGS1(UT_64K, UT_64K),
 		COPYARGS1(2 * UT_64K, UT_64K),
-		COPYARGS1(UT_MEGA, 2 * UT_64K),
-		COPYARGS1(UT_GIGA, UT_MEGA),
-		COPYARGS1(UT_TERA, UT_MEGA + UT_64K),
+		COPYARGS1(UT_1M, 2 * UT_64K),
+		COPYARGS1(UT_1G, UT_1M),
+		COPYARGS1(UT_1T, UT_1M + UT_64K),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_simple_, args);
@@ -128,15 +128,15 @@ static void ut_file_copy_range_simple_unaligned(struct ut_env *ute)
 		COPYARGS1(2, UT_1K + 2),
 		COPYARGS1(3, 3 * UT_1K + 3),
 		COPYARGS1(4, UT_4K + 4),
-		COPYARGS1(UT_1K - 1, UT_MEGA + 3),
+		COPYARGS1(UT_1K - 1, UT_1M + 3),
 		COPYARGS1(UT_4K - 5, UT_4K + 7),
 		COPYARGS1(2 * UT_4K - 5, 3 * UT_4K),
-		COPYARGS1(3 * UT_4K - 3, UT_MEGA + 3),
+		COPYARGS1(3 * UT_4K - 3, UT_1M + 3),
 		COPYARGS1(UT_64K - 11, UT_64K + 111),
-		COPYARGS1(UT_64K - 111, UT_MEGA + 1111),
-		COPYARGS1(UT_MEGA - 1, 11 * UT_64K + 11),
-		COPYARGS1(UT_GIGA - 11, UT_MEGA + 111),
-		COPYARGS1(UT_TERA - 111, 11 * UT_64K + 111),
+		COPYARGS1(UT_64K - 111, UT_1M + 1111),
+		COPYARGS1(UT_1M - 1, 11 * UT_64K + 11),
+		COPYARGS1(UT_1G - 11, UT_1M + 111),
+		COPYARGS1(UT_1T - 111, 11 * UT_64K + 111),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_simple_, args);
@@ -197,10 +197,10 @@ static void ut_file_copy_range_between_aligned(struct ut_env *ute)
 		COPYARGS2(UT_1K, 2 * UT_4K, UT_4K, 3 * UT_4K),
 		COPYARGS2(0, UT_64K, 0, UT_64K),
 		COPYARGS2(UT_64K, UT_64K, UT_64K, UT_64K),
-		COPYARGS2(UT_MEGA, UT_64K, 0, UT_64K),
-		COPYARGS2(UT_MEGA, UT_64K, UT_GIGA, 2 * UT_64K),
-		COPYARGS2(UT_TERA, 3 * UT_64K, UT_MEGA, UT_64K),
-		COPYARGS2(UT_TERA, 3 * UT_64K, 0, UT_MEGA),
+		COPYARGS2(UT_1M, UT_64K, 0, UT_64K),
+		COPYARGS2(UT_1M, UT_64K, UT_1G, 2 * UT_64K),
+		COPYARGS2(UT_1T, 3 * UT_64K, UT_1M, UT_64K),
+		COPYARGS2(UT_1T, 3 * UT_64K, 0, UT_1M),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_between_, args);
@@ -222,10 +222,10 @@ static void ut_file_copy_range_between_unaligned(struct ut_env *ute)
 		COPYARGS2(1, UT_4K, UT_1K + 1, UT_4K + 11),
 		COPYARGS2(1, UT_64K + 11, 11, UT_64K + 1),
 		COPYARGS2(UT_64K + 11, 11 * UT_64K, UT_64K + 1, UT_64K - 11),
-		COPYARGS2(UT_MEGA - 1, UT_64K - 2, 1, UT_64K - 3),
-		COPYARGS2(UT_MEGA + 11, UT_MEGA, UT_GIGA + 11, UT_MEGA + 1111),
-		COPYARGS2(UT_TERA + 111, UT_MEGA + 333, UT_MEGA - 111, 11111),
-		COPYARGS2(UT_TERA - 1111, 111111, 1, UT_MEGA + 1111),
+		COPYARGS2(UT_1M - 1, UT_64K - 2, 1, UT_64K - 3),
+		COPYARGS2(UT_1M + 11, UT_1M, UT_1G + 11, UT_1M + 1111),
+		COPYARGS2(UT_1T + 111, UT_1M + 333, UT_1M - 111, 11111),
+		COPYARGS2(UT_1T - 1111, 111111, 1, UT_1M + 1111),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_between_, args);
@@ -282,12 +282,12 @@ static void ut_file_copy_range_self_aligned(struct ut_env *ute)
 		COPYARGS2(0, UT_1K, UT_64K, UT_1K),
 		COPYARGS2(0, UT_1K, UT_4K, UT_4K),
 		COPYARGS2(UT_1K, UT_4K, UT_64K, UT_4K),
-		COPYARGS2(UT_1K, UT_MEGA, UT_GIGA, UT_MEGA),
-		COPYARGS2(UT_4K, UT_MEGA, UT_GIGA + UT_64K, UT_MEGA),
+		COPYARGS2(UT_1K, UT_1M, UT_1G, UT_1M),
+		COPYARGS2(UT_4K, UT_1M, UT_1G + UT_64K, UT_1M),
 		COPYARGS2(UT_64K, UT_64K, 4 * UT_64K, UT_4K),
-		COPYARGS2(UT_MEGA, UT_64K, UT_GIGA, UT_MEGA),
-		COPYARGS2(UT_GIGA, UT_MEGA, 0, UT_4K),
-		COPYARGS2(UT_GIGA, UT_MEGA, UT_TERA, UT_MEGA / 2),
+		COPYARGS2(UT_1M, UT_64K, UT_1G, UT_1M),
+		COPYARGS2(UT_1G, UT_1M, 0, UT_4K),
+		COPYARGS2(UT_1G, UT_1M, UT_1T, UT_1M / 2),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_self2_, args);
@@ -298,12 +298,12 @@ static void ut_file_copy_range_self_unaligned(struct ut_env *ute)
 	const struct ut_copy_range_args args[] = {
 		COPYARGS2(1, UT_1K - 1, 2 * UT_1K + 1, UT_1K + 1),
 		COPYARGS2(UT_4K + 1, UT_4K - 1, UT_64K - 1, UT_4K + 1),
-		COPYARGS2(UT_1K - 1, UT_MEGA + 3, UT_GIGA, UT_MEGA + 3),
-		COPYARGS2(UT_4K - 3, 111111, UT_GIGA + UT_64K - 3, 111111),
-		COPYARGS2(2 * UT_64K + 11, UT_64K - 111, UT_MEGA - 1, 11111),
-		COPYARGS2(UT_MEGA - 1, 11111, 333, 33333),
-		COPYARGS2(UT_GIGA - 111, 11111, UT_64K - 11, UT_64K + 111),
-		COPYARGS2(UT_TERA - 1111, 11111, UT_64K - 111, UT_64K + 1111),
+		COPYARGS2(UT_1K - 1, UT_1M + 3, UT_1G, UT_1M + 3),
+		COPYARGS2(UT_4K - 3, 111111, UT_1G + UT_64K - 3, 111111),
+		COPYARGS2(2 * UT_64K + 11, UT_64K - 111, UT_1M - 1, 11111),
+		COPYARGS2(UT_1M - 1, 11111, 333, 33333),
+		COPYARGS2(UT_1G - 111, 11111, UT_64K - 11, UT_64K + 111),
+		COPYARGS2(UT_1T - 1111, 11111, UT_64K - 111, UT_64K + 1111),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_self2_, args);
@@ -355,16 +355,16 @@ static void ut_file_copy_range_truncate(struct ut_env *ute)
 		COPYARGS1(0, UT_64K),
 		COPYARGS1(UT_64K, UT_64K),
 		COPYARGS1(2 * UT_64K, 4 * UT_64K),
-		COPYARGS1(0, UT_MEGA),
-		COPYARGS1(UT_MEGA, UT_MEGA),
-		COPYARGS1(UT_GIGA, UT_64K),
-		COPYARGS1(UT_TERA, UT_4K),
+		COPYARGS1(0, UT_1M),
+		COPYARGS1(UT_1M, UT_1M),
+		COPYARGS1(UT_1G, UT_64K),
+		COPYARGS1(UT_1T, UT_4K),
 		COPYARGS1(1, UT_1K - 1),
 		COPYARGS1(UT_4K - 1, UT_4K + 3),
-		COPYARGS1(UT_64K - 3, UT_MEGA),
-		COPYARGS1((2 * UT_64K) - 3, UT_MEGA),
-		COPYARGS1(UT_GIGA - 3, UT_64K + 5),
-		COPYARGS1(UT_TERA - 3, UT_MEGA + 5),
+		COPYARGS1(UT_64K - 3, UT_1M),
+		COPYARGS1((2 * UT_64K) - 3, UT_1M),
+		COPYARGS1(UT_1G - 3, UT_64K + 5),
+		COPYARGS1(UT_1T - 3, UT_1M + 5),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_truncate_, args);
@@ -422,16 +422,16 @@ static void ut_file_copy_range_overwrite(struct ut_env *ute)
 		COPYARGS1(0, UT_64K),
 		COPYARGS1(UT_64K, UT_64K),
 		COPYARGS1(2 * UT_64K, 4 * UT_64K),
-		COPYARGS1(0, UT_MEGA),
-		COPYARGS1(UT_MEGA, UT_MEGA),
-		COPYARGS1(UT_GIGA, UT_64K),
-		COPYARGS1(UT_TERA, UT_4K),
+		COPYARGS1(0, UT_1M),
+		COPYARGS1(UT_1M, UT_1M),
+		COPYARGS1(UT_1G, UT_64K),
+		COPYARGS1(UT_1T, UT_4K),
 		COPYARGS1(1, UT_1K - 1),
 		COPYARGS1(UT_4K - 1, UT_4K + 3),
-		COPYARGS1(UT_64K - 3, UT_MEGA),
-		COPYARGS1((2 * UT_64K) - 3, UT_MEGA),
-		COPYARGS1(UT_GIGA - 3, UT_64K + 5),
-		COPYARGS1(UT_TERA - 3, UT_MEGA + 5),
+		COPYARGS1(UT_64K - 3, UT_1M),
+		COPYARGS1((2 * UT_64K) - 3, UT_1M),
+		COPYARGS1(UT_1G - 3, UT_64K + 5),
+		COPYARGS1(UT_1T - 3, UT_1M + 5),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_overwrite_, args);
@@ -484,10 +484,10 @@ static void ut_file_copy_range_nfiles_aligned(struct ut_env *ute)
 		COPYARGS1(0, UT_64K),
 		COPYARGS1(UT_64K, UT_64K),
 		COPYARGS1(2 * UT_64K, 4 * UT_64K),
-		COPYARGS1(0, UT_MEGA / 4),
-		COPYARGS1(UT_MEGA, UT_MEGA / 8),
-		COPYARGS1(UT_GIGA, UT_64K),
-		COPYARGS1(UT_TERA, UT_4K),
+		COPYARGS1(0, UT_1M / 4),
+		COPYARGS1(UT_1M, UT_1M / 8),
+		COPYARGS1(UT_1G, UT_64K),
+		COPYARGS1(UT_1T, UT_4K),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_nfiles_, args);
@@ -498,10 +498,10 @@ static void ut_file_copy_range_nfiles_unaligned(struct ut_env *ute)
 	const struct ut_copy_range_args args[] = {
 		COPYARGS1(1, UT_1K - 1),
 		COPYARGS1(UT_4K - 1, UT_4K + 3),
-		COPYARGS1(UT_64K - 3, UT_MEGA / 16),
-		COPYARGS1((2 * UT_64K) - 3, UT_MEGA / 32),
-		COPYARGS1(UT_GIGA - 3, UT_64K + 5),
-		COPYARGS1(UT_TERA - 3, UT_MEGA + 5),
+		COPYARGS1(UT_64K - 3, UT_1M / 16),
+		COPYARGS1((2 * UT_64K) - 3, UT_1M / 32),
+		COPYARGS1(UT_1G - 3, UT_64K + 5),
+		COPYARGS1(UT_1T - 3, UT_1M + 5),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_nfiles_, args);
@@ -554,16 +554,16 @@ static void ut_file_copy_range_from_hole(struct ut_env *ute)
 		/* aligned */
 		COPYARGS2(0, UT_64K, 0, UT_64K),
 		COPYARGS2(UT_1K, UT_64K, 0, UT_64K),
-		COPYARGS2(UT_1K, UT_MEGA, UT_64K - UT_1K, UT_64K),
-		COPYARGS2(UT_64K, UT_64K, UT_MEGA, UT_64K),
-		COPYARGS2(UT_GIGA, 2 * UT_64K, UT_64K, UT_64K),
-		COPYARGS2(UT_TERA, UT_64K, UT_MEGA, UT_64K),
+		COPYARGS2(UT_1K, UT_1M, UT_64K - UT_1K, UT_64K),
+		COPYARGS2(UT_64K, UT_64K, UT_1M, UT_64K),
+		COPYARGS2(UT_1G, 2 * UT_64K, UT_64K, UT_64K),
+		COPYARGS2(UT_1T, UT_64K, UT_1M, UT_64K),
 		/* unaligned */
 		COPYARGS2(1, 11, UT_64K, UT_1K - 1),
 		COPYARGS2(1, UT_64K - 1, 3 * UT_64K + 3, UT_64K - 5),
-		COPYARGS2(UT_MEGA - 1, UT_64K, UT_MEGA, UT_64K + 1),
-		COPYARGS2(UT_GIGA - 1, UT_MEGA - 1, UT_MEGA + 11, UT_MEGA + 1),
-		COPYARGS2(UT_TERA - 1, UT_MEGA + 11, UT_GIGA - 1, UT_MEGA - 1),
+		COPYARGS2(UT_1M - 1, UT_64K, UT_1M, UT_64K + 1),
+		COPYARGS2(UT_1G - 1, UT_1M - 1, UT_1M + 11, UT_1M + 1),
+		COPYARGS2(UT_1T - 1, UT_1M + 11, UT_1G - 1, UT_1M - 1),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_from_hole_, args);
@@ -608,16 +608,16 @@ static void ut_file_copy_range_into_hole(struct ut_env *ute)
 		/* aligned */
 		COPYARGS2(0, UT_64K, 0, UT_64K),
 		COPYARGS2(UT_1K, UT_64K, 0, UT_64K),
-		COPYARGS2(UT_1K, UT_MEGA, UT_64K - UT_1K, UT_64K),
-		COPYARGS2(UT_64K, UT_64K, UT_MEGA, UT_64K),
-		COPYARGS2(UT_GIGA, 2 * UT_64K, UT_64K, UT_64K),
-		COPYARGS2(UT_TERA, UT_64K, UT_MEGA, UT_64K),
+		COPYARGS2(UT_1K, UT_1M, UT_64K - UT_1K, UT_64K),
+		COPYARGS2(UT_64K, UT_64K, UT_1M, UT_64K),
+		COPYARGS2(UT_1G, 2 * UT_64K, UT_64K, UT_64K),
+		COPYARGS2(UT_1T, UT_64K, UT_1M, UT_64K),
 		/* unaligned */
 		COPYARGS2(1, 11, UT_64K, UT_1K - 1),
 		COPYARGS2(1, UT_64K - 1, 3 * UT_64K + 3, UT_64K - 5),
-		COPYARGS2(UT_MEGA - 1, UT_64K, UT_MEGA, UT_64K + 1),
-		COPYARGS2(UT_GIGA - 1, UT_MEGA - 1, UT_MEGA + 11, UT_MEGA + 1),
-		COPYARGS2(UT_TERA - 1, UT_MEGA + 11, UT_GIGA - 1, UT_MEGA - 1),
+		COPYARGS2(UT_1M - 1, UT_64K, UT_1M, UT_64K + 1),
+		COPYARGS2(UT_1G - 1, UT_1M - 1, UT_1M + 11, UT_1M + 1),
+		COPYARGS2(UT_1T - 1, UT_1M + 11, UT_1G - 1, UT_1M - 1),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_into_hole_, args);
@@ -665,16 +665,16 @@ static void ut_file_copy_range_mtime(struct ut_env *ute)
 		/* aligned */
 		COPYARGS2(0, UT_64K, 0, UT_64K),
 		COPYARGS2(UT_1K, UT_64K, 0, UT_64K),
-		COPYARGS2(UT_1K, UT_MEGA, UT_64K - UT_1K, UT_64K),
-		COPYARGS2(UT_64K, UT_64K, UT_MEGA, UT_64K),
-		COPYARGS2(UT_GIGA, 2 * UT_64K, UT_64K, UT_64K),
-		COPYARGS2(UT_TERA, UT_64K, UT_MEGA, UT_64K),
+		COPYARGS2(UT_1K, UT_1M, UT_64K - UT_1K, UT_64K),
+		COPYARGS2(UT_64K, UT_64K, UT_1M, UT_64K),
+		COPYARGS2(UT_1G, 2 * UT_64K, UT_64K, UT_64K),
+		COPYARGS2(UT_1T, UT_64K, UT_1M, UT_64K),
 		/* unaligned */
 		COPYARGS2(1, 11, UT_64K, UT_1K - 1),
 		COPYARGS2(1, UT_64K - 1, 3 * UT_64K + 3, UT_64K - 5),
-		COPYARGS2(UT_MEGA - 1, UT_64K, UT_MEGA, UT_64K + 1),
-		COPYARGS2(UT_GIGA - 1, UT_MEGA - 1, UT_MEGA + 11, UT_MEGA + 1),
-		COPYARGS2(UT_TERA - 1, UT_MEGA + 11, UT_GIGA - 1, UT_MEGA - 1),
+		COPYARGS2(UT_1M - 1, UT_64K, UT_1M, UT_64K + 1),
+		COPYARGS2(UT_1G - 1, UT_1M - 1, UT_1M + 11, UT_1M + 1),
+		COPYARGS2(UT_1T - 1, UT_1M + 11, UT_1G - 1, UT_1M - 1),
 	};
 
 	ut_copy_range2(ute, ut_file_copy_range_mtime_, args);
@@ -720,10 +720,10 @@ static void ut_file_copy_range_extend(struct ut_env *ute)
 		COPYARGS1(UT_1K, UT_4K),
 		COPYARGS1(UT_1K, UT_64K),
 		COPYARGS1(UT_64K, UT_64K),
-		COPYARGS1(UT_64K, UT_MEGA),
-		COPYARGS1(UT_MEGA, UT_64K),
-		COPYARGS1(UT_GIGA, UT_MEGA),
-		COPYARGS1(UT_TERA, 2 * UT_64K),
+		COPYARGS1(UT_64K, UT_1M),
+		COPYARGS1(UT_1M, UT_64K),
+		COPYARGS1(UT_1G, UT_1M),
+		COPYARGS1(UT_1T, 2 * UT_64K),
 		/* unaligned */
 		COPYARGS1(1, UT_1K + 11),
 		COPYARGS1(11, UT_4K - 111),
@@ -731,10 +731,10 @@ static void ut_file_copy_range_extend(struct ut_env *ute)
 		COPYARGS1(UT_1K + 1, UT_4K + 11),
 		COPYARGS1(UT_1K - 11, UT_64K + 111),
 		COPYARGS1(UT_64K - 1, UT_64K + 11),
-		COPYARGS1(UT_64K + 11, UT_MEGA - 111),
-		COPYARGS1(UT_MEGA - 111, UT_64K + 1111),
-		COPYARGS1(UT_GIGA + 11, UT_MEGA - 11111),
-		COPYARGS1(UT_TERA - 1111, 11 * UT_64K + 1),
+		COPYARGS1(UT_64K + 11, UT_1M - 111),
+		COPYARGS1(UT_1M - 111, UT_64K + 1111),
+		COPYARGS1(UT_1G + 11, UT_1M - 11111),
+		COPYARGS1(UT_1T - 1111, 11 * UT_64K + 1),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_extend_, args);
@@ -768,17 +768,17 @@ static void ut_file_copy_range_empty(struct ut_env *ute)
 {
 	const struct ut_copy_range_args args[] = {
 		/* aligned */
-		COPYARGS1(UT_MEGA, UT_MEGA),
-		COPYARGS1(UT_GIGA, UT_MEGA),
-		COPYARGS1(4 * UT_GIGA, UT_MEGA),
-		COPYARGS1(64 * UT_GIGA, UT_MEGA),
-		COPYARGS1(UT_TERA, UT_MEGA),
+		COPYARGS1(UT_1M, UT_1M),
+		COPYARGS1(UT_1G, UT_1M),
+		COPYARGS1(4 * UT_1G, UT_1M),
+		COPYARGS1(64 * UT_1G, UT_1M),
+		COPYARGS1(UT_1T, UT_1M),
 		/* unaligned */
-		COPYARGS1(UT_MEGA - 1, UT_MEGA + 11),
-		COPYARGS1(UT_GIGA - 11, UT_MEGA + 111),
-		COPYARGS1(11 * UT_GIGA - 11, UT_MEGA - 1111),
-		COPYARGS1(111 * UT_GIGA + 1, UT_MEGA + 11),
-		COPYARGS1(UT_TERA - 111, UT_MEGA + 1111),
+		COPYARGS1(UT_1M - 1, UT_1M + 11),
+		COPYARGS1(UT_1G - 11, UT_1M + 111),
+		COPYARGS1(11 * UT_1G - 11, UT_1M - 1111),
+		COPYARGS1(111 * UT_1G + 1, UT_1M + 11),
+		COPYARGS1(UT_1T - 111, UT_1M + 1111),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_empty_, args);
@@ -817,17 +817,17 @@ static void ut_file_copy_range_sparse(struct ut_env *ute)
 {
 	const struct ut_copy_range_args args[] = {
 		/* aligned */
-		COPYARGS1(UT_MEGA, UT_MEGA),
-		COPYARGS1(UT_GIGA, UT_MEGA),
-		COPYARGS1(4 * UT_GIGA, UT_MEGA),
-		COPYARGS1(64 * UT_GIGA, UT_MEGA),
-		COPYARGS1(UT_TERA, UT_MEGA),
+		COPYARGS1(UT_1M, UT_1M),
+		COPYARGS1(UT_1G, UT_1M),
+		COPYARGS1(4 * UT_1G, UT_1M),
+		COPYARGS1(64 * UT_1G, UT_1M),
+		COPYARGS1(UT_1T, UT_1M),
 		/* unaligned */
-		COPYARGS1(UT_MEGA - 1, UT_MEGA + 11),
-		COPYARGS1(UT_GIGA - 11, UT_MEGA + 111),
-		COPYARGS1(11 * UT_GIGA - 11, UT_MEGA - 1111),
-		COPYARGS1(111 * UT_GIGA + 1, UT_MEGA + 11),
-		COPYARGS1(UT_TERA - 111, UT_MEGA + 1111),
+		COPYARGS1(UT_1M - 1, UT_1M + 11),
+		COPYARGS1(UT_1G - 11, UT_1M + 111),
+		COPYARGS1(11 * UT_1G - 11, UT_1M - 1111),
+		COPYARGS1(111 * UT_1G + 1, UT_1M + 11),
+		COPYARGS1(UT_1T - 111, UT_1M + 1111),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_sparse_, args);

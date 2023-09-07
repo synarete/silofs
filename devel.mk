@@ -176,7 +176,7 @@ CXXFLAGS += -D_GLIBCXX_ASSERTIONS
 
 # Helper functions: report action & sub-execute make in build directory
 define report
-	$(info $(NAME):$(1) $(2))
+	$(info $(strip $(NAME):$(1) $(2)))
 endef
 
 define submakeat

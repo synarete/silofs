@@ -290,9 +290,9 @@ static int check_sticky(const struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static enum silofs_inodef make_inodef(int flags, int mask)
+static enum silofs_inodef make_inodef(enum silofs_inodef flags, int mask)
 {
-	return (enum silofs_inodef)(flags & mask);
+	return (enum silofs_inodef)((int)flags & mask);
 }
 
 static void inewp_reset(struct silofs_inew_params *inp)
@@ -756,8 +756,8 @@ static int do_create(struct silofs_task *task,
                      const struct silofs_namestr *name, mode_t mode,
                      struct silofs_inode_info **out_ii)
 {
-	int err;
 	struct silofs_inode_info *ii = NULL;
+	int err;
 
 	err = check_create(task, dir_ii, name, mode);
 	if (err) {

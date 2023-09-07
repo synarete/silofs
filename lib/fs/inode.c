@@ -417,24 +417,32 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 	ii_dirtify(ii);
 }
 
+static void ii_set_iflags(struct silofs_inode_info *ii, int iflags)
+{
+	const enum silofs_inodef iflags_curr = ii_flags(ii);
+	const enum silofs_inodef iflags_allow = SILOFS_INODEF_FTYPE2;
+	enum silofs_inodef iflags_set;
+
+	iflags_set = (enum silofs_inodef)iflags & iflags_allow;
+	if (iflags_set != iflags_curr) {
+		inode_set_flags(ii->inode, iflags_set);
+		ii_dirtify(ii);
+	}
+}
+
 void silofs_ii_update_iflags(struct silofs_inode_info *ii,
                              int iflags_want, int iflags_dont)
 {
-	int iflags = ii_flags(ii);
-	int set = 0;
+	const enum silofs_inodef iflags_curr = ii_flags(ii);
+	int iflags = (int)iflags_curr;
 
 	if (iflags_want) {
 		iflags |= iflags_want;
-		set = 1;
 	}
 	if (iflags_dont) {
 		iflags &= ~iflags_dont;
-		set = 1;
 	}
-	if (set) {
-		inode_set_flags(ii->inode, iflags);
-		ii_dirtify(ii);
-	}
+	ii_set_iflags(ii, iflags);
 }
 
 bool silofs_is_rootdir(const struct silofs_inode_info *ii)

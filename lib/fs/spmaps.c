@@ -1731,7 +1731,7 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	parent_height = parent_uaddr.height;
-	if (parent_height != (height + 1)) {
+	if (parent_height != ((int)height + 1)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	if ((height == height_max) && !stype_issuper(parent_uaddr.stype)) {

@@ -711,6 +711,18 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
+static int ut_tune(struct ut_env *ute, ino_t ino,
+                   int iflags_want, int iflags_dont)
+{
+	struct silofs_task task;
+	int ret;
+
+	ut_setup_task(ute, &task);
+	ret = silofs_fs_tune(&task, ino, iflags_want, iflags_dont);
+	ut_release_task(ute, &task);
+	return sanitize_status(ret);
+}
+
 static int ut_timedout(struct ut_env *ute)
 {
 	struct silofs_task task;
@@ -983,6 +995,9 @@ void ut_mkdir_at_root(struct ut_env *ute,
                       const char *name, ino_t *out_ino)
 {
 	ut_mkdir_oki(ute, SILOFS_INO_ROOT, name, out_ino);
+	if (ute->ftype == SILOFS_FILE_TYPE2) {
+		ut_tune_ftype2_ok(ute, *out_ino);
+	}
 }
 
 static void ut_rmdir_status(struct ut_env *ute,
@@ -1014,7 +1029,6 @@ void ut_rmdir_at_root(struct ut_env *ute, const char *name)
 {
 	ut_rmdir_ok(ute, SILOFS_INO_ROOT, name);
 }
-
 
 static void ut_require_dir(struct ut_env *ute, ino_t dino)
 {
@@ -1852,6 +1866,14 @@ void ut_drop_caches_fully(struct ut_env *ute)
 	ut_expect_eq(st.ncache_unodes, 1);
 	ut_expect_eq(st.ncache_vblocks, 0);
 	ut_expect_eq(st.ncache_vnodes, 0);
+}
+
+void ut_tune_ftype2_ok(struct ut_env *ute, ino_t ino)
+{
+	int err;
+
+	err = ut_tune(ute, ino, SILOFS_INODEF_FTYPE2, 0);
+	ut_expect_ok(err);
 }
 
 void ut_timedout_ok(struct ut_env *ute)

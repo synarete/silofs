@@ -87,6 +87,7 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 	ute->malloc_list = NULL;
 	ute->nbytes_alloc = 0;
 	ute->unique_opid = 1;
+	ute->ftype = SILOFS_FILE_TYPE1;
 	ute->run_level = ut_globals.run_level;
 	silofs_prandgen_init(&ute->prng);
 	silofs_mutex_init(&ute->mutex);
@@ -290,14 +291,43 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 	}
 }
 
+static void ut_do_run_test(struct ut_env *ute, const struct ut_testdef *td)
+{
+	ut_probe_stats(ute, true);
+	td->hook(ute);
+	ut_probe_stats(ute, false);
+}
+
+static void ut_run_test1(struct ut_env *ute, const struct ut_testdef *td)
+{
+	ut_track_test(ute, td, true);
+	ut_do_run_test(ute, td);
+	ut_track_test(ute, td, false);
+}
+
+static void ut_run_test2(struct ut_env *ute, const struct ut_testdef *td)
+{
+	ut_track_test(ute, td, true);
+	ute->ftype = SILOFS_FILE_TYPE1;
+	ut_do_run_test(ute, td);
+	ute->ftype = SILOFS_FILE_TYPE2;
+	ut_do_run_test(ute, td);
+	ute->ftype = SILOFS_FILE_TYPE1;
+	ut_track_test(ute, td, false);
+}
+
 static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 {
-	if ((ute->run_level >= 2) || (td->quick && ute->run_level >= 1)) {
-		ut_track_test(ute, td, true);
-		ut_probe_stats(ute, true);
-		td->hook(ute);
-		ut_probe_stats(ute, false);
-		ut_track_test(ute, td, false);
+	const int run_level = ute->run_level;
+	const bool quick = (td->flags & UT_F_QUICK) > 0;
+	const bool with_ftype2 = (td->flags & UT_F_FTYPE2) > 0;
+
+	if ((run_level >= 2) || (quick && run_level)) {
+		if (with_ftype2) {
+			ut_run_test2(ute, td);
+		} else {
+			ut_run_test1(ute, td);
+		}
 	}
 }
 

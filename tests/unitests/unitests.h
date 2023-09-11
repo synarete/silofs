@@ -55,6 +55,11 @@
 #define UT_MKRANGE1S(a_) \
 	{ .arr = (a_), .cnt = UT_ARRAY_SIZE(a_) }
 
+/* tests control-flags */
+#define UT_F_NORMAL     (0)
+#define UT_F_QUICK      (1)
+#define UT_F_FTYPE2     (2)
+
 struct ut_range {
 	loff_t off;
 	size_t len;
@@ -130,6 +135,7 @@ struct ut_env {
 	size_t                   nbytes_alloc;
 	long                     unique_opid;
 	int                      run_level;
+	enum silofs_file_type    ftype;
 };
 
 struct ut_dvec {
@@ -142,8 +148,8 @@ typedef void (*ut_test_hook_fn)(struct ut_env *);
 
 struct ut_testdef {
 	ut_test_hook_fn hook;
-	const char *name;
-	int quick;
+	const char     *name;
+	int             flags;
 };
 
 struct ut_testdefs {
@@ -503,6 +509,8 @@ void ut_sync_drop(struct ut_env *ute);
 
 void ut_drop_caches_fully(struct ut_env *ute);
 
+void ut_tune_ftype2_ok(struct ut_env *ute, ino_t ino);
+
 void ut_timedout_ok(struct ut_env *ute);
 
 void ut_reload_fs_ok(struct ut_env *ute);
@@ -610,11 +618,13 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define ut_container_of2(ptr_, type_, member_) \
 	silofs_container_of2(ptr_, type_, member_)
 
-#define UT_DEFTEST(fn_) \
-	{ .hook = fn_, .name = SILOFS_STR(fn_), .quick = 0 }
+#define UT_DEFTESTF(fn_, flags_) \
+	{ .hook = fn_, .name = SILOFS_STR(fn_), .flags = flags_ }
 
-#define UT_DEFTEST1(fn_) \
-	{ .hook = fn_, .name = SILOFS_STR(fn_), .quick = 1 }
+#define UT_DEFTEST(fn_)         UT_DEFTESTF(fn_, 0)
+#define UT_DEFTEST1(fn_)        UT_DEFTESTF(fn_, UT_F_QUICK)
+#define UT_DEFTEST2(fn_)        UT_DEFTESTF(fn_, UT_F_FTYPE2)
+#define UT_DEFTEST3(fn_)        UT_DEFTESTF(fn_, UT_F_QUICK | UT_F_FTYPE2)
 
 #define UT_MKTESTS(arr_) \
 	{ arr_, SILOFS_ARRAY_SIZE(arr_) }

@@ -90,43 +90,44 @@ static void ut_file_stat_blocks_(struct ut_env *ute, loff_t off)
 
 static void ut_file_stat_blocks(struct ut_env *ute)
 {
-	ut_file_stat_blocks_(ute, 0);
-	ut_file_stat_blocks_(ute, UT_1M);
-	ut_file_stat_blocks_(ute, UT_1G);
-	ut_file_stat_blocks_(ute, UT_1T);
+	const loff_t off[] = { 0, UT_1M, UT_1G, UT_1T };
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		ut_file_stat_blocks_(ute, off[i]);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_statvfs_(struct ut_env *ute,
-                             loff_t off, size_t bsz)
+static void ut_file_statvfs_(struct ut_env *ute, loff_t off, size_t len)
 {
-	ino_t ino;
-	ino_t dino;
-	fsblkcnt_t bcnt;
-	const char *name = UT_NAME;
-	void *buf = ut_randbuf(ute, bsz);
 	struct statvfs stv[2];
+	const char *name = UT_NAME;
+	void *buf = ut_randbuf(ute, len);
+	fsblkcnt_t bcnt = 0;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs_ok(ute, dino, &stv[0]);
-	bcnt = bsz / stv[0].f_frsize;
+	bcnt = len / stv[0].f_frsize;
 
 	ut_create_file(ute, dino, name, &ino);
 	ut_statfs_ok(ute, ino, &stv[0]);
-	ut_write_read(ute, ino, buf, bsz, off);
+	ut_write_read(ute, ino, buf, len, off);
 	ut_statfs_ok(ute, ino, &stv[1]);
 	ut_expect_lt(stv[1].f_bfree, stv[0].f_bfree);
 	ut_expect_le(stv[1].f_bfree + bcnt, stv[0].f_bfree);
 
 	ut_statfs_ok(ute, ino, &stv[0]);
-	ut_write_read(ute, ino, buf, bsz, off);
+	ut_write_read(ute, ino, buf, len, off);
 	ut_statfs_ok(ute, ino, &stv[1]);
 	ut_expect_eq(stv[1].f_bfree, stv[0].f_bfree);
 
 	ut_trunacate_file(ute, ino, off);
 	ut_statfs_ok(ute, ino, &stv[0]);
-	ut_trunacate_file(ute, ino, off + (loff_t)bsz);
+	ut_trunacate_file(ute, ino, off + (loff_t)len);
 	ut_statfs_ok(ute, ino, &stv[1]);
 	ut_expect_eq(stv[0].f_bfree, stv[1].f_bfree);
 
@@ -136,9 +137,16 @@ static void ut_file_statvfs_(struct ut_env *ute,
 
 static void ut_file_statvfs(struct ut_env *ute)
 {
-	ut_file_statvfs_(ute, 0, UT_BK_SIZE);
-	ut_file_statvfs_(ute, UT_BK_SIZE - 1, UT_1M + 2);
-	ut_file_statvfs_(ute, UT_IOSIZE_MAX - UT_1M - 1, UT_1M + 2);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(0, UT_1M),
+		UT_MKRANGE1(UT_64K - 1, UT_1M + 3),
+		UT_MKRANGE1(UT_IOSIZE_MAX - UT_1M - 1, UT_1M + 1),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_statvfs_(ute, range[i].off, range[i].len);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

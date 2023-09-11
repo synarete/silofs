@@ -1012,7 +1012,7 @@ static const struct silofs_uaddr s_uaddr_none = {
 	.oaddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
-	.height = UINT32_MAX,
+	.height = SILOFS_HEIGHT_LAST,
 };
 
 const struct silofs_uaddr *silofs_uaddr_none(void)

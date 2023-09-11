@@ -133,6 +133,7 @@ CFLAGS += -O0
 ifeq ($(CC), gcc)
 CFLAGS += -Wunsafe-loop-optimizations -funsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables -fstack-clash-protection
+CFLAGS += -fshort-enums
 endif
 else ifeq ($(O), 1)
 CFLAGS += -O1 -D_FORTIFY_SOURCE=2

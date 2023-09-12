@@ -45,6 +45,7 @@
 #define FT_64K                  (64 * SILOFS_KILO)
 #define FT_1M                   SILOFS_MEGA
 #define FT_2M                   (2 * SILOFS_MEGA)
+#define FT_4M                   (4 * SILOFS_MEGA)
 #define FT_1G                   SILOFS_GIGA
 #define FT_1T                   SILOFS_TERA
 

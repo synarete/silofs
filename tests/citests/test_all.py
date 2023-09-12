@@ -29,6 +29,7 @@ TESTS = [
     test_self.test_unitests,
     test_self.test_fftests,
     test_self.test_fftests2,
+    test_self.test_fftests_mt,
     test_snap.test_snap_basic,
     test_snap.test_snap_reload_twice,
     test_snap.test_snap_reload_multi,

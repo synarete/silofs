@@ -23,6 +23,7 @@ def test_mount(tc: ctx.TestCtx) -> None:
     tc.exec_mkfs()
     tc.exec_mount()
     tc.exec_umount()
+    tc.exec_rmfs()
 
 
 def test_hello_world(tc: ctx.TestCtx) -> None:
@@ -39,6 +40,7 @@ def test_hello_world(tc: ctx.TestCtx) -> None:
     tc.expect.eq(lines[0], data)
     path.unlink()
     tc.exec_umount()
+    tc.exec_rmfs()
 
 
 def test_fscapacity(tc: ctx.TestCtx) -> None:
@@ -82,7 +84,7 @@ def test_show(tc: ctx.TestCtx) -> None:
     stx = tc.cmd.silofs.show_statx(base)
     tc.expect.gt(len(stx), 1)
     base.rmdir()
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def test_mkfs_mount_with_opts(tc: ctx.TestCtx) -> None:

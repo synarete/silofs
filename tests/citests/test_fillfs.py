@@ -34,8 +34,7 @@ def test_fill_data(tc: ctx.TestCtx) -> None:
                 _expect_enospc(ex)
                 enospc += 1
         _unlink_all(pathnames)
-    tc.exec_umount()
-    tc.exec_rmfs()
+    tc.exec_teardown_fs()
 
 
 def test_fill_meta(tc: ctx.TestCtx) -> None:
@@ -57,8 +56,7 @@ def test_fill_meta(tc: ctx.TestCtx) -> None:
                 _expect_enospc(ex)
                 enospc += 1
         _unlink_all(pathnames)
-    tc.exec_umount()
-    tc.exec_rmfs()
+    tc.exec_teardown_fs()
 
 
 def _subdirs_list(level1: int, level2: int) -> list[str]:

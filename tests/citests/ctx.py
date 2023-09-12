@@ -48,11 +48,14 @@ class TestDataSet:
         self.expect = exp
         self.tds = tds
 
-    def do_makedirs(self) -> None:
+    def do_makedirs(self) -> list[pathlib.Path]:
+        ret = set[pathlib.Path]()
         for td in self.tds:
             dpath = td.path.parent
             dpath.mkdir(parents=True, exist_ok=True)
             self.expect.is_dir(dpath)
+            ret.add(dpath)
+        return list(ret)
 
     def do_rmdirs(self) -> None:
         dds = {}
@@ -85,10 +88,10 @@ class TestDataSet:
             td.do_unlink()
 
     def pathnames(self) -> list[pathlib.Path]:
-        ret = []
+        ret = set[pathlib.Path]()
         for td in self.tds:
-            ret.append(td.path)
-        return ret
+            ret.add(td.path)
+        return list(ret)
 
 
 class TestBaseCtx:
@@ -206,6 +209,10 @@ class TestCtx(TestBaseCtx):
         self.exec_mkfs(gsize)
         self.exec_mount(writeback_cache=writeback_cache)
 
+    def exec_teardown_fs(self) -> None:
+        self.exec_umount()
+        self.exec_rmfs()
+
     def exec_snap(self, name: str) -> None:
         self.cmd.silofs.snap(name, self.mntpoint())
 
@@ -213,6 +220,13 @@ class TestCtx(TestBaseCtx):
         self.cmd.silofs.snap_offline(
             snapname, self._repodir_name(mainname), self._passwd()
         )
+
+    def exec_tune(self, path: pathlib.Path, ftype: int = 2) -> None:
+        self.cmd.silofs.tune(path, ftype)
+
+    def exec_tune2(self, path_list: list[pathlib.Path]) -> None:
+        for path in path_list:
+            self.cmd.silofs.tune(path, 2)
 
     def exec_rmfs(self, name: str = "") -> None:
         repodir_name = self._repodir_name(name)

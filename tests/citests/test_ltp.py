@@ -97,7 +97,7 @@ def test_ltp(tc: ctx.TestCtx) -> None:
         _runltp_more_tests(tc, config)
         _runltp_fsstress(tc, config)
     tc.remove_fstree(name)
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def _install_ltp(tc: ctx.TestCtx, config: LtpConfig) -> None:

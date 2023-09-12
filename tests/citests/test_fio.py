@@ -101,7 +101,7 @@ def test_fio_simple(tc: ctx.TestCtx) -> None:
     fio_out = fio_exe.execute_with(fio_in)
     _print_fio_out(fio_out)
     tc.remove_fstree(name)
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def test_fio_njobs(tc: ctx.TestCtx) -> None:
@@ -114,7 +114,7 @@ def test_fio_njobs(tc: ctx.TestCtx) -> None:
     fio_out = fio_exe.execute_with(fio_in)
     _print_fio_out(fio_out)
     tc.remove_fstree(name)
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def _print_fio_in(fio_in: FioInput) -> None:

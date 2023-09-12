@@ -214,6 +214,9 @@ class CmdSilofs(CmdExec):
             args = args + ["--password", password]
         self.execute_sub(args)
 
+    def tune(self, pathname: pathlib.Path, ftype: int) -> None:
+        self.execute_sub(["tune", "--ftype", str(ftype), pathname])
+
     def rmfs(self, repodir_name: pathlib.Path, password: str) -> None:
         args = ["rmfs", repodir_name]
         if password:

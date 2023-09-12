@@ -15,7 +15,7 @@ def test_rw_text(tc: ctx.TestCtx) -> None:
     tc.expect.eq(len(lines), len(data))
     tc.expect.eq(lines, data)
     os.unlink(path)
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def test_rw_rands(tc: ctx.TestCtx) -> None:
@@ -25,13 +25,21 @@ def test_rw_rands(tc: ctx.TestCtx) -> None:
     tds.do_write()
     tds.do_read()
     tds.do_unlink()
+    tds.do_rmdirs()
     tds = tc.make_tds(1024, "B", 4096)
     tds.do_makedirs()
     tds.do_write()
     tds.do_read()
-    tds.do_write()
     tds.do_unlink()
-    tc.exec_umount()
+    tds.do_rmdirs()
+    tds = tc.make_tds(64, "C", 2**20)
+    subs = tds.do_makedirs()
+    tc.exec_tune2(subs)
+    tds.do_write()
+    tds.do_read()
+    tds.do_unlink()
+    tds.do_rmdirs()
+    tc.exec_teardown_fs()
 
 
 def test_reload(tc: ctx.TestCtx) -> None:
@@ -54,7 +62,7 @@ def test_reload(tc: ctx.TestCtx) -> None:
     tds.do_write()
     tds.do_read()
     tds.do_unlink()
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def test_reload_n(tc: ctx.TestCtx) -> None:
@@ -75,7 +83,7 @@ def test_reload_n(tc: ctx.TestCtx) -> None:
     for tds in tds_all:
         tds.do_read()
         tds.do_unlink()
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def run_async_io(tds: ctx.TestDataSet, cnt: int) -> None:

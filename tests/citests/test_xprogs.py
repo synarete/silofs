@@ -14,7 +14,7 @@ def test_postgresql(tc: ctx.TestCtx) -> None:
     if ret == 0:
         _test_postgresql_at(tc, base)
     tc.remove_fstree(name)
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def _test_postgresql_at(tc: ctx.TestCtx, base: pathlib.Path) -> None:
@@ -54,7 +54,7 @@ def test_gitscm(tc: ctx.TestCtx) -> None:
     if ret == 0:
         _test_gitscm_at(tc, base)
     tc.remove_fstree(name)
-    tc.exec_umount()
+    tc.exec_teardown_fs()
 
 
 def _test_gitscm_at(tc: ctx.TestCtx, base: pathlib.Path) -> None:

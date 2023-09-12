@@ -19,14 +19,14 @@
 
 static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
+	struct stat st = { .st_size = -1 };
+	const char *name = UT_NAME;
+	const loff_t step = 2 * UT_64K;
 	loff_t off_data = -1;
 	loff_t off_hole = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 	char d = 'd';
-	struct stat st;
-	const char *name = UT_NAME;
-	const loff_t step = 2 * UT_BK_SIZE;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -48,43 +48,47 @@ static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
 
 static void ut_file_lseek_simple(struct ut_env *ute)
 {
-	ut_file_lseek_simple_(ute, 0);
-	ut_file_lseek_simple_(ute, 1);
-	ut_file_lseek_simple_(ute, UT_1M + 1);
-	ut_file_lseek_simple_(ute, UT_1G - 3);
-	ut_file_lseek_simple_(ute, UT_1T + 5);
+	const loff_t off[] = {
+		0, UT_64K, UT_1M, UT_1G, UT_1T, 1,
+		UT_64K + 1, UT_1M + 111, UT_1G - 1111, UT_1T + 11111,
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		ut_file_lseek_simple_(ute, off[i]);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_lseek_holes_(struct ut_env *ute,
-                                 loff_t base_off, size_t cnt)
+static void ut_file_lseek_holes_(struct ut_env *ute, loff_t off)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
-	loff_t off = -1;
-	loff_t off_data = -1;
-	loff_t off_hole = -1;
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
-	const size_t bsz = UT_BK_SIZE;
-	void *buf = ut_randbuf(ute, bsz);
+	const size_t len = UT_64K;
+	const size_t cnt = 1000;
+	void *buf = ut_randbuf(ute, len);
+	loff_t pos_data = -1;
+	loff_t pos_hole = -1;
+	loff_t pos = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
-		off = base_off + (loff_t)(2 * bsz * (i + 1));
-		ut_write_read(ute, ino, buf, bsz, off);
+		pos = off + (loff_t)(2 * len * (i + 1));
+		ut_write_read(ute, ino, buf, len, pos);
 		ut_getattr_reg(ute, ino, &st);
-		ut_lseek_hole(ute, ino, off, &off_hole);
-		ut_expect_eq(off_hole, st.st_size);
+		ut_lseek_hole(ute, ino, pos, &pos_hole);
+		ut_expect_eq(pos_hole, st.st_size);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		off = base_off + (loff_t)(2 * bsz * (i + 1));
-		ut_lseek_data(ute, ino, off, &off_data);
-		ut_expect_eq(off_data, off);
-		ut_lseek_hole(ute, ino, off, &off_hole);
-		ut_expect_eq(off_hole, off + (loff_t)bsz);
+		pos = off + (loff_t)(2 * len * (i + 1));
+		ut_lseek_data(ute, ino, pos, &pos_data);
+		ut_expect_eq(pos_data, pos);
+		ut_lseek_hole(ute, ino, pos, &pos_hole);
+		ut_expect_eq(pos_hole, pos + (loff_t)len);
 	}
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
@@ -93,57 +97,59 @@ static void ut_file_lseek_holes_(struct ut_env *ute,
 
 static void ut_file_lseek_holes(struct ut_env *ute)
 {
-	ut_file_lseek_holes_(ute, 0, 10);
-	ut_file_lseek_holes_(ute, UT_1M, 100);
-	ut_file_lseek_holes_(ute, UT_1G, 1000);
-	ut_file_lseek_holes_(ute, UT_1T, 10000);
+	const loff_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		ut_file_lseek_holes_(ute, off[i]);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_lseek_sparse_(struct ut_env *ute,
-                                  loff_t off_base, loff_t step, size_t nsteps)
+static void ut_file_lseek_sparse_(struct ut_env *ute, loff_t off, size_t len)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
-	loff_t off = -1;
-	loff_t off_data = -1;
-	loff_t off_hole = -1;
-	loff_t off_next = -1;
+	const char *name = UT_NAME;
+	const size_t nsteps = (len < UT_1M) ? 1000 : 100;
 	const loff_t head1_lsize = SILOFS_FILE_HEAD1_LEAF_SIZE;
 	const loff_t head2_lsize = SILOFS_FILE_HEAD2_LEAF_SIZE;
 	const loff_t tree_lsize = SILOFS_FILE_TREE_LEAF_SIZE;
-	const char *name = UT_NAME;
+	loff_t pos_data = -1;
+	loff_t pos_hole = -1;
+	loff_t pos_next = -1;
+	loff_t pos = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < nsteps; ++i) {
-		off = off_base + ((loff_t)i * step);
-		ut_write_read1(ute, ino, off);
-		ut_lseek_data(ute, ino, off, &off_data);
-		ut_expect_eq(off_data, off);
-		ut_trunacate_file(ute, ino, off + tree_lsize);
+		pos = off + (ssize_t)(i * len);
+		ut_write_read1(ute, ino, pos);
+		ut_lseek_data(ute, ino, pos, &pos_data);
+		ut_expect_eq(pos_data, pos);
+		ut_trunacate_file(ute, ino, pos + tree_lsize);
 	}
 	for (size_t i = 0; i < (nsteps - 1); ++i) {
-		off = off_base + ((loff_t)i * step);
-		ut_lseek_data(ute, ino, off, &off_data);
-		ut_expect_eq(off_data, off);
-		ut_lseek_hole(ute, ino, off, &off_hole);
+		pos = off + (ssize_t)(i * len);
+		ut_lseek_data(ute, ino, pos, &pos_data);
+		ut_expect_eq(pos_data, pos);
+		ut_lseek_hole(ute, ino, pos, &pos_hole);
 
-		if (off_data < head2_lsize) {
-			off_next = off_data + head1_lsize;
-		} else if (off_data < tree_lsize) {
-			off_next = off_data + head2_lsize;
+		if (pos_data < head2_lsize) {
+			pos_next = pos_data + head1_lsize;
+		} else if (pos_data < tree_lsize) {
+			pos_next = pos_data + head2_lsize;
 		} else {
-			off_next = off_data + tree_lsize;
+			pos_next = pos_data + tree_lsize;
 		}
-		ut_expect_le(off_hole, off_next); /* FIXME  calc exact value */
+		ut_expect_le(pos_hole, pos_next); /* FIXME  calc exact value */
 
-		off_next = off + step;
-		off = (off + off_next) / 2;
-		ut_lseek_data(ute, ino, off, &off_data);
-		ut_expect_le(off_data, off_next);
-		ut_expect_gt(off_data + step, off_next);
+		pos_next = pos + (ssize_t)len;
+		pos = (pos + pos_next) / 2;
+		ut_lseek_data(ute, ino, pos, &pos_data);
+		ut_expect_le(pos_data, pos_next);
+		ut_expect_gt(pos_data + (ssize_t)len, pos_next);
 	}
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
@@ -151,19 +157,26 @@ static void ut_file_lseek_sparse_(struct ut_env *ute,
 
 static void ut_file_lseek_sparse(struct ut_env *ute)
 {
-	ut_file_lseek_sparse_(ute, 0, 10 * UT_BK_SIZE, 10);
-	ut_file_lseek_sparse_(ute, UT_4K, 10 * UT_BK_SIZE, 10);
-	ut_file_lseek_sparse_(ute, UT_8K, 10 * UT_BK_SIZE, 10);
-	ut_file_lseek_sparse_(ute, UT_1M, UT_1G, 100);
-	ut_file_lseek_sparse_(ute, UT_1G, UT_1M, 1000);
-	ut_file_lseek_sparse_(ute, UT_1T, 10 * UT_BK_SIZE, 10000);
+	const struct ut_range range[] = {
+		UT_MKRANGE1(0, 10 * UT_64K),
+		UT_MKRANGE1(UT_4K, 10 * UT_64K),
+		UT_MKRANGE1(UT_8K, 10 * UT_64K),
+		UT_MKRANGE1(UT_1M, UT_1G),
+		UT_MKRANGE1(UT_1G, UT_1M),
+		UT_MKRANGE1(UT_1T, 10 * UT_64K),
+	};
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
+		ut_file_lseek_sparse_(ute, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_lseek_simple),
-	UT_DEFTEST(ut_file_lseek_holes),
+	UT_DEFTEST2(ut_file_lseek_simple),
+	UT_DEFTEST2(ut_file_lseek_holes),
 	UT_DEFTEST(ut_file_lseek_sparse),
 };
 

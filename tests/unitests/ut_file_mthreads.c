@@ -176,8 +176,8 @@ static void ut_file_mt_many(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_mt_simple),
-	UT_DEFTEST(ut_file_mt_many),
+	UT_DEFTEST2(ut_file_mt_simple),
+	UT_DEFTEST2(ut_file_mt_many),
 };
 
 const struct ut_testdefs ut_tdefs_file_mthreads = UT_MKTESTS(ut_local_tests);

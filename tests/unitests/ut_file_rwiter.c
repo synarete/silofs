@@ -94,22 +94,32 @@ static void ut_file_write_iter_unaligned(struct ut_env *ute)
 static void ut_file_write_iter_sparse_(struct ut_env *ute,
                                        const loff_t *offs, size_t cnt)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
-	loff_t off = -1;
-	loff_t val = -1;
 	const char *name = UT_NAME;
+	uint64_t val = 0;
+	loff_t off = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
 		off = offs[i];
-		val = off;
+		val = (uint64_t)off;
 		ut_write_iter_ok(ute, ino, &val, sizeof(val), off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		off = offs[i];
-		val = off;
+		val = (uint64_t)off;
+		ut_read_verify(ute, ino, &val, sizeof(val), off);
+	}
+	for (size_t i = cnt; i > 0; --i) {
+		off = offs[i - 1];
+		val = (uint64_t)off + i;
+		ut_write_iter_ok(ute, ino, &val, sizeof(val), off);
+	}
+	for (size_t i = cnt; i > 0; --i) {
+		off = offs[i - 1];
+		val = (uint64_t)off + i;
 		ut_read_verify(ute, ino, &val, sizeof(val), off);
 	}
 	ut_remove_file(ute, dino, name, ino);
@@ -129,10 +139,10 @@ static void ut_file_write_iter_sparse(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_file_write_iter_simple),
-	UT_DEFTEST(ut_file_write_iter_aligned),
-	UT_DEFTEST(ut_file_write_iter_unaligned),
-	UT_DEFTEST(ut_file_write_iter_sparse),
+	UT_DEFTEST3(ut_file_write_iter_simple),
+	UT_DEFTEST2(ut_file_write_iter_aligned),
+	UT_DEFTEST2(ut_file_write_iter_unaligned),
+	UT_DEFTEST2(ut_file_write_iter_sparse),
 };
 
 const struct ut_testdefs ut_tdefs_file_rwiter = UT_MKTESTS(ut_local_tests);

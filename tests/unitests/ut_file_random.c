@@ -235,10 +235,10 @@ static void ut_file_random_random(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_file_random_simple),
-	UT_DEFTEST(ut_file_random_aligned),
-	UT_DEFTEST(ut_file_random_unaligned),
-	UT_DEFTEST(ut_file_random_random),
+	UT_DEFTEST3(ut_file_random_simple),
+	UT_DEFTEST2(ut_file_random_aligned),
+	UT_DEFTEST2(ut_file_random_unaligned),
+	UT_DEFTEST2(ut_file_random_random),
 };
 
 const struct ut_testdefs ut_tdefs_file_random = UT_MKTESTS(ut_local_tests);

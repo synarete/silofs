@@ -83,25 +83,20 @@ static void ut_file_fiemap_simple_(struct ut_env *ute,
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, len, off);
-
 	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_ge(fm->fm_mapped_extents, 1);
-
 	ut_trunacate_file(ute, ino, off + 1);
 	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_eq(fm->fm_mapped_extents, 1);
 	fm_ext = &fm->fm_extents[0];
 	ut_expect_eq(fm_ext->fe_logical, off);
 	ut_expect_eq(fm_ext->fe_length, 1);
-
 	ut_trunacate_file(ute, ino, off);
 	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_eq(fm->fm_mapped_extents, 0);
-
 	ut_trunacate_file(ute, ino, off + (loff_t)len);
 	fm = ut_fiemap_of(ute, ino, off, len);
 	ut_expect_eq(fm->fm_mapped_extents, 0);
-
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }
@@ -155,13 +150,17 @@ static void ut_file_fiemap_twoext_(struct ut_env *ute,
 
 static void ut_file_fiemap_twoext(struct ut_env *ute)
 {
-	ut_file_fiemap_twoext_(ute, 0, UT_1M);
-	ut_file_fiemap_twoext_(ute, 0, UT_1G);
-	ut_file_fiemap_twoext_(ute, 0, UT_1T);
-	ut_file_fiemap_twoext_(ute, UT_BK_SIZE, UT_1M);
-	ut_file_fiemap_twoext_(ute, UT_BK_SIZE, UT_1G);
-	ut_file_fiemap_twoext_(ute, UT_1M, UT_1G);
-	ut_file_fiemap_twoext_(ute, UT_1G, UT_1T);
+	const loff_t off1[] = { 0, UT_64K, UT_1M, UT_1G };
+	const loff_t off2[] = { UT_1M, UT_1G, UT_1T };
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off1); ++i) {
+		for (size_t j = 0; j < UT_ARRAY_SIZE(off2); ++j) {
+			if (off1[i] < off2[j]) {
+				ut_file_fiemap_twoext_(ute, off1[i], off2[j]);
+				ut_relax_mem(ute);
+			}
+		}
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -184,7 +183,6 @@ static void ut_file_fiemap_sparse_(struct ut_env *ute,
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-
 	off = off_base;
 	for (size_t i = 0; i < cnt; ++i) {
 		ut_write_read(ute, ino, &b, 1, off);
@@ -204,7 +202,6 @@ static void ut_file_fiemap_sparse_(struct ut_env *ute,
 		ut_expect_le(fm_ext->fe_length, bk_size);
 		off += step;
 	}
-
 	off = off_base;
 	for (size_t i = 0; i < cnt; ++i) {
 		boff = ut_off_baligned(off);
@@ -234,8 +231,8 @@ static void ut_file_fiemap_sparse(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_fiemap_simple),
-	UT_DEFTEST(ut_file_fiemap_twoext),
+	UT_DEFTEST2(ut_file_fiemap_simple),
+	UT_DEFTEST2(ut_file_fiemap_twoext),
 	UT_DEFTEST(ut_file_fiemap_sparse),
 };
 

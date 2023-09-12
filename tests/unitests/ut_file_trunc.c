@@ -109,14 +109,15 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, loff_t off, size_t len)
 	const loff_t zoff = off - (loff_t)len;
 	const size_t bsz = 2 * len;
 	uint8_t *buf = ut_randbuf(ute, bsz);
-	const ino_t root_ino = UT_ROOT_INO;
+	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_expect(len >= UT_BK_SIZE);
 	ut_expect(zoff >= 0);
 
 	memset(buf, 0, bsz / 2);
-	ut_create_file(ute, root_ino, name, &ino);
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf + len, len, off);
 	ut_trunacate_file(ute, ino, eoff - 1);
 	ut_read_verify(ute, ino, buf, bsz - 1, zoff);
@@ -124,7 +125,8 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, loff_t off, size_t len)
 	ut_read_verify(ute, ino, buf, bsz - UT_BK_SIZE + 1, zoff);
 	ut_trunacate_file(ute, ino, off);
 	ut_read_verify(ute, ino, buf, len, zoff);
-	ut_remove_file(ute, root_ino, name, ino);
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
 }
 
 static void ut_file_trunc_mixed(struct ut_env *ute)
@@ -153,11 +155,10 @@ static void ut_file_trunc_mixed(struct ut_env *ute)
 static void ut_file_trunc_hole_(struct ut_env *ute,
                                 loff_t off1, loff_t off2, size_t len)
 {
+	const char *name = UT_NAME;
 	void *buf1 = NULL;
 	void *buf2 = NULL;
 	void *zeros = NULL;
-	const char *name = UT_NAME;
-	const char *dname = UT_NAME;
 	loff_t hole_off1 = -1;
 	loff_t hole_off2 = -1;
 	size_t hole_len = 0;
@@ -172,7 +173,7 @@ static void ut_file_trunc_hole_(struct ut_env *ute,
 	buf1 = ut_randbuf(ute, len);
 	buf2 = ut_randbuf(ute, len);
 	zeros = ut_zerobuf(ute, nzeros);
-	ut_mkdir_at_root(ute, dname, &dino);
+	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf1, len, off1);
 	ut_write_read(ute, ino, buf2, len, off2);
@@ -182,7 +183,7 @@ static void ut_file_trunc_hole_(struct ut_env *ute,
 	ut_trunacate_file(ute, ino, off1 + 1);
 	ut_write_read(ute, ino, buf1, 1, off1);
 	ut_remove_file(ute, dino, name, ino);
-	ut_rmdir_at_root(ute, dname);
+	ut_rmdir_at_root(ute, name);
 }
 
 static void ut_file_trunc_hole(struct ut_env *ute)
@@ -226,13 +227,12 @@ static void ut_file_trunc_single_byte_(struct ut_env *ute,
                                        const loff_t *off_arr, size_t cnt)
 {
 	const char *name = UT_NAME;
-	const char *dname = UT_NAME;
 	const uint8_t one[1] = { 1 };
 	loff_t off = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
-	ut_mkdir_at_root(ute, dname, &dino);
+	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
 		off = off_arr[i];
@@ -250,7 +250,7 @@ static void ut_file_trunc_single_byte_(struct ut_env *ute,
 	}
 	ut_trunacate_zero(ute, ino);
 	ut_remove_file(ute, dino, name, ino);
-	ut_rmdir_at_root(ute, dname);
+	ut_rmdir_at_root(ute, name);
 }
 
 static void ut_file_trunc_single_byte(struct ut_env *ute)
@@ -266,8 +266,11 @@ static void ut_file_trunc_single_byte(struct ut_env *ute)
 	};
 
 	ut_file_trunc_single_byte_(ute, off1, UT_ARRAY_SIZE(off1));
+	ut_relax_mem(ute);
 	ut_file_trunc_single_byte_(ute, off2, UT_ARRAY_SIZE(off2));
+	ut_relax_mem(ute);
 	ut_file_trunc_single_byte_(ute, off3, UT_ARRAY_SIZE(off3));
+	ut_relax_mem(ute);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -275,15 +278,14 @@ static void ut_file_trunc_single_byte(struct ut_env *ute)
 static void ut_file_trunc_tail_(struct ut_env *ute,
                                 loff_t off, size_t ulen)
 {
-	const char *dname = UT_NAME;
-	const char *fname = UT_NAME;
+	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, ulen);
 	const ssize_t len = (loff_t)ulen;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
-	ut_mkdir_at_root(ute, dname, &dino);
-	ut_create_file(ute, dino, fname, &ino);
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, ulen, off);
 	ut_read_zero_byte(ute, ino, off - 1);
 	ut_trunacate_file(ute, ino, off + 1);
@@ -293,8 +295,8 @@ static void ut_file_trunc_tail_(struct ut_env *ute,
 	ut_read_zero_byte(ute, ino, off + len - 1);
 	ut_trunacate_file(ute, ino, off + len + 1);
 	ut_read_zero_byte(ute, ino, off + len);
-	ut_remove_file(ute, dino, fname, ino);
-	ut_rmdir_at_root(ute, dname);
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
 }
 
 static void ut_file_trunc_tail(struct ut_env *ute)
@@ -319,17 +321,15 @@ static void ut_file_trunc_tail(struct ut_env *ute)
 static void ut_file_trunc_void_(struct ut_env *ute, loff_t off, size_t ulen)
 {
 	struct stat st = { .st_size = -1 };
-	const ino_t root_ino = UT_ROOT_INO;
+	const char *name = UT_NAME;
 	const ssize_t len = (loff_t)ulen;
 	const loff_t end = off + len;
-	const char *dname = UT_NAME;
-	const char *fname = UT_NAME;
 	uint8_t dat = 67;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
-	ut_mkdir_oki(ute, root_ino, dname, &dino);
-	ut_create_file(ute, dino, fname, &ino);
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
 	ut_trunacate_file(ute, ino, end);
 	ut_read_zeros(ute, ino, off, ulen);
 	ut_getattr_ok(ute, ino, &st);
@@ -338,8 +338,8 @@ static void ut_file_trunc_void_(struct ut_env *ute, loff_t off, size_t ulen)
 	ut_trunacate_file(ute, ino, end);
 	ut_write_read(ute, ino, &dat, 1, end);
 	ut_read_zeros(ute, ino, off, ulen);
-	ut_remove_file(ute, dino, fname, ino);
-	ut_rmdir_ok(ute, root_ino, dname);
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
 }
 
 static void ut_file_trunc_void(struct ut_env *ute)
@@ -474,16 +474,16 @@ static void ut_file_trunc_null_data(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_trunc_simple),
-	UT_DEFTEST(ut_file_trunc_aligned),
-	UT_DEFTEST(ut_file_trunc_unaligned),
-	UT_DEFTEST(ut_file_trunc_mixed),
-	UT_DEFTEST(ut_file_trunc_hole),
-	UT_DEFTEST(ut_file_trunc_single_byte),
-	UT_DEFTEST(ut_file_trunc_tail),
-	UT_DEFTEST(ut_file_trunc_void),
-	UT_DEFTEST(ut_file_trunc_zero_size),
-	UT_DEFTEST(ut_file_trunc_null_data),
+	UT_DEFTEST2(ut_file_trunc_simple),
+	UT_DEFTEST2(ut_file_trunc_aligned),
+	UT_DEFTEST2(ut_file_trunc_unaligned),
+	UT_DEFTEST2(ut_file_trunc_mixed),
+	UT_DEFTEST2(ut_file_trunc_hole),
+	UT_DEFTEST2(ut_file_trunc_single_byte),
+	UT_DEFTEST2(ut_file_trunc_tail),
+	UT_DEFTEST2(ut_file_trunc_void),
+	UT_DEFTEST2(ut_file_trunc_zero_size),
+	UT_DEFTEST2(ut_file_trunc_null_data),
 };
 
 const struct ut_testdefs ut_tdefs_file_truncate = UT_MKTESTS(ut_local_tests);

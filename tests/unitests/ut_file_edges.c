@@ -212,10 +212,10 @@ static void ut_file_edges_fmapping(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_edges_aligned),
-	UT_DEFTEST(ut_file_edges_unaligned),
-	UT_DEFTEST(ut_file_edges_special),
-	UT_DEFTEST(ut_file_edges_fmapping),
+	UT_DEFTEST2(ut_file_edges_aligned),
+	UT_DEFTEST2(ut_file_edges_unaligned),
+	UT_DEFTEST2(ut_file_edges_special),
+	UT_DEFTEST2(ut_file_edges_fmapping),
 };
 
 const struct ut_testdefs ut_tdefs_file_edges = UT_MKTESTS(ut_local_tests);

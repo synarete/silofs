@@ -203,27 +203,27 @@ static void ut_reload_unlinked(struct ut_env *ute)
 
 static void ut_reload_xattr_(struct ut_env *ute, loff_t off, size_t value_size)
 {
-	ino_t fino;
-	ino_t dino;
 	const char *name = UT_NAME;
 	struct ut_keyval kv = {
 		.name = name,
 		.value = ut_randbuf(ute, value_size),
 		.size = value_size,
 	};
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_setxattr_create(ute, dino, &kv);
-	ut_create_file(ute, dino, name, &fino);
-	ut_write_read(ute, fino, kv.value, kv.size, off);
-	ut_setxattr_create(ute, fino, &kv);
-	ut_release_file(ute, fino);
+	ut_create_file(ute, dino, name, &ino);
+	ut_write_read(ute, ino, kv.value, kv.size, off);
+	ut_setxattr_create(ute, ino, &kv);
+	ut_release_file(ute, ino);
 	ut_reload_fs_ok_at(ute, dino);
 	ut_getxattr_value(ute, dino, &kv);
-	ut_open_rdonly(ute, fino);
-	ut_getxattr_value(ute, fino, &kv);
-	ut_read_verify(ute, fino, kv.value, kv.size, off);
-	ut_release_file(ute, fino);
+	ut_open_rdonly(ute, ino);
+	ut_getxattr_value(ute, ino, &kv);
+	ut_read_verify(ute, ino, kv.value, kv.size, off);
+	ut_release_file(ute, ino);
 	ut_unlink_ok(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }

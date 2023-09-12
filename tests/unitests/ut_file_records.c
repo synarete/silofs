@@ -146,42 +146,46 @@ static loff_t offset_of(const struct ut_record *rec, size_t index,
 }
 
 static void ut_file_records_seq_(struct ut_env *ute,
-                                 loff_t base, size_t size, size_t cnt)
+                                 loff_t off, size_t len, size_t cnt)
 {
-	ino_t ino;
-	loff_t off;
-	struct ut_record *rec = NULL;
 	const char *name = UT_NAME;
-	const ino_t root_ino = UT_ROOT_INO;
+	struct ut_record *rec = NULL;
+	loff_t pos = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
-	ut_create_file(ute, root_ino, name, &ino);
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
-		rec = record_new(ute, size);
+		rec = record_new(ute, len);
 		record_stamp_encode(rec, i);
 
-		off = offset_of(rec, i, base);
-		ut_write_record(ute, ino, rec, off);
+		pos = offset_of(rec, i, off);
+		ut_write_record(ute, ino, rec, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		rec = record_new(ute, size);
+		rec = record_new(ute, len);
 		record_stamp_encode(rec, j);
 
-		off = offset_of(rec, j, base);
-		ut_read_record_verify(ute, ino, rec, off);
+		pos = offset_of(rec, j, off);
+		ut_read_record_verify(ute, ino, rec, pos);
 	}
-	ut_remove_file(ute, root_ino, name, ino);
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
 }
 
 static void ut_file_records_seq(struct ut_env *ute)
 {
-	loff_t base;
-	const loff_t base_offs[] = { 0, 111, 11111, 1111111, 111111111 };
+	const loff_t off[] = { 0, 111, 11111, 1111111, 111111111 };
+	const size_t len[] = { 111, 1111, 11111 };
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(base_offs); ++i) {
-		base = base_offs[i];
-		ut_file_records_seq_(ute, base, 111, 11);
-		ut_file_records_seq_(ute, base, 1111, 111);
-		ut_file_records_seq_(ute, base, 11111, 1111);
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		for (size_t j = 0; j < UT_ARRAY_SIZE(len); ++j) {
+			ut_file_records_seq_(ute, off[i], len[j], 10);
+			ut_relax_mem(ute);
+			ut_file_records_seq_(ute, off[i], len[j], 100);
+			ut_relax_mem(ute);
+		}
 	}
 }
 
@@ -197,81 +201,92 @@ static loff_t resolve_offset(const struct ut_record *rec, long pos,
 }
 
 static void ut_file_records_rand_(struct ut_env *ute,
-                                  loff_t base, size_t size, size_t cnt)
+                                  loff_t off, size_t len, size_t cnt)
 {
-	ino_t ino;
-	loff_t off;
 	const size_t niter = 2;
-	const ino_t root_ino = UT_ROOT_INO;
-	struct ut_record *rec;
+	struct ut_record *rec = NULL;
 	const char *name = UT_NAME;
-	const long *pos = ut_randseq(ute, cnt, 0);
+	const long *poss = ut_randseq(ute, cnt, 0);
+	loff_t pos = -1;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
-	ut_create_file(ute, root_ino, name, &ino);
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_create_file(ute, dino, name, &ino);
 	for (size_t n = 0; n < niter; ++n) {
 		for (size_t i = 0; i < cnt; ++i) {
-			rec = record_new(ute, size);
+			rec = record_new(ute, len);
 			record_stamp_encode(rec, i);
 
-			off = resolve_offset(rec, pos[i], base);
-			ut_write_record(ute, ino, rec, off);
+			pos = resolve_offset(rec, poss[i], off);
+			ut_write_record(ute, ino, rec, pos);
 		}
 		for (size_t j = cnt; j > 0; --j) {
-			rec = record_new(ute, size);
+			rec = record_new(ute, len);
 			record_stamp_encode(rec, j - 1);
 
-			off = resolve_offset(rec, pos[j - 1], base);
-			ut_read_record_verify(ute, ino, rec, off);
+			pos = resolve_offset(rec, poss[j - 1], off);
+			ut_read_record_verify(ute, ino, rec, pos);
 		}
 	}
-	ut_remove_file(ute, root_ino, name, ino);
+	ut_remove_file(ute, dino, name, ino);
+	ut_rmdir_at_root(ute, name);
 }
 
 
 static void ut_file_records_rand_aligned(struct ut_env *ute)
 {
-	const loff_t base[] = { 0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T };
+	const loff_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(base); ++i) {
-		ut_file_records_rand_(ute, base[i], UT_BK_SIZE, 512);
-		ut_file_records_rand_(ute, base[i], 8 * UT_BK_SIZE, 64);
-		ut_file_records_rand_(ute, base[i], UT_1M, 8);
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		ut_file_records_rand_(ute, off[i], UT_64K, 1000);
+		ut_relax_mem(ute);
+		ut_file_records_rand_(ute, off[i], 8 * UT_64K, 100);
+		ut_relax_mem(ute);
+		ut_file_records_rand_(ute, off[i], UT_1M, 10);
+		ut_relax_mem(ute);
 	}
 }
 
 static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 {
-	const loff_t base[] = { 1, 111, 11111, 1111111, 111111111 };
+	const loff_t off[] = { 1, 111, 11111, 1111111, 111111111 };
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(base); ++i) {
-		ut_file_records_rand_(ute, base[i], 111, 1111);
-		ut_file_records_rand_(ute, base[i], 1111, 111);
-		ut_file_records_rand_(ute, base[i], 11111, 11);
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		ut_file_records_rand_(ute, off[i], 111, 1111);
+		ut_relax_mem(ute);
+		ut_file_records_rand_(ute, off[i], 1111, 111);
+		ut_relax_mem(ute);
+		ut_file_records_rand_(ute, off[i], 11111, 11);
+		ut_relax_mem(ute);
 	}
 }
 
 static void ut_file_records_rand_unaligned2(struct ut_env *ute)
 {
-	const loff_t base[] = {
-		UT_BK_SIZE - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2
+	const loff_t off[] = {
+		UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2
 	};
 	const size_t size_rec = record_base_size(NULL);
 	const size_t size_max = UT_IOSIZE_MAX - size_rec;
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(base); ++i) {
-		ut_file_records_rand_(ute, base[i], UT_BK_SIZE + 4, 64);
-		ut_file_records_rand_(ute, base[i], UT_1M, 8);
-		ut_file_records_rand_(ute, base[i], size_max, 4);
+	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
+		ut_file_records_rand_(ute, off[i], UT_64K + 4, 64);
+		ut_relax_mem(ute);
+		ut_file_records_rand_(ute, off[i], UT_1M, 8);
+		ut_relax_mem(ute);
+		ut_file_records_rand_(ute, off[i], size_max, 4);
+		ut_relax_mem(ute);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_records_seq),
-	UT_DEFTEST(ut_file_records_rand_aligned),
-	UT_DEFTEST(ut_file_records_rand_unaligned1),
-	UT_DEFTEST(ut_file_records_rand_unaligned2),
+	UT_DEFTEST2(ut_file_records_seq),
+	UT_DEFTEST2(ut_file_records_rand_aligned),
+	UT_DEFTEST2(ut_file_records_rand_unaligned1),
+	UT_DEFTEST2(ut_file_records_rand_unaligned2),
 };
 
 const struct ut_testdefs ut_tdefs_file_records = UT_MKTESTS(ut_local_tests);

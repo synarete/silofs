@@ -100,10 +100,10 @@ rzigzag(struct ut_env *ute, const struct ut_ranges *ranges)
 static void ut_write_read_n(struct ut_env *ute,
                             const struct ut_dvecs *dvecs, ino_t ino)
 {
+	const struct ut_dvec *dvec = NULL;
 	void *buf = NULL;
 	loff_t off = -1;
 	size_t len = 0;
-	const struct ut_dvec *dvec;
 
 	for (size_t i = 0; i < dvecs->count; ++i) {
 		dvec = dvecs->dvec[i];
@@ -126,9 +126,9 @@ static void ut_write_read_n(struct ut_env *ute,
 static void ut_rdwr_file1(struct ut_env *ute,
                           const struct ut_dvecs *drefs)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -142,9 +142,9 @@ static void ut_rdwr_file2(struct ut_env *ute,
                           const struct ut_dvecs *drefs1,
                           const struct ut_dvecs *drefs2)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -154,7 +154,6 @@ static void ut_rdwr_file2(struct ut_env *ute,
 	ut_unlink_ok(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -232,6 +231,7 @@ static void ut_file_ranges(struct ut_env *ute)
 	for (size_t i = 0; i < UT_ARRAY_SIZE(s_ranges_defs); ++i) {
 		ranges = &s_ranges_defs[i];
 		ut_file_ranges_(ute, ranges);
+		ut_relax_mem(ute);
 	}
 }
 
@@ -256,14 +256,15 @@ static void ut_file_xranges(struct ut_env *ute)
 		r1 = &s_ranges_defs[j];
 		r2 = &s_ranges_defs[j + 1];
 		ut_file_xranges_(ute, r1, r2);
+		ut_relax_mem(ute);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_file_ranges),
-	UT_DEFTEST(ut_file_xranges),
+	UT_DEFTEST2(ut_file_ranges),
+	UT_DEFTEST2(ut_file_xranges),
 };
 
 const struct ut_testdefs ut_tdefs_file_ranges = UT_MKTESTS(ut_local_tests);

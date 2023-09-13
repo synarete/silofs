@@ -784,8 +784,8 @@ void cmd_iconf_init(struct silofs_iconf *iconf)
 	iconf->ids.ngids = 0;
 }
 
-void cmd_iconf_clone(struct silofs_iconf *iconf,
-                     const struct silofs_iconf *other)
+void cmd_iconf_assign(struct silofs_iconf *iconf,
+                      const struct silofs_iconf *other)
 {
 	cmd_iconf_init(iconf);
 	silofs_namebuf_assign(&iconf->name, &other->name);

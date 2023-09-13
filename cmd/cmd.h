@@ -280,8 +280,8 @@ void cmd_delpass(char **pass);
 /* init configuration */
 void cmd_iconf_init(struct silofs_iconf *iconf);
 
-void cmd_iconf_clone(struct silofs_iconf *iconf,
-                     const struct silofs_iconf *other);
+void cmd_iconf_assign(struct silofs_iconf *iconf,
+                      const struct silofs_iconf *other);
 
 void cmd_iconf_reset(struct silofs_iconf *iconf);
 

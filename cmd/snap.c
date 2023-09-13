@@ -312,7 +312,7 @@ static void cmd_snap_save_snap_iconf(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_iconf snap_iconf;
 
-	cmd_iconf_clone(&snap_iconf, &ctx->fs_args.iconf);
+	cmd_iconf_assign(&snap_iconf, &ctx->fs_args.iconf);
 	cmd_iconf_setuuid(&snap_iconf, &ctx->uuid_alt);
 	cmd_iconf_setname(&snap_iconf,  ctx->in_args.snapname);
 	cmd_iconf_save(&snap_iconf, ctx->in_args.repodir_real);
@@ -323,7 +323,7 @@ static void cmd_snap_save_orig_iconf(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_iconf orig_iconf;
 
-	cmd_iconf_clone(&orig_iconf, &ctx->fs_args.iconf);
+	cmd_iconf_assign(&orig_iconf, &ctx->fs_args.iconf);
 	cmd_iconf_setuuid(&orig_iconf, &ctx->uuid_new);
 	cmd_iconf_setname(&orig_iconf,  ctx->in_args.name);
 	cmd_iconf_save(&orig_iconf, ctx->in_args.repodir_real);

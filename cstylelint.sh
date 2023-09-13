@@ -3,8 +3,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-self=$(basename "${BASH_SOURCE[0]}")
-root=$(readlink -f "$(dirname "${self}")")
+self="${BASH_SOURCE[0]}"
+root=$(dirname "$(readlink -f "${self}")")
 checkcstyle_py="${root}"/scripts/checkcstyle.py
 
 srcs=$(find "${root}/include" "${root}/lib" \

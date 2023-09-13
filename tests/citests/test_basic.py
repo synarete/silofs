@@ -1,100 +1,99 @@
 # SPDX-License-Identifier: GPL-3.0
 
-from . import ctx
-from . import utils
+from .ctx import TestEnv
 
 
-def test_version(tc: ctx.TestCtx) -> None:
-    version = tc.cmd.silofs.version()
-    tc.expect.gt(len(version), 0)
+def test_version(env: TestEnv) -> None:
+    version = env.cmd.silofs.version()
+    env.expect.gt(len(version), 0)
 
 
-def test_init(tc: ctx.TestCtx) -> None:
-    tc.exec_init()
+def test_init(env: TestEnv) -> None:
+    env.exec_init()
 
 
-def test_mkfs(tc: ctx.TestCtx) -> None:
-    tc.exec_init()
-    tc.exec_mkfs()
+def test_mkfs(env: TestEnv) -> None:
+    env.exec_init()
+    env.exec_mkfs()
 
 
-def test_mount(tc: ctx.TestCtx) -> None:
-    tc.exec_init()
-    tc.exec_mkfs()
-    tc.exec_mount()
-    tc.exec_umount()
-    tc.exec_rmfs()
+def test_mount(env: TestEnv) -> None:
+    env.exec_init()
+    env.exec_mkfs()
+    env.exec_mount()
+    env.exec_umount()
+    env.exec_rmfs()
 
 
-def test_hello_world(tc: ctx.TestCtx) -> None:
-    tc.exec_init()
-    tc.exec_mkfs()
-    tc.exec_mount()
-    path = tc.make_path("hello")
+def test_hello_world(env: TestEnv) -> None:
+    env.exec_init()
+    env.exec_mkfs()
+    env.exec_mount()
+    path = env.make_path("hello")
     data = "hello, world!"
     with open(path, "w", encoding="utf-8") as f:
         f.writelines(data)
     with open(path, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    tc.expect.eq(len(lines), 1)
-    tc.expect.eq(lines[0], data)
+    env.expect.eq(len(lines), 1)
+    env.expect.eq(lines[0], data)
     path.unlink()
-    tc.exec_umount()
-    tc.exec_rmfs()
+    env.exec_umount()
+    env.exec_rmfs()
 
 
-def test_fscapacity(tc: ctx.TestCtx) -> None:
-    tc.exec_init()
-    _test_fscapacity(tc, 2)  # minimal capacity
-    _test_fscapacity(tc, 256)  # normal capacity
-    _test_fscapacity(tc, 64 * 1024)  # maximal capacity
+def test_fscapacity(env: TestEnv) -> None:
+    env.exec_init()
+    _test_fscapacity(env, 2)  # minimal capacity
+    _test_fscapacity(env, 256)  # normal capacity
+    _test_fscapacity(env, 64 * 1024)  # maximal capacity
 
 
-def _test_fscapacity(tc: ctx.TestCtx, cap: int) -> None:
-    name = f"{tc.name}-{cap}"
-    tc.exec_mkfs(cap, name)
-    tc.exec_mount(name)
-    base = tc.make_path(name)
-    path = tc.make_path(name, "dat")
-    wdat = utils.prandbytes(2**20)
+def _test_fscapacity(env: TestEnv, cap: int) -> None:
+    name = f"{env.name}-{cap}"
+    env.exec_mkfs(cap, name)
+    env.exec_mount(name)
+    base = env.make_path(name)
+    path = env.make_path(name, "dat")
+    wdat = env.make_rands(2**20)
     base.mkdir()
     path.write_bytes(wdat)
     rdat = path.read_bytes()
-    tc.expect.eq(wdat, rdat)
+    env.expect.eq(wdat, rdat)
     path.unlink()
     base.rmdir()
-    tc.exec_umount()
+    env.exec_umount()
 
 
-def test_show(tc: ctx.TestCtx) -> None:
-    tc.exec_setup_fs()
-    base = tc.make_basepath()
+def test_show(env: TestEnv) -> None:
+    env.exec_setup_fs()
+    base = env.make_basepath()
     base.mkdir()
-    vers1 = tc.cmd.silofs.version()
-    tc.expect.eq(len(vers1.split()), 2)
-    vers2 = tc.cmd.silofs.show_version(base)
-    tc.expect.gt(len(vers2), 1)
-    tc.expect.eq(vers2, vers1.split()[1])
-    bsec = tc.cmd.silofs.show_boot(base)
-    tc.expect.gt(len(bsec), 1)
-    prst = tc.cmd.silofs.show_proc(base)
-    tc.expect.gt(len(prst), 1)
-    spst = tc.cmd.silofs.show_spstats(base)
-    tc.expect.gt(len(spst), 1)
-    stx = tc.cmd.silofs.show_statx(base)
-    tc.expect.gt(len(stx), 1)
+    vers1 = env.cmd.silofs.version()
+    env.expect.eq(len(vers1.split()), 2)
+    vers2 = env.cmd.silofs.show_version(base)
+    env.expect.gt(len(vers2), 1)
+    env.expect.eq(vers2, vers1.split()[1])
+    bsec = env.cmd.silofs.show_boot(base)
+    env.expect.gt(len(bsec), 1)
+    prst = env.cmd.silofs.show_proc(base)
+    env.expect.gt(len(prst), 1)
+    spst = env.cmd.silofs.show_spstats(base)
+    env.expect.gt(len(spst), 1)
+    stx = env.cmd.silofs.show_statx(base)
+    env.expect.gt(len(stx), 1)
     base.rmdir()
-    tc.exec_teardown_fs()
+    env.exec_teardown_fs()
 
 
-def test_mkfs_mount_with_opts(tc: ctx.TestCtx) -> None:
+def test_mkfs_mount_with_opts(env: TestEnv) -> None:
     fsname = "0123456789abcdef"
-    tc.exec_init()
-    tc.exec_mkfs(gsize=123, name=fsname, sup_groups=True, allow_root=True)
-    tc.exec_mount(name=fsname, allow_hostids=True, writeback_cache=False)
-    tds = tc.make_tds(1, "A", 2**21)
+    env.exec_init()
+    env.exec_mkfs(gsize=123, name=fsname, sup_groups=True, allow_root=True)
+    env.exec_mount(name=fsname, allow_hostids=True, writeback_cache=False)
+    tds = env.make_tds(1, "A", 2**21)
     tds.do_makedirs()
     tds.do_write()
     tds.do_read()
     tds.do_unlink()
-    tc.exec_umount()
+    env.exec_umount()

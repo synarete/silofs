@@ -3,8 +3,7 @@ import copy
 import os
 import pathlib
 
-from . import ctx
-from . import utils
+from .ctx import TestEnv
 
 
 # pylint: disable=R0902,R0903
@@ -83,51 +82,51 @@ class LtpConfig:
         return self.ltproot / "testcases" / "bin"
 
 
-def test_ltp(tc: ctx.TestCtx) -> None:
+def test_ltp(env: TestEnv) -> None:
     url = "https://github.com/linux-test-project/ltp"
-    name = utils.selfname()
-    tc.exec_setup_fs(64, writeback_cache=False)
-    base = tc.create_fstree(name)
+    name = env.uniq_name()
+    env.exec_setup_fs(64, writeback_cache=False)
+    base = env.create_fstree(name)
     config = LtpConfig(base)
     config.makedirs()
-    ret = tc.cmd.git.clone(url, config.srcdir)
+    ret = env.cmd.git.clone(url, config.srcdir)
     if ret == 0:
-        _install_ltp(tc, config)
-        _runltp_base_tests(tc, config)
-        _runltp_more_tests(tc, config)
-        _runltp_fsstress(tc, config)
-    tc.remove_fstree(name)
-    tc.exec_teardown_fs()
+        _install_ltp(env, config)
+        _runltp_base_tests(env, config)
+        _runltp_more_tests(env, config)
+        _runltp_fsstress(env, config)
+    env.remove_fstree(name)
+    env.exec_teardown_fs()
 
 
-def _install_ltp(tc: ctx.TestCtx, config: LtpConfig) -> None:
-    tc.cmd.sh.run_ok("make autotools", config.srcdir)
-    tc.cmd.sh.run_ok(
+def _install_ltp(env: TestEnv, config: LtpConfig) -> None:
+    env.cmd.sh.run_ok("make autotools", config.srcdir)
+    env.cmd.sh.run_ok(
         f"./configure --disable-metadata --prefix={config.prefix}",
         config.srcdir,
     )
-    tc.cmd.sh.run_ok("make", config.srcdir)
-    tc.cmd.sh.run_ok("make install", config.srcdir)
+    env.cmd.sh.run_ok("make", config.srcdir)
+    env.cmd.sh.run_ok("make install", config.srcdir)
 
 
-def _runltp_base_tests(tc: ctx.TestCtx, config: LtpConfig) -> None:
-    _runltp_tests_by(tc, config, copy.copy(_LTP_TESTS))
+def _runltp_base_tests(env: TestEnv, config: LtpConfig) -> None:
+    _runltp_tests_by(env, config, copy.copy(_LTP_TESTS))
 
 
-def _runltp_more_tests(tc: ctx.TestCtx, config: LtpConfig) -> None:
-    _runltp_tests_by(tc, config, copy.copy(_LTP_TESTS_MORE))
+def _runltp_more_tests(env: TestEnv, config: LtpConfig) -> None:
+    _runltp_tests_by(env, config, copy.copy(_LTP_TESTS_MORE))
 
 
 def _runltp_tests_by(
-    tc: ctx.TestCtx, config: LtpConfig, tests: list[str]
+    env: TestEnv, config: LtpConfig, tests: list[str]
 ) -> None:
     for test in tests:
         test_path = config.testcases_bin() / test
         if test_path.is_file():
-            tc.cmd.sh.run_ok(str(test_path), config.base, config.mkenv())
+            env.cmd.sh.run_ok(str(test_path), config.base, config.mkenv())
 
 
-def _runltp_fsstress(tc: ctx.TestCtx, config: LtpConfig) -> None:
+def _runltp_fsstress(env: TestEnv, config: LtpConfig) -> None:
     args = LtpFsstressArgs()
     args.count = 1000
     args.procs = 10
@@ -147,16 +146,16 @@ def _runltp_fsstress(tc: ctx.TestCtx, config: LtpConfig) -> None:
     args.truncate = 10
     args.unlink = 10
     args.write = 1000
-    _runltp_fsstress_with(tc, config, args)
+    _runltp_fsstress_with(env, config, args)
 
 
 def _runltp_fsstress_with(
-    tc: ctx.TestCtx, config: LtpConfig, args: LtpFsstressArgs
+    env: TestEnv, config: LtpConfig, args: LtpFsstressArgs
 ) -> None:
     fsstress_path = config.testcases_bin() / "fsstress"
     if fsstress_path.is_file():
         cmd = args.make_cmd(fsstress_path, config.tmpdir)
-        tc.cmd.sh.run_ok(cmd, config.base, config.mkenv())
+        env.cmd.sh.run_ok(cmd, config.base, config.mkenv())
 
 
 _LTP_TESTS = [

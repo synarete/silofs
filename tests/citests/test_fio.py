@@ -3,9 +3,9 @@
 import pathlib
 
 from . import cmd
-from . import ctx
 from . import log
 from . import utils
+from .ctx import TestEnv
 
 
 # pylint: disable=R0902,R0903
@@ -91,30 +91,30 @@ class FioExec(cmd.CmdExec):
         return fio_out
 
 
-def test_fio_simple(tc: ctx.TestCtx) -> None:
-    name = utils.selfname()
-    tc.exec_setup_fs(8)
-    base = tc.create_fstree(name)
+def test_fio_simple(env: TestEnv) -> None:
+    name = env.uniq_name()
+    env.exec_setup_fs(8)
+    base = env.create_fstree(name)
     fio_exe = FioExec(base)
     fio_in = FioInput(fio_exe.base)
     _print_fio_in(fio_in)
     fio_out = fio_exe.execute_with(fio_in)
     _print_fio_out(fio_out)
-    tc.remove_fstree(name)
-    tc.exec_teardown_fs()
+    env.remove_fstree(name)
+    env.exec_teardown_fs()
 
 
-def test_fio_njobs(tc: ctx.TestCtx) -> None:
-    name = utils.selfname()
-    tc.exec_setup_fs(64)
-    base = tc.create_fstree(name)
+def test_fio_njobs(env: TestEnv) -> None:
+    name = env.uniq_name()
+    env.exec_setup_fs(64)
+    base = env.create_fstree(name)
     fio_exe = FioExec(base)
     fio_in = FioInput(fio_exe.base, njobs=8, rwmix=50)
     _print_fio_in(fio_in)
     fio_out = fio_exe.execute_with(fio_in)
     _print_fio_out(fio_out)
-    tc.remove_fstree(name)
-    tc.exec_teardown_fs()
+    env.remove_fstree(name)
+    env.exec_teardown_fs()
 
 
 def _print_fio_in(fio_in: FioInput) -> None:

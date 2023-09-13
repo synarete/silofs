@@ -94,16 +94,27 @@ class TestDataSet:
         return list(ret)
 
 
-class TestBaseCtx:
+# pylint: disable=R0904
+class TestEnv:
     def __init__(self, name: str, cfg: TestConfig) -> None:
         self.name = name
+        self.uniq = 0
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
+        self.cmd = cmd.Cmds()
 
     @staticmethod
     def suspend(nsec: int) -> None:
         time.sleep(nsec)
+
+    @staticmethod
+    def make_rands(n: int) -> bytes:
+        return utils.prandbytes(n)
+
+    def uniq_name(self) -> str:
+        self.uniq = self.uniq + 1
+        return f"{self.name}_{self.uniq}"
 
     def make_basepath(self) -> pathlib.Path:
         return self.make_path(self.name)
@@ -157,12 +168,6 @@ class TestBaseCtx:
 
     def _passwd(self) -> str:
         return self.cfg.password
-
-
-class TestCtx(TestBaseCtx):
-    def __init__(self, name: str, cfg: TestConfig) -> None:
-        TestBaseCtx.__init__(self, name, cfg)
-        self.cmd = cmd.Cmds()
 
     def exec_init(self) -> None:
         self.cmd.silofs.init(self.cfg.repodir)
@@ -238,7 +243,7 @@ class TestCtx(TestBaseCtx):
 
 
 class TestDef:
-    def __init__(self, hook: typing.Callable[[TestCtx], None]) -> None:
+    def __init__(self, hook: typing.Callable[[TestEnv], None]) -> None:
         mod = "." + hook.__module__
         base = mod.split(".")[-1]
         self.hook = hook

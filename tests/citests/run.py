@@ -64,29 +64,29 @@ def _post_run_tests() -> None:
     _report_done()
 
 
-def _pre_test(tc: ctx.TestCtx) -> None:
-    tc.expect.empty_dir(tc.cfg.basedir)
-    tc.expect.empty_dir(tc.cfg.mntdir)
+def _pre_test(env: ctx.TestEnv) -> None:
+    env.expect.empty_dir(env.cfg.basedir)
+    env.expect.empty_dir(env.cfg.mntdir)
 
 
-def _post_test(tc: ctx.TestCtx) -> None:
-    utils.empty_dir(tc.cfg.mntdir)
-    utils.empty_dir(tc.cfg.basedir)
+def _post_test(env: ctx.TestEnv) -> None:
+    utils.empty_dir(env.cfg.mntdir)
+    utils.empty_dir(env.cfg.basedir)
 
 
-def _exec_test(td: ctx.TestDef, tc: ctx.TestCtx) -> None:
+def _exec_test(td: ctx.TestDef, env: ctx.TestEnv) -> None:
     _print(f"TEST: {td.name}")
-    td.hook(tc)
+    td.hook(env)
 
 
 def _do_run_tests(cfg: ctx.TestConfig) -> None:
     _validate_config(cfg)
     _pre_run_tests()
     for td in test_all.get_tests_defs():
-        tc = ctx.TestCtx(td.name, cfg)
-        _pre_test(tc)
-        _exec_test(td, tc)
-        _post_test(tc)
+        env = ctx.TestEnv(td.name, cfg)
+        _pre_test(env)
+        _exec_test(td, env)
+        _post_test(env)
     _post_run_tests()
 
 

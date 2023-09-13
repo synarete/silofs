@@ -2,7 +2,7 @@
 import errno
 import pathlib
 
-from . import ctx
+from .ctx import TestEnv
 
 
 def _expect_enospc(ex: OSError) -> None:
@@ -15,8 +15,8 @@ def _unlink_all(pathnames: list[pathlib.Path]) -> None:
         path.unlink()
 
 
-def test_fill_data(tc: ctx.TestCtx) -> None:
-    tc.exec_setup_fs(2)
+def test_fill_data(env: TestEnv) -> None:
+    env.exec_setup_fs(2)
     enospc = 0
     for prefix in _subdirs_list(8, 1):
         pathnames = []
@@ -24,7 +24,7 @@ def test_fill_data(tc: ctx.TestCtx) -> None:
         while counter < 2**20 and enospc < 2:
             counter += 1
             name = f"{prefix}{counter}"
-            tds = tc.make_tds(2**8, name, 2**22)
+            tds = env.make_tds(2**8, name, 2**22)
             try:
                 tds.do_makedirs()
                 tds.do_write()
@@ -34,11 +34,11 @@ def test_fill_data(tc: ctx.TestCtx) -> None:
                 _expect_enospc(ex)
                 enospc += 1
         _unlink_all(pathnames)
-    tc.exec_teardown_fs()
+    env.exec_teardown_fs()
 
 
-def test_fill_meta(tc: ctx.TestCtx) -> None:
-    tc.exec_setup_fs(2)
+def test_fill_meta(env: TestEnv) -> None:
+    env.exec_setup_fs(2)
     enospc = 0
     for prefix in _subdirs_list(16, 64):
         pathnames = []
@@ -46,7 +46,7 @@ def test_fill_meta(tc: ctx.TestCtx) -> None:
         while counter < 2**20 and enospc < 2:
             counter += 1
             name = f"{prefix}{counter}"
-            tds = tc.make_tds(2**8, name, 2**22)
+            tds = env.make_tds(2**8, name, 2**22)
             try:
                 tds.do_makedirs()
                 tds.do_write()
@@ -56,7 +56,7 @@ def test_fill_meta(tc: ctx.TestCtx) -> None:
                 _expect_enospc(ex)
                 enospc += 1
         _unlink_all(pathnames)
-    tc.exec_teardown_fs()
+    env.exec_teardown_fs()
 
 
 def _subdirs_list(level1: int, level2: int) -> list[str]:

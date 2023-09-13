@@ -76,11 +76,12 @@ struct silofs_mntclnt {
 
 
 struct silofs_mntsvc {
-	struct silofs_mntsrv   *ms_srv;
-	struct silofs_socket    ms_asock;
 	struct silofs_sockaddr  ms_peer;
 	struct ucred            ms_peer_ucred;
-	int ms_fuse_fd;
+	char                    ms_peer_ids[52];
+	struct silofs_mntsrv   *ms_srv;
+	struct silofs_socket    ms_asock;
+	int                     ms_fuse_fd;
 };
 
 struct silofs_mntsrv {
@@ -690,6 +691,7 @@ static void mntsvc_reset_peer_ucred(struct silofs_mntsvc *msvc)
 	msvc->ms_peer_ucred.pid = (pid_t)(-1);
 	msvc->ms_peer_ucred.uid = (uid_t)(-1);
 	msvc->ms_peer_ucred.gid = (gid_t)(-1);
+	memset(msvc->ms_peer_ids, 0, sizeof(msvc->ms_peer_ids));
 }
 
 static void mntsvc_init(struct silofs_mntsvc *msvc)
@@ -720,34 +722,38 @@ static void mntsvc_fini(struct silofs_mntsvc *msvc)
 	msvc->ms_srv = NULL;
 }
 
+static void mntsvc_format_peer_ids(struct silofs_mntsvc *msvc)
+{
+	const struct ucred *cred = &msvc->ms_peer_ucred;
+	const size_t bsz = sizeof(msvc->ms_peer_ids);
+	char *buf = msvc->ms_peer_ids;
+
+	snprintf(buf, bsz - 1, "[pid=%d,uid=%d,gid=%d]",
+	         cred->pid, cred->uid, cred->gid);
+}
+
 static int mntsvc_accept_from(struct silofs_mntsvc *msvc,
                               const struct silofs_socket *sock)
 {
-	struct ucred *cred = &msvc->ms_peer_ucred;
 	int err;
 
 	err = silofs_socket_accept(sock, &msvc->ms_asock, &msvc->ms_peer);
 	if (err) {
 		return err;
 	}
-	err = silofs_socket_getpeercred(&msvc->ms_asock, cred);
+	err = silofs_socket_getpeercred(&msvc->ms_asock, &msvc->ms_peer_ucred);
 	if (err) {
 		silofs_socket_fini(&msvc->ms_asock);
 		return err;
 	}
-
-	log_info("new-connection: pid=%d uid=%d gid=%d",
-	         cred->pid, cred->uid, cred->gid);
+	mntsvc_format_peer_ids(msvc);
+	log_info("new-connection: peer=%s", msvc->ms_peer_ids);
 	return 0;
 }
 
 static void mntsvc_term_peer(struct silofs_mntsvc *msvc)
 {
-	const struct ucred *cred = &msvc->ms_peer_ucred;
-
-	log_info("end-connection: pid=%d uid=%d gid=%d",
-	         cred->pid, cred->uid, cred->gid);
-
+	log_info("end-connection: peer=%s", msvc->ms_peer_ids);
 	silofs_socket_shutdown_rdwr(&msvc->ms_asock);
 	silofs_socket_fini(&msvc->ms_asock);
 	silofs_streamsock_initu(&msvc->ms_asock);
@@ -784,12 +790,14 @@ mntsvc_check_mount_mntrule(const struct silofs_mntsvc *msvc,
 
 	mrules = msvc->ms_srv->ms_rules;
 	if (mrules == NULL) {
-		log_info("no rules for: '%s'", mntp->path);
+		log_info("no rules for: '%s' peer=%s",
+		         mntp->path, msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
 	}
 	err = silofs_sys_stat(mntp->path, &st);
 	if (err) {
-		log_info("no stat for: '%s'", mntp->path);
+		log_info("no stat for: '%s' peer=%s",
+		         mntp->path, msvc->ms_peer_ids);
 		return err;
 	}
 	for (size_t i = 0; i < mrules->nrules; ++i) {
@@ -800,12 +808,13 @@ mntsvc_check_mount_mntrule(const struct silofs_mntsvc *msvc,
 		mrule = NULL;
 	}
 	if (mrule == NULL) {
-		log_info("no valid mount-rule for: '%s'", mntp->path);
+		log_info("no valid mount-rule for: '%s' peer=%s",
+		         mntp->path, msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
 	}
 	if ((mrule->uid != uid_none) && (mrule->uid != uid_peer)) {
-		log_info("not allowed to mount: uid=%ld '%s'",
-		         (long)uid_peer, mntp->path);
+		log_info("not allowed to mount: uid=%ld '%s' peer=%s",
+		         (long)uid_peer, mntp->path, msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
 	}
 	/*
@@ -899,9 +908,10 @@ static int mntsvc_do_mount(struct silofs_mntsvc *msvc,
 
 	err = do_fuse_mount(mntp, &msvc->ms_fuse_fd);
 	log_info("mount: '%s' flags=0x%lx uid=%d gid=%d rootmode=0%o "
-	         "max_read=%u fuse_fd=%d err=%d", mntp->path, mntp->flags,
-	         mntp->user_id, mntp->group_id, mntp->root_mode,
-	         mntp->max_read, msvc->ms_fuse_fd, err);
+	         "max_read=%u fuse_fd=%d peer=%s err=%d",
+	         mntp->path, mntp->flags, mntp->user_id, mntp->group_id,
+	         mntp->root_mode, mntp->max_read, msvc->ms_fuse_fd,
+	         msvc->ms_peer_ids, err);
 
 	return err;
 }
@@ -961,8 +971,8 @@ static int mntsvc_do_umount(struct silofs_mntsvc *msvc,
 	int err;
 
 	err = do_fuse_umount(mntp);
-	log_info("umount: '%s' flags=0x%lx err=%d",
-	         mntp->path, mntp->flags, err);
+	log_info("umount: '%s' flags=0x%lx peer=%s err=%d",
+	         mntp->path, mntp->flags, msvc->ms_peer_ids, err);
 
 	unused(msvc);
 	return err;
@@ -1036,12 +1046,17 @@ static void mntsvc_fill_response(const struct silofs_mntsvc *msvc,
 static void mntsvc_send_response(struct silofs_mntsvc *msvc,
                                  const struct silofs_mntmsg *mmsg)
 {
+	const int cmd = (int)mmsg->mn_cmd;
+	const int status = (int)mmsg->mn_status;
 	int err;
 
+	log_info("send response: cmd=%d status=%d peer=%s",
+	         cmd, status, msvc->ms_peer_ids);
 	err = mntmsg_send(mmsg, &msvc->ms_asock, msvc->ms_fuse_fd);
 	if (err) {
-		log_err("failed to send response: cmd=%d err=%d",
-		        (int)mmsg->mn_cmd, err);
+		log_err("failed to send response: " \
+		        "cmd=%d status=%d peer=%s err=%d",
+		        cmd, status, msvc->ms_peer_ids, err);
 	}
 }
 

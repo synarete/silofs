@@ -366,7 +366,7 @@ int silofs_sys_opendirat(int dfd, const char *pathname, int *out_fd);
 
 int silofs_sys_closefd(int *pfd);
 
-int silofs_sys_munmapp(void **paddr, size_t length);
+int silofs_sys_munmapp(void **p_addr, size_t length);
 
 int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off);
 

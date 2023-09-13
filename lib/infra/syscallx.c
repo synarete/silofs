@@ -246,14 +246,14 @@ int silofs_sys_closefd(int *pfd)
 	return err;
 }
 
-int silofs_sys_munmapp(void **paddr, size_t length)
+int silofs_sys_munmapp(void **p_addr, size_t length)
 {
 	int err = 0;
 
-	if ((*paddr != NULL) && (length > 0)) {
-		err = silofs_sys_munmap(*paddr, length);
+	if ((*p_addr != NULL) && (length > 0)) {
+		err = silofs_sys_munmap(*p_addr, length);
 		if (!err) {
-			*paddr = NULL;
+			*p_addr = NULL;
 		}
 	}
 	return err;

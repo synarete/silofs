@@ -132,6 +132,8 @@ jobs:
           sudo ./dist/deb/install-deb-deps.sh
           sudo ./dist/deb/install-deb-extras.sh
       - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
       - name: Run python checkers
         run: ./tests/citests/pycheck.sh
   build-rpm-package:

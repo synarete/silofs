@@ -600,48 +600,72 @@ static struct silofs_inode_file *infl_of(const struct silofs_inode *inode)
 	return unconst(infl);
 }
 
-static void infl_head1_leaf(const struct silofs_inode_file *infl, size_t slot,
-                            struct silofs_vaddr *vaddr)
+static size_t
+infl_head1_slot_to_abs(const struct silofs_inode_file *infl, size_t head1_slot)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(infl->f_head1_leaf));
+	STATICASSERT_GT(ARRAY_SIZE(infl->f_slots),
+	                1 + SILOFS_FILE_HEAD2_NLEAF + SILOFS_FILE_HEAD1_NLEAF);
+	silofs_assert_lt(head1_slot, SILOFS_FILE_HEAD1_NLEAF);
 
-	silofs_vaddr64_parse(&infl->f_head1_leaf[slot], vaddr);
+	return 1 + SILOFS_FILE_HEAD2_NLEAF + head1_slot;
 }
 
-static void infl_set_head1_leaf(struct silofs_inode_file *infl, size_t slot,
-                                const struct silofs_vaddr *vaddr)
+static size_t
+infl_head2_slot_to_abs(const struct silofs_inode_file *infl, size_t head2_slot)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(infl->f_head1_leaf));
+	STATICASSERT_GT(ARRAY_SIZE(infl->f_slots),
+	                1 + SILOFS_FILE_HEAD2_NLEAF + SILOFS_FILE_HEAD1_NLEAF);
+	silofs_assert_lt(head2_slot, SILOFS_FILE_HEAD2_NLEAF);
 
-	silofs_vaddr64_set(&infl->f_head1_leaf[slot], vaddr);
+	return 1 + head2_slot;
 }
 
-static void infl_head2_leaf(const struct silofs_inode_file *infl, size_t slot,
-                            struct silofs_vaddr *vaddr)
+static void
+infl_head1_leaf(const struct silofs_inode_file *infl,
+                size_t head1_slot, struct silofs_vaddr *out_vaddr)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(infl->f_head2_leaf));
+	const size_t slot = infl_head1_slot_to_abs(infl, head1_slot);
 
-	silofs_vaddr64_parse(&infl->f_head2_leaf[slot], vaddr);
+	silofs_vaddr64_parse(&infl->f_slots[slot], out_vaddr);
 }
 
-static void infl_set_head2_leaf(struct silofs_inode_file *infl, size_t slot,
-                                const struct silofs_vaddr *vaddr)
+static void
+infl_set_head1_leaf(struct silofs_inode_file *infl,
+                    size_t head1_slot, const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(infl->f_head2_leaf));
+	const size_t slot = infl_head1_slot_to_abs(infl, head1_slot);
 
-	silofs_vaddr64_set(&infl->f_head2_leaf[slot], vaddr);
+	silofs_vaddr64_set(&infl->f_slots[slot], vaddr);
+}
+
+static void
+infl_head2_leaf(const struct silofs_inode_file *infl,
+                size_t head2_slot, struct silofs_vaddr *out_vaddr)
+{
+	const size_t slot = infl_head2_slot_to_abs(infl, head2_slot);
+
+	silofs_vaddr64_parse(&infl->f_slots[slot], out_vaddr);
+}
+
+static void
+infl_set_head2_leaf(struct silofs_inode_file *infl,
+                    size_t head2_slot, const struct silofs_vaddr *vaddr)
+{
+	const size_t slot = infl_head2_slot_to_abs(infl, head2_slot);
+
+	silofs_vaddr64_set(&infl->f_slots[slot], vaddr);
 }
 
 static void infl_tree_root(const struct silofs_inode_file *infl,
-                           struct silofs_vaddr *vaddr)
+                           struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr64_parse(&infl->f_tree_root, vaddr);
+	silofs_vaddr64_parse(&infl->f_slots[0], out_vaddr);
 }
 
 static void infl_set_tree_root(struct silofs_inode_file *infl,
                                const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr64_set(&infl->f_tree_root, vaddr);
+	silofs_vaddr64_set(&infl->f_slots[0], vaddr);
 }
 
 static void infl_setup(struct silofs_inode_file *infl)

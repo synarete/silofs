@@ -772,10 +772,8 @@ struct silofs_inode_lnk {
 
 
 struct silofs_inode_file {
-	struct silofs_vaddr64           f_head1_leaf[SILOFS_FILE_HEAD1_NLEAF];
-	struct silofs_vaddr64           f_head2_leaf[SILOFS_FILE_HEAD2_NLEAF];
-	struct silofs_vaddr64           f_tree_root;
-	uint8_t                         f_reserved[352];
+	struct silofs_vaddr64           f_slots[32];
+	uint8_t                         f_reserved[256];
 } silofs_packed_aligned8;
 
 

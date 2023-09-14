@@ -279,4 +279,15 @@ void fte_exec(struct ft_env *fte)
 	}
 }
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void ft_exec_with_ranges_(struct ft_env *fte,
+                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          const struct ft_range *range, size_t na)
+{
+	for (size_t i = 0; i < na; ++i) {
+		fn(fte, range[i].off, range[i].len);
+		ft_relax_mem(fte);
+	}
+}
 

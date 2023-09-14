@@ -51,10 +51,11 @@ static void test_fallocate_basic(struct ft_env *fte)
 /*
  * Expects fallocate(2) to successfully allocate space for file's sub-ranges.
  */
-static void test_fallocate_(struct ft_env *fte, loff_t off, ssize_t len)
+static void test_fallocate_(struct ft_env *fte, loff_t off, size_t ulen)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
+	ssize_t len = (ssize_t)ulen;
 	int fd = -1;
 
 	ft_creat(path, 0600, &fd);
@@ -72,7 +73,7 @@ static void test_fallocate_(struct ft_env *fte, loff_t off, ssize_t len)
 
 static void test_fallocate_aligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
 		FT_MKRANGE(FT_1M, FT_64K),
@@ -80,15 +81,12 @@ static void test_fallocate_aligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1T, FT_1M),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_(fte, range[i].off, (int)(range[i].len));
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_, ranges);
 }
 
 static void test_fallocate_unaligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, 1),
 		FT_MKRANGE(0, FT_64K - 1),
 		FT_MKRANGE(0, FT_1M - 1),
@@ -101,20 +99,18 @@ static void test_fallocate_unaligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_1M + 111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_(fte, range[i].off, (int)(range[i].len));
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects fallocate(2) to report allocated space as zero
  */
-static void test_fallocate_zeros_(struct ft_env *fte, loff_t off, ssize_t len)
+static void test_fallocate_zeros_(struct ft_env *fte, loff_t off, size_t ulen)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
+	const ssize_t len = (ssize_t)ulen;
 	int fd = -1;
 	uint8_t byte = 1;
 	uint8_t zero = 0;
@@ -140,7 +136,7 @@ static void test_fallocate_zeros_(struct ft_env *fte, loff_t off, ssize_t len)
 
 static void test_fallocate_zeros(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_64K / 2),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
@@ -153,10 +149,7 @@ static void test_fallocate_zeros(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_1M + 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_zeros_(fte, range[i].off, (int)(range[i].len));
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_zeros_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -164,9 +157,10 @@ static void test_fallocate_zeros(struct ft_env *fte)
  * Expects fallocate(2) and ftruncate(2) to be synchronized.
  */
 static void
-test_fallocate_truncate_(struct ft_env *fte, loff_t off, ssize_t len)
+test_fallocate_truncate_(struct ft_env *fte, loff_t off, size_t ulen)
 {
 	const char *path = ft_new_path_unique(fte);
+	const ssize_t len = (ssize_t)ulen;
 	const loff_t mid = off + (len / 2);
 	const loff_t end = off + len;
 	int fd = -1;
@@ -201,7 +195,7 @@ test_fallocate_truncate_(struct ft_env *fte, loff_t off, ssize_t len)
 
 static void test_fallocate_truncate(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_64K / 4),
 		FT_MKRANGE(3, FT_64K / 3),
 		FT_MKRANGE(FT_64K / 2, FT_64K),
@@ -215,11 +209,7 @@ static void test_fallocate_truncate(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 1111, FT_1M + 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_truncate_(fte, range[i].off,
-		                         (int)(range[i].len));
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_truncate_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -282,22 +272,19 @@ static void test_fallocate_beyond_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_fallocate_beyond(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_4K),
-		FT_MKRANGE(0, FT_BK_SIZE),
-		FT_MKRANGE(FT_1M, FT_BK_SIZE),
-		FT_MKRANGE(FT_1G, 2 * FT_BK_SIZE),
+		FT_MKRANGE(0, FT_64K),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1G, 2 * FT_64K),
 		FT_MKRANGE(FT_1T, FT_1M),
-		FT_MKRANGE(FT_1M - 11, (11 * FT_BK_SIZE) + 111),
+		FT_MKRANGE(FT_1M - 11, (11 * FT_64K) + 111),
 		FT_MKRANGE(FT_1G - 111, FT_1M + 1111),
 		FT_MKRANGE(FT_1T - 1111, FT_1M + 11111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_beyond_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_beyond_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -522,7 +509,7 @@ static void test_fallocate_zero_range(struct ft_env *fte)
 	 *
 	 * TODO: Submit patch to kernel upstream.
 	 */
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_4K),
 		FT_MKRANGE(0, FT_64K),
@@ -534,10 +521,7 @@ static void test_fallocate_zero_range(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 1111, FT_1M + 1),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_zero_range_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_zero_range_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -546,11 +530,11 @@ static void test_fallocate_zero_range(struct ft_env *fte)
  * write-on-fallocated to change none.
  */
 static void test_fallocate_sparse_(struct ft_env *fte,
-                                   loff_t base_off, loff_t step_size)
+                                   loff_t base_off, size_t step_size)
 {
 	struct stat st;
 	const char *path = ft_new_path_unique(fte);
-	const long cnt = 1024;
+	const size_t cnt = 1024;
 	blkcnt_t blocks = 0;
 	loff_t off = -1;
 	loff_t len = 0;
@@ -564,8 +548,8 @@ static void test_fallocate_sparse_(struct ft_env *fte,
 
 	blocks = 0;
 	off = base_off;
-	for (long i = 0; i < cnt; ++i) {
-		off = base_off + (i * step_size);
+	for (size_t i = 0; i < cnt; ++i) {
+		off = base_off + (ssize_t)(i * step_size);
 		len = (int)sizeof(off);
 		ft_fallocate(fd, 0, off, len);
 		ft_fstat(fd, &st);
@@ -588,7 +572,7 @@ static void test_fallocate_sparse_(struct ft_env *fte,
 
 static void test_fallocate_sparse(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1M),
 		FT_MKRANGE(1, FT_1M),
 		FT_MKRANGE(FT_1M, FT_1G),
@@ -598,10 +582,7 @@ static void test_fallocate_sparse(struct ft_env *fte)
 		FT_MKRANGE((FT_FILESIZE_MAX / 2) - 7,  FT_1G + 77),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_fallocate_sparse_(fte, range[i].off, (long)range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_fallocate_sparse_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

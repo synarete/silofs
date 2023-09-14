@@ -20,39 +20,44 @@
 /*
  * Expects read-write data-consistency when file is opened with O_SYNC.
  */
-static void test_osync_simple_(struct ft_env *fte, size_t bsz, loff_t off)
+static void test_osync_simple_(struct ft_env *fte, loff_t off, size_t len)
 {
-	void *buf0 = ft_new_buf_zeros(fte, bsz);
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
+	void *buf0 = ft_new_buf_zeros(fte, len);
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	int fd1, fd2;
+	int fd1 = -1;
+	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd1);
-	ft_pwriten(fd1, buf1, bsz, off);
+	ft_pwriten(fd1, buf1, len, off);
 	ft_close(fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);
-	ft_preadn(fd2, buf0, bsz, off);
-	ft_expect_eqm(buf1, buf0, bsz);
+	ft_preadn(fd2, buf0, len, off);
+	ft_expect_eqm(buf1, buf0, len);
 	ft_open(path, O_RDWR | O_SYNC, 0, &fd1);
-	ft_pwriten(fd1, buf2, bsz, off);
-	ft_preadn(fd2, buf0, bsz, off);
-	ft_expect_eqm(buf2, buf0, bsz);
+	ft_pwriten(fd1, buf2, len, off);
+	ft_preadn(fd2, buf0, len, off);
+	ft_expect_eqm(buf2, buf0, len);
 	ft_unlink(path);
-	ft_pwriten(fd1, buf1, bsz, off);
-	ft_preadn(fd2, buf0, bsz, off);
-	ft_expect_eqm(buf1, buf0, bsz);
+	ft_pwriten(fd1, buf1, len, off);
+	ft_preadn(fd2, buf0, len, off);
+	ft_expect_eqm(buf1, buf0, len);
 	ft_close(fd1);
 	ft_close(fd2);
 }
 
 static void test_osync_simple(struct ft_env *fte)
 {
-	test_osync_simple_(fte, FT_BK_SIZE, 0);
-	test_osync_simple_(fte, FT_BK_SIZE + 1, FT_1K);
-	test_osync_simple_(fte, FT_1M, FT_1K + 1);
-	test_osync_simple_(fte, 2 * FT_1M - 1, FT_1G);
-	test_osync_simple_(fte, 3 * FT_1M - 3, FT_1T);
+	const struct ft_range ranges[] = {
+		FT_MKRANGE(0, FT_BK_SIZE),
+		FT_MKRANGE(FT_1K, FT_64K + 1),
+		FT_MKRANGE(FT_1K + 1, FT_1M),
+		FT_MKRANGE(FT_1G, 2 * FT_1M - 1),
+		FT_MKRANGE(FT_1T, 3 * FT_1M - 3),
+	};
+
+	ft_exec_with_ranges(fte, test_osync_simple_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

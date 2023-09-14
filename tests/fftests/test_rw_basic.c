@@ -137,7 +137,7 @@ static void test_basic_rdwr_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_basic_rdwr(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		/* aligned */
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(FT_1K, FT_1K),
@@ -157,10 +157,7 @@ static void test_basic_rdwr(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, 11 * FT_1M - 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_basic_rdwr_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_basic_rdwr_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -215,7 +212,7 @@ test_basic_reserve_overwrite_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_basic_reserve_overwrite(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		/* aligned */
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(FT_4K, FT_4K),
@@ -232,10 +229,7 @@ static void test_basic_reserve_overwrite(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_4K + 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_basic_reserve_overwrite_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_basic_reserve_overwrite_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -351,32 +345,26 @@ static void test_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_basic_chunk_aligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1M),
 		FT_MKRANGE(FT_1M, 2 * FT_1M),
 		FT_MKRANGE(FT_1G, 4 * FT_1M),
 		FT_MKRANGE(FT_1T, 8 * FT_1M),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_basic_chunk_(fte, range[i].off,  range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_basic_chunk_, ranges);
 }
 
 static void test_basic_chunk_unaligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(1, FT_1M),
 		FT_MKRANGE(FT_1M - 1, 2 * FT_1M + 2),
 		FT_MKRANGE(FT_1G - 1, 4 * FT_1M + 4),
 		FT_MKRANGE(FT_1T - 1, 8 * FT_1M + 8),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_basic_chunk_(fte, range[i].off,  range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_basic_chunk_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -412,7 +400,7 @@ test_basic_backword_byte_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_basic_backword_byte(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, 11),
 		FT_MKRANGE(0, 111),
 		FT_MKRANGE(0, 1111),
@@ -425,10 +413,7 @@ static void test_basic_backword_byte(struct ft_env *fte)
 		FT_MKRANGE(FT_1T + 11, 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_basic_backword_byte_(fte, range[i].off,  range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_basic_backword_byte_, ranges);
 }
 
 static void test_basic_backword_ulong_(struct ft_env *fte, size_t cnt)

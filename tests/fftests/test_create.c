@@ -97,7 +97,7 @@ static void test_create_pwrite_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_create_pwrite(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1M),
 		FT_MKRANGE(11, FT_64K),
 		FT_MKRANGE(FT_1M, FT_64K),
@@ -105,10 +105,7 @@ static void test_create_pwrite(struct ft_env *fte)
 		FT_MKRANGE(FT_1T, FT_1K),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_create_pwrite_(fte, range[i].off,  range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_create_pwrite_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -85,7 +85,7 @@ static void test_write_unlinked_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_write_unlinked(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		/* aligned */
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_4K),
@@ -123,10 +123,7 @@ static void test_write_unlinked(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_1M - 111111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_write_unlinked_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_write_unlinked_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -235,7 +232,7 @@ static void test_write_mctimes_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_write_mctimes(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		/* aligned */
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_8K),
@@ -254,10 +251,7 @@ static void test_write_mctimes(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_1M - 111111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_write_mctimes_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_write_mctimes_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -299,7 +293,7 @@ static void test_write_read_suid_(struct ft_env *fte,
 
 static void test_write_read_suid(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
@@ -310,10 +304,7 @@ static void test_write_read_suid(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 1, FT_1M + 3),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_write_read_suid_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_write_read_suid_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -356,7 +347,7 @@ static void test_write_read_sgid_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_write_read_sgid(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
@@ -366,10 +357,7 @@ static void test_write_read_sgid(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 1, FT_1M + 3),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_write_read_sgid_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_write_read_sgid_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

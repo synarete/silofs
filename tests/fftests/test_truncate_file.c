@@ -130,7 +130,7 @@ static void test_truncate_extend_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_truncate_extend(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(1, FT_64K),
 		FT_MKRANGE(FT_64K - 11, 11 * FT_64K),
@@ -141,10 +141,7 @@ static void test_truncate_extend(struct ft_env *fte)
 		FT_MKRANGE((11 * FT_1G) - 111, FT_1M + 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_truncate_extend_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_truncate_extend_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -176,7 +173,7 @@ static void test_truncate_zeros_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_truncate_zeros(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, 2),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(1, FT_64K),
@@ -187,10 +184,7 @@ static void test_truncate_zeros(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_1G + 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_truncate_zeros_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_truncate_zeros_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

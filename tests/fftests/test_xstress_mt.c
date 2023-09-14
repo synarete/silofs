@@ -214,7 +214,7 @@ static void test_xstress_rw_trunc_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_xstress_rw_trunc(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		/* aligned */
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
@@ -226,10 +226,7 @@ static void test_xstress_rw_trunc(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_1M + 1111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_xstress_rw_trunc_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_xstress_rw_trunc_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -239,7 +239,7 @@ static void test_futimens_ctime(struct ft_env *fte)
  */
 static void test_utimensat_io_(struct ft_env *fte, loff_t off, size_t len)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	struct timespec ts[2];
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
@@ -290,7 +290,7 @@ static void test_utimensat_io_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_utimensat_io(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(FT_1M, FT_64K),
@@ -302,10 +302,7 @@ static void test_utimensat_io(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 1111, 111111),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_utimensat_io_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_utimensat_io_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

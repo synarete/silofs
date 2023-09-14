@@ -54,6 +54,7 @@
 #define FT_FILEMAP_NCHILD       SILOFS_FILE_NODE_NCHILDS
 #define FT_FILESIZE_MAX         SILOFS_FILE_SIZE_MAX
 #define FT_IOSIZE_MAX           SILOFS_IO_SIZE_MAX
+
 #define FT_STR(x_)              SILOFS_STR(x_)
 #define FT_ARRAY_SIZE(x_)       SILOFS_ARRAY_SIZE(x_)
 
@@ -456,6 +457,15 @@ void ft_preadn(int fd, void *buf, size_t cnt, loff_t offset);
 void ft_writen(int fd, const void *buf, size_t cnt);
 
 void ft_pwriten(int fd, const void *buf, size_t cnt, loff_t offset);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/* Test and relax ranges */
+#define ft_exec_with_ranges(fte_, fn_, args_) \
+	ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+
+void ft_exec_with_ranges_(struct ft_env *fte,
+                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          const struct ft_range *range, size_t na);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

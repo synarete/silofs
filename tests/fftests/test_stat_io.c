@@ -34,21 +34,6 @@ static void ft_calc_stat_blkcnt(loff_t off, size_t nbytes,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-#define ft_test_stat(fte_, fn_, args_) \
-	ft_test_stat_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
-
-static void ft_test_stat_(struct ft_env *fte,
-                          void (*fn)(struct ft_env *, loff_t, size_t),
-                          const struct ft_range *range, size_t na)
-{
-	for (size_t i = 0; i < na; ++i) {
-		fn(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects write to modify file's stat's size & blocks attributes properly.
  * Performs sequential write, followed by over-write on same region.
@@ -89,7 +74,7 @@ static void test_stat_write_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_stat_write_aligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, 1),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
@@ -104,12 +89,12 @@ static void test_stat_write_aligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1G + FT_64K, FT_64K),
 	};
 
-	ft_test_stat(fte, test_stat_write_, range);
+	ft_exec_with_ranges(fte, test_stat_write_, ranges);
 }
 
 static void test_stat_write_unaligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(1, 2),
 		FT_MKRANGE(1, FT_64K - 2),
 		FT_MKRANGE(1, FT_64K + 2),
@@ -124,7 +109,7 @@ static void test_stat_write_unaligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
 	};
 
-	ft_test_stat(fte, test_stat_write_, range);
+	ft_exec_with_ranges(fte, test_stat_write_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -163,7 +148,7 @@ static void test_stat_punch_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_stat_punch_aligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, 1),
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
@@ -178,12 +163,12 @@ static void test_stat_punch_aligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1G + FT_64K, FT_64K),
 	};
 
-	ft_test_stat(fte, test_stat_punch_, range);
+	ft_exec_with_ranges(fte, test_stat_punch_, ranges);
 }
 
 static void test_stat_punch_unaligned(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(1, 2),
 		FT_MKRANGE(1, FT_64K - 2),
 		FT_MKRANGE(1, FT_64K + 2),
@@ -198,7 +183,7 @@ static void test_stat_punch_unaligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
 	};
 
-	ft_test_stat(fte, test_stat_punch_, range);
+	ft_exec_with_ranges(fte, test_stat_punch_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

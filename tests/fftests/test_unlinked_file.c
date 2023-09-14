@@ -102,7 +102,7 @@ static void test_unlinked_complex_(struct ft_env *fte,
 
 static void test_unlinked_complex(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(1, 2),
 		FT_MKRANGE(1, FT_64K - 2),
 		FT_MKRANGE(1, FT_64K + 2),
@@ -120,11 +120,7 @@ static void test_unlinked_complex(struct ft_env *fte)
 		FT_MKRANGE(FT_1T + 1, FT_64K - 1),
 	};
 
-
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_unlinked_complex_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_unlinked_complex_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -161,7 +157,7 @@ static void test_unlinked_multi_(struct ft_env *fte, loff_t off, size_t len)
 
 static void test_unlinked_multi(struct ft_env *fte)
 {
-	const struct ft_range range[] = {
+	const struct ft_range ranges[] = {
 		FT_MKRANGE(1, 2),
 		FT_MKRANGE(1, FT_64K - 2),
 		FT_MKRANGE(FT_1K, FT_64K),
@@ -176,10 +172,7 @@ static void test_unlinked_multi(struct ft_env *fte)
 		FT_MKRANGE(FT_1T + 1, FT_64K - 1),
 	};
 
-	for (size_t i = 0; i < FT_ARRAY_SIZE(range); ++i) {
-		test_unlinked_multi_(fte, range[i].off, range[i].len);
-		ft_relax_mem(fte);
-	}
+	ft_exec_with_ranges(fte, test_unlinked_multi_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

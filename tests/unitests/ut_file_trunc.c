@@ -51,53 +51,44 @@ static void ut_file_trunc_data_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_trunc_simple(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T, UT_BK_SIZE),
+	const struct ut_range ranges[] = {
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(UT_1M, UT_64K),
+		UT_MKRANGE1(UT_1G, UT_64K),
+		UT_MKRANGE1(UT_1T, UT_64K),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_data_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_data_, ranges);
 }
 
 static void ut_file_trunc_aligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1M),
-		UT_MKRANGE1(UT_BK_SIZE, UT_1M),
+		UT_MKRANGE1(UT_64K, UT_1M),
 		UT_MKRANGE1(UT_1M, UT_1M),
 		UT_MKRANGE1(UT_1G, UT_1M),
 		UT_MKRANGE1(UT_1T, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_data_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_data_, ranges);
 }
 
 static void ut_file_trunc_unaligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
-		UT_MKRANGE1(1, UT_BK_SIZE + 2),
-		UT_MKRANGE1(UT_BK_SIZE - 1, 2 * UT_BK_SIZE + 3),
-		UT_MKRANGE1(7 * UT_BK_SIZE - 7, 7 * UT_BK_SIZE + 7),
-		UT_MKRANGE1(11 * UT_1M - 11, 11 * UT_BK_SIZE + 11),
-		UT_MKRANGE1(13 * UT_1G - 13, 13 * UT_BK_SIZE + 13),
-		UT_MKRANGE1(UT_1T - 11111, UT_BK_SIZE + 111111),
-		UT_MKRANGE1(UT_1T - 1111111, UT_BK_SIZE + 1111111),
+	const struct ut_range ranges[] = {
+		UT_MKRANGE1(1, UT_64K + 2),
+		UT_MKRANGE1(UT_64K - 1, 2 * UT_64K + 3),
+		UT_MKRANGE1(7 * UT_64K - 7, 7 * UT_64K + 7),
+		UT_MKRANGE1(11 * UT_1M - 11, 11 * UT_64K + 11),
+		UT_MKRANGE1(13 * UT_1G - 13, 13 * UT_64K + 13),
+		UT_MKRANGE1(UT_1T - 11111, UT_64K + 111111),
+		UT_MKRANGE1(UT_1T - 1111111, UT_64K + 1111111),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_data_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_data_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -131,7 +122,7 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_trunc_mixed(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE),
 		UT_MKRANGE1(UT_1M, 4 * UT_BK_SIZE),
 		UT_MKRANGE1(UT_1G, 8 * UT_BK_SIZE),
@@ -144,10 +135,7 @@ static void ut_file_trunc_mixed(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T + 11111, 11 * UT_BK_SIZE),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_mixed_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_mixed_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -301,7 +289,7 @@ static void ut_file_trunc_tail_(struct ut_env *ute,
 
 static void ut_file_trunc_tail(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(1, UT_1M + 4),
 		UT_MKRANGE1(UT_1M, UT_1M),
@@ -310,10 +298,7 @@ static void ut_file_trunc_tail(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_tail_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_tail_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -344,7 +329,7 @@ static void ut_file_trunc_void_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_trunc_void(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
 		UT_MKRANGE1(1, UT_1K),
 		UT_MKRANGE1(0, UT_1M),
@@ -355,10 +340,7 @@ static void ut_file_trunc_void(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_void_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_void_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -395,7 +377,7 @@ static void ut_file_trunc_zero_size_(struct ut_env *ute,
 
 static void ut_file_trunc_zero_size(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(1, UT_BK_SIZE),
 		UT_MKRANGE1(UT_1K, UT_BK_SIZE),
 		UT_MKRANGE1(UT_1M, UT_BK_SIZE),
@@ -408,15 +390,13 @@ static void ut_file_trunc_zero_size(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1,  UT_1M + 1),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_zero_size_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_zero_size_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_null_data_(struct ut_env *ute, loff_t off)
+static void ut_file_trunc_null_data_(struct ut_env *ute,
+                                     loff_t off, size_t unused_len)
 {
 	uint8_t rnd[256];
 	uint8_t dat[1] = { 0xC7 };
@@ -447,11 +427,12 @@ static void ut_file_trunc_null_data_(struct ut_env *ute, loff_t off)
 	ut_read_verify(ute, ino, nil, 1, off - 3);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
+	ut_unused(unused_len);
 }
 
 static void ut_file_trunc_null_data(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE0(UT_1K),
 		UT_MKRANGE0(UT_BK_SIZE),
 		UT_MKRANGE0(UT_1M + UT_1K),
@@ -465,10 +446,7 @@ static void ut_file_trunc_null_data(struct ut_env *ute)
 		UT_MKRANGE0(UT_1T + UT_1G + 1),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_null_data_(ute, range[i].off);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_trunc_null_data_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -551,6 +551,14 @@ bool ut_dot_or_dotdot(const char *s);
 
 bool ut_not_dot_or_dotdot(const char *s);
 
+/* execution */
+#define ut_exec_with_ranges(ute_, fn_, args_) \
+	ut_exec_with_ranges_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
+
+void ut_exec_with_ranges_(struct ut_env *ute,
+                          void (*fn)(struct ut_env *, loff_t, size_t),
+                          const struct ut_range *range, size_t na);
+
 /* except */
 void ut_expect_eq_ts(const struct timespec *ts1, const struct timespec *ts2);
 

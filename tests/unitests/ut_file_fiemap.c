@@ -103,7 +103,7 @@ static void ut_file_fiemap_simple_(struct ut_env *ute,
 
 static void ut_file_fiemap_simple(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, 100),
 		UT_MKRANGE1(0, UT_64K),
 		UT_MKRANGE1(UT_64K, UT_1M),
@@ -113,10 +113,7 @@ static void ut_file_fiemap_simple(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M + 1, UT_1M - 1),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fiemap_simple_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fiemap_simple_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

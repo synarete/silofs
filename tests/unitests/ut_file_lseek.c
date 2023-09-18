@@ -157,7 +157,7 @@ static void ut_file_lseek_sparse_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_lseek_sparse(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, 10 * UT_64K),
 		UT_MKRANGE1(UT_4K, 10 * UT_64K),
 		UT_MKRANGE1(UT_8K, 10 * UT_64K),
@@ -166,10 +166,7 @@ static void ut_file_lseek_sparse(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T, 10 * UT_64K),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_lseek_sparse_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_lseek_sparse_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -784,3 +784,15 @@ bool ut_not_dot_or_dotdot(const char *s)
 {
 	return !ut_dot_or_dotdot(s);
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void ut_exec_with_ranges_(struct ut_env *ute,
+                          void (*fn)(struct ut_env *, loff_t, size_t),
+                          const struct ut_range *range, size_t na)
+{
+	for (size_t i = 0; i < na; ++i) {
+		fn(ute, range[i].off, range[i].len);
+		ut_relax_mem(ute);
+	}
+}

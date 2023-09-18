@@ -16,6 +16,10 @@
  */
 #include "unitests.h"
 
+#define FIMAP_SZ        (UT_FILEMAP_NCHILDS * UT_BK_SIZE)
+#define FIMAP_SZ2       (FIMAP_SZ * UT_FILEMAP_NCHILDS)
+#define FIMAP_SZ_MAX    (UT_FILESIZE_MAX)
+
 static uint8_t dvec_first_byte(const struct ut_dvec *dvec)
 {
 	return dvec->dat[0];
@@ -77,7 +81,7 @@ static void ut_file_edges_1_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_edges_aligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(UT_4K, UT_4K),
 		UT_MKRANGE1(2 * UT_4K, UT_4K),
 		UT_MKRANGE1(UT_8K, UT_8K),
@@ -88,15 +92,12 @@ static void ut_file_edges_aligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T, 16 * UT_64K),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_edges_1_(ute, range[i].off,  range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_edges_1_, ranges);
 }
 
 static void ut_file_edges_unaligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(UT_8K - 1, UT_64K + 11),
 		UT_MKRANGE1(UT_64K + 11, UT_64K - 1),
 		UT_MKRANGE1(UT_1M - 1111, 4 * UT_64K + 1),
@@ -104,19 +105,12 @@ static void ut_file_edges_unaligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 111111, 16 * UT_64K + 111),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_edges_1_(ute, range[i].off,  range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_edges_1_, ranges);
 }
-
-#define FIMAP_SZ        (UT_FILEMAP_NCHILDS * UT_BK_SIZE)
-#define FIMAP_SZ2       (FIMAP_SZ * UT_FILEMAP_NCHILDS)
-#define FIMAP_SZ_MAX    (UT_FILESIZE_MAX)
 
 static void ut_file_edges_special(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(FIMAP_SZ, UT_64K),
 		UT_MKRANGE1(FIMAP_SZ, 2 * UT_64K),
 		UT_MKRANGE1(FIMAP_SZ - 11, UT_64K + 111),
@@ -131,10 +125,7 @@ static void ut_file_edges_special(struct ut_env *ute)
 		UT_MKRANGE1(FIMAP_SZ_MAX - UT_64K - 1, UT_64K),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_edges_1_(ute, range[i].off,  range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_edges_1_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

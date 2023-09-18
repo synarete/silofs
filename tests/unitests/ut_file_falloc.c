@@ -36,7 +36,7 @@ ut_file_fallocate_simple_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_aligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_BK_SIZE),
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(UT_1M, UT_1M),
@@ -44,15 +44,12 @@ static void ut_file_fallocate_aligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_simple_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_simple_, ranges);
 }
 
 static void ut_file_fallocate_unaligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(1, 3 * UT_BK_SIZE),
 		UT_MKRANGE1(3, UT_1M / 3),
 		UT_MKRANGE1(5 * UT_1M, UT_1M / 5),
@@ -61,10 +58,7 @@ static void ut_file_fallocate_unaligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_simple_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_simple_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -88,7 +82,7 @@ ut_file_fallocate_rdonly_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_rdonly(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(0, UT_8K),
 		UT_MKRANGE1(UT_8K, UT_8K),
@@ -100,10 +94,7 @@ static void ut_file_fallocate_rdonly(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 2, SILOFS_BLOB_SIZE_MAX + 3),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_rdonly_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_rdonly_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -140,7 +131,7 @@ ut_file_fallocate_truncate_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_truncate(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(UT_4K, 2 * UT_4K),
 		UT_MKRANGE1(UT_4K - 1, 2 * UT_4K + 3),
@@ -155,10 +146,7 @@ static void ut_file_fallocate_truncate(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 2, SILOFS_BLOB_SIZE_MAX + 3),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_truncate_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_truncate_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -185,7 +173,7 @@ ut_file_fallocate_unwritten_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_unwritten(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_BK_SIZE),
 		UT_MKRANGE1(UT_1M, 2 * UT_BK_SIZE),
 		UT_MKRANGE1(UT_1G, 3 * UT_BK_SIZE),
@@ -196,10 +184,7 @@ static void ut_file_fallocate_unwritten(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX - 111111, 111111),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_unwritten_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_unwritten_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -228,7 +213,7 @@ ut_file_fallocate_drop_caches_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_drop_caches(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(3, UT_1M / 3),
 		UT_MKRANGE1(5 * UT_1M + 5, UT_1M / 5),
@@ -237,11 +222,7 @@ static void ut_file_fallocate_drop_caches(struct ut_env *ute)
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 11, UT_1M + 11),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_drop_caches_(ute, range[i].off,
-		                               range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_drop_caches_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -271,7 +252,7 @@ ut_file_fallocate_punch_hole1_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_fallocate_punch_hole1(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(UT_1M, UT_1M),
 		UT_MKRANGE1(UT_1G, UT_1M),
@@ -281,11 +262,7 @@ static void ut_file_fallocate_punch_hole1(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 1111, UT_1M + 1),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_punch_hole1_(ute, range[i].off,
-		                               range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_punch_hole1_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -436,7 +413,7 @@ ut_file_fallocate_zero_range_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_zero_range(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(0, UT_BK_SIZE),
@@ -448,10 +425,7 @@ static void ut_file_fallocate_zero_range(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 1111, UT_1M + 1),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_zero_range_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_zero_range_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -644,7 +618,7 @@ ut_file_fallocate_beyond_(struct ut_env *ute, loff_t off, size_t ulen)
 
 static void ut_file_fallocate_beyond(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(0, UT_BK_SIZE),
@@ -656,10 +630,7 @@ static void ut_file_fallocate_beyond(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 1111, UT_1M + 11111),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_fallocate_beyond_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_fallocate_beyond_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

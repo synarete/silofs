@@ -219,19 +219,19 @@ static void ut_file_ranges_(struct ut_env *ute,
                             const struct ut_ranges *ranges)
 {
 	ut_rdwr_file1(ute, simple(ute, ranges));
+	ut_relax_mem(ute);
 	ut_rdwr_file1(ute, reverse(ute, ranges));
+	ut_relax_mem(ute);
 	ut_rdwr_file1(ute, zigzag(ute, ranges));
+	ut_relax_mem(ute);
 	ut_rdwr_file1(ute, rzigzag(ute, ranges));
+	ut_relax_mem(ute);
 }
 
 static void ut_file_ranges(struct ut_env *ute)
 {
-	const struct ut_ranges *ranges;
-
 	for (size_t i = 0; i < UT_ARRAY_SIZE(s_ranges_defs); ++i) {
-		ranges = &s_ranges_defs[i];
-		ut_file_ranges_(ute, ranges);
-		ut_relax_mem(ute);
+		ut_file_ranges_(ute, &s_ranges_defs[i]);
 	}
 }
 
@@ -240,11 +240,17 @@ static void ut_file_xranges_(struct ut_env *ute,
                              const struct ut_ranges *r2)
 {
 	ut_rdwr_file2(ute, simple(ute, r1), simple(ute, r2));
+	ut_relax_mem(ute);
 	ut_rdwr_file2(ute, reverse(ute, r1), reverse(ute, r2));
+	ut_relax_mem(ute);
 	ut_rdwr_file2(ute, zigzag(ute, r1), zigzag(ute, r2));
+	ut_relax_mem(ute);
 	ut_rdwr_file2(ute, rzigzag(ute, r1), rzigzag(ute, r2));
+	ut_relax_mem(ute);
 	ut_rdwr_file2(ute, reverse(ute, r1), zigzag(ute, r2));
+	ut_relax_mem(ute);
 	ut_rdwr_file2(ute, rzigzag(ute, r1), simple(ute, r2));
+	ut_relax_mem(ute);
 }
 
 static void ut_file_xranges(struct ut_env *ute)
@@ -256,7 +262,6 @@ static void ut_file_xranges(struct ut_env *ute)
 		r1 = &s_ranges_defs[j];
 		r2 = &s_ranges_defs[j + 1];
 		ut_file_xranges_(ute, r1, r2);
-		ut_relax_mem(ute);
 	}
 }
 

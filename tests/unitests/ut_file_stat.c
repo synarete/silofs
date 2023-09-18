@@ -137,16 +137,14 @@ static void ut_file_statvfs_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_statvfs(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_64K),
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(UT_64K - 1, UT_1M + 3),
 		UT_MKRANGE1(UT_IOSIZE_MAX - UT_1M - 1, UT_1M + 1),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_statvfs_(ute, range[i].off, range[i].len);
-	}
+	ut_exec_with_ranges(ute, ut_file_statvfs_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

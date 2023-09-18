@@ -110,7 +110,7 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_snap_copy_range(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(UT_4K, UT_4K),
@@ -125,10 +125,7 @@ static void ut_snap_copy_range(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_snap_copy_range_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_snap_copy_range_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -167,7 +164,7 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 
 static void ut_snap_rename_io(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K - 1),
 		UT_MKRANGE1(UT_1K - 1, UT_1K + 3),
 		UT_MKRANGE1(2 * UT_4K, 2 * UT_4K),
@@ -176,10 +173,7 @@ static void ut_snap_rename_io(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_snap_rename_io_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_snap_rename_io_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

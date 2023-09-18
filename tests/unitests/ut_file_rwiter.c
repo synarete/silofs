@@ -36,7 +36,7 @@ static void ut_file_write_iter_(struct ut_env *ute, loff_t off, size_t len)
 
 static void ut_file_write_iter_simple(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_64K),
 		UT_MKRANGE1(UT_64K, 2 * UT_64K),
 		UT_MKRANGE1(2 * UT_64K, 4 * UT_64K),
@@ -45,15 +45,12 @@ static void ut_file_write_iter_simple(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T, UT_1M),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_write_iter_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_write_iter_, ranges);
 }
 
 static void ut_file_write_iter_aligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(0, UT_64K),
 		UT_MKRANGE1(UT_4K, UT_64K),
@@ -64,15 +61,12 @@ static void ut_file_write_iter_aligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T / 2, UT_1M / 2),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_write_iter_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_write_iter_, ranges);
 }
 
 static void ut_file_write_iter_unaligned(struct ut_env *ute)
 {
-	const struct ut_range range[] = {
+	const struct ut_range ranges[] = {
 		UT_MKRANGE1(1, UT_4K),
 		UT_MKRANGE1(3, 3 * UT_BK_SIZE),
 		UT_MKRANGE1(UT_4K - 5, UT_64K + 7),
@@ -83,10 +77,7 @@ static void ut_file_write_iter_unaligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 7, UT_1M / 7),
 	};
 
-	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_write_iter_(ute, range[i].off, range[i].len);
-		ut_relax_mem(ute);
-	}
+	ut_exec_with_ranges(ute, ut_file_write_iter_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

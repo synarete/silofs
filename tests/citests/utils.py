@@ -80,19 +80,11 @@ def _random_bytearray(n: int) -> bytearray:
 
 def prandbytes(rsz: int) -> bytes:
     """Generate pseudo-random bytes array."""
-    rnd = _random_bytearray(min(rsz, 1024))
-    rba = bytearray(rnd)
+    rba = _random_bytearray(min(rsz, 1024))
     while len(rba) < rsz:
         rem = rsz - len(rba)
-        if rem <= 1024:
-            rnd = _random_bytearray(rem)
-            rba = rnd + rba
-        elif rem <= 2048:
-            rnd = _random_bytearray(1024)
-            rba = rnd + rba + rnd
-        else:
-            rnd = _random_bytearray(1024)
-            rba = rnd + rba + rnd + rba
+        rnd = _random_bytearray(min(rem, 1024))
+        rba = rba + rnd + rba
     return rba[:rsz]
 
 

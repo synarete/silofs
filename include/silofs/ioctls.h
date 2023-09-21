@@ -54,7 +54,7 @@ struct silofs_query_version {
 	uint32_t sublevel;
 };
 
-struct silofs_query_bootsec {
+struct silofs_query_bootrec {
 	char    repo[SILOFS_REPOPATH_MAX];
 	char    name[SILOFS_NAME_MAX + 1];
 };
@@ -89,7 +89,7 @@ struct silofs_query_statx {
 
 union silofs_query_u {
 	struct silofs_query_version     version;
-	struct silofs_query_bootsec     bootsec;
+	struct silofs_query_bootrec     bootrec;
 	struct silofs_query_fsname      fsname;
 	struct silofs_query_proc        proc;
 	struct silofs_query_spstats     spstats;

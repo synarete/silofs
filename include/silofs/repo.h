@@ -102,18 +102,19 @@ int silofs_repo_close(struct silofs_repo *repo);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_save_bootsec(struct silofs_repo *repo,
+int silofs_repo_save_bootrec(struct silofs_repo *repo,
                              const struct silofs_uuid *uuid,
-                             const struct silofs_bootsec *bsec);
+                             const struct silofs_bootrec *brec);
 
-int silofs_repo_load_bootsec(struct silofs_repo *repo,
+int silofs_repo_load_bootrec(struct silofs_repo *repo,
                              const struct silofs_uuid *uuid,
-                             struct silofs_bootsec *out_bsec);
+                             struct silofs_bootrec *out_brec);
 
-int silofs_repo_stat_bootsec(struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid);
+int silofs_repo_stat_bootrec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             struct stat *out_st);
 
-int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
+int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
                                const struct silofs_uuid *uuid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

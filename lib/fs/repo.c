@@ -1938,7 +1938,7 @@ static int repo_require_ubk(struct silofs_repo *repo, bool rw,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void repo_bootsec_name(const struct silofs_repo *repo,
+static void repo_bootrec_name(const struct silofs_repo *repo,
                               const struct silofs_uuid *uuid,
                               struct silofs_namebuf *out_nb)
 {
@@ -1946,40 +1946,40 @@ static void repo_bootsec_name(const struct silofs_repo *repo,
 	unused(repo);
 }
 
-static int repo_encode_bsec1k(const struct silofs_repo *repo,
-                              const struct silofs_bootsec *bsec,
-                              struct silofs_bootsec1k *bsc)
+static int repo_encode_bootrec1k(const struct silofs_repo *repo,
+                                 const struct silofs_bootrec *brec,
+                                 struct silofs_bootrec1k *bsc)
 {
-	/* TODO: verify input bsec */
-	silofs_bsec1k_set(bsc, bsec);
-	silofs_bsec1k_stamp(bsc, repo_mdigest(repo));
+	/* TODO: verify input brec */
+	silofs_bootrec1k_set(bsc, brec);
+	silofs_bootrec1k_stamp(bsc, repo_mdigest(repo));
 	return 0;
 }
 
-static int repo_verify_bsec1k(const struct silofs_repo *repo,
-                              const struct silofs_bootsec1k *bsc)
+static int repo_verify_bootrec1k(const struct silofs_repo *repo,
+                                 const struct silofs_bootrec1k *bsc)
 {
-	return silofs_bsec1k_verify(bsc, repo_mdigest(repo));
+	return silofs_bootrec1k_verify(bsc, repo_mdigest(repo));
 }
 
-static int repo_decode_bsec1k(const struct silofs_repo *repo,
-                              const struct silofs_bootsec1k *bsc,
-                              struct silofs_bootsec *out_bsec)
+static int repo_decode_bootrec1k(const struct silofs_repo *repo,
+                                 const struct silofs_bootrec1k *bsc,
+                                 struct silofs_bootrec *out_brec)
 {
 	int err;
 
-	err = repo_verify_bsec1k(repo, bsc);
+	err = repo_verify_bootrec1k(repo, bsc);
 	if (err) {
 		return err;
 	}
-	silofs_bsec1k_parse(bsc, out_bsec);
+	silofs_bootrec1k_parse(bsc, out_brec);
 	return 0;
 }
 
 static int
-repo_save_bootsec1k(const struct silofs_repo *repo,
+repo_save_bootrec1k(const struct silofs_repo *repo,
                     const struct silofs_namebuf *nb,
-                    const struct silofs_bootsec1k *bsc)
+                    const struct silofs_bootrec1k *bsc)
 {
 	int dfd = -1;
 	int fd = -1;
@@ -2016,29 +2016,29 @@ out:
 	return err;
 }
 
-static int repo_save_bootsec(const struct silofs_repo *repo,
+static int repo_save_bootrec(const struct silofs_repo *repo,
                              const struct silofs_uuid *uuid,
-                             const struct silofs_bootsec *bsec)
+                             const struct silofs_bootrec *brec)
 {
-	struct silofs_bootsec1k bsc;
+	struct silofs_bootrec1k bsc;
 	struct silofs_namebuf nb;
 	int err;
 
-	err = repo_encode_bsec1k(repo, bsec, &bsc);
+	err = repo_encode_bootrec1k(repo, brec, &bsc);
 	if (err) {
 		return err;
 	}
-	repo_bootsec_name(repo, uuid, &nb);
-	err = repo_save_bootsec1k(repo, &nb, &bsc);
+	repo_bootrec_name(repo, uuid, &nb);
+	err = repo_save_bootrec1k(repo, &nb, &bsc);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_load_bootsec1k(const struct silofs_repo *repo,
+static int repo_load_bootrec1k(const struct silofs_repo *repo,
                                const struct silofs_namebuf *nb,
-                               struct silofs_bootsec1k *bsc)
+                               struct silofs_bootrec1k *bsc)
 {
 	int dfd = -1;
 	int fd = -1;
@@ -2058,27 +2058,27 @@ out:
 	return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
 }
 
-static int repo_load_bootsec(const struct silofs_repo *repo,
+static int repo_load_bootrec(const struct silofs_repo *repo,
                              const struct silofs_uuid *uuid,
-                             struct silofs_bootsec *out_bsec)
+                             struct silofs_bootrec *out_brec)
 {
-	struct silofs_bootsec1k bsc;
+	struct silofs_bootrec1k bsc;
 	struct silofs_namebuf nb;
 	int err;
 
-	repo_bootsec_name(repo, uuid, &nb);
-	err = repo_load_bootsec1k(repo, &nb, &bsc);
+	repo_bootrec_name(repo, uuid, &nb);
+	err = repo_load_bootrec1k(repo, &nb, &bsc);
 	if (err) {
 		return err;
 	}
-	err = repo_decode_bsec1k(repo, &bsc, out_bsec);
+	err = repo_decode_bootrec1k(repo, &bsc, out_brec);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_stat_bootsec1k(const struct silofs_repo *repo,
+static int repo_stat_bootrec1k(const struct silofs_repo *repo,
                                const struct silofs_namebuf *nb,
                                struct stat *out_st)
 {
@@ -2101,32 +2101,34 @@ static int repo_stat_bootsec1k(const struct silofs_repo *repo,
 	return 0;
 }
 
-static int repo_stat_bootsec(const struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid)
+static int repo_stat_bootrec(const struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             struct stat *out_st)
 {
-	struct stat st;
 	struct silofs_namebuf nb;
 	int err;
 
-	repo_bootsec_name(repo, uuid, &nb);
-	err = repo_stat_bootsec1k(repo, &nb, &st);
+	repo_bootrec_name(repo, uuid, &nb);
+	err = repo_stat_bootrec1k(repo, &nb, out_st);
 	if (err) {
 		return err;
 	}
-	if (st.st_size != sizeof(struct silofs_bootsec1k)) {
+	if (out_st->st_size != sizeof(struct silofs_bootrec1k)) {
+		log_warn("bad boot-record: name=%s size=%ld",
+		         nb.name, out_st->st_size);
 		return -SILOFS_EBADBOOT;
 	}
 	return 0;
 }
 
-static int repo_unlink_bootsec(const struct silofs_repo *repo,
+static int repo_unlink_bootrec(const struct silofs_repo *repo,
                                const struct silofs_uuid *uuid)
 {
 	struct silofs_namebuf nb;
 	int dfd;
 	int err;
 
-	repo_bootsec_name(repo, uuid, &nb);
+	repo_bootrec_name(repo, uuid, &nb);
 	dfd = repo_blobs_dfd(repo);
 	err = do_unlinkat(dfd, nb.name, 0);
 	if (err) {
@@ -2137,45 +2139,46 @@ static int repo_unlink_bootsec(const struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_save_bootsec(struct silofs_repo *repo,
+int silofs_repo_save_bootrec(struct silofs_repo *repo,
                              const struct silofs_uuid *uuid,
-                             const struct silofs_bootsec *bsec)
+                             const struct silofs_bootrec *brec)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_save_bootsec(repo, uuid, bsec);
+	ret = repo_save_bootrec(repo, uuid, brec);
 	return ret;
 }
 
-int silofs_repo_load_bootsec(struct silofs_repo *repo,
+int silofs_repo_load_bootrec(struct silofs_repo *repo,
                              const struct silofs_uuid *uuid,
-                             struct silofs_bootsec *out_bsec)
+                             struct silofs_bootrec *out_brec)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_load_bootsec(repo, uuid, out_bsec);
+	ret = repo_load_bootrec(repo, uuid, out_brec);
 	return ret;
 }
 
-int silofs_repo_stat_bootsec(struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid)
+int silofs_repo_stat_bootrec(struct silofs_repo *repo,
+                             const struct silofs_uuid *uuid,
+                             struct stat *out_st)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_stat_bootsec(repo, uuid);
+	ret = repo_stat_bootrec(repo, uuid, out_st);
 	return ret;
 }
 
-int silofs_repo_unlink_bootsec(struct silofs_repo *repo,
+int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
                                const struct silofs_uuid *uuid)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_unlink_bootsec(repo, uuid);
+	ret = repo_unlink_bootrec(repo, uuid);
 	return ret;
 }
 

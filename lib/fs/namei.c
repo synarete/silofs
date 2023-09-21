@@ -2249,7 +2249,7 @@ static struct silofs_repo *repo_of(const struct silofs_uber *uber)
 	return uber->ub.repo;
 }
 
-static void fill_query_bootsec(const struct silofs_inode_info *ii,
+static void fill_query_bootrec(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
 	const struct silofs_uber *uber = ii_uber(ii);
@@ -2259,11 +2259,11 @@ static void fill_query_bootsec(const struct silofs_inode_info *ii,
 
 	bpath = &repo->re.bootpath;
 
-	bsz = sizeof(query->u.bootsec.repo);
-	fill_strbuf(query->u.bootsec.repo, bsz, &bpath->repodir);
+	bsz = sizeof(query->u.bootrec.repo);
+	fill_strbuf(query->u.bootrec.repo, bsz, &bpath->repodir);
 
-	bsz = sizeof(query->u.bootsec.name);
-	fill_strbuf(query->u.bootsec.name, bsz, &bpath->name.s);
+	bsz = sizeof(query->u.bootrec.name);
+	fill_strbuf(query->u.bootrec.name, bsz, &bpath->name.s);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
@@ -2313,7 +2313,7 @@ static int do_query_subcmd(struct silofs_task *task,
 		fill_query_version(ii, query);
 		break;
 	case SILOFS_QUERY_BOOTSEC:
-		fill_query_bootsec(ii, query);
+		fill_query_bootrec(ii, query);
 		break;
 	case SILOFS_QUERY_PROC:
 		fill_query_proc(ii, query);
@@ -2409,16 +2409,16 @@ static int check_clone(const struct silofs_task *task,
 }
 
 static int do_post_clone_updates(const struct silofs_task *task,
-                                 const struct silofs_bootsecs *bsecs)
+                                 const struct silofs_bootrecs *brecs)
 {
 	struct silofs_repo *repo = NULL;
-	const struct silofs_bootsec *bsec = NULL;
+	const struct silofs_bootrec *brec = NULL;
 	int err = 0;
 
 	repo = repo_of(task->t_uber);
-	for (size_t i = 0; i < ARRAY_SIZE(bsecs->bsec); ++i) {
-		bsec = &bsecs->bsec[i];
-		err = silofs_repo_save_bootsec(repo, &bsec->uuid, bsec);
+	for (size_t i = 0; i < ARRAY_SIZE(brecs->brec); ++i) {
+		brec = &brecs->brec[i];
+		err = silofs_repo_save_bootrec(repo, &brec->uuid, brec);
 		if (err) {
 			break;
 		}
@@ -2444,7 +2444,7 @@ static int flush_and_sync_blobs(struct silofs_task *task)
 
 static int do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
-                    struct silofs_bootsecs *out_bsecs)
+                    struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_uber *uber = task->t_uber;
 	int err;
@@ -2457,7 +2457,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_forkfs(uber, out_bsecs);
+	err = silofs_uber_forkfs(uber, out_brecs);
 	if (err) {
 		return err;
 	}
@@ -2465,7 +2465,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = do_post_clone_updates(task, out_bsecs);
+	err = do_post_clone_updates(task, out_brecs);
 	if (err) {
 		return err;
 	}
@@ -2488,13 +2488,13 @@ static void do_post_clone_relax(struct silofs_task *task,
 
 static int do_clone_and_relex(struct silofs_task *task,
                               struct silofs_inode_info *dir_ii, int flags,
-                              struct silofs_bootsecs *out_bsecs)
+                              struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_sb_info *sbi_cur = task_sbi(task);
 	int err;
 
 	sbi_incref(sbi_cur);
-	err = do_clone(task, dir_ii, flags, out_bsecs);
+	err = do_clone(task, dir_ii, flags, out_brecs);
 	sbi_decref(sbi_cur);
 	if (!err) {
 		do_post_clone_relax(task, sbi_cur);
@@ -2504,12 +2504,12 @@ static int do_clone_and_relex(struct silofs_task *task,
 
 int silofs_do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
-                    struct silofs_bootsecs *out_bsecs)
+                    struct silofs_bootrecs *out_brecs)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_clone_and_relex(task, dir_ii, flags, out_bsecs);
+	err = do_clone_and_relex(task, dir_ii, flags, out_brecs);
 	ii_decref(dir_ii);
 	return err;
 }

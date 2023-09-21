@@ -407,23 +407,23 @@ static struct silofs_bk_ref *bkr_unconst(const struct silofs_bk_ref *bkr)
 static void bkr_uref(const struct silofs_bk_ref *bkr,
                      struct silofs_bkaddr *out_bkaddr)
 {
-	silofs_bkaddr48b_parse(&bkr->br_uref, out_bkaddr);
+	silofs_bkaddr48b_parse(&bkr->bkr_uref, out_bkaddr);
 }
 
 static void bkr_set_uref(struct silofs_bk_ref *bkr,
                          const struct silofs_bkaddr *bkaddr)
 {
-	silofs_bkaddr48b_set(&bkr->br_uref, bkaddr);
+	silofs_bkaddr48b_set(&bkr->bkr_uref, bkaddr);
 }
 
 static size_t bkr_dbkref(const struct silofs_bk_ref *bkr)
 {
-	return silofs_le64_to_cpu(bkr->br_dbkref);
+	return silofs_le64_to_cpu(bkr->bkr_dbkref);
 }
 
 static void bkr_set_dbkref(struct silofs_bk_ref *bkr, size_t val)
 {
-	bkr->br_dbkref = silofs_cpu_to_le64(val);
+	bkr->bkr_dbkref = silofs_cpu_to_le64(val);
 }
 
 static void bkr_inc_dbkref(struct silofs_bk_ref *bkr)
@@ -443,13 +443,13 @@ static void bkr_dec_dbkref(struct silofs_bk_ref *bkr)
 static void bkr_allocated(const struct silofs_bk_ref *bkr,
                           struct silofs_bk_state *bk_st)
 {
-	bk_state_parse(&bkr->br_allocated, bk_st);
+	bk_state_parse(&bkr->bkr_allocated, bk_st);
 }
 
 static void bkr_set_allocated(struct silofs_bk_ref *bkr,
                               const struct silofs_bk_state *bk_st)
 {
-	bk_state_set(&bkr->br_allocated, bk_st);
+	bk_state_set(&bkr->bkr_allocated, bk_st);
 }
 
 static bool bkr_test_allocated_at(const struct silofs_bk_ref *bkr,
@@ -532,13 +532,13 @@ static bool bkr_isunused(const struct silofs_bk_ref *bkr)
 static void bkr_unwritten(const struct silofs_bk_ref *bkr,
                           struct silofs_bk_state *bk_st)
 {
-	bk_state_parse(&bkr->br_unwritten, bk_st);
+	bk_state_parse(&bkr->bkr_unwritten, bk_st);
 }
 
 static void bkr_set_unwritten(struct silofs_bk_ref *bkr,
                               const struct silofs_bk_state *bk_st)
 {
-	bk_state_set(&bkr->br_unwritten, bk_st);
+	bk_state_set(&bkr->bkr_unwritten, bk_st);
 }
 
 static bool bkr_test_unwritten_at(const struct silofs_bk_ref *bkr,
@@ -590,7 +590,7 @@ static void bkr_reset(struct silofs_bk_ref *bkr)
 {
 	memset(bkr, 0, sizeof(*bkr));
 	bkr_clear_alloc_state(bkr);
-	silofs_bkaddr48b_reset(&bkr->br_uref);
+	silofs_bkaddr48b_reset(&bkr->bkr_uref);
 }
 
 static void bkr_init(struct silofs_bk_ref *bkr)

@@ -845,7 +845,7 @@ void silofs_stat_fs(const struct silofs_fs_env *fse,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int derive_ivkey(struct silofs_fs_env *fse,
-                        const struct silofs_bootsec *bsec)
+                        const struct silofs_bootrec *brec)
 {
 	struct silofs_mdigest mdigest = { .md_hd = NULL };
 	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
@@ -859,7 +859,7 @@ static int derive_ivkey(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	silofs_bootsec_cipher_args(bsec, &cip_args);
+	silofs_bootrec_cipher_args(brec, &cip_args);
 	err = silofs_derive_ivkey(&cip_args, pswd, &mdigest, &fse->fs_ivkey);
 	silofs_mdigest_fini(&mdigest);
 	if (err) {
@@ -903,23 +903,23 @@ static int calc_key_hash(const struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int verify_bootsec_keyhash(const struct silofs_fs_env *fse,
-                                  const struct silofs_bootsec *bsec)
+static int verify_bootrec_keyhash(const struct silofs_fs_env *fse,
+                                  const struct silofs_bootrec *brec)
 {
 	struct silofs_hash256 hash;
 	const enum silofs_bootf mask = SILOFS_BOOTF_KEY_SHA256;
 	int err;
 
-	if ((bsec->flags & mask) != mask) {
+	if ((brec->flags & mask) != mask) {
 		return 0;
 	}
 	err = calc_key_hash(fse, &hash);
 	if (err) {
 		return err;
 	}
-	err = silofs_bootsec_check_keyhash(bsec, &hash);
+	err = silofs_bootrec_check_keyhash(brec, &hash);
 	if (err) {
-		log_err("failed to verify bootsec: err=%d", err);
+		log_err("failed to verify bootrec: err=%d", err);
 		return err;
 	}
 	return 0;
@@ -1344,74 +1344,82 @@ int silofs_open_repo(struct silofs_fs_env *fse)
 	return ret;
 }
 
-static int save_bootsec_of(const struct silofs_fs_env *fse,
+static int stat_bootrec_of(const struct silofs_fs_env *fse,
                            const struct silofs_uuid *uuid,
-                           const struct silofs_bootsec *bsec)
+                           struct stat *out_st)
 {
-	return silofs_repo_save_bootsec(fse->fs_repo, uuid, bsec);
+	return silofs_repo_stat_bootrec(fse->fs_repo, uuid, out_st);
 }
 
-static int load_bootsec_of(const struct silofs_fs_env *fse,
+static int save_bootrec_of(const struct silofs_fs_env *fse,
                            const struct silofs_uuid *uuid,
-                           struct silofs_bootsec *out_bsec)
+                           const struct silofs_bootrec *brec)
 {
-	return silofs_repo_load_bootsec(fse->fs_repo, uuid, out_bsec);
+	return silofs_repo_save_bootrec(fse->fs_repo, uuid, brec);
 }
 
-static int reload_bootsec_of(struct silofs_fs_env *fse,
+static int load_bootrec_of(const struct silofs_fs_env *fse,
+                           const struct silofs_uuid *uuid,
+                           struct silofs_bootrec *out_brec)
+{
+	return silofs_repo_load_bootrec(fse->fs_repo, uuid, out_brec);
+}
+
+static int reload_bootrec_of(struct silofs_fs_env *fse,
                              const struct silofs_uuid *uuid,
-                             struct silofs_bootsec *out_bsec)
+                             struct silofs_bootrec *out_brec)
 {
+	struct stat st = { .st_size = -1 };
 	int err;
 
-	err = silofs_repo_stat_bootsec(fse->fs_repo, uuid);
+	err = stat_bootrec_of(fse, uuid, &st);
 	if (err) {
-		log_err("failed to stat bootsec: err=%d", err);
+		log_err("failed to stat bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_load_bootsec(fse->fs_repo, uuid, out_bsec);
+	err = load_bootrec_of(fse, uuid, out_brec);
 	if (err) {
-		log_err("failed to reload bootsec: err=%d", err);
+		log_err("failed to reload bootrec: err=%d", err);
 		return err;
 	}
 	return 0;
 }
 
-static int unlink_bootsec_of(struct silofs_fs_env *fse,
+static int unlink_bootrec_of(struct silofs_fs_env *fse,
                              const struct silofs_uuid *uuid)
 {
 	int err;
 
-	err = silofs_repo_unlink_bootsec(fse->fs_repo, uuid);
+	err = silofs_repo_unlink_bootrec(fse->fs_repo, uuid);
 	if (err) {
-		log_err("failed to unlink bootsec: err=%d", err);
+		log_err("failed to unlink bootrec: err=%d", err);
 		return err;
 	}
 	return 0;
 }
 
-static int save_bootsec(const struct silofs_fs_env *fse,
-                        const struct silofs_bootsec *bsec)
+static int save_bootrec(const struct silofs_fs_env *fse,
+                        const struct silofs_bootrec *brec)
 {
-	return save_bootsec_of(fse, &bsec->uuid, bsec);
+	return save_bootrec_of(fse, &brec->uuid, brec);
 }
 
-static int update_save_bootsec(const struct silofs_fs_env *fse,
-                               struct silofs_bootsec *bsec)
+static int update_save_bootrec(const struct silofs_fs_env *fse,
+                               struct silofs_bootrec *brec)
 {
 	const struct silofs_sb_info *sbi = fse->fs_uber->ub_sbi;
 
-	silofs_bootsec_set_sb_ulink(bsec, sbi_ulink(sbi));
-	return save_bootsec(fse, bsec);
+	silofs_bootrec_set_sb_ulink(brec, sbi_ulink(sbi));
+	return save_bootrec(fse, brec);
 }
 
 static int do_format_fs(struct silofs_fs_env *fse,
                         struct silofs_uuid *out_uuid)
 {
-	struct silofs_bootsec bsec;
+	struct silofs_bootrec brec;
 	int err;
 
-	silofs_bootsec_init(&bsec);
+	silofs_bootrec_init(&brec);
 	err = check_capacity(fse);
 	if (err) {
 		return err;
@@ -1420,7 +1428,7 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = derive_ivkey(fse, &bsec);
+	err = derive_ivkey(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1436,11 +1444,11 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = update_save_bootsec(fse, &bsec);
+	err = update_save_bootrec(fse, &brec);
 	if (err) {
 		return err;
 	}
-	silofs_bootsec_uuid(&bsec, out_uuid);
+	silofs_bootrec_uuid(&brec, out_uuid);
 	return 0;
 }
 
@@ -1455,31 +1463,31 @@ int silofs_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid)
 }
 
 static int fse_reload_root_sblob(struct silofs_fs_env *fse,
-                                 const struct silofs_bootsec *bsec)
+                                 const struct silofs_bootrec *brec)
 {
-	silofs_uber_bind_child(fse->fs_uber, &bsec->sb_ulink);
+	silofs_uber_bind_child(fse->fs_uber, &brec->sb_ulink);
 	return silofs_uber_reload_sblob(fse->fs_uber);
 }
 
 static int do_boot_fs(struct silofs_fs_env *fse,
                       const struct silofs_uuid *uuid)
 {
-	struct silofs_bootsec bsec;
+	struct silofs_bootrec brec;
 	int err;
 
-	err = reload_bootsec_of(fse, uuid, &bsec);
+	err = reload_bootrec_of(fse, uuid, &brec);
 	if (err) {
 		return err;
 	}
-	err = derive_ivkey(fse, &bsec);
+	err = derive_ivkey(fse, &brec);
 	if (err) {
 		return err;
 	}
-	err = verify_bootsec_keyhash(fse, &bsec);
+	err = verify_bootrec_keyhash(fse, &brec);
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sblob(fse, &bsec);
+	err = fse_reload_root_sblob(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1559,15 +1567,15 @@ int silofs_close_fs(struct silofs_fs_env *fse)
 	return err;
 }
 
-int silofs_poke_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
+int silofs_poke_fs(struct silofs_fs_env *fse,
+                   const struct silofs_uuid *uuid,
+                   struct silofs_bootrec *out_brec)
 {
-	struct silofs_bootsec bsec;
-
-	return load_bootsec_of(fse, uuid, &bsec);
+	return load_bootrec_of(fse, uuid, out_brec);
 }
 
 static int exec_clone_fs(const struct silofs_fs_env *fse,
-                         struct silofs_bootsecs *out_bsecs)
+                         struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_task task;
 	int err;
@@ -1576,7 +1584,7 @@ static int exec_clone_fs(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_clone(&task, SILOFS_INO_ROOT, 0, out_bsecs);
+	err = silofs_fs_clone(&task, SILOFS_INO_ROOT, 0, out_brecs);
 	if (err) {
 		return err;
 	}
@@ -1587,15 +1595,15 @@ int silofs_fork_fs(struct silofs_fs_env *fse,
                    struct silofs_uuid *out_new,
                    struct silofs_uuid *out_alt)
 {
-	struct silofs_bootsecs bsecs;
+	struct silofs_bootrecs brecs;
 	int err;
 
-	err = exec_clone_fs(fse, &bsecs);
+	err = exec_clone_fs(fse, &brecs);
 	if (err) {
 		return err;
 	}
-	silofs_bootsec_uuid(&bsecs.bsec[0], out_new);
-	silofs_bootsec_uuid(&bsecs.bsec[1], out_alt);
+	silofs_bootrec_uuid(&brecs.brec[0], out_new);
+	silofs_bootrec_uuid(&brecs.brec[1], out_alt);
 	return 0;
 }
 
@@ -1632,22 +1640,22 @@ static int exec_unref_fs(struct silofs_fs_env *fse)
 
 int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 {
-	struct silofs_bootsec bsec;
+	struct silofs_bootrec brec;
 	int err;
 
-	err = reload_bootsec_of(fse, uuid, &bsec);
+	err = reload_bootrec_of(fse, uuid, &brec);
 	if (err) {
 		return err;
 	}
-	err = derive_ivkey(fse, &bsec);
+	err = derive_ivkey(fse, &brec);
 	if (err) {
 		return err;
 	}
-	err = verify_bootsec_keyhash(fse, &bsec);
+	err = verify_bootrec_keyhash(fse, &brec);
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sblob(fse, &bsec);
+	err = fse_reload_root_sblob(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1659,7 +1667,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 	if (err) {
 		return err;
 	}
-	err = unlink_bootsec_of(fse, uuid);
+	err = unlink_bootrec_of(fse, uuid);
 	if (err) {
 		return err;
 	}

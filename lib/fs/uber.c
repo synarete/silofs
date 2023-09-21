@@ -471,11 +471,11 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
 }
 
-static void sbi_export_bootsec(const struct silofs_sb_info *sbi,
-                               struct silofs_bootsec *bsec)
+static void sbi_export_bootrec(const struct silofs_sb_info *sbi,
+                               struct silofs_bootrec *brec)
 {
-	silofs_bootsec_init(bsec);
-	silofs_bootsec_set_sb_ulink(bsec, sbi_ulink(sbi));
+	silofs_bootrec_init(brec);
+	silofs_bootrec_set_sb_ulink(brec, sbi_ulink(sbi));
 }
 
 static void uber_pre_forkfs(struct silofs_uber *uber)
@@ -484,7 +484,7 @@ static void uber_pre_forkfs(struct silofs_uber *uber)
 }
 
 int silofs_uber_forkfs(struct silofs_uber *uber,
-                       struct silofs_bootsecs *out_bsecs)
+                       struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_sb_info *sbi_alt = NULL;
 	struct silofs_sb_info *sbi_new = NULL;
@@ -496,14 +496,14 @@ int silofs_uber_forkfs(struct silofs_uber *uber,
 	if (err) {
 		return err;
 	}
-	sbi_export_bootsec(sbi_alt, &out_bsecs->bsec[1]);
+	sbi_export_bootrec(sbi_alt, &out_brecs->brec[1]);
 
 	uber_pre_forkfs(uber);
 	err = uber_clone_rebind_super(uber, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}
-	sbi_export_bootsec(sbi_new, &out_bsecs->bsec[0]);
+	sbi_export_bootrec(sbi_new, &out_brecs->brec[0]);
 
 	sbi_mark_fossil(sbi_cur);
 	return 0;

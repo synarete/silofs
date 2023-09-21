@@ -110,8 +110,8 @@ static void cmd_lsmnt_exec_mi(struct cmd_lsmnt_ctx *ctx,
 	if (err) {
 		goto out;
 	}
-	repodir = qry->u.bootsec.repo;
-	name = qry->u.bootsec.name;
+	repodir = qry->u.bootrec.repo;
+	name = qry->u.bootrec.name;
 	sep = '/';
 out:
 	silofs_sys_closefd(&dfd);

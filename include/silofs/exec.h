@@ -39,7 +39,9 @@ int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 
 int silofs_open_fs(struct silofs_fs_env *fse);
 
-int silofs_poke_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+int silofs_poke_fs(struct silofs_fs_env *fse,
+                   const struct silofs_uuid *uuid,
+                   struct silofs_bootrec *out_brec);
 
 int silofs_close_fs(struct silofs_fs_env *fse);
 

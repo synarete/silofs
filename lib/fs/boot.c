@@ -202,182 +202,185 @@ static void cpu_to_kdf(const struct silofs_kdf_desc *kd,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t bsec1k_magic(const struct silofs_bootsec1k *bsc)
+static uint64_t bootrec1k_magic(const struct silofs_bootrec1k *bsc)
 {
-	return silofs_le64_to_cpu(bsc->bs_magic);
+	return silofs_le64_to_cpu(bsc->br_magic);
 }
 
-static void bsec1k_set_magic(struct silofs_bootsec1k *bsc, uint64_t magic)
+static void bootrec1k_set_magic(struct silofs_bootrec1k *bsc, uint64_t magic)
 {
-	bsc->bs_magic = silofs_cpu_to_le64(magic);
+	bsc->br_magic = silofs_cpu_to_le64(magic);
 }
 
-static uint64_t bsec1k_version(const struct silofs_bootsec1k *bsc)
+static uint64_t bootrec1k_version(const struct silofs_bootrec1k *bsc)
 {
-	return silofs_le64_to_cpu(bsc->bs_version);
+	return silofs_le64_to_cpu(bsc->br_version);
 }
 
-static void bsec1k_set_version(struct silofs_bootsec1k *bsc, uint64_t version)
+static void bootrec1k_set_version(struct silofs_bootrec1k *bsc,
+                                  uint64_t version)
 {
-	bsc->bs_version = silofs_cpu_to_le64(version);
+	bsc->br_version = silofs_cpu_to_le64(version);
 }
 
-static enum silofs_bootf bsec1k_flags(const struct silofs_bootsec1k *bsc)
+static enum silofs_bootf bootrec1k_flags(const struct silofs_bootrec1k *bsc)
 {
-	const uint64_t f = silofs_le64_to_cpu(bsc->bs_flags);
+	const uint64_t f = silofs_le64_to_cpu(bsc->br_flags);
 
 	return (enum silofs_bootf)f;
 }
 
-static void bsec1k_set_flags(struct silofs_bootsec1k *bsc, enum silofs_bootf f)
+static void bootrec1k_set_flags(struct silofs_bootrec1k *bsc,
+                                enum silofs_bootf f)
 {
-	bsc->bs_flags = silofs_cpu_to_le64((uint64_t)f);
+	bsc->br_flags = silofs_cpu_to_le64((uint64_t)f);
 }
 
-static void bsec1k_uuid(const struct silofs_bootsec1k *bsc,
-                        struct silofs_uuid *uu)
+static void bootrec1k_uuid(const struct silofs_bootrec1k *bsc,
+                           struct silofs_uuid *uu)
 {
-	silofs_uuid_assign(uu, &bsc->bs_uuid);
+	silofs_uuid_assign(uu, &bsc->br_uuid);
 }
 
-static void bsec1k_set_uuid(struct silofs_bootsec1k *bsc,
-                            const struct silofs_uuid *uu)
+static void bootrec1k_set_uuid(struct silofs_bootrec1k *bsc,
+                               const struct silofs_uuid *uu)
 {
-	silofs_uuid_assign(&bsc->bs_uuid, uu);
+	silofs_uuid_assign(&bsc->br_uuid, uu);
 }
 
-static void bsec1k_key_hash(const struct silofs_bootsec1k *bsc,
-                            struct silofs_hash256 *out_hash)
+static void bootrec1k_key_hash(const struct silofs_bootrec1k *bsc,
+                               struct silofs_hash256 *out_hash)
 {
-	silofs_hash256_assign(out_hash, &bsc->bs_key_hash);
+	silofs_hash256_assign(out_hash, &bsc->br_key_hash);
 }
 
-static void bsec1k_set_key_hash(struct silofs_bootsec1k *bsc,
-                                const struct silofs_hash256 *hash)
+static void bootrec1k_set_key_hash(struct silofs_bootrec1k *bsc,
+                                   const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&bsc->bs_key_hash, hash);
+	silofs_hash256_assign(&bsc->br_key_hash, hash);
 }
 
-static void bsec1k_kdf(const struct silofs_bootsec1k *bsc,
-                       struct silofs_kdf_pair *kdf)
+static void bootrec1k_kdf(const struct silofs_bootrec1k *bsc,
+                          struct silofs_kdf_pair *kdf)
 {
-	kdf_to_cpu(&bsc->bs_kdf_pair.kdf_iv, &kdf->kdf_iv);
-	kdf_to_cpu(&bsc->bs_kdf_pair.kdf_key, &kdf->kdf_key);
+	kdf_to_cpu(&bsc->br_kdf_pair.kdf_iv, &kdf->kdf_iv);
+	kdf_to_cpu(&bsc->br_kdf_pair.kdf_key, &kdf->kdf_key);
 }
 
-static void bsec1k_set_kdf(struct silofs_bootsec1k *bsc,
-                           const struct silofs_kdf_pair *kdf)
+static void bootrec1k_set_kdf(struct silofs_bootrec1k *bsc,
+                              const struct silofs_kdf_pair *kdf)
 {
-	cpu_to_kdf(&kdf->kdf_iv, &bsc->bs_kdf_pair.kdf_iv);
-	cpu_to_kdf(&kdf->kdf_key, &bsc->bs_kdf_pair.kdf_key);
+	cpu_to_kdf(&kdf->kdf_iv, &bsc->br_kdf_pair.kdf_iv);
+	cpu_to_kdf(&kdf->kdf_key, &bsc->br_kdf_pair.kdf_key);
 }
 
-static uint32_t bsec1k_chiper_algo(const struct silofs_bootsec1k *bsc)
+static uint32_t bootrec1k_chiper_algo(const struct silofs_bootrec1k *bsc)
 {
-	return silofs_le32_to_cpu(bsc->bs_chiper_algo);
+	return silofs_le32_to_cpu(bsc->br_chiper_algo);
 }
 
-static uint32_t bsec1k_chiper_mode(const struct silofs_bootsec1k *bsc)
+static uint32_t bootrec1k_chiper_mode(const struct silofs_bootrec1k *bsc)
 {
-	return silofs_le32_to_cpu(bsc->bs_chiper_mode);
+	return silofs_le32_to_cpu(bsc->br_chiper_mode);
 }
 
-static void bsec1k_set_cipher(struct silofs_bootsec1k *bsc,
-                              uint32_t cipher_algo, uint32_t cipher_mode)
+static void bootrec1k_set_cipher(struct silofs_bootrec1k *bsc,
+                                 uint32_t cipher_algo, uint32_t cipher_mode)
 {
-	bsc->bs_chiper_algo = silofs_cpu_to_le32(cipher_algo);
-	bsc->bs_chiper_mode = silofs_cpu_to_le32(cipher_mode);
+	bsc->br_chiper_algo = silofs_cpu_to_le32(cipher_algo);
+	bsc->br_chiper_mode = silofs_cpu_to_le32(cipher_mode);
 }
 
-static void bsec1k_fill_rands(struct silofs_bootsec1k *bsc)
+static void bootrec1k_fill_rands(struct silofs_bootrec1k *bsc)
 {
-	silofs_getentropy(bsc->bs_rands, sizeof(bsc->bs_rands));
+	silofs_getentropy(bsc->br_rands, sizeof(bsc->br_rands));
 }
 
-void silofs_bsec1k_init(struct silofs_bootsec1k *bsc)
+void silofs_bootrec1k_init(struct silofs_bootrec1k *brec1k)
 {
 	const struct silofs_cipher_args *cip_args = &s_default_cip_args;
 
-	silofs_memzero(bsc, sizeof(*bsc));
-	bsec1k_set_magic(bsc, SILOFS_BOOT_RECORD_MAGIC);
-	bsec1k_set_version(bsc, SILOFS_FMT_VERSION);
-	bsec1k_set_flags(bsc, SILOFS_BOOTF_NONE);
-	bsec1k_set_kdf(bsc, &cip_args->kdf);
-	bsec1k_set_cipher(bsc, cip_args->cipher_algo, cip_args->cipher_mode);
-	bsec1k_fill_rands(bsc);
+	silofs_memzero(brec1k, sizeof(*brec1k));
+	bootrec1k_fill_rands(brec1k);
+	bootrec1k_set_magic(brec1k, SILOFS_BOOT_RECORD_MAGIC);
+	bootrec1k_set_version(brec1k, SILOFS_FMT_VERSION);
+	bootrec1k_set_flags(brec1k, SILOFS_BOOTF_NONE);
+	bootrec1k_set_kdf(brec1k, &cip_args->kdf);
+	bootrec1k_set_cipher(brec1k, cip_args->cipher_algo,
+	                     cip_args->cipher_mode);
 }
 
-void silofs_bsec1k_fini(struct silofs_bootsec1k *bsc)
+void silofs_bootrec1k_fini(struct silofs_bootrec1k *brec1k)
 {
-	silofs_memffff(bsc, sizeof(*bsc));
+	silofs_memffff(brec1k, sizeof(*brec1k));
 }
 
-static void bsec1k_sb_uaddr(const struct silofs_bootsec1k *bsc,
-                            struct silofs_uaddr *out_uaddr)
+static void bootrec1k_sb_uaddr(const struct silofs_bootrec1k *brec1k,
+                               struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_parse(&bsc->bs_sb_uaddr, out_uaddr);
+	silofs_uaddr64b_parse(&brec1k->br_sb_uaddr, out_uaddr);
 }
 
-static void bsec1k_set_sb_uaddr(struct silofs_bootsec1k *bsc,
-                                const struct silofs_uaddr *uaddr)
+static void bootrec1k_set_sb_uaddr(struct silofs_bootrec1k *brec1k,
+                                   const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&bsc->bs_sb_uaddr, uaddr);
+	silofs_uaddr64b_set(&brec1k->br_sb_uaddr, uaddr);
 }
 
-static void bsec1k_sb_riv(const struct silofs_bootsec1k *bsc,
-                          struct silofs_iv *out_riv)
+static void bootrec1k_sb_riv(const struct silofs_bootrec1k *brec1k,
+                             struct silofs_iv *out_riv)
 {
-	silofs_iv_assign(out_riv, &bsc->bs_sb_riv);
+	silofs_iv_assign(out_riv, &brec1k->br_sb_riv);
 }
 
-static void bsec1k_set_sb_riv(struct silofs_bootsec1k *bsc,
-                              const struct silofs_iv *riv)
+static void bootrec1k_set_sb_riv(struct silofs_bootrec1k *brec1k,
+                                 const struct silofs_iv *riv)
 {
-	silofs_iv_assign(&bsc->bs_sb_riv, riv);
+	silofs_iv_assign(&brec1k->br_sb_riv, riv);
 }
 
 
-static int bsec1k_check_base(const struct silofs_bootsec1k *bsc)
+static int bootrec1k_check_base(const struct silofs_bootrec1k *brec1k)
 {
 	uint64_t magic;
 	uint64_t version;
 
-	magic = bsec1k_magic(bsc);
+	magic = bootrec1k_magic(brec1k);
 	if (magic != SILOFS_BOOT_RECORD_MAGIC) {
-		log_dbg("bad bootsec magic: 0x%lx", magic);
+		log_dbg("bad bootrec magic: 0x%lx", magic);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	version = bsec1k_version(bsc);
+	version = bootrec1k_version(brec1k);
 	if (version != SILOFS_FMT_VERSION) {
-		log_dbg("bad bootsec version: %lu", version);
+		log_dbg("bad bootrec version: %lu", version);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
 
-static int bsec1k_check_sb_uaddr(const struct silofs_bootsec1k *bsc)
+static int bootrec1k_check_sb_uaddr(const struct silofs_bootrec1k *brec1k)
 {
 	struct silofs_uaddr uaddr;
 
-	bsec1k_sb_uaddr(bsc, &uaddr);
+	bootrec1k_sb_uaddr(brec1k, &uaddr);
 	if ((uaddr.stype != SILOFS_STYPE_SUPER) ||
 	    (uaddr.height != SILOFS_HEIGHT_SUPER)) {
-		log_dbg("bad bootsec sb-uaddr: stype=%d height=%d",
+		log_dbg("bad bootrec sb-uaddr: stype=%d height=%d",
 		        (int)uaddr.stype, (int)uaddr.height);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
 
-static void bsec1k_cipher_args(const struct silofs_bootsec1k *bsc,
-                               struct silofs_cipher_args *cip_args)
+static void bootrec1k_cipher_args(const struct silofs_bootrec1k *brec1k,
+                                  struct silofs_cipher_args *cip_args)
 {
-	bsec1k_kdf(bsc, &cip_args->kdf);
-	cip_args->cipher_algo = bsec1k_chiper_algo(bsc);
-	cip_args->cipher_mode = bsec1k_chiper_mode(bsc);
+	bootrec1k_kdf(brec1k, &cip_args->kdf);
+	cip_args->cipher_algo = bootrec1k_chiper_algo(brec1k);
+	cip_args->cipher_mode = bootrec1k_chiper_mode(brec1k);
 }
 
-static int bsec1k_check(const struct silofs_bootsec1k *bsc)
+static int bootrec1k_check(const struct silofs_bootrec1k *brec1k)
 {
 	struct silofs_cipher_args cip_args = {
 		.cipher_algo = 0,
@@ -385,186 +388,186 @@ static int bsec1k_check(const struct silofs_bootsec1k *bsc)
 	};
 	int err;
 
-	err = bsec1k_check_base(bsc);
+	err = bootrec1k_check_base(brec1k);
 	if (err) {
 		return err;
 	}
-	err = bsec1k_check_sb_uaddr(bsc);
+	err = bootrec1k_check_sb_uaddr(brec1k);
 	if (err) {
 		return err;
 	}
 	/* currently, requires default values */
-	bsec1k_cipher_args(bsc, &cip_args);
+	bootrec1k_cipher_args(brec1k, &cip_args);
 	if (!cip_args_isequal(&cip_args, &s_default_cip_args)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
 
-static void bsec1k_hash(const struct silofs_bootsec1k *bsc,
-                        struct silofs_hash256 *hash)
+static void bootrec1k_hash(const struct silofs_bootrec1k *brec1k,
+                           struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(hash, &bsc->bs_hash);
+	silofs_hash256_assign(hash, &brec1k->br_hash);
 }
 
-static void bsec1k_set_hash(struct silofs_bootsec1k *bsc,
-                            const struct silofs_hash256 *hash)
+static void bootrec1k_set_hash(struct silofs_bootrec1k *brec1k,
+                               const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&bsc->bs_hash, hash);
+	silofs_hash256_assign(&brec1k->br_hash, hash);
 }
 
-static void bsec1k_calc_hash(const struct silofs_bootsec1k *bsc,
-                             const struct silofs_mdigest *md,
-                             struct silofs_hash256 *out_hash)
+static void bootrec1k_calc_hash(const struct silofs_bootrec1k *brec1k,
+                                const struct silofs_mdigest *md,
+                                struct silofs_hash256 *out_hash)
 {
-	const size_t len = offsetof(struct silofs_bootsec1k, bs_hash);
+	const size_t len = offsetof(struct silofs_bootrec1k, br_hash);
 
-	silofs_sha3_256_of(md, bsc, len, out_hash);
+	silofs_sha3_256_of(md, brec1k, len, out_hash);
 }
 
-void silofs_bsec1k_stamp(struct silofs_bootsec1k *bsc,
-                         const struct silofs_mdigest *md)
+void silofs_bootrec1k_stamp(struct silofs_bootrec1k *brec1k,
+                            const struct silofs_mdigest *md)
 {
 	struct silofs_hash256 hash;
 
-	bsec1k_calc_hash(bsc, md, &hash);
-	bsec1k_set_hash(bsc, &hash);
+	bootrec1k_calc_hash(brec1k, md, &hash);
+	bootrec1k_set_hash(brec1k, &hash);
 }
 
-static int bsec1k_check_hash(const struct silofs_bootsec1k *bsc,
-                             const struct silofs_mdigest *md)
+static int bootrec1k_check_hash(const struct silofs_bootrec1k *brec1k,
+                                const struct silofs_mdigest *md)
 {
 	struct silofs_hash256 hash[2];
 
-	bsec1k_hash(bsc, &hash[0]);
-	bsec1k_calc_hash(bsc, md, &hash[1]);
+	bootrec1k_hash(brec1k, &hash[0]);
+	bootrec1k_calc_hash(brec1k, md, &hash[1]);
 
 	return silofs_hash256_isequal(&hash[0], &hash[1]) ?
 	       0 : -SILOFS_EFSCORRUPTED;
 }
 
-int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,
-                         const struct silofs_mdigest *md)
+int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
+                            const struct silofs_mdigest *md)
 {
 	int err;
 
-	err = bsec1k_check(bsc);
+	err = bootrec1k_check(brec1k);
 	if (err) {
 		return err;
 	}
-	err = bsec1k_check_hash(bsc, md);
+	err = bootrec1k_check_hash(brec1k, md);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
-                         struct silofs_bootsec *bsec)
+void silofs_bootrec1k_parse(const struct silofs_bootrec1k *brec1k,
+                            struct silofs_bootrec *brec)
 {
-	bsec1k_sb_uaddr(bsc, &bsec->sb_ulink.uaddr);
-	bsec1k_sb_riv(bsc, &bsec->sb_ulink.riv);
-	bsec1k_uuid(bsc, &bsec->uuid);
-	bsec1k_cipher_args(bsc, &bsec->cip_args);
-	bsec->flags = bsec1k_flags(bsc);
-	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
-		bsec1k_key_hash(bsc, &bsec->key_hash);
+	bootrec1k_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
+	bootrec1k_sb_riv(brec1k, &brec->sb_ulink.riv);
+	bootrec1k_uuid(brec1k, &brec->uuid);
+	bootrec1k_cipher_args(brec1k, &brec->cip_args);
+	brec->flags = bootrec1k_flags(brec1k);
+	if (brec->flags & SILOFS_BOOTF_KEY_SHA256) {
+		bootrec1k_key_hash(brec1k, &brec->key_hash);
 	}
 }
 
-void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
-                       const struct silofs_bootsec *bsec)
+void silofs_bootrec1k_set(struct silofs_bootrec1k *brec1k,
+                          const struct silofs_bootrec *brec)
 {
-	silofs_bsec1k_init(bsc);
-	bsec1k_set_sb_uaddr(bsc, &bsec->sb_ulink.uaddr);
-	bsec1k_set_sb_riv(bsc, &bsec->sb_ulink.riv);
-	bsec1k_set_uuid(bsc, &bsec->uuid);
-	bsec1k_set_flags(bsc, bsec->flags);
-	if (bsec->flags & SILOFS_BOOTF_KEY_SHA256) {
-		bsec1k_set_key_hash(bsc, &bsec->key_hash);
+	silofs_bootrec1k_init(brec1k);
+	bootrec1k_set_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
+	bootrec1k_set_sb_riv(brec1k, &brec->sb_ulink.riv);
+	bootrec1k_set_uuid(brec1k, &brec->uuid);
+	bootrec1k_set_flags(brec1k, brec->flags);
+	if (brec->flags & SILOFS_BOOTF_KEY_SHA256) {
+		bootrec1k_set_key_hash(brec1k, &brec->key_hash);
 	}
 }
 
-void silofs_bsec1k_setn(struct silofs_bootsec1k *bsc,
-                        const struct silofs_bootsec *bsec, size_t n)
+void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
+                           const struct silofs_bootrec *brec, size_t n)
 {
 	for (size_t i = 0; i < n; ++i) {
-		silofs_bsec1k_set(&bsc[i], &bsec[i]);
+		silofs_bootrec1k_set(&brec1k[i], &brec[i]);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bootsec_init(struct silofs_bootsec *bsec)
+void silofs_bootrec_init(struct silofs_bootrec *brec)
 {
-	silofs_memzero(bsec, sizeof(*bsec));
-	silofs_ulink_reset(&bsec->sb_ulink);
-	silofs_default_cip_args(&bsec->cip_args);
-	silofs_uuid_generate(&bsec->uuid);
-	bsec->flags = SILOFS_BOOTF_NONE;
+	silofs_memzero(brec, sizeof(*brec));
+	silofs_ulink_reset(&brec->sb_ulink);
+	silofs_default_cip_args(&brec->cip_args);
+	silofs_uuid_generate(&brec->uuid);
+	brec->flags = SILOFS_BOOTF_NONE;
 }
 
-void silofs_bootsec_fini(struct silofs_bootsec *bsec)
+void silofs_bootrec_fini(struct silofs_bootrec *brec)
 {
-	silofs_memffff(bsec, sizeof(*bsec));
+	silofs_memffff(brec, sizeof(*brec));
 }
 
-void silofs_bootsec_uuid(const struct silofs_bootsec *bsec,
+void silofs_bootrec_uuid(const struct silofs_bootrec *brec,
                          struct silofs_uuid *out_uuid)
 {
-	silofs_uuid_assign(out_uuid, &bsec->uuid);
+	silofs_uuid_assign(out_uuid, &brec->uuid);
 }
 
-void silofs_bootsec_set_uuid(struct silofs_bootsec *bsec,
+void silofs_bootrec_set_uuid(struct silofs_bootrec *brec,
                              const struct silofs_uuid *uuid)
 {
-	silofs_uuid_assign(&bsec->uuid, uuid);
+	silofs_uuid_assign(&brec->uuid, uuid);
 }
 
-void silofs_bootsec_sb_ulink(const struct silofs_bootsec *bsec,
+void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink)
 {
-	silofs_ulink_assign(out_ulink, &bsec->sb_ulink);
+	silofs_ulink_assign(out_ulink, &brec->sb_ulink);
 }
 
-void silofs_bootsec_set_sb_ulink(struct silofs_bootsec *bsec,
+void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
                                  const struct silofs_ulink *sb_ulink)
 {
-	silofs_ulink_assign(&bsec->sb_ulink, sb_ulink);
+	silofs_ulink_assign(&brec->sb_ulink, sb_ulink);
 }
 
-void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,
+void silofs_bootrec_set_keyhash(struct silofs_bootrec *brec,
                                 const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&bsec->key_hash, hash);
-	bsec->flags |= SILOFS_BOOTF_KEY_SHA256;
+	silofs_hash256_assign(&brec->key_hash, hash);
+	brec->flags |= SILOFS_BOOTF_KEY_SHA256;
 }
 
-void silofs_bootsec_clear_keyhash(struct silofs_bootsec *bsec)
+void silofs_bootrec_clear_keyhash(struct silofs_bootrec *brec)
 {
-	silofs_memzero(&bsec->key_hash, sizeof(bsec->key_hash));
-	bsec->flags &= (enum silofs_bootf)(~SILOFS_BOOTF_KEY_SHA256);
+	silofs_memzero(&brec->key_hash, sizeof(brec->key_hash));
+	brec->flags &= (enum silofs_bootf)(~SILOFS_BOOTF_KEY_SHA256);
 }
 
-static bool bootsec_has_keyhash(const struct silofs_bootsec *bsec,
+static bool bootrec_has_keyhash(const struct silofs_bootrec *brec,
                                 const struct silofs_hash256 *hash)
 {
-	return silofs_hash256_isequal(&bsec->key_hash, hash);
+	return silofs_hash256_isequal(&brec->key_hash, hash);
 }
 
-int silofs_bootsec_check_keyhash(const struct silofs_bootsec *bsec,
+int silofs_bootrec_check_keyhash(const struct silofs_bootrec *brec,
                                  const struct silofs_hash256 *hash)
 {
-	return bootsec_has_keyhash(bsec, hash) ? 0 : -EKEYEXPIRED;
+	return bootrec_has_keyhash(brec, hash) ? 0 : -EKEYEXPIRED;
 }
 
-void silofs_bootsec_cipher_args(const struct silofs_bootsec *bsec,
+void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
                                 struct silofs_cipher_args *out_cip_args)
 {
-	if (!bsec || !bsec->cip_args.cipher_algo) {
+	if (!brec || !brec->cip_args.cipher_algo) {
 		silofs_default_cip_args(out_cip_args);
 	} else {
-		cip_args_assign(out_cip_args, &bsec->cip_args);
+		cip_args_assign(out_cip_args, &brec->cip_args);
 	}
 }
 

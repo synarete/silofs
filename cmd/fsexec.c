@@ -136,9 +136,10 @@ void cmd_close_repo(struct silofs_fs_env *fse)
 
 void cmd_require_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 {
+	struct silofs_bootrec brec;
 	int err;
 
-	err = silofs_poke_fs(fse, uuid);
+	err = silofs_poke_fs(fse, uuid, &brec);
 	cmd_require_ok(fse, err, "failed to poke fs");
 }
 

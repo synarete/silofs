@@ -151,8 +151,8 @@ static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 	cmd_check_fsname(args->snapname);
 	cmd_check_fusefs(args->dirpath_real);
 	cmd_snap_ioctl_query(args->dirpath_real, &query);
-	args->repodir = cmd_strdup(query.u.bootsec.repo);
-	args->name = cmd_strdup(query.u.bootsec.name);
+	args->repodir = cmd_strdup(query.u.bootrec.repo);
+	args->name = cmd_strdup(query.u.bootrec.name);
 	cmd_realpath(args->repodir, &args->repodir_real);
 	cmd_check_isdir(args->repodir_real, true);
 	cmd_check_fsname(args->name);
@@ -283,7 +283,7 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 	cmd_close_repo(ctx->fs_env);
 }
 
-static void cmd_snap_require_bsec(struct cmd_snap_ctx *ctx)
+static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
 {
 	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
@@ -400,8 +400,8 @@ void cmd_execute_snap(void)
 	/* Open repository */
 	cmd_snap_open_repo(&ctx);
 
-	/* Require source bootsec */
-	cmd_snap_require_bsec(&ctx);
+	/* Require source boot-record */
+	cmd_snap_require_brec(&ctx);
 
 	/* Do actual snap (offline|online) */
 	cmd_snap_execute(&ctx);

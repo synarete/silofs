@@ -108,7 +108,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 	if (err) {
 		goto out;
 	}
-	cmd_join_path(qry->u.bootsec.repo, qry->u.bootsec.name, &path[0]);
+	cmd_join_path(qry->u.bootrec.repo, qry->u.bootrec.name, &path[0]);
 	err = silofs_sys_stat(path[0], &st[0]);
 	if (err) {
 		goto out;
@@ -171,7 +171,7 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 	cmd_close_repo(ctx->fs_env);
 }
 
-static void cmd_rmfs_require_bsec(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_require_brec(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
@@ -250,8 +250,8 @@ void cmd_execute_rmfs(void)
 	/* Open-validate repository */
 	cmd_rmfs_open_repo(&ctx);
 
-	/* Require valid reference */
-	cmd_rmfs_require_bsec(&ctx);
+	/* Require existing boot-record */
+	cmd_rmfs_require_brec(&ctx);
 
 	/* Do actual blobs deletion*/
 	cmd_rmfs_execute(&ctx);

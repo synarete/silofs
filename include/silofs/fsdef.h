@@ -547,24 +547,24 @@ struct silofs_kdf_pair {
 } silofs_packed_aligned32;
 
 
-struct silofs_bootsec1k {
-	uint64_t                        bs_magic;
-	uint64_t                        bs_version;
-	struct silofs_uuid              bs_uuid;
-	uint64_t                        bs_flags;
-	uint8_t                         bs_reserved1[24];
-	struct silofs_kdf_pair          bs_kdf_pair;
-	uint32_t                        bs_chiper_algo;
-	uint32_t                        bs_chiper_mode;
-	uint8_t                         bs_reserved2[24];
-	struct silofs_hash256           bs_key_hash;
-	uint8_t                         bs_reserved3[96];
-	struct silofs_uaddr64b          bs_sb_uaddr;
-	struct silofs_iv                bs_sb_riv;
-	uint8_t                         bs_reserved4[48];
-	uint8_t                         bs_rands[128];
-	uint8_t                         bs_reserved5[480];
-	struct silofs_hash256           bs_hash;
+struct silofs_bootrec1k {
+	uint64_t                        br_magic;
+	uint64_t                        br_version;
+	struct silofs_uuid              br_uuid;
+	uint64_t                        br_flags;
+	uint8_t                         br_reserved1[24];
+	struct silofs_kdf_pair          br_kdf_pair;
+	uint32_t                        br_chiper_algo;
+	uint32_t                        br_chiper_mode;
+	uint8_t                         br_reserved2[24];
+	struct silofs_hash256           br_key_hash;
+	uint8_t                         br_reserved3[96];
+	struct silofs_uaddr64b          br_sb_uaddr;
+	struct silofs_iv                br_sb_riv;
+	uint8_t                         br_reserved4[48];
+	uint8_t                         br_rands[128];
+	uint8_t                         br_reserved5[480];
+	struct silofs_hash256           br_hash;
 } silofs_packed_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -716,11 +716,11 @@ struct silofs_bk_state {
 
 
 struct silofs_bk_ref {
-	struct silofs_bkaddr48b         br_uref;
-	struct silofs_bk_state          br_allocated;
-	struct silofs_bk_state          br_unwritten;
-	uint64_t                        br_dbkref;
-	uint8_t                         br_reserved[24];
+	struct silofs_bkaddr48b         bkr_uref;
+	struct silofs_bk_state          bkr_allocated;
+	struct silofs_bk_state          bkr_unwritten;
+	uint64_t                        bkr_dbkref;
+	uint8_t                         bkr_reserved[24];
 } silofs_packed_aligned8;
 
 

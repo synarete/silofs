@@ -144,7 +144,7 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 	cmd_open_repo(ctx->fs_env);
 }
 
-static void cmd_fsck_require_bsec(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_require_brec(struct cmd_fsck_ctx *ctx)
 {
 	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
@@ -201,8 +201,8 @@ void cmd_execute_fsck(void)
 	/* Open repository */
 	cmd_fsck_open_repo(&ctx);
 
-	/* Require source bootsec */
-	cmd_fsck_require_bsec(&ctx);
+	/* Require source boot-record */
+	cmd_fsck_require_brec(&ctx);
 
 	/* Require boot + lock-able file-system */
 	cmd_fsck_boot_fs(&ctx);

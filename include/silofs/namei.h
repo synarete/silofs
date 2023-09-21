@@ -18,7 +18,7 @@
 #define SILOFS_NAMEI_H_
 
 
-struct silofs_bootsec;
+struct silofs_bootrec;
 struct silofs_sb_info;
 struct silofs_task;
 struct silofs_ioc_query;
@@ -118,7 +118,7 @@ int silofs_do_query(struct silofs_task *task,
 
 int silofs_do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
-                    struct silofs_bootsecs *out_bsecs);
+                    struct silofs_bootrecs *out_brecs);
 
 int silofs_do_tune(struct silofs_task *task,
                    struct silofs_inode_info *dir_ii,

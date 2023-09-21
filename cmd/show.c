@@ -156,8 +156,8 @@ static void cmd_show_version(struct cmd_show_ctx *ctx)
 static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s/%s\n", ctx->ioc->query.u.bootsec.repo,
-	       ctx->ioc->query.u.bootsec.name);
+	printf("%s/%s\n", ctx->ioc->query.u.bootrec.repo,
+	       ctx->ioc->query.u.bootrec.name);
 }
 
 struct silofs_msflag_name {

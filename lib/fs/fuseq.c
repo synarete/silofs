@@ -2638,10 +2638,10 @@ out:
 	                         sizeof(fcc->args->out.query.qry), err);
 }
 
-static void uuid_of(const struct silofs_bootsecs *bsecs,
+static void uuid_of(const struct silofs_bootrecs *brecs,
                     size_t idx, struct silofs_uuid *out_uuid)
 {
-	silofs_bootsec_uuid(&bsecs->bsec[idx], out_uuid);
+	silofs_bootrec_uuid(&brecs->brec[idx], out_uuid);
 }
 
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -2676,8 +2676,8 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	if (err) {
 		goto out;
 	}
-	uuid_of(&fcc->args->out.clone.bsecs, 0, &cl_out->uuid_new);
-	uuid_of(&fcc->args->out.clone.bsecs, 1, &cl_out->uuid_alt);
+	uuid_of(&fcc->args->out.clone.brecs, 0, &cl_out->uuid_new);
+	uuid_of(&fcc->args->out.clone.brecs, 1, &cl_out->uuid_alt);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0,
@@ -4669,7 +4669,7 @@ static int op_ioctl_clone(struct silofs_task *task,
 	return silofs_fs_clone(task,
 	                       args->in.clone.ino,
 	                       args->in.clone.flags,
-	                       &args->out.clone.bsecs);
+	                       &args->out.clone.brecs);
 }
 
 static int op_ioctl_syncfs(struct silofs_task *task,

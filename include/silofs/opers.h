@@ -22,7 +22,7 @@
 
 /* forward declarations */
 struct fuse_forget_one;
-struct silofs_bootsec;
+struct silofs_bootrec;
 struct silofs_uber;
 struct silofs_task;
 struct silofs_ioc_query;
@@ -312,7 +312,7 @@ struct silofs_op_clone_in {
 };
 
 struct silofs_op_clone_out {
-	struct silofs_bootsecs bsecs;
+	struct silofs_bootrecs brecs;
 };
 
 struct silofs_op_syncfs_in {
@@ -524,7 +524,7 @@ int silofs_fs_query(struct silofs_task *task, ino_t ino,
                     struct silofs_ioc_query *out_qry);
 
 int silofs_fs_clone(struct silofs_task *task, ino_t ino,
-                    int flags, struct silofs_bootsecs *out_bsecs);
+                    int flags, struct silofs_bootrecs *out_brecs);
 
 int silofs_fs_tune(struct silofs_task *task, ino_t ino,
                    int iflags_want, int iflags_dont);

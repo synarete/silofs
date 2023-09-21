@@ -18,14 +18,14 @@
 #define SILOFS_BOOT_H_
 
 
-/* boot pathname: a pair of repo-directory & bootsec name (optional) */
+/* boot pathname: a pair of repo-directory & boot-record name (optional) */
 struct silofs_bootpath {
 	struct silofs_str               repodir;
 	struct silofs_namestr           name;
 };
 
-/* boot-sector in-memory representation */
-struct silofs_bootsec {
+/* boot-record representation (in-memory) */
+struct silofs_bootrec {
 	struct silofs_uuid              uuid;
 	struct silofs_ulink             sb_ulink;
 	struct silofs_cipher_args       cip_args;
@@ -33,59 +33,59 @@ struct silofs_bootsec {
 	enum silofs_bootf               flags;
 };
 
-/* boot-sector pair after fork-fs */
-struct silofs_bootsecs {
-	struct silofs_bootsec           bsec[2];
+/* boot-records pair after fork-fs */
+struct silofs_bootrecs {
+	struct silofs_bootrec           brec[2];
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bsec1k_init(struct silofs_bootsec1k *bsc);
+void silofs_bootrec1k_init(struct silofs_bootrec1k *brec1k);
 
-void silofs_bsec1k_fini(struct silofs_bootsec1k *bsc);
+void silofs_bootrec1k_fini(struct silofs_bootrec1k *brec1k);
 
-void silofs_bsec1k_stamp(struct silofs_bootsec1k *bsc,
-                         const struct silofs_mdigest *md);
+void silofs_bootrec1k_stamp(struct silofs_bootrec1k *brec1k,
+                            const struct silofs_mdigest *md);
 
-int silofs_bsec1k_verify(const struct silofs_bootsec1k *bsc,
-                         const struct silofs_mdigest *md);
+int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
+                            const struct silofs_mdigest *md);
 
-void silofs_bsec1k_parse(const struct silofs_bootsec1k *bsc,
-                         struct silofs_bootsec *bsec);
+void silofs_bootrec1k_parse(const struct silofs_bootrec1k *brec1k,
+                            struct silofs_bootrec *brec);
 
-void silofs_bsec1k_set(struct silofs_bootsec1k *bsc,
-                       const struct silofs_bootsec *bsec);
+void silofs_bootrec1k_set(struct silofs_bootrec1k *brec1k,
+                          const struct silofs_bootrec *brec);
 
-void silofs_bsec1k_setn(struct silofs_bootsec1k *bsc,
-                        const struct silofs_bootsec *bsec, size_t n);
+void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
+                           const struct silofs_bootrec *brec, size_t n);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bootsec_init(struct silofs_bootsec *bsec);
+void silofs_bootrec_init(struct silofs_bootrec *brec);
 
-void silofs_bootsec_fini(struct silofs_bootsec *bsec);
+void silofs_bootrec_fini(struct silofs_bootrec *brec);
 
-void silofs_bootsec_uuid(const struct silofs_bootsec *bsec,
+void silofs_bootrec_uuid(const struct silofs_bootrec *brec,
                          struct silofs_uuid *out_uuid);
 
-void silofs_bootsec_set_uuid(struct silofs_bootsec *bsec,
+void silofs_bootrec_set_uuid(struct silofs_bootrec *brec,
                              const struct silofs_uuid *uuid);
 
-void silofs_bootsec_sb_ulink(const struct silofs_bootsec *bsec,
+void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink);
 
-void silofs_bootsec_set_sb_ulink(struct silofs_bootsec *bsec,
+void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
                                  const struct silofs_ulink *sb_ulink);
 
-void silofs_bootsec_set_keyhash(struct silofs_bootsec *bsec,
+void silofs_bootrec_set_keyhash(struct silofs_bootrec *brec,
                                 const struct silofs_hash256 *hash);
 
-void silofs_bootsec_clear_keyhash(struct silofs_bootsec *bsec);
+void silofs_bootrec_clear_keyhash(struct silofs_bootrec *brec);
 
-int silofs_bootsec_check_keyhash(const struct silofs_bootsec *bsec,
+int silofs_bootrec_check_keyhash(const struct silofs_bootrec *brec,
                                  const struct silofs_hash256 *hash);
 
-void silofs_bootsec_cipher_args(const struct silofs_bootsec *bsec,
+void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
                                 struct silofs_cipher_args *out_cip_args);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

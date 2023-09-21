@@ -326,7 +326,7 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 	cmd_close_repo(ctx->fs_env);
 }
 
-static void cmd_mount_require_bsec(struct cmd_mount_ctx *ctx)
+static void cmd_mount_require_brec(struct cmd_mount_ctx *ctx)
 {
 	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
 }
@@ -529,8 +529,8 @@ void cmd_execute_mount(void)
 	/* Open repository first time */
 	cmd_mount_open_repo(&ctx);
 
-	/* Load-verify bootsec */
-	cmd_mount_require_bsec(&ctx);
+	/* Load-verify boot-record */
+	cmd_mount_require_brec(&ctx);
 
 	/* Require boot + lock-able file-system */
 	cmd_mount_boot_fs(&ctx);
@@ -550,8 +550,8 @@ void cmd_execute_mount(void)
 	/* Re-open repository */
 	cmd_mount_open_repo(&ctx);
 
-	/* Re-load and verify bootsec */
-	cmd_mount_require_bsec(&ctx);
+	/* Re-load and verify boot-record  */
+	cmd_mount_require_brec(&ctx);
 
 	/* Re-boot and lock file-system */
 	cmd_mount_boot_fs(&ctx);

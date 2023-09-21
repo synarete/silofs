@@ -1575,7 +1575,7 @@ out:
 }
 
 int silofs_fs_clone(struct silofs_task *task, ino_t ino,
-                    int flags, struct silofs_bootsecs *out_bsecs)
+                    int flags, struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
@@ -1592,7 +1592,7 @@ int silofs_fs_clone(struct silofs_task *task, ino_t ino,
 	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_clone(task, dir_ii, flags, out_bsecs);
+	err = silofs_do_clone(task, dir_ii, flags, out_brecs);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, ino, err);

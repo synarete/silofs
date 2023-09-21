@@ -668,18 +668,18 @@ static int check_xaccess_parent(struct silofs_task *task,
 
 static void kill_suid_sgid(struct silofs_inode_info *ii, long flags)
 {
-	mode_t mask = 0;
-	const mode_t mode = ii_mode(ii);
+	const long mode_cur = ii_mode(ii);
+	long mode_new = mode_cur;
 
-	if ((flags & SILOFS_IATTR_KILL_SUID) && (mode & S_ISUID)) {
-		mask |= S_ISUID;
+	if ((flags & SILOFS_IATTR_KILL_SUID) && (mode_cur & S_ISUID)) {
+		mode_new &= ~S_ISUID;
 	}
 	if ((flags & SILOFS_IATTR_KILL_SGID) &&
-	    ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP))) {
-		mask |= S_ISGID;
+	    ((mode_cur & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP))) {
+		mode_new &= ~S_ISGID;
 	}
-	if (mask) {
-		inode_set_mode(ii->inode, mode & ~mask);
+	if (mode_new != mode_cur) {
+		inode_set_mode(ii->inode, (mode_t)mode_new);
 		ii_dirtify(ii);
 	}
 }

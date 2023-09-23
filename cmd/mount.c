@@ -88,6 +88,8 @@ enum cmd_mount_subopts {
 	CMD_MOUNT_OPT_NOSUID,
 	CMD_MOUNT_OPT_EXEC,
 	CMD_MOUNT_OPT_NOEXEC,
+	CMD_MOUNT_OPT_HOSTIDS,
+	CMD_MOUNT_OPT_PASSWD,
 };
 
 static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
@@ -101,6 +103,8 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	char tok_nosuid[] = "nosuid";
 	char tok_exec[] = "exec";
 	char tok_noexec[] = "noexec";
+	char tok_hostids[] = "hostids";
+	char tok_passwd[] = "passwd";
 	char *const toks[] = {
 		[CMD_MOUNT_OPT_RO] = tok_ro,
 		[CMD_MOUNT_OPT_RW] = tok_rw,
@@ -110,11 +114,13 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 		[CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
 		[CMD_MOUNT_OPT_EXEC] = tok_exec,
 		[CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
+		[CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
+		[CMD_MOUNT_OPT_PASSWD] = tok_passwd,
 		NULL
 	};
-	char *sopt;
-	char *sval;
-	int skey;
+	char *sopt = NULL;
+	char *sval = NULL;
+	int skey = 0;
 	size_t len;
 
 	len = strlen(optarg);
@@ -142,6 +148,10 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 			ctx->in_args.noexec = false;
 		} else if (skey == CMD_MOUNT_OPT_NOEXEC) {
 			ctx->in_args.noexec = true;
+		} else if (skey == CMD_MOUNT_OPT_HOSTIDS) {
+			ctx->in_args.allowhostids = true;
+		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
+			ctx->in_args.password = cmd_strdup(sval);
 		} else {
 			cmd_dief(0, "illegal sub-options: %s", optarg);
 		}

@@ -443,6 +443,15 @@ void cmd_getoptarg(const char *opt_name, char **out_opt)
 	*out_opt = cmd_strdup(optarg);
 }
 
+void cmd_getoptarg_pass(char **out_pass)
+{
+	char *opt = NULL;
+
+	cmd_getoptarg("--password", &opt);
+	*out_pass = cmd_getpass_str(opt);
+	cmd_pstrfree(&opt);
+}
+
 void cmd_getarg(const char *arg_name, char **out_arg)
 {
 	char *arg = NULL;

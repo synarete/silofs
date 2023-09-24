@@ -56,7 +56,7 @@ static int isskip(int ch)
 	return !ch || isspace(ch);
 }
 
-static void parse_password(char *buf, size_t bsz)
+static char *parse_dup_password(const char *buf, size_t bsz)
 {
 	size_t len = bsz;
 	const char *str = buf;
@@ -71,14 +71,13 @@ static void parse_password(char *buf, size_t bsz)
 	if (len == 0) {
 		cmd_dief(-EINVAL, "zero length password");
 	}
-	if ((len > SILOFS_PASSWORD_MAX) || (len >= bsz)) {
+	if (len > SILOFS_PASSWORD_MAX) {
 		cmd_dief(-EINVAL, "password too long");
 	}
 	for (size_t i = 0; i < len; ++i) {
 		check_password_char(str[i]);
 	}
-	memmove(buf, str, len);
-	buf[len] = '\0';
+	return cmd_strndup(str, len);
 }
 
 static void
@@ -193,9 +192,8 @@ static char *getpass_from_file(const char *path)
 
 	fd = open_password_file(path);
 	read_password_buf(fd, buf, sizeof(buf), &len);
-	parse_password(buf, len);
 	close_password_file(fd, path);
-	return cmd_strdup(buf);
+	return parse_dup_password(buf, len);
 }
 
 static char *do_getpass(const char *path, bool repeat)
@@ -230,6 +228,11 @@ void cmd_getpass(const char *path, char **out_pass)
 void cmd_getpass2(const char *path, char **out_pass)
 {
 	*out_pass = do_getpass(path, true);
+}
+
+char *cmd_getpass_str(const char *pass)
+{
+	return parse_dup_password(pass, strlen(pass));
 }
 
 void cmd_delpass(char **pass)

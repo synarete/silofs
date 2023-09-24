@@ -140,6 +140,8 @@ void cmd_mkdir(const char *path, mode_t mode);
 
 void cmd_getoptarg(const char *opt_name, char **out_opt);
 
+void cmd_getoptarg_pass(char **out_pass);
+
 void cmd_getarg(const char *arg_name, char **out_arg);
 
 void cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
@@ -274,6 +276,8 @@ void cmd_register_sigactions(void (*sig_hook_fn)(int));
 void cmd_getpass(const char *path, char **out_pass);
 
 void cmd_getpass2(const char *path, char **out_pass);
+
+char *cmd_getpass_str(const char *pass);
 
 void cmd_delpass(char **pass);
 

@@ -54,7 +54,7 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 	while (opt_chr > 0) {
 		opt_chr = cmd_getopt("p:h", opts);
 		if (opt_chr == 'p') {
-			cmd_getoptarg("--password", &ctx->in_args.password);
+			cmd_getoptarg_pass(&ctx->in_args.password);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {

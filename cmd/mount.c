@@ -52,6 +52,7 @@ struct cmd_mount_in_args {
 	char   *name;
 	char   *mntpoint;
 	char   *mntpoint_real;
+	char   *uhelper;
 	char   *password;
 	bool    no_allowother;
 	bool    allowhostids;
@@ -151,7 +152,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 		} else if (skey == CMD_MOUNT_OPT_HOSTIDS) {
 			ctx->in_args.allowhostids = true;
 		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
-			ctx->in_args.password = cmd_strdup(sval);
+			ctx->in_args.password = cmd_getpass_str(sval);
 		} else {
 			cmd_dief(0, "illegal sub-options: %s", optarg);
 		}
@@ -197,7 +198,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		} else if (opt_chr == 'M') {
 			ctx->in_args.stdalloc = true;
 		} else if (opt_chr == 'p') {
-			cmd_getoptarg("--password", &ctx->in_args.password);
+			cmd_getoptarg_pass(&ctx->in_args.password);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {
@@ -279,6 +280,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.mntpoint);
 	cmd_pstrfree(&ctx->in_args.mntpoint_real);
 	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_close_syslog();
 	cmd_mount_ctx = NULL;

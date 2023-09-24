@@ -86,7 +86,7 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 		} else if (opt_chr == 'X') {
 			ctx->in_args.offline = true;
 		} else if (opt_chr == 'p') {
-			cmd_getoptarg("--password", &ctx->in_args.password);
+			cmd_getoptarg_pass(&ctx->in_args.password);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {

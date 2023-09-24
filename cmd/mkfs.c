@@ -82,7 +82,7 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 		} else if (opt_chr == 'F') {
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'p') {
-			cmd_getoptarg("--password", &ctx->in_args.password);
+			cmd_getoptarg_pass(&ctx->in_args.password);
 		} else if (opt_chr == 'V') {
 			cmd_set_verbose_mode(optarg);
 		} else if (opt_chr == 'h') {

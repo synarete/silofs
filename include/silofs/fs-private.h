@@ -17,7 +17,7 @@
 #ifndef SILOFS_PRIVATE_H_
 #define SILOFS_PRIVATE_H_
 
-#ifndef SILOFS_USE_FS_PRIVATE
+#ifndef SILOFS_HAVE_PRIVATE
 #error "internal library header -- do not include!"
 #endif
 

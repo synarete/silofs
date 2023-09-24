@@ -64,7 +64,7 @@ Various testing programs for silofs.
 %{_sbindir}/%{name}-mountd
 %{_sbindir}/*.%{name}
 %exclude %{_libdir}/lib%{name}*.so.*
-%exclude %{_libdir}/lib%{name}_*.*a
+%exclude %{_libdir}/lib%{name}*.*a
 %config(noreplace) %{_sysconfdir}/%{name}/*.conf
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man8/%{name}-*.8*

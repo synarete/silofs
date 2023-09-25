@@ -277,6 +277,8 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
+enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
+
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_blobid *blobid,
                         loff_t bpos, enum silofs_stype stype, loff_t voff);

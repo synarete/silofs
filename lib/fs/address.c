@@ -1012,7 +1012,6 @@ static const struct silofs_uaddr s_uaddr_none = {
 	.oaddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
-	.height = SILOFS_HEIGHT_LAST,
 };
 
 const struct silofs_uaddr *silofs_uaddr_none(void)
@@ -1033,7 +1032,6 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
 	silofs_oaddr_setup(&uaddr->oaddr, blobid, bpos, stype_size(stype));
 	uaddr->voff = voff;
 	uaddr->stype = stype;
-	uaddr->height = blobid->height;
 }
 
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
@@ -1049,7 +1047,6 @@ void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
 	silofs_oaddr_assign(&uaddr->oaddr, &other->oaddr);
 	uaddr->voff = other->voff;
 	uaddr->stype = other->stype;
-	uaddr->height = other->height;
 }
 
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
@@ -1057,10 +1054,6 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 {
 	long cmp;
 
-	cmp = (long)uaddr1->height - (long)uaddr2->height;
-	if (cmp) {
-		return cmp;
-	}
 	cmp = (long)uaddr1->stype - (long)uaddr2->stype;
 	if (cmp) {
 		return cmp;
@@ -1088,6 +1081,11 @@ silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 	return &uaddr->oaddr.bka.blobid;
 }
 
+enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
+{
+	return uaddr->oaddr.bka.blobid.height;
+}
+
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 {
 	silofs_oaddr48b_reset(&uaddr64->oaddr);
@@ -1109,7 +1107,6 @@ void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uaddr64,
 	silofs_oaddr48b_parse(&uaddr64->oaddr, &uaddr->oaddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
 	uaddr->stype = (enum silofs_stype)(uaddr64->stype);
-	uaddr->height = uaddr->oaddr.bka.blobid.height;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

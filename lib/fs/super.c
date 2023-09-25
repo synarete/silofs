@@ -510,13 +510,15 @@ static void sb_setup_fresh(struct silofs_super_block *sb)
 
 static int verify_sproot(const struct silofs_uaddr *uaddr)
 {
+	const enum silofs_height height = uaddr_height(uaddr);
+
 	if (uaddr_isnull(uaddr)) {
 		return 0;
 	}
 	if ((uaddr->stype != SILOFS_STYPE_SPNODE) ||
-	    (uaddr->height != (SILOFS_HEIGHT_SUPER - 1))) {
+	    (height != (SILOFS_HEIGHT_SUPER - 1))) {
 		log_err("bad spnode root: stype=%d height=%d",
-		        (int)uaddr->stype, (int)uaddr->height);
+		        (int)uaddr->stype, (int)height);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

@@ -644,7 +644,7 @@ void silofs_uakey_setup_by(struct silofs_uakey *uakey,
                            const struct silofs_uaddr *uaddr)
 {
 	uakey_setup(uakey, uaddr->voff,
-	            uaddr->height, uaddr_vspace(uaddr));
+	            uaddr_height(uaddr), uaddr_vspace(uaddr));
 }
 
 void silofs_uakey_setup_by2(struct silofs_uakey *uakey,

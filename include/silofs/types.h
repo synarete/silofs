@@ -250,7 +250,6 @@ struct silofs_uaddr {
 	struct silofs_oaddr     oaddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
-	enum silofs_height      height;
 };
 
 /* a pair of object-address and its associate (random) IV */

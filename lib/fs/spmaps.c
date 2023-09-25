@@ -140,7 +140,7 @@ static enum silofs_height spnode_heigth(const struct silofs_spmap_node *sn)
 	struct silofs_uaddr self_uaddr;
 
 	spnode_self(sn, &self_uaddr);
-	return self_uaddr.height;
+	return uaddr_height(&self_uaddr);
 }
 
 static void spnode_main_blobid(const struct silofs_spmap_node *sn,
@@ -1422,9 +1422,10 @@ void silofs_sni_decref(struct silofs_spnode_info *sni)
 void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
                               const struct silofs_uaddr *parent, loff_t voff)
 {
-	struct silofs_vrange vrange;
+	struct silofs_vrange vrange = { .beg = -1, .end = -1, .len = 0 };
+	const enum silofs_height parent_height = uaddr_height(parent);
 
-	vrange_of_spnode(&vrange, parent->height - 1, voff);
+	vrange_of_spnode(&vrange, parent_height - 1, voff);
 	spnode_init(sni->sn, &vrange);
 	spnode_set_parent(sni->sn, parent);
 	spnode_set_self(sni->sn, sni_uaddr(sni));
@@ -1439,9 +1440,7 @@ void silofs_sni_update_staged(struct silofs_spnode_info *sni)
 
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni)
 {
-	const struct silofs_uaddr *uaddr = sni_uaddr(sni);
-
-	return uaddr->height;
+	return uaddr_height(sni_uaddr(sni));
 }
 
 static enum silofs_height sni_sub_height(const struct silofs_spnode_info *sni)
@@ -1730,7 +1729,7 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 	if (uaddr_isnull(&parent_uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	parent_height = parent_uaddr.height;
+	parent_height = uaddr_height(&parent_uaddr);
 	if (parent_height != ((int)height + 1)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
@@ -1756,7 +1755,7 @@ static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 	if (!stype_isspnode(uaddr.stype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	height = uaddr.height;
+	height = uaddr_height(&uaddr);
 	err = verify_spnode_height(height);
 	if (err) {
 		return err;

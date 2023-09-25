@@ -248,7 +248,7 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	d[6] = (uint64_t)(uaddr->oaddr.bka.lba);
 	d[7] = uaddr->oaddr.len;
 	d[8] = (uint64_t)(uaddr->oaddr.pos);
-	d[9] = 0x646f72616e646f6dULL + uaddr->height;
+	d[9] = 0x646f72616e646f6dULL;
 	d[10] = 0x736f6d6570736575ULL - uaddr->stype;
 	d[11] = voff;
 

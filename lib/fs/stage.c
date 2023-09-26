@@ -341,20 +341,20 @@ static int stgc_restore_view_of(const struct silofs_stage_ctx *stg_ctx,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static bool sbi_ismutable_bkaddr(const struct silofs_sb_info *sbi,
-                                 const struct silofs_bkaddr *bkaddr)
+static bool sbi_ismutable_paddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_paddr *paddr)
 {
-	return silofs_sbi_ismutable_blobid(sbi, &bkaddr->blobid);
+	return silofs_sbi_ismutable_blobid(sbi, &paddr->bka.blobid);
 }
 
-static int sbi_inspect_bkaddr(const struct silofs_sb_info *sbi,
-                              const struct silofs_bkaddr *bkaddr,
-                              enum silofs_stg_mode stg_mode)
+static int sbi_inspect_paddr(const struct silofs_sb_info *sbi,
+                             const struct silofs_paddr *paddr,
+                             enum silofs_stg_mode stg_mode)
 {
 	if (!stage_cow(stg_mode)) {
 		return 0;
 	}
-	if (sbi_ismutable_bkaddr(sbi, bkaddr)) {
+	if (sbi_ismutable_paddr(sbi, paddr)) {
 		return 0;
 	}
 	return -SILOFS_EPERM;
@@ -364,7 +364,7 @@ static int sbi_inspect_cached_ui(const struct silofs_sb_info *sbi,
                                  const struct silofs_unode_info *ui,
                                  enum silofs_stg_mode stg_mode)
 {
-	return sbi_inspect_bkaddr(sbi, ui_bkaddr(ui), stg_mode);
+	return sbi_inspect_paddr(sbi, ui_paddr(ui), stg_mode);
 }
 
 static int sbi_inspect_cached_sni(const struct silofs_sb_info *sbi,
@@ -586,28 +586,28 @@ stgc_require_spnode_main_blob(const struct silofs_stage_ctx *stg_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stgc_inspect_bkaddr(const struct silofs_stage_ctx *stg_ctx,
-                               const struct silofs_bkaddr *bkaddr)
+static int stgc_inspect_paddr(const struct silofs_stage_ctx *stg_ctx,
+                              const struct silofs_paddr *paddr)
 {
 	if (stage_normal(stg_ctx->stg_mode)) {
 		return 0;
 	}
-	if (sbi_ismutable_bkaddr(stg_ctx->sbi, bkaddr)) {
+	if (sbi_ismutable_paddr(stg_ctx->sbi, paddr)) {
 		return 0;
 	}
 	return -SILOFS_EPERM; /* address on read-only tree */
 }
 
-static int stgc_inspect_bkaddr_of(const struct silofs_stage_ctx *stg_ctx,
-                                  const struct silofs_plink *plink)
+static int stgc_inspect_plink(const struct silofs_stage_ctx *stg_ctx,
+                              const struct silofs_plink *plink)
 {
-	return stgc_inspect_bkaddr(stg_ctx, &plink->paddr.bka);
+	return stgc_inspect_paddr(stg_ctx, &plink->paddr);
 }
 
 static int stgc_inspect_cached_ui(const struct silofs_stage_ctx *stg_ctx,
                                   const struct silofs_unode_info *ui)
 {
-	return stgc_inspect_bkaddr(stg_ctx, ui_bkaddr(ui));
+	return stgc_inspect_paddr(stg_ctx, ui_paddr(ui));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -2038,7 +2038,7 @@ static int stgc_spawn_vbki_by(const struct silofs_stage_ctx *stg_ctx,
 
 static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
                                struct silofs_blobf *blobf,
-                               const struct silofs_bkaddr *bka,
+                               const struct silofs_paddr *paddr,
                                struct silofs_vbk_info **out_vbki)
 {
 	struct silofs_vbk_info *vbki = NULL;
@@ -2048,7 +2048,7 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_load_bk(blobf, bka, &vbki->vbk);
+	err = silofs_blobf_load_bk(blobf, paddr, &vbki->vbk);
 	if (err) {
 		stgc_forget_cached_vbki(stg_ctx, vbki);
 		return err;
@@ -2058,21 +2058,21 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
-                               const struct silofs_bkaddr *bka,
+                               const struct silofs_paddr *paddr,
                                struct silofs_vbk_info **out_vbki)
 {
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = stgc_do_stage_blob(stg_ctx, &bka->blobid, &blobf);
+	err = stgc_do_stage_blob(stg_ctx, &paddr->bka.blobid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_require_bk(blobf, bka);
+	err = silofs_blobf_require(blobf, paddr);
 	if (err) {
 		return err;
 	}
-	err = stgc_spawn_load_vbk(stg_ctx, blobf, bka, out_vbki);
+	err = stgc_spawn_load_vbk(stg_ctx, blobf, paddr, out_vbki);
 	if (err) {
 		return err;
 	}
@@ -2080,7 +2080,7 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_stage_vblock(const struct silofs_stage_ctx *stg_ctx,
-                             const struct silofs_bkaddr *bka,
+                             const struct silofs_paddr *paddr,
                              struct silofs_vbk_info **out_vbki)
 {
 	int err;
@@ -2089,7 +2089,7 @@ static int stgc_stage_vblock(const struct silofs_stage_ctx *stg_ctx,
 	if (!err) {
 		return 0; /* Cache hit */
 	}
-	err = stgc_stage_load_vbk(stg_ctx, bka, out_vbki);
+	err = stgc_stage_load_vbk(stg_ctx, paddr, out_vbki);
 	if (err) {
 		return err;
 	}
@@ -2183,7 +2183,7 @@ static int stgc_clone_rebind_vblock(const struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_stage_vblock_by(const struct silofs_stage_ctx *stg_ctx,
-                                const struct silofs_bkaddr *bka,
+                                const struct silofs_paddr *paddr,
                                 struct silofs_vbk_info **out_vbki)
 {
 	const struct silofs_vaddr *vaddr = stg_ctx->vaddr;
@@ -2191,7 +2191,7 @@ static int stgc_stage_vblock_by(const struct silofs_stage_ctx *stg_ctx,
 
 	*out_vbki = NULL;
 	if (!stype_isdata(vaddr->stype)) {
-		ret = stgc_stage_vblock(stg_ctx, bka, out_vbki);
+		ret = stgc_stage_vblock(stg_ctx, paddr, out_vbki);
 		silofs_assert_ne(ret, -SILOFS_ERDONLY);
 	}
 	return ret;
@@ -2328,13 +2328,15 @@ static int stgc_clone_vblock(struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_clone_vblock_of(struct silofs_stage_ctx *stg_ctx,
-                                const struct silofs_bkaddr *src_bka,
+                                const struct silofs_paddr *src_paddr,
                                 struct silofs_vbk_info *vbki)
 {
+	struct silofs_bkaddr src_bka = { .lba = SILOFS_LBA_NULL };
 	int ret;
 
 	silofs_vbki_incref(vbki); /* may be NULL */
-	ret = stgc_clone_vblock(stg_ctx, src_bka);
+	bkaddr_by_paddr(&src_bka, src_paddr);
+	ret = stgc_clone_vblock(stg_ctx, &src_bka);
 	silofs_vbki_decref(vbki);
 	return ret;
 }
@@ -2342,7 +2344,6 @@ static int stgc_clone_vblock_of(struct silofs_stage_ctx *stg_ctx,
 static int stgc_resolve_inspect_plink(struct silofs_stage_ctx *stg_ctx,
                                       struct silofs_plink *out_plink)
 {
-	const struct silofs_bkaddr *bka = NULL;
 	struct silofs_vbk_info *vbki = NULL;
 	int err;
 
@@ -2350,7 +2351,7 @@ static int stgc_resolve_inspect_plink(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = stgc_inspect_bkaddr_of(stg_ctx, out_plink);
+	err = stgc_inspect_plink(stg_ctx, out_plink);
 	if (err != -SILOFS_EPERM) {
 		return err;
 	}
@@ -2358,12 +2359,11 @@ static int stgc_resolve_inspect_plink(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	bka = &out_plink->paddr.bka;
-	err = stgc_stage_vblock_by(stg_ctx, bka, &vbki);
+	err = stgc_stage_vblock_by(stg_ctx, &out_plink->paddr, &vbki);
 	if (err) {
 		return err;
 	}
-	err = stgc_clone_vblock_of(stg_ctx, bka, vbki);
+	err = stgc_clone_vblock_of(stg_ctx, &out_plink->paddr, vbki);
 	if (err) {
 		return err;
 	}
@@ -2398,8 +2398,7 @@ int silofs_require_mut_vaddr(struct silofs_task *task,
 static int stgc_stage_vnode_at(struct silofs_stage_ctx *stg_ctx,
                                struct silofs_vnode_info **out_vi)
 {
-	struct silofs_plink plink;
-	const struct silofs_bkaddr *bka = NULL;
+	struct silofs_plink plink = { .paddr.pos = -1 };
 	struct silofs_vbk_info *vbki = NULL;
 	struct silofs_vnode_info *vi = NULL;
 	int err;
@@ -2408,8 +2407,7 @@ static int stgc_stage_vnode_at(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		goto out_err;
 	}
-	bka = &plink.paddr.bka;
-	err = stgc_stage_vblock(stg_ctx, bka, &vbki);
+	err = stgc_stage_vblock(stg_ctx, &plink.paddr, &vbki);
 	if (err) {
 		goto out_err;
 	}

@@ -766,6 +766,14 @@ void silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
 	silofs_bkaddr_setup(bkaddr, blobid, lba);
 }
 
+void silofs_bkaddr_by_paddr(struct silofs_bkaddr *bkaddr,
+                            const struct silofs_paddr *paddr)
+{
+	const silofs_lba_t lba = off_to_lba(paddr->pos);
+
+	silofs_bkaddr_setup(bkaddr, &paddr->bka.blobid, lba);
+}
+
 bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
                            const struct silofs_bkaddr *other)
 {
@@ -863,14 +871,6 @@ void silofs_paddr_setup(struct silofs_paddr *paddr,
 	}
 }
 
-void silofs_paddr_setup_bk(struct silofs_paddr *paddr,
-                           const struct silofs_bkaddr *bkaddr)
-{
-	const loff_t off = lba_to_off(bkaddr->lba);
-
-	silofs_paddr_setup(paddr, &bkaddr->blobid, off, SILOFS_LBK_SIZE);
-}
-
 static void paddr_setup_by(struct silofs_paddr *paddr,
                            const struct silofs_blobid *blobid,
                            const struct silofs_vaddr *vaddr)
@@ -941,7 +941,6 @@ void silofs_paddr_of_bk(struct silofs_paddr *paddr,
 {
 	silofs_paddr_setup(paddr, blobid, lba_to_off(lba), SILOFS_LBK_SIZE);
 }
-
 
 void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 {

@@ -545,7 +545,13 @@ static int blobf_require_size_ge(struct silofs_blobf *blobf,
 	return (bsz >= end) ? 0 : blobf_reassign_size(blobf, end);
 }
 
-static int blobf_check_size_ge(struct silofs_blobf *blobf,
+static int blobf_require_paddr(struct silofs_blobf *blobf,
+                               const struct silofs_paddr *paddr)
+{
+	return blobf_require_size_ge(blobf, paddr->pos, paddr->len);
+}
+
+static int blobf_check_size_ge(const struct silofs_blobf *blobf,
                                loff_t off, size_t len)
 {
 	const loff_t end = off_end(off, len);
@@ -745,21 +751,27 @@ static int blobf_require_bk_of(struct silofs_blobf *blobf,
 	struct silofs_paddr paddr;
 
 	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_require_size_ge(blobf, paddr.pos, paddr.len);
+	return blobf_require_paddr(blobf, &paddr);
 }
 
-static int blobf_check_bk_of(struct silofs_blobf *blobf,
+static int blobf_check_paddr(const struct silofs_blobf *blobf,
+                             const struct silofs_paddr *paddr)
+{
+	return blobf_check_size_ge(blobf, paddr->pos, paddr->len);
+}
+
+static int blobf_check_bk_of(const struct silofs_blobf *blobf,
                              const struct silofs_bkaddr *bkaddr)
 {
 	struct silofs_paddr paddr;
 
 	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_check_size_ge(blobf, paddr.pos, paddr.len);
+	return blobf_check_paddr(blobf, &paddr);
 }
 
-static int blobf_load_bk_at(struct silofs_blobf *blobf,
-                            const struct silofs_bkaddr *bkaddr,
-                            struct silofs_lbk_info *lbki)
+static int blobf_do_load_bk_at(struct silofs_blobf *blobf,
+                               const struct silofs_bkaddr *bkaddr,
+                               struct silofs_lbk_info *lbki)
 {
 	int err;
 
@@ -775,16 +787,26 @@ static int blobf_load_bk_at(struct silofs_blobf *blobf,
 	return 0;
 }
 
-int silofs_blobf_load_bk(struct silofs_blobf *blobf,
-                         const struct silofs_bkaddr *bkaddr,
-                         struct silofs_lbk_info *lbki)
+static int blobf_load_bk_at(struct silofs_blobf *blobf,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_lbk_info *lbki)
 {
 	int ret;
 
 	blobf_lock(blobf);
-	ret = blobf_load_bk_at(blobf, bkaddr, lbki);
+	ret = blobf_do_load_bk_at(blobf, bkaddr, lbki);
 	blobf_unlock(blobf);
 	return ret;
+}
+
+int silofs_blobf_load_bk(struct silofs_blobf *blobf,
+                         const struct silofs_paddr *paddr,
+                         struct silofs_lbk_info *lbki)
+{
+	struct silofs_bkaddr bkaddr;
+
+	bkaddr_by_paddr(&bkaddr, paddr);
+	return blobf_load_bk_at(blobf, &bkaddr, lbki);
 }
 
 static int blobf_trim_by_ftruncate(const struct silofs_blobf *blobf)
@@ -844,24 +866,24 @@ int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
 	return ret;
 }
 
-int silofs_blobf_require_bk(struct silofs_blobf *blobf,
-                            const struct silofs_bkaddr *bkaddr)
+int silofs_blobf_require(struct silofs_blobf *blobf,
+                         const struct silofs_paddr *paddr)
 {
 	int ret;
 
 	blobf_lock(blobf);
-	ret = blobf_require_bk_of(blobf, bkaddr);
+	ret = blobf_require_paddr(blobf, paddr);
 	blobf_unlock(blobf);
 	return ret;
 }
 
-int silofs_blobf_check_bk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr)
+int silofs_blobf_check(struct silofs_blobf *blobf,
+                       const struct silofs_paddr *paddr)
 {
 	int ret;
 
 	blobf_lock(blobf);
-	ret = blobf_check_bk_of(blobf, bkaddr);
+	ret = blobf_check_paddr(blobf, paddr);
 	blobf_unlock(blobf);
 	return ret;
 }
@@ -1891,7 +1913,7 @@ static int repo_stage_ubk_at(struct silofs_repo *repo, bool rw,
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_load_bk(blobf, bkaddr, &ubki->ubk);
+	err = blobf_load_bk_at(blobf, bkaddr, &ubki->ubk);
 	if (err) {
 		repo_forget_cached_ubki(repo, ubki);
 		return err;
@@ -2251,34 +2273,34 @@ int silofs_repo_require_blob(struct silofs_repo *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_bkaddr *bkaddr,
+                          const struct silofs_paddr *paddr,
                           struct silofs_ubk_info **out_ubki)
 {
-	int ret;
+	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
 
 	repo_pre_op(repo);
-	ret = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
-	return ret;
+	bkaddr_by_paddr(&bkaddr, paddr);
+	return repo_stage_ubk(repo, rw, &bkaddr, out_ubki);
 }
 
 int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_bkaddr *bkaddr,
+                          const struct silofs_paddr *paddr,
                           struct silofs_ubk_info **out_ubki)
 {
-	int ret;
+	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
 
 	repo_pre_op(repo);
-	ret = repo_spawn_ubk(repo, rw, bkaddr, out_ubki);
-	return ret;
+	bkaddr_by_paddr(&bkaddr, paddr);
+	return repo_spawn_ubk(repo, rw, &bkaddr, out_ubki);
 }
 
 int silofs_repo_require_ubk(struct silofs_repo *repo,
-                            const struct silofs_bkaddr *bkaddr,
+                            const struct silofs_paddr *paddr,
                             struct silofs_ubk_info **out_ubki)
 {
-	int ret;
+	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
 
 	repo_pre_op(repo);
-	ret = repo_require_ubk(repo, true, bkaddr, out_ubki);
-	return ret;
+	bkaddr_by_paddr(&bkaddr, paddr);
+	return repo_require_ubk(repo, true, &bkaddr, out_ubki);
 }

@@ -71,7 +71,7 @@ int silofs_stage_spleaf_at(struct silofs_uber *uber,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_stage_ubk_at(struct silofs_uber *uber,
-                        const struct silofs_bkaddr *bkaddr,
+                        const struct silofs_paddr *paddr,
                         struct silofs_ubk_info **out_ubki);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

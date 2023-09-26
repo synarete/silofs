@@ -65,21 +65,22 @@ int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
                           const struct iovec *iov, size_t cnt, bool sync);
 
 int silofs_blobf_load_bk(struct silofs_blobf *blobf,
-                         const struct silofs_bkaddr *bkaddr,
+                         const struct silofs_paddr *paddr,
                          struct silofs_lbk_info *lbki);
 
-int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
-                           const struct silofs_bkaddr *bkaddr, size_t cnt);
+int silofs_blobf_require(struct silofs_blobf *blobf,
+                         const struct silofs_paddr *paddr);
 
-int silofs_blobf_require_bk(struct silofs_blobf *blobf,
-                            const struct silofs_bkaddr *bkaddr);
-
-int silofs_blobf_check_bk(struct silofs_blobf *blobf,
-                          const struct silofs_bkaddr *bkaddr);
+int silofs_blobf_check(struct silofs_blobf *blobf,
+                       const struct silofs_paddr *paddr);
 
 int silofs_blobf_resolve(struct silofs_blobf *blobf,
                          const struct silofs_paddr *paddr,
                          struct silofs_iovec *iov);
+
+int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
+                           const struct silofs_bkaddr *bkaddr, size_t cnt);
+
 
 int silofs_blobf_flock(struct silofs_blobf *blobf);
 
@@ -144,15 +145,15 @@ int silofs_repo_require_blob(struct silofs_repo *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_bkaddr *bkaddr,
+                          const struct silofs_paddr *paddr,
                           struct silofs_ubk_info **out_ubki);
 
 int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_bkaddr *bkaddr,
+                          const struct silofs_paddr *paddr,
                           struct silofs_ubk_info **out_ubki);
 
 int silofs_repo_require_ubk(struct silofs_repo *repo,
-                            const struct silofs_bkaddr *bkaddr,
+                            const struct silofs_paddr *paddr,
                             struct silofs_ubk_info **out_ubki);
 
 #endif /* SILOFS_REPO_H_ */

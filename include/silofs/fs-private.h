@@ -116,6 +116,7 @@
 
 #define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
+#define bkaddr_by_paddr(ba, pa)         silofs_bkaddr_by_paddr(ba, pa)
 #define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
 
 #define paddr_reset(oa)                 silofs_paddr_reset(oa)
@@ -192,7 +193,6 @@
 #define ui_ulink(ui)                    silofs_ui_ulink(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
 #define ui_paddr(ui)                    silofs_ui_paddr(ui)
-#define ui_bkaddr(ui)                   silofs_ui_bkaddr(ui)
 #define ui_riv(ui)                      silofs_ui_riv(ui)
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
@@ -291,12 +291,6 @@ static inline const struct silofs_paddr *
 silofs_ui_paddr(const struct silofs_unode_info *ui)
 {
 	return &ui->u_ulink.uaddr.paddr;
-}
-
-static inline const struct silofs_bkaddr *
-silofs_ui_bkaddr(const struct silofs_unode_info *ui)
-{
-	return &ui->u_ulink.uaddr.paddr.bka;
 }
 
 static inline enum silofs_stype

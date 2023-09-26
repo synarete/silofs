@@ -1699,7 +1699,7 @@ int silofs_verify_spmap_leaf(const struct silofs_spmap_leaf *sl)
 
 static int verify_ulink(const struct silofs_uaddr *uaddr)
 {
-	return oaddr_isvalid(&uaddr->oaddr) ? 0 : -SILOFS_EFSCORRUPTED;
+	return paddr_isvalid(&uaddr->paddr) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 static int verify_spmap_ref(const struct silofs_spmap_ref *spr)

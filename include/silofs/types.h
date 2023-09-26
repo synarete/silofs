@@ -238,8 +238,8 @@ struct silofs_bkaddr {
 	silofs_lba_t            lba;
 };
 
-/* object address within blob */
-struct silofs_oaddr {
+/* persistent address of sub-range within blob */
+struct silofs_paddr {
 	struct silofs_bkaddr    bka;
 	loff_t                  pos;
 	size_t                  len;
@@ -247,14 +247,14 @@ struct silofs_oaddr {
 
 /* logical addressing of space-mapping elements */
 struct silofs_uaddr {
-	struct silofs_oaddr     oaddr;
+	struct silofs_paddr     paddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
 };
 
 /* a pair of object-address and its associate (random) IV */
-struct silofs_olink {
-	struct silofs_oaddr     oaddr;
+struct silofs_plink {
+	struct silofs_paddr     paddr;
 	struct silofs_iv        riv;
 };
 

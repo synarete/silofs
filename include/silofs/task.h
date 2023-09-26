@@ -30,7 +30,7 @@ struct silofs_task {
 
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
-	struct silofs_olink         olink;
+	struct silofs_plink         plink;
 	const union silofs_view    *view;
 	enum silofs_stype           stype;
 };
@@ -70,7 +70,7 @@ struct silofs_submitq_ent *
 silofs_sqe_from_qlh(struct silofs_list_head *qlh);
 
 bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
-                           const struct silofs_oaddr *oaddr,
+                           const struct silofs_paddr *paddr,
                            struct silofs_lnode_info *lni);
 
 int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,

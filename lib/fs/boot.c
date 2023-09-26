@@ -364,9 +364,9 @@ static int bootrec1k_check_sb_uaddr(const struct silofs_bootrec1k *brec1k)
 
 	bootrec1k_sb_uaddr(brec1k, &uaddr);
 	if ((uaddr.stype != SILOFS_STYPE_SUPER) ||
-	    (uaddr.oaddr.bka.blobid.height != SILOFS_HEIGHT_SUPER)) {
+	    (uaddr.paddr.bka.blobid.height != SILOFS_HEIGHT_SUPER)) {
 		log_dbg("bad bootrec sb-uaddr: stype=%d height=%d",
-		        (int)uaddr.stype, (int)uaddr.oaddr.bka.blobid.height);
+		        (int)uaddr.stype, (int)uaddr.paddr.bka.blobid.height);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

@@ -89,8 +89,8 @@ void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
 bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
                                  const struct silofs_blobid *blobid);
 
-bool silofs_sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,
-                                const struct silofs_oaddr *oaddr);
+bool silofs_sbi_ismutable_paddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_paddr *paddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

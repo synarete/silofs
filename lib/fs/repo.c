@@ -577,20 +577,20 @@ static int blobf_iovec_at(const struct silofs_blobf *blobf,
 }
 
 static int blobf_iovec_of(const struct silofs_blobf *blobf,
-                          const struct silofs_oaddr *oaddr,
+                          const struct silofs_paddr *paddr,
                           struct silofs_iovec *siov)
 {
-	return blobf_iovec_at(blobf, oaddr->pos, oaddr->len, siov);
+	return blobf_iovec_at(blobf, paddr->pos, paddr->len, siov);
 }
 
 int silofs_blobf_resolve(struct silofs_blobf *blobf,
-                         const struct silofs_oaddr *oaddr,
+                         const struct silofs_paddr *paddr,
                          struct silofs_iovec *siov)
 {
 	int ret;
 
 	blobf_lock(blobf);
-	ret = blobf_iovec_of(blobf, oaddr, siov);
+	ret = blobf_iovec_of(blobf, paddr, siov);
 	blobf_unlock(blobf);
 	return ret;
 }
@@ -690,7 +690,7 @@ int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
 }
 
 static int blobf_load_bb(const struct silofs_blobf *blobf,
-                         const struct silofs_oaddr *oaddr,
+                         const struct silofs_paddr *paddr,
                          struct silofs_bytebuf *bb)
 {
 	struct silofs_iovec siov = { .iov_off = -1 };
@@ -699,7 +699,7 @@ static int blobf_load_bb(const struct silofs_blobf *blobf,
 	void *bobj;
 	int err;
 
-	err = blobf_iovec_of(blobf, oaddr, &siov);
+	err = blobf_iovec_of(blobf, paddr, &siov);
 	if (err) {
 		return err;
 	}
@@ -731,30 +731,30 @@ static int blobf_load_bk(const struct silofs_blobf *blobf,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_lblock *lbk)
 {
-	struct silofs_oaddr oaddr;
+	struct silofs_paddr paddr;
 	struct silofs_bytebuf bb;
 
 	silofs_bytebuf_init(&bb, lbk, sizeof(*lbk));
-	silofs_oaddr_of_bk(&oaddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_load_bb(blobf, &oaddr, &bb);
+	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
+	return blobf_load_bb(blobf, &paddr, &bb);
 }
 
 static int blobf_require_bk_of(struct silofs_blobf *blobf,
                                const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_oaddr oaddr;
+	struct silofs_paddr paddr;
 
-	silofs_oaddr_of_bk(&oaddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_require_size_ge(blobf, oaddr.pos, oaddr.len);
+	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
+	return blobf_require_size_ge(blobf, paddr.pos, paddr.len);
 }
 
 static int blobf_check_bk_of(struct silofs_blobf *blobf,
                              const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_oaddr oaddr;
+	struct silofs_paddr paddr;
 
-	silofs_oaddr_of_bk(&oaddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_check_size_ge(blobf, oaddr.pos, oaddr.len);
+	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
+	return blobf_check_size_ge(blobf, paddr.pos, paddr.len);
 }
 
 static int blobf_load_bk_at(struct silofs_blobf *blobf,
@@ -811,7 +811,7 @@ static int blobf_trim_by_punch(const struct silofs_blobf *blobf,
 static int blobf_trim_nbks(const struct silofs_blobf *blobf,
                            const struct silofs_bkaddr *bkaddr, size_t cnt)
 {
-	struct silofs_oaddr bk_oaddr;
+	struct silofs_paddr bk_paddr;
 	silofs_lba_t beg_lba;
 	silofs_lba_t end_lba;
 	loff_t beg;
@@ -819,8 +819,8 @@ static int blobf_trim_nbks(const struct silofs_blobf *blobf,
 	ssize_t cap;
 	int err;
 
-	silofs_oaddr_of_bk(&bk_oaddr, &bkaddr->blobid, bkaddr->lba);
-	beg_lba = off_to_lba(bk_oaddr.pos);
+	silofs_paddr_of_bk(&bk_paddr, &bkaddr->blobid, bkaddr->lba);
+	beg_lba = off_to_lba(bk_paddr.pos);
 	end_lba = lba_plus(beg_lba, cnt);
 	beg = lba_to_off(beg_lba);
 	end = lba_to_off(end_lba);

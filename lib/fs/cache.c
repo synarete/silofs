@@ -240,14 +240,14 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	uint64_t d[12];
 	uint64_t voff = (uint64_t)uaddr->voff;
 
-	silofs_treeid_as_u128(&uaddr->oaddr.bka.blobid.treeid, &d[0], &d[1]);
-	d[2] = (uint64_t)(uaddr->oaddr.bka.blobid.voff);
-	d[3] = uaddr->oaddr.bka.blobid.size;
-	d[4] = uaddr->oaddr.bka.blobid.vspace;
-	d[5] = uaddr->oaddr.bka.blobid.height;
-	d[6] = (uint64_t)(uaddr->oaddr.bka.lba);
-	d[7] = uaddr->oaddr.len;
-	d[8] = (uint64_t)(uaddr->oaddr.pos);
+	silofs_treeid_as_u128(&uaddr->paddr.bka.blobid.treeid, &d[0], &d[1]);
+	d[2] = (uint64_t)(uaddr->paddr.bka.blobid.voff);
+	d[3] = uaddr->paddr.bka.blobid.size;
+	d[4] = uaddr->paddr.bka.blobid.vspace;
+	d[5] = uaddr->paddr.bka.blobid.height;
+	d[6] = (uint64_t)(uaddr->paddr.bka.lba);
+	d[7] = uaddr->paddr.len;
+	d[8] = (uint64_t)(uaddr->paddr.pos);
 	d[9] = 0x646f72616e646f6dULL;
 	d[10] = 0x736f6d6570736575ULL - uaddr->stype;
 	d[11] = voff;

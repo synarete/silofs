@@ -40,13 +40,13 @@ static void lni_set_bkview(const struct silofs_lnode_info *lni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void resolve_ivkey_of(const struct silofs_uber *uber,
-                             const struct silofs_oaddr *oaddr,
+                             const struct silofs_paddr *paddr,
                              const struct silofs_iv *seediv,
                              struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_iv oadiv;
 
-	silofs_oaddr_as_iv(oaddr, &oadiv);
+	silofs_paddr_as_iv(paddr, &oadiv);
 	silofs_ivkey_assign(out_ivkey, uber->ub.ivkey);
 	silofs_iv_xor_with(&out_ivkey->iv, seediv);
 	silofs_iv_xor_with(&out_ivkey->iv, &oadiv);
@@ -61,14 +61,14 @@ static int encrypt_view_with(const struct silofs_uber *uber,
 }
 
 int silofs_encrypt_view(const struct silofs_uber *uber,
-                        const struct silofs_oaddr *oaddr,
+                        const struct silofs_paddr *paddr,
                         const struct silofs_iv *seediv,
                         const union silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
 
-	resolve_ivkey_of(uber, oaddr, seediv, &ivkey);
-	return encrypt_view_with(uber, &ivkey, view, ptr, oaddr->len);
+	resolve_ivkey_of(uber, paddr, seediv, &ivkey);
+	return encrypt_view_with(uber, &ivkey, view, ptr, paddr->len);
 }
 
 static int decrypt_view_with(const struct silofs_uber *uber,
@@ -80,13 +80,13 @@ static int decrypt_view_with(const struct silofs_uber *uber,
 }
 
 static int decrypt_view(const struct silofs_uber *uber,
-                        const struct silofs_olink *olink,
+                        const struct silofs_plink *plink,
                         const union silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
 
-	resolve_ivkey_of(uber, &olink->oaddr, &olink->riv, &ivkey);
-	return decrypt_view_with(uber, &ivkey, view, ptr, olink->oaddr.len);
+	resolve_ivkey_of(uber, &plink->paddr, &plink->riv, &ivkey);
+	return decrypt_view_with(uber, &ivkey, view, ptr, plink->paddr.len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -109,11 +109,11 @@ static void ui_set_bkview(struct silofs_unode_info *ui)
 static int decrypt_ui_view_inplace(const struct silofs_uber *uber,
                                    struct silofs_unode_info *ui)
 {
-	struct silofs_olink olink;
+	struct silofs_plink plink;
 	union silofs_view *view = ui->u.view;
 
-	silofs_ulink_as_olink(ui_ulink(ui), &olink);
-	return decrypt_view(uber, &olink, view, view);
+	silofs_ulink_as_plink(ui_ulink(ui), &plink);
+	return decrypt_view(uber, &plink, view, view);
 }
 
 int silofs_restore_uview(const struct silofs_uber *uber,
@@ -149,7 +149,7 @@ static int decrypt_vi_view_inplace(const struct silofs_uber *uber,
 {
 	union silofs_view *view = vi->v.view;
 
-	return decrypt_view(uber, &vi->v_olink, view, view);
+	return decrypt_view(uber, &vi->v_plink, view, view);
 }
 
 int silofs_restore_vview(const struct silofs_uber *uber,

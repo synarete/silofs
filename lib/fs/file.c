@@ -62,7 +62,7 @@ struct silofs_file_ctx {
 };
 
 struct silofs_fileaf_ref {
-	struct silofs_oaddr oaddr;
+	struct silofs_paddr paddr;
 	struct silofs_vaddr vaddr;
 	const struct silofs_inode_info *ii;
 	struct silofs_finode_info *parent_fni;
@@ -885,7 +885,7 @@ static void flref_reset(struct silofs_fileaf_ref *flref)
 {
 	silofs_memzero(flref, sizeof(*flref));
 	vaddr_reset(&flref->vaddr);
-	oaddr_reset(&flref->oaddr);
+	paddr_reset(&flref->paddr);
 }
 
 static void flref_setup(struct silofs_fileaf_ref *flref,
@@ -4284,8 +4284,8 @@ static int filc_share_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 static bool filc_test_ismutable_by(const struct silofs_file_ctx *f_ctx,
                                    const struct silofs_fileaf_ref *flref)
 {
-	return oaddr_isnull(&flref->oaddr) ||
-	       silofs_sbi_ismutable_oaddr(f_ctx->sbi, &flref->oaddr);
+	return paddr_isnull(&flref->paddr) ||
+	       silofs_sbi_ismutable_paddr(f_ctx->sbi, &flref->paddr);
 }
 
 static bool
@@ -4305,21 +4305,21 @@ filc_test_may_share_leaf_by(const struct silofs_file_ctx *f_ctx,
 }
 
 
-static int filc_resolve_oaddr_by(const struct silofs_file_ctx *f_ctx,
+static int filc_resolve_paddr_by(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_fileaf_ref *flref)
 {
-	struct silofs_olink olink;
+	struct silofs_plink plink;
 	int err;
 
 	if (vaddr_isnull(&flref->vaddr)) {
 		return 0;
 	}
-	err = silofs_resolve_olink_of(f_ctx->task, &flref->vaddr,
-	                              f_ctx->stg_mode, &olink);
+	err = silofs_resolve_plink_of(f_ctx->task, &flref->vaddr,
+	                              f_ctx->stg_mode, &plink);
 	if (err) {
 		return err;
 	}
-	oaddr_assign(&flref->oaddr, &olink.oaddr);
+	paddr_assign(&flref->paddr, &plink.paddr);
 	return 0;
 }
 
@@ -4359,7 +4359,7 @@ filc_copy_range_at_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 			return err;
 		}
 	} else if (flref_src->has_data && !flref_dst->has_data) {
-		err = filc_resolve_oaddr_by(f_ctx_src, flref_src);
+		err = filc_resolve_paddr_by(f_ctx_src, flref_src);
 		if (err) {
 			return err;
 		}
@@ -4394,11 +4394,11 @@ filc_copy_range_at_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 		if (err) {
 			return err;
 		}
-		err = filc_resolve_oaddr_by(f_ctx_src, flref_src);
+		err = filc_resolve_paddr_by(f_ctx_src, flref_src);
 		if (err) {
 			return err;
 		}
-		err = filc_resolve_oaddr_by(f_ctx_dst, flref_dst);
+		err = filc_resolve_paddr_by(f_ctx_dst, flref_dst);
 		if (err) {
 			return err;
 		}

@@ -89,55 +89,55 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 	}
 }
 
-static int smc_require_mutable_olink(const struct silofs_submit_ctx *sm_ctx,
-                                     const struct silofs_olink *olink)
+static int smc_require_mutable_plink(const struct silofs_submit_ctx *sm_ctx,
+                                     const struct silofs_plink *plink)
 {
 	int err = 0;
 	bool mut;
 
-	mut = silofs_sbi_ismutable_oaddr(sm_ctx->uber->ub_sbi, &olink->oaddr);
+	mut = silofs_sbi_ismutable_paddr(sm_ctx->uber->ub_sbi, &plink->paddr);
 	err = mut ? 0 : -SILOFS_EROFS;
 	silofs_assert_ok(err);
 	return err;
 }
 
-static int smc_resolve_olink_of_ui(const struct silofs_submit_ctx *sm_ctx,
+static int smc_resolve_plink_of_ui(const struct silofs_submit_ctx *sm_ctx,
                                    const struct silofs_unode_info *ui,
-                                   struct silofs_olink *out_olink)
+                                   struct silofs_plink *out_plink)
 {
 	int ret = 0;
 
-	silofs_ulink_as_olink(ui_ulink(ui), out_olink);
+	silofs_ulink_as_plink(ui_ulink(ui), out_plink);
 	if (!ui_issuper(ui)) {
-		ret = smc_require_mutable_olink(sm_ctx, out_olink);
+		ret = smc_require_mutable_plink(sm_ctx, out_plink);
 	}
 	return ret;
 }
 
-static int smc_resolve_olink_of_vi(const struct silofs_submit_ctx *sm_ctx,
+static int smc_resolve_plink_of_vi(const struct silofs_submit_ctx *sm_ctx,
                                    struct silofs_vnode_info *vi,
-                                   struct silofs_olink *out_olink)
+                                   struct silofs_plink *out_plink)
 {
 	int err;
 
-	err = silofs_refresh_olink_of(sm_ctx->task, vi);
+	err = silofs_refresh_plink_of(sm_ctx->task, vi);
 	if (err) {
 		return err;
 	}
-	silofs_olink_assign(out_olink, &vi->v_olink);
-	return smc_require_mutable_olink(sm_ctx, out_olink);
+	silofs_plink_assign(out_plink, &vi->v_plink);
+	return smc_require_mutable_plink(sm_ctx, out_plink);
 }
 
-static int smc_resolve_olink_of(const struct silofs_submit_ctx *sm_ctx,
+static int smc_resolve_plink_of(const struct silofs_submit_ctx *sm_ctx,
                                 struct silofs_lnode_info *lni,
-                                struct silofs_olink *out_olink)
+                                struct silofs_plink *out_plink)
 {
 	int ret;
 
 	if (stype_isunode(lni->stype)) {
-		ret = smc_resolve_olink_of_ui(sm_ctx, ui_from(lni), out_olink);
+		ret = smc_resolve_plink_of_ui(sm_ctx, ui_from(lni), out_plink);
 	} else if (stype_isvnode(lni->stype)) {
-		ret = smc_resolve_olink_of_vi(sm_ctx, vi_from(lni), out_olink);
+		ret = smc_resolve_plink_of_vi(sm_ctx, vi_from(lni), out_plink);
 	} else {
 		silofs_panic("corrupted lnode: stype=%d", lni->stype);
 		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
@@ -179,15 +179,15 @@ static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
 
 static bool smc_append_next_ref(struct silofs_submit_ctx *sm_ctx,
                                 struct silofs_submitq_ent *sqe,
-                                const struct silofs_olink *olink,
+                                const struct silofs_plink *plink,
                                 struct silofs_lnode_info *lni)
 {
 	struct silofs_submit_ref *ref = &sm_ctx->refs[sqe->cnt];
 	bool ret;
 
-	ret = silofs_sqe_append_ref(sqe, &olink->oaddr, lni);
+	ret = silofs_sqe_append_ref(sqe, &plink->paddr, lni);
 	if (ret) {
-		silofs_olink_assign(&ref->olink, olink);
+		silofs_plink_assign(&ref->plink, plink);
 		ref->view = lni->view;
 		ref->stype = lni->stype;
 	}
@@ -198,16 +198,16 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
                                  struct silofs_dset *dset,
                                  struct silofs_submitq_ent *sqe)
 {
-	struct silofs_olink olink;
+	struct silofs_plink plink;
 	struct silofs_lnode_info *lni = dset->ds_preq;
 	int err;
 
 	while (lni != NULL) {
-		err = smc_resolve_olink_of(sm_ctx, lni, &olink);
+		err = smc_resolve_plink_of(sm_ctx, lni, &plink);
 		if (err) {
 			return err;
 		}
-		if (!smc_append_next_ref(sm_ctx, sqe, &olink, lni)) {
+		if (!smc_append_next_ref(sm_ctx, sqe, &plink, lni)) {
 			break;
 		}
 		dset_moveq(dset);

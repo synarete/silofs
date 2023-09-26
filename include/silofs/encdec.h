@@ -20,7 +20,7 @@
 void silofs_ui_set_bkview(struct silofs_unode_info *ui);
 
 int silofs_encrypt_view(const struct silofs_uber *uber,
-                        const struct silofs_oaddr *oaddr,
+                        const struct silofs_paddr *paddr,
                         const struct silofs_iv *seediv,
                         const union silofs_view *view, void *ptr);
 

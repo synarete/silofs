@@ -91,7 +91,7 @@ struct silofs_vnode_info {
 	int                             v_asyncwr;
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
-	struct silofs_olink             v_olink;
+	struct silofs_plink             v_plink;
 	struct silofs_vbk_info         *v_vbki;
 	struct silofs_dirtyq           *v_dq;
 };

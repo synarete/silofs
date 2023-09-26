@@ -181,12 +181,12 @@ static int spac_check_within_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	return sbi_is_within_vspace(spa_ctx->sbi, vaddr) ? 0 : -SILOFS_ENOSPC;
 }
 
-static int spac_resolve_olink(struct silofs_spalloc_ctx *spa_ctx,
+static int spac_resolve_plink(struct silofs_spalloc_ctx *spa_ctx,
                               const struct silofs_vaddr *vaddr,
-                              struct silofs_olink *out_olink)
+                              struct silofs_plink *out_plink)
 {
-	return silofs_resolve_olink_of(spa_ctx->task, vaddr,
-	                               SILOFS_STG_CUR, out_olink);
+	return silofs_resolve_plink_of(spa_ctx->task, vaddr,
+	                               SILOFS_STG_CUR, out_plink);
 }
 
 static int
@@ -347,12 +347,12 @@ spac_try_find_unallocated_vspace(struct silofs_spalloc_ctx *spa_ctx,
 
 static int spac_resolve_and_claim(struct silofs_spalloc_ctx *spa_ctx,
                                   const struct silofs_vaddr *vaddr,
-                                  struct silofs_olink *out_olink)
+                                  struct silofs_plink *out_plink)
 {
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = spac_resolve_olink(spa_ctx, vaddr, out_olink);
+	err = spac_resolve_plink(spa_ctx, vaddr, out_plink);
 	if (!err) {
 		spac_mark_allocated(spa_ctx, vaddr);
 	}
@@ -363,7 +363,7 @@ static int spac_resolve_and_claim(struct silofs_spalloc_ctx *spa_ctx,
 static int spac_claim_vspace(struct silofs_spalloc_ctx *spa_ctx,
                              struct silofs_vaddr *out_vaddr)
 {
-	struct silofs_olink olink;
+	struct silofs_plink plink;
 	int err;
 
 	err = spac_check_avail_space(spa_ctx);
@@ -383,7 +383,7 @@ static int spac_claim_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	if (err) {
 		return err;
 	}
-	err = spac_resolve_and_claim(spa_ctx, out_vaddr, &olink);
+	err = spac_resolve_and_claim(spa_ctx, out_vaddr, &plink);
 	if (err) {
 		return err;
 	}
@@ -507,12 +507,12 @@ static void spac_reclaim_vspace_of(const struct silofs_spalloc_ctx *spa_ctx,
 
 static int spac_resolve_and_reclaim(struct silofs_spalloc_ctx *spa_ctx,
                                     const struct silofs_vaddr *vaddr,
-                                    struct silofs_olink *out_olink)
+                                    struct silofs_plink *out_plink)
 {
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = spac_resolve_olink(spa_ctx, vaddr, out_olink);
+	err = spac_resolve_plink(spa_ctx, vaddr, out_plink);
 	if (!err) {
 		spac_reclaim_vspace_of(spa_ctx, vaddr);
 	}
@@ -523,14 +523,14 @@ static int spac_resolve_and_reclaim(struct silofs_spalloc_ctx *spa_ctx,
 static int spac_reclaim_vspace(struct silofs_spalloc_ctx *spa_ctx,
                                const struct silofs_vaddr *vaddr)
 {
-	struct silofs_olink olink;
+	struct silofs_plink plink;
 	int err;
 
 	err = spac_require_rw_spmaps_of(spa_ctx, vaddr->off);
 	if (err) {
 		return err;
 	}
-	err = spac_resolve_and_reclaim(spa_ctx, vaddr, &olink);
+	err = spac_resolve_and_reclaim(spa_ctx, vaddr, &plink);
 	if (err) {
 		return err;
 	}
@@ -549,11 +549,11 @@ int silofs_reclaim_vspace(struct silofs_task *task,
 static int spac_addref_vspace(struct silofs_spalloc_ctx *spa_ctx,
                               const struct silofs_vaddr *vaddr)
 {
-	struct silofs_olink olink;
+	struct silofs_plink plink;
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = spac_resolve_olink(spa_ctx, vaddr, &olink);
+	err = spac_resolve_plink(spa_ctx, vaddr, &plink);
 	if (!err) {
 		silofs_sli_reref_allocated_space(spa_ctx->sli, vaddr);
 	}

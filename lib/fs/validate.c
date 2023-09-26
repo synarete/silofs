@@ -167,7 +167,7 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);
 	REQUIRE_SIZEOF(struct silofs_blobid40b, 40);
-	REQUIRE_SIZEOF(struct silofs_oaddr48b, 48);
+	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bootrec1k, SILOFS_BOOTSEC_SIZE);
 	REQUIRE_SIZEOF(struct silofs_sb_sproots, 1024);

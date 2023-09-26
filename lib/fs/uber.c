@@ -32,7 +32,7 @@ struct silofs_uber_ctx {
 
 static const struct silofs_blobid *blobid_of(const struct silofs_ulink *ulink)
 {
-	return &ulink->uaddr.oaddr.bka.blobid;
+	return &ulink->uaddr.paddr.bka.blobid;
 }
 
 static struct silofs_blobf *

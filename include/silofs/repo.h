@@ -78,7 +78,7 @@ int silofs_blobf_check_bk(struct silofs_blobf *blobf,
                           const struct silofs_bkaddr *bkaddr);
 
 int silofs_blobf_resolve(struct silofs_blobf *blobf,
-                         const struct silofs_oaddr *oaddr,
+                         const struct silofs_paddr *paddr,
                          struct silofs_iovec *iov);
 
 int silofs_blobf_flock(struct silofs_blobf *blobf);

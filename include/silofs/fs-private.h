@@ -118,13 +118,13 @@
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
 #define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
 
-#define oaddr_reset(oa)                 silofs_oaddr_reset(oa)
-#define oaddr_assign(oa, oth)           silofs_oaddr_assign(oa, oth)
-#define oaddr_setup(oa, bid, o, l)      silofs_oaddr_setup(oa, bid, o, l)
-#define oaddr_setup_bk(oa, bka)         silofs_oaddr_setup_bk(oa, bka)
-#define oaddr_setup_by(oa, bid, va)     silofs_oaddr_setup_by(oa, bid, va)
-#define oaddr_isvalid(oa)               silofs_oaddr_isvalid(oa)
-#define oaddr_isnull(oa)                silofs_oaddr_isnull(oa)
+#define paddr_reset(oa)                 silofs_paddr_reset(oa)
+#define paddr_assign(oa, oth)           silofs_paddr_assign(oa, oth)
+#define paddr_setup(oa, bid, o, l)      silofs_paddr_setup(oa, bid, o, l)
+#define paddr_setup_bk(oa, bka)         silofs_paddr_setup_bk(oa, bka)
+#define paddr_setup_by(oa, bid, va)     silofs_paddr_setup_by(oa, bid, va)
+#define paddr_isvalid(oa)               silofs_paddr_isvalid(oa)
+#define paddr_isnull(oa)                silofs_paddr_isnull(oa)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
@@ -191,7 +191,7 @@
 #define ui_stype(ui)                    silofs_ui_stype(ui)
 #define ui_ulink(ui)                    silofs_ui_ulink(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
-#define ui_oaddr(ui)                    silofs_ui_oaddr(ui)
+#define ui_paddr(ui)                    silofs_ui_paddr(ui)
 #define ui_bkaddr(ui)                   silofs_ui_bkaddr(ui)
 #define ui_riv(ui)                      silofs_ui_riv(ui)
 
@@ -287,16 +287,16 @@ silofs_ui_uaddr(const struct silofs_unode_info *ui)
 	return &ui->u_ulink.uaddr;
 }
 
-static inline const struct silofs_oaddr *
-silofs_ui_oaddr(const struct silofs_unode_info *ui)
+static inline const struct silofs_paddr *
+silofs_ui_paddr(const struct silofs_unode_info *ui)
 {
-	return &ui->u_ulink.uaddr.oaddr;
+	return &ui->u_ulink.uaddr.paddr;
 }
 
 static inline const struct silofs_bkaddr *
 silofs_ui_bkaddr(const struct silofs_unode_info *ui)
 {
-	return &ui->u_ulink.uaddr.oaddr.bka;
+	return &ui->u_ulink.uaddr.paddr.bka;
 }
 
 static inline enum silofs_stype

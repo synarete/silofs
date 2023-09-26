@@ -499,7 +499,7 @@ struct silofs_bkaddr48b {
 } silofs_packed_aligned8;
 
 
-struct silofs_oaddr48b {
+struct silofs_paddr48b {
 	struct silofs_blobid40b         blobid;
 	uint32_t                        pos;
 	uint32_t                        len;
@@ -507,7 +507,7 @@ struct silofs_oaddr48b {
 
 
 struct silofs_uaddr64b {
-	struct silofs_oaddr48b          oaddr;
+	struct silofs_paddr48b          paddr;
 	int64_t                         voff;
 	uint8_t                         stype;
 	uint8_t                         reserved[7];

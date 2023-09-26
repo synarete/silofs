@@ -188,43 +188,43 @@ void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_oaddr *silofs_oaddr_none(void);
+const struct silofs_paddr *silofs_paddr_none(void);
 
-void silofs_oaddr_setup(struct silofs_oaddr *oaddr,
+void silofs_paddr_setup(struct silofs_paddr *paddr,
                         const struct silofs_blobid *blobid,
                         loff_t off, size_t len);
 
-void silofs_oaddr_setup_bk(struct silofs_oaddr *oaddr,
+void silofs_paddr_setup_bk(struct silofs_paddr *paddr,
                            const struct silofs_bkaddr *bkaddr);
 
-void silofs_oaddr_of_bk(struct silofs_oaddr *oaddr,
+void silofs_paddr_of_bk(struct silofs_paddr *paddr,
                         const struct silofs_blobid *blobid, silofs_lba_t lba);
 
-void silofs_oaddr_reset(struct silofs_oaddr *oaddr);
+void silofs_paddr_reset(struct silofs_paddr *paddr);
 
-void silofs_oaddr_assign(struct silofs_oaddr *oaddr,
-                         const struct silofs_oaddr *other);
+void silofs_paddr_assign(struct silofs_paddr *paddr,
+                         const struct silofs_paddr *other);
 
-long silofs_oaddr_compare(const struct silofs_oaddr *oaddr1,
-                          const struct silofs_oaddr *oaddr2);
+long silofs_paddr_compare(const struct silofs_paddr *paddr1,
+                          const struct silofs_paddr *paddr2);
 
-void silofs_oaddr_as_iv(const struct silofs_oaddr *oaddr,
+void silofs_paddr_as_iv(const struct silofs_paddr *paddr,
                         struct silofs_iv *out_iv);
 
-bool silofs_oaddr_isnull(const struct silofs_oaddr *oaddr);
+bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
-bool silofs_oaddr_isvalid(const struct silofs_oaddr *oaddr);
+bool silofs_paddr_isvalid(const struct silofs_paddr *paddr);
 
-bool silofs_oaddr_isequal(const struct silofs_oaddr *oaddr,
-                          const struct silofs_oaddr *other);
+bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
+                          const struct silofs_paddr *other);
 
-void silofs_oaddr48b_set(struct silofs_oaddr48b *oaddr48,
-                         const struct silofs_oaddr *oaddr);
+void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
+                         const struct silofs_paddr *paddr);
 
-void silofs_oaddr48b_parse(const struct silofs_oaddr48b *oaddr48,
-                           struct silofs_oaddr *oaddr);
+void silofs_paddr48b_parse(const struct silofs_paddr48b *paddr48,
+                           struct silofs_paddr *paddr);
 
-void silofs_oaddr48b_reset(struct silofs_oaddr48b *oaddr48);
+void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -244,18 +244,18 @@ void silofs_treeid128_parse(const struct silofs_treeid128 *treeid128,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_olink_assign(struct silofs_olink *olink,
-                         const struct silofs_olink *other);
+void silofs_plink_assign(struct silofs_plink *plink,
+                         const struct silofs_plink *other);
 
-void silofs_olink_assign2(struct silofs_olink *olink,
-                          const struct silofs_oaddr *oaddr,
+void silofs_plink_assign2(struct silofs_plink *plink,
+                          const struct silofs_paddr *paddr,
                           const struct silofs_iv *riv);
 
-void silofs_olink_setup(struct silofs_olink *olink,
+void silofs_plink_setup(struct silofs_plink *plink,
                         const struct silofs_blink *blink,
                         const struct silofs_vaddr *vaddr);
 
-void silofs_olink_reset(struct silofs_olink *olink);
+void silofs_plink_reset(struct silofs_plink *plink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -301,8 +301,8 @@ void silofs_ulink_assign2(struct silofs_ulink *ulink,
 
 void silofs_ulink_reset(struct silofs_ulink *ulink);
 
-void silofs_ulink_as_olink(const struct silofs_ulink *ulink,
-                           struct silofs_olink *out_olink);
+void silofs_ulink_as_plink(const struct silofs_ulink *ulink,
+                           struct silofs_plink *out_plink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

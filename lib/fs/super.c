@@ -145,7 +145,7 @@ static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr64b_set(&sb->sb_self_uaddr, uaddr);
-	sb_set_treeid(sb, &uaddr->oaddr.bka.blobid.treeid);
+	sb_set_treeid(sb, &uaddr->paddr.bka.blobid.treeid);
 }
 
 static void sb_origin(const struct silofs_super_block *sb,
@@ -776,10 +776,10 @@ bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
 	return blobid_has_treeid(blobid, &treeid);
 }
 
-bool silofs_sbi_ismutable_oaddr(const struct silofs_sb_info *sbi,
-                                const struct silofs_oaddr *oaddr)
+bool silofs_sbi_ismutable_paddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_paddr *paddr)
 {
-	return silofs_sbi_ismutable_blobid(sbi, &oaddr->bka.blobid);
+	return silofs_sbi_ismutable_blobid(sbi, &paddr->bka.blobid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

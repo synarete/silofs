@@ -466,10 +466,10 @@ static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
 	if (err) {
 		return 0; /* not on main blob: no-op */
 	}
-	if (!spac_ismutable_blobid(spa_ctx, &paddr.bka.blobid)) {
+	if (!spac_ismutable_blobid(spa_ctx, &paddr.blobid)) {
 		return 0; /* not a mutable blob */
 	}
-	err = silofs_stage_blob_at(spa_ctx->uber, &paddr.bka.blobid, &blobf);
+	err = silofs_stage_blob_at(spa_ctx->uber, &paddr.blobid, &blobf);
 	if (err) {
 		log_err("failed to stage blob: err=%d", err);
 		return err;

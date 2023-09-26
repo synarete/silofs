@@ -344,7 +344,7 @@ static int stgc_restore_view_of(const struct silofs_stage_ctx *stg_ctx,
 static bool sbi_ismutable_paddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_paddr *paddr)
 {
-	return silofs_sbi_ismutable_blobid(sbi, &paddr->bka.blobid);
+	return silofs_sbi_ismutable_blobid(sbi, &paddr->blobid);
 }
 
 static int sbi_inspect_paddr(const struct silofs_sb_info *sbi,
@@ -2064,7 +2064,7 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = stgc_do_stage_blob(stg_ctx, &paddr->bka.blobid, &blobf);
+	err = stgc_do_stage_blob(stg_ctx, &paddr->blobid, &blobf);
 	if (err) {
 		return err;
 	}

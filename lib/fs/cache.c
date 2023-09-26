@@ -237,20 +237,17 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
-	uint64_t d[12];
-	uint64_t voff = (uint64_t)uaddr->voff;
+	uint64_t d[8];
+	const uint64_t voff = (uint64_t)uaddr->voff;
+	const uint64_t ppos = (uint64_t)uaddr->paddr.pos;
 
-	silofs_treeid_as_u128(&uaddr->paddr.bka.blobid.treeid, &d[0], &d[1]);
-	d[2] = (uint64_t)(uaddr->paddr.bka.blobid.voff);
-	d[3] = uaddr->paddr.bka.blobid.size;
-	d[4] = uaddr->paddr.bka.blobid.vspace;
-	d[5] = uaddr->paddr.bka.blobid.height;
-	d[6] = (uint64_t)(uaddr->paddr.bka.lba);
-	d[7] = uaddr->paddr.len;
-	d[8] = (uint64_t)(uaddr->paddr.pos);
-	d[9] = 0x646f72616e646f6dULL;
-	d[10] = 0x736f6d6570736575ULL - uaddr->stype;
-	d[11] = voff;
+	silofs_treeid_as_u128(&uaddr->paddr.blobid.treeid, &d[0], &d[1]);
+	d[2] = uaddr->paddr.blobid.size;
+	d[3] = uaddr->paddr.blobid.vspace;
+	d[4] = uaddr->paddr.blobid.height;
+	d[5] = (uint64_t)(uaddr->paddr.blobid.voff);
+	d[6] = 0x646f72616e646f6dULL + uaddr->paddr.len;
+	d[7] = (0x736f6d6570736575ULL + ppos) / (uaddr->stype + 1);
 
 	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(voff));
 }

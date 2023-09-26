@@ -32,7 +32,7 @@ struct silofs_uber_ctx {
 
 static const struct silofs_blobid *blobid_of(const struct silofs_ulink *ulink)
 {
-	return &ulink->uaddr.paddr.bka.blobid;
+	return &ulink->uaddr.paddr.blobid;
 }
 
 static struct silofs_blobf *
@@ -681,7 +681,7 @@ static bool ubc_blobid_rw_mode(const struct silofs_uber_ctx *ub_ctx,
 static bool ubc_paddr_rw_mode(const struct silofs_uber_ctx *ub_ctx,
                               const struct silofs_paddr *paddr)
 {
-	return ubc_blobid_rw_mode(ub_ctx, &paddr->bka.blobid);
+	return ubc_blobid_rw_mode(ub_ctx, &paddr->blobid);
 }
 
 static int ubc_lookup_blob(const struct silofs_uber_ctx *ub_ctx,
@@ -754,7 +754,7 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &paddr->bka.blobid, &blobf);
+	err = ubc_require_blob(ub_ctx, &paddr->blobid, &blobf);
 	if (err) {
 		return err;
 	}
@@ -792,7 +792,7 @@ static int ubc_require_ubk(const struct silofs_uber_ctx *ub_ctx,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &paddr->bka.blobid, &blobf);
+	err = ubc_require_blob(ub_ctx, &paddr->blobid, &blobf);
 	if (err) {
 		return err;
 	}

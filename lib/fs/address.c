@@ -771,7 +771,7 @@ void silofs_bkaddr_by_paddr(struct silofs_bkaddr *bkaddr,
 {
 	const silofs_lba_t lba = off_to_lba(paddr->pos);
 
-	silofs_bkaddr_setup(bkaddr, &paddr->bka.blobid, lba);
+	silofs_bkaddr_setup(bkaddr, &paddr->blobid, lba);
 }
 
 bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
@@ -848,7 +848,6 @@ void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr s_paddr_none = {
-	.bka.lba = SILOFS_LBA_NULL,
 	.pos = SILOFS_OFF_NULL,
 };
 
@@ -861,7 +860,7 @@ void silofs_paddr_setup(struct silofs_paddr *paddr,
                         const struct silofs_blobid *blobid,
                         loff_t off, size_t len)
 {
-	silofs_bkaddr_by_off(&paddr->bka, blobid, off);
+	silofs_blobid_assign(&paddr->blobid, blobid);
 	if (blobid->size && !off_isnull(off)) {
 		paddr->len = len;
 		paddr->pos = silofs_blobid_pos(blobid, off);
@@ -882,7 +881,7 @@ static void paddr_setup_by(struct silofs_paddr *paddr,
 
 void silofs_paddr_reset(struct silofs_paddr *paddr)
 {
-	silofs_bkaddr_reset(&paddr->bka);
+	silofs_blobid_reset(&paddr->blobid);
 	paddr->len = 0;
 	paddr->pos = SILOFS_OFF_NULL;
 }
@@ -890,7 +889,7 @@ void silofs_paddr_reset(struct silofs_paddr *paddr)
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
-	silofs_bkaddr_assign(&paddr->bka, &other->bka);
+	silofs_blobid_assign(&paddr->blobid, &other->blobid);
 	paddr->len = other->len;
 	paddr->pos = other->pos;
 }
@@ -908,7 +907,7 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_bkaddr_compare(&paddr1->bka, &paddr2->bka);
+	cmp = silofs_blobid_compare(&paddr1->blobid, &paddr2->blobid);
 	if (cmp) {
 		return cmp;
 	}
@@ -918,13 +917,13 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 {
 	return silofs_off_isnull(paddr->pos) ||
-	       silofs_bkaddr_isnull(&paddr->bka);
+	       silofs_blobid_isnull(&paddr->blobid);
 }
 
 bool silofs_paddr_isvalid(const struct silofs_paddr *paddr)
 {
 	const loff_t end = off_end(paddr->pos, paddr->len);
-	const ssize_t blobid_size = (ssize_t)(paddr->bka.blobid.size);
+	const ssize_t blobid_size = (ssize_t)(paddr->blobid.size);
 
 	return !silofs_paddr_isnull(paddr) && (end <= blobid_size);
 }
@@ -933,7 +932,7 @@ bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
                           const struct silofs_paddr *other)
 {
 	return ((paddr->len == other->len) && (paddr->pos == other->pos) &&
-	        silofs_bkaddr_isequal(&paddr->bka, &other->bka));
+	        silofs_blobid_isequal(&paddr->blobid, &other->blobid));
 }
 
 void silofs_paddr_of_bk(struct silofs_paddr *paddr,
@@ -952,7 +951,7 @@ void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
                          const struct silofs_paddr *paddr)
 {
-	silofs_blobid40b_set(&paddr48->blobid, &paddr->bka.blobid);
+	silofs_blobid40b_set(&paddr48->blobid, &paddr->blobid);
 	paddr48->pos = silofs_cpu_to_le32((uint32_t)(paddr->pos));
 	paddr48->len = silofs_cpu_to_le32((uint32_t)(paddr->len));
 }
@@ -960,14 +959,9 @@ void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
 void silofs_paddr48b_parse(const struct silofs_paddr48b *paddr48,
                            struct silofs_paddr *paddr)
 {
-	struct silofs_blobid blobid;
-	loff_t pos;
-	size_t len;
-
-	silofs_blobid40b_parse(&paddr48->blobid, &blobid);
-	pos = (loff_t)silofs_le32_to_cpu(paddr48->pos);
-	len = (size_t)silofs_le32_to_cpu(paddr48->len);
-	silofs_paddr_setup(paddr, &blobid, pos, len);
+	silofs_blobid40b_parse(&paddr48->blobid, &paddr->blobid);
+	paddr->pos = (loff_t)silofs_le32_to_cpu(paddr48->pos);
+	paddr->len = (size_t)silofs_le32_to_cpu(paddr48->len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1006,8 +1000,7 @@ void silofs_plink_reset(struct silofs_plink *plink)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_uaddr s_uaddr_none = {
-	.paddr.bka.blobid.size = 0,
-	.paddr.bka.lba = SILOFS_LBA_NULL,
+	.paddr.blobid.size = 0,
 	.paddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
@@ -1077,12 +1070,12 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->paddr.bka.blobid;
+	return &uaddr->paddr.blobid;
 }
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 {
-	return uaddr->paddr.bka.blobid.height;
+	return uaddr->paddr.blobid.height;
 }
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
@@ -1402,7 +1395,7 @@ void silofs_paddr_as_iv(const struct silofs_paddr *paddr,
 	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
 
 	memset(out_iv, 0, sizeof(*out_iv));
-	blobid_as_iv(&paddr->bka.blobid, out_iv);
+	blobid_as_iv(&paddr->blobid, out_iv);
 	out_iv->iv[8] ^= (uint8_t)(paddr->pos & 0xFF);
 	out_iv->iv[9] ^= (uint8_t)((paddr->pos >> 8) & 0xFF);
 	out_iv->iv[10] ^= (uint8_t)((paddr->pos >> 16) & 0xFF);

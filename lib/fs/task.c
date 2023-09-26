@@ -77,7 +77,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (end > nxt) {
 		return false;
 	}
-	if (!blobid_isequal(&paddr->bka.blobid, &sqe->blobid)) {
+	if (!blobid_isequal(&paddr->blobid, &sqe->blobid)) {
 		return false;
 	}
 	return true;
@@ -93,7 +93,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 		return false;
 	}
 	if (sqe->cnt == 0) {
-		blobid_assign(&sqe->blobid, &paddr->bka.blobid);
+		blobid_assign(&sqe->blobid, &paddr->blobid);
 		sqe->off = paddr->pos;
 		sqe->stype = lni->stype;
 	}

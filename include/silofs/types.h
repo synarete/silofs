@@ -240,7 +240,7 @@ struct silofs_bkaddr {
 
 /* persistent address of sub-range within blob */
 struct silofs_paddr {
-	struct silofs_bkaddr    bka;
+	struct silofs_blobid    blobid;
 	loff_t                  pos;
 	size_t                  len;
 };

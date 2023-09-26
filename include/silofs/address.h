@@ -156,41 +156,6 @@ int silofs_blobid_to_name(const struct silofs_blobid *blobid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_bkaddr *silofs_bkaddr_none(void);
-
-void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr);
-
-void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
-                         const struct silofs_blobid *blobid, silofs_lba_t lba);
-
-void  silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
-                           const struct silofs_blobid *blobid, loff_t off);
-
-void silofs_bkaddr_by_paddr(struct silofs_bkaddr *bkaddr,
-                            const struct silofs_paddr *paddr);
-
-bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
-                           const struct silofs_bkaddr *other);
-
-long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
-                           const struct silofs_bkaddr *bkaddr2);
-
-void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
-                          const struct silofs_bkaddr *other);
-
-bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
-
-
-void silofs_bkaddr48b_reset(struct silofs_bkaddr48b *bkaddr48);
-
-void silofs_bkaddr48b_set(struct silofs_bkaddr48b *bkaddr48,
-                          const struct silofs_bkaddr *bkaddr);
-
-void silofs_bkaddr48b_parse(const struct silofs_bkaddr48b *bkaddr48,
-                            struct silofs_bkaddr *bkaddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 const struct silofs_paddr *silofs_paddr_none(void);
 
 void silofs_paddr_setup(struct silofs_paddr *paddr,
@@ -225,6 +190,32 @@ void silofs_paddr48b_parse(const struct silofs_paddr48b *paddr48,
                            struct silofs_paddr *paddr);
 
 void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_bkaddr *silofs_bkaddr_none(void);
+
+void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr);
+
+void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
+                         const struct silofs_blobid *blobid, silofs_lba_t lba);
+
+void  silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
+                           const struct silofs_blobid *blobid, loff_t off);
+
+void silofs_bkaddr_by_paddr(struct silofs_bkaddr *bkaddr,
+                            const struct silofs_paddr *paddr);
+
+bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
+                           const struct silofs_bkaddr *other);
+
+long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
+                           const struct silofs_bkaddr *bkaddr2);
+
+void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
+                          const struct silofs_bkaddr *other);
+
+bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

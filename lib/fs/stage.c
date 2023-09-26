@@ -304,6 +304,13 @@ static int stgc_do_stage_blob(const struct silofs_stage_ctx *stg_ctx,
 	return err;
 }
 
+static int stgc_do_stage_blob_of(const struct silofs_stage_ctx *stg_ctx,
+                                 const struct silofs_bkaddr *bkaddr,
+                                 struct silofs_blobf **out_blobf)
+{
+	return stgc_do_stage_blob(stg_ctx, &bkaddr->paddr.blobid, out_blobf);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
@@ -2104,8 +2111,9 @@ static int blobf_resolve_bk(struct silofs_blobf *blobf,
 {
 	struct silofs_paddr paddr;
 	const loff_t off = lba_to_off(bkaddr->lba);
+	const size_t len = SILOFS_LBK_SIZE;
 
-	silofs_paddr_setup(&paddr, &bkaddr->blobid, off, SILOFS_LBK_SIZE);
+	silofs_paddr_setup(&paddr, &bkaddr->paddr.blobid, off, len);
 	return silofs_blobf_resolve(blobf, &paddr, iov);
 }
 
@@ -2119,13 +2127,13 @@ static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_blobf *blobf_dst = NULL;
 	int ret;
 
-	ret = stgc_do_stage_blob(stg_ctx, &bkaddr_src->blobid, &blobf_src);
+	ret = stgc_do_stage_blob_of(stg_ctx, bkaddr_src, &blobf_src);
 	if (ret) {
 		goto out;
 	}
 	blobf_incref(blobf_src);
 
-	ret = stgc_do_stage_blob(stg_ctx, &bkaddr_dst->blobid, &blobf_dst);
+	ret = stgc_do_stage_blob_of(stg_ctx, bkaddr_dst, &blobf_dst);
 	if (ret) {
 		goto out;
 	}

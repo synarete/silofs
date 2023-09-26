@@ -34,7 +34,7 @@ static int sli_resolve_blob_of(const struct silofs_spleaf_info *sli,
 
 	ret = silofs_sli_resolve_child(sli, voff, &blink);
 	if (ret == 0) {
-		blobid_assign(out_blobid, &blink.bka.blobid);
+		blobid_assign(out_blobid, &blink.bka.paddr.blobid);
 	}
 	return ret;
 }

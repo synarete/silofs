@@ -232,17 +232,17 @@ struct silofs_blobid {
 	enum silofs_height      height;
 };
 
-/* block address within blob */
-struct silofs_bkaddr {
-	struct silofs_blobid    blobid;
-	silofs_lba_t            lba;
-};
-
 /* persistent address of sub-range within blob */
 struct silofs_paddr {
 	struct silofs_blobid    blobid;
 	loff_t                  pos;
 	size_t                  len;
+};
+
+/* block address within blob */
+struct silofs_bkaddr {
+	struct silofs_paddr     paddr;
+	silofs_lba_t            lba;
 };
 
 /* logical addressing of space-mapping elements */

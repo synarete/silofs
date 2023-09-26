@@ -492,13 +492,6 @@ struct silofs_blobid40b {
 } silofs_packed_aligned8;
 
 
-struct silofs_bkaddr48b {
-	struct silofs_blobid40b         blobid;
-	uint32_t                        lba;
-	uint32_t                        pad;
-} silofs_packed_aligned8;
-
-
 struct silofs_paddr48b {
 	struct silofs_blobid40b         blobid;
 	uint32_t                        pos;
@@ -716,7 +709,7 @@ struct silofs_bk_state {
 
 
 struct silofs_bk_ref {
-	struct silofs_bkaddr48b         bkr_uref;
+	struct silofs_paddr48b          bkr_uref;
 	struct silofs_bk_state          bkr_allocated;
 	struct silofs_bk_state          bkr_unwritten;
 	uint64_t                        bkr_dbkref;

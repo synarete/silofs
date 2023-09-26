@@ -742,21 +742,16 @@ static int blobf_load_bk(const struct silofs_blobf *blobf,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_lblock *lbk)
 {
-	struct silofs_paddr paddr;
 	struct silofs_bytebuf bb;
 
 	silofs_bytebuf_init(&bb, lbk, sizeof(*lbk));
-	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_load_bb(blobf, &paddr, &bb);
+	return blobf_load_bb(blobf, &bkaddr->paddr, &bb);
 }
 
 static int blobf_require_bk_of(struct silofs_blobf *blobf,
                                const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_paddr paddr;
-
-	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_require_paddr(blobf, &paddr);
+	return blobf_require_paddr(blobf, &bkaddr->paddr);
 }
 
 static int blobf_check_paddr(const struct silofs_blobf *blobf,
@@ -768,10 +763,7 @@ static int blobf_check_paddr(const struct silofs_blobf *blobf,
 static int blobf_check_bk_of(const struct silofs_blobf *blobf,
                              const struct silofs_bkaddr *bkaddr)
 {
-	struct silofs_paddr paddr;
-
-	silofs_paddr_of_bk(&paddr, &bkaddr->blobid, bkaddr->lba);
-	return blobf_check_paddr(blobf, &paddr);
+	return blobf_check_paddr(blobf, &bkaddr->paddr);
 }
 
 static int blobf_do_load_bk_at(struct silofs_blobf *blobf,
@@ -1861,7 +1853,7 @@ static int repo_spawn_ubk_at(struct silofs_repo *repo, bool rw,
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
-	err = repo_require_blob(repo, rw, &bkaddr->blobid, &blobf);
+	err = repo_require_blob(repo, rw, &bkaddr->paddr.blobid, &blobf);
 	if (err) {
 		return err;
 	}
@@ -1905,7 +1897,7 @@ static int repo_stage_ubk_at(struct silofs_repo *repo, bool rw,
 	if (!err) {
 		return 0; /* cache hit */
 	}
-	err = repo_stage_blob(repo, rw, &bkaddr->blobid, &blobf);
+	err = repo_stage_blob(repo, rw, &bkaddr->paddr.blobid, &blobf);
 	if (err) {
 		return err;
 	}
@@ -1949,7 +1941,7 @@ static int repo_require_ubk(struct silofs_repo *repo, bool rw,
 	if (!err) {
 		return 0;
 	}
-	err = repo_lookup_blob(repo, &bkaddr->blobid);
+	err = repo_lookup_blob(repo, &bkaddr->paddr.blobid);
 	if (!err) {
 		err = repo_stage_ubk(repo, rw, bkaddr, out_ubki);
 	} else if (err == -SILOFS_ENOENT) {

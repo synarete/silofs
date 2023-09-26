@@ -220,7 +220,7 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return hash_of_blobid(&bkaddr->blobid) ^ (uint64_t)bkaddr->lba;
+	return hash_of_blobid(&bkaddr->paddr.blobid) ^ (uint64_t)bkaddr->lba;
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)

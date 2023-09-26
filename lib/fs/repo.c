@@ -484,13 +484,18 @@ static int blobf_check_range(const struct silofs_blobf *blobf,
 	return 0;
 }
 
+static int blobf_stat(const struct silofs_blobf *blobf, struct stat *out_st)
+{
+	return  do_fstat(blobf->b_fd, out_st);
+}
+
 static int blobf_inspect_size(struct silofs_blobf *blobf)
 {
 	struct stat st;
 	ssize_t cap;
 	int err;
 
-	err = do_fstat(blobf->b_fd, &st);
+	err = blobf_stat(blobf, &st);
 	if (err) {
 		return err;
 	}
@@ -830,38 +835,33 @@ static int blobf_trim_by_punch(const struct silofs_blobf *blobf,
 	return do_fallocate_punch_hole(blobf->b_fd, from, off_len(from, to));
 }
 
-static int blobf_trim_nbks(const struct silofs_blobf *blobf,
-                           const struct silofs_bkaddr *bkaddr, size_t cnt)
+static int blobf_trim_all(const struct silofs_blobf *blobf)
 {
-	struct silofs_paddr bk_paddr;
-	silofs_lba_t beg_lba;
-	silofs_lba_t end_lba;
-	loff_t beg;
-	loff_t end;
-	ssize_t cap;
+	struct stat st;
 	int err;
 
-	silofs_paddr_of_bk(&bk_paddr, &bkaddr->blobid, bkaddr->lba);
-	beg_lba = off_to_lba(bk_paddr.pos);
-	end_lba = lba_plus(beg_lba, cnt);
-	beg = lba_to_off(beg_lba);
-	end = lba_to_off(end_lba);
-	cap = blobf_capacity(blobf);
-	if ((beg == 0) && (off_len(beg, end) == cap)) {
-		err = blobf_trim_by_ftruncate(blobf);
-	} else {
-		err = blobf_trim_by_punch(blobf, beg, end);
+	err = blobf_stat(blobf, &st);
+	if (err) {
+		goto out;
 	}
+	if (st.st_blocks == 0) {
+		goto out; /* ok */
+	}
+	err = blobf_trim_by_punch(blobf, 0, blobf_size(blobf));
+	if (err != -ENOTSUP) {
+		goto out; /* ok-or-error */
+	}
+	err = blobf_trim_by_ftruncate(blobf);
+out:
 	return err;
 }
 
-int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
-                           const struct silofs_bkaddr *bkaddr, size_t cnt)
+int silofs_blobf_trim(struct silofs_blobf *blobf)
 {
 	int ret;
 
 	blobf_lock(blobf);
-	ret = blobf_trim_nbks(blobf, bkaddr, cnt);
+	ret = blobf_trim_all(blobf);
 	blobf_unlock(blobf);
 	return ret;
 }

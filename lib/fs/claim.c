@@ -434,9 +434,8 @@ static bool spac_ismutable_blobid(const struct silofs_spalloc_ctx *spa_ctx,
 
 static int
 spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
-                        struct silofs_bkaddr *out_bkaddr_base, size_t *out_cnt)
+                        struct silofs_paddr *out_paddr)
 {
-	struct silofs_blink blink;
 	struct silofs_vrange vrange;
 	struct silofs_blobid blobid;
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
@@ -446,42 +445,38 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 		return -SILOFS_ENOENT;
 	}
 	silofs_sli_vspace_range(sli, &vrange);
-	silofs_sli_resolve_main(sli, vrange.beg, &blink);
-
-	silofs_bkaddr_assign(out_bkaddr_base, &blink.bka);
-	*out_cnt = ARRAY_SIZE(sli->sl->sl_subrefs);
+	paddr_setup(out_paddr, &blobid, 0, vrange.len);
 	return 0;
 }
 
 /*
  * optional operation: in case of data-leaf where no vspace is in-use,
- * reclaim (TRIM) the underlying object space.
+ * reclaim-by-punch the underlying object space.
  */
 static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	struct silofs_bkaddr bkaddr = { .lba = -1 };
+	struct silofs_paddr paddr = { .pos = -1 };
 	struct silofs_blobf *blobf = NULL;
-	size_t cnt = 0;
 	int err;
 
 	if (spa_ctx->sli->sl_nused_bytes) {
 		return 0; /* still has in-use blocks: no-op */
 	}
-	err = spac_resolve_main_range(spa_ctx, &bkaddr, &cnt);
+	err = spac_resolve_main_range(spa_ctx, &paddr);
 	if (err) {
 		return 0; /* not on main blob: no-op */
 	}
-	if (!spac_ismutable_blobid(spa_ctx, &bkaddr.blobid)) {
+	if (!spac_ismutable_blobid(spa_ctx, &paddr.bka.blobid)) {
 		return 0; /* not a mutable blob */
 	}
-	err = silofs_stage_blob_at(spa_ctx->uber, &bkaddr.blobid, &blobf);
+	err = silofs_stage_blob_at(spa_ctx->uber, &paddr.bka.blobid, &blobf);
 	if (err) {
 		log_err("failed to stage blob: err=%d", err);
 		return err;
 	}
-	err = silofs_blobf_trim_nbks(blobf, &bkaddr, cnt);
+	err = silofs_blobf_trim(blobf);
 	if (err && (err != -ENOTSUP)) {
-		log_err("failed to trim blob: nbks=%lu err=%d", cnt, err);
+		log_err("failed to trim blob: err=%d", err);
 		return err;
 	}
 	return 0;

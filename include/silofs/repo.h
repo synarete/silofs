@@ -78,8 +78,7 @@ int silofs_blobf_resolve(struct silofs_blobf *blobf,
                          const struct silofs_paddr *paddr,
                          struct silofs_iovec *iov);
 
-int silofs_blobf_trim_nbks(struct silofs_blobf *blobf,
-                           const struct silofs_bkaddr *bkaddr, size_t cnt);
+int silofs_blobf_trim(struct silofs_blobf *blobf);
 
 
 int silofs_blobf_flock(struct silofs_blobf *blobf);

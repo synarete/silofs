@@ -132,9 +132,7 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other);
 
-void silofs_blobid_as_u128(const struct silofs_blobid *blobid, uint64_t h[2]);
-
-uint64_t silofs_blobid_hash(const struct silofs_blobid *blobid);
+uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid);
 
 
 void silofs_blobid_setup(struct silofs_blobid *blobid,

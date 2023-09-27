@@ -215,7 +215,7 @@ static void vbki_free(struct silofs_vbk_info *vbki,
 
 static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 {
-	return silofs_blobid_hash(blobid);
+	return silofs_blobid_hash64(blobid);
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
@@ -237,19 +237,16 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
-	uint64_t d[8];
-	const uint64_t voff = (uint64_t)uaddr->voff;
-	const uint64_t ppos = (uint64_t)uaddr->paddr.pos;
+	uint64_t d[4];
+	uint64_t seed;
 
-	silofs_treeid_as_u128(&uaddr->paddr.blobid.treeid, &d[0], &d[1]);
-	d[2] = uaddr->paddr.blobid.size;
-	d[3] = uaddr->paddr.blobid.vspace;
-	d[4] = uaddr->paddr.blobid.height;
-	d[5] = (uint64_t)(uaddr->paddr.blobid.voff);
-	d[6] = 0x646f72616e646f6dULL + uaddr->paddr.len;
-	d[7] = (0x736f6d6570736575ULL + ppos) / (uaddr->stype + 1);
+	d[0] = hash_of_blobid(&uaddr->paddr.blobid);
+	d[1] = uaddr->paddr.len;
+	d[2] = 0x736f6d6570736575ULL - (uint64_t)(uaddr->paddr.pos);
+	d[3] = (uint64_t)uaddr->voff;
+	seed = 0x646f72616e646f6dULL / (uaddr->stype + 1);
 
-	return silofs_hash_xxh64(d, sizeof(d), silofs_clz64(voff));
+	return silofs_hash_xxh64(d, sizeof(d), seed);
 }
 
 static uint64_t hash_of_vbk_addr(const struct silofs_vbk_addr *vbk_addr)

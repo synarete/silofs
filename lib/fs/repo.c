@@ -359,17 +359,9 @@ static int do_flock(int fd, int op)
 static size_t
 blobid_to_index(const struct silofs_blobid *blobid, uint32_t index_max)
 {
-	uint64_t h[2];
-	uint64_t leh[2];
-	uint32_t xx;
-	uint32_t idx;
+	const uint64_t bh = silofs_blobid_hash64(blobid);
 
-	silofs_blobid_as_u128(blobid, h);
-	leh[0] = silofs_cpu_to_le64(h[0]);
-	leh[1] = silofs_cpu_to_le64(h[1]);
-	xx = silofs_hash_xxh32(leh, sizeof(leh), 0);
-	idx = xx % index_max;
-	return idx;
+	return (uint32_t)(bh ^ (bh >> 32)) % index_max;
 }
 
 static size_t index_to_name(size_t idx, char *name, size_t nmax)

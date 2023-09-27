@@ -1647,7 +1647,7 @@ out:
 	return op_finish(task, SILOFS_INO_NULL, err);
 }
 
-int silofs_fs_inspect(struct silofs_task *task)
+int silofs_fs_inspect(struct silofs_task *task, silofs_visit_paddr_fn cb)
 {
 	int err;
 
@@ -1660,7 +1660,7 @@ int silofs_fs_inspect(struct silofs_task *task)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_inspect(task);
+	err = silofs_do_inspect(task, cb);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, SILOFS_INO_ROOT, err);

@@ -201,11 +201,11 @@ void cmd_unref_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "rmfs error");
 }
 
-void cmd_inspect_fs(struct silofs_fs_env *fse)
+void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb)
 {
 	int err;
 
-	err = silofs_inspect_fs(fse);
+	err = silofs_inspect_fs(fse, cb);
 	cmd_require_ok(fse, err, "fsck error");
 }
 

@@ -21,6 +21,11 @@
 #include <silofs/types.h>
 
 
+struct silofs_spleaf_urefs {
+	struct silofs_paddr subs[SILOFS_SPMAP_NCHILDS];
+};
+
+
 void silofs_bk_state_init(struct silofs_bk_state *bk_st);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -147,6 +152,9 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
                              loff_t voff, struct silofs_blink *out_blink);
+
+void silofs_sli_childrens(const struct silofs_spleaf_info *sli,
+                          struct silofs_spleaf_urefs *out_childs);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

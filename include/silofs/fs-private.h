@@ -165,6 +165,7 @@
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
+#define sbi_paddr(sbi)                  silofs_sbi_paddr(sbi)
 #define sbi_blobid(sbi)                 silofs_sbi_blobid(sbi)
 #define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
@@ -172,6 +173,7 @@
 
 #define sni_ulink(sni)                  silofs_sni_ulink(sni)
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
+#define sni_paddr(sni)                  silofs_sni_paddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)
 #define sni_decref(sni)                 silofs_sni_decref(sni)
 #define sni_vrange(sni, vrng)           silofs_sni_vspace_range(sni, vrng)
@@ -180,6 +182,7 @@
 
 #define sli_ulink(sli)                  silofs_sli_ulink(sli)
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
+#define sli_paddr(sli)                  silofs_sli_paddr(sli)
 #define sli_incref(sli)                 silofs_sli_incref(sli)
 #define sli_decref(sli)                 silofs_sli_decref(sli)
 #define sli_vrange(sli, vrng)           silofs_sli_vspace_range(sli, vrng)
@@ -401,6 +404,24 @@ static inline const struct silofs_uaddr *
 silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 {
 	return silofs_ui_uaddr(&sbi->sb_ui);
+}
+
+static inline const struct silofs_paddr *
+silofs_sbi_paddr(const struct silofs_sb_info *sbi)
+{
+	return silofs_ui_paddr(&sbi->sb_ui);
+}
+
+static inline const struct silofs_paddr *
+silofs_sni_paddr(const struct silofs_spnode_info *sni)
+{
+	return silofs_ui_paddr(&sni->sn_ui);
+}
+
+static inline const struct silofs_paddr *
+silofs_sli_paddr(const struct silofs_spleaf_info *sli)
+{
+	return silofs_ui_paddr(&sli->sl_ui);
 }
 
 #endif /* SILOFS_PRIVATE_H_ */

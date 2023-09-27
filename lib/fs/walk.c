@@ -58,41 +58,41 @@ static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void spit_increfs(const struct silofs_space_iter *spit)
+static void wit_increfs(const struct silofs_walk_iter *witr)
 {
-	sbi_incref(spit->sbi);
-	sni_incref(spit->sni4);
-	sni_incref(spit->sni3);
-	sni_incref(spit->sni2);
-	sni_incref(spit->sni1);
-	sli_incref(spit->sli);
+	sbi_incref(witr->sbi);
+	sni_incref(witr->sni4);
+	sni_incref(witr->sni3);
+	sni_incref(witr->sni2);
+	sni_incref(witr->sni1);
+	sli_incref(witr->sli);
 }
 
-static void spit_decrefs(const struct silofs_space_iter *spit)
+static void wit_decrefs(const struct silofs_walk_iter *witr)
 {
-	sli_decref(spit->sli);
-	sni_decref(spit->sni1);
-	sni_decref(spit->sni2);
-	sni_decref(spit->sni3);
-	sni_decref(spit->sni4);
-	sbi_decref(spit->sbi);
+	sli_decref(witr->sli);
+	sni_decref(witr->sni1);
+	sni_decref(witr->sni2);
+	sni_decref(witr->sni3);
+	sni_decref(witr->sni4);
+	sbi_decref(witr->sbi);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
-                                 struct silofs_space_iter *spit)
+                                 struct silofs_walk_iter *witr)
 {
-	silofs_memzero(spit, sizeof(*spit));
-	spit->sbi = wa_ctx->sbi;
-	spit->sni4 = wa_ctx->sni4;
-	spit->sni3 = wa_ctx->sni3;
-	spit->sni2 = wa_ctx->sni2;
-	spit->sni1 = wa_ctx->sni1;
-	spit->sli = wa_ctx->sli;
-	spit->height = wa_ctx->height;
-	spit->vspace = wa_ctx->vspace;
-	spit->voff = wa_ctx->voff;
+	silofs_memzero(witr, sizeof(*witr));
+	witr->sbi = wa_ctx->sbi;
+	witr->sni4 = wa_ctx->sni4;
+	witr->sni3 = wa_ctx->sni3;
+	witr->sni2 = wa_ctx->sni2;
+	witr->sni1 = wa_ctx->sni1;
+	witr->sli = wa_ctx->sli;
+	witr->height = wa_ctx->height;
+	witr->vspace = wa_ctx->vspace;
+	witr->voff = wa_ctx->voff;
 }
 
 static void wac_resetup(struct silofs_walk_ctx *wa_ctx,
@@ -125,67 +125,67 @@ static void wac_pop_height(struct silofs_walk_ctx *wa_ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int wac_do_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
-                                const struct silofs_space_iter *spit)
+                                const struct silofs_walk_iter *witr)
 {
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
 	if (vis && vis->exec_hook) {
 		wac_relax_cache(wa_ctx);
-		ret = vis->exec_hook(vis, spit);
+		ret = vis->exec_hook(vis, witr);
 	}
 	return ret;
 }
 
 static int wac_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
-                             struct silofs_space_iter *spit)
+                             struct silofs_walk_iter *witr)
 {
 	int err;
 
-	spit_increfs(spit);
-	err = wac_do_visit_exec_at(wa_ctx, spit);
-	spit_decrefs(spit);
+	wit_increfs(witr);
+	err = wac_do_visit_exec_at(wa_ctx, witr);
+	wit_decrefs(witr);
 	return err;
 }
 
 static int wac_do_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
-                                const struct silofs_space_iter *spit)
+                                const struct silofs_walk_iter *witr)
 {
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
 
 	if (vis && vis->post_hook) {
 		wac_relax_cache(wa_ctx);
-		ret = vis->post_hook(vis, spit);
+		ret = vis->post_hook(vis, witr);
 	}
 	return ret;
 }
 
 static int wac_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
-                             struct silofs_space_iter *spit)
+                             struct silofs_walk_iter *witr)
 {
 	int err;
 
-	spit_increfs(spit);
-	err = wac_do_visit_post_at(wa_ctx, spit);
-	spit_decrefs(spit);
+	wit_increfs(witr);
+	err = wac_do_visit_post_at(wa_ctx, witr);
+	wit_decrefs(witr);
 	return err;
 }
 
 static int wac_visit_exec_at_unode(const struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_space_iter spit;
+	struct silofs_walk_iter witr;
 
-	wac_setup_space_iter(wa_ctx, &spit);
-	return wac_visit_exec_at(wa_ctx, &spit);
+	wac_setup_space_iter(wa_ctx, &witr);
+	return wac_visit_exec_at(wa_ctx, &witr);
 }
 
 static int wac_visit_post_at_unode(const struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_space_iter spit;
+	struct silofs_walk_iter witr;
 
-	wac_setup_space_iter(wa_ctx, &spit);
-	return wac_visit_post_at(wa_ctx, &spit);
+	wac_setup_space_iter(wa_ctx, &witr);
+	return wac_visit_post_at(wa_ctx, &witr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

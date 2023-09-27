@@ -176,6 +176,9 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 void silofs_paddr_as_iv(const struct silofs_paddr *paddr,
                         struct silofs_iv *out_iv);
 
+bool silofs_paddr_same_tree(const struct silofs_paddr *paddr,
+                            const struct silofs_paddr *other);
+
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
 bool silofs_paddr_isvalid(const struct silofs_paddr *paddr);

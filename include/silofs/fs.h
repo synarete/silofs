@@ -40,6 +40,7 @@
 #include <silofs/file.h>
 #include <silofs/symlink.h>
 #include <silofs/xattr.h>
+#include <silofs/walk.h>
 #include <silofs/opers.h>
 #include <silofs/namei.h>
 #include <silofs/stage.h>
@@ -50,7 +51,6 @@
 #include <silofs/flush.h>
 #include <silofs/journal.h>
 #include <silofs/exec.h>
-#include <silofs/walk.h>
 #include <silofs/mntsvc.h>
 
 #endif /* SILOFS_FS_H_ */

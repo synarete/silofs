@@ -1607,7 +1607,7 @@ int silofs_fork_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int exec_inspect_fs(struct silofs_fs_env *fse)
+static int exec_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb)
 {
 	struct silofs_task task;
 	int err;
@@ -1616,13 +1616,13 @@ static int exec_inspect_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_inspect(&task);
+	err = silofs_fs_inspect(&task, cb);
 	return term_task(&task, err);
 }
 
-int silofs_inspect_fs(struct silofs_fs_env *fse)
+int silofs_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb)
 {
-	return exec_inspect_fs(fse);
+	return exec_inspect_fs(fse, cb);
 }
 
 static int exec_unref_fs(struct silofs_fs_env *fse)

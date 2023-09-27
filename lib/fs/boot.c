@@ -16,14 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fsdef.h>
-#include <silofs/ioctls.h>
-#include <silofs/errors.h>
-#include <silofs/types.h>
-#include <silofs/address.h>
-#include <silofs/crypto.h>
-#include <silofs/boot.h>
-#include <silofs/namei.h>
+#include <silofs/fs.h>
 #include <silofs/fs-private.h>
 #include <linux/limits.h>
 #include <sys/types.h>

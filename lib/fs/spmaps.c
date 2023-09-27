@@ -1386,6 +1386,21 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 	sli_dirtify(sli);
 }
 
+void silofs_sli_childrens(const struct silofs_spleaf_info *sli,
+                          struct silofs_spleaf_urefs *out_urefs)
+{
+	const struct silofs_spmap_leaf *sl = sli->sl;
+	const struct silofs_bk_ref *bkr = NULL;
+
+	STATICASSERT_EQ(ARRAY_SIZE(out_urefs->subs),
+	                ARRAY_SIZE(sl->sl_subrefs));
+
+	for (size_t slot = 0; slot < ARRAY_SIZE(sl->sl_subrefs); ++slot) {
+		bkr = spleaf_subref_at(sl, slot);
+		bkr_uref(bkr, &out_urefs->subs[slot]);
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_unode_info *sni_ui(const struct silofs_spnode_info *sni)

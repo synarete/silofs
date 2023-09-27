@@ -517,11 +517,6 @@ static void ui_stamp_mark_visible(struct silofs_unode_info *ui)
 	ui->u.flags |= SILOFS_LNF_VERIFIED;
 }
 
-static const struct silofs_paddr *sbi_paddr(const struct silofs_sb_info *sbi)
-{
-	return ui_paddr(&sbi->sb_ui);
-}
-
 static bool sbi_is_stable(const struct silofs_sb_info *sbi)
 {
 	return (sbi->sb_ui.u_ubki != NULL) && (sbi->sb != NULL);
@@ -550,12 +545,6 @@ static void sbi_set_spawned(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_paddr *
-sni_paddr(const struct silofs_spnode_info *sni)
-{
-	return ui_paddr(&sni->sn_ui);
-}
-
 static bool sni_is_stable(const struct silofs_spnode_info *sni)
 {
 	return (sni->sn_ui.u_ubki != NULL) && (sni->sn != NULL);
@@ -580,12 +569,6 @@ static void sni_set_spawned(struct silofs_spnode_info *sni)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_paddr *
-sli_paddr(const struct silofs_spleaf_info *sli)
-{
-	return ui_paddr(&sli->sl_ui);
-}
 
 static bool sli_is_stable(const struct silofs_spleaf_info *sli)
 {

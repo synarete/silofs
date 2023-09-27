@@ -628,6 +628,12 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
 	return silofs_blobid_compare(blobid, other) == 0;
 }
 
+static bool blobid_same_tree(const struct silofs_blobid *blobid,
+                             const struct silofs_blobid *other)
+{
+	return silofs_treeid_isequal(&blobid->treeid, &other->treeid);
+}
+
 static uint64_t blobid_as_u64_ta(const struct silofs_blobid *blobid)
 {
 	uint64_t u1;
@@ -880,6 +886,12 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 		return cmp;
 	}
 	return 0;
+}
+
+bool silofs_paddr_same_tree(const struct silofs_paddr *paddr,
+                            const struct silofs_paddr *other)
+{
+	return blobid_same_tree(&paddr->blobid, &other->blobid);
 }
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr)

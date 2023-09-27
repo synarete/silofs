@@ -56,10 +56,10 @@ static bool unrc_is_blobid_of(const struct silofs_unref_ctx *unr_ctx,
 }
 
 static int unrc_exec_unrefs_at(struct silofs_unref_ctx *unr_ctx,
-                               const struct silofs_space_iter *spit)
+                               const struct silofs_walk_iter *witr)
 {
 	silofs_unused(unr_ctx);
-	silofs_unused(spit);
+	silofs_unused(witr);
 	return 0;
 }
 
@@ -156,12 +156,12 @@ unrc_post_unrefs_at_spnode(struct silofs_unref_ctx *unr_ctx,
 
 static int
 unrc_post_unrefs_at_super(struct silofs_unref_ctx *unr_ctx,
-                          const struct silofs_space_iter *spit)
+                          const struct silofs_walk_iter *witr)
 {
 	struct silofs_uaddr uaddr;
 	int err;
 
-	err = silofs_sbi_sproot_of(spit->sbi, spit->vspace, &uaddr);
+	err = silofs_sbi_sproot_of(witr->sbi, witr->vspace, &uaddr);
 	if (err) {
 		return err;
 	}
@@ -173,28 +173,28 @@ unrc_post_unrefs_at_super(struct silofs_unref_ctx *unr_ctx,
 }
 
 static int unrc_post_unrefs_at(struct silofs_unref_ctx *unr_ctx,
-                               const struct silofs_space_iter *spit)
+                               const struct silofs_walk_iter *witr)
 {
 	int err;
 
-	switch (spit->height) {
+	switch (witr->height) {
 	case SILOFS_HEIGHT_SUPER:
-		err = unrc_post_unrefs_at_super(unr_ctx, spit);
+		err = unrc_post_unrefs_at_super(unr_ctx, witr);
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
-		err = unrc_post_unrefs_at_spnode(unr_ctx, spit->sni4);
+		err = unrc_post_unrefs_at_spnode(unr_ctx, witr->sni4);
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		err = unrc_post_unrefs_at_spnode(unr_ctx, spit->sni3);
+		err = unrc_post_unrefs_at_spnode(unr_ctx, witr->sni3);
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		err = unrc_post_unrefs_at_spnode(unr_ctx, spit->sni2);
+		err = unrc_post_unrefs_at_spnode(unr_ctx, witr->sni2);
 		break;
 	case SILOFS_HEIGHT_SPNODE1:
-		err = unrc_post_unrefs_at_spnode(unr_ctx, spit->sni1);
+		err = unrc_post_unrefs_at_spnode(unr_ctx, witr->sni1);
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		err = unrc_post_unrefs_at_spleaf(unr_ctx, spit->sli);
+		err = unrc_post_unrefs_at_spleaf(unr_ctx, witr->sli);
 		break;
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
@@ -213,15 +213,15 @@ static struct silofs_unref_ctx *unr_ctx_of(struct silofs_visitor *vis)
 }
 
 static int unrc_visit_exec_hook(struct silofs_visitor *vis,
-                                const struct silofs_space_iter *uit)
+                                const struct silofs_walk_iter *witr)
 {
-	return unrc_exec_unrefs_at(unr_ctx_of(vis), uit);
+	return unrc_exec_unrefs_at(unr_ctx_of(vis), witr);
 }
 
 static int unrc_visit_post_hook(struct silofs_visitor *vis,
-                                const struct silofs_space_iter *uit)
+                                const struct silofs_walk_iter *witr)
 {
-	return unrc_post_unrefs_at(unr_ctx_of(vis), uit);
+	return unrc_post_unrefs_at(unr_ctx_of(vis), witr);
 }
 
 static void unrc_init(struct silofs_unref_ctx *unr_ctx,

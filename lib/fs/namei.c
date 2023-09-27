@@ -2589,7 +2589,7 @@ int silofs_do_tune(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_inspect(struct silofs_task *task)
+int silofs_do_inspect(struct silofs_task *task, silofs_visit_paddr_fn cb)
 {
 	int err;
 
@@ -2597,7 +2597,7 @@ int silofs_do_inspect(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_walk_inspect_fs(task, task_sbi(task));
+	err = silofs_walk_inspect_fs(task, task_sbi(task), cb);
 	if (err) {
 		return err;
 	}

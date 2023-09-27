@@ -52,7 +52,7 @@ int silofs_post_exec_fs(const struct silofs_fs_env *fse);
 int silofs_fork_fs(struct silofs_fs_env *fse,
                    struct silofs_uuid *out_new, struct silofs_uuid *out_alt);
 
-int silofs_inspect_fs(struct silofs_fs_env *fse);
+int silofs_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb);
 
 int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 

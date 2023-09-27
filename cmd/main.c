@@ -164,6 +164,7 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(rmfs),
 	DEFCMD(prune),
 	DEFCMD(fsck),
+	DEFCMD(bmaps),
 };
 
 static bool equals(const char *s1, const char *s2)

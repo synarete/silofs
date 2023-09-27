@@ -40,6 +40,7 @@ int silofs_uber_reload_sblob(struct silofs_uber *uber);
 int silofs_uber_forkfs(struct silofs_uber *uber,
                        struct silofs_bootrecs *out_brecs);
 
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_super_at(struct silofs_uber *uber,

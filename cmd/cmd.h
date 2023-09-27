@@ -93,6 +93,8 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
+void cmd_execute_bmaps(void);
+
 /* fatal-error handling */
 __attribute__((__noreturn__))
 void cmd_dief(int errnum, const char *restrict fmt, ...);
@@ -238,7 +240,7 @@ void cmd_fork_fs(struct silofs_fs_env *fse,
 
 void cmd_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
 
-void cmd_inspect_fs(struct silofs_fs_env *fse);
+void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb);
 
 
 /* mount-info */

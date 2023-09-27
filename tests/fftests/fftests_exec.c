@@ -64,11 +64,6 @@ static const struct ft_tests *const ft_testsbl[]  = {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int mask_of(const struct ft_env *fte)
-{
-	return fte->params.testsmask;
-}
-
 static void statvfs_of(const struct ft_env *fte, struct statvfs *stvfs)
 {
 	ft_statvfs(fte->params.workdir, stvfs);
@@ -134,12 +129,16 @@ static void verify_consistent_statvfs(const struct statvfs *stv_beg,
 	ft_expect_lt(bfree_dif, 4096);
 }
 
+static bool ft_without_statvfs(const struct ft_env *fte)
+{
+	return (fte->params.testsmask & FT_F_NOSTAVFS) == FT_F_NOSTAVFS;
+}
+
 static void ft_verify_fsstat(const struct ft_env *fte)
 {
 	struct statvfs stvfs_end;
-	const int f_nostatvfs = FT_F_NOSTAVFS;
 
-	if ((mask_of(fte) & f_nostatvfs) != f_nostatvfs) {
+	if (!ft_without_statvfs(fte)) {
 		sleep(1); /* TODO: race in FUSE? */
 		statvfs_of(fte, &stvfs_end);
 		verify_consistent_statvfs(&fte->stvfs, &stvfs_end);
@@ -154,11 +153,26 @@ static void ft_exec_test(struct ft_env *fte, const struct ft_tdef *tdef)
 	ft_finish_test(fte);
 }
 
+static bool ft_may_exec(const struct ft_env *fte, const struct ft_tdef *tdef)
+{
+	if (!tdef->flags) {
+		return false;
+	}
+	if ((tdef->flags & FT_F_STAVFS) && ft_without_statvfs(fte)) {
+		return false;
+	}
+	if (!(fte->params.testsmask & tdef->flags)) {
+		return false;
+	}
+	return true;
+}
+
 static void ft_runtests(struct ft_env *fte)
 {
 	const struct ft_tdef *tdef;
 	const struct ft_tests *tests = &fte->tests;
 	const struct ft_params *params = &fte->params;
+	const char *wantname = params->testname;
 
 	for (size_t i = 0; i < tests->len; ++i) {
 		tdef = &tests->arr[i];
@@ -167,14 +181,13 @@ static void ft_runtests(struct ft_env *fte)
 		}
 		if (params->listtests) {
 			ft_list_test(fte, tdef);
-		} else if (params->testname) {
-			if (strstr(tdef->name, params->testname)) {
-				ft_exec_test(fte, tdef);
-			}
-		} else if (tdef->flags) {
-			if (mask_of(fte) & tdef->flags) {
-				ft_exec_test(fte, tdef);
-			}
+			continue;
+		}
+		if (!ft_may_exec(fte, tdef)) {
+			continue;
+		}
+		if (!wantname || strstr(tdef->name, wantname)) {
+			ft_exec_test(fte, tdef);
 		}
 	}
 }
@@ -256,7 +269,7 @@ static void ft_clone_tests(struct ft_env *fte)
 	}
 	fte->tests.arr = arr;
 	fte->tests.len = len;
-	if (mask_of(fte) & FT_F_RANDOM) {
+	if (fte->params.testsmask & FT_F_RANDOM) {
 		random_shuffle_tests(fte);
 	}
 }

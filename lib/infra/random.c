@@ -163,18 +163,19 @@ void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out)
 
 void silofs_prandgen_ascii(struct silofs_prandgen *prng, char *str, size_t n)
 {
-	int print_ch;
-	uint64_t rnd;
+	uint64_t rnd = 0;
 	const int base = 33;
 	const int last = 126;
+	int print_ch;
 
+	silofs_prandgen_take_u64(prng, &rnd);
 	for (size_t i = 0; i < n; ++i) {
-		if ((i % 31) == 0) {
-			silofs_prandgen_take_u64(prng, &rnd);
-		} else {
+		if (i % 53) {
 			rnd = rnd >> 1;
+		} else {
+			silofs_prandgen_take_u64(prng, &rnd);
 		}
-		print_ch = abs(((int)rnd % (last - base)) + base);
+		print_ch = abs((int)(rnd % (uint64_t)(last - base)) + base);
 		str[i] = (char)print_ch;
 	}
 }

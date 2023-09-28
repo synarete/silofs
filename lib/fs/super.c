@@ -170,10 +170,10 @@ static void sb_generate_treeid(struct silofs_super_block *sb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_blobid40b *
+static const struct silofs_blobid32b *
 sb_mainblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 {
-	const struct silofs_blobid40b *ret;
+	const struct silofs_blobid32b *ret;
 
 	switch (stype) {
 	case SILOFS_STYPE_DATA1K:
@@ -214,10 +214,10 @@ sb_mainblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	return ret;
 }
 
-static struct silofs_blobid40b *
+static struct silofs_blobid32b *
 sb_mainblobid_by2(struct silofs_super_block *sb, enum silofs_stype stype)
 {
-	const struct silofs_blobid40b *bid = sb_mainblobid_by(sb, stype);
+	const struct silofs_blobid32b *bid = sb_mainblobid_by(sb, stype);
 
 	return unconst(bid);
 }
@@ -226,10 +226,10 @@ static void sb_main_blobid(const struct silofs_super_block *sb,
                            enum silofs_stype stype,
                            struct silofs_blobid *out_blobid)
 {
-	const struct silofs_blobid40b *bid = sb_mainblobid_by(sb, stype);
+	const struct silofs_blobid32b *bid = sb_mainblobid_by(sb, stype);
 
 	if (likely(bid != NULL)) {
-		silofs_blobid40b_parse(bid, out_blobid);
+		silofs_blobid32b_parse(bid, out_blobid);
 	} else {
 		silofs_blobid_reset(out_blobid);
 	}
@@ -239,22 +239,22 @@ static void sb_set_main_blobid(struct silofs_super_block *sb,
                                enum silofs_stype stype,
                                const struct silofs_blobid *blobid)
 {
-	struct silofs_blobid40b *bid = sb_mainblobid_by2(sb, stype);
+	struct silofs_blobid32b *bid = sb_mainblobid_by2(sb, stype);
 
 	if (likely(bid != NULL)) {
-		silofs_blobid40b_set(bid, blobid);
+		silofs_blobid32b_set(bid, blobid);
 	}
 }
 
 static void sb_reset_main_blobids(struct silofs_super_block *sb)
 {
-	struct silofs_blobid40b *bid;
+	struct silofs_blobid32b *bid;
 	enum silofs_stype stype;
 
 	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		bid = sb_mainblobid_by2(sb, stype);
 		if (bid != NULL) {
-			silofs_blobid40b_reset(bid);
+			silofs_blobid32b_reset(bid);
 		}
 	}
 }

@@ -146,20 +146,20 @@ static enum silofs_height spnode_heigth(const struct silofs_spmap_node *sn)
 static void spnode_main_blobid(const struct silofs_spmap_node *sn,
                                struct silofs_blobid *out_blobid)
 {
-	silofs_blobid40b_parse(&sn->sn_main_blobid, out_blobid);
+	silofs_blobid32b_parse(&sn->sn_main_blobid, out_blobid);
 }
 
 static void spnode_set_main_blobid(struct silofs_spmap_node *sn,
                                    const struct silofs_blobid *blobid)
 {
-	silofs_blobid40b_set(&sn->sn_main_blobid, blobid);
+	silofs_blobid32b_set(&sn->sn_main_blobid, blobid);
 }
 
 static void spnode_init(struct silofs_spmap_node *sn,
                         const struct silofs_vrange *vrange)
 {
 	spnode_set_vrange(sn, vrange);
-	silofs_blobid40b_reset(&sn->sn_main_blobid);
+	silofs_blobid32b_reset(&sn->sn_main_blobid);
 	silofs_uaddr64b_reset(&sn->sn_parent);
 	silofs_uaddr64b_reset(&sn->sn_self);
 	spr_initn(sn->sn_subrefs, ARRAY_SIZE(sn->sn_subrefs));
@@ -675,7 +675,7 @@ static void spleaf_init(struct silofs_spmap_leaf *sl,
                         const struct silofs_vrange *vrange)
 {
 	silofs_vrange128_set(&sl->sl_vrange, vrange);
-	silofs_blobid40b_reset(&sl->sl_main_blobid);
+	silofs_blobid32b_reset(&sl->sl_main_blobid);
 	silofs_uaddr64b_reset(&sl->sl_parent);
 	silofs_uaddr64b_reset(&sl->sl_self);
 	bkr_init_arr(sl->sl_subrefs, ARRAY_SIZE(sl->sl_subrefs));
@@ -916,13 +916,13 @@ static void spleaf_make_vaddrs(const struct silofs_spmap_leaf *sl,
 static void spleaf_main_blobid(const struct silofs_spmap_leaf *sl,
                                struct silofs_blobid *out_blobid)
 {
-	silofs_blobid40b_parse(&sl->sl_main_blobid, out_blobid);
+	silofs_blobid32b_parse(&sl->sl_main_blobid, out_blobid);
 }
 
 static void spleaf_set_main_blobid(struct silofs_spmap_leaf *sl,
                                    const struct silofs_blobid *blobid)
 {
-	silofs_blobid40b_set(&sl->sl_main_blobid, blobid);
+	silofs_blobid32b_set(&sl->sl_main_blobid, blobid);
 }
 
 static void spleaf_main_uref_at(const struct silofs_spmap_leaf *sl,

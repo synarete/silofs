@@ -458,12 +458,12 @@ struct silofs_hash512 {
 
 struct silofs_uuid {
 	uint8_t uu[SILOFS_UUID_SIZE];
-} silofs_packed_aligned8;
+} silofs_packed_aligned16;
 
 
 struct silofs_name {
 	uint8_t name[SILOFS_NAME_MAX + 1];
-} silofs_packed_aligned16;
+} silofs_packed_aligned64;
 
 
 struct silofs_key {
@@ -478,25 +478,26 @@ struct silofs_iv {
 
 struct silofs_treeid128 {
 	struct silofs_uuid              uuid;
-} silofs_packed_aligned8;
+} silofs_packed_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_blobid40b {
+struct silofs_blobid32b {
 	struct silofs_treeid128         treeid;
 	int64_t                         voff;
 	uint32_t                        size;
 	uint8_t                         vspace;
 	uint8_t                         height;
-	uint8_t                         pad[10];
-} silofs_packed_aligned8;
+	uint8_t                         pad[2];
+} silofs_packed_aligned16;
 
 
 struct silofs_paddr48b {
-	struct silofs_blobid40b         blobid;
+	struct silofs_blobid32b         blobid;
 	uint32_t                        pos;
 	uint32_t                        len;
-} silofs_packed_aligned8;
+	uint8_t                         pad[8];
+} silofs_packed_aligned16;
 
 
 struct silofs_uaddr64b {
@@ -504,7 +505,7 @@ struct silofs_uaddr64b {
 	int64_t                         voff;
 	uint8_t                         stype;
 	uint8_t                         reserved[7];
-} silofs_packed_aligned8;
+} silofs_packed_aligned32;
 
 
 struct silofs_vrange128 {
@@ -587,16 +588,15 @@ struct silofs_sb_sproots {
 
 
 struct silofs_sb_blobids {
-	struct silofs_blobid40b         sb_blobid_reserved;
-	struct silofs_blobid40b         sb_blobid_inode;
-	struct silofs_blobid40b         sb_blobid_xanode;
-	struct silofs_blobid40b         sb_blobid_dtnode;
-	struct silofs_blobid40b         sb_blobid_ftnode;
-	struct silofs_blobid40b         sb_blobid_symval;
-	struct silofs_blobid40b         sb_blobid_data1k;
-	struct silofs_blobid40b         sb_blobid_data4k;
-	struct silofs_blobid40b         sb_blobid_databk;
-	uint8_t                         sb_reserved[664];
+	struct silofs_blobid32b         sb_blobid_inode;
+	struct silofs_blobid32b         sb_blobid_xanode;
+	struct silofs_blobid32b         sb_blobid_dtnode;
+	struct silofs_blobid32b         sb_blobid_ftnode;
+	struct silofs_blobid32b         sb_blobid_symval;
+	struct silofs_blobid32b         sb_blobid_data1k;
+	struct silofs_blobid32b         sb_blobid_data4k;
+	struct silofs_blobid32b         sb_blobid_databk;
+	uint8_t                         sb_reserved[768];
 } silofs_packed_aligned64;
 
 
@@ -684,13 +684,13 @@ struct silofs_super_block {
 struct silofs_spmap_ref {
 	struct silofs_uaddr64b          sr_uaddr;
 	uint8_t                         sr_reserved[32];
-} silofs_packed_aligned8;
+} silofs_packed_aligned32;
 
 
 struct silofs_spmap_node {
 	struct silofs_header            sn_hdr;
-	uint8_t                         sn_reserved1[8];
-	struct silofs_blobid40b         sn_main_blobid;
+	uint8_t                         sn_reserved1[16];
+	struct silofs_blobid32b         sn_main_blobid;
 	struct silofs_vrange128         sn_vrange;
 	uint8_t                         sn_reserved2[48];
 	struct silofs_uaddr64b          sn_parent;
@@ -714,13 +714,13 @@ struct silofs_bk_ref {
 	struct silofs_bk_state          bkr_unwritten;
 	uint64_t                        bkr_dbkref;
 	uint8_t                         bkr_reserved[24];
-} silofs_packed_aligned8;
+} silofs_packed_aligned32;
 
 
 struct silofs_spmap_leaf {
 	struct silofs_header            sl_hdr;
-	uint8_t                         sl_reserved1[8];
-	struct silofs_blobid40b         sl_main_blobid;
+	uint8_t                         sl_reserved1[16];
+	struct silofs_blobid32b         sl_main_blobid;
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
 	struct silofs_vrange128         sl_vrange;
@@ -947,12 +947,12 @@ struct silofs_journal_rec {
 	uint32_t                        jr_tx_count;
 	uint32_t                        jr_tx_index;
 	uint8_t                         jr_reserved2[20];
-	struct silofs_blobid40b         jr_src_blobid;
+	struct silofs_blobid32b         jr_src_blobid;
 	int64_t                         jr_src_off;
-	uint8_t                         jr_reserved3[16];
-	struct silofs_blobid40b         jr_dst_blobid;
+	uint8_t                         jr_reserved3[24];
+	struct silofs_blobid32b         jr_dst_blobid;
 	int64_t                         jr_dst_off;
-	uint8_t                         jr_reserved4[16];
+	uint8_t                         jr_reserved4[24];
 	uint8_t                         jr_reserved5[48];
 	uint64_t                        jr_csum;
 } silofs_packed_aligned64;

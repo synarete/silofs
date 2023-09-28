@@ -1051,11 +1051,11 @@ static void repo_hash_blobid(const struct silofs_repo *repo,
                              const struct silofs_blobid *blobid,
                              struct silofs_hash256 *out_hash)
 {
-	struct silofs_blobid40b blobid40;
+	struct silofs_blobid32b blobid32;
 	const struct silofs_mdigest *md = repo_mdigest(repo);
 
-	silofs_blobid40b_set(&blobid40, blobid);
-	silofs_sha256_of(md, &blobid40, sizeof(blobid40), out_hash);
+	silofs_blobid32b_set(&blobid32, blobid);
+	silofs_sha256_of(md, &blobid32, sizeof(blobid32), out_hash);
 }
 
 static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,

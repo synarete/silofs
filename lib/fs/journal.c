@@ -73,25 +73,25 @@ static void jrec_set_tx_index(struct silofs_journal_rec *jrec, size_t tx_index)
 static void jrec_src_blobid(const struct silofs_journal_rec *jrec,
                             struct silofs_blobid *out_blobid)
 {
-	silofs_blobid40b_parse(&jrec->jr_src_blobid, out_blobid);
+	silofs_blobid32b_parse(&jrec->jr_src_blobid, out_blobid);
 }
 
 static void jrec_set_src_blobid(struct silofs_journal_rec *jrec,
                                 const struct silofs_blobid *blobid)
 {
-	silofs_blobid40b_set(&jrec->jr_src_blobid, blobid);
+	silofs_blobid32b_set(&jrec->jr_src_blobid, blobid);
 }
 
 static void jrec_dst_blobid(const struct silofs_journal_rec *jrec,
                             struct silofs_blobid *out_blobid)
 {
-	silofs_blobid40b_parse(&jrec->jr_dst_blobid, out_blobid);
+	silofs_blobid32b_parse(&jrec->jr_dst_blobid, out_blobid);
 }
 
 static void jrec_set_dst_blobid(struct silofs_journal_rec *jrec,
                                 const struct silofs_blobid *blobid)
 {
-	silofs_blobid40b_set(&jrec->jr_dst_blobid, blobid);
+	silofs_blobid32b_set(&jrec->jr_dst_blobid, blobid);
 }
 
 static loff_t jrec_src_off(const struct silofs_journal_rec *jrec)

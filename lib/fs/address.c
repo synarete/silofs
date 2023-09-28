@@ -636,9 +636,9 @@ static bool blobid_same_tree(const struct silofs_blobid *blobid,
 
 uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid)
 {
-	struct silofs_blobid40b bid = { .size = 0 };
+	struct silofs_blobid32b bid = { .size = 0 };
 
-	silofs_blobid40b_set(&bid, blobid);
+	silofs_blobid32b_set(&bid, blobid);
 	return silofs_hash_xxh64(&bid, sizeof(bid), blobid->vspace);
 }
 
@@ -677,34 +677,34 @@ static void blobid_as_iv(const struct silofs_blobid *blobid,
 	out_iv->iv[15] ^= (uint8_t)blobid->height;
 }
 
-void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40)
+void silofs_blobid32b_reset(struct silofs_blobid32b *blobid32)
 {
-	memset(blobid40, 0, sizeof(*blobid40));
-	blobid40->voff = SILOFS_OFF_NULL;
-	blobid40->size = 0;
-	blobid40->vspace = SILOFS_STYPE_NONE;
-	blobid40->height = SILOFS_HEIGHT_LAST;
+	memset(blobid32, 0, sizeof(*blobid32));
+	blobid32->voff = SILOFS_OFF_NULL;
+	blobid32->size = 0;
+	blobid32->vspace = SILOFS_STYPE_NONE;
+	blobid32->height = SILOFS_HEIGHT_LAST;
 }
 
-void silofs_blobid40b_set(struct silofs_blobid40b *blobid40,
+void silofs_blobid32b_set(struct silofs_blobid32b *blobid32,
                           const struct silofs_blobid *blobid)
 {
-	memset(blobid40, 0, sizeof(*blobid40));
-	silofs_treeid128_set(&blobid40->treeid, &blobid->treeid);
-	blobid40->voff = silofs_cpu_to_off(blobid->voff);
-	blobid40->size = silofs_cpu_to_le32((uint32_t)blobid->size);
-	blobid40->vspace = (uint8_t)blobid->vspace;
-	blobid40->height = (uint8_t)blobid->height;
+	memset(blobid32, 0, sizeof(*blobid32));
+	silofs_treeid128_set(&blobid32->treeid, &blobid->treeid);
+	blobid32->voff = silofs_cpu_to_off(blobid->voff);
+	blobid32->size = silofs_cpu_to_le32((uint32_t)blobid->size);
+	blobid32->vspace = (uint8_t)blobid->vspace;
+	blobid32->height = (uint8_t)blobid->height;
 }
 
-void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid40,
+void silofs_blobid32b_parse(const struct silofs_blobid32b *blobid32,
                             struct silofs_blobid *blobid)
 {
-	silofs_treeid128_parse(&blobid40->treeid, &blobid->treeid);
-	blobid->voff = silofs_off_to_cpu(blobid40->voff);
-	blobid->size = silofs_le32_to_cpu(blobid40->size);
-	blobid->vspace = (enum silofs_stype)blobid40->vspace;
-	blobid->height = (enum silofs_height)blobid40->height;
+	silofs_treeid128_parse(&blobid32->treeid, &blobid->treeid);
+	blobid->voff = silofs_off_to_cpu(blobid32->voff);
+	blobid->size = silofs_le32_to_cpu(blobid32->size);
+	blobid->vspace = (enum silofs_stype)blobid32->vspace;
+	blobid->height = (enum silofs_height)blobid32->height;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -890,7 +890,7 @@ void silofs_paddr_of_bk(struct silofs_paddr *paddr,
 
 void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 {
-	silofs_blobid40b_reset(&paddr48->blobid);
+	silofs_blobid32b_reset(&paddr48->blobid);
 	paddr48->pos = 0;
 	paddr48->len = 0;
 }
@@ -898,7 +898,7 @@ void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
                          const struct silofs_paddr *paddr)
 {
-	silofs_blobid40b_set(&paddr48->blobid, &paddr->blobid);
+	silofs_blobid32b_set(&paddr48->blobid, &paddr->blobid);
 	paddr48->pos = silofs_cpu_to_le32((uint32_t)(paddr->pos));
 	paddr48->len = silofs_cpu_to_le32((uint32_t)(paddr->len));
 }
@@ -906,7 +906,7 @@ void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
 void silofs_paddr48b_parse(const struct silofs_paddr48b *paddr48,
                            struct silofs_paddr *paddr)
 {
-	silofs_blobid40b_parse(&paddr48->blobid, &paddr->blobid);
+	silofs_blobid32b_parse(&paddr48->blobid, &paddr->blobid);
 	paddr->pos = (loff_t)silofs_le32_to_cpu(paddr48->pos);
 	paddr->len = (size_t)silofs_le32_to_cpu(paddr48->len);
 }

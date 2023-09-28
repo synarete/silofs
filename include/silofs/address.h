@@ -140,12 +140,12 @@ void silofs_blobid_setup(struct silofs_blobid *blobid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height);
 
-void silofs_blobid40b_reset(struct silofs_blobid40b *blobid40);
+void silofs_blobid32b_reset(struct silofs_blobid32b *blobid32);
 
-void silofs_blobid40b_set(struct silofs_blobid40b *blobid40,
+void silofs_blobid32b_set(struct silofs_blobid32b *blobid32,
                           const struct silofs_blobid *blobid);
 
-void silofs_blobid40b_parse(const struct silofs_blobid40b *blobid40,
+void silofs_blobid32b_parse(const struct silofs_blobid32b *blobid32,
                             struct silofs_blobid *blobid);
 
 

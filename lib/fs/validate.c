@@ -166,7 +166,7 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);
-	REQUIRE_SIZEOF(struct silofs_blobid40b, 40);
+	REQUIRE_SIZEOF(struct silofs_blobid32b, 32);
 	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bootrec1k, SILOFS_BOOTSEC_SIZE);
@@ -263,14 +263,14 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_bks, 512);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_objs, 768);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_main_blobid, 24);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_main_blobid, 32);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_vrange, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subrefs, 4096);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_rivs, 28672);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_blobid, 24);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_blobid, 32);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
@@ -334,9 +334,9 @@ static void validate_journal_types_alignment(void)
 	REQUIRE_OFFSET(struct silofs_journal_rec, jr_tx_count, 36);
 	REQUIRE_OFFSET(struct silofs_journal_rec, jr_tx_index, 40);
 	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_src_blobid, 64);
-	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_src_off, 104);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_src_off, 96);
 	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_dst_blobid, 128);
-	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_dst_off, 168);
+	REQUIRE_OFFSET64(struct silofs_journal_rec, jr_dst_off, 160);
 }
 
 static void validate_defs_consistency(void)

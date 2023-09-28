@@ -65,23 +65,23 @@ static void sigaction_abort_handler(int signum)
 	abort(); /* Re-raise to _exit */
 }
 
-static struct sigaction s_sigaction_info = {
+static const struct sigaction s_sigaction_info = {
 	.sa_handler = sigaction_info_handler
 };
 
-static struct sigaction s_sigaction_halt = {
+static const struct sigaction s_sigaction_halt = {
 	.sa_handler = sigaction_halt_handler
 };
 
-static struct sigaction s_sigaction_term = {
+static const struct sigaction s_sigaction_term = {
 	.sa_handler = sigaction_term_handler
 };
 
-static struct sigaction s_sigaction_abort = {
+static const struct sigaction s_sigaction_abort = {
 	.sa_handler = sigaction_abort_handler
 };
 
-static void register_sigaction(int signum, struct sigaction *sa)
+static void register_sigaction(int signum, const struct sigaction *sa)
 {
 	int err;
 

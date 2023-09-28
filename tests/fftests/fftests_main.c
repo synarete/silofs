@@ -179,11 +179,11 @@ static void sigaction_noop_handler(int signum)
 	silofs_unused(signum);
 }
 
-static struct sigaction s_sigaction_noop = {
+static const struct sigaction s_sigaction_noop = {
 	.sa_handler = sigaction_noop_handler
 };
 
-static void register_sigaction(int signum, struct sigaction *sa)
+static void register_sigaction(int signum, const struct sigaction *sa)
 {
 	int err;
 
@@ -219,7 +219,7 @@ static void ft_register_sigactions(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const char *ft_usage =
+static const char *const ft_usage =
         "[options] <dirpath>\n\n" \
         "options: \n" \
         " -t, --test=<name>         Run tests which contains name\n" \

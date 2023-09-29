@@ -12,7 +12,6 @@ libsilofs_la_LIBADD = $(NULL)
 libsilofs_la_LIBADD += @LIBS@
 libsilofs_la_LIBADD += $(PTHREAD_LIBS)
 libsilofs_la_SOURCES = $(NULL)
-
 libsilofs_la_SOURCES += infra/avl.c
 libsilofs_la_SOURCES += infra/base64.c
 libsilofs_la_SOURCES += infra/bytebuf.c

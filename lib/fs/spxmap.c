@@ -499,12 +499,11 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_stype stype)
 	case SILOFS_STYPE_SYMVAL:
 		ret = &spam->spa_symval;
 		break;
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;

@@ -29,13 +29,11 @@
 ssize_t silofs_height_to_blob_size(enum silofs_height height)
 {
 	const ssize_t blob_size_max = SILOFS_BLOB_SIZE_MAX;
-	ssize_t elemsz;
-	ssize_t nelems;
-	ssize_t factor;
+	ssize_t elemsz = 0;
+	ssize_t nelems = 1;
+	ssize_t factor = 1;
 
 	switch (height) {
-	default:
-	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_VDATA:
 		elemsz = SILOFS_LBK_SIZE;
 		nelems = SILOFS_SPMAP_NCHILDS;
@@ -46,11 +44,19 @@ ssize_t silofs_height_to_blob_size(enum silofs_height height)
 	case SILOFS_HEIGHT_SPNODE2:
 	case SILOFS_HEIGHT_SPNODE3:
 	case SILOFS_HEIGHT_SPNODE4:
-	case SILOFS_HEIGHT_SUPER:
-	case SILOFS_HEIGHT_LAST:
 		elemsz = SILOFS_SPMAP_SIZE;
 		nelems = SILOFS_SPMAP_NCHILDS;
-		factor = 1;
+		break;
+	case SILOFS_HEIGHT_SUPER:
+		elemsz = SILOFS_SB_SIZE;
+		break;
+	case SILOFS_HEIGHT_UBER:
+		elemsz = SILOFS_BOOTREC_SIZE;
+		break;
+	case SILOFS_HEIGHT_NONE:
+	case SILOFS_HEIGHT_LAST:
+	default:
+		elemsz = 0;
 		break;
 	}
 	return elemsz * nelems * factor;
@@ -81,6 +87,7 @@ ssize_t silofs_height_to_space_span(enum silofs_height height)
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
+	case SILOFS_HEIGHT_UBER:
 	case SILOFS_HEIGHT_LAST:
 		shift_fac = 5;
 		break;
@@ -327,12 +334,12 @@ bool silofs_stype_isunode(enum silofs_stype stype)
 	bool ret;
 
 	switch (stype) {
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
 		ret = true;
 		break;
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_SYMVAL:
@@ -341,7 +348,6 @@ bool silofs_stype_isunode(enum silofs_stype stype)
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
-	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_LAST:
 	default:
@@ -366,12 +372,11 @@ bool silofs_stype_isvnode(enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 		ret = true;
 		break;
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = false;
@@ -390,11 +395,10 @@ bool silofs_stype_isdata(enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 		ret = true;
 		break;
-	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_DTNODE:
@@ -412,6 +416,8 @@ bool silofs_stype_isdata(enum silofs_stype stype)
 uint32_t silofs_stype_size(enum silofs_stype stype)
 {
 	switch (stype) {
+	case SILOFS_STYPE_BOOTREC:
+		return sizeof(struct silofs_bootrec1k);
 	case SILOFS_STYPE_SUPER:
 		return sizeof(struct silofs_super_block);
 	case SILOFS_STYPE_SPNODE:
@@ -433,10 +439,8 @@ uint32_t silofs_stype_size(enum silofs_stype stype)
 	case SILOFS_STYPE_DATA4K:
 		return sizeof(struct silofs_data_block4);
 	case SILOFS_STYPE_DATABK:
-	case SILOFS_STYPE_ANONBK:
 		return sizeof(struct silofs_data_block64);
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		break;
@@ -463,7 +467,7 @@ void silofs_treeid_generate(struct silofs_treeid *treeid)
 	silofs_uuid_generate(&treeid->uuid);
 }
 
-static void treeid_assign(struct silofs_treeid *treeid,
+void silofs_treeid_assign(struct silofs_treeid *treeid,
                           const struct silofs_treeid *other)
 {
 	silofs_uuid_assign(&treeid->uuid, &other->uuid);
@@ -490,13 +494,20 @@ bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
 	return treeid_isequal(treeid1, treeid2);
 }
 
-void silofs_treeid_as_u128(const struct silofs_treeid *treeid,
-                           uint64_t *out_u1, uint64_t *out_u2)
+void silofs_treeid_as_uuid(const struct silofs_treeid *treeid,
+                           struct silofs_uuid *out_uuid)
 {
 	STATICASSERT_EQ(sizeof(treeid->uuid.uu), 16);
 
-	*out_u1 = u64_of(&treeid->uuid.uu[0]);
-	*out_u2 = u64_of(&treeid->uuid.uu[8]);
+	silofs_uuid_assign(out_uuid, &treeid->uuid);
+}
+
+void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
+                           const struct silofs_uuid *uuid)
+{
+	STATICASSERT_EQ(sizeof(treeid->uuid.uu), 16);
+
+	silofs_uuid_assign(&treeid->uuid, uuid);
 }
 
 void silofs_treeid128_set(struct silofs_treeid128 *treeid128,
@@ -573,7 +584,7 @@ void silofs_blobid_reset(struct silofs_blobid *blobid)
 static void blobid_assign_ta(struct silofs_blobid *blobid,
                              const struct silofs_blobid *other)
 {
-	treeid_assign(&blobid->treeid, &other->treeid);
+	silofs_treeid_assign(&blobid->treeid, &other->treeid);
 	blobid->voff = other->voff;
 }
 
@@ -649,7 +660,7 @@ void silofs_blobid_setup(struct silofs_blobid *blobid,
 {
 	const ssize_t blob_size = silofs_height_to_blob_size(height);
 
-	treeid_assign(&blobid->treeid, treeid);
+	silofs_treeid_assign(&blobid->treeid, treeid);
 	blobid->voff = off_align(voff, blob_size);
 	blobid->size = (size_t)blob_size;
 	blobid->height = height;
@@ -1012,6 +1023,12 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2)
 {
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
+}
+
+const struct silofs_treeid *
+silofs_uaddr_treeid(const struct silofs_uaddr *uaddr)
+{
+	return &uaddr->paddr.blobid.treeid;
 }
 
 const struct silofs_blobid *

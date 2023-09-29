@@ -77,6 +77,8 @@ static int spvis_exec_at(struct silofs_sp_visitor *sp_vis,
                          const struct silofs_walk_iter *witr)
 {
 	switch (witr->height) {
+	case SILOFS_HEIGHT_UBER:
+		break;
 	case SILOFS_HEIGHT_SUPER:
 		sp_vis->cb(sbi_paddr(witr->sbi), witr->voff);
 		sp_vis->sp_st.objs.nsuper++;

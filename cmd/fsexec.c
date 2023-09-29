@@ -143,11 +143,11 @@ void cmd_require_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 	cmd_require_ok(fse, err, "failed to poke fs");
 }
 
-void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid)
+void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_fsid)
 {
 	int err;
 
-	err = silofs_format_fs(fse, out_uuid);
+	err = silofs_format_fs(fse, out_fsid);
 	cmd_require_ok(fse, err, "failed to format fs");
 }
 

@@ -26,10 +26,8 @@ struct silofs_bootpath {
 
 /* boot-record representation (in-memory) */
 struct silofs_bootrec {
-	struct silofs_uuid              uuid;
 	struct silofs_ulink             sb_ulink;
 	struct silofs_cipher_args       cip_args;
-	struct silofs_hash256           key_hash;
 	enum silofs_bootf               flags;
 };
 
@@ -65,36 +63,30 @@ void silofs_bootrec_init(struct silofs_bootrec *brec);
 
 void silofs_bootrec_fini(struct silofs_bootrec *brec);
 
-void silofs_bootrec_uuid(const struct silofs_bootrec *brec,
-                         struct silofs_uuid *out_uuid);
-
-void silofs_bootrec_set_uuid(struct silofs_bootrec *brec,
-                             const struct silofs_uuid *uuid);
-
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink);
 
 void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
                                  const struct silofs_ulink *sb_ulink);
 
-void silofs_bootrec_set_keyhash(struct silofs_bootrec *brec,
-                                const struct silofs_hash256 *hash);
-
-void silofs_bootrec_clear_keyhash(struct silofs_bootrec *brec);
-
-int silofs_bootrec_check_keyhash(const struct silofs_bootrec *brec,
-                                 const struct silofs_hash256 *hash);
-
 void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
                                 struct silofs_cipher_args *out_cip_args);
+
+void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
+                               struct silofs_uaddr *out_uaddr);
+
+void silofs_make_bootrec_uaddr(const struct silofs_uuid *fsid,
+                               struct silofs_uaddr *out_uaddr);
+
+
+void silofs_bootrecs_to_fsids(const struct silofs_bootrecs *brecs,
+                              struct silofs_uuid *out_fsid_new,
+                              struct silofs_uuid *out_fsid_alt);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bootpath_setup(struct silofs_bootpath *bp,
                           const char *repodir, const char *name);
-
-void silofs_bootpath_assign(struct silofs_bootpath *bpath,
-                            const struct silofs_bootpath *other);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

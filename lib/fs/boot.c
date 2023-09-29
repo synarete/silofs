@@ -195,98 +195,75 @@ static void cpu_to_kdf(const struct silofs_kdf_desc *kd,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t bootrec1k_magic(const struct silofs_bootrec1k *bsc)
+static uint64_t bootrec1k_magic(const struct silofs_bootrec1k *brec1k)
 {
-	return silofs_le64_to_cpu(bsc->br_magic);
+	return silofs_le64_to_cpu(brec1k->br_magic);
 }
 
-static void bootrec1k_set_magic(struct silofs_bootrec1k *bsc, uint64_t magic)
+static void
+bootrec1k_set_magic(struct silofs_bootrec1k *brec1k, uint64_t magic)
 {
-	bsc->br_magic = silofs_cpu_to_le64(magic);
+	brec1k->br_magic = silofs_cpu_to_le64(magic);
 }
 
-static uint64_t bootrec1k_version(const struct silofs_bootrec1k *bsc)
+static uint64_t bootrec1k_version(const struct silofs_bootrec1k *brec1k)
 {
-	return silofs_le64_to_cpu(bsc->br_version);
+	return silofs_le64_to_cpu(brec1k->br_version);
 }
 
-static void bootrec1k_set_version(struct silofs_bootrec1k *bsc,
-                                  uint64_t version)
+static void
+bootrec1k_set_version(struct silofs_bootrec1k *brec1k, uint64_t version)
 {
-	bsc->br_version = silofs_cpu_to_le64(version);
+	brec1k->br_version = silofs_cpu_to_le64(version);
 }
 
-static enum silofs_bootf bootrec1k_flags(const struct silofs_bootrec1k *bsc)
+static enum silofs_bootf bootrec1k_flags(const struct silofs_bootrec1k *brec1k)
 {
-	const uint64_t f = silofs_le64_to_cpu(bsc->br_flags);
+	const uint64_t f = silofs_le64_to_cpu(brec1k->br_flags);
 
 	return (enum silofs_bootf)f;
 }
 
-static void bootrec1k_set_flags(struct silofs_bootrec1k *bsc,
-                                enum silofs_bootf f)
+static void
+bootrec1k_set_flags(struct silofs_bootrec1k *brec1k, enum silofs_bootf f)
 {
-	bsc->br_flags = silofs_cpu_to_le64((uint64_t)f);
+	brec1k->br_flags = silofs_cpu_to_le64((uint64_t)f);
 }
 
-static void bootrec1k_uuid(const struct silofs_bootrec1k *bsc,
-                           struct silofs_uuid *uu)
-{
-	silofs_uuid_assign(uu, &bsc->br_uuid);
-}
-
-static void bootrec1k_set_uuid(struct silofs_bootrec1k *bsc,
-                               const struct silofs_uuid *uu)
-{
-	silofs_uuid_assign(&bsc->br_uuid, uu);
-}
-
-static void bootrec1k_key_hash(const struct silofs_bootrec1k *bsc,
-                               struct silofs_hash256 *out_hash)
-{
-	silofs_hash256_assign(out_hash, &bsc->br_key_hash);
-}
-
-static void bootrec1k_set_key_hash(struct silofs_bootrec1k *bsc,
-                                   const struct silofs_hash256 *hash)
-{
-	silofs_hash256_assign(&bsc->br_key_hash, hash);
-}
-
-static void bootrec1k_kdf(const struct silofs_bootrec1k *bsc,
+static void bootrec1k_kdf(const struct silofs_bootrec1k *brec1k,
                           struct silofs_kdf_pair *kdf)
 {
-	kdf_to_cpu(&bsc->br_kdf_pair.kdf_iv, &kdf->kdf_iv);
-	kdf_to_cpu(&bsc->br_kdf_pair.kdf_key, &kdf->kdf_key);
+	kdf_to_cpu(&brec1k->br_kdf_pair.kdf_iv, &kdf->kdf_iv);
+	kdf_to_cpu(&brec1k->br_kdf_pair.kdf_key, &kdf->kdf_key);
 }
 
-static void bootrec1k_set_kdf(struct silofs_bootrec1k *bsc,
+static void bootrec1k_set_kdf(struct silofs_bootrec1k *brec1k,
                               const struct silofs_kdf_pair *kdf)
 {
-	cpu_to_kdf(&kdf->kdf_iv, &bsc->br_kdf_pair.kdf_iv);
-	cpu_to_kdf(&kdf->kdf_key, &bsc->br_kdf_pair.kdf_key);
+	cpu_to_kdf(&kdf->kdf_iv, &brec1k->br_kdf_pair.kdf_iv);
+	cpu_to_kdf(&kdf->kdf_key, &brec1k->br_kdf_pair.kdf_key);
 }
 
-static uint32_t bootrec1k_chiper_algo(const struct silofs_bootrec1k *bsc)
+static uint32_t bootrec1k_chiper_algo(const struct silofs_bootrec1k *brec1k)
 {
-	return silofs_le32_to_cpu(bsc->br_chiper_algo);
+	return silofs_le32_to_cpu(brec1k->br_chiper_algo);
 }
 
-static uint32_t bootrec1k_chiper_mode(const struct silofs_bootrec1k *bsc)
+static uint32_t bootrec1k_chiper_mode(const struct silofs_bootrec1k *brec1k)
 {
-	return silofs_le32_to_cpu(bsc->br_chiper_mode);
+	return silofs_le32_to_cpu(brec1k->br_chiper_mode);
 }
 
-static void bootrec1k_set_cipher(struct silofs_bootrec1k *bsc,
+static void bootrec1k_set_cipher(struct silofs_bootrec1k *brec1k,
                                  uint32_t cipher_algo, uint32_t cipher_mode)
 {
-	bsc->br_chiper_algo = silofs_cpu_to_le32(cipher_algo);
-	bsc->br_chiper_mode = silofs_cpu_to_le32(cipher_mode);
+	brec1k->br_chiper_algo = silofs_cpu_to_le32(cipher_algo);
+	brec1k->br_chiper_mode = silofs_cpu_to_le32(cipher_mode);
 }
 
-static void bootrec1k_fill_rands(struct silofs_bootrec1k *bsc)
+static void bootrec1k_fill_rands(struct silofs_bootrec1k *brec1k)
 {
-	silofs_getentropy(bsc->br_rands, sizeof(bsc->br_rands));
+	silofs_getentropy(brec1k->br_rands, sizeof(brec1k->br_rands));
 }
 
 void silofs_bootrec1k_init(struct silofs_bootrec1k *brec1k)
@@ -309,27 +286,27 @@ void silofs_bootrec1k_fini(struct silofs_bootrec1k *brec1k)
 }
 
 static void bootrec1k_sb_uaddr(const struct silofs_bootrec1k *brec1k,
-                               struct silofs_uaddr *out_uaddr)
+                               struct silofs_uaddr *out_sb_uaddr)
 {
-	silofs_uaddr64b_parse(&brec1k->br_sb_uaddr, out_uaddr);
+	silofs_uaddr64b_parse(&brec1k->br_sb_uaddr, out_sb_uaddr);
 }
 
 static void bootrec1k_set_sb_uaddr(struct silofs_bootrec1k *brec1k,
-                                   const struct silofs_uaddr *uaddr)
+                                   const struct silofs_uaddr *sb_uaddr)
 {
-	silofs_uaddr64b_set(&brec1k->br_sb_uaddr, uaddr);
+	silofs_uaddr64b_set(&brec1k->br_sb_uaddr, sb_uaddr);
 }
 
 static void bootrec1k_sb_riv(const struct silofs_bootrec1k *brec1k,
-                             struct silofs_iv *out_riv)
+                             struct silofs_iv *out_sb_riv)
 {
-	silofs_iv_assign(out_riv, &brec1k->br_sb_riv);
+	silofs_iv_assign(out_sb_riv, &brec1k->br_sb_riv);
 }
 
 static void bootrec1k_set_sb_riv(struct silofs_bootrec1k *brec1k,
-                                 const struct silofs_iv *riv)
+                                 const struct silofs_iv *sb_riv)
 {
-	silofs_iv_assign(&brec1k->br_sb_riv, riv);
+	silofs_iv_assign(&brec1k->br_sb_riv, sb_riv);
 }
 
 
@@ -351,15 +328,17 @@ static int bootrec1k_check_base(const struct silofs_bootrec1k *brec1k)
 	return 0;
 }
 
-static int bootrec1k_check_sb_uaddr(const struct silofs_bootrec1k *brec1k)
+static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *brec1k)
 {
 	struct silofs_uaddr uaddr;
+	enum silofs_height height;
 
 	bootrec1k_sb_uaddr(brec1k, &uaddr);
+	height = uaddr_height(&uaddr);
 	if ((uaddr.stype != SILOFS_STYPE_SUPER) ||
-	    (uaddr.paddr.blobid.height != SILOFS_HEIGHT_SUPER)) {
-		log_dbg("bad bootrec sb-uaddr: stype=%d height=%d",
-		        (int)uaddr.stype, (int)uaddr.paddr.blobid.height);
+	    (height != SILOFS_HEIGHT_SUPER) || (uaddr.voff != 0)) {
+		log_dbg("bad bootrec uaddr-sb: voff=%ld stype=%d height=%d",
+		        uaddr.voff, (int)uaddr.stype, (int)height);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -385,7 +364,7 @@ static int bootrec1k_check(const struct silofs_bootrec1k *brec1k)
 	if (err) {
 		return err;
 	}
-	err = bootrec1k_check_sb_uaddr(brec1k);
+	err = bootrec1k_check_uaddr_sb(brec1k);
 	if (err) {
 		return err;
 	}
@@ -460,12 +439,8 @@ void silofs_bootrec1k_parse(const struct silofs_bootrec1k *brec1k,
 {
 	bootrec1k_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_sb_riv(brec1k, &brec->sb_ulink.riv);
-	bootrec1k_uuid(brec1k, &brec->uuid);
 	bootrec1k_cipher_args(brec1k, &brec->cip_args);
 	brec->flags = bootrec1k_flags(brec1k);
-	if (brec->flags & SILOFS_BOOTF_KEY_SHA256) {
-		bootrec1k_key_hash(brec1k, &brec->key_hash);
-	}
 }
 
 void silofs_bootrec1k_set(struct silofs_bootrec1k *brec1k,
@@ -474,11 +449,7 @@ void silofs_bootrec1k_set(struct silofs_bootrec1k *brec1k,
 	silofs_bootrec1k_init(brec1k);
 	bootrec1k_set_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_set_sb_riv(brec1k, &brec->sb_ulink.riv);
-	bootrec1k_set_uuid(brec1k, &brec->uuid);
 	bootrec1k_set_flags(brec1k, brec->flags);
-	if (brec->flags & SILOFS_BOOTF_KEY_SHA256) {
-		bootrec1k_set_key_hash(brec1k, &brec->key_hash);
-	}
 }
 
 void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
@@ -496,25 +467,12 @@ void silofs_bootrec_init(struct silofs_bootrec *brec)
 	silofs_memzero(brec, sizeof(*brec));
 	silofs_ulink_reset(&brec->sb_ulink);
 	silofs_default_cip_args(&brec->cip_args);
-	silofs_uuid_generate(&brec->uuid);
 	brec->flags = SILOFS_BOOTF_NONE;
 }
 
 void silofs_bootrec_fini(struct silofs_bootrec *brec)
 {
 	silofs_memffff(brec, sizeof(*brec));
-}
-
-void silofs_bootrec_uuid(const struct silofs_bootrec *brec,
-                         struct silofs_uuid *out_uuid)
-{
-	silofs_uuid_assign(out_uuid, &brec->uuid);
-}
-
-void silofs_bootrec_set_uuid(struct silofs_bootrec *brec,
-                             const struct silofs_uuid *uuid)
-{
-	silofs_uuid_assign(&brec->uuid, uuid);
 }
 
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
@@ -529,31 +487,6 @@ void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
 	silofs_ulink_assign(&brec->sb_ulink, sb_ulink);
 }
 
-void silofs_bootrec_set_keyhash(struct silofs_bootrec *brec,
-                                const struct silofs_hash256 *hash)
-{
-	silofs_hash256_assign(&brec->key_hash, hash);
-	brec->flags |= SILOFS_BOOTF_KEY_SHA256;
-}
-
-void silofs_bootrec_clear_keyhash(struct silofs_bootrec *brec)
-{
-	silofs_memzero(&brec->key_hash, sizeof(brec->key_hash));
-	brec->flags &= (enum silofs_bootf)(~SILOFS_BOOTF_KEY_SHA256);
-}
-
-static bool bootrec_has_keyhash(const struct silofs_bootrec *brec,
-                                const struct silofs_hash256 *hash)
-{
-	return silofs_hash256_isequal(&brec->key_hash, hash);
-}
-
-int silofs_bootrec_check_keyhash(const struct silofs_bootrec *brec,
-                                 const struct silofs_hash256 *hash)
-{
-	return bootrec_has_keyhash(brec, hash) ? 0 : -EKEYEXPIRED;
-}
-
 void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
                                 struct silofs_cipher_args *out_cip_args)
 {
@@ -562,6 +495,60 @@ void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
 	} else {
 		cip_args_assign(out_cip_args, &brec->cip_args);
 	}
+}
+
+static void bootrec_sb_fsid(const struct silofs_bootrec *brec,
+                            struct silofs_uuid *out_fsid)
+{
+	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
+
+	silofs_uuid_assign(out_fsid, &sb_uaddr->paddr.blobid.treeid.uuid);
+}
+
+static void bootrec_sb_treeid(const struct silofs_bootrec *brec,
+                              struct silofs_treeid *out_treeid)
+{
+	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
+
+	silofs_treeid_assign(out_treeid, &sb_uaddr->paddr.blobid.treeid);
+}
+
+static void
+bootrec_uaddr_by_treeid(const struct silofs_treeid *treeid,
+                        struct silofs_uaddr *out_uaddr)
+{
+	struct silofs_blobid blobid;
+	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
+	const enum silofs_height height = SILOFS_HEIGHT_UBER;
+
+	silofs_blobid_setup(&blobid, treeid, 0, stype, height);
+	silofs_uaddr_setup(out_uaddr, &blobid, 0, stype, 0);
+}
+
+void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
+                               struct silofs_uaddr *out_uaddr)
+{
+	struct silofs_treeid treeid;
+
+	bootrec_sb_treeid(brec, &treeid);
+	bootrec_uaddr_by_treeid(&treeid, out_uaddr);
+}
+
+void silofs_make_bootrec_uaddr(const struct silofs_uuid *fsid,
+                               struct silofs_uaddr *out_uaddr)
+{
+	struct silofs_treeid treeid;
+
+	silofs_treeid_by_uuid(&treeid, fsid);
+	bootrec_uaddr_by_treeid(&treeid, out_uaddr);
+}
+
+void silofs_bootrecs_to_fsids(const struct silofs_bootrecs *brecs,
+                              struct silofs_uuid *out_fsid_new,
+                              struct silofs_uuid *out_fsid_alt)
+{
+	bootrec_sb_fsid(&brecs->brec[0], out_fsid_new);
+	bootrec_sb_fsid(&brecs->brec[1], out_fsid_alt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -582,16 +569,6 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath,
 		ret = -SILOFS_EINVAL;
 	}
 	return ret;
-}
-
-void silofs_bootpath_assign(struct silofs_bootpath *bpath,
-                            const struct silofs_bootpath *other)
-{
-	bpath->repodir.str = other->repodir.str;
-	bpath->repodir.len = other->repodir.len;
-
-	bpath->name.s.str = other->name.s.str;
-	bpath->name.s.len = other->name.s.len;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

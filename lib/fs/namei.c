@@ -2411,19 +2411,20 @@ static int check_clone(const struct silofs_task *task,
 static int do_post_clone_updates(const struct silofs_task *task,
                                  const struct silofs_bootrecs *brecs)
 {
-	struct silofs_repo *repo = NULL;
+	struct silofs_uaddr uaddr = { .voff = -1 };
+	struct silofs_repo *repo = repo_of(task->t_uber);
 	const struct silofs_bootrec *brec = NULL;
-	int err = 0;
+	int err;
 
-	repo = repo_of(task->t_uber);
 	for (size_t i = 0; i < ARRAY_SIZE(brecs->brec); ++i) {
 		brec = &brecs->brec[i];
-		err = silofs_repo_save_bootrec(repo, &brec->uuid, brec);
+		silofs_bootrec_self_uaddr(brec, &uaddr);
+		err = silofs_repo_save_bootrec(repo, &uaddr.paddr, brec);
 		if (err) {
-			break;
+			return err;
 		}
 	}
-	return err;
+	return 0;
 }
 
 static int flush_and_sync_blobs(struct silofs_task *task)

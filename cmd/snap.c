@@ -228,8 +228,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "failed to snap: %s",
 		         ctx->in_args.repodir_name);
 	}
-	silofs_uuid_assign(&ctx->uuid_new, &ctx->ioc->clone.uuid_new);
-	silofs_uuid_assign(&ctx->uuid_alt, &ctx->ioc->clone.uuid_alt);
+	silofs_uuid_assign(&ctx->uuid_new, &ctx->ioc->clone.id_new);
+	silofs_uuid_assign(&ctx->uuid_alt, &ctx->ioc->clone.id_alt);
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)

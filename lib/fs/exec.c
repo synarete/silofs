@@ -887,44 +887,6 @@ static int check_superblock(const struct silofs_fs_env *fse)
 	return 0;
 }
 
-static int calc_key_hash(const struct silofs_fs_env *fse,
-                         struct silofs_hash256 *out_hash)
-{
-	struct silofs_mdigest mdigest;
-	const struct silofs_ivkey *ivkey = &fse->fs_ivkey;
-	int err;
-
-	err = silofs_mdigest_init(&mdigest);
-	if (err) {
-		return err;
-	}
-	silofs_calc_key_hash(&ivkey->key, &mdigest, out_hash);
-	silofs_mdigest_fini(&mdigest);
-	return 0;
-}
-
-static int verify_bootrec_keyhash(const struct silofs_fs_env *fse,
-                                  const struct silofs_bootrec *brec)
-{
-	struct silofs_hash256 hash;
-	const enum silofs_bootf mask = SILOFS_BOOTF_KEY_SHA256;
-	int err;
-
-	if ((brec->flags & mask) != mask) {
-		return 0;
-	}
-	err = calc_key_hash(fse, &hash);
-	if (err) {
-		return err;
-	}
-	err = silofs_bootrec_check_keyhash(brec, &hash);
-	if (err) {
-		log_err("failed to verify bootrec: err=%d", err);
-		return err;
-	}
-	return 0;
-}
-
 static int reload_super(const struct silofs_fs_env *fse)
 {
 	int err;
@@ -1344,40 +1306,49 @@ int silofs_open_repo(struct silofs_fs_env *fse)
 	return ret;
 }
 
+static void bootrec_to_fsid(const struct silofs_bootrec *brec,
+                            struct silofs_uuid *out_fsid)
+{
+	struct silofs_uaddr uaddr;
+
+	silofs_bootrec_self_uaddr(brec, &uaddr);
+	silofs_uuid_assign(out_fsid, &uaddr.paddr.blobid.treeid.uuid);
+}
+
 static int stat_bootrec_of(const struct silofs_fs_env *fse,
-                           const struct silofs_uuid *uuid,
+                           const struct silofs_uaddr *uaddr,
                            struct stat *out_st)
 {
-	return silofs_repo_stat_bootrec(fse->fs_repo, uuid, out_st);
+	return silofs_repo_stat_bootrec(fse->fs_repo, &uaddr->paddr, out_st);
 }
 
 static int save_bootrec_of(const struct silofs_fs_env *fse,
-                           const struct silofs_uuid *uuid,
+                           const struct silofs_uaddr *uaddr,
                            const struct silofs_bootrec *brec)
 {
-	return silofs_repo_save_bootrec(fse->fs_repo, uuid, brec);
+	return silofs_repo_save_bootrec(fse->fs_repo, &uaddr->paddr, brec);
 }
 
 static int load_bootrec_of(const struct silofs_fs_env *fse,
-                           const struct silofs_uuid *uuid,
+                           const struct silofs_uaddr *uaddr,
                            struct silofs_bootrec *out_brec)
 {
-	return silofs_repo_load_bootrec(fse->fs_repo, uuid, out_brec);
+	return silofs_repo_load_bootrec(fse->fs_repo, &uaddr->paddr, out_brec);
 }
 
 static int reload_bootrec_of(struct silofs_fs_env *fse,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_uaddr *uaddr,
                              struct silofs_bootrec *out_brec)
 {
 	struct stat st = { .st_size = -1 };
 	int err;
 
-	err = stat_bootrec_of(fse, uuid, &st);
+	err = stat_bootrec_of(fse, uaddr, &st);
 	if (err) {
 		log_err("failed to stat bootrec: err=%d", err);
 		return err;
 	}
-	err = load_bootrec_of(fse, uuid, out_brec);
+	err = load_bootrec_of(fse, uaddr, out_brec);
 	if (err) {
 		log_err("failed to reload bootrec: err=%d", err);
 		return err;
@@ -1386,11 +1357,11 @@ static int reload_bootrec_of(struct silofs_fs_env *fse,
 }
 
 static int unlink_bootrec_of(struct silofs_fs_env *fse,
-                             const struct silofs_uuid *uuid)
+                             const struct silofs_uaddr *uaddr)
 {
 	int err;
 
-	err = silofs_repo_unlink_bootrec(fse->fs_repo, uuid);
+	err = silofs_repo_unlink_bootrec(fse->fs_repo, &uaddr->paddr);
 	if (err) {
 		log_err("failed to unlink bootrec: err=%d", err);
 		return err;
@@ -1401,7 +1372,10 @@ static int unlink_bootrec_of(struct silofs_fs_env *fse,
 static int save_bootrec(const struct silofs_fs_env *fse,
                         const struct silofs_bootrec *brec)
 {
-	return save_bootrec_of(fse, &brec->uuid, brec);
+	struct silofs_uaddr uaddr;
+
+	silofs_bootrec_self_uaddr(brec, &uaddr);
+	return save_bootrec_of(fse, &uaddr, brec);
 }
 
 static int update_save_bootrec(const struct silofs_fs_env *fse,
@@ -1414,7 +1388,7 @@ static int update_save_bootrec(const struct silofs_fs_env *fse,
 }
 
 static int do_format_fs(struct silofs_fs_env *fse,
-                        struct silofs_uuid *out_uuid)
+                        struct silofs_uuid *out_fsid)
 {
 	struct silofs_bootrec brec;
 	int err;
@@ -1448,16 +1422,17 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	silofs_bootrec_uuid(&brec, out_uuid);
+	bootrec_to_fsid(&brec, out_fsid);
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid)
+int silofs_format_fs(struct silofs_fs_env *fse,
+                     struct silofs_uuid *out_fsid)
 {
 	int ret;
 
 	fse_lock(fse);
-	ret = do_format_fs(fse, out_uuid);
+	ret = do_format_fs(fse, out_fsid);
 	fse_unlock(fse);
 	return ret;
 }
@@ -1470,20 +1445,18 @@ static int fse_reload_root_sblob(struct silofs_fs_env *fse,
 }
 
 static int do_boot_fs(struct silofs_fs_env *fse,
-                      const struct silofs_uuid *uuid)
+                      const struct silofs_uuid *fsid)
 {
 	struct silofs_bootrec brec;
+	struct silofs_uaddr uaddr;
 	int err;
 
-	err = reload_bootrec_of(fse, uuid, &brec);
+	silofs_make_bootrec_uaddr(fsid, &uaddr);
+	err = reload_bootrec_of(fse, &uaddr, &brec);
 	if (err) {
 		return err;
 	}
 	err = derive_ivkey(fse, &brec);
-	if (err) {
-		return err;
-	}
-	err = verify_bootrec_keyhash(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1494,12 +1467,12 @@ static int do_boot_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
+int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *fsid)
 {
 	int ret;
 
 	fse_lock(fse);
-	ret = do_boot_fs(fse, uuid);
+	ret = do_boot_fs(fse, fsid);
 	fse_unlock(fse);
 	return ret;
 }
@@ -1568,10 +1541,13 @@ int silofs_close_fs(struct silofs_fs_env *fse)
 }
 
 int silofs_poke_fs(struct silofs_fs_env *fse,
-                   const struct silofs_uuid *uuid,
+                   const struct silofs_uuid *fsid,
                    struct silofs_bootrec *out_brec)
 {
-	return load_bootrec_of(fse, uuid, out_brec);
+	struct silofs_uaddr uaddr = { .voff = -1 };
+
+	silofs_make_bootrec_uaddr(fsid, &uaddr);
+	return load_bootrec_of(fse, &uaddr, out_brec);
 }
 
 static int exec_clone_fs(const struct silofs_fs_env *fse,
@@ -1602,8 +1578,7 @@ int silofs_fork_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	silofs_bootrec_uuid(&brecs.brec[0], out_new);
-	silofs_bootrec_uuid(&brecs.brec[1], out_alt);
+	silofs_bootrecs_to_fsids(&brecs, out_new, out_alt);
 	return 0;
 }
 
@@ -1638,20 +1613,18 @@ static int exec_unref_fs(struct silofs_fs_env *fse)
 	return err;
 }
 
-int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
+int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *fsid)
 {
 	struct silofs_bootrec brec;
+	struct silofs_uaddr uaddr;
 	int err;
 
-	err = reload_bootrec_of(fse, uuid, &brec);
+	silofs_make_bootrec_uaddr(fsid, &uaddr);
+	err = reload_bootrec_of(fse, &uaddr, &brec);
 	if (err) {
 		return err;
 	}
 	err = derive_ivkey(fse, &brec);
-	if (err) {
-		return err;
-	}
-	err = verify_bootrec_keyhash(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1667,7 +1640,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
 	if (err) {
 		return err;
 	}
-	err = unlink_bootrec_of(fse, uuid);
+	err = unlink_bootrec_of(fse, &uaddr);
 	if (err) {
 		return err;
 	}

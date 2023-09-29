@@ -1945,10 +1945,10 @@ static int repo_require_ubk(struct silofs_repo *repo, bool rw,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void repo_bootrec_name(const struct silofs_repo *repo,
-                              const struct silofs_uuid *uuid,
+                              const struct silofs_paddr *paddr,
                               struct silofs_namebuf *out_nb)
 {
-	silofs_uuid_name(uuid, out_nb);
+	silofs_uuid_name(&paddr->blobid.treeid.uuid, out_nb);
 	unused(repo);
 }
 
@@ -2023,7 +2023,7 @@ out:
 }
 
 static int repo_save_bootrec(const struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_paddr *paddr,
                              const struct silofs_bootrec *brec)
 {
 	struct silofs_bootrec1k bsc;
@@ -2034,7 +2034,7 @@ static int repo_save_bootrec(const struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	repo_bootrec_name(repo, uuid, &nb);
+	repo_bootrec_name(repo, paddr, &nb);
 	err = repo_save_bootrec1k(repo, &nb, &bsc);
 	if (err) {
 		return err;
@@ -2065,14 +2065,14 @@ out:
 }
 
 static int repo_load_bootrec(const struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_paddr *paddr,
                              struct silofs_bootrec *out_brec)
 {
 	struct silofs_bootrec1k bsc;
 	struct silofs_namebuf nb;
 	int err;
 
-	repo_bootrec_name(repo, uuid, &nb);
+	repo_bootrec_name(repo, paddr, &nb);
 	err = repo_load_bootrec1k(repo, &nb, &bsc);
 	if (err) {
 		return err;
@@ -2108,13 +2108,13 @@ static int repo_stat_bootrec1k(const struct silofs_repo *repo,
 }
 
 static int repo_stat_bootrec(const struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_paddr *paddr,
                              struct stat *out_st)
 {
 	struct silofs_namebuf nb;
 	int err;
 
-	repo_bootrec_name(repo, uuid, &nb);
+	repo_bootrec_name(repo, paddr, &nb);
 	err = repo_stat_bootrec1k(repo, &nb, out_st);
 	if (err) {
 		return err;
@@ -2128,13 +2128,13 @@ static int repo_stat_bootrec(const struct silofs_repo *repo,
 }
 
 static int repo_unlink_bootrec(const struct silofs_repo *repo,
-                               const struct silofs_uuid *uuid)
+                               const struct silofs_paddr *paddr)
 {
 	struct silofs_namebuf nb;
 	int dfd;
 	int err;
 
-	repo_bootrec_name(repo, uuid, &nb);
+	repo_bootrec_name(repo, paddr, &nb);
 	dfd = repo_blobs_dfd(repo);
 	err = do_unlinkat(dfd, nb.name, 0);
 	if (err) {
@@ -2146,45 +2146,45 @@ static int repo_unlink_bootrec(const struct silofs_repo *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_save_bootrec(struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_paddr *paddr,
                              const struct silofs_bootrec *brec)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_save_bootrec(repo, uuid, brec);
+	ret = repo_save_bootrec(repo, paddr, brec);
 	return ret;
 }
 
 int silofs_repo_load_bootrec(struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_paddr *paddr,
                              struct silofs_bootrec *out_brec)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_load_bootrec(repo, uuid, out_brec);
+	ret = repo_load_bootrec(repo, paddr, out_brec);
 	return ret;
 }
 
 int silofs_repo_stat_bootrec(struct silofs_repo *repo,
-                             const struct silofs_uuid *uuid,
+                             const struct silofs_paddr *paddr,
                              struct stat *out_st)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_stat_bootrec(repo, uuid, out_st);
+	ret = repo_stat_bootrec(repo, paddr, out_st);
 	return ret;
 }
 
 int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
-                               const struct silofs_uuid *uuid)
+                               const struct silofs_paddr *paddr)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_unlink_bootrec(repo, uuid);
+	ret = repo_unlink_bootrec(repo, paddr);
 	return ret;
 }
 

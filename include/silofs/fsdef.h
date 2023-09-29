@@ -82,8 +82,8 @@
 #define SILOFS_NSGRP_MAX                (16)
 
 
-/* size of boot-sector file */
-#define SILOFS_BOOTSEC_SIZE             (1024)
+/* size of boot-record */
+#define SILOFS_BOOTREC_SIZE             (1024)
 
 /* number of octets in UUID */
 #define SILOFS_UUID_SIZE                (16)
@@ -317,10 +317,9 @@
 #define SILOFS_HASH512_LEN              (64)
 
 
-/* boot-sector flags */
+/* boot-record flags */
 enum silofs_bootf {
 	SILOFS_BOOTF_NONE       = 0x00,
-	SILOFS_BOOTF_KEY_SHA256 = 0x01,
 };
 
 /* format endianness */
@@ -332,10 +331,10 @@ enum silofs_endianness {
 /* file-system logical-elements types */
 enum silofs_stype {
 	SILOFS_STYPE_NONE       = 0,
-	SILOFS_STYPE_SUPER      = 1,
-	SILOFS_STYPE_SPNODE     = 2,
-	SILOFS_STYPE_SPLEAF     = 3,
-	SILOFS_STYPE_RESERVED   = 4,
+	SILOFS_STYPE_BOOTREC    = 1,
+	SILOFS_STYPE_SUPER      = 2,
+	SILOFS_STYPE_SPNODE     = 3,
+	SILOFS_STYPE_SPLEAF     = 4,
 	SILOFS_STYPE_INODE      = 5,
 	SILOFS_STYPE_XANODE     = 6,
 	SILOFS_STYPE_SYMVAL     = 7,
@@ -344,7 +343,6 @@ enum silofs_stype {
 	SILOFS_STYPE_DATA1K     = 10,
 	SILOFS_STYPE_DATA4K     = 11,
 	SILOFS_STYPE_DATABK     = 12,
-	SILOFS_STYPE_ANONBK     = 13,
 	SILOFS_STYPE_LAST, /* keep last */
 };
 
@@ -358,6 +356,7 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE3   = 5,
 	SILOFS_HEIGHT_SPNODE4   = 6,
 	SILOFS_HEIGHT_SUPER     = 7,
+	SILOFS_HEIGHT_UBER      = 8,
 	SILOFS_HEIGHT_LAST, /* keep last */
 };
 
@@ -544,20 +543,15 @@ struct silofs_kdf_pair {
 struct silofs_bootrec1k {
 	uint64_t                        br_magic;
 	uint64_t                        br_version;
-	struct silofs_uuid              br_uuid;
 	uint64_t                        br_flags;
-	uint8_t                         br_reserved1[24];
-	struct silofs_kdf_pair          br_kdf_pair;
 	uint32_t                        br_chiper_algo;
 	uint32_t                        br_chiper_mode;
-	uint8_t                         br_reserved2[24];
-	struct silofs_hash256           br_key_hash;
-	uint8_t                         br_reserved3[96];
+	struct silofs_kdf_pair          br_kdf_pair;
 	struct silofs_uaddr64b          br_sb_uaddr;
 	struct silofs_iv                br_sb_riv;
-	uint8_t                         br_reserved4[48];
-	uint8_t                         br_rands[128];
-	uint8_t                         br_reserved5[480];
+	uint8_t                         br_reserved1[112];
+	uint8_t                         br_rands[256];
+	uint8_t                         br_reserved2[480];
 	struct silofs_hash256           br_hash;
 } silofs_packed_aligned64;
 

@@ -132,6 +132,7 @@
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
+#define uaddr_treeid(ua)                silofs_uaddr_treeid(ua)
 #define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)
 

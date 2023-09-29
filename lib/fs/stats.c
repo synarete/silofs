@@ -126,9 +126,8 @@ spg_gauge_of(const struct silofs_space_gauges *spg, enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 		ret = &spg->sg_ndatabk;
 		break;
-	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -405,9 +404,8 @@ spgs_gauge_of(const struct silofs_spacegauges *spgs, enum silofs_stype stype)
 	case SILOFS_STYPE_DATABK:
 		ret = &spgs->ndatabk;
 		break;
-	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;

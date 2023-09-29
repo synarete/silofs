@@ -222,11 +222,17 @@ bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr);
 
 void silofs_treeid_generate(struct silofs_treeid *treeid);
 
+void silofs_treeid_assign(struct silofs_treeid *treeid,
+                          const struct silofs_treeid *other);
+
 bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
                            const struct silofs_treeid *treeid2);
 
-void silofs_treeid_as_u128(const struct silofs_treeid *treeid,
-                           uint64_t *out_u1, uint64_t *out_u2);
+void silofs_treeid_as_uuid(const struct silofs_treeid *treeid,
+                           struct silofs_uuid *out_uuid);
+
+void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
+                           const struct silofs_uuid *uuid);
 
 void silofs_treeid128_set(struct silofs_treeid128 *treeid128,
                           const struct silofs_treeid *treeid);
@@ -265,6 +271,9 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
+
+const struct silofs_treeid *
+silofs_uaddr_treeid(const struct silofs_uaddr *uaddr);
 
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);

@@ -394,6 +394,9 @@ static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 	const enum silofs_height height = silofs_sni_height(sni);
 
 	switch (height) {
+	case SILOFS_HEIGHT_UBER:
+		stype = SILOFS_STYPE_SUPER;
+		break;
 	case SILOFS_HEIGHT_SUPER:
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SPNODE3:

@@ -1284,6 +1284,9 @@ silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 	struct silofs_unode_info *ui;
 
 	switch (ulink->uaddr.stype) {
+	case SILOFS_STYPE_BOOTREC:
+		ui = NULL;
+		break;
 	case SILOFS_STYPE_SUPER:
 		ui = sbi_to_ui(sbi_new(alloc, ulink));
 		break;
@@ -1293,7 +1296,6 @@ silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 	case SILOFS_STYPE_SPLEAF:
 		ui = sli_to_ui(sli_new(alloc, ulink));
 		break;
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_INODE:
 	case SILOFS_STYPE_XANODE:
 	case SILOFS_STYPE_SYMVAL:
@@ -1302,7 +1304,6 @@ silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
-	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_LAST:
 	default:
@@ -1338,12 +1339,11 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_STYPE_DATABK:
 		vi = fli_to_vi(fli_new(alloc, vaddr));
 		break;
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_ANONBK:
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		log_crit("illegal vaddr stype: stype=%d voff=%ld",
@@ -1419,6 +1419,8 @@ static int view_verify_sub(const union silofs_view *view,
                            enum silofs_stype stype)
 {
 	switch (stype) {
+	case SILOFS_STYPE_BOOTREC:
+		break;
 	case SILOFS_STYPE_SUPER:
 		return silofs_verify_super_block(&view->sb);
 	case SILOFS_STYPE_SPNODE:
@@ -1438,10 +1440,8 @@ static int view_verify_sub(const union silofs_view *view,
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:
-	case SILOFS_STYPE_ANONBK:
 		break;
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		log_err("illegal sub-type: stype=%d", (int)stype);

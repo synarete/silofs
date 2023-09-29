@@ -178,6 +178,9 @@ static int unrc_post_unrefs_at(struct silofs_unref_ctx *unr_ctx,
 	int err;
 
 	switch (witr->height) {
+	case SILOFS_HEIGHT_UBER:
+		err = 0;
+		break;
 	case SILOFS_HEIGHT_SUPER:
 		err = unrc_post_unrefs_at_super(unr_ctx, witr);
 		break;

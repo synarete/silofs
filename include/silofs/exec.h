@@ -33,14 +33,16 @@ int silofs_open_repo(struct silofs_fs_env *fse);
 
 int silofs_close_repo(struct silofs_fs_env *fse);
 
-int silofs_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid);
+int silofs_format_fs(struct silofs_fs_env *fse,
+                     struct silofs_uuid *out_fsid);
 
-int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+int silofs_boot_fs(struct silofs_fs_env *fse,
+                   const struct silofs_uuid *fsid);
 
 int silofs_open_fs(struct silofs_fs_env *fse);
 
 int silofs_poke_fs(struct silofs_fs_env *fse,
-                   const struct silofs_uuid *uuid,
+                   const struct silofs_uuid *fsid,
                    struct silofs_bootrec *out_brec);
 
 int silofs_close_fs(struct silofs_fs_env *fse);

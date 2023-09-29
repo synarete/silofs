@@ -201,11 +201,10 @@ sb_mainblobid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 		ret = &sb->sb_main_blobid.sb_blobid_symval;
 		break;
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -292,11 +291,10 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 		ret = &sb->sb_sproots.sb_sproot_databk;
 		break;
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;
@@ -397,11 +395,10 @@ sb_rootiv_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 		ret = &sb->sb_rootivs.sb_iv_databk;
 		break;
 	case SILOFS_STYPE_NONE:
-	case SILOFS_STYPE_ANONBK:
+	case SILOFS_STYPE_BOOTREC:
 	case SILOFS_STYPE_SUPER:
 	case SILOFS_STYPE_SPNODE:
 	case SILOFS_STYPE_SPLEAF:
-	case SILOFS_STYPE_RESERVED:
 	case SILOFS_STYPE_LAST:
 	default:
 		ret = NULL;

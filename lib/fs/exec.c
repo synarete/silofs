@@ -120,10 +120,13 @@ static void fse_init_commons(struct silofs_fs_env *fse,
                              const struct silofs_fs_args *fs_args)
 {
 	silofs_memzero(fse, sizeof(*fse));
-	silofs_ivkey_init(&fse->fs_ivkey);
+	silofs_ivkey_init(&fse->fs_boot_ivkey);
+	silofs_ivkey_init(&fse->fs_main_ivkey);
 	fs_args_assign(&fse->fs_args, fs_args);
 	fse->fs_signum = 0;
 }
+
+
 
 static int fse_init_qalloc(struct silofs_fs_env *fse)
 {
@@ -323,7 +326,8 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 {
 	const struct silofs_uber_base ub_base = {
 		.fs_args = &fse->fs_args,
-		.ivkey = &fse->fs_ivkey,
+		.boot_ivkey = &fse->fs_boot_ivkey,
+		.main_ivkey = &fse->fs_main_ivkey,
 		.alloc = fse->fs_alloc,
 		.cache = fse->fs_cache,
 		.repo = fse->fs_repo,
@@ -442,7 +446,28 @@ static void fse_fini_passwd(struct silofs_fs_env *fse)
 	}
 }
 
-static int fse_init_subs(struct silofs_fs_env *fse)
+static int fse_init_boot_ivkey(struct silofs_fs_env *fse)
+{
+	struct silofs_mdigest md;
+	const struct silofs_password *passwd = fse->fs_passwd;
+	int err;
+
+	if (!passwd->passlen) {
+		return 0;
+	}
+	err = silofs_mdigest_init(&md);
+	if (err) {
+		return err;
+	}
+	err = silofs_ivkey_for_bootrec(&fse->fs_boot_ivkey, passwd, &md);
+	silofs_mdigest_fini(&md);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int fse_init_passwd_boot_ivkey(struct silofs_fs_env *fse)
 {
 	int err;
 
@@ -450,6 +475,17 @@ static int fse_init_subs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
+	err = fse_init_boot_ivkey(fse);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int fse_init_subs(struct silofs_fs_env *fse)
+{
+	int err;
+
 	err = fse_init_alloc(fse);
 	if (err) {
 		return err;
@@ -487,16 +523,22 @@ static int fse_init(struct silofs_fs_env *fse,
 	int err;
 
 	fse_init_commons(fse, args);
+	err = fse_init_passwd_boot_ivkey(fse);
+	if (err) {
+		return err;
+	}
 	err = fse_init_subs(fse);
 	if (err) {
 		fse_fini(fse);
+		return err;
 	}
-	return err;
+	return 0;
 }
 
 static void fse_fini_commons(struct silofs_fs_env *fse)
 {
-	silofs_ivkey_fini(&fse->fs_ivkey);
+	silofs_ivkey_fini(&fse->fs_boot_ivkey);
+	silofs_ivkey_fini(&fse->fs_main_ivkey);
 	fse->fs_uber = NULL;
 }
 
@@ -844,15 +886,16 @@ void silofs_stat_fs(const struct silofs_fs_env *fse,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int derive_ivkey(struct silofs_fs_env *fse,
-                        const struct silofs_bootrec *brec)
+static int fse_derive_main_ivkey(struct silofs_fs_env *fse,
+                                 const struct silofs_bootrec *brec)
 {
 	struct silofs_mdigest mdigest = { .md_hd = NULL };
 	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
-	const struct silofs_password *pswd = fse->fs_passwd;
+	const struct silofs_password *passwd = fse->fs_passwd;
+	struct silofs_ivkey *ivkey = &fse->fs_main_ivkey;
 	int err = 0;
 
-	if (!pswd->passlen) {
+	if (!passwd->passlen) {
 		return 0;
 	}
 	err = silofs_mdigest_init(&mdigest);
@@ -860,7 +903,7 @@ static int derive_ivkey(struct silofs_fs_env *fse,
 		return err;
 	}
 	silofs_bootrec_cipher_args(brec, &cip_args);
-	err = silofs_derive_ivkey(&cip_args, pswd, &mdigest, &fse->fs_ivkey);
+	err = silofs_derive_ivkey(&cip_args, passwd, &mdigest, ivkey);
 	silofs_mdigest_fini(&mdigest);
 	if (err) {
 		log_err("failed to derive main-key: err=%d", err);
@@ -1326,14 +1369,40 @@ static int save_bootrec_of(const struct silofs_fs_env *fse,
                            const struct silofs_uaddr *uaddr,
                            const struct silofs_bootrec *brec)
 {
-	return silofs_repo_save_bootrec(fse->fs_repo, &uaddr->paddr, brec);
+	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
+	const struct silofs_crypto *crypto = &fse->fs_uber->ub_crypto;
+	const struct silofs_ivkey *ivkey = &fse->fs_boot_ivkey;
+	int err;
+
+	err = silofs_bootrec_encode(brec, &brec1k, crypto, ivkey);
+	if (err) {
+		return err;
+	}
+	err = silofs_repo_save_bootrec(fse->fs_repo, &uaddr->paddr, &brec1k);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int load_bootrec_of(const struct silofs_fs_env *fse,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_bootrec *out_brec)
 {
-	return silofs_repo_load_bootrec(fse->fs_repo, &uaddr->paddr, out_brec);
+	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
+	const struct silofs_crypto *crypto = &fse->fs_uber->ub_crypto;
+	const struct silofs_ivkey *ivkey = &fse->fs_boot_ivkey;
+	int err;
+
+	err = silofs_repo_load_bootrec(fse->fs_repo, &uaddr->paddr, &brec1k);
+	if (err) {
+		return err;
+	}
+	err = silofs_bootrec_decode(out_brec, &brec1k, crypto, ivkey);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int reload_bootrec_of(struct silofs_fs_env *fse,
@@ -1402,7 +1471,7 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = derive_ivkey(fse, &brec);
+	err = fse_derive_main_ivkey(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1456,7 +1525,7 @@ static int do_boot_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = derive_ivkey(fse, &brec);
+	err = fse_derive_main_ivkey(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1624,7 +1693,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *fsid)
 	if (err) {
 		return err;
 	}
-	err = derive_ivkey(fse, &brec);
+	err = fse_derive_main_ivkey(fse, &brec);
 	if (err) {
 		return err;
 	}

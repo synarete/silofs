@@ -47,7 +47,7 @@ static void resolve_ivkey_of(const struct silofs_uber *uber,
 	struct silofs_iv oadiv;
 
 	silofs_paddr_as_iv(paddr, &oadiv);
-	silofs_ivkey_assign(out_ivkey, uber->ub.ivkey);
+	silofs_ivkey_assign(out_ivkey, uber->ub.main_ivkey);
 	silofs_iv_xor_with(&out_ivkey->iv, seediv);
 	silofs_iv_xor_with(&out_ivkey->iv, &oadiv);
 }

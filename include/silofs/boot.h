@@ -54,9 +54,6 @@ void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
 void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
                            const struct silofs_bootrec *brec);
 
-void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
-                           const struct silofs_bootrec *brec, size_t n);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_bootrec_init(struct silofs_bootrec *brec);
@@ -82,6 +79,23 @@ void silofs_make_bootrec_uaddr(const struct silofs_uuid *fsid,
 void silofs_bootrecs_to_fsids(const struct silofs_bootrecs *brecs,
                               struct silofs_uuid *out_fsid_new,
                               struct silofs_uuid *out_fsid_alt);
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_bootrec_encode(const struct silofs_bootrec *brec,
+                          struct silofs_bootrec1k *brec1k,
+                          const struct silofs_crypto *crypto,
+                          const struct silofs_ivkey *ivkey);
+
+int silofs_bootrec_decode(struct silofs_bootrec *brec,
+                          struct silofs_bootrec1k *brec1k,
+                          const struct silofs_crypto *crypto,
+                          const struct silofs_ivkey *ivkey);
+
+int silofs_ivkey_for_bootrec(struct silofs_ivkey *ivkey,
+                             const struct silofs_password *passwd,
+                             const struct silofs_mdigest *mdigest);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

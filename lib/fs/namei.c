@@ -2408,18 +2408,34 @@ static int check_clone(const struct silofs_task *task,
 	return 0;
 }
 
+static int encode_save_bootrec(const struct silofs_task *task,
+                               const struct silofs_bootrec *brec)
+{
+	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
+	const struct silofs_uber *uber = task->t_uber;
+	const struct silofs_ivkey *ivkey = uber->ub.boot_ivkey;
+	int err;
+
+	silofs_bootrec_self_uaddr(brec, &uaddr);
+	err = silofs_bootrec_encode(brec, &brec1k, &uber->ub_crypto, ivkey);
+	if (err) {
+		return err;
+	}
+	err = silofs_repo_save_bootrec(repo_of(uber), &uaddr.paddr, &brec1k);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int do_post_clone_updates(const struct silofs_task *task,
                                  const struct silofs_bootrecs *brecs)
 {
-	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_repo *repo = repo_of(task->t_uber);
-	const struct silofs_bootrec *brec = NULL;
 	int err;
 
 	for (size_t i = 0; i < ARRAY_SIZE(brecs->brec); ++i) {
-		brec = &brecs->brec[i];
-		silofs_bootrec_self_uaddr(brec, &uaddr);
-		err = silofs_repo_save_bootrec(repo, &uaddr.paddr, brec);
+		err = encode_save_bootrec(task, &brecs->brec[i]);
 		if (err) {
 			return err;
 		}

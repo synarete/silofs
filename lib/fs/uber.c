@@ -314,7 +314,7 @@ static void uber_make_super_ulink(const struct silofs_uber *uber,
 
 	make_super_blobid(&blobid);
 	make_super_uaddr(&blobid, &uaddr);
-	ulink_init(out_ulink, &uaddr, &uber->ub.ivkey->iv);
+	ulink_init(out_ulink, &uaddr, &uber->ub.main_ivkey->iv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

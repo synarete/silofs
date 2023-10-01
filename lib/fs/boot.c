@@ -154,6 +154,25 @@ static const struct silofs_cipher_args s_default_cip_args = {
 	.cipher_mode = SILOFS_CIPHER_MODE_XTS,
 };
 
+static const struct silofs_cipher_args s_bootrec_cip_args = {
+	.kdf = {
+		.kdf_key = {
+			.kd_iterations = 4096,
+			.kd_algo = SILOFS_KDF_PBKDF2,
+			.kd_subalgo = SILOFS_MD_SHA256,
+			.kd_salt_md = SILOFS_MD_SHA3_512,
+		},
+		.kdf_iv = {
+			.kd_iterations = 1024,
+			.kd_algo = SILOFS_KDF_SCRYPT,
+			.kd_subalgo = 8,
+			.kd_salt_md = SILOFS_MD_SHA3_256,
+		},
+	},
+	.cipher_algo = SILOFS_CIPHER_AES256,
+	.cipher_mode = SILOFS_CIPHER_MODE_XTS,
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool cip_args_isequal(const struct silofs_cipher_args *cip_args1,
@@ -418,7 +437,7 @@ static int bootrec1k_check_hash(const struct silofs_bootrec1k *brec1k,
 	       0 : -SILOFS_EFSCORRUPTED;
 }
 
-int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
+static int bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
                             const struct silofs_mdigest *md)
 {
 	int err;
@@ -432,6 +451,12 @@ int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
 		return err;
 	}
 	return 0;
+}
+
+int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
+                            const struct silofs_mdigest *md)
+{
+	return bootrec1k_verify(brec1k, md);
 }
 
 void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
@@ -450,14 +475,6 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
 	bootrec1k_set_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_set_sb_riv(brec1k, &brec->sb_ulink.riv);
 	bootrec1k_set_flags(brec1k, brec->flags);
-}
-
-void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
-                           const struct silofs_bootrec *brec, size_t n)
-{
-	for (size_t i = 0; i < n; ++i) {
-		silofs_bootrec1k_htox(&brec1k[i], &brec[i]);
-	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -551,7 +568,61 @@ void silofs_bootrecs_to_fsids(const struct silofs_bootrecs *brecs,
 	bootrec_sb_fsid(&brecs->brec[1], out_fsid_alt);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_ivkey_for_bootrec(struct silofs_ivkey *ivkey,
+                             const struct silofs_password *passwd,
+                             const struct silofs_mdigest *mdigest)
+{
+	const struct silofs_cipher_args *cip_args = &s_bootrec_cip_args;
+
+	return silofs_derive_ivkey(cip_args, passwd, mdigest, ivkey);
+}
+
+static int encrypt_brec1k(const struct silofs_cipher *ci,
+                          const struct silofs_ivkey *ivkey,
+                          struct silofs_bootrec1k *brec1k)
+{
+	return silofs_encrypt_buf(ci, ivkey, brec1k, brec1k, sizeof(*brec1k));
+}
+
+static int decrypt_brec1k(const struct silofs_cipher *ci,
+                          const struct silofs_ivkey *ivkey,
+                          struct silofs_bootrec1k *brec1k)
+{
+	return silofs_decrypt_buf(ci, ivkey, brec1k, brec1k, sizeof(*brec1k));
+}
+
+int silofs_bootrec_encode(const struct silofs_bootrec *brec,
+                          struct silofs_bootrec1k *brec1k,
+                          const struct silofs_crypto *crypto,
+                          const struct silofs_ivkey *ivkey)
+{
+	silofs_bootrec1k_htox(brec1k, brec);
+	silofs_bootrec1k_stamp(brec1k, &crypto->md);
+	return encrypt_brec1k(&crypto->ci, ivkey, brec1k);
+}
+
+int silofs_bootrec_decode(struct silofs_bootrec *brec,
+                          struct silofs_bootrec1k *brec1k,
+                          const struct silofs_crypto *crypto,
+                          const struct silofs_ivkey *ivkey)
+{
+	int err;
+
+	err = decrypt_brec1k(&crypto->ci, ivkey, brec1k);
+	if (err) {
+		return err;
+	}
+	err = bootrec1k_verify(brec1k, &crypto->md);
+	if (err) {
+		return err;
+	}
+	silofs_bootrec1k_xtoh(brec1k, brec);
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_bootpath_setup(struct silofs_bootpath *bpath,
                           const char *repodir, const char *name)

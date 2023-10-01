@@ -440,7 +440,8 @@ struct silofs_oper {
 /* base members of uber-block (provided) */
 struct silofs_uber_base {
 	const struct silofs_fs_args    *fs_args;
-	const struct silofs_ivkey      *ivkey;
+	const struct silofs_ivkey      *boot_ivkey;
+	const struct silofs_ivkey      *main_ivkey;
 	struct silofs_alloc            *alloc;
 	struct silofs_cache            *cache;
 	struct silofs_repo             *repo;
@@ -512,7 +513,8 @@ struct silofs_fs_args {
 /* file-system environment context */
 struct silofs_fs_env {
 	struct silofs_fs_args   fs_args;
-	struct silofs_ivkey     fs_ivkey;
+	struct silofs_ivkey     fs_boot_ivkey;
+	struct silofs_ivkey     fs_main_ivkey;
 	struct silofs_qalloc   *fs_qalloc;
 	struct silofs_calloc   *fs_calloc;
 	struct silofs_alloc    *fs_alloc;

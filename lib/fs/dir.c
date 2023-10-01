@@ -472,7 +472,10 @@ static void dtn_reset_data(struct silofs_dtree_node *dtn)
 static loff_t dtn_child_off(const struct silofs_dtree_node *dtn,
                             silofs_dtn_ord_t ord)
 {
-	return silofs_vaddr56_parse(&dtn->dn_child[ord]);
+	loff_t off = 0;
+
+	silofs_vaddr56_xtoh(&dtn->dn_child[ord], &off);
+	return off;
 }
 
 static void dtn_child(const struct silofs_dtree_node *dtn,
@@ -484,7 +487,7 @@ static void dtn_child(const struct silofs_dtree_node *dtn,
 static void dtn_set_child(struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord,
                           const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr56_set(&dtn->dn_child[ord], vaddr->off);
+	silofs_vaddr56_htox(&dtn->dn_child[ord], vaddr->off);
 }
 
 static void dtn_reset_childs(struct silofs_dtree_node *dtn)

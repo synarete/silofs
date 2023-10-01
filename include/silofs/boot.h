@@ -48,11 +48,11 @@ void silofs_bootrec1k_stamp(struct silofs_bootrec1k *brec1k,
 int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
                             const struct silofs_mdigest *md);
 
-void silofs_bootrec1k_parse(const struct silofs_bootrec1k *brec1k,
-                            struct silofs_bootrec *brec);
+void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
+                           struct silofs_bootrec *brec);
 
-void silofs_bootrec1k_set(struct silofs_bootrec1k *brec1k,
-                          const struct silofs_bootrec *brec);
+void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
+                           const struct silofs_bootrec *brec);
 
 void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
                            const struct silofs_bootrec *brec, size_t n);

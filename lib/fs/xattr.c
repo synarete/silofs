@@ -411,13 +411,13 @@ static struct silofs_inode_xattr *ixa_of(const struct silofs_inode_info *ii)
 static void ixa_vaddr(const struct silofs_inode_xattr *ixa, size_t slot,
                       struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr64_parse(&ixa->ix_vaddr[slot], out_vaddr);
+	silofs_vaddr64_xtoh(&ixa->ix_vaddr[slot], out_vaddr);
 }
 
 static void ixa_set_vaddr(struct silofs_inode_xattr *ixa, size_t slot,
                           const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr64_set(&ixa->ix_vaddr[slot], vaddr);
+	silofs_vaddr64_htox(&ixa->ix_vaddr[slot], vaddr);
 }
 
 static void ixa_reset_vaddr(struct silofs_inode_xattr *ixa, size_t slot)

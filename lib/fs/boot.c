@@ -288,13 +288,13 @@ void silofs_bootrec1k_fini(struct silofs_bootrec1k *brec1k)
 static void bootrec1k_sb_uaddr(const struct silofs_bootrec1k *brec1k,
                                struct silofs_uaddr *out_sb_uaddr)
 {
-	silofs_uaddr64b_parse(&brec1k->br_sb_uaddr, out_sb_uaddr);
+	silofs_uaddr64b_xtoh(&brec1k->br_sb_uaddr, out_sb_uaddr);
 }
 
 static void bootrec1k_set_sb_uaddr(struct silofs_bootrec1k *brec1k,
                                    const struct silofs_uaddr *sb_uaddr)
 {
-	silofs_uaddr64b_set(&brec1k->br_sb_uaddr, sb_uaddr);
+	silofs_uaddr64b_htox(&brec1k->br_sb_uaddr, sb_uaddr);
 }
 
 static void bootrec1k_sb_riv(const struct silofs_bootrec1k *brec1k,
@@ -434,8 +434,8 @@ int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
 	return 0;
 }
 
-void silofs_bootrec1k_parse(const struct silofs_bootrec1k *brec1k,
-                            struct silofs_bootrec *brec)
+void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
+                           struct silofs_bootrec *brec)
 {
 	bootrec1k_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_sb_riv(brec1k, &brec->sb_ulink.riv);
@@ -443,8 +443,8 @@ void silofs_bootrec1k_parse(const struct silofs_bootrec1k *brec1k,
 	brec->flags = bootrec1k_flags(brec1k);
 }
 
-void silofs_bootrec1k_set(struct silofs_bootrec1k *brec1k,
-                          const struct silofs_bootrec *brec)
+void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
+                           const struct silofs_bootrec *brec)
 {
 	silofs_bootrec1k_init(brec1k);
 	bootrec1k_set_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
@@ -456,7 +456,7 @@ void silofs_bootrec1k_setn(struct silofs_bootrec1k *brec1k,
                            const struct silofs_bootrec *brec, size_t n)
 {
 	for (size_t i = 0; i < n; ++i) {
-		silofs_bootrec1k_set(&brec1k[i], &brec[i]);
+		silofs_bootrec1k_htox(&brec1k[i], &brec[i]);
 	}
 }
 

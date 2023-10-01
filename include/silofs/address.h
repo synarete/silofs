@@ -142,11 +142,11 @@ void silofs_blobid_setup(struct silofs_blobid *blobid,
 
 void silofs_blobid32b_reset(struct silofs_blobid32b *blobid32);
 
-void silofs_blobid32b_set(struct silofs_blobid32b *blobid32,
-                          const struct silofs_blobid *blobid);
+void silofs_blobid32b_htox(struct silofs_blobid32b *blobid32,
+                           const struct silofs_blobid *blobid);
 
-void silofs_blobid32b_parse(const struct silofs_blobid32b *blobid32,
-                            struct silofs_blobid *blobid);
+void silofs_blobid32b_xtoh(const struct silofs_blobid32b *blobid32,
+                           struct silofs_blobid *blobid);
 
 
 int silofs_blobid_to_name(const struct silofs_blobid *blobid,
@@ -184,11 +184,11 @@ bool silofs_paddr_isvalid(const struct silofs_paddr *paddr);
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
                           const struct silofs_paddr *other);
 
-void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
-                         const struct silofs_paddr *paddr);
+void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
+                          const struct silofs_paddr *paddr);
 
-void silofs_paddr48b_parse(const struct silofs_paddr48b *paddr48,
-                           struct silofs_paddr *paddr);
+void silofs_paddr48b_xtoh(const struct silofs_paddr48b *paddr48,
+                          struct silofs_paddr *paddr);
 
 void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48);
 
@@ -234,11 +234,11 @@ void silofs_treeid_as_uuid(const struct silofs_treeid *treeid,
 void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
                            const struct silofs_uuid *uuid);
 
-void silofs_treeid128_set(struct silofs_treeid128 *treeid128,
-                          const struct silofs_treeid *treeid);
+void silofs_treeid128_htox(struct silofs_treeid128 *treeid128,
+                           const struct silofs_treeid *treeid);
 
-void silofs_treeid128_parse(const struct silofs_treeid128 *treeid128,
-                            struct silofs_treeid *treeid);
+void silofs_treeid128_xtoh(const struct silofs_treeid128 *treeid128,
+                           struct silofs_treeid *treeid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -286,11 +286,11 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64);
 
-void silofs_uaddr64b_set(struct silofs_uaddr64b *uaddr64,
-                         const struct silofs_uaddr *uaddr);
+void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
+                          const struct silofs_uaddr *uaddr);
 
-void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uaddr64,
-                           struct silofs_uaddr *uaddr);
+void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
+                          struct silofs_uaddr *uaddr);
 
 
 void silofs_ulink_assign(struct silofs_ulink *ulink,
@@ -339,15 +339,15 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_stype stype,
                             loff_t voff_base, size_t bn, size_t kbn);
 
-void silofs_vaddr56_set(struct silofs_vaddr56 *va, loff_t off);
+void silofs_vaddr56_htox(struct silofs_vaddr56 *va, loff_t off);
 
-loff_t silofs_vaddr56_parse(const struct silofs_vaddr56 *va);
+void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *va, loff_t *out_off);
 
-void silofs_vaddr64_set(struct silofs_vaddr64 *vadr,
-                        const struct silofs_vaddr *vaddr);
+void silofs_vaddr64_htox(struct silofs_vaddr64 *vadr,
+                         const struct silofs_vaddr *vaddr);
 
-void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
-                          struct silofs_vaddr *vaddr);
+void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
+                         struct silofs_vaddr *vaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -375,11 +375,11 @@ loff_t silofs_vrange_next(const struct silofs_vrange *vrange, loff_t voff);
 
 void silofs_vrange128_reset(struct silofs_vrange128 *vrng);
 
-void silofs_vrange128_set(struct silofs_vrange128 *vrng,
-                          const struct silofs_vrange *vrange);
+void silofs_vrange128_htox(struct silofs_vrange128 *vrng,
+                           const struct silofs_vrange *vrange);
 
-void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
-                            struct silofs_vrange *vrange);
+void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
+                           struct silofs_vrange *vrange);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

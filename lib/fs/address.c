@@ -510,14 +510,14 @@ void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
 	silofs_uuid_assign(&treeid->uuid, uuid);
 }
 
-void silofs_treeid128_set(struct silofs_treeid128 *treeid128,
-                          const struct silofs_treeid *treeid)
+void silofs_treeid128_htox(struct silofs_treeid128 *treeid128,
+                           const struct silofs_treeid *treeid)
 {
 	silofs_uuid_assign(&treeid128->uuid, &treeid->uuid);
 }
 
-void silofs_treeid128_parse(const struct silofs_treeid128 *treeid128,
-                            struct silofs_treeid *treeid)
+void silofs_treeid128_xtoh(const struct silofs_treeid128 *treeid128,
+                           struct silofs_treeid *treeid)
 {
 	silofs_uuid_assign(&treeid->uuid, &treeid128->uuid);
 }
@@ -649,7 +649,7 @@ uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid)
 {
 	struct silofs_blobid32b bid = { .size = 0 };
 
-	silofs_blobid32b_set(&bid, blobid);
+	silofs_blobid32b_htox(&bid, blobid);
 	return silofs_hash_xxh64(&bid, sizeof(bid), blobid->vspace);
 }
 
@@ -697,21 +697,21 @@ void silofs_blobid32b_reset(struct silofs_blobid32b *blobid32)
 	blobid32->height = SILOFS_HEIGHT_LAST;
 }
 
-void silofs_blobid32b_set(struct silofs_blobid32b *blobid32,
-                          const struct silofs_blobid *blobid)
+void silofs_blobid32b_htox(struct silofs_blobid32b *blobid32,
+                           const struct silofs_blobid *blobid)
 {
 	memset(blobid32, 0, sizeof(*blobid32));
-	silofs_treeid128_set(&blobid32->treeid, &blobid->treeid);
+	silofs_treeid128_htox(&blobid32->treeid, &blobid->treeid);
 	blobid32->voff = silofs_cpu_to_off(blobid->voff);
 	blobid32->size = silofs_cpu_to_le32((uint32_t)blobid->size);
 	blobid32->vspace = (uint8_t)blobid->vspace;
 	blobid32->height = (uint8_t)blobid->height;
 }
 
-void silofs_blobid32b_parse(const struct silofs_blobid32b *blobid32,
-                            struct silofs_blobid *blobid)
+void silofs_blobid32b_xtoh(const struct silofs_blobid32b *blobid32,
+                           struct silofs_blobid *blobid)
 {
-	silofs_treeid128_parse(&blobid32->treeid, &blobid->treeid);
+	silofs_treeid128_xtoh(&blobid32->treeid, &blobid->treeid);
 	blobid->voff = silofs_off_to_cpu(blobid32->voff);
 	blobid->size = silofs_le32_to_cpu(blobid32->size);
 	blobid->vspace = (enum silofs_stype)blobid32->vspace;
@@ -906,18 +906,18 @@ void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 	paddr48->len = 0;
 }
 
-void silofs_paddr48b_set(struct silofs_paddr48b *paddr48,
-                         const struct silofs_paddr *paddr)
+void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
+                          const struct silofs_paddr *paddr)
 {
-	silofs_blobid32b_set(&paddr48->blobid, &paddr->blobid);
+	silofs_blobid32b_htox(&paddr48->blobid, &paddr->blobid);
 	paddr48->pos = silofs_cpu_to_le32((uint32_t)(paddr->pos));
 	paddr48->len = silofs_cpu_to_le32((uint32_t)(paddr->len));
 }
 
-void silofs_paddr48b_parse(const struct silofs_paddr48b *paddr48,
-                           struct silofs_paddr *paddr)
+void silofs_paddr48b_xtoh(const struct silofs_paddr48b *paddr48,
+                          struct silofs_paddr *paddr)
 {
-	silofs_blobid32b_parse(&paddr48->blobid, &paddr->blobid);
+	silofs_blobid32b_xtoh(&paddr48->blobid, &paddr->blobid);
 	paddr->pos = (loff_t)silofs_le32_to_cpu(paddr48->pos);
 	paddr->len = (size_t)silofs_le32_to_cpu(paddr48->len);
 }
@@ -1049,18 +1049,18 @@ void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 	uaddr64->stype = SILOFS_STYPE_NONE;
 }
 
-void silofs_uaddr64b_set(struct silofs_uaddr64b *uaddr64,
-                         const struct silofs_uaddr *uaddr)
+void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
+                          const struct silofs_uaddr *uaddr)
 {
-	silofs_paddr48b_set(&uaddr64->paddr, &uaddr->paddr);
+	silofs_paddr48b_htox(&uaddr64->paddr, &uaddr->paddr);
 	uaddr64->voff = silofs_cpu_to_off(uaddr->voff);
 	uaddr64->stype = (uint8_t)uaddr->stype;
 }
 
-void silofs_uaddr64b_parse(const struct silofs_uaddr64b *uaddr64,
-                           struct silofs_uaddr *uaddr)
+void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
+                          struct silofs_uaddr *uaddr)
 {
-	silofs_paddr48b_parse(&uaddr64->paddr, &uaddr->paddr);
+	silofs_paddr48b_xtoh(&uaddr64->paddr, &uaddr->paddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
 	uaddr->stype = (enum silofs_stype)(uaddr64->stype);
 }
@@ -1198,7 +1198,7 @@ static const struct silofs_vaddr56 s_vaddr56_null = {
 	.b = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 };
 
-void silofs_vaddr56_set(struct silofs_vaddr56 *vadr, loff_t off)
+void silofs_vaddr56_htox(struct silofs_vaddr56 *vadr, loff_t off)
 {
 	const uint64_t uoff = (uint64_t)off;
 
@@ -1217,7 +1217,7 @@ void silofs_vaddr56_set(struct silofs_vaddr56 *vadr, loff_t off)
 	}
 }
 
-loff_t silofs_vaddr56_parse(const struct silofs_vaddr56 *vadr)
+void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vadr, loff_t *out_off)
 {
 	int cmp;
 	loff_t off = 0;
@@ -1234,17 +1234,17 @@ loff_t silofs_vaddr56_parse(const struct silofs_vaddr56 *vadr)
 	} else {
 		off = SILOFS_OFF_NULL;
 	}
-	return off;
+	*out_off = off;
 }
 
-void silofs_vaddr64_set(struct silofs_vaddr64 *vadr,
-                        const struct silofs_vaddr *vaddr)
+void silofs_vaddr64_htox(struct silofs_vaddr64 *vadr,
+                         const struct silofs_vaddr *vaddr)
 {
 	vadr->voff_stype = cpu_to_voff_stype(vaddr->off, vaddr->stype);
 }
 
-void silofs_vaddr64_parse(const struct silofs_vaddr64 *vadr,
-                          struct silofs_vaddr *vaddr)
+void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
+                         struct silofs_vaddr *vaddr)
 {
 	loff_t voff;
 	enum silofs_stype stype;
@@ -1329,18 +1329,18 @@ void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 		.height = SILOFS_HEIGHT_VDATA,
 	};
 
-	silofs_vrange128_set(vrng, &vrange);
+	silofs_vrange128_htox(vrng, &vrange);
 }
 
-void silofs_vrange128_set(struct silofs_vrange128 *vrng,
-                          const struct silofs_vrange *vrange)
+void silofs_vrange128_htox(struct silofs_vrange128 *vrng,
+                           const struct silofs_vrange *vrange)
 {
 	vrng->beg = silofs_cpu_to_off(vrange->beg);
 	vrng->len_height = cpu_to_len_height(vrange->len, vrange->height);
 }
 
-void silofs_vrange128_parse(const struct silofs_vrange128 *vrng,
-                            struct silofs_vrange *vrange)
+void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
+                           struct silofs_vrange *vrange)
 {
 	loff_t beg;
 	size_t len;

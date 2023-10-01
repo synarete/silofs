@@ -1054,7 +1054,7 @@ static void repo_hash_blobid(const struct silofs_repo *repo,
 	struct silofs_blobid32b blobid32;
 	const struct silofs_mdigest *md = repo_mdigest(repo);
 
-	silofs_blobid32b_set(&blobid32, blobid);
+	silofs_blobid32b_htox(&blobid32, blobid);
 	silofs_sha256_of(md, &blobid32, sizeof(blobid32), out_hash);
 }
 
@@ -1957,7 +1957,7 @@ static int repo_encode_bootrec1k(const struct silofs_repo *repo,
                                  struct silofs_bootrec1k *bsc)
 {
 	/* TODO: verify input brec */
-	silofs_bootrec1k_set(bsc, brec);
+	silofs_bootrec1k_htox(bsc, brec);
 	silofs_bootrec1k_stamp(bsc, repo_mdigest(repo));
 	return 0;
 }
@@ -1978,7 +1978,7 @@ static int repo_decode_bootrec1k(const struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	silofs_bootrec1k_parse(bsc, out_brec);
+	silofs_bootrec1k_xtoh(bsc, out_brec);
 	return 0;
 }
 

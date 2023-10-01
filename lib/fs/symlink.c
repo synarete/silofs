@@ -131,13 +131,13 @@ static void inln_set_head_value(struct silofs_inode_lnk *inln,
 static void inln_tail_part(const struct silofs_inode_lnk *inln, size_t slot,
                            struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr64_parse(&inln->l_tail[slot], out_vaddr);
+	silofs_vaddr64_xtoh(&inln->l_tail[slot], out_vaddr);
 }
 
 static void inln_set_tail_part(struct silofs_inode_lnk *inln, size_t slot,
                                const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr64_set(&inln->l_tail[slot], vaddr);
+	silofs_vaddr64_htox(&inln->l_tail[slot], vaddr);
 }
 
 static void inln_reset_tail_part(struct silofs_inode_lnk *inln, size_t slot)

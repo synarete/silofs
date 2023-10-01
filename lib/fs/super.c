@@ -106,13 +106,13 @@ bool silofs_sb_test_flags(const struct silofs_super_block *sb,
 static void sb_vrange(const struct silofs_super_block *sb,
                       struct silofs_vrange *out_vrange)
 {
-	silofs_vrange128_parse(&sb->sb_vrange, out_vrange);
+	silofs_vrange128_xtoh(&sb->sb_vrange, out_vrange);
 }
 
 static void sb_set_vrange(struct silofs_super_block *sb,
                           const struct silofs_vrange *vrange)
 {
-	silofs_vrange128_set(&sb->sb_vrange, vrange);
+	silofs_vrange128_htox(&sb->sb_vrange, vrange);
 }
 
 static enum silofs_height sb_height(const struct silofs_super_block *sb)
@@ -126,38 +126,38 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 static void sb_treeid(const struct silofs_super_block *sb,
                       struct silofs_treeid *out_treeid)
 {
-	silofs_treeid128_parse(&sb->sb_treeid, out_treeid);
+	silofs_treeid128_xtoh(&sb->sb_treeid, out_treeid);
 }
 
 static void sb_set_treeid(struct silofs_super_block *sb,
                           const struct silofs_treeid *treeid)
 {
-	silofs_treeid128_set(&sb->sb_treeid, treeid);
+	silofs_treeid128_htox(&sb->sb_treeid, treeid);
 }
 
 static void sb_self(const struct silofs_super_block *sb,
                     struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_parse(&sb->sb_self_uaddr, out_uaddr);
+	silofs_uaddr64b_xtoh(&sb->sb_self_uaddr, out_uaddr);
 }
 
 static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&sb->sb_self_uaddr, uaddr);
+	silofs_uaddr64b_htox(&sb->sb_self_uaddr, uaddr);
 	sb_set_treeid(sb, &uaddr->paddr.blobid.treeid);
 }
 
 static void sb_origin(const struct silofs_super_block *sb,
                       struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_parse(&sb->sb_orig_uaddr, out_uaddr);
+	silofs_uaddr64b_xtoh(&sb->sb_orig_uaddr, out_uaddr);
 }
 
 static void sb_set_origin(struct silofs_super_block *sb,
                           const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_set(&sb->sb_orig_uaddr, uaddr);
+	silofs_uaddr64b_htox(&sb->sb_orig_uaddr, uaddr);
 }
 
 static void sb_generate_treeid(struct silofs_super_block *sb)
@@ -228,7 +228,7 @@ static void sb_main_blobid(const struct silofs_super_block *sb,
 	const struct silofs_blobid32b *bid = sb_mainblobid_by(sb, stype);
 
 	if (likely(bid != NULL)) {
-		silofs_blobid32b_parse(bid, out_blobid);
+		silofs_blobid32b_xtoh(bid, out_blobid);
 	} else {
 		silofs_blobid_reset(out_blobid);
 	}
@@ -241,7 +241,7 @@ static void sb_set_main_blobid(struct silofs_super_block *sb,
 	struct silofs_blobid32b *bid = sb_mainblobid_by2(sb, stype);
 
 	if (likely(bid != NULL)) {
-		silofs_blobid32b_set(bid, blobid);
+		silofs_blobid32b_htox(bid, blobid);
 	}
 }
 
@@ -318,7 +318,7 @@ static void sb_sproot_of(const struct silofs_super_block *sb,
 	const struct silofs_uaddr64b *uaddr64 = sb_sproot_by(sb, stype);
 
 	if (likely(uaddr64 != NULL)) {
-		silofs_uaddr64b_parse(uaddr64, out_uaddr);
+		silofs_uaddr64b_xtoh(uaddr64, out_uaddr);
 	} else {
 		silofs_uaddr_reset(out_uaddr);
 	}
@@ -331,7 +331,7 @@ static void sb_set_sproot_of(struct silofs_super_block *sb,
 	struct silofs_uaddr64b *uaddr64 = sb_sproot_by2(sb, stype);
 
 	if (likely(uaddr64 != NULL)) {
-		silofs_uaddr64b_set(uaddr64, uaddr);
+		silofs_uaddr64b_htox(uaddr64, uaddr);
 	}
 }
 
@@ -343,7 +343,7 @@ static void sb_reset_sproots(struct silofs_super_block *sb)
 	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
 		uaddr64 = sb_sproot_by2(sb, stype);
 		if (uaddr64 != NULL) {
-			silofs_uaddr64b_set(uaddr64, silofs_uaddr_none());
+			silofs_uaddr64b_htox(uaddr64, silofs_uaddr_none());
 		}
 	}
 }

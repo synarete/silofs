@@ -471,13 +471,16 @@ ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, loff_t file_pos)
 
 static loff_t ftn_child(const struct silofs_ftree_node *ftn, size_t slot)
 {
-	return silofs_vaddr56_parse(&ftn->fn_child[slot]);
+	loff_t off = 0;
+
+	silofs_vaddr56_xtoh(&ftn->fn_child[slot], &off);
+	return off;
 }
 
 static void
 ftn_set_child(struct silofs_ftree_node *ftn, size_t slot, loff_t off)
 {
-	silofs_vaddr56_set(&ftn->fn_child[slot], off);
+	silofs_vaddr56_htox(&ftn->fn_child[slot], off);
 }
 
 static void ftn_reset_child(struct silofs_ftree_node *ftn, size_t slot)
@@ -626,7 +629,7 @@ infl_head1_leaf(const struct silofs_inode_file *infl,
 {
 	const size_t slot = infl_head1_slot_to_abs(infl, head1_slot);
 
-	silofs_vaddr64_parse(&infl->f_slots[slot], out_vaddr);
+	silofs_vaddr64_xtoh(&infl->f_slots[slot], out_vaddr);
 }
 
 static void
@@ -635,7 +638,7 @@ infl_set_head1_leaf(struct silofs_inode_file *infl,
 {
 	const size_t slot = infl_head1_slot_to_abs(infl, head1_slot);
 
-	silofs_vaddr64_set(&infl->f_slots[slot], vaddr);
+	silofs_vaddr64_htox(&infl->f_slots[slot], vaddr);
 }
 
 static void
@@ -644,7 +647,7 @@ infl_head2_leaf(const struct silofs_inode_file *infl,
 {
 	const size_t slot = infl_head2_slot_to_abs(infl, head2_slot);
 
-	silofs_vaddr64_parse(&infl->f_slots[slot], out_vaddr);
+	silofs_vaddr64_xtoh(&infl->f_slots[slot], out_vaddr);
 }
 
 static void
@@ -653,19 +656,19 @@ infl_set_head2_leaf(struct silofs_inode_file *infl,
 {
 	const size_t slot = infl_head2_slot_to_abs(infl, head2_slot);
 
-	silofs_vaddr64_set(&infl->f_slots[slot], vaddr);
+	silofs_vaddr64_htox(&infl->f_slots[slot], vaddr);
 }
 
 static void infl_tree_root(const struct silofs_inode_file *infl,
                            struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr64_parse(&infl->f_slots[0], out_vaddr);
+	silofs_vaddr64_xtoh(&infl->f_slots[0], out_vaddr);
 }
 
 static void infl_set_tree_root(struct silofs_inode_file *infl,
                                const struct silofs_vaddr *vaddr)
 {
-	silofs_vaddr64_set(&infl->f_slots[0], vaddr);
+	silofs_vaddr64_htox(&infl->f_slots[0], vaddr);
 }
 
 static void infl_setup(struct silofs_inode_file *infl)

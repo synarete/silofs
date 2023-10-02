@@ -68,7 +68,7 @@ struct silofs_fileaf_ref {
 	struct silofs_finode_info *parent_fni;
 	loff_t  file_pos;
 	size_t  slot_idx;
-	size_t  seg_size;
+	size_t  leaf_size;
 	bool    head1;
 	bool    head2;
 	bool    tree;
@@ -914,17 +914,17 @@ static void flref_setup(struct silofs_fileaf_ref *flref,
 		flref->head1 = true;
 		flref->slot_idx = off_to_head1_slot(file_pos);
 		flref->partial = off_is_partial_head1(file_pos, io_end);
-		flref->seg_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
+		flref->leaf_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
 	} else if (!ftype2 && off_is_head2(file_pos)) {
 		flref->head2 = true;
 		flref->slot_idx = off_to_head2_slot(file_pos);
 		flref->partial = off_is_partial_head2(file_pos, io_end);
-		flref->seg_size = SILOFS_FILE_HEAD2_LEAF_SIZE;
+		flref->leaf_size = SILOFS_FILE_HEAD2_LEAF_SIZE;
 	} else {
 		flref->tree = true;
 		flref->slot_idx = off_to_leaf_slot(file_pos);
 		flref->partial = off_is_partial_leaf(file_pos, io_end);
-		flref->seg_size = SILOFS_FILE_TREE_LEAF_SIZE;
+		flref->leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
 	}
 }
 
@@ -938,7 +938,7 @@ static void flref_noent(struct silofs_fileaf_ref *flref,
 static void flref_update_partial(struct silofs_fileaf_ref *flref, size_t len)
 {
 	if (len > 0) {
-		flref->partial = (len < flref->seg_size);
+		flref->partial = (len < flref->leaf_size);
 	}
 }
 

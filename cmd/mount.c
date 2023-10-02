@@ -219,7 +219,7 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
+	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
@@ -340,12 +340,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_require_brec(struct cmd_mount_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_boot_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

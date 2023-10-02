@@ -145,7 +145,7 @@ static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
+	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->passwd = ctx->in_args.password;
@@ -173,12 +173,12 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_require_brec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_unref_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_rmfs_unlink_iconf(struct cmd_rmfs_ctx *ctx)

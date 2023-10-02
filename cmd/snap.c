@@ -55,8 +55,8 @@ struct cmd_snap_ctx {
 	struct silofs_fs_args    fs_args;
 	struct silofs_fs_env    *fs_env;
 	union silofs_ioc_u      *ioc;
-	struct silofs_uuid       uuid_new;
-	struct silofs_uuid       uuid_alt;
+	struct silofs_treeid      treeid_new;
+	struct silofs_treeid      treeid_alt;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -228,8 +228,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "failed to snap: %s",
 		         ctx->in_args.repodir_name);
 	}
-	silofs_uuid_assign(&ctx->uuid_new, &ctx->ioc->clone.id_new);
-	silofs_uuid_assign(&ctx->uuid_alt, &ctx->ioc->clone.id_alt);
+	silofs_treeid_assign(&ctx->treeid_new, &ctx->ioc->clone.treeid_new);
+	silofs_treeid_assign(&ctx->treeid_alt, &ctx->ioc->clone.treeid_alt);
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
@@ -257,7 +257,7 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
+	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
@@ -285,12 +285,12 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_boot_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
@@ -300,7 +300,7 @@ static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->fs_env, &ctx->uuid_new, &ctx->uuid_alt);
+	cmd_fork_fs(ctx->fs_env, &ctx->treeid_new, &ctx->treeid_alt);
 }
 
 static void cmd_snap_shutdown_fs(struct cmd_snap_ctx *ctx)
@@ -313,8 +313,8 @@ static void cmd_snap_save_snap_iconf(struct cmd_snap_ctx *ctx)
 	struct silofs_iconf snap_iconf;
 
 	cmd_iconf_assign(&snap_iconf, &ctx->fs_args.iconf);
-	cmd_iconf_setuuid(&snap_iconf, &ctx->uuid_alt);
-	cmd_iconf_setname(&snap_iconf,  ctx->in_args.snapname);
+	cmd_iconf_set_uuid_by(&snap_iconf, &ctx->treeid_alt);
+	cmd_iconf_set_name(&snap_iconf,  ctx->in_args.snapname);
 	cmd_iconf_save(&snap_iconf, ctx->in_args.repodir_real);
 	cmd_iconf_reset(&snap_iconf);
 }
@@ -324,8 +324,8 @@ static void cmd_snap_save_orig_iconf(struct cmd_snap_ctx *ctx)
 	struct silofs_iconf orig_iconf;
 
 	cmd_iconf_assign(&orig_iconf, &ctx->fs_args.iconf);
-	cmd_iconf_setuuid(&orig_iconf, &ctx->uuid_new);
-	cmd_iconf_setname(&orig_iconf,  ctx->in_args.name);
+	cmd_iconf_set_uuid_by(&orig_iconf, &ctx->treeid_new);
+	cmd_iconf_set_name(&orig_iconf,  ctx->in_args.name);
 	cmd_iconf_save(&orig_iconf, ctx->in_args.repodir_real);
 	cmd_iconf_reset(&orig_iconf);
 }

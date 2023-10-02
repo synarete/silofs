@@ -1349,15 +1349,6 @@ int silofs_open_repo(struct silofs_fs_env *fse)
 	return ret;
 }
 
-static void bootrec_to_fsid(const struct silofs_bootrec *brec,
-                            struct silofs_uuid *out_fsid)
-{
-	struct silofs_uaddr uaddr;
-
-	silofs_bootrec_self_uaddr(brec, &uaddr);
-	silofs_uuid_assign(out_fsid, &uaddr.paddr.blobid.treeid.uuid);
-}
-
 static int stat_bootrec_of(const struct silofs_fs_env *fse,
                            const struct silofs_uaddr *uaddr,
                            struct stat *out_st)
@@ -1457,7 +1448,7 @@ static int update_save_bootrec(const struct silofs_fs_env *fse,
 }
 
 static int do_format_fs(struct silofs_fs_env *fse,
-                        struct silofs_uuid *out_fsid)
+                        struct silofs_treeid *out_treeid)
 {
 	struct silofs_bootrec brec;
 	int err;
@@ -1491,17 +1482,17 @@ static int do_format_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	bootrec_to_fsid(&brec, out_fsid);
+	silofs_bootrec_treeid(&brec, out_treeid);
 	return 0;
 }
 
 int silofs_format_fs(struct silofs_fs_env *fse,
-                     struct silofs_uuid *out_fsid)
+                     struct silofs_treeid *out_treeid)
 {
 	int ret;
 
 	fse_lock(fse);
-	ret = do_format_fs(fse, out_fsid);
+	ret = do_format_fs(fse, out_treeid);
 	fse_unlock(fse);
 	return ret;
 }
@@ -1514,13 +1505,13 @@ static int fse_reload_root_sblob(struct silofs_fs_env *fse,
 }
 
 static int do_boot_fs(struct silofs_fs_env *fse,
-                      const struct silofs_uuid *fsid)
+                      const struct silofs_treeid *treeid)
 {
 	struct silofs_bootrec brec;
 	struct silofs_uaddr uaddr;
 	int err;
 
-	silofs_make_bootrec_uaddr(fsid, &uaddr);
+	silofs_make_bootrec_uaddr(treeid, &uaddr);
 	err = reload_bootrec_of(fse, &uaddr, &brec);
 	if (err) {
 		return err;
@@ -1536,12 +1527,13 @@ static int do_boot_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-int silofs_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *fsid)
+int silofs_boot_fs(struct silofs_fs_env *fse,
+                   const struct silofs_treeid *treeid)
 {
 	int ret;
 
 	fse_lock(fse);
-	ret = do_boot_fs(fse, fsid);
+	ret = do_boot_fs(fse, treeid);
 	fse_unlock(fse);
 	return ret;
 }
@@ -1610,12 +1602,12 @@ int silofs_close_fs(struct silofs_fs_env *fse)
 }
 
 int silofs_poke_fs(struct silofs_fs_env *fse,
-                   const struct silofs_uuid *fsid,
+                   const struct silofs_treeid *treeid,
                    struct silofs_bootrec *out_brec)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
 
-	silofs_make_bootrec_uaddr(fsid, &uaddr);
+	silofs_make_bootrec_uaddr(treeid, &uaddr);
 	return load_bootrec_of(fse, &uaddr, out_brec);
 }
 
@@ -1637,8 +1629,8 @@ static int exec_clone_fs(const struct silofs_fs_env *fse,
 }
 
 int silofs_fork_fs(struct silofs_fs_env *fse,
-                   struct silofs_uuid *out_new,
-                   struct silofs_uuid *out_alt)
+                   struct silofs_treeid *out_new,
+                   struct silofs_treeid *out_alt)
 {
 	struct silofs_bootrecs brecs;
 	int err;
@@ -1647,7 +1639,7 @@ int silofs_fork_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	silofs_bootrecs_to_fsids(&brecs, out_new, out_alt);
+	silofs_bootrecs_to_treeids(&brecs, out_new, out_alt);
 	return 0;
 }
 
@@ -1682,13 +1674,14 @@ static int exec_unref_fs(struct silofs_fs_env *fse)
 	return err;
 }
 
-int silofs_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *fsid)
+int silofs_unref_fs(struct silofs_fs_env *fse,
+                    const struct silofs_treeid *treeid)
 {
 	struct silofs_bootrec brec;
 	struct silofs_uaddr uaddr;
 	int err;
 
-	silofs_make_bootrec_uaddr(fsid, &uaddr);
+	silofs_make_bootrec_uaddr(treeid, &uaddr);
 	err = reload_bootrec_of(fse, &uaddr, &brec);
 	if (err) {
 		return err;

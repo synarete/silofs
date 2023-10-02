@@ -109,7 +109,7 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	const char *name = "silofs";
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_setname(&fs_args->iconf, name);
+	cmd_iconf_set_name(&fs_args->iconf, name);
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
 	ctx->fs_args.name = name;
 }

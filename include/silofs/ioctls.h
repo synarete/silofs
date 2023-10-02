@@ -104,8 +104,8 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_clone {
-	struct silofs_uuid id_new;
-	struct silofs_uuid id_alt;
+	struct silofs_treeid treeid_new;
+	struct silofs_treeid treeid_alt;
 };
 
 struct silofs_ioc_syncfs {

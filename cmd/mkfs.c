@@ -164,7 +164,7 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 
 	cmd_resolve_uidgid(ctx->in_args.username, &uid, &gid);
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
+	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
@@ -213,7 +213,7 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_format_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_mkfs_save_iconf(struct cmd_mkfs_ctx *ctx)

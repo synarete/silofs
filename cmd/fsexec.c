@@ -134,21 +134,45 @@ void cmd_close_repo(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "failed to close repo");
 }
 
-void cmd_require_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
+static void cmd_treeid_of(const struct silofs_iconf *iconf,
+                          struct silofs_treeid *out_treeid)
+{
+	silofs_treeid_by_uuid(out_treeid, &iconf->uuid);
+}
+
+void cmd_require_fs(struct silofs_fs_env *fse,
+                    const struct silofs_treeid *treeid)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	err = silofs_poke_fs(fse, uuid, &brec);
+	err = silofs_poke_fs(fse, treeid, &brec);
 	cmd_require_ok(fse, err, "failed to poke fs");
 }
 
-void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_fsid)
+void cmd_require_fs_by(struct silofs_fs_env *fse,
+                       const struct silofs_iconf *iconf)
+{
+	struct silofs_treeid treeid;
+
+	cmd_treeid_of(iconf, &treeid);
+	cmd_require_fs(fse, &treeid);
+}
+
+void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_treeid *out_treeid)
 {
 	int err;
 
-	err = silofs_format_fs(fse, out_fsid);
+	err = silofs_format_fs(fse, out_treeid);
 	cmd_require_ok(fse, err, "failed to format fs");
+}
+
+void cmd_format_fs_by(struct silofs_fs_env *fse, struct silofs_iconf *iconf)
+{
+	struct silofs_treeid treeid;
+
+	cmd_format_fs(fse, &treeid);
+	silofs_uuid_assign(&iconf->uuid, &treeid.uuid);
 }
 
 void cmd_close_fs(struct silofs_fs_env *fse)
@@ -159,12 +183,21 @@ void cmd_close_fs(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "shutdown error");
 }
 
-void cmd_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid)
+void cmd_boot_fs(struct silofs_fs_env *fse, const struct silofs_treeid *treeid)
 {
 	int err;
 
-	err = silofs_boot_fs(fse, uuid);
+	err = silofs_boot_fs(fse, treeid);
 	cmd_require_ok(fse, err, "failed to boot fs");
+}
+
+void cmd_boot_fs_by(struct silofs_fs_env *fse,
+                    const struct silofs_iconf *iconf)
+{
+	struct silofs_treeid treeid;
+
+	cmd_treeid_of(iconf, &treeid);
+	cmd_boot_fs(fse, &treeid);
 }
 
 void cmd_open_fs(struct silofs_fs_env *fse)
@@ -184,21 +217,30 @@ void cmd_exec_fs(struct silofs_fs_env *fse)
 }
 
 void cmd_fork_fs(struct silofs_fs_env *fse,
-                 struct silofs_uuid *out_uuid1, struct silofs_uuid *out_uuid2)
+                 struct silofs_treeid *out_new, struct silofs_treeid *out_alt)
 {
 	int err;
 
-	err = silofs_fork_fs(fse, out_uuid1, out_uuid2);
+	err = silofs_fork_fs(fse, out_new, out_alt);
 	cmd_require_ok(fse, err, "failed to fork fs");
 }
 
 void cmd_unref_fs(struct silofs_fs_env *fse,
-                  const struct silofs_uuid *uuid)
+                  const struct silofs_treeid *treeid)
 {
 	int err;
 
-	err = silofs_unref_fs(fse, uuid);
+	err = silofs_unref_fs(fse, treeid);
 	cmd_require_ok(fse, err, "rmfs error");
+}
+
+void cmd_unref_fs_by(struct silofs_fs_env *fse,
+                     const struct silofs_iconf *iconf)
+{
+	struct silofs_treeid treeid;
+
+	cmd_treeid_of(iconf, &treeid);
+	cmd_unref_fs(fse, &treeid);
 }
 
 void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb)

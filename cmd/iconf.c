@@ -863,7 +863,7 @@ void cmd_iconf_unlink(const struct silofs_iconf *iconf, const char *repodir)
 	(void)iconf;
 }
 
-void cmd_iconf_setname(struct silofs_iconf *iconf, const char *name)
+void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name)
 {
 	struct silofs_namestr nstr;
 
@@ -871,10 +871,22 @@ void cmd_iconf_setname(struct silofs_iconf *iconf, const char *name)
 	silofs_namebuf_assign_str(&iconf->name, &nstr);
 }
 
-void cmd_iconf_setuuid(struct silofs_iconf *iconf,
-                       const struct silofs_uuid *uuid)
+void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
+                        const struct silofs_uuid *uuid)
 {
 	silofs_uuid_assign(&iconf->uuid, uuid);
+}
+
+void cmd_iconf_set_uuid_by(struct silofs_iconf *iconf,
+                           const struct silofs_treeid *treeid)
+{
+	cmd_iconf_set_uuid(iconf, &treeid->uuid);
+}
+
+void cmd_iconf_get_treeid(const struct silofs_iconf *iconf,
+                          struct silofs_treeid *out_treeid)
+{
+	silofs_treeid_by_uuid(out_treeid, &iconf->uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -123,7 +123,7 @@ struct ut_args {
 struct ut_env {
 	struct silofs_prandgen   prng;
 	struct silofs_password   passwd;
-	struct silofs_uuid       uuid[2];
+	struct silofs_treeid      treeid[2];
 	struct ut_args          *args;
 	struct silofs_fs_env    *fs_env;
 	struct timespec          ts_start;

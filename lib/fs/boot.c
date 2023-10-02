@@ -514,16 +514,8 @@ void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
 	}
 }
 
-static void bootrec_sb_fsid(const struct silofs_bootrec *brec,
-                            struct silofs_uuid *out_fsid)
-{
-	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
-
-	silofs_uuid_assign(out_fsid, &sb_uaddr->paddr.blobid.treeid.uuid);
-}
-
-static void bootrec_sb_treeid(const struct silofs_bootrec *brec,
-                              struct silofs_treeid *out_treeid)
+void silofs_bootrec_treeid(const struct silofs_bootrec *brec,
+                           struct silofs_treeid *out_treeid)
 {
 	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
 
@@ -547,25 +539,22 @@ void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
 {
 	struct silofs_treeid treeid;
 
-	bootrec_sb_treeid(brec, &treeid);
+	silofs_bootrec_treeid(brec, &treeid);
 	bootrec_uaddr_by_treeid(&treeid, out_uaddr);
 }
 
-void silofs_make_bootrec_uaddr(const struct silofs_uuid *fsid,
+void silofs_make_bootrec_uaddr(const struct silofs_treeid *treeid,
                                struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_treeid treeid;
-
-	silofs_treeid_by_uuid(&treeid, fsid);
-	bootrec_uaddr_by_treeid(&treeid, out_uaddr);
+	bootrec_uaddr_by_treeid(treeid, out_uaddr);
 }
 
-void silofs_bootrecs_to_fsids(const struct silofs_bootrecs *brecs,
-                              struct silofs_uuid *out_fsid_new,
-                              struct silofs_uuid *out_fsid_alt)
+void silofs_bootrecs_to_treeids(const struct silofs_bootrecs *brecs,
+                                struct silofs_treeid *out_treeid_new,
+                                struct silofs_treeid *out_treeid_alt)
 {
-	bootrec_sb_fsid(&brecs->brec[0], out_fsid_new);
-	bootrec_sb_fsid(&brecs->brec[1], out_fsid_alt);
+	silofs_bootrec_treeid(&brecs->brec[0], out_treeid_new);
+	silofs_bootrec_treeid(&brecs->brec[1], out_treeid_alt);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

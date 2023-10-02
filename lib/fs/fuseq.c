@@ -2670,8 +2670,8 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	if (err) {
 		goto out;
 	}
-	silofs_bootrecs_to_fsids(&fcc->args->out.clone.brecs,
-	                         &cl_out->id_new, &cl_out->id_alt);
+	silofs_bootrecs_to_treeids(&fcc->args->out.clone.brecs,
+	                           &cl_out->treeid_new, &cl_out->treeid_alt);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0,

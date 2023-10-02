@@ -123,7 +123,7 @@ static void cmd_bmaps_setup_fs_args(struct cmd_bmaps_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_setname(&fs_args->iconf, ctx->in_args.name);
+	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
@@ -146,12 +146,12 @@ static void cmd_bmaps_open_repo(struct cmd_bmaps_ctx *ctx)
 
 static void cmd_bmaps_require_brec(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_bmaps_boot_fs(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf.uuid);
+	cmd_boot_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_bmaps_open_fs(struct cmd_bmaps_ctx *ctx)

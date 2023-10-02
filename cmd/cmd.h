@@ -223,22 +223,37 @@ void cmd_open_repo(struct silofs_fs_env *fse);
 
 void cmd_close_repo(struct silofs_fs_env *fse);
 
-void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_uuid *out_uuid);
+void cmd_format_fs(struct silofs_fs_env *fse,
+                   struct silofs_treeid *out_treeid);
+
+void cmd_format_fs_by(struct silofs_fs_env *fse, struct silofs_iconf *iconf);
 
 void cmd_close_fs(struct silofs_fs_env *fse);
 
-void cmd_require_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+void cmd_require_fs(struct silofs_fs_env *fse,
+                    const struct silofs_treeid *treeid);
 
-void cmd_boot_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+void cmd_require_fs_by(struct silofs_fs_env *fse,
+                       const struct silofs_iconf *iconf);
+
+void cmd_boot_fs(struct silofs_fs_env *fse,
+                 const struct silofs_treeid *treeid);
+
+void cmd_boot_fs_by(struct silofs_fs_env *fse,
+                    const struct silofs_iconf *iconf);
 
 void cmd_open_fs(struct silofs_fs_env *fse);
 
 void cmd_exec_fs(struct silofs_fs_env *fse);
 
 void cmd_fork_fs(struct silofs_fs_env *fse,
-                 struct silofs_uuid *out_uuid1, struct silofs_uuid *out_uuid2);
+                 struct silofs_treeid *out_new, struct silofs_treeid *out_alt);
 
-void cmd_unref_fs(struct silofs_fs_env *fse, const struct silofs_uuid *uuid);
+void cmd_unref_fs(struct silofs_fs_env *fse,
+                  const struct silofs_treeid *treeid);
+
+void cmd_unref_fs_by(struct silofs_fs_env *fse,
+                     const struct silofs_iconf *iconf);
 
 void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_paddr_fn cb);
 
@@ -291,10 +306,16 @@ void cmd_iconf_assign(struct silofs_iconf *iconf,
 
 void cmd_iconf_reset(struct silofs_iconf *iconf);
 
-void cmd_iconf_setname(struct silofs_iconf *iconf, const char *name);
+void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name);
 
-void cmd_iconf_setuuid(struct silofs_iconf *iconf,
-                       const struct silofs_uuid *uuid);
+void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
+                        const struct silofs_uuid *uuid);
+
+void cmd_iconf_set_uuid_by(struct silofs_iconf *iconf,
+                           const struct silofs_treeid *treeid);
+
+void cmd_iconf_get_treeid(const struct silofs_iconf *iconf,
+                          struct silofs_treeid *out_treeid);
 
 void cmd_iconf_add_user(struct silofs_iconf *iconf,
                         const char *user, bool with_sup_groups);

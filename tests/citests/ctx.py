@@ -219,7 +219,7 @@ class TestEnv:
         self.exec_rmfs()
 
     def exec_snap(self, name: str) -> None:
-        self.cmd.silofs.snap(name, self.mntpoint())
+        self.cmd.silofs.snap(name, self.mntpoint(), self._passwd())
 
     def exec_snap_offline(self, mainname: str, snapname: str) -> None:
         self.cmd.silofs.snap_offline(

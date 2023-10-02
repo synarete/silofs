@@ -203,8 +203,11 @@ class CmdSilofs(CmdExec):
     def show_statx(self, pathname: pathlib.Path) -> str:
         return self.execute_sub(["show", "statx", pathname])
 
-    def snap(self, name: str, pathname: pathlib.Path) -> None:
-        self.execute_sub(["snap", "-n", name, pathname])
+    def snap(self, name: str, pathname: pathlib.Path, password: str) -> None:
+        args = ["snap", "-n", name, pathname]
+        if password:
+            args = args + ["--password", password]
+        self.execute_sub(args)
 
     def snap_offline(
         self, name: str, repodir_name: pathlib.Path, password: str

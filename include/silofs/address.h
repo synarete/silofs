@@ -234,12 +234,6 @@ void silofs_treeid_as_uuid(const struct silofs_treeid *treeid,
 void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
                            const struct silofs_uuid *uuid);
 
-void silofs_treeid128_htox(struct silofs_treeid128 *treeid128,
-                           const struct silofs_treeid *treeid);
-
-void silofs_treeid128_xtoh(const struct silofs_treeid128 *treeid128,
-                           struct silofs_treeid *treeid);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_plink_assign(struct silofs_plink *plink,

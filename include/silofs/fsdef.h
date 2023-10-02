@@ -455,11 +455,6 @@ struct silofs_hash512 {
 } silofs_packed_aligned64;
 
 
-struct silofs_uuid {
-	uint8_t uu[SILOFS_UUID_SIZE];
-} silofs_packed_aligned16;
-
-
 struct silofs_name {
 	uint8_t name[SILOFS_NAME_MAX + 1];
 } silofs_packed_aligned64;
@@ -475,14 +470,19 @@ struct silofs_iv {
 } silofs_packed_aligned8;
 
 
-struct silofs_treeid128 {
+struct silofs_uuid {
+	uint8_t uu[SILOFS_UUID_SIZE];
+} silofs_packed_aligned16;
+
+
+struct silofs_treeid {
 	struct silofs_uuid              uuid;
 } silofs_packed_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_blobid32b {
-	struct silofs_treeid128         treeid;
+	struct silofs_treeid            treeid;
 	int64_t                         voff;
 	uint32_t                        size;
 	uint8_t                         vspace;
@@ -654,7 +654,7 @@ struct silofs_super_block {
 	/* 512..1K */
 	struct silofs_uaddr64b          sb_self_uaddr;
 	struct silofs_uaddr64b          sb_orig_uaddr;
-	struct silofs_treeid128         sb_treeid;
+	struct silofs_treeid            sb_treeid;
 	struct silofs_vrange128         sb_vrange;
 	uint64_t                        sb_reserved4a;
 	uint64_t                        sb_birth_time;

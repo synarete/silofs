@@ -126,13 +126,13 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 static void sb_treeid(const struct silofs_super_block *sb,
                       struct silofs_treeid *out_treeid)
 {
-	silofs_treeid128_xtoh(&sb->sb_treeid, out_treeid);
+	silofs_treeid_assign(out_treeid, &sb->sb_treeid);
 }
 
 static void sb_set_treeid(struct silofs_super_block *sb,
                           const struct silofs_treeid *treeid)
 {
-	silofs_treeid128_htox(&sb->sb_treeid, treeid);
+	silofs_treeid_assign(&sb->sb_treeid, treeid);
 }
 
 static void sb_self(const struct silofs_super_block *sb,

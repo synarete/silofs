@@ -157,12 +157,12 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
 	REQUIRE_SIZEOF(struct silofs_hash256, 32);
 	REQUIRE_SIZEOF(struct silofs_hash512, 64);
-	REQUIRE_SIZEOF(struct silofs_uuid, SILOFS_UUID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_kdf_desc, 16);
 	REQUIRE_SIZEOF(struct silofs_kdf_pair, 32);
 	REQUIRE_SIZEOF(struct silofs_iv, SILOFS_IV_SIZE);
 	REQUIRE_SIZEOF(struct silofs_key, SILOFS_KEY_SIZE);
-	REQUIRE_SIZEOF(struct silofs_treeid128, 16);
+	REQUIRE_SIZEOF(struct silofs_uuid, SILOFS_UUID_SIZE);
+	REQUIRE_SIZEOF(struct silofs_treeid, 16);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);

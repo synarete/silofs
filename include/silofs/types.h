@@ -218,11 +218,6 @@ struct silofs_ivkey {
 	unsigned int            mode;
 };
 
-/* space-tree id */
-struct silofs_treeid {
-	struct silofs_uuid      uuid;
-};
-
 /* blob identifier */
 struct silofs_blobid {
 	struct silofs_treeid    treeid;

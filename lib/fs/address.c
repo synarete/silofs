@@ -510,18 +510,6 @@ void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
 	silofs_uuid_assign(&treeid->uuid, uuid);
 }
 
-void silofs_treeid128_htox(struct silofs_treeid128 *treeid128,
-                           const struct silofs_treeid *treeid)
-{
-	silofs_uuid_assign(&treeid128->uuid, &treeid->uuid);
-}
-
-void silofs_treeid128_xtoh(const struct silofs_treeid128 *treeid128,
-                           struct silofs_treeid *treeid)
-{
-	silofs_uuid_assign(&treeid->uuid, &treeid128->uuid);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_blobid s_blobid_none = {
@@ -701,7 +689,7 @@ void silofs_blobid32b_htox(struct silofs_blobid32b *blobid32,
                            const struct silofs_blobid *blobid)
 {
 	memset(blobid32, 0, sizeof(*blobid32));
-	silofs_treeid128_htox(&blobid32->treeid, &blobid->treeid);
+	silofs_treeid_assign(&blobid32->treeid, &blobid->treeid);
 	blobid32->voff = silofs_cpu_to_off(blobid->voff);
 	blobid32->size = silofs_cpu_to_le32((uint32_t)blobid->size);
 	blobid32->vspace = (uint8_t)blobid->vspace;
@@ -711,7 +699,7 @@ void silofs_blobid32b_htox(struct silofs_blobid32b *blobid32,
 void silofs_blobid32b_xtoh(const struct silofs_blobid32b *blobid32,
                            struct silofs_blobid *blobid)
 {
-	silofs_treeid128_xtoh(&blobid32->treeid, &blobid->treeid);
+	silofs_treeid_assign(&blobid->treeid, &blobid32->treeid);
 	blobid->voff = silofs_off_to_cpu(blobid32->voff);
 	blobid->size = silofs_le32_to_cpu(blobid32->size);
 	blobid->vspace = (enum silofs_stype)blobid32->vspace;

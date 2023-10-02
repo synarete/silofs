@@ -138,13 +138,13 @@ int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
 static const struct silofs_cipher_args s_default_cip_args = {
 	.kdf = {
 		.kdf_key = {
-			.kd_iterations = 4096,
+			.kd_iterations = 8192,
 			.kd_algo = SILOFS_KDF_PBKDF2,
 			.kd_subalgo = SILOFS_MD_SHA256,
 			.kd_salt_md = SILOFS_MD_SHA3_512,
 		},
 		.kdf_iv = {
-			.kd_iterations = 1024,
+			.kd_iterations = 2048,
 			.kd_algo = SILOFS_KDF_SCRYPT,
 			.kd_subalgo = 8,
 			.kd_salt_md = SILOFS_MD_SHA3_256,

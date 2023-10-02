@@ -183,7 +183,7 @@ static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_getpass(struct cmd_snap_ctx *ctx)
 {
-	if ((ctx->in_args.password == NULL) && ctx->in_args.offline) {
+	if (ctx->in_args.password == NULL) {
 		cmd_getpass(NULL, &ctx->in_args.password);
 	}
 }

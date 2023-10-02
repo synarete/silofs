@@ -107,24 +107,24 @@
 #define stype_isdata(st)                silofs_stype_isdata(st)
 #define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
-#define blobid_reset(bid)               silofs_blobid_reset(bid)
-#define blobid_assign(bid, oth)         silofs_blobid_assign(bid, oth)
-#define blobid_isequal(bid, oth)        silofs_blobid_isequal(bid, oth)
-#define blobid_isnull(bid)              silofs_blobid_isnull(bid)
-#define blobid_size(bid)                silofs_blobid_size(bid)
-#define blobid_has_treeid(bid, tid)     silofs_blobid_has_treeid(bid, tid)
+#define tsegid_reset(bid)               silofs_tsegid_reset(bid)
+#define tsegid_assign(bid, oth)         silofs_tsegid_assign(bid, oth)
+#define tsegid_isequal(bid, oth)        silofs_tsegid_isequal(bid, oth)
+#define tsegid_isnull(bid)              silofs_tsegid_isnull(bid)
+#define tsegid_size(bid)                silofs_tsegid_size(bid)
+#define tsegid_has_treeid(bid, tid)     silofs_tsegid_has_treeid(bid, tid)
 
 #define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
-#define bkaddr_by_paddr(ba, pa)         silofs_bkaddr_by_paddr(ba, pa)
+#define bkaddr_by_taddr(ba, pa)         silofs_bkaddr_by_taddr(ba, pa)
 #define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
 
-#define paddr_reset(pa)                 silofs_paddr_reset(pa)
-#define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
-#define paddr_setup(pa, bid, o, l)      silofs_paddr_setup(pa, bid, o, l)
-#define paddr_setup_by(pa, bid, va)     silofs_paddr_setup_by(pa, bid, va)
-#define paddr_isvalid(pa)               silofs_paddr_isvalid(pa)
-#define paddr_isnull(pa)                silofs_paddr_isnull(pa)
+#define taddr_reset(pa)                 silofs_taddr_reset(pa)
+#define taddr_assign(pa, oth)           silofs_taddr_assign(pa, oth)
+#define taddr_setup(pa, bid, o, l)      silofs_taddr_setup(pa, bid, o, l)
+#define taddr_setup_by(pa, bid, va)     silofs_taddr_setup_by(pa, bid, va)
+#define taddr_isvalid(pa)               silofs_taddr_isvalid(pa)
+#define taddr_isnull(pa)                silofs_taddr_isnull(pa)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
@@ -133,7 +133,7 @@
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
 #define uaddr_treeid(ua)                silofs_uaddr_treeid(ua)
-#define uaddr_blobid(ua)                silofs_uaddr_blobid(ua)
+#define uaddr_tsegid(ua)                silofs_uaddr_tsegid(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)
 
 #define ulink_assign(ul, oth)           silofs_ulink_assign(ul, oth)
@@ -166,15 +166,15 @@
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
-#define sbi_paddr(sbi)                  silofs_sbi_paddr(sbi)
-#define sbi_blobid(sbi)                 silofs_sbi_blobid(sbi)
+#define sbi_taddr(sbi)                  silofs_sbi_taddr(sbi)
+#define sbi_tsegid(sbi)                 silofs_sbi_tsegid(sbi)
 #define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)
 
 #define sni_ulink(sni)                  silofs_sni_ulink(sni)
 #define sni_uaddr(sni)                  silofs_sni_uaddr(sni)
-#define sni_paddr(sni)                  silofs_sni_paddr(sni)
+#define sni_taddr(sni)                  silofs_sni_taddr(sni)
 #define sni_incref(sni)                 silofs_sni_incref(sni)
 #define sni_decref(sni)                 silofs_sni_decref(sni)
 #define sni_vrange(sni, vrng)           silofs_sni_vspace_range(sni, vrng)
@@ -183,7 +183,7 @@
 
 #define sli_ulink(sli)                  silofs_sli_ulink(sli)
 #define sli_uaddr(sli)                  silofs_sli_uaddr(sli)
-#define sli_paddr(sli)                  silofs_sli_paddr(sli)
+#define sli_taddr(sli)                  silofs_sli_taddr(sli)
 #define sli_incref(sli)                 silofs_sli_incref(sli)
 #define sli_decref(sli)                 silofs_sli_decref(sli)
 #define sli_vrange(sli, vrng)           silofs_sli_vspace_range(sli, vrng)
@@ -195,7 +195,7 @@
 #define ui_stype(ui)                    silofs_ui_stype(ui)
 #define ui_ulink(ui)                    silofs_ui_ulink(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
-#define ui_paddr(ui)                    silofs_ui_paddr(ui)
+#define ui_taddr(ui)                    silofs_ui_taddr(ui)
 #define ui_riv(ui)                      silofs_ui_riv(ui)
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
@@ -290,10 +290,10 @@ silofs_ui_uaddr(const struct silofs_unode_info *ui)
 	return &ui->u_ulink.uaddr;
 }
 
-static inline const struct silofs_paddr *
-silofs_ui_paddr(const struct silofs_unode_info *ui)
+static inline const struct silofs_taddr *
+silofs_ui_taddr(const struct silofs_unode_info *ui)
 {
-	return &ui->u_ulink.uaddr.paddr;
+	return &ui->u_ulink.uaddr.taddr;
 }
 
 static inline enum silofs_stype
@@ -407,22 +407,22 @@ silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 	return silofs_ui_uaddr(&sbi->sb_ui);
 }
 
-static inline const struct silofs_paddr *
-silofs_sbi_paddr(const struct silofs_sb_info *sbi)
+static inline const struct silofs_taddr *
+silofs_sbi_taddr(const struct silofs_sb_info *sbi)
 {
-	return silofs_ui_paddr(&sbi->sb_ui);
+	return silofs_ui_taddr(&sbi->sb_ui);
 }
 
-static inline const struct silofs_paddr *
-silofs_sni_paddr(const struct silofs_spnode_info *sni)
+static inline const struct silofs_taddr *
+silofs_sni_taddr(const struct silofs_spnode_info *sni)
 {
-	return silofs_ui_paddr(&sni->sn_ui);
+	return silofs_ui_taddr(&sni->sn_ui);
 }
 
-static inline const struct silofs_paddr *
-silofs_sli_paddr(const struct silofs_spleaf_info *sli)
+static inline const struct silofs_taddr *
+silofs_sli_taddr(const struct silofs_spleaf_info *sli)
 {
-	return silofs_ui_paddr(&sli->sl_ui);
+	return silofs_ui_taddr(&sli->sl_ui);
 }
 
 #endif /* SILOFS_PRIVATE_H_ */

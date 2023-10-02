@@ -89,55 +89,55 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 	}
 }
 
-static int smc_require_mutable_plink(const struct silofs_submit_ctx *sm_ctx,
-                                     const struct silofs_plink *plink)
+static int smc_require_mutable_tlink(const struct silofs_submit_ctx *sm_ctx,
+                                     const struct silofs_tlink *tlink)
 {
 	int err = 0;
 	bool mut;
 
-	mut = silofs_sbi_ismutable_paddr(sm_ctx->uber->ub_sbi, &plink->paddr);
+	mut = silofs_sbi_ismutable_taddr(sm_ctx->uber->ub_sbi, &tlink->taddr);
 	err = mut ? 0 : -SILOFS_EROFS;
 	silofs_assert_ok(err);
 	return err;
 }
 
-static int smc_resolve_plink_of_ui(const struct silofs_submit_ctx *sm_ctx,
+static int smc_resolve_tlink_of_ui(const struct silofs_submit_ctx *sm_ctx,
                                    const struct silofs_unode_info *ui,
-                                   struct silofs_plink *out_plink)
+                                   struct silofs_tlink *out_tlink)
 {
 	int ret = 0;
 
-	silofs_ulink_as_plink(ui_ulink(ui), out_plink);
+	silofs_ulink_as_tlink(ui_ulink(ui), out_tlink);
 	if (!ui_issuper(ui)) {
-		ret = smc_require_mutable_plink(sm_ctx, out_plink);
+		ret = smc_require_mutable_tlink(sm_ctx, out_tlink);
 	}
 	return ret;
 }
 
-static int smc_resolve_plink_of_vi(const struct silofs_submit_ctx *sm_ctx,
+static int smc_resolve_tlink_of_vi(const struct silofs_submit_ctx *sm_ctx,
                                    struct silofs_vnode_info *vi,
-                                   struct silofs_plink *out_plink)
+                                   struct silofs_tlink *out_tlink)
 {
 	int err;
 
-	err = silofs_refresh_plink_of(sm_ctx->task, vi);
+	err = silofs_refresh_tlink_of(sm_ctx->task, vi);
 	if (err) {
 		return err;
 	}
-	silofs_plink_assign(out_plink, &vi->v_plink);
-	return smc_require_mutable_plink(sm_ctx, out_plink);
+	silofs_tlink_assign(out_tlink, &vi->v_tlink);
+	return smc_require_mutable_tlink(sm_ctx, out_tlink);
 }
 
-static int smc_resolve_plink_of(const struct silofs_submit_ctx *sm_ctx,
+static int smc_resolve_tlink_of(const struct silofs_submit_ctx *sm_ctx,
                                 struct silofs_lnode_info *lni,
-                                struct silofs_plink *out_plink)
+                                struct silofs_tlink *out_tlink)
 {
 	int ret;
 
 	if (stype_isunode(lni->stype)) {
-		ret = smc_resolve_plink_of_ui(sm_ctx, ui_from(lni), out_plink);
+		ret = smc_resolve_tlink_of_ui(sm_ctx, ui_from(lni), out_tlink);
 	} else if (stype_isvnode(lni->stype)) {
-		ret = smc_resolve_plink_of_vi(sm_ctx, vi_from(lni), out_plink);
+		ret = smc_resolve_tlink_of_vi(sm_ctx, vi_from(lni), out_tlink);
 	} else {
 		silofs_panic("corrupted lnode: stype=%d", lni->stype);
 		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
@@ -179,15 +179,15 @@ static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
 
 static bool smc_append_next_ref(struct silofs_submit_ctx *sm_ctx,
                                 struct silofs_submitq_ent *sqe,
-                                const struct silofs_plink *plink,
+                                const struct silofs_tlink *tlink,
                                 struct silofs_lnode_info *lni)
 {
 	struct silofs_submit_ref *ref = &sm_ctx->refs[sqe->cnt];
 	bool ret;
 
-	ret = silofs_sqe_append_ref(sqe, &plink->paddr, lni);
+	ret = silofs_sqe_append_ref(sqe, &tlink->taddr, lni);
 	if (ret) {
-		silofs_plink_assign(&ref->plink, plink);
+		silofs_tlink_assign(&ref->tlink, tlink);
 		ref->view = lni->view;
 		ref->stype = lni->stype;
 	}
@@ -198,16 +198,16 @@ static int smc_populate_sqe_refs(struct silofs_submit_ctx *sm_ctx,
                                  struct silofs_dset *dset,
                                  struct silofs_submitq_ent *sqe)
 {
-	struct silofs_plink plink;
+	struct silofs_tlink tlink;
 	struct silofs_lnode_info *lni = dset->ds_preq;
 	int err;
 
 	while (lni != NULL) {
-		err = smc_resolve_plink_of(sm_ctx, lni, &plink);
+		err = smc_resolve_tlink_of(sm_ctx, lni, &tlink);
 		if (err) {
 			return err;
 		}
-		if (!smc_append_next_ref(sm_ctx, sqe, &plink, lni)) {
+		if (!smc_append_next_ref(sm_ctx, sqe, &tlink, lni)) {
 			break;
 		}
 		dset_moveq(dset);
@@ -547,13 +547,13 @@ static size_t flush_threshold_of(int flags)
 	} else if (flags & SILOFS_F_FSYNC) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		threshold = SILOFS_BLOB_SIZE_MAX / 4;
+		threshold = SILOFS_TSEG_SIZE_MAX / 4;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = SILOFS_BLOB_SIZE_MAX / 2;
+		threshold = SILOFS_TSEG_SIZE_MAX / 2;
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		threshold = 2 * SILOFS_BLOB_SIZE_MAX;
+		threshold = 2 * SILOFS_TSEG_SIZE_MAX;
 	} else {
-		threshold = 4 * SILOFS_BLOB_SIZE_MAX;
+		threshold = 4 * SILOFS_TSEG_SIZE_MAX;
 	}
 	return threshold;
 }
@@ -619,11 +619,11 @@ static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,
 static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
                         struct silofs_submitq_ent *sqe)
 {
-	const struct silofs_blobid *blobid = &sqe->blobid;
+	const struct silofs_tsegid *tsegid = &sqe->tsegid;
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = silofs_stage_blob_at(sm_ctx->uber, blobid, &blobf);
+	err = silofs_stage_blob_at(sm_ctx->uber, tsegid, &blobf);
 	if (err) {
 		return err;
 	}

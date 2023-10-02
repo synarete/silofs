@@ -519,19 +519,19 @@ void silofs_bootrec_treeid(const struct silofs_bootrec *brec,
 {
 	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
 
-	silofs_treeid_assign(out_treeid, &sb_uaddr->paddr.blobid.treeid);
+	silofs_treeid_assign(out_treeid, &sb_uaddr->taddr.tsegid.treeid);
 }
 
 static void
 bootrec_uaddr_by_treeid(const struct silofs_treeid *treeid,
                         struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_blobid blobid;
+	struct silofs_tsegid tsegid;
 	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_UBER;
 
-	silofs_blobid_setup(&blobid, treeid, 0, stype, height);
-	silofs_uaddr_setup(out_uaddr, &blobid, 0, stype, 0);
+	silofs_tsegid_setup(&tsegid, treeid, 0, stype, height);
+	silofs_uaddr_setup(out_uaddr, &tsegid, 0, stype, 0);
 }
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,

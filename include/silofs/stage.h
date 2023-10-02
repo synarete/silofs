@@ -41,10 +41,10 @@ int silofs_require_spmaps_of(struct silofs_task *task,
                              struct silofs_spnode_info **out_sni,
                              struct silofs_spleaf_info **out_sli);
 
-int silofs_resolve_plink_of(struct silofs_task *task,
+int silofs_resolve_tlink_of(struct silofs_task *task,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stg_mode stg_mode,
-                            struct silofs_plink *out_plink);
+                            struct silofs_tlink *out_tlink);
 
 int silofs_require_mut_vaddr(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr);
@@ -70,7 +70,7 @@ int silofs_fetch_cached_inode(struct silofs_task *task, ino_t ino,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_refresh_plink_of(struct silofs_task *task,
+int silofs_refresh_tlink_of(struct silofs_task *task,
                             struct silofs_vnode_info *vi);
 
 #endif /* SILOFS_STAGE_H_ */

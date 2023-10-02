@@ -628,7 +628,7 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam)
 
 static enum silofs_stype uaddr_vspace(const struct silofs_uaddr *uaddr)
 {
-	return uaddr->paddr.blobid.vspace;
+	return uaddr->taddr.tsegid.vspace;
 }
 
 static void uakey_setup(struct silofs_uakey *uakey, loff_t voff,

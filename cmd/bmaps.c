@@ -159,20 +159,20 @@ static void cmd_bmaps_open_fs(struct cmd_bmaps_ctx *ctx)
 	cmd_open_fs(ctx->fs_env);
 }
 
-static void cmd_bmaps_paddr_cb(const struct silofs_paddr *paddr, loff_t voff)
+static void cmd_bmaps_taddr_cb(const struct silofs_taddr *taddr, loff_t voff)
 {
 	struct silofs_namebuf nb;
 
-	silofs_uuid_name(&paddr->blobid.treeid.uuid, &nb);
+	silofs_uuid_name(&taddr->tsegid.treeid.uuid, &nb);
 	printf("%02x %02d %08lx %s\n",
-	       (int)(paddr->blobid.vspace),
-	       (int)(paddr->blobid.height),
+	       (int)(taddr->tsegid.vspace),
+	       (int)(taddr->tsegid.height),
 	       voff, nb.name);
 }
 
 static void cmd_bmaps_execute(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fs_env, cmd_bmaps_paddr_cb);
+	cmd_inspect_fs(ctx->fs_env, cmd_bmaps_taddr_cb);
 }
 
 static void cmd_bmaps_close_repo(struct cmd_bmaps_ctx *ctx)

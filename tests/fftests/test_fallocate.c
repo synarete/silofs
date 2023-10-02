@@ -16,8 +16,6 @@
  */
 #include "fftests.h"
 
-#define FT_BLOBSIZE_MAX SILOFS_BLOB_SIZE_MAX
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects fallocate(2) to successfully allocate space, and return EBADF if
@@ -202,10 +200,10 @@ static void test_fallocate_truncate(struct ft_env *fte)
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(11, FT_64K),
 		FT_MKRANGE(11, FT_1M + 111),
-		FT_MKRANGE(0, FT_BLOBSIZE_MAX),
-		FT_MKRANGE(FT_1M - 1, FT_BLOBSIZE_MAX + 2),
+		FT_MKRANGE(0, SILOFS_TSEG_SIZE_MAX),
+		FT_MKRANGE(FT_1M - 1, SILOFS_TSEG_SIZE_MAX + 2),
 		FT_MKRANGE(FT_1G, FT_1M),
-		FT_MKRANGE(FT_1T - 2, FT_BLOBSIZE_MAX + 3),
+		FT_MKRANGE(FT_1T - 2, SILOFS_TSEG_SIZE_MAX + 3),
 		FT_MKRANGE(FT_1T - 1111, FT_1M + 1111),
 	};
 

@@ -146,7 +146,7 @@ int silofs_socket_send(const struct silofs_socket *sock,
                        const void *buf, size_t len, size_t *out_sent);
 
 int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
-                         size_t bsz, const struct silofs_sockaddr *spaddr,
+                         size_t bsz, const struct silofs_sockaddr *staddr,
                          size_t *out_sent);
 
 int silofs_socket_sendmsg(const struct silofs_socket *sock,

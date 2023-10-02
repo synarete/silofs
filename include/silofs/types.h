@@ -218,8 +218,8 @@ struct silofs_ivkey {
 	unsigned int            mode;
 };
 
-/* blob identifier */
-struct silofs_blobid {
+/* file-system's tree-segment id */
+struct silofs_tsegid {
 	struct silofs_treeid    treeid;
 	loff_t                  voff;
 	size_t                  size;
@@ -227,29 +227,29 @@ struct silofs_blobid {
 	enum silofs_height      height;
 };
 
-/* persistent address of sub-range within blob */
-struct silofs_paddr {
-	struct silofs_blobid    blobid;
+/* file-system's tree-address within segment */
+struct silofs_taddr {
+	struct silofs_tsegid    tsegid;
 	loff_t                  pos;
 	size_t                  len;
 };
 
-/* block address within blob */
+/* block address within tree-segment */
 struct silofs_bkaddr {
-	struct silofs_paddr     paddr;
+	struct silofs_taddr     taddr;
 	silofs_lba_t            lba;
 };
 
 /* logical addressing of space-mapping elements */
 struct silofs_uaddr {
-	struct silofs_paddr     paddr;
+	struct silofs_taddr     taddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
 };
 
-/* a pair of object-address and its associate (random) IV */
-struct silofs_plink {
-	struct silofs_paddr     paddr;
+/* a pair of object tree-address and its associate (random) IV */
+struct silofs_tlink {
+	struct silofs_taddr     taddr;
 	struct silofs_iv        riv;
 };
 
@@ -289,7 +289,7 @@ struct silofs_vrange {
 /* caching-element's key type */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
-	SILOFS_CKEY_BLOBID,
+	SILOFS_CKEY_TSEGID,
 	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
@@ -309,7 +309,7 @@ union silofs_ckey_u {
 	const struct silofs_bkaddr *bkaddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
-	const struct silofs_blobid *blobid;
+	const struct silofs_tsegid *tsegid;
 	const struct silofs_vbk_addr *vbk_addr;
 	const void                 *key;
 };

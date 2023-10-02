@@ -73,11 +73,11 @@ void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
 
 int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
                          enum silofs_stype vspace,
-                         struct silofs_blobid *out_blobid);
+                         struct silofs_tsegid *out_tsegid);
 
 void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
                                enum silofs_stype vspace,
-                               const struct silofs_blobid *blobid);
+                               const struct silofs_tsegid *tsegid);
 
 bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
                               enum silofs_stype vspace);
@@ -86,11 +86,11 @@ void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
                                 loff_t voff, enum silofs_stype vspace,
                                 struct silofs_ulink *out_ulink);
 
-bool silofs_sbi_ismutable_blobid(const struct silofs_sb_info *sbi,
-                                 const struct silofs_blobid *blobid);
+bool silofs_sbi_ismutable_tsegid(const struct silofs_sb_info *sbi,
+                                 const struct silofs_tsegid *tsegid);
 
-bool silofs_sbi_ismutable_paddr(const struct silofs_sb_info *sbi,
-                                const struct silofs_paddr *paddr);
+bool silofs_sbi_ismutable_taddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_taddr *taddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

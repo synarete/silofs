@@ -110,87 +110,87 @@ size_t silofs_stype_nkbs(enum silofs_stype stype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_blobid *silofs_blobid_none(void);
+const struct silofs_tsegid *silofs_tsegid_none(void);
 
-size_t silofs_blobid_size(const struct silofs_blobid *blobid);
+size_t silofs_tsegid_size(const struct silofs_tsegid *tsegid);
 
-loff_t silofs_blobid_pos(const struct silofs_blobid *blobid, loff_t off);
+loff_t silofs_tsegid_pos(const struct silofs_tsegid *tsegid, loff_t off);
 
-bool silofs_blobid_isnull(const struct silofs_blobid *blobid);
+bool silofs_tsegid_isnull(const struct silofs_tsegid *tsegid);
 
-bool silofs_blobid_has_treeid(const struct silofs_blobid *blobid,
+bool silofs_tsegid_has_treeid(const struct silofs_tsegid *tsegid,
                               const struct silofs_treeid *treeid);
 
-void silofs_blobid_reset(struct silofs_blobid *blobid);
+void silofs_tsegid_reset(struct silofs_tsegid *tsegid);
 
-void silofs_blobid_assign(struct silofs_blobid *blobid,
-                          const struct silofs_blobid *other);
+void silofs_tsegid_assign(struct silofs_tsegid *tsegid,
+                          const struct silofs_tsegid *other);
 
-long silofs_blobid_compare(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2);
+long silofs_tsegid_compare(const struct silofs_tsegid *tsegid1,
+                           const struct silofs_tsegid *tsegid2);
 
-bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other);
+bool silofs_tsegid_isequal(const struct silofs_tsegid *tsegid,
+                           const struct silofs_tsegid *other);
 
-uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid);
+uint64_t silofs_tsegid_hash64(const struct silofs_tsegid *tsegid);
 
 
-void silofs_blobid_setup(struct silofs_blobid *blobid,
+void silofs_tsegid_setup(struct silofs_tsegid *tsegid,
                          const struct silofs_treeid *treeid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height);
 
-void silofs_blobid32b_reset(struct silofs_blobid32b *blobid32);
+void silofs_tsegid32b_reset(struct silofs_tsegid32b *tsegid32);
 
-void silofs_blobid32b_htox(struct silofs_blobid32b *blobid32,
-                           const struct silofs_blobid *blobid);
+void silofs_tsegid32b_htox(struct silofs_tsegid32b *tsegid32,
+                           const struct silofs_tsegid *tsegid);
 
-void silofs_blobid32b_xtoh(const struct silofs_blobid32b *blobid32,
-                           struct silofs_blobid *blobid);
+void silofs_tsegid32b_xtoh(const struct silofs_tsegid32b *tsegid32,
+                           struct silofs_tsegid *tsegid);
 
 
-int silofs_blobid_to_name(const struct silofs_blobid *blobid,
+int silofs_tsegid_to_name(const struct silofs_tsegid *tsegid,
                           char *name, size_t nmax, size_t *out_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_paddr *silofs_paddr_none(void);
+const struct silofs_taddr *silofs_taddr_none(void);
 
-void silofs_paddr_setup(struct silofs_paddr *paddr,
-                        const struct silofs_blobid *blobid,
+void silofs_taddr_setup(struct silofs_taddr *taddr,
+                        const struct silofs_tsegid *tsegid,
                         loff_t off, size_t len);
 
-void silofs_paddr_of_bk(struct silofs_paddr *paddr,
-                        const struct silofs_blobid *blobid, silofs_lba_t lba);
+void silofs_taddr_of_bk(struct silofs_taddr *taddr,
+                        const struct silofs_tsegid *tsegid, silofs_lba_t lba);
 
-void silofs_paddr_reset(struct silofs_paddr *paddr);
+void silofs_taddr_reset(struct silofs_taddr *taddr);
 
-void silofs_paddr_assign(struct silofs_paddr *paddr,
-                         const struct silofs_paddr *other);
+void silofs_taddr_assign(struct silofs_taddr *taddr,
+                         const struct silofs_taddr *other);
 
-long silofs_paddr_compare(const struct silofs_paddr *paddr1,
-                          const struct silofs_paddr *paddr2);
+long silofs_taddr_compare(const struct silofs_taddr *taddr1,
+                          const struct silofs_taddr *taddr2);
 
-void silofs_paddr_as_iv(const struct silofs_paddr *paddr,
+void silofs_taddr_as_iv(const struct silofs_taddr *taddr,
                         struct silofs_iv *out_iv);
 
-bool silofs_paddr_same_tree(const struct silofs_paddr *paddr,
-                            const struct silofs_paddr *other);
+bool silofs_taddr_same_tree(const struct silofs_taddr *taddr,
+                            const struct silofs_taddr *other);
 
-bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
+bool silofs_taddr_isnull(const struct silofs_taddr *taddr);
 
-bool silofs_paddr_isvalid(const struct silofs_paddr *paddr);
+bool silofs_taddr_isvalid(const struct silofs_taddr *taddr);
 
-bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
-                          const struct silofs_paddr *other);
+bool silofs_taddr_isequal(const struct silofs_taddr *taddr,
+                          const struct silofs_taddr *other);
 
-void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
-                          const struct silofs_paddr *paddr);
+void silofs_taddr48b_htox(struct silofs_taddr48b *taddr48,
+                          const struct silofs_taddr *taddr);
 
-void silofs_paddr48b_xtoh(const struct silofs_paddr48b *paddr48,
-                          struct silofs_paddr *paddr);
+void silofs_taddr48b_xtoh(const struct silofs_taddr48b *taddr48,
+                          struct silofs_taddr *taddr);
 
-void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48);
+void silofs_taddr48b_reset(struct silofs_taddr48b *taddr48);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -199,13 +199,13 @@ const struct silofs_bkaddr *silofs_bkaddr_none(void);
 void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr);
 
 void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
-                         const struct silofs_blobid *blobid, silofs_lba_t lba);
+                         const struct silofs_tsegid *tsegid, silofs_lba_t lba);
 
 void  silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
-                           const struct silofs_blobid *blobid, loff_t off);
+                           const struct silofs_tsegid *tsegid, loff_t off);
 
-void silofs_bkaddr_by_paddr(struct silofs_bkaddr *bkaddr,
-                            const struct silofs_paddr *paddr);
+void silofs_bkaddr_by_taddr(struct silofs_bkaddr *bkaddr,
+                            const struct silofs_taddr *taddr);
 
 bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
                            const struct silofs_bkaddr *other);
@@ -236,18 +236,18 @@ void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_plink_assign(struct silofs_plink *plink,
-                         const struct silofs_plink *other);
+void silofs_tlink_assign(struct silofs_tlink *tlink,
+                         const struct silofs_tlink *other);
 
-void silofs_plink_assign2(struct silofs_plink *plink,
-                          const struct silofs_paddr *paddr,
+void silofs_tlink_assign2(struct silofs_tlink *tlink,
+                          const struct silofs_taddr *taddr,
                           const struct silofs_iv *riv);
 
-void silofs_plink_setup(struct silofs_plink *plink,
+void silofs_tlink_setup(struct silofs_tlink *tlink,
                         const struct silofs_blink *blink,
                         const struct silofs_vaddr *vaddr);
 
-void silofs_plink_reset(struct silofs_plink *plink);
+void silofs_tlink_reset(struct silofs_tlink *tlink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -269,13 +269,13 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_treeid *
 silofs_uaddr_treeid(const struct silofs_uaddr *uaddr);
 
-const struct silofs_blobid *
-silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
+const struct silofs_tsegid *
+silofs_uaddr_tsegid(const struct silofs_uaddr *uaddr);
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_blobid *blobid,
+                        const struct silofs_tsegid *tsegid,
                         loff_t bpos, enum silofs_stype stype, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64);
@@ -296,8 +296,8 @@ void silofs_ulink_assign2(struct silofs_ulink *ulink,
 
 void silofs_ulink_reset(struct silofs_ulink *ulink);
 
-void silofs_ulink_as_plink(const struct silofs_ulink *ulink,
-                           struct silofs_plink *out_plink);
+void silofs_ulink_as_tlink(const struct silofs_ulink *ulink,
+                           struct silofs_tlink *out_tlink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

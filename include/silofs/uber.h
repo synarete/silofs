@@ -72,17 +72,17 @@ int silofs_stage_spleaf_at(struct silofs_uber *uber,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_stage_ubk_at(struct silofs_uber *uber,
-                        const struct silofs_paddr *paddr,
+                        const struct silofs_taddr *taddr,
                         struct silofs_ubk_info **out_ubki);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_blob_at(struct silofs_uber *uber,
-                         const struct silofs_blobid *blobid,
+                         const struct silofs_tsegid *tsegid,
                          struct silofs_blobf **out_blobf);
 
 int silofs_stage_blob_at(struct silofs_uber *uber,
-                         const struct silofs_blobid *blobid,
+                         const struct silofs_tsegid *tsegid,
                          struct silofs_blobf **out_blobf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

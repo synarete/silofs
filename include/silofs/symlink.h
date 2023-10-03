@@ -30,7 +30,7 @@ int silofs_do_readlink(struct silofs_task *task,
 
 int silofs_setup_symlink(struct silofs_task *task,
                          struct silofs_inode_info *lnk_ii,
-                         const struct silofs_str *symval);
+                         const struct silofs_substr *symval);
 
 int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv);
 

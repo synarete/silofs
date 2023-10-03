@@ -38,23 +38,22 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 	        "abcdefghijklmnopqrstuvwxyz"
 	        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	        "0123456789_-+.";
-	struct silofs_substr ss;
+	const struct silofs_substr *ss = &nstr->s;
 	size_t n;
 
-	silofs_substr_init_rd(&ss, nstr->s.str, nstr->s.len);
-	if (!silofs_substr_isprint(&ss)) {
+	if (!silofs_substr_isprint(ss)) {
 		return -SILOFS_EINVAL;
 	}
-	n = silofs_substr_count_if(&ss, silofs_chr_isspace);
+	n = silofs_substr_count_if(ss, silofs_chr_isspace);
 	if (n > 0) {
 		return -SILOFS_EINVAL;
 	}
-	n = silofs_substr_count_if(&ss, silofs_chr_iscntrl);
+	n = silofs_substr_count_if(ss, silofs_chr_iscntrl);
 	if (n > 0) {
 		return -SILOFS_EINVAL;
 	}
-	n = silofs_substr_find_first_not_of(&ss, allowed);
-	if (n < ss.len) {
+	n = silofs_substr_find_first_not_of(ss, allowed);
+	if (n < ss->len) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;
@@ -100,14 +99,16 @@ int silofs_check_name(const struct silofs_namestr *nstr)
 	return 0;
 }
 
+int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
+{
+	silofs_substr_init(&nstr->s, s);
+	return silofs_check_name(nstr);
+}
+
 static int check_fsname(const struct silofs_namestr *nstr)
 {
 	int err;
 
-	err = silofs_check_name(nstr);
-	if (err) {
-		return err;
-	}
 	if (nstr->s.str[0] == '.') {
 		return -SILOFS_EINVAL;
 	}
@@ -121,16 +122,19 @@ static int check_fsname(const struct silofs_namestr *nstr)
 	return 0;
 }
 
-int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
-{
-	silofs_namestr_init(nstr, s);
-	return silofs_check_name(nstr);
-}
-
 int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
 {
-	silofs_namestr_init(nstr, s);
-	return check_fsname(nstr);
+	int err;
+
+	err = silofs_make_namestr(nstr, s);
+	if (err) {
+		return err;
+	}
+	err = check_fsname(nstr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -617,18 +621,14 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath,
                           const char *repodir, const char *name)
 {
 	size_t len;
-	int ret;
 
+	silofs_memzero(bpath, sizeof(*bpath));
 	len = silofs_str_length(repodir);
-	if (len && (len < SILOFS_REPOPATH_MAX)) {
-		bpath->repodir.str = repodir;
-		bpath->repodir.len = len;
-		ret = silofs_make_namestr(&bpath->name, name);
-	} else {
-		silofs_memzero(bpath, sizeof(*bpath));
-		ret = -SILOFS_EINVAL;
+	if (!len || (len >= SILOFS_REPOPATH_MAX)) {
+		return -SILOFS_EINVAL;
 	}
-	return ret;
+	silofs_substr_init(&bpath->repodir, repodir);
+	return silofs_make_namestr(&bpath->name, name);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

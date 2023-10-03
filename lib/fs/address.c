@@ -1342,6 +1342,8 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
 {
 	char buf[40] = "";
 
+	STATICASSERT_GT(sizeof(nb->name), sizeof(buf));
+
 	uuid_unparse_lower(uu->uu, buf);
 	strncpy(nb->name, buf, sizeof(nb->name));
 }
@@ -1359,60 +1361,11 @@ void silofs_namebuf_assign(struct silofs_namebuf *nb,
 	memcpy(nb, other, sizeof(*nb));
 }
 
-void silofs_namebuf_assign2(struct silofs_namebuf *nb,
-                            const struct silofs_name *name)
+void silofs_namebuf_setup(struct silofs_namebuf *nb,
+                          const struct silofs_substr *str)
 {
-	STATICASSERT_EQ(sizeof(nb->name), sizeof(name->name));
-
-	memcpy(nb->name, name->name, sizeof(nb->name));
-	nb->name[sizeof(nb->name) - 1] = '\0';
-}
-
-void silofs_namebuf_str(const struct silofs_namebuf *nb,
-                        struct silofs_namestr *name)
-{
-	name->s.str = nb->name;
-	name->s.len = strlen(nb->name);
-}
-
-void silofs_namebuf_assign_str(struct silofs_namebuf *nb,
-                               const struct silofs_namestr *name)
-{
-	const size_t len = silofs_min(name->s.len, sizeof(nb->name) - 1);
-
-	memcpy(nb->name, name->s.str, len);
-	nb->name[len] = '\0';
-}
-
-void silofs_namebuf_copyto(const struct silofs_namebuf *nb,
-                           struct silofs_name *name)
-{
-	STATICASSERT_EQ(sizeof(nb->name), sizeof(name->name));
-
-	memcpy(name->name, nb->name, sizeof(name->name));
-}
-
-bool silofs_namebuf_isequal(const struct silofs_namebuf *nb,
-                            const struct silofs_namestr *name)
-{
-	const size_t len = strlen(nb->name);
-
-	return (name->s.len == len) && !memcmp(nb->name, name->s.str, len);
-}
-
-void silofs_namestr_init(struct silofs_namestr *nstr, const char *name)
-{
-	nstr->s.str = name;
-	nstr->s.len = strnlen(name, SILOFS_NAME_MAX + 1);
-}
-
-bool silofs_namestr_isequal(const struct silofs_namestr *nstr,
-                            const struct silofs_namestr *other)
-{
-	const size_t len = nstr->s.len;
-
-	return (len == other->s.len) &&
-	       !silofs_str_compare(nstr->s.str, other->s.str, len);
+	silofs_namebuf_reset(nb);
+	silofs_substr_copyto(str, nb->name, sizeof(nb->name) - 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

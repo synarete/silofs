@@ -106,18 +106,18 @@ enum silofs_file_type {
 
 
 /* strings */
-struct silofs_str {
-	const char *str;
-	size_t len;
-};
-
 struct silofs_qstr {
-	struct silofs_str s;
+	struct silofs_substr s;
 	uint64_t hash;
 };
 
 struct silofs_namestr {
-	struct silofs_str s;
+	struct silofs_substr s;
+};
+
+/* name-buffer */
+struct silofs_namebuf {
+	char name[SILOFS_NAME_MAX + 1];
 };
 
 /* pair of ino and dir-type */
@@ -125,11 +125,6 @@ struct silofs_ino_dt {
 	ino_t  ino;
 	mode_t dt;
 	int    pad;
-};
-
-/* name-buffer */
-struct silofs_namebuf {
-	char name[SILOFS_NAME_MAX + 1];
 };
 
 /* pass-phrase buffers */

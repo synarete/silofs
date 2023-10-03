@@ -74,26 +74,8 @@ void silofs_namebuf_reset(struct silofs_namebuf *nb);
 void silofs_namebuf_assign(struct silofs_namebuf *nb,
                            const struct silofs_namebuf *other);
 
-void silofs_namebuf_assign2(struct silofs_namebuf *nb,
-                            const struct silofs_name *name);
-
-void silofs_namebuf_assign_str(struct silofs_namebuf *nb,
-                               const struct silofs_namestr *name);
-
-void silofs_namebuf_copyto(const struct silofs_namebuf *nb,
-                           struct silofs_name *name);
-
-bool silofs_namebuf_isequal(const struct silofs_namebuf *nb,
-                            const struct silofs_namestr *name);
-
-void silofs_namebuf_str(const struct silofs_namebuf *nb,
-                        struct silofs_namestr *name);
-
-
-void silofs_namestr_init(struct silofs_namestr *nstr, const char *name);
-
-bool silofs_namestr_isequal(const struct silofs_namestr *nstr,
-                            const struct silofs_namestr *other);
+void silofs_namebuf_setup(struct silofs_namebuf *nb,
+                          const struct silofs_substr *str);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

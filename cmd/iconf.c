@@ -866,9 +866,13 @@ void cmd_iconf_unlink(const struct silofs_iconf *iconf, const char *repodir)
 void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name)
 {
 	struct silofs_namestr nstr;
+	int err;
 
-	silofs_namestr_init(&nstr, name);
-	silofs_namebuf_assign_str(&iconf->name, &nstr);
+	err = silofs_make_namestr(&nstr, name);
+	if (err) {
+		cmd_dief(err, "illegal name: %s", name);
+	}
+	silofs_namebuf_setup(&iconf->name, &nstr.s);
 }
 
 void cmd_iconf_set_uuid(struct silofs_iconf *iconf,

@@ -156,12 +156,12 @@ dii_name_to_hash(const struct silofs_inode_info *dir_ii,
 	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
 
 	STATICASSERT_EQ(sizeof(nbuf.name) % 8, 0);
+	STATICASSERT_EQ(sizeof(nbuf.name), SILOFS_NAME_MAX + 1);
 
 	if (likely(nstr->s.len >= sizeof(nbuf.name))) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_memzero(&nbuf, sizeof(nbuf));
-	silofs_namebuf_assign_str(&nbuf, nstr);
+	silofs_namebuf_setup(&nbuf, &nstr->s);
 	return dii_nbuf_to_hash(dir_ii, &nbuf, alen, out_hash);
 }
 
@@ -542,9 +542,16 @@ static int check_lookup(const struct silofs_task *task,
 	return 0;
 }
 
+static void qstr_setup(struct silofs_qstr *qstr,
+                       const char *str, size_t len, uint64_t hash)
+{
+	silofs_substr_init_rd(&qstr->s, str, len);
+	qstr->hash = hash;
+}
+
 static int assign_namehash(const struct silofs_inode_info *dir_ii,
                            const struct silofs_namestr *nstr,
-                           struct silofs_qstr *qstr)
+                           struct silofs_qstr *out_qstr)
 {
 	uint64_t hash = 0;
 	int err;
@@ -557,9 +564,7 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	qstr->hash = hash;
-	qstr->s.str = nstr->s.str;
-	qstr->s.len = nstr->s.len;
+	qstr_setup(out_qstr, nstr->s.str, nstr->s.len, hash);
 	return 0;
 }
 
@@ -1459,7 +1464,7 @@ int silofs_do_rmdir(struct silofs_task *task,
 
 static int create_lnk_inode(struct silofs_task *task,
                             const struct silofs_inode_info *dir_ii,
-                            const struct silofs_str *linkpath,
+                            const struct silofs_substr *symval,
                             struct silofs_inode_info **out_ii)
 {
 	int err;
@@ -1468,7 +1473,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_setup_symlink(task, *out_ii, linkpath);
+	err = silofs_setup_symlink(task, *out_ii, symval);
 	if (err) {
 		silofs_remove_inode_by(task, *out_ii);
 		return err;
@@ -1476,7 +1481,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	return 0;
 }
 
-static int check_symval(const struct silofs_str *symval)
+static int check_symval(const struct silofs_substr *symval)
 {
 	if (symval->len == 0) {
 		return -SILOFS_EINVAL;
@@ -1490,7 +1495,7 @@ static int check_symval(const struct silofs_str *symval)
 static int check_symlink(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name,
-                         const struct silofs_str *symval)
+                         const struct silofs_substr *symval)
 {
 	int err;
 
@@ -1508,7 +1513,7 @@ static int check_symlink(struct silofs_task *task,
 static int do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_str *symval,
+                      const struct silofs_substr *symval,
                       struct silofs_inode_info **out_ii)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -1535,7 +1540,7 @@ static int do_symlink(struct silofs_task *task,
 int silofs_do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_str *symval,
+                      const struct silofs_substr *symval,
                       struct silofs_inode_info **out_ii)
 {
 	int err;
@@ -2220,10 +2225,10 @@ int silofs_do_statvfs(const struct silofs_task *task,
 	return err;
 }
 
-static void fill_strbuf(char *buf, size_t bsz, const struct silofs_str *s)
+static void fill_strbuf(char *buf, size_t bsz, const struct silofs_substr *s)
 {
 	if ((s != NULL) && (bsz > 0)) {
-		memcpy(buf, s->str, min(bsz - 1, s->len));
+		silofs_substr_copyto(s, buf, bsz);
 		buf[bsz - 1] = '\0';
 	}
 }
@@ -2231,12 +2236,10 @@ static void fill_strbuf(char *buf, size_t bsz, const struct silofs_str *s)
 static void fill_query_version(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	struct silofs_str s = {
-		.str = silofs_version.string,
-		.len = silofs_str_length(silofs_version.string),
-	};
+	struct silofs_substr s;
 	const size_t bsz = sizeof(query->u.version.string);
 
+	silofs_substr_init(&s, silofs_version.string);
 	query->u.version.major = silofs_version.major;
 	query->u.version.minor = silofs_version.minor;
 	query->u.version.sublevel = silofs_version.sublevel;

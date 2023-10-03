@@ -119,11 +119,11 @@ int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_blob(struct silofs_repo *repo,
+int silofs_repo_stat_blob(const struct silofs_repo *repo,
                           const struct silofs_tsegid *tsegid,
                           struct stat *out_st);
 
-int silofs_repo_lookup_blob(struct silofs_repo *repo,
+int silofs_repo_lookup_blob(const struct silofs_repo *repo,
                             const struct silofs_tsegid *tsegid);
 
 int silofs_repo_spawn_blob(struct silofs_repo *repo,
@@ -150,9 +150,5 @@ int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
 int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
                           const struct silofs_taddr *taddr,
                           struct silofs_ubk_info **out_ubki);
-
-int silofs_repo_require_ubk(struct silofs_repo *repo,
-                            const struct silofs_taddr *taddr,
-                            struct silofs_ubk_info **out_ubki);
 
 #endif /* SILOFS_REPO_H_ */

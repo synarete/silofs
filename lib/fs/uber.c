@@ -715,17 +715,44 @@ static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,
 	return err;
 }
 
+static int ubc_lookup_cached_ubki(const struct silofs_uber_ctx *ub_ctx,
+                                  const struct silofs_bkaddr *bkaddr,
+                                  struct silofs_ubk_info **out_ubki)
+{
+	*out_ubki = silofs_cache_lookup_ubk(ub_ctx->cache, bkaddr);
+	return (*out_ubki == NULL) ? -SILOFS_ENOENT : 0;
+}
+
+static int ubc_do_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
+                               const struct silofs_taddr *taddr,
+                               struct silofs_ubk_info **out_ubki)
+{
+	struct silofs_bkaddr bkaddr;
+	int err;
+	bool rw_mode;
+
+	bkaddr_by_taddr(&bkaddr, taddr);
+	err = ubc_lookup_cached_ubki(ub_ctx, &bkaddr, out_ubki);
+	if (!err) {
+		return -SILOFS_EEXIST;
+	}
+	rw_mode = ubc_taddr_rw_mode(ub_ctx, taddr);
+	err = silofs_repo_spawn_ubk(ub_ctx->repo, rw_mode, taddr, out_ubki);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_taddr *taddr,
                             struct silofs_blobf *blobf,
                             struct silofs_ubk_info **out_ubki)
 {
 	int err;
-	bool rw_mode;
 
 	blobf_incref(blobf);
-	rw_mode = ubc_taddr_rw_mode(ub_ctx, taddr);
-	err = silofs_repo_spawn_ubk(ub_ctx->repo, rw_mode, taddr, out_ubki);
+	err = ubc_do_spawn_ubk_at(ub_ctx, taddr, out_ubki);
 	blobf_decref(blobf);
 	return err;
 }
@@ -748,11 +775,59 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
 	return 0;
 }
 
+static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
+                               const struct silofs_taddr *taddr,
+                               struct silofs_ubk_info **out_ubki)
+{
+	struct silofs_bkaddr bkaddr;
+	int err;
+	bool rw;
+
+	bkaddr_by_taddr(&bkaddr, taddr);
+	err = ubc_lookup_cached_ubki(ub_ctx, &bkaddr, out_ubki);
+	if (!err) {
+		return 0;
+	}
+	rw = sb ? true : ubc_taddr_rw_mode(ub_ctx, taddr);
+	err = silofs_repo_stage_ubk(ub_ctx->repo, rw, &bkaddr.taddr, out_ubki);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_stage_ubk_at(struct silofs_uber *uber,
+                        const struct silofs_taddr *taddr,
+                        struct silofs_ubk_info **out_ubki)
+{
+	struct silofs_uber_ctx ub_ctx = { .uber = uber };
+	int err;
+
+	ubc_setup(&ub_ctx);
+	err = ubc_do_stage_ubk_at(&ub_ctx, false, taddr, out_ubki);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int ubc_do_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
                                  const struct silofs_taddr *taddr,
                                  struct silofs_ubk_info **out_ubki)
 {
-	return silofs_repo_require_ubk(ub_ctx->repo, taddr, out_ubki);
+	struct silofs_bkaddr bkaddr;
+	int err;
+
+	bkaddr_by_taddr(&bkaddr, taddr);
+	err = ubc_lookup_cached_ubki(ub_ctx, &bkaddr, out_ubki);
+	if (!err) {
+		return 0;
+	}
+	err = ubc_do_stage_ubk_at(ub_ctx, false, &bkaddr.taddr, out_ubki);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int ubc_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
@@ -791,31 +866,6 @@ static int ubc_require_ubk(const struct silofs_uber_ctx *ub_ctx,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
-                               const struct silofs_taddr *taddr,
-                               struct silofs_ubk_info **out_ubki)
-{
-	bool rw;
-
-	rw = sb ? true : ubc_taddr_rw_mode(ub_ctx, taddr);
-	return silofs_repo_stage_ubk(ub_ctx->repo, rw, taddr, out_ubki);
-}
-
-int silofs_stage_ubk_at(struct silofs_uber *uber,
-                        const struct silofs_taddr *taddr,
-                        struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_uber_ctx ub_ctx = { .uber = uber };
-	int err;
-
-	ubc_setup(&ub_ctx);
-	err = ubc_do_stage_ubk_at(&ub_ctx, false, taddr, out_ubki);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
 
 static int ubc_restore_view_of(const struct silofs_uber_ctx *ub_ctx,
                                struct silofs_unode_info *ui)

@@ -69,16 +69,6 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_namebuf_reset(struct silofs_namebuf *nb);
-
-void silofs_namebuf_assign(struct silofs_namebuf *nb,
-                           const struct silofs_namebuf *other);
-
-void silofs_namebuf_setup(struct silofs_namebuf *nb,
-                          const struct silofs_substr *str);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 bool silofs_stype_isunode(enum silofs_stype stype);
 
 bool silofs_stype_isvnode(enum silofs_stype stype);

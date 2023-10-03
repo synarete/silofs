@@ -115,11 +115,6 @@ struct silofs_namestr {
 	struct silofs_substr s;
 };
 
-/* name-buffer */
-struct silofs_namebuf {
-	char name[SILOFS_NAME_MAX + 1];
-};
-
 /* pair of ino and dir-type */
 struct silofs_ino_dt {
 	ino_t  ino;

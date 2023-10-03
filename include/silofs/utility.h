@@ -20,6 +20,32 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+struct silofs_substr;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* fixed-size name-buffer */
+struct silofs_namebuf {
+	char name[256];
+};
+
+void silofs_namebuf_reset(struct silofs_namebuf *nb);
+
+void silofs_namebuf_assign(struct silofs_namebuf *nb,
+                           const struct silofs_namebuf *other);
+
+void silofs_namebuf_setup(struct silofs_namebuf *nb,
+                          const struct silofs_substr *str);
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+char silofs_nibble_to_ascii(int n);
+
+int silofs_ascii_to_nibble(char a);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static inline int32_t silofs_min32(int32_t x, int32_t y)
 {
 	return x < y ? x : y;
@@ -110,11 +136,5 @@ static inline void *silofs_unconst(const void *p)
 	};
 	return u.q;
 }
-
-
-char silofs_nibble_to_ascii(int n);
-
-int silofs_ascii_to_nibble(char a);
-
 
 #endif /* SILOFS_UTILITY_H_ */

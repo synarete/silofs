@@ -16,7 +16,31 @@
  */
 #include <silofs/configs.h>
 #include <silofs/utility.h>
+#include <silofs/strings.h>
 #include <ctype.h>
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_namebuf_reset(struct silofs_namebuf *nb)
+{
+	memset(nb, 0, sizeof(*nb));
+}
+
+void silofs_namebuf_assign(struct silofs_namebuf *nb,
+                           const struct silofs_namebuf *other)
+{
+	memcpy(nb, other, sizeof(*nb));
+}
+
+void silofs_namebuf_setup(struct silofs_namebuf *nb,
+                          const struct silofs_substr *str)
+{
+	silofs_namebuf_reset(nb);
+	silofs_substr_copyto(str, nb->name, sizeof(nb->name) - 1);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 char silofs_nibble_to_ascii(int n)
 {

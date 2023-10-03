@@ -1350,26 +1350,6 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_namebuf_reset(struct silofs_namebuf *nb)
-{
-	memset(nb, 0, sizeof(*nb));
-}
-
-void silofs_namebuf_assign(struct silofs_namebuf *nb,
-                           const struct silofs_namebuf *other)
-{
-	memcpy(nb, other, sizeof(*nb));
-}
-
-void silofs_namebuf_setup(struct silofs_namebuf *nb,
-                          const struct silofs_substr *str)
-{
-	silofs_namebuf_reset(nb);
-	silofs_substr_copyto(str, nb->name, sizeof(nb->name) - 1);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_verify_ino(ino_t ino)
 {
 	return !ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;

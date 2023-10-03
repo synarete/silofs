@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_FSDEF_H_
-#define SILOFS_FSDEF_H_
+#ifndef SILOFS_DEFS_H_
+#define SILOFS_DEFS_H_
 
 #include <silofs/ccattr.h>
 #include <stdint.h>
@@ -964,4 +964,4 @@ struct silofs_repo_meta {
 	uint8_t                         rm_reserved3[512];
 } silofs_packed_aligned64;
 
-#endif /* SILOFS_FSDEF_H_ */
+#endif /* SILOFS_DEFS_H_ */

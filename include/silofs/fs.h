@@ -18,7 +18,7 @@
 #define SILOFS_FS_H_
 
 #include <silofs/infra.h>
-#include <silofs/fsdef.h>
+#include <silofs/defs.h>
 #include <silofs/errors.h>
 #include <silofs/types.h>
 #include <silofs/ioctls.h>

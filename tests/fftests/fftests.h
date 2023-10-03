@@ -19,7 +19,7 @@
 
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fsdef.h>
+#include <silofs/defs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>

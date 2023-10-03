@@ -2,12 +2,15 @@
 -include $(top_builddir)/sedsub.mk
 
 nobase_include_HEADERS = $(NULL)
+# base
+nobase_include_HEADERS += silofs/ccattr.h
+nobase_include_HEADERS += silofs/defs.h
+nobase_include_HEADERS += silofs/syscall.h
 # infra
 nobase_include_HEADERS += silofs/atomic.h
 nobase_include_HEADERS += silofs/avl.h
 nobase_include_HEADERS += silofs/base64.h
 nobase_include_HEADERS += silofs/bytebuf.h
-nobase_include_HEADERS += silofs/ccattr.h
 nobase_include_HEADERS += silofs/consts.h
 nobase_include_HEADERS += silofs/hash.h
 nobase_include_HEADERS += silofs/iovec.h
@@ -20,7 +23,6 @@ nobase_include_HEADERS += silofs/qalloc.h
 nobase_include_HEADERS += silofs/random.h
 nobase_include_HEADERS += silofs/socket.h
 nobase_include_HEADERS += silofs/strings.h
-nobase_include_HEADERS += silofs/syscall.h
 nobase_include_HEADERS += silofs/thread.h
 nobase_include_HEADERS += silofs/time.h
 nobase_include_HEADERS += silofs/utility.h
@@ -61,7 +63,6 @@ nobase_include_HEADERS += silofs/uber.h
 nobase_include_HEADERS += silofs/walk.h
 nobase_include_HEADERS += silofs/xattr.h
 nobase_include_HEADERS += silofs/zcmpr.h
-nobase_include_HEADERS += silofs/fsdef.h
 nobase_include_HEADERS += silofs/fs-private.h
 nobase_include_HEADERS += silofs/fs.h
 

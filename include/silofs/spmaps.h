@@ -17,7 +17,7 @@
 #ifndef SILOFS_SPMAPS_H_
 #define SILOFS_SPMAPS_H_
 
-#include <silofs/fsdef.h>
+#include <silofs/defs.h>
 #include <silofs/types.h>
 
 

@@ -22,7 +22,7 @@
 #endif
 
 #include <silofs/infra.h>
-#include <silofs/fsdef.h>
+#include <silofs/defs.h>
 #include <silofs/types.h>
 #include <silofs/nodes.h>
 

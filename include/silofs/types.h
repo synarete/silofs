@@ -32,7 +32,7 @@
 #include <time.h>
 
 #include <silofs/infra.h>
-#include <silofs/fsdef.h>
+#include <silofs/defs.h>
 
 /* types forward declarations */
 struct silofs_dset;

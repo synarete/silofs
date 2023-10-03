@@ -44,12 +44,12 @@ static void resolve_ivkey_of(const struct silofs_uber *uber,
                              const struct silofs_iv *seediv,
                              struct silofs_ivkey *out_ivkey)
 {
-	struct silofs_iv oadiv;
+	struct silofs_iv iv;
 
-	silofs_taddr_as_iv(taddr, &oadiv);
+	silofs_taddr_as_iv(taddr, &iv);
 	silofs_ivkey_assign(out_ivkey, uber->ub.main_ivkey);
 	silofs_iv_xor_with(&out_ivkey->iv, seediv);
-	silofs_iv_xor_with(&out_ivkey->iv, &oadiv);
+	silofs_iv_xor_with(&out_ivkey->iv, &iv);
 }
 
 static int encrypt_view_with(const struct silofs_uber *uber,

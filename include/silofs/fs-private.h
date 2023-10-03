@@ -112,7 +112,6 @@
 #define tsegid_isequal(bid, oth)        silofs_tsegid_isequal(bid, oth)
 #define tsegid_isnull(bid)              silofs_tsegid_isnull(bid)
 #define tsegid_size(bid)                silofs_tsegid_size(bid)
-#define tsegid_has_treeid(bid, tid)     silofs_tsegid_has_treeid(bid, tid)
 
 #define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)

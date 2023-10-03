@@ -770,7 +770,7 @@ bool silofs_sbi_ismutable_tsegid(const struct silofs_sb_info *sbi,
 	struct silofs_treeid treeid;
 
 	silofs_sbi_treeid(sbi, &treeid);
-	return tsegid_has_treeid(tsegid, &treeid);
+	return silofs_tsegid_has_treeid(tsegid, &treeid);
 }
 
 bool silofs_sbi_ismutable_taddr(const struct silofs_sb_info *sbi,

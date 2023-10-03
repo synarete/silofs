@@ -490,16 +490,10 @@ stgc_make_tsegid_of_vdata(const struct silofs_stage_ctx *stg_ctx,
                           loff_t voff, struct silofs_tsegid *out_tsegid)
 {
 	struct silofs_treeid treeid;
-	const enum silofs_stype vspace = stg_ctx->vspace;
-	const enum silofs_height height = SILOFS_HEIGHT_VDATA;
-	loff_t voff_base;
-	ssize_t blob_size;
-
-	blob_size = (ssize_t)silofs_height_to_blob_size(height);
-	voff_base = off_align(voff, blob_size);
 
 	silofs_sbi_treeid(stg_ctx->sbi, &treeid);
-	silofs_tsegid_setup(out_tsegid, &treeid, voff_base, vspace, height);
+	silofs_tsegid_setup(out_tsegid, &treeid, voff,
+	                    stg_ctx->vspace, SILOFS_HEIGHT_VDATA);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1863,13 +1857,16 @@ static int stgc_resolve_tlink_of(const struct silofs_stage_ctx *stg_ctx,
                                  struct silofs_tlink *out_tlink)
 {
 	struct silofs_blink blink;
+	struct silofs_taddr taddr;
 	int err;
 
 	err = stgc_resolve_spleaf_child(stg_ctx, stg_ctx->sli, &blink);
 	if (err) {
 		return err;
 	}
-	silofs_tlink_setup(out_tlink, &blink, stg_ctx->vaddr);
+	silofs_taddr_setup(&taddr, &blink.bka.taddr.tsegid,
+	                   stg_ctx->vaddr->off, stg_ctx->vaddr->len);
+	silofs_tlink_setup(out_tlink, &taddr, &blink.riv);
 	return 0;
 }
 

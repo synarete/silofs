@@ -26,10 +26,10 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ssize_t height_to_tseg_size(enum silofs_height height)
+static size_t height_to_lext_size(enum silofs_height height)
 {
-	ssize_t elemsz = 0;
-	ssize_t nelems = 1;
+	size_t elemsz = 0;
+	size_t nelems = 1;
 
 	switch (height) {
 	case SILOFS_HEIGHT_VDATA:
@@ -56,7 +56,7 @@ static ssize_t height_to_tseg_size(enum silofs_height height)
 		elemsz = 0;
 		break;
 	}
-	return silofs_min64(elemsz * nelems, SILOFS_TSEG_SIZE_MAX);
+	return silofs_min(elemsz * nelems, SILOFS_LEXT_SIZE_MAX);
 }
 
 ssize_t silofs_height_to_space_span(enum silofs_height height)
@@ -514,308 +514,306 @@ void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_tsegid s_tsegid_none = {
+static const struct silofs_lextid s_lextid_none = {
 	.size = 0,
 	.vspace = SILOFS_STYPE_NONE,
 	.height = SILOFS_HEIGHT_LAST,
 };
 
-const struct silofs_tsegid *silofs_tsegid_none(void)
+const struct silofs_lextid *silofs_lextid_none(void)
 {
-	return &s_tsegid_none;
+	return &s_lextid_none;
 }
 
-size_t silofs_tsegid_size(const struct silofs_tsegid *tsegid)
+size_t silofs_lextid_size(const struct silofs_lextid *lextid)
 {
-	return tsegid->size;
+	return lextid->size;
 }
 
-bool silofs_tsegid_isnull(const struct silofs_tsegid *tsegid)
+bool silofs_lextid_isnull(const struct silofs_lextid *lextid)
 {
-	return (tsegid->size == 0);
+	return (lextid->size == 0);
 }
 
-bool silofs_tsegid_has_treeid(const struct silofs_tsegid *tsegid,
+bool silofs_lextid_has_treeid(const struct silofs_lextid *lextid,
                               const struct silofs_treeid *treeid)
 {
-	return treeid_isequal(&tsegid->treeid, treeid);
+	return treeid_isequal(&lextid->treeid, treeid);
 }
 
 static loff_t
-silofs_tsegid_pos(const struct silofs_tsegid *tsegid, loff_t off)
+silofs_lextid_pos(const struct silofs_lextid *lextid, loff_t off)
 {
-	const size_t size = silofs_tsegid_size(tsegid);
+	const size_t size = silofs_lextid_size(lextid);
 
 	return size ? off_within(off, size) : 0;
 }
 
-void silofs_tsegid_reset(struct silofs_tsegid *tsegid)
+void silofs_lextid_reset(struct silofs_lextid *lextid)
 {
-	treeid_reset(&tsegid->treeid);
-	tsegid->voff = SILOFS_OFF_NULL;
-	tsegid->size = 0;
-	tsegid->vspace = SILOFS_STYPE_NONE;
-	tsegid->height = SILOFS_HEIGHT_NONE;
+	treeid_reset(&lextid->treeid);
+	lextid->voff = SILOFS_OFF_NULL;
+	lextid->size = 0;
+	lextid->vspace = SILOFS_STYPE_NONE;
+	lextid->height = SILOFS_HEIGHT_NONE;
 }
 
-void silofs_tsegid_assign(struct silofs_tsegid *tsegid,
-                          const struct silofs_tsegid *other)
+void silofs_lextid_assign(struct silofs_lextid *lextid,
+                          const struct silofs_lextid *other)
 {
-	silofs_treeid_assign(&tsegid->treeid, &other->treeid);
-	tsegid->voff = other->voff;
-	tsegid->size = other->size;
-	tsegid->vspace = other->vspace;
-	tsegid->height = other->height;
+	silofs_treeid_assign(&lextid->treeid, &other->treeid);
+	lextid->voff = other->voff;
+	lextid->size = other->size;
+	lextid->vspace = other->vspace;
+	lextid->height = other->height;
 }
 
-long silofs_tsegid_compare(const struct silofs_tsegid *tsegid1,
-                           const struct silofs_tsegid *tsegid2)
+long silofs_lextid_compare(const struct silofs_lextid *lextid1,
+                           const struct silofs_lextid *lextid2)
 {
 	long cmp;
 
-	cmp = (long)(tsegid2->vspace) - (long)(tsegid1->vspace);
+	cmp = (long)(lextid2->vspace) - (long)(lextid1->vspace);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(tsegid2->height) - (long)(tsegid1->height);
+	cmp = (long)(lextid2->height) - (long)(lextid1->height);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(tsegid2->size) - (long)(tsegid1->size);
+	cmp = (long)(lextid2->size) - (long)(lextid1->size);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(tsegid2->voff) - (long)(tsegid1->voff);
+	cmp = (long)(lextid2->voff) - (long)(lextid1->voff);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = treeid_compare(&tsegid1->treeid, &tsegid2->treeid);
+	cmp = treeid_compare(&lextid1->treeid, &lextid2->treeid);
 	if (cmp) {
 		return cmp;
 	}
 	return 0;
 }
 
-bool silofs_tsegid_isequal(const struct silofs_tsegid *tsegid,
-                           const struct silofs_tsegid *other)
+bool silofs_lextid_isequal(const struct silofs_lextid *lextid,
+                           const struct silofs_lextid *other)
 {
-	return silofs_tsegid_compare(tsegid, other) == 0;
+	return silofs_lextid_compare(lextid, other) == 0;
 }
 
-uint64_t silofs_tsegid_hash64(const struct silofs_tsegid *tsegid)
+uint64_t silofs_lextid_hash64(const struct silofs_lextid *lextid)
 {
-	struct silofs_tsegid32b bid = { .size = 0 };
+	struct silofs_lextid32b bid = { .size = 0 };
 
-	silofs_tsegid32b_htox(&bid, tsegid);
-	return silofs_hash_xxh64(&bid, sizeof(bid), tsegid->vspace);
+	silofs_lextid32b_htox(&bid, lextid);
+	return silofs_hash_xxh64(&bid, sizeof(bid), lextid->vspace);
 }
 
-void silofs_tsegid_setup(struct silofs_tsegid *tsegid,
+void silofs_lextid_setup(struct silofs_lextid *lextid,
                          const struct silofs_treeid *treeid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height)
 {
-	const ssize_t blob_size = height_to_tseg_size(height);
-
-	silofs_treeid_assign(&tsegid->treeid, treeid);
-	tsegid->voff = off_align(voff, blob_size);
-	tsegid->size = (size_t)blob_size;
-	tsegid->height = height;
-	tsegid->vspace = vspace;
+	silofs_treeid_assign(&lextid->treeid, treeid);
+	lextid->size = height_to_lext_size(height);
+	lextid->voff = off_align(voff, (ssize_t)lextid->size);
+	lextid->height = height;
+	lextid->vspace = vspace;
 }
 
-static void tsegid_as_iv(const struct silofs_tsegid *tsegid,
+static void lextid_as_iv(const struct silofs_lextid *lextid,
                          struct silofs_iv *out_iv)
 {
-	STATICASSERT_EQ(sizeof(tsegid->treeid), sizeof(*out_iv));
-	STATICASSERT_EQ(sizeof(tsegid->treeid.uuid), sizeof(out_iv->iv));
+	STATICASSERT_EQ(sizeof(lextid->treeid), sizeof(*out_iv));
+	STATICASSERT_EQ(sizeof(lextid->treeid.uuid), sizeof(out_iv->iv));
 	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
 
-	memcpy(out_iv->iv, &tsegid->treeid.uuid, sizeof(out_iv->iv));
-	out_iv->iv[0] ^= (uint8_t)(tsegid->voff & 0xFF);
-	out_iv->iv[1] ^= (uint8_t)((tsegid->voff >> 8) & 0xFF);
-	out_iv->iv[2] ^= (uint8_t)((tsegid->voff >> 16) & 0xFF);
-	out_iv->iv[3] ^= (uint8_t)((tsegid->voff >> 24) & 0xFF);
-	out_iv->iv[4] ^= (uint8_t)((tsegid->voff >> 32) & 0xFF);
-	out_iv->iv[5] ^= (uint8_t)((tsegid->voff >> 40) & 0xFF);
-	out_iv->iv[6] ^= (uint8_t)((tsegid->voff >> 48) & 0xFF);
-	out_iv->iv[7] ^= (uint8_t)((tsegid->voff >> 56) & 0xFF);
+	memcpy(out_iv->iv, &lextid->treeid.uuid, sizeof(out_iv->iv));
+	out_iv->iv[0] ^= (uint8_t)(lextid->voff & 0xFF);
+	out_iv->iv[1] ^= (uint8_t)((lextid->voff >> 8) & 0xFF);
+	out_iv->iv[2] ^= (uint8_t)((lextid->voff >> 16) & 0xFF);
+	out_iv->iv[3] ^= (uint8_t)((lextid->voff >> 24) & 0xFF);
+	out_iv->iv[4] ^= (uint8_t)((lextid->voff >> 32) & 0xFF);
+	out_iv->iv[5] ^= (uint8_t)((lextid->voff >> 40) & 0xFF);
+	out_iv->iv[6] ^= (uint8_t)((lextid->voff >> 48) & 0xFF);
+	out_iv->iv[7] ^= (uint8_t)((lextid->voff >> 56) & 0xFF);
 
-	out_iv->iv[14] ^= (uint8_t)tsegid->vspace;
-	out_iv->iv[15] ^= (uint8_t)tsegid->height;
+	out_iv->iv[14] ^= (uint8_t)lextid->vspace;
+	out_iv->iv[15] ^= (uint8_t)lextid->height;
 }
 
-void silofs_tsegid32b_reset(struct silofs_tsegid32b *tsegid32)
+void silofs_lextid32b_reset(struct silofs_lextid32b *lextid32)
 {
-	memset(tsegid32, 0, sizeof(*tsegid32));
-	tsegid32->voff = SILOFS_OFF_NULL;
-	tsegid32->size = 0;
-	tsegid32->vspace = SILOFS_STYPE_NONE;
-	tsegid32->height = SILOFS_HEIGHT_LAST;
+	memset(lextid32, 0, sizeof(*lextid32));
+	lextid32->voff = SILOFS_OFF_NULL;
+	lextid32->size = 0;
+	lextid32->vspace = SILOFS_STYPE_NONE;
+	lextid32->height = SILOFS_HEIGHT_LAST;
 }
 
-void silofs_tsegid32b_htox(struct silofs_tsegid32b *tsegid32,
-                           const struct silofs_tsegid *tsegid)
+void silofs_lextid32b_htox(struct silofs_lextid32b *lextid32,
+                           const struct silofs_lextid *lextid)
 {
-	memset(tsegid32, 0, sizeof(*tsegid32));
-	silofs_treeid_assign(&tsegid32->treeid, &tsegid->treeid);
-	tsegid32->voff = silofs_cpu_to_off(tsegid->voff);
-	tsegid32->size = silofs_cpu_to_le32((uint32_t)tsegid->size);
-	tsegid32->vspace = (uint8_t)tsegid->vspace;
-	tsegid32->height = (uint8_t)tsegid->height;
+	memset(lextid32, 0, sizeof(*lextid32));
+	silofs_treeid_assign(&lextid32->treeid, &lextid->treeid);
+	lextid32->voff = silofs_cpu_to_off(lextid->voff);
+	lextid32->size = silofs_cpu_to_le32((uint32_t)lextid->size);
+	lextid32->vspace = (uint8_t)lextid->vspace;
+	lextid32->height = (uint8_t)lextid->height;
 }
 
-void silofs_tsegid32b_xtoh(const struct silofs_tsegid32b *tsegid32,
-                           struct silofs_tsegid *tsegid)
+void silofs_lextid32b_xtoh(const struct silofs_lextid32b *lextid32,
+                           struct silofs_lextid *lextid)
 {
-	silofs_treeid_assign(&tsegid->treeid, &tsegid32->treeid);
-	tsegid->voff = silofs_off_to_cpu(tsegid32->voff);
-	tsegid->size = silofs_le32_to_cpu(tsegid32->size);
-	tsegid->vspace = (enum silofs_stype)tsegid32->vspace;
-	tsegid->height = (enum silofs_height)tsegid32->height;
+	silofs_treeid_assign(&lextid->treeid, &lextid32->treeid);
+	lextid->voff = silofs_off_to_cpu(lextid32->voff);
+	lextid->size = silofs_le32_to_cpu(lextid32->size);
+	lextid->vspace = (enum silofs_stype)lextid32->vspace;
+	lextid->height = (enum silofs_height)lextid32->height;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_taddr s_taddr_none = {
+static const struct silofs_laddr s_laddr_none = {
 	.pos = SILOFS_OFF_NULL,
 };
 
-const struct silofs_taddr *silofs_taddr_none(void)
+const struct silofs_laddr *silofs_laddr_none(void)
 {
-	return &s_taddr_none;
+	return &s_laddr_none;
 }
 
-void silofs_taddr_setup(struct silofs_taddr *taddr,
-                        const struct silofs_tsegid *tsegid,
+void silofs_laddr_setup(struct silofs_laddr *laddr,
+                        const struct silofs_lextid *lextid,
                         loff_t off, size_t len)
 {
-	silofs_tsegid_assign(&taddr->tsegid, tsegid);
-	if (tsegid->size && !off_isnull(off)) {
-		taddr->len = len;
-		taddr->pos = silofs_tsegid_pos(tsegid, off);
+	silofs_lextid_assign(&laddr->lextid, lextid);
+	if (lextid->size && !off_isnull(off)) {
+		laddr->len = len;
+		laddr->pos = silofs_lextid_pos(lextid, off);
 	} else {
-		taddr->len = 0;
-		taddr->pos = SILOFS_OFF_NULL;
+		laddr->len = 0;
+		laddr->pos = SILOFS_OFF_NULL;
 	}
 }
 
-void silofs_taddr_reset(struct silofs_taddr *taddr)
+void silofs_laddr_reset(struct silofs_laddr *laddr)
 {
-	silofs_tsegid_reset(&taddr->tsegid);
-	taddr->len = 0;
-	taddr->pos = SILOFS_OFF_NULL;
+	silofs_lextid_reset(&laddr->lextid);
+	laddr->len = 0;
+	laddr->pos = SILOFS_OFF_NULL;
 }
 
-void silofs_taddr_assign(struct silofs_taddr *taddr,
-                         const struct silofs_taddr *other)
+void silofs_laddr_assign(struct silofs_laddr *laddr,
+                         const struct silofs_laddr *other)
 {
-	silofs_tsegid_assign(&taddr->tsegid, &other->tsegid);
-	taddr->len = other->len;
-	taddr->pos = other->pos;
+	silofs_lextid_assign(&laddr->lextid, &other->lextid);
+	laddr->len = other->len;
+	laddr->pos = other->pos;
 }
 
-long silofs_taddr_compare(const struct silofs_taddr *taddr1,
-                          const struct silofs_taddr *taddr2)
+long silofs_laddr_compare(const struct silofs_laddr *laddr1,
+                          const struct silofs_laddr *laddr2)
 {
 	long cmp;
 
-	cmp = taddr1->pos - taddr2->pos;
+	cmp = laddr1->pos - laddr2->pos;
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (int)taddr1->len - (int)taddr2->len;
+	cmp = (int)laddr1->len - (int)laddr2->len;
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_tsegid_compare(&taddr1->tsegid, &taddr2->tsegid);
+	cmp = silofs_lextid_compare(&laddr1->lextid, &laddr2->lextid);
 	if (cmp) {
 		return cmp;
 	}
 	return 0;
 }
 
-bool silofs_taddr_isnull(const struct silofs_taddr *taddr)
+bool silofs_laddr_isnull(const struct silofs_laddr *laddr)
 {
-	return silofs_off_isnull(taddr->pos) ||
-	       silofs_tsegid_isnull(&taddr->tsegid);
+	return silofs_off_isnull(laddr->pos) ||
+	       silofs_lextid_isnull(&laddr->lextid);
 }
 
-bool silofs_taddr_isvalid(const struct silofs_taddr *taddr)
+bool silofs_laddr_isvalid(const struct silofs_laddr *laddr)
 {
-	const loff_t end = off_end(taddr->pos, taddr->len);
-	const ssize_t tsegid_size = (ssize_t)(taddr->tsegid.size);
+	const loff_t end = off_end(laddr->pos, laddr->len);
+	const ssize_t lextid_size = (ssize_t)(laddr->lextid.size);
 
-	return !silofs_taddr_isnull(taddr) && (end <= tsegid_size);
+	return !silofs_laddr_isnull(laddr) && (end <= lextid_size);
 }
 
-bool silofs_taddr_isequal(const struct silofs_taddr *taddr,
-                          const struct silofs_taddr *other)
+bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
+                          const struct silofs_laddr *other)
 {
-	return ((taddr->len == other->len) && (taddr->pos == other->pos) &&
-	        silofs_tsegid_isequal(&taddr->tsegid, &other->tsegid));
+	return ((laddr->len == other->len) && (laddr->pos == other->pos) &&
+	        silofs_lextid_isequal(&laddr->lextid, &other->lextid));
 }
 
-void silofs_taddr_as_iv(const struct silofs_taddr *taddr,
+void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
                         struct silofs_iv *out_iv)
 {
 	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
 
 	memset(out_iv, 0, sizeof(*out_iv));
-	tsegid_as_iv(&taddr->tsegid, out_iv);
-	out_iv->iv[8] ^= (uint8_t)(taddr->pos & 0xFF);
-	out_iv->iv[9] ^= (uint8_t)((taddr->pos >> 8) & 0xFF);
-	out_iv->iv[10] ^= (uint8_t)((taddr->pos >> 16) & 0xFF);
-	out_iv->iv[11] ^= (uint8_t)((taddr->pos >> 24) & 0xFF);
-	out_iv->iv[12] ^= (uint8_t)((taddr->pos >> 32) & 0xFF);
-	out_iv->iv[13] ^= (uint8_t)((taddr->pos >> 40) & 0xFF);
-	out_iv->iv[14] ^= (uint8_t)((taddr->pos >> 48) & 0xFF);
-	out_iv->iv[15] ^= (uint8_t)((taddr->pos >> 56) & 0xFF);
+	lextid_as_iv(&laddr->lextid, out_iv);
+	out_iv->iv[8] ^= (uint8_t)(laddr->pos & 0xFF);
+	out_iv->iv[9] ^= (uint8_t)((laddr->pos >> 8) & 0xFF);
+	out_iv->iv[10] ^= (uint8_t)((laddr->pos >> 16) & 0xFF);
+	out_iv->iv[11] ^= (uint8_t)((laddr->pos >> 24) & 0xFF);
+	out_iv->iv[12] ^= (uint8_t)((laddr->pos >> 32) & 0xFF);
+	out_iv->iv[13] ^= (uint8_t)((laddr->pos >> 40) & 0xFF);
+	out_iv->iv[14] ^= (uint8_t)((laddr->pos >> 48) & 0xFF);
+	out_iv->iv[15] ^= (uint8_t)((laddr->pos >> 56) & 0xFF);
 }
 
-void silofs_taddr48b_reset(struct silofs_taddr48b *taddr48)
+void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)
 {
-	silofs_tsegid32b_reset(&taddr48->tsegid);
-	taddr48->pos = 0;
-	taddr48->len = 0;
+	silofs_lextid32b_reset(&laddr48->lextid);
+	laddr48->pos = 0;
+	laddr48->len = 0;
 }
 
-void silofs_taddr48b_htox(struct silofs_taddr48b *taddr48,
-                          const struct silofs_taddr *taddr)
+void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
+                          const struct silofs_laddr *laddr)
 {
-	silofs_tsegid32b_htox(&taddr48->tsegid, &taddr->tsegid);
-	taddr48->pos = silofs_cpu_to_le32((uint32_t)(taddr->pos));
-	taddr48->len = silofs_cpu_to_le32((uint32_t)(taddr->len));
+	silofs_lextid32b_htox(&laddr48->lextid, &laddr->lextid);
+	laddr48->pos = silofs_cpu_to_le32((uint32_t)(laddr->pos));
+	laddr48->len = silofs_cpu_to_le32((uint32_t)(laddr->len));
 }
 
-void silofs_taddr48b_xtoh(const struct silofs_taddr48b *taddr48,
-                          struct silofs_taddr *taddr)
+void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
+                          struct silofs_laddr *laddr)
 {
-	silofs_tsegid32b_xtoh(&taddr48->tsegid, &taddr->tsegid);
-	taddr->pos = (loff_t)silofs_le32_to_cpu(taddr48->pos);
-	taddr->len = (size_t)silofs_le32_to_cpu(taddr48->len);
+	silofs_lextid32b_xtoh(&laddr48->lextid, &laddr->lextid);
+	laddr->pos = (loff_t)silofs_le32_to_cpu(laddr48->pos);
+	laddr->len = (size_t)silofs_le32_to_cpu(laddr48->len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_tlink_setup(struct silofs_tlink *tlink,
-                        const struct silofs_taddr *taddr,
+void silofs_llink_setup(struct silofs_llink *llink,
+                        const struct silofs_laddr *laddr,
                         const struct silofs_iv *riv)
 {
-	silofs_taddr_assign(&tlink->taddr, taddr);
-	silofs_iv_assign(&tlink->riv, riv);
+	silofs_laddr_assign(&llink->laddr, laddr);
+	silofs_iv_assign(&llink->riv, riv);
 }
 
-void silofs_tlink_assign(struct silofs_tlink *tlink,
-                         const struct silofs_tlink *other)
+void silofs_llink_assign(struct silofs_llink *llink,
+                         const struct silofs_llink *other)
 {
-	silofs_tlink_setup(tlink, &other->taddr, &other->riv);
+	silofs_llink_setup(llink, &other->laddr, &other->riv);
 }
 
-void silofs_tlink_reset(struct silofs_tlink *tlink)
+void silofs_llink_reset(struct silofs_llink *llink)
 {
-	silofs_taddr_reset(&tlink->taddr);
-	silofs_iv_reset(&tlink->riv);
+	silofs_laddr_reset(&llink->laddr);
+	silofs_iv_reset(&llink->riv);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -830,7 +828,7 @@ const struct silofs_bkaddr *silofs_bkaddr_none(void)
 }
 
 void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
-                         const struct silofs_tsegid *tsegid,
+                         const struct silofs_lextid *lextid,
                          silofs_lba_t abs_lba)
 {
 	loff_t pos;
@@ -840,39 +838,39 @@ void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
 		pos = SILOFS_OFF_NULL;
 		lba = SILOFS_LBA_NULL;
 	} else {
-		pos = silofs_tsegid_pos(tsegid, lba_to_off(abs_lba));
+		pos = silofs_lextid_pos(lextid, lba_to_off(abs_lba));
 		lba = off_to_lba(pos);
 	}
 
-	silofs_taddr_setup(&bkaddr->taddr, tsegid, pos, SILOFS_LBK_SIZE);
+	silofs_laddr_setup(&bkaddr->laddr, lextid, pos, SILOFS_LBK_SIZE);
 	bkaddr->lba = lba;
 }
 
 void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr)
 {
-	silofs_taddr_reset(&bkaddr->taddr);
+	silofs_laddr_reset(&bkaddr->laddr);
 	bkaddr->lba = SILOFS_LBA_NULL;
 }
 
 void silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
-                          const struct silofs_tsegid *tsegid, loff_t off)
+                          const struct silofs_lextid *lextid, loff_t off)
 {
-	silofs_bkaddr_setup(bkaddr, tsegid, off_to_lba(off));
+	silofs_bkaddr_setup(bkaddr, lextid, off_to_lba(off));
 }
 
-void silofs_bkaddr_by_taddr(struct silofs_bkaddr *bkaddr,
-                            const struct silofs_taddr *taddr)
+void silofs_bkaddr_by_laddr(struct silofs_bkaddr *bkaddr,
+                            const struct silofs_laddr *laddr)
 {
-	const silofs_lba_t lba = off_to_lba(taddr->pos);
+	const silofs_lba_t lba = off_to_lba(laddr->pos);
 
-	silofs_bkaddr_setup(bkaddr, &taddr->tsegid, lba);
+	silofs_bkaddr_setup(bkaddr, &laddr->lextid, lba);
 }
 
 bool silofs_bkaddr_isequal(const struct silofs_bkaddr *bkaddr,
                            const struct silofs_bkaddr *other)
 {
 	return ((bkaddr->lba == other->lba) &&
-	        silofs_taddr_isequal(&bkaddr->taddr, &other->taddr));
+	        silofs_laddr_isequal(&bkaddr->laddr, &other->laddr));
 }
 
 long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
@@ -884,7 +882,7 @@ long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_taddr_compare(&bkaddr1->taddr, &bkaddr2->taddr);
+	cmp = silofs_laddr_compare(&bkaddr1->laddr, &bkaddr2->laddr);
 	if (cmp) {
 		return cmp;
 	}
@@ -894,21 +892,21 @@ long silofs_bkaddr_compare(const struct silofs_bkaddr *bkaddr1,
 void silofs_bkaddr_assign(struct silofs_bkaddr *bkaddr,
                           const struct silofs_bkaddr *other)
 {
-	silofs_taddr_assign(&bkaddr->taddr, &other->taddr);
+	silofs_laddr_assign(&bkaddr->laddr, &other->laddr);
 	bkaddr->lba = other->lba;
 }
 
 bool silofs_bkaddr_isnull(const struct silofs_bkaddr *bkaddr)
 {
 	return lba_isnull(bkaddr->lba) ||
-	       silofs_taddr_isnull(&bkaddr->taddr);
+	       silofs_laddr_isnull(&bkaddr->laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_uaddr s_uaddr_none = {
-	.taddr.tsegid.size = 0,
-	.taddr.pos = SILOFS_OFF_NULL,
+	.laddr.lextid.size = 0,
+	.laddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 	.stype = SILOFS_STYPE_NONE,
 };
@@ -921,21 +919,21 @@ const struct silofs_uaddr *silofs_uaddr_none(void)
 bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 {
 	return stype_isnone(uaddr->stype) || off_isnull(uaddr->voff) ||
-	       silofs_taddr_isnull(&uaddr->taddr);
+	       silofs_laddr_isnull(&uaddr->laddr);
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_tsegid *tsegid,
+                        const struct silofs_lextid *lextid,
                         loff_t bpos, enum silofs_stype stype, loff_t voff)
 {
-	silofs_taddr_setup(&uaddr->taddr, tsegid, bpos, stype_size(stype));
+	silofs_laddr_setup(&uaddr->laddr, lextid, bpos, stype_size(stype));
 	uaddr->voff = voff;
 	uaddr->stype = stype;
 }
 
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
 {
-	silofs_taddr_reset(&uaddr->taddr);
+	silofs_laddr_reset(&uaddr->laddr);
 	uaddr->voff = SILOFS_OFF_NULL;
 	uaddr->stype = SILOFS_STYPE_NONE;
 }
@@ -943,7 +941,7 @@ void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
 void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
                          const struct silofs_uaddr *other)
 {
-	silofs_taddr_assign(&uaddr->taddr, &other->taddr);
+	silofs_laddr_assign(&uaddr->laddr, &other->laddr);
 	uaddr->voff = other->voff;
 	uaddr->stype = other->stype;
 }
@@ -961,7 +959,7 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_taddr_compare(&uaddr1->taddr, &uaddr2->taddr);
+	cmp = silofs_laddr_compare(&uaddr1->laddr, &uaddr2->laddr);
 	if (cmp) {
 		return cmp;
 	}
@@ -977,23 +975,23 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_treeid *
 silofs_uaddr_treeid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->taddr.tsegid.treeid;
+	return &uaddr->laddr.lextid.treeid;
 }
 
-const struct silofs_tsegid *
-silofs_uaddr_tsegid(const struct silofs_uaddr *uaddr)
+const struct silofs_lextid *
+silofs_uaddr_lextid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->taddr.tsegid;
+	return &uaddr->laddr.lextid;
 }
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 {
-	return uaddr->taddr.tsegid.height;
+	return uaddr->laddr.lextid.height;
 }
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 {
-	silofs_taddr48b_reset(&uaddr64->taddr);
+	silofs_laddr48b_reset(&uaddr64->laddr);
 	uaddr64->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
 	uaddr64->stype = SILOFS_STYPE_NONE;
 }
@@ -1001,7 +999,7 @@ void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
                           const struct silofs_uaddr *uaddr)
 {
-	silofs_taddr48b_htox(&uaddr64->taddr, &uaddr->taddr);
+	silofs_laddr48b_htox(&uaddr64->laddr, &uaddr->laddr);
 	uaddr64->voff = silofs_cpu_to_off(uaddr->voff);
 	uaddr64->stype = (uint8_t)uaddr->stype;
 }
@@ -1009,7 +1007,7 @@ void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
 void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
                           struct silofs_uaddr *uaddr)
 {
-	silofs_taddr48b_xtoh(&uaddr64->taddr, &uaddr->taddr);
+	silofs_laddr48b_xtoh(&uaddr64->laddr, &uaddr->laddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
 	uaddr->stype = (enum silofs_stype)(uaddr64->stype);
 }
@@ -1036,10 +1034,10 @@ void silofs_ulink_reset(struct silofs_ulink *ulink)
 	silofs_iv_reset(&ulink->riv);
 }
 
-void silofs_ulink_as_tlink(const struct silofs_ulink *ulink,
-                           struct silofs_tlink *out_tlink)
+void silofs_ulink_as_llink(const struct silofs_ulink *ulink,
+                           struct silofs_llink *out_llink)
 {
-	silofs_tlink_setup(out_tlink, &ulink->uaddr.taddr, &ulink->riv);
+	silofs_llink_setup(out_llink, &ulink->uaddr.laddr, &ulink->riv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1315,7 +1313,7 @@ int silofs_check_fs_capacity(size_t cap_size)
 
 int silofs_calc_fs_capacity(size_t capcity_want, size_t *out_capacity)
 {
-	const size_t align_size = SILOFS_TSEG_SIZE_MAX;
+	const size_t align_size = SILOFS_LEXT_SIZE_MAX;
 	int err;
 
 	err = silofs_check_fs_capacity(capcity_want);

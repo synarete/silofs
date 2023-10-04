@@ -2425,7 +2425,7 @@ static int encode_save_bootrec(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_bootrec(repo_of(uber), &uaddr.taddr, &brec1k);
+	err = silofs_repo_save_bootrec(repo_of(uber), &uaddr.laddr, &brec1k);
 	if (err) {
 		return err;
 	}
@@ -2609,7 +2609,7 @@ int silofs_do_tune(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_inspect(struct silofs_task *task, silofs_visit_taddr_fn cb)
+int silofs_do_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb)
 {
 	int err;
 

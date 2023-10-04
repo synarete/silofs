@@ -70,28 +70,28 @@ static void jrec_set_tx_index(struct silofs_journal_rec *jrec, size_t tx_index)
 	jrec->jr_tx_index = silofs_cpu_to_le32((uint32_t)tx_index);
 }
 
-static void jrec_src_tsegid(const struct silofs_journal_rec *jrec,
-                            struct silofs_tsegid *out_tsegid)
+static void jrec_src_lextid(const struct silofs_journal_rec *jrec,
+                            struct silofs_lextid *out_lextid)
 {
-	silofs_tsegid32b_xtoh(&jrec->jr_src_tsegid, out_tsegid);
+	silofs_lextid32b_xtoh(&jrec->jr_src_lextid, out_lextid);
 }
 
-static void jrec_set_src_tsegid(struct silofs_journal_rec *jrec,
-                                const struct silofs_tsegid *tsegid)
+static void jrec_set_src_lextid(struct silofs_journal_rec *jrec,
+                                const struct silofs_lextid *lextid)
 {
-	silofs_tsegid32b_htox(&jrec->jr_src_tsegid, tsegid);
+	silofs_lextid32b_htox(&jrec->jr_src_lextid, lextid);
 }
 
-static void jrec_dst_tsegid(const struct silofs_journal_rec *jrec,
-                            struct silofs_tsegid *out_tsegid)
+static void jrec_dst_lextid(const struct silofs_journal_rec *jrec,
+                            struct silofs_lextid *out_lextid)
 {
-	silofs_tsegid32b_xtoh(&jrec->jr_dst_tsegid, out_tsegid);
+	silofs_lextid32b_xtoh(&jrec->jr_dst_lextid, out_lextid);
 }
 
-static void jrec_set_dst_tsegid(struct silofs_journal_rec *jrec,
-                                const struct silofs_tsegid *tsegid)
+static void jrec_set_dst_lextid(struct silofs_journal_rec *jrec,
+                                const struct silofs_lextid *lextid)
 {
-	silofs_tsegid32b_htox(&jrec->jr_dst_tsegid, tsegid);
+	silofs_lextid32b_htox(&jrec->jr_dst_lextid, lextid);
 }
 
 static loff_t jrec_src_off(const struct silofs_journal_rec *jrec)
@@ -126,7 +126,7 @@ static void jrec_set_csum(struct silofs_journal_rec *jrec, uint64_t csum)
 
 static void jrec_setup(struct silofs_journal_rec *jrec)
 {
-	const struct silofs_tsegid *tsegid_none = silofs_tsegid_none();
+	const struct silofs_lextid *lextid_none = silofs_lextid_none();
 
 	memset(jrec, 0, sizeof(*jrec));
 	jrec_set_magic(jrec, SILOFS_JOURNAL_MAGIC);
@@ -134,9 +134,9 @@ static void jrec_setup(struct silofs_journal_rec *jrec)
 	jrec_set_length(jrec, 0);
 	jrec_set_tx_count(jrec, 0);
 	jrec_set_tx_index(jrec, 0);
-	jrec_set_src_tsegid(jrec, tsegid_none);
+	jrec_set_src_lextid(jrec, lextid_none);
 	jrec_set_src_off(jrec, SILOFS_OFF_NULL);
-	jrec_set_dst_tsegid(jrec, tsegid_none);
+	jrec_set_dst_lextid(jrec, lextid_none);
 	jrec_set_dst_off(jrec, SILOFS_OFF_NULL);
 	jrec_set_csum(jrec, 0);
 }
@@ -150,7 +150,7 @@ void silofs_jrec_by_sqe(struct silofs_journal_rec *jrec,
 	jrec_set_tx_count(jrec, sqe->tx_count);
 	jrec_set_tx_index(jrec, sqe->tx_index);
 	jrec_set_dst_off(jrec, sqe->off);
-	jrec_set_dst_tsegid(jrec, &sqe->tsegid);
+	jrec_set_dst_lextid(jrec, &sqe->lextid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -239,22 +239,22 @@ static int verify_jrec_tx(const struct silofs_journal_rec *jrec)
 }
 
 static bool
-tsegid_has_off_within(const struct silofs_tsegid *tsegid, loff_t off)
+lextid_has_off_within(const struct silofs_lextid *lextid, loff_t off)
 {
-	const size_t bsz = tsegid->size;
+	const size_t bsz = lextid->size;
 
 	return !off_isnull(off) && (off < (loff_t)bsz);
 }
 
 static int verify_jrec_src(const struct silofs_journal_rec *jrec)
 {
-	struct silofs_tsegid src_tsegid;
+	struct silofs_lextid src_lextid;
 	const loff_t src_off = jrec_src_off(jrec);
 	int ret = 0;
 
-	jrec_src_tsegid(jrec, &src_tsegid);
-	if (tsegid_isnull(&src_tsegid) ||
-	    !tsegid_has_off_within(&src_tsegid, src_off)) {
+	jrec_src_lextid(jrec, &src_lextid);
+	if (lextid_isnull(&src_lextid) ||
+	    !lextid_has_off_within(&src_lextid, src_off)) {
 		log_err("illegal journal-rec: src_off=%ld", src_off);
 		ret = -SILOFS_EFSCORRUPTED;
 	}
@@ -263,13 +263,13 @@ static int verify_jrec_src(const struct silofs_journal_rec *jrec)
 
 static int verify_jrec_dst(const struct silofs_journal_rec *jrec)
 {
-	struct silofs_tsegid dst_tsegid;
+	struct silofs_lextid dst_lextid;
 	const loff_t dst_off = jrec_dst_off(jrec);
 	int ret = 0;
 
-	jrec_dst_tsegid(jrec, &dst_tsegid);
-	if (tsegid_isnull(&dst_tsegid) ||
-	    !tsegid_has_off_within(&dst_tsegid, dst_off)) {
+	jrec_dst_lextid(jrec, &dst_lextid);
+	if (lextid_isnull(&dst_lextid) ||
+	    !lextid_has_off_within(&dst_lextid, dst_off)) {
 		log_err("illegal journal-rec: dst_off=%ld", dst_off);
 		ret = -SILOFS_EFSCORRUPTED;
 	}

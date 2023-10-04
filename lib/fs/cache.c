@@ -213,14 +213,14 @@ static void vbki_free(struct silofs_vbk_info *vbki,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t hash_of_tsegid(const struct silofs_tsegid *tsegid)
+static uint64_t hash_of_lextid(const struct silofs_lextid *lextid)
 {
-	return silofs_tsegid_hash64(tsegid);
+	return silofs_lextid_hash64(lextid);
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return hash_of_tsegid(&bkaddr->taddr.tsegid) ^ (uint64_t)bkaddr->lba;
+	return hash_of_lextid(&bkaddr->laddr.lextid) ^ (uint64_t)bkaddr->lba;
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
@@ -240,9 +240,9 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	uint64_t d[4];
 	uint64_t seed;
 
-	d[0] = hash_of_tsegid(&uaddr->taddr.tsegid);
-	d[1] = uaddr->taddr.len;
-	d[2] = 0x736f6d6570736575ULL - (uint64_t)(uaddr->taddr.pos);
+	d[0] = hash_of_lextid(&uaddr->laddr.lextid);
+	d[1] = uaddr->laddr.len;
+	d[2] = 0x736f6d6570736575ULL - (uint64_t)(uaddr->laddr.pos);
 	d[3] = (uint64_t)uaddr->voff;
 	seed = 0x646f72616e646f6dULL / (uaddr->stype + 1);
 
@@ -294,10 +294,10 @@ static long ckey_compare_as_vaddr(const struct silofs_ckey *ckey1,
 	return silofs_vaddr_compare(ckey1->keyu.vaddr, ckey2->keyu.vaddr);
 }
 
-static long ckey_compare_as_tsegid(const struct silofs_ckey *ckey1,
+static long ckey_compare_as_lextid(const struct silofs_ckey *ckey1,
                                    const struct silofs_ckey *ckey2)
 {
-	return silofs_tsegid_compare(ckey1->keyu.tsegid, ckey2->keyu.tsegid);
+	return silofs_lextid_compare(ckey1->keyu.lextid, ckey2->keyu.lextid);
 }
 
 static long ckey_compare_as_vbk_addr(const struct silofs_ckey *ckey1,
@@ -335,8 +335,8 @@ long silofs_ckey_compare(const struct silofs_ckey *ckey1,
 		case SILOFS_CKEY_VADDR:
 			cmp = ckey_compare_as_vaddr(ckey1, ckey2);
 			break;
-		case SILOFS_CKEY_TSEGID:
-			cmp = ckey_compare_as_tsegid(ckey1, ckey2);
+		case SILOFS_CKEY_LEXTID:
+			cmp = ckey_compare_as_lextid(ckey1, ckey2);
 			break;
 		case SILOFS_CKEY_VBKADDR:
 			cmp = ckey_compare_as_vbk_addr(ckey1, ckey2);
@@ -357,10 +357,10 @@ static bool ckey_isequal(const struct silofs_ckey *ckey1,
 	       !silofs_ckey_compare(ckey1, ckey2);
 }
 
-void silofs_ckey_by_tsegid(struct silofs_ckey *ckey,
-                           const struct silofs_tsegid *tsegid)
+void silofs_ckey_by_lextid(struct silofs_ckey *ckey,
+                           const struct silofs_lextid *lextid)
 {
-	ckey_setup(ckey, SILOFS_CKEY_TSEGID, tsegid, hash_of_tsegid(tsegid));
+	ckey_setup(ckey, SILOFS_CKEY_LEXTID, lextid, hash_of_lextid(lextid));
 }
 
 static void ckey_by_bkaddr(struct silofs_ckey *ckey,
@@ -1393,9 +1393,9 @@ static void vi_delete(struct silofs_vnode_info *vi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_blobf *
-cache_new_blobf(struct silofs_cache *cache, const struct silofs_tsegid *tsegid)
+cache_new_blobf(struct silofs_cache *cache, const struct silofs_lextid *lextid)
 {
-	return silofs_blobf_new(cache->c_alloc, tsegid);
+	return silofs_blobf_new(cache->c_alloc, lextid);
 }
 
 static void cache_del_blobf(const struct silofs_cache *cache,
@@ -1416,12 +1416,12 @@ static void cache_fini_blobf_lm(struct silofs_cache *cache)
 
 static struct silofs_blobf *
 cache_find_blobf(const struct silofs_cache *cache,
-                 const struct silofs_tsegid *tsegid)
+                 const struct silofs_lextid *lextid)
 {
 	struct silofs_ckey ckey;
 	struct silofs_cache_elem *ce;
 
-	silofs_ckey_by_tsegid(&ckey, tsegid);
+	silofs_ckey_by_lextid(&ckey, lextid);
 	ce = lrumap_find(&cache->c_blobf_lm, &ckey);
 	return blobf_from_ce(ce);
 }
@@ -1447,11 +1447,11 @@ static void cache_evict_blobf(struct silofs_cache *cache,
 
 static struct silofs_blobf *
 cache_create_blobf(struct silofs_cache *cache,
-                   const struct silofs_tsegid *tsegid)
+                   const struct silofs_lextid *lextid)
 {
 	struct silofs_blobf *blobf;
 
-	blobf = cache_new_blobf(cache, tsegid);
+	blobf = cache_new_blobf(cache, lextid);
 	if (blobf == NULL) {
 		return NULL;
 	}
@@ -1461,11 +1461,11 @@ cache_create_blobf(struct silofs_cache *cache,
 
 static struct silofs_blobf *
 cache_find_relru_blobf(struct silofs_cache *cache,
-                       const struct silofs_tsegid *tsegid)
+                       const struct silofs_lextid *lextid)
 {
 	struct silofs_blobf *blobf;
 
-	blobf = cache_find_blobf(cache, tsegid);
+	blobf = cache_find_blobf(cache, lextid);
 	if (blobf != NULL) {
 		cache_promote_blobf(cache, blobf, false);
 	}
@@ -1474,26 +1474,26 @@ cache_find_relru_blobf(struct silofs_cache *cache,
 
 struct silofs_blobf *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
-                         const struct silofs_tsegid *tsegid)
+                         const struct silofs_lextid *lextid)
 {
 	struct silofs_blobf *blobf;
 
-	blobf = cache_find_relru_blobf(cache, tsegid);
+	blobf = cache_find_relru_blobf(cache, lextid);
 	cache_post_op(cache);
 	return blobf;
 }
 
 static struct silofs_blobf *
 cache_find_or_spawn_blobf(struct silofs_cache *cache,
-                          const struct silofs_tsegid *tsegid)
+                          const struct silofs_lextid *lextid)
 {
 	struct silofs_blobf *blobf;
 
-	blobf = cache_find_relru_blobf(cache, tsegid);
+	blobf = cache_find_relru_blobf(cache, lextid);
 	if (blobf != NULL) {
 		return blobf;
 	}
-	blobf = cache_create_blobf(cache, tsegid);
+	blobf = cache_create_blobf(cache, lextid);
 	if (blobf == NULL) {
 		return NULL; /* TODO: debug-trace */
 	}
@@ -1532,14 +1532,14 @@ cache_find_evictable_blobf(struct silofs_cache *cache)
 
 static struct silofs_blobf *
 cache_require_blobf(struct silofs_cache *cache,
-                    const struct silofs_tsegid *tsegid)
+                    const struct silofs_lextid *lextid)
 {
 	struct silofs_blobf *blobf = NULL;
 	int retry = CACHE_RETRY;
 
 	while (retry-- > 0) {
-		blobf = cache_find_or_spawn_blobf(cache, tsegid);
-		if (tsegid != NULL) {
+		blobf = cache_find_or_spawn_blobf(cache, lextid);
+		if (lextid != NULL) {
 			break;
 		}
 		cache_evict_some(cache);
@@ -1549,11 +1549,11 @@ cache_require_blobf(struct silofs_cache *cache,
 
 struct silofs_blobf *
 silofs_cache_create_blob(struct silofs_cache *cache,
-                         const struct silofs_tsegid *tsegid)
+                         const struct silofs_lextid *lextid)
 {
 	struct silofs_blobf *blobf;
 
-	blobf = cache_require_blobf(cache, tsegid);
+	blobf = cache_require_blobf(cache, lextid);
 	cache_post_op(cache);
 	return blobf;
 }

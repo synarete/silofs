@@ -47,7 +47,7 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 }
 
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
-                             const struct silofs_taddr *taddr,
+                             const struct silofs_laddr *laddr,
                              const struct silofs_lnode_info *lni)
 {
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
@@ -65,10 +65,10 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 		return false;
 	}
 	end = off_end(sqe->off, sqe->len);
-	if (taddr->pos != end) {
+	if (laddr->pos != end) {
 		return false;
 	}
-	len = sqe->len + taddr->len;
+	len = sqe->len + laddr->len;
 	if (len > (size_t)len_max) {
 		return false;
 	}
@@ -77,28 +77,28 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (end > nxt) {
 		return false;
 	}
-	if (!tsegid_isequal(&taddr->tsegid, &sqe->tsegid)) {
+	if (!lextid_isequal(&laddr->lextid, &sqe->lextid)) {
 		return false;
 	}
 	return true;
 }
 
 bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
-                           const struct silofs_taddr *taddr,
+                           const struct silofs_laddr *laddr,
                            struct silofs_lnode_info *lni)
 {
-	silofs_assert_eq(taddr->len, lni->view_len);
+	silofs_assert_eq(laddr->len, lni->view_len);
 
-	if (!sqe_isappendable(sqe, taddr, lni)) {
+	if (!sqe_isappendable(sqe, laddr, lni)) {
 		return false;
 	}
 	if (sqe->cnt == 0) {
-		tsegid_assign(&sqe->tsegid, &taddr->tsegid);
-		sqe->off = taddr->pos;
+		lextid_assign(&sqe->lextid, &laddr->lextid);
+		sqe->off = laddr->pos;
 		sqe->stype = lni->stype;
 	}
 	sqe->lbki[sqe->cnt++] = lni->lbki;
-	sqe->len += (uint32_t)(taddr->len);
+	sqe->len += (uint32_t)(laddr->len);
 	return true;
 }
 
@@ -106,20 +106,20 @@ static int sqe_setup_encrypted_iovs(struct silofs_submitq_ent *sqe,
                                     const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref = NULL;
-	const struct silofs_tlink *tlink = NULL;
+	const struct silofs_llink *llink = NULL;
 	void *enc;
 	int err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
-		tlink = &ref->tlink;
-		err = sqe_setup_iov_at(sqe, i, tlink->taddr.len);
+		llink = &ref->llink;
+		err = sqe_setup_iov_at(sqe, i, llink->laddr.len);
 		if (err) {
 			return err;
 		}
 		enc = sqe->iov[i].iov_base;
-		err = silofs_encrypt_view(sqe->uber, &tlink->taddr,
-		                          &tlink->riv, ref->view, enc);
+		err = silofs_encrypt_view(sqe->uber, &llink->laddr,
+		                          &llink->riv, ref->view, enc);
 		if (err) {
 			return err;
 		}
@@ -192,7 +192,7 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	sqe->alloc = alloc;
 	sqe->uber = NULL;
 	sqe->blobf = NULL;
-	sqe->tsegid.size = 0;
+	sqe->lextid.size = 0;
 	sqe->uniq_id = uniq_id;
 	sqe->off = -1;
 	sqe->len = 0;

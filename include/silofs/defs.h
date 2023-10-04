@@ -119,11 +119,11 @@
 
 
 /* maximal number of logical blocks within single tree-segment */
-#define SILOFS_NLBK_IN_TSEG_MAX         (256L)
+#define SILOFS_NLBK_IN_LEXT_MAX         (256L)
 
 /* maximal size in bytes of single tree-segment (16M) */
-#define SILOFS_TSEG_SIZE_MAX \
-	(SILOFS_NLBK_IN_TSEG_MAX * SILOFS_LBK_SIZE)
+#define SILOFS_LEXT_SIZE_MAX \
+	(SILOFS_NLBK_IN_LEXT_MAX * SILOFS_LBK_SIZE)
 
 
 /* non-valid ("NIL") logical byte address */
@@ -481,7 +481,7 @@ struct silofs_treeid {
 } silofs_packed_aligned16;
 
 
-struct silofs_tsegid32b {
+struct silofs_lextid32b {
 	struct silofs_treeid            treeid;
 	int64_t                         voff;
 	uint32_t                        size;
@@ -491,8 +491,8 @@ struct silofs_tsegid32b {
 } silofs_packed_aligned16;
 
 
-struct silofs_taddr48b {
-	struct silofs_tsegid32b         tsegid;
+struct silofs_laddr48b {
+	struct silofs_lextid32b         lextid;
 	uint32_t                        pos;
 	uint32_t                        len;
 	uint8_t                         pad[8];
@@ -501,7 +501,7 @@ struct silofs_taddr48b {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uaddr64b {
-	struct silofs_taddr48b          taddr;
+	struct silofs_laddr48b          laddr;
 	int64_t                         voff;
 	uint8_t                         stype;
 	uint8_t                         reserved[7];
@@ -582,15 +582,15 @@ struct silofs_sb_sproots {
 } silofs_packed_aligned64;
 
 
-struct silofs_sb_tsegids {
-	struct silofs_tsegid32b         sb_tsegid_inode;
-	struct silofs_tsegid32b         sb_tsegid_xanode;
-	struct silofs_tsegid32b         sb_tsegid_dtnode;
-	struct silofs_tsegid32b         sb_tsegid_ftnode;
-	struct silofs_tsegid32b         sb_tsegid_symval;
-	struct silofs_tsegid32b         sb_tsegid_data1k;
-	struct silofs_tsegid32b         sb_tsegid_data4k;
-	struct silofs_tsegid32b         sb_tsegid_databk;
+struct silofs_sb_lextids {
+	struct silofs_lextid32b         sb_lextid_inode;
+	struct silofs_lextid32b         sb_lextid_xanode;
+	struct silofs_lextid32b         sb_lextid_dtnode;
+	struct silofs_lextid32b         sb_lextid_ftnode;
+	struct silofs_lextid32b         sb_lextid_symval;
+	struct silofs_lextid32b         sb_lextid_data1k;
+	struct silofs_lextid32b         sb_lextid_data4k;
+	struct silofs_lextid32b         sb_lextid_databk;
 	uint8_t                         sb_reserved[768];
 } silofs_packed_aligned64;
 
@@ -664,7 +664,7 @@ struct silofs_super_block {
 	/* 1K..2K */
 	struct silofs_sb_sproots        sb_sproots;
 	/* 2K..3K */
-	struct silofs_sb_tsegids        sb_main_tsegid;
+	struct silofs_sb_lextids        sb_main_lextid;
 	/* 3K..4K */
 	struct silofs_sb_rootivs        sb_rootivs;
 	uint8_t                         sb_reserved5[512];
@@ -685,7 +685,7 @@ struct silofs_spmap_ref {
 struct silofs_spmap_node {
 	struct silofs_header            sn_hdr;
 	uint8_t                         sn_reserved1[16];
-	struct silofs_tsegid32b         sn_main_tsegid;
+	struct silofs_lextid32b         sn_main_lextid;
 	struct silofs_vrange128         sn_vrange;
 	uint8_t                         sn_reserved2[48];
 	struct silofs_uaddr64b          sn_parent;
@@ -704,7 +704,7 @@ struct silofs_bk_state {
 
 
 struct silofs_bk_ref {
-	struct silofs_taddr48b          bkr_uref;
+	struct silofs_laddr48b          bkr_uref;
 	struct silofs_bk_state          bkr_allocated;
 	struct silofs_bk_state          bkr_unwritten;
 	uint64_t                        bkr_dbkref;
@@ -715,7 +715,7 @@ struct silofs_bk_ref {
 struct silofs_spmap_leaf {
 	struct silofs_header            sl_hdr;
 	uint8_t                         sl_reserved1[16];
-	struct silofs_tsegid32b         sl_main_tsegid;
+	struct silofs_lextid32b         sl_main_lextid;
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
 	struct silofs_vrange128         sl_vrange;
@@ -942,10 +942,10 @@ struct silofs_journal_rec {
 	uint32_t                        jr_tx_count;
 	uint32_t                        jr_tx_index;
 	uint8_t                         jr_reserved2[20];
-	struct silofs_tsegid32b         jr_src_tsegid;
+	struct silofs_lextid32b         jr_src_lextid;
 	int64_t                         jr_src_off;
 	uint8_t                         jr_reserved3[24];
-	struct silofs_tsegid32b         jr_dst_tsegid;
+	struct silofs_lextid32b         jr_dst_lextid;
 	int64_t                         jr_dst_off;
 	uint8_t                         jr_reserved4[24];
 	uint8_t                         jr_reserved5[48];

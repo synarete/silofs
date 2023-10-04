@@ -1646,7 +1646,7 @@ out:
 	return op_finish(task, SILOFS_INO_NULL, err);
 }
 
-int silofs_fs_inspect(struct silofs_task *task, silofs_visit_taddr_fn cb)
+int silofs_fs_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb)
 {
 	int err;
 

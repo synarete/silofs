@@ -30,7 +30,7 @@ struct silofs_task {
 
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
-	struct silofs_tlink         tlink;
+	struct silofs_llink         llink;
 	const union silofs_view    *view;
 	enum silofs_stype           stype;
 };
@@ -43,7 +43,7 @@ struct silofs_submitq_ent {
 	struct silofs_uber     *uber;
 	struct silofs_alloc    *alloc;
 	struct silofs_blobf    *blobf;
-	struct silofs_tsegid    tsegid;
+	struct silofs_lextid    lextid;
 	uint64_t                uniq_id;
 	loff_t                  off;
 	uint32_t                len;
@@ -70,7 +70,7 @@ struct silofs_submitq_ent *
 silofs_sqe_from_qlh(struct silofs_list_head *qlh);
 
 bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
-                           const struct silofs_taddr *taddr,
+                           const struct silofs_laddr *laddr,
                            struct silofs_lnode_info *lni);
 
 int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,

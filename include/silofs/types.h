@@ -208,8 +208,8 @@ struct silofs_ivkey {
 	unsigned int            mode;
 };
 
-/* file-system's tree-segment id */
-struct silofs_tsegid {
+/* logical-extend id within specific mapping tree */
+struct silofs_lextid {
 	struct silofs_treeid    treeid;
 	loff_t                  voff;
 	size_t                  size;
@@ -217,29 +217,29 @@ struct silofs_tsegid {
 	enum silofs_height      height;
 };
 
-/* file-system's tree-address within segment */
-struct silofs_taddr {
-	struct silofs_tsegid    tsegid;
+/* logical-address within specific mapping-tree's extend */
+struct silofs_laddr {
+	struct silofs_lextid    lextid;
 	loff_t                  pos;
 	size_t                  len;
 };
 
-/* block address within tree-segment */
-struct silofs_bkaddr {
-	struct silofs_taddr     taddr;
-	silofs_lba_t            lba;
-};
-
-/* logical addressing of space-mapping elements */
+/* logical addressing of space-mapping nodes */
 struct silofs_uaddr {
-	struct silofs_taddr     taddr;
+	struct silofs_laddr     laddr;
 	loff_t                  voff;
 	enum silofs_stype       stype;
 };
 
+/* block address as extension of logical address */
+struct silofs_bkaddr {
+	struct silofs_laddr     laddr;
+	silofs_lba_t            lba;
+};
+
 /* a pair of object tree-address and its associate (random) IV */
-struct silofs_tlink {
-	struct silofs_taddr     taddr;
+struct silofs_llink {
+	struct silofs_laddr     laddr;
 	struct silofs_iv        riv;
 };
 
@@ -255,7 +255,7 @@ struct silofs_blink {
 	struct silofs_iv        riv;
 };
 
-/* logical addressing of virtual elements */
+/* logical addressing of virtual nodes */
 struct silofs_vaddr {
 	loff_t                  off;
 	enum silofs_stype       stype;
@@ -279,7 +279,7 @@ struct silofs_vrange {
 /* caching-element's key type */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
-	SILOFS_CKEY_TSEGID,
+	SILOFS_CKEY_LEXTID,
 	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
@@ -299,7 +299,7 @@ union silofs_ckey_u {
 	const struct silofs_bkaddr *bkaddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
-	const struct silofs_tsegid *tsegid;
+	const struct silofs_lextid *lextid;
 	const struct silofs_vbk_addr *vbk_addr;
 	const void                 *key;
 };

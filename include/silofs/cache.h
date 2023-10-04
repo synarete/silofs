@@ -73,8 +73,8 @@ silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
 long silofs_ckey_compare(const struct silofs_ckey *ckey1,
                          const struct silofs_ckey *ckey2);
 
-void silofs_ckey_by_tsegid(struct silofs_ckey *ckey,
-                           const struct silofs_tsegid *tsegid);
+void silofs_ckey_by_lextid(struct silofs_ckey *ckey,
+                           const struct silofs_lextid *lextid);
 
 void silofs_ce_init(struct silofs_cache_elem *ce);
 
@@ -96,11 +96,11 @@ void silofs_cache_shrink_once(struct silofs_cache *cache);
 
 struct silofs_blobf *
 silofs_cache_lookup_blob(struct silofs_cache *cache,
-                         const struct silofs_tsegid *tsegid);
+                         const struct silofs_lextid *lextid);
 
 struct silofs_blobf *
 silofs_cache_create_blob(struct silofs_cache *cache,
-                         const struct silofs_tsegid *tsegid);
+                         const struct silofs_lextid *lextid);
 
 void silofs_cache_evict_blob(struct silofs_cache *cache,
                              struct silofs_blobf *blobf, bool now);

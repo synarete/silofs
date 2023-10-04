@@ -255,7 +255,7 @@ void cmd_unref_fs(struct silofs_fs_env *fse,
 void cmd_unref_fs_by(struct silofs_fs_env *fse,
                      const struct silofs_iconf *iconf);
 
-void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_taddr_fn cb);
+void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb);
 
 
 /* mount-info */

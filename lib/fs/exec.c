@@ -1353,7 +1353,7 @@ static int stat_bootrec_of(const struct silofs_fs_env *fse,
                            const struct silofs_uaddr *uaddr,
                            struct stat *out_st)
 {
-	return silofs_repo_stat_bootrec(fse->fs_repo, &uaddr->taddr, out_st);
+	return silofs_repo_stat_bootrec(fse->fs_repo, &uaddr->laddr, out_st);
 }
 
 static int save_bootrec_of(const struct silofs_fs_env *fse,
@@ -1369,7 +1369,7 @@ static int save_bootrec_of(const struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_bootrec(fse->fs_repo, &uaddr->taddr, &brec1k);
+	err = silofs_repo_save_bootrec(fse->fs_repo, &uaddr->laddr, &brec1k);
 	if (err) {
 		return err;
 	}
@@ -1385,7 +1385,7 @@ static int load_bootrec_of(const struct silofs_fs_env *fse,
 	const struct silofs_ivkey *ivkey = &fse->fs_boot_ivkey;
 	int err;
 
-	err = silofs_repo_load_bootrec(fse->fs_repo, &uaddr->taddr, &brec1k);
+	err = silofs_repo_load_bootrec(fse->fs_repo, &uaddr->laddr, &brec1k);
 	if (err) {
 		return err;
 	}
@@ -1421,7 +1421,7 @@ static int unlink_bootrec_of(struct silofs_fs_env *fse,
 {
 	int err;
 
-	err = silofs_repo_unlink_bootrec(fse->fs_repo, &uaddr->taddr);
+	err = silofs_repo_unlink_bootrec(fse->fs_repo, &uaddr->laddr);
 	if (err) {
 		log_err("failed to unlink bootrec: err=%d", err);
 		return err;
@@ -1643,7 +1643,7 @@ int silofs_fork_fs(struct silofs_fs_env *fse,
 	return 0;
 }
 
-static int exec_inspect_fs(struct silofs_fs_env *fse, silofs_visit_taddr_fn cb)
+static int exec_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb)
 {
 	struct silofs_task task;
 	int err;
@@ -1656,7 +1656,7 @@ static int exec_inspect_fs(struct silofs_fs_env *fse, silofs_visit_taddr_fn cb)
 	return term_task(&task, err);
 }
 
-int silofs_inspect_fs(struct silofs_fs_env *fse, silofs_visit_taddr_fn cb)
+int silofs_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb)
 {
 	return exec_inspect_fs(fse, cb);
 }

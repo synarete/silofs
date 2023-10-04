@@ -22,7 +22,7 @@
 
 
 struct silofs_spleaf_urefs {
-	struct silofs_taddr subs[SILOFS_SPMAP_NCHILDS];
+	struct silofs_laddr subs[SILOFS_SPMAP_NCHILDS];
 };
 
 
@@ -59,10 +59,10 @@ void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
                               struct silofs_vrange *out_vrange);
 
 void silofs_sni_main_blob(const struct silofs_spnode_info *sni,
-                          struct silofs_tsegid *out_tsegid);
+                          struct silofs_lextid *out_lextid);
 
 void silofs_sni_bind_main_blob(struct silofs_spnode_info *sni,
-                               const struct silofs_tsegid *tsegid);
+                               const struct silofs_lextid *lextid);
 
 void silofs_sni_resolve_main(const struct silofs_spnode_info *sni,
                              loff_t voff, struct silofs_ulink *out_ulink);
@@ -135,10 +135,10 @@ void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
                           struct silofs_vaddrs *vas);
 
 void silofs_sli_main_blob(const struct silofs_spleaf_info *sli,
-                          struct silofs_tsegid *out_tsegid);
+                          struct silofs_lextid *out_lextid);
 
 void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
-                               const struct silofs_tsegid *tsegid);
+                               const struct silofs_lextid *lextid);
 
 void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
                            const struct silofs_spleaf_info *sli_other);

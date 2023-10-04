@@ -88,10 +88,10 @@ static void ut_file_fallocate_rdonly(struct ut_env *ute)
 		UT_MKRANGE1(UT_8K, UT_8K),
 		UT_MKRANGE1(0, UT_BK_SIZE),
 		UT_MKRANGE1(1, UT_1M),
-		UT_MKRANGE1(0, SILOFS_TSEG_SIZE_MAX),
-		UT_MKRANGE1(UT_1M - 1, SILOFS_TSEG_SIZE_MAX + 2),
+		UT_MKRANGE1(0, SILOFS_LEXT_SIZE_MAX),
+		UT_MKRANGE1(UT_1M - 1, SILOFS_LEXT_SIZE_MAX + 2),
 		UT_MKRANGE1(UT_1G, UT_1M),
-		UT_MKRANGE1(UT_1T - 2, SILOFS_TSEG_SIZE_MAX + 3),
+		UT_MKRANGE1(UT_1T - 2, SILOFS_LEXT_SIZE_MAX + 3),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_fallocate_rdonly_, ranges);
@@ -140,10 +140,10 @@ static void ut_file_fallocate_truncate(struct ut_env *ute)
 		UT_MKRANGE1(0, UT_BK_SIZE),
 		UT_MKRANGE1(11, UT_BK_SIZE),
 		UT_MKRANGE1(11, UT_1M),
-		UT_MKRANGE1(0, SILOFS_TSEG_SIZE_MAX),
-		UT_MKRANGE1(UT_1M - 1, SILOFS_TSEG_SIZE_MAX + 2),
+		UT_MKRANGE1(0, SILOFS_LEXT_SIZE_MAX),
+		UT_MKRANGE1(UT_1M - 1, SILOFS_LEXT_SIZE_MAX + 2),
 		UT_MKRANGE1(UT_1G, UT_1M),
-		UT_MKRANGE1(UT_1T - 2, SILOFS_TSEG_SIZE_MAX + 3),
+		UT_MKRANGE1(UT_1T - 2, SILOFS_LEXT_SIZE_MAX + 3),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_fallocate_truncate_, ranges);

@@ -30,9 +30,9 @@ struct silofs_uber_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_tsegid *tsegid_of(const struct silofs_ulink *ulink)
+static const struct silofs_lextid *lextid_of(const struct silofs_ulink *ulink)
 {
-	return &ulink->uaddr.taddr.tsegid;
+	return &ulink->uaddr.laddr.lextid;
 }
 
 static struct silofs_blobf *
@@ -282,20 +282,20 @@ time_t silofs_uber_uptime(const struct silofs_uber *uber)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void make_super_tsegid(struct silofs_tsegid *out_tsegid)
+static void make_super_lextid(struct silofs_lextid *out_lextid)
 {
 	struct silofs_treeid treeid;
 
 	silofs_treeid_generate(&treeid);
-	silofs_tsegid_setup(out_tsegid, &treeid, 0,
+	silofs_lextid_setup(out_lextid, &treeid, 0,
 	                    SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
 }
 
-static void make_super_uaddr(const struct silofs_tsegid *tsegid,
+static void make_super_uaddr(const struct silofs_lextid *lextid,
                              struct silofs_uaddr *out_uaddr)
 {
-	silofs_assert_eq(tsegid->height, SILOFS_HEIGHT_SUPER);
-	uaddr_setup(out_uaddr, tsegid, 0, SILOFS_STYPE_SUPER, 0);
+	silofs_assert_eq(lextid->height, SILOFS_HEIGHT_SUPER);
+	uaddr_setup(out_uaddr, lextid, 0, SILOFS_STYPE_SUPER, 0);
 }
 
 static void ulink_init(struct silofs_ulink *ulink,
@@ -309,11 +309,11 @@ static void ulink_init(struct silofs_ulink *ulink,
 static void uber_make_super_ulink(const struct silofs_uber *uber,
                                   struct silofs_ulink *out_ulink)
 {
-	struct silofs_tsegid tsegid;
+	struct silofs_lextid lextid;
 	struct silofs_uaddr uaddr;
 
-	make_super_tsegid(&tsegid);
-	make_super_uaddr(&tsegid, &uaddr);
+	make_super_lextid(&lextid);
+	make_super_uaddr(&lextid, &uaddr);
 	ulink_init(out_ulink, &uaddr, &uber->ub.main_ivkey->iv);
 }
 
@@ -402,11 +402,11 @@ int silofs_uber_reload_super(struct silofs_uber *uber)
 
 int silofs_uber_reload_sblob(struct silofs_uber *uber)
 {
-	const struct silofs_tsegid *tsegid = tsegid_of(&uber->ub_sb_ulink);
+	const struct silofs_lextid *lextid = lextid_of(&uber->ub_sb_ulink);
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = silofs_stage_blob_at(uber, tsegid, &blobf);
+	err = silofs_stage_blob_at(uber, lextid, &blobf);
 	if (err) {
 		log_warn("unable to stage sb-blob: err=%d", err);
 		return err;
@@ -653,34 +653,34 @@ static void ubc_forget_cached_ui(const struct silofs_uber_ctx *ub_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool ubc_tsegid_rw_mode(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_tsegid *tsegid)
+static bool ubc_lextid_rw_mode(const struct silofs_uber_ctx *ub_ctx,
+                               const struct silofs_lextid *lextid)
 {
 	const struct silofs_sb_info *sbi = ub_ctx->uber->ub_sbi;
 
-	return likely(sbi) ? silofs_sbi_ismutable_tsegid(sbi, tsegid) : true;
+	return likely(sbi) ? silofs_sbi_ismutable_lextid(sbi, lextid) : true;
 }
 
-static bool ubc_taddr_rw_mode(const struct silofs_uber_ctx *ub_ctx,
-                              const struct silofs_taddr *taddr)
+static bool ubc_laddr_rw_mode(const struct silofs_uber_ctx *ub_ctx,
+                              const struct silofs_laddr *laddr)
 {
-	return ubc_tsegid_rw_mode(ub_ctx, &taddr->tsegid);
+	return ubc_lextid_rw_mode(ub_ctx, &laddr->lextid);
 }
 
 static int ubc_lookup_blob(const struct silofs_uber_ctx *ub_ctx,
-                           const struct silofs_tsegid *tsegid)
+                           const struct silofs_lextid *lextid)
 {
-	return silofs_repo_lookup_blob(ub_ctx->repo, tsegid);
+	return silofs_repo_lookup_blob(ub_ctx->repo, lextid);
 }
 
 static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
-                          const struct silofs_tsegid *tsegid,
+                          const struct silofs_lextid *lextid,
                           struct silofs_blobf **out_blobf)
 {
 	int err;
-	const bool rw_mode = ubc_tsegid_rw_mode(ub_ctx, tsegid);
+	const bool rw_mode = ubc_lextid_rw_mode(ub_ctx, lextid);
 
-	err = silofs_repo_stage_blob(ub_ctx->repo, rw_mode, tsegid, out_blobf);
+	err = silofs_repo_stage_blob(ub_ctx->repo, rw_mode, lextid, out_blobf);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage blob failed: err=%d", err);
 	}
@@ -688,12 +688,12 @@ static int ubc_stage_blob(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
-                          const struct silofs_tsegid *tsegid,
+                          const struct silofs_lextid *lextid,
                           struct silofs_blobf **out_blobf)
 {
 	int err;
 
-	err = silofs_repo_spawn_blob(ub_ctx->repo, tsegid, out_blobf);
+	err = silofs_repo_spawn_blob(ub_ctx->repo, lextid, out_blobf);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn blob failed: err=%d", err);
 	}
@@ -701,16 +701,16 @@ static int ubc_spawn_blob(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_require_blob(const struct silofs_uber_ctx *ub_ctx,
-                            const struct silofs_tsegid *tsegid,
+                            const struct silofs_lextid *lextid,
                             struct silofs_blobf **out_blobf)
 {
 	int err;
 
-	err = ubc_lookup_blob(ub_ctx, tsegid);
+	err = ubc_lookup_blob(ub_ctx, lextid);
 	if (!err) {
-		err = ubc_stage_blob(ub_ctx, tsegid, out_blobf);
+		err = ubc_stage_blob(ub_ctx, lextid, out_blobf);
 	} else if (err == -SILOFS_ENOENT) {
-		err = ubc_spawn_blob(ub_ctx, tsegid, out_blobf);
+		err = ubc_spawn_blob(ub_ctx, lextid, out_blobf);
 	}
 	return err;
 }
@@ -724,20 +724,20 @@ static int ubc_lookup_cached_ubki(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_do_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_taddr *taddr,
+                               const struct silofs_laddr *laddr,
                                struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_bkaddr bkaddr;
 	int err;
 	bool rw_mode;
 
-	bkaddr_by_taddr(&bkaddr, taddr);
+	bkaddr_by_laddr(&bkaddr, laddr);
 	err = ubc_lookup_cached_ubki(ub_ctx, &bkaddr, out_ubki);
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
-	rw_mode = ubc_taddr_rw_mode(ub_ctx, taddr);
-	err = silofs_repo_spawn_ubk(ub_ctx->repo, rw_mode, taddr, out_ubki);
+	rw_mode = ubc_laddr_rw_mode(ub_ctx, laddr);
+	err = silofs_repo_spawn_ubk(ub_ctx->repo, rw_mode, laddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -745,30 +745,30 @@ static int ubc_do_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
-                            const struct silofs_taddr *taddr,
+                            const struct silofs_laddr *laddr,
                             struct silofs_blobf *blobf,
                             struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
 	blobf_incref(blobf);
-	err = ubc_do_spawn_ubk_at(ub_ctx, taddr, out_ubki);
+	err = ubc_do_spawn_ubk_at(ub_ctx, laddr, out_ubki);
 	blobf_decref(blobf);
 	return err;
 }
 
 static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
-                         const struct silofs_taddr *taddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &taddr->tsegid, &blobf);
+	err = ubc_require_blob(ub_ctx, &laddr->lextid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_ubk_at(ub_ctx, taddr, blobf, out_ubki);
+	err = ubc_spawn_ubk_at(ub_ctx, laddr, blobf, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -776,20 +776,20 @@ static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
-                               const struct silofs_taddr *taddr,
+                               const struct silofs_laddr *laddr,
                                struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_bkaddr bkaddr;
 	int err;
 	bool rw;
 
-	bkaddr_by_taddr(&bkaddr, taddr);
+	bkaddr_by_laddr(&bkaddr, laddr);
 	err = ubc_lookup_cached_ubki(ub_ctx, &bkaddr, out_ubki);
 	if (!err) {
 		return 0;
 	}
-	rw = sb ? true : ubc_taddr_rw_mode(ub_ctx, taddr);
-	err = silofs_repo_stage_ubk(ub_ctx->repo, rw, &bkaddr.taddr, out_ubki);
+	rw = sb ? true : ubc_laddr_rw_mode(ub_ctx, laddr);
+	err = silofs_repo_stage_ubk(ub_ctx->repo, rw, &bkaddr.laddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -797,14 +797,14 @@ static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
 }
 
 int silofs_stage_ubk_at(struct silofs_uber *uber,
-                        const struct silofs_taddr *taddr,
+                        const struct silofs_laddr *laddr,
                         struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
 	ubc_setup(&ub_ctx);
-	err = ubc_do_stage_ubk_at(&ub_ctx, false, taddr, out_ubki);
+	err = ubc_do_stage_ubk_at(&ub_ctx, false, laddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -812,18 +812,18 @@ int silofs_stage_ubk_at(struct silofs_uber *uber,
 }
 
 static int ubc_do_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
-                                 const struct silofs_taddr *taddr,
+                                 const struct silofs_laddr *laddr,
                                  struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_bkaddr bkaddr;
 	int err;
 
-	bkaddr_by_taddr(&bkaddr, taddr);
+	bkaddr_by_laddr(&bkaddr, laddr);
 	err = ubc_lookup_cached_ubki(ub_ctx, &bkaddr, out_ubki);
 	if (!err) {
 		return 0;
 	}
-	err = ubc_do_stage_ubk_at(ub_ctx, false, &bkaddr.taddr, out_ubki);
+	err = ubc_do_stage_ubk_at(ub_ctx, false, &bkaddr.laddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -831,34 +831,34 @@ static int ubc_do_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_require_ubk_at(const struct silofs_uber_ctx *ub_ctx,
-                              const struct silofs_taddr *taddr,
+                              const struct silofs_laddr *laddr,
                               struct silofs_blobf *blobf,
                               struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
 	blobf_incref(blobf);
-	err = ubc_do_require_ubk_at(ub_ctx, taddr, out_ubki);
+	err = ubc_do_require_ubk_at(ub_ctx, laddr, out_ubki);
 	blobf_decref(blobf);
 	return err;
 }
 
 static int ubc_require_ubk(const struct silofs_uber_ctx *ub_ctx,
-                           const struct silofs_taddr *taddr,
+                           const struct silofs_laddr *laddr,
                            struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = ubc_require_blob(ub_ctx, &taddr->tsegid, &blobf);
+	err = ubc_require_blob(ub_ctx, &laddr->lextid, &blobf);
 	if (err) {
 		return err;
 	}
-	err = silofs_blobf_require(blobf, taddr);
+	err = silofs_blobf_require(blobf, laddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_ubk_at(ub_ctx, taddr, blobf, out_ubki);
+	err = ubc_require_ubk_at(ub_ctx, laddr, blobf, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -906,7 +906,7 @@ static int ubc_stage_attach_sbi_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sbi_incref(sbi);
-	err = ubc_do_stage_ubk_at(ub_ctx, true, sbi_taddr(sbi), &ubki);
+	err = ubc_do_stage_ubk_at(ub_ctx, true, sbi_laddr(sbi), &ubki);
 	if (!err) {
 		sbi_attach_to(sbi, ubki);
 	}
@@ -921,7 +921,7 @@ static int ubc_spawn_attach_sbi_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sbi_incref(sbi);
-	err = ubc_spawn_ubk(ub_ctx, sbi_taddr(sbi), &ubki);
+	err = ubc_spawn_ubk(ub_ctx, sbi_laddr(sbi), &ubki);
 	if (!err) {
 		sbi_attach_to(sbi, ubki);
 	}
@@ -1052,7 +1052,7 @@ static int ubc_stage_attach_sni_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sni_incref(sni);
-	err = ubc_do_stage_ubk_at(ub_ctx, false, sni_taddr(sni), &ubki);
+	err = ubc_do_stage_ubk_at(ub_ctx, false, sni_laddr(sni), &ubki);
 	if (!err) {
 		sni_attach_to(sni, ubki);
 	}
@@ -1067,7 +1067,7 @@ static int ubc_require_attach_sni_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sni_incref(sni);
-	err = ubc_require_ubk(ub_ctx, sni_taddr(sni), &ubki);
+	err = ubc_require_ubk(ub_ctx, sni_laddr(sni), &ubki);
 	if (!err) {
 		sni_attach_to(sni, ubki);
 	}
@@ -1198,7 +1198,7 @@ static int ubc_stage_attach_sli_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sli_incref(sli);
-	err = ubc_do_stage_ubk_at(ub_ctx, false, sli_taddr(sli), &ubki);
+	err = ubc_do_stage_ubk_at(ub_ctx, false, sli_laddr(sli), &ubki);
 	if (!err) {
 		sli_attach_to(sli, ubki);
 	}
@@ -1213,7 +1213,7 @@ static int ubc_require_attach_sli_bk(const struct silofs_uber_ctx *ub_ctx,
 	int err;
 
 	sli_incref(sli);
-	err = ubc_require_ubk(ub_ctx, sli_taddr(sli), &ubki);
+	err = ubc_require_ubk(ub_ctx, sli_laddr(sli), &ubki);
 	if (!err) {
 		sli_attach_to(sli, ubki);
 	}
@@ -1314,11 +1314,11 @@ int silofs_stage_spleaf_at(struct silofs_uber *uber,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int ubc_require_no_blob(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_tsegid *tsegid)
+                               const struct silofs_lextid *lextid)
 {
 	int err;
 
-	err = ubc_lookup_blob(ub_ctx, tsegid);
+	err = ubc_lookup_blob(ub_ctx, lextid);
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
@@ -1329,18 +1329,18 @@ static int ubc_require_no_blob(const struct silofs_uber_ctx *ub_ctx,
 }
 
 int silofs_spawn_blob_at(struct silofs_uber *uber,
-                         const struct silofs_tsegid *tsegid,
+                         const struct silofs_lextid *lextid,
                          struct silofs_blobf **out_blobf)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
 	ubc_setup(&ub_ctx);
-	err = ubc_require_no_blob(&ub_ctx, tsegid);
+	err = ubc_require_no_blob(&ub_ctx, lextid);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_blob(&ub_ctx, tsegid, out_blobf);
+	err = ubc_spawn_blob(&ub_ctx, lextid, out_blobf);
 	if (err) {
 		return err;
 	}
@@ -1348,18 +1348,18 @@ int silofs_spawn_blob_at(struct silofs_uber *uber,
 }
 
 int silofs_stage_blob_at(struct silofs_uber *uber,
-                         const struct silofs_tsegid *tsegid,
+                         const struct silofs_lextid *lextid,
                          struct silofs_blobf **out_blobf)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
 
 	ubc_setup(&ub_ctx);
-	err = ubc_lookup_blob(&ub_ctx, tsegid);
+	err = ubc_lookup_blob(&ub_ctx, lextid);
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_blob(&ub_ctx, tsegid, out_blobf);
+	err = ubc_stage_blob(&ub_ctx, lextid, out_blobf);
 	if (err) {
 		return err;
 	}

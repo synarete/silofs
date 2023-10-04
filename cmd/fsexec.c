@@ -243,7 +243,7 @@ void cmd_unref_fs_by(struct silofs_fs_env *fse,
 	cmd_unref_fs(fse, &treeid);
 }
 
-void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_taddr_fn cb)
+void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb)
 {
 	int err;
 

@@ -55,7 +55,7 @@ int silofs_fork_fs(struct silofs_fs_env *fse,
                    struct silofs_treeid *out_new,
                    struct silofs_treeid *out_alt);
 
-int silofs_inspect_fs(struct silofs_fs_env *fse, silofs_visit_taddr_fn cb);
+int silofs_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb);
 
 int silofs_unref_fs(struct silofs_fs_env *fse,
                     const struct silofs_treeid *treeid);

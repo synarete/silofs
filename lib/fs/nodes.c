@@ -188,9 +188,9 @@ static void an_fini(struct silofs_avl_node *an)
 
 static loff_t uaddr_bk_pos(const struct silofs_uaddr *uaddr)
 {
-	silofs_assert_ge(uaddr->taddr.pos, 0);
+	silofs_assert_ge(uaddr->laddr.pos, 0);
 
-	return silofs_off_in_lbk(uaddr->taddr.pos);
+	return silofs_off_in_lbk(uaddr->laddr.pos);
 }
 
 static loff_t vaddr_bk_pos(const struct silofs_vaddr *vaddr)
@@ -349,7 +349,7 @@ static void vi_init(struct silofs_vnode_info *vi,
 	lni_init(&vi->v, vaddr->stype, del_fn);
 	list_head_init(&vi->v_dq_lh);
 	vaddr_assign(&vi->v_vaddr, vaddr);
-	silofs_tlink_reset(&vi->v_tlink);
+	silofs_llink_reset(&vi->v_llink);
 	vi->v_vbki = NULL;
 	vi->v_dq = NULL;
 	vi->v_asyncwr = 0;

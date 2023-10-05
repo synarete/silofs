@@ -58,6 +58,8 @@ silofs_blobf_new(struct silofs_alloc *alloc,
 void silofs_blobf_del(struct silofs_blobf *blobf,
                       struct silofs_alloc *alloc);
 
+int silofs_blobf_stat(struct silofs_blobf *blobf, struct stat *out_st);
+
 int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
                          const void *buf, size_t len, bool sync);
 
@@ -70,6 +72,9 @@ int silofs_blobf_load_bk(struct silofs_blobf *blobf,
 
 int silofs_blobf_require(struct silofs_blobf *blobf,
                          const struct silofs_laddr *laddr);
+
+int silofs_blobf_require_bk_of(struct silofs_blobf *blobf,
+                               const struct silofs_bkaddr *bkaddr);
 
 int silofs_blobf_check(struct silofs_blobf *blobf,
                        const struct silofs_laddr *laddr);
@@ -123,9 +128,6 @@ int silofs_repo_stat_blob(const struct silofs_repo *repo,
                           const struct silofs_lextid *lextid,
                           struct stat *out_st);
 
-int silofs_repo_lookup_blob(const struct silofs_repo *repo,
-                            const struct silofs_lextid *lextid);
-
 int silofs_repo_spawn_blob(struct silofs_repo *repo,
                            const struct silofs_lextid *lextid,
                            struct silofs_blobf **out_blobf);
@@ -136,19 +138,5 @@ int silofs_repo_stage_blob(struct silofs_repo *repo, bool rw,
 
 int silofs_repo_remove_blob(struct silofs_repo *repo,
                             const struct silofs_lextid *lextid);
-
-int silofs_repo_require_blob(struct silofs_repo *repo,
-                             const struct silofs_lextid *lextid,
-                             struct silofs_blobf **out_blobf);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_laddr *laddr,
-                          struct silofs_ubk_info **out_ubki);
-
-int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_laddr *laddr,
-                          struct silofs_ubk_info **out_ubki);
 
 #endif /* SILOFS_REPO_H_ */

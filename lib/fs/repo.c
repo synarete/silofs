@@ -478,7 +478,7 @@ static int blobf_check_range(const struct silofs_blobf *blobf,
 
 static int blobf_stat(const struct silofs_blobf *blobf, struct stat *out_st)
 {
-	return  do_fstat(blobf->b_fd, out_st);
+	return do_fstat(blobf->b_fd, out_st);
 }
 
 static int blobf_inspect_size(struct silofs_blobf *blobf)
@@ -740,7 +740,7 @@ static int blobf_load_bk(const struct silofs_blobf *blobf,
 	return blobf_load_bb(blobf, &bkaddr->laddr, &bb);
 }
 
-static int blobf_require_bk_of(struct silofs_blobf *blobf,
+int silofs_blobf_require_bk_of(struct silofs_blobf *blobf,
                                const struct silofs_bkaddr *bkaddr)
 {
 	return blobf_require_laddr(blobf, &bkaddr->laddr);
@@ -868,6 +868,16 @@ int silofs_blobf_check(struct silofs_blobf *blobf,
 
 	blobf_lock(blobf);
 	ret = blobf_check_laddr(blobf, laddr);
+	blobf_unlock(blobf);
+	return ret;
+}
+
+int silofs_blobf_stat(struct silofs_blobf *blobf, struct stat *out_st)
+{
+	int ret;
+
+	blobf_lock(blobf);
+	ret = blobf_stat(blobf, out_st);
 	blobf_unlock(blobf);
 	return ret;
 }
@@ -1255,7 +1265,7 @@ out_err:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int repo_check_open(const struct silofs_repo *repo)
+static int repo_check_root_dfd(const struct silofs_repo *repo)
 {
 	return likely(repo->re_root_dfd > 0) ? 0 : -SILOFS_EBADF;
 }
@@ -1272,13 +1282,16 @@ static int repo_check_writable(const struct silofs_repo *repo)
 	return 0;
 }
 
-static int repo_check_open_rw(const struct silofs_repo *repo)
+static int repo_check_open(const struct silofs_repo *repo, bool rw)
 {
 	int err;
 
-	err = repo_check_open(repo);
+	err = repo_check_root_dfd(repo);
 	if (err) {
 		return err;
+	}
+	if (!rw) {
+		return 0;
 	}
 	err = repo_check_writable(repo);
 	if (err) {
@@ -1288,37 +1301,21 @@ static int repo_check_open_rw(const struct silofs_repo *repo)
 }
 
 int silofs_repo_stat_blob(const struct silofs_repo *repo,
-                          const struct silofs_lextid *lextid, struct stat *st)
+                          const struct silofs_lextid *lextid,
+                          struct stat *out_st)
 {
-	int err;
-
-	err = repo_check_open(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_objs_stat_blob(repo, lextid, st);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_lookup_blob(const struct silofs_repo *repo,
-                            const struct silofs_lextid *lextid)
-{
-	struct stat st = { .st_size = -1 };
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = repo_check_open(repo);
+	err = repo_check_open(repo, false);
 	if (err) {
 		return err;
 	}
 	err = repo_fetch_cached_blobf(repo, lextid, &blobf);
 	if (!err) {
-		return 0; /* cache hit */
+		return silofs_blobf_stat(blobf, out_st);
 	}
-	err = repo_objs_stat_blob(repo, lextid, &st);
+	err = repo_objs_stat_blob(repo, lextid, out_st);
 	if (err) {
 		return err;
 	}
@@ -1331,7 +1328,7 @@ static int repo_spawn_blob(struct silofs_repo *repo,
 {
 	int err;
 
-	err = repo_check_open_rw(repo);
+	err = repo_check_open(repo, true);
 	if (err) {
 		return err;
 	}
@@ -1352,7 +1349,7 @@ static int repo_stage_blob(struct silofs_repo *repo, bool rw,
 {
 	int err;
 
-	err  = repo_check_open(repo);
+	err  = repo_check_open(repo, false);
 	if (err) {
 		return err;
 	}
@@ -1373,7 +1370,7 @@ static int repo_remove_blob(struct silofs_repo *repo,
 	struct silofs_blobf *blobf = NULL;
 	int err;
 
-	err = repo_check_open_rw(repo);
+	err = repo_check_open(repo, true);
 	if (err) {
 		return err;
 	}
@@ -1386,21 +1383,6 @@ static int repo_remove_blob(struct silofs_repo *repo,
 		repo_try_evict_cached_blobf(repo, blobf);
 	}
 	return 0;
-}
-
-static int repo_require_blob(struct silofs_repo *repo, bool rw,
-                             const struct silofs_lextid *lextid,
-                             struct silofs_blobf **out_blobf)
-{
-	int err;
-
-	err = silofs_repo_lookup_blob(repo, lextid);
-	if (!err) {
-		err = repo_stage_blob(repo, rw, lextid, out_blobf);
-	} else if ((err == -ENOENT) && rw) {
-		err = repo_spawn_blob(repo, lextid, out_blobf);
-	}
-	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1794,121 +1776,6 @@ int silofs_repo_close(struct silofs_repo *repo)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void repo_forget_cached_ubki(struct silofs_repo *repo,
-                                    struct silofs_ubk_info *ubki)
-{
-	silofs_cache_forget_ubk(repo_cache(repo), ubki);
-}
-
-static int repo_create_cached_ubki(struct silofs_repo *repo,
-                                   const struct silofs_bkaddr *bkaddr,
-                                   struct silofs_ubk_info **out_ubki)
-{
-	*out_ubki = silofs_cache_create_ubk(repo_cache(repo), bkaddr);
-	return (*out_ubki == NULL) ? -SILOFS_ENOMEM : 0;
-}
-
-static int repo_spawn_attach_ubki(struct silofs_repo *repo,
-                                  struct silofs_blobf *blobf,
-                                  const struct silofs_bkaddr *bkaddr,
-                                  struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	blobf_incref(blobf);
-	err = repo_create_cached_ubki(repo, bkaddr, out_ubki);
-	if (!err) {
-		silofs_ubki_attach(*out_ubki, blobf);
-	}
-	blobf_decref(blobf);
-	return err;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int repo_spawn_ubk_at(struct silofs_repo *repo, bool rw,
-                             const struct silofs_bkaddr *bkaddr,
-                             struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_blobf *blobf = NULL;
-	int err;
-
-	err = repo_require_blob(repo, rw, &bkaddr->laddr.lextid, &blobf);
-	if (err) {
-		return err;
-	}
-	err = blobf_require_bk_of(blobf, bkaddr);
-	if (err) {
-		return err;
-	}
-	err = repo_spawn_attach_ubki(repo, blobf, bkaddr, out_ubki);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int repo_spawn_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	err = repo_check_open_rw(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_spawn_ubk_at(repo, rw, bkaddr, out_ubki);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int repo_stage_ubk_at(struct silofs_repo *repo, bool rw,
-                             const struct silofs_bkaddr *bkaddr,
-                             struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_blobf *blobf = NULL;
-	struct silofs_ubk_info *ubki = NULL;
-	int err;
-
-	err = repo_stage_blob(repo, rw, &bkaddr->laddr.lextid, &blobf);
-	if (err) {
-		return err;
-	}
-	err = repo_spawn_attach_ubki(repo, blobf, bkaddr, &ubki);
-	if (err) {
-		return err;
-	}
-	err = blobf_load_bk_at(blobf, bkaddr, &ubki->ubk);
-	if (err) {
-		repo_forget_cached_ubki(repo, ubki);
-		return err;
-	}
-	*out_ubki = ubki;
-	return 0;
-}
-
-static int repo_stage_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	err = repo_check_open(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_stage_ubk_at(repo, rw, bkaddr, out_ubki);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static void repo_bootrec_name(const struct silofs_repo *repo,
                               const struct silofs_laddr *laddr,
                               struct silofs_namebuf *out_nb)
@@ -2135,39 +2002,4 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 	repo_pre_op(repo);
 	ret = repo_remove_blob(repo, lextid);
 	return ret;
-}
-
-int silofs_repo_require_blob(struct silofs_repo *repo,
-                             const struct silofs_lextid *lextid,
-                             struct silofs_blobf **out_blobf)
-{
-	int ret;
-
-	repo_pre_op(repo);
-	ret = repo_require_blob(repo, true, lextid, out_blobf);
-	return ret;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_repo_stage_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_laddr *laddr,
-                          struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
-
-	repo_pre_op(repo);
-	bkaddr_by_laddr(&bkaddr, laddr);
-	return repo_stage_ubk(repo, rw, &bkaddr, out_ubki);
-}
-
-int silofs_repo_spawn_ubk(struct silofs_repo *repo, bool rw,
-                          const struct silofs_laddr *laddr,
-                          struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
-
-	repo_pre_op(repo);
-	bkaddr_by_laddr(&bkaddr, laddr);
-	return repo_spawn_ubk(repo, rw, &bkaddr, out_ubki);
 }

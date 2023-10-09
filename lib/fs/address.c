@@ -615,9 +615,11 @@ void silofs_lextid_setup(struct silofs_lextid *lextid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height)
 {
+	const size_t sz = height_to_lext_size(height);
+
 	silofs_treeid_assign(&lextid->treeid, treeid);
-	lextid->size = height_to_lext_size(height);
-	lextid->voff = off_align(voff, (ssize_t)lextid->size);
+	lextid->size = sz;
+	lextid->voff = sz ? off_align(voff, (ssize_t)sz) : SILOFS_OFF_NULL;
 	lextid->height = height;
 	lextid->vspace = vspace;
 }

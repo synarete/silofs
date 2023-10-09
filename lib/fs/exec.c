@@ -768,13 +768,13 @@ static int flush_dirty(const struct silofs_fs_env *fse)
 	return err;
 }
 
-static int fsync_blobs(const struct silofs_fs_env *fse)
+static int fsync_lexts(const struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = silofs_cache_fsync_blobs(fse->fs_cache);
+	err = silofs_cache_fsync_lexts(fse->fs_cache);
 	if (err) {
-		log_err("failed to fsync blobs: err=%d", err);
+		log_err("failed to fsync lexts: err=%d", err);
 	}
 	return err;
 }
@@ -1497,11 +1497,11 @@ int silofs_format_fs(struct silofs_fs_env *fse,
 	return ret;
 }
 
-static int fse_reload_root_sblob(struct silofs_fs_env *fse,
+static int fse_reload_root_slext(struct silofs_fs_env *fse,
                                  const struct silofs_bootrec *brec)
 {
 	silofs_uber_bind_child(fse->fs_uber, &brec->sb_ulink);
-	return silofs_uber_reload_sblob(fse->fs_uber);
+	return silofs_uber_reload_slext(fse->fs_uber);
 }
 
 static int do_boot_fs(struct silofs_fs_env *fse,
@@ -1520,7 +1520,7 @@ static int do_boot_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sblob(fse, &brec);
+	err = fse_reload_root_slext(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1579,7 +1579,7 @@ static int do_close_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	err = fsync_blobs(fse);
+	err = fsync_lexts(fse);
 	if (err) {
 		return err;
 	}
@@ -1690,7 +1690,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sblob(fse, &brec);
+	err = fse_reload_root_slext(fse, &brec);
 	if (err) {
 		return err;
 	}

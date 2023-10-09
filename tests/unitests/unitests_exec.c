@@ -206,17 +206,17 @@ static void ut_check_valid_spacecounts(const struct silofs_spacegauges *spc)
 static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
                                  const struct silofs_spacestats *spst2)
 {
-	ut_expect_le(spst1->blobs.nsuper,  spst2->blobs.nsuper);
-	ut_expect_le(spst1->blobs.nspnode, spst2->blobs.nspnode);
-	ut_expect_le(spst1->blobs.nspleaf, spst2->blobs.nspleaf);
-	ut_expect_le(spst1->blobs.ninode,  spst2->blobs.ninode);
-	ut_expect_le(spst1->blobs.nxanode, spst2->blobs.nxanode);
-	ut_expect_le(spst1->blobs.ndtnode, spst2->blobs.ndtnode);
-	ut_expect_le(spst1->blobs.nsymval, spst2->blobs.nsymval);
-	ut_expect_le(spst1->blobs.nftnode, spst2->blobs.nftnode);
-	ut_expect_le(spst1->blobs.ndata1k, spst2->blobs.ndata1k);
-	ut_expect_le(spst1->blobs.ndata4k, spst2->blobs.ndata4k);
-	ut_expect_le(spst1->blobs.ndatabk, spst2->blobs.ndatabk);
+	ut_expect_le(spst1->lexts.nsuper,  spst2->lexts.nsuper);
+	ut_expect_le(spst1->lexts.nspnode, spst2->lexts.nspnode);
+	ut_expect_le(spst1->lexts.nspleaf, spst2->lexts.nspleaf);
+	ut_expect_le(spst1->lexts.ninode,  spst2->lexts.ninode);
+	ut_expect_le(spst1->lexts.nxanode, spst2->lexts.nxanode);
+	ut_expect_le(spst1->lexts.ndtnode, spst2->lexts.ndtnode);
+	ut_expect_le(spst1->lexts.nsymval, spst2->lexts.nsymval);
+	ut_expect_le(spst1->lexts.nftnode, spst2->lexts.nftnode);
+	ut_expect_le(spst1->lexts.ndata1k, spst2->lexts.ndata1k);
+	ut_expect_le(spst1->lexts.ndata4k, spst2->lexts.ndata4k);
+	ut_expect_le(spst1->lexts.ndatabk, spst2->lexts.ndatabk);
 
 	ut_expect_le(spst1->bks.nsuper,  spst2->bks.nsuper);
 	ut_expect_le(spst1->bks.nspnode, spst2->bks.nspnode);
@@ -250,10 +250,10 @@ static void ut_check_spacestats(const struct silofs_spacestats *spst1,
 	ut_expect_le(spst1->ctime, spst2->ctime);
 	ut_expect_eq(spst1->capacity, spst2->capacity);
 	ut_expect_eq(spst1->vspacesize, spst2->vspacesize);
-	ut_check_valid_spacecounts(&spst1->blobs);
+	ut_check_valid_spacecounts(&spst1->lexts);
 	ut_check_valid_spacecounts(&spst1->bks);
 	ut_check_valid_spacecounts(&spst1->objs);
-	ut_check_valid_spacecounts(&spst2->blobs);
+	ut_check_valid_spacecounts(&spst2->lexts);
 	ut_check_valid_spacecounts(&spst2->bks);
 	ut_check_valid_spacecounts(&spst2->objs);
 	ut_expect_spacestats(spst1, spst2);

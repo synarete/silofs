@@ -21,8 +21,8 @@
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY     (1)
 
-/* blob control file */
-struct silofs_blobf {
+/* lext control file */
+struct silofs_lextf {
 	struct silofs_namebuf           b_name;
 	struct silofs_cache_elem        b_ce;
 	struct silofs_lextid            b_lextid;
@@ -32,7 +32,7 @@ struct silofs_blobf {
 	bool                            b_rdonly;
 };
 
-/* blob repository base config */
+/* lext repository base config */
 struct silofs_repo_base {
 	struct silofs_bootpath          bootpath;
 	struct silofs_alloc            *alloc;
@@ -40,57 +40,57 @@ struct silofs_repo_base {
 	long                            flags;
 };
 
-/* blobs repository */
+/* lexts repository */
 struct silofs_repo {
 	struct silofs_repo_base         re;
 	struct silofs_mdigest           re_mdigest;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
-	int                             re_blobs_dfd;
+	int                             re_lexts_dfd;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_blobf *
-silofs_blobf_new(struct silofs_alloc *alloc,
+struct silofs_lextf *
+silofs_lextf_new(struct silofs_alloc *alloc,
                  const struct silofs_lextid *lextid);
 
-void silofs_blobf_del(struct silofs_blobf *blobf,
+void silofs_lextf_del(struct silofs_lextf *lextf,
                       struct silofs_alloc *alloc);
 
-int silofs_blobf_stat(struct silofs_blobf *blobf, struct stat *out_st);
+int silofs_lextf_stat(struct silofs_lextf *lextf, struct stat *out_st);
 
-int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
+int silofs_lextf_pwriten(struct silofs_lextf *lextf, loff_t off,
                          const void *buf, size_t len, bool sync);
 
-int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
+int silofs_lextf_pwritevn(struct silofs_lextf *lextf, loff_t off,
                           const struct iovec *iov, size_t cnt, bool sync);
 
-int silofs_blobf_load_bk(struct silofs_blobf *blobf,
+int silofs_lextf_load_bk(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_lbk_info *lbki);
 
-int silofs_blobf_require(struct silofs_blobf *blobf,
+int silofs_lextf_require(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr);
 
-int silofs_blobf_require_bk_of(struct silofs_blobf *blobf,
+int silofs_lextf_require_bk_of(struct silofs_lextf *lextf,
                                const struct silofs_bkaddr *bkaddr);
 
-int silofs_blobf_check(struct silofs_blobf *blobf,
+int silofs_lextf_check(struct silofs_lextf *lextf,
                        const struct silofs_laddr *laddr);
 
-int silofs_blobf_resolve(struct silofs_blobf *blobf,
+int silofs_lextf_resolve(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_iovec *iov);
 
-int silofs_blobf_trim(struct silofs_blobf *blobf);
+int silofs_lextf_trim(struct silofs_lextf *lextf);
 
 
-int silofs_blobf_flock(struct silofs_blobf *blobf);
+int silofs_lextf_flock(struct silofs_lextf *lextf);
 
-int silofs_blobf_funlock(struct silofs_blobf *blobf);
+int silofs_lextf_funlock(struct silofs_lextf *lextf);
 
-int silofs_blobf_fsync(struct silofs_blobf *blobf);
+int silofs_lextf_fsync(struct silofs_lextf *lextf);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -124,19 +124,19 @@ int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_blob(const struct silofs_repo *repo,
+int silofs_repo_stat_lext(const struct silofs_repo *repo,
                           const struct silofs_lextid *lextid,
                           struct stat *out_st);
 
-int silofs_repo_spawn_blob(struct silofs_repo *repo,
+int silofs_repo_spawn_lext(struct silofs_repo *repo,
                            const struct silofs_lextid *lextid,
-                           struct silofs_blobf **out_blobf);
+                           struct silofs_lextf **out_lextf);
 
-int silofs_repo_stage_blob(struct silofs_repo *repo, bool rw,
+int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
                            const struct silofs_lextid *lextid,
-                           struct silofs_blobf **out_blobf);
+                           struct silofs_lextf **out_lextf);
 
-int silofs_repo_remove_blob(struct silofs_repo *repo,
+int silofs_repo_remove_lext(struct silofs_repo *repo,
                             const struct silofs_lextid *lextid);
 
 #endif /* SILOFS_REPO_H_ */

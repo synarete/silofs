@@ -334,7 +334,7 @@ struct silofs_lbk_info {
 struct silofs_ubk_info {
 	struct silofs_lbk_info          ubk;
 	struct silofs_bkaddr            ubk_addr;
-	struct silofs_blobf            *ubk_blobf;
+	struct silofs_lextf            *ubk_lextf;
 };
 
 /* virtual-block addressing */
@@ -372,7 +372,7 @@ struct silofs_spacestats {
 	size_t          capacity;
 	size_t          vspacesize;
 	uint64_t        generation;
-	struct silofs_spacegauges blobs;
+	struct silofs_spacegauges lexts;
 	struct silofs_spacegauges bks;
 	struct silofs_spacegauges objs;
 };
@@ -440,7 +440,7 @@ struct silofs_uber {
 	struct silofs_mutex             ub_fs_lock;
 	struct silofs_crypto            ub_crypto;
 	struct silofs_oper_stat         ub_ops;
-	struct silofs_blobf            *ub_sb_blobf;
+	struct silofs_lextf            *ub_sb_lextf;
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_ulink             ub_sb_ulink;
 	struct silofs_cred              ub_owner;

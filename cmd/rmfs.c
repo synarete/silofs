@@ -253,7 +253,7 @@ void cmd_execute_rmfs(void)
 	/* Require existing boot-record */
 	cmd_rmfs_require_brec(&ctx);
 
-	/* Do actual blobs deletion*/
+	/* Do actual lexts deletion*/
 	cmd_rmfs_execute(&ctx);
 
 	/* Unlink boot-configuration */

@@ -650,7 +650,7 @@ void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
 	sb_treeid(sbi->sb, out_treeid);
 }
 
-int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
+int silofs_sbi_main_lext(const struct silofs_sb_info *sbi,
                          enum silofs_stype vspace,
                          struct silofs_lextid *out_lextid)
 {
@@ -658,7 +658,7 @@ int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
 	return lextid_isnull(out_lextid) ? -SILOFS_ENOENT : 0;
 }
 
-void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
+void silofs_sbi_bind_main_lext(struct silofs_sb_info *sbi,
                                enum silofs_stype vspace,
                                const struct silofs_lextid *lextid)
 {
@@ -666,13 +666,13 @@ void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
 	sbi_dirtify(sbi);
 }
 
-bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
+bool silofs_sbi_has_main_lext(const struct silofs_sb_info *sbi,
                               enum silofs_stype vspace)
 {
-	struct silofs_lextid blob_id;
+	struct silofs_lextid lext_id;
 
-	silofs_sbi_main_blob(sbi, vspace, &blob_id);
-	return (lextid_size(&blob_id) > 0);
+	silofs_sbi_main_lext(sbi, vspace, &lext_id);
+	return (lextid_size(&lext_id) > 0);
 }
 
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
@@ -724,7 +724,7 @@ static void sbi_main_ulink(const struct silofs_sb_info *sbi,
 	const loff_t bpos = sbi_bpos_of_child(sbi, voff);
 	const loff_t base = sbi_base_voff_of_child(sbi, voff);
 
-	silofs_sbi_main_blob(sbi, vspace, &lextid);
+	silofs_sbi_main_lext(sbi, vspace, &lextid);
 	uaddr_setup(out_uaddr, &lextid, bpos, SILOFS_STYPE_SPNODE, base);
 
 	silofs_assert_eq(lextid.height, SILOFS_HEIGHT_SUPER - 1);

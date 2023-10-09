@@ -2201,7 +2201,7 @@ static void fill_proc(const struct silofs_uber *uber,
 	qpr->iopen_cur = uber->ub_ops.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = cache->c_blobf_lm.lm_lru.sz;
+	qpr->bopen_cur = cache->c_lextf_lm.lm_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2446,7 +2446,7 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	return 0;
 }
 
-static int flush_and_sync_blobs(struct silofs_task *task)
+static int flush_and_sync_lexts(struct silofs_task *task)
 {
 	const struct silofs_cache *cache = task_cache(task);
 	int err;
@@ -2455,7 +2455,7 @@ static int flush_and_sync_blobs(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_cache_fsync_blobs(cache);
+	err = silofs_cache_fsync_lexts(cache);
 	if (err) {
 		return err;
 	}
@@ -2473,7 +2473,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_blobs(task);
+	err = flush_and_sync_lexts(task);
 	if (err) {
 		return err;
 	}
@@ -2481,7 +2481,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_blobs(task);
+	err = flush_and_sync_lexts(task);
 	if (err) {
 		return err;
 	}
@@ -2659,7 +2659,7 @@ int silofs_do_syncfs(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_blobs(task);
+	err = flush_and_sync_lexts(task);
 	if (err) {
 		return err;
 	}

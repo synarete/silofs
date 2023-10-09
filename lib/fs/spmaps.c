@@ -1335,13 +1335,13 @@ void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
 	spleaf_make_vaddrs(sli->sl, stype, lba, vas);
 }
 
-void silofs_sli_main_blob(const struct silofs_spleaf_info *sli,
+void silofs_sli_main_lext(const struct silofs_spleaf_info *sli,
                           struct silofs_lextid *out_lextid)
 {
 	spleaf_main_lextid(sli->sl, out_lextid);
 }
 
-void silofs_sli_bind_main_blob(struct silofs_spleaf_info *sli,
+void silofs_sli_bind_main_lext(struct silofs_spleaf_info *sli,
                                const struct silofs_lextid *lextid)
 {
 	spleaf_set_main_lextid(sli->sl, lextid);
@@ -1558,13 +1558,13 @@ int silofs_sni_resolve_child(const struct silofs_spnode_info *sni,
 	return 0;
 }
 
-void silofs_sni_main_blob(const struct silofs_spnode_info *sni,
+void silofs_sni_main_lext(const struct silofs_spnode_info *sni,
                           struct silofs_lextid *out_lextid)
 {
 	spnode_main_lextid(sni->sn, out_lextid);
 }
 
-void silofs_sni_bind_main_blob(struct silofs_spnode_info *sni,
+void silofs_sni_bind_main_lext(struct silofs_spnode_info *sni,
                                const struct silofs_lextid *lextid)
 {
 	spnode_set_main_lextid(sni->sn, lextid);
@@ -1598,7 +1598,7 @@ void silofs_sni_resolve_main(const struct silofs_spnode_info *sni,
 	const loff_t base = sni_base_voff_of_child(sni, voff);
 	enum silofs_stype child_stype = sni_child_stype(sni);
 
-	silofs_sni_main_blob(sni, &lextid);
+	silofs_sni_main_lext(sni, &lextid);
 	uaddr_setup(&out_ulink->uaddr, &lextid, bpos, child_stype, base);
 	sni_get_riv_of(sni, voff, &out_ulink->riv);
 }

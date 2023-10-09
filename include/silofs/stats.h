@@ -41,7 +41,7 @@ void silofs_sti_vspace_end(const struct silofs_stats_info *sti, loff_t *out);
 
 void silofs_sti_next_generation(struct silofs_stats_info *sti, uint64_t *out);
 
-void silofs_sti_update_blobs(struct silofs_stats_info *sti,
+void silofs_sti_update_lexts(struct silofs_stats_info *sti,
                              enum silofs_stype stype, ssize_t take);
 
 void silofs_sti_update_bks(struct silofs_stats_info *sti,

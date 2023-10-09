@@ -139,28 +139,28 @@ int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
 	return err;
 }
 
-void silofs_sqe_bind_blobf(struct silofs_submitq_ent *sqe,
-                           struct silofs_blobf *blobf)
+void silofs_sqe_bind_lextf(struct silofs_submitq_ent *sqe,
+                           struct silofs_lextf *lextf)
 {
-	if (sqe->blobf != NULL) {
-		blobf_decref(sqe->blobf);
-		sqe->blobf = NULL;
+	if (sqe->lextf != NULL) {
+		lextf_decref(sqe->lextf);
+		sqe->lextf = NULL;
 	}
-	if (blobf != NULL) {
-		sqe->blobf = blobf;
-		blobf_incref(sqe->blobf);
-		silofs_assert(!blobf->b_rdonly);
+	if (lextf != NULL) {
+		sqe->lextf = lextf;
+		lextf_incref(sqe->lextf);
+		silofs_assert(!lextf->b_rdonly);
 	}
 }
 
-static void sqe_unbind_blobf(struct silofs_submitq_ent *sqe)
+static void sqe_unbind_lextf(struct silofs_submitq_ent *sqe)
 {
-	silofs_sqe_bind_blobf(sqe, NULL);
+	silofs_sqe_bind_lextf(sqe, NULL);
 }
 
 static int sqe_pwrite_iovs(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_blobf_pwritevn(sqe->blobf, sqe->off,
+	return silofs_lextf_pwritevn(sqe->lextf, sqe->off,
 	                             sqe->iov, sqe->cnt, true);
 }
 
@@ -191,7 +191,7 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	list_head_init(&sqe->qlh);
 	sqe->alloc = alloc;
 	sqe->uber = NULL;
-	sqe->blobf = NULL;
+	sqe->lextf = NULL;
 	sqe->lextid.size = 0;
 	sqe->uniq_id = uniq_id;
 	sqe->off = -1;
@@ -205,7 +205,7 @@ static void sqe_fini(struct silofs_submitq_ent *sqe)
 {
 	list_head_fini(&sqe->qlh);
 	sqe_reset_iovs(sqe);
-	sqe_unbind_blobf(sqe);
+	sqe_unbind_lextf(sqe);
 	sqe->off = -1;
 	sqe->len = 0;
 	sqe->cnt = 0;
@@ -357,7 +357,7 @@ void silofs_submitq_del_sqe(struct silofs_submitq *smq,
 {
 	sqe_decrefs(sqe);
 	sqe_reset_iovs(sqe);
-	sqe_unbind_blobf(sqe);
+	sqe_unbind_lextf(sqe);
 	sqe_del(sqe, smq->smq_alloc);
 }
 

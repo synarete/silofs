@@ -153,8 +153,8 @@
 #define vrange_next(vrng, o)            silofs_vrange_next(vrng, o)
 #define vrange_within(vrng, o)          silofs_vrange_within(vrng, o)
 
-#define blobf_incref(blobf)             silofs_blobf_incref(blobf)
-#define blobf_decref(blobf)             silofs_blobf_decref(blobf)
+#define lextf_incref(lextf)             silofs_lextf_incref(lextf)
+#define lextf_decref(lextf)             silofs_lextf_decref(lextf)
 
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_cache(t)                   silofs_task_cache(t)

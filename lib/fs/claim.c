@@ -440,7 +440,7 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 	struct silofs_lextid lextid;
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
 
-	silofs_sli_main_blob(sli, &lextid);
+	silofs_sli_main_lext(sli, &lextid);
 	if (lextid_isnull(&lextid)) {
 		return -SILOFS_ENOENT;
 	}
@@ -453,10 +453,10 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
  * optional operation: in case of data-leaf where no vspace is in-use,
  * reclaim-by-punch the underlying object space.
  */
-static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
+static int spac_try_reclaim_vlext(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_laddr laddr = { .pos = -1 };
-	struct silofs_blobf *blobf = NULL;
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	if (spa_ctx->sli->sl_nused_bytes) {
@@ -464,19 +464,19 @@ static int spac_try_reclaim_vblob(const struct silofs_spalloc_ctx *spa_ctx)
 	}
 	err = spac_resolve_main_range(spa_ctx, &laddr);
 	if (err) {
-		return 0; /* not on main blob: no-op */
+		return 0; /* not on main lext: no-op */
 	}
 	if (!spac_ismutable_lextid(spa_ctx, &laddr.lextid)) {
-		return 0; /* not a mutable blob */
+		return 0; /* not a mutable lext */
 	}
-	err = silofs_stage_blob_at(spa_ctx->uber, &laddr.lextid, &blobf);
+	err = silofs_stage_lext_at(spa_ctx->uber, &laddr.lextid, &lextf);
 	if (err) {
-		log_err("failed to stage blob: err=%d", err);
+		log_err("failed to stage lext: err=%d", err);
 		return err;
 	}
-	err = silofs_blobf_trim(blobf);
+	err = silofs_lextf_trim(lextf);
 	if (err && (err != -ENOTSUP)) {
-		log_err("failed to trim blob: err=%d", err);
+		log_err("failed to trim lext: err=%d", err);
 		return err;
 	}
 	return 0;
@@ -497,7 +497,7 @@ static void spac_reclaim_vspace_of(const struct silofs_spalloc_ctx *spa_ctx,
 {
 	spac_clear_allocate_at(spa_ctx, vaddr);
 	spac_try_recache_vspace(spa_ctx, vaddr);
-	spac_try_reclaim_vblob(spa_ctx);
+	spac_try_reclaim_vlext(spa_ctx);
 }
 
 static int spac_resolve_and_reclaim(struct silofs_spalloc_ctx *spa_ctx,

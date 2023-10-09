@@ -66,7 +66,7 @@
 #define SILOFS_REPO_DOTS_DIRNAME        ".silofs"
 
 /* repository objects sub-directory name */
-#define SILOFS_REPO_BLOBS_DIRNAME       "blobs"
+#define SILOFS_REPO_LEXTS_DIRNAME       "lexts"
 
 /* repository meta descriptor-file name */
 #define SILOFS_REPO_META_FILENAME       "meta"
@@ -633,7 +633,7 @@ struct silofs_space_stats {
 	uint64_t                        sp_vspacesize;
 	uint64_t                        sp_generation;
 	uint8_t                         sp_reserved[216];
-	struct silofs_space_gauges      sp_blobs;
+	struct silofs_space_gauges      sp_lexts;
 	struct silofs_space_gauges      sp_bks;
 	struct silofs_space_gauges      sp_objs;
 } silofs_packed_aligned64;

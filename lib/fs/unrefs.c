@@ -26,7 +26,7 @@ struct silofs_unref_ctx {
 };
 
 
-static int sli_resolve_blob_of(const struct silofs_spleaf_info *sli,
+static int sli_resolve_lext_of(const struct silofs_spleaf_info *sli,
                                loff_t voff, struct silofs_lextid *out_lextid)
 {
 	struct silofs_blink blink;
@@ -63,7 +63,7 @@ static int unrc_exec_unrefs_at(struct silofs_unref_ctx *unr_ctx,
 	return 0;
 }
 
-static int unrc_try_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
+static int unrc_try_remove_lext_of(const struct silofs_unref_ctx *unr_ctx,
                                    const struct silofs_lextid *lextid)
 {
 	struct stat st = { .st_size = -1 };
@@ -74,11 +74,11 @@ static int unrc_try_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
 		return 0;
 	}
 	repo = unrc_repo(unr_ctx);
-	err = silofs_repo_stat_blob(repo, lextid, &st);
+	err = silofs_repo_stat_lext(repo, lextid, &st);
 	if (err) {
 		return (err == -SILOFS_ENOENT) ? 0 : err;
 	}
-	err = silofs_repo_remove_blob(repo, lextid);
+	err = silofs_repo_remove_lext(repo, lextid);
 	if (err) {
 		silofs_assert_ne(err, -ENOENT);
 		return err;
@@ -87,17 +87,17 @@ static int unrc_try_remove_blob_of(const struct silofs_unref_ctx *unr_ctx,
 }
 
 static int
-unrc_post_unrefs_at_blob_of(struct silofs_unref_ctx *unr_ctx,
+unrc_post_unrefs_at_lext_of(struct silofs_unref_ctx *unr_ctx,
                             const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_lextid lextid;
 	int err;
 
-	err = sli_resolve_blob_of(sli, voff, &lextid);
+	err = sli_resolve_lext_of(sli, voff, &lextid);
 	if (err) {
 		return err;
 	}
-	err = unrc_try_remove_blob_of(unr_ctx, &lextid);
+	err = unrc_try_remove_lext_of(unr_ctx, &lextid);
 	if (err) {
 		return err;
 	}
@@ -114,7 +114,7 @@ static int unrc_post_unrefs_at_spleaf(struct silofs_unref_ctx *unr_ctx,
 	sli_vrange(sli, &vrange);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
-		err = unrc_post_unrefs_at_blob_of(unr_ctx, sli, voff);
+		err = unrc_post_unrefs_at_lext_of(unr_ctx, sli, voff);
 		if (err) {
 			return err;
 		}
@@ -145,7 +145,7 @@ unrc_post_unrefs_at_spnode(struct silofs_unref_ctx *unr_ctx,
 		if (err == -SILOFS_ENOENT) {
 			break;
 		}
-		err = unrc_try_remove_blob_of(unr_ctx, lextid_of(&ulink));
+		err = unrc_try_remove_lext_of(unr_ctx, lextid_of(&ulink));
 		if (err) {
 			return err;
 		}
@@ -165,7 +165,7 @@ unrc_post_unrefs_at_super(struct silofs_unref_ctx *unr_ctx,
 	if (err) {
 		return err;
 	}
-	err = unrc_try_remove_blob_of(unr_ctx, uaddr_lextid(&uaddr));
+	err = unrc_try_remove_lext_of(unr_ctx, uaddr_lextid(&uaddr));
 	if (err) {
 		return err;
 	}
@@ -249,7 +249,7 @@ static int unrc_remove_super(const struct silofs_unref_ctx *unr_ctx)
 {
 	const struct silofs_lextid *lextid = uaddr_lextid(&unr_ctx->sb_uaddr);
 
-	return unrc_try_remove_blob_of(unr_ctx, lextid);
+	return unrc_try_remove_lext_of(unr_ctx, lextid);
 }
 
 int silofs_walk_unref_fs(struct silofs_task *task,

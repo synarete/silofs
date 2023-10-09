@@ -620,14 +620,14 @@ static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
                         struct silofs_submitq_ent *sqe)
 {
 	const struct silofs_lextid *lextid = &sqe->lextid;
-	struct silofs_blobf *blobf = NULL;
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_stage_blob_at(sm_ctx->uber, lextid, &blobf);
+	err = silofs_stage_lext_at(sm_ctx->uber, lextid, &lextf);
 	if (err) {
 		return err;
 	}
-	silofs_sqe_bind_blobf(sqe, blobf);
+	silofs_sqe_bind_lextf(sqe, lextf);
 	return 0;
 }
 
@@ -787,9 +787,9 @@ static int smc_collect_flush_dirty(struct silofs_submit_ctx *sm_ctx)
 }
 
 /*
- * TODO-0034: Issue flush sync to dirty blobs
+ * TODO-0034: Issue flush sync to dirty lexts
  *
- * Implement fsync at blobs level and ensure that all of kernel's in-cache
+ * Implement fsync at lexts level and ensure that all of kernel's in-cache
  * data is flushed all the way to stable storage.
  */
 static int smc_complete_commits(const struct silofs_submit_ctx *sm_ctx)
@@ -836,7 +836,7 @@ static bool smc_need_flush1(const struct silofs_submit_ctx *sm_ctx)
 	if (sm_ctx->flags & SILOFS_F_NOW) {
 		return true;
 	}
-	if (silofs_cache_has_blobs_overflow(sm_ctx->cache)) {
+	if (silofs_cache_has_lexts_overflow(sm_ctx->cache)) {
 		return true;
 	}
 	silofs_allocstat(sm_ctx->alloc, &st);

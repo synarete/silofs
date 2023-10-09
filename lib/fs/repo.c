@@ -28,14 +28,14 @@
 struct silofs_repo_defs {
 	const char     *re_dots_name;
 	const char     *re_meta_name;
-	const char     *re_blobs_name;
+	const char     *re_lexts_name;
 	unsigned int    re_objs_nsubs;
 };
 
 static const struct silofs_repo_defs repo_defs = {
 	.re_dots_name   = SILOFS_REPO_DOTS_DIRNAME,
 	.re_meta_name   = SILOFS_REPO_META_FILENAME,
-	.re_blobs_name  = SILOFS_REPO_BLOBS_DIRNAME,
+	.re_lexts_name  = SILOFS_REPO_LEXTS_DIRNAME,
 	.re_objs_nsubs  = SILOFS_REPO_OBJSDIR_NSUBS,
 };
 
@@ -407,203 +407,203 @@ static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int blobf_init(struct silofs_blobf *blobf,
+static int lextf_init(struct silofs_lextf *lextf,
                       const struct silofs_lextid *lextid)
 {
-	lextid_assign(&blobf->b_lextid, lextid);
-	silofs_ce_init(&blobf->b_ce);
-	silofs_ckey_by_lextid(&blobf->b_ce.ce_ckey, &blobf->b_lextid);
-	blobf->b_size = 0;
-	blobf->b_fd = -1;
-	blobf->b_flocked = false;
-	blobf->b_rdonly = false;
+	lextid_assign(&lextf->b_lextid, lextid);
+	silofs_ce_init(&lextf->b_ce);
+	silofs_ckey_by_lextid(&lextf->b_ce.ce_ckey, &lextf->b_lextid);
+	lextf->b_size = 0;
+	lextf->b_fd = -1;
+	lextf->b_flocked = false;
+	lextf->b_rdonly = false;
 	return 0;
 }
 
-static void blobf_fini(struct silofs_blobf *blobf)
+static void lextf_fini(struct silofs_lextf *lextf)
 {
-	lextid_reset(&blobf->b_lextid);
-	silofs_ce_fini(&blobf->b_ce);
-	blobf->b_size = -1;
-	blobf->b_fd = -1;
+	lextid_reset(&lextf->b_lextid);
+	silofs_ce_fini(&lextf->b_ce);
+	lextf->b_size = -1;
+	lextf->b_fd = -1;
 }
 
-static void blobf_lock(struct silofs_blobf *blobf)
-{
-	/* no-op for now */
-	silofs_unused(blobf);
-}
-
-static void blobf_unlock(struct silofs_blobf *blobf)
+static void lextf_lock(struct silofs_lextf *lextf)
 {
 	/* no-op for now */
-	silofs_unused(blobf);
+	silofs_unused(lextf);
 }
 
-static ssize_t blobf_capacity(const struct silofs_blobf *blobf)
+static void lextf_unlock(struct silofs_lextf *lextf)
 {
-	return (ssize_t)lextid_size(&blobf->b_lextid);
+	/* no-op for now */
+	silofs_unused(lextf);
 }
 
-static ssize_t blobf_size(const struct silofs_blobf *blobf)
+static ssize_t lextf_capacity(const struct silofs_lextf *lextf)
 {
-	return silofs_atomic_getl(&blobf->b_size);
+	return (ssize_t)lextid_size(&lextf->b_lextid);
 }
 
-static void blobf_set_size(struct silofs_blobf *blobf, ssize_t sz)
+static ssize_t lextf_size(const struct silofs_lextf *lextf)
 {
-	silofs_atomic_setl(&blobf->b_size, sz);
+	return silofs_atomic_getl(&lextf->b_size);
 }
 
-static void blobf_bindto(struct silofs_blobf *blobf, int fd, bool rw)
+static void lextf_set_size(struct silofs_lextf *lextf, ssize_t sz)
 {
-	blobf->b_fd = fd;
-	blobf->b_rdonly = !rw;
+	silofs_atomic_setl(&lextf->b_size, sz);
 }
 
-static int blobf_check_range(const struct silofs_blobf *blobf,
+static void lextf_bindto(struct silofs_lextf *lextf, int fd, bool rw)
+{
+	lextf->b_fd = fd;
+	lextf->b_rdonly = !rw;
+}
+
+static int lextf_check_range(const struct silofs_lextf *lextf,
                              loff_t off, size_t len)
 {
 	const loff_t end = off_end(off, len);
-	const loff_t cap = blobf_capacity(blobf);
+	const loff_t cap = lextf_capacity(lextf);
 
 	if (off < 0) {
 		return -SILOFS_EINVAL;
 	}
 	if (end > (cap + SILOFS_LBK_SIZE)) {
-		return -SILOFS_EBLOB;
+		return -SILOFS_ELEXT;
 	}
 	return 0;
 }
 
-static int blobf_stat(const struct silofs_blobf *blobf, struct stat *out_st)
+static int lextf_stat(const struct silofs_lextf *lextf, struct stat *out_st)
 {
-	return do_fstat(blobf->b_fd, out_st);
+	return do_fstat(lextf->b_fd, out_st);
 }
 
-static int blobf_inspect_size(struct silofs_blobf *blobf)
+static int lextf_inspect_size(struct silofs_lextf *lextf)
 {
 	struct stat st;
 	ssize_t cap;
 	int err;
 
-	err = blobf_stat(blobf, &st);
+	err = lextf_stat(lextf, &st);
 	if (err) {
 		return err;
 	}
 	if (st.st_size % SILOFS_LBK_SIZE) {
-		log_warn("blob-size not aligned: blob=%s size=%ld",
-		         blobf->b_name.name, st.st_size);
-		return -SILOFS_EBLOB;
+		log_warn("lext-size not aligned: lext=%s size=%ld",
+		         lextf->b_name.name, st.st_size);
+		return -SILOFS_ELEXT;
 	}
-	cap = blobf_capacity(blobf);
+	cap = lextf_capacity(lextf);
 	if (st.st_size > (cap + SILOFS_LBK_SIZE)) {
-		log_warn("blob-size mismatch: blob=%s size=%ld cap=%ld",
-		         blobf->b_name.name, st.st_size, cap);
-		return -SILOFS_EBLOB;
+		log_warn("lext-size mismatch: lext=%s size=%ld cap=%ld",
+		         lextf->b_name.name, st.st_size, cap);
+		return -SILOFS_ELEXT;
 	}
-	blobf_set_size(blobf, st.st_size);
+	lextf_set_size(lextf, st.st_size);
 	return 0;
 }
 
-static int blobf_check_writable(const struct silofs_blobf *blobf)
+static int lextf_check_writable(const struct silofs_lextf *lextf)
 {
-	return blobf->b_rdonly ? -SILOFS_ERDONLY : 0;
+	return lextf->b_rdonly ? -SILOFS_ERDONLY : 0;
 }
 
-static int blobf_reassign_size(struct silofs_blobf *blobf, loff_t off)
+static int lextf_reassign_size(struct silofs_lextf *lextf, loff_t off)
 {
 	ssize_t len;
 	int err;
 
-	err = blobf_check_range(blobf, off, 0);
+	err = lextf_check_range(lextf, off, 0);
 	if (err) {
 		return err;
 	}
-	err = blobf_check_writable(blobf);
+	err = lextf_check_writable(lextf);
 	if (err) {
 		return err;
 	}
 	len = off_align_to_lbk(off + SILOFS_LBK_SIZE - 1);
-	err = do_ftruncate(blobf->b_fd, len);
+	err = do_ftruncate(lextf->b_fd, len);
 	if (err) {
 		return err;
 	}
-	blobf_set_size(blobf, len);
+	lextf_set_size(lextf, len);
 	return 0;
 }
 
-static int blobf_require_size_ge(struct silofs_blobf *blobf,
+static int lextf_require_size_ge(struct silofs_lextf *lextf,
                                  loff_t off, size_t len)
 {
 	const loff_t end = off_end(off, len);
-	const ssize_t bsz = blobf_size(blobf);
+	const ssize_t bsz = lextf_size(lextf);
 
-	return (bsz >= end) ? 0 : blobf_reassign_size(blobf, end);
+	return (bsz >= end) ? 0 : lextf_reassign_size(lextf, end);
 }
 
-static int blobf_require_laddr(struct silofs_blobf *blobf,
+static int lextf_require_laddr(struct silofs_lextf *lextf,
                                const struct silofs_laddr *laddr)
 {
-	return blobf_require_size_ge(blobf, laddr->pos, laddr->len);
+	return lextf_require_size_ge(lextf, laddr->pos, laddr->len);
 }
 
-static int blobf_check_size_ge(const struct silofs_blobf *blobf,
+static int lextf_check_size_ge(const struct silofs_lextf *lextf,
                                loff_t off, size_t len)
 {
 	const loff_t end = off_end(off, len);
-	const ssize_t bsz = blobf_size(blobf);
+	const ssize_t bsz = lextf_size(lextf);
 
 	return (bsz >= end) ? 0 : -SILOFS_ERANGE;
 }
 
-static void blobf_make_iovec(const struct silofs_blobf *blobf,
+static void lextf_make_iovec(const struct silofs_lextf *lextf,
                              loff_t off, size_t len, struct silofs_iovec *siov)
 {
 	siov->iov_off = off;
 	siov->iov_len = len;
 	siov->iov_base = NULL;
-	siov->iov_fd = blobf->b_fd;
+	siov->iov_fd = lextf->b_fd;
 	siov->iov_ref = NULL;
 }
 
-static int blobf_iovec_at(const struct silofs_blobf *blobf,
+static int lextf_iovec_at(const struct silofs_lextf *lextf,
                           loff_t off, size_t len, struct silofs_iovec *siov)
 {
 	int err;
 
-	err = blobf_check_range(blobf, off, len);
+	err = lextf_check_range(lextf, off, len);
 	if (!err) {
-		blobf_make_iovec(blobf, off, len, siov);
+		lextf_make_iovec(lextf, off, len, siov);
 	}
 	return err;
 }
 
-static int blobf_iovec_of(const struct silofs_blobf *blobf,
+static int lextf_iovec_of(const struct silofs_lextf *lextf,
                           const struct silofs_laddr *laddr,
                           struct silofs_iovec *siov)
 {
-	return blobf_iovec_at(blobf, laddr->pos, laddr->len, siov);
+	return lextf_iovec_at(lextf, laddr->pos, laddr->len, siov);
 }
 
-int silofs_blobf_resolve(struct silofs_blobf *blobf,
+int silofs_lextf_resolve(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_iovec *siov)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_iovec_of(blobf, laddr, siov);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	ret = lextf_iovec_of(lextf, laddr, siov);
+	lextf_unlock(lextf);
 	return ret;
 }
 
-static int blobf_sync_range(const struct silofs_blobf *blobf,
+static int lextf_sync_range(const struct silofs_lextf *lextf,
                             loff_t off, size_t len)
 {
 	int err;
 
-	err = do_sync_file_range(blobf->b_fd, off, (loff_t)len,
+	err = do_sync_file_range(lextf->b_fd, off, (loff_t)len,
 	                         SYNC_FILE_RANGE_WAIT_BEFORE |
 	                         SYNC_FILE_RANGE_WRITE |
 	                         SYNC_FILE_RANGE_WAIT_AFTER);
@@ -613,20 +613,20 @@ static int blobf_sync_range(const struct silofs_blobf *blobf,
 	return 0;
 }
 
-static int blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
+static int lextf_pwriten(struct silofs_lextf *lextf, loff_t off,
                          const void *buf, size_t len)
 {
 	int err;
 
-	err = blobf_require_size_ge(blobf, off, len);
+	err = lextf_require_size_ge(lextf, off, len);
 	if (err) {
 		return err;
 	}
-	err = blobf_check_range(blobf, off, len);
+	err = lextf_check_range(lextf, off, len);
 	if (err) {
 		return err;
 	}
-	err = do_pwriten(blobf->b_fd, buf, len, off);
+	err = do_pwriten(lextf->b_fd, buf, len, off);
 	if (err) {
 		return err;
 	}
@@ -643,56 +643,56 @@ static size_t length_of(const struct iovec *iov, size_t cnt)
 	return len;
 }
 
-static int blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
+static int lextf_pwritevn(struct silofs_lextf *lextf, loff_t off,
                           const struct iovec *iov, size_t cnt)
 {
 	const size_t len = length_of(iov, cnt);
 	int err;
 
-	err = blobf_require_size_ge(blobf, off, len);
+	err = lextf_require_size_ge(lextf, off, len);
 	if (err) {
 		return err;
 	}
-	err = blobf_check_range(blobf, off, len);
+	err = lextf_check_range(lextf, off, len);
 	if (err) {
 		return err;
 	}
-	err = do_pwritevn(blobf->b_fd, iov, cnt, off);
+	err = do_pwritevn(lextf->b_fd, iov, cnt, off);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_blobf_pwriten(struct silofs_blobf *blobf, loff_t off,
+int silofs_lextf_pwriten(struct silofs_lextf *lextf, loff_t off,
                          const void *buf, size_t len, bool sync)
 {
 	int err;
 
-	blobf_lock(blobf);
-	err = blobf_pwriten(blobf, off, buf, len);
+	lextf_lock(lextf);
+	err = lextf_pwriten(lextf, off, buf, len);
 	if (!err && sync) {
-		err = blobf_sync_range(blobf, off, len);
+		err = lextf_sync_range(lextf, off, len);
 	}
-	blobf_unlock(blobf);
+	lextf_unlock(lextf);
 	return err;
 }
 
-int silofs_blobf_pwritevn(struct silofs_blobf *blobf, loff_t off,
+int silofs_lextf_pwritevn(struct silofs_lextf *lextf, loff_t off,
                           const struct iovec *iov, size_t cnt, bool sync)
 {
 	int err;
 
-	blobf_lock(blobf);
-	err = blobf_pwritevn(blobf, off, iov, cnt);
+	lextf_lock(lextf);
+	err = lextf_pwritevn(lextf, off, iov, cnt);
 	if (!err && sync) {
-		err = blobf_sync_range(blobf, off, length_of(iov, cnt));
+		err = lextf_sync_range(lextf, off, length_of(iov, cnt));
 	}
-	blobf_unlock(blobf);
+	lextf_unlock(lextf);
 	return err;
 }
 
-static int blobf_load_bb(const struct silofs_blobf *blobf,
+static int lextf_load_bb(const struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_bytebuf *bb)
 {
@@ -702,7 +702,7 @@ static int blobf_load_bb(const struct silofs_blobf *blobf,
 	void *bobj;
 	int err;
 
-	err = blobf_iovec_of(blobf, laddr, &siov);
+	err = lextf_iovec_of(lextf, laddr, &siov);
 	if (err) {
 		return err;
 	}
@@ -730,236 +730,236 @@ out:
 	return 0;
 }
 
-static int blobf_load_bk(const struct silofs_blobf *blobf,
+static int lextf_load_bk(const struct silofs_lextf *lextf,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_lblock *lbk)
 {
 	struct silofs_bytebuf bb;
 
 	silofs_bytebuf_init(&bb, lbk, sizeof(*lbk));
-	return blobf_load_bb(blobf, &bkaddr->laddr, &bb);
+	return lextf_load_bb(lextf, &bkaddr->laddr, &bb);
 }
 
-int silofs_blobf_require_bk_of(struct silofs_blobf *blobf,
+int silofs_lextf_require_bk_of(struct silofs_lextf *lextf,
                                const struct silofs_bkaddr *bkaddr)
 {
-	return blobf_require_laddr(blobf, &bkaddr->laddr);
+	return lextf_require_laddr(lextf, &bkaddr->laddr);
 }
 
-static int blobf_check_laddr(const struct silofs_blobf *blobf,
+static int lextf_check_laddr(const struct silofs_lextf *lextf,
                              const struct silofs_laddr *laddr)
 {
-	return blobf_check_size_ge(blobf, laddr->pos, laddr->len);
+	return lextf_check_size_ge(lextf, laddr->pos, laddr->len);
 }
 
-static int blobf_check_bk_of(const struct silofs_blobf *blobf,
+static int lextf_check_bk_of(const struct silofs_lextf *lextf,
                              const struct silofs_bkaddr *bkaddr)
 {
-	return blobf_check_laddr(blobf, &bkaddr->laddr);
+	return lextf_check_laddr(lextf, &bkaddr->laddr);
 }
 
-static int blobf_do_load_bk_at(struct silofs_blobf *blobf,
+static int lextf_do_load_bk_at(struct silofs_lextf *lextf,
                                const struct silofs_bkaddr *bkaddr,
                                struct silofs_lbk_info *lbki)
 {
 	int err;
 
-	err = blobf_check_bk_of(blobf, bkaddr);
+	err = lextf_check_bk_of(lextf, bkaddr);
 	if (err) {
 		silofs_assert_ne(err, -SILOFS_ERANGE);
 		return err;
 	}
-	err = blobf_load_bk(blobf, bkaddr, lbki->lbk);
+	err = lextf_load_bk(lextf, bkaddr, lbki->lbk);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int blobf_load_bk_at(struct silofs_blobf *blobf,
+static int lextf_load_bk_at(struct silofs_lextf *lextf,
                             const struct silofs_bkaddr *bkaddr,
                             struct silofs_lbk_info *lbki)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_do_load_bk_at(blobf, bkaddr, lbki);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	ret = lextf_do_load_bk_at(lextf, bkaddr, lbki);
+	lextf_unlock(lextf);
 	return ret;
 }
 
-int silofs_blobf_load_bk(struct silofs_blobf *blobf,
+int silofs_lextf_load_bk(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_lbk_info *lbki)
 {
 	struct silofs_bkaddr bkaddr;
 
 	bkaddr_by_laddr(&bkaddr, laddr);
-	return blobf_load_bk_at(blobf, &bkaddr, lbki);
+	return lextf_load_bk_at(lextf, &bkaddr, lbki);
 }
 
-static int blobf_trim_by_ftruncate(const struct silofs_blobf *blobf)
+static int lextf_trim_by_ftruncate(const struct silofs_lextf *lextf)
 {
 	int err;
 
-	err = do_ftruncate(blobf->b_fd, 0);
+	err = do_ftruncate(lextf->b_fd, 0);
 	if (err) {
 		return err;
 	}
-	err = do_ftruncate(blobf->b_fd, blobf_size(blobf));
+	err = do_ftruncate(lextf->b_fd, lextf_size(lextf));
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int blobf_trim_by_punch(const struct silofs_blobf *blobf,
+static int lextf_trim_by_punch(const struct silofs_lextf *lextf,
                                loff_t from, loff_t to)
 {
-	return do_fallocate_punch_hole(blobf->b_fd, from, off_len(from, to));
+	return do_fallocate_punch_hole(lextf->b_fd, from, off_len(from, to));
 }
 
-static int blobf_trim_all(const struct silofs_blobf *blobf)
+static int lextf_trim_all(const struct silofs_lextf *lextf)
 {
 	struct stat st;
 	int err;
 
-	err = blobf_stat(blobf, &st);
+	err = lextf_stat(lextf, &st);
 	if (err) {
 		goto out;
 	}
 	if (st.st_blocks == 0) {
 		goto out; /* ok */
 	}
-	err = blobf_trim_by_punch(blobf, 0, blobf_size(blobf));
+	err = lextf_trim_by_punch(lextf, 0, lextf_size(lextf));
 	if (err != -ENOTSUP) {
 		goto out; /* ok-or-error */
 	}
-	err = blobf_trim_by_ftruncate(blobf);
+	err = lextf_trim_by_ftruncate(lextf);
 out:
 	return err;
 }
 
-int silofs_blobf_trim(struct silofs_blobf *blobf)
+int silofs_lextf_trim(struct silofs_lextf *lextf)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_trim_all(blobf);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	ret = lextf_trim_all(lextf);
+	lextf_unlock(lextf);
 	return ret;
 }
 
-int silofs_blobf_require(struct silofs_blobf *blobf,
+int silofs_lextf_require(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_require_laddr(blobf, laddr);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	ret = lextf_require_laddr(lextf, laddr);
+	lextf_unlock(lextf);
 	return ret;
 }
 
-int silofs_blobf_check(struct silofs_blobf *blobf,
+int silofs_lextf_check(struct silofs_lextf *lextf,
                        const struct silofs_laddr *laddr)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_check_laddr(blobf, laddr);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	ret = lextf_check_laddr(lextf, laddr);
+	lextf_unlock(lextf);
 	return ret;
 }
 
-int silofs_blobf_stat(struct silofs_blobf *blobf, struct stat *out_st)
+int silofs_lextf_stat(struct silofs_lextf *lextf, struct stat *out_st)
 {
 	int ret;
 
-	blobf_lock(blobf);
-	ret = blobf_stat(blobf, out_st);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	ret = lextf_stat(lextf, out_st);
+	lextf_unlock(lextf);
 	return ret;
 }
 
-int silofs_blobf_flock(struct silofs_blobf *blobf)
+int silofs_lextf_flock(struct silofs_lextf *lextf)
 {
 	int err = 0;
 
-	blobf_lock(blobf);
-	if (!blobf->b_flocked) {
-		err = do_flock(blobf->b_fd, LOCK_EX | LOCK_NB);
-		blobf->b_flocked = (err == 0);
+	lextf_lock(lextf);
+	if (!lextf->b_flocked) {
+		err = do_flock(lextf->b_fd, LOCK_EX | LOCK_NB);
+		lextf->b_flocked = (err == 0);
 	}
-	blobf_unlock(blobf);
+	lextf_unlock(lextf);
 	return err;
 }
 
-int silofs_blobf_funlock(struct silofs_blobf *blobf)
+int silofs_lextf_funlock(struct silofs_lextf *lextf)
 {
 	int err = 0;
 
-	blobf_lock(blobf);
-	if (blobf->b_flocked) {
-		err = do_flock(blobf->b_fd, LOCK_UN);
-		blobf->b_flocked = !(err == 0);
+	lextf_lock(lextf);
+	if (lextf->b_flocked) {
+		err = do_flock(lextf->b_fd, LOCK_UN);
+		lextf->b_flocked = !(err == 0);
 	}
-	blobf_unlock(blobf);
+	lextf_unlock(lextf);
 	return err;
 }
 
-static int blobf_fsync(struct silofs_blobf *blobf)
+static int lextf_fsync(struct silofs_lextf *lextf)
 {
 	int err;
 
-	blobf_lock(blobf);
-	err = do_fsync(blobf->b_fd);
-	blobf_unlock(blobf);
+	lextf_lock(lextf);
+	err = do_fsync(lextf->b_fd);
+	lextf_unlock(lextf);
 	return err;
 }
 
-static int blobf_fsync2(struct silofs_blobf *blobf)
+static int lextf_fsync2(struct silofs_lextf *lextf)
 {
-	return !blobf->b_rdonly ? blobf_fsync(blobf) : 0;
+	return !lextf->b_rdonly ? lextf_fsync(lextf) : 0;
 }
 
-static int blobf_close(struct silofs_blobf *blobf)
+static int lextf_close(struct silofs_lextf *lextf)
 {
-	silofs_blobf_funlock(blobf);
-	return do_closefd(&blobf->b_fd);
+	silofs_lextf_funlock(lextf);
+	return do_closefd(&lextf->b_fd);
 }
 
-int silofs_blobf_fsync(struct silofs_blobf *blobf)
+int silofs_lextf_fsync(struct silofs_lextf *lextf)
 {
-	return blobf_fsync2(blobf);
+	return lextf_fsync2(lextf);
 }
 
-struct silofs_blobf *
-silofs_blobf_new(struct silofs_alloc *alloc,
+struct silofs_lextf *
+silofs_lextf_new(struct silofs_alloc *alloc,
                  const struct silofs_lextid *lextid)
 {
-	struct silofs_blobf *blobf;
+	struct silofs_lextf *lextf;
 	int err;
 
-	blobf = silofs_allocate(alloc, sizeof(*blobf), SILOFS_ALLOCF_BZERO);
-	if (blobf == NULL) {
+	lextf = silofs_allocate(alloc, sizeof(*lextf), SILOFS_ALLOCF_BZERO);
+	if (lextf == NULL) {
 		return NULL;
 	}
-	err = blobf_init(blobf, lextid);
+	err = lextf_init(lextf, lextid);
 	if (err) {
-		silofs_deallocate(alloc, blobf, sizeof(*blobf), 0);
+		silofs_deallocate(alloc, lextf, sizeof(*lextf), 0);
 		return NULL;
 	}
-	return blobf;
+	return lextf;
 }
 
-void silofs_blobf_del(struct silofs_blobf *blobf,
+void silofs_lextf_del(struct silofs_lextf *lextf,
                       struct silofs_alloc *alloc)
 {
-	blobf_fsync2(blobf);
-	blobf_close(blobf);
-	blobf_fini(blobf);
-	silofs_deallocate(alloc, blobf, sizeof(*blobf), 0);
+	lextf_fsync2(lextf);
+	lextf_close(lextf);
+	lextf_fini(lextf);
+	silofs_deallocate(alloc, lextf, sizeof(*lextf), 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -969,45 +969,45 @@ static struct silofs_cache *repo_cache(const struct silofs_repo *repo)
 	return repo->re.cache;
 }
 
-static int repo_fetch_cached_blobf(const struct silofs_repo *repo,
+static int repo_fetch_cached_lextf(const struct silofs_repo *repo,
                                    const struct silofs_lextid *lextid,
-                                   struct silofs_blobf **out_blobf)
+                                   struct silofs_lextf **out_lextf)
 {
-	*out_blobf = silofs_cache_lookup_blob(repo_cache(repo), lextid);
-	return (*out_blobf == NULL) ? -SILOFS_ENOENT : 0;
+	*out_lextf = silofs_cache_lookup_lext(repo_cache(repo), lextid);
+	return (*out_lextf == NULL) ? -SILOFS_ENOENT : 0;
 }
 
-static int repo_create_cached_blobf(struct silofs_repo *repo,
+static int repo_create_cached_lextf(struct silofs_repo *repo,
                                     const struct silofs_lextid *lextid,
-                                    struct silofs_blobf **out_blobf)
+                                    struct silofs_lextf **out_lextf)
 {
-	*out_blobf = silofs_cache_create_blob(repo_cache(repo), lextid);
-	return (*out_blobf == NULL) ? -SILOFS_ENOMEM : 0;
+	*out_lextf = silofs_cache_create_lext(repo_cache(repo), lextid);
+	return (*out_lextf == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
-static void repo_forget_cached_blobf(struct silofs_repo *repo,
-                                     struct silofs_blobf *blobf)
+static void repo_forget_cached_lextf(struct silofs_repo *repo,
+                                     struct silofs_lextf *lextf)
 {
-	silofs_cache_evict_blob(repo_cache(repo), blobf, true);
+	silofs_cache_evict_lext(repo_cache(repo), lextf, true);
 }
 
-static void repo_try_evict_cached_blobf(struct silofs_repo *repo,
-                                        struct silofs_blobf *blobf)
+static void repo_try_evict_cached_lextf(struct silofs_repo *repo,
+                                        struct silofs_lextf *lextf)
 {
-	silofs_cache_evict_blob(repo_cache(repo), blobf, false);
+	silofs_cache_evict_lext(repo_cache(repo), lextf, false);
 }
 
-static int repo_objs_relax_cached_blobfs(struct silofs_repo *repo)
+static int repo_objs_relax_cached_lextfs(struct silofs_repo *repo)
 {
-	silofs_cache_relax_blobs(repo_cache(repo));
+	silofs_cache_relax_lexts(repo_cache(repo));
 	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int repo_blobs_dfd(const struct silofs_repo *repo)
+static int repo_lexts_dfd(const struct silofs_repo *repo)
 {
-	return repo->re_blobs_dfd;
+	return repo->re_lexts_dfd;
 }
 
 static int repo_objs_format_sub(const struct silofs_repo *repo, size_t idx)
@@ -1018,7 +1018,7 @@ static int repo_objs_format_sub(const struct silofs_repo *repo, size_t idx)
 	int err;
 
 	index_to_namebuf(idx, &nb);
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_fstatat(dfd, nb.name, &st, 0);
 	if (!err) {
 		if (!S_ISDIR(st.st_mode)) {
@@ -1082,80 +1082,80 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 }
 
 static int repo_objs_setup_pathname_of(const struct silofs_repo *repo,
-                                       struct silofs_blobf *blobf)
+                                       struct silofs_lextf *lextf)
 {
-	return repo_objs_sub_pathname_of(repo, &blobf->b_lextid,
-	                                 &blobf->b_name);
+	return repo_objs_sub_pathname_of(repo, &lextf->b_lextid,
+	                                 &lextf->b_name);
 }
 
-static int repo_objs_require_noblob(const struct silofs_repo *repo,
+static int repo_objs_require_nolext(const struct silofs_repo *repo,
                                     const struct silofs_namebuf *nb)
 {
 	struct stat st = { .st_size = 0 };
-	const int dfd = repo_blobs_dfd(repo);
+	const int dfd = repo_lexts_dfd(repo);
 	int err;
 
 	err = do_fstatat(dfd, nb->name, &st, 0);
 	if (err == 0) {
-		log_err("blob already exists: name=%s", nb->name);
+		log_err("lext already exists: name=%s", nb->name);
 		return -SILOFS_EEXIST;
 	}
 	if (err != -ENOENT) {
-		log_err("blob stat error: name=%s err=%d", nb->name, err);
+		log_err("lext stat error: name=%s err=%d", nb->name, err);
 		return err;
 	}
 	return 0;
 }
 
-static int repo_objs_create_blob_of(const struct silofs_repo *repo,
-                                    struct silofs_blobf *blobf)
+static int repo_objs_create_lext_of(const struct silofs_repo *repo,
+                                    struct silofs_lextf *lextf)
 {
-	const int dfd = repo_blobs_dfd(repo);
+	const int dfd = repo_lexts_dfd(repo);
 	const int o_flags = O_CREAT | O_RDWR | O_TRUNC;
 	int fd = -1;
 	int err;
 
-	err = do_openat(dfd, blobf->b_name.name, o_flags, 0600, &fd);
+	err = do_openat(dfd, lextf->b_name.name, o_flags, 0600, &fd);
 	if (err) {
 		return err;
 	}
-	blobf_bindto(blobf, fd, true);
-	err = blobf_reassign_size(blobf, blobf_capacity(blobf));
+	lextf_bindto(lextf, fd, true);
+	err = lextf_reassign_size(lextf, lextf_capacity(lextf));
 	if (err) {
-		do_unlinkat(dfd, blobf->b_name.name, 0);
+		do_unlinkat(dfd, lextf->b_name.name, 0);
 		return err;
 	}
 	return 0;
 }
 
-static int repo_objs_open_blob_of(const struct silofs_repo *repo,
-                                  struct silofs_blobf *blobf, bool rw)
+static int repo_objs_open_lext_of(const struct silofs_repo *repo,
+                                  struct silofs_lextf *lextf, bool rw)
 {
 	const int o_flags = rw ? O_RDWR : O_RDONLY;
-	const int dfd = repo_blobs_dfd(repo);
+	const int dfd = repo_lexts_dfd(repo);
 	int fd = -1;
 	int err;
 
-	silofs_assert_lt(blobf->b_fd, 0);
+	silofs_assert_lt(lextf->b_fd, 0);
 
-	err = do_openat(dfd, blobf->b_name.name, o_flags, 0600, &fd);
+	err = do_openat(dfd, lextf->b_name.name, o_flags, 0600, &fd);
 	if (err) {
 		/*
 		 * TODO-0032: Consider using SILOFS_EFSCORRUPTED
 		 *
-		 * When higher layer wants to open a blob, it should exist.
+		 * When higher layer wants to open a lext, it should exist.
 		 */
 		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
 	}
-	blobf_bindto(blobf, fd, rw);
-	err = blobf_inspect_size(blobf);
+	lextf_bindto(lextf, fd, rw);
+	err = lextf_inspect_size(lextf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_objs_unlink_blob(const struct silofs_repo *repo,
+static int repo_objs_unlink_lext(const struct silofs_repo *repo,
                                  const struct silofs_lextid *lextid)
 {
 	struct silofs_namebuf nb;
@@ -1167,10 +1167,10 @@ static int repo_objs_unlink_blob(const struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_fstatat(dfd, nb.name, &st, 0);
 	if (err) {
-		log_dbg("can not unlink blob: %s err=%d", nb.name, err);
+		log_dbg("can not unlink lext: %s err=%d", nb.name, err);
 		return err;
 	}
 	err = do_unlinkat(dfd, nb.name, 0);
@@ -1180,33 +1180,33 @@ static int repo_objs_unlink_blob(const struct silofs_repo *repo,
 	return 0;
 }
 
-static int repo_objs_open_blob(struct silofs_repo *repo, bool rw,
+static int repo_objs_open_lext(struct silofs_repo *repo, bool rw,
                                const struct silofs_lextid *lextid,
-                               struct silofs_blobf **out_blobf)
+                               struct silofs_lextf **out_lextf)
 {
-	struct silofs_blobf *blobf = NULL;
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = repo_create_cached_blobf(repo, lextid, &blobf);
+	err = repo_create_cached_lextf(repo, lextid, &lextf);
 	if (err) {
 		return err;
 	}
-	err = repo_objs_setup_pathname_of(repo, blobf);
+	err = repo_objs_setup_pathname_of(repo, lextf);
 	if (err) {
 		goto out_err;
 	}
-	err = repo_objs_open_blob_of(repo, blobf, rw);
+	err = repo_objs_open_lext_of(repo, lextf, rw);
 	if (err) {
 		goto out_err;
 	}
-	*out_blobf = blobf;
+	*out_lextf = lextf;
 	return 0;
 out_err:
-	repo_forget_cached_blobf(repo, blobf);
+	repo_forget_cached_lextf(repo, lextf);
 	return err;
 }
 
-static int repo_objs_stat_blob(const struct silofs_repo *repo,
+static int repo_objs_stat_lext(const struct silofs_repo *repo,
                                const struct silofs_lextid *lextid,
                                struct stat *out_st)
 {
@@ -1219,47 +1219,47 @@ static int repo_objs_stat_blob(const struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_fstatat(dfd, nb.name, out_st, 0);
 	if (err) {
 		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
 	}
 	len = lextid_size(lextid);
 	if (out_st->st_size > (loff_t)(len + SILOFS_LBK_SIZE)) {
-		log_warn("blob-size mismatch: %s len=%lu st_size=%ld",
+		log_warn("lext-size mismatch: %s len=%lu st_size=%ld",
 		         nb.name, len, out_st->st_size);
 		return -SILOFS_EIO;
 	}
 	return 0;
 }
 
-static int repo_objs_create_blob(struct silofs_repo *repo,
+static int repo_objs_create_lext(struct silofs_repo *repo,
                                  const struct silofs_lextid *lextid,
-                                 struct silofs_blobf **out_blobf)
+                                 struct silofs_lextf **out_lextf)
 {
-	struct silofs_blobf *blobf = NULL;
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = repo_create_cached_blobf(repo, lextid, &blobf);
+	err = repo_create_cached_lextf(repo, lextid, &lextf);
 	if (err) {
 		return err;
 	}
-	err = repo_objs_setup_pathname_of(repo, blobf);
+	err = repo_objs_setup_pathname_of(repo, lextf);
 	if (err) {
 		goto out_err;
 	}
-	err = repo_objs_require_noblob(repo, &blobf->b_name);
+	err = repo_objs_require_nolext(repo, &lextf->b_name);
 	if (err) {
 		goto out_err;
 	}
-	err = repo_objs_create_blob_of(repo, blobf);
+	err = repo_objs_create_lext_of(repo, lextf);
 	if (err) {
 		goto out_err;
 	}
-	*out_blobf = blobf;
+	*out_lextf = lextf;
 	return 0;
 out_err:
-	repo_forget_cached_blobf(repo, blobf);
+	repo_forget_cached_lextf(repo, lextf);
 	return err;
 }
 
@@ -1300,31 +1300,31 @@ static int repo_check_open(const struct silofs_repo *repo, bool rw)
 	return 0;
 }
 
-int silofs_repo_stat_blob(const struct silofs_repo *repo,
+int silofs_repo_stat_lext(const struct silofs_repo *repo,
                           const struct silofs_lextid *lextid,
                           struct stat *out_st)
 {
-	struct silofs_blobf *blobf = NULL;
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	err = repo_check_open(repo, false);
 	if (err) {
 		return err;
 	}
-	err = repo_fetch_cached_blobf(repo, lextid, &blobf);
+	err = repo_fetch_cached_lextf(repo, lextid, &lextf);
 	if (!err) {
-		return silofs_blobf_stat(blobf, out_st);
+		return silofs_lextf_stat(lextf, out_st);
 	}
-	err = repo_objs_stat_blob(repo, lextid, out_st);
+	err = repo_objs_stat_lext(repo, lextid, out_st);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_spawn_blob(struct silofs_repo *repo,
+static int repo_spawn_lext(struct silofs_repo *repo,
                            const struct silofs_lextid *lextid,
-                           struct silofs_blobf **out_blobf)
+                           struct silofs_lextf **out_lextf)
 {
 	int err;
 
@@ -1332,20 +1332,20 @@ static int repo_spawn_blob(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_fetch_cached_blobf(repo, lextid, out_blobf);
+	err = repo_fetch_cached_lextf(repo, lextid, out_lextf);
 	if (!err) {
 		return 0; /* cache hit */
 	}
-	err = repo_objs_create_blob(repo, lextid, out_blobf);
+	err = repo_objs_create_lext(repo, lextid, out_lextf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_stage_blob(struct silofs_repo *repo, bool rw,
+static int repo_stage_lext(struct silofs_repo *repo, bool rw,
                            const struct silofs_lextid *lextid,
-                           struct silofs_blobf **out_blobf)
+                           struct silofs_lextf **out_lextf)
 {
 	int err;
 
@@ -1353,34 +1353,34 @@ static int repo_stage_blob(struct silofs_repo *repo, bool rw,
 	if (err) {
 		return err;
 	}
-	err = repo_fetch_cached_blobf(repo, lextid, out_blobf);
+	err = repo_fetch_cached_lextf(repo, lextid, out_lextf);
 	if (!err) {
 		return 0; /* cache hit */
 	}
-	err = repo_objs_open_blob(repo, rw, lextid, out_blobf);
+	err = repo_objs_open_lext(repo, rw, lextid, out_lextf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_remove_blob(struct silofs_repo *repo,
+static int repo_remove_lext(struct silofs_repo *repo,
                             const struct silofs_lextid *lextid)
 {
-	struct silofs_blobf *blobf = NULL;
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	err = repo_check_open(repo, true);
 	if (err) {
 		return err;
 	}
-	err = repo_objs_unlink_blob(repo, lextid);
+	err = repo_objs_unlink_lext(repo, lextid);
 	if (err) {
 		return err;
 	}
-	err = repo_fetch_cached_blobf(repo, lextid, &blobf);
+	err = repo_fetch_cached_lextf(repo, lextid, &lextf);
 	if (!err) {
-		repo_try_evict_cached_blobf(repo, blobf);
+		repo_try_evict_cached_lextf(repo, lextf);
 	}
 	return 0;
 }
@@ -1408,7 +1408,7 @@ int silofs_repo_init(struct silofs_repo *repo,
 	memcpy(&repo->re, re_base, sizeof(repo->re));
 	repo->re_root_dfd = -1;
 	repo->re_dots_dfd = -1;
-	repo->re_blobs_dfd = -1;
+	repo->re_lexts_dfd = -1;
 	return repo_init_mdigest(repo);
 }
 
@@ -1421,7 +1421,7 @@ void silofs_repo_fini(struct silofs_repo *repo)
 
 static void repo_pre_op(struct silofs_repo *repo)
 {
-	repo_objs_relax_cached_blobfs(repo);
+	repo_objs_relax_cached_lextfs(repo);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1483,7 +1483,7 @@ static int repo_create_skel(const struct silofs_repo *repo)
 	loff_t size;
 	int err;
 
-	name = repo_defs.re_blobs_name;
+	name = repo_defs.re_lexts_name;
 	err = repo_create_skel_subdir(repo, name, 0700);
 	if (err) {
 		return err;
@@ -1554,7 +1554,7 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	name = repo_defs.re_blobs_name;
+	name = repo_defs.re_lexts_name;
 	err = repo_require_skel_subdir(repo, name);
 	if (err) {
 		return err;
@@ -1652,13 +1652,13 @@ out:
 	return err;
 }
 
-static int repo_open_blobs_dir(struct silofs_repo *repo)
+static int repo_open_lexts_dir(struct silofs_repo *repo)
 {
-	return do_opendirat(repo->re_dots_dfd, repo_defs.re_blobs_name,
-	                    &repo->re_blobs_dfd);
+	return do_opendirat(repo->re_dots_dfd, repo_defs.re_lexts_name,
+	                    &repo->re_lexts_dfd);
 }
 
-static int repo_format_blobs_subs(struct silofs_repo *repo)
+static int repo_format_lexts_subs(struct silofs_repo *repo)
 {
 	return repo_objs_format(repo);
 }
@@ -1683,11 +1683,11 @@ int silofs_repo_format(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	err = repo_open_blobs_dir(repo);
+	err = repo_open_lexts_dir(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_format_blobs_subs(repo);
+	err = repo_format_lexts_subs(repo);
 	if (err) {
 		return err;
 	}
@@ -1718,7 +1718,7 @@ int silofs_repo_open(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	err = repo_open_blobs_dir(repo);
+	err = repo_open_lexts_dir(repo);
 	if (err) {
 		return err;
 	}
@@ -1735,16 +1735,16 @@ static int repo_close_rootdir(struct silofs_repo *repo)
 	return do_closefd(&repo->re_root_dfd);
 }
 
-static int repo_close_blobs_dir(struct silofs_repo *repo)
+static int repo_close_lexts_dir(struct silofs_repo *repo)
 {
-	return do_closefd(&repo->re_blobs_dfd);
+	return do_closefd(&repo->re_lexts_dfd);
 }
 
 static int repo_close(struct silofs_repo *repo)
 {
 	int err;
 
-	err = repo_close_blobs_dir(repo);
+	err = repo_close_lexts_dir(repo);
 	if (err) {
 		return err;
 	}
@@ -1794,7 +1794,7 @@ repo_save_bootrec1k(const struct silofs_repo *repo,
 	int o_flags;
 	int err;
 
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_fchmodat(dfd, nb->name, 0600, 0);
 	if (!err) {
 		o_flags = O_RDWR;
@@ -1842,7 +1842,7 @@ static int repo_load_bootrec1k(const struct silofs_repo *repo,
 	int fd = -1;
 	int err;
 
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_openat(dfd, nb->name, O_RDONLY, 0, &fd);
 	if (err) {
 		goto out;
@@ -1874,7 +1874,7 @@ static int repo_stat_bootrec1k(const struct silofs_repo *repo,
 	int dfd;
 	int err;
 
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_fstatat(dfd, nb->name, out_st, AT_SYMLINK_NOFOLLOW);
 	if (err) {
 		return err;
@@ -1917,7 +1917,7 @@ static int repo_unlink_bootrec(const struct silofs_repo *repo,
 	int err;
 
 	repo_bootrec_name(repo, laddr, &nb);
-	dfd = repo_blobs_dfd(repo);
+	dfd = repo_lexts_dfd(repo);
 	err = do_unlinkat(dfd, nb.name, 0);
 	if (err) {
 		return err;
@@ -1972,34 +1972,34 @@ int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_spawn_blob(struct silofs_repo *repo,
+int silofs_repo_spawn_lext(struct silofs_repo *repo,
                            const struct silofs_lextid *lextid,
-                           struct silofs_blobf **out_blobf)
+                           struct silofs_lextf **out_lextf)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_spawn_blob(repo, lextid, out_blobf);
+	ret = repo_spawn_lext(repo, lextid, out_lextf);
 	return ret;
 }
 
-int silofs_repo_stage_blob(struct silofs_repo *repo, bool rw,
+int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
                            const struct silofs_lextid *lextid,
-                           struct silofs_blobf **out_blobf)
+                           struct silofs_lextf **out_lextf)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_stage_blob(repo, rw, lextid, out_blobf);
+	ret = repo_stage_lext(repo, rw, lextid, out_lextf);
 	return ret;
 }
 
-int silofs_repo_remove_blob(struct silofs_repo *repo,
+int silofs_repo_remove_lext(struct silofs_repo *repo,
                             const struct silofs_lextid *lextid)
 {
 	int ret;
 
 	repo_pre_op(repo);
-	ret = repo_remove_blob(repo, lextid);
+	ret = repo_remove_lext(repo, lextid);
 	return ret;
 }

@@ -71,15 +71,15 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
                        struct silofs_treeid *out_treeid);
 
-int silofs_sbi_main_blob(const struct silofs_sb_info *sbi,
+int silofs_sbi_main_lext(const struct silofs_sb_info *sbi,
                          enum silofs_stype vspace,
                          struct silofs_lextid *out_lextid);
 
-void silofs_sbi_bind_main_blob(struct silofs_sb_info *sbi,
+void silofs_sbi_bind_main_lext(struct silofs_sb_info *sbi,
                                enum silofs_stype vspace,
                                const struct silofs_lextid *lextid);
 
-bool silofs_sbi_has_main_blob(const struct silofs_sb_info *sbi,
+bool silofs_sbi_has_main_lext(const struct silofs_sb_info *sbi,
                               enum silofs_stype vspace);
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,

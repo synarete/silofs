@@ -257,7 +257,7 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_capacity, 16);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_vspacesize, 24);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_generation, 32);
-	REQUIRE_OFFSET64(struct silofs_space_stats, sp_blobs, 256);
+	REQUIRE_OFFSET64(struct silofs_space_stats, sp_lexts, 256);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_bks, 512);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_objs, 768);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);

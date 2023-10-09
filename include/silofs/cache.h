@@ -37,7 +37,7 @@ struct silofs_lrumap {
 struct silofs_cache {
 	struct silofs_alloc    *c_alloc;
 	struct silofs_lblock   *c_nil_lbk;
-	struct silofs_lrumap    c_blobf_lm;
+	struct silofs_lrumap    c_lextf_lm;
 	struct silofs_lrumap    c_ubki_lm;
 	struct silofs_lrumap    c_vbki_lm;
 	struct silofs_lrumap    c_ui_lm;
@@ -94,22 +94,22 @@ void silofs_cache_drop(struct silofs_cache *cache);
 void silofs_cache_shrink_once(struct silofs_cache *cache);
 
 
-struct silofs_blobf *
-silofs_cache_lookup_blob(struct silofs_cache *cache,
+struct silofs_lextf *
+silofs_cache_lookup_lext(struct silofs_cache *cache,
                          const struct silofs_lextid *lextid);
 
-struct silofs_blobf *
-silofs_cache_create_blob(struct silofs_cache *cache,
+struct silofs_lextf *
+silofs_cache_create_lext(struct silofs_cache *cache,
                          const struct silofs_lextid *lextid);
 
-void silofs_cache_evict_blob(struct silofs_cache *cache,
-                             struct silofs_blobf *blobf, bool now);
+void silofs_cache_evict_lext(struct silofs_cache *cache,
+                             struct silofs_lextf *lextf, bool now);
 
-void silofs_cache_relax_blobs(struct silofs_cache *cache);
+void silofs_cache_relax_lexts(struct silofs_cache *cache);
 
-int silofs_cache_fsync_blobs(const struct silofs_cache *cache);
+int silofs_cache_fsync_lexts(const struct silofs_cache *cache);
 
-bool silofs_cache_has_blobs_overflow(const struct silofs_cache *cache);
+bool silofs_cache_has_lexts_overflow(const struct silofs_cache *cache);
 
 
 struct silofs_ubk_info *
@@ -167,9 +167,9 @@ void silofs_cache_forget_vi(struct silofs_cache *cache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_blobf_incref(struct silofs_blobf *blobf);
+void silofs_lextf_incref(struct silofs_lextf *lextf);
 
-void silofs_blobf_decref(struct silofs_blobf *blobf);
+void silofs_lextf_decref(struct silofs_lextf *lextf);
 
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi,
@@ -226,7 +226,7 @@ void silofs_vbki_decref(struct silofs_vbk_info *vbki);
 
 
 void silofs_ubki_attach(struct silofs_ubk_info *ubki,
-                        struct silofs_blobf *blobf);
+                        struct silofs_lextf *lextf);
 
 void silofs_ubki_incref(struct silofs_ubk_info *ubki);
 

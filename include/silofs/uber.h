@@ -35,7 +35,7 @@ int silofs_uber_format_super(struct silofs_uber *uber, size_t capacity);
 
 int silofs_uber_reload_super(struct silofs_uber *uber);
 
-int silofs_uber_reload_sblob(struct silofs_uber *uber);
+int silofs_uber_reload_slext(struct silofs_uber *uber);
 
 int silofs_uber_forkfs(struct silofs_uber *uber,
                        struct silofs_bootrecs *out_brecs);
@@ -77,13 +77,13 @@ int silofs_stage_ubk_at(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_blob_at(struct silofs_uber *uber,
+int silofs_spawn_lext_at(struct silofs_uber *uber,
                          const struct silofs_lextid *lextid,
-                         struct silofs_blobf **out_blobf);
+                         struct silofs_lextf **out_lextf);
 
-int silofs_stage_blob_at(struct silofs_uber *uber,
+int silofs_stage_lext_at(struct silofs_uber *uber,
                          const struct silofs_lextid *lextid,
-                         struct silofs_blobf **out_blobf);
+                         struct silofs_lextf **out_lextf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

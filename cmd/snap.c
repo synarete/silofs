@@ -285,12 +285,12 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
@@ -303,7 +303,7 @@ static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 	cmd_fork_fs(ctx->fs_env, &ctx->treeid_new, &ctx->treeid_alt);
 }
 
-static void cmd_snap_shutdown_fs(struct cmd_snap_ctx *ctx)
+static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
 {
 	cmd_close_fs(ctx->fs_env);
 }
@@ -353,7 +353,7 @@ static void cmd_snap_offline(struct cmd_snap_ctx *ctx)
 	cmd_snap_fork_fs(ctx);
 
 	/* Shut down file-system environment */
-	cmd_snap_shutdown_fs(ctx);
+	cmd_snap_close_fs(ctx);
 }
 
 static void cmd_snap_execute(struct cmd_snap_ctx *ctx)

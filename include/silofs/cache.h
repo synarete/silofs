@@ -37,7 +37,6 @@ struct silofs_lrumap {
 struct silofs_cache {
 	struct silofs_alloc    *c_alloc;
 	struct silofs_lblock   *c_nil_lbk;
-	struct silofs_lrumap    c_lextf_lm;
 	struct silofs_lrumap    c_ubki_lm;
 	struct silofs_lrumap    c_vbki_lm;
 	struct silofs_lrumap    c_ui_lm;
@@ -73,9 +72,6 @@ silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
 long silofs_ckey_compare(const struct silofs_ckey *ckey1,
                          const struct silofs_ckey *ckey2);
 
-void silofs_ckey_by_lextid(struct silofs_ckey *ckey,
-                           const struct silofs_lextid *lextid);
-
 void silofs_ce_init(struct silofs_cache_elem *ce);
 
 void silofs_ce_fini(struct silofs_cache_elem *ce);
@@ -92,24 +88,6 @@ void silofs_cache_relax(struct silofs_cache *cache, int flags);
 void silofs_cache_drop(struct silofs_cache *cache);
 
 void silofs_cache_shrink_once(struct silofs_cache *cache);
-
-
-struct silofs_lextf *
-silofs_cache_lookup_lext(struct silofs_cache *cache,
-                         const struct silofs_lextid *lextid);
-
-struct silofs_lextf *
-silofs_cache_create_lext(struct silofs_cache *cache,
-                         const struct silofs_lextid *lextid);
-
-void silofs_cache_evict_lext(struct silofs_cache *cache,
-                             struct silofs_lextf *lextf, bool now);
-
-void silofs_cache_relax_lexts(struct silofs_cache *cache);
-
-int silofs_cache_fsync_lexts(const struct silofs_cache *cache);
-
-bool silofs_cache_has_lexts_overflow(const struct silofs_cache *cache);
 
 
 struct silofs_ubk_info *
@@ -166,11 +144,6 @@ void silofs_cache_forget_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_lextf_incref(struct silofs_lextf *lextf);
-
-void silofs_lextf_decref(struct silofs_lextf *lextf);
-
 
 void silofs_vi_dirtify(struct silofs_vnode_info *vi,
                        struct silofs_inode_info *ii);

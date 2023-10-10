@@ -279,7 +279,6 @@ struct silofs_vrange {
 /* caching-element's key type */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
-	SILOFS_CKEY_LEXTID,
 	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
@@ -346,7 +345,7 @@ struct silofs_vbk_addr {
 /* v-addressing block info */
 struct silofs_vbk_info {
 	struct silofs_lbk_info           vbk;
-	struct silofs_vbk_addr          vbk_addr;
+	struct silofs_vbk_addr           vbk_addr;
 };
 
 

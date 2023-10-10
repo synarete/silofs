@@ -146,17 +146,22 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_require_brec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_boot_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
 	cmd_open_fs(ctx->fs_env);
+}
+
+static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
+{
+	cmd_close_fs(ctx->fs_env);
 }
 
 static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
@@ -212,6 +217,9 @@ void cmd_execute_fsck(void)
 
 	/* Do actual fsck */
 	cmd_fsck_execute(&ctx);
+
+	/* Close file-system and caches */
+	cmd_fsck_close_fs(&ctx);
 
 	/* Close repository */
 	cmd_fsck_close_repo(&ctx);

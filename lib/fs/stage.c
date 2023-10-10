@@ -171,11 +171,11 @@ static void stgc_log_cache_stat(const struct silofs_stage_ctx *stg_ctx)
 	const struct silofs_dirtyqs *dqs = &cache->c_dqs;
 
 	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "\
-	        "accum_vnodes=%lu ubki=%lu ui=%lu vbki=%lu vi=%lu lextf=%lu",
+	        "accum_vnodes=%lu ubki=%lu ui=%lu vbki=%lu vi=%lu",
 	        dqs->dq_uis.dq_accum, dqs->dq_iis.dq_accum,
 	        dqs->dq_vis.dq_accum, cache->c_ubki_lm.lm_lru.sz,
 	        cache->c_ui_lm.lm_lru.sz, cache->c_vbki_lm.lm_lru.sz,
-	        cache->c_vi_lm.lm_lru.sz, cache->c_lextf_lm.lm_lru.sz);
+	        cache->c_vi_lm.lm_lru.sz);
 }
 
 static int stgc_fetch_cached_vbki(const struct silofs_stage_ctx *stg_ctx,
@@ -518,7 +518,7 @@ static int stgc_spawn_super_main_lext(const struct silofs_stage_ctx *stg_ctx)
 		return err;
 	}
 	silofs_sbi_bind_main_lext(stg_ctx->sbi, stg_ctx->vspace,
-	                          &lextf->b_lextid);
+	                          &lextf->lex_id);
 	return 0;
 }
 
@@ -560,7 +560,7 @@ static int stgc_spawn_spnode_main_lext(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_lext(sni, &lextf->b_lextid);
+	silofs_sni_bind_main_lext(sni, &lextf->lex_id);
 	return 0;
 }
 
@@ -1622,7 +1622,7 @@ stgc_require_spleaf_main_lext(const struct silofs_stage_ctx *stg_ctx,
 		return err;
 	}
 out_ok:
-	silofs_sli_bind_main_lext(sli, &lextf->b_lextid);
+	silofs_sli_bind_main_lext(sli, &lextf->lex_id);
 	return 0;
 }
 

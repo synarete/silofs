@@ -690,7 +690,7 @@ static int ubc_lookup_lext(const struct silofs_uber_ctx *ub_ctx,
 {
 	struct stat st;
 
-	return silofs_repo_stat_lext(ub_ctx->repo, lextid, &st);
+	return silofs_repo_stat_lext(ub_ctx->repo, lextid, true, &st);
 }
 
 static int ubc_stage_lext(const struct silofs_uber_ctx *ub_ctx,
@@ -1448,11 +1448,9 @@ int silofs_stage_lext_at(struct silofs_uber *uber,
 
 void silofs_relax_cache_by(const struct silofs_task *task, int flags)
 {
-	struct silofs_cache *cache = task_cache(task);
-
-	silofs_cache_relax(cache, flags);
+	silofs_cache_relax(task_cache(task), flags);
 	if (flags & SILOFS_F_IDLE) {
-		silofs_cache_fsync_lexts(cache);
+		silofs_repo_fsync_all(task->t_uber->ub.repo);
 	}
 }
 

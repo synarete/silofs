@@ -294,12 +294,6 @@ static long ckey_compare_as_vaddr(const struct silofs_ckey *ckey1,
 	return silofs_vaddr_compare(ckey1->keyu.vaddr, ckey2->keyu.vaddr);
 }
 
-static long ckey_compare_as_lextid(const struct silofs_ckey *ckey1,
-                                   const struct silofs_ckey *ckey2)
-{
-	return silofs_lextid_compare(ckey1->keyu.lextid, ckey2->keyu.lextid);
-}
-
 static long ckey_compare_as_vbk_addr(const struct silofs_ckey *ckey1,
                                      const struct silofs_ckey *ckey2)
 {
@@ -335,9 +329,6 @@ long silofs_ckey_compare(const struct silofs_ckey *ckey1,
 		case SILOFS_CKEY_VADDR:
 			cmp = ckey_compare_as_vaddr(ckey1, ckey2);
 			break;
-		case SILOFS_CKEY_LEXTID:
-			cmp = ckey_compare_as_lextid(ckey1, ckey2);
-			break;
 		case SILOFS_CKEY_VBKADDR:
 			cmp = ckey_compare_as_vbk_addr(ckey1, ckey2);
 			break;
@@ -355,12 +346,6 @@ static bool ckey_isequal(const struct silofs_ckey *ckey1,
 	return (ckey1->type == ckey2->type) &&
 	       (ckey1->hash == ckey2->hash) &&
 	       !silofs_ckey_compare(ckey1, ckey2);
-}
-
-void silofs_ckey_by_lextid(struct silofs_ckey *ckey,
-                           const struct silofs_lextid *lextid)
-{
-	ckey_setup(ckey, SILOFS_CKEY_LEXTID, lextid, hash_of_lextid(lextid));
 }
 
 static void ckey_by_bkaddr(struct silofs_ckey *ckey,
@@ -773,54 +758,6 @@ static size_t lrumap_overpop(const struct silofs_lrumap *lm)
 static size_t lrumap_calc_search_evictable_max(const struct silofs_lrumap *lm)
 {
 	return clamp(lm->lm_htbl_sz / 4, 1, 16);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_lextf *
-lextf_from_ce(const struct silofs_cache_elem *ce)
-{
-	const struct silofs_lextf *lextf = NULL;
-
-	if (ce != NULL) {
-		lextf = container_of2(ce, struct silofs_lextf, b_ce);
-	}
-	return unconst(lextf);
-}
-
-static struct silofs_cache_elem *
-lextf_to_ce(const struct silofs_lextf *lextf)
-{
-	const struct silofs_cache_elem *ce = &lextf->b_ce;
-
-	return unconst(ce);
-}
-
-static struct silofs_lextf *
-lextf_from_lru_lh(const struct silofs_list_head *lru_lh)
-{
-	const struct silofs_cache_elem *ce = ce_from_lru_link(lru_lh);
-
-	return lextf_from_ce(ce);
-}
-
-void silofs_lextf_incref(struct silofs_lextf *lextf)
-{
-	if (likely(lextf != NULL)) {
-		ce_incref_atomic(lextf_to_ce(lextf));
-	}
-}
-
-void silofs_lextf_decref(struct silofs_lextf *lextf)
-{
-	if (likely(lextf != NULL)) {
-		ce_decref_atomic(lextf_to_ce(lextf));
-	}
-}
-
-static bool lextf_is_evictable(const struct silofs_lextf *lextf)
-{
-	return ce_is_evictable_atomic(lextf_to_ce(lextf));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1388,320 +1325,6 @@ static void vi_delete(struct silofs_vnode_info *vi,
                       struct silofs_alloc *alloc, int flags)
 {
 	lni_delete(&vi->v, alloc, flags);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_lextf *
-cache_new_lextf(struct silofs_cache *cache, const struct silofs_lextid *lextid)
-{
-	return silofs_lextf_new(cache->c_alloc, lextid);
-}
-
-static void cache_del_lextf(const struct silofs_cache *cache,
-                            struct silofs_lextf *lextf)
-{
-	silofs_lextf_del(lextf, cache->c_alloc);
-}
-
-static int cache_init_lextf_lm(struct silofs_cache *cache, size_t cap)
-{
-	return lrumap_init(&cache->c_lextf_lm, cache->c_alloc, cap);
-}
-
-static void cache_fini_lextf_lm(struct silofs_cache *cache)
-{
-	lrumap_fini(&cache->c_lextf_lm, cache->c_alloc);
-}
-
-static struct silofs_lextf *
-cache_find_lextf(const struct silofs_cache *cache,
-                 const struct silofs_lextid *lextid)
-{
-	struct silofs_ckey ckey;
-	struct silofs_cache_elem *ce;
-
-	silofs_ckey_by_lextid(&ckey, lextid);
-	ce = lrumap_find(&cache->c_lextf_lm, &ckey);
-	return lextf_from_ce(ce);
-}
-
-static void cache_store_lextf(struct silofs_cache *cache,
-                              struct silofs_lextf *lextf)
-{
-	lrumap_store(&cache->c_lextf_lm, lextf_to_ce(lextf));
-}
-
-static void cache_promote_lextf(struct silofs_cache *cache,
-                                struct silofs_lextf *lextf, bool now)
-{
-	lrumap_promote(&cache->c_lextf_lm, lextf_to_ce(lextf), now);
-}
-
-static void cache_evict_lextf(struct silofs_cache *cache,
-                              struct silofs_lextf *lextf)
-{
-	lrumap_remove(&cache->c_lextf_lm, lextf_to_ce(lextf));
-	cache_del_lextf(cache, lextf);
-}
-
-static struct silofs_lextf *
-cache_create_lextf(struct silofs_cache *cache,
-                   const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf;
-
-	lextf = cache_new_lextf(cache, lextid);
-	if (lextf == NULL) {
-		return NULL;
-	}
-	cache_store_lextf(cache, lextf);
-	return lextf;
-}
-
-static struct silofs_lextf *
-cache_find_relru_lextf(struct silofs_cache *cache,
-                       const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf;
-
-	lextf = cache_find_lextf(cache, lextid);
-	if (lextf != NULL) {
-		cache_promote_lextf(cache, lextf, false);
-	}
-	return lextf;
-}
-
-struct silofs_lextf *
-silofs_cache_lookup_lext(struct silofs_cache *cache,
-                         const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf;
-
-	lextf = cache_find_relru_lextf(cache, lextid);
-	cache_post_op(cache);
-	return lextf;
-}
-
-static struct silofs_lextf *
-cache_find_or_spawn_lextf(struct silofs_cache *cache,
-                          const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf;
-
-	lextf = cache_find_relru_lextf(cache, lextid);
-	if (lextf != NULL) {
-		return lextf;
-	}
-	lextf = cache_create_lextf(cache, lextid);
-	if (lextf == NULL) {
-		return NULL; /* TODO: debug-trace */
-	}
-	return lextf;
-}
-
-static int visit_evictable_lextf(struct silofs_cache_elem *ce, void *arg)
-{
-	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_lextf *lextf = lextf_from_ce(ce);
-
-	c_ctx->count++;
-	if (lextf_is_evictable(lextf)) {
-		c_ctx->lextf = lextf;
-		return 1;
-	}
-	if (c_ctx->count >= c_ctx->limit) {
-		return 1;
-	}
-	return 0;
-}
-
-static struct silofs_lextf *
-cache_find_evictable_lextf(struct silofs_cache *cache)
-{
-	struct silofs_cache_ctx c_ctx = {
-		.cache = cache,
-		.lextf = NULL,
-		.limit = 4
-	};
-
-	lrumap_foreach_backward(&cache->c_lextf_lm,
-	                        visit_evictable_lextf, &c_ctx);
-	return c_ctx.lextf;
-}
-
-static struct silofs_lextf *
-cache_require_lextf(struct silofs_cache *cache,
-                    const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf = NULL;
-	int retry = CACHE_RETRY;
-
-	while (retry-- > 0) {
-		lextf = cache_find_or_spawn_lextf(cache, lextid);
-		if (lextid != NULL) {
-			break;
-		}
-		cache_evict_some(cache);
-	}
-	return lextf;
-}
-
-struct silofs_lextf *
-silofs_cache_create_lext(struct silofs_cache *cache,
-                         const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf;
-
-	lextf = cache_require_lextf(cache, lextid);
-	cache_post_op(cache);
-	return lextf;
-}
-
-
-static void cache_try_evict_lextf(struct silofs_cache *cache,
-                                  struct silofs_lextf *lextf)
-{
-	if (lextf_is_evictable(lextf)) {
-		cache_evict_lextf(cache, lextf);
-	}
-}
-
-static void cache_evict_lext(struct silofs_cache *cache,
-                             struct silofs_lextf *lextf, bool now)
-{
-	if (now) {
-		cache_evict_lextf(cache, lextf);
-	} else {
-		cache_try_evict_lextf(cache, lextf);
-	}
-}
-
-void silofs_cache_evict_lext(struct silofs_cache *cache,
-                             struct silofs_lextf *lextf, bool now)
-{
-	cache_evict_lext(cache, lextf, now);
-	cache_post_op(cache);
-}
-
-static struct silofs_lextf *
-cache_get_lru_lextf(struct silofs_cache *cache)
-{
-	struct silofs_cache_elem *ce;
-
-	ce = lrumap_get_lru(&cache->c_lextf_lm);
-	return lextf_from_ce(ce);
-}
-
-static int try_evict_lextf(struct silofs_cache_elem *ce, void *arg)
-{
-	struct silofs_cache_ctx *c_ctx = arg;
-	struct silofs_lextf *lextf = lextf_from_ce(ce);
-
-	cache_try_evict_lextf(c_ctx->cache, lextf);
-	return 0;
-}
-
-static void cache_drop_evictable_lextfs(struct silofs_cache *cache)
-{
-	struct silofs_cache_ctx c_ctx = {
-		.cache = cache
-	};
-
-	lrumap_foreach_backward(&cache->c_lextf_lm, try_evict_lextf, &c_ctx);
-}
-
-static bool cache_evict_or_relru_lextf(struct silofs_cache *cache,
-                                       struct silofs_lextf *lextf)
-{
-	bool evicted;
-
-	if (lextf_is_evictable(lextf)) {
-		cache_evict_lextf(cache, lextf);
-		evicted = true;
-	} else {
-		cache_promote_lextf(cache, lextf, true);
-		evicted = false;
-	}
-	return evicted;
-}
-
-static size_t
-cache_shrink_or_relru_lextfs(struct silofs_cache *cache,
-                             size_t cnt, bool force)
-{
-	struct silofs_lextf *lextf;
-	const size_t n = min(cnt, cache->c_lextf_lm.lm_lru.sz);
-	size_t evicted = 0;
-	bool ok;
-
-	for (size_t i = 0; i < n; ++i) {
-		lextf = cache_get_lru_lextf(cache);
-		if (lextf == NULL) {
-			break;
-		}
-		ok = cache_evict_or_relru_lextf(cache, lextf);
-		if (ok) {
-			evicted++;
-		} else if (!force) {
-			break;
-		}
-	}
-	return evicted;
-}
-
-/*
- * Shrink-relru of lexts is different from other shrinker, as elements do not
- * get promoted often in LRU, but rather stay alive due to ref-count by live
- * blocks. Thus, we end up with lots of elements which are live with active
- * ref-count at the tail of LRU, and therefore we need to keep on iterating in
- * search for other candidate for eviction.
- */
-/*
- * TODO-0035: Define proper upper-bound.
- *
- * Have explicit upper-limit to cached lexts, based on the process' rlimit
- * RLIMIT_NOFILE and memory limits.
- */
-static size_t cache_lexts_overflow(const struct silofs_cache *cache)
-{
-	const size_t bar = 256;
-	const size_t cur = cache->c_lextf_lm.lm_lru.sz;
-
-	return (cur > bar) ? (cur - bar) : 0;
-}
-
-bool silofs_cache_has_lexts_overflow(const struct silofs_cache *cache)
-{
-	return cache_lexts_overflow(cache) > 0;
-}
-
-void silofs_cache_relax_lexts(struct silofs_cache *cache)
-{
-	const size_t cnt = cache_lexts_overflow(cache);
-
-	if (cnt > 0) {
-		cache_shrink_or_relru_lextfs(cache, cnt, true);
-		cache_post_op(cache);
-	}
-}
-
-int silofs_cache_fsync_lexts(const struct silofs_cache *cache)
-{
-	struct silofs_lextf *lextf = NULL;
-	const struct silofs_list_head *itr = NULL;
-	const struct silofs_listq *lru = &cache->c_lextf_lm.lm_lru;
-	int ret = 0;
-	int err;
-
-	itr = listq_front(lru);
-	while (itr != NULL) {
-		lextf = lextf_from_lru_lh(itr);
-		err = silofs_lextf_fsync(lextf);
-		ret = err || ret;
-		itr = listq_next(lru, itr);
-	}
-	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2812,9 +2435,6 @@ cache_shrink_some(struct silofs_cache *cache, int shift, bool force)
 	count = lrumap_overpop(&cache->c_ubki_lm) + extra;
 	actual += cache_shrink_or_relru_ubkis(cache, count, force);
 
-	count = lrumap_overpop(&cache->c_lextf_lm) + extra;
-	actual += cache_shrink_or_relru_lextfs(cache, count, force);
-
 	return actual;
 }
 
@@ -2825,7 +2445,6 @@ static bool cache_lrumaps_has_overpop(const struct silofs_cache *cache)
 		&cache->c_ui_lm,
 		&cache->c_ubki_lm,
 		&cache->c_vbki_lm,
-		&cache->c_lextf_lm
 	};
 	bool has_overpop = false;
 
@@ -2853,9 +2472,6 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 	size_t niter = 0;
 
 	if (cache_lrumaps_has_overpop(cache)) {
-		niter += 1;
-	}
-	if (silofs_cache_has_lexts_overflow(cache)) {
 		niter += 1;
 	}
 	mem_press = cache_memory_pressure(cache);
@@ -2928,8 +2544,7 @@ void silofs_cache_shrink_once(struct silofs_cache *cache)
 
 static size_t cache_lrumap_usage_sum(const struct silofs_cache *cache)
 {
-	return lrumap_usage(&cache->c_lextf_lm) +
-	       lrumap_usage(&cache->c_ubki_lm) +
+	return lrumap_usage(&cache->c_ubki_lm) +
 	       lrumap_usage(&cache->c_vbki_lm) +
 	       lrumap_usage(&cache->c_vi_lm) +
 	       lrumap_usage(&cache->c_ui_lm);
@@ -2941,7 +2556,6 @@ static void cache_drop_evictables_once(struct silofs_cache *cache)
 	cache_drop_evictable_uis(cache);
 	cache_drop_evictable_vbkis(cache);
 	cache_drop_evictable_ubkis(cache);
-	cache_drop_evictable_lextfs(cache);
 }
 
 static void cache_drop_evictables(struct silofs_cache *cache)
@@ -2976,18 +2590,6 @@ void silofs_cache_drop(struct silofs_cache *cache)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static bool cache_evict_by_lextf(struct silofs_cache *cache,
-                                 struct silofs_lextf *lextf)
-{
-	bool ret = false;
-
-	if ((lextf != NULL) && lextf_is_evictable(lextf)) {
-		cache_evict_lextf(cache, lextf);
-		ret = true;
-	}
-	return ret;
-}
 
 static bool cache_evict_by_ubki(struct silofs_cache *cache,
                                 struct silofs_ubk_info *ubki)
@@ -3043,7 +2645,6 @@ static void cache_evict_some(struct silofs_cache *cache)
 	struct silofs_unode_info *ui = NULL;
 	struct silofs_vbk_info *vbki = NULL;
 	struct silofs_ubk_info *ubki = NULL;
-	struct silofs_lextf *lextf = NULL;
 	bool evicted = false;
 
 	vi = cache_find_evictable_vi(cache);
@@ -3060,10 +2661,6 @@ static void cache_evict_some(struct silofs_cache *cache)
 	}
 	ubki = cache_find_evictable_ubki(cache);
 	if (cache_evict_by_ubki(cache, ubki)) {
-		evicted = true;
-	}
-	lextf = cache_find_evictable_lextf(cache);
-	if (cache_evict_by_lextf(cache, lextf)) {
 		evicted = true;
 	}
 	if (!evicted) {
@@ -3101,7 +2698,6 @@ static void cache_fini_lrumaps(struct silofs_cache *cache)
 	cache_fini_ui_lm(cache);
 	cache_fini_vbki_lm(cache);
 	cache_fini_ubki_lm(cache);
-	cache_fini_lextf_lm(cache);
 }
 
 static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
@@ -3119,10 +2715,6 @@ static int cache_init_lrumaps(struct silofs_cache *cache)
 	const size_t hcap_prime = htbl_cap_as_prime(hcap);
 	int err;
 
-	err = cache_init_lextf_lm(cache, hcap);
-	if (err) {
-		goto out_err;
-	}
 	err = cache_init_ubki_lm(cache, hcap);
 	if (err) {
 		goto out_err;

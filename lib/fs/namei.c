@@ -2188,7 +2188,6 @@ static void fill_proc(const struct silofs_uber *uber,
                       struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
-	const struct silofs_cache *cache = uber->ub.cache;
 
 	silofs_allocstat(uber->ub.alloc, &alst);
 	silofs_memzero(qpr, sizeof(*qpr));
@@ -2201,7 +2200,7 @@ static void fill_proc(const struct silofs_uber *uber,
 	qpr->iopen_cur = uber->ub_ops.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = cache->c_lextf_lm.lm_lru.sz;
+	qpr->bopen_cur = uber->ub.repo->re_htbl.rh_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2448,14 +2447,13 @@ static int do_post_clone_updates(const struct silofs_task *task,
 
 static int flush_and_sync_lexts(struct silofs_task *task)
 {
-	const struct silofs_cache *cache = task_cache(task);
 	int err;
 
 	err = silofs_flush_dirty_now(task);
 	if (err) {
 		return err;
 	}
-	err = silofs_cache_fsync_lexts(cache);
+	err = silofs_repo_fsync_all(task->t_uber->ub.repo);
 	if (err) {
 		return err;
 	}

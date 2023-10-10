@@ -836,9 +836,6 @@ static bool smc_need_flush1(const struct silofs_submit_ctx *sm_ctx)
 	if (sm_ctx->flags & SILOFS_F_NOW) {
 		return true;
 	}
-	if (silofs_cache_has_lexts_overflow(sm_ctx->cache)) {
-		return true;
-	}
 	silofs_allocstat(sm_ctx->alloc, &st);
 	if (st.nbytes_use > (st.nbytes_max / 4)) {
 		return true;

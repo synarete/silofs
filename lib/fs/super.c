@@ -636,9 +636,12 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi)
 {
-	const struct silofs_uber *uber = sbi_uber(sbi);
+	const struct silofs_uber *uber = NULL;
 
-	log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
+	if (sbi != NULL) {
+		uber = sbi_uber(sbi);
+		log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
+	}
 	return 0;
 }
 

@@ -74,7 +74,7 @@ static int unrc_try_remove_lext_of(const struct silofs_unref_ctx *unr_ctx,
 		return 0;
 	}
 	repo = unrc_repo(unr_ctx);
-	err = silofs_repo_stat_lext(repo, lextid, &st);
+	err = silofs_repo_stat_lext(repo, lextid, false, &st);
 	if (err) {
 		return (err == -SILOFS_ENOENT) ? 0 : err;
 	}

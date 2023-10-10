@@ -215,7 +215,6 @@ static int fse_make_repo_base(struct silofs_fs_env *fse,
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = fse->fs_alloc;
-	re_base->cache = fse->fs_cache;
 	re_base->flags = fse->fs_args.rdonly ? SILOFS_REPOF_RDONLY : 0;
 	return silofs_bootpath_setup(&re_base->bootpath,
 	                             fse->fs_args.repodir, fse->fs_args.name);
@@ -661,9 +660,10 @@ static int term_task(struct silofs_task *task, int status)
 	return status ? status : err;
 }
 
-static void drop_cache(const struct silofs_fs_env *fse)
+static void drop_caches(const struct silofs_fs_env *fse)
 {
 	silofs_cache_drop(fse->fs_cache);
+	silofs_repo_drop_some(fse->fs_repo);
 }
 
 static int exec_stage_rootdir_inode(const struct silofs_fs_env *fse,
@@ -740,7 +740,7 @@ static int reload_fs_meta(const struct silofs_fs_env *fse)
 		log_err("failed to reload root dir: err=%d", err);
 		return err;
 	}
-	drop_cache(fse);
+	drop_caches(fse);
 	return 0;
 }
 
@@ -772,7 +772,7 @@ static int fsync_lexts(const struct silofs_fs_env *fse)
 {
 	int err;
 
-	err = silofs_cache_fsync_lexts(fse->fs_cache);
+	err = silofs_repo_fsync_all(fse->fs_repo);
 	if (err) {
 		log_err("failed to fsync lexts: err=%d", err);
 	}
@@ -784,7 +784,7 @@ static int shutdown_uber(struct silofs_fs_env *fse)
 	struct silofs_uber *uber = fse->fs_uber;
 	int err;
 
-	if ((uber == NULL) || (uber->ub_sbi == NULL)) {
+	if (uber == NULL) {
 		return 0;
 	}
 	err = silofs_sbi_shut(uber->ub_sbi);
@@ -842,7 +842,7 @@ static int flush_and_drop_cache(const struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	drop_cache(fse);
+	drop_caches(fse);
 	return 0;
 }
 
@@ -852,7 +852,7 @@ static int do_sync_fs(const struct silofs_fs_env *fse, bool drop)
 
 	err = flush_dirty(fse);
 	if (!err && drop) {
-		drop_cache(fse);
+		drop_caches(fse);
 	}
 	return err;
 }
@@ -1038,7 +1038,7 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_env *fse,
 	const loff_t voff_exp = 0;
 	int err;
 
-	drop_cache(fse);
+	drop_caches(fse);
 	err = exec_claim_vspace(fse, vspace, &vaddr);
 	if (err) {
 		log_err("failed to claim: vspace=%d err=%d", vspace, err);
@@ -1051,7 +1051,7 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_env *fse,
 		return -SILOFS_EFSCORRUPTED;
 	}
 
-	drop_cache(fse);
+	drop_caches(fse);
 	err = exec_reclaim_vspace(fse, &vaddr);
 	if (err) {
 		log_err("failed to reclaim space: vspace=%d voff=%ld err=%d",
@@ -1587,7 +1587,7 @@ static int do_close_fs(struct silofs_fs_env *fse)
 	if (err) {
 		return err;
 	}
-	drop_cache(fse);
+	drop_caches(fse);
 	return err;
 }
 
@@ -1706,7 +1706,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = shutdown_uber(fse);
+	err = do_close_fs(fse);
 	if (err) {
 		return err;
 	}

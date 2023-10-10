@@ -213,7 +213,7 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_format_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_mkfs_save_iconf(struct cmd_mkfs_ctx *ctx)
@@ -221,7 +221,7 @@ static void cmd_mkfs_save_iconf(struct cmd_mkfs_ctx *ctx)
 	cmd_iconf_save(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_mkfs_shutdown_fs(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_close_fs(ctx->fs_env);
 }
@@ -269,7 +269,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_save_iconf(&ctx);
 
 	/* Post-format cleanups */
-	cmd_mkfs_shutdown_fs(&ctx);
+	cmd_mkfs_close_fs(&ctx);
 
 	/* Close repository */
 	cmd_mkfs_close_repo(&ctx);

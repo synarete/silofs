@@ -149,7 +149,7 @@ void silofs_sqe_bind_lextf(struct silofs_submitq_ent *sqe,
 	if (lextf != NULL) {
 		sqe->lextf = lextf;
 		lextf_incref(sqe->lextf);
-		silofs_assert(!lextf->b_rdonly);
+		silofs_assert(!lextf->lex_rdonly);
 	}
 }
 

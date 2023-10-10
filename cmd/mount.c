@@ -340,12 +340,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_require_brec(struct cmd_mount_ctx *ctx)
 {
-	cmd_require_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs_by(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -356,7 +356,7 @@ static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 	ctx->post_exec_status = silofs_post_exec_fs(ctx->fs_env);
 }
 
-static void cmd_mount_shutdown_fs(struct cmd_mount_ctx *ctx)
+static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
 {
 	cmd_close_fs(ctx->fs_env);
 }
@@ -547,6 +547,9 @@ void cmd_execute_mount(void)
 	/* Require boot + lock-able file-system */
 	cmd_mount_boot_fs(&ctx);
 
+	/* Flush-close file-system */
+	cmd_mount_close_fs(&ctx);
+
 	/* Close repository */
 	cmd_mount_close_repo(&ctx);
 
@@ -581,13 +584,13 @@ void cmd_execute_mount(void)
 	cmd_mount_execute_fs(&ctx);
 
 	/* Flush-close file-system meta-data */
-	cmd_mount_shutdown_fs(&ctx);
-
-	/* Report end-of-mount */
-	cmd_mount_trace_finish(&ctx);
+	cmd_mount_close_fs(&ctx);
 
 	/* Close repository */
 	cmd_mount_close_repo(&ctx);
+
+	/* Report end-of-mount */
+	cmd_mount_trace_finish(&ctx);
 
 	/* Destroy main environment instance */
 	cmd_mount_destroy_fs_env(&ctx);

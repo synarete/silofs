@@ -158,6 +158,7 @@
 
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_cache(t)                   silofs_task_cache(t)
+#define task_repo(t)                    silofs_task_repo(t)
 #define task_idsmap(t)                  silofs_task_idsmap(t)
 #define task_creds(t)                   silofs_task_creds(t)
 

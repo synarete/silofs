@@ -2670,7 +2670,7 @@ int silofs_do_timedout(struct silofs_task *task, int flags)
 
 	err = silofs_flush_dirty(task, NULL, flags);
 	if (!err) {
-		silofs_relax_cache_by(task, flags);
+		silofs_relax_caches(task, flags);
 	}
 	return err;
 }

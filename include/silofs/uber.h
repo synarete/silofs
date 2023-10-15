@@ -87,6 +87,6 @@ int silofs_stage_lext_at(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_relax_cache_by(const struct silofs_task *task, int flags);
+void silofs_relax_caches(const struct silofs_task *task, int flags);
 
 #endif /* SILOFS_UBER_H_ */

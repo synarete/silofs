@@ -63,7 +63,7 @@ static int op_xstart(const struct silofs_task *task, ino_t ino)
 
 	ret = op_start(task, ino);
 	if (ret == 0) {
-		silofs_relax_cache_by(task, SILOFS_F_OPSTART);
+		silofs_relax_caches(task, SILOFS_F_OPSTART);
 	}
 	return ret;
 }
@@ -111,7 +111,7 @@ static int op_finish(const struct silofs_task *task, ino_t ino, int err)
 		if (ino_isnull(ino)) {
 			flags |= SILOFS_F_TIMEOUT;
 		}
-		silofs_relax_cache_by(task, flags);
+		silofs_relax_caches(task, flags);
 	}
 	op_unlock_fs(task);
 	return err;

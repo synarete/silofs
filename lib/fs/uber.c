@@ -1446,11 +1446,10 @@ int silofs_stage_lext_at(struct silofs_uber *uber,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_relax_cache_by(const struct silofs_task *task, int flags)
+void silofs_relax_caches(const struct silofs_task *task, int flags)
 {
 	silofs_cache_relax(task_cache(task), flags);
 	if (flags & SILOFS_F_IDLE) {
-		silofs_repo_fsync_all(task->t_uber->ub.repo);
+		silofs_repo_relax(task_repo(task));
 	}
 }
-

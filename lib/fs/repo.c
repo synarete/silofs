@@ -431,7 +431,6 @@ static int lextf_init(struct silofs_lextf *lextf,
 	lextid_assign(&lextf->lex_id, lextid);
 	list_head_init(&lextf->lex_htb_lh);
 	list_head_init(&lextf->lex_lsq_lh);
-	lextf->lex_repo = NULL;
 	lextf->lex_size = 0;
 	lextf->lex_fd = -1;
 	lextf->lex_refcnt = 0;
@@ -1109,7 +1108,6 @@ static void repo_htbl_insert(struct silofs_repo *repo,
 
 	list_push_front(lst, &lextf->lex_htb_lh);
 	repo->re_htbl.rh_size += 1;
-	lextf->lex_repo = repo;
 }
 
 static void
@@ -1117,7 +1115,6 @@ repo_htbl_remove(struct silofs_repo *repo, struct silofs_lextf *lextf)
 {
 	silofs_assert_gt(repo->re_htbl.rh_size, 0);
 
-	lextf->lex_repo = NULL;
 	list_head_remove(&lextf->lex_htb_lh);
 	repo->re_htbl.rh_size -= 1;
 }
@@ -1127,13 +1124,20 @@ repo_htbl_remove(struct silofs_repo *repo, struct silofs_lextf *lextf)
 static void repo_lstq_insert(struct silofs_repo *repo,
                              struct silofs_lextf *lextf)
 {
-	listq_push_back(&repo->re_lstq, &lextf->lex_lsq_lh);
+	listq_push_front(&repo->re_lstq, &lextf->lex_lsq_lh);
 }
 
 static void repo_lstq_remove(struct silofs_repo *repo,
                              struct silofs_lextf *lextf)
 {
 	listq_remove(&repo->re_lstq, &lextf->lex_lsq_lh);
+}
+
+static void repo_lstq_requeue(struct silofs_repo *repo,
+                              struct silofs_lextf *lextf)
+{
+	listq_remove(&repo->re_lstq, &lextf->lex_lsq_lh);
+	listq_push_back(&repo->re_lstq, &lextf->lex_lsq_lh);
 }
 
 static struct silofs_lextf *repo_lstq_front(const struct silofs_repo *repo)
@@ -1216,19 +1220,27 @@ static void repo_evict_all(struct silofs_repo *repo)
 	}
 }
 
-static void repo_evict_some(struct silofs_repo *repo, size_t lim)
+static void repo_requeue_lextf(struct silofs_repo *repo,
+                               struct silofs_lextf *lextf)
+{
+	repo_lstq_requeue(repo, lextf);
+}
+
+static void repo_evict_or_requeue(struct silofs_repo *repo, size_t niter)
 {
 	struct silofs_lextf *lextf;
 	struct silofs_lextf *lextf_next;
 
 	lextf = repo_nextof(repo, NULL);
-	while ((lextf != NULL) && (lim > 0)) {
+	while ((lextf != NULL) && (niter > 0)) {
 		lextf_next = repo_nextof(repo, lextf);
 		if (lextf_is_evictable_atomic(lextf)) {
 			repo_evict_lextf(repo, lextf);
-			lim -= 1;
+		} else {
+			repo_requeue_lextf(repo, lextf);
 		}
 		lextf = lextf_next;
+		niter -= 1;
 	}
 }
 
@@ -1238,15 +1250,19 @@ static void repo_evict_some(struct silofs_repo *repo, size_t lim)
  * Have explicit upper-limit to cached lexts, based on the process' rlimit
  * RLIMIT_NOFILE and memory limits.
  */
-static void repo_relax_some(struct silofs_repo *repo)
+static void repo_evict_overpop(struct silofs_repo *repo)
 {
-	const size_t qmax = 256;
-	size_t qdif;
+	const size_t qcur = repo->re_lstq.sz;
+	const size_t qmax = 128;
 
-	if (repo->re_lstq.sz > qmax) {
-		qdif = repo->re_lstq.sz - qmax;
-		repo_evict_some(repo, (qdif + 1) / 2);
+	if (qcur > qmax) {
+		repo_evict_or_requeue(repo, min(qcur - qmax, 2));
 	}
+}
+
+void silofs_repo_relax(struct silofs_repo *repo)
+{
+	repo_evict_or_requeue(repo, 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1263,7 +1279,7 @@ static int repo_create_cached_lextf(struct silofs_repo *repo,
                                     const struct silofs_lextid *lextid,
                                     struct silofs_lextf **out_lextf)
 {
-	repo_relax_some(repo);
+	repo_evict_overpop(repo);
 	return repo_create_lextf(repo, lextid, out_lextf);
 }
 
@@ -1716,7 +1732,7 @@ void silofs_repo_fini(struct silofs_repo *repo)
 void silofs_repo_drop_some(struct silofs_repo *repo)
 {
 	silofs_repo_fsync_all(repo);
-	repo_evict_some(repo, repo->re_lstq.sz);
+	repo_evict_or_requeue(repo, repo->re_lstq.sz);
 }
 
 static void repo_pre_op(struct silofs_repo *repo)

@@ -24,10 +24,9 @@
 /* logical-extent control file */
 struct silofs_lextf {
 	struct silofs_namebuf           lex_name;
-	struct silofs_repo             *lex_repo;
+	struct silofs_lextid            lex_id;
 	struct silofs_list_head         lex_htb_lh;
 	struct silofs_list_head         lex_lsq_lh;
-	struct silofs_lextid            lex_id;
 	long                            lex_size;
 	int                             lex_fd;
 	int                             lex_refcnt;
@@ -123,6 +122,8 @@ int silofs_repo_close(struct silofs_repo *repo);
 int silofs_repo_fsync_all(struct silofs_repo *repo);
 
 void silofs_repo_drop_some(struct silofs_repo *repo);
+
+void silofs_repo_relax(struct silofs_repo *repo);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

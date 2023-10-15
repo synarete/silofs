@@ -235,7 +235,7 @@ static int stgc_flush_dirty_now(const struct silofs_stage_ctx *stg_ctx)
 
 static void stgc_relax_caches_now(const struct silofs_stage_ctx *stg_ctx)
 {
-	silofs_relax_cache_by(stg_ctx->task, SILOFS_F_NOW);
+	silofs_relax_caches(stg_ctx->task, SILOFS_F_NOW);
 }
 
 static int

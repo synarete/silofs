@@ -439,6 +439,11 @@ struct silofs_cache *silofs_task_cache(const struct silofs_task *task)
 	return task->t_uber->ub.cache;
 }
 
+struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
+{
+	return task->t_uber->ub.repo;
+}
+
 const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 {
 	return task->t_uber->ub.idsmap;

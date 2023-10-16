@@ -638,18 +638,6 @@ static int lextf_iovec_of(const struct silofs_lextf *lextf,
 	return lextf_iovec_at(lextf, laddr->pos, laddr->len, siov);
 }
 
-int silofs_lextf_resolve(struct silofs_lextf *lextf,
-                         const struct silofs_laddr *laddr,
-                         struct silofs_iovec *siov)
-{
-	int ret;
-
-	lextf_lock(lextf);
-	ret = lextf_iovec_of(lextf, laddr, siov);
-	lextf_unlock(lextf);
-	return ret;
-}
-
 static int lextf_sync_range(const struct silofs_lextf *lextf,
                             loff_t off, size_t len)
 {
@@ -716,29 +704,22 @@ static int lextf_pwritevn(struct silofs_lextf *lextf, loff_t off,
 	return 0;
 }
 
-int silofs_lextf_pwriten(struct silofs_lextf *lextf, loff_t off,
-                         const void *buf, size_t len, bool sync)
-{
-	int err;
-
-	lextf_lock(lextf);
-	err = lextf_pwriten(lextf, off, buf, len);
-	if (!err && sync) {
-		err = lextf_sync_range(lextf, off, len);
-	}
-	lextf_unlock(lextf);
-	return err;
-}
-
 int silofs_lextf_pwritevn(struct silofs_lextf *lextf, loff_t off,
                           const struct iovec *iov, size_t cnt, bool sync)
 {
+	size_t len = 0;
 	int err;
 
 	lextf_lock(lextf);
-	err = lextf_pwritevn(lextf, off, iov, cnt);
+	if (cnt == 1) {
+		len = iov->iov_len;
+		err = lextf_pwriten(lextf, off, iov->iov_base, len);
+	} else {
+		len = length_of(iov, cnt);
+		err = lextf_pwritevn(lextf, off, iov, cnt);
+	}
 	if (!err && sync) {
-		err = lextf_sync_range(lextf, off, length_of(iov, cnt));
+		err = lextf_sync_range(lextf, off, len);
 	}
 	lextf_unlock(lextf);
 	return err;
@@ -896,18 +877,7 @@ int silofs_lextf_trim(struct silofs_lextf *lextf)
 	return ret;
 }
 
-int silofs_lextf_check(struct silofs_lextf *lextf,
-                       const struct silofs_laddr *laddr)
-{
-	int ret;
-
-	lextf_lock(lextf);
-	ret = lextf_check_laddr(lextf, laddr);
-	lextf_unlock(lextf);
-	return ret;
-}
-
-int silofs_lextf_stat(struct silofs_lextf *lextf, struct stat *out_st)
+static int silofs_lextf_stat(struct silofs_lextf *lextf, struct stat *out_st)
 {
 	int ret;
 
@@ -2252,29 +2222,13 @@ int silofs_repo_remove_lext(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int repo_require_lext(struct silofs_repo *repo,
-                             const struct silofs_lextid *lextid,
-                             struct silofs_lextf **out_lextf)
-{
-	struct stat st;
-	int err;
-
-	err = silofs_repo_stat_lext(repo, lextid, false, &st);
-	if (!err) {
-		err = silofs_repo_stage_lext(repo, true, lextid, out_lextf);
-	} else if (err == -SILOFS_ENOENT) {
-		err = silofs_repo_spawn_lext(repo, lextid, out_lextf);
-	}
-	return err;
-}
-
 int silofs_repo_require_laddr(struct silofs_repo *repo,
                               const struct silofs_laddr *laddr)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = repo_require_lext(repo, &laddr->lextid, &lextf);
+	err = silofs_repo_stage_lext(repo, true, &laddr->lextid, &lextf);
 	if (err) {
 		return err;
 	}

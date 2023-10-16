@@ -2070,6 +2070,12 @@ static int stgc_require_laddr(const struct silofs_stage_ctx *stg_ctx,
 	return silofs_repo_require_laddr(stg_ctx->uber->ub.repo, laddr);
 }
 
+static int stgc_require_bkaddr(const struct silofs_stage_ctx *stg_ctx,
+                               const struct silofs_bkaddr *bkaddr)
+{
+	return stgc_require_laddr(stg_ctx, &bkaddr->laddr);
+}
+
 static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
                                const struct silofs_laddr *laddr,
                                struct silofs_vbk_info **out_vbki)
@@ -2111,23 +2117,9 @@ static int stgc_stage_vblock(const struct silofs_stage_ctx *stg_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int lextf_resolve_bk(struct silofs_lextf *lextf,
-                            const struct silofs_bkaddr *bkaddr,
-                            struct silofs_iovec *iov)
-{
-	struct silofs_laddr laddr;
-	const loff_t off = lba_to_off(bkaddr->lba);
-	const size_t len = SILOFS_LBK_SIZE;
-
-	silofs_laddr_setup(&laddr, &bkaddr->laddr.lextid, off, len);
-	return silofs_lextf_resolve(lextf, &laddr, iov);
-}
-
-static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
+static int stgc_require_bks(const struct silofs_stage_ctx *stg_ctx,
                             const struct silofs_bkaddr *bkaddr_src,
-                            const struct silofs_bkaddr *bkaddr_dst,
-                            struct silofs_iovec *out_iov_src,
-                            struct silofs_iovec *out_iov_dst)
+                            const struct silofs_bkaddr *bkaddr_dst)
 {
 	struct silofs_lextf *lextf_src = NULL;
 	struct silofs_lextf *lextf_dst = NULL;
@@ -2145,12 +2137,12 @@ static int stgc_resolve_bks(const struct silofs_stage_ctx *stg_ctx,
 	}
 	lextf_incref(lextf_dst);
 
-	ret = lextf_resolve_bk(lextf_src, bkaddr_src, out_iov_src);
+	ret = stgc_require_bkaddr(stg_ctx, bkaddr_src);
 	if (ret) {
 		goto out;
 	}
 
-	ret = lextf_resolve_bk(lextf_dst, bkaddr_dst, out_iov_dst);
+	ret = stgc_require_bkaddr(stg_ctx, bkaddr_dst);
 	if (ret) {
 		goto out;
 	}
@@ -2178,17 +2170,13 @@ static int stgc_clone_rebind_vblock(const struct silofs_stage_ctx *stg_ctx,
                                     const struct silofs_bkaddr *src_bka)
 {
 	struct silofs_blink dst_blink;
-	struct silofs_iovec src_iov = { .iov_fd = -1 };
-	struct silofs_iovec dst_iov = { .iov_fd = -1 };
-	const struct silofs_bkaddr *dst_bka = NULL;
 	int err;
 
 	err = stgc_require_clone_bkaddr(stg_ctx, &dst_blink);
 	if (err) {
 		return err;
 	}
-	dst_bka = &dst_blink.bka;
-	err = stgc_resolve_bks(stg_ctx, src_bka, dst_bka, &src_iov, &dst_iov);
+	err = stgc_require_bks(stg_ctx, src_bka, &dst_blink.bka);
 	if (err) {
 		return err;
 	}

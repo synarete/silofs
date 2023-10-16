@@ -51,12 +51,12 @@ struct silofs_repo_htbl {
 /* repository */
 struct silofs_repo {
 	struct silofs_repo_base         re;
+	struct silofs_repo_htbl         re_htbl;
+	struct silofs_listq             re_lstq;
 	struct silofs_mdigest           re_mdigest;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
 	int                             re_lexts_dfd;
-	struct silofs_repo_htbl         re_htbl;
-	struct silofs_listq             re_lstq;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -72,24 +72,12 @@ void silofs_lextf_incref(struct silofs_lextf *lextf);
 
 void silofs_lextf_decref(struct silofs_lextf *lextf);
 
-int silofs_lextf_stat(struct silofs_lextf *lextf, struct stat *out_st);
-
-int silofs_lextf_pwriten(struct silofs_lextf *lextf, loff_t off,
-                         const void *buf, size_t len, bool sync);
-
 int silofs_lextf_pwritevn(struct silofs_lextf *lextf, loff_t off,
                           const struct iovec *iov, size_t cnt, bool sync);
 
 int silofs_lextf_load_bk(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_lbk_info *lbki);
-
-int silofs_lextf_check(struct silofs_lextf *lextf,
-                       const struct silofs_laddr *laddr);
-
-int silofs_lextf_resolve(struct silofs_lextf *lextf,
-                         const struct silofs_laddr *laddr,
-                         struct silofs_iovec *iov);
 
 int silofs_lextf_trim(struct silofs_lextf *lextf);
 

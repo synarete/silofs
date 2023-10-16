@@ -84,12 +84,6 @@ int silofs_lextf_load_bk(struct silofs_lextf *lextf,
                          const struct silofs_laddr *laddr,
                          struct silofs_lbk_info *lbki);
 
-int silofs_lextf_require(struct silofs_lextf *lextf,
-                         const struct silofs_laddr *laddr);
-
-int silofs_lextf_require_bk_of(struct silofs_lextf *lextf,
-                               const struct silofs_bkaddr *bkaddr);
-
 int silofs_lextf_check(struct silofs_lextf *lextf,
                        const struct silofs_laddr *laddr);
 
@@ -104,7 +98,6 @@ int silofs_lextf_flock(struct silofs_lextf *lextf);
 
 int silofs_lextf_funlock(struct silofs_lextf *lextf);
 
-int silofs_lextf_fsync(struct silofs_lextf *lextf);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -158,5 +151,10 @@ int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
 
 int silofs_repo_remove_lext(struct silofs_repo *repo,
                             const struct silofs_lextid *lextid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_repo_require_laddr(struct silofs_repo *repo,
+                              const struct silofs_laddr *laddr);
 
 #endif /* SILOFS_REPO_H_ */

@@ -2064,6 +2064,12 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	return 0;
 }
 
+static int stgc_require_laddr(const struct silofs_stage_ctx *stg_ctx,
+                              const struct silofs_laddr *laddr)
+{
+	return silofs_repo_require_laddr(stg_ctx->uber->ub.repo, laddr);
+}
+
 static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
                                const struct silofs_laddr *laddr,
                                struct silofs_vbk_info **out_vbki)
@@ -2071,11 +2077,11 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = stgc_do_stage_lext(stg_ctx, &laddr->lextid, &lextf);
+	err = stgc_require_laddr(stg_ctx, laddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_lextf_require(lextf, laddr);
+	err = stgc_do_stage_lext(stg_ctx, &laddr->lextid, &lextf);
 	if (err) {
 		return err;
 	}

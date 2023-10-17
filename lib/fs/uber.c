@@ -852,6 +852,14 @@ static void ubc_forget_cached_ubki(const struct silofs_uber_ctx *ub_ctx,
 	silofs_cache_forget_ubk(ub_ctx->cache, ubki);
 }
 
+static int ubc_load_bk_of(const struct silofs_uber_ctx *ub_ctx,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info *ubki)
+{
+	return silofs_repo_read_at(ub_ctx->repo, &bkaddr->laddr,
+	                           ubki->ubk.lbk);
+}
+
 static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
                                const struct silofs_bkaddr *bkaddr,
                                struct silofs_ubk_info **out_ubki)
@@ -872,7 +880,7 @@ static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
 	if (err) {
 		return err;
 	}
-	err = silofs_lextf_load_bk(lextf, &bkaddr->laddr, &ubki->ubk);
+	err = ubc_load_bk_of(ub_ctx, bkaddr, ubki);
 	if (err) {
 		ubc_forget_cached_ubki(ub_ctx, ubki);
 		return err;

@@ -2043,6 +2043,17 @@ static int stgc_spawn_vbki_by(const struct silofs_stage_ctx *stg_ctx,
 	return ret;
 }
 
+static int stgc_load_bk_of(const struct silofs_stage_ctx *stg_ctx,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_vbk_info *vbki)
+{
+	struct silofs_bkaddr bkaddr;
+	void *buf = vbki->vbk.lbk;
+
+	bkaddr_by_laddr(&bkaddr, laddr);
+	return silofs_repo_read_at(stg_ctx->uber->ub.repo, &bkaddr.laddr, buf);
+}
+
 static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
                                struct silofs_lextf *lextf,
                                const struct silofs_laddr *laddr,
@@ -2055,7 +2066,7 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_lextf_load_bk(lextf, laddr, &vbki->vbk);
+	err = stgc_load_bk_of(stg_ctx, laddr, vbki);
 	if (err) {
 		stgc_forget_cached_vbki(stg_ctx, vbki);
 		return err;

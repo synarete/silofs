@@ -47,7 +47,7 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 }
 
 static bool sqe_has_lextid_as(const struct silofs_submitq_ent *sqe,
-                		const struct silofs_laddr *laddr)
+                              const struct silofs_laddr *laddr)
 {
 	return lextid_isequal(&sqe->laddr.lextid, &laddr->lextid);
 }
@@ -168,10 +168,10 @@ static void sqe_unbind_lextf(struct silofs_submitq_ent *sqe)
 	silofs_sqe_bind_lextf(sqe, NULL);
 }
 
-static int sqe_pwrite_iovs(const struct silofs_submitq_ent *sqe)
+static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_lextf_pwritevn(sqe->lextf, sqe->laddr.pos,
-	                             sqe->iov, sqe->cnt, true);
+	return silofs_repo_writev_at(sqe->uber->ub.repo,
+	                             &sqe->laddr, sqe->iov, sqe->cnt);
 }
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
@@ -253,7 +253,7 @@ struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)
 
 static int sqe_apply(struct silofs_submitq_ent *sqe)
 {
-	sqe->status = sqe_pwrite_iovs(sqe);
+	sqe->status = sqe_do_write(sqe);
 	return sqe->status;
 }
 

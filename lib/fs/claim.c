@@ -456,7 +456,6 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 static int spac_try_reclaim_vlext(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_laddr laddr = { .pos = -1 };
-	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	if (spa_ctx->sli->sl_nused_bytes) {
@@ -469,14 +468,9 @@ static int spac_try_reclaim_vlext(const struct silofs_spalloc_ctx *spa_ctx)
 	if (!spac_ismutable_lextid(spa_ctx, &laddr.lextid)) {
 		return 0; /* not a mutable lext */
 	}
-	err = silofs_stage_lext_at(spa_ctx->uber, &laddr.lextid, &lextf);
-	if (err) {
-		log_err("failed to stage lext: err=%d", err);
-		return err;
-	}
-	err = silofs_lextf_trim(lextf);
+	err = silofs_repo_punch_lext(spa_ctx->uber->ub.repo, &laddr.lextid);
 	if (err && (err != -ENOTSUP)) {
-		log_err("failed to trim lext: err=%d", err);
+		log_err("failed to punch lext: err=%d", err);
 		return err;
 	}
 	return 0;

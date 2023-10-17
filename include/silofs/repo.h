@@ -26,7 +26,7 @@ struct silofs_lextf {
 	struct silofs_namebuf           lex_name;
 	struct silofs_lextid            lex_id;
 	struct silofs_list_head         lex_htb_lh;
-	struct silofs_list_head         lex_lsq_lh;
+	struct silofs_list_head         lex_lru_lh;
 	long                            lex_size;
 	int                             lex_fd;
 	int                             lex_refcnt;
@@ -52,7 +52,7 @@ struct silofs_repo_htbl {
 struct silofs_repo {
 	struct silofs_repo_base         re;
 	struct silofs_repo_htbl         re_htbl;
-	struct silofs_listq             re_lstq;
+	struct silofs_listq             re_lruq;
 	struct silofs_mdigest           re_mdigest;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
@@ -61,20 +61,9 @@ struct silofs_repo {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_lextf *
-silofs_lextf_new(struct silofs_alloc *alloc,
-                 const struct silofs_lextid *lextid);
-
-void silofs_lextf_del(struct silofs_lextf *lextf,
-                      struct silofs_alloc *alloc);
-
 void silofs_lextf_incref(struct silofs_lextf *lextf);
 
 void silofs_lextf_decref(struct silofs_lextf *lextf);
-
-int silofs_lextf_flock(struct silofs_lextf *lextf);
-
-int silofs_lextf_funlock(struct silofs_lextf *lextf);
 
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -132,6 +121,12 @@ int silofs_repo_remove_lext(struct silofs_repo *repo,
 
 int silofs_repo_punch_lext(struct silofs_repo *repo,
                            const struct silofs_lextid *lextid);
+
+int silofs_repo_flock_lext(struct silofs_repo *repo,
+                           const struct silofs_lextid *lextid);
+
+int silofs_repo_funlock_lext(struct silofs_repo *repo,
+                             const struct silofs_lextid *lextid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -619,11 +619,10 @@ static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,
 static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
                         struct silofs_submitq_ent *sqe)
 {
-	const struct silofs_lextid *lextid = &sqe->lextid;
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_stage_lext_at(sm_ctx->uber, lextid, &lextf);
+	err = silofs_stage_lext_at(sm_ctx->uber, &sqe->laddr.lextid, &lextf);
 	if (err) {
 		return err;
 	}

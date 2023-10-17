@@ -43,10 +43,8 @@ struct silofs_submitq_ent {
 	struct silofs_uber     *uber;
 	struct silofs_alloc    *alloc;
 	struct silofs_lextf    *lextf;
-	struct silofs_lextid    lextid;
+	struct silofs_laddr     laddr;
 	uint64_t                uniq_id;
-	loff_t                  off;
-	uint32_t                len;
 	uint32_t                cnt;
 	uint32_t                tx_count;
 	uint32_t                tx_index;

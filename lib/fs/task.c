@@ -46,10 +46,17 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 	}
 }
 
+static bool sqe_has_lextid_as(const struct silofs_submitq_ent *sqe,
+                		const struct silofs_laddr *laddr)
+{
+	return lextid_isequal(&sqe->laddr.lextid, &laddr->lextid);
+}
+
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
                              const struct silofs_laddr *laddr,
                              const struct silofs_lnode_info *lni)
 {
+	const struct silofs_laddr *sqe_laddr = &sqe->laddr;
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
 	size_t len;
 	loff_t end;
@@ -64,20 +71,23 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (lni->stype != sqe->stype) {
 		return false;
 	}
-	end = off_end(sqe->off, sqe->len);
+	end = off_end(sqe->laddr.pos, sqe_laddr->len);
 	if (laddr->pos != end) {
 		return false;
 	}
-	len = sqe->len + laddr->len;
+	if (end > (ssize_t)laddr->lextid.size) {
+		return false;
+	}
+	len = sqe_laddr->len + laddr->len;
 	if (len > (size_t)len_max) {
 		return false;
 	}
-	nxt = off_next(sqe->off, len_max);
-	end = off_end(sqe->off, len);
+	nxt = off_next(sqe_laddr->pos, len_max);
+	end = off_end(sqe_laddr->pos, len);
 	if (end > nxt) {
 		return false;
 	}
-	if (!lextid_isequal(&laddr->lextid, &sqe->lextid)) {
+	if (!sqe_has_lextid_as(sqe, laddr)) {
 		return false;
 	}
 	return true;
@@ -93,12 +103,12 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 		return false;
 	}
 	if (sqe->cnt == 0) {
-		lextid_assign(&sqe->lextid, &laddr->lextid);
-		sqe->off = laddr->pos;
+		laddr_assign(&sqe->laddr, laddr);
 		sqe->stype = lni->stype;
+	} else {
+		sqe->laddr.len += laddr->len;
 	}
 	sqe->lbki[sqe->cnt++] = lni->lbki;
-	sqe->len += (uint32_t)(laddr->len);
 	return true;
 }
 
@@ -160,7 +170,7 @@ static void sqe_unbind_lextf(struct silofs_submitq_ent *sqe)
 
 static int sqe_pwrite_iovs(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_lextf_pwritevn(sqe->lextf, sqe->off,
+	return silofs_lextf_pwritevn(sqe->lextf, sqe->laddr.pos,
 	                             sqe->iov, sqe->cnt, true);
 }
 
@@ -189,13 +199,11 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 {
 	memset(sqe, 0, sizeof(*sqe));
 	list_head_init(&sqe->qlh);
+	laddr_reset(&sqe->laddr);
 	sqe->alloc = alloc;
 	sqe->uber = NULL;
 	sqe->lextf = NULL;
-	sqe->lextid.size = 0;
 	sqe->uniq_id = uniq_id;
-	sqe->off = -1;
-	sqe->len = 0;
 	sqe->cnt = 0;
 	sqe->hold_refs = 0;
 	sqe->status = 0;
@@ -204,10 +212,9 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 static void sqe_fini(struct silofs_submitq_ent *sqe)
 {
 	list_head_fini(&sqe->qlh);
+	laddr_reset(&sqe->laddr);
 	sqe_reset_iovs(sqe);
 	sqe_unbind_lextf(sqe);
-	sqe->off = -1;
-	sqe->len = 0;
 	sqe->cnt = 0;
 	sqe->alloc = NULL;
 	sqe->status = -1;

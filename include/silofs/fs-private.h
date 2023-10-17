@@ -118,12 +118,12 @@
 #define bkaddr_by_laddr(ba, pa)         silofs_bkaddr_by_laddr(ba, pa)
 #define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
 
-#define laddr_reset(pa)                 silofs_laddr_reset(pa)
-#define laddr_assign(pa, oth)           silofs_laddr_assign(pa, oth)
-#define laddr_setup(pa, bid, o, l)      silofs_laddr_setup(pa, bid, o, l)
-#define laddr_setup_by(pa, bid, va)     silofs_laddr_setup_by(pa, bid, va)
-#define laddr_isvalid(pa)               silofs_laddr_isvalid(pa)
-#define laddr_isnull(pa)                silofs_laddr_isnull(pa)
+#define laddr_reset(la)                 silofs_laddr_reset(la)
+#define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)
+#define laddr_setup(la, bid, o, l)      silofs_laddr_setup(la, bid, o, l)
+#define laddr_setup_by(la, bid, va)     silofs_laddr_setup_by(la, bid, va)
+#define laddr_isvalid(la)               silofs_laddr_isvalid(la)
+#define laddr_isnull(la)                silofs_laddr_isnull(la)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)

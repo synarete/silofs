@@ -924,36 +924,6 @@ union silofs_view {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* journal meta record */
-struct silofs_journal_meta {
-	struct silofs_header            jm_hdr;
-	uint64_t                        jm_magic1;
-	uint32_t                        jm_version;
-	uint8_t                         jm_reserved[4060];
-	uint64_t                        jm_magic2;
-} silofs_packed_aligned64;
-
-/* journal log record */
-struct silofs_journal_rec {
-	struct silofs_header            jr_hdr;
-	uint64_t                        jr_magic;
-	uint64_t                        jr_uniq_id;
-	uint32_t                        jr_length;
-	uint32_t                        jr_tx_count;
-	uint32_t                        jr_tx_index;
-	uint8_t                         jr_reserved2[20];
-	struct silofs_lextid32b         jr_src_lextid;
-	int64_t                         jr_src_off;
-	uint8_t                         jr_reserved3[24];
-	struct silofs_lextid32b         jr_dst_lextid;
-	int64_t                         jr_dst_off;
-	uint8_t                         jr_reserved4[24];
-	uint8_t                         jr_reserved5[48];
-	uint64_t                        jr_csum;
-} silofs_packed_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 /* repo meta record */
 struct silofs_repo_meta {
 	uint64_t                        rm_magic;

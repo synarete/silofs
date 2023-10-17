@@ -43,7 +43,6 @@ libsilofs_la_SOURCES += fs/fuseq.c
 libsilofs_la_SOURCES += fs/idmap.c
 libsilofs_la_SOURCES += fs/inode.c
 libsilofs_la_SOURCES += fs/inspect.c
-libsilofs_la_SOURCES += fs/journal.c
 libsilofs_la_SOURCES += fs/mntsvc.c
 libsilofs_la_SOURCES += fs/namei.c
 libsilofs_la_SOURCES += fs/nodes.c

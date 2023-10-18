@@ -107,11 +107,11 @@
 #define stype_isdata(st)                silofs_stype_isdata(st)
 #define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
-#define lextid_reset(bid)               silofs_lextid_reset(bid)
-#define lextid_assign(bid, oth)         silofs_lextid_assign(bid, oth)
-#define lextid_isequal(bid, oth)        silofs_lextid_isequal(bid, oth)
-#define lextid_isnull(bid)              silofs_lextid_isnull(bid)
-#define lextid_size(bid)                silofs_lextid_size(bid)
+#define lextid_reset(lid)               silofs_lextid_reset(lid)
+#define lextid_assign(lid, oth)         silofs_lextid_assign(lid, oth)
+#define lextid_isequal(lid, oth)        silofs_lextid_isequal(lid, oth)
+#define lextid_isnull(lid)              silofs_lextid_isnull(lid)
+#define lextid_size(lid)                silofs_lextid_size(lid)
 
 #define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
@@ -149,12 +149,6 @@
 #define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 #define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
-
-#define vrange_next(vrng, o)            silofs_vrange_next(vrng, o)
-#define vrange_within(vrng, o)          silofs_vrange_within(vrng, o)
-
-#define lextf_incref(lextf)             silofs_lextf_incref(lextf)
-#define lextf_decref(lextf)             silofs_lextf_decref(lextf)
 
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_cache(t)                   silofs_task_cache(t)

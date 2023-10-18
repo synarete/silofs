@@ -25,6 +25,20 @@
 #include <limits.h>
 
 
+/* logical-extent control file */
+struct silofs_lextf {
+	struct silofs_namebuf           lex_name;
+	struct silofs_lextid            lex_id;
+	struct silofs_list_head         lex_htb_lh;
+	struct silofs_list_head         lex_lru_lh;
+	long                            lex_size;
+	int                             lex_fd;
+	int                             lex_refcnt;
+	bool                            lex_flocked;
+	bool                            lex_rdonly;
+};
+
+/* well-know repository meta file-names and sub-directories */
 struct silofs_repo_defs {
 	const char     *re_dots_name;
 	const char     *re_meta_name;
@@ -462,17 +476,6 @@ static int lextf_refcnt(const struct silofs_lextf *lextf)
 	return silofs_atomic_get(&lextf->lex_refcnt);
 }
 
-void silofs_lextf_incref(struct silofs_lextf *lextf)
-{
-	silofs_atomic_add(&lextf->lex_refcnt, 1);
-}
-
-void silofs_lextf_decref(struct silofs_lextf *lextf)
-{
-	silofs_assert_gt(lextf->lex_refcnt, 0);
-	silofs_atomic_sub(&lextf->lex_refcnt, 1);
-}
-
 static bool lextf_is_evictable(const struct silofs_lextf *lextf)
 {
 	return !lextf->lex_flocked && (lextf_refcnt(lextf) == 0);
@@ -813,7 +816,7 @@ static int lextf_punch(struct silofs_lextf *lextf)
 	return lextf_do_punch_all(lextf);
 }
 
-static int silofs_lextf_flock(struct silofs_lextf *lextf)
+static int lextf_flock(struct silofs_lextf *lextf)
 {
 	int err = 0;
 
@@ -824,7 +827,7 @@ static int silofs_lextf_flock(struct silofs_lextf *lextf)
 	return err;
 }
 
-static int silofs_lextf_funlock(struct silofs_lextf *lextf)
+static int lextf_funlock(struct silofs_lextf *lextf)
 {
 	int err = 0;
 
@@ -847,7 +850,7 @@ static int lextf_fsync2(struct silofs_lextf *lextf)
 
 static int lextf_close(struct silofs_lextf *lextf)
 {
-	silofs_lextf_funlock(lextf);
+	lextf_funlock(lextf);
 	return do_closefd(&lextf->lex_fd);
 }
 
@@ -1085,16 +1088,25 @@ static void repo_evict_all(struct silofs_repo *repo)
 	}
 }
 
-static void repo_evict_some(struct silofs_repo *repo, size_t niter)
+static void repo_requeue_lextf(struct silofs_repo *repo,
+                               struct silofs_lextf *lextf)
 {
-	struct silofs_lextf *lextf;
-	struct silofs_lextf *lextf_prev;
+	repo_lruq_requeue(repo, lextf);
+}
+
+static void repo_evict_some(struct silofs_repo *repo, size_t niter_max)
+{
+	struct silofs_lextf *lextf = NULL;
+	struct silofs_lextf *lextf_prev = NULL;
+	size_t niter = min(niter_max, repo->re_lruq.sz);
 
 	lextf = repo_prevof(repo, NULL);
 	while ((lextf != NULL) && (niter-- > 0)) {
 		lextf_prev = repo_prevof(repo, lextf);
 		if (lextf_is_evictable(lextf)) {
 			repo_evict_lextf(repo, lextf);
+		} else {
+			repo_requeue_lextf(repo, lextf);
 		}
 		lextf = lextf_prev;
 	}
@@ -1122,12 +1134,6 @@ void silofs_repo_relax(struct silofs_repo *repo)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void repo_requeue_lextf(struct silofs_repo *repo,
-                               struct silofs_lextf *lextf)
-{
-	repo_lruq_requeue(repo, lextf);
-}
 
 static int repo_fetch_cached_lextf(const struct silofs_repo *repo,
                                    const struct silofs_lextid *lextid,
@@ -2084,20 +2090,37 @@ int silofs_repo_stat_lext(const struct silofs_repo *repo,
 }
 
 int silofs_repo_spawn_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid,
-                           struct silofs_lextf **out_lextf)
+                           const struct silofs_lextid *lextid)
 {
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	err = repo_check_open(repo, true);
 	if (err) {
 		return err;
 	}
+	err = repo_fetch_cached_lextf2(repo, lextid, &lextf);
+	if (!err) {
+		return 0; /* cache hit */
+	}
+	err = repo_objs_create_lext(repo, lextid, &lextf);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int repo_stage_lext_of(struct silofs_repo *repo, bool rw,
+                              const struct silofs_lextid *lextid,
+                              struct silofs_lextf **out_lextf)
+{
+	int err;
+
 	err = repo_fetch_cached_lextf2(repo, lextid, out_lextf);
 	if (!err) {
 		return 0; /* cache hit */
 	}
-	err = repo_objs_create_lext(repo, lextid, out_lextf);
+	err = repo_objs_open_lext(repo, rw, lextid, out_lextf);
 	if (err) {
 		return err;
 	}
@@ -2105,20 +2128,16 @@ int silofs_repo_spawn_lext(struct silofs_repo *repo,
 }
 
 int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
-                           const struct silofs_lextid *lextid,
-                           struct silofs_lextf **out_lextf)
+                           const struct silofs_lextid *lextid)
 {
+	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	err  = repo_check_open(repo, false);
 	if (err) {
 		return err;
 	}
-	err = repo_fetch_cached_lextf2(repo, lextid, out_lextf);
-	if (!err) {
-		return 0; /* cache hit */
-	}
-	err = repo_objs_open_lext(repo, rw, lextid, out_lextf);
+	err = repo_stage_lext_of(repo, rw, lextid, &lextf);
 	if (err) {
 		return err;
 	}
@@ -2152,7 +2171,11 @@ int silofs_repo_punch_lext(struct silofs_repo *repo,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_repo_stage_lext(repo, true, lextid, &lextf);
+	err = repo_check_open(repo, true);
+	if (err) {
+		return err;
+	}
+	err = repo_stage_lext_of(repo, true, lextid, &lextf);
 	if (err) {
 		return err;
 	}
@@ -2169,11 +2192,15 @@ int silofs_repo_flock_lext(struct silofs_repo *repo,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_repo_stage_lext(repo, true, lextid, &lextf);
+	err = repo_check_open(repo, true);
 	if (err) {
 		return err;
 	}
-	err = silofs_lextf_flock(lextf);
+	err = repo_stage_lext_of(repo, true, lextid, &lextf);
+	if (err) {
+		return err;
+	}
+	err = lextf_flock(lextf);
 	if (err) {
 		return err;
 	}
@@ -2186,11 +2213,15 @@ int silofs_repo_funlock_lext(struct silofs_repo *repo,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_repo_stage_lext(repo, true, lextid, &lextf);
+	err = repo_check_open(repo, true);
 	if (err) {
 		return err;
 	}
-	err = silofs_lextf_funlock(lextf);
+	err = repo_stage_lext_of(repo, true, lextid, &lextf);
+	if (err) {
+		return err;
+	}
+	err = lextf_funlock(lextf);
 	if (err) {
 		return err;
 	}
@@ -2205,7 +2236,11 @@ int silofs_repo_require_laddr(struct silofs_repo *repo,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_repo_stage_lext(repo, true, &laddr->lextid, &lextf);
+	err = repo_check_open(repo, false);
+	if (err) {
+		return err;
+	}
+	err = repo_stage_lext_of(repo, true, &laddr->lextid, &lextf);
 	if (err) {
 		return err;
 	}
@@ -2223,7 +2258,11 @@ int silofs_repo_writev_at(struct silofs_repo *repo,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_repo_stage_lext(repo, true, &laddr->lextid, &lextf);
+	err = repo_check_open(repo, true);
+	if (err) {
+		return err;
+	}
+	err = repo_stage_lext_of(repo, true, &laddr->lextid, &lextf);
 	if (err) {
 		return err;
 	}
@@ -2240,7 +2279,11 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_repo_stage_lext(repo, false, &laddr->lextid, &lextf);
+	err = repo_check_open(repo, false);
+	if (err) {
+		return err;
+	}
+	err = repo_stage_lext_of(repo, false, &laddr->lextid, &lextf);
 	if (err) {
 		return err;
 	}

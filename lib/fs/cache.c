@@ -33,7 +33,6 @@ typedef int (*silofs_cache_elem_fn)(struct silofs_cache_elem *, void *);
 
 struct silofs_cache_ctx {
 	struct silofs_cache      *cache;
-	struct silofs_lextf      *lextf;
 	struct silofs_ubk_info   *ubki;
 	struct silofs_vbk_info   *vbki;
 	struct silofs_lnode_info *lni;
@@ -864,7 +863,6 @@ static void ubki_init(struct silofs_ubk_info *ubki, struct silofs_lblock *lbk,
 {
 	lbki_init(&ubki->ubk, lbk);
 	ubki_set_addr(ubki, bkaddr);
-	ubki->ubk_lextf = NULL;
 }
 
 static void ubki_fini(struct silofs_ubk_info *ubki)
@@ -885,25 +883,6 @@ static void ubki_decref(struct silofs_ubk_info *ubki)
 static bool ubki_is_evictable(const struct silofs_ubk_info *ubki)
 {
 	return bki_is_evictable(&ubki->ubk);
-}
-
-void silofs_ubki_attach(struct silofs_ubk_info *ubki,
-                        struct silofs_lextf *lextf)
-{
-	if (ubki->ubk_lextf == NULL) {
-		lextf_incref(lextf);
-		ubki->ubk_lextf = lextf;
-	}
-}
-
-static void ubki_detach(struct silofs_ubk_info *ubki)
-{
-	struct silofs_lextf *lextf = ubki->ubk_lextf;
-
-	if (lextf != NULL) {
-		lextf_decref(lextf);
-		ubki->ubk_lextf = NULL;
-	}
 }
 
 void silofs_ubki_incref(struct silofs_ubk_info *ubki)
@@ -1355,7 +1334,6 @@ static void cache_del_ubki(const struct silofs_cache *cache,
 {
 	struct silofs_lblock *lbk = ubki->ubk.lbk;
 
-	ubki_detach(ubki);
 	ubki_fini(ubki);
 	ubki_free(ubki, cache->c_alloc, flags);
 	lbk_free(lbk, cache->c_alloc, flags);

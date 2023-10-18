@@ -289,13 +289,12 @@ static int stgc_do_spawn_vi(const struct silofs_stage_ctx *stg_ctx,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stgc_do_stage_lext(const struct silofs_stage_ctx *stg_ctx,
-                              const struct silofs_lextid *lextid,
-                              struct silofs_lextf **out_lextf)
+                              const struct silofs_lextid *lextid)
 {
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_stage_lext_at(stg_ctx->uber, lextid, out_lextf);
+		err = silofs_stage_lext_at(stg_ctx->uber, lextid);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -305,10 +304,9 @@ static int stgc_do_stage_lext(const struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_do_stage_lext_of(const struct silofs_stage_ctx *stg_ctx,
-                                 const struct silofs_bkaddr *bkaddr,
-                                 struct silofs_lextf **out_lextf)
+                                 const struct silofs_bkaddr *bkaddr)
 {
-	return stgc_do_stage_lext(stg_ctx, &bkaddr->laddr.lextid, out_lextf);
+	return stgc_do_stage_lext(stg_ctx, &bkaddr->laddr.lextid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -444,29 +442,18 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_do_spawn_lext(const struct silofs_stage_ctx *stg_ctx,
-                              const struct silofs_lextid *lextid,
-                              struct silofs_lextf **out_lextf)
+                              const struct silofs_lextid *lextid)
 {
-	int err = -SILOFS_ENOMEM;
-
-	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_spawn_lext_at(stg_ctx->uber, lextid, out_lextf);
-		if (!is_low_resource_error(err)) {
-			break;
-		}
-		stgc_try_evict_some(stg_ctx, i > 0);
-	}
-	return err;
+	return silofs_spawn_lext_at(stg_ctx->uber, lextid);
 }
 
 static int stgc_spawn_lext(const struct silofs_stage_ctx *stg_ctx,
                            const struct silofs_lextid *lextid,
-                           enum silofs_stype stype_sub,
-                           struct silofs_lextf **out_lextf)
+                           enum silofs_stype stype_sub)
 {
 	int err;
 
-	err = stgc_do_spawn_lext(stg_ctx, lextid, out_lextf);
+	err = stgc_do_spawn_lext(stg_ctx, lextid);
 	if (!err) {
 		silofs_sti_update_lexts(&stg_ctx->sbi->sb_sti, stype_sub, 1);
 	}
@@ -508,27 +495,24 @@ static void stgc_update_space_stats(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_spawn_super_main_lext(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_lextid lextid;
-	struct silofs_lextf *lextf = NULL;
 	const enum silofs_height height = SILOFS_HEIGHT_SUPER - 1;
 	int err;
 
 	stgc_make_lextid_of_spmaps(stg_ctx, 0, height, &lextid);
-	err = stgc_spawn_lext(stg_ctx, &lextid, SILOFS_STYPE_SPNODE, &lextf);
+	err = stgc_spawn_lext(stg_ctx, &lextid, SILOFS_STYPE_SPNODE);
 	if (err) {
 		return err;
 	}
-	silofs_sbi_bind_main_lext(stg_ctx->sbi, stg_ctx->vspace,
-	                          &lextf->lex_id);
+	silofs_sbi_bind_main_lext(stg_ctx->sbi, stg_ctx->vspace, &lextid);
 	return 0;
 }
 
 static int stgc_stage_super_main_lext(const struct silofs_stage_ctx *stg_ctx)
 {
 	struct silofs_lextid lextid;
-	struct silofs_lextf *lextf = NULL;
 
 	silofs_sbi_main_lext(stg_ctx->sbi, stg_ctx->vspace, &lextid);
-	return stgc_do_stage_lext(stg_ctx, &lextid, &lextf);
+	return stgc_do_stage_lext(stg_ctx, &lextid);
 }
 
 static int stgc_require_super_main_lext(const struct silofs_stage_ctx *stg_ctx)
@@ -549,18 +533,17 @@ static int stgc_spawn_spnode_main_lext(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_lextid lextid;
-	struct silofs_lextf *lextf = NULL;
 	const loff_t voff = sni_base_voff(sni);
 	const enum silofs_height height = sni_child_height(sni);
 	const enum silofs_stype stype = sni_child_stype(sni);
 	int err;
 
 	stgc_make_lextid_of_spmaps(stg_ctx, voff, height, &lextid);
-	err = stgc_spawn_lext(stg_ctx, &lextid, stype, &lextf);
+	err = stgc_spawn_lext(stg_ctx, &lextid, stype);
 	if (err) {
 		return err;
 	}
-	silofs_sni_bind_main_lext(sni, &lextf->lex_id);
+	silofs_sni_bind_main_lext(sni, &lextid);
 	return 0;
 }
 
@@ -568,10 +551,9 @@ static int stgc_stage_spnode_main_lext(const struct silofs_stage_ctx *stg_ctx,
                                        struct silofs_spnode_info *sni)
 {
 	struct silofs_lextid lextid;
-	struct silofs_lextf *lextf = NULL;
 
 	silofs_sni_main_lext(sni, &lextid);
-	return stgc_do_stage_lext(stg_ctx, &lextid, &lextf);
+	return stgc_do_stage_lext(stg_ctx, &lextid);
 }
 
 static int
@@ -1599,30 +1581,29 @@ stgc_require_spleaf_main_lext(const struct silofs_stage_ctx *stg_ctx,
                               struct silofs_spleaf_info *sli)
 {
 	struct silofs_lextid lextid;
-	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	silofs_sli_main_lext(sli, &lextid);
 	if (!lextid_isnull(&lextid)) {
-		return stgc_do_stage_lext(stg_ctx, &lextid, &lextf);
+		return stgc_do_stage_lext(stg_ctx, &lextid);
 	}
 	/*
 	 * TODO-0047: Do not use underlying repo to detect if vdata-lext exists
 	 */
 	stgc_make_lextid_of_vdata(stg_ctx, sli_base_voff(sli), &lextid);
-	err = stgc_do_stage_lext(stg_ctx, &lextid, &lextf);
+	err = stgc_do_stage_lext(stg_ctx, &lextid);
 	if (!err) {
 		goto out_ok;
 	}
 	if (err != -SILOFS_ENOENT) {
 		return err;
 	}
-	err = stgc_spawn_lext(stg_ctx, &lextid, stg_ctx->vspace, &lextf);
+	err = stgc_spawn_lext(stg_ctx, &lextid, stg_ctx->vspace);
 	if (err) {
 		return err;
 	}
 out_ok:
-	silofs_sli_bind_main_lext(sli, &lextf->lex_id);
+	silofs_sli_bind_main_lext(sli, &lextid);
 	return 0;
 }
 
@@ -2031,16 +2012,10 @@ static int check_stable_at(struct silofs_task *task,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int stgc_spawn_vbki_by(const struct silofs_stage_ctx *stg_ctx,
-                              struct silofs_lextf *lextf,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_vbk_info **out_vbki)
 {
-	int ret;
-
-	lextf_incref(lextf);
-	ret = stgc_do_spawn_vbki(stg_ctx, vaddr->off, vaddr->stype, out_vbki);
-	lextf_decref(lextf);
-	return ret;
+	return stgc_do_spawn_vbki(stg_ctx, vaddr->off, vaddr->stype, out_vbki);
 }
 
 static int stgc_load_bk_of(const struct silofs_stage_ctx *stg_ctx,
@@ -2055,14 +2030,13 @@ static int stgc_load_bk_of(const struct silofs_stage_ctx *stg_ctx,
 }
 
 static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
-                               struct silofs_lextf *lextf,
                                const struct silofs_laddr *laddr,
                                struct silofs_vbk_info **out_vbki)
 {
 	struct silofs_vbk_info *vbki = NULL;
 	int err;
 
-	err = stgc_spawn_vbki_by(stg_ctx, lextf, stg_ctx->vaddr, &vbki);
+	err = stgc_spawn_vbki_by(stg_ctx, stg_ctx->vaddr, &vbki);
 	if (err) {
 		return err;
 	}
@@ -2091,18 +2065,17 @@ static int stgc_stage_load_vbk(const struct silofs_stage_ctx *stg_ctx,
                                const struct silofs_laddr *laddr,
                                struct silofs_vbk_info **out_vbki)
 {
-	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	err = stgc_require_laddr(stg_ctx, laddr);
 	if (err) {
 		return err;
 	}
-	err = stgc_do_stage_lext(stg_ctx, &laddr->lextid, &lextf);
+	err = stgc_do_stage_lext(stg_ctx, &laddr->lextid);
 	if (err) {
 		return err;
 	}
-	err = stgc_spawn_load_vbk(stg_ctx, lextf, laddr, out_vbki);
+	err = stgc_spawn_load_vbk(stg_ctx, laddr, out_vbki);
 	if (err) {
 		return err;
 	}
@@ -2132,35 +2105,27 @@ static int stgc_require_bks(const struct silofs_stage_ctx *stg_ctx,
                             const struct silofs_bkaddr *bkaddr_src,
                             const struct silofs_bkaddr *bkaddr_dst)
 {
-	struct silofs_lextf *lextf_src = NULL;
-	struct silofs_lextf *lextf_dst = NULL;
 	int ret;
 
-	ret = stgc_do_stage_lext_of(stg_ctx, bkaddr_src, &lextf_src);
+	ret = stgc_do_stage_lext_of(stg_ctx, bkaddr_src);
 	if (ret) {
 		goto out;
 	}
-	lextf_incref(lextf_src);
-
-	ret = stgc_do_stage_lext_of(stg_ctx, bkaddr_dst, &lextf_dst);
+	ret = stgc_do_stage_lext_of(stg_ctx, bkaddr_dst);
 	if (ret) {
 		goto out;
 	}
-	lextf_incref(lextf_dst);
-
 	ret = stgc_require_bkaddr(stg_ctx, bkaddr_src);
 	if (ret) {
 		goto out;
 	}
-
 	ret = stgc_require_bkaddr(stg_ctx, bkaddr_dst);
 	if (ret) {
 		goto out;
 	}
 out:
-	lextf_decref(lextf_dst);
-	lextf_decref(lextf_src);
-	return (ret == -ENOENT) ? -SILOFS_EFSCORRUPTED : ret;
+	return ((ret == -ENOENT) || (ret == -SILOFS_ENOENT)) ?
+	       -SILOFS_EFSCORRUPTED : ret;
 }
 
 static int stgc_require_clone_bkaddr(const struct silofs_stage_ctx *stg_ctx,

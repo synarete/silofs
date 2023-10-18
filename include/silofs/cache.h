@@ -198,9 +198,6 @@ void silofs_vbki_incref(struct silofs_vbk_info *vbki);
 void silofs_vbki_decref(struct silofs_vbk_info *vbki);
 
 
-void silofs_ubki_attach(struct silofs_ubk_info *ubki,
-                        struct silofs_lextf *lextf);
-
 void silofs_ubki_incref(struct silofs_ubk_info *ubki);
 
 void silofs_ubki_decref(struct silofs_ubk_info *ubki);

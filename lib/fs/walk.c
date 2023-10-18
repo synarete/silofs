@@ -342,7 +342,7 @@ static int wac_do_traverse_spnode1(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
-		wa_ctx->voff = vrange_next(&vrange, voff);
+		wa_ctx->voff = silofs_vrange_next(&vrange, voff);
 	}
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
@@ -418,7 +418,7 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
-		wa_ctx->voff = vrange_next(&vrange, voff);
+		wa_ctx->voff = silofs_vrange_next(&vrange, voff);
 	}
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
@@ -494,7 +494,7 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
-		wa_ctx->voff = vrange_next(&vrange, voff);
+		wa_ctx->voff = silofs_vrange_next(&vrange, voff);
 	}
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
@@ -570,7 +570,7 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 		if (err && (err != -SILOFS_ENOENT)) {
 			break;
 		}
-		wa_ctx->voff = vrange_next(&vrange, voff);
+		wa_ctx->voff = silofs_vrange_next(&vrange, voff);
 	}
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }

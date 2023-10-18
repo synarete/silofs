@@ -42,7 +42,6 @@ struct silofs_submitq_ent {
 	struct silofs_list_head qlh;
 	struct silofs_uber     *uber;
 	struct silofs_alloc    *alloc;
-	struct silofs_lextf    *lextf;
 	struct silofs_laddr     laddr;
 	uint64_t                uniq_id;
 	uint32_t                cnt;
@@ -73,9 +72,6 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 
 int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
                            const struct silofs_submit_ref *refs_arr);
-
-void silofs_sqe_bind_lextf(struct silofs_submitq_ent *sqe,
-                           struct silofs_lextf *lextf);
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe);
 

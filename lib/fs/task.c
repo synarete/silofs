@@ -149,25 +149,6 @@ int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
 	return err;
 }
 
-void silofs_sqe_bind_lextf(struct silofs_submitq_ent *sqe,
-                           struct silofs_lextf *lextf)
-{
-	if (sqe->lextf != NULL) {
-		lextf_decref(sqe->lextf);
-		sqe->lextf = NULL;
-	}
-	if (lextf != NULL) {
-		sqe->lextf = lextf;
-		lextf_incref(sqe->lextf);
-		silofs_assert(!lextf->lex_rdonly);
-	}
-}
-
-static void sqe_unbind_lextf(struct silofs_submitq_ent *sqe)
-{
-	silofs_sqe_bind_lextf(sqe, NULL);
-}
-
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
 	return silofs_repo_writev_at(sqe->uber->ub.repo,
@@ -202,7 +183,6 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	laddr_reset(&sqe->laddr);
 	sqe->alloc = alloc;
 	sqe->uber = NULL;
-	sqe->lextf = NULL;
 	sqe->uniq_id = uniq_id;
 	sqe->cnt = 0;
 	sqe->hold_refs = 0;
@@ -214,7 +194,6 @@ static void sqe_fini(struct silofs_submitq_ent *sqe)
 	list_head_fini(&sqe->qlh);
 	laddr_reset(&sqe->laddr);
 	sqe_reset_iovs(sqe);
-	sqe_unbind_lextf(sqe);
 	sqe->cnt = 0;
 	sqe->alloc = NULL;
 	sqe->status = -1;
@@ -364,7 +343,6 @@ void silofs_submitq_del_sqe(struct silofs_submitq *smq,
 {
 	sqe_decrefs(sqe);
 	sqe_reset_iovs(sqe);
-	sqe_unbind_lextf(sqe);
 	sqe_del(sqe, smq->smq_alloc);
 }
 

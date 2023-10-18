@@ -118,7 +118,7 @@ static int unrc_post_unrefs_at_spleaf(struct silofs_unref_ctx *unr_ctx,
 		if (err) {
 			return err;
 		}
-		voff = vrange_next(&vrange, voff);
+		voff = silofs_vrange_next(&vrange, voff);
 	}
 	return 0;
 }
@@ -149,7 +149,7 @@ unrc_post_unrefs_at_spnode(struct silofs_unref_ctx *unr_ctx,
 		if (err) {
 			return err;
 		}
-		voff = vrange_next(&vrange, voff);
+		voff = silofs_vrange_next(&vrange, voff);
 	}
 	return 0;
 }

@@ -41,10 +41,10 @@ static void ui_bkaddr(const struct silofs_unode_info *ui,
 	bkaddr_by_laddr(out_bkaddr, ui_laddr(ui));
 }
 
-static struct silofs_lextf *
-sbi_lextref(const struct silofs_sb_info *sbi)
+static const struct silofs_lextid *
+sbi_lextid(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_ubki->ubk_lextf;
+	return &sbi->sb_ui.u_ubki->ubk_addr.laddr.lextid;
 }
 
 static void sbi_set_uber(struct silofs_sb_info *sbi, struct silofs_uber *uber)
@@ -84,21 +84,23 @@ static void sli_bkaddr(const struct silofs_spleaf_info *sli,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void uber_bind_lextf(struct silofs_uber *uber,
-                            struct silofs_lextf *lextf_new)
+static void uber_bind_sb_lextid(struct silofs_uber *uber,
+                                const struct silofs_lextid *lextid_new)
 {
 	struct silofs_repo *repo = uber->ub.repo;
-	struct silofs_lextf *lextf_cur = uber->ub_sb_lextf;
+	struct silofs_lextid *lextid_cur = &uber->ub_sb_lextid;
 
-	if (lextf_cur != NULL) {
-		silofs_repo_funlock_lext(repo, &lextf_cur->lex_id);
-		silofs_lextf_decref(lextf_cur);
+	if (!lextid_isnull(lextid_cur)) {
+		silofs_repo_funlock_lext(repo, lextid_cur);
 	}
-	if (lextf_new != NULL) {
-		silofs_lextf_incref(lextf_new);
-		silofs_repo_flock_lext(repo, &lextf_new->lex_id);
+	if (lextid_new && !lextid_isnull(lextid_new)) {
+		silofs_repo_flock_lext(repo, lextid_new);
 	}
-	uber->ub_sb_lextf = lextf_new;
+	if (lextid_new) {
+		lextid_assign(lextid_cur, lextid_new);
+	} else {
+		lextid_reset(lextid_cur);
+	}
 }
 
 static void uber_bind_sbi(struct silofs_uber *uber,
@@ -201,10 +203,10 @@ static void uber_init_commons(struct silofs_uber *uber,
                               const struct silofs_uber_base *ub_base)
 {
 	memcpy(&uber->ub, ub_base, sizeof(uber->ub));
+	lextid_reset(&uber->ub_sb_lextid);
 	uber->ub_initime = silofs_time_now_monotonic();
 	uber->ub_commit_id = 0;
 	uber->ub_iconv = (iconv_t)(-1);
-	uber->ub_sb_lextf = NULL;
 	uber->ub_sbi = NULL;
 	uber->ub_ctl_flags = 0;
 	uber->ub_ms_flags = 0;
@@ -219,8 +221,8 @@ static void uber_init_commons(struct silofs_uber *uber,
 static void uber_fini_commons(struct silofs_uber *uber)
 {
 	memset(&uber->ub, 0, sizeof(uber->ub));
+	lextid_reset(&uber->ub_sb_lextid);
 	uber->ub_iconv = (iconv_t)(-1);
-	uber->ub_sb_lextf = NULL;
 	uber->ub_sbi = NULL;
 }
 
@@ -290,7 +292,6 @@ out_err:
 
 void silofs_uber_fini(struct silofs_uber *uber)
 {
-	uber_bind_lextf(uber, NULL);
 	uber_bind_sbi(uber, NULL);
 	uber_fini_iconv(uber);
 	uber_fini_crypto(uber);
@@ -428,10 +429,9 @@ int silofs_uber_reload_super(struct silofs_uber *uber)
 int silofs_uber_reload_slext(struct silofs_uber *uber)
 {
 	const struct silofs_lextid *lextid = lextid_of(&uber->ub_sb_ulink);
-	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = silofs_stage_lext_at(uber, lextid, &lextf);
+	err = silofs_stage_lext_at(uber, lextid);
 	if (err) {
 		log_warn("unable to stage sb-lext: err=%d", err);
 		return err;
@@ -441,7 +441,7 @@ int silofs_uber_reload_slext(struct silofs_uber *uber)
 		log_warn("unable to lock sb-lext: err=%d", err);
 		return err;
 	}
-	uber_bind_lextf(uber, lextf);
+	uber_bind_sb_lextid(uber, lextid);
 	return 0;
 }
 
@@ -462,14 +462,14 @@ static void sbi_make_clone(struct silofs_sb_info *sbi_new,
 void silofs_uber_shut(struct silofs_uber *uber)
 {
 	uber_bind_sbi(uber, NULL);
-	uber_bind_lextf(uber, NULL);
+	uber_bind_sb_lextid(uber, NULL);
 }
 
 static void uber_rebind_root_sb(struct silofs_uber *uber,
                                 struct silofs_sb_info *sbi)
 {
 	silofs_uber_bind_child(uber, sbi_ulink(sbi));
-	uber_bind_lextf(uber, sbi_lextref(sbi));
+	uber_bind_sb_lextid(uber, sbi_lextid(sbi));
 	uber_bind_sbi(uber, sbi);
 }
 
@@ -695,13 +695,12 @@ static int ubc_lookup_lext(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_stage_lext(const struct silofs_uber_ctx *ub_ctx,
-                          const struct silofs_lextid *lextid,
-                          struct silofs_lextf **out_lextf)
+                          const struct silofs_lextid *lextid)
 {
 	int err;
 	const bool rw_mode = ubc_lextid_rw_mode(ub_ctx, lextid);
 
-	err = silofs_repo_stage_lext(ub_ctx->repo, rw_mode, lextid, out_lextf);
+	err = silofs_repo_stage_lext(ub_ctx->repo, rw_mode, lextid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage lext failed: err=%d", err);
 	}
@@ -709,12 +708,11 @@ static int ubc_stage_lext(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_spawn_lext(const struct silofs_uber_ctx *ub_ctx,
-                          const struct silofs_lextid *lextid,
-                          struct silofs_lextf **out_lextf)
+                          const struct silofs_lextid *lextid)
 {
 	int err;
 
-	err = silofs_repo_spawn_lext(ub_ctx->repo, lextid, out_lextf);
+	err = silofs_repo_spawn_lext(ub_ctx->repo, lextid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn lext failed: err=%d", err);
 	}
@@ -722,25 +720,23 @@ static int ubc_spawn_lext(const struct silofs_uber_ctx *ub_ctx,
 }
 
 static int ubc_require_lext(const struct silofs_uber_ctx *ub_ctx,
-                            const struct silofs_lextid *lextid,
-                            struct silofs_lextf **out_lextf)
+                            const struct silofs_lextid *lextid)
 {
 	int err;
 
 	err = ubc_lookup_lext(ub_ctx, lextid);
 	if (!err) {
-		err = ubc_stage_lext(ub_ctx, lextid, out_lextf);
+		err = ubc_stage_lext(ub_ctx, lextid);
 	} else if (err == -SILOFS_ENOENT) {
-		err = ubc_spawn_lext(ub_ctx, lextid, out_lextf);
+		err = ubc_spawn_lext(ub_ctx, lextid);
 	}
 	return err;
 }
 
 static int ubc_require_lext_of(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_bkaddr *bkaddr,
-                               struct silofs_lextf **out_lextf)
+                               const struct silofs_bkaddr *bkaddr)
 {
-	return ubc_require_lext(ub_ctx, &bkaddr->laddr.lextid, out_lextf);
+	return ubc_require_lext(ub_ctx, &bkaddr->laddr.lextid);
 }
 
 static int ubc_lookup_cached_ubki(const struct silofs_uber_ctx *ub_ctx,
@@ -759,45 +755,15 @@ static int ubc_create_cached_ubki(const struct silofs_uber_ctx *ub_ctx,
 	return (*out_ubki == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
-static int
-ubc_do_spawn_attach_ubki(const struct silofs_uber_ctx *ub_ctx,
-                         const struct silofs_bkaddr *bkaddr,
-                         struct silofs_lextf *lextf,
-                         struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	err = ubc_create_cached_ubki(ub_ctx, bkaddr, out_ubki);
-	if (err) {
-		return err;
-	}
-	silofs_ubki_attach(*out_ubki, lextf);
-	return 0;
-}
-
-static int ubc_spawn_attach_ubki(const struct silofs_uber_ctx *ub_ctx,
-                                 const struct silofs_bkaddr *bkaddr,
-                                 struct silofs_lextf *lextf,
-                                 struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	lextf_incref(lextf);
-	err = ubc_do_spawn_attach_ubki(ub_ctx, bkaddr, lextf, out_ubki);
-	lextf_decref(lextf);
-	return err;
-}
-
 static int ubc_require_bkaddr(const struct silofs_uber_ctx *ub_ctx,
                               const struct silofs_bkaddr *bkaddr)
 {
 	return silofs_repo_require_laddr(ub_ctx->repo, &bkaddr->laddr);
 }
 
-static int ubc_do_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_bkaddr *bkaddr,
-                               struct silofs_lextf *lextf,
-                               struct silofs_ubk_info **out_ubki)
+static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
+                            const struct silofs_bkaddr *bkaddr,
+                            struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
@@ -809,38 +775,24 @@ static int ubc_do_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_attach_ubki(ub_ctx, bkaddr, lextf, out_ubki);
+	err = ubc_create_cached_ubki(ub_ctx, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int ubc_spawn_ubk_at(const struct silofs_uber_ctx *ub_ctx,
-                            const struct silofs_bkaddr *bkaddr,
-                            struct silofs_lextf *lextf,
-                            struct silofs_ubk_info **out_ubki)
-{
-	int err;
-
-	lextf_incref(lextf);
-	err = ubc_do_spawn_ubk_at(ub_ctx, bkaddr, lextf, out_ubki);
-	lextf_decref(lextf);
-	return err;
-}
-
 static int ubc_spawn_ubk(const struct silofs_uber_ctx *ub_ctx,
                          const struct silofs_bkaddr *bkaddr,
                          struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_lextf *lextf = NULL;
 	int err;
 
-	err = ubc_require_lext_of(ub_ctx, bkaddr, &lextf);
+	err = ubc_require_lext_of(ub_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, lextf, out_ubki);
+	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -865,7 +817,6 @@ static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
                                const struct silofs_bkaddr *bkaddr,
                                struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_lextf *lextf = NULL;
 	struct silofs_ubk_info *ubki = NULL;
 	int err;
 
@@ -873,11 +824,11 @@ static int ubc_do_stage_ubk_at(const struct silofs_uber_ctx *ub_ctx, bool sb,
 	if (!err) {
 		return 0;
 	}
-	err = ubc_stage_lext(ub_ctx, &bkaddr->laddr.lextid, &lextf);
+	err = ubc_stage_lext(ub_ctx, &bkaddr->laddr.lextid);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_attach_ubki(ub_ctx, bkaddr, lextf, &ubki);
+	err = ubc_create_cached_ubki(ub_ctx, bkaddr, &ubki);
 	if (err) {
 		return err;
 	}
@@ -908,45 +859,28 @@ int silofs_stage_ubk_at(struct silofs_uber *uber,
 	return 0;
 }
 
-static int ubc_do_stage_ubk_of(const struct silofs_uber_ctx *ub_ctx,
-                               const struct silofs_laddr *laddr,
-                               struct silofs_ubk_info **out_ubki)
-{
-	struct silofs_bkaddr bkaddr;
-
-	bkaddr_by_laddr(&bkaddr, laddr);
-	return ubc_do_stage_ubk_at(ub_ctx, false, &bkaddr, out_ubki);
-}
-
 static int ubc_stage_ubk_of(const struct silofs_uber_ctx *ub_ctx,
                             const struct silofs_bkaddr *bkaddr,
-                            struct silofs_lextf *lextf,
                             struct silofs_ubk_info **out_ubki)
 {
-	int err;
-
-	lextf_incref(lextf);
-	err = ubc_do_stage_ubk_of(ub_ctx, &bkaddr->laddr, out_ubki);
-	lextf_decref(lextf);
-	return err;
+	return ubc_do_stage_ubk_at(ub_ctx, false, bkaddr, out_ubki);
 }
 
 static int ubc_require_ubk(const struct silofs_uber_ctx *ub_ctx,
                            const struct silofs_bkaddr *bkaddr,
                            struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_lextf *lextf = NULL;
 	int err;
 
 	err = ubc_require_bkaddr(ub_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_lext_of(ub_ctx, bkaddr, &lextf);
+	err = ubc_require_lext_of(ub_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_ubk_of(ub_ctx, bkaddr, lextf, out_ubki);
+	err = ubc_stage_ubk_of(ub_ctx, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -1429,8 +1363,7 @@ static int ubc_require_no_lext(const struct silofs_uber_ctx *ub_ctx,
 }
 
 int silofs_spawn_lext_at(struct silofs_uber *uber,
-                         const struct silofs_lextid *lextid,
-                         struct silofs_lextf **out_lextf)
+                         const struct silofs_lextid *lextid)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
@@ -1440,7 +1373,7 @@ int silofs_spawn_lext_at(struct silofs_uber *uber,
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_lext(&ub_ctx, lextid, out_lextf);
+	err = ubc_spawn_lext(&ub_ctx, lextid);
 	if (err) {
 		return err;
 	}
@@ -1448,8 +1381,7 @@ int silofs_spawn_lext_at(struct silofs_uber *uber,
 }
 
 int silofs_stage_lext_at(struct silofs_uber *uber,
-                         const struct silofs_lextid *lextid,
-                         struct silofs_lextf **out_lextf)
+                         const struct silofs_lextid *lextid)
 {
 	struct silofs_uber_ctx ub_ctx = { .uber = uber };
 	int err;
@@ -1459,7 +1391,7 @@ int silofs_stage_lext_at(struct silofs_uber *uber,
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_lext(&ub_ctx, lextid, out_lextf);
+	err = ubc_stage_lext(&ub_ctx, lextid);
 	if (err) {
 		return err;
 	}

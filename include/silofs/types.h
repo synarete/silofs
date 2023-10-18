@@ -333,7 +333,6 @@ struct silofs_lbk_info {
 struct silofs_ubk_info {
 	struct silofs_lbk_info          ubk;
 	struct silofs_bkaddr            ubk_addr;
-	struct silofs_lextf            *ubk_lextf;
 };
 
 /* virtual-block addressing */
@@ -439,7 +438,7 @@ struct silofs_uber {
 	struct silofs_mutex             ub_fs_lock;
 	struct silofs_crypto            ub_crypto;
 	struct silofs_oper_stat         ub_ops;
-	struct silofs_lextf            *ub_sb_lextf;
+	struct silofs_lextid            ub_sb_lextid;
 	struct silofs_sb_info          *ub_sbi;
 	struct silofs_ulink             ub_sb_ulink;
 	struct silofs_cred              ub_owner;

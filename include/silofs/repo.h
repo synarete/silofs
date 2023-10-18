@@ -21,19 +21,6 @@
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY     (1)
 
-/* logical-extent control file */
-struct silofs_lextf {
-	struct silofs_namebuf           lex_name;
-	struct silofs_lextid            lex_id;
-	struct silofs_list_head         lex_htb_lh;
-	struct silofs_list_head         lex_lru_lh;
-	long                            lex_size;
-	int                             lex_fd;
-	int                             lex_refcnt;
-	bool                            lex_flocked;
-	bool                            lex_rdonly;
-};
-
 /* repository base config */
 struct silofs_repo_base {
 	struct silofs_bootpath          bootpath;
@@ -60,13 +47,6 @@ struct silofs_repo {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_lextf_incref(struct silofs_lextf *lextf);
-
-void silofs_lextf_decref(struct silofs_lextf *lextf);
-
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_repo_init(struct silofs_repo *repo,
                      const struct silofs_repo_base *repo_base);
@@ -109,12 +89,10 @@ int silofs_repo_stat_lext(const struct silofs_repo *repo,
                           bool allow_cache, struct stat *out_st);
 
 int silofs_repo_spawn_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid,
-                           struct silofs_lextf **out_lextf);
+                           const struct silofs_lextid *lextid);
 
 int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
-                           const struct silofs_lextid *lextid,
-                           struct silofs_lextf **out_lextf);
+                           const struct silofs_lextid *lextid);
 
 int silofs_repo_remove_lext(struct silofs_repo *repo,
                             const struct silofs_lextid *lextid);

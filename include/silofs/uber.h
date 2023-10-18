@@ -78,12 +78,10 @@ int silofs_stage_ubk_at(struct silofs_uber *uber,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_lext_at(struct silofs_uber *uber,
-                         const struct silofs_lextid *lextid,
-                         struct silofs_lextf **out_lextf);
+                         const struct silofs_lextid *lextid);
 
 int silofs_stage_lext_at(struct silofs_uber *uber,
-                         const struct silofs_lextid *lextid,
-                         struct silofs_lextf **out_lextf);
+                         const struct silofs_lextid *lextid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -171,16 +171,14 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 
 static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 {
-	struct statfs stfs;
+	struct statfs stfs = { .f_type = 0 };
 	const char *path = cmd_umount_dirpath(ctx);
-	long fstype;
-	int err;
+	const int retry_max = 5;
+	long fstype = 0;
+	int retry = 0;
+	int err = 0;
 
-	for (size_t i = 0; i < 4; ++i) {
-		err = silofs_suspend_secs(1);
-		if (err) {
-			break;
-		}
+	while ((retry++ < retry_max) && !err) {
 		stfs.f_type = 0;
 		err = silofs_sys_statfs(path, &stfs);
 		if (err) {
@@ -196,31 +194,30 @@ static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 		 * It appears that FUSE forces zero value for 'statvfs.f_fsid'.
 		 * Need to check why and if possible to fix.
 		 */
+		err = silofs_suspend_secs(2);
 	}
 }
 
 static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 {
-	char ppath[256] = "";
+	char procfs_path[256] = "";
 	struct stat st = { .st_size = -1 };
-	const pid_t pid = ctx->server_pid;
-	const int retry_max = ctx->in_args.lazy ? 10 : 60;
+	const int retry_max = ctx->in_args.lazy ? 20 : 120;
 	int retry = 0;
 	int err = 0;
 
-	snprintf(ppath, sizeof(ppath) - 1, "/proc/%ld/fd", (long)pid);
+	snprintf(procfs_path, sizeof(procfs_path) - 1,
+	         "/proc/%ld/fdinfo", (long)(ctx->server_pid));
+
 	while ((retry++ < retry_max) && !err) {
-		err = silofs_suspend_secs(1);
+		if (ctx->notconn || !ctx->server_pid) {
+			break;
+		}
+		err = silofs_sys_stat(procfs_path, &st);
 		if (err) {
 			break;
 		}
-		if (ctx->notconn || !pid) {
-			break;
-		}
-		err = silofs_sys_stat(ppath, &st);
-		if (err || !S_ISDIR(st.st_mode)) {
-			break;
-		}
+		err = silofs_suspend_secs(1);
 	}
 }
 
@@ -232,6 +229,7 @@ void cmd_execute_umount(void)
 		.query.qtype = 0,
 		.query.u.proc.pid = 0,
 		.server_pid = 0,
+		.notconn = false,
 	};
 
 	/* Do all cleanups upon exits */

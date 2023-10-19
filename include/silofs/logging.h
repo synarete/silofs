@@ -54,4 +54,6 @@ void silofs_log_mask_by_str(int *log_maskp, const char *mode);
 
 void silofs_log_meta_banner(const char *name, int start);
 
+void silofs_make_version_banner(char *s, unsigned int n, int start);
+
 #endif /* SILOFS_LOGGING_H_ */

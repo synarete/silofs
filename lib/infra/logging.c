@@ -169,9 +169,16 @@ void silofs_log_mask_by_str(int *log_maskp, const char *mode)
 
 void silofs_log_meta_banner(const char *name, int start)
 {
-	const char *tag = start ? "++++++++" : "--------";
-	const char *vers = silofs_version.string;
+	char buf[128] = "";
 
-	silofs_log_info("%s %s %s", name, vers, tag);
+	silofs_make_version_banner(buf, sizeof(buf) - 1, start);
+	silofs_log_info("%s %s", name, buf);
+}
+
+void silofs_make_version_banner(char *s, unsigned int n, int start)
+{
+	const char *tag = start ? "++++++++++++" : "------------";
+
+	snprintf(s, n, "%s %s", silofs_version.string, tag);
 }
 

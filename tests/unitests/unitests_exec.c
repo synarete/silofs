@@ -392,10 +392,12 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 	ute_del(ute);
 }
 
-static void ut_print_tests_info(const struct ut_args *args, int pre)
+static void ut_print_tests_info(const struct ut_args *args, int start)
 {
-	printf("  %s %s %s\n", args->program, args->version,
-	       pre ? "++++++++" : "--------");
+	char buf[128] = "";
+
+	silofs_make_version_banner(buf, sizeof(buf) - 1, start);
+	printf("  %s %s \n", args->program, buf);
 }
 
 static struct silofs_uids *ut_new_uids(void)
@@ -454,7 +456,6 @@ static void ut_init_args(struct ut_args *args)
 	args->fs_args.asyncwr = ut_globals.asyncwr;
 	args->fs_args.stdalloc = ut_globals.stdalloc;
 	args->program = ut_globals.program;
-	args->version = ut_globals.version;
 }
 
 static void ut_fini_args(struct ut_args *args)

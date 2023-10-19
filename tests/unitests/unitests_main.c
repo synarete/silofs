@@ -82,7 +82,6 @@ static void ut_setup_globals(int argc, char *argv[])
 	ut_globals.argc = argc;
 	ut_globals.argv = argv;
 	ut_globals.program = program_invocation_short_name;
-	ut_globals.version = silofs_version.string;
 	ut_globals.pedantic = false;
 	ut_globals.run_level = 1;
 	ut_globals.asyncwr = true;
@@ -117,7 +116,7 @@ static void ut_show_help_and_exit(void)
 __attribute__((__noreturn__))
 static void ut_show_version_and_exit(void)
 {
-	printf("%s %s\n", ut_globals.program, ut_globals.version);
+	printf("%s %s\n", ut_globals.program, silofs_version.string);
 	exit(EXIT_SUCCESS);
 }
 

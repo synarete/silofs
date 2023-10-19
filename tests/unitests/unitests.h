@@ -117,7 +117,6 @@ struct ut_malloc_chunk {
 struct ut_args {
 	struct silofs_fs_args    fs_args;
 	const char *program;
-	const char *version;
 };
 
 struct ut_env {

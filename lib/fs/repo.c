@@ -42,15 +42,15 @@ struct silofs_lextf {
 struct silofs_repo_defs {
 	const char     *re_dots_name;
 	const char     *re_meta_name;
-	const char     *re_lexts_name;
+	const char     *re_objs_name;
 	unsigned int    re_objs_nsubs;
 };
 
 static const struct silofs_repo_defs repo_defs = {
 	.re_dots_name   = SILOFS_REPO_DOTS_DIRNAME,
 	.re_meta_name   = SILOFS_REPO_META_FILENAME,
-	.re_lexts_name  = SILOFS_REPO_LEXTS_DIRNAME,
-	.re_objs_nsubs  = SILOFS_REPO_OBJSDIR_NSUBS,
+	.re_objs_name   = SILOFS_REPO_OBJS_DIRNAME,
+	.re_objs_nsubs  = SILOFS_REPO_OBJS_NSUBS,
 };
 
 /* local functions */
@@ -1255,6 +1255,13 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	return make_pathname(&hash, idx, out_nb);
 }
 
+static void repo_objs_pathname_by(const struct silofs_repo *repo,
+                                  const struct silofs_laddr *laddr,
+                                  struct silofs_namebuf *out_nb)
+{
+	repo_objs_sub_pathname_of(repo, &laddr->lextid, out_nb);
+}
+
 static int repo_objs_setup_pathname_of(const struct silofs_repo *repo,
                                        struct silofs_lextf *lextf)
 {
@@ -1582,7 +1589,7 @@ static int repo_create_skel(const struct silofs_repo *repo)
 	loff_t size;
 	int err;
 
-	name = repo_defs.re_lexts_name;
+	name = repo_defs.re_objs_name;
 	err = repo_create_skel_subdir(repo, name, 0700);
 	if (err) {
 		return err;
@@ -1653,7 +1660,7 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
-	name = repo_defs.re_lexts_name;
+	name = repo_defs.re_objs_name;
 	err = repo_require_skel_subdir(repo, name);
 	if (err) {
 		return err;
@@ -1753,7 +1760,7 @@ out:
 
 static int repo_open_lexts_dir(struct silofs_repo *repo)
 {
-	return do_opendirat(repo->re_dots_dfd, repo_defs.re_lexts_name,
+	return do_opendirat(repo->re_dots_dfd, repo_defs.re_objs_name,
 	                    &repo->re_lexts_dfd);
 }
 
@@ -1871,198 +1878,6 @@ int silofs_repo_close(struct silofs_repo *repo)
 	}
 	repo_evict_all(repo);
 	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static void repo_bootrec_name(const struct silofs_repo *repo,
-                              const struct silofs_laddr *laddr,
-                              struct silofs_namebuf *out_nb)
-{
-	silofs_uuid_name(&laddr->lextid.treeid.uuid, out_nb);
-	unused(repo);
-}
-
-static int
-repo_save_bootrec1k(const struct silofs_repo *repo,
-                    const struct silofs_namebuf *nb,
-                    const struct silofs_bootrec1k *brec1k)
-{
-	int dfd = -1;
-	int fd = -1;
-	int o_flags;
-	int err;
-
-	dfd = repo_lexts_dfd(repo);
-	err = do_fchmodat(dfd, nb->name, 0600, 0);
-	if (!err) {
-		o_flags = O_RDWR;
-	} else if (err == -ENOENT) {
-		o_flags = O_RDWR | O_CREAT;
-	} else {
-		goto out;
-	}
-	err = do_openat(dfd, nb->name, o_flags, 0600, &fd);
-	if (err) {
-		goto out;
-	}
-	err = do_fchmod(fd, 0400);
-	if (err) {
-		goto out;
-	}
-	err = do_pwriten(fd, brec1k, sizeof(*brec1k), 0);
-	if (err) {
-		goto out;
-	}
-	err = do_fdatasync(fd);
-	if (err) {
-		goto out;
-	}
-out:
-	do_closefd(&fd);
-	return err;
-}
-
-static int repo_save_bootrec(const struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_bootrec1k *brec1k)
-{
-	struct silofs_namebuf nb;
-
-	repo_bootrec_name(repo, laddr, &nb);
-	return repo_save_bootrec1k(repo, &nb, brec1k);
-}
-
-static int repo_load_bootrec1k(const struct silofs_repo *repo,
-                               const struct silofs_namebuf *nb,
-                               struct silofs_bootrec1k *bsc)
-{
-	int dfd = -1;
-	int fd = -1;
-	int err;
-
-	dfd = repo_lexts_dfd(repo);
-	err = do_openat(dfd, nb->name, O_RDONLY, 0, &fd);
-	if (err) {
-		goto out;
-	}
-	err = do_preadn(fd, bsc, sizeof(*bsc), 0);
-	if (err) {
-		goto out;
-	}
-out:
-	do_closefd(&fd);
-	return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
-}
-
-static int repo_load_bootrec(const struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             struct silofs_bootrec1k *out_brec1k)
-{
-	struct silofs_namebuf nb;
-
-	repo_bootrec_name(repo, laddr, &nb);
-	return repo_load_bootrec1k(repo, &nb, out_brec1k);
-}
-
-static int repo_stat_bootrec1k(const struct silofs_repo *repo,
-                               const struct silofs_namebuf *nb,
-                               struct stat *out_st)
-{
-	mode_t mode;
-	int dfd;
-	int err;
-
-	dfd = repo_lexts_dfd(repo);
-	err = do_fstatat(dfd, nb->name, out_st, AT_SYMLINK_NOFOLLOW);
-	if (err) {
-		return err;
-	}
-	mode = out_st->st_mode;
-	if (S_ISDIR(mode)) {
-		return -SILOFS_EISDIR;
-	}
-	if (!S_ISREG(mode)) {
-		return -SILOFS_ENOENT   ;
-	}
-	return 0;
-}
-
-static int repo_stat_bootrec(const struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             struct stat *out_st)
-{
-	struct silofs_namebuf nb;
-	int err;
-
-	repo_bootrec_name(repo, laddr, &nb);
-	err = repo_stat_bootrec1k(repo, &nb, out_st);
-	if (err) {
-		return err;
-	}
-	if (out_st->st_size != sizeof(struct silofs_bootrec1k)) {
-		log_warn("bad boot-record: name=%s size=%ld",
-		         nb.name, out_st->st_size);
-		return -SILOFS_EBADBOOT;
-	}
-	return 0;
-}
-
-static int repo_unlink_bootrec(const struct silofs_repo *repo,
-                               const struct silofs_laddr *laddr)
-{
-	struct silofs_namebuf nb;
-	int dfd;
-	int err;
-
-	repo_bootrec_name(repo, laddr, &nb);
-	dfd = repo_lexts_dfd(repo);
-	err = do_unlinkat(dfd, nb.name, 0);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_repo_save_bootrec(struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_bootrec1k *brec1k)
-{
-	int ret;
-
-	ret = repo_save_bootrec(repo, laddr, brec1k);
-	return ret;
-}
-
-int silofs_repo_load_bootrec(struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             struct silofs_bootrec1k *out_brec1k)
-{
-	int ret;
-
-	ret = repo_load_bootrec(repo, laddr, out_brec1k);
-	return ret;
-}
-
-int silofs_repo_stat_bootrec(struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             struct stat *out_st)
-{
-	int ret;
-
-	ret = repo_stat_bootrec(repo, laddr, out_st);
-	return ret;
-}
-
-int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
-                               const struct silofs_laddr *laddr)
-{
-	int ret;
-
-	ret = repo_unlink_bootrec(repo, laddr);
-	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2297,4 +2112,129 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 		return err;
 	}
 	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int repo_save_obj_at(const struct silofs_repo *repo,
+                            const struct silofs_namebuf *nb,
+                            const void *obj, size_t len)
+{
+	int dfd = -1;
+	int fd = -1;
+	int o_flags;
+	int err;
+
+	dfd = repo_lexts_dfd(repo);
+	err = do_fchmodat(dfd, nb->name, 0600, 0);
+	if (!err) {
+		o_flags = O_RDWR;
+	} else if (err == -ENOENT) {
+		o_flags = O_RDWR | O_CREAT;
+	} else {
+		goto out;
+	}
+	err = do_openat(dfd, nb->name, o_flags, 0600, &fd);
+	if (err) {
+		goto out;
+	}
+	err = do_fchmod(fd, 0400);
+	if (err) {
+		goto out;
+	}
+	err = do_pwriten(fd, obj, len, 0);
+	if (err) {
+		goto out;
+	}
+	err = do_fdatasync(fd);
+	if (err) {
+		goto out;
+	}
+out:
+	do_closefd(&fd);
+	return err;
+}
+
+int silofs_repo_save_obj(struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr, const void *buf)
+{
+	struct silofs_namebuf nb;
+
+	repo_objs_pathname_by(repo, laddr, &nb);
+	return repo_save_obj_at(repo, &nb, buf, laddr->len);
+}
+
+static int repo_load_obj_at(const struct silofs_repo *repo,
+                            const struct silofs_namebuf *nb,
+                            void *buf, size_t len)
+{
+	int dfd = -1;
+	int fd = -1;
+	int err;
+
+	dfd = repo_lexts_dfd(repo);
+	err = do_openat(dfd, nb->name, O_RDONLY, 0, &fd);
+	if (err) {
+		goto out;
+	}
+	err = do_preadn(fd, buf, len, 0);
+	if (err) {
+		goto out;
+	}
+out:
+	do_closefd(&fd);
+	return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
+}
+
+int silofs_repo_load_obj(struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr, void *buf)
+{
+	struct silofs_namebuf nb;
+
+	repo_objs_pathname_by(repo, laddr, &nb);
+	return repo_load_obj_at(repo, &nb, buf, laddr->len);
+}
+
+static int repo_stat_obj_at(const struct silofs_repo *repo,
+                            const struct silofs_namebuf *nb,
+                            struct stat *out_st)
+{
+	mode_t mode;
+	int dfd;
+	int err;
+
+	dfd = repo_lexts_dfd(repo);
+	err = do_fstatat(dfd, nb->name, out_st, AT_SYMLINK_NOFOLLOW);
+	if (err) {
+		return err;
+	}
+	mode = out_st->st_mode;
+	if (S_ISDIR(mode)) {
+		return -SILOFS_EISDIR;
+	}
+	if (!S_ISREG(mode)) {
+		return -SILOFS_ENOENT;
+	}
+	return 0;
+}
+
+int silofs_repo_stat_obj(const struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr,
+                         struct stat *out_st)
+{
+	struct silofs_namebuf nb;
+
+	repo_objs_pathname_by(repo, laddr, &nb);
+	return repo_stat_obj_at(repo, &nb, out_st);
+}
+
+int silofs_repo_unlink_obj(struct silofs_repo *repo,
+                           const struct silofs_laddr *laddr)
+{
+	struct silofs_namebuf nb;
+	int dfd;
+
+	repo_objs_pathname_by(repo, laddr, &nb);
+	dfd = repo_lexts_dfd(repo);
+	return do_unlinkat(dfd, nb.name, 0);
 }

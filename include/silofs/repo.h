@@ -67,23 +67,6 @@ void silofs_repo_relax(struct silofs_repo *repo);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_save_bootrec(struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_bootrec1k *brec1k);
-
-int silofs_repo_load_bootrec(struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             struct silofs_bootrec1k *brec1k);
-
-int silofs_repo_stat_bootrec(struct silofs_repo *repo,
-                             const struct silofs_laddr *laddr,
-                             struct stat *out_st);
-
-int silofs_repo_unlink_bootrec(struct silofs_repo *repo,
-                               const struct silofs_laddr *laddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_repo_stat_lext(const struct silofs_repo *repo,
                           const struct silofs_lextid *lextid,
                           bool allow_cache, struct stat *out_st);
@@ -117,5 +100,20 @@ int silofs_repo_writev_at(struct silofs_repo *repo,
 
 int silofs_repo_read_at(struct silofs_repo *repo,
                         const struct silofs_laddr *laddr, void *buf);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_repo_save_obj(struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr, const void *buf);
+
+int silofs_repo_load_obj(struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr, void *buf);
+
+int silofs_repo_stat_obj(const struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr,
+                         struct stat *out_st);
+
+int silofs_repo_unlink_obj(struct silofs_repo *repo,
+                           const struct silofs_laddr *laddr);
 
 #endif /* SILOFS_REPO_H_ */

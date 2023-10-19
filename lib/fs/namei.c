@@ -2424,7 +2424,7 @@ static int encode_save_bootrec(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_bootrec(repo_of(uber), &uaddr.laddr, &brec1k);
+	err = silofs_repo_save_obj(repo_of(uber), &uaddr.laddr, &brec1k);
 	if (err) {
 		return err;
 	}

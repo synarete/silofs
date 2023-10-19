@@ -65,14 +65,14 @@
 /* repository meta sub-dir name */
 #define SILOFS_REPO_DOTS_DIRNAME        ".silofs"
 
-/* repository objects sub-directory name */
-#define SILOFS_REPO_LEXTS_DIRNAME       "lexts"
-
 /* repository meta descriptor-file name */
 #define SILOFS_REPO_META_FILENAME       "meta"
 
+/* repository objects sub-directory name */
+#define SILOFS_REPO_OBJS_DIRNAME        "objs"
+
 /* number of sub-dirs within objects directories */
-#define SILOFS_REPO_OBJSDIR_NSUBS       (256)
+#define SILOFS_REPO_OBJS_NSUBS          (256)
 
 
 /* max number of hard-links to file or sub-directories */

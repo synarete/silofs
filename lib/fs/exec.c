@@ -1350,10 +1350,21 @@ int silofs_open_repo(struct silofs_fs_env *fse)
 }
 
 static int stat_bootrec_of(const struct silofs_fs_env *fse,
-                           const struct silofs_uaddr *uaddr,
-                           struct stat *out_st)
+                           const struct silofs_uaddr *uaddr)
 {
-	return silofs_repo_stat_bootrec(fse->fs_repo, &uaddr->laddr, out_st);
+	struct stat st = { .st_size = -1 };
+	int err;
+
+	err = silofs_repo_stat_obj(fse->fs_repo, &uaddr->laddr, &st);
+	if (err) {
+		log_err("failed to stat bootrec: err=%d", err);
+		return err;
+	}
+	if (st.st_size != SILOFS_BOOTREC_SIZE) {
+		log_warn("bad bootrec: size=%ld", st.st_size);
+		return -SILOFS_EBADBOOT;
+	}
+	return 0;
 }
 
 static int save_bootrec_of(const struct silofs_fs_env *fse,
@@ -1365,11 +1376,12 @@ static int save_bootrec_of(const struct silofs_fs_env *fse,
 	const struct silofs_ivkey *ivkey = &fse->fs_boot_ivkey;
 	int err;
 
+	silofs_assert_eq(uaddr->laddr.len, sizeof(brec1k));
 	err = silofs_bootrec_encode(brec, &brec1k, crypto, ivkey);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_bootrec(fse->fs_repo, &uaddr->laddr, &brec1k);
+	err = silofs_repo_save_obj(fse->fs_repo, &uaddr->laddr, &brec1k);
 	if (err) {
 		return err;
 	}
@@ -1385,12 +1397,15 @@ static int load_bootrec_of(const struct silofs_fs_env *fse,
 	const struct silofs_ivkey *ivkey = &fse->fs_boot_ivkey;
 	int err;
 
-	err = silofs_repo_load_bootrec(fse->fs_repo, &uaddr->laddr, &brec1k);
+	silofs_assert_eq(uaddr->laddr.len, sizeof(brec1k));
+	err = silofs_repo_load_obj(fse->fs_repo, &uaddr->laddr, &brec1k);
 	if (err) {
+		log_err("failed to load bootrec: err=%d", err);
 		return err;
 	}
 	err = silofs_bootrec_decode(out_brec, &brec1k, crypto, ivkey);
 	if (err) {
+		log_err("failed to decode bootrec: err=%d", err);
 		return err;
 	}
 	return 0;
@@ -1400,17 +1415,14 @@ static int reload_bootrec_of(struct silofs_fs_env *fse,
                              const struct silofs_uaddr *uaddr,
                              struct silofs_bootrec *out_brec)
 {
-	struct stat st = { .st_size = -1 };
 	int err;
 
-	err = stat_bootrec_of(fse, uaddr, &st);
+	err = stat_bootrec_of(fse, uaddr);
 	if (err) {
-		log_err("failed to stat bootrec: err=%d", err);
 		return err;
 	}
 	err = load_bootrec_of(fse, uaddr, out_brec);
 	if (err) {
-		log_err("failed to reload bootrec: err=%d", err);
 		return err;
 	}
 	return 0;
@@ -1421,7 +1433,7 @@ static int unlink_bootrec_of(struct silofs_fs_env *fse,
 {
 	int err;
 
-	err = silofs_repo_unlink_bootrec(fse->fs_repo, &uaddr->laddr);
+	err = silofs_repo_unlink_obj(fse->fs_repo, &uaddr->laddr);
 	if (err) {
 		log_err("failed to unlink bootrec: err=%d", err);
 		return err;

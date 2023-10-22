@@ -426,7 +426,7 @@ int silofs_uber_reload_super(struct silofs_uber *uber)
 	return 0;
 }
 
-int silofs_uber_reload_slext(struct silofs_uber *uber)
+int silofs_uber_reload_sb_lext(struct silofs_uber *uber)
 {
 	const struct silofs_lextid *lextid = lextid_of(&uber->ub_sb_ulink);
 	int err;
@@ -438,7 +438,7 @@ int silofs_uber_reload_slext(struct silofs_uber *uber)
 	}
 	err = silofs_repo_flock_lext(uber->ub.repo, lextid);
 	if (err) {
-		log_warn("unable to lock sb-lext: err=%d", err);
+		log_err("unable to lock sb-lext: err=%d", err);
 		return err;
 	}
 	uber_bind_sb_lextid(uber, lextid);

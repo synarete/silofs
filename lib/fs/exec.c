@@ -1509,11 +1509,11 @@ int silofs_format_fs(struct silofs_fs_env *fse,
 	return ret;
 }
 
-static int fse_reload_root_slext(struct silofs_fs_env *fse,
-                                 const struct silofs_bootrec *brec)
+static int fse_reload_root_sb_lext(struct silofs_fs_env *fse,
+                                   const struct silofs_bootrec *brec)
 {
 	silofs_uber_bind_child(fse->fs_uber, &brec->sb_ulink);
-	return silofs_uber_reload_slext(fse->fs_uber);
+	return silofs_uber_reload_sb_lext(fse->fs_uber);
 }
 
 static int do_boot_fs(struct silofs_fs_env *fse,
@@ -1532,7 +1532,7 @@ static int do_boot_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_slext(fse, &brec);
+	err = fse_reload_root_sb_lext(fse, &brec);
 	if (err) {
 		return err;
 	}
@@ -1702,7 +1702,7 @@ int silofs_unref_fs(struct silofs_fs_env *fse,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_slext(fse, &brec);
+	err = fse_reload_root_sb_lext(fse, &brec);
 	if (err) {
 		return err;
 	}

@@ -35,7 +35,7 @@ int silofs_uber_format_super(struct silofs_uber *uber, size_t capacity);
 
 int silofs_uber_reload_super(struct silofs_uber *uber);
 
-int silofs_uber_reload_slext(struct silofs_uber *uber);
+int silofs_uber_reload_sb_lext(struct silofs_uber *uber);
 
 int silofs_uber_forkfs(struct silofs_uber *uber,
                        struct silofs_bootrecs *out_brecs);

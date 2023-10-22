@@ -177,7 +177,7 @@ void silofs_log_meta_banner(const char *name, int start)
 
 void silofs_make_version_banner(char *s, unsigned int n, int start)
 {
-	const char *tag = start ? "++++++++++++" : "------------";
+	const char *tag = start ? "============" : "------------";
 
 	snprintf(s, n, "%s %s", silofs_version.string, tag);
 }

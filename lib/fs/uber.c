@@ -668,8 +668,24 @@ static bool ubc_lextid_rw_mode(const struct silofs_uber_ctx *ub_ctx,
                                const struct silofs_lextid *lextid)
 {
 	const struct silofs_sb_info *sbi = ub_ctx->uber->ub_sbi;
+	bool rw_mode;
 
-	return likely(sbi) ? silofs_sbi_ismutable_lextid(sbi, lextid) : true;
+	if (unlikely(sbi == NULL)) {
+		rw_mode = true;
+	} else if (silofs_sbi_ismutable_lextid(sbi, lextid)) {
+		rw_mode = true;
+	} else {
+		/*
+		 * TODO-0054: Allow read-only mode to lext.
+		 *
+		 * When staging logical-extent which is not part of active
+		 * main file-system, stage it as read-only. Currently, this
+		 * logic has an issue with (offline) snapshots, thus forcing
+		 * read-write mode.
+		 */
+		rw_mode = true;
+	}
+	return rw_mode;
 }
 
 static int ubc_lookup_lext(const struct silofs_uber_ctx *ub_ctx,
@@ -684,9 +700,9 @@ static int ubc_stage_lext(const struct silofs_uber_ctx *ub_ctx,
                           const struct silofs_lextid *lextid)
 {
 	int err;
-	const bool rw_mode = ubc_lextid_rw_mode(ub_ctx, lextid);
+	const bool rw = ubc_lextid_rw_mode(ub_ctx, lextid);
 
-	err = silofs_repo_stage_lext(ub_ctx->repo, rw_mode, lextid);
+	err = silofs_repo_stage_lext(ub_ctx->repo, rw, lextid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage lext failed: err=%d", err);
 	}

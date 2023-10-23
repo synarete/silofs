@@ -2251,8 +2251,8 @@ static struct silofs_repo *repo_of(const struct silofs_uber *uber)
 	return uber->ub.repo;
 }
 
-static void fill_query_bootrec(const struct silofs_inode_info *ii,
-                               struct silofs_ioc_query *query)
+static void fill_query_boot(const struct silofs_inode_info *ii,
+                            struct silofs_ioc_query *query)
 {
 	const struct silofs_uber *uber = ii_uber(ii);
 	const struct silofs_repo *repo = uber->ub.repo;
@@ -2314,8 +2314,8 @@ static int do_query_subcmd(struct silofs_task *task,
 	case SILOFS_QUERY_VERSION:
 		fill_query_version(ii, query);
 		break;
-	case SILOFS_QUERY_BOOTSEC:
-		fill_query_bootrec(ii, query);
+	case SILOFS_QUERY_BOOT:
+		fill_query_boot(ii, query);
 		break;
 	case SILOFS_QUERY_PROC:
 		fill_query_proc(ii, query);

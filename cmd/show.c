@@ -70,7 +70,7 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
-	[SILOFS_QUERY_BOOTSEC]  = "boot",
+	[SILOFS_QUERY_BOOT]     = "boot",
 	[SILOFS_QUERY_PROC]     = "proc",
 	[SILOFS_QUERY_SPSTATS]  = "spstats",
 	[SILOFS_QUERY_STATX]    = "statx",
@@ -327,7 +327,7 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_VERSION:
 		cmd_show_version(ctx);
 		break;
-	case SILOFS_QUERY_BOOTSEC:
+	case SILOFS_QUERY_BOOT:
 		cmd_show_boot(ctx);
 		break;
 	case SILOFS_QUERY_PROC:

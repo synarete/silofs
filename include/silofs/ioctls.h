@@ -41,7 +41,7 @@
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
 	SILOFS_QUERY_VERSION    = 1,
-	SILOFS_QUERY_BOOTSEC    = 2,
+	SILOFS_QUERY_BOOT       = 2,
 	SILOFS_QUERY_PROC       = 3,
 	SILOFS_QUERY_SPSTATS    = 4,
 	SILOFS_QUERY_STATX      = 5,

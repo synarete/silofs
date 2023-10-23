@@ -103,7 +103,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 	if (err) {
 		goto out;
 	}
-	qry->qtype = SILOFS_QUERY_BOOTSEC;
+	qry->qtype = SILOFS_QUERY_BOOT;
 	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		goto out;

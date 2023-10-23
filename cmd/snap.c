@@ -143,7 +143,7 @@ static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_BOOTSEC };
+	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_BOOT };
 	struct cmd_snap_in_args *args = &ctx->in_args;
 
 	cmd_check_isdir(args->dirpath, false);

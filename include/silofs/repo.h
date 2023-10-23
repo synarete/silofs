@@ -83,12 +83,6 @@ int silofs_repo_remove_lext(struct silofs_repo *repo,
 int silofs_repo_punch_lext(struct silofs_repo *repo,
                            const struct silofs_lextid *lextid);
 
-int silofs_repo_flock_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid);
-
-int silofs_repo_funlock_lext(struct silofs_repo *repo,
-                             const struct silofs_lextid *lextid);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_require_laddr(struct silofs_repo *repo,

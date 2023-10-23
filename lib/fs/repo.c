@@ -34,7 +34,6 @@ struct silofs_lextf {
 	long                            lex_size;
 	int                             lex_fd;
 	int                             lex_refcnt;
-	bool                            lex_flocked;
 	bool                            lex_rdonly;
 };
 
@@ -357,17 +356,6 @@ static int do_fchmodat(int dirfd, const char *pathname, mode_t mode, int flags)
 	return err;
 }
 
-static int do_flock(int fd, int op)
-{
-	int err;
-
-	err = silofs_sys_flock(fd, op);
-	if (err) {
-		log_dbg("flock error: fd=%d op=%d err=%d", fd, op, err);
-	}
-	return err;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static size_t
@@ -448,7 +436,6 @@ static int lextf_init(struct silofs_lextf *lextf,
 	lextf->lex_size = 0;
 	lextf->lex_fd = -1;
 	lextf->lex_refcnt = 0;
-	lextf->lex_flocked = false;
 	lextf->lex_rdonly = false;
 	return 0;
 }
@@ -478,7 +465,7 @@ static int lextf_refcnt(const struct silofs_lextf *lextf)
 
 static bool lextf_is_evictable(const struct silofs_lextf *lextf)
 {
-	return !lextf->lex_flocked && (lextf_refcnt(lextf) == 0);
+	return (lextf_refcnt(lextf) == 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -816,28 +803,6 @@ static int lextf_punch(struct silofs_lextf *lextf)
 	return lextf_do_punch_all(lextf);
 }
 
-static int lextf_flock(struct silofs_lextf *lextf)
-{
-	int err = 0;
-
-	if (!lextf->lex_flocked) {
-		err = do_flock(lextf->lex_fd, LOCK_EX | LOCK_NB);
-		lextf->lex_flocked = (err == 0);
-	}
-	return err;
-}
-
-static int lextf_funlock(struct silofs_lextf *lextf)
-{
-	int err = 0;
-
-	if (lextf->lex_flocked) {
-		err = do_flock(lextf->lex_fd, LOCK_UN);
-		lextf->lex_flocked = !(err == 0);
-	}
-	return err;
-}
-
 static int lextf_fsync(struct silofs_lextf *lextf)
 {
 	return do_fsync(lextf->lex_fd);
@@ -850,7 +815,6 @@ static int lextf_fsync2(struct silofs_lextf *lextf)
 
 static int lextf_close(struct silofs_lextf *lextf)
 {
-	lextf_funlock(lextf);
 	return do_closefd(&lextf->lex_fd);
 }
 
@@ -1995,48 +1959,6 @@ int silofs_repo_punch_lext(struct silofs_repo *repo,
 		return err;
 	}
 	err = lextf_punch(lextf);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_flock_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf = NULL;
-	int err;
-
-	err = repo_check_open(repo, true);
-	if (err) {
-		return err;
-	}
-	err = repo_stage_lext_of(repo, true, lextid, &lextf);
-	if (err) {
-		return err;
-	}
-	err = lextf_flock(lextf);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_funlock_lext(struct silofs_repo *repo,
-                             const struct silofs_lextid *lextid)
-{
-	struct silofs_lextf *lextf = NULL;
-	int err;
-
-	err = repo_check_open(repo, true);
-	if (err) {
-		return err;
-	}
-	err = repo_stage_lext_of(repo, true, lextid, &lextf);
-	if (err) {
-		return err;
-	}
-	err = lextf_funlock(lextf);
 	if (err) {
 		return err;
 	}

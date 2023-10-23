@@ -87,19 +87,10 @@ static void sli_bkaddr(const struct silofs_spleaf_info *sli,
 static void uber_bind_sb_lextid(struct silofs_uber *uber,
                                 const struct silofs_lextid *lextid_new)
 {
-	struct silofs_repo *repo = uber->ub.repo;
-	struct silofs_lextid *lextid_cur = &uber->ub_sb_lextid;
-
-	if (!lextid_isnull(lextid_cur)) {
-		silofs_repo_funlock_lext(repo, lextid_cur);
-	}
-	if (lextid_new && !lextid_isnull(lextid_new)) {
-		silofs_repo_flock_lext(repo, lextid_new);
-	}
 	if (lextid_new) {
-		lextid_assign(lextid_cur, lextid_new);
+		lextid_assign(&uber->ub_sb_lextid, lextid_new);
 	} else {
-		lextid_reset(lextid_cur);
+		lextid_reset(&uber->ub_sb_lextid);
 	}
 }
 
@@ -434,11 +425,6 @@ int silofs_uber_reload_sb_lext(struct silofs_uber *uber)
 	err = silofs_stage_lext_at(uber, lextid);
 	if (err) {
 		log_warn("unable to stage sb-lext: err=%d", err);
-		return err;
-	}
-	err = silofs_repo_flock_lext(uber->ub.repo, lextid);
-	if (err) {
-		log_err("unable to lock sb-lext: err=%d", err);
 		return err;
 	}
 	uber_bind_sb_lextid(uber, lextid);

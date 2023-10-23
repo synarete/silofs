@@ -112,7 +112,7 @@ static int check_fsname(const struct silofs_namestr *nstr)
 	if (nstr->s.str[0] == '.') {
 		return -SILOFS_EINVAL;
 	}
-	if (nstr->s.len > (SILOFS_NAME_MAX / 2)) {
+	if (nstr->s.len > SILOFS_FSNAME_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	err = check_ascii_fs_name(nstr);

@@ -38,6 +38,7 @@ struct cmd_rmfs_ctx {
 	struct cmd_rmfs_in_args   in_args;
 	struct silofs_fs_args     fs_args;
 	struct silofs_fs_env     *fs_env;
+	bool has_lockfile;
 };
 
 static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
@@ -191,6 +192,24 @@ static void cmd_rmfs_destroy_fs_env(struct cmd_rmfs_ctx *ctx)
 	cmd_del_env(&ctx->fs_env);
 }
 
+static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)
+{
+	if (!ctx->has_lockfile) {
+		cmd_lockfile_acquire4(ctx->in_args.repodir_real,
+		                      ctx->in_args.name);
+		ctx->has_lockfile = true;
+	}
+}
+
+static void cmd_rmfs_release_lockfile(struct cmd_rmfs_ctx *ctx)
+{
+	if (ctx->has_lockfile) {
+		cmd_lockfile_release(ctx->in_args.repodir_real,
+		                     ctx->in_args.name);
+		ctx->has_lockfile = false;
+	}
+}
+
 static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_rmfs_destroy_fs_env(ctx);
@@ -205,6 +224,7 @@ static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_atexit(void)
 {
 	if (cmd_rmfs_ctx != NULL) {
+		cmd_rmfs_release_lockfile(cmd_rmfs_ctx);
 		cmd_rmfs_finalize(cmd_rmfs_ctx);
 	}
 }
@@ -247,6 +267,9 @@ void cmd_execute_rmfs(void)
 	/* Setup execution context */
 	cmd_rmfs_setup_fs_env(&ctx);
 
+	/* Acquire lock */
+	cmd_rmfs_acquire_lockfile(&ctx);
+
 	/* Open-validate repository */
 	cmd_rmfs_open_repo(&ctx);
 
@@ -261,6 +284,9 @@ void cmd_execute_rmfs(void)
 
 	/* Close repository */
 	cmd_rmfs_close_repo(&ctx);
+
+	/* Release lock */
+	cmd_rmfs_release_lockfile(&ctx);
 
 	/* Post execution cleanups */
 	cmd_rmfs_finalize(&ctx);

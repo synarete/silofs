@@ -36,6 +36,7 @@ struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_env   *fs_env;
+	bool has_lockfile;
 };
 
 static struct cmd_fsck_ctx *cmd_fsck_ctx;
@@ -86,9 +87,28 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_fsck_ctx = NULL;
 }
 
+static void cmd_fsck_acquire_lockfile(struct cmd_fsck_ctx *ctx)
+{
+	if (!ctx->has_lockfile) {
+		cmd_lockfile_acquire4(ctx->in_args.repodir_real,
+		                      ctx->in_args.name);
+		ctx->has_lockfile = true;
+	}
+}
+
+static void cmd_fsck_release_lockfile(struct cmd_fsck_ctx *ctx)
+{
+	if (ctx->has_lockfile) {
+		cmd_lockfile_release(ctx->in_args.repodir_real,
+		                     ctx->in_args.name);
+		ctx->has_lockfile = false;
+	}
+}
+
 static void cmd_fsck_atexit(void)
 {
 	if (cmd_fsck_ctx != NULL) {
+		cmd_fsck_release_lockfile(cmd_fsck_ctx);
 		cmd_fsck_finalize(cmd_fsck_ctx);
 	}
 }
@@ -203,6 +223,9 @@ void cmd_execute_fsck(void)
 	/* Setup execution environment */
 	cmd_fsck_setup_fs_env(&ctx);
 
+	/* Acquire lock */
+	cmd_fsck_acquire_lockfile(&ctx);
+
 	/* Open repository */
 	cmd_fsck_open_repo(&ctx);
 
@@ -223,6 +246,9 @@ void cmd_execute_fsck(void)
 
 	/* Close repository */
 	cmd_fsck_close_repo(&ctx);
+
+	/* Release lock */
+	cmd_fsck_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
 	cmd_fsck_destroy_fs_env(&ctx);

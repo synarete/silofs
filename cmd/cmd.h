@@ -208,11 +208,13 @@ gid_t cmd_parse_str_as_gid(const char *str);
 bool cmd_parse_str_as_bool(const char *str);
 
 /* locking facilities */
-void cmd_lockf(const char *dirpath, const char *name, int *out_fd);
 
-bool cmd_trylockf(const char *dirpath, const char *name, int *out_fd);
+void cmd_lockfile_acquire1(const char *repodir, const char *name);
 
-void cmd_unlockf(int *pfd);
+void cmd_lockfile_acquire4(const char *repodir, const char *name);
+
+void cmd_lockfile_release(const char *repodir, const char *name);
+
 
 /* complex fs operations */
 void cmd_init_fs_args(struct silofs_fs_args *fs_args);

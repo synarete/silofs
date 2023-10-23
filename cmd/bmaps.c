@@ -36,6 +36,7 @@ struct cmd_bmaps_ctx {
 	struct cmd_bmaps_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_env   *fs_env;
+	bool has_lockfile;
 };
 
 static struct cmd_bmaps_ctx *cmd_bmaps_ctx;
@@ -69,6 +70,24 @@ static void cmd_bmaps_getopt(struct cmd_bmaps_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void cmd_bmaps_acquire_lockfile(struct cmd_bmaps_ctx *ctx)
+{
+	if (!ctx->has_lockfile) {
+		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
+		                      ctx->in_args.name);
+		ctx->has_lockfile = true;
+	}
+}
+
+static void cmd_bmaps_release_lockfile(struct cmd_bmaps_ctx *ctx)
+{
+	if (ctx->has_lockfile) {
+		cmd_lockfile_release(ctx->in_args.repodir_real,
+		                     ctx->in_args.name);
+		ctx->has_lockfile = false;
+	}
+}
+
 static void cmd_bmaps_destroy_fs_env(struct cmd_bmaps_ctx *ctx)
 {
 	cmd_del_env(&ctx->fs_env);
@@ -89,6 +108,7 @@ static void cmd_bmaps_finalize(struct cmd_bmaps_ctx *ctx)
 static void cmd_bmaps_atexit(void)
 {
 	if (cmd_bmaps_ctx != NULL) {
+		cmd_bmaps_release_lockfile(cmd_bmaps_ctx);
 		cmd_bmaps_finalize(cmd_bmaps_ctx);
 	}
 }
@@ -209,13 +229,16 @@ void cmd_execute_bmaps(void)
 	/* Setup execution environment */
 	cmd_bmaps_setup_fs_env(&ctx);
 
+	/* Acquire lock */
+	cmd_bmaps_acquire_lockfile(&ctx);
+
 	/* Open repository */
 	cmd_bmaps_open_repo(&ctx);
 
 	/* Require valid boot-record */
 	cmd_bmaps_require_brec(&ctx);
 
-	/* Require boot + lock-able file-system */
+	/* Require boot-able file-system */
 	cmd_bmaps_boot_fs(&ctx);
 
 	/* Open file-system */
@@ -226,6 +249,9 @@ void cmd_execute_bmaps(void)
 
 	/* Close repository */
 	cmd_bmaps_close_repo(&ctx);
+
+	/* Release lock */
+	cmd_bmaps_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
 	cmd_bmaps_destroy_fs_env(&ctx);

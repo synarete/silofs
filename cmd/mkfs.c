@@ -47,6 +47,7 @@ struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_env   *fs_env;
+	bool has_lockfile;
 };
 
 static struct cmd_mkfs_ctx *cmd_mkfs_ctx;
@@ -116,9 +117,28 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_mkfs_ctx = NULL;
 }
 
+static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
+{
+	if (!ctx->has_lockfile) {
+		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
+		                      ctx->in_args.name);
+		ctx->has_lockfile = true;
+	}
+}
+
+static void cmd_mkfs_release_lockfile(struct cmd_mkfs_ctx *ctx)
+{
+	if (ctx->has_lockfile) {
+		cmd_lockfile_release(ctx->in_args.repodir_real,
+		                     ctx->in_args.name);
+		ctx->has_lockfile = false;
+	}
+}
+
 static void cmd_mkfs_atexit(void)
 {
 	if (cmd_mkfs_ctx != NULL) {
+		cmd_mkfs_release_lockfile(cmd_mkfs_ctx);
 		cmd_mkfs_finalize(cmd_mkfs_ctx);
 	}
 }
@@ -259,6 +279,9 @@ void cmd_execute_mkfs(void)
 	/* Prepare environment */
 	cmd_mkfs_setup_fs_env(&ctx);
 
+	/* Acquire lock */
+	cmd_mkfs_acquire_lockfile(&ctx);
+
 	/* Open repository */
 	cmd_mkfs_open_repo(&ctx);
 
@@ -273,6 +296,9 @@ void cmd_execute_mkfs(void)
 
 	/* Close repository */
 	cmd_mkfs_close_repo(&ctx);
+
+	/* Release lock */
+	cmd_mkfs_release_lockfile(&ctx);
 
 	/* Post execution cleanups */
 	cmd_mkfs_finalize(&ctx);

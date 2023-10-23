@@ -23,6 +23,7 @@ silofs_SOURCES += getpass.c
 silofs_SOURCES += iconf.c
 silofs_SOURCES += init.c
 silofs_SOURCES += bmaps.c
+silofs_SOURCES += lockfile.c
 silofs_SOURCES += lsmnt.c
 silofs_SOURCES += main.c
 silofs_SOURCES += mkfs.c

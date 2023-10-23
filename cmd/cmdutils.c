@@ -932,45 +932,6 @@ static void cmd_readfile(int fd, char *buf, size_t bsz, size_t *out_nrd)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int sys_flock(int fd, int operation)
-{
-	return silofs_sys_flock(fd, operation);
-}
-
-static void cmd_lockf_at(int fd, const char *repodir, const char *name)
-{
-	int err;
-
-	err = sys_flock(fd, LOCK_EX | LOCK_NB);
-	if (err == -EWOULDBLOCK) {
-		cmd_dief(0, "already locked by another process: %s/%s",
-		         repodir, name);
-	} else if (err) {
-		cmd_dief(err, "can not lock: %s/%s", repodir, name);
-	}
-}
-
-static int cmd_trylockf_at(int fd, const char *repodir, const char *name)
-{
-	int err;
-
-	err = sys_flock(fd, LOCK_EX | LOCK_NB);
-	if (err && (err != -EWOULDBLOCK)) {
-		cmd_dief(err, "can not lock: %s/%s", repodir, name);
-	}
-	return err;
-}
-
-static void cmd_unlockf_at(int fd)
-{
-	int err;
-
-	err = sys_flock(fd, LOCK_UN);
-	if (err) {
-		cmd_dief(err, "failed to unlock");
-	}
-}
-
 static void cmd_closefd(int *pfd)
 {
 	int err;
@@ -978,50 +939,6 @@ static void cmd_closefd(int *pfd)
 	err = silofs_sys_closefd(pfd);
 	if (err) {
 		cmd_dief(err, "close error: fd=%d", *pfd);
-	}
-}
-
-static void cmd_openlockf(int dfd, const char *name, int *out_fd)
-{
-	cmd_openat(dfd, name, O_RDWR, out_fd);
-}
-
-void cmd_lockf(const char *dirpath, const char *name, int *out_fd)
-{
-	int dfd = -1;
-	int fd = -1;
-
-	cmd_opendir(dirpath, &dfd);
-	cmd_openlockf(dfd, name, &fd);
-	cmd_closefd(&dfd);
-	cmd_lockf_at(fd, dirpath, name);
-	*out_fd = fd;
-}
-
-bool cmd_trylockf(const char *dirpath, const char *name, int *out_fd)
-{
-	int dfd = -1;
-	int fd = -1;
-	int err;
-
-	cmd_opendir(dirpath, &dfd);
-	cmd_openlockf(dfd, name, &fd);
-	cmd_closefd(&dfd);
-	err = cmd_trylockf_at(fd, dirpath, name);
-	if (err) {
-		cmd_closefd(&fd);
-		*out_fd = -1;
-		return false;
-	}
-	*out_fd = fd;
-	return true;
-}
-
-void cmd_unlockf(int *pfd)
-{
-	if (pfd && (*pfd > 0)) {
-		cmd_unlockf_at(*pfd);
-		cmd_closefd(pfd);
 	}
 }
 

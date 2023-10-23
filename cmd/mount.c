@@ -74,6 +74,7 @@ struct cmd_mount_ctx {
 	time_t                  start_time;
 	int                     halt_signal;
 	int                     post_exec_status;
+	bool                    has_lockfile;
 };
 
 static struct cmd_mount_ctx *cmd_mount_ctx;
@@ -270,6 +271,25 @@ static void cmd_mount_enable_signals(void)
 	cmd_register_sigactions(cmd_mount_halt_by_signal);
 }
 
+
+static void cmd_mount_acquire_lockfile(struct cmd_mount_ctx *ctx)
+{
+	if (!ctx->has_lockfile) {
+		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
+		                      ctx->in_args.name);
+		ctx->has_lockfile = true;
+	}
+}
+
+static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
+{
+	if (ctx->has_lockfile) {
+		cmd_lockfile_release(ctx->in_args.repodir_real,
+		                     ctx->in_args.name);
+		ctx->has_lockfile = false;
+	}
+}
+
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_fs_env(ctx);
@@ -289,6 +309,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 static void cmd_mount_atexit(void)
 {
 	if (cmd_mount_ctx != NULL) {
+		cmd_mount_release_lockfile(cmd_mount_ctx);
 		cmd_mount_finalize(cmd_mount_ctx);
 	}
 }
@@ -500,6 +521,85 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
+{
+	/* Setup boot environment instance */
+	cmd_mount_setup_fs_env(ctx);
+
+	/* Acquire lock */
+	cmd_mount_acquire_lockfile(ctx);
+
+	/* Open repository first time */
+	cmd_mount_open_repo(ctx);
+
+	/* Load-verify boot-record */
+	cmd_mount_require_brec(ctx);
+
+	/* Require boot + lock-able file-system */
+	cmd_mount_boot_fs(ctx);
+
+	/* Flush-close file-system */
+	cmd_mount_close_fs(ctx);
+
+	/* Close repository */
+	cmd_mount_close_repo(ctx);
+
+	/* Release lock */
+	cmd_mount_release_lockfile(ctx);
+
+	/* Destroy boot environment instance */
+	cmd_mount_destroy_fs_env(ctx);
+}
+
+static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
+{
+	/* Become daemon process */
+	cmd_mount_boostrap_process(ctx);
+
+	/* Setup main environment instance */
+	cmd_mount_setup_fs_env(ctx);
+
+	/* Re-acquire lock */
+	cmd_mount_acquire_lockfile(ctx);
+
+	/* Re-open repository */
+	cmd_mount_open_repo(ctx);
+
+	/* Re-load and verify boot-record  */
+	cmd_mount_require_brec(ctx);
+
+	/* Re-boot and lock file-system */
+	cmd_mount_boot_fs(ctx);
+
+	/* Open-load file-system meta-data */
+	cmd_mount_open_fs(ctx);
+
+	/* Report beginning-of-mount */
+	cmd_mount_trace_start(ctx);
+
+	/* Allow halt by signal */
+	cmd_mount_enable_signals();
+
+	/* Execute as long as needed... */
+	cmd_mount_execute_fs(ctx);
+
+	/* Flush-close file-system meta-data */
+	cmd_mount_close_fs(ctx);
+
+	/* Close repository */
+	cmd_mount_close_repo(ctx);
+
+	/* Release lock */
+	cmd_mount_release_lockfile(ctx);
+
+	/* Report end-of-mount */
+	cmd_mount_trace_finish(ctx);
+
+	/* Destroy main environment instance */
+	cmd_mount_destroy_fs_env(ctx);
+}
+
+
 void cmd_execute_mount(void)
 {
 	struct cmd_mount_ctx ctx = {
@@ -535,65 +635,11 @@ void cmd_execute_mount(void)
 	/* Require fs-uuid and ids-map */
 	cmd_mount_load_iconf(&ctx);
 
-	/* Setup boot environment instance */
-	cmd_mount_setup_fs_env(&ctx);
+	/* Execute pre-mount as command-line process */
+	cmd_mount_exec_phase1(&ctx);
 
-	/* Open repository first time */
-	cmd_mount_open_repo(&ctx);
-
-	/* Load-verify boot-record */
-	cmd_mount_require_brec(&ctx);
-
-	/* Require boot + lock-able file-system */
-	cmd_mount_boot_fs(&ctx);
-
-	/* Flush-close file-system */
-	cmd_mount_close_fs(&ctx);
-
-	/* Close repository */
-	cmd_mount_close_repo(&ctx);
-
-	/* Destroy boot environment instance */
-	cmd_mount_destroy_fs_env(&ctx);
-
-	/* Become daemon process */
-	cmd_mount_boostrap_process(&ctx);
-
-	/* Setup main environment instance */
-	cmd_mount_setup_fs_env(&ctx);
-
-	/* Re-open repository */
-	cmd_mount_open_repo(&ctx);
-
-	/* Re-load and verify boot-record  */
-	cmd_mount_require_brec(&ctx);
-
-	/* Re-boot and lock file-system */
-	cmd_mount_boot_fs(&ctx);
-
-	/* Open-load file-system meta-data */
-	cmd_mount_open_fs(&ctx);
-
-	/* Report beginning-of-mount */
-	cmd_mount_trace_start(&ctx);
-
-	/* Allow halt by signal */
-	cmd_mount_enable_signals();
-
-	/* Execute as long as needed... */
-	cmd_mount_execute_fs(&ctx);
-
-	/* Flush-close file-system meta-data */
-	cmd_mount_close_fs(&ctx);
-
-	/* Close repository */
-	cmd_mount_close_repo(&ctx);
-
-	/* Report end-of-mount */
-	cmd_mount_trace_finish(&ctx);
-
-	/* Destroy main environment instance */
-	cmd_mount_destroy_fs_env(&ctx);
+	/* Execute mount as daemon process */
+	cmd_mount_exec_phase2(&ctx);
 
 	/* Post execution cleanups */
 	cmd_mount_post_exec_cleanup(&ctx);

@@ -984,6 +984,18 @@ static struct silofs_lextf *repo_lruq_back(const struct silofs_repo *repo)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void repo_lock(struct silofs_repo *repo)
+{
+	silofs_mutex_lock(&repo->re_mutex);
+}
+
+static void repo_unlock(struct silofs_repo *repo)
+{
+	silofs_mutex_unlock(&repo->re_mutex);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int
 repo_create_lextf(struct silofs_repo *repo,
                   const struct silofs_lextid *lextid,
@@ -1026,7 +1038,7 @@ repo_prevof(const struct silofs_repo *repo, const struct silofs_lextf *lextf)
 	return NULL;
 }
 
-int silofs_repo_fsync_all(struct silofs_repo *repo)
+static int repo_do_fsync_all(struct silofs_repo *repo)
 {
 	struct silofs_lextf *lextf;
 	int ret = 0;
@@ -1039,6 +1051,16 @@ int silofs_repo_fsync_all(struct silofs_repo *repo)
 		lextf = repo_prevof(repo, lextf);
 	}
 	return ret;
+}
+
+int silofs_repo_fsync_all(struct silofs_repo *repo)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_fsync_all(repo);
+	repo_unlock(repo);
+	return err;
 }
 
 static void repo_evict_all(struct silofs_repo *repo)
@@ -1076,6 +1098,11 @@ static void repo_evict_some(struct silofs_repo *repo, size_t niter_max)
 	}
 }
 
+static void repo_evict_many(struct silofs_repo *repo)
+{
+	repo_evict_some(repo, repo->re_lruq.sz);
+}
+
 /*
  * TODO-0035: Define proper upper-bound.
  *
@@ -1094,7 +1121,9 @@ static void repo_try_evict_overpop(struct silofs_repo *repo)
 
 void silofs_repo_relax(struct silofs_repo *repo)
 {
+	repo_lock(repo);
 	repo_evict_some(repo, 1);
+	repo_unlock(repo);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1457,11 +1486,23 @@ static void repo_fini_mdigest(struct silofs_repo *repo)
 	silofs_mdigest_fini(&repo->re_mdigest);
 }
 
+static int repo_init_mutex(struct silofs_repo *repo)
+{
+	return silofs_mutex_init(&repo->re_mutex);
+}
+
+static void repo_fini_mutex(struct silofs_repo *repo)
+{
+	silofs_mutex_fini(&repo->re_mutex);
+}
+
+
 int silofs_repo_init(struct silofs_repo *repo,
                      const struct silofs_repo_base *re_base)
 {
 	int err;
 
+	memset(repo, 0, sizeof(*repo));
 	memcpy(&repo->re, re_base, sizeof(repo->re));
 	listq_init(&repo->re_lruq);
 	repo->re_root_dfd = -1;
@@ -1473,10 +1514,17 @@ int silofs_repo_init(struct silofs_repo *repo,
 	}
 	err = repo_htbl_init(repo);
 	if (err) {
-		repo_fini_mdigest(repo);
-		return err;
+		goto out_err;
+	}
+	err = repo_init_mutex(repo);
+	if (err) {
+		goto out_err;
 	}
 	return 0;
+out_err:
+	repo_fini_mutex(repo);
+	repo_fini_mdigest(repo);
+	return err;
 }
 
 void silofs_repo_fini(struct silofs_repo *repo)
@@ -1485,13 +1533,16 @@ void silofs_repo_fini(struct silofs_repo *repo)
 	repo_evict_all(repo);
 	repo_htbl_fini(repo);
 	repo_fini_mdigest(repo);
+	repo_fini_mutex(repo);
 	listq_fini(&repo->re_lruq);
 }
 
 void silofs_repo_drop_some(struct silofs_repo *repo)
 {
-	silofs_repo_fsync_all(repo);
-	repo_evict_some(repo, repo->re_lruq.sz);
+	repo_lock(repo);
+	repo_do_fsync_all(repo);
+	repo_evict_many(repo);
+	repo_unlock(repo);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1733,7 +1784,7 @@ static int repo_format_lexts_subs(struct silofs_repo *repo)
 	return repo_objs_format(repo);
 }
 
-int silofs_repo_format(struct silofs_repo *repo)
+static int repo_do_format(struct silofs_repo *repo)
 {
 	int err;
 
@@ -1768,7 +1819,17 @@ int silofs_repo_format(struct silofs_repo *repo)
 	return 0;
 }
 
-int silofs_repo_open(struct silofs_repo *repo)
+int silofs_repo_format(struct silofs_repo *repo)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_format(repo);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_do_open(struct silofs_repo *repo)
 {
 	int err;
 
@@ -1793,6 +1854,16 @@ int silofs_repo_open(struct silofs_repo *repo)
 		return err;
 	}
 	return 0;
+}
+
+int silofs_repo_open(struct silofs_repo *repo)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_open(repo);
+	repo_unlock(repo);
+	return err;
 }
 
 static int repo_close_basedir(struct silofs_repo *repo)
@@ -1829,7 +1900,7 @@ static int repo_close(struct silofs_repo *repo)
 	return 0;
 }
 
-int silofs_repo_close(struct silofs_repo *repo)
+static int repo_do_close(struct silofs_repo *repo)
 {
 	int err;
 
@@ -1844,11 +1915,21 @@ int silofs_repo_close(struct silofs_repo *repo)
 	return 0;
 }
 
+int silofs_repo_close(struct silofs_repo *repo)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_close(repo);
+	repo_unlock(repo);
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_lext(const struct silofs_repo *repo,
-                          const struct silofs_lextid *lextid,
-                          bool allow_cache, struct stat *out_st)
+static int repo_do_stat_lext(const struct silofs_repo *repo,
+                             const struct silofs_lextid *lextid,
+                             bool allow_cache, struct stat *out_st)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -1868,8 +1949,20 @@ int silofs_repo_stat_lext(const struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_spawn_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid)
+int silofs_repo_stat_lext(struct silofs_repo *repo,
+                          const struct silofs_lextid *lextid,
+                          bool allow_cache, struct stat *out_st)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_stat_lext(repo, lextid, allow_cache, out_st);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_do_spawn_lext(struct silofs_repo *repo,
+                              const struct silofs_lextid *lextid)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -1889,6 +1982,17 @@ int silofs_repo_spawn_lext(struct silofs_repo *repo,
 	return 0;
 }
 
+int silofs_repo_spawn_lext(struct silofs_repo *repo,
+                           const struct silofs_lextid *lextid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_spawn_lext(repo, lextid);
+	repo_unlock(repo);
+	return err;
+}
+
 static int repo_stage_lext_of(struct silofs_repo *repo, bool rw,
                               const struct silofs_lextid *lextid,
                               struct silofs_lextf **out_lextf)
@@ -1906,8 +2010,8 @@ static int repo_stage_lext_of(struct silofs_repo *repo, bool rw,
 	return 0;
 }
 
-int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
-                           const struct silofs_lextid *lextid)
+static int repo_do_stage_lext(struct silofs_repo *repo, bool rw,
+                              const struct silofs_lextid *lextid)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -1923,8 +2027,19 @@ int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
 	return 0;
 }
 
-int silofs_repo_remove_lext(struct silofs_repo *repo,
-                            const struct silofs_lextid *lextid)
+int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
+                           const struct silofs_lextid *lextid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_stage_lext(repo, rw, lextid);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_do_remove_lext(struct silofs_repo *repo,
+                               const struct silofs_lextid *lextid)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -1944,8 +2059,19 @@ int silofs_repo_remove_lext(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_punch_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid)
+int silofs_repo_remove_lext(struct silofs_repo *repo,
+                            const struct silofs_lextid *lextid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_remove_lext(repo, lextid);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_do_punch_lext(struct silofs_repo *repo,
+                              const struct silofs_lextid *lextid)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -1965,10 +2091,21 @@ int silofs_repo_punch_lext(struct silofs_repo *repo,
 	return 0;
 }
 
+int silofs_repo_punch_lext(struct silofs_repo *repo,
+                           const struct silofs_lextid *lextid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_punch_lext(repo, lextid);
+	repo_unlock(repo);
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_require_laddr(struct silofs_repo *repo,
-                              const struct silofs_laddr *laddr)
+static int repo_do_require_laddr(struct silofs_repo *repo,
+                                 const struct silofs_laddr *laddr)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -1988,9 +2125,20 @@ int silofs_repo_require_laddr(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_writev_at(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr,
-                          const struct iovec *iov, size_t cnt)
+int silofs_repo_require_laddr(struct silofs_repo *repo,
+                              const struct silofs_laddr *laddr)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_require_laddr(repo, laddr);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_do_writev_at(struct silofs_repo *repo,
+                             const struct silofs_laddr *laddr,
+                             const struct iovec *iov, size_t cnt)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -2010,8 +2158,20 @@ int silofs_repo_writev_at(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_read_at(struct silofs_repo *repo,
-                        const struct silofs_laddr *laddr, void *buf)
+int silofs_repo_writev_at(struct silofs_repo *repo,
+                          const struct silofs_laddr *laddr,
+                          const struct iovec *iov, size_t cnt)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_writev_at(repo, laddr, iov, cnt);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_do_read_at(struct silofs_repo *repo,
+                           const struct silofs_laddr *laddr, void *buf)
 {
 	struct silofs_lextf *lextf = NULL;
 	int err;
@@ -2034,6 +2194,17 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 		return err;
 	}
 	return 0;
+}
+
+int silofs_repo_read_at(struct silofs_repo *repo,
+                        const struct silofs_laddr *laddr, void *buf)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_read_at(repo, laddr, buf);
+	repo_unlock(repo);
+	return err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -2081,9 +2252,13 @@ int silofs_repo_save_obj(struct silofs_repo *repo,
                          const struct silofs_laddr *laddr, const void *buf)
 {
 	struct silofs_namebuf nb;
+	int err;
 
+	repo_lock(repo);
 	repo_objs_pathname_by(repo, laddr, &nb);
-	return repo_save_obj_at(repo, &nb, buf, laddr->len);
+	err = repo_save_obj_at(repo, &nb, buf, laddr->len);
+	repo_unlock(repo);
+	return err;
 }
 
 static int repo_load_obj_at(const struct silofs_repo *repo,
@@ -2112,9 +2287,13 @@ int silofs_repo_load_obj(struct silofs_repo *repo,
                          const struct silofs_laddr *laddr, void *buf)
 {
 	struct silofs_namebuf nb;
+	int err;
 
+	repo_lock(repo);
 	repo_objs_pathname_by(repo, laddr, &nb);
-	return repo_load_obj_at(repo, &nb, buf, laddr->len);
+	err = repo_load_obj_at(repo, &nb, buf, laddr->len);
+	repo_unlock(repo);
+	return err;
 }
 
 static int repo_stat_obj_at(const struct silofs_repo *repo,
@@ -2140,14 +2319,18 @@ static int repo_stat_obj_at(const struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_stat_obj(const struct silofs_repo *repo,
+int silofs_repo_stat_obj(struct silofs_repo *repo,
                          const struct silofs_laddr *laddr,
                          struct stat *out_st)
 {
 	struct silofs_namebuf nb;
+	int err;
 
+	repo_lock(repo);
 	repo_objs_pathname_by(repo, laddr, &nb);
-	return repo_stat_obj_at(repo, &nb, out_st);
+	err = repo_stat_obj_at(repo, &nb, out_st);
+	repo_unlock(repo);
+	return err;
 }
 
 int silofs_repo_unlink_obj(struct silofs_repo *repo,
@@ -2155,8 +2338,12 @@ int silofs_repo_unlink_obj(struct silofs_repo *repo,
 {
 	struct silofs_namebuf nb;
 	int dfd;
+	int err;
 
+	repo_lock(repo);
 	repo_objs_pathname_by(repo, laddr, &nb);
 	dfd = repo_lexts_dfd(repo);
-	return do_unlinkat(dfd, nb.name, 0);
+	err = do_unlinkat(dfd, nb.name, 0);
+	repo_unlock(repo);
+	return err;
 }

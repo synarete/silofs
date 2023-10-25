@@ -23,7 +23,7 @@
 
 /* repository base config */
 struct silofs_repo_base {
-	struct silofs_bootpath          bootpath;
+	struct silofs_substr            repodir;
 	struct silofs_alloc            *alloc;
 	long                            flags;
 };

@@ -17,6 +17,8 @@
 #ifndef SILOFS_QALLOC_H_
 #define SILOFS_QALLOC_H_
 
+#include <stdint.h>
+
 struct silofs_iovec;
 
 /* allocation flags */

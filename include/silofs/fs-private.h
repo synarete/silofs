@@ -14,81 +14,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PRIVATE_H_
-#define SILOFS_PRIVATE_H_
+#ifndef SILOFS_FS_PRIVATE_H_
+#define SILOFS_FS_PRIVATE_H_
 
 #ifndef SILOFS_HAVE_PRIVATE
 #error "internal library header -- do not include!"
 #endif
 
-#include <silofs/infra.h>
 #include <silofs/defs.h>
+#include <silofs/infra.h>
+#include <silofs/infra-private.h>
+#include <silofs/ps-private.h>
 #include <silofs/types.h>
 #include <silofs/nodes.h>
 
-/* common macros */
-#define likely(x_)                      silofs_likely(x_)
-#define unlikely(x_)                    silofs_unlikely(x_)
-
-#define STATICASSERT(expr_)             SILOFS_STATICASSERT(expr_)
-#define STATICASSERT_EQ(a_, b_)         SILOFS_STATICASSERT_EQ(a_, b_)
-#define STATICASSERT_LT(a_, b_)         SILOFS_STATICASSERT_LT(a_, b_)
-#define STATICASSERT_LE(a_, b_)         SILOFS_STATICASSERT_LE(a_, b_)
-#define STATICASSERT_GT(a_, b_)         SILOFS_STATICASSERT_GT(a_, b_)
-#define STATICASSERT_GE(a_, b_)         SILOFS_STATICASSERT_GE(a_, b_)
-#define STATICASSERT_SIZEOF(t_, s_)     SILOFS_STATICASSERT_EQ(sizeof(t_), s_)
-
-/* aliases */
-#define ARRAY_SIZE(x)                   SILOFS_ARRAY_SIZE(x)
-#define container_of(p, t, m)           silofs_container_of(p, t, m)
-#define container_of2(p, t, m)          silofs_container_of2(p, t, m)
-#define unconst(p)                      silofs_unconst(p)
-#define unused(x)                       silofs_unused(x)
-
-#define min(x, y)                       silofs_min(x, y)
-#define min3(x, y, z)                   silofs_min3(x, y, z)
-#define max(x, y)                       silofs_max(x, y)
-#define clamp(x, y, z)                  silofs_clamp(x, y, z)
-#define div_round_up(n, d)              silofs_div_round_up(n, d)
-
-#define log_dbg(fmt, ...)               silofs_log_debug(fmt, __VA_ARGS__)
-#define log_info(fmt, ...)              silofs_log_info(fmt, __VA_ARGS__)
-#define log_warn(fmt, ...)              silofs_log_warn(fmt, __VA_ARGS__)
-#define log_err(fmt, ...)               silofs_log_error(fmt, __VA_ARGS__)
-#define log_crit(fmt, ...)              silofs_log_crit(fmt, __VA_ARGS__)
-
-#define list_head_init(lh)              silofs_list_head_init(lh)
-#define list_head_initn(lh, n)          silofs_list_head_initn(lh, n)
-#define list_head_fini(lh)              silofs_list_head_fini(lh)
-#define list_head_finin(lh, n)          silofs_list_head_finin(lh, n)
-#define list_head_remove(lh)            silofs_list_head_remove(lh)
-#define list_head_insert_after(p, q)    silofs_list_head_insert_after(p, q)
-#define list_head_insert_before(p, q)   silofs_list_head_insert_before(p, q)
-
-#define list_init(ls)                   silofs_list_init(ls)
-#define list_fini(ls)                   silofs_list_fini(ls)
-#define list_isempty(ls)                silofs_list_isempty(ls)
-#define list_push_back(ls, lh)          silofs_list_push_back(ls, lh)
-#define list_push_front(ls, lh)         silofs_list_push_front(ls, lh)
-#define list_pop_front(ls)              silofs_list_pop_front(ls)
-#define list_front(ls)                  silofs_list_front(ls)
-
-#define listq_init(lq)                  silofs_listq_init(lq)
-#define listq_initn(lq, n)              silofs_listq_initn(lq, n)
-#define listq_fini(lq)                  silofs_listq_fini(lq)
-#define listq_finin(lq, n)              silofs_listq_finin(lq, n)
-#define listq_size(lq)                  silofs_listq_size(lq)
-#define listq_isempty(lq)               silofs_listq_isempty(lq)
-#define listq_push_back(lq, lh)         silofs_listq_push_back(lq, lh)
-#define listq_push_front(lq, lh)        silofs_listq_push_front(lq, lh)
-#define listq_pop_back(lq)              silofs_listq_pop_back(lq)
-#define listq_pop_front(lq)             silofs_listq_pop_front(lq)
-#define listq_remove(lq, lh)            silofs_listq_remove(lq, lh)
-#define listq_front(lq)                 silofs_listq_front(lq)
-#define listq_back(lq)                  silofs_listq_back(lq)
-#define listq_next(lq, lh)              silofs_listq_next(lq, lh)
-#define listq_prev(lq, lh)              silofs_listq_prev(lq, lh)
-
+/* types */
 #define stype_nkbs(st)                  silofs_stype_nkbs(st)
 #define stype_size(st)                  silofs_stype_size(st)
 #define stype_ssize(st)                 silofs_stype_ssize(st)
@@ -107,23 +47,10 @@
 #define stype_isdata(st)                silofs_stype_isdata(st)
 #define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
-#define lextid_reset(lid)               silofs_lextid_reset(lid)
-#define lextid_assign(lid, oth)         silofs_lextid_assign(lid, oth)
-#define lextid_isequal(lid, oth)        silofs_lextid_isequal(lid, oth)
-#define lextid_isnull(lid)              silofs_lextid_isnull(lid)
-#define lextid_size(lid)                silofs_lextid_size(lid)
-
 #define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
 #define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
 #define bkaddr_by_laddr(ba, pa)         silofs_bkaddr_by_laddr(ba, pa)
 #define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
-
-#define laddr_reset(la)                 silofs_laddr_reset(la)
-#define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)
-#define laddr_setup(la, bid, o, l)      silofs_laddr_setup(la, bid, o, l)
-#define laddr_setup_by(la, bid, va)     silofs_laddr_setup_by(la, bid, va)
-#define laddr_isvalid(la)               silofs_laddr_isvalid(la)
-#define laddr_isnull(la)                silofs_laddr_isnull(la)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
@@ -241,28 +168,6 @@
 #define gid_eq(gid1, gid2)              silofs_gid_eq(gid1, gid2)
 #define ino_isnull(ino)                 silofs_ino_isnull(ino)
 #define ino_to_dqid(ino)                silofs_ino_to_dqid(ino)
-
-#define off_isnull(off)                 silofs_off_isnull(off)
-#define off_min(off1, off2)             silofs_off_min(off1, off2)
-#define off_max(off1, off2)             silofs_off_max(off1, off2)
-#define off_max3(off1, off2, off3)      silofs_off_max3(off1, off2, off3)
-#define off_end(off, len)               silofs_off_end(off, len)
-#define off_clamp(off1, off2, off3)     silofs_off_clamp(off1, off2, off3)
-#define off_align(off, align)           silofs_off_align(off, align)
-#define off_align_to_lbk(off)           silofs_off_align_to_lbk(off)
-#define off_next(off, len)              silofs_off_next(off, len)
-#define off_next_lbk(off)               silofs_off_next_lbk(off)
-#define off_to_lba(off)                 silofs_off_to_lba(off)
-#define off_diff(off, end)              silofs_off_diff(off, end)
-#define off_len(beg, end)               silofs_off_len(beg, end)
-#define off_ulen(beg, end)              silofs_off_ulen(beg, end)
-#define off_iswithin(off, beg, end)     silofs_off_iswithin(off, beg, end)
-
-#define lba_align(lba, align)           silofs_lba_align(lba, align)
-#define lba_isequal(lba1, lba2)         silofs_lba_isequal(lba1, lba2)
-#define lba_isnull(lba)                 silofs_lba_isnull(lba)
-#define lba_to_off(lba)                 silofs_lba_to_off(lba)
-#define lba_plus(lba, cnt)              silofs_lba_plus(lba, cnt)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -419,4 +324,4 @@ silofs_sli_laddr(const struct silofs_spleaf_info *sli)
 	return silofs_ui_laddr(&sli->sl_ui);
 }
 
-#endif /* SILOFS_PRIVATE_H_ */
+#endif /* SILOFS_FS_PRIVATE_H_ */

@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/defs.h>
+#include <silofs/ps.h>
 #include <silofs/types.h>
 #include <silofs/ioctls.h>
 #include <silofs/boot.h>

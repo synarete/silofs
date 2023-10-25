@@ -14,6 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#include <uuid/uuid.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>

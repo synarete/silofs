@@ -14,50 +14,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_FS_H_
-#define SILOFS_FS_H_
+#ifndef SILOFS_PS_H_
+#define SILOFS_PS_H_
 
 #include <silofs/infra.h>
 #include <silofs/defs.h>
 #include <silofs/errors.h>
 #include <silofs/htox.h>
-#include <silofs/ps.h>
-#include <silofs/types.h>
-#include <silofs/ioctls.h>
-#include <silofs/address.h>
-#include <silofs/boot.h>
-#include <silofs/nodes.h>
-#include <silofs/zcmpr.h>
+#include <silofs/laddr.h>
 #include <silofs/crypto.h>
-#include <silofs/spxmap.h>
-#include <silofs/cache.h>
-#include <silofs/encdec.h>
-#include <silofs/task.h>
 #include <silofs/repo.h>
-#include <silofs/super.h>
-#include <silofs/stats.h>
-#include <silofs/idmap.h>
-#include <silofs/inode.h>
-#include <silofs/dir.h>
-#include <silofs/file.h>
-#include <silofs/symlink.h>
-#include <silofs/xattr.h>
-#include <silofs/walk.h>
-#include <silofs/opers.h>
-#include <silofs/namei.h>
-#include <silofs/stage.h>
-#include <silofs/spawn.h>
-#include <silofs/spmaps.h>
-#include <silofs/claim.h>
-#include <silofs/uber.h>
-#include <silofs/flush.h>
-#include <silofs/exec.h>
-#include <silofs/mntsvc.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
 #include <silofs/infra-private.h>
 #include <silofs/ps-private.h>
-#include <silofs/fs-private.h>
 #endif
 
-#endif /* SILOFS_FS_H_ */
+#endif /* SILOFS_PS_H_ */

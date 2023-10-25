@@ -16,11 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/types.h>
 #include <silofs/errors.h>
-#include <silofs/address.h>
-#include <silofs/crypto.h>
-#include <silofs/fs-private.h>
+#include <silofs/ps.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>

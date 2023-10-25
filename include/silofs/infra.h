@@ -43,4 +43,8 @@
 #include <silofs/socket.h>
 #include <silofs/syscall.h>
 
+#ifdef SILOFS_HAVE_PRIVATE
+#include <silofs/infra-private.h>
+#endif
+
 #endif /* SILOFS_INFRA_H_ */

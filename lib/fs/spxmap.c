@@ -963,26 +963,4 @@ bool silofs_uamap_drop_lru(struct silofs_uamap *uamap)
 	return (uamap_remove_lru(uamap) == 0);
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-struct silofs_list_head *
-silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
-{
-	struct silofs_list_head *lista;
-
-	lista = silofs_allocate(alloc, sizeof(*lista) * nelems, 0);
-	if (lista != NULL) {
-		list_head_initn(lista, nelems);
-	}
-	return lista;
-}
-
-void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-                      struct silofs_alloc *alloc)
-{
-	list_head_finin(lista, nelems);
-	silofs_deallocate(alloc, lista, sizeof(*lista) * nelems, 0);
-}
-
-
 

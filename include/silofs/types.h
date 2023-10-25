@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
-#include <uuid/uuid.h>
 #include <gcrypt.h>
 #include <iconv.h>
 #include <unistd.h>
@@ -33,6 +32,8 @@
 
 #include <silofs/infra.h>
 #include <silofs/defs.h>
+
+#include <silofs/laddr.h>
 
 /* types forward declarations */
 struct silofs_dset;
@@ -122,34 +123,6 @@ struct silofs_ino_dt {
 	int    pad;
 };
 
-/* pass-phrase buffers */
-struct silofs_password {
-	uint8_t pass[SILOFS_PASSWORD_MAX + 1];
-	size_t passlen;
-};
-
-/* cryptographic interfaces with libgcrypt */
-struct silofs_mdigest {
-	gcry_md_hd_t md_hd;
-};
-
-struct silofs_cipher {
-	gcry_cipher_hd_t cipher_hd;
-};
-
-struct silofs_crypto {
-	struct silofs_mdigest   md;
-	struct silofs_cipher    ci;
-	unsigned int            set;
-};
-
-/* cryptographic-cipher arguments */
-struct silofs_cipher_args {
-	struct silofs_kdf_pair  kdf;
-	unsigned int cipher_algo;
-	unsigned int cipher_mode;
-};
-
 /* user-credentials */
 struct silofs_cred {
 	uid_t           uid;
@@ -170,10 +143,6 @@ struct silofs_stat {
 	struct stat             st;
 	uint64_t                gen;
 };
-
-
-/* space-addressing */
-typedef loff_t          silofs_lba_t;
 
 
 /* inode's time-stamps (birth, access, modify, change) */
@@ -198,30 +167,6 @@ struct silofs_iattr {
 	loff_t          ia_span;
 	blkcnt_t        ia_blocks;
 	struct silofs_itimes ia_t;
-};
-
-/* encryption tuple (IV, key, cipher-algo, mode) */
-struct silofs_ivkey {
-	struct silofs_key       key;
-	struct silofs_iv        iv;
-	unsigned int            algo;
-	unsigned int            mode;
-};
-
-/* logical-extend id within specific mapping tree */
-struct silofs_lextid {
-	struct silofs_treeid    treeid;
-	loff_t                  voff;
-	size_t                  size;
-	enum silofs_stype       vspace;
-	enum silofs_height      height;
-};
-
-/* logical-address within specific mapping-tree's extend */
-struct silofs_laddr {
-	struct silofs_lextid    lextid;
-	loff_t                  pos;
-	size_t                  len;
 };
 
 /* logical addressing of space-mapping nodes */
@@ -423,6 +368,7 @@ struct silofs_oper {
 /* base members of uber-block (provided) */
 struct silofs_uber_base {
 	const struct silofs_fs_args    *fs_args;
+	const struct silofs_bootpath   *bootpath;
 	const struct silofs_ivkey      *boot_ivkey;
 	const struct silofs_ivkey      *main_ivkey;
 	struct silofs_alloc            *alloc;
@@ -493,9 +439,16 @@ struct silofs_fs_args {
 	bool                    restore_forced;
 };
 
+/* boot pathname: a pair of repo-directory & boot-record name (optional) */
+struct silofs_bootpath {
+	struct silofs_substr            repodir;
+	struct silofs_namestr           name;
+};
+
 /* file-system environment context */
 struct silofs_fs_env {
 	struct silofs_fs_args   fs_args;
+	struct silofs_bootpath  fs_bootpath;
 	struct silofs_ivkey     fs_boot_ivkey;
 	struct silofs_ivkey     fs_main_ivkey;
 	struct silofs_qalloc   *fs_qalloc;

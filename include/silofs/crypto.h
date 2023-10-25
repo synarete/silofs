@@ -17,6 +17,45 @@
 #ifndef SILOFS_CRYPTO_H_
 #define SILOFS_CRYPTO_H_
 
+#include <gcrypt.h>
+
+/* pass-phrase buffers */
+struct silofs_password {
+	uint8_t pass[SILOFS_PASSWORD_MAX + 1];
+	size_t passlen;
+};
+
+/* cryptographic interfaces with libgcrypt */
+struct silofs_mdigest {
+	gcry_md_hd_t md_hd;
+};
+
+struct silofs_cipher {
+	gcry_cipher_hd_t cipher_hd;
+};
+
+struct silofs_crypto {
+	struct silofs_mdigest   md;
+	struct silofs_cipher    ci;
+	unsigned int            set;
+};
+
+/* cryptographic-cipher arguments */
+struct silofs_cipher_args {
+	struct silofs_kdf_pair  kdf;
+	unsigned int cipher_algo;
+	unsigned int cipher_mode;
+};
+
+/* encryption tuple (IV, key, cipher-algo, mode) */
+struct silofs_ivkey {
+	struct silofs_key       key;
+	struct silofs_iv        iv;
+	unsigned int            algo;
+	unsigned int            mode;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const char *silofs_gcrypt_version(void);
 

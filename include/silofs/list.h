@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+struct silofs_alloc;
+
 /* linked-list */
 struct silofs_list_head {
 	struct silofs_list_head *prev;
@@ -161,6 +163,14 @@ static inline void silofs_list_head_fini(struct silofs_list_head *lh)
 {
 	silofs_list_head_set(lh, NULL, NULL);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_list_head *
+silofs_lista_new(struct silofs_alloc *alloc, size_t nelems);
+
+void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
+                      struct silofs_alloc *alloc);
 
 #endif /* SILOFS_LIST_H_ */
 

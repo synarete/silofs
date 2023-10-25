@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/list.h>
+#include <silofs/infra.h>
 
 
 void silofs_list_head_initn(struct silofs_list_head *lh_arr, size_t cnt)
@@ -221,5 +221,27 @@ silofs_listq_prev(const struct silofs_listq *lsq,
 	}
 	return prv;
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+struct silofs_list_head *
+silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
+{
+	struct silofs_list_head *lista;
+
+	lista = silofs_allocate(alloc, sizeof(*lista) * nelems, 0);
+	if (lista != NULL) {
+		silofs_list_head_initn(lista, nelems);
+	}
+	return lista;
+}
+
+void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
+                      struct silofs_alloc *alloc)
+{
+	silofs_list_head_finin(lista, nelems);
+	silofs_deallocate(alloc, lista, sizeof(*lista) * nelems, 0);
+}
+
 
 

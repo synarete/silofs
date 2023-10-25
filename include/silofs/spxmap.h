@@ -64,15 +64,6 @@ struct silofs_uamap {
 	uint32_t                 uam_htbl_sz;
 };
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_list_head *
-silofs_lista_new(struct silofs_alloc *alloc, size_t nelems);
-
-void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-                      struct silofs_alloc *alloc);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spamaps_init(struct silofs_spamaps *spam,

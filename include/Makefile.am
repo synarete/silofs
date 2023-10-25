@@ -28,6 +28,13 @@ nobase_include_HEADERS += silofs/time.h
 nobase_include_HEADERS += silofs/utility.h
 nobase_include_HEADERS += silofs/version.h
 nobase_include_HEADERS += silofs/infra.h
+nobase_include_HEADERS += silofs/infra-private.h
+# ps
+nobase_include_HEADERS += silofs/htox.h
+nobase_include_HEADERS += silofs/laddr.h
+nobase_include_HEADERS += silofs/repo.h
+nobase_include_HEADERS += silofs/ps.h
+nobase_include_HEADERS += silofs/ps-private.h
 # fs
 nobase_include_HEADERS += silofs/address.h
 nobase_include_HEADERS += silofs/boot.h
@@ -48,7 +55,6 @@ nobase_include_HEADERS += silofs/mntsvc.h
 nobase_include_HEADERS += silofs/namei.h
 nobase_include_HEADERS += silofs/nodes.h
 nobase_include_HEADERS += silofs/opers.h
-nobase_include_HEADERS += silofs/repo.h
 nobase_include_HEADERS += silofs/spawn.h
 nobase_include_HEADERS += silofs/spmaps.h
 nobase_include_HEADERS += silofs/spxmap.h
@@ -62,8 +68,8 @@ nobase_include_HEADERS += silofs/uber.h
 nobase_include_HEADERS += silofs/walk.h
 nobase_include_HEADERS += silofs/xattr.h
 nobase_include_HEADERS += silofs/zcmpr.h
-nobase_include_HEADERS += silofs/fs-private.h
 nobase_include_HEADERS += silofs/fs.h
+nobase_include_HEADERS += silofs/fs-private.h
 
 noinst_HEADERS = $(NULL)
 noinst_HEADERS += config.h

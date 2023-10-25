@@ -18,12 +18,6 @@
 #define SILOFS_BOOT_H_
 
 
-/* boot pathname: a pair of repo-directory & boot-record name (optional) */
-struct silofs_bootpath {
-	struct silofs_substr            repodir;
-	struct silofs_namestr           name;
-};
-
 /* boot-record representation (in-memory) */
 struct silofs_bootrec {
 	struct silofs_ulink             sb_ulink;

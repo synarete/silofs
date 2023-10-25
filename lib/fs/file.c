@@ -112,7 +112,22 @@ static bool ii_isftype2(const struct silofs_inode_info *ii)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static bool off_is_bk_aligned(loff_t off)
+static loff_t off_max3(loff_t off1, loff_t off2, loff_t off3)
+{
+	return off_max(off_max(off1, off2), off3);
+}
+
+static loff_t off_clamp(loff_t off1, loff_t off2, loff_t off3)
+{
+	return off_min(off_max(off1, off2), off3);
+}
+
+static bool off_is_within(loff_t off, loff_t beg, loff_t end)
+{
+	return (beg <= off) && (off < end);
+}
+
+static bool off_is_lbk_aligned(loff_t off)
 {
 	return (off % SILOFS_LBK_SIZE) == 0;
 }
@@ -190,12 +205,12 @@ static loff_t off_head2_max(void)
 
 static bool off_is_head1(loff_t off)
 {
-	return off_iswithin(off, 0, off_head1_max());
+	return off_is_within(off, 0, off_head1_max());
 }
 
 static bool off_is_head2(loff_t off)
 {
-	return off_iswithin(off, off_head1_max(), off_head2_max());
+	return off_is_within(off, off_head1_max(), off_head2_max());
 }
 
 static size_t off_to_head1_slot(loff_t off)
@@ -490,7 +505,7 @@ static void ftn_reset_child(struct silofs_ftree_node *ftn, size_t slot)
 
 static bool ftn_isinrange(const struct silofs_ftree_node *ftn, loff_t pos)
 {
-	return off_iswithin(pos, ftn_beg(ftn), ftn_end(ftn));
+	return off_is_within(pos, ftn_beg(ftn), ftn_end(ftn));
 }
 
 static enum silofs_stype ftn_child_stype(const struct silofs_ftree_node *ftn)
@@ -1272,7 +1287,7 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 		if (f_ctx->cp_flags != 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (!off_is_bk_aligned(f_ctx->beg) &&
+		if (!off_is_lbk_aligned(f_ctx->beg) &&
 		    (f_ctx->len > SILOFS_IO_SIZE_MAX)) {
 			return -SILOFS_EINVAL;
 		}

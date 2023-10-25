@@ -2255,17 +2255,14 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	const struct silofs_uber *uber = ii_uber(ii);
-	const struct silofs_repo *repo = uber->ub.repo;
-	const struct silofs_bootpath *bpath = NULL;
+	const struct silofs_bootpath *bootpath = uber->ub.bootpath;
 	size_t bsz;
 
-	bpath = &repo->re.bootpath;
-
 	bsz = sizeof(query->u.bootrec.repo);
-	fill_strbuf(query->u.bootrec.repo, bsz, &bpath->repodir);
+	fill_strbuf(query->u.bootrec.repo, bsz, &bootpath->repodir);
 
 	bsz = sizeof(query->u.bootrec.name);
-	fill_strbuf(query->u.bootrec.name, bsz, &bpath->name.s);
+	fill_strbuf(query->u.bootrec.name, bsz, &bootpath->name.s);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

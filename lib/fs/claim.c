@@ -33,6 +33,25 @@ struct silofs_spalloc_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static size_t spleaf_span(void)
+{
+	return SILOFS_SPMAP_NCHILDS * SILOFS_LBK_SIZE;
+}
+
+static loff_t off_to_spleaf_start(loff_t voff)
+{
+	return off_align(voff, (long)spleaf_span());
+}
+
+static loff_t off_to_spleaf_next(loff_t voff)
+{
+	const loff_t voff_next = off_end(voff, spleaf_span());
+
+	return off_to_spleaf_start(voff_next);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_cache *
 spac_cache(const struct silofs_spalloc_ctx *spa_ctx)
 {
@@ -252,7 +271,7 @@ spac_require_vspace_by_spmaps(struct silofs_spalloc_ctx *spa_ctx,
 		if (err != -SILOFS_ENOSPC) {
 			return err;
 		}
-		voff = silofs_off_to_spleaf_next(voff);
+		voff = off_to_spleaf_next(voff);
 	}
 	return -SILOFS_ENOSPC;
 }
@@ -588,7 +607,7 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 		if (!err) {
 			return 0;
 		}
-		voff = silofs_off_to_spleaf_next(voff);
+		voff = off_to_spleaf_next(voff);
 	}
 	return -SILOFS_ENOSPC;
 }

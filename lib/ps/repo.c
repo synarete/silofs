@@ -16,8 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
-#include <silofs/fs-private.h>
+#include <silofs/ps.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -382,6 +381,28 @@ static void index_to_namebuf(size_t idx, struct silofs_namebuf *nb)
 	nb->name[len] = '\0';
 }
 
+
+static void byte_to_ascii(unsigned int b, char *a)
+{
+	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
+	a[1] = silofs_nibble_to_ascii((int)b);
+}
+
+static size_t
+hash256_to_name(const struct silofs_hash256 *hash, char *buf, size_t bsz)
+{
+	size_t cnt = 0;
+
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
+		if ((cnt + 2) > bsz) {
+			break;
+		}
+		byte_to_ascii(hash->hash[i], buf + cnt);
+		cnt += 2;
+	}
+	return cnt;
+}
+
 static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
                          struct silofs_namebuf *out_nb)
 {
@@ -398,7 +419,7 @@ static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
 	}
 	nbuf[len++] = '/';
 	nlim = nmax - len - 1;
-	nlen = silofs_hash256_to_name(hash, nbuf + len, nlim);
+	nlen = hash256_to_name(hash, nbuf + len, nlim);
 	if (nlen >= nlim) {
 		return -SILOFS_EINVAL;
 	}
@@ -1446,11 +1467,8 @@ static int repo_check_root_dfd(const struct silofs_repo *repo)
 
 static int repo_check_writable(const struct silofs_repo *repo)
 {
-	const struct silofs_bootpath *bootpath;
-
 	if (repo->re.flags & SILOFS_REPOF_RDONLY) {
-		bootpath = &repo->re.bootpath;
-		log_dbg("read-only repo: %s", bootpath->repodir.str);
+		log_dbg("read-only repo: %s", repo->re.repodir.str);
 		return -SILOFS_EPERM;
 	}
 	return 0;
@@ -1660,12 +1678,11 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
 
 static int repo_require_skel(const struct silofs_repo *repo)
 {
-	const struct silofs_bootpath *bootpath = &repo->re.bootpath;
-	const char *name;
+	const char *name = NULL;
 	loff_t size;
 	int err;
 
-	err = do_access(bootpath->repodir.str, R_OK | W_OK | X_OK);
+	err = do_access(repo->re.repodir.str, R_OK | W_OK | X_OK);
 	if (err) {
 		return err;
 	}
@@ -1685,13 +1702,12 @@ static int repo_require_skel(const struct silofs_repo *repo)
 
 static int repo_open_rootdir(struct silofs_repo *repo)
 {
-	const struct silofs_bootpath *bootpath = &repo->re.bootpath;
 	int err;
 
 	if (repo->re_root_dfd > 0) {
 		return -SILOFS_EALREADY;
 	}
-	err = do_opendir(bootpath->repodir.str, &repo->re_root_dfd);
+	err = do_opendir(repo->re.repodir.str, &repo->re_root_dfd);
 	if (err) {
 		return err;
 	}

@@ -909,8 +909,9 @@ static void spleaf_make_vaddrs(const struct silofs_spmap_leaf *sl,
                                struct silofs_vaddrs *vas)
 {
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_lba(sl, lba);
+	const loff_t off = silofs_lba_to_off(lba);
 
-	bkr_make_vaddrs(bkr, stype, lba_to_off(lba), vas);
+	bkr_make_vaddrs(bkr, stype, off, vas);
 }
 
 static void spleaf_main_lextid(const struct silofs_spmap_leaf *sl,
@@ -928,8 +929,8 @@ static void spleaf_set_main_lextid(struct silofs_spmap_leaf *sl,
 static void spleaf_main_uref_at(const struct silofs_spmap_leaf *sl,
                                 size_t slot, struct silofs_laddr *out_laddr)
 {
-	struct silofs_lextid lextid;
-	const loff_t pos = lba_to_off((silofs_lba_t)slot);
+	struct silofs_lextid lextid = { .voff = -1 };
+	const loff_t pos = silofs_lba_to_off((silofs_lba_t)slot);
 
 	spleaf_main_lextid(sl, &lextid);
 	laddr_setup(out_laddr, &lextid, pos, SILOFS_LBK_SIZE);

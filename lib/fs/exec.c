@@ -210,14 +210,11 @@ static void fse_fini_alloc(struct silofs_fs_env *fse)
 	}
 }
 
-static int fse_make_repo_base(struct silofs_fs_env *fse,
-                              struct silofs_repo_base *re_base)
+static int fse_init_bootpath(struct silofs_fs_env *fse)
 {
-	silofs_memzero(re_base, sizeof(*re_base));
-	re_base->alloc = fse->fs_alloc;
-	re_base->flags = fse->fs_args.rdonly ? SILOFS_REPOF_RDONLY : 0;
-	return silofs_bootpath_setup(&re_base->bootpath,
-	                             fse->fs_args.repodir, fse->fs_args.name);
+	return silofs_bootpath_setup(&fse->fs_bootpath,
+	                             fse->fs_args.repodir,
+	                             fse->fs_args.name);
 }
 
 static int fse_init_cache(struct silofs_fs_env *fse)
@@ -242,18 +239,23 @@ static void fse_fini_cache(struct silofs_fs_env *fse)
 	}
 }
 
+static void fse_make_repo_base(const struct silofs_fs_env *fse,
+                               struct silofs_repo_base *re_base)
+{
+	silofs_memzero(re_base, sizeof(*re_base));
+	re_base->alloc = fse->fs_alloc;
+	re_base->flags = fse->fs_args.rdonly ? SILOFS_REPOF_RDONLY : 0;
+	silofs_substr_clone(&fse->fs_bootpath.repodir, &re_base->repodir);
+}
+
 static int fse_init_repo(struct silofs_fs_env *fse)
 {
 	struct silofs_repo_base re_base = { .flags = 0 };
 	struct silofs_fs_env_obj *fse_obj = fse_obj_of(fse);
-	struct silofs_repo *repo;
+	struct silofs_repo *repo = &fse_obj->fs_core.c.repo;
 	int err;
 
-	err = fse_make_repo_base(fse, &re_base);
-	if (err) {
-		return err;
-	}
-	repo = &fse_obj->fs_core.c.repo;
+	fse_make_repo_base(fse, &re_base);
 	err = silofs_repo_init(repo, &re_base);
 	if (err) {
 		return err;
@@ -325,6 +327,7 @@ static int fse_init_uber(struct silofs_fs_env *fse)
 {
 	const struct silofs_uber_base ub_base = {
 		.fs_args = &fse->fs_args,
+		.bootpath = &fse->fs_bootpath,
 		.boot_ivkey = &fse->fs_boot_ivkey,
 		.main_ivkey = &fse->fs_main_ivkey,
 		.alloc = fse->fs_alloc,
@@ -522,6 +525,10 @@ static int fse_init(struct silofs_fs_env *fse,
 	int err;
 
 	fse_init_commons(fse, args);
+	err = fse_init_bootpath(fse);
+	if (err) {
+		return err;
+	}
 	err = fse_init_passwd_boot_ivkey(fse);
 	if (err) {
 		return err;

@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/version.h>
-#include <silofs/logging.h>
+#include <silofs/infra/logging.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <stdlib.h>

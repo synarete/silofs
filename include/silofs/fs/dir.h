@@ -17,7 +17,7 @@
 #ifndef SILOFS_DIR_H_
 #define SILOFS_DIR_H_
 
-#include <silofs/types.h>
+#include <silofs/fs/types.h>
 
 size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii);
 

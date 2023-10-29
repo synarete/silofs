@@ -23,10 +23,9 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/infra-private.h>
-#include <silofs/ps-private.h>
-#include <silofs/types.h>
-#include <silofs/nodes.h>
+#include <silofs/ps.h>
+#include <silofs/fs/types.h>
+#include <silofs/fs/nodes.h>
 
 /* types */
 #define stype_nkbs(st)                  silofs_stype_nkbs(st)

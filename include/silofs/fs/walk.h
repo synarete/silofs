@@ -18,7 +18,7 @@
 #define SILOFS_WALK_H_
 
 #include <silofs/infra.h>
-#include <silofs/types.h>
+#include <silofs/fs/types.h>
 
 
 struct silofs_visitor;

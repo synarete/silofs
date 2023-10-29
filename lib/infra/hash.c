@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/hash.h>
+#include <silofs/infra/hash.h>
 #include <xxhash.h>
 
 uint64_t silofs_hash_fnv1a(const void *buf, size_t len, uint64_t seed)

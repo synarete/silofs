@@ -17,7 +17,7 @@
 #ifndef SILOFS_ADDRESS_H_
 #define SILOFS_ADDRESS_H_
 
-#include <silofs/types.h>
+#include <silofs/fs/types.h>
 #include <stdint.h>
 #include <endian.h>
 

@@ -19,15 +19,7 @@
 #include <silofs/syscall.h>
 #include <silofs/macros.h>
 #include <silofs/errors.h>
-#include <silofs/list.h>
-#include <silofs/utility.h>
-#include <silofs/iovec.h>
-#include <silofs/panic.h>
-#include <silofs/logging.h>
-#include <silofs/random.h>
-#include <silofs/thread.h>
-#include <silofs/atomic.h>
-#include <silofs/qalloc.h>
+#include <silofs/infra.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/mman.h>

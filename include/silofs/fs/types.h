@@ -30,10 +30,9 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include <silofs/infra.h>
 #include <silofs/defs.h>
-
-#include <silofs/laddr.h>
+#include <silofs/infra.h>
+#include <silofs/ps.h>
 
 /* types forward declarations */
 struct silofs_dset;

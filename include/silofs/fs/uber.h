@@ -17,7 +17,7 @@
 #ifndef SILOFS_UBER_H_
 #define SILOFS_UBER_H_
 
-#include <silofs/types.h>
+#include <silofs/fs/types.h>
 
 int silofs_uber_init(struct silofs_uber *uber,
                      const struct silofs_uber_base *base);

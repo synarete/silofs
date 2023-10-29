@@ -18,7 +18,7 @@
 #define SILOFS_INODE_H_
 
 #include <unistd.h>
-#include <silofs/types.h>
+#include <silofs/fs/types.h>
 
 struct silofs_inew_params {
 	struct silofs_creds     creds;

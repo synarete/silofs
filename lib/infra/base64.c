@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/macros.h>
-#include <silofs/base64.h>
+#include <silofs/infra/base64.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>

@@ -18,7 +18,7 @@
 #define SILOFS_SPMAPS_H_
 
 #include <silofs/defs.h>
-#include <silofs/types.h>
+#include <silofs/fs/types.h>
 
 
 struct silofs_spleaf_urefs {

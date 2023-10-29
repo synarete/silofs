@@ -17,16 +17,15 @@
 #ifndef SILOFS_PS_H_
 #define SILOFS_PS_H_
 
-#include <silofs/infra.h>
 #include <silofs/defs.h>
 #include <silofs/errors.h>
-#include <silofs/htox.h>
-#include <silofs/laddr.h>
-#include <silofs/crypto.h>
-#include <silofs/repo.h>
+#include <silofs/infra.h>
+#include <silofs/ps/htox.h>
+#include <silofs/ps/laddr.h>
+#include <silofs/ps/crypto.h>
+#include <silofs/ps/repo.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/infra-private.h>
 #include <silofs/ps-private.h>
 #endif
 

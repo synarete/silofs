@@ -16,8 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/fs.h>
-#include <silofs/fuseq.h>
-#include <silofs/fs-private.h>
+#include <silofs/fs/fuseq.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/stat.h>

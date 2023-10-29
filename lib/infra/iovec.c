@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/iovec.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
+#include <silofs/infra/iovec.h>
 #include <string.h>
 #include <errno.h>
 

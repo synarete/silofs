@@ -16,10 +16,10 @@
  */
 #include <silofs/configs.h>
 #include <silofs/macros.h>
-#include <silofs/utility.h>
-#include <silofs/panic.h>
-#include <silofs/time.h>
-#include <silofs/thread.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/panic.h>
+#include <silofs/infra/time.h>
+#include <silofs/infra/thread.h>
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>

@@ -16,10 +16,10 @@
  */
 #include <silofs/configs.h>
 #include <silofs/syscall.h>
-#include <silofs/utility.h>
-#include <silofs/logging.h>
 #include <silofs/errors.h>
-#include <silofs/pipe.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/logging.h>
+#include <silofs/infra/pipe.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>

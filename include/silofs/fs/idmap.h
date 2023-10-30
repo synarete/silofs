@@ -43,6 +43,14 @@ struct silofs_idsmap {
 	bool   idm_allow_hotids;
 };
 
+/* file-system's input ids */
+struct silofs_ids {
+	struct silofs_uids     *uids;
+	struct silofs_gids     *gids;
+	size_t                  nuids;
+	size_t                  ngids;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_idsmap_init(struct silofs_idsmap *idsm,

@@ -261,7 +261,7 @@ static void ut_check_spacestats(const struct silofs_spacestats *spst1,
 
 static size_t ualloc_nbytes_now(const struct ut_env *ute)
 {
-	struct silofs_fs_stats st;
+	struct silofs_cachestats st;
 
 	silofs_stat_fs(ute->fs_env, &st);
 	return st.nalloc_bytes;
@@ -451,7 +451,6 @@ static void ut_init_args(struct ut_args *args)
 	args->fs_args.mntdir = "/";
 	args->fs_args.capacity = SILOFS_CAPACITY_SIZE_MIN;
 	args->fs_args.memwant = UT_1G;
-	args->fs_args.restore_forced = true;
 	args->fs_args.pedantic = ut_globals.pedantic;
 	args->fs_args.asyncwr = ut_globals.asyncwr;
 	args->fs_args.stdalloc = ut_globals.stdalloc;

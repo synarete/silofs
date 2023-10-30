@@ -19,12 +19,15 @@
 #include <silofs/fs-private.h>
 
 
-/*
- * TODO-0051: Journal
- *
- * Implement a journal.
- */
+struct silofs_dset {
+	struct silofs_lnode_info       *ds_preq;
+	struct silofs_lnode_info       *ds_postq;
+	struct silofs_avl               ds_avl;
+};
 
+struct silofs_dsets {
+	struct silofs_dset dset[SILOFS_STYPE_LAST];
+};
 
 struct silofs_submit_ctx {
 	struct silofs_submit_ref        refs[SILOFS_SUBENT_NREFS_MAX];

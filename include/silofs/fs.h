@@ -25,7 +25,7 @@
 #include <silofs/ps.h>
 
 #include <silofs/fs/types.h>
-#include <silofs/fs/address.h>
+#include <silofs/fs/uvaddr.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/zcmpr.h>

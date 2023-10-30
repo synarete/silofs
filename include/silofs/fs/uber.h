@@ -17,7 +17,38 @@
 #ifndef SILOFS_UBER_H_
 #define SILOFS_UBER_H_
 
-#include <silofs/fs/types.h>
+
+/* base members of uber-block (provided) */
+struct silofs_uber_base {
+	const struct silofs_fs_args    *fs_args;
+	const struct silofs_bootpath   *bootpath;
+	const struct silofs_ivkey      *boot_ivkey;
+	const struct silofs_ivkey      *main_ivkey;
+	struct silofs_alloc            *alloc;
+	struct silofs_cache            *cache;
+	struct silofs_repo             *repo;
+	struct silofs_submitq          *submitq;
+	struct silofs_idsmap           *idsmap;
+};
+
+/* top-level pseudo meta node */
+struct silofs_uber {
+	struct silofs_uber_base         ub;
+	struct silofs_mutex             ub_fs_lock;
+	struct silofs_crypto            ub_crypto;
+	struct silofs_oper_stat         ub_ops;
+	struct silofs_lextid            ub_sb_lextid;
+	struct silofs_sb_info          *ub_sbi;
+	struct silofs_ulink             ub_sb_ulink;
+	struct silofs_cred              ub_owner;
+	unsigned long                   ub_ctl_flags;
+	unsigned long                   ub_ms_flags;
+	iconv_t                         ub_iconv;
+	time_t                          ub_initime;
+	uint64_t                        ub_commit_id;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_uber_init(struct silofs_uber *uber,
                      const struct silofs_uber_base *base);

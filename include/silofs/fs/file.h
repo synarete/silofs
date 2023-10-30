@@ -20,6 +20,18 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/* call-back context for read-write operations */
+typedef int (*silofs_rwiter_fn)(struct silofs_rwiter_ctx *rwi_ctx,
+                                const struct silofs_iovec *iov);
+
+struct silofs_rwiter_ctx {
+	silofs_rwiter_fn actor;
+	loff_t off;
+	size_t len;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_setup_reg(struct silofs_inode_info *ii);
 
 int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii);

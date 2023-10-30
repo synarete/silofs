@@ -876,7 +876,7 @@ int silofs_sync_fs(struct silofs_fs_env *fse, bool drop)
 }
 
 void silofs_stat_fs(const struct silofs_fs_env *fse,
-                    struct silofs_fs_stats *st)
+                    struct silofs_cachestats *st)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_cache *cache = fse->fs_cache;

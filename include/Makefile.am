@@ -1,8 +1,13 @@
 -include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 
+noinst_HEADERS = $(NULL)
+noinst_HEADERS += config.h
+noinst_HEADERS += config-am.h
+noinst_HEADERS += silofs/configs.h
+noinst_HEADERS += linux/fuse_kernel.h
+
 nobase_include_HEADERS = $(NULL)
-# base
 nobase_include_HEADERS += silofs/ccattr.h
 nobase_include_HEADERS += silofs/consts.h
 nobase_include_HEADERS += silofs/errors.h
@@ -11,7 +16,6 @@ nobase_include_HEADERS += silofs/ioctls.h
 nobase_include_HEADERS += silofs/macros.h
 nobase_include_HEADERS += silofs/syscall.h
 nobase_include_HEADERS += silofs/version.h
-
 nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h
@@ -31,15 +35,12 @@ nobase_include_HEADERS += silofs/infra/time.h
 nobase_include_HEADERS += silofs/infra/utility.h
 nobase_include_HEADERS += silofs/infra.h
 nobase_include_HEADERS += silofs/infra-private.h
-
 nobase_include_HEADERS += silofs/ps/htox.h
 nobase_include_HEADERS += silofs/ps/crypto.h
 nobase_include_HEADERS += silofs/ps/laddr.h
 nobase_include_HEADERS += silofs/ps/repo.h
 nobase_include_HEADERS += silofs/ps.h
 nobase_include_HEADERS += silofs/ps-private.h
-
-nobase_include_HEADERS += silofs/fs/address.h
 nobase_include_HEADERS += silofs/fs/boot.h
 nobase_include_HEADERS += silofs/fs/cache.h
 nobase_include_HEADERS += silofs/fs/claim.h
@@ -65,17 +66,12 @@ nobase_include_HEADERS += silofs/fs/symlink.h
 nobase_include_HEADERS += silofs/fs/task.h
 nobase_include_HEADERS += silofs/fs/types.h
 nobase_include_HEADERS += silofs/fs/uber.h
+nobase_include_HEADERS += silofs/fs/uvaddr.h
 nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
 nobase_include_HEADERS += silofs/fs/zcmpr.h
 nobase_include_HEADERS += silofs/fs.h
 nobase_include_HEADERS += silofs/fs-private.h
-
-noinst_HEADERS = $(NULL)
-noinst_HEADERS += config.h
-noinst_HEADERS += config-am.h
-noinst_HEADERS += silofs/configs.h
-noinst_HEADERS += linux/fuse_kernel.h
 
 EXTRA_DIST = config-am.h.in
 

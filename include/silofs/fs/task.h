@@ -19,6 +19,14 @@
 
 #define SILOFS_SUBENT_NREFS_MAX (16)
 
+/* current file-system operation */
+struct silofs_oper {
+	struct silofs_creds     op_creds;
+	pid_t                   op_pid;
+	uint64_t                op_unique;
+	uint32_t                op_code;
+};
+
 /* execution-context task per file-system operation */
 struct silofs_task {
 	struct silofs_uber     *t_uber;

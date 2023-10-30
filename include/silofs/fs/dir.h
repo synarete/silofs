@@ -17,7 +17,26 @@
 #ifndef SILOFS_DIR_H_
 #define SILOFS_DIR_H_
 
-#include <silofs/fs/types.h>
+
+/* call-back context for read-dir operations */
+typedef int (*silofs_filldir_fn)(struct silofs_readdir_ctx *rd_ctx,
+                                 const struct silofs_readdir_info *rdi);
+
+struct silofs_readdir_info {
+	struct silofs_stat attr;
+	const char     *name;
+	size_t          namelen;
+	ino_t           ino;
+	loff_t          off;
+	mode_t          dt;
+};
+
+struct silofs_readdir_ctx {
+	silofs_filldir_fn actor;
+	loff_t pos;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii);
 

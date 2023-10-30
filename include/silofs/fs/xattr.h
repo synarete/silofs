@@ -17,6 +17,16 @@
 #ifndef SILOFS_XATTR_H_
 #define SILOFS_XATTR_H_
 
+/* call-back context for list extended-attributes operations */
+typedef int (*silofs_fillxattr_fn)(struct silofs_listxattr_ctx *lxa_ctx,
+                                   const char *name, size_t name_len);
+
+struct silofs_listxattr_ctx {
+	silofs_fillxattr_fn actor;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_ii_setup_xattr(struct silofs_inode_info *ii);
 
 int silofs_do_getxattr(struct silofs_task *task,

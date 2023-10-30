@@ -17,6 +17,60 @@
 #ifndef SILOFS_EXEC_H_
 #define SILOFS_EXEC_H_
 
+/* initialization configurations */
+struct silofs_iconf {
+	struct silofs_namebuf   name;
+	struct silofs_uuid      uuid;
+	struct silofs_ids       ids;
+};
+
+/* file-system input arguments */
+struct silofs_fs_args {
+	struct silofs_iconf     iconf;
+	const char             *repodir;
+	const char             *name;
+	const char             *mntdir;
+	const char             *passwd;
+	uid_t                   uid;
+	gid_t                   gid;
+	pid_t                   pid;
+	mode_t                  umask;
+	size_t                  capacity;
+	size_t                  memwant;
+	bool                    withfuse;
+	bool                    pedantic;
+	bool                    allowother;
+	bool                    allowhostids;
+	bool                    allowadmin;
+	bool                    writeback_cache;
+	bool                    lazytime;
+	bool                    noexec;
+	bool                    nosuid;
+	bool                    nodev;
+	bool                    rdonly;
+	bool                    asyncwr;
+	bool                    stdalloc;
+};
+
+/* file-system environment context */
+struct silofs_fs_env {
+	struct silofs_fs_args   fs_args;
+	struct silofs_bootpath  fs_bootpath;
+	struct silofs_ivkey     fs_boot_ivkey;
+	struct silofs_ivkey     fs_main_ivkey;
+	struct silofs_qalloc   *fs_qalloc;
+	struct silofs_calloc   *fs_calloc;
+	struct silofs_alloc    *fs_alloc;
+	struct silofs_cache    *fs_cache;
+	struct silofs_repo     *fs_repo;
+	struct silofs_submitq  *fs_submitq;
+	struct silofs_idsmap   *fs_idsmap;
+	struct silofs_uber     *fs_uber;
+	struct silofs_fuseq    *fs_fuseq;
+	struct silofs_password *fs_passwd;
+	struct silofs_uaddr     fs_sb_addr;
+	int                     fs_signum;
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -65,6 +119,6 @@ void silofs_halt_fs(struct silofs_fs_env *fse, int signum);
 int silofs_sync_fs(struct silofs_fs_env *fse, bool drop);
 
 void silofs_stat_fs(const struct silofs_fs_env *fse,
-                    struct silofs_fs_stats *st);
+                    struct silofs_cachestats *st);
 
 #endif /* SILOFS_EXEC_H_ */

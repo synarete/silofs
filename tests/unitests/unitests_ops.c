@@ -1857,7 +1857,7 @@ void ut_sync_drop(struct ut_env *ute)
 
 void ut_drop_caches_fully(struct ut_env *ute)
 {
-	struct silofs_fs_stats st;
+	struct silofs_cachestats st;
 
 	ut_sync_drop(ute);
 	silofs_stat_fs(ute->fs_env, &st);

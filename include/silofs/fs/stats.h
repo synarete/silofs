@@ -18,6 +18,44 @@
 #define SILOFS_STATS_H_
 
 
+/* space accounting per sub-type */
+struct silofs_spacegauges {
+	ssize_t nsuper;
+	ssize_t nspnode;
+	ssize_t nspleaf;
+	ssize_t ninode;
+	ssize_t nxanode;
+	ssize_t ndtnode;
+	ssize_t nsymval;
+	ssize_t nftnode;
+	ssize_t ndata1k;
+	ssize_t ndata4k;
+	ssize_t ndatabk;
+};
+
+/* space accounting per sub-kind + sub-type */
+struct silofs_spacestats {
+	time_t          btime;
+	time_t          ctime;
+	size_t          capacity;
+	size_t          vspacesize;
+	uint64_t        generation;
+	struct silofs_spacegauges lexts;
+	struct silofs_spacegauges bks;
+	struct silofs_spacegauges objs;
+};
+
+/* file-system' internal cache stats */
+struct silofs_cachestats {
+	size_t nalloc_bytes;
+	size_t ncache_ublocks;
+	size_t ncache_vblocks;
+	size_t ncache_unodes;
+	size_t ncache_vnodes;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_spacestats_export(const struct silofs_spacestats *spst,
                               struct silofs_space_stats *out_spst);
 

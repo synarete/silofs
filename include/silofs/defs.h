@@ -95,6 +95,12 @@
 #define SILOFS_HEADER_SIZE              (16)
 
 
+/* number of children in logical-to-persistant mapping node */
+#define SILOFS_VOLMAP_NCHILDS           (61)
+
+/* number of mapping-entries in logical-to-persistant node */
+#define SILOFS_VOLMAP_NLTOP             (112)
+
 
 /* minimal file-system capacity, in bytes (2G) */
 #define SILOFS_CAPACITY_SIZE_MIN        (2L * SILOFS_GIGA)
@@ -109,10 +115,6 @@
 /* small ("sector") meta-block size (1K) */
 #define SILOFS_KB_SIZE                  SILOFS_KILO
 
-/* number of 1K blocks in logical block */
-#define SILOFS_NKB_IN_LBK \
-	(SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
-
 
 /* bits-shift of logical block */
 #define SILOFS_LBK_SHIFT                (16)
@@ -120,6 +122,9 @@
 /* logical block size (64K) */
 #define SILOFS_LBK_SIZE                 (1L << SILOFS_LBK_SHIFT)
 
+/* number of 1K blocks in logical block */
+#define SILOFS_NKB_IN_LBK \
+	(SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
 
 /* maximal number of logical blocks within single tree-segment */
 #define SILOFS_NLBK_IN_LEXT_MAX         (256L)
@@ -483,6 +488,7 @@ struct silofs_treeid {
 	struct silofs_uuid              uuid;
 } silofs_packed_aligned16;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_lextid32b {
 	struct silofs_treeid            treeid;
@@ -525,7 +531,6 @@ struct silofs_vaddr56 {
 struct silofs_vaddr64 {
 	uint64_t                        voff_stype;
 } silofs_packed_aligned8;
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -936,5 +941,39 @@ struct silofs_repo_meta {
 	uint8_t                         rm_reserved2[256];
 	uint8_t                         rm_reserved3[512];
 } silofs_packed_aligned64;
+
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+
+struct silofs_ltop64b {
+	struct silofs_laddr48b          laddr;
+	uint32_t                        index;
+	uint32_t                        reserved;
+	int64_t                         off;
+} silofs_packed_aligned16;
+
+
+struct silofs_volume_root {
+	struct silofs_header            vol_hdr;
+	struct silofs_treeid            vol_treeid;
+} silofs_packed_aligned64;
+
+
+struct silofs_volmap_ref {
+	uint32_t                        index;
+	uint32_t                        reserved;
+	int64_t                         off;
+} silofs_packed_aligned16;
+
+
+struct silofs_volmap_node {
+	struct silofs_header            vn_hdr;
+	struct silofs_treeid            vn_treeid;
+	uint8_t                         vn_reserved[16];
+	struct silofs_volmap_ref        vn_child[SILOFS_VOLMAP_NCHILDS];
+	struct silofs_ltop64b           vn_ltop[SILOFS_VOLMAP_NLTOP];
+} silofs_packed_aligned64;
+
 
 #endif /* SILOFS_DEFS_H_ */

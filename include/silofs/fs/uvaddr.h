@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDRESS_H_
-#define SILOFS_ADDRESS_H_
+#ifndef SILOFS_UVADDR_H_
+#define SILOFS_UVADDR_H_
 
 #include <silofs/fs/types.h>
 #include <stdint.h>
@@ -343,6 +343,4 @@ static inline bool silofs_stype_isdatabk(enum silofs_stype stype)
 	return silofs_stype_isequal(stype, SILOFS_STYPE_DATABK);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-#endif /* SILOFS_ADDRESS_H_ */
+#endif /* SILOFS_UVADDR_H_ */

@@ -135,6 +135,7 @@ static void validate_fundamental_types_size(void)
 
 static void validate_persistent_types_nk(void)
 {
+	REQUIRE_SIZEOF_8K(struct silofs_volmap_node);
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_leaf);
@@ -167,6 +168,7 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);
 	REQUIRE_SIZEOF(struct silofs_lextid32b, 32);
 	REQUIRE_SIZEOF(struct silofs_laddr48b, 48);
+	REQUIRE_SIZEOF(struct silofs_ltop64b, 64);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bootrec1k, SILOFS_BOOTREC_SIZE);
 	REQUIRE_SIZEOF(struct silofs_sb_sproots, 1024);
@@ -308,6 +310,12 @@ static void validate_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_symlnk_value, sy_value, 64);
 }
 
+static void validate_persistent_types_alignment4(void)
+{
+	REQUIRE_OFFSET64(struct silofs_volmap_node, vn_child, 48);
+	REQUIRE_OFFSET64(struct silofs_volmap_node, vn_ltop, 1024);
+}
+
 static void validate_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
@@ -367,6 +375,7 @@ void silofs_validate_fsdefs(void)
 	validate_persistent_types_alignment1();
 	validate_persistent_types_alignment2();
 	validate_persistent_types_alignment3();
+	validate_persistent_types_alignment4();
 	validate_ioctl_types_size();
 	validate_defs_consistency();
 	validate_external_constants();

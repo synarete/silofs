@@ -167,6 +167,16 @@ static bool ft_may_exec(const struct ft_env *fte, const struct ft_tdef *tdef)
 	return true;
 }
 
+static bool ignore(const struct ft_tdef *tdef)
+{
+	return (tdef->flags & FT_F_IGNORE) > 0;
+}
+
+static bool wanted(const struct ft_tdef *tdef, const char *wantname)
+{
+	return (wantname == NULL) || (strstr(tdef->name, wantname) != NULL);
+}
+
 static void ft_runtests(struct ft_env *fte)
 {
 	const struct ft_tdef *tdef;
@@ -176,18 +186,12 @@ static void ft_runtests(struct ft_env *fte)
 
 	for (size_t i = 0; i < tests->len; ++i) {
 		tdef = &tests->arr[i];
-		if (tdef->flags & FT_F_IGNORE) {
-			continue;
-		}
-		if (params->listtests) {
-			ft_list_test(fte, tdef);
-			continue;
-		}
-		if (!ft_may_exec(fte, tdef)) {
-			continue;
-		}
-		if (!wantname || strstr(tdef->name, wantname)) {
-			ft_exec_test(fte, tdef);
+		if (!ignore(tdef) && wanted(tdef, wantname)) {
+			if (params->listtests) {
+				ft_list_test(fte, tdef);
+			} else if (ft_may_exec(fte, tdef)) {
+				ft_exec_test(fte, tdef);
+			}
 		}
 	}
 }

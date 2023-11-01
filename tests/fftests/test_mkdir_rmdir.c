@@ -363,7 +363,7 @@ static void test_mkdir_tree_deep(struct ft_env *fte)
  */
 static void test_mkdir_setgid(struct ft_env *fte)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_under(fte, path1);
 	const char *path3 = ft_new_path_under(fte, path2);
@@ -387,14 +387,41 @@ static void test_mkdir_setgid(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
+ * Expects mkdirat(2) to work properly
+ */
+static void test_mkdirat_simple(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	int dfd1 = -1;
+	int dfd2 = -1;
+
+	ft_mkdir(path, 0700);
+	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd1);
+	ft_mkdirat(dfd1, name, 0700);
+	ft_fstatat(dfd1, name, &st, 0);
+	ft_expect_dir(st.st_mode);
+	ft_openat(dfd1, name, O_DIRECTORY | O_RDONLY, 0, &dfd2);
+	ft_fstat(dfd2, &st);
+	ft_expect_dir(st.st_mode);
+	ft_close(dfd2);
+	ft_unlinkat(dfd1, name, AT_REMOVEDIR);
+	ft_fstatat_err(dfd1, name, 0, -ENOENT);
+	ft_close(dfd1);
+	ft_rmdir(path);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
  * Expects mkdirat(2) to work with nested dirs/files
  */
 static void test_mkdirat_nested(struct ft_env *fte)
 {
-	int dfd = -1;
+	const char *path = ft_new_path_unique(fte);
 	const char *nested1 = "nested1";
 	const char *nested2 = "nested1/nested2";
-	const char *path = ft_new_path_unique(fte);
+	int dfd = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -531,6 +558,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mkdir_tree_wide),
 	FT_DEFTEST(test_mkdir_tree_deep),
 	FT_DEFTEST(test_mkdir_setgid),
+	FT_DEFTEST(test_mkdirat_simple),
 	FT_DEFTEST(test_mkdirat_nested),
 	FT_DEFTEST(test_rmdir_mctime),
 	FT_DEFTEST(test_rmdir_openat),

@@ -22,7 +22,7 @@
  */
 static void test_unlink_reg(struct ft_env *fte)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 
@@ -37,7 +37,7 @@ static void test_unlink_reg(struct ft_env *fte)
 
 static void test_unlink_symlink(struct ft_env *fte)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
 	int fd = -1;
@@ -55,7 +55,7 @@ static void test_unlink_symlink(struct ft_env *fte)
 
 static void test_unlink_fifo(struct ft_env *fte)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 
 	ft_mkfifo(path, 0644);
@@ -72,7 +72,7 @@ static void test_unlink_fifo(struct ft_env *fte)
  */
 static void test_unlink_notdir(struct ft_env *fte)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
@@ -105,18 +105,119 @@ static void test_unlink_isdir(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
+ * Expects unlinkat(3p) to operate using dir-fd.
+ */
+static void test_unlinkat_simple(struct ft_env *fte)
+{
+	struct stat st[2];
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	int dfd = -1;
+	int fd = -1;
+
+	ft_mkdir(path, 0700);
+	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
+	ft_fstat(fd, &st[0]);
+	ft_fstatat(dfd, name, &st[1], 0);
+	ft_expect_eq(st[0].st_ino, st[1].st_ino);
+	ft_close(fd);
+	ft_unlinkat(dfd, name, 0);
+	ft_fstatat_err(dfd, name, 0, -ENOENT);
+	ft_close(dfd);
+	ft_rmdir(path);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects unlinkat(3p) to operate with I/O
+ */
+static void test_unlinkat_io_(struct ft_env *fte, loff_t off, size_t len)
+{
+	struct stat st = { .st_size = -1 };
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_rands(fte, len);
+	void *data = ft_new_buf_zeros(fte, len);
+	const loff_t end = ft_off_end(off, len);
+	int dfd = -1;
+	int fd = -1;
+
+	ft_mkdir(path, 0700);
+	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
+	ft_pwriten(fd, buf1, len, off);
+	ft_fstatat(dfd, name, &st, 0);
+	ft_expect_eq(st.st_size, end);
+	ft_preadn(fd, data, len, off);
+	ft_expect_eqm(data, buf1, len);
+	ft_pwriten(fd, buf2, len, off);
+	ft_fstat(fd, &st);
+	ft_expect_eq(st.st_size, end);
+	ft_preadn(fd, data, len, off);
+	ft_expect_eqm(data, buf2, len);
+	ft_close(fd);
+	ft_unlinkat(dfd, name, 0);
+	ft_fstatat_err(dfd, name, 0, -ENOENT);
+	ft_close(dfd);
+	ft_rmdir(path);
+}
+
+static void test_unlinkat_io_simple(struct ft_env *fte)
+{
+	const struct ft_range ranges[] = {
+		FT_MKRANGE(0, FT_1K),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(0, FT_4K),
+		FT_MKRANGE(0, FT_64K),
+		FT_MKRANGE(FT_64K, FT_64K),
+		FT_MKRANGE(FT_1G, FT_1M),
+	};
+
+	ft_exec_with_ranges(fte, test_unlinkat_io_, ranges);
+}
+
+static void test_unlinkat_io(struct ft_env *fte)
+{
+	const struct ft_range ranges[] = {
+		/* aligned */
+		FT_MKRANGE(0, FT_1K),
+		FT_MKRANGE(FT_1K, FT_1K),
+		FT_MKRANGE(2 * FT_1K, 2 * FT_4K),
+		FT_MKRANGE(FT_4K, FT_4K),
+		FT_MKRANGE(FT_64K, FT_64K),
+		FT_MKRANGE(FT_64K - FT_4K, 4 * FT_64K),
+		FT_MKRANGE(FT_1M, FT_4K),
+		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(FT_1T, 8 * FT_1M),
+		/* unaligned */
+		FT_MKRANGE(11, 11 * FT_1K + 111),
+		FT_MKRANGE(FT_1K - 1, 2 * FT_1K),
+		FT_MKRANGE(FT_4K - 1, FT_4K + 3),
+		FT_MKRANGE(FT_64K - 1, FT_64K + 3),
+		FT_MKRANGE(FT_1M - 1, FT_4K + 11),
+		FT_MKRANGE(FT_1G - 11, FT_1M + 111),
+		FT_MKRANGE(FT_1T - 111, 11 * FT_1M - 1111),
+	};
+
+	ft_exec_with_ranges(fte, test_unlinkat_io_, ranges);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
  * Expects unlinkat(3p) to recreate files with same name when previous one with
  * same-name has been unlinked but still open.
  */
 static void test_unlinkat_same_name(struct ft_env *fte)
 {
-	int dfd = -1;
-	int fd = -1;
-	int fds[64];
-	size_t nfds = 0;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
+	size_t nfds = 0;
+	int fds[64];
+	int dfd = -1;
+	int fd = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -147,9 +248,11 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_unlink_fifo),
 	FT_DEFTEST(test_unlink_notdir),
 	FT_DEFTEST(test_unlink_isdir),
+	FT_DEFTEST(test_unlinkat_simple),
+	FT_DEFTEST(test_unlinkat_io_simple),
+	FT_DEFTEST(test_unlinkat_io),
 	FT_DEFTEST(test_unlinkat_same_name),
 };
 
 const struct ft_tests ft_test_unlink = FT_DEFTESTS(ft_local_tests);
-
 

@@ -20,14 +20,14 @@
 /*
  * Expects read-write data-consistency, sequential writes of single block.
  */
-static void test_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
+static void test_rw_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 {
-	int fd;
-	loff_t pos = -1;
-	size_t num;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	void *buf = ft_new_buf_zeros(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
+	loff_t pos = -1;
+	size_t num = 0;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -38,6 +38,7 @@ static void test_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 		ft_expect_eq(st.st_size, (i + 1) * bsz);
 	}
 	ft_llseek(fd, 0, SEEK_SET, &pos);
+	ft_expect_eq(pos, 0);
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_readn(fd, buf, bsz);
 		memcpy(&num, buf, sizeof(num));
@@ -47,33 +48,37 @@ static void test_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 	ft_unlink(path);
 }
 
-static void test_basic_simple(struct ft_env *fte)
+static void test_rw_basic_simple(struct ft_env *fte)
 {
-	test_basic_simple_(fte, FT_BK_SIZE, 256);
-	test_basic_simple_(fte, FT_BK_SIZE + 1, 256);
-	test_basic_simple_(fte, FT_1M, 16);
-	test_basic_simple_(fte, FT_1M - 1, 16);
+	test_rw_basic_simple_(fte, FT_1K, 1000);
+	test_rw_basic_simple_(fte, FT_1K - 1, 1000);
+	ft_relax_mem(fte);
+	test_rw_basic_simple_(fte, FT_64K, 100);
+	test_rw_basic_simple_(fte, FT_64K + 1, 100);
+	ft_relax_mem(fte);
+	test_rw_basic_simple_(fte, FT_1M, 10);
+	test_rw_basic_simple_(fte, FT_1M - 1, 10);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects read-write data-consistency for n uint64_t integers
  */
-static void test_basic_seq_(struct ft_env *fte, size_t count)
+static void test_rw_basic_seq_(struct ft_env *fte, size_t cnt)
 {
-	int fd;
-	uint64_t num;
-	loff_t off;
-	const size_t bsz = sizeof(num);
 	const char *path = ft_new_path_unique(fte);
+	uint64_t num = 0;
+	const size_t bsz = sizeof(num);
+	loff_t off = 0;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	for (size_t i = 0; i < count; ++i) {
+	for (size_t i = 0; i < cnt; ++i) {
 		num = i;
 		off = (loff_t)(i * bsz);
 		ft_pwriten(fd, &num, bsz, off);
 	}
-	for (size_t i = 0; i < count; ++i) {
+	for (size_t i = 0; i < cnt; ++i) {
 		off = (loff_t)(i * bsz);
 		ft_preadn(fd, &num, bsz, off);
 		ft_expect_eq(i, num);
@@ -82,40 +87,35 @@ static void test_basic_seq_(struct ft_env *fte, size_t count)
 	ft_unlink(path);
 }
 
-static void test_basic_seq1(struct ft_env *fte)
+static void test_rw_basic_seq_simple(struct ft_env *fte)
 {
-	test_basic_seq_(fte, 1);
-	test_basic_seq_(fte, 2);
-	test_basic_seq_(fte, 10);
+	const size_t cnt[] = { 1, 10, 100 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_rw_basic_seq_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
-static void test_basic_seq_1k(struct ft_env *fte)
+static void test_rw_basic_seq_long(struct ft_env *fte)
 {
-	test_basic_seq_(fte, FT_1K / sizeof(uint64_t));
-}
+	const size_t cnt[] = { 1000, 10000, 100000 };
 
-static void test_basic_seq_8k(struct ft_env *fte)
-{
-	test_basic_seq_(fte, 8 * FT_1K / sizeof(uint64_t));
-}
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_rw_basic_seq_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 
-static void test_basic_seq_1m(struct ft_env *fte)
-{
-	test_basic_seq_(fte, FT_1M / sizeof(uint64_t));
-}
-
-static void test_basic_seq_8m(struct ft_env *fte)
-{
-	test_basic_seq_(fte, (8 * FT_1M) / sizeof(uint64_t));
+	test_rw_basic_seq_(fte, FT_1K / sizeof(uint64_t));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
- * Expects read-write data-consistency for buffer-size
+ * Expects pwrite-pread data-consistency with multiple overwrites
  */
-static void test_basic_rdwr_(struct ft_env *fte, loff_t off, size_t len)
+static void test_rw_basic_multi_(struct ft_env *fte, loff_t off, size_t len)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	void *buf1 = NULL;
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
@@ -135,7 +135,7 @@ static void test_basic_rdwr_(struct ft_env *fte, loff_t off, size_t len)
 	ft_unlink(path);
 }
 
-static void test_basic_rdwr(struct ft_env *fte)
+static void test_rw_basic_multi(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
 		/* aligned */
@@ -157,14 +157,14 @@ static void test_basic_rdwr(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, 11 * FT_1M - 1111),
 	};
 
-	ft_exec_with_ranges(fte, test_basic_rdwr_, ranges);
+	ft_exec_with_ranges(fte, test_rw_basic_multi_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Must _not_ get ENOSPC for sequence of write-overwrite of large buffer.
  */
-static void test_basic_space(struct ft_env *fte)
+static void test_rw_basic_space(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
 	size_t bsz = FT_1M;
@@ -191,7 +191,7 @@ static void test_basic_space(struct ft_env *fte)
  * Expects read-write data-consistency, reverse over-writes.
  */
 static void
-test_basic_reserve_overwrite_(struct ft_env *fte, loff_t off, size_t len)
+test_rw_basic_reserve_overwrite_(struct ft_env *fte, loff_t off, size_t len)
 {
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_zeros(fte, len);
@@ -210,7 +210,7 @@ test_basic_reserve_overwrite_(struct ft_env *fte, loff_t off, size_t len)
 	ft_unlink(path);
 }
 
-static void test_basic_reserve_overwrite(struct ft_env *fte)
+static void test_rw_basic_reserve_overwrite(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
 		/* aligned */
@@ -229,14 +229,14 @@ static void test_basic_reserve_overwrite(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 111, FT_4K + 1111),
 	};
 
-	ft_exec_with_ranges(fte, test_basic_reserve_overwrite_, ranges);
+	ft_exec_with_ranges(fte, test_rw_basic_reserve_overwrite_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects read-write data-consistency when I/O overlaps
  */
-static void test_basic_overlap(struct ft_env *fte)
+static void test_rw_basic_overlap(struct ft_env *fte)
 {
 	size_t cnt = 0;
 	size_t bsz = FT_1M;
@@ -278,14 +278,14 @@ static void test_basic_overlap(struct ft_env *fte)
 /*
  * Expects read-write data-consistency when I/O in complex patterns
  */
-static void test_basic_rw(struct ft_env *fte,
-                          loff_t pos, loff_t lim, loff_t step)
+static void test_rw_basic_steps_(struct ft_env *fte,
+                                 loff_t pos, loff_t lim, loff_t step)
 {
-	int fd;
-	size_t bsz = FT_BK_SIZE;
+	size_t bsz = FT_64K;
 	void *buf1 = NULL;
 	void *buf2 = NULL;
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (loff_t off = pos; off < lim; off += step) {
@@ -302,33 +302,33 @@ static void test_basic_rw(struct ft_env *fte,
 }
 
 
-static void test_basic_rw_aligned(struct ft_env *fte)
+static void test_rw_basic_aligned_steps(struct ft_env *fte)
 {
-	const loff_t step = FT_BK_SIZE;
+	const loff_t step = FT_64K;
 
-	test_basic_rw(fte, 0, FT_1M, step);
-	test_basic_rw(fte, 0, 2 * FT_1M, step);
-	test_basic_rw(fte, FT_1G - FT_1M, FT_1M, step);
+	test_rw_basic_steps_(fte, 0, FT_1M, step);
+	test_rw_basic_steps_(fte, 0, 2 * FT_1M, step);
+	test_rw_basic_steps_(fte, FT_1G - FT_1M, FT_1M, step);
 }
 
-static void test_basic_rw_unaligned(struct ft_env *fte)
+static void test_rw_basic_unaligned_steps(struct ft_env *fte)
 {
-	const loff_t step1 = FT_BK_SIZE + 1;
-	const loff_t step2 = FT_BK_SIZE - 1;
+	const loff_t step1 = FT_64K + 1;
+	const loff_t step2 = FT_64K - 1;
 
-	test_basic_rw(fte, 0, FT_1M, step1);
-	test_basic_rw(fte, 0, FT_1M, step2);
-	test_basic_rw(fte, 0, 2 * FT_1M, step1);
-	test_basic_rw(fte, 0, 2 * FT_1M, step2);
-	test_basic_rw(fte, FT_1G - FT_1M, FT_1M, step1);
-	test_basic_rw(fte, FT_1G - FT_1M, FT_1M, step2);
+	test_rw_basic_steps_(fte, 0, FT_1M, step1);
+	test_rw_basic_steps_(fte, 0, FT_1M, step2);
+	test_rw_basic_steps_(fte, 0, 2 * FT_1M, step1);
+	test_rw_basic_steps_(fte, 0, 2 * FT_1M, step2);
+	test_rw_basic_steps_(fte, FT_1G - FT_1M, FT_1M, step1);
+	test_rw_basic_steps_(fte, FT_1G - FT_1M, FT_1M, step2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects successful write-read of single full large-chunk to regular file
  */
-static void test_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
+static void test_rw_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
 {
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
@@ -343,7 +343,7 @@ static void test_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
 	ft_unlink(path);
 }
 
-static void test_basic_chunk_aligned(struct ft_env *fte)
+static void test_rw_basic_chunk_aligned(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, FT_1M),
@@ -352,10 +352,10 @@ static void test_basic_chunk_aligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1T, 8 * FT_1M),
 	};
 
-	ft_exec_with_ranges(fte, test_basic_chunk_, ranges);
+	ft_exec_with_ranges(fte, test_rw_basic_chunk_, ranges);
 }
 
-static void test_basic_chunk_unaligned(struct ft_env *fte)
+static void test_rw_basic_chunk_unaligned(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
 		FT_MKRANGE(1, FT_1M),
@@ -364,7 +364,7 @@ static void test_basic_chunk_unaligned(struct ft_env *fte)
 		FT_MKRANGE(FT_1T - 1, 8 * FT_1M + 8),
 	};
 
-	ft_exec_with_ranges(fte, test_basic_chunk_, ranges);
+	ft_exec_with_ranges(fte, test_rw_basic_chunk_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -372,7 +372,7 @@ static void test_basic_chunk_unaligned(struct ft_env *fte)
  * Expects successful write-read of ascending files-offsets
  */
 static void
-test_basic_backword_byte_(struct ft_env *fte, loff_t off, size_t len)
+test_rw_basic_backward_byte_(struct ft_env *fte, loff_t off, size_t len)
 {
 	uint8_t val = 0;
 	const size_t vsz = sizeof(val);
@@ -398,7 +398,7 @@ test_basic_backword_byte_(struct ft_env *fte, loff_t off, size_t len)
 	ft_unlink(path);
 }
 
-static void test_basic_backword_byte(struct ft_env *fte)
+static void test_rw_basic_backward_byte(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
 		FT_MKRANGE(0, 11),
@@ -413,21 +413,20 @@ static void test_basic_backword_byte(struct ft_env *fte)
 		FT_MKRANGE(FT_1T + 11, 1111),
 	};
 
-	ft_exec_with_ranges(fte, test_basic_backword_byte_, ranges);
+	ft_exec_with_ranges(fte, test_rw_basic_backward_byte_, ranges);
 }
 
-static void test_basic_backword_ulong_(struct ft_env *fte, size_t cnt)
+static void test_rw_basic_backward_u64_(struct ft_env *fte, size_t cnt)
 {
-	int fd1 = -1;
-	int fd2 = -1;
-	loff_t pos = 0;
 	uint64_t val = 0;
 	const size_t vsz = sizeof(val);
 	const char *path = ft_new_path_unique(fte);
+	loff_t pos = 0;
+	int fd1 = -1;
+	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);
-
 	for (size_t i = cnt; i > 0; --i) {
 		pos = (loff_t)(i * cnt);
 		val = i;
@@ -451,32 +450,28 @@ static void test_basic_backword_ulong_(struct ft_env *fte, size_t cnt)
 	ft_unlink(path);
 }
 
-static void test_basic_backword_ulong(struct ft_env *fte)
+static void test_rw_basic_backward_u64(struct ft_env *fte)
 {
-	test_basic_backword_ulong_(fte, 11);
-	test_basic_backword_ulong_(fte, 111);
-	test_basic_backword_ulong_(fte, 1111);
+	test_rw_basic_backward_u64_(fte, 100);
+	test_rw_basic_backward_u64_(fte, 10000);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_basic_simple),
-	FT_DEFTEST(test_basic_rdwr),
-	FT_DEFTEST(test_basic_seq1),
-	FT_DEFTEST(test_basic_seq_1k),
-	FT_DEFTEST(test_basic_seq_8k),
-	FT_DEFTEST(test_basic_seq_1m),
-	FT_DEFTEST(test_basic_seq_8m),
-	FT_DEFTEST(test_basic_space),
-	FT_DEFTEST(test_basic_reserve_overwrite),
-	FT_DEFTEST(test_basic_overlap),
-	FT_DEFTEST(test_basic_rw_aligned),
-	FT_DEFTEST(test_basic_rw_unaligned),
-	FT_DEFTEST(test_basic_chunk_aligned),
-	FT_DEFTEST(test_basic_chunk_unaligned),
-	FT_DEFTEST(test_basic_backword_byte),
-	FT_DEFTEST(test_basic_backword_ulong),
+	FT_DEFTEST(test_rw_basic_simple),
+	FT_DEFTEST(test_rw_basic_multi),
+	FT_DEFTEST(test_rw_basic_seq_simple),
+	FT_DEFTEST(test_rw_basic_seq_long),
+	FT_DEFTEST(test_rw_basic_space),
+	FT_DEFTEST(test_rw_basic_reserve_overwrite),
+	FT_DEFTEST(test_rw_basic_overlap),
+	FT_DEFTEST(test_rw_basic_aligned_steps),
+	FT_DEFTEST(test_rw_basic_unaligned_steps),
+	FT_DEFTEST(test_rw_basic_chunk_aligned),
+	FT_DEFTEST(test_rw_basic_chunk_unaligned),
+	FT_DEFTEST(test_rw_basic_backward_byte),
+	FT_DEFTEST(test_rw_basic_backward_u64),
 };
 
 const struct ft_tests ft_test_rw_basic = FT_DEFTESTS(ft_local_tests);

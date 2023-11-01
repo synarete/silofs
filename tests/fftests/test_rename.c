@@ -23,13 +23,78 @@
  */
 static void test_rename_simple(struct ft_env *fte)
 {
-	int fd = -1;
-	ino_t ino = 0;
-	mode_t ifmt = S_IFMT;
-	struct stat st[2];
+	struct stat st[3];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
+	int fd = -1;
+
+	ft_mkdir(path0, 0755);
+	ft_creat(path1, 0644, &fd);
+	ft_stat(path1, &st[0]);
+	ft_expect_reg(st[0].st_mode);
+	ft_rename(path1, path2);
+	ft_stat_err(path1, -ENOENT);
+	ft_fstat(fd, &st[1]);
+	ft_expect_eq(st[1].st_ino, st[0].st_ino);
+	ft_expect_eq(st[1].st_mode, st[0].st_mode);
+	ft_expect_eq(st[1].st_nlink, st[0].st_nlink);
+	ft_expect_eq(st[1].st_nlink, 1);
+	ft_stat(path2, &st[2]);
+	ft_expect_eq(st[2].st_ino, st[0].st_ino);
+	ft_expect_eq(st[2].st_mode, st[0].st_mode);
+	ft_expect_eq(st[2].st_nlink, st[0].st_nlink);
+	ft_close(fd);
+	ft_unlink(path2);
+	ft_rmdir(path0);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects renameat(2) to successfully change file's new-name and return ENOENT
+ * on old-name.
+ */
+static void test_renameat_simple(struct ft_env *fte)
+{
+	struct stat st[2];
+	const char *path = ft_new_path_unique(fte);
+	const char *name1 = ft_new_name_unique(fte);
+	const char *name2 = ft_new_name_unique(fte);
+	int dfd = -1;
+	int fd = -1;
+
+	ft_mkdir(path, 0700);
+	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	ft_openat(dfd, name1, O_CREAT | O_RDWR, 0600, &fd);
+	ft_fstat(fd, &st[0]);
+	ft_expect_reg(st[0].st_mode);
+	ft_close(fd);
+	ft_fstatat(dfd, name1, &st[1], 0);
+	ft_expect_reg(st[1].st_mode);
+	ft_expect_eq(st[1].st_ino, st[0].st_ino);
+	ft_renameat(dfd, name1, dfd, name2);
+	ft_fstatat_err(dfd, name1, 0, -ENOENT);
+	ft_fstatat(dfd, name2, &st[1], 0);
+	ft_expect_eq(st[1].st_mode, st[0].st_mode);
+	ft_expect_eq(st[1].st_ino, st[0].st_ino);
+	ft_unlinkat(dfd, name2, 0);
+	ft_close(dfd);
+	ft_rmdir(path);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects rename(3p) to successfully change file's new-name and return ENOENT
+ * on old-name, plus preserve mode.
+ */
+static void test_rename_getattr(struct ft_env *fte)
+{
+	struct stat st[3];
+	const char *path0 = ft_new_path_unique(fte);
+	const char *path1 = ft_new_path_under(fte, path0);
+	const char *path2 = ft_new_path_under(fte, path0);
+	const mode_t ifmt = S_IFMT;
+	int fd = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_creat(path1, 0644, &fd);
@@ -37,17 +102,16 @@ static void test_rename_simple(struct ft_env *fte)
 	ft_expect_reg(st[0].st_mode);
 	ft_expect_eq((st[0].st_mode & ~ifmt), 0644);
 	ft_expect_eq(st[0].st_nlink, 1);
-
-	ino = st[0].st_ino;
+	ft_expect_eq(st[0].st_size, 0);
 	ft_rename(path1, path2);
 	ft_stat_err(path1, -ENOENT);
-	ft_fstat(fd, &st[0]);
-	ft_expect_eq(st[0].st_ino, ino);
-	ft_stat(path2, &st[1]);
-	ft_expect_reg(st[1].st_mode);
-	ft_expect_eq((st[1].st_mode & ~ifmt), 0644);
-	ft_expect_eq(st[1].st_nlink, 1);
-
+	ft_fstat(fd, &st[1]);
+	ft_expect_eq(st[1].st_ino, st[0].st_ino);
+	ft_expect_eq(st[1].st_mode, st[0].st_mode);
+	ft_stat(path2, &st[2]);
+	ft_expect_reg(st[2].st_mode);
+	ft_expect_eq((st[2].st_mode & ~ifmt), 0644);
+	ft_expect_eq(st[2].st_nlink, 1);
 	ft_unlink(path2);
 	ft_rmdir(path0);
 	ft_close(fd);
@@ -735,6 +799,8 @@ static void test_renameat_samedir(struct ft_env *fte)
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_rename_simple),
+	FT_DEFTEST(test_renameat_simple),
+	FT_DEFTEST(test_rename_getattr),
 	FT_DEFTEST(test_rename_ctime),
 	FT_DEFTEST(test_rename_notdirto),
 	FT_DEFTEST(test_rename_isdirto),

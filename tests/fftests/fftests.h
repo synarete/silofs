@@ -423,6 +423,8 @@ void ft_lgetxattr(const char *path, const char *name,
 void ft_fgetxattr(int fd, const char *name,
                   void *value, size_t size, size_t *cnt);
 
+void ft_fgetxattr_err(int fd, const char *name, int err);
+
 void ft_removexattr(const char *path, const char *name);
 
 void ft_lremovexattr(const char *path, const char *name);

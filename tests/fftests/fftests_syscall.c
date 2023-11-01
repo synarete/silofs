@@ -508,6 +508,13 @@ void ft_fgetxattr(int fd, const char *name,
 	expect_ok(silofs_sys_fgetxattr(fd, name, value, size, cnt));
 }
 
+void ft_fgetxattr_err(int fd, const char *name, int err)
+{
+	size_t cnt;
+
+	expect_err(silofs_sys_fgetxattr(fd, name, NULL, 0, &cnt), err);
+}
+
 void ft_removexattr(const char *path, const char *name)
 {
 	expect_ok(silofs_sys_removexattr(path, name));

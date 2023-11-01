@@ -25,8 +25,8 @@ struct ft_rw_large_args {
 /*
  * Expects read-write data-consistency upon n-gigbytes write in chunks of 1M
  */
-static void test_ngiga_rdwr_by_(struct ft_env *fte, int fd,
-                                const struct ft_rw_large_args *args)
+static void test_rw_ngiga_by_(struct ft_env *fte, int fd,
+                              const struct ft_rw_large_args *args)
 {
 	const loff_t off_base = args->off_base;
 	const size_t nskip = args->nskip;
@@ -53,31 +53,31 @@ static void test_ngiga_rdwr_by_(struct ft_env *fte, int fd,
 	}
 }
 
-static void test_ngiga_rdwr_(struct ft_env *fte,
-                             const struct ft_rw_large_args *args)
+static void test_rw_ngiga_(struct ft_env *fte,
+                           const struct ft_rw_large_args *args)
 {
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	test_ngiga_rdwr_by_(fte, fd, args);
+	test_rw_ngiga_by_(fte, fd, args);
 	ft_close(fd);
 	ft_unlink(path);
 }
 
-static void test_ngiga_rdwr_unlinked_(struct ft_env *fte,
-                                      const struct ft_rw_large_args *args)
+static void test_rw_ngiga_unlinked_(struct ft_env *fte,
+                                    const struct ft_rw_large_args *args)
 {
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);
-	test_ngiga_rdwr_by_(fte, fd, args);
+	test_rw_ngiga_by_(fte, fd, args);
 	ft_close(fd);
 }
 
-static void test_large_simple(struct ft_env *fte)
+static void test_rw_large_simple(struct ft_env *fte)
 {
 	const struct ft_rw_large_args args[] = {
 		{ 0, 0 },
@@ -86,12 +86,12 @@ static void test_large_simple(struct ft_env *fte)
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(args); ++i) {
-		test_ngiga_rdwr_(fte, &args[i]);
+		test_rw_ngiga_(fte, &args[i]);
 		ft_relax_mem(fte);
 	}
 }
 
-static void test_large_unaligned(struct ft_env *fte)
+static void test_rw_large_unaligned(struct ft_env *fte)
 {
 	const struct ft_rw_large_args args[] = {
 		{ 1, 1 },
@@ -100,12 +100,12 @@ static void test_large_unaligned(struct ft_env *fte)
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(args); ++i) {
-		test_ngiga_rdwr_(fte, &args[i]);
+		test_rw_ngiga_(fte, &args[i]);
 		ft_relax_mem(fte);
 	}
 }
 
-static void test_large_unlinked(struct ft_env *fte)
+static void test_rw_large_unlinked(struct ft_env *fte)
 {
 	const struct ft_rw_large_args args[] = {
 		{ 0, 0 },
@@ -114,9 +114,8 @@ static void test_large_unlinked(struct ft_env *fte)
 		{ FT_1T - 11, 11 * FT_1M + 1 },
 	};
 
-
 	for (size_t i = 0; i < FT_ARRAY_SIZE(args); ++i) {
-		test_ngiga_rdwr_unlinked_(fte, &args[i]);
+		test_rw_ngiga_unlinked_(fte, &args[i]);
 		ft_relax_mem(fte);
 	}
 }
@@ -124,9 +123,9 @@ static void test_large_unlinked(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_large_simple),
-	FT_DEFTEST(test_large_unaligned),
-	FT_DEFTEST(test_large_unlinked),
+	FT_DEFTEST(test_rw_large_simple),
+	FT_DEFTEST(test_rw_large_unaligned),
+	FT_DEFTEST(test_rw_large_unlinked),
 };
 
 const struct ft_tests ft_test_rw_large = FT_DEFTESTS(ft_local_tests);

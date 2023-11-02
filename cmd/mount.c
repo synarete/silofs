@@ -451,7 +451,7 @@ static void cmd_mount_set_dumpable(unsigned int state)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
-	cmd_globals.log_mask |= SILOFS_LOG_INFO;
+	cmd_globals.log_params.level |= SILOFS_LOG_INFO;
 
 	if (!cmd_globals.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);

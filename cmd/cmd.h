@@ -42,7 +42,9 @@ struct cmd_globals {
 	char   *cmd_name;
 	char  **cmd_argv;
 	int     cmd_argc;
-	int     log_mask;
+
+	/* logging */
+	struct silofs_log_params log_params;
 
 	/* process ids */
 	pid_t   pid;

@@ -163,9 +163,9 @@ struct ut_tgroup {
 
 /* global params */
 struct ut_globals {
+	struct silofs_log_params log_params;
 	char          **argv;
 	int             argc;
-	int             log_mask;
 	int             run_level;
 	const char     *program;
 	const char     *version;

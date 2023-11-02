@@ -71,12 +71,6 @@ int main(int argc, char *argv[])
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define SILOFS_CMD_LOG_DEFAULT  \
-	(SILOFS_LOG_WARN  | \
-	 SILOFS_LOG_ERROR | \
-	 SILOFS_LOG_CRIT  | \
-	 SILOFS_LOG_STDOUT)
-
 static void cmd_error_print_progname(void)
 {
 	FILE *fp = stderr;
@@ -110,7 +104,8 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_globals.dont_daemonize = false;
 	cmd_globals.allow_coredump = false;
 	cmd_globals.dumpable = true; /* XXX */
-	cmd_globals.log_mask = SILOFS_CMD_LOG_DEFAULT;
+	cmd_globals.log_params.level = SILOFS_LOG_WARN;
+	cmd_globals.log_params.flags = SILOFS_LOGF_STDOUT;
 
 	umask(cmd_globals.umsk);
 	setlocale(LC_ALL, "");
@@ -125,7 +120,7 @@ static void cmd_init_libsilofs(void)
 	if (err) {
 		cmd_dief(err, "unable to init libsilofs");
 	}
-	silofs_set_logmaskp(&cmd_globals.log_mask);
+	silofs_set_global_log_params(&cmd_globals.log_params);
 }
 
 static void cmd_resolve_caps(void)

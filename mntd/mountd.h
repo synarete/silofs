@@ -37,11 +37,6 @@
 #include <limits.h>
 
 
-/* default logging mask */
-#define MOUNTD_LOG_MASK \
-	(SILOFS_LOG_INFO | SILOFS_LOG_WARN | \
-	 SILOFS_LOG_ERROR | SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT)
-
 /* global context */
 struct mountd_args {
 	int     argc;
@@ -55,11 +50,11 @@ struct mountd_args {
 };
 
 struct mountd_ctx {
-	struct mountd_args      args;
-	struct silofs_ms_env   *mse;
-	struct silofs_mntrules *mntrules;
+	struct mountd_args       args;
+	struct silofs_ms_env    *mse;
+	struct silofs_mntrules  *mntrules;
+	struct silofs_log_params log_params;
 	char   *progname;
-	int     log_mask;
 	int     sig_halt;
 	int     sig_fatal;
 };

@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
 		.args.argv = argv,
 		.args.allow_coredump = false,
 		.args.dumpable = false,
-		.log_mask = MOUNTD_LOG_MASK,
+		.log_params.level = SILOFS_LOG_INFO,
+		.log_params.flags = SILOFS_LOGF_STDOUT,
 		.progname = program_invocation_short_name,
 	};
 
@@ -115,7 +116,7 @@ static void mountd_init_process(struct mountd_ctx *ctx)
 	if (err) {
 		mountd_dief(err, "unable to init lib");
 	}
-	silofs_set_logmaskp(&ctx->log_mask);
+	silofs_set_global_log_params(&ctx->log_params);
 }
 
 static void mountd_setrlimit_nocore(void)
@@ -442,7 +443,7 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 		if (opt_chr == 'f') {
 			ctx->args.confpath = optarg;
 		} else if (opt_chr == 'V') {
-			silofs_log_mask_by_str(&ctx->log_mask, optarg);
+			silofs_log_params_by_str(&ctx->log_params, optarg);
 		} else if (opt_chr == 'v') {
 			mountd_show_version();
 		} else if (opt_chr == 'h') {

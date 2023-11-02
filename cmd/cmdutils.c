@@ -642,8 +642,8 @@ static void cmd_daemonize(void)
 	if (err) {
 		cmd_dief(0, "failed to daemonize");
 	}
-	cmd_globals.log_mask |= SILOFS_LOG_SYSLOG;
-	cmd_globals.log_mask &= ~SILOFS_LOG_STDOUT;
+	cmd_globals.log_params.flags |= SILOFS_LOGF_SYSLOG;
+	cmd_globals.log_params.flags &= ~SILOFS_LOGF_STDOUT;
 
 	/*
 	 * TODO-0024: No fd=0
@@ -669,15 +669,15 @@ void cmd_fork_daemon(pid_t *out_pid)
 
 void cmd_open_syslog(void)
 {
-	cmd_globals.log_mask |= SILOFS_LOG_SYSLOG;
+	cmd_globals.log_params.flags |= SILOFS_LOGF_SYSLOG;
 	openlog(cmd_globals.name, LOG_CONS | LOG_NDELAY, 0);
 }
 
 void cmd_close_syslog(void)
 {
-	if (cmd_globals.log_mask & SILOFS_LOG_SYSLOG) {
+	if (cmd_globals.log_params.flags & SILOFS_LOGF_SYSLOG) {
 		closelog();
-		cmd_globals.log_mask &= ~SILOFS_LOG_SYSLOG;
+		cmd_globals.log_params.flags &= ~SILOFS_LOGF_SYSLOG;
 	}
 }
 
@@ -876,7 +876,7 @@ void cmd_print_help_and_exit(const char **help_strings)
 
 void cmd_set_verbose_mode(const char *mode)
 {
-	silofs_log_mask_by_str(&cmd_globals.log_mask, mode);
+	silofs_log_params_by_str(&cmd_globals.log_params, mode);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

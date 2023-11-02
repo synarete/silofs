@@ -22,9 +22,9 @@
 #include <errno.h>
 #include <locale.h>
 
-struct ft_globals {
+struct ft_global_settings {
+	struct silofs_log_params log_params;
 	int     argc;
-	int     log_mask;
 	char  **argv;
 	char   *workdir_root;
 	char   *workdir_real;
@@ -38,7 +38,7 @@ struct ft_globals {
 };
 
 /* Global settings */
-static struct ft_globals ft_g_globals;
+static struct ft_global_settings ft_globals;
 
 /* Real-path resolved buffer */
 static char ft_dirpath_buf[PATH_MAX];
@@ -105,7 +105,7 @@ static void ft_error_print_progname(void)
 static void ft_atexit_cleanup(void)
 {
 	ft_g_ctx = NULL;
-	memset(&ft_g_globals, 0, sizeof(ft_g_globals));
+	memset(&ft_globals, 0, sizeof(ft_globals));
 }
 
 static void ft_setup_globals(int argc, char *argv[])
@@ -115,24 +115,23 @@ static void ft_setup_globals(int argc, char *argv[])
 	atexit(ft_atexit_cleanup);
 	error_print_progname = ft_error_print_progname;
 
-	ft_g_globals.argc = argc;
-	ft_g_globals.argv = argv;
-	ft_g_globals.repeat_count = 1;
-	ft_g_globals.log_mask =
-	        SILOFS_LOG_INFO | SILOFS_LOG_WARN | SILOFS_LOG_ERROR |
-	        SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT;
-	silofs_set_logmaskp(&ft_g_globals.log_mask);
+	ft_globals.argc = argc;
+	ft_globals.argv = argv;
+	ft_globals.repeat_count = 1;
+	ft_globals.log_params.level = SILOFS_LOG_INFO;
+	ft_globals.log_params.flags = SILOFS_LOGF_STDOUT;
+	silofs_set_global_log_params(&ft_globals.log_params);
 }
 
 static int ft_tests_mask(void)
 {
 	int mask = FT_F_NORMAL | FT_F_STAVFS;
 
-	if (ft_g_globals.no_check_statvfs) {
+	if (ft_globals.no_check_statvfs) {
 		mask &= ~FT_F_STAVFS;
 		mask |= FT_F_NOSTAVFS;
 	}
-	if (ft_g_globals.random_order) {
+	if (ft_globals.random_order) {
 		mask |= FT_F_RANDOM;
 	}
 	return mask;
@@ -147,7 +146,7 @@ static void ft_pre_execute(void)
 	if (ft_g_ctx == NULL) {
 		error(EXIT_FAILURE, errno, "malloc %lu-nbytes failed", size);
 	}
-	ft_g_globals.tests_bitmask = ft_tests_mask();
+	ft_globals.tests_bitmask = ft_tests_mask();
 }
 
 static void ft_post_execute(void)
@@ -160,11 +159,11 @@ static void ft_execute_all(void)
 {
 	struct ft_params params = {
 		.progname = program_invocation_short_name,
-		.workdir = ft_g_globals.workdir_real,
-		.testname = ft_g_globals.test_name,
-		.testsmask = ft_g_globals.tests_bitmask,
-		.repeatn = ft_g_globals.repeat_count,
-		.listtests = ft_g_globals.list_tests
+		.workdir = ft_globals.workdir_real,
+		.testname = ft_globals.test_name,
+		.testsmask = ft_globals.tests_bitmask,
+		.repeatn = ft_globals.repeat_count,
+		.listtests = ft_globals.list_tests
 	};
 
 	fte_init(ft_g_ctx, &params);
@@ -274,18 +273,18 @@ static void ft_parse_args(void)
 
 	while (opt_chr > 0) {
 		opt_index = 0;
-		opt_chr = getopt_long(ft_g_globals.argc, ft_g_globals.argv,
+		opt_chr = getopt_long(ft_globals.argc, ft_globals.argv,
 		                      "t:n:erClvh", long_opts, &opt_index);
 		if (opt_chr == 't') {
-			ft_g_globals.test_name = optarg;
+			ft_globals.test_name = optarg;
 		} else if (opt_chr == 'n') {
-			ft_g_globals.repeat_count = ft_strtol_safe(optarg);
+			ft_globals.repeat_count = ft_strtol_safe(optarg);
 		} else if (opt_chr == 'r') {
-			ft_g_globals.random_order = true;
+			ft_globals.random_order = true;
 		} else if (opt_chr == 'C') {
-			ft_g_globals.no_check_statvfs = true;
+			ft_globals.no_check_statvfs = true;
 		} else if (opt_chr == 'l') {
-			ft_g_globals.list_tests = true;
+			ft_globals.list_tests = true;
 		} else if (opt_chr == 'v') {
 			show_version_and_exit();
 		} else if (opt_chr == 'h') {
@@ -295,31 +294,31 @@ static void ft_parse_args(void)
 		}
 	}
 
-	if (ft_g_globals.list_tests) {
+	if (ft_globals.list_tests) {
 		return;
 	}
-	if (optind >= ft_g_globals.argc) {
+	if (optind >= ft_globals.argc) {
 		error(EXIT_FAILURE, 0, "missing root pathname");
 	}
-	ft_g_globals.workdir_root = ft_g_globals.argv[optind++];
-	if (optind < ft_g_globals.argc) {
+	ft_globals.workdir_root = ft_globals.argv[optind++];
+	if (optind < ft_globals.argc) {
 		error(EXIT_FAILURE, 0, "redundant argument: %s",
-		      ft_g_globals.argv[optind]);
+		      ft_globals.argv[optind]);
 	}
-	if (!realpath(ft_g_globals.workdir_root, ft_dirpath_buf)) {
+	if (!realpath(ft_globals.workdir_root, ft_dirpath_buf)) {
 		error(EXIT_FAILURE, errno, "no realpath: %s",
-		      ft_g_globals.workdir_root);
+		      ft_globals.workdir_root);
 	}
-	ft_g_globals.workdir_real = ft_dirpath_buf;
+	ft_globals.workdir_real = ft_dirpath_buf;
 }
 
 static void ft_verify_args(void)
 {
 	int err;
 	struct stat st;
-	const char *base = ft_g_globals.workdir_root;
+	const char *base = ft_globals.workdir_root;
 
-	if (ft_g_globals.list_tests) {
+	if (ft_globals.list_tests) {
 		return;
 	}
 	err = silofs_sys_stat(base, &st);

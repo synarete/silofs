@@ -17,17 +17,28 @@
 #ifndef SILOFS_LOGGING_H_
 #define SILOFS_LOGGING_H_
 
-
-enum SILOFS_LOG_LEVEL {
-	SILOFS_LOG_DEBUG  = 0x0001,
-	SILOFS_LOG_INFO   = 0x0002,
-	SILOFS_LOG_WARN   = 0x0004,
-	SILOFS_LOG_ERROR  = 0x0008,
-	SILOFS_LOG_CRIT   = 0x0010,
-	SILOFS_LOG_STDOUT = 0x1000,
-	SILOFS_LOG_SYSLOG = 0x2000,
-	SILOFS_LOG_FILINE = 0x4000,
+/* log-levels (rfc-5424) */
+enum silofs_log_level {
+	SILOFS_LOG_CRIT  = 2,
+	SILOFS_LOG_ERROR = 3,
+	SILOFS_LOG_WARN  = 4,
+	SILOFS_LOG_INFO  = 6,
+	SILOFS_LOG_DEBUG = 7,
 };
+
+/* logging control flags */
+enum silofs_log_flags {
+	SILOFS_LOGF_STDOUT = 0x01,
+	SILOFS_LOGF_SYSLOG = 0x02,
+	SILOFS_LOGF_FILINE = 0x04,
+};
+
+struct silofs_log_params {
+	enum silofs_log_level   level;
+	enum silofs_log_flags   flags;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define silofs_log_debug(fmt, ...) \
 	silofs_logf(SILOFS_LOG_DEBUG, __FILE__, __LINE__, fmt, __VA_ARGS__)
@@ -44,13 +55,16 @@ enum SILOFS_LOG_LEVEL {
 #define silofs_log_crit(fmt, ...) \
 	silofs_logf(SILOFS_LOG_CRIT, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
-
-void silofs_set_logmaskp(const int *log_maskp);
-
-void silofs_logf(int flags, const char *file, int line, const char *fmt, ...);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 
-void silofs_log_mask_by_str(int *log_maskp, const char *mode);
+void silofs_set_global_log_params(const struct silofs_log_params *logp);
+
+int silofs_logf(enum silofs_log_level log_level,
+                const char *file, int line, const char *fmt, ...);
+
+
+void silofs_log_params_by_str(struct silofs_log_params *logp, const char *str);
 
 void silofs_log_meta_banner(const char *name, int start);
 

@@ -94,9 +94,9 @@ static void ut_setup_globals(int argc, char *argv[])
 
 static void ut_setup_tracing(void)
 {
-	ut_globals.log_mask =
-	        SILOFS_LOG_ERROR | SILOFS_LOG_CRIT | SILOFS_LOG_STDOUT;
-	silofs_set_logmaskp(&ut_globals.log_mask);
+	ut_globals.log_params.level = SILOFS_LOG_ERROR;
+	ut_globals.log_params.flags = SILOFS_LOGF_STDOUT;
+	silofs_set_global_log_params(&ut_globals.log_params);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

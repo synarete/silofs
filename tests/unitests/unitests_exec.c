@@ -95,9 +95,9 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 
 static void ute_cleanup(struct ut_env *ute)
 {
-	if (ute->fs_env != NULL) {
-		silofs_fse_del(ute->fs_env);
-		ute->fs_env = NULL;
+	if (ute->fs_ctx != NULL) {
+		silofs_del_fs_ctx(ute->fs_ctx);
+		ute->fs_ctx = NULL;
 	}
 }
 
@@ -134,7 +134,7 @@ static void ute_setup(struct ut_env *ute)
 	int err;
 
 	silofs_uuid_generate(&ute->args->fs_args.iconf.uuid);
-	err = silofs_fse_new(&ute->args->fs_args, &ute->fs_env);
+	err = silofs_new_fs_ctx(&ute->args->fs_args, &ute->fs_ctx);
 	silofs_assert_ok(err);
 }
 
@@ -263,7 +263,7 @@ static size_t ualloc_nbytes_now(const struct ut_env *ute)
 {
 	struct silofs_cachestats st;
 
-	silofs_stat_fs(ute->fs_env, &st);
+	silofs_stat_fs(ute->fs_ctx, &st);
 	return st.nalloc_bytes;
 }
 

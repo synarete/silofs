@@ -17,28 +17,28 @@
 #include "cmd.h"
 
 
-void cmd_new_env(struct silofs_fs_env **pfse,
-                 const struct silofs_fs_args *args)
+void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,
+                    const struct silofs_fs_args *fs_args)
 {
 	int err;
 
-	err = silofs_fse_new(args, pfse);
+	err = silofs_new_fs_ctx(fs_args, p_fs_ctx);
 	if (err) {
-		cmd_dief(err, "failed to create instance");
+		cmd_dief(err, "failed to create fs-context instance");
 	}
 }
 
-void cmd_del_env(struct silofs_fs_env **pfse)
+void cmd_del_fs_ctx(struct silofs_fs_ctx **p_fs_ctx)
 {
-	if (pfse && *pfse) {
-		silofs_fse_del(*pfse);
-		*pfse = NULL;
+	if (p_fs_ctx && *p_fs_ctx) {
+		silofs_del_fs_ctx(*p_fs_ctx);
+		*p_fs_ctx = NULL;
 	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static char *cmd_repodir_name(const struct silofs_fs_env *fse)
+static char *cmd_repodir_name(const struct silofs_fs_ctx *fse)
 {
 	char *ret = NULL;
 
@@ -46,7 +46,7 @@ static char *cmd_repodir_name(const struct silofs_fs_env *fse)
 	return ret;
 }
 
-static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
+static void cmd_report_err_and_die(const struct silofs_fs_ctx *fse,
                                    int status, const char *msg)
 {
 	char *repodir_name = cmd_repodir_name(fse);
@@ -102,7 +102,7 @@ static void cmd_report_err_and_die(const struct silofs_fs_env *fse,
 	cmd_pstrfree(&repodir_name);
 }
 
-static void cmd_require_ok(const struct silofs_fs_env *fse,
+static void cmd_require_ok(const struct silofs_fs_ctx *fse,
                            int status, const char *msg)
 {
 	if (status != 0) {
@@ -110,7 +110,7 @@ static void cmd_require_ok(const struct silofs_fs_env *fse,
 	}
 }
 
-void cmd_format_repo(struct silofs_fs_env *fse)
+void cmd_format_repo(struct silofs_fs_ctx *fse)
 {
 	int err;
 
@@ -118,7 +118,7 @@ void cmd_format_repo(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "failed to format repo");
 }
 
-void cmd_open_repo(struct silofs_fs_env *fse)
+void cmd_open_repo(struct silofs_fs_ctx *fse)
 {
 	int err;
 
@@ -126,7 +126,7 @@ void cmd_open_repo(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "failed to open repo");
 }
 
-void cmd_close_repo(struct silofs_fs_env *fse)
+void cmd_close_repo(struct silofs_fs_ctx *fse)
 {
 	int err;
 
@@ -140,7 +140,7 @@ static void cmd_treeid_of(const struct silofs_iconf *iconf,
 	silofs_treeid_by_uuid(out_treeid, &iconf->uuid);
 }
 
-static void cmd_do_require_fs(struct silofs_fs_env *fse,
+static void cmd_do_require_fs(struct silofs_fs_ctx *fse,
                               const struct silofs_treeid *treeid)
 {
 	struct silofs_bootrec brec;
@@ -150,7 +150,7 @@ static void cmd_do_require_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "failed to poke fs");
 }
 
-void cmd_require_fs(struct silofs_fs_env *fse,
+void cmd_require_fs(struct silofs_fs_ctx *fse,
                     const struct silofs_iconf *iconf)
 {
 	struct silofs_treeid treeid;
@@ -159,7 +159,7 @@ void cmd_require_fs(struct silofs_fs_env *fse,
 	cmd_do_require_fs(fse, &treeid);
 }
 
-static void cmd_do_format_fs(struct silofs_fs_env *fse,
+static void cmd_do_format_fs(struct silofs_fs_ctx *fse,
                              struct silofs_treeid *out_treeid)
 {
 	int err;
@@ -168,7 +168,7 @@ static void cmd_do_format_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "failed to format fs");
 }
 
-void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_iconf *iconf)
+void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_iconf *iconf)
 {
 	struct silofs_treeid treeid;
 
@@ -176,7 +176,7 @@ void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_iconf *iconf)
 	silofs_uuid_assign(&iconf->uuid, &treeid.uuid);
 }
 
-void cmd_close_fs(struct silofs_fs_env *fse)
+void cmd_close_fs(struct silofs_fs_ctx *fse)
 {
 	int err;
 
@@ -184,7 +184,7 @@ void cmd_close_fs(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "shutdown error");
 }
 
-static void cmd_do_boot_fs(struct silofs_fs_env *fse,
+static void cmd_do_boot_fs(struct silofs_fs_ctx *fse,
                            const struct silofs_treeid *treeid)
 {
 	int err;
@@ -193,7 +193,7 @@ static void cmd_do_boot_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "failed to boot fs");
 }
 
-void cmd_boot_fs(struct silofs_fs_env *fse,
+void cmd_boot_fs(struct silofs_fs_ctx *fse,
                  const struct silofs_iconf *iconf)
 {
 	struct silofs_treeid treeid;
@@ -202,7 +202,7 @@ void cmd_boot_fs(struct silofs_fs_env *fse,
 	cmd_do_boot_fs(fse, &treeid);
 }
 
-void cmd_open_fs(struct silofs_fs_env *fse)
+void cmd_open_fs(struct silofs_fs_ctx *fse)
 {
 	int err;
 
@@ -210,7 +210,7 @@ void cmd_open_fs(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "failed to open fs");
 }
 
-void cmd_exec_fs(struct silofs_fs_env *fse)
+void cmd_exec_fs(struct silofs_fs_ctx *fse)
 {
 	int err;
 
@@ -218,7 +218,7 @@ void cmd_exec_fs(struct silofs_fs_env *fse)
 	cmd_require_ok(fse, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_fs_env *fse,
+void cmd_fork_fs(struct silofs_fs_ctx *fse,
                  struct silofs_treeid *out_new, struct silofs_treeid *out_alt)
 {
 	int err;
@@ -227,7 +227,7 @@ void cmd_fork_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "failed to fork fs");
 }
 
-static void cmd_do_unref_fs(struct silofs_fs_env *fse,
+static void cmd_do_unref_fs(struct silofs_fs_ctx *fse,
                             const struct silofs_treeid *treeid)
 {
 	int err;
@@ -236,7 +236,7 @@ static void cmd_do_unref_fs(struct silofs_fs_env *fse,
 	cmd_require_ok(fse, err, "rmfs error");
 }
 
-void cmd_unref_fs(struct silofs_fs_env *fse,
+void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_iconf *iconf)
 {
 	struct silofs_treeid treeid;
@@ -245,7 +245,7 @@ void cmd_unref_fs(struct silofs_fs_env *fse,
 	cmd_do_unref_fs(fse, &treeid);
 }
 
-void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb)
+void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb)
 {
 	int err;
 

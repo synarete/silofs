@@ -53,7 +53,7 @@ struct cmd_snap_in_args {
 struct cmd_snap_ctx {
 	struct cmd_snap_in_args  in_args;
 	struct silofs_fs_args    fs_args;
-	struct silofs_fs_env    *fs_env;
+	struct silofs_fs_ctx    *fs_ctx;
 	union silofs_ioc_u      *ioc;
 	struct silofs_treeid      treeid_new;
 	struct silofs_treeid      treeid_alt;
@@ -108,7 +108,7 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
 {
-	cmd_del_env(&ctx->fs_env);
+	cmd_del_fs_ctx(&ctx->fs_ctx);
 }
 
 static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
@@ -268,44 +268,44 @@ static void cmd_snap_load_iconf(struct cmd_snap_ctx *ctx)
 	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_snap_setup_fs_env(struct cmd_snap_ctx *ctx)
+static void cmd_snap_setup_fs_ctx(struct cmd_snap_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_env, &ctx->fs_args);
+	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
 static void cmd_snap_open_repo(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_env);
+	cmd_open_repo(ctx->fs_ctx);
 }
 
 static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_env);
+	cmd_close_repo(ctx->fs_ctx);
 }
 
 static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_env);
+	cmd_open_fs(ctx->fs_ctx);
 }
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->fs_env, &ctx->treeid_new, &ctx->treeid_alt);
+	cmd_fork_fs(ctx->fs_ctx, &ctx->treeid_new, &ctx->treeid_alt);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_env);
+	cmd_close_fs(ctx->fs_ctx);
 }
 
 static void cmd_snap_save_snap_iconf(struct cmd_snap_ctx *ctx)
@@ -372,7 +372,7 @@ static void cmd_snap_execute(struct cmd_snap_ctx *ctx)
 void cmd_execute_snap(void)
 {
 	struct cmd_snap_ctx ctx = {
-		.fs_env = NULL,
+		.fs_ctx = NULL,
 		.ioc = NULL,
 	};
 
@@ -395,7 +395,7 @@ void cmd_execute_snap(void)
 	cmd_snap_load_iconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_snap_setup_fs_env(&ctx);
+	cmd_snap_setup_fs_ctx(&ctx);
 
 	/* Open repository */
 	cmd_snap_open_repo(&ctx);

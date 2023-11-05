@@ -37,7 +37,7 @@ struct cmd_rmfs_ctx {
 	long                      pad;
 	struct cmd_rmfs_in_args   in_args;
 	struct silofs_fs_args     fs_args;
-	struct silofs_fs_env     *fs_env;
+	struct silofs_fs_ctx     *fs_ctx;
 	bool has_lockfile;
 };
 
@@ -157,29 +157,29 @@ static void cmd_rmfs_load_iconf(struct cmd_rmfs_ctx *ctx)
 	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_rmfs_setup_fs_env(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_setup_fs_ctx(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_env, &ctx->fs_args);
+	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_env);
+	cmd_open_repo(ctx->fs_ctx);
 }
 
 static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_env);
+	cmd_close_repo(ctx->fs_ctx);
 }
 
 static void cmd_rmfs_require_brec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_unref_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
 }
 
 static void cmd_rmfs_unlink_iconf(struct cmd_rmfs_ctx *ctx)
@@ -187,9 +187,9 @@ static void cmd_rmfs_unlink_iconf(struct cmd_rmfs_ctx *ctx)
 	cmd_iconf_unlink(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_rmfs_destroy_fs_env(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_destroy_fs_ctx(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_del_env(&ctx->fs_env);
+	cmd_del_fs_ctx(&ctx->fs_ctx);
 }
 
 static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)
@@ -212,7 +212,7 @@ static void cmd_rmfs_release_lockfile(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_rmfs_destroy_fs_env(ctx);
+	cmd_rmfs_destroy_fs_ctx(ctx);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -265,7 +265,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_load_iconf(&ctx);
 
 	/* Setup execution context */
-	cmd_rmfs_setup_fs_env(&ctx);
+	cmd_rmfs_setup_fs_ctx(&ctx);
 
 	/* Acquire lock */
 	cmd_rmfs_acquire_lockfile(&ctx);

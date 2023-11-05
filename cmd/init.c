@@ -32,7 +32,7 @@ struct cmd_init_in_args {
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_env   *fs_env;
+	struct silofs_fs_ctx   *fs_ctx;
 };
 
 static struct cmd_init_ctx *cmd_init_ctx;
@@ -66,7 +66,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
-	cmd_del_env(&ctx->fs_env);
+	cmd_del_fs_ctx(&ctx->fs_ctx);
 	cmd_iconf_reset(&ctx->fs_args.iconf);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -114,26 +114,26 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	ctx->fs_args.name = name;
 }
 
-static void cmd_init_setup_fs_env(struct cmd_init_ctx *ctx)
+static void cmd_init_setup_fs_ctx(struct cmd_init_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_env, &ctx->fs_args);
+	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)
 {
-	cmd_format_repo(ctx->fs_env);
+	cmd_format_repo(ctx->fs_ctx);
 }
 
 static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_env);
+	cmd_close_repo(ctx->fs_ctx);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_execute_init(void)
 {
-	struct cmd_init_ctx ctx = { .fs_env = NULL };
+	struct cmd_init_ctx ctx = { .fs_ctx = NULL };
 
 	/* Do all cleanups upon exits */
 	cmd_init_start(&ctx);
@@ -148,7 +148,7 @@ void cmd_execute_init(void)
 	cmd_init_setup_fs_args(&ctx);
 
 	/* Prepare environment */
-	cmd_init_setup_fs_env(&ctx);
+	cmd_init_setup_fs_ctx(&ctx);
 
 	/* Format repository layout */
 	cmd_init_format_repo(&ctx);

@@ -35,7 +35,7 @@ struct cmd_bmaps_in_args {
 struct cmd_bmaps_ctx {
 	struct cmd_bmaps_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_env   *fs_env;
+	struct silofs_fs_ctx   *fs_ctx;
 	bool has_lockfile;
 };
 
@@ -88,14 +88,14 @@ static void cmd_bmaps_release_lockfile(struct cmd_bmaps_ctx *ctx)
 	}
 }
 
-static void cmd_bmaps_destroy_fs_env(struct cmd_bmaps_ctx *ctx)
+static void cmd_bmaps_destroy_fs_ctx(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_del_env(&ctx->fs_env);
+	cmd_del_fs_ctx(&ctx->fs_ctx);
 }
 
 static void cmd_bmaps_finalize(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_del_env(&ctx->fs_env);
+	cmd_del_fs_ctx(&ctx->fs_ctx);
 	cmd_iconf_reset(&ctx->fs_args.iconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -154,29 +154,29 @@ static void cmd_bmaps_load_iconf(struct cmd_bmaps_ctx *ctx)
 	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_bmaps_setup_fs_env(struct cmd_bmaps_ctx *ctx)
+static void cmd_bmaps_setup_fs_ctx(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_env, &ctx->fs_args);
+	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
 static void cmd_bmaps_open_repo(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_env);
+	cmd_open_repo(ctx->fs_ctx);
 }
 
 static void cmd_bmaps_require_brec(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
 }
 
 static void cmd_bmaps_boot_fs(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_env, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
 }
 
 static void cmd_bmaps_open_fs(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_env);
+	cmd_open_fs(ctx->fs_ctx);
 }
 
 static void cmd_bmaps_laddr_cb(const struct silofs_laddr *laddr, loff_t voff)
@@ -192,12 +192,12 @@ static void cmd_bmaps_laddr_cb(const struct silofs_laddr *laddr, loff_t voff)
 
 static void cmd_bmaps_execute(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fs_env, cmd_bmaps_laddr_cb);
+	cmd_inspect_fs(ctx->fs_ctx, cmd_bmaps_laddr_cb);
 }
 
 static void cmd_bmaps_close_repo(struct cmd_bmaps_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_env);
+	cmd_close_repo(ctx->fs_ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -205,7 +205,7 @@ static void cmd_bmaps_close_repo(struct cmd_bmaps_ctx *ctx)
 void cmd_execute_bmaps(void)
 {
 	struct cmd_bmaps_ctx ctx = {
-		.fs_env = NULL,
+		.fs_ctx = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -227,7 +227,7 @@ void cmd_execute_bmaps(void)
 	cmd_bmaps_load_iconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_bmaps_setup_fs_env(&ctx);
+	cmd_bmaps_setup_fs_ctx(&ctx);
 
 	/* Acquire lock */
 	cmd_bmaps_acquire_lockfile(&ctx);
@@ -254,7 +254,7 @@ void cmd_execute_bmaps(void)
 	cmd_bmaps_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_bmaps_destroy_fs_env(&ctx);
+	cmd_bmaps_destroy_fs_ctx(&ctx);
 
 	/* Post execution cleanups */
 	cmd_bmaps_finalize(&ctx);

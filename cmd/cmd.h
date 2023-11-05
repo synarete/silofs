@@ -221,33 +221,33 @@ void cmd_lockfile_release(const char *repodir, const char *name);
 /* complex fs operations */
 void cmd_init_fs_args(struct silofs_fs_args *fs_args);
 
-void cmd_format_repo(struct silofs_fs_env *fse);
+void cmd_format_repo(struct silofs_fs_ctx *fse);
 
-void cmd_open_repo(struct silofs_fs_env *fse);
+void cmd_open_repo(struct silofs_fs_ctx *fse);
 
-void cmd_close_repo(struct silofs_fs_env *fse);
+void cmd_close_repo(struct silofs_fs_ctx *fse);
 
-void cmd_format_fs(struct silofs_fs_env *fse, struct silofs_iconf *iconf);
+void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_iconf *iconf);
 
-void cmd_close_fs(struct silofs_fs_env *fse);
+void cmd_close_fs(struct silofs_fs_ctx *fse);
 
-void cmd_require_fs(struct silofs_fs_env *fse,
+void cmd_require_fs(struct silofs_fs_ctx *fse,
                     const struct silofs_iconf *iconf);
 
-void cmd_boot_fs(struct silofs_fs_env *fse,
+void cmd_boot_fs(struct silofs_fs_ctx *fse,
                  const struct silofs_iconf *iconf);
 
-void cmd_open_fs(struct silofs_fs_env *fse);
+void cmd_open_fs(struct silofs_fs_ctx *fse);
 
-void cmd_exec_fs(struct silofs_fs_env *fse);
+void cmd_exec_fs(struct silofs_fs_ctx *fse);
 
-void cmd_fork_fs(struct silofs_fs_env *fse,
+void cmd_fork_fs(struct silofs_fs_ctx *fse,
                  struct silofs_treeid *out_new, struct silofs_treeid *out_alt);
 
-void cmd_unref_fs(struct silofs_fs_env *fse,
+void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_iconf *iconf);
 
-void cmd_inspect_fs(struct silofs_fs_env *fse, silofs_visit_laddr_fn cb);
+void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb);
 
 
 /* mount-info */
@@ -273,10 +273,10 @@ void cmd_reset_ioc(union silofs_ioc_u *ioc);
 void cmd_trace_debug_info(void);
 
 /* file-system environment */
-void cmd_new_env(struct silofs_fs_env **pfse,
-                 const struct silofs_fs_args *args);
+void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,
+                    const struct silofs_fs_args *fs_args);
 
-void cmd_del_env(struct silofs_fs_env **pfse);
+void cmd_del_fs_ctx(struct silofs_fs_ctx **p_fs_ctx);
 
 /* signals handling */
 void cmd_register_sigactions(void (*sig_hook_fn)(int));

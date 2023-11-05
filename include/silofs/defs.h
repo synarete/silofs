@@ -364,7 +364,7 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE3   = 5,
 	SILOFS_HEIGHT_SPNODE4   = 6,
 	SILOFS_HEIGHT_SUPER     = 7,
-	SILOFS_HEIGHT_UBER      = 8,
+	SILOFS_HEIGHT_BOOT      = 8,
 	SILOFS_HEIGHT_LAST, /* keep last */
 };
 

@@ -21,7 +21,7 @@
 
 struct silofs_unref_ctx {
 	struct silofs_visitor   vis;
-	struct silofs_uber     *uber;
+	struct silofs_fsenv     *fsenv;
 	struct silofs_uaddr     sb_uaddr;
 };
 
@@ -43,7 +43,7 @@ static int sli_resolve_lext_of(const struct silofs_spleaf_info *sli,
 
 static struct silofs_repo *unrc_repo(const struct silofs_unref_ctx *unr_ctx)
 {
-	return unr_ctx->uber->ub.repo;
+	return unr_ctx->fsenv->fse.repo;
 }
 
 static bool unrc_is_lextid_of(const struct silofs_unref_ctx *unr_ctx,
@@ -178,7 +178,7 @@ static int unrc_post_unrefs_at(struct silofs_unref_ctx *unr_ctx,
 	int err;
 
 	switch (witr->height) {
-	case SILOFS_HEIGHT_UBER:
+	case SILOFS_HEIGHT_BOOT:
 		err = 0;
 		break;
 	case SILOFS_HEIGHT_SUPER:
@@ -235,14 +235,14 @@ static void unrc_init(struct silofs_unref_ctx *unr_ctx,
 	silofs_memzero(unr_ctx, sizeof(*unr_ctx));
 	unr_ctx->vis.exec_hook = unrc_visit_exec_hook;
 	unr_ctx->vis.post_hook = unrc_visit_post_hook;
-	unr_ctx->uber = sbi_uber(sbi);
+	unr_ctx->fsenv = sbi_fsenv(sbi);
 	uaddr_assign(&unr_ctx->sb_uaddr, uaddr);
 }
 
 static void unrc_fini(struct silofs_unref_ctx *unr_ctx)
 {
 	silofs_memffff(unr_ctx, sizeof(*unr_ctx));
-	unr_ctx->uber = NULL;
+	unr_ctx->fsenv = NULL;
 }
 
 static int unrc_remove_super(const struct silofs_unref_ctx *unr_ctx)

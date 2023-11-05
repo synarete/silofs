@@ -22,7 +22,7 @@
 
 struct silofs_stage_ctx {
 	struct silofs_task             *task;
-	struct silofs_uber             *uber;
+	struct silofs_fsenv             *fsenv;
 	struct silofs_sb_info          *sbi;
 	struct silofs_spnode_info      *sni4;
 	struct silofs_spnode_info      *sni3;
@@ -87,29 +87,30 @@ static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool ismutable(const struct silofs_uber *uber,
+static bool ismutable(const struct silofs_fsenv *fsenv,
                       const struct silofs_laddr *laddr)
 {
 	bool ret = false;
 
 	if (!laddr_isnull(laddr)) {
-		ret = silofs_sbi_ismutable_laddr(uber->ub_sbi, laddr);
+		ret = silofs_sbi_ismutable_laddr(fsenv->fse_sbi, laddr);
 	}
 	return ret;
 }
 
 static bool vi_has_mutable_laddr(const struct silofs_vnode_info *vi)
 {
-	return ismutable(vi_uber(vi), &vi->v_llink.laddr);
+	return ismutable(vi_fsenv(vi), &vi->v_llink.laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void vi_bind_to(struct silofs_vnode_info *vi,
-                       struct silofs_uber *uber, struct silofs_vbk_info *vbki)
+                       struct silofs_fsenv *fsenv,
+                       struct silofs_vbk_info *vbki)
 {
 	silofs_vi_attach_to(vi, vbki);
-	vi->v.uber = uber;
+	vi->v.fsenv = fsenv;
 }
 
 static void vi_update_llink(struct silofs_vnode_info *vi,
@@ -162,7 +163,7 @@ static bool sni_has_main_lext(const struct silofs_spnode_info *sni)
 
 static struct silofs_cache *stgc_cache(const struct silofs_stage_ctx *stg_ctx)
 {
-	return stg_ctx->uber->ub.cache;
+	return stg_ctx->fsenv->fse.cache;
 }
 
 static void stgc_log_cache_stat(const struct silofs_stage_ctx *stg_ctx)
@@ -294,7 +295,7 @@ static int stgc_do_stage_lext(const struct silofs_stage_ctx *stg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_stage_lext_at(stg_ctx->uber, lextid);
+		err = silofs_stage_lext_at(stg_ctx->fsenv, lextid);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -322,7 +323,7 @@ static int stgc_spawn_bind_vi(const struct silofs_stage_ctx *stg_ctx,
 	silofs_vbki_incref(vbki);
 	err = stgc_do_spawn_vi(stg_ctx, stg_ctx->vaddr, &vi);
 	if (!err) {
-		vi_bind_to(vi, stg_ctx->uber, vbki);
+		vi_bind_to(vi, stg_ctx->fsenv, vbki);
 		vi_update_llink(vi, llink);
 	}
 	silofs_vbki_decref(vbki);
@@ -337,7 +338,7 @@ static int stgc_restore_view_of(const struct silofs_stage_ctx *stg_ctx,
 	bool raw;
 
 	raw = (stg_ctx->stg_mode & SILOFS_STG_RAW) > 0;
-	err = silofs_restore_vview(stg_ctx->uber, vi, raw);
+	err = silofs_restore_vview(stg_ctx->fsenv, vi, raw);
 	if (!err && !raw) {
 		err = silofs_vi_verify_view(vi);
 	}
@@ -392,7 +393,7 @@ static enum silofs_stype sni_child_stype(const struct silofs_spnode_info *sni)
 	const enum silofs_height height = silofs_sni_height(sni);
 
 	switch (height) {
-	case SILOFS_HEIGHT_UBER:
+	case SILOFS_HEIGHT_BOOT:
 		stype = SILOFS_STYPE_SUPER;
 		break;
 	case SILOFS_HEIGHT_SUPER:
@@ -430,8 +431,8 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 {
 	memset(stg_ctx, 0, sizeof(*stg_ctx));
 	stg_ctx->task = task;
-	stg_ctx->uber = task->t_uber;
-	stg_ctx->sbi = task->t_uber->ub_sbi;
+	stg_ctx->fsenv = task->t_fsenv;
+	stg_ctx->sbi = task->t_fsenv->fse_sbi;
 	stg_ctx->vaddr = vaddr;
 	stg_ctx->stg_mode = stg_mode;
 	stg_ctx->vspace = vaddr->stype;
@@ -444,7 +445,7 @@ static void stgc_setup(struct silofs_stage_ctx *stg_ctx,
 static int stgc_do_spawn_lext(const struct silofs_stage_ctx *stg_ctx,
                               const struct silofs_lextid *lextid)
 {
-	return silofs_spawn_lext_at(stg_ctx->uber, lextid);
+	return silofs_spawn_lext_at(stg_ctx->fsenv, lextid);
 }
 
 static int stgc_spawn_lext(const struct silofs_stage_ctx *stg_ctx,
@@ -729,7 +730,7 @@ static int stgc_do_stage_spnode_at(const struct silofs_stage_ctx *stg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_stage_spnode_at(stg_ctx->uber, ulink, out_sni);
+		err = silofs_stage_spnode_at(stg_ctx->fsenv, ulink, out_sni);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -752,7 +753,7 @@ static int stgc_do_spawn_spnode_at(const struct silofs_stage_ctx *stg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_spawn_spnode_at(stg_ctx->uber, ulink, out_sni);
+		err = silofs_spawn_spnode_at(stg_ctx->fsenv, ulink, out_sni);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -775,7 +776,7 @@ static int stgc_do_stage_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_stage_spleaf_at(stg_ctx->uber, ulink, out_sli);
+		err = silofs_stage_spleaf_at(stg_ctx->fsenv, ulink, out_sli);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -798,7 +799,7 @@ static int stgc_do_spawn_spleaf_at(const struct silofs_stage_ctx *stg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < stg_ctx->retry; ++i) {
-		err = silofs_spawn_spleaf_at(stg_ctx->uber, ulink, out_sli);
+		err = silofs_spawn_spleaf_at(stg_ctx->fsenv, ulink, out_sli);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -2026,7 +2027,8 @@ static int stgc_load_bk_of(const struct silofs_stage_ctx *stg_ctx,
 	void *buf = vbki->vbk.lbk;
 
 	bkaddr_by_laddr(&bkaddr, laddr);
-	return silofs_repo_read_at(stg_ctx->uber->ub.repo, &bkaddr.laddr, buf);
+	return silofs_repo_read_at(stg_ctx->fsenv->fse.repo,
+	                           &bkaddr.laddr, buf);
 }
 
 static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
@@ -2052,7 +2054,7 @@ static int stgc_spawn_load_vbk(const struct silofs_stage_ctx *stg_ctx,
 static int stgc_require_laddr(const struct silofs_stage_ctx *stg_ctx,
                               const struct silofs_laddr *laddr)
 {
-	return silofs_repo_require_laddr(stg_ctx->uber->ub.repo, laddr);
+	return silofs_repo_require_laddr(stg_ctx->fsenv->fse.repo, laddr);
 }
 
 static int stgc_require_bkaddr(const struct silofs_stage_ctx *stg_ctx,

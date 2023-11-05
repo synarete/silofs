@@ -35,7 +35,7 @@ struct silofs_submit_ctx {
 	struct silofs_listq             txq[2];
 	struct silofs_task             *task;
 	struct silofs_inode_info       *ii;
-	struct silofs_uber             *uber;
+	struct silofs_fsenv             *fsenv;
 	struct silofs_repo             *repo;
 	struct silofs_alloc            *alloc;
 	struct silofs_cache            *cache;
@@ -95,10 +95,11 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 static int smc_require_mutable_llink(const struct silofs_submit_ctx *sm_ctx,
                                      const struct silofs_llink *llink)
 {
+	const struct silofs_sb_info *sbi = sm_ctx->fsenv->fse_sbi;
 	int err = 0;
 	bool mut;
 
-	mut = silofs_sbi_ismutable_laddr(sm_ctx->uber->ub_sbi, &llink->laddr);
+	mut = silofs_sbi_ismutable_laddr(sbi, &llink->laddr);
 	err = mut ? 0 : -SILOFS_EROFS;
 	silofs_assert_ok(err);
 	return err;
@@ -176,7 +177,7 @@ static int smc_make_sqe(struct silofs_submit_ctx *sm_ctx,
 	if (err) {
 		return err;
 	}
-	(*out_sqe)->uber = sm_ctx->uber;
+	(*out_sqe)->fsenv = sm_ctx->fsenv;
 	return 0;
 }
 
@@ -622,7 +623,7 @@ static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,
 static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
                         struct silofs_submitq_ent *sqe)
 {
-	return silofs_stage_lext_at(sm_ctx->uber, &sqe->laddr.lextid);
+	return silofs_stage_lext_at(sm_ctx->fsenv, &sqe->laddr.lextid);
 }
 
 static void smc_submit_sqe(const struct silofs_submit_ctx *sm_ctx,
@@ -862,20 +863,20 @@ static int smc_setup(struct silofs_submit_ctx *sm_ctx,
                      struct silofs_task *task,
                      struct silofs_inode_info *ii, int flags)
 {
-	struct silofs_uber *uber = task->t_uber;
-	struct silofs_repo *repo = uber->ub.repo;
+	struct silofs_fsenv *fsenv = task->t_fsenv;
+	struct silofs_repo *repo = fsenv->fse.repo;
 
 	listq_init(&sm_ctx->txq[0]);
 	listq_init(&sm_ctx->txq[1]);
 	sm_ctx->task = task;
 	sm_ctx->ii = ii;
-	sm_ctx->uber = uber;
+	sm_ctx->fsenv = fsenv;
 	sm_ctx->tx_count = 0;
 	sm_ctx->flags = flags;
 	sm_ctx->repo = repo;
-	sm_ctx->cache = uber->ub.cache;
-	sm_ctx->dirtyqs = &uber->ub.cache->c_dqs;
-	sm_ctx->submitq = uber->ub.submitq;
+	sm_ctx->cache = fsenv->fse.cache;
+	sm_ctx->dirtyqs = &fsenv->fse.cache->c_dqs;
+	sm_ctx->submitq = fsenv->fse.submitq;
 	sm_ctx->alloc = sm_ctx->cache->c_alloc;
 	return 0;
 }

@@ -49,7 +49,7 @@ void ut_setup_task(struct ut_env *ute, struct silofs_task *task)
 	const struct silofs_fs_args *args = &ute->args->fs_args;
 	int err;
 
-	err = silofs_task_init(task, ute->fs_ctx->uber);
+	err = silofs_task_init(task, ute->fs_ctx->fsenv);
 	ut_expect_ok(err);
 	silofs_task_set_creds(task, args->uid, args->gid, 0002);
 	silofs_task_set_ts(task, true);

@@ -23,7 +23,7 @@
 /* forward declarations */
 struct fuse_forget_one;
 struct silofs_bootrec;
-struct silofs_uber;
+struct silofs_fsenv;
 struct silofs_task;
 struct silofs_ioc_query;
 struct silofs_ioc_iterfs;

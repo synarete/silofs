@@ -40,7 +40,7 @@ struct silofs_fs_core {
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
 	struct silofs_idsmap    idsm;
-	struct silofs_uber      uber;
+	struct silofs_fsenv      fsenv;
 };
 
 union silofs_fs_core_u {
@@ -344,9 +344,9 @@ static void fs_ctx_fini_idsmap(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
-static int fs_ctx_init_uber(struct silofs_fs_ctx *fs_ctx)
+static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_uber_base ub_base = {
+	const struct silofs_fsenv_base ub_base = {
 		.fs_args = &fs_ctx->fs_args,
 		.bootpath = &fs_ctx->bootpath,
 		.boot_ivkey = &fs_ctx->ivkey_boot,
@@ -357,22 +357,22 @@ static int fs_ctx_init_uber(struct silofs_fs_ctx *fs_ctx)
 		.submitq = fs_ctx->submitq,
 		.idsmap = fs_ctx->idsmap,
 	};
-	struct silofs_uber *uber;
+	struct silofs_fsenv *fsenv;
 	int err;
 
-	uber = &fs_ctx_obj_of(fs_ctx)->fs_core.c.uber;
-	err = silofs_uber_init(uber, &ub_base);
+	fsenv = &fs_ctx_obj_of(fs_ctx)->fs_core.c.fsenv;
+	err = silofs_fsenv_init(fsenv, &ub_base);
 	if (!err) {
-		fs_ctx->uber = uber;
+		fs_ctx->fsenv = fsenv;
 	}
 	return err;
 }
 
-static void fs_ctx_fini_uber(struct silofs_fs_ctx *fs_ctx)
+static void fs_ctx_fini_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
-	if (fs_ctx->uber != NULL) {
-		silofs_uber_fini(fs_ctx->uber);
-		fs_ctx->uber = NULL;
+	if (fs_ctx->fsenv != NULL) {
+		silofs_fsenv_fini(fs_ctx->fsenv);
+		fs_ctx->fsenv = NULL;
 	}
 }
 
@@ -517,7 +517,7 @@ static int fs_ctx_init_subs(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = fs_ctx_init_uber(fs_ctx);
+	err = fs_ctx_init_fsenv(fs_ctx);
 	if (err) {
 		return err;
 	}
@@ -554,13 +554,13 @@ static void fs_ctx_fini_commons(struct silofs_fs_ctx *fs_ctx)
 {
 	silofs_ivkey_fini(&fs_ctx->ivkey_boot);
 	silofs_ivkey_fini(&fs_ctx->ivkey_main);
-	fs_ctx->uber = NULL;
+	fs_ctx->fsenv = NULL;
 }
 
 static void fs_ctx_fini(struct silofs_fs_ctx *fs_ctx)
 {
 	fs_ctx_fini_fuseq(fs_ctx);
-	fs_ctx_fini_uber(fs_ctx);
+	fs_ctx_fini_fsenv(fs_ctx);
 	fs_ctx_fini_idsmap(fs_ctx);
 	fs_ctx_fini_submitq(fs_ctx);
 	fs_ctx_fini_repo(fs_ctx);
@@ -572,12 +572,12 @@ static void fs_ctx_fini(struct silofs_fs_ctx *fs_ctx)
 
 static void fs_ctx_lock(struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_mutex_lock(&fs_ctx->uber->ub_fs_lock);
+	silofs_mutex_lock(&fs_ctx->fsenv->fse_lock);
 }
 
 static void fs_ctx_unlock(struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_mutex_unlock(&fs_ctx->uber->ub_fs_lock);
+	silofs_mutex_unlock(&fs_ctx->fsenv->fse_lock);
 }
 
 static int check_fs_args(const struct silofs_fs_args *fs_args)
@@ -663,7 +663,7 @@ static int make_task(const struct silofs_fs_ctx *fs_ctx,
 	const struct silofs_fs_args *fs_args = &fs_ctx->fs_args;
 	int err;
 
-	err = silofs_task_init(task, fs_ctx->uber);
+	err = silofs_task_init(task, fs_ctx->fsenv);
 	if (err) {
 		return err;
 	}
@@ -802,19 +802,19 @@ static int fsync_lexts(const struct silofs_fs_ctx *fs_ctx)
 	return err;
 }
 
-static int shutdown_uber(struct silofs_fs_ctx *fs_ctx)
+static int shutdown_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_uber *uber = fs_ctx->uber;
+	struct silofs_fsenv *fsenv = fs_ctx->fsenv;
 	int err;
 
-	if (uber == NULL) {
+	if (fsenv == NULL) {
 		return 0;
 	}
-	err = silofs_sbi_shut(uber->ub_sbi);
+	err = silofs_sbi_shut(fsenv->fse_sbi);
 	if (err) {
 		return err;
 	}
-	silofs_uber_shut(uber);
+	silofs_fsenv_shut(fsenv);
 	return 0;
 }
 
@@ -841,7 +841,7 @@ int silofs_exec_fs(struct silofs_fs_ctx *fs_ctx)
 	if (!fs_ctx->fs_args.withfuse || (fs_ctx->fuseq == NULL)) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_fuseq_mount(fq, fs_ctx->uber, fs_ctx->fs_args.mntdir);
+	err = silofs_fuseq_mount(fq, fs_ctx->fsenv, fs_ctx->fs_args.mntdir);
 	if (!err) {
 		err = silofs_fuseq_exec(fq);
 	}
@@ -937,7 +937,7 @@ static int derive_main_ivkey(struct silofs_fs_ctx *fs_ctx,
 
 static int check_superblock(const struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_sb_info *sbi = fs_ctx->uber->ub_sbi;
+	const struct silofs_sb_info *sbi = fs_ctx->fsenv->fse_sbi;
 	const struct silofs_super_block *sb = sbi->sb;
 	int fossil;
 	int err;
@@ -957,7 +957,7 @@ static int reload_super(const struct silofs_fs_ctx *fs_ctx)
 {
 	int err;
 
-	err = silofs_uber_reload_super(fs_ctx->uber);
+	err = silofs_fsenv_reload_super(fs_ctx->fsenv);
 	if (err) {
 		log_err("failed to reload super: err=%d", err);
 		return err;
@@ -1303,7 +1303,7 @@ static int format_umeta(const struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_format_super(fs_ctx->uber, capacity);
+	err = silofs_fsenv_format_super(fs_ctx->fsenv, capacity);
 	if (err) {
 		return err;
 	}
@@ -1395,7 +1395,7 @@ static int save_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
                            const struct silofs_bootrec *brec)
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
-	const struct silofs_crypto *crypto = &fs_ctx->uber->ub_crypto;
+	const struct silofs_crypto *crypto = &fs_ctx->fsenv->fse_crypto;
 	const struct silofs_ivkey *ivkey = &fs_ctx->ivkey_boot;
 	int err;
 
@@ -1416,7 +1416,7 @@ static int load_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
                            struct silofs_bootrec *out_brec)
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
-	const struct silofs_crypto *crypto = &fs_ctx->uber->ub_crypto;
+	const struct silofs_crypto *crypto = &fs_ctx->fsenv->fse_crypto;
 	const struct silofs_ivkey *ivkey = &fs_ctx->ivkey_boot;
 	int err;
 
@@ -1476,7 +1476,7 @@ static int save_bootrec(const struct silofs_fs_ctx *fs_ctx,
 static int update_save_bootrec(const struct silofs_fs_ctx *fs_ctx,
                                struct silofs_bootrec *brec)
 {
-	const struct silofs_sb_info *sbi = fs_ctx->uber->ub_sbi;
+	const struct silofs_sb_info *sbi = fs_ctx->fsenv->fse_sbi;
 
 	silofs_bootrec_set_sb_ulink(brec, sbi_ulink(sbi));
 	return save_bootrec(fs_ctx, brec);
@@ -1535,8 +1535,8 @@ int silofs_format_fs(struct silofs_fs_ctx *fs_ctx,
 static int fse_reload_root_sb_lext(struct silofs_fs_ctx *fs_ctx,
                                    const struct silofs_bootrec *brec)
 {
-	silofs_uber_bind_child(fs_ctx->uber, &brec->sb_ulink);
-	return silofs_uber_reload_sb_lext(fs_ctx->uber);
+	silofs_fsenv_bind_child(fs_ctx->fsenv, &brec->sb_ulink);
+	return silofs_fsenv_reload_sb_lext(fs_ctx->fsenv);
 }
 
 static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
@@ -1618,7 +1618,7 @@ static int do_close_fs(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = shutdown_uber(fs_ctx);
+	err = shutdown_fsenv(fs_ctx);
 	if (err) {
 		return err;
 	}

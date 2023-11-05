@@ -128,7 +128,7 @@ static int sqe_setup_encrypted_iovs(struct silofs_submitq_ent *sqe,
 			return err;
 		}
 		enc = sqe->iov[i].iov_base;
-		err = silofs_encrypt_view(sqe->uber, &llink->laddr,
+		err = silofs_encrypt_view(sqe->fsenv, &llink->laddr,
 		                          &llink->riv, ref->view, enc);
 		if (err) {
 			return err;
@@ -151,7 +151,7 @@ int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
 
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_repo_writev_at(sqe->uber->ub.repo,
+	return silofs_repo_writev_at(sqe->fsenv->fse.repo,
 	                             &sqe->laddr, sqe->iov, sqe->cnt);
 }
 
@@ -182,7 +182,7 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	list_head_init(&sqe->qlh);
 	laddr_reset(&sqe->laddr);
 	sqe->alloc = alloc;
-	sqe->uber = NULL;
+	sqe->fsenv = NULL;
 	sqe->uniq_id = uniq_id;
 	sqe->cnt = 0;
 	sqe->hold_refs = 0;
@@ -416,22 +416,22 @@ int silofs_task_submit(const struct silofs_task *task, bool all)
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 {
-	return task->t_uber->ub_sbi;
+	return task->t_fsenv->fse_sbi;
 }
 
 struct silofs_cache *silofs_task_cache(const struct silofs_task *task)
 {
-	return task->t_uber->ub.cache;
+	return task->t_fsenv->fse.cache;
 }
 
 struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
 {
-	return task->t_uber->ub.repo;
+	return task->t_fsenv->fse.repo;
 }
 
 const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 {
-	return task->t_uber->ub.idsmap;
+	return task->t_fsenv->fse.idsmap;
 }
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
@@ -440,13 +440,13 @@ const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
 }
 
 
-int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
+int silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
 {
 	memset(task, 0, sizeof(*task));
 	cred_init(&task->t_oper.op_creds.fs_cred);
 	cred_init(&task->t_oper.op_creds.host_cred);
-	task->t_uber = uber;
-	task->t_submitq = uber->ub.submitq;
+	task->t_fsenv = fsenv;
+	task->t_submitq = fsenv->fse.submitq;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
 	return 0;
@@ -454,7 +454,7 @@ int silofs_task_init(struct silofs_task *task, struct silofs_uber *uber)
 
 void silofs_task_fini(struct silofs_task *task)
 {
-	task->t_uber = NULL;
+	task->t_fsenv = NULL;
 	task->t_submitq = NULL;
 }
 

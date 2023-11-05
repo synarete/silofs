@@ -41,7 +41,7 @@
 
 struct silofs_file_ctx {
 	struct silofs_task             *task;
-	struct silofs_uber             *uber;
+	struct silofs_fsenv             *fsenv;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *ii;
 	struct silofs_rwiter_ctx       *rwi_ctx;
@@ -364,9 +364,9 @@ static size_t fli_len_within(const struct silofs_fileaf_info *fli,
 
 static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
-	const struct silofs_uber *uber = vi_uber(&fli->fl_vi);
+	const struct silofs_fsenv *fsenv = vi_fsenv(&fli->fl_vi);
 
-	return (uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
+	return (fsenv->fse_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
 }
 
 static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
@@ -826,7 +826,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_lblock *nil_bk = f_ctx->uber->ub.cache->c_nil_lbk;
+	struct silofs_lblock *nil_bk = f_ctx->fsenv->fse.cache->c_nil_lbk;
 
 	return nil_bk->u.bk;
 }
@@ -836,9 +836,9 @@ filc_iovec_by_alloc(const struct silofs_file_ctx *f_ctx,
                     void *bk_start, loff_t off_in_bk, size_t len,
                     struct silofs_iovec *out_iov)
 {
-	void *base = base_of(bk_start, off_in_bk);
-
-	return silofs_allocresolve(f_ctx->uber->ub.alloc, base, len, out_iov);
+	return silofs_allocresolve(f_ctx->fsenv->fse.alloc,
+	                           base_of(bk_start, off_in_bk),
+	                           len, out_iov);
 }
 
 static int
@@ -2066,7 +2066,7 @@ int silofs_do_read_iter(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_READ,
@@ -2097,7 +2097,7 @@ int silofs_do_read(struct silofs_task *task,
 	};
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_READ,
@@ -2829,7 +2829,7 @@ int silofs_do_write_iter(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_WRITE,
@@ -2861,7 +2861,7 @@ int silofs_do_write(struct silofs_task *task,
 	};
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_WRITE,
@@ -3133,7 +3133,7 @@ int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.stg_mode = SILOFS_STG_COW,
@@ -3410,7 +3410,7 @@ int silofs_do_truncate(struct silofs_task *task,
 	const size_t len = (off < isp) ? off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = len,
@@ -3525,7 +3525,7 @@ int silofs_do_lseek(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = 0,
@@ -3749,7 +3749,7 @@ int silofs_do_fallocate(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = (size_t)len,
@@ -3940,7 +3940,7 @@ int silofs_do_fiemap(struct silofs_task *task,
 	const size_t len = (size_t)fm->fm_length;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = len,
@@ -4506,7 +4506,7 @@ filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, loff_t *out_off)
 	};
 	struct silofs_file_ctx f_ctx_alt = {
 		.task = f_ctx->task,
-		.uber = f_ctx->uber,
+		.fsenv = f_ctx->fsenv,
 		.sbi = f_ctx->sbi,
 		.ii = f_ctx->ii,
 		.len = 0,
@@ -4608,7 +4608,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx_src = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii_in,
 		.len = len,
@@ -4622,7 +4622,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 	};
 	struct silofs_file_ctx f_ctx_dst = {
 		.task = task,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = task_sbi(task),
 		.ii = ii_out,
 		.len = len,

@@ -48,7 +48,7 @@
 #include <silofs/fs/spawn.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/claim.h>
-#include <silofs/fs/uber.h>
+#include <silofs/fs/fsenv.h>
 #include <silofs/fs/flush.h>
 #include <silofs/fs/exec.h>
 #include <silofs/fs/mntsvc.h>

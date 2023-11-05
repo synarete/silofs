@@ -26,7 +26,7 @@
 struct silofs_walk_ctx {
 	struct silofs_task         *task;
 	struct silofs_visitor      *vis;
-	struct silofs_uber         *uber;
+	struct silofs_fsenv         *fsenv;
 	struct silofs_sb_info      *sbi;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;
@@ -194,14 +194,14 @@ static int wac_stage_spnode_at(const struct silofs_walk_ctx *wa_ctx,
                                const struct silofs_ulink *ulink,
                                struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode_at(wa_ctx->uber, ulink, out_sni);
+	return silofs_stage_spnode_at(wa_ctx->fsenv, ulink, out_sni);
 }
 
 static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
                                const struct silofs_ulink *ulink,
                                struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_at(wa_ctx->uber, ulink, out_sli);
+	return silofs_stage_spleaf_at(wa_ctx->fsenv, ulink, out_sli);
 }
 
 static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
@@ -697,7 +697,7 @@ int silofs_walk_space_tree(struct silofs_task *task,
 	struct silofs_walk_ctx wa_ctx = {
 		.task = task,
 		.vis = vis,
-		.uber = task->t_uber,
+		.fsenv = task->t_fsenv,
 		.sbi = sbi,
 		.height = SILOFS_HEIGHT_SUPER,
 	};

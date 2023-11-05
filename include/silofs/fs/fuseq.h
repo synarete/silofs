@@ -65,7 +65,7 @@ struct silofs_fuseq {
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_mutex             fq_ctl_lock;
 	struct silofs_rwlock            fq_cmd_lock;
-	struct silofs_uber             *fq_uber;
+	struct silofs_fsenv             *fq_fsenv;
 	struct silofs_alloc            *fq_alloc;
 	size_t                          fq_nopers;
 	size_t                          fq_nopers_done;
@@ -88,7 +88,7 @@ int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 void silofs_fuseq_fini(struct silofs_fuseq *fq);
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
-                       struct silofs_uber *uber, const char *path);
+                       struct silofs_fsenv *fsenv, const char *path);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 

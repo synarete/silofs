@@ -66,7 +66,7 @@ enum silofs_flags {
 	SILOFS_F_TIMEOUT_IDLE   = SILOFS_F_TIMEOUT | SILOFS_F_IDLE,
 };
 
-/* uber-block control flags */
+/* fsenv-block control flags */
 enum silofs_ubctl_flags {
 	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(0),
 	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(1),

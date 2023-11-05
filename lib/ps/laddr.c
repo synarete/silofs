@@ -193,7 +193,7 @@ static size_t height_to_lext_size(enum silofs_height height)
 	case SILOFS_HEIGHT_SUPER:
 		elemsz = SILOFS_SB_SIZE;
 		break;
-	case SILOFS_HEIGHT_UBER:
+	case SILOFS_HEIGHT_BOOT:
 		elemsz = SILOFS_BOOTREC_SIZE;
 		break;
 	case SILOFS_HEIGHT_NONE:

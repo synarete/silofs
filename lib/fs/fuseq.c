@@ -2485,7 +2485,7 @@ static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 
 static bool fuseq_asyncwr_mode(const struct silofs_fuseq_worker *fqw)
 {
-	return (fqw->fw_fq->fq_uber->ub_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
+	return (fqw->fw_fq->fq_fsenv->fse_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
 }
 
 static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
@@ -2928,7 +2928,7 @@ static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
 	const struct fuse_in_header *hdr = &in->u.hdr.hdr;
 	int err;
 
-	err = silofs_task_init(task, fqw->fw_fq->fq_uber);
+	err = silofs_task_init(task, fqw->fw_fq->fq_fsenv);
 	if (!err) {
 		silofs_task_set_creds(task, hdr->uid, hdr->gid, 0);
 		task->t_oper.op_pid = (pid_t)hdr->pid;
@@ -2941,13 +2941,14 @@ static int fuseq_setup_task(const struct silofs_fuseq_worker *fqw,
 static int fuseq_setup_self_task(const struct silofs_fuseq_worker *fqw,
                                  struct silofs_task *task)
 {
-	const struct silofs_fs_args *fs_args = fqw->fw_fq->fq_uber->ub.fs_args;
+	const struct silofs_fs_args *fs_args = NULL;
 	int err;
 
-	err = silofs_task_init(task, fqw->fw_fq->fq_uber);
+	err = silofs_task_init(task, fqw->fw_fq->fq_fsenv);
 	if (err) {
 		return err;
 	}
+	fs_args = fqw->fw_fq->fq_fsenv->fse.fs_args;
 	silofs_task_set_creds(task, fs_args->uid,
 	                      fs_args->gid, fs_args->umask);
 	silofs_task_set_ts(task, false);
@@ -3824,7 +3825,7 @@ static void fuseq_fini_locks(struct silofs_fuseq *fq)
 static void fuseq_init_common(struct silofs_fuseq *fq,
                               struct silofs_alloc *alloc)
 {
-	fq->fq_uber = NULL;
+	fq->fq_fsenv = NULL;
 	fq->fq_alloc = alloc;
 	fq->fq_active = 0;
 	fq->fq_nopers = 0;
@@ -3885,11 +3886,11 @@ void silofs_fuseq_fini(struct silofs_fuseq *fq)
 	fuseq_fini_workers(fq);
 	fuseq_fini_locks(fq);
 	fq->fq_alloc = NULL;
-	fq->fq_uber = NULL;
+	fq->fq_fsenv = NULL;
 }
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
-                       struct silofs_uber *uber, const char *path)
+                       struct silofs_fsenv *fsenv, const char *path)
 {
 	const size_t max_read = fq->fq_coni.buffsize;
 	const char *sock = SILOFS_MNTSOCK_NAME;
@@ -3900,10 +3901,10 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	int err;
 	bool allow_other;
 
-	uid = uber->ub_owner.uid;
-	gid = uber->ub_owner.gid;
-	ms_flags = uber->ub_ms_flags;
-	allow_other = (uber->ub_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
+	uid = fsenv->fse_owner.uid;
+	gid = fsenv->fse_owner.gid;
+	ms_flags = fsenv->fse_ms_flags;
+	allow_other = (fsenv->fse_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
@@ -3920,10 +3921,10 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 		return err;
 	}
 
-	fq->fq_fs_owner = uber->ub_owner.uid;
+	fq->fq_fs_owner = fsenv->fse_owner.uid;
 	fq->fq_fuse_fd = fd;
 	fq->fq_mount = true;
-	fq->fq_uber = uber;
+	fq->fq_fsenv = fsenv;
 
 	/* TODO: Looks like kernel needs time. why? */
 	silofs_suspend_secs(1);
@@ -3934,7 +3935,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 void silofs_fuseq_term(struct silofs_fuseq *fq)
 {
 	fuseq_fini_fuse_fd(fq);
-	fq->fq_uber = NULL;
+	fq->fq_fsenv = NULL;
 }
 
 static int fuseq_check_input(const struct silofs_fuseq_worker *fqw)

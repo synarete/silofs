@@ -62,7 +62,7 @@ struct silofs_fs_ctx {
 	struct silofs_cache    *cache;
 	struct silofs_repo     *repo;
 	struct silofs_idsmap   *idsmap;
-	struct silofs_uber     *uber;
+	struct silofs_fsenv     *fsenv;
 	struct silofs_submitq  *submitq;
 	struct silofs_fuseq    *fuseq;
 	struct silofs_password *password;

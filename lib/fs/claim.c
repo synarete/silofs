@@ -24,7 +24,7 @@
 /* space-allocation context */
 struct silofs_spalloc_ctx {
 	struct silofs_task        *task;
-	struct silofs_uber        *uber;
+	struct silofs_fsenv        *fsenv;
 	struct silofs_sb_info     *sbi;
 	struct silofs_spnode_info *sni;
 	struct silofs_spleaf_info *sli;
@@ -55,7 +55,7 @@ static loff_t off_to_spleaf_next(loff_t voff)
 static struct silofs_cache *
 spac_cache(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	return spa_ctx->uber->ub.cache;
+	return spa_ctx->fsenv->fse.cache;
 }
 
 static struct silofs_spamaps *
@@ -131,7 +131,7 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 {
 	silofs_memzero(spa_ctx, sizeof(*spa_ctx));
 	spa_ctx->task = task;
-	spa_ctx->uber = task->t_uber;
+	spa_ctx->fsenv = task->t_fsenv;
 	spa_ctx->sbi = task_sbi(task);
 	spa_ctx->stype = stype;
 }
@@ -487,7 +487,7 @@ static int spac_try_reclaim_vlext(const struct silofs_spalloc_ctx *spa_ctx)
 	if (!spac_ismutable_lextid(spa_ctx, &laddr.lextid)) {
 		return 0; /* not a mutable lext */
 	}
-	err = silofs_repo_punch_lext(spa_ctx->uber->ub.repo, &laddr.lextid);
+	err = silofs_repo_punch_lext(spa_ctx->fsenv->fse.repo, &laddr.lextid);
 	if (err && (err != -ENOTSUP)) {
 		log_err("failed to punch lext: err=%d", err);
 		return err;

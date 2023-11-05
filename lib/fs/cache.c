@@ -1198,9 +1198,9 @@ static void ui_delete(struct silofs_unode_info *ui,
 
 static struct silofs_dirtyqs *vi_dirtyqs(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_uber *uber = vi_uber(vi);
+	const struct silofs_fsenv *fsenv = vi_fsenv(vi);
 
-	return &uber->ub.cache->c_dqs;
+	return &fsenv->fse.cache->c_dqs;
 }
 
 static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)

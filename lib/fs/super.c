@@ -622,10 +622,10 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 {
-	const struct silofs_uber *uber = sbi_uber(sbi);
+	const struct silofs_fsenv *fsenv = sbi_fsenv(sbi);
 	const unsigned long ms_mask = MS_RDONLY;
 
-	if ((uber->ub_ms_flags & ms_mask) == ms_mask) {
+	if ((fsenv->fse_ms_flags & ms_mask) == ms_mask) {
 		return -SILOFS_EROFS;
 	}
 	if (silofs_sb_test_flags(sbi->sb, SILOFS_SUPERF_FOSSIL)) {
@@ -636,11 +636,12 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi)
 {
-	const struct silofs_uber *uber = NULL;
+	const struct silofs_fsenv *fsenv = NULL;
 
 	if (sbi != NULL) {
-		uber = sbi_uber(sbi);
-		log_dbg("shut-super: op_count=%lu", uber->ub_ops.op_count);
+		fsenv = sbi_fsenv(sbi);
+		log_dbg("shut-super: op_count=%lu",
+		        fsenv->fse_op_stat.op_count);
 	}
 	return 0;
 }

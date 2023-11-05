@@ -221,7 +221,7 @@ static void lni_init(struct silofs_lnode_info *lni,
 	an_init(&lni->ds_an);
 	lni->stype = stype;
 	lni->ds_next = NULL;
-	lni->uber = NULL;
+	lni->fsenv = NULL;
 	lni->lbki = NULL;
 	lni->view = NULL;
 	lni->view_len = 0;
@@ -235,7 +235,7 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	an_fini(&lni->ds_an);
 	lni->stype = SILOFS_STYPE_NONE;
 	lni->ds_next = NULL;
-	lni->uber = NULL;
+	lni->fsenv = NULL;
 	lni->lbki = NULL;
 	lni->view = NULL;
 	lni->del_hook = NULL;
@@ -305,10 +305,10 @@ void silofs_seal_unode(struct silofs_unode_info *ui)
 	hdr_set_csum(&ui->u.view->hdr, lni_calc_chekcsum(&ui->u));
 }
 
-void silofs_ui_set_uber(struct silofs_unode_info *ui,
-                        struct silofs_uber *uber)
+void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
+                         struct silofs_fsenv *fsenv)
 {
-	ui->u.uber = uber;
+	ui->u.fsenv = fsenv;
 }
 
 struct silofs_unode_info *
@@ -385,9 +385,9 @@ bool silofs_vi_isdata(const struct silofs_vnode_info *vi)
 static const struct silofs_mdigest *
 vi_mdigest(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_uber *uber = vi_uber(vi);
+	const struct silofs_fsenv *fsenv = vi_fsenv(vi);
 
-	return &uber->ub_crypto.md;
+	return &fsenv->fse_crypto.md;
 }
 
 static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)

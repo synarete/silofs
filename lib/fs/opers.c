@@ -38,21 +38,21 @@
 
 static void op_lock_fs(const struct silofs_task *task)
 {
-	silofs_mutex_lock(&task->t_uber->ub_fs_lock);
+	silofs_mutex_lock(&task->t_fsenv->fse_lock);
 }
 
 static void op_unlock_fs(const struct silofs_task *task)
 {
-	silofs_mutex_unlock(&task->t_uber->ub_fs_lock);
+	silofs_mutex_unlock(&task->t_fsenv->fse_lock);
 }
 
 static int op_start(const struct silofs_task *task, ino_t ino)
 {
-	struct silofs_uber *uber = task->t_uber;
+	struct silofs_fsenv *fsenv = task->t_fsenv;
 
 	op_lock_fs(task);
-	uber->ub_ops.op_time = task->t_oper.op_creds.ts.tv_sec;
-	uber->ub_ops.op_count++;
+	fsenv->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
+	fsenv->fse_op_stat.op_count++;
 	silofs_unused(ino);
 	return 0;
 }
@@ -95,10 +95,11 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	const time_t beg = task->t_oper.op_creds.ts.tv_sec;
 	const time_t dif = now - beg;
 	const uint32_t op_code = task->t_oper.op_code;
+	const unsigned long id = task->t_fsenv->fse_op_stat.op_count;
 
 	if (op_code && (beg < now) && (dif > 30)) {
 		log_warn("slow-oper: id=%ld op_code=%u duration=%ld status=%d",
-		         task->t_uber->ub_ops.op_count, op_code, dif, status);
+		         id, op_code, dif, status);
 	}
 }
 
@@ -177,20 +178,20 @@ static bool op_is_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return uid_eq(creds->host_cred.uid, task->t_uber->ub_owner.uid);
+	return uid_eq(creds->host_cred.uid, task->t_fsenv->fse_owner.uid);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return (task->t_uber->ub_ctl_flags & SILOFS_UBF_ALLOWADMIN) &&
+	return (task->t_fsenv->fse_ctl_flags & SILOFS_UBF_ALLOWADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
 static bool op_allow_other(const struct silofs_task *task)
 {
-	return (task->t_uber->ub_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
+	return (task->t_fsenv->fse_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
 }
 
 static int op_authorize(const struct silofs_task *task)

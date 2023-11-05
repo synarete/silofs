@@ -532,7 +532,7 @@ bootrec_uaddr_by_treeid(const struct silofs_treeid *treeid,
 {
 	struct silofs_lextid lextid;
 	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
-	const enum silofs_height height = SILOFS_HEIGHT_UBER;
+	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
 	silofs_lextid_setup(&lextid, treeid, 0, stype, height);
 	silofs_uaddr_setup(out_uaddr, &lextid, 0, stype, 0);

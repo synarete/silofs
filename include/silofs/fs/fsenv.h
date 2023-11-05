@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_UBER_H_
-#define SILOFS_UBER_H_
+#ifndef SILOFS_FSENV_H_
+#define SILOFS_FSENV_H_
 
 
-/* base members of uber-block (provided) */
-struct silofs_uber_base {
+/* base members of fsenv-block (provided) */
+struct silofs_fsenv_base {
 	const struct silofs_fs_args    *fs_args;
 	const struct silofs_bootpath   *bootpath;
 	const struct silofs_ivkey      *boot_ivkey;
@@ -32,90 +32,90 @@ struct silofs_uber_base {
 };
 
 /* top-level pseudo meta node */
-struct silofs_uber {
-	struct silofs_uber_base         ub;
-	struct silofs_mutex             ub_fs_lock;
-	struct silofs_crypto            ub_crypto;
-	struct silofs_oper_stat         ub_ops;
-	struct silofs_lextid            ub_sb_lextid;
-	struct silofs_sb_info          *ub_sbi;
-	struct silofs_ulink             ub_sb_ulink;
-	struct silofs_cred              ub_owner;
-	unsigned long                   ub_ctl_flags;
-	unsigned long                   ub_ms_flags;
-	iconv_t                         ub_iconv;
-	time_t                          ub_initime;
-	uint64_t                        ub_commit_id;
+struct silofs_fsenv {
+	struct silofs_fsenv_base        fse;
+	struct silofs_mutex             fse_lock;
+	struct silofs_crypto            fse_crypto;
+	struct silofs_oper_stat         fse_op_stat;
+	struct silofs_lextid            fse_sb_lextid;
+	struct silofs_sb_info          *fse_sbi;
+	struct silofs_ulink             fse_sb_ulink;
+	struct silofs_cred              fse_owner;
+	unsigned long                   fse_ctl_flags;
+	unsigned long                   fse_ms_flags;
+	iconv_t                         fse_iconv;
+	time_t                          fse_init_time;
+	uint64_t                        fse_commit_id;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_uber_init(struct silofs_uber *uber,
-                     const struct silofs_uber_base *base);
+int silofs_fsenv_init(struct silofs_fsenv *fsenv,
+                      const struct silofs_fsenv_base *base);
 
-void silofs_uber_fini(struct silofs_uber *uber);
+void silofs_fsenv_fini(struct silofs_fsenv *fsenv);
 
-time_t silofs_uber_uptime(const struct silofs_uber *uber);
+time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv);
 
-void silofs_uber_shut(struct silofs_uber *uber);
+void silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
-void silofs_uber_bind_child(struct silofs_uber *uber,
-                            const struct silofs_ulink *ulink);
+void silofs_fsenv_bind_child(struct silofs_fsenv *fsenv,
+                             const struct silofs_ulink *ulink);
 
-int silofs_uber_format_super(struct silofs_uber *uber, size_t capacity);
+int silofs_fsenv_format_super(struct silofs_fsenv *fsenv, size_t capacity);
 
-int silofs_uber_reload_super(struct silofs_uber *uber);
+int silofs_fsenv_reload_super(struct silofs_fsenv *fsenv);
 
-int silofs_uber_reload_sb_lext(struct silofs_uber *uber);
+int silofs_fsenv_reload_sb_lext(struct silofs_fsenv *fsenv);
 
-int silofs_uber_forkfs(struct silofs_uber *uber,
-                       struct silofs_bootrecs *out_brecs);
+int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
+                        struct silofs_bootrecs *out_brecs);
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_super_at(struct silofs_uber *uber,
+int silofs_spawn_super_at(struct silofs_fsenv *fsenv,
                           const struct silofs_ulink *ulink,
                           struct silofs_sb_info **out_sbi);
 
-int silofs_stage_super_at(struct silofs_uber *uber,
+int silofs_stage_super_at(struct silofs_fsenv *fsenv,
                           const struct silofs_ulink *ulink,
                           struct silofs_sb_info **out_sbi);
 
 
-int silofs_spawn_spnode_at(struct silofs_uber *uber,
+int silofs_spawn_spnode_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spnode_info **out_sni);
 
-int silofs_stage_spnode_at(struct silofs_uber *uber,
+int silofs_stage_spnode_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spnode_info **out_sni);
 
 
-int silofs_spawn_spleaf_at(struct silofs_uber *uber,
+int silofs_spawn_spleaf_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli);
 
-int silofs_stage_spleaf_at(struct silofs_uber *uber,
+int silofs_stage_spleaf_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_stage_ubk_at(struct silofs_uber *uber,
+int silofs_stage_ubk_at(struct silofs_fsenv *fsenv,
                         const struct silofs_laddr *laddr,
                         struct silofs_ubk_info **out_ubki);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_lext_at(struct silofs_uber *uber,
+int silofs_spawn_lext_at(struct silofs_fsenv *fsenv,
                          const struct silofs_lextid *lextid);
 
-int silofs_stage_lext_at(struct silofs_uber *uber,
+int silofs_stage_lext_at(struct silofs_fsenv *fsenv,
                          const struct silofs_lextid *lextid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_relax_caches(const struct silofs_task *task, int flags);
 
-#endif /* SILOFS_UBER_H_ */
+#endif /* SILOFS_FSENV_H_ */

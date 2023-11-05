@@ -38,7 +38,7 @@ union silofs_utf32_name_buf {
 } silofs_aligned64;
 
 
-static int check_utf8_name(const struct silofs_uber *uber,
+static int check_utf8_name(const struct silofs_fsenv *fsenv,
                            const struct silofs_namestr *nstr)
 {
 	union silofs_utf32_name_buf unb;
@@ -49,7 +49,7 @@ static int check_utf8_name(const struct silofs_uber *uber,
 	size_t datlen;
 	size_t ret;
 
-	ret = iconv(uber->ub_iconv, &in, &len, &out, &outlen);
+	ret = iconv(fsenv->fse_iconv, &in, &len, &out, &outlen);
 	if ((ret != 0) || len || (outlen % 4)) {
 		return errno ? -errno : -SILOFS_EINVAL;
 	}
@@ -64,9 +64,9 @@ static int check_utf8_name(const struct silofs_uber *uber,
 
 static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
-	const struct silofs_uber *uber = ii_uber(ii);
+	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
 
-	return ((uber->ub_ctl_flags & SILOFS_UBF_NLOOKUP) > 0);
+	return ((fsenv->fse_ctl_flags & SILOFS_UBF_NLOOKUP) > 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -107,9 +107,9 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 static const struct silofs_mdigest *
 dii_mdigest(const struct silofs_inode_info *dii)
 {
-	const struct silofs_uber *uber = ii_uber(dii);
+	const struct silofs_fsenv *fsenv = ii_fsenv(dii);
 
-	return &uber->ub_crypto.md;
+	return &fsenv->fse_crypto.md;
 }
 
 static uint64_t
@@ -179,7 +179,7 @@ static int dii_check_name_encoding(const struct silofs_inode_info *dir_ii,
 	int ret = 0;
 
 	if (dii_hasflag(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
-		ret = check_utf8_name(ii_uber(dir_ii), nstr);
+		ret = check_utf8_name(ii_fsenv(dir_ii), nstr);
 	}
 	return ret;
 }
@@ -234,11 +234,11 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
-	const struct silofs_uber *uber = ii_uber(ii);
-	const size_t total_iopen_max = uber->ub_ops.op_iopen_max;
+	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	const size_t total_iopen_max = fsenv->fse_op_stat.op_iopen_max;
 	const size_t iopen_max = total_iopen_max / 2;
 
-	if (uber->ub_ops.op_iopen >= total_iopen_max) {
+	if (fsenv->fse_op_stat.op_iopen >= total_iopen_max) {
 		return -SILOFS_EMFILE;
 	}
 	if (ii->i_nopen >= (long)iopen_max) {
@@ -249,15 +249,15 @@ static int check_open_limit(const struct silofs_inode_info *ii)
 
 static void update_nopen(struct silofs_inode_info *ii, int n)
 {
-	struct silofs_uber *uber = ii_uber(ii);
+	struct silofs_fsenv *fsenv = ii_fsenv(ii);
 
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		uber->ub_ops.op_iopen++;
+		fsenv->fse_op_stat.op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		uber->ub_ops.op_iopen--;
+		fsenv->fse_op_stat.op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -822,7 +822,7 @@ static int check_mknod(struct silofs_task *task,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->t_uber->ub_ms_flags & MS_NODEV) {
+		if (task->t_fsenv->fse_ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2184,23 +2184,23 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
-static void fill_proc(const struct silofs_uber *uber,
+static void fill_proc(const struct silofs_fsenv *fsenv,
                       struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
 
-	silofs_allocstat(uber->ub.alloc, &alst);
+	silofs_allocstat(fsenv->fse.alloc, &alst);
 	silofs_memzero(qpr, sizeof(*qpr));
-	qpr->uid = uber->ub_owner.uid;
-	qpr->gid = uber->ub_owner.gid;
-	qpr->pid = uber->ub.fs_args->pid;
-	qpr->msflags = uber->ub_ms_flags;
-	qpr->uptime = silofs_uber_uptime(uber);
-	qpr->iopen_max = uber->ub_ops.op_iopen_max;
-	qpr->iopen_cur = uber->ub_ops.op_iopen;
+	qpr->uid = fsenv->fse_owner.uid;
+	qpr->gid = fsenv->fse_owner.gid;
+	qpr->pid = fsenv->fse.fs_args->pid;
+	qpr->msflags = fsenv->fse_ms_flags;
+	qpr->uptime = silofs_fsenv_uptime(fsenv);
+	qpr->iopen_max = fsenv->fse_op_stat.op_iopen_max;
+	qpr->iopen_cur = fsenv->fse_op_stat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = uber->ub.repo->re_htbl.rh_size;
+	qpr->bopen_cur = fsenv->fse.repo->re_htbl.rh_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2246,16 +2246,16 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static struct silofs_repo *repo_of(const struct silofs_uber *uber)
+static struct silofs_repo *repo_of(const struct silofs_fsenv *fsenv)
 {
-	return uber->ub.repo;
+	return fsenv->fse.repo;
 }
 
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	const struct silofs_uber *uber = ii_uber(ii);
-	const struct silofs_bootpath *bootpath = uber->ub.bootpath;
+	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	const struct silofs_bootpath *bootpath = fsenv->fse.bootpath;
 	size_t bsz;
 
 	bsz = sizeof(query->u.bootrec.repo);
@@ -2268,7 +2268,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 static void fill_query_proc(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	fill_proc(ii_uber(ii), &query->u.proc);
+	fill_proc(ii_fsenv(ii), &query->u.proc);
 }
 
 static void fill_query_spstats(const struct silofs_inode_info *ii,
@@ -2367,7 +2367,7 @@ int silofs_do_query(struct silofs_task *task,
 static int check_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
-	const uid_t owner_uid = task->t_uber->ub_owner.uid;
+	const uid_t owner_uid = task->t_fsenv->fse_owner.uid;
 
 	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
 }
@@ -2412,16 +2412,16 @@ static int encode_save_bootrec(const struct silofs_task *task,
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	const struct silofs_uber *uber = task->t_uber;
-	const struct silofs_ivkey *ivkey = uber->ub.boot_ivkey;
+	const struct silofs_fsenv *fsenv = task->t_fsenv;
+	const struct silofs_ivkey *ivkey = fsenv->fse.boot_ivkey;
 	int err;
 
 	silofs_bootrec_self_uaddr(brec, &uaddr);
-	err = silofs_bootrec_encode(brec, &brec1k, &uber->ub_crypto, ivkey);
+	err = silofs_bootrec_encode(brec, &brec1k, &fsenv->fse_crypto, ivkey);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_obj(repo_of(uber), &uaddr.laddr, &brec1k);
+	err = silofs_repo_save_obj(repo_of(fsenv), &uaddr.laddr, &brec1k);
 	if (err) {
 		return err;
 	}
@@ -2450,7 +2450,7 @@ static int flush_and_sync_lexts(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_fsync_all(task->t_uber->ub.repo);
+	err = silofs_repo_fsync_all(task->t_fsenv->fse.repo);
 	if (err) {
 		return err;
 	}
@@ -2461,7 +2461,7 @@ static int do_clone(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii, int flags,
                     struct silofs_bootrecs *out_brecs)
 {
-	struct silofs_uber *uber = task->t_uber;
+	struct silofs_fsenv *fsenv = task->t_fsenv;
 	int err;
 
 	err = check_clone(task, dir_ii, flags);
@@ -2472,7 +2472,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_uber_forkfs(uber, out_brecs);
+	err = silofs_fsenv_forkfs(fsenv, out_brecs);
 	if (err) {
 		return err;
 	}
@@ -2490,10 +2490,10 @@ static int do_clone(struct silofs_task *task,
 static void do_post_clone_relax(struct silofs_task *task,
                                 struct silofs_sb_info *sbi)
 {
-	struct silofs_uber *uber = task->t_uber;
-	struct silofs_cache *cache = uber->ub.cache;
+	struct silofs_fsenv *fsenv = task->t_fsenv;
+	struct silofs_cache *cache = fsenv->fse.cache;
 
-	silofs_assert_ne(sbi, uber->ub_sbi);
+	silofs_assert_ne(sbi, fsenv->fse_sbi);
 	silofs_assert_eq(sbi->sb_ui.u.ce.ce_refcnt, 0);
 	silofs_assert_eq(sbi->sb_ui.u.ce.ce_flags & SILOFS_CEF_DIRTY, 0);
 

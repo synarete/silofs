@@ -84,7 +84,7 @@ static int spvis_exec_at(struct silofs_sp_visitor *sp_vis,
                          const struct silofs_walk_iter *witr)
 {
 	switch (witr->height) {
-	case SILOFS_HEIGHT_UBER:
+	case SILOFS_HEIGHT_BOOT:
 		break;
 	case SILOFS_HEIGHT_SUPER:
 		sp_vis->cb(sbi_laddr(witr->sbi), witr->voff);
@@ -173,7 +173,7 @@ int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
                            silofs_visit_laddr_fn cb)
 {
-	struct silofs_alloc *alloc = task->t_uber->ub.alloc;
+	struct silofs_alloc *alloc = task->t_fsenv->fse.alloc;
 	struct silofs_sp_visitor *sp_vis = NULL;
 	int ret;
 

@@ -51,7 +51,7 @@ ssize_t silofs_height_to_space_span(enum silofs_height height)
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SUPER:
-	case SILOFS_HEIGHT_UBER:
+	case SILOFS_HEIGHT_BOOT:
 	case SILOFS_HEIGHT_LAST:
 		shift_fac = 5;
 		break;

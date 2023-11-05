@@ -38,7 +38,7 @@ struct silofs_lnode_info {
 	struct silofs_cache_elem        ce;
 	struct silofs_avl_node          ds_an;
 	silofs_lnode_del_fn             del_hook;
-	struct silofs_uber             *uber;
+	struct silofs_fsenv             *fsenv;
 	struct silofs_lnode_info       *ds_next;
 	struct silofs_lbk_info         *lbki;
 	union silofs_view              *view;
@@ -211,8 +211,8 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni);
 struct silofs_unode_info *
 silofs_ui_from_dirty_lh(struct silofs_list_head *lh);
 
-void silofs_ui_set_uber(struct silofs_unode_info *ui,
-                        struct silofs_uber *uber);
+void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
+                         struct silofs_fsenv *fsenv);
 
 void silofs_zero_stamp_meta(union silofs_view *view, enum silofs_stype stype);
 

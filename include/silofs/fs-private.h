@@ -82,7 +82,7 @@
 #define task_idsmap(t)                  silofs_task_idsmap(t)
 #define task_creds(t)                   silofs_task_creds(t)
 
-#define sbi_uber(sbi)                   silofs_sbi_uber(sbi)
+#define sbi_fsenv(sbi)                   silofs_sbi_fsenv(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
@@ -120,7 +120,7 @@
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)
-#define vi_uber(vi)                     silofs_vi_uber(vi)
+#define vi_fsenv(vi)                     silofs_vi_fsenv(vi)
 #define vi_sbi(vi)                      silofs_vi_sbi(vi)
 #define vi_refcnt(vi)                   silofs_vi_refcnt(vi)
 #define vi_incref(vi)                   silofs_vi_incref(vi)
@@ -133,7 +133,7 @@
 #define ii_ino(ii)                      silofs_ii_ino(ii)
 #define ii_vaddr(ii)                    silofs_ii_vaddr(ii)
 #define ii_sbi(ii)                      silofs_ii_sbi(ii)
-#define ii_uber(ii)                     silofs_ii_uber(ii)
+#define ii_fsenv(ii)                     silofs_ii_fsenv(ii)
 #define ii_cache(ii)                    silofs_ii_cache(ii)
 #define ii_refcnt(ii)                   silofs_ii_refcnt(ii)
 #define ii_incref(ii)                   silofs_ii_incref(ii)
@@ -218,16 +218,16 @@ silofs_vi_vaddr(const struct silofs_vnode_info *vi)
 	return &vi->v_vaddr;
 }
 
-static inline struct silofs_uber *
-silofs_vi_uber(const struct silofs_vnode_info *vi)
+static inline struct silofs_fsenv *
+silofs_vi_fsenv(const struct silofs_vnode_info *vi)
 {
-	return vi->v.uber;
+	return vi->v.fsenv;
 }
 
 static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
-	return vi->v.uber->ub_sbi;
+	return vi->v.fsenv->fse_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -267,10 +267,10 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 	return silofs_vi_sbi(silofs_ii_to_vi(ii));
 }
 
-static inline struct silofs_uber *
-silofs_ii_uber(const struct silofs_inode_info *ii)
+static inline struct silofs_fsenv *
+silofs_ii_fsenv(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v.uber;
+	return ii->i_vi.v.fsenv;
 }
 
 static inline struct silofs_cache *
@@ -281,10 +281,10 @@ silofs_ii_cache(const struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static inline struct silofs_uber *
-silofs_sbi_uber(const struct silofs_sb_info *sbi)
+static inline struct silofs_fsenv *
+silofs_sbi_fsenv(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u.uber;
+	return sbi->sb_ui.u.fsenv;
 }
 
 static inline struct silofs_cache *

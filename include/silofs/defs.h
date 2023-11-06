@@ -960,19 +960,19 @@ struct silofs_volume_root {
 } silofs_packed_aligned64;
 
 
-struct silofs_volmap_ref {
+struct silofs_pvmap_ref {
 	uint32_t                        index;
 	uint32_t                        reserved;
 	int64_t                         off;
 } silofs_packed_aligned16;
 
 
-struct silofs_volmap_node {
-	struct silofs_header            vn_hdr;
-	struct silofs_volid             vn_volid;
-	uint8_t                         vn_reserved[16];
-	struct silofs_volmap_ref        vn_child[SILOFS_VOLMAP_NCHILDS];
-	struct silofs_ltop64b           vn_ltop[SILOFS_VOLMAP_NLTOP];
+struct silofs_pvmap_node {
+	struct silofs_header            pn_hdr;
+	struct silofs_volid             pn_volid;
+	uint8_t                         pn_reserved[16];
+	struct silofs_pvmap_ref         pn_child[SILOFS_VOLMAP_NCHILDS];
+	struct silofs_ltop64b           pn_ltop[SILOFS_VOLMAP_NLTOP];
 } silofs_packed_aligned64;
 
 

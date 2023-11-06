@@ -38,6 +38,7 @@ nobase_include_HEADERS += silofs/infra-private.h
 nobase_include_HEADERS += silofs/ps/htox.h
 nobase_include_HEADERS += silofs/ps/crypto.h
 nobase_include_HEADERS += silofs/ps/laddr.h
+nobase_include_HEADERS += silofs/ps/pvmaps.h
 nobase_include_HEADERS += silofs/ps/repo.h
 nobase_include_HEADERS += silofs/ps.h
 nobase_include_HEADERS += silofs/ps-private.h

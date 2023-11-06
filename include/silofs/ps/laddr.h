@@ -21,7 +21,7 @@
 
 typedef loff_t          silofs_lba_t;
 
-/* logical-extend id within specific mapping tree */
+/* logical-extend id within specific volume mapping */
 struct silofs_lextid {
 	struct silofs_volid     volid;
 	loff_t                  voff;
@@ -30,12 +30,27 @@ struct silofs_lextid {
 	enum silofs_height      height;
 };
 
-/* logical-address within specific mapping-tree's extend */
+/* logical-address within specific volume's mapping extend */
 struct silofs_laddr {
 	struct silofs_lextid    lextid;
 	loff_t                  pos;
 	size_t                  len;
 };
+
+/* physical-address within specific volume mapping */
+struct silofs_paddr {
+	struct silofs_lextid    lextid;
+	size_t                  index;
+	loff_t                  off;
+	size_t                  len;
+};
+
+/* logical-to-physical address mapping */
+struct silofs_ltop {
+	struct silofs_laddr     laddr;
+	struct silofs_paddr     paddr;
+};
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -169,5 +184,8 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_paddr_assign(struct silofs_paddr *paddr,
+                         const struct silofs_paddr *other);
 
 #endif /* SILOFS_LADDR_H_ */

@@ -287,12 +287,6 @@ silofs_sbi_fsenv(const struct silofs_sb_info *sbi)
 	return sbi->sb_ui.u.fsenv;
 }
 
-static inline struct silofs_cache *
-silofs_sbi_cache(const struct silofs_sb_info *sbi)
-{
-	return sbi->sb_ui.u.ce.ce_cache;
-}
-
 static inline const struct silofs_ulink *
 silofs_sbi_ulink(const struct silofs_sb_info *sbi)
 {

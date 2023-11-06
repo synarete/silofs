@@ -488,3 +488,13 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 	laddr->len = (size_t)silofs_le32_to_cpu(laddr48->len);
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_paddr_assign(struct silofs_paddr *paddr,
+                         const struct silofs_paddr *other)
+{
+	silofs_lextid_assign(&paddr->lextid, &other->lextid);
+	paddr->index = other->index;
+	paddr->off = other->off;
+	paddr->len = other->len;
+}

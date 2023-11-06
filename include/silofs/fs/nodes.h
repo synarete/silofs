@@ -38,7 +38,7 @@ struct silofs_lnode_info {
 	struct silofs_cache_elem        ce;
 	struct silofs_avl_node          ds_an;
 	silofs_lnode_del_fn             del_hook;
-	struct silofs_fsenv             *fsenv;
+	struct silofs_fsenv            *fsenv;
 	struct silofs_lnode_info       *ds_next;
 	struct silofs_lbk_info         *lbki;
 	union silofs_view              *view;

@@ -34,6 +34,7 @@ libsilofs_la_SOURCES += infra/utility.c
 libsilofs_la_SOURCES += ps/crypto.c
 libsilofs_la_SOURCES += ps/laddr.c
 libsilofs_la_SOURCES += ps/repo.c
+libsilofs_la_SOURCES += ps/pvmaps.c
 libsilofs_la_SOURCES += fs/boot.c
 libsilofs_la_SOURCES += fs/cache.c
 libsilofs_la_SOURCES += fs/claim.c

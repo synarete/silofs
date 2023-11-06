@@ -24,6 +24,7 @@
 #include <silofs/ps/laddr.h>
 #include <silofs/ps/crypto.h>
 #include <silofs/ps/repo.h>
+#include <silofs/ps/pvmaps.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
 #include <silofs/ps-private.h>

@@ -136,38 +136,38 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_treeid_generate(struct silofs_treeid *treeid)
+void silofs_volid_generate(struct silofs_volid *volid)
 {
-	silofs_uuid_generate(&treeid->uuid);
+	silofs_uuid_generate(&volid->uuid);
 }
 
-void silofs_treeid_assign(struct silofs_treeid *treeid,
-                          const struct silofs_treeid *other)
+void silofs_volid_assign(struct silofs_volid *volid,
+                         const struct silofs_volid *other)
 {
-	silofs_uuid_assign(&treeid->uuid, &other->uuid);
+	silofs_uuid_assign(&volid->uuid, &other->uuid);
 }
 
-long silofs_treeid_compare(const struct silofs_treeid *treeid1,
-                           const struct silofs_treeid *treeid2)
+long silofs_volid_compare(const struct silofs_volid *volid1,
+                          const struct silofs_volid *volid2)
 {
-	const struct silofs_uuid *uu1 = &treeid1->uuid;
-	const struct silofs_uuid *uu2 = &treeid2->uuid;
+	const struct silofs_uuid *uu1 = &volid1->uuid;
+	const struct silofs_uuid *uu2 = &volid2->uuid;
 
 	return memcmp(uu1->uu, uu2->uu, sizeof(uu1->uu));
 }
 
-bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
-                           const struct silofs_treeid *treeid2)
+bool silofs_volid_isequal(const struct silofs_volid *volid1,
+                          const struct silofs_volid *volid2)
 {
-	return (silofs_treeid_compare(treeid1, treeid2) == 0);
+	return (silofs_volid_compare(volid1, volid2) == 0);
 }
 
-void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
-                           const struct silofs_uuid *uuid)
+void silofs_volid_by_uuid(struct silofs_volid *volid,
+                          const struct silofs_uuid *uuid)
 {
-	STATICASSERT_EQ(sizeof(treeid->uuid.uu), 16);
+	STATICASSERT_EQ(sizeof(volid->uuid.uu), 16);
 
-	silofs_uuid_assign(&treeid->uuid, uuid);
+	silofs_uuid_assign(&volid->uuid, uuid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -228,10 +228,10 @@ bool silofs_lextid_isnull(const struct silofs_lextid *lextid)
 	return (lextid->size == 0);
 }
 
-bool silofs_lextid_has_treeid(const struct silofs_lextid *lextid,
-                              const struct silofs_treeid *treeid)
+bool silofs_lextid_has_volid(const struct silofs_lextid *lextid,
+                             const struct silofs_volid *volid)
 {
-	return silofs_treeid_isequal(&lextid->treeid, treeid);
+	return silofs_volid_isequal(&lextid->volid, volid);
 }
 
 loff_t silofs_lextid_pos(const struct silofs_lextid *lextid, loff_t off)
@@ -253,7 +253,7 @@ void silofs_lextid_reset(struct silofs_lextid *lextid)
 void silofs_lextid_assign(struct silofs_lextid *lextid,
                           const struct silofs_lextid *other)
 {
-	silofs_treeid_assign(&lextid->treeid, &other->treeid);
+	silofs_volid_assign(&lextid->volid, &other->volid);
 	lextid->voff = other->voff;
 	lextid->size = other->size;
 	lextid->vspace = other->vspace;
@@ -281,7 +281,7 @@ long silofs_lextid_compare(const struct silofs_lextid *lextid1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_treeid_compare(&lextid1->treeid, &lextid2->treeid);
+	cmp = silofs_volid_compare(&lextid1->volid, &lextid2->volid);
 	if (cmp) {
 		return cmp;
 	}
@@ -303,13 +303,13 @@ uint64_t silofs_lextid_hash64(const struct silofs_lextid *lextid)
 }
 
 void silofs_lextid_setup(struct silofs_lextid *lextid,
-                         const struct silofs_treeid *treeid,
+                         const struct silofs_volid *volid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height)
 {
 	const size_t sz = height_to_lext_size(height);
 
-	silofs_treeid_assign(&lextid->treeid, treeid);
+	silofs_volid_assign(&lextid->volid, volid);
 	lextid->size = sz;
 	lextid->voff = sz ? off_align(voff, (ssize_t)sz) : SILOFS_OFF_NULL;
 	lextid->height = height;
@@ -319,11 +319,11 @@ void silofs_lextid_setup(struct silofs_lextid *lextid,
 static void lextid_as_iv(const struct silofs_lextid *lextid,
                          struct silofs_iv *out_iv)
 {
-	STATICASSERT_EQ(sizeof(lextid->treeid), sizeof(*out_iv));
-	STATICASSERT_EQ(sizeof(lextid->treeid.uuid), sizeof(out_iv->iv));
+	STATICASSERT_EQ(sizeof(lextid->volid), sizeof(*out_iv));
+	STATICASSERT_EQ(sizeof(lextid->volid.uuid), sizeof(out_iv->iv));
 	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
 
-	memcpy(out_iv->iv, &lextid->treeid.uuid, sizeof(out_iv->iv));
+	memcpy(out_iv->iv, &lextid->volid.uuid, sizeof(out_iv->iv));
 	out_iv->iv[0] ^= (uint8_t)(lextid->voff & 0xFF);
 	out_iv->iv[1] ^= (uint8_t)((lextid->voff >> 8) & 0xFF);
 	out_iv->iv[2] ^= (uint8_t)((lextid->voff >> 16) & 0xFF);
@@ -350,7 +350,7 @@ void silofs_lextid32b_htox(struct silofs_lextid32b *lextid32,
                            const struct silofs_lextid *lextid)
 {
 	memset(lextid32, 0, sizeof(*lextid32));
-	silofs_treeid_assign(&lextid32->treeid, &lextid->treeid);
+	silofs_volid_assign(&lextid32->volid, &lextid->volid);
 	lextid32->voff = silofs_cpu_to_off(lextid->voff);
 	lextid32->size = silofs_cpu_to_le32((uint32_t)lextid->size);
 	lextid32->vspace = (uint8_t)lextid->vspace;
@@ -360,7 +360,7 @@ void silofs_lextid32b_htox(struct silofs_lextid32b *lextid32,
 void silofs_lextid32b_xtoh(const struct silofs_lextid32b *lextid32,
                            struct silofs_lextid *lextid)
 {
-	silofs_treeid_assign(&lextid->treeid, &lextid32->treeid);
+	silofs_volid_assign(&lextid->volid, &lextid32->volid);
 	lextid->voff = silofs_off_to_cpu(lextid32->voff);
 	lextid->size = silofs_le32_to_cpu(lextid32->size);
 	lextid->vspace = (enum silofs_stype)lextid32->vspace;

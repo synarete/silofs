@@ -69,19 +69,19 @@ void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
 void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
                                 struct silofs_cipher_args *out_cip_args);
 
-void silofs_bootrec_treeid(const struct silofs_bootrec *brec,
-                           struct silofs_treeid *out_treeid);
+void silofs_bootrec_volid(const struct silofs_bootrec *brec,
+                          struct silofs_volid *out_volid);
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
                                struct silofs_uaddr *out_uaddr);
 
-void silofs_make_bootrec_uaddr(const struct silofs_treeid *treeid,
+void silofs_make_bootrec_uaddr(const struct silofs_volid *volid,
                                struct silofs_uaddr *out_uaddr);
 
 
-void silofs_bootrecs_to_treeids(const struct silofs_bootrecs *brecs,
-                                struct silofs_treeid *out_treeid_new,
-                                struct silofs_treeid *out_treeid_alt);
+void silofs_bootrecs_to_volids(const struct silofs_bootrecs *brecs,
+                               struct silofs_volid *out_volid_new,
+                               struct silofs_volid *out_volid_alt);
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

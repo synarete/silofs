@@ -883,15 +883,15 @@ void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
 }
 
 void cmd_iconf_set_uuid_by(struct silofs_iconf *iconf,
-                           const struct silofs_treeid *treeid)
+                           const struct silofs_volid *volid)
 {
-	cmd_iconf_set_uuid(iconf, &treeid->uuid);
+	cmd_iconf_set_uuid(iconf, &volid->uuid);
 }
 
-void cmd_iconf_get_treeid(const struct silofs_iconf *iconf,
-                          struct silofs_treeid *out_treeid)
+void cmd_iconf_get_volid(const struct silofs_iconf *iconf,
+                         struct silofs_volid *out_volid)
 {
-	silofs_treeid_by_uuid(out_treeid, &iconf->uuid);
+	silofs_volid_by_uuid(out_volid, &iconf->uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

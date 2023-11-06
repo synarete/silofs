@@ -68,8 +68,8 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
 
-void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
-                       struct silofs_treeid *out_treeid);
+void silofs_sbi_volid(const struct silofs_sb_info *sbi,
+                      struct silofs_volid *out_volid);
 
 int silofs_sbi_main_lext(const struct silofs_sb_info *sbi,
                          enum silofs_stype vspace,

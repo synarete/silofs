@@ -23,7 +23,7 @@ typedef loff_t          silofs_lba_t;
 
 /* logical-extend id within specific mapping tree */
 struct silofs_lextid {
-	struct silofs_treeid    treeid;
+	struct silofs_volid     volid;
 	loff_t                  voff;
 	size_t                  size;
 	enum silofs_stype       vspace;
@@ -81,19 +81,19 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_treeid_generate(struct silofs_treeid *treeid);
+void silofs_volid_generate(struct silofs_volid *volid);
 
-long silofs_treeid_compare(const struct silofs_treeid *treeid1,
-                           const struct silofs_treeid *treeid2);
+long silofs_volid_compare(const struct silofs_volid *volid1,
+                          const struct silofs_volid *volid2);
 
-void silofs_treeid_assign(struct silofs_treeid *treeid,
-                          const struct silofs_treeid *other);
+void silofs_volid_assign(struct silofs_volid *volid,
+                         const struct silofs_volid *other);
 
-bool silofs_treeid_isequal(const struct silofs_treeid *treeid1,
-                           const struct silofs_treeid *treeid2);
+bool silofs_volid_isequal(const struct silofs_volid *volid1,
+                          const struct silofs_volid *volid2);
 
-void silofs_treeid_by_uuid(struct silofs_treeid *treeid,
-                           const struct silofs_uuid *uuid);
+void silofs_volid_by_uuid(struct silofs_volid *volid,
+                          const struct silofs_uuid *uuid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -103,13 +103,13 @@ size_t silofs_lextid_size(const struct silofs_lextid *lextid);
 
 bool silofs_lextid_isnull(const struct silofs_lextid *lextid);
 
-bool silofs_lextid_has_treeid(const struct silofs_lextid *lextid,
-                              const struct silofs_treeid *treeid);
+bool silofs_lextid_has_volid(const struct silofs_lextid *lextid,
+                             const struct silofs_volid *volid);
 
 void silofs_lextid_reset(struct silofs_lextid *lextid);
 
 void silofs_lextid_setup(struct silofs_lextid *lextid,
-                         const struct silofs_treeid *treeid,
+                         const struct silofs_volid *volid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height);
 

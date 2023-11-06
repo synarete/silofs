@@ -518,47 +518,47 @@ void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
 	}
 }
 
-void silofs_bootrec_treeid(const struct silofs_bootrec *brec,
-                           struct silofs_treeid *out_treeid)
+void silofs_bootrec_volid(const struct silofs_bootrec *brec,
+                          struct silofs_volid *out_volid)
 {
 	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
 
-	silofs_treeid_assign(out_treeid, &sb_uaddr->laddr.lextid.treeid);
+	silofs_volid_assign(out_volid, &sb_uaddr->laddr.lextid.volid);
 }
 
 static void
-bootrec_uaddr_by_treeid(const struct silofs_treeid *treeid,
-                        struct silofs_uaddr *out_uaddr)
+bootrec_uaddr_by_volid(const struct silofs_volid *volid,
+                       struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lextid lextid;
 	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lextid_setup(&lextid, treeid, 0, stype, height);
+	silofs_lextid_setup(&lextid, volid, 0, stype, height);
 	silofs_uaddr_setup(out_uaddr, &lextid, 0, stype, 0);
 }
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
                                struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_treeid treeid;
+	struct silofs_volid volid;
 
-	silofs_bootrec_treeid(brec, &treeid);
-	bootrec_uaddr_by_treeid(&treeid, out_uaddr);
+	silofs_bootrec_volid(brec, &volid);
+	bootrec_uaddr_by_volid(&volid, out_uaddr);
 }
 
-void silofs_make_bootrec_uaddr(const struct silofs_treeid *treeid,
+void silofs_make_bootrec_uaddr(const struct silofs_volid *volid,
                                struct silofs_uaddr *out_uaddr)
 {
-	bootrec_uaddr_by_treeid(treeid, out_uaddr);
+	bootrec_uaddr_by_volid(volid, out_uaddr);
 }
 
-void silofs_bootrecs_to_treeids(const struct silofs_bootrecs *brecs,
-                                struct silofs_treeid *out_treeid_new,
-                                struct silofs_treeid *out_treeid_alt)
+void silofs_bootrecs_to_volids(const struct silofs_bootrecs *brecs,
+                               struct silofs_volid *out_volid_new,
+                               struct silofs_volid *out_volid_alt)
 {
-	silofs_bootrec_treeid(&brecs->brec[0], out_treeid_new);
-	silofs_bootrec_treeid(&brecs->brec[1], out_treeid_alt);
+	silofs_bootrec_volid(&brecs->brec[0], out_volid_new);
+	silofs_bootrec_volid(&brecs->brec[1], out_volid_alt);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

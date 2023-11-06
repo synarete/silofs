@@ -123,16 +123,16 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 	return vrange.height;
 }
 
-static void sb_treeid(const struct silofs_super_block *sb,
-                      struct silofs_treeid *out_treeid)
+static void sb_volid(const struct silofs_super_block *sb,
+                     struct silofs_volid *out_volid)
 {
-	silofs_treeid_assign(out_treeid, &sb->sb_treeid);
+	silofs_volid_assign(out_volid, &sb->sb_volid);
 }
 
-static void sb_set_treeid(struct silofs_super_block *sb,
-                          const struct silofs_treeid *treeid)
+static void sb_set_volid(struct silofs_super_block *sb,
+                         const struct silofs_volid *volid)
 {
-	silofs_treeid_assign(&sb->sb_treeid, treeid);
+	silofs_volid_assign(&sb->sb_volid, volid);
 }
 
 static void sb_self(const struct silofs_super_block *sb,
@@ -145,7 +145,7 @@ static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr64b_htox(&sb->sb_self_uaddr, uaddr);
-	sb_set_treeid(sb, &uaddr->laddr.lextid.treeid);
+	sb_set_volid(sb, &uaddr->laddr.lextid.volid);
 }
 
 static void sb_origin(const struct silofs_super_block *sb,
@@ -160,12 +160,12 @@ static void sb_set_origin(struct silofs_super_block *sb,
 	silofs_uaddr64b_htox(&sb->sb_orig_uaddr, uaddr);
 }
 
-static void sb_generate_treeid(struct silofs_super_block *sb)
+static void sb_generate_volid(struct silofs_super_block *sb)
 {
-	struct silofs_treeid treeid;
+	struct silofs_volid volid;
 
-	silofs_treeid_generate(&treeid);
-	sb_set_treeid(sb, &treeid);
+	silofs_volid_generate(&volid);
+	sb_set_volid(sb, &volid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -482,7 +482,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_sproots(sb);
 	sb_gen_rootivs(sb);
-	sb_generate_treeid(sb);
+	sb_generate_volid(sb);
 	sb_reset_main_lextids(sb);
 	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
 	silofs_uaddr64b_reset(&sb->sb_orig_uaddr);
@@ -648,10 +648,10 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sbi_treeid(const struct silofs_sb_info *sbi,
-                       struct silofs_treeid *out_treeid)
+void silofs_sbi_volid(const struct silofs_sb_info *sbi,
+                      struct silofs_volid *out_volid)
 {
-	sb_treeid(sbi->sb, out_treeid);
+	sb_volid(sbi->sb, out_volid);
 }
 
 int silofs_sbi_main_lext(const struct silofs_sb_info *sbi,
@@ -771,10 +771,10 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
 bool silofs_sbi_ismutable_lextid(const struct silofs_sb_info *sbi,
                                  const struct silofs_lextid *lextid)
 {
-	struct silofs_treeid treeid;
+	struct silofs_volid volid;
 
-	silofs_sbi_treeid(sbi, &treeid);
-	return silofs_lextid_has_treeid(lextid, &treeid);
+	silofs_sbi_volid(sbi, &volid);
+	return silofs_lextid_has_volid(lextid, &volid);
 }
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
@@ -930,7 +930,7 @@ void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
 	sb_assign(sb, sb_other);
 	sb_clone_sproots(sb, sb_other);
 	sb_clone_rootivs(sb, sb_other);
-	sb_generate_treeid(sb);
+	sb_generate_volid(sb);
 	sb_reset_main_lextids(sb);
 	sb_set_self(sb, sbi_uaddr(sbi));
 	sb_set_origin(sb, sbi_uaddr(sbi_other));

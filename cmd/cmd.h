@@ -242,7 +242,7 @@ void cmd_open_fs(struct silofs_fs_ctx *fse);
 void cmd_exec_fs(struct silofs_fs_ctx *fse);
 
 void cmd_fork_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_treeid *out_new, struct silofs_treeid *out_alt);
+                 struct silofs_volid *out_new, struct silofs_volid *out_alt);
 
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_iconf *iconf);
@@ -304,10 +304,10 @@ void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
                         const struct silofs_uuid *uuid);
 
 void cmd_iconf_set_uuid_by(struct silofs_iconf *iconf,
-                           const struct silofs_treeid *treeid);
+                           const struct silofs_volid *volid);
 
-void cmd_iconf_get_treeid(const struct silofs_iconf *iconf,
-                          struct silofs_treeid *out_treeid);
+void cmd_iconf_get_volid(const struct silofs_iconf *iconf,
+                         struct silofs_volid *out_volid);
 
 void cmd_iconf_add_user(struct silofs_iconf *iconf,
                         const char *user, bool with_sup_groups);

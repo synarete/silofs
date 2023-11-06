@@ -117,7 +117,7 @@ struct ft_mchunk;
 /* Test define */
 struct ft_tdef {
 	void (*hook)(struct ft_env *);
-	const char  *name;
+	const char *name;
 	int flags;
 	int pad;
 };
@@ -226,6 +226,8 @@ long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
                         const struct statx_timestamp *ts2);
 
 size_t ft_page_size(void);
+
+const char *ft_curr_test_name(const struct ft_env *fte);
 
 /* Directory-entry helpers */
 int ft_dirent_isdot(const struct dirent64 *dent);

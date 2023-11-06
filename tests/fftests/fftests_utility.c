@@ -456,6 +456,11 @@ static uint64_t ft_next_seqn(struct ft_env *fte)
 	return ret;
 }
 
+const char *ft_curr_test_name(const struct ft_env *fte)
+{
+	return fte->currtest->name;
+}
+
 char *ft_make_xname_unique(struct ft_env *fte, size_t nlen,
                            char *buf, size_t bsz)
 {
@@ -465,7 +470,8 @@ char *ft_make_xname_unique(struct ft_env *fte, size_t nlen,
 	ssize_t len;
 
 	if ((bsz > 0) && (nlen < bsz)) {
-		len = snprintf(buf, bsz, "%s_%08x", fte->currtest->name, val);
+		len = snprintf(buf, bsz, "%s_%08x",
+		               ft_curr_test_name(fte), val);
 		if ((size_t)len < bsz) {
 			memset(buf + len, 'x', bsz - (size_t)len);
 		}
@@ -480,7 +486,7 @@ char *ft_new_name_unique(struct ft_env *fte)
 	const uint32_t rnd = (uint32_t)ft_lrand(fte);
 	const uint32_t val = seq ^ rnd ^ (uint32_t)fte->pid;
 
-	return ft_strfmt(fte, "%s_%08x", fte->currtest->name, val);
+	return ft_strfmt(fte, "%s_%08x", ft_curr_test_name(fte), val);
 }
 
 long ft_timespec_diff(const struct timespec *ts1, const struct timespec *ts2)

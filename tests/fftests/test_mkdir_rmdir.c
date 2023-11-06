@@ -435,6 +435,76 @@ static void test_mkdirat_nested(struct ft_env *fte)
 	ft_rmdir(path);
 }
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects mkdirat(2) to work with multiple nested dirs/files and I/O
+ */
+static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
+{
+	const char *curr = ft_curr_test_name(fte);
+	const char *path = ft_new_path_unique(fte);
+	const char *name = NULL;
+	const size_t len = FT_1M;
+	void *buf1 = ft_new_buf_rands(fte, len);
+	void *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt_inner = (cnt > 10) ? 10 : cnt;
+	loff_t off = -1;
+	int dfd = -1;
+	int fd = -1;
+
+	ft_mkdir(path, 0700);
+	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	for (size_t i = 0; i < cnt; ++i) {
+		name = ft_new_namef(fte, "%s%lu", curr, i);
+		ft_mkdirat(dfd, name, 0700);
+		name = ft_new_namef(fte, "%s%lu/%lu", curr, i, i);
+		ft_mkdirat(dfd, name, 0700);
+		name = ft_new_namef(fte, "%s%lu/%lu/%lu", curr, i, i, i);
+		ft_mkdirat(dfd, name, 0700);
+		for (size_t j = 0; j < cnt_inner; ++j) {
+			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu",
+			                    curr, i, i, i, curr, j);
+			ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
+			off = (ssize_t)(i * len + j);
+			ft_pwriten(fd, buf1, len, off);
+			ft_close(fd);
+		}
+	}
+	ft_close(dfd);
+	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	for (size_t i = 0; i < cnt; ++i) {
+		for (size_t j = 0; j < cnt_inner; ++j) {
+			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu",
+			                    curr, i, i, i, curr, j);
+			ft_openat(dfd, name, O_RDONLY, 0600, &fd);
+			off = (ssize_t)(i * len + j);
+			ft_preadn(fd, buf2, len, off);
+			ft_expect_eqm(buf1, buf2, len);
+			ft_close(fd);
+			ft_unlinkat(dfd, name, 0);
+		}
+		name = ft_new_namef(fte, "%s%lu/%lu/%lu", curr, i, i, i);
+		ft_unlinkat(dfd, name, AT_REMOVEDIR);
+		name = ft_new_namef(fte, "%s%lu/%lu", curr, i, i);
+		ft_unlinkat(dfd, name, AT_REMOVEDIR);
+		name = ft_new_namef(fte, "%s%lu", curr, i);
+		ft_unlinkat(dfd, name, AT_REMOVEDIR);
+	}
+	ft_close(dfd);
+	ft_rmdir(path);
+}
+
+static void test_mkdirat_nested_io(struct ft_env *fte)
+{
+	const size_t cnt[] = { 1, 10, 100 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_mkdirat_nested_io_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects successful rmdir(3p) to update the last data modification and last
@@ -560,6 +630,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mkdir_setgid),
 	FT_DEFTEST(test_mkdirat_simple),
 	FT_DEFTEST(test_mkdirat_nested),
+	FT_DEFTEST(test_mkdirat_nested_io),
 	FT_DEFTEST(test_rmdir_mctime),
 	FT_DEFTEST(test_rmdir_openat),
 	FT_DEFTEST(test_rmdir_getdents),

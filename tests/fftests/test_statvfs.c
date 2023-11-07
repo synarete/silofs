@@ -28,7 +28,7 @@ static void test_statvfs_simple(struct ft_env *fte)
 	const char *name = ft_new_name_unique(fte);
 	const char *path = ft_new_path_name(fte, name);
 
-	ft_statvfs(fte->params.workdir, &stv);
+	ft_statvfs(fte->params.testdir, &stv);
 	ft_expect_gt(stv.f_bsize, 0);
 	ft_expect_eq((stv.f_bsize % FT_FRGSIZE), 0);
 	ft_expect_gt(stv.f_frsize, 0);

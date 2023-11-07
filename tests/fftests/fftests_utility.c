@@ -257,7 +257,7 @@ char *ft_new_path_nested(struct ft_env *fte,
 
 char *ft_new_path_name(struct ft_env *fte, const char *name)
 {
-	const char *workdir = fte->params.workdir;
+	const char *workdir = fte->params.testdir;
 
 	return ft_new_path_nested(fte, workdir, name);
 }

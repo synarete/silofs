@@ -133,7 +133,7 @@ struct ft_tests {
 /* Tests execution parameters */
 struct ft_params {
 	const char *progname;
-	const char *workdir;
+	const char *testdir;
 	const char *testname;
 	long repeatn;
 	int testsmask;

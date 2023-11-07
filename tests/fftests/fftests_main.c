@@ -26,8 +26,9 @@ struct ft_global_settings {
 	struct silofs_log_params log_params;
 	int     argc;
 	char  **argv;
-	char   *workdir_root;
-	char   *workdir_real;
+	char   *curr_workdir;
+	char   *testdir_path;
+	char   *testdir_real;
 	char   *test_name;
 	long    repeat_count;
 	int     tests_bitmask;
@@ -140,6 +141,11 @@ static int ft_tests_mask(void)
 
 static void ft_pre_execute(void)
 {
+	ft_globals.curr_workdir = get_current_dir_name();
+	if (ft_globals.curr_workdir == NULL) {
+		error(EXIT_FAILURE, errno, "get_current_dir_name failed");
+	}
+
 	ft_g_env = (struct ft_env *)malloc(sizeof(*ft_g_env));
 	if (ft_g_env == NULL) {
 		error(EXIT_FAILURE, errno,
@@ -154,15 +160,21 @@ static void ft_pre_execute(void)
 
 static void ft_post_execute(void)
 {
-	free(ft_g_env);
-	ft_g_env = NULL;
+	if (ft_g_env != NULL) {
+		free(ft_g_env);
+		ft_g_env = NULL;
+	}
+	if (ft_globals.curr_workdir != NULL) {
+		free(ft_globals.curr_workdir);
+		ft_globals.curr_workdir = NULL;
+	}
 }
 
 static void ft_execute_all(void)
 {
 	struct ft_params params = {
 		.progname = program_invocation_short_name,
-		.workdir = ft_globals.workdir_real,
+		.testdir = ft_globals.testdir_real,
 		.testname = ft_globals.test_name,
 		.testsmask = ft_globals.tests_bitmask,
 		.repeatn = ft_globals.repeat_count,
@@ -307,23 +319,23 @@ static void ft_parse_args(void)
 	if (optind >= ft_globals.argc) {
 		error(EXIT_FAILURE, 0, "missing root pathname");
 	}
-	ft_globals.workdir_root = ft_globals.argv[optind++];
+	ft_globals.testdir_path = ft_globals.argv[optind++];
 	if (optind < ft_globals.argc) {
 		error(EXIT_FAILURE, 0, "redundant argument: %s",
 		      ft_globals.argv[optind]);
 	}
-	if (!realpath(ft_globals.workdir_root, ft_dirpath_buf)) {
+	if (!realpath(ft_globals.testdir_path, ft_dirpath_buf)) {
 		error(EXIT_FAILURE, errno, "no realpath: %s",
-		      ft_globals.workdir_root);
+		      ft_globals.testdir_path);
 	}
-	ft_globals.workdir_real = ft_dirpath_buf;
+	ft_globals.testdir_real = ft_dirpath_buf;
 }
 
 static void ft_verify_args(void)
 {
+	struct stat st = { .st_size = -1 };
+	const char *base = ft_globals.testdir_path;
 	int err;
-	struct stat st;
-	const char *base = ft_globals.workdir_root;
 
 	if (ft_globals.list_tests) {
 		return;

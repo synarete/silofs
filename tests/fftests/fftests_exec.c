@@ -66,7 +66,7 @@ static const struct ft_tests *const ft_testsbl[]  = {
 
 static void statvfs_of(const struct ft_env *fte, struct statvfs *stvfs)
 {
-	ft_statvfs(fte->params.workdir, stvfs);
+	ft_statvfs(fte->params.testdir, stvfs);
 }
 
 static void ft_list_test(struct ft_env *fte, const struct ft_tdef *tdef)

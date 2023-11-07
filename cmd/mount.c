@@ -75,6 +75,7 @@ struct cmd_mount_ctx {
 	int                     halt_signal;
 	int                     post_exec_status;
 	bool                    has_lockfile;
+	bool                    with_progname; /* XXX: TODO: allow set */
 };
 
 static struct cmd_mount_ctx *cmd_mount_ctx;
@@ -451,7 +452,7 @@ static void cmd_mount_set_dumpable(unsigned int state)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
-	cmd_globals.log_params.level |= SILOFS_LOG_INFO;
+	cmd_globals.log_params.level = SILOFS_LOG_INFO;
 
 	if (!cmd_globals.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
@@ -463,6 +464,11 @@ static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 		cmd_mount_set_dumpable(1);
 	} else {
 		cmd_mount_set_dumpable(0);
+	}
+	if (ctx->with_progname) {
+		cmd_globals.log_params.flags |= SILOFS_LOGF_PROGNAME;
+	} else {
+		cmd_globals.log_params.flags &= ~SILOFS_LOGF_PROGNAME;
 	}
 }
 

@@ -86,7 +86,7 @@ _mount_silofs_by_systemd_run() {
 
   systemd_run_cmd=$(_locate_systemd_run)
   silofs_cmd=$(_locate_silofs)
-  ${systemd_run_cmd} --user --scope "${silofs_cmd}" mount "$@"
+  ${systemd_run_cmd} --user --scope "${silofs_cmd}" "mount" "$@"
 }
 
 _mount_silofs_by_direct_call() {

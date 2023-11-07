@@ -644,6 +644,7 @@ static void cmd_daemonize(void)
 	}
 	cmd_globals.log_params.flags |= SILOFS_LOGF_SYSLOG;
 	cmd_globals.log_params.flags &= ~SILOFS_LOGF_STDOUT;
+	cmd_globals.log_params.flags &= ~SILOFS_LOGF_PROGNAME;
 
 	/*
 	 * TODO-0024: No fd=0

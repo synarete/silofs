@@ -104,8 +104,9 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_globals.dont_daemonize = false;
 	cmd_globals.allow_coredump = false;
 	cmd_globals.dumpable = true; /* XXX */
-	cmd_globals.log_params.level = SILOFS_LOG_WARN;
-	cmd_globals.log_params.flags = SILOFS_LOGF_STDOUT;
+	cmd_globals.log_params.level = SILOFS_LOG_INFO;
+	cmd_globals.log_params.flags =
+	        SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME;
 
 	umask(cmd_globals.umsk);
 	setlocale(LC_ALL, "");

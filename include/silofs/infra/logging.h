@@ -28,9 +28,10 @@ enum silofs_log_level {
 
 /* logging control flags */
 enum silofs_log_flags {
-	SILOFS_LOGF_STDOUT = 0x01,
-	SILOFS_LOGF_SYSLOG = 0x02,
-	SILOFS_LOGF_FILINE = 0x04,
+	SILOFS_LOGF_STDOUT      = 0x01,
+	SILOFS_LOGF_SYSLOG      = 0x02,
+	SILOFS_LOGF_FILINE      = 0x04,
+	SILOFS_LOGF_PROGNAME    = 0x08,
 };
 
 struct silofs_log_params {

@@ -32,7 +32,8 @@
 	(SILOFS_LOG_ERROR)
 
 #define SILOFS_LOG_FLAGS_DEFAULT \
-	(SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG | SILOFS_LOGF_FILINE)
+	(SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG | \
+	 SILOFS_LOGF_PROGNAME | SILOFS_LOGF_FILINE)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -51,17 +52,20 @@ void silofs_set_global_log_params(const struct silofs_log_params *logp)
 	silofs_global_log_params = logp;
 }
 
-static void log_to_stdout(const char *msg, const char *file, int line)
+static void log_to_stdout(enum silofs_log_flags log_flags,
+                          const char *msg, const char *file, int line)
 {
 	FILE *fp = stdout;
-	const char *prog = program_invocation_short_name;
 
 	flockfile(fp);
-	if ((file != NULL) && line) {
-		fprintf(fp, "%s: [%s:%d] \t%s\n", prog, file, line, msg);
-	} else {
-		fprintf(fp, "%s: %s\n", prog, msg);
+	if (log_flags & SILOFS_LOGF_PROGNAME) {
+		fprintf(fp, "%s: ", program_invocation_short_name);
 	}
+	if ((file != NULL) && line) {
+		fprintf(fp, "[%s:%d] \t", file, line);
+	}
+	fprintf(fp, "%s\n", msg);
+	fflush(fp);
 	funlockfile(fp);
 }
 
@@ -102,7 +106,7 @@ static void log_msg(enum silofs_log_level log_level,
                     const char *msg, const char *file, int line)
 {
 	if (log_flags & SILOFS_LOGF_STDOUT) {
-		log_to_stdout(msg, file, line);
+		log_to_stdout(log_flags, msg, file, line);
 	}
 	if (log_flags & SILOFS_LOGF_SYSLOG) {
 		log_to_syslog(log_level, msg, file, line);

@@ -210,6 +210,17 @@ void ft_unlinkat(int dirfd, const char *pathname, int flags)
 	expect_ok(silofs_sys_unlinkat(dirfd, pathname, flags));
 }
 
+static void ft_unlinkat_err(int dirfd, const char *pathname, int flags,
+                            int err)
+{
+	expect_err(silofs_sys_unlinkat(dirfd, pathname, flags), err);
+}
+
+void ft_unlinkat_noent(int dirfd, const char *pathname)
+{
+	ft_unlinkat_err(dirfd, pathname, 0, -ENOENT);
+}
+
 void ft_open(const char *path, int flags, mode_t mode, int *fd)
 {
 	expect_ok(silofs_sys_open(path, flags, mode, fd));

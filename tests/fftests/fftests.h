@@ -304,6 +304,8 @@ void ft_unlink_noent(const char *path);
 
 void ft_unlinkat(int dirfd, const char *pathname, int flags);
 
+void ft_unlinkat_noent(int dirfd, const char *pathname);
+
 void ft_open(const char *path, int flags, mode_t mode, int *fd);
 
 void ft_open_err(const char *path, int flags, mode_t mode, int err);

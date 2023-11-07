@@ -31,10 +31,10 @@ struct ft_global_settings {
 	char   *test_name;
 	long    repeat_count;
 	int     tests_bitmask;
-	int     no_check_statvfs;
-	int     do_extra_tests;
-	int     random_order;
-	int     list_tests;
+	bool    quiet_mode;
+	bool    no_check_statvfs;
+	bool    random_order;
+	bool    list_tests;
 };
 
 /* Global settings */
@@ -44,7 +44,7 @@ static struct ft_global_settings ft_globals;
 static char ft_dirpath_buf[PATH_MAX];
 
 /* Execution environment context */
-static struct ft_env *ft_g_ctx;
+static struct ft_env *ft_g_env;
 
 /* Local functions */
 static void ft_setup_globals(int argc, char *argv[]);
@@ -104,7 +104,7 @@ static void ft_error_print_progname(void)
 
 static void ft_atexit_cleanup(void)
 {
-	ft_g_ctx = NULL;
+	ft_g_env = NULL;
 	memset(&ft_globals, 0, sizeof(ft_globals));
 }
 
@@ -119,7 +119,8 @@ static void ft_setup_globals(int argc, char *argv[])
 	ft_globals.argv = argv;
 	ft_globals.repeat_count = 1;
 	ft_globals.log_params.level = SILOFS_LOG_INFO;
-	ft_globals.log_params.flags = SILOFS_LOGF_STDOUT;
+	ft_globals.log_params.flags =
+	        SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME;
 	silofs_set_global_log_params(&ft_globals.log_params);
 }
 
@@ -139,20 +140,22 @@ static int ft_tests_mask(void)
 
 static void ft_pre_execute(void)
 {
-	size_t size;
-
-	size = sizeof(*ft_g_ctx);
-	ft_g_ctx = (struct ft_env *)malloc(size);
-	if (ft_g_ctx == NULL) {
-		error(EXIT_FAILURE, errno, "malloc %lu-nbytes failed", size);
+	ft_g_env = (struct ft_env *)malloc(sizeof(*ft_g_env));
+	if (ft_g_env == NULL) {
+		error(EXIT_FAILURE, errno,
+		      "malloc %lu failed", sizeof(*ft_g_env));
 	}
 	ft_globals.tests_bitmask = ft_tests_mask();
+
+	if (ft_globals.quiet_mode) {
+		ft_globals.log_params.level = SILOFS_LOG_ERROR;
+	}
 }
 
 static void ft_post_execute(void)
 {
-	free(ft_g_ctx);
-	ft_g_ctx = NULL;
+	free(ft_g_env);
+	ft_g_env = NULL;
 }
 
 static void ft_execute_all(void)
@@ -166,9 +169,9 @@ static void ft_execute_all(void)
 		.listtests = ft_globals.list_tests
 	};
 
-	fte_init(ft_g_ctx, &params);
-	fte_exec(ft_g_ctx);
-	fte_fini(ft_g_ctx);
+	fte_init(ft_g_env, &params);
+	fte_exec(ft_g_env);
+	fte_fini(ft_g_env);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -226,6 +229,7 @@ static const char *const ft_usage =
         " -e, --extra               Use extra tests\n" \
         " -r, --random              Run tests in random order\n" \
         " -C, --nostatvfs           Do not check statvfs between tests\n" \
+        " -Q, --quiet               Print only errors\n"
         " -l, --list                List tests names\n"
         " -v, --version             Show version info\n";
 
@@ -265,6 +269,7 @@ static void ft_parse_args(void)
 		{ "repeat", required_argument, NULL, 'n' },
 		{ "random", no_argument, NULL, 'r' },
 		{ "nostatvfs", no_argument, NULL, 'C' },
+		{ "quiet", no_argument, NULL, 'Q' },
 		{ "list", no_argument, NULL, 'l' },
 		{ "version", no_argument, NULL, 'v' },
 		{ "help", no_argument, NULL, 'h' },
@@ -274,13 +279,15 @@ static void ft_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ft_globals.argc, ft_globals.argv,
-		                      "t:n:erClvh", long_opts, &opt_index);
+		                      "t:n:erQClvh", long_opts, &opt_index);
 		if (opt_chr == 't') {
 			ft_globals.test_name = optarg;
 		} else if (opt_chr == 'n') {
 			ft_globals.repeat_count = ft_strtol_safe(optarg);
 		} else if (opt_chr == 'r') {
 			ft_globals.random_order = true;
+		} else if (opt_chr == 'Q') {
+			ft_globals.quiet_mode = true;
 		} else if (opt_chr == 'C') {
 			ft_globals.no_check_statvfs = true;
 		} else if (opt_chr == 'l') {

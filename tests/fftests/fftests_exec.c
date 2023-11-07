@@ -71,34 +71,27 @@ static void statvfs_of(const struct ft_env *fte, struct statvfs *stvfs)
 
 static void ft_list_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
-	FILE *fp = stdout;
-
 	fte->currtest = tdef;
-	fprintf(fp, "  %-40s\n", fte->currtest->name);
-	fflush(fp);
+	fprintf(stdout, "%-40s\n", fte->currtest->name);
+	fflush(stdout);
 }
 
 static void ft_start_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
-	FILE *fp = stdout;
-
 	fte->currtest = tdef;
 	fte->nbytes_alloc = 0;
-	fprintf(fp, "  %-40s", fte->currtest->name);
-	fflush(fp);
+	silofs_log_info("  %-40s =>", fte->currtest->name);
 	silofs_mclock_now(&fte->ts_start);
 	statvfs_of(fte, &fte->stvfs);
 }
 
 static void ft_finish_test(struct ft_env *fte)
 {
-	FILE *fp = stdout;
 	struct timespec dur;
 
 	silofs_mclock_dur(&fte->ts_start, &dur);
-	fprintf(fp, "OK (%ld.%03lds)\n", dur.tv_sec, dur.tv_nsec / 1000000L);
-	fflush(fp);
-
+	silofs_log_info("  %-40s OK (%ld.%03lds)", fte->currtest->name,
+	                dur.tv_sec, dur.tv_nsec / 1000000L);
 	umask(fte->umsk);
 	fte->currtest = NULL;
 	ft_freeall(fte);

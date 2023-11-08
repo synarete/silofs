@@ -181,20 +181,24 @@ int silofs_logf(enum silofs_log_level log_level,
 
 void silofs_log_params_by_str(struct silofs_log_params *logp, const char *str)
 {
+	int level = SILOFS_LOG_WARN;
+	int flags = logp->flags;
+
 	if (str == NULL) {
-		logp->level = SILOFS_LOG_WARN;
-		logp->flags &= ~SILOFS_LOGF_FILINE;
+		flags &= ~SILOFS_LOGF_FILINE;
 	} else if (!strcmp(str, "0")) {
-		logp->level = SILOFS_LOG_WARN;
-		logp->flags &= ~SILOFS_LOGF_FILINE;
+		flags &= ~SILOFS_LOGF_FILINE;
 	} else if (!strcmp(str, "1")) {
-		logp->level = SILOFS_LOG_INFO;
+		level = SILOFS_LOG_INFO;
 	} else if (!strcmp(str, "2")) {
-		logp->level = SILOFS_LOG_DEBUG;
+		level = SILOFS_LOG_DEBUG;
 	} else if (!strcmp(str, "3")) {
-		logp->level = SILOFS_LOG_DEBUG;
-		logp->flags |= SILOFS_LOGF_FILINE;
+		level = SILOFS_LOG_DEBUG;
+		flags |= SILOFS_LOGF_FILINE;
 	}
+
+	logp->level = (enum silofs_log_level)level;
+	logp->flags = (enum silofs_log_flags)flags;
 }
 
 void silofs_log_meta_banner(const char *name, int start)

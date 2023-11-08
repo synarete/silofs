@@ -302,10 +302,10 @@ time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv)
 
 static void make_super_lextid(struct silofs_lextid *out_lextid)
 {
-	struct silofs_pvid pvid;
+	struct silofs_lvid lvid;
 
-	silofs_pvid_generate(&pvid);
-	silofs_lextid_setup(out_lextid, &pvid, 0,
+	silofs_lvid_generate(&lvid);
+	silofs_lextid_setup(out_lextid, &lvid, 0,
 	                    SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
 }
 

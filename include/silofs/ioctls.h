@@ -104,8 +104,8 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_clone {
-	struct silofs_pvid pvid_new;
-	struct silofs_pvid pvid_alt;
+	struct silofs_lvid lvid_new;
+	struct silofs_lvid lvid_alt;
 };
 
 struct silofs_ioc_syncfs {

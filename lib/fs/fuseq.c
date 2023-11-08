@@ -2669,8 +2669,8 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	if (err) {
 		goto out;
 	}
-	silofs_bootrecs_to_pvids(&fcc->args->out.clone.brecs,
-	                         &cl_out->pvid_new, &cl_out->pvid_alt);
+	silofs_bootrecs_to_lvids(&fcc->args->out.clone.brecs,
+	                         &cl_out->lvid_new, &cl_out->lvid_alt);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fuseq_reply_ioctl(fcc->fqw, fcc->task, 0,

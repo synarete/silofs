@@ -1483,7 +1483,7 @@ static int update_save_bootrec(const struct silofs_fs_ctx *fs_ctx,
 }
 
 static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
-                        struct silofs_pvid *out_pvid)
+                        struct silofs_lvid *out_lvid)
 {
 	struct silofs_bootrec brec;
 	int err;
@@ -1517,17 +1517,17 @@ static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_bootrec_pvid(&brec, out_pvid);
+	silofs_bootrec_lvid(&brec, out_lvid);
 	return 0;
 }
 
 int silofs_format_fs(struct silofs_fs_ctx *fs_ctx,
-                     struct silofs_pvid *out_pvid)
+                     struct silofs_lvid *out_lvid)
 {
 	int ret;
 
 	fs_ctx_lock(fs_ctx);
-	ret = do_format_fs(fs_ctx, out_pvid);
+	ret = do_format_fs(fs_ctx, out_lvid);
 	fs_ctx_unlock(fs_ctx);
 	return ret;
 }
@@ -1540,13 +1540,13 @@ static int fse_reload_root_sb_lext(struct silofs_fs_ctx *fs_ctx,
 }
 
 static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
-                      const struct silofs_pvid *pvid)
+                      const struct silofs_lvid *lvid)
 {
 	struct silofs_bootrec brec;
 	struct silofs_uaddr uaddr;
 	int err;
 
-	silofs_make_bootrec_uaddr(pvid, &uaddr);
+	silofs_make_bootrec_uaddr(lvid, &uaddr);
 	err = reload_bootrec_of(fs_ctx, &uaddr, &brec);
 	if (err) {
 		return err;
@@ -1563,12 +1563,12 @@ static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_boot_fs(struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_pvid *pvid)
+                   const struct silofs_lvid *lvid)
 {
 	int ret;
 
 	fs_ctx_lock(fs_ctx);
-	ret = do_boot_fs(fs_ctx, pvid);
+	ret = do_boot_fs(fs_ctx, lvid);
 	fs_ctx_unlock(fs_ctx);
 	return ret;
 }
@@ -1637,12 +1637,12 @@ int silofs_close_fs(struct silofs_fs_ctx *fs_ctx)
 }
 
 int silofs_poke_fs(struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_pvid *pvid,
+                   const struct silofs_lvid *lvid,
                    struct silofs_bootrec *out_brec)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
 
-	silofs_make_bootrec_uaddr(pvid, &uaddr);
+	silofs_make_bootrec_uaddr(lvid, &uaddr);
 	return load_bootrec_of(fs_ctx, &uaddr, out_brec);
 }
 
@@ -1664,8 +1664,8 @@ static int exec_clone_fs(const struct silofs_fs_ctx *fs_ctx,
 }
 
 int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_pvid *out_new,
-                   struct silofs_pvid *out_alt)
+                   struct silofs_lvid *out_new,
+                   struct silofs_lvid *out_alt)
 {
 	struct silofs_bootrecs brecs;
 	int err;
@@ -1674,7 +1674,7 @@ int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_bootrecs_to_pvids(&brecs, out_new, out_alt);
+	silofs_bootrecs_to_lvids(&brecs, out_new, out_alt);
 	return 0;
 }
 
@@ -1711,13 +1711,13 @@ static int exec_unref_fs(struct silofs_fs_ctx *fse)
 }
 
 int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
-                    const struct silofs_pvid *pvid)
+                    const struct silofs_lvid *lvid)
 {
 	struct silofs_bootrec brec;
 	struct silofs_uaddr uaddr;
 	int err;
 
-	silofs_make_bootrec_uaddr(pvid, &uaddr);
+	silofs_make_bootrec_uaddr(lvid, &uaddr);
 	err = reload_bootrec_of(fs_ctx, &uaddr, &brec);
 	if (err) {
 		return err;

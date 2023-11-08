@@ -49,10 +49,10 @@ static struct silofs_repo *unrc_repo(const struct silofs_unref_ctx *unr_ctx)
 static bool unrc_is_lextid_of(const struct silofs_unref_ctx *unr_ctx,
                               const struct silofs_lextid *lextid)
 {
-	const struct silofs_pvid *pvid =
-		        &unr_ctx->sb_uaddr.laddr.lextid.pvid;
+	const struct silofs_lvid *lvid =
+		        &unr_ctx->sb_uaddr.laddr.lextid.lvid;
 
-	return silofs_lextid_has_pvid(lextid, pvid);
+	return silofs_lextid_has_lvid(lextid, lvid);
 }
 
 static int unrc_exec_unrefs_at(struct silofs_unref_ctx *unr_ctx,

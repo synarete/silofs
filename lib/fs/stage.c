@@ -466,21 +466,21 @@ stgc_make_lextid_of_spmaps(const struct silofs_stage_ctx *stg_ctx,
                            loff_t voff, enum silofs_height height,
                            struct silofs_lextid *out_lextid)
 {
-	struct silofs_pvid pvid;
+	struct silofs_lvid lvid;
 	const enum silofs_stype vspace = stg_ctx->vspace;
 
-	silofs_sbi_get_pvid(stg_ctx->sbi, &pvid);
-	silofs_lextid_setup(out_lextid, &pvid, voff, vspace, height);
+	silofs_sbi_get_lvid(stg_ctx->sbi, &lvid);
+	silofs_lextid_setup(out_lextid, &lvid, voff, vspace, height);
 }
 
 static void
 stgc_make_lextid_of_vdata(const struct silofs_stage_ctx *stg_ctx,
                           loff_t voff, struct silofs_lextid *out_lextid)
 {
-	struct silofs_pvid pvid;
+	struct silofs_lvid lvid;
 
-	silofs_sbi_get_pvid(stg_ctx->sbi, &pvid);
-	silofs_lextid_setup(out_lextid, &pvid, voff,
+	silofs_sbi_get_lvid(stg_ctx->sbi, &lvid);
+	silofs_lextid_setup(out_lextid, &lvid, voff,
 	                    stg_ctx->vspace, SILOFS_HEIGHT_VDATA);
 }
 

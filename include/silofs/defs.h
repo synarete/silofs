@@ -96,10 +96,10 @@
 
 
 /* number of children in logical-to-persistant mapping node */
-#define SILOFS_VOLMAP_NCHILDS           (61)
+#define SILOFS_PVMAP_NCHILDS            (59)
 
 /* number of mapping-entries in logical-to-persistant node */
-#define SILOFS_VOLMAP_NLTOP             (112)
+#define SILOFS_PVMAP_NLTOP              (77)
 
 
 /* minimal file-system capacity, in bytes (2G) */
@@ -488,10 +488,24 @@ struct silofs_pvid {
 	struct silofs_uuid              uuid;
 } silofs_packed_aligned16;
 
+
+struct silofs_lvid {
+	struct silofs_uuid              uuid;
+} silofs_packed_aligned16;
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_lextid32b {
+struct silofs_paddr32b {
 	struct silofs_pvid              pvid;
+	uint32_t                        index;
+	uint32_t                        pos;
+	uint32_t                        len;
+	uint8_t                         pad[4];
+} silofs_packed_aligned16;
+
+
+struct silofs_lextid32b {
+	struct silofs_lvid              lvid;
 	int64_t                         voff;
 	uint32_t                        size;
 	uint8_t                         vspace;
@@ -663,7 +677,7 @@ struct silofs_super_block {
 	/* 512..1K */
 	struct silofs_uaddr64b          sb_self_uaddr;
 	struct silofs_uaddr64b          sb_orig_uaddr;
-	struct silofs_pvid             sb_pvid;
+	struct silofs_lvid              sb_lvid;
 	struct silofs_vrange128         sb_vrange;
 	uint64_t                        sb_reserved4a;
 	uint64_t                        sb_birth_time;
@@ -946,33 +960,25 @@ struct silofs_repo_meta {
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 
-struct silofs_ltop64b {
+struct silofs_ltop80b {
 	struct silofs_laddr48b          laddr;
-	uint32_t                        index;
-	uint32_t                        reserved;
-	int64_t                         off;
+	struct silofs_paddr32b          paddr;
 } silofs_packed_aligned16;
 
 
 struct silofs_volume_root {
 	struct silofs_header            vol_hdr;
-	struct silofs_pvid             vol_id;
+	struct silofs_pvid              vol_id;
 } silofs_packed_aligned64;
-
-
-struct silofs_pvmap_ref {
-	uint32_t                        index;
-	uint32_t                        reserved;
-	int64_t                         off;
-} silofs_packed_aligned16;
 
 
 struct silofs_pvmap_node {
 	struct silofs_header            pn_hdr;
-	struct silofs_pvid             pn_pvid;
-	uint8_t                         pn_reserved[16];
-	struct silofs_pvmap_ref         pn_child[SILOFS_VOLMAP_NCHILDS];
-	struct silofs_ltop64b           pn_ltop[SILOFS_VOLMAP_NLTOP];
+	uint8_t                         pn_reserved[48];
+	struct silofs_paddr32b          pn_child[SILOFS_PVMAP_NCHILDS];
+	uint8_t                         pn_reserved2[32];
+	struct silofs_ltop80b           pn_ltop[SILOFS_PVMAP_NLTOP];
+	uint8_t                         pn_reserved3[48];
 } silofs_packed_aligned64;
 
 

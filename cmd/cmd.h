@@ -242,7 +242,7 @@ void cmd_open_fs(struct silofs_fs_ctx *fse);
 void cmd_exec_fs(struct silofs_fs_ctx *fse);
 
 void cmd_fork_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_pvid *out_new, struct silofs_pvid *out_alt);
+                 struct silofs_lvid *out_new, struct silofs_lvid *out_alt);
 
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_iconf *iconf);
@@ -300,11 +300,11 @@ void cmd_iconf_reset(struct silofs_iconf *iconf);
 
 void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name);
 
-void cmd_iconf_set_pvid_by(struct silofs_iconf *iconf,
-                           const struct silofs_pvid *pvid);
+void cmd_iconf_set_lvid_by(struct silofs_iconf *iconf,
+                           const struct silofs_lvid *lvid);
 
-void cmd_iconf_get_pvid(const struct silofs_iconf *iconf,
-                        struct silofs_pvid *out_pvid);
+void cmd_iconf_get_lvid(const struct silofs_iconf *iconf,
+                        struct silofs_lvid *out_lvid);
 
 void cmd_iconf_add_user(struct silofs_iconf *iconf,
                         const char *user, bool with_sup_groups);

@@ -549,10 +549,10 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
-const struct silofs_pvid *
-silofs_uaddr_pvid(const struct silofs_uaddr *uaddr)
+const struct silofs_lvid *
+silofs_uaddr_lvid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->laddr.lextid.pvid;
+	return &uaddr->laddr.lextid.lvid;
 }
 
 const struct silofs_lextid *

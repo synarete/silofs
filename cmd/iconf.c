@@ -882,16 +882,16 @@ static void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
 	silofs_uuid_assign(&iconf->uuid, uuid);
 }
 
-void cmd_iconf_set_pvid_by(struct silofs_iconf *iconf,
-                           const struct silofs_pvid *pvid)
+void cmd_iconf_set_lvid_by(struct silofs_iconf *iconf,
+                           const struct silofs_lvid *lvid)
 {
-	cmd_iconf_set_uuid(iconf, &pvid->uuid);
+	cmd_iconf_set_uuid(iconf, &lvid->uuid);
 }
 
-void cmd_iconf_get_pvid(const struct silofs_iconf *iconf,
-                        struct silofs_pvid *out_pvid)
+void cmd_iconf_get_lvid(const struct silofs_iconf *iconf,
+                        struct silofs_lvid *out_lvid)
 {
-	silofs_pvid_by_uuid(out_pvid, &iconf->uuid);
+	silofs_lvid_by_uuid(out_lvid, &iconf->uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

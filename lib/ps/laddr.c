@@ -133,7 +133,6 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
 	uuid_unparse_lower(uu->uu, buf);
 	strncpy(nb->name, buf, sizeof(nb->name));
 }
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_pvid_generate(struct silofs_pvid *pvid)
@@ -147,27 +146,40 @@ void silofs_pvid_assign(struct silofs_pvid *pvid,
 	silofs_uuid_assign(&pvid->uuid, &other->uuid);
 }
 
-long silofs_pvid_compare(const struct silofs_pvid *pvid1,
-                         const struct silofs_pvid *pvid2)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_lvid_generate(struct silofs_lvid *lvid)
 {
-	const struct silofs_uuid *uu1 = &pvid1->uuid;
-	const struct silofs_uuid *uu2 = &pvid2->uuid;
+	silofs_uuid_generate(&lvid->uuid);
+}
+
+void silofs_lvid_assign(struct silofs_lvid *lvid,
+                        const struct silofs_lvid *other)
+{
+	silofs_uuid_assign(&lvid->uuid, &other->uuid);
+}
+
+long silofs_lvid_compare(const struct silofs_lvid *lvid1,
+                         const struct silofs_lvid *lvid2)
+{
+	const struct silofs_uuid *uu1 = &lvid1->uuid;
+	const struct silofs_uuid *uu2 = &lvid2->uuid;
 
 	return memcmp(uu1->uu, uu2->uu, sizeof(uu1->uu));
 }
 
-bool silofs_pvid_isequal(const struct silofs_pvid *pvid1,
-                         const struct silofs_pvid *pvid2)
+bool silofs_lvid_isequal(const struct silofs_lvid *lvid1,
+                         const struct silofs_lvid *lvid2)
 {
-	return (silofs_pvid_compare(pvid1, pvid2) == 0);
+	return (silofs_lvid_compare(lvid1, lvid2) == 0);
 }
 
-void silofs_pvid_by_uuid(struct silofs_pvid *pvid,
+void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
                          const struct silofs_uuid *uuid)
 {
-	STATICASSERT_EQ(sizeof(pvid->uuid.uu), 16);
+	STATICASSERT_EQ(sizeof(lvid->uuid.uu), 16);
 
-	silofs_uuid_assign(&pvid->uuid, uuid);
+	silofs_uuid_assign(&lvid->uuid, uuid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -228,10 +240,10 @@ bool silofs_lextid_isnull(const struct silofs_lextid *lextid)
 	return (lextid->size == 0);
 }
 
-bool silofs_lextid_has_pvid(const struct silofs_lextid *lextid,
-                            const struct silofs_pvid *pvid)
+bool silofs_lextid_has_lvid(const struct silofs_lextid *lextid,
+                            const struct silofs_lvid *lvid)
 {
-	return silofs_pvid_isequal(&lextid->pvid, pvid);
+	return silofs_lvid_isequal(&lextid->lvid, lvid);
 }
 
 loff_t silofs_lextid_pos(const struct silofs_lextid *lextid, loff_t off)
@@ -253,7 +265,7 @@ void silofs_lextid_reset(struct silofs_lextid *lextid)
 void silofs_lextid_assign(struct silofs_lextid *lextid,
                           const struct silofs_lextid *other)
 {
-	silofs_pvid_assign(&lextid->pvid, &other->pvid);
+	silofs_lvid_assign(&lextid->lvid, &other->lvid);
 	lextid->voff = other->voff;
 	lextid->size = other->size;
 	lextid->vspace = other->vspace;
@@ -281,7 +293,7 @@ long silofs_lextid_compare(const struct silofs_lextid *lextid1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_pvid_compare(&lextid1->pvid, &lextid2->pvid);
+	cmp = silofs_lvid_compare(&lextid1->lvid, &lextid2->lvid);
 	if (cmp) {
 		return cmp;
 	}
@@ -303,13 +315,13 @@ uint64_t silofs_lextid_hash64(const struct silofs_lextid *lextid)
 }
 
 void silofs_lextid_setup(struct silofs_lextid *lextid,
-                         const struct silofs_pvid *pvid,
+                         const struct silofs_lvid *lvid,
                          loff_t voff, enum silofs_stype vspace,
                          enum silofs_height height)
 {
 	const size_t sz = height_to_lext_size(height);
 
-	silofs_pvid_assign(&lextid->pvid, pvid);
+	silofs_lvid_assign(&lextid->lvid, lvid);
 	lextid->size = sz;
 	lextid->voff = sz ? off_align(voff, (ssize_t)sz) : SILOFS_OFF_NULL;
 	lextid->height = height;
@@ -319,11 +331,11 @@ void silofs_lextid_setup(struct silofs_lextid *lextid,
 static void lextid_as_iv(const struct silofs_lextid *lextid,
                          struct silofs_iv *out_iv)
 {
-	STATICASSERT_EQ(sizeof(lextid->pvid), sizeof(*out_iv));
-	STATICASSERT_EQ(sizeof(lextid->pvid.uuid), sizeof(out_iv->iv));
+	STATICASSERT_EQ(sizeof(lextid->lvid), sizeof(*out_iv));
+	STATICASSERT_EQ(sizeof(lextid->lvid.uuid), sizeof(out_iv->iv));
 	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
 
-	memcpy(out_iv->iv, &lextid->pvid.uuid, sizeof(out_iv->iv));
+	memcpy(out_iv->iv, &lextid->lvid.uuid, sizeof(out_iv->iv));
 	out_iv->iv[0] ^= (uint8_t)(lextid->voff & 0xFF);
 	out_iv->iv[1] ^= (uint8_t)((lextid->voff >> 8) & 0xFF);
 	out_iv->iv[2] ^= (uint8_t)((lextid->voff >> 16) & 0xFF);
@@ -350,7 +362,7 @@ void silofs_lextid32b_htox(struct silofs_lextid32b *lextid32,
                            const struct silofs_lextid *lextid)
 {
 	memset(lextid32, 0, sizeof(*lextid32));
-	silofs_pvid_assign(&lextid32->pvid, &lextid->pvid);
+	silofs_lvid_assign(&lextid32->lvid, &lextid->lvid);
 	lextid32->voff = silofs_cpu_to_off(lextid->voff);
 	lextid32->size = silofs_cpu_to_le32((uint32_t)lextid->size);
 	lextid32->vspace = (uint8_t)lextid->vspace;
@@ -360,7 +372,7 @@ void silofs_lextid32b_htox(struct silofs_lextid32b *lextid32,
 void silofs_lextid32b_xtoh(const struct silofs_lextid32b *lextid32,
                            struct silofs_lextid *lextid)
 {
-	silofs_pvid_assign(&lextid->pvid, &lextid32->pvid);
+	silofs_lvid_assign(&lextid->lvid, &lextid32->lvid);
 	lextid->voff = silofs_off_to_cpu(lextid32->voff);
 	lextid->size = silofs_le32_to_cpu(lextid32->size);
 	lextid->vspace = (enum silofs_stype)lextid32->vspace;
@@ -493,7 +505,7 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
-	silofs_lextid_assign(&paddr->lextid, &other->lextid);
+	silofs_pvid_assign(&paddr->pvid, &other->pvid);
 	paddr->index = other->index;
 	paddr->off = other->off;
 	paddr->len = other->len;

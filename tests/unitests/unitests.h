@@ -122,7 +122,7 @@ struct ut_args {
 struct ut_env {
 	struct silofs_prandgen   prng;
 	struct silofs_password   passwd;
-	struct silofs_volid      volid[2];
+	struct silofs_pvid       pvid[2];
 	struct ut_args          *args;
 	struct silofs_fs_ctx    *fs_ctx;
 	struct timespec          ts_start;

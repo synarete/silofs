@@ -134,46 +134,46 @@ void cmd_close_repo(struct silofs_fs_ctx *fse)
 	cmd_require_ok(fse, err, "failed to close repo");
 }
 
-static void cmd_volid_of(const struct silofs_iconf *iconf,
-                         struct silofs_volid *out_volid)
+static void cmd_pvid_of(const struct silofs_iconf *iconf,
+                        struct silofs_pvid *out_pvid)
 {
-	silofs_volid_by_uuid(out_volid, &iconf->uuid);
+	silofs_pvid_by_uuid(out_pvid, &iconf->uuid);
 }
 
 static void cmd_do_require_fs(struct silofs_fs_ctx *fse,
-                              const struct silofs_volid *volid)
+                              const struct silofs_pvid *pvid)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	err = silofs_poke_fs(fse, volid, &brec);
+	err = silofs_poke_fs(fse, pvid, &brec);
 	cmd_require_ok(fse, err, "failed to poke fs");
 }
 
 void cmd_require_fs(struct silofs_fs_ctx *fse,
                     const struct silofs_iconf *iconf)
 {
-	struct silofs_volid volid;
+	struct silofs_pvid pvid;
 
-	cmd_volid_of(iconf, &volid);
-	cmd_do_require_fs(fse, &volid);
+	cmd_pvid_of(iconf, &pvid);
+	cmd_do_require_fs(fse, &pvid);
 }
 
 static void cmd_do_format_fs(struct silofs_fs_ctx *fse,
-                             struct silofs_volid *out_volid)
+                             struct silofs_pvid *out_pvid)
 {
 	int err;
 
-	err = silofs_format_fs(fse, out_volid);
+	err = silofs_format_fs(fse, out_pvid);
 	cmd_require_ok(fse, err, "failed to format fs");
 }
 
 void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_iconf *iconf)
 {
-	struct silofs_volid volid;
+	struct silofs_pvid pvid;
 
-	cmd_do_format_fs(fse, &volid);
-	silofs_uuid_assign(&iconf->uuid, &volid.uuid);
+	cmd_do_format_fs(fse, &pvid);
+	silofs_uuid_assign(&iconf->uuid, &pvid.uuid);
 }
 
 void cmd_close_fs(struct silofs_fs_ctx *fse)
@@ -185,21 +185,21 @@ void cmd_close_fs(struct silofs_fs_ctx *fse)
 }
 
 static void cmd_do_boot_fs(struct silofs_fs_ctx *fse,
-                           const struct silofs_volid *volid)
+                           const struct silofs_pvid *pvid)
 {
 	int err;
 
-	err = silofs_boot_fs(fse, volid);
+	err = silofs_boot_fs(fse, pvid);
 	cmd_require_ok(fse, err, "failed to boot fs");
 }
 
 void cmd_boot_fs(struct silofs_fs_ctx *fse,
                  const struct silofs_iconf *iconf)
 {
-	struct silofs_volid volid;
+	struct silofs_pvid pvid;
 
-	cmd_volid_of(iconf, &volid);
-	cmd_do_boot_fs(fse, &volid);
+	cmd_pvid_of(iconf, &pvid);
+	cmd_do_boot_fs(fse, &pvid);
 }
 
 void cmd_open_fs(struct silofs_fs_ctx *fse)
@@ -219,7 +219,7 @@ void cmd_exec_fs(struct silofs_fs_ctx *fse)
 }
 
 void cmd_fork_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_volid *out_new, struct silofs_volid *out_alt)
+                 struct silofs_pvid *out_new, struct silofs_pvid *out_alt)
 {
 	int err;
 
@@ -228,21 +228,21 @@ void cmd_fork_fs(struct silofs_fs_ctx *fse,
 }
 
 static void cmd_do_unref_fs(struct silofs_fs_ctx *fse,
-                            const struct silofs_volid *volid)
+                            const struct silofs_pvid *pvid)
 {
 	int err;
 
-	err = silofs_unref_fs(fse, volid);
+	err = silofs_unref_fs(fse, pvid);
 	cmd_require_ok(fse, err, "rmfs error");
 }
 
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_iconf *iconf)
 {
-	struct silofs_volid volid;
+	struct silofs_pvid pvid;
 
-	cmd_volid_of(iconf, &volid);
-	cmd_do_unref_fs(fse, &volid);
+	cmd_pvid_of(iconf, &pvid);
+	cmd_do_unref_fs(fse, &pvid);
 }
 
 void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb)

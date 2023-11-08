@@ -55,8 +55,8 @@ struct cmd_snap_ctx {
 	struct silofs_fs_args    fs_args;
 	struct silofs_fs_ctx    *fs_ctx;
 	union silofs_ioc_u      *ioc;
-	struct silofs_volid      volid_new;
-	struct silofs_volid      volid_alt;
+	struct silofs_pvid       pvid_new;
+	struct silofs_pvid       pvid_alt;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -228,8 +228,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "failed to snap: %s",
 		         ctx->in_args.repodir_name);
 	}
-	silofs_volid_assign(&ctx->volid_new, &ctx->ioc->clone.volid_new);
-	silofs_volid_assign(&ctx->volid_alt, &ctx->ioc->clone.volid_alt);
+	silofs_pvid_assign(&ctx->pvid_new, &ctx->ioc->clone.pvid_new);
+	silofs_pvid_assign(&ctx->pvid_alt, &ctx->ioc->clone.pvid_alt);
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
@@ -300,7 +300,7 @@ static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->fs_ctx, &ctx->volid_new, &ctx->volid_alt);
+	cmd_fork_fs(ctx->fs_ctx, &ctx->pvid_new, &ctx->pvid_alt);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
@@ -313,7 +313,7 @@ static void cmd_snap_save_snap_iconf(struct cmd_snap_ctx *ctx)
 	struct silofs_iconf snap_iconf;
 
 	cmd_iconf_assign(&snap_iconf, &ctx->fs_args.iconf);
-	cmd_iconf_set_uuid_by(&snap_iconf, &ctx->volid_alt);
+	cmd_iconf_set_pvid_by(&snap_iconf, &ctx->pvid_alt);
 	cmd_iconf_set_name(&snap_iconf,  ctx->in_args.snapname);
 	cmd_iconf_save(&snap_iconf, ctx->in_args.repodir_real);
 	cmd_iconf_reset(&snap_iconf);
@@ -324,7 +324,7 @@ static void cmd_snap_save_orig_iconf(struct cmd_snap_ctx *ctx)
 	struct silofs_iconf orig_iconf;
 
 	cmd_iconf_assign(&orig_iconf, &ctx->fs_args.iconf);
-	cmd_iconf_set_uuid_by(&orig_iconf, &ctx->volid_new);
+	cmd_iconf_set_pvid_by(&orig_iconf, &ctx->pvid_new);
 	cmd_iconf_set_name(&orig_iconf,  ctx->in_args.name);
 	cmd_iconf_save(&orig_iconf, ctx->in_args.repodir_real);
 	cmd_iconf_reset(&orig_iconf);

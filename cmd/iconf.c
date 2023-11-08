@@ -876,22 +876,22 @@ void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name)
 	silofs_namebuf_setup(&iconf->name, &nstr.s);
 }
 
-void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
-                        const struct silofs_uuid *uuid)
+static void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
+                               const struct silofs_uuid *uuid)
 {
 	silofs_uuid_assign(&iconf->uuid, uuid);
 }
 
-void cmd_iconf_set_uuid_by(struct silofs_iconf *iconf,
-                           const struct silofs_volid *volid)
+void cmd_iconf_set_pvid_by(struct silofs_iconf *iconf,
+                           const struct silofs_pvid *pvid)
 {
-	cmd_iconf_set_uuid(iconf, &volid->uuid);
+	cmd_iconf_set_uuid(iconf, &pvid->uuid);
 }
 
-void cmd_iconf_get_volid(const struct silofs_iconf *iconf,
-                         struct silofs_volid *out_volid)
+void cmd_iconf_get_pvid(const struct silofs_iconf *iconf,
+                        struct silofs_pvid *out_pvid)
 {
-	silofs_volid_by_uuid(out_volid, &iconf->uuid);
+	silofs_pvid_by_uuid(out_pvid, &iconf->uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

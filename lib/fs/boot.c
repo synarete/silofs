@@ -518,47 +518,47 @@ void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
 	}
 }
 
-void silofs_bootrec_volid(const struct silofs_bootrec *brec,
-                          struct silofs_volid *out_volid)
+void silofs_bootrec_pvid(const struct silofs_bootrec *brec,
+                         struct silofs_pvid *out_pvid)
 {
 	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
 
-	silofs_volid_assign(out_volid, &sb_uaddr->laddr.lextid.volid);
+	silofs_pvid_assign(out_pvid, &sb_uaddr->laddr.lextid.pvid);
 }
 
 static void
-bootrec_uaddr_by_volid(const struct silofs_volid *volid,
-                       struct silofs_uaddr *out_uaddr)
+bootrec_uaddr_by_pvid(const struct silofs_pvid *pvid,
+                      struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lextid lextid;
 	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lextid_setup(&lextid, volid, 0, stype, height);
+	silofs_lextid_setup(&lextid, pvid, 0, stype, height);
 	silofs_uaddr_setup(out_uaddr, &lextid, 0, stype, 0);
 }
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
                                struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_volid volid;
+	struct silofs_pvid pvid;
 
-	silofs_bootrec_volid(brec, &volid);
-	bootrec_uaddr_by_volid(&volid, out_uaddr);
+	silofs_bootrec_pvid(brec, &pvid);
+	bootrec_uaddr_by_pvid(&pvid, out_uaddr);
 }
 
-void silofs_make_bootrec_uaddr(const struct silofs_volid *volid,
+void silofs_make_bootrec_uaddr(const struct silofs_pvid *pvid,
                                struct silofs_uaddr *out_uaddr)
 {
-	bootrec_uaddr_by_volid(volid, out_uaddr);
+	bootrec_uaddr_by_pvid(pvid, out_uaddr);
 }
 
-void silofs_bootrecs_to_volids(const struct silofs_bootrecs *brecs,
-                               struct silofs_volid *out_volid_new,
-                               struct silofs_volid *out_volid_alt)
+void silofs_bootrecs_to_pvids(const struct silofs_bootrecs *brecs,
+                              struct silofs_pvid *out_pvid_new,
+                              struct silofs_pvid *out_pvid_alt)
 {
-	silofs_bootrec_volid(&brecs->brec[0], out_volid_new);
-	silofs_bootrec_volid(&brecs->brec[1], out_volid_alt);
+	silofs_bootrec_pvid(&brecs->brec[0], out_pvid_new);
+	silofs_bootrec_pvid(&brecs->brec[1], out_pvid_alt);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -1982,7 +1982,7 @@ void ut_format_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_fs(ute->fs_ctx, &ute->volid[0]);
+	err = silofs_format_fs(ute->fs_ctx, &ute->pvid[0]);
 	ut_expect_ok(err);
 }
 
@@ -1990,7 +1990,7 @@ void ut_open_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_boot_fs(ute->fs_ctx, &ute->volid[0]);
+	err = silofs_boot_fs(ute->fs_ctx, &ute->pvid[0]);
 	ut_expect_ok(err);
 
 	err = silofs_open_fs(ute->fs_ctx);
@@ -2001,7 +2001,7 @@ void ut_open_fs2_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_boot_fs(ute->fs_ctx, &ute->volid[1]);
+	err = silofs_boot_fs(ute->fs_ctx, &ute->pvid[1]);
 	ut_expect_ok(err);
 
 	err = silofs_open_fs(ute->fs_ctx);
@@ -2028,7 +2028,7 @@ void ut_unref_fs2_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_unref_fs(ute->fs_ctx, &ute->volid[1]);
+	err = silofs_unref_fs(ute->fs_ctx, &ute->pvid[1]);
 	ut_expect_ok(err);
 }
 
@@ -2044,7 +2044,7 @@ void ut_fork_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fork_fs(ute->fs_ctx, &ute->volid[0], &ute->volid[1]);
+	err = silofs_fork_fs(ute->fs_ctx, &ute->pvid[0], &ute->pvid[1]);
 	ut_expect_ok(err);
 }
 

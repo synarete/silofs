@@ -113,8 +113,8 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
 
-const struct silofs_volid *
-silofs_uaddr_volid(const struct silofs_uaddr *uaddr);
+const struct silofs_pvid *
+silofs_uaddr_pvid(const struct silofs_uaddr *uaddr);
 
 const struct silofs_lextid *
 silofs_uaddr_lextid(const struct silofs_uaddr *uaddr);

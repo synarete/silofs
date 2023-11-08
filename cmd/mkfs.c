@@ -25,7 +25,7 @@ static const char *cmd_mkfs_help_desc[] = {
 	"  -G, --sup-groups             Allow owner's supplementary groups",
 	"  -r, --allow-root             Allow root user and group",
 	"  -F, --force                  Force overwrite if already exists",
-	"  -V, --verbose=level          Run in verbose mode (0..3)",
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
@@ -64,13 +64,13 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 		{ "allow-root", no_argument, NULL, 'r' },
 		{ "force", no_argument, NULL, 'F' },
 		{ "password", required_argument, NULL, 'p' },
-		{ "verbose", required_argument, NULL, 'V' },
+		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:u:GrFp:V:h", opts);
+		opt_chr = cmd_getopt("s:u:GrFp:L:h", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
@@ -84,8 +84,8 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 			ctx->in_args.force = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
+		} else if (opt_chr == 'L') {
+			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_mkfs_help_desc);
 		} else if (opt_chr > 0) {

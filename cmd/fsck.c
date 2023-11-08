@@ -20,7 +20,7 @@ static const char *cmd_fsck_help_desc[] = {
 	"fsck <repodir/name>",
 	"",
 	"options:",
-	"  -V, --verbose=level          Run in verbose mode (0..3)",
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
@@ -48,16 +48,17 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "password", required_argument, NULL, 'p' },
+		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("p:h", opts);
+		opt_chr = cmd_getopt("p:L:h", opts);
 		if (opt_chr == 'p') {
 			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
+		} else if (opt_chr == 'L') {
+			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_fsck_help_desc);
 		} else if (opt_chr > 0) {

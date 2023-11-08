@@ -9,7 +9,7 @@ _silofs_init() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-V --verbose= -h --help' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-L --loglevel= -h --help' -- "$cur") )
   fi
 }
 
@@ -21,6 +21,7 @@ _silofs_mkfs() {
     COMPREPLY+=( $(compgen -W '-s --size= -F --force' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-u --user= -G --sup-groups' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-r --allow-root' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-L --loglevel= -h ' -- "$cur") )
   fi
 }
 
@@ -32,7 +33,7 @@ _silofs_mount() {
     COMPREPLY+=( $(compgen -W '-o --opts= -D --nodaemon ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-C --coredump -A --no-allow-other ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-W --writeback-cache= ' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-V --verbose= -h ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-L --loglevel= -h ' -- "$cur") )
   fi
 }
 

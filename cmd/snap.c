@@ -34,7 +34,7 @@ static const char *cmd_snap_help_desc[] = {
 	"options:",
 	"  -n, --name=snapname          Result snapshot name",
 	"  -X, --offline                Operate on non-mounted file-system",
-	"  -V, --verbose=level          Run in verbose mode (0..3)",
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
@@ -74,21 +74,21 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 		{ "name", required_argument, NULL, 'n' },
 		{ "offline", no_argument, NULL, 'X' },
 		{ "password", required_argument, NULL, 'p' },
-		{ "verbose", required_argument, NULL, 'V' },
+		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("n:XV:h", opts);
+		opt_chr = cmd_getopt("n:p:XL:h", opts);
 		if (opt_chr == 'n') {
 			ctx->in_args.snapname = cmd_strdup(optarg);
 		} else if (opt_chr == 'X') {
 			ctx->in_args.offline = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
+		} else if (opt_chr == 'L') {
+			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_snap_help_desc);
 		} else if (opt_chr > 0) {

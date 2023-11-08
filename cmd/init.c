@@ -20,7 +20,7 @@ static const char *cmd_init_help_desc[] = {
 	"init <repodir>",
 	"",
 	"options:",
-	"  -V, --verbose=level          Run in verbose mode (0..3)",
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
@@ -43,15 +43,15 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "verbose", required_argument, NULL, 'V' },
+		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("V:h", opts);
-		if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
+		opt_chr = cmd_getopt("L:h", opts);
+		if (opt_chr == 'L') {
+			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_init_help_desc);
 		} else if (opt_chr > 0) {

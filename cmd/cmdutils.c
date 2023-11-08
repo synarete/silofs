@@ -651,21 +651,6 @@ static void cmd_daemonize(void)
 	 */
 }
 
-static void cmd_post_daemon_fixups(void)
-{
-	int log_flags = cmd_globals.log_params.flags;
-
-	/* force syslog */
-	log_flags |= SILOFS_LOGF_SYSLOG;
-
-	/* disable stdout printing */
-	log_flags &= ~SILOFS_LOGF_STDOUT;
-	log_flags &= ~SILOFS_LOGF_PROGNAME;
-
-	/* reset log control flags */
-	cmd_globals.log_params.flags = (enum silofs_log_flags)log_flags;
-}
-
 void cmd_fork_daemon(pid_t *out_pid)
 {
 	pid_t pid;
@@ -676,7 +661,6 @@ void cmd_fork_daemon(pid_t *out_pid)
 	}
 	if (pid == 0) {
 		cmd_daemonize();
-		cmd_post_daemon_fixups();
 	}
 	*out_pid = pid;
 }
@@ -892,9 +876,9 @@ void cmd_print_help_and_exit(const char **help_strings)
 	exit(EXIT_SUCCESS);
 }
 
-void cmd_set_verbose_mode(const char *mode)
+void cmd_set_log_level_by(const char *s)
 {
-	silofs_log_params_by_str(&cmd_globals.log_params, mode);
+	cmd_globals.log_params.level = silofs_log_level_by_rfc5424(s);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

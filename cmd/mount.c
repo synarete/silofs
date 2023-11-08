@@ -41,7 +41,7 @@ static const char *cmd_mount_help_desc[] = {
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
 	"  -M, --stdalloc               Use standard C allocator",
-	"  -V, --verbose=LEVEL          Run in verbose mode (0..2)",
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
@@ -64,6 +64,8 @@ struct cmd_mount_in_args {
 	bool    rdonly;
 	bool    asyncwr;
 	bool    stdalloc;
+	bool    explicit_log_level;
+	bool    systemd_run;
 };
 
 struct cmd_mount_ctx {
@@ -174,13 +176,14 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "asyncwr", required_argument, NULL, 'a' },
 		{ "stdalloc", no_argument, NULL, 'M' },
 		{ "password", required_argument, NULL, 'p' },
-		{ "verbose", required_argument, NULL, 'V' },
+		{ "loglevel", required_argument, NULL, 'L' },
+		{ "systemd-run", no_argument, NULL, 'R' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("o:AiW:DCa:Mp:V:h", opts);
+		opt_chr = cmd_getopt("o:AiW:DCa:Mp:L:Rh", opts);
 		if (opt_chr == 'o') {
 			cmd_mount_getsubopts(ctx);
 		} else if (opt_chr == 'A') {
@@ -201,8 +204,11 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			ctx->in_args.stdalloc = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
+		} else if (opt_chr == 'L') {
+			cmd_set_log_level_by(optarg);
+			ctx->in_args.explicit_log_level = true;
+		} else if (opt_chr == 'R') {
+			ctx->in_args.systemd_run = true;
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_mount_help_desc);
 		} else if (opt_chr > 0) {
@@ -452,9 +458,6 @@ static void cmd_mount_set_dumpable(unsigned int state)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
-	int log_level = SILOFS_LOG_INFO;
-	int log_flags = cmd_globals.log_params.flags;
-
 	if (!cmd_globals.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
 	}
@@ -466,14 +469,35 @@ static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 	} else {
 		cmd_mount_set_dumpable(0);
 	}
+}
 
+static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
+{
+	int log_level = cmd_globals.log_params.level;
+	int log_flags = cmd_globals.log_params.flags;
+
+	if (!cmd_globals.dont_daemonize) { /* daemon mode */
+		log_flags |= SILOFS_LOGF_SYSLOG;
+		log_flags &= ~SILOFS_LOGF_STDOUT;
+		log_flags &= ~SILOFS_LOGF_PROGNAME;
+	} else {
+		log_flags |= SILOFS_LOGF_STDOUT;
+		log_flags &= ~SILOFS_LOGF_SYSLOG;
+	}
 	if (ctx->with_progname) {
 		log_flags |= SILOFS_LOGF_PROGNAME;
 	} else {
 		log_flags &= ~SILOFS_LOGF_PROGNAME;
 	}
-	cmd_globals.log_params.level = log_level;
-	cmd_globals.log_params.flags = log_flags;
+	if (ctx->in_args.explicit_log_level) {
+		log_level = cmd_globals.log_params.level;
+	} else if (ctx->in_args.systemd_run) {
+		log_level = SILOFS_LOG_ERROR;
+	} else {
+		log_level = SILOFS_LOG_INFO;
+	}
+	cmd_globals.log_params.level = (enum silofs_log_level)log_level;
+	cmd_globals.log_params.flags = (enum silofs_log_flags)log_flags;
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
@@ -566,6 +590,9 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	/* Become daemon process */
 	cmd_mount_boostrap_process(ctx);
 
+	/* Update logging */
+	cmd_mount_update_log_params(ctx);
+
 	/* Setup main environment instance */
 	cmd_mount_setup_fs_ctx(ctx);
 
@@ -618,6 +645,8 @@ void cmd_execute_mount(void)
 			.asyncwr = true,
 			.stdalloc = false,
 			.writeback_cache = true,
+			.explicit_log_level = false,
+			.systemd_run = false,
 		},
 		.fs_ctx = NULL,
 		.halt_signal = -1,

@@ -179,26 +179,30 @@ int silofs_logf(enum silofs_log_level log_level,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_log_params_by_str(struct silofs_log_params *logp, const char *str)
+enum silofs_log_level silofs_log_level_by_rfc5424(const char *s)
 {
-	int level = SILOFS_LOG_WARN;
-	int flags = logp->flags;
+	enum silofs_log_level ll = SILOFS_LOG_ERROR; /* default value */
 
-	if (str == NULL) {
-		flags &= ~SILOFS_LOGF_FILINE;
-	} else if (!strcmp(str, "0")) {
-		flags &= ~SILOFS_LOGF_FILINE;
-	} else if (!strcmp(str, "1")) {
-		level = SILOFS_LOG_INFO;
-	} else if (!strcmp(str, "2")) {
-		level = SILOFS_LOG_DEBUG;
-	} else if (!strcmp(str, "3")) {
-		level = SILOFS_LOG_DEBUG;
-		flags |= SILOFS_LOGF_FILINE;
+	if (s != NULL) {
+		if (!strcmp(s, "0")) {
+			ll = SILOFS_LOG_CRIT;
+		} else if (!strcmp(s, "1") || !strcasecmp(s, "ALERT")) {
+			ll = SILOFS_LOG_CRIT;
+		} else if (!strcmp(s, "2") || !strcasecmp(s, "CRIT")) {
+			ll = SILOFS_LOG_CRIT;
+		} else if (!strcmp(s, "3") || !strcasecmp(s, "ERROR")) {
+			ll = SILOFS_LOG_ERROR;
+		} else if (!strcmp(s, "4") || !strcasecmp(s, "WARN")) {
+			ll = SILOFS_LOG_WARN;
+		} else if (!strcmp(s, "5") || !strcasecmp(s, "NOTICE")) {
+			ll = SILOFS_LOG_WARN;
+		} else if (!strcmp(s, "6") || !strcasecmp(s, "INFO")) {
+			ll = SILOFS_LOG_INFO;
+		} else if (!strcmp(s, "7") || !strcasecmp(s, "DEBUG")) {
+			ll = SILOFS_LOG_DEBUG;
+		}
 	}
-
-	logp->level = (enum silofs_log_level)level;
-	logp->flags = (enum silofs_log_flags)flags;
+	return ll;
 }
 
 void silofs_log_meta_banner(const char *name, int start)

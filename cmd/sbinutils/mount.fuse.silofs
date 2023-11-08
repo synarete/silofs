@@ -86,21 +86,21 @@ _mount_silofs_by_systemd_run() {
 
   systemd_run_cmd=$(_locate_systemd_run)
   silofs_cmd=$(_locate_silofs)
-  ${systemd_run_cmd} --user --scope "${silofs_cmd}" "mount" "$@"
+  ${systemd_run_cmd} --user --scope "${silofs_cmd}" "mount" --systemd-run "$@"
 }
 
-_mount_silofs_by_direct_call() {
+_mount_silofs_by_command_line() {
   local silofs_cmd
 
   silofs_cmd=$(_locate_silofs)
-  ${silofs_cmd} mount "$@"
+  ${silofs_cmd} "mount" "$@"
 }
 
 _mount_silofs() {
   if [[ "$(_check_mount_by_systemd_run)" == "0" ]]; then
     _mount_silofs_by_systemd_run "$@"
   else
-    _mount_silofs_by_direct_call "$@"
+    _mount_silofs_by_command_line "$@"
   fi
   exit $?
 }

@@ -65,7 +65,7 @@ int silofs_logf(enum silofs_log_level log_level,
                 const char *file, int line, const char *fmt, ...);
 
 
-void silofs_log_params_by_str(struct silofs_log_params *logp, const char *str);
+enum silofs_log_level silofs_log_level_by_rfc5424(const char *s);
 
 void silofs_log_meta_banner(const char *name, int start);
 

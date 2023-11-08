@@ -3241,9 +3241,14 @@ static int fuseq_splice_into_pipe(struct silofs_fuseq_worker *fqw, size_t cnt)
 
 	err = silofs_pipe_splice_from_fd(pipe, fuse_fd,
 	                                 NULL, cnt, FUSEQ_SPLICE_FLAGS);
-	if (unlikely(err)) {
-		fuseq_log_err("fuse splice-in failed: "
-		              "fuse_fd=%d cnt=%lu err=%d", fuse_fd, cnt, err);
+	if (unlikely(err) && (err != -ENODEV)) {
+		if (err == -ENODEV) {
+			fuseq_log_dbg("fuse splice-in nodev-error: "
+			              "fuse_fd=%d cnt=%lu", fuse_fd, cnt);
+		} else {
+			fuseq_log_err("fuse splice-in failed: fuse_fd=%d "
+			              "cnt=%lu err=%d", fuse_fd, cnt, err);
+		}
 	}
 	return err;
 }
@@ -3364,7 +3369,7 @@ static int fuseq_recv_in_locked(struct silofs_fuseq_worker *fqw)
 		fqw->fw_fq->fq_active = 0;
 	} else if (err == -ENODEV) {
 		/* umount case: set non-active under channel-lock */
-		fuseq_log_err("input status: err=%d", err);
+		fuseq_log_info("input status: err=%d", err);
 		fqw->fw_fq->fq_active = 0;
 	}
 	fuseq_unlock_ch(fqw->fw_fq);

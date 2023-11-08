@@ -178,7 +178,7 @@ void cmd_close_syslog(void);
 
 void cmd_setrlimit_nocore(void);
 
-void cmd_set_verbose_mode(const char *mode);
+void cmd_set_log_level_by(const char *s);
 
 void *cmd_zalloc(size_t n);
 

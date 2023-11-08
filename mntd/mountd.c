@@ -396,7 +396,7 @@ static const char mountd_usage[] =
         "\n"\
         "options:\n"\
         "  -f, --conf=CONF              Mount-rules config file\n"\
-        "  -V, --verbose=LEVEL          Run in verbose mode (0..3)\n"\
+        "  -L, --loglevel=LEVEL         Logging level (rfc5424)\n"\
         "  -v, --version                Show version and exit\n";
 
 __attribute__((__noreturn__))
@@ -428,7 +428,7 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 	char **argv = ctx->args.argv;
 	const struct option lopts[] = {
 		{ "conf", required_argument, NULL, 'f' },
-		{ "verbose", required_argument, NULL, 'V' },
+		{ "loglevel", required_argument, NULL, 'L' },
 		{ "version", no_argument, NULL, 'v' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
@@ -436,14 +436,15 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 
 	while (opt_chr > 0) {
 		opt_index = 0;
-		opt_chr = getopt_long(argc, argv, "f:V:vh", lopts, &opt_index);
+		opt_chr = getopt_long(argc, argv, "f:L:vh", lopts, &opt_index);
 		if (opt_chr == -1) {
 			break;
 		}
 		if (opt_chr == 'f') {
 			ctx->args.confpath = optarg;
-		} else if (opt_chr == 'V') {
-			silofs_log_params_by_str(&ctx->log_params, optarg);
+		} else if (opt_chr == 'L') {
+			ctx->log_params.level =
+			        silofs_log_level_by_rfc5424(optarg);
 		} else if (opt_chr == 'v') {
 			mountd_show_version();
 		} else if (opt_chr == 'h') {

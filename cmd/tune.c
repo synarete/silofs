@@ -22,7 +22,7 @@ static const char *cmd_tune_help_desc[] = {
 	"",
 	"options:",
 	"  -t, --ftype=1|2              Sub-type to assign to child files",
-	"  -V, --verbose=level          Run in verbose mode (0..3)",
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
@@ -48,18 +48,18 @@ static void cmd_tune_getopt(struct cmd_tune_ctx *ctx)
 	int opt_chr = 1;
 	const struct option opts[] = {
 		{ "ftype", required_argument, NULL, 't' },
-		{ "verbose", required_argument, NULL, 'V' },
+		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("t:V:h", opts);
+		opt_chr = cmd_getopt("t:L:h", opts);
 		if (opt_chr == 't') {
 			ctx->in_args.ftype =
 			        cmd_parse_str_as_uint32_within(optarg, 1, 2);
-		} else if (opt_chr == 'V') {
-			cmd_set_verbose_mode(optarg);
+		} else if (opt_chr == 'L') {
+			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_tune_help_desc);
 		} else if (opt_chr > 0) {

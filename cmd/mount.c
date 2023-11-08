@@ -452,7 +452,8 @@ static void cmd_mount_set_dumpable(unsigned int state)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
-	cmd_globals.log_params.level = SILOFS_LOG_INFO;
+	int log_level = SILOFS_LOG_INFO;
+	int log_flags = cmd_globals.log_params.flags;
 
 	if (!cmd_globals.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
@@ -465,11 +466,14 @@ static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 	} else {
 		cmd_mount_set_dumpable(0);
 	}
+
 	if (ctx->with_progname) {
-		cmd_globals.log_params.flags |= SILOFS_LOGF_PROGNAME;
+		log_flags |= SILOFS_LOGF_PROGNAME;
 	} else {
-		cmd_globals.log_params.flags &= ~SILOFS_LOGF_PROGNAME;
+		log_flags &= ~SILOFS_LOGF_PROGNAME;
 	}
+	cmd_globals.log_params.level = log_level;
+	cmd_globals.log_params.flags = log_flags;
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)

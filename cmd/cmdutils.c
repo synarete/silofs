@@ -642,9 +642,6 @@ static void cmd_daemonize(void)
 	if (err) {
 		cmd_dief(0, "failed to daemonize");
 	}
-	cmd_globals.log_params.flags |= SILOFS_LOGF_SYSLOG;
-	cmd_globals.log_params.flags &= ~SILOFS_LOGF_STDOUT;
-	cmd_globals.log_params.flags &= ~SILOFS_LOGF_PROGNAME;
 
 	/*
 	 * TODO-0024: No fd=0
@@ -652,6 +649,21 @@ static void cmd_daemonize(void)
 	 * Ensure that next allocated fd is positive (non-zero) or bad things
 	 * may happen in various places where code assumes (fd > 0).
 	 */
+}
+
+static void cmd_post_daemon_fixups(void)
+{
+	int log_flags = cmd_globals.log_params.flags;
+
+	/* force syslog */
+	log_flags |= SILOFS_LOGF_SYSLOG;
+
+	/* disable stdout printing */
+	log_flags &= ~SILOFS_LOGF_STDOUT;
+	log_flags &= ~SILOFS_LOGF_PROGNAME;
+
+	/* reset log control flags */
+	cmd_globals.log_params.flags = (enum silofs_log_flags)log_flags;
 }
 
 void cmd_fork_daemon(pid_t *out_pid)
@@ -664,6 +676,7 @@ void cmd_fork_daemon(pid_t *out_pid)
 	}
 	if (pid == 0) {
 		cmd_daemonize();
+		cmd_post_daemon_fixups();
 	}
 	*out_pid = pid;
 }
@@ -676,9 +689,13 @@ void cmd_open_syslog(void)
 
 void cmd_close_syslog(void)
 {
-	if (cmd_globals.log_params.flags & SILOFS_LOGF_SYSLOG) {
+	int log_flags = cmd_globals.log_params.flags;
+
+	if (log_flags & SILOFS_LOGF_SYSLOG) {
 		closelog();
-		cmd_globals.log_params.flags &= ~SILOFS_LOGF_SYSLOG;
+		log_flags &= ~SILOFS_LOGF_SYSLOG;
+		cmd_globals.log_params.flags =
+		        (enum silofs_log_flags)log_flags;
 	}
 }
 

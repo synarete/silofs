@@ -32,9 +32,11 @@ enum silofs_log_flags {
 	SILOFS_LOGF_SYSLOG      = 0x02,
 	SILOFS_LOGF_FILINE      = 0x04,
 	SILOFS_LOGF_PROGNAME    = 0x08,
+	SILOFS_LOGF_DEFAULT     = SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME,
 };
 
 struct silofs_log_params {
+	const char             *progname;
 	enum silofs_log_level   level;
 	enum silofs_log_flags   flags;
 };

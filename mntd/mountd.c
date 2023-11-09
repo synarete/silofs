@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 		.args.dumpable = false,
 		.log_params.level = SILOFS_LOG_INFO,
 		.log_params.flags = SILOFS_LOGF_STDOUT,
-		.progname = program_invocation_short_name,
+		.log_params.progname = program_invocation_short_name,
 	};
 
 	/* Do all cleanups upon exits */
@@ -192,12 +192,12 @@ static void mountd_setup_env(struct mountd_ctx *ctx)
 
 static void mountd_trace_start(const struct mountd_ctx *ctx)
 {
-	silofs_log_meta_banner(ctx->progname, 1);
+	silofs_log_meta_banner(ctx->log_params.progname, 1);
 }
 
 static void mountd_trace_finish(const struct mountd_ctx *ctx)
 {
-	silofs_log_meta_banner(ctx->progname, 0);
+	silofs_log_meta_banner(ctx->log_params.progname, 0);
 }
 
 static void mountd_load_mntrules(struct mountd_ctx *ctx)

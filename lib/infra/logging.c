@@ -52,6 +52,14 @@ void silofs_set_global_log_params(const struct silofs_log_params *logp)
 	silofs_global_log_params = logp;
 }
 
+static const char *log_progname(void)
+{
+	const struct silofs_log_params *params = silofs_global_log_params;
+
+	return (params && params->progname) ?
+	       params->progname : program_invocation_short_name;
+}
+
 static void log_to_stdout(enum silofs_log_flags log_flags,
                           const char *msg, const char *file, int line)
 {
@@ -59,7 +67,7 @@ static void log_to_stdout(enum silofs_log_flags log_flags,
 
 	flockfile(fp);
 	if (log_flags & SILOFS_LOGF_PROGNAME) {
-		fprintf(fp, "%s: ", program_invocation_short_name);
+		fprintf(fp, "%s: ", log_progname());
 	}
 	if ((file != NULL) && line) {
 		fprintf(fp, "[%s:%d] \t", file, line);

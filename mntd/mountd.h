@@ -54,7 +54,6 @@ struct mountd_ctx {
 	struct silofs_ms_env    *mse;
 	struct silofs_mntrules  *mntrules;
 	struct silofs_log_params log_params;
-	char   *progname;
 	int     sig_halt;
 	int     sig_fatal;
 };

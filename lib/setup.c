@@ -15,13 +15,13 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/defs.h>
-#include <silofs/ps.h>
-#include <silofs/fs.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <silofs/libsilofs.h>
+#include <linux/limits.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <errno.h>
 #include <limits.h>
+#include <endian.h>
 
 #ifndef LINK_MAX
 #define LINK_MAX 127
@@ -56,17 +56,11 @@
 #define REQUIRE_GE(a, b) \
 	SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
 
-#define REQUIRE_LBK_SIZE(a) \
-	REQUIRE_EQ(a, SILOFS_LBK_SIZE)
-
 #define REQUIRE_SIZEOF(type, size) \
 	REQUIRE_EQ(sizeof(type), size)
 
 #define REQUIRE_SIZEOF_LE(type, size) \
 	REQUIRE_LE(sizeof(type), size)
-
-#define REQUIRE_SIZEOF_KB(type) \
-	REQUIRE_SIZEOF(type, SILOFS_KB_SIZE)
 
 #define REQUIRE_SIZEOF_NK(type, nk) \
 	REQUIRE_SIZEOF(type, (nk) * SILOFS_KILO)
@@ -85,9 +79,6 @@
 
 #define REQUIRE_SIZEOF_64K(type) \
 	REQUIRE_SIZEOF_NK(type, 64)
-
-#define REQUIRE_SIZEOF_LBK(type) \
-	REQUIRE_LBK_SIZE(sizeof(type))
 
 #define REQUIRE_MEMBER_SIZE(type, f, size) \
 	REQUIRE_EQ(MEMBER_SIZE(type, f), size)
@@ -183,8 +174,8 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF(struct silofs_bk_ref, 96);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
-	REQUIRE_SIZEOF_KB(struct silofs_inode);
-	REQUIRE_SIZEOF_LBK(struct silofs_lblock);
+	REQUIRE_SIZEOF(struct silofs_inode, SILOFS_KB_SIZE);
+	REQUIRE_SIZEOF(struct silofs_lblock, SILOFS_LBK_SIZE);
 	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
@@ -368,7 +359,7 @@ static void validate_external_constants(void)
 	REQUIRE_EQ(SILOFS_KDF_SCRYPT, GCRY_KDF_SCRYPT);
 }
 
-void silofs_validate_fsdefs(void)
+static void validate_defs(void)
 {
 	validate_fundamental_types_size();
 	validate_persistent_types_nk();
@@ -381,5 +372,191 @@ void silofs_validate_fsdefs(void)
 	validate_ioctl_types_size();
 	validate_defs_consistency();
 	validate_external_constants();
+}
+
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+#define SILOFS_NOFILES_MIN      (512)
+
+static int errno_or_errnum(int errnum)
+{
+	return (errno > 0) ? -errno : -abs(errnum);
+}
+
+static int check_endianess32(uint32_t val, const char *str)
+{
+	char buf[16] = "";
+	const uint32_t val_le = htole32(val);
+
+	for (size_t i = 0; i < 4; ++i) {
+		buf[i] = (char)(val_le >> (i * 8));
+	}
+	return !strcmp(buf, str) ? 0 : -EBADE;
+}
+
+static int check_endianess64(uint64_t val, const char *str)
+{
+	char buf[16] = "";
+	const uint64_t val_le = htole64(val);
+
+	for (size_t i = 0; i < 8; ++i) {
+		buf[i] = (char)(val_le >> (i * 8));
+	}
+	return !strcmp(buf, str) ? 0 : -EBADE;
+}
+
+static int check_endianess(void)
+{
+	int err;
+
+	err = check_endianess64(SILOFS_REPO_META_MAGIC, "#SILOFS#");
+	if (err) {
+		return err;
+	}
+	err = check_endianess64(SILOFS_BOOT_RECORD_MAGIC, "@SILOFS@");
+	if (err) {
+		return err;
+	}
+	err = check_endianess64(SILOFS_JOURNAL_MAGIC, "%silofs%");
+	if (err) {
+		return err;
+	}
+	err = check_endianess64(SILOFS_SUPER_MAGIC, "@silofs@");
+	if (err) {
+		return err;
+	}
+	err = check_endianess32(SILOFS_FSID_MAGIC, "SILO");
+	if (err) {
+		return err;
+	}
+	err = check_endianess32(SILOFS_STYPE_MAGIC, "silo");
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int check_sysconf(void)
+{
+	long val;
+	long page_shift = 0;
+	const long page_size_min = SILOFS_PAGE_SIZE_MIN;
+	const long page_shift_min = SILOFS_PAGE_SHIFT_MIN;
+	const long page_shift_max = SILOFS_PAGE_SHIFT_MAX;
+	const long cl_size_min = SILOFS_CACHELINE_SIZE_MIN;
+	const long cl_size_max = SILOFS_CACHELINE_SIZE_MAX;
+
+	errno = 0;
+	val = silofs_sc_phys_pages();
+	if (val <= 0) {
+		return errno_or_errnum(SILOFS_ENOMEM);
+	}
+	val = silofs_sc_avphys_pages();
+	if (val <= 0) {
+		return errno_or_errnum(SILOFS_ENOMEM);
+	}
+	val = silofs_sc_l1_dcache_linesize();
+	if ((val < cl_size_min) || (val > cl_size_max)) {
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
+	}
+	val = silofs_sc_page_size();
+	if ((val < page_size_min) || (val % page_size_min)) {
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
+	}
+	for (long shift = page_shift_min; shift <= page_shift_max; ++shift) {
+		if (val == (1L << shift)) {
+			page_shift = val;
+			break;
+		}
+	}
+	if (page_shift == 0) {
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
+	}
+	val = silofs_sc_nproc_onln();
+	if (val <= 0) {
+		return errno_or_errnum(SILOFS_ENOMEDIUM);
+	}
+	return 0;
+}
+
+static int check_system_page_size(void)
+{
+	long page_size;
+	const size_t page_shift[] = { 12, 13, 14, 16 };
+
+	page_size = silofs_sc_page_size();
+	if (page_size > SILOFS_LBK_SIZE) {
+		return -SILOFS_EOPNOTSUPP;
+	}
+	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(page_shift); ++i) {
+		if (page_size == (1L << page_shift[i])) {
+			return 0;
+		}
+	}
+	return -SILOFS_EOPNOTSUPP;
+}
+
+static int check_proc_rlimits(void)
+{
+	struct rlimit rlim;
+	int err;
+
+	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
+	if (err) {
+		return err;
+	}
+	if (rlim.rlim_cur < SILOFS_MEGA) {
+		return -SILOFS_ENOMEM;
+	}
+	err = silofs_sys_getrlimit(RLIMIT_NOFILE, &rlim);
+	if (err) {
+		return err;
+	}
+	if (rlim.rlim_cur < SILOFS_NOFILES_MIN) {
+		return -SILOFS_ENFILE;
+	}
+	return 0;
+}
+
+static int init_libsilofs(void)
+{
+	int err;
+
+	err = check_endianess();
+	if (err) {
+		return err;
+	}
+	err = check_sysconf();
+	if (err) {
+		return err;
+	}
+	err = check_system_page_size();
+	if (err) {
+		return err;
+	}
+	err = check_proc_rlimits();
+	if (err) {
+		return err;
+	}
+	err = silofs_init_gcrypt();
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static bool g_init_lib_ok;
+
+int silofs_setup_lib(void)
+{
+	int ret = 0;
+
+	validate_defs();
+	if (!g_init_lib_ok) {
+		ret = init_libsilofs();
+		g_init_lib_ok = (ret == 0);
+	}
+	return ret;
 }
 

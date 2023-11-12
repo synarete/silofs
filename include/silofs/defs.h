@@ -966,7 +966,7 @@ struct silofs_ltop80b {
 } silofs_packed_aligned16;
 
 
-struct silofs_volume_root {
+struct silofs_pvmap_root {
 	struct silofs_header            vol_hdr;
 	struct silofs_pvid              vol_id;
 } silofs_packed_aligned64;

@@ -16,6 +16,7 @@ nobase_include_HEADERS += silofs/ioctls.h
 nobase_include_HEADERS += silofs/macros.h
 nobase_include_HEADERS += silofs/syscall.h
 nobase_include_HEADERS += silofs/version.h
+nobase_include_HEADERS += silofs/libsilofs.h
 nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h

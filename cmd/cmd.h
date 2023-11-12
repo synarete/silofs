@@ -17,8 +17,7 @@
 #ifndef SILOFS_CMD_H_
 #define SILOFS_CMD_H_
 
-#include <silofs/infra.h>
-#include <silofs/fs.h>
+#include <silofs/libsilofs.h>
 #include <getopt.h>
 
 typedef void (*silofs_exec_fn)(void);

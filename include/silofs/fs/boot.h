@@ -121,10 +121,4 @@ void silofs_calc_key_hash(const struct silofs_key *key,
                           const struct silofs_mdigest *md,
                           struct silofs_hash256 *out_hash);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_init_lib(void);
-
-void silofs_validate_fsdefs(void);
-
 #endif /* SILOFS_BOOT_H_ */

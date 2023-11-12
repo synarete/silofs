@@ -41,7 +41,7 @@ struct silofs_laddr {
 struct silofs_paddr {
 	struct silofs_pvid      pvid;
 	size_t                  index;
-	loff_t                  off;
+	loff_t                  pos;
 	size_t                  len;
 };
 
@@ -192,7 +192,18 @@ void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
+
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other);
+
+
+void silofs_paddr32b_reset(struct silofs_paddr32b *paddr32);
+
+void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
+                          const struct silofs_paddr *paddr);
+
+void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
+                          struct silofs_paddr *paddr);
 
 #endif /* SILOFS_LADDR_H_ */

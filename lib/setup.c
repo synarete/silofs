@@ -126,7 +126,7 @@ static void validate_fundamental_types_size(void)
 
 static void validate_persistent_types_nk(void)
 {
-	REQUIRE_SIZEOF_8K(struct silofs_pvmap_node);
+	REQUIRE_SIZEOF_64K(struct silofs_pvmap_node);
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_leaf);
@@ -305,8 +305,8 @@ static void validate_persistent_types_alignment3(void)
 
 static void validate_persistent_types_alignment4(void)
 {
-	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_ltop, 1984);
+	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_child, 32);
+	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_ltop, 4096);
 }
 
 static void validate_ioctl_types_size(void)
@@ -552,8 +552,8 @@ int silofs_setup_lib(void)
 {
 	int ret = 0;
 
-	validate_defs();
 	if (!g_init_lib_ok) {
+		validate_defs();
 		ret = init_libsilofs();
 		g_init_lib_ok = (ret == 0);
 	}

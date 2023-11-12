@@ -47,4 +47,8 @@
 #define laddr_isvalid(la)               silofs_laddr_isvalid(la)
 #define laddr_isnull(la)                silofs_laddr_isnull(la)
 
+#define paddr_reset(pa)                 silofs_paddr_reset(pa)
+#define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
+
+
 #endif /* SILOFS_PS_PRIVATE_H_ */

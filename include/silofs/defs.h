@@ -96,10 +96,10 @@
 
 
 /* number of children in logical-to-persistant mapping node */
-#define SILOFS_PVMAP_NCHILDS            (59)
+#define SILOFS_PVMAP_NCHILDS            (127)
 
 /* number of mapping-entries in logical-to-persistant node */
-#define SILOFS_PVMAP_NLTOP              (77)
+#define SILOFS_PVMAP_NLTOP              (768)
 
 
 /* minimal file-system capacity, in bytes (2G) */
@@ -974,11 +974,9 @@ struct silofs_pvmap_root {
 
 struct silofs_pvmap_node {
 	struct silofs_header            pn_hdr;
-	uint8_t                         pn_reserved[48];
+	uint8_t                         pn_reserved[16];
 	struct silofs_paddr32b          pn_child[SILOFS_PVMAP_NCHILDS];
-	uint8_t                         pn_reserved2[32];
 	struct silofs_ltop80b           pn_ltop[SILOFS_PVMAP_NLTOP];
-	uint8_t                         pn_reserved3[48];
 } silofs_packed_aligned64;
 
 

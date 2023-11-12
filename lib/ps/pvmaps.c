@@ -18,6 +18,58 @@
 #include <silofs/infra.h>
 #include <silofs/ps.h>
 
+static struct silofs_pvnode_info *pni_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_pvnode_info *pni = NULL;
+
+	pni = silofs_allocate(alloc, sizeof(*pni), 0);
+	return pni;
+}
+
+static void pni_free(struct silofs_pvnode_info *pni,
+                     struct silofs_alloc *alloc)
+{
+	silofs_deallocate(alloc, pni, sizeof(*pni), 0);
+}
+
+static void pni_init(struct silofs_pvnode_info *pni,
+                     const struct silofs_paddr *paddr)
+{
+	silofs_assert(!silofs_paddr_isnull(paddr));
+
+	paddr_assign(&pni->pn_paddr, paddr);
+	list_head_init(&pni->pn_htb_lh);
+	list_head_init(&pni->pn_lru_lh);
+	pni->pn = NULL;
+	pni->pn_psenv = NULL;
+}
+
+static void pni_fini(struct silofs_pvnode_info *pni)
+{
+	list_head_fini(&pni->pn_htb_lh);
+	list_head_fini(&pni->pn_lru_lh);
+	pni->pn = NULL;
+	pni->pn_psenv = NULL;
+}
+
+
+struct silofs_pvnode_info *
+silofs_pni_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
+{
+	struct silofs_pvnode_info *pni;
+
+	pni = pni_malloc(alloc);
+	if (pni != NULL) {
+		pni_init(pni, paddr);
+	}
+	return pni;
+}
+
+void silofs_pni_del(struct silofs_pvnode_info *pni, struct silofs_alloc *alloc)
+{
+	pni_fini(pni);
+	pni_free(pni, alloc);
+}
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

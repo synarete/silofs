@@ -38,6 +38,14 @@ struct silofs_pvmap {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+struct silofs_pvnode_info *
+silofs_pni_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+
+void silofs_pni_del(struct silofs_pvnode_info *pni,
+                    struct silofs_alloc *alloc);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc);
 
 void silofs_pvmap_fini(struct silofs_pvmap *pvmap);

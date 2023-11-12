@@ -502,11 +502,43 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
+{
+	return (paddr->index == 0) || (paddr->len == 0);
+}
+
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
 	silofs_pvid_assign(&paddr->pvid, &other->pvid);
 	paddr->index = other->index;
-	paddr->off = other->off;
+	paddr->pos = other->pos;
 	paddr->len = other->len;
+}
+
+
+void silofs_paddr32b_reset(struct silofs_paddr32b *paddr32)
+{
+	memset(paddr32, 0, sizeof(*paddr32));
+	paddr32->index = 0;
+	paddr32->pos = 0;
+	paddr32->len = 0;
+}
+
+void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
+                          const struct silofs_paddr *paddr)
+{
+	silofs_pvid_assign(&paddr32->pvid, &paddr->pvid);
+	paddr32->index = silofs_cpu_to_le32((uint32_t)(paddr->index));
+	paddr32->pos = silofs_cpu_to_le32((uint32_t)(paddr->pos));
+	paddr32->len = silofs_cpu_to_le32((uint32_t)(paddr->len));
+}
+
+void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
+                          struct silofs_paddr *paddr)
+{
+	silofs_pvid_assign(&paddr->pvid, &paddr32->pvid);
+	paddr->index = silofs_le32_to_cpu(paddr32->index);
+	paddr->pos = silofs_le32_to_cpu(paddr32->pos);
+	paddr->len = silofs_le32_to_cpu(paddr32->len);
 }

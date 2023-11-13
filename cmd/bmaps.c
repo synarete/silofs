@@ -184,10 +184,10 @@ static void cmd_bmaps_laddr_cb(const struct silofs_laddr *laddr, loff_t voff)
 {
 	struct silofs_namebuf nb;
 
-	silofs_uuid_name(&laddr->lextid.lvid.uuid, &nb);
+	silofs_uuid_name(&laddr->lsegid.lvid.uuid, &nb);
 	printf("%02x %02d %08lx %s\n",
-	       (int)(laddr->lextid.vspace),
-	       (int)(laddr->lextid.height),
+	       (int)(laddr->lsegid.vspace),
+	       (int)(laddr->lsegid.height),
 	       voff, nb.name);
 }
 

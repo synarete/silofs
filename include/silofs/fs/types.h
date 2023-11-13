@@ -242,7 +242,7 @@ union silofs_ckey_u {
 	const struct silofs_bkaddr *bkaddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
-	const struct silofs_lextid *lextid;
+	const struct silofs_lsegid *lsegid;
 	const struct silofs_vbk_addr *vbk_addr;
 	const void                 *key;
 };

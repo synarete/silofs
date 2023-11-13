@@ -445,10 +445,10 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 	return ret;
 }
 
-static bool spac_ismutable_lextid(const struct silofs_spalloc_ctx *spa_ctx,
-                                  const struct silofs_lextid *lextid)
+static bool spac_ismutable_lsegid(const struct silofs_spalloc_ctx *spa_ctx,
+                                  const struct silofs_lsegid *lsegid)
 {
-	return silofs_sbi_ismutable_lextid(spa_ctx->sbi, lextid);
+	return silofs_sbi_ismutable_lsegid(spa_ctx->sbi, lsegid);
 }
 
 static int
@@ -456,15 +456,15 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
                         struct silofs_laddr *out_laddr)
 {
 	struct silofs_vrange vrange;
-	struct silofs_lextid lextid;
+	struct silofs_lsegid lsegid;
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
 
-	silofs_sli_main_lext(sli, &lextid);
-	if (lextid_isnull(&lextid)) {
+	silofs_sli_main_lseg(sli, &lsegid);
+	if (lsegid_isnull(&lsegid)) {
 		return -SILOFS_ENOENT;
 	}
 	silofs_sli_vspace_range(sli, &vrange);
-	laddr_setup(out_laddr, &lextid, 0, vrange.len);
+	laddr_setup(out_laddr, &lsegid, 0, vrange.len);
 	return 0;
 }
 
@@ -472,7 +472,7 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
  * optional operation: in case of data-leaf where no vspace is in-use,
  * reclaim-by-punch the underlying object space.
  */
-static int spac_try_reclaim_vlext(const struct silofs_spalloc_ctx *spa_ctx)
+static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_laddr laddr = { .pos = -1 };
 	int err;
@@ -482,14 +482,14 @@ static int spac_try_reclaim_vlext(const struct silofs_spalloc_ctx *spa_ctx)
 	}
 	err = spac_resolve_main_range(spa_ctx, &laddr);
 	if (err) {
-		return 0; /* not on main lext: no-op */
+		return 0; /* not on main lseg: no-op */
 	}
-	if (!spac_ismutable_lextid(spa_ctx, &laddr.lextid)) {
-		return 0; /* not a mutable lext */
+	if (!spac_ismutable_lsegid(spa_ctx, &laddr.lsegid)) {
+		return 0; /* not a mutable lseg */
 	}
-	err = silofs_repo_punch_lext(spa_ctx->fsenv->fse.repo, &laddr.lextid);
+	err = silofs_repo_punch_lseg(spa_ctx->fsenv->fse.repo, &laddr.lsegid);
 	if (err && (err != -ENOTSUP)) {
-		log_err("failed to punch lext: err=%d", err);
+		log_err("failed to punch lseg: err=%d", err);
 		return err;
 	}
 	return 0;
@@ -510,7 +510,7 @@ static void spac_reclaim_vspace_of(const struct silofs_spalloc_ctx *spa_ctx,
 {
 	spac_clear_allocate_at(spa_ctx, vaddr);
 	spac_try_recache_vspace(spa_ctx, vaddr);
-	spac_try_reclaim_vlext(spa_ctx);
+	spac_try_reclaim_vlseg(spa_ctx);
 }
 
 static int spac_resolve_and_reclaim(struct silofs_spalloc_ctx *spa_ctx,

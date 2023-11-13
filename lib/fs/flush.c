@@ -551,13 +551,13 @@ static size_t flush_threshold_of(int flags)
 	} else if (flags & SILOFS_F_FSYNC) {
 		threshold = 0;
 	} else if (flags & SILOFS_F_TIMEOUT) {
-		threshold = SILOFS_LEXT_SIZE_MAX / 4;
+		threshold = SILOFS_LSEG_SIZE_MAX / 4;
 	} else if (flags & SILOFS_F_RELEASE) {
-		threshold = SILOFS_LEXT_SIZE_MAX / 2;
+		threshold = SILOFS_LSEG_SIZE_MAX / 2;
 	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
-		threshold = 2 * SILOFS_LEXT_SIZE_MAX;
+		threshold = 2 * SILOFS_LSEG_SIZE_MAX;
 	} else {
-		threshold = 4 * SILOFS_LEXT_SIZE_MAX;
+		threshold = 4 * SILOFS_LSEG_SIZE_MAX;
 	}
 	return threshold;
 }
@@ -623,7 +623,7 @@ static void smc_cleanup_dset(struct silofs_submit_ctx *sm_ctx,
 static int smc_prep_sqe(const struct silofs_submit_ctx *sm_ctx,
                         struct silofs_submitq_ent *sqe)
 {
-	return silofs_stage_lext_at(sm_ctx->fsenv, &sqe->laddr.lextid);
+	return silofs_stage_lseg_at(sm_ctx->fsenv, &sqe->laddr.lsegid);
 }
 
 static void smc_submit_sqe(const struct silofs_submit_ctx *sm_ctx,
@@ -782,9 +782,9 @@ static int smc_collect_flush_dirty(struct silofs_submit_ctx *sm_ctx)
 }
 
 /*
- * TODO-0034: Issue flush sync to dirty lexts
+ * TODO-0034: Issue flush sync to dirty lsegs
  *
- * Implement fsync at lexts level and ensure that all of kernel's in-cache
+ * Implement fsync at lsegs level and ensure that all of kernel's in-cache
  * data is flushed all the way to stable storage.
  */
 static int smc_complete_commits(const struct silofs_submit_ctx *sm_ctx)

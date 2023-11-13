@@ -791,13 +791,13 @@ static int flush_dirty(const struct silofs_fs_ctx *fs_ctx)
 	return err;
 }
 
-static int fsync_lexts(const struct silofs_fs_ctx *fs_ctx)
+static int fsync_lsegs(const struct silofs_fs_ctx *fs_ctx)
 {
 	int err;
 
 	err = silofs_repo_fsync_all(fs_ctx->repo);
 	if (err) {
-		log_err("failed to fsync lexts: err=%d", err);
+		log_err("failed to fsync lsegs: err=%d", err);
 	}
 	return err;
 }
@@ -1532,11 +1532,11 @@ int silofs_format_fs(struct silofs_fs_ctx *fs_ctx,
 	return ret;
 }
 
-static int fse_reload_root_sb_lext(struct silofs_fs_ctx *fs_ctx,
+static int fse_reload_root_sb_lseg(struct silofs_fs_ctx *fs_ctx,
                                    const struct silofs_bootrec *brec)
 {
 	silofs_fsenv_bind_child(fs_ctx->fsenv, &brec->sb_ulink);
-	return silofs_fsenv_reload_sb_lext(fs_ctx->fsenv);
+	return silofs_fsenv_reload_sb_lseg(fs_ctx->fsenv);
 }
 
 static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
@@ -1555,7 +1555,7 @@ static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sb_lext(fs_ctx, &brec);
+	err = fse_reload_root_sb_lseg(fs_ctx, &brec);
 	if (err) {
 		return err;
 	}
@@ -1614,7 +1614,7 @@ static int do_close_fs(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = fsync_lexts(fs_ctx);
+	err = fsync_lsegs(fs_ctx);
 	if (err) {
 		return err;
 	}
@@ -1726,7 +1726,7 @@ int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sb_lext(fs_ctx, &brec);
+	err = fse_reload_root_sb_lseg(fs_ctx, &brec);
 	if (err) {
 		return err;
 	}

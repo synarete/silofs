@@ -28,7 +28,7 @@ struct silofs_repo_base {
 	long                            flags;
 };
 
-/* repository logical-extents-file hash-map */
+/* repository logical-segments-file hash-map */
 struct silofs_repo_htbl {
 	size_t                          rh_size;
 	size_t                          rh_nelems;
@@ -44,7 +44,7 @@ struct silofs_repo {
 	struct silofs_mdigest           re_mdigest;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
-	int                             re_lexts_dfd;
+	int                             re_lsegs_dfd;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -68,21 +68,21 @@ void silofs_repo_relax(struct silofs_repo *repo);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_lext(struct silofs_repo *repo,
-                          const struct silofs_lextid *lextid,
+int silofs_repo_stat_lseg(struct silofs_repo *repo,
+                          const struct silofs_lsegid *lsegid,
                           bool allow_cache, struct stat *out_st);
 
-int silofs_repo_spawn_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid);
+int silofs_repo_spawn_lseg(struct silofs_repo *repo,
+                           const struct silofs_lsegid *lsegid);
 
-int silofs_repo_stage_lext(struct silofs_repo *repo, bool rw,
-                           const struct silofs_lextid *lextid);
+int silofs_repo_stage_lseg(struct silofs_repo *repo, bool rw,
+                           const struct silofs_lsegid *lsegid);
 
-int silofs_repo_remove_lext(struct silofs_repo *repo,
-                            const struct silofs_lextid *lextid);
+int silofs_repo_remove_lseg(struct silofs_repo *repo,
+                            const struct silofs_lsegid *lsegid);
 
-int silofs_repo_punch_lext(struct silofs_repo *repo,
-                           const struct silofs_lextid *lextid);
+int silofs_repo_punch_lseg(struct silofs_repo *repo,
+                           const struct silofs_lsegid *lsegid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

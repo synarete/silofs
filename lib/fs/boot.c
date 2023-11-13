@@ -510,19 +510,19 @@ void silofs_bootrec_lvid(const struct silofs_bootrec *brec,
 {
 	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
 
-	silofs_lvid_assign(out_lvid, &sb_uaddr->laddr.lextid.lvid);
+	silofs_lvid_assign(out_lvid, &sb_uaddr->laddr.lsegid.lvid);
 }
 
 static void
 bootrec_uaddr_by_lvid(const struct silofs_lvid *lvid,
                       struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_lextid lextid;
+	struct silofs_lsegid lsegid;
 	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lextid_setup(&lextid, lvid, 0, stype, height);
-	silofs_uaddr_setup(out_uaddr, &lextid, 0, stype, 0);
+	silofs_lsegid_setup(&lsegid, lvid, 0, stype, height);
+	silofs_uaddr_setup(out_uaddr, &lsegid, 0, stype, 0);
 }
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,

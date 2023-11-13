@@ -212,14 +212,14 @@ static void vbki_free(struct silofs_vbk_info *vbki,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t hash_of_lextid(const struct silofs_lextid *lextid)
+static uint64_t hash_of_lsegid(const struct silofs_lsegid *lsegid)
 {
-	return silofs_lextid_hash64(lextid);
+	return silofs_lsegid_hash64(lsegid);
 }
 
 static uint64_t hash_of_bkaddr(const struct silofs_bkaddr *bkaddr)
 {
-	return hash_of_lextid(&bkaddr->laddr.lextid) ^ (uint64_t)bkaddr->lba;
+	return hash_of_lsegid(&bkaddr->laddr.lsegid) ^ (uint64_t)bkaddr->lba;
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
@@ -239,7 +239,7 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	uint64_t d[4];
 	uint64_t seed;
 
-	d[0] = hash_of_lextid(&uaddr->laddr.lextid);
+	d[0] = hash_of_lsegid(&uaddr->laddr.lsegid);
 	d[1] = uaddr->laddr.len;
 	d[2] = 0x736f6d6570736575ULL - (uint64_t)(uaddr->laddr.pos);
 	d[3] = (uint64_t)uaddr->voff;

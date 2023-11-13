@@ -50,14 +50,14 @@ struct silofs_sp_visitor {
 	silofs_visit_laddr_fn           cb;
 };
 
-static bool spvis_unique_lextid(const struct silofs_sp_visitor *sp_vis,
-                                const struct silofs_lextid *lextid, size_t cnt)
+static bool spvis_unique_lsegid(const struct silofs_sp_visitor *sp_vis,
+                                const struct silofs_lsegid *lsegid, size_t cnt)
 {
-	if (lextid_isnull(lextid)) {
+	if (lsegid_isnull(lsegid)) {
 		return false;
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		if (lextid_isequal(lextid, &sp_vis->urefs.subs[i].lextid)) {
+		if (lsegid_isequal(lsegid, &sp_vis->urefs.subs[i].lsegid)) {
 			return false;
 		}
 	}
@@ -73,7 +73,7 @@ spvis_exec_at_spleaf(struct silofs_sp_visitor *sp_vis,
 	silofs_sli_childrens(sli, &sp_vis->urefs);
 	for (size_t i = 0; i < ARRAY_SIZE(sp_vis->urefs.subs); ++i) {
 		laddr = &sp_vis->urefs.subs[i];
-		if (spvis_unique_lextid(sp_vis, &laddr->lextid, i)) {
+		if (spvis_unique_lsegid(sp_vis, &laddr->lsegid, i)) {
 			sp_vis->cb(laddr, voff);
 		}
 		voff = off_next_lbk(voff);

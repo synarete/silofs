@@ -145,7 +145,7 @@ static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr64b_htox(&sb->sb_self_uaddr, uaddr);
-	sb_set_lvid(sb, &uaddr->laddr.lextid.lvid);
+	sb_set_lvid(sb, &uaddr->laddr.lsegid.lvid);
 }
 
 static void sb_origin(const struct silofs_super_block *sb,
@@ -170,35 +170,35 @@ static void sb_generate_lvid(struct silofs_super_block *sb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_lextid32b *
-sb_mainlextid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
+static const struct silofs_lsegid32b *
+sb_mainlsegid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 {
-	const struct silofs_lextid32b *ret;
+	const struct silofs_lsegid32b *ret;
 
 	switch (stype) {
 	case SILOFS_STYPE_DATA1K:
-		ret = &sb->sb_main_lextid.sb_lextid_data1k;
+		ret = &sb->sb_main_lsegid.sb_lsegid_data1k;
 		break;
 	case SILOFS_STYPE_DATA4K:
-		ret = &sb->sb_main_lextid.sb_lextid_data4k;
+		ret = &sb->sb_main_lsegid.sb_lsegid_data4k;
 		break;
 	case SILOFS_STYPE_DATABK:
-		ret = &sb->sb_main_lextid.sb_lextid_databk;
+		ret = &sb->sb_main_lsegid.sb_lsegid_databk;
 		break;
 	case SILOFS_STYPE_INODE:
-		ret = &sb->sb_main_lextid.sb_lextid_inode;
+		ret = &sb->sb_main_lsegid.sb_lsegid_inode;
 		break;
 	case SILOFS_STYPE_XANODE:
-		ret = &sb->sb_main_lextid.sb_lextid_xanode;
+		ret = &sb->sb_main_lsegid.sb_lsegid_xanode;
 		break;
 	case SILOFS_STYPE_DTNODE:
-		ret = &sb->sb_main_lextid.sb_lextid_dtnode;
+		ret = &sb->sb_main_lsegid.sb_lsegid_dtnode;
 		break;
 	case SILOFS_STYPE_FTNODE:
-		ret = &sb->sb_main_lextid.sb_lextid_ftnode;
+		ret = &sb->sb_main_lsegid.sb_lsegid_ftnode;
 		break;
 	case SILOFS_STYPE_SYMVAL:
-		ret = &sb->sb_main_lextid.sb_lextid_symval;
+		ret = &sb->sb_main_lsegid.sb_lsegid_symval;
 		break;
 	case SILOFS_STYPE_NONE:
 	case SILOFS_STYPE_BOOTREC:
@@ -213,47 +213,47 @@ sb_mainlextid_by(const struct silofs_super_block *sb, enum silofs_stype stype)
 	return ret;
 }
 
-static struct silofs_lextid32b *
-sb_mainlextid_by2(struct silofs_super_block *sb, enum silofs_stype stype)
+static struct silofs_lsegid32b *
+sb_mainlsegid_by2(struct silofs_super_block *sb, enum silofs_stype stype)
 {
-	const struct silofs_lextid32b *bid = sb_mainlextid_by(sb, stype);
+	const struct silofs_lsegid32b *bid = sb_mainlsegid_by(sb, stype);
 
 	return unconst(bid);
 }
 
-static void sb_main_lextid(const struct silofs_super_block *sb,
+static void sb_main_lsegid(const struct silofs_super_block *sb,
                            enum silofs_stype stype,
-                           struct silofs_lextid *out_lextid)
+                           struct silofs_lsegid *out_lsegid)
 {
-	const struct silofs_lextid32b *bid = sb_mainlextid_by(sb, stype);
+	const struct silofs_lsegid32b *bid = sb_mainlsegid_by(sb, stype);
 
 	if (likely(bid != NULL)) {
-		silofs_lextid32b_xtoh(bid, out_lextid);
+		silofs_lsegid32b_xtoh(bid, out_lsegid);
 	} else {
-		silofs_lextid_reset(out_lextid);
+		silofs_lsegid_reset(out_lsegid);
 	}
 }
 
-static void sb_set_main_lextid(struct silofs_super_block *sb,
+static void sb_set_main_lsegid(struct silofs_super_block *sb,
                                enum silofs_stype stype,
-                               const struct silofs_lextid *lextid)
+                               const struct silofs_lsegid *lsegid)
 {
-	struct silofs_lextid32b *bid = sb_mainlextid_by2(sb, stype);
+	struct silofs_lsegid32b *bid = sb_mainlsegid_by2(sb, stype);
 
 	if (likely(bid != NULL)) {
-		silofs_lextid32b_htox(bid, lextid);
+		silofs_lsegid32b_htox(bid, lsegid);
 	}
 }
 
-static void sb_reset_main_lextids(struct silofs_super_block *sb)
+static void sb_reset_main_lsegids(struct silofs_super_block *sb)
 {
-	struct silofs_lextid32b *bid;
+	struct silofs_lsegid32b *bid;
 	enum silofs_stype stype;
 
 	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
-		bid = sb_mainlextid_by2(sb, stype);
+		bid = sb_mainlsegid_by2(sb, stype);
 		if (bid != NULL) {
-			silofs_lextid32b_reset(bid);
+			silofs_lsegid32b_reset(bid);
 		}
 	}
 }
@@ -483,7 +483,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_reset_sproots(sb);
 	sb_gen_rootivs(sb);
 	sb_generate_lvid(sb);
-	sb_reset_main_lextids(sb);
+	sb_reset_main_lsegids(sb);
 	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
 	silofs_uaddr64b_reset(&sb->sb_orig_uaddr);
 }
@@ -654,29 +654,29 @@ void silofs_sbi_get_lvid(const struct silofs_sb_info *sbi,
 	sb_lvid(sbi->sb, out_lvid);
 }
 
-int silofs_sbi_main_lext(const struct silofs_sb_info *sbi,
+int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
                          enum silofs_stype vspace,
-                         struct silofs_lextid *out_lextid)
+                         struct silofs_lsegid *out_lsegid)
 {
-	sb_main_lextid(sbi->sb, vspace, out_lextid);
-	return lextid_isnull(out_lextid) ? -SILOFS_ENOENT : 0;
+	sb_main_lsegid(sbi->sb, vspace, out_lsegid);
+	return lsegid_isnull(out_lsegid) ? -SILOFS_ENOENT : 0;
 }
 
-void silofs_sbi_bind_main_lext(struct silofs_sb_info *sbi,
+void silofs_sbi_bind_main_lseg(struct silofs_sb_info *sbi,
                                enum silofs_stype vspace,
-                               const struct silofs_lextid *lextid)
+                               const struct silofs_lsegid *lsegid)
 {
-	sb_set_main_lextid(sbi->sb, vspace, lextid);
+	sb_set_main_lsegid(sbi->sb, vspace, lsegid);
 	sbi_dirtify(sbi);
 }
 
-bool silofs_sbi_has_main_lext(const struct silofs_sb_info *sbi,
+bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
                               enum silofs_stype vspace)
 {
-	struct silofs_lextid lext_id;
+	struct silofs_lsegid lseg_id;
 
-	silofs_sbi_main_lext(sbi, vspace, &lext_id);
-	return (lextid_size(&lext_id) > 0);
+	silofs_sbi_main_lseg(sbi, vspace, &lseg_id);
+	return (lsegid_size(&lseg_id) > 0);
 }
 
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
@@ -724,14 +724,14 @@ static void sbi_main_ulink(const struct silofs_sb_info *sbi,
                            loff_t voff, enum silofs_stype vspace,
                            struct silofs_uaddr *out_uaddr)
 {
-	struct silofs_lextid lextid;
+	struct silofs_lsegid lsegid;
 	const loff_t bpos = sbi_bpos_of_child(sbi, voff);
 	const loff_t base = sbi_base_voff_of_child(sbi, voff);
 
-	silofs_sbi_main_lext(sbi, vspace, &lextid);
-	uaddr_setup(out_uaddr, &lextid, bpos, SILOFS_STYPE_SPNODE, base);
+	silofs_sbi_main_lseg(sbi, vspace, &lsegid);
+	uaddr_setup(out_uaddr, &lsegid, bpos, SILOFS_STYPE_SPNODE, base);
 
-	silofs_assert_eq(lextid.height, SILOFS_HEIGHT_SUPER - 1);
+	silofs_assert_eq(lsegid.height, SILOFS_HEIGHT_SUPER - 1);
 }
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
@@ -768,19 +768,19 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
 	sbi_dirtify(sbi);
 }
 
-bool silofs_sbi_ismutable_lextid(const struct silofs_sb_info *sbi,
-                                 const struct silofs_lextid *lextid)
+bool silofs_sbi_ismutable_lsegid(const struct silofs_sb_info *sbi,
+                                 const struct silofs_lsegid *lsegid)
 {
 	struct silofs_lvid lvid;
 
 	silofs_sbi_get_lvid(sbi, &lvid);
-	return silofs_lextid_has_lvid(lextid, &lvid);
+	return silofs_lsegid_has_lvid(lsegid, &lvid);
 }
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_laddr *laddr)
 {
-	return silofs_sbi_ismutable_lextid(sbi, &laddr->lextid);
+	return silofs_sbi_ismutable_lsegid(sbi, &laddr->lsegid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -931,7 +931,7 @@ void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
 	sb_clone_sproots(sb, sb_other);
 	sb_clone_rootivs(sb, sb_other);
 	sb_generate_lvid(sb);
-	sb_reset_main_lextids(sb);
+	sb_reset_main_lsegids(sb);
 	sb_set_self(sb, sbi_uaddr(sbi));
 	sb_set_origin(sb, sbi_uaddr(sbi_other));
 	sbi_dirtify(sbi);

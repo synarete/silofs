@@ -77,10 +77,10 @@ const struct silofs_bkaddr *silofs_bkaddr_none(void);
 void silofs_bkaddr_reset(struct silofs_bkaddr *bkaddr);
 
 void silofs_bkaddr_setup(struct silofs_bkaddr *bkaddr,
-                         const struct silofs_lextid *lextid, silofs_lba_t lba);
+                         const struct silofs_lsegid *lsegid, silofs_lba_t lba);
 
 void  silofs_bkaddr_by_off(struct silofs_bkaddr *bkaddr,
-                           const struct silofs_lextid *lextid, loff_t off);
+                           const struct silofs_lsegid *lsegid, loff_t off);
 
 void silofs_bkaddr_by_laddr(struct silofs_bkaddr *bkaddr,
                             const struct silofs_laddr *laddr);
@@ -116,13 +116,13 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_lvid *
 silofs_uaddr_lvid(const struct silofs_uaddr *uaddr);
 
-const struct silofs_lextid *
-silofs_uaddr_lextid(const struct silofs_uaddr *uaddr);
+const struct silofs_lsegid *
+silofs_uaddr_lsegid(const struct silofs_uaddr *uaddr);
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_lextid *lextid,
+                        const struct silofs_lsegid *lsegid,
                         loff_t bpos, enum silofs_stype stype, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64);
@@ -221,8 +221,6 @@ void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
                            struct silofs_vrange *vrange);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_check_fs_capacity(size_t cap_size);
 
 int silofs_calc_fs_capacity(size_t capcity_want, size_t *out_capacity);
 

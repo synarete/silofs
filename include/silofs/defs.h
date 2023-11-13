@@ -127,11 +127,11 @@
 	(SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
 
 /* maximal number of logical blocks within single tree-segment */
-#define SILOFS_NLBK_IN_LEXT_MAX         (256L)
+#define SILOFS_NLBK_IN_LSEG_MAX         (256L)
 
 /* maximal size in bytes of single tree-segment (16M) */
-#define SILOFS_LEXT_SIZE_MAX \
-	(SILOFS_NLBK_IN_LEXT_MAX * SILOFS_LBK_SIZE)
+#define SILOFS_LSEG_SIZE_MAX \
+	(SILOFS_NLBK_IN_LSEG_MAX * SILOFS_LBK_SIZE)
 
 
 /* non-valid ("NIL") logical byte address */
@@ -503,7 +503,7 @@ struct silofs_paddr32b {
 } silofs_packed_aligned16;
 
 
-struct silofs_lextid32b {
+struct silofs_lsegid32b {
 	struct silofs_lvid              lvid;
 	int64_t                         voff;
 	uint32_t                        size;
@@ -514,7 +514,7 @@ struct silofs_lextid32b {
 
 
 struct silofs_laddr48b {
-	struct silofs_lextid32b         lextid;
+	struct silofs_lsegid32b         lsegid;
 	uint32_t                        pos;
 	uint32_t                        len;
 	uint8_t                         pad[8];
@@ -603,15 +603,15 @@ struct silofs_sb_sproots {
 } silofs_packed_aligned64;
 
 
-struct silofs_sb_lextids {
-	struct silofs_lextid32b         sb_lextid_inode;
-	struct silofs_lextid32b         sb_lextid_xanode;
-	struct silofs_lextid32b         sb_lextid_dtnode;
-	struct silofs_lextid32b         sb_lextid_ftnode;
-	struct silofs_lextid32b         sb_lextid_symval;
-	struct silofs_lextid32b         sb_lextid_data1k;
-	struct silofs_lextid32b         sb_lextid_data4k;
-	struct silofs_lextid32b         sb_lextid_databk;
+struct silofs_sb_lsegids {
+	struct silofs_lsegid32b         sb_lsegid_inode;
+	struct silofs_lsegid32b         sb_lsegid_xanode;
+	struct silofs_lsegid32b         sb_lsegid_dtnode;
+	struct silofs_lsegid32b         sb_lsegid_ftnode;
+	struct silofs_lsegid32b         sb_lsegid_symval;
+	struct silofs_lsegid32b         sb_lsegid_data1k;
+	struct silofs_lsegid32b         sb_lsegid_data4k;
+	struct silofs_lsegid32b         sb_lsegid_databk;
 	uint8_t                         sb_reserved[768];
 } silofs_packed_aligned64;
 
@@ -654,7 +654,7 @@ struct silofs_space_stats {
 	uint64_t                        sp_vspacesize;
 	uint64_t                        sp_generation;
 	uint8_t                         sp_reserved[216];
-	struct silofs_space_gauges      sp_lexts;
+	struct silofs_space_gauges      sp_lsegs;
 	struct silofs_space_gauges      sp_bks;
 	struct silofs_space_gauges      sp_objs;
 } silofs_packed_aligned64;
@@ -685,7 +685,7 @@ struct silofs_super_block {
 	/* 1K..2K */
 	struct silofs_sb_sproots        sb_sproots;
 	/* 2K..3K */
-	struct silofs_sb_lextids        sb_main_lextid;
+	struct silofs_sb_lsegids        sb_main_lsegid;
 	/* 3K..4K */
 	struct silofs_sb_rootivs        sb_rootivs;
 	uint8_t                         sb_reserved5[512];
@@ -706,7 +706,7 @@ struct silofs_spmap_ref {
 struct silofs_spmap_node {
 	struct silofs_header            sn_hdr;
 	uint8_t                         sn_reserved1[16];
-	struct silofs_lextid32b         sn_main_lextid;
+	struct silofs_lsegid32b         sn_main_lsegid;
 	struct silofs_vrange128         sn_vrange;
 	uint8_t                         sn_reserved2[48];
 	struct silofs_uaddr64b          sn_parent;
@@ -736,7 +736,7 @@ struct silofs_bk_ref {
 struct silofs_spmap_leaf {
 	struct silofs_header            sl_hdr;
 	uint8_t                         sl_reserved1[16];
-	struct silofs_lextid32b         sl_main_lextid;
+	struct silofs_lsegid32b         sl_main_lsegid;
 	struct silofs_uaddr64b          sl_parent;
 	struct silofs_uaddr64b          sl_self;
 	struct silofs_vrange128         sl_vrange;

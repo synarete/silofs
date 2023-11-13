@@ -34,11 +34,11 @@
 #define off_len(beg, end)               silofs_off_len(beg, end)
 #define off_ulen(beg, end)              silofs_off_ulen(beg, end)
 
-#define lextid_reset(lid)               silofs_lextid_reset(lid)
-#define lextid_assign(lid, oth)         silofs_lextid_assign(lid, oth)
-#define lextid_isequal(lid, oth)        silofs_lextid_isequal(lid, oth)
-#define lextid_isnull(lid)              silofs_lextid_isnull(lid)
-#define lextid_size(lid)                silofs_lextid_size(lid)
+#define lsegid_reset(lid)               silofs_lsegid_reset(lid)
+#define lsegid_assign(lid, oth)         silofs_lsegid_assign(lid, oth)
+#define lsegid_isequal(lid, oth)        silofs_lsegid_isequal(lid, oth)
+#define lsegid_isnull(lid)              silofs_lsegid_isnull(lid)
+#define lsegid_size(lid)                silofs_lsegid_size(lid)
 
 #define laddr_reset(la)                 silofs_laddr_reset(la)
 #define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)

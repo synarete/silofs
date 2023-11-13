@@ -37,7 +37,7 @@ struct silofs_fsenv {
 	struct silofs_mutex             fse_lock;
 	struct silofs_crypto            fse_crypto;
 	struct silofs_oper_stat         fse_op_stat;
-	struct silofs_lextid            fse_sb_lextid;
+	struct silofs_lsegid            fse_sb_lsegid;
 	struct silofs_sb_info          *fse_sbi;
 	struct silofs_ulink             fse_sb_ulink;
 	struct silofs_cred              fse_owner;
@@ -66,7 +66,7 @@ int silofs_fsenv_format_super(struct silofs_fsenv *fsenv, size_t capacity);
 
 int silofs_fsenv_reload_super(struct silofs_fsenv *fsenv);
 
-int silofs_fsenv_reload_sb_lext(struct silofs_fsenv *fsenv);
+int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
                         struct silofs_bootrecs *out_brecs);
@@ -108,11 +108,11 @@ int silofs_stage_ubk_at(struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_lext_at(struct silofs_fsenv *fsenv,
-                         const struct silofs_lextid *lextid);
+int silofs_spawn_lseg_at(struct silofs_fsenv *fsenv,
+                         const struct silofs_lsegid *lsegid);
 
-int silofs_stage_lext_at(struct silofs_fsenv *fsenv,
-                         const struct silofs_lextid *lextid);
+int silofs_stage_lseg_at(struct silofs_fsenv *fsenv,
+                         const struct silofs_lsegid *lsegid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

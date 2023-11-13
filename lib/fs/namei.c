@@ -2442,7 +2442,7 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	return 0;
 }
 
-static int flush_and_sync_lexts(struct silofs_task *task)
+static int flush_and_sync_lsegs(struct silofs_task *task)
 {
 	int err;
 
@@ -2468,7 +2468,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_lexts(task);
+	err = flush_and_sync_lsegs(task);
 	if (err) {
 		return err;
 	}
@@ -2476,7 +2476,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_lexts(task);
+	err = flush_and_sync_lsegs(task);
 	if (err) {
 		return err;
 	}
@@ -2654,7 +2654,7 @@ int silofs_do_syncfs(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_lexts(task);
+	err = flush_and_sync_lsegs(task);
 	if (err) {
 		return err;
 	}

@@ -49,12 +49,12 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_gt(spst.ctime, 0);
 	ut_expect_ge(spst.capacity, SILOFS_CAPACITY_SIZE_MIN);
 	ut_expect_ge(spst.vspacesize, SILOFS_CAPACITY_SIZE_MIN);
-	ut_expect_ge(spst.lexts.nsuper, 1);
-	ut_expect_ge(spst.lexts.ndatabk, 1);
-	ut_expect_ge(spst.lexts.nspnode, 3);
-	ut_expect_ge(spst.lexts.nspleaf, 1);
-	ut_expect_ge(spst.lexts.ninode, 1);
-	ut_expect_ge(spst.lexts.ndtnode, 1);
+	ut_expect_ge(spst.lsegs.nsuper, 1);
+	ut_expect_ge(spst.lsegs.ndatabk, 1);
+	ut_expect_ge(spst.lsegs.nspnode, 3);
+	ut_expect_ge(spst.lsegs.nspleaf, 1);
+	ut_expect_ge(spst.lsegs.ninode, 1);
+	ut_expect_ge(spst.lsegs.ndtnode, 1);
 	ut_expect_ge(spst.objs.nspnode, 3);
 	ut_expect_ge(spst.objs.nspleaf, 4);
 	ut_expect_ge(spst.bks.ndata1k, spst.bks.ndata1k);

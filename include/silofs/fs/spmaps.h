@@ -58,11 +58,11 @@ void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
 void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
                               struct silofs_vrange *out_vrange);
 
-void silofs_sni_main_lext(const struct silofs_spnode_info *sni,
-                          struct silofs_lextid *out_lextid);
+void silofs_sni_main_lseg(const struct silofs_spnode_info *sni,
+                          struct silofs_lsegid *out_lsegid);
 
-void silofs_sni_bind_main_lext(struct silofs_spnode_info *sni,
-                               const struct silofs_lextid *lextid);
+void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
+                               const struct silofs_lsegid *lsegid);
 
 void silofs_sni_resolve_main(const struct silofs_spnode_info *sni,
                              loff_t voff, struct silofs_ulink *out_ulink);
@@ -134,11 +134,11 @@ void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
                           enum silofs_stype stype, silofs_lba_t lba,
                           struct silofs_vaddrs *vas);
 
-void silofs_sli_main_lext(const struct silofs_spleaf_info *sli,
-                          struct silofs_lextid *out_lextid);
+void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
+                          struct silofs_lsegid *out_lsegid);
 
-void silofs_sli_bind_main_lext(struct silofs_spleaf_info *sli,
-                               const struct silofs_lextid *lextid);
+void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
+                               const struct silofs_lsegid *lsegid);
 
 void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
                            const struct silofs_spleaf_info *sli_other);

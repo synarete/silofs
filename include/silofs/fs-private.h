@@ -58,7 +58,7 @@
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
 #define uaddr_lvid(ua)                silofs_uaddr_lvid(ua)
-#define uaddr_lextid(ua)                silofs_uaddr_lextid(ua)
+#define uaddr_lsegid(ua)                silofs_uaddr_lsegid(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)
 
 #define ulink_assign(ul, oth)           silofs_ulink_assign(ul, oth)
@@ -87,7 +87,7 @@
 #define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 #define sbi_laddr(sbi)                  silofs_sbi_laddr(sbi)
-#define sbi_lextid(sbi)                 silofs_sbi_lextid(sbi)
+#define sbi_lsegid(sbi)                 silofs_sbi_lsegid(sbi)
 #define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)

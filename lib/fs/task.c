@@ -46,10 +46,10 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 	}
 }
 
-static bool sqe_has_lextid_as(const struct silofs_submitq_ent *sqe,
+static bool sqe_has_lsegid_as(const struct silofs_submitq_ent *sqe,
                               const struct silofs_laddr *laddr)
 {
-	return lextid_isequal(&sqe->laddr.lextid, &laddr->lextid);
+	return lsegid_isequal(&sqe->laddr.lsegid, &laddr->lsegid);
 }
 
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
@@ -75,7 +75,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (laddr->pos != end) {
 		return false;
 	}
-	if (end > (ssize_t)laddr->lextid.size) {
+	if (end > (ssize_t)laddr->lsegid.size) {
 		return false;
 	}
 	len = sqe_laddr->len + laddr->len;
@@ -87,7 +87,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (end > nxt) {
 		return false;
 	}
-	if (!sqe_has_lextid_as(sqe, laddr)) {
+	if (!sqe_has_lsegid_as(sqe, laddr)) {
 		return false;
 	}
 	return true;

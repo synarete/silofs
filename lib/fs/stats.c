@@ -277,14 +277,14 @@ static void spst_init(struct silofs_space_stats *spst)
 	spst_set_generation(spst, 0);
 	spg_bzero_all(&spst->sp_objs);
 	spg_bzero_all(&spst->sp_bks);
-	spg_bzero_all(&spst->sp_lexts);
+	spg_bzero_all(&spst->sp_lsegs);
 }
 
 static void spst_renew(struct silofs_space_stats *spst)
 {
 	spg_bzero_all(&spst->sp_objs);
 	spg_bzero_all(&spst->sp_bks);
-	spg_bzero_all(&spst->sp_lexts);
+	spg_bzero_all(&spst->sp_lsegs);
 }
 
 static void spst_make_clone(struct silofs_space_stats *spst,
@@ -297,7 +297,7 @@ static void spst_make_clone(struct silofs_space_stats *spst,
 	spst_set_generation(spst, spst_generation(spst_other));
 	spg_make_clone(&spst->sp_objs, &spst_other->sp_objs);
 	spg_make_clone(&spst->sp_bks, &spst_other->sp_bks);
-	spg_make_clone(&spst->sp_lexts, &spst_other->sp_lexts);
+	spg_make_clone(&spst->sp_lsegs, &spst_other->sp_lsegs);
 }
 
 static void spst_export_to(const struct silofs_space_stats *spst,
@@ -310,13 +310,13 @@ static void spst_export_to(const struct silofs_space_stats *spst,
 	sst->generation = spst_generation(spst);
 	spg_export_to(&spst->sp_objs, &sst->objs);
 	spg_export_to(&spst->sp_bks, &sst->bks);
-	spg_export_to(&spst->sp_lexts, &sst->lexts);
+	spg_export_to(&spst->sp_lsegs, &sst->lsegs);
 }
 
-static void spst_update_lexts(struct silofs_space_stats *spst,
+static void spst_update_lsegs(struct silofs_space_stats *spst,
                               enum silofs_stype stype, ssize_t take)
 {
-	spg_update_take(&spst->sp_lexts, stype, take);
+	spg_update_take(&spst->sp_lsegs, stype, take);
 }
 
 static void spst_update_objs(struct silofs_space_stats *spst,
@@ -356,7 +356,7 @@ int silofs_verify_space_stats(const struct silofs_space_stats *spst)
 	if (err) {
 		return err;
 	}
-	err = spg_verify(&spst->sp_lexts);
+	err = spg_verify(&spst->sp_lsegs);
 	if (err) {
 		return err;
 	}
@@ -498,7 +498,7 @@ static void spgs_import(struct silofs_spacegauges *spgs,
 static void spacestats_accum_gauges(struct silofs_spacestats *spst,
                                     const struct silofs_spacestats *spst_other)
 {
-	spgs_accum(&spst->lexts, &spst_other->lexts);
+	spgs_accum(&spst->lsegs, &spst_other->lsegs);
 	spgs_accum(&spst->bks, &spst_other->bks);
 	spgs_accum(&spst->objs, &spst_other->objs);
 }
@@ -512,7 +512,7 @@ void silofs_spacestats_export(const struct silofs_spacestats *spst,
 	out_spst->sp_capacity = silofs_cpu_to_le64(spst->capacity);
 	out_spst->sp_vspacesize = silofs_cpu_to_le64(spst->vspacesize);
 	out_spst->sp_generation = silofs_cpu_to_le64(spst->generation);
-	spgs_export(&spst->lexts, &out_spst->sp_lexts);
+	spgs_export(&spst->lsegs, &out_spst->sp_lsegs);
 	spgs_export(&spst->bks, &out_spst->sp_bks);
 	spgs_export(&spst->objs, &out_spst->sp_objs);
 }
@@ -526,7 +526,7 @@ void silofs_spacestats_import(struct silofs_spacestats *spst,
 	spst->capacity = silofs_le64_to_cpu(in_spst->sp_capacity);
 	spst->vspacesize = silofs_le64_to_cpu(in_spst->sp_vspacesize);
 	spst->generation = silofs_le64_to_cpu(in_spst->sp_generation);
-	spgs_import(&spst->lexts, &in_spst->sp_lexts);
+	spgs_import(&spst->lsegs, &in_spst->sp_lsegs);
 	spgs_import(&spst->bks, &in_spst->sp_bks);
 	spgs_import(&spst->objs, &in_spst->sp_objs);
 }
@@ -576,11 +576,11 @@ void silofs_sti_set_capacity(struct silofs_stats_info *sti,
 	sti_dirtify(sti);
 }
 
-void silofs_sti_update_lexts(struct silofs_stats_info *sti,
+void silofs_sti_update_lsegs(struct silofs_stats_info *sti,
                              enum silofs_stype stype, ssize_t take)
 {
 	if (take != 0) {
-		spst_update_lexts(sti->spst_curr, stype, take);
+		spst_update_lsegs(sti->spst_curr, stype, take);
 		sti_dirtify(sti);
 	}
 }

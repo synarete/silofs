@@ -893,32 +893,6 @@ void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int check_fs_capacity(size_t cap_size)
-{
-	if (cap_size < SILOFS_CAPACITY_SIZE_MIN) {
-		return -SILOFS_EINVAL;
-	}
-	if (cap_size > SILOFS_CAPACITY_SIZE_MAX) {
-		return -SILOFS_EINVAL;
-	}
-	return 0;
-}
-
-int silofs_calc_fs_capacity(size_t capcity_want, size_t *out_capacity)
-{
-	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
-	int err;
-
-	err = check_fs_capacity(capcity_want);
-	if (err) {
-		return err;
-	}
-	*out_capacity = (capcity_want / align_size) * align_size;
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_verify_ino(ino_t ino)
 {
 	return !ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;

@@ -944,10 +944,13 @@ static int check_superblock(const struct silofs_fs_ctx *fs_ctx)
 
 	err = silofs_sb_check_version(sb);
 	if (err) {
+		log_err("bad sb: magic=%lx version:=%ld err=%d",
+		        sb->sb_magic, sb->sb_version, err);
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
 	if (fossil && !fs_ctx->fs_args.rdonly) {
+		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
 		return -SILOFS_EROFS;
 	}
 	return 0;
@@ -1261,15 +1264,26 @@ static int format_rootdir(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int check_capacity(const struct silofs_fs_ctx *fs_ctx)
+static int check_fs_capacity(size_t cap_size)
+{
+	if (cap_size < SILOFS_CAPACITY_SIZE_MIN) {
+		return -SILOFS_EINVAL;
+	}
+	if (cap_size > SILOFS_CAPACITY_SIZE_MAX) {
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+static int check_want_capacity(const struct silofs_fs_ctx *fs_ctx)
 {
 	const size_t cap_want = fs_ctx->fs_args.capacity;
-	size_t capacity = 0;
 	int err;
 
-	err = silofs_calc_fs_capacity(cap_want, &capacity);
+	err = check_fs_capacity(cap_want);
 	if (err) {
-		log_err("illegal capacity: cap=%lu err=%d", cap_want, err);
+		log_err("illegal file-system capacity: "
+		        "cap=%lu err=%d", cap_want, err);
 		return err;
 	}
 	return 0;
@@ -1293,23 +1307,28 @@ static int check_owner_ids(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
+static size_t calc_aligned_fs_cap(size_t cap_want)
+{
+	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
+
+	return (cap_want / align_size) * align_size;
+}
+
 static int format_umeta(const struct silofs_fs_ctx *fs_ctx)
 {
-	const size_t cap_want = fs_ctx->fs_args.capacity;
-	size_t capacity = 0;
+	const size_t cap = calc_aligned_fs_cap(fs_ctx->fs_args.capacity);
 	int err;
 
-	err = silofs_calc_fs_capacity(cap_want, &capacity);
+	err = check_want_capacity(fs_ctx);
 	if (err) {
 		return err;
 	}
-	err = silofs_fsenv_format_super(fs_ctx->fsenv, capacity);
+	err = silofs_fsenv_format_super(fs_ctx->fsenv, cap);
 	if (err) {
 		return err;
 	}
 	err = check_superblock(fs_ctx);
 	if (err) {
-		log_err("internal sb format: err=%d", err);
 		return err;
 	}
 	err = flush_dirty(fs_ctx);
@@ -1489,7 +1508,7 @@ static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
 	int err;
 
 	silofs_bootrec_init(&brec);
-	err = check_capacity(fs_ctx);
+	err = check_want_capacity(fs_ctx);
 	if (err) {
 		return err;
 	}

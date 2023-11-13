@@ -222,9 +222,6 @@ void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_calc_fs_capacity(size_t capcity_want, size_t *out_capacity);
-
-
 int silofs_verify_ino(ino_t ino);
 
 int silofs_verify_off(loff_t off);

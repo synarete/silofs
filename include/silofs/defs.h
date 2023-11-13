@@ -498,9 +498,8 @@ struct silofs_lvid {
 struct silofs_paddr32b {
 	struct silofs_pvid              pvid;
 	uint32_t                        index;
-	uint32_t                        pos;
 	uint32_t                        len;
-	uint8_t                         pad[4];
+	int64_t                         off;
 } silofs_packed_aligned16;
 
 

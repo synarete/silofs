@@ -18,6 +18,10 @@
 #include <silofs/infra.h>
 #include <silofs/ps.h>
 
+
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static struct silofs_pvnode_info *pni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_pvnode_info *pni = NULL;
@@ -71,7 +75,7 @@ void silofs_pni_del(struct silofs_pvnode_info *pni, struct silofs_alloc *alloc)
 	pni_free(pni, alloc);
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc)
 {

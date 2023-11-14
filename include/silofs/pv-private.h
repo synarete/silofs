@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_PRIVATE_H_
-#define SILOFS_PS_PRIVATE_H_
+#ifndef SILOFS_PV_PRIVATE_H_
+#define SILOFS_PV_PRIVATE_H_
 
 #ifndef SILOFS_HAVE_PRIVATE
 #error "internal library header -- do not include!"
@@ -50,5 +50,4 @@
 #define paddr_reset(pa)                 silofs_paddr_reset(pa)
 #define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
 
-
-#endif /* SILOFS_PS_PRIVATE_H_ */
+#endif /* SILOFS_PV_PRIVATE_H_ */

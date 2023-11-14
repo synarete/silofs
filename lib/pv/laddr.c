@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
+#include <silofs/pv.h>
 #include <uuid/uuid.h>
 #include <stdlib.h>
 #include <stdint.h>

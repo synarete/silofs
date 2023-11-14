@@ -22,7 +22,7 @@
 #include <silofs/consts.h>
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
+#include <silofs/pv.h>
 #include <silofs/fs.h>
 
 int silofs_setup_lib(void);

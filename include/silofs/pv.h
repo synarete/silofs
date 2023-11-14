@@ -14,20 +14,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
+#ifndef SILOFS_PV_H_
+#define SILOFS_PV_H_
 
 #include <silofs/defs.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/ps/htox.h>
-#include <silofs/ps/laddr.h>
-#include <silofs/ps/crypto.h>
-#include <silofs/ps/repo.h>
-#include <silofs/ps/pvmaps.h>
+#include <silofs/pv/htox.h>
+#include <silofs/pv/laddr.h>
+#include <silofs/pv/crypto.h>
+#include <silofs/pv/repo.h>
+#include <silofs/pv/pvmaps.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/ps-private.h>
+#include <silofs/pv-private.h>
 #endif
 
-#endif /* SILOFS_PS_H_ */
+#endif /* SILOFS_PV_H_ */

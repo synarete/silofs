@@ -44,6 +44,15 @@ char silofs_nibble_to_ascii(int n);
 
 int silofs_ascii_to_nibble(char a);
 
+
+void silofs_uint64_to_ascii(uint64_t u, char *a);
+
+uint64_t silofs_ascii_to_uint64(const char *a);
+
+void silofs_byte_to_ascii(unsigned int b, char *a);
+
+size_t silofs_mem_to_ascii(const void *ptr, size_t len, char *buf, size_t bsz);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static inline int32_t silofs_min32(int32_t x, int32_t y)

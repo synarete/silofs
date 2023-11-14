@@ -29,6 +29,11 @@
 #include <limits.h>
 
 
+bool silofs_ino_isnull(ino_t ino)
+{
+	return (ino == SILOFS_INO_NULL);
+}
+
 bool silofs_user_cap_fowner(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_FOWNER */
@@ -608,20 +613,6 @@ static mode_t itype_of(mode_t mode)
 	return S_IFMT & mode;
 }
 
-static bool uid_isnull(uid_t uid)
-{
-	const uid_t uid_none = (uid_t)(-1);
-
-	return uid_eq(uid, uid_none);
-}
-
-static bool gid_isnull(gid_t gid)
-{
-	const gid_t gid_none = (gid_t)(-1);
-
-	return gid_eq(gid, gid_none);
-}
-
 static bool user_isowner(const struct silofs_cred *cred,
                          const struct silofs_inode_info *ii)
 {
@@ -811,10 +802,10 @@ static int check_chown(const struct silofs_task *task,
 {
 	int err = 0;
 
-	if (!uid_isnull(uid)) {
+	if (!silofs_uid_isnull(uid)) {
 		err = check_chown_uid(task, ii, uid);
 	}
-	if (!gid_isnull(gid) && !err) {
+	if (!silofs_gid_isnull(gid) && !err) {
 		err = check_chown_gid(task, ii, gid);
 	}
 	return err;
@@ -839,10 +830,10 @@ static int do_chown(const struct silofs_task *task,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     const struct silofs_itimes *itimes)
 {
-	int err;
-	bool chown_uid = !uid_isnull(uid);
-	bool chown_gid = !gid_isnull(gid);
 	struct silofs_iattr iattr = { .ia_flags = 0 };
+	bool chown_uid = !silofs_uid_isnull(uid);
+	bool chown_gid = !silofs_gid_isnull(gid);
+	int err;
 
 	if (!chown_uid && !chown_gid) {
 		return 0; /* no-op */
@@ -1311,7 +1302,12 @@ void silofs_ii_update_isize(struct silofs_inode_info *ii,
 	ii_update_iattrs(ii, creds, &iattr);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_verify_ino(ino_t ino)
+{
+	return !ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;
+}
 
 static int verify_inode_specific(const struct silofs_inode *inode)
 {

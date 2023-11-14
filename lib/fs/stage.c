@@ -45,6 +45,20 @@ struct silofs_vis {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static loff_t silofs_ino_to_off(ino_t ino)
+{
+	return silofs_ino_isnull(ino) ? SILOFS_OFF_NULL :
+	       (loff_t)(ino << SILOFS_INODE_SHIFT);
+}
+
+ino_t silofs_off_to_ino(loff_t off)
+{
+	return silofs_off_isnull(off) ? SILOFS_INO_NULL :
+	       (ino_t)(off >> SILOFS_INODE_SHIFT);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static bool is_low_resource_error(int err)
 {
 	bool ret;

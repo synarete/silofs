@@ -339,11 +339,11 @@ static void *fli_data(const struct silofs_fileaf_info *fli)
 	void *dat = NULL;
 	const enum silofs_stype stype = fli_stype(fli);
 
-	if (stype_isequal(stype, SILOFS_STYPE_DATA1K)) {
+	if (silofs_stype_isdata1k(stype)) {
 		dat = fli->flu.db1;
-	} else if (stype_isequal(stype, SILOFS_STYPE_DATA4K)) {
+	} else if (silofs_stype_isdata4k(stype)) {
 		dat = fli->flu.db4;
-	} else if (stype_isequal(stype, SILOFS_STYPE_DATABK)) {
+	} else if (silofs_stype_isdatabk(stype)) {
 		dat = fli->flu.db;
 	} else {
 		silofs_panic("illegal file data type: stype=%d", (int)stype);
@@ -4682,10 +4682,10 @@ int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn)
 	}
 	child_stype = ftn_child_stype(ftn);
 	ftn_child_stype_by_height(ftn, height, &expect_stype);
-	if (!stype_isequal(child_stype, expect_stype)) {
+	if (child_stype != expect_stype) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (ftn_isbottom(ftn) && !stype_isdatabk(child_stype)) {
+	if (ftn_isbottom(ftn) && !silofs_stype_isdatabk(child_stype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

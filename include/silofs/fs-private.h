@@ -27,55 +27,6 @@
 #include <silofs/fs/types.h>
 #include <silofs/fs/nodes.h>
 
-/* types */
-#define stype_nkbs(st)                  silofs_stype_nkbs(st)
-#define stype_size(st)                  silofs_stype_size(st)
-#define stype_ssize(st)                 silofs_stype_ssize(st)
-#define stype_isequal(st1, st2)         silofs_stype_isequal(st1, st2)
-#define stype_isnone(st)                silofs_stype_isnone(st)
-#define stype_issuper(st)               silofs_stype_issuper(st)
-#define stype_isspnode(st)              silofs_stype_isspnode(st)
-#define stype_isspleaf(st)              silofs_stype_isspleaf(st)
-#define stype_isunode(st)               silofs_stype_isunode(st)
-#define stype_isvnode(st)               silofs_stype_isvnode(st)
-#define stype_isinode(st)               silofs_stype_isinode(st)
-#define stype_isxanode(st)              silofs_stype_isxanode(st)
-#define stype_issymval(st)              silofs_stype_issymval(st)
-#define stype_isdtnode(st)              silofs_stype_isdtnode(st)
-#define stype_isftnode(st)              silofs_stype_isftnode(st)
-#define stype_isdata(st)                silofs_stype_isdata(st)
-#define stype_isdatabk(st)              silofs_stype_isdatabk(st)
-
-#define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
-#define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
-#define bkaddr_by_laddr(ba, pa)         silofs_bkaddr_by_laddr(ba, pa)
-#define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
-
-#define uaddr_none()                    silofs_uaddr_none()
-#define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
-#define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
-#define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
-#define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
-#define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
-#define uaddr_lvid(ua)                silofs_uaddr_lvid(ua)
-#define uaddr_lsegid(ua)                silofs_uaddr_lsegid(ua)
-#define uaddr_height(ua)                silofs_uaddr_height(ua)
-
-#define ulink_assign(ul, oth)           silofs_ulink_assign(ul, oth)
-#define ulink_assign2(ul, ua, iv)       silofs_ulink_assign2(ul, ua, iv)
-#define ulink_reset(ul)                 silofs_ulink_reset(ul)
-
-#define vaddr_none()                    silofs_vaddr_none()
-#define vaddr_isnull(va)                silofs_vaddr_isnull(va)
-#define vaddr_isdata(va)                silofs_vaddr_isdata(va)
-#define vaddr_isdatabk(va)              silofs_vaddr_isdatabk(va)
-#define vaddr_isinode(va)               silofs_vaddr_isinode(va)
-#define vaddr_reset(va)                 silofs_vaddr_reset(va)
-#define vaddr_assign(va, oth)           silofs_vaddr_assign(va, oth)
-#define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
-#define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
-#define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
-
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_cache(t)                   silofs_task_cache(t)
 #define task_repo(t)                    silofs_task_repo(t)
@@ -165,8 +116,8 @@
 #define uid_eq(uid1, uid2)              silofs_uid_eq(uid1, uid2)
 #define uid_isroot(uid)                 silofs_uid_isroot(uid)
 #define gid_eq(gid1, gid2)              silofs_gid_eq(gid1, gid2)
+
 #define ino_isnull(ino)                 silofs_ino_isnull(ino)
-#define ino_to_dqid(ino)                silofs_ino_to_dqid(ino)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

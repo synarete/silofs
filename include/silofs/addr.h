@@ -14,18 +14,22 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_LIBSILOFS_H_
-#define SILOFS_LIBSILOFS_H_
+#ifndef SILOFS_ADDR_H_
+#define SILOFS_ADDR_H_
 
-#include <silofs/version.h>
-#include <silofs/ccattr.h>
-#include <silofs/consts.h>
 #include <silofs/defs.h>
-#include <silofs/infra.h>
-#include <silofs/addr.h>
-#include <silofs/pv.h>
-#include <silofs/fs.h>
+#include <silofs/addr/offlba.h>
+#include <silofs/addr/htox.h>
+#include <silofs/addr/stype.h>
+#include <silofs/addr/ivkey.h>
+#include <silofs/addr/laddr.h>
+#include <silofs/addr/bkaddr.h>
+#include <silofs/addr/paddr.h>
+#include <silofs/addr/uaddr.h>
+#include <silofs/addr/vaddr.h>
 
-int silofs_setup_lib(void);
+#ifdef SILOFS_HAVE_PRIVATE
+#include <silofs/addr-private.h>
+#endif
 
-#endif /* SILOFS_LIBSILOFS_H_ */
+#endif /* SILOFS_ADDR_H_ */

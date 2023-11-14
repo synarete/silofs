@@ -20,7 +20,7 @@
 #include <silofs/fs-private.h>
 
 
-static ino_t ino_of(const struct silofs_vaddr *vaddr)
+static ino_t vaddr_ino(const struct silofs_vaddr *vaddr)
 {
 	return silofs_off_to_ino(vaddr->off);
 }
@@ -102,7 +102,7 @@ static int claim_inode(struct silofs_task *task,
 		return err;
 	}
 	ii = silofs_ii_from_vi(vi);
-	silofs_ii_rebind_view(ii, ino_of(&vaddr));
+	silofs_ii_rebind_view(ii, vaddr_ino(&vaddr));
 	*out_ii = ii;
 	return 0;
 }

@@ -73,4 +73,7 @@ int silofs_fetch_cached_inode(struct silofs_task *task, ino_t ino,
 int silofs_refresh_llink_of(struct silofs_task *task,
                             struct silofs_vnode_info *vi);
 
+
+ino_t silofs_off_to_ino(loff_t off);
+
 #endif /* SILOFS_STAGE_H_ */

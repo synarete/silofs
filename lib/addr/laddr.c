@@ -16,101 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/pv.h>
+#include <silofs/addr.h>
 #include <uuid/uuid.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <endian.h>
-#include <errno.h>
-#include <ctype.h>
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_off_isnull(loff_t off)
-{
-	STATICASSERT_LT(SILOFS_OFF_NULL, 0);
-
-	return (off < 0);
-}
-
-loff_t silofs_off_min(loff_t off1, loff_t off2)
-{
-	return (off1 < off2) ? off1 : off2;
-}
-
-loff_t silofs_off_max(loff_t off1, loff_t off2)
-{
-	return (off1 > off2) ? off1 : off2;
-}
-
-loff_t silofs_off_end(loff_t off, size_t len)
-{
-	return off + (loff_t)len;
-}
-
-silofs_lba_t silofs_off_to_lba(loff_t off)
-{
-	return !silofs_off_isnull(off) ?
-	       (off / SILOFS_LBK_SIZE) : SILOFS_LBA_NULL;
-}
-
-loff_t silofs_off_in_lbk(loff_t off)
-{
-	return silofs_off_remainder(off, SILOFS_LBK_SIZE);
-}
-
-loff_t silofs_off_remainder(loff_t off, size_t len)
-{
-	return off % (ssize_t)len;
-}
-
-loff_t silofs_off_align(loff_t off, ssize_t align)
-{
-	return (off / align) * align;
-}
-
-loff_t silofs_off_align_to_lbk(loff_t off)
-{
-	return silofs_off_align(off, SILOFS_LBK_SIZE);
-}
-
-loff_t silofs_off_next(loff_t off, ssize_t len)
-{
-	return silofs_off_align(off + len, len);
-}
-
-ssize_t silofs_off_diff(loff_t beg, loff_t end)
-{
-	return end - beg;
-}
-
-ssize_t silofs_off_len(loff_t beg, loff_t end)
-{
-	return silofs_off_diff(beg, end);
-}
-
-size_t silofs_off_ulen(loff_t beg, loff_t end)
-{
-	return (size_t)silofs_off_len(beg, end);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static bool lba_isequal(silofs_lba_t lba1, silofs_lba_t lba2)
-{
-	return (lba1 == lba2);
-}
-
-bool silofs_lba_isnull(silofs_lba_t lba)
-{
-	return lba_isequal(lba, SILOFS_LBA_NULL);
-}
-
-loff_t silofs_lba_to_off(silofs_lba_t lba)
-{
-	return !silofs_lba_isnull(lba) ?
-	       (lba * SILOFS_LBK_SIZE) : SILOFS_OFF_NULL;
-}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -132,18 +39,6 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
 
 	uuid_unparse_lower(uu->uu, buf);
 	strncpy(nb->name, buf, sizeof(nb->name));
-}
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_pvid_generate(struct silofs_pvid *pvid)
-{
-	silofs_uuid_generate(&pvid->uuid);
-}
-
-void silofs_pvid_assign(struct silofs_pvid *pvid,
-                        const struct silofs_pvid *other)
-{
-	silofs_uuid_assign(&pvid->uuid, &other->uuid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -502,54 +397,22 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_paddr s_paddr_none = {
-	.index = 0,
-	.off = SILOFS_OFF_NULL,
-	.len = 0
-};
-
-const struct silofs_paddr *silofs_paddr_none(void)
+void silofs_llink_setup(struct silofs_llink *llink,
+                        const struct silofs_laddr *laddr,
+                        const struct silofs_iv *riv)
 {
-	return &s_paddr_none;
+	silofs_laddr_assign(&llink->laddr, laddr);
+	silofs_iv_assign(&llink->riv, riv);
 }
 
-bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
+void silofs_llink_assign(struct silofs_llink *llink,
+                         const struct silofs_llink *other)
 {
-	return !paddr->index || !paddr->len || off_isnull(paddr->off);
+	silofs_llink_setup(llink, &other->laddr, &other->riv);
 }
 
-void silofs_paddr_assign(struct silofs_paddr *paddr,
-                         const struct silofs_paddr *other)
+void silofs_llink_reset(struct silofs_llink *llink)
 {
-	silofs_pvid_assign(&paddr->pvid, &other->pvid);
-	paddr->index = other->index;
-	paddr->off = other->off;
-	paddr->len = other->len;
-}
-
-
-void silofs_paddr32b_reset(struct silofs_paddr32b *paddr32)
-{
-	memset(paddr32, 0, sizeof(*paddr32));
-	paddr32->index = 0;
-	paddr32->len = 0;
-	paddr32->off = SILOFS_OFF_NULL;
-}
-
-void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
-                          const struct silofs_paddr *paddr)
-{
-	silofs_pvid_assign(&paddr32->pvid, &paddr->pvid);
-	paddr32->index = silofs_cpu_to_le32((uint32_t)(paddr->index));
-	paddr32->len = silofs_cpu_to_le32((uint32_t)(paddr->len));
-	paddr32->off = silofs_cpu_to_off(paddr->off);
-}
-
-void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
-                          struct silofs_paddr *paddr)
-{
-	silofs_pvid_assign(&paddr->pvid, &paddr32->pvid);
-	paddr->index = silofs_le32_to_cpu(paddr32->index);
-	paddr->len = silofs_le32_to_cpu(paddr32->len);
-	paddr->off = silofs_off_to_cpu(paddr32->off);
+	silofs_laddr_reset(&llink->laddr);
+	silofs_iv_reset(&llink->riv);
 }

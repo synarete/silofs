@@ -95,10 +95,6 @@ int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc)
 
 void silofs_pvmap_fini(struct silofs_pvmap *pvmap)
 {
-	struct silofs_pvmap_node *zzz = NULL;
-
-	memset(zzz, 0, sizeof(*zzz));
-
 	silofs_listq_fini(&pvmap->pvm_lru);
 	if (pvmap->pvm_htbl != NULL) {
 		silofs_lista_del(pvmap->pvm_htbl,

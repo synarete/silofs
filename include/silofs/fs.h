@@ -22,10 +22,11 @@
 #include <silofs/defs.h>
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
+#include <silofs/addr.h>
 #include <silofs/pv.h>
 
 #include <silofs/fs/types.h>
-#include <silofs/fs/uvaddr.h>
+#include <silofs/fs/uidgid.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/nodes.h>
 #include <silofs/fs/zcmpr.h>

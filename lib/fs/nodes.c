@@ -1257,11 +1257,11 @@ void silofs_fli_rebind_view(struct silofs_fileaf_info *fli)
 {
 	const enum silofs_stype stype = fli_stype(fli);
 
-	if (stype_isequal(stype, SILOFS_STYPE_DATA1K)) {
+	if (silofs_stype_isdata1k(stype)) {
 		fli->flu.db1 = &fli->fl_vi.v.view->dbk1;
-	} else if (stype_isequal(stype, SILOFS_STYPE_DATA4K)) {
+	} else if (silofs_stype_isdata4k(stype)) {
 		fli->flu.db4 = &fli->fl_vi.v.view->dbk4;
-	} else if (stype_isequal(stype, SILOFS_STYPE_DATABK)) {
+	} else if (silofs_stype_isdatabk(stype)) {
 		fli->flu.db = &fli->fl_vi.v.view->dbk64;
 	} else {
 		silofs_panic("illegal file leaf: stype=%d", (int)stype);

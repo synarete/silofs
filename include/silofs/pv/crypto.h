@@ -47,14 +47,6 @@ struct silofs_cipher_args {
 	unsigned int cipher_mode;
 };
 
-/* encryption tuple (IV, key, cipher-algo, mode) */
-struct silofs_ivkey {
-	struct silofs_key       key;
-	struct silofs_iv        iv;
-	unsigned int            algo;
-	unsigned int            mode;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const char *silofs_gcrypt_version(void);
@@ -110,33 +102,5 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 int silofs_password_setup(struct silofs_password *pp, const void *pass);
 
 void silofs_password_reset(struct silofs_password *pp);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_iv_reset(struct silofs_iv *iv);
-
-void silofs_iv_mkrand(struct silofs_iv *iv);
-
-void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other);
-
-bool silofs_iv_isequal(const struct silofs_iv *iv,
-                       const struct silofs_iv *iv_other);
-
-long silofs_iv_compare(const struct silofs_iv *iv,
-                       const struct silofs_iv *iv_other);
-
-void silofs_iv_xor_with(struct silofs_iv *iv,
-                        const struct silofs_iv *iv_other);
-
-void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_ivkey_init(struct silofs_ivkey *ivkey);
-
-void silofs_ivkey_fini(struct silofs_ivkey *ivkey);
-
-void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
-                         const struct silofs_ivkey *other);
 
 #endif /* SILOFS_CRYPTO_H_ */

@@ -30,6 +30,8 @@ struct silofs_inew_params {
 };
 
 
+bool silofs_ino_isnull(ino_t ino);
+
 bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
@@ -129,6 +131,8 @@ void silofs_ii_statof(const struct silofs_inode_info *ii,
 void silofs_setup_iattr_of(struct silofs_iattr *iattr, ino_t ino);
 
 int silofs_verify_inode(const struct silofs_inode *inode);
+
+int silofs_verify_ino(ino_t ino);
 
 
 #endif /* SILOFS_INODE_H_ */

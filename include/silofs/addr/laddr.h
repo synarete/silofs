@@ -19,7 +19,6 @@
 
 #include <sys/types.h>
 
-typedef loff_t          silofs_lba_t;
 
 /* logical-extend id within specific volume mapping */
 struct silofs_lsegid {
@@ -37,53 +36,12 @@ struct silofs_laddr {
 	size_t                  len;
 };
 
-/* physical-address within specific volume mapping */
-struct silofs_paddr {
-	struct silofs_pvid      pvid;
-	size_t                  index;
-	loff_t                  off;
-	size_t                  len;
-};
-
-/* logical-to-physical address mapping */
-struct silofs_ltop {
+/* a pair of object logical-address and its associate (random) IV */
+struct silofs_llink {
 	struct silofs_laddr     laddr;
-	struct silofs_paddr     paddr;
+	struct silofs_iv        riv;
 };
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_off_isnull(loff_t off);
-
-loff_t silofs_off_min(loff_t off1, loff_t off2);
-
-loff_t silofs_off_max(loff_t off1, loff_t off2);
-
-loff_t silofs_off_end(loff_t off, size_t len);
-
-loff_t silofs_off_align(loff_t off, ssize_t align);
-
-loff_t silofs_off_align_to_lbk(loff_t off);
-
-loff_t silofs_off_next(loff_t off, ssize_t len);
-
-ssize_t silofs_off_diff(loff_t beg, loff_t end);
-
-ssize_t silofs_off_len(loff_t beg, loff_t end);
-
-size_t silofs_off_ulen(loff_t beg, loff_t end);
-
-silofs_lba_t silofs_off_to_lba(loff_t off);
-
-loff_t silofs_off_in_lbk(loff_t off);
-
-loff_t silofs_off_remainder(loff_t off, size_t len);
-
-
-bool silofs_lba_isnull(silofs_lba_t lba);
-
-loff_t silofs_lba_to_off(silofs_lba_t lba);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -93,13 +51,6 @@ void silofs_uuid_assign(struct silofs_uuid *uu1,
                         const struct silofs_uuid *uu2);
 
 void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_pvid_generate(struct silofs_pvid *pvid);
-
-void silofs_pvid_assign(struct silofs_pvid *pvid,
-                        const struct silofs_pvid *other);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -192,20 +143,14 @@ void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_paddr *silofs_paddr_none(void);
+void silofs_llink_setup(struct silofs_llink *llink,
+                        const struct silofs_laddr *laddr,
+                        const struct silofs_iv *riv);
 
-bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
+void silofs_llink_assign(struct silofs_llink *llink,
+                         const struct silofs_llink *other);
 
-void silofs_paddr_assign(struct silofs_paddr *paddr,
-                         const struct silofs_paddr *other);
+void silofs_llink_reset(struct silofs_llink *llink);
 
-
-void silofs_paddr32b_reset(struct silofs_paddr32b *paddr32);
-
-void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
-                          const struct silofs_paddr *paddr);
-
-void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
-                          struct silofs_paddr *paddr);
 
 #endif /* SILOFS_LADDR_H_ */

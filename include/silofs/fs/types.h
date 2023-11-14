@@ -167,58 +167,6 @@ struct silofs_iattr {
 	struct silofs_itimes ia_t;
 };
 
-/* logical addressing of space-mapping nodes */
-struct silofs_uaddr {
-	struct silofs_laddr     laddr;
-	loff_t                  voff;
-	enum silofs_stype       stype;
-};
-
-/* block address as extension of logical address */
-struct silofs_bkaddr {
-	struct silofs_laddr     laddr;
-	silofs_lba_t            lba;
-};
-
-/* a pair of object tree-address and its associate (random) IV */
-struct silofs_llink {
-	struct silofs_laddr     laddr;
-	struct silofs_iv        riv;
-};
-
-/* a pair of unode-address and its associate (random) IV */
-struct silofs_ulink {
-	struct silofs_uaddr     uaddr;
-	struct silofs_iv        riv;
-};
-
-/* a pair of block-address and its associate (random) IV */
-struct silofs_blink {
-	struct silofs_bkaddr    bka;
-	struct silofs_iv        riv;
-};
-
-/* logical addressing of virtual nodes */
-struct silofs_vaddr {
-	loff_t                  off;
-	enum silofs_stype       stype;
-	unsigned int            len;
-};
-
-/* set of addresses within single vblock */
-struct silofs_vaddrs {
-	struct silofs_vaddr     vaddr[SILOFS_NKB_IN_LBK];
-	size_t                  count;
-};
-
-/* vspace address range [beg, end) */
-struct silofs_vrange {
-	loff_t                  beg;
-	loff_t                  end;
-	size_t                  len;
-	enum silofs_height      height;
-};
-
 /* caching-element's key type */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,

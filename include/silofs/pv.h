@@ -20,14 +20,10 @@
 #include <silofs/defs.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/pv/htox.h>
-#include <silofs/pv/laddr.h>
+#include <silofs/addr.h>
+
 #include <silofs/pv/crypto.h>
 #include <silofs/pv/repo.h>
 #include <silofs/pv/pvmaps.h>
-
-#ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/pv-private.h>
-#endif
 
 #endif /* SILOFS_PV_H_ */

@@ -2466,7 +2466,7 @@ static int verify_childs_of(const struct silofs_dtree_node *dtn)
 		if (err) {
 			return err;
 		}
-		if (!stype_isequal(vaddr.stype, SILOFS_STYPE_DTNODE)) {
+		if (!silofs_stype_isdtnode(vaddr.stype)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 	}

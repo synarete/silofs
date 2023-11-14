@@ -19,6 +19,21 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
+
+static bool hash256_isequal(const struct silofs_hash256 *hash,
+                            const struct silofs_hash256 *other)
+{
+	return (memcmp(hash, other, sizeof(*hash)) == 0);
+}
+
+static void hash256_assign(struct silofs_hash256 *hash,
+                           const struct silofs_hash256 *other)
+{
+	memcpy(hash, other, sizeof(*hash));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 {
 	const char *allowed =
@@ -389,13 +404,13 @@ static int bootrec1k_check(const struct silofs_bootrec1k *brec1k)
 static void bootrec1k_hash(const struct silofs_bootrec1k *brec1k,
                            struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(hash, &brec1k->br_hash);
+	hash256_assign(hash, &brec1k->br_hash);
 }
 
 static void bootrec1k_set_hash(struct silofs_bootrec1k *brec1k,
                                const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&brec1k->br_hash, hash);
+	hash256_assign(&brec1k->br_hash, hash);
 }
 
 static void bootrec1k_calc_hash(const struct silofs_bootrec1k *brec1k,
@@ -424,7 +439,7 @@ static int bootrec1k_check_hash(const struct silofs_bootrec1k *brec1k,
 	bootrec1k_hash(brec1k, &hash[0]);
 	bootrec1k_calc_hash(brec1k, md, &hash[1]);
 
-	return silofs_hash256_isequal(&hash[0], &hash[1]) ?
+	return hash256_isequal(&hash[0], &hash[1]) ?
 	       0 : -SILOFS_EFSCORRUPTED;
 }
 

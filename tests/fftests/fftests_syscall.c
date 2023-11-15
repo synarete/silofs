@@ -59,6 +59,11 @@ void ft_fsync(int fd)
 	expect_ok(silofs_sys_fsync(fd));
 }
 
+void ft_fsync_err(int fd, int err)
+{
+	expect_err(silofs_sys_fsync(fd), err);
+}
+
 void ft_stat(const char *path, struct stat *st)
 {
 	expect_ok(silofs_sys_stat(path, st));
@@ -292,6 +297,13 @@ void ft_write(int fd, const void *buf, size_t cnt, size_t *nwr)
 	expect_ok(silofs_sys_write(fd, buf, cnt, nwr));
 }
 
+void ft_write_err(int fd, const void *buf, size_t cnt, int err)
+{
+	size_t nwr = 0;
+
+	expect_err(silofs_sys_write(fd, buf, cnt, &nwr), err);
+}
+
 void ft_pwrite(int fd, const void *buf, size_t cnt, loff_t off, size_t *nwr)
 {
 	expect_ok(silofs_sys_pwrite(fd, buf, cnt, off, nwr));
@@ -300,7 +312,7 @@ void ft_pwrite(int fd, const void *buf, size_t cnt, loff_t off, size_t *nwr)
 void ft_pwrite_err(int fd, const void *buf,
                    size_t cnt, loff_t off, int err)
 {
-	size_t nwr;
+	size_t nwr = 0;
 
 	expect_err(silofs_sys_pwrite(fd, buf, cnt, off, &nwr), err);
 }
@@ -308,6 +320,13 @@ void ft_pwrite_err(int fd, const void *buf,
 void ft_read(int fd, void *buf, size_t cnt, size_t *nrd)
 {
 	expect_ok(silofs_sys_read(fd, buf, cnt, nrd));
+}
+
+void ft_read_err(int fd, void *buf, size_t cnt, int err)
+{
+	size_t nrd = 0;
+
+	expect_err(silofs_sys_read(fd, buf, cnt, &nrd), err);
 }
 
 void ft_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *nrd)
@@ -433,6 +452,11 @@ void ft_chmod(const char *path, mode_t mode)
 void ft_fchmod(int fd, mode_t mode)
 {
 	expect_ok(silofs_sys_fchmod(fd, mode));
+}
+
+void ft_fchmod_err(int fd, mode_t mode, int err)
+{
+	expect_err(silofs_sys_fchmod(fd, mode), err);
 }
 
 void ft_chown(const char *path, uid_t uid, gid_t gid)

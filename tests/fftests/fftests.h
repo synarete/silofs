@@ -248,6 +248,8 @@ void ft_syncfs(int fd);
 
 void ft_fsync(int fd);
 
+void ft_fsync_err(int fd, int err);
+
 void ft_statvfs(const char *path, struct statvfs *stv);
 
 void ft_statvfs_err(const char *path, int err);
@@ -328,12 +330,16 @@ void ft_llseek_err(int fd, loff_t off, int whence, int err);
 
 void ft_write(int fd, const void *buf, size_t cnt, size_t *nwr);
 
+void ft_write_err(int fd, const void *buf, size_t cnt, int err);
+
 void ft_pwrite(int fd, const void *buf, size_t cnt, loff_t off, size_t *nwr);
 
 void ft_pwrite_err(int fd, const void *buf,
                    size_t cnt, loff_t off, int err);
 
 void ft_read(int fd, void *buf, size_t cnt, size_t *nrd);
+
+void ft_read_err(int fd, void *buf, size_t cnt, int err);
 
 void ft_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *nrd);
 
@@ -385,6 +391,8 @@ void ft_linkat_err(int olddirfd, const char *oldpath,
 void ft_chmod(const char *path, mode_t mode);
 
 void ft_fchmod(int fd, mode_t mode);
+
+void ft_fchmod_err(int fd, mode_t mode, int err);
 
 void ft_chown(const char *path, uid_t uid, gid_t gid);
 

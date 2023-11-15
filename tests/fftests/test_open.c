@@ -132,44 +132,112 @@ static void test_open_isdir(struct ft_env *fte)
 /*
  * Expects open(3p) with O_TRUNC to reduce file-size to zero.
  */
-static void test_open_trunc_(struct ft_env *fte, loff_t off, size_t bsz)
+static void test_open_trunc_(struct ft_env *fte, loff_t off, size_t len)
 {
-	int fd = -1;
-	int fd2 = -1;
 	struct stat st;
-	void *buf = ft_new_buf_zeros(fte, bsz);
+	void *buf = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
+	int fd1 = -1;
+	int fd2 = -1;
 
-	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	ft_pwriten(fd, buf, bsz, off);
-	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (long)bsz);
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
+	ft_pwriten(fd1, buf, len, off);
+	ft_fstat(fd1, &st);
+	ft_expect_eq(st.st_size, off + (long)len);
 	ft_expect_gt(st.st_blocks, 0);
-	ft_close(fd);
-	ft_open(path, O_RDWR | O_TRUNC, 0, &fd);
-	ft_fstat(fd, &st);
+	ft_close(fd1);
+	ft_open(path, O_RDWR | O_TRUNC, 0, &fd1);
+	ft_fstat(fd1, &st);
 	ft_expect_eq(st.st_size, 0);
 	ft_expect_eq(st.st_blocks, 0);
-	ft_pwriten(fd, buf, bsz, off);
-	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (long)bsz);
+	ft_pwriten(fd1, buf, len, off);
+	ft_fstat(fd1, &st);
+	ft_expect_eq(st.st_size, off + (long)len);
 	ft_expect_gt(st.st_blocks, 0);
 	ft_open(path, O_RDWR | O_TRUNC, 0, &fd2);
-	ft_fstat(fd, &st);
+	ft_fstat(fd1, &st);
 	ft_expect_eq(st.st_size, 0);
 	ft_expect_eq(st.st_blocks, 0);
-	ft_close(fd);
+	ft_close(fd1);
 	ft_close(fd2);
 	ft_unlink(path);
 }
 
 static void test_open_trunc(struct ft_env *fte)
 {
-	test_open_trunc_(fte, 0, FT_1K);
-	test_open_trunc_(fte, FT_1K, FT_4K);
-	test_open_trunc_(fte, FT_1M, FT_64K);
-	test_open_trunc_(fte, FT_1G - 7, 7 * FT_1K);
-	test_open_trunc_(fte, FT_1T - 11, FT_1M + 111);
+	const struct ft_range ranges[] = {
+		FT_MKRANGE(0, FT_1K),
+		FT_MKRANGE(FT_1K, FT_4K),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1G - 7, 7 * FT_1K),
+		FT_MKRANGE(FT_1T - 11, FT_1M + 111),
+	};
+
+	ft_exec_with_ranges(fte, test_open_trunc_, ranges);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects open(3p) with O_PATH on regular file to have valid semantics.
+ */
+static void test_open_opath_reg(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	struct statvfs stv = { .f_files = 0 };
+	uint8_t buf[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+	const char *path = ft_new_path_unique(fte);
+	const mode_t ifmt = S_IFMT;
+	int fd = -1;
+
+	ft_open_err(path, O_CREAT | O_RDWR | O_PATH, 0666, -ENOENT);
+	ft_open(path, O_CREAT | O_RDWR, 0666, &fd);
+	ft_close(fd);
+	ft_open(path, O_CREAT | O_RDWR | O_PATH, 0666, &fd);
+	ft_read_err(fd, buf, sizeof(buf), -EBADF);
+	ft_write_err(fd, buf, sizeof(buf), -EBADF);
+	ft_fchmod_err(fd, 0600, -EBADF);
+	ft_fsync_err(fd, -EBADF);
+	ft_fstat(fd, &st);
+	ft_expect_reg(st.st_mode);
+	ft_expect_eq(st.st_size, 0);
+	ft_fstatvfs(fd, &stv);
+	ft_expect_gt(stv.f_files, 0);
+	ft_close(fd);
+	ft_chmod(path, 0100);
+	ft_open(path, O_PATH, 0, &fd);
+	ft_fstat(fd, &st);
+	ft_expect_eq(st.st_mode & ~ifmt, 0100);
+	ft_close(fd);
+	ft_chmod(path, 0600);
+	ft_unlink(path);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects open(3p) with O_PATH on symbolic-link to have valid semantics.
+ */
+static void test_open_opath_symlnk(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	const char *path0 = ft_new_path_unique(fte);
+	const char *path1 = ft_new_path_unique(fte);
+	const size_t len = strlen(path0);
+	char *symval = ft_new_buf_zeros(fte, len + 1);
+	size_t nch = 0;
+	int fd = -1;
+
+	ft_creat(path0, 0600, &fd);
+	ft_close(fd);
+	ft_symlink(path0, path1);
+	ft_open(path1, O_PATH | O_NOFOLLOW, 0, &fd);
+	ft_fstat(fd, &st);
+	ft_expect_lnk(st.st_mode);
+	ft_readlinkat(fd, "", symval, len, &nch);
+	ft_expect_eq(nch, len);
+	ft_expect_eqm(symval, path0, len);
+	ft_close(fd);
+	ft_unlink(path1);
+	ft_unlink(path0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -180,6 +248,8 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_loop),
 	FT_DEFTEST(test_open_isdir),
 	FT_DEFTEST(test_open_trunc),
+	FT_DEFTEST(test_open_opath_reg),
+	FT_DEFTEST(test_open_opath_symlnk),
 };
 
 const struct ft_tests ft_test_open = FT_DEFTESTS(ft_local_tests);

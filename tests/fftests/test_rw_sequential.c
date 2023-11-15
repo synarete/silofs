@@ -20,12 +20,12 @@
 /*
  * Tests data-consistency of sequential writes followed by sequential reads.
  */
-static void test_sequencial_(struct ft_env *fte, loff_t from,
-                             size_t bsz, size_t cnt, int rewrite)
+static void test_rw_sequencial_(struct ft_env *fte, loff_t from,
+                                size_t len, size_t cnt, int rewrite)
 {
-	void *buf1 = NULL;
-	void *buf2 = ft_new_buf_zeros(fte, bsz);
+	void *buf2 = ft_new_buf_zeros(fte, len);
 	char *path = ft_new_path_unique(fte);
+	void *buf1 = NULL;
 	const size_t nitr = rewrite ? 2 : 1;
 	loff_t pos = -1;
 	size_t nwr = 0;
@@ -36,16 +36,16 @@ static void test_sequencial_(struct ft_env *fte, loff_t from,
 	for (size_t i = 0; i < nitr; ++i) {
 		ft_llseek(fd, from, SEEK_SET, &pos);
 		for (size_t j = 0; j < cnt; ++j) {
-			buf1 = ft_new_buf_nums(fte, (long)j, bsz);
-			ft_write(fd, buf1, bsz, &nwr);
-			ft_expect_eq(nwr, bsz);
+			buf1 = ft_new_buf_nums(fte, (long)j, len);
+			ft_write(fd, buf1, len, &nwr);
+			ft_expect_eq(nwr, len);
 		}
 		ft_llseek(fd, from, SEEK_SET, &pos);
 		for (size_t j = 0; j < cnt; ++j) {
-			buf1 = ft_new_buf_nums(fte, (long)j, bsz);
-			ft_read(fd, buf2, bsz, &nrd);
-			ft_expect_eq(nrd, bsz);
-			ft_expect_eqm(buf1, buf2, bsz);
+			buf1 = ft_new_buf_nums(fte, (long)j, len);
+			ft_read(fd, buf2, len, &nrd);
+			ft_expect_eq(nrd, len);
+			ft_expect_eqm(buf1, buf2, len);
 		}
 	}
 	ft_close(fd);
@@ -54,28 +54,28 @@ static void test_sequencial_(struct ft_env *fte, loff_t from,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_sequencial_aligned_bk(struct ft_env *fte)
+static void test_rw_sequencial_aligned_64k(struct ft_env *fte)
 {
-	const size_t bsz = FT_BK_SIZE;
+	const size_t len = FT_64K;
 	const size_t cnt[] = { 1, 2, 63 };
 	const loff_t from[] = {
 		0,
-		FT_BK_SIZE,
+		FT_64K,
 		FT_1M,
-		FT_1M - FT_BK_SIZE,
+		FT_1M - FT_64K,
 		FT_1G / 2,
 		FT_1G,
-		FT_1G - FT_BK_SIZE,
-		FT_1G + FT_BK_SIZE,
+		FT_1G - FT_64K,
+		FT_1G + FT_64K,
 		FT_1G - FT_1M,
 		FT_1T - (64 * FT_1M),
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
 		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
-			test_sequencial_(fte, from[i], bsz, cnt[j], 0);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 0);
 			ft_relax_mem(fte);
-			test_sequencial_(fte, from[i], bsz, cnt[j], 1);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 1);
 			ft_relax_mem(fte);
 		}
 	}
@@ -83,9 +83,9 @@ static void test_sequencial_aligned_bk(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_sequencial_aligned_mega(struct ft_env *fte)
+static void test_rw_sequencial_aligned_1m(struct ft_env *fte)
 {
-	const size_t bsz = FT_1M;
+	const size_t len = FT_1M;
 	const size_t cnt[] = { 1, 2, 4 };
 	const loff_t from[] = {
 		0,
@@ -100,9 +100,9 @@ static void test_sequencial_aligned_mega(struct ft_env *fte)
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
 		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
-			test_sequencial_(fte, from[i], bsz, cnt[j], 0);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 0);
 			ft_relax_mem(fte);
-			test_sequencial_(fte, from[i], bsz, cnt[j], 1);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 1);
 			ft_relax_mem(fte);
 		}
 	}
@@ -110,28 +110,28 @@ static void test_sequencial_aligned_mega(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_sequencial_unaligned_bk(struct ft_env *fte)
+static void test_rw_sequencial_unaligned_64k(struct ft_env *fte)
 {
-	const size_t bsz = FT_BK_SIZE;
+	const size_t len = FT_64K;
 	const size_t cnt[] = { 1, 2, 4 };
 	const loff_t from[] = {
 		1,
-		FT_BK_SIZE - 11,
-		FT_BK_SIZE + 11,
+		FT_64K - 11,
+		FT_64K + 11,
 		FT_1M - 11,
-		FT_1M - FT_BK_SIZE - 1,
+		FT_1M - FT_64K - 1,
 		FT_1G - 111,
-		FT_1G - FT_BK_SIZE - 1,
-		FT_1G + FT_BK_SIZE + 1,
+		FT_1G - FT_64K - 1,
+		FT_1G + FT_64K + 1,
 		FT_1T - 1111,
 		FT_1T - (11 * FT_1G) + 111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
 		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
-			test_sequencial_(fte, from[i], bsz, cnt[j], 0);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 0);
 			ft_relax_mem(fte);
-			test_sequencial_(fte, from[i], bsz, cnt[j], 1);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 1);
 			ft_relax_mem(fte);
 		}
 	}
@@ -140,28 +140,28 @@ static void test_sequencial_unaligned_bk(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_sequencial_unaligned_mega(struct ft_env *fte)
+static void test_rw_sequencial_unaligned_1m(struct ft_env *fte)
 {
-	const size_t bsz = FT_1M;
+	const size_t len = FT_1M;
 	const size_t cnt[] = { 1, 2, 3 };
 	const loff_t from[] = {
 		11,
-		FT_BK_SIZE - 11,
+		FT_64K - 11,
 		FT_1M - 11,
-		FT_1M - FT_BK_SIZE - 1,
+		FT_1M - FT_64K - 1,
 		11 * FT_1M - 1,
 		FT_1G - 111,
-		FT_1G - FT_BK_SIZE - 1,
-		FT_1G + FT_BK_SIZE + 1,
+		FT_1G - FT_64K - 1,
+		FT_1G + FT_64K + 1,
 		FT_1T - 1111,
 		FT_1T - (11 * FT_1G) + 111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
 		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
-			test_sequencial_(fte, from[i], bsz, cnt[j], 0);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 0);
 			ft_relax_mem(fte);
-			test_sequencial_(fte, from[i], bsz, cnt[j], 1);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 1);
 			ft_relax_mem(fte);
 		}
 	}
@@ -169,36 +169,39 @@ static void test_sequencial_unaligned_mega(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_sequencial_unaligned_(struct ft_env *fte, size_t bsz)
+static void test_sequencial_unaligned_(struct ft_env *fte, size_t len)
 {
 	const size_t cnt[] = { 1, 2, 3 };
 	const loff_t from[] = {
 		7,
-		FT_BK_SIZE - 7,
+		FT_64K - 7,
 		FT_1M - 7,
-		FT_1M - FT_BK_SIZE - 7,
+		FT_1M - FT_64K - 7,
 		7 * FT_1M - 7,
 		FT_1G - 17,
-		FT_1G - FT_BK_SIZE - 17,
-		FT_1G + FT_BK_SIZE + 17,
+		FT_1G - FT_64K - 17,
+		FT_1G + FT_64K + 17,
 		FT_1T - 7,
 		FT_1T - (7 * FT_1G) + 7,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(from); ++i) {
 		for (size_t j = 0; j < FT_ARRAY_SIZE(cnt); ++j) {
-			test_sequencial_(fte, from[i], bsz, cnt[j], 0);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 0);
 			ft_relax_mem(fte);
-			test_sequencial_(fte, from[i], bsz, cnt[j], 1);
+			test_rw_sequencial_(fte, from[i], len, cnt[j], 1);
 			ft_relax_mem(fte);
 		}
 	}
 }
 
-static void test_sequencial_unaligned(struct ft_env *fte)
+static void test_rw_sequencial_unaligned_some(struct ft_env *fte)
 {
-	test_sequencial_unaligned_(fte, 7907);
-	test_sequencial_unaligned_(fte, 66601);
+	const size_t len[] = { 1023, 7907, 66601 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {
+		test_sequencial_unaligned_(fte, len[i]);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -241,21 +244,25 @@ static void test_sequencial_strings_(struct ft_env *fte,
 	ft_unlink(path);
 }
 
-static void test_sequencial_strings(struct ft_env *fte)
+static void test_rw_sequencial_strings(struct ft_env *fte)
 {
 	const size_t cnt[] = { 10, 100, 1000, 10000 };
 	const loff_t from[] = {
 		0,
-		FT_BK_SIZE,
+		FT_1K,
+		FT_4K,
+		FT_64K,
 		FT_1M,
 		FT_1G,
 		FT_1T,
 		7,
-		FT_BK_SIZE - 7,
-		FT_1M - FT_BK_SIZE - 7,
+		FT_4K - 7,
+		FT_8K + 7,
+		FT_64K - 7,
+		FT_1M - FT_64K - 7,
 		7 * FT_1M - 7,
 		FT_1G - 17,
-		FT_1G - FT_BK_SIZE - 17,
+		FT_1G - FT_64K - 17,
 		FT_1T - 7,
 		FT_1T - (7 * FT_1G) + 7,
 	};
@@ -271,12 +278,12 @@ static void test_sequencial_strings(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_sequencial_aligned_bk),
-	FT_DEFTEST(test_sequencial_aligned_mega),
-	FT_DEFTEST(test_sequencial_unaligned_bk),
-	FT_DEFTEST(test_sequencial_unaligned_mega),
-	FT_DEFTEST(test_sequencial_unaligned),
-	FT_DEFTEST(test_sequencial_strings),
+	FT_DEFTEST(test_rw_sequencial_aligned_64k),
+	FT_DEFTEST(test_rw_sequencial_aligned_1m),
+	FT_DEFTEST(test_rw_sequencial_unaligned_64k),
+	FT_DEFTEST(test_rw_sequencial_unaligned_1m),
+	FT_DEFTEST(test_rw_sequencial_unaligned_some),
+	FT_DEFTEST(test_rw_sequencial_strings),
 };
 
 const struct ft_tests ft_test_rw_sequencial = FT_DEFTESTS(ft_local_tests);

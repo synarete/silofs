@@ -607,68 +607,68 @@ static void sli_set_spawned(struct silofs_spleaf_info *sli)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void ubc_setup(struct silofs_fsenv_ctx *ub_ctx)
+static void fsec_setup(struct silofs_fsenv_ctx *fse_ctx)
 {
-	struct silofs_fsenv *fsenv = ub_ctx->fsenv;
+	struct silofs_fsenv *fsenv = fse_ctx->fsenv;
 	struct silofs_repo *repo = fsenv->fse.repo;
 
-	ub_ctx->fsenv = fsenv;
-	ub_ctx->repo = fsenv->fse.repo;
-	ub_ctx->cache = fsenv->fse.cache;
-	ub_ctx->mdigest = &repo->re_mdigest;
+	fse_ctx->fsenv = fsenv;
+	fse_ctx->repo = fsenv->fse.repo;
+	fse_ctx->cache = fsenv->fse.cache;
+	fse_ctx->mdigest = &repo->re_mdigest;
 }
 
-static int ubc_fetch_cached_ui(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_uaddr *uaddr,
-                               struct silofs_unode_info **out_ui)
+static int fsec_fetch_cached_ui(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_uaddr *uaddr,
+                                struct silofs_unode_info **out_ui)
 {
-	*out_ui = silofs_cache_lookup_ui(ub_ctx->cache, uaddr);
+	*out_ui = silofs_cache_lookup_ui(fse_ctx->cache, uaddr);
 	return (*out_ui == NULL) ? -SILOFS_ENOENT : 0;
 }
 
-static void ubc_bind_spawned_ui(const struct silofs_fsenv_ctx *ub_ctx,
-                                struct silofs_unode_info *ui)
+static void fsec_bind_spawned_ui(const struct silofs_fsenv_ctx *fse_ctx,
+                                 struct silofs_unode_info *ui)
 {
-	ui->u.fsenv = ub_ctx->fsenv;
+	ui->u.fsenv = fse_ctx->fsenv;
 }
 
-static int ubc_create_cached_ui(const struct silofs_fsenv_ctx *ub_ctx,
-                                const struct silofs_ulink *ulink,
-                                struct silofs_unode_info **out_ui)
-{
-	*out_ui = silofs_cache_create_ui(ub_ctx->cache, ulink);
-	if (*out_ui == NULL) {
-		return -SILOFS_ENOMEM;
-	}
-	ubc_bind_spawned_ui(ub_ctx, *out_ui);
-	return 0;
-}
-
-static int ubc_require_cached_ui(const struct silofs_fsenv_ctx *ub_ctx,
+static int fsec_create_cached_ui(const struct silofs_fsenv_ctx *fse_ctx,
                                  const struct silofs_ulink *ulink,
                                  struct silofs_unode_info **out_ui)
 {
+	*out_ui = silofs_cache_create_ui(fse_ctx->cache, ulink);
+	if (*out_ui == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	fsec_bind_spawned_ui(fse_ctx, *out_ui);
+	return 0;
+}
+
+static int fsec_require_cached_ui(const struct silofs_fsenv_ctx *fse_ctx,
+                                  const struct silofs_ulink *ulink,
+                                  struct silofs_unode_info **out_ui)
+{
 	int ret;
 
-	ret = ubc_fetch_cached_ui(ub_ctx, &ulink->uaddr, out_ui);
+	ret = fsec_fetch_cached_ui(fse_ctx, &ulink->uaddr, out_ui);
 	if (ret == -SILOFS_ENOENT) {
-		ret = ubc_create_cached_ui(ub_ctx, ulink, out_ui);
+		ret = fsec_create_cached_ui(fse_ctx, ulink, out_ui);
 	}
 	return ret;
 }
 
-static void ubc_forget_cached_ui(const struct silofs_fsenv_ctx *ub_ctx,
-                                 struct silofs_unode_info *ui)
+static void fsec_forget_cached_ui(const struct silofs_fsenv_ctx *fse_ctx,
+                                  struct silofs_unode_info *ui)
 {
-	silofs_cache_forget_ui(ub_ctx->cache, ui);
+	silofs_cache_forget_ui(fse_ctx->cache, ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool ubc_lsegid_rw_mode(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_lsegid *lsegid)
+static bool fsec_lsegid_rw_mode(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_lsegid *lsegid)
 {
-	const struct silofs_sb_info *sbi = ub_ctx->fsenv->fse_sbi;
+	const struct silofs_sb_info *sbi = fse_ctx->fsenv->fse_sbi;
 	bool rw_mode;
 
 	if (unlikely(sbi == NULL)) {
@@ -689,155 +689,156 @@ static bool ubc_lsegid_rw_mode(const struct silofs_fsenv_ctx *ub_ctx,
 	return rw_mode;
 }
 
-static int ubc_lookup_lseg(const struct silofs_fsenv_ctx *ub_ctx,
-                           const struct silofs_lsegid *lsegid)
+static int fsec_lookup_lseg(const struct silofs_fsenv_ctx *fse_ctx,
+                            const struct silofs_lsegid *lsegid)
 {
 	struct stat st;
 
-	return silofs_repo_stat_lseg(ub_ctx->repo, lsegid, true, &st);
+	return silofs_repo_stat_lseg(fse_ctx->repo, lsegid, true, &st);
 }
 
-static int ubc_stage_lseg(const struct silofs_fsenv_ctx *ub_ctx,
-                          const struct silofs_lsegid *lsegid)
+static int fsec_stage_lseg(const struct silofs_fsenv_ctx *fse_ctx,
+                           const struct silofs_lsegid *lsegid)
 {
 	int err;
-	const bool rw = ubc_lsegid_rw_mode(ub_ctx, lsegid);
+	const bool rw = fsec_lsegid_rw_mode(fse_ctx, lsegid);
 
-	err = silofs_repo_stage_lseg(ub_ctx->repo, rw, lsegid);
+	err = silofs_repo_stage_lseg(fse_ctx->repo, rw, lsegid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage lseg failed: err=%d", err);
 	}
 	return err;
 }
 
-static int ubc_spawn_lseg(const struct silofs_fsenv_ctx *ub_ctx,
-                          const struct silofs_lsegid *lsegid)
+static int fsec_spawn_lseg(const struct silofs_fsenv_ctx *fse_ctx,
+                           const struct silofs_lsegid *lsegid)
 {
 	int err;
 
-	err = silofs_repo_spawn_lseg(ub_ctx->repo, lsegid);
+	err = silofs_repo_spawn_lseg(fse_ctx->repo, lsegid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn lseg failed: err=%d", err);
 	}
 	return err;
 }
 
-static int ubc_require_lseg(const struct silofs_fsenv_ctx *ub_ctx,
-                            const struct silofs_lsegid *lsegid)
+static int fsec_require_lseg(const struct silofs_fsenv_ctx *fse_ctx,
+                             const struct silofs_lsegid *lsegid)
 {
 	int err;
 
-	err = ubc_lookup_lseg(ub_ctx, lsegid);
+	err = fsec_lookup_lseg(fse_ctx, lsegid);
 	if (!err) {
-		err = ubc_stage_lseg(ub_ctx, lsegid);
+		err = fsec_stage_lseg(fse_ctx, lsegid);
 	} else if (err == -SILOFS_ENOENT) {
-		err = ubc_spawn_lseg(ub_ctx, lsegid);
+		err = fsec_spawn_lseg(fse_ctx, lsegid);
 	}
 	return err;
 }
 
-static int ubc_require_lseg_of(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_bkaddr *bkaddr)
+static int fsec_require_lseg_of(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_bkaddr *bkaddr)
 {
-	return ubc_require_lseg(ub_ctx, &bkaddr->laddr.lsegid);
+	return fsec_require_lseg(fse_ctx, &bkaddr->laddr.lsegid);
 }
 
-static int ubc_lookup_cached_ubki(const struct silofs_fsenv_ctx *ub_ctx,
-                                  const struct silofs_bkaddr *bkaddr,
-                                  struct silofs_ubk_info **out_ubki)
+static int fsec_lookup_cached_ubki(const struct silofs_fsenv_ctx *fse_ctx,
+                                   const struct silofs_bkaddr *bkaddr,
+                                   struct silofs_ubk_info **out_ubki)
 {
-	*out_ubki = silofs_cache_lookup_ubk(ub_ctx->cache, bkaddr);
+	*out_ubki = silofs_cache_lookup_ubk(fse_ctx->cache, bkaddr);
 	return (*out_ubki == NULL) ? -SILOFS_ENOENT : 0;
 }
 
-static int ubc_create_cached_ubki(const struct silofs_fsenv_ctx *ub_ctx,
-                                  const struct silofs_bkaddr *bkaddr,
-                                  struct silofs_ubk_info **out_ubki)
+static int fsec_create_cached_ubki(const struct silofs_fsenv_ctx *fse_ctx,
+                                   const struct silofs_bkaddr *bkaddr,
+                                   struct silofs_ubk_info **out_ubki)
 {
-	*out_ubki = silofs_cache_create_ubk(ub_ctx->cache, bkaddr);
+	*out_ubki = silofs_cache_create_ubk(fse_ctx->cache, bkaddr);
 	return (*out_ubki == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
-static int ubc_require_bkaddr(const struct silofs_fsenv_ctx *ub_ctx,
-                              const struct silofs_bkaddr *bkaddr)
+static int fsec_require_bkaddr(const struct silofs_fsenv_ctx *fse_ctx,
+                               const struct silofs_bkaddr *bkaddr)
 {
-	return silofs_repo_require_laddr(ub_ctx->repo, &bkaddr->laddr);
+	return silofs_repo_require_laddr(fse_ctx->repo, &bkaddr->laddr);
 }
 
-static int ubc_spawn_ubk_at(const struct silofs_fsenv_ctx *ub_ctx,
-                            const struct silofs_bkaddr *bkaddr,
-                            struct silofs_ubk_info **out_ubki)
+static int fsec_spawn_ubk_at(const struct silofs_fsenv_ctx *fse_ctx,
+                             const struct silofs_bkaddr *bkaddr,
+                             struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
-	err = ubc_lookup_cached_ubki(ub_ctx, bkaddr, out_ubki);
+	err = fsec_lookup_cached_ubki(fse_ctx, bkaddr, out_ubki);
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
-	err = ubc_require_bkaddr(ub_ctx, bkaddr);
+	err = fsec_require_bkaddr(fse_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_create_cached_ubki(ub_ctx, bkaddr, out_ubki);
+	err = fsec_create_cached_ubki(fse_ctx, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int ubc_spawn_ubk(const struct silofs_fsenv_ctx *ub_ctx,
-                         const struct silofs_bkaddr *bkaddr,
-                         struct silofs_ubk_info **out_ubki)
+static int fsec_spawn_ubk(const struct silofs_fsenv_ctx *fse_ctx,
+                          const struct silofs_bkaddr *bkaddr,
+                          struct silofs_ubk_info **out_ubki)
 {
 	int err;
 
-	err = ubc_require_lseg_of(ub_ctx, bkaddr);
+	err = fsec_require_lseg_of(fse_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_ubk_at(ub_ctx, bkaddr, out_ubki);
+	err = fsec_spawn_ubk_at(fse_ctx, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static void ubc_forget_cached_ubki(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_ubk_info *ubki)
+static void fsec_forget_cached_ubki(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_ubk_info *ubki)
 {
-	silofs_cache_forget_ubk(ub_ctx->cache, ubki);
+	silofs_cache_forget_ubk(fse_ctx->cache, ubki);
 }
 
-static int ubc_load_bk_of(const struct silofs_fsenv_ctx *ub_ctx,
-                          const struct silofs_bkaddr *bkaddr,
-                          struct silofs_ubk_info *ubki)
+static int fsec_load_bk_of(const struct silofs_fsenv_ctx *fse_ctx,
+                           const struct silofs_bkaddr *bkaddr,
+                           struct silofs_ubk_info *ubki)
 {
-	return silofs_repo_read_at(ub_ctx->repo, &bkaddr->laddr,
+	return silofs_repo_read_at(fse_ctx->repo, &bkaddr->laddr,
 	                           ubki->ubk.lbk);
 }
 
-static int ubc_do_stage_ubk_at(const struct silofs_fsenv_ctx *ub_ctx, bool sb,
-                               const struct silofs_bkaddr *bkaddr,
-                               struct silofs_ubk_info **out_ubki)
+static int fsec_do_stage_ubk_at(const struct silofs_fsenv_ctx *fse_ctx,
+                                bool sb,
+                                const struct silofs_bkaddr *bkaddr,
+                                struct silofs_ubk_info **out_ubki)
 {
 	struct silofs_ubk_info *ubki = NULL;
 	int err;
 
-	err = ubc_lookup_cached_ubki(ub_ctx, bkaddr, out_ubki);
+	err = fsec_lookup_cached_ubki(fse_ctx, bkaddr, out_ubki);
 	if (!err) {
 		return 0;
 	}
-	err = ubc_stage_lseg(ub_ctx, &bkaddr->laddr.lsegid);
+	err = fsec_stage_lseg(fse_ctx, &bkaddr->laddr.lsegid);
 	if (err) {
 		return err;
 	}
-	err = ubc_create_cached_ubki(ub_ctx, bkaddr, &ubki);
+	err = fsec_create_cached_ubki(fse_ctx, bkaddr, &ubki);
 	if (err) {
 		return err;
 	}
-	err = ubc_load_bk_of(ub_ctx, bkaddr, ubki);
+	err = fsec_load_bk_of(fse_ctx, bkaddr, ubki);
 	if (err) {
-		ubc_forget_cached_ubki(ub_ctx, ubki);
+		fsec_forget_cached_ubki(fse_ctx, ubki);
 		return err;
 	}
 	silofs_unused(sb);
@@ -849,41 +850,41 @@ int silofs_stage_ubk_at(struct silofs_fsenv *fsenv,
                         const struct silofs_laddr *laddr,
                         struct silofs_ubk_info **out_ubki)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 	struct silofs_bkaddr bkaddr;
 	int err;
 
-	ubc_setup(&ub_ctx);
+	fsec_setup(&fse_ctx);
 	bkaddr_by_laddr(&bkaddr, laddr);
-	err = ubc_do_stage_ubk_at(&ub_ctx, false, &bkaddr, out_ubki);
+	err = fsec_do_stage_ubk_at(&fse_ctx, false, &bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int ubc_stage_ubk_of(const struct silofs_fsenv_ctx *ub_ctx,
+static int fsec_stage_ubk_of(const struct silofs_fsenv_ctx *fse_ctx,
+                             const struct silofs_bkaddr *bkaddr,
+                             struct silofs_ubk_info **out_ubki)
+{
+	return fsec_do_stage_ubk_at(fse_ctx, false, bkaddr, out_ubki);
+}
+
+static int fsec_require_ubk(const struct silofs_fsenv_ctx *fse_ctx,
                             const struct silofs_bkaddr *bkaddr,
                             struct silofs_ubk_info **out_ubki)
 {
-	return ubc_do_stage_ubk_at(ub_ctx, false, bkaddr, out_ubki);
-}
-
-static int ubc_require_ubk(const struct silofs_fsenv_ctx *ub_ctx,
-                           const struct silofs_bkaddr *bkaddr,
-                           struct silofs_ubk_info **out_ubki)
-{
 	int err;
 
-	err = ubc_require_bkaddr(ub_ctx, bkaddr);
+	err = fsec_require_bkaddr(fse_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_require_lseg_of(ub_ctx, bkaddr);
+	err = fsec_require_lseg_of(fse_ctx, bkaddr);
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_ubk_of(ub_ctx, bkaddr, out_ubki);
+	err = fsec_stage_ubk_of(fse_ctx, bkaddr, out_ubki);
 	if (err) {
 		return err;
 	}
@@ -892,40 +893,40 @@ static int ubc_require_ubk(const struct silofs_fsenv_ctx *ub_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int ubc_restore_view_of(const struct silofs_fsenv_ctx *ub_ctx,
-                               struct silofs_unode_info *ui)
+static int fsec_restore_view_of(const struct silofs_fsenv_ctx *fse_ctx,
+                                struct silofs_unode_info *ui)
 {
-	return silofs_restore_uview(ub_ctx->fsenv, ui);
+	return silofs_restore_uview(fse_ctx->fsenv, ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ubc_forget_cached_sbi(const struct silofs_fsenv_ctx *ub_ctx,
-                                  struct silofs_sb_info *sbi)
+static void fsec_forget_cached_sbi(const struct silofs_fsenv_ctx *fse_ctx,
+                                   struct silofs_sb_info *sbi)
 {
 	if (sbi != NULL) {
-		ubc_forget_cached_ui(ub_ctx, &sbi->sb_ui);
+		fsec_forget_cached_ui(fse_ctx, &sbi->sb_ui);
 	}
 }
 
-static int ubc_require_cached_sbi(const struct silofs_fsenv_ctx *ub_ctx,
-                                  const struct silofs_ulink *ulink,
-                                  struct silofs_sb_info **out_sbi)
+static int fsec_require_cached_sbi(const struct silofs_fsenv_ctx *fse_ctx,
+                                   const struct silofs_ulink *ulink,
+                                   struct silofs_sb_info **out_sbi)
 {
 	struct silofs_unode_info *ui = NULL;
 	int err;
 
-	err = ubc_require_cached_ui(ub_ctx, ulink, &ui);
+	err = fsec_require_cached_ui(fse_ctx, ulink, &ui);
 	if (err) {
 		return err;
 	}
 	*out_sbi = silofs_sbi_from_ui(ui);
-	sbi_set_fsenv(*out_sbi, ub_ctx->fsenv);
+	sbi_set_fsenv(*out_sbi, fse_ctx->fsenv);
 	return 0;
 }
 
-static int ubc_stage_attach_sbi_bk(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_sb_info *sbi)
+static int fsec_stage_attach_sbi_bk(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_sb_info *sbi)
 {
 	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
 	struct silofs_ubk_info *ubki = NULL;
@@ -933,7 +934,7 @@ static int ubc_stage_attach_sbi_bk(const struct silofs_fsenv_ctx *ub_ctx,
 
 	sbi_bkaddr(sbi, &bkaddr);
 	sbi_incref(sbi);
-	err = ubc_do_stage_ubk_at(ub_ctx, true, &bkaddr, &ubki);
+	err = fsec_do_stage_ubk_at(fse_ctx, true, &bkaddr, &ubki);
 	if (!err) {
 		sbi_attach_to(sbi, ubki);
 	}
@@ -941,8 +942,8 @@ static int ubc_stage_attach_sbi_bk(const struct silofs_fsenv_ctx *ub_ctx,
 	return err;
 }
 
-static int ubc_spawn_attach_sbi_bk(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_sb_info *sbi)
+static int fsec_spawn_attach_sbi_bk(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_sb_info *sbi)
 {
 	struct silofs_bkaddr bkaddr;
 	struct silofs_ubk_info *ubki = NULL;
@@ -950,7 +951,7 @@ static int ubc_spawn_attach_sbi_bk(const struct silofs_fsenv_ctx *ub_ctx,
 
 	sbi_bkaddr(sbi, &bkaddr);
 	sbi_incref(sbi);
-	err = ubc_spawn_ubk(ub_ctx, &bkaddr, &ubki);
+	err = fsec_spawn_ubk(fse_ctx, &bkaddr, &ubki);
 	if (!err) {
 		sbi_attach_to(sbi, ubki);
 	}
@@ -958,21 +959,21 @@ static int ubc_spawn_attach_sbi_bk(const struct silofs_fsenv_ctx *ub_ctx,
 	return err;
 }
 
-static int ubc_spawn_super_at(const struct silofs_fsenv_ctx *ub_ctx,
-                              const struct silofs_ulink *ulink,
-                              struct silofs_sb_info **out_sbi)
+static int fsec_spawn_super_at(const struct silofs_fsenv_ctx *fse_ctx,
+                               const struct silofs_ulink *ulink,
+                               struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = ubc_require_cached_sbi(ub_ctx, ulink, &sbi);
+	err = fsec_require_cached_sbi(fse_ctx, ulink, &sbi);
 	if (err) {
 		goto out_err;
 	}
 	if (sbi_is_stable(sbi)) {
 		return -SILOFS_EEXIST;
 	}
-	err = ubc_spawn_attach_sbi_bk(ub_ctx, sbi);
+	err = fsec_spawn_attach_sbi_bk(fse_ctx, sbi);
 	if (err) {
 		goto out_err;
 	}
@@ -981,7 +982,7 @@ static int ubc_spawn_super_at(const struct silofs_fsenv_ctx *ub_ctx,
 	*out_sbi = sbi;
 	return 0;
 out_err:
-	ubc_forget_cached_sbi(ub_ctx, sbi);
+	fsec_forget_cached_sbi(fse_ctx, sbi);
 	*out_sbi = NULL;
 	return err;
 }
@@ -990,38 +991,38 @@ int silofs_spawn_super_at(struct silofs_fsenv *fsenv,
                           const struct silofs_ulink *ulink,
                           struct silofs_sb_info **out_sbi)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 
-	ubc_setup(&ub_ctx);
-	return ubc_spawn_super_at(&ub_ctx, ulink, out_sbi);
+	fsec_setup(&fse_ctx);
+	return fsec_spawn_super_at(&fse_ctx, ulink, out_sbi);
 }
 
-static int ubc_decrypt_view_of_sbi(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_sb_info *sbi)
+static int fsec_decrypt_view_of_sbi(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_sb_info *sbi)
 {
-	return ubc_restore_view_of(ub_ctx, &sbi->sb_ui);
+	return fsec_restore_view_of(fse_ctx, &sbi->sb_ui);
 }
 
-static int ubc_stage_super_at(const struct silofs_fsenv_ctx *ub_ctx,
-                              const struct silofs_ulink *ulink,
-                              struct silofs_sb_info **out_sbi)
+static int fsec_stage_super_at(const struct silofs_fsenv_ctx *fse_ctx,
+                               const struct silofs_ulink *ulink,
+                               struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = ubc_require_cached_sbi(ub_ctx, ulink, &sbi);
+	err = fsec_require_cached_sbi(fse_ctx, ulink, &sbi);
 	if (err) {
 		goto out_err;
 	}
 	if (sbi_is_stable(sbi)) {
 		goto out_ok;
 	}
-	err = ubc_stage_attach_sbi_bk(ub_ctx, sbi);
+	err = fsec_stage_attach_sbi_bk(fse_ctx, sbi);
 	if (err) {
 		goto out_err;
 	}
 
-	err = ubc_decrypt_view_of_sbi(ub_ctx, sbi);
+	err = fsec_decrypt_view_of_sbi(fse_ctx, sbi);
 	if (err) {
 		goto out_err;
 	}
@@ -1033,7 +1034,7 @@ out_ok:
 	*out_sbi = sbi;
 	return 0;
 out_err:
-	ubc_forget_cached_sbi(ub_ctx, sbi);
+	fsec_forget_cached_sbi(fse_ctx, sbi);
 	*out_sbi = NULL;
 	return err;
 }
@@ -1042,40 +1043,40 @@ int silofs_stage_super_at(struct silofs_fsenv *fsenv,
                           const struct silofs_ulink *ulink,
                           struct silofs_sb_info **out_sbi)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 
-	ubc_setup(&ub_ctx);
-	return ubc_stage_super_at(&ub_ctx, ulink, out_sbi);
+	fsec_setup(&fse_ctx);
+	return fsec_stage_super_at(&fse_ctx, ulink, out_sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ubc_forget_cached_sni(const struct silofs_fsenv_ctx *ub_ctx,
-                                  struct silofs_spnode_info *sni)
+static void fsec_forget_cached_sni(const struct silofs_fsenv_ctx *fse_ctx,
+                                   struct silofs_spnode_info *sni)
 {
 	if (sni != NULL) {
-		ubc_forget_cached_ui(ub_ctx, &sni->sn_ui);
+		fsec_forget_cached_ui(fse_ctx, &sni->sn_ui);
 	}
 }
 
-static int ubc_require_cached_sni(const struct silofs_fsenv_ctx *ub_ctx,
-                                  const struct silofs_ulink *ulink,
-                                  struct silofs_spnode_info **out_sni)
+static int fsec_require_cached_sni(const struct silofs_fsenv_ctx *fse_ctx,
+                                   const struct silofs_ulink *ulink,
+                                   struct silofs_spnode_info **out_sni)
 {
 	struct silofs_unode_info *ui = NULL;
 	int err;
 
-	err = ubc_require_cached_ui(ub_ctx, ulink, &ui);
+	err = fsec_require_cached_ui(fse_ctx, ulink, &ui);
 	if (err) {
 		return err;
 	}
 	*out_sni = silofs_sni_from_ui(ui);
-	sni_set_fsenv(*out_sni, ub_ctx->fsenv);
+	sni_set_fsenv(*out_sni, fse_ctx->fsenv);
 	return 0;
 }
 
-static int ubc_stage_attach_sni_bk(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_spnode_info *sni)
+static int fsec_stage_attach_sni_bk(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_spnode_info *sni)
 {
 	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
 	struct silofs_ubk_info *ubki = NULL;
@@ -1083,7 +1084,7 @@ static int ubc_stage_attach_sni_bk(const struct silofs_fsenv_ctx *ub_ctx,
 
 	sni_bkaddr(sni, &bkaddr);
 	sni_incref(sni);
-	err = ubc_do_stage_ubk_at(ub_ctx, false, &bkaddr, &ubki);
+	err = fsec_do_stage_ubk_at(fse_ctx, false, &bkaddr, &ubki);
 	if (!err) {
 		sni_attach_to(sni, ubki);
 	}
@@ -1091,8 +1092,8 @@ static int ubc_stage_attach_sni_bk(const struct silofs_fsenv_ctx *ub_ctx,
 	return err;
 }
 
-static int ubc_require_attach_sni_bk(const struct silofs_fsenv_ctx *ub_ctx,
-                                     struct silofs_spnode_info *sni)
+static int fsec_require_attach_sni_bk(const struct silofs_fsenv_ctx *fse_ctx,
+                                      struct silofs_spnode_info *sni)
 {
 	struct silofs_bkaddr bkaddr;
 	struct silofs_ubk_info *ubki = NULL;
@@ -1100,7 +1101,7 @@ static int ubc_require_attach_sni_bk(const struct silofs_fsenv_ctx *ub_ctx,
 
 	sni_bkaddr(sni, &bkaddr);
 	sni_incref(sni);
-	err = ubc_require_ubk(ub_ctx, &bkaddr, &ubki);
+	err = fsec_require_ubk(fse_ctx, &bkaddr, &ubki);
 	if (!err) {
 		sni_attach_to(sni, ubki);
 	}
@@ -1108,21 +1109,21 @@ static int ubc_require_attach_sni_bk(const struct silofs_fsenv_ctx *ub_ctx,
 	return err;
 }
 
-static int ubc_spawn_spnode_at(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_ulink *ulink,
-                               struct silofs_spnode_info **out_sni)
+static int fsec_spawn_spnode_at(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_ulink *ulink,
+                                struct silofs_spnode_info **out_sni)
 {
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = ubc_require_cached_sni(ub_ctx, ulink, &sni);
+	err = fsec_require_cached_sni(fse_ctx, ulink, &sni);
 	if (err) {
 		goto out_err;
 	}
 	if (sni_is_stable(sni)) {
 		return -SILOFS_EEXIST;
 	}
-	err = ubc_require_attach_sni_bk(ub_ctx, sni);
+	err = fsec_require_attach_sni_bk(fse_ctx, sni);
 	if (err) {
 		goto out_err;
 	}
@@ -1131,7 +1132,7 @@ static int ubc_spawn_spnode_at(const struct silofs_fsenv_ctx *ub_ctx,
 	*out_sni = sni;
 	return 0;
 out_err:
-	ubc_forget_cached_sni(ub_ctx, sni);
+	fsec_forget_cached_sni(fse_ctx, sni);
 	*out_sni = NULL;
 	return err;
 }
@@ -1140,37 +1141,37 @@ int silofs_spawn_spnode_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spnode_info **out_sni)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 
-	ubc_setup(&ub_ctx);
-	return ubc_spawn_spnode_at(&ub_ctx, ulink, out_sni);
+	fsec_setup(&fse_ctx);
+	return fsec_spawn_spnode_at(&fse_ctx, ulink, out_sni);
 }
 
-static int ubc_decrypt_view_of_sni(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_spnode_info *sni)
+static int fsec_decrypt_view_of_sni(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_spnode_info *sni)
 {
-	return ubc_restore_view_of(ub_ctx, &sni->sn_ui);
+	return fsec_restore_view_of(fse_ctx, &sni->sn_ui);
 }
 
-static int ubc_stage_spnode_at(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_ulink *ulink,
-                               struct silofs_spnode_info **out_sni)
+static int fsec_stage_spnode_at(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_ulink *ulink,
+                                struct silofs_spnode_info **out_sni)
 {
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = ubc_require_cached_sni(ub_ctx, ulink, &sni);
+	err = fsec_require_cached_sni(fse_ctx, ulink, &sni);
 	if (err) {
 		goto out_err;
 	}
 	if (sni_is_stable(sni)) {
 		goto out_ok;
 	}
-	err = ubc_stage_attach_sni_bk(ub_ctx, sni);
+	err = fsec_stage_attach_sni_bk(fse_ctx, sni);
 	if (err) {
 		goto out_err;
 	}
-	err = ubc_decrypt_view_of_sni(ub_ctx, sni);
+	err = fsec_decrypt_view_of_sni(fse_ctx, sni);
 	if (err) {
 		goto out_err;
 	}
@@ -1183,7 +1184,7 @@ out_ok:
 	*out_sni = sni;
 	return 0;
 out_err:
-	ubc_forget_cached_sni(ub_ctx, sni);
+	fsec_forget_cached_sni(fse_ctx, sni);
 	*out_sni = NULL;
 	return err;
 }
@@ -1192,40 +1193,40 @@ int silofs_stage_spnode_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spnode_info **out_sni)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 
-	ubc_setup(&ub_ctx);
-	return ubc_stage_spnode_at(&ub_ctx, ulink, out_sni);
+	fsec_setup(&fse_ctx);
+	return fsec_stage_spnode_at(&fse_ctx, ulink, out_sni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ubc_forget_cached_sli(const struct silofs_fsenv_ctx *ub_ctx,
-                                  struct silofs_spleaf_info *sli)
+static void fsec_forget_cached_sli(const struct silofs_fsenv_ctx *fse_ctx,
+                                   struct silofs_spleaf_info *sli)
 {
 	if (sli != NULL) {
-		ubc_forget_cached_ui(ub_ctx, &sli->sl_ui);
+		fsec_forget_cached_ui(fse_ctx, &sli->sl_ui);
 	}
 }
 
-static int ubc_require_cached_sli(const struct silofs_fsenv_ctx *ub_ctx,
-                                  const struct silofs_ulink *ulink,
-                                  struct silofs_spleaf_info **out_sli)
+static int fsec_require_cached_sli(const struct silofs_fsenv_ctx *fse_ctx,
+                                   const struct silofs_ulink *ulink,
+                                   struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_unode_info *ui = NULL;
 	int err;
 
-	err = ubc_require_cached_ui(ub_ctx, ulink, &ui);
+	err = fsec_require_cached_ui(fse_ctx, ulink, &ui);
 	if (err) {
 		return err;
 	}
 	*out_sli = silofs_sli_from_ui(ui);
-	sli_set_fsenv(*out_sli, ub_ctx->fsenv);
+	sli_set_fsenv(*out_sli, fse_ctx->fsenv);
 	return 0;
 }
 
-static int ubc_stage_attach_sli_bk(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_spleaf_info *sli)
+static int fsec_stage_attach_sli_bk(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_spleaf_info *sli)
 {
 	struct silofs_bkaddr bkaddr = { .lba = SILOFS_LBA_NULL };
 	struct silofs_ubk_info *ubki = NULL;
@@ -1233,7 +1234,7 @@ static int ubc_stage_attach_sli_bk(const struct silofs_fsenv_ctx *ub_ctx,
 
 	sli_bkaddr(sli, &bkaddr);
 	sli_incref(sli);
-	err = ubc_do_stage_ubk_at(ub_ctx, false, &bkaddr, &ubki);
+	err = fsec_do_stage_ubk_at(fse_ctx, false, &bkaddr, &ubki);
 	if (!err) {
 		sli_attach_to(sli, ubki);
 	}
@@ -1241,8 +1242,8 @@ static int ubc_stage_attach_sli_bk(const struct silofs_fsenv_ctx *ub_ctx,
 	return err;
 }
 
-static int ubc_require_attach_sli_bk(const struct silofs_fsenv_ctx *ub_ctx,
-                                     struct silofs_spleaf_info *sli)
+static int fsec_require_attach_sli_bk(const struct silofs_fsenv_ctx *fse_ctx,
+                                      struct silofs_spleaf_info *sli)
 {
 	struct silofs_bkaddr bkaddr;
 	struct silofs_ubk_info *ubki = NULL;
@@ -1250,7 +1251,7 @@ static int ubc_require_attach_sli_bk(const struct silofs_fsenv_ctx *ub_ctx,
 
 	sli_bkaddr(sli, &bkaddr);
 	sli_incref(sli);
-	err = ubc_require_ubk(ub_ctx, &bkaddr, &ubki);
+	err = fsec_require_ubk(fse_ctx, &bkaddr, &ubki);
 	if (!err) {
 		sli_attach_to(sli, ubki);
 	}
@@ -1258,21 +1259,21 @@ static int ubc_require_attach_sli_bk(const struct silofs_fsenv_ctx *ub_ctx,
 	return err;
 }
 
-static int ubc_spawn_spleaf_at(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_ulink *ulink,
-                               struct silofs_spleaf_info **out_sli)
+static int fsec_spawn_spleaf_at(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_ulink *ulink,
+                                struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = ubc_require_cached_sli(ub_ctx, ulink, &sli);
+	err = fsec_require_cached_sli(fse_ctx, ulink, &sli);
 	if (err) {
 		goto out_err;
 	}
 	if (sli_is_stable(sli)) {
 		return -SILOFS_EEXIST;
 	}
-	err = ubc_require_attach_sli_bk(ub_ctx, sli);
+	err = fsec_require_attach_sli_bk(fse_ctx, sli);
 	if (err) {
 		goto out_err;
 	}
@@ -1281,7 +1282,7 @@ static int ubc_spawn_spleaf_at(const struct silofs_fsenv_ctx *ub_ctx,
 	*out_sli = sli;
 	return 0;
 out_err:
-	ubc_forget_cached_sli(ub_ctx, sli);
+	fsec_forget_cached_sli(fse_ctx, sli);
 	*out_sli = NULL;
 	return err;
 }
@@ -1290,37 +1291,37 @@ int silofs_spawn_spleaf_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 
-	ubc_setup(&ub_ctx);
-	return ubc_spawn_spleaf_at(&ub_ctx, ulink, out_sli);
+	fsec_setup(&fse_ctx);
+	return fsec_spawn_spleaf_at(&fse_ctx, ulink, out_sli);
 }
 
-static int ubc_decrypt_view_of_sli(const struct silofs_fsenv_ctx *ub_ctx,
-                                   struct silofs_spleaf_info *sli)
+static int fsec_decrypt_view_of_sli(const struct silofs_fsenv_ctx *fse_ctx,
+                                    struct silofs_spleaf_info *sli)
 {
-	return ubc_restore_view_of(ub_ctx, &sli->sl_ui);
+	return fsec_restore_view_of(fse_ctx, &sli->sl_ui);
 }
 
-static int ubc_stage_spleaf_at(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_ulink *ulink,
-                               struct silofs_spleaf_info **out_sli)
+static int fsec_stage_spleaf_at(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_ulink *ulink,
+                                struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = ubc_require_cached_sli(ub_ctx, ulink, &sli);
+	err = fsec_require_cached_sli(fse_ctx, ulink, &sli);
 	if (err) {
 		goto out_err;
 	}
 	if (sli_is_stable(sli)) {
 		goto out_ok;
 	}
-	err = ubc_stage_attach_sli_bk(ub_ctx, sli);
+	err = fsec_stage_attach_sli_bk(fse_ctx, sli);
 	if (err) {
 		goto out_err;
 	}
-	err = ubc_decrypt_view_of_sli(ub_ctx, sli);
+	err = fsec_decrypt_view_of_sli(fse_ctx, sli);
 	if (err) {
 		goto out_err;
 	}
@@ -1333,7 +1334,7 @@ out_ok:
 	*out_sli = sli;
 	return 0;
 out_err:
-	ubc_forget_cached_sli(ub_ctx, sli);
+	fsec_forget_cached_sli(fse_ctx, sli);
 	*out_sli = NULL;
 	return err;
 }
@@ -1342,20 +1343,20 @@ int silofs_stage_spleaf_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 
-	ubc_setup(&ub_ctx);
-	return ubc_stage_spleaf_at(&ub_ctx, ulink, out_sli);
+	fsec_setup(&fse_ctx);
+	return fsec_stage_spleaf_at(&fse_ctx, ulink, out_sli);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int ubc_require_no_lseg(const struct silofs_fsenv_ctx *ub_ctx,
-                               const struct silofs_lsegid *lsegid)
+static int fsec_require_no_lseg(const struct silofs_fsenv_ctx *fse_ctx,
+                                const struct silofs_lsegid *lsegid)
 {
 	int err;
 
-	err = ubc_lookup_lseg(ub_ctx, lsegid);
+	err = fsec_lookup_lseg(fse_ctx, lsegid);
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
@@ -1368,15 +1369,15 @@ static int ubc_require_no_lseg(const struct silofs_fsenv_ctx *ub_ctx,
 int silofs_spawn_lseg_at(struct silofs_fsenv *fsenv,
                          const struct silofs_lsegid *lsegid)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 	int err;
 
-	ubc_setup(&ub_ctx);
-	err = ubc_require_no_lseg(&ub_ctx, lsegid);
+	fsec_setup(&fse_ctx);
+	err = fsec_require_no_lseg(&fse_ctx, lsegid);
 	if (err) {
 		return err;
 	}
-	err = ubc_spawn_lseg(&ub_ctx, lsegid);
+	err = fsec_spawn_lseg(&fse_ctx, lsegid);
 	if (err) {
 		return err;
 	}
@@ -1386,15 +1387,15 @@ int silofs_spawn_lseg_at(struct silofs_fsenv *fsenv,
 int silofs_stage_lseg_at(struct silofs_fsenv *fsenv,
                          const struct silofs_lsegid *lsegid)
 {
-	struct silofs_fsenv_ctx ub_ctx = { .fsenv = fsenv };
+	struct silofs_fsenv_ctx fse_ctx = { .fsenv = fsenv };
 	int err;
 
-	ubc_setup(&ub_ctx);
-	err = ubc_lookup_lseg(&ub_ctx, lsegid);
+	fsec_setup(&fse_ctx);
+	err = fsec_lookup_lseg(&fse_ctx, lsegid);
 	if (err) {
 		return err;
 	}
-	err = ubc_stage_lseg(&ub_ctx, lsegid);
+	err = fsec_stage_lseg(&fse_ctx, lsegid);
 	if (err) {
 		return err;
 	}

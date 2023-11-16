@@ -20,15 +20,15 @@
 #include <silofs/infra.h>
 
 /* in-memory short lifo of previously-allocated now-free space */
-struct silofs_splifo {
-	loff_t spl_lifo[512];
-	unsigned int spl_size;
-	unsigned int spl_ulen;
+struct silofs_spalifo {
+	loff_t sal_lifo[512];
+	unsigned int sal_size;
+	unsigned int sal_ulen;
 };
 
 /* in-memory map of previously-allocated now-free space */
 struct silofs_spamap {
-	struct silofs_splifo    spa_lifo;
+	struct silofs_spalifo   spa_lifo;
 	struct silofs_alloc    *spa_alloc;
 	struct silofs_avl       spa_avl;
 	loff_t                  spa_hint;

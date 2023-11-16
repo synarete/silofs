@@ -29,43 +29,44 @@ struct silofs_spa_entry {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void splifo_clear(struct silofs_splifo *spl)
+static void spalifo_clear(struct silofs_spalifo *spal)
 {
-	silofs_memzero(spl->spl_lifo, sizeof(spl->spl_lifo));
-	spl->spl_size = 0;
+	silofs_memzero(spal->sal_lifo, sizeof(spal->sal_lifo));
+	spal->sal_size = 0;
 }
 
-static void splifo_init(struct silofs_splifo *spl, unsigned int ulen)
+static void spalifo_init(struct silofs_spalifo *spal, unsigned int ulen)
 {
-	splifo_clear(spl);
-	spl->spl_ulen = ulen;
+	spalifo_clear(spal);
+	spal->sal_ulen = ulen;
 }
 
-static void splifo_fini(struct silofs_splifo *spl)
+static void spalifo_fini(struct silofs_spalifo *spal)
 {
-	splifo_clear(spl);
+	spalifo_clear(spal);
 }
 
-static int splifo_pop_vspace(struct silofs_splifo *spl,
-                             size_t len, loff_t *out_off)
+static int spalifo_pop_vspace(struct silofs_spalifo *spal,
+                              size_t len, loff_t *out_off)
 {
-	if (!spl->spl_size || (spl->spl_ulen != len)) {
+	if (!spal->sal_size || (spal->sal_ulen != len)) {
 		return -SILOFS_ENOENT;
 	}
-	*out_off = spl->spl_lifo[spl->spl_size - 1];
-	spl->spl_size--;
+	*out_off = spal->sal_lifo[spal->sal_size - 1];
+	spal->sal_size--;
 	return 0;
 }
 
-static int splifo_add_vspace(struct silofs_splifo *spl, loff_t off, size_t len)
+static int spalifo_add_vspace(struct silofs_spalifo *spal,
+                              loff_t off, size_t len)
 {
-	const size_t size_max = ARRAY_SIZE(spl->spl_lifo);
+	const size_t size_max = ARRAY_SIZE(spal->sal_lifo);
 
-	if (!(spl->spl_size < size_max) || (spl->spl_ulen != len)) {
+	if (!(spal->sal_size < size_max) || (spal->sal_ulen != len)) {
 		return -SILOFS_ENOSPC;
 	}
-	spl->spl_lifo[spl->spl_size] = off;
-	spl->spl_size++;
+	spal->sal_lifo[spal->sal_size] = off;
+	spal->sal_size++;
 	return 0;
 }
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -281,7 +282,7 @@ static int spamap_pop_vspace(struct silofs_spamap *spa,
 	struct silofs_spa_entry *spe;
 	int err;
 
-	err = splifo_pop_vspace(&spa->spa_lifo, len, out_off);
+	err = spalifo_pop_vspace(&spa->spa_lifo, len, out_off);
 	if (!err) {
 		return 0;
 	}
@@ -379,7 +380,7 @@ static int spamap_add_vspace(struct silofs_spamap *spa, loff_t off, size_t len)
 {
 	int err;
 
-	err = splifo_add_vspace(&spa->spa_lifo, off, len);
+	err = spalifo_add_vspace(&spa->spa_lifo, off, len);
 	if (!err) {
 		return 0;
 	}
@@ -434,7 +435,7 @@ static void spamap_clear(struct silofs_spamap *spa)
 	};
 
 	silofs_avl_clear(&spa->spa_avl, &fn);
-	splifo_clear(&spa->spa_lifo);
+	spalifo_clear(&spa->spa_lifo);
 }
 
 static loff_t spamap_get_hint(const struct silofs_spamap *spa)
@@ -450,7 +451,7 @@ static void spamap_set_hint(struct silofs_spamap *spa, loff_t off)
 static void spamap_init(struct silofs_spamap *spa, enum silofs_stype stype,
                         struct silofs_alloc *alloc)
 {
-	splifo_init(&spa->spa_lifo, (unsigned int)stype_size(stype));
+	spalifo_init(&spa->spa_lifo, (unsigned int)stype_size(stype));
 	silofs_avl_init(&spa->spa_avl, spe_getkey, voff_compare, spa);
 	spa->spa_alloc = alloc;
 	spa->spa_cap_max = spamap_capacity(stype);
@@ -460,7 +461,7 @@ static void spamap_init(struct silofs_spamap *spa, enum silofs_stype stype,
 
 static void spamap_fini(struct silofs_spamap *spa)
 {
-	splifo_fini(&spa->spa_lifo);
+	spalifo_fini(&spa->spa_lifo);
 	silofs_avl_fini(&spa->spa_avl);
 	spa->spa_alloc = NULL;
 	spa->spa_cap_max = 0;

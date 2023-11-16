@@ -473,9 +473,9 @@ static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 {
-	int log_level = cmd_globals.log_params.level;
 	int log_flags = cmd_globals.log_params.flags;
 
+	/* log control flags bits-mask */
 	if (!cmd_globals.dont_daemonize) { /* daemon mode */
 		log_flags |= SILOFS_LOGF_SYSLOG;
 		log_flags &= ~SILOFS_LOGF_STDOUT;
@@ -489,15 +489,16 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 	} else {
 		log_flags &= ~SILOFS_LOGF_PROGNAME;
 	}
-	if (ctx->in_args.explicit_log_level) {
-		log_level = cmd_globals.log_params.level;
-	} else if (ctx->in_args.systemd_run) {
-		log_level = SILOFS_LOG_ERROR;
-	} else {
-		log_level = SILOFS_LOG_INFO;
-	}
-	cmd_globals.log_params.level = (enum silofs_log_level)log_level;
 	cmd_globals.log_params.flags = (enum silofs_log_flags)log_flags;
+
+	/* log level */
+	if (!ctx->in_args.explicit_log_level) {
+		if (ctx->in_args.systemd_run) {
+			cmd_globals.log_params.level = SILOFS_LOG_ERROR;
+		} else {
+			cmd_globals.log_params.level = SILOFS_LOG_INFO;
+		}
+	}
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)

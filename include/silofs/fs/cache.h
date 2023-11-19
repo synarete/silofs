@@ -37,8 +37,6 @@ struct silofs_lrumap {
 struct silofs_cache {
 	struct silofs_alloc    *c_alloc;
 	struct silofs_lblock   *c_nil_lbk;
-	struct silofs_lrumap    c_ubki_lm;
-	struct silofs_lrumap    c_vbki_lm;
 	struct silofs_lrumap    c_ui_lm;
 	struct silofs_lrumap    c_vi_lm;
 	struct silofs_dirtyqs   c_dqs;
@@ -86,20 +84,6 @@ void silofs_cache_fini(struct silofs_cache *cache);
 void silofs_cache_relax(struct silofs_cache *cache, int flags);
 
 void silofs_cache_drop(struct silofs_cache *cache);
-
-void silofs_cache_shrink_once(struct silofs_cache *cache);
-
-
-struct silofs_ubk_info *
-silofs_cache_lookup_ubk(struct silofs_cache *cache,
-                        const struct silofs_bkaddr *bkaddr);
-
-struct silofs_ubk_info *
-silofs_cache_create_ubk(struct silofs_cache *cache,
-                        const struct silofs_bkaddr *bkaddr);
-
-void silofs_cache_forget_ubk(struct silofs_cache *cache,
-                             struct silofs_ubk_info *ubki);
 
 
 struct silofs_unode_info *
@@ -154,9 +138,6 @@ void silofs_vi_incref(struct silofs_vnode_info *vi);
 
 void silofs_vi_decref(struct silofs_vnode_info *vi);
 
-void silofs_vi_attach_to(struct silofs_vnode_info *vi,
-                         struct silofs_vbk_info *vbki);
-
 
 int silofs_vi_refcnt(const struct silofs_vnode_info *vi);
 
@@ -170,6 +151,11 @@ void silofs_ii_undirtify(struct silofs_inode_info *ii);
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 
+void silofs_ii_set_loose(struct silofs_inode_info *ii);
+
+bool silofs_ii_is_loose(const struct silofs_inode_info *ii);
+
+
 void silofs_ui_incref(struct silofs_unode_info *ui);
 
 void silofs_ui_decref(struct silofs_unode_info *ui);
@@ -177,9 +163,6 @@ void silofs_ui_decref(struct silofs_unode_info *ui);
 void silofs_ui_dirtify(struct silofs_unode_info *ui);
 
 void silofs_ui_undirtify(struct silofs_unode_info *ui);
-
-void silofs_ui_attach_to(struct silofs_unode_info *ui,
-                         struct silofs_ubk_info *ubki);
 
 
 bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
@@ -192,19 +175,5 @@ void silofs_lni_decref(struct silofs_lnode_info *lni);
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
-
-void silofs_vbki_incref(struct silofs_vbk_info *vbki);
-
-void silofs_vbki_decref(struct silofs_vbk_info *vbki);
-
-
-void silofs_ubki_incref(struct silofs_ubk_info *ubki);
-
-void silofs_ubki_decref(struct silofs_ubk_info *ubki);
-
-
-void silofs_lbki_incref(struct silofs_lbk_info *lbki);
-
-void silofs_lbki_decref(struct silofs_lbk_info *lbki);
 
 #endif /* SILOFS_CACHE_H_ */

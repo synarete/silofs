@@ -18,8 +18,9 @@
 #define SILOFS_FFTESTS_H_
 
 #include <silofs/configs.h>
-#include <silofs/infra.h>
 #include <silofs/defs.h>
+#include <silofs/ioctls.h>
+#include <silofs/infra.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -37,7 +38,7 @@
 #include <dirent.h>
 
 
-/* Re-mapped macros */
+/* re-mapped macros */
 #define FT_1K                   SILOFS_KILO
 #define FT_2K                   (2 * SILOFS_KILO)
 #define FT_4K                   (4 * SILOFS_KILO)
@@ -98,7 +99,7 @@
 #define ft_expect_lnk(m)        ft_expect_true(S_ISLNK(m))
 
 
-/* Tests control flags */
+/* tests' control flags */
 enum ft_flags {
 	FT_F_NORMAL     = (1 << 1),
 	FT_F_IGNORE     = (1 << 2),
@@ -114,7 +115,7 @@ struct ft_env;
 struct ft_mchunk;
 
 
-/* Test define */
+/* test definition */
 struct ft_tdef {
 	void (*hook)(struct ft_env *);
 	const char *name;
@@ -123,14 +124,14 @@ struct ft_tdef {
 };
 
 
-/* Tests-array define */
+/* tests-array define */
 struct ft_tests {
 	const struct ft_tdef *arr;
 	size_t len;
 };
 
 
-/* Tests execution parameters */
+/* tests execution parameters */
 struct ft_params {
 	const char *progname;
 	const char *testdir;
@@ -142,7 +143,7 @@ struct ft_params {
 };
 
 
-/* Tests execution environment context */
+/* tests execution environment context */
 struct ft_env {
 	struct silofs_mutex     mutex;
 	struct silofs_prandgen  prng;
@@ -168,7 +169,7 @@ struct ft_range {
 };
 
 
-/* Sanity-testing utility */
+/* sanity-testing utility */
 void fte_init(struct ft_env *fte, const struct ft_params *params);
 
 void fte_exec(struct ft_env *fte);
@@ -243,7 +244,8 @@ int ft_dirent_isreg(const struct dirent64 *dent);
 mode_t ft_dirent_gettype(const struct dirent64 *dent);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/* Wrapper over system calls */
+
+/* wrappers over system calls */
 void ft_syncfs(int fd);
 
 void ft_fsync(int fd);
@@ -463,7 +465,7 @@ void ft_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
 
 void ft_fiemap(int fd, struct fiemap *fm);
 
-/* Complex wrappers */
+/* complex wrappers */
 void ft_readn(int fd, void *buf, size_t cnt);
 
 void ft_preadn(int fd, void *buf, size_t cnt, loff_t offset);
@@ -472,8 +474,12 @@ void ft_writen(int fd, const void *buf, size_t cnt);
 
 void ft_pwriten(int fd, const void *buf, size_t cnt, loff_t offset);
 
+/* ioctl wrappers */
+void ft_ioctl_syncfs(int fd);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/* Test and relax ranges */
+
+/* test-and-relax ranges */
 #define ft_exec_with_ranges(fte_, fn_, args_) \
 	ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
@@ -483,7 +489,7 @@ void ft_exec_with_ranges_(struct ft_env *fte,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* Sub-tests grouped by topic */
+/* sub-tests grouped by topic */
 extern const struct ft_tests ft_test_access;
 extern const struct ft_tests ft_test_stat;
 extern const struct ft_tests ft_test_statvfs;
@@ -522,7 +528,7 @@ extern const struct ft_tests ft_test_mmap_mt;
 extern const struct ft_tests ft_test_namespace;
 extern const struct ft_tests ft_test_xstress_mt;
 
-/* Test-define helper macros */
+/* test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_) \
 	{ .hook = (fn_), .name = FT_STR(fn_), .flags = (fl_) }
 
@@ -539,7 +545,7 @@ extern const struct ft_tests ft_test_xstress_mt;
 #define FT_MKRANGE(off_, len_) \
 	{ .off = off_, .len = len_ }
 
-/* Common inline utility functions */
+/* common inline utility functions */
 #include "fftests-inline.h"
 
 #endif /* SILOFS_FFTESTS_H_ */

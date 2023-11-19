@@ -239,7 +239,7 @@ static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
 	int err;
 
 	cmd_reset_ioc(ctx->ioc);
-	err = silofs_sys_open(dirpath, O_RDONLY, 0, &dfd);
+	err = silofs_sys_open(dirpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
 		cmd_dief(err, "failed to open: %s", dirpath);
 	}

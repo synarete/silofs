@@ -257,11 +257,11 @@ static void ut_rename_onto_link(struct ut_env *ute)
 static void ut_rename_exchange_aux_(struct ut_env *ute,
                                     ino_t dino1, ino_t dino2, size_t cnt)
 {
-	ino_t ino1 = 0;
-	ino_t ino2 = 0;
 	const char *name1 = NULL;
 	const char *name2 = NULL;
 	const char *prefix = UT_NAME;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		name1 = ut_make_name(ute, prefix, i + 1);
@@ -285,10 +285,10 @@ static void ut_rename_exchange_aux_(struct ut_env *ute,
 
 static void ut_rename_exchange_(struct ut_env *ute, size_t cnt)
 {
-	ino_t dino1 = 0;
-	ino_t dino2 = 0;
 	const char *dname1 = "dir1";
 	const char *dname2 = "dir2";
+	ino_t dino1 = 0;
+	ino_t dino2 = 0;
 
 	ut_mkdir_at_root(ute, dname1, &dino1);
 	ut_mkdir_at_root(ute, dname2, &dino2);
@@ -305,8 +305,8 @@ static void ut_rename_exchange_simple(struct ut_env *ute)
 
 static void ut_rename_exchange_same_(struct ut_env *ute, size_t cnt)
 {
-	ino_t dino = 0;
 	const char *dname = UT_NAME;
+	ino_t dino = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_rename_exchange_aux_(ute, dino, dino, cnt);
@@ -315,8 +315,12 @@ static void ut_rename_exchange_same_(struct ut_env *ute, size_t cnt)
 
 static void ut_rename_exchange_same(struct ut_env *ute)
 {
-	ut_rename_exchange_same_(ute, 10);
-	ut_rename_exchange_same_(ute, 1000);
+	const size_t cnt[] = { 1, 10, 1000 };
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(cnt); ++i) {
+		ut_rename_exchange_same_(ute, cnt[i]);
+		ut_relax_mem(ute);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -324,16 +328,16 @@ static void ut_rename_exchange_same(struct ut_env *ute)
 static void ut_rename_override_(struct ut_env *ute, size_t cnt,
                                 loff_t off_base, size_t bsz)
 {
-	ino_t ino1 = 0;
-	ino_t ino2 = 0;
-	ino_t dino1 = 0;
-	ino_t dino2 = 0;
 	void *buf1 = ut_randbuf(ute, bsz);
 	void *buf2 = ut_randbuf(ute, bsz);
 	const char *name1 = NULL;
 	const char *name2 = NULL;
 	const char *dname1 = ut_make_name(ute, UT_NAME, 1);
 	const char *dname2 = ut_make_name(ute, UT_NAME, 2);
+	ino_t dino1 = 0;
+	ino_t dino2 = 0;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
 
 	ut_mkdir_at_root(ute, dname1, &dino1);
 	ut_mkdir_at_root(ute, dname2, &dino2);
@@ -366,11 +370,17 @@ static void ut_rename_override_(struct ut_env *ute, size_t cnt,
 
 static void ut_rename_override(struct ut_env *ute)
 {
-	ut_rename_override_(ute, 1, 0, UT_1K);
-	ut_rename_override_(ute, 11, 11, UT_1K + 11);
-	ut_rename_override_(ute, 111, UT_BK_SIZE - 1, UT_BK_SIZE + 11);
-	ut_rename_override_(ute, 1111, UT_1G - 11, UT_1K + 1111);
-	ut_rename_override_(ute, 11, UT_1T - 111, UT_1M + 111);
+	ut_rename_override_(ute, 1000, 0, UT_1K);
+	ut_relax_mem(ute);
+	ut_rename_override_(ute, 100, UT_1T, UT_1M);
+	ut_relax_mem(ute);
+	ut_rename_override_(ute, 10, 11, UT_1K + 11);
+	ut_relax_mem(ute);
+	ut_rename_override_(ute, 100, UT_64K - 1, UT_64K + 11);
+	ut_relax_mem(ute);
+	ut_rename_override_(ute, 1000, UT_1G - 11, UT_1K + 1111);
+	ut_relax_mem(ute);
+	ut_rename_override_(ute, 10, UT_1T - 111, UT_1M + 111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -410,15 +420,15 @@ static void ut_getxattr_ino(struct ut_env *ute, ino_t ino)
 static void ut_rename_with_xattr_(struct ut_env *ute, size_t cnt,
                                   loff_t off_base, size_t bsz)
 {
-	ino_t dino = 0;
-	ino_t ino1 = 0;
-	ino_t ino2 = 0;
 	void *buf1 = ut_randbuf(ute, bsz);
 	void *buf2 = ut_randbuf(ute, bsz);
 	const char *name1 = NULL;
 	const char *name2 = NULL;
 	const char *name3 = NULL;
 	const char *dname = ut_make_name(ute, UT_NAME, 0);
+	ino_t dino = 0;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -460,10 +470,13 @@ static void ut_rename_with_xattr_(struct ut_env *ute, size_t cnt,
 
 static void ut_rename_with_xattr(struct ut_env *ute)
 {
-	ut_rename_with_xattr_(ute, 11, 11, UT_1K + 11);
-	ut_rename_with_xattr_(ute, 111, UT_BK_SIZE - 1, UT_BK_SIZE + 11);
-	ut_rename_with_xattr_(ute, 1111, UT_1G - 11, UT_1K + 1111);
-	ut_rename_with_xattr_(ute, 111, UT_1T - 111, UT_BK_SIZE + 111);
+	ut_rename_with_xattr_(ute, 10, 11, UT_1K + 11);
+	ut_relax_mem(ute);
+	ut_rename_with_xattr_(ute, 100, UT_64K - 1, UT_64K + 11);
+	ut_relax_mem(ute);
+	ut_rename_with_xattr_(ute, 1000, UT_1G - 11, UT_1K + 1111);
+	ut_relax_mem(ute);
+	ut_rename_with_xattr_(ute, 100, UT_1T - 111, UT_64K + 111);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

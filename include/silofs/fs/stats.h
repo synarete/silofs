@@ -48,8 +48,6 @@ struct silofs_spacestats {
 /* file-system' internal cache stats */
 struct silofs_cachestats {
 	size_t nalloc_bytes;
-	size_t ncache_ublocks;
-	size_t ncache_vblocks;
 	size_t ncache_unodes;
 	size_t ncache_vnodes;
 };

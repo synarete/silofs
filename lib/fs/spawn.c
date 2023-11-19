@@ -52,7 +52,7 @@ static int do_spawn_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	silofs_stamp_meta_of(vi);
+	silofs_vi_mark_verified(vi);
 	vi_dirtify(vi, pii);
 	*out_vi = vi;
 	return 0;
@@ -102,7 +102,7 @@ static int claim_inode(struct silofs_task *task,
 		return err;
 	}
 	ii = silofs_ii_from_vi(vi);
-	silofs_ii_rebind_view(ii, vaddr_ino(&vaddr));
+	silofs_ii_set_ino(ii, vaddr_ino(&vaddr));
 	*out_ii = ii;
 	return 0;
 }

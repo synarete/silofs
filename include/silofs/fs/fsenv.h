@@ -41,6 +41,7 @@ struct silofs_fsenv {
 	struct silofs_sb_info          *fse_sbi;
 	struct silofs_ulink             fse_sb_ulink;
 	struct silofs_cred              fse_owner;
+	struct silofs_inode_info       *fse_pruneq;
 	unsigned long                   fse_ctl_flags;
 	unsigned long                   fse_ms_flags;
 	iconv_t                         fse_iconv;
@@ -99,12 +100,6 @@ int silofs_spawn_spleaf_at(struct silofs_fsenv *fsenv,
 int silofs_stage_spleaf_at(struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink,
                            struct silofs_spleaf_info **out_sli);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_stage_ubk_at(struct silofs_fsenv *fsenv,
-                        const struct silofs_laddr *laddr,
-                        struct silofs_ubk_info **out_ubki);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

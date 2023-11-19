@@ -49,6 +49,9 @@
 #define stype_isdtnode(st)              silofs_stype_isdtnode(st)
 #define stype_isftnode(st)              silofs_stype_isftnode(st)
 #define stype_isdata(st)                silofs_stype_isdata(st)
+#define stype_isdata1k(st)              silofs_stype_isdata1k(st)
+#define stype_isdata4k(st)              silofs_stype_isdata4k(st)
+#define stype_isdatabk(st)              silofs_stype_isdatabk(st)
 
 #define lsegid_reset(lid)               silofs_lsegid_reset(lid)
 #define lsegid_assign(lid, oth)         silofs_lsegid_assign(lid, oth)

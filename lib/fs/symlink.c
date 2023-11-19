@@ -205,11 +205,11 @@ static void syi_dirtify(struct silofs_symval_info *syi,
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
-	if (syi->sy_vi.v.flags & SILOFS_LNF_RECHECK) {
+	if (syi->sy_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	/* TODO: recheck */
-	syi->sy_vi.v.flags |= SILOFS_LNF_RECHECK;
+	syi->sy_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 
@@ -240,7 +240,6 @@ static int slc_do_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 		return err;
 	}
 	syi = silofs_syi_from_vi(vi);
-	silofs_syi_rebind_view(syi);
 	err = syi_recheck_symval(syi);
 	if (err) {
 		return err;
@@ -376,7 +375,6 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 		return err;
 	}
 	syi = silofs_syi_from_vi(vi);
-	silofs_syi_rebind_view(syi);
 	syi_dirtify(syi, sl_ctx->lnk_ii);
 	*out_syi = syi;
 	return 0;

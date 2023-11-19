@@ -22,7 +22,6 @@
 #include <sys/stat.h>
 #include <limits.h>
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
@@ -1126,17 +1125,14 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 static loff_t sli_start_voff(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_vrange vrange;
-	struct silofs_spmap_leaf *sl = sli->sl;
 
-	spleaf_vrange(sl, &vrange);
+	spleaf_vrange(sli->sl, &vrange);
 	return vrange.beg;
 }
 
-void silofs_sli_update_staged(struct silofs_spleaf_info *sli)
+void silofs_sli_update_nused(struct silofs_spleaf_info *sli)
 {
-	const struct silofs_spmap_leaf *sl = sli->sl;
-
-	sli->sl_nused_bytes = spleaf_sum_nbytes_used(sl);
+	sli->sl_nused_bytes = spleaf_sum_nbytes_used(sli->sl);
 	silofs_assert_le(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 }
 
@@ -1200,18 +1196,25 @@ static int sli_find_free_space_from(const struct silofs_spleaf_info *sli,
 	return 0;
 }
 
+static size_t sli_vrange_len(const struct silofs_spleaf_info *sli)
+{
+	struct silofs_vrange vrange;
+
+	sli_vrange(sli, &vrange);
+	return vrange.len;
+}
+
 static int sli_cap_allocate(const struct silofs_spleaf_info *sli,
                             enum silofs_stype stype)
 {
-	struct silofs_vrange vrange;
-	size_t nlimit;
-	size_t nbytes;
+	const size_t nlimit = sli_vrange_len(sli);
+	const size_t nbytes_want = stype_size(stype);
+	const size_t nbytes_used = sli->sl_nused_bytes;
 
-	sli_vrange(sli, &vrange);
-	nlimit = vrange.len;
-	nbytes = stype_size(stype);
+	silofs_assert_le(nlimit, SILOFS_LSEG_SIZE_MAX);
+	silofs_assert_le(nbytes_used, SILOFS_LSEG_SIZE_MAX);
 
-	return ((sli->sl_nused_bytes + nbytes) <= nlimit) ? 0 : -SILOFS_ENOSPC;
+	return ((nbytes_used + nbytes_want) <= nlimit) ? 0 : -SILOFS_ENOSPC;
 }
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
@@ -1234,14 +1237,15 @@ int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
 void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
                                      const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spmap_leaf *sl = sli->sl;
+	silofs_assert_lt(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
+	silofs_assert_le(sli->sl_nused_bytes + vaddr->len,
+	                 SILOFS_LSEG_SIZE_MAX);
 
 	sli->sl_nused_bytes += vaddr->len;
-	silofs_assert_le(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 
-	spleaf_ref_allocated_at(sl, vaddr);
+	spleaf_ref_allocated_at(sli->sl, vaddr);
 	if (vaddr_isdata(vaddr)) {
-		spleaf_set_unwritten_at(sl, vaddr);
+		spleaf_set_unwritten_at(sli->sl, vaddr);
 	}
 	sli_dirtify(sli);
 }
@@ -1456,7 +1460,7 @@ void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
 	sni_dirtify(sni);
 }
 
-void silofs_sni_update_staged(struct silofs_spnode_info *sni)
+void silofs_sni_update_nactive(struct silofs_spnode_info *sni)
 {
 	sni->sn_nactive_subs = spnode_count_nactive(sni->sn);
 }
@@ -1613,36 +1617,6 @@ void silofs_sni_clone_from(struct silofs_spnode_info *sni,
 	spnode_clone_rivs(sni->sn, sni_other->sn);
 	sni->sn_nactive_subs = sni_other->sn_nactive_subs;
 	sni_dirtify(sni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void
-bk_state_mask_of_view(struct silofs_bk_state *bk_mask, loff_t off, size_t len)
-{
-	const loff_t roff = silofs_off_in_lbk(off);
-	const size_t ki = (size_t)(roff / SILOFS_KB_SIZE);
-	const size_t nk = div_round_up(len, SILOFS_KB_SIZE);
-
-	bk_state_mask_of(bk_mask, ki, nk);
-}
-
-bool silofs_lbki_has_view_at(const struct silofs_lbk_info *lbki,
-                             loff_t view_pos, size_t view_len)
-{
-	struct silofs_bk_state bk_mask;
-
-	bk_state_mask_of_view(&bk_mask, view_pos, view_len);
-	return bk_state_has_mask(&lbki->lbk_view, &bk_mask);
-}
-
-void silofs_lbki_set_view_at(struct silofs_lbk_info *lbki,
-                             loff_t view_pos, size_t view_len)
-{
-	struct silofs_bk_state bk_mask;
-
-	bk_state_mask_of_view(&bk_mask, view_pos, view_len);
-	bk_state_set_mask(&lbki->lbk_view, &bk_mask);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

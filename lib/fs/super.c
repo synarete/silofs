@@ -878,13 +878,6 @@ void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sbi_zero_stamp_view(struct silofs_sb_info *sbi)
-{
-	union silofs_view *view = sbi->sb_ui.u.view;
-
-	silofs_zero_stamp_meta(view, SILOFS_STYPE_SUPER);
-}
-
 static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 {
 	struct silofs_vrange vrange;
@@ -900,7 +893,6 @@ static void sbi_setup_spstats(struct silofs_sb_info *sbi)
 
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 {
-	sbi_zero_stamp_view(sbi);
 	sb_init(sbi->sb);
 	sb_set_self(sbi->sb, sbi_uaddr(sbi));
 	sb_setup_fresh(sbi->sb);

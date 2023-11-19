@@ -21,19 +21,19 @@
 /*
  * Expects valid lseek(3p) with whence as SEEK_SET, SEEK_CUR and SEEK_END
  */
-static void test_lseek_simple_(struct ft_env *fte, size_t bsz)
+static void test_lseek_simple_(struct ft_env *fte, size_t len)
 {
-	int fd = -1;
+	uint8_t *buf = ft_new_buf_rands(fte, len);
+	const char *path = ft_new_path_unique(fte);
 	loff_t pos = -1;
 	size_t nrd = 0;
 	size_t nwr = 0;
-	uint8_t byte;
-	uint8_t *buf = ft_new_buf_rands(fte, bsz);
-	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
+	uint8_t byte = 0;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	ft_write(fd, buf, bsz, &nwr);
-	ft_expect_eq(bsz, nwr);
+	ft_write(fd, buf, len, &nwr);
+	ft_expect_eq(len, nwr);
 
 	ft_llseek(fd, 0, SEEK_SET, &pos);
 	ft_expect_eq(pos, 0);
@@ -48,7 +48,7 @@ static void test_lseek_simple_(struct ft_env *fte, size_t bsz)
 	ft_expect_eq(buf[pos], byte);
 
 	ft_llseek(fd, -1, SEEK_END, &pos);
-	ft_expect_eq(pos, bsz - 1);
+	ft_expect_eq(pos, len - 1);
 	ft_read(fd, &byte, 1, &nrd);
 	ft_expect_eq(1, nrd);
 	ft_expect_eq(buf[pos], byte);

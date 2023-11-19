@@ -112,21 +112,22 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v.flags);
+	const int flags = (int)(ii->i_vi.v_lni.flags);
 
 	return (flags & SILOFS_LNF_PINNED) > 0;
 }
 
 static void ii_unpin(struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v.flags);
+	const int flags = (int)(ii->i_vi.v_lni.flags);
 
-	ii->i_vi.v.flags = (enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
+	ii->i_vi.v_lni.flags =
+	        (enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
 }
 
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v.flags |= SILOFS_LNF_PINNED;
+	ii->i_vi.v_lni.flags |= SILOFS_LNF_PINNED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1008,11 +1009,16 @@ static int check_open(const struct silofs_task *task,
 	return 0;
 }
 
+static int trunc_data(struct silofs_task *task,
+                      struct silofs_inode_info *ii)
+{
+	return ii_isreg(ii) ? silofs_do_truncate(task, ii, 0) : 0;
+}
+
 static int post_open(struct silofs_task *task,
                      struct silofs_inode_info *ii, int o_flags)
 {
-	return (ii_isreg(ii) && (o_flags & O_TRUNC)) ?
-	       silofs_do_truncate(task, ii, 0) : 0;
+	return (o_flags & O_TRUNC) ? trunc_data(task, ii) : 0;
 }
 
 static int do_open(struct silofs_task *task,
@@ -1130,18 +1136,78 @@ static bool ii_isdropable(const struct silofs_inode_info *ii)
 	return true;
 }
 
+static bool ii_is_orphan(const struct silofs_inode_info *ii)
+{
+	return (ii->i_nopen == 0) && ii_isnlink_orphan(ii);
+}
+
+static int try_prune_loose_data(struct silofs_task *task,
+                                struct silofs_inode_info *ii)
+{
+	/*
+	 * Special case of remove-and-unlinked regular file which still has
+	 * ref-count due to in-flight flush. In such case, drop its data now
+	 * to release resources from within current call.
+	 */
+	return (ii_isreg(ii) && ii_is_loose(ii)) ?
+	       silofs_drop_reg(task, ii) : 0;
+}
+
+static void enqueue_pruneq(const struct silofs_task *task,
+                           struct silofs_inode_info *ii)
+{
+	struct silofs_inode_info **ppruneq = &task->t_fsenv->fse_pruneq;
+
+	silofs_assert_null(ii->i_pruneq_next);
+
+	ii_incref(ii);
+	ii->i_pruneq_next = *ppruneq;
+	ii->i_in_pruneq = true;
+	*ppruneq = ii;
+}
+
+static struct silofs_inode_info *dequeue_pruneq(const struct silofs_task *task)
+{
+	struct silofs_inode_info **ppruneq = &task->t_fsenv->fse_pruneq;
+	struct silofs_inode_info *ii = *ppruneq;
+
+	if (ii != NULL) {
+		*ppruneq = ii->i_pruneq_next;
+		ii->i_pruneq_next = NULL;
+		ii->i_in_pruneq = false;
+		ii_decref(ii);
+	}
+	return ii;
+}
+
+static void enqueue_if_loose(const struct silofs_task *task,
+                             struct silofs_inode_info *ii)
+{
+	if (!ii->i_in_pruneq && ii_is_loose(ii)) {
+		enqueue_pruneq(task, ii);
+	}
+}
+
 static int try_prune_inode(struct silofs_task *task,
                            struct silofs_inode_info *ii, bool update_ctime)
 {
-	if (!ii->i_nopen && ii_isnlink_orphan(ii)) {
+	int err;
+
+	if (ii_is_orphan(ii)) {
 		ii_undirtify_all(ii);
+		ii_set_loose(ii);
 	}
 	if (ii_isdropable(ii)) {
 		return drop_unlinked(task, ii);
 	}
+	err = try_prune_loose_data(task, ii);
+	if (err) {
+		return err;
+	}
 	if (update_ctime) {
 		ii_update_itimes(ii, creds_of(task), SILOFS_IATTR_CTIME);
 	}
+	enqueue_if_loose(task, ii);
 	return 0;
 }
 
@@ -1861,7 +1927,14 @@ int silofs_do_fsync(struct silofs_task *task,
 int silofs_do_flush(struct silofs_task *task,
                     struct silofs_inode_info *ii, bool now)
 {
-	return flush_dirty_of(task, ii, now ? SILOFS_F_NOW : 0);
+	const int flags = now ? SILOFS_F_NOW : 0;
+	int err;
+
+	err = flush_dirty_of(task, ii, flags);
+	if (!err && now) {
+		err = silofs_relax_pruneq(task);
+	}
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2469,7 +2542,7 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	return 0;
 }
 
-static int flush_and_sync_lsegs(struct silofs_task *task)
+static int flush_and_sync(struct silofs_task *task)
 {
 	int err;
 
@@ -2495,7 +2568,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_lsegs(task);
+	err = flush_and_sync(task);
 	if (err) {
 		return err;
 	}
@@ -2503,7 +2576,7 @@ static int do_clone(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_lsegs(task);
+	err = flush_and_sync(task);
 	if (err) {
 		return err;
 	}
@@ -2521,8 +2594,8 @@ static void do_post_clone_relax(struct silofs_task *task,
 	struct silofs_cache *cache = fsenv->fse.cache;
 
 	silofs_assert_ne(sbi, fsenv->fse_sbi);
-	silofs_assert_eq(sbi->sb_ui.u.ce.ce_refcnt, 0);
-	silofs_assert_eq(sbi->sb_ui.u.ce.ce_flags & SILOFS_CEF_DIRTY, 0);
+	silofs_assert_eq(sbi->sb_ui.u_lni.ce.ce_refcnt, 0);
+	silofs_assert_eq(sbi->sb_ui.u_lni.ce.ce_flags & SILOFS_CEF_DIRTY, 0);
 
 	silofs_cache_forget_ui(cache, &sbi->sb_ui);
 	silofs_cache_relax(cache, SILOFS_F_NOW);
@@ -2681,7 +2754,7 @@ int silofs_do_syncfs(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = flush_and_sync_lsegs(task);
+	err = flush_and_sync(task);
 	if (err) {
 		return err;
 	}
@@ -2745,3 +2818,25 @@ int silofs_do_forget(struct silofs_task *task,
 	}
 	return err;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_relax_pruneq(struct silofs_task *task)
+{
+	struct silofs_inode_info *ii = NULL;
+	int ret = 0;
+
+	while ((ii = dequeue_pruneq(task)) != NULL) {
+		if (!ii_isdropable(ii)) {
+			enqueue_pruneq(task, ii);
+			break;
+		}
+		ret = drop_unlinked(task, ii);
+		if (ret) {
+			enqueue_pruneq(task, ii);
+			break;
+		}
+	}
+	return ret;
+}
+

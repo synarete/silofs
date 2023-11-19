@@ -99,8 +99,8 @@ static void test_osync_multi_(struct ft_env *fte, size_t bsz, loff_t off)
 
 static void test_osync_multi(struct ft_env *fte)
 {
-	test_osync_multi_(fte, FT_BK_SIZE, 0);
-	test_osync_multi_(fte, FT_BK_SIZE + 1, FT_1K);
+	test_osync_multi_(fte, FT_64K, 0);
+	test_osync_multi_(fte, FT_64K + 1, FT_1K);
 	test_osync_multi_(fte, FT_1M, FT_1K + 1);
 	test_osync_multi_(fte, 2 * FT_1M - 1, FT_1G);
 	test_osync_multi_(fte, 3 * FT_1M - 3, FT_1T);

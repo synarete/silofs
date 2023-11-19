@@ -588,9 +588,12 @@ static int lsegf_require_size_ge(struct silofs_lsegf *lsegf,
                                  loff_t off, size_t len)
 {
 	const loff_t end = off_end(off, len);
-	const ssize_t bsz = lsegf_size(lsegf);
+	const loff_t nxt = off_next_lbk(off);
+	const ssize_t want_size = off_max(end, nxt);
+	const ssize_t curr_size = lsegf_size(lsegf);
 
-	return (bsz >= end) ? 0 : lsegf_reassign_size(lsegf, end);
+	return (curr_size >= want_size) ? 0 :
+	       lsegf_reassign_size(lsegf, want_size);
 }
 
 static int lsegf_require_laddr(struct silofs_lsegf *lsegf,

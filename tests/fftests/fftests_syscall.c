@@ -695,3 +695,12 @@ void ft_pwriten(int fd, const void *buf, size_t cnt, loff_t offset)
 	}
 	ft_expect_eq(nwr, cnt);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void ft_ioctl_syncfs(int fd)
+{
+	struct silofs_ioc_syncfs syncfs = { .flags = 0 };
+
+	expect_ok(silofs_sys_ioctlp(fd, SILOFS_IOC_SYNCFS, &syncfs));
+}

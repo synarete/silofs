@@ -1381,11 +1381,11 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	if (fli->fl_vi.v.flags & SILOFS_LNF_RECHECK) {
+	if (fli->fl_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	silofs_unused(f_ctx);
-	fli->fl_vi.v.flags |= SILOFS_LNF_RECHECK;
+	fli->fl_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 
@@ -1403,7 +1403,6 @@ static int filc_stage_fileaf(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fli = silofs_fli_from_vi(vi);
-	silofs_fli_rebind_view(fli);
 	err = filc_recheck_fileaf(f_ctx, fli);
 	if (err) {
 		return err;
@@ -1457,7 +1456,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 	const ino_t f_ino = ii_ino(f_ctx->ii);
 	const size_t height = ftn_height(fni->ftn);
 
-	if (fni->fn_vi.v.flags & SILOFS_LNF_RECHECK) {
+	if (fni->fn_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	if ((height < 2) || (height > 16)) {
@@ -1468,7 +1467,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 		log_err("bad finode ino: r_ino=%lu f_ino=%lu", r_ino, f_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	fni->fn_vi.v.flags |= SILOFS_LNF_RECHECK;
+	fni->fn_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 
@@ -1486,7 +1485,6 @@ static int filc_stage_tree_node(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fni = silofs_fni_from_vi(vi);
-	silofs_fni_rebind_view(fni);
 	err = filc_recheck_fni(f_ctx, fni);
 	if (err) {
 		return err;
@@ -2210,7 +2208,6 @@ static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
 		return err;
 	}
 	fni = silofs_fni_from_vi(vi);
-	silofs_fni_rebind_view(fni);
 	fni_difnify(fni, f_ctx->ii);
 	*out_fni = fni;
 	return 0;

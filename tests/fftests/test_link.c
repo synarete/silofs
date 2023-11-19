@@ -203,8 +203,8 @@ static void test_link_max(struct ft_env *fte)
  */
 static const char *make_name(struct ft_env *fte, char c, size_t len)
 {
-	size_t nlen;
 	char name[SILOFS_NAME_MAX + 1] = "";
+	size_t nlen;
 
 	nlen = (len < sizeof(name)) ? len : (sizeof(name) - 1);
 	memset(name, c, nlen);

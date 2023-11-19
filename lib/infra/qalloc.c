@@ -59,6 +59,9 @@
 #define STATICASSERT_SIZEOF_LE(t_, s_) \
 	SILOFS_STATICASSERT_LE(sizeof(t_), s_)
 
+#ifndef likely
+#define likely(x_) silofs_likely(x_)
+#endif
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -127,7 +130,7 @@ static bool isslabsize(size_t size)
 
 static void apply_allocf(void *ptr, size_t size, int flags)
 {
-	if (silofs_likely(ptr != NULL)) {
+	if (likely(ptr != NULL)) {
 		if (flags & SILOFS_ALLOCF_BZERO) {
 			memset(ptr, 0, size);
 		}
@@ -179,7 +182,7 @@ void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags)
 {
 	void *ptr = NULL;
 
-	if (silofs_likely(alloc->malloc_fn != NULL) && size) {
+	if (likely(alloc->malloc_fn && size)) {
 		ptr = alloc->malloc_fn(alloc, size, flags);
 	}
 	return ptr;
@@ -188,7 +191,7 @@ void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags)
 void silofs_deallocate(struct silofs_alloc *alloc,
                        void *ptr, size_t size, int flags)
 {
-	if (silofs_likely((ptr != NULL) && size && (alloc->free_fn != NULL))) {
+	if (likely(ptr && size && alloc->free_fn)) {
 		alloc->free_fn(alloc, ptr, size, flags);
 	}
 }
@@ -1206,7 +1209,7 @@ static int qalloc_alloc_by_slab(struct silofs_qalloc *qal, size_t nbytes,
 	int err;
 
 	slab = qalloc_slab_of(qal, nbytes);
-	if (silofs_likely(slab != NULL)) {
+	if (likely(slab != NULL)) {
 		err = slab_alloc_seg(slab, out_seg);
 	} else {
 		err = -SILOFS_ENOMEM;

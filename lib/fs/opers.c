@@ -70,7 +70,17 @@ static int op_xstart(const struct silofs_task *task, ino_t ino)
 
 static int op_try_flush(struct silofs_task *task, struct silofs_inode_info *ii)
 {
-	return silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
+	int err;
+
+	err = silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
+	if (err) {
+		return err;
+	}
+	err = silofs_relax_pruneq(task);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int op_try_flush2(struct silofs_task *task,

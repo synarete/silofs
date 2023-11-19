@@ -63,7 +63,7 @@
 #define SILOFS_REPOPATH_MAX             (1536)
 
 /* size of repository meta-file descriptor */
-#define SILOFS_REPO_METADATA_SIZE       SILOFS_KILO
+#define SILOFS_REPO_METADATA_SIZE       (1024)
 
 /* repository meta sub-dir name */
 #define SILOFS_REPO_DOTS_DIRNAME        ".silofs"
@@ -113,7 +113,7 @@
 
 
 /* small ("sector") meta-block size (1K) */
-#define SILOFS_KB_SIZE                  SILOFS_KILO
+#define SILOFS_KB_SIZE                  (1024)
 
 
 /* bits-shift of logical block */
@@ -155,7 +155,7 @@
 
 
 /* on-disk size of super-block */
-#define SILOFS_SB_SIZE                  (8 * SILOFS_KILO)
+#define SILOFS_SB_SIZE                  (8192)
 
 /* bits-shift for space-mapping children fan-out */
 #define SILOFS_SPMAP_SHIFT              (8)
@@ -164,7 +164,7 @@
 #define SILOFS_SPMAP_NCHILDS            (1L << SILOFS_SPMAP_SHIFT)
 
 /* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE               (32 * SILOFS_KILO)
+#define SILOFS_SPMAP_SIZE               (32768)
 
 /* number of space-maps per logical-block */
 #define SILOFS_NSPMAP_IN_LBK            (SILOFS_LBK_SIZE / SILOFS_SPMAP_SIZE)
@@ -304,9 +304,9 @@
 	(SILOFS_LBK_SIZE / SILOFS_XATTR_NODE_SIZE)
 
 
-/* max size of single I/O operation */
+/* max size of single I/O operation (2M - 64K) */
 #define SILOFS_IO_SIZE_MAX \
-	((2UL * SILOFS_UMEGA) - SILOFS_LBK_SIZE)
+	((1UL << 21) - SILOFS_LBK_SIZE)
 
 
 /* cryptographic key size */
@@ -927,7 +927,7 @@ struct silofs_lblock {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* semantic "view" into meta elements */
-union silofs_view {
+union silofs_view_u {
 	struct silofs_header            hdr;
 	struct silofs_super_block       sb;
 	struct silofs_spmap_node        sn;
@@ -941,6 +941,10 @@ union silofs_view {
 	struct silofs_data_block4       dbk4;
 	struct silofs_data_block64      dbk64;
 	struct silofs_lblock            lbk;
+} silofs_packed_aligned64;
+
+struct silofs_view {
+	union silofs_view_u u;
 } silofs_packed_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

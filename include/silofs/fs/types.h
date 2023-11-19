@@ -123,9 +123,9 @@ struct silofs_ino_dt {
 
 /* user-credentials */
 struct silofs_cred {
-	uid_t           uid;
-	gid_t           gid;
-	mode_t          umask;
+	uid_t   uid;
+	gid_t   gid;
+	mode_t  umask;
 };
 
 /* external-internal credentials + time */
@@ -138,8 +138,8 @@ struct silofs_creds {
 
 /* extended inode stat */
 struct silofs_stat {
-	struct stat             st;
-	uint64_t                gen;
+	struct stat     st;
+	uint64_t        gen;
 };
 
 
@@ -170,10 +170,8 @@ struct silofs_iattr {
 /* caching-element's key type */
 enum silofs_ckey_type {
 	SILOFS_CKEY_NONE,
-	SILOFS_CKEY_BKADDR,
 	SILOFS_CKEY_UADDR,
 	SILOFS_CKEY_VADDR,
-	SILOFS_CKEY_VBKADDR
 };
 
 /* caching-element's control flags */
@@ -186,11 +184,8 @@ enum silofs_ce_flags {
 
 /* caching-element's key, up to 256-bits */
 union silofs_ckey_u {
-	const struct silofs_bkaddr *bkaddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
-	const struct silofs_lsegid *lsegid;
-	const struct silofs_vbk_addr *vbk_addr;
 	const void                 *key;
 };
 
@@ -213,31 +208,6 @@ struct silofs_cache_elem {
 	int                     ce_refcnt;
 };
 
-/* logical-block base info */
-struct silofs_lbk_info {
-	struct silofs_cache_elem        lbk_ce;
-	struct silofs_lblock           *lbk;
-	struct silofs_bk_state          lbk_view;
-};
-
-/* u-addressing block info */
-struct silofs_ubk_info {
-	struct silofs_lbk_info          ubk;
-	struct silofs_bkaddr            ubk_addr;
-};
-
-/* virtual-block addressing */
-struct silofs_vbk_addr {
-	loff_t                          vbk_voff;
-	enum silofs_stype               vbk_vspace;
-};
-
-/* v-addressing block info */
-struct silofs_vbk_info {
-	struct silofs_lbk_info           vbk;
-	struct silofs_vbk_addr           vbk_addr;
-};
-
 /* in-memory mapping from ino to voff */
 struct silofs_inoent {
 	struct silofs_list_head htb_lh;
@@ -257,8 +227,8 @@ struct silofs_oper_stat {
 
 /* dirty-queue of cached-elements */
 struct silofs_dirtyq {
-	struct silofs_listq             dq;
-	size_t                          dq_accum;
+	struct silofs_listq     dq;
+	size_t                  dq_accum;
 };
 
 #endif /* SILOFS_TYPES_H_ */

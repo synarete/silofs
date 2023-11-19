@@ -194,7 +194,7 @@ bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr)
 
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)
 {
-	return stype_isdata(vaddr->stype);
+	return silofs_stype_isdata(vaddr->stype);
 }
 
 bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr)

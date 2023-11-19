@@ -34,13 +34,6 @@
  */
 
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static loff_t silofs_off_next_lbk(loff_t off)
-{
-	return silofs_off_next(off, SILOFS_LBK_SIZE);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_sp_visitor {

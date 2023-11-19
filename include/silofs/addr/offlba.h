@@ -47,6 +47,8 @@ silofs_lba_t silofs_off_to_lba(loff_t off);
 
 loff_t silofs_off_in_lbk(loff_t off);
 
+loff_t silofs_off_next_lbk(loff_t off);
+
 loff_t silofs_off_remainder(loff_t off, size_t len);
 
 int silofs_verify_off(loff_t off);

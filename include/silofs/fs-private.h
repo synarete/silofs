@@ -86,12 +86,14 @@
 #define ii_ino(ii)                      silofs_ii_ino(ii)
 #define ii_vaddr(ii)                    silofs_ii_vaddr(ii)
 #define ii_sbi(ii)                      silofs_ii_sbi(ii)
-#define ii_fsenv(ii)                     silofs_ii_fsenv(ii)
+#define ii_fsenv(ii)                    silofs_ii_fsenv(ii)
 #define ii_cache(ii)                    silofs_ii_cache(ii)
 #define ii_refcnt(ii)                   silofs_ii_refcnt(ii)
 #define ii_incref(ii)                   silofs_ii_incref(ii)
 #define ii_decref(ii)                   silofs_ii_decref(ii)
 #define ii_dirtify(ii)                  silofs_ii_dirtify(ii)
+#define ii_set_loose(ii)                silofs_ii_set_loose(ii)
+#define ii_is_loose(ii)                 silofs_ii_is_loose(ii)
 #define ii_xino(ii)                     silofs_ii_xino_of(ii)
 #define ii_parent(ii)                   silofs_ii_parent(ii)
 #define ii_uid(ii)                      silofs_ii_uid(ii)
@@ -174,13 +176,13 @@ silofs_vi_vaddr(const struct silofs_vnode_info *vi)
 static inline struct silofs_fsenv *
 silofs_vi_fsenv(const struct silofs_vnode_info *vi)
 {
-	return vi->v.fsenv;
+	return vi->v_lni.fsenv;
 }
 
 static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
-	return vi->v.fsenv->fse_sbi;
+	return vi->v_lni.fsenv->fse_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -223,13 +225,13 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 static inline struct silofs_fsenv *
 silofs_ii_fsenv(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v.fsenv;
+	return ii->i_vi.v_lni.fsenv;
 }
 
 static inline struct silofs_cache *
 silofs_ii_cache(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v.ce.ce_cache;
+	return ii->i_vi.v_lni.ce.ce_cache;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -237,7 +239,7 @@ silofs_ii_cache(const struct silofs_inode_info *ii)
 static inline struct silofs_fsenv *
 silofs_sbi_fsenv(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u.fsenv;
+	return sbi->sb_ui.u_lni.fsenv;
 }
 
 static inline const struct silofs_ulink *

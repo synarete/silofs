@@ -54,6 +54,12 @@ loff_t silofs_off_in_lbk(loff_t off)
 	return silofs_off_remainder(off, SILOFS_LBK_SIZE);
 }
 
+loff_t silofs_off_next_lbk(loff_t off)
+{
+	return silofs_off_next(off, SILOFS_LBK_SIZE);
+}
+
+
 loff_t silofs_off_remainder(loff_t off, size_t len)
 {
 	return off % (ssize_t)len;

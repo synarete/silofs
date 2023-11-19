@@ -65,7 +65,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == 0) {
 		return true;
 	}
-	if (sqe->cnt == ARRAY_SIZE(sqe->lbki)) {
+	if (sqe->cnt == ARRAY_SIZE(sqe->iov)) {
 		return false;
 	}
 	if (lni->stype != sqe->stype) {
@@ -106,7 +106,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	} else {
 		sqe->laddr.len += laddr->len;
 	}
-	sqe->lbki[sqe->cnt++] = lni->lbki;
+	sqe->lni[sqe->cnt++] = lni;
 	return true;
 }
 
@@ -157,7 +157,7 @@ void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
 {
 	if (!sqe->hold_refs) {
 		for (size_t i = 0; i < sqe->cnt; ++i) {
-			silofs_lbki_incref(sqe->lbki[i]);
+			silofs_lni_incref(sqe->lni[i]);
 		}
 		sqe->hold_refs = 1;
 	}
@@ -167,7 +167,7 @@ static void sqe_decrefs(struct silofs_submitq_ent *sqe)
 {
 	if (sqe->hold_refs) {
 		for (size_t i = 0; i < sqe->cnt; ++i) {
-			silofs_lbki_decref(sqe->lbki[i]);
+			silofs_lni_decref(sqe->lni[i]);
 		}
 		sqe->hold_refs = 0;
 	}

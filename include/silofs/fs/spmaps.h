@@ -47,7 +47,7 @@ void silofs_sni_decref(struct silofs_spnode_info *sni);
 void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
                               const struct silofs_uaddr *parent, loff_t voff);
 
-void silofs_sni_update_staged(struct silofs_spnode_info *sni);
+void silofs_sni_update_nactive(struct silofs_spnode_info *sni);
 
 void silofs_sni_clone_from(struct silofs_spnode_info *sni,
                            const struct silofs_spnode_info *sni_other);
@@ -89,7 +89,7 @@ void silofs_sli_decref(struct silofs_spleaf_info *sli);
 void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
                               const struct silofs_uaddr *parent, loff_t voff);
 
-void silofs_sli_update_staged(struct silofs_spleaf_info *sli);
+void silofs_sli_update_nused(struct silofs_spleaf_info *sli);
 
 void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
                              struct silofs_vrange *out_vrange);
@@ -155,14 +155,6 @@ int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
 
 void silofs_sli_childrens(const struct silofs_spleaf_info *sli,
                           struct silofs_spleaf_urefs *out_childs);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_lbki_has_view_at(const struct silofs_lbk_info *lbki,
-                             loff_t view_pos, size_t view_len);
-
-void silofs_lbki_set_view_at(struct silofs_lbk_info *lbki,
-                             loff_t view_pos, size_t view_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

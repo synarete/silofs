@@ -476,7 +476,7 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	bool ret = false;
 
 	if (!ii->i_dq_vis.dq.sz && !ii->i_nopen) {
-		ret = silofs_lni_isevictable(&ii->i_vi.v);
+		ret = silofs_lni_isevictable(&ii->i_vi.v_lni);
 	}
 	return ret;
 }
@@ -544,7 +544,7 @@ void silofs_ii_set_generation(struct silofs_inode_info *ii, uint64_t gen)
 
 void silofs_ii_stamp_mark_visible(struct silofs_inode_info *ii)
 {
-	silofs_stamp_meta_of(ii_to_vi(ii));
+	silofs_vi_mark_verified(ii_to_vi(ii));
 	ii_dirtify(ii);
 }
 

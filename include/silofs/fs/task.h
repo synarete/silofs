@@ -29,7 +29,7 @@ struct silofs_oper {
 
 /* execution-context task per file-system operation */
 struct silofs_task {
-	struct silofs_fsenv     *t_fsenv;
+	struct silofs_fsenv    *t_fsenv;
 	struct silofs_submitq  *t_submitq;
 	struct silofs_oper      t_oper;
 	uint64_t                t_apex_id;
@@ -39,25 +39,25 @@ struct silofs_task {
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
 	struct silofs_llink         llink;
-	const union silofs_view    *view;
+	const struct silofs_view   *view;
 	enum silofs_stype           stype;
 };
 
 /* submission queue entry */
 struct silofs_submitq_ent {
-	struct iovec            iov[SILOFS_SUBENT_NREFS_MAX];
-	struct silofs_lbk_info *lbki[SILOFS_SUBENT_NREFS_MAX];
-	struct silofs_list_head qlh;
-	struct silofs_fsenv    *fsenv;
-	struct silofs_alloc    *alloc;
-	struct silofs_laddr     laddr;
-	uint64_t                uniq_id;
-	uint32_t                cnt;
-	uint32_t                tx_count;
-	uint32_t                tx_index;
-	int                     hold_refs;
-	volatile int            status;
-	enum silofs_stype       stype;
+	struct iovec                    iov[SILOFS_SUBENT_NREFS_MAX];
+	struct silofs_lnode_info       *lni[SILOFS_SUBENT_NREFS_MAX];
+	struct silofs_list_head         qlh;
+	struct silofs_fsenv            *fsenv;
+	struct silofs_alloc            *alloc;
+	struct silofs_laddr             laddr;
+	uint64_t                        uniq_id;
+	uint32_t                        cnt;
+	uint32_t                        tx_count;
+	uint32_t                        tx_index;
+	int                             hold_refs;
+	volatile int                    status;
+	enum silofs_stype               stype;
 };
 
 /* submission flush queue */
@@ -80,8 +80,6 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 
 int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
                            const struct silofs_submit_ref *refs_arr);
-
-void silofs_sqe_increfs(struct silofs_submitq_ent *sqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -113,6 +111,9 @@ const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task);
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_sqe_increfs(struct silofs_submitq_ent *sqe);
+
 
 int silofs_submitq_init(struct silofs_submitq *smq,
                         struct silofs_alloc *alloc);

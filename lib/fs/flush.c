@@ -35,7 +35,7 @@ struct silofs_submit_ctx {
 	struct silofs_listq             txq[2];
 	struct silofs_task             *task;
 	struct silofs_inode_info       *ii;
-	struct silofs_fsenv             *fsenv;
+	struct silofs_fsenv            *fsenv;
 	struct silofs_repo             *repo;
 	struct silofs_alloc            *alloc;
 	struct silofs_cache            *cache;
@@ -191,6 +191,7 @@ static bool smc_append_next_ref(struct silofs_submit_ctx *sm_ctx,
 
 	ret = silofs_sqe_append_ref(sqe, &llink->laddr, lni);
 	if (ret) {
+		silofs_assert_not_null(lni->view);
 		silofs_llink_assign(&ref->llink, llink);
 		ref->view = lni->view;
 		ref->stype = lni->stype;
@@ -463,7 +464,7 @@ static void dsets_add_by_vi(struct silofs_dsets *dsets,
 {
 	struct silofs_dset *dset = dsets_get_by_vi(dsets, vi);
 
-	dset_add_dirty(dset, &vi->v);
+	dset_add_dirty(dset, &vi->v_lni);
 }
 
 static void dsets_add_by_ui(struct silofs_dsets *dsets,
@@ -471,7 +472,7 @@ static void dsets_add_by_ui(struct silofs_dsets *dsets,
 {
 	struct silofs_dset *dset = dsets_get_by_ui(dsets, ui);
 
-	dset_add_dirty(dset, &ui->u);
+	dset_add_dirty(dset, &ui->u_lni);
 }
 
 static void dsets_fill_vis_of(struct silofs_dsets *dsets,
@@ -905,5 +906,15 @@ int silofs_flush_dirty(struct silofs_task *task,
 
 int silofs_flush_dirty_now(struct silofs_task *task)
 {
-	return silofs_flush_dirty(task, NULL, SILOFS_F_NOW);
+	int err;
+
+	err = silofs_flush_dirty(task, NULL, SILOFS_F_NOW);
+	if (err) {
+		return err;
+	}
+	err = silofs_relax_pruneq(task);
+	if (err) {
+		return err;
+	}
+	return 0;
 }

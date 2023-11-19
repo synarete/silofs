@@ -33,7 +33,9 @@
 #define task_idsmap(t)                  silofs_task_idsmap(t)
 #define task_creds(t)                   silofs_task_creds(t)
 
-#define sbi_fsenv(sbi)                   silofs_sbi_fsenv(sbi)
+#define lni_view_len(lni)               silofs_lni_view_len(lni)
+
+#define sbi_fsenv(sbi)                  silofs_sbi_fsenv(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
 #define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)

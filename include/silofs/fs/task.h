@@ -48,7 +48,7 @@ struct silofs_submitq_ent {
 	struct iovec            iov[SILOFS_SUBENT_NREFS_MAX];
 	struct silofs_lbk_info *lbki[SILOFS_SUBENT_NREFS_MAX];
 	struct silofs_list_head qlh;
-	struct silofs_fsenv     *fsenv;
+	struct silofs_fsenv    *fsenv;
 	struct silofs_alloc    *alloc;
 	struct silofs_laddr     laddr;
 	uint64_t                uniq_id;

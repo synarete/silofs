@@ -1080,11 +1080,9 @@ static bool ui_isdirty(const struct silofs_unode_info *ui)
 
 static void ui_do_dirtify(struct silofs_unode_info *ui)
 {
-	silofs_assert_not_null(ui->u_dq);
-
 	if (!ui_isdirty(ui)) {
 		silofs_dirtyq_append(ui->u_dq, &ui->u_dq_lh,
-		                     ui->u.view_len);
+		                     lni_view_len(&ui->u));
 		ce_set_dirty(&ui->u.ce, true);
 	}
 }
@@ -1095,7 +1093,7 @@ static void ui_do_undirtify(struct silofs_unode_info *ui)
 
 	if (ui_isdirty(ui)) {
 		silofs_dirtyq_remove(ui->u_dq, &ui->u_dq_lh,
-		                     ui->u.view_len);
+		                     lni_view_len(&ui->u));
 		ce_set_dirty(&ui->u.ce, false);
 	}
 }

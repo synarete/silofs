@@ -97,8 +97,6 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_laddr *laddr,
                            struct silofs_lnode_info *lni)
 {
-	silofs_assert_eq(laddr->len, lni->view_len);
-
 	if (!sqe_isappendable(sqe, laddr, lni)) {
 		return false;
 	}

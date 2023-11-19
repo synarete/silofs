@@ -26,7 +26,7 @@
 static bool lni_has_bkview(const struct silofs_lnode_info *lni)
 {
 	return silofs_lbki_has_view_at(lni->lbki, lni->view_pos,
-	                               lni->view_len);
+	                               lni_view_len(lni));
 }
 
 static void lni_set_bkview(const struct silofs_lnode_info *lni)
@@ -34,7 +34,7 @@ static void lni_set_bkview(const struct silofs_lnode_info *lni)
 	struct silofs_lbk_info *bki = lni->lbki;
 
 	silofs_assert_not_null(bki);
-	silofs_lbki_set_view_at(bki, lni->view_pos, lni->view_len);
+	silofs_lbki_set_view_at(bki, lni->view_pos, lni_view_len(lni));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

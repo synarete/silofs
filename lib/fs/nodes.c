@@ -224,7 +224,6 @@ static void lni_init(struct silofs_lnode_info *lni,
 	lni->fsenv = NULL;
 	lni->lbki = NULL;
 	lni->view = NULL;
-	lni->view_len = 0;
 	lni->del_hook = del_fn;
 	lni->flags = SILOFS_LNF_NONE;
 }
@@ -254,6 +253,11 @@ static uint32_t lni_calc_chekcsum(const struct silofs_lnode_info *lni)
 static int lni_verify_view(struct silofs_lnode_info *lni)
 {
 	return verify_view_by(lni->view, lni->stype);
+}
+
+size_t silofs_lni_view_len(const struct silofs_lnode_info *lni)
+{
+	return silofs_stype_size(lni->stype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1379,7 +1383,6 @@ static void lni_bind_view(struct silofs_lnode_info *lni,
 {
 	lni->view = make_view(opaque_view_of(lbk, lbk_pos));
 	lni->view_pos = lbk_pos;
-	lni->view_len = stype_size(lni->stype);
 }
 
 void silofs_ui_bind_view(struct silofs_unode_info *ui)

@@ -43,7 +43,6 @@ struct silofs_lnode_info {
 	struct silofs_lbk_info         *lbki;
 	union silofs_view              *view;
 	loff_t                          view_pos;
-	uint32_t                        view_len;
 	enum silofs_stype               stype;
 	enum silofs_lnflags             flags;
 };
@@ -142,6 +141,10 @@ struct silofs_fileaf_info {
 	struct silofs_vnode_info        fl_vi;
 	union silofs_fileaf_u           flu;
 };
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+size_t silofs_lni_view_len(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

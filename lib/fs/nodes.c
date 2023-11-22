@@ -270,25 +270,25 @@ static void lni_init(struct silofs_lnode_info *lni,
                      struct silofs_view *view,
                      silofs_lnode_del_fn del_fn)
 {
-	ce_init(&lni->ce);
-	an_init(&lni->ds_an);
-	lni->stype = stype;
-	lni->ds_next = NULL;
-	lni->fsenv = NULL;
-	lni->view = view;
-	lni->del_hook = del_fn;
-	lni->flags = SILOFS_LNF_NONE;
+	ce_init(&lni->l_ce);
+	an_init(&lni->l_ds_avl_node);
+	lni->l_stype = stype;
+	lni->l_ds_next = NULL;
+	lni->l_fsenv = NULL;
+	lni->l_view = view;
+	lni->l_del_cb = del_fn;
+	lni->l_flags = 0;
 }
 
 static void lni_fini(struct silofs_lnode_info *lni)
 {
-	ce_fini(&lni->ce);
-	an_fini(&lni->ds_an);
-	lni->stype = SILOFS_STYPE_NONE;
-	lni->ds_next = NULL;
-	lni->fsenv = NULL;
-	lni->view = NULL;
-	lni->del_hook = NULL;
+	ce_fini(&lni->l_ce);
+	an_fini(&lni->l_ds_avl_node);
+	lni->l_stype = SILOFS_STYPE_NONE;
+	lni->l_ds_next = NULL;
+	lni->l_fsenv = NULL;
+	lni->l_view = NULL;
+	lni->l_del_cb = NULL;
 }
 
 static bool lni_evictable(const struct silofs_lnode_info *lni)
@@ -298,19 +298,19 @@ static bool lni_evictable(const struct silofs_lnode_info *lni)
 
 static uint32_t lni_calc_chekcsum(const struct silofs_lnode_info *lni)
 {
-	silofs_assert_not_null(lni->view);
-	return calc_meta_chekcsum(&lni->view->u.hdr);
+	silofs_assert_not_null(lni->l_view);
+	return calc_meta_chekcsum(&lni->l_view->u.hdr);
 }
 
 static int lni_verify_view(struct silofs_lnode_info *lni)
 {
-	silofs_assert_not_null(lni->view);
-	return verify_view_by(lni->view, lni->stype);
+	silofs_assert_not_null(lni->l_view);
+	return verify_view_by(lni->l_view, lni->l_stype);
 }
 
 size_t silofs_lni_view_len(const struct silofs_lnode_info *lni)
 {
-	return silofs_stype_size(lni->stype);
+	return silofs_stype_size(lni->l_stype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -358,13 +358,13 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni)
 
 void silofs_seal_unode(struct silofs_unode_info *ui)
 {
-	hdr_set_csum(&ui->u_lni.view->u.hdr, lni_calc_chekcsum(&ui->u_lni));
+	hdr_set_csum(&ui->u_lni.l_view->u.hdr, lni_calc_chekcsum(&ui->u_lni));
 }
 
 void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
                          struct silofs_fsenv *fsenv)
 {
-	ui->u_lni.fsenv = fsenv;
+	ui->u_lni.l_fsenv = fsenv;
 }
 
 struct silofs_unode_info *
@@ -379,8 +379,8 @@ silofs_ui_from_dirty_lh(struct silofs_list_head *lh)
 static void ui_del_view(struct silofs_unode_info *ui,
                         struct silofs_alloc *alloc)
 {
-	view_del_by_ulink(ui->u_lni.view, ui_ulink(ui), alloc);
-	ui->u_lni.view = NULL;
+	view_del_by_ulink(ui->u_lni.l_view, ui_ulink(ui), alloc);
+	ui->u_lni.l_view = NULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -458,21 +458,21 @@ static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
 	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
 	uint32_t csum;
 
-	silofs_assert_not_null(vi->v_lni.view);
+	silofs_assert_not_null(vi->v_lni.l_view);
 
 	if (vaddr_isdata(vaddr)) {
-		csum = calc_data_checksum(vi->v_lni.view, vaddr->len, md);
+		csum = calc_data_checksum(vi->v_lni.l_view, vaddr->len, md);
 	} else {
-		csum = calc_meta_chekcsum(&vi->v_lni.view->u.hdr);
+		csum = calc_meta_chekcsum(&vi->v_lni.l_view->u.hdr);
 	}
 	return csum;
 }
 
 void silofs_seal_vnode(struct silofs_vnode_info *vi)
 {
-	silofs_assert_not_null(vi->v_lni.view);
+	silofs_assert_not_null(vi->v_lni.l_view);
 
-	hdr_set_csum(&vi->v_lni.view->u.hdr, vi_calc_chekcsum(vi));
+	hdr_set_csum(&vi->v_lni.l_view->u.hdr, vi_calc_chekcsum(vi));
 }
 
 static bool vi_has_stype(const struct silofs_vnode_info *vi,
@@ -484,8 +484,8 @@ static bool vi_has_stype(const struct silofs_vnode_info *vi,
 static void vi_del_view(struct silofs_vnode_info *vi,
                         struct silofs_alloc *alloc)
 {
-	view_del_by_vaddr(vi->v_lni.view, vi_vaddr(vi), alloc);
-	vi->v_lni.view = NULL;
+	view_del_by_vaddr(vi->v_lni.l_view, vi_vaddr(vi), alloc);
+	vi->v_lni.l_view = NULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -905,7 +905,7 @@ silofs_ii_from_dirty_lh(struct silofs_list_head *lh)
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 {
 	/* ii->inode = &ii->i_vi.v.view->u.in; */
-	silofs_assert_not_null(ii->i_vi.v_lni.view);
+	silofs_assert_not_null(ii->i_vi.v_lni.l_view);
 	silofs_assert_not_null(ii->inode);
 	ii->i_ino = ino;
 }
@@ -1398,7 +1398,7 @@ struct silofs_fileaf_info *silofs_fli_from_vi(struct silofs_vnode_info *vi)
 
 bool silofs_test_evictable(const struct silofs_lnode_info *lni)
 {
-	return stype_isinode(lni->stype) ?
+	return stype_isinode(lni->l_stype) ?
 	       ii_evictable_as(lni) : lni_evictable(lni);
 }
 
@@ -1553,53 +1553,20 @@ static int verify_view_by(const struct silofs_view *view,
 
 bool silofs_ui_is_active(const struct silofs_unode_info *ui)
 {
-	return (ui->u_lni.flags & SILOFS_LNF_ACTIVE) > 0;
+	return (ui->u_lni.l_flags & SILOFS_LNF_ACTIVE) > 0;
 }
 
 void silofs_ui_set_active(struct silofs_unode_info *ui)
 {
-	ui->u_lni.flags |= SILOFS_LNF_ACTIVE;
-}
-
-void silofs_ui_mark_verified(struct silofs_unode_info *ui)
-{
-	ui->u_lni.flags |= SILOFS_LNF_VERIFIED;
+	ui->u_lni.l_flags |= SILOFS_LNF_ACTIVE;
 }
 
 int silofs_ui_verify_view(struct silofs_unode_info *ui)
 {
-	int err;
-
-	if (ui->u_lni.flags & SILOFS_LNF_VERIFIED) {
-		return 0;
-	}
-	err = lni_verify_view(&ui->u_lni);
-	if (err) {
-		return err;
-	}
-	ui->u_lni.flags |= SILOFS_LNF_VERIFIED;
-	return 0;
+	return lni_verify_view(&ui->u_lni);
 }
 
 int silofs_vi_verify_view(struct silofs_vnode_info *vi)
 {
-	int err;
-
-	if (vi->v_lni.flags & SILOFS_LNF_VERIFIED) {
-		return 0;
-	}
-	err = lni_verify_view(&vi->v_lni);
-	if (err) {
-		return err;
-	}
-	vi->v_lni.flags |= SILOFS_LNF_VERIFIED;
-	return 0;
+	return lni_verify_view(&vi->v_lni);
 }
-
-void silofs_vi_mark_verified(struct silofs_vnode_info *vi)
-{
-	vi->v_lni.flags |= SILOFS_LNF_VERIFIED;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-

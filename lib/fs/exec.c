@@ -737,10 +737,10 @@ static int exec_rescan_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int reload_free_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -1010,10 +1010,10 @@ static int format_base_vspmaps_of(const struct silofs_fs_ctx *fs_ctx,
 static int format_base_vspmaps(const struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_vaddr vaddr;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -1086,10 +1086,10 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int claim_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -1139,10 +1139,10 @@ static int reload_base_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int reload_base_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err = 0;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}
@@ -1198,10 +1198,10 @@ static int format_zero_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int format_zero_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}

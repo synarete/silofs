@@ -147,9 +147,9 @@ static void spg_export_to(const struct silofs_space_gauges *spg,
 {
 	ssize_t *dst = NULL;
 	const uint64_t *src = NULL;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		src = spg_gauge_of(spg, stype);
 		if (unlikely(src == NULL)) {
 			continue;
@@ -190,11 +190,11 @@ static void spg_update_take(struct silofs_space_gauges *spg,
 static int spg_verify(const struct silofs_space_gauges *spg)
 {
 	const uint64_t *pcnt = NULL;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	ssize_t cnt;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		pcnt = spg_gauge_of(spg, stype);
 		if (unlikely(pcnt == NULL)) {
 			continue;
@@ -424,9 +424,9 @@ static ssize_t spgs_sum(const struct silofs_spacegauges *spgs)
 {
 	ssize_t sum = 0;
 	const ssize_t *cnt = NULL;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		cnt = spgs_gauge_of(spgs, stype);
 		if (likely(cnt != NULL)) {
 			sum += *cnt * stype_ssize(stype);
@@ -440,9 +440,9 @@ static void spgs_accum(struct silofs_spacegauges *spgs,
 {
 	ssize_t *dst = NULL;
 	const ssize_t *src = NULL;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		dst = spgs_gauge_of2(spgs, stype);
 		if (dst == NULL) {
 			continue;
@@ -460,9 +460,9 @@ static void spgs_export(const struct silofs_spacegauges *spgs,
 {
 	uint64_t *dst = NULL;
 	const ssize_t *src = NULL;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		dst = spg_gauge_of2(out_spg, stype);
 		if (dst == NULL) {
 			continue;
@@ -480,9 +480,9 @@ static void spgs_import(struct silofs_spacegauges *spgs,
 {
 	ssize_t *dst = NULL;
 	const uint64_t *src = NULL;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		src = spg_gauge_of(in_spg, stype);
 		if (src == NULL) {
 			continue;

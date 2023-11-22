@@ -205,11 +205,11 @@ static void syi_dirtify(struct silofs_symval_info *syi,
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
-	if (syi->sy_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
+	if (syi->sy_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	/* TODO: recheck */
-	syi->sy_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
+	syi->sy_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 

@@ -23,28 +23,26 @@ struct silofs_vnode_info;
 
 
 enum silofs_lnflags {
-	SILOFS_LNF_NONE         = 0x00,
-	SILOFS_LNF_VERIFIED     = 0x01,
-	SILOFS_LNF_RECHECK      = 0x02,
-	SILOFS_LNF_PINNED       = 0x04,
-	SILOFS_LNF_ACTIVE       = 0x08,
-	SILOFS_LNF_LOOSE        = 0x10,
+	SILOFS_LNF_RECHECK      = SILOFS_BIT(0),
+	SILOFS_LNF_PINNED       = SILOFS_BIT(1),
+	SILOFS_LNF_ACTIVE       = SILOFS_BIT(2),
+	SILOFS_LNF_LOOSE        = SILOFS_BIT(3),
 };
 
 /* nodes' delete hook */
 typedef void (*silofs_lnode_del_fn)(struct silofs_lnode_info *lni,
-                                    struct silofs_alloc *alloc, int flags);
+                                    struct silofs_alloc *alloc, int l_flags);
 
 /* lnode: base object of all logiacal-nodes */
 struct silofs_lnode_info {
-	struct silofs_cache_elem        ce;
-	struct silofs_avl_node          ds_an;
-	silofs_lnode_del_fn             del_hook;
-	struct silofs_fsenv            *fsenv;
-	struct silofs_lnode_info       *ds_next;
-	struct silofs_view             *view;
-	enum silofs_stype               stype;
-	enum silofs_lnflags             flags;
+	struct silofs_cache_elem        l_ce;
+	struct silofs_avl_node          l_ds_avl_node;
+	struct silofs_lnode_info       *l_ds_next;
+	struct silofs_fsenv            *l_fsenv;
+	struct silofs_view             *l_view;
+	silofs_lnode_del_fn             l_del_cb;
+	enum silofs_lnflags             l_flags;
+	enum silofs_stype               l_stype;
 };
 
 /* unode */
@@ -191,8 +189,6 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni);
 
 bool silofs_vi_isdata(const struct silofs_vnode_info *vi);
 
-void silofs_vi_mark_verified(struct silofs_vnode_info *vi);
-
 
 struct silofs_unode_info *
 silofs_ui_from_lni(const struct silofs_lnode_info *lni);
@@ -214,8 +210,6 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 bool silofs_ui_is_active(const struct silofs_unode_info *ui);
 
 void silofs_ui_set_active(struct silofs_unode_info *ui);
-
-void silofs_ui_mark_verified(struct silofs_unode_info *ui);
 
 int silofs_ui_verify_view(struct silofs_unode_info *ui);
 

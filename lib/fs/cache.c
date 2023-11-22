@@ -675,14 +675,14 @@ lni_from_ce(const struct silofs_cache_elem *ce)
 	const struct silofs_lnode_info *lni = NULL;
 
 	if (likely(ce != NULL)) {
-		lni = container_of2(ce, struct silofs_lnode_info, ce);
+		lni = container_of2(ce, struct silofs_lnode_info, l_ce);
 	}
 	return unconst(lni);
 }
 
 static struct silofs_cache_elem *lni_to_ce(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_cache_elem *ce = &lni->ce;
+	const struct silofs_cache_elem *ce = &lni->l_ce;
 
 	return unconst(ce);
 }
@@ -690,14 +690,14 @@ static struct silofs_cache_elem *lni_to_ce(const struct silofs_lnode_info *lni)
 static void lni_set_cache(struct silofs_lnode_info *lni,
                           struct silofs_cache *cache)
 {
-	lni->ce.ce_cache = cache;
+	lni->l_ce.ce_cache = cache;
 }
 
 bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 {
 	bool ret = false;
 
-	if (!(lni->flags & SILOFS_LNF_PINNED)) {
+	if (!(lni->l_flags & SILOFS_LNF_PINNED)) {
 		ret = ce_is_evictable_atomic(lni_to_ce(lni));
 	}
 	return ret;
@@ -705,12 +705,12 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 
 static void lni_incref(struct silofs_lnode_info *lni)
 {
-	ce_incref_atomic(&lni->ce);
+	ce_incref_atomic(&lni->l_ce);
 }
 
 static void lni_decref(struct silofs_lnode_info *lni)
 {
-	ce_decref_atomic(&lni->ce);
+	ce_decref_atomic(&lni->l_ce);
 }
 
 void silofs_lni_incref(struct silofs_lnode_info *lni)
@@ -742,7 +742,7 @@ static void lni_remove_from_lrumap(struct silofs_lnode_info *lni,
 static void lni_delete(struct silofs_lnode_info *lni,
                        struct silofs_alloc *alloc, int flags)
 {
-	silofs_lnode_del_fn del = lni->del_hook;
+	silofs_lnode_del_fn del = lni->l_del_cb;
 
 	del(lni, alloc, flags);
 }
@@ -773,7 +773,7 @@ static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 
 static bool ui_isdirty(const struct silofs_unode_info *ui)
 {
-	return ce_is_dirty(&ui->u_lni.ce);
+	return ce_is_dirty(&ui->u_lni.l_ce);
 }
 
 static void ui_do_dirtify(struct silofs_unode_info *ui)
@@ -781,7 +781,7 @@ static void ui_do_dirtify(struct silofs_unode_info *ui)
 	if (!ui_isdirty(ui)) {
 		silofs_dirtyq_append(ui->u_dq, &ui->u_dq_lh,
 		                     lni_view_len(&ui->u_lni));
-		ce_set_dirty(&ui->u_lni.ce, true);
+		ce_set_dirty(&ui->u_lni.l_ce, true);
 	}
 }
 
@@ -792,7 +792,7 @@ static void ui_do_undirtify(struct silofs_unode_info *ui)
 	if (ui_isdirty(ui)) {
 		silofs_dirtyq_remove(ui->u_dq, &ui->u_dq_lh,
 		                     lni_view_len(&ui->u_lni));
-		ce_set_dirty(&ui->u_lni.ce, false);
+		ce_set_dirty(&ui->u_lni.l_ce, false);
 	}
 }
 
@@ -902,7 +902,7 @@ static struct silofs_vnode_info *vi_from_ce(struct silofs_cache_elem *ce)
 
 static struct silofs_cache_elem *vi_to_ce(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_cache_elem *ce = &vi->v_lni.ce;
+	const struct silofs_cache_elem *ce = &vi->v_lni.l_ce;
 
 	return unconst(ce);
 }
@@ -1174,7 +1174,7 @@ cache_require_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 static void cache_store_ui(struct silofs_cache *cache,
                            struct silofs_unode_info *ui)
 {
-	ckey_by_uaddr(&ui->u_lni.ce.ce_ckey, ui_uaddr(ui));
+	ckey_by_uaddr(&ui->u_lni.l_ce.ce_ckey, ui_uaddr(ui));
 	cache_store_ui_lrumap(cache, ui);
 }
 
@@ -1318,7 +1318,7 @@ static void cache_remove_vi(struct silofs_cache *cache,
                             struct silofs_vnode_info *vi)
 {
 	lni_remove_from_lrumap(&vi->v_lni, &cache->c_vi_lm);
-	ce_set_forgot(&vi->v_lni.ce, false);
+	ce_set_forgot(&vi->v_lni.l_ce, false);
 }
 
 static void cache_evict_vi(struct silofs_cache *cache,
@@ -1337,7 +1337,7 @@ static void cache_store_vi_lrumap(struct silofs_cache *cache,
 static void cache_store_vi(struct silofs_cache *cache,
                            struct silofs_vnode_info *vi)
 {
-	ckey_by_vaddr(&vi->v_lni.ce.ce_ckey, &vi->v_vaddr);
+	ckey_by_vaddr(&vi->v_lni.l_ce.ce_ckey, &vi->v_vaddr);
 	cache_store_vi_lrumap(cache, vi);
 }
 
@@ -1453,7 +1453,7 @@ static void cache_forget_vi(struct silofs_cache *cache,
 	vi_do_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		cache_unmap_vi(cache, vi);
-		ce_set_forgot(&vi->v_lni.ce, true);
+		ce_set_forgot(&vi->v_lni.l_ce, true);
 	} else {
 		cache_evict_vi(cache, vi, 0);
 	}
@@ -1811,12 +1811,12 @@ static void cache_post_op(struct silofs_cache *cache)
 
 static bool vi_isdirty(const struct silofs_vnode_info *vi)
 {
-	return ce_is_dirty(&vi->v_lni.ce);
+	return ce_is_dirty(&vi->v_lni.l_ce);
 }
 
 static void vi_set_dirty(struct silofs_vnode_info *vi, bool dirty)
 {
-	ce_set_dirty(&vi->v_lni.ce, dirty);
+	ce_set_dirty(&vi->v_lni.l_ce, dirty);
 }
 
 static void vi_do_dirtify(struct silofs_vnode_info *vi,
@@ -1907,12 +1907,12 @@ void silofs_ii_decref(struct silofs_inode_info *ii)
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v_lni.flags |= SILOFS_LNF_LOOSE;
+	ii->i_vi.v_lni.l_flags |= SILOFS_LNF_LOOSE;
 }
 
 bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
 {
-	return (ii->i_vi.v_lni.flags & SILOFS_LNF_LOOSE) > 0;
+	return (ii->i_vi.v_lni.l_flags & SILOFS_LNF_LOOSE) > 0;
 }
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi)

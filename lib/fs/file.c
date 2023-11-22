@@ -366,7 +366,7 @@ static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
 	const struct silofs_fsenv *fsenv = vi_fsenv(&fli->fl_vi);
 
-	return (fsenv->fse_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
+	return (fsenv->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
 }
 
 static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
@@ -1381,11 +1381,11 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	if (fli->fl_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
+	if (fli->fl_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	silofs_unused(f_ctx);
-	fli->fl_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
+	fli->fl_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 
@@ -1456,7 +1456,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 	const ino_t f_ino = ii_ino(f_ctx->ii);
 	const size_t height = ftn_height(fni->ftn);
 
-	if (fni->fn_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
+	if (fni->fn_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	if ((height < 2) || (height > 16)) {
@@ -1467,7 +1467,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 		log_err("bad finode ino: r_ino=%lu f_ino=%lu", r_ino, f_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	fni->fn_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
+	fni->fn_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 

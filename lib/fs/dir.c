@@ -1217,7 +1217,7 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 	ino_t h_ino;
 	ino_t d_ino;
 
-	if (dni->dn_vi.v_lni.flags & SILOFS_LNF_RECHECK) {
+	if (dni->dn_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
 		return 0;
 	}
 	h_ino = dtn_ino(dni->dtn);
@@ -1231,7 +1231,7 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 		log_err("bad dnode: h_ino=%lu d_ino=%lu", h_ino, d_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	dni->dn_vi.v_lni.flags |= SILOFS_LNF_RECHECK;
+	dni->dn_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
 	return 0;
 }
 

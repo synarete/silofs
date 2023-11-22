@@ -65,12 +65,12 @@ enum silofs_flags {
 	SILOFS_F_TIMEOUT_IDLE   = SILOFS_F_TIMEOUT | SILOFS_F_IDLE,
 };
 
-/* fsenv-block control flags */
-enum silofs_ubctl_flags {
-	SILOFS_UBF_NLOOKUP      = SILOFS_BIT(0),
-	SILOFS_UBF_ALLOWOTHER   = SILOFS_BIT(1),
-	SILOFS_UBF_ALLOWADMIN   = SILOFS_BIT(2),
-	SILOFS_UBF_ASYNCWR      = SILOFS_BIT(3),
+/* fs-env control flags */
+enum silofs_env_flags {
+	SILOFS_ENVF_NLOOKUP     = SILOFS_BIT(0),
+	SILOFS_ENVF_ALLOWOTHER  = SILOFS_BIT(1),
+	SILOFS_ENVF_ALLOWADMIN  = SILOFS_BIT(2),
+	SILOFS_ENVF_ASYNCWR     = SILOFS_BIT(3),
 };
 
 /* inode's attributes masks */
@@ -94,13 +94,6 @@ enum silofs_iattr_flags {
 	SILOFS_IATTR_MCTIME     = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
 	SILOFS_IATTR_TIMES      = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
 	                          SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME
-};
-
-/* regual-file sub-types */
-enum silofs_file_type {
-	SILOFS_FILE_TYPE_NONE   = 0,
-	SILOFS_FILE_TYPE1       = 1,
-	SILOFS_FILE_TYPE2       = 2,
 };
 
 

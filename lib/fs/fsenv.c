@@ -138,16 +138,16 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
 
 	if (fs_args->allowother) {
-		fsenv->fse_ctl_flags |= SILOFS_UBF_ALLOWOTHER;
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWOTHER;
 	}
 	if (fs_args->allowadmin) {
-		fsenv->fse_ctl_flags |= SILOFS_UBF_ALLOWADMIN;
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWADMIN;
 	}
 	if (fs_args->withfuse) {
-		fsenv->fse_ctl_flags |= SILOFS_UBF_NLOOKUP;
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_NLOOKUP;
 	}
 	if (fs_args->asyncwr) {
-		fsenv->fse_ctl_flags |= SILOFS_UBF_ASYNCWR;
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_ASYNCWR;
 	}
 }
 
@@ -536,7 +536,6 @@ static void sbi_set_spawned(struct silofs_sb_info *sbi)
 {
 	sbi_set_active(sbi);
 	sbi_bind_spstats(sbi);
-	silofs_ui_mark_verified(&sbi->sb_ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -565,7 +564,6 @@ static void sni_set_staged(struct silofs_spnode_info *sni)
 static void sni_set_spawned(struct silofs_spnode_info *sni)
 {
 	sni_set_active(sni);
-	silofs_ui_mark_verified(&sni->sn_ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -594,7 +592,6 @@ static void sli_set_staged(struct silofs_spleaf_info *sli)
 static void sli_set_spawned(struct silofs_spleaf_info *sli)
 {
 	sli_set_active(sli);
-	silofs_ui_mark_verified(&sli->sl_ui);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -621,7 +618,7 @@ static int fsec_fetch_cached_ui(const struct silofs_fsenv_ctx *fse_ctx,
 static void fsec_bind_spawned_ui(const struct silofs_fsenv_ctx *fse_ctx,
                                  struct silofs_unode_info *ui)
 {
-	ui->u_lni.fsenv = fse_ctx->fsenv;
+	ui->u_lni.l_fsenv = fse_ctx->fsenv;
 }
 
 static int fsec_create_cached_ui(const struct silofs_fsenv_ctx *fse_ctx,
@@ -837,7 +834,7 @@ static int fsec_load_view_of_sbi(const struct silofs_fsenv_ctx *fse_ctx,
                                  struct silofs_sb_info *sbi)
 {
 	return fsec_stage_load_view(fse_ctx, sbi_laddr(sbi),
-	                            sbi->sb_ui.u_lni.view);
+	                            sbi->sb_ui.u_lni.l_view);
 }
 
 static int fsec_stage_super_at(const struct silofs_fsenv_ctx *fse_ctx,
@@ -964,7 +961,7 @@ static int fsec_load_view_of_sni(const struct silofs_fsenv_ctx *fse_ctx,
                                  struct silofs_spnode_info *sni)
 {
 	return fsec_stage_load_view(fse_ctx, sni_laddr(sni),
-	                            sni->sn_ui.u_lni.view);
+	                            sni->sn_ui.u_lni.l_view);
 }
 
 static int fsec_stage_spnode_at(const struct silofs_fsenv_ctx *fse_ctx,
@@ -1091,7 +1088,7 @@ static int fsec_load_view_of_sli(const struct silofs_fsenv_ctx *fse_ctx,
                                  struct silofs_spleaf_info *sli)
 {
 	return fsec_stage_load_view(fse_ctx, sli_laddr(sli),
-	                            sli->sl_ui.u_lni.view);
+	                            sli->sl_ui.u_lni.l_view);
 }
 
 static int fsec_stage_spleaf_at(const struct silofs_fsenv_ctx *fse_ctx,

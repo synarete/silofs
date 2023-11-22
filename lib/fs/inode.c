@@ -542,12 +542,6 @@ void silofs_ii_set_generation(struct silofs_inode_info *ii, uint64_t gen)
 	ii_dirtify(ii);
 }
 
-void silofs_ii_stamp_mark_visible(struct silofs_inode_info *ii)
-{
-	silofs_vi_mark_verified(ii_to_vi(ii));
-	ii_dirtify(ii);
-}
-
 void silofs_ii_setup_by(struct silofs_inode_info *ii,
                         const struct silofs_inew_params *inp)
 {

@@ -2485,7 +2485,7 @@ static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 
 static bool fuseq_asyncwr_mode(const struct silofs_fuseq_worker *fqw)
 {
-	return (fqw->fw_fq->fq_fsenv->fse_ctl_flags & SILOFS_UBF_ASYNCWR) > 0;
+	return (fqw->fw_fq->fq_fsenv->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
 }
 
 static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
@@ -3909,7 +3909,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	uid = fsenv->fse_owner.uid;
 	gid = fsenv->fse_owner.gid;
 	ms_flags = fsenv->fse_ms_flags;
-	allow_other = (fsenv->fse_ctl_flags & SILOFS_UBF_ALLOWOTHER) > 0;
+	allow_other = (fsenv->fse_ctl_flags & SILOFS_ENVF_ALLOWOTHER) > 0;
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {

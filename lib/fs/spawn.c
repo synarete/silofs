@@ -52,7 +52,6 @@ static int do_spawn_vnode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	silofs_vi_mark_verified(vi);
 	vi_dirtify(vi, pii);
 	*out_vi = vi;
 	return 0;
@@ -110,8 +109,8 @@ static int claim_inode(struct silofs_task *task,
 static void setup_new_inode(struct silofs_inode_info *ii,
                             const struct silofs_inew_params *inp)
 {
-	silofs_ii_stamp_mark_visible(ii);
 	silofs_ii_setup_by(ii, inp);
+	ii_dirtify(ii);
 }
 
 static void setup_uniqe_generation(struct silofs_task *task,

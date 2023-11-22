@@ -68,7 +68,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == ARRAY_SIZE(sqe->iov)) {
 		return false;
 	}
-	if (lni->stype != sqe->stype) {
+	if (lni->l_stype != sqe->stype) {
 		return false;
 	}
 	end = off_end(sqe->laddr.pos, sqe_laddr->len);
@@ -102,7 +102,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	}
 	if (sqe->cnt == 0) {
 		laddr_assign(&sqe->laddr, laddr);
-		sqe->stype = lni->stype;
+		sqe->stype = lni->l_stype;
 	} else {
 		sqe->laddr.len += laddr->len;
 	}

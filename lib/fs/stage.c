@@ -115,7 +115,7 @@ static bool vi_has_mutable_laddr(const struct silofs_vnode_info *vi)
 static void vi_bind_to(struct silofs_vnode_info *vi,
                        struct silofs_fsenv *fsenv)
 {
-	vi->v_lni.fsenv = fsenv;
+	vi->v_lni.l_fsenv = fsenv;
 }
 
 static void vi_update_llink(struct silofs_vnode_info *vi,
@@ -2353,7 +2353,7 @@ static int stgc_stage_vnode_at(struct silofs_stage_ctx *stg_ctx,
 	if (err) {
 		goto out_err;
 	}
-	err = stgc_stage_load_view(stg_ctx, &llink.laddr, vi->v_lni.view);
+	err = stgc_stage_load_view(stg_ctx, &llink.laddr, vi->v_lni.l_view);
 	if (err) {
 		goto out_err;
 	}
@@ -2380,7 +2380,7 @@ out_err:
 static int fixup_cached_vi(const struct silofs_task *task,
                            struct silofs_vnode_info *vi)
 {
-	if (!(vi->v_lni.ce.ce_flags & SILOFS_CEF_FORGOT)) {
+	if (!(vi->v_lni.l_ce.ce_flags & SILOFS_CEF_FORGOT)) {
 		return 0;
 	}
 	if (silofs_vi_refcnt(vi)) {

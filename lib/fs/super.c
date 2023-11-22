@@ -23,8 +23,6 @@
 #include <sys/mount.h>
 
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static void sb_assign(struct silofs_super_block *sb,
                       const struct silofs_super_block *sb_other)
 {
@@ -248,9 +246,9 @@ static void sb_set_main_lsegid(struct silofs_super_block *sb,
 static void sb_reset_main_lsegids(struct silofs_super_block *sb)
 {
 	struct silofs_lsegid32b *bid;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		bid = sb_mainlsegid_by2(sb, stype);
 		if (bid != NULL) {
 			silofs_lsegid32b_reset(bid);
@@ -338,9 +336,9 @@ static void sb_set_sproot_of(struct silofs_super_block *sb,
 static void sb_reset_sproots(struct silofs_super_block *sb)
 {
 	struct silofs_uaddr64b *uaddr64;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		uaddr64 = sb_sproot_by2(sb, stype);
 		if (uaddr64 != NULL) {
 			silofs_uaddr64b_htox(uaddr64, silofs_uaddr_none());
@@ -352,9 +350,9 @@ static void sb_clone_sproots(struct silofs_super_block *sb,
                              const struct silofs_super_block *sb_other)
 {
 	struct silofs_uaddr uaddr;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (stype_isvnode(stype)) {
 			sb_sproot_of(sb_other, stype, &uaddr);
 			sb_set_sproot_of(sb, stype, &uaddr);
@@ -460,9 +458,9 @@ static void sb_clone_rootivs(struct silofs_super_block *sb,
                              const struct silofs_super_block *sb_other)
 {
 	struct silofs_iv iv;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (stype_isvnode(stype)) {
 			sb_rootiv_of(sb_other, stype, &iv);
 			sb_set_rootiv_of(sb, stype, &iv);
@@ -524,10 +522,10 @@ static int verify_sproot(const struct silofs_uaddr *uaddr)
 static int verify_sb_sproots(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}

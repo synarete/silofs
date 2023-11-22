@@ -674,10 +674,10 @@ static int wac_traverse_sptree_of(struct silofs_walk_ctx *wa_ctx,
 
 static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 {
-	enum silofs_stype stype;
+	enum silofs_stype stype = SILOFS_STYPE_NONE;
 	int err;
 
-	for (stype = SILOFS_STYPE_NONE; stype < SILOFS_STYPE_LAST; ++stype) {
+	while (++stype < SILOFS_STYPE_LAST) {
 		if (!stype_isvnode(stype)) {
 			continue;
 		}

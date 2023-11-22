@@ -93,7 +93,7 @@ static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
 
-	return ((fsenv->fse_ctl_flags & SILOFS_UBF_NLOOKUP) > 0);
+	return ((fsenv->fse_ctl_flags & SILOFS_ENVF_NLOOKUP) > 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -112,22 +112,22 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v_lni.flags);
+	const int flags = (int)(ii->i_vi.v_lni.l_flags);
 
 	return (flags & SILOFS_LNF_PINNED) > 0;
 }
 
 static void ii_unpin(struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v_lni.flags);
+	const int flags = (int)(ii->i_vi.v_lni.l_flags);
 
-	ii->i_vi.v_lni.flags =
+	ii->i_vi.v_lni.l_flags =
 	        (enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
 }
 
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v_lni.flags |= SILOFS_LNF_PINNED;
+	ii->i_vi.v_lni.l_flags |= SILOFS_LNF_PINNED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2594,8 +2594,8 @@ static void do_post_clone_relax(struct silofs_task *task,
 	struct silofs_cache *cache = fsenv->fse.cache;
 
 	silofs_assert_ne(sbi, fsenv->fse_sbi);
-	silofs_assert_eq(sbi->sb_ui.u_lni.ce.ce_refcnt, 0);
-	silofs_assert_eq(sbi->sb_ui.u_lni.ce.ce_flags & SILOFS_CEF_DIRTY, 0);
+	silofs_assert_eq(sbi->sb_ui.u_lni.l_ce.ce_refcnt, 0);
+	silofs_assert_eq(sbi->sb_ui.u_lni.l_ce.ce_flags & SILOFS_CEF_DIRTY, 0);
 
 	silofs_cache_forget_ui(cache, &sbi->sb_ui);
 	silofs_cache_relax(cache, SILOFS_F_NOW);

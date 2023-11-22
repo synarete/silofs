@@ -20,6 +20,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/* regual-file sub-types */
+enum silofs_file_type {
+	SILOFS_FILE_TYPE_NONE   = 0,
+	SILOFS_FILE_TYPE1       = 1,
+	SILOFS_FILE_TYPE2       = 2,
+};
+
 /* call-back context for read-write operations */
 typedef int (*silofs_rwiter_fn)(struct silofs_rwiter_ctx *rwi_ctx,
                                 const struct silofs_iovec *iov);

@@ -176,13 +176,13 @@ silofs_vi_vaddr(const struct silofs_vnode_info *vi)
 static inline struct silofs_fsenv *
 silofs_vi_fsenv(const struct silofs_vnode_info *vi)
 {
-	return vi->v_lni.fsenv;
+	return vi->v_lni.l_fsenv;
 }
 
 static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
-	return vi->v_lni.fsenv->fse_sbi;
+	return vi->v_lni.l_fsenv->fse_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -225,13 +225,13 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 static inline struct silofs_fsenv *
 silofs_ii_fsenv(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_lni.fsenv;
+	return ii->i_vi.v_lni.l_fsenv;
 }
 
 static inline struct silofs_cache *
 silofs_ii_cache(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_lni.ce.ce_cache;
+	return ii->i_vi.v_lni.l_ce.ce_cache;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -239,7 +239,7 @@ silofs_ii_cache(const struct silofs_inode_info *ii)
 static inline struct silofs_fsenv *
 silofs_sbi_fsenv(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_lni.fsenv;
+	return sbi->sb_ui.u_lni.l_fsenv;
 }
 
 static inline const struct silofs_ulink *

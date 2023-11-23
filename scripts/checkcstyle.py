@@ -141,6 +141,7 @@ COMPILER_PRIVATE = """
     __line__
     __func__
     __inline__
+    __has_attribute
     __attribute__
     __extension__
     __typeof__
@@ -151,6 +152,7 @@ COMPILER_PRIVATE = """
     __nonnull__
     __noreturn__
     __unused__
+    __fallthrough__
     __cplusplus
     __has_feature
     __thread
@@ -724,14 +726,10 @@ class FileChecker(Checker):
         name = os.path.split(self.path)[1]
         guard = name.upper().replace(".", "_").replace("-", "_") + "_"
         ls1 = [
-            (no, ln)
-            for (no, ln) in self.xlines
-            if self._starts_with_pp(ln, "define")
+            (no, ln) for (no, ln) in self.xlines if self._starts_with_pp(ln, "define")
         ]
         ls2 = [
-            (no, ln)
-            for (no, ln) in self.xlines
-            if self._starts_with_pp(ln, "ifndef")
+            (no, ln) for (no, ln) in self.xlines if self._starts_with_pp(ln, "ifndef")
         ]
         count1 = len([ln for (no, ln) in ls1 if guard in ln])
         count2 = len([ln for (no, ln) in ls2 if guard in ln])

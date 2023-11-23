@@ -1,13 +1,16 @@
-#!/usr/bin/make -f
 #
 # Developer's convenience wrapper over autotools build system via GNU make,
 # with extra pedantic compiler flags. Forces pedantic compilation flags.
 #
+# See also:
+#   https://best.openssf.org/ \
+#     Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++
+#
 # Usage examples:
 #
-#  $ ./devel.mk D=1 O=2 CC=clang
+#  $ make -f devel.mk D=1 O=2 CC=clang
 #
-#  $ ./devel.mk V=1 clean
+#  $ make -f devel.mk V=1 clean
 #
 # If you want to build in separate 'build' directory, try:
 #
@@ -107,10 +110,13 @@ CFLAGS += -Wvla -Waddress -Woverlength-strings -Wconversion -Wsign-conversion
 CFLAGS += -Wunreachable-code -Wwrite-strings -Wlarger-than=4096
 CFLAGS += -Wframe-larger-than=4096 -Wmissing-field-initializers
 CFLAGS += -Wstrict-aliasing=2 -Warray-bounds -Winline -Wcast-qual
-CFLAGS += -Wmissing-noreturn # -Wsuggest-attribute=const -Wpadded
-CFLAGS += -fPIC -fwrapv -fstrict-aliasing -fsigned-char
-CFLAGS += -fstack-protector -fstack-protector-strong # -fstack-check
-CFLAGS += -fasynchronous-unwind-tables
+CFLAGS += -Wmissing-noreturn -Wimplicit-fallthrough
+CFLAGS += -fwrapv -fstrict-aliasing -fsigned-char
+CFLAGS += -fstack-protector-all -fstack-protector-strong
+CFLAGS += -fstack-clash-protection
+CFLAGS += -fasynchronous-unwind-tables -fcf-protection=full
+CFLAGS += -fPIE -fPIC
+# CFLAGS += -Wsuggest-attribute=const -Wpadded
 
 # C-Dialect compilation flags
 CFLAGS2 += -Wbad-function-cast -Wmissing-prototypes -Waggregate-return
@@ -130,11 +136,6 @@ endif
 # Optimization flags
 ifeq ($(O), 0)
 CFLAGS += -O0
-ifeq ($(CC), gcc)
-CFLAGS += -Wunsafe-loop-optimizations -funsafe-loop-optimizations
-CFLAGS += -fasynchronous-unwind-tables -fstack-clash-protection
-CFLAGS += -fshort-enums
-endif
 else ifeq ($(O), 1)
 CFLAGS += -O1 -D_FORTIFY_SOURCE=2
 else ifeq ($(O), 2)
@@ -149,11 +150,18 @@ endif
 ifeq ($(CC), gcc)
 CFLAGS += -Werror -Wstack-usage=4096 -Wlogical-op
 CFLAGS += -Wmultistatement-macros -Wunused-const-variable=2
-CFLAGS += -Wswitch-unreachable -Wmaybe-uninitialized
+CFLAGS += -Wswitch-unreachable -Wmaybe-uninitialized -Wtrampolines
+CFLAGS += -Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
+CFLAGS += -pie
 # CFLAGS += -Wstringop-truncation -Wstringop-overread -Wstringop-overflow
 # CFLAGS += -Wstring-compare
 CFLAGS2 += -Wjump-misses-init -Wunsuffixed-float-constants
 CFLAGS2 += -Wold-style-declaration
+ifeq ($(O), 0)
+CFLAGS += -Wunsafe-loop-optimizations -funsafe-loop-optimizations
+CFLAGS += -fasynchronous-unwind-tables -fstack-clash-protection
+CFLAGS += -fshort-enums
+endif
 ifneq ($(D), 0)
 CFLAGS += -fsanitize-address-use-after-scope
 CFLAGS += -fsanitize=pointer-overflow

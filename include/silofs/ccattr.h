@@ -30,4 +30,10 @@
 #define silofs_packed_aligned32 __attribute__ ((__packed__, __aligned__(32)))
 #define silofs_packed_aligned64 __attribute__ ((__packed__, __aligned__(64)))
 
+#if __has_attribute(__fallthrough__)
+# define silofs_fallthrough     __attribute__((__fallthrough__))
+#else
+# define silofs_fallthrough     do {} while (0)  /* fallthrough */
+#endif
+
 #endif /* SILOFS_CCATTR_H_ */

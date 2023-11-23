@@ -1587,6 +1587,7 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 	update_cap_want(coni, FUSE_EXPORT_SUPPORT);
 	update_cap_want(coni, FUSE_SPLICE_WRITE);
 	update_cap_want(coni, FUSE_SPLICE_READ);
+	update_cap_want(coni, FUSE_PARALLEL_DIROPS);
 	update_cap_want(coni, FUSE_HANDLE_KILLPRIV);
 	update_cap_want(coni, FUSE_MAX_PAGES);
 	update_cap_want(coni, FUSE_CACHE_SYMLINKS);

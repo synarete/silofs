@@ -212,12 +212,29 @@ static void view_init_by(struct silofs_view *view, enum silofs_stype stype)
 	}
 }
 
+static int view_alloc_flags_of(enum silofs_stype stype, bool alloc)
+{
+	int flags = 0;
+
+	if (alloc) {
+		if (stype_issuper(stype)) {
+			flags |= SILOFS_ALLOCF_BZERO;
+		}
+	} else {
+		if (stype_isdatabk(stype)) {
+			flags |= SILOFS_ALLOCF_PUNCH;
+		}
+	}
+	return flags;
+}
+
 static struct silofs_view *
 view_new_by(struct silofs_alloc *alloc, enum silofs_stype stype)
 {
 	struct silofs_view *view;
 
-	view = silofs_allocate(alloc, stype_size(stype), 0);
+	view = silofs_allocate(alloc, stype_size(stype),
+	                       view_alloc_flags_of(stype, true));
 	if (view != NULL) {
 		view_init_by(view, stype);
 	}
@@ -239,13 +256,11 @@ view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 static void view_del_by(struct silofs_view *view,
                         enum silofs_stype stype, struct silofs_alloc *alloc)
 {
-	const size_t sz = stype_size(stype);
-	const int flags =
-	        (sz >= (SILOFS_LBK_SIZE / 2)) ? SILOFS_ALLOCF_PUNCH : 0;
+	const size_t size = stype_size(stype);
 
-	if (view != NULL) {
-		silofs_memzero(view, min(sizeof(view->u.hdr), sz));
-		silofs_deallocate(alloc, view, sz, flags);
+	if (likely(view != NULL)) {
+		silofs_deallocate(alloc, view, size,
+		                  view_alloc_flags_of(stype, false));
 	}
 }
 
@@ -792,19 +807,19 @@ static void ii_init(struct silofs_inode_info *ii,
 	vi_init(&ii->i_vi, vaddr, view, ii_delete_by);
 	silofs_dirtyq_init(&ii->i_dq_vis);
 	ii->inode = &view->u.in;
-	ii->i_pruneq_next = NULL;
+	ii->i_looseq_next = NULL;
 	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = 0;
 	ii->i_nlookup = 0;
-	ii->i_in_pruneq = false;
+	ii->i_in_looseq = false;
 }
 
 static void ii_fini(struct silofs_inode_info *ii)
 {
 	silofs_assert_eq(ii->i_dq_vis.dq.sz, 0);
 	silofs_assert_eq(ii->i_dq_vis.dq_accum, 0);
-	silofs_assert(!ii->i_in_pruneq);
-	silofs_assert_null(ii->i_pruneq_next);
+	silofs_assert(!ii->i_in_looseq);
+	silofs_assert_null(ii->i_looseq_next);
 
 	vi_fini(&ii->i_vi);
 	silofs_dirtyq_fini(&ii->i_dq_vis);

@@ -96,12 +96,12 @@ struct silofs_inode_info {
 	struct silofs_vnode_info        i_vi;
 	struct silofs_dirtyq            i_dq_vis;
 	struct silofs_inode            *inode;
-	struct silofs_inode_info       *i_pruneq_next;
+	struct silofs_inode_info       *i_looseq_next;
 	struct timespec                 i_atime_lazy;
 	ino_t  i_ino;
 	long   i_nopen;
 	long   i_nlookup;
-	bool   i_in_pruneq;
+	bool   i_in_looseq;
 };
 
 /* xattr */

@@ -1045,7 +1045,7 @@ static bool cache_evict_or_relru_ui(struct silofs_cache *cache,
 	bool evicted;
 
 	if (ui_is_evictable(ui)) {
-		cache_evict_ui(cache, ui, SILOFS_ALLOCF_PUNCH);
+		cache_evict_ui(cache, ui, 0);
 		evicted = true;
 	} else {
 		cache_promote_ui(cache, ui, true);
@@ -1355,7 +1355,7 @@ static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
 	bool evicted;
 
 	if (vi_is_evictable(vi)) {
-		cache_evict_vi(cache, vi, SILOFS_ALLOCF_PUNCH);
+		cache_evict_vi(cache, vi, 0);
 		evicted = true;
 	} else {
 		cache_promote_vi(cache, vi, true);
@@ -1495,13 +1495,15 @@ silofs_cache_create_vi(struct silofs_cache *cache,
 static size_t
 cache_shrink_some(struct silofs_cache *cache, int shift, bool force)
 {
-	const size_t extra = clamp(1U << shift, 1, 64);
 	size_t actual = 0;
+	size_t extra;
 	size_t count;
 
+	extra = clamp(1U << shift, 1, 64);
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
 	actual += cache_shrink_or_relru_vis(cache, count, force);
 
+	extra = (shift > 1) ? clamp(1U << (shift - 1), 1, 64) : 0;
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
 	actual += cache_shrink_or_relru_uis(cache, count, force);
 
@@ -1869,7 +1871,7 @@ static void ii_do_undirtify(struct silofs_inode_info *ii)
 
 void silofs_ii_dirtify(struct silofs_inode_info *ii)
 {
-	if (likely(ii != NULL) && !ii_is_loose(ii)) {
+	if (likely(ii != NULL) && !ii_isloose(ii)) {
 		ii_do_dirtify(ii);
 	}
 }

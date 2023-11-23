@@ -134,6 +134,7 @@ int silofs_do_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb);
 int silofs_do_unrefs(struct silofs_task *task);
 
 
-int silofs_relax_pruneq(struct silofs_task *task);
+int silofs_forget_loose_ii(struct silofs_task *task,
+                           struct silofs_inode_info *ii);
 
 #endif /* SILOFS_NAMEI_H_ */

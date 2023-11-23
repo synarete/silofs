@@ -29,11 +29,13 @@ struct silofs_oper {
 
 /* execution-context task per file-system operation */
 struct silofs_task {
-	struct silofs_fsenv    *t_fsenv;
-	struct silofs_submitq  *t_submitq;
-	struct silofs_oper      t_oper;
-	uint64_t                t_apex_id;
-	volatile int            t_interrupt;
+	struct silofs_fsenv            *t_fsenv;
+	struct silofs_submitq          *t_submitq;
+	struct silofs_inode_info       *t_looseq;
+	struct silofs_oper              t_oper;
+	uint64_t                        t_apex_id;
+	volatile short                  t_interrupt;
+	volatile short                  t_fs_locked;
 };
 
 /* submit reference into view within underlying block */
@@ -98,7 +100,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt);
 void silofs_task_update_by(struct silofs_task *task,
                            struct silofs_submitq_ent *sqe);
 
-int silofs_task_submit(const struct silofs_task *task, bool all);
+int silofs_task_submit(struct silofs_task *task, bool all);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
@@ -109,6 +111,14 @@ struct silofs_repo *silofs_task_repo(const struct silofs_task *task);
 const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task);
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
+
+
+void silofs_task_enq_loose(struct silofs_task *task,
+                           struct silofs_inode_info *ii);
+
+void silofs_task_lock_fs(struct silofs_task *task);
+
+void silofs_task_unlock_fs(struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

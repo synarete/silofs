@@ -180,7 +180,6 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 	fsenv->fse_sbi = NULL;
 	fsenv->fse_ctl_flags = 0;
 	fsenv->fse_ms_flags = 0;
-	fsenv->fse_pruneq = NULL;
 
 	fsenv->fse_op_stat.op_iopen_max = 0;
 	fsenv->fse_op_stat.op_iopen = 0;
@@ -191,8 +190,6 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 
 static void fsenv_fini_commons(struct silofs_fsenv *fsenv)
 {
-	silofs_assert_null(fsenv->fse_pruneq);
-
 	memset(&fsenv->fse, 0, sizeof(fsenv->fse));
 	lsegid_reset(&fsenv->fse_sb_lsegid);
 	fsenv->fse_iconv = (iconv_t)(-1);
@@ -270,6 +267,16 @@ void silofs_fsenv_fini(struct silofs_fsenv *fsenv)
 	fsenv_fini_crypto(fsenv);
 	fsenv_fini_fs_lock(fsenv);
 	fsenv_fini_commons(fsenv);
+}
+
+void silofs_fsenv_lock(struct silofs_fsenv *fsenv)
+{
+	silofs_mutex_lock(&fsenv->fse_lock);
+}
+
+void silofs_fsenv_unlock(struct silofs_fsenv *fsenv)
+{
+	silofs_mutex_unlock(&fsenv->fse_lock);
 }
 
 time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv)

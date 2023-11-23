@@ -1149,42 +1149,15 @@ static int try_prune_loose_data(struct silofs_task *task,
 	 * ref-count due to in-flight flush. In such case, drop its data now
 	 * to release resources from within current call.
 	 */
-	return (ii_isreg(ii) && ii_is_loose(ii)) ?
+	return (ii_isreg(ii) && ii_isloose(ii)) ?
 	       silofs_drop_reg(task, ii) : 0;
 }
 
-static void enqueue_pruneq(const struct silofs_task *task,
-                           struct silofs_inode_info *ii)
-{
-	struct silofs_inode_info **ppruneq = &task->t_fsenv->fse_pruneq;
-
-	silofs_assert_null(ii->i_pruneq_next);
-
-	ii_incref(ii);
-	ii->i_pruneq_next = *ppruneq;
-	ii->i_in_pruneq = true;
-	*ppruneq = ii;
-}
-
-static struct silofs_inode_info *dequeue_pruneq(const struct silofs_task *task)
-{
-	struct silofs_inode_info **ppruneq = &task->t_fsenv->fse_pruneq;
-	struct silofs_inode_info *ii = *ppruneq;
-
-	if (ii != NULL) {
-		*ppruneq = ii->i_pruneq_next;
-		ii->i_pruneq_next = NULL;
-		ii->i_in_pruneq = false;
-		ii_decref(ii);
-	}
-	return ii;
-}
-
-static void enqueue_if_loose(const struct silofs_task *task,
+static void enqueue_if_loose(struct silofs_task *task,
                              struct silofs_inode_info *ii)
 {
-	if (!ii->i_in_pruneq && ii_is_loose(ii)) {
-		enqueue_pruneq(task, ii);
+	if (ii_isloose(ii) && !ii_ispinned(ii)) {
+		silofs_task_enq_loose(task, ii);
 	}
 }
 
@@ -1928,13 +1901,8 @@ int silofs_do_flush(struct silofs_task *task,
                     struct silofs_inode_info *ii, bool now)
 {
 	const int flags = now ? SILOFS_F_NOW : 0;
-	int err;
 
-	err = flush_dirty_of(task, ii, flags);
-	if (!err && now) {
-		err = silofs_relax_pruneq(task);
-	}
-	return err;
+	return flush_dirty_of(task, ii, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2821,22 +2789,13 @@ int silofs_do_forget(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_relax_pruneq(struct silofs_task *task)
+int silofs_forget_loose_ii(struct silofs_task *task,
+                           struct silofs_inode_info *ii)
 {
-	struct silofs_inode_info *ii = NULL;
-	int ret = 0;
+	int ret = -SILOFS_EWOULDBLOCK;
 
-	while ((ii = dequeue_pruneq(task)) != NULL) {
-		if (!ii_isdropable(ii)) {
-			enqueue_pruneq(task, ii);
-			break;
-		}
+	if (ii_isdropable(ii)) {
 		ret = drop_unlinked(task, ii);
-		if (ret) {
-			enqueue_pruneq(task, ii);
-			break;
-		}
 	}
 	return ret;
 }
-

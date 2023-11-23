@@ -400,7 +400,7 @@ void silofs_task_update_by(struct silofs_task *task,
 	}
 }
 
-int silofs_task_submit(const struct silofs_task *task, bool all)
+static int task_apply(const struct silofs_task *task, bool all)
 {
 	int ret = 0;
 
@@ -445,15 +445,107 @@ int silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
 	cred_init(&task->t_oper.op_creds.host_cred);
 	task->t_fsenv = fsenv;
 	task->t_submitq = fsenv->fse.submitq;
+	task->t_looseq = NULL;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
+	task->t_fs_locked = 0;
 	return 0;
 }
 
 void silofs_task_fini(struct silofs_task *task)
 {
+	silofs_assert_null(task->t_looseq);
+	silofs_assert_eq(task->t_fs_locked, 0);
+
 	task->t_fsenv = NULL;
 	task->t_submitq = NULL;
+}
+
+
+void silofs_task_enq_loose(struct silofs_task *task,
+                           struct silofs_inode_info *ii)
+{
+	silofs_assert_null(ii->i_looseq_next);
+	silofs_assert_eq(ii->i_vi.v_lni.l_flags & SILOFS_LNF_PINNED, 0);
+
+	if (!ii->i_in_looseq) {
+		ii->i_looseq_next = task->t_looseq;
+		ii->i_in_looseq = true;
+		task->t_looseq = ii;
+		ii_incref(ii);
+	}
+}
+
+static struct silofs_inode_info *
+task_deq_loose(struct silofs_task *task)
+{
+	struct silofs_inode_info *ii = NULL;
+
+	if (task->t_looseq != NULL) {
+		ii = task->t_looseq;
+		task->t_looseq = ii->i_looseq_next;
+		ii->i_looseq_next = NULL;
+		ii->i_in_looseq = false;
+		ii_decref(ii);
+	}
+	return ii;
+}
+
+static void task_forget_looseq(struct silofs_task *task)
+{
+	struct silofs_inode_info *ii;
+	int err;
+
+	ii = task_deq_loose(task);
+	while (ii != NULL) {
+		err = silofs_forget_loose_ii(task, ii);
+		if (err) {
+			/* TODO: maybe have retry loop ? */
+			silofs_panic("failed to forget loose inode: "
+			             "ino=%ld flags=%x err=%d",
+			             ii->i_ino, ii->i_vi.v_lni.l_flags, err);
+		}
+		ii = task_deq_loose(task);
+	}
+}
+
+static void task_purge(struct silofs_task *task)
+{
+	if (task->t_looseq != NULL) {
+		silofs_task_lock_fs(task);
+		task_forget_looseq(task);
+		silofs_task_unlock_fs(task);
+	}
+}
+
+void silofs_task_lock_fs(struct silofs_task *task)
+{
+	if (!task->t_fs_locked) {
+		silofs_fsenv_lock(task->t_fsenv);
+		task->t_fs_locked = 1;
+	}
+}
+
+void silofs_task_unlock_fs(struct silofs_task *task)
+{
+	if (task->t_fs_locked) {
+		silofs_fsenv_unlock(task->t_fsenv);
+		task->t_fs_locked = 0;
+	}
+}
+
+static bool task_has_looseq(const struct silofs_task *task)
+{
+	return (task->t_looseq != NULL);
+}
+
+int silofs_task_submit(struct silofs_task *task, bool all)
+{
+	int ret;
+
+	ret = task_apply(task, all || task_has_looseq(task));
+	task_purge(task);
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

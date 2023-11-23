@@ -41,7 +41,6 @@ struct silofs_fsenv {
 	struct silofs_sb_info          *fse_sbi;
 	struct silofs_ulink             fse_sb_ulink;
 	struct silofs_cred              fse_owner;
-	struct silofs_inode_info       *fse_pruneq;
 	unsigned long                   fse_ctl_flags;
 	unsigned long                   fse_ms_flags;
 	iconv_t                         fse_iconv;
@@ -56,7 +55,9 @@ int silofs_fsenv_init(struct silofs_fsenv *fsenv,
 
 void silofs_fsenv_fini(struct silofs_fsenv *fsenv);
 
-time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv);
+void silofs_fsenv_lock(struct silofs_fsenv *fsenv);
+
+void silofs_fsenv_unlock(struct silofs_fsenv *fsenv);
 
 void silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
@@ -72,6 +73,7 @@ int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv);
 int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
                         struct silofs_bootrecs *out_brecs);
 
+time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

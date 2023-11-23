@@ -572,12 +572,12 @@ static void fs_ctx_fini(struct silofs_fs_ctx *fs_ctx)
 
 static void fs_ctx_lock(struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_mutex_lock(&fs_ctx->fsenv->fse_lock);
+	silofs_fsenv_lock(fs_ctx->fsenv);
 }
 
 static void fs_ctx_unlock(struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_mutex_unlock(&fs_ctx->fsenv->fse_lock);
+	silofs_fsenv_unlock(fs_ctx->fsenv);
 }
 
 static int check_fs_args(const struct silofs_fs_args *fs_args)

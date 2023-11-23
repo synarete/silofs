@@ -912,9 +912,5 @@ int silofs_flush_dirty_now(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_relax_pruneq(task);
-	if (err) {
-		return err;
-	}
 	return 0;
 }

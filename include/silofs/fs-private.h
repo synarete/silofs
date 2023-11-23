@@ -73,7 +73,7 @@
 
 #define vi_stype(vi)                    silofs_vi_stype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)
-#define vi_fsenv(vi)                     silofs_vi_fsenv(vi)
+#define vi_fsenv(vi)                    silofs_vi_fsenv(vi)
 #define vi_sbi(vi)                      silofs_vi_sbi(vi)
 #define vi_refcnt(vi)                   silofs_vi_refcnt(vi)
 #define vi_incref(vi)                   silofs_vi_incref(vi)
@@ -93,7 +93,7 @@
 #define ii_decref(ii)                   silofs_ii_decref(ii)
 #define ii_dirtify(ii)                  silofs_ii_dirtify(ii)
 #define ii_set_loose(ii)                silofs_ii_set_loose(ii)
-#define ii_is_loose(ii)                 silofs_ii_is_loose(ii)
+#define ii_isloose(ii)                  silofs_ii_is_loose(ii)
 #define ii_xino(ii)                     silofs_ii_xino_of(ii)
 #define ii_parent(ii)                   silofs_ii_parent(ii)
 #define ii_uid(ii)                      silofs_ii_uid(ii)

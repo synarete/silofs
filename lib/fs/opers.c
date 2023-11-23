@@ -36,17 +36,17 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void op_lock_fs(const struct silofs_task *task)
+static void op_lock_fs(struct silofs_task *task)
 {
-	silofs_mutex_lock(&task->t_fsenv->fse_lock);
+	silofs_task_lock_fs(task);
 }
 
-static void op_unlock_fs(const struct silofs_task *task)
+static void op_unlock_fs(struct silofs_task *task)
 {
-	silofs_mutex_unlock(&task->t_fsenv->fse_lock);
+	silofs_task_unlock_fs(task);
 }
 
-static int op_start(const struct silofs_task *task, ino_t ino)
+static int op_start(struct silofs_task *task, ino_t ino)
 {
 	struct silofs_fsenv *fsenv = task->t_fsenv;
 
@@ -57,7 +57,7 @@ static int op_start(const struct silofs_task *task, ino_t ino)
 	return 0;
 }
 
-static int op_xstart(const struct silofs_task *task, ino_t ino)
+static int op_xstart(struct silofs_task *task, ino_t ino)
 {
 	int ret;
 
@@ -70,17 +70,7 @@ static int op_xstart(const struct silofs_task *task, ino_t ino)
 
 static int op_try_flush(struct silofs_task *task, struct silofs_inode_info *ii)
 {
-	int err;
-
-	err = silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
-	if (err) {
-		return err;
-	}
-	err = silofs_relax_pruneq(task);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
 }
 
 static int op_try_flush2(struct silofs_task *task,
@@ -113,7 +103,7 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	}
 }
 
-static int op_finish(const struct silofs_task *task, ino_t ino, int err)
+static int op_finish(struct silofs_task *task, ino_t ino, int err)
 {
 	int flags = SILOFS_F_OPFINISH;
 

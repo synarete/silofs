@@ -231,7 +231,7 @@ static int memfd_setup(struct silofs_memfd *memfd,
 	int fd = -1;
 	int err;
 
-	err = silofs_sys_memfd_create(name, 0, &fd);
+	err = silofs_sys_memfd_create(name, MFD_CLOEXEC, &fd);
 	if (err) {
 		return err;
 	}

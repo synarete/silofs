@@ -15,10 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/consts.h>
-#include <silofs/syscall.h>
-#include <silofs/macros.h>
 #include <silofs/errors.h>
+#include <silofs/syscall.h>
 #include <silofs/infra.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -32,38 +30,15 @@
 #include <errno.h>
 #include <limits.h>
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-#define STATICASSERT_EQ(a_, b_) \
-	SILOFS_STATICASSERT_EQ(a_, b_)
-
-#define STATICASSERT_SIZEOF(t_, s_) \
-	SILOFS_STATICASSERT_EQ(sizeof(t_), s_)
-
-#define STATICASSERT_SIZEOF_GE(t_, s_) \
-	SILOFS_STATICASSERT_GE(sizeof(t_), s_)
-
-#define STATICASSERT_SIZEOF_LE(t_, s_) \
-	SILOFS_STATICASSERT_LE(sizeof(t_), s_)
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x_) SILOFS_ARRAY_SIZE(x_)
-#endif
-
-#ifndef likely
-#define likely(x_) silofs_likely(x_)
-#endif
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define QALLOC_MALLOC_SIZE_MAX  (64 * SILOFS_UMEGA)
 #define QALLOC_FREE_NPAGES_MANY (16)
 
-#define QALLOC_PAGE_SHIFT       (12)
+#define QALLOC_PAGE_SHIFT       (16)
 #define QALLOC_PAGE_SIZE        (1U << QALLOC_PAGE_SHIFT)
 #define QALLOC_PAGE_NSEGS       (QALLOC_PAGE_SIZE / QALLOC_SLAB_SEG_SIZE)
 
-#define QALLOC_SLAB_SHIFT_MIN   (5)
+#define QALLOC_SLAB_SHIFT_MIN   (4)
 #define QALLOC_SLAB_SHIFT_MAX   (QALLOC_PAGE_SHIFT - 1)
 #define QALLOC_SLAB_SIZE_MIN    (1U << QALLOC_SLAB_SHIFT_MIN)
 #define QALLOC_SLAB_SIZE_MAX    (1U << QALLOC_SLAB_SHIFT_MAX)
@@ -77,41 +52,45 @@
 
 struct silofs_slab_seg {
 	struct silofs_list_head link;
-	uint8_t pad[16];
-} silofs_aligned32;
+} silofs_aligned16;
 
 
-union silofs_page {
+union silofs_qpage {
 	struct silofs_slab_seg seg[QALLOC_PAGE_NSEGS];
 	uint8_t data[QALLOC_PAGE_SIZE];
 } silofs_packed_aligned64;
 
 
-struct silofs_page_info {
-	struct silofs_list_head  lh;
-	struct silofs_page_info *prev;
-	union silofs_page       *pg;
-	uint64_t        pg_index;
-	uint64_t        pg_count; /* num pages free/used */
-	uint16_t        pg_free;
-	uint16_t        pg_reserved;
-	int32_t         slab_index;
-	int32_t         slab_nused;
-	int32_t         slab_nelems;
+struct silofs_qpage_info {
+	union silofs_qpage       *qpg;
+	struct silofs_qpage_info *qpg_prev;
+	struct silofs_list_head   qpg_lh;
+	uint64_t        qpg_index;
+	uint64_t        qpg_count; /* num pages free/used */
+	uint8_t         qpg_free;  /* free/alloc state (bool) */
+	uint8_t         qpg_reserved[3];
+	int32_t         qpg_slab_index;
+	int32_t         qpg_slab_nused;
+	int32_t         qpg_slab_nelems;
 } __attribute__((__aligned__(SILOFS_CACHELINE_SIZE_DFL)));
 
+
+/* global qpool's unique id (per process) */
+static long g_qpool_id;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void qalloc_staticassert_defs(const struct silofs_qalloc *qal)
 {
-	STATICASSERT_SIZEOF(struct silofs_slab_seg, QALLOC_SLAB_SEG_SIZE);
-	STATICASSERT_SIZEOF(union silofs_page, QALLOC_PAGE_SIZE);
-	STATICASSERT_SIZEOF(struct silofs_page_info, 64);
-	STATICASSERT_SIZEOF_LE(struct silofs_slab_seg,
-	                       SILOFS_CACHELINE_SIZE_MAX);
-	STATICASSERT_SIZEOF_GE(struct silofs_page_info,
-	                       SILOFS_CACHELINE_SIZE_DFL);
+	STATICASSERT_GE(QALLOC_PAGE_SIZE, SILOFS_PAGE_SIZE_MIN);
+	STATICASSERT_LE(QALLOC_PAGE_SIZE, SILOFS_PAGE_SIZE_MAX);
+	STATICASSERT_EQ(sizeof(struct silofs_slab_seg), QALLOC_SLAB_SEG_SIZE);
+	STATICASSERT_EQ(sizeof(union silofs_qpage), QALLOC_PAGE_SIZE);
+	STATICASSERT_EQ(sizeof(struct silofs_qpage_info), 64);
+	STATICASSERT_LE(sizeof(struct silofs_slab_seg),
+	                SILOFS_CACHELINE_SIZE_MAX);
+	STATICASSERT_GE(sizeof(struct silofs_qpage_info),
+	                SILOFS_CACHELINE_SIZE_DFL);
 	STATICASSERT_EQ(ARRAY_SIZE(qal->slabs), QALLOC_NSLABS_MAX);
 }
 
@@ -280,60 +259,60 @@ static int memfd_close(struct silofs_memfd *memfd)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_page_info *
-pgi_from_lh(const struct silofs_list_head *lh)
+static struct silofs_qpage_info *
+qpgi_from_lh(const struct silofs_list_head *lh)
 {
-	const struct silofs_page_info *pgi =
-	        silofs_container_of2(lh, struct silofs_page_info, lh);
+	const struct silofs_qpage_info *qpgi =
+	        silofs_container_of2(lh, struct silofs_qpage_info, qpg_lh);
 
-	return silofs_unconst(pgi);
+	return silofs_unconst(qpgi);
 }
 
-static void pgi_update(struct silofs_page_info *pgi,
-                       struct silofs_page_info *prev, size_t count)
+static void qpgi_update(struct silofs_qpage_info *qpgi,
+                        struct silofs_qpage_info *prev, size_t count)
 {
-	pgi->prev = prev;
-	pgi->pg_count = count;
-	pgi->pg_free = 1;
+	qpgi->qpg_prev = prev;
+	qpgi->qpg_count = count;
+	qpgi->qpg_free = 1;
 }
 
-static void pgi_mute(struct silofs_page_info *pgi)
+static void qpgi_mute(struct silofs_qpage_info *qpgi)
 {
-	pgi_update(pgi, NULL, 0);
+	qpgi_update(qpgi, NULL, 0);
 }
 
-static void pgi_init(struct silofs_page_info *pgi,
-                     union silofs_page *pg, size_t pg_index)
+static void qpgi_init(struct silofs_qpage_info *qpgi,
+                      union silofs_qpage *qpg, size_t pg_index)
 {
-	silofs_list_head_init(&pgi->lh);
-	pgi_mute(pgi);
-	pgi->pg = pg;
-	pgi->pg_index = pg_index;
-	pgi->slab_nused = 0;
-	pgi->slab_index = QALLOC_SLAB_INDEX_NONE;
+	silofs_list_head_init(&qpgi->qpg_lh);
+	qpgi_mute(qpgi);
+	qpgi->qpg = qpg;
+	qpgi->qpg_index = pg_index;
+	qpgi->qpg_slab_nused = 0;
+	qpgi->qpg_slab_index = QALLOC_SLAB_INDEX_NONE;
 }
 
-static void pgi_push_head(struct silofs_page_info *pgi,
-                          struct silofs_list_head *ls)
+static void qpgi_push_head(struct silofs_qpage_info *qpgi,
+                           struct silofs_list_head *ls)
 {
-	silofs_list_push_front(ls, &pgi->lh);
+	silofs_list_push_front(ls, &qpgi->qpg_lh);
 }
 
-static void pgi_push_tail(struct silofs_page_info *pgi,
-                          struct silofs_list_head *ls)
+static void qpgi_push_tail(struct silofs_qpage_info *qpgi,
+                           struct silofs_list_head *ls)
 {
-	silofs_list_push_back(ls, &pgi->lh);
+	silofs_list_push_back(ls, &qpgi->qpg_lh);
 }
 
-static void pgi_unlink(struct silofs_page_info *pgi)
+static void qpgi_unlink(struct silofs_qpage_info *qpgi)
 {
-	silofs_list_head_remove(&pgi->lh);
+	silofs_list_head_remove(&qpgi->qpg_lh);
 }
 
-static void pgi_unlink_mute(struct silofs_page_info *pgi)
+static void qpgi_unlink_mute(struct silofs_qpage_info *qpgi)
 {
-	pgi_unlink(pgi);
-	pgi_mute(pgi);
+	qpgi_unlink(qpgi);
+	qpgi_mute(qpgi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -342,347 +321,359 @@ static int
 calc_mem_sizes(size_t npgs, size_t *out_data_msz, size_t *out_meta_msz)
 {
 	const size_t npgs_max = UINT_MAX; /* TODO: proper upper limit */
-	int ret = -EINVAL;
+	int ret = -SILOFS_EINVAL;
 
 	if ((npgs > 0) && (npgs <= npgs_max)) {
-		*out_data_msz = npgs * sizeof(union silofs_page);
-		*out_meta_msz = npgs * sizeof(struct silofs_page_info);
+		*out_data_msz = npgs * sizeof(union silofs_qpage);
+		*out_meta_msz = npgs * sizeof(struct silofs_qpage_info);
 		ret = 0;
 	}
 	return ret;
 }
 
-static void *pgal_page_at(const struct silofs_pgal *pgal, size_t idx)
+static void *qpool_page_at(const struct silofs_qpool *qpool, size_t idx)
 {
-	union silofs_page *pg_arr = pgal->data.mem;
+	union silofs_qpage *pg_arr = qpool->data.mem;
 
 	return pg_arr + idx;
 }
 
-static struct silofs_page_info *
-pgal_page_info_at(const struct silofs_pgal *pgal, size_t idx)
+static struct silofs_qpage_info *
+qpool_page_info_at(const struct silofs_qpool *qpool, size_t idx)
 {
-	struct silofs_page_info *pgi_arr = pgal->meta.mem;
+	struct silofs_qpage_info *qpgi_arr = qpool->meta.mem;
 
-	silofs_assert_lt(idx, pgal->npgs_max);
+	silofs_assert_lt(idx, qpool->npgs_max);
 
-	return pgi_arr + idx;
+	return qpgi_arr + idx;
 }
 
-static struct silofs_page_info *
-pgal_next(const struct silofs_pgal *pgal,
-          const struct silofs_page_info *pgi, size_t npgs)
+static struct silofs_qpage_info *
+qpool_next(const struct silofs_qpool *qpool,
+           const struct silofs_qpage_info *qpgi, size_t npgs)
 {
-	const size_t idx_next = pgi->pg_index + npgs;
-	struct silofs_page_info *pgi_next = NULL;
+	const size_t idx_next = qpgi->qpg_index + npgs;
+	struct silofs_qpage_info *qpgi_next = NULL;
 
-	if (idx_next < pgal->npgs_max) {
-		pgi_next = pgal_page_info_at(pgal, idx_next);
+	if (idx_next < qpool->npgs_max) {
+		qpgi_next = qpool_page_info_at(qpool, idx_next);
 	}
-	return pgi_next;
+	return qpgi_next;
 }
 
-static int pgal_init_memfds(struct silofs_pgal *pgal, size_t npgs)
+static void qpool_make_memfd_name(const struct silofs_qpool *qpool,
+                                  char *nbuf, size_t nbsz, bool data)
+{
+	snprintf(nbuf, nbsz, "silofs-%s-%d-%04x",
+	         data ? "data" : "meta", getpid(), qpool->unique_id);
+}
+
+static int qpool_init_memfds(struct silofs_qpool *qpool, size_t npgs)
 {
 	char name[256] = "";
-	const pid_t pid = getpid();
 	size_t data_msz;
 	size_t meta_msz;
-	uint32_t id;
 	int err;
 
-	silofs_getentropy(&id, sizeof(id));
 	err = calc_mem_sizes(npgs, &data_msz, &meta_msz);
 	if (err) {
 		return err;
 	}
-	snprintf(name, sizeof(name) - 1, "silofs-data-%d-%08x", pid, id);
-	err = memfd_setup(&pgal->data, name, data_msz);
+	qpool_make_memfd_name(qpool, name, sizeof(name) - 1, true);
+	err = memfd_setup(&qpool->data, name, data_msz);
 	if (err) {
 		return err;
 	}
-	snprintf(name, sizeof(name) - 1, "silofs-meta-%d-%08x", pid, id);
-	err = memfd_setup(&pgal->meta, name, meta_msz);
+	qpool_make_memfd_name(qpool, name, sizeof(name) - 1, false);
+	err = memfd_setup(&qpool->meta, name, meta_msz);
 	if (err) {
-		memfd_close(&pgal->data);
+		memfd_close(&qpool->data);
 		return err;
 	}
-	pgal->npgs_max = npgs;
+	qpool->npgs_max = npgs;
 	return 0;
 }
 
-static void pgal_update(const struct silofs_pgal *pgal,
-                        struct silofs_page_info *pgi, size_t npgs)
+static void qpool_update(const struct silofs_qpool *qpool,
+                         struct silofs_qpage_info *qpgi, size_t npgs)
 {
-	struct silofs_page_info *pgi_next;
+	struct silofs_qpage_info *qpgi_next;
 
-	pgi_next = pgal_next(pgal, pgi, npgs);
-	if (pgi_next != NULL) {
-		pgi_next->prev = pgi;
+	qpgi_next = qpool_next(qpool, qpgi, npgs);
+	if (qpgi_next != NULL) {
+		qpgi_next->qpg_prev = qpgi;
 	}
 }
 
-static void pgal_add_free(struct silofs_pgal *pgal,
-                          struct silofs_page_info *pgi,
-                          struct silofs_page_info *prev, size_t npgs)
+static void qpool_add_free(struct silofs_qpool *qpool,
+                           struct silofs_qpage_info *qpgi,
+                           struct silofs_qpage_info *prev, size_t npgs)
 {
-	struct silofs_list_head *free_list = &pgal->free_pgs;
+	struct silofs_list_head *free_list = &qpool->free_pgs;
 
-	pgi_update(pgi, prev, npgs);
-	pgal_update(pgal, pgi, npgs);
+	qpgi_update(qpgi, prev, npgs);
+	qpool_update(qpool, qpgi, npgs);
 	if (npgs >= QALLOC_FREE_NPAGES_MANY) {
-		pgi_push_head(pgi, free_list);
+		qpgi_push_head(qpgi, free_list);
 	} else {
-		pgi_push_tail(pgi, free_list);
+		qpgi_push_tail(qpgi, free_list);
 	}
 }
 
-static void pgal_init_page_infos(struct silofs_pgal *pgal)
+static void qpool_init_page_infos(struct silofs_qpool *qpool)
 {
-	union silofs_page *pg;
-	struct silofs_page_info *pgi;
+	union silofs_qpage *qpg;
+	struct silofs_qpage_info *qpgi;
 
-	for (size_t i = 0; i < pgal->npgs_max; ++i) {
-		pg = pgal_page_at(pgal, i);
-		pgi = pgal_page_info_at(pgal, i);
-		pgi_init(pgi, pg, i);
+	for (size_t i = 0; i < qpool->npgs_max; ++i) {
+		qpg = qpool_page_at(qpool, i);
+		qpgi = qpool_page_info_at(qpool, i);
+		qpgi_init(qpgi, qpg, i);
 	}
-	pgi = pgal_page_info_at(pgal, 0);
-	pgal_add_free(pgal, pgi, NULL, pgal->npgs_max);
+	qpgi = qpool_page_info_at(qpool, 0);
+	qpool_add_free(qpool, qpgi, NULL, qpool->npgs_max);
 }
 
-static int pgal_init_mutex(struct silofs_pgal *pgal)
+static int qpool_init_mutex(struct silofs_qpool *qpool)
 {
-	return silofs_mutex_init(&pgal->mutex);
+	return silofs_mutex_init(&qpool->mutex);
 }
 
-static void pgal_fini_mutex(struct silofs_pgal *pgal)
+static void qpool_fini_mutex(struct silofs_qpool *qpool)
 {
-	silofs_mutex_fini(&pgal->mutex);
+	silofs_mutex_fini(&qpool->mutex);
 }
 
-static int pgal_init(struct silofs_pgal *pgal, size_t memsize)
+static long qpool_next_unique_id(void)
+{
+	return silofs_atomic_addl(&g_qpool_id, 1);
+}
+
+static int qpool_init(struct silofs_qpool *qpool, size_t memsize)
 {
 	const size_t npgs = memsize / QALLOC_PAGE_SIZE;
 	int err;
 
-	silofs_memzero(pgal, sizeof(*pgal));
-	silofs_list_init(&pgal->free_pgs);
+	silofs_memzero(qpool, sizeof(*qpool));
+	silofs_list_init(&qpool->free_pgs);
+	qpool->unique_id = (uint32_t)qpool_next_unique_id();
 
-	err = pgal_init_mutex(pgal);
+	err = qpool_init_mutex(qpool);
 	if (err) {
 		return err;
 	}
-	err = pgal_init_memfds(pgal, npgs);
+	err = qpool_init_memfds(qpool, npgs);
 	if (err) {
-		pgal_fini_mutex(pgal);
+		qpool_fini_mutex(qpool);
 		return err;
 	}
-	pgal_init_page_infos(pgal);
+	qpool_init_page_infos(qpool);
 	return 0;
 }
 
-static int pgal_fini(struct silofs_pgal *pgal)
+static int qpool_fini(struct silofs_qpool *qpool)
 {
 	int err1 = 0;
 	int err2 = 0;
 
-	pgal_fini_mutex(pgal);
-	if (pgal->npgs_max) {
-		err1 = memfd_close(&pgal->data);
-		err2 = memfd_close(&pgal->meta);
+	qpool_fini_mutex(qpool);
+	if (qpool->npgs_max) {
+		err1 = memfd_close(&qpool->data);
+		err2 = memfd_close(&qpool->meta);
 	}
 	return err1 ? err1 : err2;
 }
 
-static void pgal_lock(struct silofs_pgal *pgal)
+static void qpool_lock(struct silofs_qpool *qpool)
 {
-	silofs_mutex_lock(&pgal->mutex);
+	silofs_mutex_lock(&qpool->mutex);
 }
 
-static void pgal_unlock(struct silofs_pgal *pgal)
+static void qpool_unlock(struct silofs_qpool *qpool)
 {
-	silofs_mutex_unlock(&pgal->mutex);
+	silofs_mutex_unlock(&qpool->mutex);
 }
 
-static struct silofs_page_info *
-pgal_search_free_from_tail(struct silofs_pgal *pgal, size_t npgs)
+static struct silofs_qpage_info *
+qpool_search_free_from_tail(struct silofs_qpool *qpool, size_t npgs)
 {
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 	struct silofs_list_head *itr;
-	struct silofs_list_head *free_list = &pgal->free_pgs;
+	struct silofs_list_head *free_list = &qpool->free_pgs;
 
 	itr = free_list->prev;
 	while (itr != free_list) {
-		pgi = pgi_from_lh(itr);
-		if (pgi->pg_count >= npgs) {
-			return pgi;
+		qpgi = qpgi_from_lh(itr);
+		if (qpgi->qpg_count >= npgs) {
+			return qpgi;
 		}
 		itr = itr->prev;
 	}
 	return NULL;
 }
 
-static struct silofs_page_info *
-pgal_search_free_from_head(struct silofs_pgal *pgal, size_t npgs)
+static struct silofs_qpage_info *
+qpool_search_free_from_head(struct silofs_qpool *qpool, size_t npgs)
 {
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 	struct silofs_list_head *itr;
-	struct silofs_list_head *free_list = &pgal->free_pgs;
+	struct silofs_list_head *free_list = &qpool->free_pgs;
 
 	itr = free_list->next;
 	while (itr != free_list) {
-		pgi = pgi_from_lh(itr);
-		if (pgi->pg_count >= npgs) {
-			return pgi;
+		qpgi = qpgi_from_lh(itr);
+		if (qpgi->qpg_count >= npgs) {
+			return qpgi;
 		}
 		itr = itr->next;
 	}
 	return NULL;
 }
 
-static struct silofs_page_info *
-pgal_search_free_list(struct silofs_pgal *pgal, size_t npgs)
+static struct silofs_qpage_info *
+qpool_search_free_list(struct silofs_qpool *qpool, size_t npgs)
 {
-	struct silofs_page_info *pgi = NULL;
+	struct silofs_qpage_info *qpgi = NULL;
 
-	if ((pgal->npgs_use + npgs) <= pgal->npgs_max) {
+	if ((qpool->npgs_use + npgs) <= qpool->npgs_max) {
 		if (npgs >= QALLOC_FREE_NPAGES_MANY) {
-			pgi = pgal_search_free_from_head(pgal, npgs);
+			qpgi = qpool_search_free_from_head(qpool, npgs);
 		} else {
-			pgi = pgal_search_free_from_tail(pgal, npgs);
+			qpgi = qpool_search_free_from_tail(qpool, npgs);
 		}
 	}
-	return pgi;
+	return qpgi;
 }
 
-static struct silofs_page_info *
-pgal_do_alloc_npgs(struct silofs_pgal *pgal, size_t npgs)
+static struct silofs_qpage_info *
+qpool_do_alloc_npgs(struct silofs_qpool *qpool, size_t npgs)
 {
-	struct silofs_page_info *pgi;
-	struct silofs_page_info *pgi_next = NULL;
+	struct silofs_qpage_info *qpgi;
+	struct silofs_qpage_info *qpgi_next = NULL;
 
-	pgi = pgal_search_free_list(pgal, npgs);
-	if (pgi == NULL) {
+	qpgi = qpool_search_free_list(qpool, npgs);
+	if (qpgi == NULL) {
 		return NULL;
 	}
-	pgi_unlink(pgi);
-	pgi->pg_free = 0;
-	if (pgi->pg_count > npgs) {
-		pgi_next = pgal_next(pgal, pgi, npgs);
-		pgal_add_free(pgal, pgi_next, pgi, pgi->pg_count - npgs);
-		pgi->pg_count = npgs;
+	qpgi_unlink(qpgi);
+	qpgi->qpg_free = 0;
+	if (qpgi->qpg_count > npgs) {
+		qpgi_next = qpool_next(qpool, qpgi, npgs);
+		qpool_add_free(qpool, qpgi_next, qpgi, qpgi->qpg_count - npgs);
+		qpgi->qpg_count = npgs;
 	}
-	return pgi;
+	return qpgi;
 }
 
-static struct silofs_page_info *
-pgal_alloc_npgs(struct silofs_pgal *pgal, size_t npgs)
+static struct silofs_qpage_info *
+qpool_alloc_npgs(struct silofs_qpool *qpool, size_t npgs)
 {
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 
-	pgal_lock(pgal);
-	pgi = pgal_do_alloc_npgs(pgal, npgs);
-	pgal_unlock(pgal);
-	return pgi;
+	qpool_lock(qpool);
+	qpgi = qpool_do_alloc_npgs(qpool, npgs);
+	qpool_unlock(qpool);
+	return qpgi;
 }
 
 
-static int pgal_do_alloc_multi_pg(struct silofs_pgal *pgal,
-                                  size_t nbytes, void **out_ptr)
+static int qpool_do_alloc_multi_pg(struct silofs_qpool *qpool,
+                                   size_t nbytes, void **out_ptr)
 {
 	size_t npgs;
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 
 	npgs = nbytes_to_npgs(nbytes);
-	pgi = pgal_do_alloc_npgs(pgal, npgs);
-	if (pgi == NULL) {
+	qpgi = qpool_do_alloc_npgs(qpool, npgs);
+	if (qpgi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	*out_ptr = pgi->pg->data;
-	pgal->npgs_use += npgs;
-	silofs_assert_ge(pgal->npgs_max, pgal->npgs_use);
+	*out_ptr = qpgi->qpg->data;
+	qpool->npgs_use += npgs;
+	silofs_assert_ge(qpool->npgs_max, qpool->npgs_use);
 	return 0;
 }
 
-static int pgal_alloc_multi_pg(struct silofs_pgal *pgal,
-                               size_t nbytes, void **out_ptr)
+static int qpool_alloc_multi_pg(struct silofs_qpool *qpool,
+                                size_t nbytes, void **out_ptr)
 {
 	int err;
 
-	pgal_lock(pgal);
-	err = pgal_do_alloc_multi_pg(pgal, nbytes, out_ptr);
-	pgal_unlock(pgal);
+	qpool_lock(qpool);
+	err = qpool_do_alloc_multi_pg(qpool, nbytes, out_ptr);
+	qpool_unlock(qpool);
 	return err;
 }
 
-static loff_t pgal_ptr_to_off(const struct silofs_pgal *pgal, const void *ptr)
+static loff_t
+qpool_ptr_to_off(const struct silofs_qpool *qpool, const void *ptr)
 {
-	return (const char *)ptr - (const char *)pgal->data.mem;
+	return (const char *)ptr - (const char *)qpool->data.mem;
 }
 
-static size_t pgal_ptr_to_pgn(const struct silofs_pgal *pgal, const void *ptr)
+static size_t
+qpool_ptr_to_pgn(const struct silofs_qpool *qpool, const void *ptr)
 {
-	const loff_t off = pgal_ptr_to_off(pgal, ptr);
+	const loff_t off = qpool_ptr_to_off(qpool, ptr);
 
 	return (size_t)off / QALLOC_PAGE_SIZE;
 }
 
-static bool pgal_isinrange(const struct silofs_pgal *pgal,
-                           const void *ptr, size_t nb)
+static bool qpool_isinrange(const struct silofs_qpool *qpool,
+                            const void *ptr, size_t nb)
 {
-	const loff_t off = pgal_ptr_to_off(pgal, ptr);
+	const loff_t off = qpool_ptr_to_off(qpool, ptr);
 	const loff_t end = off + (loff_t)nb;
 
-	return (off >= 0) && (end <= (loff_t)pgal->data.msz);
+	return (off >= 0) && (end <= (loff_t)qpool->data.msz);
 }
 
-static struct silofs_page_info *
-pgal_page_info_of(const struct silofs_pgal *pgal, const void *ptr)
+static struct silofs_qpage_info *
+qpool_page_info_of(const struct silofs_qpool *qpool, const void *ptr)
 {
-	const size_t pgn = pgal_ptr_to_pgn(pgal, ptr);
+	const size_t pgn = qpool_ptr_to_pgn(qpool, ptr);
 
-	silofs_assert_lt(pgn, pgal->npgs_max);
-	return pgal_page_info_at(pgal, pgn);
+	silofs_assert_lt(pgn, qpool->npgs_max);
+	return qpool_page_info_at(qpool, pgn);
 }
 
 
 static struct silofs_slab_seg *
-pgal_slab_seg_of(const struct silofs_pgal *pgal, const void *ptr)
+qpool_slab_seg_of(const struct silofs_qpool *qpool, const void *ptr)
 {
 	struct silofs_slab_seg *seg;
 	loff_t off;
 	size_t idx;
 
-	seg = pgal->data.mem;
-	off = pgal_ptr_to_off(pgal, ptr);
+	seg = qpool->data.mem;
+	off = qpool_ptr_to_off(qpool, ptr);
 	idx = (size_t)off / sizeof(*seg);
 
 	return &seg[idx];
 }
 
-static int pgal_check_by_page(const struct silofs_pgal *pgal,
-                              const void *ptr, size_t nbytes)
+static int qpool_check_by_page(const struct silofs_qpool *qpool,
+                               const void *ptr, size_t nbytes)
 {
-	const struct silofs_page_info *pgi;
+	const struct silofs_qpage_info *qpgi;
 	size_t npgs;
 
 	npgs = nbytes_to_npgs(nbytes);
-	if (pgal->npgs_use < npgs) {
-		return -SILOFS_EINVAL;
+	if (qpool->npgs_use < npgs) {
+		return -SILOFS_EQALLOC;
 	}
-	pgi = pgal_page_info_of(pgal, ptr);
-	if (pgi == NULL) {
-		return -SILOFS_EINVAL;
+	qpgi = qpool_page_info_of(qpool, ptr);
+	if (qpgi == NULL) {
+		return -SILOFS_EQALLOC;
 	}
-	if (pgi->pg_count != npgs) {
-		return -SILOFS_EINVAL;
+	if (qpgi->qpg_count != npgs) {
+		return -SILOFS_EQALLOC;
 	}
 	return 0;
 }
 
-static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
-                               struct silofs_page_info *pgi, size_t npgs)
+static void qpool_punch_hole_at(const struct silofs_qpool *qpool,
+                                struct silofs_qpage_info *qpgi, size_t npgs)
 {
 	loff_t off;
 	ssize_t len;
@@ -690,10 +681,10 @@ static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
 	int fd;
 	int err;
 
-	off = npgs_to_nbytes(pgi->pg_index);
+	off = npgs_to_nbytes(qpgi->qpg_index);
 	len = npgs_to_nbytes(npgs);
 	mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	fd = pgal->data.fd;
+	fd = qpool->data.fd;
 	err = silofs_sys_fallocate(fd, mode, off, len);
 	if (err) {
 		silofs_panic("failed to fallocate punch-hole in memory: "
@@ -703,105 +694,105 @@ static void pgal_punch_hole_at(const struct silofs_pgal *pgal,
 }
 
 static void
-pgal_update_released(const struct silofs_pgal *pgal,
-                     struct silofs_page_info *pgi, size_t npgs, int flags)
+qpool_update_released(const struct silofs_qpool *qpool,
+                      struct silofs_qpage_info *qpgi, size_t npgs, int flags)
 {
 	const size_t npgs_threshold = (flags & SILOFS_ALLOCF_PUNCH) ? 32 : 256;
 
 	if (npgs >= npgs_threshold) {
-		pgal_punch_hole_at(pgal, pgi, npgs);
+		qpool_punch_hole_at(qpool, qpgi, npgs);
 	}
 }
 
 static int
-pgal_do_free_npgs(struct silofs_pgal *pgal,
-                  struct silofs_page_info *pgi, size_t npgs, int flags)
+qpool_do_free_npgs(struct silofs_qpool *qpool,
+                   struct silofs_qpage_info *qpgi, size_t npgs, int flags)
 {
-	struct silofs_page_info *pgi_next;
-	struct silofs_page_info *pgi_prev;
+	struct silofs_qpage_info *qpgi_next;
+	struct silofs_qpage_info *qpgi_prev;
 
-	pgi_next = pgal_next(pgal, pgi, npgs);
-	if (pgi_next && pgi_next->pg_free) {
-		npgs += pgi_next->pg_count;
-		pgi_unlink_mute(pgi_next);
+	qpgi_next = qpool_next(qpool, qpgi, npgs);
+	if (qpgi_next && qpgi_next->qpg_free) {
+		npgs += qpgi_next->qpg_count;
+		qpgi_unlink_mute(qpgi_next);
 	}
-	pgi_prev = pgi->prev;
-	if (pgi_prev && pgi_prev->pg_free) {
-		npgs += pgi_prev->pg_count;
-		pgi_mute(pgi);
-		pgi = pgi_prev;
-		pgi_prev = pgi_prev->prev;
-		pgi_unlink_mute(pgi);
+	qpgi_prev = qpgi->qpg_prev;
+	if (qpgi_prev && qpgi_prev->qpg_free) {
+		npgs += qpgi_prev->qpg_count;
+		qpgi_mute(qpgi);
+		qpgi = qpgi_prev;
+		qpgi_prev = qpgi_prev->qpg_prev;
+		qpgi_unlink_mute(qpgi);
 	}
 
-	pgal_update_released(pgal, pgi, npgs, flags);
-	pgal_add_free(pgal, pgi, pgi_prev, npgs);
+	qpool_update_released(qpool, qpgi, npgs, flags);
+	qpool_add_free(qpool, qpgi, qpgi_prev, npgs);
 	return 0;
 }
 
-static int pgal_free_npgs(struct silofs_pgal *pgal,
-                          struct silofs_page_info *pgi, size_t npgs, int flags)
+static int qpool_free_npgs(struct silofs_qpool *qpool,
+                           struct silofs_qpage_info *qpgi,
+                           size_t npgs, int flags)
 {
 	int err;
 
-	pgal_lock(pgal);
-	err = pgal_do_free_npgs(pgal, pgi, npgs, flags);
-	pgal_unlock(pgal);
+	qpool_lock(qpool);
+	err = qpool_do_free_npgs(qpool, qpgi, npgs, flags);
+	qpool_unlock(qpool);
 	return err;
 }
 
-static int pgal_do_free_multi_pg(struct silofs_pgal *pgal,
-                                 void *ptr, size_t nbytes, int flags)
+static int qpool_do_free_multi_pg(struct silofs_qpool *qpool,
+                                  void *ptr, size_t nbytes, int flags)
 {
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 	size_t npgs;
 	int err;
 
-	err = pgal_check_by_page(pgal, ptr, nbytes);
+	err = qpool_check_by_page(qpool, ptr, nbytes);
 	if (err) {
 		return err;
 	}
 	npgs = nbytes_to_npgs(nbytes);
-	pgi = pgal_page_info_of(pgal, ptr);
-	pgal_do_free_npgs(pgal, pgi, npgs, flags);
-	pgal->npgs_use -= npgs;
+	qpgi = qpool_page_info_of(qpool, ptr);
+	qpool_do_free_npgs(qpool, qpgi, npgs, flags);
+	qpool->npgs_use -= npgs;
 	return 0;
 }
 
-static int pgal_free_multi_pg(struct silofs_pgal *pgal,
-                              void *ptr, size_t nbytes, int flags)
+static int qpool_free_multi_pg(struct silofs_qpool *qpool,
+                               void *ptr, size_t nbytes, int flags)
 {
 	int err;
 
-	pgal_lock(pgal);
-	err = pgal_do_free_multi_pg(pgal, ptr, nbytes, flags);
-	pgal_unlock(pgal);
+	qpool_lock(qpool);
+	err = qpool_do_free_multi_pg(qpool, ptr, nbytes, flags);
+	qpool_unlock(qpool);
 	return err;
 }
 
-static void *pgal_base_of(const struct silofs_pgal *pgal,
-                          void *ptr, size_t len)
+static void *qpool_base_of(const struct silofs_qpool *qpool,
+                           void *ptr, size_t len)
 {
 	struct silofs_slab_seg *seg = NULL;
-	const struct silofs_page_info *pgi = NULL;
+	const struct silofs_qpage_info *qpgi = NULL;
 	void *base = NULL;
 
-	if (pgal_isinrange(pgal, ptr, len)) {
+	if (qpool_isinrange(qpool, ptr, len)) {
 		if (isslabsize(len)) {
-			seg = pgal_slab_seg_of(pgal, ptr);
+			seg = qpool_slab_seg_of(qpool, ptr);
 			if (seg != NULL) {
 				base = seg;
 			}
 		} else {
-			pgi = pgal_page_info_of(pgal, ptr);
-			if (pgi != NULL) {
-				base = pgi->pg;
+			qpgi = qpool_page_info_of(qpool, ptr);
+			if (qpgi != NULL) {
+				base = qpgi->qpg;
 			}
 		}
 	}
 	return base;
 }
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -851,10 +842,11 @@ static int32_t slab_size_to_sindex(size_t size)
 }
 
 static int slab_init(struct silofs_slab *slab,
-                     struct silofs_pgal *pgal, int32_t sindex, uint32_t elemsz)
+                     struct silofs_qpool *qpool,
+                     int32_t sindex, uint32_t elemsz)
 {
 	silofs_list_init(&slab->free_list);
-	slab->pgal = pgal;
+	slab->qpool = qpool;
 	slab->nfree = 0;
 	slab->nused = 0;
 	slab->elemsz = elemsz;
@@ -870,7 +862,7 @@ static void slab_fini(struct silofs_slab *slab)
 	slab->nfree = 0;
 	slab->nused = 0;
 	slab->sindex = QALLOC_SLAB_INDEX_NONE;
-	slab->pgal = NULL;
+	slab->qpool = NULL;
 }
 
 static size_t slab_step_nsegs(const struct silofs_slab *slab)
@@ -880,42 +872,44 @@ static size_t slab_step_nsegs(const struct silofs_slab *slab)
 	return SILOFS_DIV_ROUND_UP(slab->elemsz, sizeof(*seg));
 }
 
-static void slab_expand(struct silofs_slab *slab, struct silofs_page_info *pgi)
+static void slab_expand(struct silofs_slab *slab,
+                        struct silofs_qpage_info *qpgi)
 {
 	struct silofs_slab_seg *seg;
-	union silofs_page *pg = pgi->pg;
+	union silofs_qpage *qpg = qpgi->qpg;
 	const size_t step = slab_step_nsegs(slab);
-	const size_t nsegs = ARRAY_SIZE(pg->seg);
+	const size_t nsegs = ARRAY_SIZE(qpg->seg);
 
-	pgi->slab_index = (int)slab->sindex;
-	pgi->slab_nelems = (int)(sizeof(*pg) / slab->elemsz);
-	pgi->slab_nused = 0;
+	qpgi->qpg_slab_index = (int)slab->sindex;
+	qpgi->qpg_slab_nelems = (int)(sizeof(*qpg) / slab->elemsz);
+	qpgi->qpg_slab_nused = 0;
 	for (size_t i = 0; (i + step) <= nsegs; i += step) {
-		seg = &pg->seg[i];
+		seg = &qpg->seg[i];
 		silofs_list_push_back(&slab->free_list, &seg->link);
 		slab->nfree++;
 	}
 }
 
-static void slab_shrink(struct silofs_slab *slab, struct silofs_page_info *pgi)
+static void slab_shrink(struct silofs_slab *slab,
+                        struct silofs_qpage_info *qpgi)
 {
 	struct silofs_slab_seg *seg;
-	union silofs_page *pg = pgi->pg;
+	union silofs_qpage *qpg = qpgi->qpg;
 	const size_t step = slab_step_nsegs(slab);
-	const size_t nsegs = ARRAY_SIZE(pg->seg);
+	const size_t nsegs = ARRAY_SIZE(qpg->seg);
 
-	silofs_assert_eq(pgi->slab_index, slab->sindex);
-	silofs_assert_eq(pgi->slab_nused, 0);
+	silofs_assert_eq(qpgi->qpg_slab_index, slab->sindex);
+	silofs_assert_eq(qpgi->qpg_slab_nused, 0);
 
 	for (size_t i = 0; (i + step) <= nsegs; i += step) {
 		silofs_assert_gt(slab->nfree, 0);
 
-		seg = &pg->seg[i];
+		seg = &qpg->seg[i];
 		silofs_list_head_remove(&seg->link);
 		slab->nfree--;
 	}
-	pgi->slab_index = QALLOC_SLAB_INDEX_NONE;
-	pgi->slab_nelems = 0;
+	qpgi->qpg_slab_index = QALLOC_SLAB_INDEX_NONE;
+	qpgi->qpg_slab_nelems = 0;
 }
 
 static struct silofs_slab_seg *slab_alloc(struct silofs_slab *slab)
@@ -960,16 +954,16 @@ static void slab_unlock(struct silofs_slab *slab)
 
 static int slab_require_space(struct silofs_slab *slab)
 {
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 
 	if (slab->nfree > 0) {
 		return 0;
 	}
-	pgi = pgal_alloc_npgs(slab->pgal, 1);
-	if (pgi == NULL) {
+	qpgi = qpool_alloc_npgs(slab->qpool, 1);
+	if (qpgi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	slab_expand(slab, pgi);
+	slab_expand(slab, qpgi);
 	return 0;
 }
 
@@ -977,16 +971,16 @@ static struct silofs_slab_seg *
 slab_alloc_and_update(struct silofs_slab *slab)
 {
 	struct silofs_slab_seg *seg;
-	struct silofs_page_info *pgi;
+	struct silofs_qpage_info *qpgi;
 
 	seg = slab_alloc(slab);
 	if (seg == NULL) {
 		return NULL;
 	}
-	pgi = pgal_page_info_of(slab->pgal, seg);
+	qpgi = qpool_page_info_of(slab->qpool, seg);
 
-	silofs_assert_lt(pgi->slab_nused, pgi->slab_nelems);
-	pgi->slab_nused += 1;
+	silofs_assert_lt(qpgi->qpg_slab_nused, qpgi->qpg_slab_nelems);
+	qpgi->qpg_slab_nused += 1;
 	return seg;
 }
 
@@ -1022,41 +1016,41 @@ static int slab_alloc_seg(struct silofs_slab *slab,
 static void slab_free_and_update(struct silofs_slab *slab,
                                  struct silofs_slab_seg *seg, int flags)
 {
-	struct silofs_page_info *pgi = pgal_page_info_of(slab->pgal, seg);
+	struct silofs_qpage_info *qpgi = qpool_page_info_of(slab->qpool, seg);
 
-	silofs_assert_eq(pgi->slab_index, slab->sindex);
+	silofs_assert_eq(qpgi->qpg_slab_index, slab->sindex);
 
 	slab_free(slab, seg);
-	silofs_assert_le(pgi->slab_nused, pgi->slab_nelems);
-	silofs_assert_gt(pgi->slab_nused, 0);
+	silofs_assert_le(qpgi->qpg_slab_nused, qpgi->qpg_slab_nelems);
+	silofs_assert_gt(qpgi->qpg_slab_nused, 0);
 
-	pgi->slab_nused -= 1;
-	if (!pgi->slab_nused) {
-		slab_shrink(slab, pgi);
-		pgal_free_npgs(slab->pgal, pgi, 1, flags);
+	qpgi->qpg_slab_nused -= 1;
+	if (!qpgi->qpg_slab_nused) {
+		slab_shrink(slab, qpgi);
+		qpool_free_npgs(slab->qpool, qpgi, 1, flags);
 	}
 }
 
 static int slab_check_seg(const struct silofs_slab *slab,
                           const struct silofs_slab_seg *seg, size_t nb)
 {
-	const struct silofs_page_info *pgi = NULL;
+	const struct silofs_qpage_info *qpgi = NULL;
 
 	if (!slab->nused) {
-		return -SILOFS_EINVAL;
+		return -SILOFS_EQALLOC;
 	}
 	if (nb > slab->elemsz) {
-		return -SILOFS_EINVAL;
+		return -SILOFS_EQALLOC;
 	}
 	if (nb >= (2 * slab->elemsz)) {
-		return -SILOFS_EINVAL;
+		return -SILOFS_EQALLOC;
 	}
-	pgi = pgal_page_info_of(slab->pgal, seg);
-	if (pgi->slab_index != slab->sindex) {
-		return -SILOFS_EINVAL;
+	qpgi = qpool_page_info_of(slab->qpool, seg);
+	if (qpgi->qpg_slab_index != slab->sindex) {
+		return -SILOFS_EQALLOC;
 	}
-	if (pgi->slab_nused == 0) {
-		return -SILOFS_EINVAL;
+	if (qpgi->qpg_slab_nused == 0) {
+		return -SILOFS_EQALLOC;
 	}
 	return 0;
 }
@@ -1087,14 +1081,14 @@ static int slab_free_seg(struct silofs_slab *slab,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int qalloc_init_pgal(struct silofs_qalloc *qal, size_t memsize)
+static int qalloc_init_qpool(struct silofs_qalloc *qal, size_t memsize)
 {
-	return pgal_init(&qal->pgal, memsize);
+	return qpool_init(&qal->qpool, memsize);
 }
 
-static int qalloc_fini_pgal(struct silofs_qalloc *qal)
+static int qalloc_fini_qpool(struct silofs_qalloc *qal)
 {
-	return pgal_fini(&qal->pgal);
+	return qpool_fini(&qal->qpool);
 }
 
 static int qalloc_init_slabs(struct silofs_qalloc *qal)
@@ -1108,7 +1102,7 @@ static int qalloc_init_slabs(struct silofs_qalloc *qal)
 	for (size_t i = 0; i < ARRAY_SIZE(qal->slabs); ++i) {
 		sindex = (int32_t)i;
 		elemsz = 1U << (shift_base + sindex);
-		err = slab_init(&qal->slabs[i], &qal->pgal, sindex, elemsz);
+		err = slab_init(&qal->slabs[i], &qal->qpool, sindex, elemsz);
 		if (err) {
 			goto out_err;
 		}
@@ -1180,13 +1174,13 @@ int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 	if (err) {
 		return err;
 	}
-	err = qalloc_init_pgal(qal, memsize);
+	err = qalloc_init_qpool(qal, memsize);
 	if (err) {
 		return err;
 	}
 	err = qalloc_init_slabs(qal);
 	if (err) {
-		qalloc_fini_pgal(qal);
+		qalloc_fini_qpool(qal);
 		return err;
 	}
 	qalloc_init_interface(qal);
@@ -1200,7 +1194,7 @@ int silofs_qalloc_fini(struct silofs_qalloc *qal)
 	/* TODO: release all pending memory-elements in slabs */
 	qalloc_fini_interface(qal);
 	qalloc_fini_slabs(qal);
-	return qalloc_fini_pgal(qal);
+	return qalloc_fini_qpool(qal);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1246,7 +1240,7 @@ static int qalloc_check_alloc(const struct silofs_qalloc *qal, size_t nbytes)
 {
 	const size_t nbytes_max = QALLOC_MALLOC_SIZE_MAX;
 
-	if (qal->pgal.data.mem == NULL) {
+	if (qal->qpool.data.mem == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 	if (nbytes > nbytes_max) {
@@ -1275,7 +1269,7 @@ static int qalloc_alloc_sub_pg(struct silofs_qalloc *qal,
 static int qalloc_alloc_multi_pg(struct silofs_qalloc *qal,
                                  size_t nbytes, void **out_ptr)
 {
-	return pgal_alloc_multi_pg(&qal->pgal, nbytes, out_ptr);
+	return qpool_alloc_multi_pg(&qal->qpool, nbytes, out_ptr);
 }
 
 static void qalloc_add_nbytes_use(struct silofs_qalloc *qal, size_t nbytes)
@@ -1330,7 +1324,7 @@ static void qalloc_require_malloc_ok(const struct silofs_qalloc *qal,
 	if (err) {
 		silofs_log_debug("malloc failed: nbytes=%lu "
 		                 "data_msz=%lu err=%d",
-		                 nbytes, qal->pgal.data.msz, err);
+		                 nbytes, qal->qpool.data.msz, err);
 	}
 }
 
@@ -1355,7 +1349,7 @@ static int qalloc_check_free(const struct silofs_qalloc *qal,
 	if (!nbytes || (nbytes > QALLOC_MALLOC_SIZE_MAX)) {
 		return -SILOFS_EINVAL;
 	}
-	if (!pgal_isinrange(&qal->pgal, ptr, nbytes)) {
+	if (!qpool_isinrange(&qal->qpool, ptr, nbytes)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;
@@ -1394,14 +1388,14 @@ static int qalloc_free_sub_pg(struct silofs_qalloc *qal,
 {
 	struct silofs_slab_seg *seg;
 
-	seg = pgal_slab_seg_of(&qal->pgal, ptr);
+	seg = qpool_slab_seg_of(&qal->qpool, ptr);
 	return qalloc_free_by_slab(qal, seg, nbytes, flags);
 }
 
 static int qalloc_free_multi_pg(struct silofs_qalloc *qal,
                                 void *ptr, size_t nbytes, int flags)
 {
-	return pgal_free_multi_pg(&qal->pgal, ptr, nbytes, flags);
+	return qpool_free_multi_pg(&qal->qpool, ptr, nbytes, flags);
 }
 
 static void
@@ -1445,7 +1439,7 @@ static void qalloc_require_free_ok(const struct silofs_qalloc *qal,
 {
 	if (err) {
 		silofs_panic("free error: ptr=%p nbytes=%lu data_msz=%lu "
-		             "err=%d", ptr, nbytes, qal->pgal.data.msz, err);
+		             "err=%d", ptr, nbytes, qal->qpool.data.msz, err);
 	}
 }
 
@@ -1464,17 +1458,17 @@ static int qalloc_check_by_slab(const struct silofs_qalloc *qal,
 	const struct silofs_slab_seg *seg;
 	int err = -EINVAL;
 
-	seg = pgal_slab_seg_of(&qal->pgal, ptr);
+	seg = qpool_slab_seg_of(&qal->qpool, ptr);
 	if (seg != NULL) {
 		err = qalloc_check_slab_seg_of(qal, seg, nbytes);
 	}
 	return err;
 }
 
-static int qalloc_check_by_pgal(const struct silofs_qalloc *qal,
-                                const void *ptr, size_t nbytes)
+static int qalloc_check_by_qpool(const struct silofs_qalloc *qal,
+                                 const void *ptr, size_t nbytes)
 {
-	return pgal_check_by_page(&qal->pgal, ptr, nbytes);
+	return qpool_check_by_page(&qal->qpool, ptr, nbytes);
 }
 
 int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
@@ -1492,7 +1486,7 @@ int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
 	if (isslabsize(nbytes)) {
 		err = qalloc_check_by_slab(qal, ptr, nbytes);
 	} else {
-		err = qalloc_check_by_pgal(qal, ptr, nbytes);
+		err = qalloc_check_by_qpool(qal, ptr, nbytes);
 	}
 	return err;
 }
@@ -1507,17 +1501,17 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
 {
 	const void *base;
 
-	base = pgal_base_of(&qal->pgal, ptr, len);
-	if (silofs_unlikely(base == NULL)) {
+	base = qpool_base_of(&qal->qpool, ptr, len);
+	if (unlikely(base == NULL)) {
 		return -SILOFS_ERANGE;
 	}
-	if (silofs_unlikely(base > ptr)) {
+	if (unlikely(base > ptr)) {
 		return -SILOFS_ERANGE;
 	}
-	iov->iov_off = pgal_ptr_to_off(&qal->pgal, ptr);
+	iov->iov_off = qpool_ptr_to_off(&qal->qpool, ptr);
 	iov->iov_len = len;
 	iov->iov_base = ptr;
-	iov->iov_fd = qal->pgal.data.fd;
+	iov->iov_fd = qal->qpool.data.fd;
 	iov->iov_ref = NULL;
 	return 0;
 }
@@ -1526,9 +1520,9 @@ void silofs_qalloc_stat(const struct silofs_qalloc *qal,
                         struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
-	out_stat->nbytes_max = qal->pgal.data.msz;
+	out_stat->nbytes_max = qal->qpool.data.msz;
 	out_stat->nbytes_use = qalloc_get_nbytes_use(qal);
-	out_stat->nbytes_ext = qal->pgal.meta.msz;
+	out_stat->nbytes_ext = qal->qpool.meta.msz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

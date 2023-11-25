@@ -73,6 +73,7 @@
 #define SILOFS_ENOTDONE         SILOFS_DEFERR2(12)
 #define SILOFS_ECOMPRESS        SILOFS_DEFERR2(13)
 #define SILOFS_EDECOMPRESS      SILOFS_DEFERR2(14)
+#define SILOFS_EQALLOC          SILOFS_DEFERR2(15)
 
 /* error codes which are purely internal to silofs */
 #define SILOFS_EBUG             SILOFS_DEFERR2(1111)

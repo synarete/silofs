@@ -58,18 +58,19 @@ struct silofs_memfd {
 	int     fd;
 };
 
-struct silofs_pgal {
+struct silofs_qpool {
 	struct silofs_list_head free_pgs;
 	struct silofs_mutex     mutex;
 	struct silofs_memfd     data;
 	struct silofs_memfd     meta;
 	size_t                  npgs_max;
 	size_t                  npgs_use;
+	uint32_t                unique_id;
 };
 
 struct silofs_slab {
 	struct silofs_list_head free_list;
-	struct silofs_pgal     *pgal;
+	struct silofs_qpool    *qpool;
 	struct silofs_mutex     mutex;
 	size_t                  nfree;
 	size_t                  nused;
@@ -78,8 +79,8 @@ struct silofs_slab {
 };
 
 struct silofs_qalloc {
-	struct silofs_slab      slabs[7];
-	struct silofs_pgal      pgal;
+	struct silofs_slab      slabs[12];
+	struct silofs_qpool     qpool;
 	struct silofs_alloc     alloc;
 	size_t                  nbytes_use;
 	int                     mode;

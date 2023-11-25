@@ -28,7 +28,6 @@ struct ut_mrecord {
 	char   dat[8];
 };
 
-
 static void mrecord_setup(struct ut_mrecord *mr, void *mem, size_t len)
 {
 	SILOFS_STATICASSERT_EQ(sizeof(*mr), 64);
@@ -69,13 +68,13 @@ link_to_mrecord(const struct silofs_list_head *link)
 static struct ut_mrecord *
 mrecord_new(struct silofs_qalloc *qal, size_t msz)
 {
-	int err;
-	void *mem;
-	struct ut_mrecord *mr;
 	struct silofs_iovec iov = {
 		.iov_base = NULL,
 		.iov_fd = -1
 	};
+	struct ut_mrecord *mr = NULL;
+	void *mem = NULL;
+	int err = 0;
 
 	mem = silofs_qalloc_malloc(qal, msz, 0);
 	ut_expect_not_null(mem);
@@ -118,13 +117,12 @@ static void link_mrecord_del(struct silofs_list_head *link)
 static struct silofs_qalloc *
 ut_new_qalloc(struct ut_env *ute, size_t sz)
 {
-	int err;
 	struct silofs_qalloc *qal = NULL;
+	int err;
 
 	qal = ut_zalloc(ute, sizeof(*qal));
 	err = silofs_qalloc_init(qal, sz, SILOFS_QALLOC_NORMAL);
 	ut_expect_ok(err);
-
 	return qal;
 }
 
@@ -134,6 +132,66 @@ static void ut_del_qalloc(struct silofs_qalloc *qal)
 
 	err = silofs_qalloc_fini(qal);
 	ut_expect_ok(err);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_qalloc_simple(struct ut_env *ute)
+{
+	struct silofs_qalloc *qal = NULL;
+	uint32_t *ptr;
+	uint32_t len;
+
+	qal = ut_new_qalloc(ute, 8 * UT_1M);
+	for (uint32_t n = 8; n <= UT_1M; n *= 2) {
+		len = n;
+		ptr = silofs_qalloc_malloc(qal, len, 0);
+		ut_expect_not_null(ptr);
+		silofs_qalloc_free(qal, ptr, len, 0);
+	}
+	ut_del_qalloc(qal);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_qalloc_simple3(struct ut_env *ute)
+{
+	struct silofs_qalloc *qal = NULL;
+	uint32_t *ptr1;
+	uint32_t *ptr2;
+	uint32_t *ptr3;
+	uint32_t len;
+
+	qal = ut_new_qalloc(ute, 8 * UT_1M);
+	for (uint32_t n = 8; n <= UT_1M; n *= 2) {
+		len = n;
+		ptr1 = silofs_qalloc_malloc(qal, len, 0);
+		ut_expect_not_null(ptr1);
+		*ptr1 = len;
+
+		len = n - 1;
+		ptr2 = silofs_qalloc_malloc(qal, len, 0);
+		ut_expect_not_null(ptr2);
+		*ptr2 = len;
+
+		len = n + 1;
+		ptr3 = silofs_qalloc_malloc(qal, len, 0);
+		ut_expect_not_null(ptr3);
+		*ptr3 = len;
+
+		len = n;
+		silofs_assert_eq(*ptr1, len);
+		silofs_qalloc_free(qal, ptr1, len, 0);
+
+		len = n - 1;
+		silofs_assert_eq(*ptr2, len);
+		silofs_qalloc_free(qal, ptr2, len, 0);
+
+		len = n + 1;
+		silofs_assert_eq(*ptr3, len);
+		silofs_qalloc_free(qal, ptr3, len, 0);
+	}
+	ut_del_qalloc(qal);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -160,11 +218,11 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 	struct silofs_qalloc *qal;
 	struct ut_mrecord *mr = NULL;
 	const size_t sizes[] = {
-		UT_BK_SIZE - 1,
-		UT_BK_SIZE,
-		UT_BK_SIZE + 1,
-		2 * UT_BK_SIZE,
-		8 * UT_BK_SIZE - 1
+		UT_64K - 1,
+		UT_64K,
+		UT_64K + 1,
+		2 * UT_64K,
+		8 * UT_64K - 1
 	};
 
 	silofs_list_init(&lst);
@@ -188,14 +246,14 @@ static size_t align_up(size_t nn, size_t align)
 
 static void ut_qalloc_free_nbks(struct ut_env *ute)
 {
-	size_t msz = 0;
-	size_t rem = 0;
-	size_t total = 0;
+	struct silofs_alloc_stat alst;
+	struct silofs_list_head lst;
 	struct silofs_qalloc *qal = NULL;
 	struct ut_mrecord *mr = NULL;
-	struct silofs_list_head lst;
 	const size_t bk_size =  UT_BK_SIZE;
-	struct silofs_alloc_stat alst;
+	size_t total = 0;
+	size_t msz = 0;
+	size_t rem = 0;
 
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 32 * UT_1M);
@@ -220,12 +278,12 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 
 static void ut_qalloc_slab_elems(struct ut_env *ute)
 {
-	size_t val = 0;
-	size_t msz = 0;
+	struct silofs_list_head lst;
 	struct silofs_qalloc *qal = NULL;
 	struct ut_mrecord *mr = NULL;
-	struct silofs_list_head lst;
 	const size_t pg_size = SILOFS_PAGE_SIZE_MIN;
+	size_t val = 0;
+	size_t msz = 0;
 
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 64 * UT_1M);
@@ -290,12 +348,12 @@ static size_t small_alloc_size(size_t i)
 
 static void ut_qalloc_small_sizes(struct ut_env *ute)
 {
-	size_t idx;
-	size_t msz;
-	void *mem = NULL;
 	void *ptr[NALLOC_SMALL];
 	long idx_arr[NALLOC_SMALL];
-	struct silofs_qalloc *qal;
+	struct silofs_qalloc *qal = NULL;
+	void *mem = NULL;
+	size_t idx = 0;
+	size_t msz = 0;
 
 	qal = ut_new_qalloc(ute, 32 * UT_1M);
 	for (size_t i = 0; i < UT_ARRAY_SIZE(ptr); ++i) {
@@ -353,12 +411,12 @@ static struct iovec *random_iovecs(struct ut_env *ute,
 
 static void ut_qalloc_random_(struct ut_env *ute, size_t cnt)
 {
-	int err;
-	size_t msz;
-	void *mem = NULL;
-	struct iovec *iov;
-	struct silofs_qalloc *qal;
+	struct silofs_qalloc *qal = NULL;
+	struct iovec *iov = NULL;
 	const size_t pg_size = SILOFS_PAGE_SIZE_MIN;
+	void *mem = NULL;
+	size_t msz = 0;
+	int err = 0;
 
 	qal = ut_new_qalloc(ute, cnt * 2 * pg_size);
 	iov = random_iovecs(ute, cnt, 1, 2 * pg_size);
@@ -416,6 +474,8 @@ static void ut_qalloc_random(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
+	UT_DEFTEST1(ut_qalloc_simple),
+	UT_DEFTEST1(ut_qalloc_simple3),
 	UT_DEFTEST1(ut_qalloc_nbks_simple),
 	UT_DEFTEST(ut_qalloc_free_nbks),
 	UT_DEFTEST(ut_qalloc_slab_elems),
@@ -425,5 +485,4 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_qalloc = UT_MKTESTS(ut_local_tests);
-
 

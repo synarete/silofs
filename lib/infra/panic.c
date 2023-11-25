@@ -431,7 +431,6 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 	silofs_dump_backtrace();
 	silofs_dump_addr2line();
 	silofs_abort();
-	silofs_unreachable();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -448,7 +447,7 @@ void silofs_die(int errnum, const char *fmt, ...)
 
 	error(EXIT_FAILURE, abs(errnum), "%s", msg);
 	/* never gets here, but makes compiler happy */
-	abort();
+	silofs_abort();
 }
 
 __attribute__((__noreturn__))
@@ -464,5 +463,5 @@ void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 	error_at_line(EXIT_FAILURE, abs(errnum), fl,
 	              (unsigned int)ln, "%s", msg);
 	/* never gets here, but makes compiler happy */
-	abort();
+	silofs_abort();
 }

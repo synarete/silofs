@@ -73,14 +73,14 @@ struct silofs_slab {
 	struct silofs_mutex     mutex;
 	size_t                  nfree;
 	size_t                  nused;
-	uint32_t                sindex;
 	uint32_t                elemsz;
+	int32_t                 sindex;
 };
 
 struct silofs_qalloc {
-	struct silofs_alloc     alloc;
-	struct silofs_slab      slabs[64];
+	struct silofs_slab      slabs[7];
 	struct silofs_pgal      pgal;
+	struct silofs_alloc     alloc;
 	size_t                  nbytes_use;
 	int                     mode;
 };

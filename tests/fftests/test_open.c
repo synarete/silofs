@@ -22,21 +22,20 @@
  */
 static void test_open_atime(struct ft_env *fte)
 {
-	int fd = -1;
-	struct stat st0;
-	struct stat st1;
+	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
+	int fd = -1;
 
 	ft_mkdir(path0, 0755);
-	ft_stat(path0, &st0);
+	ft_stat(path0, &st[0]);
 	ft_suspend(fte, 3, 1);
 	ft_open(path1, O_CREAT | O_WRONLY, 0644, &fd);
-	ft_fstat(fd, &st1);
-	ft_expect_true(st0.st_atim.tv_sec < st1.st_atim.tv_sec);
+	ft_fstat(fd, &st[1]);
+	ft_expect_true(st[0].st_atim.tv_sec < st[1].st_atim.tv_sec);
+	ft_close(fd);
 	ft_unlink(path1);
 	ft_rmdir(path0);
-	ft_close(fd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -46,39 +45,36 @@ static void test_open_atime(struct ft_env *fte)
  */
 static void test_open_mctime(struct ft_env *fte)
 {
-	int fd1 = -1;
-	int fd2 = -1;
-	struct stat st0;
-	struct stat st1;
-	struct stat st2;
-	struct stat st3;
+	struct stat st[4];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
+	int fd2 = -1;
+	int fd1 = -1;
 
 	ft_mkdir(path0, 0755);
-	ft_stat(path0, &st0);
+	ft_stat(path0, &st[0]);
 	ft_suspend(fte, 3, 2);
 	ft_open(path1, O_CREAT | O_WRONLY, 0644, &fd1);
-	ft_fstat(fd1, &st1);
-	ft_expect_lt(st0.st_mtim.tv_sec, st1.st_mtim.tv_sec);
-	ft_expect_lt(st0.st_ctim.tv_sec, st1.st_ctim.tv_sec);
-	ft_stat(path0, &st2);
-	ft_expect_lt(st0.st_mtim.tv_sec, st2.st_mtim.tv_sec);
-	ft_expect_lt(st0.st_ctim.tv_sec, st2.st_ctim.tv_sec);
+	ft_fstat(fd1, &st[1]);
+	ft_expect_lt(st[0].st_mtim.tv_sec, st[1].st_mtim.tv_sec);
+	ft_expect_lt(st[0].st_ctim.tv_sec, st[1].st_ctim.tv_sec);
+	ft_stat(path0, &st[2]);
+	ft_expect_lt(st[0].st_mtim.tv_sec, st[2].st_mtim.tv_sec);
+	ft_expect_lt(st[0].st_ctim.tv_sec, st[2].st_ctim.tv_sec);
 	ft_unlink(path1);
 	ft_close(fd1);
 
 	ft_creat(path1, 0644, &fd1);
-	ft_fstat(fd1, &st1);
-	ft_stat(path0, &st0);
+	ft_fstat(fd1, &st[1]);
+	ft_stat(path0, &st[0]);
 	ft_suspend(fte, 3, 2);
 	ft_open(path1, O_CREAT | O_RDONLY, 0644, &fd2);
-	ft_fstat(fd2, &st2);
-	ft_stat(path0, &st3);
-	ft_expect_eq(st1.st_mtim.tv_sec, st2.st_mtim.tv_sec);
-	ft_expect_eq(st1.st_ctim.tv_sec, st2.st_ctim.tv_sec);
-	ft_expect_eq(st0.st_mtim.tv_sec, st3.st_mtim.tv_sec);
-	ft_expect_eq(st0.st_ctim.tv_sec, st3.st_ctim.tv_sec);
+	ft_fstat(fd2, &st[2]);
+	ft_stat(path0, &st[3]);
+	ft_expect_eq(st[1].st_mtim.tv_sec, st[2].st_mtim.tv_sec);
+	ft_expect_eq(st[1].st_ctim.tv_sec, st[2].st_ctim.tv_sec);
+	ft_expect_eq(st[0].st_mtim.tv_sec, st[3].st_mtim.tv_sec);
+	ft_expect_eq(st[0].st_ctim.tv_sec, st[3].st_ctim.tv_sec);
 
 	ft_unlink(path1);
 	ft_rmdir(path0);
@@ -114,8 +110,8 @@ static void test_open_loop(struct ft_env *fte)
  */
 static void test_open_isdir(struct ft_env *fte)
 {
-	int fd = -1;
 	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_mkdir(path, 0755);
 	ft_open(path, O_RDONLY, 0, &fd);
@@ -134,7 +130,7 @@ static void test_open_isdir(struct ft_env *fte)
  */
 static void test_open_trunc_(struct ft_env *fte, loff_t off, size_t len)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	void *buf = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
 	int fd1 = -1;
@@ -241,6 +237,54 @@ static void test_open_opath_symlnk(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects open(3p) with O_PATH on directory to have valid semantics.
+ */
+static void test_open_opath_dir(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	const size_t dlen = FT_1M - 1;
+	const void *data = ft_new_buf_rands(fte, dlen);
+	int dfd1 = -1;
+	int dfd2 = -1;
+	int dfd3 = -1;
+	int fd1 = -1;
+	int fd2 = -1;
+
+	ft_mkdir(path, 0700);
+	ft_open(path, O_DIRECTORY | O_PATH, 0, &dfd1);
+	ft_fstat(dfd1, &st);
+	ft_expect_dir(st.st_mode);
+	ft_mkdirat(dfd1, name, 0700);
+	ft_openat(dfd1, name, O_DIRECTORY | O_PATH, 0, &dfd2);
+	ft_fstat(dfd2, &st);
+	ft_expect_dir(st.st_mode);
+	ft_mkdirat(dfd2, name, 0750);
+	ft_openat(dfd2, name, O_DIRECTORY | O_PATH, 0, &dfd3);
+	ft_fstat(dfd3, &st);
+	ft_expect_dir(st.st_mode);
+	ft_openat(dfd3, name, O_CREAT | O_WRONLY | O_TRUNC, 0600, &fd1);
+	ft_openat(dfd3, name, O_PATH | O_CLOEXEC, 0, &fd2);
+	ft_fstat(fd2, &st);
+	ft_expect_reg(st.st_mode);
+	ft_expect_eq(st.st_size, 0);
+	ft_writen(fd1, data, dlen);
+	ft_close(fd1);
+	ft_fstat(fd2, &st);
+	ft_expect_eq(st.st_size, dlen);
+	ft_close(fd2);
+	ft_unlinkat(dfd3, name, 0);
+	ft_close(dfd3);
+	ft_unlinkat(dfd2, name, AT_REMOVEDIR);
+	ft_close(dfd2);
+	ft_unlinkat(dfd1, name, AT_REMOVEDIR);
+	ft_close(dfd1);
+	ft_rmdir(path);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_atime),
@@ -250,6 +294,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_trunc),
 	FT_DEFTEST(test_open_opath_reg),
 	FT_DEFTEST(test_open_opath_symlnk),
+	FT_DEFTEST(test_open_opath_dir),
 };
 
 const struct ft_tests ft_test_open = FT_DEFTESTS(ft_local_tests);

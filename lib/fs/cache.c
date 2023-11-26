@@ -1495,15 +1495,13 @@ silofs_cache_create_vi(struct silofs_cache *cache,
 static size_t
 cache_shrink_some(struct silofs_cache *cache, int shift, bool force)
 {
+	const size_t extra = clamp(1U << shift, 1, 64);
 	size_t actual = 0;
-	size_t extra;
 	size_t count;
 
-	extra = clamp(1U << shift, 1, 64);
 	count = lrumap_overpop(&cache->c_vi_lm) + extra;
 	actual += cache_shrink_or_relru_vis(cache, count, force);
 
-	extra = (shift > 1) ? clamp(1U << (shift - 1), 1, 64) : 0;
 	count = lrumap_overpop(&cache->c_ui_lm) + extra;
 	actual += cache_shrink_or_relru_uis(cache, count, force);
 
@@ -1677,7 +1675,7 @@ static void cache_evict_some(struct silofs_cache *cache)
 		evicted = true;
 	}
 	if (!evicted) {
-		cache_shrink_some(cache, 0, false);
+		cache_shrink_some(cache, 1, false);
 	}
 }
 

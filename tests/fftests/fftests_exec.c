@@ -70,7 +70,6 @@ static void statvfs_of(const struct ft_env *fte, struct statvfs *stvfs)
 	int dfd = -1;
 
 	ft_open(testdir, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	ft_ioctl_syncfs(dfd);
 	sleep(1); /* TODO: race in FUSE? */
 	ft_fstatvfs(dfd, stvfs);
 	ft_close(dfd);

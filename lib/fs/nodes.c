@@ -216,14 +216,8 @@ static int view_alloc_flags_of(enum silofs_stype stype, bool alloc)
 {
 	int flags = 0;
 
-	if (alloc) {
-		if (stype_issuper(stype)) {
-			flags |= SILOFS_ALLOCF_BZERO;
-		}
-	} else {
-		if (stype_isdatabk(stype)) {
-			flags |= SILOFS_ALLOCF_PUNCH;
-		}
+	if (stype_issuper(stype)) {
+		flags = alloc ? SILOFS_ALLOCF_BZERO : SILOFS_ALLOCF_PUNCH;
 	}
 	return flags;
 }
@@ -231,10 +225,10 @@ static int view_alloc_flags_of(enum silofs_stype stype, bool alloc)
 static struct silofs_view *
 view_new_by(struct silofs_alloc *alloc, enum silofs_stype stype)
 {
-	struct silofs_view *view;
+	struct silofs_view *view = NULL;
+	const int flags = view_alloc_flags_of(stype, true);
 
-	view = silofs_allocate(alloc, stype_size(stype),
-	                       view_alloc_flags_of(stype, true));
+	view = silofs_allocate(alloc, stype_size(stype), flags);
 	if (view != NULL) {
 		view_init_by(view, stype);
 	}
@@ -256,11 +250,13 @@ view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 static void view_del_by(struct silofs_view *view,
                         enum silofs_stype stype, struct silofs_alloc *alloc)
 {
-	const size_t size = stype_size(stype);
+	size_t size;
+	int flags;
 
 	if (likely(view != NULL)) {
-		silofs_deallocate(alloc, view, size,
-		                  view_alloc_flags_of(stype, false));
+		size = stype_size(stype);
+		flags = view_alloc_flags_of(stype, false);
+		silofs_deallocate(alloc, view, size, flags);
 	}
 }
 
@@ -454,11 +450,6 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni)
 	return vi_unconst(vi);
 }
 
-bool silofs_vi_isdata(const struct silofs_vnode_info *vi)
-{
-	return stype_isdata(vi_stype(vi));
-}
-
 static const struct silofs_mdigest *
 vi_mdigest(const struct silofs_vnode_info *vi)
 {
@@ -566,16 +557,22 @@ static void sbi_delete(struct silofs_sb_info *sbi,
 static void sbi_delete_as_ui(struct silofs_unode_info *ui,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_sb_info *sbi;
+
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sbi_delete(silofs_sbi_from_ui(ui), alloc, flags);
+		sbi = silofs_sbi_from_ui(ui);
+		sbi_delete(sbi, alloc, flags);
 	}
 }
 
 static void sbi_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_unode_info *ui;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		sbi_delete_as_ui(silofs_ui_from_lni(lni), alloc, flags);
+		ui = silofs_ui_from_lni(lni);
+		sbi_delete_as_ui(ui, alloc, flags);
 	}
 }
 
@@ -658,16 +655,22 @@ static void sni_delete(struct silofs_spnode_info *sni,
 static void sni_delete_as_ui(struct silofs_unode_info *ui,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_spnode_info *sni;
+
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sni_delete(silofs_sni_from_ui(ui), alloc, flags);
+		sni = silofs_sni_from_ui(ui);
+		sni_delete(sni, alloc, flags);
 	}
 }
 
 static void sni_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_unode_info *ui;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		sni_delete_as_ui(silofs_ui_from_lni(lni), alloc, flags);
+		ui = silofs_ui_from_lni(lni);
+		sni_delete_as_ui(ui, alloc, flags);
 	}
 }
 
@@ -755,16 +758,22 @@ static void sli_delete(struct silofs_spleaf_info *sli,
 static void sli_delete_as_ui(struct silofs_unode_info *ui,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_spleaf_info *sli;
+
 	if (likely(ui != NULL)) { /* make gcc-analyzer happy */
-		sli_delete(silofs_sli_from_ui(ui), alloc, flags);
+		sli = silofs_sli_from_ui(ui);
+		sli_delete(sli, alloc, flags);
 	}
 }
 
 static void sli_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_unode_info *ui;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		sli_delete_as_ui(silofs_ui_from_lni(lni), alloc, flags);
+		ui = silofs_ui_from_lni(lni);
+		sli_delete_as_ui(ui, alloc, flags);
 	}
 }
 
@@ -856,16 +865,22 @@ static void ii_delete(struct silofs_inode_info *ii,
 static void ii_delete_as_vi(struct silofs_vnode_info *vi,
                             struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_inode_info *ii;
+
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		ii_delete(silofs_ii_from_vi(vi), alloc, flags);
+		ii = silofs_ii_from_vi(vi);
+		ii_delete(ii, alloc, flags);
 	}
 }
 
 static void ii_delete_by(struct silofs_lnode_info *lni,
                          struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_vnode_info *vi;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		ii_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
+		vi = silofs_vi_from_lni(lni);
+		ii_delete_as_vi(vi, alloc, flags);
 	}
 }
 
@@ -990,16 +1005,22 @@ static void xai_delete(struct silofs_xanode_info *xai,
 static void xai_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_xanode_info *xai;
+
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		xai_delete(silofs_xai_from_vi(vi), alloc, flags);
+		xai = silofs_xai_from_vi(vi);
+		xai_delete(xai, alloc, flags);
 	}
 }
 
 static void xai_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_vnode_info *vi;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		xai_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
+		vi = silofs_vi_from_lni(lni);
+		xai_delete_as_vi(vi, alloc, flags);
 	}
 }
 
@@ -1082,16 +1103,22 @@ static void syi_delete(struct silofs_symval_info *syi,
 static void syi_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_symval_info *syi;
+
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		syi_delete(silofs_syi_from_vi(vi), alloc, flags);
+		syi = silofs_syi_from_vi(vi);
+		syi_delete(syi, alloc, flags);
 	}
 }
 
 static void syi_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_vnode_info *vi;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		syi_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
+		vi = silofs_vi_from_lni(lni);
+		syi_delete_as_vi(vi, alloc, flags);
 	}
 }
 
@@ -1174,16 +1201,22 @@ static void dni_delete(struct silofs_dnode_info *dni,
 static void dni_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_dnode_info *dni;
+
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		dni_delete(silofs_dni_from_vi(vi), alloc, flags);
+		dni = silofs_dni_from_vi(vi);
+		dni_delete(dni, alloc, flags);
 	}
 }
 
 static void dni_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_vnode_info *vi;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		dni_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
+		vi = silofs_vi_from_lni(lni);
+		dni_delete_as_vi(vi, alloc, flags);
 	}
 }
 
@@ -1269,16 +1302,22 @@ static void fni_delete(struct silofs_finode_info *fni,
 static void fni_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_finode_info *fni;
+
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		fni_delete(silofs_fni_from_vi(vi), alloc, flags);
+		fni = silofs_fni_from_vi(vi);
+		fni_delete(fni, alloc, flags);
 	}
 }
 
 static void fni_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_vnode_info *vi;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		fni_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
+		vi = silofs_vi_from_lni(lni);
+		fni_delete_as_vi(vi, alloc, flags);
 	}
 }
 
@@ -1368,16 +1407,22 @@ static void fli_delete(struct silofs_fileaf_info *fli,
 static void fli_delete_as_vi(struct silofs_vnode_info *vi,
                              struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_fileaf_info *fli;
+
 	if (likely(vi != NULL)) { /* make gcc-analyzer happy */
-		fli_delete(silofs_fli_from_vi(vi), alloc, flags);
+		fli = silofs_fli_from_vi(vi);
+		fli_delete(fli, alloc, flags);
 	}
 }
 
 static void fli_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags)
 {
+	struct silofs_vnode_info *vi;
+
 	if (likely(lni != NULL)) { /* make gcc-analyzer happy */
-		fli_delete_as_vi(silofs_vi_from_lni(lni), alloc, flags);
+		vi = silofs_vi_from_lni(lni);
+		fli_delete_as_vi(vi, alloc, flags);
 	}
 }
 

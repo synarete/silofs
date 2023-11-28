@@ -187,8 +187,6 @@ silofs_vi_from_dirty_lh(struct silofs_list_head *lh);
 struct silofs_vnode_info *
 silofs_vi_from_lni(const struct silofs_lnode_info *lni);
 
-bool silofs_vi_isdata(const struct silofs_vnode_info *vi);
-
 
 struct silofs_unode_info *
 silofs_ui_from_lni(const struct silofs_lnode_info *lni);

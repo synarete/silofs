@@ -424,6 +424,15 @@ static void ce_unlru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 	listq_remove(lru, ce_lru_link(ce));
 }
 
+static bool ce_is_lru_front(const struct silofs_cache_elem *ce,
+                            const struct silofs_listq *lru)
+{
+	const struct silofs_list_head *lru_front = listq_front(lru);
+	const struct silofs_list_head *ce_lru_lnk = ce_lru_link2(ce);
+
+	return (lru_front == ce_lru_lnk);
+}
+
 static bool ce_need_relru(const struct silofs_cache_elem *ce,
                           const struct silofs_listq *lru)
 {
@@ -597,9 +606,10 @@ static void lrumap_promote_lru(struct silofs_lrumap *lm,
                                struct silofs_cache_elem *ce, bool now)
 {
 	struct silofs_listq *lru = &lm->lm_lru;
+	const bool first = ce_is_lru_front(ce, lru);
 
 	ce->ce_lru_hitcnt++;
-	if (now || ce_need_relru(ce, lru)) {
+	if (!first && (now || ce_need_relru(ce, lru))) {
 		ce_relru(ce, &lm->lm_lru);
 		ce->ce_lru_hitcnt = 0;
 	}
@@ -995,7 +1005,9 @@ cache_find_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
 static void cache_promote_ui(struct silofs_cache *cache,
                              struct silofs_unode_info *ui, bool now)
 {
-	lrumap_promote(&cache->c_ui_lm, ui_to_ce(ui), now);
+	struct silofs_cache_elem *ce = ui_to_ce(ui);
+
+	lrumap_promote(&cache->c_ui_lm, ce, now);
 }
 
 static struct silofs_unode_info *
@@ -1365,7 +1377,7 @@ static bool cache_evict_or_relru_vi(struct silofs_cache *cache,
 }
 
 static size_t
-cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt, bool force)
+cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt, bool now)
 {
 	struct silofs_vnode_info *vi = NULL;
 	const size_t n = min(cnt, cache->c_vi_lm.lm_lru.sz);
@@ -1380,7 +1392,7 @@ cache_shrink_or_relru_vis(struct silofs_cache *cache, size_t cnt, bool force)
 		ok = cache_evict_or_relru_vi(cache, vi);
 		if (ok) {
 			evicted++;
-		} else if (!force && (i || evicted)) {
+		} else if (!now && (i || evicted)) {
 			break;
 		}
 	}
@@ -1493,101 +1505,135 @@ silofs_cache_create_vi(struct silofs_cache *cache,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t
-cache_shrink_some(struct silofs_cache *cache, int shift, bool force)
+cache_shrink_some_vis(struct silofs_cache *cache, size_t count, bool now)
 {
-	const size_t extra = clamp(1U << shift, 1, 64);
-	size_t actual = 0;
-	size_t count;
-
-	count = lrumap_overpop(&cache->c_vi_lm) + extra;
-	actual += cache_shrink_or_relru_vis(cache, count, force);
-
-	count = lrumap_overpop(&cache->c_ui_lm) + extra;
-	actual += cache_shrink_or_relru_uis(cache, count, force);
-
-	return actual;
+	return cache_shrink_or_relru_vis(cache, count, now);
 }
 
-static bool cache_lrumaps_has_overpop(const struct silofs_cache *cache)
+static size_t
+cache_shrink_some_uis(struct silofs_cache *cache, size_t count, bool now)
 {
-	const bool has_vi_overpop = lrumap_overpop(&cache->c_vi_lm) > 0;
-	const bool has_ui_overpop = lrumap_overpop(&cache->c_ui_lm) > 0;
-
-	return has_vi_overpop || has_ui_overpop;
+	return cache_shrink_or_relru_uis(cache, count, now);
 }
 
-static uint64_t cache_memory_pressure(const struct silofs_cache *cache)
+static size_t
+cache_shrink_some(struct silofs_cache *cache, size_t count, bool now)
+{
+	return cache_shrink_some_vis(cache, count, now) +
+	       cache_shrink_some_uis(cache, count, now);
+}
+
+/* returns memory-pressure as percentage of total available memory */
+static size_t cache_memory_pressure(const struct silofs_cache *cache)
 {
 	struct silofs_alloc_stat st;
-	uint64_t nbits;
+	size_t mem_pres = 1;
 
 	silofs_allocstat(cache->c_alloc, &st);
-	nbits = min((64UL * st.nbytes_use) / st.nbytes_max, 63);
-
-	/* returns memory-pressure represented as bit-mask */
-	return ((1UL << nbits) - 1);
+	if (likely(st.nbytes_max > 0)) {
+		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
+	}
+	return mem_pres;
 }
 
 static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 {
-	uint64_t mem_press;
+	const size_t mem_pres = cache_memory_pressure(cache);
 	size_t niter = 0;
 
-	if (cache_lrumaps_has_overpop(cache)) {
+	if (flags & SILOFS_F_NOW) {
+		niter += 2;
+	}
+	if (mem_pres && (flags & SILOFS_F_IDLE)) {
 		niter += 1;
 	}
-	mem_press = cache_memory_pressure(cache);
-	if (flags & SILOFS_F_NOW) {
-		niter += clamp(silofs_popcount64(mem_press >> 12), 2, 12);
-	}
-	if (flags & (SILOFS_F_BRINGUP | SILOFS_F_FSYNC | SILOFS_F_RELEASE)) {
-		niter += silofs_popcount64(mem_press >> 4);
-	} else if (flags & SILOFS_F_IDLE) {
-		niter += clamp(silofs_popcount64(mem_press >> 4), 2, 8);
-	} else if (flags & SILOFS_F_TIMEOUT) {
-		niter += clamp(silofs_popcount64(mem_press >> 8), 1, 4);
-	} else if (flags & (SILOFS_F_OPSTART)) {
-		niter += min(silofs_popcount64(mem_press >> 11), 1);
-	} else if (flags & (SILOFS_F_OPFINISH)) {
-		niter += min(silofs_popcount64(mem_press >> 13), 3);
-	} else if (flags & SILOFS_F_WALKFS) {
-		niter += (mem_press & 7);
+	if (20 < mem_pres) {
+		if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
+			niter += 1;
+		} else if (flags & SILOFS_F_TIMEOUT) {
+			niter += mem_pres / 10;
+		} else {
+			niter += mem_pres / 20;
+		}
 	}
 	return niter;
 }
 
-static size_t cache_relax_niter(struct silofs_cache *cache,
-                                size_t niter, bool force)
+static size_t cache_nmapped_uis(const struct silofs_cache *cache)
 {
-	size_t total = 0;
-	size_t actual = 1;
-	int shift = 0;
+	return cache->c_ui_lm.lm_htbl_sz;
+}
 
-	for (size_t i = 0; (i < niter) && actual; ++i) {
-		actual = cache_shrink_some(cache, shift++, force);
-		total += actual;
+static size_t cache_relax_by_niter(struct silofs_cache *cache,
+                                   size_t niter, int flags)
+{
+	const size_t nmapped = cache_nmapped_uis(cache);
+	size_t total = 0;
+	size_t nvis;
+	size_t nuis;
+	size_t cnt;
+	bool now;
+
+	now = (flags & SILOFS_F_NOW) > 0;
+	cnt = (now || (niter > 1)) ? 2 : 1;
+	for (size_t i = 0; i < niter; ++i) {
+		nvis = cache_shrink_some_vis(cache, i + 1, now);
+		if (!nvis || now || (nmapped > 256)) {
+			nuis = cache_shrink_some_uis(cache, cnt, now);
+		} else {
+			nuis = 0;
+		}
+		if (!nvis && !nuis) {
+			break;
+		}
+		total += nvis + nuis;
 	}
 	return total;
 }
 
+static size_t cache_overpop_vis(const struct silofs_cache *cache)
+{
+	return lrumap_overpop(&cache->c_vi_lm);
+}
+
+static size_t cache_overpop_uis(const struct silofs_cache *cache)
+{
+	return lrumap_overpop(&cache->c_ui_lm);
+}
+
+static size_t cache_relax_by_overpop(struct silofs_cache *cache)
+{
+	size_t opop;
+	size_t cnt = 0;
+
+	opop = cache_overpop_vis(cache);
+	if (opop > 0) {
+		cnt += cache_shrink_some_vis(cache, min(opop, 8), true);
+	}
+	opop = cache_overpop_uis(cache);
+	if (opop > 0) {
+		cnt += cache_shrink_some_uis(cache, min(opop, 2), true);
+	}
+	return cnt;
+}
+
 static void cache_relax_uamap(struct silofs_cache *cache, int flags)
 {
-	struct silofs_uamap *uamap = &cache->c_uamap;
-
 	if (flags & SILOFS_F_IDLE) {
-		silofs_uamap_drop_lru(uamap);
+		silofs_uamap_drop_lru(&cache->c_uamap);
 	}
 }
 
 void silofs_cache_relax(struct silofs_cache *cache, int flags)
 {
 	size_t niter;
-	size_t total;
-	const bool force = (flags & SILOFS_F_NOW) > 0;
+	size_t drop1;
+	size_t drop2;
 
 	niter = cache_calc_niter(cache, flags);
-	total = cache_relax_niter(cache, niter, force);
-	if (!total) {
+	drop1 = cache_relax_by_niter(cache, niter, flags);
+	drop2 = cache_relax_by_overpop(cache);
+	if (niter && !drop1 && !drop2 && (flags & SILOFS_F_IDLE)) {
 		cache_relax_uamap(cache, flags);
 	}
 }

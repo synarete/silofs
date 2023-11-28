@@ -4028,13 +4028,15 @@ fuseq_do_timeout_by(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq *fq = fqw->fw_fq;
 	time_t dif = 0;
-	int flags = 0;
+	int flags = SILOFS_F_TIMEOUT;
 	int err = 0;
 
 	fuseq_lock_ctl(fq);
 	if (fuseq_is_dormant(fq)) {
 		dif = fuseq_dif_time_stamp(fqw);
-		flags = (dif > 60) ? SILOFS_F_TIMEOUT_IDLE : SILOFS_F_TIMEOUT;
+		if (dif > 30) {
+			flags |= SILOFS_F_IDLE;
+		}
 		err = fuseq_do_timeout_with(fqw, flags);
 	}
 	fuseq_unlock_ctl(fq);

@@ -286,7 +286,7 @@ static void ut_qalloc_small_elems(struct ut_env *ute)
 	size_t msz = 0;
 
 	silofs_list_init(&lst);
-	qal = ut_new_qalloc(ute, 64 * UT_1M);
+	qal = ut_new_qalloc(ute, 256 * UT_1M);
 	for (size_t i = 0; i < 10000; ++i) {
 		val = (small_sz + i) % (small_sz / 2);
 		msz = silofs_clamp(val, sizeof(*mr), (small_sz / 2));

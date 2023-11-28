@@ -84,6 +84,7 @@ struct silofs_qalloc {
 	struct silofs_alloc     alloc;
 	size_t                  nbytes_use;
 	int                     mode;
+	int                     magic;
 };
 
 /* allocator via standard C malloc/free */

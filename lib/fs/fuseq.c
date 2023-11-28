@@ -3187,7 +3187,7 @@ static int fuseq_check_pipe_pre(const struct silofs_fuseq_worker *fqw)
 static int fuseq_wait_request(const struct silofs_fuseq_worker *fqw)
 {
 	const int fuse_fd = fqw->fw_fq->fq_fuse_fd;
-	const int timout_millisec = 100;
+	const int timout_millisec = 100 + (int)(fqw->fw_index % 11);
 
 	return silofs_sys_pollin_rfd(fuse_fd, timout_millisec);
 }

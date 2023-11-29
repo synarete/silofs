@@ -41,4 +41,7 @@
 #define SILOFS_CACHELINE_SIZE_MAX       (256)
 #define SILOFS_CACHELINE_SIZE_DFL       (64)
 
+/* iovec count limit */
+#define SILOFS_IOV_MAX                  (64)
+
 #endif /* SILOFS_CONSTS_H_ */

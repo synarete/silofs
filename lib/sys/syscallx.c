@@ -425,3 +425,7 @@ long silofs_sc_nproc_onln(void)
 	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
+long silofs_sc_iov_max(void)
+{
+	return sysconf(_SC_IOV_MAX);
+}

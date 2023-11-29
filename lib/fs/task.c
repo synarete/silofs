@@ -25,6 +25,8 @@
 static int sqe_setup_iov_at(struct silofs_submitq_ent *sqe,
                             size_t idx, size_t len)
 {
+	STATICASSERT_LE(ARRAY_SIZE(sqe->iov), SILOFS_IOV_MAX);
+
 	silofs_assert_lt(idx, ARRAY_SIZE(sqe->iov));
 	silofs_assert_null(sqe->iov[idx].iov_base);
 

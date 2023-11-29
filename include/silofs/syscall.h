@@ -389,6 +389,8 @@ long silofs_sc_nproc_conf(void);
 
 long silofs_sc_nproc_onln(void);
 
+long silofs_sc_iov_max(void);
+
 
 #endif /* SILOFS_SYSCALL_H_ */
 

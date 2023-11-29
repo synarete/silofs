@@ -477,6 +477,10 @@ static int check_sysconf(void)
 	if (val <= 0) {
 		return errno_or_errnum(SILOFS_ENOMEDIUM);
 	}
+	val = silofs_sc_iov_max();
+	if (val < SILOFS_IOV_MAX) {
+		return errno_or_errnum(SILOFS_EOPNOTSUPP);
+	}
 	return 0;
 }
 

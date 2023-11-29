@@ -285,6 +285,72 @@ static void test_open_opath_dir(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects open(3p) with O_PATH on directory to work correctly with renameat(2)
+ */
+static void test_open_opath_renameat(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	const size_t len1 = FT_1K;
+	const size_t len2 = FT_64K;
+	const char *path1 = ft_new_path_unique(fte);
+	const char *path2 = ft_new_path_unique(fte);
+	const char *name1 = ft_new_name_unique(fte);
+	const char *name2 = ft_new_name_unique(fte);
+	const void *data1 = ft_new_buf_rands(fte, len1);
+	const void *data2 = ft_new_buf_rands(fte, len2);
+	int dfd1 = -1;
+	int dfd2 = -1;
+	int fd1 = -1;
+	int fd2 = -1;
+
+	ft_mkdir(path1, 0700);
+	ft_open(path1, O_DIRECTORY, 0, &dfd1);
+	ft_openat(dfd1, name1, O_CREAT | O_WRONLY | O_TRUNC, 0600, &fd1);
+	ft_writen(fd1, data1, len1);
+	ft_close(fd1);
+	ft_close(dfd1);
+
+	ft_mkdir(path2, 0700);
+	ft_open(path2, O_DIRECTORY, 0, &dfd2);
+	ft_openat(dfd2, name2, O_CREAT | O_WRONLY | O_TRUNC, 0600, &fd2);
+	ft_writen(fd2, data2, len2);
+	ft_close(fd2);
+	ft_close(dfd2);
+
+	ft_open(path1, O_DIRECTORY | O_PATH, 0, &dfd1);
+	ft_open(path2, O_DIRECTORY | O_PATH, 0, &dfd2);
+	ft_renameat(dfd1, name1, dfd2, name1);
+	ft_fstatat_err(dfd1, name1, 0, -ENOENT);
+	ft_fstatat(dfd2, name1, &st, 0);
+	ft_expect_eq(st.st_size, len1);
+	ft_renameat(dfd2, name2, dfd1, name2);
+	ft_fstatat_err(dfd2, name2, 0, -ENOENT);
+	ft_fstatat(dfd1, name2, &st, 0);
+	ft_expect_eq(st.st_size, len2);
+
+	ft_renameat2(dfd1, name2, dfd2, name1, RENAME_EXCHANGE);
+	ft_fstatat(dfd1, name2, &st, 0);
+	ft_expect_eq(st.st_size, len1);
+	ft_fstatat_err(dfd1, name1, 0, -ENOENT);
+	ft_fstatat(dfd2, name1, &st, 0);
+	ft_expect_eq(st.st_size, len2);
+	ft_fstatat_err(dfd2, name2, 0, -ENOENT);
+	ft_renameat2(dfd1, name2, dfd2, name1, RENAME_EXCHANGE);
+
+	ft_renameat(dfd1, name2, dfd2, name1);
+	ft_fstatat_err(dfd1, name2, 0, -ENOENT);
+	ft_fstatat(dfd2, name1, &st, 0);
+	ft_expect_eq(st.st_size, len2);
+	ft_unlinkat(dfd2, name1, 0);
+
+	ft_close(dfd1);
+	ft_close(dfd2);
+	ft_rmdir(path1);
+	ft_rmdir(path2);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_atime),
@@ -295,6 +361,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_opath_reg),
 	FT_DEFTEST(test_open_opath_symlnk),
 	FT_DEFTEST(test_open_opath_dir),
+	FT_DEFTEST(test_open_opath_renameat),
 };
 
 const struct ft_tests ft_test_open = FT_DEFTESTS(ft_local_tests);

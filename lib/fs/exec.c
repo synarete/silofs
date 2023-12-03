@@ -39,8 +39,9 @@ struct silofs_fs_core {
 	struct silofs_cache     cache;
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
-	struct silofs_idsmap    idsm;
-	struct silofs_fsenv      fsenv;
+	struct silofs_idsmap    idsmap;
+	struct silofs_fsenv     fsenv;
+	struct silofs_flusher   flusher;
 };
 
 union silofs_fs_core_u {
@@ -315,12 +316,34 @@ static void fs_ctx_fini_submitq(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
+static int fs_ctx_init_flusher(struct silofs_fs_ctx *fs_ctx)
+{
+	struct silofs_flusher *flusher;
+	int err;
+
+	flusher = &fs_ctx_obj_of(fs_ctx)->fs_core.c.flusher;
+	err = silofs_flusher_init(flusher, fs_ctx->submitq);
+	if (err) {
+		return err;
+	}
+	fs_ctx->flusher = flusher;
+	return 0;
+}
+
+static void fs_ctx_fini_flusher(struct silofs_fs_ctx *fs_ctx)
+{
+	if (fs_ctx->flusher != NULL) {
+		silofs_flusher_fini(fs_ctx->flusher);
+		fs_ctx->flusher = NULL;
+	}
+}
+
 static int fs_ctx_init_idsmap(struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_idsmap *idsmap;
 	int err;
 
-	idsmap = &fs_ctx_obj_of(fs_ctx)->fs_core.c.idsm;
+	idsmap = &fs_ctx_obj_of(fs_ctx)->fs_core.c.idsmap;
 	err = silofs_idsmap_init(idsmap, fs_ctx->alloc,
 	                         fs_ctx->fs_args.allowhostids);
 	if (err) {
@@ -346,7 +369,7 @@ static void fs_ctx_fini_idsmap(struct silofs_fs_ctx *fs_ctx)
 
 static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_fsenv_base ub_base = {
+	const struct silofs_fsenv_base fse_base = {
 		.fs_args = &fs_ctx->fs_args,
 		.bootpath = &fs_ctx->bootpath,
 		.boot_ivkey = &fs_ctx->ivkey_boot,
@@ -355,13 +378,14 @@ static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 		.cache = fs_ctx->cache,
 		.repo = fs_ctx->repo,
 		.submitq = fs_ctx->submitq,
+		.flusher = fs_ctx->flusher,
 		.idsmap = fs_ctx->idsmap,
 	};
 	struct silofs_fsenv *fsenv;
 	int err;
 
 	fsenv = &fs_ctx_obj_of(fs_ctx)->fs_core.c.fsenv;
-	err = silofs_fsenv_init(fsenv, &ub_base);
+	err = silofs_fsenv_init(fsenv, &fse_base);
 	if (!err) {
 		fs_ctx->fsenv = fsenv;
 	}
@@ -513,6 +537,10 @@ static int fs_ctx_init_subs(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
+	err = fs_ctx_init_flusher(fs_ctx);
+	if (err) {
+		return err;
+	}
 	err = fs_ctx_init_idsmap(fs_ctx);
 	if (err) {
 		return err;
@@ -562,6 +590,7 @@ static void fs_ctx_fini(struct silofs_fs_ctx *fs_ctx)
 	fs_ctx_fini_fuseq(fs_ctx);
 	fs_ctx_fini_fsenv(fs_ctx);
 	fs_ctx_fini_idsmap(fs_ctx);
+	fs_ctx_fini_flusher(fs_ctx);
 	fs_ctx_fini_submitq(fs_ctx);
 	fs_ctx_fini_repo(fs_ctx);
 	fs_ctx_fini_cache(fs_ctx);

@@ -170,9 +170,9 @@ static size_t fsenv_calc_iopen_limit(const struct silofs_fsenv *fsenv)
 }
 
 static void fsenv_init_commons(struct silofs_fsenv *fsenv,
-                               const struct silofs_fsenv_base *ub_base)
+                               const struct silofs_fsenv_base *fse_base)
 {
-	memcpy(&fsenv->fse, ub_base, sizeof(fsenv->fse));
+	memcpy(&fsenv->fse, fse_base, sizeof(fsenv->fse));
 	lsegid_reset(&fsenv->fse_sb_lsegid);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
 	fsenv->fse_commit_id = 0;
@@ -235,11 +235,11 @@ static void fsenv_fini_iconv(struct silofs_fsenv *fsenv)
 }
 
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
-                      const struct silofs_fsenv_base *ub_base)
+                      const struct silofs_fsenv_base *fse_base)
 {
 	int err;
 
-	fsenv_init_commons(fsenv, ub_base);
+	fsenv_init_commons(fsenv, fse_base);
 	fsenv_update_by_fs_args(fsenv);
 
 	err = fsenv_init_fs_lock(fsenv);

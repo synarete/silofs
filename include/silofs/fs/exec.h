@@ -61,9 +61,10 @@ struct silofs_fs_ctx {
 	struct silofs_alloc    *alloc;
 	struct silofs_cache    *cache;
 	struct silofs_repo     *repo;
-	struct silofs_idsmap   *idsmap;
-	struct silofs_fsenv     *fsenv;
 	struct silofs_submitq  *submitq;
+	struct silofs_flusher  *flusher;
+	struct silofs_idsmap   *idsmap;
+	struct silofs_fsenv    *fsenv;
 	struct silofs_fuseq    *fuseq;
 	struct silofs_password *password;
 	struct silofs_uaddr     sb_addr;

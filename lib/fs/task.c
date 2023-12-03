@@ -19,8 +19,8 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
-#define SILOFS_COMMIT_LEN_MAX   (2 * SILOFS_MEGA)
-#define SILOFS_CID_ALL          (UINT64_MAX)
+#define SILOFS_COMMIT_LEN_MAX   SILOFS_MEGA
+#define SILOFS_CID_ALL          UINT64_MAX
 
 static int sqe_setup_iov_at(struct silofs_submitq_ent *sqe,
                             size_t idx, size_t len)
@@ -63,6 +63,8 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	size_t len;
 	loff_t end;
 	loff_t nxt;
+
+	STATICASSERT_EQ(ARRAY_SIZE(sqe->iov), ARRAY_SIZE(sqe->lni));
 
 	if (sqe->cnt == 0) {
 		return true;
@@ -204,7 +206,7 @@ sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 {
 	struct silofs_submitq_ent *sqe;
 
-	STATICASSERT_LE(sizeof(*sqe), 1024);
+	STATICASSERT_LE(sizeof(*sqe), 2048);
 
 	sqe = silofs_allocate(alloc, sizeof(*sqe), 0);
 	if (likely(sqe != NULL)) {

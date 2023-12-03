@@ -17,7 +17,7 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
-#define SILOFS_SUBENT_NREFS_MAX (16)
+#define SILOFS_SQENT_NREFS_MAX  (64)
 
 /* current file-system operation */
 struct silofs_oper {
@@ -47,8 +47,8 @@ struct silofs_submit_ref {
 
 /* submission queue entry */
 struct silofs_submitq_ent {
-	struct iovec                    iov[SILOFS_SUBENT_NREFS_MAX];
-	struct silofs_lnode_info       *lni[SILOFS_SUBENT_NREFS_MAX];
+	struct iovec                    iov[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_lnode_info       *lni[SILOFS_SQENT_NREFS_MAX];
 	struct silofs_list_head         qlh;
 	struct silofs_fsenv            *fsenv;
 	struct silofs_alloc            *alloc;

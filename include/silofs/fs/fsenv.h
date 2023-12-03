@@ -28,6 +28,7 @@ struct silofs_fsenv_base {
 	struct silofs_cache            *cache;
 	struct silofs_repo             *repo;
 	struct silofs_submitq          *submitq;
+	struct silofs_flusher          *flusher;
 	struct silofs_idsmap           *idsmap;
 };
 
@@ -46,7 +47,7 @@ struct silofs_fsenv {
 	iconv_t                         fse_iconv;
 	time_t                          fse_init_time;
 	uint64_t                        fse_commit_id;
-};
+} silofs_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

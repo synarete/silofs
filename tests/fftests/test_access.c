@@ -42,11 +42,9 @@ static void test_access_noent(struct ft_env *fte)
 	ft_access(path0, F_OK);
 	ft_access(path0, X_OK);
 	ft_access(path0, F_OK | X_OK);
-
 	ft_access_err(path1, R_OK, -ENOENT);
 	ft_access_err(path1, F_OK, -ENOENT);
 	ft_access_err(path1, F_OK | X_OK, -ENOENT);
-
 	ft_access_err(path2, R_OK, -ENOENT);
 	ft_access_err(path2, F_OK, -ENOENT);
 	ft_access_err(path2, F_OK | X_OK, -ENOENT);
@@ -60,9 +58,9 @@ static void test_access_noent(struct ft_env *fte)
  */
 static void test_access_inval(struct ft_env *fte)
 {
-	int fd = -1;
-	const int mode = R_OK | W_OK | X_OK | F_OK;
 	const char *path = ft_new_path_unique(fte);
+	const int mode = R_OK | W_OK | X_OK | F_OK;
+	int fd = -1;
 
 	ft_creat(path, 0644, &fd);
 	ft_access_err(path, ~mode, -EINVAL);
@@ -77,12 +75,12 @@ static void test_access_inval(struct ft_env *fte)
  */
 static void test_access_prefix(struct ft_env *fte)
 {
-	int fd = -1;
-	const int mode = R_OK;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
 	const char *path3 = ft_new_path_under(fte, path2);
+	const int mode = R_OK;
+	int fd = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_mkdir(path1, 0750);
@@ -95,7 +93,6 @@ static void test_access_prefix(struct ft_env *fte)
 	ft_chmod(path2, 0700);
 	ft_suspends(fte, 3);
 	ft_access(path3, mode);
-
 	ft_unlink(path3);
 	ft_close(fd);
 	ft_rmdir(path2);

@@ -300,7 +300,7 @@ void ft_rmdir_err(const char *path, int err);
 
 void ft_unlink(const char *path);
 
-void ft_unlink_n(const char **path_arr, size_t n);
+void ft_unlink2(const char *path1, const char *path2);
 
 void ft_unlink_err(const char *path, int err);
 
@@ -406,7 +406,7 @@ void ft_access_err(const char *path, int mode, int err);
 
 void ft_close(int fd);
 
-void ft_close_n(int *fds, size_t n);
+void ft_close2(int fd1, int fd2);
 
 void ft_mmap(void *addr, size_t length, int prot, int flags,
              int fd, off_t offset, void **out);
@@ -498,6 +498,7 @@ extern const struct ft_tests ft_test_mkdir;
 extern const struct ft_tests ft_test_readdir;
 extern const struct ft_tests ft_test_create;
 extern const struct ft_tests ft_test_open;
+extern const struct ft_tests ft_test_opath;
 extern const struct ft_tests ft_test_link;
 extern const struct ft_tests ft_test_unlink;
 extern const struct ft_tests ft_test_chmod;

@@ -34,6 +34,21 @@ struct ft_xstress_ctx {
 	int             keep_run;
 };
 
+
+static void ft_close_n(int *fds, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_close(fds[i]);
+	}
+}
+
+static void ft_unlink_n(const char **path_arr, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_unlink(path_arr[i]);
+	}
+}
+
 static void xs_bzero_ctx(struct ft_xstress_ctx *xs_ctx, size_t cnt)
 {
 	memset(xs_ctx, 0, cnt * sizeof(*xs_ctx));

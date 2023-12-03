@@ -161,35 +161,6 @@ static void test_fstatat_simple(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/*
- * Expects fstatat(2) to successfully probe sub-directory components when used
- * with O_PATH.
- */
-static void test_fstatat_opath(struct ft_env *fte)
-{
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
-	const char *name = ft_new_name_unique(fte);
-	int dfd = -1;
-	int fd = -1;
-
-	ft_mkdir(path, 0700);
-	ft_openat(AT_FDCWD, path, O_DIRECTORY | O_RDONLY | O_PATH, 0, &dfd);
-	ft_fstatat(dfd, "", &st, AT_EMPTY_PATH);
-	ft_expect_dir(st.st_mode);
-	ft_openat(dfd, name, O_CREAT | O_TRUNC | O_RDWR, 0644, &fd);
-	ft_fstatat(dfd, "", &st, AT_EMPTY_PATH);
-	ft_expect_dir(st.st_mode);
-	ft_fstatat(dfd, name, &st, 0);
-	ft_expect_reg(st.st_mode);
-	ft_unlinkat(dfd, name, 0);
-	ft_close(fd);
-	ft_unlinkat_noent(dfd, name);
-	ft_close(dfd);
-	ft_rmdir(path);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_stat_simple),
@@ -197,7 +168,6 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTESTF(test_stat_statvfs, FT_F_STAVFS),
 	FT_DEFTEST(test_statx_btime),
 	FT_DEFTEST(test_fstatat_simple),
-	FT_DEFTEST(test_fstatat_opath),
 };
 
 const struct ft_tests ft_test_stat = FT_DEFTESTS(ft_local_tests);

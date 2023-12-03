@@ -193,11 +193,10 @@ void ft_unlink(const char *path)
 	expect_ok(silofs_sys_unlink(path));
 }
 
-void ft_unlink_n(const char **path_arr, size_t n)
+void ft_unlink2(const char *path1, const char *path2)
 {
-	for (size_t i = 0; i < n; ++i) {
-		ft_unlink(path_arr[i]);
-	}
+	ft_unlink(path1);
+	ft_unlink(path2);
 }
 
 void ft_unlink_err(const char *path, int err)
@@ -263,11 +262,10 @@ void ft_close(int fd)
 	expect_ok(silofs_sys_close(fd));
 }
 
-void ft_close_n(int *fds, size_t n)
+void ft_close2(int fd1, int fd2)
 {
-	for (size_t i = 0; i < n; ++i) {
-		ft_close(fds[i]);
-	}
+	ft_close(fd1);
+	ft_close(fd2);
 }
 
 void ft_truncate(const char *path, loff_t len)

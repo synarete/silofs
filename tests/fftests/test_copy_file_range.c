@@ -91,18 +91,6 @@ static long ft_lmax(long a, long b)
 	return (a > b) ? a : b;
 }
 
-static void ft_close2(int fd1, int fd2)
-{
-	ft_close(fd1);
-	ft_close(fd2);
-}
-
-static void ft_unlink2(const char *path1, const char *path2)
-{
-	ft_unlink(path1);
-	ft_unlink(path2);
-}
-
 static void ft_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
                                 loff_t off_out, size_t len)
 {

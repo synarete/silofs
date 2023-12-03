@@ -32,6 +32,7 @@ silofs_fftests_SOURCES += test_mkdir_rmdir.c
 silofs_fftests_SOURCES += test_mmap_mt.c
 silofs_fftests_SOURCES += test_mmap.c
 silofs_fftests_SOURCES += test_namespace.c
+silofs_fftests_SOURCES += test_opath.c
 silofs_fftests_SOURCES += test_open.c
 silofs_fftests_SOURCES += test_readdir.c
 silofs_fftests_SOURCES += test_rename.c

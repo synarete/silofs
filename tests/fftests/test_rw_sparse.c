@@ -20,7 +20,7 @@
 /*
  * Tests read-write data-consistency over sparse file.
  */
-static void test_sparse_simple_(struct ft_env *fte, size_t cnt)
+static void test_rw_sparse_simple_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	const size_t step = 524287;
@@ -50,12 +50,12 @@ static void test_sparse_simple_(struct ft_env *fte, size_t cnt)
 	ft_unlink(path);
 }
 
-static void test_sparse_simple(struct ft_env *fte)
+static void test_rw_sparse_simple(struct ft_env *fte)
 {
-	const size_t cnt[] = { 17, 7717 };
+	const size_t cnt[] = { 10, 1000, 10000 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
-		test_sparse_simple_(fte, cnt[i]);
+		test_rw_sparse_simple_(fte, cnt[i]);
 		ft_relax_mem(fte);
 	}
 }
@@ -64,7 +64,7 @@ static void test_sparse_simple(struct ft_env *fte)
 /*
  * Tests read-write data-consistency over sparse file with syncs over same file
  */
-static void test_sparse_rdwr_(struct ft_env *fte, size_t cnt)
+static void test_rw_sparse_repeat_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	const size_t step = 524287;
@@ -76,7 +76,7 @@ static void test_sparse_rdwr_(struct ft_env *fte, size_t cnt)
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_close(fd);
-	for (size_t i = 0; i < 11; ++i) {
+	for (size_t i = 0; i < 10; ++i) {
 		for (size_t j = 0; j < cnt; ++j) {
 			ft_open(path, O_RDWR, 0, &fd);
 			num = i + (j * step);
@@ -92,12 +92,12 @@ static void test_sparse_rdwr_(struct ft_env *fte, size_t cnt)
 	ft_unlink(path);
 }
 
-static void test_sparse_rdwr(struct ft_env *fte)
+static void test_rw_sparse_repeat(struct ft_env *fte)
 {
-	const size_t cnt[] = { 3, 11, 127 };
+	const size_t cnt[] = { 10, 1000 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
-		test_sparse_rdwr_(fte, cnt[i]);
+		test_rw_sparse_repeat_(fte, cnt[i]);
 		ft_relax_mem(fte);
 	}
 }
@@ -106,7 +106,7 @@ static void test_sparse_rdwr(struct ft_env *fte)
 /*
  * Tests read-write data-consistency over sparse file with overwrites.
  */
-static void test_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
+static void test_rw_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
 {
 	const size_t len1 = 10037;
 	const size_t len2 = 10039;
@@ -143,12 +143,12 @@ static void test_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
 	ft_unlink(path);
 }
 
-static void test_sparse_overwrite(struct ft_env *fte)
+static void test_rw_sparse_overwrite(struct ft_env *fte)
 {
 	const loff_t base_off[] = { 0, 1, FT_1M - 2, FT_1G - 3 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(base_off); ++i) {
-		test_sparse_overwrite_(fte, base_off[i]);
+		test_rw_sparse_overwrite_(fte, base_off[i]);
 		ft_relax_mem(fte);
 	}
 }
@@ -156,9 +156,9 @@ static void test_sparse_overwrite(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_sparse_simple),
-	FT_DEFTEST(test_sparse_rdwr),
-	FT_DEFTEST(test_sparse_overwrite),
+	FT_DEFTEST(test_rw_sparse_simple),
+	FT_DEFTEST(test_rw_sparse_repeat),
+	FT_DEFTEST(test_rw_sparse_overwrite),
 };
 
 const struct ft_tests ft_test_rw_sparse = FT_DEFTESTS(ft_local_tests);

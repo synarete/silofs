@@ -31,6 +31,7 @@ static const struct ft_tests *const ft_testsbl[]  = {
 	FT_METATEST(ft_test_readdir),
 	FT_METATEST(ft_test_create),
 	FT_METATEST(ft_test_open),
+	FT_METATEST(ft_test_opath),
 	FT_METATEST(ft_test_link),
 	FT_METATEST(ft_test_unlink),
 	FT_METATEST(ft_test_chmod),
@@ -70,7 +71,7 @@ static void statvfs_of(const struct ft_env *fte, struct statvfs *stvfs)
 	int dfd = -1;
 
 	ft_open(testdir, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	sleep(1); /* TODO: race in FUSE? */
+	/* sleep(1); TODO: needed? race in FUSE? */
 	ft_fstatvfs(dfd, stvfs);
 	ft_close(dfd);
 }

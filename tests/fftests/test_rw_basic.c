@@ -317,10 +317,15 @@ static void test_rw_basic_unaligned_steps(struct ft_env *fte)
 	const loff_t step2 = FT_64K - 1;
 
 	test_rw_basic_steps_(fte, 0, FT_1M, step1);
+	ft_relax_mem(fte);
 	test_rw_basic_steps_(fte, 0, FT_1M, step2);
+	ft_relax_mem(fte);
 	test_rw_basic_steps_(fte, 0, 2 * FT_1M, step1);
+	ft_relax_mem(fte);
 	test_rw_basic_steps_(fte, 0, 2 * FT_1M, step2);
+	ft_relax_mem(fte);
 	test_rw_basic_steps_(fte, FT_1G - FT_1M, FT_1M, step1);
+	ft_relax_mem(fte);
 	test_rw_basic_steps_(fte, FT_1G - FT_1M, FT_1M, step2);
 }
 
@@ -445,15 +450,18 @@ static void test_rw_basic_backward_u64_(struct ft_env *fte, size_t cnt)
 		ft_preadn(fd2, &val, vsz, pos);
 		ft_expect_eq(i, val);
 	}
-	ft_close(fd1);
-	ft_close(fd2);
+	ft_close2(fd1, fd2);
 	ft_unlink(path);
 }
 
 static void test_rw_basic_backward_u64(struct ft_env *fte)
 {
-	test_rw_basic_backward_u64_(fte, 100);
-	test_rw_basic_backward_u64_(fte, 10000);
+	const size_t cnt[] = { 100, 10000 };
+
+	for (size_t i = 0; i < FT_ARRAY_SIZE(cnt); ++i) {
+		test_rw_basic_backward_u64_(fte, cnt[i]);
+		ft_relax_mem(fte);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

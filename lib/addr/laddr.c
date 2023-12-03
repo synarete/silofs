@@ -172,7 +172,7 @@ long silofs_lsegid_compare(const struct silofs_lsegid *lsegid1,
 {
 	long cmp;
 
-	cmp = (long)(lsegid2->vspace) - (long)(lsegid1->vspace);
+	cmp = silofs_lvid_compare(&lsegid1->lvid, &lsegid2->lvid);
 	if (cmp) {
 		return cmp;
 	}
@@ -180,15 +180,15 @@ long silofs_lsegid_compare(const struct silofs_lsegid *lsegid1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(lsegid2->size) - (long)(lsegid1->size);
-	if (cmp) {
-		return cmp;
-	}
 	cmp = (long)(lsegid2->voff) - (long)(lsegid1->voff);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_lvid_compare(&lsegid1->lvid, &lsegid2->lvid);
+	cmp = (long)(lsegid2->vspace) - (long)(lsegid1->vspace);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)(lsegid2->size) - (long)(lsegid1->size);
 	if (cmp) {
 		return cmp;
 	}
@@ -319,15 +319,15 @@ long silofs_laddr_compare(const struct silofs_laddr *laddr1,
 {
 	long cmp;
 
+	cmp = silofs_lsegid_compare(&laddr1->lsegid, &laddr2->lsegid);
+	if (cmp) {
+		return cmp;
+	}
 	cmp = laddr1->pos - laddr2->pos;
 	if (cmp) {
 		return cmp;
 	}
 	cmp = (int)laddr1->len - (int)laddr2->len;
-	if (cmp) {
-		return cmp;
-	}
-	cmp = silofs_lsegid_compare(&laddr1->lsegid, &laddr2->lsegid);
 	if (cmp) {
 		return cmp;
 	}

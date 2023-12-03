@@ -65,15 +65,15 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 {
 	long cmp;
 
+	cmp = silofs_laddr_compare(&uaddr1->laddr, &uaddr2->laddr);
+	if (cmp) {
+		return cmp;
+	}
 	cmp = (long)uaddr1->stype - (long)uaddr2->stype;
 	if (cmp) {
 		return cmp;
 	}
 	cmp = uaddr1->voff - uaddr2->voff;
-	if (cmp) {
-		return cmp;
-	}
-	cmp = silofs_laddr_compare(&uaddr1->laddr, &uaddr2->laddr);
 	if (cmp) {
 		return cmp;
 	}

@@ -136,7 +136,7 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 {
 	long cmp;
 
-	cmp = (long)vaddr1->len - (long)vaddr2->len;
+	cmp = vaddr1->stype - vaddr2->stype;
 	if (cmp) {
 		return cmp;
 	}
@@ -144,7 +144,7 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = vaddr1->stype - vaddr2->stype;
+	cmp = (long)vaddr1->len - (long)vaddr2->len;
 	if (cmp) {
 		return cmp;
 	}

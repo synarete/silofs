@@ -65,13 +65,19 @@ static const struct ft_tests *const ft_testsbl[]  = {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void statvfs_of(const struct ft_env *fte, struct statvfs *stvfs)
+static void statvfs_of(const struct ft_env *fte,
+                       struct statvfs *stvfs, bool finish)
 {
 	const char *testdir = fte->params.testdir;
 	int dfd = -1;
 
 	ft_open(testdir, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	/* sleep(1); TODO: needed? race in FUSE? */
+	if (finish) {
+		/* TODO: needed, but why? race in FUSE? */
+		ft_fsync(dfd);
+		sleep(1);
+		ft_fsync(dfd);
+	}
 	ft_fstatvfs(dfd, stvfs);
 	ft_close(dfd);
 }
@@ -83,22 +89,26 @@ static void ft_list_test(struct ft_env *fte, const struct ft_tdef *tdef)
 	fflush(stdout);
 }
 
+static void ft_take_timestamp(struct ft_env *fte, bool finish)
+{
+	silofs_mclock_now(finish ? &fte->ts_finish : &fte->ts_start);
+}
+
 static void ft_start_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
 	fte->currtest = tdef;
 	fte->nbytes_alloc = 0;
 	silofs_log_info("%-40s =>", fte->currtest->name);
-	silofs_mclock_now(&fte->ts_start);
-	statvfs_of(fte, &fte->stvfs);
+	statvfs_of(fte, &fte->stvfs, false);
 }
 
 static void ft_finish_test(struct ft_env *fte)
 {
-	struct timespec dur;
+	struct timespec dif;
 
-	silofs_mclock_dur(&fte->ts_start, &dur);
+	silofs_mclock_dif(&fte->ts_start, &fte->ts_finish, &dif);
 	silofs_log_info("%-40s OK (%ld.%03lds)", fte->currtest->name,
-	                dur.tv_sec, dur.tv_nsec / 1000000L);
+	                dif.tv_sec, dif.tv_nsec / 1000000L);
 	umask(fte->umsk);
 	fte->currtest = NULL;
 	ft_freeall(fte);
@@ -146,7 +156,7 @@ static void ft_verify_fsstat(const struct ft_env *fte,
 	struct statvfs stvfs_end;
 
 	if (!ft_ignore_statvfs_check(fte, tdef)) {
-		statvfs_of(fte, &stvfs_end);
+		statvfs_of(fte, &stvfs_end, true);
 		verify_consistent_statvfs(&fte->stvfs, &stvfs_end);
 	}
 }
@@ -154,7 +164,9 @@ static void ft_verify_fsstat(const struct ft_env *fte,
 static void ft_exec_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
 	ft_start_test(fte, tdef);
+	ft_take_timestamp(fte, false);
 	tdef->hook(fte);
+	ft_take_timestamp(fte, true);
 	ft_verify_fsstat(fte, tdef);
 	ft_finish_test(fte);
 }

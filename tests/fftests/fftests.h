@@ -151,6 +151,7 @@ struct ft_env {
 	const struct ft_tdef   *currtest;
 	struct statvfs          stvfs;
 	struct timespec         ts_start;
+	struct timespec         ts_finish;
 	uint64_t seqn;
 	time_t  start;
 	pid_t   pid;

@@ -61,7 +61,13 @@ void silofs_mclock_dur(const struct timespec *start, struct timespec *dur)
 	struct timespec now;
 
 	silofs_mclock_now(&now);
-	timespec_dif(start, &now, dur);
+	silofs_mclock_dif(start, &now, dur);
+}
+
+void silofs_mclock_dif(const struct timespec *start,
+                       const struct timespec *finish, struct timespec *dif)
+{
+	timespec_dif(start, finish, dif);
 }
 
 time_t silofs_time_now(void)

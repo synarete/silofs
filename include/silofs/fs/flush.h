@@ -24,23 +24,15 @@ struct silofs_dset {
 	struct silofs_avl               ds_avl;
 };
 
-struct silofs_dsets {
-	struct silofs_dset dset[SILOFS_STYPE_LAST];
-};
-
-struct silofs_sqrefs {
-	struct silofs_submit_ref        sr[SILOFS_SQENT_NREFS_MAX];
-};
-
 struct silofs_flusher {
-	struct silofs_sqrefs            sqrefs;
-	struct silofs_dsets             dsets;
-	struct silofs_listq             txq[2];
+	struct silofs_submit_ref        sref[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_dset              dset[3];
+	struct silofs_listq             txq;
 	struct silofs_submitq          *submitq;
 	struct silofs_task             *task;
 	struct silofs_inode_info       *ii;
-	uint32_t tx_count;
-	int flags;
+	uint32_t                        tx_count;
+	int                             flags;
 } silofs_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

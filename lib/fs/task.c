@@ -86,13 +86,16 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (len > (size_t)len_max) {
 		return false;
 	}
-	nxt = off_next(sqe_laddr->pos, len_max);
-	end = off_end(sqe_laddr->pos, len);
-	if (end > nxt) {
-		return false;
-	}
 	if (!sqe_has_lsegid_as(sqe, laddr)) {
 		return false;
+	}
+	/* for inodes require alignment on commit-len boundaries */
+	if (stype_isinode(sqe->stype)) {
+		nxt = off_next(sqe_laddr->pos, len_max);
+		end = off_end(sqe_laddr->pos, len);
+		if (end > nxt) {
+			return false;
+		}
 	}
 	return true;
 }
@@ -206,7 +209,7 @@ sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 {
 	struct silofs_submitq_ent *sqe;
 
-	STATICASSERT_LE(sizeof(*sqe), 2048);
+	STATICASSERT_LE(sizeof(*sqe), 1024);
 
 	sqe = silofs_allocate(alloc, sizeof(*sqe), 0);
 	if (likely(sqe != NULL)) {

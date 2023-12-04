@@ -17,7 +17,7 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
-#define SILOFS_SQENT_NREFS_MAX  (64)
+#define SILOFS_SQENT_NREFS_MAX  (32)
 
 /* current file-system operation */
 struct silofs_oper {

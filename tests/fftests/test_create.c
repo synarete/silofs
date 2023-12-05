@@ -75,7 +75,6 @@ static void test_create_unlink(struct ft_env *fte)
 	}
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects success for sequence of creat(3p) plus pwrite(3p) of regular file.
@@ -98,13 +97,23 @@ static void test_create_pwrite_(struct ft_env *fte, loff_t off, size_t len)
 static void test_create_pwrite(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
+		/* aligned */
+		FT_MKRANGE(0, FT_1K),
 		FT_MKRANGE(0, FT_1M),
-		FT_MKRANGE(11, FT_64K),
+		FT_MKRANGE(FT_1K, FT_1K),
+		FT_MKRANGE(FT_64K, FT_4K),
 		FT_MKRANGE(FT_1M, FT_64K),
 		FT_MKRANGE(FT_1G, FT_4K),
 		FT_MKRANGE(FT_1T, FT_1K),
+		/* unaligned */
+		FT_MKRANGE(1, FT_1K + 11),
+		FT_MKRANGE(11, FT_1M - 111),
+		FT_MKRANGE(FT_1K - 1, FT_1K + 11),
+		FT_MKRANGE(FT_64K + 1, FT_4K + 111),
+		FT_MKRANGE(FT_1M - 11, FT_64K + 1111),
+		FT_MKRANGE(FT_1G - 1, FT_4K + 11),
+		FT_MKRANGE(FT_1T - 1111, 11111),
 	};
-
 	ft_exec_with_ranges(fte, test_create_pwrite_, ranges);
 }
 

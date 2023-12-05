@@ -32,8 +32,10 @@
 #define task_repo(t)                    silofs_task_repo(t)
 #define task_idsmap(t)                  silofs_task_idsmap(t)
 #define task_creds(t)                   silofs_task_creds(t)
-
-#define lni_view_len(lni)               silofs_lni_view_len(lni)
+#define task_lock_fs(t)                 silofs_task_lock_fs(t)
+#define task_unlock_fs(t)               silofs_task_unlock_fs(t)
+#define task_lock_ex(t)                 silofs_task_lock_ex(t)
+#define task_unlock_ex(t)               silofs_task_unlock_ex(t)
 
 #define sbi_fsenv(sbi)                  silofs_sbi_fsenv(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)

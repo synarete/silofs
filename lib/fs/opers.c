@@ -36,21 +36,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void op_lock_fs(struct silofs_task *task)
-{
-	silofs_task_lock_fs(task);
-}
-
-static void op_unlock_fs(struct silofs_task *task)
-{
-	silofs_task_unlock_fs(task);
-}
-
 static int op_start(struct silofs_task *task, ino_t ino)
 {
 	struct silofs_fsenv *fsenv = task->t_fsenv;
 
-	op_lock_fs(task);
+	task_lock_fs(task);
 	fsenv->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
 	fsenv->fse_op_stat.op_count++;
 	silofs_unused(ino);
@@ -114,7 +104,7 @@ static int op_finish(struct silofs_task *task, ino_t ino, int err)
 		}
 		silofs_relax_caches(task, flags);
 	}
-	op_unlock_fs(task);
+	task_unlock_fs(task);
 	return err;
 }
 

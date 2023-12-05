@@ -34,8 +34,10 @@ struct silofs_task {
 	struct silofs_inode_info       *t_looseq;
 	struct silofs_oper              t_oper;
 	uint64_t                        t_apex_id;
-	volatile short                  t_interrupt;
-	volatile short                  t_fs_locked;
+	volatile int8_t                 t_interrupt;
+	bool                            t_fs_locked;
+	bool                            t_ex_locked;
+	bool                            t_exclusive;
 };
 
 /* submit reference into view within underlying block */
@@ -85,7 +87,7 @@ int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv);
+void silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv);
 
 void silofs_task_fini(struct silofs_task *task);
 
@@ -119,6 +121,10 @@ void silofs_task_enq_loose(struct silofs_task *task,
 void silofs_task_lock_fs(struct silofs_task *task);
 
 void silofs_task_unlock_fs(struct silofs_task *task);
+
+void silofs_task_lock_ex(struct silofs_task *task);
+
+void silofs_task_unlock_ex(struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -445,7 +445,7 @@ const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
 }
 
 
-int silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
+void silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
 {
 	memset(task, 0, sizeof(*task));
 	cred_init(&task->t_oper.op_creds.fs_cred);
@@ -455,19 +455,19 @@ int silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
 	task->t_looseq = NULL;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
-	task->t_fs_locked = 0;
-	return 0;
+	task->t_fs_locked = false;
+	task->t_ex_locked = false;
+	task->t_exclusive = false;
 }
 
 void silofs_task_fini(struct silofs_task *task)
 {
 	silofs_assert_null(task->t_looseq);
-	silofs_assert_eq(task->t_fs_locked, 0);
+	silofs_assert_eq(task->t_fs_locked, false);
 
 	task->t_fsenv = NULL;
 	task->t_submitq = NULL;
 }
-
 
 void silofs_task_enq_loose(struct silofs_task *task,
                            struct silofs_inode_info *ii)
@@ -519,9 +519,9 @@ static void task_forget_looseq(struct silofs_task *task)
 static void task_purge(struct silofs_task *task)
 {
 	if (task->t_looseq != NULL) {
-		silofs_task_lock_fs(task);
+		task_lock_fs(task);
 		task_forget_looseq(task);
-		silofs_task_unlock_fs(task);
+		task_unlock_fs(task);
 	}
 }
 
@@ -529,7 +529,7 @@ void silofs_task_lock_fs(struct silofs_task *task)
 {
 	if (!task->t_fs_locked) {
 		silofs_fsenv_lock(task->t_fsenv);
-		task->t_fs_locked = 1;
+		task->t_fs_locked = true;
 	}
 }
 
@@ -537,7 +537,23 @@ void silofs_task_unlock_fs(struct silofs_task *task)
 {
 	if (task->t_fs_locked) {
 		silofs_fsenv_unlock(task->t_fsenv);
-		task->t_fs_locked = 0;
+		task->t_fs_locked = false;
+	}
+}
+
+void silofs_task_lock_ex(struct silofs_task *task)
+{
+	if (!task->t_ex_locked) {
+		silofs_fsenv_rwlock(task->t_fsenv, task->t_exclusive);
+		task->t_ex_locked = true;
+	}
+}
+
+void silofs_task_unlock_ex(struct silofs_task *task)
+{
+	if (task->t_ex_locked) {
+		silofs_fsenv_rwunlock(task->t_fsenv);
+		task->t_ex_locked = false;
 	}
 }
 

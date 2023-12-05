@@ -142,10 +142,6 @@ struct silofs_fileaf_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-size_t silofs_lni_view_len(const struct silofs_lnode_info *lni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 struct silofs_sb_info *
 silofs_sbi_from_ui(const struct silofs_unode_info *ui);
 

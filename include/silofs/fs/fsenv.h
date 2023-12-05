@@ -35,7 +35,8 @@ struct silofs_fsenv_base {
 /* top-level pseudo meta node */
 struct silofs_fsenv {
 	struct silofs_fsenv_base        fse;
-	struct silofs_mutex             fse_lock;
+	struct silofs_mutex             fse_mutex;
+	struct silofs_rwlock            fse_rwlock;
 	struct silofs_crypto            fse_crypto;
 	struct silofs_oper_stat         fse_op_stat;
 	struct silofs_lsegid            fse_sb_lsegid;
@@ -59,6 +60,10 @@ void silofs_fsenv_fini(struct silofs_fsenv *fsenv);
 void silofs_fsenv_lock(struct silofs_fsenv *fsenv);
 
 void silofs_fsenv_unlock(struct silofs_fsenv *fsenv);
+
+void silofs_fsenv_rwlock(struct silofs_fsenv *fsenv, bool ex);
+
+void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv);
 
 void silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 

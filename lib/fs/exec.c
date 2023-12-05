@@ -689,16 +689,11 @@ static int map_task_creds(struct silofs_task *task)
 static int make_task(const struct silofs_fs_ctx *fs_ctx,
                      struct silofs_task *task)
 {
-	const struct silofs_fs_args *fs_args = &fs_ctx->fs_args;
-	int err;
+	const struct silofs_fs_args *args = &fs_ctx->fs_args;
 
-	err = silofs_task_init(task, fs_ctx->fsenv);
-	if (err) {
-		return err;
-	}
+	silofs_task_init(task, fs_ctx->fsenv);
 	silofs_task_set_ts(task, true);
-	silofs_task_set_creds(task, fs_args->uid,
-	                      fs_args->gid, fs_args->umask);
+	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	return map_task_creds(task);
 }
 

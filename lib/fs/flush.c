@@ -943,11 +943,5 @@ int silofs_flush_dirty(struct silofs_task *task,
 
 int silofs_flush_dirty_now(struct silofs_task *task)
 {
-	int err;
-
-	err = silofs_flush_dirty(task, NULL, SILOFS_F_NOW);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_flush_dirty(task, NULL, SILOFS_F_NOW);
 }

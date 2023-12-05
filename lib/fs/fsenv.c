@@ -196,14 +196,26 @@ static void fsenv_fini_commons(struct silofs_fsenv *fsenv)
 	fsenv->fse_sbi = NULL;
 }
 
-static int fsenv_init_fs_lock(struct silofs_fsenv *fsenv)
+static int fsenv_init_locks(struct silofs_fsenv *fsenv)
 {
-	return silofs_mutex_init(&fsenv->fse_lock);
+	int err;
+
+	err = silofs_rwlock_init(&fsenv->fse_rwlock);
+	if (err) {
+		return err;
+	}
+	err = silofs_mutex_init(&fsenv->fse_mutex);
+	if (err) {
+		silofs_rwlock_fini(&fsenv->fse_rwlock);
+		return err;
+	}
+	return 0;
 }
 
-static void fsenv_fini_fs_lock(struct silofs_fsenv *fsenv)
+static void fsenv_fini_locks(struct silofs_fsenv *fsenv)
 {
-	silofs_mutex_fini(&fsenv->fse_lock);
+	silofs_mutex_fini(&fsenv->fse_mutex);
+	silofs_rwlock_fini(&fsenv->fse_rwlock);
 }
 
 static int fsenv_init_crypto(struct silofs_fsenv *fsenv)
@@ -242,7 +254,7 @@ int silofs_fsenv_init(struct silofs_fsenv *fsenv,
 	fsenv_init_commons(fsenv, fse_base);
 	fsenv_update_by_fs_args(fsenv);
 
-	err = fsenv_init_fs_lock(fsenv);
+	err = fsenv_init_locks(fsenv);
 	if (err) {
 		return err;
 	}
@@ -265,18 +277,8 @@ void silofs_fsenv_fini(struct silofs_fsenv *fsenv)
 	fsenv_bind_sbi(fsenv, NULL);
 	fsenv_fini_iconv(fsenv);
 	fsenv_fini_crypto(fsenv);
-	fsenv_fini_fs_lock(fsenv);
+	fsenv_fini_locks(fsenv);
 	fsenv_fini_commons(fsenv);
-}
-
-void silofs_fsenv_lock(struct silofs_fsenv *fsenv)
-{
-	silofs_mutex_lock(&fsenv->fse_lock);
-}
-
-void silofs_fsenv_unlock(struct silofs_fsenv *fsenv)
-{
-	silofs_mutex_unlock(&fsenv->fse_lock);
 }
 
 time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv)
@@ -284,6 +286,30 @@ time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv)
 	const time_t now = silofs_time_now_monotonic();
 
 	return now - fsenv->fse_init_time;
+}
+
+void silofs_fsenv_lock(struct silofs_fsenv *fsenv)
+{
+	silofs_mutex_lock(&fsenv->fse_mutex);
+}
+
+void silofs_fsenv_unlock(struct silofs_fsenv *fsenv)
+{
+	silofs_mutex_unlock(&fsenv->fse_mutex);
+}
+
+void silofs_fsenv_rwlock(struct silofs_fsenv *fsenv, bool ex)
+{
+	if (ex) {
+		silofs_rwlock_wrlock(&fsenv->fse_rwlock);
+	} else {
+		silofs_rwlock_rdlock(&fsenv->fse_rwlock);
+	}
+}
+
+void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv)
+{
+	silofs_rwlock_unlock(&fsenv->fse_rwlock);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -713,6 +713,11 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 	return ret;
 }
 
+static size_t lni_view_len(const struct silofs_lnode_info *lni)
+{
+	return silofs_stype_size(lni->l_stype);
+}
+
 static void lni_incref(struct silofs_lnode_info *lni)
 {
 	ce_incref_atomic(&lni->l_ce);

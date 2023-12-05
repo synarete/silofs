@@ -319,11 +319,6 @@ static int lni_verify_view(struct silofs_lnode_info *lni)
 	return verify_view_by(lni->l_view, lni->l_stype);
 }
 
-size_t silofs_lni_view_len(const struct silofs_lnode_info *lni)
-{
-	return silofs_stype_size(lni->l_stype);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)

@@ -64,11 +64,11 @@ struct silofs_fuseq {
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_mutex             fq_ctl_lock;
-	struct silofs_rwlock            fq_cmd_lock;
-	struct silofs_fsenv             *fq_fsenv;
+	struct silofs_fsenv            *fq_fsenv;
 	struct silofs_alloc            *fq_alloc;
 	size_t                          fq_nopers;
 	size_t                          fq_nopers_done;
+	size_t                          fq_ntimedout;
 	uid_t                           fq_fs_owner;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;

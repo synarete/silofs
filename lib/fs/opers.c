@@ -36,21 +36,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void op_lock_fs(struct silofs_task *task)
-{
-	silofs_task_lock_fs(task);
-}
-
-static void op_unlock_fs(struct silofs_task *task)
-{
-	silofs_task_unlock_fs(task);
-}
-
 static int op_start(struct silofs_task *task, ino_t ino)
 {
 	struct silofs_fsenv *fsenv = task->t_fsenv;
 
-	op_lock_fs(task);
+	task_lock_fs(task);
 	fsenv->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
 	fsenv->fse_op_stat.op_count++;
 	silofs_unused(ino);
@@ -103,19 +93,48 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	}
 }
 
-static int op_finish(struct silofs_task *task, ino_t ino, int err)
+static int op_unlooseq(struct silofs_task *task)
+{
+	int ret = 0;
+
+	/*
+	 * Task's loose-queue may hold one (or more) inodes which are no-longer
+	 * alive but could not be fully dropped as they are still under to-be
+	 * written state in submit-queue. This rare case may happen on heavy
+	 * load with unlinked files. In this special case, we must do forced
+	 * flush-all to purge and evict those pending inodes while current task
+	 * still holds the fs-lock.
+	 */
+	if (task->t_looseq != NULL) {
+		ret = silofs_flush_dirty_now(task);
+		silofs_assert_null(task->t_looseq);
+	}
+	return ret;
+}
+
+static void op_relax_post(struct silofs_task *task, ino_t ino)
 {
 	int flags = SILOFS_F_OPFINISH;
 
-	op_probe_duration(task, err);
-	if (!err && task->t_apex_id) {
+	if (task->t_apex_id) {
 		if (ino_isnull(ino)) {
 			flags |= SILOFS_F_TIMEOUT;
 		}
 		silofs_relax_caches(task, flags);
 	}
-	op_unlock_fs(task);
-	return err;
+}
+
+static int op_finish(struct silofs_task *task, ino_t ino, int err)
+{
+	int err2 = 0;
+
+	op_probe_duration(task, err);
+	err2 = op_unlooseq(task);
+	if (!err && !err2) {
+		op_relax_post(task, ino);
+	}
+	task_unlock_fs(task);
+	return err ? err : err2;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

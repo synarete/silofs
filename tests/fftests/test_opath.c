@@ -24,7 +24,7 @@
 static void test_opath_reg(struct ft_env *fte)
 {
 	struct stat st = { .st_size = -1 };
-	struct statvfs stv = { .f_files = 0 };
+	struct statvfs stv = { .f_blocks = 0 };
 	uint8_t buf[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 	const char *path = ft_new_path_unique(fte);
 	const mode_t ifmt = S_IFMT;
@@ -42,12 +42,12 @@ static void test_opath_reg(struct ft_env *fte)
 	ft_expect_reg(st.st_mode);
 	ft_expect_eq(st.st_size, 0);
 	ft_fstatvfs(fd, &stv);
-	ft_expect_gt(stv.f_files, 0);
+	ft_expect_gt(stv.f_blocks, 0);
 	ft_close(fd);
-	ft_chmod(path, 0100);
+	ft_chmod(path, 0444);
 	ft_open(path, O_PATH, 0, &fd);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_mode & ~ifmt, 0100);
+	ft_expect_eq(st.st_mode & ~ifmt, 0444);
 	ft_close(fd);
 	ft_chmod(path, 0600);
 	ft_unlink(path);

@@ -1,22 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
 import os
-import pathlib
 import shlex
 import shutil
 import subprocess
 import typing
+from pathlib import Path
 
 from . import log
 
 
-def find_executable(name: str) -> pathlib.Path:
+def find_executable(name: str) -> Path:
     """Locate executable program's path by name"""
     xbin = shutil.which(name)
     if not xbin:
         raise CmdError(f"failed to find {name}")
-    path = pathlib.Path(str(xbin).strip())
-    return path
+    return Path(str(xbin).strip())
 
 
 class CmdError(Exception):
@@ -29,9 +28,7 @@ class CmdError(Exception):
 class CmdExec:
     """Generic wrapper over command-line executor"""
 
-    def __init__(
-        self, prog: str, xbin: typing.Optional[pathlib.Path] = None
-    ) -> None:
+    def __init__(self, prog: str, xbin: typing.Optional[Path] = None) -> None:
         self.prog = prog
         if xbin:
             self.xbin = xbin
@@ -102,7 +99,7 @@ class CmdShell(CmdExec):
     def run(
         self,
         cmd: str,
-        wdir: typing.Optional[pathlib.Path] = None,
+        wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> int:
         with subprocess.Popen(
@@ -120,7 +117,7 @@ class CmdShell(CmdExec):
     def run_ok(
         self,
         cmd: str,
-        wdir: typing.Optional[pathlib.Path] = None,
+        wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> None:
         log.printsl(f"SH: {cmd}")
@@ -147,13 +144,13 @@ class CmdSilofs(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def init(self, repodir: pathlib.Path) -> None:
+    def init(self, repodir: Path) -> None:
         args = ["init", repodir]
         self.execute_sub(args)
 
     def mkfs(
         self,
-        repodir_name: pathlib.Path,
+        repodir_name: Path,
         size: int,
         password: str,
         sup_groups: bool = False,
@@ -170,8 +167,8 @@ class CmdSilofs(CmdExec):
 
     def mount(
         self,
-        repodir_name: pathlib.Path,
-        mntpoint: pathlib.Path,
+        repodir_name: Path,
+        mntpoint: Path,
         password: str,
         allow_hostids: bool = False,
         writeback_cache: bool = False,
@@ -185,48 +182,48 @@ class CmdSilofs(CmdExec):
             args = args + ["--password", password]
         self.execute_run(args)
 
-    def umount(self, mntpoint: pathlib.Path) -> None:
+    def umount(self, mntpoint: Path) -> None:
         self.execute_run(["umount", mntpoint])
 
-    def show_version(self, pathname: pathlib.Path) -> str:
+    def show_version(self, pathname: Path) -> str:
         return self.execute_sub(["show", "version", pathname])
 
-    def show_boot(self, pathname: pathlib.Path) -> str:
+    def show_boot(self, pathname: Path) -> str:
         return self.execute_sub(["show", "boot", pathname])
 
-    def show_proc(self, pathname: pathlib.Path) -> str:
+    def show_proc(self, pathname: Path) -> str:
         return self.execute_sub(["show", "proc", pathname])
 
-    def show_spstats(self, pathname: pathlib.Path) -> str:
+    def show_spstats(self, pathname: Path) -> str:
         return self.execute_sub(["show", "spstats", pathname])
 
-    def show_statx(self, pathname: pathlib.Path) -> str:
+    def show_statx(self, pathname: Path) -> str:
         return self.execute_sub(["show", "statx", pathname])
 
-    def snap(self, name: str, pathname: pathlib.Path, password: str) -> None:
+    def snap(self, name: str, pathname: Path, password: str) -> None:
         args = ["snap", "-n", name, pathname]
         if password:
             args = args + ["--password", password]
         self.execute_sub(args)
 
     def snap_offline(
-        self, name: str, repodir_name: pathlib.Path, password: str
+        self, name: str, repodir_name: Path, password: str
     ) -> None:
         args = ["snap", "-n", name, "--offline", repodir_name]
         if password:
             args = args + ["--password", password]
         self.execute_sub(args)
 
-    def tune(self, pathname: pathlib.Path, ftype: int) -> None:
+    def tune(self, pathname: Path, ftype: int) -> None:
         self.execute_sub(["tune", "--ftype", str(ftype), pathname])
 
-    def rmfs(self, repodir_name: pathlib.Path, password: str) -> None:
+    def rmfs(self, repodir_name: Path, password: str) -> None:
         args = ["rmfs", repodir_name]
         if password:
             args = args + ["--password", password]
         self.execute_sub(args)
 
-    def fsck(self, repodir_name: pathlib.Path, password: str) -> None:
+    def fsck(self, repodir_name: Path, password: str) -> None:
         args = ["fsck", repodir_name]
         if password:
             args = args + ["--password", password]
@@ -242,7 +239,7 @@ class CmdUnitests(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def run(self, basedir: pathlib.Path, level: int = 1) -> None:
+    def run(self, basedir: Path, level: int = 1) -> None:
         args = [basedir, f"--level={level}"]
         self.execute_sub(args, timeout=1200)
 
@@ -258,7 +255,7 @@ class CmdFftests(CmdExec):
 
     def run(
         self,
-        basedir: pathlib.Path,
+        basedir: Path,
         rand: bool = False,
         nostatvfs: bool = False,
     ) -> None:
@@ -279,10 +276,10 @@ class CmdGit(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["version"])
 
-    def clone(self, repo: str, dpath: pathlib.Path) -> int:
+    def clone(self, repo: str, dpath: Path) -> int:
         ret = 0
         try:
-            self.execute_sub(["clone", repo, dpath], timeout=60)
+            self.execute_sub(["clone", repo, dpath], timeout=300)
         except CmdError as ex:
             ret = ex.retcode
         return ret

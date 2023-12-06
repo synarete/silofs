@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
 import os
-import pathlib
+from pathlib import Path
 
 from .ctx import TestEnv
 
@@ -28,7 +28,7 @@ class LtpFsstressArgs:
         self.unlink = 0
         self.write = 0
 
-    def make_cmd(self, fsstress: pathlib.Path, testdir: pathlib.Path) -> str:
+    def make_cmd(self, fsstress: Path, testdir: Path) -> str:
         cmd = f"{fsstress} -r -d {testdir} "
         cmd = cmd + f"-n {self.count} -p {self.procs} "
         cmd = cmd + f"-f creat={self.creat} "
@@ -51,7 +51,7 @@ class LtpFsstressArgs:
 
 
 class LtpConfig:
-    def __init__(self, base: pathlib.Path) -> None:
+    def __init__(self, base: Path) -> None:
         self.env = os.environ.copy()
         self.base = base
         self.srcdir = base / "ltp-src"
@@ -78,7 +78,7 @@ class LtpConfig:
         self.srcdir.mkdir(parents=True)
         self.tmpdir.mkdir(parents=True)
 
-    def testcases_bin(self) -> pathlib.Path:
+    def testcases_bin(self) -> Path:
         return self.ltproot / "testcases" / "bin"
 
 

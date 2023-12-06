@@ -2,31 +2,31 @@
 import contextlib
 import inspect
 import os
-import pathlib
 import pprint
 import random
 import shutil
 import urllib
 import urllib.request
+from pathlib import Path
 
 
 def selfname() -> str:
     return str(inspect.stack()[1][3])
 
 
-def is_dir(dirpath: pathlib.Path) -> bool:
+def is_dir(dirpath: Path) -> bool:
     return dirpath.is_dir()
 
 
-def is_reg(filepath: pathlib.Path) -> bool:
+def is_reg(filepath: Path) -> bool:
     return filepath.is_file()
 
 
-def is_empty_dir(dirpath: pathlib.Path) -> bool:
+def is_empty_dir(dirpath: Path) -> bool:
     return is_dir(dirpath) and len(list(dirpath.iterdir())) == 0
 
 
-def empty_dir(dirpath: pathlib.Path) -> None:
+def empty_dir(dirpath: Path) -> None:
     for name in os.listdir(dirpath):
         subpath = dirpath / name
         if is_dir(subpath):
@@ -35,19 +35,19 @@ def empty_dir(dirpath: pathlib.Path) -> None:
             rmfile_at(subpath)
 
 
-def rmtree_at(dirpath: pathlib.Path) -> None:
+def rmtree_at(dirpath: Path) -> None:
     os.stat(dirpath)
     shutil.rmtree(dirpath)
 
 
-def rmfile_at(path: pathlib.Path) -> None:
+def rmfile_at(path: Path) -> None:
     os.stat(path)
     path.unlink(missing_ok=False)
 
 
-def fstype_of(path: pathlib.Path) -> str:
+def fstype_of(path: Path) -> str:
     """Resolve file-system type of a given pathname"""
-    proc_mounts = pathlib.Path("/proc/mounts").read_text(encoding="utf-8")
+    proc_mounts = Path("/proc/mounts").read_text(encoding="utf-8")
     lines = proc_mounts.split("\n")
     st = path.stat()
     for line in lines:
@@ -57,7 +57,7 @@ def fstype_of(path: pathlib.Path) -> str:
         mntp = fields[1]
         fs_type = fields[2]
         try:
-            mntp_path = pathlib.Path(mntp)
+            mntp_path = Path(mntp)
             mntp_st = mntp_path.stat()
             if mntp_st.st_dev == st.st_dev:
                 return fs_type

@@ -37,12 +37,13 @@ TESTS = [
     test_snap.test_snap_repeated,
     test_fsck.test_fsck_basic,
     test_fsck.test_fsck_snap,
-    test_xprogs.test_postgresql,
-    test_xprogs.test_rsync,
-    test_xprogs.test_gitscm,
     test_fio.test_fio_simple,
     test_fio.test_fio_njobs,
     test_ltp.test_ltp,
+    test_xprogs.test_postgresql,
+    test_xprogs.test_rsync,
+    test_xprogs.test_gitscm,
+    test_xprogs.test_git_archive_untar,
 ]
 
 

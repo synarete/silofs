@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
-import pathlib
+
+from pathlib import Path
 
 from .ctx import TestEnv
 
@@ -62,7 +63,7 @@ def test_fftests2(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def run_fftests(env: TestEnv, base: pathlib.Path, rand: bool) -> None:
+def run_fftests(env: TestEnv, base: Path, rand: bool) -> None:
     env.cmd.fftests.run(base, rand, True)
 
 

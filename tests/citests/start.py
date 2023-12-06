@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
-import pathlib
 import sys
+from pathlib import Path
 
 from . import run
 
@@ -14,12 +14,11 @@ def _usage(exit_code: int) -> None:
     sys.exit(exit_code)
 
 
-def _parseargs() -> tuple[pathlib.Path, pathlib.Path]:
+def _parseargs() -> tuple[Path, Path]:
     args = sys.argv
     if len(args[1:]) != 2:
         _usage(1)
-    test_dir = pathlib.Path(args[1])
-    mnt_point = pathlib.Path(args[2])
+    test_dir, mnt_point = Path(args[1]), Path(args[2])
     return (test_dir, mnt_point)
 
 

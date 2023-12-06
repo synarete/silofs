@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0
 import datetime
-import pathlib
 import random
 import sys
 import traceback
+from pathlib import Path
 
 from . import cmd
 from . import ctx
@@ -22,7 +22,7 @@ def _print(msg: str) -> None:
     log.println(msg)
 
 
-def _require_empty_dir(dirpath: pathlib.Path) -> None:
+def _require_empty_dir(dirpath: Path) -> None:
     if not utils.is_dir(dirpath):
         _die(f"not a directory: {dirpath}")
     if not utils.is_empty_dir(dirpath):
@@ -90,7 +90,7 @@ def _do_run_tests(cfg: ctx.TestConfig) -> None:
     _post_run_tests()
 
 
-def make_config(basedir: pathlib.Path, mntdir: pathlib.Path) -> ctx.TestConfig:
+def make_config(basedir: Path, mntdir: Path) -> ctx.TestConfig:
     _require_empty_dir(basedir)
     _require_empty_dir(mntdir)
     return ctx.TestConfig(basedir, mntdir)

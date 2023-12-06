@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 
-import pathlib
+from pathlib import Path
 
 from . import cmd
 from . import log
@@ -14,9 +14,7 @@ class FioInput:
     FioInput represents a subset of fio's input arguments as python object
     """
 
-    def __init__(
-        self, wdir: pathlib.Path, njobs: int = 1, rwmix: int = 70
-    ) -> None:
+    def __init__(self, wdir: Path, njobs: int = 1, rwmix: int = 70) -> None:
         self.wdir = str(wdir.resolve(strict=True))
         self.fs_type = utils.fstype_of(wdir)
         self.name = f"{self.fs_type}-j{njobs}".replace(".", "-")
@@ -78,7 +76,7 @@ class FioOutput:
 
 
 class FioExec(cmd.CmdExec):
-    def __init__(self, base: pathlib.Path):
+    def __init__(self, base: Path):
         cmd.CmdExec.__init__(self, "fio")
         self.base = base
         self.timeout = 180

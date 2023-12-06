@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
-import pathlib
 import typing
+from pathlib import Path
 
 from . import utils
 
@@ -33,23 +33,23 @@ class Expect:
             sb = self._stringify(b)
             self.error(f"not greater-than: {sa} <= {sb}")
 
-    def exists(self, path: pathlib.Path) -> None:
+    def exists(self, path: Path) -> None:
         if not path.exists():
             self.error(f"not exists: {path}")
 
-    def not_exists(self, path: pathlib.Path) -> None:
+    def not_exists(self, path: Path) -> None:
         if path.exists():
             self.error(f"already exists: {path}")
 
-    def is_dir(self, path: pathlib.Path) -> None:
+    def is_dir(self, path: Path) -> None:
         if not path.is_dir():
             self.error(f"not a directory: {path}")
 
-    def is_reg(self, path: pathlib.Path) -> None:
+    def is_reg(self, path: Path) -> None:
         if not path.is_file():
             self.error(f"not a regular file: {path}")
 
-    def empty_dir(self, dirpath: pathlib.Path) -> None:
+    def empty_dir(self, dirpath: Path) -> None:
         if not utils.is_empty_dir(dirpath):
             self.error(f"not an empty directory: {dirpath}")
 

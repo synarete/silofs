@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
 import os
-import pathlib
 import time
 import typing
 from concurrent import futures
+from pathlib import Path
 
 from . import cmd
 from . import expect
@@ -13,7 +13,7 @@ from . import utils
 
 # pylint: disable=R0903
 class TestConfig:
-    def __init__(self, basedir: pathlib.Path, mntdir: pathlib.Path) -> None:
+    def __init__(self, basedir: Path, mntdir: Path) -> None:
         self.basedir = basedir.resolve(strict=True)
         self.mntdir = mntdir.resolve(strict=True)
         self.repodir = self.basedir / "repo"
@@ -21,7 +21,7 @@ class TestConfig:
 
 
 class TestData:
-    def __init__(self, path: pathlib.Path, sz: int) -> None:
+    def __init__(self, path: Path, sz: int) -> None:
         self.path = path
         self.base = 0
         self.size = sz
@@ -48,8 +48,8 @@ class TestDataSet:
         self.expect = exp
         self.tds = tds
 
-    def do_makedirs(self) -> list[pathlib.Path]:
-        ret = set[pathlib.Path]()
+    def do_makedirs(self) -> list[Path]:
+        ret = set[Path]()
         for td in self.tds:
             dpath = td.path.parent
             dpath.mkdir(parents=True, exist_ok=True)
@@ -87,8 +87,8 @@ class TestDataSet:
             self.expect.is_reg(td.path)
             td.do_unlink()
 
-    def pathnames(self) -> list[pathlib.Path]:
-        ret = set[pathlib.Path]()
+    def pathnames(self) -> list[Path]:
+        ret = set[Path]()
         for td in self.tds:
             ret.add(td.path)
         return list(ret)
@@ -116,11 +116,11 @@ class TestEnv:
         self.uniq = self.uniq + 1
         return f"{self.name}_{self.uniq}"
 
-    def make_basepath(self) -> pathlib.Path:
+    def make_basepath(self) -> Path:
         return self.make_path(self.name)
 
-    def make_path(self, *subs) -> pathlib.Path:
-        return pathlib.Path(self.mntpoint(), *subs)
+    def make_path(self, *subs) -> Path:
+        return Path(self.mntpoint(), *subs)
 
     def make_td(self, sub: str, name: str, sz: int) -> TestData:
         return TestData(self.make_path(sub, name), sz)
@@ -138,30 +138,30 @@ class TestEnv:
         tds.do_read()
         return tds
 
-    def create_fstree(self, name: str) -> pathlib.Path:
+    def create_fstree(self, name: str) -> Path:
         path = self.make_path(name)
         self._create_fstree_at(self.make_path(name))
         return path
 
-    def _create_fstree_at(self, path: pathlib.Path) -> None:
+    def _create_fstree_at(self, path: Path) -> None:
         self.expect.not_exists(path)
         path.mkdir(mode=0o700, parents=True, exist_ok=False)
 
     def remove_fstree(self, name: str) -> None:
         self._remove_fstree_at(self.make_path(name))
 
-    def _remove_fstree_at(self, path: pathlib.Path) -> None:
+    def _remove_fstree_at(self, path: Path) -> None:
         self.expect.exists(path)
         self.expect.is_dir(path)
         utils.rmtree_at(path)
 
-    def repodir(self) -> pathlib.Path:
+    def repodir(self) -> Path:
         return self.cfg.repodir
 
-    def mntpoint(self) -> pathlib.Path:
+    def mntpoint(self) -> Path:
         return self.cfg.mntdir
 
-    def _repodir_name(self, name: str = "") -> pathlib.Path:
+    def _repodir_name(self, name: str = "") -> Path:
         if not name:
             name = self.name
         return self.repodir() / name
@@ -226,10 +226,10 @@ class TestEnv:
             snapname, self._repodir_name(mainname), self._passwd()
         )
 
-    def exec_tune(self, path: pathlib.Path, ftype: int = 2) -> None:
+    def exec_tune(self, path: Path, ftype: int = 2) -> None:
         self.cmd.silofs.tune(path, ftype)
 
-    def exec_tune2(self, path_list: list[pathlib.Path]) -> None:
+    def exec_tune2(self, path_list: list[Path]) -> None:
         for path in path_list:
             self.cmd.silofs.tune(path, 2)
 

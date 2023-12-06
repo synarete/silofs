@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import errno
-import pathlib
+from pathlib import Path
 
 from .ctx import TestEnv
 
@@ -10,7 +10,7 @@ def _expect_enospc(ex: OSError) -> None:
         raise ex
 
 
-def _unlink_all(pathnames: list[pathlib.Path]) -> None:
+def _unlink_all(pathnames: list[Path]) -> None:
     for path in pathnames:
         path.unlink()
 

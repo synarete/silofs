@@ -224,19 +224,30 @@ static int fsenv_init_crypto(struct silofs_fsenv *fsenv)
 
 	err = silofs_mdigest_init(&fsenv->fse_mdigest);
 	if (err) {
-		return err;
+		goto out_err;
 	}
-	err = silofs_cipher_init(&fsenv->fse_cipher);
+	err = silofs_cipher_init(&fsenv->fse_enc_cipher);
 	if (err) {
-		silofs_mdigest_fini(&fsenv->fse_mdigest);
-		return err;
+		goto out_err1;
+	}
+	err = silofs_cipher_init(&fsenv->fse_dec_cipher);
+	if (err) {
+		goto out_err2;
 	}
 	return 0;
+
+out_err2:
+	silofs_cipher_init(&fsenv->fse_enc_cipher);
+out_err1:
+	silofs_mdigest_fini(&fsenv->fse_mdigest);
+out_err:
+	return err;
 }
 
 static void fsenv_fini_crypto(struct silofs_fsenv *fsenv)
 {
-	silofs_cipher_fini(&fsenv->fse_cipher);
+	silofs_cipher_fini(&fsenv->fse_dec_cipher);
+	silofs_cipher_fini(&fsenv->fse_enc_cipher);
 	silofs_mdigest_fini(&fsenv->fse_mdigest);
 }
 

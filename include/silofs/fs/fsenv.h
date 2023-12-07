@@ -38,7 +38,8 @@ struct silofs_fsenv {
 	struct silofs_mutex             fse_mutex;
 	struct silofs_rwlock            fse_rwlock;
 	struct silofs_mdigest           fse_mdigest;
-	struct silofs_cipher            fse_cipher;
+	struct silofs_cipher            fse_enc_cipher;
+	struct silofs_cipher            fse_dec_cipher;
 	struct silofs_oper_stat         fse_op_stat;
 	struct silofs_lsegid            fse_sb_lsegid;
 	struct silofs_sb_info          *fse_sbi;

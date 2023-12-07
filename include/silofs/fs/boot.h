@@ -18,6 +18,8 @@
 #define SILOFS_BOOT_H_
 
 
+struct silofs_fsenv;
+
 /* boot pathname: a pair of repo-directory & boot-record name (optional) */
 struct silofs_bootpath {
 	struct silofs_substr            repodir;
@@ -88,12 +90,14 @@ void silofs_bootrecs_to_lvids(const struct silofs_bootrecs *brecs,
 
 int silofs_bootrec_encode(const struct silofs_bootrec *brec,
                           struct silofs_bootrec1k *brec1k,
-                          const struct silofs_crypto *crypto,
+                          const struct silofs_mdigest *mdigest,
+                          const struct silofs_cipher *cipher,
                           const struct silofs_ivkey *ivkey);
 
 int silofs_bootrec_decode(struct silofs_bootrec *brec,
                           struct silofs_bootrec1k *brec1k,
-                          const struct silofs_crypto *crypto,
+                          const struct silofs_mdigest *mdigest,
+                          const struct silofs_cipher *cipher,
                           const struct silofs_ivkey *ivkey);
 
 int silofs_ivkey_for_bootrec(struct silofs_ivkey *ivkey,
@@ -120,5 +124,15 @@ void silofs_default_cip_args(struct silofs_cipher_args *cip_args);
 void silofs_calc_key_hash(const struct silofs_key *key,
                           const struct silofs_mdigest *md,
                           struct silofs_hash256 *out_hash);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
+                        const struct silofs_laddr *laddr,
+                        const struct silofs_bootrec *brec);
+
+int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
+                        const struct silofs_laddr *laddr,
+                        struct silofs_bootrec *out_brec);
 
 #endif /* SILOFS_BOOT_H_ */

@@ -120,8 +120,8 @@ static void fs_ctx_init_commons(struct silofs_fs_ctx *fs_ctx,
                                 const struct silofs_fs_args *fs_args)
 {
 	silofs_memzero(fs_ctx, sizeof(*fs_ctx));
-	silofs_ivkey_init(&fs_ctx->ivkey_boot);
-	silofs_ivkey_init(&fs_ctx->ivkey_main);
+	silofs_ivkey_init(&fs_ctx->boot_ivkey);
+	silofs_ivkey_init(&fs_ctx->main_ivkey);
 	fs_args_assign(&fs_ctx->fs_args, fs_args);
 	fs_ctx->signum = 0;
 }
@@ -372,8 +372,8 @@ static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 	const struct silofs_fsenv_base fse_base = {
 		.fs_args = &fs_ctx->fs_args,
 		.bootpath = &fs_ctx->bootpath,
-		.boot_ivkey = &fs_ctx->ivkey_boot,
-		.main_ivkey = &fs_ctx->ivkey_main,
+		.boot_ivkey = &fs_ctx->boot_ivkey,
+		.main_ivkey = &fs_ctx->main_ivkey,
 		.alloc = fs_ctx->alloc,
 		.cache = fs_ctx->cache,
 		.repo = fs_ctx->repo,
@@ -493,7 +493,7 @@ static int fs_ctx_init_boot_ivkey(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = silofs_ivkey_for_bootrec(&fs_ctx->ivkey_boot,
+	err = silofs_ivkey_for_bootrec(&fs_ctx->boot_ivkey,
 	                               fs_ctx->password, &md);
 	silofs_mdigest_fini(&md);
 	if (err) {
@@ -580,8 +580,8 @@ static int fs_ctx_init(struct silofs_fs_ctx *fs_ctx,
 
 static void fs_ctx_fini_commons(struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_ivkey_fini(&fs_ctx->ivkey_boot);
-	silofs_ivkey_fini(&fs_ctx->ivkey_main);
+	silofs_ivkey_fini(&fs_ctx->boot_ivkey);
+	silofs_ivkey_fini(&fs_ctx->main_ivkey);
 	fs_ctx->fsenv = NULL;
 }
 
@@ -937,7 +937,7 @@ static int derive_main_ivkey(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_mdigest mdigest = { .md_hd = NULL };
 	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
 	const struct silofs_password *passwd = fs_ctx->password;
-	struct silofs_ivkey *ivkey = &fs_ctx->ivkey_main;
+	struct silofs_ivkey *ivkey = &fs_ctx->main_ivkey;
 	int err = 0;
 
 	if (!passwd->passlen) {
@@ -1436,43 +1436,9 @@ static int save_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
                            const struct silofs_bootrec *brec)
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
-	const struct silofs_crypto *crypto = &fs_ctx->fsenv->fse_crypto;
-	const struct silofs_ivkey *ivkey = &fs_ctx->ivkey_boot;
-	int err;
 
 	silofs_assert_eq(uaddr->laddr.len, sizeof(brec1k));
-	err = silofs_bootrec_encode(brec, &brec1k, crypto, ivkey);
-	if (err) {
-		return err;
-	}
-	err = silofs_repo_save_obj(fs_ctx->repo, &uaddr->laddr, &brec1k);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int load_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
-                           const struct silofs_uaddr *uaddr,
-                           struct silofs_bootrec *out_brec)
-{
-	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
-	const struct silofs_crypto *crypto = &fs_ctx->fsenv->fse_crypto;
-	const struct silofs_ivkey *ivkey = &fs_ctx->ivkey_boot;
-	int err;
-
-	silofs_assert_eq(uaddr->laddr.len, sizeof(brec1k));
-	err = silofs_repo_load_obj(fs_ctx->repo, &uaddr->laddr, &brec1k);
-	if (err) {
-		log_err("failed to load bootrec: err=%d", err);
-		return err;
-	}
-	err = silofs_bootrec_decode(out_brec, &brec1k, crypto, ivkey);
-	if (err) {
-		log_err("failed to decode bootrec: err=%d", err);
-		return err;
-	}
-	return 0;
+	return silofs_save_bootrec(fs_ctx->fsenv, &uaddr->laddr, brec);
 }
 
 static int reload_bootrec_of(struct silofs_fs_ctx *fs_ctx,
@@ -1485,7 +1451,7 @@ static int reload_bootrec_of(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = load_bootrec_of(fs_ctx, uaddr, out_brec);
+	err = silofs_load_bootrec(fs_ctx->fsenv, &uaddr->laddr, out_brec);
 	if (err) {
 		return err;
 	}
@@ -1684,7 +1650,7 @@ int silofs_poke_fs(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_uaddr uaddr = { .voff = -1 };
 
 	silofs_make_bootrec_uaddr(lvid, &uaddr);
-	return load_bootrec_of(fs_ctx, &uaddr, out_brec);
+	return silofs_load_bootrec(fs_ctx->fsenv, &uaddr.laddr, out_brec);
 }
 
 static int exec_clone_fs(const struct silofs_fs_ctx *fs_ctx,

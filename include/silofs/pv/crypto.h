@@ -34,12 +34,6 @@ struct silofs_cipher {
 	gcry_cipher_hd_t cipher_hd;
 };
 
-struct silofs_crypto {
-	struct silofs_mdigest   md;
-	struct silofs_cipher    ci;
-	unsigned int            set;
-};
-
 /* cryptographic-cipher arguments */
 struct silofs_cipher_args {
 	struct silofs_kdf_pair  kdf;
@@ -57,9 +51,10 @@ int silofs_mdigest_init(struct silofs_mdigest *md);
 
 void silofs_mdigest_fini(struct silofs_mdigest *md);
 
-int silofs_crypto_init(struct silofs_crypto *crypto);
+int silofs_cipher_init(struct silofs_cipher *ci);
 
-void silofs_crypto_fini(struct silofs_crypto *crypto);
+void silofs_cipher_fini(struct silofs_cipher *ci);
+
 
 int silofs_derive_ivkey(const struct silofs_cipher_args *cip_args,
                         const struct silofs_password *pp,

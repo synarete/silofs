@@ -39,8 +39,7 @@ static int encrypt_view_with(const struct silofs_fsenv *fsenv,
                              const struct silofs_view *view,
                              void *ptr, size_t len)
 {
-	return silofs_encrypt_buf(&fsenv->fse_crypto.ci,
-	                          ivkey, view, ptr, len);
+	return silofs_encrypt_buf(&fsenv->fse_cipher, ivkey, view, ptr, len);
 }
 
 int silofs_encrypt_view(const struct silofs_fsenv *fsenv,
@@ -59,8 +58,7 @@ static int decrypt_view_with(const struct silofs_fsenv *fsenv,
                              const struct silofs_view *view,
                              void *ptr, size_t len)
 {
-	return silofs_decrypt_buf(&fsenv->fse_crypto.ci,
-	                          ivkey, view, ptr, len);
+	return silofs_decrypt_buf(&fsenv->fse_cipher, ivkey, view, ptr, len);
 }
 
 static int decrypt_view(const struct silofs_fsenv *fsenv,

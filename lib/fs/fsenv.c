@@ -220,12 +220,24 @@ static void fsenv_fini_locks(struct silofs_fsenv *fsenv)
 
 static int fsenv_init_crypto(struct silofs_fsenv *fsenv)
 {
-	return silofs_crypto_init(&fsenv->fse_crypto);
+	int err;
+
+	err = silofs_mdigest_init(&fsenv->fse_mdigest);
+	if (err) {
+		return err;
+	}
+	err = silofs_cipher_init(&fsenv->fse_cipher);
+	if (err) {
+		silofs_mdigest_fini(&fsenv->fse_mdigest);
+		return err;
+	}
+	return 0;
 }
 
 static void fsenv_fini_crypto(struct silofs_fsenv *fsenv)
 {
-	silofs_crypto_fini(&fsenv->fse_crypto);
+	silofs_cipher_fini(&fsenv->fse_cipher);
+	silofs_mdigest_fini(&fsenv->fse_mdigest);
 }
 
 static int fsenv_init_iconv(struct silofs_fsenv *fsenv)

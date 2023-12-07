@@ -56,8 +56,8 @@ struct silofs_fs_args {
 struct silofs_fs_ctx {
 	struct silofs_fs_args   fs_args;
 	struct silofs_bootpath  bootpath;
-	struct silofs_ivkey     ivkey_boot;
-	struct silofs_ivkey     ivkey_main;
+	struct silofs_ivkey     boot_ivkey;
+	struct silofs_ivkey     main_ivkey;
 	struct silofs_alloc    *alloc;
 	struct silofs_cache    *cache;
 	struct silofs_repo     *repo;
@@ -119,5 +119,6 @@ int silofs_sync_fs(struct silofs_fs_ctx *fs_ctx, bool drop);
 
 void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_cachestats *cst);
+
 
 #endif /* SILOFS_EXEC_H_ */

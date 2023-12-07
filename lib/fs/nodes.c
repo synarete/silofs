@@ -450,7 +450,7 @@ vi_mdigest(const struct silofs_vnode_info *vi)
 {
 	const struct silofs_fsenv *fsenv = vi_fsenv(vi);
 
-	return &fsenv->fse_crypto.md;
+	return &fsenv->fse_mdigest;
 }
 
 static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)

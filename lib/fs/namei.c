@@ -137,7 +137,7 @@ dii_mdigest(const struct silofs_inode_info *dii)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(dii);
 
-	return &fsenv->fse_crypto.md;
+	return &fsenv->fse_mdigest;
 }
 
 static uint64_t
@@ -2314,11 +2314,6 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static struct silofs_repo *repo_of(const struct silofs_fsenv *fsenv)
-{
-	return fsenv->fse.repo;
-}
-
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
@@ -2478,22 +2473,10 @@ static int check_clone(const struct silofs_task *task,
 static int encode_save_bootrec(const struct silofs_task *task,
                                const struct silofs_bootrec *brec)
 {
-	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	const struct silofs_fsenv *fsenv = task->t_fsenv;
-	const struct silofs_ivkey *ivkey = fsenv->fse.boot_ivkey;
-	int err;
 
 	silofs_bootrec_self_uaddr(brec, &uaddr);
-	err = silofs_bootrec_encode(brec, &brec1k, &fsenv->fse_crypto, ivkey);
-	if (err) {
-		return err;
-	}
-	err = silofs_repo_save_obj(repo_of(fsenv), &uaddr.laddr, &brec1k);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_save_bootrec(task->t_fsenv, &uaddr.laddr, brec);
 }
 
 static int do_post_clone_updates(const struct silofs_task *task,

@@ -267,7 +267,7 @@ void silofs_crc32_of(const struct silofs_mdigest *md,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int cipher_init(struct silofs_cipher *ci)
+int silofs_cipher_init(struct silofs_cipher *ci)
 {
 	gcry_error_t err;
 	const int algo = GCRY_CIPHER_AES256;
@@ -282,7 +282,7 @@ static int cipher_init(struct silofs_cipher *ci)
 	return 0;
 }
 
-static void cipher_fini(struct silofs_cipher *ci)
+void silofs_cipher_fini(struct silofs_cipher *ci)
 {
 	if (ci->cipher_hd != NULL) {
 		gcry_cipher_close(ci->cipher_hd);
@@ -535,33 +535,4 @@ out:
 		silofs_memzero(ivkey, sizeof(*ivkey));
 	}
 	return err;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_crypto_init(struct silofs_crypto *crypto)
-{
-	int err;
-
-	silofs_memzero(crypto, sizeof(*crypto));
-	err = silofs_mdigest_init(&crypto->md);
-	if (err) {
-		return err;
-	}
-	err = cipher_init(&crypto->ci);
-	if (err) {
-		silofs_mdigest_fini(&crypto->md);
-		return err;
-	}
-	crypto->set = 1;
-	return 0;
-}
-
-void silofs_crypto_fini(struct silofs_crypto *crypto)
-{
-	if (crypto->set) {
-		cipher_fini(&crypto->ci);
-		silofs_mdigest_fini(&crypto->md);
-		silofs_memzero(crypto, sizeof(*crypto));
-	}
 }

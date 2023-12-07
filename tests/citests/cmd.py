@@ -156,7 +156,13 @@ class CmdSilofs(CmdExec):
         sup_groups: bool = False,
         allow_root: bool = False,
     ) -> None:
-        args = ["mkfs", "-s", str(size), repodir_name]
+        giga = 2**30
+        args = ["mkfs", repodir_name]
+        if (size % giga) == 0:
+            gsize = int(size / giga)
+            args = args + [f"--size={gsize}G"]
+        else:
+            args = args + [f"--size={size}"]
         if password:
             args = args + [f"--password={password}"]
         if sup_groups:

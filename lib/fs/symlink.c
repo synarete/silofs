@@ -369,8 +369,8 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
-	err = silofs_spawn_vnode_of(sl_ctx->task, sl_ctx->lnk_ii,
-	                            SILOFS_STYPE_SYMVAL, &vi);
+	err = silofs_spawn_vnode(sl_ctx->task, sl_ctx->lnk_ii,
+	                         SILOFS_STYPE_SYMVAL, &vi);
 	if (err) {
 		return err;
 	}
@@ -383,7 +383,7 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_of(sl_ctx->task, vaddr);
+	return silofs_remove_vnode_at(sl_ctx->task, vaddr);
 }
 
 static int slc_create_symval(struct silofs_symlnk_ctx *sl_ctx,

@@ -45,8 +45,7 @@
 #include <silofs/fs/walk.h>
 #include <silofs/fs/opers.h>
 #include <silofs/fs/namei.h>
-#include <silofs/fs/stage.h>
-#include <silofs/fs/spawn.h>
+#include <silofs/fs/vstage.h>
 #include <silofs/fs/spmaps.h>
 #include <silofs/fs/claim.h>
 #include <silofs/fs/fsenv.h>

@@ -2188,7 +2188,7 @@ static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	}
-	err = silofs_remove_vnode_of(f_ctx->task, vaddr);
+	err = silofs_remove_vnode_at(f_ctx->task, vaddr);
 	if (err) {
 		return err;
 	}
@@ -2202,8 +2202,8 @@ static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode_of(f_ctx->task, f_ctx->ii,
-	                            SILOFS_STYPE_FTNODE, &vi);
+	err = silofs_spawn_vnode(f_ctx->task, f_ctx->ii,
+	                         SILOFS_STYPE_FTNODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -2216,7 +2216,7 @@ static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
 static int filc_remove_finode(const struct silofs_file_ctx *f_ctx,
                               struct silofs_finode_info *fni)
 {
-	return silofs_remove_vnode_by(f_ctx->task, &fni->fn_vi);
+	return silofs_remove_vnode(f_ctx->task, &fni->fn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4329,8 +4329,8 @@ static int filc_resolve_laddr_by(const struct silofs_file_ctx *f_ctx,
 	if (vaddr_isnull(&flref->vaddr)) {
 		return 0;
 	}
-	err = silofs_resolve_llink_of(f_ctx->task, &flref->vaddr,
-	                              f_ctx->stg_mode, &llink);
+	err = silofs_resolve_llink(f_ctx->task, &flref->vaddr,
+	                           f_ctx->stg_mode, &llink);
 	if (err) {
 		return err;
 	}

@@ -161,8 +161,8 @@ spac_stage_curr_spnode1_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	const enum silofs_stg_mode stg_mode = SILOFS_STG_CUR;
 
 	vaddr_setup(&vaddr, spa_ctx->stype, voff);
-	return silofs_stage_spnode1_of(spa_ctx->task, &vaddr,
-	                               stg_mode, &spa_ctx->sni);
+	return silofs_stage_spnode1(spa_ctx->task, &vaddr,
+	                            stg_mode, &spa_ctx->sni);
 }
 
 static int
@@ -171,8 +171,8 @@ spac_stage_spmaps_of(struct silofs_spalloc_ctx *spa_ctx, loff_t voff)
 	struct silofs_vaddr vaddr;
 
 	vaddr_setup(&vaddr, spa_ctx->stype, voff);
-	return silofs_stage_spmaps_of(spa_ctx->task, &vaddr, SILOFS_STG_CUR,
-	                              &spa_ctx->sni, &spa_ctx->sli);
+	return silofs_stage_spmaps(spa_ctx->task, &vaddr, SILOFS_STG_CUR,
+	                           &spa_ctx->sni, &spa_ctx->sli);
 }
 
 static int
@@ -181,8 +181,8 @@ spac_require_spmaps_of(struct silofs_spalloc_ctx *spa_ctx,
 {
 	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
 
-	return silofs_require_spmaps_of(spa_ctx->task, vaddr, stg_mode,
-	                                &spa_ctx->sni, &spa_ctx->sli);
+	return silofs_require_spmaps(spa_ctx->task, vaddr, stg_mode,
+	                             &spa_ctx->sni, &spa_ctx->sli);
 }
 
 static int
@@ -204,8 +204,8 @@ static int spac_resolve_llink(struct silofs_spalloc_ctx *spa_ctx,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_llink *out_llink)
 {
-	return silofs_resolve_llink_of(spa_ctx->task, vaddr,
-	                               SILOFS_STG_CUR, out_llink);
+	return silofs_resolve_llink(spa_ctx->task, vaddr,
+	                            SILOFS_STG_CUR, out_llink);
 }
 
 static int

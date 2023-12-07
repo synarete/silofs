@@ -369,7 +369,7 @@ static int spawn_inode(struct silofs_task *task,
 	struct silofs_inew_params inp;
 
 	silofs_inew_params_of(&inp, task_creds(task), parent_dii, mode, rdev);
-	return silofs_spawn_inode_of(task, &inp, out_ii);
+	return silofs_spawn_inode(task, &inp, out_ii);
 }
 
 static int spawn_dir_inode(struct silofs_task *task,
@@ -779,7 +779,7 @@ static int do_add_dentry(struct silofs_task *task,
 	}
 	err = silofs_add_dentry(task, dir_ii, &name, ii);
 	if (err && del_upon_failure) {
-		silofs_remove_inode_by(task, ii);
+		silofs_remove_inode(task, ii);
 	}
 	return err;
 }
@@ -1086,7 +1086,7 @@ static int drop_unlinked(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_remove_inode_by(task, ii);
+	err = silofs_remove_inode(task, ii);
 	if (err) {
 		return err;
 	}
@@ -1541,7 +1541,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	}
 	err = silofs_setup_symlink(task, *out_ii, symval);
 	if (err) {
-		silofs_remove_inode_by(task, *out_ii);
+		silofs_remove_inode(task, *out_ii);
 		return err;
 	}
 	return 0;

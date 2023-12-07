@@ -475,7 +475,7 @@ static int flusher_resolve_llink_of_vi(const struct silofs_flusher *flusher,
 {
 	int err;
 
-	err = silofs_refresh_llink_of(flusher->task, vi);
+	err = silofs_refresh_llink(flusher->task, vi);
 	if (err) {
 		return err;
 	}

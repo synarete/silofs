@@ -787,8 +787,8 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	struct silofs_xanode_info *xai = NULL;
 	int err;
 
-	err = silofs_spawn_vnode_of(xa_ctx->task, xa_ctx->ii,
-	                            SILOFS_STYPE_XANODE, &vi);
+	err = silofs_spawn_vnode(xa_ctx->task, xa_ctx->ii,
+	                         SILOFS_STYPE_XANODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -819,7 +819,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_of(xa_ctx->task, vaddr);
+	return silofs_remove_vnode_at(xa_ctx->task, vaddr);
 }
 
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,

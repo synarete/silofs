@@ -1288,8 +1288,8 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode_of(d_ctx->task, d_ctx->dir_ii,
-	                            SILOFS_STYPE_DTNODE, &vi);
+	err = silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii,
+	                         SILOFS_STYPE_DTNODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -1302,7 +1302,7 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 static int dirc_remove_dnode(const struct silofs_dir_ctx *d_ctx,
                              struct silofs_dnode_info *dni)
 {
-	return silofs_remove_vnode_by(d_ctx->task, &dni->dn_vi);
+	return silofs_remove_vnode(d_ctx->task, &dni->dn_vi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

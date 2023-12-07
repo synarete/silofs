@@ -1008,7 +1008,7 @@ static int exec_require_spmaps_of(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_require_spmaps_of(&task, vaddr, stg_mode, &sni, &sli);
+	err = silofs_require_spmaps(&task, vaddr, stg_mode, &sni, &sli);
 	return term_task(&task, err);
 }
 
@@ -1142,7 +1142,7 @@ static int exec_stage_spmaps_at(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_spmaps_of(&task, vaddr, stg_mode, &sni, &sli);
+	err = silofs_stage_spmaps(&task, vaddr, stg_mode, &sni, &sli);
 	return term_task(&task, err);
 }
 
@@ -1193,7 +1193,7 @@ static int exec_spawn_vnode(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode_of(&task, NULL, stype, out_vi);
+	err = silofs_spawn_vnode(&task, NULL, stype, out_vi);
 	if (!err) {
 		vi_dirtify(*out_vi, NULL);
 	}
@@ -1247,7 +1247,7 @@ static int do_spawn_rootdir(struct silofs_task *task,
 	struct silofs_inew_params inp;
 
 	silofs_inew_params_of(&inp, task_creds(task), NULL, S_IFDIR | 0755, 0);
-	return silofs_spawn_inode_of(task, &inp, out_ii);
+	return silofs_spawn_inode(task, &inp, out_ii);
 }
 
 static int exec_spawn_rootdir(const struct silofs_fs_ctx *fs_ctx,

@@ -110,7 +110,7 @@ static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t len)
 	ft_ftruncate(fd, off + (loff_t)len);
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	memcpy(addr, mbuf, len / 2);
 	ft_msync(addr, len, MS_SYNC);
 	ft_munmap(addr, len);

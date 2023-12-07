@@ -163,21 +163,21 @@ static void test_truncate_mctimes_(struct ft_env *fte, loff_t off)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_ftruncate(fd, off);
 	ft_fstat(fd, &st[1]);
 	ft_expect_ctime_gt(&st[0], &st[1]);
 	ft_expect_mtime_gt(&st[0], &st[1]);
 
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_ftruncate(fd, off);
 	ft_fstat(fd, &st[1]);
 	ft_expect_ctime_eq(&st[0], &st[1]);
 	ft_expect_mtime_eq(&st[0], &st[1]);
 
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_ftruncate(fd, 0);
 	ft_fstat(fd, &st[1]);
 	ft_expect_ctime_gt(&st[0], &st[1]);

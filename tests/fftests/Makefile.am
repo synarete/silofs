@@ -17,6 +17,7 @@ silofs_fftests_SOURCES += fftests-inline.h
 silofs_fftests_SOURCES += fftests_main.c
 silofs_fftests_SOURCES += fftests_syscall.c
 silofs_fftests_SOURCES += fftests_utility.c
+silofs_fftests_SOURCES += stress_rw_basic.c
 silofs_fftests_SOURCES += test_access.c
 silofs_fftests_SOURCES += test_boundaries.c
 silofs_fftests_SOURCES += test_chmod_chown.c
@@ -54,5 +55,4 @@ silofs_fftests_SOURCES += test_unlinked_file.c
 silofs_fftests_SOURCES += test_utimes.c
 silofs_fftests_SOURCES += test_write.c
 silofs_fftests_SOURCES += test_xattr.c
-silofs_fftests_SOURCES += test_xstress_mt.c
 

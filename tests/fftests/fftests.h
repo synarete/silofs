@@ -183,6 +183,8 @@ void ft_suspend(const struct ft_env *fte, int sec, int part);
 
 void ft_suspends(const struct ft_env *fte, int sec);
 
+void ft_suspend1(const struct ft_env *fte);
+
 void ft_freeall(struct ft_env *fte);
 
 char *ft_strdup(struct ft_env *fte, const char *str);
@@ -528,7 +530,7 @@ extern const struct ft_tests ft_test_copy_file_range;
 extern const struct ft_tests ft_test_mmap;
 extern const struct ft_tests ft_test_mmap_mt;
 extern const struct ft_tests ft_test_namespace;
-extern const struct ft_tests ft_test_xstress_mt;
+extern const struct ft_tests ft_stress_rw;
 
 /* test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_) \

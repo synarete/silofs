@@ -208,19 +208,19 @@ static void test_write_mctimes_(struct ft_env *fte, loff_t off, size_t len)
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st[1]);
 	ft_expect_ctime_gt(&st[0], &st[1]);
 	ft_expect_mtime_gt(&st[0], &st[1]);
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st[1]);
 	ft_expect_ctime_gt(&st[0], &st[1]);
 	ft_expect_mtime_gt(&st[0], &st[1]);
 	ft_fstat(fd, &st[0]);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_pwrite(fd, buf, 0, off, &nwr);
 	ft_expect_eq(nwr, 0);
 	ft_fstat(fd, &st[1]);

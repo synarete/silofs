@@ -60,7 +60,7 @@ static const struct ft_tests *const ft_testsbl[]  = {
 	FT_METATEST(ft_test_tmpfile),
 	FT_METATEST(ft_test_mmap),
 	FT_METATEST(ft_test_mmap_mt),
-	FT_METATEST(ft_test_xstress_mt),
+	FT_METATEST(ft_stress_rw),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

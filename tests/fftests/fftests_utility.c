@@ -229,6 +229,11 @@ void ft_suspends(const struct ft_env *fte, int sec)
 	ft_suspend(fte, sec, 0);
 }
 
+void ft_suspend1(const struct ft_env *fte)
+{
+	ft_suspends(fte, 1);
+}
+
 static char *ft_do_joinpath(struct ft_env *fte, const char *s1, const char *s2)
 {
 	char *path;

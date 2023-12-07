@@ -119,11 +119,11 @@ static void test_fifo_write_mctime_(struct ft_env *fte, size_t bsz)
 	ft_writen(fd, buf1, bsz);
 	ft_readn(fd, buf2, bsz);
 	ft_expect_eqm(buf1, buf2, bsz);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_writen(fd, buf1, bsz);
 	ft_readn(fd, buf2, bsz);
 	ft_expect_eqm(buf1, buf2, bsz);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_fstat(fd, &st[1]);
 	if (!fuse_has_fifo_bug) { /* XXX */
 		ft_expect_ctime_gt(&st[0], &st[1]);
@@ -164,7 +164,7 @@ static void test_fifo_unlinked_(struct ft_env *fte, size_t bsz)
 	ft_writen(fd, buf1, bsz);
 	ft_readn(fd, buf2, bsz);
 	ft_expect_eqm(buf1, buf2, bsz);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_writen(fd, buf1, bsz);
 	ft_readn(fd, buf2, bsz);
 	ft_expect_eqm(buf1, buf2, bsz);
@@ -174,7 +174,7 @@ static void test_fifo_unlinked_(struct ft_env *fte, size_t bsz)
 	ft_stat_err(path, -ENOENT);
 	ft_syncfs(dfd);
 	ft_close(dfd);
-	ft_suspends(fte, 1);
+	ft_suspend1(fte);
 	ft_rmdir(dpath);
 }
 

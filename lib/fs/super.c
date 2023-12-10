@@ -788,7 +788,7 @@ static int stage_spleaf(struct silofs_task *task,
                         enum silofs_stg_mode stg_mode,
                         struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf(task, vaddr, stg_mode, out_sli);
+	return silofs_stage_spleaf_of(task, vaddr, stg_mode, out_sli);
 }
 
 int silofs_test_unwritten_at(struct silofs_task *task,

@@ -75,6 +75,7 @@ nobase_include_HEADERS += silofs/fs/symlink.h
 nobase_include_HEADERS += silofs/fs/task.h
 nobase_include_HEADERS += silofs/fs/types.h
 nobase_include_HEADERS += silofs/fs/uidgid.h
+nobase_include_HEADERS += silofs/fs/ustage.h
 nobase_include_HEADERS += silofs/fs/vstage.h
 nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h

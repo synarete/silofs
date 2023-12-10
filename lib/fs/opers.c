@@ -36,6 +36,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void relax_caches(const struct silofs_task *task, int flags)
+{
+	silofs_fsenv_relax_caches(task->t_fsenv, flags);
+}
+
 static int op_start(struct silofs_task *task, ino_t ino)
 {
 	struct silofs_fsenv *fsenv = task->t_fsenv;
@@ -53,7 +58,7 @@ static int op_xstart(struct silofs_task *task, ino_t ino)
 
 	ret = op_start(task, ino);
 	if (ret == 0) {
-		silofs_relax_caches(task, SILOFS_F_OPSTART);
+		relax_caches(task, SILOFS_F_OPSTART);
 	}
 	return ret;
 }
@@ -120,7 +125,7 @@ static void op_relax_post(struct silofs_task *task, ino_t ino)
 		if (ino_isnull(ino)) {
 			flags |= SILOFS_F_TIMEOUT;
 		}
-		silofs_relax_caches(task, flags);
+		relax_caches(task, flags);
 	}
 }
 

@@ -883,7 +883,10 @@ static int filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
 static int filc_require_mut_vaddr(const struct silofs_file_ctx *f_ctx,
                                   const struct silofs_vaddr *vaddr)
 {
-	return silofs_require_mut_vaddr(f_ctx->task, vaddr);
+	struct silofs_llink llink;
+	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
+
+	return silofs_resolve_llink_of(f_ctx->task, vaddr, stg_mode, &llink);
 }
 
 static size_t filc_io_length(const struct silofs_file_ctx *f_ctx)
@@ -4329,8 +4332,8 @@ static int filc_resolve_laddr_by(const struct silofs_file_ctx *f_ctx,
 	if (vaddr_isnull(&flref->vaddr)) {
 		return 0;
 	}
-	err = silofs_resolve_llink(f_ctx->task, &flref->vaddr,
-	                           f_ctx->stg_mode, &llink);
+	err = silofs_resolve_llink_of(f_ctx->task, &flref->vaddr,
+	                              f_ctx->stg_mode, &llink);
 	if (err) {
 		return err;
 	}

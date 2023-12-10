@@ -81,46 +81,12 @@ int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv);
 int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
                         struct silofs_bootrecs *out_brecs);
 
-time_t silofs_fsenv_uptime(const struct silofs_fsenv *fsenv);
+void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime);
 
-int silofs_spawn_super_at(struct silofs_fsenv *fsenv,
-                          const struct silofs_ulink *ulink,
-                          struct silofs_sb_info **out_sbi);
+void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
+                            struct silofs_alloc_stat *out_alst);
 
-int silofs_stage_super_at(struct silofs_fsenv *fsenv,
-                          const struct silofs_ulink *ulink,
-                          struct silofs_sb_info **out_sbi);
-
-
-int silofs_spawn_spnode_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spnode_info **out_sni);
-
-int silofs_stage_spnode_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spnode_info **out_sni);
-
-
-int silofs_spawn_spleaf_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spleaf_info **out_sli);
-
-int silofs_stage_spleaf_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spleaf_info **out_sli);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_spawn_lseg_at(struct silofs_fsenv *fsenv,
-                         const struct silofs_lsegid *lsegid);
-
-int silofs_stage_lseg_at(struct silofs_fsenv *fsenv,
-                         const struct silofs_lsegid *lsegid);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_relax_caches(const struct silofs_task *task, int flags);
 
 #endif /* SILOFS_FSENV_H_ */

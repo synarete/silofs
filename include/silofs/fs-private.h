@@ -42,7 +42,6 @@
 #define sbi_ulink(sbi)                  silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)                  silofs_sbi_uaddr(sbi)
 #define sbi_laddr(sbi)                  silofs_sbi_laddr(sbi)
-#define sbi_lsegid(sbi)                 silofs_sbi_lsegid(sbi)
 #define sbi_incref(sbi)                 silofs_sbi_incref(sbi)
 #define sbi_decref(sbi)                 silofs_sbi_decref(sbi)
 #define sbi_dirtify(sbi)                silofs_sbi_dirtify(sbi)

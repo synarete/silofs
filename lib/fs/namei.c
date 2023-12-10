@@ -2256,14 +2256,17 @@ static void fill_proc(const struct silofs_fsenv *fsenv,
                       struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
+	time_t uptime;
 
-	silofs_allocstat(fsenv->fse.alloc, &alst);
+	silofs_fsenv_uptime(fsenv, &uptime);
+	silofs_fsenv_allocstat(fsenv, &alst);
+
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid = fsenv->fse_owner.uid;
 	qpr->gid = fsenv->fse_owner.gid;
 	qpr->pid = fsenv->fse.fs_args->pid;
 	qpr->msflags = fsenv->fse_ms_flags;
-	qpr->uptime = silofs_fsenv_uptime(fsenv);
+	qpr->uptime = uptime;
 	qpr->iopen_max = fsenv->fse_op_stat.op_iopen_max;
 	qpr->iopen_cur = fsenv->fse_op_stat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
@@ -2718,7 +2721,7 @@ int silofs_do_timedout(struct silofs_task *task, int flags)
 
 	err = silofs_flush_dirty(task, NULL, flags);
 	if (!err) {
-		silofs_relax_caches(task, flags);
+		silofs_fsenv_relax_caches(task->t_fsenv, flags);
 	}
 	return err;
 }

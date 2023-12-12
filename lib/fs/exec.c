@@ -1435,9 +1435,7 @@ static int save_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
                            const struct silofs_uaddr *uaddr,
                            const struct silofs_bootrec *brec)
 {
-	struct silofs_bootrec1k brec1k = { .br_magic = 0 };
-
-	silofs_assert_eq(uaddr->laddr.len, sizeof(brec1k));
+	silofs_assert_eq(uaddr->laddr.len, sizeof(struct silofs_bootrec1k));
 	return silofs_save_bootrec(fs_ctx->fsenv, &uaddr->laddr, brec);
 }
 

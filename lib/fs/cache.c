@@ -1544,26 +1544,28 @@ static size_t cache_memory_pressure(const struct silofs_cache *cache)
 static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 {
 	const size_t mem_pres = cache_memory_pressure(cache);
+	const size_t niter_base = (flags & SILOFS_F_NOW) ? 2 : 0;
 	size_t niter = 0;
 
-	if (flags & SILOFS_F_NOW) {
-		niter += 2;
-	}
-	if (flags & SILOFS_F_IDLE) {
-		niter += (mem_pres + 9) / 10;
-	}
-	if (20 < mem_pres) {
+	if (mem_pres > 60) {
+		niter += mem_pres / 10;
+	} else if (mem_pres > 20) {
 		if (flags & SILOFS_F_OPSTART) {
-			niter += 1;
+			niter += mem_pres / 40;
 		} else if (flags & SILOFS_F_OPFINISH) {
-			niter += mem_pres / 30;
+			niter += mem_pres / 25;
 		} else if (flags & SILOFS_F_TIMEOUT) {
-			niter += mem_pres / 20;
-		} else {
 			niter += mem_pres / 10;
 		}
+	} else if (mem_pres > 0) {
+		if (flags & SILOFS_F_TIMEOUT) {
+			niter += mem_pres / 10;
+		}
+		if (flags & SILOFS_F_IDLE) {
+			niter += 1;
+		}
 	}
-	return niter;
+	return niter + niter_base;
 }
 
 static size_t cache_nmapped_uis(const struct silofs_cache *cache)

@@ -104,6 +104,7 @@ int silofs_check_name(const struct silofs_namestr *nstr)
 int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
 {
 	silofs_substr_init(&nstr->s, s);
+	nstr->hash = 0;
 	return silofs_check_name(nstr);
 }
 

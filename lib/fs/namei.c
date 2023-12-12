@@ -570,16 +570,17 @@ static int check_lookup(const struct silofs_task *task,
 	return 0;
 }
 
-static void qstr_setup(struct silofs_qstr *qstr,
-                       const char *str, size_t len, uint64_t hash)
+static void
+setup_namestr_with_hash(struct silofs_namestr *nstr,
+                        const struct silofs_namestr *base, uint64_t hash)
 {
-	silofs_substr_init_rd(&qstr->s, str, len);
-	qstr->hash = hash;
+	silofs_substr_clone(&base->s, &nstr->s);
+	nstr->hash = hash;
 }
 
 static int assign_namehash(const struct silofs_inode_info *dir_ii,
                            const struct silofs_namestr *nstr,
-                           struct silofs_qstr *out_qstr)
+                           struct silofs_namestr *out_nstr)
 {
 	uint64_t hash = 0;
 	int err;
@@ -592,7 +593,7 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	qstr_setup(out_qstr, nstr->s.str, nstr->s.len, hash);
+	setup_namestr_with_hash(out_nstr, nstr, hash);
 	return 0;
 }
 
@@ -600,7 +601,7 @@ static int lookup_by_name(struct silofs_task *task,
                           struct silofs_inode_info *dir_ii,
                           const struct silofs_namestr *nstr, ino_t *out_ino)
 {
-	struct silofs_qstr name;
+	struct silofs_namestr name;
 	struct silofs_ino_dt ino_dt;
 	int err;
 
@@ -770,7 +771,7 @@ static int do_add_dentry(struct silofs_task *task,
                          struct silofs_inode_info *ii,
                          bool del_upon_failure)
 {
-	struct silofs_qstr name;
+	struct silofs_namestr name;
 	int err;
 
 	err = assign_namehash(dir_ii, nstr, &name);
@@ -1187,7 +1188,7 @@ static int try_prune_inode(struct silofs_task *task,
 static int remove_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          struct silofs_inode_info *ii,
-                         const struct silofs_qstr *name)
+                         const struct silofs_namestr *name)
 {
 	int err;
 
@@ -1202,7 +1203,7 @@ static int remove_dentry_of(struct silofs_task *task,
                             struct silofs_inode_info *ii,
                             const struct silofs_namestr *nstr)
 {
-	struct silofs_qstr name;
+	struct silofs_namestr name;
 	int err;
 
 	err = assign_namehash(dir_ii, nstr, &name);

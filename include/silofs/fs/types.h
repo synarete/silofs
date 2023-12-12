@@ -96,14 +96,10 @@ enum silofs_iattr_flags {
 };
 
 
-/* strings */
-struct silofs_qstr {
-	struct silofs_substr s;
-	uint64_t hash;
-};
-
+/* name-string + hash (optional) */
 struct silofs_namestr {
 	struct silofs_substr s;
+	uint64_t hash;
 };
 
 /* pair of ino and dir-type */

@@ -48,8 +48,8 @@ struct silofs_dir_ctx {
 	struct silofs_inode_info       *parent_ii;
 	struct silofs_inode_info       *child_ii;
 	struct silofs_readdir_ctx      *rd_ctx;
-	const struct silofs_qstr       *name;
-	enum silofs_stg_mode          stg_mode;
+	const struct silofs_namestr       *name;
+	enum silofs_stg_mode            stg_mode;
 	int keep_iter;
 	int readdir_plus;
 };
@@ -60,7 +60,7 @@ typedef unsigned int silofs_dtn_depth_t;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint32_t name_hash32_of(const struct silofs_qstr *name)
+static uint32_t name_hash32_of(const struct silofs_namestr *name)
 {
 	return (uint32_t)(name->hash);
 }
@@ -570,7 +570,7 @@ static char *dtn_name_of(const struct silofs_dtree_node *dtn,
 
 static bool dtn_has_name_at(const struct silofs_dtree_node *dtn,
                             const struct silofs_dir_entry *de,
-                            const struct silofs_qstr *name)
+                            const struct silofs_namestr *name)
 {
 	const char *de_name = dtn_name_of(dtn, de);
 
@@ -579,7 +579,7 @@ static bool dtn_has_name_at(const struct silofs_dtree_node *dtn,
 
 static bool dtn_de_has_name(const struct silofs_dtree_node *dtn,
                             const struct silofs_dir_entry *de,
-                            const struct silofs_qstr *name)
+                            const struct silofs_namestr *name)
 {
 	const uint32_t name_hash32 = name_hash32_of(name);
 
@@ -597,7 +597,7 @@ static bool dtn_de_has_name(const struct silofs_dtree_node *dtn,
 
 static const struct silofs_dir_entry *
 dtn_search(const struct silofs_dtree_node *dtn,
-           const struct silofs_qstr *name)
+           const struct silofs_namestr *name)
 {
 	const struct silofs_dir_entry *de;
 	const struct silofs_dir_entry *de_beg = dtn_de_begin(dtn);
@@ -669,7 +669,7 @@ static bool dtn_may_insert(const struct silofs_dtree_node *dtn, size_t nlen)
 
 static void dtn_de_assing_name(struct silofs_dtree_node *dtn,
                                const struct silofs_dir_entry *de,
-                               const struct silofs_qstr *name)
+                               const struct silofs_namestr *name)
 {
 	char *dst = dtn_name_of(dtn, de);
 
@@ -700,7 +700,7 @@ dtn_resolve_insert_de(struct silofs_dtree_node *dtn)
 }
 
 static void dtn_insert(struct silofs_dtree_node *dtn,
-                       const struct silofs_qstr *name, ino_t ino, mode_t dt)
+                       const struct silofs_namestr *name, ino_t ino, mode_t dt)
 {
 	struct silofs_dir_entry *de;
 	const size_t name_len = name->s.len;
@@ -1198,7 +1198,7 @@ void silofs_setup_dir(struct silofs_inode_info *dir_ii,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int search_dnode(const struct silofs_dnode_info *dni,
-                        const struct silofs_qstr *name,
+                        const struct silofs_namestr *name,
                         struct silofs_dir_entry_info *out_dei)
 {
 	const struct silofs_dir_entry *de;
@@ -1397,7 +1397,7 @@ static int dirc_do_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
                                   struct silofs_dnode_info *root_dni,
                                   struct silofs_dir_entry_info *dei)
 {
-	const struct silofs_qstr *name = d_ctx->name;
+	const struct silofs_namestr *name = d_ctx->name;
 	struct silofs_dnode_info *child_dni = NULL;
 	struct silofs_dnode_info *dni = root_dni;
 	silofs_dtn_depth_t depth;
@@ -1510,7 +1510,7 @@ out:
 
 int silofs_lookup_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
-                         const struct silofs_qstr *name,
+                         const struct silofs_namestr *name,
                          struct silofs_ino_dt *out_idt)
 {
 	struct silofs_dir_ctx d_ctx = {
@@ -1548,7 +1548,7 @@ static int dirc_do_spawn_bind_child(const struct silofs_dir_ctx *d_ctx,
                                     struct silofs_dnode_info *parent_dni,
                                     struct silofs_dnode_info **out_dni)
 {
-	const struct silofs_qstr *name = d_ctx->name;
+	const struct silofs_namestr *name = d_ctx->name;
 	const struct silofs_vaddr *parent_vaddr = dni_vaddr(parent_dni);
 	const uint64_t nhash = name->hash;
 	silofs_dtn_index_t parent_dtn_index;
@@ -1583,7 +1583,7 @@ static int dirc_require_child(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dnode_info **out_dni)
 {
 	struct silofs_vaddr vaddr;
-	const struct silofs_qstr *name = d_ctx->name;
+	const struct silofs_namestr *name = d_ctx->name;
 	int err;
 
 	dni_child_addr_by_hash(parent_dni, name->hash, &vaddr);
@@ -1737,7 +1737,7 @@ static int dirc_add_dentry(struct silofs_dir_ctx *d_ctx)
 
 int silofs_add_dentry(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
-                      const struct silofs_qstr *name,
+                      const struct silofs_namestr *name,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_dir_ctx d_ctx = {
@@ -2393,7 +2393,7 @@ static int dirc_remove_dentry(struct silofs_dir_ctx *d_ctx)
 
 int silofs_remove_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
-                         const struct silofs_qstr *name)
+                         const struct silofs_namestr *name)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task = task,

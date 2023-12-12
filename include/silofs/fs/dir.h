@@ -55,17 +55,17 @@ void silofs_setup_dir(struct silofs_inode_info *dir_ii,
 
 int silofs_lookup_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
-                         const struct silofs_qstr *name,
+                         const struct silofs_namestr *name,
                          struct silofs_ino_dt *out_idt);
 
 int silofs_add_dentry(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
-                      const struct silofs_qstr *name,
+                      const struct silofs_namestr *name,
                       struct silofs_inode_info *ii);
 
 int silofs_remove_dentry(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
-                         const struct silofs_qstr *name);
+                         const struct silofs_namestr *name);
 
 int silofs_do_readdir(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,

@@ -99,7 +99,7 @@ enum silofs_iattr_flags {
 /* name-string + hash (optional) */
 struct silofs_namestr {
 	struct silofs_substr s;
-	uint64_t hash;
+	uint32_t hash;
 };
 
 /* pair of ino and dir-type */

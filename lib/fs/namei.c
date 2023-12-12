@@ -62,29 +62,22 @@ static int check_utf8_name(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t u64_of(const uint8_t p[8])
+static uint32_t u32_of(const uint8_t p[4])
 {
-	uint64_t u = 0;
-
-	u |= (uint64_t)(p[0]) << 56;
-	u |= (uint64_t)(p[1]) << 48;
-	u |= (uint64_t)(p[2]) << 40;
-	u |= (uint64_t)(p[3]) << 32;
-	u |= (uint64_t)(p[4]) << 24;
-	u |= (uint64_t)(p[5]) << 16;
-	u |= (uint64_t)(p[6]) << 8;
-	u |= (uint64_t)(p[7]);
-
-	return u;
+	return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+	       ((uint32_t)p[2] << 8) | ((uint32_t)p[3]);
 }
 
-static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
+static uint32_t hash256_to_u32(const struct silofs_hash256 *hash)
 {
-	const uint8_t *h = hash->hash;
+	uint32_t n = 0;
 
-	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 4 * sizeof(uint64_t));
+	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 8 * sizeof(uint32_t));
 
-	return u64_of(h) ^ u64_of(h + 8) ^ u64_of(h + 16) ^ u64_of(h + 24);
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); i += 4) {
+		n ^= u32_of(&hash->hash[i]);
+	}
+	return n;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -140,26 +133,29 @@ dii_mdigest(const struct silofs_inode_info *dii)
 	return &fsenv->fse_mdigest;
 }
 
-static uint64_t
-dii_namehash_by_sha256(const struct silofs_inode_info *dii,
+static uint32_t
+dii_namehash_by_sha256(const struct silofs_inode_info *dir_ii,
                        const char *name, size_t nlen)
 {
 	struct silofs_hash256 sha256;
+	const uint32_t seed = silofs_dir_seed32(dir_ii);
 
-	silofs_sha256_of(dii_mdigest(dii), name, nlen, &sha256);
-	return hash256_to_u64(&sha256);
+	silofs_sha256_of(dii_mdigest(dir_ii), name, nlen, &sha256);
+	return seed ^ hash256_to_u32(&sha256);
 }
 
-static uint64_t
-dii_namehash_by_xxh64(const struct silofs_inode_info *dir_ii,
+static uint32_t
+dii_namehash_by_xxh32(const struct silofs_inode_info *dir_ii,
                       const char *name, size_t nlen)
 {
-	return silofs_hash_xxh64(name, nlen, silofs_dir_seed(dir_ii));
+	const uint32_t seed = silofs_dir_seed32(dir_ii);
+
+	return silofs_hash_xxh32(name, nlen, seed);
 }
 
 static int dii_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
                             const struct silofs_namebuf *nbuf,
-                            size_t nlen, uint64_t *out_hash)
+                            size_t nlen, uint32_t *out_hash)
 {
 	const enum silofs_dirhfn dhfn = silofs_dir_hfn(dir_ii);
 
@@ -167,8 +163,8 @@ static int dii_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
 	case SILOFS_DIRHASH_SHA256:
 		*out_hash = dii_namehash_by_sha256(dir_ii, nbuf->name, nlen);
 		break;
-	case SILOFS_DIRHASH_XXH64:
-		*out_hash = dii_namehash_by_xxh64(dir_ii, nbuf->name, nlen);
+	case SILOFS_DIRHASH_XXH32:
+		*out_hash = dii_namehash_by_xxh32(dir_ii, nbuf->name, nlen);
 		break;
 	default:
 		return -SILOFS_EFSCORRUPTED;
@@ -178,7 +174,7 @@ static int dii_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
 
 static int
 dii_name_to_hash(const struct silofs_inode_info *dir_ii,
-                 const struct silofs_namestr *nstr, uint64_t *out_hash)
+                 const struct silofs_namestr *nstr, uint32_t *out_hash)
 {
 	struct silofs_namebuf nbuf;
 	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
@@ -572,7 +568,7 @@ static int check_lookup(const struct silofs_task *task,
 
 static void
 setup_namestr_with_hash(struct silofs_namestr *nstr,
-                        const struct silofs_namestr *base, uint64_t hash)
+                        const struct silofs_namestr *base, uint32_t hash)
 {
 	silofs_substr_clone(&base->s, &nstr->s);
 	nstr->hash = hash;
@@ -582,7 +578,7 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
                            const struct silofs_namestr *nstr,
                            struct silofs_namestr *out_nstr)
 {
-	uint64_t hash = 0;
+	uint32_t hash = 0;
 	int err;
 
 	err = check_isdir(dir_ii);

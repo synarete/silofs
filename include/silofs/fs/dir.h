@@ -40,7 +40,7 @@ struct silofs_readdir_ctx {
 
 size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii);
 
-uint64_t silofs_dir_seed(const struct silofs_inode_info *dir_ii);
+uint32_t silofs_dir_seed32(const struct silofs_inode_info *dir_ii);
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
 

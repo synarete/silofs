@@ -394,7 +394,7 @@ enum silofs_dirf {
 /* dir-inode hash-functions for names */
 enum silofs_dirhfn {
 	SILOFS_DIRHASH_SHA256   = 1,
-	SILOFS_DIRHASH_XXH64    = 2,
+	SILOFS_DIRHASH_XXH32    = 2,
 };
 
 /* extended attributes known classes */

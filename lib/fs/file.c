@@ -1384,11 +1384,11 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	if (fli->fl_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
+	if (!vi_need_recheck(&fli->fl_vi)) {
 		return 0;
 	}
 	silofs_unused(f_ctx);
-	fli->fl_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
+	vi_set_rechecked(&fli->fl_vi);
 	return 0;
 }
 
@@ -1455,22 +1455,27 @@ static int filc_zero_data_leaf_at(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
                             struct silofs_finode_info *fni)
 {
-	const ino_t r_ino = ftn_ino(fni->ftn);
-	const ino_t f_ino = ii_ino(f_ctx->ii);
-	const size_t height = ftn_height(fni->ftn);
+	ino_t fnode_ino;
+	ino_t owner_ino;
+	size_t height;
 
-	if (fni->fn_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
+	if (!vi_need_recheck(&fni->fn_vi)) {
 		return 0;
 	}
+	fnode_ino = ftn_ino(fni->ftn);
+	owner_ino = ii_ino(f_ctx->ii);
+	if (fnode_ino != owner_ino) {
+		log_err("bad finode ino: fnode_ino=%lu owner_ino=%lu",
+		        fnode_ino, owner_ino);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	height = ftn_height(fni->ftn);
 	if ((height < 2) || (height > 16)) {
-		log_err("illegal height: height=%lu ino=%lu", height, f_ino);
+		log_err("illegal height: height=%lu ino=%lu",
+		        height, owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (r_ino != f_ino) {
-		log_err("bad finode ino: r_ino=%lu f_ino=%lu", r_ino, f_ino);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	fni->fn_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
+	vi_set_rechecked(&fni->fn_vi);
 	return 0;
 }
 

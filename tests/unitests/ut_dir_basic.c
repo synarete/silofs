@@ -112,11 +112,11 @@ make_names_ulongs_seq(struct ut_env *ute, size_t cnt)
 
 static void ut_mkdir_simple(struct ut_env *ute)
 {
-	ino_t ino = 0;
+	struct statvfs stv[2];
+	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
 	const ino_t parent = UT_ROOT_INO;
-	struct stat st = { .st_size = -1 };
-	struct statvfs stv[2];
+	ino_t ino = 0;
 
 	ut_statfs_rootd_ok(ute, &stv[0]);
 	ut_mkdir_ok(ute, parent, name, &st);

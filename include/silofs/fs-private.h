@@ -80,6 +80,8 @@
 #define vi_incref(vi)                   silofs_vi_incref(vi)
 #define vi_decref(vi)                   silofs_vi_decref(vi)
 #define vi_dirtify(vi, ii)              silofs_vi_dirtify(vi, ii)
+#define vi_need_recheck(vi)             silofs_vi_need_recheck(vi)
+#define vi_set_rechecked(vi)            silofs_vi_set_rechecked(vi)
 
 #define ii_unconst(ii)                  silofs_ii_unconst(ii)
 #define ii_to_vi(ii)                    silofs_ii_to_vi(ii)
@@ -183,6 +185,16 @@ static inline struct silofs_sb_info *
 silofs_vi_sbi(const struct silofs_vnode_info *vi)
 {
 	return vi->v_lni.l_fsenv->fse_sbi;
+}
+
+static inline bool silofs_vi_need_recheck(const struct silofs_vnode_info *vi)
+{
+	return (vi->v_lni.l_flags & SILOFS_LNF_RECHECK) != SILOFS_LNF_RECHECK;
+}
+
+static inline void silofs_vi_set_rechecked(struct silofs_vnode_info *vi)
+{
+	vi->v_lni.l_flags |= SILOFS_LNF_RECHECK;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

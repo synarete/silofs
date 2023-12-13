@@ -30,58 +30,6 @@
 #include <limits.h>
 
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-union silofs_utf32_name_buf {
-	char dat[4 * (SILOFS_NAME_MAX + 1)];
-	uint32_t utf32[SILOFS_NAME_MAX + 1];
-} silofs_aligned64;
-
-
-static int check_utf8_name(const struct silofs_fsenv *fsenv,
-                           const struct silofs_namestr *nstr)
-{
-	union silofs_utf32_name_buf unb;
-	char *in = unconst(nstr->s.str);
-	char *out = unb.dat;
-	size_t len = nstr->s.len;
-	size_t outlen = sizeof(unb.dat);
-	size_t datlen;
-	size_t ret;
-
-	ret = iconv(fsenv->fse_iconv, &in, &len, &out, &outlen);
-	if ((ret != 0) || len || (outlen % 4)) {
-		return errno ? -errno : -SILOFS_EINVAL;
-	}
-	datlen = sizeof(unb.dat) - outlen;
-	if (datlen == 0) {
-		return -SILOFS_EINVAL;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static uint32_t u32_of(const uint8_t p[4])
-{
-	return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-	       ((uint32_t)p[2] << 8) | ((uint32_t)p[3]);
-}
-
-static uint32_t hash256_to_u32(const struct silofs_hash256 *hash)
-{
-	uint32_t n = 0;
-
-	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 8 * sizeof(uint32_t));
-
-	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); i += 4) {
-		n ^= u32_of(&hash->hash[i]);
-	}
-	return n;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
@@ -121,91 +69,6 @@ static void ii_unpin(struct silofs_inode_info *ii)
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
 	ii->i_vi.v_lni.l_flags |= SILOFS_LNF_PINNED;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_mdigest *
-dii_mdigest(const struct silofs_inode_info *dii)
-{
-	const struct silofs_fsenv *fsenv = ii_fsenv(dii);
-
-	return &fsenv->fse_mdigest;
-}
-
-static uint32_t
-dii_namehash_by_sha256(const struct silofs_inode_info *dir_ii,
-                       const char *name, size_t nlen)
-{
-	struct silofs_hash256 sha256;
-	const uint32_t seed = silofs_dir_seed32(dir_ii);
-
-	silofs_sha256_of(dii_mdigest(dir_ii), name, nlen, &sha256);
-	return seed ^ hash256_to_u32(&sha256);
-}
-
-static uint32_t
-dii_namehash_by_xxh32(const struct silofs_inode_info *dir_ii,
-                      const char *name, size_t nlen)
-{
-	const uint32_t seed = silofs_dir_seed32(dir_ii);
-
-	return silofs_hash_xxh32(name, nlen, seed);
-}
-
-static int dii_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
-                            const struct silofs_namebuf *nbuf,
-                            size_t nlen, uint32_t *out_hash)
-{
-	const enum silofs_dirhfn dhfn = silofs_dir_hfn(dir_ii);
-
-	switch (dhfn) {
-	case SILOFS_DIRHASH_SHA256:
-		*out_hash = dii_namehash_by_sha256(dir_ii, nbuf->name, nlen);
-		break;
-	case SILOFS_DIRHASH_XXH32:
-		*out_hash = dii_namehash_by_xxh32(dir_ii, nbuf->name, nlen);
-		break;
-	default:
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int
-dii_name_to_hash(const struct silofs_inode_info *dir_ii,
-                 const struct silofs_namestr *nstr, uint32_t *out_hash)
-{
-	struct silofs_namebuf nbuf;
-	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
-
-	STATICASSERT_EQ(sizeof(nbuf.name) % 8, 0);
-	STATICASSERT_EQ(sizeof(nbuf.name), SILOFS_NAME_MAX + 1);
-
-	if (likely(nstr->s.len >= sizeof(nbuf.name))) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_namebuf_setup(&nbuf, &nstr->s);
-	return dii_nbuf_to_hash(dir_ii, &nbuf, alen, out_hash);
-}
-
-static bool
-dii_hasflag(const struct silofs_inode_info *dir_ii, enum silofs_dirf mask)
-{
-	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
-
-	return ((flags & mask) == mask);
-}
-
-static int dii_check_name_encoding(const struct silofs_inode_info *dir_ii,
-                                   const struct silofs_namestr *nstr)
-{
-	int ret = 0;
-
-	if (dii_hasflag(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
-		ret = check_utf8_name(ii_fsenv(dir_ii), nstr);
-	}
-	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -566,30 +429,20 @@ static int check_lookup(const struct silofs_task *task,
 	return 0;
 }
 
-static void
-setup_namestr_with_hash(struct silofs_namestr *nstr,
-                        const struct silofs_namestr *base, uint32_t hash)
-{
-	silofs_substr_clone(&base->s, &nstr->s);
-	nstr->hash = hash;
-}
-
 static int assign_namehash(const struct silofs_inode_info *dir_ii,
                            const struct silofs_namestr *nstr,
                            struct silofs_namestr *out_nstr)
 {
-	uint32_t hash = 0;
 	int err;
 
 	err = check_isdir(dir_ii);
 	if (err) {
 		return err;
 	}
-	err = dii_name_to_hash(dir_ii, nstr, &hash);
+	err = silofs_dir_make_hname(dir_ii, nstr, out_nstr);
 	if (err) {
 		return err;
 	}
-	setup_namestr_with_hash(out_nstr, nstr, hash);
 	return 0;
 }
 
@@ -696,16 +549,13 @@ static int check_nodent(struct silofs_task *task,
 static int check_add_dentry(const struct silofs_inode_info *dir_ii,
                             const struct silofs_namestr *name)
 {
-	const size_t ndents_max = SILOFS_DIR_ENTRIES_MAX;
-	size_t ndents;
 	int err;
 
 	err = check_dir_and_name(dir_ii, name);
 	if (err) {
 		return err;
 	}
-	ndents = silofs_dir_ndentries(dir_ii);
-	if (!(ndents < ndents_max)) {
+	if (!silofs_dir_may_add(dir_ii)) {
 		return -SILOFS_EMLINK;
 	}
 	/* Special case for directory which is still held by open fd */
@@ -1432,17 +1282,6 @@ int silofs_do_mkdir(struct silofs_task *task,
 	return err;
 }
 
-static bool dir_isempty(const struct silofs_inode_info *dir_ii)
-{
-	if (ii_nlink(dir_ii) > 2) {
-		return false;
-	}
-	if (silofs_dir_ndentries(dir_ii)) {
-		return false;
-	}
-	return true;
-}
-
 static int check_rmdir_child(const struct silofs_task *task,
                              const struct silofs_inode_info *parent_ii,
                              const struct silofs_inode_info *dir_ii)
@@ -1457,7 +1296,7 @@ static int check_rmdir_child(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	if (!dir_isempty(dir_ii)) {
+	if (!silofs_dir_isempty(dir_ii)) {
 		return -SILOFS_ENOTEMPTY;
 	}
 	if (ii_isrootd(dir_ii)) {
@@ -2731,17 +2570,10 @@ int silofs_make_namestr_by(struct silofs_namestr *nstr,
 	int err;
 
 	err = silofs_make_namestr(nstr, s);
-	if (err) {
-		return err;
+	if (!err && ii_isdir(ii)) {
+		err = silofs_dir_check_name(ii, nstr);
 	}
-	if (!ii_isdir(ii)) {
-		return 0;
-	}
-	err = dii_check_name_encoding(ii, nstr);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

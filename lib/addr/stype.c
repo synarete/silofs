@@ -18,9 +18,9 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-static bool stype_isequal(enum silofs_stype stype1, enum silofs_stype stype2)
+static bool stype_isequal(enum silofs_stype st1, enum silofs_stype st2)
 {
-	return (stype1 == stype2);
+	return (st1 == st2);
 }
 
 bool silofs_stype_isnone(enum silofs_stype stype)

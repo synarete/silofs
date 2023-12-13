@@ -38,17 +38,7 @@ struct silofs_readdir_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii);
-
-uint32_t silofs_dir_seed32(const struct silofs_inode_info *dir_ii);
-
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
-
-enum silofs_dirhfn silofs_dir_hfn(const struct silofs_inode_info *dir_ii);
-
-int silofs_verify_dir_inode(const struct silofs_inode *inode);
-
-int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn);
 
 void silofs_setup_dir(struct silofs_inode_info *dir_ii,
                       mode_t parent_mode, nlink_t nlink);
@@ -78,5 +68,23 @@ int silofs_do_readdirplus(struct silofs_task *task,
 int silofs_drop_dir(struct silofs_task *task,
                     struct silofs_inode_info *dir_ii);
 
+bool silofs_dir_isempty(const struct silofs_inode_info *dir_ii);
+
+bool silofs_dir_may_add(const struct silofs_inode_info *dir_ii);
+
+
+bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
+                          enum silofs_dirf mask);
+
+int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_namestr *nstr);
+
+int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_namestr *nstr,
+                          struct silofs_namestr *out_nstr);
+
+int silofs_verify_dir_inode(const struct silofs_inode *inode);
+
+int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn);
 
 #endif /* SILOFS_DIR_H_ */

@@ -109,7 +109,7 @@ static void assign_xts(struct statx_timestamp *xts, const struct timespec *ts)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ino_t inode_ino(const struct silofs_inode *inode)
+ino_t silofs_inode_ino(const struct silofs_inode *inode)
 {
 	return silofs_cpu_to_ino(inode->i_ino);
 }
@@ -317,7 +317,7 @@ ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
 
 ino_t silofs_ii_ino_of(const struct silofs_inode_info *ii)
 {
-	return inode_ino(ii->inode);
+	return silofs_inode_ino(ii->inode);
 }
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii)
@@ -1325,7 +1325,7 @@ static int verify_inode_head(const struct silofs_inode *inode)
 	mode_t mode;
 	int err;
 
-	ino = inode_ino(inode);
+	ino = silofs_inode_ino(inode);
 	err = silofs_verify_ino(ino);
 	if (err) {
 		log_err("bad inode: ino=%ld", ino);
@@ -1352,7 +1352,7 @@ static int verify_inode_head(const struct silofs_inode *inode)
 static int verify_inode_flags(const struct silofs_inode *inode)
 {
 	const mode_t mode = inode_mode(inode);
-	const ino_t ino = inode_ino(inode);
+	const ino_t ino = silofs_inode_ino(inode);
 	const enum silofs_inodef flags = inode_flags(inode);
 	const enum silofs_inodef fmask =
 	        SILOFS_INODEF_ROOTD | SILOFS_INODEF_FTYPE2;

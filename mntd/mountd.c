@@ -112,7 +112,7 @@ static void mountd_init_process(struct mountd_ctx *ctx)
 {
 	int err;
 
-	err = silofs_setup_lib();
+	err = silofs_initlib();
 	if (err) {
 		mountd_dief(err, "unable to init lib");
 	}

@@ -26,6 +26,6 @@
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 
-int silofs_setup_lib(void);
+int silofs_initlib(void);
 
 #endif /* SILOFS_LIBSILOFS_H_ */

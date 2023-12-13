@@ -287,9 +287,12 @@ static void validate_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_inode, i_tm, 128);
 	REQUIRE_OFFSET64(struct silofs_inode, i_xa, 256);
 	REQUIRE_OFFSET64(struct silofs_inode, i_ta, 512);
+	REQUIRE_OFFSET(struct silofs_inode_dir, d_root, 0);
+	REQUIRE_OFFSET(struct silofs_inode_dir, d_seed, 8);
+	REQUIRE_OFFSET(struct silofs_inode_dir, d_ndents, 16);
 	REQUIRE_OFFSET(struct silofs_dir_entry, de_ino, 0);
-	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_hash, 8);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_len_dt, 12);
+	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_hash_lo, 8);
+	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_len_dt, 12);
 	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_pos, 14);
 	REQUIRE_OFFSET(struct silofs_dtree_node, dn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);
@@ -550,16 +553,16 @@ static int init_libsilofs(void)
 	return 0;
 }
 
-static bool g_init_lib_ok;
+static bool g_libsilofs_init;
 
-int silofs_setup_lib(void)
+int silofs_initlib(void)
 {
 	int ret = 0;
 
-	if (!g_init_lib_ok) {
+	if (!g_libsilofs_init) {
 		validate_defs();
 		ret = init_libsilofs();
-		g_init_lib_ok = (ret == 0);
+		g_libsilofs_init = (ret == 0);
 	}
 	return ret;
 }

@@ -95,7 +95,7 @@
 #define vaddr_isinode(va)               silofs_vaddr_isinode(va)
 #define vaddr_reset(va)                 silofs_vaddr_reset(va)
 #define vaddr_assign(va, oth)           silofs_vaddr_assign(va, oth)
-#define vaddr_setup(va, t, o)           silofs_vaddr_setup(va, t, o)
+#define vaddr_setup(va, st, o)          silofs_vaddr_setup(va, st, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 #define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
 

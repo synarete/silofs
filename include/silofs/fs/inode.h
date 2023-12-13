@@ -132,5 +132,6 @@ int silofs_verify_inode(const struct silofs_inode *inode);
 
 int silofs_verify_ino(ino_t ino);
 
+ino_t silofs_inode_ino(const struct silofs_inode *inode);
 
 #endif /* SILOFS_INODE_H_ */

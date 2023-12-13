@@ -28,7 +28,7 @@
 #define DTREE_INDEX_MAX         SILOFS_DIR_TREE_INDEX_MAX
 #define DTREE_INDEX_NULL        SILOFS_DIR_TREE_INDEX_NULL
 #define DTREE_INDEX_ROOT        SILOFS_DIR_TREE_INDEX_ROOT
-
+#define DTREE_OFF_SHIFT         (13)
 
 /*
  * TODO-0006: Support SILOFS_NAME_MAX=1023
@@ -54,9 +54,9 @@ struct silofs_dir_ctx {
 	int readdir_plus;
 };
 
-typedef unsigned int silofs_dtn_index_t;
-typedef unsigned int silofs_dtn_ord_t;
-typedef unsigned int silofs_dtn_depth_t;
+typedef uint64_t silofs_dtn_index_t;
+typedef uint64_t silofs_dtn_ord_t;
+typedef uint32_t silofs_dtn_depth_t;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -169,7 +169,7 @@ static bool dtn_index_valid_depth(silofs_dtn_index_t dtn_index)
 }
 
 static silofs_dtn_ord_t
-hash_to_child_ord(uint32_t hash, silofs_dtn_depth_t depth)
+hash_to_child_ord(uint64_t hash, silofs_dtn_depth_t depth)
 {
 	silofs_expect_gt(depth, 0);
 	silofs_expect_lt(depth, sizeof(hash));
@@ -179,7 +179,7 @@ hash_to_child_ord(uint32_t hash, silofs_dtn_depth_t depth)
 }
 
 static silofs_dtn_index_t
-hash_to_child_dtn_index(uint32_t hash, silofs_dtn_index_t parent_dtn_index)
+hash_to_child_dtn_index(uint64_t hash, silofs_dtn_index_t parent_dtn_index)
 {
 	const silofs_dtn_depth_t depth = dtn_index_depth(parent_dtn_index);
 	const silofs_dtn_ord_t child_ord = hash_to_child_ord(hash, depth + 1);
@@ -189,22 +189,20 @@ hash_to_child_dtn_index(uint32_t hash, silofs_dtn_index_t parent_dtn_index)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define DOFF_SHIFT 13
-
 static void
 encode_doffset(uint64_t dtn_index, uint64_t slot, uint64_t *out_doff)
 {
-	const uint64_t mask = (1L << DOFF_SHIFT) - 1;
+	const uint64_t mask = (1L << DTREE_OFF_SHIFT) - 1;
 
-	*out_doff = (dtn_index << DOFF_SHIFT) | (slot & mask);
+	*out_doff = (dtn_index << DTREE_OFF_SHIFT) | (slot & mask);
 }
 
 static void
 decode_doffset(uint64_t doff, uint64_t *out_dtn_index, uint64_t *out_slot)
 {
-	const uint64_t mask = (1L << DOFF_SHIFT) - 1;
+	const uint64_t mask = (1L << DTREE_OFF_SHIFT) - 1;
 
-	*out_dtn_index = (doff >> DOFF_SHIFT);
+	*out_dtn_index = (doff >> DTREE_OFF_SHIFT);
 	*out_slot = (doff & mask);
 }
 
@@ -212,7 +210,7 @@ static loff_t make_doffset(size_t dtn_index, size_t slot)
 {
 	uint64_t doff;
 
-	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DOFF_SHIFT);
+	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DTREE_OFF_SHIFT);
 
 	encode_doffset(dtn_index, slot, &doff);
 	return (loff_t)((doff << 2) | 2);
@@ -220,12 +218,11 @@ static loff_t make_doffset(size_t dtn_index, size_t slot)
 
 static silofs_dtn_index_t doff_to_dtn_index(loff_t doff)
 {
-	uint64_t dtn_index;
+	silofs_dtn_index_t dtn_index;
 	uint64_t slot;
 
 	decode_doffset((uint64_t)(doff >> 2), &dtn_index, &slot);
-	return (dtn_index <= DTREE_INDEX_MAX) ?
-	       (silofs_dtn_index_t)dtn_index : DTREE_INDEX_NULL;
+	return (dtn_index <= DTREE_INDEX_MAX) ? dtn_index : DTREE_INDEX_NULL;
 }
 
 static size_t doff_to_slot(loff_t doff)
@@ -237,7 +234,7 @@ static size_t doff_to_slot(loff_t doff)
 	return slot;
 }
 
-static loff_t calc_d_isize(silofs_dtn_index_t dtn_index_last)
+static loff_t dtn_index_to_isize(silofs_dtn_index_t dtn_index_last)
 {
 	loff_t dir_isize;
 
@@ -272,14 +269,14 @@ static void de_set_ino(struct silofs_dir_entry *de, ino_t ino)
 	de->de_ino = silofs_cpu_to_ino(ino);
 }
 
-static uint32_t de_name_hash(const struct silofs_dir_entry *de)
+static uint32_t de_name_hash_lo(const struct silofs_dir_entry *de)
 {
-	return silofs_le32_to_cpu(de->de_name_hash);
+	return silofs_le32_to_cpu(de->de_name_hash_lo);
 }
 
-static void de_set_name_hash(struct silofs_dir_entry *de, uint32_t hash)
+static void de_set_name_hash_lo(struct silofs_dir_entry *de, uint32_t hash)
 {
-	de->de_name_hash = silofs_cpu_to_le32(hash);
+	de->de_name_hash_lo = silofs_cpu_to_le32(hash);
 }
 
 static mode_t de_dt(const struct silofs_dir_entry *de)
@@ -322,9 +319,12 @@ static bool de_has_name_len(const struct silofs_dir_entry *de, size_t nlen)
 	return (de_name_len(de) == nlen);
 }
 
-static bool de_has_name_hash(const struct silofs_dir_entry *de, uint32_t hash)
+static bool de_has_name_hash_lo(const struct silofs_dir_entry *de,
+                                uint64_t name_hash)
 {
-	return (de_name_hash(de) == hash);
+	const uint32_t name_hash_lo = de_name_hash_lo(de);
+
+	return (name_hash_lo == (uint32_t)name_hash);
 }
 
 static size_t de_data_size_of(const struct silofs_dir_entry *de, size_t nlen)
@@ -333,10 +333,10 @@ static size_t de_data_size_of(const struct silofs_dir_entry *de, size_t nlen)
 }
 
 static void de_assign_meta(struct silofs_dir_entry *de, ino_t ino, mode_t dt,
-                           uint32_t hash, size_t name_len, size_t name_pos)
+                           uint64_t hash, size_t name_len, size_t name_pos)
 {
 	de_set_ino(de, ino);
-	de_set_name_hash(de, hash);
+	de_set_name_hash_lo(de, (uint32_t)hash);
 	de_set_name_len_dt(de, name_len, dt);
 	de_set_name_pos(de, name_pos);
 }
@@ -576,7 +576,7 @@ static bool dtn_de_has_name(const struct silofs_dtree_node *dtn,
                             const struct silofs_dir_entry *de,
                             const struct silofs_namestr *name)
 {
-	if (!de_has_name_hash(de, name->hash)) {
+	if (!de_has_name_hash_lo(de, name->hash)) {
 		return false;
 	}
 	if (!de_has_name_len(de, name->s.len)) {
@@ -669,7 +669,8 @@ static void dtn_de_assing_name(struct silofs_dtree_node *dtn,
 	memcpy(dst, name->s.str, name->s.len);
 }
 
-static size_t dtn_insert_name_pos(struct silofs_dtree_node *dtn, size_t nlen)
+static size_t
+dtn_insert_name_pos(const struct silofs_dtree_node *dtn, size_t nlen)
 {
 	const size_t nnb = dtn_nnb(dtn);
 
@@ -819,7 +820,7 @@ static void dtn_child_by_ord(const struct silofs_dtree_node *dtn,
 }
 
 static void dtn_child_by_hash(const struct silofs_dtree_node *dtn,
-                              uint32_t hash, struct silofs_vaddr *out_vaddr)
+                              uint64_t hash, struct silofs_vaddr *out_vaddr)
 {
 	silofs_dtn_ord_t ord;
 	const silofs_dtn_depth_t depth = dtn_depth(dtn);
@@ -904,7 +905,7 @@ dni_vaddr(const struct silofs_dnode_info *dni)
 
 static void
 dni_child_addr_by_hash(const struct silofs_dnode_info *dni,
-                       uint32_t hash, struct silofs_vaddr *out_vaddr)
+                       uint64_t hash, struct silofs_vaddr *out_vaddr)
 {
 	dtn_child_by_hash(dni->dtn, hash, out_vaddr);
 }
@@ -951,15 +952,27 @@ static void dni_bind_child_at(struct silofs_dnode_info *parent_dni,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void dei_clear(struct silofs_dir_entry_info *dei)
+{
+	silofs_memzero(dei, sizeof(*dei));
+}
+
 static void dei_setup(struct silofs_dir_entry_info *dei,
                       const struct silofs_dnode_info *dni,
                       const struct silofs_dir_entry *de)
 {
+	dei_clear(dei);
 	dei->dni = dni_unconst(dni);
-	dei->de = unconst(de);
+	dei->de = de_unconst(de);
 	dei->ino_dt.ino = de_ino(de);
 	dei->ino_dt.dt = de_dt(de);
-	dei->ino_dt.pad = 0;
+}
+
+static void dei_ino_dt(const struct silofs_dir_entry_info *dei,
+                       struct silofs_ino_dt *out_idt)
+{
+	out_idt->ino = dei->ino_dt.ino;
+	out_idt->dt = dei->ino_dt.dt;
 }
 
 static mode_t ii_dtype_of(const struct silofs_inode_info *ii)
@@ -1036,14 +1049,16 @@ static void indr_update_last_index(struct silofs_inode_dir *indr,
 	indr_set_last_index(indr, new_index);
 }
 
-static loff_t indr_htree_root(const struct silofs_inode_dir *indr)
+static void indr_tree_root(const struct silofs_inode_dir *indr,
+                           struct silofs_vaddr *out_vaddr)
 {
-	return silofs_off_to_cpu(indr->d_root);
+	silofs_vaddr64_xtoh(&indr->d_root, out_vaddr);
 }
 
-static void indr_set_htree_root(struct silofs_inode_dir *indr, loff_t off)
+static void indr_set_tree_root(struct silofs_inode_dir *indr,
+                               const struct silofs_vaddr *vaddr)
 {
-	indr->d_root = silofs_cpu_to_off(off);
+	silofs_vaddr64_htox(&indr->d_root, vaddr);
 }
 
 static enum silofs_dirf indr_flags(const struct silofs_inode_dir *indr)
@@ -1070,12 +1085,12 @@ static void indr_set_hashfn(struct silofs_inode_dir *indr,
 
 static void indr_setup(struct silofs_inode_dir *indr, uint64_t seed)
 {
+	indr_set_tree_root(indr, vaddr_none());
 	indr_set_seed(indr, seed);
-	indr_set_htree_root(indr, SILOFS_OFF_NULL);
 	indr_set_last_index(indr, DTREE_INDEX_NULL);
 	indr_set_ndents(indr, 0);
 	indr_set_flags(indr, SILOFS_DIRF_NAME_UTF8);
-	indr_set_hashfn(indr, SILOFS_DIRHASH_XXH32);
+	indr_set_hashfn(indr, SILOFS_DIRHASH_XXH64);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1103,28 +1118,26 @@ static void dir_dec_ndents(struct silofs_inode_info *dir_ii)
 	ii_dirtify(dir_ii);
 }
 
-static loff_t dir_htree_root(const struct silofs_inode_info *dir_ii)
+static void dir_tree_root(const struct silofs_inode_info *dir_ii,
+                          struct silofs_vaddr *out_vaddr)
 {
-	return indr_htree_root(dir_ispec_of(dir_ii));
+	indr_tree_root(dir_ispec_of(dir_ii), out_vaddr);
 }
 
-static void dir_htree_root_addr(const struct silofs_inode_info *dir_ii,
-                                struct silofs_vaddr *out_vaddr)
+static bool dir_has_tree(const struct silofs_inode_info *dir_ii)
 {
-	vaddr_of_dnode(out_vaddr, dir_htree_root(dir_ii));
+	struct silofs_vaddr vaddr = { .off = -1 };
+
+	dir_tree_root(dir_ii, &vaddr);
+	return !vaddr_isnull(&vaddr);
 }
 
-static bool dir_has_htree(const struct silofs_inode_info *dir_ii)
-{
-	return !off_isnull(dir_htree_root(dir_ii));
-}
-
-static void dir_set_htree_root(struct silofs_inode_info *dir_ii,
-                               const struct silofs_vaddr *vaddr)
+static void dir_set_tree_root(struct silofs_inode_info *dir_ii,
+                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_inode_dir *indr = dir_ispec_of(dir_ii);
 
-	indr_set_htree_root(indr, vaddr->off);
+	indr_set_tree_root(indr, vaddr);
 	indr_set_last_index(indr, DTREE_INDEX_ROOT);
 }
 
@@ -1140,19 +1153,9 @@ static void dir_update_last_index(struct silofs_inode_info *dir_ii,
 	indr_update_last_index(dir_ispec_of(dir_ii), alt_index, add);
 }
 
-size_t silofs_dir_ndentries(const struct silofs_inode_info *dir_ii)
-{
-	return dir_ndents(dir_ii);
-}
-
 static uint64_t dir_seed(const struct silofs_inode_info *dir_ii)
 {
 	return indr_seed(dir_ispec_of(dir_ii));
-}
-
-uint32_t silofs_dir_seed32(const struct silofs_inode_info *dir_ii)
-{
-	return (uint32_t)dir_seed(dir_ii);
 }
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
@@ -1160,12 +1163,208 @@ enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
 	return indr_flags(dir_ispec_of(dir_ii));
 }
 
-enum silofs_dirhfn silofs_dir_hfn(const struct silofs_inode_info *dir_ii)
+static enum silofs_dirhfn dir_hfn(const struct silofs_inode_info *dir_ii)
 {
 	return indr_hashfn(dir_ispec_of(dir_ii));
 }
 
+bool silofs_dir_isempty(const struct silofs_inode_info *dir_ii)
+{
+	if (ii_nlink(dir_ii) > 2) {
+		return false;
+	}
+	if (dir_ndents(dir_ii) > 0) {
+		return false;
+	}
+	return true;
+}
+
+bool silofs_dir_may_add(const struct silofs_inode_info *dir_ii)
+{
+	const size_t ndents = dir_ndents(dir_ii);
+
+	return (ndents < SILOFS_DIR_ENTRIES_MAX);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+union silofs_utf32_name_buf {
+	char dat[4 * (SILOFS_NAME_MAX + 1)];
+	uint32_t utf32[SILOFS_NAME_MAX + 1];
+	uint64_t n;
+} silofs_aligned64;
+
+
+static iconv_t iconv_by(const struct silofs_inode_info *dir_ii)
+{
+	const struct silofs_fsenv *fsenv = ii_fsenv(dir_ii);
+
+	return fsenv->fse_iconv;
+}
+
+static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
+                               const struct silofs_namestr *nstr)
+{
+	union silofs_utf32_name_buf unb = { .n = 0 };
+	char *in = unconst(nstr->s.str);
+	char *out = unb.dat;
+	size_t len = nstr->s.len;
+	size_t outlen = sizeof(unb.dat);
+	size_t datlen;
+	size_t ret;
+
+	ret = iconv(iconv_by(dir_ii), &in, &len, &out, &outlen);
+	if ((ret != 0) || len || (outlen % 4)) {
+		return errno ? -errno : -SILOFS_EINVAL;
+	}
+	datlen = sizeof(unb.dat) - outlen;
+	if (datlen == 0) {
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_namestr *nstr)
+{
+	if (nstr->s.len > SILOFS_NAME_MAX) {
+		return -SILOFS_ENAMETOOLONG;
+	}
+	if (!silofs_dir_has_flags(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
+		return 0;
+	}
+	return dir_check_utf8_name(dir_ii, nstr);
+}
+
+bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
+                          enum silofs_dirf mask)
+{
+	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
+
+	return ((flags & mask) == mask);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_mdigest *
+mdigest_of(const struct silofs_inode_info *dii)
+{
+	const struct silofs_fsenv *fsenv = ii_fsenv(dii);
+
+	return &fsenv->fse_mdigest;
+}
+
+static uint64_t u64_of(const uint8_t p[8])
+{
+	uint64_t u = 0;
+
+	u |= (uint64_t)(p[0]) << 56;
+	u |= (uint64_t)(p[1]) << 48;
+	u |= (uint64_t)(p[2]) << 40;
+	u |= (uint64_t)(p[3]) << 32;
+	u |= (uint64_t)(p[4]) << 24;
+	u |= (uint64_t)(p[5]) << 16;
+	u |= (uint64_t)(p[6]) << 8;
+	u |= (uint64_t)(p[7]);
+
+	return u;
+}
+
+static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
+{
+	const uint8_t *h = hash->hash;
+
+	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 4 * sizeof(uint64_t));
+
+	return u64_of(h) ^ u64_of(h + 8) ^ u64_of(h + 16) ^ u64_of(h + 24);
+}
+
+static uint64_t
+dir_namehash_by_sha256(const struct silofs_inode_info *dir_ii,
+                       const char *name, size_t nlen)
+{
+	struct silofs_hash256 sha256;
+	const uint64_t seed = dir_seed(dir_ii);
+
+	silofs_sha256_of(mdigest_of(dir_ii), name, nlen, &sha256);
+	return seed ^ hash256_to_u64(&sha256);
+}
+
+static uint64_t
+dir_namehash_by_xxh64(const struct silofs_inode_info *dir_ii,
+                      const char *name, size_t nlen)
+{
+	const uint64_t seed = dir_seed(dir_ii);
+
+	return silofs_hash_xxh64(name, nlen, seed);
+}
+
+static int dir_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
+                            const struct silofs_namebuf *nbuf,
+                            size_t nlen, uint64_t *out_hash)
+{
+	const enum silofs_dirhfn dhfn = dir_hfn(dir_ii);
+
+	switch (dhfn) {
+	case SILOFS_DIRHASH_SHA256:
+		*out_hash = dir_namehash_by_sha256(dir_ii, nbuf->name, nlen);
+		break;
+	case SILOFS_DIRHASH_XXH64:
+		*out_hash = dir_namehash_by_xxh64(dir_ii, nbuf->name, nlen);
+		break;
+	default:
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int
+dir_calc_namehash(const struct silofs_inode_info *dir_ii,
+                  const struct silofs_namestr *nstr, uint64_t *out_hash)
+{
+	struct silofs_namebuf nbuf;
+	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
+	uint64_t hash = 0;
+	int err;
+
+	STATICASSERT_EQ(sizeof(nbuf.name) % 8, 0);
+	STATICASSERT_EQ(sizeof(nbuf.name), SILOFS_NAME_MAX + 1);
+
+	if (likely(nstr->s.len >= sizeof(nbuf.name))) {
+		return -SILOFS_EINVAL;
+	}
+	silofs_namebuf_setup(&nbuf, &nstr->s);
+	err = dir_nbuf_to_hash(dir_ii, &nbuf, alen, &hash);
+	if (err) {
+		return err;
+	}
+	*out_hash = hash;
+	return 0;
+}
+
+static void make_namestr(struct silofs_namestr *nstr,
+                         const struct silofs_namestr *base, uint64_t hash)
+{
+	silofs_substr_clone(&base->s, &nstr->s);
+	nstr->hash = hash;
+}
+
+int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_namestr *nstr,
+                          struct silofs_namestr *out_nstr)
+{
+	uint64_t hash = 0;
+	int err;
+
+	err = dir_calc_namehash(dir_ii, nstr, &hash);
+	if (err) {
+		return err;
+	}
+	make_namestr(out_nstr, nstr, hash);
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static uint64_t unique_seed(void)
 {
@@ -1211,25 +1410,29 @@ static int search_dnode(const struct silofs_dnode_info *dni,
 static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dnode_info *dni)
 {
-	ino_t h_ino;
-	ino_t d_ino;
+	ino_t dnode_ino;
+	ino_t owner_ino;
 
-	if (dni->dn_vi.v_lni.l_flags & SILOFS_LNF_RECHECK) {
+	if (!vi_need_recheck(&dni->dn_vi)) {
 		return 0;
 	}
-	h_ino = dtn_ino(dni->dtn);
-	d_ino = ii_ino(d_ctx->dir_ii);
-
-	/* TODO: not a clean logic, improve me */
-	if ((h_ino != d_ino) && (d_ino == SILOFS_INO_ROOT)) {
-		d_ino = silofs_ii_ino_of(d_ctx->dir_ii);
-	}
-	if (h_ino != d_ino) {
-		log_err("bad dnode: h_ino=%lu d_ino=%lu", h_ino, d_ino);
+	dnode_ino = dtn_ino(dni->dtn);
+	owner_ino = ii_ino(d_ctx->dir_ii);
+	if (dnode_ino != owner_ino) {
+		log_err("bad dnode: dnode_ino=%lu owner_ino=%lu",
+		        dnode_ino, owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	dni->dn_vi.v_lni.l_flags |= SILOFS_LNF_RECHECK;
+	vi_set_rechecked(&dni->dn_vi);
 	return 0;
+}
+
+static int dirc_stage_vnode(const struct silofs_dir_ctx *d_ctx,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vnode_info **out_vi)
+{
+	return silofs_stage_vnode(d_ctx->task, d_ctx->dir_ii,
+	                          vaddr, d_ctx->stg_mode, out_vi);
 }
 
 static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
@@ -1240,8 +1443,7 @@ static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_stage_vnode(d_ctx->task, d_ctx->dir_ii,
-	                         vaddr, d_ctx->stg_mode, &vi);
+	err = dirc_stage_vnode(d_ctx, vaddr, &vi);
 	if (err) {
 		return err;
 	}
@@ -1278,6 +1480,13 @@ dirc_stage_child_by_name(const struct silofs_dir_ctx *d_ctx,
 	return dirc_stage_child(d_ctx, parent_dni, &vaddr, out_dni);
 }
 
+static int dirc_spawn_vnode(const struct silofs_dir_ctx *d_ctx,
+                            enum silofs_stype stype,
+                            struct silofs_vnode_info **out_vi)
+{
+	return silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii, stype, out_vi);
+}
+
 static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
                             struct silofs_dnode_info **out_dni)
 {
@@ -1285,8 +1494,7 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii,
-	                         SILOFS_STYPE_DTNODE, &vi);
+	err = dirc_spawn_vnode(d_ctx, SILOFS_STYPE_DTNODE, &vi);
 	if (err) {
 		return err;
 	}
@@ -1328,7 +1536,7 @@ dirc_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
 	dir_update_last_index(dir_ii, dtn_index, new_node);
 	last_dtn_index = dir_last_index(dir_ii);
 
-	ii_update_isize(dir_ii, creds, calc_d_isize(last_dtn_index));
+	ii_update_isize(dir_ii, creds, dtn_index_to_isize(last_dtn_index));
 	ii_update_iblocks(dir_ii, creds, SILOFS_STYPE_DTNODE, dif);
 }
 
@@ -1349,13 +1557,23 @@ static int dirc_spawn_setup_dnode(const struct silofs_dir_ctx *d_ctx,
 	return 0;
 }
 
+static void dirc_resolve_tree(const struct silofs_dir_ctx *d_ctx,
+                              struct silofs_vaddr *out_vaddr)
+{
+	dir_tree_root(d_ctx->dir_ii, out_vaddr);
+}
+
 static int dirc_stage_tree_root(const struct silofs_dir_ctx *d_ctx,
                                 struct silofs_dnode_info **out_dni)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_vaddr vaddr = { .off = SILOFS_OFF_NULL };
+	int ret = -SILOFS_ENOENT;
 
-	dir_htree_root_addr(d_ctx->dir_ii, &vaddr);
-	return dirc_stage_dnode(d_ctx, &vaddr, out_dni);
+	dirc_resolve_tree(d_ctx, &vaddr);
+	if (!vaddr_isnull(&vaddr)) {
+		ret = dirc_stage_dnode(d_ctx, &vaddr, out_dni);
+	}
+	return ret;
 }
 
 static int dirc_spawn_tree_root(const struct silofs_dir_ctx *d_ctx,
@@ -1370,9 +1588,14 @@ static int dirc_spawn_tree_root(const struct silofs_dir_ctx *d_ctx,
 	if (err) {
 		return err;
 	}
-	dir_set_htree_root(d_ctx->dir_ii, dni_vaddr(*out_dni));
+	dir_set_tree_root(d_ctx->dir_ii, dni_vaddr(*out_dni));
 	ii_dirtify(d_ctx->dir_ii);
 	return 0;
+}
+
+static bool dirc_has_tree(const struct silofs_dir_ctx *d_ctx)
+{
+	return dir_has_tree(d_ctx->dir_ii);
 }
 
 static int dirc_require_tree_root(const struct silofs_dir_ctx *d_ctx,
@@ -1380,7 +1603,7 @@ static int dirc_require_tree_root(const struct silofs_dir_ctx *d_ctx,
 {
 	int err;
 
-	if (dir_has_htree(d_ctx->dir_ii)) {
+	if (dirc_has_tree(d_ctx)) {
 		err = dirc_stage_tree_root(d_ctx, out_dni);
 	} else {
 		err = dirc_spawn_tree_root(d_ctx, out_dni);
@@ -1436,7 +1659,7 @@ static int dirc_check_may_lookup(const struct silofs_dir_ctx *d_ctx)
 	if (!dir_ndents(d_ctx->dir_ii)) {
 		return -SILOFS_ENOENT;
 	}
-	if (!dir_has_htree(d_ctx->dir_ii)) {
+	if (!dir_has_tree(d_ctx->dir_ii)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
@@ -1445,18 +1668,14 @@ static int dirc_check_may_lookup(const struct silofs_dir_ctx *d_ctx)
 static int dirc_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
                                struct silofs_dir_entry_info *dei)
 {
-	struct silofs_dnode_info *root_dni;
+	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = dirc_check_may_lookup(d_ctx);
+	err = dirc_stage_tree_root(d_ctx, &dni);
 	if (err) {
 		return err;
 	}
-	err = dirc_stage_tree_root(d_ctx, &root_dni);
-	if (err) {
-		return err;
-	}
-	err = dirc_lookup_by_tree(d_ctx, root_dni, dei);
+	err = dirc_lookup_by_tree(d_ctx, dni, dei);
 	if (err) {
 		return err;
 	}
@@ -1477,30 +1696,48 @@ static int dirc_check_self_and_name(const struct silofs_dir_ctx *d_ctx)
 	return 0;
 }
 
-static void fill_ino_dt(struct silofs_ino_dt *ino_dt,
-                        const struct silofs_dir_entry_info *dei)
+static int
+dirc_check_and_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
+                              struct silofs_dir_entry_info *dei)
 {
-	ino_dt->ino = dei->ino_dt.ino;
-	ino_dt->dt = dei->ino_dt.dt;
+	int err;
+
+	err = dirc_check_self_and_name(d_ctx);
+	if (err) {
+		return err;
+	}
+	err = dirc_check_may_lookup(d_ctx);
+	if (err) {
+		return err;
+	}
+	err = dirc_lookup_by_name(d_ctx, dei);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-static int dirc_lookup_dentry(struct silofs_dir_ctx *d_ctx,
-                              struct silofs_ino_dt *ino_dt)
+static int dirc_do_lookup_dentry(const struct silofs_dir_ctx *d_ctx,
+                                 struct silofs_ino_dt *out_idt)
 {
 	struct silofs_dir_entry_info dei;
+	int err;
+
+	err = dirc_check_and_lookup_by_name(d_ctx, &dei);
+	if (err) {
+		return err;
+	}
+	dei_ino_dt(&dei, out_idt);
+	return 0;
+}
+
+static int dirc_lookup_dentry(const struct silofs_dir_ctx *d_ctx,
+                              struct silofs_ino_dt *out_idt)
+{
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
-	ret = dirc_check_self_and_name(d_ctx);
-	if (ret) {
-		goto out;
-	}
-	ret = dirc_lookup_by_name(d_ctx, &dei);
-	if (ret) {
-		goto out;
-	}
-	fill_ino_dt(ino_dt, &dei);
-out:
+	ret = dirc_do_lookup_dentry(d_ctx, out_idt);
 	ii_decref(d_ctx->dir_ii);
 	return ret;
 }
@@ -1546,7 +1783,7 @@ static int dirc_do_spawn_bind_child(const struct silofs_dir_ctx *d_ctx,
 {
 	const struct silofs_namestr *name = d_ctx->name;
 	const struct silofs_vaddr *parent_vaddr = dni_vaddr(parent_dni);
-	const uint32_t nhash = name->hash;
+	const uint64_t nhash = name->hash;
 	silofs_dtn_index_t parent_dtn_index;
 	silofs_dtn_index_t child_dtn_index;
 	int err;
@@ -1574,15 +1811,21 @@ static int dirc_spawn_bind_child(const struct silofs_dir_ctx *d_ctx,
 	return ret;
 }
 
+static void dirc_resolve_child_of(const struct silofs_dir_ctx *d_ctx,
+                                  const struct silofs_dnode_info *dni,
+                                  struct silofs_vaddr *out_vaddr)
+{
+	dni_child_addr_by_hash(dni, d_ctx->name->hash, out_vaddr);
+}
+
 static int dirc_require_child(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dnode_info *parent_dni,
                               struct silofs_dnode_info **out_dni)
 {
 	struct silofs_vaddr vaddr;
-	const struct silofs_namestr *name = d_ctx->name;
 	int err;
 
-	dni_child_addr_by_hash(parent_dni, name->hash, &vaddr);
+	dirc_resolve_child_of(d_ctx, parent_dni, &vaddr);
 	if (!vaddr_isnull(&vaddr)) {
 		err = dirc_stage_child(d_ctx, parent_dni, &vaddr, out_dni);
 	} else {
@@ -1696,10 +1939,11 @@ static int dirc_insert_dentry(struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_add_to_tree(d_ctx, root_dni);
-	if (!err) {
-		dirc_update_nlink(d_ctx, 1);
+	if (err) {
+		return err;
 	}
-	return err;
+	dirc_update_nlink(d_ctx, 1);
+	return 0;
 }
 
 static int dirc_do_add_dentry(struct silofs_dir_ctx *d_ctx)
@@ -1717,7 +1961,6 @@ static int dirc_do_add_dentry(struct silofs_dir_ctx *d_ctx)
 	}
 	return 0;
 }
-
 
 static int dirc_add_dentry(struct silofs_dir_ctx *d_ctx)
 {
@@ -2044,18 +2287,19 @@ static int dirc_iterate_tree_nodes(struct silofs_dir_ctx *d_ctx,
 
 static int dirc_iterate_tree(struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_dnode_info *root_dni = NULL;
-	const size_t start_index = dirc_curr_node_index_of(d_ctx);
+	struct silofs_dnode_info *dni = NULL;
+	silofs_dtn_index_t start_index;
 	int err;
 
+	start_index = dirc_curr_node_index_of(d_ctx);
 	if (!dirc_isindex_inrange(d_ctx, start_index)) {
 		return dirc_readdir_eos(d_ctx);
 	}
-	err = dirc_stage_tree_root(d_ctx, &root_dni);
+	err = dirc_stage_tree_root(d_ctx, &dni);
 	if (err) {
 		return err;
 	}
-	err = dirc_iterate_tree_nodes(d_ctx, root_dni);
+	err = dirc_iterate_tree_nodes(d_ctx, dni);
 	if (err) {
 		return err;
 	}
@@ -2066,7 +2310,7 @@ static int dirc_iterate(struct silofs_dir_ctx *d_ctx)
 {
 	int err;
 
-	if (!dir_has_htree(d_ctx->dir_ii)) {
+	if (!dirc_has_tree(d_ctx)) {
 		return dirc_readdir_eos(d_ctx);
 	}
 	err = dirc_iterate_tree(d_ctx);
@@ -2115,7 +2359,7 @@ static int dirc_check_raccess(const struct silofs_dir_ctx *d_ctx)
 	return silofs_do_access(d_ctx->task, d_ctx->dir_ii, R_OK);
 }
 
-static int dirc_check_dir_io(const struct silofs_dir_ctx *d_ctx)
+static int dirc_check_readdir(const struct silofs_dir_ctx *d_ctx)
 {
 	const struct silofs_inode_info *ii = d_ctx->dir_ii;
 
@@ -2128,29 +2372,37 @@ static int dirc_check_dir_io(const struct silofs_dir_ctx *d_ctx)
 	return 0;
 }
 
+static int dirc_do_readdir(struct silofs_dir_ctx *d_ctx)
+{
+	int err;
+
+	err = dirc_check_readdir(d_ctx);
+	if (err) {
+		return err;
+	}
+	err = dirc_check_raccess(d_ctx);
+	if (err) {
+		return err;
+	}
+	err = dirc_check_stage_parent(d_ctx);
+	if (err) {
+		return err;
+	}
+	err = dirc_readdir_emit(d_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int dirc_readdir(struct silofs_dir_ctx *d_ctx)
 {
 	int ret;
 
 	ii_incref(d_ctx->dir_ii);
-	ret = dirc_check_dir_io(d_ctx);
-	if (ret) {
-		goto out;
-	}
-	ret = dirc_check_raccess(d_ctx);
-	if (ret) {
-		goto out;
-	}
-	ret = dirc_check_stage_parent(d_ctx);
-	if (ret) {
-		goto out;
-	}
-	ret = dirc_readdir_emit(d_ctx);
-	if (ret) {
-		goto out;
-	}
-out:
+	ret = dirc_do_readdir(d_ctx);
 	ii_decref(d_ctx->dir_ii);
+
 	return ret;
 }
 
@@ -2188,10 +2440,10 @@ int silofs_do_readdirplus(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int dirc_discard_recursively(struct silofs_dir_ctx *d_ctx,
+static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
                                     const struct silofs_vaddr *vaddr);
 
-static int dirc_discard_childs_of(struct silofs_dir_ctx *d_ctx,
+static int dirc_discard_childs_of(const struct silofs_dir_ctx *d_ctx,
                                   struct silofs_dnode_info *dni)
 {
 	struct silofs_vaddr child_vaddr;
@@ -2207,7 +2459,7 @@ static int dirc_discard_childs_of(struct silofs_dir_ctx *d_ctx,
 	return ret;
 }
 
-static int dirc_discard_tree_at(struct silofs_dir_ctx *d_ctx,
+static int dirc_discard_tree_at(const struct silofs_dir_ctx *d_ctx,
                                 struct silofs_dnode_info *dni)
 {
 	int err;
@@ -2223,7 +2475,7 @@ static int dirc_discard_tree_at(struct silofs_dir_ctx *d_ctx,
 	return 0;
 }
 
-static int dirc_discard_recursively(struct silofs_dir_ctx *d_ctx,
+static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
                                     const struct silofs_vaddr *vaddr)
 {
 	struct silofs_dnode_info *dni = NULL;
@@ -2243,25 +2495,31 @@ static int dirc_discard_recursively(struct silofs_dir_ctx *d_ctx,
 	return 0;
 }
 
-static int dirc_drop_tree(struct silofs_dir_ctx *d_ctx)
+static void dirc_resetup_dir(const struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_dnode_info *root_dni = NULL;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	int err;
 
-	if (!dir_has_htree(dir_ii)) {
-		return 0;
-	}
-	err = dirc_stage_tree_root(d_ctx, &root_dni);
-	if (err) {
-		return err;
-	}
-	err = dirc_discard_tree_at(d_ctx, root_dni);
-	if (err) {
-		return err;
-	}
 	silofs_setup_dir(dir_ii, 0, ii_nlink(dir_ii));
 	ii_dirtify(dir_ii);
+}
+
+static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
+{
+	struct silofs_dnode_info *dni = NULL;
+	int err;
+
+	if (!dirc_has_tree(d_ctx)) {
+		return 0;
+	}
+	err = dirc_stage_tree_root(d_ctx, &dni);
+	if (err) {
+		return err;
+	}
+	err = dirc_discard_tree_at(d_ctx, dni);
+	if (err) {
+		return err;
+	}
+	dirc_resetup_dir(d_ctx);
 	return 0;
 }
 
@@ -2286,7 +2544,7 @@ int silofs_drop_dir(struct silofs_task *task,
  * Currently, we drop tree only when its empty. Try to squeeze it up and
  * remove empty leaf nodes.
  */
-static int dirc_erase_empty_tree(struct silofs_dir_ctx *d_ctx)
+static int dirc_erase_empty_tree(const struct silofs_dir_ctx *d_ctx)
 {
 	int err;
 
@@ -2317,22 +2575,6 @@ static int dirc_erase_dentry(struct silofs_dir_ctx *d_ctx,
 	ret = dirc_do_erase_dentry(d_ctx, dei);
 	ii_decref(d_ctx->child_ii);
 	return ret;
-}
-
-static int dirc_check_and_lookup_by_name(struct silofs_dir_ctx *d_ctx,
-                struct silofs_dir_entry_info *dei)
-{
-	int err;
-
-	err = dirc_check_self_and_name(d_ctx);
-	if (err) {
-		return err;
-	}
-	err = dirc_lookup_by_name(d_ctx, dei);
-	if (err) {
-		return err;
-	}
-	return 0;
 }
 
 static int dirc_stage_child_by_de(struct silofs_dir_ctx *d_ctx,
@@ -2393,49 +2635,99 @@ int silofs_remove_dentry(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int verify_dtn_index(silofs_dtn_index_t dtn_index, bool has_tree)
+static ino_t ino_of(const struct silofs_inode *inode)
 {
-	int err;
-
-	if (has_tree) {
-		err = dtn_index_isvalid(dtn_index) ? 0 : -SILOFS_EFSCORRUPTED;
-	} else {
-		err = dtn_index_isnull(dtn_index) ? 0 : -SILOFS_EFSCORRUPTED;
-	}
-	return err;
+	return silofs_inode_ino(inode);
 }
 
-static int verify_dir_root(const struct silofs_inode *inode)
+static int dinode_verify_root(const struct silofs_inode *inode)
 {
 	const struct silofs_inode_dir *indr = indr_of(inode);
-	loff_t root_off;
+	struct silofs_vaddr vaddr = { .off = -1 };
+	silofs_dtn_index_t dtn_index;
 	int err;
 
-	root_off = indr_htree_root(indr);
-	err = silofs_verify_off(root_off);
-	if (err) {
-		return err;
-	}
-	err = verify_dtn_index(indr_last_index(indr), !off_isnull(root_off));
-	if (err) {
-		return err;
+	indr_tree_root(indr, &vaddr);
+	if (!off_isnull(vaddr.off)) {
+		err = silofs_verify_off(vaddr.off); /* TODO: check stype */
+		if (err) {
+			log_err("illegal dir root: ino=%lu off=%ld",
+			        ino_of(inode), vaddr.off);
+			return err;
+		}
+		if (!silofs_stype_isdtnode(vaddr.stype)) {
+			log_err("illegal dir root: ino=%lu off=%ld stype=%d",
+			        ino_of(inode), vaddr.off, vaddr.stype);
+			return -SILOFS_EFSCORRUPTED;
+		}
+		dtn_index = indr_last_index(indr);
+		if (!dtn_index_isvalid(dtn_index)) {
+			log_err("illegal dir root: ino=%lu dtn_index=%ld",
+			        ino_of(inode), (long)dtn_index);
+			return -SILOFS_EFSCORRUPTED;
+		}
+	} else {
+		dtn_index = indr_last_index(indr);
+		if (!dtn_index_isnull(dtn_index)) {
+			log_err("illegal dir root: ino=%lu dtn_index=%ld",
+			        ino_of(inode), (long)dtn_index);
+			return -SILOFS_EFSCORRUPTED;
+		}
 	}
 	return 0;
+}
+
+static int dinode_verify_ndends(const struct silofs_inode *inode)
+{
+	const size_t ndents = indr_ndents(indr_of(inode));
+
+	if (ndents > SILOFS_DIR_ENTRIES_MAX) {
+		log_err("illegal dir ndends: ino=%lu ndends=%lu",
+		        ino_of(inode), ndents);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int dinode_verify_hashfn(const struct silofs_inode *inode)
+{
+	const enum silofs_dirhfn dhfn = indr_hashfn(indr_of(inode));
+	int ret;
+
+	switch (dhfn) {
+	case SILOFS_DIRHASH_SHA256:
+	case SILOFS_DIRHASH_XXH64:
+		ret = 0;
+		break;
+	default:
+		log_err("illegal dir hashfn: ino=%lu dhfn=%ld",
+		        ino_of(inode), dhfn);
+		ret = -SILOFS_EFSCORRUPTED;
+		break;
+	}
+	return ret;
 }
 
 int silofs_verify_dir_inode(const struct silofs_inode *inode)
 {
 	int err;
 
-	/* TODO: Check more */
-	err = verify_dir_root(inode);
+	err = dinode_verify_root(inode);
+	if (err) {
+		return err;
+	}
+	err = dinode_verify_ndends(inode);
+	if (err) {
+		return err;
+	}
+	err = dinode_verify_hashfn(inode);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int verify_childs_of(const struct silofs_dtree_node *dtn)
+static int dtn_verify_childs(const struct silofs_dtree_node *dtn)
 {
 	struct silofs_vaddr vaddr;
 	int err;
@@ -2456,7 +2748,12 @@ static int verify_childs_of(const struct silofs_dtree_node *dtn)
 	return 0;
 }
 
-int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
+static int verify_dtn_index(silofs_dtn_index_t dtn_index)
+{
+	return dtn_index_isvalid(dtn_index) ? 0 : -SILOFS_EFSCORRUPTED;
+}
+
+static int dtn_verify_parents(const struct silofs_dtree_node *dtn)
 {
 	int err;
 
@@ -2468,11 +2765,22 @@ int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
 	if (err) {
 		return err;
 	}
-	err = verify_dtn_index(dtn_node_index(dtn), true);
+	return 0;
+}
+
+int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
+{
+	int err;
+
+	err = dtn_verify_parents(dtn);
 	if (err) {
 		return err;
 	}
-	err = verify_childs_of(dtn);
+	err = verify_dtn_index(dtn_node_index(dtn));
+	if (err) {
+		return err;
+	}
+	err = dtn_verify_childs(dtn);
 	if (err) {
 		return err;
 	}
@@ -2487,4 +2795,3 @@ int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
 	return 0;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

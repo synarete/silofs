@@ -1042,6 +1042,7 @@ struct silofs_xanode_info *silofs_xai_from_vi(struct silofs_vnode_info *vi)
 {
 	struct silofs_xanode_info *xai = NULL;
 
+	silofs_assert_not_null(vi);
 	xai = container_of(vi, struct silofs_xanode_info, xan_vi);
 	return xai;
 }
@@ -1140,6 +1141,7 @@ struct silofs_symval_info *silofs_syi_from_vi(struct silofs_vnode_info *vi)
 {
 	struct silofs_symval_info *syi = NULL;
 
+	silofs_assert_not_null(vi);
 	syi = container_of(vi, struct silofs_symval_info, sy_vi);
 	return syi;
 }
@@ -1339,6 +1341,7 @@ struct silofs_finode_info *silofs_fni_from_vi(struct silofs_vnode_info *vi)
 {
 	struct silofs_finode_info *fni = NULL;
 
+	silofs_assert_not_null(vi);
 	fni = container_of(vi, struct silofs_finode_info, fn_vi);
 	return fni;
 }
@@ -1564,12 +1567,12 @@ static int view_verify_sub(const struct silofs_view *view,
 		return silofs_verify_inode(&view->u.in);
 	case SILOFS_STYPE_XANODE:
 		return silofs_verify_xattr_node(&view->u.xan);
+	case SILOFS_STYPE_SYMVAL:
+		return silofs_verify_symlnk_value(&view->u.syv);
 	case SILOFS_STYPE_DTNODE:
 		return silofs_verify_dtree_node(&view->u.dtn);
 	case SILOFS_STYPE_FTNODE:
 		return silofs_verify_ftree_node(&view->u.ftn);
-	case SILOFS_STYPE_SYMVAL:
-		return silofs_verify_symlnk_value(&view->u.syv);
 	case SILOFS_STYPE_DATA1K:
 	case SILOFS_STYPE_DATA4K:
 	case SILOFS_STYPE_DATABK:

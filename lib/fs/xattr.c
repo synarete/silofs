@@ -28,8 +28,14 @@
 
 #define XATTRF_DISABLE 1
 
-#define XATTR_PREFIX(p_, n_, f_) \
+#define XATTR_PREFIX_(p_, n_, f_) \
 	{ .prefix = (p_), .ns = (n_), .flags = (f_) }
+
+#define XATTR_PREFIX1(p_, n_) \
+	XATTR_PREFIX_(p_, n_, XATTRF_DISABLE)
+
+#define XATTR_PREFIX2(p_, n_) \
+	XATTR_PREFIX_(p_, n_, 0)
 
 
 struct silofs_xentry_view {
@@ -51,16 +57,14 @@ struct silofs_xentry_info {
 
 struct silofs_xattr_ctx {
 	struct silofs_task             *task;
-	struct silofs_sb_info          *sbi;
 	struct silofs_listxattr_ctx    *lxa_ctx;
 	struct silofs_inode_info       *ii;
 	const struct silofs_namestr    *name;
 	struct silofs_bytebuf           value;
-	size_t  size;
-	int     flags;
-	int     keep_iter;
-	bool    kill_sgid;
-	enum silofs_stg_mode stg_mode;
+	size_t                          size;
+	int                             flags;
+	enum silofs_stg_mode            stg_mode;
+	bool                            kill_sgid;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -70,14 +74,11 @@ struct silofs_xattr_ctx {
  * but as 'enum silofs_xattr_ns' value within 'xe_namespace'.
  */
 static const struct silofs_xattr_prefix s_xattr_prefix[] = {
-	XATTR_PREFIX(XATTR_SECURITY_PREFIX,
-	             SILOFS_XATTR_SECURITY, 0),
-	XATTR_PREFIX(XATTR_SYSTEM_PREFIX,
-	             SILOFS_XATTR_SYSTEM, XATTRF_DISABLE),
-	XATTR_PREFIX(XATTR_TRUSTED_PREFIX,
-	             SILOFS_XATTR_TRUSTED, 0),
-	XATTR_PREFIX(XATTR_USER_PREFIX,
-	             SILOFS_XATTR_USER, 0),
+	XATTR_PREFIX2(XATTR_SECURITY_PREFIX, SILOFS_XATTR_SECURITY),
+	XATTR_PREFIX2(XATTR_SYSTEM_PREFIX, SILOFS_XATTR_SYSTEM),
+	XATTR_PREFIX2(XATTR_TRUSTED_PREFIX, SILOFS_XATTR_TRUSTED),
+	XATTR_PREFIX2(XATTR_USER_PREFIX, SILOFS_XATTR_USER),
+	XATTR_PREFIX1(XATTR_HURD_PREFIX, SILOFS_XATTR_GNU),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -766,7 +767,6 @@ int silofs_do_getxattr(struct silofs_task *task,
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
 		.ii = ii,
 		.name = name,
 		.value.ptr = buf,
@@ -1021,7 +1021,6 @@ int silofs_do_setxattr(struct silofs_task *task,
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
 		.ii = ii,
 		.name = name,
 		.value.ptr = unconst(value),
@@ -1079,7 +1078,6 @@ int silofs_do_removexattr(struct silofs_task *task,
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
 		.ii = ii,
 		.name = name,
 		.stg_mode = SILOFS_STG_COW,
@@ -1213,10 +1211,8 @@ int silofs_do_listxattr(struct silofs_task *task,
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
 		.ii = ii,
 		.lxa_ctx = lxa_ctx,
-		.keep_iter = true,
 		.stg_mode = SILOFS_STG_CUR,
 	};
 
@@ -1260,7 +1256,6 @@ int silofs_drop_xattr(struct silofs_task *task,
 {
 	struct silofs_xattr_ctx xa_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
 		.ii = ii,
 		.stg_mode = SILOFS_STG_COW,
 	};

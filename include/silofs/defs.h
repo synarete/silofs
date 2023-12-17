@@ -404,6 +404,7 @@ enum silofs_xattr_ns {
 	SILOFS_XATTR_SYSTEM     = 2,
 	SILOFS_XATTR_TRUSTED    = 3,
 	SILOFS_XATTR_USER       = 4,
+	SILOFS_XATTR_GNU        = 5,
 };
 
 

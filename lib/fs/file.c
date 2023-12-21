@@ -1359,7 +1359,7 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 			}
 		}
 	}
-	ii_update_iattrs(ii, &f_ctx->task->t_oper.op_creds, &iattr);
+	ii_update_iattrs(ii, task_creds(f_ctx->task), &iattr);
 }
 
 static int filc_update_unwritten_by(const struct silofs_file_ctx *f_ctx,
@@ -2249,9 +2249,8 @@ static void
 filc_update_iattr_blocks(const struct silofs_file_ctx *f_ctx,
                          const struct silofs_vaddr *vaddr, long dif)
 {
-	const struct silofs_creds *creds = &f_ctx->task->t_oper.op_creds;
-
-	ii_update_iblocks(f_ctx->ii, creds, vaddr->stype, dif);
+	ii_update_iblocks(f_ctx->ii, task_creds(f_ctx->task),
+	                  vaddr->stype, dif);
 }
 
 static int filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx,

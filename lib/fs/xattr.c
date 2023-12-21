@@ -979,12 +979,11 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 {
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *ii = xa_ctx->ii;
-	const struct silofs_creds *creds = &xa_ctx->task->t_oper.op_creds;
 
 	silofs_setup_iattr_of(&iattr, ii_ino(ii));
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
-	silofs_ii_update_iattrs(ii, creds, &iattr);
+	silofs_ii_update_iattrs(ii, task_creds(xa_ctx->task), &iattr);
 }
 
 static int xac_do_setxattr(struct silofs_xattr_ctx *xa_ctx)
@@ -1045,7 +1044,7 @@ int silofs_do_setxattr(struct silofs_task *task,
 static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 {
 	struct silofs_xentry_info xei = { .xe = NULL };
-	const struct silofs_creds *creds = &xa_ctx->task->t_oper.op_creds;
+	const enum silofs_iattr_flags attr_flags = SILOFS_IATTR_CTIME;
 	int err;
 
 	err = xac_check_op(xa_ctx, W_OK);
@@ -1058,7 +1057,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	}
 	xei_discard_entry(&xei);
 	xai_dirtify(xei.xai, xa_ctx->ii);
-	ii_update_itimes(xa_ctx->ii, creds, SILOFS_IATTR_CTIME);
+	ii_update_itimes(xa_ctx->ii, task_creds(xa_ctx->task), attr_flags);
 	return 0;
 }
 

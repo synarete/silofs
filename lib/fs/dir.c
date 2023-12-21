@@ -1323,7 +1323,7 @@ dirc_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
 	silofs_dtn_index_t last_dtn_index;
 	const long dif = new_node ? 1 : -1;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	const struct silofs_creds *creds = &d_ctx->task->t_oper.op_creds;
+	const struct silofs_creds *creds = task_creds(d_ctx->task);
 
 	dir_update_last_index(dir_ii, dtn_index, new_node);
 	last_dtn_index = dir_last_index(dir_ii);
@@ -1618,7 +1618,7 @@ static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *child_ii = d_ctx->child_ii;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	const struct silofs_creds *creds = &d_ctx->task->t_oper.op_creds;
+	const struct silofs_creds *creds = task_creds(d_ctx->task);
 
 	silofs_setup_iattr_of(&iattr, ii_ino(child_ii));
 	iattr.ia_nlink = i_nlink_new(child_ii, dif);
@@ -2076,12 +2076,6 @@ static int dirc_iterate(struct silofs_dir_ctx *d_ctx)
 	return dirc_readdir_eos(d_ctx);
 }
 
-static const struct silofs_creds *
-dirc_creds(const struct silofs_dir_ctx *d_ctx)
-{
-	return  &d_ctx->task->t_oper.op_creds;
-}
-
 static int dirc_readdir_emit(struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_iattr iattr;
@@ -2105,7 +2099,7 @@ static int dirc_readdir_emit(struct silofs_dir_ctx *d_ctx)
 
 	silofs_setup_iattr_of(&iattr, ii_ino(d_ctx->dir_ii));
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
-	ii_update_iattrs(d_ctx->dir_ii, dirc_creds(d_ctx), &iattr);
+	ii_update_iattrs(d_ctx->dir_ii, task_creds(d_ctx->task), &iattr);
 
 	return err;
 }

@@ -212,7 +212,7 @@ static int dii_check_name_encoding(const struct silofs_inode_info *dir_ii,
 
 static const struct silofs_creds *creds_of(const struct silofs_task *task)
 {
-	return &task->t_oper.op_creds;
+	return task_creds(task);
 }
 
 static bool isowner(const struct silofs_task *task,

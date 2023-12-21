@@ -419,7 +419,7 @@ slc_bind_symval_part(struct silofs_symlnk_ctx *sl_ctx, size_t slot,
 {
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 	const struct silofs_vaddr *vaddr = syi_vaddr(syi);
-	const struct silofs_creds *creds = &sl_ctx->task->t_oper.op_creds;
+	const struct silofs_creds *creds = task_creds(sl_ctx->task);
 
 	lnk_set_value_part(lnk_ii, slot, vaddr);
 	ii_update_iblocks(lnk_ii, creds, vaddr->stype, 1);
@@ -471,7 +471,7 @@ static void slc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	struct silofs_iattr iattr = { .ia_flags = 0 };
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
-	const struct silofs_creds *creds = &sl_ctx->task->t_oper.op_creds;
+	const struct silofs_creds *creds = task_creds(sl_ctx->task);
 
 	silofs_setup_iattr_of(&iattr, ii_ino(lnk_ii));
 	iattr.ia_size = symval_length(sl_ctx->symval);

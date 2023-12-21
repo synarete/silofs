@@ -702,7 +702,7 @@ static void update_times_attr(const struct silofs_task *task,
 	silofs_setup_iattr_of(&iattr, ii_ino(ii));
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
 	iattr.ia_flags = attr_flags;
-	ii_update_iattrs(ii, &task->t_oper.op_creds, &iattr);
+	ii_update_iattrs(ii, task_creds(task), &iattr);
 }
 
 /*
@@ -716,7 +716,7 @@ static void update_post_chmod(const struct silofs_task *task,
                               struct silofs_iattr *iattr)
 {
 	const gid_t gid = ii_gid(ii);
-	const struct silofs_creds *creds = &task->t_oper.op_creds;
+	const struct silofs_creds *creds = task_creds(task);
 	const struct silofs_cred *cred = &creds->fs_cred;
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
@@ -817,7 +817,7 @@ static void update_post_chown(const struct silofs_task *task,
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SUID;
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
-	ii_update_iattrs(ii, &task->t_oper.op_creds, iattr);
+	ii_update_iattrs(ii, task_creds(task), iattr);
 }
 
 static int do_chown(const struct silofs_task *task,
@@ -893,7 +893,7 @@ static int do_utimens(const struct silofs_task *task,
                       struct silofs_inode_info *ii,
                       const struct silofs_itimes *itimes)
 {
-	const struct silofs_creds *creds = &task->t_oper.op_creds;
+	const struct silofs_creds *creds = task_creds(task);
 	const struct timespec *ctime = &itimes->ctime;
 	const struct timespec *atime = &itimes->atime;
 	const struct timespec *mtime = &itimes->mtime;

@@ -5,6 +5,7 @@ import os
 import pprint
 import random
 import shutil
+import typing
 import urllib
 import urllib.request
 from pathlib import Path
@@ -89,5 +90,21 @@ def prandbytes(rsz: int) -> bytes:
 
 
 def pformat(obj) -> str:
+    """Wrapper over formatted pretty-print"""
     rep = pprint.pformat(vars(obj), indent=0)
     return rep.replace("\n", " ")
+
+
+def find_executable(name: str) -> typing.Tuple[Path, bool]:
+    """Locate executable program's path by name"""
+    xbin = str(shutil.which(name) or "").strip()
+    return (Path(xbin), True) if xbin else (Path(""), False)
+
+
+def has_executables(names: typing.Iterable[str]) -> bool:
+    """Returns True is able to find all executable programs path by name"""
+    for name in names:
+        _, ok = find_executable(name)
+        if not ok:
+            return False
+    return True

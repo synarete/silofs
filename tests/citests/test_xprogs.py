@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0
 from pathlib import Path
 
+from . import utils
 from .ctx import TestEnv
 
 
@@ -85,3 +86,21 @@ def _test_git_archive_untar_at(env: TestEnv, base: Path) -> None:
     env.cmd.sh.run_ok(cmd, base)
     cmd = f"tar xvf {tarname}"
     env.cmd.sh.run_ok(cmd, base)
+
+
+def test_rpmbuild(env: TestEnv) -> None:
+    url = "https://github.com/synarete/silofs"
+    name = env.uniq_name()
+    env.exec_setup_fs(50)
+    base = env.create_fstree(name)
+    ret = env.cmd.git.clone(url, base)
+    ok = utils.has_executables(["make", "rpmbuild"])
+    if ok and ret == 0:
+        _test_rpmbuild_at(env, base)
+    env.remove_fstree(name)
+    env.exec_teardown_fs()
+
+
+def _test_rpmbuild_at(env: TestEnv, base: Path) -> None:
+    env.cmd.sh.run_ok("make -f devel.mk rpm", base)
+    env.cmd.sh.run_ok("make -f devel.mk reset", base)

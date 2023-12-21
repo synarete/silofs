@@ -2,20 +2,20 @@
 import copy
 import os
 import shlex
-import shutil
 import subprocess
 import typing
 from pathlib import Path
 
 from . import log
+from . import utils
 
 
-def find_executable(name: str) -> Path:
+def _require_executable(name: str) -> Path:
     """Locate executable program's path by name"""
-    xbin = shutil.which(name)
-    if not xbin:
+    pp, ok = utils.find_executable(name)
+    if not ok:
         raise CmdError(f"failed to find {name}")
-    return Path(str(xbin).strip())
+    return pp
 
 
 class CmdError(Exception):
@@ -33,7 +33,7 @@ class CmdExec:
         if xbin:
             self.xbin = xbin
         else:
-            self.xbin = find_executable(prog)
+            self.xbin = _require_executable(prog)
         self.cwd = "/"
 
     def execute_sub(self, args, wdir: str = "", timeout: int = 5) -> str:

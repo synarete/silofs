@@ -44,6 +44,7 @@ TESTS = [
     test_xprogs.test_rsync,
     test_xprogs.test_gitscm,
     test_xprogs.test_git_archive_untar,
+    test_xprogs.test_rpmbuild,
 ]
 
 

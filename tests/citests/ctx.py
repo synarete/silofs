@@ -123,7 +123,8 @@ class TestEnv:
         return Path(self.mntpoint(), *subs)
 
     def make_td(self, sub: str, name: str, sz: int) -> TestData:
-        return TestData(self.make_path(sub, name), sz)
+        path = self.make_path(sub, name)
+        return TestData(path, sz)
 
     def make_tds(self, cnt: int, sub: str, sz: int) -> TestDataSet:
         tds = []
@@ -140,7 +141,7 @@ class TestEnv:
 
     def create_fstree(self, name: str) -> Path:
         path = self.make_path(name)
-        self._create_fstree_at(self.make_path(name))
+        self._create_fstree_at(path)
         return path
 
     def _create_fstree_at(self, path: Path) -> None:
@@ -148,7 +149,8 @@ class TestEnv:
         path.mkdir(mode=0o700, parents=True, exist_ok=False)
 
     def remove_fstree(self, name: str) -> None:
-        self._remove_fstree_at(self.make_path(name))
+        path = self.make_path(name)
+        self._remove_fstree_at(path)
 
     def _remove_fstree_at(self, path: Path) -> None:
         self.expect.exists(path)

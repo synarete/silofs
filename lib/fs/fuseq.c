@@ -2897,7 +2897,7 @@ static bool is_exclusive_cmd(const struct silofs_fuseq_in *in)
 	long ioc_cmd;
 	bool ret = false;
 
-	if (in->u.hdr.hdr.opcode != FUSE_IOCTL) {
+	if (in->u.hdr.hdr.opcode == FUSE_IOCTL) {
 		ioc_cmd = (long)(in->u.ioctl.arg.cmd);
 		ret = (ioc_cmd == SILOFS_IOC_CLONE) ||
 		      (ioc_cmd == SILOFS_IOC_SYNCFS);

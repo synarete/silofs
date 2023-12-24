@@ -1375,7 +1375,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_setup_symlink(task, *out_ii, symval);
+	err = silofs_bind_symval(task, *out_ii, symval);
 	if (err) {
 		silofs_remove_inode(task, *out_ii);
 		return err;

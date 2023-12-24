@@ -310,6 +310,56 @@ static void inode_set_ctime(struct silofs_inode *inode,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ts_setup_now(struct timespec *ts)
+{
+	ts->tv_sec = 0;
+	ts->tv_nsec = UTIME_NOW;
+}
+
+static void itimes_setup_now(struct silofs_itimes *itimes)
+{
+	ts_setup_now(&itimes->atime);
+	ts_setup_now(&itimes->ctime);
+	ts_setup_now(&itimes->mtime);
+	ts_setup_now(&itimes->btime);
+}
+
+static void itimes_copy(struct silofs_itimes *itimes,
+                        const struct silofs_itimes *other)
+{
+	silofs_ts_copy(&itimes->atime, &other->atime);
+	silofs_ts_copy(&itimes->ctime, &other->ctime);
+	silofs_ts_copy(&itimes->mtime, &other->mtime);
+	silofs_ts_copy(&itimes->btime, &other->btime);
+}
+
+static void iattr_set_times(struct silofs_iattr *iattr,
+                            const struct silofs_itimes *itimes)
+{
+	itimes_copy(&iattr->ia_t, itimes);
+}
+
+static void iattr_init(struct silofs_iattr *iattr, ino_t ino)
+{
+	silofs_memzero(iattr, sizeof(*iattr));
+	iattr->ia_ino = ino;
+}
+
+static void iattr_setup_with(struct silofs_iattr *iattr, ino_t ino,
+                             const struct silofs_itimes *itimes)
+{
+	iattr_init(iattr, ino);
+	iattr_set_times(iattr, itimes);
+}
+
+static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
+{
+	iattr_init(iattr, ino);
+	itimes_setup_now(&iattr->ia_t);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
 {
 	return ii_isrootd(ii) ? SILOFS_INO_ROOT : ii_ino(ii);
@@ -524,7 +574,7 @@ static void ii_setup_inode(struct silofs_inode_info *ii,
 	const ino_t ino = ii_ino(ii);
 
 	inode_setup_common(inode, ino, inp);
-	silofs_ii_setup_xattr(ii);
+	silofs_setup_xattr(ii);
 	if (ii_isdir(ii)) {
 		silofs_setup_dir(ii, inp->parent_mode, 1);
 	} else if (ii_isreg(ii)) {
@@ -550,54 +600,10 @@ void silofs_ii_setup_by(struct silofs_inode_info *ii,
 	ii_dirtify(ii);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void ts_setup_now(struct timespec *ts)
+void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
+		struct silofs_iattr *out_iattr)
 {
-	ts->tv_sec = 0;
-	ts->tv_nsec = UTIME_NOW;
-}
-
-static void itimes_setup_now(struct silofs_itimes *itimes)
-{
-	ts_setup_now(&itimes->atime);
-	ts_setup_now(&itimes->ctime);
-	ts_setup_now(&itimes->mtime);
-	ts_setup_now(&itimes->btime);
-}
-
-static void itimes_copy(struct silofs_itimes *itimes,
-                        const struct silofs_itimes *other)
-{
-	silofs_ts_copy(&itimes->atime, &other->atime);
-	silofs_ts_copy(&itimes->ctime, &other->ctime);
-	silofs_ts_copy(&itimes->mtime, &other->mtime);
-	silofs_ts_copy(&itimes->btime, &other->btime);
-}
-
-static void iattr_set_times(struct silofs_iattr *iattr,
-                            const struct silofs_itimes *itimes)
-{
-	itimes_copy(&iattr->ia_t, itimes);
-}
-
-static void iattr_init(struct silofs_iattr *iattr, ino_t ino)
-{
-	silofs_memzero(iattr, sizeof(*iattr));
-	iattr->ia_ino = ino;
-}
-
-static void iattr_setup_with(struct silofs_iattr *iattr, ino_t ino,
-                             const struct silofs_itimes *itimes)
-{
-	iattr_init(iattr, ino);
-	iattr_set_times(iattr, itimes);
-}
-
-void silofs_setup_iattr_of(struct silofs_iattr *iattr, ino_t ino)
-{
-	iattr_init(iattr, ino);
-	itimes_setup_now(&iattr->ia_t);
+	iattr_setup_now(out_iattr, ii_ino(ii));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -699,7 +705,7 @@ static void update_times_attr(const struct silofs_task *task,
 {
 	struct silofs_iattr iattr;
 
-	silofs_setup_iattr_of(&iattr, ii_ino(ii));
+	ii_mkiattr(ii, &iattr);
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
 	iattr.ia_flags = attr_flags;
 	ii_update_iattrs(ii, task_creds(task), &iattr);
@@ -918,7 +924,6 @@ static int do_utimens(const struct silofs_task *task,
 	}
 	return 0;
 }
-
 
 int silofs_do_utimens(const struct silofs_task *task,
                       struct silofs_inode_info *ii,
@@ -1243,7 +1248,7 @@ void silofs_ii_update_itimes(struct silofs_inode_info *ii,
 	struct silofs_iattr iattr;
 	const enum silofs_iattr_flags mask = SILOFS_IATTR_TIMES;
 
-	silofs_setup_iattr_of(&iattr, ii_ino(ii));
+	ii_mkiattr(ii, &iattr);
 	ii_update_inode_attr(ii, creds, attr_flags & mask, &iattr);
 }
 
@@ -1277,7 +1282,7 @@ void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
 {
 	struct silofs_iattr iattr;
 
-	silofs_setup_iattr_of(&iattr, ii_ino(ii));
+	ii_mkiattr(ii, &iattr);
 	iattr.ia_blocks = recalc_iblocks(ii, stype, dif);
 	iattr.ia_flags = SILOFS_IATTR_BLOCKS;
 
@@ -1289,7 +1294,7 @@ void silofs_ii_update_isize(struct silofs_inode_info *ii,
 {
 	struct silofs_iattr iattr;
 
-	silofs_setup_iattr_of(&iattr, ii_ino(ii));
+	ii_mkiattr(ii, &iattr);
 	iattr.ia_size = size;
 	iattr.ia_flags = SILOFS_IATTR_SIZE;
 

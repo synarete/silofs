@@ -1863,7 +1863,7 @@ static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
 	const struct silofs_creds *creds = task_creds(d_ctx->task);
 
-	silofs_setup_iattr_of(&iattr, ii_ino(child_ii));
+	ii_mkiattr(child_ii, &iattr);
 	iattr.ia_nlink = i_nlink_new(child_ii, dif);
 	iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	if (dif > 0) {
@@ -1875,7 +1875,7 @@ static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 	}
 	ii_update_iattrs(child_ii, creds, &iattr);
 
-	silofs_setup_iattr_of(&iattr, ii_ino(dir_ii));
+	ii_mkiattr(dir_ii, &iattr);
 	if (ii_isdir(child_ii)) {
 		iattr.ia_nlink = i_nlink_new(dir_ii, dif);
 		iattr.ia_flags |= SILOFS_IATTR_NLINK;
@@ -2341,7 +2341,7 @@ static int dirc_readdir_emit(struct silofs_dir_ctx *d_ctx)
 		err = dirc_iterate(d_ctx);
 	}
 
-	silofs_setup_iattr_of(&iattr, ii_ino(d_ctx->dir_ii));
+	ii_mkiattr(d_ctx->dir_ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	ii_update_iattrs(d_ctx->dir_ii, task_creds(d_ctx->task), &iattr);
 

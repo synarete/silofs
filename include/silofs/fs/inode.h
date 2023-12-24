@@ -82,25 +82,6 @@ void silofs_ii_update_iflags(struct silofs_inode_info *ii,
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
 
-int silofs_do_getattr(struct silofs_task *task,
-                      struct silofs_inode_info *ii,
-                      struct silofs_stat *out_st);
-
-int silofs_do_statx(struct silofs_task *task, struct silofs_inode_info *ii,
-                    unsigned int request_mask, struct statx *out_stx);
-
-int silofs_do_chmod(struct silofs_task *task,
-                    struct silofs_inode_info *ii, mode_t mode,
-                    const struct silofs_itimes *itimes);
-
-int silofs_do_chown(const struct silofs_task *task,
-                    struct silofs_inode_info *ii, uid_t uid, gid_t gid,
-                    const struct silofs_itimes *itimes);
-
-int silofs_do_utimens(const struct silofs_task *task,
-                      struct silofs_inode_info *ii,
-                      const struct silofs_itimes *itimes);
-
 void silofs_ii_update_itimes(struct silofs_inode_info *ii,
                              const struct silofs_creds *creds,
                              enum silofs_iattr_flags attr_flags);
@@ -126,7 +107,31 @@ void silofs_ii_setup_by(struct silofs_inode_info *ii,
 void silofs_ii_statof(const struct silofs_inode_info *ii,
                       struct silofs_stat *st);
 
-void silofs_setup_iattr_of(struct silofs_iattr *iattr, ino_t ino);
+void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
+		struct silofs_iattr *out_iattr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_do_getattr(struct silofs_task *task,
+                      struct silofs_inode_info *ii,
+                      struct silofs_stat *out_st);
+
+int silofs_do_statx(struct silofs_task *task, struct silofs_inode_info *ii,
+                    unsigned int request_mask, struct statx *out_stx);
+
+int silofs_do_chmod(struct silofs_task *task,
+                    struct silofs_inode_info *ii, mode_t mode,
+                    const struct silofs_itimes *itimes);
+
+int silofs_do_chown(const struct silofs_task *task,
+                    struct silofs_inode_info *ii, uid_t uid, gid_t gid,
+                    const struct silofs_itimes *itimes);
+
+int silofs_do_utimens(const struct silofs_task *task,
+                      struct silofs_inode_info *ii,
+                      const struct silofs_itimes *itimes);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_verify_inode(const struct silofs_inode *inode);
 

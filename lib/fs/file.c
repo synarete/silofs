@@ -1326,7 +1326,7 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 	const loff_t end = f_ctx->end;
 	const size_t len = filc_io_length(f_ctx);
 
-	silofs_setup_iattr_of(&iattr, ii_ino(ii));
+	ii_mkiattr(ii, &iattr);
 	if (f_ctx->op_mask & OP_READ) {
 		iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	} else if (f_ctx->op_mask & (OP_WRITE | OP_COPY_RANGE)) {
@@ -2886,7 +2886,7 @@ int silofs_do_write(struct silofs_task *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_do_rdwr_post(const struct silofs_task *task, int wr_mode,
-                        const struct silofs_iovec *iov, size_t cnt)
+                     const struct silofs_iovec *iov, size_t cnt)
 {
 	silofs_unused(task);
 	for (size_t i = 0; i < cnt; ++i) {

@@ -27,7 +27,7 @@ struct silofs_listxattr_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ii_setup_xattr(struct silofs_inode_info *ii);
+void silofs_setup_xattr(struct silofs_inode_info *ii);
 
 int silofs_do_getxattr(struct silofs_task *task,
                        struct silofs_inode_info *ii,
@@ -50,6 +50,8 @@ int silofs_do_listxattr(struct silofs_task *task,
 
 int silofs_drop_xattr(struct silofs_task *task,
                       struct silofs_inode_info *ii);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_verify_inode_xattr(const struct silofs_inode *inode);
 

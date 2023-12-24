@@ -473,7 +473,7 @@ static void slc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 	const struct silofs_creds *creds = task_creds(sl_ctx->task);
 
-	silofs_setup_iattr_of(&iattr, ii_ino(lnk_ii));
+	ii_mkiattr(lnk_ii, &iattr);
 	iattr.ia_size = symval_length(sl_ctx->symval);
 	iattr.ia_flags = SILOFS_IATTR_MCTIME | SILOFS_IATTR_SIZE;
 	ii_update_iattrs(lnk_ii, creds, &iattr);
@@ -498,9 +498,9 @@ out:
 	return ret;
 }
 
-int silofs_setup_symlink(struct silofs_task *task,
-                         struct silofs_inode_info *lnk_ii,
-                         const struct silofs_substr *symval)
+int silofs_bind_symval(struct silofs_task *task,
+                       struct silofs_inode_info *lnk_ii,
+                       const struct silofs_substr *symval)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task = task,

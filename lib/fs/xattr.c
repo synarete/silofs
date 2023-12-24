@@ -486,7 +486,7 @@ static void ii_xa_set_at(const struct silofs_inode_info *ii, size_t sloti,
 	ixa_set_vaddr(ixa_of(ii), sloti, vaddr);
 }
 
-void silofs_ii_setup_xattr(struct silofs_inode_info *ii)
+void silofs_setup_xattr(struct silofs_inode_info *ii)
 {
 	ixa_setup(ixa_of(ii));
 }
@@ -983,7 +983,7 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *ii = xa_ctx->ii;
 
-	silofs_setup_iattr_of(&iattr, ii_ino(ii));
+	ii_mkiattr(ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
 	silofs_ii_update_iattrs(ii, task_creds(xa_ctx->task), &iattr);

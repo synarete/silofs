@@ -705,8 +705,8 @@ static int xac_lookup_entry_at_nodes(struct silofs_xattr_ctx *xa_ctx,
 static int xac_lookup_entry_at_inode(struct silofs_xattr_ctx *xa_ctx,
                                      struct silofs_xentry_info *xei)
 {
-	(void)xa_ctx;
-	(void)xei;
+	unused(xa_ctx);
+	unused(xei);
 	return -SILOFS_ENOENT;
 }
 
@@ -716,14 +716,9 @@ static int xac_lookup_entry(struct silofs_xattr_ctx *xa_ctx,
 	int err;
 
 	err = xac_lookup_entry_at_inode(xa_ctx, xei);
-	if (err != -SILOFS_ENOENT) {
-		goto out;
+	if (err == -SILOFS_ENOENT) {
+		err = xac_lookup_entry_at_nodes(xa_ctx, xei);
 	}
-	err = xac_lookup_entry_at_nodes(xa_ctx, xei);
-	if (err != -SILOFS_ENOENT) {
-		goto out;
-	}
-out:
 	return (err == -SILOFS_ENOENT) ? -SILOFS_ENODATA : err;
 }
 
@@ -743,13 +738,12 @@ static int xac_do_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 	}
 	*out_size = xe_value_size(xei.xe);
 	if (!buf->cap || (buf->ptr == NULL)) {
-		goto out_ok;
+		return 0; /* getxattr-size only */
 	}
 	if (buf->cap < (buf->len + *out_size)) {
 		return -SILOFS_ERANGE;
 	}
 	xe_copy_value(xei.xe, buf);
-out_ok:
 	return 0;
 }
 

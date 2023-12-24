@@ -108,7 +108,7 @@ void silofs_ii_statof(const struct silofs_inode_info *ii,
                       struct silofs_stat *st);
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
-		struct silofs_iattr *out_iattr);
+                       struct silofs_iattr *out_iattr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -601,7 +601,7 @@ void silofs_ii_setup_by(struct silofs_inode_info *ii,
 }
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
-		struct silofs_iattr *out_iattr)
+                       struct silofs_iattr *out_iattr)
 {
 	iattr_setup_now(out_iattr, ii_ino(ii));
 }

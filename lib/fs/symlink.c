@@ -386,7 +386,7 @@ static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
 	return silofs_remove_vnode_at(sl_ctx->task, vaddr);
 }
 
-static int slc_create_symval(struct silofs_symlnk_ctx *sl_ctx,
+static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
                              const struct silofs_substr *str,
                              struct silofs_symval_info **out_syi)
 {
@@ -403,7 +403,7 @@ static int slc_create_symval(struct silofs_symlnk_ctx *sl_ctx,
 	return 0;
 }
 
-static int slc_assign_symval_head(struct silofs_symlnk_ctx *sl_ctx,
+static int slc_assign_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
                                   const struct silofs_symval_desc *sv_dsc)
 {
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
@@ -414,7 +414,7 @@ static int slc_assign_symval_head(struct silofs_symlnk_ctx *sl_ctx,
 }
 
 static void
-slc_bind_symval_part(struct silofs_symlnk_ctx *sl_ctx, size_t slot,
+slc_bind_symval_part(const struct silofs_symlnk_ctx *sl_ctx, size_t slot,
                      const struct silofs_symval_info *syi)
 {
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
@@ -425,7 +425,7 @@ slc_bind_symval_part(struct silofs_symlnk_ctx *sl_ctx, size_t slot,
 	ii_update_iblocks(lnk_ii, creds, vaddr->stype, 1);
 }
 
-static int slc_assign_symval_parts(struct silofs_symlnk_ctx *sl_ctx,
+static int slc_assign_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
                                    const struct silofs_symval_desc *sv_dsc)
 {
 	struct silofs_symval_info *syi = NULL;
@@ -441,7 +441,7 @@ static int slc_assign_symval_parts(struct silofs_symlnk_ctx *sl_ctx,
 	return 0;
 }
 
-static int slc_assign_symval(struct silofs_symlnk_ctx *sl_ctx)
+static int slc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	const struct silofs_substr *symval = sl_ctx->symval;
 	struct silofs_symval_desc sv_dsc = { .nparts = 0 };
@@ -479,21 +479,28 @@ static void slc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	ii_update_iattrs(lnk_ii, creds, &iattr);
 }
 
-static int slc_symlink(struct silofs_symlnk_ctx *sl_ctx)
+static int slc_do_symlink(const struct silofs_symlnk_ctx *sl_ctx)
+{
+	int err;
+
+	err = slc_check_symlnk(sl_ctx);
+	if (err) {
+		return 0;
+	}
+	err = slc_assign_symval(sl_ctx);
+	if (err) {
+		return 0;
+	}
+	slc_update_post_symlink(sl_ctx);
+	return 0;
+}
+
+static int slc_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	int ret;
 
 	ii_incref(sl_ctx->lnk_ii);
-	ret = slc_check_symlnk(sl_ctx);
-	if (ret) {
-		goto out;
-	}
-	ret = slc_assign_symval(sl_ctx);
-	if (ret) {
-		goto out;
-	}
-	slc_update_post_symlink(sl_ctx);
-out:
+	ret = slc_do_symlink(sl_ctx);
 	ii_decref(sl_ctx->lnk_ii);
 	return ret;
 }

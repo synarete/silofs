@@ -113,7 +113,7 @@
 #define ii_islnk(ii)                    silofs_ii_islnk(ii)
 #define ii_isfifo(ii)                   silofs_ii_isfifo(ii)
 #define ii_issock(ii)                   silofs_ii_issock(ii)
-#define ii_mkiattr(ii, ia)		silofs_ii_mkiattr(ii, ia)
+#define ii_mkiattr(ii, ia)              silofs_ii_mkiattr(ii, ia)
 #define ii_update_itimes(ii, cr, f)     silofs_ii_update_itimes(ii, cr, f)
 #define ii_update_iattrs(ii, cr, a)     silofs_ii_update_iattrs(ii, cr, a)
 #define ii_update_isize(ii, cr, sz)     silofs_ii_update_isize(ii, cr, sz)

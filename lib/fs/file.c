@@ -2886,7 +2886,7 @@ int silofs_do_write(struct silofs_task *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_do_rdwr_post(const struct silofs_task *task, int wr_mode,
-                     const struct silofs_iovec *iov, size_t cnt)
+                        const struct silofs_iovec *iov, size_t cnt)
 {
 	silofs_unused(task);
 	for (size_t i = 0; i < cnt; ++i) {

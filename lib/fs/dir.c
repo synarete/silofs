@@ -2153,31 +2153,36 @@ static int dirc_readdir_eos(struct silofs_dir_ctx *d_ctx)
 	return 0;
 }
 
-static int dirc_stage_child_by_ord(struct silofs_dir_ctx *d_ctx,
+static int dirc_do_stage_child_by_ord(const struct silofs_dir_ctx *d_ctx,
+                                      const struct silofs_dnode_info *dni,
+                                      silofs_dtn_ord_t ord,
+                                      struct silofs_dnode_info **out_dni)
+{
+	struct silofs_vaddr vaddr;
+	int ret = -SILOFS_ENOENT;
+
+	if (ord < DTREE_FANOUT) {
+		dni_child_addr_by_ord(dni, ord, &vaddr);
+		ret = dirc_stage_dnode(d_ctx, &vaddr, out_dni);
+	}
+	return ret;
+}
+
+static int dirc_stage_child_by_ord(const struct silofs_dir_ctx *d_ctx,
                                    struct silofs_dnode_info *dni,
                                    silofs_dtn_ord_t ord,
                                    struct silofs_dnode_info **out_dni)
 {
-	struct silofs_vaddr vaddr;
 	int ret;
 
 	dni_incref(dni);
-	if (ord >= DTREE_FANOUT) {
-		ret = -SILOFS_ENOENT;
-		goto out;
-	}
-	dni_child_addr_by_ord(dni, ord, &vaddr);
-	ret = dirc_stage_dnode(d_ctx, &vaddr, out_dni);
-	if (ret) {
-		goto out;
-	}
-out:
+	ret = dirc_do_stage_child_by_ord(d_ctx, dni, ord, out_dni);
 	dni_decref(dni);
 	return ret;
 }
 
 static int
-dirc_stage_node_by_index(struct silofs_dir_ctx *d_ctx,
+dirc_stage_node_by_index(const struct silofs_dir_ctx *d_ctx,
                          const struct silofs_dnode_info *root_dni,
                          silofs_dtn_index_t dtn_index,
                          struct silofs_dnode_info **out_dni)

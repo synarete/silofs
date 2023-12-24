@@ -26,6 +26,7 @@
 #include <sys/statvfs.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/xattr.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>

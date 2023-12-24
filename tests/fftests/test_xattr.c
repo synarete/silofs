@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include "fftests.h"
-#include <sys/xattr.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*

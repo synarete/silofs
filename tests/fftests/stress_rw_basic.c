@@ -37,13 +37,6 @@ struct ft_stress_executor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ft_new_path_unique_n(struct ft_env *fte, char **path_arr, size_t n)
-{
-	for (size_t i = 0; i < n; ++i) {
-		path_arr[i] = ft_new_path_unique(fte);
-	}
-}
-
 static void ft_pclose(int *fd)
 {
 	if (fd != NULL) {
@@ -52,25 +45,13 @@ static void ft_pclose(int *fd)
 	}
 }
 
-static void ft_creat_n(char **path_arr, size_t n, ssize_t len)
+static void ft_creat_with_size(const char *path, size_t len)
 {
 	int fd = -1;
 
-	for (size_t i = 0; i < n; ++i) {
-		ft_open(path_arr[i], O_CREAT | O_RDWR, 0600, &fd);
-		if (len > 0) {
-			ft_ftruncate(fd, len);
-		}
-		ft_pclose(&fd);
-	}
-}
-
-static void ft_unlink_n(char **path_arr, size_t n)
-{
-	for (size_t i = 0; i < n; ++i) {
-		ft_unlink(path_arr[i]);
-		path_arr[i] = NULL;
-	}
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
+	ft_ftruncate(fd, (ssize_t)len);
+	ft_pclose(&fd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -126,6 +107,30 @@ static void ste_njoin(struct ft_stress_executor *ste, size_t n)
 	}
 }
 
+static void ste_create(struct ft_stress_executor *ste)
+{
+	ft_creat_with_size(ste->path, ste->len);
+}
+
+static void ste_ncreate(struct ft_stress_executor *ste, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ste_create(&ste[i]);
+	}
+}
+
+static void ste_unlink(struct ft_stress_executor *ste)
+{
+	ft_unlink(ste->path);
+}
+
+static void ste_nunlink(struct ft_stress_executor *ste, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ste_unlink(&ste[i]);
+	}
+}
+
 static void ste_setup(struct ft_stress_executor *ste, struct ft_env *fte,
                       const char *path, size_t niter, loff_t off, size_t len)
 {
@@ -139,56 +144,55 @@ static void ste_setup(struct ft_stress_executor *ste, struct ft_env *fte,
 	ste->keep_run = 1;
 }
 
+static void ste_setup_uniq(struct ft_stress_executor *ste, struct ft_env *fte,
+                           size_t niter, loff_t off, size_t len)
+{
+	ste_setup(ste, fte, ft_new_path_unique(fte), niter, off, len);
+}
+
+static void ste_nsetup_uniq(struct ft_stress_executor *ste_arr, size_t n,
+                            struct ft_env *fte, size_t niter,
+                            loff_t off, size_t len)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ste_setup_uniq(&ste_arr[i], fte, niter, off, len);
+	}
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void ste_read_zeros(const struct ft_stress_executor *ste)
+static void ste_rdwr_trunc(const struct ft_stress_executor *ste)
 {
-	uint8_t *buf1 = ft_new_buf_zeros(ste->fte, ste->len);
-	uint8_t *buf2 = ft_new_buf_zeros(ste->fte, ste->len);
-	size_t nrd = 0;
-	int fd = -1;
-
-	ft_open(ste->path, O_RDONLY, 0600, &fd);
-	while (ste->keep_run) {
-		ft_pread(fd, buf1, ste->len, ste->off, &nrd);
-		ft_expect_eqm(buf1, buf2, nrd);
-		nrd = 0;
-	}
-	ft_close(fd);
-}
-
-static void ste_write_zeros_trunc(const struct ft_stress_executor *ste)
-{
-	uint8_t *buf = ft_new_buf_zeros(ste->fte, ste->len);
-	size_t nwr = 0;
+	uint8_t *buf1 = ft_new_buf_rands(ste->fte, ste->len);
+	uint8_t *buf2 = ft_new_buf_rands(ste->fte, ste->len);
+	uint8_t byte = 0;
 	size_t iter = 0;
-	int fd = -1;
+	int fd1 = -1;
+	int fd2 = -1;
 
-	ft_open(ste->path, O_WRONLY, 0600, &fd);
+	ft_open(ste->path, O_WRONLY, 0600, &fd1);
+	ft_open(ste->path, O_RDONLY, 0600, &fd2);
 	while (ste->keep_run && (iter++ < ste->niter)) {
-		ft_ftruncate(fd, ste->end);
-		ft_pwrite(fd, buf, ste->len, ste->off, &nwr);
-		ft_ftruncate(fd, 0);
-		nwr = 0;
+		byte = (uint8_t)(iter + 1);
+		buf1[0] = byte;
+		ft_ftruncate(fd1, ste->end);
+		ft_pwriten(fd1, buf1, ste->len, ste->off);
+		ft_preadn(fd2, buf2, ste->len, ste->off);
+		ft_expect_eqm(buf1, buf2, ste->len);
+		ft_ftruncate(fd1, ste->end - 1);
+		ft_ftruncate(fd1, ste->end);
+		ft_preadn(fd2, &byte, 1, ste->end - 1);
+		ft_expect_eq(byte, 0);
+		ft_ftruncate(fd1, ste->off + 1);
+		ft_ftruncate(fd1, ste->off + 2);
+		ft_preadn(fd2, &byte, 1, ste->off);
+		ft_expect_eq(byte, buf1[0]);
+		ft_preadn(fd2, &byte, 1, ste->off + 1);
+		ft_expect_eq(byte, 0);
+		ft_ftruncate(fd1, 0);
 	}
-	ft_close(fd);
-}
-
-static void ste_write_rands_trunc(const struct ft_stress_executor *ste)
-{
-	uint8_t *buf = ft_new_buf_rands(ste->fte, ste->len);
-	size_t nwr = 0;
-	size_t iter = 0;
-	int fd = -1;
-
-	ft_open(ste->path, O_WRONLY, 0600, &fd);
-	while (ste->keep_run && (iter++ < ste->niter)) {
-		ft_ftruncate(fd, ste->end);
-		ft_pwrite(fd, buf, ste->len, ste->off, &nwr);
-		ft_ftruncate(fd, 0);
-		nwr = 0;
-	}
-	ft_close(fd);
+	ft_close(fd1);
+	ft_close(fd2);
 }
 
 static void ste_rewrite_over(const struct ft_stress_executor *ste)
@@ -224,49 +228,71 @@ static void ste_rewrite_over(const struct ft_stress_executor *ste)
 	ft_close(fd);
 }
 
+static void ste_rdwr_with_xattr(const struct ft_stress_executor *ste)
+{
+	char name1[64] = "";
+	char name2[64] = "";
+	const size_t valsz_max = 1024;
+	uint8_t *buf1 = ft_new_buf_rands(ste->fte, ste->len);
+	uint8_t *buf2 = ft_new_buf_rands(ste->fte, ste->len);
+	uint8_t *buf3 = ft_new_buf_rands(ste->fte, ste->len);
+	void *val1 = ft_new_buf_rands(ste->fte, valsz_max);
+	void *val2 = ft_new_buf_rands(ste->fte, valsz_max);
+	void *val3 = ft_new_buf_rands(ste->fte, valsz_max);
+	size_t valsz = 0;
+	size_t iter = 0;
+	size_t sz = 0;
+	int fd = -1;
+
+	ft_open(ste->path, O_RDWR, 0, &fd);
+	while (ste->keep_run && (iter++ < ste->niter)) {
+		snprintf(name1, sizeof(name1) - 1, "user.xattr1-%lu", iter);
+		snprintf(name2, sizeof(name2) - 1, "user.xattr2-%lu", iter);
+		valsz = (iter % (valsz_max - 1)) + 1;
+		ft_fsetxattr(fd, name1, val1, valsz, 0);
+		ft_fgetxattr(fd, name1, NULL, 0, &sz);
+		ft_expect_eq(sz, valsz);
+		ft_pwriten(fd, buf1, ste->len, ste->off);
+		ft_fgetxattr(fd, name1, val2, valsz, &sz);
+		ft_expect_eq(sz, valsz);
+		ft_expect_eqm(val1, val2, valsz);
+		ft_preadn(fd, buf2, ste->len, ste->off);
+		ft_expect_eqm(buf1, buf2, ste->len);
+		valsz = ((iter + 11) % (valsz_max - 1)) + 1;
+		ft_fsetxattr(fd, name1, val3, valsz, XATTR_REPLACE);
+		ft_fsetxattr(fd, name2, val2, valsz, 0);
+		ft_pwriten(fd, buf3, ste->len - 1, ste->off);
+		ft_fgetxattr(fd, name1, val2, valsz, &sz);
+		ft_expect_eq(sz, valsz);
+		ft_expect_eqm(val3, val2, valsz);
+		ft_fremovexattr(fd, name1);
+		ft_ftruncate(fd, ste->off + (ssize_t)iter);
+		ft_fremovexattr(fd, name2);
+		buf1[(iter + 1) % ste->len] = (uint8_t)iter;
+		buf3[iter % ste->len] = (uint8_t)iter;
+	}
+	ft_close(fd);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int do_read_zeros(struct silofs_thread *th)
+static int do_rdwr_trunc(struct silofs_thread *th)
 {
-	ste_read_zeros(th->arg);
-	return 0;
-}
-
-static int do_write_zeros_trunc(struct silofs_thread *th)
-{
-	ste_write_zeros_trunc(th->arg);
-	return 0;
-}
-
-static int do_write_rands_trunc(struct silofs_thread *th)
-{
-	ste_write_rands_trunc(th->arg);
+	ste_rdwr_trunc(th->arg);
 	return 0;
 }
 
 static void stress_rw_trunc_(struct ft_env *fte, loff_t off, size_t len)
 {
-	struct ft_stress_executor ste_wr[2];
-	struct ft_stress_executor ste_rd[16];
-	char *path[2] = { NULL, NULL };
-	const size_t niter = 1000;
+	struct ft_stress_executor ste[10];
+	const size_t nste = FT_ARRAY_SIZE(ste);
 
-	ft_new_path_unique_n(fte, path, FT_ARRAY_SIZE(path));
-	ft_creat_n(path, FT_ARRAY_SIZE(path), ft_off_end(off, len));
-	for (size_t i = 0; i < FT_ARRAY_SIZE(ste_wr); ++i) {
-		ste_setup(&ste_wr[i], fte, path[i], niter, off, len);
-	}
-	for (size_t i = 0; i < FT_ARRAY_SIZE(ste_rd); ++i) {
-		/* all readers from same file */
-		ste_setup(&ste_rd[i], fte, path[0], niter, off, len);
-	}
-	ste_nrun(ste_rd, FT_ARRAY_SIZE(ste_rd), do_read_zeros);
-	ste_nrun(ste_wr, 1, do_write_zeros_trunc);
-	ste_nrun(ste_wr + 1, 1, do_write_rands_trunc);
-	ste_nwait(ste_wr, FT_ARRAY_SIZE(ste_wr));
-	ste_njoin(ste_rd, FT_ARRAY_SIZE(ste_rd));
-	ste_njoin(ste_wr, FT_ARRAY_SIZE(ste_wr));
-	ft_unlink_n(path, FT_ARRAY_SIZE(path));
+	ste_nsetup_uniq(ste, nste, fte, 100, off, len);
+	ste_ncreate(ste, nste);
+	ste_nrun(ste, nste, do_rdwr_trunc);
+	ste_nwait(ste, nste);
+	ste_njoin(ste, nste);
+	ste_nunlink(ste, nste);
 }
 
 static void stress_rw_trunc(struct ft_env *fte)
@@ -297,20 +323,14 @@ static int do_rewrite_over(struct silofs_thread *th)
 static void stress_rw_over_(struct ft_env *fte, loff_t off, size_t len)
 {
 	struct ft_stress_executor ste[10];
-	char *path[10];
-	const size_t niter = 100;
+	const size_t nste = FT_ARRAY_SIZE(ste);
 
-	SILOFS_STATICASSERT_EQ(FT_ARRAY_SIZE(ste), FT_ARRAY_SIZE(path));
-
-	ft_new_path_unique_n(fte, path, FT_ARRAY_SIZE(path));
-	ft_creat_n(path, FT_ARRAY_SIZE(path), 0);
-	for (size_t i = 0; i < FT_ARRAY_SIZE(ste); ++i) {
-		ste_setup(&ste[i], fte, path[i], niter, off, len);
-	}
-	ste_nrun(ste, FT_ARRAY_SIZE(ste), do_rewrite_over);
-	ste_nwait(ste, FT_ARRAY_SIZE(ste));
-	ste_njoin(ste, FT_ARRAY_SIZE(ste));
-	ft_unlink_n(path, FT_ARRAY_SIZE(path));
+	ste_nsetup_uniq(ste, nste, fte, 100, off, len);
+	ste_ncreate(ste, nste);
+	ste_nrun(ste, nste, do_rewrite_over);
+	ste_nwait(ste, nste);
+	ste_njoin(ste, nste);
+	ste_nunlink(ste, nste);
 }
 
 static void stress_rw_over(struct ft_env *fte)
@@ -332,9 +352,48 @@ static void stress_rw_over(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int do_rdwr_with_xattr(struct silofs_thread *th)
+{
+	ste_rdwr_with_xattr(th->arg);
+	return 0;
+}
+
+static void stress_rw_xattr_(struct ft_env *fte, loff_t off, size_t len)
+{
+	struct ft_stress_executor ste[10];
+	const size_t nste = FT_ARRAY_SIZE(ste);
+
+	ste_nsetup_uniq(ste, nste, fte, 1000, off, len);
+	ste_ncreate(ste, nste);
+	ste_nrun(ste, nste, do_rdwr_with_xattr);
+	ste_nwait(ste, nste);
+	ste_njoin(ste, nste);
+	ste_nunlink(ste, nste);
+}
+
+static void stress_rw_xattr(struct ft_env *fte)
+{
+	const struct ft_range ranges[] = {
+		/* aligned */
+		FT_MKRANGE(0, FT_64K),
+		FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(FT_1T, FT_1M),
+		/* unaligned */
+		FT_MKRANGE(1, FT_1M),
+		FT_MKRANGE(FT_1G - 11, FT_1M + 111),
+		FT_MKRANGE(FT_1T - 111, FT_1M + 1111),
+	};
+
+	ft_exec_with_ranges(fte, stress_rw_xattr_, ranges);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(stress_rw_trunc),
 	FT_DEFTEST(stress_rw_over),
+	FT_DEFTEST(stress_rw_xattr),
 };
 
 const struct ft_tests ft_stress_rw = FT_DEFTESTS(ft_local_tests);

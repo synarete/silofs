@@ -234,7 +234,7 @@ static void ft_register_sigactions(void)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const char *const ft_usage =
-        "[options] <dirpath>\n\n" \
+        "[options] <test-dirpath>\n\n" \
         "options: \n" \
         " -t, --test=<name>         Run tests which contains name\n" \
         " -n, --repeat=<count>      Execute tests count times\n" \
@@ -317,7 +317,7 @@ static void ft_parse_args(void)
 		return;
 	}
 	if (optind >= ft_globals.argc) {
-		error(EXIT_FAILURE, 0, "missing root pathname");
+		error(EXIT_FAILURE, 0, "missing test-dirpath");
 	}
 	ft_globals.testdir_path = ft_globals.argv[optind++];
 	if (optind < ft_globals.argc) {

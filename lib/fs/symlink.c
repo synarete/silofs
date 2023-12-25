@@ -89,6 +89,11 @@ static void symv_set_parent(struct silofs_symlnk_value *symv, ino_t parent)
 	symv->sy_parent = silofs_cpu_to_ino(parent);
 }
 
+static size_t symv_length(const struct silofs_symlnk_value *symv)
+{
+	return silofs_le16_to_cpu(symv->sy_length);
+}
+
 static void symv_set_length(struct silofs_symlnk_value *symv, size_t length)
 {
 	symv->sy_length = silofs_cpu_to_le16((uint16_t)length);
@@ -561,13 +566,30 @@ void silofs_setup_symlnk(struct silofs_inode_info *lnk_ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+
+static int symv_verify_parent(const struct silofs_symlnk_value *symv)
+{
+	const ino_t parent = symv_parent(symv);
+
+	return silofs_verify_ino(parent);
+}
+
+static int symv_verify_length(const struct silofs_symlnk_value *symv)
+{
+	const size_t length = symv_length(symv);
+
+	return (length <= SILOFS_SYMLNK_MAX) ? 0 : -SILOFS_EFSCORRUPTED;
+}
+
 int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv)
 {
-	ino_t parent;
 	int err;
 
-	parent = symv_parent(symv);
-	err = silofs_verify_ino(parent);
+	err = symv_verify_parent(symv);
+	if (err) {
+		return err;
+	}
+	err = symv_verify_length(symv);
 	if (err) {
 		return err;
 	}

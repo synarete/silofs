@@ -454,9 +454,14 @@ static int ixa_verify(const struct silofs_inode_xattr *ixa)
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(ixa->ix_vaddr); ++slot) {
 		ixa_vaddr(ixa, slot, &vaddr);
-		err = silofs_verify_off(vaddr.off);
-		if (err) {
-			return err;
+		if (!off_isnull(vaddr.off)) {
+			err = silofs_verify_off(vaddr.off);
+			if (err) {
+				return err;
+			}
+			if (!silofs_stype_isxanode(vaddr.stype)) {
+				return -SILOFS_EFSCORRUPTED;
+			}
 		}
 	}
 	return 0;
@@ -1217,7 +1222,7 @@ int silofs_do_listxattr(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int xac_drop_xan_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
+static int xac_drop_node_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
 {
 	int err;
 	struct silofs_vaddr vaddr;
@@ -1234,15 +1239,26 @@ static int xac_drop_xan_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
 	return 0;
 }
 
-static int xac_drop_xattr_slots(struct silofs_xattr_ctx *xa_ctx)
+static int xac_do_drop_slots(struct silofs_xattr_ctx *xa_ctx)
 {
 	const size_t nslots_max = ii_xa_nslots_max(xa_ctx->ii);
-	int ret = 0;
+	int err;
+
+	for (size_t i = 0; i < nslots_max; ++i) {
+		err = xac_drop_node_at(xa_ctx, i);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+static int xac_drop_slots(struct silofs_xattr_ctx *xa_ctx)
+{
+	int ret;
 
 	ii_incref(xa_ctx->ii);
-	for (size_t i = 0; (i < nslots_max) && !ret; ++i) {
-		ret = xac_drop_xan_at(xa_ctx, i);
-	}
+	ret = xac_do_drop_slots(xa_ctx);
 	ii_decref(xa_ctx->ii);
 	return ret;
 }
@@ -1256,18 +1272,14 @@ int silofs_drop_xattr(struct silofs_task *task,
 		.stg_mode = SILOFS_STG_COW,
 	};
 
-	return xac_drop_xattr_slots(&xa_ctx);
+	return xac_drop_slots(&xa_ctx);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_verify_inode_xattr(const struct silofs_inode *inode)
 {
-	const struct silofs_inode_xattr *ixa = inode_xattr_of(inode);
-
-	/* TODO: check nodes offsets */
-
-	return ixa_verify(ixa);
+	return ixa_verify(inode_xattr_of(inode));
 }
 
 int silofs_verify_xattr_node(const struct silofs_xattr_node *xan)

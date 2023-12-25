@@ -1574,22 +1574,19 @@ filc_seek_tree_recursive_at(struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static int filc_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
-                                    struct silofs_finode_info *parent_fni,
-                                    struct silofs_fileaf_ref *out_flref)
+static int filc_do_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
+                                       struct silofs_finode_info *parent_fni,
+                                       struct silofs_fileaf_ref *out_flref)
 {
 	const size_t nslots_max = fni_nchilds_max(parent_fni);
 	size_t start_slot;
 	int ret;
 
-	fni_incref(parent_fni);
 	if (!fni_isinrange(parent_fni, f_ctx->off)) {
-		ret = -SILOFS_ENOENT;
-		goto out;
+		return -SILOFS_ENOENT;
 	}
 	if (fni_isbottom(parent_fni)) {
-		ret = filc_seek_tree_at_leaves(f_ctx, parent_fni, out_flref);
-		goto out;
+		return filc_seek_tree_at_leaves(f_ctx, parent_fni, out_flref);
 	}
 	ret = filc_is_seek_hole(f_ctx) ? 0 : -SILOFS_ENOENT;
 	start_slot = fni_child_slot_of(parent_fni, f_ctx->off);
@@ -1597,11 +1594,22 @@ static int filc_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
 		ret = filc_seek_tree_recursive_at(f_ctx, parent_fni,
 		                                  slot, out_flref);
 		if (ret != -SILOFS_ENOENT) {
-			goto out;
+			break;
 		}
 		filc_advance_to_next_tree_slot(f_ctx, parent_fni, slot);
 	}
-out:
+	return ret;
+}
+
+
+static int filc_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
+                                    struct silofs_finode_info *parent_fni,
+                                    struct silofs_fileaf_ref *out_flref)
+{
+	int ret;
+
+	fni_incref(parent_fni);
+	ret = filc_do_seek_tree_recursive(f_ctx, parent_fni, out_flref);
 	fni_decref(parent_fni);
 	return ret;
 }

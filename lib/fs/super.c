@@ -519,7 +519,7 @@ static int verify_sproot(const struct silofs_uaddr *uaddr)
 	return 0;
 }
 
-static int verify_sb_sproots(const struct silofs_super_block *sb)
+static int sb_verify_sproots(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
 	enum silofs_stype stype = SILOFS_STYPE_NONE;
@@ -538,7 +538,7 @@ static int verify_sb_sproots(const struct silofs_super_block *sb)
 	return 0;
 }
 
-static int verify_sb_self(const struct silofs_super_block *sb)
+static int sb_verify_self(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
 
@@ -549,7 +549,7 @@ static int verify_sb_self(const struct silofs_super_block *sb)
 	return 0;
 }
 
-static int verify_sb_origin(const struct silofs_super_block *sb)
+static int sb_verify_origin(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
 
@@ -560,7 +560,7 @@ static int verify_sb_origin(const struct silofs_super_block *sb)
 	return 0;
 }
 
-static int verify_sb_height(const struct silofs_super_block *sb)
+static int sb_verify_height(const struct silofs_super_block *sb)
 {
 	const enum silofs_height height = sb_height(sb);
 
@@ -575,19 +575,19 @@ int silofs_verify_super_block(const struct silofs_super_block *sb)
 {
 	int err;
 
-	err = verify_sb_height(sb);
+	err = sb_verify_height(sb);
 	if (err) {
 		return err;
 	}
-	err = verify_sb_self(sb);
+	err = sb_verify_self(sb);
 	if (err) {
 		return err;
 	}
-	err = verify_sb_origin(sb);
+	err = sb_verify_origin(sb);
 	if (err) {
 		return err;
 	}
-	err = verify_sb_sproots(sb);
+	err = sb_verify_sproots(sb);
 	if (err) {
 		return err;
 	}

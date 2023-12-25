@@ -65,7 +65,10 @@ static void cmd_report_err_and_die(const struct silofs_fs_ctx *fse,
 		cmd_dief(err, "%s%smissing boot: %s",
 		         xmsg, xtag, repodir_name);
 	} else if (err == SILOFS_EBADBOOT) {
-		cmd_dief(err, "%s%scorrupted boot: %s",
+		cmd_dief(err, "%s%sbad boot: %s",
+		         xmsg, xtag, repodir_name);
+	} else if (err == SILOFS_EKEYEXPIRED) {
+		cmd_dief(err, "%s%sbad password: %s",
 		         xmsg, xtag, repodir_name);
 	} else if (err == SILOFS_EMOUNT) {
 		cmd_dief(err, "%s%scan not mount: %s",
@@ -75,6 +78,9 @@ static void cmd_report_err_and_die(const struct silofs_fs_ctx *fse,
 		         xmsg, xtag, repodir_name);
 	} else if (err == SILOFS_EFSCORRUPTED) {
 		cmd_dief(err, "%s%scorrupted file-system: %s",
+		         xmsg, xtag, repodir_name);
+	} else if (err == SILOFS_ECSUM) {
+		cmd_dief(err, "%s%schecksum error: %s",
 		         xmsg, xtag, repodir_name);
 	}
 
@@ -147,7 +153,7 @@ static void cmd_do_require_fs(struct silofs_fs_ctx *fse,
 	int err;
 
 	err = silofs_poke_fs(fse, lvid, &brec);
-	cmd_require_ok(fse, err, "failed to poke fs");
+	cmd_require_ok(fse, err, "can not load");
 }
 
 void cmd_require_fs(struct silofs_fs_ctx *fse,

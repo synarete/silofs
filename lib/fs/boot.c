@@ -338,18 +338,22 @@ static void bootrec1k_set_sb_riv(struct silofs_bootrec1k *brec1k,
 
 static int bootrec1k_check_base(const struct silofs_bootrec1k *brec1k)
 {
-	uint64_t magic;
-	uint64_t version;
+	const uint64_t magic = bootrec1k_magic(brec1k);
+	const uint64_t version = bootrec1k_version(brec1k);
 
-	magic = bootrec1k_magic(brec1k);
+	/* When both magic and version are no valid, we are likely to assume it
+	 * is due to bad password provided by user. */
+	if ((magic != SILOFS_BOOT_RECORD_MAGIC) &&
+	    (version != SILOFS_FMT_VERSION)) {
+		return -SILOFS_EKEYEXPIRED;
+	}
 	if (magic != SILOFS_BOOT_RECORD_MAGIC) {
 		log_dbg("bad bootrec magic: 0x%lx", magic);
-		return -SILOFS_EFSCORRUPTED;
+		return -SILOFS_EBADBOOT;
 	}
-	version = bootrec1k_version(brec1k);
 	if (version != SILOFS_FMT_VERSION) {
 		log_dbg("bad bootrec version: %lu", version);
-		return -SILOFS_EFSCORRUPTED;
+		return -SILOFS_EBADBOOT;
 	}
 	return 0;
 }
@@ -365,7 +369,7 @@ static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *brec1k)
 	    (height != SILOFS_HEIGHT_SUPER) || (uaddr.voff != 0)) {
 		log_dbg("bad bootrec uaddr-sb: voff=%ld stype=%d height=%d",
 		        uaddr.voff, (int)uaddr.stype, (int)height);
-		return -SILOFS_EFSCORRUPTED;
+		return -SILOFS_EBADBOOT;
 	}
 	return 0;
 }
@@ -440,8 +444,7 @@ static int bootrec1k_check_hash(const struct silofs_bootrec1k *brec1k,
 	bootrec1k_hash(brec1k, &hash[0]);
 	bootrec1k_calc_hash(brec1k, md, &hash[1]);
 
-	return hash256_isequal(&hash[0], &hash[1]) ?
-	       0 : -SILOFS_EFSCORRUPTED;
+	return hash256_isequal(&hash[0], &hash[1]) ? 0 : -SILOFS_ECSUM;
 }
 
 static int bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
@@ -699,12 +702,12 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 	silofs_assert_eq(laddr->len, sizeof(brec1k));
 	err = silofs_repo_load_obj(fsenv->fse.repo, laddr, &brec1k);
 	if (err) {
-		log_err("failed to load bootrec: err=%d", err);
+		log_dbg("failed to load bootrec: err=%d", err);
 		return err;
 	}
 	err = decode_bootrec_from(fsenv, &brec1k, out_brec);
 	if (err) {
-		log_err("failed to decode bootrec: err=%d", err);
+		log_dbg("failed to decode bootrec: err=%d", err);
 		return err;
 	}
 	return 0;

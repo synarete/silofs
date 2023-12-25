@@ -202,7 +202,7 @@ static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 {
 	char procfs_path[256] = "";
 	struct stat st = { .st_size = -1 };
-	const int retry_max = ctx->in_args.lazy ? 20 : 120;
+	const int retry_max = ctx->in_args.lazy ? 2 : 120;
 	int retry = 0;
 	int err = 0;
 

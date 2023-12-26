@@ -25,7 +25,7 @@
 #include <silofs/infra.h>
 #include <silofs/pv.h>
 #include <silofs/fs/types.h>
-#include <silofs/fs/nodes.h>
+#include <silofs/fs/lnodes.h>
 
 #define task_sbi(t)                     silofs_task_sbi(t)
 #define task_cache(t)                   silofs_task_cache(t)

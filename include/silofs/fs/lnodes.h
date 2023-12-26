@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_NODES_H_
-#define SILOFS_NODES_H_
+#ifndef SILOFS_LNODES_H_
+#define SILOFS_LNODES_H_
 
 struct silofs_lnode_info;
 struct silofs_unode_info;
@@ -217,4 +217,4 @@ void silofs_seal_unode(struct silofs_unode_info *ui);
 
 bool silofs_test_evictable(const struct silofs_lnode_info *lni);
 
-#endif /* SILOFS_NODES_H_ */
+#endif /* SILOFS_LNODES_H_ */

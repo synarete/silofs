@@ -39,16 +39,18 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_bt_info {
+struct silofs_backtrace_args {
 	void *ip;
 	long  sp;
 	const char *sym;
 	long  off;
 };
 
+typedef int (*silofs_backtrace_cb)(const struct silofs_backtrace_args *);
+
 #ifdef SILOFS_WITH_LIBUNWIND
 
-struct silofs_bt_ctx {
+struct silofs_backtrace_ctx {
 	unw_context_t   context;
 	unw_cursor_t    cursor;
 	unw_word_t      ip;
@@ -57,10 +59,10 @@ struct silofs_bt_ctx {
 	char            sym[512];
 };
 
-static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))
+static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 {
-	struct silofs_bt_ctx bt_ctx;
-	struct silofs_bt_info bti;
+	struct silofs_backtrace_ctx bt_ctx;
+	struct silofs_backtrace_args bt_args;
 	int err;
 
 	memset(&bt_ctx, 0, sizeof(bt_ctx));
@@ -93,11 +95,11 @@ static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))
 		if (err) {
 			bt_ctx.sym[0] = '\0';
 		}
-		bti.ip = (void *)bt_ctx.ip;
-		bti.sp = (long)bt_ctx.sp;
-		bti.sym = bt_ctx.sym;
-		bti.off = (long)bt_ctx.off;
-		err = bt_cb(&bti);
+		bt_args.ip = (void *)bt_ctx.ip;
+		bt_args.sp = (long)bt_ctx.sp;
+		bt_args.sym = bt_ctx.sym;
+		bt_args.off = (long)bt_ctx.off;
+		err = bt_cb(&bt_args);
 		if (err) {
 			return err;
 		}
@@ -105,7 +107,7 @@ static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))
 	return 0;
 }
 #else
-static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))
+static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 {
 	silofs_unused(bt_cb);
 	return 0;
@@ -116,10 +118,11 @@ static int silofs_backtrace_calls(int (*bt_cb)(const struct silofs_bt_info *))
 
 static bool silofs_enable_backtrace = true;
 
-static int log_err_bt(const struct silofs_bt_info *bti)
+static int log_err_bt(const struct silofs_backtrace_args *bt_args)
 {
 	silofs_log_error("[<%p>] 0x%lx %s+0x%lx",
-	                 bti->ip, bti->sp, bti->sym, bti->off);
+	                 bt_args->ip, bt_args->sp,
+	                 bt_args->sym, bt_args->off);
 	return 0;
 }
 

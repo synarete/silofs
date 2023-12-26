@@ -49,6 +49,12 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 	return !paddr->index || !paddr->len || off_isnull(paddr->off);
 }
 
+void silofs_paddr_reset(struct silofs_paddr *paddr)
+{
+	silofs_memzero(paddr, sizeof(*paddr));
+	paddr->off = SILOFS_OFF_NULL;
+}
+
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {

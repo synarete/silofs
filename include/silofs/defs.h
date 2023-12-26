@@ -971,14 +971,14 @@ struct silofs_pvmap_root {
 } silofs_packed_aligned64;
 
 
-/* persistent volume mapping b+tree node */
-struct silofs_pvmap_node {
-	struct silofs_header            pn_hdr;
-	uint8_t                         pn_reserved1[48];
-	struct silofs_paddr32b          pn_child[SILOFS_PVMAP_NCHILDS];
-	uint8_t                         pn_reserved2[192];
-	struct silofs_laddr48b          pn_keys[SILOFS_PVMAP_NKEYS];
-	uint8_t                         pn_reserved3[48];
+/* b+tree node of persistent volume mapping */
+struct silofs_btree_node {
+	struct silofs_header            btn_hdr;
+	uint8_t                         btn_reserved1[48];
+	struct silofs_paddr32b          btn_child[SILOFS_PVMAP_NCHILDS];
+	uint8_t                         btn_reserved2[192];
+	struct silofs_laddr48b          btn_keys[SILOFS_PVMAP_NKEYS];
+	uint8_t                         btn_reserved3[48];
 } silofs_packed_aligned64;
 
 
@@ -989,11 +989,11 @@ struct silofs_ltop80b {
 } silofs_packed_aligned16;
 
 
-/* persistent volume mapping b+tree leaf */
-struct silofs_pvmap_leaf {
-	struct silofs_header            pl_hdr;
-	uint8_t                         pn_reserved1[16];
-	struct silofs_ltop80b           pl_ltop[SILOFS_PVMAP_NENTS];
+/*  b+tree leaf of persistent volume mapping */
+struct silofs_btree_leaf {
+	struct silofs_header            btl_hdr;
+	uint8_t                         btl_reserved1[16];
+	struct silofs_ltop80b           btl_ltop[SILOFS_PVMAP_NENTS];
 } silofs_packed_aligned64;
 
 

@@ -46,6 +46,8 @@ const struct silofs_paddr *silofs_paddr_none(void);
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
+void silofs_paddr_reset(struct silofs_paddr *paddr);
+
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other);
 

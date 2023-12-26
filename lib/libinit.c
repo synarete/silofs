@@ -126,8 +126,8 @@ static void validate_fundamental_types_size(void)
 
 static void validate_persistent_types_nk(void)
 {
-	REQUIRE_SIZEOF_4K(struct silofs_pvmap_node);
-	REQUIRE_SIZEOF_8K(struct silofs_pvmap_leaf);
+	REQUIRE_SIZEOF_4K(struct silofs_btree_node);
+	REQUIRE_SIZEOF_8K(struct silofs_btree_leaf);
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_leaf);
@@ -309,11 +309,11 @@ static void validate_persistent_types_alignment3(void)
 
 static void validate_persistent_types_alignment4(void)
 {
-	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_pvmap_node, pn_keys, 1792);
-	REQUIRE_OFFSET64(struct silofs_pvmap_leaf, pl_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_pvmap_leaf, pl_ltop, 32);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_keys, 1792);
+	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltop, 32);
 }
 
 static void validate_ioctl_types_size(void)

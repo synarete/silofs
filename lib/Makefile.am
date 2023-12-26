@@ -42,6 +42,7 @@ libsilofs_la_SOURCES += addr/uaddr.c
 libsilofs_la_SOURCES += addr/vaddr.c
 libsilofs_la_SOURCES += pv/crypto.c
 libsilofs_la_SOURCES += pv/repo.c
+libsilofs_la_SOURCES += pv/pnodes.c
 libsilofs_la_SOURCES += pv/pvmaps.c
 libsilofs_la_SOURCES += fs/boot.c
 libsilofs_la_SOURCES += fs/cache.c

@@ -17,25 +17,6 @@
 #ifndef SILOFS_PVMAPS_H_
 #define SILOFS_PVMAPS_H_
 
-struct silofs_psenv;
-
-/* base object of all physical-mapping nodes */
-struct silofs_pnode_info {
-	struct silofs_paddr             p_paddr;
-	struct silofs_list_head         p_htb_lh;
-	struct silofs_list_head         p_lru_lh;
-	struct silofs_psenv            *p_psenv;
-	struct silofs_view             *p_view;
-	enum silofs_stype               p_stype;
-};
-
-struct silofs_pvnode_info {
-	struct silofs_paddr             pn_paddr;
-	struct silofs_list_head         pn_htb_lh;
-	struct silofs_list_head         pn_lru_lh;
-	struct silofs_pvmap_node       *pn;
-	struct silofs_psenv            *pn_psenv;
-};
 
 struct silofs_pvmap {
 	struct silofs_alloc            *pvm_alloc;
@@ -45,13 +26,6 @@ struct silofs_pvmap {
 	size_t                          pvm_htbl_sz;
 };
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_pvnode_info *
-silofs_pni_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
-
-void silofs_pni_del(struct silofs_pvnode_info *pni,
-                    struct silofs_alloc *alloc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

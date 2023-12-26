@@ -48,6 +48,7 @@ nobase_include_HEADERS += silofs/addr/vaddr.h
 nobase_include_HEADERS += silofs/addr.h
 nobase_include_HEADERS += silofs/addr-private.h
 nobase_include_HEADERS += silofs/pv/crypto.h
+nobase_include_HEADERS += silofs/pv/pnodes.h
 nobase_include_HEADERS += silofs/pv/pvmaps.h
 nobase_include_HEADERS += silofs/pv/repo.h
 nobase_include_HEADERS += silofs/pv.h

@@ -95,11 +95,14 @@
 #define SILOFS_HEADER_SIZE              (16)
 
 
-/* number of children in logical-to-persistant mapping node */
-#define SILOFS_PVMAP_NCHILDS            (127)
+/* number of pointers btree mapping-node */
+#define SILOFS_PVMAP_NCHILDS            (48)
 
-/* number of mapping-entries in logical-to-persistant node */
-#define SILOFS_PVMAP_NLTOP              (768)
+/* number of keys in btree mapping-node */
+#define SILOFS_PVMAP_NKEYS              (SILOFS_PVMAP_NCHILDS - 1)
+
+/* number of entries in btree mapping-leaf */
+#define SILOFS_PVMAP_NENTS              (102)
 
 
 /* minimal file-system capacity, in bytes (2G) */
@@ -961,24 +964,36 @@ struct silofs_repo_meta {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-
-struct silofs_ltop80b {
-	struct silofs_laddr48b          laddr;
-	struct silofs_paddr32b          paddr;
-} silofs_packed_aligned16;
-
-
+/* root meta-data of persistent volume mapping */
 struct silofs_pvmap_root {
 	struct silofs_header            vol_hdr;
 	struct silofs_pvid              vol_id;
 } silofs_packed_aligned64;
 
 
+/* persistent volume mapping b+tree node */
 struct silofs_pvmap_node {
 	struct silofs_header            pn_hdr;
-	uint8_t                         pn_reserved[16];
+	uint8_t                         pn_reserved1[48];
 	struct silofs_paddr32b          pn_child[SILOFS_PVMAP_NCHILDS];
-	struct silofs_ltop80b           pn_ltop[SILOFS_PVMAP_NLTOP];
+	uint8_t                         pn_reserved2[192];
+	struct silofs_laddr48b          pn_keys[SILOFS_PVMAP_NKEYS];
+	uint8_t                         pn_reserved3[48];
+} silofs_packed_aligned64;
+
+
+/* laddr-to-paddr mapping entry */
+struct silofs_ltop80b {
+	struct silofs_laddr48b          laddr;
+	struct silofs_paddr32b          paddr;
+} silofs_packed_aligned16;
+
+
+/* persistent volume mapping b+tree leaf */
+struct silofs_pvmap_leaf {
+	struct silofs_header            pl_hdr;
+	uint8_t                         pn_reserved1[16];
+	struct silofs_ltop80b           pl_ltop[SILOFS_PVMAP_NENTS];
 } silofs_packed_aligned64;
 
 

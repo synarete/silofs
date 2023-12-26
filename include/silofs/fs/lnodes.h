@@ -33,7 +33,7 @@ enum silofs_lnflags {
 typedef void (*silofs_lnode_del_fn)(struct silofs_lnode_info *lni,
                                     struct silofs_alloc *alloc, int l_flags);
 
-/* lnode: base object of all logiacal-nodes */
+/* lnode: base object of all logical-nodes */
 struct silofs_lnode_info {
 	struct silofs_cache_elem        l_ce;
 	struct silofs_avl_node          l_ds_avl_node;

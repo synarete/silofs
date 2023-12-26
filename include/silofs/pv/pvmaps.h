@@ -19,6 +19,15 @@
 
 struct silofs_psenv;
 
+/* base object of all physical-mapping nodes */
+struct silofs_pnode_info {
+	struct silofs_paddr             p_paddr;
+	struct silofs_list_head         p_htb_lh;
+	struct silofs_list_head         p_lru_lh;
+	struct silofs_psenv            *p_psenv;
+	struct silofs_view             *p_view;
+	enum silofs_stype               p_stype;
+};
 
 struct silofs_pvnode_info {
 	struct silofs_paddr             pn_paddr;

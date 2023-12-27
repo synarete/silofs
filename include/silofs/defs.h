@@ -96,13 +96,13 @@
 
 
 /* number of pointers btree mapping-node */
-#define SILOFS_PVMAP_NCHILDS            (48)
+#define SILOFS_BTREE_NODE_NCHILDS            (48)
 
 /* number of keys in btree mapping-node */
-#define SILOFS_PVMAP_NKEYS              (SILOFS_PVMAP_NCHILDS - 1)
+#define SILOFS_BTREE_NODE_NKEYS              (SILOFS_BTREE_NODE_NCHILDS - 1)
 
 /* number of entries in btree mapping-leaf */
-#define SILOFS_PVMAP_NENTS              (102)
+#define SILOFS_BTREE_LEAF_NENTS              (102)
 
 
 /* minimal file-system capacity, in bytes (2G) */
@@ -974,10 +974,12 @@ struct silofs_pvmap_root {
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header            btn_hdr;
-	uint8_t                         btn_reserved1[48];
-	struct silofs_paddr32b          btn_child[SILOFS_PVMAP_NCHILDS];
+	uint8_t                         btn_nchilds;
+	uint8_t                         btn_nkeys;
+	uint8_t                         btn_reserved1[46];
+	struct silofs_paddr32b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint8_t                         btn_reserved2[192];
-	struct silofs_laddr48b          btn_keys[SILOFS_PVMAP_NKEYS];
+	struct silofs_laddr48b          btn_keys[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                         btn_reserved3[48];
 } silofs_packed_aligned64;
 
@@ -992,8 +994,9 @@ struct silofs_ltop80b {
 /*  b+tree leaf of persistent volume mapping */
 struct silofs_btree_leaf {
 	struct silofs_header            btl_hdr;
-	uint8_t                         btl_reserved1[16];
-	struct silofs_ltop80b           btl_ltop[SILOFS_PVMAP_NENTS];
+	uint8_t                         btl_nltop;
+	uint8_t                         btl_reserved1[15];
+	struct silofs_ltop80b           btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_packed_aligned64;
 
 

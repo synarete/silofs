@@ -19,6 +19,8 @@
 #include <silofs/pv.h>
 
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static void pni_init(struct silofs_pnode_info *pni,
                      const struct silofs_paddr *paddr)
 {

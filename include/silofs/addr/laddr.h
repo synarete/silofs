@@ -115,6 +115,9 @@ void silofs_laddr_setup(struct silofs_laddr *laddr,
                         const struct silofs_lsegid *lsegid,
                         loff_t off, size_t len);
 
+void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
+                            const struct silofs_lsegid *lsegid, loff_t off);
+
 void silofs_laddr_reset(struct silofs_laddr *laddr);
 
 void silofs_laddr_assign(struct silofs_laddr *laddr,

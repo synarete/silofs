@@ -144,14 +144,14 @@ void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
                            const struct silofs_spleaf_info *sli_other);
 
 
-void silofs_sli_resolve_main(const struct silofs_spleaf_info *sli,
-                             loff_t voff, struct silofs_blink *out_blink);
+void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
+                                 loff_t voff, struct silofs_llink *out_llink);
 
 void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
-                           const struct silofs_blink *blink);
+                           const struct silofs_llink *llink);
 
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
-                             loff_t voff, struct silofs_blink *out_blink);
+                             loff_t voff, struct silofs_llink *out_llink);
 
 void silofs_sli_childrens(const struct silofs_spleaf_info *sli,
                           struct silofs_spleaf_urefs *out_childs);

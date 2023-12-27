@@ -69,11 +69,6 @@
 #define paddr_reset(pa)                 silofs_paddr_reset(pa)
 #define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
 
-#define bkaddr_reset(ba)                silofs_bkaddr_reset(ba)
-#define bkaddr_setup(ba, bid, l)        silofs_bkaddr_setup(ba, bid, l)
-#define bkaddr_by_laddr(ba, pa)         silofs_bkaddr_by_laddr(ba, pa)
-#define bkaddr_isnull(ba)               silofs_bkaddr_isnull(ba)
-
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)

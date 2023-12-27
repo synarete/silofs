@@ -273,9 +273,9 @@ static int vstgc_do_stage_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_do_stage_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
-                                  const struct silofs_bkaddr *bkaddr)
+                                  const struct silofs_laddr *laddr)
 {
-	return vstgc_do_stage_lseg(vstg_ctx, &bkaddr->laddr.lsegid);
+	return vstgc_do_stage_lseg(vstg_ctx, &laddr->lsegid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -698,16 +698,18 @@ static int vstgc_resolve_spnode_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spnode_info *sni,
                                       struct silofs_ulink *out_ulink)
 {
-	return silofs_sni_resolve_child(sni, vstgc_lbk_voff(vstg_ctx),
-	                                out_ulink);
+	const loff_t lbk_voff = vstgc_lbk_voff(vstg_ctx);
+
+	return silofs_sni_resolve_child(sni, lbk_voff, out_ulink);
 }
 
 static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spleaf_info *sli,
-                                      struct silofs_blink *out_blink)
+                                      struct silofs_llink *out_llink)
 {
-	return silofs_sli_resolve_child(sli, vstgc_lbk_voff(vstg_ctx),
-	                                out_blink);
+	const loff_t lbk_voff = vstgc_lbk_voff(vstg_ctx);
+
+	return silofs_sli_resolve_child(sli, lbk_voff, out_llink);
 }
 
 static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
@@ -1844,17 +1846,17 @@ static int vstgc_stage_spmaps_of(struct silofs_vstage_ctx *vstg_ctx)
 static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_llink *out_llink)
 {
-	struct silofs_blink blink;
+	struct silofs_llink llink_lbk;
 	struct silofs_laddr laddr;
 	int err;
 
-	err = vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, &blink);
+	err = vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, &llink_lbk);
 	if (err) {
 		return err;
 	}
-	silofs_laddr_setup(&laddr, &blink.bka.laddr.lsegid,
+	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsegid,
 	                   vstg_ctx->vaddr->off, vstg_ctx->vaddr->len);
-	silofs_llink_setup(out_llink, &laddr, &blink.riv);
+	silofs_llink_setup(out_llink, &laddr, &llink_lbk.riv);
 	return 0;
 }
 
@@ -2039,12 +2041,6 @@ static int vstgc_require_laddr(const struct silofs_vstage_ctx *vstg_ctx,
 	return silofs_repo_require_laddr(vstg_ctx->fsenv->fse.repo, laddr);
 }
 
-static int vstgc_require_bkaddr(const struct silofs_vstage_ctx *vstg_ctx,
-                                const struct silofs_bkaddr *bkaddr)
-{
-	return vstgc_require_laddr(vstg_ctx, &bkaddr->laddr);
-}
-
 static int vstgc_do_require_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
                                     const struct silofs_laddr *laddr)
 {
@@ -2086,25 +2082,25 @@ static int vstgc_stage_load_view(const struct silofs_vstage_ctx *vstg_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int vstgc_require_bks(const struct silofs_vstage_ctx *vstg_ctx,
-                             const struct silofs_bkaddr *bkaddr_src,
-                             const struct silofs_bkaddr *bkaddr_dst)
+static int vstgc_require_lbks(const struct silofs_vstage_ctx *vstg_ctx,
+                              const struct silofs_laddr *laddr_src,
+                              const struct silofs_laddr *laddr_dst)
 {
 	int ret;
 
-	ret = vstgc_do_stage_lseg_of(vstg_ctx, bkaddr_src);
+	ret = vstgc_do_stage_lseg_of(vstg_ctx, laddr_src);
 	if (ret) {
 		goto out;
 	}
-	ret = vstgc_do_stage_lseg_of(vstg_ctx, bkaddr_dst);
+	ret = vstgc_do_stage_lseg_of(vstg_ctx, laddr_dst);
 	if (ret) {
 		goto out;
 	}
-	ret = vstgc_require_bkaddr(vstg_ctx, bkaddr_src);
+	ret = vstgc_require_laddr(vstg_ctx, laddr_src);
 	if (ret) {
 		goto out;
 	}
-	ret = vstgc_require_bkaddr(vstg_ctx, bkaddr_dst);
+	ret = vstgc_require_laddr(vstg_ctx, laddr_dst);
 	if (ret) {
 		goto out;
 	}
@@ -2113,8 +2109,8 @@ out:
 	       -SILOFS_EFSCORRUPTED : ret;
 }
 
-static int vstgc_require_clone_bkaddr(const struct silofs_vstage_ctx *vstg_ctx,
-                                      struct silofs_blink *out_blink_dst)
+static int vstgc_require_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
+                                   struct silofs_llink *out_llink_dst)
 {
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	int err;
@@ -2123,25 +2119,25 @@ static int vstgc_require_clone_bkaddr(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_resolve_main(vstg_ctx->sli, vaddr->off, out_blink_dst);
+	silofs_sli_resolve_main_lbk(vstg_ctx->sli, vaddr->off, out_llink_dst);
 	return 0;
 }
 
 static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
-                                  const struct silofs_bkaddr *src_bka)
+                                  const struct silofs_laddr *src_laddr)
 {
-	struct silofs_blink dst_blink;
+	struct silofs_llink dst_llink;
 	int err;
 
-	err = vstgc_require_clone_bkaddr(vstg_ctx, &dst_blink);
+	err = vstgc_require_clone_lbk(vstg_ctx, &dst_llink);
 	if (err) {
 		return err;
 	}
-	err = vstgc_require_bks(vstg_ctx, src_bka, &dst_blink.bka);
+	err = vstgc_require_lbks(vstg_ctx, src_laddr, &dst_llink.laddr);
 	if (err) {
 		return err;
 	}
-	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, &dst_blink);
+	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, &dst_llink);
 	return 0;
 }
 
@@ -2275,14 +2271,14 @@ static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_clone_lbk_at(struct silofs_vstage_ctx *vstg_ctx,
-                              const struct silofs_bkaddr *src_bka)
+                              const struct silofs_laddr *src_laddr)
 {
 	struct silofs_vis vis = { .vas.count = 0 };
 	int err;
 
 	err = vstgc_pre_clone_lbk(vstg_ctx, &vis);
 	if (!err) {
-		err = vstgc_clone_rebind_lbk(vstg_ctx, src_bka);
+		err = vstgc_clone_rebind_lbk(vstg_ctx, src_laddr);
 	}
 	vstgc_post_clone_lbk(vstg_ctx, &vis);
 	return err;
@@ -2291,10 +2287,10 @@ static int vstgc_clone_lbk_at(struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_clone_lbk_of(struct silofs_vstage_ctx *vstg_ctx,
                               const struct silofs_laddr *src_laddr)
 {
-	struct silofs_bkaddr src_bka = { .lba = SILOFS_LBA_NULL };
+	struct silofs_laddr laddr_lbk;
 
-	bkaddr_by_laddr(&src_bka, src_laddr);
-	return vstgc_clone_lbk_at(vstg_ctx, &src_bka);
+	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsegid, src_laddr->pos);
+	return vstgc_clone_lbk_at(vstg_ctx, &laddr_lbk);
 }
 
 static int vstgc_resolve_inspect_llink(struct silofs_vstage_ctx *vstg_ctx,

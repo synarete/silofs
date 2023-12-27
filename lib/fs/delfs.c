@@ -30,12 +30,12 @@ struct silofs_delfs_ctx {
 static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
                                loff_t voff, struct silofs_lsegid *out_lsegid)
 {
-	struct silofs_blink blink;
+	struct silofs_llink llink;
 	int ret;
 
-	ret = silofs_sli_resolve_child(sli, voff, &blink);
+	ret = silofs_sli_resolve_child(sli, voff, &llink);
 	if (ret == 0) {
-		lsegid_assign(out_lsegid, &blink.bka.laddr.lsegid);
+		lsegid_assign(out_lsegid, &llink.laddr.lsegid);
 	}
 	return ret;
 }

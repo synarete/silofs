@@ -23,7 +23,6 @@
 #include <silofs/addr/stype.h>
 #include <silofs/addr/ivkey.h>
 #include <silofs/addr/laddr.h>
-#include <silofs/addr/bkaddr.h>
 #include <silofs/addr/paddr.h>
 #include <silofs/addr/uaddr.h>
 #include <silofs/addr/vaddr.h>

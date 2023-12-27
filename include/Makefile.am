@@ -36,7 +36,6 @@ nobase_include_HEADERS += silofs/infra/time.h
 nobase_include_HEADERS += silofs/infra/utility.h
 nobase_include_HEADERS += silofs/infra.h
 nobase_include_HEADERS += silofs/infra-private.h
-nobase_include_HEADERS += silofs/addr/bkaddr.h
 nobase_include_HEADERS += silofs/addr/htox.h
 nobase_include_HEADERS += silofs/addr/ivkey.h
 nobase_include_HEADERS += silofs/addr/laddr.h

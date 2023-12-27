@@ -299,6 +299,14 @@ void silofs_laddr_setup(struct silofs_laddr *laddr,
 	}
 }
 
+void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
+                            const struct silofs_lsegid *lsegid, loff_t off)
+{
+	const loff_t lbk_off = !off_isnull(off) ? off_align_to_lbk(off) : off;
+
+	silofs_laddr_setup(laddr, lsegid, lbk_off, SILOFS_LBK_SIZE);
+}
+
 void silofs_laddr_reset(struct silofs_laddr *laddr)
 {
 	silofs_lsegid_reset(&laddr->lsegid);

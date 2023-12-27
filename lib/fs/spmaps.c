@@ -967,23 +967,21 @@ static size_t spleaf_sum_nbytes_used(const struct silofs_spmap_leaf *spl)
 }
 
 static void
-spleaf_resolve_main_ubk(const struct silofs_spmap_leaf *spl, loff_t voff,
-                        struct silofs_bkaddr *out_bkaddr)
+spleaf_resolve_main_lbk(const struct silofs_spmap_leaf *spl, loff_t voff,
+                        struct silofs_laddr *out_laddr)
 {
 	struct silofs_lsegid lsegid;
 
 	spleaf_main_lsegid(spl, &lsegid);
-	silofs_bkaddr_by_off(out_bkaddr, &lsegid, voff);
+	silofs_laddr_setup_lbk(out_laddr, &lsegid, voff);
 }
 
 static void spleaf_child_of(const struct silofs_spmap_leaf *spl,
-                            loff_t voff, struct silofs_bkaddr *out_bkaddr)
+                            loff_t voff, struct silofs_laddr *out_laddr)
 {
-	struct silofs_laddr laddr = { .pos = -1 };
 	const struct silofs_bk_ref *bkr = spleaf_bkr_by_voff(spl, voff);
 
-	bkr_uref(bkr, &laddr);
-	bkaddr_by_laddr(out_bkaddr, &laddr);
+	bkr_uref(bkr, out_laddr);
 }
 
 static void spleaf_bind_child(struct silofs_spmap_leaf *spl, loff_t voff,
@@ -1033,11 +1031,11 @@ static void spleaf_set_riv_of(const struct silofs_spmap_leaf *spl, loff_t voff,
 	spleaf_set_riv_at(spl, spleaf_slot_of(spl, voff), riv);
 }
 
-static void spleaf_resolve_blink(const struct silofs_spmap_leaf *spl,
-                                 loff_t voff, struct silofs_blink *out_blink)
+static void spleaf_resolve_child(const struct silofs_spmap_leaf *spl,
+                                 loff_t voff, struct silofs_llink *out_llink)
 {
-	spleaf_child_of(spl, voff, &out_blink->bka);
-	spleaf_riv_of(spl, voff, &out_blink->riv);
+	spleaf_child_of(spl, voff, &out_llink->laddr);
+	spleaf_riv_of(spl, voff, &out_llink->riv);
 }
 
 static void spleaf_clone_subrefs(struct silofs_spmap_leaf *spl,
@@ -1365,31 +1363,31 @@ void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_resolve_main(const struct silofs_spleaf_info *sli,
-                             loff_t voff, struct silofs_blink *out_blink)
+void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
+                                 loff_t voff, struct silofs_llink *out_llink)
 {
-	spleaf_resolve_main_ubk(sli->sl, voff, &out_blink->bka);
-	spleaf_riv_of(sli->sl, voff, &out_blink->riv);
+	spleaf_resolve_main_lbk(sli->sl, voff, &out_llink->laddr);
+	spleaf_riv_of(sli->sl, voff, &out_llink->riv);
 }
 
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
-                             loff_t voff, struct silofs_blink *out_blink)
+                             loff_t voff, struct silofs_llink *out_llink)
 {
 	if (!sli_is_inrange(sli, voff)) {
 		return -SILOFS_ERANGE;
 	}
-	spleaf_resolve_blink(sli->sl, voff, out_blink);
-	if (bkaddr_isnull(&out_blink->bka)) {
+	spleaf_resolve_child(sli->sl, voff, out_llink);
+	if (laddr_isnull(&out_llink->laddr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
 
 void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
-                           const struct silofs_blink *blink)
+                           const struct silofs_llink *llink)
 {
-	spleaf_bind_child(sli->sl, voff, &blink->bka.laddr);
-	spleaf_set_riv_of(sli->sl, voff, &blink->riv);
+	spleaf_bind_child(sli->sl, voff, &llink->laddr);
+	spleaf_set_riv_of(sli->sl, voff, &llink->riv);
 	sli_dirtify(sli);
 }
 

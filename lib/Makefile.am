@@ -35,6 +35,7 @@ libsilofs_la_SOURCES += infra/utility.c
 libsilofs_la_SOURCES += addr/ivkey.c
 libsilofs_la_SOURCES += addr/laddr.c
 libsilofs_la_SOURCES += addr/ltype.c
+libsilofs_la_SOURCES += addr/meta.c
 libsilofs_la_SOURCES += addr/offlba.c
 libsilofs_la_SOURCES += addr/paddr.c
 libsilofs_la_SOURCES += addr/uaddr.c

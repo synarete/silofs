@@ -14,23 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_META_H_
+#define SILOFS_META_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/addr/offlba.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/meta.h>
-#include <silofs/addr/ltype.h>
-#include <silofs/addr/ivkey.h>
-#include <silofs/addr/laddr.h>
-#include <silofs/addr/paddr.h>
-#include <silofs/addr/uaddr.h>
-#include <silofs/addr/vaddr.h>
+void silofs_hdr_setup(struct silofs_header *hdr, uint8_t type, size_t size);
 
-#ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/addr-private.h>
-#endif
+void silofs_hdr_seal(struct silofs_header *hdr);
 
-#endif /* SILOFS_ADDR_H_ */
+int silofs_hdr_verify(const struct silofs_header *hdr,
+                      uint8_t expected_type, size_t expected_size);
+
+#endif /* SILOFS_META_H_ */

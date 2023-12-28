@@ -45,115 +45,6 @@ static int verify_view_by(const struct silofs_view *view,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint32_t hdr_magic(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_magic);
-}
-
-static void hdr_set_magic(struct silofs_header *hdr, uint32_t magic)
-{
-	hdr->h_magic = silofs_cpu_to_le32(magic);
-}
-
-static size_t hdr_size(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_size);
-}
-
-static size_t hdr_payload_size(const struct silofs_header *hdr)
-{
-	return hdr_size(hdr) - sizeof(*hdr);
-}
-
-static void hdr_set_size(struct silofs_header *hdr, size_t size)
-{
-	hdr->h_size = silofs_cpu_to_le32((uint32_t)size);
-}
-
-static enum silofs_ltype hdr_ltype(const struct silofs_header *hdr)
-{
-	return (enum silofs_ltype)(hdr->h_ltype);
-}
-
-static void hdr_set_ltype(struct silofs_header *hdr, enum silofs_ltype ltype)
-{
-	hdr->h_ltype = (uint8_t)ltype;
-}
-
-static uint32_t hdr_csum(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_csum);
-}
-
-static void hdr_set_csum(struct silofs_header *hdr, uint32_t csum)
-{
-	hdr->h_csum = silofs_cpu_to_le32(csum);
-	hdr->h_flags |= SILOFS_HDRF_CSUM;
-}
-
-static bool hdr_has_csum(const struct silofs_header *hdr)
-{
-	return (hdr->h_flags & SILOFS_HDRF_CSUM) > 0;
-}
-
-static const void *hdr_payload(const struct silofs_header *hdr)
-{
-	return hdr + 1;
-}
-
-static void hdr_stamp(struct silofs_header *hdr,
-                      enum silofs_ltype ltype, size_t size)
-{
-	hdr_set_magic(hdr, SILOFS_LTYPE_MAGIC);
-	hdr_set_size(hdr, size);
-	hdr_set_ltype(hdr, ltype);
-	hdr->h_csum = 0;
-	hdr->h_flags = 0;
-	hdr->h_reserved = 0;
-}
-
-static int hdr_verify_base(const struct silofs_header *hdr,
-                           const enum silofs_ltype ltype)
-{
-	const size_t hsz = hdr_size(hdr);
-	const size_t psz = ltype_size(ltype);
-
-	if (hdr_magic(hdr) != SILOFS_LTYPE_MAGIC) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	if (hdr_ltype(hdr) != ltype) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	if (hsz != psz) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr)
-{
-	const void *payload = hdr_payload(hdr);
-	const size_t pl_size = hdr_payload_size(hdr);
-
-	return silofs_hash_xxh32(payload, pl_size, SILOFS_LTYPE_MAGIC);
-}
-
-static int hdr_verify_checksum(const struct silofs_header *hdr)
-{
-	uint32_t csum;
-
-	if (!hdr_has_csum(hdr)) {
-		return 0;
-	}
-	csum = hdr_calc_chekcsum(hdr);
-	if (csum != hdr_csum(hdr)) {
-		return -SILOFS_EFSBADCRC;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void lh_init(struct silofs_list_head *lh)
 {
 	silofs_list_head_init(lh);
@@ -186,29 +77,14 @@ static void an_fini(struct silofs_avl_node *an)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint32_t calc_meta_chekcsum(const struct silofs_header *hdr)
-{
-	return hdr_calc_chekcsum(hdr);
-}
-
-static uint32_t calc_data_checksum(const void *dat, size_t len,
-                                   const struct silofs_mdigest *md)
-{
-	uint32_t csum = 0;
-
-	silofs_crc32_of(md, dat, len, &csum);
-	return csum;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 {
-	const size_t len = ltype_size(ltype);
+	size_t size;
 
 	if (!ltype_isdata(ltype)) {
-		silofs_memzero(view, len);
-		hdr_stamp(&view->u.hdr, ltype, len);
+		size = ltype_size(ltype);
+		silofs_memzero(view, size);
+		silofs_hdr_setup(&view->u.hdr, (uint8_t)ltype, size);
 	}
 }
 
@@ -307,12 +183,6 @@ static bool lni_evictable(const struct silofs_lnode_info *lni)
 	return silofs_lni_isevictable(lni);
 }
 
-static uint32_t lni_calc_chekcsum(const struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni->l_view);
-	return calc_meta_chekcsum(&lni->l_view->u.hdr);
-}
-
 static int lni_verify_view(struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni->l_view);
@@ -364,7 +234,7 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni)
 
 void silofs_seal_unode(struct silofs_unode_info *ui)
 {
-	hdr_set_csum(&ui->u_lni.l_view->u.hdr, lni_calc_chekcsum(&ui->u_lni));
+	silofs_hdr_seal(&ui->u_lni.l_view->u.hdr);
 }
 
 void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
@@ -445,35 +315,12 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni)
 	return vi_unconst(vi);
 }
 
-static const struct silofs_mdigest *
-vi_mdigest(const struct silofs_vnode_info *vi)
-{
-	const struct silofs_fsenv *fsenv = vi_fsenv(vi);
-
-	return &fsenv->fse_mdigest;
-}
-
-static uint32_t vi_calc_chekcsum(const struct silofs_vnode_info *vi)
-{
-	const struct silofs_mdigest *md = vi_mdigest(vi);
-	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
-	uint32_t csum;
-
-	silofs_assert_not_null(vi->v_lni.l_view);
-
-	if (vaddr_isdata(vaddr)) {
-		csum = calc_data_checksum(vi->v_lni.l_view, vaddr->len, md);
-	} else {
-		csum = calc_meta_chekcsum(&vi->v_lni.l_view->u.hdr);
-	}
-	return csum;
-}
-
 void silofs_seal_vnode(struct silofs_vnode_info *vi)
 {
 	silofs_assert_not_null(vi->v_lni.l_view);
+	silofs_assert(!vaddr_isdata(vi_vaddr(vi)));
 
-	hdr_set_csum(&vi->v_lni.l_view->u.hdr, vi_calc_chekcsum(vi));
+	silofs_hdr_seal(&vi->v_lni.l_view->u.hdr);
 }
 
 static bool vi_has_ltype(const struct silofs_vnode_info *vi,
@@ -1540,15 +1387,12 @@ silofs_new_vi(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 
-static int view_verify_hdr(const struct silofs_view *view,
-                           enum silofs_ltype ltype)
+static int view_verify_by_hdr(const struct silofs_view *view,
+                              enum silofs_ltype ltype)
 {
-	return hdr_verify_base(&view->u.hdr, ltype);
-}
+	const struct silofs_header *hdr = &view->u.hdr;
 
-static int view_verify_checksum(const struct silofs_view *view)
-{
-	return hdr_verify_checksum(&view->u.hdr);
+	return silofs_hdr_verify(hdr, (uint8_t)ltype, ltype_size(ltype));
 }
 
 static int view_verify_sub(const struct silofs_view *view,
@@ -1594,11 +1438,7 @@ static int verify_view_by(const struct silofs_view *view,
 	if (ltype_isdata(ltype)) {
 		return 0;
 	}
-	err = view_verify_hdr(view, ltype);
-	if (err) {
-		return err;
-	}
-	err = view_verify_checksum(view);
+	err = view_verify_by_hdr(view, ltype);
 	if (err) {
 		return err;
 	}

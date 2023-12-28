@@ -198,7 +198,7 @@ static void validate_persistent_types_size(void)
 
 static void validate_persistent_types_members(void)
 {
-	REQUIRE_NBITS(struct silofs_header, h_ltype, 8);
+	REQUIRE_NBITS(struct silofs_header, h_type, 8);
 	REQUIRE_NBITS(struct silofs_bk_ref, bkr_allocated, SILOFS_NKB_IN_LBK);
 	REQUIRE_NBITS(struct silofs_bk_ref, bkr_unwritten, SILOFS_NKB_IN_LBK);
 	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, bkr_dbkref, 8);
@@ -437,7 +437,7 @@ static int check_endianess(void)
 	if (err) {
 		return err;
 	}
-	err = check_endianess32(SILOFS_LTYPE_MAGIC, "silo");
+	err = check_endianess32(SILOFS_META_MAGIC, "silo");
 	if (err) {
 		return err;
 	}

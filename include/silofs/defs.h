@@ -42,7 +42,7 @@
 #define SILOFS_FSID_MAGIC               (0x4F4C4953U)
 
 /* magic numbers at meta-objects start (ASCII: "silo") */
-#define SILOFS_LTYPE_MAGIC              (0x6F6C6973U)
+#define SILOFS_META_MAGIC              (0x6F6C6973U)
 
 /* max length of encryption password */
 #define SILOFS_PASSWORD_MAX             (255)
@@ -584,7 +584,7 @@ struct silofs_bootrec1k {
 
 struct silofs_header {
 	uint32_t                        h_magic;
-	uint8_t                         h_ltype;
+	uint8_t                         h_type;
 	uint8_t                         h_flags;
 	uint16_t                        h_reserved;
 	uint32_t                        h_size;

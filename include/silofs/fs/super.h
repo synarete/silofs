@@ -44,15 +44,15 @@ void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
                            struct silofs_stats_info *sti);
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
-                         enum silofs_stype vstype,
+                         enum silofs_ltype vltype,
                          struct silofs_uaddr *out_uaddr);
 
 int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
-                             enum silofs_stype vstype,
+                             enum silofs_ltype vltype,
                              struct silofs_ulink *out_ulink);
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
-                           enum silofs_stype vstype,
+                           enum silofs_ltype vltype,
                            const struct silofs_ulink *ulink);
 
 void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
@@ -72,18 +72,18 @@ void silofs_sbi_get_lvid(const struct silofs_sb_info *sbi,
                          struct silofs_lvid *out_lvid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
-                         enum silofs_stype vspace,
+                         enum silofs_ltype vspace,
                          struct silofs_lsegid *out_lsegid);
 
 void silofs_sbi_bind_main_lseg(struct silofs_sb_info *sbi,
-                               enum silofs_stype vspace,
+                               enum silofs_ltype vspace,
                                const struct silofs_lsegid *lsegid);
 
 bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
-                              enum silofs_stype vspace);
+                              enum silofs_ltype vspace);
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
-                                loff_t voff, enum silofs_stype vspace,
+                                loff_t voff, enum silofs_ltype vspace,
                                 struct silofs_ulink *out_ulink);
 
 bool silofs_sbi_ismutable_lsegid(const struct silofs_sb_info *sbi,

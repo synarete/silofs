@@ -72,7 +72,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == ARRAY_SIZE(sqe->iov)) {
 		return false;
 	}
-	if (lni->l_stype != sqe->stype) {
+	if (lni->l_ltype != sqe->ltype) {
 		return false;
 	}
 	end = off_end(sqe->laddr.pos, sqe_laddr->len);
@@ -90,7 +90,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 		return false;
 	}
 	/* for inodes require alignment on commit-len boundaries */
-	if (stype_isinode(sqe->stype)) {
+	if (ltype_isinode(sqe->ltype)) {
 		nxt = off_next(sqe_laddr->pos, len_max);
 		end = off_end(sqe_laddr->pos, len);
 		if (end > nxt) {
@@ -109,7 +109,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	}
 	if (sqe->cnt == 0) {
 		laddr_assign(&sqe->laddr, laddr);
-		sqe->stype = lni->l_stype;
+		sqe->ltype = lni->l_ltype;
 	} else {
 		sqe->laddr.len += laddr->len;
 	}

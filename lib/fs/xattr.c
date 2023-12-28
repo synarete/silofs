@@ -459,7 +459,7 @@ static int ixa_verify(const struct silofs_inode_xattr *ixa)
 			if (err) {
 				return err;
 			}
-			if (!silofs_stype_isxanode(vaddr.stype)) {
+			if (!silofs_ltype_isxanode(vaddr.ltype)) {
 				return -SILOFS_EFSCORRUPTED;
 			}
 		}
@@ -790,7 +790,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	int err;
 
 	err = silofs_spawn_vnode(xa_ctx->task, xa_ctx->ii,
-	                         SILOFS_STYPE_XANODE, &vi);
+	                         SILOFS_LTYPE_XANODE, &vi);
 	if (err) {
 		return err;
 	}

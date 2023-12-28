@@ -78,13 +78,13 @@ void silofs_sti_vspace_end(const struct silofs_stats_info *sti, loff_t *out);
 void silofs_sti_next_generation(struct silofs_stats_info *sti, uint64_t *out);
 
 void silofs_sti_update_lsegs(struct silofs_stats_info *sti,
-                             enum silofs_stype stype, ssize_t take);
+                             enum silofs_ltype ltype, ssize_t take);
 
 void silofs_sti_update_bks(struct silofs_stats_info *sti,
-                           enum silofs_stype stype, ssize_t take);
+                           enum silofs_ltype ltype, ssize_t take);
 
 void silofs_sti_update_objs(struct silofs_stats_info *sti,
-                            enum silofs_stype stype, ssize_t take);
+                            enum silofs_ltype ltype, ssize_t take);
 
 void silofs_sti_collect_stats(const struct silofs_stats_info *sti,
                               struct silofs_spacestats *out_sp);

@@ -44,7 +44,7 @@ struct silofs_task {
 struct silofs_submit_ref {
 	struct silofs_llink         llink;
 	const struct silofs_view   *view;
-	enum silofs_stype           stype;
+	enum silofs_ltype           ltype;
 };
 
 /* submission queue entry */
@@ -61,7 +61,7 @@ struct silofs_submitq_ent {
 	uint32_t                        tx_index;
 	int                             hold_refs;
 	volatile int                    status;
-	enum silofs_stype               stype;
+	enum silofs_ltype               ltype;
 };
 
 /* submission flush queue */

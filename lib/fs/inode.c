@@ -1262,10 +1262,10 @@ void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
 }
 
 static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
-                               enum silofs_stype stype, long dif)
+                               enum silofs_ltype ltype, long dif)
 {
 	blkcnt_t cnt;
-	const size_t nkbs = stype_nkbs(stype);
+	const size_t nkbs = ltype_nkbs(ltype);
 	const blkcnt_t blocks = ii_blocks(ii);
 
 	if (dif > 0) {
@@ -1278,12 +1278,12 @@ static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
 
 void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
                               const struct silofs_creds *creds,
-                              enum silofs_stype stype, long dif)
+                              enum silofs_ltype ltype, long dif)
 {
 	struct silofs_iattr iattr;
 
 	ii_mkiattr(ii, &iattr);
-	iattr.ia_blocks = recalc_iblocks(ii, stype, dif);
+	iattr.ia_blocks = recalc_iblocks(ii, ltype, dif);
 	iattr.ia_flags = SILOFS_IATTR_BLOCKS;
 
 	ii_update_iattrs(ii, creds, &iattr);

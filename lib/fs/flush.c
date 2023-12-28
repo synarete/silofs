@@ -23,7 +23,7 @@
 
 static bool ui_issuper(const struct silofs_unode_info *ui)
 {
-	return stype_issuper(ui_stype(ui));
+	return ltype_issuper(ui_ltype(ui));
 }
 
 static const struct silofs_unode_info *
@@ -81,11 +81,11 @@ static void lni_visit_reinit(struct silofs_avl_node *an, void *p)
 
 static void lni_seal_meta(struct silofs_lnode_info *lni)
 {
-	const enum silofs_stype stype = lni->l_stype;
+	const enum silofs_ltype ltype = lni->l_ltype;
 
-	if (stype_isunode(stype)) {
+	if (ltype_isunode(ltype)) {
 		silofs_seal_unode(silofs_ui_from_lni(lni));
-	} else if (stype_isvnode(stype) && !stype_isdata(stype)) {
+	} else if (ltype_isvnode(ltype) && !ltype_isdata(ltype)) {
 		silofs_seal_vnode(silofs_vi_from_lni(lni));
 	}
 }
@@ -184,11 +184,11 @@ static void lni_undirtify(struct silofs_lnode_info *lni)
 	struct silofs_unode_info *ui = NULL;
 	struct silofs_vnode_info *vi = NULL;
 
-	if (stype_isvnode(lni->l_stype)) {
+	if (ltype_isvnode(lni->l_ltype)) {
 		vi = silofs_vi_from_lni(lni);
 		silofs_vi_undirtify(vi);
 	} else {
-		silofs_assert(stype_isunode(lni->l_stype));
+		silofs_assert(ltype_isunode(lni->l_ltype));
 		ui = silofs_ui_from_lni(lni);
 		silofs_ui_undirtify(ui);
 	}
@@ -229,15 +229,15 @@ static void dset_unlink_queues(struct silofs_dset *dset)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static size_t flusher_dset_slot_of(const struct silofs_flusher *flusher,
-                                   enum silofs_stype stype)
+                                   enum silofs_ltype ltype)
 {
 	size_t slot;
 
 	STATICASSERT_EQ(ARRAY_SIZE(flusher->dset), 3);
 
-	if (stype_isdata(stype)) {
+	if (ltype_isdata(ltype)) {
 		slot = 0;
-	} else if (stype_isvnode(stype)) {
+	} else if (ltype_isvnode(ltype)) {
 		slot = 1;
 	} else {
 		slot = 2;
@@ -276,9 +276,9 @@ flusher_dset_at(struct silofs_flusher *flusher, size_t slot)
 }
 
 static struct silofs_dset *
-flusher_dset_of(struct silofs_flusher *flusher, const enum silofs_stype stype)
+flusher_dset_of(struct silofs_flusher *flusher, const enum silofs_ltype ltype)
 {
-	const size_t slot = flusher_dset_slot_of(flusher, stype);
+	const size_t slot = flusher_dset_slot_of(flusher, ltype);
 
 	return flusher_dset_at(flusher, slot);
 }
@@ -295,14 +295,14 @@ static struct silofs_dset *
 flusher_dset_of_vi(struct silofs_flusher *flusher,
                    const struct silofs_vnode_info *vi)
 {
-	return flusher_dset_of(flusher, vi_stype(vi));
+	return flusher_dset_of(flusher, vi_ltype(vi));
 }
 
 static struct silofs_dset *
 flusher_dset_of_ui(struct silofs_flusher *flusher,
                    const struct silofs_unode_info *ui)
 {
-	return flusher_dset_of(flusher, ui_stype(ui));
+	return flusher_dset_of(flusher, ui_ltype(ui));
 }
 
 static void flusher_add_dirty_vi(struct silofs_flusher *flusher,
@@ -489,16 +489,16 @@ static int flusher_resolve_llink_of(const struct silofs_flusher *flusher,
 {
 	int ret;
 
-	if (stype_isunode(lni->l_stype)) {
+	if (ltype_isunode(lni->l_ltype)) {
 		ret = flusher_resolve_llink_of_ui(flusher,
 		                                  ui_from(lni),
 		                                  out_llink);
-	} else if (stype_isvnode(lni->l_stype)) {
+	} else if (ltype_isvnode(lni->l_ltype)) {
 		ret = flusher_resolve_llink_of_vi(flusher,
 		                                  vi_from(lni),
 		                                  out_llink);
 	} else {
-		silofs_panic("corrupted lnode: stype=%d", lni->l_stype);
+		silofs_panic("corrupted lnode: ltype=%d", lni->l_ltype);
 		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
 	}
 	return ret;
@@ -552,7 +552,7 @@ static bool flusher_append_next_ref(struct silofs_flusher *flusher,
 		silofs_assert_not_null(lni->l_view);
 		silofs_llink_assign(&ref->llink, llink);
 		ref->view = lni->l_view;
-		ref->stype = lni->l_stype;
+		ref->ltype = lni->l_ltype;
 	}
 	return ok;
 }

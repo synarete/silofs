@@ -42,7 +42,7 @@ struct silofs_lnode_info {
 	struct silofs_view             *l_view;
 	silofs_lnode_del_fn             l_del_cb;
 	enum silofs_lnflags             l_flags;
-	enum silofs_stype               l_stype;
+	enum silofs_ltype               l_ltype;
 };
 
 /* unode */

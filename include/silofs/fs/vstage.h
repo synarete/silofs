@@ -69,7 +69,7 @@ int silofs_fetch_cached_inode(struct silofs_task *task, ino_t ino,
 
 int silofs_spawn_vnode(struct silofs_task *task,
                        struct silofs_inode_info *pii,
-                       enum silofs_stype stype,
+                       enum silofs_ltype ltype,
                        struct silofs_vnode_info **out_vi);
 
 int silofs_spawn_inode(struct silofs_task *task,

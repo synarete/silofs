@@ -116,7 +116,7 @@ static size_t height_to_lseg_size(enum silofs_height height)
 
 static const struct silofs_lsegid s_lsegid_none = {
 	.size = 0,
-	.vspace = SILOFS_STYPE_NONE,
+	.vspace = SILOFS_LTYPE_NONE,
 	.height = SILOFS_HEIGHT_LAST,
 };
 
@@ -153,7 +153,7 @@ void silofs_lsegid_reset(struct silofs_lsegid *lsegid)
 	memset(lsegid, 0, sizeof(*lsegid));
 	lsegid->voff = SILOFS_OFF_NULL;
 	lsegid->size = 0;
-	lsegid->vspace = SILOFS_STYPE_NONE;
+	lsegid->vspace = SILOFS_LTYPE_NONE;
 	lsegid->height = SILOFS_HEIGHT_NONE;
 }
 
@@ -211,7 +211,7 @@ uint64_t silofs_lsegid_hash64(const struct silofs_lsegid *lsegid)
 
 void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
                          const struct silofs_lvid *lvid,
-                         loff_t voff, enum silofs_stype vspace,
+                         loff_t voff, enum silofs_ltype vspace,
                          enum silofs_height height)
 {
 	const size_t sz = height_to_lseg_size(height);
@@ -249,7 +249,7 @@ void silofs_lsegid32b_reset(struct silofs_lsegid32b *lsegid32)
 	memset(lsegid32, 0, sizeof(*lsegid32));
 	lsegid32->voff = SILOFS_OFF_NULL;
 	lsegid32->size = 0;
-	lsegid32->vspace = SILOFS_STYPE_NONE;
+	lsegid32->vspace = SILOFS_LTYPE_NONE;
 	lsegid32->height = SILOFS_HEIGHT_LAST;
 }
 
@@ -270,7 +270,7 @@ void silofs_lsegid32b_xtoh(const struct silofs_lsegid32b *lsegid32,
 	silofs_lvid_assign(&lsegid->lvid, &lsegid32->lvid);
 	lsegid->voff = silofs_off_to_cpu(lsegid32->voff);
 	lsegid->size = silofs_le32_to_cpu(lsegid32->size);
-	lsegid->vspace = (enum silofs_stype)lsegid32->vspace;
+	lsegid->vspace = (enum silofs_ltype)lsegid32->vspace;
 	lsegid->height = (enum silofs_height)lsegid32->height;
 }
 

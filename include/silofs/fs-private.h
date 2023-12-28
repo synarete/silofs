@@ -66,13 +66,13 @@
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)
 #define ui_dirtify(ui)                  silofs_ui_dirtify(ui)
-#define ui_stype(ui)                    silofs_ui_stype(ui)
+#define ui_ltype(ui)                    silofs_ui_ltype(ui)
 #define ui_ulink(ui)                    silofs_ui_ulink(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
 #define ui_laddr(ui)                    silofs_ui_laddr(ui)
 #define ui_riv(ui)                      silofs_ui_riv(ui)
 
-#define vi_stype(vi)                    silofs_vi_stype(vi)
+#define vi_ltype(vi)                    silofs_vi_ltype(vi)
 #define vi_vaddr(vi)                    silofs_vi_vaddr(vi)
 #define vi_fsenv(vi)                    silofs_vi_fsenv(vi)
 #define vi_sbi(vi)                      silofs_vi_sbi(vi)
@@ -152,22 +152,22 @@ silofs_ui_laddr(const struct silofs_unode_info *ui)
 	return &ui->u_ulink.uaddr.laddr;
 }
 
-static inline enum silofs_stype
-silofs_ui_stype(const struct silofs_unode_info *ui) {
-	return ui->u_ulink.uaddr.stype;
+static inline enum silofs_ltype
+silofs_ui_ltype(const struct silofs_unode_info *ui) {
+	return ui->u_ulink.uaddr.ltype;
 }
 
 static inline bool
-silofs_ui_has_stype(const struct silofs_unode_info *ui,
-                    enum silofs_stype stype)
+silofs_ui_has_ltype(const struct silofs_unode_info *ui,
+                    enum silofs_ltype ltype)
 {
-	return stype == silofs_ui_stype(ui);
+	return ltype == silofs_ui_ltype(ui);
 }
 
 static inline
-enum silofs_stype silofs_vi_stype(const struct silofs_vnode_info *vi)
+enum silofs_ltype silofs_vi_ltype(const struct silofs_vnode_info *vi)
 {
-	return vi->v_vaddr.stype;
+	return vi->v_vaddr.ltype;
 }
 
 static inline const struct silofs_vaddr *

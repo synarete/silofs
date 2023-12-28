@@ -25,7 +25,7 @@ struct silofs_lsegid {
 	struct silofs_lvid      lvid;
 	loff_t                  voff;
 	size_t                  size;
-	enum silofs_stype       vspace;
+	enum silofs_ltype       vspace;
 	enum silofs_height      height;
 };
 
@@ -83,7 +83,7 @@ void silofs_lsegid_reset(struct silofs_lsegid *lsegid);
 
 void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
                          const struct silofs_lvid *lvid,
-                         loff_t voff, enum silofs_stype vspace,
+                         loff_t voff, enum silofs_ltype vspace,
                          enum silofs_height height);
 
 void silofs_lsegid_assign(struct silofs_lsegid *lsegid,

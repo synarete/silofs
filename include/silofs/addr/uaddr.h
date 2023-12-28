@@ -23,7 +23,7 @@
 struct silofs_uaddr {
 	struct silofs_laddr     laddr;
 	loff_t                  voff;
-	enum silofs_stype       stype;
+	enum silofs_ltype       ltype;
 };
 
 /* a pair of unode-address and its associate (random) IV */
@@ -59,7 +59,7 @@ enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_lsegid *lsegid,
-                        loff_t bpos, enum silofs_stype stype, loff_t voff);
+                        loff_t bpos, enum silofs_ltype ltype, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64);
 

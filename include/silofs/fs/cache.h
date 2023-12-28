@@ -106,11 +106,11 @@ void silofs_cache_drop_uamap(struct silofs_cache *cache);
 
 struct silofs_vbk_info *
 silofs_cache_lookup_vbk(struct silofs_cache *cache,
-                        loff_t voff, enum silofs_stype vspace);
+                        loff_t voff, enum silofs_ltype vspace);
 
 struct silofs_vbk_info *
 silofs_cache_create_vbk(struct silofs_cache *cache,
-                        loff_t voff, enum silofs_stype vspace);
+                        loff_t voff, enum silofs_ltype vspace);
 
 void silofs_cache_forget_vbk(struct silofs_cache *cache,
                              struct silofs_vbk_info *vbki);

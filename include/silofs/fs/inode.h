@@ -88,7 +88,7 @@ void silofs_ii_update_itimes(struct silofs_inode_info *ii,
 
 void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
                               const struct silofs_creds *creds,
-                              enum silofs_stype stype, long dif);
+                              enum silofs_ltype ltype, long dif);
 
 void silofs_ii_update_isize(struct silofs_inode_info *ii,
                             const struct silofs_creds *creds, loff_t size);

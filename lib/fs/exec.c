@@ -746,7 +746,7 @@ static int reload_rootdir_inode(const struct silofs_fs_ctx *fs_ctx)
 }
 
 static int exec_rescan_vspace_of(const struct silofs_fs_ctx *fs_ctx,
-                                 enum silofs_stype stype)
+                                 enum silofs_ltype ltype)
 {
 	struct silofs_task task;
 	int err;
@@ -755,20 +755,20 @@ static int exec_rescan_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_rescan_vspace_of(&task, stype);
+	err = silofs_rescan_vspace_of(&task, ltype);
 	return term_task(&task, err);
 }
 
 static int reload_free_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
-	while (++stype < SILOFS_STYPE_LAST) {
-		if (!stype_isvnode(stype)) {
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = exec_rescan_vspace_of(fs_ctx, stype);
+		err = exec_rescan_vspace_of(fs_ctx, ltype);
 		if (err && (err != -SILOFS_ENOSPC) &&
 		    (err != -SILOFS_ENOENT)) {
 			log_err("failed to reload free vspace: err=%d", err);
@@ -1020,28 +1020,28 @@ static int format_base_vspmaps_of(const struct silofs_fs_ctx *fs_ctx,
 	err = exec_require_spmaps_of(fs_ctx, vaddr);
 	if (err) {
 		log_err("failed to format base spmaps: "
-		        "stype=%d err=%d", vaddr->stype, err);
+		        "ltype=%d err=%d", vaddr->ltype, err);
 		return err;
 	}
 	err = do_sync_fs(fs_ctx, false);
 	if (err) {
 		return err;
 	}
-	log_dbg("format base spmaps of: stype=%d err=%d", vaddr->stype, err);
+	log_dbg("format base spmaps of: ltype=%d err=%d", vaddr->ltype, err);
 	return 0;
 }
 
 static int format_base_vspmaps(const struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_vaddr vaddr;
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
-	while (++stype < SILOFS_STYPE_LAST) {
-		if (!stype_isvnode(stype)) {
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		vaddr_setup(&vaddr, stype, 0);
+		vaddr_setup(&vaddr, ltype, 0);
 		err = format_base_vspmaps_of(fs_ctx, &vaddr);
 		if (err) {
 			return err;
@@ -1051,7 +1051,7 @@ static int format_base_vspmaps(const struct silofs_fs_ctx *fs_ctx)
 }
 
 static int exec_claim_vspace(const struct silofs_fs_ctx *fs_ctx,
-                             enum silofs_stype stype,
+                             enum silofs_ltype ltype,
                              struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_task task;
@@ -1061,7 +1061,7 @@ static int exec_claim_vspace(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_claim_vspace(&task, stype, out_vaddr);
+	err = silofs_claim_vspace(&task, ltype, out_vaddr);
 	return term_task(&task, err);
 }
 
@@ -1080,7 +1080,7 @@ static int exec_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx,
 }
 
 static int claim_reclaim_vspace_of(const struct silofs_fs_ctx *fs_ctx,
-                                   enum silofs_stype vspace)
+                                   enum silofs_ltype vspace)
 {
 	struct silofs_vaddr vaddr;
 	const loff_t voff_exp = 0;
@@ -1110,14 +1110,14 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int claim_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
-	while (++stype < SILOFS_STYPE_LAST) {
-		if (!stype_isvnode(stype)) {
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = claim_reclaim_vspace_of(fs_ctx, stype);
+		err = claim_reclaim_vspace_of(fs_ctx, ltype);
 		if (err) {
 			return err;
 		}
@@ -1147,7 +1147,7 @@ static int exec_stage_spmaps_at(const struct silofs_fs_ctx *fs_ctx,
 }
 
 static int reload_base_vspace_of(const struct silofs_fs_ctx *fs_ctx,
-                                 enum silofs_stype vspace)
+                                 enum silofs_ltype vspace)
 {
 	struct silofs_vaddr vaddr;
 	int err;
@@ -1163,14 +1163,14 @@ static int reload_base_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int reload_base_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err = 0;
 
-	while (++stype < SILOFS_STYPE_LAST) {
-		if (!stype_isvnode(stype)) {
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = reload_base_vspace_of(fs_ctx, stype);
+		err = reload_base_vspace_of(fs_ctx, ltype);
 		if (err) {
 			return err;
 		}
@@ -1183,7 +1183,7 @@ static int reload_base_vspace(const struct silofs_fs_ctx *fs_ctx)
 }
 
 static int exec_spawn_vnode(const struct silofs_fs_ctx *fs_ctx,
-                            enum silofs_stype stype,
+                            enum silofs_ltype ltype,
                             struct silofs_vnode_info **out_vi)
 {
 	struct silofs_task task;
@@ -1193,7 +1193,7 @@ static int exec_spawn_vnode(const struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode(&task, NULL, stype, out_vi);
+	err = silofs_spawn_vnode(&task, NULL, ltype, out_vi);
 	if (!err) {
 		vi_dirtify(*out_vi, NULL);
 	}
@@ -1201,7 +1201,7 @@ static int exec_spawn_vnode(const struct silofs_fs_ctx *fs_ctx,
 }
 
 static int format_zero_vspace_of(const struct silofs_fs_ctx *fs_ctx,
-                                 enum silofs_stype vspace)
+                                 enum silofs_ltype vspace)
 {
 	struct silofs_vnode_info *vi = NULL;
 	const struct silofs_vaddr *vaddr = NULL;
@@ -1222,14 +1222,14 @@ static int format_zero_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 
 static int format_zero_vspace(const struct silofs_fs_ctx *fs_ctx)
 {
-	enum silofs_stype stype = SILOFS_STYPE_NONE;
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
-	while (++stype < SILOFS_STYPE_LAST) {
-		if (!stype_isvnode(stype)) {
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = format_zero_vspace_of(fs_ctx, stype);
+		err = format_zero_vspace_of(fs_ctx, ltype);
 		if (err) {
 			return err;
 		}

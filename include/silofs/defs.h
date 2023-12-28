@@ -42,7 +42,7 @@
 #define SILOFS_FSID_MAGIC               (0x4F4C4953U)
 
 /* magic numbers at meta-objects start (ASCII: "silo") */
-#define SILOFS_STYPE_MAGIC              (0x6F6C6973U)
+#define SILOFS_LTYPE_MAGIC              (0x6F6C6973U)
 
 /* max length of encryption password */
 #define SILOFS_PASSWORD_MAX             (255)
@@ -339,21 +339,21 @@ enum silofs_endianness {
 };
 
 /* file-system logical-elements types */
-enum silofs_stype {
-	SILOFS_STYPE_NONE       = 0,
-	SILOFS_STYPE_BOOTREC    = 1,
-	SILOFS_STYPE_SUPER      = 2,
-	SILOFS_STYPE_SPNODE     = 3,
-	SILOFS_STYPE_SPLEAF     = 4,
-	SILOFS_STYPE_INODE      = 5,
-	SILOFS_STYPE_XANODE     = 6,
-	SILOFS_STYPE_SYMVAL     = 7,
-	SILOFS_STYPE_DTNODE     = 8,
-	SILOFS_STYPE_FTNODE     = 9,
-	SILOFS_STYPE_DATA1K     = 10,
-	SILOFS_STYPE_DATA4K     = 11,
-	SILOFS_STYPE_DATABK     = 12,
-	SILOFS_STYPE_LAST, /* keep last */
+enum silofs_ltype {
+	SILOFS_LTYPE_NONE       = 0,
+	SILOFS_LTYPE_BOOTREC    = 1,
+	SILOFS_LTYPE_SUPER      = 2,
+	SILOFS_LTYPE_SPNODE     = 3,
+	SILOFS_LTYPE_SPLEAF     = 4,
+	SILOFS_LTYPE_INODE      = 5,
+	SILOFS_LTYPE_XANODE     = 6,
+	SILOFS_LTYPE_SYMVAL     = 7,
+	SILOFS_LTYPE_DTNODE     = 8,
+	SILOFS_LTYPE_FTNODE     = 9,
+	SILOFS_LTYPE_DATA1K     = 10,
+	SILOFS_LTYPE_DATA4K     = 11,
+	SILOFS_LTYPE_DATABK     = 12,
+	SILOFS_LTYPE_LAST, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -528,7 +528,7 @@ struct silofs_laddr48b {
 struct silofs_uaddr64b {
 	struct silofs_laddr48b          laddr;
 	int64_t                         voff;
-	uint8_t                         stype;
+	uint8_t                         ltype;
 	uint8_t                         reserved[7];
 } silofs_packed_aligned32;
 
@@ -545,7 +545,7 @@ struct silofs_vaddr56 {
 
 
 struct silofs_vaddr64 {
-	uint64_t                        voff_stype;
+	uint64_t                        voff_ltype;
 } silofs_packed_aligned8;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -584,7 +584,7 @@ struct silofs_bootrec1k {
 
 struct silofs_header {
 	uint32_t                        h_magic;
-	uint8_t                         h_stype;
+	uint8_t                         h_ltype;
 	uint8_t                         h_flags;
 	uint16_t                        h_reserved;
 	uint32_t                        h_size;
@@ -872,7 +872,7 @@ struct silofs_ftree_node {
 	int64_t                         fn_beg;
 	int64_t                         fn_end;
 	uint8_t                         fn_height;
-	uint8_t                         fn_child_stype;
+	uint8_t                         fn_child_ltype;
 	uint8_t                         fn_reserved1[14];
 	uint8_t                         fn_zeros[960];
 	struct silofs_vaddr56           fn_child[SILOFS_FILE_NODE_NCHILDS];

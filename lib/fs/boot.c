@@ -365,10 +365,10 @@ static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *brec1k)
 
 	bootrec1k_sb_uaddr(brec1k, &uaddr);
 	height = uaddr_height(&uaddr);
-	if ((uaddr.stype != SILOFS_STYPE_SUPER) ||
+	if ((uaddr.ltype != SILOFS_LTYPE_SUPER) ||
 	    (height != SILOFS_HEIGHT_SUPER) || (uaddr.voff != 0)) {
-		log_dbg("bad bootrec uaddr-sb: voff=%ld stype=%d height=%d",
-		        uaddr.voff, (int)uaddr.stype, (int)height);
+		log_dbg("bad bootrec uaddr-sb: voff=%ld ltype=%d height=%d",
+		        uaddr.voff, (int)uaddr.ltype, (int)height);
 		return -SILOFS_EBADBOOT;
 	}
 	return 0;
@@ -537,11 +537,11 @@ bootrec_uaddr_by_lvid(const struct silofs_lvid *lvid,
                       struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsegid lsegid;
-	const enum silofs_stype stype = SILOFS_STYPE_BOOTREC;
+	const enum silofs_ltype ltype = SILOFS_LTYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lsegid_setup(&lsegid, lvid, 0, stype, height);
-	silofs_uaddr_setup(out_uaddr, &lsegid, 0, stype, 0);
+	silofs_lsegid_setup(&lsegid, lvid, 0, ltype, height);
+	silofs_uaddr_setup(out_uaddr, &lsegid, 0, ltype, 0);
 }
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,

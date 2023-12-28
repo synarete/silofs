@@ -309,14 +309,14 @@ static void make_super_lsegid(struct silofs_lsegid *out_lsegid)
 
 	silofs_lvid_generate(&lvid);
 	silofs_lsegid_setup(out_lsegid, &lvid, 0,
-	                    SILOFS_STYPE_SUPER, SILOFS_HEIGHT_SUPER);
+	                    SILOFS_LTYPE_SUPER, SILOFS_HEIGHT_SUPER);
 }
 
 static void make_super_uaddr(const struct silofs_lsegid *lsegid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_assert_eq(lsegid->height, SILOFS_HEIGHT_SUPER);
-	uaddr_setup(out_uaddr, lsegid, 0, SILOFS_STYPE_SUPER, 0);
+	uaddr_setup(out_uaddr, lsegid, 0, SILOFS_LTYPE_SUPER, 0);
 }
 
 static void ulink_init(struct silofs_ulink *ulink,
@@ -389,9 +389,9 @@ static void sbi_account_super_of(struct silofs_sb_info *sbi)
 {
 	struct silofs_stats_info *sti = &sbi->sb_sti;
 
-	silofs_sti_update_lsegs(sti, SILOFS_STYPE_SUPER, 1);
-	silofs_sti_update_bks(sti, SILOFS_STYPE_SUPER, 1);
-	silofs_sti_update_objs(sti, SILOFS_STYPE_SUPER, 1);
+	silofs_sti_update_lsegs(sti, SILOFS_LTYPE_SUPER, 1);
+	silofs_sti_update_bks(sti, SILOFS_LTYPE_SUPER, 1);
+	silofs_sti_update_objs(sti, SILOFS_LTYPE_SUPER, 1);
 }
 
 int silofs_fsenv_format_super(struct silofs_fsenv *fsenv, size_t capacity)

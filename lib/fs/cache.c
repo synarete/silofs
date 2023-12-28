@@ -138,16 +138,16 @@ static void dirtyqs_fini(struct silofs_dirtyqs *dqs)
 }
 
 static struct silofs_dirtyq *
-dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_stype stype)
+dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_ltype ltype)
 {
 	struct silofs_dirtyq *dq;
 
-	if (stype_isinode(stype)) {
+	if (ltype_isinode(ltype)) {
 		dq = &dqs->dq_iis;
-	} else if (stype_isvnode(stype)) {
+	} else if (ltype_isvnode(ltype)) {
 		dq = &dqs->dq_vis;
 	} else {
-		silofs_assert(stype_isunode(stype));
+		silofs_assert(ltype_isunode(ltype));
 		dq = &dqs->dq_uis;
 	}
 	return dq;
@@ -156,7 +156,7 @@ dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_stype stype)
 static struct silofs_dirtyq *
 dirtyqs_get_by(struct silofs_dirtyqs *dqs, const struct silofs_vaddr *vaddr)
 {
-	return dirtyqs_get(dqs, vaddr->stype);
+	return dirtyqs_get(dqs, vaddr->ltype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -190,7 +190,7 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 	hval = off;
 	hval ^= (0x5D21C111ULL / (lz + 1)); /* M77232917 */
-	hval ^= ((uint64_t)(vaddr->stype) << 43);
+	hval ^= ((uint64_t)(vaddr->ltype) << 43);
 	return twang_mix64(hval);
 }
 
@@ -203,7 +203,7 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	d[1] = uaddr->laddr.len;
 	d[2] = 0x736f6d6570736575ULL - (uint64_t)(uaddr->laddr.pos);
 	d[3] = (uint64_t)uaddr->voff;
-	seed = 0x646f72616e646f6dULL / (uaddr->stype + 1);
+	seed = 0x646f72616e646f6dULL / (uaddr->ltype + 1);
 
 	return silofs_hash_xxh64(d, sizeof(d), seed);
 }
@@ -715,7 +715,7 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 
 static size_t lni_view_len(const struct silofs_lnode_info *lni)
 {
-	return silofs_stype_size(lni->l_stype);
+	return silofs_ltype_size(lni->l_ltype);
 }
 
 static void lni_incref(struct silofs_lnode_info *lni)
@@ -967,9 +967,9 @@ static void vi_delete(struct silofs_vnode_info *vi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_dirtyq *
-cache_dirtyq_by(struct silofs_cache *cache, enum silofs_stype stype)
+cache_dirtyq_by(struct silofs_cache *cache, enum silofs_ltype ltype)
 {
-	return dirtyqs_get(&cache->c_dqs, stype);
+	return dirtyqs_get(&cache->c_dqs, ltype);
 }
 
 static int cache_init_ui_lm(struct silofs_cache *cache, size_t cap)
@@ -1201,7 +1201,7 @@ static void cache_set_dq_of_ui(struct silofs_cache *cache,
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 	struct silofs_dirtyq *dq;
 
-	dq = cache_dirtyq_by(cache, uaddr->stype);
+	dq = cache_dirtyq_by(cache, uaddr->ltype);
 	ui_set_dq(ui, dq);
 }
 

@@ -97,7 +97,7 @@ void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
-                               loff_t voff_from, enum silofs_stype stype,
+                               loff_t voff_from, enum silofs_ltype ltype,
                                struct silofs_vaddr *out_vaddr);
 
 void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
@@ -131,7 +131,7 @@ size_t silofs_sli_dbkref_at(const struct silofs_spleaf_info *sli,
                             const struct silofs_vaddr *vaddr);
 
 void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
-                          enum silofs_stype stype, silofs_lba_t lba,
+                          enum silofs_ltype ltype, silofs_lba_t lba,
                           struct silofs_vaddrs *vas);
 
 void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,

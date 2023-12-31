@@ -84,7 +84,8 @@ static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 	if (!ltype_isdata(ltype)) {
 		size = ltype_size(ltype);
 		silofs_memzero(view, size);
-		silofs_hdr_setup(&view->u.hdr, (uint8_t)ltype, size);
+		silofs_hdr_setup(&view->u.hdr,
+		                 (uint8_t)ltype, size, SILOFS_HDRF_LTYPE);
 	}
 }
 
@@ -1392,7 +1393,8 @@ static int view_verify_by_hdr(const struct silofs_view *view,
 {
 	const struct silofs_header *hdr = &view->u.hdr;
 
-	return silofs_hdr_verify(hdr, (uint8_t)ltype, ltype_size(ltype));
+	return silofs_hdr_verify(hdr, (uint8_t)ltype, ltype_size(ltype),
+	                         SILOFS_HDRF_CSUM | SILOFS_HDRF_LTYPE);
 }
 
 static int view_verify_sub(const struct silofs_view *view,

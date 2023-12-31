@@ -17,31 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <uuid/uuid.h>
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_uuid_generate(struct silofs_uuid *uu)
-{
-	uuid_generate_random(uu->uu);
-}
-
-void silofs_uuid_assign(struct silofs_uuid *uu1, const struct silofs_uuid *uu2)
-{
-	uuid_copy(uu1->uu, uu2->uu);
-}
-
-void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
-{
-	char buf[40] = "";
-
-	STATICASSERT_GT(sizeof(nb->name), sizeof(buf));
-
-	uuid_unparse_lower(uu->uu, buf);
-	strncpy(nb->name, buf, sizeof(nb->name));
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_lvid_generate(struct silofs_lvid *lvid)
 {

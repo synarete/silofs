@@ -372,7 +372,9 @@ enum silofs_height {
 
 /* common-header flags */
 enum silofs_hdrf {
-	SILOFS_HDRF_CSUM        = 1,
+	SILOFS_HDRF_CSUM        = 0x01,
+	SILOFS_HDRF_PTYPE       = 0x02,
+	SILOFS_HDRF_LTYPE       = 0x04,
 };
 
 /* super-block flags */
@@ -585,8 +587,8 @@ struct silofs_bootrec1k {
 struct silofs_header {
 	uint32_t                        h_magic;
 	uint8_t                         h_type;
-	uint8_t                         h_flags;
-	uint16_t                        h_reserved;
+	uint8_t                         h_reserved;
+	uint16_t                        h_flags;
 	uint32_t                        h_size;
 	uint32_t                        h_csum;
 } silofs_packed_aligned16;

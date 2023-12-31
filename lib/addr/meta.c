@@ -17,7 +17,31 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include <uuid/uuid.h>
 
+void silofs_uuid_generate(struct silofs_uuid *uu)
+{
+	STATICASSERT_EQ(sizeof(uu->uu), sizeof(uuid_t));
+
+	uuid_generate_random(uu->uu);
+}
+
+void silofs_uuid_assign(struct silofs_uuid *uu1, const struct silofs_uuid *uu2)
+{
+	uuid_copy(uu1->uu, uu2->uu);
+}
+
+void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
+{
+	char buf[40] = "";
+
+	STATICASSERT_GT(sizeof(nb->name), sizeof(buf));
+
+	uuid_unparse_lower(uu->uu, buf);
+	strncpy(nb->name, buf, sizeof(nb->name));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static uint32_t hdr_magic(const struct silofs_header *hdr)
 {
@@ -59,15 +83,38 @@ static uint32_t hdr_csum(const struct silofs_header *hdr)
 	return silofs_le32_to_cpu(hdr->h_csum);
 }
 
+static enum silofs_hdrf hdr_flags(const struct silofs_header *hdr)
+{
+	const int flags = (int)silofs_le16_to_cpu(hdr->h_flags);
+
+	return (enum silofs_hdrf)flags;
+}
+
+static void hdr_set_flags(struct silofs_header *hdr, enum silofs_hdrf flags)
+{
+	hdr->h_flags = silofs_cpu_to_le16((enum silofs_hdrf)flags);
+}
+
+static void hdr_add_flags(struct silofs_header *hdr, enum silofs_hdrf flags)
+{
+	hdr_set_flags(hdr, flags | hdr_flags(hdr));
+}
+
+static bool hdr_has_flags(const struct silofs_header *hdr,
+                          enum silofs_hdrf flags)
+{
+	return (hdr_flags(hdr) & flags) > 0;
+}
+
 static void hdr_set_csum(struct silofs_header *hdr, uint32_t csum)
 {
 	hdr->h_csum = silofs_cpu_to_le32(csum);
-	hdr->h_flags |= SILOFS_HDRF_CSUM;
+	hdr_add_flags(hdr, SILOFS_HDRF_CSUM);
 }
 
 static bool hdr_has_csum(const struct silofs_header *hdr)
 {
-	return (hdr->h_flags & SILOFS_HDRF_CSUM) > 0;
+	return hdr_has_flags(hdr, SILOFS_HDRF_CSUM);
 }
 
 static const void *hdr_payload(const struct silofs_header *hdr)
@@ -75,28 +122,31 @@ static const void *hdr_payload(const struct silofs_header *hdr)
 	return hdr + 1;
 }
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint8_t type, size_t size)
+void silofs_hdr_setup(struct silofs_header *hdr,
+                      uint8_t type, size_t size, enum silofs_hdrf flags)
 {
 	hdr_set_magic(hdr, SILOFS_META_MAGIC);
 	hdr_set_size(hdr, size);
 	hdr_set_type(hdr, type);
+	hdr_set_flags(hdr, flags);
 	hdr->h_csum = 0;
 	hdr->h_flags = 0;
 	hdr->h_reserved = 0;
 }
 
 static int hdr_verify_base(const struct silofs_header *hdr,
-                           uint8_t expected_type, size_t expected_size)
+                           uint8_t type, size_t size, enum silofs_hdrf flags)
 {
-	const size_t hsz = hdr_size(hdr);
-
 	if (hdr_magic(hdr) != SILOFS_META_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (hdr_type(hdr) != expected_type) {
+	if (hdr_type(hdr) != type) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (hsz != expected_size) {
+	if (hdr_size(hdr) != size) {
+		return -SILOFS_EFSCORRUPTED;
+	}
+	if (!hdr_has_flags(hdr, flags)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -132,11 +182,11 @@ static int hdr_verify_checksum(const struct silofs_header *hdr)
 }
 
 int silofs_hdr_verify(const struct silofs_header *hdr,
-                      uint8_t expected_type, size_t expected_size)
+                      uint8_t type, size_t size, enum silofs_hdrf flags)
 {
 	int err;
 
-	err = hdr_verify_base(hdr, expected_type, expected_size);
+	err = hdr_verify_base(hdr, type, size, flags);
 	if (err) {
 		return err;
 	}

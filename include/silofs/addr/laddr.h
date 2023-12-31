@@ -42,16 +42,6 @@ struct silofs_llink {
 	struct silofs_iv        riv;
 };
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_uuid_generate(struct silofs_uuid *uu);
-
-void silofs_uuid_assign(struct silofs_uuid *uu1,
-                        const struct silofs_uuid *uu2);
-
-void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_lvid_generate(struct silofs_lvid *lvid);

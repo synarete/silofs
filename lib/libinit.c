@@ -141,10 +141,18 @@ static void validate_persistent_types_nk(void)
 	REQUIRE_SIZEOF_64K(struct silofs_data_block64);
 }
 
-static void validate_persistent_types_size(void)
+static void validate_persistent_types_size1(void)
 {
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
+	REQUIRE_SIZEOF(struct silofs_paddr32b, 32);
+	REQUIRE_SIZEOF(struct silofs_btree_ltop, 80);
+	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
+	REQUIRE_SIZEOF(struct silofs_btree_leaf, SILOFS_BTREE_LEAF_SIZE);
+}
+
+static void validate_persistent_types_size2(void)
+{
 	REQUIRE_SIZEOF(struct silofs_timespec, 16);
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
 	REQUIRE_SIZEOF(struct silofs_hash256, 32);
@@ -159,10 +167,8 @@ static void validate_persistent_types_size(void)
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);
-	REQUIRE_SIZEOF(struct silofs_paddr32b, 32);
 	REQUIRE_SIZEOF(struct silofs_lsegid32b, 32);
 	REQUIRE_SIZEOF(struct silofs_laddr48b, 48);
-	REQUIRE_SIZEOF(struct silofs_ltop80b, 80);
 	REQUIRE_SIZEOF(struct silofs_uaddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bootrec1k, SILOFS_BOOTREC_SIZE);
 	REQUIRE_SIZEOF(struct silofs_sb_sproots, 1024);
@@ -311,7 +317,7 @@ static void validate_persistent_types_alignment4(void)
 {
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_keys, 1792);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 1792);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltop, 32);
 }
@@ -370,7 +376,8 @@ static void validate_defs(void)
 {
 	validate_fundamental_types_size();
 	validate_persistent_types_nk();
-	validate_persistent_types_size();
+	validate_persistent_types_size1();
+	validate_persistent_types_size2();
 	validate_persistent_types_members();
 	validate_persistent_types_alignment1();
 	validate_persistent_types_alignment2();

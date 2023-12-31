@@ -34,6 +34,10 @@
 #define off_len(beg, end)               silofs_off_len(beg, end)
 #define off_ulen(beg, end)              silofs_off_ulen(beg, end)
 
+#define paddr_none()                    silofs_paddr_none()
+#define paddr_reset(pa)                 silofs_paddr_reset(pa)
+#define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
+
 #define ltype_nkbs(lt)                  silofs_ltype_nkbs(lt)
 #define ltype_size(lt)                  silofs_ltype_size(lt)
 #define ltype_ssize(lt)                 silofs_ltype_ssize(lt)
@@ -59,6 +63,7 @@
 #define lsegid_isnull(lid)              silofs_lsegid_isnull(lid)
 #define lsegid_size(lid)                silofs_lsegid_size(lid)
 
+#define laddr_none()                    silofs_laddr_none()
 #define laddr_reset(la)                 silofs_laddr_reset(la)
 #define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)
 #define laddr_setup(la, bid, o, l)      silofs_laddr_setup(la, bid, o, l)
@@ -66,16 +71,13 @@
 #define laddr_isvalid(la)               silofs_laddr_isvalid(la)
 #define laddr_isnull(la)                silofs_laddr_isnull(la)
 
-#define paddr_reset(pa)                 silofs_paddr_reset(pa)
-#define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
-
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
-#define uaddr_lvid(ua)                silofs_uaddr_lvid(ua)
+#define uaddr_lvid(ua)                  silofs_uaddr_lvid(ua)
 #define uaddr_lsegid(ua)                silofs_uaddr_lsegid(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)
 

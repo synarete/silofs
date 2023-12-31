@@ -19,6 +19,193 @@
 #include <silofs/pv.h>
 
 
+static void btn_setup_hdr(struct silofs_btree_node *btn)
+{
+	silofs_hdr_setup(&btn->btn_hdr, SILOFS_PTYPE_BTNODE,
+	                 sizeof(*btn), SILOFS_HDRF_PTYPE);
+}
+
+static void btn_set_nchilds(struct silofs_btree_node *btn, size_t nchilds)
+{
+	btn->btn_nchilds = silofs_cpu_to_le16((uint16_t)nchilds);
+}
+
+static void btn_set_nkeys(struct silofs_btree_node *btn, size_t nkeys)
+{
+	btn->btn_nkeys = silofs_cpu_to_le16((uint16_t)nkeys);
+}
+
+static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
+                             const struct silofs_paddr *paddr)
+{
+	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
+
+	silofs_paddr32b_htox(&btn->btn_child[slot], paddr);
+}
+
+static void btn_reset_child_at(struct silofs_btree_node *btn, size_t slot)
+{
+	btn_set_child_at(btn, slot, paddr_none());
+}
+
+static void btn_reset_childs(struct silofs_btree_node *btn)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(btn->btn_child); ++slot) {
+		btn_reset_child_at(btn, slot);
+	}
+}
+
+static void btn_set_key_at(struct silofs_btree_node *btn, size_t slot,
+                           const struct silofs_laddr *laddr)
+{
+	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_key));
+
+	silofs_laddr48b_htox(&btn->btn_key[slot], laddr);
+}
+
+static void btn_reset_key_at(struct silofs_btree_node *btn, size_t slot)
+{
+	btn_set_key_at(btn, slot, laddr_none());
+}
+
+static void btn_reset_keys(struct silofs_btree_node *btn)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(btn->btn_key); ++slot) {
+		btn_reset_key_at(btn, slot);
+	}
+}
+
+static void btn_init(struct silofs_btree_node *btn)
+{
+	btn_setup_hdr(btn);
+	btn_set_nchilds(btn, 0);
+	btn_set_nkeys(btn, 0);
+	btn_reset_childs(btn);
+	btn_reset_keys(btn);
+}
+
+static void btn_fini(struct silofs_btree_node *btn)
+{
+	btn_set_nchilds(btn, 0);
+	btn_set_nkeys(btn, 0);
+}
+
+static struct silofs_btree_node *btn_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_btree_node *btn;
+
+	btn = silofs_allocate(alloc, sizeof(*btn), SILOFS_ALLOCF_BZERO);
+	return btn;
+}
+
+static void btn_free(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
+{
+	silofs_deallocate(alloc, btn, sizeof(*btn), 0);
+}
+
+static struct silofs_btree_node *btn_new(struct silofs_alloc *alloc)
+{
+	struct silofs_btree_node *btn;
+
+	btn = btn_malloc(alloc);
+	if (btn != NULL) {
+		btn_init(btn);
+	}
+	return btn;
+}
+
+static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
+{
+	btn_fini(btn);
+	btn_free(btn, alloc);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ltop_htox(struct silofs_btree_ltop *ltop,
+                      const struct silofs_laddr *laddr,
+                      const struct silofs_paddr *paddr)
+{
+	silofs_laddr48b_htox(&ltop->laddr, laddr);
+	silofs_paddr32b_htox(&ltop->paddr, paddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void btl_set_nltops(struct silofs_btree_leaf *btl, size_t n)
+{
+	btl->btl_nltops = silofs_cpu_to_le16((uint16_t)n);
+}
+
+static void btl_setup_hdr(struct silofs_btree_leaf *btl)
+{
+	silofs_hdr_setup(&btl->btl_hdr, SILOFS_PTYPE_BTLEAF,
+	                 sizeof(*btl), SILOFS_HDRF_PTYPE);
+}
+
+static void btl_set_ltop_at(struct silofs_btree_leaf *btl, size_t slot,
+                            const struct silofs_laddr *laddr,
+                            const struct silofs_paddr *paddr)
+{
+	silofs_assert_lt(slot, ARRAY_SIZE(btl->btl_ltop));
+
+	ltop_htox(&btl->btl_ltop[slot], laddr, paddr);
+}
+
+static void btl_reset_ltop_at(struct silofs_btree_leaf *btl, size_t slot)
+{
+	btl_set_ltop_at(btl, slot, laddr_none(), paddr_none());
+}
+
+static void btl_reset_ltops(struct silofs_btree_leaf *btl)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(btl->btl_ltop); ++slot) {
+		btl_reset_ltop_at(btl, slot);
+	}
+}
+
+static void btl_init(struct silofs_btree_leaf *btl)
+{
+	btl_setup_hdr(btl);
+	btl_set_nltops(btl, 0);
+	btl_reset_ltops(btl);
+}
+
+static void btl_fini(struct silofs_btree_leaf *btl)
+{
+	btl_set_nltops(btl, 0);
+}
+
+static struct silofs_btree_leaf *btl_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_btree_leaf *btl;
+
+	btl = silofs_allocate(alloc, sizeof(*btl), SILOFS_ALLOCF_BZERO);
+	return btl;
+}
+
+static void btl_free(struct silofs_btree_leaf *btl, struct silofs_alloc *alloc)
+{
+	silofs_deallocate(alloc, btl, sizeof(*btl), 0);
+}
+
+static struct silofs_btree_leaf *btl_new(struct silofs_alloc *alloc)
+{
+	struct silofs_btree_leaf *btl;
+
+	btl = btl_malloc(alloc);
+	if (btl != NULL) {
+		btl_init(btl);
+	}
+	return btl;
+}
+
+static void btl_del(struct silofs_btree_leaf *btl, struct silofs_alloc *alloc)
+{
+	btl_fini(btl);
+	btl_free(btl, alloc);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void pni_init(struct silofs_pnode_info *pni,
@@ -74,19 +261,30 @@ static void bti_fini(struct silofs_btnode_info *bti)
 struct silofs_btnode_info *
 silofs_bti_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 {
-	struct silofs_btnode_info *bti;
+	struct silofs_btree_node *btn = NULL;
+	struct silofs_btnode_info *bti = NULL;
 
-	bti = bti_malloc(alloc);
-	if (bti != NULL) {
-		bti_init(bti, paddr);
+	btn = btn_new(alloc);
+	if (btn == NULL) {
+		return NULL;
 	}
+	bti = bti_malloc(alloc);
+	if (bti == NULL) {
+		btn_del(btn, alloc);
+		return NULL;
+	}
+	bti_init(bti, paddr);
+	bti->btn = btn;
 	return bti;
 }
 
 void silofs_bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 {
+	struct silofs_btree_node *btn = bti->btn;
+
 	bti_fini(bti);
 	bti_free(bti, alloc);
+	btn_del(btn, alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -123,17 +321,28 @@ static void bli_fini(struct silofs_btleaf_info *bli)
 struct silofs_btleaf_info *
 silofs_bli_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 {
-	struct silofs_btleaf_info *bli;
+	struct silofs_btree_leaf *btl = NULL;
+	struct silofs_btleaf_info *bli = NULL;
 
-	bli = bli_malloc(alloc);
-	if (bli != NULL) {
-		bli_init(bli, paddr);
+	btl = btl_new(alloc);
+	if (btl == NULL) {
+		return NULL;
 	}
+	bli = bli_malloc(alloc);
+	if (bli == NULL) {
+		btl_del(btl, alloc);
+		return NULL;
+	}
+	bli_init(bli, paddr);
+	bli->btl = btl;
 	return bli;
 }
 
 void silofs_bli_del(struct silofs_btleaf_info *bli, struct silofs_alloc *alloc)
 {
+	struct silofs_btree_leaf *btl = bli->btl;
+
 	bli_fini(bli);
 	bli_free(bli, alloc);
+	btl_del(btl, alloc);
 }

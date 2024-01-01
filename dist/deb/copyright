@@ -2,11 +2,11 @@ Upstream-Name: silofs
 Source: https://github.com/synarete/silofs
 
 Files: *
-Copyright: Copyright (C) 2020-2023, Shachar Sharon <synarete@xxxxxxxx>
+Copyright: Copyright (C) 2020-2024, Shachar Sharon <synarete@xxxxxxxx>
 License: GPLv3
  GPLv3
  .
- Copyright (c) 2020-2023, Shachar Sharon. All rights reserved.
+ Copyright (c) 2020-2024, Shachar Sharon. All rights reserved.
  .
  Silofs is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

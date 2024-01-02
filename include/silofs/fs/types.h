@@ -155,40 +155,6 @@ struct silofs_iattr {
 	struct silofs_itimes ia_t;
 };
 
-/* caching-element's key type */
-enum silofs_ckey_type {
-	SILOFS_CKEY_NONE,
-	SILOFS_CKEY_UADDR,
-	SILOFS_CKEY_VADDR,
-};
-
-/* caching-element's key, up to 256-bits */
-union silofs_ckey_u {
-	const struct silofs_uaddr  *uaddr;
-	const struct silofs_vaddr  *vaddr;
-	const void                 *key;
-};
-
-struct silofs_ckey {
-	enum silofs_ckey_type   type;
-	unsigned long           hash;
-	union silofs_ckey_u     keyu;
-};
-
-/* caching-elements */
-struct silofs_cache_elem {
-	struct silofs_list_head ce_htb_lh;
-	struct silofs_list_head ce_lru_lh;
-	struct silofs_ckey      ce_ckey;
-	unsigned long           ce_magic;
-	long                    ce_htb_hitcnt;
-	long                    ce_lru_hitcnt;
-	int                     ce_refcnt;
-	bool                    ce_dirty;
-	bool                    ce_mapped;
-	bool                    ce_forgot;
-};
-
 /* in-memory mapping from ino to voff */
 struct silofs_inoent {
 	struct silofs_list_head htb_lh;

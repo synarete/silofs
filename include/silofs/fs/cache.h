@@ -18,11 +18,38 @@
 #define SILOFS_CACHE_H_
 
 
-/* dirty-queues of cached-elements by owner */
-struct silofs_dirtyqs {
-	struct silofs_dirtyq    dq_uis;
-	struct silofs_dirtyq    dq_iis;
-	struct silofs_dirtyq    dq_vis;
+/* caching-element's key type */
+enum silofs_ckey_type {
+	SILOFS_CKEY_NONE,
+	SILOFS_CKEY_UADDR,
+	SILOFS_CKEY_VADDR,
+};
+
+/* caching-element's key, up to 256-bits */
+union silofs_ckey_u {
+	const struct silofs_uaddr  *uaddr;
+	const struct silofs_vaddr  *vaddr;
+	const void                 *key;
+};
+
+struct silofs_ckey {
+	enum silofs_ckey_type   type;
+	unsigned long           hash;
+	union silofs_ckey_u     keyu;
+};
+
+/* caching-elements */
+struct silofs_cache_elem {
+	struct silofs_list_head ce_htb_lh;
+	struct silofs_list_head ce_lru_lh;
+	struct silofs_ckey      ce_ckey;
+	unsigned long           ce_magic;
+	long                    ce_htb_hitcnt;
+	long                    ce_lru_hitcnt;
+	int                     ce_refcnt;
+	bool                    ce_dirty;
+	bool                    ce_mapped;
+	bool                    ce_forgot;
 };
 
 /* LRU + hash-map */
@@ -31,6 +58,13 @@ struct silofs_lrumap {
 	struct silofs_list_head *lm_htbl;
 	size_t lm_htbl_cap;
 	size_t lm_htbl_sz;
+};
+
+/* dirty-queues of cached-elements by owner */
+struct silofs_dirtyqs {
+	struct silofs_dirtyq    dq_uis;
+	struct silofs_dirtyq    dq_iis;
+	struct silofs_dirtyq    dq_vis;
 };
 
 /* in-memory caching */

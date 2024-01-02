@@ -2578,10 +2578,11 @@ int silofs_make_namestr_by(struct silofs_namestr *nstr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int try_forget_cached_ii(struct silofs_inode_info *ii)
+static int try_forget_cached_ii(const struct silofs_task *task,
+				struct silofs_inode_info *ii)
 {
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
-		silofs_cache_forget_vi(ii_cache(ii), ii_to_vi(ii));
+		silofs_cache_forget_vi(task_cache(task), ii_to_vi(ii));
 	}
 	return 0;
 }
@@ -2597,7 +2598,7 @@ int silofs_do_forget(struct silofs_task *task,
 		ii_unpin(ii);
 		err = try_prune_inode(task, ii, false);
 	} else {
-		err = try_forget_cached_ii(ii);
+		err = try_forget_cached_ii(task, ii);
 	}
 	return err;
 }

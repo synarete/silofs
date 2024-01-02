@@ -241,12 +241,6 @@ silofs_ii_fsenv(const struct silofs_inode_info *ii)
 	return ii->i_vi.v_lni.l_fsenv;
 }
 
-static inline struct silofs_cache *
-silofs_ii_cache(const struct silofs_inode_info *ii)
-{
-	return ii->i_vi.v_lni.l_ce.ce_cache;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static inline struct silofs_fsenv *

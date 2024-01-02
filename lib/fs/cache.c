@@ -307,7 +307,6 @@ void silofs_ce_init(struct silofs_cache_elem *ce)
 	ckey_reset(&ce->ce_ckey);
 	list_head_init(&ce->ce_htb_lh);
 	list_head_init(&ce->ce_lru_lh);
-	ce->ce_cache = NULL;
 	ce->ce_magic = CE_MAGIC;
 	ce->ce_flags = 0;
 	ce->ce_refcnt = 0;
@@ -327,7 +326,6 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 	ce->ce_refcnt = INT_MIN;
 	ce->ce_htb_hitcnt = -1;
 	ce->ce_lru_hitcnt = -1;
-	ce->ce_cache = NULL;
 	ce->ce_magic = ULONG_MAX;
 }
 
@@ -695,12 +693,6 @@ static struct silofs_cache_elem *lni_to_ce(const struct silofs_lnode_info *lni)
 	const struct silofs_cache_elem *ce = &lni->l_ce;
 
 	return unconst(ce);
-}
-
-static void lni_set_cache(struct silofs_lnode_info *lni,
-                          struct silofs_cache *cache)
-{
-	lni->l_ce.ce_cache = cache;
 }
 
 bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
@@ -1212,7 +1204,6 @@ cache_create_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 
 	ui = cache_require_ui(cache, ulink);
 	if (ui != NULL) {
-		lni_set_cache(&ui->u_lni, cache);
 		cache_set_dq_of_ui(cache, ui);
 		cache_store_ui(cache, ui);
 		cache_track_uaddr(cache, ui_uaddr(ui));
@@ -1490,7 +1481,6 @@ cache_create_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 
 	vi = cache_require_vi(cache, vaddr);
 	if (vi != NULL) {
-		lni_set_cache(&vi->v_lni, cache);
 		cache_store_vi(cache, vi);
 	}
 	return vi;

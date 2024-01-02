@@ -308,16 +308,17 @@ void silofs_ce_init(struct silofs_cache_elem *ce)
 	list_head_init(&ce->ce_htb_lh);
 	list_head_init(&ce->ce_lru_lh);
 	ce->ce_magic = CE_MAGIC;
-	ce->ce_flags = 0;
 	ce->ce_refcnt = 0;
 	ce->ce_htb_hitcnt = 0;
 	ce->ce_lru_hitcnt = 0;
+	ce->ce_dirty = false;
+	ce->ce_mapped = false;
+	ce->ce_forgot = false;
 }
 
 void silofs_ce_fini(struct silofs_cache_elem *ce)
 {
 	silofs_assert_eq(ce->ce_refcnt, 0);
-	silofs_assert_eq(ce->ce_flags, 0);
 	silofs_assert_eq(ce->ce_magic, CE_MAGIC);
 
 	ckey_reset(&ce->ce_ckey);
@@ -329,49 +330,22 @@ void silofs_ce_fini(struct silofs_cache_elem *ce)
 	ce->ce_magic = ULONG_MAX;
 }
 
-static bool ce_is_mapped(const struct silofs_cache_elem *ce)
-{
-	return (ce->ce_flags & SILOFS_CEF_MAPPED) > 0;
-}
-
-static void ce_set_flags(struct silofs_cache_elem *ce, int flags)
-{
-	ce->ce_flags = (enum silofs_ce_flags)flags;
-}
-
-static void ce_set_mapped(struct silofs_cache_elem *ce, bool mapped)
-{
-	const int flags = (int)(ce->ce_flags);
-
-	if (mapped) {
-		ce_set_flags(ce, flags | SILOFS_CEF_MAPPED);
-	} else {
-		ce_set_flags(ce, flags & ~SILOFS_CEF_MAPPED);
-	}
-}
-
 static void ce_set_forgot(struct silofs_cache_elem *ce, bool forgot)
 {
-	const int flags = (int)(ce->ce_flags);
-
-	if (forgot) {
-		ce_set_flags(ce, flags | SILOFS_CEF_FORGOT);
-	} else {
-		ce_set_flags(ce, flags & ~SILOFS_CEF_FORGOT);
-	}
+	ce->ce_forgot = forgot;
 }
 
 static void ce_hmap(struct silofs_cache_elem *ce,
                     struct silofs_list_head *hlst)
 {
 	list_push_front(hlst, &ce->ce_htb_lh);
-	ce_set_mapped(ce, true);
+	ce->ce_mapped = true;
 }
 
 static void ce_hunmap(struct silofs_cache_elem *ce)
 {
 	list_head_remove(&ce->ce_htb_lh);
-	ce_set_mapped(ce, false);
+	ce->ce_mapped = false;
 }
 
 static bool ce_need_promote_hmap(const struct silofs_cache_elem *ce,
@@ -394,7 +368,7 @@ static void ce_promote_hmap(struct silofs_cache_elem *ce,
 {
 	struct silofs_list_head *hlnk = &ce->ce_htb_lh;
 
-	silofs_assert(ce_is_mapped(ce));
+	silofs_assert(ce->ce_mapped);
 
 	list_head_remove(hlnk);
 	list_push_front(hlst, hlnk);
@@ -463,20 +437,12 @@ static void ce_relru(struct silofs_cache_elem *ce, struct silofs_listq *lru)
 
 static bool ce_is_dirty(const struct silofs_cache_elem *ce)
 {
-	const int flags = (int)ce->ce_flags;
-
-	return (flags & SILOFS_CEF_DIRTY) > 0;
+	return ce->ce_dirty;
 }
 
 static void ce_set_dirty(struct silofs_cache_elem *ce, bool dirty)
 {
-	const int flags = (int)ce->ce_flags;
-
-	if (dirty) {
-		ce_set_flags(ce, flags | SILOFS_CEF_DIRTY);
-	} else {
-		ce_set_flags(ce, flags & ~SILOFS_CEF_DIRTY);
-	}
+	ce->ce_dirty = dirty;
 }
 
 static int ce_refcnt_atomic(const struct silofs_cache_elem *ce)
@@ -739,7 +705,7 @@ static void lni_remove_from_lrumap(struct silofs_lnode_info *lni,
 {
 	struct silofs_cache_elem *ce = lni_to_ce(lni);
 
-	if (ce_is_mapped(ce)) {
+	if (ce->ce_mapped) {
 		lrumap_remove(lm, ce);
 	} else {
 		lrumap_unlru(lm, ce);
@@ -1450,7 +1416,7 @@ static void cache_unmap_vi(struct silofs_cache *cache,
 {
 	struct silofs_cache_elem *ce = vi_to_ce(vi);
 
-	if (ce_is_mapped(ce)) {
+	if (ce->ce_mapped) {
 		lrumap_unmap(&cache->c_vi_lm, ce);
 	}
 }

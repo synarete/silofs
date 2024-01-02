@@ -2377,18 +2377,11 @@ static int do_clone(struct silofs_task *task,
 	return 0;
 }
 
-static void do_post_clone_relax(struct silofs_task *task,
+static void do_post_clone_relax(const struct silofs_task *task,
                                 struct silofs_sb_info *sbi)
 {
-	struct silofs_fsenv *fsenv = task->t_fsenv;
-	struct silofs_cache *cache = fsenv->fse.cache;
-
-	silofs_assert_ne(sbi, fsenv->fse_sbi);
-	silofs_assert_eq(sbi->sb_ui.u_lni.l_ce.ce_refcnt, 0);
-	silofs_assert_eq(sbi->sb_ui.u_lni.l_ce.ce_flags & SILOFS_CEF_DIRTY, 0);
-
-	silofs_cache_forget_ui(cache, &sbi->sb_ui);
-	silofs_cache_relax(cache, SILOFS_F_NOW);
+	silofs_cache_forget_ui(task_cache(task), &sbi->sb_ui);
+	silofs_cache_relax(task_cache(task), SILOFS_F_NOW);
 }
 
 static int do_clone_and_relex(struct silofs_task *task,
@@ -2579,7 +2572,7 @@ int silofs_make_namestr_by(struct silofs_namestr *nstr,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int try_forget_cached_ii(const struct silofs_task *task,
-				struct silofs_inode_info *ii)
+                                struct silofs_inode_info *ii)
 {
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
 		silofs_cache_forget_vi(task_cache(task), ii_to_vi(ii));

@@ -162,14 +162,6 @@ enum silofs_ckey_type {
 	SILOFS_CKEY_VADDR,
 };
 
-/* caching-element's control flags */
-enum silofs_ce_flags {
-	SILOFS_CEF_NONE         = 0x00,
-	SILOFS_CEF_DIRTY        = 0x01,
-	SILOFS_CEF_MAPPED       = 0x02,
-	SILOFS_CEF_FORGOT       = 0x04,
-};
-
 /* caching-element's key, up to 256-bits */
 union silofs_ckey_u {
 	const struct silofs_uaddr  *uaddr;
@@ -191,8 +183,10 @@ struct silofs_cache_elem {
 	unsigned long           ce_magic;
 	long                    ce_htb_hitcnt;
 	long                    ce_lru_hitcnt;
-	enum silofs_ce_flags    ce_flags;
 	int                     ce_refcnt;
+	bool                    ce_dirty;
+	bool                    ce_mapped;
+	bool                    ce_forgot;
 };
 
 /* in-memory mapping from ino to voff */

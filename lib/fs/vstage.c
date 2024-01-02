@@ -2396,7 +2396,7 @@ out_err:
 static int fixup_cached_vi(const struct silofs_task *task,
                            struct silofs_vnode_info *vi)
 {
-	if (!(vi->v_lni.l_ce.ce_flags & SILOFS_CEF_FORGOT)) {
+	if (!vi->v_lni.l_ce.ce_forgot) {
 		return 0;
 	}
 	if (silofs_vi_refcnt(vi)) {

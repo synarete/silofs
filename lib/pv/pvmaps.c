@@ -19,8 +19,6 @@
 #include <silofs/pv.h>
 
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc)
 {
 	const unsigned int cap = 8191; /* TODO: cap based on memory size */

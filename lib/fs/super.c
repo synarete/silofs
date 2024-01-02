@@ -869,6 +869,20 @@ int silofs_test_shared_dbkref(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_sbi_incref(struct silofs_sb_info *sbi)
+{
+	if (likely(sbi != NULL)) {
+		silofs_lni_incref(&sbi->sb_ui.u_lni);
+	}
+}
+
+void silofs_sbi_decref(struct silofs_sb_info *sbi)
+{
+	if (likely(sbi != NULL)) {
+		silofs_lni_decref(&sbi->sb_ui.u_lni);
+	}
+}
+
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 {
 	ui_dirtify(&sbi->sb_ui);
@@ -926,3 +940,4 @@ void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
 	sb_set_origin(sb, sbi_uaddr(sbi_other));
 	sbi_dirtify(sbi);
 }
+

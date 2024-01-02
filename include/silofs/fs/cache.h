@@ -171,9 +171,4 @@ void silofs_lni_incref(struct silofs_lnode_info *lni);
 
 void silofs_lni_decref(struct silofs_lnode_info *lni);
 
-
-void silofs_sbi_incref(struct silofs_sb_info *sbi);
-
-void silofs_sbi_decref(struct silofs_sb_info *sbi);
-
 #endif /* SILOFS_CACHE_H_ */

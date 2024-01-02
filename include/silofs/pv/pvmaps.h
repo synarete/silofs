@@ -26,7 +26,6 @@ struct silofs_pvmap {
 	size_t                          pvm_htbl_sz;
 };
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc);

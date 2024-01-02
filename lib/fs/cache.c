@@ -1970,16 +1970,3 @@ bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
 	return (ii->i_vi.v_lni.l_flags & SILOFS_LNF_LOOSE) > 0;
 }
 
-void silofs_sbi_incref(struct silofs_sb_info *sbi)
-{
-	if (likely(sbi != NULL)) {
-		lni_incref(&sbi->sb_ui.u_lni);
-	}
-}
-
-void silofs_sbi_decref(struct silofs_sb_info *sbi)
-{
-	if (likely(sbi != NULL)) {
-		lni_decref(&sbi->sb_ui.u_lni);
-	}
-}

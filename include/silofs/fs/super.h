@@ -30,6 +30,10 @@ int silofs_verify_super_block(const struct silofs_super_block *sb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_sbi_incref(struct silofs_sb_info *sbi);
+
+void silofs_sbi_decref(struct silofs_sb_info *sbi);
+
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
 
 int silofs_sbi_shut(struct silofs_sb_info *sbi);

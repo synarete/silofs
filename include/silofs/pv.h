@@ -25,6 +25,6 @@
 #include <silofs/pv/crypto.h>
 #include <silofs/pv/repo.h>
 #include <silofs/pv/pnodes.h>
-#include <silofs/pv/pvmaps.h>
+#include <silofs/pv/bcache.h>
 
 #endif /* SILOFS_PV_H_ */

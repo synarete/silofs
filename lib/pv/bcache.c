@@ -19,30 +19,29 @@
 #include <silofs/pv.h>
 
 
-int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc)
+int silofs_bcache_init(struct silofs_bcache *bcache,
+                       struct silofs_alloc *alloc)
 {
 	const unsigned int cap = 8191; /* TODO: cap based on memory size */
 
-	silofs_memzero(pvmap, sizeof(*pvmap));
-	silofs_listq_init(&pvmap->pvm_lru);
-	pvmap->pvm_htbl = silofs_lista_new(alloc, cap);
-	if (pvmap->pvm_htbl == NULL) {
+	silofs_memzero(bcache, sizeof(*bcache));
+	silofs_listq_init(&bcache->bc_lru);
+	bcache->bc_htbl = silofs_lista_new(alloc, cap);
+	if (bcache->bc_htbl == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	pvmap->pvm_htbl_cap = cap;
-	pvmap->pvm_htbl_sz = 0;
-	pvmap->pvm_alloc = alloc;
+	bcache->bc_htbl_cap = cap;
+	bcache->bc_htbl_sz = 0;
+	bcache->bc_alloc = alloc;
 	return 0;
 }
 
-void silofs_pvmap_fini(struct silofs_pvmap *pvmap)
+void silofs_bcache_fini(struct silofs_bcache *bcache)
 {
-	silofs_listq_fini(&pvmap->pvm_lru);
-	if (pvmap->pvm_htbl != NULL) {
-		silofs_lista_del(pvmap->pvm_htbl,
-		                 pvmap->pvm_htbl_cap, pvmap->pvm_alloc);
-		pvmap->pvm_htbl_cap = 0;
-		pvmap->pvm_htbl_sz = 0;
-	}
-	pvmap->pvm_alloc = NULL;
+	silofs_listq_fini(&bcache->bc_lru);
+	silofs_lista_del(bcache->bc_htbl,
+	                 bcache->bc_htbl_cap, bcache->bc_alloc);
+	bcache->bc_htbl_cap = 0;
+	bcache->bc_htbl_sz = 0;
+	bcache->bc_alloc = NULL;
 }

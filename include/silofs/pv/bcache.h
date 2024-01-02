@@ -14,22 +14,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PVMAPS_H_
-#define SILOFS_PVMAPS_H_
+#ifndef SILOFS_BCACHE_H_
+#define SILOFS_BCACHE_H_
 
 
-struct silofs_pvmap {
-	struct silofs_alloc            *pvm_alloc;
-	struct silofs_listq             pvm_lru;
-	struct silofs_list_head        *pvm_htbl;
-	size_t                          pvm_htbl_cap;
-	size_t                          pvm_htbl_sz;
+struct silofs_bcache {
+	struct silofs_alloc            *bc_alloc;
+	struct silofs_listq             bc_lru;
+	struct silofs_list_head        *bc_htbl;
+	size_t                          bc_htbl_cap;
+	size_t                          bc_htbl_sz;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_pvmap_init(struct silofs_pvmap *pvmap, struct silofs_alloc *alloc);
+int silofs_bcache_init(struct silofs_bcache *bcache,
+                       struct silofs_alloc *alloc);
 
-void silofs_pvmap_fini(struct silofs_pvmap *pvmap);
+void silofs_bcache_fini(struct silofs_bcache *bcache);
 
-#endif /* SILOFS_PVMAPS_H_ */
+#endif /* SILOFS_BCACHE_H_ */

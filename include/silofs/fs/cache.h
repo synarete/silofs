@@ -18,38 +18,38 @@
 #define SILOFS_CACHE_H_
 
 
-/* caching-element's key type */
-enum silofs_ckey_type {
-	SILOFS_CKEY_NONE,
-	SILOFS_CKEY_UADDR,
-	SILOFS_CKEY_VADDR,
+/* elements' mapping hash-key types */
+enum silofs_hkey_type {
+	SILOFS_HKEY_NONE,
+	SILOFS_HKEY_UADDR,
+	SILOFS_HKEY_VADDR,
 };
 
-/* caching-element's key, up to 256-bits */
-union silofs_ckey_u {
+/* addresses as mapping-key */
+union silofs_hkey_u {
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
 	const void                 *key;
 };
 
-struct silofs_ckey {
-	enum silofs_ckey_type   type;
+struct silofs_hkey {
+	enum silofs_hkey_type   type;
 	unsigned long           hash;
-	union silofs_ckey_u     keyu;
+	union silofs_hkey_u     keyu;
 };
 
 /* caching-elements */
-struct silofs_cache_elem {
-	struct silofs_list_head ce_htb_lh;
-	struct silofs_list_head ce_lru_lh;
-	struct silofs_ckey      ce_ckey;
-	unsigned long           ce_magic;
-	long                    ce_htb_hitcnt;
-	long                    ce_lru_hitcnt;
-	int                     ce_refcnt;
-	bool                    ce_dirty;
-	bool                    ce_mapped;
-	bool                    ce_forgot;
+struct silofs_lrumap_elem {
+	struct silofs_list_head lme_htb_lh;
+	struct silofs_list_head lme_lru_lh;
+	struct silofs_hkey      lme_key;
+	unsigned long           lme_magic;
+	long                    lme_htb_hitcnt;
+	long                    lme_lru_hitcnt;
+	int                     lme_refcnt;
+	bool                    lme_dirty;
+	bool                    lme_mapped;
+	bool                    lme_forgot;
 };
 
 /* LRU + hash-map */
@@ -101,12 +101,12 @@ silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-long silofs_ckey_compare(const struct silofs_ckey *ckey1,
-                         const struct silofs_ckey *ckey2);
+long silofs_hkey_compare(const struct silofs_hkey *hkey1,
+                         const struct silofs_hkey *hkey2);
 
-void silofs_ce_init(struct silofs_cache_elem *ce);
+void silofs_lme_init(struct silofs_lrumap_elem *ce);
 
-void silofs_ce_fini(struct silofs_cache_elem *ce);
+void silofs_lme_fini(struct silofs_lrumap_elem *ce);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

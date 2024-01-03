@@ -47,12 +47,12 @@ static bool vi_may_flush(const struct silofs_vnode_info *vi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static long ckey_compare(const void *x, const void *y)
+static long hkey_compare(const void *x, const void *y)
 {
-	const struct silofs_ckey *ckey_x = x;
-	const struct silofs_ckey *ckey_y = y;
+	const struct silofs_hkey *hkey_x = x;
+	const struct silofs_hkey *hkey_y = y;
 
-	return silofs_ckey_compare(ckey_x, ckey_y);
+	return silofs_hkey_compare(hkey_x, hkey_y);
 }
 
 static struct silofs_lnode_info *
@@ -68,7 +68,7 @@ static const void *lni_getkey(const struct silofs_avl_node *an)
 {
 	const struct silofs_lnode_info *lni = avl_node_to_lni(an);
 
-	return &lni->l_ce.ce_ckey;
+	return &lni->l_lme.lme_key;
 }
 
 static void lni_visit_reinit(struct silofs_avl_node *an, void *p)
@@ -110,7 +110,7 @@ static void dset_add_dirty(struct silofs_dset *dset,
 
 static void dset_init(struct silofs_dset *dset)
 {
-	silofs_avl_init(&dset->ds_avl, lni_getkey, ckey_compare, dset);
+	silofs_avl_init(&dset->ds_avl, lni_getkey, hkey_compare, dset);
 	dset->ds_preq = NULL;
 	dset->ds_postq = NULL;
 }

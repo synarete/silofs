@@ -45,38 +45,6 @@ static int verify_view_by(const struct silofs_view *view,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void lh_init(struct silofs_list_head *lh)
-{
-	silofs_list_head_init(lh);
-}
-
-static void lh_fini(struct silofs_list_head *lh)
-{
-	silofs_list_head_fini(lh);
-}
-
-static void ce_init(struct silofs_cache_elem *ce)
-{
-	silofs_ce_init(ce);
-}
-
-static void ce_fini(struct silofs_cache_elem *ce)
-{
-	silofs_ce_fini(ce);
-}
-
-static void an_init(struct silofs_avl_node *an)
-{
-	silofs_avl_node_init(an);
-}
-
-static void an_fini(struct silofs_avl_node *an)
-{
-	silofs_avl_node_fini(an);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 {
 	size_t size;
@@ -158,8 +126,8 @@ static void lni_init(struct silofs_lnode_info *lni,
                      struct silofs_view *view,
                      silofs_lnode_del_fn del_fn)
 {
-	ce_init(&lni->l_ce);
-	an_init(&lni->l_ds_avl_node);
+	silofs_lme_init(&lni->l_lme);
+	silofs_avl_node_init(&lni->l_ds_avl_node);
 	lni->l_ltype = ltype;
 	lni->l_ds_next = NULL;
 	lni->l_fsenv = NULL;
@@ -170,8 +138,8 @@ static void lni_init(struct silofs_lnode_info *lni,
 
 static void lni_fini(struct silofs_lnode_info *lni)
 {
-	ce_fini(&lni->l_ce);
-	an_fini(&lni->l_ds_avl_node);
+	silofs_lme_fini(&lni->l_lme);
+	silofs_avl_node_fini(&lni->l_ds_avl_node);
 	lni->l_ltype = SILOFS_LTYPE_NONE;
 	lni->l_ds_next = NULL;
 	lni->l_fsenv = NULL;
@@ -209,7 +177,7 @@ static void ui_init(struct silofs_unode_info *ui,
                     silofs_lnode_del_fn del_fn)
 {
 	lni_init(&ui->u_lni, ulink->uaddr.ltype, view, del_fn);
-	lh_init(&ui->u_dq_lh);
+	list_head_init(&ui->u_dq_lh);
 	ulink_assign(&ui->u_ulink, ulink);
 	ui->u_dq = NULL;
 }
@@ -217,7 +185,7 @@ static void ui_init(struct silofs_unode_info *ui,
 static void ui_fini(struct silofs_unode_info *ui)
 {
 	ulink_reset(&ui->u_ulink);
-	lh_fini(&ui->u_dq_lh);
+	list_head_fini(&ui->u_dq_lh);
 	lni_fini(&ui->u_lni);
 	ui->u_dq = NULL;
 }
@@ -227,7 +195,7 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni)
 {
 	const struct silofs_unode_info *ui = NULL;
 
-	if (likely(lni != NULL)) {
+	if (lni != NULL) {
 		ui = container_of2(lni, struct silofs_unode_info, u_lni);
 	}
 	return ui_unconst(ui);
@@ -310,7 +278,7 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni)
 {
 	const struct silofs_vnode_info *vi = NULL;
 
-	if (likely(lni != NULL)) {
+	if (lni != NULL) {
 		vi = container_of2(lni, struct silofs_vnode_info, v_lni);
 	}
 	return vi_unconst(vi);

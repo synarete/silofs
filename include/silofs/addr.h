@@ -28,6 +28,7 @@
 #include <silofs/addr/paddr.h>
 #include <silofs/addr/uaddr.h>
 #include <silofs/addr/vaddr.h>
+#include <silofs/addr/hmapq.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
 #include <silofs/addr-private.h>

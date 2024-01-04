@@ -925,8 +925,8 @@ void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
 	silofs_memzero(cst, sizeof(*cst));
 	silofs_allocstat(fs_ctx->alloc, &alst);
 	cst->nalloc_bytes = alst.nbytes_use;
-	cst->ncache_unodes += cache->c_ui_lm.lm_htbl_sz;
-	cst->ncache_vnodes += cache->c_vi_lm.lm_htbl_sz;
+	cst->ncache_unodes += cache->c_ui_hmapq.hmq_htbl_sz;
+	cst->ncache_vnodes += cache->c_vi_hmapq.hmq_htbl_sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

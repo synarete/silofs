@@ -182,8 +182,8 @@ static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 	        dqs->dq_uis.dq_accum,
 	        dqs->dq_iis.dq_accum,
 	        dqs->dq_vis.dq_accum,
-	        cache->c_ui_lm.lm_lru.sz,
-	        cache->c_vi_lm.lm_lru.sz);
+	        cache->c_ui_hmapq.hmq_lru.sz,
+	        cache->c_vi_hmapq.hmq_lru.sz);
 }
 
 static int vstgc_create_cached_vi(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2396,7 +2396,7 @@ out_err:
 static int fixup_cached_vi(const struct silofs_task *task,
                            struct silofs_vnode_info *vi)
 {
-	if (!vi->v_lni.l_lme.lme_forgot) {
+	if (!vi->v_lni.l_hmqe.hme_forgot) {
 		return 0;
 	}
 	if (silofs_vi_refcnt(vi)) {

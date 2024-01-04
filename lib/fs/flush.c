@@ -68,7 +68,7 @@ static const void *lni_getkey(const struct silofs_avl_node *an)
 {
 	const struct silofs_lnode_info *lni = avl_node_to_lni(an);
 
-	return &lni->l_lme.lme_key;
+	return &lni->l_hmqe.hme_key;
 }
 
 static void lni_visit_reinit(struct silofs_avl_node *an, void *p)

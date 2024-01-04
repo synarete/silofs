@@ -32,6 +32,7 @@ libsilofs_la_SOURCES += infra/strings.c
 libsilofs_la_SOURCES += infra/thread.c
 libsilofs_la_SOURCES += infra/time.c
 libsilofs_la_SOURCES += infra/utility.c
+libsilofs_la_SOURCES += addr/hmapq.c
 libsilofs_la_SOURCES += addr/ivkey.c
 libsilofs_la_SOURCES += addr/laddr.c
 libsilofs_la_SOURCES += addr/ltype.c

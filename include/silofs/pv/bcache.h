@@ -19,11 +19,8 @@
 
 
 struct silofs_bcache {
-	struct silofs_alloc            *bc_alloc;
-	struct silofs_listq             bc_lru;
-	struct silofs_list_head        *bc_htbl;
-	size_t                          bc_htbl_cap;
-	size_t                          bc_htbl_sz;
+	struct silofs_hmapq     bc_hmapq;
+	struct silofs_alloc    *bc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

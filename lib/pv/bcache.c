@@ -22,26 +22,19 @@
 int silofs_bcache_init(struct silofs_bcache *bcache,
                        struct silofs_alloc *alloc)
 {
-	const unsigned int cap = 8191; /* TODO: cap based on memory size */
+	int err;
 
 	silofs_memzero(bcache, sizeof(*bcache));
-	silofs_listq_init(&bcache->bc_lru);
-	bcache->bc_htbl = silofs_lista_new(alloc, cap);
-	if (bcache->bc_htbl == NULL) {
-		return -SILOFS_ENOMEM;
+	err = silofs_hmapq_init(&bcache->bc_hmapq, alloc);
+	if (err) {
+		return err;
 	}
-	bcache->bc_htbl_cap = cap;
-	bcache->bc_htbl_sz = 0;
 	bcache->bc_alloc = alloc;
 	return 0;
 }
 
 void silofs_bcache_fini(struct silofs_bcache *bcache)
 {
-	silofs_listq_fini(&bcache->bc_lru);
-	silofs_lista_del(bcache->bc_htbl,
-	                 bcache->bc_htbl_cap, bcache->bc_alloc);
-	bcache->bc_htbl_cap = 0;
-	bcache->bc_htbl_sz = 0;
+	silofs_hmapq_fini(&bcache->bc_hmapq, bcache->bc_alloc);
 	bcache->bc_alloc = NULL;
 }

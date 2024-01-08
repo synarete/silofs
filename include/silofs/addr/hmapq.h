@@ -57,7 +57,8 @@ struct silofs_hmapq_elem {
 struct silofs_hmapq {
 	struct silofs_listq      hmq_lru;
 	struct silofs_list_head *hmq_htbl;
-	size_t hmq_htbl_cap;
+	size_t hmq_htbl_nelems;
+	size_t hmq_htbl_prime;
 	size_t hmq_htbl_sz;
 };
 

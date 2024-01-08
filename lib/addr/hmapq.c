@@ -30,20 +30,20 @@ static const unsigned int htbl_primes[] = {
 	3221225473, 4294967291
 };
 
-static uint64_t htbl_nelems_as_prime(size_t nelems_max)
+static uint64_t htbl_prime_of(size_t nelems)
 {
-	unsigned int p = 11;
+	uint64_t p = 4294967291;
 
-	for (size_t i = 0; i < ARRAY_SIZE(htbl_primes); ++i) {
-		if (htbl_primes[i] > nelems_max) {
+	for (size_t i = ARRAY_SIZE(htbl_primes); i > 0; --i) {
+		if (htbl_primes[i - 1] < (2 * nelems)) {
 			break;
 		}
-		p = htbl_primes[i];
+		p = htbl_primes[i - 1];
 	}
 	return p;
 }
 
-static uint64_t htbl_nelems_by_memsize(const struct silofs_alloc *alloc)
+static uint64_t htbl_nelems_by(const struct silofs_alloc *alloc)
 {
 	struct silofs_alloc_stat al_st = { .nbytes_max = 0 };
 	size_t memsize_ng;
@@ -55,11 +55,6 @@ static uint64_t htbl_nelems_by_memsize(const struct silofs_alloc *alloc)
 
 	/* 64K-elems for each available 1G of memory */
 	return (1UL << 16) * cap_factor;
-}
-
-static uint64_t htbl_nelems_by(const struct silofs_alloc *alloc)
-{
-	return htbl_nelems_as_prime(htbl_nelems_by_memsize(alloc));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -391,7 +386,8 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 	}
 	listq_init(&hmapq->hmq_lru);
 	hmapq->hmq_htbl = htbl;
-	hmapq->hmq_htbl_cap = nelems;
+	hmapq->hmq_htbl_nelems = nelems;
+	hmapq->hmq_htbl_prime = htbl_prime_of(nelems);
 	hmapq->hmq_htbl_sz = 0;
 	return 0;
 }
@@ -399,10 +395,11 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 {
 	if (hmapq->hmq_htbl != NULL) {
-		silofs_lista_del(hmapq->hmq_htbl, hmapq->hmq_htbl_cap, alloc);
+		silofs_lista_del(hmapq->hmq_htbl,
+		                 hmapq->hmq_htbl_nelems, alloc);
 		listq_fini(&hmapq->hmq_lru);
 		hmapq->hmq_htbl = NULL;
-		hmapq->hmq_htbl_cap = 0;
+		hmapq->hmq_htbl_nelems = 0;
 	}
 }
 
@@ -414,9 +411,9 @@ size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)
 static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
                                 const struct silofs_hkey *hkey)
 {
-	const uint64_t hval = hkey->hash ^ (hkey->hash >> 32);
+	const uint64_t hval = hkey->hash % hmapq->hmq_htbl_prime;
 
-	return hval % hmapq->hmq_htbl_cap;
+	return hval % hmapq->hmq_htbl_nelems;
 }
 
 static struct silofs_list_head *
@@ -561,8 +558,8 @@ size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq)
 	const size_t fac = 4;
 	size_t ovp = 0;
 
-	if (hmapq->hmq_htbl_sz > (fac * hmapq->hmq_htbl_cap)) {
-		ovp = (hmapq->hmq_htbl_sz - (fac * hmapq->hmq_htbl_cap));
+	if (hmapq->hmq_htbl_sz > (fac * hmapq->hmq_htbl_nelems)) {
+		ovp = (hmapq->hmq_htbl_sz - (fac * hmapq->hmq_htbl_nelems));
 	} else if (hmapq->hmq_lru.sz > (fac * hmapq->hmq_htbl_sz)) {
 		ovp = (hmapq->hmq_lru.sz - (fac * hmapq->hmq_htbl_sz));
 	}

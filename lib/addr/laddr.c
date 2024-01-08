@@ -29,19 +29,16 @@ void silofs_lvid_assign(struct silofs_lvid *lvid,
 	silofs_uuid_assign(&lvid->uuid, &other->uuid);
 }
 
-long silofs_lvid_compare(const struct silofs_lvid *lvid1,
+static long lvid_compare(const struct silofs_lvid *lvid1,
                          const struct silofs_lvid *lvid2)
 {
-	const struct silofs_uuid *uu1 = &lvid1->uuid;
-	const struct silofs_uuid *uu2 = &lvid2->uuid;
-
-	return memcmp(uu1->uu, uu2->uu, sizeof(uu1->uu));
+	return silofs_uuid_compare(&lvid1->uuid, &lvid2->uuid);
 }
 
 bool silofs_lvid_isequal(const struct silofs_lvid *lvid1,
                          const struct silofs_lvid *lvid2)
 {
-	return (silofs_lvid_compare(lvid1, lvid2) == 0);
+	return (lvid_compare(lvid1, lvid2) == 0);
 }
 
 void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
@@ -147,7 +144,7 @@ long silofs_lsegid_compare(const struct silofs_lsegid *lsegid1,
 {
 	long cmp;
 
-	cmp = silofs_lvid_compare(&lsegid1->lvid, &lsegid2->lvid);
+	cmp = lvid_compare(&lsegid1->lvid, &lsegid2->lvid);
 	if (cmp) {
 		return cmp;
 	}
@@ -178,10 +175,11 @@ bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
 
 uint64_t silofs_lsegid_hash64(const struct silofs_lsegid *lsegid)
 {
-	struct silofs_lsegid32b bid = { .size = 0 };
+	struct silofs_lsegid32b lsegid32b = { .size = 0 };
+	const uint64_t seed = lsegid->vspace;
 
-	silofs_lsegid32b_htox(&bid, lsegid);
-	return silofs_hash_xxh64(&bid, sizeof(bid), lsegid->vspace);
+	silofs_lsegid32b_htox(&lsegid32b, lsegid);
+	return silofs_hash_xxh64(&lsegid32b, sizeof(lsegid32b), seed);
 }
 
 void silofs_lsegid_setup(struct silofs_lsegid *lsegid,

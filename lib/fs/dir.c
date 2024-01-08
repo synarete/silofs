@@ -1254,29 +1254,16 @@ mdigest_of(const struct silofs_inode_info *dii)
 	return &fsenv->fse_mdigest;
 }
 
-static uint64_t u64_of(const uint8_t p[8])
-{
-	uint64_t u = 0;
-
-	u |= (uint64_t)(p[0]) << 56;
-	u |= (uint64_t)(p[1]) << 48;
-	u |= (uint64_t)(p[2]) << 40;
-	u |= (uint64_t)(p[3]) << 32;
-	u |= (uint64_t)(p[4]) << 24;
-	u |= (uint64_t)(p[5]) << 16;
-	u |= (uint64_t)(p[6]) << 8;
-	u |= (uint64_t)(p[7]);
-
-	return u;
-}
-
 static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
 {
 	const uint8_t *h = hash->hash;
 
 	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 4 * sizeof(uint64_t));
 
-	return u64_of(h) ^ u64_of(h + 8) ^ u64_of(h + 16) ^ u64_of(h + 24);
+	return silofs_u8b_as_u64(h) ^
+	       silofs_u8b_as_u64(h + 8) ^
+	       silofs_u8b_as_u64(h + 16) ^
+	       silofs_u8b_as_u64(h + 24);
 }
 
 static uint64_t

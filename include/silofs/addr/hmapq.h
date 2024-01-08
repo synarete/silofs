@@ -22,21 +22,23 @@
 /* elements' mapping hash-key types */
 enum silofs_hkey_type {
 	SILOFS_HKEY_NONE,
+	SILOFS_HKEY_PADDR,
 	SILOFS_HKEY_UADDR,
 	SILOFS_HKEY_VADDR,
 };
 
 /* addresses as mapping-key */
 union silofs_hkey_u {
+	const struct silofs_paddr  *paddr;
 	const struct silofs_uaddr  *uaddr;
 	const struct silofs_vaddr  *vaddr;
 	const void                 *key;
 };
 
 struct silofs_hkey {
-	enum silofs_hkey_type   type;
-	unsigned long           hash;
 	union silofs_hkey_u     keyu;
+	uint64_t                hash;
+	enum silofs_hkey_type   type;
 };
 
 /* caching-elements */
@@ -58,7 +60,6 @@ struct silofs_hmapq {
 	struct silofs_listq      hmq_lru;
 	struct silofs_list_head *hmq_htbl;
 	size_t hmq_htbl_nelems;
-	size_t hmq_htbl_prime;
 	size_t hmq_htbl_sz;
 };
 
@@ -66,6 +67,9 @@ struct silofs_hmapq {
 typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
+                          const struct silofs_paddr *paddr);
 
 void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,
                           const struct silofs_uaddr *uaddr);

@@ -31,6 +31,17 @@ void silofs_pvid_assign(struct silofs_pvid *pvid,
 	silofs_uuid_assign(&pvid->uuid, &other->uuid);
 }
 
+static long pvid_compare(const struct silofs_pvid *pvid1,
+                         const struct silofs_pvid *pvid2)
+{
+	return silofs_uuid_compare(&pvid1->uuid, &pvid2->uuid);
+}
+
+uint64_t silofs_pvid_hash64(const struct silofs_pvid *pvid)
+{
+	return silofs_uuid_as_u64(&pvid->uuid);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr s_paddr_none = {
@@ -62,6 +73,30 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 	paddr->index = other->index;
 	paddr->off = other->off;
 	paddr->len = other->len;
+}
+
+long silofs_paddr_compare(const struct silofs_paddr *paddr1,
+                          const struct silofs_paddr *paddr2)
+{
+	long cmp;
+
+	cmp = pvid_compare(&paddr1->pvid, &paddr2->pvid);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)paddr1->index - (long)paddr2->index;
+	if (cmp) {
+		return cmp;
+	}
+	cmp = paddr1->off - paddr2->off;
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)paddr1->len - (long)paddr2->len;
+	if (cmp) {
+		return cmp;
+	}
+	return 0;
 }
 
 

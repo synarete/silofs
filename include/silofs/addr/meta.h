@@ -17,13 +17,22 @@
 #ifndef SILOFS_META_H_
 #define SILOFS_META_H_
 
+uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_uuid_generate(struct silofs_uuid *uu);
 
 void silofs_uuid_assign(struct silofs_uuid *uu,
                         const struct silofs_uuid *other);
 
-void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb);
+long silofs_uuid_compare(const struct silofs_uuid *uu1,
+                         const struct silofs_uuid *uu2);
+
+void silofs_uuid_name(const struct silofs_uuid *uu,
+                      struct silofs_namebuf *nb);
+
+uint64_t silofs_uuid_as_u64(const struct silofs_uuid *uu);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -19,6 +19,24 @@
 #include <silofs/addr.h>
 #include <uuid/uuid.h>
 
+uint64_t silofs_u8b_as_u64(const uint8_t p[8])
+{
+	uint64_t u = 0;
+
+	u |= (uint64_t)(p[0]) << 56;
+	u |= (uint64_t)(p[1]) << 48;
+	u |= (uint64_t)(p[2]) << 40;
+	u |= (uint64_t)(p[3]) << 32;
+	u |= (uint64_t)(p[4]) << 24;
+	u |= (uint64_t)(p[5]) << 16;
+	u |= (uint64_t)(p[6]) << 8;
+	u |= (uint64_t)(p[7]);
+
+	return u;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_uuid_generate(struct silofs_uuid *uu)
 {
 	STATICASSERT_EQ(sizeof(uu->uu), sizeof(uuid_t));
@@ -26,9 +44,16 @@ void silofs_uuid_generate(struct silofs_uuid *uu)
 	uuid_generate_random(uu->uu);
 }
 
-void silofs_uuid_assign(struct silofs_uuid *uu1, const struct silofs_uuid *uu2)
+void silofs_uuid_assign(struct silofs_uuid *uu,
+                        const struct silofs_uuid *other)
 {
-	uuid_copy(uu1->uu, uu2->uu);
+	uuid_copy(uu->uu, other->uu);
+}
+
+long silofs_uuid_compare(const struct silofs_uuid *uu1,
+                         const struct silofs_uuid *uu2)
+{
+	return uuid_compare(uu1->uu, uu2->uu);
 }
 
 void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
@@ -39,6 +64,17 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
 
 	uuid_unparse_lower(uu->uu, buf);
 	strncpy(nb->name, buf, sizeof(nb->name));
+}
+
+uint64_t silofs_uuid_as_u64(const struct silofs_uuid *uu)
+{
+	const uint8_t *p = uu->uu;
+	const uint64_t u1 = silofs_u8b_as_u64(p);
+	const uint64_t u2 = silofs_u8b_as_u64(p + 8);
+
+	STATICASSERT_EQ(sizeof(uu->uu), 16);
+
+	return u1 ^ u2;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

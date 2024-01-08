@@ -32,13 +32,13 @@ static const unsigned int htbl_primes[] = {
 
 static uint64_t htbl_prime_of(size_t nelems)
 {
-	uint64_t p = 4294967291;
+	uint64_t p = 11;
 
-	for (size_t i = ARRAY_SIZE(htbl_primes); i > 0; --i) {
-		if (htbl_primes[i - 1] < (2 * nelems)) {
+	for (size_t i = 0; i < ARRAY_SIZE(htbl_primes); ++i) {
+		if (htbl_primes[i] > nelems) {
 			break;
 		}
-		p = htbl_primes[i - 1];
+		p = htbl_primes[i];
 	}
 	return p;
 }
@@ -59,57 +59,47 @@ static uint64_t htbl_nelems_by(const struct silofs_alloc *alloc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t twang_mix64(uint64_t key)
+static uint64_t hash_of_pvid(const struct silofs_pvid *pvid)
 {
-	key = ~key + (key << 21);
-	key = key ^ (key >> 24);
-	key = key + (key << 3) + (key << 8);
-	key = key ^ (key >> 14);
-	key = key + (key << 2) + (key << 4);
-	key = key ^ (key >> 28);
-	key = key + (key << 31);
-
-	return key;
+	return silofs_pvid_hash64(pvid);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
+{
+	const uint64_t uoff = (uint64_t)paddr->off;
+	const uint64_t h1 = 0xc6a4a7935bd1e995ULL - paddr->len;
+	const uint64_t h2 = hash_of_pvid(&paddr->pvid);
+
+	return (uoff + paddr->index) ^ h1 ^ h2;
+}
 
 static uint64_t hash_of_lsegid(const struct silofs_lsegid *lsegid)
 {
 	return silofs_lsegid_hash64(lsegid);
 }
 
-static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
-{
-	const uint64_t off = (uint64_t)(vaddr->off);
-	const uint64_t lz = silofs_clz64(off);
-	uint64_t hval;
-
-	hval = off;
-	hval ^= (0x5D21C111ULL / (lz + 1)); /* M77232917 */
-	hval ^= ((uint64_t)(vaddr->ltype) << 43);
-	return twang_mix64(hval);
-}
-
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
-	uint64_t d[4];
-	uint64_t seed;
+	const uint64_t uoff = (uint64_t)uaddr->voff;
+	const uint64_t upos = (uint64_t)uaddr->laddr.pos;
+	const uint64_t h1 = 0x646f72616e646f6dULL - upos;
+	const uint64_t h2 = hash_of_lsegid(&uaddr->laddr.lsegid);
 
-	d[0] = hash_of_lsegid(&uaddr->laddr.lsegid);
-	d[1] = uaddr->laddr.len;
-	d[2] = 0x736f6d6570736575ULL - (uint64_t)(uaddr->laddr.pos);
-	d[3] = (uint64_t)uaddr->voff;
-	seed = 0x646f72616e646f6dULL / (uaddr->ltype + 1);
+	return (uoff + uaddr->ltype) ^ h1 ^ h2;
+}
 
-	return silofs_hash_xxh64(d, sizeof(d), seed);
+static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
+{
+	const uint64_t uoff = (uint64_t)vaddr->off;
+
+	return (uoff + vaddr->ltype) ^ 0x736f6d6570736575ULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void hkey_setup(struct silofs_hkey *hkey,
                        enum silofs_hkey_type type,
-                       const void *key, unsigned long hash)
+                       const void *key, uint64_t hash)
 {
 	hkey->keyu.key = key;
 	hkey->hash = hash;
@@ -121,6 +111,12 @@ static void hkey_reset(struct silofs_hkey *hkey)
 	hkey->keyu.key = NULL;
 	hkey->hash = 0;
 	hkey->type = SILOFS_HKEY_NONE;
+}
+
+static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
+                                  const struct silofs_hkey *hkey2)
+{
+	return silofs_paddr_compare(hkey1->keyu.paddr, hkey2->keyu.paddr);
 }
 
 static long hkey_compare_as_uaddr(const struct silofs_hkey *hkey1,
@@ -135,6 +131,29 @@ static long hkey_compare_as_vaddr(const struct silofs_hkey *hkey1,
 	return silofs_vaddr_compare(hkey1->keyu.vaddr, hkey2->keyu.vaddr);
 }
 
+static long hkey_compare_as(const struct silofs_hkey *hkey1,
+                            const struct silofs_hkey *hkey2)
+{
+	long cmp;
+
+	switch (hkey1->type) {
+	case SILOFS_HKEY_PADDR:
+		cmp = hkey_compare_as_paddr(hkey1, hkey2);
+		break;
+	case SILOFS_HKEY_UADDR:
+		cmp = hkey_compare_as_uaddr(hkey1, hkey2);
+		break;
+	case SILOFS_HKEY_VADDR:
+		cmp = hkey_compare_as_vaddr(hkey1, hkey2);
+		break;
+	case SILOFS_HKEY_NONE:
+	default:
+		cmp = 0;
+		break;
+	}
+	return cmp;
+}
+
 long silofs_hkey_compare(const struct silofs_hkey *hkey1,
                          const struct silofs_hkey *hkey2)
 {
@@ -142,17 +161,7 @@ long silofs_hkey_compare(const struct silofs_hkey *hkey1,
 
 	cmp = (long)hkey2->type - (long)hkey1->type;
 	if (cmp == 0) {
-		switch (hkey1->type) {
-		case SILOFS_HKEY_UADDR:
-			cmp = hkey_compare_as_uaddr(hkey1, hkey2);
-			break;
-		case SILOFS_HKEY_VADDR:
-			cmp = hkey_compare_as_vaddr(hkey1, hkey2);
-			break;
-		case SILOFS_HKEY_NONE:
-		default:
-			break;
-		}
+		cmp = hkey_compare_as(hkey1, hkey2);
 	}
 	return cmp;
 }
@@ -165,16 +174,50 @@ static bool hkey_isequal(const struct silofs_hkey *hkey1,
 	       !silofs_hkey_compare(hkey1, hkey2);
 }
 
+static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
+{
+	uint64_t hash = 0;
+
+	switch (type) {
+	case SILOFS_HKEY_PADDR:
+		hash = hash_of_paddr(key);
+		break;
+	case SILOFS_HKEY_UADDR:
+		hash = hash_of_uaddr(key);
+		break;
+	case SILOFS_HKEY_VADDR:
+		hash = hash_of_vaddr(key);
+		break;
+	case SILOFS_HKEY_NONE:
+	default:
+		hash = 0;
+		break;
+	}
+	return hash;
+}
+
+static void hkey_setup_by(struct silofs_hkey *hkey,
+                          enum silofs_hkey_type type, const void *key)
+{
+	hkey_setup(hkey, type, key, hkey_hash_of(type, key));
+}
+
+void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
+                          const struct silofs_paddr *paddr)
+{
+	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, paddr);
+}
+
 void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,
                           const struct silofs_uaddr *uaddr)
 {
-	hkey_setup(hkey, SILOFS_HKEY_UADDR, uaddr, hash_of_uaddr(uaddr));
+	hkey_setup_by(hkey, SILOFS_HKEY_UADDR, uaddr);
 }
 
 void silofs_hkey_by_vaddr(struct silofs_hkey *hkey,
                           const struct silofs_vaddr *vaddr)
 {
-	hkey_setup(hkey, SILOFS_HKEY_VADDR, vaddr, hash_of_vaddr(vaddr));
+	hkey_setup_by(hkey, SILOFS_HKEY_VADDR, vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -379,7 +422,7 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 	struct silofs_list_head *htbl = NULL;
 	size_t nelems;
 
-	nelems = htbl_nelems_by(alloc);
+	nelems = htbl_prime_of(htbl_nelems_by(alloc));
 	htbl = silofs_lista_new(alloc, nelems);
 	if (htbl == NULL) {
 		return -SILOFS_ENOMEM;
@@ -387,7 +430,6 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 	listq_init(&hmapq->hmq_lru);
 	hmapq->hmq_htbl = htbl;
 	hmapq->hmq_htbl_nelems = nelems;
-	hmapq->hmq_htbl_prime = htbl_prime_of(nelems);
 	hmapq->hmq_htbl_sz = 0;
 	return 0;
 }
@@ -411,7 +453,7 @@ size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)
 static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
                                 const struct silofs_hkey *hkey)
 {
-	const uint64_t hval = hkey->hash % hmapq->hmq_htbl_prime;
+	const uint64_t hval = hkey->hash ^ (hkey->hash >> 32);
 
 	return hval % hmapq->hmq_htbl_nelems;
 }

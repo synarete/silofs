@@ -46,9 +46,6 @@ struct silofs_llink {
 
 void silofs_lvid_generate(struct silofs_lvid *lvid);
 
-long silofs_lvid_compare(const struct silofs_lvid *lvid1,
-                         const struct silofs_lvid *lvid2);
-
 void silofs_lvid_assign(struct silofs_lvid *lvid,
                         const struct silofs_lvid *other);
 

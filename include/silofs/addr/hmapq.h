@@ -92,11 +92,9 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_hmapq_init(struct silofs_hmapq *hmapq,
-                      struct silofs_alloc *alloc, size_t cap);
+int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc);
 
-void silofs_hmapq_fini(struct silofs_hmapq *hmapq,
-                       struct silofs_alloc *alloc);
+void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc);
 
 struct silofs_hmapq_elem *
 silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,

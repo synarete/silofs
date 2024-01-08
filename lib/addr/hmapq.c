@@ -21,7 +21,48 @@
 
 #define HMQE_MAGIC      (0xDEFEC8EDBADDCAFE)
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/* prime-value for hash-table of n-elements */
+static const unsigned int htbl_primes[] = {
+	13, 53, 97, 193, 389, 769, 1543, 3079, 4093, 6151, 8191, 12289, 16381,
+	24593, 32749, 49157, 65521, 98317, 131071, 147377, 196613, 294979,
+	393241, 589933, 786433, 1572869, 3145739, 6291469, 12582917, 25165843,
+	50331653, 100663319, 201326611, 402653189, 805306457, 1610612741,
+	3221225473, 4294967291
+};
+
+static uint64_t htbl_nelems_as_prime(size_t nelems_max)
+{
+	unsigned int p = 11;
+
+	for (size_t i = 0; i < ARRAY_SIZE(htbl_primes); ++i) {
+		if (htbl_primes[i] > nelems_max) {
+			break;
+		}
+		p = htbl_primes[i];
+	}
+	return p;
+}
+
+static uint64_t htbl_nelems_by_memsize(const struct silofs_alloc *alloc)
+{
+	struct silofs_alloc_stat al_st = { .nbytes_max = 0 };
+	size_t memsize_ng;
+	size_t cap_factor;
+
+	silofs_allocstat(alloc, &al_st);
+	memsize_ng = al_st.nbytes_max / SILOFS_GIGA;
+	cap_factor = clamp(memsize_ng, 1, 64);
+
+	/* 64K-elems for each available 1G of memory */
+	return (1UL << 16) * cap_factor;
+}
+
+static uint64_t htbl_nelems_by(const struct silofs_alloc *alloc)
+{
+	return htbl_nelems_as_prime(htbl_nelems_by_memsize(alloc));
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static uint64_t twang_mix64(uint64_t key)
 {
@@ -338,24 +379,24 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_hmapq_init(struct silofs_hmapq *hmapq,
-                      struct silofs_alloc *alloc, size_t cap)
+int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 {
-	struct silofs_list_head *htbl;
+	struct silofs_list_head *htbl = NULL;
+	size_t nelems;
 
-	htbl = silofs_lista_new(alloc, cap);
+	nelems = htbl_nelems_by(alloc);
+	htbl = silofs_lista_new(alloc, nelems);
 	if (htbl == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 	listq_init(&hmapq->hmq_lru);
 	hmapq->hmq_htbl = htbl;
-	hmapq->hmq_htbl_cap = cap;
+	hmapq->hmq_htbl_cap = nelems;
 	hmapq->hmq_htbl_sz = 0;
 	return 0;
 }
 
-void silofs_hmapq_fini(struct silofs_hmapq *hmapq,
-                       struct silofs_alloc *alloc)
+void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 {
 	if (hmapq->hmq_htbl != NULL) {
 		silofs_lista_del(hmapq->hmq_htbl, hmapq->hmq_htbl_cap, alloc);

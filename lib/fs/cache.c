@@ -31,30 +31,6 @@ static void cache_evict_some(struct silofs_cache *cache);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* prime-value for hash-table of n-elements */
-static const unsigned int hcap_primes[] = {
-	13, 53, 97, 193, 389, 769, 1543, 3079, 4093, 6151, 8191, 12289, 16381,
-	24593, 32749, 49157, 65521, 98317, 131071, 147377, 196613, 294979,
-	393241, 589933, 786433, 1572869, 3145739, 6291469, 12582917, 25165843,
-	50331653, 100663319, 201326611, 402653189, 805306457, 1610612741,
-	3221225473, 4294967291
-};
-
-static size_t htbl_cap_as_prime(size_t lim)
-{
-	size_t p = 11;
-
-	for (size_t i = 0; i < ARRAY_SIZE(hcap_primes); ++i) {
-		if (hcap_primes[i] > lim) {
-			break;
-		}
-		p = hcap_primes[i];
-	}
-	return p;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static struct silofs_lblock *lbk_malloc(struct silofs_alloc *alloc, int flags)
 {
 	struct silofs_lblock *lbk;
@@ -416,12 +392,12 @@ cache_dirtyq_by(struct silofs_cache *cache, enum silofs_ltype ltype)
 	return dirtyqs_get(&cache->c_dqs, ltype);
 }
 
-static int cache_init_ui_lm(struct silofs_cache *cache, size_t cap)
+static int cache_init_ui_hmapq(struct silofs_cache *cache)
 {
-	return silofs_hmapq_init(&cache->c_ui_hmapq, cache->c_alloc, cap);
+	return silofs_hmapq_init(&cache->c_ui_hmapq, cache->c_alloc);
 }
 
-static void cache_fini_ui_lm(struct silofs_cache *cache)
+static void cache_fini_ui_hmapq(struct silofs_cache *cache)
 {
 	silofs_hmapq_fini(&cache->c_ui_hmapq, cache->c_alloc);
 }
@@ -715,12 +691,12 @@ void silofs_cache_drop_uamap(struct silofs_cache *cache)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int cache_init_vi_lm(struct silofs_cache *cache, size_t cap)
+static int cache_init_vi_hmapq(struct silofs_cache *cache)
 {
-	return silofs_hmapq_init(&cache->c_vi_hmapq, cache->c_alloc, cap);
+	return silofs_hmapq_init(&cache->c_vi_hmapq, cache->c_alloc);
 }
 
-static void cache_fini_vi_lm(struct silofs_cache *cache)
+static void cache_fini_vi_hmapq(struct silofs_cache *cache)
 {
 	silofs_hmapq_fini(&cache->c_vi_hmapq, cache->c_alloc);
 }
@@ -1167,30 +1143,19 @@ static void cache_fini_nil_bk(struct silofs_cache *cache)
 
 static void cache_fini_hmapqs(struct silofs_cache *cache)
 {
-	cache_fini_vi_lm(cache);
-	cache_fini_ui_lm(cache);
-}
-
-static size_t cache_calc_htbl_cap(const struct silofs_cache *cache)
-{
-	const size_t base = 64UL * SILOFS_KILO;
-	const size_t mem_hint_ngigs = cache->c_mem_size_hint / SILOFS_GIGA;
-	const size_t factor = clamp(mem_hint_ngigs, 1, 32);
-
-	return base * factor;
+	cache_fini_vi_hmapq(cache);
+	cache_fini_ui_hmapq(cache);
 }
 
 static int cache_init_hmapqs(struct silofs_cache *cache)
 {
-	const size_t hcap = cache_calc_htbl_cap(cache);
-	const size_t hcap_prime = htbl_cap_as_prime(hcap);
 	int err;
 
-	err = cache_init_ui_lm(cache, hcap);
+	err = cache_init_ui_hmapq(cache);
 	if (err) {
 		goto out_err;
 	}
-	err = cache_init_vi_lm(cache, hcap_prime);
+	err = cache_init_vi_hmapq(cache);
 	if (err) {
 		goto out_err;
 	}

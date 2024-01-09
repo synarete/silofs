@@ -87,18 +87,6 @@ silofs_cache_find_ui_by(struct silofs_cache *cache,
 void silofs_cache_drop_uamap(struct silofs_cache *cache);
 
 
-struct silofs_vbk_info *
-silofs_cache_lookup_vbk(struct silofs_cache *cache,
-                        loff_t voff, enum silofs_ltype vspace);
-
-struct silofs_vbk_info *
-silofs_cache_create_vbk(struct silofs_cache *cache,
-                        loff_t voff, enum silofs_ltype vspace);
-
-void silofs_cache_forget_vbk(struct silofs_cache *cache,
-                             struct silofs_vbk_info *vbki);
-
-
 struct silofs_vnode_info *
 silofs_cache_lookup_vi(struct silofs_cache *cache,
                        const struct silofs_vaddr *vaddr);

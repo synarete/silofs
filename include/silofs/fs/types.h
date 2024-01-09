@@ -51,19 +51,6 @@ enum silofs_stg_mode {
 	SILOFS_STG_RAW          = SILOFS_BIT(2), /* not-set-yet */
 };
 
-/* common control flags */
-enum silofs_flags {
-	SILOFS_F_NOW            = SILOFS_BIT(0),
-	SILOFS_F_FSYNC          = SILOFS_BIT(1),
-	SILOFS_F_RELEASE        = SILOFS_BIT(2),
-	SILOFS_F_BRINGUP        = SILOFS_BIT(4),
-	SILOFS_F_OPSTART        = SILOFS_BIT(5),
-	SILOFS_F_OPFINISH       = SILOFS_BIT(6),
-	SILOFS_F_TIMEOUT        = SILOFS_BIT(7),
-	SILOFS_F_IDLE           = SILOFS_BIT(8),
-	SILOFS_F_WALKFS         = SILOFS_BIT(9),
-};
-
 /* fs-env control flags */
 enum silofs_env_flags {
 	SILOFS_ENVF_NLOOKUP     = SILOFS_BIT(0),

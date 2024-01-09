@@ -20,10 +20,6 @@
 #include <silofs/fs-private.h>
 #include <limits.h>
 
-
-#define CACHE_RETRY     (4)
-
-
 static void vi_do_undirtify(struct silofs_vnode_info *vi);
 static void cache_post_op(struct silofs_cache *cache);
 static void cache_drop_uamap(struct silofs_cache *cache);
@@ -199,9 +195,9 @@ static void lni_delete(struct silofs_lnode_info *lni,
 	del(lni, alloc, flags);
 }
 
-static int visit_evictable_lni(struct silofs_hmapq_elem *lme, void *arg)
+static int visit_evictable_lni(struct silofs_hmapq_elem *hmqe, void *arg)
 {
-	struct silofs_lnode_info *lni = lni_from_hmqe(lme);
+	struct silofs_lnode_info *lni = lni_from_hmqe(hmqe);
 	struct silofs_lnode_info **out_lni = arg;
 	int ret = 0;
 
@@ -406,14 +402,15 @@ static struct silofs_unode_info *
 cache_find_evictable_ui(struct silofs_cache *cache)
 {
 	struct silofs_lnode_info *lni = NULL;
-	struct silofs_hmapq *hmapq = &cache->c_ui_hmapq;
 
-	silofs_hmapq_riterate(hmapq, 10, visit_evictable_ui, &lni);
+	silofs_hmapq_riterate(&cache->c_ui_hmapq, 10,
+	                      visit_evictable_ui, &lni);
 	return silofs_ui_from_lni(lni);
 }
 
 static struct silofs_unode_info *
-cache_find_ui(struct silofs_cache *cache, const struct silofs_uaddr *uaddr)
+cache_find_ui(const struct silofs_cache *cache,
+              const struct silofs_uaddr *uaddr)
 {
 	struct silofs_hkey hkey;
 	struct silofs_hmapq_elem *hmqe;
@@ -519,8 +516,8 @@ static int try_evict_ui(struct silofs_hmapq_elem *lme, void *arg)
 
 static void cache_drop_evictable_uis(struct silofs_cache *cache)
 {
-	silofs_hmapq_riterate(&cache->c_ui_hmapq,
-	                      SILOFS_HMAPQ_ITERALL, try_evict_ui, cache);
+	silofs_hmapq_riterate(&cache->c_ui_hmapq, SILOFS_HMAPQ_ITERALL,
+	                      try_evict_ui, cache);
 }
 
 static struct silofs_unode_info *
@@ -591,7 +588,7 @@ static struct silofs_unode_info *
 cache_require_ui(struct silofs_cache *cache, const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui = NULL;
-	int retry = CACHE_RETRY;
+	int retry = 4;
 
 	while (retry-- > 0) {
 		ui = cache_new_ui(cache, ulink);
@@ -705,9 +702,9 @@ static struct silofs_vnode_info *
 cache_find_evictable_vi(struct silofs_cache *cache)
 {
 	struct silofs_lnode_info *lni = NULL;
-	struct silofs_hmapq *hmapq = &cache->c_vi_hmapq;
 
-	silofs_hmapq_riterate(hmapq, 10, visit_evictable_vi, &lni);
+	silofs_hmapq_riterate(&cache->c_vi_hmapq, 10,
+	                      visit_evictable_vi, &lni);
 	return silofs_vi_from_lni(lni);
 }
 
@@ -825,8 +822,8 @@ static int try_evict_vi(struct silofs_hmapq_elem *hmqe, void *arg)
 
 static void cache_drop_evictable_vis(struct silofs_cache *cache)
 {
-	silofs_hmapq_riterate(&cache->c_vi_hmapq,
-	                      SILOFS_HMAPQ_ITERALL, try_evict_vi, cache);
+	silofs_hmapq_riterate(&cache->c_vi_hmapq, SILOFS_HMAPQ_ITERALL,
+	                      try_evict_vi, cache);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -852,8 +849,8 @@ silofs_cache_lookup_vi(struct silofs_cache *cache,
 static struct silofs_vnode_info *
 cache_require_vi(struct silofs_cache *cache, const struct silofs_vaddr *vaddr)
 {
-	int retry = CACHE_RETRY;
 	struct silofs_vnode_info *vi = NULL;
+	int retry = 4;
 
 	while (retry-- > 0) {
 		vi = cache_new_vi(cache, vaddr);
@@ -959,7 +956,7 @@ static void cache_evict_some(struct silofs_cache *cache)
 static size_t cache_memory_pressure(const struct silofs_cache *cache)
 {
 	struct silofs_alloc_stat st;
-	size_t mem_pres = 1;
+	size_t mem_pres = 0;
 
 	silofs_allocstat(cache->c_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {

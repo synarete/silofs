@@ -23,9 +23,9 @@ struct silofs_psenv;
 /* pnode: base of all physical-mapping nodes */
 struct silofs_pnode_info {
 	struct silofs_paddr             p_paddr;
-	struct silofs_list_head         p_htb_lh;
-	struct silofs_list_head         p_lru_lh;
+	struct silofs_hmapq_elem        p_hmqe;
 	struct silofs_psenv            *p_psenv;
+	enum silofs_ptype               p_type;
 };
 
 /* btree-node */
@@ -42,6 +42,9 @@ struct silofs_btleaf_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+bool silofs_pni_isevictable(const struct silofs_pnode_info *pni);
+
+
 struct silofs_btnode_info *
 silofs_bti_new(const struct silofs_paddr *paddr,
                struct silofs_alloc *alloc);
@@ -49,6 +52,8 @@ silofs_bti_new(const struct silofs_paddr *paddr,
 void silofs_bti_del(struct silofs_btnode_info *pni,
                     struct silofs_alloc *alloc);
 
+struct silofs_btnode_info *
+silofs_bti_from_pni(const struct silofs_pnode_info *pi);
 
 
 struct silofs_btleaf_info *
@@ -57,5 +62,8 @@ silofs_bli_new(const struct silofs_paddr *paddr,
 
 void silofs_bli_del(struct silofs_btleaf_info *bli,
                     struct silofs_alloc *alloc);
+
+struct silofs_btleaf_info *
+silofs_bli_from_pni(const struct silofs_pnode_info *pni);
 
 #endif /* SILOFS_PNODES_H_ */

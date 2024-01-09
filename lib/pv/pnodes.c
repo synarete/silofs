@@ -208,23 +208,28 @@ static void btl_del(struct silofs_btree_leaf *btl, struct silofs_alloc *alloc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void pni_init(struct silofs_pnode_info *pni,
+static void pni_init(struct silofs_pnode_info *pni, enum silofs_ptype type,
                      const struct silofs_paddr *paddr)
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
 
-	paddr_assign(&pni->p_paddr, paddr);
-	list_head_init(&pni->p_htb_lh);
-	list_head_init(&pni->p_lru_lh);
+	silofs_paddr_assign(&pni->p_paddr, paddr);
+	silofs_hmqe_init(&pni->p_hmqe);
+	silofs_hkey_by_paddr(&pni->p_hmqe.hme_key, &pni->p_paddr);
 	pni->p_psenv = NULL;
+	pni->p_type = type;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
-	paddr_reset(&pni->p_paddr);
-	list_head_fini(&pni->p_htb_lh);
-	list_head_fini(&pni->p_lru_lh);
+	silofs_paddr_reset(&pni->p_paddr);
+	silofs_hmqe_fini(&pni->p_hmqe);
 	pni->p_psenv = NULL;
+}
+
+bool silofs_pni_isevictable(const struct silofs_pnode_info *pni)
+{
+	return silofs_hmqe_is_evictable(&pni->p_hmqe);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -248,7 +253,7 @@ static void bti_init(struct silofs_btnode_info *bti,
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
 
-	pni_init(&bti->btn_pni, paddr);
+	pni_init(&bti->btn_pni, SILOFS_PTYPE_BTNODE, paddr);
 	bti->btn = NULL;
 }
 
@@ -287,6 +292,29 @@ void silofs_bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 	btn_del(btn, alloc);
 }
 
+static struct silofs_btnode_info *
+bti_unconst(const struct silofs_btnode_info *bti)
+{
+	union {
+		const struct silofs_btnode_info *p;
+		struct silofs_btnode_info *q;
+	} u = {
+		.p = bti
+	};
+	return u.q;
+}
+
+struct silofs_btnode_info *
+silofs_bti_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_btnode_info *bti = NULL;
+
+	if ((pni != NULL) && (pni->p_type == SILOFS_PTYPE_BTNODE)) {
+		bti = container_of2(pni, struct silofs_btnode_info, btn_pni);
+	}
+	return bti_unconst(bti);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_btleaf_info *bli_malloc(struct silofs_alloc *alloc)
@@ -308,7 +336,7 @@ static void bli_init(struct silofs_btleaf_info *bli,
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
 
-	pni_init(&bli->btl_pni, paddr);
+	pni_init(&bli->btl_pni, SILOFS_PTYPE_BTLEAF, paddr);
 	bli->btl = NULL;
 }
 
@@ -346,3 +374,27 @@ void silofs_bli_del(struct silofs_btleaf_info *bli, struct silofs_alloc *alloc)
 	bli_free(bli, alloc);
 	btl_del(btl, alloc);
 }
+
+static struct silofs_btleaf_info *
+bli_unconst(const struct silofs_btleaf_info *bli)
+{
+	union {
+		const struct silofs_btleaf_info *p;
+		struct silofs_btleaf_info *q;
+	} u = {
+		.p = bli
+	};
+	return u.q;
+}
+
+struct silofs_btleaf_info *
+silofs_bli_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_btleaf_info *bli = NULL;
+
+	if ((pni != NULL) && (pni->p_type == SILOFS_PTYPE_BTLEAF)) {
+		bli = container_of2(pni, struct silofs_btleaf_info, btl_pni);
+	}
+	return bli_unconst(bli);
+}
+

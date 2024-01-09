@@ -14,25 +14,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_FLAGS_H_
+#define SILOFS_FLAGS_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/flags.h>
-#include <silofs/addr/offlba.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/meta.h>
-#include <silofs/addr/ltype.h>
-#include <silofs/addr/ivkey.h>
-#include <silofs/addr/laddr.h>
-#include <silofs/addr/paddr.h>
-#include <silofs/addr/uaddr.h>
-#include <silofs/addr/vaddr.h>
-#include <silofs/addr/hmapq.h>
+#include <silofs/macros.h>
 
-#ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/addr-private.h>
-#endif
+/* common control flags */
+enum silofs_flags {
+	SILOFS_F_NOW            = SILOFS_BIT(0),
+	SILOFS_F_FSYNC          = SILOFS_BIT(1),
+	SILOFS_F_RELEASE        = SILOFS_BIT(2),
+	SILOFS_F_BRINGUP        = SILOFS_BIT(4),
+	SILOFS_F_OPSTART        = SILOFS_BIT(5),
+	SILOFS_F_OPFINISH       = SILOFS_BIT(6),
+	SILOFS_F_TIMEOUT        = SILOFS_BIT(7),
+	SILOFS_F_IDLE           = SILOFS_BIT(8),
+};
 
-#endif /* SILOFS_ADDR_H_ */
+#endif /* SILOFS_FLAGS_H_ */

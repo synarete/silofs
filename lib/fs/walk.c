@@ -109,7 +109,7 @@ static void wac_resetup(struct silofs_walk_ctx *wa_ctx,
 
 static void wac_relax_cache(const struct silofs_walk_ctx *wa_ctx)
 {
-	silofs_fsenv_relax_caches(wa_ctx->fsenv, SILOFS_F_WALKFS);
+	silofs_fsenv_relax_caches(wa_ctx->fsenv, SILOFS_F_OPSTART);
 }
 
 static void wac_push_height(struct silofs_walk_ctx *wa_ctx)

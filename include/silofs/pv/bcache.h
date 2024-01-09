@@ -30,4 +30,26 @@ int silofs_bcache_init(struct silofs_bcache *bcache,
 
 void silofs_bcache_fini(struct silofs_bcache *bcache);
 
+bool silofs_bcache_isempty(const struct silofs_bcache *bcache);
+
+void silofs_bcache_drop(struct silofs_bcache *bcache);
+
+void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
+
+struct silofs_btnode_info *
+silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
+                         const struct silofs_paddr *paddr);
+
+struct silofs_btnode_info *
+silofs_bcache_create_bti(struct silofs_bcache *bcache,
+                         const struct silofs_paddr *paddr);
+
+struct silofs_btleaf_info *
+silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
+                         const struct silofs_paddr *paddr);
+
+struct silofs_btleaf_info *
+silofs_bcache_create_bli(struct silofs_bcache *bcache,
+                         const struct silofs_paddr *paddr);
+
 #endif /* SILOFS_BCACHE_H_ */

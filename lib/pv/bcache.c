@@ -43,6 +43,11 @@ static void pni_do_undirtify(struct silofs_pnode_info *pni)
 	pni->p_hmqe.hme_dirty = false;
 }
 
+static bool pni_isevictable(const struct silofs_pnode_info *pni)
+{
+	return silofs_hmqe_is_evictable(&pni->p_hmqe);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bcache_init(struct silofs_bcache *bcache,
@@ -173,6 +178,7 @@ bcache_new_pni(const struct silofs_bcache *bcache,
 	case SILOFS_PTYPE_BTLEAF:
 		pni = bcache_new_bli_as_pni(bcache, paddr);
 		break;
+	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
 	default:
@@ -194,6 +200,7 @@ static void bcache_del_pni(const struct silofs_bcache *bcache,
 	case SILOFS_PTYPE_BTLEAF:
 		bcache_del_bli_by_pni(bcache, pni);
 		break;
+	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
 	default:
@@ -207,7 +214,7 @@ static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
 	struct silofs_pnode_info **out_pni = arg;
 	int ret = 0;
 
-	if (silofs_pni_isevictable(pni)) {
+	if (pni_isevictable(pni)) {
 		*out_pni = pni; /* found candidate for eviction */
 		ret = 1;
 	}

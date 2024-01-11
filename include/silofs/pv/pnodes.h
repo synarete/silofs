@@ -42,19 +42,22 @@ struct silofs_btleaf_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_pni_isevictable(const struct silofs_pnode_info *pni);
-
-
 struct silofs_btnode_info *
 silofs_bti_new(const struct silofs_paddr *paddr,
                struct silofs_alloc *alloc);
 
-void silofs_bti_del(struct silofs_btnode_info *pni,
+void silofs_bti_del(struct silofs_btnode_info *bti,
                     struct silofs_alloc *alloc);
 
 struct silofs_btnode_info *
 silofs_bti_from_pni(const struct silofs_pnode_info *pi);
 
+int silofs_bti_resolve(const struct silofs_btnode_info *bti,
+                       const struct silofs_laddr *laddr,
+                       struct silofs_paddr *out_paddr);
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_btleaf_info *
 silofs_bli_new(const struct silofs_paddr *paddr,

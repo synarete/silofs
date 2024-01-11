@@ -104,7 +104,7 @@ CFLAGS += -Wshadow -Wfloat-equal -Wwrite-strings -Wpointer-arith
 CFLAGS += -Wcast-align -Wsign-compare -Wredundant-decls -Wformat
 CFLAGS += -Wmissing-include-dirs -Wmissing-declarations -Wswitch -Wswitch-enum
 CFLAGS += -Wswitch-default -Wcomment -Wparentheses -Wsequence-point
-CFLAGS += -Wpointer-arith -Wpointer-sign -Wdisabled-optimization -Wmain -Wundef
+CFLAGS += -Wpointer-arith -Wdisabled-optimization -Wmain -Wundef
 CFLAGS += -Wunknown-pragmas -Wunused-macros -Wendif-labels
 CFLAGS += -Wvla -Waddress -Woverlength-strings -Wconversion -Wsign-conversion
 CFLAGS += -Wunreachable-code -Wwrite-strings -Wlarger-than=4096
@@ -121,7 +121,7 @@ CFLAGS += -fPIE -fPIC
 # C-Dialect compilation flags
 CFLAGS2 += -Wbad-function-cast -Wmissing-prototypes -Waggregate-return
 CFLAGS2 += -Wdeclaration-after-statement -Wnested-externs -Wstrict-prototypes
-CFLAGS2 += -Wold-style-definition -Winit-self -std=gnu11
+CFLAGS2 += -Wold-style-definition -Wpointer-sign -Winit-self -std=gnu11
 CFLAGS2 += -Wfree-nonheap-object -Wuninitialized
 
 # Debug flags

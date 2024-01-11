@@ -994,7 +994,7 @@ static size_t cache_calc_niter(const struct silofs_cache *cache, int flags)
 
 static size_t cache_nmapped_uis(const struct silofs_cache *cache)
 {
-	return cache->c_ui_hmapq.hmq_htbl_sz;
+	return cache->c_ui_hmapq.hmq_htbl_size;
 }
 
 static size_t cache_relax_by_niter(struct silofs_cache *cache,

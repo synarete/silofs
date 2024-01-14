@@ -19,9 +19,25 @@
 #include <silofs/errors.h>
 #include <silofs/infra/iovec.h>
 #include <string.h>
-#include <errno.h>
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+void silofs_iovec_reset(struct silofs_iovec *iov)
+{
+	iov->iov_ref = NULL;
+	iov->iov_base = NULL;
+	iov->iov_len = 0;
+	iov->iov_off = 0;
+	iov->iov_fd = -1;
+}
+
+void silofs_iovec_assign(struct silofs_iovec *iov,
+                         const struct silofs_iovec *other)
+{
+	iov->iov_ref = other->iov_ref;
+	iov->iov_base = other->iov_base;
+	iov->iov_len = other->iov_len;
+	iov->iov_off = other->iov_off;
+	iov->iov_fd = other->iov_fd;
+}
 
 int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf)
 {

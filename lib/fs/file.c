@@ -808,9 +808,9 @@ static void fni_resolve_child_by_slot(const struct silofs_finode_info *fni,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void *base_of(void *bk_start, loff_t off_in_bk)
+static void *base_of(void *start, loff_t off_within)
 {
-	return (uint8_t *)bk_start + off_in_bk;
+	return (uint8_t *)start + off_within;
 }
 
 static void filc_incref(const struct silofs_file_ctx *f_ctx)
@@ -831,51 +831,36 @@ static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 	return nil_bk->u.bk;
 }
 
-static int
-filc_iovec_by_alloc(const struct silofs_file_ctx *f_ctx,
-                    void *bk_start, loff_t off_in_bk, size_t len,
-                    struct silofs_iovec *out_iov)
+static void filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
+                                 struct silofs_fileaf_info *fli, bool all,
+                                 struct silofs_iovec *out_iov)
 {
-	return silofs_memresolve(f_ctx->fsenv->fse.alloc,
-	                         base_of(bk_start, off_in_bk),
-	                         len, out_iov);
-}
-
-static int
-filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
-                     struct silofs_fileaf_info *fli, bool all,
-                     struct silofs_iovec *out_iov)
-{
-	void *dat;
-	loff_t off_in_bk;
+	void *dat = fli_data(fli);
+	loff_t off_within;
 	size_t len;
-	int err;
 
 	if (all) {
-		off_in_bk = 0;
+		off_within = 0;
 		len = fli_data_len(fli);
 	} else {
-		off_in_bk = fli_off_within(fli, f_ctx->off);
+		off_within = fli_off_within(fli, f_ctx->off);
 		len = fli_len_within(fli, f_ctx->off, f_ctx->end);
 	}
 
-	dat = fli_data(fli);
-	err = filc_iovec_by_alloc(f_ctx, dat, off_in_bk, len, out_iov);
-	if (err) {
-		return err;
-	}
+	silofs_iovec_reset(out_iov);
+	out_iov->iov_base = base_of(dat, off_within);
+	out_iov->iov_len = len;
 	out_iov->iov_ref = f_ctx->with_backref ? fli : NULL;
-	return 0;
 }
 
-static int filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
-                               const enum silofs_ltype ltype,
-                               struct silofs_iovec *out_iov)
+static void filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
+                                const enum silofs_ltype ltype,
+                                struct silofs_iovec *out_iov)
 {
-	void *buf = filc_nil_block(f_ctx);
-	const size_t len = len_of_data(f_ctx->off, f_ctx->end, ltype);
-
-	return filc_iovec_by_alloc(f_ctx, buf, 0, len, out_iov);
+	silofs_iovec_reset(out_iov);
+	out_iov->iov_base = filc_nil_block(f_ctx);
+	out_iov->iov_len = len_of_data(f_ctx->off, f_ctx->end, ltype);
+	out_iov->iov_off = 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1676,22 +1661,18 @@ filc_seek_hole_by_heads(struct silofs_file_ctx *f_ctx,
 	return -SILOFS_ENOENT;
 }
 
-static int filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
-                              struct silofs_fileaf_info *fli,
-                              const struct silofs_vaddr *vaddr,
-                              struct silofs_iovec *out_iov)
+static void filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
+                               struct silofs_fileaf_info *fli,
+                               struct silofs_iovec *out_iov)
 {
 	enum silofs_ltype ltype;
-	int err;
 
 	if (fli != NULL) {
-		err = filc_iovec_by_fileaf(f_ctx, fli, false, out_iov);
+		filc_iovec_by_fileaf(f_ctx, fli, false, out_iov);
 	} else {
 		filc_curr_data_ltype(f_ctx, &ltype);
-		silofs_assert((vaddr == NULL) || (ltype == vaddr->ltype));
-		err = filc_iovec_by_nilbk(f_ctx, ltype, out_iov);
+		filc_iovec_by_nilbk(f_ctx, ltype, out_iov);
 	}
-	return err;
 }
 
 static void iovref_pre(const struct silofs_iovec *iov, int wr_mode)
@@ -1713,9 +1694,7 @@ static void iovref_post(const struct silofs_iovec *iov, int wr_mode)
 }
 
 static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
-                              struct silofs_fileaf_info *fli,
-                              const struct silofs_vaddr *vaddr,
-                              size_t *out_len)
+                              struct silofs_fileaf_info *fli, size_t *out_len)
 {
 	struct silofs_iovec iov = {
 		.iov_ref = NULL,
@@ -1727,11 +1706,7 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 	int wr_mode = f_ctx->op_mask & OP_WRITE;
 	int err;
 
-	*out_len = 0;
-	err = filc_resolve_iovec(f_ctx, fli, vaddr, &iov);
-	if (err) {
-		return err;
-	}
+	filc_resolve_iovec(f_ctx, fli, &iov);
 	iovref_pre(&iov, wr_mode);
 	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iov);
 	*out_len = iov.iov_len;
@@ -1746,14 +1721,13 @@ static int
 filc_export_data_by_fileaf(const struct silofs_file_ctx *f_ctx,
                            struct silofs_fileaf_info *fli, size_t *out_sz)
 {
-	return filc_call_rw_actor(f_ctx, fli, fli_vaddr(fli), out_sz);
+	return filc_call_rw_actor(f_ctx, fli, out_sz);
 }
 
-static int filc_export_data_by_vaddr(struct silofs_file_ctx *f_ctx,
-                                     const struct silofs_vaddr *vaddr,
-                                     size_t *out_size)
+static int
+filc_export_data_by_curr(struct silofs_file_ctx *f_ctx, size_t *out_sz)
 {
-	return filc_call_rw_actor(f_ctx, NULL, vaddr, out_size);
+	return filc_call_rw_actor(f_ctx, NULL, out_sz);
 }
 
 static int
@@ -1762,7 +1736,7 @@ filc_import_data_by_fileaf(const struct silofs_file_ctx *f_ctx,
 {
 	int err;
 
-	err = filc_call_rw_actor(f_ctx, fli, fli_vaddr(fli), out_sz);
+	err = filc_call_rw_actor(f_ctx, fli, out_sz);
 	if (!err) {
 		filc_dirtify_fileaf(f_ctx, fli);
 	}
@@ -1865,7 +1839,7 @@ static int filc_read_leaf_by_copy(struct silofs_file_ctx *f_ctx,
 static int
 filc_read_leaf_as_zeros(struct silofs_file_ctx *f_ctx, size_t *out_sz)
 {
-	return filc_export_data_by_vaddr(f_ctx, NULL, out_sz);
+	return filc_export_data_by_curr(f_ctx, out_sz);
 }
 
 static int filc_stage_fileaf_by(const struct silofs_file_ctx *f_ctx,
@@ -4153,16 +4127,10 @@ filc_copy_data_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 	fli_incref(fli_dst);
 
 	all = (len == flref_src->vaddr.len);
-	err = filc_iovec_by_fileaf(f_ctx_src, fli_src, all, &iov_src);
-	if (err) {
-		goto out;
-	}
+	filc_iovec_by_fileaf(f_ctx_src, fli_src, all, &iov_src);
 
 	all = (len == flref_dst->vaddr.len);
-	err = filc_iovec_by_fileaf(f_ctx_dst, fli_dst, all, &iov_dst);
-	if (err) {
-		goto out;
-	}
+	filc_iovec_by_fileaf(f_ctx_dst, fli_dst, all, &iov_dst);
 
 	err = silofs_iovec_copy_mem(&iov_src, &iov_dst, len);
 	if (err) {

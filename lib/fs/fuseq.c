@@ -1161,14 +1161,13 @@ static int fuseq_reply_read_buf(struct silofs_fuseq_worker *fqw,
 
 static void iovec_reset(struct silofs_iovec *iov)
 {
-	memset(iov, 0, sizeof(*iov));
-	iov->iov_fd = -1;
+	silofs_iovec_reset(iov);
 }
 
 static void iovec_assign(struct silofs_iovec *iov,
                          const struct silofs_iovec *other)
 {
-	memcpy(iov, other, sizeof(*iov));
+	silofs_iovec_assign(iov, other);
 }
 
 static bool iovec_isfdseq(const struct silofs_iovec *iov1,

@@ -23,13 +23,17 @@
 
 /* prime-value for hash-table of n-elements */
 static const unsigned int htbl_primes[] = {
-	13, 53, 97, 193, 389, 509, 1021, 2557, 3581, 3583, 4093, 5119, 6143,
-	8191, 20479, 24571, 28669, 36857, 45053, 53233, 65521, 73727, 81919,
-	94207, 131071, 172031, 241663, 245759, 253951, 266239, 294911, 356351,
-	364543, 401407, 438271, 442367, 479231, 487423, 499711, 524287, 528383,
-	565247, 585727, 602111, 626687, 671743, 675839, 724991, 737279, 745471,
-	770047, 774143, 786431, 847871, 917503, 929791, 942079, 954367, 995327,
-	1572869,
+	13, 53, 97, 167, 193, 283, 389, 509, 1021, 2557, 3041, 3581, 3583,
+	4093, 5107, 5119, 6143, 7159, 8191, 9209, 10141, 11257, 11261, 12281,
+	13309, 14699, 15359, 16381, 17401, 18427, 20479, 24571, 27529, 28669,
+	36857, 45053, 49207, 53233, 65521, 73727, 77291, 81919, 85237, 94207,
+	106693, 131071, 160423, 172031, 203789, 241663, 245759, 253951, 266239,
+	294911, 356351, 364289, 364543, 401407, 438271, 442367, 479231, 487423,
+	499711, 524287, 528383, 565247, 585727, 602111, 626687, 671743, 675839,
+	724991, 737279, 745471, 770047, 774143, 786431, 847871, 917503, 929791,
+	942079, 954367, 991961, 995327, 1203793, 1572869, 1667321, 3704053,
+	4792057,
+
 };
 
 static uint64_t htbl_prime_of(size_t nelems)
@@ -58,11 +62,11 @@ static uint64_t htbl_nslots_by_memsize(const struct silofs_alloc *alloc)
 	/* derive slots (buckets) factor based on available memory size */
 	nslots_factor = clamp(memsize_ngigs, 1, 64);
 
-	/* 8K hash-buckets for each available 1G of memory */
-	return (1UL << 13) * nslots_factor;
+	/* 4K hash-buckets for each available 1G of memory */
+	return (1UL << 12) * nslots_factor;
 }
 
-static size_t htbl_calc_nslots(const struct silofs_alloc *alloc)
+static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint32_t fac)
 {
 	uint64_t nslots;
 
@@ -70,7 +74,7 @@ static size_t htbl_calc_nslots(const struct silofs_alloc *alloc)
 	nslots = htbl_nslots_by_memsize(alloc);
 
 	/* abd clamp it to prime value */
-	nslots = htbl_prime_of(nslots);
+	nslots = htbl_prime_of(nslots * clamp(fac, 1, 10));
 
 	return nslots;
 }
@@ -435,12 +439,13 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
+int silofs_hmapq_init(struct silofs_hmapq *hmapq,
+                      struct silofs_alloc *alloc, unsigned int fac)
 {
 	struct silofs_list_head *htbl = NULL;
 	size_t nslots;
 
-	nslots = htbl_calc_nslots(alloc);
+	nslots = htbl_calc_nslots(alloc, fac);
 	htbl = silofs_lista_new(alloc, nslots);
 	if (htbl == NULL) {
 		return -SILOFS_ENOMEM;
@@ -615,13 +620,12 @@ void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
 
 size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq)
 {
-	const size_t fac = 4;
 	size_t ovp = 0;
 
-	if (hmapq->hmq_htbl_size > (fac * hmapq->hmq_htbl_nslots)) {
-		ovp = (hmapq->hmq_htbl_size - (fac * hmapq->hmq_htbl_nslots));
-	} else if (hmapq->hmq_lru.sz > (fac * hmapq->hmq_htbl_size)) {
-		ovp = (hmapq->hmq_lru.sz - (fac * hmapq->hmq_htbl_size));
+	if (hmapq->hmq_htbl_size > hmapq->hmq_htbl_nslots) {
+		ovp = hmapq->hmq_htbl_size - hmapq->hmq_htbl_nslots;
+	} else if (hmapq->hmq_lru.sz > (2 * hmapq->hmq_htbl_size)) {
+		ovp = hmapq->hmq_lru.sz - (2 * hmapq->hmq_htbl_size);
 	}
 	return ovp;
 }

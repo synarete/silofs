@@ -390,7 +390,7 @@ cache_dirtyq_by(struct silofs_cache *cache, enum silofs_ltype ltype)
 
 static int cache_init_ui_hmapq(struct silofs_cache *cache)
 {
-	return silofs_hmapq_init(&cache->c_ui_hmapq, cache->c_alloc);
+	return silofs_hmapq_init(&cache->c_ui_hmapq, cache->c_alloc, 1);
 }
 
 static void cache_fini_ui_hmapq(struct silofs_cache *cache)
@@ -690,7 +690,7 @@ void silofs_cache_drop_uamap(struct silofs_cache *cache)
 
 static int cache_init_vi_hmapq(struct silofs_cache *cache)
 {
-	return silofs_hmapq_init(&cache->c_vi_hmapq, cache->c_alloc);
+	return silofs_hmapq_init(&cache->c_vi_hmapq, cache->c_alloc, 5);
 }
 
 static void cache_fini_vi_hmapq(struct silofs_cache *cache)

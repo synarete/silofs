@@ -51,7 +51,7 @@ int silofs_bcache_init(struct silofs_bcache *bcache,
 	int err;
 
 	silofs_memzero(bcache, sizeof(*bcache));
-	err = silofs_hmapq_init(&bcache->bc_hmapq, alloc);
+	err = silofs_hmapq_init(&bcache->bc_hmapq, alloc, 1);
 	if (err) {
 		return err;
 	}

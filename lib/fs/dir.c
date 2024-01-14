@@ -2312,31 +2312,60 @@ static int dirc_iterate(struct silofs_dir_ctx *d_ctx)
 	return dirc_readdir_eos(d_ctx);
 }
 
-static int dirc_readdir_emit(struct silofs_dir_ctx *d_ctx)
+static bool dirc_emit_dot(struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_iattr iattr;
-	int err = 0;
+	return dirc_emit_ii(d_ctx, ".", 1, d_ctx->dir_ii);
+}
+
+static bool dirc_emit_dotdot(struct silofs_dir_ctx *d_ctx)
+{
+	return dirc_emit_ii(d_ctx, "..", 2, d_ctx->parent_ii);
+}
+
+static bool dirc_emit_meta(struct silofs_dir_ctx *d_ctx)
+{
 	bool ok = true;
 
 	if (d_ctx->rd_ctx->pos == 0) {
-		ok = dirc_emit_ii(d_ctx, ".", 1, d_ctx->dir_ii);
+		ok = dirc_emit_dot(d_ctx);
 		d_ctx->rd_ctx->pos = 1;
 	}
 	if (ok && (d_ctx->rd_ctx->pos == 1)) {
-		ok = dirc_emit_ii(d_ctx, "..", 2, d_ctx->parent_ii);
+		ok = dirc_emit_dotdot(d_ctx);
 		d_ctx->rd_ctx->pos = 2;
 	}
-	if (ok && !dirc_inrange(d_ctx)) {
-		err = dirc_readdir_eos(d_ctx);
+	return ok;
+}
+
+static int dirc_readdir_iter(struct silofs_dir_ctx *d_ctx)
+{
+	int err = 0;
+
+	if (dirc_emit_meta(d_ctx)) {
+		if (!dirc_inrange(d_ctx)) {
+			err = dirc_readdir_eos(d_ctx);
+		} else if (!dirc_stopped(d_ctx)) {
+			err = dirc_iterate(d_ctx);
+		}
 	}
-	if (ok && !dirc_stopped(d_ctx)) {
-		err = dirc_iterate(d_ctx);
-	}
+	return err;
+}
+
+static void dirc_post_readdir(const struct silofs_dir_ctx *d_ctx)
+{
+	struct silofs_iattr iattr;
 
 	ii_mkiattr(d_ctx->dir_ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	ii_update_iattrs(d_ctx->dir_ii, task_creds(d_ctx->task), &iattr);
+}
 
+static int dirc_readdir_and_update(struct silofs_dir_ctx *d_ctx)
+{
+	int err;
+
+	err = dirc_readdir_iter(d_ctx);
+	dirc_post_readdir(d_ctx);
 	return err;
 }
 
@@ -2380,7 +2409,7 @@ static int dirc_do_readdir(struct silofs_dir_ctx *d_ctx)
 	if (err) {
 		return err;
 	}
-	err = dirc_readdir_emit(d_ctx);
+	err = dirc_readdir_and_update(d_ctx);
 	if (err) {
 		return err;
 	}

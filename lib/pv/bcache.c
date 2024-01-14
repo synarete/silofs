@@ -337,7 +337,7 @@ static size_t bcache_memory_pressure(const struct silofs_bcache *bcache)
 	struct silofs_alloc_stat st;
 	size_t mem_pres = 0;
 
-	silofs_allocstat(bcache->bc_alloc, &st);
+	silofs_memstat(bcache->bc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
 	}

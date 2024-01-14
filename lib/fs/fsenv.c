@@ -137,7 +137,7 @@ static size_t fsenv_calc_iopen_limit(const struct silofs_fsenv *fsenv)
 	const size_t align = 128;
 	size_t lim;
 
-	silofs_allocstat(fsenv->fse.alloc, &st);
+	silofs_memstat(fsenv->fse.alloc, &st);
 	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
 	return div_round_up(lim, align) * align;
 }
@@ -542,5 +542,5 @@ void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime)
 void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
                             struct silofs_alloc_stat *out_alst)
 {
-	silofs_allocstat(fsenv->fse.alloc, out_alst);
+	silofs_memstat(fsenv->fse.alloc, out_alst);
 }

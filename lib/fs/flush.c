@@ -914,7 +914,7 @@ static bool need_flush_by(const struct silofs_task *task,
 	if (flags & SILOFS_F_NOW) {
 		return true;
 	}
-	silofs_allocstat(task->t_fsenv->fse.alloc, &alst);
+	silofs_memstat(task->t_fsenv->fse.alloc, &alst);
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}

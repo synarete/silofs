@@ -31,14 +31,14 @@ static struct silofs_lblock *lbk_malloc(struct silofs_alloc *alloc, int flags)
 {
 	struct silofs_lblock *lbk;
 
-	lbk = silofs_allocate(alloc, sizeof(*lbk), flags);
+	lbk = silofs_memalloc(alloc, sizeof(*lbk), flags);
 	return lbk;
 }
 
 static void lbk_free(struct silofs_lblock *lbk,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, lbk, sizeof(*lbk), flags);
+	silofs_memfree(alloc, lbk, sizeof(*lbk), flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -958,7 +958,7 @@ static size_t cache_memory_pressure(const struct silofs_cache *cache)
 	struct silofs_alloc_stat st;
 	size_t mem_pres = 0;
 
-	silofs_allocstat(cache->c_alloc, &st);
+	silofs_memstat(cache->c_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
 	}
@@ -1188,7 +1188,7 @@ int silofs_cache_init(struct silofs_cache *cache,
 	struct silofs_alloc_stat st;
 	int err;
 
-	silofs_allocstat(alloc, &st);
+	silofs_memstat(alloc, &st);
 
 	cache->c_alloc = alloc;
 	cache->c_nil_lbk = NULL;

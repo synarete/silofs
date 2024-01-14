@@ -94,13 +94,13 @@ static struct silofs_btree_node *btn_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btree_node *btn;
 
-	btn = silofs_allocate(alloc, sizeof(*btn), SILOFS_ALLOCF_BZERO);
+	btn = silofs_memalloc(alloc, sizeof(*btn), SILOFS_ALLOCF_BZERO);
 	return btn;
 }
 
 static void btn_free(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, btn, sizeof(*btn), 0);
+	silofs_memfree(alloc, btn, sizeof(*btn), 0);
 }
 
 static struct silofs_btree_node *btn_new(struct silofs_alloc *alloc)
@@ -180,13 +180,13 @@ static struct silofs_btree_leaf *btl_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btree_leaf *btl;
 
-	btl = silofs_allocate(alloc, sizeof(*btl), SILOFS_ALLOCF_BZERO);
+	btl = silofs_memalloc(alloc, sizeof(*btl), SILOFS_ALLOCF_BZERO);
 	return btl;
 }
 
 static void btl_free(struct silofs_btree_leaf *btl, struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, btl, sizeof(*btl), 0);
+	silofs_memfree(alloc, btl, sizeof(*btl), 0);
 }
 
 static struct silofs_btree_leaf *btl_new(struct silofs_alloc *alloc)
@@ -238,14 +238,14 @@ static struct silofs_btnode_info *bti_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btnode_info *bti = NULL;
 
-	bti = silofs_allocate(alloc, sizeof(*bti), 0);
+	bti = silofs_memalloc(alloc, sizeof(*bti), 0);
 	return bti;
 }
 
 static void bti_free(struct silofs_btnode_info *bti,
                      struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, bti, sizeof(*bti), 0);
+	silofs_memfree(alloc, bti, sizeof(*bti), 0);
 }
 
 static void bti_init(struct silofs_btnode_info *bti,
@@ -321,14 +321,14 @@ static struct silofs_btleaf_info *bli_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btleaf_info *bli = NULL;
 
-	bli = silofs_allocate(alloc, sizeof(*bli), 0);
+	bli = silofs_memalloc(alloc, sizeof(*bli), 0);
 	return bli;
 }
 
 static void bli_free(struct silofs_btleaf_info *bli,
                      struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, bli, sizeof(*bli), 0);
+	silofs_memfree(alloc, bli, sizeof(*bli), 0);
 }
 
 static void bli_init(struct silofs_btleaf_info *bli,

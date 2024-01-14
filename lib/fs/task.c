@@ -30,7 +30,7 @@ static int sqe_setup_iov_at(struct silofs_submitq_ent *sqe,
 	silofs_assert_lt(idx, ARRAY_SIZE(sqe->iov));
 	silofs_assert_null(sqe->iov[idx].iov_base);
 
-	sqe->iov[idx].iov_base = silofs_allocate(sqe->alloc, len, 0);
+	sqe->iov[idx].iov_base = silofs_memalloc(sqe->alloc, len, 0);
 	if (sqe->iov[idx].iov_base == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -41,8 +41,8 @@ static int sqe_setup_iov_at(struct silofs_submitq_ent *sqe,
 static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 {
 	for (size_t idx = 0; idx < sqe->cnt; ++idx) {
-		silofs_deallocate(sqe->alloc, sqe->iov[idx].iov_base,
-		                  sqe->iov[idx].iov_len, 0);
+		silofs_memfree(sqe->alloc, sqe->iov[idx].iov_base,
+		               sqe->iov[idx].iov_len, 0);
 		sqe->iov[idx].iov_base = NULL;
 		sqe->iov[idx].iov_len = 0;
 	}
@@ -223,7 +223,7 @@ sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 
 	STATICASSERT_LE(sizeof(*sqe), 1024);
 
-	sqe = silofs_allocate(alloc, sizeof(*sqe), 0);
+	sqe = silofs_memalloc(alloc, sizeof(*sqe), 0);
 	if (likely(sqe != NULL)) {
 		sqe_init(sqe, alloc, uniq_id);
 	}
@@ -234,7 +234,7 @@ static void sqe_del(struct silofs_submitq_ent *sqe,
                     struct silofs_alloc *alloc)
 {
 	sqe_fini(sqe);
-	silofs_deallocate(alloc, sqe, sizeof(*sqe), 0);
+	silofs_memfree(alloc, sqe, sizeof(*sqe), 0);
 }
 
 struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)

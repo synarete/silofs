@@ -163,7 +163,7 @@ static int qal_resolve(const struct silofs_alloc *alloc,
 	return silofs_qalloc_resolve(qal, ptr, len, iov);
 }
 
-void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags)
+void *silofs_memalloc(struct silofs_alloc *alloc, size_t size, int flags)
 {
 	void *ptr = NULL;
 
@@ -173,16 +173,16 @@ void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags)
 	return ptr;
 }
 
-void silofs_deallocate(struct silofs_alloc *alloc,
-                       void *ptr, size_t size, int flags)
+void silofs_memfree(struct silofs_alloc *alloc,
+                    void *ptr, size_t size, int flags)
 {
 	if (likely(ptr && size && alloc->free_fn)) {
 		alloc->free_fn(alloc, ptr, size, flags);
 	}
 }
 
-void silofs_allocstat(const struct silofs_alloc *alloc,
-                      struct silofs_alloc_stat *out_stat)
+void silofs_memstat(const struct silofs_alloc *alloc,
+                    struct silofs_alloc_stat *out_stat)
 {
 	if (alloc->stat_fn != NULL) {
 		alloc->stat_fn(alloc, out_stat);
@@ -191,8 +191,8 @@ void silofs_allocstat(const struct silofs_alloc *alloc,
 	}
 }
 
-int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
-                        size_t len, struct silofs_iovec *iov)
+int silofs_memresolve(const struct silofs_alloc *alloc, void *ptr,
+                      size_t len, struct silofs_iovec *iov)
 {
 	int ret = -ENOTSUP;
 

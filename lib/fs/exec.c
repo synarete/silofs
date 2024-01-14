@@ -429,7 +429,7 @@ static int fs_ctx_init_fuseq(struct silofs_fs_ctx *fs_ctx)
 	if (!fs_ctx->fs_args.withfuse) {
 		return 0;
 	}
-	mem = silofs_allocate(fs_ctx->alloc, fuseq_pg_size, 0);
+	mem = silofs_memalloc(fs_ctx->alloc, fuseq_pg_size, 0);
 	if (mem == NULL) {
 		log_warn("failed to allocate fuseq: size=%lu", fuseq_pg_size);
 		return -SILOFS_ENOMEM;
@@ -437,7 +437,7 @@ static int fs_ctx_init_fuseq(struct silofs_fs_ctx *fs_ctx)
 	fqp = mem;
 	err = silofs_fuseq_init(&fqp->fuseq, fs_ctx->alloc);
 	if (err) {
-		silofs_deallocate(fs_ctx->alloc, mem, fuseq_pg_size, 0);
+		silofs_memfree(fs_ctx->alloc, mem, fuseq_pg_size, 0);
 		return err;
 	}
 	fs_ctx_bind_fuseq(fs_ctx, &fqp->fuseq);
@@ -454,8 +454,8 @@ static void fs_ctx_fini_fuseq(struct silofs_fs_ctx *fs_ctx)
 		silofs_fuseq_fini(fs_ctx->fuseq);
 		fs_ctx_bind_fuseq(fs_ctx, NULL);
 
-		silofs_deallocate(fs_ctx->alloc, fuseq_pg,
-		                  sizeof(*fuseq_pg), 0);
+		silofs_memfree(fs_ctx->alloc, fuseq_pg,
+		               sizeof(*fuseq_pg), 0);
 	}
 }
 
@@ -923,7 +923,7 @@ void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
 	const struct silofs_cache *cache = fs_ctx->cache;
 
 	silofs_memzero(cst, sizeof(*cst));
-	silofs_allocstat(fs_ctx->alloc, &alst);
+	silofs_memstat(fs_ctx->alloc, &alst);
 	cst->nalloc_bytes = alst.nbytes_use;
 	cst->ncache_unodes += cache->c_ui_hmapq.hmq_htbl_size;
 	cst->ncache_vnodes += cache->c_vi_hmapq.hmq_htbl_size;

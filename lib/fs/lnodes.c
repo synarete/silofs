@@ -73,7 +73,7 @@ view_new_by(struct silofs_alloc *alloc, enum silofs_ltype ltype)
 	struct silofs_view *view = NULL;
 	const int flags = view_alloc_flags_of(ltype, true);
 
-	view = silofs_allocate(alloc, ltype_size(ltype), flags);
+	view = silofs_memalloc(alloc, ltype_size(ltype), flags);
 	if (view != NULL) {
 		view_init_by(view, ltype);
 	}
@@ -101,7 +101,7 @@ static void view_del_by(struct silofs_view *view,
 	if (likely(view != NULL)) {
 		size = ltype_size(ltype);
 		flags = view_alloc_flags_of(ltype, false);
-		silofs_deallocate(alloc, view, size, flags);
+		silofs_memfree(alloc, view, size, flags);
 	}
 }
 
@@ -347,14 +347,14 @@ static struct silofs_sb_info *sbi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_sb_info *sbi;
 
-	sbi = silofs_allocate(alloc, sizeof(*sbi), SILOFS_ALLOCF_BZERO);
+	sbi = silofs_memalloc(alloc, sizeof(*sbi), SILOFS_ALLOCF_BZERO);
 	return sbi;
 }
 
 static void sbi_free(struct silofs_sb_info *sbi,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, sbi, sizeof(*sbi), flags);
+	silofs_memfree(alloc, sbi, sizeof(*sbi), flags);
 }
 
 static void sbi_delete(struct silofs_sb_info *sbi,
@@ -445,14 +445,14 @@ static struct silofs_spnode_info *sni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spnode_info *sni;
 
-	sni = silofs_allocate(alloc, sizeof(*sni), 0);
+	sni = silofs_memalloc(alloc, sizeof(*sni), 0);
 	return sni;
 }
 
 static void sni_free(struct silofs_spnode_info *sni,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, sni, sizeof(*sni), flags);
+	silofs_memfree(alloc, sni, sizeof(*sni), flags);
 }
 
 static void sni_delete(struct silofs_spnode_info *sni,
@@ -548,14 +548,14 @@ static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spleaf_info *sli;
 
-	sli = silofs_allocate(alloc, sizeof(*sli), 0);
+	sli = silofs_memalloc(alloc, sizeof(*sli), 0);
 	return sli;
 }
 
 static void sli_free(struct silofs_spleaf_info *sli,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, sli, sizeof(*sli), flags);
+	silofs_memfree(alloc, sli, sizeof(*sli), flags);
 }
 
 static void sli_delete(struct silofs_spleaf_info *sli,
@@ -652,14 +652,14 @@ static struct silofs_inode_info *ii_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_inode_info *ii;
 
-	ii = silofs_allocate(alloc, sizeof(*ii), 0);
+	ii = silofs_memalloc(alloc, sizeof(*ii), 0);
 	return ii;
 }
 
 static void ii_free(struct silofs_inode_info *ii,
                     struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, ii, sizeof(*ii), flags);
+	silofs_memfree(alloc, ii, sizeof(*ii), flags);
 }
 
 static void ii_delete(struct silofs_inode_info *ii,
@@ -795,14 +795,14 @@ static struct silofs_xanode_info *xai_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_xanode_info *xai;
 
-	xai = silofs_allocate(alloc, sizeof(*xai), 0);
+	xai = silofs_memalloc(alloc, sizeof(*xai), 0);
 	return xai;
 }
 
 static void xai_free(struct silofs_xanode_info *xai,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, xai, sizeof(*xai), flags);
+	silofs_memfree(alloc, xai, sizeof(*xai), flags);
 }
 
 static void xai_delete(struct silofs_xanode_info *xai,
@@ -894,14 +894,14 @@ static struct silofs_symval_info *syi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_symval_info *syi;
 
-	syi = silofs_allocate(alloc, sizeof(*syi), 0);
+	syi = silofs_memalloc(alloc, sizeof(*syi), 0);
 	return syi;
 }
 
 static void syi_free(struct silofs_symval_info *syi,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, syi, sizeof(*syi), flags);
+	silofs_memfree(alloc, syi, sizeof(*syi), flags);
 }
 
 static void syi_delete(struct silofs_symval_info *syi,
@@ -993,14 +993,14 @@ static struct silofs_dnode_info *dni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_dnode_info *dni;
 
-	dni = silofs_allocate(alloc, sizeof(*dni), 0);
+	dni = silofs_memalloc(alloc, sizeof(*dni), 0);
 	return dni;
 }
 
 static void dni_free(struct silofs_dnode_info *dni,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, dni, sizeof(*dni), flags);
+	silofs_memfree(alloc, dni, sizeof(*dni), flags);
 }
 
 static void dni_delete(struct silofs_dnode_info *dni,
@@ -1094,14 +1094,14 @@ static struct silofs_finode_info *fni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_finode_info *fni;
 
-	fni = silofs_allocate(alloc, sizeof(*fni), 0);
+	fni = silofs_memalloc(alloc, sizeof(*fni), 0);
 	return fni;
 }
 
 static void fni_free(struct silofs_finode_info *fni,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, fni, sizeof(*fni), flags);
+	silofs_memfree(alloc, fni, sizeof(*fni), flags);
 }
 
 static void fni_delete(struct silofs_finode_info *fni,
@@ -1200,14 +1200,14 @@ static struct silofs_fileaf_info *fli_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_fileaf_info *fli;
 
-	fli = silofs_allocate(alloc, sizeof(*fli), 0);
+	fli = silofs_memalloc(alloc, sizeof(*fli), 0);
 	return fli;
 }
 
 static void fli_free(struct silofs_fileaf_info *fli,
                      struct silofs_alloc *alloc, int flags)
 {
-	silofs_deallocate(alloc, fli, sizeof(*fli), flags);
+	silofs_memfree(alloc, fli, sizeof(*fli), flags);
 }
 
 static void fli_delete(struct silofs_fileaf_info *fli,

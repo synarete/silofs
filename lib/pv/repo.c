@@ -860,13 +860,13 @@ lsegf_new(struct silofs_alloc *alloc, const struct silofs_lsegid *lsegid)
 	struct silofs_lsegf *lsegf;
 	int err;
 
-	lsegf = silofs_allocate(alloc, sizeof(*lsegf), SILOFS_ALLOCF_BZERO);
+	lsegf = silofs_memalloc(alloc, sizeof(*lsegf), SILOFS_ALLOCF_BZERO);
 	if (lsegf == NULL) {
 		return NULL;
 	}
 	err = lsegf_init(lsegf, lsegid);
 	if (err) {
-		silofs_deallocate(alloc, lsegf, sizeof(*lsegf), 0);
+		silofs_memfree(alloc, lsegf, sizeof(*lsegf), 0);
 		return NULL;
 	}
 	return lsegf;
@@ -878,7 +878,7 @@ static void lsegf_del(struct silofs_lsegf *lsegf, struct silofs_alloc *alloc)
 
 	lsegf_close2(lsegf);
 	lsegf_fini(lsegf);
-	silofs_deallocate(alloc, lsegf, sizeof(*lsegf), 0);
+	silofs_memfree(alloc, lsegf, sizeof(*lsegf), 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

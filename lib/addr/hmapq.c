@@ -52,7 +52,7 @@ static uint64_t htbl_nslots_by_memsize(const struct silofs_alloc *alloc)
 	size_t nslots_factor;
 
 	/* available memory as 1G units */
-	silofs_allocstat(alloc, &al_st);
+	silofs_memstat(alloc, &al_st);
 	memsize_ngigs = al_st.nbytes_max / SILOFS_GIGA;
 
 	/* derive slots (buckets) factor based on available memory size */

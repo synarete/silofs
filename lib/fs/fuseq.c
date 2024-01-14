@@ -3445,7 +3445,7 @@ static void *iob_new(struct silofs_alloc *alloc, size_t len)
 	silofs_assert_le(len, 2 * SILOFS_MEGA);
 	silofs_assert_ge(len, SILOFS_LBK_SIZE);
 
-	iob = silofs_allocate(alloc, len, 0);
+	iob = silofs_memalloc(alloc, len, 0);
 	return iob;
 }
 
@@ -3457,7 +3457,7 @@ static void iob_del(struct silofs_alloc *alloc, void *iob, size_t len)
 	silofs_assert_ge(len, SILOFS_LBK_SIZE);
 
 	silofs_memffff(iob, min(len, min(len, bk_size)));
-	silofs_deallocate(alloc, iob, len, 0);
+	silofs_memfree(alloc, iob, len, 0);
 }
 
 static struct silofs_fuseq_inb *inb_new(struct silofs_alloc *alloc)
@@ -3495,7 +3495,7 @@ static struct silofs_fuseq_rw_iter *rwi_new(struct silofs_alloc *alloc)
 {
 	struct silofs_fuseq_rw_iter *rwi;
 
-	rwi = silofs_allocate(alloc, sizeof(*rwi), 0);
+	rwi = silofs_memalloc(alloc, sizeof(*rwi), 0);
 	if (rwi != NULL) {
 		silofs_memzero(rwi, sizeof(*rwi));
 	}
@@ -3505,7 +3505,7 @@ static struct silofs_fuseq_rw_iter *rwi_new(struct silofs_alloc *alloc)
 static void rwi_del(struct silofs_fuseq_rw_iter *rwi,
                     struct silofs_alloc *alloc)
 {
-	silofs_deallocate(alloc, rwi, sizeof(*rwi), 0);
+	silofs_memfree(alloc, rwi, sizeof(*rwi), 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3664,7 +3664,7 @@ static int fuseq_init_op_args(struct silofs_fuseq_worker *fqw)
 	struct silofs_oper_args *op_args = NULL;
 	struct silofs_alloc *alloc = fuseq_alloc(fqw);
 
-	op_args = silofs_allocate(alloc, sizeof(*op_args), 0);
+	op_args = silofs_memalloc(alloc, sizeof(*op_args), 0);
 	if (op_args == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -3680,7 +3680,7 @@ static void fuseq_fini_op_args(struct silofs_fuseq_worker *fqw)
 
 	if (op_args != NULL) {
 		silofs_memffff(op_args, sizeof(*op_args));
-		silofs_deallocate(alloc, op_args, sizeof(*op_args), 0);
+		silofs_memfree(alloc, op_args, sizeof(*op_args), 0);
 		fqw->fw_args = NULL;
 	}
 }
@@ -3755,7 +3755,7 @@ static int fuseq_init_workers(struct silofs_fuseq *fq)
 
 	listq_init(&fws->fws_curropsq);
 	mem_size = fws->fws_nlimit * sizeof(*fws->fws_workers);
-	fws->fws_workers = silofs_allocate(fq->fq_alloc, mem_size, 0);
+	fws->fws_workers = silofs_memalloc(fq->fq_alloc, mem_size, 0);
 	if (fws->fws_workers == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -3779,7 +3779,7 @@ static void fuseq_fini_workers(struct silofs_fuseq *fq)
 			fuseq_fini_worker(&fws->fws_workers[i]);
 		}
 		mem_size = fws->fws_nlimit * sizeof(*fws->fws_workers);
-		silofs_deallocate(fq->fq_alloc, fws->fws_workers, mem_size, 0);
+		silofs_memfree(fq->fq_alloc, fws->fws_workers, mem_size, 0);
 		fws->fws_workers = NULL;
 		fws->fws_nlimit = 0;
 		listq_fini(&fws->fws_curropsq);

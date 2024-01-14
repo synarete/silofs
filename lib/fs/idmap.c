@@ -89,7 +89,7 @@ ume_new(struct silofs_alloc *alloc, uid_t host_uid, uid_t fs_uid)
 {
 	struct silofs_umap_entry *ume;
 
-	ume = silofs_allocate(alloc, sizeof(*ume), 0);
+	ume = silofs_memalloc(alloc, sizeof(*ume), 0);
 	if (ume != NULL) {
 		ume_init(ume, host_uid, fs_uid);
 	}
@@ -99,7 +99,7 @@ ume_new(struct silofs_alloc *alloc, uid_t host_uid, uid_t fs_uid)
 static void ume_del(struct silofs_umap_entry *ume, struct silofs_alloc *alloc)
 {
 	ume_fini(ume);
-	silofs_deallocate(alloc, ume, sizeof(*ume), 0);
+	silofs_memfree(alloc, ume, sizeof(*ume), 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -156,7 +156,7 @@ gme_new(struct silofs_alloc *alloc, gid_t host_gid, gid_t fs_gid)
 {
 	struct silofs_gmap_entry *gme;
 
-	gme = silofs_allocate(alloc, sizeof(*gme), 0);
+	gme = silofs_memalloc(alloc, sizeof(*gme), 0);
 	if (gme != NULL) {
 		gme_init(gme, host_gid, fs_gid);
 	}
@@ -166,7 +166,7 @@ gme_new(struct silofs_alloc *alloc, gid_t host_gid, gid_t fs_gid)
 static void gme_del(struct silofs_gmap_entry *gme, struct silofs_alloc *alloc)
 {
 	gme_fini(gme);
-	silofs_deallocate(alloc, gme, sizeof(*gme), 0);
+	silofs_memfree(alloc, gme, sizeof(*gme), 0);
 }
 
 

@@ -134,7 +134,7 @@ spe_new(loff_t voff, size_t len, struct silofs_alloc *alloc)
 {
 	struct silofs_spa_entry *spe;
 
-	spe = silofs_allocate(alloc, sizeof(*spe), 0);
+	spe = silofs_memalloc(alloc, sizeof(*spe), 0);
 	if (spe != NULL) {
 		spe_init(spe, voff, len);
 	}
@@ -145,7 +145,7 @@ static void spe_del(struct silofs_spa_entry *spe,
                     struct silofs_alloc *alloc)
 {
 	spe_fini(spe);
-	silofs_deallocate(alloc, spe, sizeof(*spe), 0);
+	silofs_memfree(alloc, spe, sizeof(*spe), 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -703,7 +703,7 @@ uaent_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_uaent *uae = NULL;
 
-	uae = silofs_allocate(alloc, sizeof(*uae), 0);
+	uae = silofs_memalloc(alloc, sizeof(*uae), 0);
 	if (uae != NULL) {
 		uaent_init(uae, uaddr);
 	}
@@ -713,7 +713,7 @@ uaent_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 static void uaent_del(struct silofs_uaent *uae, struct silofs_alloc *alloc)
 {
 	uaent_fini(uae);
-	silofs_deallocate(alloc, uae, sizeof(*uae), 0);
+	silofs_memfree(alloc, uae, sizeof(*uae), 0);
 }
 
 static bool uaent_has_mapping(const struct silofs_uaent *uaent,

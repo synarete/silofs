@@ -148,7 +148,7 @@ spvis_new(struct silofs_alloc *alloc, silofs_visit_laddr_fn cb)
 {
 	struct silofs_sp_visitor *sp_vis = NULL;
 
-	sp_vis = silofs_allocate(alloc, sizeof(*sp_vis), 0);
+	sp_vis = silofs_memalloc(alloc, sizeof(*sp_vis), 0);
 	if (sp_vis != NULL) {
 		spvis_init(sp_vis, cb);
 	}
@@ -159,7 +159,7 @@ static void spvis_del(struct silofs_sp_visitor *sp_vis,
                       struct silofs_alloc *alloc)
 {
 	spvis_fini(sp_vis);
-	silofs_deallocate(alloc, sp_vis, sizeof(*sp_vis), 0);
+	silofs_memfree(alloc, sp_vis, sizeof(*sp_vis), 0);
 }
 
 int silofs_walk_inspect_fs(struct silofs_task *task,

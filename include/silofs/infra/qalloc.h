@@ -95,19 +95,19 @@ struct silofs_calloc {
 
 };
 
-/* allocation via interface */
-void *silofs_allocate(struct silofs_alloc *alloc, size_t size, int flags);
+/* memory allocation convenience wrappers */
+void *silofs_memalloc(struct silofs_alloc *alloc, size_t size, int flags);
 
-void silofs_deallocate(struct silofs_alloc *alloc,
-                       void *ptr, size_t size, int flags);
+void silofs_memfree(struct silofs_alloc *alloc,
+                    void *ptr, size_t size, int flags);
 
-void silofs_allocstat(const struct silofs_alloc *alloc,
-                      struct silofs_alloc_stat *out_stat);
+void silofs_memstat(const struct silofs_alloc *alloc,
+                    struct silofs_alloc_stat *out_stat);
 
-int silofs_allocresolve(const struct silofs_alloc *alloc, void *ptr,
-                        size_t len, struct silofs_iovec *iov);
+int silofs_memresolve(const struct silofs_alloc *alloc, void *ptr,
+                      size_t len, struct silofs_iovec *iov);
 
-/* allocator via standard C malloc/free */
+/* standard C allocator */
 int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
 
 int silofs_calloc_fini(struct silofs_calloc *cal);

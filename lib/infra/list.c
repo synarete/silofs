@@ -229,7 +229,7 @@ silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
 {
 	struct silofs_list_head *lista;
 
-	lista = silofs_allocate(alloc, sizeof(*lista) * nelems, 0);
+	lista = silofs_memalloc(alloc, sizeof(*lista) * nelems, 0);
 	if (lista != NULL) {
 		silofs_list_head_initn(lista, nelems);
 	}
@@ -240,7 +240,7 @@ void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
                       struct silofs_alloc *alloc)
 {
 	silofs_list_head_finin(lista, nelems);
-	silofs_deallocate(alloc, lista, sizeof(*lista) * nelems, 0);
+	silofs_memfree(alloc, lista, sizeof(*lista) * nelems, 0);
 }
 
 

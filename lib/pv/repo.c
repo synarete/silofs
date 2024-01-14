@@ -618,7 +618,7 @@ static void lsegf_make_iovec(const struct silofs_lsegf *lsegf,
 	siov->iov_len = len;
 	siov->iov_base = NULL;
 	siov->iov_fd = lsegf->lsf_fd;
-	siov->iov_ref = NULL;
+	siov->iov_backref = NULL;
 }
 
 static int lsegf_iovec_at(const struct silofs_lsegf *lsegf,

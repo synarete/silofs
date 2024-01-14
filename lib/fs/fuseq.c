@@ -1238,8 +1238,7 @@ fuseq_append_data_to_pipe(struct silofs_fuseq_worker *fqw,
 		} else {
 			fuseq_log_err("bad iovec entry: "\
 			              "fd=%d off=%ld len=%lu",
-			              iov->iov_fd, iov->iov_off,
-			              iov->iov_len);
+			              iov->iov_fd, iov->iov_off, iov->iov_len);
 			err = -SILOFS_EINVAL;
 		}
 	}

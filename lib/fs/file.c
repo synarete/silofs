@@ -850,7 +850,7 @@ static void filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
 	silofs_iovec_reset(out_iov);
 	out_iov->iov_base = base_of(dat, off_within);
 	out_iov->iov_len = len;
-	out_iov->iov_ref = f_ctx->with_backref ? fli : NULL;
+	out_iov->iov_backref = f_ctx->with_backref ? fli : NULL;
 }
 
 static void filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
@@ -1677,7 +1677,7 @@ static void filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
 
 static void iovref_pre(const struct silofs_iovec *iov, int wr_mode)
 {
-	struct silofs_fileaf_info *fli = iov->iov_ref;
+	struct silofs_fileaf_info *fli = iov->iov_backref;
 
 	if (fli != NULL) {
 		fli_pre_io(fli, wr_mode);
@@ -1686,7 +1686,7 @@ static void iovref_pre(const struct silofs_iovec *iov, int wr_mode)
 
 static void iovref_post(const struct silofs_iovec *iov, int wr_mode)
 {
-	struct silofs_fileaf_info *fli = iov->iov_ref;
+	struct silofs_fileaf_info *fli = iov->iov_backref;
 
 	if (fli != NULL) {
 		fli_post_io(fli, wr_mode);
@@ -1697,7 +1697,7 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
                               struct silofs_fileaf_info *fli, size_t *out_len)
 {
 	struct silofs_iovec iov = {
-		.iov_ref = NULL,
+		.iov_backref = NULL,
 		.iov_base = NULL,
 		.iov_off = -1,
 		.iov_len = 0,

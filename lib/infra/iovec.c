@@ -22,7 +22,7 @@
 
 void silofs_iovec_reset(struct silofs_iovec *iov)
 {
-	iov->iov_ref = NULL;
+	iov->iov_backref = NULL;
 	iov->iov_base = NULL;
 	iov->iov_len = 0;
 	iov->iov_off = 0;
@@ -32,7 +32,7 @@ void silofs_iovec_reset(struct silofs_iovec *iov)
 void silofs_iovec_assign(struct silofs_iovec *iov,
                          const struct silofs_iovec *other)
 {
-	iov->iov_ref = other->iov_ref;
+	iov->iov_backref = other->iov_backref;
 	iov->iov_base = other->iov_base;
 	iov->iov_len = other->iov_len;
 	iov->iov_off = other->iov_off;
@@ -57,11 +57,10 @@ int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf)
 
 int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf)
 {
-	int err;
+	int err = 0;
 
 	if (iov->iov_base != NULL) {
 		memcpy(iov->iov_base, buf, iov->iov_len);
-		err = 0;
 	} else if (iov->iov_fd > 0) {
 		err = silofs_sys_pwriten(iov->iov_fd, buf,
 		                         iov->iov_len, iov->iov_off);

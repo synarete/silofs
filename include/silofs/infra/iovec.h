@@ -21,7 +21,7 @@
 
 /* extended standard iovec with optional file-descriptor and back-references */
 struct silofs_iovec {
-	void  *iov_ref;
+	void  *iov_backref;
 	void  *iov_base;
 	size_t iov_len;
 	loff_t iov_off;

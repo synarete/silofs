@@ -55,6 +55,12 @@ size_t silofs_mem_to_ascii(const void *ptr, size_t len, char *buf, size_t bsz);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_burnstackn(int n);
+
+void silofs_burnstack(void);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static inline int32_t silofs_min32(int32_t x, int32_t y)
 {
 	return x < y ? x : y;

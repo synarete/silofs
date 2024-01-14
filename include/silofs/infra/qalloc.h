@@ -41,8 +41,6 @@ struct silofs_alloc {
 	                void *ptr, size_t size, int flags);
 	void (*stat_fn)(const struct silofs_alloc *alloc,
 	                struct silofs_alloc_stat *out_stat);
-	int (*resolve_fn)(const struct silofs_alloc *alloc,
-	                  void *ptr, size_t len, struct silofs_iovec *iov);
 };
 
 /* quick memory allocator */
@@ -104,9 +102,6 @@ void silofs_memfree(struct silofs_alloc *alloc,
 void silofs_memstat(const struct silofs_alloc *alloc,
                     struct silofs_alloc_stat *out_stat);
 
-int silofs_memresolve(const struct silofs_alloc *alloc, void *ptr,
-                      size_t len, struct silofs_iovec *iov);
-
 /* standard C allocator */
 int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
 
@@ -133,11 +128,7 @@ int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
                          const void *ptr, size_t nbytes);
 
 
-/* memory utilities */
-void silofs_burnstackn(int n);
-
-void silofs_burnstack(void);
-
+/* extra memory utilities */
 void silofs_memzero(void *s, size_t n);
 
 void silofs_memffff(void *s, size_t n);

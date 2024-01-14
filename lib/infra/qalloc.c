@@ -132,17 +132,17 @@ static struct silofs_qalloc *alloc_to_qalloc(const struct silofs_alloc *alloc)
 	return silofs_unconst(qal);
 }
 
-static void *qal_malloc(struct silofs_alloc *aif, size_t nbytes, int flags)
+static void *qal_malloc(struct silofs_alloc *alloc, size_t nbytes, int flags)
 {
-	struct silofs_qalloc *qal = alloc_to_qalloc(aif);
+	struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
 
 	return silofs_qalloc_malloc(qal, nbytes, flags);
 }
 
-static void qal_free(struct silofs_alloc *aif,
+static void qal_free(struct silofs_alloc *alloc,
                      void *ptr, size_t nbytes, int flags)
 {
-	struct silofs_qalloc *qal = alloc_to_qalloc(aif);
+	struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
 
 	silofs_qalloc_free(qal, ptr, nbytes, flags);
 }
@@ -153,14 +153,6 @@ static void qal_stat(const struct silofs_alloc *alloc,
 	const struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
 
 	silofs_qalloc_stat(qal, out_stat);
-}
-
-static int qal_resolve(const struct silofs_alloc *alloc,
-                       void *ptr, size_t len, struct silofs_iovec *iov)
-{
-	const struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
-
-	return silofs_qalloc_resolve(qal, ptr, len, iov);
 }
 
 void *silofs_memalloc(struct silofs_alloc *alloc, size_t size, int flags)
@@ -189,20 +181,6 @@ void silofs_memstat(const struct silofs_alloc *alloc,
 	} else {
 		memset(out_stat, 0, sizeof(*out_stat));
 	}
-}
-
-int silofs_memresolve(const struct silofs_alloc *alloc, void *ptr,
-                      size_t len, struct silofs_iovec *iov)
-{
-	int ret = -ENOTSUP;
-
-	if (alloc->resolve_fn != NULL) {
-		ret = alloc->resolve_fn(alloc, ptr, len, iov);
-	} else {
-		memset(iov, 0, sizeof(*iov));
-		iov->iov_fd = -1;
-	}
-	return ret;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1142,7 +1120,6 @@ static void qalloc_init_interface(struct silofs_qalloc *qal)
 	qal->alloc.malloc_fn = qal_malloc;
 	qal->alloc.free_fn = qal_free;
 	qal->alloc.stat_fn = qal_stat;
-	qal->alloc.resolve_fn = qal_resolve;
 }
 
 static void qalloc_fini_interface(struct silofs_qalloc *qal)
@@ -1150,7 +1127,6 @@ static void qalloc_fini_interface(struct silofs_qalloc *qal)
 	qal->alloc.malloc_fn = NULL;
 	qal->alloc.free_fn = NULL;
 	qal->alloc.stat_fn = NULL;
-	qal->alloc.resolve_fn = NULL;
 }
 
 static int check_mode(int mode)
@@ -1516,6 +1492,7 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
 	if (unlikely(base > ptr)) {
 		return -SILOFS_ERANGE;
 	}
+	silofs_iovec_reset(iov);
 	iov->iov_off = qpool_ptr_to_off(&qal->qpool, ptr);
 	iov->iov_len = len;
 	iov->iov_base = ptr;
@@ -1592,27 +1569,6 @@ void silofs_zfree(void *mem, size_t sz)
 	cstd_memfree(mem, sz);
 }
 
-static void burnstack_recursively(int depth, int nbytes)
-{
-	char buf[512];
-	const int cnt = silofs_min32((int)sizeof(buf), nbytes);
-
-	if (cnt > 0) {
-		memset(buf, 0xF4 ^ depth, (size_t)cnt);
-		burnstack_recursively(depth + 1, nbytes - cnt);
-	}
-}
-
-void silofs_burnstackn(int n)
-{
-	burnstack_recursively(0, n);
-}
-
-void silofs_burnstack(void)
-{
-	silofs_burnstackn((int)silofs_sc_page_size());
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_calloc *
@@ -1655,17 +1611,6 @@ static void calloc_free(struct silofs_calloc *cal,
 	}
 }
 
-static int calloc_resolve(struct silofs_calloc *cal,
-                          void *ptr, size_t len, struct silofs_iovec *iov)
-{
-	memset(iov, 0, sizeof(*iov));
-	iov->iov_base = ptr;
-	iov->iov_len = len;
-	iov->iov_fd = -1;
-	silofs_unused(cal);
-	return 0;
-}
-
 static void calloc_stat(struct silofs_calloc *cal,
                         struct silofs_alloc_stat *out_stat)
 {
@@ -1691,19 +1636,12 @@ static void cal_stat(const struct silofs_alloc *alloc,
 	calloc_stat(alloc_to_calloc(alloc), out_stat);
 }
 
-static int cal_resolve(const struct silofs_alloc *alloc, void *ptr,
-                       size_t len, struct silofs_iovec *iov)
-{
-	return calloc_resolve(alloc_to_calloc(alloc), ptr, len, iov);
-}
-
 int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize)
 {
 	silofs_memzero(cal, sizeof(*cal));
 	cal->alloc.malloc_fn = cal_malloc;
 	cal->alloc.free_fn = cal_free;
 	cal->alloc.stat_fn = cal_stat;
-	cal->alloc.resolve_fn = cal_resolve;
 	cal->nbytes_max = memsize;
 	return 0;
 }

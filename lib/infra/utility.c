@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/syscall.h>
 #include <silofs/infra/utility.h>
 #include <silofs/infra/strings.h>
 #include <ctype.h>
@@ -184,4 +185,27 @@ size_t silofs_mem_to_ascii(const void *ptr, size_t len, char *buf, size_t bsz)
 		cnt += 2;
 	}
 	return cnt;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void burnstack_recursively(int depth, int nbytes)
+{
+	char buf[512];
+	const int cnt = silofs_min32((int)sizeof(buf), nbytes);
+
+	if (cnt > 0) {
+		memset(buf, 0xF4 ^ depth, (size_t)cnt);
+		burnstack_recursively(depth + 1, nbytes - cnt);
+	}
+}
+
+void silofs_burnstackn(int n)
+{
+	burnstack_recursively(0, n);
+}
+
+void silofs_burnstack(void)
+{
+	silofs_burnstackn((int)silofs_sc_page_size());
 }

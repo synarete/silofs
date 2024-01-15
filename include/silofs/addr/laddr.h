@@ -32,6 +32,7 @@ struct silofs_lsegid {
 /* logical-address within specific volume's mapping extend */
 struct silofs_laddr {
 	struct silofs_lsegid    lsegid;
+	enum silofs_ltype       ltype;
 	loff_t                  pos;
 	size_t                  len;
 };
@@ -76,9 +77,6 @@ void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
 void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
                           const struct silofs_lsegid *other);
 
-long silofs_lsegid_compare(const struct silofs_lsegid *lsegid1,
-                           const struct silofs_lsegid *lsegid2);
-
 bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
                            const struct silofs_lsegid *other);
 
@@ -100,10 +98,11 @@ const struct silofs_laddr *silofs_laddr_none(void);
 
 void silofs_laddr_setup(struct silofs_laddr *laddr,
                         const struct silofs_lsegid *lsegid,
-                        loff_t off, size_t len);
+                        enum silofs_ltype ltype, loff_t off, size_t len);
 
 void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
-                            const struct silofs_lsegid *lsegid, loff_t off);
+                            const struct silofs_lsegid *lsegid,
+                            enum silofs_ltype ltype, loff_t off);
 
 void silofs_laddr_reset(struct silofs_laddr *laddr);
 

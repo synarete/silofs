@@ -365,10 +365,10 @@ static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *brec1k)
 
 	bootrec1k_sb_uaddr(brec1k, &uaddr);
 	height = uaddr_height(&uaddr);
-	if ((uaddr.ltype != SILOFS_LTYPE_SUPER) ||
+	if ((uaddr.laddr.ltype != SILOFS_LTYPE_SUPER) ||
 	    (height != SILOFS_HEIGHT_SUPER) || (uaddr.voff != 0)) {
 		log_dbg("bad bootrec uaddr-sb: voff=%ld ltype=%d height=%d",
-		        uaddr.voff, (int)uaddr.ltype, (int)height);
+		        uaddr.voff, (int)uaddr.laddr.ltype, (int)height);
 		return -SILOFS_EBADBOOT;
 	}
 	return 0;

@@ -537,7 +537,8 @@ struct silofs_laddr48b {
 	struct silofs_lsegid32b         lsegid;
 	uint32_t                        pos;
 	uint32_t                        len;
-	uint8_t                         pad[8];
+	uint8_t                         ltype;
+	uint8_t                         pad[7];
 } silofs_packed_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -545,8 +546,7 @@ struct silofs_laddr48b {
 struct silofs_uaddr64b {
 	struct silofs_laddr48b          laddr;
 	int64_t                         voff;
-	uint8_t                         ltype;
-	uint8_t                         reserved[7];
+	uint8_t                         pad[8];
 } silofs_packed_aligned32;
 
 

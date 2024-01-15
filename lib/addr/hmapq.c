@@ -107,7 +107,7 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	const uint64_t h1 = 0x646f72616e646f6dULL - upos;
 	const uint64_t h2 = hash_of_lsegid(&uaddr->laddr.lsegid);
 
-	return (uoff + uaddr->ltype) ^ h1 ^ h2;
+	return (uoff + uaddr->laddr.ltype) ^ h1 ^ h2;
 }
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)

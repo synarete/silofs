@@ -66,7 +66,6 @@
 #define ui_incref(ui)                   silofs_ui_incref(ui)
 #define ui_decref(ui)                   silofs_ui_decref(ui)
 #define ui_dirtify(ui)                  silofs_ui_dirtify(ui)
-#define ui_ltype(ui)                    silofs_ui_ltype(ui)
 #define ui_ulink(ui)                    silofs_ui_ulink(ui)
 #define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
 #define ui_laddr(ui)                    silofs_ui_laddr(ui)
@@ -150,18 +149,6 @@ static inline const struct silofs_laddr *
 silofs_ui_laddr(const struct silofs_unode_info *ui)
 {
 	return &ui->u_ulink.uaddr.laddr;
-}
-
-static inline enum silofs_ltype
-silofs_ui_ltype(const struct silofs_unode_info *ui) {
-	return ui->u_ulink.uaddr.ltype;
-}
-
-static inline bool
-silofs_ui_has_ltype(const struct silofs_unode_info *ui,
-                    enum silofs_ltype ltype)
-{
-	return ltype == silofs_ui_ltype(ui);
 }
 
 static inline

@@ -613,7 +613,7 @@ static void cache_set_dq_of_ui(struct silofs_cache *cache,
 	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
 	struct silofs_dirtyq *dq;
 
-	dq = cache_dirtyq_by(cache, uaddr->ltype);
+	dq = cache_dirtyq_by(cache, uaddr->laddr.ltype);
 	ui_set_dq(ui, dq);
 }
 

@@ -462,8 +462,10 @@ vstgc_make_lsegid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx,
 static void vstgc_update_space_stats(const struct silofs_vstage_ctx *vstg_ctx,
                                      const struct silofs_uaddr *uaddr)
 {
-	silofs_sti_update_objs(&vstg_ctx->sbi->sb_sti, uaddr->ltype, 1);
-	silofs_sti_update_bks(&vstg_ctx->sbi->sb_sti, uaddr->ltype, 1);
+	const enum silofs_ltype ltype = uaddr->laddr.ltype;
+
+	silofs_sti_update_objs(&vstg_ctx->sbi->sb_sti, ltype, 1);
+	silofs_sti_update_bks(&vstg_ctx->sbi->sb_sti, ltype, 1);
 }
 
 static int vstgc_spawn_super_main_lseg(const struct silofs_vstage_ctx
@@ -1848,6 +1850,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_llink llink_lbk;
 	struct silofs_laddr laddr;
+	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	int err;
 
 	err = vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, &llink_lbk);
@@ -1855,7 +1858,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsegid,
-	                   vstg_ctx->vaddr->off, vstg_ctx->vaddr->len);
+	                   vaddr->ltype, vaddr->off, vaddr->len);
 	silofs_llink_setup(out_llink, &laddr, &llink_lbk.riv);
 	return 0;
 }
@@ -2289,7 +2292,8 @@ static int vstgc_clone_lbk_of(struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_laddr laddr_lbk;
 
-	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsegid, src_laddr->pos);
+	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsegid,
+	                       src_laddr->ltype, src_laddr->pos);
 	return vstgc_clone_lbk_at(vstg_ctx, &laddr_lbk);
 }
 

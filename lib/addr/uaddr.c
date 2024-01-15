@@ -21,8 +21,8 @@
 static const struct silofs_uaddr s_uaddr_none = {
 	.laddr.lsegid.size = 0,
 	.laddr.pos = SILOFS_OFF_NULL,
+	.laddr.ltype = SILOFS_LTYPE_NONE,
 	.voff = SILOFS_OFF_NULL,
-	.ltype = SILOFS_LTYPE_NONE,
 };
 
 const struct silofs_uaddr *silofs_uaddr_none(void)
@@ -32,24 +32,23 @@ const struct silofs_uaddr *silofs_uaddr_none(void)
 
 bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 {
-	return ltype_isnone(uaddr->ltype) || off_isnull(uaddr->voff) ||
-	       silofs_laddr_isnull(&uaddr->laddr);
+	return off_isnull(uaddr->voff) || silofs_laddr_isnull(&uaddr->laddr);
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_lsegid *lsegid,
-                        loff_t bpos, enum silofs_ltype ltype, loff_t voff)
+                        loff_t pos, enum silofs_ltype ltype, loff_t voff)
 {
-	silofs_laddr_setup(&uaddr->laddr, lsegid, bpos, ltype_size(ltype));
+	const size_t lsz = ltype_size(ltype);
+
+	silofs_laddr_setup(&uaddr->laddr, lsegid, ltype, pos, lsz);
 	uaddr->voff = voff;
-	uaddr->ltype = ltype;
 }
 
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
 {
 	silofs_laddr_reset(&uaddr->laddr);
 	uaddr->voff = SILOFS_OFF_NULL;
-	uaddr->ltype = SILOFS_LTYPE_NONE;
 }
 
 void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
@@ -57,7 +56,6 @@ void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
 {
 	silofs_laddr_assign(&uaddr->laddr, &other->laddr);
 	uaddr->voff = other->voff;
-	uaddr->ltype = other->ltype;
 }
 
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
@@ -66,10 +64,6 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 	long cmp;
 
 	cmp = silofs_laddr_compare(&uaddr1->laddr, &uaddr2->laddr);
-	if (cmp) {
-		return cmp;
-	}
-	cmp = (long)uaddr1->ltype - (long)uaddr2->ltype;
 	if (cmp) {
 		return cmp;
 	}
@@ -107,7 +101,6 @@ void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 {
 	silofs_laddr48b_reset(&uaddr64->laddr);
 	uaddr64->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
-	uaddr64->ltype = SILOFS_LTYPE_NONE;
 }
 
 void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
@@ -115,7 +108,6 @@ void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
 {
 	silofs_laddr48b_htox(&uaddr64->laddr, &uaddr->laddr);
 	uaddr64->voff = silofs_cpu_to_off(uaddr->voff);
-	uaddr64->ltype = (uint8_t)uaddr->ltype;
 }
 
 void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
@@ -123,7 +115,6 @@ void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
 {
 	silofs_laddr48b_xtoh(&uaddr64->laddr, &uaddr->laddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
-	uaddr->ltype = (enum silofs_ltype)(uaddr64->ltype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

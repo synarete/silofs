@@ -464,7 +464,7 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 		return -SILOFS_ENOENT;
 	}
 	silofs_sli_vspace_range(sli, &vrange);
-	laddr_setup(out_laddr, &lsegid, 0, vrange.len);
+	silofs_laddr_setup(out_laddr, &lsegid, spa_ctx->ltype, 0, vrange.len);
 	return 0;
 }
 

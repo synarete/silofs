@@ -21,6 +21,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static enum silofs_ltype ui_ltype(const struct silofs_unode_info *ui)
+{
+	return ui->u_ulink.uaddr.laddr.ltype;
+}
+
 static bool ui_issuper(const struct silofs_unode_info *ui)
 {
 	return ltype_issuper(ui_ltype(ui));

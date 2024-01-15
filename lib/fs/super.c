@@ -506,14 +506,15 @@ static void sb_setup_fresh(struct silofs_super_block *sb)
 static int verify_sproot(const struct silofs_uaddr *uaddr)
 {
 	const enum silofs_height height = uaddr_height(uaddr);
+	const enum silofs_ltype ltype = uaddr->laddr.ltype;
 
 	if (uaddr_isnull(uaddr)) {
 		return 0;
 	}
-	if ((uaddr->ltype != SILOFS_LTYPE_SPNODE) ||
+	if ((ltype != SILOFS_LTYPE_SPNODE) ||
 	    (height != (SILOFS_HEIGHT_SUPER - 1))) {
 		log_err("bad spnode root: ltype=%d height=%d",
-		        (int)uaddr->ltype, (int)height);
+		        (int)ltype, (int)height);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -543,7 +544,7 @@ static int sb_verify_self(const struct silofs_super_block *sb)
 	struct silofs_uaddr uaddr;
 
 	sb_self(sb, &uaddr);
-	if (uaddr_isnull(&uaddr) || !ltype_issuper(uaddr.ltype)) {
+	if (uaddr_isnull(&uaddr) || !ltype_issuper(uaddr.laddr.ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -554,7 +555,7 @@ static int sb_verify_origin(const struct silofs_super_block *sb)
 	struct silofs_uaddr uaddr;
 
 	sb_origin(sb, &uaddr);
-	if (!uaddr_isnull(&uaddr) && !ltype_issuper(uaddr.ltype)) {
+	if (!uaddr_isnull(&uaddr) && !ltype_issuper(uaddr.laddr.ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

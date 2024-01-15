@@ -66,8 +66,6 @@
 #define laddr_none()                    silofs_laddr_none()
 #define laddr_reset(la)                 silofs_laddr_reset(la)
 #define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)
-#define laddr_setup(la, bid, o, l)      silofs_laddr_setup(la, bid, o, l)
-#define laddr_setup_by(la, bid, va)     silofs_laddr_setup_by(la, bid, va)
 #define laddr_isvalid(la)               silofs_laddr_isvalid(la)
 #define laddr_isnull(la)                silofs_laddr_isnull(la)
 
@@ -95,6 +93,5 @@
 #define vaddr_setup(va, st, o)          silofs_vaddr_setup(va, st, o)
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 #define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
-
 
 #endif /* SILOFS_ADDR_PRIVATE_H_ */

@@ -23,7 +23,6 @@
 struct silofs_uaddr {
 	struct silofs_laddr     laddr;
 	loff_t                  voff;
-	enum silofs_ltype       ltype;
 };
 
 /* a pair of unode-address and its associate (random) IV */

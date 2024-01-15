@@ -83,7 +83,7 @@ view_new_by(struct silofs_alloc *alloc, enum silofs_ltype ltype)
 static struct silofs_view *
 view_new_by_ulink(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
-	return view_new_by(alloc, ulink->uaddr.ltype);
+	return view_new_by(alloc, ulink->uaddr.laddr.ltype);
 }
 
 static struct silofs_view *
@@ -109,7 +109,7 @@ static void view_del_by_ulink(struct silofs_view *view,
                               const struct silofs_ulink *ulink,
                               struct silofs_alloc *alloc)
 {
-	view_del_by(view, ulink->uaddr.ltype, alloc);
+	view_del_by(view, ulink->uaddr.laddr.ltype, alloc);
 }
 
 static void view_del_by_vaddr(struct silofs_view *view,
@@ -176,7 +176,7 @@ static void ui_init(struct silofs_unode_info *ui,
                     struct silofs_view *view,
                     silofs_lnode_del_fn del_fn)
 {
-	lni_init(&ui->u_lni, ulink->uaddr.ltype, view, del_fn);
+	lni_init(&ui->u_lni, ulink->uaddr.laddr.ltype, view, del_fn);
 	list_head_init(&ui->u_dq_lh);
 	ulink_assign(&ui->u_ulink, ulink);
 	ui->u_dq = NULL;
@@ -1281,9 +1281,10 @@ bool silofs_test_evictable(const struct silofs_lnode_info *lni)
 struct silofs_unode_info *
 silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
-	struct silofs_unode_info *ui;
+	struct silofs_unode_info *ui = NULL;
+	const enum silofs_ltype ltype = ulink->uaddr.laddr.ltype;
 
-	switch (ulink->uaddr.ltype) {
+	switch (ltype) {
 	case SILOFS_LTYPE_BOOTREC:
 		ui = NULL;
 		break;

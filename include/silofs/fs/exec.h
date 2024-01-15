@@ -59,7 +59,7 @@ struct silofs_fs_ctx {
 	struct silofs_ivkey     boot_ivkey;
 	struct silofs_ivkey     main_ivkey;
 	struct silofs_alloc    *alloc;
-	struct silofs_cache    *cache;
+	struct silofs_lcache   *lcache;
 	struct silofs_repo     *repo;
 	struct silofs_submitq  *submitq;
 	struct silofs_flusher  *flusher;

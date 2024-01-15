@@ -52,18 +52,18 @@ static loff_t off_to_spleaf_next(loff_t voff)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_cache *
-spac_cache(const struct silofs_spalloc_ctx *spa_ctx)
+static struct silofs_lcache *
+spac_lcache(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	return spa_ctx->fsenv->fse.cache;
+	return spa_ctx->fsenv->fse.lcache;
 }
 
 static struct silofs_spamaps *
 spac_spamaps(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	struct silofs_cache *cache = spac_cache(spa_ctx);
+	struct silofs_lcache *cache = spac_lcache(spa_ctx);
 
-	return &cache->c_spams;
+	return &cache->lc_spamaps;
 }
 
 static loff_t spac_get_hint(const struct silofs_spalloc_ctx *spa_ctx)

@@ -166,33 +166,31 @@ static bool sni_has_main_lseg(const struct silofs_spnode_info *sni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_cache *vstgc_cache(const struct silofs_vstage_ctx
-                                        *vstg_ctx)
+static struct silofs_lcache *
+vstgc_lcache(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return vstg_ctx->fsenv->fse.cache;
+	return vstg_ctx->fsenv->fse.lcache;
 }
 
 static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	const struct silofs_cache *cache = vstgc_cache(vstg_ctx);
-	const struct silofs_dirtyqs *dqs = &cache->c_dqs;
+	const struct silofs_lcache *lcache = vstgc_lcache(vstg_ctx);
+	const struct silofs_dirtyqs *dqs = &lcache->lc_dirtyqs;
 
 	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "\
 	        "accum_vnodes=%lu ui=%lu vi=%lu",
 	        dqs->dq_uis.dq_accum,
 	        dqs->dq_iis.dq_accum,
 	        dqs->dq_vis.dq_accum,
-	        cache->c_ui_hmapq.hmq_lru.sz,
-	        cache->c_vi_hmapq.hmq_lru.sz);
+	        lcache->lc_ui_hmapq.hmq_lru.sz,
+	        lcache->lc_vi_hmapq.hmq_lru.sz);
 }
 
 static int vstgc_create_cached_vi(const struct silofs_vstage_ctx *vstg_ctx,
                                   const struct silofs_vaddr *vaddr,
                                   struct silofs_vnode_info **out_vi)
 {
-	struct silofs_cache *cache = vstgc_cache(vstg_ctx);
-
-	*out_vi = silofs_cache_create_vi(cache, vaddr);
+	*out_vi = silofs_lcache_create_vi(vstgc_lcache(vstg_ctx), vaddr);
 	return (*out_vi == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
@@ -200,7 +198,7 @@ static void vstgc_forget_cached_vi(const struct silofs_vstage_ctx *vstg_ctx,
                                    struct silofs_vnode_info *vi)
 {
 	if (vi != NULL) {
-		silofs_cache_forget_vi(vstgc_cache(vstg_ctx), vi);
+		silofs_lcache_forget_vi(vstgc_lcache(vstg_ctx), vi);
 	}
 }
 
@@ -639,7 +637,7 @@ static int vstgc_find_cached_unode(const struct silofs_vstage_ctx *vstg_ctx,
 
 	silofs_vrange_of_spmap(&vrange, height, vstgc_lbk_voff(vstg_ctx));
 	silofs_uakey_setup_by2(&uakey, &vrange, vstg_ctx->vspace);
-	*out_ui = silofs_cache_find_ui_by(vstgc_cache(vstg_ctx), &uakey);
+	*out_ui = silofs_lcache_find_ui_by(vstgc_lcache(vstg_ctx), &uakey);
 	return (*out_ui != NULL) ? 0 : -SILOFS_ENOENT;
 }
 
@@ -1722,9 +1720,9 @@ static int vstgc_stage_spleaf_of(struct silofs_vstage_ctx *vstg_ctx)
 static struct silofs_spamaps *
 vstgc_spamaps(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_cache *cache = vstgc_cache(vstg_ctx);
+	struct silofs_lcache *cache = vstgc_lcache(vstg_ctx);
 
-	return &cache->c_spams;
+	return &cache->lc_spamaps;
 }
 
 static void vstgc_track_spawned_spleaf(const struct silofs_vstage_ctx
@@ -2406,7 +2404,7 @@ static int fixup_cached_vi(const struct silofs_task *task,
 	if (silofs_vi_refcnt(vi)) {
 		return 0;
 	}
-	silofs_cache_forget_vi(task_cache(task), vi);
+	silofs_lcache_forget_vi(task_lcache(task), vi);
 	return -SILOFS_ENOENT;
 }
 
@@ -2417,7 +2415,7 @@ static int fetch_cached_vi(struct silofs_task *task,
 	struct silofs_vnode_info *vi;
 	int err;
 
-	vi = silofs_cache_lookup_vi(task_cache(task), vaddr);
+	vi = silofs_lcache_lookup_vi(task_lcache(task), vaddr);
 	if (vi == NULL) {
 		return -SILOFS_ENOENT;
 	}
@@ -2852,7 +2850,7 @@ int silofs_spawn_inode(struct silofs_task *task,
 static void forget_cached_vi(const struct silofs_task *task,
                              struct silofs_vnode_info *vi)
 {
-	silofs_cache_forget_vi(task_cache(task), vi);
+	silofs_lcache_forget_vi(task_lcache(task), vi);
 }
 
 static int reclaim_vspace_at(struct silofs_task *task,

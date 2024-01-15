@@ -36,7 +36,7 @@ union silofs_fs_alloc_u {
 struct silofs_fs_core {
 	struct silofs_password  passwd;
 	union silofs_fs_alloc_u alloc_u;
-	struct silofs_cache     cache;
+	struct silofs_lcache    lcache;
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
 	struct silofs_idsmap    idsmap;
@@ -239,25 +239,25 @@ static int fs_ctx_init_bootpath(struct silofs_fs_ctx *fs_ctx)
 	                             fs_ctx->fs_args.name);
 }
 
-static int fs_ctx_init_cache(struct silofs_fs_ctx *fs_ctx)
+static int fs_ctx_init_lcache(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_cache *cache;
+	struct silofs_lcache *lcache;
 	int err;
 
-	cache = &fs_ctx_obj_of(fs_ctx)->fs_core.c.cache;
-	err = silofs_cache_init(cache, fs_ctx->alloc);
+	lcache = &fs_ctx_obj_of(fs_ctx)->fs_core.c.lcache;
+	err = silofs_lcache_init(lcache, fs_ctx->alloc);
 	if (err) {
 		return err;
 	}
-	fs_ctx->cache = cache;
+	fs_ctx->lcache = lcache;
 	return 0;
 }
 
-static void fs_ctx_fini_cache(struct silofs_fs_ctx *fs_ctx)
+static void fs_ctx_fini_lcache(struct silofs_fs_ctx *fs_ctx)
 {
-	if (fs_ctx->cache != NULL) {
-		silofs_cache_fini(fs_ctx->cache);
-		fs_ctx->cache = NULL;
+	if (fs_ctx->lcache != NULL) {
+		silofs_lcache_fini(fs_ctx->lcache);
+		fs_ctx->lcache = NULL;
 	}
 }
 
@@ -375,7 +375,7 @@ static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 		.boot_ivkey = &fs_ctx->boot_ivkey,
 		.main_ivkey = &fs_ctx->main_ivkey,
 		.alloc = fs_ctx->alloc,
-		.cache = fs_ctx->cache,
+		.lcache = fs_ctx->lcache,
 		.repo = fs_ctx->repo,
 		.submitq = fs_ctx->submitq,
 		.flusher = fs_ctx->flusher,
@@ -525,7 +525,7 @@ static int fs_ctx_init_subs(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = fs_ctx_init_cache(fs_ctx);
+	err = fs_ctx_init_lcache(fs_ctx);
 	if (err) {
 		return err;
 	}
@@ -593,7 +593,7 @@ static void fs_ctx_fini(struct silofs_fs_ctx *fs_ctx)
 	fs_ctx_fini_flusher(fs_ctx);
 	fs_ctx_fini_submitq(fs_ctx);
 	fs_ctx_fini_repo(fs_ctx);
-	fs_ctx_fini_cache(fs_ctx);
+	fs_ctx_fini_lcache(fs_ctx);
 	fs_ctx_fini_alloc(fs_ctx);
 	fs_ctx_fini_passwd(fs_ctx);
 	fs_ctx_fini_commons(fs_ctx);
@@ -709,7 +709,7 @@ static int term_task(struct silofs_task *task, int status)
 
 static void drop_caches(const struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_cache_drop(fs_ctx->cache);
+	silofs_lcache_drop(fs_ctx->lcache);
 	silofs_repo_drop_some(fs_ctx->repo);
 }
 
@@ -920,13 +920,13 @@ void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_cachestats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
-	const struct silofs_cache *cache = fs_ctx->cache;
+	const struct silofs_lcache *lcache = fs_ctx->lcache;
 
 	silofs_memzero(cst, sizeof(*cst));
 	silofs_memstat(fs_ctx->alloc, &alst);
 	cst->nalloc_bytes = alst.nbytes_use;
-	cst->ncache_unodes += cache->c_ui_hmapq.hmq_htbl_size;
-	cst->ncache_vnodes += cache->c_vi_hmapq.hmq_htbl_size;
+	cst->ncache_unodes += lcache->lc_ui_hmapq.hmq_htbl_size;
+	cst->ncache_vnodes += lcache->lc_vi_hmapq.hmq_htbl_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

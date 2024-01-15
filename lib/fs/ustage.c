@@ -139,7 +139,7 @@ static int fetch_cached_ui(const struct silofs_fsenv *fsenv,
                            const struct silofs_uaddr *uaddr,
                            struct silofs_unode_info **out_ui)
 {
-	*out_ui = silofs_cache_lookup_ui(fsenv->fse.cache, uaddr);
+	*out_ui = silofs_lcache_lookup_ui(fsenv->fse.lcache, uaddr);
 	return (*out_ui == NULL) ? -SILOFS_ENOENT : 0;
 }
 
@@ -153,7 +153,7 @@ static int create_cached_ui(struct silofs_fsenv *fsenv,
                             const struct silofs_ulink *ulink,
                             struct silofs_unode_info **out_ui)
 {
-	*out_ui = silofs_cache_create_ui(fsenv->fse.cache, ulink);
+	*out_ui = silofs_lcache_create_ui(fsenv->fse.lcache, ulink);
 	if (*out_ui == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -177,7 +177,7 @@ static int require_cached_ui(struct silofs_fsenv *fsenv,
 static void forget_cached_ui(const struct silofs_fsenv *fsenv,
                              struct silofs_unode_info *ui)
 {
-	silofs_cache_forget_ui(fsenv->fse.cache, ui);
+	silofs_lcache_forget_ui(fsenv->fse.lcache, ui);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

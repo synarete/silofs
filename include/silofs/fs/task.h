@@ -106,7 +106,7 @@ int silofs_task_submit(struct silofs_task *task, bool all);
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
 
-struct silofs_cache *silofs_task_cache(const struct silofs_task *task);
+struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task);
 
 struct silofs_repo *silofs_task_repo(const struct silofs_task *task);
 

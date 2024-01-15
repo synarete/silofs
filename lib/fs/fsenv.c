@@ -495,7 +495,7 @@ static void sbi_export_bootrec(const struct silofs_sb_info *sbi,
 
 static void fsenv_pre_forkfs(struct silofs_fsenv *fsenv)
 {
-	silofs_cache_drop_uamap(fsenv->fse.cache);
+	silofs_lcache_drop_uamap(fsenv->fse.lcache);
 }
 
 int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
@@ -526,7 +526,7 @@ int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
 
 void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags)
 {
-	silofs_cache_relax(fsenv->fse.cache, flags);
+	silofs_lcache_relax(fsenv->fse.lcache, flags);
 	if (flags & SILOFS_F_IDLE) {
 		silofs_repo_relax(fsenv->fse.repo);
 	}

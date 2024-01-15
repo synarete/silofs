@@ -29,7 +29,7 @@
 #include <silofs/fs/uidgid.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/spxmap.h>
-#include <silofs/fs/cache.h>
+#include <silofs/fs/lcache.h>
 #include <silofs/fs/lnodes.h>
 #include <silofs/fs/zcmpr.h>
 #include <silofs/fs/encdec.h>

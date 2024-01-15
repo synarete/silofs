@@ -2380,8 +2380,8 @@ static int do_clone(struct silofs_task *task,
 static void do_post_clone_relax(const struct silofs_task *task,
                                 struct silofs_sb_info *sbi)
 {
-	silofs_cache_forget_ui(task_cache(task), &sbi->sb_ui);
-	silofs_cache_relax(task_cache(task), SILOFS_F_NOW);
+	silofs_lcache_forget_ui(task_lcache(task), &sbi->sb_ui);
+	silofs_lcache_relax(task_lcache(task), SILOFS_F_NOW);
 }
 
 static int do_clone_and_relex(struct silofs_task *task,
@@ -2575,7 +2575,7 @@ static int try_forget_cached_ii(const struct silofs_task *task,
                                 struct silofs_inode_info *ii)
 {
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
-		silofs_cache_forget_vi(task_cache(task), ii_to_vi(ii));
+		silofs_lcache_forget_vi(task_lcache(task), ii_to_vi(ii));
 	}
 	return 0;
 }

@@ -444,7 +444,7 @@ flusher_dirtyqs_from_task(const struct silofs_flusher *flusher)
 {
 	const struct silofs_fsenv *fsenv = flusher_fsenv_from_task(flusher);
 
-	return &fsenv->fse.cache->c_dqs;
+	return &fsenv->fse.lcache->lc_dirtyqs;
 }
 
 static int
@@ -513,7 +513,7 @@ static void flusher_relax_cache_now(const struct silofs_flusher *flusher)
 {
 	struct silofs_fsenv *fsenv = flusher_fsenv_from_task(flusher);
 
-	silofs_cache_relax(fsenv->fse.cache, SILOFS_F_NOW);
+	silofs_lcache_relax(fsenv->fse.lcache, SILOFS_F_NOW);
 }
 
 static int flusher_do_make_sqe(struct silofs_flusher *flusher,
@@ -902,9 +902,10 @@ static size_t total_ndirty_by(const struct silofs_task *task,
 	if (ii != NULL) {
 		ret = ii->i_dq_vis.dq_accum;
 	} else {
-		dqs = &task->t_fsenv->fse.cache->c_dqs;
+		dqs = &task->t_fsenv->fse.lcache->lc_dirtyqs;
 		ret = dqs->dq_uis.dq_accum +
-		      dqs->dq_iis.dq_accum + dqs->dq_vis.dq_accum;
+		      dqs->dq_iis.dq_accum +
+		      dqs->dq_vis.dq_accum;
 	}
 	return ret;
 }

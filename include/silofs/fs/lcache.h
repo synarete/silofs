@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CACHE_H_
-#define SILOFS_CACHE_H_
+#ifndef SILOFS_LCACHE_H_
+#define SILOFS_LCACHE_H_
 
 
 /* dirty-queues of cached-elements by owner */
@@ -26,15 +26,14 @@ struct silofs_dirtyqs {
 };
 
 /* in-memory caching */
-struct silofs_cache {
-	struct silofs_alloc    *c_alloc;
-	struct silofs_lblock   *c_nil_lbk;
-	struct silofs_hmapq     c_ui_hmapq;
-	struct silofs_hmapq     c_vi_hmapq;
-	struct silofs_dirtyqs   c_dqs;
-	struct silofs_spamaps   c_spams;
-	struct silofs_uamap     c_uamap;
-	size_t                  c_mem_size_hint;
+struct silofs_lcache {
+	struct silofs_alloc    *lc_alloc;
+	struct silofs_lblock   *lc_nil_lbk;
+	struct silofs_hmapq     lc_ui_hmapq;
+	struct silofs_hmapq     lc_vi_hmapq;
+	struct silofs_dirtyqs   lc_dirtyqs;
+	struct silofs_spamaps   lc_spamaps;
+	struct silofs_uamap     lc_uamap;
 };
 
 
@@ -59,44 +58,44 @@ silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_cache_init(struct silofs_cache *cache,
-                      struct silofs_alloc *alloc);
+int silofs_lcache_init(struct silofs_lcache *lcache,
+                       struct silofs_alloc *alloc);
 
-void silofs_cache_fini(struct silofs_cache *cache);
+void silofs_lcache_fini(struct silofs_lcache *lcache);
 
-void silofs_cache_relax(struct silofs_cache *cache, int flags);
+void silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
 
-void silofs_cache_drop(struct silofs_cache *cache);
+void silofs_lcache_drop(struct silofs_lcache *lcache);
 
-
-struct silofs_unode_info *
-silofs_cache_lookup_ui(struct silofs_cache *cache,
-                       const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
-silofs_cache_create_ui(struct silofs_cache *cache,
-                       const struct silofs_ulink *ulink);
-
-void silofs_cache_forget_ui(struct silofs_cache *cache,
-                            struct silofs_unode_info *ui);
+silofs_lcache_lookup_ui(struct silofs_lcache *lcache,
+                        const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
-silofs_cache_find_ui_by(struct silofs_cache *cache,
-                        const struct silofs_uakey *uakey);
+silofs_lcache_create_ui(struct silofs_lcache *lcache,
+                        const struct silofs_ulink *ulink);
 
-void silofs_cache_drop_uamap(struct silofs_cache *cache);
+void silofs_lcache_forget_ui(struct silofs_lcache *lcache,
+                             struct silofs_unode_info *ui);
+
+struct silofs_unode_info *
+silofs_lcache_find_ui_by(struct silofs_lcache *lcache,
+                         const struct silofs_uakey *uakey);
+
+void silofs_lcache_drop_uamap(struct silofs_lcache *lcache);
 
 
 struct silofs_vnode_info *
-silofs_cache_lookup_vi(struct silofs_cache *cache,
-                       const struct silofs_vaddr *vaddr);
+silofs_lcache_lookup_vi(struct silofs_lcache *lcache,
+                        const struct silofs_vaddr *vaddr);
 
 struct silofs_vnode_info *
-silofs_cache_create_vi(struct silofs_cache *cache,
-                       const struct silofs_vaddr *vaddr);
+silofs_lcache_create_vi(struct silofs_lcache *lcache,
+                        const struct silofs_vaddr *vaddr);
 
-void silofs_cache_forget_vi(struct silofs_cache *cache,
-                            struct silofs_vnode_info *vi);
+void silofs_lcache_forget_vi(struct silofs_lcache *lcache,
+                             struct silofs_vnode_info *vi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -142,4 +141,4 @@ void silofs_lni_incref(struct silofs_lnode_info *lni);
 
 void silofs_lni_decref(struct silofs_lnode_info *lni);
 
-#endif /* SILOFS_CACHE_H_ */
+#endif /* SILOFS_LCACHE_H_ */

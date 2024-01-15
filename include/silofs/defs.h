@@ -519,7 +519,7 @@ struct silofs_paddr32b {
 	struct silofs_pvid              pvid;
 	uint32_t                        index;
 	uint32_t                        len;
-	int64_t                         off;
+	uint64_t                        off_ptype;
 } silofs_packed_aligned16;
 
 

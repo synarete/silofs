@@ -57,13 +57,15 @@ const struct silofs_paddr *silofs_paddr_none(void)
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 {
-	return !paddr->index || !paddr->len || off_isnull(paddr->off);
+	return (paddr->ptype == SILOFS_PTYPE_NONE) ||
+	       !paddr->index || !paddr->len || off_isnull(paddr->off);
 }
 
 void silofs_paddr_reset(struct silofs_paddr *paddr)
 {
 	silofs_memzero(paddr, sizeof(*paddr));
 	paddr->off = SILOFS_OFF_NULL;
+	paddr->ptype = SILOFS_PTYPE_NONE;
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
@@ -73,6 +75,7 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 	paddr->index = other->index;
 	paddr->off = other->off;
 	paddr->len = other->len;
+	paddr->ptype = other->ptype;
 }
 
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,
@@ -84,11 +87,15 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 	if (cmp) {
 		return cmp;
 	}
+	cmp = (long)paddr1->ptype - (long)paddr2->ptype;
+	if (cmp) {
+		return cmp;
+	}
 	cmp = (long)paddr1->index - (long)paddr2->index;
 	if (cmp) {
 		return cmp;
 	}
-	cmp = paddr1->off - paddr2->off;
+	cmp = (long)paddr1->off - (long)paddr2->off;
 	if (cmp) {
 		return cmp;
 	}
@@ -99,13 +106,41 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 	return 0;
 }
 
+static void
+cpu_to_off_ptype(uint64_t *off_ptype, loff_t off, enum silofs_ptype ptype)
+{
+	uint64_t val;
+
+	if (off_isnull(off)) {
+		STATICASSERT_EQ(SILOFS_PTYPE_NONE, 0);
+		val = 0;
+	} else {
+		val = ((uint64_t)off) << 8 | ((uint64_t)ptype & 0xFF);
+	}
+	*off_ptype = silofs_cpu_to_le64(val);
+}
+
+static void
+off_ptype_to_cpu(uint64_t off_ptype, loff_t *off, enum silofs_ptype *ptype)
+{
+	uint64_t val;
+
+	val = silofs_le64_to_cpu(off_ptype);
+	if (val == 0) {
+		*off = SILOFS_OFF_NULL;
+		*ptype = SILOFS_PTYPE_NONE;
+	} else {
+		*off = (loff_t)(val >> 8);
+		*ptype = (enum silofs_ptype)(val & 0xFF);
+	}
+}
 
 void silofs_paddr32b_reset(struct silofs_paddr32b *paddr32)
 {
 	memset(paddr32, 0, sizeof(*paddr32));
 	paddr32->index = 0;
 	paddr32->len = 0;
-	paddr32->off = SILOFS_OFF_NULL;
+	paddr32->off_ptype = 0;
 }
 
 void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
@@ -114,7 +149,7 @@ void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
 	silofs_pvid_assign(&paddr32->pvid, &paddr->pvid);
 	paddr32->index = silofs_cpu_to_le32((uint32_t)(paddr->index));
 	paddr32->len = silofs_cpu_to_le32((uint32_t)(paddr->len));
-	paddr32->off = silofs_cpu_to_off(paddr->off);
+	cpu_to_off_ptype(&paddr32->off_ptype, paddr->off, paddr->ptype);
 }
 
 void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
@@ -123,5 +158,5 @@ void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
 	silofs_pvid_assign(&paddr->pvid, &paddr32->pvid);
 	paddr->index = silofs_le32_to_cpu(paddr32->index);
 	paddr->len = silofs_le32_to_cpu(paddr32->len);
-	paddr->off = silofs_off_to_cpu(paddr32->off);
+	off_ptype_to_cpu(paddr32->off_ptype, &paddr->off, &paddr->ptype);
 }

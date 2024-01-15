@@ -25,6 +25,7 @@ struct silofs_paddr {
 	size_t                  index;
 	loff_t                  off;
 	size_t                  len;
+	enum silofs_ptype       ptype;
 };
 
 /* logical-to-physical address mapping */

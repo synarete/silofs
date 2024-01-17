@@ -14,42 +14,42 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BCACHE_H_
-#define SILOFS_BCACHE_H_
+#ifndef SILOFS_PCACHE_H_
+#define SILOFS_PCACHE_H_
 
 
-struct silofs_bcache {
-	struct silofs_hmapq     bc_hmapq;
-	struct silofs_alloc    *bc_alloc;
+struct silofs_pcache {
+	struct silofs_hmapq     pc_hmapq;
+	struct silofs_alloc    *pc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bcache_init(struct silofs_bcache *bcache,
+int silofs_pcache_init(struct silofs_pcache *pcache,
                        struct silofs_alloc *alloc);
 
-void silofs_bcache_fini(struct silofs_bcache *bcache);
+void silofs_pcache_fini(struct silofs_pcache *pcache);
 
-bool silofs_bcache_isempty(const struct silofs_bcache *bcache);
+bool silofs_pcache_isempty(const struct silofs_pcache *pcache);
 
-void silofs_bcache_drop(struct silofs_bcache *bcache);
+void silofs_pcache_drop(struct silofs_pcache *pcache);
 
-void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
+void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 
 struct silofs_btnode_info *
-silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
+silofs_pcache_lookup_bti(struct silofs_pcache *pcache,
                          const struct silofs_paddr *paddr);
 
 struct silofs_btnode_info *
-silofs_bcache_create_bti(struct silofs_bcache *bcache,
+silofs_pcache_create_bti(struct silofs_pcache *pcache,
                          const struct silofs_paddr *paddr);
 
 struct silofs_btleaf_info *
-silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
+silofs_pcache_lookup_bli(struct silofs_pcache *pcache,
                          const struct silofs_paddr *paddr);
 
 struct silofs_btleaf_info *
-silofs_bcache_create_bli(struct silofs_bcache *bcache,
+silofs_pcache_create_bli(struct silofs_pcache *pcache,
                          const struct silofs_paddr *paddr);
 
-#endif /* SILOFS_BCACHE_H_ */
+#endif /* SILOFS_PCACHE_H_ */

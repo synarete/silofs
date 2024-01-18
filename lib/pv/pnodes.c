@@ -25,14 +25,112 @@ static void btn_setup_hdr(struct silofs_btree_node *btn)
 	                 sizeof(*btn), SILOFS_HDRF_PTYPE);
 }
 
-static size_t btn_nchilds(const struct silofs_btree_node *btn)
+static size_t btn_nkeys(const struct silofs_btree_node *btn)
 {
-	return silofs_le16_to_cpu(btn->btn_nchilds);
+	return silofs_le16_to_cpu(btn->btn_nkeys);
 }
 
-static void btn_set_nchilds(struct silofs_btree_node *btn, size_t nchilds)
+static void btn_set_nkeys(struct silofs_btree_node *btn, size_t nkeys)
 {
-	btn->btn_nchilds = silofs_cpu_to_le16((uint16_t)nchilds);
+	silofs_assert_le(nkeys, ARRAY_SIZE(btn->btn_key));
+	btn->btn_nkeys = silofs_cpu_to_le16((uint16_t)nkeys);
+}
+
+static void btn_inc_nkeys(struct silofs_btree_node *btn)
+{
+	btn_set_nkeys(btn, btn_nkeys(btn) + 1);
+}
+
+static size_t btn_nkeys_max(const struct silofs_btree_node *btn)
+{
+	return ARRAY_SIZE(btn->btn_key);
+}
+
+static size_t btn_nfree_keys(const struct silofs_btree_node *btn)
+{
+	const size_t nkeys = btn_nkeys(btn);
+	const size_t nkeys_max = btn_nkeys_max(btn);
+
+	silofs_assert_le(nkeys, nkeys_max);
+	return (nkeys_max - nkeys);
+}
+
+static void btn_key_at(const struct silofs_btree_node *btn, size_t slot,
+                       struct silofs_laddr *out_laddr)
+{
+	silofs_assert_lt(slot, btn_nkeys_max(btn));
+
+	silofs_laddr48b_xtoh(&btn->btn_key[slot], out_laddr);
+}
+
+static void btn_set_key_at(struct silofs_btree_node *btn, size_t slot,
+                           const struct silofs_laddr *laddr)
+{
+	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_key));
+
+	silofs_laddr48b_htox(&btn->btn_key[slot], laddr);
+}
+
+static void btn_reset_key_at(struct silofs_btree_node *btn, size_t slot)
+{
+	btn_set_key_at(btn, slot, laddr_none());
+}
+
+static void btn_reset_keys(struct silofs_btree_node *btn)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(btn->btn_key); ++slot) {
+		btn_reset_key_at(btn, slot);
+	}
+}
+
+static long btn_compare_key_at(const struct silofs_btree_node *btn,
+                               size_t slot, const struct silofs_laddr *laddr)
+{
+	struct silofs_laddr laddr_at_slot = { .len = 0 };
+
+	btn_key_at(btn, slot, &laddr_at_slot);
+	return silofs_laddr_compare(laddr, &laddr_at_slot);
+}
+
+static bool btn_has_key_ge_at(const struct silofs_btree_node *btn, size_t slot,
+                              const struct silofs_laddr *laddr)
+{
+	const long cmp = btn_compare_key_at(btn, slot, laddr);
+
+	return (cmp <= 0);
+}
+
+static size_t btn_resolve_slot_by(const struct silofs_btree_node *btn,
+                                  const struct silofs_laddr *laddr)
+{
+	const size_t nkeys = btn_nkeys(btn);
+
+	for (size_t slot = 0; slot < nkeys; ++slot) {
+		if (btn_has_key_ge_at(btn, slot, laddr)) {
+			return slot;
+		}
+	}
+	return nkeys;
+}
+
+static void btn_insert_key(struct silofs_btree_node *btn, size_t slot,
+                           const struct silofs_laddr *laddr)
+{
+	struct silofs_laddr laddr_at_slot;
+	const size_t nkeys = btn_nkeys(btn);
+
+	silofs_assert_lt(nkeys, btn_nkeys_max(btn));
+	for (size_t i = nkeys; i > slot; --i) {
+		btn_key_at(btn, i - 1, &laddr_at_slot);
+		btn_set_key_at(btn, i, &laddr_at_slot);
+	}
+	btn_set_key_at(btn, slot, laddr);
+	btn_inc_nkeys(btn);
+}
+
+static size_t btn_nchilds_max(const struct silofs_btree_node *btn)
+{
+	return ARRAY_SIZE(btn->btn_child);
 }
 
 static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
@@ -63,72 +161,23 @@ static void btn_reset_childs(struct silofs_btree_node *btn)
 	}
 }
 
-static size_t btn_nkeys(const struct silofs_btree_node *btn)
+static void btn_insert_child(struct silofs_btree_node *btn, size_t slot,
+                             const struct silofs_paddr *paddr)
 {
-	return silofs_le16_to_cpu(btn->btn_nkeys);
-}
-
-static void btn_set_nkeys(struct silofs_btree_node *btn, size_t nkeys)
-{
-	btn->btn_nkeys = silofs_cpu_to_le16((uint16_t)nkeys);
-}
-
-static void btn_key_at(const struct silofs_btree_node *btn, size_t slot,
-                       struct silofs_laddr *out_laddr)
-{
-	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_key));
-
-	silofs_laddr48b_xtoh(&btn->btn_key[slot], out_laddr);
-}
-
-static void btn_set_key_at(struct silofs_btree_node *btn, size_t slot,
-                           const struct silofs_laddr *laddr)
-{
-	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_key));
-
-	silofs_laddr48b_htox(&btn->btn_key[slot], laddr);
-}
-
-static void btn_reset_key_at(struct silofs_btree_node *btn, size_t slot)
-{
-	btn_set_key_at(btn, slot, laddr_none());
-}
-
-static void btn_reset_keys(struct silofs_btree_node *btn)
-{
-	for (size_t slot = 0; slot < ARRAY_SIZE(btn->btn_key); ++slot) {
-		btn_reset_key_at(btn, slot);
-	}
-}
-
-static bool btn_has_key_gt_at(const struct silofs_btree_node *btn, size_t slot,
-                              const struct silofs_laddr *laddr)
-{
-	struct silofs_laddr laddr_at_slot = { .len = 0 };
-	long cmp;
-
-	btn_key_at(btn, slot, &laddr_at_slot);
-	cmp = silofs_laddr_compare(laddr, &laddr_at_slot);
-	return (cmp < 0);
-}
-
-static size_t btn_key_slot_of(const struct silofs_btree_node *btn,
-                              const struct silofs_laddr *laddr)
-{
+	struct silofs_paddr paddr_at_slot;
 	const size_t nkeys = btn_nkeys(btn);
 
-	for (size_t slot = 0; slot < nkeys; ++slot) {
-		if (btn_has_key_gt_at(btn, slot, laddr)) {
-			return slot;
-		}
+	silofs_assert_lt(nkeys, btn_nchilds_max(btn));
+	for (size_t i = nkeys; i > slot; --i) {
+		btn_child_at(btn, i, &paddr_at_slot);
+		btn_set_child_at(btn, i + 1, &paddr_at_slot);
 	}
-	return nkeys;
+	btn_set_child_at(btn, slot, paddr);
 }
 
 static void btn_init(struct silofs_btree_node *btn)
 {
 	btn_setup_hdr(btn);
-	btn_set_nchilds(btn, 0);
 	btn_set_nkeys(btn, 0);
 	btn_reset_childs(btn);
 	btn_reset_keys(btn);
@@ -136,8 +185,9 @@ static void btn_init(struct silofs_btree_node *btn)
 
 static void btn_fini(struct silofs_btree_node *btn)
 {
-	btn_set_nchilds(btn, 0);
 	btn_set_nkeys(btn, 0);
+	btn_reset_childs(btn);
+	btn_reset_keys(btn);
 }
 
 static struct silofs_btree_node *btn_malloc(struct silofs_alloc *alloc)
@@ -172,20 +222,20 @@ static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+#define laddr48b_htox(lx_, lh_)         silofs_laddr48b_htox(lx_, lh_)
+#define laddr48b_xtoh(lx_, lh_)         silofs_laddr48b_xtoh(lx_, lh_)
+#define paddr32b_htox(px_, ph_)         silofs_paddr32b_htox(px_, ph_)
+#define paddr32b_xtoh(px_, ph_)         silofs_paddr32b_xtoh(px_, ph_)
+
 static void ltop_htox(struct silofs_btree_ltop *ltop,
                       const struct silofs_laddr *laddr,
                       const struct silofs_paddr *paddr)
 {
-	silofs_laddr48b_htox(&ltop->laddr, laddr);
-	silofs_paddr32b_htox(&ltop->paddr, paddr);
+	laddr48b_htox(&ltop->laddr, laddr);
+	paddr32b_htox(&ltop->paddr, paddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void btl_set_nltops(struct silofs_btree_leaf *btl, size_t n)
-{
-	btl->btl_nltops = silofs_cpu_to_le16((uint16_t)n);
-}
 
 static void btl_setup_hdr(struct silofs_btree_leaf *btl)
 {
@@ -193,11 +243,66 @@ static void btl_setup_hdr(struct silofs_btree_leaf *btl)
 	                 sizeof(*btl), SILOFS_HDRF_PTYPE);
 }
 
+static size_t btl_nltops(const struct silofs_btree_leaf *btl)
+{
+	return silofs_le16_to_cpu(btl->btl_nltops);
+}
+
+static void btl_set_nltops(struct silofs_btree_leaf *btl, size_t n)
+{
+	silofs_assert_le(n, ARRAY_SIZE(btl->btl_ltop));
+
+	btl->btl_nltops = silofs_cpu_to_le16((uint16_t)n);
+}
+
+static void btl_inc_nltops(struct silofs_btree_leaf *btl)
+{
+	btl_set_nltops(btl, btl_nltops(btl) + 1);
+}
+
+static size_t btl_nltops_max(const struct silofs_btree_leaf *btl)
+{
+	return ARRAY_SIZE(btl->btl_ltop);
+}
+
+static size_t btl_nfree_ltops(const struct silofs_btree_leaf *btl)
+{
+	const size_t nltop = btl_nltops(btl);
+	const size_t nltop_max = btl_nltops_max(btl);
+
+	silofs_assert_le(nltop, nltop_max);
+	return (nltop_max - nltop);
+}
+
+static void btl_laddr_at(const struct silofs_btree_leaf *btl,
+                         size_t slot, struct silofs_laddr *out_laddr)
+{
+	silofs_assert_lt(slot, btl_nltops_max(btl));
+
+	laddr48b_xtoh(&btl->btl_ltop[slot].laddr, out_laddr);
+}
+
+static void btl_paddr_at(const struct silofs_btree_leaf *btl,
+                         size_t slot, struct silofs_paddr *out_paddr)
+{
+	silofs_assert_lt(slot, btl_nltops_max(btl));
+
+	paddr32b_xtoh(&btl->btl_ltop[slot].paddr, out_paddr);
+}
+
+static void btl_ltop_at(const struct silofs_btree_leaf *btl, size_t slot,
+                        struct silofs_laddr *out_laddr,
+                        struct silofs_paddr *out_paddr)
+{
+	btl_laddr_at(btl, slot, out_laddr);
+	btl_paddr_at(btl, slot, out_paddr);
+}
+
 static void btl_set_ltop_at(struct silofs_btree_leaf *btl, size_t slot,
                             const struct silofs_laddr *laddr,
                             const struct silofs_paddr *paddr)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(btl->btl_ltop));
+	silofs_assert_lt(slot, btl_nltops_max(btl));
 
 	ltop_htox(&btl->btl_ltop[slot], laddr, paddr);
 }
@@ -212,6 +317,65 @@ static void btl_reset_ltops(struct silofs_btree_leaf *btl)
 	for (size_t slot = 0; slot < ARRAY_SIZE(btl->btl_ltop); ++slot) {
 		btl_reset_ltop_at(btl, slot);
 	}
+}
+
+static long btl_compare_key_at(const struct silofs_btree_leaf *btl,
+                               size_t slot, const struct silofs_laddr *laddr)
+{
+	struct silofs_laddr laddr_at_slot = { .len = 0 };
+
+	btl_laddr_at(btl, slot, &laddr_at_slot);
+	return silofs_laddr_compare(laddr, &laddr_at_slot);
+}
+
+static size_t btl_find_slot_of(const struct silofs_btree_leaf *btl,
+                               const struct silofs_laddr *laddr)
+{
+	const size_t nltops = btl_nltops(btl);
+	long cmp;
+
+	for (size_t slot = 0; slot < nltops; ++slot) {
+		cmp = btl_compare_key_at(btl, slot, laddr);
+		if (cmp == 0) {
+			return slot;
+		}
+		if (cmp > 0) {
+			break;
+		}
+	}
+	return nltops;
+}
+
+static size_t btl_insert_slot_of(const struct silofs_btree_leaf *btl,
+                                 const struct silofs_laddr *laddr)
+{
+	const size_t nltops = btl_nltops(btl);
+	long cmp;
+
+	for (size_t slot = 0; slot < nltops; ++slot) {
+		cmp = btl_compare_key_at(btl, slot, laddr);
+		if (cmp >= 0) {
+			return slot;
+		}
+	}
+	return nltops;
+}
+
+static void btl_insert_ltop(struct silofs_btree_leaf *btl, size_t slot,
+                            const struct silofs_laddr *laddr,
+                            const struct silofs_paddr *paddr)
+{
+	struct silofs_laddr laddr_at_slot;
+	struct silofs_paddr paddr_at_slot;
+	const size_t nltop = btl_nltops(btl);
+
+	silofs_assert_lt(nltop, btl_nltops_max(btl));
+	for (size_t i = nltop; i > slot; --i) {
+		btl_ltop_at(btl, i - 1, &laddr_at_slot, &paddr_at_slot);
+		btl_set_ltop_at(btl, i, &laddr_at_slot, &paddr_at_slot);
+	}
+	btl_set_ltop_at(btl, slot, laddr, paddr);
+	btl_inc_nltops(btl);
 }
 
 static void btl_init(struct silofs_btree_leaf *btl)
@@ -279,6 +443,29 @@ static void pni_fini(struct silofs_pnode_info *pni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_btnode_info *
+bti_unconst(const struct silofs_btnode_info *bti)
+{
+	union {
+		const struct silofs_btnode_info *p;
+		struct silofs_btnode_info *q;
+	} u = {
+		.p = bti
+	};
+	return u.q;
+}
+
+struct silofs_btnode_info *
+silofs_bti_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_btnode_info *bti = NULL;
+
+	if ((pni != NULL) && (pni->p_type == SILOFS_PTYPE_BTNODE)) {
+		bti = container_of2(pni, struct silofs_btnode_info, btn_pni);
+	}
+	return bti_unconst(bti);
+}
+
 static struct silofs_btnode_info *bti_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btnode_info *bti = NULL;
@@ -337,44 +524,73 @@ void silofs_bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 	btn_del(btn, alloc);
 }
 
-static struct silofs_btnode_info *
-bti_unconst(const struct silofs_btnode_info *bti)
-{
-	union {
-		const struct silofs_btnode_info *p;
-		struct silofs_btnode_info *q;
-	} u = {
-		.p = bti
-	};
-	return u.q;
-}
-
-struct silofs_btnode_info *
-silofs_bti_from_pni(const struct silofs_pnode_info *pni)
-{
-	const struct silofs_btnode_info *bti = NULL;
-
-	if ((pni != NULL) && (pni->p_type == SILOFS_PTYPE_BTNODE)) {
-		bti = container_of2(pni, struct silofs_btnode_info, btn_pni);
-	}
-	return bti_unconst(bti);
-}
-
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
                        const struct silofs_laddr *laddr,
                        struct silofs_paddr *out_paddr)
 {
+	const size_t nkeys = btn_nkeys(bti->btn);
 	size_t slot;
 
-	slot = btn_key_slot_of(bti->btn, laddr);
-	if (slot >= btn_nchilds(bti->btn)) {
+	if (!nkeys) {
 		return -SILOFS_ENOENT;
 	}
+	slot = btn_resolve_slot_by(bti->btn, laddr);
 	btn_child_at(bti->btn, slot, out_paddr);
+	if (paddr_isnull(out_paddr)) {
+		return -SILOFS_ENOENT;
+	}
 	return 0;
 }
 
+int silofs_bti_expand(struct silofs_btnode_info *bti,
+                      const struct silofs_laddr *laddr,
+                      const struct silofs_paddr *paddr)
+{
+	struct silofs_btree_node *btn = bti->btn;
+	const size_t nfree_keys = btn_nfree_keys(btn);
+	size_t slot;
+
+	if (!nfree_keys) {
+		return -SILOFS_ENOSPC;
+	}
+	slot = btn_resolve_slot_by(btn, laddr);
+	btn_insert_child(btn, slot, paddr);
+	btn_insert_key(btn, slot, laddr);
+	return 0;
+}
+
+void silofs_bti_setapex(struct silofs_btnode_info *bti,
+                        const struct silofs_paddr *paddr)
+{
+	const size_t slot = btn_nkeys(bti->btn);
+
+	btn_set_child_at(bti->btn, slot, paddr);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_btleaf_info *
+bli_unconst(const struct silofs_btleaf_info *bli)
+{
+	union {
+		const struct silofs_btleaf_info *p;
+		struct silofs_btleaf_info *q;
+	} u = {
+		.p = bli
+	};
+	return u.q;
+}
+
+struct silofs_btleaf_info *
+silofs_bli_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_btleaf_info *bli = NULL;
+
+	if ((pni != NULL) && (pni->p_type == SILOFS_PTYPE_BTLEAF)) {
+		bli = container_of2(pni, struct silofs_btleaf_info, btl_pni);
+	}
+	return bli_unconst(bli);
+}
 
 static struct silofs_btleaf_info *bli_malloc(struct silofs_alloc *alloc)
 {
@@ -434,26 +650,37 @@ void silofs_bli_del(struct silofs_btleaf_info *bli, struct silofs_alloc *alloc)
 	btl_del(btl, alloc);
 }
 
-static struct silofs_btleaf_info *
-bli_unconst(const struct silofs_btleaf_info *bli)
+int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
+                       const struct silofs_laddr *laddr,
+                       struct silofs_paddr *out_paddr)
 {
-	union {
-		const struct silofs_btleaf_info *p;
-		struct silofs_btleaf_info *q;
-	} u = {
-		.p = bli
-	};
-	return u.q;
-}
+	const struct silofs_btree_leaf *btl = bli->btl;
+	const size_t nltops = btl_nltops(btl);
+	size_t slot;
 
-struct silofs_btleaf_info *
-silofs_bli_from_pni(const struct silofs_pnode_info *pni)
-{
-	const struct silofs_btleaf_info *bli = NULL;
-
-	if ((pni != NULL) && (pni->p_type == SILOFS_PTYPE_BTLEAF)) {
-		bli = container_of2(pni, struct silofs_btleaf_info, btl_pni);
+	if (!nltops) {
+		return -SILOFS_ENOENT;
 	}
-	return bli_unconst(bli);
+	slot = btl_find_slot_of(btl, laddr);
+	if (slot >= nltops) {
+		return -SILOFS_ENOENT;
+	}
+	btl_paddr_at(btl, slot, out_paddr);
+	return 0;
 }
 
+int silofs_bli_extend(struct silofs_btleaf_info *bli,
+                      const struct silofs_laddr *laddr,
+                      const struct silofs_paddr *paddr)
+{
+	struct silofs_btree_leaf *btl = bli->btl;
+	const size_t nfree_ltops = btl_nfree_ltops(btl);
+	size_t slot;
+
+	if (!nfree_ltops) {
+		return -SILOFS_ENOSPC;
+	}
+	slot = btl_insert_slot_of(btl, laddr);
+	btl_insert_ltop(btl, slot, laddr, paddr);
+	return 0;
+}

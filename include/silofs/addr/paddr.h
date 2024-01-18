@@ -28,12 +28,6 @@ struct silofs_paddr {
 	enum silofs_ptype       ptype;
 };
 
-/* logical-to-physical address mapping */
-struct silofs_ltop {
-	struct silofs_laddr     laddr;
-	struct silofs_paddr     paddr;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_pvid_generate(struct silofs_pvid *pvid);

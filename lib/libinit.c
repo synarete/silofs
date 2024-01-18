@@ -316,6 +316,7 @@ static void validate_persistent_types_alignment3(void)
 static void validate_persistent_types_alignment4(void)
 {
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_nkeys, 16);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 1792);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_hdr, 0);

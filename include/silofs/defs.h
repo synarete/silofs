@@ -991,9 +991,8 @@ struct silofs_pvmap_root {
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header            btn_hdr;
-	uint16_t                        btn_nchilds;
 	uint16_t                        btn_nkeys;
-	uint8_t                         btn_reserved1[44];
+	uint8_t                         btn_reserved1[46];
 	struct silofs_paddr32b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint8_t                         btn_reserved2[192];
 	struct silofs_laddr48b          btn_key[SILOFS_BTREE_NODE_NKEYS];

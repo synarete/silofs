@@ -62,6 +62,7 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([linux/fuse.h])
   AX_SILOFS_NEED_HEADER([linux/fiemap.h])
   AX_SILOFS_NEED_HEADER([linux/limits.h])
+  AX_SILOFS_NEED_HEADER([linux/xattr.h])
 ])
 
 AC_DEFUN([AX_SILOFS_NEED_LIBS],

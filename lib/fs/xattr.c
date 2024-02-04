@@ -75,7 +75,7 @@ struct silofs_xattr_ctx {
  */
 static const struct silofs_xattr_prefix s_xattr_prefix[] = {
 	XATTR_PREFIX2(XATTR_SECURITY_PREFIX, SILOFS_XATTR_SECURITY),
-	XATTR_PREFIX1(XATTR_SYSTEM_PREFIX, SILOFS_XATTR_SYSTEM),
+	XATTR_PREFIX2(XATTR_SYSTEM_PREFIX, SILOFS_XATTR_SYSTEM),
 	XATTR_PREFIX2(XATTR_TRUSTED_PREFIX, SILOFS_XATTR_TRUSTED),
 	XATTR_PREFIX2(XATTR_USER_PREFIX, SILOFS_XATTR_USER),
 	XATTR_PREFIX1(XATTR_HURD_PREFIX, SILOFS_XATTR_GNU),
@@ -600,12 +600,12 @@ static bool is_valid_xflags(int flags)
 	return !flags || (flags == XATTR_CREATE) || (flags == XATTR_REPLACE);
 }
 
-static bool has_prefix(const struct silofs_xattr_prefix *xap,
-                       const struct silofs_substr *name)
+static bool has_xattr_prefix(const struct silofs_namestr *name,
+                             const struct silofs_xattr_prefix *xap)
 {
 	const size_t len = strlen(xap->prefix);
 
-	return (name->len > len) && !strncmp(name->str, xap->prefix, len);
+	return (name->s.len > len) && !strncmp(name->s.str, xap->prefix, len);
 }
 
 static const struct silofs_xattr_prefix *
@@ -615,7 +615,7 @@ search_prefix(const struct silofs_namestr *name)
 
 	for (size_t i = 0; i < ARRAY_SIZE(s_xattr_prefix); ++i) {
 		xap = &s_xattr_prefix[i];
-		if (has_prefix(xap, &name->s)) {
+		if (has_xattr_prefix(name, xap)) {
 			return xap;
 		}
 	}
@@ -1039,6 +1039,24 @@ int silofs_do_setxattr(struct silofs_task *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /*
+ * The special extended attributes names of "system.posix_acl_access" and
+ * "system.posix_acl_default" should return 0 upon REMOVEXATTR even if they do
+ * not exist on the referenced inode.
+ */
+static bool is_posix_acl_name(const struct silofs_namestr *name)
+{
+	return silofs_substr_isequal(&name->s, XATTR_NAME_POSIX_ACL_ACCESS) ||
+	       silofs_substr_isequal(&name->s, XATTR_NAME_POSIX_ACL_DEFAULT);
+}
+
+static int
+xac_removexattr_retval(const struct silofs_xattr_ctx *xa_ctx, int err)
+{
+	return ((err == -SILOFS_ENODATA) &&
+	        is_posix_acl_name(xa_ctx->name)) ? 0 : err;
+}
+
+/*
  * TODO-0003: Delete node if empty
  *
  * Free xattr-node upon last-entry remvoal and update parent-slot.
@@ -1055,7 +1073,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	}
 	err = xac_lookup_entry(xa_ctx, &xei);
 	if (err) {
-		return err;
+		return xac_removexattr_retval(xa_ctx, err);
 	}
 	xei_discard_entry(&xei);
 	xai_dirtify(xei.xai, xa_ctx->ii);

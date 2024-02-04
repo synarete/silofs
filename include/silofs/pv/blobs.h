@@ -14,18 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PV_H_
-#define SILOFS_PV_H_
+#ifndef SILOFS_BLOBS_H_
+#define SILOFS_BLOBS_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/infra.h>
-#include <silofs/addr.h>
 
-#include <silofs/pv/crypto.h>
-#include <silofs/pv/repo.h>
-#include <silofs/pv/pnodes.h>
-#include <silofs/pv/pcache.h>
-#include <silofs/pv/blobs.h>
+/* blob file-handle */
+struct silofs_blob_fh {
+	struct silofs_hmapq_elem        bf_hmqe;
+	struct silofs_pvsegid           bf_pvsid;
+	struct silofs_list_head         bf_htb_lh;
+	struct silofs_list_head         bf_lru_lh;
+	ssize_t                         bf_size;
+	int                             bf_fd;
+};
 
-#endif /* SILOFS_PV_H_ */
+/* blobs storage */
+struct silofs_blobstore {
+	struct silofs_alloc            *bs_alloc;
+	struct silofs_mutex             bs_mutex;
+	struct silofs_hmapq             bs_hmapq;
+	int                             bs_dirfd;
+};
+
+#endif /* SILOFS_BLOBS_H_ */

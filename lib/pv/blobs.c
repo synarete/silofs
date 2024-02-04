@@ -14,18 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PV_H_
-#define SILOFS_PV_H_
-
-#include <silofs/defs.h>
-#include <silofs/errors.h>
+#include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
-
-#include <silofs/pv/crypto.h>
-#include <silofs/pv/repo.h>
-#include <silofs/pv/pnodes.h>
-#include <silofs/pv/pcache.h>
-#include <silofs/pv/blobs.h>
-
-#endif /* SILOFS_PV_H_ */
+#include <silofs/errors.h>
+#include <silofs/pv.h>

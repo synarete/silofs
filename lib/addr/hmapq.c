@@ -90,9 +90,9 @@ static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 {
 	const uint64_t uoff = (uint64_t)paddr->off;
 	const uint64_t h1 = 0xc6a4a7935bd1e995ULL - paddr->len;
-	const uint64_t h2 = hash_of_pvid(&paddr->pvid);
+	const uint64_t h2 = hash_of_pvid(&paddr->pvs.pvid);
 
-	return (uoff + paddr->index) ^ h1 ^ h2;
+	return (uoff + paddr->pvs.index) ^ h1 ^ h2;
 }
 
 static uint64_t hash_of_lsegid(const struct silofs_lsegid *lsegid)

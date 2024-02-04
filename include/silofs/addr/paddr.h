@@ -19,13 +19,18 @@
 
 #include <sys/types.h>
 
+/* persistant-volume sub-segment id */
+struct silofs_pvsegid {
+	struct silofs_pvid      pvid;
+	uint32_t                index;
+};
+
 /* physical-address within specific volume mapping */
 struct silofs_paddr {
-	struct silofs_pvid      pvid;
-	size_t                  index;
+	struct silofs_pvsegid   pvs;
+	enum silofs_ptype       ptype;
 	loff_t                  off;
 	size_t                  len;
-	enum silofs_ptype       ptype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

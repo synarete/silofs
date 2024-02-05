@@ -23,10 +23,11 @@
 #include <silofs/addr/offlba.h>
 #include <silofs/addr/htox.h>
 #include <silofs/addr/meta.h>
-#include <silofs/addr/ltype.h>
 #include <silofs/addr/ivkey.h>
-#include <silofs/addr/laddr.h>
+#include <silofs/addr/blobid.h>
 #include <silofs/addr/paddr.h>
+#include <silofs/addr/ltype.h>
+#include <silofs/addr/laddr.h>
 #include <silofs/addr/uaddr.h>
 #include <silofs/addr/vaddr.h>
 #include <silofs/addr/hmapq.h>

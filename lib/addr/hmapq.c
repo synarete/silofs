@@ -66,7 +66,7 @@ static uint64_t htbl_nslots_by_memsize(const struct silofs_alloc *alloc)
 	return (1UL << 12) * nslots_factor;
 }
 
-static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint32_t fac)
+static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)
 {
 	uint64_t nslots;
 
@@ -439,13 +439,16 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+size_t silofs_hmapq_nslots_by(const struct silofs_alloc *alloc, uint8_t fac)
+{
+	return htbl_calc_nslots(alloc, fac);
+}
+
 int silofs_hmapq_init(struct silofs_hmapq *hmapq,
-                      struct silofs_alloc *alloc, unsigned int fac)
+                      struct silofs_alloc *alloc, size_t nslots)
 {
 	struct silofs_list_head *htbl = NULL;
-	size_t nslots;
 
-	nslots = htbl_calc_nslots(alloc, fac);
 	htbl = silofs_lista_new(alloc, nslots);
 	if (htbl == NULL) {
 		return -SILOFS_ENOMEM;

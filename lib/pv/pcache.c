@@ -53,10 +53,11 @@ static bool pni_isevictable(const struct silofs_pnode_info *pni)
 int silofs_pcache_init(struct silofs_pcache *pcache,
                        struct silofs_alloc *alloc)
 {
+	const size_t nslots = silofs_hmapq_nslots_by(alloc, 1);
 	int err;
 
 	silofs_memzero(pcache, sizeof(*pcache));
-	err = silofs_hmapq_init(&pcache->pc_hmapq, alloc, 1);
+	err = silofs_hmapq_init(&pcache->pc_hmapq, alloc, nslots);
 	if (err) {
 		return err;
 	}

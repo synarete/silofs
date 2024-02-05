@@ -389,7 +389,10 @@ lcache_dirtyq_by(struct silofs_lcache *lcache, enum silofs_ltype ltype)
 
 static int lcache_init_ui_hmapq(struct silofs_lcache *lcache)
 {
-	return silofs_hmapq_init(&lcache->lc_ui_hmapq, lcache->lc_alloc, 1);
+	struct silofs_alloc *alloc = lcache->lc_alloc;
+	const size_t nslots = silofs_hmapq_nslots_by(alloc, 1);
+
+	return silofs_hmapq_init(&lcache->lc_ui_hmapq, alloc, nslots);
 }
 
 static void lcache_fini_ui_hmapq(struct silofs_lcache *lcache)
@@ -690,7 +693,10 @@ void silofs_lcache_drop_uamap(struct silofs_lcache *lcache)
 
 static int lcache_init_vi_hmapq(struct silofs_lcache *lcache)
 {
-	return silofs_hmapq_init(&lcache->lc_vi_hmapq, lcache->lc_alloc, 7);
+	struct silofs_alloc *alloc = lcache->lc_alloc;
+	const size_t nslots = silofs_hmapq_nslots_by(alloc, 7);
+
+	return silofs_hmapq_init(&lcache->lc_vi_hmapq, alloc, nslots);
 }
 
 static void lcache_fini_vi_hmapq(struct silofs_lcache *lcache)

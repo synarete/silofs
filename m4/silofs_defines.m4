@@ -1,3 +1,8 @@
+AC_DEFUN([AX_SILOFS_NEED_DEFINES],
+[
+  AX_SILOFS_NEED_POSIX_ACL_DEFINES
+])
+
 AC_DEFUN([AX_SILOFS_NEED_POSIX_ACL_DEFINES],
 [AC_CACHE_CHECK([for posix ACL xattr defines], [ac_cv_ax_posix_acl_defines],
 [AC_COMPILE_IFELSE(

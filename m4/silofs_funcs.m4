@@ -85,18 +85,5 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([get_current_dir_name])
 ])
 
-AC_DEFUN([AX_SILOFS_NEED_BUILTIN],
-[
-  AX_GCC_BUILTIN(__builtin_clz)
-  AX_GCC_BUILTIN(__builtin_expect)
-  AX_GCC_BUILTIN(__builtin_popcount)
-])
-
-AC_DEFUN([AX_SILOFS_NEED_FUNC_ATTRIBUTE],
-[
-  AX_GCC_FUNC_ATTRIBUTE(noreturn)
-])
-
-
 
 

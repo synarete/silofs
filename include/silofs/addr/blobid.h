@@ -17,23 +17,16 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
-#define SILOFS_BOLBID_LEN_MAX   (30)
+#define SILOFS_BOLBID_LEN_MAX   (40)
 
-/* blobs' sub-types */
-enum silofs_btype {
-	SILOFS_BTYPE_NONE       = 0,
-	SILOFS_BTYPE_META       = 1,
-	SILOFS_BTYPE_DATA       = 2,
-};
 
 struct silofs_blobid {
-	enum silofs_btype       btype;
-	unsigned int            len;
-	uint8_t                 val[SILOFS_BOLBID_LEN_MAX];
+	uint32_t        id_len;
+	uint8_t         id[SILOFS_BOLBID_LEN_MAX];
 };
 
 void silofs_blobid_setup(struct silofs_blobid *blobid,
-                         enum silofs_btype btype, size_t len, const void *val);
+                         const void *id, size_t id_len);
 
 void silofs_blobid_assign(struct silofs_blobid *blobid,
                           const struct silofs_blobid *other);

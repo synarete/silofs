@@ -20,26 +20,23 @@
 
 
 void silofs_blobid_setup(struct silofs_blobid *blobid,
-                         enum silofs_btype btype, size_t len, const void *val)
+                         const void *id, size_t id_len)
 {
 	silofs_memzero(blobid, sizeof(*blobid));
-	blobid->btype = btype;
-	blobid->len = (uint32_t)silofs_min(len, sizeof(blobid->val));
-	memcpy(blobid->val, val, blobid->len);
+	blobid->id_len = (uint32_t)silofs_min(id_len, sizeof(blobid->id));
+	memcpy(blobid->id, id, blobid->id_len);
 }
 
 void silofs_blobid_assign(struct silofs_blobid *blobid,
                           const struct silofs_blobid *other)
 {
-	blobid->btype = other->btype;
-	blobid->len = other->len;
-	memcpy(blobid->val, other->val, sizeof(blobid->val));
+	blobid->id_len = other->id_len;
+	memcpy(blobid->id, other->id, sizeof(blobid->id));
 }
 
 void silofs_blobid_reset(struct silofs_blobid *blobid)
 {
-	silofs_memzero(blobid, sizeof(*blobid));
-	blobid->btype = SILOFS_BTYPE_NONE;
+	blobid->id_len = 0;
 }
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid1,
@@ -47,25 +44,21 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 {
 	int cmp;
 
-	cmp = (int)blobid1->btype - (int)blobid2->btype;
-	if (cmp) {
-		return cmp;
+	cmp = (int)blobid1->id_len - (int)blobid2->id_len;
+	if (cmp == 0) {
+		cmp = memcmp(blobid1->id, blobid2->id, blobid1->id_len);
 	}
-	cmp = (int)blobid1->len - (int)blobid2->len;
-	if (cmp) {
-		return cmp;
-	}
-	return memcmp(blobid1->val, blobid2->val, blobid1->len);
+	return cmp;
 }
 
 
 uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid)
 {
-	uint64_t v = (uint64_t)(blobid->btype);
+	uint64_t v = blobid->id_len;
 
-	for (size_t i = 0; i < blobid->len; ++i) {
+	for (size_t i = 0; i < blobid->id_len; ++i) {
 		v = silofs_lrotate64(v, 8);
-		v ^= (uint64_t)blobid->val[i];
+		v ^= (uint64_t)blobid->id[i];
 	}
 	return v;
 }

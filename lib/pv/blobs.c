@@ -133,8 +133,10 @@ static int do_fsync(int fd)
 
 static void byte_to_ascii(unsigned int b, char *a)
 {
-	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
-	a[1] = silofs_nibble_to_ascii((int)b);
+	const int8_t v = (int8_t)(b & 0xff);
+
+	a[0] = silofs_nibble_to_ascii(v >> 4);
+	a[1] = silofs_nibble_to_ascii(v);
 }
 
 static void blobid_to_name(const struct silofs_blobid *blobid,
@@ -143,16 +145,10 @@ static void blobid_to_name(const struct silofs_blobid *blobid,
 	unsigned int b;
 	char *s = nbuf->name;
 
-	b = blobid->btype;
-	byte_to_ascii(b, s);
-	s += 2;
+	STATICASSERT_GT(sizeof(nbuf->name), 2 * sizeof(blobid->id));
 
-	b = blobid->len;
-	byte_to_ascii(b, s);
-	s += 2;
-
-	for (size_t i = 0; i < blobid->len; ++i) {
-		b = blobid->val[i];
+	for (size_t i = 0; i < blobid->id_len; ++i) {
+		b = blobid->id[i];
 		byte_to_ascii(b, s);
 		s += 2;
 	}

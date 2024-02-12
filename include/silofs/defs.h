@@ -71,6 +71,9 @@
 /* repository meta descriptor-file name */
 #define SILOFS_REPO_META_FILENAME       "meta"
 
+/* repository blobs sub-directory name */
+#define SILOFS_REPO_BLOBS_DIRNAME       "blobs"
+
 /* repository objects sub-directory name */
 #define SILOFS_REPO_OBJS_DIRNAME        "objs"
 

@@ -40,6 +40,7 @@ struct silofs_lsegf {
 struct silofs_repo_defs {
 	const char     *re_dots_name;
 	const char     *re_meta_name;
+	const char     *re_blobs_name;
 	const char     *re_objs_name;
 	unsigned int    re_objs_nsubs;
 };
@@ -47,6 +48,7 @@ struct silofs_repo_defs {
 static const struct silofs_repo_defs repo_defs = {
 	.re_dots_name   = SILOFS_REPO_DOTS_DIRNAME,
 	.re_meta_name   = SILOFS_REPO_META_FILENAME,
+	.re_blobs_name  = SILOFS_REPO_BLOBS_DIRNAME,
 	.re_objs_name   = SILOFS_REPO_OBJS_DIRNAME,
 	.re_objs_nsubs  = SILOFS_REPO_OBJS_NSUBS,
 };
@@ -1242,18 +1244,12 @@ static int repo_objs_format(struct silofs_repo *repo)
 	return 0;
 }
 
-static const struct silofs_mdigest *
-repo_mdigest(const struct silofs_repo *repo)
-{
-	return &repo->re_mdigest;
-}
-
 static void repo_hash_lsegid(const struct silofs_repo *repo,
                              const struct silofs_lsegid *lsegid,
                              struct silofs_hash256 *out_hash)
 {
 	struct silofs_lsegid32b lsegid32;
-	const struct silofs_mdigest *md = repo_mdigest(repo);
+	const struct silofs_mdigest *md = &repo->re_mdigest;
 
 	silofs_lsegid32b_htox(&lsegid32, lsegid);
 	silofs_sha256_of(md, &lsegid32, sizeof(lsegid32), out_hash);
@@ -1517,6 +1513,16 @@ static void repo_fini_mutex(struct silofs_repo *repo)
 	silofs_mutex_fini(&repo->re_mutex);
 }
 
+static int repo_init_bstore(struct silofs_repo *repo)
+{
+	return silofs_bstore_init(&repo->re_bstore, repo->re.alloc);
+}
+
+static void repo_fini_bstore(struct silofs_repo *repo)
+{
+	silofs_bstore_fini(&repo->re_bstore);
+}
+
 
 int silofs_repo_init(struct silofs_repo *repo,
                      const struct silofs_repo_base *re_base)
@@ -1541,8 +1547,13 @@ int silofs_repo_init(struct silofs_repo *repo,
 	if (err) {
 		goto out_err;
 	}
+	err = repo_init_bstore(repo);
+	if (err) {
+		goto out_err;
+	}
 	return 0;
 out_err:
+	repo_fini_bstore(repo);
 	repo_fini_mutex(repo);
 	repo_fini_mdigest(repo);
 	return err;
@@ -1621,15 +1632,22 @@ static int repo_create_skel_subfile(const struct silofs_repo *repo,
 
 static int repo_create_skel(const struct silofs_repo *repo)
 {
-	const char *name;
-	loff_t size;
+	const char *name = NULL;
+	loff_t size = 0;
 	int err;
+
+	name = repo_defs.re_blobs_name;
+	err = repo_create_skel_subdir(repo, name, 0700);
+	if (err) {
+		return err;
+	}
 
 	name = repo_defs.re_objs_name;
 	err = repo_create_skel_subdir(repo, name, 0700);
 	if (err) {
 		return err;
 	}
+
 	name = repo_defs.re_meta_name;
 	size = SILOFS_REPO_METADATA_SIZE;
 	err = repo_create_skel_subfile(repo, name, 0600, size);
@@ -1689,17 +1707,26 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
+
 	name = repo_defs.re_meta_name;
 	size = SILOFS_REPO_METADATA_SIZE;
 	err = repo_require_skel_subfile(repo, name, size);
 	if (err) {
 		return err;
 	}
+
 	name = repo_defs.re_objs_name;
 	err = repo_require_skel_subdir(repo, name);
 	if (err) {
 		return err;
 	}
+
+	name = repo_defs.re_blobs_name;
+	err = repo_require_skel_subdir(repo, name);
+	if (err) {
+		return err;
+	}
+
 	return 0;
 }
 
@@ -1848,6 +1875,13 @@ int silofs_repo_format(struct silofs_repo *repo)
 	return err;
 }
 
+static int repo_open_bstore(struct silofs_repo *repo)
+{
+	return silofs_bstore_openat(&repo->re_bstore,
+	                            repo->re_dots_dfd,
+	                            repo_defs.re_blobs_name);
+}
+
 static int repo_do_open(struct silofs_repo *repo)
 {
 	int err;
@@ -1869,6 +1903,10 @@ static int repo_do_open(struct silofs_repo *repo)
 		return err;
 	}
 	err = repo_open_lsegs_dir(repo);
+	if (err) {
+		return err;
+	}
+	err = repo_open_bstore(repo);
 	if (err) {
 		return err;
 	}
@@ -1900,10 +1938,19 @@ static int repo_close_lsegs_dir(struct silofs_repo *repo)
 	return do_closefd(&repo->re_lsegs_dfd);
 }
 
+static int repo_close_bstore(struct silofs_repo *repo)
+{
+	return silofs_bstore_close(&repo->re_bstore);
+}
+
 static int repo_close(struct silofs_repo *repo)
 {
 	int err;
 
+	err = repo_close_bstore(repo);
+	if (err) {
+		return err;
+	}
 	err = repo_close_lsegs_dir(repo);
 	if (err) {
 		return err;

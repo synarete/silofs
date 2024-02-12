@@ -22,13 +22,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-static int do_opendir(const char *path, int *out_fd)
+static int do_opendirat(int dirfd, const char *pathname, int *out_fd)
 {
 	int err;
 
-	err = silofs_sys_opendir(path, out_fd);
+	err = silofs_sys_opendirat(dirfd, pathname, out_fd);
 	if (err) {
-		log_warn("opendir failed: %s err=%d", path, err);
+		log_warn("opendirat error: dirfd=%d pathname=%s err=%d",
+		         dirfd, pathname, err);
 	}
 	return err;
 }
@@ -250,6 +251,11 @@ static int blob_fh_flush(const struct silofs_blob_fh *bfh)
 	return do_fsync(bfh->bf_fd);
 }
 
+static bool blob_fh_is_evictable(const struct silofs_blob_fh *bfh)
+{
+	return silofs_hmqe_is_evictable(&bfh->bf_hmqe);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int bstore_spawn_bfh(struct silofs_bstore *bstore,
@@ -302,8 +308,17 @@ bstore_get_bfh(struct silofs_bstore *bstore,
 	return bfh;
 }
 
-static int bstore_remove_bfh(struct silofs_bstore *bstore,
-                             const struct silofs_blobid *blobid)
+static void bstore_remove_bfh(struct silofs_bstore *bstore,
+                              struct silofs_blob_fh *bfh)
+{
+	silofs_assert(blob_fh_is_evictable(bfh));
+
+	silofs_hmapq_remove(&bstore->bs_hmapq, &bfh->bf_hmqe);
+	blob_fh_del(bfh, bstore->bs_alloc);
+}
+
+static int bstore_try_remove_bfh(struct silofs_bstore *bstore,
+                                 const struct silofs_blobid *blobid)
 {
 	struct silofs_blob_fh *bfh = NULL;
 	int err;
@@ -312,8 +327,7 @@ static int bstore_remove_bfh(struct silofs_bstore *bstore,
 	if (err) {
 		return err;
 	}
-	silofs_hmapq_remove(&bstore->bs_hmapq, &bfh->bf_hmqe);
-	blob_fh_del(bfh, bstore->bs_alloc);
+	bstore_remove_bfh(bstore, bfh);
 	return 0;
 }
 
@@ -383,21 +397,35 @@ static int bstore_statblob(const struct silofs_bstore *bstore,
 	return bstore_statblob_at(bstore, blobid, &st);
 }
 
-int silofs_bstore_open(struct silofs_bstore *bstore, const char *pathname)
+int silofs_bstore_openat(struct silofs_bstore *bstore,
+                         int parent_dirfd, const char *name)
 {
-	int err = -SILOFS_EALREADY;
 
-	if (!bstore_isopen(bstore)) {
-		err = do_opendir(pathname, &bstore->bs_dirfd);
+	int err;
+
+	if (bstore_isopen(bstore)) {
+		return -SILOFS_EALREADY;
 	}
-	return err;
+	err = do_opendirat(parent_dirfd, name, &bstore->bs_dirfd);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-void silofs_bstore_close(struct silofs_bstore *bstore)
+int silofs_bstore_close(struct silofs_bstore *bstore)
 {
-	if (bstore_isopen(bstore)) {
-		do_closefd(&bstore->bs_dirfd);
+	int err;
+
+	if (!bstore_isopen(bstore)) {
+		return 0;
 	}
+	err = silofs_bstore_pruneall(bstore);
+	if (err) {
+		return err;
+	}
+	do_closefd(&bstore->bs_dirfd);
+	return 0;
 }
 
 static int bstore_open_blob_with(struct silofs_bstore *bstore,
@@ -488,7 +516,7 @@ int silofs_bstore_rmblob(struct silofs_bstore *bstore,
 	if (err) {
 		return err;
 	}
-	err = bstore_remove_bfh(bstore, blobid);
+	err = bstore_try_remove_bfh(bstore, blobid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		return err;
 	}
@@ -567,4 +595,36 @@ int silofs_bstore_flush(struct silofs_bstore *bstore,
 		err = blob_fh_flush(bfh);
 	}
 	return err;
+}
+
+
+static int try_evict_blob_fh(struct silofs_hmapq_elem *hmqe, void *arg)
+{
+	struct silofs_bstore *bstore = arg;
+	struct silofs_blob_fh *bfh = NULL;
+
+	bfh = blob_fh_from_hmqe(hmqe);
+	if (blob_fh_is_evictable(bfh)) {
+		bstore_remove_bfh(bstore, bfh);
+	}
+	return 0;
+}
+
+void silofs_bstore_prune(struct silofs_bstore *bstore)
+{
+	silofs_hmapq_riterate(&bstore->bs_hmapq,
+	                      SILOFS_HMAPQ_ITERALL,
+	                      try_evict_blob_fh, bstore);
+}
+
+int silofs_bstore_pruneall(struct silofs_bstore *bstore)
+{
+	size_t usage;
+
+	usage = silofs_hmapq_usage(&bstore->bs_hmapq);
+	if (usage > 0) {
+		silofs_bstore_prune(bstore);
+		usage = silofs_hmapq_usage(&bstore->bs_hmapq);
+	}
+	return (usage == 0) ? 0 : -SILOFS_EAGAIN;
 }

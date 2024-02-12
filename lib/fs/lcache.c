@@ -327,7 +327,7 @@ static void vi_update_dq_by(struct silofs_vnode_info *vi,
 	vi_set_dq(vi, dq);
 }
 
-static struct silofs_vnode_info *vi_from_lme(struct silofs_hmapq_elem *lme)
+static struct silofs_vnode_info *vi_from_hmqe(struct silofs_hmapq_elem *lme)
 {
 	struct silofs_vnode_info *vi = NULL;
 
@@ -508,10 +508,10 @@ static size_t lcache_shrink_or_relru_uis(struct silofs_lcache *lcache,
 	return evicted;
 }
 
-static int try_evict_ui(struct silofs_hmapq_elem *lme, void *arg)
+static int try_evict_ui(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_lcache *lcache = arg;
-	struct silofs_unode_info *ui = ui_from_hmqe(lme);
+	struct silofs_unode_info *ui = ui_from_hmqe(hmqe);
 
 	lcache_evict_or_relru_ui(lcache, ui);
 	return 0;
@@ -722,7 +722,7 @@ lcache_find_vi(struct silofs_lcache *lcache, const struct silofs_vaddr *vaddr)
 
 	silofs_hkey_by_vaddr(&hkey, vaddr);
 	hmqe = silofs_hmapq_lookup(&lcache->lc_vi_hmapq, &hkey);
-	return vi_from_lme(hmqe);
+	return vi_from_hmqe(hmqe);
 }
 
 static void lcache_promote_vi(struct silofs_lcache *lcache,
@@ -777,7 +777,7 @@ lcache_get_lru_vi(struct silofs_lcache *lcache)
 	struct silofs_hmapq_elem *hmqe;
 
 	hmqe = silofs_hmapq_get_lru(&lcache->lc_vi_hmapq);
-	return (hmqe != NULL) ? vi_from_lme(hmqe) : NULL;
+	return (hmqe != NULL) ? vi_from_hmqe(hmqe) : NULL;
 }
 
 static bool lcache_evict_or_relru_vi(struct silofs_lcache *lcache,
@@ -821,7 +821,7 @@ lcache_shrink_or_relru_vis(struct silofs_lcache *lcache, size_t cnt, bool now)
 static int try_evict_vi(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_lcache *lcache = arg;
-	struct silofs_vnode_info *vi = vi_from_lme(hmqe);
+	struct silofs_vnode_info *vi = vi_from_hmqe(hmqe);
 
 	lcache_evict_or_relru_vi(lcache, vi);
 	return 0;

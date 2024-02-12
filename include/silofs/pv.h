@@ -23,9 +23,9 @@
 #include <silofs/addr.h>
 
 #include <silofs/pv/crypto.h>
+#include <silofs/pv/blobs.h>
 #include <silofs/pv/repo.h>
 #include <silofs/pv/pnodes.h>
 #include <silofs/pv/pcache.h>
-#include <silofs/pv/blobs.h>
 
 #endif /* SILOFS_PV_H_ */

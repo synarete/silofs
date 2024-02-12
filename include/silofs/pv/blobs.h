@@ -41,9 +41,10 @@ int silofs_bstore_init(struct silofs_bstore *bstore,
 
 void silofs_bstore_fini(struct silofs_bstore *bstore);
 
-int silofs_bstore_open(struct silofs_bstore *bstore, const char *pathname);
+int silofs_bstore_openat(struct silofs_bstore *bstore,
+                         int parent_dirfd, const char *name);
 
-void silofs_bstore_close(struct silofs_bstore *bstore);
+int silofs_bstore_close(struct silofs_bstore *bstore);
 
 int silofs_bstore_mkblob(struct silofs_bstore *bstore,
                          const struct silofs_blobid *blobid);
@@ -61,5 +62,10 @@ int silofs_bstore_pread(struct silofs_bstore *bstore,
 
 int silofs_bstore_flush(struct silofs_bstore *bstore,
                         const struct silofs_blobid *blobid);
+
+void silofs_bstore_prune(struct silofs_bstore *bstore);
+
+int silofs_bstore_pruneall(struct silofs_bstore *bstore);
+
 
 #endif /* SILOFS_BLOBS_H_ */

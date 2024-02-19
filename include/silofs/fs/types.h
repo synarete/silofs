@@ -51,14 +51,6 @@ enum silofs_stg_mode {
 	SILOFS_STG_RAW          = SILOFS_BIT(2), /* not-set-yet */
 };
 
-/* fs-env control flags */
-enum silofs_env_flags {
-	SILOFS_ENVF_NLOOKUP     = SILOFS_BIT(0),
-	SILOFS_ENVF_ALLOWOTHER  = SILOFS_BIT(1),
-	SILOFS_ENVF_ALLOWADMIN  = SILOFS_BIT(2),
-	SILOFS_ENVF_ASYNCWR     = SILOFS_BIT(3),
-};
-
 /* inode's attributes masks */
 enum silofs_iattr_flags {
 	SILOFS_IATTR_PARENT     = SILOFS_BIT(0),

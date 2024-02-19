@@ -17,6 +17,16 @@
 #ifndef SILOFS_FSENV_H_
 #define SILOFS_FSENV_H_
 
+/* fs-env control flags */
+enum silofs_env_flags {
+	SILOFS_ENVF_WITHFUSE    = SILOFS_BIT(0),
+	SILOFS_ENVF_NLOOKUP     = SILOFS_BIT(1),
+	SILOFS_ENVF_WRITEBACK   = SILOFS_BIT(2),
+	SILOFS_ENVF_ALLOWOTHER  = SILOFS_BIT(3),
+	SILOFS_ENVF_ALLOWADMIN  = SILOFS_BIT(4),
+	SILOFS_ENVF_ALLOWXACL   = SILOFS_BIT(5),
+	SILOFS_ENVF_ASYNCWR     = SILOFS_BIT(6),
+};
 
 /* base members of fsenv-block (provided) */
 struct silofs_fsenv_base {
@@ -45,8 +55,8 @@ struct silofs_fsenv {
 	struct silofs_sb_info          *fse_sbi;
 	struct silofs_ulink             fse_sb_ulink;
 	struct silofs_cred              fse_owner;
-	unsigned long                   fse_ctl_flags;
 	unsigned long                   fse_ms_flags;
+	enum silofs_env_flags           fse_ctl_flags;
 	iconv_t                         fse_iconv;
 	time_t                          fse_init_time;
 	uint64_t                        fse_commit_id;

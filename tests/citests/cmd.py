@@ -178,12 +178,15 @@ class CmdSilofs(CmdExec):
         password: str,
         allow_hostids: bool = False,
         writeback_cache: bool = False,
+        no_xattr_acl: bool = False,
     ) -> None:
         wb_mode = int(writeback_cache)
         args = ["mount", repodir_name, mntpoint]
         args = args + [f"--writeback-cache={wb_mode}"]
         if allow_hostids:
             args = args + ["--allow-hostids"]
+        if no_xattr_acl:
+            args = args + ["--no-xattr-acl"]
         if password:
             args = args + ["--password", password]
         self.execute_run(args)

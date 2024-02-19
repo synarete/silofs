@@ -37,6 +37,7 @@ static const char *cmd_mount_help_desc[] = {
 	"  -S, --nosuid                 Do not honor special bits",
 	"  -i  --allow-hostids          Use local host uid/gid",
 	"  -A  --no-allow-other         Do not allow other users",
+	"  -E  --no-xattr-acl           Disable ACL via extended attributes",
 	"  -W  --writeback-cache=0|1    Write-back cache mode",
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
@@ -54,8 +55,9 @@ struct cmd_mount_in_args {
 	char   *mntpoint_real;
 	char   *uhelper;
 	char   *password;
-	bool    no_allowother;
-	bool    allowhostids;
+	bool    allow_hostids;
+	bool    no_allow_other;
+	bool    no_xattr_acl;
 	bool    writeback_cache;
 	bool    lazytime;
 	bool    noexec;
@@ -154,7 +156,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 		} else if (skey == CMD_MOUNT_OPT_NOEXEC) {
 			ctx->in_args.noexec = true;
 		} else if (skey == CMD_MOUNT_OPT_HOSTIDS) {
-			ctx->in_args.allowhostids = true;
+			ctx->in_args.allow_hostids = true;
 		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
 			ctx->in_args.password = cmd_getpass_str(sval);
 		} else {
@@ -170,6 +172,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "opts", required_argument, NULL, 'o' },
 		{ "allow-hostids", no_argument, NULL, 'i' },
 		{ "no-allow-other", no_argument, NULL, 'A' },
+		{ "no-xattr-acl", no_argument, NULL, 'E' },
 		{ "writeback-cache", required_argument, NULL, 'W' },
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "coredump", no_argument, NULL, 'C' },
@@ -183,13 +186,15 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("o:AiW:DCa:Mp:L:Rh", opts);
+		opt_chr = cmd_getopt("o:iAEW:DCa:Mp:L:Rh", opts);
 		if (opt_chr == 'o') {
 			cmd_mount_getsubopts(ctx);
-		} else if (opt_chr == 'A') {
-			ctx->in_args.no_allowother = true;
 		} else if (opt_chr == 'i') {
-			ctx->in_args.allowhostids = true;
+			ctx->in_args.allow_hostids = true;
+		} else if (opt_chr == 'A') {
+			ctx->in_args.no_allow_other = true;
+		} else if (opt_chr == 'E') {
+			ctx->in_args.no_xattr_acl = true;
 		} else if (opt_chr == 'W') {
 			ctx->in_args.writeback_cache =
 			        cmd_parse_str_as_bool(optarg);
@@ -232,10 +237,11 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 	fs_args->mntdir = ctx->in_args.mntpoint_real;
-	fs_args->withfuse = true;
-	fs_args->allowother = !ctx->in_args.no_allowother;
-	fs_args->allowhostids = ctx->in_args.allowhostids;
-	fs_args->allowadmin = true;
+	fs_args->with_fuse = true;
+	fs_args->allow_admin = true;
+	fs_args->allow_other = !ctx->in_args.no_allow_other;
+	fs_args->allow_hostids = ctx->in_args.allow_hostids;
+	fs_args->xattr_acl = !ctx->in_args.no_xattr_acl;
 	fs_args->writeback_cache = ctx->in_args.writeback_cache;
 	fs_args->lazytime = ctx->in_args.lazytime;
 	fs_args->noexec = ctx->in_args.noexec;
@@ -645,6 +651,7 @@ void cmd_execute_mount(void)
 			.rdonly = false,
 			.asyncwr = true,
 			.stdalloc = false,
+			.no_xattr_acl = false,
 			.writeback_cache = true,
 			.explicit_log_level = false,
 			.systemd_run = false,

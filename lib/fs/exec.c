@@ -345,7 +345,7 @@ static int fs_ctx_init_idsmap(struct silofs_fs_ctx *fs_ctx)
 
 	idsmap = &fs_ctx_obj_of(fs_ctx)->fs_core.c.idsmap;
 	err = silofs_idsmap_init(idsmap, fs_ctx->alloc,
-	                         fs_ctx->fs_args.allowhostids);
+	                         fs_ctx->fs_args.allow_hostids);
 	if (err) {
 		return err;
 	}
@@ -386,10 +386,11 @@ static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 
 	fsenv = &fs_ctx_obj_of(fs_ctx)->fs_core.c.fsenv;
 	err = silofs_fsenv_init(fsenv, &fse_base);
-	if (!err) {
-		fs_ctx->fsenv = fsenv;
+	if (err) {
+		return err;
 	}
-	return err;
+	fs_ctx->fsenv = fsenv;
+	return 0;
 }
 
 static void fs_ctx_fini_fsenv(struct silofs_fs_ctx *fs_ctx)
@@ -410,12 +411,30 @@ static union silofs_fuseq_page *fuseq_to_page(struct silofs_fuseq *fuseq)
 	return unconst(fqp);
 }
 
+static bool fs_ctx_with_fuse(const struct silofs_fs_ctx *fs_ctx)
+{
+	const struct silofs_fsenv *fsenv = fs_ctx->fsenv;
+	const enum silofs_env_flags mask = SILOFS_ENVF_WITHFUSE;
+
+	silofs_assert_not_null(fsenv);
+	return (fsenv->fse_ctl_flags & mask) == mask;
+}
+
+static bool fs_ctx_with_writeback(const struct silofs_fs_ctx *fs_ctx)
+{
+	const struct silofs_fsenv *fsenv = fs_ctx->fsenv;
+	const enum silofs_env_flags mask = SILOFS_ENVF_WRITEBACK;
+
+	silofs_assert_not_null(fsenv);
+	return (fsenv->fse_ctl_flags & mask) == mask;
+}
+
 static void fs_ctx_bind_fuseq(struct silofs_fs_ctx *fs_ctx,
                               struct silofs_fuseq *fuseq)
 {
 	fs_ctx->fuseq = fuseq;
 	if (fuseq != NULL) {
-		fuseq->fq_writeback_cache = fs_ctx->fs_args.writeback_cache;
+		fuseq->fq_writeback_cache = fs_ctx_with_writeback(fs_ctx);
 	}
 }
 
@@ -426,7 +445,7 @@ static int fs_ctx_init_fuseq(struct silofs_fs_ctx *fs_ctx)
 	void *mem = NULL;
 	int err;
 
-	if (!fs_ctx->fs_args.withfuse) {
+	if (!fs_ctx_with_fuse(fs_ctx)) {
 		return 0;
 	}
 	mem = silofs_memalloc(fs_ctx->alloc, fuseq_pg_size, 0);
@@ -859,17 +878,17 @@ int silofs_close_repo(struct silofs_fs_ctx *fs_ctx)
 
 int silofs_exec_fs(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_fuseq *fq = fs_ctx->fuseq;
+	struct silofs_fuseq *fuseq = fs_ctx->fuseq;
 	int err;
 
-	if (!fs_ctx->fs_args.withfuse || (fs_ctx->fuseq == NULL)) {
+	if (!fs_ctx_with_fuse(fs_ctx) || (fuseq == NULL)) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_fuseq_mount(fq, fs_ctx->fsenv, fs_ctx->fs_args.mntdir);
+	err = silofs_fuseq_mount(fuseq, fs_ctx->fsenv, fs_ctx->fs_args.mntdir);
 	if (!err) {
-		err = silofs_fuseq_exec(fq);
+		err = silofs_fuseq_exec(fuseq);
 	}
-	silofs_fuseq_term(fq);
+	silofs_fuseq_term(fuseq);
 	return err;
 }
 

@@ -29,7 +29,9 @@ def test_rsync(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_init()
     env.exec_mkfs(16, sup_groups=True)
-    env.exec_mount(allow_hostids=True, writeback_cache=False)
+    env.exec_mount(
+        allow_hostids=True, writeback_cache=False, no_xattr_acl=True
+    )
     base = env.create_fstree(name)
     ret = env.cmd.git.clone(url, base)
     if ret == 0:

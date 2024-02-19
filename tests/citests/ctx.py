@@ -196,6 +196,7 @@ class TestEnv:
         name: str = "",
         allow_hostids: bool = False,
         writeback_cache: bool = True,
+        no_xattr_acl: bool = False,
     ) -> None:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.mount(
@@ -204,6 +205,7 @@ class TestEnv:
             self._passwd(),
             allow_hostids,
             writeback_cache,
+            no_xattr_acl,
         )
 
     def exec_umount(self) -> None:

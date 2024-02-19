@@ -37,11 +37,12 @@ struct silofs_fs_args {
 	mode_t                  umask;
 	size_t                  capacity;
 	size_t                  memwant;
-	bool                    withfuse;
 	bool                    pedantic;
-	bool                    allowother;
-	bool                    allowhostids;
-	bool                    allowadmin;
+	bool                    allow_other;
+	bool                    allow_hostids;
+	bool                    xattr_acl;
+	bool                    allow_admin;
+	bool                    with_fuse;
 	bool                    writeback_cache;
 	bool                    lazytime;
 	bool                    noexec;

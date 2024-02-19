@@ -2507,7 +2507,9 @@ static int fuseq_wr_iter_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 
 static bool fuseq_asyncwr_mode(const struct silofs_fuseq_worker *fqw)
 {
-	return (fqw->fw_fq->fq_fsenv->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
+	const enum silofs_env_flags mask = SILOFS_ENVF_ASYNCWR;
+
+	return (fqw->fw_fq->fq_fsenv->fse_ctl_flags & mask) == mask;
 }
 
 static void fuseq_setup_wr_iter(struct silofs_fuseq_worker *fqw,
@@ -3887,6 +3889,13 @@ void silofs_fuseq_fini(struct silofs_fuseq *fq)
 	fq->fq_fsenv = NULL;
 }
 
+static bool has_allow_other_mode(const struct silofs_fsenv *fsenv)
+{
+	const enum silofs_env_flags mask = SILOFS_ENVF_ALLOWOTHER;
+
+	return (fsenv->fse_ctl_flags & mask) == mask;
+}
+
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
                        struct silofs_fsenv *fsenv, const char *path)
 {
@@ -3902,7 +3911,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 	uid = fsenv->fse_owner.uid;
 	gid = fsenv->fse_owner.gid;
 	ms_flags = fsenv->fse_ms_flags;
-	allow_other = (fsenv->fse_ctl_flags & SILOFS_ENVF_ALLOWOTHER) > 0;
+	allow_other = has_allow_other_mode(fsenv);
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {

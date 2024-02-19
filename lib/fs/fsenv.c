@@ -110,14 +110,21 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
 
-	if (fs_args->allowother) {
+	if (fs_args->with_fuse) {
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_WITHFUSE;
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_NLOOKUP;
+	}
+	if (fs_args->writeback_cache) {
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_WRITEBACK;
+	}
+	if (fs_args->allow_other) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWOTHER;
 	}
-	if (fs_args->allowadmin) {
-		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWADMIN;
+	if (fs_args->xattr_acl) {
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWXACL;
 	}
-	if (fs_args->withfuse) {
-		fsenv->fse_ctl_flags |= SILOFS_ENVF_NLOOKUP;
+	if (fs_args->allow_admin) {
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWADMIN;
 	}
 	if (fs_args->asyncwr) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ASYNCWR;

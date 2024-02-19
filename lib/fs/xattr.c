@@ -26,17 +26,20 @@
 #define XATTR_DATA_MAX \
 	(SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 
-#define XATTRF_DISABLE 1
+#define XATTRF_DISABLE  (0x01)
+#define XATTRF_ACL      (0x02)
 
 #define XATTR_PREFIX_(p_, n_, f_) \
 	{ .prefix = (p_), .ns = (n_), .flags = (f_) }
 
-#define XATTR_PREFIX1(p_, n_) \
-	XATTR_PREFIX_(p_, n_, XATTRF_DISABLE)
-
-#define XATTR_PREFIX2(p_, n_) \
+#define XATTR_PREFIX_NORMAL(p_, n_) \
 	XATTR_PREFIX_(p_, n_, 0)
 
+#define XATTR_PREFIX_ACL(p_, n_) \
+	XATTR_PREFIX_(p_, n_, XATTRF_ACL)
+
+#define XATTR_PREFIX_DISABLED(p_, n_) \
+	XATTR_PREFIX_(p_, n_, XATTRF_DISABLE)
 
 struct silofs_xentry_view {
 	struct silofs_xattr_entry xe;
@@ -74,11 +77,11 @@ struct silofs_xattr_ctx {
  * but as 'enum silofs_xattr_ns' value within 'xe_namespace'.
  */
 static const struct silofs_xattr_prefix s_xattr_prefix[] = {
-	XATTR_PREFIX2(XATTR_SECURITY_PREFIX, SILOFS_XATTR_SECURITY),
-	XATTR_PREFIX2(XATTR_SYSTEM_PREFIX, SILOFS_XATTR_SYSTEM),
-	XATTR_PREFIX2(XATTR_TRUSTED_PREFIX, SILOFS_XATTR_TRUSTED),
-	XATTR_PREFIX2(XATTR_USER_PREFIX, SILOFS_XATTR_USER),
-	XATTR_PREFIX1(XATTR_HURD_PREFIX, SILOFS_XATTR_GNU),
+	XATTR_PREFIX_ACL(XATTR_SECURITY_PREFIX, SILOFS_XATTR_SECURITY),
+	XATTR_PREFIX_ACL(XATTR_SYSTEM_PREFIX, SILOFS_XATTR_SYSTEM),
+	XATTR_PREFIX_ACL(XATTR_TRUSTED_PREFIX, SILOFS_XATTR_TRUSTED),
+	XATTR_PREFIX_NORMAL(XATTR_USER_PREFIX, SILOFS_XATTR_USER),
+	XATTR_PREFIX_DISABLED(XATTR_HURD_PREFIX, SILOFS_XATTR_GNU),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -622,9 +625,18 @@ search_prefix(const struct silofs_namestr *name)
 	return NULL;
 }
 
-static int check_xattr_name(const struct silofs_namestr *name)
+static bool xac_allow_acl(const struct silofs_xattr_ctx *xa_ctx)
 {
-	const struct silofs_xattr_prefix *xap;
+	const struct silofs_fsenv *fsenv = xa_ctx->task->t_fsenv;
+
+	return (fsenv->fse_ctl_flags & SILOFS_ENVF_ALLOWXACL) > 0;
+}
+
+static int
+xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
+{
+	const struct silofs_namestr *name = xa_ctx->name;
+	const struct silofs_xattr_prefix *xap = NULL;
 
 	if (!name) {
 		return 0;
@@ -633,7 +645,13 @@ static int check_xattr_name(const struct silofs_namestr *name)
 		return -SILOFS_ENAMETOOLONG;
 	}
 	xap = search_prefix(name);
-	if (xap && (xap->flags & XATTRF_DISABLE)) {
+	if ((xap == NULL) || !xap->flags || !w_mode) {
+		return 0;
+	}
+	if (xap->flags & XATTRF_DISABLE) {
+		return -SILOFS_EINVAL;
+	}
+	if ((xap->flags & XATTRF_ACL) && !xac_allow_acl(xa_ctx)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;
@@ -648,7 +666,7 @@ static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
 	if (S_ISCHR(mode) || S_ISBLK(mode)) {
 		return -SILOFS_EINVAL;
 	}
-	err = check_xattr_name(xa_ctx->name);
+	err = xac_check_xattr_name(xa_ctx, access_mode & W_OK);
 	if (err) {
 		return err;
 	}

@@ -14,7 +14,7 @@ on:
       - $default-branch
 jobs:
   prepare:
-    name: Prepare environment
+    name: Start workflow
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -236,10 +236,18 @@ jobs:
       - name: Mount file-system
         run: |
           silofs mount -p 12345678 ./build/repo/test /mnt/test
+          silofs lsmnt
+      - name: I/O operations
+        run: |
           mkdir /mnt/test/A
           echo "hello, world" > /mnt/test/A/hello
           cat /mnt/test/A/hello
-          silofs lsmnt
+          cp /mnt/test/A/hello /mnt/test/A/world
+          diff /mnt/test/A/hello /mnt/test/A/world
+          mv /mnt/test/A/hello /mnt/test/A/world
+          cat /mnt/test/A/world
+          unlink /mnt/test/A/world
+          rmdir /mnt/test/A
       - name: Umount file-system
         run: silofs umount /mnt/test
       - name: Cleanups

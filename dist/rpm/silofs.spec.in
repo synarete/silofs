@@ -80,7 +80,7 @@ Various testing programs for silofs.
 %files devel
 %defattr(-, root, root)
 %{_bindir}/%{name}-unitests
-%{_bindir}/%{name}-fftests
+%{_bindir}/%{name}-funtests
 %{_bindir}/%{name}-citests
 %{_prefix}/lib/python3*/site-packages/%{name}/*
 %exclude %{_includedir}/*

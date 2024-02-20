@@ -253,11 +253,11 @@ class CmdUnitests(CmdExec):
         self.execute_sub(args, timeout=1200)
 
 
-class CmdFftests(CmdExec):
-    """Wrapper over silofs-fftests command-line front-end"""
+class CmdFuntests(CmdExec):
+    """Wrapper over silofs-funtests command-line front-end"""
 
     def __init__(self) -> None:
-        CmdExec.__init__(self, "silofs-fftests")
+        CmdExec.__init__(self, "silofs-funtests")
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -302,5 +302,5 @@ class Cmds:
         self.sh = CmdShell()
         self.silofs = CmdSilofs()
         self.unitests = CmdUnitests()
-        self.fftests = CmdFftests()
+        self.funtests = CmdFuntests()
         self.git = CmdGit()

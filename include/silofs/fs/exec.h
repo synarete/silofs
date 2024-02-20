@@ -17,8 +17,8 @@
 #ifndef SILOFS_EXEC_H_
 #define SILOFS_EXEC_H_
 
-/* initialization configurations */
-struct silofs_iconf {
+/* file-system boot configurations */
+struct silofs_fs_bconf {
 	struct silofs_namebuf   name;
 	struct silofs_uuid      uuid;
 	struct silofs_ids       ids;
@@ -26,7 +26,7 @@ struct silofs_iconf {
 
 /* file-system input arguments */
 struct silofs_fs_args {
-	struct silofs_iconf     iconf;
+	struct silofs_fs_bconf  bconf;
 	const char             *repodir;
 	const char             *name;
 	const char             *mntdir;

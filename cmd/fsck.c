@@ -79,7 +79,7 @@ static void cmd_fsck_destroy_fs_ctx(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_iconf_reset(&ctx->fs_args.iconf);
+	cmd_bconf_reset(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -144,15 +144,15 @@ static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
+	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_fsck_load_iconf(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_load_bconf(struct cmd_fsck_ctx *ctx)
 {
-	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
+	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_fsck_setup_fs_ctx(struct cmd_fsck_ctx *ctx)
@@ -167,12 +167,12 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_require_brec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
@@ -219,7 +219,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_setup_fs_args(&ctx);
 
 	/* Require ids-map */
-	cmd_fsck_load_iconf(&ctx);
+	cmd_fsck_load_bconf(&ctx);
 
 	/* Setup execution environment */
 	cmd_fsck_setup_fs_ctx(&ctx);

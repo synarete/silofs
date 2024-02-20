@@ -115,7 +115,7 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_iconf_reset(&ctx->fs_args.iconf);
+	cmd_bconf_reset(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -257,15 +257,15 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
+	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_snap_load_iconf(struct cmd_snap_ctx *ctx)
+static void cmd_snap_load_bconf(struct cmd_snap_ctx *ctx)
 {
-	cmd_iconf_load(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
+	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_snap_setup_fs_ctx(struct cmd_snap_ctx *ctx)
@@ -285,12 +285,12 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
+	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
+	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
@@ -308,26 +308,26 @@ static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
 	cmd_close_fs(ctx->fs_ctx);
 }
 
-static void cmd_snap_save_snap_iconf(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_snap_bconf(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_iconf snap_iconf;
+	struct silofs_fs_bconf snap_bconf;
 
-	cmd_iconf_assign(&snap_iconf, &ctx->fs_args.iconf);
-	cmd_iconf_set_lvid_by(&snap_iconf, &ctx->lvid_alt);
-	cmd_iconf_set_name(&snap_iconf,  ctx->in_args.snapname);
-	cmd_iconf_save(&snap_iconf, ctx->in_args.repodir_real);
-	cmd_iconf_reset(&snap_iconf);
+	cmd_bconf_assign(&snap_bconf, &ctx->fs_args.bconf);
+	cmd_bconf_set_lvid_by(&snap_bconf, &ctx->lvid_alt);
+	cmd_bconf_set_name(&snap_bconf,  ctx->in_args.snapname);
+	cmd_bconf_save(&snap_bconf, ctx->in_args.repodir_real);
+	cmd_bconf_reset(&snap_bconf);
 }
 
-static void cmd_snap_save_orig_iconf(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_orig_bconf(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_iconf orig_iconf;
+	struct silofs_fs_bconf orig_bconf;
 
-	cmd_iconf_assign(&orig_iconf, &ctx->fs_args.iconf);
-	cmd_iconf_set_lvid_by(&orig_iconf, &ctx->lvid_new);
-	cmd_iconf_set_name(&orig_iconf,  ctx->in_args.name);
-	cmd_iconf_save(&orig_iconf, ctx->in_args.repodir_real);
-	cmd_iconf_reset(&orig_iconf);
+	cmd_bconf_assign(&orig_bconf, &ctx->fs_args.bconf);
+	cmd_bconf_set_lvid_by(&orig_bconf, &ctx->lvid_new);
+	cmd_bconf_set_name(&orig_bconf,  ctx->in_args.name);
+	cmd_bconf_save(&orig_bconf, ctx->in_args.repodir_real);
+	cmd_bconf_reset(&orig_bconf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -392,7 +392,7 @@ void cmd_execute_snap(void)
 	cmd_snap_setup_fs_args(&ctx);
 
 	/* Require ids-map */
-	cmd_snap_load_iconf(&ctx);
+	cmd_snap_load_bconf(&ctx);
 
 	/* Setup execution environment */
 	cmd_snap_setup_fs_ctx(&ctx);
@@ -409,11 +409,11 @@ void cmd_execute_snap(void)
 	/* Close repository */
 	cmd_snap_close_repo(&ctx);
 
-	/* Save new snap iconf */
-	cmd_snap_save_snap_iconf(&ctx);
+	/* Save new snap bconf */
+	cmd_snap_save_snap_bconf(&ctx);
 
-	/* Re-save (overwrite) original iconf */
-	cmd_snap_save_orig_iconf(&ctx);
+	/* Re-save (overwrite) original bconf */
+	cmd_snap_save_orig_bconf(&ctx);
 
 	/* Delete environment */
 	cmd_snap_destroy_env(&ctx);

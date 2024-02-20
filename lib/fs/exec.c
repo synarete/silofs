@@ -349,7 +349,7 @@ static int fs_ctx_init_idsmap(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = silofs_idsmap_populate(idsmap, &fs_ctx->fs_args.iconf.ids);
+	err = silofs_idsmap_populate(idsmap, &fs_ctx->fs_args.bconf.ids);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;

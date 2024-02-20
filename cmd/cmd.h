@@ -226,15 +226,15 @@ void cmd_open_repo(struct silofs_fs_ctx *fse);
 
 void cmd_close_repo(struct silofs_fs_ctx *fse);
 
-void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_iconf *iconf);
+void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_fs_bconf *bconf);
 
 void cmd_close_fs(struct silofs_fs_ctx *fse);
 
 void cmd_require_fs(struct silofs_fs_ctx *fse,
-                    const struct silofs_iconf *iconf);
+                    const struct silofs_fs_bconf *bconf);
 
 void cmd_boot_fs(struct silofs_fs_ctx *fse,
-                 const struct silofs_iconf *iconf);
+                 const struct silofs_fs_bconf *bconf);
 
 void cmd_open_fs(struct silofs_fs_ctx *fse);
 
@@ -244,7 +244,7 @@ void cmd_fork_fs(struct silofs_fs_ctx *fse,
                  struct silofs_lvid *out_new, struct silofs_lvid *out_alt);
 
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
-                  const struct silofs_iconf *iconf);
+                  const struct silofs_fs_bconf *bconf);
 
 void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb);
 
@@ -290,29 +290,30 @@ char *cmd_getpass_str(const char *pass);
 void cmd_delpass(char **pass);
 
 /* init configuration */
-void cmd_iconf_init(struct silofs_iconf *iconf);
+void cmd_bconf_init(struct silofs_fs_bconf *bconf);
 
-void cmd_iconf_assign(struct silofs_iconf *iconf,
-                      const struct silofs_iconf *other);
+void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
+                      const struct silofs_fs_bconf *other);
 
-void cmd_iconf_reset(struct silofs_iconf *iconf);
+void cmd_bconf_reset(struct silofs_fs_bconf *bconf);
 
-void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name);
+void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name);
 
-void cmd_iconf_set_lvid_by(struct silofs_iconf *iconf,
+void cmd_bconf_set_lvid_by(struct silofs_fs_bconf *bconf,
                            const struct silofs_lvid *lvid);
 
-void cmd_iconf_get_lvid(const struct silofs_iconf *iconf,
+void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
                         struct silofs_lvid *out_lvid);
 
-void cmd_iconf_add_user(struct silofs_iconf *iconf,
+void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
                         const char *user, bool with_sup_groups);
 
-void cmd_iconf_load(struct silofs_iconf *iconf, const char *repodir);
+void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *repodir);
 
-void cmd_iconf_save(const struct silofs_iconf *iconf, const char *repodir);
+void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *repodir);
 
-void cmd_iconf_unlink(const struct silofs_iconf *iconf, const char *repodir);
+void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf,
+                      const char *repodir);
 
 
 char *cmd_getpwuid(uid_t uid);

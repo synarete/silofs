@@ -107,7 +107,7 @@ static void cmd_mkfs_destroy_fs_ctx(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_ctx(ctx);
-	cmd_iconf_reset(&ctx->fs_args.iconf);
+	cmd_bconf_reset(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
@@ -184,7 +184,7 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 
 	cmd_resolve_uidgid(ctx->in_args.username, &uid, &gid);
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_set_name(&fs_args->iconf, ctx->in_args.name);
+	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
@@ -193,9 +193,9 @@ static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 	fs_args->gid = gid;
 }
 
-static void cmd_mkfs_update_iconf(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_update_bconf(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_iconf *iconf = &ctx->fs_args.iconf;
+	struct silofs_fs_bconf *bconf = &ctx->fs_args.bconf;
 	const char *username = ctx->in_args.username;
 	bool with_sup_groups = ctx->in_args.with_sup_groups;
 	char *selfname = NULL;
@@ -204,13 +204,13 @@ static void cmd_mkfs_update_iconf(struct cmd_mkfs_ctx *ctx)
 	selfname = cmd_getpwuid(getuid());
 	rootname = cmd_getpwuid(0);
 	if (ctx->in_args.allow_root && strcmp(rootname, username)) {
-		cmd_iconf_add_user(iconf, rootname, false);
+		cmd_bconf_add_user(bconf, rootname, false);
 	}
 	if (strcmp(selfname, username)) {
-		cmd_iconf_add_user(iconf, selfname, false);
+		cmd_bconf_add_user(bconf, selfname, false);
 	}
 	if (strlen(username)) {
-		cmd_iconf_add_user(iconf, username, with_sup_groups);
+		cmd_bconf_add_user(bconf, username, with_sup_groups);
 	}
 	cmd_pstrfree(&selfname);
 	cmd_pstrfree(&rootname);
@@ -233,12 +233,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fs_ctx, &ctx->fs_args.iconf);
+	cmd_format_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
-static void cmd_mkfs_save_iconf(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_bconf(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_iconf_save(&ctx->fs_args.iconf, ctx->in_args.repodir_real);
+	cmd_bconf_save(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -274,7 +274,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_setup_fs_args(&ctx);
 
 	/* Add user-ids configuration */
-	cmd_mkfs_update_iconf(&ctx);
+	cmd_mkfs_update_bconf(&ctx);
 
 	/* Prepare environment */
 	cmd_mkfs_setup_fs_ctx(&ctx);
@@ -289,7 +289,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_format_fs(&ctx);
 
 	/* Save top-level fs-uuid */
-	cmd_mkfs_save_iconf(&ctx);
+	cmd_mkfs_save_bconf(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_close_fs(&ctx);

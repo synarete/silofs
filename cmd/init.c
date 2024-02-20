@@ -67,7 +67,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_iconf_reset(&ctx->fs_args.iconf);
+	cmd_bconf_reset(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx = NULL;
@@ -109,7 +109,7 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	const char *name = "silofs";
 
 	cmd_init_fs_args(fs_args);
-	cmd_iconf_set_name(&fs_args->iconf, name);
+	cmd_bconf_set_name(&fs_args->bconf, name);
 	ctx->fs_args.repodir = ctx->in_args.repodir_real;
 	ctx->fs_args.name = name;
 }

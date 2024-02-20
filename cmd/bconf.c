@@ -548,7 +548,7 @@ static bool cmd_isascii_cfg(const char *cfg, size_t size)
 	return substr_isascii(&scfg);
 }
 
-static void cmd_read_iconf_file(const char *path, char **out_cfg)
+static void cmd_read_bconf_file(const char *path, char **out_cfg)
 {
 	struct stat st;
 	size_t size;
@@ -584,7 +584,7 @@ static void cmd_read_iconf_file(const char *path, char **out_cfg)
 	*out_cfg = cfg;
 }
 
-static void cmd_write_iconf_file(const char *path, const char *cfg)
+static void cmd_write_bconf_file(const char *path, const char *cfg)
 {
 	const size_t len = cfg ? strlen(cfg) : 0;
 	const mode_t mode = S_IRUSR | S_IWUSR;
@@ -605,33 +605,33 @@ static void cmd_write_iconf_file(const char *path, const char *cfg)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void cmd_iconf_parse_uuid_cfg(struct silofs_iconf *iconf,
+static void cmd_bconf_parse_uuid_cfg(struct silofs_fs_bconf *bconf,
                                      const struct silofs_substr *line)
 {
-	cmd_parse_uuid_cfg(line, &iconf->uuid);
+	cmd_parse_uuid_cfg(line, &bconf->uuid);
 }
 
-static void cmd_iconf_parse_uid_cfg(struct silofs_iconf *iconf,
+static void cmd_bconf_parse_uid_cfg(struct silofs_fs_bconf *bconf,
                                     const struct silofs_substr *line)
 {
-	cmd_parse_uid_cfg(line, &iconf->ids.uids, &iconf->ids.nuids);
+	cmd_parse_uid_cfg(line, &bconf->ids.uids, &bconf->ids.nuids);
 }
 
-static void cmd_iconf_parse_gid_cfg(struct silofs_iconf *iconf,
+static void cmd_bconf_parse_gid_cfg(struct silofs_fs_bconf *bconf,
                                     const struct silofs_substr *line)
 {
-	cmd_parse_gid_cfg(line, &iconf->ids.gids, &iconf->ids.ngids);
+	cmd_parse_gid_cfg(line, &bconf->ids.gids, &bconf->ids.ngids);
 }
 
-static void cmd_iconf_parse_line(struct silofs_iconf *iconf, int sec_state,
+static void cmd_bconf_parse_line(struct silofs_fs_bconf *bconf, int sec_state,
                                  const struct silofs_substr *line)
 {
 	if (sec_state & CONF_SEC_FS) {
-		cmd_iconf_parse_uuid_cfg(iconf, line);
+		cmd_bconf_parse_uuid_cfg(bconf, line);
 	} else if (sec_state & CONF_SEC_USERS) {
-		cmd_iconf_parse_uid_cfg(iconf, line);
+		cmd_bconf_parse_uid_cfg(bconf, line);
 	} else if (sec_state & CONF_SEC_GROUPS) {
-		cmd_iconf_parse_gid_cfg(iconf, line);
+		cmd_bconf_parse_gid_cfg(bconf, line);
 	} else if (sec_state != CONF_SEC_IGNORE) {
 		cmd_die_by(line, "illegal ids-map config");
 	}
@@ -657,7 +657,7 @@ static int cmd_parse_sec_state(const struct silofs_substr *line)
 	return ret;
 }
 
-static void cmd_iconf_parse_data(struct silofs_iconf *iconf,
+static void cmd_bconf_parse_data(struct silofs_fs_bconf *bconf,
                                  const struct silofs_substr *data)
 {
 	struct silofs_substr_pair pair;
@@ -677,54 +677,55 @@ static void cmd_iconf_parse_data(struct silofs_iconf *iconf,
 		if (sec_snext && (sec_snext != sec_state)) {
 			sec_state = sec_snext;
 		} else if (!substr_isempty(&sline)) {
-			cmd_iconf_parse_line(iconf, sec_state, &sline);
+			cmd_bconf_parse_line(bconf, sec_state, &sline);
 		}
 		substr_split_by_nl(tail, &pair);
 	}
 }
 
-static void cmd_iconf_parse(struct silofs_iconf *iconf, const char *cfg)
+static void cmd_bconf_parse(struct silofs_fs_bconf *bconf, const char *cfg)
 {
 	struct silofs_substr data;
 
 	substr_init(&data, cfg);
-	cmd_iconf_parse_data(iconf, &data);
+	cmd_bconf_parse_data(bconf, &data);
 }
 
 static void
-cmd_iconf_unparse(const struct silofs_iconf *iconf, char **pcfg)
+cmd_bconf_unparse(const struct silofs_fs_bconf *bconf, char **pcfg)
 {
 	cmd_append_section("fs", pcfg);
-	cmd_append_uuid("uuid", &iconf->uuid, pcfg);
+	cmd_append_uuid("uuid", &bconf->uuid, pcfg);
 
 	cmd_append_section("users", pcfg);
-	for (size_t i = 0; i < iconf->ids.nuids; ++i) {
-		cmd_append_user(&iconf->ids.uids[i], pcfg);
+	for (size_t i = 0; i < bconf->ids.nuids; ++i) {
+		cmd_append_user(&bconf->ids.uids[i], pcfg);
 	}
 	cmd_append_newline(pcfg);
 
 	cmd_append_section("groups", pcfg);
-	for (size_t j = 0; j < iconf->ids.ngids; ++j) {
-		cmd_append_group(&iconf->ids.gids[j], pcfg);
+	for (size_t j = 0; j < bconf->ids.ngids; ++j) {
+		cmd_append_group(&bconf->ids.gids[j], pcfg);
 	}
 	cmd_append_newline(pcfg);
 }
 
-static void cmd_iconf_append_uids1(struct silofs_iconf *iconf,
+static void cmd_bconf_append_uids1(struct silofs_fs_bconf *bconf,
                                    const struct silofs_uids *uids)
 {
-	cmd_append_uids1(&iconf->ids.uids, &iconf->ids.nuids, uids);
+	cmd_append_uids1(&bconf->ids.uids, &bconf->ids.nuids, uids);
 }
 
-static void cmd_iconf_append_gids1(struct silofs_iconf *iconf,
+static void cmd_bconf_append_gids1(struct silofs_fs_bconf *bconf,
                                    const struct silofs_gids *gids)
 {
-	cmd_append_gids1(&iconf->ids.gids, &iconf->ids.ngids, gids);
+	cmd_append_gids1(&bconf->ids.gids, &bconf->ids.ngids, gids);
 }
 
-static bool cmd_iconf_has_host_gid(const struct silofs_iconf *iconf, gid_t gid)
+static bool cmd_bconf_has_host_gid(const struct silofs_fs_bconf *bconf,
+                                   gid_t gid)
 {
-	const struct silofs_ids *ids = &iconf->ids;
+	const struct silofs_ids *ids = &bconf->ids;
 
 	for (size_t i = 0; i < ids->ngids; ++i) {
 		if (ids->gids[i].host_gid == gid) {
@@ -734,7 +735,8 @@ static bool cmd_iconf_has_host_gid(const struct silofs_iconf *iconf, gid_t gid)
 	return false;
 }
 
-static void cmd_iconf_add_supgr(struct silofs_iconf *iconf, const char *user)
+static void cmd_bconf_add_supgr(struct silofs_fs_bconf *bconf,
+                                const char *user)
 {
 	struct silofs_gids gids;
 	gid_t groups[64] = { (gid_t)(-1) };
@@ -751,15 +753,15 @@ static void cmd_iconf_add_supgr(struct silofs_iconf *iconf, const char *user)
 		if (gid == (gid_t)(-1)) {
 			continue;
 		}
-		if (cmd_iconf_has_host_gid(iconf, gid)) {
+		if (cmd_bconf_has_host_gid(bconf, gid)) {
 			continue;
 		}
 		gids.host_gid = gids.fs_gid = gid;
-		cmd_iconf_append_gids1(iconf, &gids);
+		cmd_bconf_append_gids1(bconf, &gids);
 	}
 }
 
-void cmd_iconf_add_user(struct silofs_iconf *iconf,
+void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
                         const char *user, bool with_sup_groups)
 {
 	struct silofs_uids uids;
@@ -769,102 +771,101 @@ void cmd_iconf_add_user(struct silofs_iconf *iconf,
 
 	cmd_resolve_uidgid(user, &uid, &gid);
 	uids.host_uid = uids.fs_uid = uid;
-	cmd_iconf_append_uids1(iconf, &uids);
+	cmd_bconf_append_uids1(bconf, &uids);
 	gids.host_gid = gids.fs_gid = gid;
-	cmd_iconf_append_gids1(iconf, &gids);
+	cmd_bconf_append_gids1(bconf, &gids);
 	if (with_sup_groups) {
-		cmd_iconf_add_supgr(iconf, user);
+		cmd_bconf_add_supgr(bconf, user);
 	}
 }
 
-void cmd_iconf_init(struct silofs_iconf *iconf)
+void cmd_bconf_init(struct silofs_fs_bconf *bconf)
 {
-	memset(iconf, 0, sizeof(*iconf));
-	silofs_uuid_generate(&iconf->uuid);
-	iconf->ids.nuids = 0;
-	iconf->ids.ngids = 0;
+	memset(bconf, 0, sizeof(*bconf));
+	silofs_uuid_generate(&bconf->uuid);
+	bconf->ids.nuids = 0;
+	bconf->ids.ngids = 0;
 }
 
-void cmd_iconf_assign(struct silofs_iconf *iconf,
-                      const struct silofs_iconf *other)
+void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
+                      const struct silofs_fs_bconf *other)
 {
-	cmd_iconf_init(iconf);
-	silofs_namebuf_assign(&iconf->name, &other->name);
-	silofs_uuid_assign(&iconf->uuid, &other->uuid);
+	cmd_bconf_init(bconf);
+	silofs_namebuf_assign(&bconf->name, &other->name);
+	silofs_uuid_assign(&bconf->uuid, &other->uuid);
 	for (size_t i = 0; i < other->ids.nuids; ++i) {
-		cmd_iconf_append_uids1(iconf, &other->ids.uids[i]);
+		cmd_bconf_append_uids1(bconf, &other->ids.uids[i]);
 	}
 	for (size_t j = 0; j < other->ids.ngids; ++j) {
-		cmd_iconf_append_gids1(iconf, &other->ids.gids[j]);
+		cmd_bconf_append_gids1(bconf, &other->ids.gids[j]);
 	}
 }
 
-void cmd_iconf_reset(struct silofs_iconf *iconf)
+void cmd_bconf_reset(struct silofs_fs_bconf *bconf)
 {
-	cmd_pfree_uids(&iconf->ids.uids, &iconf->ids.nuids);
-	cmd_pfree_gids(&iconf->ids.gids, &iconf->ids.ngids);
+	cmd_pfree_uids(&bconf->ids.uids, &bconf->ids.nuids);
+	cmd_pfree_gids(&bconf->ids.gids, &bconf->ids.ngids);
 }
 
 static void
-cmd_iconf_load_from(struct silofs_iconf *iconf, const char *path)
+cmd_bconf_load_from(struct silofs_fs_bconf *bconf, const char *path)
 {
 	char *cfg = NULL;
 
-	cmd_read_iconf_file(path, &cfg);
-	cmd_iconf_parse(iconf, cfg);
+	cmd_read_bconf_file(path, &cfg);
+	cmd_bconf_parse(bconf, cfg);
 	cmd_pstrfree(&cfg);
 }
 
 static void
-cmd_iconf_save_to(const struct silofs_iconf *iconf, const char *path)
+cmd_bconf_save_to(const struct silofs_fs_bconf *bconf, const char *path)
 {
 	char *cfg = NULL;
 
-	cmd_iconf_unparse(iconf, &cfg);
-	cmd_write_iconf_file(path, cfg);
+	cmd_bconf_unparse(bconf, &cfg);
+	cmd_write_bconf_file(path, cfg);
 	cmd_pstrfree(&cfg);
 }
 
 static char *
-cmd_iconf_pathname(const struct silofs_iconf *iconf, const char *repodir)
+cmd_bconf_pathname(const struct silofs_fs_bconf *bconf, const char *repodir)
 {
 	char *path = NULL;
 
-	cmd_join_path(repodir, iconf->name.name, &path);
+	cmd_join_path(repodir, bconf->name.name, &path);
 	return path;
 }
 
-void cmd_iconf_load(struct silofs_iconf *iconf, const char *repodir)
+void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *repodir)
 {
 	char *path;
 
-	path = cmd_iconf_pathname(iconf, repodir);
-	cmd_iconf_reset(iconf);
-	cmd_iconf_load_from(iconf, path);
+	path = cmd_bconf_pathname(bconf, repodir);
+	cmd_bconf_reset(bconf);
+	cmd_bconf_load_from(bconf, path);
 	cmd_pstrfree(&path);
 }
 
-void cmd_iconf_save(const struct silofs_iconf *iconf,
-                    const char *repodir)
+void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *repodir)
 {
 	char *path;
 
-	path = cmd_iconf_pathname(iconf, repodir);
-	cmd_iconf_save_to(iconf, path);
+	path = cmd_bconf_pathname(bconf, repodir);
+	cmd_bconf_save_to(bconf, path);
 	cmd_pstrfree(&path);
 }
 
-void cmd_iconf_unlink(const struct silofs_iconf *iconf, const char *repodir)
+void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf, const char *repodir)
 {
 	char *path = NULL;
 
-	path = cmd_iconf_pathname(iconf, repodir);
+	path = cmd_bconf_pathname(bconf, repodir);
 	silofs_sys_unlink(path);
 	cmd_pstrfree(&path);
-	(void)iconf;
+	(void)bconf;
 }
 
-void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name)
+void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name)
 {
 	struct silofs_namestr nstr;
 	int err;
@@ -873,25 +874,25 @@ void cmd_iconf_set_name(struct silofs_iconf *iconf, const char *name)
 	if (err) {
 		cmd_dief(err, "illegal name: %s", name);
 	}
-	silofs_namebuf_setup(&iconf->name, &nstr.s);
+	silofs_namebuf_setup(&bconf->name, &nstr.s);
 }
 
-static void cmd_iconf_set_uuid(struct silofs_iconf *iconf,
+static void cmd_bconf_set_uuid(struct silofs_fs_bconf *bconf,
                                const struct silofs_uuid *uuid)
 {
-	silofs_uuid_assign(&iconf->uuid, uuid);
+	silofs_uuid_assign(&bconf->uuid, uuid);
 }
 
-void cmd_iconf_set_lvid_by(struct silofs_iconf *iconf,
+void cmd_bconf_set_lvid_by(struct silofs_fs_bconf *bconf,
                            const struct silofs_lvid *lvid)
 {
-	cmd_iconf_set_uuid(iconf, &lvid->uuid);
+	cmd_bconf_set_uuid(bconf, &lvid->uuid);
 }
 
-void cmd_iconf_get_lvid(const struct silofs_iconf *iconf,
+void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
                         struct silofs_lvid *out_lvid)
 {
-	silofs_lvid_by_uuid(out_lvid, &iconf->uuid);
+	silofs_lvid_by_uuid(out_lvid, &bconf->uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

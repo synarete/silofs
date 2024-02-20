@@ -133,7 +133,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	silofs_uuid_generate(&ute->args->fs_args.iconf.uuid);
+	silofs_uuid_generate(&ute->args->fs_args.bconf.uuid);
 	err = silofs_new_fs_ctx(&ute->args->fs_args, &ute->fs_ctx);
 	silofs_assert_ok(err);
 }
@@ -437,11 +437,11 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	silofs_uuid_generate(&args->fs_args.iconf.uuid);
-	args->fs_args.iconf.ids.uids = ut_new_uids();
-	args->fs_args.iconf.ids.nuids = 2;
-	args->fs_args.iconf.ids.gids = ut_new_gids();
-	args->fs_args.iconf.ids.ngids = 2;
+	silofs_uuid_generate(&args->fs_args.bconf.uuid);
+	args->fs_args.bconf.ids.uids = ut_new_uids();
+	args->fs_args.bconf.ids.nuids = 2;
+	args->fs_args.bconf.ids.gids = ut_new_gids();
+	args->fs_args.bconf.ids.ngids = 2;
 	args->fs_args.uid = getuid();
 	args->fs_args.gid = getgid();
 	args->fs_args.pid = getpid();
@@ -459,8 +459,8 @@ static void ut_init_args(struct ut_args *args)
 
 static void ut_fini_args(struct ut_args *args)
 {
-	ut_del_uids(args->fs_args.iconf.ids.uids);
-	ut_del_gids(args->fs_args.iconf.ids.gids);
+	ut_del_uids(args->fs_args.bconf.ids.uids);
+	ut_del_gids(args->fs_args.bconf.ids.gids);
 	memset(args, 0, sizeof(*args));
 }
 

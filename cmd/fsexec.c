@@ -140,10 +140,10 @@ void cmd_close_repo(struct silofs_fs_ctx *fse)
 	cmd_require_ok(fse, err, "failed to close repo");
 }
 
-static void cmd_lvid_of(const struct silofs_iconf *iconf,
+static void cmd_lvid_of(const struct silofs_fs_bconf *bconf,
                         struct silofs_lvid *out_lvid)
 {
-	silofs_lvid_by_uuid(out_lvid, &iconf->uuid);
+	silofs_lvid_by_uuid(out_lvid, &bconf->uuid);
 }
 
 static void cmd_do_require_fs(struct silofs_fs_ctx *fse,
@@ -157,11 +157,11 @@ static void cmd_do_require_fs(struct silofs_fs_ctx *fse,
 }
 
 void cmd_require_fs(struct silofs_fs_ctx *fse,
-                    const struct silofs_iconf *iconf)
+                    const struct silofs_fs_bconf *bconf)
 {
 	struct silofs_lvid lvid;
 
-	cmd_lvid_of(iconf, &lvid);
+	cmd_lvid_of(bconf, &lvid);
 	cmd_do_require_fs(fse, &lvid);
 }
 
@@ -174,12 +174,12 @@ static void cmd_do_format_fs(struct silofs_fs_ctx *fse,
 	cmd_require_ok(fse, err, "failed to format fs");
 }
 
-void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_iconf *iconf)
+void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_fs_bconf *bconf)
 {
 	struct silofs_lvid lvid;
 
 	cmd_do_format_fs(fse, &lvid);
-	silofs_uuid_assign(&iconf->uuid, &lvid.uuid);
+	silofs_uuid_assign(&bconf->uuid, &lvid.uuid);
 }
 
 void cmd_close_fs(struct silofs_fs_ctx *fse)
@@ -200,11 +200,11 @@ static void cmd_do_boot_fs(struct silofs_fs_ctx *fse,
 }
 
 void cmd_boot_fs(struct silofs_fs_ctx *fse,
-                 const struct silofs_iconf *iconf)
+                 const struct silofs_fs_bconf *bconf)
 {
 	struct silofs_lvid lvid;
 
-	cmd_lvid_of(iconf, &lvid);
+	cmd_lvid_of(bconf, &lvid);
 	cmd_do_boot_fs(fse, &lvid);
 }
 
@@ -243,11 +243,11 @@ static void cmd_do_unref_fs(struct silofs_fs_ctx *fse,
 }
 
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
-                  const struct silofs_iconf *iconf)
+                  const struct silofs_fs_bconf *bconf)
 {
 	struct silofs_lvid lvid;
 
-	cmd_lvid_of(iconf, &lvid);
+	cmd_lvid_of(bconf, &lvid);
 	cmd_do_unref_fs(fse, &lvid);
 }
 
@@ -264,7 +264,7 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb)
 void cmd_init_fs_args(struct silofs_fs_args *fs_args)
 {
 	memset(fs_args, 0, sizeof(*fs_args));
-	cmd_iconf_init(&fs_args->iconf);
+	cmd_bconf_init(&fs_args->bconf);
 	fs_args->uid = getuid();
 	fs_args->gid = getgid();
 	fs_args->pid = getpid();

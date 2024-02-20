@@ -46,7 +46,7 @@ class CmdExec:
         cwd = self._make_cwd(wdir)
         txt = ""
         exp = False
-        log.printsl(f"SUB: {cmd}")
+        log.printsl(f"EXEC: {cmd}")
         with subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.PIPE,
@@ -74,7 +74,7 @@ class CmdExec:
         """Run command as sub-process without output, raise upon failure"""
         cmd = self._make_cmd(args)
         cwd = self._make_cwd(wdir)
-        log.printsl(f"RUN: {cmd}")
+        log.printsl(f"EXEC: {cmd}")
         proc = subprocess.run(shlex.split(cmd), check=True, cwd=cwd)
         if proc.returncode != 0:
             raise CmdError("failed: " + cmd, ret=proc.returncode)

@@ -7,10 +7,10 @@ silofs_mountd_CPPFLAGS = -I$(top_srcdir)/include
 silofs_mountd_LDFLAGS = $(NULL)
 silofs_mountd_LDFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
 silofs_mountd_LDFLAGS += -L$(builddir)
-silofs_mountd_LDFLAGS += -L$(top_builddir)/lib
+silofs_mountd_LDFLAGS += -L$(top_builddir)/src/lib
 silofs_mountd_LDFLAGS += -static
 silofs_mountd_LDADD = @LIBS@
-silofs_mountd_LDADD += $(top_builddir)/lib/libsilofs.la
+silofs_mountd_LDADD += $(top_builddir)/src/lib/libsilofs.la
 silofs_mountd_LDADD += $(PTHREAD_LIBS)
 silofs_mountd_LDADD += $(LIBGCRYPT_LIBS)
 

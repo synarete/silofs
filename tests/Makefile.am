@@ -1,1 +1,1 @@
-SUBDIRS = unitests fftests citests
+SUBDIRS = unitests fftests

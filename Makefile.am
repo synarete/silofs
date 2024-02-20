@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
-SUBDIRS = . include lib cmd mntd tests man docs scripts dist
+SUBDIRS = . include lib cmd mntd tests ci man docs scripts dist
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += README.md

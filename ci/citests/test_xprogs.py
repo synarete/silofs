@@ -50,7 +50,9 @@ def _test_rsync_at(env: TestEnv, base: Path) -> None:
 def test_gitscm(env: TestEnv) -> None:
     url = "https://github.com/git/git.git"
     name = env.uniq_name()
-    env.exec_setup_fs(8)
+    env.exec_init()
+    env.exec_mkfs(20)
+    env.exec_mount(no_xattr_acl=True)
     base = env.create_fstree(name)
     ret = env.cmd.git.clone(url, base)
     if ret == 0:

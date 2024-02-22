@@ -77,27 +77,27 @@ static void fsenv_update_mntflags(struct silofs_fsenv *fsenv)
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
-	if (fs_args->lazytime) {
+	if (fs_args->cflags.lazytime) {
 		ms_flag_with |= MS_LAZYTIME;
 	} else {
 		ms_flag_dont |= MS_LAZYTIME;
 	}
-	if (fs_args->noexec) {
+	if (fs_args->cflags.noexec) {
 		ms_flag_with |= MS_NOEXEC;
 	} else {
 		ms_flag_dont |= MS_NOEXEC;
 	}
-	if (fs_args->nosuid) {
+	if (fs_args->cflags.nosuid) {
 		ms_flag_with |= MS_NOSUID;
 	} else {
 		ms_flag_dont |= MS_NOSUID;
 	}
-	if (fs_args->nodev) {
+	if (fs_args->cflags.nodev) {
 		ms_flag_with |= MS_NODEV;
 	} else {
 		ms_flag_dont |= MS_NODEV;
 	}
-	if (fs_args->rdonly) {
+	if (fs_args->cflags.rdonly) {
 		ms_flag_with |= MS_RDONLY;
 	} else {
 		ms_flag_dont |= MS_RDONLY;
@@ -110,23 +110,23 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
 
-	if (fs_args->with_fuse) {
+	if (fs_args->cflags.with_fuse) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_WITHFUSE;
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_NLOOKUP;
 	}
-	if (fs_args->writeback_cache) {
+	if (fs_args->cflags.writeback_cache) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_WRITEBACK;
 	}
-	if (fs_args->allow_other) {
+	if (fs_args->cflags.allow_other) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWOTHER;
 	}
-	if (fs_args->xattr_acl) {
+	if (fs_args->cflags.allow_xattr_acl) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWXACL;
 	}
-	if (fs_args->allow_admin) {
+	if (fs_args->cflags.allow_admin) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWADMIN;
 	}
-	if (fs_args->asyncwr) {
+	if (fs_args->cflags.asyncwr) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ASYNCWR;
 	}
 }

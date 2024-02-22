@@ -24,6 +24,24 @@ struct silofs_fs_bconf {
 	struct silofs_ids       ids;
 };
 
+/* file-system control flags */
+struct silofs_fs_cflags {
+	bool                    pedantic;
+	bool                    rdonly;
+	bool                    noexec;
+	bool                    nosuid;
+	bool                    nodev;
+	bool                    with_fuse;
+	bool                    asyncwr;
+	bool                    allow_admin;
+	bool                    allow_other;
+	bool                    allow_hostids;
+	bool                    allow_xattr_acl;
+	bool                    writeback_cache;
+	bool                    lazytime;
+	bool                    stdalloc;
+};
+
 /* file-system input arguments */
 struct silofs_fs_args {
 	struct silofs_fs_bconf  bconf;
@@ -37,20 +55,7 @@ struct silofs_fs_args {
 	mode_t                  umask;
 	size_t                  capacity;
 	size_t                  memwant;
-	bool                    pedantic;
-	bool                    allow_other;
-	bool                    allow_hostids;
-	bool                    xattr_acl;
-	bool                    allow_admin;
-	bool                    with_fuse;
-	bool                    writeback_cache;
-	bool                    lazytime;
-	bool                    noexec;
-	bool                    nosuid;
-	bool                    nodev;
-	bool                    rdonly;
-	bool                    asyncwr;
-	bool                    stdalloc;
+	struct silofs_fs_cflags cflags;
 };
 
 /* file-system top-level context */

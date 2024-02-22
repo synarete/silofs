@@ -451,9 +451,9 @@ static void ut_init_args(struct ut_args *args)
 	args->fs_args.mntdir = "/";
 	args->fs_args.capacity = SILOFS_CAPACITY_SIZE_MIN;
 	args->fs_args.memwant = UT_1G;
-	args->fs_args.pedantic = ut_globals.pedantic;
-	args->fs_args.asyncwr = ut_globals.asyncwr;
-	args->fs_args.stdalloc = ut_globals.stdalloc;
+	args->fs_args.cflags.pedantic = ut_globals.pedantic;
+	args->fs_args.cflags.asyncwr = ut_globals.asyncwr;
+	args->fs_args.cflags.stdalloc = ut_globals.stdalloc;
 	args->program = ut_globals.program;
 }
 

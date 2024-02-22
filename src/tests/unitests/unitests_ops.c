@@ -489,8 +489,8 @@ static int ut_write_iter_actor(struct silofs_rwiter_ctx *rwi,
 }
 
 
-static int ut_write_iter_concp_actor(struct silofs_rwiter_ctx *rwi,
-                                     const struct silofs_iovec *iov)
+static int ut_write_iter_asyncwr_actor(struct silofs_rwiter_ctx *rwi,
+                                       const struct silofs_iovec *iov)
 {
 	struct ut_write_iter *wri = write_iter_of(rwi);
 	int err;
@@ -520,9 +520,9 @@ static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 	return 0;
 }
 
-static bool ut_with_concp(const struct ut_env *ute)
+static bool ut_with_aswyncwr(const struct ut_env *ute)
 {
-	return ute->args->fs_args.asyncwr;
+	return ute->args->fs_args.cflags.asyncwr;
 }
 
 static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
@@ -537,8 +537,8 @@ static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 		.ncp = 0,
 		.rwi.len = len,
 		.rwi.off = off,
-		.rwi.actor = ut_with_concp(ute) ?
-		ut_write_iter_concp_actor :
+		.rwi.actor = ut_with_aswyncwr(ute) ?
+		ut_write_iter_asyncwr_actor :
 		ut_write_iter_actor,
 	};
 	int err1;

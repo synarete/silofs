@@ -131,7 +131,7 @@ static struct silofs_qalloc *fs_ctx_qalloc_of(struct silofs_fs_ctx *fs_ctx)
 	struct silofs_alloc *alloc = fs_ctx->alloc;
 	struct silofs_qalloc *qalloc = NULL;
 
-	if ((alloc != NULL) && !fs_ctx->fs_args.stdalloc) {
+	if ((alloc != NULL) && !fs_ctx->fs_args.cflags.stdalloc) {
 		qalloc = container_of(alloc, struct silofs_qalloc, alloc);
 	}
 	return qalloc;
@@ -142,7 +142,7 @@ static struct silofs_calloc *fs_ctx_calloc_of(struct silofs_fs_ctx *fs_ctx)
 	struct silofs_alloc *alloc = fs_ctx->alloc;
 	struct silofs_calloc *calloc = NULL;
 
-	if ((alloc != NULL) && fs_ctx->fs_args.stdalloc) {
+	if ((alloc != NULL) && fs_ctx->fs_args.cflags.stdalloc) {
 		calloc = container_of(alloc, struct silofs_calloc, alloc);
 	}
 	return calloc;
@@ -159,7 +159,7 @@ static int fs_ctx_init_qalloc(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	mode = fs_ctx->fs_args.pedantic ?
+	mode = fs_ctx->fs_args.cflags.pedantic ?
 	       SILOFS_QALLOC_PEDANTIC : SILOFS_QALLOC_NORMAL;
 	qalloc = &fs_ctx_obj_of(fs_ctx)->fs_core.c.alloc_u.qalloc;
 	err = silofs_qalloc_init(qalloc, memsize, mode);
@@ -215,7 +215,7 @@ static int fs_ctx_init_alloc(struct silofs_fs_ctx *fs_ctx)
 {
 	int ret;
 
-	if (fs_ctx->fs_args.stdalloc) {
+	if (fs_ctx->fs_args.cflags.stdalloc) {
 		ret = fs_ctx_init_calloc(fs_ctx);
 	} else {
 		ret = fs_ctx_init_qalloc(fs_ctx);
@@ -225,7 +225,7 @@ static int fs_ctx_init_alloc(struct silofs_fs_ctx *fs_ctx)
 
 static void fs_ctx_fini_alloc(struct silofs_fs_ctx *fs_ctx)
 {
-	if (fs_ctx->fs_args.stdalloc) {
+	if (fs_ctx->fs_args.cflags.stdalloc) {
 		fs_ctx_fini_calloc(fs_ctx);
 	} else {
 		fs_ctx_fini_qalloc(fs_ctx);
@@ -266,7 +266,9 @@ static void fs_ctx_make_repo_base(const struct silofs_fs_ctx *fs_ctx,
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = fs_ctx->alloc;
-	re_base->flags = fs_ctx->fs_args.rdonly ? SILOFS_REPOF_RDONLY : 0;
+	if (fs_ctx->fs_args.cflags.rdonly) {
+		re_base->flags |= SILOFS_REPOF_RDONLY;
+	}
 	silofs_substr_clone(&fs_ctx->bootpath.repodir, &re_base->repodir);
 }
 
@@ -345,7 +347,7 @@ static int fs_ctx_init_idsmap(struct silofs_fs_ctx *fs_ctx)
 
 	idsmap = &fs_ctx_obj_of(fs_ctx)->fs_core.c.idsmap;
 	err = silofs_idsmap_init(idsmap, fs_ctx->alloc,
-	                         fs_ctx->fs_args.allow_hostids);
+	                         fs_ctx->fs_args.cflags.allow_hostids);
 	if (err) {
 		return err;
 	}
@@ -990,7 +992,7 @@ static int check_superblock(const struct silofs_fs_ctx *fs_ctx)
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
-	if (fossil && !fs_ctx->fs_args.rdonly) {
+	if (fossil && !fs_ctx->fs_args.cflags.rdonly) {
 		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
 		return -SILOFS_EROFS;
 	}

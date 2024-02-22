@@ -195,28 +195,33 @@ class TestEnv:
         self,
         name: str = "",
         allow_hostids: bool = False,
+        allow_xattr_acl: bool = False,
         writeback_cache: bool = True,
-        no_xattr_acl: bool = False,
     ) -> None:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.mount(
-            repodir_name,
-            self.cfg.mntdir,
-            self._passwd(),
-            allow_hostids,
-            writeback_cache,
-            no_xattr_acl,
+            repodir_name=repodir_name,
+            mntpoint=self.cfg.mntdir,
+            password=self._passwd(),
+            allow_hostids=allow_hostids,
+            allow_xattr_acl=allow_xattr_acl,
+            writeback_cache=writeback_cache,
         )
 
     def exec_umount(self) -> None:
         self.cmd.silofs.umount(self.mntpoint())
 
     def exec_setup_fs(
-        self, gsize: int = 2, writeback_cache: bool = True
+        self,
+        gsize: int = 2,
+        allow_xattr_acl: bool = False,
+        writeback_cache: bool = True,
     ) -> None:
         self.exec_init()
         self.exec_mkfs(gsize)
-        self.exec_mount(writeback_cache=writeback_cache)
+        self.exec_mount(
+            allow_xattr_acl=allow_xattr_acl, writeback_cache=writeback_cache
+        )
 
     def exec_teardown_fs(self) -> None:
         self.exec_umount()

@@ -26,7 +26,7 @@ def test_funtests(env: TestEnv) -> None:
     ff_pre_dname = "pre-funtests"
     ff_dname = "funtests"
     ff_snap_name = "funtests-snap"
-    env.exec_setup_fs(64, writeback_cache=False)
+    env.exec_setup_fs(64, allow_xattr_acl=True, writeback_cache=False)
     tds = env.make_tds(64, ff_pre_dname, 2**22)
     tds.do_makedirs()
     tds.do_write()

@@ -70,7 +70,7 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
-	[SILOFS_QUERY_BOOT]  = "boot",
+	[SILOFS_QUERY_BOOT]     = "boot",
 	[SILOFS_QUERY_PROC]     = "proc",
 	[SILOFS_QUERY_SPSTATS]  = "spstats",
 	[SILOFS_QUERY_STATX]    = "statx",

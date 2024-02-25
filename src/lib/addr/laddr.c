@@ -366,6 +366,27 @@ void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
 	out_iv->iv[15] ^= (uint8_t)(laddr->ltype);
 }
 
+void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
+                           struct silofs_namebuf *nbuf)
+{
+	union {
+		struct silofs_laddr48b laddr48;
+		uint8_t d[48];
+	} u;
+	size_t pos = 0;
+
+	STATICASSERT_EQ(sizeof(u), 48);
+	STATICASSERT_LT(2 * sizeof(u), sizeof(nbuf->name));
+
+	silofs_memzero(&u, sizeof(u));
+	silofs_laddr48b_htox(&u.laddr48, laddr);
+	for (size_t i = 0; i < sizeof(u.d); ++i) {
+		silofs_byte_to_ascii(u.d[i], &nbuf->name[pos]);
+		pos += 2;
+	}
+	nbuf->name[pos] = '\0';
+}
+
 void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)
 {
 	silofs_lsegid32b_reset(&laddr48->lsegid);

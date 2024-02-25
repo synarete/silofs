@@ -17,10 +17,7 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include <sys/types.h>
-
-
-/* logical-extend id within specific volume mapping */
+/* logical-segment id within specific volume mapping */
 struct silofs_lsegid {
 	struct silofs_lvid      lvid;
 	loff_t                  voff;
@@ -121,6 +118,9 @@ bool silofs_laddr_isvalid(const struct silofs_laddr *laddr);
 
 bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
                           const struct silofs_laddr *other);
+
+void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
+                           struct silofs_namebuf *nbuf);
 
 void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
                           const struct silofs_laddr *laddr);

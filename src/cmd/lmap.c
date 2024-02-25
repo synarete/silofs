@@ -16,15 +16,15 @@
  */
 #include "cmd.h"
 
-static const char *cmd_bmaps_help_desc[] = {
-	"bmaps <repodir/name>",
+static const char *cmd_lmap_help_desc[] = {
+	"lmap <repodir/name>",
 	"",
 	"options:",
 	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
 	NULL
 };
 
-struct cmd_bmaps_in_args {
+struct cmd_lmap_in_args {
 	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
@@ -32,18 +32,18 @@ struct cmd_bmaps_in_args {
 	char   *password;
 };
 
-struct cmd_bmaps_ctx {
-	struct cmd_bmaps_in_args in_args;
+struct cmd_lmap_ctx {
+	struct cmd_lmap_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_ctx   *fs_ctx;
 	bool has_lockfile;
 };
 
-static struct cmd_bmaps_ctx *cmd_bmaps_ctx;
+static struct cmd_lmap_ctx *cmd_lmap_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_bmaps_getopt(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_getopt(struct cmd_lmap_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -60,7 +60,7 @@ static void cmd_bmaps_getopt(struct cmd_bmaps_ctx *ctx)
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_bmaps_help_desc);
+			cmd_print_help_and_exit(cmd_lmap_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}
@@ -71,7 +71,7 @@ static void cmd_bmaps_getopt(struct cmd_bmaps_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_bmaps_acquire_lockfile(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_acquire_lockfile(struct cmd_lmap_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
 		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
@@ -80,7 +80,7 @@ static void cmd_bmaps_acquire_lockfile(struct cmd_bmaps_ctx *ctx)
 	}
 }
 
-static void cmd_bmaps_release_lockfile(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_release_lockfile(struct cmd_lmap_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
 		cmd_lockfile_release(ctx->in_args.repodir_real,
@@ -89,12 +89,12 @@ static void cmd_bmaps_release_lockfile(struct cmd_bmaps_ctx *ctx)
 	}
 }
 
-static void cmd_bmaps_destroy_fs_ctx(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_destroy_fs_ctx(struct cmd_lmap_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
 }
 
-static void cmd_bmaps_finalize(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_finalize(struct cmd_lmap_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
 	cmd_bconf_reset(&ctx->fs_args.bconf);
@@ -103,24 +103,24 @@ static void cmd_bmaps_finalize(struct cmd_bmaps_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_bmaps_ctx = NULL;
+	cmd_lmap_ctx = NULL;
 }
 
-static void cmd_bmaps_atexit(void)
+static void cmd_lmap_atexit(void)
 {
-	if (cmd_bmaps_ctx != NULL) {
-		cmd_bmaps_release_lockfile(cmd_bmaps_ctx);
-		cmd_bmaps_finalize(cmd_bmaps_ctx);
+	if (cmd_lmap_ctx != NULL) {
+		cmd_lmap_release_lockfile(cmd_lmap_ctx);
+		cmd_lmap_finalize(cmd_lmap_ctx);
 	}
 }
 
-static void cmd_bmaps_start(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_start(struct cmd_lmap_ctx *ctx)
 {
-	cmd_bmaps_ctx = ctx;
-	atexit(cmd_bmaps_atexit);
+	cmd_lmap_ctx = ctx;
+	atexit(cmd_lmap_atexit);
 }
 
-static void cmd_bmaps_prepare(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_prepare(struct cmd_lmap_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
 	cmd_check_isreg(ctx->in_args.repodir_name, false);
@@ -132,14 +132,14 @@ static void cmd_bmaps_prepare(struct cmd_bmaps_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.name);
 }
 
-static void cmd_bmaps_getpass(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_getpass(struct cmd_lmap_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass(NULL, &ctx->in_args.password);
 	}
 }
 
-static void cmd_bmaps_setup_fs_args(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_setup_fs_args(struct cmd_lmap_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
@@ -150,114 +150,114 @@ static void cmd_bmaps_setup_fs_args(struct cmd_bmaps_ctx *ctx)
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_bmaps_load_bconf(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_load_bconf(struct cmd_lmap_ctx *ctx)
 {
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_bmaps_setup_fs_ctx(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_setup_fs_ctx(struct cmd_lmap_ctx *ctx)
 {
 	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
-static void cmd_bmaps_open_repo(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_open_repo(struct cmd_lmap_ctx *ctx)
 {
 	cmd_open_repo(ctx->fs_ctx);
 }
 
-static void cmd_bmaps_require_brec(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_require_brec(struct cmd_lmap_ctx *ctx)
 {
 	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
-static void cmd_bmaps_boot_fs(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_boot_fs(struct cmd_lmap_ctx *ctx)
 {
 	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
-static void cmd_bmaps_open_fs(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_open_fs(struct cmd_lmap_ctx *ctx)
 {
 	cmd_open_fs(ctx->fs_ctx);
 }
 
-static void cmd_bmaps_laddr_cb(const struct silofs_laddr *laddr, loff_t voff)
+static void cmd_lmap_laddr_cb(const struct silofs_laddr *laddr, loff_t voff)
 {
 	struct silofs_namebuf nb;
+	FILE *fp = stdout;
 
-	silofs_uuid_name(&laddr->lsegid.lvid.uuid, &nb);
-	printf("%02x %02d %08lx %s\n",
-	       (int)(laddr->lsegid.vspace),
-	       (int)(laddr->lsegid.height),
-	       voff, nb.name);
+	silofs_unused(voff);
+	silofs_laddr_to_ascii(laddr, &nb);
+	fprintf(fp, "%s\n", nb.name);
+	fflush(fp);
 }
 
-static void cmd_bmaps_execute(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_execute(struct cmd_lmap_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fs_ctx, cmd_bmaps_laddr_cb);
+	cmd_inspect_fs(ctx->fs_ctx, cmd_lmap_laddr_cb);
 }
 
-static void cmd_bmaps_close_repo(struct cmd_bmaps_ctx *ctx)
+static void cmd_lmap_close_repo(struct cmd_lmap_ctx *ctx)
 {
 	cmd_close_repo(ctx->fs_ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void cmd_execute_bmaps(void)
+void cmd_execute_lmap(void)
 {
-	struct cmd_bmaps_ctx ctx = {
+	struct cmd_lmap_ctx ctx = {
 		.fs_ctx = NULL,
 	};
 
 	/* Do all cleanups upon exits */
-	cmd_bmaps_start(&ctx);
+	cmd_lmap_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_bmaps_getopt(&ctx);
+	cmd_lmap_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_bmaps_prepare(&ctx);
+	cmd_lmap_prepare(&ctx);
 
 	/* Require password */
-	cmd_bmaps_getpass(&ctx);
+	cmd_lmap_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_bmaps_setup_fs_args(&ctx);
+	cmd_lmap_setup_fs_args(&ctx);
 
 	/* Require ids-map */
-	cmd_bmaps_load_bconf(&ctx);
+	cmd_lmap_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_bmaps_setup_fs_ctx(&ctx);
+	cmd_lmap_setup_fs_ctx(&ctx);
 
 	/* Acquire lock */
-	cmd_bmaps_acquire_lockfile(&ctx);
+	cmd_lmap_acquire_lockfile(&ctx);
 
 	/* Open repository */
-	cmd_bmaps_open_repo(&ctx);
+	cmd_lmap_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_bmaps_require_brec(&ctx);
+	cmd_lmap_require_brec(&ctx);
 
 	/* Require boot-able file-system */
-	cmd_bmaps_boot_fs(&ctx);
+	cmd_lmap_boot_fs(&ctx);
 
 	/* Open file-system */
-	cmd_bmaps_open_fs(&ctx);
+	cmd_lmap_open_fs(&ctx);
 
-	/* Do actual bmaps */
-	cmd_bmaps_execute(&ctx);
+	/* Do actual lmap */
+	cmd_lmap_execute(&ctx);
 
 	/* Close repository */
-	cmd_bmaps_close_repo(&ctx);
+	cmd_lmap_close_repo(&ctx);
 
 	/* Release lock */
-	cmd_bmaps_release_lockfile(&ctx);
+	cmd_lmap_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_bmaps_destroy_fs_ctx(&ctx);
+	cmd_lmap_destroy_fs_ctx(&ctx);
 
 	/* Post execution cleanups */
-	cmd_bmaps_finalize(&ctx);
+	cmd_lmap_finalize(&ctx);
 }
 

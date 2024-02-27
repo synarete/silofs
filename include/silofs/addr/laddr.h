@@ -119,6 +119,9 @@ bool silofs_laddr_isvalid(const struct silofs_laddr *laddr);
 bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
                           const struct silofs_laddr *other);
 
+bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
+                         const struct silofs_laddr *other);
+
 void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
                            struct silofs_namebuf *nbuf);
 

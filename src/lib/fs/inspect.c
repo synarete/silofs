@@ -36,73 +36,80 @@
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_sp_visitor {
+struct silofs_inspect_ctx {
 	struct silofs_visitor           vis;
 	struct silofs_spacestats        sp_st;
-	struct silofs_spleaf_urefs      urefs;
+	struct silofs_spmap_lmap        lmap;
+	struct silofs_task             *task;
+	struct silofs_sb_info          *sbi;
 	silofs_visit_laddr_fn           cb;
 };
 
-static bool spvis_unique_lsegid(const struct silofs_sp_visitor *sp_vis,
-                                const struct silofs_lsegid *lsegid, size_t cnt)
-{
-	if (lsegid_isnull(lsegid)) {
-		return false;
-	}
-	for (size_t i = 0; i < cnt; ++i) {
-		if (lsegid_isequal(lsegid, &sp_vis->urefs.subs[i].lsegid)) {
-			return false;
-		}
-	}
-	return true;
-}
-
 static void
-spvis_exec_at_spleaf(struct silofs_sp_visitor *sp_vis,
-                     const struct silofs_spleaf_info *sli, loff_t voff)
+inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx, loff_t voff)
 {
 	const struct silofs_laddr *laddr = NULL;
 
-	silofs_sli_childrens(sli, &sp_vis->urefs);
-	for (size_t i = 0; i < ARRAY_SIZE(sp_vis->urefs.subs); ++i) {
-		laddr = &sp_vis->urefs.subs[i];
-		if (spvis_unique_lsegid(sp_vis, &laddr->lsegid, i)) {
-			sp_vis->cb(laddr, voff);
-		}
-		voff = off_next_lbk(voff);
+	for (size_t i = 0; i < insp_ctx->lmap.cnt; ++i) {
+		laddr = &insp_ctx->lmap.laddr[i];
+		insp_ctx->cb(laddr, voff);
+		voff = off_end(voff, laddr->len);
 	}
 }
 
-static int spvis_exec_at(struct silofs_sp_visitor *sp_vis,
+static void
+inspc_exec_at_super(struct silofs_inspect_ctx *insp_ctx,
+                    const struct silofs_sb_info *sbi, loff_t voff)
+{
+	silofs_sbi_resolve_lmap(sbi, &insp_ctx->lmap);
+	inspc_exec_lmap(insp_ctx, voff);
+}
+
+static void
+inspc_exec_at_spnode(struct silofs_inspect_ctx *insp_ctx,
+                     const struct silofs_spnode_info *sni, loff_t voff)
+{
+	silofs_sni_resolve_lmap(sni, &insp_ctx->lmap);
+	inspc_exec_lmap(insp_ctx, voff);
+}
+
+static void
+inspc_exec_at_spleaf(struct silofs_inspect_ctx *insp_ctx,
+                     const struct silofs_spleaf_info *sli, loff_t voff)
+{
+	silofs_sli_resolve_lmap(sli, &insp_ctx->lmap);
+	inspc_exec_lmap(insp_ctx, voff);
+}
+
+static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
                          const struct silofs_walk_iter *witr)
 {
 	switch (witr->height) {
 	case SILOFS_HEIGHT_BOOT:
 		break;
 	case SILOFS_HEIGHT_SUPER:
-		sp_vis->cb(sbi_laddr(witr->sbi), witr->voff);
-		sp_vis->sp_st.objs.nsuper++;
+		inspc_exec_at_super(insp_ctx, witr->sbi, witr->voff);
+		insp_ctx->sp_st.objs.nsuper++;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
-		sp_vis->cb(sni_laddr(witr->sni4), witr->voff);
-		sp_vis->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni4, witr->voff);
+		insp_ctx->sp_st.objs.nspnode++;
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		sp_vis->cb(sni_laddr(witr->sni3), witr->voff);
-		sp_vis->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni3, witr->voff);
+		insp_ctx->sp_st.objs.nspnode++;
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		sp_vis->cb(sni_laddr(witr->sni2), witr->voff);
-		sp_vis->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni2, witr->voff);
+		insp_ctx->sp_st.objs.nspnode++;
 		break;
 	case SILOFS_HEIGHT_SPNODE1:
-		sp_vis->cb(sni_laddr(witr->sni1), witr->voff);
-		sp_vis->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni1, witr->voff);
+		insp_ctx->sp_st.objs.nspnode++;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		sp_vis->cb(sli_laddr(witr->sli), witr->voff);
-		spvis_exec_at_spleaf(sp_vis, witr->sli, witr->voff);
-		sp_vis->sp_st.objs.nspleaf++;
+		inspc_exec_at_spleaf(insp_ctx, witr->sli, witr->voff);
+		insp_ctx->sp_st.objs.nspleaf++;
 		break;
 	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_VDATA:
@@ -113,15 +120,15 @@ static int spvis_exec_at(struct silofs_sp_visitor *sp_vis,
 	return 0;
 }
 
-static struct silofs_sp_visitor *spvis_of(struct silofs_visitor *vis)
+static struct silofs_inspect_ctx *inspc_of(struct silofs_visitor *vis)
 {
-	return container_of(vis, struct silofs_sp_visitor, vis);
+	return container_of(vis, struct silofs_inspect_ctx, vis);
 }
 
-static int spvis_exec_hook(struct silofs_visitor *vis,
+static int inspc_exec_hook(struct silofs_visitor *vis,
                            const struct silofs_walk_iter *witr)
 {
-	return spvis_exec_at(spvis_of(vis), witr);
+	return inspc_exec_at(inspc_of(vis), witr);
 }
 
 static void noop_callback(const struct silofs_laddr *laddr, loff_t voff)
@@ -130,36 +137,55 @@ static void noop_callback(const struct silofs_laddr *laddr, loff_t voff)
 	silofs_unused(voff);
 }
 
-static void spvis_init(struct silofs_sp_visitor *sp_vis,
+static void inspc_init(struct silofs_inspect_ctx *insp_ctx,
+                       struct silofs_task *task,
+                       struct silofs_sb_info *sbi,
                        silofs_visit_laddr_fn cb)
 {
-	silofs_memzero(sp_vis, sizeof(*sp_vis));
-	sp_vis->vis.exec_hook = spvis_exec_hook;
-	sp_vis->cb = cb ? cb : noop_callback;
+	silofs_memzero(insp_ctx, sizeof(*insp_ctx));
+	insp_ctx->vis.post_hook = inspc_exec_hook;
+	insp_ctx->task = task;
+	insp_ctx->sbi = sbi;
+	insp_ctx->cb = cb ? cb : noop_callback;
 }
 
-static void spvis_fini(struct silofs_sp_visitor *sp_vis)
+static void inspc_fini(struct silofs_inspect_ctx *insp_ctx)
 {
-	silofs_memzero(sp_vis, sizeof(*sp_vis));
+	silofs_memzero(insp_ctx, sizeof(*insp_ctx));
 }
 
-static struct silofs_sp_visitor *
-spvis_new(struct silofs_alloc *alloc, silofs_visit_laddr_fn cb)
+static struct silofs_inspect_ctx *
+inspc_new(struct silofs_alloc *alloc,
+          struct silofs_task *task,
+          struct silofs_sb_info *sbi,
+          silofs_visit_laddr_fn cb)
 {
-	struct silofs_sp_visitor *sp_vis = NULL;
+	struct silofs_inspect_ctx *insp_ctx = NULL;
 
-	sp_vis = silofs_memalloc(alloc, sizeof(*sp_vis), 0);
-	if (sp_vis != NULL) {
-		spvis_init(sp_vis, cb);
+	insp_ctx = silofs_memalloc(alloc, sizeof(*insp_ctx), 0);
+	if (insp_ctx != NULL) {
+		inspc_init(insp_ctx, task, sbi, cb);
 	}
-	return sp_vis;
+	return insp_ctx;
 }
 
-static void spvis_del(struct silofs_sp_visitor *sp_vis,
+static void inspc_del(struct silofs_inspect_ctx *insp_ctx,
                       struct silofs_alloc *alloc)
 {
-	spvis_fini(sp_vis);
-	silofs_memfree(alloc, sp_vis, sizeof(*sp_vis), 0);
+	inspc_fini(insp_ctx);
+	silofs_memfree(alloc, insp_ctx, sizeof(*insp_ctx), 0);
+}
+
+static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
+{
+	struct silofs_sb_info *sbi = insp_ctx->sbi;
+	int err;
+
+	err = silofs_walk_space_tree(insp_ctx->task, sbi, &insp_ctx->vis);
+	if (!err) {
+		insp_ctx->cb(sbi_laddr(sbi), 0);
+	}
+	return err;
 }
 
 int silofs_walk_inspect_fs(struct silofs_task *task,
@@ -167,14 +193,14 @@ int silofs_walk_inspect_fs(struct silofs_task *task,
                            silofs_visit_laddr_fn cb)
 {
 	struct silofs_alloc *alloc = task->t_fsenv->fse.alloc;
-	struct silofs_sp_visitor *sp_vis = NULL;
+	struct silofs_inspect_ctx *insp_ctx = NULL;
 	int ret;
 
-	sp_vis = spvis_new(alloc, cb);
-	if (sp_vis == NULL) {
+	insp_ctx = inspc_new(alloc, task, sbi, cb);
+	if (insp_ctx == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	ret = silofs_walk_space_tree(task, sbi, &sp_vis->vis);
-	spvis_del(sp_vis, alloc);
+	ret = inspc_walk_fs(insp_ctx);
+	inspc_del(insp_ctx, alloc);
 	return ret;
 }

@@ -69,6 +69,7 @@
 #define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)
 #define laddr_isvalid(la)               silofs_laddr_isvalid(la)
 #define laddr_isnull(la)                silofs_laddr_isnull(la)
+#define laddr_isnext(la, oth)           silofs_laddr_isnext(la, oth)
 
 #define uaddr_none()                    silofs_uaddr_none()
 #define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)

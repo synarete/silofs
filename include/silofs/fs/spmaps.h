@@ -21,8 +21,9 @@
 #include <silofs/fs/types.h>
 
 
-struct silofs_spleaf_urefs {
-	struct silofs_laddr subs[SILOFS_SPMAP_NCHILDS];
+struct silofs_spmap_lmap {
+	struct silofs_laddr laddr[SILOFS_SPMAP_NCHILDS];
+	uint32_t cnt;
 };
 
 
@@ -72,6 +73,9 @@ void silofs_sni_bind_child(struct silofs_spnode_info *sni, loff_t voff,
 
 int silofs_sni_resolve_child(const struct silofs_spnode_info *sni,
                              loff_t voff, struct silofs_ulink *out_ulink);
+
+void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
+                             struct silofs_spmap_lmap *out_lmap);
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -153,8 +157,8 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
                              loff_t voff, struct silofs_llink *out_llink);
 
-void silofs_sli_childrens(const struct silofs_spleaf_info *sli,
-                          struct silofs_spleaf_urefs *out_childs);
+void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
+                             struct silofs_spmap_lmap *out_lmaps);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -345,7 +345,28 @@ bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
 	return ((laddr->ltype == other->ltype) &&
 	        (laddr->len == other->len) &&
 	        (laddr->pos == other->pos) &&
-	        silofs_lsegid_isequal(&laddr->lsegid, &other->lsegid));
+	        lsegid_isequal(&laddr->lsegid, &other->lsegid));
+}
+
+bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
+                         const struct silofs_laddr *other)
+{
+	loff_t end;
+
+	if (laddr->ltype != other->ltype) {
+		return false;
+	}
+	end = off_end(laddr->pos, laddr->len);
+	if (other->pos != end) {
+		return false;
+	}
+	if (end > (ssize_t)other->lsegid.size) {
+		return false;
+	}
+	if (!lsegid_isequal(&laddr->lsegid, &other->lsegid)) {
+		return false;
+	}
+	return true;
 }
 
 void silofs_laddr_as_iv(const struct silofs_laddr *laddr,

@@ -1399,19 +1399,34 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_childrens(const struct silofs_spleaf_info *sli,
-                          struct silofs_spleaf_urefs *out_urefs)
+void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
+                             struct silofs_spmap_lmap *out_lmap)
 {
+	struct silofs_laddr laddr = { .pos = -1 };
+	struct silofs_laddr *laddr_prev = NULL;
 	const struct silofs_spmap_leaf *sl = sli->sl;
 	const struct silofs_bk_ref *bkr = NULL;
+	unsigned int cnt = 0;
 
-	STATICASSERT_EQ(ARRAY_SIZE(out_urefs->subs),
+	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
 	                ARRAY_SIZE(sl->sl_subrefs));
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(sl->sl_subrefs); ++slot) {
 		bkr = spleaf_subref_at(sl, slot);
-		bkr_uref(bkr, &out_urefs->subs[slot]);
+		bkr_uref(bkr, &laddr);
+		if (laddr_isnull(&laddr)) {
+			continue;
+		}
+		if (cnt > 0) {
+			laddr_prev = &out_lmap->laddr[cnt - 1];
+			if (laddr_isnext(laddr_prev, &laddr)) {
+				laddr_prev->len += laddr.len;
+				continue;
+			}
+		}
+		laddr_assign(&out_lmap->laddr[cnt++], &laddr);
 	}
+	out_lmap->cnt = cnt;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1623,6 +1638,36 @@ void silofs_sni_clone_from(struct silofs_spnode_info *sni,
 	spnode_clone_rivs(sni->sn, sni_other->sn);
 	sni->sn_nactive_subs = sni_other->sn_nactive_subs;
 	sni_dirtify(sni);
+}
+
+void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
+                             struct silofs_spmap_lmap *out_lmap)
+{
+	struct silofs_uaddr uaddr = { .voff = -1 };
+	struct silofs_laddr *laddr_prev = NULL;
+	const struct silofs_spmap_node *sn = sni->sn;
+	const struct silofs_spmap_ref *spr = NULL;
+	unsigned int cnt = 0;
+
+	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
+	                ARRAY_SIZE(sn->sn_subrefs));
+
+	for (size_t slot = 0; slot < ARRAY_SIZE(sn->sn_subrefs); ++slot) {
+		spr = spnode_subref_at(sn, slot);
+		spr_uaddr(spr, &uaddr);
+		if (uaddr_isnull(&uaddr)) {
+			continue;
+		}
+		if (cnt > 0) {
+			laddr_prev = &out_lmap->laddr[cnt - 1];
+			if (laddr_isnext(laddr_prev, &uaddr.laddr)) {
+				laddr_prev->len += uaddr.laddr.len;
+				continue;
+			}
+		}
+		laddr_assign(&out_lmap->laddr[cnt++], &uaddr.laddr);
+	}
+	out_lmap->cnt = cnt;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

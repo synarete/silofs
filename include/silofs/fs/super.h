@@ -20,6 +20,7 @@
 struct silofs_stats_info;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
+struct silofs_spmap_lmap;
 
 int silofs_sb_check_version(const struct silofs_super_block *sb);
 
@@ -48,19 +49,22 @@ void silofs_sbi_bind_stats(struct silofs_sb_info *sbi,
                            struct silofs_stats_info *sti);
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
-                         enum silofs_ltype vltype,
+                         enum silofs_ltype ltype,
                          struct silofs_uaddr *out_uaddr);
 
 int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
-                             enum silofs_ltype vltype,
+                             enum silofs_ltype ltype,
                              struct silofs_ulink *out_ulink);
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi,
-                           enum silofs_ltype vltype,
+                           enum silofs_ltype ltype,
                            const struct silofs_ulink *ulink);
 
 void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
                            const struct silofs_sb_info *sbi_other);
+
+void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
+                             struct silofs_spmap_lmap *out_lmap);
 
 
 void silofs_sbi_add_flags(struct silofs_sb_info *sbi,

@@ -48,15 +48,8 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 	}
 }
 
-static bool sqe_has_lsegid_as(const struct silofs_submitq_ent *sqe,
-                              const struct silofs_laddr *laddr)
-{
-	return lsegid_isequal(&sqe->laddr.lsegid, &laddr->lsegid);
-}
-
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_lnode_info *lni)
+                             const struct silofs_laddr *laddr)
 {
 	const struct silofs_laddr *sqe_laddr = &sqe->laddr;
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
@@ -72,21 +65,11 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == ARRAY_SIZE(sqe->iov)) {
 		return false;
 	}
-	if (lni->l_ltype != sqe->ltype) {
-		return false;
-	}
-	end = off_end(sqe->laddr.pos, sqe_laddr->len);
-	if (laddr->pos != end) {
-		return false;
-	}
-	if (end > (ssize_t)laddr->lsegid.size) {
+	if (!silofs_laddr_isnext(sqe_laddr, laddr)) {
 		return false;
 	}
 	len = sqe_laddr->len + laddr->len;
 	if (len > (size_t)len_max) {
-		return false;
-	}
-	if (!sqe_has_lsegid_as(sqe, laddr)) {
 		return false;
 	}
 	/* for inodes require alignment on commit-len boundaries */
@@ -104,7 +87,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_laddr *laddr,
                            struct silofs_lnode_info *lni)
 {
-	if (!sqe_isappendable(sqe, laddr, lni)) {
+	if (!sqe_isappendable(sqe, laddr)) {
 		return false;
 	}
 	if (sqe->cnt == 0) {

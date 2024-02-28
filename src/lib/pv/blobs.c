@@ -141,12 +141,12 @@ static void byte_to_ascii(unsigned int b, char *a)
 }
 
 static void blobid_to_name(const struct silofs_blobid *blobid,
-                           struct silofs_namebuf *nbuf)
+                           struct silofs_nbuf *nbuf)
 {
 	unsigned int b;
-	char *s = nbuf->name;
+	char *s = nbuf->b;
 
-	STATICASSERT_GT(sizeof(nbuf->name), 2 * sizeof(blobid->id));
+	STATICASSERT_GT(sizeof(nbuf->b), 2 * sizeof(blobid->id));
 
 	for (size_t i = 0; i < blobid->id_len; ++i) {
 		b = blobid->id[i];
@@ -370,10 +370,10 @@ static int bstore_statblob_at(const struct silofs_bstore *bstore,
                               const struct silofs_blobid *blobid,
                               struct stat *out_st)
 {
-	struct silofs_namebuf nb;
+	struct silofs_nbuf nb;
 
 	blobid_to_name(blobid, &nb);
-	return do_fstatat(bstore->bs_dirfd, nb.name, out_st, 0);
+	return do_fstatat(bstore->bs_dirfd, nb.b, out_st, 0);
 }
 
 static int bstore_statnoblob(const struct silofs_bstore *bstore,
@@ -432,19 +432,19 @@ static int bstore_open_blob_with(struct silofs_bstore *bstore,
                                  const struct silofs_blobid *blobid,
                                  int o_flags, int *out_fd)
 {
-	struct silofs_namebuf nb;
+	struct silofs_nbuf nb;
 
 	blobid_to_name(blobid, &nb);
-	return do_openat(bstore->bs_dirfd, nb.name, o_flags, 0600, out_fd);
+	return do_openat(bstore->bs_dirfd, nb.b, o_flags, 0600, out_fd);
 }
 
 static int bstore_unlink_blob(struct silofs_bstore *bstore,
                               const struct silofs_blobid *blobid)
 {
-	struct silofs_namebuf nb;
+	struct silofs_nbuf nb;
 
 	blobid_to_name(blobid, &nb);
-	return do_unlinkat(bstore->bs_dirfd, nb.name, 0);
+	return do_unlinkat(bstore->bs_dirfd, nb.b, 0);
 }
 
 static int bstore_create_blob(struct silofs_bstore *bstore,

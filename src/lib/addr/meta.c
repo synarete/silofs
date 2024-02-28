@@ -56,14 +56,14 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
 	return uuid_compare(uu1->uu, uu2->uu);
 }
 
-void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_namebuf *nb)
+void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_nbuf *nb)
 {
 	char buf[40] = "";
 
-	STATICASSERT_GT(sizeof(nb->name), sizeof(buf));
+	STATICASSERT_GT(sizeof(nb->b), sizeof(buf));
 
 	uuid_unparse_lower(uu->uu, buf);
-	strncpy(nb->name, buf, sizeof(nb->name));
+	strncpy(nb->b, buf, sizeof(nb->b));
 }
 
 uint64_t silofs_uuid_as_u64(const struct silofs_uuid *uu)

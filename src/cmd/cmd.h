@@ -94,7 +94,7 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
-void cmd_execute_lmap(void);
+void cmd_execute_lsobjs(void);
 
 /* fatal-error handling */
 __attribute__((__noreturn__))

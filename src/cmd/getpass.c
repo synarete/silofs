@@ -79,18 +79,42 @@ static char *parse_dup_password(const char *buf, size_t bsz)
 	}
 	return cmd_strndup(str, len);
 }
+static void
+read_password_buf_from_stdin(int fd, void *buf, size_t bsz, size_t *out_len)
+{
+	size_t nrd = 0;
+	char ch = 0;
+	int err;
+
+	err = silofs_sys_read(fd, buf, bsz, out_len);
+	if (err) {
+		cmd_dief(err, "failed to read password from stdin");
+	}
+	if (*out_len == 0) {
+		cmd_dief(-EINVAL, "zero-length password");
+	}
+	if (*out_len == bsz) {
+		err = silofs_sys_read(fd, &ch, 1, &nrd);
+		if (!err && (nrd > 0)) {
+			cmd_dief(-EINVAL, "password too long");
+		}
+	}
+}
 
 static void
 read_password_buf_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 {
-	int err;
 	struct stat st;
+	int err;
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
 		cmd_dief(err, "fstat failed");
 	}
-	if (!st.st_size || (st.st_size > (loff_t)bsz)) {
+	if (!st.st_size) {
+		cmd_dief(-EINVAL, "zero-length password file");
+	}
+	if (st.st_size > (loff_t)bsz) {
 		cmd_dief(-EFBIG, "illegal password file size");
 	}
 	err = silofs_sys_pread(fd, buf, (size_t)st.st_size, 0, out_len);
@@ -102,11 +126,11 @@ read_password_buf_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 static void
 read_password_buf_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 {
-	int err;
-	int read_err;
-	char *pass;
 	struct termios tr_old;
 	struct termios tr_new;
+	char *pass = NULL;
+	int read_err;
+	int err;
 
 	err = tcgetattr(fd, &tr_old);
 	if (err) {
@@ -144,9 +168,16 @@ read_password_buf_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 	}
 }
 
+static int isstdin(int fd)
+{
+	return (fd == STDIN_FILENO);
+}
+
 static void read_password_buf(int fd, void *buf, size_t bsz, size_t *out_len)
 {
-	if (isatty(fd)) {
+	if (isstdin(fd)) {
+		read_password_buf_from_stdin(fd, buf, bsz, out_len);
+	} else if (isatty(fd)) {
 		read_password_buf_from_tty(fd, buf, bsz, out_len);
 	} else {
 		read_password_buf_from_file(fd, buf, bsz, out_len);

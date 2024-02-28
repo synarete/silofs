@@ -23,22 +23,22 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_namebuf_reset(struct silofs_namebuf *nb)
+void silofs_nbuf_reset(struct silofs_nbuf *nb)
 {
 	memset(nb, 0, sizeof(*nb));
 }
 
-void silofs_namebuf_assign(struct silofs_namebuf *nb,
-                           const struct silofs_namebuf *other)
+void silofs_nbuf_assign(struct silofs_nbuf *nb,
+                        const struct silofs_nbuf *other)
 {
 	memcpy(nb, other, sizeof(*nb));
 }
 
-void silofs_namebuf_setup(struct silofs_namebuf *nb,
-                          const struct silofs_substr *str)
+void silofs_nbuf_setup(struct silofs_nbuf *nb,
+                       const struct silofs_substr *str)
 {
-	silofs_namebuf_reset(nb);
-	silofs_substr_copyto(str, nb->name, sizeof(nb->name) - 1);
+	silofs_nbuf_reset(nb);
+	silofs_substr_copyto(str, nb->b, sizeof(nb->b) - 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -131,30 +131,30 @@ int silofs_ascii_to_nibble(char a)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_byte_to_ascii(unsigned int b, char *a)
+void silofs_byte_to_ascii(uint8_t b, char *a)
 {
 	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
 	a[1] = silofs_nibble_to_ascii((int)b);
 }
 
-static uint8_t ascii_to_byte(const char *a)
+void silofs_ascii_to_byte(const char *a, uint8_t *b)
 {
 	uint8_t nib[2];
 
 	nib[0] = (uint8_t)silofs_ascii_to_nibble(a[0]);
 	nib[1] = (uint8_t)silofs_ascii_to_nibble(a[1]);
-	return (nib[0] << 4 | nib[1]);
+	*b = (nib[0] << 4 | nib[1]);
 }
 
 void silofs_uint64_to_ascii(uint64_t u, char *a)
 {
 	int shift;
-	unsigned int b;
+	uint8_t b;
 
 	shift = 64;
 	while (shift > 0) {
 		shift -= 8;
-		b = (unsigned int)((u >> shift) & 0xFF);
+		b = (uint8_t)((u >> shift) & 0xFF);
 		silofs_byte_to_ascii(b, a);
 		a += 2;
 	}
@@ -163,10 +163,11 @@ void silofs_uint64_to_ascii(uint64_t u, char *a)
 uint64_t silofs_ascii_to_uint64(const char *a)
 {
 	uint64_t u = 0;
+	uint8_t b;
 
 	for (size_t i = 0; i < 8; ++i) {
-		u = u << 8;
-		u |= ascii_to_byte(a);
+		silofs_ascii_to_byte(a, &b);
+		u = (u << 8) | (uint64_t)b;
 		a += 2;
 	}
 	return u;

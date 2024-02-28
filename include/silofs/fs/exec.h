@@ -19,7 +19,7 @@
 
 /* file-system boot configurations */
 struct silofs_fs_bconf {
-	struct silofs_namebuf   name;
+	struct silofs_nbuf      name;
 	struct silofs_uuid      uuid;
 	struct silofs_ids       ids;
 };

@@ -387,25 +387,58 @@ void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
 	out_iv->iv[15] ^= (uint8_t)(laddr->ltype);
 }
 
-void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
-                           struct silofs_namebuf *nbuf)
+union silofs_laddr_data_u {
+	struct silofs_laddr48b laddr48;
+	uint8_t d[48];
+};
+
+int silofs_laddr_to_base64(const struct silofs_laddr *laddr,
+                           struct silofs_nbuf *nbuf)
 {
-	union {
-		struct silofs_laddr48b laddr48;
-		uint8_t d[48];
-	} u;
-	size_t pos = 0;
+	union silofs_laddr_data_u u;
+	size_t len = 0;
+	int err;
 
 	STATICASSERT_EQ(sizeof(u), 48);
-	STATICASSERT_LT(2 * sizeof(u), sizeof(nbuf->name));
+	STATICASSERT_LT(2 * sizeof(u), sizeof(nbuf->b));
 
 	silofs_memzero(&u, sizeof(u));
 	silofs_laddr48b_htox(&u.laddr48, laddr);
-	for (size_t i = 0; i < sizeof(u.d); ++i) {
-		silofs_byte_to_ascii(u.d[i], &nbuf->name[pos]);
-		pos += 2;
+
+	err = silofs_base64_encode(u.d, sizeof(u.d), nbuf->b,
+	                           sizeof(nbuf->b) - 1, &len);
+	if (err) {
+		return err;
 	}
-	nbuf->name[pos] = '\0';
+	nbuf->b[len] = '\0';
+	return 0;
+}
+
+int silofs_laddr_from_base64(struct silofs_laddr *laddr,
+                             const struct silofs_nbuf *nbuf)
+{
+	union silofs_laddr_data_u u;
+	size_t nrd = 0;
+	size_t inlen = 0;
+	size_t outlen = 0;
+	int err;
+
+	STATICASSERT_EQ(sizeof(u), 48);
+	STATICASSERT_LT(2 * sizeof(u), sizeof(nbuf->b));
+
+	silofs_memzero(&u, sizeof(u));
+
+	inlen = strlen(nbuf->b);
+	err = silofs_base64_decode(nbuf->b, inlen,
+	                           u.d, sizeof(u.d), &outlen, &nrd);
+	if (err) {
+		return err;
+	}
+	if ((outlen != sizeof(u.d)) || (nrd != inlen)) {
+		return -SILOFS_EINVAL;
+	}
+	silofs_laddr48b_xtoh(&u.laddr48, laddr);
+	return 0;
 }
 
 void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)

@@ -22,20 +22,18 @@
 
 struct silofs_substr;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-/* fixed-size name-buffer */
-struct silofs_namebuf {
-	char name[256];
+/* fixed-size buffer of n-characters (typically, for names) */
+struct silofs_nbuf {
+	char b[256];
 };
 
-void silofs_namebuf_reset(struct silofs_namebuf *nb);
+void silofs_nbuf_reset(struct silofs_nbuf *nb);
 
-void silofs_namebuf_assign(struct silofs_namebuf *nb,
-                           const struct silofs_namebuf *other);
+void silofs_nbuf_assign(struct silofs_nbuf *nb,
+                        const struct silofs_nbuf *other);
 
-void silofs_namebuf_setup(struct silofs_namebuf *nb,
-                          const struct silofs_substr *str);
+void silofs_nbuf_setup(struct silofs_nbuf *nb,
+                       const struct silofs_substr *str);
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -49,7 +47,9 @@ void silofs_uint64_to_ascii(uint64_t u, char *a);
 
 uint64_t silofs_ascii_to_uint64(const char *a);
 
-void silofs_byte_to_ascii(unsigned int b, char *a);
+void silofs_byte_to_ascii(uint8_t b, char *a);
+
+void silofs_ascii_to_byte(const char *a, uint8_t *b);
 
 size_t silofs_mem_to_ascii(const void *ptr, size_t len, char *buf, size_t bsz);
 

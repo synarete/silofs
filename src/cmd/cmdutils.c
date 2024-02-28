@@ -60,7 +60,7 @@ void cmd_dief(int err, const char *restrict fmt, ...)
 	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
 	va_end(ap);
 	error(EXIT_FAILURE, cmd_errnum_of(err), "%s", msg);
-	_exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
+	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
 __attribute__((__noreturn__))

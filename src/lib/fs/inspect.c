@@ -45,40 +45,36 @@ struct silofs_inspect_ctx {
 	silofs_visit_laddr_fn           cb;
 };
 
-static void
-inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx, loff_t voff)
+static void inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
 {
 	const struct silofs_laddr *laddr = NULL;
 
 	for (size_t i = 0; i < insp_ctx->lmap.cnt; ++i) {
 		laddr = &insp_ctx->lmap.laddr[i];
-		insp_ctx->cb(laddr, voff);
-		voff = off_end(voff, laddr->len);
+		insp_ctx->cb(laddr);
 	}
 }
 
 static void
 inspc_exec_at_super(struct silofs_inspect_ctx *insp_ctx,
-                    const struct silofs_sb_info *sbi, loff_t voff)
+                    const struct silofs_sb_info *sbi)
 {
 	silofs_sbi_resolve_lmap(sbi, &insp_ctx->lmap);
-	inspc_exec_lmap(insp_ctx, voff);
+	inspc_exec_lmap(insp_ctx);
 }
 
-static void
-inspc_exec_at_spnode(struct silofs_inspect_ctx *insp_ctx,
-                     const struct silofs_spnode_info *sni, loff_t voff)
+static void inspc_exec_at_spnode(struct silofs_inspect_ctx *insp_ctx,
+                                 const struct silofs_spnode_info *sni)
 {
 	silofs_sni_resolve_lmap(sni, &insp_ctx->lmap);
-	inspc_exec_lmap(insp_ctx, voff);
+	inspc_exec_lmap(insp_ctx);
 }
 
-static void
-inspc_exec_at_spleaf(struct silofs_inspect_ctx *insp_ctx,
-                     const struct silofs_spleaf_info *sli, loff_t voff)
+static void inspc_exec_at_spleaf(struct silofs_inspect_ctx *insp_ctx,
+                                 const struct silofs_spleaf_info *sli)
 {
 	silofs_sli_resolve_lmap(sli, &insp_ctx->lmap);
-	inspc_exec_lmap(insp_ctx, voff);
+	inspc_exec_lmap(insp_ctx);
 }
 
 static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
@@ -88,28 +84,26 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 	case SILOFS_HEIGHT_BOOT:
 		break;
 	case SILOFS_HEIGHT_SUPER:
-		inspc_exec_at_super(insp_ctx, witr->sbi, witr->voff);
-		insp_ctx->sp_st.objs.nsuper++;
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
-		inspc_exec_at_spnode(insp_ctx, witr->sni4, witr->voff);
 		insp_ctx->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni4);
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
-		inspc_exec_at_spnode(insp_ctx, witr->sni3, witr->voff);
 		insp_ctx->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni3);
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
-		inspc_exec_at_spnode(insp_ctx, witr->sni2, witr->voff);
 		insp_ctx->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni2);
 		break;
 	case SILOFS_HEIGHT_SPNODE1:
-		inspc_exec_at_spnode(insp_ctx, witr->sni1, witr->voff);
 		insp_ctx->sp_st.objs.nspnode++;
+		inspc_exec_at_spnode(insp_ctx, witr->sni1);
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
-		inspc_exec_at_spleaf(insp_ctx, witr->sli, witr->voff);
 		insp_ctx->sp_st.objs.nspleaf++;
+		inspc_exec_at_spleaf(insp_ctx, witr->sli);
 		break;
 	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_VDATA:
@@ -131,10 +125,9 @@ static int inspc_exec_hook(struct silofs_visitor *vis,
 	return inspc_exec_at(inspc_of(vis), witr);
 }
 
-static void noop_callback(const struct silofs_laddr *laddr, loff_t voff)
+static void noop_callback(const struct silofs_laddr *laddr)
 {
 	silofs_unused(laddr);
-	silofs_unused(voff);
 }
 
 static void inspc_init(struct silofs_inspect_ctx *insp_ctx,
@@ -176,14 +169,27 @@ static void inspc_del(struct silofs_inspect_ctx *insp_ctx,
 	silofs_memfree(alloc, insp_ctx, sizeof(*insp_ctx), 0);
 }
 
+static int inspc_walk_spmaps(struct silofs_inspect_ctx *insp_ctx)
+{
+	return silofs_walk_space_tree(insp_ctx->task,
+	                              insp_ctx->sbi, &insp_ctx->vis);
+}
+
+static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
+{
+	insp_ctx->sp_st.objs.nsuper++;
+	inspc_exec_at_super(insp_ctx, insp_ctx->sbi);
+	insp_ctx->cb(sbi_laddr(insp_ctx->sbi));
+	return 0;
+}
+
 static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
 {
-	struct silofs_sb_info *sbi = insp_ctx->sbi;
 	int err;
 
-	err = silofs_walk_space_tree(insp_ctx->task, sbi, &insp_ctx->vis);
+	err = inspc_walk_spmaps(insp_ctx);
 	if (!err) {
-		insp_ctx->cb(sbi_laddr(sbi), 0);
+		err = inspc_walk_super(insp_ctx);
 	}
 	return err;
 }

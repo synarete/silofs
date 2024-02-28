@@ -791,7 +791,7 @@ void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
                       const struct silofs_fs_bconf *other)
 {
 	cmd_bconf_init(bconf);
-	silofs_namebuf_assign(&bconf->name, &other->name);
+	silofs_nbuf_assign(&bconf->name, &other->name);
 	silofs_uuid_assign(&bconf->uuid, &other->uuid);
 	for (size_t i = 0; i < other->ids.nuids; ++i) {
 		cmd_bconf_append_uids1(bconf, &other->ids.uids[i]);
@@ -832,7 +832,7 @@ cmd_bconf_pathname(const struct silofs_fs_bconf *bconf, const char *repodir)
 {
 	char *path = NULL;
 
-	cmd_join_path(repodir, bconf->name.name, &path);
+	cmd_join_path(repodir, bconf->name.b, &path);
 	return path;
 }
 
@@ -874,7 +874,7 @@ void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name)
 	if (err) {
 		cmd_dief(err, "illegal name: %s", name);
 	}
-	silofs_namebuf_setup(&bconf->name, &nstr.s);
+	silofs_nbuf_setup(&bconf->name, &nstr.s);
 }
 
 static void cmd_bconf_set_uuid(struct silofs_fs_bconf *bconf,

@@ -26,7 +26,7 @@
 struct silofs_walk_ctx {
 	struct silofs_task         *task;
 	struct silofs_visitor      *vis;
-	struct silofs_fsenv         *fsenv;
+	struct silofs_fsenv        *fsenv;
 	struct silofs_sb_info      *sbi;
 	struct silofs_spnode_info  *sni4;
 	struct silofs_spnode_info  *sni3;

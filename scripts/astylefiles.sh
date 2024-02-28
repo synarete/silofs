@@ -3,13 +3,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-self="${BASH_SOURCE[0]}"
-root=$(dirname "$(readlink -f "${self}")")
-srcs=$(find "${root}/include" "${root}/src" \
-  -type f -not -name "fuse_kernel.h" -not -name "configs.h" -name "*.[ch]")
-
 command -v astyle > /dev/null
-for src in ${srcs}; do
+for src in "${@}"; do
   astyle -Q \
     --style=1tbs \
     --suffix=none \
@@ -29,4 +24,3 @@ for src in ${srcs}; do
     --lineend=linux \
     "${src}"
 done
-

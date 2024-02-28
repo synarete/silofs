@@ -53,10 +53,10 @@ jobs:
         run: sudo apt-get update
       - name: Install deps
         run: sudo apt-get install -y astyle python3
-      - name: Check C-style
-        run: ./cstylelint.sh
-      - name: Verify code formatting
-        run: ./astyleall.sh
+      - name: Verify code style
+        run: ./cstylefmt.sh
+      - name: Require clean code
+        run: git diff-index --quiet HEAD
   build-devel:
     name: Build with developer flags
     needs:

@@ -135,7 +135,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Run python checkers
-        run: ./tests/citests/pycheck.sh
+        run: ./ci/citests/pycheck.sh
   build-rpm-package:
     name: Build rpm package
     runs-on: ubuntu-latest

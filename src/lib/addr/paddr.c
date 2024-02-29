@@ -39,7 +39,10 @@ static long pvid_compare(const struct silofs_pvid *pvid1,
 
 uint64_t silofs_pvid_hash64(const struct silofs_pvid *pvid)
 {
-	return silofs_uuid_as_u64(&pvid->uuid);
+	uint64_t u[2] = { 0, 0 };
+
+	silofs_uuid_as_u64s(&pvid->uuid, u);
+	return u[0] ^ u[1];
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

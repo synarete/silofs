@@ -66,15 +66,14 @@ void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_nbuf *nb)
 	strncpy(nb->b, buf, sizeof(nb->b));
 }
 
-uint64_t silofs_uuid_as_u64(const struct silofs_uuid *uu)
+void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])
 {
 	const uint8_t *p = uu->uu;
-	const uint64_t u1 = silofs_u8b_as_u64(p);
-	const uint64_t u2 = silofs_u8b_as_u64(p + 8);
 
 	STATICASSERT_EQ(sizeof(uu->uu), 16);
 
-	return u1 ^ u2;
+	u[0] = silofs_u8b_as_u64(p);
+	u[1] = silofs_u8b_as_u64(p + 8);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

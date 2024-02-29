@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+self=$(basename "${BASH_SOURCE[0]}")
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -22,5 +23,5 @@ for src in "${@}"; do
     --max-code-length=79 \
     --indent-col1-comments \
     --lineend=linux \
-    "${src}"
+    "${src}" | sed "s,^Formatted ,${self}:,g"
 done

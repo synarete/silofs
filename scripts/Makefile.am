@@ -1,5 +1,5 @@
 EXTRA_DIST = $(NULL)
-EXTRA_DIST += astylefiles.sh
+EXTRA_DIST += astylefile.sh
 EXTRA_DIST += checkcstyle.py
 EXTRA_DIST += clangformat.sh
 EXTRA_DIST += clangscanbuild.sh

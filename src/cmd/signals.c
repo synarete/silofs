@@ -19,8 +19,6 @@
 #include <signal.h>
 #include "cmd.h"
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void (*silofs_signal_callback_hook)(int) = NULL;
 
 static void sigaction_info_handler(int signum)
@@ -65,6 +63,10 @@ static void sigaction_abort_handler(int signum)
 	abort(); /* Re-raise to _exit */
 }
 
+static const struct sigaction s_sigaction_ignore = {
+	.sa_handler = SIG_IGN,
+};
+
 static const struct sigaction s_sigaction_info = {
 	.sa_handler = sigaction_info_handler
 };
@@ -89,6 +91,11 @@ static void register_sigaction(int signum, const struct sigaction *sa)
 	if (err) {
 		cmd_dief(err, "sigaction error: signum=%d", signum);
 	}
+}
+
+static void sigaction_ignore(int signum)
+{
+	register_sigaction(signum, &s_sigaction_ignore);
 }
 
 static void sigaction_info(int signum)
@@ -124,7 +131,7 @@ void cmd_register_sigactions(void (*sig_hook_fn)(int))
 	sigaction_info(SIGUSR1);
 	sigaction_term(SIGSEGV);
 	sigaction_info(SIGUSR2);
-	sigaction_info(SIGPIPE);
+	sigaction_ignore(SIGPIPE);
 	sigaction_info(SIGALRM);
 	sigaction_halt(SIGTERM);
 	sigaction_term(SIGSTKFLT);
@@ -144,4 +151,3 @@ void cmd_register_sigactions(void (*sig_hook_fn)(int))
 	sigaction_halt(SIGSYS);
 	silofs_signal_callback_hook = sig_hook_fn;
 }
-

@@ -175,10 +175,10 @@ static int isstdin(int fd)
 
 static void read_password_buf(int fd, void *buf, size_t bsz, size_t *out_len)
 {
-	if (isstdin(fd)) {
-		read_password_buf_from_stdin(fd, buf, bsz, out_len);
-	} else if (isatty(fd)) {
+	if (isatty(fd)) {
 		read_password_buf_from_tty(fd, buf, bsz, out_len);
+	} else if (isstdin(fd)) {
+		read_password_buf_from_stdin(fd, buf, bsz, out_len);
 	} else {
 		read_password_buf_from_file(fd, buf, bsz, out_len);
 	}

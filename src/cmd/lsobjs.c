@@ -120,6 +120,11 @@ static void cmd_lsobjs_start(struct cmd_lsobjs_ctx *ctx)
 	atexit(cmd_lsobjs_atexit);
 }
 
+static void cmd_lsobjs_enable_signals(void)
+{
+	cmd_register_sigactions(NULL);
+}
+
 static void cmd_lsobjs_prepare(struct cmd_lsobjs_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
@@ -219,6 +224,9 @@ void cmd_execute_lsobjs(void)
 
 	/* Require password */
 	cmd_lsobjs_getpass(&ctx);
+
+	/* Run with signals */
+	cmd_lsobjs_enable_signals();
 
 	/* Setup input arguments */
 	cmd_lsobjs_setup_fs_args(&ctx);

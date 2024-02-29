@@ -235,6 +235,11 @@ static void cmd_rmfs_start(struct cmd_rmfs_ctx *ctx)
 	atexit(cmd_rmfs_atexit);
 }
 
+static void cmd_rmfs_enable_signals(void)
+{
+	cmd_register_sigactions(NULL);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_execute_rmfs(void)
@@ -257,6 +262,9 @@ void cmd_execute_rmfs(void)
 
 	/* Require password */
 	cmd_rmfs_getpass(&ctx);
+
+	/* Run with signals */
+	cmd_rmfs_enable_signals();
 
 	/* Setup input arguments */
 	cmd_rmfs_setup_fs_args(&ctx);

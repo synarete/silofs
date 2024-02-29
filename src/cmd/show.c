@@ -113,6 +113,11 @@ static void cmd_show_start(struct cmd_show_ctx *ctx)
 	atexit(cmd_show_atexit);
 }
 
+static void cmd_show_enable_signals(void)
+{
+	cmd_register_sigactions(NULL);
+}
+
 static void cmd_show_prepare(struct cmd_show_ctx *ctx)
 {
 	ctx->ioc = cmd_new_ioc();
@@ -365,6 +370,9 @@ void cmd_execute_show(void)
 
 	/* Resolve sub-command to query-type */
 	cmd_show_resolve_subcmd(&ctx);
+
+	/* Run with signals */
+	cmd_show_enable_signals();
 
 	/* Do actual query + show */
 	cmd_show_execute(&ctx);

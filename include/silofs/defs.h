@@ -528,7 +528,7 @@ struct silofs_paddr32b {
 
 struct silofs_lsegid32b {
 	struct silofs_lvid              lvid;
-	uint32_t                        size;
+	uint32_t                        lsize;
 	uint32_t                        vindex;
 	uint8_t                         vspace;
 	uint8_t                         height;

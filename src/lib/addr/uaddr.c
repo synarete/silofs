@@ -19,7 +19,7 @@
 #include <silofs/addr.h>
 
 static const struct silofs_uaddr s_uaddr_none = {
-	.laddr.lsegid.size = 0,
+	.laddr.lsegid.lsize = 0,
 	.laddr.pos = SILOFS_OFF_NULL,
 	.laddr.ltype = SILOFS_LTYPE_NONE,
 	.voff = SILOFS_OFF_NULL,

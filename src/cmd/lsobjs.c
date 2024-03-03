@@ -190,7 +190,7 @@ static void cmd_lsobjs_laddr_cb(const struct silofs_laddr *laddr)
 	struct silofs_nbuf nb;
 	FILE *fp = stdout;
 
-	silofs_laddr_to_base64(laddr, &nb);
+	silofs_laddr_to_ascii(laddr, &nb);
 	fprintf(fp, "%s\n", nb.b);
 	fflush(fp);
 }

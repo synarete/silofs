@@ -23,22 +23,22 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_nbuf_reset(struct silofs_nbuf *nb)
+void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
 {
-	memset(nb, 0, sizeof(*nb));
+	memset(sbuf, 0, sizeof(*sbuf));
 }
 
-void silofs_nbuf_assign(struct silofs_nbuf *nb,
-                        const struct silofs_nbuf *other)
+void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
+                          const struct silofs_strbuf *other)
 {
-	memcpy(nb, other, sizeof(*nb));
+	memcpy(sbuf, other, sizeof(*sbuf));
 }
 
-void silofs_nbuf_setup(struct silofs_nbuf *nb,
-                       const struct silofs_substr *str)
+void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
+                         const struct silofs_substr *str)
 {
-	silofs_nbuf_reset(nb);
-	silofs_substr_copyto(str, nb->b, sizeof(nb->b) - 1);
+	silofs_strbuf_reset(sbuf);
+	silofs_substr_copyto(str, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

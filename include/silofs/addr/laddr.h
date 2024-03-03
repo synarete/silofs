@@ -123,7 +123,7 @@ bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
                          const struct silofs_laddr *other);
 
 void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
-                           struct silofs_nbuf *nbuf);
+                           struct silofs_strbuf *sbuf);
 
 void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
                           const struct silofs_laddr *laddr);

@@ -22,18 +22,18 @@
 
 struct silofs_substr;
 
-/* fixed-size buffer of n-characters (typically, for names) */
-struct silofs_nbuf {
-	char b[256];
+/* fixed-size string-buffer (typically, for names) */
+struct silofs_strbuf {
+	char str[256];
 };
 
-void silofs_nbuf_reset(struct silofs_nbuf *nb);
+void silofs_strbuf_reset(struct silofs_strbuf *sbuf);
 
-void silofs_nbuf_assign(struct silofs_nbuf *nb,
-                        const struct silofs_nbuf *other);
+void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
+                          const struct silofs_strbuf *other);
 
-void silofs_nbuf_setup(struct silofs_nbuf *nb,
-                       const struct silofs_substr *str);
+void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
+                         const struct silofs_substr *str);
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

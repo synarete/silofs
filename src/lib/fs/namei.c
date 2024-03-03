@@ -2131,7 +2131,7 @@ int silofs_do_statvfs(const struct silofs_task *task,
 	return err;
 }
 
-static void fill_strbuf(char *buf, size_t bsz, const struct silofs_substr *s)
+static void str_to_buf(const struct silofs_substr *s, char *buf, size_t bsz)
 {
 	if ((s != NULL) && (bsz > 0)) {
 		silofs_substr_copyto(s, buf, bsz);
@@ -2149,7 +2149,7 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	query->u.version.major = silofs_version.major;
 	query->u.version.minor = silofs_version.minor;
 	query->u.version.sublevel = silofs_version.sublevel;
-	fill_strbuf(query->u.version.string, bsz, &s);
+	str_to_buf(&s, query->u.version.string, bsz);
 	unused(ii);
 }
 
@@ -2161,10 +2161,10 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	size_t bsz;
 
 	bsz = sizeof(query->u.bootrec.repo);
-	fill_strbuf(query->u.bootrec.repo, bsz, &bootpath->repodir);
+	str_to_buf(&bootpath->repodir, query->u.bootrec.repo, bsz);
 
 	bsz = sizeof(query->u.bootrec.name);
-	fill_strbuf(query->u.bootrec.name, bsz, &bootpath->name.s);
+	str_to_buf(&bootpath->name.s, query->u.bootrec.name, bsz);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

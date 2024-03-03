@@ -51,15 +51,15 @@ void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
 }
 
 static void lvid_to_ascii(const struct silofs_lvid *lvid,
-                          struct silofs_nbuf *nbuf)
+                          struct silofs_strbuf *sbuf)
 {
 	size_t pos = 0;
 
 	for (size_t i = 0; i < ARRAY_SIZE(lvid->uuid.uu); ++i) {
-		silofs_byte_to_ascii(lvid->uuid.uu[i], &nbuf->b[pos]);
+		silofs_byte_to_ascii(lvid->uuid.uu[i], &sbuf->str[pos]);
 		pos += 2;
 	}
-	nbuf->b[pos] = '\0';
+	sbuf->str[pos] = '\0';
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -449,16 +449,16 @@ static void laddr_to_repr(const struct silofs_laddr *laddr,
 }
 
 static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
-                              struct silofs_nbuf *nbuf)
+                              struct silofs_strbuf *sbuf)
 {
-	struct silofs_nbuf lvid_nb;
-	const size_t lim = sizeof(nbuf->b) - 1;
+	struct silofs_strbuf lvid_sbuf;
+	const size_t lim = sizeof(sbuf->str) - 1;
 	int n;
 
-	lvid_to_ascii(&repr->lvid, &lvid_nb);
-	n = snprintf(nbuf->b, lim,
+	lvid_to_ascii(&repr->lvid, &lvid_sbuf);
+	n = snprintf(sbuf->str, lim,
 	             "%s-%x%x%02x%02x-%08x-%08x-%08x-%08x",
-	             lvid_nb.b,
+	             lvid_sbuf.str,
 	             repr->version,
 	             repr->height,
 	             repr->vspace,
@@ -470,16 +470,16 @@ static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
 	if (n >= (int)lim) {
 		n = (int)lim;
 	}
-	nbuf->b[n] = '\0';
+	sbuf->str[n] = '\0';
 }
 
 void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
-                           struct silofs_nbuf *nbuf)
+                           struct silofs_strbuf *sbuf)
 {
 	struct silofs_laddr_repr repr = { .version = 1 };
 
 	laddr_to_repr(laddr, &repr);
-	laddr_repr_to_str(&repr, nbuf);
+	laddr_repr_to_str(&repr, sbuf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

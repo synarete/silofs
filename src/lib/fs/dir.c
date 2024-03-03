@@ -1286,18 +1286,18 @@ dir_namehash_by_xxh64(const struct silofs_inode_info *dir_ii,
 	return silofs_hash_xxh64(name, nlen, seed);
 }
 
-static int dir_nbuf_to_hash(const struct silofs_inode_info *dir_ii,
-                            const struct silofs_nbuf *nbuf,
-                            size_t nlen, uint64_t *out_hash)
+static int dir_namehash_by(const struct silofs_inode_info *dir_ii,
+                           const struct silofs_strbuf *sbuf,
+                           size_t nlen, uint64_t *out_hash)
 {
 	const enum silofs_dirhfn dhfn = dir_hfn(dir_ii);
 
 	switch (dhfn) {
 	case SILOFS_DIRHASH_SHA256:
-		*out_hash = dir_namehash_by_sha256(dir_ii, nbuf->b, nlen);
+		*out_hash = dir_namehash_by_sha256(dir_ii, sbuf->str, nlen);
 		break;
 	case SILOFS_DIRHASH_XXH64:
-		*out_hash = dir_namehash_by_xxh64(dir_ii, nbuf->b, nlen);
+		*out_hash = dir_namehash_by_xxh64(dir_ii, sbuf->str, nlen);
 		break;
 	default:
 		return -SILOFS_EFSCORRUPTED;
@@ -1309,19 +1309,19 @@ static int
 dir_calc_namehash(const struct silofs_inode_info *dir_ii,
                   const struct silofs_namestr *nstr, uint64_t *out_hash)
 {
-	struct silofs_nbuf nbuf;
+	struct silofs_strbuf sbuf;
 	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
 	uint64_t hash = 0;
 	int err;
 
-	STATICASSERT_EQ(sizeof(nbuf.b) % 8, 0);
-	STATICASSERT_EQ(sizeof(nbuf.b), SILOFS_NAME_MAX + 1);
+	STATICASSERT_EQ(sizeof(sbuf.str) % 8, 0);
+	STATICASSERT_EQ(sizeof(sbuf.str), SILOFS_NAME_MAX + 1);
 
-	if (likely(nstr->s.len >= sizeof(nbuf.b))) {
+	if (likely(nstr->s.len >= sizeof(sbuf.str))) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_nbuf_setup(&nbuf, &nstr->s);
-	err = dir_nbuf_to_hash(dir_ii, &nbuf, alen, &hash);
+	silofs_strbuf_setup(&sbuf, &nstr->s);
+	err = dir_namehash_by(dir_ii, &sbuf, alen, &hash);
 	if (err) {
 		return err;
 	}

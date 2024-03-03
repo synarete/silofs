@@ -134,19 +134,19 @@ static int do_fsync(int fd)
 
 static void byte_to_ascii(unsigned int b, char *a)
 {
-	const int8_t v = (int8_t)(b & 0xff);
+	const uint8_t v = (uint8_t)(b & 0xff);
 
 	a[0] = silofs_nibble_to_ascii(v >> 4);
 	a[1] = silofs_nibble_to_ascii(v);
 }
 
 static void blobid_to_name(const struct silofs_blobid *blobid,
-                           struct silofs_nbuf *nbuf)
+                           struct silofs_strbuf *sbuf)
 {
+	char *s = sbuf->str;
 	unsigned int b;
-	char *s = nbuf->b;
 
-	STATICASSERT_GT(sizeof(nbuf->b), 2 * sizeof(blobid->id));
+	STATICASSERT_GT(sizeof(sbuf->str), 2 * sizeof(blobid->id));
 
 	for (size_t i = 0; i < blobid->id_len; ++i) {
 		b = blobid->id[i];
@@ -370,10 +370,10 @@ static int bstore_statblob_at(const struct silofs_bstore *bstore,
                               const struct silofs_blobid *blobid,
                               struct stat *out_st)
 {
-	struct silofs_nbuf nb;
+	struct silofs_strbuf sbuf;
 
-	blobid_to_name(blobid, &nb);
-	return do_fstatat(bstore->bs_dirfd, nb.b, out_st, 0);
+	blobid_to_name(blobid, &sbuf);
+	return do_fstatat(bstore->bs_dirfd, sbuf.str, out_st, 0);
 }
 
 static int bstore_statnoblob(const struct silofs_bstore *bstore,
@@ -432,19 +432,19 @@ static int bstore_open_blob_with(struct silofs_bstore *bstore,
                                  const struct silofs_blobid *blobid,
                                  int o_flags, int *out_fd)
 {
-	struct silofs_nbuf nb;
+	struct silofs_strbuf sbuf;
 
-	blobid_to_name(blobid, &nb);
-	return do_openat(bstore->bs_dirfd, nb.b, o_flags, 0600, out_fd);
+	blobid_to_name(blobid, &sbuf);
+	return do_openat(bstore->bs_dirfd, sbuf.str, o_flags, 0600, out_fd);
 }
 
 static int bstore_unlink_blob(struct silofs_bstore *bstore,
                               const struct silofs_blobid *blobid)
 {
-	struct silofs_nbuf nb;
+	struct silofs_strbuf sbuf;
 
-	blobid_to_name(blobid, &nb);
-	return do_unlinkat(bstore->bs_dirfd, nb.b, 0);
+	blobid_to_name(blobid, &sbuf);
+	return do_unlinkat(bstore->bs_dirfd, sbuf.str, 0);
 }
 
 static int bstore_create_blob(struct silofs_bstore *bstore,

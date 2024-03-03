@@ -187,11 +187,11 @@ static void cmd_lsobjs_open_fs(struct cmd_lsobjs_ctx *ctx)
 
 static void cmd_lsobjs_laddr_cb(const struct silofs_laddr *laddr)
 {
-	struct silofs_nbuf nb;
+	struct silofs_strbuf sbuf;
 	FILE *fp = stdout;
 
-	silofs_laddr_to_ascii(laddr, &nb);
-	fprintf(fp, "%s\n", nb.b);
+	silofs_laddr_to_ascii(laddr, &sbuf);
+	fprintf(fp, "%s\n", sbuf.str);
 	fflush(fp);
 }
 

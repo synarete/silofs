@@ -345,7 +345,7 @@ struct silofs_fuseq_in {
 
 struct silofs_fuseq_diter {
 	char   buf[8 * SILOFS_UKILO];
-	struct silofs_nbuf de_name;
+	struct silofs_strbuf de_name;
 	struct silofs_readdir_ctx rd_ctx;
 	struct silofs_stat de_attr;
 	size_t bsz;
@@ -1455,7 +1455,7 @@ static int emit_dirent(struct silofs_fuseq_diter *di, loff_t off)
 	const size_t rem = di->bsz - di->len;
 	const ino_t ino = di->de_ino;
 	const size_t nlen = di->de_nlen;
-	const char *name = di->de_name.b;
+	const char *name = di->de_name.str;
 	size_t cnt = 0;
 	int err;
 
@@ -1476,14 +1476,14 @@ static int emit_dirent(struct silofs_fuseq_diter *di, loff_t off)
 static void update_dirent(struct silofs_fuseq_diter *di,
                           const struct silofs_readdir_info *rdi)
 {
-	const size_t nbuf_sz = sizeof(di->de_name.b);
+	const size_t nbuf_sz = sizeof(di->de_name.str);
 
 	di->de_off = rdi->off;
 	di->de_ino = rdi->ino;
 	di->de_dt = rdi->dt;
 	di->de_nlen = min(rdi->namelen, nbuf_sz - 1);
-	memcpy(di->de_name.b, rdi->name, di->de_nlen);
-	memset(di->de_name.b + di->de_nlen, 0, nbuf_sz - di->de_nlen);
+	memcpy(di->de_name.str, rdi->name, di->de_nlen);
+	memset(di->de_name.str + di->de_nlen, 0, nbuf_sz - di->de_nlen);
 	if (di->plus) {
 		memcpy(&di->de_attr, &rdi->attr, sizeof(di->de_attr));
 	}
@@ -1523,7 +1523,7 @@ static void diter_prep(struct silofs_fuseq_diter *di,
 	di->de_nlen = 0;
 	di->de_ino = 0;
 	di->de_dt = 0;
-	di->de_name.b[0] = '\0';
+	di->de_name.str[0] = '\0';
 	di->bsz = min(bsz, sizeof(di->buf));
 	di->len = 0;
 	di->rd_ctx.actor = filldir;

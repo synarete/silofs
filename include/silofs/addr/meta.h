@@ -30,7 +30,7 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
                          const struct silofs_uuid *uu2);
 
 void silofs_uuid_name(const struct silofs_uuid *uu,
-                      struct silofs_nbuf *nb);
+                      struct silofs_strbuf *sbuf);
 
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
 

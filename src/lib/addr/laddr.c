@@ -209,24 +209,6 @@ void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
 	lsegid->vspace = vspace;
 }
 
-static void lsegid_as_iv(const struct silofs_lsegid *lsegid,
-                         struct silofs_iv *out_iv)
-{
-	union {
-		struct silofs_lsegid32b lsegid32;
-		uint8_t d[32];
-	} u;
-
-	STATICASSERT_EQ(2 * sizeof(out_iv->iv), sizeof(u.lsegid32));
-	STATICASSERT_EQ(2 * sizeof(out_iv->iv), sizeof(u));
-	STATICASSERT_EQ(2 * ARRAY_SIZE(out_iv->iv), sizeof(u));
-
-	silofs_lsegid32b_htox(&u.lsegid32, lsegid);
-	for (size_t i = 0; i < ARRAY_SIZE(out_iv->iv); ++i) {
-		out_iv->iv[i] = u.d[i] ^ u.d[i + 16];
-	}
-}
-
 void silofs_lsegid32b_reset(struct silofs_lsegid32b *lsegid32)
 {
 	memset(lsegid32, 0, sizeof(*lsegid32));
@@ -382,23 +364,25 @@ bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
 void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
                         struct silofs_iv *out_iv)
 {
-	STATICASSERT_GE(ARRAY_SIZE(out_iv->iv), 16);
+	union {
+		struct silofs_laddr48b laddr48;
+		uint8_t d[48];
+	} u;
 
-	memset(out_iv, 0, sizeof(*out_iv));
-	lsegid_as_iv(&laddr->lsegid, out_iv);
-	out_iv->iv[8] ^= (uint8_t)(laddr->pos & 0xFF);
-	out_iv->iv[9] ^= (uint8_t)((laddr->pos >> 8) & 0xFF);
-	out_iv->iv[10] ^= (uint8_t)((laddr->pos >> 16) & 0xFF);
-	out_iv->iv[11] ^= (uint8_t)((laddr->pos >> 24) & 0xFF);
-	out_iv->iv[12] ^= (uint8_t)((laddr->pos >> 32) & 0xFF);
-	out_iv->iv[13] ^= (uint8_t)((laddr->pos >> 40) & 0xFF);
-	out_iv->iv[14] ^= (uint8_t)((laddr->pos >> 48) & 0xFF);
-	out_iv->iv[15] ^= (uint8_t)((laddr->pos >> 56) & 0xFF);
-	out_iv->iv[15] ^= (uint8_t)(laddr->ltype);
+	STATICASSERT_EQ(sizeof(u), 48);
+	STATICASSERT_EQ(3 * sizeof(out_iv->iv), sizeof(u.laddr48));
+	STATICASSERT_EQ(3 * sizeof(out_iv->iv), sizeof(u));
+	STATICASSERT_EQ(3 * ARRAY_SIZE(out_iv->iv), sizeof(u));
+
+	silofs_laddr48b_htox(&u.laddr48, laddr);
+	for (size_t i = 0; i < ARRAY_SIZE(out_iv->iv); ++i) {
+		out_iv->iv[i] = u.d[i] ^ u.d[i + 16] ^ u.d[i + 32];
+	}
 }
 
 void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)
 {
+	memset(laddr48, 0, sizeof(*laddr48));
 	silofs_lsegid32b_reset(&laddr48->lsegid);
 	laddr48->pos = 0;
 	laddr48->len = 0;
@@ -408,6 +392,7 @@ void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)
 void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
                           const struct silofs_laddr *laddr)
 {
+	memset(laddr48, 0, sizeof(*laddr48));
 	silofs_lsegid32b_htox(&laddr48->lsegid, &laddr->lsegid);
 	laddr48->pos = silofs_cpu_to_le32((uint32_t)(laddr->pos));
 	laddr48->len = silofs_cpu_to_le32((uint32_t)(laddr->len));

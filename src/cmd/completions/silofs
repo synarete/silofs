@@ -123,6 +123,15 @@ _silofs_fsck() {
   fi
 }
 
+_silofs_lsobjs() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  fi
+}
+
 _silofs_subcmd() {
   local cur prev words cword
   _init_completion || return
@@ -164,6 +173,9 @@ _silofs_subcmd() {
     "fsck")
       _silofs_fsck
       ;;
+    "lsobjs")
+      _silofs_lsobjs
+      ;;
   esac
 }
 
@@ -176,7 +188,7 @@ _silofs_main() {
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'lsmnt show snap sync' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck lsobjs' -- "$cur") )
   fi
 }
 

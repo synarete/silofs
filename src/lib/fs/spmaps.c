@@ -936,7 +936,7 @@ static void spleaf_set_main_lsegid(struct silofs_spmap_leaf *spl,
 static void spleaf_main_uref_at(const struct silofs_spmap_leaf *spl,
                                 size_t slot, struct silofs_laddr *out_laddr)
 {
-	struct silofs_lsegid lsegid = { .voff = -1 };
+	struct silofs_lsegid lsegid = { .height = SILOFS_HEIGHT_NONE };
 	const loff_t pos = silofs_lba_to_off((silofs_lba_t)slot);
 
 	spleaf_main_lsegid(spl, &lsegid);

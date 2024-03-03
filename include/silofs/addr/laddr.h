@@ -20,8 +20,8 @@
 /* logical-segment id within specific volume mapping */
 struct silofs_lsegid {
 	struct silofs_lvid      lvid;
-	loff_t                  voff;
 	size_t                  size;
+	uint32_t                vindex;
 	enum silofs_ltype       vspace;
 	enum silofs_height      height;
 };

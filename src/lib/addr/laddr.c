@@ -50,18 +50,6 @@ void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
 	silofs_uuid_assign(&lvid->uuid, uuid);
 }
 
-static void lvid_to_ascii(const struct silofs_lvid *lvid,
-                          struct silofs_strbuf *sbuf)
-{
-	size_t pos = 0;
-
-	for (size_t i = 0; i < ARRAY_SIZE(lvid->uuid.uu); ++i) {
-		silofs_byte_to_ascii(lvid->uuid.uu[i], &sbuf->str[pos]);
-		pos += 2;
-	}
-	sbuf->str[pos] = '\0';
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t height_to_lseg_size(enum silofs_height height)
@@ -448,25 +436,35 @@ static void laddr_to_repr(const struct silofs_laddr *laddr,
 	repr->version = 1;
 }
 
+static void laddr_repr_lvid(const struct silofs_laddr_repr *repr,
+                            struct silofs_strbuf *sbuf)
+{
+	silofs_uuid_unparse(&repr->lvid.uuid, sbuf);
+}
+
+static void laddr_repr_meta(const struct silofs_laddr_repr *repr,
+                            struct silofs_strbuf *sbuf)
+{
+	sbuf->str[0] = silofs_nibble_to_ascii((int)repr->version);
+	sbuf->str[1] = silofs_nibble_to_ascii((int)repr->height);
+	silofs_byte_to_ascii(repr->vspace, &sbuf->str[2]);
+	silofs_byte_to_ascii(repr->ltype, &sbuf->str[4]);
+	sbuf->str[6] = '\0';
+}
+
 static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
                               struct silofs_strbuf *sbuf)
 {
-	struct silofs_strbuf lvid_sbuf;
+	struct silofs_strbuf lvid;
+	struct silofs_strbuf meta;
 	const size_t lim = sizeof(sbuf->str) - 1;
 	int n;
 
-	lvid_to_ascii(&repr->lvid, &lvid_sbuf);
+	laddr_repr_lvid(repr, &lvid);
+	laddr_repr_meta(repr, &meta);
 	n = snprintf(sbuf->str, lim,
-	             "%s-%x%x%02x%02x-%08x-%08x-%08x-%08x",
-	             lvid_sbuf.str,
-	             repr->version,
-	             repr->height,
-	             repr->vspace,
-	             repr->ltype,
-	             repr->lsize,
-	             repr->vindex,
-	             repr->pos,
-	             repr->len);
+	             "%s:%s-%08x-%08x-%08x-%08x", lvid.str, meta.str,
+	             repr->lsize, repr->vindex, repr->pos, repr->len);
 	if (n >= (int)lim) {
 		n = (int)lim;
 	}

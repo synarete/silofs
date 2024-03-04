@@ -56,7 +56,8 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
 	return uuid_compare(uu1->uu, uu2->uu);
 }
 
-void silofs_uuid_name(const struct silofs_uuid *uu, struct silofs_strbuf *sbuf)
+void silofs_uuid_unparse(const struct silofs_uuid *uu,
+                         struct silofs_strbuf *sbuf)
 {
 	char buf[40] = "";
 

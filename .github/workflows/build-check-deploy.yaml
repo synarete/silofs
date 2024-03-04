@@ -17,7 +17,7 @@ jobs:
     name: Start workflow
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "repo ${{ github.repository }} "
       - run: echo "ref ${{ github.ref }} ${{ github.sha }}"
       - run: echo "sha ${{ github.sha }}"
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -65,7 +65,7 @@ jobs:
       - gitlint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -88,7 +88,7 @@ jobs:
       - gitlint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -109,7 +109,7 @@ jobs:
       - codelint
       - gitlint
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -124,7 +124,7 @@ jobs:
       - codelint
       - gitlint
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -145,7 +145,7 @@ jobs:
       - static-analyze
       - check-py-code
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -163,7 +163,7 @@ jobs:
       - static-analyze
       - check-py-code
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -207,7 +207,7 @@ jobs:
       - static-analyze
       - check-py-code
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update
         run: sudo apt-get update
       - name: Install deps

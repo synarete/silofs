@@ -42,7 +42,7 @@ static const char *cmd_mount_help_desc[] = {
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
 	"  -M, --stdalloc               Use standard C allocator",
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
+	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 

@@ -22,7 +22,7 @@ static const char *cmd_tune_help_desc[] = {
 	"",
 	"options:",
 	"  -t, --ftype=1|2              Sub-type to assign to child files",
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
+	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 

@@ -25,7 +25,7 @@ static const char *cmd_mkfs_help_desc[] = {
 	"  -G, --sup-groups             Allow owner's supplementary groups",
 	"  -r, --allow-root             Allow root user and group",
 	"  -F, --force                  Force overwrite if already exists",
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
+	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 

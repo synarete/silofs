@@ -20,7 +20,7 @@ static const char *cmd_init_help_desc[] = {
 	"init <repodir>",
 	"",
 	"options:",
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
+	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 

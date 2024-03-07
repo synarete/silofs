@@ -20,7 +20,7 @@ static const char *cmd_rmfs_help_desc[] = {
 	"rmfs <repodir/name>",
 	"",
 	"options:",
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
+	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 

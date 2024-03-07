@@ -34,7 +34,7 @@ static const char *cmd_snap_help_desc[] = {
 	"options:",
 	"  -n, --name=snapname          Result snapshot name",
 	"  -X, --offline                Operate on non-mounted file-system",
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)",
+	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 

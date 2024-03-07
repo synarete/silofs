@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 self=$(basename "${BASH_SOURCE[0]}")
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${1:-$selfdir}")
-srcdir="${basedir}"
+basedir=$(realpath "${selfdir}")
 
 _msg() { echo "$self: $*" >&2; }
 _die() { _msg "$*"; exit 1; }
@@ -18,28 +17,52 @@ _run_command() {
 }
 
 _run_black() {
+  local srcdir="${1}"
+
+  cd "${srcdir}" || exit 1
   _run_command black -q -l 79 "${srcdir}"
 }
 
 _run_flake8() {
+  local srcdir="${1}"
+
+  cd "${srcdir}/../" || exit 1
   _run_command flake8 "${srcdir}"
 }
 
 _run_mypy() {
+  local srcdir="${1}"
+
+  cd "${srcdir}" || exit 1
   _run_command mypy --no-color-output "${srcdir}" | grep -v "Success: "
 }
 
 _run_pylint() {
+  local srcdir="${1}"
+
+  cd "${srcdir}" || exit 1
   _run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
 }
 
-_main() {
-  cd "${srcdir}/../" || exit 1
-  _run_black
-  _run_flake8
-  _run_mypy
-  _run_pylint
+_run_pychecks() {
+  local srcdir
+
+  _run_black "${1}"
+  _run_flake8 "${1}"
+  _run_mypy "${1}"
+  _run_pylint "${1}"
 }
 
-_main
+_main() {
+  local srcdir
+
+  for arg in "$@"; do
+    srcdir="$(realpath "$(readlink -f "${arg}")")"
+
+    cd "${basedir}" || exit 1
+    _run_pychecks "${srcdir}"
+  done
+}
+
+_main "$@"
 exit 0

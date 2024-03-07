@@ -1,7 +1,3 @@
--include $(top_builddir)/common.mk
-
-noinst_SCRIPTS = pycheck.sh
-
 silofs_citestsdir = $(pythondir)/silofs/citests
 silofs_citests_PYTHON = $(NULL)
 silofs_citests_PYTHON += __init__.py
@@ -24,13 +20,11 @@ silofs_citests_PYTHON += test_snap.py
 silofs_citests_PYTHON += test_xprogs.py
 silofs_citests_PYTHON += utils.py
 
-EXTRA_DIST = $(NULL)
-EXTRA_DIST += pycheck.sh
-EXTRA_DIST += pylintrc
+
 CLEANFILES = pycheck-citests
 
 pycheck-citests: $(silofs_citests_PYTHON)
-	@echo "  PYCHECK  $@"; \
-		VERBOSE=0 sh -c "$(srcdir)/pycheck.sh" "$(srcdir)" > "$@" ;
+	@echo "  PYCHECK  $@";
+	@VERBOSE=0 "$(srcdir)/../pycheck.sh" "$(srcdir)" > "$@" ;
 
 all-local: pycheck-citests

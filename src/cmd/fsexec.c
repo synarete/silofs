@@ -251,11 +251,12 @@ void cmd_unref_fs(struct silofs_fs_ctx *fse,
 	cmd_do_unref_fs(fse, &lvid);
 }
 
-void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb)
+void cmd_inspect_fs(struct silofs_fs_ctx *fse,
+                    silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	int err;
 
-	err = silofs_inspect_fs(fse, cb);
+	err = silofs_inspect_fs(fse, cb, user_ctx);
 	cmd_require_ok(fse, err, "fsck error");
 }
 

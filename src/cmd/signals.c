@@ -131,7 +131,7 @@ void cmd_register_sigactions(void (*sig_hook_fn)(int))
 	sigaction_info(SIGUSR1);
 	sigaction_term(SIGSEGV);
 	sigaction_info(SIGUSR2);
-	sigaction_ignore(SIGPIPE);
+	sigaction_term(SIGPIPE);
 	sigaction_info(SIGALRM);
 	sigaction_halt(SIGTERM);
 	sigaction_term(SIGSTKFLT);
@@ -145,7 +145,7 @@ void cmd_register_sigactions(void (*sig_hook_fn)(int))
 	sigaction_halt(SIGXFSZ);
 	sigaction_halt(SIGVTALRM);
 	sigaction_info(SIGPROF);
-	sigaction_info(SIGWINCH);
+	sigaction_ignore(SIGWINCH);
 	sigaction_info(SIGIO);
 	sigaction_halt(SIGPWR);
 	sigaction_halt(SIGSYS);

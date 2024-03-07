@@ -43,6 +43,7 @@ struct silofs_inspect_ctx {
 	struct silofs_task             *task;
 	struct silofs_sb_info          *sbi;
 	silofs_visit_laddr_fn           cb;
+	void                           *user_ctx;
 };
 
 static void inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
@@ -51,7 +52,7 @@ static void inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
 
 	for (size_t i = 0; i < insp_ctx->lmap.cnt; ++i) {
 		laddr = &insp_ctx->lmap.laddr[i];
-		insp_ctx->cb(laddr);
+		insp_ctx->cb(insp_ctx->user_ctx, laddr);
 	}
 }
 
@@ -125,21 +126,23 @@ static int inspc_exec_hook(struct silofs_visitor *vis,
 	return inspc_exec_at(inspc_of(vis), witr);
 }
 
-static void noop_callback(const struct silofs_laddr *laddr)
+static void noop_callback(void *user_ctx, const struct silofs_laddr *laddr)
 {
 	silofs_unused(laddr);
+	silofs_unused(user_ctx);
 }
 
 static void inspc_init(struct silofs_inspect_ctx *insp_ctx,
                        struct silofs_task *task,
                        struct silofs_sb_info *sbi,
-                       silofs_visit_laddr_fn cb)
+                       silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	silofs_memzero(insp_ctx, sizeof(*insp_ctx));
 	insp_ctx->vis.post_hook = inspc_exec_hook;
 	insp_ctx->task = task;
 	insp_ctx->sbi = sbi;
 	insp_ctx->cb = cb ? cb : noop_callback;
+	insp_ctx->user_ctx = user_ctx;
 }
 
 static void inspc_fini(struct silofs_inspect_ctx *insp_ctx)
@@ -151,13 +154,14 @@ static struct silofs_inspect_ctx *
 inspc_new(struct silofs_alloc *alloc,
           struct silofs_task *task,
           struct silofs_sb_info *sbi,
-          silofs_visit_laddr_fn cb)
+          silofs_visit_laddr_fn cb,
+          void *user_ctx)
 {
 	struct silofs_inspect_ctx *insp_ctx = NULL;
 
 	insp_ctx = silofs_memalloc(alloc, sizeof(*insp_ctx), 0);
 	if (insp_ctx != NULL) {
-		inspc_init(insp_ctx, task, sbi, cb);
+		inspc_init(insp_ctx, task, sbi, cb, user_ctx);
 	}
 	return insp_ctx;
 }
@@ -177,9 +181,21 @@ static int inspc_walk_spmaps(struct silofs_inspect_ctx *insp_ctx)
 
 static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 {
+	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
+
 	insp_ctx->sp_st.objs.nsuper++;
 	inspc_exec_at_super(insp_ctx, insp_ctx->sbi);
-	insp_ctx->cb(sbi_laddr(insp_ctx->sbi));
+	insp_ctx->cb(insp_ctx->user_ctx, sb_laddr);
+	return 0;
+}
+
+static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
+{
+	struct silofs_uaddr brec_uaddr = { .voff = -1 };
+	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
+
+	silofs_make_bootrec_uaddr(&sb_laddr->lsegid.lvid, &brec_uaddr);
+	insp_ctx->cb(insp_ctx->user_ctx, &brec_uaddr.laddr);
 	return 0;
 }
 
@@ -188,21 +204,29 @@ static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
 	int err;
 
 	err = inspc_walk_spmaps(insp_ctx);
-	if (!err) {
-		err = inspc_walk_super(insp_ctx);
+	if (err) {
+		return err;
 	}
-	return err;
+	err = inspc_walk_super(insp_ctx);
+	if (err) {
+		return err;
+	}
+	err = inspc_walk_boot(insp_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
-                           silofs_visit_laddr_fn cb)
+                           silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	struct silofs_alloc *alloc = task->t_fsenv->fse.alloc;
 	struct silofs_inspect_ctx *insp_ctx = NULL;
 	int ret;
 
-	insp_ctx = inspc_new(alloc, task, sbi, cb);
+	insp_ctx = inspc_new(alloc, task, sbi, cb, user_ctx);
 	if (insp_ctx == NULL) {
 		return -SILOFS_ENOMEM;
 	}

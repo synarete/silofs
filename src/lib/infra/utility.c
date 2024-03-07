@@ -41,6 +41,14 @@ void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
 	silofs_substr_copyto(str, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
+void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
+{
+	struct silofs_substr ss;
+
+	silofs_substr_init(&ss, s);
+	silofs_strbuf_setup(sbuf, &ss);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 char silofs_nibble_to_ascii(int n)

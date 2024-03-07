@@ -625,6 +625,22 @@ bool cmd_parse_str_as_bool(const char *str)
 	return val;
 }
 
+void cmd_parse_str_as_segid(const char *str, struct silofs_laddr *out_laddr)
+{
+	struct silofs_strbuf sbuf;
+	size_t len;
+	int err;
+
+	len = strlen(str);
+	if (len != 79) {
+		cmd_dief(0, "illegal segid: %s", str);
+	}
+	silofs_strbuf_setup_by(&sbuf, str);
+	err = silofs_laddr_from_ascii(out_laddr, &sbuf);
+	if (err) {
+		cmd_dief(err, "failed to parse segid: %s", str);
+	}
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

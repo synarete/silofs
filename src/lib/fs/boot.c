@@ -636,6 +636,9 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath,
 		return -SILOFS_EINVAL;
 	}
 	silofs_substr_init(&bpath->repodir, repodir);
+	if (name == NULL) {
+		return 0; /* boot with repo-dir only */
+	}
 	return silofs_make_namestr(&bpath->name, name);
 }
 

@@ -2015,7 +2015,7 @@ void ut_inspect_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_inspect_fs(ute->fs_ctx, NULL);
+	err = silofs_inspect_fs(ute->fs_ctx, NULL, NULL);
 	ut_expect_ok(err);
 }
 

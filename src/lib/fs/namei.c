@@ -2487,7 +2487,8 @@ int silofs_do_tune(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb)
+int silofs_do_inspect(struct silofs_task *task,
+                      silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	int err;
 
@@ -2495,7 +2496,7 @@ int silofs_do_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb)
 	if (err) {
 		return err;
 	}
-	err = silofs_walk_inspect_fs(task, task_sbi(task), cb);
+	err = silofs_walk_inspect_fs(task, task_sbi(task), cb, user_ctx);
 	if (err) {
 		return err;
 	}

@@ -59,12 +59,19 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
 void silofs_uuid_unparse(const struct silofs_uuid *uu,
                          struct silofs_strbuf *sbuf)
 {
-	char buf[40] = "";
+	uuid_unparse_lower(uu->uu, sbuf->str);
+}
 
-	STATICASSERT_GT(sizeof(sbuf->str), sizeof(buf));
+int silofs_uuid_parse(struct silofs_uuid *uu,
+                      const struct silofs_strbuf *sbuf)
+{
+	const size_t len = strlen(sbuf->str);
+	int ret = -EINVAL;
 
-	uuid_unparse_lower(uu->uu, buf);
-	strncpy(sbuf->str, buf, sizeof(sbuf->str));
+	if (len == 36) {
+		ret = uuid_parse_range(sbuf->str, sbuf->str + len, uu->uu);
+	}
+	return ret;
 }
 
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])

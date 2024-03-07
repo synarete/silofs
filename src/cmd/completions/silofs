@@ -123,7 +123,7 @@ _silofs_fsck() {
   fi
 }
 
-_silofs_lsobjs() {
+_silofs_xsend() {
   local cur prev words cword
   _init_completion || return
 
@@ -173,8 +173,8 @@ _silofs_subcmd() {
     "fsck")
       _silofs_fsck
       ;;
-    "lsobjs")
-      _silofs_lsobjs
+    "xsend")
+      _silofs_xsend
       ;;
   esac
 }
@@ -188,7 +188,7 @@ _silofs_main() {
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'lsmnt show snap sync' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck lsobjs' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck xsend' -- "$cur") )
   fi
 }
 

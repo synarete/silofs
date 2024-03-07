@@ -22,7 +22,6 @@ silofs_SOURCES += fsck.c
 silofs_SOURCES += fsexec.c
 silofs_SOURCES += getpass.c
 silofs_SOURCES += init.c
-silofs_SOURCES += lsobjs.c
 silofs_SOURCES += lockfile.c
 silofs_SOURCES += lsmnt.c
 silofs_SOURCES += main.c
@@ -35,4 +34,4 @@ silofs_SOURCES += snap.c
 silofs_SOURCES += sync.c
 silofs_SOURCES += tune.c
 silofs_SOURCES += umount.c
-
+silofs_SOURCES += xsend.c

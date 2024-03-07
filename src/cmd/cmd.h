@@ -94,7 +94,7 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
-void cmd_execute_lsobjs(void);
+void cmd_execute_xsend(void);
 
 /* fatal-error handling */
 __attribute__((__noreturn__))
@@ -208,6 +208,8 @@ gid_t cmd_parse_str_as_gid(const char *str);
 
 bool cmd_parse_str_as_bool(const char *str);
 
+void cmd_parse_str_as_segid(const char *str, struct silofs_laddr *out_laddr);
+
 /* locking facilities */
 
 void cmd_lockfile_acquire1(const char *repodir, const char *name);
@@ -246,7 +248,8 @@ void cmd_fork_fs(struct silofs_fs_ctx *fse,
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_fs_bconf *bconf);
 
-void cmd_inspect_fs(struct silofs_fs_ctx *fse, silofs_visit_laddr_fn cb);
+void cmd_inspect_fs(struct silofs_fs_ctx *fse,
+                    silofs_visit_laddr_fn cb, void *user_ctx);
 
 
 /* mount-info */

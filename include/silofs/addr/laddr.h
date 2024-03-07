@@ -122,9 +122,6 @@ bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
 bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
                          const struct silofs_laddr *other);
 
-void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
-                           struct silofs_strbuf *sbuf);
-
 void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
                           const struct silofs_laddr *laddr);
 
@@ -132,6 +129,16 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
                           struct silofs_laddr *laddr);
 
 void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48);
+
+
+void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
+                           struct silofs_strbuf *sbuf);
+
+int silofs_laddr_from_ascii(struct silofs_laddr *laddr,
+                            const struct silofs_strbuf *sbuf);
+
+void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
+                            struct silofs_strbuf *sbuf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -409,6 +409,8 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 	laddr->ltype = (enum silofs_ltype)laddr48->ltype;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 struct silofs_laddr_repr {
 	struct silofs_lvid              lvid;
 	uint32_t                        lsize;
@@ -436,20 +438,56 @@ static void laddr_to_repr(const struct silofs_laddr *laddr,
 	repr->version = 1;
 }
 
-static void laddr_repr_lvid(const struct silofs_laddr_repr *repr,
-                            struct silofs_strbuf *sbuf)
+static int laddr_from_repr(struct silofs_laddr *laddr,
+                           const struct silofs_laddr_repr *repr)
+{
+	if (repr->version != 1) {
+		return -SILOFS_EINVAL;
+	}
+	silofs_laddr_reset(laddr);
+	silofs_lvid_assign(&laddr->lsegid.lvid, &repr->lvid);
+	laddr->lsegid.lsize = repr->lsize;
+	laddr->pos = repr->pos;
+	laddr->len = repr->len;
+	laddr->lsegid.vindex = repr->vindex;
+	laddr->lsegid.vspace = repr->vspace;
+	laddr->lsegid.height = repr->height;
+	laddr->ltype = repr->ltype;
+	if (!silofs_laddr_isvalid(laddr)) {
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+static void laddr_repr_lvid_to_str(const struct silofs_laddr_repr *repr,
+                                   struct silofs_strbuf *sbuf)
 {
 	silofs_uuid_unparse(&repr->lvid.uuid, sbuf);
 }
 
-static void laddr_repr_meta(const struct silofs_laddr_repr *repr,
-                            struct silofs_strbuf *sbuf)
+static int laddr_repr_lvid_from_str(struct silofs_laddr_repr *repr,
+                                    const struct silofs_strbuf *sbuf)
+{
+	return silofs_uuid_parse(&repr->lvid.uuid, sbuf);
+}
+
+static void laddr_repr_meta_to_str(const struct silofs_laddr_repr *repr,
+                                   struct silofs_strbuf *sbuf)
 {
 	sbuf->str[0] = silofs_nibble_to_ascii((int)repr->version);
 	sbuf->str[1] = silofs_nibble_to_ascii((int)repr->height);
 	silofs_byte_to_ascii(repr->vspace, &sbuf->str[2]);
 	silofs_byte_to_ascii(repr->ltype, &sbuf->str[4]);
 	sbuf->str[6] = '\0';
+}
+
+static void laddr_repr_meta_from_str(struct silofs_laddr_repr *repr,
+                                     const struct silofs_strbuf *sbuf)
+{
+	repr->version = (uint8_t)silofs_ascii_to_nibble(sbuf->str[0]);
+	repr->height = (uint8_t)silofs_ascii_to_nibble(sbuf->str[1]);
+	silofs_ascii_to_byte(&sbuf->str[2], &repr->vspace);
+	silofs_ascii_to_byte(&sbuf->str[4], &repr->ltype);
 }
 
 static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
@@ -460,15 +498,49 @@ static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
 	const size_t lim = sizeof(sbuf->str) - 1;
 	int n;
 
-	laddr_repr_lvid(repr, &lvid);
-	laddr_repr_meta(repr, &meta);
+	silofs_strbuf_reset(&lvid);
+	silofs_strbuf_reset(&meta);
+
+	laddr_repr_lvid_to_str(repr, &lvid);
+	laddr_repr_meta_to_str(repr, &meta);
 	n = snprintf(sbuf->str, lim,
-	             "%s:%s-%08x-%08x-%08x-%08x", lvid.str, meta.str,
+	             "%s:%s-%08x-%08x-%08x-%08x",
+	             lvid.str, meta.str,
 	             repr->lsize, repr->vindex, repr->pos, repr->len);
 	if (n >= (int)lim) {
 		n = (int)lim;
 	}
 	sbuf->str[n] = '\0';
+}
+
+static int laddr_repr_from_str(struct silofs_laddr_repr *repr,
+                               const struct silofs_strbuf *sbuf)
+{
+	struct silofs_strbuf lvid;
+	struct silofs_strbuf meta;
+	uint32_t pos;
+	int nscan;
+	int err;
+
+	silofs_strbuf_reset(&lvid);
+	silofs_strbuf_reset(&meta);
+	nscan = sscanf(sbuf->str, "%36s:%6s-%08x-%08x-%08x-%08x",
+	               lvid.str, meta.str,
+	               &repr->lsize, &repr->vindex, &pos, &repr->len);
+	if (nscan != 6) {
+		return -SILOFS_EINVAL;
+	}
+	repr->pos = (int32_t)pos;
+	err = laddr_repr_lvid_from_str(repr, &lvid);
+	if (err) {
+		return err;
+	}
+	laddr_repr_meta_from_str(repr, &meta);
+
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
@@ -478,6 +550,46 @@ void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
 
 	laddr_to_repr(laddr, &repr);
 	laddr_repr_to_str(&repr, sbuf);
+}
+
+int silofs_laddr_from_ascii(struct silofs_laddr *laddr,
+                            const struct silofs_strbuf *sbuf)
+{
+	struct silofs_laddr_repr repr = { .version = 2 };
+	int err;
+
+	err = laddr_repr_from_str(&repr, sbuf);
+	if (err) {
+		return err;
+	}
+	err = laddr_from_repr(laddr, &repr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+union silofs_laddr_repr_u {
+	struct silofs_laddr48b laddr48;
+	uint8_t d[48];
+} silofs_packed_aligned16;
+
+void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
+                            struct silofs_strbuf *sbuf)
+{
+	union silofs_laddr_repr_u repr;
+	size_t len = 0;
+
+	STATICASSERT_EQ(sizeof(repr), 48);
+
+	silofs_memzero(&repr, sizeof(repr));
+	silofs_laddr48b_htox(&repr.laddr48, laddr);
+	silofs_strbuf_reset(sbuf);
+	silofs_base64_encode(repr.d, sizeof(repr.d),
+	                     sbuf->str, sizeof(sbuf->str) - 1, &len);
+	sbuf->str[len] = '\0';
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

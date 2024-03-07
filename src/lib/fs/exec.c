@@ -1569,11 +1569,11 @@ static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
                       const struct silofs_lvid *lvid)
 {
 	struct silofs_bootrec brec;
-	struct silofs_uaddr uaddr;
+	struct silofs_uaddr brec_uaddr;
 	int err;
 
-	silofs_make_bootrec_uaddr(lvid, &uaddr);
-	err = reload_bootrec_of(fs_ctx, &uaddr, &brec);
+	silofs_make_bootrec_uaddr(lvid, &brec_uaddr);
+	err = reload_bootrec_of(fs_ctx, &brec_uaddr, &brec);
 	if (err) {
 		return err;
 	}
@@ -1666,10 +1666,10 @@ int silofs_poke_fs(struct silofs_fs_ctx *fs_ctx,
                    const struct silofs_lvid *lvid,
                    struct silofs_bootrec *out_brec)
 {
-	struct silofs_uaddr uaddr = { .voff = -1 };
+	struct silofs_uaddr brec_uaddr = { .voff = -1 };
 
-	silofs_make_bootrec_uaddr(lvid, &uaddr);
-	return silofs_load_bootrec(fs_ctx->fsenv, &uaddr.laddr, out_brec);
+	silofs_make_bootrec_uaddr(lvid, &brec_uaddr);
+	return silofs_load_bootrec(fs_ctx->fsenv, &brec_uaddr.laddr, out_brec);
 }
 
 static int exec_clone_fs(const struct silofs_fs_ctx *fs_ctx,
@@ -1705,7 +1705,7 @@ int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
 }
 
 static int exec_inspect_fs(struct silofs_fs_ctx *fs_ctx,
-                           silofs_visit_laddr_fn cb)
+                           silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	struct silofs_task task;
 	int err;
@@ -1714,13 +1714,14 @@ static int exec_inspect_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_inspect(&task, cb);
+	err = silofs_fs_inspect(&task, cb, user_ctx);
 	return term_task(&task, err);
 }
 
-int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx, silofs_visit_laddr_fn cb)
+int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+                      silofs_visit_laddr_fn cb, void *user_ctx)
 {
-	return exec_inspect_fs(fs_ctx, cb);
+	return exec_inspect_fs(fs_ctx, cb, user_ctx);
 }
 
 static int exec_unref_fs(struct silofs_fs_ctx *fse)
@@ -1740,11 +1741,11 @@ int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
                     const struct silofs_lvid *lvid)
 {
 	struct silofs_bootrec brec;
-	struct silofs_uaddr uaddr;
+	struct silofs_uaddr brec_uaddr;
 	int err;
 
-	silofs_make_bootrec_uaddr(lvid, &uaddr);
-	err = reload_bootrec_of(fs_ctx, &uaddr, &brec);
+	silofs_make_bootrec_uaddr(lvid, &brec_uaddr);
+	err = reload_bootrec_of(fs_ctx, &brec_uaddr, &brec);
 	if (err) {
 		return err;
 	}
@@ -1764,7 +1765,7 @@ int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = unlink_bootrec_of(fs_ctx, &uaddr);
+	err = unlink_bootrec_of(fs_ctx, &brec_uaddr);
 	if (err) {
 		return err;
 	}

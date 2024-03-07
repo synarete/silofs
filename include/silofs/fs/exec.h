@@ -114,7 +114,8 @@ int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
                    struct silofs_lvid *out_new,
                    struct silofs_lvid *out_alt);
 
-int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx, silofs_visit_laddr_fn cb);
+int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+                      silofs_visit_laddr_fn cb, void *user_ctx);
 
 int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
                     const struct silofs_lvid *lvid);

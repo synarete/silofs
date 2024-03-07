@@ -27,7 +27,7 @@ struct silofs_walk_iter;
 typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
                                const struct silofs_walk_iter *wit);
 
-typedef void (*silofs_visit_laddr_fn)(const struct silofs_laddr *);
+typedef void (*silofs_visit_laddr_fn)(void *, const struct silofs_laddr *);
 
 struct silofs_walk_iter {
 	struct silofs_sb_info      *sbi;
@@ -56,7 +56,7 @@ int silofs_walk_space_tree(struct silofs_task *task,
 
 int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
-                           silofs_visit_laddr_fn cb);
+                           silofs_visit_laddr_fn cb, void *user_ctx);
 
 int silofs_walk_unref_fs(struct silofs_task *task,
                          struct silofs_sb_info *sbi);

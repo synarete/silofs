@@ -143,7 +143,7 @@ void cmd_close_repo(struct silofs_fs_ctx *fse)
 static void cmd_lvid_of(const struct silofs_fs_bconf *bconf,
                         struct silofs_lvid *out_lvid)
 {
-	silofs_lvid_by_uuid(out_lvid, &bconf->uuid);
+	silofs_lvid_by_uuid(out_lvid, &bconf->fsid);
 }
 
 static void cmd_do_require_fs(struct silofs_fs_ctx *fse,
@@ -179,7 +179,7 @@ void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_fs_bconf *bconf)
 	struct silofs_lvid lvid;
 
 	cmd_do_format_fs(fse, &lvid);
-	silofs_uuid_assign(&bconf->uuid, &lvid.uuid);
+	silofs_uuid_assign(&bconf->fsid, &lvid.uuid);
 }
 
 void cmd_close_fs(struct silofs_fs_ctx *fse)

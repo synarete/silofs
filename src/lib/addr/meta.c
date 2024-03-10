@@ -74,6 +74,16 @@ int silofs_uuid_parse(struct silofs_uuid *uu,
 	return ret;
 }
 
+int silofs_uuid_parse2(struct silofs_uuid *uu,
+                       const struct silofs_substr *ss)
+{
+	struct silofs_strbuf sbuf;
+
+	silofs_strbuf_reset(&sbuf);
+	silofs_substr_copyto(ss, sbuf.str, sizeof(sbuf.str) - 1);
+	return silofs_uuid_parse(uu, &sbuf);
+}
+
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])
 {
 	const uint8_t *p = uu->uu;

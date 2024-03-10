@@ -35,6 +35,9 @@ void silofs_uuid_unparse(const struct silofs_uuid *uu,
 int silofs_uuid_parse(struct silofs_uuid *uu,
                       const struct silofs_strbuf *sbuf);
 
+int silofs_uuid_parse2(struct silofs_uuid *uu,
+                       const struct silofs_substr *ss);
+
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

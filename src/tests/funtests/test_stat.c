@@ -35,6 +35,7 @@ static void test_stat_simple(struct ft_env *fte)
 	ft_expect_eq((long)st.st_nlink, 2);
 	ft_stat_noent(path1);
 	ft_rmdir(path0);
+	ft_stat_noent(path0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

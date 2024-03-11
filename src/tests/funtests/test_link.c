@@ -62,8 +62,10 @@ static void test_link_exists(struct ft_env *fte)
 	ft_unlink(path2);
 	ft_mkfifo(path1, 0644);
 	ft_link_err(path0, path1, -EEXIST);
-	ft_unlink2(path1, path0);
-	ft_close2(fd0, fd1);
+	ft_unlink(path0);
+	ft_unlink(path1);
+	ft_close(fd0);
+	ft_close(fd1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -106,9 +108,11 @@ static void test_link_notdir(struct ft_env *fte)
 	ft_link_err(path3, path2, -ENOTDIR);
 	ft_creat(path2, 0644, &fd2);
 	ft_link_err(path2, path3, -ENOTDIR);
-	ft_unlink2(path1, path2);
+	ft_unlink(path1);
+	ft_unlink(path2);
 	ft_rmdir(path0);
-	ft_close2(fd1, fd2);
+	ft_close(fd1);
+	ft_close(fd2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

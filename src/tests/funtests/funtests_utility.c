@@ -535,7 +535,7 @@ int ft_dirent_isxdot(const struct dirent64 *dent)
 	return ft_dirent_isdot(dent) || ft_dirent_isdotdot(dent);
 }
 
-mode_t ft_dirent_gettype(const struct dirent64 *dent)
+static mode_t ft_dirent_gettype(const struct dirent64 *dent)
 {
 	const mode_t d_type = (mode_t)dent->d_type;
 

@@ -32,6 +32,7 @@ static void test_unlinked_simple_(struct ft_env *fte, size_t len)
 	size_t nrd = 0;
 	int fd = -1;
 
+	ft_unlink_noent(path);
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -232,12 +233,13 @@ static void test_unlinked_rename(struct ft_env *fte)
  */
 static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 {
-	int fd = -1;
-	int dat = -1;
-	int *fds = ft_new_buf_zeros(fte, cnt * sizeof(fd));
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos;
+	loff_t pos = -1;
+	int *fds = NULL;
+	int dat = -1;
+	int fd = -1;
 
+	fds = ft_new_buf_zeros(fte, cnt * sizeof(fd));
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 		ft_unlink(path);

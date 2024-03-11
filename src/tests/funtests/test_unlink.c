@@ -26,6 +26,7 @@ static void test_unlink_reg(struct ft_env *fte)
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 
+	ft_unlink_noent(path);
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_close(fd);
 	ft_lstat(path, &st);
@@ -42,6 +43,7 @@ static void test_unlink_symlink(struct ft_env *fte)
 	const char *path1 = ft_new_path_unique(fte);
 	int fd = -1;
 
+	ft_unlink_noent(path0);
 	ft_creat(path0, 0600, &fd);
 	ft_close(fd);
 	ft_symlink(path0, path1);
@@ -58,6 +60,7 @@ static void test_unlink_fifo(struct ft_env *fte)
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 
+	ft_unlink_noent(path);
 	ft_mkfifo(path, 0644);
 	ft_lstat(path, &st);
 	ft_expect_true(S_ISFIFO(st.st_mode));

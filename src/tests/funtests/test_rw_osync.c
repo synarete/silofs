@@ -43,7 +43,8 @@ static void test_osync_simple_(struct ft_env *fte, loff_t off, size_t len)
 	ft_pwriten(fd1, buf1, len, off);
 	ft_preadn(fd2, buf0, len, off);
 	ft_expect_eqm(buf1, buf0, len);
-	ft_close2(fd1, fd2);
+	ft_close(fd1);
+	ft_close(fd2);
 }
 
 static void test_osync_simple(struct ft_env *fte)

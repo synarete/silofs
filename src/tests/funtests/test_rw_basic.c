@@ -450,7 +450,8 @@ static void test_rw_basic_backward_u64_(struct ft_env *fte, size_t cnt)
 		ft_preadn(fd2, &val, vsz, pos);
 		ft_expect_eq(i, val);
 	}
-	ft_close2(fd1, fd2);
+	ft_close(fd1);
+	ft_close(fd2);
 	ft_unlink(path);
 }
 

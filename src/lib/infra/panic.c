@@ -441,7 +441,7 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 __attribute__((__noreturn__))
 void silofs_die(int errnum, const char *fmt, ...)
 {
-	char msg[2048] = "";
+	char msg[1024] = "";
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -456,15 +456,14 @@ void silofs_die(int errnum, const char *fmt, ...)
 __attribute__((__noreturn__))
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 {
-	char msg[2048] = "";
+	char msg[1024] = "";
 	va_list ap;
 
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
 	va_end(ap);
 
-	error_at_line(EXIT_FAILURE, abs(errnum), fl,
-	              (unsigned int)ln, "%s", msg);
+	error_at_line(EXIT_FAILURE, abs(errnum), fl, (uint32_t)ln, "%s", msg);
 	/* never gets here, but makes compiler happy */
 	silofs_abort();
 }

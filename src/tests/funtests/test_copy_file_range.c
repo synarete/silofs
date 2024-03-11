@@ -143,8 +143,10 @@ static void test_copy_file_range_(struct ft_env *fte,
 	ft_preadn(fd_src, buf_src, len, off_src);
 	ft_preadn(fd_dst, buf_dst, len, off_dst);
 	ft_expect_eqm(buf_src, buf_dst, len);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_aligned(struct ft_env *fte)
@@ -230,7 +232,8 @@ static void test_copy_file_range_self_(struct ft_env *fte,
 	ft_preadn(fd_src, buf_src, len, off_src);
 	ft_preadn(fd_dst, buf_dst, len, off_dst);
 	ft_expect_eqm(buf_src, buf_dst, len);
-	ft_close2(fd_src, fd_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
 	ft_unlink(path);
 }
 
@@ -296,8 +299,10 @@ test_copy_file_range_between_(struct ft_env *fte,
 	ft_preadn(fd_dst, buf_alt, len_dst - len_min,
 	          ft_off_end(off_dst, len_min));
 	ft_expect_eqm(buf_alt, buf_zeros, len_dst - len_min);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_between(struct ft_env *fte)
@@ -380,8 +385,10 @@ test_copy_file_range_truncate_(struct ft_env *fte, loff_t off, size_t len)
 	ft_expect_eq(byte, 0);
 	ft_preadn(fd_dst, &byte, 1, end - 1);
 	ft_expect_eq(byte, 0);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_truncate(struct ft_env *fte)
@@ -456,8 +463,10 @@ test_copy_file_range_overwrite_(struct ft_env *fte, loff_t off, size_t len)
 	ft_copy_file_rangen(fd_src, off, fd_dst, off, len);
 	ft_preadn(fd_dst, buf_alt, len, off);
 	ft_expect_eq(buf_alt[0], 0);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_overwrite(struct ft_env *fte)
@@ -583,8 +592,10 @@ static void test_copy_file_range_mtime_(struct ft_env *fte, size_t len,
 	ft_preadn(fd_src, buf_src, len, off_src);
 	ft_preadn(fd_dst, buf_dst, len, off_dst);
 	ft_expect_eqm(buf_src, buf_dst, len);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_mtime(struct ft_env *fte)
@@ -641,8 +652,10 @@ test_copy_file_range_extend_(struct ft_env *fte, loff_t off, size_t len)
 	ft_ftruncate(fd_src, 0);
 	ft_preadn(fd_dst, buf_dst, len, off);
 	ft_expect_eqm(buf_src, buf_dst, len);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_extend(struct ft_env *fte)
@@ -708,8 +721,10 @@ test_copy_file_range_sparse_(struct ft_env *fte, loff_t off, size_t len)
 	ft_expect_eqm(buf_src1, buf_dst1, len);
 	ft_preadn(fd_dst, buf_dst2, len, 2 * off);
 	ft_expect_eqm(buf_src2, buf_dst2, len);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_sparse(struct ft_env *fte)
@@ -761,8 +776,10 @@ test_copy_file_range_sparser_(struct ft_env *fte, loff_t off, size_t len)
 	ft_expect_eq(b[4], 0);
 	ft_preadn(fd_dst, &b[4], 1, end - 2);
 	ft_expect_eq(b[4], 0);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_sparser(struct ft_env *fte)
@@ -807,8 +824,10 @@ test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
 	ft_expect_eq(v[0], 0);
 	ft_preadn(fd_dst, &v[1], sizeof(v[1]), len - (int)sizeof(v[1]));
 	ft_expect_eq(v[1], 0);
-	ft_close2(fd_src, fd_dst);
-	ft_unlink2(path_src, path_dst);
+	ft_close(fd_src);
+	ft_close(fd_dst);
+	ft_unlink(path_src);
+	ft_unlink(path_dst);
 }
 
 static void test_copy_file_range_empty(struct ft_env *fte)

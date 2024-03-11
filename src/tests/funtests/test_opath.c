@@ -182,14 +182,14 @@ static void test_opath_renameat(struct ft_env *fte)
 	ft_expect_eq(st.st_size, len2);
 	ft_fstatat_err(dfd2, name2, 0, -ENOENT);
 	ft_renameat2(dfd1, name2, dfd2, name1, RENAME_EXCHANGE);
-
 	ft_renameat(dfd1, name2, dfd2, name1);
 	ft_fstatat_err(dfd1, name2, 0, -ENOENT);
 	ft_fstatat(dfd2, name1, &st, 0);
 	ft_expect_eq(st.st_size, len2);
 	ft_unlinkat(dfd2, name1, 0);
 
-	ft_close2(dfd1, dfd2);
+	ft_close(dfd1);
+	ft_close(dfd2);
 	ft_rmdir(path1);
 	ft_rmdir(path2);
 }
@@ -261,7 +261,8 @@ static void test_opath_unlinked(struct ft_env *fte)
 	ft_fstat(fd1, &st);
 	ft_expect_ts_eq(&st.st_atim, &ts[0]);
 	ft_expect_ts_eq(&st.st_mtim, &ts[1]);
-	ft_close2(fd1, fd2);
+	ft_close(fd1);
+	ft_close(fd2);
 	ft_close(dfd);
 	ft_rmdir(path);
 }

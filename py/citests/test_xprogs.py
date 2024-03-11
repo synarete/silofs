@@ -34,6 +34,7 @@ def test_rsync(env: TestEnv) -> None:
         allow_xattr_acl=False,
         writeback_cache=False,
     )
+    env.exec_findmnt()
     base = env.create_fstree(name)
     ret = env.cmd.git.clone(url, base)
     if ret == 0:

@@ -33,6 +33,10 @@ class Expect:
             sb = self._stringify(b)
             self.error(f"not greater-than: {sa} <= {sb}")
 
+    def within(self, elem, xset) -> None:
+        if elem not in xset:
+            self.error(f"'{elem}' not found in '{xset}'")
+
     def exists(self, path: Path) -> None:
         if not path.exists():
             self.error(f"not exists: {path}")

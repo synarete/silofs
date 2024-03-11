@@ -21,6 +21,7 @@ def test_mount(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs()
     env.exec_mount()
+    env.exec_findmnt()
     env.exec_umount()
     env.exec_rmfs()
 
@@ -29,6 +30,7 @@ def test_hello_world(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs()
     env.exec_mount()
+    env.exec_findmnt()
     path = env.make_path("hello")
     data = "hello, world!"
     with open(path, "w", encoding="utf-8") as f:

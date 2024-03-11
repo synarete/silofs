@@ -6,6 +6,8 @@ import typing
 from concurrent import futures
 from pathlib import Path
 
+import toml
+
 from . import cmd
 from . import expect
 from . import utils
@@ -103,6 +105,7 @@ class TestEnv:
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
         self.cmd = cmd.Cmds()
+        self.bconf = dict[str, typing.Any]()
 
     @staticmethod
     def suspend(nsec: int) -> None:
@@ -219,11 +222,15 @@ class TestEnv:
     ) -> None:
         self.exec_init()
         self.exec_mkfs(gsize)
+        self.update_bconf()
         self.exec_mount(
             allow_xattr_acl=allow_xattr_acl, writeback_cache=writeback_cache
         )
+        self.exec_findmnt()
 
     def exec_teardown_fs(self) -> None:
+        self.update_bconf()
+        self.exec_findmnt()
         self.exec_umount()
         self.exec_rmfs()
 
@@ -249,6 +256,19 @@ class TestEnv:
     def exec_fsck(self, name: str = "") -> None:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.fsck(repodir_name, self._passwd())
+
+    def exec_findmnt(self) -> None:
+        mntp = self.cfg.mntdir
+        mnts = self.cmd.silofs.lsmnt()
+        self.expect.within(mntp, mnts)
+
+    def load_bconf(self, name: str = "") -> typing.Dict[str, typing.Any]:
+        repodir_name = self._repodir_name(name)
+        bconf = toml.load(repodir_name)
+        return bconf
+
+    def update_bconf(self) -> None:
+        self.bconf = self.load_bconf()
 
 
 class TestDef:

@@ -72,6 +72,4 @@ bool silofs_is_fuse_fstype(long fstype);
 
 const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype);
 
-int silofs_check_mntdir_fstype(long vfstype);
-
 #endif /* SILOFS_MNTSVC_H_ */

@@ -153,7 +153,7 @@ const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype)
 	return fsinfo;
 }
 
-int silofs_check_mntdir_fstype(long vfstype)
+static int check_mntdir_fstype(long vfstype)
 {
 	const struct silofs_fsinfo *fsinfo;
 
@@ -167,11 +167,26 @@ int silofs_check_mntdir_fstype(long vfstype)
 	return 0;
 }
 
-static int silofs_check_mntpoint(const char *path,
-                                 uid_t caller_uid, bool mounting)
+static int check_mntpoint_fstype(const char *path)
 {
 	struct statfs stfs;
-	struct stat st;
+	int err;
+
+	err = silofs_sys_statfs(path, &stfs);
+	if (err) {
+		return err;
+	}
+	err = check_mntdir_fstype(stfs.f_type);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int check_mntpoint(const char *path,
+                          uid_t caller_uid, bool mounting)
+{
+	struct stat st = { .st_ino = 0 };
 	int err;
 
 	err = silofs_sys_stat(path, &st);
@@ -191,28 +206,24 @@ static int silofs_check_mntpoint(const char *path,
 	if (!S_ISDIR(st.st_mode)) {
 		return -SILOFS_ENOTDIR;
 	}
-	if (mounting && (st.st_nlink > 2)) {
-		return -SILOFS_ENOTEMPTY;
-	}
-	if (mounting && (st.st_ino == SILOFS_INO_ROOT)) {
-		return -SILOFS_EBUSY;
-	}
-	if (!mounting && (st.st_ino != SILOFS_INO_ROOT)) {
-		return -SILOFS_EINVAL;
-	}
-	if (!mounting) {
-		return 0;
-	}
-	err = silofs_sys_statfs(path, &stfs);
-	if (err) {
-		return err;
-	}
-	if (caller_uid != st.st_uid) {
-		return -SILOFS_EMOUNT;
-	}
-	err = silofs_check_mntdir_fstype(stfs.f_type);
-	if (err) {
-		return err;
+	if (mounting) {
+		if (st.st_nlink > 2) {
+			return -SILOFS_ENOTEMPTY;
+		}
+		if (st.st_ino == SILOFS_INO_ROOT) {
+			return -SILOFS_EBUSY;
+		}
+		if (caller_uid != st.st_uid) {
+			return -SILOFS_EMOUNT;
+		}
+		err = check_mntpoint_fstype(path);
+		if (err) {
+			return err;
+		}
+	} else {
+		if (st.st_ino != SILOFS_INO_ROOT) {
+			return -SILOFS_EINVAL;
+		}
 	}
 	return 0;
 }
@@ -298,7 +309,7 @@ static int check_mount_path(const char *path, uid_t caller_uid)
 	if (err) {
 		return err;
 	}
-	err = silofs_check_mntpoint(path, caller_uid, true);
+	err = check_mntpoint(path, caller_uid, true);
 	if (err) {
 		log_info("illegal mount-point: %s %d", path, err);
 	}
@@ -309,7 +320,7 @@ static int check_umount_path(const char *path, uid_t caller_uid, bool force)
 {
 	int err;
 
-	err = silofs_check_mntpoint(path, caller_uid, false);
+	err = check_mntpoint(path, caller_uid, false);
 	if (err) {
 		if (err != -ENOTCONN) {
 			log_info("unable to umount: %s %d", path, err);
@@ -379,7 +390,7 @@ static int format_mount_data(const struct silofs_mntparams *mntp,
 	return 0;
 }
 
-static int do_fuse_mount(const struct silofs_mntparams *mntp, int *out_fd)
+static int do_mount_fuse_fs(const struct silofs_mntparams *mntp, int *out_fd)
 {
 	int err;
 	const char *dev = "/dev/fuse";
@@ -404,7 +415,7 @@ static int do_fuse_mount(const struct silofs_mntparams *mntp, int *out_fd)
 	return 0;
 }
 
-static int do_fuse_umount(const struct silofs_mntparams *mntp)
+static int do_umount_fuse_fs(const struct silofs_mntparams *mntp)
 {
 	return silofs_sys_umount2(mntp->path, (int)mntp->flags);
 }
@@ -906,7 +917,7 @@ static int mntsvc_do_mount(struct silofs_mntsvc *msvc,
 {
 	int err;
 
-	err = do_fuse_mount(mntp, &msvc->ms_fuse_fd);
+	err = do_mount_fuse_fs(mntp, &msvc->ms_fuse_fd);
 	log_info("mount: '%s' flags=0x%lx uid=%d gid=%d rootmode=0%o "
 	         "max_read=%u fuse_fd=%d peer=%s err=%d",
 	         mntp->path, mntp->flags, mntp->user_id, mntp->group_id,
@@ -970,7 +981,7 @@ static int mntsvc_do_umount(struct silofs_mntsvc *msvc,
 {
 	int err;
 
-	err = do_fuse_umount(mntp);
+	err = do_umount_fuse_fs(mntp);
 	log_info("umount: '%s' flags=0x%lx peer=%s err=%d",
 	         mntp->path, mntp->flags, msvc->ms_peer_ids, err);
 

@@ -212,8 +212,8 @@ static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 		ft_fstat(fd, &st);
 		ft_pwriten(fd, name, strlen(name), off);
 		ft_fstat(fd, &sts[i]);
-		ft_expect_mtime_gt(&st, &sts[i]);
-		ft_expect_ctime_gt(&st, &sts[i]);
+		ft_expect_st_mtime_gt(&st, &sts[i]);
+		ft_expect_st_ctime_gt(&st, &sts[i]);
 		ft_close(fd);
 	}
 	for (size_t i = 0; i < nfiles; ++i) {
@@ -221,7 +221,7 @@ static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 		snprintf(name, sizeof(name) - 1, "%lx-%ld", i, off);
 		ft_openat(dfd, name, O_RDONLY, 0600, &fd);
 		ft_fstat(fd, &st);
-		ft_expect_mtime_eq(&st, &sts[i]);
+		ft_expect_st_mtime_eq(&st, &sts[i]);
 		/*
 		 * For some unexplained reason, CTIME may change slightly every
 		 * once in a million iterations. Happens only when 'nfiles' is

@@ -62,45 +62,6 @@
 
 #define FT_FL_LN_               SILOFS_FL_LN_
 
-#define ft_expect_true(p)       silofs_expect(p)
-#define ft_expect_false(p)      silofs_expect(!(p))
-#define ft_expect_ok(err)       silofs_expect_ok(err)
-#define ft_expect_err(err, x)   silofs_expect_err(err, x)
-#define ft_expect_eq(a, b)      silofs_expect_eq(a, b)
-#define ft_expect_ne(a, b)      silofs_expect_ne(a, b)
-#define ft_expect_lt(a, b)      silofs_expect_lt(a, b)
-#define ft_expect_le(a, b)      silofs_expect_le(a, b)
-#define ft_expect_gt(a, b)      silofs_expect_gt(a, b)
-#define ft_expect_ge(a, b)      silofs_expect_ge(a, b)
-#define ft_expect_eqm(a, b, n)  silofs_expect_eqm(a, b, n)
-
-#define ft_expect_ts_eq(t1, t2) \
-	ft_expect_eq(ft_timespec_diff(t1, t2), 0)
-#define ft_expect_ts_gt(t1, t2) \
-	ft_expect_gt(ft_timespec_diff(t1, t2), 0)
-#define ft_expect_ts_ge(t1, t2) \
-	ft_expect_ge(ft_timespec_diff(t1, t2), 0)
-#define ft_expect_mtime_eq(st1, st2) \
-	ft_expect_ts_eq(&((st1)->st_mtim), &((st2)->st_mtim))
-#define ft_expect_mtime_gt(st1, st2) \
-	ft_expect_ts_gt(&((st1)->st_mtim), &((st2)->st_mtim))
-#define ft_expect_ctime_eq(st1, st2) \
-	ft_expect_ts_eq(&((st1)->st_ctim), &((st2)->st_ctim))
-#define ft_expect_ctime_gt(st1, st2) \
-	ft_expect_ts_gt(&((st1)->st_ctim), &((st2)->st_ctim))
-#define ft_expect_ctime_ge(st1, st2) \
-	ft_expect_ts_ge(&((st1)->st_ctim), &((st2)->st_ctim))
-
-#define ft_expect_xts_eq(xt1, xt2) \
-	ft_expect_eq(ft_xtimestamp_diff(xt1, xt2), 0)
-#define ft_expect_xts_gt(xt1, xt2) \
-	ft_expect_gt(ft_xtimestamp_diff(xt1, xt2), 0)
-
-
-#define ft_expect_dir(m)        ft_expect_true(S_ISDIR(m))
-#define ft_expect_reg(m)        ft_expect_true(S_ISREG(m))
-#define ft_expect_lnk(m)        ft_expect_true(S_ISLNK(m))
-
 
 /* tests' control flags */
 enum ft_flags {
@@ -117,7 +78,6 @@ enum ft_flags {
 struct ft_env;
 struct ft_mchunk;
 
-
 /* test definition */
 struct ft_tdef {
 	void (*hook)(struct ft_env *);
@@ -126,13 +86,11 @@ struct ft_tdef {
 	int pad;
 };
 
-
 /* tests-array define */
 struct ft_tests {
 	const struct ft_tdef *arr;
 	size_t len;
 };
-
 
 /* tests execution parameters */
 struct ft_params {
@@ -142,9 +100,7 @@ struct ft_params {
 	long repeatn;
 	int testsmask;
 	int listtests;
-	int pad;
 };
-
 
 /* tests execution environment context */
 struct ft_env {
@@ -172,11 +128,10 @@ struct ft_range {
 	size_t len;
 };
 
-
 /* sanity-testing utility */
 void fte_init(struct ft_env *fte, const struct ft_params *params);
 
-void fte_exec(struct ft_env *fte);
+void fte_run(struct ft_env *fte);
 
 void fte_fini(struct ft_env *fte);
 
@@ -321,6 +276,9 @@ extern const struct ft_tests ft_stress_rw;
 
 /* system-calls wrappers */
 #include "funtests_syscall.h"
+
+/* expect utilities */
+#include "funtests_expect.h"
 
 #endif /* SILOFS_FUNTESTS_H_ */
 

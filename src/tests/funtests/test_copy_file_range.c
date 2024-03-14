@@ -580,7 +580,7 @@ static void test_copy_file_range_mtime_(struct ft_env *fte, size_t len,
 	ft_pwriten(fd_src, buf_src, len, off_src);
 	ft_copy_file_rangen(fd_src, off_src, fd_dst, off_dst, len);
 	ft_fstat(fd_dst, &st[1]);
-	ft_expect_mtime_gt(&st[0], &st[1]);
+	ft_expect_st_mtime_gt(&st[0], &st[1]);
 	ft_preadn(fd_src, buf_src, len, off_src);
 	ft_preadn(fd_dst, buf_dst, len, off_dst);
 	ft_expect_eqm(buf_src, buf_dst, len);
@@ -588,7 +588,7 @@ static void test_copy_file_range_mtime_(struct ft_env *fte, size_t len,
 	ft_ftruncate(fd_dst, ft_off_end(off_dst, len));
 	ft_copy_file_rangen(fd_src, off_src, fd_dst, off_dst, len);
 	ft_fstat(fd_dst, &st[2]);
-	ft_expect_mtime_gt(&st[1], &st[2]);
+	ft_expect_st_mtime_gt(&st[1], &st[2]);
 	ft_preadn(fd_src, buf_src, len, off_src);
 	ft_preadn(fd_dst, buf_dst, len, off_dst);
 	ft_expect_eqm(buf_src, buf_dst, len);
@@ -646,7 +646,7 @@ test_copy_file_range_extend_(struct ft_env *fte, loff_t off, size_t len)
 	ft_copy_file_rangen(fd_src, off, fd_dst, off, len);
 	ft_fstat(fd_dst, &st[1]);
 	ft_expect_eq(st[1].st_size, end);
-	ft_expect_mtime_gt(&st[0], &st[1]);
+	ft_expect_st_mtime_gt(&st[0], &st[1]);
 	ft_preadn(fd_dst, buf_dst, len, off);
 	ft_expect_eqm(buf_src, buf_dst, len);
 	ft_ftruncate(fd_src, 0);

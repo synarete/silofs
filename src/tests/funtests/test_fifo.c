@@ -126,8 +126,8 @@ static void test_fifo_write_mctime_(struct ft_env *fte, size_t bsz)
 	ft_suspend1(fte);
 	ft_fstat(fd, &st[1]);
 	if (!fuse_has_fifo_bug) { /* XXX */
-		ft_expect_ctime_gt(&st[0], &st[1]);
-		ft_expect_mtime_gt(&st[0], &st[1]);
+		ft_expect_st_ctime_gt(&st[0], &st[1]);
+		ft_expect_st_mtime_gt(&st[0], &st[1]);
 	}
 	ft_close(fd);
 	ft_unlink(path);

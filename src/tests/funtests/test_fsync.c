@@ -131,7 +131,7 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 		name1 = ft_new_namef(fte, "1-%08x", j + 1);
 		name2 = ft_new_namef(fte, "2-%08x", j + 1);
 		ft_fstatat(dfd, name2, &st, 0);
-		ft_expect_reg(st.st_mode);
+		ft_expect_st_reg(&st);
 		ft_openat(dfd, name2, O_RDONLY, 0600, &fd);
 		ft_unlinkat(dfd, name2, 0);
 		ft_fsync(dfd);

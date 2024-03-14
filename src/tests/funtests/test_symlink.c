@@ -30,13 +30,13 @@ static void test_symlink_simple(struct ft_env *fte)
 
 	ft_creat(path0, 0600, &fd);
 	ft_stat(path0, &st[0]);
-	ft_expect_reg(st[0].st_mode);
+	ft_expect_st_reg(&st[0]);
 	ft_symlink(path0, path1);
 	ft_stat(path1, &st[1]);
 	ft_expect_eq(st[0].st_ino, st[1].st_ino);
 	ft_lstat(path1, &st[1]);
 	ft_expect_ne(st[0].st_ino, st[1].st_ino);
-	ft_expect_lnk(st[1].st_mode);
+	ft_expect_st_lnk(&st[1]);
 	ft_expect_eq((st[1].st_mode & ~ifmt), 0777);
 	ft_unlink(path1);
 	ft_stat_noent(path1);
@@ -65,7 +65,7 @@ static void test_symlink_readlink(struct ft_env *fte)
 	ft_creat(path0, 0600, &fd);
 	ft_symlink(path0, path1);
 	ft_lstat(path1, &st);
-	ft_expect_lnk(st.st_mode);
+	ft_expect_st_lnk(&st);
 	ft_expect_eq(st.st_size, strlen(path0));
 
 	ft_readlink(path1, buf, bsz, &nch);
@@ -100,7 +100,7 @@ static void test_symlink_readlink_atime(struct ft_env *fte)
 	ft_mkdir(path0, 0700);
 	ft_symlink(path0, path1);
 	ft_lstat(path1, &st);
-	ft_expect_lnk(st.st_mode);
+	ft_expect_st_lnk(&st);
 	ft_expect_eq(st.st_size, strlen(path0));
 
 	atime[0] = st.st_atim.tv_sec;
@@ -151,7 +151,7 @@ static void test_symlink_anylen_(struct ft_env *fte, size_t len)
 
 	ft_symlink(path1, path0);
 	ft_lstat(path0, &st);
-	ft_expect_lnk(st.st_mode);
+	ft_expect_st_lnk(&st);
 	ft_expect_eq((st.st_mode & ~ifmt), 0777);
 	ft_readlink(path0, lnkbuf, len, &nch);
 	ft_expect_eq(len, nch);
@@ -201,14 +201,14 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 		symval = ft_new_path_dummy(fte, i);
 		ft_symlinkat(symval, dfd, name);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
-		ft_expect_lnk(st.st_mode);
+		ft_expect_st_lnk(&st);
 		off = (loff_t)(i * cnt);
 		ft_pwriten(fd, symval, i, off);
 	}
 	for (size_t i = 1; i < cnt; ++i) {
 		fill_name(name, sizeof(name), i);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
-		ft_expect_lnk(st.st_mode);
+		ft_expect_st_lnk(&st);
 		symval = ft_new_path_dummy(fte, i + 1);
 		ft_readlinkat(dfd, name, symval, i + 1, &nch);
 		ft_expect_eq(nch, i);
@@ -219,7 +219,7 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 	for (size_t i = 1; i < cnt; ++i) {
 		fill_name(name, sizeof(name), i);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
-		ft_expect_lnk(st.st_mode);
+		ft_expect_st_lnk(&st);
 		ft_expect_eq((st.st_mode & ~ifmt), 0777);
 		ft_unlinkat(dfd, name, 0);
 		ft_fstatat_err(dfd, name, 0, -ENOENT);
@@ -264,11 +264,11 @@ static void test_symlinkat_simple(struct ft_env *fte)
 	ft_close(fd);
 	ft_symlinkat(rpath, dfd, sname);
 	ft_fstatat(dfd, sname, &st, AT_SYMLINK_NOFOLLOW);
-	ft_expect_lnk(st.st_mode);
+	ft_expect_st_lnk(&st);
 	ft_fstatat(dfd, sname, &st, 0);
-	ft_expect_reg(st.st_mode);
+	ft_expect_st_reg(&st);
 	ft_stat(spath, &st);
-	ft_expect_reg(st.st_mode);
+	ft_expect_st_reg(&st);
 	ft_readlinkat(dfd, sname, symval, symval_bsz, &len);
 	ft_expect_eq(len, strlen(rpath));
 	ft_expect_eqm(symval, rpath, len);

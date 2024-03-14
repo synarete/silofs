@@ -117,8 +117,8 @@ static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t len)
 	ft_fsync(fd);
 	ft_close(fd);
 	ft_stat(path, &st[1]);
-	ft_expect_mtime_gt(&st[0], &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_mtime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_unlink(path);
 }
 

@@ -32,7 +32,7 @@ static void test_rename_simple(struct ft_env *fte)
 	ft_mkdir(path0, 0755);
 	ft_creat(path1, 0644, &fd);
 	ft_stat(path1, &st[0]);
-	ft_expect_reg(st[0].st_mode);
+	ft_expect_st_reg(&st[0]);
 	ft_rename(path1, path2);
 	ft_stat_err(path1, -ENOENT);
 	ft_fstat(fd, &st[1]);
@@ -67,10 +67,10 @@ static void test_renameat_simple(struct ft_env *fte)
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	ft_openat(dfd, name1, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st[0]);
-	ft_expect_reg(st[0].st_mode);
+	ft_expect_st_reg(&st[0]);
 	ft_close(fd);
 	ft_fstatat(dfd, name1, &st[1], 0);
-	ft_expect_reg(st[1].st_mode);
+	ft_expect_st_reg(&st[1]);
 	ft_expect_eq(st[1].st_ino, st[0].st_ino);
 	ft_renameat(dfd, name1, dfd, name2);
 	ft_fstatat_err(dfd, name1, 0, -ENOENT);
@@ -99,7 +99,7 @@ static void test_rename_getattr(struct ft_env *fte)
 	ft_mkdir(path0, 0755);
 	ft_creat(path1, 0644, &fd);
 	ft_stat(path1, &st[0]);
-	ft_expect_reg(st[0].st_mode);
+	ft_expect_st_reg(&st[0]);
 	ft_expect_eq((st[0].st_mode & ~ifmt), 0644);
 	ft_expect_eq(st[0].st_nlink, 1);
 	ft_expect_eq(st[0].st_size, 0);
@@ -109,7 +109,7 @@ static void test_rename_getattr(struct ft_env *fte)
 	ft_expect_eq(st[1].st_ino, st[0].st_ino);
 	ft_expect_eq(st[1].st_mode, st[0].st_mode);
 	ft_stat(path2, &st[2]);
-	ft_expect_reg(st[2].st_mode);
+	ft_expect_st_reg(&st[2]);
 	ft_expect_eq((st[2].st_mode & ~ifmt), 0644);
 	ft_expect_eq(st[2].st_nlink, 1);
 	ft_unlink(path2);
@@ -180,25 +180,25 @@ static void test_rename_ctime(struct ft_env *fte)
  */
 static void test_rename_notdirto(struct ft_env *fte)
 {
-	int fd = -1;
 	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_creat(path1, 0644, &fd);
 	ft_close(fd);
 	ft_rename_err(path0, path1, -ENOTDIR);
 	ft_lstat(path0, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 	ft_unlink(path1);
 
 	ft_symlink("test-rename-notdirto", path1);
 	ft_rename_err(path0, path1, -ENOTDIR);
 	ft_lstat(path0, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 	ft_lstat(path1, &st[1]);
-	ft_expect_lnk(st[1].st_mode);
+	ft_expect_st_lnk(&st[1]);
 	ft_unlink(path1);
 	ft_rmdir(path0);
 }
@@ -210,23 +210,23 @@ static void test_rename_notdirto(struct ft_env *fte)
  */
 static void test_rename_isdirto(struct ft_env *fte)
 {
-	int fd = -1;
 	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_creat(path1, 0640, &fd);
 	ft_close(fd);
 	ft_rename_err(path1, path0, -EISDIR);
 	ft_lstat(path0, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 	ft_unlink(path1);
 
 	ft_mkfifo(path1, 0644);
 	ft_rename_err(path1, path0, -EISDIR);
 	ft_lstat(path0, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 	ft_lstat(path1, &st[1]);
 	ft_expect_true(S_ISFIFO(st[1].st_mode));
 	ft_unlink(path1);
@@ -234,9 +234,9 @@ static void test_rename_isdirto(struct ft_env *fte)
 	ft_symlink("test-rename-isdirto", path1);
 	ft_rename_err(path1, path0, -EISDIR);
 	ft_lstat(path0, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 	ft_lstat(path1, &st[1]);
-	ft_expect_lnk(st[1].st_mode);
+	ft_expect_st_lnk(&st[1]);
 	ft_unlink(path1);
 	ft_rmdir(path0);
 }

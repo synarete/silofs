@@ -77,7 +77,7 @@ static void test_chmod_ctime(struct ft_env *fte)
 	ft_suspend(fte, 3, 2);
 	ft_chmod(path0, 0111);
 	ft_fstat(fd, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_close(fd);
 	ft_unlink(path0);
 
@@ -86,7 +86,7 @@ static void test_chmod_ctime(struct ft_env *fte)
 	ft_suspend(fte, 3, 2);
 	ft_chmod(path1, 0753);
 	ft_stat(path1, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_rmdir(path1);
 
 	ft_mkfifo(path2, 0640);
@@ -94,7 +94,7 @@ static void test_chmod_ctime(struct ft_env *fte)
 	ft_suspend(fte, 3, 2);
 	ft_chmod(path2, 0300);
 	ft_stat(path2, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_unlink(path2);
 }
 

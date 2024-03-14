@@ -30,7 +30,7 @@ static void test_unlink_reg(struct ft_env *fte)
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_close(fd);
 	ft_lstat(path, &st);
-	ft_expect_reg(st.st_mode);
+	ft_expect_st_reg(&st);
 	ft_unlink(path);
 	ft_unlink_noent(path);
 	ft_lstat_err(path, -ENOENT);
@@ -96,12 +96,12 @@ static void test_unlink_notdir(struct ft_env *fte)
  */
 static void test_unlink_isdir(struct ft_env *fte)
 {
-	struct stat st;
+	struct stat st = { .st_mode = 0 };
 	const char *path = ft_new_path_unique(fte);
 
 	ft_mkdir(path, 0700);
 	ft_stat(path, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_unlink_err(path, -EISDIR);
 	ft_rmdir(path);
 }

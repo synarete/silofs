@@ -182,7 +182,7 @@ static void ft_execute_all(void)
 	};
 
 	fte_init(ft_g_env, &params);
-	fte_exec(ft_g_env);
+	fte_run(ft_g_env);
 	fte_fini(ft_g_env);
 }
 

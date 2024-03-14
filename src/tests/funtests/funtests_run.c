@@ -195,7 +195,7 @@ static bool wanted(const struct ft_tdef *tdef, const char *wantname)
 	return (wantname == NULL) || (strstr(tdef->name, wantname) != NULL);
 }
 
-static void ft_runtests(struct ft_env *fte)
+static void ft_run_tests(struct ft_env *fte)
 {
 	const struct ft_tdef *tdef;
 	const struct ft_tests *tests = &fte->tests;
@@ -305,13 +305,23 @@ static void ft_free_tests(struct ft_env *fte)
 	fte->tests.len = 0;
 }
 
-void fte_exec(struct ft_env *fte)
+static void fte_meta(const struct ft_env *fte, int start)
 {
+	if (!fte->params.listtests) {
+		silofs_log_info("%s: %s", start ? "start" : "done",
+		                silofs_version.string);
+	}
+}
+
+void fte_run(struct ft_env *fte)
+{
+	fte_meta(fte, 1);
 	for (int i = 0; i < fte->params.repeatn; ++i) {
 		ft_clone_tests(fte);
-		ft_runtests(fte);
+		ft_run_tests(fte);
 		ft_free_tests(fte);
 	}
+	fte_meta(fte, 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

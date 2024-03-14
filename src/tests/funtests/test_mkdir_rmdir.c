@@ -71,38 +71,38 @@ static void test_mkdir_umask(struct ft_env *fte)
 	umsk  = umask(0020);
 	ft_mkdir(path0, 0755);
 	ft_stat(path0, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 
 	ft_mkdir(path1, 0755);
 	ft_stat(path1, &st[1]);
-	ft_expect_dir(st[1].st_mode);
+	ft_expect_st_dir(&st[1]);
 	ft_expect_eq((st[1].st_mode & ~ifmt), 0755);
 	ft_rmdir(path1);
 
 	ft_mkdir(path1, 0153);
 	ft_stat(path1, &st[1]);
-	ft_expect_dir(st[1].st_mode);
+	ft_expect_st_dir(&st[1]);
 	ft_expect_eq((st[1].st_mode & ~ifmt), 0153);
 	ft_rmdir(path1);
 
 	umask(077);
 	ft_mkdir(path1, 0151);
 	ft_stat(path1, &st[1]);
-	ft_expect_dir(st[1].st_mode);
+	ft_expect_st_dir(&st[1]);
 	ft_expect_eq((st[1].st_mode & ~ifmt), 0100);
 	ft_rmdir(path1);
 
 	umask(070);
 	ft_mkdir(path1, 0345);
 	ft_stat(path1, &st[1]);
-	ft_expect_dir(st[1].st_mode);
+	ft_expect_st_dir(&st[1]);
 	ft_expect_eq((st[1].st_mode & ~ifmt), 0305);
 	ft_rmdir(path1);
 
 	umask(0501);
 	ft_mkdir(path1, 0345);
 	ft_stat(path1, &st[1]);
-	ft_expect_dir(st[1].st_mode);
+	ft_expect_st_dir(&st[1]);
 	ft_expect_eq((st[1].st_mode & ~ifmt), 0244);
 
 	ft_rmdir(path1);
@@ -401,10 +401,10 @@ static void test_mkdirat_simple(struct ft_env *fte)
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd1);
 	ft_mkdirat(dfd1, name, 0700);
 	ft_fstatat(dfd1, name, &st, 0);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_openat(dfd1, name, O_DIRECTORY | O_RDONLY, 0, &dfd2);
 	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_close(dfd2);
 	ft_unlinkat(dfd1, name, AT_REMOVEDIR);
 	ft_fstatat_err(dfd1, name, 0, -ENOENT);
@@ -519,13 +519,13 @@ static void test_rmdir_mctime(struct ft_env *fte)
 	ft_mkdir(path1, 0700);
 	ft_mkdir(path2, 0700);
 	ft_stat(path1, &st[0]);
-	ft_expect_dir(st[0].st_mode);
+	ft_expect_st_dir(&st[0]);
 	ft_suspends(fte, 2);
 	ft_rmdir(path2);
 	ft_stat_err(path2, -ENOENT);
 	ft_stat(path1, &st[1]);
-	ft_expect_mtime_gt(&st[0], &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_mtime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_rmdir(path1);
 }
 
@@ -548,13 +548,13 @@ static void test_rmdir_openat(struct ft_env *fte)
 	ft_mkdirat(dfd1, name, 0700);
 	ft_openat(dfd1, name, O_DIRECTORY | O_RDONLY, 0, &dfd2);
 	ft_fstat(dfd1, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_expect_eq(st.st_nlink, 2);
 	ft_rmdir(path2);
 	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_expect_le(st.st_nlink, 1); /* TODO: why not eq 1 ? */
 	ft_rmdir(path1);
 	ft_close(dfd1);
@@ -589,17 +589,17 @@ static void test_rmdir_getdents(struct ft_env *fte)
 	ft_openat(dfd1, name2, O_DIRECTORY | O_RDONLY, 0, &dfd2);
 	ft_openat(dfd1, name3, O_CREAT | O_RDWR, 0600, &fd3);
 	ft_fstat(dfd1, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_expect_eq(st.st_nlink, 3);
 	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_expect_eq(st.st_nlink, 2);
 	ft_rmdir(path2);
 	ft_unlinkat(dfd1, name3, 0);
 	ft_fstat(dfd2, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_fstat(dfd1, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_expect_eq(st.st_nlink, 2);
 	ft_getdent(dfd1, &dent);
 	ft_expect_true(ft_dirent_isdir(&dent));

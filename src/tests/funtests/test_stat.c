@@ -30,7 +30,7 @@ static void test_stat_simple(struct ft_env *fte)
 
 	ft_mkdir(path0, 0700);
 	ft_stat(path0, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_expect_eq((int)(st.st_mode & ~ifmt), 0700);
 	ft_expect_eq((long)st.st_nlink, 2);
 	ft_stat_noent(path1);
@@ -53,10 +53,10 @@ static void test_stat_notdir(struct ft_env *fte)
 
 	ft_mkdir(path0, 0700);
 	ft_stat(path0, &st);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_open(path1, O_CREAT | O_RDWR, 0644, &fd);
 	ft_stat(path1, &st);
-	ft_expect_reg(st.st_mode);
+	ft_expect_st_reg(&st);
 	ft_expect_eq(st.st_size, 0);
 	ft_expect_eq(st.st_blocks, 0);
 	ft_stat_err(path2, -ENOTDIR);
@@ -151,9 +151,9 @@ static void test_fstatat_simple(struct ft_env *fte)
 	ft_writen(fd, fname, strlen(fname));
 	ft_close(fd);
 	ft_fstatat(dfd, dname, &st, 0);
-	ft_expect_dir(st.st_mode);
+	ft_expect_st_dir(&st);
 	ft_fstatat(dfd, fname, &st, 0);
-	ft_expect_reg(st.st_mode);
+	ft_expect_st_reg(&st);
 	ft_expect_gt(st.st_size, 0);
 	ft_unlinkat(dfd, fname, 0);
 	ft_unlinkat(dfd, dname, AT_REMOVEDIR);

@@ -38,7 +38,7 @@ static void test_utime_file(struct ft_env *fte)
 	ft_expect_eq(st[1].st_atim.tv_nsec, 0);
 	ft_expect_eq(st[1].st_mtim.tv_sec, utm[0].modtime);
 	ft_expect_eq(st[1].st_mtim.tv_nsec, 0);
-	ft_expect_ctime_ge(&st[0], &st[1]);
+	ft_expect_st_ctime_ge(&st[0], &st[1]);
 	utm[1].actime = 2222222222;
 	utm[1].modtime = 222;
 	ft_utime(path, &utm[1]);
@@ -47,7 +47,7 @@ static void test_utime_file(struct ft_env *fte)
 	ft_expect_eq(st[2].st_atim.tv_nsec, 0);
 	ft_expect_eq(st[2].st_mtim.tv_sec, utm[1].modtime);
 	ft_expect_eq(st[2].st_mtim.tv_nsec, 0);
-	ft_expect_ctime_ge(&st[1], &st[2]);
+	ft_expect_st_ctime_ge(&st[1], &st[2]);
 	ft_close(fd);
 	ft_unlink(path);
 }
@@ -69,7 +69,7 @@ static void test_utime_now(struct ft_env *fte)
 	ft_write(fd, path, strlen(path), &nwr);
 	ft_utime(path, NULL);
 	ft_stat(path, &st[1]);
-	ft_expect_ctime_ge(&st[0], &st[1]);
+	ft_expect_st_ctime_ge(&st[0], &st[1]);
 	ft_close(fd);
 	ft_unlink(path);
 }
@@ -95,7 +95,7 @@ static void test_utimes_file(struct ft_env *fte)
 	tv1[1].tv_usec = 444444;
 	ft_utimes(path, tv1);
 	ft_stat(path, &st[1]);
-	ft_expect_ctime_ge(&st[0], &st[1]);
+	ft_expect_st_ctime_ge(&st[0], &st[1]);
 	ft_expect_eq(st[1].st_atim.tv_sec, tv1[0].tv_sec);
 	ft_expect_eq(st[1].st_atim.tv_nsec / 1000, tv1[0].tv_usec);
 	ft_expect_eq(st[1].st_mtim.tv_sec, tv1[1].tv_sec);
@@ -111,7 +111,7 @@ static void test_utimes_file(struct ft_env *fte)
 	ft_expect_eq(st[2].st_atim.tv_nsec / 1000, tv2[0].tv_usec);
 	ft_expect_eq(st[2].st_mtim.tv_sec, tv2[1].tv_sec);
 	ft_expect_eq(st[2].st_mtim.tv_nsec / 1000, tv2[1].tv_usec);
-	ft_expect_ctime_ge(&st[1], &st[2]);
+	ft_expect_st_ctime_ge(&st[1], &st[2]);
 	ft_close(fd);
 	ft_unlink(path);
 }
@@ -142,7 +142,7 @@ static void test_utimensat_file(struct ft_env *fte)
 	ts1[1].tv_nsec = 88888;
 	ft_utimensat(dfd, name, ts1, 0);
 	ft_fstat(fd, &st[1]);
-	ft_expect_ctime_ge(&st[0], &st[1]);
+	ft_expect_st_ctime_ge(&st[0], &st[1]);
 	ft_expect_ts_eq(&st[1].st_atim, &ts1[0]);
 	ft_expect_ts_eq(&st[1].st_mtim, &ts1[1]);
 	ft_writen(fd, name, strlen(name));
@@ -153,7 +153,7 @@ static void test_utimensat_file(struct ft_env *fte)
 	ts2[1].tv_nsec = 0;
 	ft_futimens(fd, ts2);
 	ft_fstat(fd, &st[2]);
-	ft_expect_ctime_ge(&st[1], &st[2]);
+	ft_expect_st_ctime_ge(&st[1], &st[2]);
 	ft_expect_ts_eq(&st[2].st_atim, &ts2[0]);
 	ft_expect_ts_eq(&st[2].st_mtim, &ts2[1]);
 
@@ -163,7 +163,7 @@ static void test_utimensat_file(struct ft_env *fte)
 	ts3[1].tv_nsec = UTIME_NOW;
 	ft_futimens(fd, ts3);
 	ft_fstat(fd, &st[3]);
-	ft_expect_ctime_ge(&st[2], &st[3]);
+	ft_expect_st_ctime_ge(&st[2], &st[3]);
 	ft_expect_ts_gt(&ts3[0], &st[3].st_atim);
 	ft_expect_ts_gt(&ts3[1], &st[3].st_mtim);
 
@@ -202,7 +202,7 @@ static void test_futimens_ctime(struct ft_env *fte)
 	ft_fstat(fd, &st[0]);
 	ft_futimens(fd, tm);
 	ft_fstat(fd, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_expect_ts_eq(&st[1].st_atim, &tm[0]);
 	ft_expect_ts_eq(&st[1].st_mtim, &tm[1]);
 
@@ -213,19 +213,19 @@ static void test_futimens_ctime(struct ft_env *fte)
 	ft_fstat(dfd, &st[0]);
 	ft_futimens(dfd, tm);
 	ft_fstat(dfd, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 	ft_expect_ts_eq(&st[1].st_atim, &tm[0]);
 	ft_expect_ts_eq(&st[1].st_mtim, &tm[1]);
 
 	ft_fstat(fd, &st[0]);
 	ft_futimens(fd, NULL);
 	ft_fstat(fd, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 
 	ft_fstat(dfd, &st[0]);
 	ft_futimens(dfd, NULL);
 	ft_fstat(dfd, &st[1]);
-	ft_expect_ctime_gt(&st[0], &st[1]);
+	ft_expect_st_ctime_gt(&st[0], &st[1]);
 
 	ft_close(fd);
 	ft_unlinkat(dfd, name, 0);

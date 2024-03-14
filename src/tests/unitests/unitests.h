@@ -566,31 +566,31 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 
 /* except-alias */
 #define ut_expect(cond) \
-	silofs_expect_true_((bool)(cond), SILOFS_FL)
+	silofs_expect_true_((bool)(cond), SILOFS_FL_LN_)
 #define ut_expect_lt(a, b) \
-	silofs_expect_lt_((long)(a), (long)(b), SILOFS_FL)
+	silofs_expect_lt_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_le(a, b) \
-	silofs_expect_le_((long)(a), (long)(b), SILOFS_FL)
+	silofs_expect_le_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_gt(a, b) \
-	silofs_expect_gt_((long)(a), (long)(b), SILOFS_FL)
+	silofs_expect_gt_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_ge(a, b) \
-	silofs_expect_ge_((long)(a), (long)(b), SILOFS_FL)
+	silofs_expect_ge_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_eq(a, b) \
-	silofs_expect_eq_((long)(a), (long)(b), SILOFS_FL)
+	silofs_expect_eq_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_ne(a, b) \
-	silofs_expect_ne_((long)(a), (long)(b), SILOFS_FL)
+	silofs_expect_ne_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_ok(err) \
-	silofs_expect_ok_((int)(err), SILOFS_FL)
+	silofs_expect_ok_((int)(err), SILOFS_FL_LN_)
 #define ut_expect_err(err, exp) \
-	silofs_expect_err_((int)(err), (int)(exp), SILOFS_FL)
+	silofs_expect_err_((int)(err), (int)(exp), SILOFS_FL_LN_)
 #define ut_expect_null(ptr) \
-	silofs_expect_null_(ptr, SILOFS_FL)
+	silofs_expect_null_(ptr, SILOFS_FL_LN_)
 #define ut_expect_not_null(ptr) \
-	silofs_expect_not_null_(ptr, SILOFS_FL)
+	silofs_expect_not_null_(ptr, SILOFS_FL_LN_)
 #define ut_expect_eqs(a, b) \
-	silofs_expect_eqs_(a, b, SILOFS_FL)
+	silofs_expect_eqs_(a, b, SILOFS_FL_LN_)
 #define ut_expect_eqm(a, b, n) \
-	silofs_expect_eqm_(a, b, n, SILOFS_FL)
+	silofs_expect_eqm_(a, b, n, SILOFS_FL_LN_)
 
 /* aliases */
 #define UT_1K                   SILOFS_KILO

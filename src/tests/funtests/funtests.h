@@ -60,6 +60,8 @@
 #define FT_STR(x_)              SILOFS_STR(x_)
 #define FT_ARRAY_SIZE(x_)       SILOFS_ARRAY_SIZE(x_)
 
+#define FT_FL_LN_               SILOFS_FL_LN_
+
 #define ft_expect_true(p)       silofs_expect(p)
 #define ft_expect_false(p)      silofs_expect(!(p))
 #define ft_expect_ok(err)       silofs_expect_ok(err)

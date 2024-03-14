@@ -24,8 +24,8 @@
 #define SILOFS_MAKESTR_(x_)     #x_
 #define SILOFS_CONCAT(x_, y_)   x_ ## y_
 
-/* file+line */
-#define SILOFS_FL               __FILE__, __LINE__
+/* file line pair */
+#define SILOFS_FL_LN_           __FILE__, __LINE__
 
 /* array number of elements */
 #define SILOFS_ARRAY_SIZE(x_)   ( (sizeof((x_))) / (sizeof(((x_)[0]))) )

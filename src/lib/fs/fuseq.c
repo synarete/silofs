@@ -4270,41 +4270,53 @@ static void fuseq_unlock_ctl(struct silofs_fuseq *fq)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-
 typedef int (*silofs_oper_fn)(struct silofs_task *, struct silofs_oper_args *);
 
 static int op_setattr(struct silofs_task *task, struct silofs_oper_args *args)
 {
-	const struct stat *tms = &args->in.setattr.tims;
 	struct silofs_stat *out_st = &args->out.setattr.st;
-	loff_t size;
-	mode_t mode;
-	uid_t uid;
-	gid_t gid;
-	ino_t ino;
-	int err;
+	const struct stat *tms = &args->in.setattr.tims;
+	const loff_t size = args->in.setattr.size;
+	const mode_t mode = args->in.setattr.mode;
+	const uid_t uid = args->in.setattr.uid;
+	const gid_t gid = args->in.setattr.gid;
+	const ino_t ino = args->in.setattr.ino;
+	int err = 0;
 
-	ino = args->in.setattr.ino;
-	err = silofs_fs_getattr(task, ino, out_st);
-	if (!err && args->in.setattr.set_amtime_now) {
+	out_st->gen = 0;
+	if (args->in.setattr.set_amtime_now) {
 		err = silofs_fs_utimens(task, ino, tms, out_st);
+		if (err) {
+			goto out;
+		}
 	}
-	if (!err && args->in.setattr.set_mode) {
-		mode = args->in.setattr.mode;
+	if (args->in.setattr.set_mode) {
 		err = silofs_fs_chmod(task, ino, mode, tms, out_st);
+		if (err) {
+			goto out;
+		}
 	}
-	if (!err && args->in.setattr.set_uid_gid) {
-		uid = args->in.setattr.uid;
-		gid = args->in.setattr.gid;
+	if (args->in.setattr.set_uid_gid) {
 		err = silofs_fs_chown(task, ino, uid, gid, tms, out_st);
+		if (err) {
+			goto out;
+		}
 	}
-	if (!err && args->in.setattr.set_size) {
-		size = args->in.setattr.size;
+	if (args->in.setattr.set_size) {
 		err = silofs_fs_truncate(task, ino, size, out_st);
+		if (err) {
+			goto out;
+		}
 	}
-	if (!err && args->in.setattr.set_amctime &&
-	    !args->in.setattr.set_nontime) {
+	if (args->in.setattr.set_amctime && !args->in.setattr.set_nontime) {
 		err = silofs_fs_utimens(task, ino, tms, out_st);
+		if (err) {
+			goto out;
+		}
+	}
+out:
+	if (!err && !out_st->gen) {
+		err = silofs_fs_getattr(task, ino, out_st);
 	}
 	return err;
 }

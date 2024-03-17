@@ -259,7 +259,7 @@ class TestEnv:
 
     def exec_findmnt(self) -> None:
         mntp = self.cfg.mntdir
-        mnts = self.cmd.silofs.lsmnt()
+        mnts = self.cmd.silofs.findmnt()
         self.expect.within(mntp, mnts)
 
     def load_bconf(self, name: str = "") -> typing.Dict[str, typing.Any]:

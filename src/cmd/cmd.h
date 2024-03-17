@@ -88,7 +88,7 @@ void cmd_execute_tune(void);
 
 void cmd_execute_rmfs(void);
 
-void cmd_execute_lsmnt(void);
+void cmd_execute_findmnt(void);
 
 void cmd_execute_prune(void);
 

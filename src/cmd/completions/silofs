@@ -46,7 +46,7 @@ _silofs_umount() {
   fi
 }
 
-_silofs_lsmnt() {
+_silofs_findmnt() {
   local cur prev words cword
   _init_completion || return
 
@@ -149,8 +149,8 @@ _silofs_subcmd() {
     "umount")
       _silofs_umount
       ;;
-    "lsmnt")
-      _silofs_lsmnt
+    "findmnt")
+      _silofs_findmnt
       ;;
     "show")
       _silofs_show
@@ -187,7 +187,7 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsmnt show snap sync' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'findmnt show snap sync' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck xsend' -- "$cur") )
   fi
 }
@@ -195,6 +195,7 @@ _silofs_main() {
 
 _silofs_completions() {
   local IFS=$' \t\n'
+  # shellcheck disable=SC2034
   local cur prev words cword
   _init_completion || return
 

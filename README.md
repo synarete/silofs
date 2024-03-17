@@ -169,7 +169,7 @@ $ silofs mount /path/to/repo/myfs /path/to/mntdir
 enter password: ********
 
 $ # probe mount-point using silofs command line
-$ silofs lsmnt
+$ silofs findmnt
 /path/to/mntdir
 $ silofs show boot /path/to/mntdir
 /path/to/repo/myfs
@@ -205,7 +205,7 @@ actual `umount` system call is issued by the `silofs-mountd.service`
 daemon:
 
 ``` sh
-$ silofs lsmnt
+$ silofs findmnt
 /path/to/mntdir
 $ silofs umount /path/to/mntdir
 ```
@@ -229,7 +229,7 @@ file with the snapshot name is created at the root of the repository:
 
 ``` sh
 $ silofs mount /path/to/repo/myfs /path/to/mntdir
-$ silofs lsmnt
+$ silofs findmnt
 /path/to/mntdir
 $ silofs show boot /path/to/mntdir
 /path/to/repo/myfs
@@ -256,7 +256,7 @@ silofs file-system:
 
 ``` sh
 $ silofs mount /path/to/repo/snap2 /path/to/mntdir
-$ silofs lsmnt
+$ silofs findmnt
 /path/to/mntdir
 $ # read previously written file
 $ cat /path/to/mntdir/hello

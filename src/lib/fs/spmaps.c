@@ -1399,34 +1399,46 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 	sli_dirtify(sli);
 }
 
+static int lmap_append(struct silofs_spmap_lmap *lmap,
+                       const struct silofs_laddr *laddr)
+{
+	struct silofs_laddr *laddr_prev = NULL;
+
+	if (laddr_isnull(laddr)) {
+		return 0;
+	}
+	if (lmap->cnt == 0) {
+		goto out_ok;
+	}
+	laddr_prev = &lmap->laddr[lmap->cnt - 1];
+	if (laddr_isnext(laddr_prev, laddr)) {
+		laddr_prev->len += laddr->len;
+		return 0;
+	}
+	if (lmap->cnt == ARRAY_SIZE(lmap->laddr)) {
+		return -SILOFS_ENOSPC;
+	}
+out_ok:
+	laddr_assign(&lmap->laddr[lmap->cnt++], laddr);
+	return 0;
+}
+
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
                              struct silofs_spmap_lmap *out_lmap)
 {
 	struct silofs_laddr laddr = { .pos = -1 };
-	struct silofs_laddr *laddr_prev = NULL;
 	const struct silofs_spmap_leaf *sl = sli->sl;
 	const struct silofs_bk_ref *bkr = NULL;
-	unsigned int cnt = 0;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
 	                ARRAY_SIZE(sl->sl_subrefs));
 
+	out_lmap->cnt = 0;
 	for (size_t slot = 0; slot < ARRAY_SIZE(sl->sl_subrefs); ++slot) {
 		bkr = spleaf_subref_at(sl, slot);
 		bkr_uref(bkr, &laddr);
-		if (laddr_isnull(&laddr)) {
-			continue;
-		}
-		if (cnt > 0) {
-			laddr_prev = &out_lmap->laddr[cnt - 1];
-			if (laddr_isnext(laddr_prev, &laddr)) {
-				laddr_prev->len += laddr.len;
-				continue;
-			}
-		}
-		laddr_assign(&out_lmap->laddr[cnt++], &laddr);
+		lmap_append(out_lmap, &laddr);
 	}
-	out_lmap->cnt = cnt;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1644,30 +1656,18 @@ void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
                              struct silofs_spmap_lmap *out_lmap)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	struct silofs_laddr *laddr_prev = NULL;
 	const struct silofs_spmap_node *sn = sni->sn;
 	const struct silofs_spmap_ref *spr = NULL;
-	unsigned int cnt = 0;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
 	                ARRAY_SIZE(sn->sn_subrefs));
 
+	out_lmap->cnt = 0;
 	for (size_t slot = 0; slot < ARRAY_SIZE(sn->sn_subrefs); ++slot) {
 		spr = spnode_subref_at(sn, slot);
 		spr_uaddr(spr, &uaddr);
-		if (uaddr_isnull(&uaddr)) {
-			continue;
-		}
-		if (cnt > 0) {
-			laddr_prev = &out_lmap->laddr[cnt - 1];
-			if (laddr_isnext(laddr_prev, &uaddr.laddr)) {
-				laddr_prev->len += uaddr.laddr.len;
-				continue;
-			}
-		}
-		laddr_assign(&out_lmap->laddr[cnt++], &uaddr.laddr);
+		lmap_append(out_lmap, &uaddr.laddr);
 	}
-	out_lmap->cnt = cnt;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

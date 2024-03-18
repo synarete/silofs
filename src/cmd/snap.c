@@ -391,7 +391,7 @@ void cmd_execute_snap(void)
 	/* Setup input arguments */
 	cmd_snap_setup_fs_args(&ctx);
 
-	/* Require ids-map */
+	/* Require boot-config */
 	cmd_snap_load_bconf(&ctx);
 
 	/* Setup execution environment */

@@ -642,7 +642,7 @@ static void cmd_bconf_parse_line(struct silofs_fs_bconf *bconf, int sec_state,
 	} else if (sec_state & CONF_SEC_GROUPS) {
 		cmd_bconf_parse_gid_cfg(bconf, line);
 	} else if (sec_state != CONF_SEC_IGNORE) {
-		cmd_die_by(line, "illegal ids-map config");
+		cmd_die_by(line, "illegal boot-config config");
 	}
 }
 

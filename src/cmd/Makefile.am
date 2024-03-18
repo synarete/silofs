@@ -34,4 +34,5 @@ silofs_SOURCES += snap.c
 silofs_SOURCES += sync.c
 silofs_SOURCES += tune.c
 silofs_SOURCES += umount.c
-silofs_SOURCES += xsend.c
+silofs_SOURCES += import.c
+silofs_SOURCES += export.c

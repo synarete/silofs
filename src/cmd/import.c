@@ -16,34 +16,34 @@
  */
 #include "cmd.h"
 
-static const char *cmd_fsck_help_desc[] = {
-	"fsck <repodir/name>",
+static const char *cmd_import_help_desc[] = {
+	"import [options] <repodir/name>",
 	"",
 	"options:",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
-struct cmd_fsck_in_args {
+struct cmd_import_in_args {
 	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
 	char   *name;
-	char   *password;
 };
 
-struct cmd_fsck_ctx {
-	struct cmd_fsck_in_args in_args;
+struct cmd_import_ctx {
+	struct cmd_import_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_ctx   *fs_ctx;
+	FILE *in_fp;
 	bool has_lockfile;
 };
 
-static struct cmd_fsck_ctx *cmd_fsck_ctx;
+static struct cmd_import_ctx *cmd_import_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
+static void cmd_import_getopt(struct cmd_import_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -55,12 +55,10 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 
 	while (opt_chr > 0) {
 		opt_chr = cmd_getopt("p:L:h", opts);
-		if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'L') {
+		if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_fsck_help_desc);
+			cmd_print_help_and_exit(cmd_import_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}
@@ -71,33 +69,16 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_fsck_destroy_fs_ctx(struct cmd_fsck_ctx *ctx)
-{
-	cmd_del_fs_ctx(&ctx->fs_ctx);
-}
-
-static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
-{
-	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset(&ctx->fs_args.bconf);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
-	cmd_pstrfree(&ctx->in_args.repodir);
-	cmd_pstrfree(&ctx->in_args.repodir_real);
-	cmd_pstrfree(&ctx->in_args.name);
-	cmd_delpass(&ctx->in_args.password);
-	cmd_fsck_ctx = NULL;
-}
-
-static void cmd_fsck_acquire_lockfile(struct cmd_fsck_ctx *ctx)
+static void cmd_import_acquire_lockfile(struct cmd_import_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
-		cmd_lockfile_acquire4(ctx->in_args.repodir_real,
+		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
 		                      ctx->in_args.name);
 		ctx->has_lockfile = true;
 	}
 }
 
-static void cmd_fsck_release_lockfile(struct cmd_fsck_ctx *ctx)
+static void cmd_import_release_lockfile(struct cmd_import_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
 		cmd_lockfile_release(ctx->in_args.repodir_real,
@@ -106,21 +87,42 @@ static void cmd_fsck_release_lockfile(struct cmd_fsck_ctx *ctx)
 	}
 }
 
-static void cmd_fsck_atexit(void)
+static void cmd_import_destroy_fs_ctx(struct cmd_import_ctx *ctx)
 {
-	if (cmd_fsck_ctx != NULL) {
-		cmd_fsck_release_lockfile(cmd_fsck_ctx);
-		cmd_fsck_finalize(cmd_fsck_ctx);
+	cmd_del_fs_ctx(&ctx->fs_ctx);
+}
+
+static void cmd_import_finalize(struct cmd_import_ctx *ctx)
+{
+	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_bconf_reset(&ctx->fs_args.bconf);
+	cmd_pstrfree(&ctx->in_args.repodir_name);
+	cmd_pstrfree(&ctx->in_args.repodir);
+	cmd_pstrfree(&ctx->in_args.repodir_real);
+	cmd_pstrfree(&ctx->in_args.name);
+	cmd_import_ctx = NULL;
+}
+
+static void cmd_import_atexit(void)
+{
+	if (cmd_import_ctx != NULL) {
+		cmd_import_release_lockfile(cmd_import_ctx);
+		cmd_import_finalize(cmd_import_ctx);
 	}
 }
 
-static void cmd_fsck_start(struct cmd_fsck_ctx *ctx)
+static void cmd_import_start(struct cmd_import_ctx *ctx)
 {
-	cmd_fsck_ctx = ctx;
-	atexit(cmd_fsck_atexit);
+	cmd_import_ctx = ctx;
+	atexit(cmd_import_atexit);
 }
 
-static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
+static void cmd_import_enable_signals(void)
+{
+	cmd_register_sigactions(NULL);
+}
+
+static void cmd_import_prepare(struct cmd_import_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
 	cmd_check_isreg(ctx->in_args.repodir_name, false);
@@ -132,129 +134,91 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.name);
 }
 
-static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
-{
-	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, &ctx->in_args.password);
-	}
-}
-
-static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
+static void cmd_import_setup_fs_args(struct cmd_import_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
 	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
-	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_fsck_load_bconf(struct cmd_fsck_ctx *ctx)
+static void cmd_import_load_bconf(struct cmd_import_ctx *ctx)
 {
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_fsck_setup_fs_ctx(struct cmd_fsck_ctx *ctx)
+static void cmd_import_setup_fs_ctx(struct cmd_import_ctx *ctx)
 {
 	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
-static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
+static void cmd_import_open_repo(struct cmd_import_ctx *ctx)
 {
 	cmd_open_repo(ctx->fs_ctx);
 }
 
-static void cmd_fsck_require_brec(struct cmd_fsck_ctx *ctx)
-{
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
-}
-
-static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
-{
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
-}
-
-static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
-{
-	cmd_open_fs(ctx->fs_ctx);
-}
-
-static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
-{
-	cmd_close_fs(ctx->fs_ctx);
-}
-
-static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
-{
-	cmd_inspect_fs(ctx->fs_ctx, NULL, NULL);
-}
-
-static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
+static void cmd_import_close_repo(struct cmd_import_ctx *ctx)
 {
 	cmd_close_repo(ctx->fs_ctx);
 }
 
+static void cmd_import_execute(struct cmd_import_ctx *ctx)
+{
+	/* TODO: impl */
+	(void)ctx;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void cmd_execute_fsck(void)
+void cmd_execute_import(void)
 {
-	struct cmd_fsck_ctx ctx = {
+	struct cmd_import_ctx ctx = {
 		.fs_ctx = NULL,
+		.in_fp = stdin,
 	};
 
 	/* Do all cleanups upon exits */
-	cmd_fsck_start(&ctx);
+	cmd_import_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_fsck_getopt(&ctx);
+	cmd_import_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_fsck_prepare(&ctx);
+	cmd_import_prepare(&ctx);
 
-	/* Require password */
-	cmd_fsck_getpass(&ctx);
+	/* Run with signals */
+	cmd_import_enable_signals();
 
 	/* Setup input arguments */
-	cmd_fsck_setup_fs_args(&ctx);
+	cmd_import_setup_fs_args(&ctx);
 
 	/* Require boot-config */
-	cmd_fsck_load_bconf(&ctx);
+	cmd_import_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_fsck_setup_fs_ctx(&ctx);
+	cmd_import_setup_fs_ctx(&ctx);
 
 	/* Acquire lock */
-	cmd_fsck_acquire_lockfile(&ctx);
+	cmd_import_acquire_lockfile(&ctx);
 
 	/* Open repository */
-	cmd_fsck_open_repo(&ctx);
+	cmd_import_open_repo(&ctx);
 
-	/* Require source boot-record */
-	cmd_fsck_require_brec(&ctx);
-
-	/* Require boot + lock-able file-system */
-	cmd_fsck_boot_fs(&ctx);
-
-	/* Open file-system */
-	cmd_fsck_open_fs(&ctx);
-
-	/* Do actual fsck */
-	cmd_fsck_execute(&ctx);
-
-	/* Close file-system and caches */
-	cmd_fsck_close_fs(&ctx);
+	/* Do actual import */
+	cmd_import_execute(&ctx);
 
 	/* Close repository */
-	cmd_fsck_close_repo(&ctx);
+	cmd_import_close_repo(&ctx);
 
 	/* Release lock */
-	cmd_fsck_release_lockfile(&ctx);
+	cmd_import_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_fsck_destroy_fs_ctx(&ctx);
+	cmd_import_destroy_fs_ctx(&ctx);
 
 	/* Post execution cleanups */
-	cmd_fsck_finalize(&ctx);
+	cmd_import_finalize(&ctx);
 }
 

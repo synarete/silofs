@@ -683,7 +683,7 @@ void cmd_execute_mount(void)
 	/* Setup input arguments */
 	cmd_mount_setup_fs_args(&ctx);
 
-	/* Require fs-uuid and ids-map */
+	/* Require boot-config */
 	cmd_mount_load_bconf(&ctx);
 
 	/* Execute pre-mount as command-line process */

@@ -269,7 +269,7 @@ void cmd_execute_rmfs(void)
 	/* Setup input arguments */
 	cmd_rmfs_setup_fs_args(&ctx);
 
-	/* Require ids-map */
+	/* Require boot-config */
 	cmd_rmfs_load_bconf(&ctx);
 
 	/* Setup execution context */

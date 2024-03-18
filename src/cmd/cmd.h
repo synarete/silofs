@@ -94,7 +94,9 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
-void cmd_execute_xsend(void);
+void cmd_execute_export(void);
+
+void cmd_execute_import(void);
 
 /* fatal-error handling */
 __attribute__((__noreturn__))

@@ -993,7 +993,7 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 			niter += mem_pres / 10;
 		}
 		if (flags & SILOFS_F_IDLE) {
-			niter += 1;
+			niter += 2;
 		}
 	}
 	return niter + niter_base;
@@ -1007,7 +1007,6 @@ static size_t lcache_nmapped_uis(const struct silofs_lcache *lcache)
 static size_t lcache_relax_by_niter(struct silofs_lcache *lcache,
                                     size_t niter, int flags)
 {
-	const size_t nmapped = lcache_nmapped_uis(lcache);
 	size_t total = 0;
 	size_t nvis;
 	size_t nuis;
@@ -1018,7 +1017,7 @@ static size_t lcache_relax_by_niter(struct silofs_lcache *lcache,
 	cnt = (now || (niter > 1)) ? 2 : 1;
 	for (size_t i = 0; i < niter; ++i) {
 		nvis = lcache_shrink_some_vis(lcache, i + 1, now);
-		if (!nvis || now || (nmapped > 256)) {
+		if (!nvis || now || (lcache_nmapped_uis(lcache) > 128)) {
 			nuis = lcache_shrink_some_uis(lcache, cnt, now);
 		} else {
 			nuis = 0;

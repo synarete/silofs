@@ -233,14 +233,14 @@ int silofs_base64_decode(const char *in, size_t inlen,
                          void *out, size_t outlen_max,
                          size_t *out_len, size_t *out_inrd)
 {
-	int err;
-	int chr;
 	uint8_t sext[4];
 	size_t incnt = 0;
 	size_t nsexts = 0;
 	size_t npads = 0;
 	size_t outlen = 0;
 	uint8_t *outb = out;
+	int chr = 0;
+	int err = -1;
 
 	while ((incnt < inlen) && (outlen < outlen_max) && (npads < 2)) {
 		chr = in[incnt];

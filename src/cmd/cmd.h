@@ -94,6 +94,8 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
+void cmd_execute_lsrefs(void);
+
 void cmd_execute_export(void);
 
 void cmd_execute_import(void);
@@ -210,7 +212,7 @@ gid_t cmd_parse_str_as_gid(const char *str);
 
 bool cmd_parse_str_as_bool(const char *str);
 
-void cmd_parse_str_as_segid(const char *str, struct silofs_laddr *out_laddr);
+void cmd_parse_str_as_refid(const char *refid, struct silofs_laddr *out_laddr);
 
 /* locking facilities */
 

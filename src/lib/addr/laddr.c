@@ -555,7 +555,7 @@ void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
 int silofs_laddr_from_ascii(struct silofs_laddr *laddr,
                             const struct silofs_strbuf *sbuf)
 {
-	struct silofs_laddr_repr repr = { .version = 2 };
+	struct silofs_laddr_repr repr = { .version = 0xFF };
 	int err;
 
 	err = laddr_repr_from_str(&repr, sbuf);

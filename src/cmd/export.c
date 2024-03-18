@@ -17,31 +17,29 @@
 #include "cmd.h"
 
 static const char *cmd_export_help_desc[] = {
-	"export [options] <repodir/name>",
+	"export --ref=id <repodir> [--outfile=path]",
 	"",
 	"options:",
-	"  -V, --view                   Display only logical addresses",
+	"  -r, --ref=id                 Reference id",
 	"  -f, --outfile=path           Output file (default: stdout)",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_export_in_args {
-	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
-	char   *name;
-	char   *password;
 	char   *outfile;
-	bool    viewonly;
+	char   *ref;
 };
 
 struct cmd_export_ctx {
 	struct cmd_export_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_ctx   *fs_ctx;
-	FILE *out_fp;
-	bool has_lockfile;
+	struct silofs_laddr     refid;
+	FILE *output;
+	bool has_repolock;
 };
 
 static struct cmd_export_ctx *cmd_export_ctx;
@@ -52,22 +50,19 @@ static void cmd_export_getopt(struct cmd_export_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "view", no_argument, NULL, 'V' },
+		{ "ref", required_argument, NULL, 'r' },
 		{ "outfile", required_argument, NULL, 'f' },
-		{ "password", required_argument, NULL, 'p' },
 		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("Vf:p:L:h", opts);
-		if (opt_chr == 'V') {
-			ctx->in_args.viewonly = true;
+		opt_chr = cmd_getopt("r:f:L:h", opts);
+		if (opt_chr == 'r') {
+			ctx->in_args.ref = cmd_strdup(optarg);
 		} else if (opt_chr == 'f') {
 			ctx->in_args.outfile = cmd_strdup(optarg);
-		} else if (opt_chr == 'p') {
-			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
@@ -76,53 +71,49 @@ static void cmd_export_getopt(struct cmd_export_ctx *ctx)
 			cmd_fatal_unsupported_opt();
 		}
 	}
-	cmd_getarg("repodir/name", &ctx->in_args.repodir_name);
+	cmd_getarg("repodir", &ctx->in_args.repodir);
 	cmd_endargs();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_export_acquire_lockfile(struct cmd_export_ctx *ctx)
+static void cmd_export_lock_repo(struct cmd_export_ctx *ctx)
 {
-	if (!ctx->has_lockfile) {
-		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
-		                      ctx->in_args.name);
-		ctx->has_lockfile = true;
+	if (!ctx->has_repolock) {
+		/* TODO: lock-repo */
+		ctx->has_repolock = true;
 	}
 }
 
-static void cmd_export_release_lockfile(struct cmd_export_ctx *ctx)
+static void cmd_export_unlock_repo(struct cmd_export_ctx *ctx)
 {
-	if (ctx->has_lockfile) {
-		cmd_lockfile_release(ctx->in_args.repodir_real,
-		                     ctx->in_args.name);
-		ctx->has_lockfile = false;
+	if (ctx->has_repolock) {
+		/* TODO: unlock-repo */
+		ctx->has_repolock = false;
 	}
 }
 
-static void cmd_export_open_outfile(struct cmd_export_ctx *ctx)
+static void cmd_export_open_output(struct cmd_export_ctx *ctx)
 {
-	const char *pathname = ctx->in_args.outfile;
-
-	if (pathname != NULL) {
-		ctx->out_fp = fopen(pathname, "w+");
-		if (ctx->out_fp == NULL) {
-			cmd_dief(errno, "failed to open: %s", pathname);
+	if (ctx->in_args.outfile != NULL) {
+		ctx->output = fopen(ctx->in_args.outfile, "w+");
+		if (ctx->output == NULL) {
+			cmd_dief(errno, "failed to open output: %s",
+			         ctx->in_args.outfile);
 		}
 	} else {
-		ctx->out_fp = stdout;
+		ctx->output = stdout;
 	}
 }
 
-static void cmd_export_close_outfile(struct cmd_export_ctx *ctx)
+static void cmd_export_close_output(struct cmd_export_ctx *ctx)
 {
-	const char *pathname = ctx->in_args.outfile;
-
-	if ((ctx->out_fp != NULL) && (ctx->out_fp != stdout)) {
-		if (fclose(ctx->out_fp) != 0) {
-			cmd_dief(errno, "failed to close: %s", pathname);
+	if ((ctx->output != NULL) && (ctx->output != stdout)) {
+		if (fclose(ctx->output) != 0) {
+			cmd_dief(errno, "failed to close output: %s",
+			         ctx->in_args.outfile);
 		}
-		ctx->out_fp = NULL;
+		ctx->output = NULL;
 	}
 }
 
@@ -135,20 +126,18 @@ static void cmd_export_finalize(struct cmd_export_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
 	cmd_bconf_reset(&ctx->fs_args.bconf);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
-	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.ref);
 	cmd_pstrfree(&ctx->in_args.outfile);
-	cmd_delpass(&ctx->in_args.password);
 	cmd_export_ctx = NULL;
 }
 
 static void cmd_export_atexit(void)
 {
 	if (cmd_export_ctx != NULL) {
-		cmd_export_release_lockfile(cmd_export_ctx);
-		cmd_export_close_outfile(cmd_export_ctx);
+		cmd_export_unlock_repo(cmd_export_ctx);
+		cmd_export_close_output(cmd_export_ctx);
 		cmd_export_finalize(cmd_export_ctx);
 	}
 }
@@ -166,21 +155,11 @@ static void cmd_export_enable_signals(void)
 
 static void cmd_export_prepare(struct cmd_export_ctx *ctx)
 {
-	cmd_check_exists(ctx->in_args.repodir_name);
-	cmd_check_isreg(ctx->in_args.repodir_name, false);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_parse_str_as_refid(ctx->in_args.ref, &ctx->refid);
+	cmd_check_exists(ctx->in_args.repodir);
 	cmd_check_nonemptydir(ctx->in_args.repodir, false);
 	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repopath(ctx->in_args.repodir_real);
-	cmd_check_fsname(ctx->in_args.name);
-}
-
-static void cmd_export_getpass(struct cmd_export_ctx *ctx)
-{
-	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, &ctx->in_args.password);
-	}
 }
 
 static void cmd_export_setup_fs_args(struct cmd_export_ctx *ctx)
@@ -188,15 +167,7 @@ static void cmd_export_setup_fs_args(struct cmd_export_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
-	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.name;
-}
-
-static void cmd_export_load_bconf(struct cmd_export_ctx *ctx)
-{
-	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
 static void cmd_export_setup_fs_ctx(struct cmd_export_ctx *ctx)
@@ -214,36 +185,6 @@ static void cmd_export_close_repo(struct cmd_export_ctx *ctx)
 	cmd_close_repo(ctx->fs_ctx);
 }
 
-static void cmd_export_require_brec(struct cmd_export_ctx *ctx)
-{
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
-}
-
-static void cmd_export_boot_fs(struct cmd_export_ctx *ctx)
-{
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
-}
-
-static void cmd_export_open_fs(struct cmd_export_ctx *ctx)
-{
-	cmd_open_fs(ctx->fs_ctx);
-}
-
-static void cmd_export_close_fs(struct cmd_export_ctx *ctx)
-{
-	cmd_close_fs(ctx->fs_ctx);
-}
-
-static void cmd_export_segaddr(const struct cmd_export_ctx *ctx,
-                               const struct silofs_laddr *laddr)
-{
-	struct silofs_strbuf sbuf;
-
-	silofs_laddr_to_base64(laddr, &sbuf);
-	fputs(sbuf.str, ctx->out_fp);
-	fputs(" ", ctx->out_fp);
-}
-
 static void cmd_export_load_seg(const struct cmd_export_ctx *ctx,
                                 const struct silofs_laddr *laddr, void *seg)
 {
@@ -251,7 +192,8 @@ static void cmd_export_load_seg(const struct cmd_export_ctx *ctx,
 
 	err = silofs_repo_read_at(ctx->fs_ctx->repo, laddr, seg);
 	if (err) {
-		cmd_dief(err, "failed to read: ltype=%d", laddr->ltype);
+		cmd_dief(err, "failed to read: ltype=%d len=%zu",
+		         laddr->ltype, laddr->len);
 	}
 }
 
@@ -263,7 +205,8 @@ static void cmd_export_load_brec(const struct cmd_export_ctx *ctx,
 
 	err = silofs_repo_load_obj(ctx->fs_ctx->repo, laddr, out_brec1k);
 	if (err) {
-		cmd_dief(err, "failed to load: ltype=%d", laddr->ltype);
+		cmd_dief(err, "failed to load: ltype=%d len=%zu",
+		         laddr->ltype, laddr->len);
 	}
 }
 
@@ -281,7 +224,7 @@ static void cmd_export_print_seg(const struct cmd_export_ctx *ctx,
 		cmd_dief(err, "base64 encode failure");
 	}
 	enc[len] = '\0';
-	fputs(enc, ctx->out_fp);
+	fputs(enc, ctx->output);
 	cmd_zfree(enc, enc_len);
 }
 
@@ -300,34 +243,30 @@ static void cmd_export_segdata(const struct cmd_export_ctx *ctx,
 static void cmd_export_bootrec(const struct cmd_export_ctx *ctx,
                                const struct silofs_laddr *laddr)
 {
-	struct silofs_bootrec1k brec1k;
+	struct silofs_bootrec1k brec1k = { .br_magic = 0xFFFFFFFF };
 
 	cmd_export_load_brec(ctx, laddr, &brec1k);
 	cmd_export_print_seg(ctx, &brec1k, sizeof(brec1k));
 }
 
-static void cmd_export_callback(void *user_ctx,
-                                const struct silofs_laddr *laddr)
+static void cmd_export_ref(const struct cmd_export_ctx *ctx)
 {
-	const struct cmd_export_ctx *ctx = user_ctx;
+	const struct silofs_laddr *laddr = &ctx->refid;
 
-	cmd_export_segaddr(ctx, laddr);
-	if (!ctx->in_args.viewonly) {
-		if (laddr->ltype == SILOFS_LTYPE_BOOTREC) {
-			cmd_export_bootrec(ctx, laddr);
-		} else {
-			cmd_export_segdata(ctx, laddr);
-		}
+	if (laddr->ltype == SILOFS_LTYPE_BOOTREC) {
+		cmd_export_bootrec(ctx, laddr);
+	} else {
+		cmd_export_segdata(ctx, laddr);
 	}
-	fputs("\n", ctx->out_fp);
-	fflush(ctx->out_fp);
+	fputs("\n", ctx->output);
+	fflush(ctx->output);
 }
 
 static void cmd_export_execute(struct cmd_export_ctx *ctx)
 {
-	cmd_export_open_outfile(ctx);
-	cmd_inspect_fs(ctx->fs_ctx, cmd_export_callback, ctx);
-	cmd_export_close_outfile(ctx);
+	cmd_export_open_output(ctx);
+	cmd_export_ref(ctx);
+	cmd_export_close_output(ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -336,7 +275,7 @@ void cmd_execute_export(void)
 {
 	struct cmd_export_ctx ctx = {
 		.fs_ctx = NULL,
-		.out_fp = stdout,
+		.output = stdout,
 	};
 
 	/* Do all cleanups upon exits */
@@ -348,50 +287,32 @@ void cmd_execute_export(void)
 	/* Verify user's arguments */
 	cmd_export_prepare(&ctx);
 
-	/* Require password */
-	cmd_export_getpass(&ctx);
-
 	/* Run with signals */
 	cmd_export_enable_signals();
+
+	/* Acquire global repo-lock */
+	cmd_export_lock_repo(&ctx);
 
 	/* Setup input arguments */
 	cmd_export_setup_fs_args(&ctx);
 
-	/* Require boot-config */
-	cmd_export_load_bconf(&ctx);
-
 	/* Setup execution environment */
 	cmd_export_setup_fs_ctx(&ctx);
-
-	/* Acquire lock */
-	cmd_export_acquire_lockfile(&ctx);
 
 	/* Open repository */
 	cmd_export_open_repo(&ctx);
 
-	/* Require valid boot-record */
-	cmd_export_require_brec(&ctx);
-
-	/* Require boot-able file-system */
-	cmd_export_boot_fs(&ctx);
-
-	/* Open file-system */
-	cmd_export_open_fs(&ctx);
-
 	/* Do actual export */
 	cmd_export_execute(&ctx);
-
-	/* Close file-system */
-	cmd_export_close_fs(&ctx);
 
 	/* Close repository */
 	cmd_export_close_repo(&ctx);
 
-	/* Release lock */
-	cmd_export_release_lockfile(&ctx);
-
 	/* Destroy environment instance */
 	cmd_export_destroy_fs_ctx(&ctx);
+
+	/* Release global-repo lock */
+	cmd_export_unlock_repo(&ctx);
 
 	/* Post execution cleanups */
 	cmd_export_finalize(&ctx);

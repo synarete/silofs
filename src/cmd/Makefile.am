@@ -23,6 +23,7 @@ silofs_SOURCES += fsexec.c
 silofs_SOURCES += getpass.c
 silofs_SOURCES += init.c
 silofs_SOURCES += lockfile.c
+silofs_SOURCES += lsrefs.c
 silofs_SOURCES += findmnt.c
 silofs_SOURCES += main.c
 silofs_SOURCES += mkfs.c

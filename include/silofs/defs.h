@@ -62,14 +62,17 @@
 /* max path-length of repository-path (including null) */
 #define SILOFS_REPOPATH_MAX             (1536)
 
-/* size of repository meta-file descriptor */
-#define SILOFS_REPO_METADATA_SIZE       (1024)
+/* size of repository meta-files  */
+#define SILOFS_REPO_METAFILE_SIZE       (1024)
 
 /* repository meta sub-dir name */
 #define SILOFS_REPO_DOTS_DIRNAME        ".silofs"
 
 /* repository meta descriptor-file name */
 #define SILOFS_REPO_META_FILENAME       "meta"
+
+/* repository global lock file name */
+#define SILOFS_REPO_LOCK_FILENAME       "lock"
 
 /* repository blobs sub-directory name */
 #define SILOFS_REPO_BLOBS_DIRNAME       "blobs"

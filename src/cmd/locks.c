@@ -30,7 +30,6 @@ struct cmd_lockfile_ctx {
 	int     dfd;
 };
 
-
 static int do_fstatat(int dirfd, const char *pathname, struct stat *st)
 {
 	return silofs_sys_fstatat(dirfd, pathname, st, 0);
@@ -158,33 +157,140 @@ static void cmd_lockfile_unlinkall(const struct cmd_lockfile_ctx *lf_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_lockfile_acquire(const char *repodir,
-                                 const char *name, size_t retry)
+void cmd_lock_fs(const char *repodir, const char *name)
 {
 	struct cmd_lockfile_ctx lf_ctx;
 
-	cmd_lockfile_setup(&lf_ctx, repodir, name, retry);
+	cmd_lockfile_setup(&lf_ctx, repodir, name, 3);
 	cmd_lockfile_wait_noent(&lf_ctx);
 	cmd_lockfile_mktemp(&lf_ctx);
 	cmd_lockfile_mklock(&lf_ctx);
 	cmd_lockfile_fini(&lf_ctx);
 }
 
-void cmd_lockfile_acquire1(const char *repodir, const char *name)
-{
-	cmd_lockfile_acquire(repodir, name, 1);
-}
-
-void cmd_lockfile_acquire4(const char *repodir, const char *name)
-{
-	cmd_lockfile_acquire(repodir, name, 4);
-}
-
-void cmd_lockfile_release(const char *repodir, const char *name)
+void cmd_unlock_fs(const char *repodir, const char *name)
 {
 	struct cmd_lockfile_ctx lf_ctx;
 
 	cmd_lockfile_setup(&lf_ctx, repodir, name, 1);
 	cmd_lockfile_unlinkall(&lf_ctx);
 	cmd_lockfile_fini(&lf_ctx);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void cmd_repo_lockpath(const char *repodir, char **out_path)
+{
+	char *dotsdir = NULL;
+
+	cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME, &dotsdir);
+	cmd_join_path(dotsdir, SILOFS_REPO_LOCK_FILENAME, out_path);
+	cmd_pstrfree(&dotsdir);
+}
+
+static void cmd_open_repo_lock(const char *path, int *out_fd)
+{
+	struct stat st = { .st_size = 0 };
+	int fd = -1;
+	int err;
+
+	err = silofs_sys_open(path, O_RDWR, 0, &fd);
+	if (err) {
+		cmd_dief(err, "failed to open repo lock: %s", path);
+	}
+	err = silofs_sys_fstat(fd, &st);
+	if (err) {
+		cmd_dief(err, "failed to stat repo lock: %s", path);
+	}
+	if (st.st_size != SILOFS_REPO_METAFILE_SIZE) {
+		cmd_dief(0, "bad repo lock: %s", path);
+	}
+	*out_fd = fd;
+}
+
+static void cmd_close_repo_lock(const char *path, int *pfd)
+{
+	int err;
+
+	err = silofs_sys_close(*pfd);
+	if (err) {
+		cmd_dief(err, "failed to close repo lock: %s", path);
+	}
+	*pfd = -1;
+}
+
+static void cmd_acquire_repo_lock(const char *path, int fd, bool wrlck)
+{
+	struct stat st = { .st_size = 0 };
+	struct flock fl = { .l_type = wrlck ? F_WRLCK : F_RDLCK };
+	int err;
+
+	err = silofs_sys_fstat(fd, &st);
+	if (err) {
+		cmd_dief(err, "failed to stat repo lock: %s", path);
+	}
+	fl.l_len = st.st_size;
+	err = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
+	if (err) {
+		cmd_dief(err, "failed to acquire repo lock: %s", path);
+	}
+}
+
+static void cmd_release_repo_lock(const char *path, int fd)
+{
+	struct stat st = { .st_size = 0 };
+	struct flock fl = { .l_type = F_UNLCK };
+	int err;
+
+	err = silofs_sys_fstat(fd, &st);
+	if (err) {
+		cmd_dief(err, "failed to stat repo lock: %s", path);
+	}
+	fl.l_len = st.st_size;
+	err = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
+	if (err) {
+		cmd_dief(err, "failed to release repo lock: %s", path);
+	}
+}
+
+static void cmd_do_lock_repo(const char *lockfile, bool wrlck, int *out_fd)
+{
+	cmd_open_repo_lock(lockfile, out_fd);
+	cmd_acquire_repo_lock(lockfile, *out_fd, wrlck);
+}
+
+static void cmd_do_unlock_repo(const char *lockfile, int *pfd)
+{
+	cmd_release_repo_lock(lockfile, *pfd);
+	cmd_close_repo_lock(lockfile, pfd);
+}
+
+static void cmd_lock_repo(const char *repodir, bool wrlck, int *out_fd)
+{
+	char *lockfile = NULL;
+
+	cmd_repo_lockpath(repodir, &lockfile);
+	cmd_do_lock_repo(lockfile, wrlck, out_fd);
+	cmd_pstrfree(&lockfile);
+}
+
+void cmd_wrlock_repo(const char *repodir, int *pfd)
+{
+	cmd_lock_repo(repodir, true, pfd);
+}
+
+void cmd_rdlock_repo(const char *repodir, int *pfd)
+{
+	cmd_lock_repo(repodir, false, pfd);
+}
+
+void cmd_unlock_repo(const char *repodir, int *pfd)
+{
+	char *lockfile = NULL;
+
+	if (repodir && pfd && (*pfd > 0)) {
+		cmd_repo_lockpath(repodir, &lockfile);
+		cmd_do_unlock_repo(lockfile, pfd);
+		cmd_pstrfree(&lockfile);
+	}
 }

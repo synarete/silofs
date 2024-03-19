@@ -39,6 +39,7 @@ struct cmd_import_ctx {
 	struct silofs_fs_ctx   *fs_ctx;
 	struct silofs_laddr     refid;
 	FILE *input;
+	int repolock_fd;
 	bool has_repolock;
 };
 
@@ -80,7 +81,7 @@ static void cmd_import_getopt(struct cmd_import_ctx *ctx)
 static void cmd_import_lock_repo(struct cmd_import_ctx *ctx)
 {
 	if (!ctx->has_repolock) {
-		/* TODO: lock-repo */
+		cmd_wrlock_repo(ctx->in_args.repodir, &ctx->repolock_fd);
 		ctx->has_repolock = true;
 	}
 }
@@ -88,7 +89,7 @@ static void cmd_import_lock_repo(struct cmd_import_ctx *ctx)
 static void cmd_import_unlock_repo(struct cmd_import_ctx *ctx)
 {
 	if (ctx->has_repolock) {
-		/* TODO: unlock-repo */
+		cmd_unlock_repo(ctx->in_args.repodir, &ctx->repolock_fd);
 		ctx->has_repolock = false;
 	}
 }
@@ -298,6 +299,7 @@ void cmd_execute_import(void)
 	struct cmd_import_ctx ctx = {
 		.fs_ctx = NULL,
 		.input = stdout,
+		.repolock_fd = -1,
 	};
 
 	/* Do all cleanups upon exits */

@@ -39,6 +39,7 @@ struct cmd_export_ctx {
 	struct silofs_fs_ctx   *fs_ctx;
 	struct silofs_laddr     refid;
 	FILE *output;
+	int repolock_fd;
 	bool has_repolock;
 };
 
@@ -80,7 +81,7 @@ static void cmd_export_getopt(struct cmd_export_ctx *ctx)
 static void cmd_export_lock_repo(struct cmd_export_ctx *ctx)
 {
 	if (!ctx->has_repolock) {
-		/* TODO: lock-repo */
+		cmd_rdlock_repo(ctx->in_args.repodir, &ctx->repolock_fd);
 		ctx->has_repolock = true;
 	}
 }
@@ -88,7 +89,7 @@ static void cmd_export_lock_repo(struct cmd_export_ctx *ctx)
 static void cmd_export_unlock_repo(struct cmd_export_ctx *ctx)
 {
 	if (ctx->has_repolock) {
-		/* TODO: unlock-repo */
+		cmd_unlock_repo(ctx->in_args.repodir, &ctx->repolock_fd);
 		ctx->has_repolock = false;
 	}
 }
@@ -276,6 +277,7 @@ void cmd_execute_export(void)
 	struct cmd_export_ctx ctx = {
 		.fs_ctx = NULL,
 		.output = stdout,
+		.repolock_fd = -1,
 	};
 
 	/* Do all cleanups upon exits */

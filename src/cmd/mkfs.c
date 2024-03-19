@@ -120,8 +120,8 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
-		cmd_lockfile_acquire1(ctx->in_args.repodir_real,
-		                      ctx->in_args.name);
+		cmd_lock_fs(ctx->in_args.repodir_real,
+		            ctx->in_args.name);
 		ctx->has_lockfile = true;
 	}
 }
@@ -129,8 +129,8 @@ static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_release_lockfile(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
-		cmd_lockfile_release(ctx->in_args.repodir_real,
-		                     ctx->in_args.name);
+		cmd_unlock_fs(ctx->in_args.repodir_real,
+		              ctx->in_args.name);
 		ctx->has_lockfile = false;
 	}
 }

@@ -199,7 +199,7 @@ static void validate_persistent_types_size2(void)
 	REQUIRE_SIZEOF(struct silofs_dtree_node, SILOFS_DIR_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_data_block4, SILOFS_FILE_HEAD2_LEAF_SIZE);
 	REQUIRE_SIZEOF(struct silofs_data_block64, SILOFS_FILE_TREE_LEAF_SIZE);
-	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METADATA_SIZE);
+	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METAFILE_SIZE);
 }
 
 static void validate_persistent_types_members(void)

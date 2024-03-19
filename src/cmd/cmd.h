@@ -216,11 +216,16 @@ void cmd_parse_str_as_refid(const char *refid, struct silofs_laddr *out_laddr);
 
 /* locking facilities */
 
-void cmd_lockfile_acquire1(const char *repodir, const char *name);
+void cmd_lock_fs(const char *repodir, const char *name);
 
-void cmd_lockfile_acquire4(const char *repodir, const char *name);
+void cmd_unlock_fs(const char *repodir, const char *name);
 
-void cmd_lockfile_release(const char *repodir, const char *name);
+
+void cmd_wrlock_repo(const char *repodir, int *pfd);
+
+void cmd_rdlock_repo(const char *repodir, int *pfd);
+
+void cmd_unlock_repo(const char *repodir, int *pfd);
 
 
 /* complex fs operations */

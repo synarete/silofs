@@ -26,7 +26,7 @@
 
 /* logical-segment control file */
 struct silofs_lsegf {
-	struct silofs_strbuf           lsf_name;
+	struct silofs_strbuf            lsf_name;
 	struct silofs_lsegid            lsf_id;
 	struct silofs_list_head         lsf_htb_lh;
 	struct silofs_list_head         lsf_lru_lh;
@@ -40,14 +40,16 @@ struct silofs_lsegf {
 struct silofs_repo_defs {
 	const char     *re_dots_name;
 	const char     *re_meta_name;
+	const char     *re_lock_name;
 	const char     *re_blobs_name;
 	const char     *re_objs_name;
-	unsigned int    re_objs_nsubs;
+	uint32_t        re_objs_nsubs;
 };
 
 static const struct silofs_repo_defs repo_defs = {
 	.re_dots_name   = SILOFS_REPO_DOTS_DIRNAME,
 	.re_meta_name   = SILOFS_REPO_META_FILENAME,
+	.re_lock_name   = SILOFS_REPO_LOCK_FILENAME,
 	.re_blobs_name  = SILOFS_REPO_BLOBS_DIRNAME,
 	.re_objs_name   = SILOFS_REPO_OBJS_DIRNAME,
 	.re_objs_nsubs  = SILOFS_REPO_OBJS_NSUBS,
@@ -1583,16 +1585,15 @@ static int repo_create_skel_subdir(const struct silofs_repo *repo,
                                    const char *name, mode_t mode)
 {
 	struct stat st = { .st_size = 0 };
-	const int dfd = repo->re_dots_dfd;
 	int err;
 
-	err = do_mkdirat(dfd, name, mode);
+	err = do_mkdirat(repo->re_dots_dfd, name, mode);
 	if (err && (err != -EEXIST)) {
 		log_warn("repo mkdirat failed: name=%s mode=%o err=%d",
 		         name, mode, err);
 		return err;
 	}
-	err = do_fstatat(dfd, name, &st, 0);
+	err = do_fstatat(repo->re_dots_dfd, name, &st, 0);
 	if (err) {
 		return err;
 	}
@@ -1606,15 +1607,14 @@ static int repo_create_skel_subdir(const struct silofs_repo *repo,
 static int repo_create_skel_subfile(const struct silofs_repo *repo,
                                     const char *name, mode_t mode, loff_t len)
 {
-	const int dfd = repo->re_dots_dfd;
 	int fd = -1;
 	int err;
 
-	err = do_unlinkat(dfd, name, 0);
+	err = do_unlinkat(repo->re_dots_dfd, name, 0);
 	if (err && (err != -ENOENT)) {
 		return err;
 	}
-	err = do_openat(dfd, name, O_CREAT | O_RDWR, mode, &fd);
+	err = do_openat(repo->re_dots_dfd, name, O_CREAT | O_RDWR, mode, &fd);
 	if (err) {
 		return err;
 	}
@@ -1648,8 +1648,14 @@ static int repo_create_skel(const struct silofs_repo *repo)
 		return err;
 	}
 
+	size = SILOFS_REPO_METAFILE_SIZE;
 	name = repo_defs.re_meta_name;
-	size = SILOFS_REPO_METADATA_SIZE;
+	err = repo_create_skel_subfile(repo, name, 0600, size);
+	if (err) {
+		return err;
+	}
+
+	name = repo_defs.re_lock_name;
 	err = repo_create_skel_subfile(repo, name, 0600, size);
 	if (err) {
 		return err;
@@ -1679,10 +1685,9 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
                                      const char *name, loff_t min_size)
 {
 	struct stat st = { .st_size = 0 };
-	const int dfd = repo->re_dots_dfd;
 	int err;
 
-	err = do_fstatat(dfd, name, &st, 0);
+	err = do_fstatat(repo->re_dots_dfd, name, &st, 0);
 	if (err) {
 		return err;
 	}
@@ -1709,7 +1714,7 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	}
 
 	name = repo_defs.re_meta_name;
-	size = SILOFS_REPO_METADATA_SIZE;
+	size = SILOFS_REPO_METAFILE_SIZE;
 	err = repo_require_skel_subfile(repo, name, size);
 	if (err) {
 		return err;
@@ -1767,15 +1772,14 @@ static int repo_format_meta(const struct silofs_repo *repo)
 {
 	struct silofs_repo_meta rmeta;
 	const char *name = repo_defs.re_meta_name;
-	const int dfd = repo->re_dots_dfd;
 	int fd = -1;
 	int err;
 
-	rmeta_init(&rmeta);
-	err = do_openat(dfd, name, O_RDWR, 0600, &fd);
+	err = do_openat(repo->re_dots_dfd, name, O_RDWR, 0600, &fd);
 	if (err) {
 		return err;
 	}
+	rmeta_init(&rmeta);
 	err = do_pwriten(fd, &rmeta, sizeof(rmeta), 0);
 	if (err) {
 		goto out;
@@ -1793,19 +1797,42 @@ out:
 	return err;
 }
 
+static int repo_format_lock(const struct silofs_repo *repo)
+{
+	char data[SILOFS_REPO_METAFILE_SIZE] = "SILOFS_LOCK\n";
+	const char *name = repo_defs.re_lock_name;
+	int fd = -1;
+	int err;
+
+	err = do_openat(repo->re_dots_dfd, name, O_RDWR, 0600, &fd);
+	if (err) {
+		return err;
+	}
+	err = do_pwriten(fd, data, sizeof(data), 0);
+	if (err) {
+		goto out;
+	}
+	err = do_fdatasync(fd);
+	if (err) {
+		goto out;
+	}
+out:
+	do_closefd(&fd);
+	return err;
+}
+
 static int repo_require_meta(const struct silofs_repo *repo)
 {
 	struct silofs_repo_meta rmeta;
 	const char *name = repo_defs.re_meta_name;
-	const int dfd = repo->re_dots_dfd;
 	int fd = -1;
 	int err;
 
-	rmeta_init(&rmeta);
-	err = do_openat(dfd, name, O_RDONLY, 0, &fd);
+	err = do_openat(repo->re_dots_dfd, name, O_RDONLY, 0, &fd);
 	if (err) {
 		return err;
 	}
+	rmeta_init(&rmeta);
 	err = do_preadn(fd, &rmeta, sizeof(rmeta), 0);
 	if (err) {
 		goto out;
@@ -1814,6 +1841,27 @@ static int repo_require_meta(const struct silofs_repo *repo)
 	if (err) {
 		goto out;
 	}
+out:
+	do_closefd(&fd);
+	return err;
+}
+
+static int repo_require_lock(const struct silofs_repo *repo)
+{
+	char data[SILOFS_REPO_METAFILE_SIZE] = "";
+	const char *name = repo_defs.re_lock_name;
+	int fd = -1;
+	int err;
+
+	err = do_openat(repo->re_dots_dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		return err;
+	}
+	err = do_preadn(fd, data, sizeof(data), 0);
+	if (err) {
+		goto out;
+	}
+	err = strncmp(data, "SILOFS_LOCK", 11) ? -SILOFS_EBADREPO : 0;
 out:
 	do_closefd(&fd);
 	return err;
@@ -1862,6 +1910,10 @@ static int repo_do_format(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
+	err = repo_format_lock(repo);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -1899,6 +1951,10 @@ static int repo_do_open(struct silofs_repo *repo)
 		return err;
 	}
 	err = repo_require_meta(repo);
+	if (err) {
+		return err;
+	}
+	err = repo_require_lock(repo);
 	if (err) {
 		return err;
 	}

@@ -10,10 +10,10 @@ EXTRA_DIST += VERSION
 EXTRA_DIST += REVISION
 EXTRA_DIST += COPYING
 EXTRA_DIST += TODO
+EXTRA_DIST += devel.mk
 EXTRA_DIST += common.mk.in
 EXTRA_DIST += sedsub.mk.in
 EXTRA_DIST += build-aux/autom4te.cfg.in
-EXTRA_DIST += devel.mk
 
 BUILT_SOURCES = REVISION
 CLEANFILES = REVISION
@@ -21,10 +21,3 @@ CLEANFILES = REVISION
 REVISION:
 	@$(top_srcdir)/version.sh --revision > $@
 	@echo >> $@
-
-
-
-
-
-
-

@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+
+from silofs import archive as silofs_archive
+
+prog_info = silofs_archive.ProgInfo()
+prog_info.version = "@PACKAGE_VERSION@"
+prog_info.release = "@PACKAGE_RELEASE@"
+prog_info.revision = "@PACKAGE_REVISION@"
+
+silofs_archive.main(prog_info)

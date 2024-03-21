@@ -193,7 +193,7 @@ jobs:
           mkdir /mnt/test/A
           echo "hello, world" > /mnt/test/A/hello
           cat /mnt/test/A/hello
-          silofs findmnt
+          silofs lsmnt
       - name: Umount file-system
         run: silofs umount /mnt/test
       - name: Cleanups
@@ -236,7 +236,7 @@ jobs:
       - name: Mount file-system
         run: |
           silofs mount -p 12345678 ./build/repo/test /mnt/test
-          silofs findmnt
+          silofs lsmnt
       - name: I/O operations
         run: |
           mkdir /mnt/test/A

@@ -194,8 +194,8 @@ class CmdSilofs(CmdExec):
     def umount(self, mntpoint: Path) -> None:
         self.execute_run(["umount", mntpoint])
 
-    def findmnt(self) -> typing.Iterable[Path]:
-        mnts = self.execute_sub(["findmnt"])
+    def lsmnt(self) -> typing.Iterable[Path]:
+        mnts = self.execute_sub(["lsmnt"])
         return [Path(mnt) for mnt in mnts.splitlines()]
 
     def show_version(self, pathname: Path) -> str:

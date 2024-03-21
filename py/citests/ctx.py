@@ -226,11 +226,11 @@ class TestEnv:
         self.exec_mount(
             allow_xattr_acl=allow_xattr_acl, writeback_cache=writeback_cache
         )
-        self.exec_findmnt()
+        self.exec_lsmnt()
 
     def exec_teardown_fs(self) -> None:
         self.update_bconf()
-        self.exec_findmnt()
+        self.exec_lsmnt()
         self.exec_umount()
         self.exec_rmfs()
 
@@ -257,9 +257,9 @@ class TestEnv:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.fsck(repodir_name, self._passwd())
 
-    def exec_findmnt(self) -> None:
+    def exec_lsmnt(self) -> None:
         mntp = self.cfg.mntdir
-        mnts = self.cmd.silofs.findmnt()
+        mnts = self.cmd.silofs.lsmnt()
         self.expect.within(mntp, mnts)
 
     def load_bconf(self, name: str = "") -> typing.Dict[str, typing.Any]:

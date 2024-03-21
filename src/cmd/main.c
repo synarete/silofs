@@ -152,7 +152,7 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(mkfs),
 	DEFCMD(mount),
 	DEFCMD(umount),
-	DEFCMD(findmnt),
+	DEFCMD(lsmnt),
 	DEFCMD(show),
 	DEFCMD(snap),
 	DEFCMD(sync),

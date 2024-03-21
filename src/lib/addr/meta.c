@@ -59,6 +59,7 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
 void silofs_uuid_unparse(const struct silofs_uuid *uu,
                          struct silofs_strbuf *sbuf)
 {
+	silofs_strbuf_reset(sbuf);
 	uuid_unparse_lower(uu->uu, sbuf->str);
 }
 

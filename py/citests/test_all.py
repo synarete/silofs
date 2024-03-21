@@ -11,6 +11,7 @@ from . import test_snap
 from . import test_xprogs
 
 TESTS = [
+    test_basic.test_show,
     test_basic.test_version,
     test_basic.test_init,
     test_basic.test_mkfs,

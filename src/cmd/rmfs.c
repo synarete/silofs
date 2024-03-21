@@ -95,6 +95,8 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 {
 	struct stat st[2];
 	char *path[2] = { NULL, NULL };
+	char *repodir = NULL;
+	char *name = NULL;
 	struct silofs_ioc_query *qry = &ctx->ioc_qry;
 	int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd = -1;
@@ -104,21 +106,35 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 	if (err) {
 		goto out;
 	}
+
+	silofs_memzero(qry, sizeof(*qry));
+	qry->qtype = SILOFS_QUERY_REPO;
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
+	if (err) {
+		goto out;
+	}
+	repodir = cmd_strdup(qry->u.repo.path);
+
+	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_BOOT;
 	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}
-	cmd_join_path(qry->u.bootrec.repo, qry->u.bootrec.name, &path[0]);
+	name = cmd_strdup(qry->u.boot.name);
+
+	cmd_join_path(repodir, name, &path[0]);
 	err = silofs_sys_stat(path[0], &st[0]);
 	if (err) {
 		goto out;
 	}
+
 	cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.name, &path[1]);
 	err = silofs_sys_stat(path[1], &st[1]);
 	if (err) {
 		goto out;
 	}
+
 	if ((st[0].st_ino == st[1].st_ino) &&
 	    (st[0].st_dev == st[1].st_dev)) {
 		cmd_dief(EBUSY, "currently mounted at: %s", mi->mntdir);
@@ -127,6 +143,8 @@ out:
 	silofs_sys_closefd(&dfd);
 	cmd_pstrfree(&path[0]);
 	cmd_pstrfree(&path[1]);
+	cmd_pstrfree(&name);
+	cmd_pstrfree(&repodir);
 }
 
 static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)

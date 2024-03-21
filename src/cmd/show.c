@@ -22,7 +22,8 @@ static const char *cmd_show_help_desc[] = {
 	"",
 	"sub commands:",
 	"  version      Show mounted file-system's version",
-	"  boot         Show back-end repo dir-path and fs-name",
+	"  repo         Show back-end repository dir-path",
+	"  boot         Show file-system name and id",
 	"  proc         Show state of active mount daemon",
 	"  spstats      Show space-allocations stats",
 	"  statx        Show extended file stats",
@@ -39,6 +40,7 @@ struct cmd_show_ctx {
 	struct cmd_show_in_args in_args;
 	union silofs_ioc_u     *ioc;
 	enum silofs_query_type  qtype;
+	FILE *out_fp;
 };
 
 static struct cmd_show_ctx *cmd_show_ctx;
@@ -70,6 +72,7 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION]  = "version",
+	[SILOFS_QUERY_REPO]     = "repo",
 	[SILOFS_QUERY_BOOT]     = "boot",
 	[SILOFS_QUERY_PROC]     = "proc",
 	[SILOFS_QUERY_SPSTATS]  = "spstats",
@@ -155,14 +158,21 @@ static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
 static void cmd_show_version(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s\n", ctx->ioc->query.u.version.string);
+	fprintf(ctx->out_fp, "%s\n", ctx->ioc->query.u.version.string);
+}
+
+static void cmd_show_repo(struct cmd_show_ctx *ctx)
+{
+	cmd_show_do_ioctl_query(ctx);
+	fprintf(ctx->out_fp, "%s\n", ctx->ioc->query.u.repo.path);
 }
 
 static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	printf("%s/%s\n", ctx->ioc->query.u.bootrec.repo,
-	       ctx->ioc->query.u.bootrec.name);
+	fprintf(ctx->out_fp, "%s %s\n",
+	        ctx->ioc->query.u.boot.name,
+	        ctx->ioc->query.u.boot.fsid);
 }
 
 struct silofs_msflag_name {
@@ -172,8 +182,6 @@ struct silofs_msflag_name {
 
 static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 {
-	bool first = true;
-	size_t len;
 	const char *end = buf + bsz;
 	const struct silofs_msflag_name *ms_name = NULL;
 	const struct silofs_msflag_name ms_names[] = {
@@ -184,6 +192,8 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 		{ MS_MANDLOCK,  "mandlock" },
 		{ MS_NOATIME,   "noatime" },
 	};
+	size_t len = 0;
+	bool first = true;
 
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(ms_names); ++i) {
 		ms_name = &ms_names[i];
@@ -204,36 +214,41 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 	}
 }
 
-static void print_msflags(unsigned long msflags)
+static void cmd_show_msflags(const struct cmd_show_ctx *ctx,
+                             unsigned long msflags)
 {
 	char mntfstr[128] = "";
 
 	msflags_str(msflags, mntfstr, sizeof(mntfstr) - 1);
-	printf("mount-flags: %s\n", mntfstr);
+	fprintf(ctx->out_fp, "mount-flags: %s\n", mntfstr);
 }
 
-static void print_pid(const char *name, pid_t pid)
+static void cmd_show_pid(const struct cmd_show_ctx *ctx,
+                         const char *name, pid_t pid)
 {
-	printf("%s: %ld\n", name, (long)pid);
+	fprintf(ctx->out_fp, "%s: %ld\n", name, (long)pid);
 }
 
-static void print_time(const char *name, time_t tm)
+static void cmd_show_time(const struct cmd_show_ctx *ctx,
+                          const char *name, time_t tm)
 {
-	printf("%s: %ld\n", name, tm);
+	fprintf(ctx->out_fp, "%s: %ld\n", name, tm);
 }
 
-static void print_count(const char *prefix, const char *name, ssize_t cnt)
+static void cmd_show_counter(const struct cmd_show_ctx *ctx,
+                             const char *prefix, const char *name, ssize_t val)
 {
 	if (prefix && strlen(prefix)) {
-		printf("%s.%s: %ld\n", prefix, name, cnt);
+		fprintf(ctx->out_fp, "%s.%s: %ld\n", prefix, name, val);
 	} else {
-		printf("%s: %ld\n", name, cnt);
+		fprintf(ctx->out_fp, "%s: %ld\n", name, val);
 	}
 }
 
-static void print_count1(const char *name, size_t cnt)
+static void cmd_show_ucounter(const struct cmd_show_ctx *ctx,
+                              const char *name, size_t val)
 {
-	printf("%s: %lu\n", name, cnt);
+	fprintf(ctx->out_fp, "%s: %lu\n", name, val);
 }
 
 static void cmd_show_proc(struct cmd_show_ctx *ctx)
@@ -241,61 +256,61 @@ static void cmd_show_proc(struct cmd_show_ctx *ctx)
 	const struct silofs_query_proc *qpr = &ctx->ioc->query.u.proc;
 
 	cmd_show_do_ioctl_query(ctx);
-	print_pid("pid", (pid_t)qpr->pid);
-	print_time("uptime", (time_t)qpr->uptime);
-	print_msflags(qpr->msflags);
-	print_count1("memsz_max", qpr->memsz_max);
-	print_count1("memsz_cur", qpr->memsz_cur);
-	print_count1("bopen_cur", qpr->bopen_cur);
-	print_count1("iopen_max", qpr->iopen_max);
-	print_count1("iopen_cur", qpr->iopen_cur);
+	cmd_show_pid(ctx, "pid", (pid_t)qpr->pid);
+	cmd_show_time(ctx, "uptime", (time_t)qpr->uptime);
+	cmd_show_msflags(ctx, qpr->msflags);
+	cmd_show_ucounter(ctx, "memsz_max", qpr->memsz_max);
+	cmd_show_ucounter(ctx, "memsz_cur", qpr->memsz_cur);
+	cmd_show_ucounter(ctx, "bopen_cur", qpr->bopen_cur);
+	cmd_show_ucounter(ctx, "iopen_max", qpr->iopen_max);
+	cmd_show_ucounter(ctx, "iopen_cur", qpr->iopen_cur);
 }
 
-static void print_spacestats(const struct silofs_spacestats *spst)
+static void cmd_show_spacestats(const struct cmd_show_ctx *ctx,
+                                const struct silofs_spacestats *spst)
 {
-	const char *prefix;
+	const char *prefix = "";
 
-	prefix = "";
-	print_time("btime", spst->btime);
-	print_time("ctime", spst->ctime);
-	print_count(prefix, "capacity", (ssize_t)spst->capacity);
-	print_count(prefix, "vspacesize", (ssize_t)spst->vspacesize);
+	cmd_show_time(ctx, "btime", spst->btime);
+	cmd_show_time(ctx, "ctime", spst->ctime);
+	cmd_show_counter(ctx, prefix, "capacity", (ssize_t)spst->capacity);
+	cmd_show_counter(ctx, prefix, "vspacesize", (ssize_t)spst->vspacesize);
 	prefix = "lsegs";
-	print_count(prefix, "ndata1k", spst->lsegs.ndata1k);
-	print_count(prefix, "ndata4k", spst->lsegs.ndata4k);
-	print_count(prefix, "ndatabk", spst->lsegs.ndatabk);
-	print_count(prefix, "nsuper", spst->lsegs.nsuper);
-	print_count(prefix, "nspnode", spst->lsegs.nspnode);
-	print_count(prefix, "nspleaf", spst->lsegs.nspleaf);
-	print_count(prefix, "ninode", spst->lsegs.ninode);
-	print_count(prefix, "nxanode", spst->lsegs.nxanode);
-	print_count(prefix, "ndtnode", spst->lsegs.ndtnode);
-	print_count(prefix, "nftnode", spst->lsegs.nftnode);
-	print_count(prefix, "nsymval", spst->lsegs.nsymval);
+	cmd_show_counter(ctx, prefix, "ndata1k", spst->lsegs.ndata1k);
+	cmd_show_counter(ctx, prefix, "ndata4k", spst->lsegs.ndata4k);
+	cmd_show_counter(ctx, prefix, "ndatabk", spst->lsegs.ndatabk);
+	cmd_show_counter(ctx, prefix, "nsuper", spst->lsegs.nsuper);
+	cmd_show_counter(ctx, prefix, "nspnode", spst->lsegs.nspnode);
+	cmd_show_counter(ctx, prefix, "nspleaf", spst->lsegs.nspleaf);
+	cmd_show_counter(ctx, prefix, "ninode", spst->lsegs.ninode);
+	cmd_show_counter(ctx, prefix, "nxanode", spst->lsegs.nxanode);
+	cmd_show_counter(ctx, prefix, "ndtnode", spst->lsegs.ndtnode);
+	cmd_show_counter(ctx, prefix, "nftnode", spst->lsegs.nftnode);
+	cmd_show_counter(ctx, prefix, "nsymval", spst->lsegs.nsymval);
 	prefix = "bks";
-	print_count(prefix, "ndata1k", spst->bks.ndata1k);
-	print_count(prefix, "ndata4k", spst->bks.ndata4k);
-	print_count(prefix, "ndatabk", spst->bks.ndatabk);
-	print_count(prefix, "nsuper", spst->bks.nsuper);
-	print_count(prefix, "nspnode", spst->bks.nspnode);
-	print_count(prefix, "nspleaf", spst->bks.nspleaf);
-	print_count(prefix, "ninode", spst->bks.ninode);
-	print_count(prefix, "nxanode", spst->bks.nxanode);
-	print_count(prefix, "ndtnode", spst->bks.ndtnode);
-	print_count(prefix, "nftnode", spst->bks.nftnode);
-	print_count(prefix, "nsymval", spst->bks.nsymval);
+	cmd_show_counter(ctx, prefix, "ndata1k", spst->bks.ndata1k);
+	cmd_show_counter(ctx, prefix, "ndata4k", spst->bks.ndata4k);
+	cmd_show_counter(ctx, prefix, "ndatabk", spst->bks.ndatabk);
+	cmd_show_counter(ctx, prefix, "nsuper", spst->bks.nsuper);
+	cmd_show_counter(ctx, prefix, "nspnode", spst->bks.nspnode);
+	cmd_show_counter(ctx, prefix, "nspleaf", spst->bks.nspleaf);
+	cmd_show_counter(ctx, prefix, "ninode", spst->bks.ninode);
+	cmd_show_counter(ctx, prefix, "nxanode", spst->bks.nxanode);
+	cmd_show_counter(ctx, prefix, "ndtnode", spst->bks.ndtnode);
+	cmd_show_counter(ctx, prefix, "nftnode", spst->bks.nftnode);
+	cmd_show_counter(ctx, prefix, "nsymval", spst->bks.nsymval);
 	prefix = "objs";
-	print_count(prefix, "ndata1k", spst->objs.ndata1k);
-	print_count(prefix, "ndata4k", spst->objs.ndata4k);
-	print_count(prefix, "ndatabk", spst->objs.ndatabk);
-	print_count(prefix, "nsuper", spst->objs.nsuper);
-	print_count(prefix, "nspnode", spst->objs.nspnode);
-	print_count(prefix, "nspleaf", spst->objs.nspleaf);
-	print_count(prefix, "ninode", spst->objs.ninode);
-	print_count(prefix, "nxanode", spst->objs.nxanode);
-	print_count(prefix, "ndtnode", spst->objs.ndtnode);
-	print_count(prefix, "nftnode", spst->objs.nftnode);
-	print_count(prefix, "nsymval", spst->objs.nsymval);
+	cmd_show_counter(ctx, prefix, "ndata1k", spst->objs.ndata1k);
+	cmd_show_counter(ctx, prefix, "ndata4k", spst->objs.ndata4k);
+	cmd_show_counter(ctx, prefix, "ndatabk", spst->objs.ndatabk);
+	cmd_show_counter(ctx, prefix, "nsuper", spst->objs.nsuper);
+	cmd_show_counter(ctx, prefix, "nspnode", spst->objs.nspnode);
+	cmd_show_counter(ctx, prefix, "nspleaf", spst->objs.nspleaf);
+	cmd_show_counter(ctx, prefix, "ninode", spst->objs.ninode);
+	cmd_show_counter(ctx, prefix, "nxanode", spst->objs.nxanode);
+	cmd_show_counter(ctx, prefix, "ndtnode", spst->objs.ndtnode);
+	cmd_show_counter(ctx, prefix, "nftnode", spst->objs.nftnode);
+	cmd_show_counter(ctx, prefix, "nsymval", spst->objs.nsymval);
 }
 
 static void cmd_show_spstats(struct cmd_show_ctx *ctx)
@@ -304,7 +319,7 @@ static void cmd_show_spstats(struct cmd_show_ctx *ctx)
 
 	cmd_show_do_ioctl_query(ctx);
 	silofs_spacestats_import(&spst, &ctx->ioc->query.u.spstats.spst);
-	print_spacestats(&spst);
+	cmd_show_spacestats(ctx, &spst);
 }
 
 static void cmd_show_statx(struct cmd_show_ctx *ctx)
@@ -313,17 +328,16 @@ static void cmd_show_statx(struct cmd_show_ctx *ctx)
 	const struct statx *stx = &qstatx->stx;
 
 	cmd_show_do_ioctl_query(ctx);
-	printf("blksize: %ld\n", (long)stx->stx_blksize);
-	printf("nlink: %u\n",  stx->stx_nlink);
-	printf("uid: %u\n",  stx->stx_uid);
-	printf("gid: %u\n",  stx->stx_gid);
-	printf("mode: 0%o\n",  stx->stx_mode);
-	printf("ino: %ld\n", (long)stx->stx_ino);
-	printf("size: %ld\n", (long)stx->stx_size);
-	printf("blocks: %ld\n", (long)stx->stx_blocks);
-	/* printf("mnt_id:     %ld \n", (long)stx->stx_mnt_id); */
-	printf("iflags: %x\n",  qstatx->iflags);
-	printf("dirflags: %x\n",  qstatx->dirflags);
+	fprintf(ctx->out_fp, "blksize: %ld\n", (long)stx->stx_blksize);
+	fprintf(ctx->out_fp, "nlink: %u\n",  stx->stx_nlink);
+	fprintf(ctx->out_fp, "uid: %u\n",  stx->stx_uid);
+	fprintf(ctx->out_fp, "gid: %u\n",  stx->stx_gid);
+	fprintf(ctx->out_fp, "mode: 0%o\n",  stx->stx_mode);
+	fprintf(ctx->out_fp, "ino: %ld\n", (long)stx->stx_ino);
+	fprintf(ctx->out_fp, "size: %ld\n", (long)stx->stx_size);
+	fprintf(ctx->out_fp, "blocks: %ld\n", (long)stx->stx_blocks);
+	fprintf(ctx->out_fp, "iflags: %x\n",  qstatx->iflags);
+	fprintf(ctx->out_fp, "dirflags: %x\n",  qstatx->dirflags);
 }
 
 static void cmd_show_execute(struct cmd_show_ctx *ctx)
@@ -331,6 +345,9 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	switch (ctx->qtype) {
 	case SILOFS_QUERY_VERSION:
 		cmd_show_version(ctx);
+		break;
+	case SILOFS_QUERY_REPO:
+		cmd_show_repo(ctx);
 		break;
 	case SILOFS_QUERY_BOOT:
 		cmd_show_boot(ctx);
@@ -357,6 +374,7 @@ void cmd_execute_show(void)
 	struct cmd_show_ctx ctx = {
 		.qtype = SILOFS_QUERY_NONE,
 		.ioc = NULL,
+		.out_fp = stdout,
 	};
 
 	/* Do all cleanups upon exits */

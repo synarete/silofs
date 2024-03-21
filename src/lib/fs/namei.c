@@ -2153,18 +2153,34 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
-static void fill_query_boot(const struct silofs_inode_info *ii,
+static void fill_query_repo(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
 	const struct silofs_bootpath *bootpath = fsenv->fse.bootpath;
 	size_t bsz;
 
-	bsz = sizeof(query->u.bootrec.repo);
-	str_to_buf(&bootpath->repodir, query->u.bootrec.repo, bsz);
+	bsz = sizeof(query->u.repo.path);
+	str_to_buf(&bootpath->repodir, query->u.repo.path, bsz);
+}
 
-	bsz = sizeof(query->u.bootrec.name);
-	str_to_buf(&bootpath->name.s, query->u.bootrec.name, bsz);
+static void fill_query_boot(const struct silofs_inode_info *ii,
+                            struct silofs_ioc_query *query)
+{
+	struct silofs_strbuf sbuf;
+	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	const struct silofs_fs_bconf *bconf = &fsenv->fse.fs_args->bconf;
+	const struct silofs_bootpath *bootpath = fsenv->fse.bootpath;
+	size_t bsz;
+
+	STATICASSERT_EQ(sizeof(sbuf.str), sizeof(query->u.boot.fsid));
+
+	bsz = sizeof(query->u.boot.name);
+	str_to_buf(&bootpath->name.s, query->u.boot.name, bsz);
+
+	silofs_uuid_unparse(&bconf->fsid, &sbuf);
+	bsz = sizeof(query->u.boot.fsid);
+	silofs_strbuf_copyto(&sbuf, query->u.boot.fsid, bsz);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
@@ -2212,6 +2228,9 @@ static int do_query_subcmd(struct silofs_task *task,
 	switch (qtype) {
 	case SILOFS_QUERY_VERSION:
 		fill_query_version(ii, query);
+		break;
+	case SILOFS_QUERY_REPO:
+		fill_query_repo(ii, query);
 		break;
 	case SILOFS_QUERY_BOOT:
 		fill_query_boot(ii, query);

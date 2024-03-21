@@ -4,6 +4,7 @@ import os
 import shlex
 import subprocess
 import typing
+import uuid
 from pathlib import Path
 
 from . import log
@@ -201,8 +202,12 @@ class CmdSilofs(CmdExec):
     def show_version(self, pathname: Path) -> str:
         return self.execute_sub(["show", "version", pathname])
 
-    def show_boot(self, pathname: Path) -> str:
-        return self.execute_sub(["show", "boot", pathname])
+    def show_repo(self, pathname: Path) -> Path:
+        return Path(self.execute_sub(["show", "repo", pathname]))
+
+    def show_boot(self, pathname: Path) -> typing.Tuple[str, uuid.UUID]:
+        boot_info = self.execute_sub(["show", "boot", pathname]).split()
+        return (str(boot_info[0]), uuid.UUID(boot_info[1]))
 
     def show_proc(self, pathname: Path) -> str:
         return self.execute_sub(["show", "proc", pathname])

@@ -65,7 +65,8 @@ _silofs_show() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
   else
-    COMPREPLY+=( $(compgen -W 'version boot proc spstats statx' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'version repo boot proc ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'spstats statx ' -- "$cur") )
   fi
 }
 
@@ -123,12 +124,30 @@ _silofs_fsck() {
   fi
 }
 
-_silofs_export() {
+_silofs_lsrefs() {
   local cur prev words cword
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+  fi
+}
+
+_silofs_export() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h -r --ref= -f --outfile=' -- "$cur") )
+  fi
+}
+
+_silofs_import() {
+  local cur prev words cword
+  _init_completion || return
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-h -r --ref= -f --infile=' -- "$cur") )
   fi
 }
 
@@ -173,8 +192,14 @@ _silofs_subcmd() {
     "fsck")
       _silofs_fsck
       ;;
+    "lsrefs")
+      _silofs_lsrefs
+      ;;
     "export")
       _silofs_export
+      ;;
+    "import")
+      _silofs_import
       ;;
   esac
 }
@@ -186,9 +211,10 @@ _silofs_main() {
   if [[ "$cur" == -* ]]; then
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
-    COMPREPLY+=( $(compgen -W 'init mkfs mount umount' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsmnt show snap sync' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck export' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'init mkfs mount umount ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show snap sync ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsrefs export import ' -- "$cur") )
   fi
 }
 

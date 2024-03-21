@@ -41,10 +41,11 @@
 enum silofs_query_type {
 	SILOFS_QUERY_NONE       = 0,
 	SILOFS_QUERY_VERSION    = 1,
-	SILOFS_QUERY_BOOT       = 2,
-	SILOFS_QUERY_PROC       = 3,
-	SILOFS_QUERY_SPSTATS    = 4,
-	SILOFS_QUERY_STATX      = 5,
+	SILOFS_QUERY_REPO       = 2,
+	SILOFS_QUERY_BOOT       = 3,
+	SILOFS_QUERY_PROC       = 4,
+	SILOFS_QUERY_SPSTATS    = 5,
+	SILOFS_QUERY_STATX      = 6,
 };
 
 struct silofs_query_version {
@@ -54,13 +55,13 @@ struct silofs_query_version {
 	uint32_t sublevel;
 };
 
-struct silofs_query_bootrec {
-	char    repo[SILOFS_REPOPATH_MAX];
-	char    name[SILOFS_NAME_MAX + 1];
+struct silofs_query_repo {
+	char    path[SILOFS_REPOPATH_MAX];
 };
 
-struct silofs_query_fsname {
+struct silofs_query_boot {
 	char    name[SILOFS_NAME_MAX + 1];
+	char    fsid[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_query_proc {
@@ -89,8 +90,8 @@ struct silofs_query_statx {
 
 union silofs_query_u {
 	struct silofs_query_version     version;
-	struct silofs_query_bootrec     bootrec;
-	struct silofs_query_fsname      fsname;
+	struct silofs_query_repo        repo;
+	struct silofs_query_boot        boot;
 	struct silofs_query_proc        proc;
 	struct silofs_query_spstats     spstats;
 	struct silofs_query_statx       statx;

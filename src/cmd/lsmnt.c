@@ -33,6 +33,7 @@ struct cmd_lsmnt_in_args {
 struct cmd_lsmnt_ctx {
 	struct cmd_lsmnt_in_args in_args;
 	struct silofs_ioc_query  ioc_qry;
+	FILE *out_fp;
 };
 
 static struct cmd_lsmnt_ctx *cmd_lsmnt_ctx;
@@ -86,36 +87,57 @@ static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
 }
 
-static void cmd_lsmnt_exec_mi(struct cmd_lsmnt_ctx *ctx,
-                              const struct cmd_proc_mntinfo *mi)
+static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx,
+                            const struct cmd_proc_mntinfo *mi)
+{
+	fprintf(ctx->out_fp, "%s\n", mi->mntdir);
+}
+
+static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
+                           const struct cmd_proc_mntinfo *mi)
 {
 	struct silofs_ioc_query *qry = &ctx->ioc_qry;
-	const char *repodir = "";
-	const char *name = "";
-	char sep = ' ';
-	int o_flags;
+	char *mntd_path = NULL;
+	char *repo_path = NULL;
+	char *boot_name = NULL;
+	char *boot_fsid = NULL;
+	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd = -1;
 	int err = 0;
 
-	if (!ctx->in_args.long_listing) {
-		goto out;
-	}
-	o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
-	err = silofs_sys_openat(AT_FDCWD, mi->mntdir, o_flags, 0, &dfd);
+	mntd_path = cmd_strdup(mi->mntdir);
+	err = silofs_sys_openat(AT_FDCWD, mntd_path, o_flags, 0, &dfd);
 	if (err) {
 		goto out;
 	}
+
+	silofs_memzero(qry, sizeof(*qry));
+	qry->qtype = SILOFS_QUERY_REPO;
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
+	if (err) {
+		goto out;
+	}
+	repo_path = cmd_strdup(qry->u.repo.path);
+
+	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_BOOT;
 	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}
-	repodir = qry->u.bootrec.repo;
-	name = qry->u.bootrec.name;
-	sep = '/';
+	boot_name = cmd_strdup(qry->u.boot.name);
+	boot_fsid = cmd_strdup(qry->u.boot.fsid);
+
+	fprintf(ctx->out_fp, "%s %s %s/%s",
+	        boot_fsid, mntd_path, repo_path, boot_name);
 out:
 	silofs_sys_closefd(&dfd);
-	printf("%-16s %s%c%s\n", mi->mntdir, repodir, sep, name);
+	cmd_pstrfree(&mntd_path);
+	cmd_pstrfree(&repo_path);
+	cmd_pstrfree(&boot_name);
+	cmd_pstrfree(&boot_fsid);
+	fputs("\n", ctx->out_fp);
+	fflush(ctx->out_fp);
 }
 
 static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
@@ -125,7 +147,11 @@ static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 
 	mi_list = cmd_parse_mountinfo();
 	for (mi_iter = mi_list; mi_iter != NULL; mi_iter = mi_iter->next) {
-		cmd_lsmnt_exec_mi(ctx, mi_iter);
+		if (ctx->in_args.long_listing) {
+			cmd_lsmnt_long(ctx, mi_iter);
+		} else {
+			cmd_lsmnt_short(ctx, mi_iter);
+		}
 	}
 	cmd_free_mountinfo(mi_list);
 }
@@ -135,7 +161,8 @@ static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 void cmd_execute_lsmnt(void)
 {
 	struct cmd_lsmnt_ctx ctx = {
-		.ioc_qry.qtype = 0,
+		.ioc_qry.qtype = SILOFS_QUERY_NONE,
+		.out_fp = stdout,
 	};
 
 	/* Do all cleanups upon exits */

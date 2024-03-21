@@ -141,18 +141,31 @@ static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 	atexit(cmd_snap_atexit);
 }
 
+static void cmd_snap_prepare_by_query(struct cmd_snap_ctx *ctx)
+{
+	struct silofs_ioc_query ioc_qry;
+	struct silofs_ioc_query *qry = &ioc_qry;
+	struct cmd_snap_in_args *args = &ctx->in_args;
+
+	silofs_memzero(qry, sizeof(*qry));
+	qry->qtype = SILOFS_QUERY_REPO;
+	cmd_snap_ioctl_query(args->dirpath_real, qry);
+	args->repodir = cmd_strdup(qry->u.repo.path);
+
+	qry->qtype = SILOFS_QUERY_BOOT;
+	cmd_snap_ioctl_query(args->dirpath_real, qry);
+	args->name = cmd_strdup(qry->u.boot.name);
+}
+
 static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_ioc_query query = { .qtype = SILOFS_QUERY_BOOT };
 	struct cmd_snap_in_args *args = &ctx->in_args;
 
 	cmd_check_isdir(args->dirpath, false);
 	cmd_realpath(args->dirpath, &args->dirpath_real);
 	cmd_check_fsname(args->snapname);
 	cmd_check_fusefs(args->dirpath_real);
-	cmd_snap_ioctl_query(args->dirpath_real, &query);
-	args->repodir = cmd_strdup(query.u.bootrec.repo);
-	args->name = cmd_strdup(query.u.bootrec.name);
+	cmd_snap_prepare_by_query(ctx);
 	cmd_realpath(args->repodir, &args->repodir_real);
 	cmd_check_isdir(args->repodir_real, true);
 	cmd_check_fsname(args->name);

@@ -8,6 +8,7 @@ from . import test_io
 from . import test_ltp
 from . import test_self
 from . import test_snap
+from . import test_view
 from . import test_xprogs
 
 TESTS = [
@@ -25,6 +26,8 @@ TESTS = [
     test_io.test_reload,
     test_io.test_reload_n,
     test_io.test_async_io,
+    test_view.test_view_minimal,
+    test_view.test_view_data,
     test_fillfs.test_fill_data,
     test_fillfs.test_fill_meta,
     test_self.test_unitests,

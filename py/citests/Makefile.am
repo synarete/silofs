@@ -17,6 +17,7 @@ silofs_citests_PYTHON += test_io.py
 silofs_citests_PYTHON += test_ltp.py
 silofs_citests_PYTHON += test_self.py
 silofs_citests_PYTHON += test_snap.py
+silofs_citests_PYTHON += test_view.py
 silofs_citests_PYTHON += test_xprogs.py
 silofs_citests_PYTHON += utils.py
 

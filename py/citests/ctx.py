@@ -257,6 +257,10 @@ class TestEnv:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.fsck(repodir_name, self._passwd())
 
+    def exec_view(self, name: str = "") -> list[str]:
+        repodir_name = self._repodir_name(name)
+        return list(self.cmd.silofs.view(repodir_name, self._passwd()))
+
     def exec_lsmnt(self) -> None:
         mntp = self.cfg.mntdir
         mnts = self.cmd.silofs.lsmnt()

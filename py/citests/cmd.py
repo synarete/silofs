@@ -247,6 +247,12 @@ class CmdSilofs(CmdExec):
             args = args + ["--password", password]
         self.execute_sub(args)
 
+    def view(self, repodir_name: Path, password: str) -> typing.Iterable[str]:
+        args = ["view", repodir_name]
+        if password:
+            args = args + ["--password", password]
+        return self.execute_sub(args).split("\n")
+
 
 class CmdUnitests(CmdExec):
     """Wrapper over silofs-unitests command-line front-end"""

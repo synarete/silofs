@@ -76,13 +76,15 @@ Various testing programs for silofs.
 %else
 %exclude %{_prefix}/lib/systemd/system/%{name}*.*
 %endif
+%{_bindir}/%{name}-archive
+%{_prefix}/lib/python3*/site-packages/%{name}/archive/*
 
 %files devel
 %defattr(-, root, root)
 %{_bindir}/%{name}-unitests
 %{_bindir}/%{name}-funtests
 %{_bindir}/%{name}-citests
-%{_prefix}/lib/python3*/site-packages/%{name}/*
+%{_prefix}/lib/python3*/site-packages/%{name}/citests/*
 %exclude %{_includedir}/*
 %exclude %{_libdir}/lib%{name}*.so
 

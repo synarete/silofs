@@ -98,7 +98,9 @@ run find \
 # run rm -rf "${rpmhomedir}"
 
 # Show result rpm files
-run find "${rpmdistdir}" -type f -name ${name}'*.rpm' -exec basename {} \;
+run find "${rpmdistdir}" \
+  -depth -maxdepth 1 \
+  -type f -name ${name}'*.rpm' -exec basename {} \;
 
 # Bye ;)
 exit 0

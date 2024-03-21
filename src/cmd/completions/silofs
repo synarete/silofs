@@ -124,7 +124,7 @@ _silofs_fsck() {
   fi
 }
 
-_silofs_lsrefs() {
+_silofs_view() {
   local cur prev words cword
   _init_completion || return
 
@@ -192,8 +192,8 @@ _silofs_subcmd() {
     "fsck")
       _silofs_fsck
       ;;
-    "lsrefs")
-      _silofs_lsrefs
+    "view")
+      _silofs_view
       ;;
     "export")
       _silofs_export
@@ -214,7 +214,7 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'lsmnt show snap sync ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck ' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsrefs export import ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'view export import ' -- "$cur") )
   fi
 }
 

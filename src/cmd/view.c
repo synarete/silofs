@@ -16,15 +16,15 @@
  */
 #include "cmd.h"
 
-static const char *cmd_lsrefs_help_desc[] = {
-	"lsrefs <repodir/name>",
+static const char *cmd_view_help_desc[] = {
+	"view <repodir/name>",
 	"",
 	"options:",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
-struct cmd_lsrefs_in_args {
+struct cmd_view_in_args {
 	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
@@ -33,19 +33,19 @@ struct cmd_lsrefs_in_args {
 	char   *outfile;
 };
 
-struct cmd_lsrefs_ctx {
-	struct cmd_lsrefs_in_args in_args;
+struct cmd_view_ctx {
+	struct cmd_view_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fs_ctx   *fs_ctx;
 	FILE *out_fp;
 	bool has_lockfile;
 };
 
-static struct cmd_lsrefs_ctx *cmd_lsrefs_ctx;
+static struct cmd_view_ctx *cmd_view_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_lsrefs_getopt(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_getopt(struct cmd_view_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -62,7 +62,7 @@ static void cmd_lsrefs_getopt(struct cmd_lsrefs_ctx *ctx)
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_lsrefs_help_desc);
+			cmd_print_help_and_exit(cmd_view_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_fatal_unsupported_opt();
 		}
@@ -73,7 +73,7 @@ static void cmd_lsrefs_getopt(struct cmd_lsrefs_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_lsrefs_acquire_lockfile(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_acquire_lockfile(struct cmd_view_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
 		cmd_lock_fs(ctx->in_args.repodir_real,
@@ -82,7 +82,7 @@ static void cmd_lsrefs_acquire_lockfile(struct cmd_lsrefs_ctx *ctx)
 	}
 }
 
-static void cmd_lsrefs_release_lockfile(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_release_lockfile(struct cmd_view_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
 		cmd_unlock_fs(ctx->in_args.repodir_real,
@@ -91,12 +91,12 @@ static void cmd_lsrefs_release_lockfile(struct cmd_lsrefs_ctx *ctx)
 	}
 }
 
-static void cmd_lsrefs_destroy_fs_ctx(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_destroy_fs_ctx(struct cmd_view_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
 }
 
-static void cmd_lsrefs_finalize(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
 	cmd_bconf_reset(&ctx->fs_args.bconf);
@@ -106,29 +106,29 @@ static void cmd_lsrefs_finalize(struct cmd_lsrefs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.outfile);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_lsrefs_ctx = NULL;
+	cmd_view_ctx = NULL;
 }
 
-static void cmd_lsrefs_atexit(void)
+static void cmd_view_atexit(void)
 {
-	if (cmd_lsrefs_ctx != NULL) {
-		cmd_lsrefs_release_lockfile(cmd_lsrefs_ctx);
-		cmd_lsrefs_finalize(cmd_lsrefs_ctx);
+	if (cmd_view_ctx != NULL) {
+		cmd_view_release_lockfile(cmd_view_ctx);
+		cmd_view_finalize(cmd_view_ctx);
 	}
 }
 
-static void cmd_lsrefs_start(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_start(struct cmd_view_ctx *ctx)
 {
-	cmd_lsrefs_ctx = ctx;
-	atexit(cmd_lsrefs_atexit);
+	cmd_view_ctx = ctx;
+	atexit(cmd_view_atexit);
 }
 
-static void cmd_lsrefs_enable_signals(void)
+static void cmd_view_enable_signals(void)
 {
 	cmd_register_sigactions(NULL);
 }
 
-static void cmd_lsrefs_prepare(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_prepare(struct cmd_view_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
 	cmd_check_isreg(ctx->in_args.repodir_name, false);
@@ -140,14 +140,14 @@ static void cmd_lsrefs_prepare(struct cmd_lsrefs_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.name);
 }
 
-static void cmd_lsrefs_getpass(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass(NULL, &ctx->in_args.password);
 	}
 }
 
-static void cmd_lsrefs_setup_fs_args(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_setup_fs_args(struct cmd_view_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
@@ -158,48 +158,48 @@ static void cmd_lsrefs_setup_fs_args(struct cmd_lsrefs_ctx *ctx)
 	fs_args->name = ctx->in_args.name;
 }
 
-static void cmd_lsrefs_load_bconf(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_load_bconf(struct cmd_view_ctx *ctx)
 {
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_lsrefs_setup_fs_ctx(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_setup_fs_ctx(struct cmd_view_ctx *ctx)
 {
 	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
 }
 
-static void cmd_lsrefs_open_repo(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_open_repo(struct cmd_view_ctx *ctx)
 {
 	cmd_open_repo(ctx->fs_ctx);
 }
 
-static void cmd_lsrefs_close_repo(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 {
 	cmd_close_repo(ctx->fs_ctx);
 }
 
-static void cmd_lsrefs_require_brec(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_require_brec(struct cmd_view_ctx *ctx)
 {
 	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
-static void cmd_lsrefs_boot_fs(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_boot_fs(struct cmd_view_ctx *ctx)
 {
 	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
 }
 
-static void cmd_lsrefs_open_fs(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
 	cmd_open_fs(ctx->fs_ctx);
 }
 
-static void cmd_lsrefs_close_fs(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
 {
 	cmd_close_fs(ctx->fs_ctx);
 }
 
-static void cmd_lsrefs_show_laddr(const struct cmd_lsrefs_ctx *ctx,
-                                  const struct silofs_laddr *laddr)
+static void cmd_view_show_laddr(const struct cmd_view_ctx *ctx,
+                                const struct silofs_laddr *laddr)
 {
 	struct silofs_strbuf sbuf;
 	FILE *fp = ctx->out_fp;
@@ -210,81 +210,81 @@ static void cmd_lsrefs_show_laddr(const struct cmd_lsrefs_ctx *ctx,
 	fflush(fp);
 }
 
-static void cmd_lsrefs_cb(void *user_ctx, const struct silofs_laddr *laddr)
+static void cmd_view_cb(void *user_ctx, const struct silofs_laddr *laddr)
 {
 
-	cmd_lsrefs_show_laddr(user_ctx, laddr);
+	cmd_view_show_laddr(user_ctx, laddr);
 }
 
-static void cmd_lsrefs_execute(struct cmd_lsrefs_ctx *ctx)
+static void cmd_view_execute(struct cmd_view_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fs_ctx, cmd_lsrefs_cb, ctx);
+	cmd_inspect_fs(ctx->fs_ctx, cmd_view_cb, ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void cmd_execute_lsrefs(void)
+void cmd_execute_view(void)
 {
-	struct cmd_lsrefs_ctx ctx = {
+	struct cmd_view_ctx ctx = {
 		.fs_ctx = NULL,
 		.out_fp = stdout,
 	};
 
 	/* Do all cleanups upon exits */
-	cmd_lsrefs_start(&ctx);
+	cmd_view_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_lsrefs_getopt(&ctx);
+	cmd_view_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_lsrefs_prepare(&ctx);
+	cmd_view_prepare(&ctx);
 
 	/* Require password */
-	cmd_lsrefs_getpass(&ctx);
+	cmd_view_getpass(&ctx);
 
 	/* Run with signals */
-	cmd_lsrefs_enable_signals();
+	cmd_view_enable_signals();
 
 	/* Setup input arguments */
-	cmd_lsrefs_setup_fs_args(&ctx);
+	cmd_view_setup_fs_args(&ctx);
 
 	/* Require boot-config */
-	cmd_lsrefs_load_bconf(&ctx);
+	cmd_view_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_lsrefs_setup_fs_ctx(&ctx);
+	cmd_view_setup_fs_ctx(&ctx);
 
 	/* Acquire lock */
-	cmd_lsrefs_acquire_lockfile(&ctx);
+	cmd_view_acquire_lockfile(&ctx);
 
 	/* Open repository */
-	cmd_lsrefs_open_repo(&ctx);
+	cmd_view_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_lsrefs_require_brec(&ctx);
+	cmd_view_require_brec(&ctx);
 
 	/* Require boot-able file-system */
-	cmd_lsrefs_boot_fs(&ctx);
+	cmd_view_boot_fs(&ctx);
 
 	/* Open file-system */
-	cmd_lsrefs_open_fs(&ctx);
+	cmd_view_open_fs(&ctx);
 
-	/* Do actual lsrefs */
-	cmd_lsrefs_execute(&ctx);
+	/* Do actual view */
+	cmd_view_execute(&ctx);
 
 	/* Close file-system */
-	cmd_lsrefs_close_fs(&ctx);
+	cmd_view_close_fs(&ctx);
 
 	/* Close repository */
-	cmd_lsrefs_close_repo(&ctx);
+	cmd_view_close_repo(&ctx);
 
 	/* Release lock */
-	cmd_lsrefs_release_lockfile(&ctx);
+	cmd_view_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_lsrefs_destroy_fs_ctx(&ctx);
+	cmd_view_destroy_fs_ctx(&ctx);
 
 	/* Post execution cleanups */
-	cmd_lsrefs_finalize(&ctx);
+	cmd_view_finalize(&ctx);
 }
 

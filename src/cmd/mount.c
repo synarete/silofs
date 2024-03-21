@@ -512,7 +512,7 @@ static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 
 /*
  * Trace global setting to user. When running as daemon on systemd-based
- * environments, users should use the following command to view silofs's
+ * environments, users should use the following command to inspect silofs's
  * traces:
  *
  *   $ journalctl -b -n 60 -f -t silofs

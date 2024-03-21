@@ -94,7 +94,7 @@ void cmd_execute_prune(void);
 
 void cmd_execute_fsck(void);
 
-void cmd_execute_lsrefs(void);
+void cmd_execute_view(void);
 
 void cmd_execute_export(void);
 

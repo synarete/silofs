@@ -60,12 +60,12 @@ static void cmd_show_getopt(struct cmd_show_ctx *ctx)
 		if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_show_help_desc);
 		} else if (opt_chr > 0) {
-			cmd_fatal_unsupported_opt();
+			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_getarg("subcmd", &ctx->in_args.subcmd);
+	cmd_getopt_getarg("subcmd", &ctx->in_args.subcmd);
 	cmd_getarg_or_cwd("pathname", &ctx->in_args.pathname);
-	cmd_endargs();
+	cmd_getopt_endargs();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

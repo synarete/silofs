@@ -55,11 +55,11 @@ static void cmd_sync_getopt(struct cmd_sync_ctx *ctx)
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_sync_help_desc);
 		} else if (opt_chr > 0) {
-			cmd_fatal_unsupported_opt();
+			cmd_getopt_unrecognized();
 		}
 	}
 	cmd_getarg_or_cwd("pathname", &ctx->in_args.pathname);
-	cmd_endargs();
+	cmd_getopt_endargs();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

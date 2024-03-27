@@ -68,11 +68,11 @@ static void cmd_view_getopt(struct cmd_view_ctx *ctx)
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_view_help_desc);
 		} else if (opt_chr > 0) {
-			cmd_fatal_unsupported_opt();
+			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_getarg("repodir/name", &ctx->in_args.repodir_name);
-	cmd_endargs();
+	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
+	cmd_getopt_endargs();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

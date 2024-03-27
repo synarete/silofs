@@ -50,11 +50,11 @@ static void cmd_prune_getopt(struct cmd_prune_ctx *ctx)
 		if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_prune_help_desc);
 		} else if (opt_chr > 0) {
-			cmd_fatal_unsupported_opt();
+			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_getarg("repodir", &ctx->in_args.repodir);
-	cmd_endargs();
+	cmd_getopt_getarg("repodir", &ctx->in_args.repodir);
+	cmd_getopt_endargs();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

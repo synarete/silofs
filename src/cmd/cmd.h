@@ -104,10 +104,6 @@ void cmd_execute_import(void);
 __attribute__((__noreturn__))
 void cmd_dief(int errnum, const char *restrict fmt, ...);
 
-__attribute__((__noreturn__))
-void cmd_fatal_unsupported_opt(void);
-
-
 /* common utilities */
 void cmd_require_arg(const char *arg_name, const void *arg_val);
 
@@ -149,13 +145,7 @@ void cmd_getoptarg(const char *opt_name, char **out_opt);
 
 void cmd_getoptarg_pass(char **out_pass);
 
-void cmd_getarg(const char *arg_name, char **out_arg);
-
 void cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
-
-int cmd_getopt(const char *sopts, const struct option *lopts);
-
-void cmd_endargs(void);
 
 void cmd_realpath(const char *path, char **out_real);
 
@@ -197,6 +187,16 @@ char *cmd_mkpathf(const char *fmt, ...);
 
 __attribute__((__noreturn__))
 void cmd_print_help_and_exit(const char **help_strings);
+
+/* getopt wrappers */
+int cmd_getopt(const char *sopts, const struct option *lopts);
+
+void cmd_getopt_endargs(void);
+
+void cmd_getopt_getarg(const char *arg_name, char **out_arg);
+
+__attribute__((__noreturn__))
+void cmd_getopt_unrecognized(void);
 
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);

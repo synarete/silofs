@@ -92,16 +92,16 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 		} else if (opt_chr == 'h') {
 			cmd_print_help_and_exit(cmd_snap_help_desc);
 		} else if (opt_chr > 0) {
-			cmd_fatal_unsupported_opt();
+			cmd_getopt_unrecognized();
 		}
 	}
 	cmd_require_arg("name", ctx->in_args.snapname);
 	if (ctx->in_args.offline) {
-		cmd_getarg("repodir/name", &ctx->in_args.repodir_name);
+		cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
 	} else {
 		cmd_getarg_or_cwd("pathname", &ctx->in_args.dirpath);
 	}
-	cmd_endargs();
+	cmd_getopt_endargs();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

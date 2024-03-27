@@ -477,7 +477,7 @@ static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 {
-	int log_flags = cmd_globals.log_params.flags;
+	int log_flags = (int)cmd_globals.log_params.flags;
 
 	/* log control flags bits-mask */
 	if (!cmd_globals.dont_daemonize) { /* daemon mode */

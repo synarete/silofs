@@ -331,10 +331,10 @@ void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln)
 
 static void mem_to_str(const void *mem, size_t nn, char *str, size_t len)
 {
-	int b;
+	const uint8_t *ptr = mem;
 	size_t pos = 0;
 	size_t i = 0;
-	const uint8_t *ptr = mem;
+	int b;
 
 	memset(str, 0, len);
 	while ((i < nn) && ((pos + 4) < len)) {
@@ -422,9 +422,9 @@ static void silofs_dump_panic_msg(const char *file, int line,
 __attribute__((__noreturn__))
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
-	va_list ap;
-	char msg[512] = "";
+	char msg[512] = "";\
 	const int errnum = errno;
+	va_list ap;
 
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);

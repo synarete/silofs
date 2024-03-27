@@ -97,7 +97,7 @@ endif
 
 
 # Developer's (pedantic) compilation flags
-CFLAGS += -pedantic -Wall -Wextra -Winit-self -Winline
+CFLAGS += -pedantic -Werror -Wall -Wextra -Winit-self -Winline
 CFLAGS += -Wunused -Wunused-parameter -Wunused-result
 CFLAGS += -Wunused-local-typedefs -Wunused-label
 CFLAGS += -Wshadow -Wfloat-equal -Wwrite-strings -Wpointer-arith
@@ -148,7 +148,7 @@ endif
 
 # Compiler specific flags
 ifeq ($(CC), gcc)
-CFLAGS += -Werror -Wstack-usage=4096 -Wlogical-op
+CFLAGS += -Wstack-usage=4096 -Wlogical-op
 CFLAGS += -Wmultistatement-macros -Wunused-const-variable=2
 CFLAGS += -Wswitch-unreachable -Wmaybe-uninitialized -Wtrampolines
 CFLAGS += -Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
@@ -167,6 +167,9 @@ CFLAGS += -fsanitize-address-use-after-scope
 CFLAGS += -fsanitize=pointer-overflow
 CFLAGS += -fsanitize=alignment -fsanitize=bounds
 CFLAGS += -fsanitize=object-size
+ifeq ($(CC), clang)
+CFLAGS += -fsanitize=address
+endif
 endif
 ifeq ($(ANALYZER), 1)
 CFLAGS += -fanalyzer -Wno-analyzer-malloc-leak

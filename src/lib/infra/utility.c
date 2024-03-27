@@ -156,11 +156,11 @@ void silofs_byte_to_ascii(uint8_t b, char *a)
 
 void silofs_ascii_to_byte(const char *a, uint8_t *b)
 {
-	uint8_t nib[2];
+	uint32_t nib[2];
 
-	nib[0] = (uint8_t)silofs_ascii_to_nibble(a[0]);
-	nib[1] = (uint8_t)silofs_ascii_to_nibble(a[1]);
-	*b = (nib[0] << 4 | nib[1]);
+	nib[0] = (uint32_t)silofs_ascii_to_nibble(a[0]);
+	nib[1] = (uint32_t)silofs_ascii_to_nibble(a[1]);
+	*b = (uint8_t)(nib[0] << 4 | nib[1]);
 }
 
 void silofs_uint64_to_ascii(uint64_t u, char *a)

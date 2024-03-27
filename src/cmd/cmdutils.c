@@ -701,7 +701,7 @@ void cmd_open_syslog(void)
 
 void cmd_close_syslog(void)
 {
-	int log_flags = cmd_globals.log_params.flags;
+	int log_flags = (int)cmd_globals.log_params.flags;
 
 	if (log_flags & SILOFS_LOGF_SYSLOG) {
 		closelog();

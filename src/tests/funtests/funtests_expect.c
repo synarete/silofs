@@ -27,6 +27,7 @@ static const char *basename_of(const char *path)
 	return (name == NULL) ? path : (name + 1);
 }
 
+__attribute__((__noreturn__))
 static void do_error_at_line(const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[512] = "";

@@ -146,7 +146,7 @@ static enum silofs_hdrf hdr_flags(const struct silofs_header *hdr)
 
 static void hdr_set_flags(struct silofs_header *hdr, enum silofs_hdrf flags)
 {
-	hdr->h_flags = silofs_cpu_to_le16((enum silofs_hdrf)flags);
+	hdr->h_flags = silofs_cpu_to_le16((uint16_t)flags);
 }
 
 static void hdr_add_flags(struct silofs_header *hdr, enum silofs_hdrf flags)

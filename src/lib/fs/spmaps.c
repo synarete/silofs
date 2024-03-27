@@ -1772,14 +1772,14 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 	const enum silofs_height height_max = SILOFS_HEIGHT_SUPER - 1;
 	const enum silofs_height height = spnode_heigth(sn);
 	enum silofs_ltype parent_ltype;
-	int parent_height;
+	enum silofs_height parent_height;
 
 	spnode_parent(sn, &parent_uaddr);
 	if (uaddr_isnull(&parent_uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	parent_height = uaddr_height(&parent_uaddr);
-	if (parent_height != ((int)height + 1)) {
+	if (parent_height != (height + 1)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	parent_ltype = parent_uaddr.laddr.ltype;

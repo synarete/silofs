@@ -356,7 +356,7 @@ static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, &ctx->in_args.password);
+		cmd_getpass(NULL, true, &ctx->in_args.password);
 	}
 }
 

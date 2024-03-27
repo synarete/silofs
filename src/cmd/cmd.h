@@ -293,9 +293,9 @@ void cmd_del_fs_ctx(struct silofs_fs_ctx **p_fs_ctx);
 void cmd_register_sigactions(void (*sig_hook_fn)(int));
 
 /* password input */
-void cmd_getpass(const char *path, char **out_pass);
+void cmd_getpass(const char *path, bool with_prompt, char **out_pass);
 
-void cmd_getpass2(const char *path, char **out_pass);
+void cmd_getpass2(const char *path, bool with_prompt, char **out_pass);
 
 char *cmd_getpass_str(const char *pass);
 

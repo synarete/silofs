@@ -185,7 +185,7 @@ static void read_password_buf(int fd, void *buf, size_t bsz, size_t *out_len)
 	}
 }
 
-static int open_password_file(const char *path)
+static int open_password_infile(const char *path)
 {
 	int err;
 	int fd = -1;
@@ -204,7 +204,7 @@ static int open_password_file(const char *path)
 	return fd;
 }
 
-static void close_password_file(int fd, const char *path)
+static void close_password_infile(int fd, const char *path)
 {
 	int err;
 
@@ -216,33 +216,37 @@ static void close_password_file(int fd, const char *path)
 	}
 }
 
-static char *getpass_from_file(const char *path)
+static char *getpass_from(const char *path)
 {
 	char buf[1024] = "";
 	size_t len = 0;
 	int fd;
 
-	fd = open_password_file(path);
+	fd = open_password_infile(path);
 	read_password_buf(fd, buf, sizeof(buf), &len);
-	close_password_file(fd, path);
+	close_password_infile(fd, path);
 	return parse_dup_password(buf, len);
 }
 
-static char *do_getpass(const char *path, bool repeat)
+static char *do_getpass(const char *path, bool with_prompt, bool repeat)
 {
 	char *pass = NULL;
 	char *pass2 = NULL;
 
 	if (path) {
-		return getpass_from_file(path);
+		return getpass_from(path);
 	}
-	write_stdout("enter password: ");
-	pass = getpass_from_file(NULL);
+	if (with_prompt) {
+		write_stdout("enter password: ");
+	}
+	pass = getpass_from(NULL);
 	if (!repeat) {
 		return pass;
 	}
-	write_stdout("re-enter password: ");
-	pass2 = getpass_from_file(NULL);
+	if (with_prompt) {
+		write_stdout("re-enter password: ");
+	}
+	pass2 = getpass_from(NULL);
 	if (strcmp(pass, pass2) != 0) {
 		cmd_delpass(&pass);
 		cmd_delpass(&pass2);
@@ -252,14 +256,14 @@ static char *do_getpass(const char *path, bool repeat)
 	return pass;
 }
 
-void cmd_getpass(const char *path, char **out_pass)
+void cmd_getpass(const char *path, bool with_prompt, char **out_pass)
 {
-	*out_pass = do_getpass(path, false);
+	*out_pass = do_getpass(path, with_prompt, false);
 }
 
-void cmd_getpass2(const char *path, char **out_pass)
+void cmd_getpass2(const char *path, bool with_prompt, char **out_pass)
 {
-	*out_pass = do_getpass(path, true);
+	*out_pass = do_getpass(path, with_prompt, true);
 }
 
 char *cmd_getpass_str(const char *pass)

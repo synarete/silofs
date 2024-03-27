@@ -172,7 +172,7 @@ static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
-		cmd_getpass2(NULL, &ctx->in_args.password);
+		cmd_getpass2(NULL, true, &ctx->in_args.password);
 	}
 }
 

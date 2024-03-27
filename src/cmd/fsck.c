@@ -135,7 +135,7 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, &ctx->in_args.password);
+		cmd_getpass(NULL, true, &ctx->in_args.password);
 	}
 }
 

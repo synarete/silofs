@@ -422,7 +422,7 @@ static void silofs_dump_panic_msg(const char *file, int line,
 __attribute__((__noreturn__))
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
-	char msg[512] = "";\
+	char msg[256] = "";
 	const int errnum = errno;
 	va_list ap;
 

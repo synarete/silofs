@@ -764,9 +764,9 @@ out:
 }
 
 struct silofs_readdir_filter_ctx {
-	struct silofs_readdir_ctx *rd_ctx_orig;
-	struct silofs_task      *task;
-	struct silofs_readdir_ctx  rd_ctx;
+	struct silofs_readdir_ctx      *rd_ctx_orig;
+	struct silofs_task             *task;
+	struct silofs_readdir_ctx       rd_ctx;
 };
 
 static int readdirplus_actor(struct silofs_readdir_ctx *rd_ctx,

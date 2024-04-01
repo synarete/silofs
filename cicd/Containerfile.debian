@@ -1,0 +1,8 @@
+FROM debian:latest
+WORKDIR /scratch
+RUN apt update -y
+RUN apt upgrade -y
+COPY install-deb-deps.sh .
+RUN ./install-deb-deps.sh --all
+RUN rm -f /scratch/*
+

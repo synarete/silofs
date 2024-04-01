@@ -1,0 +1,7 @@
+FROM fedora:latest
+WORKDIR /scratch
+RUN dnf update -y
+COPY install-rpm-deps.sh .
+RUN ./install-rpm-deps.sh --all
+RUN rm -f /scratch/*
+

@@ -128,9 +128,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: |
-          sudo ./dist/deb/install-deb-deps.sh
-          sudo ./dist/deb/install-deb-extras.sh
+        run: ./dist/deb/install-deb-deps.sh --all
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"

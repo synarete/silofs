@@ -83,8 +83,8 @@ Various testing programs for silofs.
 %defattr(-, root, root)
 %{_bindir}/%{name}-unitests
 %{_bindir}/%{name}-funtests
-%{_bindir}/%{name}-citests
-%{_prefix}/lib/python3*/site-packages/%{name}/citests/*
+%{_bindir}/%{name}-qatests
+%{_prefix}/lib/python3*/site-packages/%{name}/qatests/*
 %exclude %{_includedir}/*
 %exclude %{_libdir}/lib%{name}*.so
 

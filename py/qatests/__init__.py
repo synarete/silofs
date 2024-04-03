@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0
-from .start import start_citests
+from .start import start_qatests
 
 
 def _setproctitle() -> None:
@@ -7,19 +7,19 @@ def _setproctitle() -> None:
         # pylint: disable=C0415
         from setproctitle import setproctitle  # type: ignore
 
-        setproctitle("silofs-citests")
+        setproctitle("silofs-qatests")
     except ImportError:
         pass
 
 
 def _exectests() -> None:
-    start_citests()
+    start_qatests()
 
 
-def citests_main() -> None:
+def qatests_main() -> None:
     _setproctitle()
     _exectests()
 
 
 if __name__ == "__main__":
-    citests_main()
+    qatests_main()

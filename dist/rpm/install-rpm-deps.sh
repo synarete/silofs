@@ -22,7 +22,7 @@ base_deps=(
   xxhash-devel
 )
 
-citests_deps=(
+qatests_deps=(
   automake
   bison
   expat-devel
@@ -74,13 +74,13 @@ _install_rpm_pkgs() {
 arg=${1:-}
 case "$arg" in
   -a|--all)
-    _install_rpm_pkgs "${base_deps[@]}" "${citests_deps[@]}" "${extra_deps[@]}"
+    _install_rpm_pkgs "${base_deps[@]}" "${qatests_deps[@]}" "${extra_deps[@]}"
     ;;
   -b|--base)
     _install_rpm_pkgs "${base_deps[@]}"
     ;;
-  -c|--citests)
-    _install_rpm_pkgs "${citests_deps[@]}"
+  -c|--qatests)
+    _install_rpm_pkgs "${qatests_deps[@]}"
     ;;
   -e|--extra)
     _install_rpm_pkgs "${extra_deps[@]}"

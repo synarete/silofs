@@ -6,7 +6,7 @@ from . import run
 
 
 def _progname() -> str:
-    return "silofs-citests"
+    return "silofs-qatests"
 
 
 def _usage(exit_code: int) -> None:
@@ -22,7 +22,7 @@ def _parseargs() -> tuple[Path, Path]:
     return (test_dir, mnt_point)
 
 
-def start_citests() -> None:
+def start_qatests() -> None:
     basedir, mntdir = _parseargs()
     cfg = run.make_config(basedir, mntdir)
     run.run_tests(cfg)

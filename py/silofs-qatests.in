@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from silofs.citests import citests_main
+from silofs.qatests import qatests_main
 
 __version__ = "@PACKAGE_VERSION@"
 __release__ = "@PACKAGE_RELEASE@"
 __revision__ = "@PACKAGE_REVISION@"
 
-citests_main()
+qatests_main()

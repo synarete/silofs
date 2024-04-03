@@ -32,7 +32,7 @@ base_deps=(
   xxhash
 )
 
-citests_deps=(
+qatests_deps=(
   gcc
   git
   make
@@ -71,13 +71,13 @@ _install_deb_pkgs() {
 arg=${1:-}
 case "$arg" in
   -a|--all)
-    _install_deb_pkgs "${base_deps[@]}" "${citests_deps[@]}" "${extra_deps[@]}"
+    _install_deb_pkgs "${base_deps[@]}" "${qatests_deps[@]}" "${extra_deps[@]}"
     ;;
   -b|--base)
     _install_deb_pkgs "${base_deps[@]}"
     ;;
-  -c|--citests)
-    _install_deb_pkgs "${citests_deps[@]}"
+  -c|--qatests)
+    _install_deb_pkgs "${qatests_deps[@]}"
     ;;
   -e|--extra)
     _install_deb_pkgs "${extra_deps[@]}"

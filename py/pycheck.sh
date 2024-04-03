@@ -47,6 +47,7 @@ _run_pylint() {
 _run_pychecks() {
   local srcdir
 
+   cd "${basedir}" || exit 1
   _run_black "${1}"
   _run_flake8 "${1}"
   _run_mypy "${1}"
@@ -55,11 +56,14 @@ _run_pychecks() {
 
 _main() {
   local srcdir
+  local curdir
 
+  curdir="$(pwd)"
   for arg in "$@"; do
+    cd "${curdir}"
     srcdir="$(realpath "$(readlink -f "${arg}")")"
+    _try cd "${srcdir}"
 
-    cd "${basedir}" || exit 1
     _run_pychecks "${srcdir}"
   done
 }

@@ -53,22 +53,24 @@ class LocalCtx:
         self.meta = FsMeta(repodir_name)
         self.silofs_cmd = SilofsCmd()
 
-    def check_args(self) -> None:
-        self.check_meta()
-        self.check_cmd()
-
-    def check_meta(self) -> None:
-        if not self.meta.repodir.is_dir():
-            raise ArchiveException(f"not a directory: {self.meta.repodir}")
-        if not self.meta.repodir_name.exists():
-            raise ArchiveException(f"not-exists: {self.meta.repodir_name}")
-        if not self.meta.repodir_name.is_file():
-            raise ArchiveException(f"not a file: {self.meta.repodir_name}")
-
     def check_cmd(self) -> None:
         version = self.silofs_cmd.exec_version()
         if not version:
             raise ArchiveException(f"bad silofs: {self.silofs_cmd.xbin}")
+
+    def check_args(self, restore_mode: bool = False) -> None:
+        repodir = self.meta.repodir
+        repodir_name = self.meta.repodir_name
+        if not repodir.is_dir():
+            raise ArchiveException(f"not a directory: {repodir}")
+        if restore_mode:
+            if repodir_name.exists():
+                raise ArchiveException(f"already exists: {repodir_name}")
+        else:
+            if not repodir_name.exists():
+                raise ArchiveException(f"not exists: {repodir_name}")
+            if not repodir_name.is_file():
+                raise ArchiveException(f"not a file: {repodir_name}")
 
     def load_meta(self) -> None:
         self.meta.load_conf()

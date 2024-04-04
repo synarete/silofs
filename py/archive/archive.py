@@ -4,30 +4,40 @@ from pathlib import Path
 
 from .blobs import BlobInfo
 from .local import LocalCtx
-from .model import ArchiveIndex, BlobMeta
+from .model import BlobMeta, Catalog
 from .remote import RemoteCtx
 
 
-# pylint: disable=R0903
 class ArchiveCtx:
     def __init__(
-        self, repodir_name: Path, archive_dir: Path, passwd: str = ""
+        self,
+        repodir_name: Path,
+        archive_dir: Path,
+        passwd: str = "",
+        restore_mode: bool = False,
     ) -> None:
         self.local = LocalCtx(repodir_name, passwd)
         self.remote = RemoteCtx(archive_dir)
+        self.restore_mode = restore_mode
 
-    def execute_archive(self) -> ArchiveIndex:
+    def execute_archive(self) -> None:
         self._pre_archive()
         blobs_meta = self._store_blobs()
-        ar_index = self._make_index(blobs_meta)
-        return ar_index
+        catalog = self._make_catalog(blobs_meta)
+        self._store_catalog(catalog)
 
-    def _make_index(self, blobs_meta: typing.List[BlobMeta]) -> ArchiveIndex:
-        ar_index = ArchiveIndex()
-        ar_index.name = self.local.meta.name
-        ar_index.conf = self.local.meta.conf
-        ar_index.blobs_meta = blobs_meta
-        return ar_index
+    def execute_restore(self) -> None:
+        pass
+
+    def _store_catalog(self, catalog: Catalog) -> None:
+        self.remote.store_catalog(catalog)
+
+    def _make_catalog(self, blobs_meta: typing.List[BlobMeta]) -> Catalog:
+        catalog = Catalog()
+        catalog.name = self.local.meta.name
+        catalog.conf = self.local.meta.conf
+        catalog.blobids = [meta.blobid for meta in blobs_meta]
+        return catalog
 
     def _store_blobs(self) -> typing.List[BlobMeta]:
         blobs_meta = []
@@ -40,8 +50,8 @@ class ArchiveCtx:
         return blobs_meta
 
     def _pre_archive(self) -> None:
-        self.local.check_args()
-        self.remote.check_args()
         self.local.check_cmd()
+        self.local.check_args(self.restore_mode)
+        self.remote.check_args()
         self.local.load_meta()
         self.local.require_passwd()

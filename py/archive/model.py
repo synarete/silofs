@@ -7,6 +7,10 @@ from uuid import UUID, uuid4
 import pydantic
 
 
+class Version(str, enum.Enum):
+    V1 = "1"
+
+
 class HashFn(str, enum.Enum):
     SHA256 = "sha256"
 
@@ -22,14 +26,17 @@ class FsConf(pydantic.BaseModel):
 
 
 class FsRefID(pydantic.BaseModel):
+    version: Version = Version.V1
     rid: str
 
 
 class BlobID(pydantic.BaseModel):
+    version: Version = Version.V1
     bid: str
 
 
 class BlobMeta(pydantic.BaseModel):
+    version: Version = Version.V1
     refid: FsRefID
     blobid: BlobID
     hashfn: HashFn
@@ -37,8 +44,9 @@ class BlobMeta(pydantic.BaseModel):
     btime: datetime.datetime = datetime.datetime.now()
 
 
-class ArchiveIndex(pydantic.BaseModel):
+class Catalog(pydantic.BaseModel):
+    version: Version = Version.V1
     name: str = ""
     conf: FsConf = FsConf()
     btime: datetime.datetime = datetime.datetime.now()
-    blobs_meta: typing.Optional[typing.List[BlobMeta]] = []
+    blobids: typing.Optional[typing.List[BlobID]] = []

@@ -37,7 +37,9 @@ class CmdExec:
             self.xbin = _require_executable(prog)
         self.cwd = "/"
 
-    def execute_sub(self, args, wdir: str = "", timeout: int = 5) -> str:
+    def execute_sub(
+        self, args, wdir: str = "", indat: str = "", timeout: float = 5.0
+    ) -> str:
         """Execute command via subprocess.
 
         Execute command as sub-process and return its output. Raises CmdError
@@ -50,6 +52,7 @@ class CmdExec:
         log.printsl(f"EXEC: {cmd}")
         with subprocess.Popen(
             shlex.split(cmd),
+            stdin=subprocess.PIPE if indat else None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd,
@@ -58,7 +61,9 @@ class CmdExec:
             universal_newlines=True,
         ) as proc:
             try:
-                std_out, std_err = proc.communicate(timeout=timeout)
+                std_out, std_err = proc.communicate(
+                    timeout=timeout, input=indat
+                )
                 out = std_err or std_out
                 txt = out.strip()
             except subprocess.TimeoutExpired:
@@ -71,14 +76,20 @@ class CmdExec:
                 raise CmdError("failed: " + cmd, txt, ret)
         return txt
 
-    def execute_run(self, args, wdir: str = "") -> None:
+    def execute_run(self, args, wdir: str = "", indat: str = "") -> None:
         """Run command as sub-process without output, raise upon failure"""
         cmd = self._make_cmd(args)
         cwd = self._make_cwd(wdir)
         log.printsl(f"EXEC: {cmd}")
-        proc = subprocess.run(shlex.split(cmd), check=True, cwd=cwd)
-        if proc.returncode != 0:
-            raise CmdError("failed: " + cmd, ret=proc.returncode)
+        ret = subprocess.run(
+            shlex.split(cmd),
+            check=True,
+            cwd=cwd,
+            input=indat,
+            encoding="utf-8",
+        ).returncode
+        if ret != 0:
+            raise CmdError("failed: " + cmd, ret=ret)
 
     def _make_cmd(self, args: typing.Iterable[typing.Any]) -> str:
         cmd_xbin = str(self.xbin)
@@ -182,15 +193,13 @@ class CmdSilofs(CmdExec):
         writeback_cache: bool = False,
     ) -> None:
         wb_mode = int(writeback_cache)
-        args = ["mount", repodir_name, mntpoint]
+        args = ["mount", "--no-prompt", repodir_name, mntpoint]
         args = args + [f"--writeback-cache={wb_mode}"]
         if allow_hostids:
             args = args + ["--allow-hostids"]
         if allow_xattr_acl:
             args = args + ["--allow-xattr-acl"]
-        if password:
-            args = args + ["--password", password]
-        self.execute_run(args)
+        self.execute_run(args, indat=password)
 
     def umount(self, mntpoint: Path) -> None:
         self.execute_run(["umount", mntpoint])
@@ -219,39 +228,29 @@ class CmdSilofs(CmdExec):
         return self.execute_sub(["show", "statx", pathname])
 
     def snap(self, name: str, pathname: Path, password: str) -> None:
-        args = ["snap", "-n", name, pathname]
-        if password:
-            args = args + ["--password", password]
-        self.execute_sub(args)
+        args = ["snap", "--no-prompt", "-n", name, pathname]
+        self.execute_sub(args, indat=password)
 
     def snap_offline(
         self, name: str, repodir_name: Path, password: str
     ) -> None:
-        args = ["snap", "-n", name, "--offline", repodir_name]
-        if password:
-            args = args + ["--password", password]
-        self.execute_sub(args)
+        args = ["snap", "--no-prompt", "-n", name, "--offline", repodir_name]
+        self.execute_sub(args, indat=password)
 
     def tune(self, pathname: Path, ftype: int) -> None:
         self.execute_sub(["tune", "--ftype", str(ftype), pathname])
 
     def rmfs(self, repodir_name: Path, password: str) -> None:
-        args = ["rmfs", repodir_name]
-        if password:
-            args = args + ["--password", password]
-        self.execute_sub(args)
+        args = ["rmfs", "--no-prompt", repodir_name]
+        self.execute_sub(args, indat=password)
 
     def fsck(self, repodir_name: Path, password: str) -> None:
-        args = ["fsck", repodir_name]
-        if password:
-            args = args + ["--password", password]
-        self.execute_sub(args)
+        args = ["fsck", "--no-prompt", repodir_name]
+        self.execute_sub(args, indat=password)
 
     def view(self, repodir_name: Path, password: str) -> typing.Iterable[str]:
-        args = ["view", repodir_name]
-        if password:
-            args = args + ["--password", password]
-        return self.execute_sub(args).split("\n")
+        args = ["view", "--no-prompt", repodir_name]
+        return self.execute_sub(args, indat=password).split("\n")
 
 
 class CmdUnitests(CmdExec):

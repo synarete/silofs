@@ -79,7 +79,7 @@ class FioExec(cmd.CmdExec):
     def __init__(self, base: Path):
         cmd.CmdExec.__init__(self, "fio")
         self.base = base
-        self.timeout = 180
+        self.timeout = 180.0
 
     def execute_with(self, fio_in: FioInput) -> FioOutput:
         argv = fio_in.to_argv()

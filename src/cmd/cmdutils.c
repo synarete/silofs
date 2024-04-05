@@ -450,7 +450,7 @@ void cmd_getoptarg_pass(char **out_pass)
 	char *opt = NULL;
 
 	cmd_getoptarg("--password", &opt);
-	*out_pass = cmd_getpass_str(opt);
+	*out_pass = cmd_duppass(opt);
 	cmd_pstrfree(&opt);
 }
 

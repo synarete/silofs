@@ -48,6 +48,7 @@ struct cmd_snap_in_args {
 	char   *dirpath_real;
 	char   *password;
 	bool    offline;
+	bool    no_prompt;
 };
 
 struct cmd_snap_ctx {
@@ -73,20 +74,20 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 	const struct option opts[] = {
 		{ "name", required_argument, NULL, 'n' },
 		{ "offline", no_argument, NULL, 'X' },
-		{ "password", required_argument, NULL, 'p' },
+		{ "no-prompt", no_argument, NULL, 'P' },
 		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("n:p:XL:h", opts);
+		opt_chr = cmd_getopt("n:PXL:h", opts);
 		if (opt_chr == 'n') {
 			ctx->in_args.snapname = cmd_strdup(optarg);
 		} else if (opt_chr == 'X') {
 			ctx->in_args.offline = true;
-		} else if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
+		} else if (opt_chr == 'P') {
+			ctx->in_args.no_prompt = true;
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
@@ -197,7 +198,8 @@ static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)
 static void cmd_snap_getpass(struct cmd_snap_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, true, &ctx->in_args.password);
+		cmd_getpass_simple(ctx->in_args.no_prompt,
+		                   &ctx->in_args.password);
 	}
 }
 

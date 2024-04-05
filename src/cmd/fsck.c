@@ -30,6 +30,7 @@ struct cmd_fsck_in_args {
 	char   *repodir_real;
 	char   *name;
 	char   *password;
+	bool    no_prompt;
 };
 
 struct cmd_fsck_ctx {
@@ -47,16 +48,16 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "password", required_argument, NULL, 'p' },
+		{ "no-prompt", no_argument, NULL, 'P' },
 		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("p:L:h", opts);
-		if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
+		opt_chr = cmd_getopt("PL:h", opts);
+		if (opt_chr == 'P') {
+			ctx->in_args.no_prompt = true;
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
@@ -135,7 +136,8 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, true, &ctx->in_args.password);
+		cmd_getpass_simple(ctx->in_args.no_prompt,
+		                   &ctx->in_args.password);
 	}
 }
 

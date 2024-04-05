@@ -102,7 +102,7 @@ read_password_buf_from_fd(int fd, void *buf, size_t bsz, size_t *out_len)
 }
 
 static void
-read_password_buf_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
+read_password_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	struct stat st;
 	int err;
@@ -121,7 +121,7 @@ read_password_buf_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 }
 
 static void
-read_password_buf_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
+read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	struct termios tr_old;
 	struct termios tr_new;
@@ -174,18 +174,18 @@ static int isregfd(int fd)
 	return !err && S_ISREG(st.st_mode);
 }
 
-static void read_password_buf(int fd, void *buf, size_t bsz, size_t *out_len)
+static void read_password_from(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	if (isatty(fd)) {
-		read_password_buf_from_tty(fd, buf, bsz, out_len);
+		read_password_from_tty(fd, buf, bsz, out_len);
 	} else if (isregfd(fd)) {
-		read_password_buf_from_file(fd, buf, bsz, out_len);
+		read_password_from_file(fd, buf, bsz, out_len);
 	} else {
 		read_password_buf_from_fd(fd, buf, bsz, out_len);
 	}
 }
 
-static int open_password_infile(const char *path)
+static int open_password_fd(const char *path)
 {
 	int err;
 	int fd = -1;
@@ -204,7 +204,7 @@ static int open_password_infile(const char *path)
 	return fd;
 }
 
-static void close_password_infile(int fd, const char *path)
+static void close_password_fd(int fd, const char *path)
 {
 	int err;
 
@@ -222,9 +222,9 @@ static char *getpass_from(const char *path)
 	size_t len = 0;
 	int fd;
 
-	fd = open_password_infile(path);
-	read_password_buf(fd, buf, sizeof(buf), &len);
-	close_password_infile(fd, path);
+	fd = open_password_fd(path);
+	read_password_from(fd, buf, sizeof(buf), &len);
+	close_password_fd(fd, path);
 	return parse_dup_password(buf, len);
 }
 
@@ -266,7 +266,13 @@ void cmd_getpass2(const char *path, bool with_prompt, char **out_pass)
 	*out_pass = do_getpass(path, with_prompt, true);
 }
 
-char *cmd_getpass_str(const char *pass)
+void cmd_getpass_simple(bool no_prompt, char **out_pass)
+{
+	cmd_getpass(NULL, !no_prompt, out_pass);
+}
+
+
+char *cmd_duppass(const char *pass)
 {
 	return parse_dup_password(pass, strlen(pass));
 }

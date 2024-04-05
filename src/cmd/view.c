@@ -147,8 +147,8 @@ static void cmd_view_prepare(struct cmd_view_ctx *ctx)
 static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
-		cmd_getpass(NULL, !ctx->in_args.no_prompt,
-		            &ctx->in_args.password);
+		cmd_getpass_simple(ctx->in_args.no_prompt,
+		                   &ctx->in_args.password);
 	}
 }
 

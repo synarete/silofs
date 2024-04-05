@@ -297,7 +297,9 @@ void cmd_getpass(const char *path, bool with_prompt, char **out_pass);
 
 void cmd_getpass2(const char *path, bool with_prompt, char **out_pass);
 
-char *cmd_getpass_str(const char *pass);
+void cmd_getpass_simple(bool no_prompt, char **out_pass);
+
+char *cmd_duppass(const char *pass);
 
 void cmd_delpass(char **pass);
 

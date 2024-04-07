@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/pv.h>
+#include <silofs/vol.h>
 
 
 static struct silofs_pnode_info *

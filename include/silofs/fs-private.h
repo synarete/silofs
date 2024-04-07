@@ -23,7 +23,7 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/pv.h>
+#include <silofs/vol.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/lnodes.h>
 

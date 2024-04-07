@@ -23,7 +23,7 @@
 #include <silofs/defs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/pv.h>
+#include <silofs/vol.h>
 #include <silofs/fs.h>
 
 int silofs_initlib(void);

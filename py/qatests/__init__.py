@@ -1,25 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0
-from .start import start_qatests
+from .start import ProgInfo, run_silofs_qatests
 
 
-def _setproctitle() -> None:
-    try:
-        # pylint: disable=C0415
-        from setproctitle import setproctitle  # type: ignore
-
-        setproctitle("silofs-qatests")
-    except ImportError:
-        pass
-
-
-def _exectests() -> None:
-    start_qatests()
-
-
-def qatests_main() -> None:
-    _setproctitle()
-    _exectests()
+def main(prog_info: ProgInfo = ProgInfo()) -> None:
+    run_silofs_qatests(prog_info)
 
 
 if __name__ == "__main__":
-    qatests_main()
+    main()

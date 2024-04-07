@@ -1,4 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0
-from . import qatests_main
+from . import main
 
-qatests_main()
+main()

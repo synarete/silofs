@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
+from silofs import qatests as silofs_qatests
 
-from silofs.qatests import qatests_main
+prog_info = silofs_qatests.ProgInfo()
+prog_info.version = "@PACKAGE_VERSION@"
+prog_info.release = "@PACKAGE_RELEASE@"
+prog_info.revision = "@PACKAGE_REVISION@"
 
-__version__ = "@PACKAGE_VERSION@"
-__release__ = "@PACKAGE_RELEASE@"
-__revision__ = "@PACKAGE_REVISION@"
-
-qatests_main()
+silofs_qatests.main(prog_info)

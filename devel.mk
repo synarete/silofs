@@ -55,6 +55,7 @@ CXXFLAGS =
 LDFLAGS =
 MAKE_OPTS =
 CONFIGURE_OPTS =
+CONFIGURE_RE =
 
 # Vars setup
 ifneq ($(CC), $(CCS))
@@ -101,6 +102,7 @@ endif
 
 # Make options
 ifeq ($(V), 0)
+CONFIGURE_RE = > /dev/null
 MAKE_OPTS += --silent --no-print-directory
 endif
 
@@ -266,7 +268,8 @@ dist: check
 configure: bootstrap
 	$(call report, $@, $(CONFIGURE_OPTS))
 	@if [ ! -e $(BUILDDIR)/config.status ]; then \
-            cd $(BUILDDIR) && $(TOP)/configure $(CONFIGURE_OPTS); fi
+            cd $(BUILDDIR) && \
+            $(TOP)/configure $(CONFIGURE_OPTS) $(CONFIGURE_RE); fi
 
 bootstrap:
 	$(call report, $@, $(BUILDDIR))

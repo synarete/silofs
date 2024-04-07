@@ -2,6 +2,7 @@ silofs_qatestsdir = $(pythondir)/silofs/qatests
 silofs_qatests_PYTHON = $(NULL)
 silofs_qatests_PYTHON += __init__.py
 silofs_qatests_PYTHON += __main__.py
+silofs_qatests_PYTHON += bconf.py
 silofs_qatests_PYTHON += cmd.py
 silofs_qatests_PYTHON += ctx.py
 silofs_qatests_PYTHON += expect.py

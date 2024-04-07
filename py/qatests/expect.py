@@ -6,7 +6,8 @@ from . import utils
 
 
 class ExpectException(Exception):
-    pass
+    def __init__(self, msg: str) -> None:
+        Exception.__init__(self, msg)
 
 
 class Expect:

@@ -6,8 +6,7 @@ import typing
 from concurrent import futures
 from pathlib import Path
 
-import toml
-
+from . import bconf
 from . import cmd
 from . import expect
 from . import utils
@@ -105,7 +104,7 @@ class TestEnv:
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
         self.cmd = cmd.Cmds()
-        self.bconf = dict[str, typing.Any]()
+        self.bconf = bconf.BConf()
 
     @staticmethod
     def suspend(nsec: int) -> None:
@@ -266,13 +265,8 @@ class TestEnv:
         mnts = self.cmd.silofs.lsmnt()
         self.expect.within(mntp, mnts)
 
-    def load_bconf(self, name: str = "") -> typing.Dict[str, typing.Any]:
-        repodir_name = self._repodir_name(name)
-        bconf = toml.load(repodir_name)
-        return bconf
-
-    def update_bconf(self) -> None:
-        self.bconf = self.load_bconf()
+    def update_bconf(self, name: str = "") -> None:
+        self.bconf = bconf.load_bconf(self._repodir_name(name))
 
 
 class TestDef:

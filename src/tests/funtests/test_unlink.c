@@ -63,7 +63,7 @@ static void test_unlink_fifo(struct ft_env *fte)
 	ft_unlink_noent(path);
 	ft_mkfifo(path, 0644);
 	ft_lstat(path, &st);
-	ft_expect_true(S_ISFIFO(st.st_mode));
+	ft_expect_st_fifo(&st);
 	ft_unlink(path);
 	ft_unlink_noent(path);
 }

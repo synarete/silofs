@@ -137,6 +137,15 @@ void ft_do_expect_st_lnk(const struct stat *st, const char *fl, int ln)
 	}
 }
 
+void ft_do_expect_st_fifo(const struct stat *st, const char *fl, int ln)
+{
+	const mode_t mode = st->st_mode;
+
+	if (!S_ISFIFO(mode)) {
+		do_error_at_line(fl, ln, "not a fifo: mode=0%o", mode);
+	}
+}
+
 void ft_do_expect_st_mtime_eq(const struct stat *st1, const struct stat *st2,
                               const char *fl, int ln)
 {

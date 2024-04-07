@@ -27,13 +27,13 @@ static void test_mkfifo(struct ft_env *fte)
 
 	ft_mkfifo(path, S_IFIFO | 0600);
 	ft_stat(path, &st);
-	ft_expect_true(S_ISFIFO(st.st_mode));
+	ft_expect_st_fifo(&st);
 	ft_expect_eq(st.st_nlink, 1);
 	ft_expect_eq(st.st_size, 0);
 	ft_unlink(path);
 }
 
-static void test_mkfifoat_(struct ft_env *fte, size_t count)
+static void test_mkfifoat_(struct ft_env *fte, size_t cnt)
 {
 	struct stat st = { .st_mode = 0 };
 	const char *path = ft_new_path_unique(fte);
@@ -42,15 +42,15 @@ static void test_mkfifoat_(struct ft_env *fte, size_t count)
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	for (size_t i = 0; i < count; ++i) {
+	for (size_t i = 0; i < cnt; ++i) {
 		name = ft_make_ulong_name(fte, i + 1);
 		ft_mkfifoat(dfd, name, S_IFIFO | 0600);
 		ft_fstatat(dfd, name, &st, 0);
-		ft_expect_true(S_ISFIFO(st.st_mode));
+		ft_expect_st_fifo(&st);
 		ft_expect_eq(st.st_nlink, 1);
 		ft_expect_eq(st.st_size, 0);
 	}
-	for (size_t i = 0; i < count; ++i) {
+	for (size_t i = 0; i < cnt; ++i) {
 		name = ft_make_ulong_name(fte, i + 1);
 		ft_unlinkat(dfd, name, 0);
 	}
@@ -81,7 +81,7 @@ static void test_fifo_read_write_(struct ft_env *fte, size_t bsz)
 
 	ft_mkfifo(path, S_IFIFO | 0600);
 	ft_stat(path, &st);
-	ft_expect_true(S_ISFIFO(st.st_mode));
+	ft_expect_st_fifo(&st);
 	ft_open(path, O_RDWR, 0, &wfd);
 	ft_write(wfd, buf1, bsz, &nwr);
 	ft_expect_eq(bsz, nwr);
@@ -158,7 +158,7 @@ static void test_fifo_unlinked_(struct ft_env *fte, size_t bsz)
 	ft_mkfifo(path, S_IFIFO | 0600);
 	ft_open(path, O_RDWR, 0, &fd);
 	ft_fstat(fd, &st[0]);
-	ft_expect_true(S_ISFIFO(st[0].st_mode));
+	ft_expect_st_fifo(&st[0]);
 	ft_unlink(path);
 	ft_fstat(fd, &st[1]);
 	ft_writen(fd, buf1, bsz);
@@ -169,7 +169,7 @@ static void test_fifo_unlinked_(struct ft_env *fte, size_t bsz)
 	ft_readn(fd, buf2, bsz);
 	ft_expect_eqm(buf1, buf2, bsz);
 	ft_fstat(fd, &st[1]);
-	ft_expect_true(S_ISFIFO(st[1].st_mode));
+	ft_expect_st_fifo(&st[1]);
 	ft_close(fd);
 	ft_stat_err(path, -ENOENT);
 	ft_syncfs(dfd);
@@ -204,7 +204,7 @@ static void test_fifo_nlinks_(struct ft_env *fte, nlink_t nlink, size_t bsz)
 	ft_mkfifoat(dfd, fname, S_IFIFO | 0600);
 	ft_openat(dfd, fname, O_RDWR, 0, &fd);
 	ft_fstat(fd, &st);
-	ft_expect_true(S_ISFIFO(st.st_mode));
+	ft_expect_st_fifo(&st);
 	for (nlink_t i = 0; i < nlink; ++i) {
 		lname = ft_make_ulong_name(fte, i);
 		ft_linkat(dfd, fname, dfd, lname, 0);

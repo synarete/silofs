@@ -60,6 +60,9 @@
 #define ft_expect_st_lnk(st_) \
 	ft_do_expect_st_lnk(st_, FT_FL_LN_)
 
+#define ft_expect_st_fifo(st_) \
+	ft_do_expect_st_fifo(st_, FT_FL_LN_)
+
 #define ft_expect_st_mtime_eq(st1_, st2_) \
 	ft_do_expect_st_mtime_eq(st1_, st2_, FT_FL_LN_)
 
@@ -120,6 +123,8 @@ void ft_do_expect_st_dir(const struct stat *st, const char *fl, int ln);
 void ft_do_expect_st_reg(const struct stat *st, const char *fl, int ln);
 
 void ft_do_expect_st_lnk(const struct stat *st, const char *fl, int ln);
+
+void ft_do_expect_st_fifo(const struct stat *st, const char *fl, int ln);
 
 void ft_do_expect_st_mtime_eq(const struct stat *st1, const struct stat *st2,
                               const char *fl, int ln);

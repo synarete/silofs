@@ -228,7 +228,7 @@ static void test_rename_isdirto(struct ft_env *fte)
 	ft_lstat(path0, &st[0]);
 	ft_expect_st_dir(&st[0]);
 	ft_lstat(path1, &st[1]);
-	ft_expect_true(S_ISFIFO(st[1].st_mode));
+	ft_expect_st_fifo(&st[1]);
 	ft_unlink(path1);
 
 	ft_symlink("test-rename-isdirto", path1);

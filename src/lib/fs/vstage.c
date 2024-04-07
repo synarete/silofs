@@ -293,14 +293,12 @@ static int vstgc_spawn_vi_at(const struct silofs_vstage_ctx *vstg_ctx,
 	return err;
 }
 
-static int vstgc_restore_view_of(const struct silofs_vstage_ctx *vstg_ctx,
-                                 struct silofs_vnode_info *vi)
+static int vstgc_update_view_of(const struct silofs_vstage_ctx *vstg_ctx,
+                                struct silofs_vnode_info *vi)
 {
 	int err;
-	bool raw;
 
-	raw = (vstg_ctx->stg_mode & SILOFS_STG_RAW) > 0;
-	if (raw) {
+	if (vstg_ctx->stg_mode & SILOFS_STG_RAW) {
 		return 0; /* no-op */
 	}
 	err = silofs_refresh_llink(vstg_ctx->task, vi);
@@ -2375,7 +2373,7 @@ static int vstgc_stage_vnode_at(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		goto out_err;
 	}
-	err = vstgc_restore_view_of(vstg_ctx, vi);
+	err = vstgc_update_view_of(vstg_ctx, vi);
 	if (err) {
 		goto out_err;
 	}

@@ -42,6 +42,7 @@ qatests_deps=(
   openssl-devel
   perl-core
   perl-libwww-perl
+  python3-pydantic
   python3-setproctitle
   readline-devel
   zlib
@@ -79,7 +80,7 @@ case "$arg" in
   -b|--base)
     _install_rpm_pkgs "${base_deps[@]}"
     ;;
-  -c|--qatests)
+  -q|--qatests)
     _install_rpm_pkgs "${qatests_deps[@]}"
     ;;
   -e|--extra)

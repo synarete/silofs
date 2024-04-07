@@ -44,10 +44,12 @@ qatests_deps=(
   libcap-dev
   libunwind-dev
   libreadline-dev
-  zlib1g-dev
   libssl-dev
   libcurl4-openssl-dev
   libexpat1-dev
+  python3-pydantic
+  python3-setproctitle
+  zlib1g-dev
 )
 
 extra_deps=(
@@ -76,7 +78,7 @@ case "$arg" in
   -b|--base)
     _install_deb_pkgs "${base_deps[@]}"
     ;;
-  -c|--qatests)
+  -q|--qatests)
     _install_deb_pkgs "${qatests_deps[@]}"
     ;;
   -e|--extra)

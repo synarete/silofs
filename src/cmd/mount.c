@@ -87,6 +87,7 @@ enum cmd_mount_subopts {
 	CMD_MOUNT_OPT_EXEC,
 	CMD_MOUNT_OPT_NOEXEC,
 	CMD_MOUNT_OPT_HOSTIDS,
+	CMD_MOUNT_OPT_PASSWD,
 };
 
 static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
@@ -101,6 +102,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	char tok_exec[] = "exec";
 	char tok_noexec[] = "noexec";
 	char tok_hostids[] = "hostids";
+	char tok_passwd[] = "passwd";
 	char *const toks[] = {
 		[CMD_MOUNT_OPT_RO] = tok_ro,
 		[CMD_MOUNT_OPT_RW] = tok_rw,
@@ -111,6 +113,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 		[CMD_MOUNT_OPT_EXEC] = tok_exec,
 		[CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
 		[CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
+		[CMD_MOUNT_OPT_PASSWD] = tok_passwd,
 		NULL
 	};
 	char *sopt = NULL;
@@ -145,6 +148,8 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 			ctx->in_args.flags.noexec = true;
 		} else if (skey == CMD_MOUNT_OPT_HOSTIDS) {
 			ctx->in_args.flags.allow_hostids = true;
+		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
+			ctx->in_args.password = cmd_duppass(sval);
 		} else {
 			cmd_dief(0, "illegal sub-options: %s", optarg);
 		}
@@ -165,6 +170,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "asyncwr", required_argument, NULL, 'a' },
 		{ "stdalloc", no_argument, NULL, 'M' },
 		{ "no-prompt", no_argument, NULL, 'P' },
+		{ "password", required_argument, NULL, 'p' },
 		{ "loglevel", required_argument, NULL, 'L' },
 		{ "systemd-run", no_argument, NULL, 'R' },
 		{ "help", no_argument, NULL, 'h' },
@@ -172,7 +178,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("o:iAEW:DCa:MPL:Rh", opts);
+		opt_chr = cmd_getopt("o:iAEW:DCa:MPp:L:Rh", opts);
 		if (opt_chr == 'o') {
 			cmd_mount_getsubopts(ctx);
 		} else if (opt_chr == 'i') {
@@ -195,6 +201,8 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 			ctx->in_args.flags.stdalloc = true;
 		} else if (opt_chr == 'P') {
 			ctx->in_args.no_prompt = true;
+		} else if (opt_chr == 'p') {
+			cmd_getoptarg_pass(&ctx->in_args.password);
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 			ctx->in_args.explicit_log_level = true;

@@ -16,10 +16,11 @@ dist_name="$1"
 archive_tgz="${dist_name}.tar.gz"
 workdir="${selfdir}/${dist_name}"
 
-# Build from source
+# Build from (clean) source
 cd "${selfdir}"
 run tar xvfz "${archive_tgz}"
 cd "${workdir}"
+run ./cstylefmt.sh
 run ./configure
 run make
 run make distcheck

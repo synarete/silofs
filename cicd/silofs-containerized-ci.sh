@@ -59,7 +59,7 @@ run podman inspect "${imagename}"
 # Run CI build-and-test cycle using local user and scratch dir
 scratchdir="${workdir}/scratch/"
 run mkdir -p "${scratchdir}"
-run cp "${selfdir}/build-and-test.sh" "${scratchdir}"
+run cp "${selfdir}/silofs-citests.sh" "${scratchdir}"
 run mv "${autotoolsdir}/${disttgz}" "${scratchdir}"
 
 run podman run -ti --rm \
@@ -70,7 +70,7 @@ run podman run -ti --rm \
   --volume="/etc/shadow:/etc/shadow:ro" \
   --volume="${scratchdir}:/scratch:rw" \
   --workdir="/scratch" \
-  "${imagename}" "./build-and-test.sh" "${distname}"
+  "${imagename}" "./silofs-citests.sh" "${distname}"
 
 # Remove test image
 run podman rmi "${imagename}"

@@ -1382,10 +1382,14 @@ static bool qalloc_is_pedantic(const struct silofs_qalloc *qal)
 	return (qal->mode & SILOFS_QALLOC_PEDANTIC) > 0;
 }
 
-static void
-qalloc_wreck_data(const struct silofs_qalloc *qal, void *ptr, size_t nbytes)
+static void qalloc_pre_free(const struct silofs_qalloc *qal,
+                            void *ptr, size_t nbytes, int flags)
 {
-	memset(ptr, qal->magic, silofs_min(256, nbytes));
+	if (flags) {
+		qalloc_apply_flags(qal, ptr, nbytes, flags);
+	} else if (qalloc_is_pedantic(qal)) {
+		memset(ptr, qal->magic, silofs_min(512, nbytes));
+	}
 }
 
 static int qalloc_free(struct silofs_qalloc *qal,
@@ -1400,11 +1404,8 @@ static int qalloc_free(struct silofs_qalloc *qal,
 	if (err) {
 		return err;
 	}
-	qalloc_apply_flags(qal, ptr, nbytes, flags);
 
-	if (qalloc_is_pedantic(qal)) {
-		qalloc_wreck_data(qal, ptr, nbytes);
-	}
+	qalloc_pre_free(qal, ptr, nbytes, flags);
 
 	if (is_slab_size(nbytes)) {
 		err = qalloc_free_sub_pg(qal, ptr, nbytes, flags);

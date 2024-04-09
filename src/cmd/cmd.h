@@ -284,7 +284,7 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* misc */
-void cmd_trace_debug_info(void);
+void cmd_trace_versions(void);
 
 /* file-system environment */
 void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,

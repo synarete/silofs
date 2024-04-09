@@ -257,7 +257,7 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 	int err;
 
 	err = silofs_inspect_fs(fse, cb, user_ctx);
-	cmd_require_ok(fse, err, "fsck error");
+	cmd_require_ok(fse, err, "inspect error");
 }
 
 void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir)

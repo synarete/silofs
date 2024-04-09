@@ -544,6 +544,7 @@ static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 	silofs_log_iarg("allow_xattr_acl=%d", cflags->allow_xattr_acl);
 	silofs_log_iarg("writeback_cache=%d", cflags->writeback_cache);
 	silofs_log_iarg("lazytime=%d", cflags->lazytime);
+	cmd_trace_versions();
 }
 
 static void cmd_mount_trace_finish(const struct cmd_mount_ctx *ctx)

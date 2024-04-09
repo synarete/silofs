@@ -1157,9 +1157,9 @@ void cmd_reset_ioc(union silofs_ioc_u *ioc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_trace_debug_info(void)
+void cmd_trace_versions(void)
 {
-	silofs_log_debug("version: %s", silofs_version.string);
-	silofs_log_debug("gcrypt version: %s", silofs_gcrypt_version());
-	silofs_log_debug("zstd version: %s", silofs_zstd_version());
+	silofs_log_info("silofs version: %s", silofs_version.string);
+	silofs_log_info("gcrypt version: %s", silofs_gcrypt_version());
+	silofs_log_info("zstd version: %s", silofs_zstd_version());
 }

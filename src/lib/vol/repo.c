@@ -385,26 +385,10 @@ static void index_to_sbuf(size_t idx, struct silofs_strbuf *sbuf)
 	sbuf->str[len] = '\0';
 }
 
-
-static void byte_to_ascii(unsigned int b, char *a)
-{
-	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
-	a[1] = silofs_nibble_to_ascii((int)b);
-}
-
 static size_t
 hash256_to_name(const struct silofs_hash256 *hash, char *buf, size_t bsz)
 {
-	size_t cnt = 0;
-
-	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
-		if ((cnt + 2) > bsz) {
-			break;
-		}
-		byte_to_ascii(hash->hash[i], buf + cnt);
-		cnt += 2;
-	}
-	return cnt;
+	return silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), buf, bsz);
 }
 
 static int make_pathname(const struct silofs_hash256 *hash, size_t idx,

@@ -14,18 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_LIBSILOFS_H_
-#define SILOFS_LIBSILOFS_H_
+#ifndef SILOFS_EXPORT_H_
+#define SILOFS_EXPORT_H_
 
-#include <silofs/version.h>
-#include <silofs/ccattr.h>
-#include <silofs/consts.h>
-#include <silofs/defs.h>
-#include <silofs/infra.h>
-#include <silofs/addr.h>
-#include <silofs/vol.h>
-#include <silofs/fs.h>
-#include <silofs/pack.h>
-#include <silofs/execlib.h>
+struct silofs_task;
 
-#endif /* SILOFS_LIBSILOFS_H_ */
+struct silofs_pack_args {
+	const char *remotedir;
+};
+
+int silofs_fs_export(struct silofs_task *task,
+                     const struct silofs_pack_args *args);
+
+#endif /* SILOFS_EXPORT_H_ */

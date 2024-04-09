@@ -84,9 +84,11 @@ nobase_include_HEADERS += silofs/fs/ustage.h
 nobase_include_HEADERS += silofs/fs/vstage.h
 nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
-nobase_include_HEADERS += silofs/fs/zcmpr.h
 nobase_include_HEADERS += silofs/fs.h
 nobase_include_HEADERS += silofs/fs-private.h
+nobase_include_HEADERS += silofs/pack/export.h
+nobase_include_HEADERS += silofs/pack/zcmpr.h
+nobase_include_HEADERS += silofs/pack.h
 
 EXTRA_DIST = config-am.h.in
 

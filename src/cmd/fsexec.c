@@ -260,6 +260,14 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 	cmd_require_ok(fse, err, "fsck error");
 }
 
+void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir)
+{
+	int err;
+
+	err = silofs_export_fs(fse, remotedir);
+	cmd_require_ok(fse, err, "archive error");
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_init_fs_args(struct silofs_fs_args *fs_args)

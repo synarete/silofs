@@ -16,8 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
-#include <silofs/fs-private.h>
+#include <silofs/pack.h>
 #include <zstd.h>
 
 #if (ZSTD_VERSION_NUMBER >= 10502)

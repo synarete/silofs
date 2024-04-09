@@ -15,6 +15,7 @@ silofs_LDADD += $(PTHREAD_LIBS)
 silofs_LDADD += $(LIBGCRYPT_LIBS)
 silofs_SOURCES = $(NULL)
 silofs_SOURCES += cmd.h
+silofs_SOURCES += archive.c
 silofs_SOURCES += bconf.c
 silofs_SOURCES += cmdutils.c
 silofs_SOURCES += rmfs.c

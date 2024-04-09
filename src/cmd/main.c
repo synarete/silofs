@@ -163,6 +163,7 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(view),
 	DEFCMD(export),
 	DEFCMD(import),
+	DEFCMD(archive),
 };
 
 static bool equals(const char *s1, const char *s2)

@@ -100,6 +100,8 @@ void cmd_execute_export(void);
 
 void cmd_execute_import(void);
 
+void cmd_execute_archive(void);
+
 /* fatal-error handling */
 __attribute__((__noreturn__))
 void cmd_dief(int errnum, const char *restrict fmt, ...);
@@ -260,6 +262,7 @@ void cmd_unref_fs(struct silofs_fs_ctx *fse,
 void cmd_inspect_fs(struct silofs_fs_ctx *fse,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
+void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir);
 
 /* mount-info */
 struct cmd_proc_mntinfo {

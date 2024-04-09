@@ -32,7 +32,6 @@
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/lcache.h>
 #include <silofs/fs/lnodes.h>
-#include <silofs/fs/zcmpr.h>
 #include <silofs/fs/encdec.h>
 #include <silofs/fs/task.h>
 #include <silofs/fs/super.h>

@@ -75,9 +75,6 @@ int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
                    struct silofs_lvid *out_new,
                    struct silofs_lvid *out_alt);
 
-int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
-                      silofs_visit_laddr_fn cb, void *user_ctx);
-
 int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
                     const struct silofs_lvid *lvid);
 
@@ -87,5 +84,10 @@ int silofs_sync_fs(struct silofs_fs_ctx *fs_ctx, bool drop);
 
 void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_cachestats *cst);
+
+int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+                      silofs_visit_laddr_fn cb, void *user_ctx);
+
+int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *remotedir);
 
 #endif /* SILOFS_EXECLIB_H_ */

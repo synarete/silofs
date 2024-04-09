@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fs/fuseq.h>
+#include <silofs/pack.h>
 #include <silofs/execlib.h>
 
 
@@ -1698,26 +1699,6 @@ int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
 	return 0;
 }
 
-static int exec_inspect_fs(struct silofs_fs_ctx *fs_ctx,
-                           silofs_visit_laddr_fn cb, void *user_ctx)
-{
-	struct silofs_task task;
-	int err;
-
-	err = make_task(fs_ctx, &task);
-	if (err) {
-		return err;
-	}
-	err = silofs_fs_inspect(&task, cb, user_ctx);
-	return term_task(&task, err);
-}
-
-int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
-                      silofs_visit_laddr_fn cb, void *user_ctx)
-{
-	return exec_inspect_fs(fs_ctx, cb, user_ctx);
-}
-
 static int exec_unref_fs(struct silofs_fs_ctx *fse)
 {
 	struct silofs_task task;
@@ -1768,4 +1749,47 @@ int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
 		return err;
 	}
 	return 0;
+}
+
+static int exec_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+                           silofs_visit_laddr_fn cb, void *user_ctx)
+{
+	struct silofs_task task;
+	int err;
+
+	err = make_task(fs_ctx, &task);
+	if (err) {
+		return err;
+	}
+	err = silofs_fs_inspect(&task, cb, user_ctx);
+	return term_task(&task, err);
+}
+
+int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+                      silofs_visit_laddr_fn cb, void *user_ctx)
+{
+	return exec_inspect_fs(fs_ctx, cb, user_ctx);
+}
+
+static int exec_export_fs(struct silofs_fs_ctx *fs_ctx,
+                          const struct silofs_pack_args *pargs)
+{
+	struct silofs_task task;
+	int err;
+
+	err = make_task(fs_ctx, &task);
+	if (err) {
+		return err;
+	}
+	err = silofs_fs_export(&task, pargs);
+	return term_task(&task, err);
+}
+
+int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *remotedir)
+{
+	const struct silofs_pack_args pargs = {
+		.remotedir = remotedir,
+	};
+
+	return exec_export_fs(fs_ctx, &pargs);
 }

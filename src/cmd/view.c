@@ -215,10 +215,10 @@ static void cmd_view_show_laddr(const struct cmd_view_ctx *ctx,
 	fflush(fp);
 }
 
-static void cmd_view_cb(void *user_ctx, const struct silofs_laddr *laddr)
+static int cmd_view_cb(void *user_ctx, const struct silofs_laddr *laddr)
 {
-
 	cmd_view_show_laddr(user_ctx, laddr);
+	return 0;
 }
 
 static void cmd_view_execute(struct cmd_view_ctx *ctx)

@@ -27,7 +27,7 @@ struct silofs_walk_iter;
 typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
                                const struct silofs_walk_iter *wit);
 
-typedef void (*silofs_visit_laddr_fn)(void *, const struct silofs_laddr *);
+typedef int (*silofs_visit_laddr_fn)(void *, const struct silofs_laddr *);
 
 struct silofs_walk_iter {
 	struct silofs_sb_info      *sbi;

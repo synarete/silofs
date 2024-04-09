@@ -46,41 +46,47 @@ struct silofs_inspect_ctx {
 	void                           *user_ctx;
 };
 
-static void inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
+static int inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
 {
 	const struct silofs_laddr *laddr = NULL;
+	int err;
 
 	for (size_t i = 0; i < insp_ctx->lmap.cnt; ++i) {
 		laddr = &insp_ctx->lmap.laddr[i];
-		insp_ctx->cb(insp_ctx->user_ctx, laddr);
+		err = insp_ctx->cb(insp_ctx->user_ctx, laddr);
+		if (err) {
+			return err;
+		}
 	}
+	return 0;
 }
 
-static void
-inspc_exec_at_super(struct silofs_inspect_ctx *insp_ctx,
-                    const struct silofs_sb_info *sbi)
+static int inspc_exec_at_super(struct silofs_inspect_ctx *insp_ctx,
+                               const struct silofs_sb_info *sbi)
 {
 	silofs_sbi_resolve_lmap(sbi, &insp_ctx->lmap);
-	inspc_exec_lmap(insp_ctx);
+	return inspc_exec_lmap(insp_ctx);
 }
 
-static void inspc_exec_at_spnode(struct silofs_inspect_ctx *insp_ctx,
-                                 const struct silofs_spnode_info *sni)
+static int inspc_exec_at_spnode(struct silofs_inspect_ctx *insp_ctx,
+                                const struct silofs_spnode_info *sni)
 {
 	silofs_sni_resolve_lmap(sni, &insp_ctx->lmap);
-	inspc_exec_lmap(insp_ctx);
+	return inspc_exec_lmap(insp_ctx);
 }
 
-static void inspc_exec_at_spleaf(struct silofs_inspect_ctx *insp_ctx,
-                                 const struct silofs_spleaf_info *sli)
+static int inspc_exec_at_spleaf(struct silofs_inspect_ctx *insp_ctx,
+                                const struct silofs_spleaf_info *sli)
 {
 	silofs_sli_resolve_lmap(sli, &insp_ctx->lmap);
-	inspc_exec_lmap(insp_ctx);
+	return inspc_exec_lmap(insp_ctx);
 }
 
 static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
                          const struct silofs_walk_iter *witr)
 {
+	int ret = 0;
+
 	switch (witr->height) {
 	case SILOFS_HEIGHT_BOOT:
 		break;
@@ -88,23 +94,23 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 		break;
 	case SILOFS_HEIGHT_SPNODE4:
 		insp_ctx->sp_st.objs.nspnode++;
-		inspc_exec_at_spnode(insp_ctx, witr->sni4);
+		ret = inspc_exec_at_spnode(insp_ctx, witr->sni4);
 		break;
 	case SILOFS_HEIGHT_SPNODE3:
 		insp_ctx->sp_st.objs.nspnode++;
-		inspc_exec_at_spnode(insp_ctx, witr->sni3);
+		ret = inspc_exec_at_spnode(insp_ctx, witr->sni3);
 		break;
 	case SILOFS_HEIGHT_SPNODE2:
 		insp_ctx->sp_st.objs.nspnode++;
-		inspc_exec_at_spnode(insp_ctx, witr->sni2);
+		ret = inspc_exec_at_spnode(insp_ctx, witr->sni2);
 		break;
 	case SILOFS_HEIGHT_SPNODE1:
 		insp_ctx->sp_st.objs.nspnode++;
-		inspc_exec_at_spnode(insp_ctx, witr->sni1);
+		ret = inspc_exec_at_spnode(insp_ctx, witr->sni1);
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
 		insp_ctx->sp_st.objs.nspleaf++;
-		inspc_exec_at_spleaf(insp_ctx, witr->sli);
+		ret = inspc_exec_at_spleaf(insp_ctx, witr->sli);
 		break;
 	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_VDATA:
@@ -112,7 +118,7 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 	default:
 		break;
 	}
-	return 0;
+	return ret;
 }
 
 static struct silofs_inspect_ctx *inspc_of(struct silofs_visitor *vis)
@@ -126,10 +132,11 @@ static int inspc_exec_hook(struct silofs_visitor *vis,
 	return inspc_exec_at(inspc_of(vis), witr);
 }
 
-static void noop_callback(void *user_ctx, const struct silofs_laddr *laddr)
+static int noop_callback(void *ctx, const struct silofs_laddr *laddr)
 {
 	silofs_unused(laddr);
-	silofs_unused(user_ctx);
+	silofs_unused(ctx);
+	return 0;
 }
 
 static void inspc_init(struct silofs_inspect_ctx *insp_ctx,
@@ -182,10 +189,17 @@ static int inspc_walk_spmaps(struct silofs_inspect_ctx *insp_ctx)
 static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 {
 	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
+	int err;
 
 	insp_ctx->sp_st.objs.nsuper++;
-	inspc_exec_at_super(insp_ctx, insp_ctx->sbi);
-	insp_ctx->cb(insp_ctx->user_ctx, sb_laddr);
+	err = inspc_exec_at_super(insp_ctx, insp_ctx->sbi);
+	if (err) {
+		return err;
+	}
+	err = insp_ctx->cb(insp_ctx->user_ctx, sb_laddr);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -195,8 +209,7 @@ static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
 
 	silofs_make_bootrec_uaddr(&sb_laddr->lsegid.lvid, &brec_uaddr);
-	insp_ctx->cb(insp_ctx->user_ctx, &brec_uaddr.laddr);
-	return 0;
+	return insp_ctx->cb(insp_ctx->user_ctx, &brec_uaddr.laddr);
 }
 
 static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)

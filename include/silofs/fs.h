@@ -27,6 +27,7 @@
 
 #include <silofs/fs/types.h>
 #include <silofs/fs/uidgid.h>
+#include <silofs/fs/idmap.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/lcache.h>
@@ -36,7 +37,6 @@
 #include <silofs/fs/task.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/stats.h>
-#include <silofs/fs/idmap.h>
 #include <silofs/fs/inode.h>
 #include <silofs/fs/dir.h>
 #include <silofs/fs/file.h>

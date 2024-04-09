@@ -17,47 +17,6 @@
 #ifndef SILOFS_EXEC_H_
 #define SILOFS_EXEC_H_
 
-/* file-system boot configurations */
-struct silofs_fs_bconf {
-	struct silofs_strbuf    name;
-	struct silofs_uuid      fsid;
-	struct silofs_ids       ids;
-};
-
-/* file-system control flags */
-struct silofs_fs_cflags {
-	bool                    pedantic;
-	bool                    rdonly;
-	bool                    noexec;
-	bool                    nosuid;
-	bool                    nodev;
-	bool                    with_fuse;
-	bool                    asyncwr;
-	bool                    allow_admin;
-	bool                    allow_other;
-	bool                    allow_hostids;
-	bool                    allow_xattr_acl;
-	bool                    writeback_cache;
-	bool                    lazytime;
-	bool                    stdalloc;
-};
-
-/* file-system input arguments */
-struct silofs_fs_args {
-	struct silofs_fs_bconf  bconf;
-	const char             *repodir;
-	const char             *name;
-	const char             *mntdir;
-	const char             *passwd;
-	uid_t                   uid;
-	gid_t                   gid;
-	pid_t                   pid;
-	mode_t                  umask;
-	size_t                  capacity;
-	size_t                  memwant;
-	struct silofs_fs_cflags cflags;
-};
-
 /* file-system top-level context */
 struct silofs_fs_ctx {
 	struct silofs_fs_args   fs_args;

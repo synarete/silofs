@@ -117,7 +117,7 @@ static void cmd_init_libsilofs(void)
 {
 	int err;
 
-	err = silofs_initlib();
+	err = silofs_init_lib();
 	if (err) {
 		cmd_dief(err, "unable to init libsilofs");
 	}

@@ -96,7 +96,7 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 static void ute_cleanup(struct ut_env *ute)
 {
 	if (ute->fs_ctx != NULL) {
-		silofs_del_fs_ctx(ute->fs_ctx);
+		silofs_del_ctx(ute->fs_ctx);
 		ute->fs_ctx = NULL;
 	}
 }
@@ -134,7 +134,7 @@ static void ute_setup(struct ut_env *ute)
 	int err;
 
 	silofs_uuid_generate(&ute->args->fs_args.bconf.fsid);
-	err = silofs_new_fs_ctx(&ute->args->fs_args, &ute->fs_ctx);
+	err = silofs_new_ctx(&ute->args->fs_args, &ute->fs_ctx);
 	silofs_assert_ok(err);
 }
 

@@ -25,7 +25,6 @@
 #include <silofs/addr.h>
 #include <silofs/vol.h>
 #include <silofs/fs.h>
-
-int silofs_initlib(void);
+#include <silofs/execlib.h>
 
 #endif /* SILOFS_LIBSILOFS_H_ */

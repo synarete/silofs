@@ -51,7 +51,6 @@
 #include <silofs/fs/fsenv.h>
 #include <silofs/fs/ustage.h>
 #include <silofs/fs/flush.h>
-#include <silofs/fs/exec.h>
 #include <silofs/fs/mntsvc.h>
 
 #ifdef SILOFS_HAVE_PRIVATE

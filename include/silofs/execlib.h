@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_EXEC_H_
-#define SILOFS_EXEC_H_
+#ifndef SILOFS_EXECLIB_H_
+#define SILOFS_EXECLIB_H_
 
 /* file-system top-level context */
 struct silofs_fs_ctx {
@@ -38,10 +38,12 @@ struct silofs_fs_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_new_fs_ctx(const struct silofs_fs_args *args,
-                      struct silofs_fs_ctx **out_fs_ctx);
+int silofs_init_lib(void);
 
-void silofs_del_fs_ctx(struct silofs_fs_ctx *fs_ctx);
+int silofs_new_ctx(const struct silofs_fs_args *args,
+                   struct silofs_fs_ctx **out_fs_ctx);
+
+void silofs_del_ctx(struct silofs_fs_ctx *fs_ctx);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -86,5 +88,4 @@ int silofs_sync_fs(struct silofs_fs_ctx *fs_ctx, bool drop);
 void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
                     struct silofs_cachestats *cst);
 
-
-#endif /* SILOFS_EXEC_H_ */
+#endif /* SILOFS_EXECLIB_H_ */

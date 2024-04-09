@@ -17,14 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fs/fuseq.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#include <silofs/execlib.h>
+
 
 #define ROUND_TO_4K(n)  SILOFS_ROUND_TO(n, (4 * SILOFS_KILO))
 
@@ -637,8 +631,8 @@ static int check_fs_args(const struct silofs_fs_args *fs_args)
 	return silofs_password_setup(&passwd, fs_args->passwd);
 }
 
-int silofs_new_fs_ctx(const struct silofs_fs_args *fs_args,
-                      struct silofs_fs_ctx **out_fs_ctx)
+int silofs_new_ctx(const struct silofs_fs_args *fs_args,
+                   struct silofs_fs_ctx **out_fs_ctx)
 {
 	struct silofs_fs_ctx *fs_ctx = NULL;
 	struct silofs_fs_ctx_obj *fs_ctx_obj = NULL;
@@ -671,7 +665,7 @@ int silofs_new_fs_ctx(const struct silofs_fs_args *fs_args,
 	return 0;
 }
 
-void silofs_del_fs_ctx(struct silofs_fs_ctx *fs_ctx)
+void silofs_del_ctx(struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_fs_ctx_obj *fs_ctx_obj = fs_ctx_obj_of(fs_ctx);
 

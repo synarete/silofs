@@ -22,7 +22,7 @@ void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,
 {
 	int err;
 
-	err = silofs_new_fs_ctx(fs_args, p_fs_ctx);
+	err = silofs_new_ctx(fs_args, p_fs_ctx);
 	if (err) {
 		cmd_dief(err, "failed to create fs-context instance");
 	}
@@ -31,7 +31,7 @@ void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,
 void cmd_del_fs_ctx(struct silofs_fs_ctx **p_fs_ctx)
 {
 	if (p_fs_ctx && *p_fs_ctx) {
-		silofs_del_fs_ctx(*p_fs_ctx);
+		silofs_del_ctx(*p_fs_ctx);
 		*p_fs_ctx = NULL;
 	}
 }

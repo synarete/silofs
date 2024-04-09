@@ -567,7 +567,7 @@ static int init_libsilofs(void)
 
 static bool g_libsilofs_init;
 
-int silofs_initlib(void)
+int silofs_init_lib(void)
 {
 	int ret = 0;
 

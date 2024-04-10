@@ -2029,7 +2029,11 @@ static int vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
 
 	raw = (vstg_ctx->stg_mode & SILOFS_STG_RAW) > 0;
 	if (!raw) {
+		/* Normal mode: load encrypted from stable storage */
 		ret = silofs_repo_read_at(repo, laddr, view);
+	} else if (ltype_isdata(laddr->ltype)) {
+		/* Raw-data mode: force all-zeros for in-memory view */
+		silofs_memzero(view, laddr->len);
 	}
 	return ret;
 }

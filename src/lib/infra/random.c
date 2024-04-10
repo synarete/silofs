@@ -96,7 +96,7 @@ static void prandgen_rotate_some(struct silofs_prandgen *prng, size_t nslots)
 	for (size_t i = 0; i < nslots; ++i) {
 		val = *tip ^ (uint64_t)(ts.tv_nsec);
 		rnd ^= val;
-		rot = (uint32_t)(rnd + i) % 59;
+		rot = (uint32_t)(rnd + i) % 31;
 		*tip++ = silofs_lrotate64(val, rot);
 	}
 }

@@ -1619,6 +1619,10 @@ static int dirc_do_lookup_by_tree(const struct silofs_dir_ctx *d_ctx,
 		if (ret) {
 			break;
 		}
+		if (child_dni == NULL) { /* make gcc-analyzer happy */
+			ret = -SILOFS_ENOENT;
+			break;
+		}
 		dni = child_dni;
 		ret = dni_check_child_depth(dni, depth);
 		if (ret) {

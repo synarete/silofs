@@ -530,6 +530,7 @@ qpool_do_alloc_npgs(struct silofs_qpool *qpool, size_t npgs)
 {
 	struct silofs_qpage_info *qpgi;
 	struct silofs_qpage_info *qpgi_next = NULL;
+	size_t npgs_add = 0;
 
 	qpgi = qpool_search_free_list(qpool, npgs);
 	if (qpgi == NULL) {
@@ -538,7 +539,10 @@ qpool_do_alloc_npgs(struct silofs_qpool *qpool, size_t npgs)
 	qpgi_unlink(qpgi);
 	if (qpgi->qpg_count > npgs) {
 		qpgi_next = qpool_next(qpool, qpgi, npgs);
-		qpool_add_free(qpool, qpgi_next, qpgi, qpgi->qpg_count - npgs);
+		if (qpgi_next != NULL) {
+			npgs_add = qpgi->qpg_count - npgs;
+			qpool_add_free(qpool, qpgi_next, qpgi, npgs_add);
+		}
 		qpgi->qpg_count = npgs;
 	}
 	qpgi->qpg_free = 0;

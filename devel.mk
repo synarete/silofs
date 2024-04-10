@@ -18,16 +18,19 @@
 #
 
 # User options:
-# D = DEBUG (0|1|2)
-# O = OPTLEVEL (0|1|2|3)
-# V = VERBOSE (0|1)
-# CC = COMPLIER (gcc|clang)
-# ANALYZER = ANALYZER-MODE (0|1)
+# D=0|1|2          DEBUG-LEVEL
+# O=0|1|2|3        OPTIMIZE-LEVEL
+# V=0|1            VERBOSE-MODE
+# CC=gcc|clang     COMPLIER
+# ANALYZER=0|1     ANALYZER-MODE
+# SANITIZER=0|1|2  SANITIZER-MODE
 # PREFIX =
 D ?= 1
 O ?= 0
 V ?= 0
 ANALYZER ?= 0
+SANITIZER ?= 0
+
 
 MKDIR_P := mkdir -p
 SELF := $(lastword $(MAKEFILE_LIST))
@@ -43,11 +46,13 @@ OPTS := 0 1 2 3
 DBGS := 0 1 2
 VRBS := 0 1
 ANLZ := 0 1
+SNTZ := 0 1 2
 
 # Guard against environment variables
 CFLAGS =
 CFLAGS2 =
 CXXFLAGS =
+LDFLAGS =
 MAKE_OPTS =
 CONFIGURE_OPTS =
 
@@ -75,6 +80,10 @@ endif
 
 ifneq ($(ANALYZER), $(ANLZ))
 ANALYZER := 0
+endif
+
+ifneq ($(SANITIZER), $(SNTZ))
+SANITIZER := 0
 endif
 
 
@@ -162,19 +171,43 @@ CFLAGS += -Wunsafe-loop-optimizations -funsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables -fstack-clash-protection
 CFLAGS += -fshort-enums
 endif
-ifneq ($(D), 0)
-CFLAGS += -fsanitize-address-use-after-scope
-CFLAGS += -fsanitize=pointer-overflow
-CFLAGS += -fsanitize=alignment -fsanitize=bounds
-CFLAGS += -fsanitize=object-size
-ifeq ($(CC), clang)
-CFLAGS += -fsanitize=address
 endif
-endif
+
+# Analyzer flags
 ifeq ($(ANALYZER), 1)
+ifeq ($(CC), gcc)
 CFLAGS += -fanalyzer -Wno-analyzer-malloc-leak
 endif
-else ifeq ($(CC), clang)
+endif
+
+# Sanitizer flags
+ifeq ($(SANITIZER), 1)
+CFLAGS += -fsanitize=address
+CFLAGS += -fsanitize-address-use-after-scope
+CFLAGS += -fsanitize=pointer-overflow
+CFLAGS += -fsanitize=alignment
+CFLAGS += -fsanitize=bounds
+CFLAGS += -fsanitize=object-size
+CFLAGS += -fsanitize=undefined
+CFLAGS += -fsanitize=float-divide-by-zero
+CFLAGS += -fsanitize=float-cast-overflow
+# CFLAGS += -fsanitize=null
+CFLAGS += -fno-sanitize=null
+LDFLAGS += -fsanitize=address
+
+LDFLAGS += -fsanitize=undefined
+endif
+ifeq ($(SANITIZER), 2)
+CFLAGS += -fsanitize=bounds
+CFLAGS += -fsanitize=object-size
+CFLAGS += -fsanitize=undefined
+CFLAGS += -fsanitize=null
+CFLAGS += -fsanitize=undefined
+ifeq ($(CC), clang)
+CFLAGS += -fsanitize=memory
+CFLAGS += -fsanitize-memory-track-origins=2
+LDFLAGS += -fsanitize=memory
+endif
 endif
 
 # C++ flags
@@ -193,7 +226,10 @@ endef
 
 define submakeat
 	@+$(MAKE) $(MAKE_OPTS) V=$(V) \
-	  CFLAGS="$(CFLAGS) $(CFLAGS2)" CXXFLAGS="$(CXXFLAGS)" -C $(1) $(2)
+	  CFLAGS="$(CFLAGS) $(CFLAGS2)" \
+	  CXXFLAGS="$(CXXFLAGS)" \
+	  LDFLAGS="$(LDFLAGS)" \
+	  -C $(1) $(2)
 endef
 
 define submake
@@ -263,8 +299,12 @@ params:
 	$(info  COMPILER=$(CC))
 	$(info  DEBUG=$(D))
 	$(info  OPTLEVEL=$(O))
+	$(info  ANALYZER=$(ANALYZER))
+	$(info  SANITIZER=$(SANITIZER))
 	$(info  VERBOSE=$(V))
 	$(info  PREFIX=$(PREFIX))
+	$(info  CFLAGS=$(CFLAGS) $(CFLAGS2))
+	$(info  LDFLAGS=$(LDFLAGS))
 
 
 # Help the naive user
@@ -288,6 +328,7 @@ help:
 	$(info   O=[$(OPTS)])
 	$(info   V=[$(VRBS)])
 	$(info   ANALYZER=[$(ANLZ)])
+	$(info   SANITIZER=[$(SNTZ)])
 	$(info   PREFIX=[DIRPATH])
 	$(info )
 

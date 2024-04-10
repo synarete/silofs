@@ -104,13 +104,18 @@ static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
                           const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref;
-	int err = 0;
+	size_t len;
+	int err;
 
-	for (size_t i = 0; (i < sqe->cnt) && !err; ++i) {
+	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
-		err = sqe_setup_iov_at(sqe, i, ref->llink.laddr.len);
+		len = ref->llink.laddr.len;
+		err = sqe_setup_iov_at(sqe, i, len);
+		if (err) {
+			return err;
+		}
 	}
-	return err;
+	return 0;
 }
 
 static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
@@ -118,16 +123,19 @@ static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
 {
 	const struct silofs_submit_ref *ref = NULL;
 	const struct silofs_llink *llink = NULL;
-	int err = 0;
+	int err;
 
-	for (size_t i = 0; (i < sqe->cnt) && !err; ++i) {
+	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
 		llink = &ref->llink;
 		err = silofs_encrypt_view(sqe->fsenv, &llink->laddr,
 		                          &llink->riv, ref->view,
 		                          sqe->iov[i].iov_base);
+		if (err) {
+			return err;
+		}
 	}
-	return err;
+	return 0;
 }
 
 int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,

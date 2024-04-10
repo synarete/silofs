@@ -544,22 +544,35 @@ static int flusher_make_sqe(struct silofs_flusher *flusher,
 	return 0;
 }
 
+static void flusher_append_at(struct silofs_flusher *flusher, size_t pos,
+                              const struct silofs_llink *llink,
+                              const struct silofs_lnode_info *lni)
+{
+	struct silofs_submit_ref *ref = &flusher->sref[pos];
+
+	silofs_assert_lt(pos, ARRAY_SIZE(flusher->sref));
+	silofs_llink_assign(&ref->llink, llink);
+	ref->view = lni->l_view;
+	ref->ltype = lni->l_ltype;
+}
+
 static bool flusher_append_next_ref(struct silofs_flusher *flusher,
                                     struct silofs_submitq_ent *sqe,
                                     const struct silofs_llink *llink,
                                     struct silofs_lnode_info *lni)
 {
-	struct silofs_submit_ref *ref = &flusher->sref[sqe->cnt];
+	const size_t cur = sqe->cnt;
 	bool ok;
 
-	ok = silofs_sqe_append_ref(sqe, &llink->laddr, lni);
-	if (ok) {
-		silofs_assert_not_null(lni->l_view);
-		silofs_llink_assign(&ref->llink, llink);
-		ref->view = lni->l_view;
-		ref->ltype = lni->l_ltype;
+	if (cur >= ARRAY_SIZE(flusher->sref)) {
+		return false;
 	}
-	return ok;
+	ok = silofs_sqe_append_ref(sqe, &llink->laddr, lni);
+	if (!ok) {
+		return false;
+	}
+	flusher_append_at(flusher, cur, llink, lni);
+	return true;
 }
 
 static int flusher_populate_sqe_refs(struct silofs_flusher *flusher,

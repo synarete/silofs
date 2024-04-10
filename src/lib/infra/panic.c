@@ -179,6 +179,7 @@ static void silofs_dump_addr2line(void)
 
 struct silofs_fatal_msg {
 	char str[256];
+	long pad;
 };
 
 static void fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
@@ -231,9 +232,9 @@ void silofs_expect_cond_(int cond, const char *str, const char *fl, int ln)
 
 void silofs_expect_true_(int cond, const char *fl, int ln)
 {
-	struct silofs_fatal_msg fm;
-
 	if (silofs_unlikely(!cond)) {
+		struct silofs_fatal_msg fm = { .pad = 0 };
+
 		fmtmsg(&fm, "not-true: %d", cond);
 		silofs_fatal_at_(fm.str, fl, ln);
 	}
@@ -283,9 +284,9 @@ void silofs_expect_ge_(long a, long b, const char *fl, int ln)
 
 void silofs_expect_ok_(int err, const char *fl, int ln)
 {
-	struct silofs_fatal_msg fm;
-
 	if (silofs_unlikely(err != 0)) {
+		struct silofs_fatal_msg fm = { .pad = 0 };
+
 		fmtmsg(&fm, "err=%d", err);
 		silofs_fatal_at_(fm.str, fl, ln);
 	}
@@ -293,9 +294,9 @@ void silofs_expect_ok_(int err, const char *fl, int ln)
 
 void silofs_expect_err_(int err, int exp, const char *fl, int ln)
 {
-	struct silofs_fatal_msg fm;
-
 	if (silofs_unlikely(err != exp)) {
+		struct silofs_fatal_msg fm = { .pad = 0 };
+
 		fmtmsg(&fm, "err=%d exp=%d", err, exp);
 		silofs_fatal_at_(fm.str, fl, ln);
 	}
@@ -310,9 +311,9 @@ void silofs_expect_not_null_(const void *ptr, const char *fl, int ln)
 
 void silofs_expect_null_(const void *ptr, const char *fl, int ln)
 {
-	struct silofs_fatal_msg fm;
-
 	if (silofs_unlikely(ptr != NULL)) {
+		struct silofs_fatal_msg fm = { .pad = 0 };
+
 		fmtmsg(&fm, "not NULL ptr=%p", ptr);
 		silofs_fatal_at_(fm.str, fl, ln);
 	}
@@ -320,12 +321,13 @@ void silofs_expect_null_(const void *ptr, const char *fl, int ln)
 
 void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln)
 {
-	struct silofs_fatal_msg msg;
 	const int cmp = strcmp(s, z);
 
 	if (silofs_unlikely(cmp != 0)) {
-		fmtmsg(&msg, "str-not-equal: %s != %s", s, z);
-		silofs_fatal_at_(msg.str, fl, ln);
+		struct silofs_fatal_msg fm = { .pad = 0 };
+
+		fmtmsg(&fm, "str-not-equal: %s != %s", s, z);
+		silofs_fatal_at_(fm.str, fl, ln);
 	}
 }
 
@@ -366,7 +368,7 @@ static void silofs_die_not_eqm(const uint8_t *p, const uint8_t *q,
 {
 	char s1[20];
 	char s2[20];
-	struct silofs_fatal_msg fm;
+	struct silofs_fatal_msg fm = { .pad = 0 };
 	const size_t pos = find_first_not_eq(p, q, n);
 
 	if (pos > sizeof(s1)) {

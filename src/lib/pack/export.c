@@ -31,109 +31,109 @@ struct silofs_pack_export_ctx {
 	int pex_dfd;
 };
 
-struct silofs_pack_desc {
-	struct silofs_list_head pd_lh;
-	struct silofs_laddr     pd_laddr;
-	struct silofs_hash256   pd_hash;
+struct silofs_pack_desc_info {
+	struct silofs_list_head pdi_lh;
+	struct silofs_laddr     pdi_laddr;
+	struct silofs_hash256   pdi_hash;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_pack_desc *pdesc_from_lh(struct silofs_list_head *lh)
+static struct silofs_pack_desc_info *pdi_from_lh(struct silofs_list_head *lh)
 {
-	struct silofs_pack_desc *pdesc = NULL;
+	struct silofs_pack_desc_info *pdi = NULL;
 
 	if (lh != NULL) {
-		pdesc = container_of(lh, struct silofs_pack_desc, pd_lh);
+		pdi = container_of(lh, struct silofs_pack_desc_info, pdi_lh);
 	}
-	return pdesc;
+	return pdi;
 }
 
-static struct silofs_pack_desc *pdesc_malloc(struct silofs_alloc *alloc)
+static struct silofs_pack_desc_info *pdi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_pack_desc *pdesc = NULL;
+	struct silofs_pack_desc_info *pdi = NULL;
 
-	pdesc = silofs_memalloc(alloc, sizeof(*pdesc), 0);
-	return pdesc;
+	pdi = silofs_memalloc(alloc, sizeof(*pdi), 0);
+	return pdi;
 }
 
-static void pdesc_free(struct silofs_pack_desc *pdesc,
-                       struct silofs_alloc *alloc)
+static void pdi_free(struct silofs_pack_desc_info *pdi,
+                     struct silofs_alloc *alloc)
 {
-	silofs_memfree(alloc, pdesc, sizeof(*pdesc), 0);
+	silofs_memfree(alloc, pdi, sizeof(*pdi), 0);
 }
 
-static void pdesc_init(struct silofs_pack_desc *pdesc,
-                       const struct silofs_laddr *laddr)
+static void pdi_init(struct silofs_pack_desc_info *pdi,
+                     const struct silofs_laddr *laddr)
 {
-	silofs_list_head_init(&pdesc->pd_lh);
-	silofs_laddr_assign(&pdesc->pd_laddr, laddr);
+	silofs_list_head_init(&pdi->pdi_lh);
+	silofs_laddr_assign(&pdi->pdi_laddr, laddr);
 }
 
-static void pdesc_fini(struct silofs_pack_desc *pdesc)
+static void pdi_fini(struct silofs_pack_desc_info *pdi)
 {
-	silofs_list_head_fini(&pdesc->pd_lh);
-	silofs_laddr_reset(&pdesc->pd_laddr);
+	silofs_list_head_fini(&pdi->pdi_lh);
+	silofs_laddr_reset(&pdi->pdi_laddr);
 }
 
-static struct silofs_pack_desc *
-pdesc_new(const struct silofs_laddr *laddr, struct silofs_alloc *alloc)
+static struct silofs_pack_desc_info *
+pdi_new(const struct silofs_laddr *laddr, struct silofs_alloc *alloc)
 {
-	struct silofs_pack_desc *pdesc;
+	struct silofs_pack_desc_info *pdi;
 
-	pdesc = pdesc_malloc(alloc);
-	if (pdesc != NULL) {
-		pdesc_init(pdesc, laddr);
+	pdi = pdi_malloc(alloc);
+	if (pdi != NULL) {
+		pdi_init(pdi, laddr);
 	}
-	return pdesc;
+	return pdi;
 }
 
-static void pdesc_del(struct silofs_pack_desc *pdesc,
-                      struct silofs_alloc *alloc)
+static void pdi_del(struct silofs_pack_desc_info *pdi,
+                    struct silofs_alloc *alloc)
 {
-	if (pdesc != NULL) {
-		pdesc_fini(pdesc);
-		pdesc_free(pdesc, alloc);
+	if (pdi != NULL) {
+		pdi_fini(pdi);
+		pdi_free(pdi, alloc);
 	}
 }
 
-static void pdesc_to_name(const struct silofs_pack_desc *pdesc,
-                          struct silofs_strbuf *out_name)
+static void pdi_to_name(const struct silofs_pack_desc_info *pdi,
+                        struct silofs_strbuf *out_name)
 {
 	silofs_strbuf_reset(out_name);
-	silofs_mem_to_ascii(pdesc->pd_hash.hash, sizeof(pdesc->pd_hash.hash),
+	silofs_mem_to_ascii(pdi->pdi_hash.hash, sizeof(pdi->pdi_hash.hash),
 	                    out_name->str, sizeof(out_name->str) - 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void pec_push_desc(struct silofs_pack_export_ctx *pe_ctx,
-                          struct silofs_pack_desc *pdesc)
+                          struct silofs_pack_desc_info *pdi)
 {
-	silofs_listq_push_back(&pe_ctx->pex_descq, &pdesc->pd_lh);
+	silofs_listq_push_back(&pe_ctx->pex_descq, &pdi->pdi_lh);
 }
 
-static struct silofs_pack_desc *
+static struct silofs_pack_desc_info *
 pec_pop_desc(struct silofs_pack_export_ctx *pe_ctx)
 {
 	struct silofs_list_head *lh;
-	struct silofs_pack_desc *pdesc = NULL;
+	struct silofs_pack_desc_info *pdi = NULL;
 
 	lh = silofs_listq_pop_front(&pe_ctx->pex_descq);
 	if (lh != NULL) {
-		pdesc = pdesc_from_lh(lh);
+		pdi = pdi_from_lh(lh);
 	}
-	return pdesc;
+	return pdi;
 }
 
 static void pec_clear_descq(struct silofs_pack_export_ctx *pe_ctx)
 {
-	struct silofs_pack_desc *pdesc;
+	struct silofs_pack_desc_info *pdi;
 
-	pdesc = pec_pop_desc(pe_ctx);
-	while (pdesc != NULL) {
-		pdesc_del(pdesc, pe_ctx->pex_alloc);
-		pdesc = pec_pop_desc(pe_ctx);
+	pdi = pec_pop_desc(pe_ctx);
+	while (pdi != NULL) {
+		pdi_del(pdi, pe_ctx->pex_alloc);
+		pdi = pec_pop_desc(pe_ctx);
 	}
 }
 
@@ -191,24 +191,24 @@ static void pec_disconnect_target(struct silofs_pack_export_ctx *pe_ctx)
 }
 
 static int pec_send_to_remote(const struct silofs_pack_export_ctx *pe_ctx,
-                              const struct silofs_pack_desc *pdesc,
+                              const struct silofs_pack_desc_info *pdi,
                               const void *data)
 {
 	struct silofs_strbuf name;
 	int fd = -1;
 	int err;
 
-	pdesc_to_name(pdesc, &name);
+	pdi_to_name(pdi, &name);
 	err = silofs_sys_openat(pe_ctx->pex_dfd, name.str,
 	                        O_CREAT | O_RDWR, 0600, &fd);
 	if (err) {
 		log_dbg("remote: failed to create: %s err=%d", name.str, err);
 		goto out;
 	}
-	err = silofs_sys_writen(fd, data, pdesc->pd_laddr.len);
+	err = silofs_sys_writen(fd, data, pdi->pdi_laddr.len);
 	if (err) {
 		log_dbg("remote: failed to write: %s len=%zu err=%d",
-		        name.str, pdesc->pd_laddr.len, err);
+		        name.str, pdi->pdi_laddr.len, err);
 		goto out;
 	}
 out:
@@ -252,9 +252,9 @@ static int pec_calc_seg_hash(const struct silofs_pack_export_ctx *pe_ctx,
 }
 
 static int pec_process_segdata(const struct silofs_pack_export_ctx *pe_ctx,
-                               struct silofs_pack_desc *pdesc)
+                               struct silofs_pack_desc_info *pdi)
 {
-	const size_t seg_len = pdesc->pd_laddr.len;
+	const size_t seg_len = pdi->pdi_laddr.len;
 	void *seg = NULL;
 	int err = -SILOFS_ENOMEM;
 
@@ -262,15 +262,15 @@ static int pec_process_segdata(const struct silofs_pack_export_ctx *pe_ctx,
 	if (seg == NULL) {
 		goto out;
 	}
-	err = pec_load_seg(pe_ctx, &pdesc->pd_laddr, seg);
+	err = pec_load_seg(pe_ctx, &pdi->pdi_laddr, seg);
 	if (err) {
 		goto out;
 	}
-	err = pec_calc_seg_hash(pe_ctx, seg, seg_len, &pdesc->pd_hash);
+	err = pec_calc_seg_hash(pe_ctx, seg, seg_len, &pdi->pdi_hash);
 	if (err) {
 		goto out;
 	}
-	err = pec_send_to_remote(pe_ctx, pdesc, seg);
+	err = pec_send_to_remote(pe_ctx, pdi, seg);
 	if (err) {
 		goto out;
 	}
@@ -280,35 +280,35 @@ out:
 }
 
 static int pec_process_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
-                               struct silofs_pack_desc *pdesc)
+                               struct silofs_pack_desc_info *pdi)
 {
 	struct silofs_bootrec1k brec = { .br_magic = 0xFFFFFFFF };
 	int err;
 
-	err = pec_load_brec(pe_ctx, &pdesc->pd_laddr, &brec);
+	err = pec_load_brec(pe_ctx, &pdi->pdi_laddr, &brec);
 	if (err) {
 		return err;
 	}
-	err = pec_calc_seg_hash(pe_ctx, &brec, sizeof(brec), &pdesc->pd_hash);
+	err = pec_calc_seg_hash(pe_ctx, &brec, sizeof(brec), &pdi->pdi_hash);
 	if (err) {
 		return err;
 	}
-	err = pec_send_to_remote(pe_ctx, pdesc, &brec);
+	err = pec_send_to_remote(pe_ctx, pdi, &brec);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int pec_process_pdesc(struct silofs_pack_export_ctx *pe_ctx,
-                             struct silofs_pack_desc *pdesc)
+static int pec_process_pdi(struct silofs_pack_export_ctx *pe_ctx,
+                           struct silofs_pack_desc_info *pdi)
 {
 	int err;
 
-	if (pdesc->pd_laddr.ltype == SILOFS_LTYPE_BOOTREC) {
-		err = pec_process_bootrec(pe_ctx, pdesc);
+	if (pdi->pdi_laddr.ltype == SILOFS_LTYPE_BOOTREC) {
+		err = pec_process_bootrec(pe_ctx, pdi);
 	} else {
-		err = pec_process_segdata(pe_ctx, pdesc);
+		err = pec_process_segdata(pe_ctx, pdi);
 	}
 	return err;
 }
@@ -316,19 +316,19 @@ static int pec_process_pdesc(struct silofs_pack_export_ctx *pe_ctx,
 static int pec_process_by_laddr(struct silofs_pack_export_ctx *pe_ctx,
                                 const struct silofs_laddr *laddr)
 {
-	struct silofs_pack_desc *pdesc = NULL;
+	struct silofs_pack_desc_info *pdi = NULL;
 	int err;
 
-	pdesc = pdesc_new(laddr, pe_ctx->pex_alloc);
-	if (pdesc == NULL) {
+	pdi = pdi_new(laddr, pe_ctx->pex_alloc);
+	if (pdi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	err = pec_process_pdesc(pe_ctx, pdesc);
+	err = pec_process_pdi(pe_ctx, pdi);
 	if (err) {
-		pdesc_del(pdesc, pe_ctx->pex_alloc);
+		pdi_del(pdi, pe_ctx->pex_alloc);
 		return err;
 	}
-	pec_push_desc(pe_ctx, pdesc);
+	pec_push_desc(pe_ctx, pdi);
 	return 0;
 }
 

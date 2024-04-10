@@ -1021,5 +1021,27 @@ struct silofs_btree_leaf {
 	struct silofs_btree_ltop        btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_packed_aligned64;
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+/* packing descriptor */
+struct silofs_pack_desc128b {
+	struct silofs_hash256           pd_hash;
+	struct silofs_laddr48b          pd_laddr;
+	uint8_t                         pd_reserved[48];
+} silofs_packed_aligned64;
+
+
+/* packing catalog meta descriptor */
+struct silofs_pack_meta1k {
+	uint64_t                        pm_magic;
+	uint32_t                        pm_version;
+	uint32_t                        pm_flags;
+	uint64_t                        pm_capacity;
+	uint64_t                        pm_ndescs;
+	uint64_t                        pm_descs_csum;
+	uint64_t                        pm_reserved2[122];
+	uint64_t                        pm_meta_csum;
+} silofs_packed_aligned64;
+
 
 #endif /* SILOFS_DEFS_H_ */

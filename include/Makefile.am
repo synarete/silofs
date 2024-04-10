@@ -86,6 +86,7 @@ nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
 nobase_include_HEADERS += silofs/fs.h
 nobase_include_HEADERS += silofs/fs-private.h
+nobase_include_HEADERS += silofs/pack/catalog.h
 nobase_include_HEADERS += silofs/pack/export.h
 nobase_include_HEADERS += silofs/pack/zcmpr.h
 nobase_include_HEADERS += silofs/pack.h

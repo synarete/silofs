@@ -14,16 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PACK_H_
-#define SILOFS_PACK_H_
+#ifndef SILOFS_CATALOG_H_
+#define SILOFS_CATALOG_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/infra.h>
-#include <silofs/addr.h>
 
-#include <silofs/pack/zcmpr.h>
-#include <silofs/pack/catalog.h>
-#include <silofs/pack/export.h>
-
-#endif /* SILOFS_PACK_H_ */
+#endif /* SILOFS_CATALOG_H_ */

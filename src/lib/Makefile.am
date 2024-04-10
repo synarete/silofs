@@ -73,6 +73,7 @@ libsilofs_la_SOURCES += fs/ustage.c
 libsilofs_la_SOURCES += fs/vstage.c
 libsilofs_la_SOURCES += fs/walk.c
 libsilofs_la_SOURCES += fs/xattr.c
+libsilofs_la_SOURCES += pack/catalog.c
 libsilofs_la_SOURCES += pack/export.c
 libsilofs_la_SOURCES += pack/import.c
 libsilofs_la_SOURCES += pack/zcmpr.c

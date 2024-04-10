@@ -1550,6 +1550,7 @@ void silofs_repo_fini(struct silofs_repo *repo)
 	repo_close(repo);
 	repo_evict_all(repo);
 	repo_htbl_fini(repo);
+	repo_fini_bstore(repo);
 	repo_fini_mdigest(repo);
 	repo_fini_mutex(repo);
 	listq_fini(&repo->re_lruq);

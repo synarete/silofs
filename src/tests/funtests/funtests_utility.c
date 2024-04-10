@@ -317,9 +317,6 @@ void *ft_new_buf_rands(struct ft_env *fte, size_t bsz)
 {
 	void *buf;
 
-	if (bsz == 0) {
-		return NULL;
-	}
 	fte_lock(fte);
 	buf = ft_do_malloc(fte, bsz);
 	ft_do_fill_random(fte, buf, bsz);

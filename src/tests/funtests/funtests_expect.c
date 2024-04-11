@@ -101,7 +101,7 @@ void ft_do_expect_ge(intmax_t a, intmax_t b, const char *fl, int ln)
 void ft_do_expect_eqm(const void *p, const void *q, size_t n,
                       const char *fl, int ln)
 {
-	const int cmp = memcmp(p, q, n);
+	const int cmp = ft_memcmp(p, q, n);
 
 	if (cmp != 0) {
 		do_error_at_line(fl, ln, "not equal mem: cmp=%d", cmp);

@@ -63,13 +63,13 @@ test_mmap_mt_seq_at_(struct ft_env *fte, const struct ft_mmap_mt_ctx *mmtc)
 		seg = (i + indx) % nsegs;
 		pos = (loff_t)(seg * mmtc->sgsz);
 		dst = mmtc->addr + pos;
-		memcpy(dst, buf, bsz - indx);
+		ft_memcpy(dst, buf, bsz - indx);
 	}
 	for (size_t i = 0; i < nsegs; ++i) {
 		seg = (i + indx + 1) % nsegs;
 		pos = (loff_t)(seg * mmtc->sgsz);
 		src = mmtc->addr + pos;
-		memcpy(buf, src, bsz - indx);
+		ft_memcpy(buf, src, bsz - indx);
 		dat = buf[0];
 		ft_expect_ne(dat, 0);
 	}

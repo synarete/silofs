@@ -35,7 +35,7 @@ static void test_mmap_basic_(struct ft_env *fte, loff_t off, size_t len)
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
 	ft_expect_eqm(addr, buf, len);
 	buf = ft_new_buf_rands(fte, len);
-	memcpy(addr, buf, len);
+	ft_memcpy(addr, buf, len);
 	ft_expect_eqm(addr, buf, len);
 	ft_munmap(addr, len);
 	ft_close(fd);
@@ -68,7 +68,7 @@ static void test_mmap_simple_(struct ft_env *fte, loff_t off, size_t len)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
-	memcpy(addr, mbuf, len);
+	ft_memcpy(addr, mbuf, len);
 	ft_expect_eqm(addr, mbuf, len);
 	ft_munmap(addr, len);
 	ft_close(fd);
@@ -111,7 +111,7 @@ static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t len)
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
 	ft_fstat(fd, &st[0]);
 	ft_suspend1(fte);
-	memcpy(addr, mbuf, len / 2);
+	ft_memcpy(addr, mbuf, len / 2);
 	ft_msync(addr, len, MS_SYNC);
 	ft_munmap(addr, len);
 	ft_fsync(fd);
@@ -148,7 +148,7 @@ static void test_mmap_fallocate_(struct ft_env *fte, loff_t off, size_t len)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, mode, off, (loff_t)len);
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
-	memcpy(addr, data, len);
+	ft_memcpy(addr, data, len);
 	ft_expect_eqm(addr, data, len);
 
 	/*
@@ -198,7 +198,7 @@ static void test_mmap_sequential_(struct ft_env *fte, loff_t off, size_t len)
 	for (size_t i = 0; i < cnt; ++i) {
 		buf = ft_new_buf_nums(fte, (long)(i * 1000), bsz);
 		ptr = (uint8_t *)addr + (i * bsz);
-		memcpy(ptr, buf, bsz);
+		ft_memcpy(ptr, buf, bsz);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		buf = ft_new_buf_nums(fte, (long)(i * 1000), bsz);
@@ -279,7 +279,7 @@ static void test_mmap_msync_at(struct ft_env *fte, loff_t step)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
-	memcpy(addr, buf, len);
+	ft_memcpy(addr, buf, len);
 	ft_msync(addr, len, MS_SYNC);
 	ft_munmap(addr, len);
 	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
@@ -486,6 +486,7 @@ static void test_mmap_on_holes_(struct ft_env *fte, loff_t off, size_t len)
 	loff_t npos = 0;
 	size_t nwr = 0;
 	void *mem = NULL;
+	void *pnum = NULL;
 	size_t msz = 0;
 	int fd = -1;
 
@@ -504,18 +505,21 @@ static void test_mmap_on_holes_(struct ft_env *fte, loff_t off, size_t len)
 		ft_expect_eqm(buf, dat + pos, len);
 		num1 = i + 1;
 		npos = pos + 1;
-		memcpy(dat + npos, &num1, sizeof(num1));
+		pnum = &num1;
+		ft_memcpy(dat + npos, pnum, sizeof(num1));
 		npos = pos + (loff_t)len + 1;
-		memcpy(dat + npos, &num1, sizeof(num1));
+		ft_memcpy(dat + npos, pnum, sizeof(num1));
 	}
 	for (size_t i = 0; i < nsteps; ++i) {
 		pos = off + (ssize_t)(2 * i * len);
 		num1 = i + 1;
 		npos = pos + 1;
-		memcpy(&num2, dat + npos, sizeof(num2));
+		pnum = dat + npos;
+		ft_memcpy(&num2, pnum, sizeof(num2));
 		ft_expect_eq(num1, num2);
 		npos = pos + (loff_t)len + 1;
-		memcpy(&num2, dat + npos, sizeof(num2));
+		pnum = dat + npos;
+		ft_memcpy(&num2, pnum, sizeof(num2));
 		ft_expect_eq(num1, num2);
 	}
 	ft_munmap(mem, msz);
@@ -561,21 +565,21 @@ static void test_mmap_rw_mixed_(struct ft_env *fte, size_t len)
 	data = addr;
 
 	off = 0;
-	memcpy(&data[off], buf1, len);
+	ft_memcpy(&data[off], buf1, len);
 	ft_msync(&data[off], len, MS_SYNC);
 	ft_pread(fd, buf2, len, off, &nrd);
 	ft_expect_eqm(buf1, buf2, len);
 
 	off = (loff_t)(3 * len);
 	buf1 = ft_new_buf_rands(fte, len);
-	memcpy(&data[off], buf1, len);
+	ft_memcpy(&data[off], buf1, len);
 	ft_pread(fd, buf2, len, off, &nrd);
 	ft_expect_eqm(buf1, buf2, len);
 
 	off = (loff_t)(11 * len);
 	buf1 = ft_new_buf_rands(fte, len);
 	ft_pwrite(fd, buf1, len, off, &nrd);
-	memcpy(buf2, &data[off], len);
+	ft_memcpy(buf2, &data[off], len);
 	ft_expect_eqm(buf1, buf2, len);
 
 	ft_munmap(addr, mlen);

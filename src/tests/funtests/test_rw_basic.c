@@ -32,7 +32,7 @@ static void test_rw_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
 		num = i;
-		memcpy(buf, &num, sizeof(num));
+		ft_memcpy(buf, &num, sizeof(num));
 		ft_writen(fd, buf, bsz);
 		ft_fstat(fd, &st);
 		ft_expect_eq(st.st_size, (i + 1) * bsz);
@@ -41,7 +41,7 @@ static void test_rw_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 	ft_expect_eq(pos, 0);
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_readn(fd, buf, bsz);
-		memcpy(&num, buf, sizeof(num));
+		ft_memcpy(&num, buf, sizeof(num));
 		ft_expect_eq(i, num);
 	}
 	ft_close(fd);

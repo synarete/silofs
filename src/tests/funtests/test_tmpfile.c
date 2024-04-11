@@ -37,7 +37,7 @@ static void test_tmpfile_simple(struct ft_env *fte)
 	ft_open(path, O_RDWR | O_TMPFILE | O_EXCL, 0600, &fd);
 	for (size_t i = 0; i < 128; ++i) {
 		dat = i;
-		memcpy(buf, &dat, sizeof(dat));
+		ft_memcpy(buf, &dat, sizeof(dat));
 		ft_write(fd, buf, bsz, &nwr);
 		ft_fstat(fd, &st);
 		ft_expect_eq((long)st.st_size, (long)((i + 1) * bsz));
@@ -45,7 +45,7 @@ static void test_tmpfile_simple(struct ft_env *fte)
 	ft_llseek(fd, 0, SEEK_SET, &pos);
 	for (size_t i = 0; i < 128; ++i) {
 		ft_read(fd, buf, bsz, &nrd);
-		memcpy(&dat, buf, sizeof(dat));
+		ft_memcpy(&dat, buf, sizeof(dat));
 		ft_expect_eq((long)i, (long)dat);
 	}
 	ft_close(fd);

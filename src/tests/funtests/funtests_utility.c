@@ -203,6 +203,20 @@ void ft_relax_mem(struct ft_env *fte)
 	ft_freeall(fte);
 }
 
+void ft_memcpy(void *dst, const void *src, size_t n)
+{
+	silofs_assert_not_null(dst);
+	silofs_assert_not_null(src);
+	memcpy(dst, src, n);
+}
+
+int ft_memcmp(const void *p, const void *q, size_t n)
+{
+	silofs_assert_not_null(p);
+	silofs_assert_not_null(q);
+	return memcmp(p, q, n);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ft_do_fill_random(struct ft_env *fte, void *buf, size_t bsz)

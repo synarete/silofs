@@ -128,12 +128,16 @@ struct ft_range {
 	size_t len;
 };
 
-/* sanity-testing utility */
+/* testing utility functions */
 void fte_init(struct ft_env *fte, const struct ft_params *params);
 
 void fte_run(struct ft_env *fte);
 
 void fte_fini(struct ft_env *fte);
+
+void ft_memcpy(void *dst, const void *src, size_t n);
+
+int ft_memcmp(const void *p, const void *q, size_t n);
 
 void ft_relax_mem(struct ft_env *fte);
 

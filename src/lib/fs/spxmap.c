@@ -144,8 +144,10 @@ spe_new(loff_t voff, size_t len, struct silofs_alloc *alloc)
 static void spe_del(struct silofs_spa_entry *spe,
                     struct silofs_alloc *alloc)
 {
-	spe_fini(spe);
-	silofs_memfree(alloc, spe, sizeof(*spe), 0);
+	if (spe != NULL) { /* make gcc-analyzer happy */
+		spe_fini(spe);
+		silofs_memfree(alloc, spe, sizeof(*spe), 0);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -17,5 +17,32 @@
 #ifndef SILOFS_CATALOG_H_
 #define SILOFS_CATALOG_H_
 
+struct silofs_mdigest;
+
+struct silofs_pack_desc {
+	struct silofs_hash256   pd_hash;
+	struct silofs_laddr     pd_laddr;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_pkdesc_init(struct silofs_pack_desc *pd,
+                        const struct silofs_laddr *laddr);
+
+void silofs_pkdesc_fini(struct silofs_pack_desc *pd);
+
+void silofs_pkdesc_to_name(const struct silofs_pack_desc *pd,
+                           struct silofs_strbuf *out_name);
+
+void silofs_pkdesc_update_hash(struct silofs_pack_desc *pd,
+                               const struct silofs_mdigest *md,
+                               const void *buf, size_t bsz);
+
+
+void silofs_pkdesc128b_htox(struct silofs_pack_desc128b *pdx,
+                            const struct silofs_pack_desc *pd);
+
+void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc128b *pdx,
+                            struct silofs_pack_desc *pd);
 
 #endif /* SILOFS_CATALOG_H_ */

@@ -250,3 +250,17 @@ int silofs_hdr_verify(const struct silofs_header *hdr,
 	}
 	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
+                            const struct silofs_hash256 *other)
+{
+	return (memcmp(hash, other, sizeof(*hash)) == 0);
+}
+
+void silofs_hash256_assign(struct silofs_hash256 *hash,
+                           const struct silofs_hash256 *other)
+{
+	memcpy(hash, other, sizeof(*hash));
+}

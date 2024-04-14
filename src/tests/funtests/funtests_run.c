@@ -141,13 +141,13 @@ static void verify_consistent_statvfs(const struct statvfs *stv_beg,
 
 static bool ft_without_statvfs(const struct ft_env *fte)
 {
-	return ((fte->params.testsmask & FT_F_NOSTAVFS) > 0);
+	return ((fte->params.tests_xmask & FT_F_STATVFS) > 0);
 }
 
 static bool ft_ignore_statvfs_check(const struct ft_env *fte,
                                     const struct ft_tdef *tdef)
 {
-	return ft_without_statvfs(fte) || ((tdef->flags & FT_F_NOSTAVFS) > 0);
+	return ft_without_statvfs(fte) || ((tdef->flags & FT_F_STATVFS) > 0);
 }
 
 static void ft_verify_fsstat(const struct ft_env *fte,
@@ -176,10 +176,13 @@ static bool ft_may_exec(const struct ft_env *fte, const struct ft_tdef *tdef)
 	if (!tdef->flags) {
 		return false;
 	}
-	if ((tdef->flags & FT_F_STAVFS) && ft_without_statvfs(fte)) {
+	if ((tdef->flags & FT_F_STATVFS) && ft_without_statvfs(fte)) {
 		return false;
 	}
-	if (!(fte->params.testsmask & tdef->flags)) {
+	if (!(fte->params.tests_mask & tdef->flags)) {
+		return false;
+	}
+	if (fte->params.tests_xmask & tdef->flags) {
 		return false;
 	}
 	return true;
@@ -291,7 +294,7 @@ static void ft_clone_tests(struct ft_env *fte)
 	}
 	fte->tests.arr = arr;
 	fte->tests.len = len;
-	if (fte->params.testsmask & FT_F_RANDOM) {
+	if (fte->params.tests_mask & FT_F_RANDOM) {
 		random_shuffle_tests(fte);
 	}
 }

@@ -166,7 +166,7 @@ static void test_fstatat_simple(struct ft_env *fte)
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_stat_simple),
 	FT_DEFTEST(test_stat_notdir),
-	FT_DEFTESTF(test_stat_statvfs, FT_F_STAVFS),
+	FT_DEFTESTF(test_stat_statvfs, FT_F_STATVFS),
 	FT_DEFTEST(test_statx_btime),
 	FT_DEFTEST(test_fstatat_simple),
 };

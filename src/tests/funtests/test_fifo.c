@@ -240,12 +240,12 @@ static void test_fifo_nlinks(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_mkfifo),
-	FT_DEFTEST(test_mkfifoat),
-	FT_DEFTEST(test_fifo_read_write),
-	FT_DEFTEST(test_fifo_write_mctime),
-	FT_DEFTEST(test_fifo_unlinked),
-	FT_DEFTEST(test_fifo_nlinks),
+	FT_DEFTESTF(test_mkfifo, FT_F_FLAKY),
+	FT_DEFTESTF(test_mkfifoat, FT_F_FLAKY),
+	FT_DEFTESTF(test_fifo_read_write, FT_F_FLAKY),
+	FT_DEFTESTF(test_fifo_write_mctime, FT_F_FLAKY),
+	FT_DEFTESTF(test_fifo_unlinked, FT_F_FLAKY),
+	FT_DEFTESTF(test_fifo_nlinks, FT_F_FLAKY),
 };
 
 const struct ft_tests ft_test_mkfifo = FT_DEFTESTS(ft_local_tests);

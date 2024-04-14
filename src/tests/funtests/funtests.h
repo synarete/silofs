@@ -67,10 +67,10 @@
 enum ft_flags {
 	FT_F_NORMAL     = (1 << 1),
 	FT_F_IGNORE     = (1 << 2),
-	FT_F_STAVFS     = (1 << 3),
-	FT_F_NOSTAVFS   = (1 << 4),
-	FT_F_TMPFILE    = (1 << 5),
-	FT_F_RANDOM     = (1 << 6),
+	FT_F_STATVFS    = (1 << 3),
+	FT_F_TMPFILE    = (1 << 4),
+	FT_F_RANDOM     = (1 << 5),
+	FT_F_FLAKY      = (1 << 6),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -98,7 +98,8 @@ struct ft_params {
 	const char *testdir;
 	const char *testname;
 	long repeatn;
-	int testsmask;
+	int tests_mask;
+	int tests_xmask;
 	int listtests;
 };
 

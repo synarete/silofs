@@ -31,9 +31,11 @@ struct ft_global_settings {
 	char   *testdir_real;
 	char   *test_name;
 	long    repeat_count;
-	int     tests_bitmask;
+	int     tests_mask;
+	int     tests_xmask;
 	bool    quiet_mode;
-	bool    no_check_statvfs;
+	bool    without_statvfs;
+	bool    without_flaky;
 	bool    random_order;
 	bool    list_tests;
 };
@@ -125,22 +127,30 @@ static void ft_setup_globals(int argc, char *argv[])
 	silofs_set_global_log_params(&ft_globals.log_params);
 }
 
-static int ft_tests_mask(void)
+static void ft_tests_mask(int *out_mask, int *out_xmask)
 {
-	int mask = FT_F_NORMAL | FT_F_STAVFS;
+	*out_mask = FT_F_NORMAL;
+	*out_xmask = 0;
 
-	if (ft_globals.no_check_statvfs) {
-		mask &= ~FT_F_STAVFS;
-		mask |= FT_F_NOSTAVFS;
+	if (ft_globals.without_statvfs) {
+		*out_xmask |= FT_F_STATVFS;
+	} else {
+		*out_mask |= FT_F_STATVFS;
+	}
+	if (ft_globals.without_flaky) {
+		*out_xmask |= FT_F_FLAKY;
+	} else {
+		*out_mask |= FT_F_FLAKY;
 	}
 	if (ft_globals.random_order) {
-		mask |= FT_F_RANDOM;
+		*out_mask |= FT_F_RANDOM;
 	}
-	return mask;
 }
 
 static void ft_pre_execute(void)
 {
+	ft_tests_mask(&ft_globals.tests_mask, &ft_globals.tests_xmask);
+
 	ft_globals.curr_workdir = get_current_dir_name();
 	if (ft_globals.curr_workdir == NULL) {
 		error(EXIT_FAILURE, errno, "get_current_dir_name failed");
@@ -151,7 +161,6 @@ static void ft_pre_execute(void)
 		error(EXIT_FAILURE, errno,
 		      "malloc %lu failed", sizeof(*ft_g_env));
 	}
-	ft_globals.tests_bitmask = ft_tests_mask();
 
 	if (ft_globals.quiet_mode) {
 		ft_globals.log_params.level = SILOFS_LOG_ERROR;
@@ -176,7 +185,8 @@ static void ft_execute_all(void)
 		.progname = program_invocation_short_name,
 		.testdir = ft_globals.testdir_real,
 		.testname = ft_globals.test_name,
-		.testsmask = ft_globals.tests_bitmask,
+		.tests_mask = ft_globals.tests_mask,
+		.tests_xmask = ft_globals.tests_xmask,
 		.repeatn = ft_globals.repeat_count,
 		.listtests = ft_globals.list_tests
 	};
@@ -241,6 +251,7 @@ static const char *const ft_usage =
         " -e, --extra               Use extra tests\n" \
         " -r, --random              Run tests in random order\n" \
         " -C, --nostatvfs           Do not check statvfs between tests\n" \
+        " -F, --noflaky             Ignore non-stable tests\n" \
         " -Q, --quiet               Print only errors\n"
         " -l, --list                List tests names\n"
         " -v, --version             Show version info\n";
@@ -281,6 +292,7 @@ static void ft_parse_args(void)
 		{ "repeat", required_argument, NULL, 'n' },
 		{ "random", no_argument, NULL, 'r' },
 		{ "nostatvfs", no_argument, NULL, 'C' },
+		{ "noflaky", no_argument, NULL, 'F' },
 		{ "quiet", no_argument, NULL, 'Q' },
 		{ "list", no_argument, NULL, 'l' },
 		{ "version", no_argument, NULL, 'v' },
@@ -291,7 +303,7 @@ static void ft_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ft_globals.argc, ft_globals.argv,
-		                      "t:n:erQClvh", long_opts, &opt_index);
+		                      "t:n:erQCFlvh", long_opts, &opt_index);
 		if (opt_chr == 't') {
 			ft_globals.test_name = optarg;
 		} else if (opt_chr == 'n') {
@@ -301,7 +313,9 @@ static void ft_parse_args(void)
 		} else if (opt_chr == 'Q') {
 			ft_globals.quiet_mode = true;
 		} else if (opt_chr == 'C') {
-			ft_globals.no_check_statvfs = true;
+			ft_globals.without_statvfs = true;
+		} else if (opt_chr == 'F') {
+			ft_globals.without_flaky = true;
 		} else if (opt_chr == 'l') {
 			ft_globals.list_tests = true;
 		} else if (opt_chr == 'v') {

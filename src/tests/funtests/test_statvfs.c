@@ -259,13 +259,13 @@ static void test_statvfs_bfree(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTESTF(test_statvfs_simple, FT_F_STAVFS),
-	FT_DEFTESTF(test_statvfs_reg, FT_F_STAVFS),
-	FT_DEFTESTF(test_statvfs_dir, FT_F_STAVFS),
-	FT_DEFTESTF(test_statvfs_notdir, FT_F_STAVFS),
-	FT_DEFTESTF(test_statvfs_ffree, FT_F_STAVFS),
-	FT_DEFTESTF(test_statvfs_ffree_seq, FT_F_STAVFS),
-	FT_DEFTESTF(test_statvfs_bfree, FT_F_STAVFS),
+	FT_DEFTESTF(test_statvfs_simple, FT_F_STATVFS),
+	FT_DEFTESTF(test_statvfs_reg, FT_F_STATVFS),
+	FT_DEFTESTF(test_statvfs_dir, FT_F_STATVFS),
+	FT_DEFTESTF(test_statvfs_notdir, FT_F_STATVFS),
+	FT_DEFTESTF(test_statvfs_ffree, FT_F_STATVFS),
+	FT_DEFTESTF(test_statvfs_ffree_seq, FT_F_STATVFS),
+	FT_DEFTESTF(test_statvfs_bfree, FT_F_STATVFS),
 };
 
 const struct ft_tests ft_test_statvfs = FT_DEFTESTS(ft_local_tests);

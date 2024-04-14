@@ -248,7 +248,7 @@ static void test_unlinkat_same_name(struct ft_env *fte)
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_unlink_reg),
 	FT_DEFTEST(test_unlink_symlink),
-	FT_DEFTEST(test_unlink_fifo),
+	FT_DEFTESTF(test_unlink_fifo, FT_F_FLAKY),
 	FT_DEFTEST(test_unlink_notdir),
 	FT_DEFTEST(test_unlink_isdir),
 	FT_DEFTEST(test_unlinkat_simple),

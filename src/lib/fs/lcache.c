@@ -959,38 +959,41 @@ static void lcache_evict_some(struct silofs_lcache *lcache)
 	}
 }
 
-/* returns memory-pressure as percentage of total available memory */
+/* returns memory-pressure as ratio of total available memory, normalized to
+ * a value within the range [0,1000] */
 static size_t lcache_memory_pressure(const struct silofs_lcache *lcache)
 {
 	struct silofs_alloc_stat st;
-	size_t mem_pres = 0;
+	size_t mem_press = 0;
 
 	silofs_memstat(lcache->lc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
-		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
+		mem_press = ((1000UL * st.nbytes_use) / st.nbytes_max);
 	}
-	return mem_pres;
+	return mem_press;
 }
 
 static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 {
-	const size_t mem_pres = lcache_memory_pressure(lcache);
+	const size_t mempress = lcache_memory_pressure(lcache);
+	const size_t mempress_percentage = mempress / 10;
 	const size_t niter_base = (flags & SILOFS_F_NOW) ? 2 : 0;
 	size_t niter = 0;
 
-	if (mem_pres > 60) {
-		niter += mem_pres / 10;
-	} else if (mem_pres > 20) {
+	if (mempress_percentage > 60) {
+		niter += mempress_percentage / 10;
+	} else if (mempress_percentage > 20) {
 		if (flags & SILOFS_F_OPSTART) {
-			niter += mem_pres / 40;
+			niter += mempress_percentage / 40;
 		} else if (flags & SILOFS_F_OPFINISH) {
-			niter += mem_pres / 25;
+			niter += mempress_percentage / 25;
 		} else if (flags & SILOFS_F_TIMEOUT) {
-			niter += mem_pres / 10;
+			niter += mempress_percentage / 10;
 		}
-	} else if (mem_pres > 0) {
+	}
+	if (!niter && (mempress > 0)) {
 		if (flags & SILOFS_F_TIMEOUT) {
-			niter += mem_pres / 10;
+			niter += mempress_percentage / 10;
 		}
 		if (flags & SILOFS_F_IDLE) {
 			niter += 2;
@@ -1056,7 +1059,7 @@ static size_t lcache_relax_by_overpop(struct silofs_lcache *lcache)
 	return cnt;
 }
 
-static void lcache_relax_uamap(struct silofs_lcache *lcache, int flags)
+static void lcache_try_relax_uamap(struct silofs_lcache *lcache, int flags)
 {
 	if (flags & SILOFS_F_IDLE) {
 		silofs_uamap_drop_lru(&lcache->lc_uamap);
@@ -1072,8 +1075,8 @@ void silofs_lcache_relax(struct silofs_lcache *lcache, int flags)
 	niter = lcache_calc_niter(lcache, flags);
 	drop1 = lcache_relax_by_niter(lcache, niter, flags);
 	drop2 = lcache_relax_by_overpop(lcache);
-	if (niter && !drop1 && !drop2 && (flags & SILOFS_F_IDLE)) {
-		lcache_relax_uamap(lcache, flags);
+	if (!drop1 && !drop2) {
+		lcache_try_relax_uamap(lcache, flags);
 	}
 }
 

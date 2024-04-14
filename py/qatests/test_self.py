@@ -32,10 +32,10 @@ def test_funtests(env: TestEnv) -> None:
     tds.do_write()
     ff_root = env.create_fstree(ff_dname)
     env.cmd.funtests.version()
-    env.cmd.funtests.run(ff_root, False)
+    env.cmd.funtests.run(ff_root, rand=False)
     env.exec_snap(ff_snap_name)
     tds.do_read()
-    env.cmd.funtests.run(ff_root, True)
+    env.cmd.funtests.run(ff_root, rand=True)
     tds.do_read()
     tds.do_unlink()
     env.remove_fstree(ff_pre_dname)
@@ -63,8 +63,8 @@ def test_funtests2(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def run_funtests(env: TestEnv, base: Path, rand: bool) -> None:
-    env.cmd.funtests.run(base, rand, True)
+def _run_funtests(env: TestEnv, base: Path) -> None:
+    env.cmd.funtests.run(base, rand=True, nostatvfs=True, noflaky=True)
 
 
 def test_funtests_mt(env: TestEnv) -> None:
@@ -79,8 +79,8 @@ def test_funtests_mt(env: TestEnv) -> None:
     tds.do_write()
     ff_root1 = env.create_fstree(ff_dname1)
     ff_root2 = env.create_fstree(ff_dname2)
-    fu1 = env.executor.submit(run_funtests, env, ff_root1, True)
-    fu2 = env.executor.submit(run_funtests, env, ff_root2, False)
+    fu1 = env.executor.submit(_run_funtests, env, ff_root1)
+    fu2 = env.executor.submit(_run_funtests, env, ff_root2)
     env.exec_snap(ff_snap_name1)
     tds.do_read()
     env.suspend(2)

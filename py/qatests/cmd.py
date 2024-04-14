@@ -281,12 +281,15 @@ class CmdFuntests(CmdExec):
         basedir: Path,
         rand: bool = False,
         nostatvfs: bool = False,
+        noflaky: bool = False,
     ) -> None:
         args = [str(basedir)]
         if rand:
             args.append("--random")
         if nostatvfs:
             args.append("--nostatvfs")
+        if noflaky:
+            args.append("--noflaky")
         self.execute_sub(args, wdir="/", timeout=2400)
 
 

@@ -30,7 +30,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#define QALLOC_MAGIC            (0x2573666F)
+#define QALLOC_MAGIC            (0xBCC12573666F)
 #define QALLOC_MALLOC_SIZE_MAX  (64 * SILOFS_UMEGA)
 #define QALLOC_FREE_NPAGES_MANY (16)
 
@@ -429,7 +429,8 @@ static long qpool_next_unique_id(void)
 	return silofs_atomic_addl(&g_qpool_id, 1);
 }
 
-static int qpool_init(struct silofs_qpool *qpool, size_t memsize)
+static int qpool_init(struct silofs_qpool *qpool,
+                      size_t memsize, enum silofs_qallocf flags)
 {
 	const size_t npgs = memsize / QALLOC_PAGE_SIZE;
 	int err;
@@ -448,6 +449,7 @@ static int qpool_init(struct silofs_qpool *qpool, size_t memsize)
 		return err;
 	}
 	qpool_init_page_infos(qpool);
+	qpool->flags = flags;
 	return 0;
 }
 
@@ -1066,9 +1068,10 @@ static int slab_free_seg(struct silofs_slab *slab,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int qalloc_init_qpool(struct silofs_qalloc *qal, size_t memsize)
+static int qalloc_init_qpool(struct silofs_qalloc *qal,
+                             size_t memsize, enum silofs_qallocf flags)
 {
-	return qpool_init(&qal->qpool, memsize);
+	return qpool_init(&qal->qpool, memsize, flags);
 }
 
 static int qalloc_fini_qpool(struct silofs_qalloc *qal)
@@ -1133,13 +1136,8 @@ static void qalloc_fini_interface(struct silofs_qalloc *qal)
 	qal->alloc.stat_fn = NULL;
 }
 
-static int check_mode(int mode)
-{
-	return ((mode == SILOFS_QALLOC_NORMAL) ||
-	        (mode == SILOFS_QALLOC_PEDANTIC)) ? 0 : -EINVAL;
-}
-
-int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
+int silofs_qalloc_init(struct silofs_qalloc *qal,
+                       size_t memsize, enum silofs_qallocf flags)
 {
 	int err;
 
@@ -1147,18 +1145,13 @@ int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 
 	silofs_memzero(qal, sizeof(*qal));
 	qal->nbytes_use = 0;
-	qal->mode = 0;
 	qal->magic = QALLOC_MAGIC;
 
-	err = check_mode(mode);
-	if (err) {
-		return err;
-	}
 	err = check_memsize(memsize);
 	if (err) {
 		return err;
 	}
-	err = qalloc_init_qpool(qal, memsize);
+	err = qalloc_init_qpool(qal, memsize, flags);
 	if (err) {
 		return err;
 	}
@@ -1168,7 +1161,6 @@ int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode)
 		return err;
 	}
 	qalloc_init_interface(qal);
-	qal->mode = mode;
 	return 0;
 }
 
@@ -1326,7 +1318,7 @@ void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags)
 static int qalloc_check_free(const struct silofs_qalloc *qal,
                              const void *ptr, size_t nbytes)
 {
-	if (!qal->mode || (ptr == NULL)) {
+	if (ptr == NULL) {
 		return -SILOFS_EINVAL;
 	}
 	if (!nbytes || (nbytes > QALLOC_MALLOC_SIZE_MAX)) {
@@ -1381,9 +1373,9 @@ static int qalloc_free_multi_pg(struct silofs_qalloc *qal,
 	return qpool_free_multi_pg(&qal->qpool, ptr, nbytes, flags);
 }
 
-static bool qalloc_is_pedantic(const struct silofs_qalloc *qal)
+static bool qalloc_may_demask_on_free(const struct silofs_qalloc *qal)
 {
-	return (qal->mode & SILOFS_QALLOC_PEDANTIC) > 0;
+	return (qal->qpool.flags & SILOFS_QALLOCF_DEMASK) > 0;
 }
 
 static void qalloc_pre_free(const struct silofs_qalloc *qal,
@@ -1391,8 +1383,8 @@ static void qalloc_pre_free(const struct silofs_qalloc *qal,
 {
 	if (flags) {
 		qalloc_apply_flags(qal, ptr, nbytes, flags);
-	} else if (qalloc_is_pedantic(qal)) {
-		memset(ptr, qal->magic, silofs_min(512, nbytes));
+	} else if (qalloc_may_demask_on_free(qal)) {
+		memset(ptr, (int)qal->magic, silofs_min(512, nbytes));
 	}
 }
 

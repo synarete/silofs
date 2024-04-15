@@ -44,10 +44,10 @@ struct silofs_alloc {
 };
 
 /* quick memory allocator */
-enum silofs_qalloc_mode {
-	SILOFS_QALLOC_NONE      = 0,
-	SILOFS_QALLOC_NORMAL    = 1,
-	SILOFS_QALLOC_PEDANTIC  = 2,
+enum silofs_qallocf {
+	SILOFS_QALLOCF_NONE     = 0x0,
+	SILOFS_QALLOCF_DEMASK   = 0x1,
+	SILOFS_QALLOCF_NOFAIL   = 0x2,
 };
 
 struct silofs_memfd {
@@ -64,6 +64,7 @@ struct silofs_qpool {
 	size_t                  npgs_max;
 	size_t                  npgs_use;
 	uint32_t                unique_id;
+	enum silofs_qallocf     flags;
 };
 
 struct silofs_slab {
@@ -81,8 +82,7 @@ struct silofs_qalloc {
 	struct silofs_qpool     qpool;
 	struct silofs_alloc     alloc;
 	size_t                  nbytes_use;
-	int                     mode;
-	int                     magic;
+	int64_t                 magic;
 };
 
 /* allocator via standard C malloc/free */
@@ -108,7 +108,8 @@ int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
 int silofs_calloc_fini(struct silofs_calloc *cal);
 
 /* quick allocator */
-int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize, int mode);
+int silofs_qalloc_init(struct silofs_qalloc *qal,
+                       size_t memsize, enum silofs_qallocf flags);
 
 int silofs_qalloc_fini(struct silofs_qalloc *qal);
 

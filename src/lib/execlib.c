@@ -147,17 +147,18 @@ static int fs_ctx_init_qalloc(struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_qalloc *qalloc = NULL;
 	size_t memsize = 0;
-	int mode;
+	enum silofs_qallocf qaflags = SILOFS_QALLOCF_NOFAIL;
 	int err;
 
 	err = calc_mem_size(fs_ctx->fs_args.memwant, &memsize);
 	if (err) {
 		return err;
 	}
-	mode = fs_ctx->fs_args.cflags.pedantic ?
-	       SILOFS_QALLOC_PEDANTIC : SILOFS_QALLOC_NORMAL;
+	if (fs_ctx->fs_args.cflags.pedantic) {
+		qaflags |= SILOFS_QALLOCF_DEMASK;
+	}
 	qalloc = &fs_ctx_obj_of(fs_ctx)->fs_core.c.alloc_u.qalloc;
-	err = silofs_qalloc_init(qalloc, memsize, mode);
+	err = silofs_qalloc_init(qalloc, memsize, qaflags);
 	if (err) {
 		return err;
 	}

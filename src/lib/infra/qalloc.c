@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -296,6 +297,39 @@ static void qpgi_unlink_mute(struct silofs_qpage_info *qpgi)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static bool qpool_nofail_mode(const struct silofs_qpool *qpool)
+{
+	return (qpool->flags & SILOFS_QALLOCF_NOFAIL) > 0;
+}
+
+#define qpool_error(qpool_, fmt_, ...) \
+	qpool_errorf(qpool_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
+
+static void qpool_errorf(const struct silofs_qpool *qpool,
+                         const char *file, int line, const char *fmt, ...)
+{
+	char msg[256] = "";
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	va_end(ap);
+
+	if (qpool_nofail_mode(qpool)) {
+		silofs_panicf(file, line,
+		              "qpool error: %s npgs_use=%zu npgs_max=%zu "
+		              "memsz=%zu memaddr=%p", msg, qpool->npgs_use,
+		              qpool->npgs_max, qpool->data.msz,
+		              qpool->data.mem);
+	} else {
+		silofs_logf(SILOFS_LOG_ERROR, file, line,
+		            "qpool error: %s npgs_use=%zu npgs_max=%zu "
+		            "memsz=%zu memaddr=%p", msg, qpool->npgs_use,
+		            qpool->npgs_max, qpool->data.msz,
+		            qpool->data.mem);
+	}
+}
 
 static int
 calc_mem_sizes(size_t npgs, size_t *out_data_msz, size_t *out_meta_msz)
@@ -641,18 +675,29 @@ qpool_slab_seg_of(const struct silofs_qpool *qpool, const void *ptr)
 static int qpool_check_by_page(const struct silofs_qpool *qpool,
                                const void *ptr, size_t nbytes)
 {
-	const struct silofs_qpage_info *qpgi;
-	size_t npgs;
+	const struct silofs_qpage_info *qpgi = NULL;
+	const size_t npgs = nbytes_to_npgs(nbytes);
 
-	npgs = nbytes_to_npgs(nbytes);
 	if (qpool->npgs_use < npgs) {
+		qpool_error(qpool, "more-than-allocated: nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
 	qpgi = qpool_page_info_of(qpool, ptr);
 	if (qpgi == NULL) {
+		qpool_error(qpool, "out-of-range: ptr=%p nbytes=%zu",
+		            ptr, nbytes);
 		return -SILOFS_EQALLOC;
 	}
+	if (qpgi->qpg_free) {
+		qpool_error(qpool, "double-free: ptr=%p nbytes=%zu "
+		            "qpg_count=%zu qpg_free=%d", ptr, nbytes,
+		            qpgi->qpg_count, (int)qpgi->qpg_free);
+	}
 	if (qpgi->qpg_count != npgs) {
+		qpool_error(qpool, "count-mismatch: ptr=%p nbytes=%zu "
+		            "npgs=%zu ptr_pgn=%zu qpg_count=%zu qpg_free=%d",
+		            ptr, nbytes, npgs, qpool_ptr_to_pgn(qpool, ptr),
+		            qpgi->qpg_count, (int)qpgi->qpg_free);
 		return -SILOFS_EQALLOC;
 	}
 	return 0;
@@ -781,6 +826,32 @@ static void *qpool_base_of(const struct silofs_qpool *qpool,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+#define slab_error(slab_, fmt_, ...) \
+	slab_errorf(slab_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
+
+static void slab_errorf(const struct silofs_slab *slab,
+                        const char *file, int line, const char *fmt, ...)
+{
+	char msg[256] = "";
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	va_end(ap);
+
+	if (qpool_nofail_mode(slab->qpool)) {
+		silofs_panicf(file, line,
+		              "slab error: %s nfree=%zu nused=%zu "
+		              "elemsz=%u sindex=%d", msg, slab->nfree,
+		              slab->nused, slab->elemsz, slab->sindex);
+	} else {
+		silofs_logf(SILOFS_LOG_ERROR, file, line,
+		            "slab error: %s nfree=%zu nused=%zu "
+		            "elemsz=%u sindex=%d", msg, slab->nfree,
+		            slab->nused, slab->elemsz, slab->sindex);
+	}
+}
 
 static struct silofs_slab_seg *
 link_to_slab_seg(const struct silofs_list_head *link)
@@ -1018,24 +1089,30 @@ static void slab_free_and_update(struct silofs_slab *slab,
 }
 
 static int slab_check_seg(const struct silofs_slab *slab,
-                          const struct silofs_slab_seg *seg, size_t nb)
+                          const struct silofs_slab_seg *seg, size_t nbytes)
 {
 	const struct silofs_qpage_info *qpgi = NULL;
 
 	if (!slab->nused) {
+		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
-	if (nb > slab->elemsz) {
+	if (nbytes > slab->elemsz) {
+		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
-	if (nb >= (2 * slab->elemsz)) {
+	if (nbytes >= (2 * slab->elemsz)) {
+		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
 	qpgi = qpool_page_info_of(slab->qpool, seg);
 	if (qpgi->qpg_slab_index != slab->sindex) {
+		slab_error(slab, "qpg_slab_index=%d", qpgi->qpg_slab_index);
 		return -SILOFS_EQALLOC;
 	}
 	if (qpgi->qpg_slab_nused == 0) {
+		slab_error(slab, "qpg_slab_index=%d qpg_slab_nused=%d",
+		           qpgi->qpg_slab_index, qpgi->qpg_slab_nused);
 		return -SILOFS_EQALLOC;
 	}
 	return 0;
@@ -1293,24 +1370,30 @@ static int qalloc_malloc(struct silofs_qalloc *qal,
 	return 0;
 }
 
-static void qalloc_require_malloc_ok(const struct silofs_qalloc *qal,
-                                     size_t nbytes, int err)
+static void qalloc_handle_malloc_failure(const struct silofs_qalloc *qal,
+                size_t nbytes, int err)
 {
-	if (err) {
-		silofs_log_debug("malloc failed: nbytes=%lu "
-		                 "data_msz=%lu err=%d",
-		                 nbytes, qal->qpool.data.msz, err);
+	const struct silofs_qpool *qpool = &qal->qpool;
+
+	if (qpool_nofail_mode(qpool)) {
+		silofs_log_debug("qalloc malloc failure: nbytes=%zu "
+		                 "mem=%p msz=%zu err=%d", nbytes,
+		                 qpool->data.mem, qpool->data.msz, err);
 	}
 }
 
 void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags)
 {
 	void *ptr = NULL;
-	int err = 0;
+	int err;
 
-	if (likely(nbytes > 0)) {
-		err = qalloc_malloc(qal, nbytes, flags, &ptr);
-		qalloc_require_malloc_ok(qal, nbytes, err);
+	if (nbytes == 0) {
+		return NULL; /* OK, no-alloc case */
+	}
+	err = qalloc_malloc(qal, nbytes, flags, &ptr);
+	if (unlikely(err)) {
+		qalloc_handle_malloc_failure(qal, nbytes, err);
+		return NULL;
 	}
 	return ptr;
 }
@@ -1318,13 +1401,15 @@ void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags)
 static int qalloc_check_free(const struct silofs_qalloc *qal,
                              const void *ptr, size_t nbytes)
 {
-	if (ptr == NULL) {
-		return -SILOFS_EINVAL;
-	}
+	const struct silofs_qpool *qpool = &qal->qpool;
+
 	if (!nbytes || (nbytes > QALLOC_MALLOC_SIZE_MAX)) {
+		qpool_error(qpool, "nbytes=%zu", nbytes);
 		return -SILOFS_EINVAL;
 	}
-	if (!qpool_isinrange(&qal->qpool, ptr, nbytes)) {
+	if (!qpool_isinrange(qpool, ptr, nbytes)) {
+		qpool_error(qpool, "not-in-range: ptr=%p nbytes=%zu",
+		            ptr, nbytes);
 		return -SILOFS_EINVAL;
 	}
 	return 0;
@@ -1332,16 +1417,16 @@ static int qalloc_check_free(const struct silofs_qalloc *qal,
 
 static int
 qalloc_check_slab_seg_of(const struct silofs_qalloc *qal,
-                         const struct silofs_slab_seg *seg, size_t nb)
+                         const struct silofs_slab_seg *seg, size_t nbytes)
 {
 	const struct silofs_slab *slab;
-	int err = -SILOFS_EQALLOC;
+	int ret = -SILOFS_EQALLOC;
 
-	slab = qalloc_slab_of(qal, nb);
-	if (slab != NULL) {
-		err = slab_check_seg(slab, seg, nb);
+	slab = qalloc_slab_of(qal, nbytes);
+	if (likely(slab != NULL)) {
+		ret = slab_check_seg(slab, seg, nbytes);
 	}
-	return err;
+	return ret;
 }
 
 static int
@@ -1349,13 +1434,13 @@ qalloc_free_by_slab(struct silofs_qalloc *qal,
                     struct silofs_slab_seg *seg, size_t nbytes, int flags)
 {
 	struct silofs_slab *slab;
-	int err = -SILOFS_EQALLOC;
+	int ret = -SILOFS_EQALLOC;
 
 	slab = qalloc_slab_of(qal, nbytes);
-	if (slab != NULL) {
-		err = slab_free_seg(slab, seg, nbytes, flags);
+	if (likely(slab != NULL)) {
+		ret = slab_free_seg(slab, seg, nbytes, flags);
 	}
-	return err;
+	return ret;
 }
 
 static int qalloc_free_sub_pg(struct silofs_qalloc *qal,
@@ -1416,12 +1501,19 @@ static int qalloc_free(struct silofs_qalloc *qal,
 	return 0;
 }
 
-static void qalloc_require_free_ok(const struct silofs_qalloc *qal,
-                                   const void *ptr, size_t nbytes, int err)
+static void qalloc_handle_free_failure(const struct silofs_qalloc *qal,
+                                       const void *ptr, size_t nbytes, int err)
 {
-	if (err) {
-		silofs_panic("free error: ptr=%p nbytes=%lu data_msz=%lu "
-		             "err=%d", ptr, nbytes, qal->qpool.data.msz, err);
+	const struct silofs_qpool *qpool = &qal->qpool;
+
+	if (qpool_nofail_mode(&qal->qpool)) {
+		silofs_panic("qalloc free failure: ptr=%p nbytes=%zu "
+		             "mem=%p msz=%zu err=%d", ptr, nbytes,
+		             qpool->data.mem, qpool->data.msz, err);
+	} else {
+		silofs_log_error("qalloc free failure: ptr=%p nbytes=%zu "
+		                 "mem=%p msz=%zu err=%d", ptr, nbytes,
+		                 qpool->data.mem, qpool->data.msz, err);
 	}
 }
 
@@ -1431,19 +1523,22 @@ void silofs_qalloc_free(struct silofs_qalloc *qal,
 	int err;
 
 	err = qalloc_free(qal, ptr, nbytes, flags);
-	qalloc_require_free_ok(qal, ptr, nbytes, err);
+	if (unlikely(err)) {
+		qalloc_handle_free_failure(qal, ptr, nbytes, err);
+	}
 }
 
 static int qalloc_check_by_slab(const struct silofs_qalloc *qal,
                                 const void *ptr, size_t nbytes)
 {
 	const struct silofs_slab_seg *seg;
+	int ret = -SILOFS_EQALLOC;
 
 	seg = qpool_slab_seg_of(&qal->qpool, ptr);
-	if (unlikely(seg == NULL)) {
-		return -SILOFS_EQALLOC;
+	if (likely(seg != NULL)) {
+		ret = qalloc_check_slab_seg_of(qal, seg, nbytes);
 	}
-	return qalloc_check_slab_seg_of(qal, seg, nbytes);
+	return ret;
 }
 
 static int qalloc_check_by_qpool(const struct silofs_qalloc *qal,

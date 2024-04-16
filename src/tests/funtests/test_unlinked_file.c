@@ -74,8 +74,7 @@ static void test_unlinked_simple(struct ft_env *fte)
  * Tests data-consistency of I/O via fd where file's path is unlinked from
  * filesyatem's namespace and data is truncated implicitly upon close.
  */
-static void test_unlinked_complex_(struct ft_env *fte,
-                                   loff_t off, size_t len)
+static void test_unlinked_complex_(struct ft_env *fte, loff_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	uint8_t *buf1 = ft_new_buf_rands(fte, len);
@@ -111,6 +110,8 @@ static void test_unlinked_complex(struct ft_env *fte)
 		FT_MKRANGE(1, FT_1M + 2),
 		FT_MKRANGE(FT_1K, FT_64K),
 		FT_MKRANGE(FT_1K + 1, FT_64K - 11),
+		FT_MKRANGE(FT_1K - 1, FT_64K + 11),
+		FT_MKRANGE(FT_4K - 11, FT_64K + 111),
 		FT_MKRANGE(FT_64K - 1, FT_64K + 2),
 		FT_MKRANGE(FT_1M - FT_64K + 1, 2 * FT_64K + 1),
 		FT_MKRANGE(FT_1M - 1, FT_64K + 11),
@@ -119,6 +120,8 @@ static void test_unlinked_complex(struct ft_env *fte)
 		FT_MKRANGE(FT_1G - FT_64K - 1, 2 * FT_64K + 2),
 		FT_MKRANGE(FT_1G + FT_64K + 1, FT_64K - 1),
 		FT_MKRANGE(FT_1T + 1, FT_64K - 1),
+		FT_MKRANGE(2 * FT_1T - 2, FT_1M + 3),
+		FT_MKRANGE(3 * FT_1T - 3, 3 * FT_1M + 5),
 	};
 
 	ft_exec_with_ranges(fte, test_unlinked_complex_, ranges);
@@ -225,7 +228,6 @@ static void test_unlinked_rename(struct ft_env *fte)
 		ft_relax_mem(fte);
 	}
 }
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*

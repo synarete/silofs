@@ -40,9 +40,9 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_backtrace_args {
+	const char *sym;
 	void *ip;
 	long  sp;
-	const char *sym;
 	long  off;
 };
 
@@ -51,21 +51,23 @@ typedef int (*silofs_backtrace_cb)(const struct silofs_backtrace_args *);
 #ifdef SILOFS_WITH_LIBUNWIND
 
 struct silofs_backtrace_ctx {
-	unw_context_t   context;
-	unw_cursor_t    cursor;
-	unw_word_t      ip;
-	unw_word_t      sp;
-	unw_word_t      off;
-	char            sym[512];
+	unw_context_t                   context;
+	unw_cursor_t                    cursor;
+	unw_word_t                      ip;
+	unw_word_t                      sp;
+	unw_word_t                      off;
+	char                            sym[512];
+	struct silofs_backtrace_args    args;
 };
 
 static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 {
 	struct silofs_backtrace_ctx bt_ctx;
-	struct silofs_backtrace_args bt_args;
 	int err;
 
 	memset(&bt_ctx, 0, sizeof(bt_ctx));
+	bt_ctx.args.sym = bt_ctx.sym;
+
 	err = unw_getcontext(&bt_ctx.context);
 	if (err != UNW_ESUCCESS) {
 		return err;
@@ -74,7 +76,7 @@ static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 	if (err != UNW_ESUCCESS) {
 		return err;
 	}
-	for (int step = 0; step < 64; ++step) {
+	for (int step = 0; step < 80; ++step) {
 		bt_ctx.ip = 0;
 		bt_ctx.sp = 0;
 		bt_ctx.off = 0;
@@ -95,11 +97,10 @@ static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 		if (err) {
 			bt_ctx.sym[0] = '\0';
 		}
-		bt_args.ip = (void *)bt_ctx.ip;
-		bt_args.sp = (long)bt_ctx.sp;
-		bt_args.sym = bt_ctx.sym;
-		bt_args.off = (long)bt_ctx.off;
-		err = bt_cb(&bt_args);
+		bt_ctx.args.ip = (void *)bt_ctx.ip;
+		bt_ctx.args.sp = (long)bt_ctx.sp;
+		bt_ctx.args.off = (long)bt_ctx.off;
+		err = bt_cb(&bt_ctx.args);
 		if (err) {
 			return err;
 		}
@@ -155,10 +156,10 @@ static void bt_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 
 static void silofs_dump_addr2line(void)
 {
-	int bt_len;
 	void *bt_arr[128];
 	char bt_addrs[1024];
 	const int bt_cnt = (int)(SILOFS_ARRAY_SIZE(bt_arr));
+	int bt_len;
 
 	memset(bt_arr, 0, sizeof(bt_arr));
 	memset(bt_addrs, 0, sizeof(bt_addrs));

@@ -13,20 +13,13 @@ from . import test_all
 from . import utils
 
 
-def _die(msg: str) -> None:
-    log.println(msg)
-    sys.exit(1)
-
-
-def _print(msg: str) -> None:
-    log.println(msg)
-
-
 def _require_empty_dir(dirpath: Path) -> None:
     if not utils.is_dir(dirpath):
-        _die(f"not a directory: {dirpath}")
+        log.println(f"not a directory: {dirpath}")
+        sys.exit(1)
     if not utils.is_empty_dir(dirpath):
-        _die(f"not an empty directory: {dirpath}")
+        log.println(f"not an empty directory: {dirpath}")
+        sys.exit(1)
 
 
 def _validate_config(cfg: ctx.TestConfig) -> None:
@@ -43,16 +36,16 @@ def _seed_random() -> None:
 def _report_prog() -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
-    _print(f"PROG: {prog}")
+    log.println(f"PROG: {prog}")
     vers = cmds.silofs.version()
-    _print(f"VERS: {vers}")
+    log.println(f"VERS: {vers}")
 
 
 def _report_done() -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
     vers = cmds.silofs.version()
-    _print(f"DONE: {prog} {vers}")
+    log.println(f"DONE: {prog} {vers}")
 
 
 def _pre_run_tests() -> None:
@@ -75,7 +68,7 @@ def _post_test(env: ctx.TestEnv) -> None:
 
 
 def _exec_test(td: ctx.TestDef, env: ctx.TestEnv) -> None:
-    _print(f"TEST: {td.name}")
+    log.println(f"TEST: {td.name}")
     td.hook(env)
 
 
@@ -100,11 +93,11 @@ def run_tests(cfg: ctx.TestConfig) -> None:
     try:
         _do_run_tests(cfg)
     except cmd.CmdError as cex:
-        _print(f"FATAL: {cex} {cex.retcode}")
-        _print(f"FATAL: {cex.output}")
+        log.println(f"FATAL: {cex} {cex.retcode}")
+        log.println(f"FATAL: {cex.output}")
         traceback.print_exc()
-        sys.exit(1)
+        sys.exit(3)
     except expect.ExpectException as exp:
-        _print(f"FATAL: {exp}")
+        log.println(f"FATAL: {exp}")
         traceback.print_exc()
-        sys.exit(2)
+        sys.exit(4)

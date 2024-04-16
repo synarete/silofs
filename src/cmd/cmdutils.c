@@ -711,14 +711,39 @@ void cmd_close_syslog(void)
 	}
 }
 
-void cmd_setrlimit_nocore(void)
+static void cmd_setup_dumpable(void)
+{
+	const unsigned int state = 1;
+	int err;
+
+	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
+	if (err) {
+		cmd_dief(err, "prctl PR_SET_DUMPABLE failed: state=%d", state);
+	}
+}
+
+void cmd_setup_coredump_mode(bool enable_coredump)
 {
 	struct rlimit rlim = { .rlim_cur = 0, .rlim_max = 0 };
 	int err;
 
+	err = silofs_sys_getrlimit(RLIMIT_CORE, &rlim);
+	if (err) {
+		cmd_dief(err, "failed to getrlimit RLIMIT_CORE");
+	}
+	if (enable_coredump) {
+		rlim.rlim_cur = rlim.rlim_max;
+	} else {
+		rlim.rlim_cur = rlim.rlim_max = 0;
+	}
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
-		cmd_dief(err, "failed to disable core-dupms");
+		cmd_dief(err, "failed to setrlimit RLIMIT_CORE: "
+		         "rlim_cur=%zu rlim_max=%zu",
+		         rlim.rlim_cur, rlim.rlim_max);
+	}
+	if (enable_coredump) {
+		cmd_setup_dumpable();
 	}
 }
 

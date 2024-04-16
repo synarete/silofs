@@ -54,7 +54,6 @@ struct cmd_globals {
 	/* common process settings */
 	bool    dont_daemonize;
 	bool    allow_coredump;
-	bool    dumpable; /* XXX: TODO: allow set */
 
 	/* capability */
 	bool    cap_sys_admin;
@@ -171,7 +170,7 @@ void cmd_open_syslog(void);
 
 void cmd_close_syslog(void);
 
-void cmd_setrlimit_nocore(void);
+void cmd_setup_coredump_mode(bool enable_coredump);
 
 void cmd_set_log_level_by(const char *s);
 

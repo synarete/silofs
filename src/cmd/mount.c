@@ -455,29 +455,12 @@ static void cmd_mount_start_daemon(struct cmd_mount_ctx *ctx)
 	}
 }
 
-static void cmd_mount_set_dumpable(unsigned int state)
-{
-	int err;
-
-	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
-	if (err) {
-		cmd_dief(err, "failed to prctl dumpable: state=%d", state);
-	}
-}
-
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
 	if (!cmd_globals.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
 	}
-	if (!cmd_globals.allow_coredump) {
-		cmd_setrlimit_nocore();
-	}
-	if (cmd_globals.dumpable) {
-		cmd_mount_set_dumpable(1);
-	} else {
-		cmd_mount_set_dumpable(0);
-	}
+	cmd_setup_coredump_mode(cmd_globals.allow_coredump);
 }
 
 static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)

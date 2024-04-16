@@ -193,12 +193,12 @@ class CmdSilofs(CmdExec):
         writeback_cache: bool = False,
     ) -> None:
         wb_mode = int(writeback_cache)
-        args = ["mount", "--no-prompt", repodir_name, mntpoint]
-        args = args + [f"--writeback-cache={wb_mode}"]
+        args = ["mount", "-C", "--no-prompt", f"--writeback-cache={wb_mode}"]
         if allow_hostids:
             args = args + ["--allow-hostids"]
         if allow_xattr_acl:
             args = args + ["--allow-xattr-acl"]
+        args = args + [str(repodir_name), str(mntpoint)]
         self.execute_run(args, indat=password)
 
     def umount(self, mntpoint: Path) -> None:

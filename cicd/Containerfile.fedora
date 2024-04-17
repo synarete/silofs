@@ -1,4 +1,4 @@
-FROM fedora:latest
+FROM registry.fedoraproject.org/fedora:latest
 WORKDIR /scratch
 RUN dnf update -y
 COPY install-rpm-deps.sh .

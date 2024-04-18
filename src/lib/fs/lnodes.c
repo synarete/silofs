@@ -20,6 +20,9 @@
 #include <silofs/fs-private.h>
 #include <limits.h>
 
+#define UI_MAGIC (0xA1B3C5)
+#define VI_MAGIC (0xD2E4F6)
+
 /* local functions forward declarations */
 static void sbi_delete_by(struct silofs_lnode_info *lni,
                           struct silofs_alloc *alloc, int flags);
@@ -180,14 +183,18 @@ static void ui_init(struct silofs_unode_info *ui,
 	list_head_init(&ui->u_dq_lh);
 	ulink_assign(&ui->u_ulink, ulink);
 	ui->u_dq = NULL;
+	ui->u_magic = UI_MAGIC;
 }
 
 static void ui_fini(struct silofs_unode_info *ui)
 {
+	silofs_assert_eq(ui->u_magic, UI_MAGIC);
+
 	ulink_reset(&ui->u_ulink);
 	list_head_fini(&ui->u_dq_lh);
 	lni_fini(&ui->u_lni);
 	ui->u_dq = NULL;
+	ui->u_magic = -2;
 }
 
 struct silofs_unode_info *
@@ -197,6 +204,10 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni)
 
 	if (lni != NULL) {
 		ui = container_of2(lni, struct silofs_unode_info, u_lni);
+		if (unlikely(ui->u_magic != UI_MAGIC)) {
+			silofs_panic("corrupted unode-info: "
+			             "ui=%p u_magic=%x", ui, ui->u_magic);
+		}
 	}
 	return ui_unconst(ui);
 }
@@ -261,16 +272,19 @@ static void vi_init(struct silofs_vnode_info *vi,
 	silofs_llink_reset(&vi->v_llink);
 	vi->v_dq = NULL;
 	vi->v_asyncwr = 0;
+	vi->v_magic = VI_MAGIC;
 }
 
 static void vi_fini(struct silofs_vnode_info *vi)
 {
+	silofs_assert_eq(vi->v_magic, VI_MAGIC);
 	silofs_assert_eq(vi->v_asyncwr, 0);
 
 	lni_fini(&vi->v_lni);
 	list_head_fini(&vi->v_dq_lh);
 	vaddr_reset(&vi->v_vaddr);
 	vi->v_dq = NULL;
+	vi->v_magic = -1;
 }
 
 struct silofs_vnode_info *
@@ -280,6 +294,10 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni)
 
 	if (lni != NULL) {
 		vi = container_of2(lni, struct silofs_vnode_info, v_lni);
+		if (unlikely(vi->v_magic != VI_MAGIC)) {
+			silofs_panic("corrupted vnode-info: "
+			             "vi=%p v_magic=%x", vi, vi->v_magic);
+		}
 	}
 	return vi_unconst(vi);
 }

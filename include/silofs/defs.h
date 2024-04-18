@@ -882,7 +882,8 @@ struct silofs_dtree_node {
 	uint32_t                        dn_node_index;
 	uint16_t                        dn_nde;
 	uint16_t                        dn_nnb;
-	uint64_t                        dn_reserved[3];
+	uint32_t                        dn_nactive_childs;
+	uint32_t                        dn_reserved[5];
 	struct silofs_vaddr56           dn_child[SILOFS_DIR_NODE_NCHILDS];
 	union silofs_dtree_data         dn_data;
 } silofs_packed_aligned64;

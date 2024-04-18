@@ -464,6 +464,28 @@ static void dtn_reset_data(struct silofs_dtree_node *dtn)
 	silofs_memzero(&dtn->dn_data, sizeof(dtn->dn_data));
 }
 
+static size_t dtn_nactive_childs(const struct silofs_dtree_node *dtn)
+{
+	return silofs_le32_to_cpu(dtn->dn_nactive_childs);
+}
+
+static void dtn_set_nactive_childs(struct silofs_dtree_node *dtn, size_t n)
+{
+	silofs_assert_le(n, ARRAY_SIZE(dtn->dn_child));
+
+	dtn->dn_nactive_childs = silofs_cpu_to_le32((uint32_t)n);
+}
+
+static void dtn_inc_nactive_childs(struct silofs_dtree_node *dtn)
+{
+	dtn_set_nactive_childs(dtn, dtn_nactive_childs(dtn) + 1);
+}
+
+static void dtn_dec_nactive_childs(struct silofs_dtree_node *dtn)
+{
+	dtn_set_nactive_childs(dtn, dtn_nactive_childs(dtn) - 1);
+}
+
 static loff_t dtn_child_off(const struct silofs_dtree_node *dtn,
                             silofs_dtn_ord_t ord)
 {
@@ -477,6 +499,15 @@ static void dtn_child(const struct silofs_dtree_node *dtn,
                       silofs_dtn_ord_t ord, struct silofs_vaddr *out_vaddr)
 {
 	vaddr_setup(out_vaddr, SILOFS_LTYPE_DTNODE, dtn_child_off(dtn, ord));
+}
+
+static bool dtn_has_child_at(const struct silofs_dtree_node *dtn,
+                             silofs_dtn_ord_t ord)
+{
+	struct silofs_vaddr vaddr;
+
+	dtn_child(dtn, ord, &vaddr);
+	return !vaddr_isnull(&vaddr);
 }
 
 static void dtn_set_child(struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord,
@@ -504,6 +535,7 @@ static void dtn_setup(struct silofs_dtree_node *dtn, ino_t ino,
 	dtn_set_node_index(dtn, dtn_index);
 	dtn_set_nde(dtn, 0);
 	dtn_set_nnb(dtn, 0);
+	dtn_set_nactive_childs(dtn, 0);
 	dtn_reset_childs(dtn);
 	dtn_reset_data(dtn);
 }
@@ -945,9 +977,14 @@ static void dni_bind_child_at(struct silofs_dnode_info *parent_dni,
                               const struct silofs_vaddr *vaddr,
                               silofs_dtn_index_t dtn_index)
 {
+	struct silofs_dtree_node *dtn = parent_dni->dtn;
 	const silofs_dtn_ord_t child_ord = dtn_index_to_child_ord(dtn_index);
+	const bool rebind = dtn_has_child_at(dtn, child_ord);
 
-	dtn_set_child(parent_dni->dtn, child_ord, vaddr);
+	dtn_set_child(dtn, child_ord, vaddr);
+	if (!rebind) {
+		dtn_inc_nactive_childs(dtn);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2473,15 +2510,25 @@ static int dirc_discard_childs_of(const struct silofs_dir_ctx *d_ctx,
 {
 	struct silofs_vaddr child_vaddr;
 	silofs_dtn_ord_t ord;
-	int ret = 0;
+	int err = 0;
 
 	dni_incref(dni);
-	for (ord = 0; (ord < DTREE_FANOUT) && !ret; ++ord) {
+	for (ord = 0; ord < DTREE_FANOUT; ++ord) {
+		if (!dtn_nactive_childs(dni->dtn)) {
+			break;
+		}
 		dtn_child_by_ord(dni->dtn, ord, &child_vaddr);
-		ret = dirc_discard_recursively(d_ctx, &child_vaddr);
+		if (vaddr_isnull(&child_vaddr)) {
+			continue;
+		}
+		err = dirc_discard_recursively(d_ctx, &child_vaddr);
+		if (err) {
+			return err;
+		}
+		dtn_dec_nactive_childs(dni->dtn);
 	}
 	dni_decref(dni);
-	return ret;
+	return err;
 }
 
 static int dirc_discard_tree_at(const struct silofs_dir_ctx *d_ctx,

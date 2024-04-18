@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 import datetime
+import platform
 import random
 import sys
 import traceback
@@ -33,6 +34,15 @@ def _seed_random() -> None:
     random.seed(seed)
 
 
+def _report_host() -> None:
+    plat_sys = platform.system()
+    plat_rel = platform.release()
+    log.println(f"HOST: {plat_sys} {plat_rel}")
+    py_impl = platform.python_implementation()
+    py_vers = platform.python_version()
+    log.println(f"PYTHON: {py_impl} {py_vers}")
+
+
 def _report_prog() -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
@@ -50,6 +60,7 @@ def _report_done() -> None:
 
 def _pre_run_tests() -> None:
     _seed_random()
+    _report_host()
     _report_prog()
 
 

@@ -11,6 +11,7 @@ AC_DEFUN([AX_SILOFS_WANT_PYTHON],
   AX_PYTHON_MODULE([hashlib], [1])
   AX_PYTHON_MODULE([json], [1])
   AX_PYTHON_MODULE([pathlib], [1])
+  AX_PYTHON_MODULE([platform], [1])
   AX_PYTHON_MODULE([pydantic], [1])
   AX_PYTHON_MODULE([tempfile], [1])
   AX_PYTHON_MODULE([toml], [1])

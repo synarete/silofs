@@ -19,6 +19,8 @@ class TestConfig:
         self.mntdir = mntdir.resolve(strict=True)
         self.repodir = self.basedir / "repo"
         self.password = "123456"
+        self.use_stdalloc = False
+        self.allow_coredump = False
 
 
 class TestData:
@@ -103,7 +105,7 @@ class TestEnv:
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
-        self.cmd = cmd.Cmds()
+        self.cmd = cmd.Cmds(cfg.use_stdalloc, cfg.allow_coredump)
         self.bconf = bconf.BConf()
 
     @staticmethod

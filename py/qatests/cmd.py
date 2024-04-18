@@ -150,8 +150,12 @@ class CmdShell(CmdExec):
 class CmdSilofs(CmdExec):
     """Wrapper over silofs command-line front-end"""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, use_stdalloc: bool = False, allow_coredump: bool = False
+    ) -> None:
         CmdExec.__init__(self, "silofs")
+        self.use_stdalloc = use_stdalloc
+        self.allow_coredump = allow_coredump
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -193,7 +197,11 @@ class CmdSilofs(CmdExec):
         writeback_cache: bool = False,
     ) -> None:
         wb_mode = int(writeback_cache)
-        args = ["mount", "-C", "--no-prompt", f"--writeback-cache={wb_mode}"]
+        args = ["mount", "--no-prompt", f"--writeback-cache={wb_mode}"]
+        if self.allow_coredump:
+            args = args + ["--coredump"]
+        if self.use_stdalloc:
+            args = args + ["--stdalloc"]
         if allow_hostids:
             args = args + ["--allow-hostids"]
         if allow_xattr_acl:
@@ -315,9 +323,11 @@ class CmdGit(CmdExec):
 class Cmds:
     """All command-line wrappers in single class"""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, use_stdalloc: bool = False, allow_coredump: bool = False
+    ) -> None:
         self.sh = CmdShell()
-        self.silofs = CmdSilofs()
+        self.silofs = CmdSilofs(use_stdalloc, allow_coredump)
         self.unitests = CmdUnitests()
         self.funtests = CmdFuntests()
         self.git = CmdGit()

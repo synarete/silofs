@@ -510,6 +510,35 @@ static void ftn_reset_child(struct silofs_ftree_node *ftn, size_t slot)
 	ftn_set_child(ftn, slot, SILOFS_OFF_NULL);
 }
 
+static bool ftn_has_child_at(const struct silofs_ftree_node *ftn, size_t slot)
+{
+	const loff_t voff = ftn_child(ftn, slot);
+
+	return !off_isnull(voff);
+}
+
+static size_t ftn_nactive_childs(const struct silofs_ftree_node *ftn)
+{
+	return silofs_le32_to_cpu(ftn->fn_nactive_childs);
+}
+
+static void ftn_set_nactive_childs(struct silofs_ftree_node *ftn, size_t n)
+{
+	silofs_assert_le(n, ARRAY_SIZE(ftn->fn_child));
+
+	ftn->fn_nactive_childs = silofs_cpu_to_le32((uint32_t)n);
+}
+
+static void ftn_inc_nactive_childs(struct silofs_ftree_node *ftn)
+{
+	ftn_set_nactive_childs(ftn, ftn_nactive_childs(ftn) + 1);
+}
+
+static void ftn_dec_nactive_childs(struct silofs_ftree_node *ftn)
+{
+	ftn_set_nactive_childs(ftn, ftn_nactive_childs(ftn) - 1);
+}
+
 static bool ftn_isinrange(const struct silofs_ftree_node *ftn, loff_t pos)
 {
 	return off_is_within(pos, ftn_beg(ftn), ftn_end(ftn));
@@ -581,7 +610,7 @@ ftn_next_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
 	return off_end(file_pos, nbps);
 }
 
-static void ftn_clear_childs(struct silofs_ftree_node *ftn)
+static void ftn_init_null_childs(struct silofs_ftree_node *ftn)
 {
 	const size_t nslots_max = ftn_nchilds_max(ftn);
 
@@ -598,9 +627,10 @@ static void ftn_init(struct silofs_ftree_node *ftn, ino_t ino,
 	ftn_set_ino(ftn, ino);
 	ftn_set_beg(ftn, beg);
 	ftn_set_end(ftn, end);
+	ftn_set_nactive_childs(ftn, 0);
 	ftn_set_height(ftn, height);
 	ftn_set_child_ltype(ftn, child_ltype);
-	ftn_clear_childs(ftn);
+	ftn_init_null_childs(ftn);
 	silofs_memzero(ftn->fn_zeros, sizeof(ftn->fn_zeros));
 }
 
@@ -766,14 +796,37 @@ fni_child_slot_of(const struct silofs_finode_info *fni, loff_t off)
 	return ftn_slot_by_file_pos(fni->ftn, off);
 }
 
+static void fni_assign_child_at(struct silofs_finode_info *fni, size_t slot,
+                                const struct silofs_vaddr *vaddr)
+{
+	struct silofs_ftree_node *ftn = fni->ftn;
+	const loff_t voff = vaddr->off;
+
+	if (!ftn_has_child_at(ftn, slot)) {
+		if (!off_isnull(voff)) {
+			ftn_set_child(ftn, slot, voff);
+			ftn_inc_nactive_childs(ftn);
+		} else {
+			ftn_reset_child(ftn, slot);
+		}
+	} else {
+		if (!off_isnull(voff)) {
+			ftn_set_child(ftn, slot, voff);
+		} else {
+			ftn_reset_child(ftn, slot);
+			ftn_dec_nactive_childs(ftn);
+		}
+	}
+}
+
 static void
-fni_assign_child_by_pos(struct silofs_finode_info *parent_fni,
-                        loff_t file_pos, const struct silofs_vaddr *vaddr)
+fni_assign_child_by_pos(struct silofs_finode_info *fni,
+                        loff_t pos, const struct silofs_vaddr *vaddr)
 {
 	size_t child_slot;
 
-	child_slot = fni_child_slot_of(parent_fni, file_pos);
-	ftn_set_child(parent_fni->ftn, child_slot, vaddr->off);
+	child_slot = fni_child_slot_of(fni, pos);
+	fni_assign_child_at(fni, child_slot, vaddr);
 }
 
 static void
@@ -796,7 +849,10 @@ static void fni_bind_finode(struct silofs_finode_info *parent_fni,
 static void
 fni_clear_subtree_mappings(struct silofs_finode_info *fni, size_t slot)
 {
-	ftn_reset_child(fni->ftn, slot);
+	if (ftn_has_child_at(fni->ftn, slot)) {
+		ftn_reset_child(fni->ftn, slot);
+		ftn_dec_nactive_childs(fni->ftn);
+	}
 }
 
 static void fni_setup(struct silofs_finode_info *fni,
@@ -1484,6 +1540,7 @@ static int filc_stage_tree_node(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
+
 	*out_fni = fni;
 	return 0;
 }
@@ -2362,7 +2419,7 @@ static void filc_bind_sub_tree(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 
 	filc_tree_root_of(f_ctx, &vaddr);
-	ftn_set_child(fni->ftn, 0, vaddr.off);
+	fni_assign_child_at(fni, 0, &vaddr);
 	fni_dirtify(fni, f_ctx->ii);
 
 	filc_update_tree_root(f_ctx, fni_vaddr(fni));
@@ -2920,20 +2977,26 @@ static int filc_drop_subtree(struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static int
-filc_drop_subtree_at(struct silofs_file_ctx *f_ctx,
-                     const struct silofs_finode_info *parent_fni, size_t slot)
+static int filc_drop_subtree_at(struct silofs_file_ctx *f_ctx,
+                                struct silofs_finode_info *fni, size_t slot)
 {
 	struct silofs_vaddr vaddr;
 	int err;
 
-	fni_resolve_child_by_slot(parent_fni, slot, &vaddr);
-	if (fni_isbottom(parent_fni)) {
+	fni_resolve_child_by_slot(fni, slot, &vaddr);
+	if (vaddr_isnull(&vaddr)) {
+		return 0;
+	}
+	if (fni_isbottom(fni)) {
 		err = filc_discard_data_leaf(f_ctx, &vaddr);
 	} else {
 		err = filc_drop_subtree(f_ctx, &vaddr);
 	}
-	return err;
+	if (err) {
+		return err;
+	}
+	fni_clear_subtree_mappings(fni, slot);
+	return 0;
 }
 
 static int filc_drop_recursive(struct silofs_file_ctx *f_ctx,
@@ -2943,8 +3006,14 @@ static int filc_drop_recursive(struct silofs_file_ctx *f_ctx,
 	int err = 0;
 
 	fni_incref(fni);
-	for (size_t slot = 0; (slot < nslots_max) && !err; ++slot) {
+	for (size_t slot = 0; slot < nslots_max; ++slot) {
+		if (!ftn_nactive_childs(fni->ftn)) {
+			break;
+		}
 		err = filc_drop_subtree_at(f_ctx, fni, slot);
+		if (err) {
+			break;
+		}
 	}
 	fni_decref(fni);
 	return err;

@@ -894,9 +894,10 @@ struct silofs_ftree_node {
 	uint64_t                        fn_ino;
 	int64_t                         fn_beg;
 	int64_t                         fn_end;
+	uint32_t                        fn_nactive_childs;
 	uint8_t                         fn_height;
 	uint8_t                         fn_child_ltype;
-	uint8_t                         fn_reserved1[14];
+	uint8_t                         fn_reserved1[10];
 	uint8_t                         fn_zeros[960];
 	struct silofs_vaddr56           fn_child[SILOFS_FILE_NODE_NCHILDS];
 } silofs_packed_aligned64;

@@ -143,11 +143,9 @@ static void lni_fini(struct silofs_lnode_info *lni)
 {
 	silofs_hmqe_fini(&lni->l_hmqe);
 	silofs_avl_node_fini(&lni->l_ds_avl_node);
-	lni->l_ltype = SILOFS_LTYPE_NONE;
 	lni->l_ds_next = NULL;
 	lni->l_fsenv = NULL;
 	lni->l_view = NULL;
-	lni->l_del_cb = NULL;
 }
 
 static bool lni_evictable(const struct silofs_lnode_info *lni)

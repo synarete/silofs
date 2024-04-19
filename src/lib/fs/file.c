@@ -41,7 +41,7 @@
 
 struct silofs_file_ctx {
 	struct silofs_task             *task;
-	struct silofs_fsenv             *fsenv;
+	struct silofs_fsenv            *fsenv;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *ii;
 	struct silofs_rwiter_ctx       *rwi_ctx;

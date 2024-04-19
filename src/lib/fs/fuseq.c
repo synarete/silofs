@@ -3105,10 +3105,10 @@ static int fuseq_do_exec_request(struct silofs_fuseq_worker *fqw,
 	int err2;
 
 	fuseq_track_oper(fqw, true);
-	task_lock_ex(task);
+	silofs_task_lock_ex(task);
 	err1 = fuseq_call_oper(fqw, task);
 	err2 = task_submit(task);
-	task_unlock_ex(task);
+	silofs_task_unlock_ex(task);
 	fuseq_track_oper(fqw, false);
 
 	return err1 ? err1 : err2;
@@ -3993,10 +3993,10 @@ static int fuseq_do_exec_timeout(struct silofs_fuseq_worker *fqw,
 	int err2 = 0;
 
 	fuseq_track_timedout(fqw);
-	task_lock_ex(task);
+	silofs_task_lock_ex(task);
 	err1 = silofs_fs_timedout(task, flags);
 	err2 = task_submit(task);
-	task_unlock_ex(task);
+	silofs_task_unlock_ex(task);
 
 	return err1 ? err1 : err2;
 }

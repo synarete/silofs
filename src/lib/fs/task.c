@@ -522,9 +522,15 @@ static void task_forget_looseq(struct silofs_task *task)
 static void task_purge(struct silofs_task *task)
 {
 	if (task->t_looseq != NULL) {
-		task_lock_fs(task);
-		task_forget_looseq(task);
-		task_unlock_fs(task);
+		if (task->t_fs_locked) {
+			/* case 1: already fs-locked; keep it locked post op */
+			task_forget_looseq(task);
+		} else {
+			/* case 2: need to protect with fs-lock/unlock pair */
+			silofs_task_lock_fs(task);
+			task_forget_looseq(task);
+			silofs_task_unlock_fs(task);
+		}
 	}
 }
 

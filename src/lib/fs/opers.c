@@ -45,7 +45,7 @@ static int op_start(struct silofs_task *task)
 {
 	struct silofs_fsenv *fsenv = task->t_fsenv;
 
-	task_lock_fs(task);
+	silofs_task_lock_fs(task);
 	fsenv->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
 	fsenv->fse_op_stat.op_count++;
 	return 0;
@@ -133,7 +133,7 @@ static int op_finish(struct silofs_task *task, int err)
 	if (!err && !err2) {
 		op_relax_post(task);
 	}
-	task_unlock_fs(task);
+	silofs_task_unlock_fs(task);
 	return err ? err : err2;
 }
 

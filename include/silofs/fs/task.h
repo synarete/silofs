@@ -35,7 +35,7 @@ struct silofs_task {
 	struct silofs_oper              t_oper;
 	uint64_t                        t_apex_id;
 	volatile int8_t                 t_interrupt;
-	bool                            t_fs_locked;
+	volatile bool                   t_fs_locked;
 	bool                            t_ex_locked;
 	bool                            t_exclusive;
 };

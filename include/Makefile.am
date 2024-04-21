@@ -1,4 +1,3 @@
--include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 
 noinst_HEADERS = $(NULL)
@@ -94,5 +93,5 @@ nobase_include_HEADERS += silofs/pack.h
 EXTRA_DIST = config-am.h.in
 
 config-am.h: config-am.h.in
-	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;
+	$(silofs_sedsub) "$<" > "$@"
 

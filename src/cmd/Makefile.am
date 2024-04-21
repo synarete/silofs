@@ -1,4 +1,3 @@
--include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 SUBDIRS = completions sbinutils
 

@@ -22,11 +22,14 @@ silofs_qatests_PYTHON += test_view.py
 silofs_qatests_PYTHON += test_xprogs.py
 silofs_qatests_PYTHON += utils.py
 
+pycheck = $(srcdir)/../pycheck.sh
+pycheck_verbose = $(pycheck_verbose_@AM_V@)
+pycheck_verbose_ = $(pycheck_verbose_@AM_DEFAULT_V@)
+pycheck_verbose_0 = $(AM_V)echo "  PYCHECK  $@";
 
 CLEANFILES = pycheck-qatests
 
 pycheck-qatests: $(silofs_qatests_PYTHON)
-	@echo "  PYCHECK  $@";
-	@VERBOSE=0 "$(srcdir)/../pycheck.sh" "$(srcdir)" > "$@" ;
+	$(pycheck_verbose)VERBOSE=0 "$(pycheck)" "$(srcdir)" > "$@" ;
 
 all-local: pycheck-qatests

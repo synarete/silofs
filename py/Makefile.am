@@ -1,4 +1,3 @@
--include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 SUBDIRS = archive qatests .
 
@@ -22,4 +21,5 @@ CLEANFILES += silofs-qatests
 all-local: silofs-archive silofs-qatests
 
 silofs-%: silofs-%.in
-	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ; chmod +x "$@" ;
+	$(silofs_sedsub) "$<" > "$@"
+	$(AM_V)chmod +x "$@"

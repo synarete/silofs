@@ -1,6 +1,6 @@
 -include $(top_builddir)/common.mk
 
-PATSUBST = @SED@ \
+_silofs_sedsub = @SED@ \
   -e "s,[@]PACKAGE_NAME[@],$(name),g" \
   -e "s,[@]PACKAGE_VERSION[@],$(version),g" \
   -e "s,[@]PACKAGE_RELEASE[@],$(release),g" \
@@ -15,3 +15,9 @@ PATSUBST = @SED@ \
   -e "s,[@]RUNSTATEDIR[@],$(DESTDIR)$(localstatedir)/run,g" \
   -e "s,[@]PYTHON[@],$(PYTHON),g" \
   -e "s,[@]PYTHONDIR[@],$(pythondir),g"
+
+_silofs_sedsub_verbose = $(_silofs_sedsub_verbose_@AM_V@)
+_silofs_sedsub_verbose_ = $(_silofs_sedsub_verbose_@AM_DEFAULT_V@)
+_silofs_sedsub_verbose_0 = @echo "  SED      $@";
+
+silofs_sedsub = $(_silofs_sedsub_verbose)$(_silofs_sedsub)

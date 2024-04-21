@@ -56,16 +56,16 @@ if SILOFS_RUN_UNITESTS
 ut_check_dir := "$(builddir)/ut"
 
 all-local:
-	@mkdir -p $(ut_check_dir)
+	$(AM_V)mkdir -p $(ut_check_dir)
 
 clean-local:
-	@rm -rf $(ut_check_dir)
+	$(AM_V)rm -rf $(ut_check_dir)
 
 check-local: $(bin_PROGRAMS)
-	@mkdir -p $(ut_check_dir)
-	@echo "  TEST       " && \
+	$(AM_V)mkdir -p $(ut_check_dir)
+	$(AM_V)echo "  TEST       " && \
 	  $$(realpath "$^") -l $(SILOFS_UNITESTS_LEVEL) $(ut_check_dir) ;
-	@rm -rf $(ut_check_dir)
+	$(AM_V)rm -rf $(ut_check_dir)
 endif
 
 

@@ -1,4 +1,3 @@
--include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 
 EXTRA_DIST = silofs-mountd.service.in
@@ -8,6 +7,6 @@ silofsmountdunitdir = $(prefix)/lib/systemd/system
 silofsmountdunit_DATA = silofs-mountd.service
 
 silofs-mountd.service: silofs-mountd.service.in
-	@echo "  SED      $@"; $(PATSUBST) "$<" > "$@" ;
+	$(silofs_sedsub) "$<" > "$@"
 
 install-data-local: silofs-mountd.service

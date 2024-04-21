@@ -1,4 +1,3 @@
--include $(top_builddir)/common.mk
 -include $(top_builddir)/sedsub.mk
 SUBDIRS = systemd
 
@@ -25,7 +24,7 @@ silofs_mountd_confdir = $(sysconfdir)/silofs
 silofs_mountd_conf_DATA = mountd.conf
 
 mountd.conf: mountd.conf.in
-	@echo "  SED      $@"; $(PATSUBST) $< > $@ ;
+	$(silofs_sedsub) $< > $@ ;
 
 install-data-local:
-	@install -d $(DESTDIR)$(localstatedir)/run/silofs
+	$(AM_V)install -d $(DESTDIR)$(localstatedir)/run/silofs

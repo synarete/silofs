@@ -76,8 +76,6 @@ Various testing programs for silofs.
 %else
 %exclude %{_prefix}/lib/systemd/system/%{name}*.*
 %endif
-%{_bindir}/%{name}-archive
-%{_prefix}/lib/python3*/site-packages/%{name}/archive/*
 
 %files devel
 %defattr(-, root, root)

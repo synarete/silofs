@@ -271,10 +271,12 @@ static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 {
 	if (unlikely(hmqe->hme_magic != HMQE_MAGIC) ||
 	    unlikely(hmqe->hme_refcnt < 0)) {
-		silofs_panic("illegal: hmqe=%p hme_key=%d "
-		             "hme_refcnt=%d hme_magic=%ld",
-		             hmqe, (int)hmqe->hme_key.type,
-		             hmqe->hme_refcnt, hmqe->hme_magic);
+		silofs_panic("illegal: hmqe=%p hme_key.type=%d "
+		             "hme_refcnt=%d hme_dirty=%d hme_mapped=%d "
+		             "hme_forgot=%d hme_magic=0x%lx", hmqe,
+		             (int)hmqe->hme_key.type, hmqe->hme_refcnt,
+		             (int)hmqe->hme_dirty, (int)hmqe->hme_mapped,
+		             (int)hmqe->hme_forgot, hmqe->hme_magic);
 	}
 }
 
@@ -436,6 +438,7 @@ static bool hmqe_need_relru(const struct silofs_hmapq_elem *hmqe,
 static void hmqe_relru(struct silofs_hmapq_elem *hmqe,
                        struct silofs_listq *lru)
 {
+	hmqe_sanitize(hmqe);
 	hmqe_unlru(hmqe, lru);
 	hmqe_lru(hmqe, lru);
 }
@@ -468,19 +471,21 @@ int silofs_hmqe_refcnt(const struct silofs_hmapq_elem *hmqe)
 
 void silofs_hmqe_incref(struct silofs_hmapq_elem *hmqe)
 {
+	hmqe_sanitize(hmqe);
 	hmqe_incref_atomic(hmqe);
 }
 
 void silofs_hmqe_decref(struct silofs_hmapq_elem *hmqe)
 {
+	hmqe_sanitize(hmqe);
 	hmqe_decref_atomic(hmqe);
 }
 
 bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 {
+	hmqe_sanitize(hmqe);
 	return hmqe_is_evictable_atomic(hmqe);
 }
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

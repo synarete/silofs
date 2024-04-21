@@ -16,6 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
+#include <silofs/vol.h>
 #include <silofs/pack.h>
 #include <zstd.h>
 

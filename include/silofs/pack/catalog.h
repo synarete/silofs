@@ -17,11 +17,22 @@
 #ifndef SILOFS_CATALOG_H_
 #define SILOFS_CATALOG_H_
 
-struct silofs_mdigest;
 
 struct silofs_pack_desc {
 	struct silofs_hash256   pd_hash;
 	struct silofs_laddr     pd_laddr;
+};
+
+struct silofs_pack_desc_info {
+	struct silofs_list_head pdi_lh;
+	struct silofs_pack_desc pd;
+};
+
+struct silofs_catalog {
+	struct silofs_mdigest   cat_mdigest;
+	struct silofs_listq     cat_descq;
+	struct silofs_alloc    *cat_alloc;
+	size_t cat_capacity;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -44,5 +55,30 @@ void silofs_pkdesc128b_htox(struct silofs_pack_desc128b *pdx,
 
 void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc128b *pdx,
                             struct silofs_pack_desc *pd);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_pdi_to_name(const struct silofs_pack_desc_info *pdi,
+                        struct silofs_strbuf *out_name);
+
+bool silofs_pdi_isbootrec(const struct silofs_pack_desc_info *pdi);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_catalog_init(struct silofs_catalog *catalog,
+                        struct silofs_alloc *alloc);
+
+void silofs_catalog_fini(struct silofs_catalog *catalog);
+
+
+struct silofs_pack_desc_info *
+silofs_catalog_add_desc(struct silofs_catalog *catalog,
+                        const struct silofs_laddr *laddr);
+
+void silofs_catalog_rm_desc(struct silofs_catalog *catalog,
+                            struct silofs_pack_desc_info *pdi);
+
+void silofs_catalog_clear_descq(struct silofs_catalog *catalog);
+
 
 #endif /* SILOFS_CATALOG_H_ */

@@ -5,21 +5,21 @@ set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
-_require_clang_bin() {
-  command -v clang
-  command -v clang++
-  command -v scan-build
-}
+self=$(basename "${BASH_SOURCE[0]}")
+selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+basedir=$(realpath "${selfdir}"/../)
+rootdir=${1:-"${basedir}"}
+outdir="${rootdir}"/build/html
 
-_setup_clang_env() {
-  CCC_ANALYZER_CPLUSPLUS=1
-  CCC_CC="$(command -v clang)"
-  CCC_CXX="$(command -v clang++)"
-  export CCC_ANALYZER_CPLUSPLUS CCC_CC CCC_CXX
 
-}
+# run-and-log helpers
+_msg() { echo "$self: $*" >&2; }
+_die() { _msg "$*"; exit 1; }
+_try() { ( "$@" ) || _die "failed: $*"; }
+_run() { echo "$self:" "$@" >&2; _try "$@"; }
 
-_clang_analyzer_checkers_args() {
+
+_clang_scan_enabled_checkers_args() {
   clang -cc1 -analyzer-checker-help \
     | awk '{print $1}' \
     | grep -Ev 'OVERVIEW|USAGE|CHECKERS' \
@@ -28,53 +28,58 @@ _clang_analyzer_checkers_args() {
     | grep -Ev 'DeprecatedOrUnsafeBufferHandling' \
     | awk '{print $1}' \
     | sed '/^$/d' \
-    | awk '{print " -enable-checker "$1} ' \
-    | tr "\n" " "
+    | awk '{print " -enable-checker "$1""} '
+}
+
+_clang_requires() {
+  command -v clang
+  command -v clang++
+  command -v scan-build
+}
+
+_clang_scan_env() {
+  CCC_CC="$(command -v clang)"
+  CCC_CXX="$(command -v clang++)"
+  CCC_ANALYZER_CPLUSPLUS=1
+  export CCC_CC CCC_CXX CCC_ANALYZER_CPLUSPLUS
 }
 
 _clang_scan_build() {
   local topdir="$1"
   local builddir="${topdir}/build"
   local outdir="${builddir}/html"
-  local analyzer
 
   cd "${topdir}"
   mkdir -p "${outdir}"
 
   cd "${builddir}"
-  _setup_clang_env
+  _clang_scan_env
 
-  analyzer="$(command -v clang)"
-  scan-build \
-    --use-analyzer="${analyzer}" \
+  _run scan-build \
+    --use-cc="${CCC_CC}" \
+    --use-c++="${CCC_CXX}" \
     ../configure CFLAGS='-O2 -pthread'
 
-  scan-build \
-    --use-analyzer="${analyzer}" \
-    -maxloop 128 -k -v -o "${outdir}" \
-    $(_clang_analyzer_checkers_args) \
+  _run scan-build \
+    --use-cc="${CCC_CC}" \
+    --use-c++="${CCC_CXX}" \
+    -maxloop 32 -k -v -o "${outdir}" \
+    $(_clang_scan_enabled_checkers_args) \
     make all
 }
 
-_bootstrap_regen() {
-  local topdir="$1"
-
-  "${topdir}"/bootstrap -r
+_rebootstrap() {
+  _run "${1}"/bootstrap -r
 }
 
 
 # main:
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}"/../)
-rootdir=${1:-"${basedir}"}
-
 cd "${rootdir}"
-_require_clang_bin
-_bootstrap_regen "${rootdir}"
+_clang_requires
+_rebootstrap "${rootdir}"
 _clang_scan_build "${rootdir}"
 
 # expect scan-build to remove all outputs
-outdir="${rootdir}"/build/html
 exit_code=$(find "${outdir}" -mindepth 1 -type d | wc -l)
 exit "${exit_code}"
 

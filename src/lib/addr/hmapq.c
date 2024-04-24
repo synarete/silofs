@@ -281,13 +281,25 @@ static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 }
 
 static struct silofs_hmapq_elem *
+hmqe_unconst(const struct silofs_hmapq_elem *hmqe)
+{
+	union {
+		const void *p;
+		void *q;
+	} u = {
+		.p = hmqe
+	};
+	return u.q;
+}
+
+static struct silofs_hmapq_elem *
 hmqe_from_htb_link(const struct silofs_list_head *htb_lh)
 {
 	const struct silofs_hmapq_elem *hmqe;
 
 	hmqe = container_of2(htb_lh, struct silofs_hmapq_elem, hme_htb_lh);
 	hmqe_sanitize(hmqe);
-	return unconst(hmqe);
+	return hmqe_unconst(hmqe);
 }
 
 static struct silofs_hmapq_elem *
@@ -297,7 +309,7 @@ hmqe_from_lru_link(const struct silofs_list_head *lru_lh)
 
 	hmqe = container_of2(lru_lh, struct silofs_hmapq_elem, hme_lru_lh);
 	hmqe_sanitize(hmqe);
-	return unconst(hmqe);
+	return hmqe_unconst(hmqe);
 }
 
 void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe)
@@ -358,6 +370,7 @@ static bool hmqe_need_promote_hmap(const struct silofs_hmapq_elem *hmqe,
 
 static void hmqe_sanitize_mapped(const struct silofs_hmapq_elem *hmqe)
 {
+	hmqe_sanitize(hmqe);
 	if (unlikely(!hmqe->hme_mapped)) {
 		silofs_panic("unexpected non-mapped state: hmqe=%p "
 		             "hme_key=%d hme_dirty=%d hme_refcnt=%d",
@@ -371,7 +384,6 @@ static void hmqe_promote_hmap(struct silofs_hmapq_elem *hmqe,
 {
 	struct silofs_list_head *hlnk = &hmqe->hme_htb_lh;
 
-	hmqe_sanitize(hmqe);
 	hmqe_sanitize_mapped(hmqe);
 
 	list_head_remove(hlnk);
@@ -554,7 +566,7 @@ void silofs_hmapq_store(struct silofs_hmapq *hmapq,
 	hmapq->hmq_htbl_size += 1;
 }
 
-static struct silofs_hmapq_elem *
+static const struct silofs_hmapq_elem *
 hmapq_find(const struct silofs_hmapq *hmapq, const struct silofs_hkey *hkey)
 {
 	const struct silofs_list_head *hlst;
@@ -566,7 +578,7 @@ hmapq_find(const struct silofs_hmapq *hmapq, const struct silofs_hkey *hkey)
 	while (itr != hlst) {
 		hmqe = hmqe_from_htb_link(itr);
 		if (hkey_isequal(&hmqe->hme_key, hkey)) {
-			return unconst(hmqe);
+			return hmqe;
 		}
 		itr = itr->next;
 	}
@@ -577,7 +589,13 @@ struct silofs_hmapq_elem *
 silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
                     const struct silofs_hkey *hkey)
 {
-	return hmapq_find(hmapq, hkey);
+	const struct silofs_hmapq_elem *hmqe;
+
+	hmqe = hmapq_find(hmapq, hkey);
+	if (hmqe != NULL) {
+		hmqe_sanitize_mapped(hmqe);
+	}
+	return hmqe_unconst(hmqe);
 }
 
 static void hmapq_unmap(struct silofs_hmapq *hmapq,
@@ -638,7 +656,9 @@ void silofs_hmapq_promote(struct silofs_hmapq *hmapq,
                           struct silofs_hmapq_elem *hmqe, bool now)
 {
 	hmapq_promote_lru(hmapq, hmqe, now);
-	hmapq_promote_hlnk(hmapq, hmqe);
+	if (hmqe->hme_mapped) {
+		hmapq_promote_hlnk(hmapq, hmqe);
+	}
 }
 
 struct silofs_hmapq_elem *

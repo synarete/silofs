@@ -337,11 +337,12 @@ static struct silofs_vnode_info *vi_from_hmqe(struct silofs_hmapq_elem *lme)
 	return vi;
 }
 
-static struct silofs_hmapq_elem *vi_to_lme(const struct silofs_vnode_info *vi)
+static struct silofs_hmapq_elem *
+vi_to_hmqe(const struct silofs_vnode_info *vi)
 {
-	const struct silofs_hmapq_elem *lme = &vi->v_lni.l_hmqe;
+	const struct silofs_hmapq_elem *hmqe = &vi->v_lni.l_hmqe;
 
-	return unconst(lme);
+	return unconst(hmqe);
 }
 
 static int visit_evictable_vi(struct silofs_hmapq_elem *lme, void *arg)
@@ -351,7 +352,7 @@ static int visit_evictable_vi(struct silofs_hmapq_elem *lme, void *arg)
 
 int silofs_vi_refcnt(const struct silofs_vnode_info *vi)
 {
-	return likely(vi != NULL) ? silofs_hmqe_refcnt(vi_to_lme(vi)) : 0;
+	return likely(vi != NULL) ? silofs_hmqe_refcnt(vi_to_hmqe(vi)) : 0;
 }
 
 void silofs_vi_incref(struct silofs_vnode_info *vi)
@@ -728,7 +729,7 @@ lcache_find_vi(struct silofs_lcache *lcache, const struct silofs_vaddr *vaddr)
 static void lcache_promote_vi(struct silofs_lcache *lcache,
                               struct silofs_vnode_info *vi, bool now)
 {
-	silofs_hmapq_promote(&lcache->lc_vi_hmapq, vi_to_lme(vi), now);
+	silofs_hmapq_promote(&lcache->lc_vi_hmapq, vi_to_hmqe(vi), now);
 }
 
 static struct silofs_vnode_info *
@@ -761,7 +762,7 @@ static void lcache_evict_vi(struct silofs_lcache *lcache,
 static void lcache_store_vi_hmapq(struct silofs_lcache *lcache,
                                   struct silofs_vnode_info *vi)
 {
-	silofs_hmapq_store(&lcache->lc_vi_hmapq, vi_to_lme(vi));
+	silofs_hmapq_store(&lcache->lc_vi_hmapq, vi_to_hmqe(vi));
 }
 
 static void lcache_store_vi(struct silofs_lcache *lcache,
@@ -873,7 +874,7 @@ lcache_require_vi(struct silofs_lcache *lcache,
 static void lcache_unmap_vi(struct silofs_lcache *lcache,
                             struct silofs_vnode_info *vi)
 {
-	silofs_hmapq_unmap(&lcache->lc_vi_hmapq, vi_to_lme(vi));
+	silofs_hmapq_unmap(&lcache->lc_vi_hmapq, vi_to_hmqe(vi));
 }
 
 static void lcache_forget_vi(struct silofs_lcache *lcache,

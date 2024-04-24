@@ -48,9 +48,9 @@ struct silofs_hmapq_elem {
 	struct silofs_list_head hme_htb_lh;
 	struct silofs_list_head hme_lru_lh;
 	struct silofs_hkey      hme_key;
-	long                    hme_magic;
-	long                    hme_htb_hitcnt;
-	long                    hme_lru_hitcnt;
+	int64_t                 hme_magic;
+	int64_t                 hme_htb_hitcnt;
+	int64_t                 hme_lru_hitcnt;
 	int                     hme_refcnt;
 	bool                    hme_dirty;
 	bool                    hme_mapped;

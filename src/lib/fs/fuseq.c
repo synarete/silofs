@@ -507,6 +507,7 @@ fuse_setattr_to_stat(const struct fuse_setattr_in *attr, struct stat *st)
 static void
 statfs_to_fuse_kstatfs(const struct statvfs *stv, struct fuse_kstatfs *kstfs)
 {
+	memset(kstfs, 0, sizeof(*kstfs));
 	kstfs->bsize = (uint32_t)stv->f_bsize;
 	kstfs->frsize = (uint32_t)stv->f_frsize;
 	kstfs->blocks = stv->f_blocks;
@@ -3693,6 +3694,7 @@ static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
 
 	STATICASSERT_LE(sizeof(*fqw), 256);
 
+	silofs_memzero(fqw, sizeof(*fqw));
 	list_head_init(&fqw->fw_lh);
 	fqw->fw_fq  = fq;
 	fqw->fw_inb = NULL;

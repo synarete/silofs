@@ -91,7 +91,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
 	size_t nlen = 0;
 	int err;
 
-	if (th->pth || th->exec || !exec) {
+	if (exec == NULL) {
 		return -EINVAL;
 	}
 	err = pthread_attr_init(&attr);

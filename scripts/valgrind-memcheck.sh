@@ -1,5 +1,5 @@
 #!/bin/sh
-exec valgrind -v --tool=memcheck \
+valgrind -v --tool=memcheck --error-exitcode=1 \
   --show-reachable=yes --leak-check=full --track-origins=yes "$@"
 
 

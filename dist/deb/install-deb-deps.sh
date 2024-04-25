@@ -49,6 +49,7 @@ qatests_deps=(
   libexpat1-dev
   python3-pydantic
   python3-setproctitle
+  valgrind
   zlib1g-dev
 )
 

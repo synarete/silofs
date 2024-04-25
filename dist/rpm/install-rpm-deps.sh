@@ -45,6 +45,7 @@ qatests_deps=(
   python3-pydantic
   python3-setproctitle
   readline-devel
+  valgrind
   zlib
   zlib-devel
 )

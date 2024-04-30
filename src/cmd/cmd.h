@@ -95,10 +95,6 @@ void cmd_execute_fsck(void);
 
 void cmd_execute_view(void);
 
-void cmd_execute_export(void);
-
-void cmd_execute_import(void);
-
 void cmd_execute_archive(void);
 
 /* fatal-error handling */

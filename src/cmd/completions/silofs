@@ -133,24 +133,6 @@ _silofs_view() {
   fi
 }
 
-_silofs_export() {
-  local cur prev words cword
-  _init_completion || return
-
-  if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-h -r --ref= -f --outfile=' -- "$cur") )
-  fi
-}
-
-_silofs_import() {
-  local cur prev words cword
-  _init_completion || return
-
-  if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-h -r --ref= -f --infile=' -- "$cur") )
-  fi
-}
-
 _silofs_subcmd() {
   local cur prev words cword
   _init_completion || return
@@ -195,12 +177,6 @@ _silofs_subcmd() {
     "view")
       _silofs_view
       ;;
-    "export")
-      _silofs_export
-      ;;
-    "import")
-      _silofs_import
-      ;;
   esac
 }
 
@@ -214,7 +190,7 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'lsmnt show snap sync ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck ' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'view export import ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'view ' -- "$cur") )
   fi
 }
 

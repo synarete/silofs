@@ -160,8 +160,6 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(prune),
 	DEFCMD(fsck),
 	DEFCMD(view),
-	DEFCMD(export),
-	DEFCMD(import),
 	DEFCMD(archive),
 };
 

@@ -435,7 +435,7 @@ static int check_endianess(void)
 	if (err) {
 		return err;
 	}
-	err = check_endianess64(SILOFS_JOURNAL_MAGIC, "%silofs%");
+	err = check_endianess64(SILOFS_PACK_META_MAGIC, "%silofs%");
 	if (err) {
 		return err;
 	}

@@ -32,6 +32,8 @@ struct silofs_catalog {
 	struct silofs_mdigest   cat_mdigest;
 	struct silofs_listq     cat_descq;
 	struct silofs_alloc    *cat_alloc;
+	struct silofs_bytebuf   cat_bbuf;
+	struct silofs_hash256   cat_hash;
 	size_t cat_capacity;
 };
 
@@ -42,16 +44,10 @@ void silofs_pkdesc_init(struct silofs_pack_desc *pd,
 
 void silofs_pkdesc_fini(struct silofs_pack_desc *pd);
 
-void silofs_pkdesc_to_name(const struct silofs_pack_desc *pd,
-                           struct silofs_strbuf *out_name);
-
 void silofs_pkdesc_update_hash(struct silofs_pack_desc *pd,
                                const struct silofs_mdigest *md,
                                const void *buf, size_t bsz);
 
-
-void silofs_pkdesc128b_htox(struct silofs_pack_desc128b *pdx,
-                            const struct silofs_pack_desc *pd);
 
 void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc128b *pdx,
                             struct silofs_pack_desc *pd);
@@ -80,5 +76,9 @@ void silofs_catalog_rm_desc(struct silofs_catalog *catalog,
 
 void silofs_catalog_clear_descq(struct silofs_catalog *catalog);
 
+int silofs_catalog_encode(struct silofs_catalog *catalog);
+
+void silofs_catalog_to_name(const struct silofs_catalog *catalog,
+                            struct silofs_strbuf *out_name);
 
 #endif /* SILOFS_CATALOG_H_ */

@@ -85,30 +85,39 @@ static void pec_disconnect_target(struct silofs_pack_export_ctx *pe_ctx)
 }
 
 static int pec_send_to_remote(const struct silofs_pack_export_ctx *pe_ctx,
-                              const struct silofs_pack_desc_info *pdi,
-                              const void *data)
+                              const struct silofs_strbuf *name,
+                              const void *data, size_t len)
 {
-	struct silofs_strbuf name;
 	int fd = -1;
 	int err;
 
-	silofs_pdi_to_name(pdi, &name);
-	err = silofs_sys_openat(pe_ctx->pex_dfd, name.str,
+	err = silofs_sys_openat(pe_ctx->pex_dfd, name->str,
 	                        O_CREAT | O_RDWR, 0600, &fd);
 	if (err) {
-		log_dbg("remote: failed to create: %s err=%d", name.str, err);
+		log_dbg("remote: failed to create: %s err=%d", name->str, err);
 		goto out;
 	}
-	err = silofs_sys_writen(fd, data, pdi->pd.pd_laddr.len);
+	err = silofs_sys_writen(fd, data, len);
 	if (err) {
 		log_dbg("remote: failed to write: %s len=%zu err=%d",
-		        name.str, pdi->pd.pd_laddr.len, err);
+		        name->str, len, err);
 		goto out;
 	}
 out:
 	silofs_sys_closefd(&fd);
 	return err;
 }
+
+static int pec_send_to_remote_by(const struct silofs_pack_export_ctx *pe_ctx,
+                                 const struct silofs_pack_desc_info *pdi,
+                                 const void *data)
+{
+	struct silofs_strbuf name;
+
+	silofs_pdi_to_name(pdi, &name);
+	return pec_send_to_remote(pe_ctx, &name, data, pdi->pd.pd_laddr.len);
+}
+
 
 static int pec_load_seg(const struct silofs_pack_export_ctx *pe_ctx,
                         const struct silofs_laddr *laddr, void *seg)
@@ -167,7 +176,7 @@ static int pec_process_segdata(const struct silofs_pack_export_ctx *pe_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pec_send_to_remote(pe_ctx, pdi, seg);
+	err = pec_send_to_remote_by(pe_ctx, pdi, seg);
 	if (err) {
 		goto out;
 	}
@@ -190,7 +199,7 @@ static int pec_process_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
 	if (err) {
 		return err;
 	}
-	err = pec_send_to_remote(pe_ctx, pdi, &brec);
+	err = pec_send_to_remote_by(pe_ctx, pdi, &brec);
 	if (err) {
 		return err;
 	}
@@ -235,6 +244,25 @@ static int pec_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
 	return pec_process_by_laddr(pe_ctx, laddr);
 }
 
+static int pec_process_catalog(struct silofs_pack_export_ctx *pe_ctx)
+{
+	struct silofs_strbuf name;
+	struct silofs_catalog *catalog = &pe_ctx->pex_catalog;
+	const struct silofs_bytebuf *bb = &catalog->cat_bbuf;
+	int err;
+
+	err = silofs_catalog_encode(catalog);
+	if (err) {
+		return err;
+	}
+	silofs_catalog_to_name(catalog, &name);
+	err = pec_send_to_remote(pe_ctx, &name, bb->ptr, bb->len);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int pec_archive_fs(struct silofs_pack_export_ctx *pe_ctx)
 {
 	int err;
@@ -244,6 +272,10 @@ static int pec_archive_fs(struct silofs_pack_export_ctx *pe_ctx)
 		goto out;
 	}
 	err = silofs_fs_inspect(pe_ctx->pex_task, pec_visit_laddr_cb, pe_ctx);
+	if (err) {
+		goto out;
+	}
+	err = pec_process_catalog(pe_ctx);
 	if (err) {
 		goto out;
 	}

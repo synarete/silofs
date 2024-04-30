@@ -26,14 +26,17 @@
 /* current repo format version number */
 #define SILOFS_REPO_VERSION             (1)
 
+/* current pack format version number */
+#define SILOFS_PACK_VERSION             (1)
+
 /* repo meta-file magic-signature (ASCII: "#SILOFS#") */
 #define SILOFS_REPO_META_MAGIC          (0x2353464F4C495323L)
 
 /* boot-record magic-signature (ASCII: "@SILOFS@") */
 #define SILOFS_BOOT_RECORD_MAGIC        (0x4053464F4C495340L)
 
-/* journal-record magic-signature (ASCII: "%silofs%") */
-#define SILOFS_JOURNAL_MAGIC            (0x2573666F6C697325L)
+/* pack catalog meta-header magic-signature (ASCII: "%silofs%") */
+#define SILOFS_PACK_META_MAGIC          (0x2573666F6C697325L)
 
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC              (0x4073666F6C697340L)

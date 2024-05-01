@@ -219,7 +219,7 @@ static void catalog_sub_capacity(struct silofs_catalog *catalog,
 static void catalog_link_desc(struct silofs_catalog *catalog,
                               struct silofs_pack_desc_info *pdi)
 {
-	silofs_listq_push_back(&catalog->cat_descq, &pdi->pdi_lh);
+	silofs_listq_push_front(&catalog->cat_descq, &pdi->pdi_lh);
 	catalog_add_capacity(catalog, &pdi->pd.pd_laddr);
 }
 
@@ -272,6 +272,7 @@ static void catalog_clear_descq(struct silofs_catalog *catalog)
 		pdi_del(pdi, catalog->cat_alloc);
 		pdi = catalog_pop_desc(catalog);
 	}
+	catalog->cat_capacity = 0;
 }
 
 static size_t catalog_ndescs(const struct silofs_catalog *catalog)

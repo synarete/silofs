@@ -23,7 +23,6 @@
 
 struct silofs_pack_export_ctx {
 	struct silofs_catalog   pex_catalog;
-	struct silofs_listq     pex_descq;
 	struct silofs_pack_args pex_args;
 	struct silofs_task     *pex_task;
 	struct silofs_alloc    *pex_alloc;
@@ -38,7 +37,6 @@ static int pec_init(struct silofs_pack_export_ctx *pe_ctx,
                     const struct silofs_pack_args *pargs)
 {
 	silofs_memzero(pe_ctx, sizeof(*pe_ctx));
-	silofs_listq_init(&pe_ctx->pex_descq);
 	memcpy(&pe_ctx->pex_args, pargs, sizeof(pe_ctx->pex_args));
 	pe_ctx->pex_task = task;
 	pe_ctx->pex_alloc = task->t_fsenv->fse.alloc;
@@ -157,8 +155,8 @@ pec_update_hash_of(const struct silofs_pack_export_ctx *pe_ctx,
 	return 0;
 }
 
-static int pec_process_segdata(const struct silofs_pack_export_ctx *pe_ctx,
-                               struct silofs_pack_desc_info *pdi)
+static int pec_export_segdata(const struct silofs_pack_export_ctx *pe_ctx,
+                              struct silofs_pack_desc_info *pdi)
 {
 	const size_t seg_len = pdi->pd.pd_laddr.len;
 	void *seg = NULL;
@@ -185,8 +183,8 @@ out:
 	return err;
 }
 
-static int pec_process_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
-                               struct silofs_pack_desc_info *pdi)
+static int pec_export_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
+                              struct silofs_pack_desc_info *pdi)
 {
 	struct silofs_bootrec1k brec = { .br_magic = 0xFFFFFFFF };
 	int err;
@@ -212,9 +210,9 @@ static int pec_process_pdi(struct silofs_pack_export_ctx *pe_ctx,
 	int err;
 
 	if (silofs_pdi_isbootrec(pdi)) {
-		err = pec_process_bootrec(pe_ctx, pdi);
+		err = pec_export_bootrec(pe_ctx, pdi);
 	} else {
-		err = pec_process_segdata(pe_ctx, pdi);
+		err = pec_export_segdata(pe_ctx, pdi);
 	}
 	return err;
 }
@@ -244,7 +242,7 @@ static int pec_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
 	return pec_process_by_laddr(pe_ctx, laddr);
 }
 
-static int pec_process_catalog(struct silofs_pack_export_ctx *pe_ctx)
+static int pec_export_catalog(struct silofs_pack_export_ctx *pe_ctx)
 {
 	struct silofs_strbuf name;
 	struct silofs_catalog *catalog = &pe_ctx->pex_catalog;
@@ -263,7 +261,7 @@ static int pec_process_catalog(struct silofs_pack_export_ctx *pe_ctx)
 	return 0;
 }
 
-static int pec_archive_fs(struct silofs_pack_export_ctx *pe_ctx)
+static int pec_export_fs(struct silofs_pack_export_ctx *pe_ctx)
 {
 	int err;
 
@@ -275,7 +273,7 @@ static int pec_archive_fs(struct silofs_pack_export_ctx *pe_ctx)
 	if (err) {
 		goto out;
 	}
-	err = pec_process_catalog(pe_ctx);
+	err = pec_export_catalog(pe_ctx);
 	if (err) {
 		goto out;
 	}
@@ -294,7 +292,7 @@ int silofs_fs_export(struct silofs_task *task,
 
 	err = pec_init(&pe_ctx, task, pargs);
 	if (!err) {
-		err = pec_archive_fs(&pe_ctx);
+		err = pec_export_fs(&pe_ctx);
 		pec_fini(&pe_ctx);
 	}
 	return err;

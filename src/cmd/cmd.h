@@ -320,12 +320,12 @@ void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
 void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
                         const char *user, bool with_sup_groups);
 
-void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *repodir);
+void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir);
 
-void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *repodir);
+void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir);
 
 void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf,
-                      const char *repodir);
+                      const char *basedir);
 
 
 char *cmd_getpwuid(uid_t uid);

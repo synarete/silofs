@@ -849,38 +849,38 @@ cmd_bconf_save_to(const struct silofs_fs_bconf *bconf, const char *path)
 }
 
 static char *
-cmd_bconf_pathname(const struct silofs_fs_bconf *bconf, const char *repodir)
+cmd_bconf_pathname(const struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *path = NULL;
 
-	cmd_join_path(repodir, bconf->name.str, &path);
+	cmd_join_path(basedir, bconf->name.str, &path);
 	return path;
 }
 
-void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *repodir)
+void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *path;
 
-	path = cmd_bconf_pathname(bconf, repodir);
+	path = cmd_bconf_pathname(bconf, basedir);
 	cmd_bconf_reset(bconf);
 	cmd_bconf_load_from(bconf, path);
 	cmd_pstrfree(&path);
 }
 
-void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *repodir)
+void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *path;
 
-	path = cmd_bconf_pathname(bconf, repodir);
+	path = cmd_bconf_pathname(bconf, basedir);
 	cmd_bconf_save_to(bconf, path);
 	cmd_pstrfree(&path);
 }
 
-void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf, const char *repodir)
+void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *path = NULL;
 
-	path = cmd_bconf_pathname(bconf, repodir);
+	path = cmd_bconf_pathname(bconf, basedir);
 	silofs_sys_unlink(path);
 	cmd_pstrfree(&path);
 	(void)bconf;

@@ -59,7 +59,6 @@ struct silofs_fsenv {
 	enum silofs_env_flags           fse_ctl_flags;
 	iconv_t                         fse_iconv;
 	time_t                          fse_init_time;
-	uint64_t                        fse_commit_id;
 } silofs_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -155,7 +155,6 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 	memcpy(&fsenv->fse, fse_base, sizeof(fsenv->fse));
 	lsegid_reset(&fsenv->fse_sb_lsegid);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
-	fsenv->fse_commit_id = 0;
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
 	fsenv->fse_ctl_flags = 0;

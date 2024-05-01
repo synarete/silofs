@@ -48,6 +48,7 @@ static int op_start(struct silofs_task *task)
 	silofs_task_lock_fs(task);
 	fsenv->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
 	fsenv->fse_op_stat.op_count++;
+	fsenv->fse.lcache->lc_nidle = 0;
 	return 0;
 }
 
@@ -56,11 +57,24 @@ static int op_xstart(struct silofs_task *task)
 	int err;
 
 	err = op_start(task);
-	if (err) {
-		return err;
+	if (!err) {
+		relax_caches(task, SILOFS_F_OPSTART);
 	}
-	relax_caches(task, SILOFS_F_OPSTART);
-	return 0;
+	return err;
+}
+
+static int op_zstart(struct silofs_task *task, int flags)
+{
+	struct silofs_lcache *lcache = task_lcache(task);
+	const size_t nidle = lcache->lc_nidle;
+	const int idle_mode = (flags & SILOFS_F_IDLE) > 0;
+	int err;
+
+	err = op_start(task);
+	if (!err && idle_mode) {
+		lcache->lc_nidle = nidle + 1;
+	}
+	return err;
 }
 
 static int op_try_flush(struct silofs_task *task, struct silofs_inode_info *ii)
@@ -1657,7 +1671,7 @@ int silofs_fs_timedout(struct silofs_task *task, int flags)
 {
 	int err;
 
-	err = op_xstart(task);
+	err = op_zstart(task, flags);
 	ok_or_goto_out(err);
 
 	err = silofs_do_timedout(task, flags);

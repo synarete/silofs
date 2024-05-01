@@ -472,12 +472,13 @@ lcache_get_lru_ui(struct silofs_lcache *lcache)
 }
 
 static bool lcache_evict_or_relru_ui(struct silofs_lcache *lcache,
-                                     struct silofs_unode_info *ui)
+                                     struct silofs_unode_info *ui, int flags)
 {
+	const int allocf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_PUNCH : 0;
 	bool evicted;
 
 	if (ui_is_evictable(ui)) {
-		lcache_evict_ui(lcache, ui, 0);
+		lcache_evict_ui(lcache, ui, allocf);
 		evicted = true;
 	} else {
 		lcache_promote_ui(lcache, ui, true);
@@ -486,23 +487,25 @@ static bool lcache_evict_or_relru_ui(struct silofs_lcache *lcache,
 	return evicted;
 }
 
-static size_t lcache_shrink_or_relru_uis(struct silofs_lcache *lcache,
-                size_t cnt, bool force)
+static size_t
+lcache_shrink_or_relru_uis(struct silofs_lcache *lcache, size_t cnt, int flags)
 {
 	struct silofs_unode_info *ui;
 	const size_t n = min(cnt, lcache->lc_ui_hmapq.hmq_lru.sz);
 	size_t evicted = 0;
+	bool now;
 	bool ok;
 
+	now = (flags & SILOFS_F_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
 		ui = lcache_get_lru_ui(lcache);
 		if (ui == NULL) {
 			break;
 		}
-		ok = lcache_evict_or_relru_ui(lcache, ui);
+		ok = lcache_evict_or_relru_ui(lcache, ui, flags);
 		if (ok) {
 			evicted++;
-		} else if (!force) {
+		} else if (!now) {
 			break;
 		}
 	}
@@ -514,7 +517,7 @@ static int try_evict_ui(struct silofs_hmapq_elem *hmqe, void *arg)
 	struct silofs_lcache *lcache = arg;
 	struct silofs_unode_info *ui = ui_from_hmqe(hmqe);
 
-	lcache_evict_or_relru_ui(lcache, ui);
+	lcache_evict_or_relru_ui(lcache, ui, 0);
 	return 0;
 }
 
@@ -782,12 +785,13 @@ lcache_get_lru_vi(struct silofs_lcache *lcache)
 }
 
 static bool lcache_evict_or_relru_vi(struct silofs_lcache *lcache,
-                                     struct silofs_vnode_info *vi)
+                                     struct silofs_vnode_info *vi, int flags)
 {
+	const int allocf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_PUNCH : 0;
 	bool evicted;
 
 	if (vi_is_evictable(vi)) {
-		lcache_evict_vi(lcache, vi, 0);
+		lcache_evict_vi(lcache, vi, allocf);
 		evicted = true;
 	} else {
 		lcache_promote_vi(lcache, vi, true);
@@ -797,19 +801,21 @@ static bool lcache_evict_or_relru_vi(struct silofs_lcache *lcache,
 }
 
 static size_t
-lcache_shrink_or_relru_vis(struct silofs_lcache *lcache, size_t cnt, bool now)
+lcache_shrink_or_relru_vis(struct silofs_lcache *lcache, size_t cnt, int flags)
 {
 	struct silofs_vnode_info *vi = NULL;
 	const size_t n = min(cnt, lcache->lc_vi_hmapq.hmq_lru.sz);
 	size_t evicted = 0;
+	bool now;
 	bool ok;
 
+	now = (flags & SILOFS_F_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
 		vi = lcache_get_lru_vi(lcache);
 		if (vi == NULL) {
 			break;
 		}
-		ok = lcache_evict_or_relru_vi(lcache, vi);
+		ok = lcache_evict_or_relru_vi(lcache, vi, flags);
 		if (ok) {
 			evicted++;
 		} else if (!now && (i || evicted)) {
@@ -824,7 +830,7 @@ static int try_evict_vi(struct silofs_hmapq_elem *hmqe, void *arg)
 	struct silofs_lcache *lcache = arg;
 	struct silofs_vnode_info *vi = vi_from_hmqe(hmqe);
 
-	lcache_evict_or_relru_vi(lcache, vi);
+	lcache_evict_or_relru_vi(lcache, vi, 0);
 	return 0;
 }
 
@@ -921,22 +927,22 @@ silofs_lcache_create_vi(struct silofs_lcache *lcache,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t
-lcache_shrink_some_vis(struct silofs_lcache *lcache, size_t count, bool now)
+lcache_shrink_some_vis(struct silofs_lcache *lcache, size_t count, int flags)
 {
-	return lcache_shrink_or_relru_vis(lcache, count, now);
+	return lcache_shrink_or_relru_vis(lcache, count, flags);
 }
 
 static size_t
-lcache_shrink_some_uis(struct silofs_lcache *lcache, size_t count, bool now)
+lcache_shrink_some_uis(struct silofs_lcache *lcache, size_t count, int flags)
 {
-	return lcache_shrink_or_relru_uis(lcache, count, now);
+	return lcache_shrink_or_relru_uis(lcache, count, flags);
 }
 
 static size_t
-lcache_shrink_some(struct silofs_lcache *lcache, size_t count, bool now)
+lcache_shrink_some(struct silofs_lcache *lcache, size_t count, int flags)
 {
-	return lcache_shrink_some_vis(lcache, count, now) +
-	       lcache_shrink_some_uis(lcache, count, now);
+	return lcache_shrink_some_vis(lcache, count, flags) +
+	       lcache_shrink_some_uis(lcache, count, flags);
 }
 
 static void lcache_evict_some(struct silofs_lcache *lcache)
@@ -956,7 +962,7 @@ static void lcache_evict_some(struct silofs_lcache *lcache)
 		evicted = true;
 	}
 	if (!evicted) {
-		lcache_shrink_some(lcache, 1, false);
+		lcache_shrink_some(lcache, 1, 0);
 	}
 }
 
@@ -1020,9 +1026,9 @@ static size_t lcache_relax_by_niter(struct silofs_lcache *lcache,
 	now = (flags & SILOFS_F_NOW) > 0;
 	cnt = (now || (niter > 1)) ? 2 : 1;
 	for (size_t i = 0; i < niter; ++i) {
-		nvis = lcache_shrink_some_vis(lcache, i + 1, now);
+		nvis = lcache_shrink_some_vis(lcache, i + 1, flags);
 		if (!nvis || now || (lcache_nmapped_uis(lcache) > 128)) {
-			nuis = lcache_shrink_some_uis(lcache, cnt, now);
+			nuis = lcache_shrink_some_uis(lcache, cnt, flags);
 		} else {
 			nuis = 0;
 		}
@@ -1047,17 +1053,20 @@ static size_t lcache_overpop_uis(const struct silofs_lcache *lcache)
 static size_t lcache_relax_by_overpop(struct silofs_lcache *lcache)
 {
 	size_t opop;
-	size_t cnt = 0;
+	size_t want;
+	size_t total = 0;
 
 	opop = lcache_overpop_vis(lcache);
 	if (opop > 0) {
-		cnt += lcache_shrink_some_vis(lcache, min(opop, 8), true);
+		want = min(opop, 8);
+		total += lcache_shrink_some_vis(lcache, want, SILOFS_F_NOW);
 	}
 	opop = lcache_overpop_uis(lcache);
 	if (opop > 0) {
-		cnt += lcache_shrink_some_uis(lcache, min(opop, 2), true);
+		want = min(opop, 2);
+		total += lcache_shrink_some_uis(lcache, want, SILOFS_F_NOW);
 	}
-	return cnt;
+	return total;
 }
 
 static void lcache_try_relax_uamap(struct silofs_lcache *lcache, int flags)

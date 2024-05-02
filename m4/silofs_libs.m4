@@ -29,6 +29,7 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([zstd.h])
   AX_SILOFS_NEED_HEADER([pwd.h])
   AX_SILOFS_NEED_HEADER([grp.h])
+  AX_SILOFS_NEED_HEADER([sched.h])
   AX_SILOFS_NEED_HEADER([uuid/uuid.h])
   AX_SILOFS_NEED_HEADER([attr/attributes.h])
   AX_SILOFS_NEED_HEADER([sys/xattr.h])

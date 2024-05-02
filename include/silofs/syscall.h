@@ -348,6 +348,7 @@ int silofs_sys_setresuid(uid_t ruid, uid_t euid, uid_t suid);
 
 int silofs_sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 
+int silofs_sys_sched_yield(void);
 
 /* syscallx */
 int silofs_sys_readn(int fd, void *buf, size_t cnt);

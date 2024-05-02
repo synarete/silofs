@@ -3628,21 +3628,6 @@ static int fuseq_renew_bufs(struct silofs_fuseq_worker *fqw)
 	return 0;
 }
 
-static int fuseq_try_renew_bufs(struct silofs_fuseq_worker *fqw)
-{
-	int err;
-
-	if (!fqw->fw_req_count) {
-		return 0; /* no-op */
-	}
-	err = fuseq_renew_bufs(fqw);
-	if (unlikely(err)) {
-		return err;
-	}
-	fqw->fw_req_count = 0;
-	return 0;
-}
-
 static int fuseq_init_rwi(struct silofs_fuseq_worker *fqw)
 {
 	fqw->fw_rwi = rwi_new(fuseq_alloc(fqw));
@@ -4013,28 +3998,31 @@ static int fuseq_exec_timeout(struct silofs_fuseq_worker *fqw, int flags)
 	return err;
 }
 
-static bool fuseq_is_dormant(const struct silofs_fuseq *fq)
+static bool fuseq_is_inactive(const struct silofs_fuseq *fq)
 {
 	const struct silofs_fuseq_workset *fq_ws = &fq->fq_ws;
+	const struct silofs_fuseq_worker *fqw = NULL;
 
 	for (size_t i = 0; i < fq_ws->fws_nactive; ++i) {
-		if (fq_ws->fws_workers[i].fw_req_count) {
+		fqw = &fq_ws->fws_workers[i];
+		if (fqw->fw_req_count > 0) {
 			return false;
 		}
 	}
 	return true;
 }
 
-static int
-fuseq_exec_timedout_by(struct silofs_fuseq_worker *fqw)
+static int fuseq_exec_timedout_by(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq *fq = fqw->fw_fq;
 	time_t dif = 0;
 	int flags = SILOFS_F_TIMEOUT;
 	int err = 0;
+	bool inactive;
 
 	fuseq_lock_ctl(fq);
-	if (fuseq_is_dormant(fq)) {
+	inactive = fuseq_is_inactive(fq);
+	if (inactive) {
 		dif = fuseq_dif_time_stamp(fqw);
 		if (dif > 30) {
 			flags |= SILOFS_F_IDLE;
@@ -4043,6 +4031,32 @@ fuseq_exec_timedout_by(struct silofs_fuseq_worker *fqw)
 	}
 	fuseq_unlock_ctl(fq);
 	return err;
+}
+
+static void fuseq_post_timedout(struct silofs_fuseq_worker *fqw)
+{
+	bool renew = false;
+	bool inactive;
+
+	/* renew base state */
+	if (fqw->fw_req_count > 0) {
+		fuseq_renew_bufs(fqw);
+		fqw->fw_req_count = 0;
+		renew = true;
+	}
+
+	/* check inactivity (without lock) */
+	inactive = fuseq_is_inactive(fqw->fw_fq);
+
+	/*
+	 * If this thread got the timeout but the overall state is still active
+	 * it can not do any of the actual timed-out logic. This may happen when
+	 * other thread don't get CPU. Force re-schedule to allow other workers
+	 * do some work.
+	 */
+	if (!inactive && !renew) {
+		silofs_sys_sched_yield();
+	}
 }
 
 static int fuseq_exec_timedout(struct silofs_fuseq_worker *fqw)
@@ -4061,7 +4075,7 @@ static int fuseq_exec_timedout(struct silofs_fuseq_worker *fqw)
 	if (err) {
 		return err;
 	}
-	fuseq_try_renew_bufs(fqw);
+	fuseq_post_timedout(fqw);
 	return 0;
 }
 

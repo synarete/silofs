@@ -84,6 +84,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([readlinkat])
   AX_SILOFS_CHECK_FUNCS([renameat2])
   AX_SILOFS_CHECK_FUNCS([get_current_dir_name])
+  AX_SILOFS_CHECK_FUNCS([sched_yield])
 ])
 
 

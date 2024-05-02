@@ -46,6 +46,7 @@
 #include <utime.h>
 #include <poll.h>
 #include <time.h>
+#include <sched.h>
 
 
 #if _POSIX_C_SOURCE < 200809L
@@ -924,3 +925,7 @@ int silofs_sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 	return ok_or_errno(setresgid(rgid, egid, sgid));
 }
 
+int silofs_sys_sched_yield(void)
+{
+	return ok_or_errno(sched_yield());
+}

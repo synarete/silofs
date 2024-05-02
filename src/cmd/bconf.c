@@ -455,7 +455,7 @@ static void cmd_parse_simple_string(const struct silofs_substr *in,
 	}
 }
 
-static void cmd_parse_fsid_cfg(const struct silofs_substr *line,
+static void cmd_parse_uuid_cfg(const struct silofs_substr *line,
                                struct silofs_uuid *uuid)
 {
 	struct silofs_substr_pair ssp;
@@ -468,14 +468,14 @@ static void cmd_parse_fsid_cfg(const struct silofs_substr *line,
 	cmd_parse_simple_string(&ssp.second, &suuid);
 
 	if (substr_isempty(&name) || substr_isempty(&suuid)) {
-		cmd_die_by(line, "missing fs-id mapping");
+		cmd_die_by(line, "missing uuid value");
 	}
-	if (!substr_isequal(&name, "id")) {
-		cmd_die_by(line, "illegal fs-id mapping");
+	if (!substr_isequal(&name, "uuid")) {
+		cmd_die_by(line, "missing 'uuid' key");
 	}
 	err = silofs_uuid_parse2(uuid, &suuid);
 	if (err) {
-		cmd_die_by(line, "illegal fs-id value");
+		cmd_die_by(line, "illegal uuid value");
 	}
 }
 
@@ -509,7 +509,7 @@ static void cmd_append_section(const char *name, char **pcfg)
 	cmd_append_cfgline(pcfg, line);
 }
 
-static void cmd_append_fsid(const char *name,
+static void cmd_append_uuid(const char *name,
                             const struct silofs_uuid *uuid, char **conf)
 {
 	struct silofs_strbuf sbuf;
@@ -617,7 +617,7 @@ static void cmd_write_bconf_file(const char *path, const char *cfg)
 static void cmd_bconf_parse_fsid_cfg(struct silofs_fs_bconf *bconf,
                                      const struct silofs_substr *line)
 {
-	cmd_parse_fsid_cfg(line, &bconf->fsid);
+	cmd_parse_uuid_cfg(line, &bconf->fs_uuid);
 }
 
 static void cmd_bconf_parse_uid_cfg(struct silofs_fs_bconf *bconf,
@@ -704,7 +704,7 @@ static void
 cmd_bconf_unparse(const struct silofs_fs_bconf *bconf, char **pcfg)
 {
 	cmd_append_section("fs", pcfg);
-	cmd_append_fsid("id", &bconf->fsid, pcfg);
+	cmd_append_uuid("uuid", &bconf->fs_uuid, pcfg);
 
 	cmd_append_section("users", pcfg);
 	for (size_t i = 0; i < bconf->ids.nuids; ++i) {
@@ -791,15 +791,15 @@ void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
 void cmd_bconf_init(struct silofs_fs_bconf *bconf)
 {
 	memset(bconf, 0, sizeof(*bconf));
-	silofs_uuid_generate(&bconf->fsid);
+	silofs_uuid_generate(&bconf->fs_uuid);
 	bconf->ids.nuids = 0;
 	bconf->ids.ngids = 0;
 }
 
-static void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
-                               const struct silofs_uuid *uuid)
+void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
+                        const struct silofs_uuid *uuid)
 {
-	silofs_uuid_assign(&bconf->fsid, uuid);
+	silofs_uuid_assign(&bconf->fs_uuid, uuid);
 }
 
 static void cmd_bconf_set_name2(struct silofs_fs_bconf *bconf,
@@ -813,7 +813,7 @@ void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
 {
 	cmd_bconf_init(bconf);
 	cmd_bconf_set_name2(bconf, &other->name);
-	cmd_bconf_set_fsid(bconf, &other->fsid);
+	cmd_bconf_set_fsid(bconf, &other->fs_uuid);
 	for (size_t i = 0; i < other->ids.nuids; ++i) {
 		cmd_bconf_append_uids1(bconf, &other->ids.uids[i]);
 	}
@@ -907,7 +907,7 @@ void cmd_bconf_set_lvid_by(struct silofs_fs_bconf *bconf,
 void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
                         struct silofs_lvid *out_lvid)
 {
-	silofs_lvid_by_uuid(out_lvid, &bconf->fsid);
+	silofs_lvid_by_uuid(out_lvid, &bconf->fs_uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

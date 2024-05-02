@@ -61,7 +61,7 @@ struct silofs_fs_cflags {
 /* file-system's boot configurations */
 struct silofs_fs_bconf {
 	struct silofs_strbuf    name;
-	struct silofs_uuid      fsid;
+	struct silofs_uuid      fs_uuid;
 	struct silofs_ids       ids;
 };
 

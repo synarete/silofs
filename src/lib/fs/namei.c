@@ -2178,7 +2178,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	bsz = sizeof(query->u.boot.name);
 	str_to_buf(&bootpath->name.s, query->u.boot.name, bsz);
 
-	silofs_uuid_unparse(&bconf->fsid, &sbuf);
+	silofs_uuid_unparse(&bconf->fs_uuid, &sbuf);
 	bsz = sizeof(query->u.boot.fsid);
 	silofs_strbuf_copyto(&sbuf, query->u.boot.fsid, bsz);
 }

@@ -133,7 +133,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	silofs_uuid_generate(&ute->args->fs_args.bconf.fsid);
+	silofs_uuid_generate(&ute->args->fs_args.bconf.fs_uuid);
 	err = silofs_new_ctx(&ute->args->fs_args, &ute->fs_ctx);
 	silofs_assert_ok(err);
 }
@@ -437,7 +437,7 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	silofs_uuid_generate(&args->fs_args.bconf.fsid);
+	silofs_uuid_generate(&args->fs_args.bconf.fs_uuid);
 	args->fs_args.bconf.ids.uids = ut_new_uids();
 	args->fs_args.bconf.ids.nuids = 2;
 	args->fs_args.bconf.ids.gids = ut_new_gids();

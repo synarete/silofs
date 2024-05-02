@@ -304,6 +304,9 @@ void cmd_delpass(char **pass);
 /* init configuration */
 void cmd_bconf_init(struct silofs_fs_bconf *bconf);
 
+void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
+                        const struct silofs_uuid *uuid);
+
 void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
                       const struct silofs_fs_bconf *other);
 

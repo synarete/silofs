@@ -45,7 +45,7 @@ struct silofs_fuseq_worker {
 	struct silofs_oper_args        *fw_args;
 	struct silofs_piper             fw_piper;
 	time_t                          fw_time_stamp;
-	unsigned long                   fw_req_count;
+	volatile uint64_t               fw_req_count;
 	unsigned int                    fw_index;
 	int                             fw_leader;
 } silofs_aligned64;

@@ -3634,16 +3634,19 @@ static int fuseq_renew_bufs(struct silofs_fuseq_worker *fqw)
 	return 0;
 }
 
-static void fuseq_try_renew_bufs(struct silofs_fuseq_worker *fqw)
+static int fuseq_try_renew_bufs(struct silofs_fuseq_worker *fqw)
 {
 	int err;
 
-	if (fqw->fw_req_count) {
-		err = fuseq_renew_bufs(fqw);
-		if (!err) {
-			fqw->fw_req_count = 0;
-		}
+	if (!fqw->fw_req_count) {
+		return 0; /* no-op */
 	}
+	err = fuseq_renew_bufs(fqw);
+	if (unlikely(err)) {
+		return err;
+	}
+	fqw->fw_req_count = 0;
+	return 0;
 }
 
 static int fuseq_init_rwi(struct silofs_fuseq_worker *fqw)

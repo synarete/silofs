@@ -171,11 +171,17 @@ static bool dtn_index_valid_depth(silofs_dtn_index_t dtn_index)
 static silofs_dtn_ord_t
 hash_to_child_ord(uint64_t hash, silofs_dtn_depth_t depth)
 {
+	silofs_dtn_ord_t ord = 0;
+
 	silofs_expect_gt(depth, 0);
 	silofs_expect_lt(depth, sizeof(hash));
 	silofs_expect_le(depth, DTREE_DEPTH_MAX);
 
-	return (hash >> (DTREE_SHIFT * (depth - 1))) % DTREE_FANOUT;
+	if (likely((depth > 0) && (depth <= DTREE_DEPTH_MAX))) {
+		/* make clang-scan happy */
+		ord = (hash >> (DTREE_SHIFT * (depth - 1))) % DTREE_FANOUT;
+	}
+	return ord;
 }
 
 static silofs_dtn_index_t

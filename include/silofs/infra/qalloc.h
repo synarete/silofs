@@ -24,7 +24,8 @@ struct silofs_iovec;
 /* allocation flags */
 enum silofs_allocf {
 	SILOFS_ALLOCF_BZERO     = 0x01,
-	SILOFS_ALLOCF_PUNCH     = 0x02,
+	SILOFS_ALLOCF_TRYPUNCH  = 0x02,
+	SILOFS_ALLOCF_NOPUNCH   = 0x04,
 };
 
 /* allocator stats */

@@ -724,16 +724,32 @@ static void qpool_punch_hole_at(const struct silofs_qpool *qpool,
 	}
 }
 
-static void
+static bool
 qpool_update_released(const struct silofs_qpool *qpool,
                       struct silofs_qpage_info *qpgi, size_t npgs, int flags)
 {
-	const size_t npgs_punch_hole_threshold =
-	        (flags & SILOFS_ALLOCF_PUNCH) ? 32 : 256;
+	size_t npgs_punch_hole_threshold;
 
-	if (npgs >= npgs_punch_hole_threshold) {
-		qpool_punch_hole_at(qpool, qpgi, npgs);
+	if (flags & SILOFS_ALLOCF_NOPUNCH) {
+		/* no-op if explicit request for no-punch */
+		return false;
 	}
+
+	if (flags & SILOFS_ALLOCF_TRYPUNCH) {
+		/* when asked to try-punch, require at least 1M hole size */
+		npgs_punch_hole_threshold = 16;
+	} else {
+		/* by default, require 8M hole size */
+		npgs_punch_hole_threshold = 128;
+	}
+	if (npgs < npgs_punch_hole_threshold) {
+		/* avoid redundant syscalls when below threshold */
+		return false;
+	}
+
+	/* actual memory reclaim to system via fallocate punch-hole */
+	qpool_punch_hole_at(qpool, qpgi, npgs);
+	return true;
 }
 
 static int

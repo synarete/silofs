@@ -3452,12 +3452,6 @@ static void *iob_new(struct silofs_alloc *alloc, size_t len)
 
 static void iob_del(struct silofs_alloc *alloc, void *iob, size_t len)
 {
-	const size_t bk_size = SILOFS_LBK_SIZE;
-
-	silofs_assert_le(len, 2 * SILOFS_MEGA);
-	silofs_assert_ge(len, SILOFS_LBK_SIZE);
-
-	silofs_memffff(iob, min(len, min(len, bk_size)));
 	silofs_memfree(alloc, iob, len, 0);
 }
 

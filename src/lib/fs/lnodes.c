@@ -91,7 +91,7 @@ static void view_del(struct silofs_view *view, enum silofs_ltype ltype,
 	const size_t size = ltype_size(ltype);
 
 	if (ltype_issuper(ltype)) {
-		flags |= SILOFS_ALLOCF_PUNCH;
+		flags |= SILOFS_ALLOCF_TRYPUNCH;
 	}
 	silofs_memfree(alloc, view, size, flags);
 }

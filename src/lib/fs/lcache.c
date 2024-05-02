@@ -474,11 +474,11 @@ lcache_get_lru_ui(struct silofs_lcache *lcache)
 static bool lcache_evict_or_relru_ui(struct silofs_lcache *lcache,
                                      struct silofs_unode_info *ui, int flags)
 {
-	const int allocf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_PUNCH : 0;
+	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
 	bool evicted;
 
 	if (ui_is_evictable(ui)) {
-		lcache_evict_ui(lcache, ui, allocf);
+		lcache_evict_ui(lcache, ui, alf);
 		evicted = true;
 	} else {
 		lcache_promote_ui(lcache, ui, true);
@@ -787,11 +787,11 @@ lcache_get_lru_vi(struct silofs_lcache *lcache)
 static bool lcache_evict_or_relru_vi(struct silofs_lcache *lcache,
                                      struct silofs_vnode_info *vi, int flags)
 {
-	const int allocf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_PUNCH : 0;
+	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
 	bool evicted;
 
 	if (vi_is_evictable(vi)) {
-		lcache_evict_vi(lcache, vi, allocf);
+		lcache_evict_vi(lcache, vi, alf);
 		evicted = true;
 	} else {
 		lcache_promote_vi(lcache, vi, true);

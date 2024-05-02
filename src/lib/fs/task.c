@@ -42,7 +42,7 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 {
 	for (size_t idx = 0; idx < sqe->cnt; ++idx) {
 		silofs_memfree(sqe->alloc, sqe->iov[idx].iov_base,
-		               sqe->iov[idx].iov_len, 0);
+		               sqe->iov[idx].iov_len, SILOFS_ALLOCF_NOPUNCH);
 		sqe->iov[idx].iov_base = NULL;
 		sqe->iov[idx].iov_len = 0;
 	}
@@ -225,7 +225,7 @@ static void sqe_del(struct silofs_submitq_ent *sqe,
                     struct silofs_alloc *alloc)
 {
 	sqe_fini(sqe);
-	silofs_memfree(alloc, sqe, sizeof(*sqe), 0);
+	silofs_memfree(alloc, sqe, sizeof(*sqe), SILOFS_ALLOCF_NOPUNCH);
 }
 
 struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)

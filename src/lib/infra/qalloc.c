@@ -729,7 +729,7 @@ qpool_update_released(const struct silofs_qpool *qpool,
                       struct silofs_qpage_info *qpgi, size_t npgs, int flags)
 {
 	const size_t npgs_punch_hole_threshold =
-	        (flags & SILOFS_ALLOCF_PUNCH) ? 4 : 64;
+	        (flags & SILOFS_ALLOCF_PUNCH) ? 32 : 256;
 
 	if (npgs >= npgs_punch_hole_threshold) {
 		qpool_punch_hole_at(qpool, qpgi, npgs);

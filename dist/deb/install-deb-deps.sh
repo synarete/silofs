@@ -45,7 +45,6 @@ qatests_deps=(
   libunwind-dev
   libreadline-dev
   libssl-dev
-  libcurl4-openssl-dev
   libexpat1-dev
   python3-pydantic
   python3-setproctitle

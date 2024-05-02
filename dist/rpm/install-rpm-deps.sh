@@ -33,7 +33,6 @@ qatests_deps=(
   git-email
   libattr-devel
   libcap-devel
-  libcurl-devel
   libtool
   libunwind-devel
   libuuid-devel

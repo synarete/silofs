@@ -338,16 +338,22 @@ static void fs_ctx_fini_flusher(struct silofs_fs_ctx *fs_ctx)
 
 static int fs_ctx_init_idsmap(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_idsmap *idsmap;
+	const struct silofs_fs_bconf *bconf = &fs_ctx->fs_args.bconf;
+	struct silofs_idsmap *idsmap = NULL;
+	const bool allow_hostids = fs_ctx->fs_args.cflags.allow_hostids;
 	int err;
 
 	idsmap = &fs_ctx_obj_of(fs_ctx)->fs_core.c.idsmap;
-	err = silofs_idsmap_init(idsmap, fs_ctx->alloc,
-	                         fs_ctx->fs_args.cflags.allow_hostids);
+	err = silofs_idsmap_init(idsmap, fs_ctx->alloc, allow_hostids);
 	if (err) {
 		return err;
 	}
-	err = silofs_idsmap_populate(idsmap, &fs_ctx->fs_args.bconf.ids);
+	err = silofs_idsmap_populate_uids(idsmap, &bconf->users_ids);
+	if (err) {
+		silofs_idsmap_fini(idsmap);
+		return err;
+	}
+	err = silofs_idsmap_populate_gids(idsmap, &bconf->groups_ids);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;

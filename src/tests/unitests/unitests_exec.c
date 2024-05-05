@@ -438,10 +438,10 @@ static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
 	silofs_uuid_generate(&args->fs_args.bconf.fs_uuid);
-	args->fs_args.bconf.ids.uids = ut_new_uids();
-	args->fs_args.bconf.ids.nuids = 2;
-	args->fs_args.bconf.ids.gids = ut_new_gids();
-	args->fs_args.bconf.ids.ngids = 2;
+	args->fs_args.bconf.users_ids.uids = ut_new_uids();
+	args->fs_args.bconf.users_ids.nuids = 2;
+	args->fs_args.bconf.groups_ids.gids = ut_new_gids();
+	args->fs_args.bconf.groups_ids.ngids = 2;
 	args->fs_args.uid = getuid();
 	args->fs_args.gid = getgid();
 	args->fs_args.pid = getpid();
@@ -459,8 +459,8 @@ static void ut_init_args(struct ut_args *args)
 
 static void ut_fini_args(struct ut_args *args)
 {
-	ut_del_uids(args->fs_args.bconf.ids.uids);
-	ut_del_gids(args->fs_args.bconf.ids.gids);
+	ut_del_uids(args->fs_args.bconf.users_ids.uids);
+	ut_del_gids(args->fs_args.bconf.groups_ids.gids);
 	memset(args, 0, sizeof(*args));
 }
 

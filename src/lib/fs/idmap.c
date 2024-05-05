@@ -656,19 +656,28 @@ static int idsmap_add_uid(struct silofs_idsmap *idsm,
 	return idsmap_insert_umap(idsm, uid->host_uid, uid->fs_uid);
 }
 
-int silofs_idsmap_populate(struct silofs_idsmap *idsm,
-                           const struct silofs_ids *ids)
+int silofs_idsmap_populate_uids(struct silofs_idsmap *idsm,
+                                const struct silofs_users_ids *uids)
 {
 	int err = 0;
 
-	if (ids == NULL) {
-		return 0;
+	if (uids != NULL) {
+		for (size_t i = 0; (i < uids->nuids) && !err; ++i) {
+			err = idsmap_add_uid(idsm, &uids->uids[i]);
+		}
 	}
-	for (size_t i = 0; (i < ids->nuids) && !err; ++i) {
-		err = idsmap_add_uid(idsm, &ids->uids[i]);
-	}
-	for (size_t j = 0; (j < ids->ngids) && !err; ++j) {
-		err = idsmap_add_gid(idsm, &ids->gids[j]);
+	return err;
+}
+
+int silofs_idsmap_populate_gids(struct silofs_idsmap *idsm,
+                                const struct silofs_groups_ids *gids)
+{
+	int err = 0;
+
+	if (gids != NULL) {
+		for (size_t j = 0; (j < gids->ngids) && !err; ++j) {
+			err = idsmap_add_gid(idsm, &gids->gids[j]);
+		}
 	}
 	return err;
 }

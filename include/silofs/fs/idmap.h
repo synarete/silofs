@@ -43,11 +43,15 @@ struct silofs_idsmap {
 	bool   idm_allow_hotids;
 };
 
-/* file-system's input ids */
-struct silofs_ids {
+/* file-system's input user-ids list */
+struct silofs_users_ids {
 	struct silofs_uids     *uids;
-	struct silofs_gids     *gids;
 	size_t                  nuids;
+};
+
+/* file-system's input group-ids list */
+struct silofs_groups_ids {
+	struct silofs_gids     *gids;
 	size_t                  ngids;
 };
 
@@ -60,8 +64,11 @@ void silofs_idsmap_fini(struct silofs_idsmap *idsm);
 
 void silofs_idsmap_clear(struct silofs_idsmap *idsm);
 
-int silofs_idsmap_populate(struct silofs_idsmap *idsm,
-                           const struct silofs_ids *ids);
+int silofs_idsmap_populate_uids(struct silofs_idsmap *idsm,
+                                const struct silofs_users_ids *uids);
+
+int silofs_idsmap_populate_gids(struct silofs_idsmap *idsm,
+                                const struct silofs_groups_ids *gids);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

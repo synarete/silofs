@@ -102,6 +102,18 @@ void cmd_check_fsname(const char *arg_val)
 	}
 }
 
+void cmd_check_repodir(const char *path)
+{
+	cmd_check_repopath(path);
+	cmd_check_nonemptydir(path, false);
+}
+
+void cmd_check_repodir_fsname(const char *basedir, const char *fsname)
+{
+	cmd_check_repodir(basedir);
+	cmd_check_fsname(fsname);
+}
+
 static void cmd_stat_ok(const char *path, struct stat *st)
 {
 	int err;
@@ -114,7 +126,7 @@ static void cmd_stat_ok(const char *path, struct stat *st)
 	}
 }
 
-void cmd_check_isdir(const char *path, bool w_ok)
+static void cmd_check_isdir(const char *path, bool w_ok)
 {
 	struct stat st;
 	int access_mode = R_OK | X_OK | (w_ok ? W_OK : 0);
@@ -130,10 +142,10 @@ void cmd_check_isdir(const char *path, bool w_ok)
 	}
 }
 
-void cmd_check_isreg(const char *path, bool w_ok)
+void cmd_check_isreg(const char *path)
 {
-	struct stat st;
-	int access_mode = R_OK | (w_ok ? W_OK : 0);
+	struct stat st = { .st_mode = 0 };
+	const int access_mode = R_OK;
 	int err;
 
 	cmd_stat_ok(path, &st);
@@ -273,12 +285,12 @@ void cmd_check_mntsrv_perm(const char *path)
 
 void cmd_check_nonemptydir(const char *path, bool w_ok)
 {
-	int err;
-	int dfd = -1;
-	size_t ndes = 0;
+	char buf[1024] = "";
 	struct dirent64 de[8];
 	const size_t nde = SILOFS_ARRAY_SIZE(de);
-	char buf[1024] = "";
+	size_t ndes = 0;
+	int dfd = -1;
+	int err;
 
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -755,12 +767,16 @@ void cmd_realpath(const char *path, char **out_real)
 	}
 }
 
-void cmd_stat_reg(const char *path, struct stat *st)
+void cmd_realpath_dir(const char *path, char **out_real)
 {
-	cmd_stat_ok(path, st);
-	if (!S_ISREG(st->st_mode)) {
-		cmd_dief(0, "not a regular file: %s", path);
-	}
+	cmd_realpath(path, out_real);
+	cmd_check_isdir(*out_real, true);
+}
+
+void cmd_realpath_rdir(const char *path, char **out_real)
+{
+	cmd_realpath(path, out_real);
+	cmd_check_isdir(*out_real, false);
 }
 
 void cmd_stat_dir(const char *path, struct stat *st)

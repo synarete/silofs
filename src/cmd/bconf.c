@@ -887,7 +887,7 @@ void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
 	}
 }
 
-void cmd_bconf_reset(struct silofs_fs_bconf *bconf)
+void cmd_bconf_reset_ids(struct silofs_fs_bconf *bconf)
 {
 	cmd_pfree_uids(&bconf->users_ids.uids, &bconf->users_ids.nuids);
 	cmd_pfree_gids(&bconf->groups_ids.gids, &bconf->groups_ids.ngids);
@@ -927,7 +927,7 @@ void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir)
 	char *path;
 
 	path = cmd_bconf_pathname(bconf, basedir);
-	cmd_bconf_reset(bconf);
+	cmd_bconf_reset_ids(bconf);
 	cmd_bconf_load_from(bconf, path);
 	cmd_pstrfree(&path);
 }

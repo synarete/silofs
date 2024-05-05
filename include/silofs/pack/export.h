@@ -20,7 +20,7 @@
 struct silofs_task;
 
 struct silofs_pack_args {
-	const char *remotedir;
+	const char *packdir;
 };
 
 int silofs_fs_export(struct silofs_task *task,

@@ -76,12 +76,11 @@ static void cmd_rmfs_getopt(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_name, false);
+	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name,
 	               &ctx->in_args.repodir, &ctx->in_args.name);
-	cmd_check_nonemptydir(ctx->in_args.repodir, true);
-	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_fsname(ctx->in_args.name);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
 
 static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)

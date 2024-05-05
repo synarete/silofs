@@ -55,7 +55,7 @@ static void pec_fini(struct silofs_pack_export_ctx *pe_ctx)
 
 static int pec_connect_target(struct silofs_pack_export_ctx *pe_ctx)
 {
-	const char *path = pe_ctx->pex_args.remotedir;
+	const char *path = pe_ctx->pex_args.packdir;
 	int dfd = -1;
 	int err;
 
@@ -77,7 +77,7 @@ static void pec_disconnect_target(struct silofs_pack_export_ctx *pe_ctx)
 		err = silofs_sys_closefd(&pe_ctx->pex_dfd);
 		if (err) {
 			log_err("failed to close remote: %s err=%d",
-			        pe_ctx->pex_args.remotedir, err);
+			        pe_ctx->pex_args.packdir, err);
 		}
 	}
 }

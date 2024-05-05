@@ -96,8 +96,7 @@ static void cmd_tune_start(struct cmd_tune_ctx *ctx)
 static void cmd_tune_prepare(struct cmd_tune_ctx *ctx)
 {
 	ctx->ioc = cmd_new_ioc();
-	cmd_realpath(ctx->in_args.dirpath, &ctx->in_args.dirpath_real);
-	cmd_check_isdir(ctx->in_args.dirpath_real, true);
+	cmd_realpath_dir(ctx->in_args.dirpath, &ctx->in_args.dirpath_real);
 	cmd_check_fusefs(ctx->in_args.dirpath_real);
 }
 

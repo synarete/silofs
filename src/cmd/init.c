@@ -67,7 +67,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset(&ctx->fs_args.bconf);
+	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx = NULL;
@@ -86,20 +86,24 @@ static void cmd_init_start(struct cmd_init_ctx *ctx)
 	atexit(cmd_init_atexit);
 }
 
-static void cmd_init_prepare(struct cmd_init_ctx *ctx)
+static void cmd_init_prepare_repodir(const struct cmd_init_ctx *ctx)
 {
-	struct stat st;
+	struct stat st = { .st_mode = 0 };
 	int err;
 
 	err = silofs_sys_stat(ctx->in_args.repodir, &st);
-	if (err == 0) {
-		cmd_check_emptydir(ctx->in_args.repodir, true);
-	} else if (err == -ENOENT) {
+	if (err == -ENOENT) {
 		cmd_mkdir(ctx->in_args.repodir, 0700);
-	} else {
+	} else if (err != 0) {
 		cmd_dief(err, "stat failure: %s", ctx->in_args.repodir);
 	}
-	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+}
+
+static void cmd_init_prepare(struct cmd_init_ctx *ctx)
+{
+	cmd_init_prepare_repodir(ctx);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_emptydir(ctx->in_args.repodir_real, true);
 	cmd_check_repopath(ctx->in_args.repodir_real);
 }
 

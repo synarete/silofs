@@ -1793,11 +1793,11 @@ static int exec_export_fs(struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *remotedir,
+int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *packdir,
                      struct silofs_hash256 *out_cat_hash)
 {
 	const struct silofs_pack_args pargs = {
-		.remotedir = remotedir,
+		.packdir = packdir,
 	};
 
 	return exec_export_fs(fs_ctx, &pargs, out_cat_hash);

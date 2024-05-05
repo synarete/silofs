@@ -80,7 +80,7 @@ static void cmd_fsck_destroy_fs_ctx(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset(&ctx->fs_args.bconf);
+	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -124,13 +124,11 @@ static void cmd_fsck_start(struct cmd_fsck_ctx *ctx)
 static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
-	cmd_check_isreg(ctx->in_args.repodir_name, false);
+	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name,
 	               &ctx->in_args.repodir, &ctx->in_args.name);
-	cmd_check_nonemptydir(ctx->in_args.repodir, false);
-	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repopath(ctx->in_args.repodir_real);
-	cmd_check_fsname(ctx->in_args.name);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
 
 static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)

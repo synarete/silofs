@@ -107,7 +107,7 @@ static void cmd_mkfs_destroy_fs_ctx(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_ctx(ctx);
-	cmd_bconf_reset(&ctx->fs_args.bconf);
+	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
@@ -156,9 +156,8 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 	cmd_check_notdir(args->repodir_name);
 	cmd_check_notexists(args->repodir_name);
 	cmd_split_path(args->repodir_name, &args->repodir, &args->name);
-	cmd_check_nonemptydir(args->repodir, true);
-	cmd_realpath(args->repodir, &args->repodir_real);
-	cmd_check_repopath(args->repodir_real);
+	cmd_realpath_dir(args->repodir, &args->repodir_real);
+	cmd_check_repodir(args->repodir_real);
 	cmd_check_fsname(args->name);
 }
 

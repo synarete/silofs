@@ -82,8 +82,8 @@ static void cmd_prune_start(struct cmd_prune_ctx *ctx)
 
 static void cmd_prune_prepare(struct cmd_prune_ctx *ctx)
 {
-	cmd_check_nonemptydir(ctx->in_args.repodir, true);
-	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir(ctx->in_args.repodir_real);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

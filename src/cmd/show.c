@@ -124,7 +124,7 @@ static void cmd_show_enable_signals(void)
 static void cmd_show_prepare(struct cmd_show_ctx *ctx)
 {
 	ctx->ioc = cmd_new_ioc();
-	cmd_realpath(ctx->in_args.pathname, &ctx->in_args.pathname_real);
+	cmd_realpath_rdir(ctx->in_args.pathname, &ctx->in_args.pathname_real);
 	cmd_check_reg_or_dir(ctx->in_args.pathname_real);
 	cmd_check_fusefs(ctx->in_args.pathname_real);
 }

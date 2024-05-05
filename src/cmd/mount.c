@@ -288,7 +288,7 @@ static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_fs_ctx(ctx);
-	cmd_bconf_reset(&ctx->fs_args.bconf);
+	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -339,7 +339,7 @@ static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 {
-	cmd_realpath(ctx->in_args.mntpoint, &ctx->in_args.mntpoint_real);
+	cmd_realpath_rdir(ctx->in_args.mntpoint, &ctx->in_args.mntpoint_real);
 	cmd_check_mntdir(ctx->in_args.mntpoint_real, true);
 	cmd_check_mntsrv_conn();
 	cmd_check_mntsrv_perm(ctx->in_args.mntpoint_real);
@@ -347,14 +347,11 @@ static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_check_exists(ctx->in_args.repodir_name);
-	cmd_check_isreg(ctx->in_args.repodir_name, false);
+	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name,
 	               &ctx->in_args.repodir, &ctx->in_args.name);
-	cmd_check_nonemptydir(ctx->in_args.repodir, true);
-	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repopath(ctx->in_args.repodir_real);
-	cmd_check_fsname(ctx->in_args.name);
+	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
 
 static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)

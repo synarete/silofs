@@ -108,6 +108,10 @@ void cmd_check_repopath(const char *arg_val);
 
 void cmd_check_fsname(const char *arg_val);
 
+void cmd_check_repodir(const char *path);
+
+void cmd_check_repodir_fsname(const char *basedir, const char *fsname);
+
 void cmd_check_notdir(const char *path);
 
 void cmd_check_notexists(const char *path);
@@ -118,8 +122,6 @@ void cmd_check_exists(const char *path);
 
 void cmd_check_not_same(const char *path, const char *other);
 
-void cmd_check_isdir(const char *path, bool w_ok);
-
 void cmd_check_nonemptydir(const char *path, bool w_ok);
 
 void cmd_check_emptydir(const char *path, bool w_ok);
@@ -128,7 +130,7 @@ void cmd_check_mntdir(const char *path, bool mount);
 
 void cmd_check_fusefs(const char *path);
 
-void cmd_check_isreg(const char *path, bool w_ok);
+void cmd_check_isreg(const char *path);
 
 void cmd_check_reg_or_dir(const char *path);
 
@@ -146,7 +148,9 @@ void cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
 
 void cmd_realpath(const char *path, char **out_real);
 
-void cmd_stat_reg(const char *path, struct stat *st);
+void cmd_realpath_dir(const char *path, char **out_real);
+
+void cmd_realpath_rdir(const char *path, char **out_real);
 
 void cmd_stat_dir(const char *path, struct stat *st);
 
@@ -257,7 +261,7 @@ void cmd_unref_fs(struct silofs_fs_ctx *fse,
 void cmd_inspect_fs(struct silofs_fs_ctx *fse,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir,
+void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *packdir,
                     struct silofs_hash256 *out_cat_hash);
 
 /* mount-info */
@@ -305,13 +309,13 @@ void cmd_delpass(char **pass);
 /* init configuration */
 void cmd_bconf_init(struct silofs_fs_bconf *bconf);
 
-void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
-                        const struct silofs_uuid *uuid);
+void cmd_bconf_reset_ids(struct silofs_fs_bconf *bconf);
 
 void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
                       const struct silofs_fs_bconf *other);
 
-void cmd_bconf_reset(struct silofs_fs_bconf *bconf);
+void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
+                        const struct silofs_uuid *uuid);
 
 void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name);
 

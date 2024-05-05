@@ -17,7 +17,7 @@
 #include "cmd.h"
 
 static const char *cmd_archive_help_desc[] = {
-	"archive <repodir/name> <remotedir>",
+	"archive <repodir/srcname> <packdir/dstname>",
 	"",
 	"options:",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
@@ -25,12 +25,14 @@ static const char *cmd_archive_help_desc[] = {
 };
 
 struct cmd_archive_in_args {
-	char   *repodir_name;
+	char   *repodir_srcname;
 	char   *repodir;
 	char   *repodir_real;
-	char   *name;
-	char   *remotedir;
-	char   *remotedir_real;
+	char   *srcname;
+	char   *packdir_dstname;
+	char   *packdir;
+	char   *packdir_real;
+	char   *dstname;
 	char   *password;
 	bool    no_prompt;
 };
@@ -71,8 +73,8 @@ static void cmd_archive_getopt(struct cmd_archive_ctx *ctx)
 			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
-	cmd_getopt_getarg("remotedir", &ctx->in_args.remotedir);
+	cmd_getopt_getarg("repodir/srcname", &ctx->in_args.repodir_srcname);
+	cmd_getopt_getarg("packdir/dstname", &ctx->in_args.packdir_dstname);
 	cmd_getopt_endargs();
 }
 
@@ -82,7 +84,7 @@ static void cmd_archive_acquire_lockfile(struct cmd_archive_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
 		cmd_lock_fs(ctx->in_args.repodir_real,
-		            ctx->in_args.name);
+		            ctx->in_args.srcname);
 		ctx->has_lockfile = true;
 	}
 }
@@ -91,7 +93,7 @@ static void cmd_archive_release_lockfile(struct cmd_archive_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
 		cmd_unlock_fs(ctx->in_args.repodir_real,
-		              ctx->in_args.name);
+		              ctx->in_args.srcname);
 		ctx->has_lockfile = false;
 	}
 }
@@ -104,13 +106,15 @@ static void cmd_archive_destroy_fs_ctx(struct cmd_archive_ctx *ctx)
 static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset(&ctx->fs_args.bconf);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
+	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_pstrfree(&ctx->in_args.repodir_srcname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
-	cmd_pstrfree(&ctx->in_args.name);
-	cmd_pstrfree(&ctx->in_args.remotedir);
-	cmd_pstrfree(&ctx->in_args.remotedir_real);
+	cmd_pstrfree(&ctx->in_args.srcname);
+	cmd_pstrfree(&ctx->in_args.packdir_dstname);
+	cmd_pstrfree(&ctx->in_args.packdir);
+	cmd_pstrfree(&ctx->in_args.packdir_real);
+	cmd_pstrfree(&ctx->in_args.dstname);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_archive_ctx = NULL;
 }
@@ -136,16 +140,16 @@ static void cmd_archive_enable_signals(void)
 
 static void cmd_archive_prepare(struct cmd_archive_ctx *ctx)
 {
-	cmd_check_exists(ctx->in_args.repodir_name);
-	cmd_check_isreg(ctx->in_args.repodir_name, false);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
-	cmd_check_nonemptydir(ctx->in_args.repodir, false);
-	cmd_realpath(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repopath(ctx->in_args.repodir_real);
-	cmd_check_fsname(ctx->in_args.name);
-	cmd_realpath(ctx->in_args.remotedir, &ctx->in_args.remotedir_real);
-	cmd_check_isdir(ctx->in_args.remotedir_real, true);
+	cmd_check_isreg(ctx->in_args.repodir_srcname);
+	cmd_split_path(ctx->in_args.repodir_srcname,
+	               &ctx->in_args.repodir, &ctx->in_args.srcname);
+	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
+	                         ctx->in_args.srcname);
+	cmd_split_path(ctx->in_args.packdir_dstname,
+	               &ctx->in_args.packdir, &ctx->in_args.dstname);
+	cmd_realpath_dir(ctx->in_args.packdir, &ctx->in_args.packdir_real);
+	cmd_check_notexists2(ctx->in_args.packdir_real, ctx->in_args.dstname);
 }
 
 static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
@@ -161,10 +165,10 @@ static void cmd_archive_setup_fs_args(struct cmd_archive_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
+	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.srcname);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.name;
+	fs_args->name = ctx->in_args.srcname;
 }
 
 static void cmd_archive_load_bconf(struct cmd_archive_ctx *ctx)
@@ -209,11 +213,12 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	const char *remotedir = ctx->in_args.remotedir_real;
-	struct silofs_fs_bconf *bconf = &ctx->fs_args.bconf;
+	struct silofs_fs_bconf bconf;
 
-	cmd_archive_fs(ctx->fs_ctx, remotedir, &bconf->pack_id);
-	cmd_bconf_save(bconf, remotedir);
+	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
+	cmd_bconf_set_name(&bconf, ctx->in_args.dstname);
+	cmd_archive_fs(ctx->fs_ctx, ctx->in_args.packdir_real, &bconf.pack_id);
+	cmd_bconf_save(&bconf, ctx->in_args.packdir_real);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

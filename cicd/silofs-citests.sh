@@ -5,9 +5,7 @@ set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
-delim="* * * * * * * * * * * * * * * *"
 self=$(basename "${BASH_SOURCE[0]}")
-
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
@@ -19,15 +17,14 @@ archive_tgz="${dist_name}.tar.gz"
 workdir="${selfdir}/${dist_name}"
 unitestsdir="${workdir}/build/src/tests/unitests/"
 
-# Require sane input
-msg "${delim}"
+###
+msg "cheching input: ${archive_tgz}"
 cd "${selfdir}"
 run rm -rf "${workdir}"
-msg "check using ${archive_tgz}"
 run stat "${archive_tgz}"
 
-# Build from (clean) source
-msg "${delim}"
+###
+msg "build from source: ${archive_tgz}"
 cd "${selfdir}"
 run tar xfz "${archive_tgz}"
 cd "${workdir}"
@@ -38,8 +35,8 @@ run make
 run make distcheck
 run make clean
 
-# Run developer's checks
-msg "${delim}"
+###
+msg "run developer's checks"
 cd "${selfdir}"
 run rm -rf "${workdir}"
 run tar xfz "${archive_tgz}"
@@ -60,19 +57,20 @@ run make -f devel.mk
 run valgrind --tool=memcheck --error-exitcode=1 \
   "${unitestsdir}/silofs-unitests" "${unitestsdir}/ut" -M -l1
 
-# Build dist-package
-msg "${delim}"
+###
+msg "build dist-package"
 cd "${selfdir}"
 run rm -rf "${workdir}"
 run tar xfz "${archive_tgz}"
 cd "${workdir}"
-msg "build dist-package at: $(pwd)"
 run ./dist/packagize.sh
 
 # Post-op cleanup
-msg "${delim}"
+msg "post-op cleanup: ${workdir}"
 cd "${selfdir}"
 run rm -rf "${workdir}"
-msg "${dist_name} passed all checks"
+
+###
+msg "passed all checks: ${dist_name} "
 
 

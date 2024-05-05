@@ -257,7 +257,8 @@ void cmd_unref_fs(struct silofs_fs_ctx *fse,
 void cmd_inspect_fs(struct silofs_fs_ctx *fse,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir);
+void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir,
+                    struct silofs_hash256 *out_cat_hash);
 
 /* mount-info */
 struct cmd_proc_mntinfo {

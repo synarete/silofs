@@ -24,6 +24,7 @@ struct silofs_pack_args {
 };
 
 int silofs_fs_export(struct silofs_task *task,
-                     const struct silofs_pack_args *args);
+                     const struct silofs_pack_args *args,
+                     struct silofs_hash256 *out_cat_hash);
 
 #endif /* SILOFS_EXPORT_H_ */

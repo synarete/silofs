@@ -23,13 +23,6 @@
 #include <grp.h>
 #include "cmd.h"
 
-#define CONF_SEC_IGNORE      (0x00)
-#define CONF_SEC_FS          (0x01)
-#define CONF_SEC_USERS       (0x02)
-#define CONF_SEC_GROUPS      (0x04)
-#define CONF_SEC_PACK        (0x08)
-
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void substr_init(struct silofs_substr *ss, const char *s)
@@ -514,11 +507,22 @@ static void cmd_append_uuid(const char *name,
                             const struct silofs_uuid *uuid, char **conf)
 {
 	struct silofs_strbuf sbuf;
-	char line[400] = "";
+	char line[512] = "";
 
 	silofs_strbuf_reset(&sbuf);
 	silofs_uuid_unparse(uuid, &sbuf);
-	snprintf(line, sizeof(line) - 1, "%s = \"%s\"\n\n", name, sbuf.str);
+	snprintf(line, sizeof(line) - 1, "%s = \"%s\"\n", name, sbuf.str);
+	cmd_append_cfgline(conf, line);
+}
+
+static void cmd_append_hash(const char *name,
+                            const struct silofs_hash256 *hash, char **conf)
+{
+	struct silofs_strbuf sbuf;
+	char line[512] = "";
+
+	silofs_hash256_to_base64(hash, &sbuf);
+	snprintf(line, sizeof(line) - 1, "%s = \"%s\"\n", name, sbuf.str);
 	cmd_append_cfgline(conf, line);
 }
 
@@ -615,6 +619,50 @@ static void cmd_write_bconf_file(const char *path, const char *cfg)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+enum cmd_conf_sec {
+	CMD_CONF_SEC_NIL,
+	CMD_CONF_SEC_FS,
+	CMD_CONF_SEC_USERS,
+	CMD_CONF_SEC_GROUPS,
+};
+
+static const char *s_cmd_conf_sec_name[] = {
+	[CMD_CONF_SEC_NIL] = "",
+	[CMD_CONF_SEC_FS] = "fs",
+	[CMD_CONF_SEC_USERS] = "users",
+	[CMD_CONF_SEC_GROUPS] = "groups",
+};
+
+static const char *cmd_conf_sec_to_name(enum cmd_conf_sec sec)
+{
+	const char *sec_name = "";
+
+	if (sec < SILOFS_ARRAY_SIZE(s_cmd_conf_sec_name)) {
+		sec_name = s_cmd_conf_sec_name[sec];
+	}
+	return sec_name;
+}
+
+static enum cmd_conf_sec cmd_conf_sec_by_name(const struct silofs_substr *ss)
+{
+	const char *sec_name;
+
+	for (int i = 0; i < (int)SILOFS_ARRAY_SIZE(s_cmd_conf_sec_name); ++i) {
+		sec_name = s_cmd_conf_sec_name[i];
+		if (substr_isequal(ss, sec_name)) {
+			return (enum cmd_conf_sec)i;
+		}
+	}
+	return CMD_CONF_SEC_NIL;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static bool cmd_bconf_has_pack_id(const struct silofs_fs_bconf *bconf)
+{
+	return !silofs_hash256_isnil(&bconf->pack_id);
+}
+
 static void cmd_bconf_parse_fsid_cfg(struct silofs_fs_bconf *bconf,
                                      const struct silofs_substr *line)
 {
@@ -635,42 +683,40 @@ static void cmd_bconf_parse_groups_cfg(struct silofs_fs_bconf *bconf,
 	                  &bconf->groups_ids.ngids);
 }
 
-static void cmd_bconf_parse_line(struct silofs_fs_bconf *bconf, int sec_state,
+static void cmd_bconf_parse_line(struct silofs_fs_bconf *bconf,
+                                 enum cmd_conf_sec sec_state,
                                  const struct silofs_substr *line)
 {
-	if (sec_state & CONF_SEC_FS) {
+	switch (sec_state) {
+	case CMD_CONF_SEC_NIL:
+		break;
+	case CMD_CONF_SEC_FS:
 		cmd_bconf_parse_fsid_cfg(bconf, line);
-	} else if (sec_state & CONF_SEC_PACK) {
-		/* TODO */
-	} else if (sec_state & CONF_SEC_USERS) {
+		break;
+	case CMD_CONF_SEC_USERS:
 		cmd_bconf_parse_users_cfg(bconf, line);
-	} else if (sec_state & CONF_SEC_GROUPS) {
+		break;
+	case CMD_CONF_SEC_GROUPS:
 		cmd_bconf_parse_groups_cfg(bconf, line);
-	} else if (sec_state != CONF_SEC_IGNORE) {
-		cmd_die_by(line, "illegal boot-config config");
+		break;
+	default:
+		cmd_die_by(line, "illegal boot-config");
+		break;
 	}
 }
 
-static int cmd_parse_sec_state(const struct silofs_substr *line)
+static enum cmd_conf_sec cmd_parse_sec_state(const struct silofs_substr *line)
 {
 	struct silofs_substr ss;
-	int ret = CONF_SEC_IGNORE;
+	enum cmd_conf_sec sec = CMD_CONF_SEC_NIL;
 
 	substr_strip_ws(line, &ss);
 	if (substr_starts_with(&ss, '[') && substr_ends_with(&ss, ']')) {
 		substr_strip_any(&ss, "[]", &ss);
 		substr_strip_ws(&ss, &ss);
-		if (substr_isequal(&ss, "fs")) {
-			ret = CONF_SEC_FS;
-		} else if (substr_isequal(&ss, "pack")) {
-			ret = CONF_SEC_PACK;
-		} else if (substr_isequal(&ss, "users")) {
-			ret = CONF_SEC_USERS;
-		} else if (substr_isequal(&ss, "groups")) {
-			ret = CONF_SEC_GROUPS;
-		}
+		sec = cmd_conf_sec_by_name(&ss);
 	}
-	return ret;
+	return sec;
 }
 
 static void cmd_bconf_parse_data(struct silofs_fs_bconf *bconf,
@@ -681,19 +727,20 @@ static void cmd_bconf_parse_data(struct silofs_fs_bconf *bconf,
 	struct silofs_substr *line = &pair.first;
 	struct silofs_substr *tail = &pair.second;
 	struct silofs_substr sline;
-	int sec_state = CONF_SEC_IGNORE;
-	int sec_snext = CONF_SEC_IGNORE;
+	enum cmd_conf_sec sec_curr = CMD_CONF_SEC_NIL;
+	enum cmd_conf_sec sec_next = CMD_CONF_SEC_NIL;
 
 	substr_split_by_nl(data, &pair);
 	while (!substr_isempty(line) || !substr_isempty(tail)) {
 		substr_split_by(line, '#', &pair2);
 		substr_strip_ws(&pair2.first, &sline);
 
-		sec_snext = cmd_parse_sec_state(&sline);
-		if (sec_snext && (sec_snext != sec_state)) {
-			sec_state = sec_snext;
+		sec_next = cmd_parse_sec_state(&sline);
+		if ((sec_next != CMD_CONF_SEC_NIL) &&
+		    (sec_next != sec_curr)) {
+			sec_curr = sec_next;
 		} else if (!substr_isempty(&sline)) {
-			cmd_bconf_parse_line(bconf, sec_state, &sline);
+			cmd_bconf_parse_line(bconf, sec_curr, &sline);
 		}
 		substr_split_by_nl(tail, &pair);
 	}
@@ -710,16 +757,25 @@ static void cmd_bconf_parse(struct silofs_fs_bconf *bconf, const char *cfg)
 static void
 cmd_bconf_unparse(const struct silofs_fs_bconf *bconf, char **pcfg)
 {
-	cmd_append_section("fs", pcfg);
-	cmd_append_uuid("uuid", &bconf->fs_uuid, pcfg);
+	const char *sec_name = NULL;
 
-	cmd_append_section("users", pcfg);
+	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_FS);
+	cmd_append_section(sec_name, pcfg);
+	cmd_append_uuid("uuid", &bconf->fs_uuid, pcfg);
+	if (cmd_bconf_has_pack_id(bconf)) {
+		cmd_append_hash("pack", &bconf->pack_id, pcfg);
+	}
+	cmd_append_newline(pcfg);
+
+	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_USERS);
+	cmd_append_section(sec_name, pcfg);
 	for (size_t i = 0; i < bconf->users_ids.nuids; ++i) {
 		cmd_append_user(&bconf->users_ids.uids[i], pcfg);
 	}
 	cmd_append_newline(pcfg);
 
-	cmd_append_section("groups", pcfg);
+	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_GROUPS);
+	cmd_append_section(sec_name, pcfg);
 	for (size_t j = 0; j < bconf->groups_ids.ngids; ++j) {
 		cmd_append_group(&bconf->groups_ids.gids[j], pcfg);
 	}

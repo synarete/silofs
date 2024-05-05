@@ -21,16 +21,6 @@
 #include <silofs/pack.h>
 
 
-static void hash_to_name(const struct silofs_hash256 *hash,
-                         struct silofs_strbuf *out_name)
-{
-	silofs_strbuf_reset(out_name);
-	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash),
-	                    out_name->str, sizeof(out_name->str) - 1);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void pkmeta1k_set_magic(struct silofs_pack_meta1k *pkm, uint64_t magic)
 {
 	pkm->pm_magic = silofs_cpu_to_le64(magic);
@@ -193,7 +183,7 @@ static void pdi_del(struct silofs_pack_desc_info *pdi,
 void silofs_pdi_to_name(const struct silofs_pack_desc_info *pdi,
                         struct silofs_strbuf *out_name)
 {
-	hash_to_name(&pdi->pd.pd_hash, out_name);
+	silofs_hash256_to_name(&pdi->pd.pd_hash, out_name);
 }
 
 bool silofs_pdi_isbootrec(const struct silofs_pack_desc_info *pdi)
@@ -438,5 +428,5 @@ int silofs_catalog_encode(struct silofs_catalog *catalog)
 void silofs_catalog_to_name(const struct silofs_catalog *catalog,
                             struct silofs_strbuf *out_name)
 {
-	hash_to_name(&catalog->cat_hash, out_name);
+	silofs_hash256_to_name(&catalog->cat_hash, out_name);
 }

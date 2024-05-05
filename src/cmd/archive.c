@@ -209,7 +209,11 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	cmd_archive_fs(ctx->fs_ctx, ctx->in_args.remotedir_real);
+	const char *remotedir = ctx->in_args.remotedir_real;
+	struct silofs_fs_bconf *bconf = &ctx->fs_args.bconf;
+
+	cmd_archive_fs(ctx->fs_ctx, remotedir, &bconf->pack_id);
+	cmd_bconf_save(bconf, remotedir);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

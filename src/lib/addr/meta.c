@@ -253,6 +253,13 @@ int silofs_hdr_verify(const struct silofs_header *hdr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_hash256 s_hash_nil;
+
+bool silofs_hash256_isnil(const struct silofs_hash256 *hash)
+{
+	return silofs_hash256_isequal(hash, &s_hash_nil);
+}
+
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other)
 {
@@ -263,4 +270,22 @@ void silofs_hash256_assign(struct silofs_hash256 *hash,
                            const struct silofs_hash256 *other)
 {
 	memcpy(hash, other, sizeof(*hash));
+}
+
+void silofs_hash256_to_name(const struct silofs_hash256 *hash,
+                            struct silofs_strbuf *out_name)
+{
+	silofs_strbuf_reset(out_name);
+	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash),
+	                    out_name->str, sizeof(out_name->str) - 1);
+}
+
+void silofs_hash256_to_base64(const struct silofs_hash256 *hash,
+                              struct silofs_strbuf *out_sbuf)
+{
+	size_t len = 0;
+
+	silofs_strbuf_reset(out_sbuf);
+	silofs_base64_encode(hash->hash, sizeof(hash->hash),
+	                     out_sbuf->str, sizeof(out_sbuf->str) - 1, &len);
 }

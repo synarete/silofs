@@ -260,11 +260,12 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 	cmd_require_ok(fse, err, "inspect error");
 }
 
-void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir)
+void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *remotedir,
+                    struct silofs_hash256 *out_cat_hash)
 {
 	int err;
 
-	err = silofs_export_fs(fse, remotedir);
+	err = silofs_export_fs(fse, remotedir, out_cat_hash);
 	cmd_require_ok(fse, err, "archive error");
 }
 

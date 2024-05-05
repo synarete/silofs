@@ -88,6 +88,7 @@ void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
 int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
                       silofs_visit_laddr_fn cb, void *user_ctx);
 
-int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *remotedir);
+int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *remotedir,
+                     struct silofs_hash256 *out_cat_hash);
 
 #endif /* SILOFS_EXECLIB_H_ */

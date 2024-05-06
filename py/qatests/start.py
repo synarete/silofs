@@ -73,10 +73,12 @@ class ProgInfo:
     def check_config(self) -> None:
         basedir = self.config.basedir
         if not utils.is_empty_dir(basedir):
-            raise ArgsException(f"not an empty base directory: {basedir}")
+            raise ArgsException(f"not an empty directory: {basedir}")
         mntdir = self.config.mntdir
+        if not utils.is_dir(mntdir):
+            raise ArgsException(f"illegal mount-point: {mntdir}")
         if not utils.is_empty_dir(mntdir):
-            raise ArgsException(f"not an empty mount directory: {mntdir}")
+            raise ArgsException(f"not an empty mount-point: {mntdir}")
 
     def start_run(self) -> None:
         run.run_tests(self.config)

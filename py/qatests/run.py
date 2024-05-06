@@ -4,7 +4,6 @@ import platform
 import random
 import sys
 import traceback
-from pathlib import Path
 
 from . import cmd
 from . import conf
@@ -13,20 +12,6 @@ from . import expect
 from . import log
 from . import test_all
 from . import utils
-
-
-def _require_empty_dir(dirpath: Path) -> None:
-    if not utils.is_dir(dirpath):
-        log.println(f"not a directory: {dirpath}")
-        sys.exit(1)
-    if not utils.is_empty_dir(dirpath):
-        log.println(f"not an empty directory: {dirpath}")
-        sys.exit(1)
-
-
-def _validate_config(cfg: conf.TestConfig) -> None:
-    _require_empty_dir(cfg.basedir)
-    _require_empty_dir(cfg.mntdir)
 
 
 def _seed_random() -> None:
@@ -85,7 +70,6 @@ def _exec_test(td: ctx.TestDef, env: ctx.TestEnv) -> None:
 
 
 def _do_run_tests(cfg: conf.TestConfig) -> None:
-    _validate_config(cfg)
     _pre_run_tests()
     for td in test_all.get_tests_defs():
         env = ctx.TestEnv(td.name, cfg)

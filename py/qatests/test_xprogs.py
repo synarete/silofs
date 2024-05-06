@@ -8,7 +8,7 @@ from .ctx import TestEnv
 def test_postgresql(env: TestEnv) -> None:
     url = env.cfg.remotes.postgresql_repo_url
     if not url:
-        return None
+        return
     name = env.uniq_name()
     env.exec_setup_fs(20)
     base = env.create_fstree(name)
@@ -29,7 +29,7 @@ def _test_postgresql_at(env: TestEnv, base: Path) -> None:
 def test_rsync(env: TestEnv) -> None:
     url = env.cfg.remotes.rsync_repo_url
     if not url:
-        return None
+        return
     name = env.uniq_name()
     env.exec_init()
     env.exec_mkfs(20, sup_groups=True)
@@ -57,7 +57,7 @@ def _test_rsync_at(env: TestEnv, base: Path) -> None:
 def test_gitscm(env: TestEnv) -> None:
     url = env.cfg.remotes.git_repo_url
     if not url:
-        return None
+        return
     name = env.uniq_name()
     env.exec_setup_fs(8)
     base = env.create_fstree(name)
@@ -79,7 +79,7 @@ def _test_gitscm_at(env: TestEnv, base: Path) -> None:
 def test_git_archive_untar(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     if not url:
-        return None
+        return
     name = env.uniq_name()
     env.exec_setup_fs(60)
     base = env.create_fstree(name)
@@ -104,7 +104,7 @@ def _test_git_archive_untar_at(env: TestEnv, base: Path) -> None:
 def test_rpmbuild(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     if not url:
-        return None
+        return
     name = env.uniq_name()
     env.exec_setup_fs(20)
     base = env.create_fstree(name)

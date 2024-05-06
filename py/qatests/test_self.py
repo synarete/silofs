@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from . import utils
 from .ctx import TestEnv
 
 
@@ -95,3 +96,28 @@ def test_funtests_mt(env: TestEnv) -> None:
     env.exec_umount()
     env.exec_rmfs(ff_snap_name1)
     env.exec_rmfs(ff_snap_name2)
+
+
+def test_cicd(env: TestEnv) -> None:
+    url = env.cfg.remotes.silofs_repo_url
+    if url:
+        _test_cicd(env)
+
+
+def _test_cicd(env: TestEnv) -> None:
+    url = env.cfg.remotes.silofs_repo_url
+    name = env.uniq_name()
+    env.exec_setup_fs(60)
+    base = env.create_fstree(name)
+    ret = env.cmd.git.clone(url, base)
+    ok = utils.has_executables(["podman"])
+    if ok and ret == 0:
+        _test_cicd_at(env, base)
+    env.remove_fstree(name)
+    env.exec_teardown_fs()
+
+
+def _test_cicd_at(env: TestEnv, base: Path) -> None:
+    cicd_dir = base / "cicd"
+    run_ci_sh = "./silofs-containerized-ci.sh"
+    env.cmd.sh.run_ok(run_ci_sh, cicd_dir)

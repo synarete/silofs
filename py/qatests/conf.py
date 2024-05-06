@@ -11,12 +11,20 @@ import toml
 from .expect import ExpectException
 
 
+class TestRemotesConfig(pydantic.BaseModel):
+    postgresql_repo_url: str = "https://git.postgresql.org/git/postgresql.git"
+    rsync_repo_url: str = "git://git.samba.org/rsync.git"
+    git_repo_url: str = "https://github.com/git/git.git"
+    silofs_repo_url: str = "https://github.com/synarete/silofs"
+
+
 class TestConfig(pydantic.BaseModel):
     basedir: Path = Path(".").resolve(strict=True)
     mntdir: Path = Path(".").resolve(strict=True)
     password: str = "123456"
     use_stdalloc: bool = False
     allow_coredump: bool = False
+    remotes: TestRemotesConfig = TestRemotesConfig()
 
 
 class FsId(pydantic.BaseModel):

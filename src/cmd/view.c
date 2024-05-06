@@ -103,7 +103,7 @@ static void cmd_view_destroy_fs_ctx(struct cmd_view_ctx *ctx)
 static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);

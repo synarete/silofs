@@ -288,7 +288,7 @@ static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_fs_ctx(ctx);
-	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);

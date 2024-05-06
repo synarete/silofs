@@ -107,7 +107,7 @@ static void cmd_mkfs_destroy_fs_ctx(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fs_ctx(ctx);
-	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
@@ -151,14 +151,13 @@ static void cmd_mkfs_start(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 {
-	struct cmd_mkfs_in_args *args = &ctx->in_args;
-
-	cmd_check_notdir(args->repodir_name);
-	cmd_check_notexists(args->repodir_name);
-	cmd_split_path(args->repodir_name, &args->repodir, &args->name);
-	cmd_realpath_dir(args->repodir, &args->repodir_real);
-	cmd_check_repodir(args->repodir_real);
-	cmd_check_fsname(args->name);
+	cmd_check_notdir(ctx->in_args.repodir_name);
+	cmd_check_notexists(ctx->in_args.repodir_name);
+	cmd_split_path(ctx->in_args.repodir_name,
+	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir(ctx->in_args.repodir_real);
+	cmd_check_fsname(ctx->in_args.name);
 }
 
 static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)

@@ -309,6 +309,8 @@ void cmd_delpass(char **pass);
 /* init configuration */
 void cmd_bconf_init(struct silofs_fs_bconf *bconf);
 
+void cmd_bconf_fini(struct silofs_fs_bconf *bconf);
+
 void cmd_bconf_reset_ids(struct silofs_fs_bconf *bconf);
 
 void cmd_bconf_assign(struct silofs_fs_bconf *bconf,

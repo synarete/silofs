@@ -106,7 +106,7 @@ static void cmd_archive_destroy_fs_ctx(struct cmd_archive_ctx *ctx)
 static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_srcname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -219,6 +219,7 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 	cmd_bconf_set_name(&bconf, ctx->in_args.dstname);
 	cmd_archive_fs(ctx->fs_ctx, ctx->in_args.packdir_real, &bconf.pack_id);
 	cmd_bconf_save(&bconf, ctx->in_args.packdir_real);
+	cmd_bconf_fini(&bconf);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

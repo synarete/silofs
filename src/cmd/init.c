@@ -67,7 +67,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
-	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx = NULL;

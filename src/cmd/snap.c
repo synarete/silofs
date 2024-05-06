@@ -116,7 +116,7 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_bconf_reset_ids(&ctx->fs_args.bconf);
+	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -329,7 +329,7 @@ static void cmd_snap_save_snap_bconf(struct cmd_snap_ctx *ctx)
 	cmd_bconf_set_lvid_by(&snap_bconf, &ctx->lvid_alt);
 	cmd_bconf_set_name(&snap_bconf,  ctx->in_args.snapname);
 	cmd_bconf_save(&snap_bconf, ctx->in_args.repodir_real);
-	cmd_bconf_reset_ids(&snap_bconf);
+	cmd_bconf_fini(&snap_bconf);
 }
 
 static void cmd_snap_save_orig_bconf(struct cmd_snap_ctx *ctx)
@@ -340,7 +340,7 @@ static void cmd_snap_save_orig_bconf(struct cmd_snap_ctx *ctx)
 	cmd_bconf_set_lvid_by(&orig_bconf, &ctx->lvid_new);
 	cmd_bconf_set_name(&orig_bconf,  ctx->in_args.name);
 	cmd_bconf_save(&orig_bconf, ctx->in_args.repodir_real);
-	cmd_bconf_reset_ids(&orig_bconf);
+	cmd_bconf_fini(&orig_bconf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

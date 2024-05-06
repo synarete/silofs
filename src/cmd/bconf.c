@@ -887,6 +887,12 @@ void cmd_bconf_init(struct silofs_fs_bconf *bconf)
 	bconf->groups_ids.ngids = 0;
 }
 
+void cmd_bconf_fini(struct silofs_fs_bconf *bconf)
+{
+	cmd_bconf_reset_ids(bconf);
+	silofs_memzero(bconf, sizeof(*bconf));
+}
+
 void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
                         const struct silofs_uuid *uuid)
 {

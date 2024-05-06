@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path
 
 from . import cmd
+from . import conf
 from . import ctx
 from . import expect
 from . import log
@@ -23,7 +24,7 @@ def _require_empty_dir(dirpath: Path) -> None:
         sys.exit(1)
 
 
-def _validate_config(cfg: ctx.TestConfig) -> None:
+def _validate_config(cfg: conf.TestConfig) -> None:
     _require_empty_dir(cfg.basedir)
     _require_empty_dir(cfg.mntdir)
 
@@ -83,7 +84,7 @@ def _exec_test(td: ctx.TestDef, env: ctx.TestEnv) -> None:
     td.hook(env)
 
 
-def _do_run_tests(cfg: ctx.TestConfig) -> None:
+def _do_run_tests(cfg: conf.TestConfig) -> None:
     _validate_config(cfg)
     _pre_run_tests()
     for td in test_all.get_tests_defs():
@@ -94,13 +95,7 @@ def _do_run_tests(cfg: ctx.TestConfig) -> None:
     _post_run_tests()
 
 
-def make_config(basedir: Path, mntdir: Path) -> ctx.TestConfig:
-    _require_empty_dir(basedir)
-    _require_empty_dir(mntdir)
-    return ctx.TestConfig(basedir, mntdir)
-
-
-def run_tests(cfg: ctx.TestConfig) -> None:
+def run_tests(cfg: conf.TestConfig) -> None:
     try:
         _do_run_tests(cfg)
     except cmd.CmdError as cex:

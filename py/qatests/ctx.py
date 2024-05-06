@@ -6,21 +6,10 @@ import typing
 from concurrent import futures
 from pathlib import Path
 
-from . import bconf
 from . import cmd
+from . import conf
 from . import expect
 from . import utils
-
-
-# pylint: disable=R0903
-class TestConfig:
-    def __init__(self, basedir: Path, mntdir: Path) -> None:
-        self.basedir = basedir.resolve(strict=True)
-        self.mntdir = mntdir.resolve(strict=True)
-        self.repodir = self.basedir / "repo"
-        self.password = "123456"
-        self.use_stdalloc = False
-        self.allow_coredump = False
 
 
 class TestData:
@@ -99,14 +88,14 @@ class TestDataSet:
 
 # pylint: disable=R0904
 class TestEnv:
-    def __init__(self, name: str, cfg: TestConfig) -> None:
+    def __init__(self, name: str, cfg: conf.TestConfig) -> None:
         self.name = name
         self.uniq = 0
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
         self.cmd = cmd.Cmds(cfg.use_stdalloc, cfg.allow_coredump)
-        self.bconf = bconf.BConf()
+        self.bconf = conf.FsBootConf()
 
     @staticmethod
     def suspend(nsec: int) -> None:
@@ -162,7 +151,7 @@ class TestEnv:
         utils.rmtree_at(path)
 
     def repodir(self) -> Path:
-        return self.cfg.repodir
+        return self.cfg.basedir / "repo"
 
     def mntpoint(self) -> Path:
         return self.cfg.mntdir
@@ -176,7 +165,7 @@ class TestEnv:
         return self.cfg.password
 
     def exec_init(self) -> None:
-        self.cmd.silofs.init(self.cfg.repodir)
+        self.cmd.silofs.init(self.repodir())
 
     def exec_mkfs(
         self,
@@ -268,9 +257,10 @@ class TestEnv:
         self.expect.within(mntp, mnts)
 
     def update_bconf(self, name: str = "") -> None:
-        self.bconf = bconf.load_bconf(self._repodir_name(name))
+        self.bconf = conf.load_fs_boot_conf(self._repodir_name(name))
 
 
+# pylint: disable=R0903
 class TestDef:
     def __init__(self, hook: typing.Callable[[TestEnv], None]) -> None:
         mod = "." + hook.__module__

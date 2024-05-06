@@ -562,57 +562,82 @@ static bool cmd_isascii_cfg(const char *cfg, size_t size)
 	return substr_isascii(&scfg);
 }
 
-static void cmd_read_bconf_file(const char *path, char **out_cfg)
+static char *
+cmd_read_bconf_file(const char *repodir, const char *name)
 {
-	struct stat st;
-	size_t size;
+	struct stat st = { .st_mode = 0 };
+	size_t size = 0;
 	char *cfg = NULL;
+	int dfd = -1;
 	int fd = -1;
 	int err;
 
-	err = silofs_sys_stat(path, &st);
+	err = silofs_sys_stat(repodir, &st);
 	if (err) {
-		silofs_die(err, "stat failure: %s", path);
+		silofs_die(err, "stat failure: %s", repodir);
+	}
+	if (!S_ISDIR(st.st_mode)) {
+		silofs_die(0, "not a directory: %s", repodir);
+	}
+	err = silofs_sys_open(repodir, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	if (err) {
+		silofs_die(err, "opendir error: %s", repodir);
+	}
+	err = silofs_sys_fstatat(dfd, name, &st, 0);
+	if (err) {
+		silofs_die(err, "stat failure: %s", name);
 	}
 	if (!S_ISREG(st.st_mode)) {
-		silofs_die(0, "not a regular file: %s", path);
-	}
-	if (st.st_size >= SILOFS_MEGA) {
-		silofs_die(-EFBIG, "illegal config file: %s", path);
-	}
-	err = silofs_sys_open(path, O_RDONLY, 0, &fd);
-	if (err) {
-		silofs_die(err, "can not open config file: %s", path);
+		silofs_die(0, "not a regular file: %s", name);
 	}
 	size = (size_t)st.st_size;
+	if (size >= SILOFS_MEGA) {
+		silofs_die(-EFBIG, "illegal boot-config file: %s", name);
+	}
+	err = silofs_sys_openat(dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		silofs_die(err, "failed to open boot-config: %s", name);
+	}
+	silofs_sys_closefd(&dfd);
+
 	cfg = cmd_zalloc(size + 1);
 	err = silofs_sys_readn(fd, cfg, size);
 	if (err) {
-		silofs_die(err, "failed to read config file %s", path);
+		silofs_die(err, "failed to read boot-config: %s", name);
 	}
 	silofs_sys_close(fd);
 
 	if (!cmd_isascii_cfg(cfg, size)) {
-		silofs_die(0, "non-ascii character in: %s", path);
+		silofs_die(0, "non-ascii character in: %s", repodir);
 	}
-	*out_cfg = cfg;
+	return cfg;
 }
 
-static void cmd_write_bconf_file(const char *path, const char *cfg)
+static void
+cmd_write_bconf_file(const char *repodir, const char *name, const char *cfg)
 {
 	const size_t len = cfg ? strlen(cfg) : 0;
 	const mode_t mode = S_IRUSR | S_IWUSR;
+	int dfd = -1;
 	int fd = -1;
 	int err;
 
-	silofs_sys_chmod(path, mode);
-	err = silofs_sys_open(path, O_CREAT | O_RDWR | O_TRUNC, mode, &fd);
+	err = silofs_sys_open(repodir, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
-		silofs_die(err, "failed to create: %s", path);
+		silofs_die(err, "opendir error: %s", repodir);
 	}
+	silofs_sys_fchmodat(dfd, name, mode, 0);
+
+	err = silofs_sys_openat(dfd, name, O_CREAT | O_RDWR | O_TRUNC,
+	                        mode, &fd);
+	if (err) {
+		silofs_die(err, "failed to create boot-config: %s", name);
+	}
+	silofs_sys_closefd(&dfd);
+
 	err = silofs_sys_writen(fd, cfg, len);
 	if (err) {
-		silofs_die(err, "failed to write: %s", path);
+		silofs_die(err, "failed to write boot-config: %s", name);
 	}
 	silofs_sys_closefd(&fd);
 }
@@ -754,32 +779,33 @@ static void cmd_bconf_parse(struct silofs_fs_bconf *bconf, const char *cfg)
 	cmd_bconf_parse_data(bconf, &data);
 }
 
-static void
-cmd_bconf_unparse(const struct silofs_fs_bconf *bconf, char **pcfg)
+static char *cmd_bconf_unparse(const struct silofs_fs_bconf *bconf)
 {
 	const char *sec_name = NULL;
+	char *cfg = NULL;
 
 	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_FS);
-	cmd_append_section(sec_name, pcfg);
-	cmd_append_uuid("uuid", &bconf->fs_uuid, pcfg);
+	cmd_append_section(sec_name, &cfg);
+	cmd_append_uuid("uuid", &bconf->fs_uuid, &cfg);
 	if (cmd_bconf_has_pack_id(bconf)) {
-		cmd_append_hash("pack", &bconf->pack_id, pcfg);
+		cmd_append_hash("pack", &bconf->pack_id, &cfg);
 	}
-	cmd_append_newline(pcfg);
+	cmd_append_newline(&cfg);
 
 	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_USERS);
-	cmd_append_section(sec_name, pcfg);
+	cmd_append_section(sec_name, &cfg);
 	for (size_t i = 0; i < bconf->users_ids.nuids; ++i) {
-		cmd_append_user(&bconf->users_ids.uids[i], pcfg);
+		cmd_append_user(&bconf->users_ids.uids[i], &cfg);
 	}
-	cmd_append_newline(pcfg);
+	cmd_append_newline(&cfg);
 
 	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_GROUPS);
-	cmd_append_section(sec_name, pcfg);
+	cmd_append_section(sec_name, &cfg);
 	for (size_t j = 0; j < bconf->groups_ids.ngids; ++j) {
-		cmd_append_group(&bconf->groups_ids.gids[j], pcfg);
+		cmd_append_group(&bconf->groups_ids.gids[j], &cfg);
 	}
-	cmd_append_newline(pcfg);
+	cmd_append_newline(&cfg);
+	return cfg;
 }
 
 static void cmd_bconf_append_user_id(struct silofs_fs_bconf *bconf,
@@ -893,62 +919,32 @@ void cmd_bconf_reset_ids(struct silofs_fs_bconf *bconf)
 	cmd_pfree_gids(&bconf->groups_ids.gids, &bconf->groups_ids.ngids);
 }
 
-static void
-cmd_bconf_load_from(struct silofs_fs_bconf *bconf, const char *path)
+void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *cfg = NULL;
 
-	cmd_read_bconf_file(path, &cfg);
+	cmd_bconf_reset_ids(bconf);
+	cfg = cmd_read_bconf_file(basedir, bconf->name.str);
 	cmd_bconf_parse(bconf, cfg);
 	cmd_pstrfree(&cfg);
 }
 
-static void
-cmd_bconf_save_to(const struct silofs_fs_bconf *bconf, const char *path)
+void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *cfg = NULL;
 
-	cmd_bconf_unparse(bconf, &cfg);
-	cmd_write_bconf_file(path, cfg);
+	cfg = cmd_bconf_unparse(bconf);
+	cmd_write_bconf_file(basedir, bconf->name.str, cfg);
 	cmd_pstrfree(&cfg);
-}
-
-static char *
-cmd_bconf_pathname(const struct silofs_fs_bconf *bconf, const char *basedir)
-{
-	char *path = NULL;
-
-	cmd_join_path(basedir, bconf->name.str, &path);
-	return path;
-}
-
-void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir)
-{
-	char *path;
-
-	path = cmd_bconf_pathname(bconf, basedir);
-	cmd_bconf_reset_ids(bconf);
-	cmd_bconf_load_from(bconf, path);
-	cmd_pstrfree(&path);
-}
-
-void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir)
-{
-	char *path;
-
-	path = cmd_bconf_pathname(bconf, basedir);
-	cmd_bconf_save_to(bconf, path);
-	cmd_pstrfree(&path);
 }
 
 void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf, const char *basedir)
 {
 	char *path = NULL;
 
-	path = cmd_bconf_pathname(bconf, basedir);
+	cmd_join_path(basedir, bconf->name.str, &path);
 	silofs_sys_unlink(path);
 	cmd_pstrfree(&path);
-	(void)bconf;
 }
 
 void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name)

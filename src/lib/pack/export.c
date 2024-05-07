@@ -82,10 +82,24 @@ static void pec_disconnect_target(struct silofs_pack_export_ctx *pe_ctx)
 	}
 }
 
+static int pec_stat_at_remote(const struct silofs_pack_export_ctx *pe_ctx,
+                              const struct silofs_strbuf *name, loff_t *out_sz)
+{
+	struct stat st = { .st_size = 0 };
+	int err;
+
+	err = silofs_sys_fstatat(pe_ctx->pex_dfd, name->str, &st, 0);
+	if (!err) {
+		*out_sz = st.st_size;
+	}
+	return err;
+}
+
 static int pec_send_to_remote(const struct silofs_pack_export_ctx *pe_ctx,
                               const struct silofs_strbuf *name,
                               const void *data, size_t len)
 {
+	const mode_t mode = S_IRUSR | S_IRGRP;
 	int fd = -1;
 	int err;
 
@@ -101,6 +115,12 @@ static int pec_send_to_remote(const struct silofs_pack_export_ctx *pe_ctx,
 		        name->str, len, err);
 		goto out;
 	}
+	err = silofs_sys_fchmodat(pe_ctx->pex_dfd, name->str, mode, 0);
+	if (err) {
+		log_dbg("remote: failed to chmod: %s mode=0%o err=%d",
+		        name->str, mode, err);
+		goto out;
+	}
 out:
 	silofs_sys_closefd(&fd);
 	return err;
@@ -111,9 +131,16 @@ static int pec_send_to_remote_by(const struct silofs_pack_export_ctx *pe_ctx,
                                  const void *data)
 {
 	struct silofs_strbuf name;
+	const size_t len = pdi->pd.pd_laddr.len;
+	loff_t sz = -1;
+	int err;
 
 	silofs_pdi_to_name(pdi, &name);
-	return pec_send_to_remote(pe_ctx, &name, data, pdi->pd.pd_laddr.len);
+	err = pec_stat_at_remote(pe_ctx, &name, &sz);
+	if ((err == -ENOENT) || (!err && (len == (size_t)sz))) {
+		err = pec_send_to_remote(pe_ctx, &name, data, len);
+	}
+	return err;
 }
 
 

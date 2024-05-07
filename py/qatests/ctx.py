@@ -88,13 +88,13 @@ class TestDataSet:
 
 # pylint: disable=R0904
 class TestEnv:
-    def __init__(self, name: str, cfg: conf.TestConfig) -> None:
+    def __init__(self, name: str, cfg: conf.Config) -> None:
         self.name = name
         self.uniq = 0
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
-        self.cmd = cmd.Cmds(cfg.use_stdalloc, cfg.allow_coredump)
+        self.cmd = cmd.Cmds(cfg.params.use_stdalloc, cfg.params.allow_coredump)
         self.bconf = conf.FsBootConf()
 
     @staticmethod
@@ -162,7 +162,7 @@ class TestEnv:
         return self.repodir() / name
 
     def _passwd(self) -> str:
-        return self.cfg.password
+        return self.cfg.params.password
 
     def exec_init(self) -> None:
         self.cmd.silofs.init(self.repodir())

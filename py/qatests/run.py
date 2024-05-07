@@ -4,23 +4,39 @@ import platform
 import random
 import sys
 import traceback
+from pathlib import Path
 
 from . import cmd
 from . import conf
-from . import ctx
 from . import expect
 from . import log
 from . import test_all
 from . import utils
+from .ctx import TestDef, TestEnv
 
 
-def _seed_random() -> None:
-    now = datetime.datetime.now()
-    seed = int(now.year * now.day * now.hour * now.minute / (now.second + 1))
-    random.seed(seed)
+class RunArgs:
+    def __init__(self) -> None:
+        self.start_time = datetime.datetime.now()
+        self.config = conf.Config()
+
+    def exec_duration(self) -> float:
+        """Returns the total time (in minutes) since start"""
+        now = datetime.datetime.now()
+        dif = now - self.start_time
+        return dif.total_seconds() / 60.0
+
+    def load_config(self, path: Path) -> None:
+        self.config = conf.load_config(path.resolve(strict=True))
 
 
-def _report_host() -> None:
+def _seed_random(args: RunArgs) -> None:
+    base = args.start_time
+    seed = base.year * base.day * base.hour * base.minute / (base.second + 1)
+    random.seed(int(seed))
+
+
+def _report_host(_: RunArgs) -> None:
     plat_sys = platform.system()
     plat_rel = platform.release()
     log.println(f"HOST: {plat_sys} {plat_rel}")
@@ -29,59 +45,62 @@ def _report_host() -> None:
     log.println(f"PYTHON: {py_impl} {py_vers}")
 
 
-def _report_prog() -> None:
+def _report_prog(args: RunArgs) -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
     log.println(f"PROG: {prog}")
     vers = cmds.silofs.version()
     log.println(f"VERS: {vers}")
+    log.println(f"START: {args.start_time}")
 
 
-def _report_done() -> None:
+def _report_done(args: RunArgs) -> None:
     cmds = cmd.Cmds()
     prog = cmds.silofs.xbin
     vers = cmds.silofs.version()
     log.println(f"DONE: {prog} {vers}")
+    durs = args.exec_duration()
+    log.println(f"DURATION: {durs} minutes")
 
 
-def _pre_run_tests() -> None:
-    _seed_random()
-    _report_host()
-    _report_prog()
+def _pre_run_tests(args: RunArgs) -> None:
+    _seed_random(args)
+    _report_host(args)
+    _report_prog(args)
 
 
-def _post_run_tests() -> None:
-    _report_done()
+def _post_run_tests(args: RunArgs) -> None:
+    _report_done(args)
 
 
-def _pre_test(env: ctx.TestEnv) -> None:
+def _pre_test(env: TestEnv) -> None:
     env.expect.empty_dir(env.cfg.basedir)
     env.expect.empty_dir(env.cfg.mntdir)
 
 
-def _post_test(env: ctx.TestEnv) -> None:
+def _post_test(env: TestEnv) -> None:
     utils.empty_dir(env.cfg.mntdir)
     utils.empty_dir(env.cfg.basedir)
 
 
-def _exec_test(td: ctx.TestDef, env: ctx.TestEnv) -> None:
+def _exec_test(td: TestDef, env: TestEnv) -> None:
     log.println(f"TEST: {td.name}")
     td.hook(env)
 
 
-def _do_run_tests(cfg: conf.TestConfig) -> None:
-    _pre_run_tests()
+def _do_run_tests(args: RunArgs) -> None:
+    _pre_run_tests(args)
     for td in test_all.get_tests_defs():
-        env = ctx.TestEnv(td.name, cfg)
+        env = TestEnv(td.name, args.config)
         _pre_test(env)
         _exec_test(td, env)
         _post_test(env)
-    _post_run_tests()
+    _post_run_tests(args)
 
 
-def run_tests(cfg: conf.TestConfig) -> None:
+def run_tests(args: RunArgs) -> None:
     try:
-        _do_run_tests(cfg)
+        _do_run_tests(args)
     except cmd.CmdError as cex:
         log.println(f"FATAL: {cex} {cex.retcode}")
         log.println(f"FATAL: {cex.output}")

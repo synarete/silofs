@@ -11,20 +11,24 @@ import toml
 from .expect import ExpectException
 
 
-class TestRemotesConfig(pydantic.BaseModel):
+class ConfigParams(pydantic.BaseModel):
+    password: str = "123456"
+    use_stdalloc: bool = False
+    allow_coredump: bool = False
+
+
+class ConfigRemotes(pydantic.BaseModel):
     postgresql_repo_url: str = "https://git.postgresql.org/git/postgresql.git"
     rsync_repo_url: str = "git://git.samba.org/rsync.git"
     git_repo_url: str = "https://github.com/git/git.git"
     silofs_repo_url: str = "https://github.com/synarete/silofs"
 
 
-class TestConfig(pydantic.BaseModel):
+class Config(pydantic.BaseModel):
     basedir: Path = Path(".").resolve(strict=True)
     mntdir: Path = Path(".").resolve(strict=True)
-    password: str = "123456"
-    use_stdalloc: bool = False
-    allow_coredump: bool = False
-    remotes: TestRemotesConfig = TestRemotesConfig()
+    params: ConfigParams = ConfigParams()
+    remotes: ConfigRemotes = ConfigRemotes()
 
 
 class FsId(pydantic.BaseModel):
@@ -42,10 +46,10 @@ def _load_toml_as_json(path: Path) -> str:
     return json.dumps(toml_data)
 
 
-def load_config(path: Path) -> TestConfig:
+def load_config(path: Path) -> Config:
     try:
         json_conf = json.loads(_load_toml_as_json(path))
-        return TestConfig(**json_conf)
+        return Config(**json_conf)
     except toml.TomlDecodeError as tde:
         raise ExpectException(f"bad configuration toml: {path}") from tde
     except pydantic.ValidationError as ve:

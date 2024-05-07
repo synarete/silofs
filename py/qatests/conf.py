@@ -36,7 +36,7 @@ class FsId(pydantic.BaseModel):
 
 
 class FsBootConf(pydantic.BaseModel):
-    fsid: FsId = FsId()
+    fs: FsId = FsId()
     users: typing.Optional[typing.Dict[str, int]] = {}
     groups: typing.Optional[typing.Dict[str, int]] = {}
 

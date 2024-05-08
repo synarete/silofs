@@ -25,7 +25,7 @@
 #include <silofs/addr/meta.h>
 #include <silofs/addr/ivkey.h>
 #include <silofs/addr/blobid.h>
-#include <silofs/addr/paddr.h>
+#include <silofs/addr/oaddr.h>
 #include <silofs/addr/ltype.h>
 #include <silofs/addr/laddr.h>
 #include <silofs/addr/uaddr.h>

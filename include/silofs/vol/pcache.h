@@ -38,18 +38,18 @@ void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 
 struct silofs_btnode_info *
 silofs_pcache_lookup_bti(struct silofs_pcache *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_oaddr *oaddr);
 
 struct silofs_btnode_info *
 silofs_pcache_create_bti(struct silofs_pcache *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_oaddr *oaddr);
 
 struct silofs_btleaf_info *
 silofs_pcache_lookup_bli(struct silofs_pcache *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_oaddr *oaddr);
 
 struct silofs_btleaf_info *
 silofs_pcache_create_bli(struct silofs_pcache *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_oaddr *oaddr);
 
 #endif /* SILOFS_PCACHE_H_ */

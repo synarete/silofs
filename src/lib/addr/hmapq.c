@@ -81,9 +81,9 @@ static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t hash_of_pvid(const struct silofs_pvid *pvid)
+static uint64_t hash_of_ovid(const struct silofs_ovid *ovid)
 {
-	return silofs_pvid_hash64(pvid);
+	return silofs_ovid_hash64(ovid);
 }
 
 static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
@@ -91,13 +91,13 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 	return silofs_blobid_hash64(blobid);
 }
 
-static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
+static uint64_t hash_of_oaddr(const struct silofs_oaddr *oaddr)
 {
-	const uint64_t uoff = (uint64_t)paddr->off;
-	const uint64_t h1 = 0xc6a4a7935bd1e995ULL - paddr->len;
-	const uint64_t h2 = hash_of_pvid(&paddr->pvid);
+	const uint64_t uoff = (uint64_t)oaddr->off;
+	const uint64_t h1 = 0xc6a4a7935bd1e995ULL - oaddr->len;
+	const uint64_t h2 = hash_of_ovid(&oaddr->ovid);
 
-	return (uoff + paddr->index) ^ h1 ^ h2;
+	return (uoff + oaddr->index) ^ h1 ^ h2;
 }
 
 static uint64_t hash_of_lsegid(const struct silofs_lsegid *lsegid)
@@ -146,10 +146,10 @@ static long hkey_compare_as_blobid(const struct silofs_hkey *hkey1,
 	return silofs_blobid_compare(hkey1->keyu.blobid, hkey2->keyu.blobid);
 }
 
-static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
+static long hkey_compare_as_oaddr(const struct silofs_hkey *hkey1,
                                   const struct silofs_hkey *hkey2)
 {
-	return silofs_paddr_compare(hkey1->keyu.paddr, hkey2->keyu.paddr);
+	return silofs_oaddr_compare(hkey1->keyu.oaddr, hkey2->keyu.oaddr);
 }
 
 static long hkey_compare_as_uaddr(const struct silofs_hkey *hkey1,
@@ -174,7 +174,7 @@ static long hkey_compare_as(const struct silofs_hkey *hkey1,
 		cmp = hkey_compare_as_blobid(hkey1, hkey2);
 		break;
 	case SILOFS_HKEY_PADDR:
-		cmp = hkey_compare_as_paddr(hkey1, hkey2);
+		cmp = hkey_compare_as_oaddr(hkey1, hkey2);
 		break;
 	case SILOFS_HKEY_UADDR:
 		cmp = hkey_compare_as_uaddr(hkey1, hkey2);
@@ -219,7 +219,7 @@ static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
 		hash = hash_of_blobid(key);
 		break;
 	case SILOFS_HKEY_PADDR:
-		hash = hash_of_paddr(key);
+		hash = hash_of_oaddr(key);
 		break;
 	case SILOFS_HKEY_UADDR:
 		hash = hash_of_uaddr(key);
@@ -247,10 +247,10 @@ void silofs_hkey_by_blobid(struct silofs_hkey *hkey,
 	hkey_setup_by(hkey, SILOFS_HKEY_BLOBID, blobid);
 }
 
-void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
-                          const struct silofs_paddr *paddr)
+void silofs_hkey_by_oaddr(struct silofs_hkey *hkey,
+                          const struct silofs_oaddr *oaddr)
 {
-	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, paddr);
+	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, oaddr);
 }
 
 void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,

@@ -34,10 +34,10 @@
 #define off_len(beg, end)               silofs_off_len(beg, end)
 #define off_ulen(beg, end)              silofs_off_ulen(beg, end)
 
-#define paddr_none()                    silofs_paddr_none()
-#define paddr_reset(pa)                 silofs_paddr_reset(pa)
-#define paddr_assign(pa, oth)           silofs_paddr_assign(pa, oth)
-#define paddr_isnull(pa)                silofs_paddr_isnull(pa)
+#define oaddr_none()                    silofs_oaddr_none()
+#define oaddr_reset(pa)                 silofs_oaddr_reset(pa)
+#define oaddr_assign(pa, oth)           silofs_oaddr_assign(pa, oth)
+#define oaddr_isnull(pa)                silofs_oaddr_isnull(pa)
 
 #define ltype_nkbs(lt)                  silofs_ltype_nkbs(lt)
 #define ltype_size(lt)                  silofs_ltype_size(lt)

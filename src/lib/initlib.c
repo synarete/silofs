@@ -146,7 +146,7 @@ static void validate_persistent_types_size1(void)
 {
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
-	REQUIRE_SIZEOF(struct silofs_paddr32b, 32);
+	REQUIRE_SIZEOF(struct silofs_oaddr32b, 32);
 	REQUIRE_SIZEOF(struct silofs_btree_ltop, 80);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_leaf, SILOFS_BTREE_LEAF_SIZE);
@@ -166,7 +166,7 @@ static void validate_persistent_types_size2(void)
 	REQUIRE_SIZEOF(struct silofs_key, SILOFS_KEY_SIZE);
 	REQUIRE_SIZEOF(struct silofs_uuid, SILOFS_UUID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_lvid, 16);
-	REQUIRE_SIZEOF(struct silofs_pvid, 16);
+	REQUIRE_SIZEOF(struct silofs_ovid, 16);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_vrange128, 16);

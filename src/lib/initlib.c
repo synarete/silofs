@@ -150,7 +150,8 @@ static void validate_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_btree_ltop, 80);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_leaf, SILOFS_BTREE_LEAF_SIZE);
-	REQUIRE_SIZEOF(struct silofs_pack_desc128b, 128);
+	REQUIRE_SIZEOF(struct silofs_packid64b, 64);
+	REQUIRE_SIZEOF(struct silofs_pack_desc256b, 256);
 }
 
 static void validate_persistent_types_size2(void)

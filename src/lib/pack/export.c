@@ -178,7 +178,7 @@ pec_update_hash_of(const struct silofs_pack_export_ctx *pe_ctx,
 	const struct silofs_mdigest *md = &pe_ctx->pex_catalog.cat_mdigest;
 	const size_t len = pdi->pd.pd_laddr.len;
 
-	silofs_pkdesc_update_hash(&pdi->pd, md, dat, len);
+	silofs_pkdesc_update_id(&pdi->pd, md, dat, len);
 	return 0;
 }
 
@@ -309,15 +309,15 @@ out:
 	return err;
 }
 
-static void pec_catalog_hash(const struct silofs_pack_export_ctx *pe_ctx,
-                             struct silofs_hash256 *out_cat_hash)
+static void pec_catalog_id(const struct silofs_pack_export_ctx *pe_ctx,
+                           struct silofs_packid *out_packid)
 {
-	silofs_hash256_assign(out_cat_hash, &pe_ctx->pex_catalog.cat_hash);
+	silofs_packid_assign(out_packid, &pe_ctx->pex_catalog.cat_packid);
 }
 
 int silofs_fs_export(struct silofs_task *task,
                      const struct silofs_pack_args *pargs,
-                     struct silofs_hash256 *out_cat_hash)
+                     struct silofs_packid *out_packid)
 {
 	struct silofs_pack_export_ctx pe_ctx = {
 		.pex_dfd = -1,
@@ -332,7 +332,7 @@ int silofs_fs_export(struct silofs_task *task,
 	if (err) {
 		goto out;
 	}
-	pec_catalog_hash(&pe_ctx, out_cat_hash);
+	pec_catalog_id(&pe_ctx, out_packid);
 out:
 	pec_fini(&pe_ctx);
 	return err;

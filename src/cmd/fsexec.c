@@ -261,11 +261,11 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 }
 
 void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *packdir,
-                    struct silofs_hash256 *out_cat_hash)
+                    struct silofs_packid *out_packid)
 {
 	int err;
 
-	err = silofs_export_fs(fse, packdir, out_cat_hash);
+	err = silofs_export_fs(fse, packdir, out_packid);
 	cmd_require_ok(fse, err, "archive error");
 }
 

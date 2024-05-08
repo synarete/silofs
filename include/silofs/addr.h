@@ -30,6 +30,7 @@
 #include <silofs/addr/laddr.h>
 #include <silofs/addr/uaddr.h>
 #include <silofs/addr/vaddr.h>
+#include <silofs/addr/packid.h>
 #include <silofs/addr/hmapq.h>
 
 #ifdef SILOFS_HAVE_PRIVATE

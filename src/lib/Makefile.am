@@ -38,6 +38,7 @@ libsilofs_la_SOURCES += addr/laddr.c
 libsilofs_la_SOURCES += addr/ltype.c
 libsilofs_la_SOURCES += addr/meta.c
 libsilofs_la_SOURCES += addr/offlba.c
+libsilofs_la_SOURCES += addr/packid.c
 libsilofs_la_SOURCES += addr/paddr.c
 libsilofs_la_SOURCES += addr/uaddr.c
 libsilofs_la_SOURCES += addr/vaddr.c

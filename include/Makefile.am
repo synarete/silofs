@@ -45,6 +45,7 @@ nobase_include_HEADERS += silofs/addr/laddr.h
 nobase_include_HEADERS += silofs/addr/ltype.h
 nobase_include_HEADERS += silofs/addr/meta.h
 nobase_include_HEADERS += silofs/addr/offlba.h
+nobase_include_HEADERS += silofs/addr/packid.h
 nobase_include_HEADERS += silofs/addr/paddr.h
 nobase_include_HEADERS += silofs/addr/uaddr.h
 nobase_include_HEADERS += silofs/addr/vaddr.h

@@ -262,7 +262,7 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
 void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *packdir,
-                    struct silofs_hash256 *out_cat_hash);
+                    struct silofs_packid *out_packid);
 
 /* mount-info */
 struct cmd_proc_mntinfo {

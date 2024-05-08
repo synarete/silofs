@@ -19,7 +19,7 @@
 
 
 struct silofs_pack_desc {
-	struct silofs_hash256   pd_hash;
+	struct silofs_packid    pd_packid;
 	struct silofs_laddr     pd_laddr;
 };
 
@@ -33,7 +33,7 @@ struct silofs_catalog {
 	struct silofs_listq     cat_descq;
 	struct silofs_alloc    *cat_alloc;
 	struct silofs_bytebuf   cat_bbuf;
-	struct silofs_hash256   cat_hash;
+	struct silofs_packid    cat_packid;
 	size_t cat_capacity;
 };
 
@@ -44,12 +44,12 @@ void silofs_pkdesc_init(struct silofs_pack_desc *pd,
 
 void silofs_pkdesc_fini(struct silofs_pack_desc *pd);
 
-void silofs_pkdesc_update_hash(struct silofs_pack_desc *pd,
-                               const struct silofs_mdigest *md,
-                               const void *buf, size_t bsz);
+void silofs_pkdesc_update_id(struct silofs_pack_desc *pd,
+                             const struct silofs_mdigest *md,
+                             const void *buf, size_t bsz);
 
 
-void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc128b *pdx,
+void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc256b *pdx,
                             struct silofs_pack_desc *pd);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

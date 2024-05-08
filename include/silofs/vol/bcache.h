@@ -14,42 +14,42 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PCACHE_H_
-#define SILOFS_PCACHE_H_
+#ifndef SILOFS_BCACHE_H_
+#define SILOFS_BCACHE_H_
 
 
-struct silofs_pcache {
+struct silofs_bcache {
 	struct silofs_hmapq     pc_hmapq;
 	struct silofs_alloc    *pc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_pcache_init(struct silofs_pcache *pcache,
+int silofs_bcache_init(struct silofs_bcache *bcache,
                        struct silofs_alloc *alloc);
 
-void silofs_pcache_fini(struct silofs_pcache *pcache);
+void silofs_bcache_fini(struct silofs_bcache *bcache);
 
-bool silofs_pcache_isempty(const struct silofs_pcache *pcache);
+bool silofs_bcache_isempty(const struct silofs_bcache *bcache);
 
-void silofs_pcache_drop(struct silofs_pcache *pcache);
+void silofs_bcache_drop(struct silofs_bcache *bcache);
 
-void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
+void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 
 struct silofs_btnode_info *
-silofs_pcache_lookup_bti(struct silofs_pcache *pcache,
+silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
                          const struct silofs_oaddr *oaddr);
 
 struct silofs_btnode_info *
-silofs_pcache_create_bti(struct silofs_pcache *pcache,
+silofs_bcache_create_bti(struct silofs_bcache *bcache,
                          const struct silofs_oaddr *oaddr);
 
 struct silofs_btleaf_info *
-silofs_pcache_lookup_bli(struct silofs_pcache *pcache,
+silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
                          const struct silofs_oaddr *oaddr);
 
 struct silofs_btleaf_info *
-silofs_pcache_create_bli(struct silofs_pcache *pcache,
+silofs_bcache_create_bli(struct silofs_bcache *bcache,
                          const struct silofs_oaddr *oaddr);
 
-#endif /* SILOFS_PCACHE_H_ */
+#endif /* SILOFS_BCACHE_H_ */

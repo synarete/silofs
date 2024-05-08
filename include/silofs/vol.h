@@ -26,6 +26,6 @@
 #include <silofs/vol/blobs.h>
 #include <silofs/vol/repo.h>
 #include <silofs/vol/pnodes.h>
-#include <silofs/vol/pcache.h>
+#include <silofs/vol/bcache.h>
 
 #endif /* SILOFS_VOL_H_ */

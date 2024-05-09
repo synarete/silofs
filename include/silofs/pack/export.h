@@ -19,12 +19,6 @@
 
 struct silofs_task;
 
-struct silofs_pack_args {
-	const char *packdir;
-};
-
-int silofs_fs_export(struct silofs_task *task,
-                     const struct silofs_pack_args *args,
-                     struct silofs_packid *out_packid);
+int silofs_fs_pack(struct silofs_task *task, struct silofs_packid *out_packid);
 
 #endif /* SILOFS_EXPORT_H_ */

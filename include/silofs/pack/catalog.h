@@ -54,9 +54,6 @@ void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc256b *pdx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pdi_to_name(const struct silofs_pack_desc_info *pdi,
-                        struct silofs_strbuf *out_name);
-
 bool silofs_pdi_isbootrec(const struct silofs_pack_desc_info *pdi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

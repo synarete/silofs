@@ -183,12 +183,6 @@ static void pdi_del(struct silofs_pack_desc_info *pdi,
 	}
 }
 
-void silofs_pdi_to_name(const struct silofs_pack_desc_info *pdi,
-                        struct silofs_strbuf *out_name)
-{
-	silofs_packid_to_name(&pdi->pd.pd_packid, out_name);
-}
-
 bool silofs_pdi_isbootrec(const struct silofs_pack_desc_info *pdi)
 {
 	return (pdi->pd.pd_laddr.ltype == SILOFS_LTYPE_BOOTREC);
@@ -427,10 +421,4 @@ int silofs_catalog_encode(struct silofs_catalog *catalog)
 	catalog_encode_meta(catalog);
 	catalog_update_packid(catalog);
 	return 0;
-}
-
-void silofs_catalog_to_name(const struct silofs_catalog *catalog,
-                            struct silofs_strbuf *out_name)
-{
-	silofs_packid_to_name(&catalog->cat_packid, out_name);
 }

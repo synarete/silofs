@@ -613,11 +613,10 @@ cmd_read_bconf_file(const char *repodir, const char *name)
 	return cfg;
 }
 
-static void
-cmd_write_bconf_file(const char *repodir, const char *name, const char *cfg)
+static void cmd_write_bconf_file(const char *repodir, const char *name,
+                                 bool rd_only, const char *cfg)
 {
 	const size_t len = cfg ? strlen(cfg) : 0;
-	const mode_t mode = S_IRUSR | S_IWUSR;
 	int dfd = -1;
 	int fd = -1;
 	int err;
@@ -626,12 +625,19 @@ cmd_write_bconf_file(const char *repodir, const char *name, const char *cfg)
 	if (err) {
 		silofs_die(err, "opendir error: %s", repodir);
 	}
-	silofs_sys_fchmodat(dfd, name, mode, 0);
+	silofs_sys_fchmodat(dfd, name, S_IRUSR | S_IRGRP | S_IWUSR, 0);
 
 	err = silofs_sys_openat(dfd, name, O_CREAT | O_RDWR | O_TRUNC,
-	                        mode, &fd);
+	                        S_IRUSR | S_IRGRP | S_IWUSR, &fd);
 	if (err) {
 		silofs_die(err, "failed to create boot-config: %s", name);
+	}
+	if (rd_only) {
+		err = silofs_sys_fchmodat(dfd, name, S_IRUSR | S_IRGRP, 0);
+		if (err) {
+			silofs_die(err, "failed to change-mode of "
+			           "boot-config: %s", name);
+		}
 	}
 	silofs_sys_closefd(&dfd);
 
@@ -940,7 +946,17 @@ void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir)
 	char *cfg = NULL;
 
 	cfg = cmd_bconf_unparse(bconf);
-	cmd_write_bconf_file(basedir, bconf->name.str, cfg);
+	cmd_write_bconf_file(basedir, bconf->name.str, false, cfg);
+	cmd_pstrfree(&cfg);
+}
+
+void cmd_bconf_save_rdonly(const struct silofs_fs_bconf *bconf,
+                           const char *basedir)
+{
+	char *cfg = NULL;
+
+	cfg = cmd_bconf_unparse(bconf);
+	cmd_write_bconf_file(basedir, bconf->name.str, true, cfg);
 	cmd_pstrfree(&cfg);
 }
 

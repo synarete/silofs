@@ -261,8 +261,8 @@ void cmd_unref_fs(struct silofs_fs_ctx *fse,
 void cmd_inspect_fs(struct silofs_fs_ctx *fse,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *packdir,
-                    struct silofs_packid *out_packid);
+void cmd_pack_fs(struct silofs_fs_ctx *fse,
+                 struct silofs_packid *out_packid);
 
 /* mount-info */
 struct cmd_proc_mntinfo {
@@ -330,9 +330,14 @@ void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
 void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
                         const char *user, bool with_sup_groups);
 
-void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir);
+void cmd_bconf_load(struct silofs_fs_bconf *bconf,
+                    const char *basedir);
 
-void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir);
+void cmd_bconf_save(const struct silofs_fs_bconf *bconf,
+                    const char *basedir);
+
+void cmd_bconf_save_rdonly(const struct silofs_fs_bconf *bconf,
+                           const char *basedir);
 
 void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf,
                       const char *basedir);

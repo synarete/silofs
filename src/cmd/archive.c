@@ -17,22 +17,20 @@
 #include "cmd.h"
 
 static const char *cmd_archive_help_desc[] = {
-	"archive <repodir/srcname> <packdir/dstname>",
+	"archive -n <arname> <repodir/name>",
 	"",
 	"options:",
+	"  -n, --name=archivename       Result archive name",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_archive_in_args {
-	char   *repodir_srcname;
+	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
-	char   *srcname;
-	char   *packdir_dstname;
-	char   *packdir;
-	char   *packdir_real;
-	char   *dstname;
+	char   *name;
+	char   *arname;
 	char   *password;
 	bool    no_prompt;
 };
@@ -52,6 +50,7 @@ static void cmd_archive_getopt(struct cmd_archive_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
+		{ "name", required_argument, NULL, 'n' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "no-prompt", no_argument, NULL, 'P' },
 		{ "loglevel", required_argument, NULL, 'L' },
@@ -60,8 +59,10 @@ static void cmd_archive_getopt(struct cmd_archive_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("p:PL:h", opts);
-		if (opt_chr == 'p') {
+		opt_chr = cmd_getopt("n:p:PL:h", opts);
+		if (opt_chr == 'n') {
+			ctx->in_args.arname = cmd_strdup(optarg);
+		} else if (opt_chr == 'p') {
 			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'P') {
 			ctx->in_args.no_prompt = true;
@@ -73,8 +74,7 @@ static void cmd_archive_getopt(struct cmd_archive_ctx *ctx)
 			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_getopt_getarg("repodir/srcname", &ctx->in_args.repodir_srcname);
-	cmd_getopt_getarg("packdir/dstname", &ctx->in_args.packdir_dstname);
+	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
 	cmd_getopt_endargs();
 }
 
@@ -84,7 +84,7 @@ static void cmd_archive_acquire_lockfile(struct cmd_archive_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
 		cmd_lock_fs(ctx->in_args.repodir_real,
-		            ctx->in_args.srcname);
+		            ctx->in_args.name);
 		ctx->has_lockfile = true;
 	}
 }
@@ -93,7 +93,7 @@ static void cmd_archive_release_lockfile(struct cmd_archive_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
 		cmd_unlock_fs(ctx->in_args.repodir_real,
-		              ctx->in_args.srcname);
+		              ctx->in_args.name);
 		ctx->has_lockfile = false;
 	}
 }
@@ -107,14 +107,11 @@ static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
 	cmd_del_fs_ctx(&ctx->fs_ctx);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
-	cmd_pstrfree(&ctx->in_args.repodir_srcname);
+	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
-	cmd_pstrfree(&ctx->in_args.srcname);
-	cmd_pstrfree(&ctx->in_args.packdir_dstname);
-	cmd_pstrfree(&ctx->in_args.packdir);
-	cmd_pstrfree(&ctx->in_args.packdir_real);
-	cmd_pstrfree(&ctx->in_args.dstname);
+	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_archive_ctx = NULL;
 }
@@ -140,16 +137,14 @@ static void cmd_archive_enable_signals(void)
 
 static void cmd_archive_prepare(struct cmd_archive_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_srcname);
-	cmd_split_path(ctx->in_args.repodir_srcname,
-	               &ctx->in_args.repodir, &ctx->in_args.srcname);
+	cmd_check_fsname(ctx->in_args.arname);
+	cmd_check_isreg(ctx->in_args.repodir_name);
+	cmd_split_path(ctx->in_args.repodir_name,
+	               &ctx->in_args.repodir, &ctx->in_args.name);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
-	                         ctx->in_args.srcname);
-	cmd_split_path(ctx->in_args.packdir_dstname,
-	               &ctx->in_args.packdir, &ctx->in_args.dstname);
-	cmd_realpath_dir(ctx->in_args.packdir, &ctx->in_args.packdir_real);
-	cmd_check_notexists2(ctx->in_args.packdir_real, ctx->in_args.dstname);
+	                         ctx->in_args.name);
+	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.arname);
 }
 
 static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
@@ -165,10 +160,10 @@ static void cmd_archive_setup_fs_args(struct cmd_archive_ctx *ctx)
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
 	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.srcname);
+	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
 	fs_args->passwd = ctx->in_args.password;
 	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.srcname;
+	fs_args->name = ctx->in_args.name;
 }
 
 static void cmd_archive_load_bconf(struct cmd_archive_ctx *ctx)
@@ -216,9 +211,9 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 	struct silofs_fs_bconf bconf;
 
 	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
-	cmd_bconf_set_name(&bconf, ctx->in_args.dstname);
-	cmd_archive_fs(ctx->fs_ctx, ctx->in_args.packdir_real, &bconf.pack_id);
-	cmd_bconf_save(&bconf, ctx->in_args.packdir_real);
+	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
+	cmd_pack_fs(ctx->fs_ctx, &bconf.pack_id);
+	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&bconf);
 }
 

@@ -257,16 +257,16 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 	int err;
 
 	err = silofs_inspect_fs(fse, cb, user_ctx);
-	cmd_require_ok(fse, err, "inspect error");
+	cmd_require_ok(fse, err, "inspect-fs error");
 }
 
-void cmd_archive_fs(struct silofs_fs_ctx *fse, const char *packdir,
-                    struct silofs_packid *out_packid)
+void cmd_pack_fs(struct silofs_fs_ctx *fse,
+                 struct silofs_packid *out_packid)
 {
 	int err;
 
-	err = silofs_export_fs(fse, packdir, out_packid);
-	cmd_require_ok(fse, err, "archive error");
+	err = silofs_pack_fs(fse, out_packid);
+	cmd_require_ok(fse, err, "pack-fs error");
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

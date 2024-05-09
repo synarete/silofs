@@ -23,25 +23,21 @@
 
 struct silofs_pack_export_ctx {
 	struct silofs_catalog   pex_catalog;
-	struct silofs_pack_args pex_args;
 	struct silofs_task     *pex_task;
 	struct silofs_alloc    *pex_alloc;
 	struct silofs_repo     *pex_repo;
-	int pex_dfd;
+	long pad;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int pec_init(struct silofs_pack_export_ctx *pe_ctx,
-                    struct silofs_task *task,
-                    const struct silofs_pack_args *pargs)
+                    struct silofs_task *task)
 {
 	silofs_memzero(pe_ctx, sizeof(*pe_ctx));
-	memcpy(&pe_ctx->pex_args, pargs, sizeof(pe_ctx->pex_args));
 	pe_ctx->pex_task = task;
 	pe_ctx->pex_alloc = task->t_fsenv->fse.alloc;
 	pe_ctx->pex_repo = task->t_fsenv->fse.repo;
-	pe_ctx->pex_dfd = -1;
 	return silofs_catalog_init(&pe_ctx->pex_catalog, pe_ctx->pex_alloc);
 }
 
@@ -53,96 +49,37 @@ static void pec_fini(struct silofs_pack_export_ctx *pe_ctx)
 	pe_ctx->pex_repo = NULL;
 }
 
-static int pec_connect_target(struct silofs_pack_export_ctx *pe_ctx)
+static int
+pec_stat_pack(const struct silofs_pack_export_ctx *pe_ctx,
+              const struct silofs_packid *packid, ssize_t *out_sz)
 {
-	const char *path = pe_ctx->pex_args.packdir;
-	int dfd = -1;
-	int err;
-
-	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	if (err) {
-		log_err("failed to open remote: %s err=%d", path, err);
-		return err;
-	}
-	log_dbg("opened archive-dir: %s", path);
-	pe_ctx->pex_dfd = dfd;
-	return 0;
+	return silofs_repo_stat_pack(pe_ctx->pex_repo, packid, out_sz);
 }
 
-static void pec_disconnect_target(struct silofs_pack_export_ctx *pe_ctx)
+static int pec_send_to_repo(const struct silofs_pack_export_ctx *pe_ctx,
+                            const struct silofs_packid *packid,
+                            const struct silofs_bytebuf *bb)
 {
-	int err;
-
-	if (pe_ctx->pex_dfd > 0) {
-		err = silofs_sys_closefd(&pe_ctx->pex_dfd);
-		if (err) {
-			log_err("failed to close remote: %s err=%d",
-			        pe_ctx->pex_args.packdir, err);
-		}
-	}
+	return silofs_repo_save_pack(pe_ctx->pex_repo, packid, bb);
 }
 
-static int pec_stat_at_remote(const struct silofs_pack_export_ctx *pe_ctx,
-                              const struct silofs_strbuf *name, loff_t *out_sz)
+static int pec_send_pack(const struct silofs_pack_export_ctx *pe_ctx,
+                         const struct silofs_pack_desc_info *pdi,
+                         const void *dat)
 {
-	struct stat st = { .st_size = 0 };
+	const struct silofs_packid *packid = &pdi->pd.pd_packid;
+	const struct silofs_laddr *laddr = &pdi->pd.pd_laddr;
+	struct silofs_bytebuf bb;
+	ssize_t sz = -1;
 	int err;
 
-	err = silofs_sys_fstatat(pe_ctx->pex_dfd, name->str, &st, 0);
-	if (!err) {
-		*out_sz = st.st_size;
+	err = pec_stat_pack(pe_ctx, packid, &sz);
+	if ((err == -ENOENT) || (!err && ((size_t)sz != laddr->len))) {
+		silofs_bytebuf_init2(&bb, unconst(dat), laddr->len);
+		err = pec_send_to_repo(pe_ctx, packid, &bb);
 	}
 	return err;
 }
-
-static int pec_send_to_remote(const struct silofs_pack_export_ctx *pe_ctx,
-                              const struct silofs_strbuf *name,
-                              const void *data, size_t len)
-{
-	const mode_t mode = S_IRUSR | S_IRGRP;
-	int fd = -1;
-	int err;
-
-	err = silofs_sys_openat(pe_ctx->pex_dfd, name->str,
-	                        O_CREAT | O_RDWR, 0600, &fd);
-	if (err) {
-		log_dbg("remote: failed to create: %s err=%d", name->str, err);
-		goto out;
-	}
-	err = silofs_sys_writen(fd, data, len);
-	if (err) {
-		log_dbg("remote: failed to write: %s len=%zu err=%d",
-		        name->str, len, err);
-		goto out;
-	}
-	err = silofs_sys_fchmodat(pe_ctx->pex_dfd, name->str, mode, 0);
-	if (err) {
-		log_dbg("remote: failed to chmod: %s mode=0%o err=%d",
-		        name->str, mode, err);
-		goto out;
-	}
-out:
-	silofs_sys_closefd(&fd);
-	return err;
-}
-
-static int pec_send_to_remote_by(const struct silofs_pack_export_ctx *pe_ctx,
-                                 const struct silofs_pack_desc_info *pdi,
-                                 const void *data)
-{
-	struct silofs_strbuf name;
-	const size_t len = pdi->pd.pd_laddr.len;
-	loff_t sz = -1;
-	int err;
-
-	silofs_pdi_to_name(pdi, &name);
-	err = pec_stat_at_remote(pe_ctx, &name, &sz);
-	if ((err == -ENOENT) || (!err && (len == (size_t)sz))) {
-		err = pec_send_to_remote(pe_ctx, &name, data, len);
-	}
-	return err;
-}
-
 
 static int pec_load_seg(const struct silofs_pack_export_ctx *pe_ctx,
                         const struct silofs_laddr *laddr, void *seg)
@@ -201,7 +138,7 @@ static int pec_export_segdata(const struct silofs_pack_export_ctx *pe_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pec_send_to_remote_by(pe_ctx, pdi, seg);
+	err = pec_send_pack(pe_ctx, pdi, seg);
 	if (err) {
 		goto out;
 	}
@@ -224,7 +161,7 @@ static int pec_export_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
 	if (err) {
 		return err;
 	}
-	err = pec_send_to_remote_by(pe_ctx, pdi, &brec);
+	err = pec_send_pack(pe_ctx, pdi, &brec);
 	if (err) {
 		return err;
 	}
@@ -271,17 +208,14 @@ static int pec_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
 
 static int pec_export_catalog(struct silofs_pack_export_ctx *pe_ctx)
 {
-	struct silofs_strbuf name;
-	struct silofs_catalog *catalog = &pe_ctx->pex_catalog;
-	const struct silofs_bytebuf *bb = &catalog->cat_bbuf;
+	struct silofs_catalog *cat = &pe_ctx->pex_catalog;
 	int err;
 
-	err = silofs_catalog_encode(catalog);
+	err = silofs_catalog_encode(cat);
 	if (err) {
 		return err;
 	}
-	silofs_catalog_to_name(catalog, &name);
-	err = pec_send_to_remote(pe_ctx, &name, bb->ptr, bb->len);
+	err = pec_send_to_repo(pe_ctx, &cat->cat_packid, &cat->cat_bbuf);
 	if (err) {
 		return err;
 	}
@@ -292,21 +226,15 @@ static int pec_export_fs(struct silofs_pack_export_ctx *pe_ctx)
 {
 	int err;
 
-	err = pec_connect_target(pe_ctx);
-	if (err) {
-		goto out;
-	}
 	err = silofs_fs_inspect(pe_ctx->pex_task, pec_visit_laddr_cb, pe_ctx);
 	if (err) {
-		goto out;
+		return err;
 	}
 	err = pec_export_catalog(pe_ctx);
 	if (err) {
-		goto out;
+		return err;
 	}
-out:
-	pec_disconnect_target(pe_ctx);
-	return err;
+	return 0;
 }
 
 static void pec_catalog_id(const struct silofs_pack_export_ctx *pe_ctx,
@@ -315,16 +243,15 @@ static void pec_catalog_id(const struct silofs_pack_export_ctx *pe_ctx,
 	silofs_packid_assign(out_packid, &pe_ctx->pex_catalog.cat_packid);
 }
 
-int silofs_fs_export(struct silofs_task *task,
-                     const struct silofs_pack_args *pargs,
-                     struct silofs_packid *out_packid)
+int silofs_fs_pack(struct silofs_task *task,
+                   struct silofs_packid *out_packid)
 {
 	struct silofs_pack_export_ctx pe_ctx = {
-		.pex_dfd = -1,
+		.pad = -1,
 	};
 	int err;
 
-	err = pec_init(&pe_ctx, task, pargs);
+	err = pec_init(&pe_ctx, task);
 	if (err) {
 		return err;
 	}

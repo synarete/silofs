@@ -160,28 +160,25 @@ static void cmd_snap_prepare_by_query(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 {
-	struct cmd_snap_in_args *args = &ctx->in_args;
-
-	cmd_realpath_dir(args->dirpath, &args->dirpath_real);
-	cmd_check_fsname(args->snapname);
-	cmd_check_fusefs(args->dirpath_real);
+	cmd_realpath_dir(ctx->in_args.dirpath, &ctx->in_args.dirpath_real);
+	cmd_check_fsname(ctx->in_args.snapname);
+	cmd_check_fusefs(ctx->in_args.dirpath_real);
 	cmd_snap_prepare_by_query(ctx);
-	cmd_realpath_dir(args->repodir, &args->repodir_real);
-	cmd_check_repodir_fsname(args->repodir_real, args->name);
-	cmd_check_notexists2(args->repodir_real, args->snapname);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.snapname);
 }
 
 static void cmd_snap_prepare_offline(struct cmd_snap_ctx *ctx)
 {
-	struct cmd_snap_in_args *args = &ctx->in_args;
-
-	cmd_check_isreg(args->repodir_name);
-	cmd_split_path(args->repodir_name, &args->repodir, &args->name);
-	cmd_check_nonemptydir(args->repodir, true);
-	cmd_realpath_dir(args->repodir, &args->repodir_real);
-	cmd_check_repodir_fsname(args->repodir_real, args->name);
-	cmd_check_fsname(args->snapname);
-	cmd_check_notexists2(args->repodir_real, args->snapname);
+	cmd_check_isreg(ctx->in_args.repodir_name);
+	cmd_split_path(ctx->in_args.repodir_name,
+	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_check_nonemptydir(ctx->in_args.repodir, true);
+	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_check_fsname(ctx->in_args.snapname);
+	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.snapname);
 }
 
 static void cmd_snap_prepare(struct cmd_snap_ctx *ctx)

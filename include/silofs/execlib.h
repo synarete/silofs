@@ -88,7 +88,7 @@ void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
 int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
                       silofs_visit_laddr_fn cb, void *user_ctx);
 
-int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *packdir,
-                     struct silofs_packid *out_packid);
+int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
+                   struct silofs_packid *out_packid);
 
 #endif /* SILOFS_EXECLIB_H_ */

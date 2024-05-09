@@ -1778,9 +1778,8 @@ int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
 	return exec_inspect_fs(fs_ctx, cb, user_ctx);
 }
 
-static int exec_export_fs(struct silofs_fs_ctx *fs_ctx,
-                          const struct silofs_pack_args *pargs,
-                          struct silofs_packid *out_packid)
+static int exec_pack_fs(struct silofs_fs_ctx *fs_ctx,
+                        struct silofs_packid *out_packid)
 {
 	struct silofs_task task;
 	int err;
@@ -1789,16 +1788,12 @@ static int exec_export_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_export(&task, pargs, out_packid);
+	err = silofs_fs_pack(&task, out_packid);
 	return term_task(&task, err);
 }
 
-int silofs_export_fs(struct silofs_fs_ctx *fs_ctx, const char *packdir,
-                     struct silofs_packid *out_packid)
+int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
+                   struct silofs_packid *out_packid)
 {
-	const struct silofs_pack_args pargs = {
-		.packdir = packdir,
-	};
-
-	return exec_export_fs(fs_ctx, &pargs, out_packid);
+	return exec_pack_fs(fs_ctx, out_packid);
 }

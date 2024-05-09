@@ -18,6 +18,8 @@
 #include <silofs/syscall.h>
 #include <silofs/infra/utility.h>
 #include <silofs/infra/strings.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <ctype.h>
 
 
@@ -56,6 +58,20 @@ size_t silofs_strbuf_copyto(const struct silofs_strbuf *sbuf,
 
 	memcpy(str, sbuf->str, n);
 	return n;
+}
+
+size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
+{
+	va_list ap;
+	size_t k;
+	int n;
+
+	silofs_strbuf_reset(sbuf);
+	va_start(ap, fmt);
+	k = sizeof(sbuf->str);
+	n = vsnprintf(sbuf->str, k - 1, fmt, ap);
+	va_end(ap);
+	return (n < (int)k) ? (size_t)n : k;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

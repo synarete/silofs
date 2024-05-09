@@ -662,7 +662,7 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_obj(fsenv->fse.repo, laddr, &brec1k);
+	err = silofs_repo_save_lobj(fsenv->fse.repo, laddr, &brec1k);
 	if (err) {
 		log_err("failed to save bootrec: err=%d", err);
 		return err;
@@ -689,7 +689,7 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 	int err;
 
 	silofs_assert_eq(laddr->len, sizeof(brec1k));
-	err = silofs_repo_load_obj(fsenv->fse.repo, laddr, &brec1k);
+	err = silofs_repo_load_lobj(fsenv->fse.repo, laddr, &brec1k);
 	if (err) {
 		log_dbg("failed to load bootrec: err=%d", err);
 		return err;

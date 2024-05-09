@@ -163,7 +163,7 @@ static int pec_load_brec(const struct silofs_pack_export_ctx *pe_ctx,
 {
 	int err;
 
-	err = silofs_repo_load_obj(pe_ctx->pex_repo, laddr, out_brec1k);
+	err = silofs_repo_load_lobj(pe_ctx->pex_repo, laddr, out_brec1k);
 	if (err) {
 		log_err("failed to load: ltype=%d len=%zu err=%d",
 		        laddr->ltype, laddr->len, err);

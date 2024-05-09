@@ -38,6 +38,7 @@ struct silofs_repo_htbl {
 /* repository */
 struct silofs_repo {
 	struct silofs_repo_base         re;
+	const struct silofs_repo_defs  *re_defs;
 	struct silofs_mutex             re_mutex;
 	struct silofs_repo_htbl         re_htbl;
 	struct silofs_listq             re_lruq;
@@ -45,7 +46,8 @@ struct silofs_repo {
 	struct silofs_bstore            re_bstore;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
-	int                             re_lsegs_dfd;
+	int                             re_objs_dfd;
+
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -99,17 +101,25 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_save_obj(struct silofs_repo *repo,
-                         const struct silofs_laddr *laddr, const void *buf);
+int silofs_repo_stat_lobj(struct silofs_repo *repo,
+                          const struct silofs_laddr *laddr, ssize_t *out_sz);
 
-int silofs_repo_load_obj(struct silofs_repo *repo,
-                         const struct silofs_laddr *laddr, void *buf);
+int silofs_repo_save_lobj(struct silofs_repo *repo,
+                          const struct silofs_laddr *laddr, const void *buf);
 
-int silofs_repo_stat_obj(struct silofs_repo *repo,
-                         const struct silofs_laddr *laddr,
-                         struct stat *out_st);
+int silofs_repo_load_lobj(struct silofs_repo *repo,
+                          const struct silofs_laddr *laddr, void *buf);
 
-int silofs_repo_unlink_obj(struct silofs_repo *repo,
-                           const struct silofs_laddr *laddr);
+int silofs_repo_unlink_lobj(struct silofs_repo *repo,
+                            const struct silofs_laddr *laddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_repo_stat_pack(struct silofs_repo *repo,
+                          const struct silofs_packid *packid, ssize_t *out_sz);
+
+int silofs_repo_save_pack(struct silofs_repo *repo,
+                          const struct silofs_packid *packid,
+                          const struct silofs_bytebuf *bb);
 
 #endif /* SILOFS_REPO_H_ */

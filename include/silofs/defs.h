@@ -77,10 +77,13 @@
 /* repository global lock file name */
 #define SILOFS_REPO_LOCK_FILENAME       "lock"
 
-/* repository blobs sub-directory name */
+/* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME       "blobs"
 
-/* repository objects sub-directory name */
+/* repository pack-archive sub-directory */
+#define SILOFS_REPO_PACK_DIRNAME        "pack"
+
+/* repository objects sub-directory */
 #define SILOFS_REPO_OBJS_DIRNAME        "objs"
 
 /* number of sub-dirs within objects directories */

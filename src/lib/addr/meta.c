@@ -19,6 +19,47 @@
 #include <silofs/addr.h>
 #include <uuid/uuid.h>
 
+
+uint32_t silofs_squash_to_u32(const void *ptr, size_t len)
+{
+	const uint8_t *ba = ptr;
+	const size_t len_head = (len / 4) * 4;
+	const size_t len_tail = len - len_head;
+	uint32_t ret = 0;
+	uint32_t lei = 0;
+	size_t pos = 0;
+
+	while (pos < len_head) {
+		lei = ((uint32_t)(ba[pos]) << 24) |
+		      ((uint32_t)(ba[pos + 1]) << 16) |
+		      ((uint32_t)(ba[pos + 2]) << 8) |
+		      ((uint32_t)(ba[pos + 3]));
+		ret ^= silofs_le32_to_cpu(lei);
+		pos += 4;
+	}
+
+	switch (len_tail) {
+	case 3:
+		lei = ((uint32_t)(ba[pos]) << 16) |
+		      ((uint32_t)(ba[pos + 1]) << 8) |
+		      ((uint32_t)(ba[pos + 2]));
+		break;
+	case 2:
+		lei = ((uint32_t)(ba[pos]) << 8) |
+		      ((uint32_t)(ba[pos + 1]));
+		break;
+	case 1:
+		lei = ((uint32_t)(ba[pos]));
+		break;
+	default:
+		lei = 0;
+		break;
+	}
+	ret ^= silofs_le32_to_cpu(lei);
+
+	return ret;
+}
+
 uint64_t silofs_u8b_as_u64(const uint8_t p[8])
 {
 	uint64_t u = 0;

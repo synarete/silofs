@@ -45,6 +45,7 @@ struct silofs_repo_defs {
 	const char     *re_pack_name;
 	const char     *re_objs_name;
 	uint32_t        re_objs_nsubs;
+	uint32_t        re_pack_nsubs;
 };
 
 static const struct silofs_repo_defs repo_defs = {
@@ -55,6 +56,7 @@ static const struct silofs_repo_defs repo_defs = {
 	.re_pack_name   = SILOFS_REPO_PACK_DIRNAME,
 	.re_objs_name   = SILOFS_REPO_OBJS_DIRNAME,
 	.re_objs_nsubs  = SILOFS_REPO_OBJS_NSUBS,
+	.re_pack_nsubs  = SILOFS_REPO_OBJS_NSUBS, /* TODO: use dedicated def */
 };
 
 /* local functions */
@@ -289,12 +291,28 @@ static int do_fstatat(int dirfd, const char *pathname,
 	return err;
 }
 
-static int do_fstatat_reg(int dfd, const char *pathname, struct stat *out_st)
+static int do_fstatat_dir(int dirfd, const char *pathname, struct stat *out_st)
 {
 	mode_t mode;
 	int err;
 
-	err = do_fstatat(dfd, pathname, out_st, 0);
+	err = do_fstatat(dirfd, pathname, out_st, 0);
+	if (err) {
+		return err;
+	}
+	mode = out_st->st_mode;
+	if (!S_ISDIR(mode)) {
+		return -SILOFS_ENOTDIR;
+	}
+	return 0;
+}
+
+static int do_fstatat_reg(int dirfd, const char *pathname, struct stat *out_st)
+{
+	mode_t mode;
+	int err;
+
+	err = do_fstatat(dirfd, pathname, out_st, 0);
 	if (err) {
 		return err;
 	}
@@ -366,6 +384,15 @@ static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 		         dirfd, pathname, mode, err);
 	}
 	return err;
+}
+
+static int do_fstatat_or_mkdirat(int dirfd, const char *pathname, mode_t mode)
+{
+	struct stat st = { .st_mode = 0 };
+	int err;
+
+	err = do_fstatat_dir(dirfd, pathname, &st);
+	return err ? do_mkdirat(dirfd, pathname, mode) : 0;
 }
 
 static int do_fchmodat(int dirfd, const char *pathname, mode_t mode, int flags)
@@ -2439,56 +2466,104 @@ int silofs_repo_unlink_lobj(struct silofs_repo *repo,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static void repo_packid_subdir(const struct silofs_repo *repo,
+                               const struct silofs_packid *packid,
+                               struct silofs_strbuf *out_sbuf)
+{
+	const uint32_t pn = silofs_packid_to_u32(packid);
+	const uint32_t in = pn % repo->re_defs->re_pack_nsubs;
+
+	silofs_strbuf_sprintf(out_sbuf, "%s/%02x",
+	                      repo->re_defs->re_pack_name, (int)in);
+}
+
 static void repo_packid_pathname(const struct silofs_repo *repo,
                                  const struct silofs_packid *packid,
                                  struct silofs_strbuf *out_sbuf)
 {
+	struct silofs_strbuf subdir;
 	struct silofs_strbuf name;
 
+	repo_packid_subdir(repo, packid, &subdir);
 	silofs_packid_to_name(packid, &name);
-	silofs_strbuf_sprintf(out_sbuf, "%s/%s",
-	                      repo->re_defs->re_pack_name, name.str);
+	silofs_strbuf_sprintf(out_sbuf, "%s/%s", subdir.str, name.str);
 }
 
-static int repo_stat_pack_at(const struct silofs_repo *repo,
-                             const struct silofs_strbuf *sbuf,
-                             struct stat *out_st)
+static int repo_stat_subdir(const struct silofs_repo *repo,
+                            const struct silofs_strbuf *sbuf,
+                            struct stat *out_st)
+{
+	return do_fstatat_dir(repo->re_dots_dfd, sbuf->str, out_st);
+}
+
+static int repo_stat_reg(const struct silofs_repo *repo,
+                         const struct silofs_strbuf *sbuf,
+                         struct stat *out_st)
 {
 	return do_fstatat_reg(repo->re_dots_dfd, sbuf->str, out_st);
+}
+
+static int repo_stat_pack_of(const struct silofs_repo *repo,
+                             const struct silofs_packid *packid,
+                             struct stat *out_st)
+{
+	struct silofs_strbuf sbuf;
+	int err;
+
+	repo_packid_subdir(repo, packid, &sbuf);
+	err = repo_stat_subdir(repo, &sbuf, out_st);
+	if (err) {
+		return err;
+	}
+	repo_packid_pathname(repo, packid, &sbuf);
+	err = repo_stat_reg(repo, &sbuf, out_st);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_repo_stat_pack(struct silofs_repo *repo,
                           const struct silofs_packid *packid, ssize_t *out_sz)
 {
-	struct silofs_strbuf name;
 	struct stat st = { .st_size = -1 };
 	int err;
 
-	repo_packid_pathname(repo, packid, &name);
 	repo_lock(repo);
-	err = repo_stat_pack_at(repo, &name, &st);
+	err = repo_stat_pack_of(repo, packid, &st);
 	repo_unlock(repo);
 	*out_sz = st.st_size;
 	return err;
 }
 
-static int repo_save_pack_at(const struct silofs_repo *repo,
-                             const struct silofs_strbuf *sbuf,
+static int repo_save_pack_of(const struct silofs_repo *repo,
+                             const struct silofs_packid *packid,
                              const struct silofs_bytebuf *bb)
 {
-	return do_save_obj(repo->re_dots_dfd, sbuf->str, bb->ptr, bb->len);
+	struct silofs_strbuf sbuf;
+	int err;
+
+	repo_packid_subdir(repo, packid, &sbuf);
+	err = do_fstatat_or_mkdirat(repo->re_dots_dfd, sbuf.str, 0700);
+	if (err) {
+		return err;
+	}
+	repo_packid_pathname(repo, packid, &sbuf);
+	err = do_save_obj(repo->re_dots_dfd, sbuf.str, bb->ptr, bb->len);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_repo_save_pack(struct silofs_repo *repo,
                           const struct silofs_packid *packid,
                           const struct silofs_bytebuf *bb)
 {
-	struct silofs_strbuf name;
 	int err;
 
-	repo_packid_pathname(repo, packid, &name);
 	repo_lock(repo);
-	err = repo_save_pack_at(repo, &name, bb);
+	err = repo_save_pack_of(repo, packid, bb);
 	repo_unlock(repo);
 	return err;
 }

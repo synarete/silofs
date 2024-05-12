@@ -42,6 +42,14 @@ void silofs_packid_to_name(const struct silofs_packid *packid,
 	silofs_hash256_to_name(&packid->hash, out_name);
 }
 
+uint32_t silofs_packid_to_u32(const struct silofs_packid *packid)
+{
+	struct silofs_packid64b packid64b;
+
+	silofs_packid64b_htox(&packid64b, packid);
+	return silofs_squash_to_u32(&packid64b, sizeof(packid64b));
+}
+
 void silofs_packid_to_base64(const struct silofs_packid *packid,
                              struct silofs_strbuf *out_sbuf)
 {

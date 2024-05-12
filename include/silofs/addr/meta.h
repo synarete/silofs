@@ -17,6 +17,9 @@
 #ifndef SILOFS_META_H_
 #define SILOFS_META_H_
 
+
+uint32_t silofs_squash_to_u32(const void *ptr, size_t len);
+
 uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -34,6 +34,8 @@ bool silofs_packid_isnone(const struct silofs_packid *packid);
 void silofs_packid_to_name(const struct silofs_packid *packid,
                            struct silofs_strbuf *out_name);
 
+uint32_t silofs_packid_to_u32(const struct silofs_packid *packid);
+
 void silofs_packid_to_base64(const struct silofs_packid *packid,
                              struct silofs_strbuf *out_sbuf);
 

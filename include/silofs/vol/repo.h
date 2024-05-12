@@ -116,10 +116,10 @@ int silofs_repo_unlink_lobj(struct silofs_repo *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stat_pack(struct silofs_repo *repo,
-                          const struct silofs_packid *packid, ssize_t *out_sz);
+                          const struct silofs_caddr *caddr, ssize_t *out_sz);
 
 int silofs_repo_save_pack(struct silofs_repo *repo,
-                          const struct silofs_packid *packid,
+                          const struct silofs_caddr *caddr,
                           const struct silofs_bytebuf *bb);
 
 #endif /* SILOFS_REPO_H_ */

@@ -51,32 +51,32 @@ static void pec_fini(struct silofs_pack_export_ctx *pe_ctx)
 
 static int
 pec_stat_pack(const struct silofs_pack_export_ctx *pe_ctx,
-              const struct silofs_packid *packid, ssize_t *out_sz)
+              const struct silofs_caddr *caddr, ssize_t *out_sz)
 {
-	return silofs_repo_stat_pack(pe_ctx->pex_repo, packid, out_sz);
+	return silofs_repo_stat_pack(pe_ctx->pex_repo, caddr, out_sz);
 }
 
 static int pec_send_to_repo(const struct silofs_pack_export_ctx *pe_ctx,
-                            const struct silofs_packid *packid,
+                            const struct silofs_caddr *caddr,
                             const struct silofs_bytebuf *bb)
 {
-	return silofs_repo_save_pack(pe_ctx->pex_repo, packid, bb);
+	return silofs_repo_save_pack(pe_ctx->pex_repo, caddr, bb);
 }
 
 static int pec_send_pack(const struct silofs_pack_export_ctx *pe_ctx,
                          const struct silofs_pack_desc_info *pdi,
                          const void *dat)
 {
-	const struct silofs_packid *packid = &pdi->pd.pd_packid;
+	const struct silofs_caddr *caddr = &pdi->pd.pd_caddr;
 	const struct silofs_laddr *laddr = &pdi->pd.pd_laddr;
 	struct silofs_bytebuf bb;
 	ssize_t sz = -1;
 	int err;
 
-	err = pec_stat_pack(pe_ctx, packid, &sz);
+	err = pec_stat_pack(pe_ctx, caddr, &sz);
 	if ((err == -ENOENT) || (!err && ((size_t)sz != laddr->len))) {
 		silofs_bytebuf_init2(&bb, unconst(dat), laddr->len);
-		err = pec_send_to_repo(pe_ctx, packid, &bb);
+		err = pec_send_to_repo(pe_ctx, caddr, &bb);
 	}
 	return err;
 }
@@ -215,7 +215,7 @@ static int pec_export_catalog(struct silofs_pack_export_ctx *pe_ctx)
 	if (err) {
 		return err;
 	}
-	err = pec_send_to_repo(pe_ctx, &cat->cat_packid, &cat->cat_bbuf);
+	err = pec_send_to_repo(pe_ctx, &cat->cat_caddr, &cat->cat_bbuf);
 	if (err) {
 		return err;
 	}
@@ -238,13 +238,13 @@ static int pec_export_fs(struct silofs_pack_export_ctx *pe_ctx)
 }
 
 static void pec_catalog_id(const struct silofs_pack_export_ctx *pe_ctx,
-                           struct silofs_packid *out_packid)
+                           struct silofs_caddr *out_caddr)
 {
-	silofs_packid_assign(out_packid, &pe_ctx->pex_catalog.cat_packid);
+	silofs_caddr_assign(out_caddr, &pe_ctx->pex_catalog.cat_caddr);
 }
 
 int silofs_fs_pack(struct silofs_task *task,
-                   struct silofs_packid *out_packid)
+                   struct silofs_caddr *out_caddr)
 {
 	struct silofs_pack_export_ctx pe_ctx = {
 		.pad = -1,
@@ -259,7 +259,7 @@ int silofs_fs_pack(struct silofs_task *task,
 	if (err) {
 		goto out;
 	}
-	pec_catalog_id(&pe_ctx, out_packid);
+	pec_catalog_id(&pe_ctx, out_caddr);
 out:
 	pec_fini(&pe_ctx);
 	return err;

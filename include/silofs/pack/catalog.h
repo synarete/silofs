@@ -19,7 +19,7 @@
 
 
 struct silofs_pack_desc {
-	struct silofs_packid    pd_packid;
+	struct silofs_caddr    pd_caddr;
 	struct silofs_laddr     pd_laddr;
 };
 
@@ -33,7 +33,7 @@ struct silofs_catalog {
 	struct silofs_listq     cat_descq;
 	struct silofs_alloc    *cat_alloc;
 	struct silofs_bytebuf   cat_bbuf;
-	struct silofs_packid    cat_packid;
+	struct silofs_caddr    cat_caddr;
 	size_t cat_capacity;
 };
 

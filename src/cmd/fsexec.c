@@ -261,11 +261,11 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 }
 
 void cmd_pack_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_packid *out_packid)
+                 struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = silofs_pack_fs(fse, out_packid);
+	err = silofs_pack_fs(fse, out_caddr);
 	cmd_require_ok(fse, err, "pack-fs error");
 }
 

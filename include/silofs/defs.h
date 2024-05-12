@@ -1032,7 +1032,7 @@ struct silofs_btree_leaf {
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* packed-object identifier (by hash) */
-struct silofs_packid64b {
+struct silofs_caddr64b {
 	struct silofs_hash256 hash;
 	uint8_t               reserved[32];
 } silofs_packed_aligned64;
@@ -1040,7 +1040,7 @@ struct silofs_packid64b {
 
 /* packing descriptor */
 struct silofs_pack_desc256b {
-	struct silofs_packid64b         pd_packid;
+	struct silofs_caddr64b         pd_caddr;
 	struct silofs_laddr48b          pd_laddr;
 	uint8_t                         pd_reserved[144];
 } silofs_packed_aligned64;

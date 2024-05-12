@@ -1779,7 +1779,7 @@ int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
 }
 
 static int exec_pack_fs(struct silofs_fs_ctx *fs_ctx,
-                        struct silofs_packid *out_packid)
+                        struct silofs_caddr *out_caddr)
 {
 	struct silofs_task task;
 	int err;
@@ -1788,12 +1788,12 @@ static int exec_pack_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_pack(&task, out_packid);
+	err = silofs_fs_pack(&task, out_caddr);
 	return term_task(&task, err);
 }
 
 int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_packid *out_packid)
+                   struct silofs_caddr *out_caddr)
 {
-	return exec_pack_fs(fs_ctx, out_packid);
+	return exec_pack_fs(fs_ctx, out_caddr);
 }

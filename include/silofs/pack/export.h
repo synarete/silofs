@@ -19,6 +19,6 @@
 
 struct silofs_task;
 
-int silofs_fs_pack(struct silofs_task *task, struct silofs_packid *out_packid);
+int silofs_fs_pack(struct silofs_task *task, struct silofs_caddr *out_caddr);
 
 #endif /* SILOFS_EXPORT_H_ */

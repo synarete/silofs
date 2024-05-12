@@ -89,6 +89,6 @@ int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
                       silofs_visit_laddr_fn cb, void *user_ctx);
 
 int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_packid *out_packid);
+                   struct silofs_caddr *out_caddr);
 
 #endif /* SILOFS_EXECLIB_H_ */

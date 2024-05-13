@@ -33,7 +33,7 @@ struct silofs_catalog {
 	struct silofs_listq     cat_descq;
 	struct silofs_alloc    *cat_alloc;
 	struct silofs_bytebuf   cat_bbuf;
-	struct silofs_caddr    cat_caddr;
+	struct silofs_caddr     cat_caddr;
 	size_t cat_capacity;
 };
 

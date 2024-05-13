@@ -527,6 +527,7 @@ struct silofs_lvid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* object address */
 struct silofs_oaddr32b {
 	struct silofs_ovid              ovid;
 	uint32_t                        index;
@@ -535,6 +536,7 @@ struct silofs_oaddr32b {
 } silofs_packed_aligned16;
 
 
+/* logical-segment identifier */
 struct silofs_lsegid32b {
 	struct silofs_lvid              lvid;
 	uint32_t                        lsize;
@@ -545,6 +547,7 @@ struct silofs_lsegid32b {
 } silofs_packed_aligned16;
 
 
+/* logical address */
 struct silofs_laddr48b {
 	struct silofs_lsegid32b         lsegid;
 	uint32_t                        pos;
@@ -552,6 +555,13 @@ struct silofs_laddr48b {
 	uint8_t                         ltype;
 	uint8_t                         pad[7];
 } silofs_packed_aligned16;
+
+
+/* content address (by hash) */
+struct silofs_caddr64b {
+	struct silofs_hash256           hash;
+	uint8_t                         reserved[32];
+} silofs_packed_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1031,16 +1041,9 @@ struct silofs_btree_leaf {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/* packed-object identifier (by hash) */
-struct silofs_caddr64b {
-	struct silofs_hash256 hash;
-	uint8_t               reserved[32];
-} silofs_packed_aligned64;
-
-
 /* packing descriptor */
 struct silofs_pack_desc256b {
-	struct silofs_caddr64b         pd_caddr;
+	struct silofs_caddr64b          pd_caddr;
 	struct silofs_laddr48b          pd_laddr;
 	uint8_t                         pd_reserved[144];
 } silofs_packed_aligned64;

@@ -62,7 +62,7 @@ struct silofs_fs_cflags {
 struct silofs_fs_bconf {
 	struct silofs_strbuf            name;
 	struct silofs_uuid              fs_uuid;
-	struct silofs_caddr            pack_id;
+	struct silofs_caddr             pack_ref;
 	struct silofs_users_ids         users_ids;
 	struct silofs_groups_ids        groups_ids;
 };

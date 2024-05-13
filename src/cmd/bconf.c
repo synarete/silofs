@@ -521,7 +521,7 @@ static void cmd_append_caddr(const char *name,
 	struct silofs_strbuf sbuf;
 	char line[512] = "";
 
-	silofs_caddr_to_base64(caddr, &sbuf);
+	silofs_caddr_to_name(caddr, &sbuf);
 	snprintf(line, sizeof(line) - 1, "%s = \"%s\"\n", name, sbuf.str);
 	cmd_append_cfgline(conf, line);
 }
@@ -689,9 +689,9 @@ static enum cmd_conf_sec cmd_conf_sec_by_name(const struct silofs_substr *ss)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool cmd_bconf_has_pack_id(const struct silofs_fs_bconf *bconf)
+static bool cmd_bconf_has_pack_ref(const struct silofs_fs_bconf *bconf)
 {
-	return !silofs_caddr_isnone(&bconf->pack_id);
+	return !silofs_caddr_isnone(&bconf->pack_ref);
 }
 
 static void cmd_bconf_parse_fsid_cfg(struct silofs_fs_bconf *bconf,
@@ -793,8 +793,8 @@ static char *cmd_bconf_unparse(const struct silofs_fs_bconf *bconf)
 	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_FS);
 	cmd_append_section(sec_name, &cfg);
 	cmd_append_uuid("uuid", &bconf->fs_uuid, &cfg);
-	if (cmd_bconf_has_pack_id(bconf)) {
-		cmd_append_caddr("pack", &bconf->pack_id, &cfg);
+	if (cmd_bconf_has_pack_ref(bconf)) {
+		cmd_append_caddr("pack", &bconf->pack_ref, &cfg);
 	}
 	cmd_append_newline(&cfg);
 

@@ -50,13 +50,6 @@ uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr)
 	return silofs_squash_to_u32(&caddr64b, sizeof(caddr64b));
 }
 
-void silofs_caddr_to_base64(const struct silofs_caddr *caddr,
-                            struct silofs_strbuf *out_sbuf)
-{
-	silofs_hash256_to_base64(&caddr->hash, out_sbuf);
-}
-
-
 void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
                           const struct silofs_caddr *caddr)
 {

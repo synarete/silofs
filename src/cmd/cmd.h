@@ -261,8 +261,7 @@ void cmd_unref_fs(struct silofs_fs_ctx *fse,
 void cmd_inspect_fs(struct silofs_fs_ctx *fse,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-void cmd_pack_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_caddr *out_caddr);
+void cmd_pack_fs(struct silofs_fs_ctx *fse, struct silofs_caddr *out_caddr);
 
 /* mount-info */
 struct cmd_proc_mntinfo {

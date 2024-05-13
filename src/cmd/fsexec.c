@@ -260,8 +260,7 @@ void cmd_inspect_fs(struct silofs_fs_ctx *fse,
 	cmd_require_ok(fse, err, "inspect-fs error");
 }
 
-void cmd_pack_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_caddr *out_caddr)
+void cmd_pack_fs(struct silofs_fs_ctx *fse, struct silofs_caddr *out_caddr)
 {
 	int err;
 

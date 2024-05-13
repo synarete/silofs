@@ -212,7 +212,7 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 
 	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
 	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
-	cmd_pack_fs(ctx->fs_ctx, &bconf.pack_id);
+	cmd_pack_fs(ctx->fs_ctx, &bconf.pack_ref);
 	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&bconf);
 }

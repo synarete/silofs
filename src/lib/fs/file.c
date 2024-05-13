@@ -906,8 +906,8 @@ static void filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
 	}
 
 	silofs_iovec_reset(out_iov);
-	out_iov->iov_base = fli_data_at(fli, off_within);
-	out_iov->iov_len = len;
+	out_iov->iov.iov_base = fli_data_at(fli, off_within);
+	out_iov->iov.iov_len = len;
 	out_iov->iov_backref = f_ctx->with_backref ? fli : NULL;
 }
 
@@ -916,8 +916,8 @@ static void filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
                                 struct silofs_iovec *out_iov)
 {
 	silofs_iovec_reset(out_iov);
-	out_iov->iov_base = filc_nil_block(f_ctx);
-	out_iov->iov_len = len_of_data(f_ctx->off, f_ctx->end, ltype);
+	out_iov->iov.iov_base = filc_nil_block(f_ctx);
+	out_iov->iov.iov_len = len_of_data(f_ctx->off, f_ctx->end, ltype);
 	out_iov->iov_off = 0;
 }
 
@@ -1755,22 +1755,22 @@ static void iovref_post(const struct silofs_iovec *iov, int wr_mode)
 static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
                               struct silofs_fileaf_info *fli, size_t *out_len)
 {
-	struct silofs_iovec iov = {
+	struct silofs_iovec iovec = {
+		.iov.iov_base = NULL,
+		.iov.iov_len = 0,
 		.iov_backref = NULL,
-		.iov_base = NULL,
 		.iov_off = -1,
-		.iov_len = 0,
 		.iov_fd = -1,
 	};
 	int wr_mode = f_ctx->op_mask & OP_WRITE;
 	int err;
 
-	filc_resolve_iovec(f_ctx, fli, &iov);
-	iovref_pre(&iov, wr_mode);
-	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iov);
-	*out_len = iov.iov_len;
+	filc_resolve_iovec(f_ctx, fli, &iovec);
+	iovref_pre(&iovec, wr_mode);
+	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iovec);
+	*out_len = iovec.iov.iov_len;
 	if (err) {
-		iovref_post(&iov, wr_mode);
+		iovref_post(&iovec, wr_mode);
 		return err;
 	}
 	return 0;
@@ -2054,22 +2054,22 @@ read_iter_of(const struct silofs_rwiter_ctx *rwi)
 }
 
 static int read_iter_actor(struct silofs_rwiter_ctx *rwi,
-                           const struct silofs_iovec *iov)
+                           const struct silofs_iovec *iovec)
 {
 	struct silofs_read_iter *rdi = read_iter_of(rwi);
 	int err;
 
-	if ((iov->iov_fd > 0) && (iov->iov_off < 0)) {
+	if ((iovec->iov_fd > 0) && (iovec->iov_off < 0)) {
 		return -SILOFS_EINVAL;
 	}
-	if ((rdi->dat_len + iov->iov_len) > rdi->dat_max) {
+	if ((rdi->dat_len + iovec->iov.iov_len) > rdi->dat_max) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_iovec_copy_into(iov, rdi->dat + rdi->dat_len);
+	err = silofs_iovec_copy_into(iovec, rdi->dat + rdi->dat_len);
 	if (err) {
 		return err;
 	}
-	rdi->dat_len += iov->iov_len;
+	rdi->dat_len += iovec->iov.iov_len;
 	return 0;
 }
 
@@ -2808,22 +2808,22 @@ write_iter_of(const struct silofs_rwiter_ctx *rwi)
 }
 
 static int write_iter_actor(struct silofs_rwiter_ctx *rwi,
-                            const struct silofs_iovec *iov)
+                            const struct silofs_iovec *iovec)
 {
 	struct silofs_write_iter *wri = write_iter_of(rwi);
 	int err;
 
-	if ((iov->iov_fd > 0) && (iov->iov_off < 0)) {
+	if ((iovec->iov_fd > 0) && (iovec->iov_off < 0)) {
 		return -SILOFS_EINVAL;
 	}
-	if ((wri->dat_len + iov->iov_len) > wri->dat_max) {
+	if ((wri->dat_len + iovec->iov.iov_len) > wri->dat_max) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_iovec_copy_from(iov, wri->dat + wri->dat_len);
+	err = silofs_iovec_copy_from(iovec, wri->dat + wri->dat_len);
 	if (err) {
 		return err;
 	}
-	wri->dat_len += iov->iov_len;
+	wri->dat_len += iovec->iov.iov_len;
 	return 0;
 }
 

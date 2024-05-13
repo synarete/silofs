@@ -22,9 +22,9 @@
 
 void silofs_iovec_reset(struct silofs_iovec *iov)
 {
+	iov->iov.iov_base = NULL;
+	iov->iov.iov_len = 0;
 	iov->iov_backref = NULL;
-	iov->iov_base = NULL;
-	iov->iov_len = 0;
 	iov->iov_off = 0;
 	iov->iov_fd = -1;
 }
@@ -32,9 +32,9 @@ void silofs_iovec_reset(struct silofs_iovec *iov)
 void silofs_iovec_assign(struct silofs_iovec *iov,
                          const struct silofs_iovec *other)
 {
+	iov->iov.iov_base = other->iov.iov_base;
+	iov->iov.iov_len = other->iov.iov_len;
 	iov->iov_backref = other->iov_backref;
-	iov->iov_base = other->iov_base;
-	iov->iov_len = other->iov_len;
 	iov->iov_off = other->iov_off;
 	iov->iov_fd = other->iov_fd;
 }
@@ -43,12 +43,12 @@ int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf)
 {
 	int err;
 
-	if (iov->iov_base != NULL) {
-		memcpy(buf, iov->iov_base, iov->iov_len);
+	if (iov->iov.iov_base != NULL) {
+		memcpy(buf, iov->iov.iov_base, iov->iov.iov_len);
 		err = 0;
 	} else if (iov->iov_fd > 0) {
 		err = silofs_sys_preadn(iov->iov_fd, buf,
-		                        iov->iov_len, iov->iov_off);
+		                        iov->iov.iov_len, iov->iov_off);
 	} else {
 		err = -SILOFS_EIO;
 	}
@@ -59,11 +59,11 @@ int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf)
 {
 	int err = 0;
 
-	if (iov->iov_base != NULL) {
-		memcpy(iov->iov_base, buf, iov->iov_len);
+	if (iov->iov.iov_base != NULL) {
+		memcpy(iov->iov.iov_base, buf, iov->iov.iov_len);
 	} else if (iov->iov_fd > 0) {
 		err = silofs_sys_pwriten(iov->iov_fd, buf,
-		                         iov->iov_len, iov->iov_off);
+		                         iov->iov.iov_len, iov->iov_off);
 	} else {
 		err = -SILOFS_EIO;
 	}
@@ -73,6 +73,6 @@ int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf)
 int silofs_iovec_copy_mem(const struct silofs_iovec *iov_src,
                           const struct silofs_iovec *iov_dst, size_t len)
 {
-	memcpy(iov_dst->iov_base, iov_src->iov_base, len);
+	memcpy(iov_dst->iov.iov_base, iov_src->iov.iov_base, len);
 	return 0;
 }

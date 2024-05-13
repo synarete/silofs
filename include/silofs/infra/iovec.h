@@ -17,13 +17,13 @@
 #ifndef SILOFS_IOVEC_H_
 #define SILOFS_IOVEC_H_
 
-#include <stdlib.h>
+#include <sys/uio.h>
 
-/* extended standard iovec with optional file-descriptor and back-references */
+/* extension to standard scatter/gather I/O vector with optional
+ * file-descriptor and back-reference. */
 struct silofs_iovec {
+	struct iovec iov;
 	void  *iov_backref;
-	void  *iov_base;
-	size_t iov_len;
 	loff_t iov_off;
 	int    iov_fd;
 };

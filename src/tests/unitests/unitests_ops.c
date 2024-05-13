@@ -457,33 +457,33 @@ static void iovec_copy(struct silofs_iovec *dst,
 }
 
 static int ut_write_iter_check(const struct ut_write_iter *wri,
-                               const struct silofs_iovec *iov)
+                               const struct silofs_iovec *iovec)
 {
-	if ((iov->iov_fd > 0) && (iov->iov_off < 0)) {
+	if ((iovec->iov_fd > 0) && (iovec->iov_off < 0)) {
 		return -EINVAL;
 	}
-	if ((wri->dat_len + iov->iov_len) > wri->dat_max) {
+	if ((wri->dat_len + iovec->iov.iov_len) > wri->dat_max) {
 		return -EINVAL;
 	}
 	return 0;
 }
 
 static int ut_write_iter_actor(struct silofs_rwiter_ctx *rwi,
-                               const struct silofs_iovec *iov)
+                               const struct silofs_iovec *iovec)
 {
 	struct ut_write_iter *wri = write_iter_of(rwi);
 	int err;
 
-	err = ut_write_iter_check(wri, iov);
+	err = ut_write_iter_check(wri, iovec);
 	if (err) {
 		return err;
 	}
-	err = silofs_iovec_copy_from(iov, wri->dat + wri->dat_len);
+	err = silofs_iovec_copy_from(iovec, wri->dat + wri->dat_len);
 	if (err) {
 		return err;
 	}
-	iovec_copy(&wri->iov[wri->cnt++], iov);
-	wri->dat_len += iov->iov_len;
+	iovec_copy(&wri->iov[wri->cnt++], iovec);
+	wri->dat_len += iovec->iov.iov_len;
 	wri->ncp++;
 	return 0;
 }
@@ -505,16 +505,16 @@ static int ut_write_iter_asyncwr_actor(struct silofs_rwiter_ctx *rwi,
 
 static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 {
-	const struct silofs_iovec *iov;
+	const struct silofs_iovec *iovec;
 	int err;
 
 	for (size_t i = wri->ncp; i < wri->cnt; ++i) {
-		iov = &wri->iov[i];
-		err = silofs_iovec_copy_from(iov, wri->dat + wri->dat_len);
+		iovec = &wri->iov[i];
+		err = silofs_iovec_copy_from(iovec, wri->dat + wri->dat_len);
 		if (err) {
 			return err;
 		}
-		wri->dat_len += iov->iov_len;
+		wri->dat_len += iovec->iov.iov_len;
 		wri->ncp++;
 	}
 	return 0;

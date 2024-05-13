@@ -1601,9 +1601,9 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
 		return -SILOFS_ERANGE;
 	}
 	silofs_iovec_reset(iov);
+	iov->iov.iov_len = len;
+	iov->iov.iov_base = ptr;
 	iov->iov_off = qpool_ptr_to_off(&qal->qpool, ptr);
-	iov->iov_len = len;
-	iov->iov_base = ptr;
 	iov->iov_fd = qal->qpool.data.fd;
 	iov->iov_backref = NULL;
 	return 0;

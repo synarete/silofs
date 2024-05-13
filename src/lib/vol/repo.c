@@ -652,13 +652,13 @@ static int lsegf_check_size_ge(const struct silofs_lsegf *lsegf,
 }
 
 static void lsegf_make_iovec(const struct silofs_lsegf *lsegf,
-                             loff_t off, size_t len, struct silofs_iovec *siov)
+                             loff_t off, size_t len, struct silofs_iovec *iov)
 {
-	siov->iov_off = off;
-	siov->iov_len = len;
-	siov->iov_base = NULL;
-	siov->iov_fd = lsegf->lsf_fd;
-	siov->iov_backref = NULL;
+	iov->iov.iov_len = len;
+	iov->iov.iov_base = NULL;
+	iov->iov_off = off;
+	iov->iov_fd = lsegf->lsf_fd;
+	iov->iov_backref = NULL;
 }
 
 static int lsegf_iovec_at(const struct silofs_lsegf *lsegf,
@@ -769,37 +769,37 @@ static int lsegf_load_bb(const struct silofs_lsegf *lsegf,
                          const struct silofs_laddr *laddr,
                          struct silofs_bytebuf *bb)
 {
-	struct silofs_iovec siov = { .iov_off = -1 };
+	struct silofs_iovec iovec = { .iov_off = -1 };
 	struct stat st;
 	loff_t end;
 	void *bobj;
 	int err;
 
-	err = lsegf_iovec_of(lsegf, laddr, &siov);
+	err = lsegf_iovec_of(lsegf, laddr, &iovec);
 	if (err) {
 		return err;
 	}
-	if (!silofs_bytebuf_has_free(bb, !siov.iov_len)) {
+	if (!silofs_bytebuf_has_free(bb, !iovec.iov.iov_len)) {
 		return -SILOFS_EINVAL;
 	}
-	err = do_fstat(siov.iov_fd, &st);
+	err = do_fstat(iovec.iov_fd, &st);
 	if (err) {
 		return err;
 	}
 	silofs_assert_eq(st.st_size % SILOFS_KB_SIZE, 0);
 
 	bobj = silofs_bytebuf_end(bb);
-	end = off_end(siov.iov_off, siov.iov_len);
+	end = off_end(iovec.iov_off, iovec.iov.iov_len);
 	if (end > st.st_size) {
-		memset(bobj, 0, siov.iov_len);
+		silofs_memzero(bobj, iovec.iov.iov_len);
 		goto out;
 	}
-	err = do_preadn(siov.iov_fd, bobj, siov.iov_len, siov.iov_off);
+	err = do_preadn(iovec.iov_fd, bobj, iovec.iov.iov_len, iovec.iov_off);
 	if (err) {
 		return err;
 	}
 out:
-	bb->len += siov.iov_len;
+	bb->len += iovec.iov.iov_len;
 	return 0;
 }
 

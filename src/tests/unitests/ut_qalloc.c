@@ -68,8 +68,7 @@ link_to_mrecord(const struct silofs_list_head *link)
 static struct ut_mrecord *
 mrecord_new(struct silofs_qalloc *qal, size_t msz)
 {
-	struct silofs_iovec iov = {
-		.iov_base = NULL,
+	struct silofs_iovec iovec = {
 		.iov_fd = -1
 	};
 	struct ut_mrecord *mr = NULL;
@@ -82,9 +81,9 @@ mrecord_new(struct silofs_qalloc *qal, size_t msz)
 	err = silofs_qalloc_mcheck(qal, mem, msz);
 	ut_expect_ok(err);
 
-	err = silofs_qalloc_resolve(qal, mem, msz, &iov);
+	err = silofs_qalloc_resolve(qal, mem, msz, &iovec);
 	ut_expect_ok(err);
-	ut_expect_eq(mem, iov.iov_base);
+	ut_expect_eq(mem, iovec.iov.iov_base);
 
 	mr = mrecord_of(mem, msz);
 	mr->qal = qal;

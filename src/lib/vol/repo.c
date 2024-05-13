@@ -2567,3 +2567,22 @@ int silofs_repo_save_pack(struct silofs_repo *repo,
 	repo_unlock(repo);
 	return err;
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void calc_hash_of(const struct silofs_mdigest *md,
+                         const void *ptr, size_t len,
+                         struct silofs_hash256 *out_hash)
+{
+	silofs_sha256_of(md, ptr, len, out_hash);
+}
+
+void silofs_calc_caddr_of(const void *ptr, size_t len,
+                          const struct silofs_mdigest *md,
+                          struct silofs_caddr *out_caddr)
+{
+	struct silofs_hash256 hash;
+
+	calc_hash_of(md, ptr, len, &hash);
+	silofs_caddr_setup(out_caddr, &hash);
+}

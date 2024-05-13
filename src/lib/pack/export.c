@@ -115,7 +115,7 @@ pec_update_hash_of(const struct silofs_pack_export_ctx *pe_ctx,
 	const struct silofs_mdigest *md = &pe_ctx->pex_catalog.cat_mdigest;
 	const size_t len = pdi->pd.pd_laddr.len;
 
-	silofs_pkdesc_update_id(&pdi->pd, md, dat, len);
+	silofs_pkdesc_update_caddr(&pdi->pd, md, dat, len);
 	return 0;
 }
 

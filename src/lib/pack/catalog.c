@@ -84,23 +84,12 @@ void silofs_pkdesc_fini(struct silofs_pack_desc *pd)
 	silofs_laddr_reset(&pd->pd_laddr);
 }
 
-static void calc_hash_of(const struct silofs_mdigest *md,
-                         const void *buf, size_t bsz,
-                         struct silofs_hash256 *out_hash)
+void silofs_pkdesc_update_caddr(struct silofs_pack_desc *pd,
+                                const struct silofs_mdigest *md,
+                                const void *buf, size_t bsz)
 {
-	silofs_sha256_of(md, buf, bsz, out_hash);
+	silofs_calc_caddr_of(buf, bsz, md, &pd->pd_caddr);
 }
-
-void silofs_pkdesc_update_id(struct silofs_pack_desc *pd,
-                             const struct silofs_mdigest *md,
-                             const void *buf, size_t bsz)
-{
-	struct silofs_hash256 hash;
-
-	calc_hash_of(md, buf, bsz, &hash);
-	silofs_caddr_setup(&pd->pd_caddr, &hash);
-}
-
 
 static void silofs_pack_desc256b_reset(struct silofs_pack_desc256b *pdx)
 {
@@ -402,11 +391,10 @@ static void catalog_encode_meta(struct silofs_catalog *catalog)
 
 static void catalog_update_caddr(struct silofs_catalog *catalog)
 {
-	struct silofs_hash256 hash;
-
-	silofs_sha256_of(&catalog->cat_mdigest, catalog->cat_bbuf.ptr,
-	                 catalog->cat_bbuf.len, &hash);
-	silofs_caddr_setup(&catalog->cat_caddr, &hash);
+	silofs_calc_caddr_of(catalog->cat_bbuf.ptr,
+	                     catalog->cat_bbuf.len,
+	                     &catalog->cat_mdigest,
+	                     &catalog->cat_caddr);
 }
 
 int silofs_catalog_encode(struct silofs_catalog *catalog)

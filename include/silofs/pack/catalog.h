@@ -44,9 +44,9 @@ void silofs_pkdesc_init(struct silofs_pack_desc *pd,
 
 void silofs_pkdesc_fini(struct silofs_pack_desc *pd);
 
-void silofs_pkdesc_update_id(struct silofs_pack_desc *pd,
-                             const struct silofs_mdigest *md,
-                             const void *buf, size_t bsz);
+void silofs_pkdesc_update_caddr(struct silofs_pack_desc *pd,
+                                const struct silofs_mdigest *md,
+                                const void *buf, size_t bsz);
 
 
 void silofs_pkdesc128b_xtoh(const struct silofs_pack_desc256b *pdx,

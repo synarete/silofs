@@ -124,7 +124,7 @@ int silofs_repo_save_pack(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_calc_caddr_of(const void *ptr, size_t len,
+void silofs_calc_caddr_of(const struct silofs_rovec *rov,
                           const struct silofs_mdigest *md,
                           struct silofs_caddr *out_caddr);
 

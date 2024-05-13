@@ -112,10 +112,13 @@ static int
 pec_update_hash_of(const struct silofs_pack_export_ctx *pe_ctx,
                    struct silofs_pack_desc_info *pdi, const void *dat)
 {
+	const struct silofs_rovec rov = {
+		.rov_base = dat,
+		.rov_len = pdi->pd.pd_laddr.len
+	};
 	const struct silofs_mdigest *md = &pe_ctx->pex_catalog.cat_mdigest;
-	const size_t len = pdi->pd.pd_laddr.len;
 
-	silofs_pkdesc_update_caddr(&pdi->pd, md, dat, len);
+	silofs_pkdesc_calc_caddr_by(&pdi->pd, md, &rov);
 	return 0;
 }
 

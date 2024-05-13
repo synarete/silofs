@@ -84,11 +84,11 @@ void silofs_pkdesc_fini(struct silofs_pack_desc *pd)
 	silofs_laddr_reset(&pd->pd_laddr);
 }
 
-void silofs_pkdesc_update_caddr(struct silofs_pack_desc *pd,
-                                const struct silofs_mdigest *md,
-                                const void *buf, size_t bsz)
+void silofs_pkdesc_calc_caddr_by(struct silofs_pack_desc *pd,
+                                 const struct silofs_mdigest *md,
+                                 const struct silofs_rovec *rov)
 {
-	silofs_calc_caddr_of(buf, bsz, md, &pd->pd_caddr);
+	silofs_calc_caddr_of(rov, md, &pd->pd_caddr);
 }
 
 static void silofs_pack_desc256b_reset(struct silofs_pack_desc256b *pdx)
@@ -391,10 +391,12 @@ static void catalog_encode_meta(struct silofs_catalog *catalog)
 
 static void catalog_update_caddr(struct silofs_catalog *catalog)
 {
-	silofs_calc_caddr_of(catalog->cat_bbuf.ptr,
-	                     catalog->cat_bbuf.len,
-	                     &catalog->cat_mdigest,
-	                     &catalog->cat_caddr);
+	const struct silofs_rovec rov = {
+		.rov_base = catalog->cat_bbuf.ptr,
+		.rov_len = catalog->cat_bbuf.len,
+	};
+
+	silofs_calc_caddr_of(&rov, &catalog->cat_mdigest, &catalog->cat_caddr);
 }
 
 int silofs_catalog_encode(struct silofs_catalog *catalog)

@@ -19,6 +19,12 @@
 
 #include <sys/uio.h>
 
+/* read-only I/O vector (pointer-to-data + length) */
+struct silofs_rovec {
+	const void *rov_base;
+	size_t rov_len;
+};
+
 /* extension to standard scatter/gather I/O vector with optional
  * file-descriptor and back-reference. */
 struct silofs_iovec {

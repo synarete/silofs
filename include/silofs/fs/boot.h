@@ -172,6 +172,17 @@ void silofs_calc_key_hash(const struct silofs_key *key,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_encode_bootrec(const struct silofs_fsenv *fsenv,
+                          const struct silofs_bootrec *brec,
+                          struct silofs_bootrec1k *out_brec1k);
+
+int silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
+                          struct silofs_bootrec1k *brec1k,
+                          struct silofs_bootrec *out_brec);
+
+int silofs_stat_bootrec(const struct silofs_fsenv *fsenv,
+                        const struct silofs_laddr *laddr);
+
 int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
                         const struct silofs_laddr *laddr,
                         const struct silofs_bootrec *brec);
@@ -179,6 +190,9 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
                         const struct silofs_laddr *laddr,
                         struct silofs_bootrec *out_brec);
+
+int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
+                          const struct silofs_laddr *laddr);
 
 int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
                               const struct silofs_bootrec *brec,

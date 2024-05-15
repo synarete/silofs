@@ -94,18 +94,25 @@ static int pec_load_seg(const struct silofs_pack_export_ctx *pe_ctx,
 	return err;
 }
 
-static int pec_load_brec(const struct silofs_pack_export_ctx *pe_ctx,
-                         const struct silofs_laddr *laddr,
-                         struct silofs_bootrec1k *out_brec1k)
+static int pec_load_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
+                            const struct silofs_laddr *laddr,
+                            struct silofs_bootrec1k *out_brec1k)
 {
+	struct silofs_bootrec brec = { .flags = 0 };
+	const struct silofs_fsenv *fsenv = pe_ctx->pex_task->t_fsenv;
 	int err;
 
-	err = silofs_repo_load_lobj(pe_ctx->pex_repo, laddr, out_brec1k);
+	err = silofs_load_bootrec(fsenv, laddr, &brec);
 	if (err) {
-		log_err("failed to load: ltype=%d len=%zu err=%d",
-		        laddr->ltype, laddr->len, err);
+		log_err("failed to load bootrec: err=%d", err);
+		return err;
 	}
-	return err;
+	err = silofs_encode_bootrec(fsenv, &brec, out_brec1k);
+	if (err) {
+		log_err("failed to encode bootrec: err=%d", err);
+		return err;
+	}
+	return 0;
 }
 
 static int
@@ -156,7 +163,7 @@ static int pec_export_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
 	struct silofs_bootrec1k brec = { .br_magic = 0xFFFFFFFF };
 	int err;
 
-	err = pec_load_brec(pe_ctx, &pdi->pd.pd_laddr, &brec);
+	err = pec_load_bootrec(pe_ctx, &pdi->pd.pd_laddr, &brec);
 	if (err) {
 		return err;
 	}

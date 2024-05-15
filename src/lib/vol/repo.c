@@ -2400,7 +2400,7 @@ static int repo_stat_lobj_at(const struct silofs_repo *repo,
 }
 
 int silofs_repo_stat_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, ssize_t *out_sz)
+                          const struct silofs_laddr *laddr, size_t *out_sz)
 {
 	struct silofs_strbuf name;
 	struct stat st = { .st_size = -1 };
@@ -2409,7 +2409,7 @@ int silofs_repo_stat_lobj(struct silofs_repo *repo,
 	repo_lock(repo);
 	repo_objs_pathname_by(repo, laddr, &name);
 	err = repo_stat_lobj_at(repo, &name, &st);
-	*out_sz = st.st_size;
+	*out_sz = (size_t)st.st_size;
 	repo_unlock(repo);
 	return err;
 }

@@ -102,7 +102,7 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stat_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, ssize_t *out_sz);
+                          const struct silofs_laddr *laddr, size_t *out_sz);
 
 int silofs_repo_save_lobj(struct silofs_repo *repo,
                           const struct silofs_laddr *laddr, const void *buf);

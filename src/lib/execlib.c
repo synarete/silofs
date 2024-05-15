@@ -1439,19 +1439,7 @@ int silofs_open_repo(struct silofs_fs_ctx *fs_ctx)
 static int stat_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
                            const struct silofs_uaddr *uaddr)
 {
-	ssize_t sz = -1;
-	int err;
-
-	err = silofs_repo_stat_lobj(fs_ctx->repo, &uaddr->laddr, &sz);
-	if (err) {
-		log_err("failed to stat bootrec: err=%d", err);
-		return err;
-	}
-	if (sz != SILOFS_BOOTREC_SIZE) {
-		log_warn("bad bootrec: size=%zd", sz);
-		return -SILOFS_EBADBOOT;
-	}
-	return 0;
+	return silofs_stat_bootrec(fs_ctx->fsenv, &uaddr->laddr);
 }
 
 static int save_bootrec_of(const struct silofs_fs_ctx *fs_ctx,
@@ -1482,14 +1470,7 @@ static int reload_bootrec_of(struct silofs_fs_ctx *fs_ctx,
 static int unlink_bootrec_of(struct silofs_fs_ctx *fs_ctx,
                              const struct silofs_uaddr *uaddr)
 {
-	int err;
-
-	err = silofs_repo_unlink_lobj(fs_ctx->repo, &uaddr->laddr);
-	if (err) {
-		log_err("failed to unlink bootrec: err=%d", err);
-		return err;
-	}
-	return 0;
+	return silofs_unlink_bootrec(fs_ctx->fsenv, &uaddr->laddr);
 }
 
 static int save_bootrec(const struct silofs_fs_ctx *fs_ctx,

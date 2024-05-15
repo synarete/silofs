@@ -31,6 +31,9 @@ void silofs_caddr_assign(struct silofs_caddr *caddr,
 
 bool silofs_caddr_isnone(const struct silofs_caddr *caddr);
 
+bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
+                          const struct silofs_caddr *other);
+
 void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf *out_name);
 

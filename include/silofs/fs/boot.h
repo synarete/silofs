@@ -194,8 +194,19 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
                           const struct silofs_laddr *laddr);
 
-int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
-                              const struct silofs_bootrec *brec,
-                              struct silofs_caddr *out_caddr);
+
+int silofs_save_bootrec2(const struct silofs_fsenv *fsenv,
+                         const struct silofs_bootrec *brec,
+                         struct silofs_caddr *out_caddr);
+
+int silofs_load_bootrec2(const struct silofs_fsenv *fsenv,
+                         const struct silofs_caddr *caddr,
+                         struct silofs_bootrec *out_brec);
+
+int silofs_stat_bootrec2(const struct silofs_fsenv *fsenv,
+                         const struct silofs_caddr *caddr);
+
+int silofs_unlink_bootrec2(const struct silofs_fsenv *fsenv,
+                           const struct silofs_caddr *caddr);
 
 #endif /* SILOFS_BOOT_H_ */

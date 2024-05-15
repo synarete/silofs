@@ -737,22 +737,113 @@ int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
-                              const struct silofs_bootrec *brec,
-                              struct silofs_caddr *out_caddr)
+static void calc_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
+                                 const struct silofs_bootrec1k *brec1k,
+                                 struct silofs_caddr *out_caddr)
+{
+	const struct silofs_rovec rov = {
+		.rov_base = brec1k,
+		.rov_len = sizeof(*brec1k)
+	};
+
+	silofs_calc_caddr_of(&rov, &fsenv->fse_mdigest, out_caddr);
+}
+
+static int verify_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
+                                  const struct silofs_bootrec1k *brec1k,
+                                  const struct silofs_caddr *caddr)
+{
+	struct silofs_caddr caddr2;
+
+	calc_bootrec1k_caddr(fsenv, brec1k, &caddr2);
+	return silofs_caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOT;
+}
+
+int silofs_save_bootrec2(const struct silofs_fsenv *fsenv,
+                         const struct silofs_bootrec *brec,
+                         struct silofs_caddr *out_caddr)
 {
 	struct silofs_bootrec1k brec1k = {
 		.br_magic = 1,
 	};
-	const struct silofs_rovec rov = {
+	const struct silofs_rovec rovec = {
 		.rov_base = &brec1k,
 		.rov_len = sizeof(brec1k)
 	};
 	int err;
 
 	err = silofs_encode_bootrec(fsenv, brec, &brec1k);
-	if (!err) {
-		silofs_calc_caddr_of(&rov, &fsenv->fse_mdigest, out_caddr);
+	if (err) {
+		log_err("failed to encode bootrec: err=%d", err);
+		return err;
 	}
-	return err;
+	calc_bootrec1k_caddr(fsenv, &brec1k, out_caddr);
+	err = silofs_repo_save_cobj(fsenv->fse.repo, out_caddr, &rovec);
+	if (err) {
+		log_err("failed to save bootrec: err=%d", err);
+		return err;
+	}
+	return 0;
+}
+
+int silofs_load_bootrec2(const struct silofs_fsenv *fsenv,
+                         const struct silofs_caddr *caddr,
+                         struct silofs_bootrec *out_brec)
+{
+	struct silofs_bootrec1k brec1k = {
+		.br_magic = 0
+	};
+	struct silofs_rwvec rwvec = {
+		.rwv_base = &brec1k,
+		.rwv_len = sizeof(brec1k)
+	};
+	int err;
+
+	err = silofs_repo_load_cobj(fsenv->fse.repo, caddr, &rwvec);
+	if (err) {
+		log_dbg("failed to load bootrec: err=%d", err);
+		return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
+	}
+	err = verify_bootrec1k_caddr(fsenv, &brec1k, caddr);
+	if (err) {
+		log_dbg("failed to verify bootrec: err=%d", err);
+		return err;
+	}
+	err = silofs_decode_bootrec(fsenv, &brec1k, out_brec);
+	if (err) {
+		log_dbg("failed to decode bootrec: err=%d", err);
+		return err;
+	}
+	return 0;
+}
+
+int silofs_stat_bootrec2(const struct silofs_fsenv *fsenv,
+                         const struct silofs_caddr *caddr)
+{
+	size_t sz = 0;
+	int err;
+
+	err = silofs_repo_stat_cobj(fsenv->fse.repo, caddr, &sz);
+	if (err) {
+		log_err("failed to stat bootrec: err=%d", err);
+		return err;
+	}
+	if (sz != SILOFS_BOOTREC_SIZE) {
+		log_warn("bad bootrec: size=%zu", sz);
+		return -SILOFS_EBADBOOT;
+	}
+	return 0;
+}
+
+int silofs_unlink_bootrec2(const struct silofs_fsenv *fsenv,
+                           const struct silofs_caddr *caddr)
+{
+	int err;
+
+	err = silofs_repo_unlink_cobj(fsenv->fse.repo, caddr);
+	if (err) {
+		log_err("failed to unlink bootrec: err=%d", err);
+		return err;
+	}
+	return 0;
 }

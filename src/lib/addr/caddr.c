@@ -36,6 +36,12 @@ bool silofs_caddr_isnone(const struct silofs_caddr *caddr)
 	return silofs_hash256_isnil(&caddr->hash);
 }
 
+bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
+                          const struct silofs_caddr *other)
+{
+	return silofs_hash256_isequal(&caddr->hash, &other->hash);
+}
+
 void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf *out_name)
 {

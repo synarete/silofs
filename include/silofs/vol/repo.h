@@ -115,6 +115,22 @@ int silofs_repo_unlink_lobj(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_repo_stat_cobj(struct silofs_repo *repo,
+                          const struct silofs_caddr *caddr, size_t *out_sz);
+
+int silofs_repo_save_cobj(struct silofs_repo *repo,
+                          const struct silofs_caddr *caddr,
+                          const struct silofs_rovec *rovec);
+
+int silofs_repo_load_cobj(struct silofs_repo *repo,
+                          const struct silofs_caddr *caddr,
+                          struct silofs_rwvec *rwvec);
+
+int silofs_repo_unlink_cobj(struct silofs_repo *repo,
+                            const struct silofs_caddr *caddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_repo_stat_pack(struct silofs_repo *repo,
                           const struct silofs_caddr *caddr, ssize_t *out_sz);
 

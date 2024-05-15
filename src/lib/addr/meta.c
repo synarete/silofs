@@ -316,17 +316,26 @@ void silofs_hash256_assign(struct silofs_hash256 *hash,
 void silofs_hash256_to_name(const struct silofs_hash256 *hash,
                             struct silofs_strbuf *out_name)
 {
+	size_t cnt = 0;
+
 	silofs_strbuf_reset(out_name);
 	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash),
-	                    out_name->str, sizeof(out_name->str) - 1);
+	                    out_name->str, sizeof(out_name->str) - 1, &cnt);
 }
 
-void silofs_hash256_to_base64(const struct silofs_hash256 *hash,
-                              struct silofs_strbuf *out_sbuf)
+int silofs_hash256_by_name(struct silofs_hash256 *hash,
+                           const struct silofs_strbuf *name)
 {
-	size_t len = 0;
+	size_t cnt = 0;
+	int err;
 
-	silofs_strbuf_reset(out_sbuf);
-	silofs_base64_encode(hash->hash, sizeof(hash->hash),
-	                     out_sbuf->str, sizeof(out_sbuf->str) - 1, &len);
+	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash),
+	                          name->str, strlen(name->str), &cnt);
+	if (err) {
+		return err;
+	}
+	if (cnt != sizeof(hash->hash)) {
+		return -SILOFS_EILLSTR;
+	}
+	return 0;
 }

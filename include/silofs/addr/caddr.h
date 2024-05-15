@@ -20,8 +20,11 @@
 /* packed-object identifier */
 struct silofs_caddr {
 	struct silofs_hash256 hash;
+	uint8_t pad[32]; /* padding for ioctl */
 };
 
+
+void silofs_caddr_reset(struct silofs_caddr *caddr);
 
 void silofs_caddr_setup(struct silofs_caddr *caddr,
                         const struct silofs_hash256 *hash);
@@ -36,6 +39,12 @@ bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
 
 void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf *out_name);
+
+void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
+                           char s[SILOFS_NAME_MAX + 1]);
+
+int silofs_caddr_by_name(struct silofs_caddr *caddr,
+                         const struct silofs_strbuf *name);
 
 uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr);
 

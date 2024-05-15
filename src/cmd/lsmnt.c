@@ -100,7 +100,7 @@ static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
 	char *mntd_path = NULL;
 	char *repo_path = NULL;
 	char *boot_name = NULL;
-	char *boot_fsid = NULL;
+	char *boot_addr = NULL;
 	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd = -1;
 	int err = 0;
@@ -126,16 +126,16 @@ static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
 		goto out;
 	}
 	boot_name = cmd_strdup(qry->u.boot.name);
-	boot_fsid = cmd_strdup(qry->u.boot.fsid);
+	boot_addr = cmd_strdup(qry->u.boot.addr);
 
 	fprintf(ctx->out_fp, "%s %s %s/%s",
-	        boot_fsid, mntd_path, repo_path, boot_name);
+	        boot_addr, mntd_path, repo_path, boot_name);
 out:
 	silofs_sys_closefd(&dfd);
 	cmd_pstrfree(&mntd_path);
 	cmd_pstrfree(&repo_path);
 	cmd_pstrfree(&boot_name);
-	cmd_pstrfree(&boot_fsid);
+	cmd_pstrfree(&boot_addr);
 	fputs("\n", ctx->out_fp);
 	fflush(ctx->out_fp);
 }

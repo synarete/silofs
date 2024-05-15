@@ -352,6 +352,23 @@ static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
+cmd_parse_caddr_by_name(const struct silofs_substr *ss,
+                        struct silofs_caddr *out_caddr)
+{
+	struct silofs_strbuf name;
+	int err;
+
+	if (ss->len >= sizeof(name.str)) {
+		cmd_die_by(ss, "content-address too long");
+	}
+	silofs_strbuf_setup(&name, ss);
+	err = silofs_caddr_by_name(out_caddr, &name);
+	if (err) {
+		cmd_die_by(ss, "illegal content-address");
+	}
+}
+
+static void
 cmd_parse_uid_by_name(const struct silofs_substr *name, uid_t *out_uid)
 {
 	char buf[NAME_MAX + 1] = "";
@@ -449,30 +466,6 @@ static void cmd_parse_simple_string(const struct silofs_substr *in,
 	}
 }
 
-static void cmd_parse_uuid_cfg(const struct silofs_substr *line,
-                               struct silofs_uuid *uuid)
-{
-	struct silofs_substr_pair ssp;
-	struct silofs_substr name;
-	struct silofs_substr suuid;
-	int err;
-
-	substr_split_by(line, '=', &ssp);
-	substr_strip_ws(&ssp.first, &name);
-	cmd_parse_simple_string(&ssp.second, &suuid);
-
-	if (substr_isempty(&name) || substr_isempty(&suuid)) {
-		cmd_die_by(line, "missing uuid value");
-	}
-	if (!substr_isequal(&name, "uuid")) {
-		cmd_die_by(line, "missing 'uuid' key");
-	}
-	err = silofs_uuid_parse2(uuid, &suuid);
-	if (err) {
-		cmd_die_by(line, "illegal uuid value");
-	}
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void cmd_append_cfgline(char **pcfg_curr, const char *line)
@@ -501,18 +494,6 @@ static void cmd_append_section(const char *name, char **pcfg)
 
 	snprintf(line, sizeof(line) - 1, "[%s]\n", name);
 	cmd_append_cfgline(pcfg, line);
-}
-
-static void cmd_append_uuid(const char *name,
-                            const struct silofs_uuid *uuid, char **conf)
-{
-	struct silofs_strbuf sbuf;
-	char line[512] = "";
-
-	silofs_strbuf_reset(&sbuf);
-	silofs_uuid_unparse(uuid, &sbuf);
-	snprintf(line, sizeof(line) - 1, "%s = \"%s\"\n", name, sbuf.str);
-	cmd_append_cfgline(conf, line);
 }
 
 static void cmd_append_caddr(const char *name,
@@ -652,14 +633,14 @@ static void cmd_write_bconf_file(const char *repodir, const char *name,
 
 enum cmd_conf_sec {
 	CMD_CONF_SEC_NIL,
-	CMD_CONF_SEC_FS,
+	CMD_CONF_SEC_REFS,
 	CMD_CONF_SEC_USERS,
 	CMD_CONF_SEC_GROUPS,
 };
 
 static const char *s_cmd_conf_sec_name[] = {
 	[CMD_CONF_SEC_NIL] = "",
-	[CMD_CONF_SEC_FS] = "fs",
+	[CMD_CONF_SEC_REFS] = "refs",
 	[CMD_CONF_SEC_USERS] = "users",
 	[CMD_CONF_SEC_GROUPS] = "groups",
 };
@@ -689,15 +670,40 @@ static enum cmd_conf_sec cmd_conf_sec_by_name(const struct silofs_substr *ss)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool cmd_bconf_has_boot_ref(const struct silofs_fs_bconf *bconf)
+{
+	return !silofs_caddr_isnone(&bconf->boot_ref);
+}
+
 static bool cmd_bconf_has_pack_ref(const struct silofs_fs_bconf *bconf)
 {
 	return !silofs_caddr_isnone(&bconf->pack_ref);
 }
 
-static void cmd_bconf_parse_fsid_cfg(struct silofs_fs_bconf *bconf,
+static void cmd_bconf_parse_refs_cfg(struct silofs_fs_bconf *bconf,
                                      const struct silofs_substr *line)
 {
-	cmd_parse_uuid_cfg(line, &bconf->fs_uuid);
+	struct silofs_substr_pair ssp;
+	struct silofs_substr key;
+	struct silofs_substr val;
+
+	substr_split_by(line, '=', &ssp);
+	substr_strip_ws(&ssp.first, &key);
+	cmd_parse_simple_string(&ssp.second, &val);
+
+	if (substr_isempty(&key)) {
+		cmd_die_by(line, "missing key");
+	}
+	if (substr_isempty(&val)) {
+		cmd_die_by(line, "missing value");
+	}
+	if (substr_isequal(&key, "boot")) {
+		cmd_parse_caddr_by_name(&val, &bconf->boot_ref);
+	} else if (substr_isequal(&key, "pack")) {
+		cmd_parse_caddr_by_name(&val, &bconf->pack_ref);
+	} else {
+		cmd_die_by(line, "unknown key");
+	}
 }
 
 static void cmd_bconf_parse_users_cfg(struct silofs_fs_bconf *bconf,
@@ -721,8 +727,8 @@ static void cmd_bconf_parse_line(struct silofs_fs_bconf *bconf,
 	switch (sec_state) {
 	case CMD_CONF_SEC_NIL:
 		break;
-	case CMD_CONF_SEC_FS:
-		cmd_bconf_parse_fsid_cfg(bconf, line);
+	case CMD_CONF_SEC_REFS:
+		cmd_bconf_parse_refs_cfg(bconf, line);
 		break;
 	case CMD_CONF_SEC_USERS:
 		cmd_bconf_parse_users_cfg(bconf, line);
@@ -777,6 +783,15 @@ static void cmd_bconf_parse_data(struct silofs_fs_bconf *bconf,
 	}
 }
 
+static void cmd_bconf_verify(const struct silofs_fs_bconf *bconf)
+{
+	if (!cmd_bconf_has_boot_ref(bconf) &&
+	    !cmd_bconf_has_pack_ref(bconf)) {
+		cmd_dief(0, "missing \"boot\" or \"pack\" in \"%s\" section",
+		         cmd_conf_sec_to_name(CMD_CONF_SEC_REFS));
+	}
+}
+
 static void cmd_bconf_parse(struct silofs_fs_bconf *bconf, const char *cfg)
 {
 	struct silofs_substr data;
@@ -790,9 +805,11 @@ static char *cmd_bconf_unparse(const struct silofs_fs_bconf *bconf)
 	const char *sec_name = NULL;
 	char *cfg = NULL;
 
-	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_FS);
+	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_REFS);
 	cmd_append_section(sec_name, &cfg);
-	cmd_append_uuid("uuid", &bconf->fs_uuid, &cfg);
+	if (cmd_bconf_has_boot_ref(bconf)) {
+		cmd_append_caddr("boot", &bconf->boot_ref, &cfg);
+	}
 	if (cmd_bconf_has_pack_ref(bconf)) {
 		cmd_append_caddr("pack", &bconf->pack_ref, &cfg);
 	}
@@ -886,7 +903,8 @@ void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
 void cmd_bconf_init(struct silofs_fs_bconf *bconf)
 {
 	silofs_memzero(bconf, sizeof(*bconf));
-	silofs_uuid_generate(&bconf->fs_uuid);
+	silofs_caddr_reset(&bconf->boot_ref);
+	silofs_caddr_reset(&bconf->pack_ref);
 	bconf->users_ids.uids = NULL;
 	bconf->users_ids.nuids = 0;
 	bconf->groups_ids.gids = NULL;
@@ -899,11 +917,18 @@ void cmd_bconf_fini(struct silofs_fs_bconf *bconf)
 	silofs_memzero(bconf, sizeof(*bconf));
 }
 
-void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
-                        const struct silofs_uuid *uuid)
+void cmd_bconf_set_boot_ref(struct silofs_fs_bconf *bconf,
+                            const struct silofs_caddr *caddr)
 {
-	silofs_uuid_assign(&bconf->fs_uuid, uuid);
+	silofs_caddr_assign(&bconf->boot_ref, caddr);
 }
+
+void cmd_bconf_set_pack_ref(struct silofs_fs_bconf *bconf,
+                            const struct silofs_caddr *caddr)
+{
+	silofs_caddr_assign(&bconf->pack_ref, caddr);
+}
+
 
 static void cmd_bconf_set_name2(struct silofs_fs_bconf *bconf,
                                 const struct silofs_strbuf *name)
@@ -916,7 +941,8 @@ void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
 {
 	cmd_bconf_init(bconf);
 	cmd_bconf_set_name2(bconf, &other->name);
-	cmd_bconf_set_fsid(bconf, &other->fs_uuid);
+	cmd_bconf_set_boot_ref(bconf, &other->boot_ref);
+	cmd_bconf_set_pack_ref(bconf, &other->pack_ref);
 	for (size_t i = 0; i < other->users_ids.nuids; ++i) {
 		cmd_bconf_append_user_id(bconf, &other->users_ids.uids[i]);
 	}
@@ -939,6 +965,7 @@ void cmd_bconf_load(struct silofs_fs_bconf *bconf, const char *basedir)
 	cfg = cmd_read_bconf_file(basedir, bconf->name.str);
 	cmd_bconf_parse(bconf, cfg);
 	cmd_pstrfree(&cfg);
+	cmd_bconf_verify(bconf);
 }
 
 void cmd_bconf_save(const struct silofs_fs_bconf *bconf, const char *basedir)
@@ -979,18 +1006,6 @@ void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name)
 		cmd_dief(err, "illegal name: %s", name);
 	}
 	silofs_strbuf_setup(&bconf->name, &nstr.s);
-}
-
-void cmd_bconf_set_lvid_by(struct silofs_fs_bconf *bconf,
-                           const struct silofs_lvid *lvid)
-{
-	cmd_bconf_set_fsid(bconf, &lvid->uuid);
-}
-
-void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
-                        struct silofs_lvid *out_lvid)
-{
-	silofs_lvid_by_uuid(out_lvid, &bconf->fs_uuid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -54,15 +54,15 @@ int silofs_open_repo(struct silofs_fs_ctx *fs_ctx);
 int silofs_close_repo(struct silofs_fs_ctx *fs_ctx);
 
 int silofs_format_fs(struct silofs_fs_ctx *fs_ctx,
-                     struct silofs_lvid *out_lvid);
+                     struct silofs_caddr *out_caddr);
 
 int silofs_boot_fs(struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_lvid *lvid);
+                   const struct silofs_caddr *boot_ref);
 
 int silofs_open_fs(struct silofs_fs_ctx *fs_ctx);
 
 int silofs_poke_fs(struct silofs_fs_ctx *fs_ctx,
-                   const struct silofs_lvid *out_lvid,
+                   const struct silofs_caddr *caddr,
                    struct silofs_bootrec *out_brec);
 
 int silofs_close_fs(struct silofs_fs_ctx *fs_ctx);
@@ -72,11 +72,11 @@ int silofs_exec_fs(struct silofs_fs_ctx *fs_ctx);
 int silofs_post_exec_fs(const struct silofs_fs_ctx *fs_ctx);
 
 int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_lvid *out_new,
-                   struct silofs_lvid *out_alt);
+                   struct silofs_caddr *out_boot_new,
+                   struct silofs_caddr *out_boot_alt);
 
 int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
-                    const struct silofs_lvid *lvid);
+                    const struct silofs_caddr *caddr);
 
 void silofs_halt_fs(struct silofs_fs_ctx *fs_ctx, int signum);
 

@@ -253,7 +253,7 @@ void cmd_open_fs(struct silofs_fs_ctx *fse);
 void cmd_exec_fs(struct silofs_fs_ctx *fse);
 
 void cmd_fork_fs(struct silofs_fs_ctx *fse,
-                 struct silofs_lvid *out_new, struct silofs_lvid *out_alt);
+                 struct silofs_caddr *out_new, struct silofs_caddr *out_alt);
 
 void cmd_unref_fs(struct silofs_fs_ctx *fse,
                   const struct silofs_fs_bconf *bconf);
@@ -315,16 +315,13 @@ void cmd_bconf_reset_ids(struct silofs_fs_bconf *bconf);
 void cmd_bconf_assign(struct silofs_fs_bconf *bconf,
                       const struct silofs_fs_bconf *other);
 
-void cmd_bconf_set_fsid(struct silofs_fs_bconf *bconf,
-                        const struct silofs_uuid *uuid);
+void cmd_bconf_set_boot_ref(struct silofs_fs_bconf *bconf,
+                            const struct silofs_caddr *caddr);
+
+void cmd_bconf_set_pack_ref(struct silofs_fs_bconf *bconf,
+                            const struct silofs_caddr *caddr);
 
 void cmd_bconf_set_name(struct silofs_fs_bconf *bconf, const char *name);
-
-void cmd_bconf_set_lvid_by(struct silofs_fs_bconf *bconf,
-                           const struct silofs_lvid *lvid);
-
-void cmd_bconf_get_lvid(const struct silofs_fs_bconf *bconf,
-                        struct silofs_lvid *out_lvid);
 
 void cmd_bconf_add_user(struct silofs_fs_bconf *bconf,
                         const char *user, bool with_sup_groups);

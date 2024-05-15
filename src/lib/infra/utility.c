@@ -54,9 +54,13 @@ void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
 size_t silofs_strbuf_copyto(const struct silofs_strbuf *sbuf,
                             char *str, size_t lim)
 {
-	const size_t n = (lim < sizeof(sbuf->str)) ? lim : sizeof(sbuf->str);
+	const size_t len = strlen(sbuf->str);
+	const size_t n = (lim < len) ? lim : len;
 
 	memcpy(str, sbuf->str, n);
+	if (lim && (n < lim)) {
+		str[n] = '\0';
+	}
 	return n;
 }
 
@@ -170,13 +174,25 @@ void silofs_byte_to_ascii(uint8_t b, char *a)
 	a[1] = silofs_nibble_to_ascii((int)b);
 }
 
-void silofs_ascii_to_byte(const char *a, uint8_t *b)
+int silofs_ascii_to_byte(const char *a, uint8_t *b)
 {
 	uint32_t nib[2];
+	int ret;
 
-	nib[0] = (uint32_t)silofs_ascii_to_nibble(a[0]);
-	nib[1] = (uint32_t)silofs_ascii_to_nibble(a[1]);
+	ret = silofs_ascii_to_nibble(a[0]);
+	if (ret == -1) {
+		return -1;
+	}
+	nib[0] = (uint32_t)ret;
+
+	ret = silofs_ascii_to_nibble(a[1]);
+	if (ret == -1) {
+		return -1;
+	}
+	nib[1] = (uint32_t)ret;
+
 	*b = (uint8_t)(nib[0] << 4 | nib[1]);
+	return 0;
 }
 
 void silofs_uint64_to_ascii(uint64_t u, char *a)
@@ -206,19 +222,41 @@ uint64_t silofs_ascii_to_uint64(const char *a)
 	return u;
 }
 
-size_t silofs_mem_to_ascii(const void *ptr, size_t len, char *buf, size_t bsz)
+void silofs_mem_to_ascii(const void *mem, size_t msz,
+                         char *asb, size_t asz, size_t *out_cnt)
 {
-	const uint8_t *mem = ptr;
+	const uint8_t *b = mem;
 	size_t cnt = 0;
 
-	for (size_t i = 0; i < len; ++i) {
-		if ((cnt + 2) > bsz) {
+	for (size_t i = 0; i < msz; ++i) {
+		if ((cnt + 2) > asz) {
 			break;
 		}
-		silofs_byte_to_ascii(mem[i], buf + cnt);
+		silofs_byte_to_ascii(b[i], asb + cnt);
 		cnt += 2;
 	}
-	return cnt;
+	*out_cnt = cnt;
+}
+
+int silofs_ascii_to_mem(void *mem, size_t msz,
+                        const char *asb, size_t asz, size_t *out_cnt)
+{
+	uint8_t *b = mem;
+	size_t cnt = 0;
+	int err = 0;
+
+	for (size_t i = 0; (i + 1) < asz; i += 2) {
+		if (cnt >= msz) {
+			break;
+		}
+		err = silofs_ascii_to_byte(&asb[i], b + cnt);
+		if (err) {
+			break;
+		}
+		cnt += 1;
+	}
+	*out_cnt = cnt;
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

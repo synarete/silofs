@@ -19,7 +19,7 @@
 
 
 struct silofs_pack_desc {
-	struct silofs_caddr    pd_caddr;
+	struct silofs_caddr     pd_caddr;
 	struct silofs_laddr     pd_laddr;
 };
 

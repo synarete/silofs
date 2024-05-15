@@ -2167,20 +2167,12 @@ static void fill_query_repo(const struct silofs_inode_info *ii,
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	struct silofs_strbuf sbuf;
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
-	const struct silofs_fs_bconf *bconf = &fsenv->fse.fs_args->bconf;
 	const struct silofs_bootpath *bootpath = fsenv->fse.bootpath;
-	size_t bsz;
+	const size_t bsz = sizeof(query->u.boot.name);
 
-	STATICASSERT_EQ(sizeof(sbuf.str), sizeof(query->u.boot.fsid));
-
-	bsz = sizeof(query->u.boot.name);
 	str_to_buf(&bootpath->name.s, query->u.boot.name, bsz);
-
-	silofs_uuid_unparse(&bconf->fs_uuid, &sbuf);
-	bsz = sizeof(query->u.boot.fsid);
-	silofs_strbuf_copyto(&sbuf, query->u.boot.fsid, bsz);
+	silofs_caddr_to_name2(&fsenv->fse_boot_ref, query->u.boot.addr);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
@@ -2328,25 +2320,33 @@ static int check_clone(const struct silofs_task *task,
 	return 0;
 }
 
-static int encode_save_bootrec(const struct silofs_task *task,
-                               const struct silofs_bootrec *brec)
+static int update_save_bootrec(const struct silofs_task *task,
+                               struct silofs_bootrec *brec)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
+	int err;
 
 	silofs_bootrec_self_uaddr(brec, &uaddr);
-	return silofs_save_bootrec(task->t_fsenv, &uaddr.laddr, brec);
+	err = silofs_save_bootrec(task->t_fsenv, brec, &brec->caddr);
+	if (err) {
+		return err;
+	}
+	silofs_fsenv_set_boot_ref(task->t_fsenv, &brec->caddr);
+	return 0;
 }
 
 static int do_post_clone_updates(const struct silofs_task *task,
-                                 const struct silofs_bootrecs *brecs)
+                                 struct silofs_bootrecs *brecs)
 {
 	int err;
 
-	for (size_t i = 0; i < ARRAY_SIZE(brecs->brec); ++i) {
-		err = encode_save_bootrec(task, &brecs->brec[i]);
-		if (err) {
-			return err;
-		}
+	err = update_save_bootrec(task, &brecs->brec_new);
+	if (err) {
+		return err;
+	}
+	err = update_save_bootrec(task, &brecs->brec_alt);
+	if (err) {
+		return err;
 	}
 	return 0;
 }

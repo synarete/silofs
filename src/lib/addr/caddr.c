@@ -19,6 +19,11 @@
 #include <silofs/addr.h>
 
 
+void silofs_caddr_reset(struct silofs_caddr *caddr)
+{
+	silofs_memzero(caddr, sizeof(*caddr));
+}
+
 void silofs_caddr_setup(struct silofs_caddr *caddr,
                         const struct silofs_hash256 *hash)
 {
@@ -46,6 +51,30 @@ void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf *out_name)
 {
 	silofs_hash256_to_name(&caddr->hash, out_name);
+}
+
+void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
+                           char s[SILOFS_NAME_MAX + 1])
+{
+	struct silofs_strbuf name;
+
+	STATICASSERT_EQ(ARRAY_SIZE(name.str), SILOFS_NAME_MAX + 1);
+	silofs_caddr_to_name(caddr, &name);
+	silofs_strbuf_copyto(&name, s, SILOFS_NAME_MAX);
+}
+
+int silofs_caddr_by_name(struct silofs_caddr *caddr,
+                         const struct silofs_strbuf *name)
+{
+	struct silofs_hash256 hash;
+	int err;
+
+	err = silofs_hash256_by_name(&hash, name);
+	if (err) {
+		return err;
+	}
+	silofs_caddr_setup(caddr, &hash);
+	return 0;
 }
 
 uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr)

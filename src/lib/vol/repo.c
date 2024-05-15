@@ -1318,13 +1318,6 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	return make_pathname(&hash, idx, out_name);
 }
 
-static void repo_objs_pathname_by(const struct silofs_repo *repo,
-                                  const struct silofs_laddr *laddr,
-                                  struct silofs_strbuf *out_name)
-{
-	repo_objs_sub_pathname_of(repo, &laddr->lsegid, out_name);
-}
-
 static int repo_objs_setup_pathname_of(const struct silofs_repo *repo,
                                        struct silofs_lsegf *lsegf)
 {
@@ -2386,94 +2379,6 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 
 	repo_lock(repo);
 	err = repo_do_read_at(repo, laddr, buf);
-	repo_unlock(repo);
-	return err;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static int repo_stat_lobj_at(const struct silofs_repo *repo,
-                             const struct silofs_strbuf *sbuf,
-                             struct stat *out_st)
-{
-	return do_fstatat_reg(repo->re_objs_dfd, sbuf->str, out_st);
-}
-
-int silofs_repo_stat_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, size_t *out_sz)
-{
-	struct silofs_strbuf name;
-	struct stat st = { .st_size = -1 };
-	int err;
-
-	repo_lock(repo);
-	repo_objs_pathname_by(repo, laddr, &name);
-	err = repo_stat_lobj_at(repo, &name, &st);
-	*out_sz = (size_t)st.st_size;
-	repo_unlock(repo);
-	return err;
-}
-
-static int repo_save_lobj_at(const struct silofs_repo *repo,
-                             const struct silofs_strbuf *sbuf,
-                             const struct silofs_rovec *rovec)
-{
-	return do_save_obj(repo->re_objs_dfd, sbuf->str,
-	                   rovec->rov_base, rovec->rov_len);
-}
-
-int silofs_repo_save_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, const void *buf)
-{
-	struct silofs_strbuf sbuf;
-	const struct silofs_rovec rovec = {
-		.rov_base = buf,
-		.rov_len = laddr->len,
-	};
-	int err;
-
-	repo_lock(repo);
-	repo_objs_pathname_by(repo, laddr, &sbuf);
-	err = repo_save_lobj_at(repo, &sbuf, &rovec);
-	repo_unlock(repo);
-	return err;
-}
-
-static int repo_load_lobj_at(const struct silofs_repo *repo,
-                             const struct silofs_strbuf *sbuf,
-                             void *buf, size_t len)
-{
-	return do_load_obj(repo->re_objs_dfd, sbuf->str, buf, len);
-}
-
-int silofs_repo_load_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, void *buf)
-{
-	struct silofs_strbuf sbuf;
-	int err;
-
-	repo_lock(repo);
-	repo_objs_pathname_by(repo, laddr, &sbuf);
-	err = repo_load_lobj_at(repo, &sbuf, buf, laddr->len);
-	repo_unlock(repo);
-	return err;
-}
-
-static int repo_unlink_lobj_at(const struct silofs_repo *repo,
-                               const struct silofs_strbuf *sbuf)
-{
-	return do_unlinkat(repo->re_objs_dfd, sbuf->str, 0);
-}
-
-int silofs_repo_unlink_lobj(struct silofs_repo *repo,
-                            const struct silofs_laddr *laddr)
-{
-	struct silofs_strbuf name;
-	int err;
-
-	repo_lock(repo);
-	repo_objs_pathname_by(repo, laddr, &name);
-	err = repo_unlink_lobj_at(repo, &name);
 	repo_unlock(repo);
 	return err;
 }

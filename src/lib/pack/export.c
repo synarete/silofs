@@ -95,14 +95,14 @@ static int pec_load_seg(const struct silofs_pack_export_ctx *pe_ctx,
 }
 
 static int pec_load_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
-                            const struct silofs_laddr *laddr,
+                            const struct silofs_caddr *caddr,
                             struct silofs_bootrec1k *out_brec1k)
 {
 	struct silofs_bootrec brec = { .flags = 0 };
 	const struct silofs_fsenv *fsenv = pe_ctx->pex_task->t_fsenv;
 	int err;
 
-	err = silofs_load_bootrec(fsenv, laddr, &brec);
+	err = silofs_load_bootrec(fsenv, caddr, &brec);
 	if (err) {
 		log_err("failed to load bootrec: err=%d", err);
 		return err;
@@ -157,13 +157,23 @@ out:
 	return err;
 }
 
+static const struct silofs_caddr *
+pec_bootrec_caddr(const struct silofs_pack_export_ctx *pe_ctx)
+{
+	const struct silofs_fsenv *fsenv = pe_ctx->pex_task->t_fsenv;
+
+	return &fsenv->fse_boot_ref;
+}
+
 static int pec_export_bootrec(const struct silofs_pack_export_ctx *pe_ctx,
                               struct silofs_pack_desc_info *pdi)
 {
 	struct silofs_bootrec1k brec = { .br_magic = 0xFFFFFFFF };
+	const struct silofs_caddr *boot_caddr = NULL;
 	int err;
 
-	err = pec_load_bootrec(pe_ctx, &pdi->pd.pd_laddr, &brec);
+	boot_caddr = pec_bootrec_caddr(pe_ctx);
+	err = pec_load_bootrec(pe_ctx, boot_caddr, &brec);
 	if (err) {
 		return err;
 	}

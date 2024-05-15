@@ -172,7 +172,7 @@ static void cmd_show_boot(struct cmd_show_ctx *ctx)
 	cmd_show_do_ioctl_query(ctx);
 	fprintf(ctx->out_fp, "%s %s\n",
 	        ctx->ioc->query.u.boot.name,
-	        ctx->ioc->query.u.boot.fsid);
+	        ctx->ioc->query.u.boot.addr);
 }
 
 struct silofs_msflag_name {

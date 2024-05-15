@@ -101,20 +101,6 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, size_t *out_sz);
-
-int silofs_repo_save_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, const void *buf);
-
-int silofs_repo_load_lobj(struct silofs_repo *repo,
-                          const struct silofs_laddr *laddr, void *buf);
-
-int silofs_repo_unlink_lobj(struct silofs_repo *repo,
-                            const struct silofs_laddr *laddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_repo_stat_cobj(struct silofs_repo *repo,
                           const struct silofs_caddr *caddr, size_t *out_sz);
 

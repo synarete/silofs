@@ -66,7 +66,7 @@ void silofs_hash256_assign(struct silofs_hash256 *hash,
 void silofs_hash256_to_name(const struct silofs_hash256 *hash,
                             struct silofs_strbuf *out_name);
 
-void silofs_hash256_to_base64(const struct silofs_hash256 *hash,
-                              struct silofs_strbuf *out_sbuf);
+int silofs_hash256_by_name(struct silofs_hash256 *hash,
+                           const struct silofs_strbuf *name);
 
 #endif /* SILOFS_META_H_ */

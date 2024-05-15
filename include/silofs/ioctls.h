@@ -61,7 +61,7 @@ struct silofs_query_repo {
 
 struct silofs_query_boot {
 	char    name[SILOFS_NAME_MAX + 1];
-	char    fsid[SILOFS_NAME_MAX + 1];
+	char    addr[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_query_proc {
@@ -105,8 +105,8 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_clone {
-	struct silofs_lvid lvid_new;
-	struct silofs_lvid lvid_alt;
+	char boot_new[SILOFS_NAME_MAX + 1];
+	char boot_alt[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_ioc_syncfs {

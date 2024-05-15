@@ -56,8 +56,8 @@ struct cmd_snap_ctx {
 	struct silofs_fs_args    fs_args;
 	struct silofs_fs_ctx    *fs_ctx;
 	union silofs_ioc_u      *ioc;
-	struct silofs_lvid       lvid_new;
-	struct silofs_lvid       lvid_alt;
+	struct silofs_caddr      boot_new;
+	struct silofs_caddr      boot_alt;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -217,6 +217,8 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 
 static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 {
+	struct silofs_strbuf name;
+	struct silofs_ioc_clone *cl = &ctx->ioc->clone;
 	const char *dirpath = ctx->in_args.dirpath_real;
 	int dfd = -1;
 	int err;
@@ -230,7 +232,7 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	if (err) {
 		cmd_dief(err, "syncfs error: %s", dirpath);
 	}
-	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_CLONE, &ctx->ioc->clone);
+	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_CLONE, cl);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
 		cmd_dief(err, "ioctl error: %s", dirpath);
@@ -238,8 +240,12 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_dief(err, "failed to snap: %s",
 		         ctx->in_args.repodir_name);
 	}
-	silofs_lvid_assign(&ctx->lvid_new, &ctx->ioc->clone.lvid_new);
-	silofs_lvid_assign(&ctx->lvid_alt, &ctx->ioc->clone.lvid_alt);
+
+	silofs_strbuf_setup_by(&name, cl->boot_new);
+	silofs_caddr_by_name(&ctx->boot_new, &name);
+
+	silofs_strbuf_setup_by(&name, cl->boot_alt);
+	silofs_caddr_by_name(&ctx->boot_alt, &name);
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
@@ -310,7 +316,7 @@ static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->fs_ctx, &ctx->lvid_new, &ctx->lvid_alt);
+	cmd_fork_fs(ctx->fs_ctx, &ctx->boot_new, &ctx->boot_alt);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
@@ -323,7 +329,7 @@ static void cmd_snap_save_snap_bconf(struct cmd_snap_ctx *ctx)
 	struct silofs_fs_bconf snap_bconf;
 
 	cmd_bconf_assign(&snap_bconf, &ctx->fs_args.bconf);
-	cmd_bconf_set_lvid_by(&snap_bconf, &ctx->lvid_alt);
+	cmd_bconf_set_boot_ref(&snap_bconf, &ctx->boot_alt);
 	cmd_bconf_set_name(&snap_bconf,  ctx->in_args.snapname);
 	cmd_bconf_save(&snap_bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&snap_bconf);
@@ -334,7 +340,7 @@ static void cmd_snap_save_orig_bconf(struct cmd_snap_ctx *ctx)
 	struct silofs_fs_bconf orig_bconf;
 
 	cmd_bconf_assign(&orig_bconf, &ctx->fs_args.bconf);
-	cmd_bconf_set_lvid_by(&orig_bconf, &ctx->lvid_new);
+	cmd_bconf_set_boot_ref(&orig_bconf, &ctx->boot_new);
 	cmd_bconf_set_name(&orig_bconf,  ctx->in_args.name);
 	cmd_bconf_save(&orig_bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&orig_bconf);

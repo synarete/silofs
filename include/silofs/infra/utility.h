@@ -55,9 +55,14 @@ uint64_t silofs_ascii_to_uint64(const char *a);
 
 void silofs_byte_to_ascii(uint8_t b, char *a);
 
-void silofs_ascii_to_byte(const char *a, uint8_t *b);
+int silofs_ascii_to_byte(const char *a, uint8_t *b);
 
-size_t silofs_mem_to_ascii(const void *ptr, size_t len, char *buf, size_t bsz);
+
+void silofs_mem_to_ascii(const void *mem, size_t msz,
+                         char *asb, size_t asz, size_t *out_cnt);
+
+int silofs_ascii_to_mem(void *mem, size_t msz,
+                        const char *asb, size_t asz, size_t *out_cnt);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

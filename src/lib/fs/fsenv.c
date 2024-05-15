@@ -62,6 +62,13 @@ static void fsenv_bind_sbi(struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void fsenv_update_boot(struct silofs_fsenv *fsenv)
+{
+	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
+
+	silofs_fsenv_set_boot_ref(fsenv, &fs_args->bconf.boot_ref);
+}
+
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
@@ -133,6 +140,7 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 
 static void fsenv_update_by_fs_args(struct silofs_fsenv *fsenv)
 {
+	fsenv_update_boot(fsenv);
 	fsenv_update_owner(fsenv);
 	fsenv_update_mntflags(fsenv);
 	fsenv_update_ctlflags(fsenv);
@@ -153,7 +161,8 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
                                const struct silofs_fsenv_base *fse_base)
 {
 	memcpy(&fsenv->fse, fse_base, sizeof(fsenv->fse));
-	lsegid_reset(&fsenv->fse_sb_lsegid);
+	silofs_caddr_reset(&fsenv->fse_boot_ref);
+	silofs_lsegid_reset(&fsenv->fse_sb_lsegid);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -346,10 +355,16 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_fsenv_bind_child(struct silofs_fsenv *fsenv,
-                             const struct silofs_ulink *sb_ulink)
+void silofs_fsenv_set_boot_ref(struct silofs_fsenv *fsenv,
+                               const struct silofs_caddr *caddr)
 {
-	ulink_assign(&fsenv->fse_sb_ulink, sb_ulink);
+	silofs_caddr_assign(&fsenv->fse_boot_ref, caddr);
+}
+
+void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
+                               const struct silofs_ulink *sb_ulink)
+{
+	silofs_ulink_assign(&fsenv->fse_sb_ulink, sb_ulink);
 }
 
 static int fsenv_spawn_super_at(struct silofs_fsenv *fsenv,
@@ -464,7 +479,7 @@ void silofs_fsenv_shut(struct silofs_fsenv *fsenv)
 static void fsenv_rebind_root_sb(struct silofs_fsenv *fsenv,
                                  struct silofs_sb_info *sbi)
 {
-	silofs_fsenv_bind_child(fsenv, sbi_ulink(sbi));
+	silofs_fsenv_set_sb_ulink(fsenv, sbi_ulink(sbi));
 	fsenv_bind_sb_lsegid(fsenv, sbi_lsegid(sbi));
 	fsenv_bind_sbi(fsenv, sbi);
 }
@@ -517,14 +532,14 @@ int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	sbi_export_bootrec(sbi_alt, &out_brecs->brec[1]);
+	sbi_export_bootrec(sbi_alt, &out_brecs->brec_alt);
 
 	fsenv_pre_forkfs(fsenv);
 	err = fsenv_clone_rebind_super(fsenv, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}
-	sbi_export_bootrec(sbi_new, &out_brecs->brec[0]);
+	sbi_export_bootrec(sbi_new, &out_brecs->brec_new);
 
 	sbi_mark_fossil(sbi_cur);
 	return 0;

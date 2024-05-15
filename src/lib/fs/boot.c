@@ -692,12 +692,36 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 	err = silofs_repo_load_lobj(fsenv->fse.repo, laddr, &brec1k);
 	if (err) {
 		log_dbg("failed to load bootrec: err=%d", err);
-		return err;
+		goto out;
 	}
 	err = decode_bootrec_from(fsenv, &brec1k, out_brec);
 	if (err) {
 		log_dbg("failed to decode bootrec: err=%d", err);
-		return err;
+		goto out;
 	}
-	return 0;
+out:
+	if ((err == -ENOENT) || (err == -SILOFS_ENOENT)) {
+		err = -SILOFS_ENOBOOT;
+	}
+	return err;
+}
+
+int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
+                              const struct silofs_bootrec *brec,
+                              struct silofs_caddr *out_caddr)
+{
+	struct silofs_bootrec1k brec1k = {
+		.br_magic = 1,
+	};
+	const struct silofs_rovec rov = {
+		.rov_base = &brec1k,
+		.rov_len = sizeof(brec1k)
+	};
+	int err;
+
+	err = encode_bootrec_into(fsenv, brec, &brec1k);
+	if (!err) {
+		silofs_calc_caddr_of(&rov, &fsenv->fse_mdigest, out_caddr);
+	}
+	return err;
 }

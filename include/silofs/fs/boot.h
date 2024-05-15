@@ -180,4 +180,8 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
                         const struct silofs_laddr *laddr,
                         struct silofs_bootrec *out_brec);
 
+int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
+                              const struct silofs_bootrec *brec,
+                              struct silofs_caddr *out_caddr);
+
 #endif /* SILOFS_BOOT_H_ */

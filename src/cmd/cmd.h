@@ -202,18 +202,15 @@ void cmd_getopt_unrecognized(void);
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);
 
-uint32_t cmd_parse_str_as_uint32(const char *str);
+uint32_t cmd_parse_str_as_u32(const char *str);
 
-uint32_t cmd_parse_str_as_uint32_within(const char *str,
-                                        uint32_t min_val, uint32_t max_val);
+uint32_t cmd_parse_str_as_u32v(const char *str, uint32_t vmin, uint32_t vmax);
 
 uid_t cmd_parse_str_as_uid(const char *str);
 
 gid_t cmd_parse_str_as_gid(const char *str);
 
 bool cmd_parse_str_as_bool(const char *str);
-
-void cmd_parse_str_as_refid(const char *refid, struct silofs_laddr *out_laddr);
 
 /* locking facilities */
 

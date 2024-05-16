@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/macros.h>
 #include <silofs/infra/utility.h>
+#include <silofs/infra/ascii.h>
 #include <silofs/infra/panic.h>
 #include <silofs/infra/logging.h>
 #include <unistd.h>

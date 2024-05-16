@@ -588,7 +588,7 @@ static long cmd_parse_str_as_long(const char *str)
 	return val;
 }
 
-uint32_t cmd_parse_str_as_uint32(const char *str)
+uint32_t cmd_parse_str_as_u32(const char *str)
 {
 	long val;
 
@@ -599,15 +599,14 @@ uint32_t cmd_parse_str_as_uint32(const char *str)
 	return (uint32_t)val;
 }
 
-uint32_t cmd_parse_str_as_uint32_within(const char *str,
-                                        uint32_t min_val, uint32_t max_val)
+uint32_t cmd_parse_str_as_u32v(const char *str,  uint32_t vmin, uint32_t vmax)
 {
 	uint32_t val;
 
-	val = cmd_parse_str_as_uint32(str);
-	if ((val < min_val) || (val > max_val)) {
+	val = cmd_parse_str_as_u32(str);
+	if ((val < vmin) || (val > vmax)) {
 		cmd_dief(0, "%s is not within range [%u..%u]",
-		         str, min_val, max_val);
+		         str, vmin, vmax);
 	}
 	return val;
 }
@@ -646,24 +645,6 @@ bool cmd_parse_str_as_bool(const char *str)
 		cmd_dief(0, "illegal bool: %s", str);
 	}
 	return val;
-}
-
-void cmd_parse_str_as_refid(const char *str, struct silofs_laddr *out_laddr)
-{
-	struct silofs_strbuf sbuf;
-	size_t len;
-	int err;
-
-	len = strlen(str);
-	if (len >= sizeof(sbuf.str)) {
-		cmd_dief(0, "illegal refid: %s", str);
-	}
-	silofs_strbuf_setup_by(&sbuf, str);
-
-	err = silofs_laddr_from_ascii(out_laddr, &sbuf);
-	if (err) {
-		cmd_dief(err, "failed to parse refid: %s", str);
-	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

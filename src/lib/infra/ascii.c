@@ -15,70 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/syscall.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/strings.h>
-#include <stdio.h>
-#include <stdarg.h>
+#include <silofs/infra/ascii.h>
 #include <ctype.h>
 
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
-{
-	memset(sbuf, 0, sizeof(*sbuf));
-}
-
-void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
-                          const struct silofs_strbuf *other)
-{
-	memcpy(sbuf, other, sizeof(*sbuf));
-}
-
-void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
-                         const struct silofs_substr *str)
-{
-	silofs_strbuf_reset(sbuf);
-	silofs_substr_copyto(str, sbuf->str, sizeof(sbuf->str) - 1);
-}
-
-void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
-{
-	struct silofs_substr ss;
-
-	silofs_substr_init(&ss, s);
-	silofs_strbuf_setup(sbuf, &ss);
-}
-
-size_t silofs_strbuf_copyto(const struct silofs_strbuf *sbuf,
-                            char *str, size_t lim)
-{
-	const size_t len = strlen(sbuf->str);
-	const size_t n = (lim < len) ? lim : len;
-
-	memcpy(str, sbuf->str, n);
-	if (lim && (n < lim)) {
-		str[n] = '\0';
-	}
-	return n;
-}
-
-size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
-{
-	va_list ap;
-	size_t k;
-	int n;
-
-	silofs_strbuf_reset(sbuf);
-	va_start(ap, fmt);
-	k = sizeof(sbuf->str);
-	n = vsnprintf(sbuf->str, k - 1, fmt, ap);
-	va_end(ap);
-	return (n < (int)k) ? (size_t)n : k;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 char silofs_nibble_to_ascii(int n)
 {
@@ -209,17 +148,22 @@ void silofs_uint64_to_ascii(uint64_t u, char *a)
 	}
 }
 
-uint64_t silofs_ascii_to_uint64(const char *a)
+int silofs_ascii_to_uint64(const char *a, uint64_t *out_u)
 {
 	uint64_t u = 0;
-	uint8_t b;
+	uint8_t b = 0;
+	int err;
 
 	for (size_t i = 0; i < 8; ++i) {
-		silofs_ascii_to_byte(a, &b);
+		err = silofs_ascii_to_byte(a, &b);
+		if (err) {
+			return err;
+		}
 		u = (u << 8) | (uint64_t)b;
 		a += 2;
 	}
-	return u;
+	*out_u = u;
+	return 0;
 }
 
 void silofs_mem_to_ascii(const void *mem, size_t msz,
@@ -257,27 +201,4 @@ int silofs_ascii_to_mem(void *mem, size_t msz,
 	}
 	*out_cnt = cnt;
 	return err;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void burnstack_recursively(int depth, int nbytes)
-{
-	char buf[512];
-	const int cnt = silofs_min32((int)sizeof(buf), nbytes);
-
-	if (cnt > 0) {
-		memset(buf, 0xF4 ^ depth, (size_t)cnt);
-		burnstack_recursively(depth + 1, nbytes - cnt);
-	}
-}
-
-void silofs_burnstackn(int n)
-{
-	burnstack_recursively(0, n);
-}
-
-void silofs_burnstack(void)
-{
-	silofs_burnstackn((int)silofs_sc_page_size());
 }

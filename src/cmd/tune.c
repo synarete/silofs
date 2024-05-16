@@ -57,7 +57,7 @@ static void cmd_tune_getopt(struct cmd_tune_ctx *ctx)
 		opt_chr = cmd_getopt("t:L:h", opts);
 		if (opt_chr == 't') {
 			ctx->in_args.ftype =
-			        cmd_parse_str_as_uint32_within(optarg, 1, 2);
+			        cmd_parse_str_as_u32v(optarg, 1, 2);
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {

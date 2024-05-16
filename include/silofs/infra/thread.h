@@ -113,4 +113,10 @@ int silofs_muco_init(struct silofs_muco *muco);
 
 void silofs_muco_fini(struct silofs_muco *muco);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_burnstackn(int n);
+
+void silofs_burnstack(void);
+
 #endif /* SILOFS_THREAD_H_ */

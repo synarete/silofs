@@ -17,60 +17,7 @@
 #ifndef SILOFS_UTILITY_H_
 #define SILOFS_UTILITY_H_
 
-#include <stdlib.h>
 #include <stdint.h>
-
-struct silofs_substr;
-
-/* fixed-size string-buffer (typically, for names) */
-struct silofs_strbuf {
-	char str[256];
-};
-
-void silofs_strbuf_reset(struct silofs_strbuf *sbuf);
-
-void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
-                          const struct silofs_strbuf *other);
-
-void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
-                         const struct silofs_substr *str);
-
-void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s);
-
-size_t silofs_strbuf_copyto(const struct silofs_strbuf *sbuf,
-                            char *str, size_t lim);
-
-size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-char silofs_nibble_to_ascii(int n);
-
-int silofs_ascii_to_nibble(char a);
-
-
-void silofs_uint64_to_ascii(uint64_t u, char *a);
-
-uint64_t silofs_ascii_to_uint64(const char *a);
-
-void silofs_byte_to_ascii(uint8_t b, char *a);
-
-int silofs_ascii_to_byte(const char *a, uint8_t *b);
-
-
-void silofs_mem_to_ascii(const void *mem, size_t msz,
-                         char *asb, size_t asz, size_t *out_cnt);
-
-int silofs_ascii_to_mem(void *mem, size_t msz,
-                        const char *asb, size_t asz, size_t *out_cnt);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_burnstackn(int n);
-
-void silofs_burnstack(void);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static inline int32_t silofs_min32(int32_t x, int32_t y)
 {

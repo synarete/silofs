@@ -366,10 +366,10 @@ static int sys_readproc(const char *procdir, const char *filename,
 static int sys_readproc_long(const char *procdir,
                              const char *filename, long *out_value)
 {
-	int err;
-	size_t nrd = 0;
 	char buf[128];
+	size_t nrd = 0;
 	char *end = NULL;
+	int err;
 
 	memset(buf, 0, sizeof(buf));
 	err = sys_readproc(procdir, filename, buf, sizeof(buf) - 1, 0, &nrd);

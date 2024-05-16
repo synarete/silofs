@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0
 import json
-import typing
 from pathlib import Path
-from uuid import UUID, uuid4
+from typing import Dict, Optional
 
 import pydantic
 
 import toml
 
 from .expect import ExpectException
+
+_POSTGRESQL_REPO_URL = "https://git.postgresql.org/git/postgresql.git"
+_RSYNC_REPO_URL = "git://git.samba.org/rsync.git"
+_GITSCM_REPO_URL = "https://github.com/git/git.git"
+_SILOFS_REPO_URL = "https://github.com/synarete/silofs"
 
 
 class ConfigParams(pydantic.BaseModel):
@@ -18,10 +22,10 @@ class ConfigParams(pydantic.BaseModel):
 
 
 class ConfigRemotes(pydantic.BaseModel):
-    postgresql_repo_url: str = "https://git.postgresql.org/git/postgresql.git"
-    rsync_repo_url: str = "git://git.samba.org/rsync.git"
-    git_repo_url: str = "https://github.com/git/git.git"
-    silofs_repo_url: str = "https://github.com/synarete/silofs"
+    postgresql_repo_url: str = _POSTGRESQL_REPO_URL
+    rsync_repo_url: str = _RSYNC_REPO_URL
+    git_repo_url: str = _GITSCM_REPO_URL
+    silofs_repo_url: str = _SILOFS_REPO_URL
 
 
 class Config(pydantic.BaseModel):
@@ -31,14 +35,15 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class FsId(pydantic.BaseModel):
-    uuid: UUID = uuid4()
+class FsBootConfRefs(pydantic.BaseModel):
+    boot: Optional[str] = pydantic.Field(None, max_length=64)
+    pack: Optional[str] = pydantic.Field(None, max_length=64)
 
 
 class FsBootConf(pydantic.BaseModel):
-    fs: FsId = FsId()
-    users: typing.Optional[typing.Dict[str, int]] = {}
-    groups: typing.Optional[typing.Dict[str, int]] = {}
+    refs: FsBootConfRefs = FsBootConfRefs()
+    users: Optional[Dict[str, int]] = {}
+    groups: Optional[Dict[str, int]] = {}
 
 
 def _load_toml_as_json(path: Path) -> str:

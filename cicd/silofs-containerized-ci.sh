@@ -62,7 +62,7 @@ run mkdir -p "${scratchdir}"
 run cp "${selfdir}/silofs-citests.sh" "${scratchdir}"
 run mv "${autotoolsdir}/${disttgz}" "${scratchdir}"
 
-run podman run -ti --rm \
+run podman run --rm \
   --userns keep-id:"uid=$(id -u),gid=$(id -g)" \
   --user="$(id -u):$(id -g)" \
   --volume="/etc/group:/etc/group:ro" \

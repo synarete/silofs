@@ -59,7 +59,7 @@ def _report_done(args: RunArgs) -> None:
     prog = cmds.silofs.xbin
     vers = cmds.silofs.version()
     log.println(f"DONE: {prog} {vers}")
-    durs = args.exec_duration()
+    durs = round(args.exec_duration(), 2)
     log.println(f"DURATION: {durs} minutes")
 
 

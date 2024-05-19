@@ -45,8 +45,6 @@ void silofs_pipe_init(struct silofs_pipe *pipe);
 
 int silofs_pipe_open(struct silofs_pipe *pipe);
 
-int silofs_pipe_setsize(struct silofs_pipe *pipe, size_t size);
-
 void silofs_pipe_close(struct silofs_pipe *pipe);
 
 void silofs_pipe_fini(struct silofs_pipe *pipe);
@@ -77,9 +75,11 @@ int silofs_pipe_dispose(struct silofs_pipe *pipe,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_piper_init(struct silofs_piper *piper, size_t pipe_size);
+int silofs_piper_init(struct silofs_piper *piper);
 
 void silofs_piper_fini(struct silofs_piper *piper);
+
+int silofs_piper_try_grow(struct silofs_piper *piper, size_t sz);
 
 int silofs_piper_dispose(struct silofs_piper *piper);
 

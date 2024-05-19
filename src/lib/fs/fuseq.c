@@ -1635,6 +1635,14 @@ static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
 		do_init_capabilities(fcc);
 		fcc->fqw->fw_fq->fq_got_init = true;
 	}
+
+	fuseq_log_info("init: buffsize=%zu", coni->buffsize);
+	fuseq_log_info("init: max_write=%zu max_read=%zu max_readahead=%zu",
+	               coni->max_write, coni->max_read, coni->max_readahead);
+	fuseq_log_info("init: max_background=%zu congestion_threshold=%zu "
+	               "time_gran=%zu", coni->max_background,
+	               coni->congestion_threshold, coni->time_gran);
+
 	ret = fuseq_reply_init(fcc->fqw, fcc->task, err);
 	if (!err && !ret) {
 		fcc->fqw->fw_fq->fq_reply_init_ok = true;
@@ -2770,11 +2778,11 @@ static int fuseq_check_ioctl_flags(struct silofs_fuseq_worker *fqw,
 	return 0;
 }
 
-static int fuseq_check_ioctl_in_size(struct silofs_fuseq_worker *fqw,
+static int fuseq_check_ioctl_in_size(const struct silofs_fuseq_worker *fqw,
                                      const struct silofs_fuseq_in *in)
 {
 	const size_t in_size = in->u.ioctl.arg.in_size;
-	const size_t bsz_max = fuseq_bufsize_max(fqw->fw_fq);
+	const size_t bsz_max = fqw->fw_fq->fq_coni.buffsize;
 
 	return (in_size < bsz_max) ? 0 : -SILOFS_EINVAL;
 }
@@ -3511,16 +3519,25 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 	return max(inbuf_max, outbuf_max);
 }
 
+static void fuseq_update_coni_sizes(struct silofs_fuseq *fq, size_t buff_size)
+{
+	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
+	const size_t rdwr_size = buff_size - coni->pagesize;
+
+	coni->max_write = rdwr_size;
+	coni->max_read = rdwr_size;
+	coni->max_readahead = rdwr_size;
+	coni->buffsize = buff_size;
+	coni->max_inlen = buff_size;
+}
+
 static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
 	size_t pipe_size;
 	size_t buff_size;
-	size_t rdwr_size;
 	size_t bufsize_max;
-	size_t page_size;
 
-	page_size = (size_t)silofs_sc_page_size();
 	bufsize_max = fuseq_bufsize_max(fq);
 	pipe_size = silofs_pipe_size_of(bufsize_max);
 	buff_size = min(pipe_size, bufsize_max);
@@ -3528,19 +3545,16 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 		fuseq_log_err("buffer too small: buff_size=%lu", buff_size);
 		return -EPROTO;
 	}
-	rdwr_size = buff_size - page_size;
 
+	coni->pagesize = (size_t)silofs_sc_page_size();
 	coni->proto_major = 0;
 	coni->proto_minor = 0;
 	coni->cap_kern = 0;
 	coni->cap_want = 0;
-	coni->pagesize = page_size;
-	coni->buffsize = buff_size;
-	coni->max_write = rdwr_size;
-	coni->max_read = rdwr_size;
-	coni->max_readahead = rdwr_size;
 	coni->time_gran = 1;
-	coni->max_inlen = buff_size;
+
+	fuseq_update_coni_sizes(fq, buff_size);
+
 	/*
 	 * Follow similar values as those at libfuse:lib/fuse_lowlevel.c
 	 * However, libfuse has: congestion_threshold = max_background * 3 / 4
@@ -3552,9 +3566,9 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static int fuseq_init_piper(struct silofs_fuseq_worker *fqw, size_t pipe_size)
+static int fuseq_init_piper(struct silofs_fuseq_worker *fqw)
 {
-	return silofs_piper_init(&fqw->fw_piper, pipe_size);
+	return silofs_piper_init(&fqw->fw_piper);
 }
 
 static void fuseq_fini_piper(struct silofs_fuseq_worker *fqw)
@@ -3667,7 +3681,6 @@ static void fuseq_fini_op_args(struct silofs_fuseq_worker *fqw)
 static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
                              struct silofs_fuseq *fq, unsigned int idx)
 {
-	const size_t pipe_size_want = fq->fq_coni.buffsize;
 	int err;
 
 	STATICASSERT_LE(sizeof(*fqw), 256);
@@ -3694,7 +3707,7 @@ static int fuseq_init_worker(struct silofs_fuseq_worker *fqw,
 	if (err) {
 		goto out_err;
 	}
-	err = fuseq_init_piper(fqw, pipe_size_want);
+	err = fuseq_init_piper(fqw);
 	if (err) {
 		goto out_err;
 	}
@@ -3717,14 +3730,28 @@ static void fuseq_fini_worker(struct silofs_fuseq_worker *fqw)
 	fqw->fw_fq  = NULL;
 }
 
-static int fuseq_init_workers_limit(struct silofs_fuseq *fq)
+static int fuseq_try_grow_pipe(struct silofs_fuseq_worker *fqw,
+                               size_t pipe_size_want)
+{
+	struct silofs_piper *piper = &fqw->fw_piper;
+	int err;
+
+	err = silofs_piper_try_grow(piper, pipe_size_want);
+	if (err) {
+		fuseq_log_warn("failed to grow pipe size: "
+		               "pipe_size_curr=%zu pipe_size_want=%zu err=%d",
+		               piper->pipe.size, pipe_size_want, err);
+	}
+	return err;
+}
+
+static void fuseq_init_workers_limit(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 
 	fws->fws_nlimit = silofs_num_worker_threads();
 	fws->fws_navail = 0;
 	fws->fws_nactive = 0;
-	return 0;
 }
 
 static int fuseq_init_workers(struct silofs_fuseq *fq)
@@ -3764,6 +3791,38 @@ static void fuseq_fini_workers(struct silofs_fuseq *fq)
 		fws->fws_nlimit = 0;
 		listq_fini(&fws->fws_curropsq);
 	}
+}
+
+static int fuseq_update_workers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
+	struct silofs_fuseq_workset *fws = &fq->fq_ws;
+	struct silofs_fuseq_worker *fqw = NULL;
+	size_t pipe_size_min = max(SILOFS_LBK_SIZE, FUSE_MIN_READ_BUFFER);
+	size_t pipe_size = coni->buffsize;
+	int err;
+
+	if (fws->fws_workers == NULL) {
+		return 0;
+	}
+	for (size_t i = 0; i < fws->fws_navail; ++i) {
+		fqw = &fws->fws_workers[i];
+		err = fuseq_try_grow_pipe(fqw, pipe_size);
+		if (err) {
+			pipe_size = fqw->fw_piper.pipe.size;
+		}
+	}
+	if (pipe_size < pipe_size_min) {
+		fuseq_log_err("failed to set minimal pipe size: want=%zu "
+		              "actual=%zu", coni->buffsize, pipe_size);
+		return -SILOFS_EPERM;
+	}
+	if (coni->buffsize != pipe_size) {
+		fuseq_log_err("reduce buffer-size: want=%zu actual=%zu",
+		              coni->buffsize, pipe_size);
+		fuseq_update_coni_sizes(fq, pipe_size);
+	}
+	return 0;
 }
 
 static int fuseq_init_locks(struct silofs_fuseq *fq)
@@ -3827,11 +3886,8 @@ int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
 
 	silofs_memzero(fq, sizeof(*fq));
 	fuseq_init_common(fq, alloc);
+	fuseq_init_workers_limit(fq);
 
-	err = fuseq_init_workers_limit(fq);
-	if (err) {
-		return err;
-	}
 	err = fuseq_init_conn_info(fq);
 	if (err) {
 		return err;
@@ -3841,6 +3897,10 @@ int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
 		goto out;
 	}
 	err = fuseq_init_workers(fq);
+	if (err) {
+		goto out;
+	}
+	err = fuseq_update_workers(fq);
 	if (err) {
 		goto out;
 	}
@@ -4125,23 +4185,41 @@ static int fuseq_sub_exec_once(struct silofs_fuseq_worker *fqw)
 
 	/* umount case */
 	if (err == -ENODEV) {
-		fqw->fw_fq->fq_active = 0; /* umount case */
-		fuseq_log_info("umount fuseq-status: err=%d", err);
-	} else if (err == -ENOENT) {
-		fuseq_log_err("unexpected fuseq-status: err=%d", err);
-		fuseq_suspend(fqw);
+		if (fqw->fw_fq->fq_active) {
+			fqw->fw_fq->fq_active = 0;
+			fuseq_log_info("deactivate: worker=%s",
+			               fqw->fw_th.name);
+		}
+		return err;
 	}
-	return err;
+
+	/* termination case */
+	if (err == -ENOENT) {
+		fuseq_suspend(fqw);
+		return err;
+	}
+
+	/* abnormal failure */
+	if (err) {
+		fuseq_log_err("unexpected status: worker=%s err=%d",
+		              fqw->fw_th.name, err);
+		fuseq_suspend(fqw);
+		return err;
+	}
+	return 0;
 }
 
 static int fuseq_sub_exec_loop(struct silofs_fuseq_worker *fqw)
 {
-	int err = 0;
+	int err;
 
-	while (fuseq_is_active(fqw->fw_fq) && !err) {
+	while (fuseq_is_active(fqw->fw_fq)) {
 		err = fuseq_sub_exec_once(fqw);
+		if (err) {
+			return err;
+		}
 	}
-	return err;
+	return 0;
 }
 
 static struct silofs_fuseq_worker *
@@ -4164,7 +4242,8 @@ static int fuseq_start(struct silofs_thread *th)
 	}
 	err = fuseq_sub_exec_loop(fqw);
 	if (err) {
-		fuseq_log_info("exec-loop completed: %s", th->name);
+		fuseq_log_info("exec-loop completed: %s err=%d",
+		               th->name, err);
 		goto out;
 	}
 out:

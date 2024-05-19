@@ -45,6 +45,11 @@ static long roundup_pow_of_two(long n)
  * Clap pipe size to range of [2-pages, 2M], unless system's limit is below
  * two pages (should not happen on modern machines).
  *
+ * Note: the size from '/proc/sys/fs/pipe-max-size' is just a hint to pipe-size
+ * limit. In real world, a user may not have enough resources to allocate
+ * such size (e.g. due to low threshold in '/proc/sys/fs/pipe-user-pages-soft'
+ * or when other processes cosume too many pipe pages).
+ *
  * See also 'pipe_set_size' and 'round_pipe_size' in Linux kernel.
  */
 static long calc_pipe_size_of(long pipe_size_want)
@@ -151,7 +156,7 @@ int silofs_pipe_open(struct silofs_pipe *pipe)
 	return 0;
 }
 
-int silofs_pipe_setsize(struct silofs_pipe *pipe, size_t size_want)
+static int pipe_setsize(struct silofs_pipe *pipe, size_t size_want)
 {
 	size_t size_set;
 	int err;
@@ -162,12 +167,28 @@ int silofs_pipe_setsize(struct silofs_pipe *pipe, size_t size_want)
 	}
 	err = silofs_sys_fcntl_setpipesz(pipe->fd[0], (int)size_set);
 	if (err) {
-		silofs_log_warn("failed to set pipe size: size=%lu err=%d",
-		                size_set, err);
 		return err;
 	}
 	pipe->size = size_set;
 	return 0;
+}
+
+static int pipe_try_grow(struct silofs_pipe *pipe, size_t pipe_size_want)
+{
+	long page_size;
+	long pipe_size;
+	int err = 0;
+
+	page_size = silofs_sc_page_size();
+	pipe_size = calc_pipe_size_of((long)pipe_size_want);
+	while (((long)pipe->size < pipe_size) && (pipe_size > page_size)) {
+		err = pipe_setsize(pipe, (size_t)pipe_size);
+		if (!err) {
+			break;
+		}
+		pipe_size /= 2;
+	}
+	return err;
 }
 
 void silofs_pipe_close(struct silofs_pipe *pipe)
@@ -384,7 +405,7 @@ static void silofs_nilfd_fini(struct silofs_nilfd *nfd)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_piper_init(struct silofs_piper *piper, size_t pipe_size)
+int silofs_piper_init(struct silofs_piper *piper)
 {
 	struct silofs_nilfd *nfd = &piper->nfd;
 	struct silofs_pipe *pipe = &piper->pipe;
@@ -395,24 +416,23 @@ int silofs_piper_init(struct silofs_piper *piper, size_t pipe_size)
 	if (err) {
 		return err;
 	}
-	err = silofs_pipe_setsize(pipe, pipe_size);
-	if (err) {
-		goto out_err;
-	}
 	err = silofs_nilfd_init(nfd);
 	if (err) {
-		goto out_err;
+		silofs_pipe_fini(pipe);
+		return err;
 	}
 	return 0;
-out_err:
-	silofs_pipe_fini(pipe);
-	return err;
 }
 
 void silofs_piper_fini(struct silofs_piper *piper)
 {
 	silofs_nilfd_fini(&piper->nfd);
 	silofs_pipe_fini(&piper->pipe);
+}
+
+int silofs_piper_try_grow(struct silofs_piper *piper, size_t sz)
+{
+	return pipe_try_grow(&piper->pipe, sz);
 }
 
 int silofs_piper_dispose(struct silofs_piper *piper)

@@ -585,8 +585,7 @@ int silofs_task_submit(struct silofs_task *task, bool all)
 uint32_t silofs_num_worker_threads(void)
 {
 	const long npr = silofs_sc_nproc_onln();
-	const long cnt = silofs_clamp32((int)npr, 2, 16);
-	const long nth = (((cnt + 1) / 2) * 2);
+	const long nth = silofs_clamp32((int)npr, 2, 8);
 
 	return (uint32_t)nth;
 }

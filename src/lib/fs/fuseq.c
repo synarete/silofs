@@ -3011,16 +3011,30 @@ static time_t fqw_dif_time_stamp(const struct silofs_fuseq_worker *fqw)
 	return (time_t)(labs(silofs_time_now() - fqw->fw_time_stamp));
 }
 
-static void fqw_track_oper(struct silofs_fuseq_worker *fqw, bool init)
+static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n)
 {
-	fuseq_lock_ctl(fqw->fw_fq);
-	if (init) {
-		fqw_set_time_stamp(fqw);
-		fqw->fw_fq->fq_nopers++;
-	} else {
-		fqw->fw_fq->fq_nopers_done++;
+	const int32_t lim = 10 * (int)(fq->fq_ws.fws_nactive);
+
+	if (n > 0) {
+		fq->fq_nexecs = silofs_clamp32(fq->fq_nexecs + n, 1, lim);
+	} else if (n < 0) {
+		fq->fq_nexecs = silofs_clamp32(fq->fq_nexecs + n, -lim, lim);
 	}
-	fuseq_unlock_ctl(fqw->fw_fq);
+}
+
+static void fqw_track_oper(struct silofs_fuseq_worker *fqw, bool pre)
+{
+	struct silofs_fuseq *fq = fqw->fw_fq;
+
+	fuseq_lock_ctl(fq);
+	if (pre) {
+		fuseq_update_nexecs(fq, 1);
+		fqw_set_time_stamp(fqw);
+		fq->fq_nopers++;
+	} else {
+		fq->fq_nopers_done++;
+	}
+	fuseq_unlock_ctl(fq);
 }
 
 static void fqw_track_timedout(struct silofs_fuseq_worker *fqw)
@@ -3871,6 +3885,7 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_umount = false;
 	fq->fq_writeback_cache = false;
 	fq->fq_fs_owner = (uid_t)(-1);
+	fq->fq_nexecs = 0;
 }
 
 int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
@@ -4047,31 +4062,16 @@ static int fqw_exec_timeout(struct silofs_fuseq_worker *fqw, int flags)
 	return err;
 }
 
-static bool fuseq_is_inactive(const struct silofs_fuseq *fq)
-{
-	const struct silofs_fuseq_workset *fq_ws = &fq->fq_ws;
-	const struct silofs_fuseq_worker *fqw = NULL;
-
-	for (size_t i = 0; i < fq_ws->fws_nactive; ++i) {
-		fqw = &fq_ws->fws_workers[i];
-		if (fqw->fw_req_count > 0) {
-			return false;
-		}
-	}
-	return true;
-}
-
 static int fqw_exec_timedout(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq *fq = fqw->fw_fq;
 	time_t dif = 0;
 	int flags = SILOFS_F_TIMEOUT;
 	int err = 0;
-	bool inactive;
 
 	fuseq_lock_ctl(fq);
-	inactive = fuseq_is_inactive(fq);
-	if (inactive) {
+	fuseq_update_nexecs(fq, -1);
+	if (fq->fq_nexecs < 0) {
 		dif = fqw_dif_time_stamp(fqw);
 		if (dif > 30) {
 			flags |= SILOFS_F_IDLE;
@@ -4084,26 +4084,12 @@ static int fqw_exec_timedout(struct silofs_fuseq_worker *fqw)
 
 static void fqw_post_timedout(struct silofs_fuseq_worker *fqw)
 {
-	bool renew = false;
-	bool inactive;
-
-	/* renew base state */
 	if (fqw->fw_req_count > 0) {
+		/* renew base state */
 		fqw_renew_bufs(fqw);
 		fqw->fw_req_count = 0;
-		renew = true;
-	}
-
-	/* check inactivity (without lock) */
-	inactive = fuseq_is_inactive(fqw->fw_fq);
-
-	/*
-	 * If this thread got the timeout but the overall state is still active
-	 * it can not do any of the actual timed-out logic. This may happen when
-	 * other thread don't get CPU. Force re-schedule to allow other workers
-	 * do some work.
-	 */
-	if (!inactive && !renew) {
+	} else {
+		/* yield to let other worker get CPU and do this post-op */
 		silofs_sys_sched_yield();
 	}
 }

@@ -70,6 +70,7 @@ struct silofs_fuseq {
 	size_t                          fq_nopers_done;
 	size_t                          fq_ntimedout;
 	uid_t                           fq_fs_owner;
+	int32_t                         fq_nexecs;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

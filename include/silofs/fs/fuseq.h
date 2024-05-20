@@ -20,20 +20,22 @@
 
 /* fuse-q machinery */
 struct silofs_fuseq_conn_info {
+	uint32_t        kern_proto_major;
+	uint32_t        kern_proto_minor;
+	uint32_t        kern_cap;
 	uint32_t        proto_major;
 	uint32_t        proto_minor;
-	uint32_t        cap_kern;
-	uint32_t        cap_want;
+	uint32_t        want_cap;
 	size_t          pagesize;
 	size_t          buffsize;
-	size_t          max_write;
-	size_t          max_read;
-	size_t          max_readahead;
-	size_t          max_background;
-	size_t          congestion_threshold;
-	size_t          time_gran;
-	size_t          max_inlen;
-} silofs_aligned64;
+	uint32_t        max_write;
+	uint32_t        max_read;
+	uint32_t        max_readahead;
+	uint32_t        max_background;
+	uint32_t        congestion_threshold;
+	uint32_t        time_gran;
+	uint32_t        max_pages;
+};
 
 struct silofs_fuseq_worker {
 	struct silofs_thread            fw_th;

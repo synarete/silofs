@@ -56,10 +56,7 @@
 	(SILOFS_CMD_TAIL_MAX / sizeof(struct fuse_forget_one))
 
 /* max size for read/write I/O copy-buffer in splice-pipe mode */
-#define FUSEQ_RWITER_THRESH     (SILOFS_PAGE_SIZE_MIN)
-
-/* splice-mode flags */
-#define FUSEQ_SPLICE_FLAGS      (SPLICE_F_MOVE | SPLICE_F_NONBLOCK)
+#define FUSEQ_RWITER_THRESH             (SILOFS_PAGE_SIZE_MIN)
 
 /*
  * Currently, there is limitation to output-size of FUSE_COPY_FILE_RANGE: the
@@ -1208,8 +1205,7 @@ static int fqw_append_to_pipe_by_fd(struct silofs_fuseq_worker *fqw,
 	size_t len = iovec->iov.iov_len;
 	loff_t off = iovec->iov_off;
 
-	return silofs_pipe_splice_from_fd(pipe, iovec->iov_fd,
-	                                  &off, len, FUSEQ_SPLICE_FLAGS);
+	return silofs_pipe_splice_from_fd(pipe, iovec->iov_fd, &off, len, 0);
 }
 
 static int fqw_append_to_pipe_by_iov(struct silofs_fuseq_worker *fqw,
@@ -1217,7 +1213,7 @@ static int fqw_append_to_pipe_by_iov(struct silofs_fuseq_worker *fqw,
 {
 	return silofs_pipe_vmsplice_from_iov(&fqw->fw_piper.pipe,
 	                                     &iovec->iov, 1,
-	                                     FUSEQ_SPLICE_FLAGS);
+	                                     SPLICE_F_NONBLOCK);
 }
 
 static int
@@ -1247,7 +1243,7 @@ static int fqw_send_pipe(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_pipe *pipe = &fqw->fw_piper.pipe;
 
-	return silofs_pipe_flush_to_fd(pipe, fqw->fw_fq->fq_fuse_fd);
+	return silofs_pipe_flush_to_fd(pipe, fqw->fw_fq->fq_fuse_fd, 0);
 }
 
 static int fqw_reply_read_data(struct silofs_fuseq_worker *fqw,
@@ -2388,7 +2384,7 @@ static int fqw_extract_from_pipe_by_fd(struct silofs_fuseq_worker *fqw,
 
 	return silofs_pipe_splice_to_fd(pipe, iovec->iov_fd,
 	                                &off, iovec->iov.iov_len,
-	                                FUSEQ_SPLICE_FLAGS);
+	                                SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
 }
 
 static int fqw_extract_from_pipe_by_iov(struct silofs_fuseq_worker *fqw,
@@ -2396,7 +2392,7 @@ static int fqw_extract_from_pipe_by_iov(struct silofs_fuseq_worker *fqw,
 {
 	return silofs_pipe_vmsplice_to_iov(&fqw->fw_piper.pipe,
 	                                   &iovec->iov, 1,
-	                                   FUSEQ_SPLICE_FLAGS);
+	                                   SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
 }
 
 static int fqw_extract_data_from_pipe(struct silofs_fuseq_worker *fqw,
@@ -3013,7 +3009,7 @@ static time_t fqw_dif_time_stamp(const struct silofs_fuseq_worker *fqw)
 
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n)
 {
-	const int32_t lim = 10 * (int)(fq->fq_ws.fws_nactive);
+	const int32_t lim = 100 * (int)(fq->fq_ws.fws_nactive);
 
 	if (n > 0) {
 		fq->fq_nexecs = silofs_clamp32(fq->fq_nexecs + n, 1, lim);
@@ -3149,8 +3145,9 @@ static int fqw_exec_request(struct silofs_fuseq_worker *fqw)
 static void fqw_reset_inhdr(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq_in *in = fqw_in_of(fqw);
+	struct silofs_fuseq_hdr_in *hdr = &in->u.hdr;
 
-	memset(&in->u.hdr, 0, sizeof(in->u.hdr));
+	memset(hdr, 0, sizeof(*hdr));
 }
 
 static int fqw_check_inhdr(const struct silofs_fuseq_worker *fqw,
@@ -3256,8 +3253,8 @@ static int fqw_splice_into_pipe(struct silofs_fuseq_worker *fqw, size_t cnt)
 	silofs_assert_le(cnt, pipe->size);
 
 	err = silofs_pipe_splice_from_fd(pipe, fuse_fd,
-	                                 NULL, cnt, FUSEQ_SPLICE_FLAGS);
-	if (unlikely(err) && (err != -ENODEV)) {
+	                                 NULL, cnt, SPLICE_F_MOVE);
+	if (unlikely(err)) {
 		if (err == -ENODEV) {
 			fuseq_log_dbg("fuse splice-in nodev-error: "
 			              "fuse_fd=%d cnt=%lu", fuse_fd, cnt);
@@ -3298,7 +3295,7 @@ static bool fqw_has_long_write_in(const struct silofs_fuseq_worker *fqw)
  * fuse.ko requires user-space to transfer the entire message (header +
  * sub-command control + data payload) into user-space owned buffer: either
  * as in-memory buffer or via in-kernel pipe (splice-mode). When trying to
- * copy in smaller chunks, we get -SILOFS_EINVAL.
+ * copy in smaller chunks, we get -EINVAL.
  *
  * Do a two phase operation: first copy from common fuse-fd into thread-private
  * pipe under channel-lock, then release the lock and copy from private pipe

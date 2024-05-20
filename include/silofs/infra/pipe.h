@@ -68,7 +68,8 @@ int silofs_pipe_copy_to_buf(struct silofs_pipe *pipe, void *buf, size_t len);
 int silofs_pipe_append_from_buf(struct silofs_pipe *pipe,
                                 const void *buf, size_t len);
 
-int silofs_pipe_flush_to_fd(struct silofs_pipe *pipe, int fd);
+int silofs_pipe_flush_to_fd(struct silofs_pipe *pipe,
+                            int fd, unsigned int flags);
 
 int silofs_pipe_dispose(struct silofs_pipe *pipe,
                         const struct silofs_nilfd *nfd);

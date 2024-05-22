@@ -81,6 +81,7 @@ struct silofs_mntsvc {
 	char                    ms_peer_ids[52];
 	struct silofs_mntsrv   *ms_srv;
 	struct silofs_socket    ms_asock;
+	uint32_t                ms_page_size;
 	int                     ms_fuse_fd;
 };
 
@@ -710,6 +711,7 @@ static void mntsvc_init(struct silofs_mntsvc *msvc)
 	silofs_streamsock_initu(&msvc->ms_asock);
 	silofs_sockaddr_none(&msvc->ms_peer);
 	mntsvc_reset_peer_ucred(msvc);
+	msvc->ms_page_size = (uint32_t)silofs_sc_page_size();
 	msvc->ms_fuse_fd = -1;
 	msvc->ms_srv = NULL;
 }
@@ -872,11 +874,10 @@ mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
                               const struct silofs_mntparams *mntp)
 {
-	int err;
-	size_t page_size;
 	const struct ucred *peer_cred = &msvc->ms_peer_ucred;
 	const unsigned long sup_mnt_mask =
 	        (MS_LAZYTIME | MS_NOEXEC | MS_NOSUID | MS_NODEV | MS_RDONLY);
+	int err;
 
 	if (mntp->flags & ~sup_mnt_mask) {
 		return -SILOFS_EOPNOTSUPP;
@@ -891,11 +892,10 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
 	    (mntp->group_id != peer_cred->gid)) {
 		return -SILOFS_EACCES;
 	}
-	page_size = (size_t)silofs_sc_page_size();
-	if (mntp->max_read < (2 * page_size)) {
+	if (mntp->max_read < (2 * msvc->ms_page_size)) {
 		return -SILOFS_EINVAL;
 	}
-	if (mntp->max_read > (512 * page_size)) {
+	if (mntp->max_read > (512 * msvc->ms_page_size)) {
 		return -SILOFS_EINVAL;
 	}
 	if (mntp->path == NULL) {

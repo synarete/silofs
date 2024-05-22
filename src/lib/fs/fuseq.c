@@ -1257,9 +1257,8 @@ static int fqw_reply_read_data(struct silofs_fuseq_worker *fqw,
 
 static int fq_rdi_reply_read_iov(struct silofs_fuseq_rd_iter *fq_rdi)
 {
-	struct silofs_iovec iov;
-	const struct silofs_iovec *itr = NULL;
-	size_t cur = 0;
+	const struct silofs_iovec *iov = NULL;
+	size_t rem = 0;
 	int err = 0;
 	int ret = 0;
 
@@ -1267,25 +1266,14 @@ static int fq_rdi_reply_read_iov(struct silofs_fuseq_rd_iter *fq_rdi)
 	if (err) {
 		goto out;
 	}
-	while (fq_rdi->ncp < fq_rdi->cnt) {
-		cur = 0;
-		iovec_reset(&iov);
-		for (size_t i = fq_rdi->ncp; i < fq_rdi->cnt; ++i) {
-			itr = &fq_rdi->iovec[i];
-			if (!cur) {
-				iovec_assign(&iov, itr);
-			} else if (iovec_isfdseq(&iov, itr)) {
-				iovec_append_len(&iov, itr);
-			} else {
-				break;
-			}
-			cur++;
-		}
-		err = fqw_append_data_to_pipe(fq_rdi->fqw, &iov, 1);
+	if (fq_rdi->ncp < fq_rdi->cnt) {
+		iov = fq_rdi->iovec + fq_rdi->ncp;
+		rem = fq_rdi->cnt - fq_rdi->ncp;
+		err = fqw_append_data_to_pipe(fq_rdi->fqw, iov, rem);
 		if (err) {
 			goto out;
 		}
-		fq_rdi->ncp += cur;
+		fq_rdi->ncp += rem;
 	}
 out:
 	if (err) {

@@ -226,9 +226,9 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
 	cnt = silofs_min(pipe_avail(pipe), len);
 	err = silofs_sys_splice(fd, off, pipe->fd[1], NULL, cnt, flags, &nsp);
 	if (err) {
-		silofs_log_debug("splice-error: fd_in=%d off_in=%ld "\
-		                 "fd_out=%d cnt=%lu flags=%u err=%d",
-		                 fd, off_in, pipe->fd[1], cnt, flags, err);
+		silofs_log_warn("splice-error: fd_in=%d off_in=%ld "\
+		                "fd_out=%d cnt=%lu flags=%u err=%d",
+		                fd, off_in, pipe->fd[1], cnt, flags, err);
 		return err;
 	}
 	if (nsp > cnt) {
@@ -252,9 +252,9 @@ int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
 	cnt = iov_count_ceil(iov, niov, pipe_avail(pipe));
 	err = silofs_sys_vmsplice(pipe->fd[1], iov, cnt, flags, &nsp);
 	if (err) {
-		silofs_log_debug("vmsplice-error: fd=%d cnt=%lu "\
-		                 "flags=%u err=%d",
-		                 pipe->fd[1], cnt, flags, err);
+		silofs_log_warn("vmsplice-error: fd=%d cnt=%lu "\
+		                "flags=%u err=%d",
+		                pipe->fd[1], cnt, flags, err);
 		return err;
 	}
 	pipe->pend += nsp;

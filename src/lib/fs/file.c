@@ -1359,7 +1359,7 @@ static bool filc_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 }
 
 static void
-filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
+filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 {
 	struct silofs_iattr iattr;
 	struct silofs_inode_info *ii = f_ctx->ii;
@@ -1402,6 +1402,7 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx,  bool kill_suid_sgid)
 			}
 		}
 	}
+
 	ii_update_iattrs(ii, task_creds(f_ctx->task), &iattr);
 }
 
@@ -3796,7 +3797,7 @@ static int filc_fallocate(struct silofs_file_ctx *f_ctx)
 	if (err) {
 		return err;
 	}
-	filc_update_post_io(f_ctx, false);
+	filc_update_post_io(f_ctx, true);
 	return 0;
 }
 

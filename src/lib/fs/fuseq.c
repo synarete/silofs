@@ -1200,45 +1200,31 @@ static int fqw_append_hdr_to_pipe(struct silofs_fuseq_worker *fqw,
 	return silofs_pipe_append_from_buf(pipe, &hdr, sizeof(hdr));
 }
 
-static int fqw_append_to_pipe_by_fd(struct silofs_fuseq_worker *fqw,
-                                    const struct silofs_iovec *iovec)
-{
-	struct silofs_pipe *pipe = &fqw->fw_piper.pipe;
-	size_t len = iovec->iov.iov_len;
-	loff_t off = iovec->iov_off;
-
-	return silofs_pipe_splice_from_fd(pipe, iovec->iov_fd, &off, len, 0);
-}
-
-static int fqw_append_to_pipe_by_iov(struct silofs_fuseq_worker *fqw,
-                                     const struct silofs_iovec *iovec)
-{
-	return silofs_pipe_vmsplice_from_iov(&fqw->fw_piper.pipe,
-	                                     &iovec->iov, 1,
-	                                     SPLICE_F_NONBLOCK);
-}
-
 static int
 fqw_append_data_to_pipe(struct silofs_fuseq_worker *fqw,
-                        const struct silofs_iovec *iovec_arr, size_t cnt)
+                        const struct silofs_iovec *iovec, size_t cnt)
 {
-	const struct silofs_iovec *iovec;
-	int err = 0;
+	struct iovec iov[48];
+	struct silofs_pipe *pipe = &fqw->fw_piper.pipe;
+	size_t ncp = 0;
+	size_t cur = 0;
+	int err;
 
-	for (size_t i = 0; (i < cnt) && !err; ++i) {
-		iovec = &iovec_arr[i];
-		if (iovec->iov_fd > 0) {
-			err = fqw_append_to_pipe_by_fd(fqw, iovec);
-		} else if (iovec->iov.iov_base != NULL) {
-			err = fqw_append_to_pipe_by_iov(fqw, iovec);
-		} else {
-			fuseq_log_err("bad iovec entry: fd=%d off=%ld len=%lu",
-			              iovec->iov_fd, iovec->iov_off,
-			              iovec->iov.iov_len);
-			err = -SILOFS_EINVAL;
+	STATICASSERT_LE(ARRAY_SIZE(iov), SILOFS_FILE_NITER_MAX);
+
+	while (ncp < cnt) {
+		cur = min(cnt - ncp, ARRAY_SIZE(iov));
+		for (size_t i = 0; i < cur; ++i) {
+			iov[i].iov_base = iovec[ncp + i].iov.iov_base;
+			iov[i].iov_len = iovec[ncp + i].iov.iov_len;
 		}
+		err = silofs_pipe_vmsplice_from_iov(pipe, iov, cur, 0);
+		if (err) {
+			return err;
+		}
+		ncp += cur;
 	}
-	return err;
+	return 0;
 }
 
 static int fqw_send_pipe(struct silofs_fuseq_worker *fqw)
@@ -3167,6 +3153,7 @@ static size_t fqw_max_inlen(const struct silofs_fuseq_worker *fqw)
 
 	silofs_assert_gt(len_max, FUSE_BUFFER_HEADER_SIZE);
 	silofs_assert_le(len_max, sizeof(*in));
+	silofs_unused(in); /* make clangscan happy */
 
 	return len_max;
 }

@@ -39,6 +39,8 @@ static const char *cmd_mount_help_desc[] = {
 	"  -E  --allow-xattr-acl        Enable ACL via extended attributes",
 	"  -A  --no-allow-other         Do not allow other users",
 	"  -W  --writeback-cache=0|1    Write-back cache mode",
+	"  -B  --buffer-copy-mode       "
+	"Use copy-to-buffer mode (instead of pipe-splice)",
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
 	"  -M, --stdalloc               Use standard C allocator",
@@ -165,6 +167,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		{ "allow-xattr-acl", no_argument, NULL, 'E' },
 		{ "no-allow-other", no_argument, NULL, 'A' },
 		{ "writeback-cache", required_argument, NULL, 'W' },
+		{ "buffer-copy-mode", no_argument, NULL, 'B' },
 		{ "nodaemon", no_argument, NULL, 'D' },
 		{ "coredump", no_argument, NULL, 'C' },
 		{ "asyncwr", required_argument, NULL, 'a' },
@@ -178,7 +181,7 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("o:iAEW:DCa:MPp:L:Rh", opts);
+		opt_chr = cmd_getopt("o:iAEW:BDCa:MPp:L:Rh", opts);
 		if (opt_chr == 'o') {
 			cmd_mount_getsubopts(ctx);
 		} else if (opt_chr == 'i') {
@@ -190,6 +193,8 @@ static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
 		} else if (opt_chr == 'W') {
 			ctx->in_args.flags.writeback_cache =
 			        cmd_parse_str_as_bool(optarg);
+		} else if (opt_chr == 'B') {
+			ctx->in_args.flags.may_splice = false;
 		} else if (opt_chr == 'D') {
 			cmd_globals.dont_daemonize = true;
 		} else if (opt_chr == 'C') {
@@ -329,6 +334,7 @@ static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
 	ctx->in_args.flags.allow_xattr_acl = false;
 	ctx->in_args.flags.allow_admin = true;
 	ctx->in_args.flags.writeback_cache = true;
+	ctx->in_args.flags.may_splice = true;
 	ctx->in_args.flags.lazytime = false;
 	ctx->in_args.flags.stdalloc = false;
 	ctx->in_args.explicit_log_level = false;
@@ -523,6 +529,7 @@ static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 	silofs_log_iarg("allow_hostids=%d", cflags->allow_hostids);
 	silofs_log_iarg("allow_xattr_acl=%d", cflags->allow_xattr_acl);
 	silofs_log_iarg("writeback_cache=%d", cflags->writeback_cache);
+	silofs_log_iarg("may_splice=%d", cflags->may_splice);
 	silofs_log_iarg("lazytime=%d", cflags->lazytime);
 	cmd_trace_versions();
 }

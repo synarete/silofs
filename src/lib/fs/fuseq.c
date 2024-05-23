@@ -3899,21 +3899,23 @@ static int fuseq_update_workers(struct silofs_fuseq *fq)
 
 	if (!fq->fq_may_splice) {
 		/* operate in non-splice mode */
-		goto out;
+		return 0;
 	}
 	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
 	for (size_t i = 0; i < fq->fq_ws.fws_navail; ++i) {
 		fqw = &fq->fq_ws.fws_workers[i];
 		err = fqw_update_piper(fqw, pipesize);
-		if (err) {
-			break;
+		if (err == -EPERM) {
+			goto can_not_splice;
+		} else if (err) {
+			return err;
 		}
 		cnt++;
 	}
-	if (!err) {
-		/* all workers set with proper pipe -- all OK */
-		goto out;
-	}
+	/* normal mode: all workers set with proper pipe */
+	return 0;
+
+can_not_splice:
 	/* can not have proper pipe size: fallback to buffer-only mode */
 	fuseq_log_dbg("disable splice mode: nworkers=%zu", cnt);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -3921,7 +3923,6 @@ static int fuseq_update_workers(struct silofs_fuseq *fq)
 		fqw_close_piper(fqw);
 	}
 	fq->fq_may_splice = false;
-out:
 	return 0;
 }
 

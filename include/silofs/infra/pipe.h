@@ -43,11 +43,11 @@ size_t silofs_pipe_size_of(size_t pipe_size_want);
 
 void silofs_pipe_init(struct silofs_pipe *pipe);
 
+void silofs_pipe_fini(struct silofs_pipe *pipe);
+
 int silofs_pipe_open(struct silofs_pipe *pipe);
 
 void silofs_pipe_close(struct silofs_pipe *pipe);
-
-void silofs_pipe_fini(struct silofs_pipe *pipe);
 
 int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
                                size_t len, unsigned int flags);
@@ -76,9 +76,13 @@ int silofs_pipe_dispose(struct silofs_pipe *pipe,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_piper_init(struct silofs_piper *piper);
+void silofs_piper_init(struct silofs_piper *piper);
 
 void silofs_piper_fini(struct silofs_piper *piper);
+
+int silofs_piper_open(struct silofs_piper *piper);
+
+void silofs_piper_close(struct silofs_piper *piper);
 
 int silofs_piper_try_grow(struct silofs_piper *piper, size_t sz);
 

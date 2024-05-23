@@ -35,7 +35,7 @@ struct silofs_fuseq_conn_info {
 	uint32_t        congestion_threshold;
 	uint32_t        time_gran;
 	uint32_t        max_pages;
-};
+} silofs_aligned64;
 
 struct silofs_fuseq_worker {
 	struct silofs_thread            fw_th;
@@ -48,7 +48,7 @@ struct silofs_fuseq_worker {
 	struct silofs_piper             fw_piper;
 	time_t                          fw_time_stamp;
 	volatile uint64_t               fw_req_count;
-	unsigned int                    fw_index;
+	uint32_t                        fw_index;
 	int                             fw_leader;
 } silofs_aligned64;
 
@@ -83,12 +83,15 @@ struct silofs_fuseq {
 	bool                            fq_mount;
 	bool                            fq_umount;
 	bool                            fq_writeback_cache;
+	bool                            fq_may_splice;
 } silofs_aligned64;
 
 
 int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 
 void silofs_fuseq_fini(struct silofs_fuseq *fq);
+
+int silofs_fuseq_update(struct silofs_fuseq *fq);
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq,
                        struct silofs_fsenv *fsenv, const char *path);

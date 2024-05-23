@@ -124,6 +124,9 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 	if (fs_args->cflags.writeback_cache) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_WRITEBACK;
 	}
+	if (fs_args->cflags.may_splice) {
+		fsenv->fse_ctl_flags |= SILOFS_ENVF_MAYSPLICE;
+	}
 	if (fs_args->cflags.allow_other) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_ALLOWOTHER;
 	}

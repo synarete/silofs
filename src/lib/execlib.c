@@ -424,10 +424,10 @@ static bool fs_ctx_with_fuse(const struct silofs_fs_ctx *fs_ctx)
 	return (fsenv->fse_ctl_flags & mask) == mask;
 }
 
-static bool fs_ctx_with_writeback(const struct silofs_fs_ctx *fs_ctx)
+static bool fs_ctx_has_ctlf(const struct silofs_fs_ctx *fs_ctx,
+                            enum silofs_env_flags mask)
 {
 	const struct silofs_fsenv *fsenv = fs_ctx->fsenv;
-	const enum silofs_env_flags mask = SILOFS_ENVF_WRITEBACK;
 
 	silofs_assert_not_null(fsenv);
 	return (fsenv->fse_ctl_flags & mask) == mask;
@@ -438,7 +438,10 @@ static void fs_ctx_bind_fuseq(struct silofs_fs_ctx *fs_ctx,
 {
 	fs_ctx->fuseq = fuseq;
 	if (fuseq != NULL) {
-		fuseq->fq_writeback_cache = fs_ctx_with_writeback(fs_ctx);
+		fuseq->fq_writeback_cache =
+		        fs_ctx_has_ctlf(fs_ctx, SILOFS_ENVF_WRITEBACK);
+		fuseq->fq_may_splice =
+		        fs_ctx_has_ctlf(fs_ctx, SILOFS_ENVF_MAYSPLICE);
 	}
 }
 
@@ -464,6 +467,10 @@ static int fs_ctx_init_fuseq(struct silofs_fs_ctx *fs_ctx)
 		return err;
 	}
 	fs_ctx_bind_fuseq(fs_ctx, &fqp->fuseq);
+	err = silofs_fuseq_update(&fqp->fuseq);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 

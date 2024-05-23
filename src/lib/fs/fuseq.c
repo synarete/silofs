@@ -1591,7 +1591,8 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	const struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
+	const struct silofs_fuseq *fq = fcc->fq;
+	const struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
 
 	fuseq_log_info("init: kern_proto_major=%u kern_proto_minor=%u",
 	               coni->kern_proto_major, coni->kern_proto_minor);
@@ -1609,6 +1610,8 @@ static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
 	               coni->congestion_threshold);
 	fuseq_log_info("init: time_gran=%u", coni->time_gran);
 	fuseq_log_info("init: max_pages=%u", coni->max_pages);
+	fuseq_log_info("init: oper_mode=%s", fq->fq_may_splice ?
+	               "pipe-splice" : "buffer-copy");
 }
 
 static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -1668,17 +1671,14 @@ static bool fuseq_is_normal(const struct silofs_fuseq *fq)
 
 static bool fuseq_may_splice(const struct silofs_fuseq *fq)
 {
-	return fuseq_is_normal(fq) && (fq->fq_nopers > 2);
+	return fq->fq_may_splice && fuseq_is_normal(fq) && (fq->fq_nopers > 2);
 }
 
-static bool fuseq_cap_splice_read(const struct silofs_fuseq *fq)
+static bool fuseq_cap_splice(const struct silofs_fuseq *fq)
 {
-	return fuseq_may_splice(fq) && fuseq_has_cap(fq, FUSE_SPLICE_READ);
-}
-
-static bool fuseq_cap_splice_write(const struct silofs_fuseq *fq)
-{
-	return fuseq_may_splice(fq) && fuseq_has_cap(fq, FUSE_SPLICE_WRITE);
+	return fuseq_may_splice(fq) &&
+	       fuseq_has_cap(fq, FUSE_SPLICE_READ) &&
+	       fuseq_has_cap(fq, FUSE_SPLICE_WRITE);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2341,7 +2341,7 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static bool fqw_cap_read_iter(const struct silofs_fuseq_worker *fqw)
 {
-	return fuseq_cap_splice_write(fqw->fw_fq);
+	return fuseq_cap_splice(fqw->fw_fq);
 }
 
 static int do_read(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -2574,13 +2574,23 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	return ret;
 }
 
+static bool fqw_cap_write_iter(const struct silofs_fuseq_worker *fqw)
+{
+	return fuseq_cap_splice(fqw->fw_fq);
+}
+
 static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	const size_t wr_size = fcc->in->u.write.arg.size;
 	const size_t wr_iter_thresh = FUSEQ_RWITER_THRESH;
+	int ret;
 
-	return (wr_size >= wr_iter_thresh) ?
-	       do_write_iter(fcc) : do_write_buf(fcc);
+	if ((wr_size >= wr_iter_thresh) && fqw_cap_write_iter(fcc->fqw)) {
+		ret = do_write_iter(fcc);
+	} else {
+		ret = do_write_buf(fcc);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3355,7 +3365,7 @@ static bool fuseq_is_active(const struct silofs_fuseq *fq)
 
 static bool fqw_cap_splice_in(const struct silofs_fuseq_worker *fqw)
 {
-	return fuseq_cap_splice_read(fqw->fw_fq);
+	return fuseq_cap_splice(fqw->fw_fq);
 }
 
 static int fqw_do_recv_in(struct silofs_fuseq_worker *fqw, bool *out_spliced)
@@ -3533,28 +3543,33 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 }
 
 static int fuseq_resolve_bufsize(const struct silofs_fuseq *fq,
-                                 size_t bufsize_max, size_t *out_bufsize)
+                                 size_t *out_bufsize)
 {
 	const struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
 	const size_t page_size = coni->pagesize;
 	size_t bufsize_min;
-	size_t pipe_size;
+	size_t bufsize_max;
+	size_t bufsize_may;
 	size_t bufsize;
 
 	STATICASSERT_GE(FUSE_MIN_READ_BUFFER, 2 * FUSE_BUFFER_HEADER_SIZE);
 
 	bufsize_min = min(FUSE_MIN_READ_BUFFER, 2 * SILOFS_LBK_SIZE);
-	pipe_size = silofs_pipe_size_of(bufsize_max);
-	bufsize = (min(pipe_size, bufsize_max) / page_size) * page_size;
+	bufsize_max = fuseq_bufsize_max(fq);
+	if (fq->fq_may_splice) {
+		bufsize_may = silofs_pipe_size_of(bufsize_max);
+	} else {
+		bufsize_may = bufsize_max;
+	}
+	bufsize = (min(bufsize_may, bufsize_max) / page_size) * page_size;
 	if ((bufsize < bufsize_min)  || (bufsize > bufsize_max)) {
-		fuseq_log_err("can not creat channel: pipe_size=%zu "
-		              "bufsize=%zu bufsize_max=%zu bufsize_min=%zu ",
-		              pipe_size, bufsize, bufsize_max, bufsize_min);
+		fuseq_log_err("can not creat channel: bufsize=%zu "
+		              "bufsize_max=%zu bufsize_min=%zu ",
+		              bufsize, bufsize_max, bufsize_min);
 		return -SILOFS_EPROTO;
 	}
-	fuseq_log_dbg("channel params: pipe_size=%zu "
-	              "bufsize=%zu bufsize_max=%zu bufsize_min=%zu ",
-	              pipe_size, bufsize, bufsize_max, bufsize_min);
+	fuseq_log_dbg("channel params: bufsize=%zu bufsize_max=%zu "
+	              "bufsize_min=%zu ", bufsize, bufsize_max, bufsize_min);
 	*out_bufsize = bufsize;
 	return 0;
 }
@@ -3591,7 +3606,7 @@ static int fuseq_calc_max_write(const struct silofs_fuseq *fq,
 	return 0;
 }
 
-static int fuseq_update_conn_info(struct silofs_fuseq *fq, size_t bufsize_max)
+static int fuseq_update_conn_info(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
 	size_t bufsize = 0;
@@ -3599,7 +3614,7 @@ static int fuseq_update_conn_info(struct silofs_fuseq *fq, size_t bufsize_max)
 	size_t max_pages = 0;
 	int err;
 
-	err = fuseq_resolve_bufsize(fq, bufsize_max, &bufsize);
+	err = fuseq_resolve_bufsize(fq, &bufsize);
 	if (err) {
 		return err;
 	}
@@ -3619,20 +3634,14 @@ static int fuseq_update_conn_info(struct silofs_fuseq *fq, size_t bufsize_max)
 	return 0;
 }
 
-static int fuseq_init_conn_info(struct silofs_fuseq *fq)
+static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	size_t bufsize = 0;
-	int err;
 
-
+	memset(coni, 0, sizeof(*coni));
 	coni->pagesize = (size_t)silofs_sc_page_size();
-	coni->kern_proto_major = 0;
-	coni->kern_proto_minor = 0;
-	coni->kern_cap = 0;
 	coni->proto_major = FUSE_KERNEL_VERSION;
 	coni->proto_minor = FUSE_KERNEL_MINOR_VERSION;
-	coni->want_cap = 0;
 	coni->time_gran = 1;
 
 	/*
@@ -3643,25 +3652,16 @@ static int fuseq_init_conn_info(struct silofs_fuseq *fq)
 	 */
 	coni->max_background = (1 << 16) - 1;
 	coni->congestion_threshold = coni->max_background / 2;
-
-	err = fuseq_resolve_bufsize(fq, fuseq_bufsize_max(fq), &bufsize);
-	if (err) {
-		return err;
-	}
-	err = fuseq_update_conn_info(fq, bufsize);
-	if (err) {
-		return err;
-	}
-	return 0;
 }
 
-static int fqw_init_piper(struct silofs_fuseq_worker *fqw)
+static void fqw_init_piper(struct silofs_fuseq_worker *fqw)
 {
-	return silofs_piper_init(&fqw->fw_piper);
+	silofs_piper_init(&fqw->fw_piper);
 }
 
 static void fqw_fini_piper(struct silofs_fuseq_worker *fqw)
 {
+	silofs_piper_close(&fqw->fw_piper);
 	silofs_piper_fini(&fqw->fw_piper);
 }
 
@@ -3766,7 +3766,7 @@ static void fqw_fini_op_args(struct silofs_fuseq_worker *fqw)
 }
 
 static int fqw_init(struct silofs_fuseq_worker *fqw,
-                    struct silofs_fuseq *fq, unsigned int idx)
+                    struct silofs_fuseq *fq, uint32_t idx)
 {
 	int err;
 
@@ -3794,13 +3794,9 @@ static int fqw_init(struct silofs_fuseq_worker *fqw,
 	if (err) {
 		goto out_err;
 	}
-	err = fqw_init_piper(fqw);
-	if (err) {
-		goto out_err;
-	}
+	fqw_init_piper(fqw);
 	return 0;
 out_err:
-	fqw_fini_piper(fqw);
 	fqw_fini_op_args(fqw);
 	fqw_fini_rwi(fqw);
 	fqw_fini_bufs(fqw);
@@ -3817,19 +3813,30 @@ static void fqw_fini(struct silofs_fuseq_worker *fqw)
 	fqw->fw_fq  = NULL;
 }
 
-static int fqw_try_grow_pipe(struct silofs_fuseq_worker *fqw,
-                             size_t pipe_size_want)
+static int fqw_update_piper(struct silofs_fuseq_worker *fqw,
+                            size_t pipe_size_want)
 {
 	struct silofs_piper *piper = &fqw->fw_piper;
 	int err;
 
+	err = silofs_piper_open(piper);
+	if (err) {
+		fuseq_log_warn("failed to open piper: err=%d", err);
+		return err;
+	}
 	err = silofs_piper_try_grow(piper, pipe_size_want);
 	if (err) {
 		fuseq_log_warn("failed to grow pipe size: "
 		               "pipe_size_curr=%zu pipe_size_want=%zu err=%d",
 		               piper->pipe.size, pipe_size_want, err);
+		return err;
 	}
-	return err;
+	return 0;
+}
+
+static void fqw_close_piper(struct silofs_fuseq_worker *fqw)
+{
+	silofs_piper_close(&fqw->fw_piper);
 }
 
 static void fuseq_init_workers_limit(struct silofs_fuseq *fq)
@@ -3844,17 +3851,19 @@ static void fuseq_init_workers_limit(struct silofs_fuseq *fq)
 static int fuseq_init_workers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_workset *fws = &fq->fq_ws;
+	struct silofs_fuseq_worker *fqw = NULL;
 	size_t mem_size;
 	int err;
 
 	listq_init(&fws->fws_curropsq);
-	mem_size = fws->fws_nlimit * sizeof(*fws->fws_workers);
+	mem_size = fws->fws_nlimit * sizeof(*fqw);
 	fws->fws_workers = silofs_memalloc(fq->fq_alloc, mem_size, 0);
 	if (fws->fws_workers == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	for (unsigned int i = 0; i < fws->fws_nlimit; ++i) {
-		err = fqw_init(&fws->fws_workers[i], fq, i);
+	for (size_t i = 0; i < fws->fws_nlimit; ++i) {
+		fqw = &fws->fws_workers[i];
+		err = fqw_init(fqw, fq, (uint32_t)i);
 		if (err) {
 			return err;
 		}
@@ -3882,29 +3891,63 @@ static void fuseq_fini_workers(struct silofs_fuseq *fq)
 
 static int fuseq_update_workers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	struct silofs_fuseq_worker *fqw = NULL;
-	size_t pipe_size_min = max(2 * SILOFS_LBK_SIZE, FUSE_MIN_READ_BUFFER);
-	size_t pipe_size = coni->buffsize;
+	const size_t buffsize = fq->fq_coni.buffsize;
+	const size_t pipesize = buffsize;
+	size_t cnt = 0;
 	int err;
 
-	for (size_t i = 0; i < fws->fws_navail; ++i) {
-		fqw = &fws->fws_workers[i];
-		err = fqw_try_grow_pipe(fqw, pipe_size);
+	if (!fq->fq_may_splice) {
+		/* operate in non-splice mode */
+		goto out;
+	}
+	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
+	for (size_t i = 0; i < fq->fq_ws.fws_navail; ++i) {
+		fqw = &fq->fq_ws.fws_workers[i];
+		err = fqw_update_piper(fqw, pipesize);
 		if (err) {
-			pipe_size = fqw->fw_piper.pipe.size;
+			break;
 		}
+		cnt++;
 	}
-	if (pipe_size < pipe_size_min) {
-		fuseq_log_err("failed to set minimal pipe size: want=%zu "
-		              "actual=%zu", coni->buffsize, pipe_size);
-		return -SILOFS_EPERM;
+	if (!err) {
+		/* all workers set with proper pipe -- all OK */
+		goto out;
 	}
-	if (coni->buffsize != pipe_size) {
-		fuseq_log_err("reduce buffer-size: want=%zu actual=%zu",
-		              coni->buffsize, pipe_size);
-		return fuseq_update_conn_info(fq, pipe_size);
+	/* can not have proper pipe size: fallback to buffer-only mode */
+	fuseq_log_dbg("disable splice mode: nworkers=%zu", cnt);
+	for (size_t i = 0; i < cnt; ++i) {
+		fqw = &fq->fq_ws.fws_workers[i];
+		fqw_close_piper(fqw);
+	}
+	fq->fq_may_splice = false;
+out:
+	return 0;
+}
+
+int silofs_fuseq_update(struct silofs_fuseq *fq)
+{
+	const bool may_splice = fq->fq_may_splice;
+	int err;
+
+	err = fuseq_update_conn_info(fq);
+	if (err) {
+		return err;
+	}
+	err = fuseq_update_workers(fq);
+	if (err) {
+		return err;
+	}
+	/*
+	 * Special case: fallback from pipe-splice mode to buffer-copy mode due
+	 * to insufficient resources to create big-enough pipes. Need to update
+	 * connection-info settings.
+	 */
+	if (may_splice != fq->fq_may_splice) {
+		err = fuseq_update_conn_info(fq);
+		if (err) {
+			return err;
+		}
 	}
 	return 0;
 }
@@ -3961,6 +4004,7 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_mount = false;
 	fq->fq_umount = false;
 	fq->fq_writeback_cache = false;
+	fq->fq_may_splice = true;
 	fq->fq_fs_owner = (uid_t)(-1);
 	fq->fq_nexecs = 0;
 }
@@ -3972,20 +4016,13 @@ int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
 	silofs_memzero(fq, sizeof(*fq));
 	fuseq_init_common(fq, alloc);
 	fuseq_init_workers_limit(fq);
+	fuseq_init_conn_info(fq);
 
-	err = fuseq_init_conn_info(fq);
-	if (err) {
-		return err;
-	}
 	err = fuseq_init_locks(fq);
 	if (err) {
 		goto out;
 	}
 	err = fuseq_init_workers(fq);
-	if (err) {
-		goto out;
-	}
-	err = fuseq_update_workers(fq);
 	if (err) {
 		goto out;
 	}

@@ -57,6 +57,7 @@ struct silofs_fs_cflags {
 	bool allow_hostids;
 	bool allow_xattr_acl;
 	bool writeback_cache;
+	bool may_splice;
 	bool lazytime;
 	bool stdalloc;
 };

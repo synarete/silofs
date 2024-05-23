@@ -163,6 +163,7 @@ class CmdSilofs(CmdExec):
         args = ["init", repodir]
         self.execute_sub(args)
 
+    # pylint: disable=R0913
     def mkfs(
         self,
         repodir_name: Path,
@@ -194,6 +195,7 @@ class CmdSilofs(CmdExec):
         allow_hostids: bool = False,
         allow_xattr_acl: bool = False,
         writeback_cache: bool = False,
+        buffer_copy_mode: bool = False,
     ) -> None:
         wb_mode = int(writeback_cache)
         args = ["mount", "--no-prompt", f"--writeback-cache={wb_mode}"]
@@ -205,6 +207,8 @@ class CmdSilofs(CmdExec):
             args = args + ["--allow-hostids"]
         if allow_xattr_acl:
             args = args + ["--allow-xattr-acl"]
+        if buffer_copy_mode:
+            args = args + ["--buffer-copy-mode"]
         args = args + [str(repodir_name), str(mntpoint)]
         self.execute_run(args, indat=password)
 

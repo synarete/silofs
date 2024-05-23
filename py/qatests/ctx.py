@@ -190,6 +190,7 @@ class TestEnv:
         allow_hostids: bool = False,
         allow_xattr_acl: bool = False,
         writeback_cache: bool = True,
+        buffer_copy_mode: bool = False,
     ) -> None:
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.mount(
@@ -199,6 +200,7 @@ class TestEnv:
             allow_hostids=allow_hostids,
             allow_xattr_acl=allow_xattr_acl,
             writeback_cache=writeback_cache,
+            buffer_copy_mode=buffer_copy_mode,
         )
 
     def exec_umount(self) -> None:

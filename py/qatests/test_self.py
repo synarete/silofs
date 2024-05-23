@@ -45,7 +45,24 @@ def test_funtests(env: TestEnv) -> None:
     env.exec_rmfs(ff_snap_name)
 
 
-def test_funtests2(env: TestEnv) -> None:
+def test_funtests_nosplice(env: TestEnv) -> None:
+    ff_dname = "funtests_nosplice"
+    env.exec_init()
+    env.exec_mkfs(40)
+    env.update_bconf()
+    env.exec_mount(writeback_cache=False, buffer_copy_mode=True)
+    tds = env.make_tds(40, ff_dname, 2**22)
+    tds.do_makedirs()
+    tds.do_write()
+    tds.do_unlink()
+    tds.do_rmdirs()
+    ff_root = env.create_fstree(ff_dname)
+    env.cmd.funtests.run(ff_root)
+    env.remove_fstree(ff_dname)
+    env.exec_teardown_fs()
+
+
+def test_funtests_tune2(env: TestEnv) -> None:
     ff_dname = "funtests2"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(64, ff_dname, 2**22)

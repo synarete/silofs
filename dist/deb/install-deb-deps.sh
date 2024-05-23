@@ -60,6 +60,7 @@ extra_deps=(
   git
   gitlint
   mypy
+  psmisc
   pylint
   python3-pathspec
   python3-pygments

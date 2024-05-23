@@ -57,6 +57,7 @@ extra_deps=(
   clang-tools-extra
   gdb
   git
+  psmisc
   python3-docutils
   python3-flake8
   python3-flake8-import-order

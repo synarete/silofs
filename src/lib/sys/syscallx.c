@@ -324,8 +324,7 @@ static int sys_readfile(int dfd, const char *filename,
 	int err;
 	int fd = -1;
 
-	(void)flags;
-	err = silofs_sys_openat(dfd, filename, O_RDONLY, 0, &fd);
+	err = silofs_sys_openat(dfd, filename, flags, 0, &fd);
 	if (err) {
 		return err;
 	}
@@ -342,7 +341,7 @@ static int sys_readfile(int dfd, const char *filename,
 }
 
 static int sys_readproc(const char *procdir, const char *filename,
-                        void *buf, size_t bsz, int flags, size_t *nrd)
+                        void *buf, size_t bsz, size_t *nrd)
 {
 	int err;
 	int dfd = -1;
@@ -351,7 +350,7 @@ static int sys_readproc(const char *procdir, const char *filename,
 	if (err) {
 		return err;
 	}
-	err = sys_readfile(dfd, filename, buf, bsz, flags, nrd);
+	err = sys_readfile(dfd, filename, buf, bsz, O_RDONLY, nrd);
 	if (err) {
 		silofs_sys_close(dfd);
 		return err;
@@ -363,8 +362,7 @@ static int sys_readproc(const char *procdir, const char *filename,
 	return 0;
 }
 
-static int sys_readproc_long(const char *procdir,
-                             const char *filename, long *out_value)
+static int sys_readproc_long(const char *pathname, long *out_value)
 {
 	char buf[128];
 	size_t nrd = 0;
@@ -372,7 +370,7 @@ static int sys_readproc_long(const char *procdir,
 	int err;
 
 	memset(buf, 0, sizeof(buf));
-	err = sys_readproc(procdir, filename, buf, sizeof(buf) - 1, 0, &nrd);
+	err = sys_readproc("/proc", pathname, buf, sizeof(buf) - 1, &nrd);
 	if (err) {
 		return err;
 	}
@@ -381,16 +379,12 @@ static int sys_readproc_long(const char *procdir,
 	}
 	errno = 0;
 	*out_value = strtol(buf, &end, 10);
-	err = -errno;
-	if (err) {
-		return err;
-	}
-	return 0;
+	return -errno;
 }
 
-int silofs_proc_pipe_max_size(long *out_value)
+int silofs_proc_get_value(const char *pathname, long *out_value)
 {
-	return sys_readproc_long("/proc/sys/fs", "pipe-max-size", out_value);
+	return sys_readproc_long(pathname, out_value);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

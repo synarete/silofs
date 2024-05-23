@@ -36,6 +36,13 @@ struct silofs_piper {
 	struct silofs_pipe      pipe;
 };
 
+struct silofs_pipe_limits {
+	long pipe_max_size;
+	long pipe_max_pages;
+	long pipe_user_pages_hard;
+	long pipe_user_pages_soft;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_pipe_size_of(size_t pipe_size_want);
@@ -91,5 +98,9 @@ int silofs_piper_dispose(struct silofs_piper *piper);
 int silofs_piper_kcopy(struct silofs_piper *piper, int fd_in, loff_t *off_in,
                        int fd_out, loff_t *off_out, size_t len,
                        unsigned int flags);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_proc_pipe_limits(struct silofs_pipe_limits *pl);
 
 #endif /* SILOFS_PIPE_H_ */

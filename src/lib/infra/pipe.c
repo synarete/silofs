@@ -55,6 +55,7 @@ static long roundup_pow_of_two(long n)
  */
 static long calc_pipe_size_of(long pipe_size_want)
 {
+	struct silofs_pipe_limits pipe_lim = { .pipe_max_size = -1 };
 	long page_size;
 	long pipe_size;
 	long pipe_size_lim;
@@ -66,9 +67,9 @@ static long calc_pipe_size_of(long pipe_size_want)
 	pipe_size_min = 2 * page_size;
 	pipe_size_max = (1L << 21); /* 2M */
 
-	err = silofs_proc_pipe_max_size(&pipe_size_lim);
+	err = silofs_proc_pipe_limits(&pipe_lim);
 	if (!err) {
-		pipe_size_lim = roundup_pow_of_two(pipe_size_lim);
+		pipe_size_lim = roundup_pow_of_two(pipe_lim.pipe_max_size);
 		if (pipe_size_max > pipe_size_lim) {
 			pipe_size_max = pipe_size_lim;
 		}
@@ -512,4 +513,31 @@ int silofs_piper_kcopy(struct silofs_piper *piper, int fd_in, loff_t *off_in,
 {
 	return pipe_kcopy_by_splice(&piper->pipe, fd_in, off_in,
 	                            fd_out, off_out, len, flags);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_proc_pipe_limits(struct silofs_pipe_limits *pl)
+{
+	const long page_size = silofs_sc_page_size();
+	int err;
+
+	err = silofs_proc_get_value("sys/fs/pipe-max-size",
+	                            &pl->pipe_max_size);
+	if (err) {
+		return err;
+	}
+	err = silofs_proc_get_value("sys/fs/pipe-user-pages-hard",
+	                            &pl->pipe_user_pages_hard);
+	if (err) {
+		return err;
+	}
+	err = silofs_proc_get_value("sys/fs/pipe-user-pages-soft",
+	                            &pl->pipe_user_pages_soft);
+	if (err) {
+		return err;
+	}
+	pl->pipe_max_pages = (pl->pipe_max_size / page_size);
+
+	return 0;
 }

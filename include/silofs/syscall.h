@@ -371,11 +371,12 @@ int silofs_sys_munmapp(void **p_addr, size_t length);
 
 int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off);
 
-int silofs_proc_pipe_max_size(long *out_value);
-
 int silofs_sys_pselect_rfd(int fd, const struct timespec *ts);
 
 int silofs_sys_pollin_rfd(int fd, int timeout);
+
+/* procfs */
+int silofs_proc_get_value(const char *pathname, long *out_value);
 
 /* sysconf */
 long silofs_sc_page_size(void);

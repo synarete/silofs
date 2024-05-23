@@ -10,6 +10,7 @@ msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
 run() { echo "$self: $*" >&2; try "$@"; }
+xrun() { echo "$self: $*" >&2; ( "$@" ) || true; }
 
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 dist_name="$1"
@@ -68,6 +69,9 @@ run ./dist/packagize.sh
 # Post-op cleanup
 msg "post-op cleanup: ${workdir}"
 cd "${selfdir}"
+run sleep 1
+xrun killall catatonit # some leftovers on debian
+run sleep 1
 run rm -rf "${workdir}"
 
 ###

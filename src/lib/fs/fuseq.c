@@ -3014,7 +3014,7 @@ static time_t fqw_dif_time_stamp(const struct silofs_fuseq_worker *fqw)
 
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n)
 {
-	const int32_t lim = 100 * (int)(fq->fq_ws.fws_nactive);
+	const int32_t lim = 100 * (int)(fq->fq_nworkers_run);
 
 	if (n > 0) {
 		fq->fq_nexecs = silofs_clamp32(fq->fq_nexecs + n, 1, lim);
@@ -3046,23 +3046,23 @@ static void fqw_track_timedout(struct silofs_fuseq_worker *fqw)
 static void fqw_enq_active_op(struct silofs_fuseq_worker *fqw,
                               struct silofs_task *task)
 {
-	struct silofs_fuseq_workset *fq_ws = &fqw->fw_fq->fq_ws;
+	struct silofs_fuseq *fq = fqw->fw_fq;
 
-	fuseq_lock_op(fqw->fw_fq);
-	listq_push_front(&fq_ws->fws_curropsq, &fqw->fw_lh);
+	fuseq_lock_op(fq);
+	listq_push_front(&fq->fq_curr_opers, &fqw->fw_lh);
 	task->t_interrupt = 0;
-	fuseq_unlock_op(fqw->fw_fq);
+	fuseq_unlock_op(fq);
 }
 
 static void fqw_dec_active_op(struct silofs_fuseq_worker *fqw,
                               struct silofs_task *task)
 {
-	struct silofs_fuseq_workset *fq_ws = &fqw->fw_fq->fq_ws;
+	struct silofs_fuseq *fq = fqw->fw_fq;
 
-	fuseq_lock_op(fqw->fw_fq);
-	listq_remove(&fq_ws->fws_curropsq, &fqw->fw_lh);
+	fuseq_lock_op(fq);
+	listq_remove(&fq->fq_curr_opers, &fqw->fw_lh);
 	task->t_interrupt = 0;
-	fuseq_unlock_op(fqw->fw_fq);
+	fuseq_unlock_op(fq);
 }
 
 static void fqw_interrupt_op(struct silofs_fuseq_worker *fqw, uint64_t unq)
@@ -3360,7 +3360,7 @@ static int fqw_copy_pipe_in(struct silofs_fuseq_worker *fqw)
 
 static bool fuseq_is_active(const struct silofs_fuseq *fq)
 {
-	return (fq->fq_active > 0) || (fq->fq_ws.fws_curropsq.sz > 0);
+	return (fq->fq_active > 0) || (fq->fq_curr_opers.sz > 0);
 }
 
 static bool fqw_cap_splice_in(const struct silofs_fuseq_worker *fqw)
@@ -3534,7 +3534,7 @@ static void rwi_del(struct silofs_fuseq_rw_iter *rwi,
 
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 {
-	const struct silofs_fuseq_worker *fqw = &fq->fq_ws.fws_workers[0];
+	const struct silofs_fuseq_worker *fqw = &fq->fq_workers[0];
 	const size_t inbuf_max = sizeof(*fqw->fw_inb);
 	const size_t outbuf_max = sizeof(*fqw->fw_outb);
 
@@ -3780,7 +3780,8 @@ static int fqw_init(struct silofs_fuseq_worker *fqw,
 	fqw->fw_time_stamp = silofs_time_now();
 	fqw->fw_req_count = 0;
 	fqw->fw_index = idx;
-	fqw->fw_leader = (idx == 0) ? 1 : 0;
+	fqw->fw_leader = (idx == 0);
+	fqw->fw_init_ok = false;
 
 	err = fqw_init_bufs(fqw);
 	if (err) {
@@ -3795,6 +3796,7 @@ static int fqw_init(struct silofs_fuseq_worker *fqw,
 		goto out_err;
 	}
 	fqw_init_piper(fqw);
+	fqw->fw_init_ok = true;
 	return 0;
 out_err:
 	fqw_fini_op_args(fqw);
@@ -3839,53 +3841,42 @@ static void fqw_close_piper(struct silofs_fuseq_worker *fqw)
 	silofs_piper_close(&fqw->fw_piper);
 }
 
+static uint32_t fuseq_calc_nworkers_lim(const struct silofs_fuseq *fq)
+{
+	const size_t nproc_lim = (size_t)silofs_sc_nproc_onln();
+	const size_t nworkers_lim = ARRAY_SIZE(fq->fq_workers);
+
+	return (uint32_t)silofs_clamp(nproc_lim / 2, 1, nworkers_lim);
+}
+
 static void fuseq_init_workers_limit(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
-
-	fws->fws_nlimit = silofs_num_worker_threads();
-	fws->fws_navail = 0;
-	fws->fws_nactive = 0;
+	fq->fq_nworkers_lim = fuseq_calc_nworkers_lim(fq);
+	fq->fq_nworkers_run = 0;
 }
 
 static int fuseq_init_workers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
 	struct silofs_fuseq_worker *fqw = NULL;
-	size_t mem_size;
 	int err;
 
-	listq_init(&fws->fws_curropsq);
-	mem_size = fws->fws_nlimit * sizeof(*fqw);
-	fws->fws_workers = silofs_memalloc(fq->fq_alloc, mem_size, 0);
-	if (fws->fws_workers == NULL) {
-		return -SILOFS_ENOMEM;
-	}
-	for (size_t i = 0; i < fws->fws_nlimit; ++i) {
-		fqw = &fws->fws_workers[i];
-		err = fqw_init(fqw, fq, (uint32_t)i);
+	for (uint32_t i = 0; i < fq->fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_workers[i];
+		err = fqw_init(fqw, fq, i);
 		if (err) {
 			return err;
 		}
-		fws->fws_navail++;
 	}
 	return 0;
 }
 
 static void fuseq_fini_workers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
-	size_t mem_size;
+	struct silofs_fuseq_worker *fqw = NULL;
 
-	if (fws->fws_workers != NULL) {
-		for (size_t i = 0; i < fws->fws_navail; ++i) {
-			fqw_fini(&fws->fws_workers[i]);
-		}
-		mem_size = fws->fws_nlimit * sizeof(*fws->fws_workers);
-		silofs_memfree(fq->fq_alloc, fws->fws_workers, mem_size, 0);
-		fws->fws_workers = NULL;
-		fws->fws_nlimit = 0;
-		listq_fini(&fws->fws_curropsq);
+	for (uint32_t i = 0; i < fq->fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_workers[i];
+		fqw_fini(fqw);
 	}
 }
 
@@ -3902,8 +3893,8 @@ static int fuseq_update_workers(struct silofs_fuseq *fq)
 		return 0;
 	}
 	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
-	for (size_t i = 0; i < fq->fq_ws.fws_navail; ++i) {
-		fqw = &fq->fq_ws.fws_workers[i];
+	for (size_t i = 0; i < fq->fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_workers[i];
 		err = fqw_update_piper(fqw, pipesize);
 		if (err == -EPERM) {
 			goto can_not_splice;
@@ -3919,7 +3910,7 @@ can_not_splice:
 	/* can not have proper pipe size: fallback to buffer-only mode */
 	fuseq_log_dbg("disable splice mode: nworkers=%zu", cnt);
 	for (size_t i = 0; i < cnt; ++i) {
-		fqw = &fq->fq_ws.fws_workers[i];
+		fqw = &fq->fq_workers[i];
 		fqw_close_piper(fqw);
 	}
 	fq->fq_may_splice = false;
@@ -3991,6 +3982,9 @@ static void fuseq_fini_locks(struct silofs_fuseq *fq)
 static void fuseq_init_common(struct silofs_fuseq *fq,
                               struct silofs_alloc *alloc)
 {
+	listq_init(&fq->fq_curr_opers);
+	fq->fq_nworkers_lim = 0;
+	fq->fq_nworkers_run = 0;
 	fq->fq_fsenv = NULL;
 	fq->fq_alloc = alloc;
 	fq->fq_active = 0;
@@ -4045,9 +4039,12 @@ static void fuseq_fini_fuse_fd(struct silofs_fuseq *fq)
 
 void silofs_fuseq_fini(struct silofs_fuseq *fq)
 {
+	silofs_assert_eq(fq->fq_curr_opers.sz, 0);
+
 	fuseq_fini_fuse_fd(fq);
 	fuseq_fini_workers(fq);
 	fuseq_fini_locks(fq);
+	listq_fini(&fq->fq_curr_opers);
 	fq->fq_alloc = NULL;
 	fq->fq_fsenv = NULL;
 }
@@ -4231,7 +4228,7 @@ static int fqw_try_exec_timedout(struct silofs_fuseq_worker *fqw)
 
 static bool fuseq_all_workers_active(const struct silofs_fuseq *fq)
 {
-	return (fq->fq_ws.fws_nactive == fq->fq_ws.fws_navail);
+	return (fq->fq_nworkers_run == fq->fq_nworkers_lim);
 }
 
 static void fuseq_suspend(const struct silofs_fuseq_worker *fqw)
@@ -4367,7 +4364,7 @@ static void fqw_make_thread_name(const struct silofs_fuseq_worker *fqw,
 
 static int fqw_exec_thread(struct silofs_fuseq_worker *fqw)
 {
-	char name[32] = "";
+	char name[40] = "";
 	int err;
 
 	fqw_make_thread_name(fqw, name, sizeof(name) - 1);
@@ -4393,30 +4390,32 @@ static void fuseq_suspend_while_active(const struct silofs_fuseq *fq)
 
 static int fuseq_start_workers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
+	struct silofs_fuseq_worker *fqw = NULL;
 	int err;
 
-	fuseq_log_dbg("start workers: nworkers=%d", fws->fws_navail);
+	fuseq_log_dbg("start workers: total=%zu", fq->fq_nworkers_lim);
 	fq->fq_active = 1;
-	fws->fws_nactive = 0;
-	for (size_t i = 0; i < fws->fws_navail; ++i) {
-		err = fqw_exec_thread(&fws->fws_workers[i]);
+	fq->fq_nworkers_run = 0;
+	for (size_t i = 0; i < fq->fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_workers[i];
+		err = fqw_exec_thread(fqw);
 		if (err) {
 			return err;
 		}
-		fws->fws_nactive++;
+		fq->fq_nworkers_run++;
 	}
 	return 0;
 }
 
 static void fuseq_finish_workers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_workset *fws = &fq->fq_ws;
+	struct silofs_fuseq_worker *fqw = NULL;
 
-	fuseq_log_dbg("finish workers: nworkers=%d", fws->fws_nactive);
+	fuseq_log_dbg("finish workers: total=%zu", fq->fq_nworkers_lim);
 	fq->fq_active = 0;
-	for (size_t i = 0; i < fws->fws_nactive; ++i) {
-		fqw_join_thread(&fws->fws_workers[i]);
+	for (size_t i = 0; i < fq->fq_nworkers_run; ++i) {
+		fqw = &fq->fq_workers[i];
+		fqw_join_thread(fqw);
 	}
 }
 

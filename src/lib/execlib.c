@@ -46,7 +46,7 @@ union silofs_fs_core_u {
 
 union silofs_fuseq_page {
 	struct silofs_fuseq     fuseq;
-	uint8_t page[4096];
+	uint8_t page[SILOFS_PAGE_SIZE_MIN];
 };
 
 struct silofs_fs_ctx_obj {

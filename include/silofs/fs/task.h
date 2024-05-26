@@ -145,8 +145,4 @@ int silofs_submitq_new_sqe(struct silofs_submitq *smq,
 void silofs_submitq_del_sqe(struct silofs_submitq *smq,
                             struct silofs_submitq_ent *sqe);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-uint32_t silofs_num_worker_threads(void);
-
 #endif /* SILOFS_TASK_H_ */

@@ -580,12 +580,3 @@ int silofs_task_submit(struct silofs_task *task, bool all)
 	return ret;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-uint32_t silofs_num_worker_threads(void)
-{
-	const long npr = silofs_sc_nproc_onln();
-	const long nth = silofs_clamp32((int)npr, 2, 8);
-
-	return (uint32_t)nth;
-}

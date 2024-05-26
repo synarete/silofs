@@ -49,30 +49,26 @@ struct silofs_fuseq_worker {
 	time_t                          fw_time_stamp;
 	volatile uint64_t               fw_req_count;
 	uint32_t                        fw_index;
-	int                             fw_leader;
+	bool                            fw_leader;
+	bool                            fw_init_ok;
 } silofs_aligned64;
 
-struct silofs_fuseq_workset {
-	struct silofs_fuseq_worker     *fws_workers;
-	struct silofs_listq             fws_curropsq;
-	unsigned int                    fws_nlimit;
-	unsigned int                    fws_navail;
-	unsigned int                    fws_nactive;
-};
-
 struct silofs_fuseq {
-	struct silofs_fuseq_workset     fq_ws;
+	struct silofs_fuseq_worker      fq_workers[4];
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
 	struct silofs_mutex             fq_ctl_lock;
 	struct silofs_fsenv            *fq_fsenv;
 	struct silofs_alloc            *fq_alloc;
+	struct silofs_listq             fq_curr_opers;
 	size_t                          fq_nopers;
 	size_t                          fq_nopers_done;
 	size_t                          fq_ntimedout;
 	uid_t                           fq_fs_owner;
 	int32_t                         fq_nexecs;
+	uint32_t                        fq_nworkers_lim;
+	uint32_t                        fq_nworkers_run;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

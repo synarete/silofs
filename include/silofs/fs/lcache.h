@@ -34,7 +34,6 @@ struct silofs_lcache {
 	struct silofs_dirtyqs   lc_dirtyqs;
 	struct silofs_spamaps   lc_spamaps;
 	struct silofs_uamap     lc_uamap;
-	volatile size_t         lc_nidle;
 };
 
 

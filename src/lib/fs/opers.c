@@ -48,7 +48,6 @@ static int op_start(struct silofs_task *task)
 	silofs_task_lock_fs(task);
 	fsenv->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
 	fsenv->fse_op_stat.op_count++;
-	fsenv->fse.lcache->lc_nidle = 0;
 	return 0;
 }
 
@@ -65,14 +64,11 @@ static int op_xstart(struct silofs_task *task)
 
 static int op_zstart(struct silofs_task *task, int flags)
 {
-	struct silofs_lcache *lcache = task_lcache(task);
-	const size_t nidle = lcache->lc_nidle;
-	const int idle_mode = (flags & SILOFS_F_IDLE) > 0;
 	int err;
 
 	err = op_start(task);
-	if (!err && idle_mode) {
-		lcache->lc_nidle = nidle + 1;
+	if (!err && (flags & SILOFS_F_IDLE)) {
+		relax_caches(task, flags | SILOFS_F_OPSTART);
 	}
 	return err;
 }

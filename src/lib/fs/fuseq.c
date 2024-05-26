@@ -3201,13 +3201,13 @@ static int fqw_check_pipe_pre(const struct silofs_fuseq_worker *fqw)
 	const struct silofs_pipe *pipe = &fqw->fw_piper.pipe;
 	const size_t buffsize = fqw->fw_fq->fq_coni.buffsize;
 
-	if (unlikely(buffsize < pipe->size)) {
-		fuseq_log_err("pipe-fuse mismatch: pipesize=%lu buffsize=%lu ",
+	if (unlikely((int)buffsize < pipe->size)) {
+		fuseq_log_err("pipe-fuse mismatch: pipesize=%d buffsize=%zu ",
 		              pipe->size, buffsize);
 		return -SILOFS_EIO;
 	}
 	if (unlikely(pipe->pend != 0)) {
-		fuseq_log_err("pipe not empty: pend=%lu fuse_fd=%d",
+		fuseq_log_err("pipe not empty: pend=%d fuse_fd=%d",
 		              pipe->pend, fqw->fw_fq->fq_fuse_fd);
 		return -SILOFS_EIO;
 	}
@@ -3288,14 +3288,14 @@ static int fqw_copy_from_pipe_in(struct silofs_fuseq_worker *fqw,
 {
 	struct silofs_fuseq_in *in = fqw_in_of(fqw);
 	struct silofs_pipe *pipe = &fqw->fw_piper.pipe;
-	const size_t pre = pipe->pend;
+	const int pre = pipe->pend;
 	int err;
 
 	err = silofs_pipe_copy_to_buf(pipe, tail_of(in, head_sz), cnt);
 	if (unlikely(err)) {
 		return err;
 	}
-	*out_ncp = pre - pipe->pend;
+	*out_ncp = (size_t)(pre - pipe->pend);
 	return 0;
 }
 
@@ -3328,7 +3328,7 @@ static int fqw_copy_pipe_in(struct silofs_fuseq_worker *fqw)
 {
 	struct silofs_fuseq_in *in = fqw_in_of(fqw);
 	struct silofs_fuseq_hdr_in *hdr_in = &in->u.hdr;
-	const size_t nsp = fqw->fw_piper.pipe.pend;
+	const size_t nsp = (size_t)(fqw->fw_piper.pipe.pend);
 	const size_t cnt = min(sizeof(in->u.write), nsp);
 	size_t ncp1 = 0;
 	size_t ncp2 = 0;

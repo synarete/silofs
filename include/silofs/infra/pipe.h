@@ -23,8 +23,8 @@ struct iovec;
 
 struct silofs_pipe {
 	int fd[2];
-	size_t size;
-	size_t pend;
+	int size;
+	int pend;
 };
 
 struct silofs_nilfd {

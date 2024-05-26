@@ -149,12 +149,12 @@ int silofs_pipe_open(struct silofs_pipe *pipe)
 		return err;
 	}
 	if (pipesz < pagesz) {
-		silofs_log_warn("illegal pipe-size: pipesz=%d pagesz=%lu",
+		silofs_log_warn("illegal pipe-size: pipesz=%d pagesz=%zu",
 		                pipesz, pagesz);
 		silofs_pipe_close(pipe);
 		return -EINVAL;
 	}
-	pipe->size = (size_t)pipesz;
+	pipe->size = pipesz;
 	return 0;
 }
 
@@ -164,14 +164,14 @@ static int pipe_setsize(struct silofs_pipe *pipe, size_t size_want)
 	int err;
 
 	size_set = silofs_pipe_size_of(size_want);
-	if (size_set == pipe->size) {
+	if ((int)size_set == pipe->size) {
 		return 0; /* no-op */
 	}
 	err = silofs_sys_fcntl_setpipesz(pipe->fd[0], (int)size_set);
 	if (err) {
 		return err;
 	}
-	pipe->size = size_set;
+	pipe->size = (int)size_set;
 	return 0;
 }
 
@@ -217,12 +217,12 @@ void silofs_pipe_fini(struct silofs_pipe *pipe)
 {
 	silofs_pipe_close(pipe);
 	pipe->size = 0;
-	pipe->pend = 0;
+	pipe->pend = -1;
 }
 
 static size_t pipe_avail(const struct silofs_pipe *pipe)
 {
-	return (pipe->size - pipe->pend);
+	return (size_t)(pipe->size - pipe->pend);
 }
 
 int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
@@ -230,7 +230,8 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
 {
 	size_t cnt;
 	size_t nsp = 0;
-	const loff_t off_in = off ? *off : 0;
+	loff_t off_in = (off != NULL) ? *off : 0;
+	const int fd_in = pipe->fd[1];
 	int err;
 
 	if (!pipe_isopen(pipe)) {
@@ -238,20 +239,20 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
 	}
 
 	cnt = silofs_min(pipe_avail(pipe), len);
-	err = silofs_sys_splice(fd, off, pipe->fd[1], NULL, cnt, flags, &nsp);
+	err = silofs_sys_splice(fd, &off_in, fd_in, NULL, cnt, flags, &nsp);
 	if (err) {
 		silofs_log_warn("splice-error: fd_in=%d off_in=%ld "\
-		                "fd_out=%d cnt=%lu flags=%u err=%d",
-		                fd, off_in, pipe->fd[1], cnt, flags, err);
+		                "fd_out=%d cnt=%zu flags=%u err=%d",
+		                fd, off_in, fd_in, cnt, flags, err);
 		return err;
 	}
 	if (nsp > cnt) {
 		silofs_log_error("bad-splice: fd_in=%d off_in=%ld fd_out=%d "\
-		                 "cnt=%lu flags=%u nsp=%lu", fd, off_in,
-		                 pipe->fd[1], cnt, flags, nsp);
+		                 "cnt=%zu flags=%u nsp=%zu", fd, off_in,
+		                 fd_in, cnt, flags, nsp);
 		return -SILOFS_EIO;
 	}
-	pipe->pend += nsp;
+	pipe->pend += (int)nsp;
 	return 0;
 }
 
@@ -261,6 +262,7 @@ int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
 {
 	size_t cnt;
 	size_t nsp = 0;
+	const int fd = pipe->fd[1];
 	int err;
 
 	if (!pipe_isopen(pipe)) {
@@ -268,23 +270,23 @@ int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
 	}
 
 	cnt = iov_count_ceil(iov, niov, pipe_avail(pipe));
-	err = silofs_sys_vmsplice(pipe->fd[1], iov, cnt, flags, &nsp);
+	err = silofs_sys_vmsplice(fd, iov, cnt, flags, &nsp);
 	if (err) {
-		silofs_log_warn("vmsplice-error: fd=%d cnt=%lu "\
-		                "flags=%u err=%d",
-		                pipe->fd[1], cnt, flags, err);
+		silofs_log_warn("vmsplice-error: fd=%d cnt=%zu "\
+		                "flags=%u err=%d", fd, cnt, flags, err);
 		return err;
 	}
-	pipe->pend += nsp;
+	pipe->pend += (int)nsp;
 	return 0;
 }
 
 int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd,
                              loff_t *off, size_t len, unsigned int flags)
 {
-	const loff_t off_out = off ? *off : 0;
+	loff_t off_out = (off != NULL) ? *off : 0;
 	size_t cnt = 0;
 	size_t nsp = 0;
+	const int fd_in = pipe->fd[0];
 	int nonblock_err;
 	int err;
 
@@ -292,26 +294,26 @@ int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd,
 		return -SILOFS_EBADF;
 	}
 
-	cnt = silofs_min(pipe->pend, len);
-	err = silofs_sys_splice(pipe->fd[0], NULL, fd, off, cnt, flags, &nsp);
+	cnt = silofs_min((size_t)pipe->pend, len);
+	err = silofs_sys_splice(fd_in, NULL, fd, &off_out, cnt, flags, &nsp);
 	nonblock_err = (err == -EAGAIN) && ((flags & SPLICE_F_NONBLOCK) > 0);
 	if (nonblock_err) {
 		silofs_log_debug("partial-splice: fd_in=%d fd_out=%d "\
 		                 "off_out=%ld cnt=%zu flags=%u nsp=%zu",
-		                 pipe->fd[0], fd, off_out, cnt, flags, nsp);
+		                 fd_in, fd, off_out, cnt, flags, nsp);
 	} else if (err) {
 		silofs_log_error("splice-error: fd_in=%d fd_out=%d "\
 		                 "off_out=%ld cnt=%zu flags=%u err=%d",
-		                 pipe->fd[0], fd, off_out, cnt, flags, err);
+		                 fd_in, fd, off_out, cnt, flags, err);
 		return err;
 	}
-	if (nsp > pipe->pend) {
+	if ((int)nsp > pipe->pend) {
 		silofs_log_error("bad-splice: fd_in=%d fd_out=%d off_out=%ld"\
-		                 "cnt=%lu flags=%u nsp=%lu",
+		                 "cnt=%zu flags=%u nsp=%zu",
 		                 pipe->fd[0], fd, off_out, cnt, flags, nsp);
 		return -SILOFS_EIO;
 	}
-	pipe->pend -= nsp;
+	pipe->pend -= (int)nsp;
 	return err; /* OK or -EAGAIN if SPLICE_F_NONBLOCK */
 }
 
@@ -322,78 +324,80 @@ int silofs_pipe_vmsplice_to_iov(struct silofs_pipe *pipe,
 	size_t len;
 	size_t cnt;
 	size_t nsp = 0;
+	const int fd = pipe->fd[0];
 	int err;
 
 	if (!pipe_isopen(pipe)) {
 		return -SILOFS_EBADF;
 	}
 
-	cnt = iov_count_ceil(iov, niov, pipe->pend);
+	cnt = iov_count_ceil(iov, niov, (size_t)(pipe->pend));
 	len = iov_length(iov, cnt);
-	err = silofs_sys_vmsplice(pipe->fd[0], iov, cnt, flags, &nsp);
+	err = silofs_sys_vmsplice(fd, iov, cnt, flags, &nsp);
 	if (err) {
-		silofs_log_error("vmsplice-error: fd=%d cnt=%lu "
+		silofs_log_error("vmsplice-error: fd=%d cnt=%zu "
 		                 "flags=%u err=%d", pipe->fd[1],
 		                 cnt, flags, err);
 		return err;
 	}
-	if ((nsp != len) || (nsp > pipe->pend)) {
-		silofs_log_error("bad-vmsplice: fd=%d cnt=%lu "
-		                 "flags=%u nsp=%lu", pipe->fd[1],
-		                 cnt, flags, nsp);
+	if ((nsp != len) || ((int)nsp > pipe->pend)) {
+		silofs_log_error("bad-vmsplice: fd=%d cnt=%zu "
+		                 "flags=%u nsp=%zu", fd, cnt, flags, nsp);
 		return -SILOFS_EIO;
 	}
-	pipe->pend -= nsp;
+	pipe->pend -= (int)nsp;
 	return 0;
 }
 
 int silofs_pipe_copy_to_buf(struct silofs_pipe *pipe, void *buf, size_t len)
 {
 	size_t cnt;
+	const int fd = pipe->fd[0];
 	int err;
 
 	if (!pipe_isopen(pipe)) {
 		return -SILOFS_EBADF;
 	}
 
-	cnt = silofs_min(pipe->pend, len);
+	cnt = silofs_min((size_t)pipe->pend, len);
 	err = silofs_sys_readn(pipe->fd[0], buf, cnt);
 	if (err) {
-		silofs_log_error("readn-from-pipe: fd=%ld cnt=%lu err=%d",
-		                 pipe->fd[0], cnt, err);
+		silofs_log_error("readn-from-pipe: fd=%d cnt=%zu err=%d",
+		                 fd, cnt, err);
 		return err;
 	}
-	pipe->pend -= cnt;
+	pipe->pend -= (int)cnt;
 	return 0;
 }
 
 int silofs_pipe_append_from_buf(struct silofs_pipe *pipe,
                                 const void *buf, size_t len)
 {
-	size_t cnt;
+	size_t cnt = 0;
+	const int fd = pipe->fd[1];
 	int err;
 
 	if (!pipe_isopen(pipe)) {
 		return -SILOFS_EBADF;
 	}
 
-	cnt = silofs_min(pipe->size, len);
-	err = silofs_sys_writen(pipe->fd[1], buf, cnt);
+	cnt = silofs_min((size_t)pipe->size, len);
+	err = silofs_sys_writen(fd, buf, cnt);
 	if (err) {
-		silofs_log_error("writen-to-pipe: fd=%ld cnt=%lu err=%d",
-		                 pipe->fd[1], cnt, err);
+		silofs_log_error("writen-to-pipe: fd=%d cnt=%zu err=%d",
+		                 fd, cnt, err);
 		return err;
 	}
-	pipe->pend += cnt;
+	pipe->pend += (int)cnt;
 	return 0;
 }
 
 int silofs_pipe_flush_to_fd(struct silofs_pipe *pipe,
                             int fd, unsigned int flags)
 {
-	const size_t len = pipe->pend;
-
-	return len ? silofs_pipe_splice_to_fd(pipe, fd, NULL, len, flags) : 0;
+	return (pipe->pend > 0) ?
+	       silofs_pipe_splice_to_fd(pipe, fd, NULL,
+	                                (size_t)pipe->pend, flags) : 0;
 }
 
 int silofs_pipe_dispose(struct silofs_pipe *pipe,
@@ -496,7 +500,7 @@ int silofs_piper_try_grow(struct silofs_piper *piper, size_t sz)
 {
 	int ret = 0;
 
-	if (sz != piper->pipe.size) {
+	if ((int)sz != piper->pipe.size) {
 		ret = pipe_try_grow(&piper->pipe, sz);
 	}
 	return ret;

@@ -1,1 +1,1 @@
-SUBDIRS = lib cmd mntd tests
+SUBDIRS = cmd mntd tests

@@ -74,17 +74,21 @@
 #define FUSEQ_COPY_FILE_RANGE_MAX       (SILOFS_GIGA * 2)
 
 /* local functions */
+static void fqd_interrupt_op(struct silofs_fuseq_dispatcher *fqd, uint64_t uq);
 static void fuseq_lock_ch(struct silofs_fuseq *fq);
 static void fuseq_unlock_ch(struct silofs_fuseq *fq);
 static void fuseq_lock_op(struct silofs_fuseq *fq);
 static void fuseq_unlock_op(struct silofs_fuseq *fq);
 static void fuseq_lock_ctl(struct silofs_fuseq *fq);
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq);
-static void fqd_interrupt_op(struct silofs_fuseq_dispatcher *fqd, uint64_t uq);
-static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq);
-
 static int exec_op(struct silofs_task *task, struct silofs_oper_args *args);
 static const struct silofs_fuseq_cmd_desc *cmd_desc_of(unsigned int opc);
+
+static int fuseq_create_thread(const struct silofs_fuseq *fq,
+                               const struct silofs_strbuf *name,
+                               struct silofs_thread *th, silofs_execute_fn fn);
+static int fuseq_block_thread_signals(const struct silofs_fuseq *fq,
+                                      const struct silofs_thread *th);
 
 /* FUSE types per 7.34 */
 struct fuse_setxattr1_in {
@@ -3880,7 +3884,12 @@ static bool fqd_allowed_exec(const struct silofs_fuseq_dispatcher *fqd)
 	return true;
 }
 
-static const char *fqd_name(const struct silofs_fuseq_dispatcher *fqd)
+static struct silofs_fuseq_dispatcher *fqd_from_th(struct silofs_thread *th)
+{
+	return container_of(th, struct silofs_fuseq_dispatcher, fqd_th);
+}
+
+static const char *fqd_thread_name(const struct silofs_fuseq_dispatcher *fqd)
 {
 	return fqd->fqd_th.name;
 }
@@ -3889,7 +3898,7 @@ static void fqd_deactivate_fuseq(struct silofs_fuseq_dispatcher *fqd)
 {
 	if (fqd->fqd_fq->fq_active) {
 		fqd->fqd_fq->fq_active = 0;
-		fuseq_log_info("deactivate fuseq: worker=%s", fqd_name(fqd));
+		fuseq_log_info("deactivate fuseq: %s", fqd_thread_name(fqd));
 	}
 }
 
@@ -3917,7 +3926,7 @@ static int fqd_post_exec_once(struct silofs_fuseq_dispatcher *fqd, int status)
 		return err;
 	}
 	/* abnormal failure */
-	fuseq_log_err("abnormal error: err=%d worker=%s", err, fqd_name(fqd));
+	fuseq_log_err("abnormal error: %s err=%d", fqd_thread_name(fqd), err);
 	return err;
 }
 
@@ -3945,20 +3954,14 @@ static int fqd_exec_once(struct silofs_fuseq_dispatcher *fqd)
 
 static int fqd_exec_loop(struct silofs_fuseq_dispatcher *fqd)
 {
-	int err;
+	int err = 0;
 
-	while (fuseq_is_active(fqd->fqd_fq)) {
+	while (fuseq_is_active(fqd->fqd_fq) && !err) {
 		err = fqd_exec_once(fqd);
-		if (err) {
-			return err;
-		}
 	}
-	return 0;
-}
-
-static struct silofs_fuseq_dispatcher *fqd_from_th(struct silofs_thread *th)
-{
-	return container_of(th, struct silofs_fuseq_dispatcher, fqd_th);
+	fuseq_log_info("dispatch exec-loop done: name=%s status=%d",
+	               fqd_thread_name(fqd), err);
+	return err;
 }
 
 static int fqd_start(struct silofs_thread *th)
@@ -3966,47 +3969,109 @@ static int fqd_start(struct silofs_thread *th)
 	struct silofs_fuseq_dispatcher *fqd = fqd_from_th(th);
 	int err;
 
-	fuseq_log_info("start worker: %s", th->name);
-	err = silofs_thread_sigblock_common();
-	if (err) {
-		fuseq_log_warn("unable to block signals: "\
-		               "%s err=%d", th->name, err);
-		goto out;
+	fuseq_log_info("start: %s", th->name);
+	err = fuseq_block_thread_signals(fqd->fqd_fq, th);
+	if (!err) {
+		err = fqd_exec_loop(fqd);
 	}
-	err = fqd_exec_loop(fqd);
-	if (err) {
-		fuseq_log_info("exec-loop completed: %s err=%d",
-		               th->name, err);
-		goto out;
-	}
-out:
-	fuseq_log_info("finish worker: %s", th->name);
+	fuseq_log_info("finish: %s", th->name);
 	return err;
 }
 
 static void fqd_make_thread_name(const struct silofs_fuseq_dispatcher *fqd,
-                                 char *name_buf, size_t name_bsz)
+                                 struct silofs_strbuf *name)
 {
-	snprintf(name_buf, name_bsz, "silofs-disptch%u", fqd->fqd_index + 1);
+	silofs_strbuf_reset(name);
+	silofs_strbuf_sprintf(name, "silofs-disptch%u", fqd->fqd_index + 1);
 }
 
 static int fqd_exec_thread(struct silofs_fuseq_dispatcher *fqd)
 {
-	char name[40] = "";
-	int err;
+	struct silofs_strbuf name;
 
-	fqd_make_thread_name(fqd, name, sizeof(name) - 1);
-	err = silofs_thread_create(&fqd->fqd_th, fqd_start, NULL, name);
-	if (err) {
-		fuseq_log_err("failed to create fuse worker: "\
-		              "%s err=%d", name, err);
-	}
-	return err;
+	fqd_make_thread_name(fqd, &name);
+	return fuseq_create_thread(fqd->fqd_fq, &name,
+	                           &fqd->fqd_th, fqd_start);
 }
 
 static int fqd_join_thread(struct silofs_fuseq_dispatcher *fqd)
 {
 	return silofs_thread_join(&fqd->fqd_th);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int fqw_init(struct silofs_fuseq_worker *fqw,
+                    struct silofs_fuseq *fq, uint32_t idx)
+{
+	STATICASSERT_LE(sizeof(*fqw), 256);
+
+	silofs_memzero(fqw, sizeof(*fqw));
+	fqw->fqw_fq = fq;
+	fqw->fqw_index = idx;
+	return 0;
+}
+
+static void fqw_fini(struct silofs_fuseq_worker *fqw)
+{
+	fqw->fqw_fq  = NULL;
+}
+
+static struct silofs_fuseq_worker *fqw_from_th(struct silofs_thread *th)
+{
+	return container_of(th, struct silofs_fuseq_worker, fqw_th);
+}
+
+static const char *fqw_thread_name(const struct silofs_fuseq_worker *fqw)
+{
+	return fqw->fqw_th.name;
+}
+
+static int fqw_exec_loop(struct silofs_fuseq_worker *fqw)
+{
+	int err = 0;
+
+	while (fuseq_is_active(fqw->fqw_fq) && !err) {
+		sleep(1);
+	}
+	fuseq_log_info("worker exec-loop done: name=%s status=%d",
+	               fqw_thread_name(fqw), err);
+	return err;
+}
+
+static int fqw_start(struct silofs_thread *th)
+{
+	struct silofs_fuseq_worker *fqw = fqw_from_th(th);
+	int err;
+
+	fuseq_log_info("start: %s", th->name);
+	err = fuseq_block_thread_signals(fqw->fqw_fq, th);
+	if (!err) {
+		err = fqw_exec_loop(fqw);
+	}
+	fuseq_log_info("finish: %s", th->name);
+	return err;
+}
+
+static void fqw_make_thread_name(const struct silofs_fuseq_worker *fqw,
+                                 struct silofs_strbuf *name)
+{
+	silofs_strbuf_reset(name);
+	silofs_strbuf_sprintf(name, "silofs-worker%u", fqw->fqw_index + 1);
+}
+
+static int fqw_exec_thread(struct silofs_fuseq_worker *fqw)
+{
+	struct silofs_strbuf name;
+
+	fqw_make_thread_name(fqw, &name);
+	return fuseq_create_thread(fqw->fqw_fq, &name,
+	                           &fqw->fqw_th, fqw_start);
+}
+
+static int fqw_join_thread(struct silofs_fuseq_worker *fqw)
+{
+	return silofs_thread_join(&fqw->fqw_th);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4046,7 +4111,7 @@ static void fuseq_unlock_ctl(struct silofs_fuseq *fq)
 static void fuseq_init_thread_limits(struct silofs_fuseq *fq)
 {
 	const size_t nproc_lim = (size_t)silofs_sc_nproc_onln();
-	const size_t nworkers_lim = ARRAY_SIZE(fq->fq_workers);
+	const size_t nworkers_lim = ARRAY_SIZE(fq->fq_worker);
 	const size_t ndisptch_lim = ARRAY_SIZE(fq->fq_disptch);
 
 	STATICASSERT_GE(ARRAY_SIZE(fq->fq_disptch), 2);
@@ -4153,6 +4218,31 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_may_splice = true;
 	fq->fq_fs_owner = (uid_t)(-1);
 	fq->fq_nexecs = 0;
+}
+
+static int fuseq_init_workers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_worker *fqw = NULL;
+	int err;
+
+	for (uint32_t i = 0; i < fq->fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_worker[i];
+		err = fqw_init(fqw, fq, i);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+static void fuseq_fini_workers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_worker *fqw = NULL;
+
+	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
+		fqw = &fq->fq_worker[i];
+		fqw_fini(fqw);
+	}
 }
 
 static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
@@ -4313,17 +4403,21 @@ int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
 
 	err = fuseq_init_locks(fq);
 	if (err) {
-		goto out;
+		return err;
+	}
+	err = fuseq_init_workers(fq);
+	if (err) {
+		goto out_err;
 	}
 	err = fuseq_init_dispatchers(fq);
 	if (err) {
-		goto out;
+		goto out_err;
 	}
-out:
-	if (err) {
-		fuseq_fini_dispatchers(fq);
-		fuseq_fini_locks(fq);
-	}
+	return 0;
+out_err:
+	fuseq_fini_dispatchers(fq);
+	fuseq_fini_workers(fq);
+	fuseq_fini_locks(fq);
 	return err;
 }
 
@@ -4426,13 +4520,41 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int fuseq_start_workers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_worker *fqw = NULL;
+	int err;
+
+	fuseq_log_dbg("start workers: lim=%zu", fq->fq_nworkers_lim);
+	fq->fq_nworkers_run = 0;
+	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
+		fqw = &fq->fq_worker[i];
+		err = fqw_exec_thread(fqw);
+		if (err) {
+			return err;
+		}
+		fq->fq_nworkers_run++;
+	}
+	return 0;
+}
+
+static void fuseq_finish_workers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_worker *fqw = NULL;
+
+	fuseq_log_dbg("finish workers: run=%zu", fq->fq_nworkers_run);
+	for (size_t i = 0; i < fq->fq_nworkers_run; ++i) {
+		fqw = &fq->fq_worker[i];
+		fqw_join_thread(fqw);
+	}
+}
+
 static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_dispatcher *fqd = NULL;
 	int err;
 
 	fuseq_log_dbg("start dispatchers: lim=%zu", fq->fq_ndisptch_lim);
-	fq->fq_active = 1;
 	fq->fq_ndisptch_run = 0;
 	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
 		fqd = &fq->fq_disptch[i];
@@ -4450,11 +4572,33 @@ static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_dispatcher *fqd = NULL;
 
 	fuseq_log_dbg("finish dispatchers: run=%zu", fq->fq_ndisptch_run);
-	fq->fq_active = 0;
 	for (size_t i = 0; i < fq->fq_ndisptch_run; ++i) {
 		fqd = &fq->fq_disptch[i];
 		fqd_join_thread(fqd);
 	}
+}
+
+static int fuseq_start_exec_threads(struct silofs_fuseq *fq)
+{
+	int err;
+
+	fq->fq_active = 1;
+	err = fuseq_start_workers(fq);
+	if (err) {
+		return err;
+	}
+	err = fuseq_start_dispatchers(fq);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static void fuseq_finish_exec_threads(struct silofs_fuseq *fq)
+{
+	fq->fq_active = 0;
+	fuseq_finish_dispatchers(fq);
+	fuseq_finish_workers(fq);
 }
 
 static void fuseq_suspend_while_active(const struct silofs_fuseq *fq)
@@ -4468,11 +4612,11 @@ int silofs_fuseq_exec(struct silofs_fuseq *fq)
 {
 	int err;
 
-	err = fuseq_start_dispatchers(fq);
+	err = fuseq_start_exec_threads(fq);
 	if (!err) {
 		fuseq_suspend_while_active(fq);
 	}
-	fuseq_finish_dispatchers(fq);
+	fuseq_finish_exec_threads(fq);
 	return err;
 }
 
@@ -4480,6 +4624,37 @@ void silofs_fuseq_term(struct silofs_fuseq *fq)
 {
 	fuseq_fini_fuse_fd(fq);
 	fq->fq_fsenv = NULL;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int fuseq_create_thread(const struct silofs_fuseq *fq,
+                               const struct silofs_strbuf *name,
+                               struct silofs_thread *th, silofs_execute_fn fn)
+{
+	int err;
+
+	silofs_unused(fq);
+	err = silofs_thread_create(th, fn, NULL, name->str);
+	if (err) {
+		fuseq_log_err("failed to create thread: name=%s err=%d",
+		              name->str, err);
+	}
+	return err;
+}
+
+static int fuseq_block_thread_signals(const struct silofs_fuseq *fq,
+                                      const struct silofs_thread *th)
+{
+	int err;
+
+	silofs_unused(fq);
+	err = silofs_thread_sigblock_common();
+	if (err) {
+		fuseq_log_warn("unable to block thread signals: "\
+		               "name=%s err=%d", th->name, err);
+	}
+	return err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

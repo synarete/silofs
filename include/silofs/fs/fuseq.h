@@ -39,8 +39,8 @@ struct silofs_fuseq_conn_info {
 
 struct silofs_fuseq_worker {
 	struct silofs_thread            fqw_th;
-	struct silofs_list_head         fqw_lh;
 	struct silofs_fuseq            *fqw_fq;
+	uint32_t                        fqw_index;
 } silofs_aligned64;
 
 struct silofs_fuseq_dispatcher {
@@ -60,7 +60,7 @@ struct silofs_fuseq_dispatcher {
 } silofs_aligned64;
 
 struct silofs_fuseq {
-	struct silofs_fuseq_worker      fq_workers[4];
+	struct silofs_fuseq_worker      fq_worker[4];
 	struct silofs_fuseq_dispatcher  fq_disptch[4];
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;

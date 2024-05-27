@@ -1681,6 +1681,11 @@ static bool fuseq_cap_splice(const struct silofs_fuseq *fq)
 	       fuseq_has_cap(fq, FUSE_SPLICE_WRITE);
 }
 
+static bool fuseq_all_workers_active(const struct silofs_fuseq *fq)
+{
+	return (fq->fq_ndisptch_run == fq->fq_ndisptch_lim);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int do_exec_op(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -2761,8 +2766,8 @@ out:
 	return fqd_reply_ioctl(fcc->fqd, fcc->task, 0, NULL, 0, err);
 }
 
-static int fuseq_check_ioctl_flags(struct silofs_fuseq_dispatcher *fqd,
-                                   const struct silofs_fuseq_in *in)
+static int fqd_check_ioctl_flags(struct silofs_fuseq_dispatcher *fqd,
+                                 const struct silofs_fuseq_in *in)
 {
 	const int flags = (int)(in->u.ioctl.arg.flags);
 
@@ -2776,8 +2781,8 @@ static int fuseq_check_ioctl_flags(struct silofs_fuseq_dispatcher *fqd,
 	return 0;
 }
 
-static int fuseq_check_ioctl_in_size(const struct silofs_fuseq_dispatcher *fqd,
-                                     const struct silofs_fuseq_in *in)
+static int fqd_check_ioctl_in_size(const struct silofs_fuseq_dispatcher *fqd,
+                                   const struct silofs_fuseq_in *in)
 {
 	const size_t in_size = in->u.ioctl.arg.in_size;
 	const size_t bsz_max = fqd->fqd_fq->fq_coni.buffsize;
@@ -2791,12 +2796,12 @@ static int do_ioctl(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 	int ret;
 
-	err = fuseq_check_ioctl_flags(fcc->fqd, fcc->in);
+	err = fqd_check_ioctl_flags(fcc->fqd, fcc->in);
 	if (err) {
 		ret = fqd_reply_err(fcc->fqd, fcc->task, err);
 		goto out;
 	}
-	err = fuseq_check_ioctl_in_size(fcc->fqd, fcc->in);
+	err = fqd_check_ioctl_in_size(fcc->fqd, fcc->in);
 	if (err) {
 		ret = fqd_reply_err(fcc->fqd, fcc->task, err);
 		goto out;
@@ -3015,7 +3020,7 @@ static time_t fqd_dif_time_stamp(const struct silofs_fuseq_dispatcher *fqd)
 
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n)
 {
-	const int32_t lim = 100 * (int)(fq->fq_ndispatchers_run);
+	const int32_t lim = 100 * (int)(fq->fq_ndisptch_run);
 
 	if (n > 0) {
 		fq->fq_nexecs = silofs_clamp32(fq->fq_nexecs + n, 1, lim);
@@ -3535,128 +3540,6 @@ static void rwi_del(struct silofs_fuseq_rw_iter *rwi,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
-{
-	const struct silofs_fuseq_dispatcher *fqd = &fq->fq_dispatchers[0];
-	const size_t inbuf_max = sizeof(*fqd->fqd_inb);
-	const size_t outbuf_max = sizeof(*fqd->fqd_outb);
-
-	unused(fqd); /* make clangscan happy */
-	return max(inbuf_max, outbuf_max);
-}
-
-static int fuseq_resolve_bufsize(const struct silofs_fuseq *fq,
-                                 size_t *out_bufsize)
-{
-	const struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	const size_t page_size = coni->pagesize;
-	size_t bufsize_min;
-	size_t bufsize_max;
-	size_t bufsize_may;
-	size_t bufsize;
-
-	STATICASSERT_GE(FUSE_MIN_READ_BUFFER, 2 * FUSE_BUFFER_HEADER_SIZE);
-
-	bufsize_min = min(FUSE_MIN_READ_BUFFER, 2 * SILOFS_LBK_SIZE);
-	bufsize_max = fuseq_bufsize_max(fq);
-	if (fq->fq_may_splice) {
-		bufsize_may = silofs_pipe_size_of(bufsize_max);
-	} else {
-		bufsize_may = bufsize_max;
-	}
-	bufsize = (min(bufsize_may, bufsize_max) / page_size) * page_size;
-	if ((bufsize < bufsize_min)  || (bufsize > bufsize_max)) {
-		fuseq_log_err("can not creat channel: bufsize=%zu "
-		              "bufsize_max=%zu bufsize_min=%zu ",
-		              bufsize, bufsize_max, bufsize_min);
-		return -SILOFS_EPROTO;
-	}
-	fuseq_log_dbg("channel params: bufsize=%zu bufsize_max=%zu "
-	              "bufsize_min=%zu ", bufsize, bufsize_max, bufsize_min);
-	*out_bufsize = bufsize;
-	return 0;
-}
-
-/*
- * From Linux kerenl fs/fuse/dec.c:
- *
- *     Require sane minimum read buffer - that has capacity for fixed part
- *     of any request header + negotiated max_write room for data...
- */
-static int fuseq_calc_max_write(const struct silofs_fuseq *fq,
-                                size_t bufsize, size_t *out_max_write)
-{
-	const size_t page_size = fq->fq_coni.pagesize;
-	const size_t hdr_size = sizeof(struct fuse_in_header);
-	const size_t write_in_size = sizeof(struct fuse_write_in);
-	size_t data_size;
-	size_t max_write;
-
-	if (bufsize < (hdr_size + write_in_size + page_size)) {
-		fuseq_log_err("short buffer: bufsize=%zu hdr_size=%zu "
-		              "write_in_size=%zu ",
-		              bufsize, hdr_size, write_in_size);
-		return -SILOFS_EPROTO;
-	}
-	data_size = bufsize - hdr_size - write_in_size;
-	max_write = (data_size / page_size) * page_size;
-	if (max_write < max(2 * page_size, FUSE_MIN_READ_BUFFER)) {
-		fuseq_log_err("short buffer: data_size=%zu max_write=%zu ",
-		              data_size, max_write);
-		return -SILOFS_EPROTO;
-	}
-	*out_max_write = max_write;
-	return 0;
-}
-
-static int fuseq_update_conn_info(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	size_t bufsize = 0;
-	size_t max_write = 0;
-	size_t max_pages = 0;
-	int err;
-
-	err = fuseq_resolve_bufsize(fq, &bufsize);
-	if (err) {
-		return err;
-	}
-	err = fuseq_calc_max_write(fq, bufsize, &max_write);
-	if (err) {
-		return err;
-	}
-	coni->buffsize = bufsize;
-	coni->max_write = (uint32_t)max_write;
-	coni->max_read = (uint32_t)max_write;
-	coni->max_readahead = (uint32_t)(bufsize - coni->pagesize);
-
-	/* logic from libfuse::fuse_lowlevel.c -- is it correct? */
-	max_pages = ((coni->max_write - 1) / coni->pagesize) + 1;
-	coni->max_pages = (uint32_t)min(max_pages, UINT16_MAX);
-
-	return 0;
-}
-
-static void fuseq_init_conn_info(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-
-	memset(coni, 0, sizeof(*coni));
-	coni->pagesize = (size_t)silofs_sc_page_size();
-	coni->proto_major = FUSE_KERNEL_VERSION;
-	coni->proto_minor = FUSE_KERNEL_MINOR_VERSION;
-	coni->time_gran = 1;
-
-	/*
-	 * Follow similar values as those at libfuse:lib/fuse_lowlevel.c
-	 * However, libfuse has: congestion_threshold = max_background * 3 / 4
-	 * but it is hard to understand from its code or kernel code why it is
-	 * defined that way. Needs further investigation.
-	 */
-	coni->max_background = (1 << 16) - 1;
-	coni->congestion_threshold = coni->max_background / 2;
-}
-
 static void fqd_init_piper(struct silofs_fuseq_dispatcher *fqd)
 {
 	silofs_piper_init(&fqd->fqd_piper);
@@ -3668,8 +3551,8 @@ static void fqd_fini_piper(struct silofs_fuseq_dispatcher *fqd)
 	silofs_piper_fini(&fqd->fqd_piper);
 }
 
-static struct silofs_alloc *fqd_alloc(const struct silofs_fuseq_dispatcher
-                                      *fqd)
+static struct silofs_alloc *
+fqd_alloc(const struct silofs_fuseq_dispatcher *fqd)
 {
 	return fqd->fqd_fq->fq_alloc;
 }
@@ -3819,8 +3702,8 @@ static void fqd_fini(struct silofs_fuseq_dispatcher *fqd)
 	fqd->fqd_fq  = NULL;
 }
 
-static int fqd_update_piper(struct silofs_fuseq_dispatcher *fqd,
-                            size_t pipe_size_want)
+static int fqd_open_piper(struct silofs_fuseq_dispatcher *fqd,
+                          size_t pipe_size_want)
 {
 	struct silofs_piper *piper = &fqd->fqd_piper;
 	int err;
@@ -3845,269 +3728,7 @@ static void fqd_close_piper(struct silofs_fuseq_dispatcher *fqd)
 	silofs_piper_close(&fqd->fqd_piper);
 }
 
-static uint16_t fuseq_calc_ndispatchers_lim(const struct silofs_fuseq *fq)
-{
-	const size_t nproc_lim = (size_t)silofs_sc_nproc_onln();
-	const size_t nworkers_lim = ARRAY_SIZE(fq->fq_dispatchers);
-
-	return (uint16_t)silofs_clamp(nproc_lim / 2, 1, nworkers_lim);
-}
-
-static void fuseq_init_workers_limit(struct silofs_fuseq *fq)
-{
-	fq->fq_ndispatchers_lim = fuseq_calc_ndispatchers_lim(fq);
-	fq->fq_ndispatchers_run = 0;
-}
-
-static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_dispatcher *fqd = NULL;
-	int err;
-
-	for (uint32_t i = 0; i < fq->fq_ndispatchers_lim; ++i) {
-		fqd = &fq->fq_dispatchers[i];
-		err = fqd_init(fqd, fq, i);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
-}
-
-static void fuseq_fini_dispatchers(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_dispatcher *fqd = NULL;
-
-	for (uint32_t i = 0; i < fq->fq_ndispatchers_lim; ++i) {
-		fqd = &fq->fq_dispatchers[i];
-		fqd_fini(fqd);
-	}
-}
-
-static int fuseq_update_dispatchers(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_dispatcher *fqd = NULL;
-	const size_t buffsize = fq->fq_coni.buffsize;
-	const size_t pipesize = buffsize;
-	size_t cnt = 0;
-	int err;
-
-	if (!fq->fq_may_splice) {
-		/* operate in non-splice mode */
-		return 0;
-	}
-	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
-	for (size_t i = 0; i < fq->fq_ndispatchers_lim; ++i) {
-		fqd = &fq->fq_dispatchers[i];
-		err = fqd_update_piper(fqd, pipesize);
-		if (err == -EPERM) {
-			goto can_not_splice;
-		} else if (err) {
-			return err;
-		}
-		cnt++;
-	}
-	/* normal mode: all workers set with proper pipe */
-	return 0;
-
-can_not_splice:
-	/* can not have proper pipe size: fallback to buffer-only mode */
-	fuseq_log_dbg("disable splice mode: cnt=%zu", cnt);
-	for (size_t i = 0; i < cnt; ++i) {
-		fqd = &fq->fq_dispatchers[i];
-		fqd_close_piper(fqd);
-	}
-	fq->fq_may_splice = false;
-	return 0;
-}
-
-int silofs_fuseq_update(struct silofs_fuseq *fq)
-{
-	const bool may_splice = fq->fq_may_splice;
-	int err;
-
-	err = fuseq_update_conn_info(fq);
-	if (err) {
-		return err;
-	}
-	err = fuseq_update_dispatchers(fq);
-	if (err) {
-		return err;
-	}
-	/*
-	 * Special case: fallback from pipe-splice mode to buffer-copy mode due
-	 * to insufficient resources to create big-enough pipes. Need to update
-	 * connection-info settings.
-	 */
-	if (may_splice != fq->fq_may_splice) {
-		err = fuseq_update_conn_info(fq);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
-}
-
-static int fuseq_init_locks(struct silofs_fuseq *fq)
-{
-	int err;
-
-	err = silofs_mutex_init(&fq->fq_ch_lock);
-	if (err) {
-		return err;
-	}
-	err = silofs_mutex_init(&fq->fq_op_lock);
-	if (err) {
-		goto out_err1;
-	}
-	err = silofs_mutex_init(&fq->fq_ctl_lock);
-	if (err) {
-		goto out_err2;
-	}
-	fq->fq_init_locks = true;
-	return 0;
-
-out_err2:
-	silofs_mutex_fini(&fq->fq_op_lock);
-out_err1:
-	silofs_mutex_fini(&fq->fq_ch_lock);
-	return err;
-}
-
-static void fuseq_fini_locks(struct silofs_fuseq *fq)
-{
-	if (fq->fq_init_locks) {
-		silofs_mutex_fini(&fq->fq_ctl_lock);
-		silofs_mutex_fini(&fq->fq_op_lock);
-		silofs_mutex_fini(&fq->fq_ch_lock);
-	}
-}
-
-static void fuseq_init_common(struct silofs_fuseq *fq,
-                              struct silofs_alloc *alloc)
-{
-	listq_init(&fq->fq_curr_opers);
-	fq->fq_ndispatchers_lim = 0;
-	fq->fq_ndispatchers_run = 0;
-	fq->fq_fsenv = NULL;
-	fq->fq_alloc = alloc;
-	fq->fq_active = 0;
-	fq->fq_nopers = 0;
-	fq->fq_nopers_done = 0;
-	fq->fq_ntimedout = 0;
-	fq->fq_fuse_fd = -1;
-	fq->fq_got_init = false;
-	fq->fq_reply_init_ok = false;
-	fq->fq_got_destroy = false;
-	fq->fq_deny_others = false;
-	fq->fq_mount = false;
-	fq->fq_umount = false;
-	fq->fq_writeback_cache = false;
-	fq->fq_may_splice = true;
-	fq->fq_fs_owner = (uid_t)(-1);
-	fq->fq_nexecs = 0;
-}
-
-int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
-{
-	int err;
-
-	silofs_memzero(fq, sizeof(*fq));
-	fuseq_init_common(fq, alloc);
-	fuseq_init_workers_limit(fq);
-	fuseq_init_conn_info(fq);
-
-	err = fuseq_init_locks(fq);
-	if (err) {
-		goto out;
-	}
-	err = fuseq_init_dispatchers(fq);
-	if (err) {
-		goto out;
-	}
-out:
-	if (err) {
-		fuseq_fini_dispatchers(fq);
-		fuseq_fini_locks(fq);
-	}
-	return err;
-}
-
-static void fuseq_fini_fuse_fd(struct silofs_fuseq *fq)
-{
-	if (fq->fq_fuse_fd > 0) {
-		silofs_sys_close(fq->fq_fuse_fd);
-		fq->fq_fuse_fd = -1;
-	}
-}
-
-void silofs_fuseq_fini(struct silofs_fuseq *fq)
-{
-	silofs_assert_eq(fq->fq_curr_opers.sz, 0);
-
-	fuseq_fini_fuse_fd(fq);
-	fuseq_fini_dispatchers(fq);
-	fuseq_fini_locks(fq);
-	listq_fini(&fq->fq_curr_opers);
-	fq->fq_alloc = NULL;
-	fq->fq_fsenv = NULL;
-}
-
-static bool has_allow_other_mode(const struct silofs_fsenv *fsenv)
-{
-	const enum silofs_env_flags mask = SILOFS_ENVF_ALLOWOTHER;
-
-	return (fsenv->fse_ctl_flags & mask) == mask;
-}
-
-int silofs_fuseq_mount(struct silofs_fuseq *fq,
-                       struct silofs_fsenv *fsenv, const char *path)
-{
-	const size_t max_read = fq->fq_coni.max_read;
-	const char *sock = SILOFS_MNTSOCK_NAME;
-	uint64_t ms_flags;
-	uid_t uid;
-	gid_t gid;
-	int fd = -1;
-	int err;
-	bool allow_other;
-
-	uid = fsenv->fse_owner.uid;
-	gid = fsenv->fse_owner.gid;
-	ms_flags = fsenv->fse_ms_flags;
-	allow_other = has_allow_other_mode(fsenv);
-
-	err = silofs_mntrpc_handshake(uid, gid);
-	if (err) {
-		fuseq_log_err("handshake with mountd failed: "\
-		              "sock=@%s err=%d", sock, err);
-		return err;
-	}
-	err = silofs_mntrpc_mount(path, uid, gid, max_read,
-	                          ms_flags, allow_other, false, &fd);
-	if (err) {
-		fuseq_log_err("mount failed: path=%s max_read=%lu "\
-		              "ms_flags=0x%lx allow_other=%d err=%d", path,
-		              max_read, ms_flags, (int)allow_other, err);
-		return err;
-	}
-
-	fq->fq_fs_owner = fsenv->fse_owner.uid;
-	fq->fq_fuse_fd = fd;
-	fq->fq_mount = true;
-	fq->fq_fsenv = fsenv;
-
-	/* TODO: Looks like kernel needs time. why? */
-	silofs_suspend_secs(1);
-
-	return 0;
-}
-
-void silofs_fuseq_term(struct silofs_fuseq *fq)
-{
-	fuseq_fini_fuse_fd(fq);
-	fq->fq_fsenv = NULL;
-}
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int fqd_check_input(const struct silofs_fuseq_dispatcher *fqd)
 {
@@ -4230,16 +3851,20 @@ static int fqd_try_exec_timedout(struct silofs_fuseq_dispatcher *fqd)
 	return 0;
 }
 
-static bool fuseq_all_workers_active(const struct silofs_fuseq *fq)
+static void fqd_suspend(const struct silofs_fuseq_dispatcher *fqd)
 {
-	return (fq->fq_ndispatchers_run == fq->fq_ndispatchers_lim);
-}
+	const struct timespec ts = {
+		.tv_sec = 1,
+		.tv_nsec = (long)(fqd->fqd_index),
+	};
+	struct timespec ts_rem = {
+		.tv_sec = 0,
+		.tv_nsec = 0,
+	};
 
-static void fuseq_suspend(const struct silofs_fuseq_dispatcher *fqd)
-{
 	/* TODO: tweak sleep based on state */
-	silofs_unused(fqd);
-	silofs_suspend_secs(1);
+	/* TODO: handle case of -EINTR ? */
+	silofs_nanosleep(&ts, &ts_rem);
 }
 
 static bool fqd_allowed_exec(const struct silofs_fuseq_dispatcher *fqd)
@@ -4283,12 +3908,12 @@ static int fqd_post_exec_once(struct silofs_fuseq_dispatcher *fqd, int status)
 	}
 	/* no-lock & interrupt cases */
 	if ((err == -SILOFS_ENORX) || (err == -SILOFS_ENOTX)) {
-		fuseq_suspend(fqd);
+		fqd_suspend(fqd);
 		return 0;
 	}
 	/* termination case */
 	if (err == -ENOENT) {
-		fuseq_suspend(fqd);
+		fqd_suspend(fqd);
 		return err;
 	}
 	/* abnormal failure */
@@ -4302,7 +3927,7 @@ static int fqd_exec_once(struct silofs_fuseq_dispatcher *fqd)
 
 	/* allow only single worker on bootstrap */
 	if (!fqd_allowed_exec(fqd)) {
-		fuseq_suspend(fqd);
+		fqd_suspend(fqd);
 		return 0;
 	}
 	/* serve single in-comming request */
@@ -4331,15 +3956,14 @@ static int fqd_exec_loop(struct silofs_fuseq_dispatcher *fqd)
 	return 0;
 }
 
-static struct silofs_fuseq_dispatcher *
-thread_to_fuseq_worker(struct silofs_thread *th)
+static struct silofs_fuseq_dispatcher *fqd_from_th(struct silofs_thread *th)
 {
 	return container_of(th, struct silofs_fuseq_dispatcher, fqd_th);
 }
 
-static int fuseq_start(struct silofs_thread *th)
+static int fqd_start(struct silofs_thread *th)
 {
-	struct silofs_fuseq_dispatcher *fqd = thread_to_fuseq_worker(th);
+	struct silofs_fuseq_dispatcher *fqd = fqd_from_th(th);
 	int err;
 
 	fuseq_log_info("start worker: %s", th->name);
@@ -4372,7 +3996,7 @@ static int fqd_exec_thread(struct silofs_fuseq_dispatcher *fqd)
 	int err;
 
 	fqd_make_thread_name(fqd, name, sizeof(name) - 1);
-	err = silofs_thread_create(&fqd->fqd_th, fuseq_start, NULL, name);
+	err = silofs_thread_create(&fqd->fqd_th, fqd_start, NULL, name);
 	if (err) {
 		fuseq_log_err("failed to create fuse worker: "\
 		              "%s err=%d", name, err);
@@ -4383,56 +4007,6 @@ static int fqd_exec_thread(struct silofs_fuseq_dispatcher *fqd)
 static int fqd_join_thread(struct silofs_fuseq_dispatcher *fqd)
 {
 	return silofs_thread_join(&fqd->fqd_th);
-}
-
-static void fuseq_suspend_while_active(const struct silofs_fuseq *fq)
-{
-	while (fuseq_is_active(fq)) {
-		sleep(1);
-	}
-}
-
-static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_dispatcher *fqd = NULL;
-	int err;
-
-	fuseq_log_dbg("start dispatchers: lim=%zu", fq->fq_ndispatchers_lim);
-	fq->fq_active = 1;
-	fq->fq_ndispatchers_run = 0;
-	for (size_t i = 0; i < fq->fq_ndispatchers_lim; ++i) {
-		fqd = &fq->fq_dispatchers[i];
-		err = fqd_exec_thread(fqd);
-		if (err) {
-			return err;
-		}
-		fq->fq_ndispatchers_run++;
-	}
-	return 0;
-}
-
-static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
-{
-	struct silofs_fuseq_dispatcher *fqd = NULL;
-
-	fuseq_log_dbg("finish dispatchers: run=%zu", fq->fq_ndispatchers_run);
-	fq->fq_active = 0;
-	for (size_t i = 0; i < fq->fq_ndispatchers_run; ++i) {
-		fqd = &fq->fq_dispatchers[i];
-		fqd_join_thread(fqd);
-	}
-}
-
-int silofs_fuseq_exec(struct silofs_fuseq *fq)
-{
-	int err;
-
-	err = fuseq_start_dispatchers(fq);
-	if (!err) {
-		fuseq_suspend_while_active(fq);
-	}
-	fuseq_finish_dispatchers(fq);
-	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4465,6 +4039,447 @@ static void fuseq_lock_ctl(struct silofs_fuseq *fq)
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq)
 {
 	silofs_mutex_unlock(&fq->fq_ctl_lock);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void fuseq_init_thread_limits(struct silofs_fuseq *fq)
+{
+	const size_t nproc_lim = (size_t)silofs_sc_nproc_onln();
+	const size_t nworkers_lim = ARRAY_SIZE(fq->fq_workers);
+	const size_t ndisptch_lim = ARRAY_SIZE(fq->fq_disptch);
+
+	STATICASSERT_GE(ARRAY_SIZE(fq->fq_disptch), 2);
+
+	fq->fq_nworkers_lim = (uint16_t)clamp(nproc_lim / 2, 1, nworkers_lim);
+	fq->fq_nworkers_run = 0;
+	fq->fq_ndisptch_lim = (uint16_t)clamp(nproc_lim / 2, 2, ndisptch_lim);
+	fq->fq_ndisptch_run = 0;
+}
+
+
+static int fuseq_update_dispatchers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_dispatcher *fqd = NULL;
+	const size_t buffsize = fq->fq_coni.buffsize;
+	const size_t pipesize = buffsize;
+	size_t cnt = 0;
+	int err;
+
+	if (!fq->fq_may_splice) {
+		/* operate in non-splice mode */
+		return 0;
+	}
+	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
+	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_disptch[i];
+		err = fqd_open_piper(fqd, pipesize);
+		if (err == -EPERM) {
+			goto can_not_splice;
+		} else if (err) {
+			return err;
+		}
+		cnt++;
+	}
+	/* normal mode: all workers set with proper pipe */
+	return 0;
+
+can_not_splice:
+	/* can not have proper pipe size: fallback to buffer-only mode */
+	fuseq_log_dbg("disable splice mode: cnt=%zu", cnt);
+	for (size_t i = 0; i < cnt; ++i) {
+		fqd = &fq->fq_disptch[i];
+		fqd_close_piper(fqd);
+	}
+	fq->fq_may_splice = false;
+	return 0;
+}
+
+static int fuseq_init_locks(struct silofs_fuseq *fq)
+{
+	int err;
+
+	err = silofs_mutex_init(&fq->fq_ch_lock);
+	if (err) {
+		return err;
+	}
+	err = silofs_mutex_init(&fq->fq_op_lock);
+	if (err) {
+		goto out_err1;
+	}
+	err = silofs_mutex_init(&fq->fq_ctl_lock);
+	if (err) {
+		goto out_err2;
+	}
+	fq->fq_init_locks = true;
+	return 0;
+
+out_err2:
+	silofs_mutex_fini(&fq->fq_op_lock);
+out_err1:
+	silofs_mutex_fini(&fq->fq_ch_lock);
+	return err;
+}
+
+static void fuseq_fini_locks(struct silofs_fuseq *fq)
+{
+	if (fq->fq_init_locks) {
+		silofs_mutex_fini(&fq->fq_ctl_lock);
+		silofs_mutex_fini(&fq->fq_op_lock);
+		silofs_mutex_fini(&fq->fq_ch_lock);
+	}
+}
+
+static void fuseq_init_common(struct silofs_fuseq *fq,
+                              struct silofs_alloc *alloc)
+{
+	listq_init(&fq->fq_curr_opers);
+	fq->fq_ndisptch_lim = 0;
+	fq->fq_ndisptch_run = 0;
+	fq->fq_fsenv = NULL;
+	fq->fq_alloc = alloc;
+	fq->fq_active = 0;
+	fq->fq_nopers = 0;
+	fq->fq_nopers_done = 0;
+	fq->fq_ntimedout = 0;
+	fq->fq_fuse_fd = -1;
+	fq->fq_got_init = false;
+	fq->fq_reply_init_ok = false;
+	fq->fq_got_destroy = false;
+	fq->fq_deny_others = false;
+	fq->fq_mount = false;
+	fq->fq_umount = false;
+	fq->fq_writeback_cache = false;
+	fq->fq_may_splice = true;
+	fq->fq_fs_owner = (uid_t)(-1);
+	fq->fq_nexecs = 0;
+}
+
+static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_dispatcher *fqd = NULL;
+	int err;
+
+	for (uint32_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_disptch[i];
+		err = fqd_init(fqd, fq, i);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+static void fuseq_fini_dispatchers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_dispatcher *fqd = NULL;
+
+	for (uint32_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_disptch[i];
+		fqd_fini(fqd);
+	}
+}
+
+static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
+{
+	const struct silofs_fuseq_dispatcher *fqd = &fq->fq_disptch[0];
+	const size_t inbuf_max = sizeof(*fqd->fqd_inb);
+	const size_t outbuf_max = sizeof(*fqd->fqd_outb);
+
+	unused(fqd); /* make clangscan happy */
+	return max(inbuf_max, outbuf_max);
+}
+
+static int fuseq_resolve_bufsize(const struct silofs_fuseq *fq,
+                                 size_t *out_bufsize)
+{
+	const struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
+	const size_t page_size = coni->pagesize;
+	size_t bufsize_min;
+	size_t bufsize_max;
+	size_t bufsize_may;
+	size_t bufsize;
+
+	STATICASSERT_GE(FUSE_MIN_READ_BUFFER, 2 * FUSE_BUFFER_HEADER_SIZE);
+
+	bufsize_min = min(FUSE_MIN_READ_BUFFER, 2 * SILOFS_LBK_SIZE);
+	bufsize_max = fuseq_bufsize_max(fq);
+	if (fq->fq_may_splice) {
+		bufsize_may = silofs_pipe_size_of(bufsize_max);
+	} else {
+		bufsize_may = bufsize_max;
+	}
+	bufsize = (min(bufsize_may, bufsize_max) / page_size) * page_size;
+	if ((bufsize < bufsize_min)  || (bufsize > bufsize_max)) {
+		fuseq_log_err("can not creat channel: bufsize=%zu "
+		              "bufsize_max=%zu bufsize_min=%zu ",
+		              bufsize, bufsize_max, bufsize_min);
+		return -SILOFS_EPROTO;
+	}
+	fuseq_log_dbg("channel params: bufsize=%zu bufsize_max=%zu "
+	              "bufsize_min=%zu ", bufsize, bufsize_max, bufsize_min);
+	*out_bufsize = bufsize;
+	return 0;
+}
+
+/*
+ * From Linux kerenl fs/fuse/dec.c:
+ *
+ *     Require sane minimum read buffer - that has capacity for fixed part
+ *     of any request header + negotiated max_write room for data...
+ */
+static int fuseq_calc_max_write(const struct silofs_fuseq *fq,
+                                size_t bufsize, size_t *out_max_write)
+{
+	const size_t page_size = fq->fq_coni.pagesize;
+	const size_t hdr_size = sizeof(struct fuse_in_header);
+	const size_t write_in_size = sizeof(struct fuse_write_in);
+	size_t data_size;
+	size_t max_write;
+
+	if (bufsize < (hdr_size + write_in_size + page_size)) {
+		fuseq_log_err("short buffer: bufsize=%zu hdr_size=%zu "
+		              "write_in_size=%zu ",
+		              bufsize, hdr_size, write_in_size);
+		return -SILOFS_EPROTO;
+	}
+	data_size = bufsize - hdr_size - write_in_size;
+	max_write = (data_size / page_size) * page_size;
+	if (max_write < max(2 * page_size, FUSE_MIN_READ_BUFFER)) {
+		fuseq_log_err("short buffer: data_size=%zu max_write=%zu ",
+		              data_size, max_write);
+		return -SILOFS_EPROTO;
+	}
+	*out_max_write = max_write;
+	return 0;
+}
+
+static int fuseq_update_conn_info(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
+	size_t bufsize = 0;
+	size_t max_write = 0;
+	size_t max_pages = 0;
+	int err;
+
+	err = fuseq_resolve_bufsize(fq, &bufsize);
+	if (err) {
+		return err;
+	}
+	err = fuseq_calc_max_write(fq, bufsize, &max_write);
+	if (err) {
+		return err;
+	}
+	coni->buffsize = bufsize;
+	coni->max_write = (uint32_t)max_write;
+	coni->max_read = (uint32_t)max_write;
+	coni->max_readahead = (uint32_t)(bufsize - coni->pagesize);
+
+	/* logic from libfuse::fuse_lowlevel.c -- is it correct? */
+	max_pages = ((coni->max_write - 1) / coni->pagesize) + 1;
+	coni->max_pages = (uint32_t)min(max_pages, UINT16_MAX);
+
+	return 0;
+}
+
+static void fuseq_init_conn_info(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
+
+	memset(coni, 0, sizeof(*coni));
+	coni->pagesize = (size_t)silofs_sc_page_size();
+	coni->proto_major = FUSE_KERNEL_VERSION;
+	coni->proto_minor = FUSE_KERNEL_MINOR_VERSION;
+	coni->time_gran = 1;
+
+	/*
+	 * Follow similar values as those at libfuse:lib/fuse_lowlevel.c
+	 * However, libfuse has: congestion_threshold = max_background * 3 / 4
+	 * but it is hard to understand from its code or kernel code why it is
+	 * defined that way. Needs further investigation.
+	 */
+	coni->max_background = (1 << 16) - 1;
+	coni->congestion_threshold = coni->max_background / 2;
+}
+
+int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
+{
+	int err;
+
+	silofs_memzero(fq, sizeof(*fq));
+	fuseq_init_common(fq, alloc);
+	fuseq_init_thread_limits(fq);
+	fuseq_init_conn_info(fq);
+
+	err = fuseq_init_locks(fq);
+	if (err) {
+		goto out;
+	}
+	err = fuseq_init_dispatchers(fq);
+	if (err) {
+		goto out;
+	}
+out:
+	if (err) {
+		fuseq_fini_dispatchers(fq);
+		fuseq_fini_locks(fq);
+	}
+	return err;
+}
+
+static void fuseq_fini_fuse_fd(struct silofs_fuseq *fq)
+{
+	if (fq->fq_fuse_fd > 0) {
+		silofs_sys_close(fq->fq_fuse_fd);
+		fq->fq_fuse_fd = -1;
+	}
+}
+
+void silofs_fuseq_fini(struct silofs_fuseq *fq)
+{
+	silofs_assert_eq(fq->fq_curr_opers.sz, 0);
+
+	fuseq_fini_fuse_fd(fq);
+	fuseq_fini_dispatchers(fq);
+	fuseq_fini_locks(fq);
+	listq_fini(&fq->fq_curr_opers);
+	fq->fq_alloc = NULL;
+	fq->fq_fsenv = NULL;
+}
+
+int silofs_fuseq_update(struct silofs_fuseq *fq)
+{
+	const bool may_splice = fq->fq_may_splice;
+	int err;
+
+	err = fuseq_update_conn_info(fq);
+	if (err) {
+		return err;
+	}
+	err = fuseq_update_dispatchers(fq);
+	if (err) {
+		return err;
+	}
+	/*
+	 * Special case: fallback from pipe-splice mode to buffer-copy mode due
+	 * to insufficient resources to create big-enough pipes. Need to update
+	 * connection-info settings.
+	 */
+	if (may_splice != fq->fq_may_splice) {
+		err = fuseq_update_conn_info(fq);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+static bool has_allow_other_mode(const struct silofs_fsenv *fsenv)
+{
+	const enum silofs_env_flags mask = SILOFS_ENVF_ALLOWOTHER;
+
+	return (fsenv->fse_ctl_flags & mask) == mask;
+}
+
+int silofs_fuseq_mount(struct silofs_fuseq *fq,
+                       struct silofs_fsenv *fsenv, const char *path)
+{
+	const size_t max_read = fq->fq_coni.max_read;
+	const char *sock = SILOFS_MNTSOCK_NAME;
+	uint64_t ms_flags;
+	uid_t uid;
+	gid_t gid;
+	int fd = -1;
+	int err;
+	bool allow_other;
+
+	uid = fsenv->fse_owner.uid;
+	gid = fsenv->fse_owner.gid;
+	ms_flags = fsenv->fse_ms_flags;
+	allow_other = has_allow_other_mode(fsenv);
+
+	err = silofs_mntrpc_handshake(uid, gid);
+	if (err) {
+		fuseq_log_err("handshake with mountd failed: "\
+		              "sock=@%s err=%d", sock, err);
+		return err;
+	}
+	err = silofs_mntrpc_mount(path, uid, gid, max_read,
+	                          ms_flags, allow_other, false, &fd);
+	if (err) {
+		fuseq_log_err("mount failed: path=%s max_read=%lu "\
+		              "ms_flags=0x%lx allow_other=%d err=%d", path,
+		              max_read, ms_flags, (int)allow_other, err);
+		return err;
+	}
+
+	fq->fq_fs_owner = fsenv->fse_owner.uid;
+	fq->fq_fuse_fd = fd;
+	fq->fq_mount = true;
+	fq->fq_fsenv = fsenv;
+
+	/* TODO: Looks like kernel needs time. why? */
+	silofs_suspend_secs(1);
+
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_dispatcher *fqd = NULL;
+	int err;
+
+	fuseq_log_dbg("start dispatchers: lim=%zu", fq->fq_ndisptch_lim);
+	fq->fq_active = 1;
+	fq->fq_ndisptch_run = 0;
+	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_disptch[i];
+		err = fqd_exec_thread(fqd);
+		if (err) {
+			return err;
+		}
+		fq->fq_ndisptch_run++;
+	}
+	return 0;
+}
+
+static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
+{
+	struct silofs_fuseq_dispatcher *fqd = NULL;
+
+	fuseq_log_dbg("finish dispatchers: run=%zu", fq->fq_ndisptch_run);
+	fq->fq_active = 0;
+	for (size_t i = 0; i < fq->fq_ndisptch_run; ++i) {
+		fqd = &fq->fq_disptch[i];
+		fqd_join_thread(fqd);
+	}
+}
+
+static void fuseq_suspend_while_active(const struct silofs_fuseq *fq)
+{
+	while (fuseq_is_active(fq)) {
+		sleep(1);
+	}
+}
+
+int silofs_fuseq_exec(struct silofs_fuseq *fq)
+{
+	int err;
+
+	err = fuseq_start_dispatchers(fq);
+	if (!err) {
+		fuseq_suspend_while_active(fq);
+	}
+	fuseq_finish_dispatchers(fq);
+	return err;
+}
+
+void silofs_fuseq_term(struct silofs_fuseq *fq)
+{
+	fuseq_fini_fuse_fd(fq);
+	fq->fq_fsenv = NULL;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

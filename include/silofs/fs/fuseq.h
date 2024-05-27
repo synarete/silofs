@@ -37,6 +37,12 @@ struct silofs_fuseq_conn_info {
 	uint32_t        max_pages;
 } silofs_aligned64;
 
+struct silofs_fuseq_worker {
+	struct silofs_thread            fqw_th;
+	struct silofs_list_head         fqw_lh;
+	struct silofs_fuseq            *fqw_fq;
+} silofs_aligned64;
+
 struct silofs_fuseq_dispatcher {
 	struct silofs_thread            fqd_th;
 	struct silofs_list_head         fqd_lh;
@@ -54,7 +60,8 @@ struct silofs_fuseq_dispatcher {
 } silofs_aligned64;
 
 struct silofs_fuseq {
-	struct silofs_fuseq_dispatcher  fq_dispatchers[4];
+	struct silofs_fuseq_worker      fq_workers[4];
+	struct silofs_fuseq_dispatcher  fq_disptch[4];
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
@@ -67,8 +74,10 @@ struct silofs_fuseq {
 	size_t                          fq_ntimedout;
 	uid_t                           fq_fs_owner;
 	int32_t                         fq_nexecs;
-	uint16_t                        fq_ndispatchers_lim;
-	uint16_t                        fq_ndispatchers_run;
+	uint16_t                        fq_nworkers_lim;
+	uint16_t                        fq_nworkers_run;
+	uint16_t                        fq_ndisptch_lim;
+	uint16_t                        fq_ndisptch_run;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

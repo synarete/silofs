@@ -71,7 +71,6 @@ struct silofs_fuseq {
 	struct silofs_listq             fq_curr_opers;
 	size_t                          fq_nopers;
 	size_t                          fq_nopers_done;
-	size_t                          fq_ntimedout;
 	uid_t                           fq_fs_owner;
 	int32_t                         fq_nexecs;
 	uint16_t                        fq_nworkers_lim;

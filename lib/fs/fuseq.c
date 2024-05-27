@@ -3048,11 +3048,6 @@ static void fqd_track_oper(struct silofs_fuseq_dispatcher *fqd, bool pre)
 	fuseq_unlock_ctl(fq);
 }
 
-static void fqd_track_timedout(struct silofs_fuseq_dispatcher *fqd)
-{
-	fqd->fqd_fq->fq_ntimedout++;
-}
-
 static void fqd_enq_active_op(struct silofs_fuseq_dispatcher *fqd,
                               struct silofs_task *task)
 {
@@ -3781,7 +3776,7 @@ static int fqd_do_exec_timeout(struct silofs_fuseq_dispatcher *fqd,
 	int err1 = 0;
 	int err2 = 0;
 
-	fqd_track_timedout(fqd);
+	fqd_setup_self_task(fqd, task);
 	silofs_task_lock_ex(task);
 	err1 = silofs_fs_timedout(task, flags);
 	err2 = task_submit(task);
@@ -3796,10 +3791,8 @@ static int fqd_exec_timeout(struct silofs_fuseq_dispatcher *fqd, int flags)
 	int err;
 
 	task_init_by(&task, fqd);
-	fqd_setup_self_task(fqd, &task);
 	err = fqd_do_exec_timeout(fqd, &task, flags);
 	task_fini(&task);
-
 	return err;
 }
 
@@ -4206,7 +4199,6 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_active = 0;
 	fq->fq_nopers = 0;
 	fq->fq_nopers_done = 0;
-	fq->fq_ntimedout = 0;
 	fq->fq_fuse_fd = -1;
 	fq->fq_got_init = false;
 	fq->fq_reply_init_ok = false;

@@ -551,7 +551,7 @@ int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
 void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags)
 {
 	silofs_lcache_relax(fsenv->fse.lcache, flags);
-	if (flags & SILOFS_F_IDLE) {
+	if (flags & SILOFS_F_IDLE2) {
 		silofs_repo_relax(fsenv->fse.repo);
 	}
 }

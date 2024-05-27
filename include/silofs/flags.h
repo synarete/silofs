@@ -27,8 +27,8 @@ enum silofs_flags {
 	SILOFS_F_BRINGUP        = SILOFS_BIT(4),
 	SILOFS_F_OPSTART        = SILOFS_BIT(5),
 	SILOFS_F_OPFINISH       = SILOFS_BIT(6),
-	SILOFS_F_TIMEOUT        = SILOFS_BIT(7),
-	SILOFS_F_IDLE           = SILOFS_BIT(8),
+	SILOFS_F_IDLE1          = SILOFS_BIT(7),
+	SILOFS_F_IDLE2          = SILOFS_BIT(8),
 };
 
 #endif /* SILOFS_FLAGS_H_ */

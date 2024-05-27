@@ -62,17 +62,6 @@ static int op_xstart(struct silofs_task *task)
 	return err;
 }
 
-static int op_zstart(struct silofs_task *task, int flags)
-{
-	int err;
-
-	err = op_start(task);
-	if (!err && (flags & SILOFS_F_IDLE)) {
-		relax_caches(task, flags | SILOFS_F_OPSTART);
-	}
-	return err;
-}
-
 static int op_try_flush(struct silofs_task *task, struct silofs_inode_info *ii)
 {
 	return silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
@@ -1667,7 +1656,7 @@ int silofs_fs_timedout(struct silofs_task *task, int flags)
 {
 	int err;
 
-	err = op_zstart(task, flags);
+	err = op_start(task);
 	ok_or_goto_out(err);
 
 	err = silofs_do_timedout(task, flags);

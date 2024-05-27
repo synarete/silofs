@@ -20,14 +20,14 @@
 
 /* fuse-q machinery */
 struct silofs_fuseq_conn_info {
+	size_t          pagesize;
+	size_t          buffsize;
 	uint32_t        kern_proto_major;
 	uint32_t        kern_proto_minor;
 	uint32_t        kern_cap;
 	uint32_t        proto_major;
 	uint32_t        proto_minor;
 	uint32_t        want_cap;
-	size_t          pagesize;
-	size_t          buffsize;
 	uint32_t        max_write;
 	uint32_t        max_read;
 	uint32_t        max_readahead;
@@ -37,24 +37,24 @@ struct silofs_fuseq_conn_info {
 	uint32_t        max_pages;
 } silofs_aligned64;
 
-struct silofs_fuseq_worker {
-	struct silofs_thread            fw_th;
-	struct silofs_list_head         fw_lh;
-	struct silofs_fuseq            *fw_fq;
-	struct silofs_fuseq_inb        *fw_inb;
-	struct silofs_fuseq_outb       *fw_outb;
-	struct silofs_fuseq_rw_iter    *fw_rwi;
-	struct silofs_oper_args        *fw_args;
-	struct silofs_piper             fw_piper;
-	time_t                          fw_time_stamp;
-	volatile uint64_t               fw_req_count;
-	uint32_t                        fw_index;
-	bool                            fw_leader;
-	bool                            fw_init_ok;
+struct silofs_fuseq_dispatcher {
+	struct silofs_thread            fqd_th;
+	struct silofs_list_head         fqd_lh;
+	struct silofs_fuseq            *fqd_fq;
+	struct silofs_fuseq_inb        *fqd_inb;
+	struct silofs_fuseq_outb       *fqd_outb;
+	struct silofs_fuseq_rw_iter    *fqd_rwi;
+	struct silofs_oper_args        *fqd_args;
+	struct silofs_piper             fqd_piper;
+	time_t                          fqd_time_stamp;
+	volatile uint64_t               fqd_req_count;
+	uint32_t                        fqd_index;
+	bool                            fqd_leader;
+	bool                            fqd_init_ok;
 } silofs_aligned64;
 
 struct silofs_fuseq {
-	struct silofs_fuseq_worker      fq_workers[4];
+	struct silofs_fuseq_dispatcher  fq_dispatchers[4];
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
@@ -67,8 +67,8 @@ struct silofs_fuseq {
 	size_t                          fq_ntimedout;
 	uid_t                           fq_fs_owner;
 	int32_t                         fq_nexecs;
-	uint32_t                        fq_nworkers_lim;
-	uint32_t                        fq_nworkers_run;
+	uint16_t                        fq_ndispatchers_lim;
+	uint16_t                        fq_ndispatchers_run;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

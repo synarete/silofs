@@ -567,9 +567,9 @@ static void fill_fuse_open(struct fuse_open_out *open, int noflush, int isdir)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void task_init_by(struct silofs_task *task,
-                         const struct silofs_fuseq_dispatcher *fqd)
+                         const struct silofs_fuseq *fq)
 {
-	silofs_task_init(task, fqd->fqd_fq->fq_fsenv);
+	silofs_task_init(task, fq->fq_fsenv);
 }
 
 static void task_fini(struct silofs_task *task)
@@ -3140,7 +3140,7 @@ static int fqd_exec_request(struct silofs_fuseq_dispatcher *fqd)
 	struct silofs_task task;
 	int err;
 
-	task_init_by(&task, fqd);
+	task_init_by(&task, fqd->fqd_fq);
 	fqd_update_task(fqd, &task);
 	err = fqd_check_task(fqd, &task);
 	if (unlikely(err)) {
@@ -3790,7 +3790,7 @@ static int fqd_exec_timeout(struct silofs_fuseq_dispatcher *fqd, int flags)
 	struct silofs_task task;
 	int err;
 
-	task_init_by(&task, fqd);
+	task_init_by(&task, fqd->fqd_fq);
 	err = fqd_do_exec_timeout(fqd, &task, flags);
 	task_fini(&task);
 	return err;

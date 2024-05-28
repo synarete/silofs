@@ -550,7 +550,7 @@ void silofs_task_unlock_fs(struct silofs_task *task)
 	}
 }
 
-void silofs_task_lock_ex(struct silofs_task *task)
+void silofs_task_rwlock_fs(struct silofs_task *task)
 {
 	if (!task->t_ex_locked) {
 		silofs_fsenv_rwlock(task->t_fsenv, task->t_exclusive);
@@ -558,7 +558,7 @@ void silofs_task_lock_ex(struct silofs_task *task)
 	}
 }
 
-void silofs_task_unlock_ex(struct silofs_task *task)
+void silofs_task_rwunlock_fs(struct silofs_task *task)
 {
 	if (task->t_ex_locked) {
 		silofs_fsenv_rwunlock(task->t_fsenv);

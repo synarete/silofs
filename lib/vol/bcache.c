@@ -385,7 +385,7 @@ static void bcache_relax_args(const struct silofs_bcache *bcache, int flags,
 		*out_niter += 2;
 		*out_iterall = true;
 	}
-	if (flags & SILOFS_F_IDLE1) {
+	if (flags & SILOFS_F_IDLE) {
 		*out_niter += 1;
 		*out_iterall = false;
 	}

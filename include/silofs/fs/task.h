@@ -122,9 +122,9 @@ void silofs_task_lock_fs(struct silofs_task *task);
 
 void silofs_task_unlock_fs(struct silofs_task *task);
 
-void silofs_task_lock_ex(struct silofs_task *task);
+void silofs_task_rwlock_fs(struct silofs_task *task);
 
-void silofs_task_unlock_ex(struct silofs_task *task);
+void silofs_task_rwunlock_fs(struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

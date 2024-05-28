@@ -44,8 +44,10 @@
 #define unused(x)                       silofs_unused(x)
 
 #define min(x, y)                       silofs_min(x, y)
+#define min64(x, y)                     silofs_min64(x, y)
 #define min3(x, y, z)                   silofs_min3(x, y, z)
 #define max(x, y)                       silofs_max(x, y)
+#define max64(x, y)                     silofs_max64(x, y)
 #define clamp(x, y, z)                  silofs_clamp(x, y, z)
 #define div_round_up(n, d)              silofs_div_round_up(n, d)
 

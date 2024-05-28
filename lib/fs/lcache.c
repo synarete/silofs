@@ -474,7 +474,7 @@ lcache_get_lru_ui(struct silofs_lcache *lcache)
 static bool lcache_evict_or_relru_ui(struct silofs_lcache *lcache,
                                      struct silofs_unode_info *ui, int flags)
 {
-	const int alf = (flags & SILOFS_F_IDLE2) ? SILOFS_ALLOCF_TRYPUNCH : 0;
+	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
 	bool evicted;
 
 	if (ui_is_evictable(ui)) {
@@ -787,7 +787,7 @@ lcache_get_lru_vi(struct silofs_lcache *lcache)
 static bool lcache_evict_or_relru_vi(struct silofs_lcache *lcache,
                                      struct silofs_vnode_info *vi, int flags)
 {
-	const int alf = (flags & SILOFS_F_IDLE2) ? SILOFS_ALLOCF_TRYPUNCH : 0;
+	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
 	bool evicted;
 
 	if (vi_is_evictable(vi)) {
@@ -984,7 +984,6 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 {
 	const size_t mempress = lcache_memory_pressure(lcache);
 	const size_t mempress_percentage = mempress / 10;
-	const size_t niter_base = (flags & SILOFS_F_NOW) ? 2 : 0;
 	size_t niter = 0;
 
 	if (mempress_percentage > 60) {
@@ -996,15 +995,13 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 			niter += mempress_percentage / 25;
 		}
 	}
-	if (!niter && (mempress > 0)) {
-		if (flags & SILOFS_F_IDLE1) {
-			niter += mempress_percentage / 10;
-		}
-		if (flags & SILOFS_F_IDLE2) {
-			niter += 2;
-		}
+	if (!niter && (mempress > 0) && (flags & SILOFS_F_IDLE)) {
+		niter = 2 + mempress_percentage / 10;
 	}
-	return niter + niter_base;
+	if (flags & SILOFS_F_NOW) {
+		niter += 2;
+	}
+	return niter;
 }
 
 static size_t lcache_nmapped_uis(const struct silofs_lcache *lcache)
@@ -1069,7 +1066,7 @@ static size_t lcache_relax_by_overpop(struct silofs_lcache *lcache)
 
 static void lcache_try_relax_uamap(struct silofs_lcache *lcache, int flags)
 {
-	if (flags & SILOFS_F_IDLE2) {
+	if (flags & SILOFS_F_IDLE) {
 		silofs_uamap_drop_lru(&lcache->lc_uamap);
 	}
 }

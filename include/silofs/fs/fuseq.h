@@ -55,7 +55,6 @@ struct silofs_fuseq_dispatcher {
 	time_t                          fqd_time_stamp;
 	volatile uint64_t               fqd_req_count;
 	uint32_t                        fqd_index;
-	bool                            fqd_leader;
 	bool                            fqd_init_ok;
 } silofs_aligned64;
 
@@ -69,10 +68,9 @@ struct silofs_fuseq {
 	struct silofs_fsenv            *fq_fsenv;
 	struct silofs_alloc            *fq_alloc;
 	struct silofs_listq             fq_curr_opers;
-	size_t                          fq_nopers;
+	int64_t                         fq_nexecs;
+	int64_t                         fq_nopers;
 	uid_t                           fq_fs_owner;
-	time_t                          fq_nexecs_ts;
-	int32_t                         fq_nexecs;
 	uint16_t                        fq_nworkers_lim;
 	uint16_t                        fq_nworkers_run;
 	uint16_t                        fq_ndisptch_lim;

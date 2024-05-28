@@ -2564,15 +2564,10 @@ int silofs_do_syncfs(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_do_timedout(struct silofs_task *task, int flags)
+int silofs_do_undust(struct silofs_task *task, int flags)
 {
-	int err;
-
-	err = silofs_flush_dirty(task, NULL, flags);
-	if (!err) {
-		silofs_fsenv_relax_caches(task->t_fsenv, flags);
-	}
-	return err;
+	silofs_fsenv_relax_caches(task->t_fsenv, flags);
+	return silofs_flush_dirty(task, NULL, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

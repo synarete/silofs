@@ -894,7 +894,9 @@ static size_t flush_threshold_of(int flags)
 		threshold = 0;
 	} else if (flags & SILOFS_F_RELEASE) {
 		threshold = SILOFS_LSEG_SIZE_MAX / 2;
-	} else if (flags & (SILOFS_F_OPSTART | SILOFS_F_OPFINISH)) {
+	} else if (flags & SILOFS_F_INTERN) {
+		threshold = SILOFS_LSEG_SIZE_MAX;
+	} else if (flags & SILOFS_F_OPSTART) {
 		threshold = 2 * SILOFS_LSEG_SIZE_MAX;
 	} else {
 		threshold = 4 * SILOFS_LSEG_SIZE_MAX;

@@ -102,18 +102,31 @@ int silofs_ts_gettime(struct timespec *ts, int realtime)
 	return err;
 }
 
-int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
+static int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	int err;
 
-	err = nanosleep(req, rem);
+	if (req->tv_sec || req->tv_nsec) {
+		err = nanosleep(req, rem);
+	} else {
+		rem->tv_sec = 0;
+		rem->tv_nsec = 0;
+		err = 0;
+	}
 	return err ? -errno : 0;
 }
 
 int silofs_suspend_secs(time_t secs)
 {
-	struct timespec req = { .tv_sec = secs };
-	struct timespec rem = { .tv_sec = 0 };
+	struct timespec ts = { .tv_sec = secs, .tv_nsec = 0 };
+
+	return silofs_suspend_ts(&ts);
+}
+
+int silofs_suspend_ts(const struct timespec *ts)
+{
+	struct timespec req = { .tv_sec = ts->tv_sec, .tv_nsec = ts->tv_nsec };
+	struct timespec rem = { .tv_sec = 0, .tv_nsec = 0 };
 	int err;
 
 	err = silofs_nanosleep(&req, &rem);

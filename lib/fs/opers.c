@@ -116,22 +116,12 @@ static int op_unlooseq(struct silofs_task *task)
 	return ret;
 }
 
-static void op_relax_post(struct silofs_task *task)
-{
-	if (task->t_apex_id) {
-		relax_caches(task, SILOFS_F_OPFINISH);
-	}
-}
-
 static int op_finish(struct silofs_task *task, int err)
 {
 	int err2 = 0;
 
 	op_probe_duration(task, err);
 	err2 = op_unlooseq(task);
-	if (!err && !err2) {
-		op_relax_post(task);
-	}
 	silofs_task_unlock_fs(task);
 	return err ? err : err2;
 }
@@ -1652,14 +1642,14 @@ int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,
 	return silofs_do_rdwr_post(task, wr_mode, iov, cnt);
 }
 
-int silofs_fs_timedout(struct silofs_task *task, int flags)
+int silofs_fs_undust(struct silofs_task *task, int flags)
 {
 	int err;
 
 	err = op_start(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_timedout(task, flags);
+	err = silofs_do_undust(task, flags);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

@@ -36,7 +36,7 @@ void silofs_ts_copy(struct timespec *dst, const struct timespec *src);
 
 int silofs_ts_gettime(struct timespec *ts, int realtime);
 
-int silofs_nanosleep(const struct timespec *req, struct timespec *rem);
+int silofs_suspend_ts(const struct timespec *ts);
 
 int silofs_suspend_secs(time_t secs);
 

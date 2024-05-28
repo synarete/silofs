@@ -26,7 +26,7 @@ enum silofs_flags {
 	SILOFS_F_RELEASE        = SILOFS_BIT(2),
 	SILOFS_F_BRINGUP        = SILOFS_BIT(4),
 	SILOFS_F_OPSTART        = SILOFS_BIT(5),
-	SILOFS_F_OPFINISH       = SILOFS_BIT(6),
+	SILOFS_F_INTERN         = SILOFS_BIT(6),
 	SILOFS_F_IDLE           = SILOFS_BIT(7),
 };
 

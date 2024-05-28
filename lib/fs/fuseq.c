@@ -3981,7 +3981,7 @@ static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	silofs_task_set_ts(task, false);
 	task->t_oper.op_pid = args->pid;
-	task->t_exclusive = true;
+	task->t_exclusive = false;
 }
 
 static int fqw_do_exec_timeout(struct silofs_fuseq_worker *fqw,

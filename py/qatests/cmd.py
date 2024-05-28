@@ -61,7 +61,7 @@ class CmdExec:
         ) as proc:
             try:
                 std_out, std_err = proc.communicate(
-                    timeout=timeout, input=indat
+                    timeout=timeout, input=indat or None
                 )
                 out = std_err or std_out
                 txt = out.strip()
@@ -249,11 +249,11 @@ class CmdSilofs(CmdExec):
         self.execute_sub(args, indat=password)
 
     def tune(self, pathname: Path, ftype: int) -> None:
-        self.execute_sub(["tune", "--ftype", str(ftype), pathname])
+        self.execute_run(["tune", "--ftype", str(ftype), pathname])
 
     def rmfs(self, repodir_name: Path, password: str) -> None:
         args = ["rmfs", "--no-prompt", repodir_name]
-        self.execute_sub(args, indat=password)
+        self.execute_run(args, indat=password)
 
     def fsck(self, repodir_name: Path, password: str) -> None:
         args = ["fsck", "--no-prompt", repodir_name]

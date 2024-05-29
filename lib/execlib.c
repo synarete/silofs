@@ -467,10 +467,6 @@ static int fs_ctx_init_fuseq(struct silofs_fs_ctx *fs_ctx)
 		return err;
 	}
 	fs_ctx_bind_fuseq(fs_ctx, &fqp->fuseq);
-	err = silofs_fuseq_update(&fqp->fuseq);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 
@@ -894,6 +890,10 @@ int silofs_exec_fs(struct silofs_fs_ctx *fs_ctx)
 
 	if (!fs_ctx_with_fuse(fs_ctx) || (fuseq == NULL)) {
 		return -SILOFS_EINVAL;
+	}
+	err = silofs_fuseq_update(fuseq);
+	if (err) {
+		return err;
 	}
 	err = silofs_fuseq_mount(fuseq, fs_ctx->fsenv, fs_ctx->fs_args.mntdir);
 	if (!err) {

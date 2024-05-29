@@ -991,12 +991,13 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 	} else if (mempress_percentage > 20) {
 		if (flags & SILOFS_F_OPSTART) {
 			niter += mempress_percentage / 40;
-		} else if (flags & SILOFS_F_INTERN) {
+		}
+		if (flags & SILOFS_F_INTERN) {
 			niter += mempress_percentage / 20;
 		}
 	}
 	if (!niter && (mempress > 0) && (flags & SILOFS_F_IDLE)) {
-		niter = 2 + mempress_percentage / 10;
+		niter += 2 + mempress_percentage / 10;
 	}
 	if (flags & SILOFS_F_NOW) {
 		niter += 2;

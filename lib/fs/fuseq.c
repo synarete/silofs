@@ -5259,4 +5259,3 @@ void silofs_guarantee_fuse_proto(void)
 	REQUIRE_SIZEOF(struct silofs_fuseq_copy_file_range_in, 96);
 	REQUIRE_BASEOF(struct silofs_fuseq_copy_file_range_in, arg);
 }
-

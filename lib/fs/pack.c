@@ -30,6 +30,28 @@ struct silofs_pack_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int pac_acquire_buf(const struct silofs_pack_ctx *pa_ctx, size_t len,
+                           struct silofs_bytebuf *out_bbuf)
+{
+	void *dat;
+
+	dat = silofs_memalloc(pa_ctx->pac_alloc, len, SILOFS_ALLOCF_BZERO);
+	if (dat == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	silofs_bytebuf_init2(out_bbuf, dat, len);
+	return 0;
+}
+
+static void pac_release_buf(const struct silofs_pack_ctx *pa_ctx,
+                            struct silofs_bytebuf *bbuf)
+{
+	if (bbuf && bbuf->cap) {
+		silofs_memfree(pa_ctx->pac_alloc, bbuf->ptr, bbuf->cap, 0);
+		silofs_bytebuf_fini(bbuf);
+	}
+}
+
 static int pac_init(struct silofs_pack_ctx *pa_ctx,
                     struct silofs_task *task)
 {
@@ -50,9 +72,22 @@ static void pac_fini(struct silofs_pack_ctx *pa_ctx)
 
 static int
 pac_stat_pack(const struct silofs_pack_ctx *pa_ctx,
-              const struct silofs_caddr *caddr, ssize_t *out_sz)
+              const struct silofs_caddr *caddr, size_t *out_sz)
 {
-	return silofs_repo_stat_pack(pa_ctx->pac_repo, caddr, out_sz);
+	ssize_t sz = -1;
+	int err;
+
+	err = silofs_repo_stat_pack(pa_ctx->pac_repo, caddr, &sz);
+	if (err) {
+		return err;
+	}
+	if ((sz < SILOFS_CATALOG_SIZE_MIN) ||
+	    (sz > SILOFS_CATALOG_SIZE_MAX)) {
+		log_warn("illegal pack-catalog: size=%zu", sz);
+		return -SILOFS_EINVAL;
+	}
+	*out_sz = (size_t)sz;
+	return 0;
 }
 
 static int pac_send_to_repo(const struct silofs_pack_ctx *pa_ctx,
@@ -60,6 +95,13 @@ static int pac_send_to_repo(const struct silofs_pack_ctx *pa_ctx,
                             const struct silofs_rovec *rov)
 {
 	return silofs_repo_save_pack(pa_ctx->pac_repo, caddr, rov);
+}
+
+static int pac_recv_from_repo(const struct silofs_pack_ctx *pa_ctx,
+                              const struct silofs_caddr *caddr,
+                              const struct silofs_rwvec *rwv)
+{
+	return silofs_repo_load_pack(pa_ctx->pac_repo, caddr, rwv);
 }
 
 static int pac_send_pack(const struct silofs_pack_ctx *pa_ctx,
@@ -72,11 +114,11 @@ static int pac_send_pack(const struct silofs_pack_ctx *pa_ctx,
 		.rov_base = dat,
 		.rov_len = laddr->len
 	};
-	ssize_t sz = -1;
+	size_t sz = 0;
 	int err;
 
 	err = pac_stat_pack(pa_ctx, caddr, &sz);
-	if ((err == -ENOENT) || (!err && ((size_t)sz != laddr->len))) {
+	if ((err == -ENOENT) || (!err && (sz != laddr->len))) {
 		err = pac_send_to_repo(pa_ctx, caddr, &rov);
 	}
 	return err;
@@ -126,7 +168,7 @@ pac_update_hash_of(const struct silofs_pack_ctx *pa_ctx,
 	};
 	const struct silofs_mdigest *md = &pa_ctx->pac_catalog.cat_mdigest;
 
-	silofs_pkdesc_calc_caddr_by(&pdi->pd, md, &rov);
+	silofs_pkdesc_update_caddr_by(&pdi->pd, md, &rov);
 	return 0;
 }
 
@@ -232,16 +274,21 @@ static int pac_export_fs(struct silofs_pack_ctx *pa_ctx)
 	return silofs_fs_inspect(pa_ctx->pac_task, pac_visit_laddr_cb, pa_ctx);
 }
 
-static int pac_export_catalog(struct silofs_pack_ctx *pa_ctx)
+static int pac_encode_save_catalog(struct silofs_pack_ctx *pa_ctx,
+                                   struct silofs_bytebuf *bb)
 {
 	struct silofs_catalog *cat = &pa_ctx->pac_catalog;
-	const struct silofs_rovec rov = {
-		.rov_base = cat->cat_bbuf.ptr,
-		.rov_len = cat->cat_bbuf.len
+	struct silofs_rwvec rwv = {
+		.rwv_base = bb->ptr,
+		.rwv_len = bb->len
+	};
+	struct silofs_rovec rov = {
+		.rov_base = bb->ptr,
+		.rov_len = bb->len
 	};
 	int err;
 
-	err = silofs_catalog_encode(cat);
+	err = silofs_catalog_encode(cat, &rwv);
 	if (err) {
 		return err;
 	}
@@ -250,6 +297,37 @@ static int pac_export_catalog(struct silofs_pack_ctx *pa_ctx)
 		return err;
 	}
 	return 0;
+}
+
+static int pac_acquire_enc_buf(const struct silofs_pack_ctx *pa_ctx,
+                               struct silofs_bytebuf *out_bbuf)
+{
+	size_t bsz = 0;
+	int err;
+
+	err = silofs_catalog_encsize(&pa_ctx->pac_catalog, &bsz);
+	if (!err) {
+		err = pac_acquire_buf(pa_ctx, bsz, out_bbuf);
+	}
+	return err;
+}
+
+static int pac_export_catalog(struct silofs_pack_ctx *pa_ctx)
+{
+	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
+	int err;
+
+	err = pac_acquire_enc_buf(pa_ctx, &bb);
+	if (err) {
+		goto out;
+	}
+	err = pac_encode_save_catalog(pa_ctx, &bb);
+	if (err) {
+		goto out;
+	}
+out:
+	pac_release_buf(pa_ctx, &bb);
+	return err;
 }
 
 static void pac_catalog_id(const struct silofs_pack_ctx *pa_ctx,
@@ -292,6 +370,61 @@ static void pac_set_catalog_id(struct silofs_pack_ctx *pa_ctx,
 	silofs_caddr_assign(&pa_ctx->pac_catalog.cat_caddr, caddr);
 }
 
+static int pac_acquire_dec_buf(const struct silofs_pack_ctx *pa_ctx, size_t sz,
+                               struct silofs_bytebuf *out_bbuf)
+{
+	return pac_acquire_buf(pa_ctx, sz, out_bbuf);
+}
+
+static int pac_load_decode_catalog(struct silofs_pack_ctx *pa_ctx,
+                                   struct silofs_bytebuf *bb)
+{
+	struct silofs_catalog *cat = &pa_ctx->pac_catalog;
+	struct silofs_rwvec rwv = {
+		.rwv_base = bb->ptr,
+		.rwv_len = bb->len
+	};
+	struct silofs_rovec rov = {
+		.rov_base = bb->ptr,
+		.rov_len = bb->len
+	};
+	int err;
+
+	err = pac_recv_from_repo(pa_ctx, &cat->cat_caddr, &rwv);
+	if (err) {
+		return err;
+	}
+	err = silofs_catalog_decode(cat, &rov);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int pac_import_catalog(struct silofs_pack_ctx *pa_ctx)
+{
+	struct silofs_catalog *cat = &pa_ctx->pac_catalog;
+	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
+	size_t sz;
+	int err;
+
+	err = pac_stat_pack(pa_ctx, &cat->cat_caddr, &sz);
+	if (err) {
+		goto out;
+	}
+	err = pac_acquire_dec_buf(pa_ctx, sz, &bb);
+	if (err) {
+		goto out;
+	}
+	err = pac_load_decode_catalog(pa_ctx, &bb);
+	if (err) {
+		goto out;
+	}
+out:
+	pac_release_buf(pa_ctx, &bb);
+	return err;
+}
+
 int silofs_fs_unpack(struct silofs_task *task,
                      const struct silofs_caddr *caddr)
 {
@@ -305,6 +438,10 @@ int silofs_fs_unpack(struct silofs_task *task,
 		return err;
 	}
 	pac_set_catalog_id(&pa_ctx, caddr);
+	if (err) {
+		goto out;
+	}
+	err = pac_import_catalog(&pa_ctx);
 	if (err) {
 		goto out;
 	}

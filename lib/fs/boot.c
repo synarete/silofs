@@ -666,12 +666,12 @@ static void calc_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
                                  const struct silofs_bootrec1k *brec1k,
                                  struct silofs_caddr *out_caddr)
 {
-	const struct silofs_rovec rov = {
-		.rov_base = brec1k,
-		.rov_len = sizeof(*brec1k)
+	const struct iovec iov = {
+		.iov_base = unconst(brec1k),
+		.iov_len = sizeof(*brec1k)
 	};
 
-	silofs_calc_caddr_of(&rov, &fsenv->fse_mdigest, out_caddr);
+	silofs_calc_caddr_of(&iov, 1, &fsenv->fse_mdigest, out_caddr);
 }
 
 static int verify_bootrec1k_caddr(const struct silofs_fsenv *fsenv,

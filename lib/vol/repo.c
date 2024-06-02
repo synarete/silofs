@@ -2651,19 +2651,12 @@ int silofs_repo_load_pack(struct silofs_repo *repo,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void calc_hash_of(const struct silofs_rovec *rov,
-                         const struct silofs_mdigest *md,
-                         struct silofs_hash256 *out_hash)
-{
-	silofs_sha256_of(md, rov->rov_base, rov->rov_len, out_hash);
-}
-
-void silofs_calc_caddr_of(const struct silofs_rovec *rov,
+void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
                           const struct silofs_mdigest *md,
                           struct silofs_caddr *out_caddr)
 {
 	struct silofs_hash256 hash;
 
-	calc_hash_of(rov, md, &hash);
+	silofs_sha256_ofv(md, iov, cnt, &hash);
 	silofs_caddr_setup(out_caddr, &hash);
 }

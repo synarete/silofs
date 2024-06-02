@@ -85,7 +85,7 @@ static void sb_generate_uuid(struct silofs_super_block *sb)
 int silofs_sb_check_version(const struct silofs_super_block *sb)
 {
 	if (sb_magic(sb) != SILOFS_SUPER_MAGIC) {
-		return -SILOFS_EINVAL;
+		return -SILOFS_EFSCORRUPTED;
 	}
 	if (sb_version(sb) != SILOFS_FMT_VERSION) {
 		return -SILOFS_EFSCORRUPTED;

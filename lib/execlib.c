@@ -17,7 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fs/fuseq.h>
-#include <silofs/pack.h>
 #include <silofs/execlib.h>
 
 

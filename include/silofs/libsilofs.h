@@ -25,7 +25,6 @@
 #include <silofs/addr.h>
 #include <silofs/vol.h>
 #include <silofs/fs.h>
-#include <silofs/pack.h>
 #include <silofs/execlib.h>
 
 #endif /* SILOFS_LIBSILOFS_H_ */

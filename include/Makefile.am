@@ -61,6 +61,7 @@ nobase_include_HEADERS += silofs/vol/pnodes.h
 nobase_include_HEADERS += silofs/vol/repo.h
 nobase_include_HEADERS += silofs/vol.h
 nobase_include_HEADERS += silofs/fs/boot.h
+nobase_include_HEADERS += silofs/fs/catalog.h
 nobase_include_HEADERS += silofs/fs/claim.h
 nobase_include_HEADERS += silofs/fs/dir.h
 nobase_include_HEADERS += silofs/fs/encdec.h
@@ -75,6 +76,7 @@ nobase_include_HEADERS += silofs/fs/lnodes.h
 nobase_include_HEADERS += silofs/fs/mntsvc.h
 nobase_include_HEADERS += silofs/fs/namei.h
 nobase_include_HEADERS += silofs/fs/opers.h
+nobase_include_HEADERS += silofs/fs/pack.h
 nobase_include_HEADERS += silofs/fs/spmaps.h
 nobase_include_HEADERS += silofs/fs/spxmap.h
 nobase_include_HEADERS += silofs/fs/stats.h
@@ -89,9 +91,6 @@ nobase_include_HEADERS += silofs/fs/walk.h
 nobase_include_HEADERS += silofs/fs/xattr.h
 nobase_include_HEADERS += silofs/fs.h
 nobase_include_HEADERS += silofs/fs-private.h
-nobase_include_HEADERS += silofs/pack/catalog.h
-nobase_include_HEADERS += silofs/pack/export.h
-nobase_include_HEADERS += silofs/pack.h
 
 EXTRA_DIST = config-am.h.in
 

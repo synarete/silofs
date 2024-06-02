@@ -14,7 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/vol.h>
-#include <silofs/pack.h>
+#ifndef SILOFS_PACK_H_
+#define SILOFS_PACK_H_
+
+struct silofs_task;
+
+int silofs_fs_pack(struct silofs_task *task, struct silofs_caddr *out_caddr);
+
+#endif /* SILOFS_PACK_H_ */

@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/vol.h>
 #include <silofs/fs.h>
-#include <silofs/pack.h>
 
 
 struct silofs_pack_export_ctx {

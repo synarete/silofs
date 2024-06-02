@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/vol.h>
 #include <silofs/fs.h>
-#include <silofs/pack.h>
 
 
 static void pkmeta1k_set_magic(struct silofs_pack_meta1k *pkm, uint64_t magic)

@@ -122,7 +122,11 @@ int silofs_repo_stat_pack(struct silofs_repo *repo,
 
 int silofs_repo_save_pack(struct silofs_repo *repo,
                           const struct silofs_caddr *caddr,
-                          const struct silofs_bytebuf *bb);
+                          const struct silofs_rovec *rov);
+
+int silofs_repo_load_pack(struct silofs_repo *repo,
+                          const struct silofs_caddr *caddr,
+                          const struct silofs_rwvec *rwv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

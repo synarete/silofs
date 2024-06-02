@@ -307,6 +307,13 @@ static int do_fstatat_dir(int dirfd, const char *pathname, struct stat *out_st)
 	return 0;
 }
 
+static int do_fstatat_dir2(int dirfd, const char *pathname)
+{
+	struct stat st = { .st_size = -1 };
+
+	return do_fstatat_dir(dirfd, pathname, &st);
+}
+
 static int do_fstatat_reg(int dirfd, const char *pathname, struct stat *out_st)
 {
 	mode_t mode;
@@ -2578,7 +2585,7 @@ int silofs_repo_stat_pack(struct silofs_repo *repo,
 
 static int repo_save_pack_of(const struct silofs_repo *repo,
                              const struct silofs_caddr *caddr,
-                             const struct silofs_bytebuf *bb)
+                             const struct silofs_rovec *rov)
 {
 	struct silofs_strbuf sbuf;
 	int err;
@@ -2589,7 +2596,8 @@ static int repo_save_pack_of(const struct silofs_repo *repo,
 		return err;
 	}
 	repo_pack_pathname_of(repo, caddr, &sbuf);
-	err = do_save_obj(repo->re_dots_dfd, sbuf.str, bb->ptr, bb->len);
+	err = do_save_obj(repo->re_dots_dfd, sbuf.str,
+	                  rov->rov_base, rov->rov_len);
 	if (err) {
 		return err;
 	}
@@ -2598,12 +2606,45 @@ static int repo_save_pack_of(const struct silofs_repo *repo,
 
 int silofs_repo_save_pack(struct silofs_repo *repo,
                           const struct silofs_caddr *caddr,
-                          const struct silofs_bytebuf *bb)
+                          const struct silofs_rovec *rov)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_save_pack_of(repo, caddr, bb);
+	err = repo_save_pack_of(repo, caddr, rov);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_load_pack_of(const struct silofs_repo *repo,
+                             const struct silofs_caddr *caddr,
+                             const struct silofs_rwvec *rwv)
+{
+	struct silofs_strbuf sbuf;
+	int err;
+
+	repo_pack_subdir_of(repo, caddr, &sbuf);
+	err = do_fstatat_dir2(repo->re_dots_dfd, sbuf.str);
+	if (err) {
+		return err;
+	}
+	repo_pack_pathname_of(repo, caddr, &sbuf);
+	err = do_load_obj(repo->re_dots_dfd, sbuf.str,
+	                  rwv->rwv_base, rwv->rwv_len);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_repo_load_pack(struct silofs_repo *repo,
+                          const struct silofs_caddr *caddr,
+                          const struct silofs_rwvec *rwv)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_load_pack_of(repo, caddr, rwv);
 	repo_unlock(repo);
 	return err;
 }

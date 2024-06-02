@@ -37,6 +37,7 @@ nobase_include_HEADERS += silofs/infra/strings.h
 nobase_include_HEADERS += silofs/infra/thread.h
 nobase_include_HEADERS += silofs/infra/time.h
 nobase_include_HEADERS += silofs/infra/utility.h
+nobase_include_HEADERS += silofs/infra/zcmpr.h
 nobase_include_HEADERS += silofs/infra.h
 nobase_include_HEADERS += silofs/infra-private.h
 nobase_include_HEADERS += silofs/addr/blobid.h
@@ -90,7 +91,6 @@ nobase_include_HEADERS += silofs/fs.h
 nobase_include_HEADERS += silofs/fs-private.h
 nobase_include_HEADERS += silofs/pack/catalog.h
 nobase_include_HEADERS += silofs/pack/export.h
-nobase_include_HEADERS += silofs/pack/zcmpr.h
 nobase_include_HEADERS += silofs/pack.h
 
 EXTRA_DIST = config-am.h.in

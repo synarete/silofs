@@ -46,6 +46,7 @@
 #include <silofs/infra/time.h>
 #include <silofs/infra/qalloc.h>
 #include <silofs/infra/utility.h>
+#include <silofs/infra/zcmpr.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
 #include <silofs/infra-private.h>

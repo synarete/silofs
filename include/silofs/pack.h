@@ -22,7 +22,6 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-#include <silofs/pack/zcmpr.h>
 #include <silofs/pack/catalog.h>
 #include <silofs/pack/export.h>
 

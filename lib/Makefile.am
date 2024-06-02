@@ -32,6 +32,7 @@ libsilofs_la_SOURCES += infra/strbuf.c
 libsilofs_la_SOURCES += infra/strings.c
 libsilofs_la_SOURCES += infra/thread.c
 libsilofs_la_SOURCES += infra/time.c
+libsilofs_la_SOURCES += infra/zcmpr.c
 libsilofs_la_SOURCES += addr/blobid.c
 libsilofs_la_SOURCES += addr/hmapq.c
 libsilofs_la_SOURCES += addr/ivkey.c
@@ -78,7 +79,6 @@ libsilofs_la_SOURCES += fs/xattr.c
 libsilofs_la_SOURCES += pack/catalog.c
 libsilofs_la_SOURCES += pack/export.c
 libsilofs_la_SOURCES += pack/import.c
-libsilofs_la_SOURCES += pack/zcmpr.c
 libsilofs_la_SOURCES += execlib.c
 libsilofs_la_SOURCES += version.c
 

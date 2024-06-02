@@ -17,6 +17,8 @@
 #ifndef SILOFS_ZCMPR_H_
 #define SILOFS_ZCMPR_H_
 
+#include <stdlib.h>
+#include <stdbool.h>
 
 struct silofs_zcmpr {
 	void *ctx;

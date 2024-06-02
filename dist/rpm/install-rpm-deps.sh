@@ -33,6 +33,7 @@ qatests_deps=(
   git-email
   libattr-devel
   libcap-devel
+  libicu-devel
   libtool
   libunwind-devel
   libuuid-devel
@@ -91,4 +92,3 @@ case "$arg" in
     _install_rpm_pkgs "${base_deps[@]}"
     ;;
 esac
-

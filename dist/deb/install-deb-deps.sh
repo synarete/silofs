@@ -42,6 +42,7 @@ qatests_deps=(
   flex
   bison
   libcap-dev
+  libicu-dev
   libunwind-dev
   libreadline-dev
   libssl-dev

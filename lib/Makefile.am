@@ -50,7 +50,6 @@ libsilofs_la_SOURCES += vol/bcache.c
 libsilofs_la_SOURCES += vol/pnodes.c
 libsilofs_la_SOURCES += vol/repo.c
 libsilofs_la_SOURCES += fs/boot.c
-libsilofs_la_SOURCES += fs/catalog.c
 libsilofs_la_SOURCES += fs/claim.c
 libsilofs_la_SOURCES += fs/delfs.c
 libsilofs_la_SOURCES += fs/dir.c

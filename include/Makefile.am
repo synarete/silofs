@@ -61,7 +61,6 @@ nobase_include_HEADERS += silofs/vol/pnodes.h
 nobase_include_HEADERS += silofs/vol/repo.h
 nobase_include_HEADERS += silofs/vol.h
 nobase_include_HEADERS += silofs/fs/boot.h
-nobase_include_HEADERS += silofs/fs/catalog.h
 nobase_include_HEADERS += silofs/fs/claim.h
 nobase_include_HEADERS += silofs/fs/dir.h
 nobase_include_HEADERS += silofs/fs/encdec.h

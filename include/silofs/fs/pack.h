@@ -22,15 +22,6 @@ struct silofs_task;
 #define SILOFS_CATALOG_SIZE_MIN SILOFS_LBK_SIZE
 #define SILOFS_CATALOG_SIZE_MAX (256 * SILOFS_MEGA)
 
-struct silofs_pack_desc {
-	struct silofs_caddr     pd_caddr;
-	struct silofs_laddr     pd_laddr;
-};
-
-struct silofs_pack_desc_info {
-	struct silofs_list_head pdi_lh;
-	struct silofs_pack_desc pd;
-};
 
 int silofs_fs_pack(struct silofs_task *task,
                    struct silofs_caddr *out_caddr);

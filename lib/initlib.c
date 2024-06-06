@@ -139,7 +139,7 @@ static void validate_persistent_types_nk(void)
 	REQUIRE_SIZEOF_1K(struct silofs_data_block1);
 	REQUIRE_SIZEOF_4K(struct silofs_data_block4);
 	REQUIRE_SIZEOF_64K(struct silofs_data_block64);
-	REQUIRE_SIZEOF_1K(struct silofs_pack_meta1k);
+	REQUIRE_SIZEOF_1K(struct silofs_archive_meta1k);
 }
 
 static void validate_persistent_types_size1(void)
@@ -151,7 +151,7 @@ static void validate_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_btree_ltop, 80);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_leaf, SILOFS_BTREE_LEAF_SIZE);
-	REQUIRE_SIZEOF(struct silofs_pack_desc256b, 256);
+	REQUIRE_SIZEOF(struct silofs_archive_desc256b, 256);
 }
 
 static void validate_persistent_types_size2(void)

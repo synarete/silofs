@@ -19,218 +19,217 @@
 #include <silofs/vol.h>
 #include <silofs/fs.h>
 
-struct silofs_pack_ref {
-	struct silofs_pack_meta1k   *meta;
-	struct silofs_pack_desc256b *descs;
+
+struct silofs_archive_desc {
+	struct silofs_caddr             ard_caddr;
+	struct silofs_laddr             ard_laddr;
+};
+
+struct silofs_archive_desc_info {
+	struct silofs_list_head         lh;
+	struct silofs_archive_desc      ad;
+};
+
+struct silofs_archive_view {
+	struct silofs_archive_meta1k   *meta;
+	struct silofs_archive_desc256b *descs;
 	size_t capacity;
 	size_t ndescs_max;
 	size_t ndescs;
 };
 
-struct silofs_catalog {
-	struct silofs_mdigest   cat_mdigest;
-	struct silofs_caddr     cat_caddr;
-	struct silofs_listq     cat_descq;
-	struct silofs_alloc    *cat_alloc;
+struct silofs_archive_index {
+	struct silofs_mdigest           mdigest;
+	struct silofs_caddr             caddr;
+	struct silofs_listq             descq;
+	struct silofs_alloc            *alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 
-static uint64_t pkmeta1k_magic(const struct silofs_pack_meta1k *pkm)
+static uint64_t armeta1k_magic(const struct silofs_archive_meta1k *arm1k)
 {
-	return silofs_le64_to_cpu(pkm->pm_magic);
+	return silofs_le64_to_cpu(arm1k->am_magic);
 }
 
-static void pkmeta1k_set_magic(struct silofs_pack_meta1k *pkm, uint64_t magic)
+static void armeta1k_set_magic(struct silofs_archive_meta1k *arm1k,
+                               uint64_t magic)
 {
-	pkm->pm_magic = silofs_cpu_to_le64(magic);
+	arm1k->am_magic = silofs_cpu_to_le64(magic);
 }
 
-static uint32_t pkmeta1k_version(const struct silofs_pack_meta1k *pkm)
+static uint32_t armeta1k_version(const struct silofs_archive_meta1k *arm1k)
 {
-	return silofs_le32_to_cpu(pkm->pm_version);
+	return silofs_le32_to_cpu(arm1k->am_version);
 }
 
-static void pkmeta1k_set_version(struct silofs_pack_meta1k *pkm, uint32_t vers)
+static void armeta1k_set_version(struct silofs_archive_meta1k *arm1k,
+                                 uint32_t vers)
 {
-	pkm->pm_version = silofs_cpu_to_le32(vers);
+	arm1k->am_version = silofs_cpu_to_le32(vers);
 }
 
-static void pkmeta1k_set_flags(struct silofs_pack_meta1k *pkm, uint32_t flags)
+static void armeta1k_set_flags(struct silofs_archive_meta1k *arm1k,
+                               uint32_t flags)
 {
-	pkm->pm_flags = silofs_cpu_to_le32(flags);
+	arm1k->am_flags = silofs_cpu_to_le32(flags);
 }
 
-static size_t pkmeta1k_capacity(const struct silofs_pack_meta1k *pkm)
+static size_t armeta1k_ndescs(const struct silofs_archive_meta1k *arm1k)
 {
-	return silofs_le64_to_cpu(pkm->pm_capacity);
+	return silofs_le64_to_cpu(arm1k->am_ndescs);
 }
 
-static void pkmeta1k_set_capacity(struct silofs_pack_meta1k *pkm, size_t cap)
+static void armeta1k_set_ndescs(struct silofs_archive_meta1k *arm1k,
+                                size_t ndescs)
 {
-	pkm->pm_capacity = silofs_cpu_to_le64(cap);
+	arm1k->am_ndescs = silofs_cpu_to_le64(ndescs);
 }
 
-static size_t pkmeta1k_ndescs(const struct silofs_pack_meta1k *pkm)
+static uint64_t armeta1k_descs_csum(const struct silofs_archive_meta1k *arm1k)
 {
-	return silofs_le64_to_cpu(pkm->pm_ndescs);
+	return silofs_le64_to_cpu(arm1k->am_descs_csum);
 }
 
-static void pkmeta1k_set_ndescs(struct silofs_pack_meta1k *pkm, size_t ndescs)
-{
-	pkm->pm_ndescs = silofs_cpu_to_le64(ndescs);
-}
-
-static uint64_t pkmeta1k_descs_csum(const struct silofs_pack_meta1k *pkm)
-{
-	return silofs_le64_to_cpu(pkm->pm_descs_csum);
-}
-
-static void pkmeta1k_set_descs_csum(struct silofs_pack_meta1k *pkm,
+static void armeta1k_set_descs_csum(struct silofs_archive_meta1k *arm1k,
                                     uint64_t descs_csum)
 {
-	pkm->pm_descs_csum = silofs_cpu_to_le64(descs_csum);
+	arm1k->am_descs_csum = silofs_cpu_to_le64(descs_csum);
 }
 
-static uint64_t pkmeta1k_meta_csum(const struct silofs_pack_meta1k *pkm)
+static uint64_t armeta1k_meta_csum(const struct silofs_archive_meta1k *arm1k)
 {
-	return silofs_le64_to_cpu(pkm->pm_meta_csum);
+	return silofs_le64_to_cpu(arm1k->am_meta_csum);
 }
 
-static void pkmeta1k_set_meta_csum(struct silofs_pack_meta1k *pkm,
+static void armeta1k_set_meta_csum(struct silofs_archive_meta1k *arm1k,
                                    uint64_t meta_csum)
 {
-	pkm->pm_meta_csum = silofs_cpu_to_le64(meta_csum);
+	arm1k->am_meta_csum = silofs_cpu_to_le64(meta_csum);
 }
 
-static void pkmeta1k_init(struct silofs_pack_meta1k *pkm)
+static void armeta1k_init(struct silofs_archive_meta1k *arm1k)
 {
-	silofs_memzero(pkm, sizeof(*pkm));
-	pkmeta1k_set_magic(pkm, SILOFS_PACK_META_MAGIC);
-	pkmeta1k_set_version(pkm, SILOFS_PACK_VERSION);
-	pkmeta1k_set_flags(pkm, 0);
-	pkmeta1k_set_capacity(pkm, 0);
-	pkmeta1k_set_ndescs(pkm, 0);
-	pkmeta1k_set_descs_csum(pkm, 0);
-	pkmeta1k_set_meta_csum(pkm, 0);
+	silofs_memzero(arm1k, sizeof(*arm1k));
+	armeta1k_set_magic(arm1k, SILOFS_PACK_META_MAGIC);
+	armeta1k_set_version(arm1k, SILOFS_PACK_VERSION);
+	armeta1k_set_flags(arm1k, 0);
+	armeta1k_set_ndescs(arm1k, 0);
+	armeta1k_set_descs_csum(arm1k, 0);
+	armeta1k_set_meta_csum(arm1k, 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void pkdesc_init(struct silofs_pack_desc *pd,
-                        const struct silofs_laddr *laddr)
+static void ard_init(struct silofs_archive_desc *ard,
+                     const struct silofs_laddr *laddr)
 {
-	silofs_memzero(pd, sizeof(*pd));
-	silofs_laddr_assign(&pd->pd_laddr, laddr);
+	silofs_memzero(ard, sizeof(*ard));
+	silofs_laddr_assign(&ard->ard_laddr, laddr);
 }
 
-static void pkdesc_fini(struct silofs_pack_desc *pd)
+static void ard_fini(struct silofs_archive_desc *ard)
 {
-	silofs_laddr_reset(&pd->pd_laddr);
+	silofs_laddr_reset(&ard->ard_laddr);
 }
 
-static void pkdesc_update_caddr_by(struct silofs_pack_desc *pd,
-                                   const struct silofs_mdigest *md,
-                                   const struct silofs_rovec *rov)
+static void ard_update_caddr_by(struct silofs_archive_desc *ard,
+                                const struct silofs_mdigest *md,
+                                const struct silofs_rovec *rov)
 {
 	const struct iovec iov = {
 		.iov_base = unconst(rov->rov_base),
 		.iov_len = rov->rov_len,
 	};
 
-	silofs_calc_caddr_of(&iov, 1, md, &pd->pd_caddr);
+	silofs_calc_caddr_of(&iov, 1, md, &ard->ard_caddr);
 }
 
-static void silofs_pack_desc256b_reset(struct silofs_pack_desc256b *pdx)
+static void ardesc256b_reset(struct silofs_archive_desc256b *ard256)
 {
-	memset(pdx, 0, sizeof(*pdx));
+	memset(ard256, 0, sizeof(*ard256));
 }
 
-static void pkdesc128b_htox(struct silofs_pack_desc256b *pdx,
-                            const struct silofs_pack_desc *pd)
+static void ardesc256b_htox(struct silofs_archive_desc256b *ard256,
+                            const struct silofs_archive_desc *ard)
 {
-	silofs_pack_desc256b_reset(pdx);
-	silofs_caddr64b_htox(&pdx->pd_caddr, &pd->pd_caddr);
-	silofs_laddr48b_htox(&pdx->pd_laddr, &pd->pd_laddr);
+	ardesc256b_reset(ard256);
+	silofs_caddr64b_htox(&ard256->ad_caddr, &ard->ard_caddr);
+	silofs_laddr48b_htox(&ard256->ad_laddr, &ard->ard_laddr);
 }
 
-static void pkdesc128b_xtoh(const struct silofs_pack_desc256b *pdx,
-                            struct silofs_pack_desc *pd)
+static void ardesc256b_xtoh(const struct silofs_archive_desc256b *ard256,
+                            struct silofs_archive_desc *ard)
 {
-	silofs_caddr64b_xtoh(&pdx->pd_caddr, &pd->pd_caddr);
-	silofs_laddr48b_xtoh(&pdx->pd_laddr, &pd->pd_laddr);
+	silofs_caddr64b_xtoh(&ard256->ad_caddr, &ard->ard_caddr);
+	silofs_laddr48b_xtoh(&ard256->ad_laddr, &ard->ard_laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_pack_desc_info *
-pdi_from_lh(const struct silofs_list_head *lh)
+static struct silofs_archive_desc_info *
+ardi_from_lh(const struct silofs_list_head *lh)
 {
-	const struct silofs_pack_desc_info *pdi = NULL;
+	const struct silofs_archive_desc_info *ardi = NULL;
 
 	if (lh != NULL) {
-		pdi = container_of2(lh, struct silofs_pack_desc_info, pdi_lh);
+		ardi = container_of2(lh, struct silofs_archive_desc_info, lh);
 	}
-	return unconst(pdi);
+	return unconst(ardi);
 }
 
-static struct silofs_pack_desc_info *pdi_malloc(struct silofs_alloc *alloc)
+static struct silofs_archive_desc_info *ardi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_pack_desc_info *pdi = NULL;
+	struct silofs_archive_desc_info *ardi = NULL;
 
-	pdi = silofs_memalloc(alloc, sizeof(*pdi), 0);
-	return pdi;
+	ardi = silofs_memalloc(alloc, sizeof(*ardi), 0);
+	return ardi;
 }
 
-static void pdi_free(struct silofs_pack_desc_info *pdi,
+static void ardi_free(struct silofs_archive_desc_info *ardi,
+                      struct silofs_alloc *alloc)
+{
+	silofs_memfree(alloc, ardi, sizeof(*ardi), 0);
+}
+
+static void ardi_init(struct silofs_archive_desc_info *ardi,
+                      const struct silofs_laddr *laddr)
+{
+	silofs_list_head_init(&ardi->lh);
+	ard_init(&ardi->ad, laddr);
+}
+
+static void ardi_fini(struct silofs_archive_desc_info *ardi)
+{
+	silofs_list_head_fini(&ardi->lh);
+	ard_fini(&ardi->ad);
+}
+
+static struct silofs_archive_desc_info *
+ardi_new(const struct silofs_laddr *laddr, struct silofs_alloc *alloc)
+{
+	struct silofs_archive_desc_info *ardi;
+
+	ardi = ardi_malloc(alloc);
+	if (ardi != NULL) {
+		ardi_init(ardi, laddr);
+	}
+	return ardi;
+}
+
+static void ardi_del(struct silofs_archive_desc_info *ardi,
                      struct silofs_alloc *alloc)
 {
-	silofs_memfree(alloc, pdi, sizeof(*pdi), 0);
-}
-
-static void pdi_init(struct silofs_pack_desc_info *pdi,
-                     const struct silofs_laddr *laddr)
-{
-	silofs_list_head_init(&pdi->pdi_lh);
-	pkdesc_init(&pdi->pd, laddr);
-}
-
-static void pdi_fini(struct silofs_pack_desc_info *pdi)
-{
-	silofs_list_head_fini(&pdi->pdi_lh);
-	pkdesc_fini(&pdi->pd);
-}
-
-static struct silofs_pack_desc_info *
-pdi_new(const struct silofs_laddr *laddr, struct silofs_alloc *alloc)
-{
-	struct silofs_pack_desc_info *pdi;
-
-	pdi = pdi_malloc(alloc);
-	if (pdi != NULL) {
-		pdi_init(pdi, laddr);
-	}
-	return pdi;
-}
-
-static void pdi_del(struct silofs_pack_desc_info *pdi,
-                    struct silofs_alloc *alloc)
-{
-	if (pdi != NULL) {
-		pdi_fini(pdi);
-		pdi_free(pdi, alloc);
+	if (ardi != NULL) {
+		ardi_fini(ardi);
+		ardi_free(ardi, alloc);
 	}
 }
 
-static bool pdi_isbootrec(const struct silofs_pack_desc_info *pdi)
+static bool ardi_isbootrec(const struct silofs_archive_desc_info *ardi)
 {
-	return (pdi->pd.pd_laddr.ltype == SILOFS_LTYPE_BOOTREC);
-}
-
-static size_t pdi_capacity(const struct silofs_pack_desc_info *pdi)
-{
-	return pdi->pd.pd_laddr.len;
+	return (ardi->ad.ard_laddr.ltype == SILOFS_LTYPE_BOOTREC);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -242,347 +241,341 @@ static void *data_at(void *base, size_t pos)
 	return &dat[pos];
 }
 
-static int pref_check_size(size_t sz)
+static int arv_check_size(size_t sz)
 {
 	return ((sz >= SILOFS_CATALOG_SIZE_MIN) &&
 	        (sz <= SILOFS_CATALOG_SIZE_MAX)) ? 0 : -SILOFS_EINVAL;
 }
 
-static int pref_setup(struct silofs_pack_ref *pref, void *dat, size_t sz)
+static int arv_setup(struct silofs_archive_view *arv, void *dat,
+                     size_t sz)
 {
-	const size_t meta_size = sizeof(struct silofs_pack_meta1k);
-	const size_t desc_size = sizeof(struct silofs_pack_desc256b);
+	const size_t meta_size = sizeof(struct silofs_archive_meta1k);
+	const size_t desc_size = sizeof(struct silofs_archive_desc256b);
 	int err;
 
-	err = pref_check_size(sz);
+	err = arv_check_size(sz);
 	if (err) {
 		return err;
 	}
-	pref->meta = dat;
-	pref->descs = data_at(dat, meta_size);
-	pref->ndescs_max = (sz - meta_size) / desc_size;
-	pref->ndescs = 0;
-	pref->capacity = 0;
+	arv->meta = dat;
+	arv->descs = data_at(dat, meta_size);
+	arv->ndescs_max = (sz - meta_size) / desc_size;
+	arv->ndescs = 0;
 	return 0;
 }
 
-static int pref_setup2(struct silofs_pack_ref *pref,
-                       const void *dat, size_t sz)
+static int arv_setup2(struct silofs_archive_view *arv,
+                      const void *dat, size_t sz)
 {
-	return pref_setup(pref, unconst(dat), sz);
+	return arv_setup(arv, unconst(dat), sz);
 }
 
-static uint64_t pref_calc_descs_csum(const struct silofs_pack_ref *pref)
+static uint64_t arv_calc_descs_csum(const struct silofs_archive_view
+                                    *arv)
 {
 	const uint64_t seed = SILOFS_PACK_META_MAGIC;
-	const struct silofs_pack_desc256b *descs = pref->descs;
+	const struct silofs_archive_desc256b *descs = arv->descs;
 
-	return silofs_hash_xxh64(descs, pref->ndescs * sizeof(*descs), seed);
+	return silofs_hash_xxh64(descs, arv->ndescs * sizeof(*descs), seed);
 }
 
-static uint64_t pref_calc_meta_csum(const struct silofs_pack_ref *pref)
+static uint64_t arv_calc_meta_csum(const struct silofs_archive_view *arv)
 {
 	const uint64_t seed = SILOFS_PACK_META_MAGIC;
-	const struct silofs_pack_meta1k *pkm = pref->meta;
-	const size_t len = sizeof(*pkm) - sizeof(pkm->pm_meta_csum);
+	const struct silofs_archive_meta1k *arm1k = arv->meta;
+	const size_t len = sizeof(*arm1k) - sizeof(arm1k->am_meta_csum);
 
-	return silofs_hash_xxh64(pkm, len, seed);
+	return silofs_hash_xxh64(arm1k, len, seed);
 }
 
-static void pref_encode_meta(struct silofs_pack_ref *pref)
+static void arv_encode_meta(struct silofs_archive_view *arv)
 {
-	struct silofs_pack_meta1k *pkm = pref->meta;
+	struct silofs_archive_meta1k *arm1k = arv->meta;
 
-	pkmeta1k_init(pkm);
-	pkmeta1k_set_capacity(pkm, pref->capacity);
-	pkmeta1k_set_ndescs(pkm, pref->ndescs);
-	pkmeta1k_set_descs_csum(pkm, pref_calc_descs_csum(pref));
-	pkmeta1k_set_meta_csum(pkm, pref_calc_meta_csum(pref));
+	armeta1k_init(arm1k);
+	armeta1k_set_ndescs(arm1k, arv->ndescs);
+	armeta1k_set_descs_csum(arm1k, arv_calc_descs_csum(arv));
+	armeta1k_set_meta_csum(arm1k, arv_calc_meta_csum(arv));
 }
 
-static void pref_decode_meta(struct silofs_pack_ref *pref)
+static void arv_decode_meta(struct silofs_archive_view *arv)
 {
-	const struct silofs_pack_meta1k *pkm = pref->meta;
-
-	pref->capacity = pkmeta1k_capacity(pkm);
-	pref->ndescs = pkmeta1k_ndescs(pkm);
+	arv->ndescs = armeta1k_ndescs(arv->meta);
 }
 
-static int pref_check_meta(const struct silofs_pack_ref *pref)
+static int arv_check_meta(const struct silofs_archive_view *arv)
 {
-	const struct silofs_pack_meta1k *pkm = pref->meta;
+	const struct silofs_archive_meta1k *arm1k = arv->meta;
 	uint64_t csum_set, csum_exp;
 
-	if (pkmeta1k_magic(pkm) != SILOFS_PACK_META_MAGIC) {
+	if (armeta1k_magic(arm1k) != SILOFS_PACK_META_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (pkmeta1k_version(pkm) != SILOFS_PACK_VERSION) {
+	if (armeta1k_version(arm1k) != SILOFS_PACK_VERSION) {
 		return -SILOFS_EPROTO;
 	}
-	csum_set = pkmeta1k_meta_csum(pkm);
-	csum_exp = pref_calc_meta_csum(pref);
+	csum_set = armeta1k_meta_csum(arm1k);
+	csum_exp = arv_calc_meta_csum(arv);
 	if (csum_set != csum_exp) {
 		return -SILOFS_ECSUM;
 	}
-	csum_set = pkmeta1k_descs_csum(pkm);
-	csum_exp = pref_calc_descs_csum(pref);
+	csum_set = armeta1k_descs_csum(arm1k);
+	csum_exp = arv_calc_descs_csum(arv);
 	if (csum_set != csum_exp) {
 		return -SILOFS_ECSUM;
 	}
 	return 0;
 }
 
-static void pref_calc_caddr(const struct silofs_pack_ref *pref,
-                            const struct silofs_mdigest *md,
-                            struct silofs_caddr *out_caddr)
+static void arv_calc_caddr(const struct silofs_archive_view *arv,
+                           const struct silofs_mdigest *md,
+                           struct silofs_caddr *out_caddr)
 {
-	const struct silofs_pack_desc256b *descs = pref->descs;
-	const struct silofs_pack_meta1k *pkm = pref->meta;
+	const struct silofs_archive_desc256b *descs = arv->descs;
+	const struct silofs_archive_meta1k *arm1k = arv->meta;
 	struct iovec iov[2];
 
-	iov[0].iov_base = unconst(pkm);
-	iov[0].iov_len = sizeof(*pkm);
+	iov[0].iov_base = unconst(arm1k);
+	iov[0].iov_len = sizeof(*arm1k);
 	iov[1].iov_base = unconst(descs);
-	iov[1].iov_len = pref->ndescs * sizeof(*descs);
+	iov[1].iov_len = arv->ndescs * sizeof(*descs);
 
 	silofs_calc_caddr_of(iov, 2, md, out_caddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void catalog_link_desc(struct silofs_catalog *catalog,
-                              struct silofs_pack_desc_info *pdi)
+static void ari_link_desc(struct silofs_archive_index *ari,
+                          struct silofs_archive_desc_info *ardi)
 {
-	silofs_listq_push_front(&catalog->cat_descq, &pdi->pdi_lh);
+	silofs_listq_push_front(&ari->descq, &ardi->lh);
 }
 
-static void catalog_unlink_desc(struct silofs_catalog *catalog,
-                                struct silofs_pack_desc_info *pdi)
+static void ari_unlink_desc(struct silofs_archive_index *ari,
+                            struct silofs_archive_desc_info *ardi)
 {
-	silofs_listq_remove(&catalog->cat_descq, &pdi->pdi_lh);
+	silofs_listq_remove(&ari->descq, &ardi->lh);
 }
 
-static struct silofs_pack_desc_info *
-catalog_add_desc(struct silofs_catalog *catalog,
-                 const struct silofs_laddr *laddr)
+static struct silofs_archive_desc_info *
+ari_add_desc(struct silofs_archive_index *ari,
+             const struct silofs_laddr *laddr)
 {
-	struct silofs_pack_desc_info *pdi;
+	struct silofs_archive_desc_info *ardi;
 
-	pdi = pdi_new(laddr, catalog->cat_alloc);
-	if (pdi != NULL) {
-		catalog_link_desc(catalog, pdi);
+	ardi = ardi_new(laddr, ari->alloc);
+	if (ardi != NULL) {
+		ari_link_desc(ari, ardi);
 	}
-	return pdi;
+	return ardi;
 }
 
-static void catalog_rm_desc(struct silofs_catalog *catalog,
-                            struct silofs_pack_desc_info *pdi)
+static void ari_rm_desc(struct silofs_archive_index *ari,
+                        struct silofs_archive_desc_info *ardi)
 {
-	catalog_unlink_desc(catalog, pdi);
-	pdi_del(pdi, catalog->cat_alloc);
+	ari_unlink_desc(ari, ardi);
+	ardi_del(ardi, ari->alloc);
 }
 
-static struct silofs_pack_desc_info *
-catalog_pop_desc(struct silofs_catalog *catalog)
+static struct silofs_archive_desc_info *
+ari_pop_desc(struct silofs_archive_index *ari)
 {
 	struct silofs_list_head *lh;
-	struct silofs_pack_desc_info *pdi = NULL;
+	struct silofs_archive_desc_info *ardi = NULL;
 
-	lh = silofs_listq_pop_front(&catalog->cat_descq);
+	lh = silofs_listq_pop_front(&ari->descq);
 	if (lh != NULL) {
-		pdi = pdi_from_lh(lh);
+		ardi = ardi_from_lh(lh);
 	}
-	return pdi;
+	return ardi;
 }
 
-static void catalog_clear_descq(struct silofs_catalog *catalog)
+static void ari_clear_descq(struct silofs_archive_index *ari)
 {
-	struct silofs_pack_desc_info *pdi;
+	struct silofs_archive_desc_info *ardi;
 
-	pdi = catalog_pop_desc(catalog);
-	while (pdi != NULL) {
-		pdi_del(pdi, catalog->cat_alloc);
-		pdi = catalog_pop_desc(catalog);
+	ardi = ari_pop_desc(ari);
+	while (ardi != NULL) {
+		ardi_del(ardi, ari->alloc);
+		ardi = ari_pop_desc(ari);
 	}
 }
 
-static size_t catalog_ndescs_inq(const struct silofs_catalog *catalog)
+static size_t ari_ndescs_inq(const struct silofs_archive_index *ari)
 {
-	return catalog->cat_descq.sz;
+	return ari->descq.sz;
 }
 
 static size_t encode_sizeof(size_t ndesc)
 {
 	const size_t align = SILOFS_LBK_SIZE;
-	const size_t meta_size = sizeof(struct silofs_pack_meta1k);
-	const size_t desc_size = sizeof(struct silofs_pack_desc256b);
+	const size_t meta_size = sizeof(struct silofs_archive_meta1k);
+	const size_t desc_size = sizeof(struct silofs_archive_desc256b);
 	const size_t descs_total_size = ndesc * desc_size;
 	const size_t enc_total_size = meta_size + descs_total_size;
 
 	return silofs_div_round_up(enc_total_size, align) * align;
 }
 
-static int catalog_init(struct silofs_catalog *catalog,
-                        struct silofs_alloc *alloc)
+static int ari_init(struct silofs_archive_index *ari,
+                    struct silofs_alloc *alloc)
 {
-	silofs_listq_init(&catalog->cat_descq);
-	catalog->cat_alloc = alloc;
-	return silofs_mdigest_init(&catalog->cat_mdigest);
+	silofs_listq_init(&ari->descq);
+	ari->alloc = alloc;
+	return silofs_mdigest_init(&ari->mdigest);
 }
 
-static void catalog_fini(struct silofs_catalog *catalog)
+static void ari_fini(struct silofs_archive_index *ari)
 {
-	catalog_clear_descq(catalog);
-	silofs_listq_fini(&catalog->cat_descq);
-	silofs_mdigest_fini(&catalog->cat_mdigest);
-	catalog->cat_alloc = NULL;
+	ari_clear_descq(ari);
+	silofs_listq_fini(&ari->descq);
+	silofs_mdigest_fini(&ari->mdigest);
+	ari->alloc = NULL;
 }
 
-static size_t catalog_encsize(const struct silofs_catalog *catalog)
+static size_t ari_encsize(const struct silofs_archive_index *ari)
 {
-	return encode_sizeof(catalog_ndescs_inq(catalog));
+	return encode_sizeof(ari_ndescs_inq(ari));
 }
 
-static int check_catalog_encsize(size_t sz)
+static int check_ari_encsize(size_t sz)
 {
 	return ((sz >= SILOFS_CATALOG_SIZE_MIN) &&
 	        (sz <= SILOFS_CATALOG_SIZE_MAX)) ? -SILOFS_EINVAL : 0;
 }
 
-static int silofs_catalog_encsize(const struct silofs_catalog *catalog,
-                                  size_t *out_encodebuf_size)
+static int silofs_ari_encsize(const struct silofs_archive_index *ari,
+                              size_t *out_encodebuf_size)
 {
-	*out_encodebuf_size = catalog_encsize(catalog);
-	return check_catalog_encsize(*out_encodebuf_size);
+	*out_encodebuf_size = ari_encsize(ari);
+	return check_ari_encsize(*out_encodebuf_size);
 }
 
-static int catalog_encode_descs(const struct silofs_catalog *catalog,
-                                struct silofs_pack_ref *pref)
+static int ari_encode_descs(const struct silofs_archive_index *ari,
+                            struct silofs_archive_view *arv)
 {
 	const struct silofs_list_head *itr = NULL;
-	const struct silofs_pack_desc_info *pdi = NULL;
-	const struct silofs_listq *descq = &catalog->cat_descq;
-	struct silofs_pack_desc256b *pdx = NULL;
+	const struct silofs_archive_desc_info *ardi = NULL;
+	const struct silofs_listq *descq = &ari->descq;
+	struct silofs_archive_desc256b *pdx = NULL;
 
-	pref->capacity = 0;
-	pref->ndescs = 0;
+	arv->ndescs = 0;
 	itr = silofs_listq_front(descq);
 	while (itr != NULL) {
-		if (pref->ndescs >= pref->ndescs_max) {
+		if (arv->ndescs >= arv->ndescs_max) {
 			return -SILOFS_EINVAL;
 		}
-		pdi = pdi_from_lh(itr);
-		pdx = &pref->descs[pref->ndescs++];
-		pkdesc128b_htox(pdx, &pdi->pd);
-
-		pref->capacity += pdi_capacity(pdi);
+		ardi = ardi_from_lh(itr);
+		pdx = &arv->descs[arv->ndescs++];
+		ardesc256b_htox(pdx, &ardi->ad);
 		itr = silofs_listq_next(descq, itr);
 	}
 	return 0;
 }
 
-static int catalog_decode_descs(struct silofs_catalog *catalog,
-                                const struct silofs_pack_ref *pref)
+static int ari_decode_descs(struct silofs_archive_index *ari,
+                            const struct silofs_archive_view *arv)
 {
-	struct silofs_pack_desc_info *pdi = NULL;
-	const struct silofs_pack_desc256b *pdx = NULL;
+	struct silofs_archive_desc_info *ardi = NULL;
+	const struct silofs_archive_desc256b *ard256 = NULL;
 
-	for (size_t i = 0; i < pref->ndescs; ++i) {
-		pdx = &pref->descs[i];
-		pdi = catalog_add_desc(catalog, laddr_none());
-		if (pdi == NULL) {
+	for (size_t i = 0; i < arv->ndescs; ++i) {
+		ard256 = &arv->descs[i];
+		ardi = ari_add_desc(ari, laddr_none());
+		if (ardi == NULL) {
 			return -SILOFS_ENOMEM;
 		}
-		pkdesc128b_xtoh(pdx, &pdi->pd);
+		ardesc256b_xtoh(ard256, &ardi->ad);
 	}
 	return 0;
 }
 
 
-static void catalog_encode_meta(const struct silofs_catalog *catalog,
-                                struct silofs_pack_ref *pref)
+static void ari_encode_meta(const struct silofs_archive_index *ari,
+                            struct silofs_archive_view *arv)
 {
-	silofs_unused(catalog);
-	pref_encode_meta(pref);
+	silofs_unused(ari);
+	arv_encode_meta(arv);
 }
 
-static int catalog_decode_meta(struct silofs_catalog *catalog,
-                               struct silofs_pack_ref *pref)
+static int ari_decode_meta(struct silofs_archive_index *ari,
+                           struct silofs_archive_view *arv)
 {
 	int err;
 
-	silofs_unused(catalog);
-	err = pref_check_meta(pref);
+	silofs_unused(ari);
+	err = arv_check_meta(arv);
 	if (err) {
 		return err;
 	}
-	pref_decode_meta(pref);
+	arv_decode_meta(arv);
 	return 0;
 }
 
-static void catalog_update_caddr(struct silofs_catalog *catalog,
-                                 struct silofs_pack_ref *pref)
+static void ari_update_caddr(struct silofs_archive_index *ari,
+                             struct silofs_archive_view *arv)
 {
-	pref_calc_caddr(pref, &catalog->cat_mdigest, &catalog->cat_caddr);
+	arv_calc_caddr(arv, &ari->mdigest, &ari->caddr);
 }
 
 
-static int catalog_encode(struct silofs_catalog *catalog,
-                          struct silofs_rwvec *rwv)
+static int ari_encode(struct silofs_archive_index *ari,
+                      struct silofs_rwvec *rwv)
 {
-	struct silofs_pack_ref pref = { .meta = NULL, .descs = NULL };
-	const size_t esz = catalog_encsize(catalog);
+	struct silofs_archive_view arv = { .meta = NULL, .descs = NULL };
+	const size_t esz = ari_encsize(ari);
 	int err;
 
 	if (esz < rwv->rwv_len) {
 		return -SILOFS_EINVAL;
 	}
-	err = pref_setup(&pref, rwv->rwv_base, rwv->rwv_len);
+	err = arv_setup(&arv, rwv->rwv_base, rwv->rwv_len);
 	if (err) {
 		return err;
 	}
-	err = catalog_encode_descs(catalog, &pref);
+	err = ari_encode_descs(ari, &arv);
 	if (err) {
 		return err;
 	}
-	catalog_encode_meta(catalog, &pref);
-	catalog_update_caddr(catalog, &pref);
+	ari_encode_meta(ari, &arv);
+	ari_update_caddr(ari, &arv);
 	return 0;
 }
 
-static int catalog_check_caddr(const struct silofs_catalog *catalog,
-                               const struct silofs_pack_ref *pref)
+static int ari_check_caddr(const struct silofs_archive_index *ari,
+                           const struct silofs_archive_view *arv)
 {
-	const struct silofs_caddr *caddr_exp = &catalog->cat_caddr;
+	const struct silofs_caddr *caddr_exp = &ari->caddr;
 	struct silofs_caddr caddr;
 
-	pref_calc_caddr(pref, &catalog->cat_mdigest, &caddr);
+	arv_calc_caddr(arv, &ari->mdigest, &caddr);
 	return silofs_caddr_isequal(&caddr, caddr_exp) ? 0 : -SILOFS_ECSUM;
 }
 
-static int catalog_decode(struct silofs_catalog *catalog,
-                          const struct silofs_rovec *rov)
+static int ari_decode(struct silofs_archive_index *ari,
+                      const struct silofs_rovec *rov)
 {
-	struct silofs_pack_ref pref = { .meta = NULL, .descs = NULL };
+	struct silofs_archive_view arv = { .meta = NULL, .descs = NULL };
 	int err;
 
-	err = check_catalog_encsize(rov->rov_len);
+	err = check_ari_encsize(rov->rov_len);
 	if (err) {
 		return err;
 	}
-	err = pref_setup2(&pref, rov->rov_base, rov->rov_len);
+	err = arv_setup2(&arv, rov->rov_base, rov->rov_len);
 	if (err) {
 		return err;
 	}
-	err = catalog_check_caddr(catalog, &pref);
+	err = ari_check_caddr(ari, &arv);
 	if (err) {
 		return err;
 	}
-	err = catalog_decode_meta(catalog, &pref);
+	err = ari_decode_meta(ari, &arv);
 	if (err) {
 		return err;
 	}
-	err = catalog_decode_descs(catalog, &pref);
+	err = ari_decode_descs(ari, &arv);
 	if (err) {
 		return err;
 	}
@@ -592,7 +585,7 @@ static int catalog_decode(struct silofs_catalog *catalog,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_pack_ctx {
-	struct silofs_catalog   pac_catalog;
+	struct silofs_archive_index   pac_ari;
 	struct silofs_task     *pac_task;
 	struct silofs_alloc    *pac_alloc;
 	struct silofs_repo     *pac_repo;
@@ -628,12 +621,12 @@ static int pac_init(struct silofs_pack_ctx *pa_ctx,
 	pa_ctx->pac_task = task;
 	pa_ctx->pac_alloc = task->t_fsenv->fse.alloc;
 	pa_ctx->pac_repo = task->t_fsenv->fse.repo;
-	return catalog_init(&pa_ctx->pac_catalog, pa_ctx->pac_alloc);
+	return ari_init(&pa_ctx->pac_ari, pa_ctx->pac_alloc);
 }
 
 static void pac_fini(struct silofs_pack_ctx *pa_ctx)
 {
-	catalog_fini(&pa_ctx->pac_catalog);
+	ari_fini(&pa_ctx->pac_ari);
 	pa_ctx->pac_task = NULL;
 	pa_ctx->pac_alloc = NULL;
 	pa_ctx->pac_repo = NULL;
@@ -652,7 +645,7 @@ pac_stat_pack(const struct silofs_pack_ctx *pa_ctx,
 	}
 	if ((sz < SILOFS_CATALOG_SIZE_MIN) ||
 	    (sz > SILOFS_CATALOG_SIZE_MAX)) {
-		log_warn("illegal pack-catalog: size=%zu", sz);
+		log_warn("illegal pack-ari: size=%zu", sz);
 		return -SILOFS_EINVAL;
 	}
 	*out_sz = (size_t)sz;
@@ -674,11 +667,11 @@ static int pac_recv_from_repo(const struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_send_pack(const struct silofs_pack_ctx *pa_ctx,
-                         const struct silofs_pack_desc_info *pdi,
+                         const struct silofs_archive_desc_info *ardi,
                          const void *dat)
 {
-	const struct silofs_caddr *caddr = &pdi->pd.pd_caddr;
-	const struct silofs_laddr *laddr = &pdi->pd.pd_laddr;
+	const struct silofs_caddr *caddr = &ardi->ad.ard_caddr;
+	const struct silofs_laddr *laddr = &ardi->ad.ard_laddr;
 	const struct silofs_rovec rov = {
 		.rov_base = dat,
 		.rov_len = laddr->len
@@ -729,22 +722,22 @@ static int pac_load_bootrec(const struct silofs_pack_ctx *pa_ctx,
 
 static int
 pac_update_hash_of(const struct silofs_pack_ctx *pa_ctx,
-                   struct silofs_pack_desc_info *pdi, const void *dat)
+                   struct silofs_archive_desc_info *ardi, const void *dat)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = dat,
-		.rov_len = pdi->pd.pd_laddr.len
+		.rov_len = ardi->ad.ard_laddr.len
 	};
-	const struct silofs_mdigest *md = &pa_ctx->pac_catalog.cat_mdigest;
+	const struct silofs_mdigest *md = &pa_ctx->pac_ari.mdigest;
 
-	pkdesc_update_caddr_by(&pdi->pd, md, &rov);
+	ard_update_caddr_by(&ardi->ad, md, &rov);
 	return 0;
 }
 
 static int pac_export_segdata(const struct silofs_pack_ctx *pa_ctx,
-                              struct silofs_pack_desc_info *pdi)
+                              struct silofs_archive_desc_info *ardi)
 {
-	const size_t seg_len = pdi->pd.pd_laddr.len;
+	const size_t seg_len = ardi->ad.ard_laddr.len;
 	void *seg = NULL;
 	int err = -SILOFS_ENOMEM;
 
@@ -752,15 +745,15 @@ static int pac_export_segdata(const struct silofs_pack_ctx *pa_ctx,
 	if (seg == NULL) {
 		goto out;
 	}
-	err = pac_load_seg(pa_ctx, &pdi->pd.pd_laddr, seg);
+	err = pac_load_seg(pa_ctx, &ardi->ad.ard_laddr, seg);
 	if (err) {
 		goto out;
 	}
-	err = pac_update_hash_of(pa_ctx, pdi, seg);
+	err = pac_update_hash_of(pa_ctx, ardi, seg);
 	if (err) {
 		goto out;
 	}
-	err = pac_send_pack(pa_ctx, pdi, seg);
+	err = pac_send_pack(pa_ctx, ardi, seg);
 	if (err) {
 		goto out;
 	}
@@ -778,7 +771,7 @@ pac_bootrec_caddr(const struct silofs_pack_ctx *pa_ctx)
 }
 
 static int pac_export_bootrec(const struct silofs_pack_ctx *pa_ctx,
-                              struct silofs_pack_desc_info *pdi)
+                              struct silofs_archive_desc_info *ardi)
 {
 	struct silofs_bootrec1k brec = { .br_magic = 0xFFFFFFFF };
 	const struct silofs_caddr *boot_caddr = NULL;
@@ -789,11 +782,11 @@ static int pac_export_bootrec(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_update_hash_of(pa_ctx, pdi, &brec);
+	err = pac_update_hash_of(pa_ctx, ardi, &brec);
 	if (err) {
 		return err;
 	}
-	err = pac_send_pack(pa_ctx, pdi, &brec);
+	err = pac_send_pack(pa_ctx, ardi, &brec);
 	if (err) {
 		return err;
 	}
@@ -801,14 +794,14 @@ static int pac_export_bootrec(const struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_process_pdi(struct silofs_pack_ctx *pa_ctx,
-                           struct silofs_pack_desc_info *pdi)
+                           struct silofs_archive_desc_info *ardi)
 {
 	int err;
 
-	if (pdi_isbootrec(pdi)) {
-		err = pac_export_bootrec(pa_ctx, pdi);
+	if (ardi_isbootrec(ardi)) {
+		err = pac_export_bootrec(pa_ctx, ardi);
 	} else {
-		err = pac_export_segdata(pa_ctx, pdi);
+		err = pac_export_segdata(pa_ctx, ardi);
 	}
 	return err;
 }
@@ -816,16 +809,16 @@ static int pac_process_pdi(struct silofs_pack_ctx *pa_ctx,
 static int pac_process_by_laddr(struct silofs_pack_ctx *pa_ctx,
                                 const struct silofs_laddr *laddr)
 {
-	struct silofs_pack_desc_info *pdi = NULL;
+	struct silofs_archive_desc_info *ardi = NULL;
 	int err;
 
-	pdi = catalog_add_desc(&pa_ctx->pac_catalog, laddr);
-	if (pdi == NULL) {
+	ardi = ari_add_desc(&pa_ctx->pac_ari, laddr);
+	if (ardi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	err = pac_process_pdi(pa_ctx, pdi);
+	err = pac_process_pdi(pa_ctx, ardi);
 	if (err) {
-		catalog_rm_desc(&pa_ctx->pac_catalog, pdi);
+		ari_rm_desc(&pa_ctx->pac_ari, ardi);
 		return err;
 	}
 	return 0;
@@ -843,10 +836,10 @@ static int pac_export_fs(struct silofs_pack_ctx *pa_ctx)
 	return silofs_fs_inspect(pa_ctx->pac_task, pac_visit_laddr_cb, pa_ctx);
 }
 
-static int pac_encode_save_catalog(struct silofs_pack_ctx *pa_ctx,
-                                   struct silofs_bytebuf *bb)
+static int pac_encode_save_ari(struct silofs_pack_ctx *pa_ctx,
+                               struct silofs_bytebuf *bb)
 {
-	struct silofs_catalog *cat = &pa_ctx->pac_catalog;
+	struct silofs_archive_index *cat = &pa_ctx->pac_ari;
 	struct silofs_rwvec rwv = {
 		.rwv_base = bb->ptr,
 		.rwv_len = bb->len
@@ -857,11 +850,11 @@ static int pac_encode_save_catalog(struct silofs_pack_ctx *pa_ctx,
 	};
 	int err;
 
-	err = catalog_encode(cat, &rwv);
+	err = ari_encode(cat, &rwv);
 	if (err) {
 		return err;
 	}
-	err = pac_send_to_repo(pa_ctx, &cat->cat_caddr, &rov);
+	err = pac_send_to_repo(pa_ctx, &cat->caddr, &rov);
 	if (err) {
 		return err;
 	}
@@ -874,14 +867,14 @@ static int pac_acquire_enc_buf(const struct silofs_pack_ctx *pa_ctx,
 	size_t bsz = 0;
 	int err;
 
-	err = silofs_catalog_encsize(&pa_ctx->pac_catalog, &bsz);
+	err = silofs_ari_encsize(&pa_ctx->pac_ari, &bsz);
 	if (!err) {
 		err = pac_acquire_buf(pa_ctx, bsz, out_bbuf);
 	}
 	return err;
 }
 
-static int pac_export_catalog(struct silofs_pack_ctx *pa_ctx)
+static int pac_export_ari(struct silofs_pack_ctx *pa_ctx)
 {
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
 	int err;
@@ -890,7 +883,7 @@ static int pac_export_catalog(struct silofs_pack_ctx *pa_ctx)
 	if (err) {
 		goto out;
 	}
-	err = pac_encode_save_catalog(pa_ctx, &bb);
+	err = pac_encode_save_ari(pa_ctx, &bb);
 	if (err) {
 		goto out;
 	}
@@ -899,10 +892,10 @@ out:
 	return err;
 }
 
-static void pac_catalog_id(const struct silofs_pack_ctx *pa_ctx,
-                           struct silofs_caddr *out_caddr)
+static void pac_ari_id(const struct silofs_pack_ctx *pa_ctx,
+                       struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &pa_ctx->pac_catalog.cat_caddr);
+	silofs_caddr_assign(out_caddr, &pa_ctx->pac_ari.caddr);
 }
 
 int silofs_fs_pack(struct silofs_task *task,
@@ -921,20 +914,20 @@ int silofs_fs_pack(struct silofs_task *task,
 	if (err) {
 		goto out;
 	}
-	err = pac_export_catalog(&pa_ctx);
+	err = pac_export_ari(&pa_ctx);
 	if (err) {
 		goto out;
 	}
-	pac_catalog_id(&pa_ctx, out_caddr);
+	pac_ari_id(&pa_ctx, out_caddr);
 out:
 	pac_fini(&pa_ctx);
 	return err;
 }
 
-static void pac_set_catalog_id(struct silofs_pack_ctx *pa_ctx,
-                               const struct silofs_caddr *caddr)
+static void pac_set_ari_id(struct silofs_pack_ctx *pa_ctx,
+                           const struct silofs_caddr *caddr)
 {
-	silofs_caddr_assign(&pa_ctx->pac_catalog.cat_caddr, caddr);
+	silofs_caddr_assign(&pa_ctx->pac_ari.caddr, caddr);
 }
 
 static int pac_acquire_dec_buf(const struct silofs_pack_ctx *pa_ctx, size_t sz,
@@ -943,10 +936,10 @@ static int pac_acquire_dec_buf(const struct silofs_pack_ctx *pa_ctx, size_t sz,
 	return pac_acquire_buf(pa_ctx, sz, out_bbuf);
 }
 
-static int pac_load_decode_catalog(struct silofs_pack_ctx *pa_ctx,
-                                   struct silofs_bytebuf *bb)
+static int pac_load_decode_ari(struct silofs_pack_ctx *pa_ctx,
+                               struct silofs_bytebuf *bb)
 {
-	struct silofs_catalog *cat = &pa_ctx->pac_catalog;
+	struct silofs_archive_index *cat = &pa_ctx->pac_ari;
 	struct silofs_rwvec rwv = {
 		.rwv_base = bb->ptr,
 		.rwv_len = bb->len
@@ -957,25 +950,25 @@ static int pac_load_decode_catalog(struct silofs_pack_ctx *pa_ctx,
 	};
 	int err;
 
-	err = pac_recv_from_repo(pa_ctx, &cat->cat_caddr, &rwv);
+	err = pac_recv_from_repo(pa_ctx, &cat->caddr, &rwv);
 	if (err) {
 		return err;
 	}
-	err = catalog_decode(cat, &rov);
+	err = ari_decode(cat, &rov);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int pac_import_catalog(struct silofs_pack_ctx *pa_ctx)
+static int pac_import_ari(struct silofs_pack_ctx *pa_ctx)
 {
-	struct silofs_catalog *cat = &pa_ctx->pac_catalog;
+	struct silofs_archive_index *cat = &pa_ctx->pac_ari;
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
 	size_t sz;
 	int err;
 
-	err = pac_stat_pack(pa_ctx, &cat->cat_caddr, &sz);
+	err = pac_stat_pack(pa_ctx, &cat->caddr, &sz);
 	if (err) {
 		goto out;
 	}
@@ -983,7 +976,7 @@ static int pac_import_catalog(struct silofs_pack_ctx *pa_ctx)
 	if (err) {
 		goto out;
 	}
-	err = pac_load_decode_catalog(pa_ctx, &bb);
+	err = pac_load_decode_ari(pa_ctx, &bb);
 	if (err) {
 		goto out;
 	}
@@ -1004,11 +997,11 @@ int silofs_fs_unpack(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	pac_set_catalog_id(&pa_ctx, caddr);
+	pac_set_ari_id(&pa_ctx, caddr);
 	if (err) {
 		goto out;
 	}
-	err = pac_import_catalog(&pa_ctx);
+	err = pac_import_ari(&pa_ctx);
 	if (err) {
 		goto out;
 	}

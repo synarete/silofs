@@ -1041,24 +1041,23 @@ struct silofs_btree_leaf {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/* packing descriptor */
-struct silofs_pack_desc256b {
-	struct silofs_caddr64b          pd_caddr;
-	struct silofs_laddr48b          pd_laddr;
-	uint8_t                         pd_reserved[144];
+/* archive descriptor */
+struct silofs_archive_desc256b {
+	struct silofs_caddr64b          ad_caddr;
+	struct silofs_laddr48b          ad_laddr;
+	uint8_t                         ad_reserved[144];
 } silofs_packed_aligned64;
 
 
-/* packing catalog meta descriptor */
-struct silofs_pack_meta1k {
-	uint64_t                        pm_magic;
-	uint32_t                        pm_version;
-	uint32_t                        pm_flags;
-	uint64_t                        pm_capacity;
-	uint64_t                        pm_ndescs;
-	uint64_t                        pm_descs_csum;
-	uint64_t                        pm_reserved2[122];
-	uint64_t                        pm_meta_csum;
+/* archive meta-header */
+struct silofs_archive_meta1k {
+	uint64_t                        am_magic;
+	uint32_t                        am_version;
+	uint32_t                        am_flags;
+	uint64_t                        am_ndescs;
+	uint64_t                        am_descs_csum;
+	uint64_t                        am_reserved2[123];
+	uint64_t                        am_meta_csum;
 } silofs_packed_aligned64;
 
 

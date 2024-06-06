@@ -1041,6 +1041,13 @@ struct silofs_btree_leaf {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/* minimal archive's index total size in bytes */
+#define SILOFS_ARCHIVE_INDEX_SIZE_MIN   SILOFS_LBK_SIZE
+
+/* maximal archive's index total size in bytes */
+#define SILOFS_ARCHIVE_INDEX_SIZE_MAX   (256 * SILOFS_MEGA)
+
+
 /* archive descriptor */
 struct silofs_archive_desc256b {
 	struct silofs_caddr64b          ad_caddr;

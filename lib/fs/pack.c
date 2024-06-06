@@ -21,8 +21,8 @@
 
 
 struct silofs_archive_desc {
-	struct silofs_caddr             ard_caddr;
-	struct silofs_laddr             ard_laddr;
+	struct silofs_caddr             caddr;
+	struct silofs_laddr             laddr;
 };
 
 struct silofs_archive_desc_info {
@@ -40,7 +40,6 @@ struct silofs_archive_view {
 
 struct silofs_archive_index {
 	struct silofs_mdigest           mdigest;
-	struct silofs_caddr             caddr;
 	struct silofs_listq             descq;
 	struct silofs_alloc            *alloc;
 };
@@ -126,12 +125,12 @@ static void ard_init(struct silofs_archive_desc *ard,
                      const struct silofs_laddr *laddr)
 {
 	silofs_memzero(ard, sizeof(*ard));
-	silofs_laddr_assign(&ard->ard_laddr, laddr);
+	silofs_laddr_assign(&ard->laddr, laddr);
 }
 
 static void ard_fini(struct silofs_archive_desc *ard)
 {
-	silofs_laddr_reset(&ard->ard_laddr);
+	silofs_laddr_reset(&ard->laddr);
 }
 
 static void ard_update_caddr_by(struct silofs_archive_desc *ard,
@@ -143,7 +142,7 @@ static void ard_update_caddr_by(struct silofs_archive_desc *ard,
 		.iov_len = rov->rov_len,
 	};
 
-	silofs_calc_caddr_of(&iov, 1, md, &ard->ard_caddr);
+	silofs_calc_caddr_of(&iov, 1, md, &ard->caddr);
 }
 
 static void ardesc256b_reset(struct silofs_archive_desc256b *ard256)
@@ -155,15 +154,15 @@ static void ardesc256b_htox(struct silofs_archive_desc256b *ard256,
                             const struct silofs_archive_desc *ard)
 {
 	ardesc256b_reset(ard256);
-	silofs_caddr64b_htox(&ard256->ad_caddr, &ard->ard_caddr);
-	silofs_laddr48b_htox(&ard256->ad_laddr, &ard->ard_laddr);
+	silofs_caddr64b_htox(&ard256->ad_caddr, &ard->caddr);
+	silofs_laddr48b_htox(&ard256->ad_laddr, &ard->laddr);
 }
 
 static void ardesc256b_xtoh(const struct silofs_archive_desc256b *ard256,
                             struct silofs_archive_desc *ard)
 {
-	silofs_caddr64b_xtoh(&ard256->ad_caddr, &ard->ard_caddr);
-	silofs_laddr48b_xtoh(&ard256->ad_laddr, &ard->ard_laddr);
+	silofs_caddr64b_xtoh(&ard256->ad_caddr, &ard->caddr);
+	silofs_laddr48b_xtoh(&ard256->ad_laddr, &ard->laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -229,10 +228,16 @@ static void ardi_del(struct silofs_archive_desc_info *ardi,
 
 static bool ardi_isbootrec(const struct silofs_archive_desc_info *ardi)
 {
-	return (ardi->ad.ard_laddr.ltype == SILOFS_LTYPE_BOOTREC);
+	return (ardi->ad.laddr.ltype == SILOFS_LTYPE_BOOTREC);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int check_archive_index_size(size_t sz)
+{
+	return ((sz >= SILOFS_ARCHIVE_INDEX_SIZE_MIN) &&
+	        (sz <= SILOFS_ARCHIVE_INDEX_SIZE_MAX)) ? 0 : -SILOFS_EINVAL;
+}
 
 static void *data_at(void *base, size_t pos)
 {
@@ -241,72 +246,66 @@ static void *data_at(void *base, size_t pos)
 	return &dat[pos];
 }
 
-static int arv_check_size(size_t sz)
-{
-	return ((sz >= SILOFS_CATALOG_SIZE_MIN) &&
-	        (sz <= SILOFS_CATALOG_SIZE_MAX)) ? 0 : -SILOFS_EINVAL;
-}
-
-static int arv_setup(struct silofs_archive_view *arv, void *dat,
-                     size_t sz)
+static int arview_setup(struct silofs_archive_view *arview, void *dat,
+                        size_t sz)
 {
 	const size_t meta_size = sizeof(struct silofs_archive_meta1k);
 	const size_t desc_size = sizeof(struct silofs_archive_desc256b);
 	int err;
 
-	err = arv_check_size(sz);
+	err = check_archive_index_size(sz);
 	if (err) {
 		return err;
 	}
-	arv->meta = dat;
-	arv->descs = data_at(dat, meta_size);
-	arv->ndescs_max = (sz - meta_size) / desc_size;
-	arv->ndescs = 0;
+	arview->meta = dat;
+	arview->descs = data_at(dat, meta_size);
+	arview->ndescs_max = (sz - meta_size) / desc_size;
+	arview->ndescs = 0;
 	return 0;
 }
 
-static int arv_setup2(struct silofs_archive_view *arv,
-                      const void *dat, size_t sz)
+static int arview_setup2(struct silofs_archive_view *arview,
+                         const void *dat, size_t sz)
 {
-	return arv_setup(arv, unconst(dat), sz);
+	return arview_setup(arview, unconst(dat), sz);
 }
 
-static uint64_t arv_calc_descs_csum(const struct silofs_archive_view
-                                    *arv)
+static uint64_t arview_calc_descs_csum(const struct silofs_archive_view
+                                       *arview)
 {
 	const uint64_t seed = SILOFS_PACK_META_MAGIC;
-	const struct silofs_archive_desc256b *descs = arv->descs;
+	const struct silofs_archive_desc256b *descs = arview->descs;
 
-	return silofs_hash_xxh64(descs, arv->ndescs * sizeof(*descs), seed);
+	return silofs_hash_xxh64(descs, arview->ndescs * sizeof(*descs), seed);
 }
 
-static uint64_t arv_calc_meta_csum(const struct silofs_archive_view *arv)
+static uint64_t arview_calc_meta_csum(const struct silofs_archive_view *arview)
 {
 	const uint64_t seed = SILOFS_PACK_META_MAGIC;
-	const struct silofs_archive_meta1k *arm1k = arv->meta;
+	const struct silofs_archive_meta1k *arm1k = arview->meta;
 	const size_t len = sizeof(*arm1k) - sizeof(arm1k->am_meta_csum);
 
 	return silofs_hash_xxh64(arm1k, len, seed);
 }
 
-static void arv_encode_meta(struct silofs_archive_view *arv)
+static void arview_encode_meta(struct silofs_archive_view *arview)
 {
-	struct silofs_archive_meta1k *arm1k = arv->meta;
+	struct silofs_archive_meta1k *arm1k = arview->meta;
 
 	armeta1k_init(arm1k);
-	armeta1k_set_ndescs(arm1k, arv->ndescs);
-	armeta1k_set_descs_csum(arm1k, arv_calc_descs_csum(arv));
-	armeta1k_set_meta_csum(arm1k, arv_calc_meta_csum(arv));
+	armeta1k_set_ndescs(arm1k, arview->ndescs);
+	armeta1k_set_descs_csum(arm1k, arview_calc_descs_csum(arview));
+	armeta1k_set_meta_csum(arm1k, arview_calc_meta_csum(arview));
 }
 
-static void arv_decode_meta(struct silofs_archive_view *arv)
+static void arview_decode_meta(struct silofs_archive_view *arview)
 {
-	arv->ndescs = armeta1k_ndescs(arv->meta);
+	arview->ndescs = armeta1k_ndescs(arview->meta);
 }
 
-static int arv_check_meta(const struct silofs_archive_view *arv)
+static int arview_check_meta(const struct silofs_archive_view *arview)
 {
-	const struct silofs_archive_meta1k *arm1k = arv->meta;
+	const struct silofs_archive_meta1k *arm1k = arview->meta;
 	uint64_t csum_set, csum_exp;
 
 	if (armeta1k_magic(arm1k) != SILOFS_PACK_META_MAGIC) {
@@ -316,95 +315,95 @@ static int arv_check_meta(const struct silofs_archive_view *arv)
 		return -SILOFS_EPROTO;
 	}
 	csum_set = armeta1k_meta_csum(arm1k);
-	csum_exp = arv_calc_meta_csum(arv);
+	csum_exp = arview_calc_meta_csum(arview);
 	if (csum_set != csum_exp) {
 		return -SILOFS_ECSUM;
 	}
 	csum_set = armeta1k_descs_csum(arm1k);
-	csum_exp = arv_calc_descs_csum(arv);
+	csum_exp = arview_calc_descs_csum(arview);
 	if (csum_set != csum_exp) {
 		return -SILOFS_ECSUM;
 	}
 	return 0;
 }
 
-static void arv_calc_caddr(const struct silofs_archive_view *arv,
-                           const struct silofs_mdigest *md,
-                           struct silofs_caddr *out_caddr)
+static void arview_calc_caddr(const struct silofs_archive_view *arview,
+                              const struct silofs_mdigest *md,
+                              struct silofs_caddr *out_caddr)
 {
-	const struct silofs_archive_desc256b *descs = arv->descs;
-	const struct silofs_archive_meta1k *arm1k = arv->meta;
+	const struct silofs_archive_desc256b *descs = arview->descs;
+	const struct silofs_archive_meta1k *arm1k = arview->meta;
 	struct iovec iov[2];
 
 	iov[0].iov_base = unconst(arm1k);
 	iov[0].iov_len = sizeof(*arm1k);
 	iov[1].iov_base = unconst(descs);
-	iov[1].iov_len = arv->ndescs * sizeof(*descs);
+	iov[1].iov_len = arview->ndescs * sizeof(*descs);
 
 	silofs_calc_caddr_of(iov, 2, md, out_caddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void ari_link_desc(struct silofs_archive_index *ari,
-                          struct silofs_archive_desc_info *ardi)
-{
-	silofs_listq_push_front(&ari->descq, &ardi->lh);
-}
-
-static void ari_unlink_desc(struct silofs_archive_index *ari,
+static void index_link_desc(struct silofs_archive_index *index,
                             struct silofs_archive_desc_info *ardi)
 {
-	silofs_listq_remove(&ari->descq, &ardi->lh);
+	silofs_listq_push_front(&index->descq, &ardi->lh);
+}
+
+static void index_unlink_desc(struct silofs_archive_index *index,
+                              struct silofs_archive_desc_info *ardi)
+{
+	silofs_listq_remove(&index->descq, &ardi->lh);
 }
 
 static struct silofs_archive_desc_info *
-ari_add_desc(struct silofs_archive_index *ari,
-             const struct silofs_laddr *laddr)
+index_add_desc(struct silofs_archive_index *index,
+               const struct silofs_laddr *laddr)
 {
 	struct silofs_archive_desc_info *ardi;
 
-	ardi = ardi_new(laddr, ari->alloc);
+	ardi = ardi_new(laddr, index->alloc);
 	if (ardi != NULL) {
-		ari_link_desc(ari, ardi);
+		index_link_desc(index, ardi);
 	}
 	return ardi;
 }
 
-static void ari_rm_desc(struct silofs_archive_index *ari,
-                        struct silofs_archive_desc_info *ardi)
+static void index_rm_desc(struct silofs_archive_index *index,
+                          struct silofs_archive_desc_info *ardi)
 {
-	ari_unlink_desc(ari, ardi);
-	ardi_del(ardi, ari->alloc);
+	index_unlink_desc(index, ardi);
+	ardi_del(ardi, index->alloc);
 }
 
 static struct silofs_archive_desc_info *
-ari_pop_desc(struct silofs_archive_index *ari)
+index_pop_desc(struct silofs_archive_index *index)
 {
 	struct silofs_list_head *lh;
 	struct silofs_archive_desc_info *ardi = NULL;
 
-	lh = silofs_listq_pop_front(&ari->descq);
+	lh = silofs_listq_pop_front(&index->descq);
 	if (lh != NULL) {
 		ardi = ardi_from_lh(lh);
 	}
 	return ardi;
 }
 
-static void ari_clear_descq(struct silofs_archive_index *ari)
+static void index_clear_descq(struct silofs_archive_index *index)
 {
 	struct silofs_archive_desc_info *ardi;
 
-	ardi = ari_pop_desc(ari);
+	ardi = index_pop_desc(index);
 	while (ardi != NULL) {
-		ardi_del(ardi, ari->alloc);
-		ardi = ari_pop_desc(ari);
+		ardi_del(ardi, index->alloc);
+		ardi = index_pop_desc(index);
 	}
 }
 
-static size_t ari_ndescs_inq(const struct silofs_archive_index *ari)
+static size_t index_ndescs_inq(const struct silofs_archive_index *index)
 {
-	return ari->descq.sz;
+	return index->descq.sz;
 }
 
 static size_t encode_sizeof(size_t ndesc)
@@ -418,71 +417,58 @@ static size_t encode_sizeof(size_t ndesc)
 	return silofs_div_round_up(enc_total_size, align) * align;
 }
 
-static int ari_init(struct silofs_archive_index *ari,
-                    struct silofs_alloc *alloc)
+static int index_init(struct silofs_archive_index *index,
+                      struct silofs_alloc *alloc)
 {
-	silofs_listq_init(&ari->descq);
-	ari->alloc = alloc;
-	return silofs_mdigest_init(&ari->mdigest);
+	silofs_listq_init(&index->descq);
+	index->alloc = alloc;
+	return silofs_mdigest_init(&index->mdigest);
 }
 
-static void ari_fini(struct silofs_archive_index *ari)
+static void index_fini(struct silofs_archive_index *index)
 {
-	ari_clear_descq(ari);
-	silofs_listq_fini(&ari->descq);
-	silofs_mdigest_fini(&ari->mdigest);
-	ari->alloc = NULL;
+	index_clear_descq(index);
+	silofs_listq_fini(&index->descq);
+	silofs_mdigest_fini(&index->mdigest);
+	index->alloc = NULL;
 }
 
-static size_t ari_encsize(const struct silofs_archive_index *ari)
+static size_t index_encsize(const struct silofs_archive_index *index)
 {
-	return encode_sizeof(ari_ndescs_inq(ari));
+	return encode_sizeof(index_ndescs_inq(index));
 }
 
-static int check_ari_encsize(size_t sz)
-{
-	return ((sz >= SILOFS_CATALOG_SIZE_MIN) &&
-	        (sz <= SILOFS_CATALOG_SIZE_MAX)) ? -SILOFS_EINVAL : 0;
-}
-
-static int silofs_ari_encsize(const struct silofs_archive_index *ari,
-                              size_t *out_encodebuf_size)
-{
-	*out_encodebuf_size = ari_encsize(ari);
-	return check_ari_encsize(*out_encodebuf_size);
-}
-
-static int ari_encode_descs(const struct silofs_archive_index *ari,
-                            struct silofs_archive_view *arv)
+static int index_encode_descs(const struct silofs_archive_index *index,
+                              struct silofs_archive_view *arview)
 {
 	const struct silofs_list_head *itr = NULL;
 	const struct silofs_archive_desc_info *ardi = NULL;
-	const struct silofs_listq *descq = &ari->descq;
+	const struct silofs_listq *descq = &index->descq;
 	struct silofs_archive_desc256b *pdx = NULL;
 
-	arv->ndescs = 0;
+	arview->ndescs = 0;
 	itr = silofs_listq_front(descq);
 	while (itr != NULL) {
-		if (arv->ndescs >= arv->ndescs_max) {
+		if (arview->ndescs >= arview->ndescs_max) {
 			return -SILOFS_EINVAL;
 		}
 		ardi = ardi_from_lh(itr);
-		pdx = &arv->descs[arv->ndescs++];
+		pdx = &arview->descs[arview->ndescs++];
 		ardesc256b_htox(pdx, &ardi->ad);
 		itr = silofs_listq_next(descq, itr);
 	}
 	return 0;
 }
 
-static int ari_decode_descs(struct silofs_archive_index *ari,
-                            const struct silofs_archive_view *arv)
+static int index_decode_descs(struct silofs_archive_index *index,
+                              const struct silofs_archive_view *arview)
 {
 	struct silofs_archive_desc_info *ardi = NULL;
 	const struct silofs_archive_desc256b *ard256 = NULL;
 
-	for (size_t i = 0; i < arv->ndescs; ++i) {
-		ard256 = &arv->descs[i];
-		ardi = ari_add_desc(ari, laddr_none());
+	for (size_t i = 0; i < arview->ndescs; ++i) {
+		ard256 = &arview->descs[i];
+		ardi = index_add_desc(index, laddr_none());
 		if (ardi == NULL) {
 			return -SILOFS_ENOMEM;
 		}
@@ -492,90 +478,93 @@ static int ari_decode_descs(struct silofs_archive_index *ari,
 }
 
 
-static void ari_encode_meta(const struct silofs_archive_index *ari,
-                            struct silofs_archive_view *arv)
+static void index_encode_meta(const struct silofs_archive_index *index,
+                              struct silofs_archive_view *arview)
 {
-	silofs_unused(ari);
-	arv_encode_meta(arv);
+	silofs_unused(index);
+	arview_encode_meta(arview);
 }
 
-static int ari_decode_meta(struct silofs_archive_index *ari,
-                           struct silofs_archive_view *arv)
+static int index_decode_meta(struct silofs_archive_index *index,
+                             struct silofs_archive_view *arview)
 {
 	int err;
 
-	silofs_unused(ari);
-	err = arv_check_meta(arv);
+	silofs_unused(index);
+	err = arview_check_meta(arview);
 	if (err) {
 		return err;
 	}
-	arv_decode_meta(arv);
+	arview_decode_meta(arview);
 	return 0;
 }
 
-static void ari_update_caddr(struct silofs_archive_index *ari,
-                             struct silofs_archive_view *arv)
+static void index_calc_caddr_of(const struct silofs_archive_index *index,
+                                const struct silofs_archive_view *arview,
+                                struct silofs_caddr *out_caddr)
 {
-	arv_calc_caddr(arv, &ari->mdigest, &ari->caddr);
+	arview_calc_caddr(arview, &index->mdigest, out_caddr);
 }
 
 
-static int ari_encode(struct silofs_archive_index *ari,
-                      struct silofs_rwvec *rwv)
+static int index_encode(struct silofs_archive_index *index,
+                        struct silofs_rwvec *rwv,
+                        struct silofs_caddr *out_caddr)
 {
-	struct silofs_archive_view arv = { .meta = NULL, .descs = NULL };
-	const size_t esz = ari_encsize(ari);
+	struct silofs_archive_view arview = { .meta = NULL, .descs = NULL };
+	const size_t esz = index_encsize(index);
 	int err;
 
 	if (esz < rwv->rwv_len) {
 		return -SILOFS_EINVAL;
 	}
-	err = arv_setup(&arv, rwv->rwv_base, rwv->rwv_len);
+	err = arview_setup(&arview, rwv->rwv_base, rwv->rwv_len);
 	if (err) {
 		return err;
 	}
-	err = ari_encode_descs(ari, &arv);
+	err = index_encode_descs(index, &arview);
 	if (err) {
 		return err;
 	}
-	ari_encode_meta(ari, &arv);
-	ari_update_caddr(ari, &arv);
+	index_encode_meta(index, &arview);
+	index_calc_caddr_of(index, &arview, out_caddr);
 	return 0;
 }
 
-static int ari_check_caddr(const struct silofs_archive_index *ari,
-                           const struct silofs_archive_view *arv)
+static int index_check_caddr(const struct silofs_archive_index *index,
+                             const struct silofs_caddr *caddr,
+                             const struct silofs_archive_view *arview)
 {
-	const struct silofs_caddr *caddr_exp = &ari->caddr;
-	struct silofs_caddr caddr;
+	struct silofs_caddr caddr_calc;
 
-	arv_calc_caddr(arv, &ari->mdigest, &caddr);
-	return silofs_caddr_isequal(&caddr, caddr_exp) ? 0 : -SILOFS_ECSUM;
+	arview_calc_caddr(arview, &index->mdigest, &caddr_calc);
+	return silofs_caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
 }
 
-static int ari_decode(struct silofs_archive_index *ari,
-                      const struct silofs_rovec *rov)
+static int index_decode(struct silofs_archive_index *index,
+                        const struct silofs_caddr *caddr,
+                        const struct silofs_rovec *rov)
 {
-	struct silofs_archive_view arv = { .meta = NULL, .descs = NULL };
+	struct silofs_archive_view arview = { .meta = NULL, .descs = NULL };
 	int err;
 
-	err = check_ari_encsize(rov->rov_len);
+	err = check_archive_index_size(rov->rov_len);
 	if (err) {
 		return err;
 	}
-	err = arv_setup2(&arv, rov->rov_base, rov->rov_len);
+	err = arview_setup2(&arview, rov->rov_base, rov->rov_len);
 	if (err) {
 		return err;
 	}
-	err = ari_check_caddr(ari, &arv);
+	err = index_check_caddr(index, caddr, &arview);
 	if (err) {
 		return err;
 	}
-	err = ari_decode_meta(ari, &arv);
+	err = index_decode_meta(index, &arview);
 	if (err) {
 		return err;
 	}
-	err = ari_decode_descs(ari, &arv);
+	err = index_decode_descs(index, &arview);
 	if (err) {
 		return err;
 	}
@@ -585,10 +574,10 @@ static int ari_decode(struct silofs_archive_index *ari,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_pack_ctx {
-	struct silofs_archive_index   pac_ari;
-	struct silofs_task     *pac_task;
-	struct silofs_alloc    *pac_alloc;
-	struct silofs_repo     *pac_repo;
+	struct silofs_archive_index   pac_index;
+	struct silofs_task           *pac_task;
+	struct silofs_alloc          *pac_alloc;
+	struct silofs_repo           *pac_repo;
 	long pad;
 };
 
@@ -621,12 +610,12 @@ static int pac_init(struct silofs_pack_ctx *pa_ctx,
 	pa_ctx->pac_task = task;
 	pa_ctx->pac_alloc = task->t_fsenv->fse.alloc;
 	pa_ctx->pac_repo = task->t_fsenv->fse.repo;
-	return ari_init(&pa_ctx->pac_ari, pa_ctx->pac_alloc);
+	return index_init(&pa_ctx->pac_index, pa_ctx->pac_alloc);
 }
 
 static void pac_fini(struct silofs_pack_ctx *pa_ctx)
 {
-	ari_fini(&pa_ctx->pac_ari);
+	index_fini(&pa_ctx->pac_index);
 	pa_ctx->pac_task = NULL;
 	pa_ctx->pac_alloc = NULL;
 	pa_ctx->pac_repo = NULL;
@@ -643,9 +632,9 @@ pac_stat_pack(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	if ((sz < SILOFS_CATALOG_SIZE_MIN) ||
-	    (sz > SILOFS_CATALOG_SIZE_MAX)) {
-		log_warn("illegal pack-ari: size=%zu", sz);
+	err = check_archive_index_size((size_t)sz);
+	if (err) {
+		log_warn("illegal archive index: size=%zd", sz);
 		return -SILOFS_EINVAL;
 	}
 	*out_sz = (size_t)sz;
@@ -670,8 +659,8 @@ static int pac_send_pack(const struct silofs_pack_ctx *pa_ctx,
                          const struct silofs_archive_desc_info *ardi,
                          const void *dat)
 {
-	const struct silofs_caddr *caddr = &ardi->ad.ard_caddr;
-	const struct silofs_laddr *laddr = &ardi->ad.ard_laddr;
+	const struct silofs_caddr *caddr = &ardi->ad.caddr;
+	const struct silofs_laddr *laddr = &ardi->ad.laddr;
 	const struct silofs_rovec rov = {
 		.rov_base = dat,
 		.rov_len = laddr->len
@@ -726,9 +715,9 @@ pac_update_hash_of(const struct silofs_pack_ctx *pa_ctx,
 {
 	const struct silofs_rovec rov = {
 		.rov_base = dat,
-		.rov_len = ardi->ad.ard_laddr.len
+		.rov_len = ardi->ad.laddr.len
 	};
-	const struct silofs_mdigest *md = &pa_ctx->pac_ari.mdigest;
+	const struct silofs_mdigest *md = &pa_ctx->pac_index.mdigest;
 
 	ard_update_caddr_by(&ardi->ad, md, &rov);
 	return 0;
@@ -737,7 +726,7 @@ pac_update_hash_of(const struct silofs_pack_ctx *pa_ctx,
 static int pac_export_segdata(const struct silofs_pack_ctx *pa_ctx,
                               struct silofs_archive_desc_info *ardi)
 {
-	const size_t seg_len = ardi->ad.ard_laddr.len;
+	const size_t seg_len = ardi->ad.laddr.len;
 	void *seg = NULL;
 	int err = -SILOFS_ENOMEM;
 
@@ -745,7 +734,7 @@ static int pac_export_segdata(const struct silofs_pack_ctx *pa_ctx,
 	if (seg == NULL) {
 		goto out;
 	}
-	err = pac_load_seg(pa_ctx, &ardi->ad.ard_laddr, seg);
+	err = pac_load_seg(pa_ctx, &ardi->ad.laddr, seg);
 	if (err) {
 		goto out;
 	}
@@ -812,13 +801,13 @@ static int pac_process_by_laddr(struct silofs_pack_ctx *pa_ctx,
 	struct silofs_archive_desc_info *ardi = NULL;
 	int err;
 
-	ardi = ari_add_desc(&pa_ctx->pac_ari, laddr);
+	ardi = index_add_desc(&pa_ctx->pac_index, laddr);
 	if (ardi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 	err = pac_process_pdi(pa_ctx, ardi);
 	if (err) {
-		ari_rm_desc(&pa_ctx->pac_ari, ardi);
+		index_rm_desc(&pa_ctx->pac_index, ardi);
 		return err;
 	}
 	return 0;
@@ -836,10 +825,10 @@ static int pac_export_fs(struct silofs_pack_ctx *pa_ctx)
 	return silofs_fs_inspect(pa_ctx->pac_task, pac_visit_laddr_cb, pa_ctx);
 }
 
-static int pac_encode_save_ari(struct silofs_pack_ctx *pa_ctx,
-                               struct silofs_bytebuf *bb)
+static int pac_encode_save_index(struct silofs_pack_ctx *pa_ctx,
+                                 struct silofs_bytebuf *bb,
+                                 struct silofs_caddr *out_caddr)
 {
-	struct silofs_archive_index *cat = &pa_ctx->pac_ari;
 	struct silofs_rwvec rwv = {
 		.rwv_base = bb->ptr,
 		.rwv_len = bb->len
@@ -850,11 +839,11 @@ static int pac_encode_save_ari(struct silofs_pack_ctx *pa_ctx,
 	};
 	int err;
 
-	err = ari_encode(cat, &rwv);
+	err = index_encode(&pa_ctx->pac_index, &rwv, out_caddr);
 	if (err) {
 		return err;
 	}
-	err = pac_send_to_repo(pa_ctx, &cat->caddr, &rov);
+	err = pac_send_to_repo(pa_ctx, out_caddr, &rov);
 	if (err) {
 		return err;
 	}
@@ -864,17 +853,18 @@ static int pac_encode_save_ari(struct silofs_pack_ctx *pa_ctx,
 static int pac_acquire_enc_buf(const struct silofs_pack_ctx *pa_ctx,
                                struct silofs_bytebuf *out_bbuf)
 {
-	size_t bsz = 0;
+	const size_t bsz = index_encsize(&pa_ctx->pac_index);
 	int err;
 
-	err = silofs_ari_encsize(&pa_ctx->pac_ari, &bsz);
+	err = check_archive_index_size(bsz);
 	if (!err) {
 		err = pac_acquire_buf(pa_ctx, bsz, out_bbuf);
 	}
 	return err;
 }
 
-static int pac_export_ari(struct silofs_pack_ctx *pa_ctx)
+static int pac_export_index(struct silofs_pack_ctx *pa_ctx,
+                            struct silofs_caddr *out_caddr)
 {
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
 	int err;
@@ -883,7 +873,7 @@ static int pac_export_ari(struct silofs_pack_ctx *pa_ctx)
 	if (err) {
 		goto out;
 	}
-	err = pac_encode_save_ari(pa_ctx, &bb);
+	err = pac_encode_save_index(pa_ctx, &bb, out_caddr);
 	if (err) {
 		goto out;
 	}
@@ -892,10 +882,20 @@ out:
 	return err;
 }
 
-static void pac_ari_id(const struct silofs_pack_ctx *pa_ctx,
-                       struct silofs_caddr *out_caddr)
+static int pac_do_export(struct silofs_pack_ctx *pa_ctx,
+                         struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &pa_ctx->pac_ari.caddr);
+	int err;
+
+	err = pac_export_fs(pa_ctx);
+	if (err) {
+		return err;
+	}
+	err = pac_export_index(pa_ctx, out_caddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_fs_pack(struct silofs_task *task,
@@ -908,26 +908,15 @@ int silofs_fs_pack(struct silofs_task *task,
 
 	err = pac_init(&pa_ctx, task);
 	if (err) {
-		return err;
+		goto out;
 	}
-	err = pac_export_fs(&pa_ctx);
+	err = pac_do_export(&pa_ctx, out_caddr);
 	if (err) {
 		goto out;
 	}
-	err = pac_export_ari(&pa_ctx);
-	if (err) {
-		goto out;
-	}
-	pac_ari_id(&pa_ctx, out_caddr);
 out:
 	pac_fini(&pa_ctx);
 	return err;
-}
-
-static void pac_set_ari_id(struct silofs_pack_ctx *pa_ctx,
-                           const struct silofs_caddr *caddr)
-{
-	silofs_caddr_assign(&pa_ctx->pac_ari.caddr, caddr);
 }
 
 static int pac_acquire_dec_buf(const struct silofs_pack_ctx *pa_ctx, size_t sz,
@@ -936,10 +925,10 @@ static int pac_acquire_dec_buf(const struct silofs_pack_ctx *pa_ctx, size_t sz,
 	return pac_acquire_buf(pa_ctx, sz, out_bbuf);
 }
 
-static int pac_load_decode_ari(struct silofs_pack_ctx *pa_ctx,
-                               struct silofs_bytebuf *bb)
+static int pac_load_decode_index(struct silofs_pack_ctx *pa_ctx,
+                                 const struct silofs_caddr *caddr,
+                                 struct silofs_bytebuf *bb)
 {
-	struct silofs_archive_index *cat = &pa_ctx->pac_ari;
 	struct silofs_rwvec rwv = {
 		.rwv_base = bb->ptr,
 		.rwv_len = bb->len
@@ -950,25 +939,25 @@ static int pac_load_decode_ari(struct silofs_pack_ctx *pa_ctx,
 	};
 	int err;
 
-	err = pac_recv_from_repo(pa_ctx, &cat->caddr, &rwv);
+	err = pac_recv_from_repo(pa_ctx, caddr, &rwv);
 	if (err) {
 		return err;
 	}
-	err = ari_decode(cat, &rov);
+	err = index_decode(&pa_ctx->pac_index, caddr, &rov);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int pac_import_ari(struct silofs_pack_ctx *pa_ctx)
+static int pac_import_index(struct silofs_pack_ctx *pa_ctx,
+                            const struct silofs_caddr *caddr)
 {
-	struct silofs_archive_index *cat = &pa_ctx->pac_ari;
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
 	size_t sz;
 	int err;
 
-	err = pac_stat_pack(pa_ctx, &cat->caddr, &sz);
+	err = pac_stat_pack(pa_ctx, caddr, &sz);
 	if (err) {
 		goto out;
 	}
@@ -976,13 +965,25 @@ static int pac_import_ari(struct silofs_pack_ctx *pa_ctx)
 	if (err) {
 		goto out;
 	}
-	err = pac_load_decode_ari(pa_ctx, &bb);
+	err = pac_load_decode_index(pa_ctx, caddr, &bb);
 	if (err) {
 		goto out;
 	}
 out:
 	pac_release_buf(pa_ctx, &bb);
 	return err;
+}
+
+static int pac_do_import(struct silofs_pack_ctx *pa_ctx,
+                         const struct silofs_caddr *caddr)
+{
+	int err;
+
+	err = pac_import_index(pa_ctx, caddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_fs_unpack(struct silofs_task *task,
@@ -995,13 +996,9 @@ int silofs_fs_unpack(struct silofs_task *task,
 
 	err = pac_init(&pa_ctx, task);
 	if (err) {
-		return err;
-	}
-	pac_set_ari_id(&pa_ctx, caddr);
-	if (err) {
 		goto out;
 	}
-	err = pac_import_ari(&pa_ctx);
+	err = pac_do_import(&pa_ctx, caddr);
 	if (err) {
 		goto out;
 	}

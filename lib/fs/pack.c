@@ -390,6 +390,20 @@ index_pop_desc(struct silofs_archive_index *index)
 	return ardi;
 }
 
+static const struct silofs_archive_desc_info *
+index_next_desc(const struct silofs_archive_index *index,
+                const struct silofs_archive_desc_info *curr)
+{
+	const struct silofs_list_head *lh;
+
+	if (curr == NULL) {
+		lh = silofs_listq_front(&index->descq);
+	} else {
+		lh = silofs_listq_next(&index->descq, &curr->lh);
+	}
+	return ardi_from_lh(lh);
+}
+
 static void index_clear_descq(struct silofs_archive_index *index)
 {
 	struct silofs_archive_desc_info *ardi;
@@ -538,7 +552,7 @@ static int index_check_caddr(const struct silofs_archive_index *index,
 	struct silofs_caddr caddr_calc;
 
 	arview_calc_caddr(arview, &index->mdigest, &caddr_calc);
-	return silofs_caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
+	return caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
 }
 
 static int index_decode(struct silofs_archive_index *index,
@@ -656,23 +670,33 @@ static int pac_recv_from_repo(const struct silofs_pack_ctx *pa_ctx,
 }
 
 static int pac_send_pack(const struct silofs_pack_ctx *pa_ctx,
-                         const struct silofs_archive_desc_info *ardi,
-                         const void *dat)
+                         const struct silofs_caddr *caddr,
+                         const void *dat, size_t len)
 {
-	const struct silofs_caddr *caddr = &ardi->ad.caddr;
-	const struct silofs_laddr *laddr = &ardi->ad.laddr;
 	const struct silofs_rovec rov = {
 		.rov_base = dat,
-		.rov_len = laddr->len
+		.rov_len = len
 	};
 	size_t sz = 0;
 	int err;
 
 	err = pac_stat_pack(pa_ctx, caddr, &sz);
-	if ((err == -ENOENT) || (!err && (sz != laddr->len))) {
+	if ((err == -ENOENT) || (!err && (sz != len))) {
 		err = pac_send_to_repo(pa_ctx, caddr, &rov);
 	}
 	return err;
+}
+
+static int pac_recv_pack(const struct silofs_pack_ctx *pa_ctx,
+                         const struct silofs_caddr *caddr,
+                         void *dat, size_t len)
+{
+	const struct silofs_rwvec rwv = {
+		.rwv_base = dat,
+		.rwv_len = len
+	};
+
+	return pac_recv_from_repo(pa_ctx, caddr, &rwv);
 }
 
 static int pac_load_seg(const struct silofs_pack_ctx *pa_ctx,
@@ -688,23 +712,71 @@ static int pac_load_seg(const struct silofs_pack_ctx *pa_ctx,
 	return err;
 }
 
+static int pac_save_seg(const struct silofs_pack_ctx *pa_ctx,
+                        const struct silofs_laddr *laddr, void *seg)
+{
+	int err;
+
+	err = silofs_repo_require_laddr(pa_ctx->pac_repo, laddr);
+	if (err) {
+		log_err("failed to require: ltype=%d len=%zu err=%d",
+		        laddr->ltype, laddr->len, err);
+		return err;
+	}
+	err = silofs_repo_write_at(pa_ctx->pac_repo, laddr, seg);
+	if (err) {
+		log_err("failed to write: ltype=%d len=%zu err=%d",
+		        laddr->ltype, laddr->len, err);
+		return err;
+	}
+	return 0;
+}
+
+static const struct silofs_fsenv *
+pac_fsenv(const struct silofs_pack_ctx *pa_ctx)
+{
+	return pa_ctx->pac_task->t_fsenv;
+}
+
 static int pac_load_bootrec(const struct silofs_pack_ctx *pa_ctx,
                             const struct silofs_caddr *caddr,
                             struct silofs_bootrec1k *out_brec1k)
 {
 	struct silofs_bootrec brec = { .flags = 0 };
-	const struct silofs_fsenv *fsenv = pa_ctx->pac_task->t_fsenv;
 	int err;
 
-	err = silofs_load_bootrec(fsenv, caddr, &brec);
+	err = silofs_load_bootrec(pac_fsenv(pa_ctx), caddr, &brec);
 	if (err) {
 		log_err("failed to load bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_encode_bootrec(fsenv, &brec, out_brec1k);
+	err = silofs_encode_bootrec(pac_fsenv(pa_ctx), &brec, out_brec1k);
 	if (err) {
 		log_err("failed to encode bootrec: err=%d", err);
 		return err;
+	}
+	return 0;
+}
+
+static int pac_save_bootrec(const struct silofs_pack_ctx *pa_ctx,
+                            const struct silofs_caddr *caddr,
+                            struct silofs_bootrec1k *brec1k)
+{
+	struct silofs_bootrec brec = { .flags = 0 };
+	struct silofs_caddr caddr2;
+	int err;
+
+	err = silofs_decode_bootrec(pac_fsenv(pa_ctx), brec1k, &brec);
+	if (err) {
+		return err;
+	}
+	/* TODO: check proper caddr before save */
+	err = silofs_save_bootrec(pac_fsenv(pa_ctx), &brec, &caddr2);
+	if (err) {
+		return err;
+	}
+	if (!caddr_isequal(caddr, &caddr2)) {
+		return -SILOFS_EBADBOOT;
 	}
 	return 0;
 }
@@ -726,15 +798,16 @@ pac_update_hash_of(const struct silofs_pack_ctx *pa_ctx,
 static int pac_export_segdata(const struct silofs_pack_ctx *pa_ctx,
                               struct silofs_archive_desc_info *ardi)
 {
-	const size_t seg_len = ardi->ad.laddr.len;
+	const struct silofs_laddr *laddr = &ardi->ad.laddr;
+	const size_t len = laddr->len;
 	void *seg = NULL;
-	int err = -SILOFS_ENOMEM;
+	int err;
 
-	seg = silofs_memalloc(pa_ctx->pac_alloc, seg_len, 0);
+	seg = silofs_memalloc(pa_ctx->pac_alloc, len, 0);
 	if (seg == NULL) {
-		goto out;
+		return -SILOFS_ENOMEM;
 	}
-	err = pac_load_seg(pa_ctx, &ardi->ad.laddr, seg);
+	err = pac_load_seg(pa_ctx, laddr, seg);
 	if (err) {
 		goto out;
 	}
@@ -742,12 +815,38 @@ static int pac_export_segdata(const struct silofs_pack_ctx *pa_ctx,
 	if (err) {
 		goto out;
 	}
-	err = pac_send_pack(pa_ctx, ardi, seg);
+	err = pac_send_pack(pa_ctx, &ardi->ad.caddr, seg, len);
 	if (err) {
 		goto out;
 	}
 out:
-	silofs_memfree(pa_ctx->pac_alloc, seg, seg_len, 0);
+	silofs_memfree(pa_ctx->pac_alloc, seg, len, 0);
+	return err;
+}
+
+static int pac_import_segdata(const struct silofs_pack_ctx *pa_ctx,
+                              const struct silofs_archive_desc_info *ardi)
+{
+	const struct silofs_laddr *laddr = &ardi->ad.laddr;
+	const size_t len = laddr->len;
+	void *seg = NULL;
+	int err;
+
+	seg = silofs_memalloc(pa_ctx->pac_alloc, len, 0);
+	if (seg == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	err = pac_recv_pack(pa_ctx, &ardi->ad.caddr, seg, len);
+	if (err) {
+		goto out;
+	}
+	/* TODO: recheck caddr by content */
+	err = pac_save_seg(pa_ctx, laddr, seg);
+	if (err) {
+		goto out;
+	}
+out:
+	silofs_memfree(pa_ctx->pac_alloc, seg, len, 0);
 	return err;
 }
 
@@ -762,28 +861,46 @@ pac_bootrec_caddr(const struct silofs_pack_ctx *pa_ctx)
 static int pac_export_bootrec(const struct silofs_pack_ctx *pa_ctx,
                               struct silofs_archive_desc_info *ardi)
 {
-	struct silofs_bootrec1k brec = { .br_magic = 0xFFFFFFFF };
+	struct silofs_bootrec1k brec1k = { .br_magic = 0xff };
 	const struct silofs_caddr *boot_caddr = NULL;
 	int err;
 
 	boot_caddr = pac_bootrec_caddr(pa_ctx);
-	err = pac_load_bootrec(pa_ctx, boot_caddr, &brec);
+	err = pac_load_bootrec(pa_ctx, boot_caddr, &brec1k);
 	if (err) {
 		return err;
 	}
-	err = pac_update_hash_of(pa_ctx, ardi, &brec);
+	err = pac_update_hash_of(pa_ctx, ardi, &brec1k);
 	if (err) {
 		return err;
 	}
-	err = pac_send_pack(pa_ctx, ardi, &brec);
+	err = pac_send_pack(pa_ctx, &ardi->ad.caddr, &brec1k, sizeof(brec1k));
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int pac_process_pdi(struct silofs_pack_ctx *pa_ctx,
-                           struct silofs_archive_desc_info *ardi)
+static int pac_import_bootrec(const struct silofs_pack_ctx *pa_ctx,
+                              const struct silofs_archive_desc_info *ardi)
+{
+	struct silofs_bootrec1k brec1k = { .br_magic = 0xff };
+	int err;
+
+	err = pac_recv_pack(pa_ctx, &ardi->ad.caddr, &brec1k, sizeof(brec1k));
+	if (err) {
+		return err;
+	}
+	/* TODO: check caddr vs content hash */
+	err = pac_save_bootrec(pa_ctx, &ardi->ad.caddr, &brec1k);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int pac_export_by_desc(struct silofs_pack_ctx *pa_ctx,
+                              struct silofs_archive_desc_info *ardi)
 {
 	int err;
 
@@ -795,8 +912,8 @@ static int pac_process_pdi(struct silofs_pack_ctx *pa_ctx,
 	return err;
 }
 
-static int pac_process_by_laddr(struct silofs_pack_ctx *pa_ctx,
-                                const struct silofs_laddr *laddr)
+static int pac_export_by_laddr(struct silofs_pack_ctx *pa_ctx,
+                               const struct silofs_laddr *laddr)
 {
 	struct silofs_archive_desc_info *ardi = NULL;
 	int err;
@@ -805,7 +922,7 @@ static int pac_process_by_laddr(struct silofs_pack_ctx *pa_ctx,
 	if (ardi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	err = pac_process_pdi(pa_ctx, ardi);
+	err = pac_export_by_desc(pa_ctx, ardi);
 	if (err) {
 		index_rm_desc(&pa_ctx->pac_index, ardi);
 		return err;
@@ -817,7 +934,7 @@ static int pac_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
 {
 	struct silofs_pack_ctx *pa_ctx = ctx;
 
-	return pac_process_by_laddr(pa_ctx, laddr);
+	return pac_export_by_laddr(pa_ctx, laddr);
 }
 
 static int pac_export_fs(struct silofs_pack_ctx *pa_ctx)
@@ -974,12 +1091,45 @@ out:
 	return err;
 }
 
+static int pac_import_by_desc(const struct silofs_pack_ctx *pa_ctx,
+                              const struct silofs_archive_desc_info *ardi)
+{
+	int err;
+
+	if (ardi_isbootrec(ardi)) {
+		err = pac_import_bootrec(pa_ctx, ardi);
+	} else {
+		err = pac_import_segdata(pa_ctx, ardi);
+	}
+	return err;
+}
+
+static int pac_import_fs(struct silofs_pack_ctx *pa_ctx)
+{
+	const struct silofs_archive_desc_info *ardi = NULL;
+	int err;
+
+	ardi = index_next_desc(&pa_ctx->pac_index, ardi);
+	while (ardi != NULL) {
+		err = pac_import_by_desc(pa_ctx, ardi);
+		if (err) {
+			return err;
+		}
+		ardi = index_next_desc(&pa_ctx->pac_index, ardi);
+	}
+	return 0;
+}
+
 static int pac_do_import(struct silofs_pack_ctx *pa_ctx,
                          const struct silofs_caddr *caddr)
 {
 	int err;
 
 	err = pac_import_index(pa_ctx, caddr);
+	if (err) {
+		return err;
+	}
+	err = pac_import_fs(pa_ctx);
 	if (err) {
 		return err;
 	}

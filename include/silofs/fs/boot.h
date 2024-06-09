@@ -160,6 +160,10 @@ int silofs_encode_bootrec(const struct silofs_fsenv *fsenv,
                           const struct silofs_bootrec *brec,
                           struct silofs_bootrec1k *out_brec1k);
 
+int silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
+                          struct silofs_bootrec1k *brec1k,
+                          struct silofs_bootrec *out_brec);
+
 int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
                         const struct silofs_bootrec *brec,
                         struct silofs_caddr *out_caddr);

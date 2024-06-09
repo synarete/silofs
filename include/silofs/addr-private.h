@@ -96,4 +96,7 @@
 #define vaddr_compare(va1, va2)         silofs_vaddr_compare(va1, va2)
 #define vaddr_isequal(va1, va2)         silofs_vaddr_isequal(va1, va2)
 
+#define caddr_isnone(ca)                silofs_caddr_isnone(ca)
+#define caddr_isequal(ca, oth)          silofs_caddr_isequal(ca, oth)
+
 #endif /* SILOFS_ADDR_PRIVATE_H_ */

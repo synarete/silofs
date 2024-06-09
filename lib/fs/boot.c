@@ -650,10 +650,9 @@ int silofs_encode_bootrec(const struct silofs_fsenv *fsenv,
 	return silofs_bootrec_encode(brec, out_brec1k, mdigest, cipher, ivkey);
 }
 
-static int
-silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
-                      struct silofs_bootrec1k *brec1k,
-                      struct silofs_bootrec *out_brec)
+int silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
+                          struct silofs_bootrec1k *brec1k,
+                          struct silofs_bootrec *out_brec)
 {
 	const struct silofs_mdigest *mdigest = &fsenv->fse_mdigest;
 	const struct silofs_cipher *cipher = &fsenv->fse_dec_cipher;
@@ -681,7 +680,7 @@ static int verify_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
 	struct silofs_caddr caddr2;
 
 	calc_bootrec1k_caddr(fsenv, brec1k, &caddr2);
-	return silofs_caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOT;
+	return caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOT;
 }
 
 int silofs_save_bootrec(const struct silofs_fsenv *fsenv,

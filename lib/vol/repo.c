@@ -2353,6 +2353,17 @@ int silofs_repo_writev_at(struct silofs_repo *repo,
 	return err;
 }
 
+int silofs_repo_write_at(struct silofs_repo *repo,
+                         const struct silofs_laddr *laddr, const void *buf)
+{
+	const struct iovec iov = {
+		.iov_base = unconst(buf),
+		.iov_len = laddr->len,
+	};
+
+	return silofs_repo_writev_at(repo, laddr, &iov, 1);
+}
+
 static int repo_do_read_at(struct silofs_repo *repo,
                            const struct silofs_laddr *laddr, void *buf)
 {

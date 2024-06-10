@@ -1762,3 +1762,23 @@ int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
 {
 	return exec_pack_fs(fs_ctx, out_caddr);
 }
+
+static int exec_unpack_fs(struct silofs_fs_ctx *fs_ctx,
+                          const struct silofs_caddr *caddr)
+{
+	struct silofs_task task;
+	int err;
+
+	err = make_task(fs_ctx, &task);
+	if (err) {
+		return err;
+	}
+	err = silofs_fs_unpack(&task, caddr);
+	return term_task(&task, err);
+}
+
+int silofs_unpack_fs(struct silofs_fs_ctx *fs_ctx,
+                     const struct silofs_caddr *caddr)
+{
+	return exec_unpack_fs(fs_ctx, caddr);
+}

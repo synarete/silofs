@@ -91,4 +91,7 @@ int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
 int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
                    struct silofs_caddr *out_caddr);
 
+int silofs_unpack_fs(struct silofs_fs_ctx *fs_ctx,
+                     const struct silofs_caddr *caddr);
+
 #endif /* SILOFS_EXECLIB_H_ */

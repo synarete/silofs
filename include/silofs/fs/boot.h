@@ -31,14 +31,15 @@ struct silofs_bootrec {
 	struct silofs_ulink             sb_ulink;
 	struct silofs_cipher_args       cip_args;
 	enum silofs_bootf               flags;
-	/* self content-address, in-memory only */
-	struct silofs_caddr             caddr;
+	uint8_t                         rands[64];
 };
 
 /* boot-records pair after fork-fs with their content-addresses */
 struct silofs_bootrecs {
 	struct silofs_bootrec           brec_new;
 	struct silofs_bootrec           brec_alt;
+	struct silofs_caddr             caddr_new;
+	struct silofs_caddr             caddr_alt;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -111,6 +112,8 @@ void silofs_bootrec_init(struct silofs_bootrec *brec);
 
 void silofs_bootrec_fini(struct silofs_bootrec *brec);
 
+void silofs_bootrec_setup(struct silofs_bootrec *brec);
+
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink);
 
@@ -158,10 +161,10 @@ void silofs_calc_key_hash(const struct silofs_key *key,
 
 int silofs_encode_bootrec(const struct silofs_fsenv *fsenv,
                           const struct silofs_bootrec *brec,
-                          struct silofs_bootrec1k *out_brec1k);
+                          struct silofs_bootrec1k *out_brec1k_enc);
 
 int silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
-                          struct silofs_bootrec1k *brec1k,
+                          const struct silofs_bootrec1k *brec1k_enc,
                           struct silofs_bootrec *out_brec);
 
 int silofs_save_bootrec(const struct silofs_fsenv *fsenv,

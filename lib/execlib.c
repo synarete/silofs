@@ -1487,7 +1487,8 @@ static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
 	struct silofs_bootrec brec;
 	int err;
 
-	silofs_bootrec_init(&brec);
+	silofs_bootrec_setup(&brec);
+
 	err = check_want_capacity(fs_ctx);
 	if (err) {
 		return err;
@@ -1668,8 +1669,8 @@ int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_caddr_assign(out_boot_new, &brecs.brec_new.caddr);
-	silofs_caddr_assign(out_boot_alt, &brecs.brec_alt.caddr);
+	silofs_caddr_assign(out_boot_new, &brecs.caddr_new);
+	silofs_caddr_assign(out_boot_alt, &brecs.caddr_alt);
 	return 0;
 }
 

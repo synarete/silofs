@@ -2321,17 +2321,18 @@ static int check_clone(const struct silofs_task *task,
 }
 
 static int update_save_bootrec(const struct silofs_task *task,
-                               struct silofs_bootrec *brec)
+                               const struct silofs_bootrec *brec,
+                               struct silofs_caddr *out_caddr)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	silofs_bootrec_self_uaddr(brec, &uaddr);
-	err = silofs_save_bootrec(task->t_fsenv, brec, &brec->caddr);
+	err = silofs_save_bootrec(task->t_fsenv, brec, out_caddr);
 	if (err) {
 		return err;
 	}
-	silofs_fsenv_set_boot_ref(task->t_fsenv, &brec->caddr);
+	silofs_fsenv_set_boot_ref(task->t_fsenv, out_caddr);
 	return 0;
 }
 
@@ -2340,11 +2341,11 @@ static int do_post_clone_updates(const struct silofs_task *task,
 {
 	int err;
 
-	err = update_save_bootrec(task, &brecs->brec_new);
+	err = update_save_bootrec(task, &brecs->brec_new, &brecs->caddr_new);
 	if (err) {
 		return err;
 	}
-	err = update_save_bootrec(task, &brecs->brec_alt);
+	err = update_save_bootrec(task, &brecs->brec_alt, &brecs->caddr_alt);
 	if (err) {
 		return err;
 	}

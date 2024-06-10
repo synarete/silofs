@@ -270,13 +270,14 @@ static int arview_setup2(struct silofs_archive_view *arview,
 	return arview_setup(arview, unconst(dat), sz);
 }
 
-static uint64_t arview_calc_descs_csum(const struct silofs_archive_view
-                                       *arview)
+static uint64_t
+arview_calc_descs_csum(const struct silofs_archive_view *arview)
 {
 	const uint64_t seed = SILOFS_PACK_META_MAGIC;
 	const struct silofs_archive_desc256b *descs = arview->descs;
+	const size_t len = arview->ndescs_max * sizeof(*descs);
 
-	return silofs_hash_xxh64(descs, arview->ndescs * sizeof(*descs), seed);
+	return silofs_hash_xxh64(descs, len, seed);
 }
 
 static uint64_t arview_calc_meta_csum(const struct silofs_archive_view *arview)
@@ -338,7 +339,7 @@ static void arview_calc_caddr(const struct silofs_archive_view *arview,
 	iov[0].iov_base = unconst(arm1k);
 	iov[0].iov_len = sizeof(*arm1k);
 	iov[1].iov_base = unconst(descs);
-	iov[1].iov_len = arview->ndescs * sizeof(*descs);
+	iov[1].iov_len = arview->ndescs_max * sizeof(*descs);
 
 	silofs_calc_caddr_of(iov, 2, md, out_caddr);
 }
@@ -645,11 +646,6 @@ pac_stat_pack(const struct silofs_pack_ctx *pa_ctx,
 	err = silofs_repo_stat_pack(pa_ctx->pac_repo, caddr, &sz);
 	if (err) {
 		return err;
-	}
-	err = check_archive_index_size((size_t)sz);
-	if (err) {
-		log_warn("illegal archive index: size=%zd", sz);
-		return -SILOFS_EINVAL;
 	}
 	*out_sz = (size_t)sz;
 	return 0;
@@ -1067,14 +1063,31 @@ static int pac_load_decode_index(struct silofs_pack_ctx *pa_ctx,
 	return 0;
 }
 
+static int pac_stat_index(const struct silofs_pack_ctx *pa_ctx,
+                          const struct silofs_caddr *caddr, size_t *out_sz)
+{
+	int err;
+
+	err = pac_stat_pack(pa_ctx, caddr, out_sz);
+	if (err) {
+		return err;
+	}
+	err = check_archive_index_size(*out_sz);
+	if (err) {
+		log_warn("illegal archive index: size=%zu", *out_sz);
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
 static int pac_import_index(struct silofs_pack_ctx *pa_ctx,
                             const struct silofs_caddr *caddr)
 {
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
-	size_t sz;
+	size_t sz = 0;
 	int err;
 
-	err = pac_stat_pack(pa_ctx, caddr, &sz);
+	err = pac_stat_index(pa_ctx, caddr, &sz);
 	if (err) {
 		goto out;
 	}

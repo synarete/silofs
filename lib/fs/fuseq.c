@@ -2775,8 +2775,8 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	silofs_caddr_to_name2(&brecs->brec_new.caddr, cl_out->boot_new);
-	silofs_caddr_to_name2(&brecs->brec_alt.caddr, cl_out->boot_alt);
+	silofs_caddr_to_name2(&brecs->caddr_new, cl_out->boot_new);
+	silofs_caddr_to_name2(&brecs->caddr_alt, cl_out->boot_alt);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqd_reply_ioctl(fcc->fqd, fcc->task, 0,

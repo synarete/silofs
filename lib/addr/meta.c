@@ -304,13 +304,13 @@ bool silofs_hash256_isnil(const struct silofs_hash256 *hash)
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other)
 {
-	return (memcmp(hash, other, sizeof(*hash)) == 0);
+	return (memcmp(hash->hash, other->hash, sizeof(hash->hash)) == 0);
 }
 
 void silofs_hash256_assign(struct silofs_hash256 *hash,
                            const struct silofs_hash256 *other)
 {
-	memcpy(hash, other, sizeof(*hash));
+	memcpy(hash->hash, other->hash, sizeof(hash->hash));
 }
 
 void silofs_hash256_to_name(const struct silofs_hash256 *hash,

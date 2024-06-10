@@ -510,10 +510,10 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
 }
 
-static void sbi_export_bootrec(const struct silofs_sb_info *sbi,
-                               struct silofs_bootrec *brec)
+static void sbi_make_bootrec(const struct silofs_sb_info *sbi,
+                             struct silofs_bootrec *brec)
 {
-	silofs_bootrec_init(brec);
+	silofs_bootrec_setup(brec);
 	silofs_bootrec_set_sb_ulink(brec, sbi_ulink(sbi));
 }
 
@@ -535,14 +535,14 @@ int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	sbi_export_bootrec(sbi_alt, &out_brecs->brec_alt);
+	sbi_make_bootrec(sbi_alt, &out_brecs->brec_alt);
 
 	fsenv_pre_forkfs(fsenv);
 	err = fsenv_clone_rebind_super(fsenv, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}
-	sbi_export_bootrec(sbi_new, &out_brecs->brec_new);
+	sbi_make_bootrec(sbi_new, &out_brecs->brec_new);
 
 	sbi_mark_fossil(sbi_cur);
 	return 0;

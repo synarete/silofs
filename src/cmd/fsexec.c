@@ -250,6 +250,14 @@ void cmd_pack_fs(struct silofs_fs_ctx *fse, struct silofs_caddr *out_caddr)
 	cmd_require_ok(fse, err, "pack-fs error");
 }
 
+void cmd_unpack_fs(struct silofs_fs_ctx *fse, const struct silofs_caddr *caddr)
+{
+	int err;
+
+	err = silofs_unpack_fs(fse, caddr);
+	cmd_require_ok(fse, err, "unpack-fs error");
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_init_fs_args(struct silofs_fs_args *fs_args)

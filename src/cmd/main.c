@@ -160,7 +160,8 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(prune),
 	DEFCMD(fsck),
 	DEFCMD(view),
-	DEFCMD(archive),
+	DEFCMD(pack),
+	DEFCMD(unpack),
 };
 
 static bool equals(const char *s1, const char *s2)
@@ -239,4 +240,3 @@ static void cmd_execute_sub(void)
 		cmdi->action_hook();
 	}
 }
-

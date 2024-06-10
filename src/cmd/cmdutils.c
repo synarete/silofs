@@ -161,6 +161,15 @@ void cmd_check_isreg(const char *path)
 	}
 }
 
+void cmd_check_isreg2(const char *dirpath, const char *name)
+{
+	char *path = NULL;
+
+	cmd_join_path(dirpath, name, &path);
+	cmd_check_isreg(path);
+	cmd_pstrfree(&path);
+}
+
 void cmd_check_reg_or_dir(const char *path)
 {
 	struct stat st;

@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <fcntl.h>
-#include <limits.h>
 
 
 /* logical-segment control file */

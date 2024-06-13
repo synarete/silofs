@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
-#include <limits.h>
 
 
 static void resolve_ivkey_of(const struct silofs_fsenv *fsenv,

@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
-#include <limits.h>
 
 static void vi_do_undirtify(struct silofs_vnode_info *vi);
 static void lcache_drop_uamap(struct silofs_lcache *lcache);
@@ -1345,4 +1344,3 @@ bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
 {
 	return (ii->i_vi.v_lni.l_flags & SILOFS_LNF_LOOSE) > 0;
 }
-

@@ -19,7 +19,6 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 #include <errno.h>
-#include <limits.h>
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {

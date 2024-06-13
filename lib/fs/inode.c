@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <unistd.h>
-#include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1397,4 +1396,3 @@ int silofs_verify_inode(const struct silofs_inode *inode)
 	}
 	return err;
 }
-

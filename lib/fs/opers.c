@@ -21,8 +21,6 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <limits.h>
 #include <time.h>
 
 
@@ -1694,4 +1692,3 @@ int silofs_remap_status_code(int status)
 	}
 	return -ret;
 }
-

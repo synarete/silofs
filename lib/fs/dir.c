@@ -20,7 +20,6 @@
 #include <silofs/fs-private.h>
 #include <dirent.h>
 #include <errno.h>
-#include <limits.h>
 
 #define DTREE_SHIFT             SILOFS_DIR_NODE_SHIFT
 #define DTREE_FANOUT            SILOFS_DIR_NODE_NCHILDS
@@ -2872,4 +2871,3 @@ int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
 	}
 	return 0;
 }
-

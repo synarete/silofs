@@ -22,7 +22,6 @@
 #include <sys/stat.h>
 #include <limits.h>
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
 {
@@ -1861,4 +1860,3 @@ int silofs_verify_spmap_node(const struct silofs_spmap_node *sn)
 	}
 	return 0;
 }
-

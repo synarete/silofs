@@ -14,9 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PACK_H_
-#define SILOFS_PACK_H_
+#ifndef SILOFS_PAR_H_
+#define SILOFS_PAR_H_
 
+struct silofs_caddr;
 struct silofs_task;
 
 int silofs_fs_pack(struct silofs_task *task,
@@ -25,4 +26,4 @@ int silofs_fs_pack(struct silofs_task *task,
 int silofs_fs_unpack(struct silofs_task *task,
                      const struct silofs_caddr *caddr);
 
-#endif /* SILOFS_PACK_H_ */
+#endif /* SILOFS_PAR_H_ */

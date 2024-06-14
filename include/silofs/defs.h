@@ -35,8 +35,8 @@
 /* boot-record magic-signature (ASCII: "@SILOFS@") */
 #define SILOFS_BOOT_RECORD_MAGIC        (0x4053464F4C495340L)
 
-/* pack catalog meta-header magic-signature (ASCII: "%silofs%") */
-#define SILOFS_PACK_META_MAGIC          (0x2573666F6C697325L)
+/* pack-index header magic-signature (ASCII: "%silofs%") */
+#define SILOFS_PAR_INDEX_MAGIC          (0x2573666F6C697325L)
 
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC              (0x4073666F6C697340L)
@@ -1042,30 +1042,30 @@ struct silofs_btree_leaf {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/* minimal archive's index total size in bytes */
-#define SILOFS_ARCHIVE_INDEX_SIZE_MIN   SILOFS_LBK_SIZE
+/* minimal pack-archive index total size in bytes */
+#define SILOFS_PAR_INDEX_SIZE_MIN       SILOFS_LBK_SIZE
 
-/* maximal archive's index total size in bytes */
-#define SILOFS_ARCHIVE_INDEX_SIZE_MAX   (256 * SILOFS_MEGA)
+/* maximal pack-archive index total size in bytes */
+#define SILOFS_PAR_INDEX_SIZE_MAX       (256 * SILOFS_MEGA)
 
 
-/* archive descriptor */
-struct silofs_archive_desc256b {
-	struct silofs_caddr64b          ad_caddr;
-	struct silofs_laddr48b          ad_laddr;
-	uint8_t                         ad_reserved[144];
+/* pack-archive descriptor */
+struct silofs_par_desc256b {
+	struct silofs_caddr64b          pd_caddr;
+	struct silofs_laddr48b          pd_laddr;
+	uint8_t                         pd_reserved[144];
 } silofs_packed_aligned64;
 
 
-/* archive meta-header */
-struct silofs_archive_meta1k {
-	uint64_t                        am_magic;
-	uint32_t                        am_version;
-	uint32_t                        am_flags;
-	uint64_t                        am_ndescs;
-	uint64_t                        am_descs_csum;
-	uint64_t                        am_reserved2[123];
-	uint64_t                        am_meta_csum;
+/* pac-archive header */
+struct silofs_par_hdr1k {
+	uint64_t                        ph_magic;
+	uint32_t                        ph_version;
+	uint32_t                        ph_flags;
+	uint64_t                        ph_ndescs;
+	uint64_t                        ph_descs_csum;
+	uint64_t                        ph_reserved2[123];
+	uint64_t                        ph_hdr_csum;
 } silofs_packed_aligned64;
 
 

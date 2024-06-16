@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <errno.h>
 #include <limits.h>
 
 #define QALLOC_MAGIC            (0xBCC12573666F)

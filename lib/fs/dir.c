@@ -1105,7 +1105,9 @@ static void indr_set_tree_root(struct silofs_inode_dir *indr,
 
 static enum silofs_dirf indr_flags(const struct silofs_inode_dir *indr)
 {
-	return silofs_le32_to_cpu(indr->d_flags);
+	const uint32_t flags = silofs_le32_to_cpu(indr->d_flags);
+
+	return (enum silofs_dirf)flags;
 }
 
 static void indr_set_flags(struct silofs_inode_dir *indr,

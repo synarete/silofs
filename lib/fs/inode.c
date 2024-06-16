@@ -225,7 +225,9 @@ static void inode_inc_revision(struct silofs_inode *inode)
 
 static enum silofs_inodef inode_flags(const struct silofs_inode *inode)
 {
-	return silofs_le32_to_cpu(inode->i_flags);
+	const uint32_t flags = silofs_le32_to_cpu(inode->i_flags);
+
+	return (enum silofs_inodef)flags;
 }
 
 static void inode_set_flags(struct silofs_inode *inode,

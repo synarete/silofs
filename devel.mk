@@ -278,7 +278,11 @@ bootstrap:
 
 
 # Special targets
-.PHONY: clangscan rpm reset params
+.PHONY: tags clangscan rpm deb reset params
+
+tags:
+	$(call report, $@)
+	@find $(TOP) -name "*.[ch]" -print | etags -
 
 clangscan:
 	$(call report, $@)

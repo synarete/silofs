@@ -231,14 +231,14 @@ static void validate_persistent_types_alignment2(void)
 {
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_magic, 0);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_version, 8);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_flags, 16);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_chiper_algo, 24);
-	REQUIRE_OFFSET(struct silofs_bootrec1k, br_chiper_mode, 28);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_kdf_pair, 32);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_uaddr, 64);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_riv, 128);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_rands, 256);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_reserved3, 512);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_uuid, 16);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_flags, 32);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_chiper_algo, 40);
+	REQUIRE_OFFSET(struct silofs_bootrec1k, br_chiper_mode, 44);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_kdf_pair, 64);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_uaddr, 128);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_riv, 192);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_reserved3, 208);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_magic, 16);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_version, 24);
@@ -581,4 +581,3 @@ int silofs_init_lib(void)
 	}
 	return ret;
 }
-

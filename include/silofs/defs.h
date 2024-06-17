@@ -607,16 +607,16 @@ struct silofs_kdf_pair {
 struct silofs_bootrec1k {
 	uint64_t                        br_magic;
 	uint64_t                        br_version;
+	struct silofs_uuid              br_uuid;
 	uint64_t                        br_flags;
 	uint32_t                        br_chiper_algo;
 	uint32_t                        br_chiper_mode;
+	uint8_t                         br_reserved1[16];
 	struct silofs_kdf_pair          br_kdf_pair;
+	uint8_t                         br_reserved2[32];
 	struct silofs_uaddr64b          br_sb_uaddr;
 	struct silofs_iv                br_sb_riv;
-	uint8_t                         br_reserved1[112];
-	uint8_t                         br_rands[64];
-	uint8_t                         br_reserved2[192];
-	uint8_t                         br_reserved3[480];
+	uint8_t                         br_reserved3[784];
 	struct silofs_hash256           br_hash;
 } silofs_packed_aligned64;
 

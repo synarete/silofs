@@ -17,6 +17,15 @@
 #ifndef SILOFS_META_H_
 #define SILOFS_META_H_
 
+#include <silofs/defs.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+struct silofs_uuid;
+struct silofs_substr;
+struct silofs_strbuf;
+struct silofs_header;
 
 uint32_t silofs_squash_to_u32(const void *ptr, size_t len);
 

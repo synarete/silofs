@@ -362,6 +362,18 @@ static void bootrec1k_cipher_args(const struct silofs_bootrec1k *brec1k,
 	cip_args->cipher_mode = bootrec1k_chiper_mode(brec1k);
 }
 
+static void bootrec1k_uuid(const struct silofs_bootrec1k *brec1k,
+                           struct silofs_uuid *out_uuid)
+{
+	silofs_uuid_assign(out_uuid, &brec1k->br_uuid);
+}
+
+static void bootrec1k_set_uuid(struct silofs_bootrec1k *brec1k,
+                               const struct silofs_uuid *uuid)
+{
+	silofs_uuid_assign(&brec1k->br_uuid, uuid);
+}
+
 static int bootrec1k_check(const struct silofs_bootrec1k *brec1k)
 {
 	struct silofs_cipher_args cip_args = {
@@ -452,25 +464,21 @@ int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
 void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
                            struct silofs_bootrec *brec)
 {
-	STATICASSERT_EQ(sizeof(brec->rands), sizeof(brec1k->br_rands));
-
 	bootrec1k_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_sb_riv(brec1k, &brec->sb_ulink.riv);
 	bootrec1k_cipher_args(brec1k, &brec->cip_args);
 	brec->flags = bootrec1k_flags(brec1k);
-	memcpy(brec->rands, brec1k->br_rands, sizeof(brec->rands));
+	bootrec1k_uuid(brec1k, &brec->uuid);
 }
 
 void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
                            const struct silofs_bootrec *brec)
 {
-	STATICASSERT_EQ(sizeof(brec1k->br_rands), sizeof(brec->rands));
-
 	silofs_bootrec1k_init(brec1k);
 	bootrec1k_set_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_set_sb_riv(brec1k, &brec->sb_ulink.riv);
 	bootrec1k_set_flags(brec1k, brec->flags);
-	memcpy(brec1k->br_rands, brec->rands, sizeof(brec1k->br_rands));
+	bootrec1k_set_uuid(brec1k, &brec->uuid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -488,15 +496,10 @@ void silofs_bootrec_fini(struct silofs_bootrec *brec)
 	silofs_memffff(brec, sizeof(*brec));
 }
 
-static void bootrec_fill_rands(struct silofs_bootrec *brec)
-{
-	silofs_getentropy(brec->rands, sizeof(brec->rands));
-}
-
 void silofs_bootrec_setup(struct silofs_bootrec *brec)
 {
 	silofs_bootrec_init(brec);
-	bootrec_fill_rands(brec);
+	silofs_uuid_generate(&brec->uuid);
 }
 
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,

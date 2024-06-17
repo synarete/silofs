@@ -17,6 +17,11 @@
 #ifndef SILOFS_BOOT_H_
 #define SILOFS_BOOT_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/vol.h>
+#include <silofs/fs/types.h>
+#include <silofs/fs/idmap.h>
 
 struct silofs_fsenv;
 
@@ -30,8 +35,8 @@ struct silofs_bootpath {
 struct silofs_bootrec {
 	struct silofs_ulink             sb_ulink;
 	struct silofs_cipher_args       cip_args;
+	struct silofs_uuid              uuid;
 	enum silofs_bootf               flags;
-	uint8_t                         rands[64];
 };
 
 /* boot-records pair after fork-fs with their content-addresses */

@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
-SUBDIRS = . include lib src py man docs scripts dist cicd
+SUBDIRS = . include lib src test py man docs scripts dist cicd
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += README.md

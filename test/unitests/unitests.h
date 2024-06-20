@@ -528,6 +528,8 @@ void ut_open_fs2_ok(struct ut_env *ute);
 
 void ut_inspect_fs_ok(struct ut_env *ute);
 
+void ut_unref_fs_ok(struct ut_env *ute);
+
 void ut_unref_fs2_ok(struct ut_env *ute);
 
 void ut_fork_fs_ok(struct ut_env *ute);

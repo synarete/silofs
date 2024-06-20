@@ -9,8 +9,8 @@ astylefile_sh="${root}/scripts/astylefile.sh"
 checkcstyle_py="${root}/scripts/checkcstyle.py"
 
 cd "${root}"
-srcs=$(find "${root}/include" "${root}/lib" "${root}/src" -type f \
-  -not -name "fuse_kernel.h" -not -name "config*.h" -name "*.[ch]")
+srcs=$(find "${root}/include" "${root}/lib" "${root}/src" "${root}/test" \
+  -type f -not -name "fuse_kernel.h" -not -name "config*.h" -name "*.[ch]")
 
 ${astylefile_sh} ${srcs}
 ${checkcstyle_py} ${srcs}

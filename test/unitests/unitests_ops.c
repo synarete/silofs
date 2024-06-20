@@ -2019,6 +2019,14 @@ void ut_inspect_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
+void ut_unref_fs_ok(struct ut_env *ute)
+{
+	int err;
+
+	err = silofs_unref_fs(ute->fs_ctx, &ute->boot_ref[0]);
+	ut_expect_ok(err);
+}
+
 void ut_unref_fs2_ok(struct ut_env *ute)
 {
 	int err;

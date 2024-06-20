@@ -2044,3 +2044,18 @@ void ut_fork_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
+void ut_pack_fs_ok(struct ut_env *ute)
+{
+	int err;
+
+	err = silofs_pack_fs(ute->fs_ctx, &ute->pack_ref);
+	ut_expect_ok(err);
+}
+
+void ut_unpack_fs_ok(struct ut_env *ute)
+{
+	int err;
+
+	err = silofs_unpack_fs(ute->fs_ctx, &ute->pack_ref);
+	ut_expect_ok(err);
+}

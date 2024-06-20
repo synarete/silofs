@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 #include "unitests.h"
+#include <limits.h>
 #include <dirent.h>
-
 
 struct ut_direlem {
 	struct ut_direlem *next;

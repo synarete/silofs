@@ -40,6 +40,7 @@ silofs_unitests_SOURCES += ut_fillfs.c
 silofs_unitests_SOURCES += ut_inspect.c
 silofs_unitests_SOURCES += ut_ioctl.c
 silofs_unitests_SOURCES += ut_namei.c
+silofs_unitests_SOURCES += ut_pack.c
 silofs_unitests_SOURCES += ut_qalloc.c
 silofs_unitests_SOURCES += ut_reload.c
 silofs_unitests_SOURCES += ut_rename.c

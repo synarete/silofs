@@ -28,14 +28,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
 #include <dirent.h>
-#include <limits.h>
-#include <ctype.h>
-#include <errno.h>
 
 #ifndef SILOFS_UNITEST
 #error "this header must not be included out-side of unitests"
@@ -122,6 +116,7 @@ struct ut_env {
 	struct silofs_prandgen   prng;
 	struct silofs_password   passwd;
 	struct silofs_caddr      boot_ref[2];
+	struct silofs_caddr      pack_ref;
 	struct ut_args          *args;
 	struct silofs_fs_ctx    *fs_ctx;
 	struct timespec          ts_start;
@@ -537,6 +532,9 @@ void ut_unref_fs2_ok(struct ut_env *ute);
 
 void ut_fork_fs_ok(struct ut_env *ute);
 
+void ut_pack_fs_ok(struct ut_env *ute);
+
+void ut_unpack_fs_ok(struct ut_env *ute);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);
@@ -614,9 +612,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define ut_min(x, y)            silofs_min(x, y)
 #define ut_min3(x, y, z)        silofs_min3(x, y, z)
 #define ut_max(x, y)            silofs_max(x, y)
-
-#define ut_unused(x) \
-	silofs_unused(x)
+#define ut_unused(x)            silofs_unused(x)
 
 #define ut_container_of(ptr_, type_, member_) \
 	silofs_container_of(ptr_, type_, member_)
@@ -631,7 +627,6 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define UT_DEFTEST1(fn_)        UT_DEFTESTF(fn_, UT_F_QUICK)
 #define UT_DEFTEST2(fn_)        UT_DEFTESTF(fn_, UT_F_FTYPE2)
 #define UT_DEFTEST3(fn_)        UT_DEFTESTF(fn_, UT_F_QUICK | UT_F_FTYPE2)
-
 #define UT_MKTESTS(arr_) \
 	{ arr_, SILOFS_ARRAY_SIZE(arr_) }
 

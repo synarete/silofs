@@ -16,6 +16,8 @@
  */
 #include "unitests.h"
 #include <error.h>
+#include <ctype.h>
+#include <limits.h>
 
 #define UT_DEFTGRP(t_) \
 	{ .tests = &(t_), .name = SILOFS_STR(t_) }
@@ -53,6 +55,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_fillfs),
 	UT_DEFTGRP(ut_tdefs_snap_basic),
 	UT_DEFTGRP(ut_tdefs_snap_io),
+	UT_DEFTGRP(ut_tdefs_pack),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

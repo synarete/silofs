@@ -1465,13 +1465,6 @@ static int unlink_bootrec_of(struct silofs_fs_ctx *fs_ctx,
 	return silofs_unlink_bootrec(fs_ctx->fsenv, caddr);
 }
 
-static int save_bootrec(const struct silofs_fs_ctx *fs_ctx,
-                        const struct silofs_bootrec *brec,
-                        struct silofs_caddr *out_caddr)
-{
-	return silofs_save_bootrec(fs_ctx->fsenv, brec, out_caddr);
-}
-
 static void update_bootrec(const struct silofs_fs_ctx *fs_ctx,
                            struct silofs_bootrec *brec)
 {
@@ -1481,6 +1474,19 @@ static void update_bootrec(const struct silofs_fs_ctx *fs_ctx,
 	silofs_bootrec_set_sb_ulink(brec, sb_ulink);
 }
 
+static int commit_bootrec(const struct silofs_fs_ctx *fs_ctx,
+                          struct silofs_bootrec *brec)
+{
+	update_bootrec(fs_ctx, brec);
+	return silofs_resave_bootrec(fs_ctx->fsenv, brec);
+}
+
+static void resolve_bootrec_caddr(const struct silofs_fs_ctx *fs_ctx,
+                                  struct silofs_caddr *out_caddr)
+{
+	silofs_caddr_assign(out_caddr, &fs_ctx->fsenv->fse_boot_ref);
+}
+
 static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
                         struct silofs_caddr *out_caddr)
 {
@@ -1488,7 +1494,6 @@ static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
 	int err;
 
 	silofs_bootrec_setup(&brec);
-
 	err = check_want_capacity(fs_ctx);
 	if (err) {
 		return err;
@@ -1513,11 +1518,11 @@ static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
 	if (err) {
 		return err;
 	}
-	update_bootrec(fs_ctx, &brec);
-	err = save_bootrec(fs_ctx, &brec, out_caddr);
+	err = commit_bootrec(fs_ctx, &brec);
 	if (err) {
 		return err;
 	}
+	resolve_bootrec_caddr(fs_ctx, out_caddr);
 	return 0;
 }
 

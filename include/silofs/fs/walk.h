@@ -18,6 +18,7 @@
 #define SILOFS_WALK_H_
 
 #include <silofs/infra.h>
+#include <silofs/addr.h>
 #include <silofs/fs/types.h>
 
 

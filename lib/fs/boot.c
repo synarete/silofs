@@ -723,6 +723,20 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 	return 0;
 }
 
+int silofs_resave_bootrec(struct silofs_fsenv *fsenv,
+                          const struct silofs_bootrec *brec)
+{
+	struct silofs_caddr caddr;
+	int err;
+
+	err = silofs_save_bootrec(fsenv, brec, &caddr);
+	if (err) {
+		return err;
+	}
+	silofs_fsenv_set_boot_ref(fsenv, &caddr);
+	return 0;
+}
+
 int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
                         const struct silofs_caddr *caddr,
                         struct silofs_bootrec *out_brec)

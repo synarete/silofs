@@ -17,6 +17,12 @@
 #ifndef SILOFS_EXECLIB_H_
 #define SILOFS_EXECLIB_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/fs/boot.h>
+
+struct silofs_cachestats;
+
 /* file-system top-level context */
 struct silofs_fs_ctx {
 	struct silofs_fs_args   fs_args;

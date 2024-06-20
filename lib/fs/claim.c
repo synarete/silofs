@@ -23,7 +23,7 @@
 /* space-allocation context */
 struct silofs_spalloc_ctx {
 	struct silofs_task        *task;
-	struct silofs_fsenv        *fsenv;
+	struct silofs_fsenv       *fsenv;
 	struct silofs_sb_info     *sbi;
 	struct silofs_spnode_info *sni;
 	struct silofs_spleaf_info *sli;

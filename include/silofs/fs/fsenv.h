@@ -17,6 +17,12 @@
 #ifndef SILOFS_FSENV_H_
 #define SILOFS_FSENV_H_
 
+#include <silofs/infra.h>
+#include <silofs/vol.h>
+#include <silofs/fs/types.h>
+#include <silofs/fs/boot.h>
+
+
 /* fs-env control flags */
 enum silofs_env_flags {
 	SILOFS_ENVF_WITHFUSE    = SILOFS_BIT(0),
@@ -27,6 +33,15 @@ enum silofs_env_flags {
 	SILOFS_ENVF_ALLOWADMIN  = SILOFS_BIT(5),
 	SILOFS_ENVF_ALLOWXACL   = SILOFS_BIT(6),
 	SILOFS_ENVF_ASYNCWR     = SILOFS_BIT(7),
+};
+
+/* operations counters */
+struct silofs_oper_stat {
+	size_t op_iopen_max;
+	size_t op_iopen;
+	time_t op_time;
+	size_t op_count;
+	/* TODO: Have counter per-operation */
 };
 
 /* base members of fsenv-block (provided) */

@@ -875,21 +875,31 @@ static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
+static void pac_update_bootref(const struct silofs_par_ctx *pa_ctx,
+                               const struct silofs_caddr *caddr)
+{
+	struct silofs_fsenv *fsenv = pa_ctx->pac_task->t_fsenv;
+
+	silofs_fsenv_set_boot_ref(fsenv, caddr);
+}
+
 static int pac_import_bootrec(const struct silofs_par_ctx *pa_ctx,
                               const struct silofs_par_desc_info *pdi)
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0xff };
+	const struct silofs_caddr *caddr = &pdi->pd.caddr;
 	int err;
 
-	err = pac_recv_pack(pa_ctx, &pdi->pd.caddr, &brec1k, sizeof(brec1k));
+	err = pac_recv_pack(pa_ctx, caddr, &brec1k, sizeof(brec1k));
 	if (err) {
 		return err;
 	}
 	/* TODO: check caddr vs content hash */
-	err = pac_save_bootrec(pa_ctx, &pdi->pd.caddr, &brec1k);
+	err = pac_save_bootrec(pa_ctx, caddr, &brec1k);
 	if (err) {
 		return err;
 	}
+	pac_update_bootref(pa_ctx, caddr);
 	return 0;
 }
 

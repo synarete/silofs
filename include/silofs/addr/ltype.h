@@ -21,6 +21,8 @@
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);
 
+bool silofs_ltype_isbootrec(enum silofs_ltype ltype);
+
 bool silofs_ltype_issuper(enum silofs_ltype ltype);
 
 bool silofs_ltype_isspnode(enum silofs_ltype ltype);

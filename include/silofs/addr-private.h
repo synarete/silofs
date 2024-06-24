@@ -43,6 +43,7 @@
 #define ltype_size(lt)                  silofs_ltype_size(lt)
 #define ltype_ssize(lt)                 silofs_ltype_ssize(lt)
 #define ltype_isnone(lt)                silofs_ltype_isnone(lt)
+#define ltype_isbootrec(lt)             silofs_ltype_isbootrec(lt)
 #define ltype_issuper(lt)               silofs_ltype_issuper(lt)
 #define ltype_isspnode(lt)              silofs_ltype_isspnode(lt)
 #define ltype_isspleaf(lt)              silofs_ltype_isspleaf(lt)

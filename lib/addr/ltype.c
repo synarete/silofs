@@ -28,6 +28,11 @@ bool silofs_ltype_isnone(enum silofs_ltype ltype)
 	return ltype_isequal(ltype, SILOFS_LTYPE_NONE);
 }
 
+bool silofs_ltype_isbootrec(enum silofs_ltype ltype)
+{
+	return ltype_isequal(ltype, SILOFS_LTYPE_BOOTREC);
+}
+
 bool silofs_ltype_issuper(enum silofs_ltype ltype)
 {
 	return ltype_isequal(ltype, SILOFS_LTYPE_SUPER);

@@ -17,6 +17,10 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/fs/types.h>
+
 #define SILOFS_SQENT_NREFS_MAX  (32)
 
 /* current file-system operation */

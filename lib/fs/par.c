@@ -233,7 +233,12 @@ static void pdi_del(struct silofs_par_desc_info *pdi,
 
 static bool pdi_isbootrec(const struct silofs_par_desc_info *pdi)
 {
-	return (pdi->pd.laddr.ltype == SILOFS_LTYPE_BOOTREC);
+	return ltype_isbootrec(pdi->pd.laddr.ltype);
+}
+
+static bool pdi_issuper(const struct silofs_par_desc_info *pdi)
+{
+	return ltype_issuper(pdi->pd.laddr.ltype);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -353,9 +358,13 @@ static void piview_calc_caddr(const struct silofs_par_index_view *piv,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void paridx_link_desc(struct silofs_par_index *paridx,
-                             struct silofs_par_desc_info *pdi)
+                             struct silofs_par_desc_info *pdi, bool front)
 {
-	silofs_listq_push_front(&paridx->descq, &pdi->lh);
+	if (front) {
+		silofs_listq_push_front(&paridx->descq, &pdi->lh);
+	} else {
+		silofs_listq_push_back(&paridx->descq, &pdi->lh);
+	}
 }
 
 static void paridx_unlink_desc(struct silofs_par_index *paridx,
@@ -366,13 +375,13 @@ static void paridx_unlink_desc(struct silofs_par_index *paridx,
 
 static struct silofs_par_desc_info *
 paridx_add_desc(struct silofs_par_index *paridx,
-                const struct silofs_laddr *laddr)
+                const struct silofs_laddr *laddr, bool front)
 {
 	struct silofs_par_desc_info *pdi;
 
 	pdi = pdi_new(laddr, paridx->alloc);
 	if (pdi != NULL) {
-		paridx_link_desc(paridx, pdi);
+		paridx_link_desc(paridx, pdi, front);
 	}
 	return pdi;
 }
@@ -489,7 +498,7 @@ static int pindex_decode_descs(struct silofs_par_index *pindex,
 
 	for (size_t i = 0; i < piview->ndescs; ++i) {
 		pd256 = &piview->descs[i];
-		pdi = paridx_add_desc(pindex, laddr_none());
+		pdi = paridx_add_desc(pindex, laddr_none(), false);
 		if (pdi == NULL) {
 			return -SILOFS_ENOMEM;
 		}
@@ -706,14 +715,35 @@ static int pac_load_seg(const struct silofs_par_ctx *pa_ctx,
 	return err;
 }
 
+static int pac_require_lseg_of(const struct silofs_par_ctx *pa_ctx,
+                               const struct silofs_laddr *laddr)
+{
+	struct stat st = { .st_ino = 0 };
+	const struct silofs_lsegid *lsegid = &laddr->lsegid;
+	int err;
+
+	err = silofs_repo_stat_lseg(pa_ctx->pac_repo, lsegid, false, &st);
+	if (!err) {
+		err = silofs_repo_stage_lseg(pa_ctx->pac_repo, true, lsegid);
+	} else  if (err == -SILOFS_ENOENT) {
+		err = silofs_repo_spawn_lseg(pa_ctx->pac_repo, lsegid);
+	}
+	return err;
+}
+
 static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
                         const struct silofs_laddr *laddr, void *seg)
 {
 	int err;
 
+	err = pac_require_lseg_of(pa_ctx, laddr);
+	if (err) {
+		log_err("failed to require lseg: ltype=%d", laddr->ltype);
+		return err;
+	}
 	err = silofs_repo_require_laddr(pa_ctx->pac_repo, laddr);
 	if (err) {
-		log_err("failed to require: ltype=%d len=%zu err=%d",
+		log_err("failed to require laddr: ltype=%d len=%zu err=%d",
 		        laddr->ltype, laddr->len, err);
 		return err;
 	}
@@ -922,7 +952,7 @@ static int pac_export_by_laddr(struct silofs_par_ctx *pa_ctx,
 	struct silofs_par_desc_info *pdi = NULL;
 	int err;
 
-	pdi = paridx_add_desc(&pa_ctx->pac_pindex, laddr);
+	pdi = paridx_add_desc(&pa_ctx->pac_pindex, laddr, true);
 	if (pdi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -1110,6 +1140,22 @@ out:
 	return err;
 }
 
+static int pac_import_super(const struct silofs_par_ctx *pa_ctx,
+                            const struct silofs_par_desc_info *pdi)
+{
+	int err;
+
+	err = pac_import_segdata(pa_ctx, pdi);
+	if (err) {
+		return err;
+	}
+	err = silofs_fsenv_reload_super(pa_ctx->pac_task->t_fsenv);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int pac_import_by_desc(const struct silofs_par_ctx *pa_ctx,
                               const struct silofs_par_desc_info *pdi)
 {
@@ -1117,6 +1163,8 @@ static int pac_import_by_desc(const struct silofs_par_ctx *pa_ctx,
 
 	if (pdi_isbootrec(pdi)) {
 		err = pac_import_bootrec(pa_ctx, pdi);
+	} else if (pdi_issuper(pdi)) {
+		err = pac_import_super(pa_ctx, pdi);
 	} else {
 		err = pac_import_segdata(pa_ctx, pdi);
 	}

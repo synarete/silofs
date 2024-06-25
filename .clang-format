@@ -4,6 +4,10 @@
 #   Documentation/process/clang-format.rst
 #   https://clang.llvm.org/docs/ClangFormat.html
 #   https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+#
+# Check:
+#   https://zed0.co.uk/clang-format-configurator/
+#
 ---
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
@@ -23,7 +27,6 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: false
-BasedOnStyle: GNU
 BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:
@@ -50,7 +53,7 @@ BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: BeforeComma
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: false
-ColumnLimit: 0
+ColumnLimit: 79
 CommentPragmas: '^ IWYU pragma:'
 CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: false

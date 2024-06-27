@@ -262,7 +262,8 @@ static void cmd_mount_halt_by_signal(int signum)
 
 	ctx = cmd_mount_ctx;
 	if (ctx && ctx->fs_ctx) {
-		silofs_halt_fs(ctx->fs_ctx, signum);
+		silofs_halt_fs(ctx->fs_ctx->fsenv);
+		ctx->halt_signal = signum;
 	}
 }
 
@@ -390,8 +391,7 @@ static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
 	ctx->start_time = silofs_time_now();
 	cmd_exec_fs(ctx->fs_ctx);
-	ctx->halt_signal = ctx->fs_ctx->signum;
-	ctx->post_exec_status = silofs_post_exec_fs(ctx->fs_ctx);
+	ctx->post_exec_status = silofs_post_exec_fs(ctx->fs_ctx->fsenv);
 }
 
 static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)

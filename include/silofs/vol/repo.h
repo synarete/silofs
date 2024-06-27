@@ -90,6 +90,9 @@ int silofs_repo_remove_lseg(struct silofs_repo *repo,
 int silofs_repo_punch_lseg(struct silofs_repo *repo,
                            const struct silofs_lsegid *lsegid);
 
+int silofs_repo_require_lseg(struct silofs_repo *repo,
+                             const struct silofs_lsegid *lsegid);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_require_laddr(struct silofs_repo *repo,

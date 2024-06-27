@@ -2286,6 +2286,38 @@ int silofs_repo_punch_lseg(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int repo_do_require_lseg(struct silofs_repo *repo,
+                                const struct silofs_lsegid *lsegid)
+{
+	struct stat st = { .st_ino = 0 };
+	int err;
+
+	err = repo_do_stat_lseg(repo, lsegid, true, &st);
+	if (!err) {
+		goto out_ok;
+	}
+	if (err != -SILOFS_ENOENT) {
+		return err;
+	}
+	err = repo_do_spawn_lseg(repo, lsegid);
+	if (err) {
+		return err;
+	}
+out_ok:
+	return repo_do_stage_lseg(repo, true, lsegid);
+}
+
+int silofs_repo_require_lseg(struct silofs_repo *repo,
+                             const struct silofs_lsegid *lsegid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_do_require_lseg(repo, lsegid);
+	repo_unlock(repo);
+	return err;
+}
+
 static int repo_do_require_laddr(struct silofs_repo *repo,
                                  const struct silofs_laddr *laddr)
 {

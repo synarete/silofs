@@ -118,7 +118,7 @@ struct ut_env {
 	struct silofs_caddr      boot_ref[2];
 	struct silofs_caddr      pack_ref;
 	struct ut_args          *args;
-	struct silofs_fs_ctx    *fs_ctx;
+	struct silofs_fsenv     *fsenv;
 	struct timespec          ts_start;
 	struct statvfs           stvfs[2];
 	struct silofs_spacestats spst[2];

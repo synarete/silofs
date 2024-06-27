@@ -23,6 +23,7 @@
 	{ .tests = &(t_), .name = SILOFS_STR(t_) }
 
 static struct ut_tgroup const g_ut_tgroups[] = {
+
 	UT_DEFTGRP(ut_tdefs_strings),
 	UT_DEFTGRP(ut_tdefs_avl),
 	UT_DEFTGRP(ut_tdefs_base64),
@@ -53,9 +54,10 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_inspect),
 	UT_DEFTGRP(ut_tdefs_reload),
 	UT_DEFTGRP(ut_tdefs_fillfs),
+	UT_DEFTGRP(ut_tdefs_pack), /* test pack pre-snapshot */
 	UT_DEFTGRP(ut_tdefs_snap_basic),
 	UT_DEFTGRP(ut_tdefs_snap_io),
-	UT_DEFTGRP(ut_tdefs_pack),
+	/* UT_DEFTGRP(ut_tdefs_pack), */ /* re-test pack post-snapshot */
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -265,7 +267,7 @@ static size_t ualloc_nbytes_now(const struct ut_env *ute)
 {
 	struct silofs_cachestats st;
 
-	silofs_stat_fs(ute->fs_ctx, &st);
+	silofs_stat_fs(ute->fs_ctx->fsenv, &st);
 	return st.nalloc_bytes;
 }
 

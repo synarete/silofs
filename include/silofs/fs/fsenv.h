@@ -46,7 +46,6 @@ struct silofs_oper_stat {
 
 /* base members of fsenv-block (provided) */
 struct silofs_fsenv_base {
-	const struct silofs_fs_args    *args;
 	const struct silofs_password   *passwd;
 	struct silofs_alloc            *alloc;
 	struct silofs_lcache           *lcache;
@@ -59,6 +58,7 @@ struct silofs_fsenv_base {
 
 /* top-level envinment obejct */
 struct silofs_fsenv {
+	struct silofs_fs_args           fse_args;
 	struct silofs_fsenv_base        fse;
 	struct silofs_ivkey             fse_boot_ivkey;
 	struct silofs_ivkey             fse_main_ivkey;
@@ -82,6 +82,7 @@ struct silofs_fsenv {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
+                      const struct silofs_fs_args *args,
                       const struct silofs_fsenv_base *base);
 
 void silofs_fsenv_fini(struct silofs_fsenv *fsenv);

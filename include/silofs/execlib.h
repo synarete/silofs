@@ -22,30 +22,14 @@
 #include <silofs/fs/boot.h>
 #include <silofs/fs/stats.h>
 
-/* file-system top-level context */
-struct silofs_fs_ctx {
-	struct silofs_fs_args   args;
-	struct silofs_alloc    *alloc;
-	struct silofs_lcache   *lcache;
-	struct silofs_repo     *repo;
-	struct silofs_submitq  *submitq;
-	struct silofs_flusher  *flusher;
-	struct silofs_idsmap   *idsmap;
-	struct silofs_fsenv    *fsenv;
-	struct silofs_fuseq    *fuseq;
-	struct silofs_password *password;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_init_lib(void);
 
-int silofs_new_ctx(const struct silofs_fs_args *args,
-                   struct silofs_fs_ctx **out_fs_ctx);
+int silofs_new_fsenv(const struct silofs_fs_args *args,
+                     struct silofs_fsenv **out_fsenv);
 
-void silofs_del_ctx(struct silofs_fs_ctx *fs_ctx);
+void silofs_del_fsenv(struct silofs_fsenv *fsenv);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_format_repo(struct silofs_fsenv *fsenv);
 

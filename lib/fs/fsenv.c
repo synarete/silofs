@@ -64,14 +64,14 @@ static void fsenv_bind_sbi(struct silofs_fsenv *fsenv,
 
 static void fsenv_update_boot(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.args;
+	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
 	silofs_fsenv_set_boot_ref(fsenv, &fs_args->bconf.boot_ref);
 }
 
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.args;
+	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
 	fsenv->fse_owner.uid = fs_args->uid;
 	fsenv->fse_owner.gid = fs_args->gid;
@@ -80,7 +80,7 @@ static void fsenv_update_owner(struct silofs_fsenv *fsenv)
 
 static void fsenv_update_mntflags(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.args;
+	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
@@ -115,7 +115,7 @@ static void fsenv_update_mntflags(struct silofs_fsenv *fsenv)
 
 static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.args;
+	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
 	if (fs_args->cflags.with_fuse) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_WITHFUSE;
@@ -161,9 +161,11 @@ static size_t fsenv_calc_iopen_limit(const struct silofs_fsenv *fsenv)
 }
 
 static void fsenv_init_commons(struct silofs_fsenv *fsenv,
-                               const struct silofs_fsenv_base *fse_base)
+                               const struct silofs_fs_args *args,
+                               const struct silofs_fsenv_base *base)
 {
-	memcpy(&fsenv->fse, fse_base, sizeof(fsenv->fse));
+	memcpy(&fsenv->fse_args, args, sizeof(fsenv->fse_args));
+	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
 	silofs_caddr_reset(&fsenv->fse_boot_ref);
 	silofs_lsegid_reset(&fsenv->fse_sb_lsegid);
 	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
@@ -283,11 +285,12 @@ static void fsenv_fini_ivkeys(struct silofs_fsenv *fsenv)
 }
 
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
-                      const struct silofs_fsenv_base *fse_base)
+                      const struct silofs_fs_args *args,
+                      const struct silofs_fsenv_base *base)
 {
 	int err;
 
-	fsenv_init_commons(fsenv, fse_base);
+	fsenv_init_commons(fsenv, args, base);
 	fsenv_update_by_fs_args(fsenv);
 
 	err = fsenv_init_locks(fsenv);
@@ -606,7 +609,7 @@ void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
 void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
                            struct silofs_bootpath *out_bootpath)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.args;
+	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
 	silofs_bootpath_setup(out_bootpath, fs_args->repodir, fs_args->name);
 }

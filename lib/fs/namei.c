@@ -2099,7 +2099,7 @@ static void fill_proc(const struct silofs_fsenv *fsenv,
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid = fsenv->fse_owner.uid;
 	qpr->gid = fsenv->fse_owner.gid;
-	qpr->pid = fsenv->fse.args->pid;
+	qpr->pid = fsenv->fse_args.pid;
 	qpr->msflags = fsenv->fse_ms_flags;
 	qpr->uptime = uptime;
 	qpr->iopen_max = fsenv->fse_op_stat.op_iopen_max;

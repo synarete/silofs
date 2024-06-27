@@ -138,16 +138,24 @@ static void pd_fini(struct silofs_par_desc *pd)
 	silofs_laddr_reset(&pd->laddr);
 }
 
+static void pd_update_caddr(struct silofs_par_desc *pd,
+                            const struct silofs_caddr *caddr)
+{
+	caddr_assign(&pd->caddr, caddr);
+}
+
 static void pd_update_caddr_by(struct silofs_par_desc *pd,
                                const struct silofs_mdigest *md,
                                const struct silofs_rovec *rov)
 {
+	struct silofs_caddr caddr;
 	const struct iovec iov = {
 		.iov_base = unconst(rov->rov_base),
 		.iov_len = rov->rov_len,
 	};
 
-	silofs_calc_caddr_of(&iov, 1, md, &pd->caddr);
+	silofs_calc_caddr_of(&iov, 1, md, &caddr);
+	pd_update_caddr(pd, &caddr);
 }
 
 static void pardsc256b_reset(struct silofs_par_desc256b *pd256)
@@ -229,6 +237,12 @@ static void pdi_del(struct silofs_par_desc_info *pdi,
 		pdi_fini(pdi);
 		pdi_free(pdi, alloc);
 	}
+}
+
+static void pdi_update_caddr(struct silofs_par_desc_info *pdi,
+                             const struct silofs_caddr *caddr)
+{
+	pd_update_caddr(&pdi->pd, caddr);
 }
 
 static bool pdi_isbootrec(const struct silofs_par_desc_info *pdi)
@@ -715,28 +729,12 @@ static int pac_load_seg(const struct silofs_par_ctx *pa_ctx,
 	return err;
 }
 
-static int pac_require_lseg_of(const struct silofs_par_ctx *pa_ctx,
-                               const struct silofs_laddr *laddr)
-{
-	struct stat st = { .st_ino = 0 };
-	const struct silofs_lsegid *lsegid = &laddr->lsegid;
-	int err;
-
-	err = silofs_repo_stat_lseg(pa_ctx->pac_repo, lsegid, false, &st);
-	if (!err) {
-		err = silofs_repo_stage_lseg(pa_ctx->pac_repo, true, lsegid);
-	} else  if (err == -SILOFS_ENOENT) {
-		err = silofs_repo_spawn_lseg(pa_ctx->pac_repo, lsegid);
-	}
-	return err;
-}
-
 static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
                         const struct silofs_laddr *laddr, void *seg)
 {
 	int err;
 
-	err = pac_require_lseg_of(pa_ctx, laddr);
+	err = silofs_repo_require_lseg(pa_ctx->pac_repo, &laddr->lsegid);
 	if (err) {
 		log_err("failed to require lseg: ltype=%d", laddr->ltype);
 		return err;
@@ -894,10 +892,8 @@ static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	err = pac_update_hash_of(pa_ctx, pdi, &brec1k);
-	if (err) {
-		return err;
-	}
+	pdi_update_caddr(pdi, boot_caddr);
+
 	err = pac_send_pack(pa_ctx, &pdi->pd.caddr, &brec1k, sizeof(brec1k));
 	if (err) {
 		return err;

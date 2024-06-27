@@ -99,5 +99,6 @@
 
 #define caddr_isnone(ca)                silofs_caddr_isnone(ca)
 #define caddr_isequal(ca, oth)          silofs_caddr_isequal(ca, oth)
+#define caddr_assign(ca, oth)           silofs_caddr_assign(ca, oth)
 
 #endif /* SILOFS_ADDR_PRIVATE_H_ */

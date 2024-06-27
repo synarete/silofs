@@ -17,6 +17,8 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
+#include <silofs/infra.h>
+
 /* logical-segment id within specific volume mapping */
 struct silofs_lsegid {
 	struct silofs_lvid      lvid;

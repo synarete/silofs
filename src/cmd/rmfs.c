@@ -38,7 +38,7 @@ struct cmd_rmfs_ctx {
 	long                      pad;
 	struct cmd_rmfs_in_args   in_args;
 	struct silofs_fs_args     fs_args;
-	struct silofs_fs_ctx     *fs_ctx;
+	struct silofs_fsenv      *fsenv;
 	bool has_lockfile;
 };
 
@@ -178,27 +178,27 @@ static void cmd_rmfs_load_bconf(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_fs_ctx(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_rmfs_require_brec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_unref_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_rmfs_unlink_bconf(struct cmd_rmfs_ctx *ctx)
@@ -208,7 +208,7 @@ static void cmd_rmfs_unlink_bconf(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_destroy_fs_ctx(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)

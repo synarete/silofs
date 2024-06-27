@@ -17,36 +17,36 @@
 #include "cmd.h"
 
 
-void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,
-                    const struct silofs_fs_args *fs_args)
+void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
+                   struct silofs_fsenv **p_fsenv)
 {
 	int err;
 
-	err = silofs_new_ctx(fs_args, p_fs_ctx);
+	err = silofs_new_fsenv(fs_args, p_fsenv);
 	if (err) {
-		cmd_dief(err, "failed to create fs-context instance");
+		cmd_dief(err, "failed to create fs instance");
 	}
 }
 
-void cmd_del_fs_ctx(struct silofs_fs_ctx **p_fs_ctx)
+void cmd_del_fsenv(struct silofs_fsenv **p_fsenv)
 {
-	if (p_fs_ctx && *p_fs_ctx) {
-		silofs_del_ctx(*p_fs_ctx);
-		*p_fs_ctx = NULL;
+	if (p_fsenv && *p_fsenv) {
+		silofs_del_fsenv(*p_fsenv);
+		*p_fsenv = NULL;
 	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static char *cmd_repodir_name(const struct silofs_fs_ctx *fse)
+static char *cmd_repodir_name(const struct silofs_fsenv *fsenv)
 {
 	char *ret = NULL;
 
-	cmd_join_path(fse->args.repodir, fse->args.name, &ret);
+	cmd_join_path(fsenv->fse_args.repodir, fsenv->fse_args.name, &ret);
 	return ret;
 }
 
-static void cmd_report_err_and_die(const struct silofs_fs_ctx *fse,
+static void cmd_report_err_and_die(const struct silofs_fsenv *fsenv,
                                    int status, const char *msg)
 {
 	char *rname = NULL;
@@ -58,7 +58,7 @@ static void cmd_report_err_and_die(const struct silofs_fs_ctx *fse,
 	if (status == 0) {
 		return;
 	}
-	rname = cmd_repodir_name(fse);
+	rname = cmd_repodir_name(fsenv);
 
 	/* internal errors */
 	err = abs(status);
@@ -123,139 +123,140 @@ static void cmd_report_err_and_die(const struct silofs_fs_ctx *fse,
 	cmd_pstrfree(&rname);
 }
 
-static void cmd_require_ok(const struct silofs_fs_ctx *fse,
+static void cmd_require_ok(const struct silofs_fsenv *fsenv,
                            int status, const char *msg)
 {
 	if (status != 0) {
-		cmd_report_err_and_die(fse, status, msg);
+		cmd_report_err_and_die(fsenv, status, msg);
 	}
 }
 
-void cmd_format_repo(struct silofs_fs_ctx *fs_ctx)
+void cmd_format_repo(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_format_repo(fs_ctx->fsenv);
-	cmd_require_ok(fs_ctx, err, "failed to format repo");
+	err = silofs_format_repo(fsenv);
+	cmd_require_ok(fsenv, err, "failed to format repo");
 }
 
-void cmd_open_repo(struct silofs_fs_ctx *fse)
+void cmd_open_repo(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_open_repo(fse->fsenv);
-	cmd_require_ok(fse, err, "failed to open repo");
+	err = silofs_open_repo(fsenv);
+	cmd_require_ok(fsenv, err, "failed to open repo");
 }
 
-void cmd_close_repo(struct silofs_fs_ctx *fs_ctx)
+void cmd_close_repo(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_close_repo(fs_ctx->fsenv);
-	cmd_require_ok(fs_ctx, err, "failed to close repo");
+	err = silofs_close_repo(fsenv);
+	cmd_require_ok(fsenv, err, "failed to close repo");
 }
 
-void cmd_require_fs(struct silofs_fs_ctx *fse,
+void cmd_require_fs(struct silofs_fsenv *fsenv,
                     const struct silofs_fs_bconf *bconf)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	err = silofs_poke_fs(fse->fsenv, &bconf->boot_ref, &brec);
-	cmd_require_ok(fse, err, "can not load");
+	err = silofs_poke_fs(fsenv, &bconf->boot_ref, &brec);
+	cmd_require_ok(fsenv, err, "can not load");
 }
 
-static void cmd_do_format_fs(struct silofs_fs_ctx *fse,
+static void cmd_do_format_fs(struct silofs_fsenv *fsenv,
                              struct silofs_caddr *out_root_ref)
 {
 	int err;
 
-	err = silofs_format_fs(fse->fsenv, out_root_ref);
-	cmd_require_ok(fse, err, "failed to format fs");
+	err = silofs_format_fs(fsenv, out_root_ref);
+	cmd_require_ok(fsenv, err, "failed to format fs");
 }
 
-void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_fs_bconf *bconf)
+void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bconf *bconf)
 {
 	struct silofs_caddr root_ref;
 
-	cmd_do_format_fs(fse, &root_ref);
+	cmd_do_format_fs(fsenv, &root_ref);
 	cmd_bconf_set_boot_ref(bconf, &root_ref);
 }
 
-void cmd_close_fs(struct silofs_fs_ctx *fse)
+void cmd_close_fs(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_close_fs(fse->fsenv);
-	cmd_require_ok(fse, err, "shutdown error");
+	err = silofs_close_fs(fsenv);
+	cmd_require_ok(fsenv, err, "failed to close fs");
 }
 
-void cmd_boot_fs(struct silofs_fs_ctx *fse,
+void cmd_boot_fs(struct silofs_fsenv *fsenv,
                  const struct silofs_fs_bconf *bconf)
 {
 	int err;
 
-	err = silofs_boot_fs(fse->fsenv, &bconf->boot_ref);
-	cmd_require_ok(fse, err, "failed to boot fs");
+	err = silofs_boot_fs(fsenv, &bconf->boot_ref);
+	cmd_require_ok(fsenv, err, "failed to boot fs");
 }
 
-void cmd_open_fs(struct silofs_fs_ctx *fse)
+void cmd_open_fs(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_open_fs(fse->fsenv);
-	cmd_require_ok(fse, err, "failed to open fs");
+	err = silofs_open_fs(fsenv);
+	cmd_require_ok(fsenv, err, "failed to open fs");
 }
 
-void cmd_exec_fs(struct silofs_fs_ctx *fse)
+void cmd_exec_fs(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_exec_fs(fse->fsenv);
-	cmd_require_ok(fse, err, "failed to exec fs");
+	err = silofs_exec_fs(fsenv);
+	cmd_require_ok(fsenv, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_fs_ctx *fse,
+void cmd_fork_fs(struct silofs_fsenv *fsenv,
                  struct silofs_caddr *out_new, struct silofs_caddr *out_alt)
 {
 	int err;
 
-	err = silofs_fork_fs(fse->fsenv, out_new, out_alt);
-	cmd_require_ok(fse, err, "failed to fork fs");
+	err = silofs_fork_fs(fsenv, out_new, out_alt);
+	cmd_require_ok(fsenv, err, "failed to fork fs");
 }
 
-void cmd_unref_fs(struct silofs_fs_ctx *fse,
+void cmd_unref_fs(struct silofs_fsenv *fsenv,
                   const struct silofs_fs_bconf *bconf)
 {
 	int err;
 
-	err = silofs_unref_fs(fse->fsenv, &bconf->boot_ref);
-	cmd_require_ok(fse, err, "unref-fs error");
+	err = silofs_unref_fs(fsenv, &bconf->boot_ref);
+	cmd_require_ok(fsenv, err, "unref-fs error");
 }
 
-void cmd_inspect_fs(struct silofs_fs_ctx *fse,
+void cmd_inspect_fs(struct silofs_fsenv *fsenv,
                     silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	int err;
 
-	err = silofs_inspect_fs(fse->fsenv, cb, user_ctx);
-	cmd_require_ok(fse, err, "inspect-fs error");
+	err = silofs_inspect_fs(fsenv, cb, user_ctx);
+	cmd_require_ok(fsenv, err, "inspect-fs error");
 }
 
-void cmd_pack_fs(struct silofs_fs_ctx *fse, struct silofs_caddr *out_caddr)
+void cmd_pack_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = silofs_pack_fs(fse->fsenv, out_caddr);
-	cmd_require_ok(fse, err, "pack-fs error");
+	err = silofs_pack_fs(fsenv, out_caddr);
+	cmd_require_ok(fsenv, err, "pack-fs error");
 }
 
-void cmd_unpack_fs(struct silofs_fs_ctx *fse, const struct silofs_caddr *caddr)
+void cmd_unpack_fs(struct silofs_fsenv *fsenv,
+                   const struct silofs_caddr *caddr)
 {
 	int err;
 
-	err = silofs_unpack_fs(fse->fsenv, caddr);
-	cmd_require_ok(fse, err, "unpack-fs error");
+	err = silofs_unpack_fs(fsenv, caddr);
+	cmd_require_ok(fsenv, err, "unpack-fs error");
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

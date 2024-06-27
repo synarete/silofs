@@ -66,7 +66,7 @@ struct cmd_mount_in_args {
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_ctx   *fs_ctx;
+	struct silofs_fsenv    *fsenv;
 	pid_t                   child_pid;
 	time_t                  start_time;
 	int                     halt_signal;
@@ -248,12 +248,12 @@ static void cmd_mount_load_bconf(struct cmd_mount_ctx *ctx)
 static void cmd_mount_setup_fs_ctx(struct cmd_mount_ctx *ctx)
 {
 	ctx->fs_args.passwd = ctx->in_args.password;
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_mount_destroy_fs_ctx(struct cmd_mount_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_mount_halt_by_signal(int signum)
@@ -261,8 +261,8 @@ static void cmd_mount_halt_by_signal(int signum)
 	struct cmd_mount_ctx *ctx;
 
 	ctx = cmd_mount_ctx;
-	if (ctx && ctx->fs_ctx) {
-		silofs_halt_fs(ctx->fs_ctx->fsenv);
+	if (ctx && ctx->fsenv) {
+		silofs_halt_fs(ctx->fsenv);
 		ctx->halt_signal = signum;
 	}
 }
@@ -369,34 +369,34 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_mount_require_brec(struct cmd_mount_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
 	ctx->start_time = silofs_time_now();
-	cmd_exec_fs(ctx->fs_ctx);
-	ctx->post_exec_status = silofs_post_exec_fs(ctx->fs_ctx->fsenv);
+	cmd_exec_fs(ctx->fsenv);
+	ctx->post_exec_status = silofs_post_exec_fs(ctx->fsenv);
 }
 
 static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_ctx);
+	cmd_close_fs(ctx->fsenv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -496,7 +496,7 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_ctx);
+	cmd_open_fs(ctx->fsenv);
 }
 
 /*
@@ -648,7 +648,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 void cmd_execute_mount(void)
 {
 	struct cmd_mount_ctx ctx = {
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 		.halt_signal = -1,
 		.post_exec_status = 0,
 	};

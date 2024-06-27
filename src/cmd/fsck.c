@@ -36,7 +36,7 @@ struct cmd_fsck_in_args {
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_ctx   *fs_ctx;
+	struct silofs_fsenv    *fsenv;
 	bool has_lockfile;
 };
 
@@ -74,12 +74,12 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_destroy_fs_ctx(struct cmd_fsck_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -155,42 +155,42 @@ static void cmd_fsck_load_bconf(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_setup_fs_ctx(struct cmd_fsck_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_fsck_require_brec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_ctx);
+	cmd_open_fs(ctx->fsenv);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_ctx);
+	cmd_close_fs(ctx->fsenv);
 }
 
 static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fs_ctx, NULL, NULL);
+	cmd_inspect_fs(ctx->fsenv, NULL, NULL);
 }
 
 static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -198,7 +198,7 @@ static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
 void cmd_execute_fsck(void)
 {
 	struct cmd_fsck_ctx ctx = {
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -255,4 +255,3 @@ void cmd_execute_fsck(void)
 	/* Post execution cleanups */
 	cmd_fsck_finalize(&ctx);
 }
-

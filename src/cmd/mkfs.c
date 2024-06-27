@@ -46,7 +46,7 @@ struct cmd_mkfs_in_args {
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_ctx   *fs_ctx;
+	struct silofs_fsenv    *fsenv;
 	bool has_lockfile;
 };
 
@@ -101,7 +101,7 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_destroy_fs_ctx(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
@@ -214,22 +214,22 @@ static void cmd_mkfs_update_bconf(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_fs_ctx(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_format_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_mkfs_save_bconf(struct cmd_mkfs_ctx *ctx)
@@ -239,7 +239,7 @@ static void cmd_mkfs_save_bconf(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_ctx);
+	cmd_close_fs(ctx->fsenv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -248,7 +248,7 @@ void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
 		.in_args = { .fs_size = 0, },
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 	};
 
 	/* Do all cleanups upon exits */

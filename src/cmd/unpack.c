@@ -38,7 +38,7 @@ struct cmd_unpack_in_args {
 struct cmd_unpack_ctx {
 	struct cmd_unpack_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_ctx   *fs_ctx;
+	struct silofs_fsenv    *fsenv;
 	bool has_lockfile;
 };
 
@@ -99,12 +99,12 @@ static void cmd_unpack_release_lockfile(struct cmd_unpack_ctx *ctx)
 
 static void cmd_unpack_destroy_fs_ctx(struct cmd_unpack_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_unpack_finalize(struct cmd_unpack_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_arname);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -172,22 +172,22 @@ static void cmd_unpack_load_bconf(struct cmd_unpack_ctx *ctx)
 
 static void cmd_unpack_setup_fs_ctx(struct cmd_unpack_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_unpack_open_repo(struct cmd_unpack_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_unpack_close_repo(struct cmd_unpack_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_unpack_require_brec(struct cmd_unpack_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_unpack_execute(struct cmd_unpack_ctx *ctx)
@@ -196,7 +196,7 @@ static void cmd_unpack_execute(struct cmd_unpack_ctx *ctx)
 
 	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
 	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
-	cmd_unpack_fs(ctx->fs_ctx, &bconf.pack_ref);
+	cmd_unpack_fs(ctx->fsenv, &bconf.pack_ref);
 	cmd_bconf_set_name(&bconf, ctx->in_args.name);
 	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&bconf);
@@ -207,7 +207,7 @@ static void cmd_unpack_execute(struct cmd_unpack_ctx *ctx)
 void cmd_execute_unpack(void)
 {
 	struct cmd_unpack_ctx ctx = {
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -258,4 +258,3 @@ void cmd_execute_unpack(void)
 	/* Post execution cleanups */
 	cmd_unpack_finalize(&ctx);
 }
-

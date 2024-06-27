@@ -38,7 +38,7 @@ struct cmd_pack_in_args {
 struct cmd_pack_ctx {
 	struct cmd_pack_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_ctx   *fs_ctx;
+	struct silofs_fsenv    *fsenv;
 	bool has_lockfile;
 };
 
@@ -99,12 +99,12 @@ static void cmd_pack_release_lockfile(struct cmd_pack_ctx *ctx)
 
 static void cmd_pack_destroy_fs_ctx(struct cmd_pack_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_pack_finalize(struct cmd_pack_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -172,37 +172,37 @@ static void cmd_pack_load_bconf(struct cmd_pack_ctx *ctx)
 
 static void cmd_pack_setup_fs_ctx(struct cmd_pack_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_pack_open_repo(struct cmd_pack_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_pack_close_repo(struct cmd_pack_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_pack_require_brec(struct cmd_pack_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_pack_boot_fs(struct cmd_pack_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_pack_open_fs(struct cmd_pack_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_ctx);
+	cmd_open_fs(ctx->fsenv);
 }
 
 static void cmd_pack_close_fs(struct cmd_pack_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_ctx);
+	cmd_close_fs(ctx->fsenv);
 }
 
 static void cmd_pack_execute(struct cmd_pack_ctx *ctx)
@@ -211,7 +211,7 @@ static void cmd_pack_execute(struct cmd_pack_ctx *ctx)
 
 	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
 	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
-	cmd_pack_fs(ctx->fs_ctx, &bconf.pack_ref);
+	cmd_pack_fs(ctx->fsenv, &bconf.pack_ref);
 	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&bconf);
 }
@@ -221,7 +221,7 @@ static void cmd_pack_execute(struct cmd_pack_ctx *ctx)
 void cmd_execute_pack(void)
 {
 	struct cmd_pack_ctx ctx = {
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -281,4 +281,3 @@ void cmd_execute_pack(void)
 	/* Post execution cleanups */
 	cmd_pack_finalize(&ctx);
 }
-

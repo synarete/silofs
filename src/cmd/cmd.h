@@ -233,38 +233,38 @@ void cmd_unlock_repo(const char *repodir, int *pfd);
 /* complex fs operations */
 void cmd_init_fs_args(struct silofs_fs_args *fs_args);
 
-void cmd_format_repo(struct silofs_fs_ctx *fse);
+void cmd_format_repo(struct silofs_fsenv *fsenv);
 
-void cmd_open_repo(struct silofs_fs_ctx *fse);
+void cmd_open_repo(struct silofs_fsenv *fsenv);
 
-void cmd_close_repo(struct silofs_fs_ctx *fse);
+void cmd_close_repo(struct silofs_fsenv *fsenv);
 
-void cmd_format_fs(struct silofs_fs_ctx *fse, struct silofs_fs_bconf *bconf);
+void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bconf *bconf);
 
-void cmd_close_fs(struct silofs_fs_ctx *fse);
+void cmd_close_fs(struct silofs_fsenv *fsenv);
 
-void cmd_require_fs(struct silofs_fs_ctx *fse,
+void cmd_require_fs(struct silofs_fsenv *fsenv,
                     const struct silofs_fs_bconf *bconf);
 
-void cmd_boot_fs(struct silofs_fs_ctx *fse,
+void cmd_boot_fs(struct silofs_fsenv *fsenv,
                  const struct silofs_fs_bconf *bconf);
 
-void cmd_open_fs(struct silofs_fs_ctx *fse);
+void cmd_open_fs(struct silofs_fsenv *fsenv);
 
-void cmd_exec_fs(struct silofs_fs_ctx *fse);
+void cmd_exec_fs(struct silofs_fsenv *fsenv);
 
-void cmd_fork_fs(struct silofs_fs_ctx *fse,
+void cmd_fork_fs(struct silofs_fsenv *fsenv,
                  struct silofs_caddr *out_new, struct silofs_caddr *out_alt);
 
-void cmd_unref_fs(struct silofs_fs_ctx *fse,
+void cmd_unref_fs(struct silofs_fsenv *fsenv,
                   const struct silofs_fs_bconf *bconf);
 
-void cmd_inspect_fs(struct silofs_fs_ctx *fse,
+void cmd_inspect_fs(struct silofs_fsenv *fsenv,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-void cmd_pack_fs(struct silofs_fs_ctx *fse, struct silofs_caddr *out_caddr);
+void cmd_pack_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr);
 
-void cmd_unpack_fs(struct silofs_fs_ctx *fse,
+void cmd_unpack_fs(struct silofs_fsenv *fsenv,
                    const struct silofs_caddr *caddr);
 
 /* mount-info */
@@ -290,10 +290,10 @@ void cmd_reset_ioc(union silofs_ioc_u *ioc);
 void cmd_trace_versions(void);
 
 /* file-system environment */
-void cmd_new_fs_ctx(struct silofs_fs_ctx **p_fs_ctx,
-                    const struct silofs_fs_args *fs_args);
+void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
+                   struct silofs_fsenv **p_fsenv);
 
-void cmd_del_fs_ctx(struct silofs_fs_ctx **p_fs_ctx);
+void cmd_del_fsenv(struct silofs_fsenv **p_fsenv);
 
 /* signals handling */
 void cmd_register_sigactions(void (*sig_hook_fn)(int));

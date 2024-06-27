@@ -54,7 +54,7 @@ struct cmd_snap_in_args {
 struct cmd_snap_ctx {
 	struct cmd_snap_in_args  in_args;
 	struct silofs_fs_args    fs_args;
-	struct silofs_fs_ctx    *fs_ctx;
+	struct silofs_fsenv     *fsenv;
 	union silofs_ioc_u      *ioc;
 	struct silofs_caddr      boot_new;
 	struct silofs_caddr      boot_alt;
@@ -109,7 +109,7 @@ static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
@@ -286,42 +286,42 @@ static void cmd_snap_load_bconf(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_setup_fs_ctx(struct cmd_snap_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_snap_open_repo(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_ctx);
+	cmd_open_fs(ctx->fsenv);
 }
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->fs_ctx, &ctx->boot_new, &ctx->boot_alt);
+	cmd_fork_fs(ctx->fsenv, &ctx->boot_new, &ctx->boot_alt);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_ctx);
+	cmd_close_fs(ctx->fsenv);
 }
 
 static void cmd_snap_save_snap_bconf(struct cmd_snap_ctx *ctx)
@@ -388,7 +388,7 @@ static void cmd_snap_execute(struct cmd_snap_ctx *ctx)
 void cmd_execute_snap(void)
 {
 	struct cmd_snap_ctx ctx = {
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 		.ioc = NULL,
 	};
 
@@ -437,4 +437,3 @@ void cmd_execute_snap(void)
 	/* Post execution cleanups */
 	cmd_snap_finalize(&ctx);
 }
-

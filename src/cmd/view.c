@@ -37,7 +37,7 @@ struct cmd_view_in_args {
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
 	struct silofs_fs_args   fs_args;
-	struct silofs_fs_ctx   *fs_ctx;
+	struct silofs_fsenv    *fsenv;
 	FILE *out_fp;
 	bool has_lockfile;
 };
@@ -95,12 +95,12 @@ static void cmd_view_release_lockfile(struct cmd_view_ctx *ctx)
 
 static void cmd_view_destroy_fs_ctx(struct cmd_view_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 {
-	cmd_del_fs_ctx(&ctx->fs_ctx);
+	cmd_del_fsenv(&ctx->fsenv);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -166,37 +166,37 @@ static void cmd_view_load_bconf(struct cmd_view_ctx *ctx)
 
 static void cmd_view_setup_fs_ctx(struct cmd_view_ctx *ctx)
 {
-	cmd_new_fs_ctx(&ctx->fs_ctx, &ctx->fs_args);
+	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
 static void cmd_view_open_repo(struct cmd_view_ctx *ctx)
 {
-	cmd_open_repo(ctx->fs_ctx);
+	cmd_open_repo(ctx->fsenv);
 }
 
 static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 {
-	cmd_close_repo(ctx->fs_ctx);
+	cmd_close_repo(ctx->fsenv);
 }
 
 static void cmd_view_require_brec(struct cmd_view_ctx *ctx)
 {
-	cmd_require_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_view_boot_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fs_ctx, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->fs_ctx);
+	cmd_open_fs(ctx->fsenv);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_close_fs(ctx->fs_ctx);
+	cmd_close_fs(ctx->fsenv);
 }
 
 static void cmd_view_show_laddr(const struct cmd_view_ctx *ctx,
@@ -219,7 +219,7 @@ static int cmd_view_cb(void *user_ctx, const struct silofs_laddr *laddr)
 
 static void cmd_view_execute(struct cmd_view_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fs_ctx, cmd_view_cb, ctx);
+	cmd_inspect_fs(ctx->fsenv, cmd_view_cb, ctx);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -227,7 +227,7 @@ static void cmd_view_execute(struct cmd_view_ctx *ctx)
 void cmd_execute_view(void)
 {
 	struct cmd_view_ctx ctx = {
-		.fs_ctx = NULL,
+		.fsenv = NULL,
 		.out_fp = stdout,
 	};
 
@@ -288,4 +288,3 @@ void cmd_execute_view(void)
 	/* Post execution cleanups */
 	cmd_view_finalize(&ctx);
 }
-

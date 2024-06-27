@@ -2041,7 +2041,18 @@ static int vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_require_laddr(const struct silofs_vstage_ctx *vstg_ctx,
                                const struct silofs_laddr *laddr)
 {
-	return silofs_repo_require_laddr(vstg_ctx->fsenv->fse.repo, laddr);
+	struct silofs_repo *repo = vstg_ctx->fsenv->fse.repo;
+	int err;
+
+	err = silofs_repo_require_lseg(repo, &laddr->lsegid);
+	if (err) {
+		return err;
+	}
+	err = silofs_repo_require_laddr(repo, laddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int vstgc_do_require_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2967,4 +2978,3 @@ int silofs_refresh_llink(struct silofs_task *task,
 	vi_update_llink(vi, &llink);
 	return 0;
 }
-

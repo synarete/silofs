@@ -114,10 +114,7 @@ static void fs_ctx_init_commons(struct silofs_fs_ctx *fs_ctx,
                                 const struct silofs_fs_args *fs_args)
 {
 	silofs_memzero(fs_ctx, sizeof(*fs_ctx));
-	silofs_ivkey_init(&fs_ctx->boot_ivkey);
-	silofs_ivkey_init(&fs_ctx->main_ivkey);
-	fs_args_assign(&fs_ctx->fs_args, fs_args);
-	fs_ctx->signum = 0;
+	fs_args_assign(&fs_ctx->args, fs_args);
 }
 
 static struct silofs_qalloc *fs_ctx_qalloc_of(struct silofs_fs_ctx *fs_ctx)
@@ -125,7 +122,7 @@ static struct silofs_qalloc *fs_ctx_qalloc_of(struct silofs_fs_ctx *fs_ctx)
 	struct silofs_alloc *alloc = fs_ctx->alloc;
 	struct silofs_qalloc *qalloc = NULL;
 
-	if ((alloc != NULL) && !fs_ctx->fs_args.cflags.stdalloc) {
+	if ((alloc != NULL) && !fs_ctx->args.cflags.stdalloc) {
 		qalloc = container_of(alloc, struct silofs_qalloc, alloc);
 	}
 	return qalloc;
@@ -136,7 +133,7 @@ static struct silofs_calloc *fs_ctx_calloc_of(struct silofs_fs_ctx *fs_ctx)
 	struct silofs_alloc *alloc = fs_ctx->alloc;
 	struct silofs_calloc *calloc = NULL;
 
-	if ((alloc != NULL) && fs_ctx->fs_args.cflags.stdalloc) {
+	if ((alloc != NULL) && fs_ctx->args.cflags.stdalloc) {
 		calloc = container_of(alloc, struct silofs_calloc, alloc);
 	}
 	return calloc;
@@ -149,11 +146,11 @@ static int fs_ctx_init_qalloc(struct silofs_fs_ctx *fs_ctx)
 	enum silofs_qallocf qaflags = SILOFS_QALLOCF_NOFAIL;
 	int err;
 
-	err = calc_mem_size(fs_ctx->fs_args.memwant, &memsize);
+	err = calc_mem_size(fs_ctx->args.memwant, &memsize);
 	if (err) {
 		return err;
 	}
-	if (fs_ctx->fs_args.cflags.pedantic) {
+	if (fs_ctx->args.cflags.pedantic) {
 		qaflags |= SILOFS_QALLOCF_DEMASK;
 	}
 	qalloc = &fs_ctx_obj_of(fs_ctx)->fs_core.c.alloc_u.qalloc;
@@ -182,7 +179,7 @@ static int fs_ctx_init_calloc(struct silofs_fs_ctx *fs_ctx)
 	size_t memsize = 0;
 	int err;
 
-	err = calc_mem_size(fs_ctx->fs_args.memwant, &memsize);
+	err = calc_mem_size(fs_ctx->args.memwant, &memsize);
 	if (err) {
 		return err;
 	}
@@ -210,7 +207,7 @@ static int fs_ctx_init_alloc(struct silofs_fs_ctx *fs_ctx)
 {
 	int ret;
 
-	if (fs_ctx->fs_args.cflags.stdalloc) {
+	if (fs_ctx->args.cflags.stdalloc) {
 		ret = fs_ctx_init_calloc(fs_ctx);
 	} else {
 		ret = fs_ctx_init_qalloc(fs_ctx);
@@ -220,18 +217,20 @@ static int fs_ctx_init_alloc(struct silofs_fs_ctx *fs_ctx)
 
 static void fs_ctx_fini_alloc(struct silofs_fs_ctx *fs_ctx)
 {
-	if (fs_ctx->fs_args.cflags.stdalloc) {
+	if (fs_ctx->args.cflags.stdalloc) {
 		fs_ctx_fini_calloc(fs_ctx);
 	} else {
 		fs_ctx_fini_qalloc(fs_ctx);
 	}
 }
 
-static int fs_ctx_init_bootpath(struct silofs_fs_ctx *fs_ctx)
+static int fs_ctx_check_bootpath(const struct silofs_fs_ctx *fs_ctx)
 {
-	return silofs_bootpath_setup(&fs_ctx->bootpath,
-	                             fs_ctx->fs_args.repodir,
-	                             fs_ctx->fs_args.name);
+	struct silofs_bootpath bootpath;
+
+	return silofs_bootpath_setup(&bootpath,
+	                             fs_ctx->args.repodir,
+	                             fs_ctx->args.name);
 }
 
 static int fs_ctx_init_lcache(struct silofs_fs_ctx *fs_ctx)
@@ -261,10 +260,10 @@ static void fs_ctx_make_repo_base(const struct silofs_fs_ctx *fs_ctx,
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = fs_ctx->alloc;
-	if (fs_ctx->fs_args.cflags.rdonly) {
+	if (fs_ctx->args.cflags.rdonly) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_substr_clone(&fs_ctx->bootpath.repodir, &re_base->repodir);
+	silofs_substr_init(&re_base->repodir, fs_ctx->args.repodir);
 }
 
 static int fs_ctx_init_repo(struct silofs_fs_ctx *fs_ctx)
@@ -337,9 +336,9 @@ static void fs_ctx_fini_flusher(struct silofs_fs_ctx *fs_ctx)
 
 static int fs_ctx_init_idsmap(struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_fs_bconf *bconf = &fs_ctx->fs_args.bconf;
+	const struct silofs_fs_bconf *bconf = &fs_ctx->args.bconf;
 	struct silofs_idsmap *idsmap = NULL;
-	const bool allow_hostids = fs_ctx->fs_args.cflags.allow_hostids;
+	const bool allow_hostids = fs_ctx->args.cflags.allow_hostids;
 	int err;
 
 	idsmap = &fs_ctx_obj_of(fs_ctx)->fs_core.c.idsmap;
@@ -373,16 +372,15 @@ static void fs_ctx_fini_idsmap(struct silofs_fs_ctx *fs_ctx)
 static int fs_ctx_init_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_fsenv_base fse_base = {
-		.fs_args = &fs_ctx->fs_args,
-		.bootpath = &fs_ctx->bootpath,
-		.boot_ivkey = &fs_ctx->boot_ivkey,
-		.main_ivkey = &fs_ctx->main_ivkey,
+		.args = &fs_ctx->args,
+		.passwd = fs_ctx->password,
 		.alloc = fs_ctx->alloc,
 		.lcache = fs_ctx->lcache,
 		.repo = fs_ctx->repo,
 		.submitq = fs_ctx->submitq,
 		.flusher = fs_ctx->flusher,
 		.idsmap = fs_ctx->idsmap,
+		.fuseq = NULL,
 	};
 	struct silofs_fsenv *fsenv;
 	int err;
@@ -414,13 +412,18 @@ static union silofs_fuseq_page *fuseq_to_page(struct silofs_fuseq *fuseq)
 	return unconst(fqp);
 }
 
-static bool fs_ctx_with_fuse(const struct silofs_fs_ctx *fs_ctx)
+static bool has_with_fuse(const struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fsenv *fsenv = fs_ctx->fsenv;
 	const enum silofs_env_flags mask = SILOFS_ENVF_WITHFUSE;
 
-	silofs_assert_not_null(fsenv);
 	return (fsenv->fse_ctl_flags & mask) == mask;
+}
+
+static bool run_with_fuse(const struct silofs_fsenv *fsenv)
+{
+	const struct silofs_fuseq *fuseq = fsenv->fse.fuseq;
+
+	return (fuseq != NULL) && has_with_fuse(fsenv);
 }
 
 static bool fs_ctx_has_ctlf(const struct silofs_fs_ctx *fs_ctx,
@@ -436,6 +439,7 @@ static void fs_ctx_bind_fuseq(struct silofs_fs_ctx *fs_ctx,
                               struct silofs_fuseq *fuseq)
 {
 	fs_ctx->fuseq = fuseq;
+	fs_ctx->fsenv->fse.fuseq = fuseq;
 	if (fuseq != NULL) {
 		fuseq->fq_writeback_cache =
 		        fs_ctx_has_ctlf(fs_ctx, SILOFS_ENVF_WRITEBACK);
@@ -451,7 +455,7 @@ static int fs_ctx_init_fuseq(struct silofs_fs_ctx *fs_ctx)
 	void *mem = NULL;
 	int err;
 
-	if (!fs_ctx_with_fuse(fs_ctx)) {
+	if (!has_with_fuse(fs_ctx->fsenv)) {
 		return 0;
 	}
 	mem = silofs_memalloc(fs_ctx->alloc, fuseq_pg_size, 0);
@@ -490,7 +494,7 @@ static int fs_ctx_init_passwd(struct silofs_fs_ctx *fs_ctx)
 	int err;
 
 	passwd = &fs_ctx_obj_of(fs_ctx)->fs_core.c.passwd;
-	err = silofs_password_setup(passwd, fs_ctx->fs_args.passwd);
+	err = silofs_password_setup(passwd, fs_ctx->args.passwd);
 	if (err) {
 		return err;
 	}
@@ -504,42 +508,6 @@ static void fs_ctx_fini_passwd(struct silofs_fs_ctx *fs_ctx)
 		silofs_password_reset(fs_ctx->password);
 		fs_ctx->password = NULL;
 	}
-}
-
-static int fs_ctx_init_boot_ivkey(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_mdigest md;
-	int err;
-
-	if (!fs_ctx->password->passlen) {
-		return 0;
-	}
-	err = silofs_mdigest_init(&md);
-	if (err) {
-		return err;
-	}
-	err = silofs_ivkey_for_bootrec(&fs_ctx->boot_ivkey,
-	                               fs_ctx->password, &md);
-	silofs_mdigest_fini(&md);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int fs_ctx_init_passwd_boot_ivkey(struct silofs_fs_ctx *fs_ctx)
-{
-	int err;
-
-	err = fs_ctx_init_passwd(fs_ctx);
-	if (err) {
-		return err;
-	}
-	err = fs_ctx_init_boot_ivkey(fs_ctx);
-	if (err) {
-		return err;
-	}
-	return 0;
 }
 
 static int fs_ctx_init_subs(struct silofs_fs_ctx *fs_ctx)
@@ -587,11 +555,11 @@ static int fs_ctx_init(struct silofs_fs_ctx *fs_ctx,
 	int err;
 
 	fs_ctx_init_commons(fs_ctx, fs_args);
-	err = fs_ctx_init_bootpath(fs_ctx);
+	err = fs_ctx_check_bootpath(fs_ctx);
 	if (err) {
 		return err;
 	}
-	err = fs_ctx_init_passwd_boot_ivkey(fs_ctx);
+	err = fs_ctx_init_passwd(fs_ctx);
 	if (err) {
 		return err;
 	}
@@ -605,8 +573,6 @@ static int fs_ctx_init(struct silofs_fs_ctx *fs_ctx,
 
 static void fs_ctx_fini_commons(struct silofs_fs_ctx *fs_ctx)
 {
-	silofs_ivkey_fini(&fs_ctx->boot_ivkey);
-	silofs_ivkey_fini(&fs_ctx->main_ivkey);
 	fs_ctx->fsenv = NULL;
 }
 
@@ -622,16 +588,6 @@ static void fs_ctx_fini(struct silofs_fs_ctx *fs_ctx)
 	fs_ctx_fini_alloc(fs_ctx);
 	fs_ctx_fini_passwd(fs_ctx);
 	fs_ctx_fini_commons(fs_ctx);
-}
-
-static void fs_ctx_lock(struct silofs_fs_ctx *fs_ctx)
-{
-	silofs_fsenv_lock(fs_ctx->fsenv);
-}
-
-static void fs_ctx_unlock(struct silofs_fs_ctx *fs_ctx)
-{
-	silofs_fsenv_unlock(fs_ctx->fsenv);
 }
 
 static int check_fs_args(const struct silofs_fs_args *fs_args)
@@ -686,13 +642,13 @@ void silofs_del_ctx(struct silofs_fs_ctx *fs_ctx)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_post_exec_fs(const struct silofs_fs_ctx *fs_ctx)
+int silofs_post_exec_fs(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fuseq *fq = fs_ctx->fuseq;
+	const struct silofs_fuseq *fuseq = fsenv->fse.fuseq;
 	int ret = 0;
 
-	if (fq && fq->fq_got_init) {
-		ret = fq->fq_got_destroy ? 0 : -SILOFS_ENOTDONE;
+	if ((fuseq != NULL) && fuseq->fq_got_init) {
+		ret = fuseq->fq_got_destroy ? 0 : -SILOFS_ENOTDONE;
 	}
 	return ret;
 }
@@ -711,14 +667,14 @@ static int map_task_creds(struct silofs_task *task)
 	return ret;
 }
 
-static int make_task(const struct silofs_fs_ctx *fs_ctx,
-                     struct silofs_task *task)
+static int make_task(struct silofs_fsenv *fsenv, struct silofs_task *task)
 {
-	const struct silofs_fs_args *args = &fs_ctx->fs_args;
+	const struct silofs_fs_args *args = fsenv->fse.args;
 
-	silofs_task_init(task, fs_ctx->fsenv);
+	silofs_task_init(task, fsenv);
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
+	task->t_uber_op = true;
 	return map_task_creds(task);
 }
 
@@ -732,19 +688,19 @@ static int term_task(struct silofs_task *task, int status)
 	return status ? status : err;
 }
 
-static void drop_caches(const struct silofs_fs_ctx *fs_ctx)
+static void drop_caches(const struct silofs_fsenv *fsenv)
 {
-	silofs_lcache_drop(fs_ctx->lcache);
-	silofs_repo_drop_some(fs_ctx->repo);
+	silofs_lcache_drop(fsenv->fse.lcache);
+	silofs_repo_drop_some(fsenv->fse.repo);
 }
 
-static int exec_stage_rootdir_inode(const struct silofs_fs_ctx *fs_ctx,
+static int exec_stage_rootdir_inode(struct silofs_fsenv *fsenv,
                                     struct silofs_inode_info **out_ii)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -753,12 +709,12 @@ static int exec_stage_rootdir_inode(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int reload_rootdir_inode(const struct silofs_fs_ctx *fs_ctx)
+static int reload_rootdir_inode(struct silofs_fsenv *fsenv)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
 
-	err = exec_stage_rootdir_inode(fs_ctx, &ii);
+	err = exec_stage_rootdir_inode(fsenv, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -770,13 +726,13 @@ static int reload_rootdir_inode(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int exec_rescan_vspace_of(const struct silofs_fs_ctx *fs_ctx,
+static int exec_rescan_vspace_of(struct silofs_fsenv *fsenv,
                                  enum silofs_ltype ltype)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -784,7 +740,7 @@ static int exec_rescan_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int reload_free_vspace(const struct silofs_fs_ctx *fs_ctx)
+static int reload_free_vspace(struct silofs_fsenv *fsenv)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -793,7 +749,7 @@ static int reload_free_vspace(const struct silofs_fs_ctx *fs_ctx)
 		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = exec_rescan_vspace_of(fs_ctx, ltype);
+		err = exec_rescan_vspace_of(fsenv, ltype);
 		if (err && (err != -SILOFS_ENOSPC) &&
 		    (err != -SILOFS_ENOENT)) {
 			log_err("failed to reload free vspace: err=%d", err);
@@ -803,25 +759,25 @@ static int reload_free_vspace(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int reload_fs_meta(const struct silofs_fs_ctx *fs_ctx)
+static int reload_fs_meta(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = reload_rootdir_inode(fs_ctx);
+	err = reload_rootdir_inode(fsenv);
 	if (err) {
 		log_err("failed to reload root dir: err=%d", err);
 		return err;
 	}
-	drop_caches(fs_ctx);
+	drop_caches(fsenv);
 	return 0;
 }
 
-static int exec_flush_dirty_now(const struct silofs_fs_ctx *fs_ctx)
+static int exec_flush_dirty_now(struct silofs_fsenv *fsenv)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -829,130 +785,129 @@ static int exec_flush_dirty_now(const struct silofs_fs_ctx *fs_ctx)
 	return term_task(&task, err);
 }
 
-static int flush_dirty(const struct silofs_fs_ctx *fs_ctx)
+static int flush_dirty(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = exec_flush_dirty_now(fs_ctx);
+	err = exec_flush_dirty_now(fsenv);
 	if (err) {
 		log_err("failed to flush dirty: err=%d", err);
 	}
 	return err;
 }
 
-static int fsync_lsegs(const struct silofs_fs_ctx *fs_ctx)
+static int fsync_lsegs(const struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_repo_fsync_all(fs_ctx->repo);
+	err = silofs_repo_fsync_all(fsenv->fse.repo);
 	if (err) {
 		log_err("failed to fsync lsegs: err=%d", err);
 	}
 	return err;
 }
 
-static int shutdown_fsenv(struct silofs_fs_ctx *fs_ctx)
+static int shutdown_fsenv(struct silofs_fsenv *fsenv)
 {
-	struct silofs_fsenv *fsenv = fs_ctx->fsenv;
-	int err;
-
-	if (fsenv == NULL) {
-		return 0;
-	}
-	err = silofs_sbi_shut(fsenv->fse_sbi);
-	if (err) {
-		return err;
-	}
-	silofs_fsenv_shut(fsenv);
-	return 0;
+	return silofs_fsenv_shut(fsenv);
 }
 
-static int do_close_repo(const struct silofs_fs_ctx *fs_ctx)
-{
-	return silofs_repo_close(fs_ctx->repo);
-}
-
-int silofs_close_repo(struct silofs_fs_ctx *fs_ctx)
+int silofs_close_repo(struct silofs_fsenv *fsenv)
 {
 	int ret;
 
-	fs_ctx_lock(fs_ctx);
-	ret = do_close_repo(fs_ctx);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	ret = silofs_repo_close(fsenv->fse.repo);
+	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
 
-int silofs_exec_fs(struct silofs_fs_ctx *fs_ctx)
+static int do_mount_and_exec(struct silofs_fsenv *fsenv)
 {
-	struct silofs_fuseq *fuseq = fs_ctx->fuseq;
+	struct silofs_fuseq *fuseq = fsenv->fse.fuseq;
+	const char *mntdir = fsenv->fse.args->mntdir;
 	int err;
 
-	if (!fs_ctx_with_fuse(fs_ctx) || (fuseq == NULL)) {
-		return -SILOFS_EINVAL;
-	}
-	err = silofs_fuseq_update(fuseq);
+	err = silofs_fuseq_mount(fuseq, fsenv, mntdir);
 	if (err) {
 		return err;
 	}
-	err = silofs_fuseq_mount(fuseq, fs_ctx->fsenv, fs_ctx->fs_args.mntdir);
-	if (!err) {
-		err = silofs_fuseq_exec(fuseq);
-	}
-	silofs_fuseq_term(fuseq);
-	return err;
-}
-
-void silofs_halt_fs(struct silofs_fs_ctx *fs_ctx, int signum)
-{
-	fs_ctx->signum = signum;
-	if (fs_ctx->fuseq != NULL) {
-		fs_ctx->fuseq->fq_active = 0;
-	}
-}
-
-static int flush_and_drop_cache(const struct silofs_fs_ctx *fs_ctx)
-{
-	int err;
-
-	err = flush_dirty(fs_ctx);
+	err = silofs_fuseq_exec(fuseq);
 	if (err) {
 		return err;
 	}
-	drop_caches(fs_ctx);
 	return 0;
 }
 
-static int do_sync_fs(const struct silofs_fs_ctx *fs_ctx, bool drop)
+int silofs_exec_fs(struct silofs_fsenv *fsenv)
+{
+	struct silofs_fuseq *fuseq = fsenv->fse.fuseq;
+	int err = -SILOFS_EINVAL;
+
+	if (run_with_fuse(fsenv)) {
+		err = silofs_fuseq_update(fuseq);
+		if (!err) {
+			err = do_mount_and_exec(fsenv);
+			silofs_fuseq_term(fuseq);
+		}
+	}
+	return err;
+}
+
+void silofs_halt_fs(struct silofs_fsenv *fsenv)
+{
+	silofs_fsenv_lock(fsenv);
+	if (fsenv->fse.fuseq != NULL) {
+		fsenv->fse.fuseq->fq_active = 0;
+	}
+	silofs_fsenv_unlock(fsenv);
+}
+
+static int flush_and_drop_cache(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = flush_dirty(fs_ctx);
+	err = flush_dirty(fsenv);
+	if (err) {
+		return err;
+	}
+	drop_caches(fsenv);
+	return 0;
+}
+
+static int do_sync_fs(struct silofs_fsenv *fsenv, bool drop)
+{
+	int err;
+
+	err = flush_dirty(fsenv);
 	if (!err && drop) {
-		drop_caches(fs_ctx);
+		drop_caches(fsenv);
 	}
 	return err;
 }
 
-int silofs_sync_fs(struct silofs_fs_ctx *fs_ctx, bool drop)
+int silofs_sync_fs(struct silofs_fsenv *fsenv, bool drop)
 {
+	int cnt = 3;
 	int err = 0;
 
-	fs_ctx_lock(fs_ctx);
-	for (size_t i = 0; !err && (i < 3); ++i) {
-		err = do_sync_fs(fs_ctx, drop);
+	silofs_fsenv_lock(fsenv);
+	while ((cnt-- > 0) && !err) {
+		err = do_sync_fs(fsenv, drop);
 	}
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_unlock(fsenv);
 	return err;
 }
 
-void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
+void silofs_stat_fs(const struct silofs_fsenv *fsenv,
                     struct silofs_cachestats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
-	const struct silofs_lcache *lcache = fs_ctx->lcache;
+	const struct silofs_alloc *alloc = fsenv->fse.alloc;
+	const struct silofs_lcache *lcache = fsenv->fse.lcache;
 
 	silofs_memzero(cst, sizeof(*cst));
-	silofs_memstat(fs_ctx->alloc, &alst);
+	silofs_memstat(alloc, &alst);
 	cst->nalloc_bytes = alst.nbytes_use;
 	cst->ncache_unodes += lcache->lc_ui_hmapq.hmq_htbl_size;
 	cst->ncache_vnodes += lcache->lc_vi_hmapq.hmq_htbl_size;
@@ -960,35 +915,15 @@ void silofs_stat_fs(const struct silofs_fs_ctx *fs_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int derive_main_ivkey(struct silofs_fs_ctx *fs_ctx,
+static int derive_main_ivkey(struct silofs_fsenv *fsenv,
                              const struct silofs_bootrec *brec)
 {
-	struct silofs_mdigest mdigest = { .md_hd = NULL };
-	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
-	const struct silofs_password *passwd = fs_ctx->password;
-	struct silofs_ivkey *ivkey = &fs_ctx->main_ivkey;
-	int err = 0;
-
-	if (!passwd->passlen) {
-		return 0;
-	}
-	err = silofs_mdigest_init(&mdigest);
-	if (err) {
-		return err;
-	}
-	silofs_bootrec_cipher_args(brec, &cip_args);
-	err = silofs_derive_ivkey(&cip_args, passwd, &mdigest, ivkey);
-	silofs_mdigest_fini(&mdigest);
-	if (err) {
-		log_err("failed to derive main-key: err=%d", err);
-		return err;
-	}
-	return 0;
+	return silofs_fsenv_derive_main_ivkey(fsenv, brec);
 }
 
-static int check_superblock(const struct silofs_fs_ctx *fs_ctx)
+static int check_superblock(const struct silofs_fsenv *fsenv)
 {
-	const struct silofs_sb_info *sbi = fs_ctx->fsenv->fse_sbi;
+	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
 	const struct silofs_super_block *sb = sbi->sb;
 	int fossil;
 	int err;
@@ -1000,23 +935,23 @@ static int check_superblock(const struct silofs_fs_ctx *fs_ctx)
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
-	if (fossil && !fs_ctx->fs_args.cflags.rdonly) {
+	if (fossil && !fsenv->fse.args->cflags.rdonly) {
 		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
 		return -SILOFS_EROFS;
 	}
 	return 0;
 }
 
-static int reload_super(const struct silofs_fs_ctx *fs_ctx)
+static int reload_super(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_fsenv_reload_super(fs_ctx->fsenv);
+	err = silofs_fsenv_reload_super(fsenv);
 	if (err) {
 		log_err("failed to reload super: err=%d", err);
 		return err;
 	}
-	err = check_superblock(fs_ctx);
+	err = check_superblock(fsenv);
 	if (err) {
 		log_warn("bad super-block: err=%d", err);
 		return err;
@@ -1024,7 +959,7 @@ static int reload_super(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int exec_require_spmaps_of(const struct silofs_fs_ctx *fs_ctx,
+static int exec_require_spmaps_of(struct silofs_fsenv *fsenv,
                                   const struct silofs_vaddr *vaddr)
 {
 	struct silofs_task task;
@@ -1033,7 +968,7 @@ static int exec_require_spmaps_of(const struct silofs_fs_ctx *fs_ctx,
 	enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1041,18 +976,18 @@ static int exec_require_spmaps_of(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int format_base_vspmaps_of(const struct silofs_fs_ctx *fs_ctx,
+static int format_base_vspmaps_of(struct silofs_fsenv *fsenv,
                                   const struct silofs_vaddr *vaddr)
 {
 	int err;
 
-	err = exec_require_spmaps_of(fs_ctx, vaddr);
+	err = exec_require_spmaps_of(fsenv, vaddr);
 	if (err) {
 		log_err("failed to format base spmaps: "
 		        "ltype=%d err=%d", vaddr->ltype, err);
 		return err;
 	}
-	err = do_sync_fs(fs_ctx, false);
+	err = do_sync_fs(fsenv, false);
 	if (err) {
 		return err;
 	}
@@ -1060,7 +995,7 @@ static int format_base_vspmaps_of(const struct silofs_fs_ctx *fs_ctx,
 	return 0;
 }
 
-static int format_base_vspmaps(const struct silofs_fs_ctx *fs_ctx)
+static int format_base_vspmaps(struct silofs_fsenv *fsenv)
 {
 	struct silofs_vaddr vaddr;
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
@@ -1071,7 +1006,7 @@ static int format_base_vspmaps(const struct silofs_fs_ctx *fs_ctx)
 			continue;
 		}
 		vaddr_setup(&vaddr, ltype, 0);
-		err = format_base_vspmaps_of(fs_ctx, &vaddr);
+		err = format_base_vspmaps_of(fsenv, &vaddr);
 		if (err) {
 			return err;
 		}
@@ -1079,14 +1014,14 @@ static int format_base_vspmaps(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int exec_claim_vspace(const struct silofs_fs_ctx *fs_ctx,
+static int exec_claim_vspace(struct silofs_fsenv *fsenv,
                              enum silofs_ltype ltype,
                              struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1094,13 +1029,13 @@ static int exec_claim_vspace(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int exec_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx,
+static int exec_reclaim_vspace(struct silofs_fsenv *fsenv,
                                const struct silofs_vaddr *vaddr)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1108,15 +1043,15 @@ static int exec_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int claim_reclaim_vspace_of(const struct silofs_fs_ctx *fs_ctx,
+static int claim_reclaim_vspace_of(struct silofs_fsenv *fsenv,
                                    enum silofs_ltype vspace)
 {
 	struct silofs_vaddr vaddr;
 	const loff_t voff_exp = 0;
 	int err;
 
-	drop_caches(fs_ctx);
-	err = exec_claim_vspace(fs_ctx, vspace, &vaddr);
+	drop_caches(fsenv);
+	err = exec_claim_vspace(fsenv, vspace, &vaddr);
 	if (err) {
 		log_err("failed to claim: vspace=%d err=%d", vspace, err);
 		return err;
@@ -1128,8 +1063,8 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 		return -SILOFS_EFSCORRUPTED;
 	}
 
-	drop_caches(fs_ctx);
-	err = exec_reclaim_vspace(fs_ctx, &vaddr);
+	drop_caches(fsenv);
+	err = exec_reclaim_vspace(fsenv, &vaddr);
 	if (err) {
 		log_err("failed to reclaim space: vspace=%d voff=%ld err=%d",
 		        vspace, vaddr.off, err);
@@ -1137,7 +1072,7 @@ static int claim_reclaim_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 	return 0;
 }
 
-static int claim_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx)
+static int claim_reclaim_vspace(struct silofs_fsenv *fsenv)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -1146,11 +1081,11 @@ static int claim_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx)
 		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = claim_reclaim_vspace_of(fs_ctx, ltype);
+		err = claim_reclaim_vspace_of(fsenv, ltype);
 		if (err) {
 			return err;
 		}
-		err = flush_and_drop_cache(fs_ctx);
+		err = flush_and_drop_cache(fsenv);
 		if (err) {
 			return err;
 		}
@@ -1158,7 +1093,7 @@ static int claim_reclaim_vspace(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int exec_stage_spmaps_at(const struct silofs_fs_ctx *fs_ctx,
+static int exec_stage_spmaps_at(struct silofs_fsenv *fsenv,
                                 const struct silofs_vaddr *vaddr)
 {
 	struct silofs_task task;
@@ -1167,7 +1102,7 @@ static int exec_stage_spmaps_at(const struct silofs_fs_ctx *fs_ctx,
 	const enum silofs_stg_mode stg_mode = SILOFS_STG_CUR;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1175,14 +1110,14 @@ static int exec_stage_spmaps_at(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int reload_base_vspace_of(const struct silofs_fs_ctx *fs_ctx,
+static int reload_base_vspace_of(struct silofs_fsenv *fsenv,
                                  enum silofs_ltype vspace)
 {
 	struct silofs_vaddr vaddr;
 	int err;
 
 	vaddr_setup(&vaddr, vspace, 0);
-	err = exec_stage_spmaps_at(fs_ctx, &vaddr);
+	err = exec_stage_spmaps_at(fsenv, &vaddr);
 	if (err) {
 		log_err("failed to reload: vspace=%d err=%d", vspace, err);
 		return -SILOFS_EFSCORRUPTED;
@@ -1190,7 +1125,7 @@ static int reload_base_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 	return 0;
 }
 
-static int reload_base_vspace(const struct silofs_fs_ctx *fs_ctx)
+static int reload_base_vspace(struct silofs_fsenv *fsenv)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err = 0;
@@ -1199,11 +1134,11 @@ static int reload_base_vspace(const struct silofs_fs_ctx *fs_ctx)
 		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = reload_base_vspace_of(fs_ctx, ltype);
+		err = reload_base_vspace_of(fsenv, ltype);
 		if (err) {
 			return err;
 		}
-		err = flush_and_drop_cache(fs_ctx);
+		err = flush_and_drop_cache(fsenv);
 		if (err) {
 			return err;
 		}
@@ -1211,14 +1146,14 @@ static int reload_base_vspace(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int exec_spawn_vnode(const struct silofs_fs_ctx *fs_ctx,
+static int exec_spawn_vnode(struct silofs_fsenv *fsenv,
                             enum silofs_ltype ltype,
                             struct silofs_vnode_info **out_vi)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1229,14 +1164,14 @@ static int exec_spawn_vnode(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int format_zero_vspace_of(const struct silofs_fs_ctx *fs_ctx,
+static int format_zero_vspace_of(struct silofs_fsenv *fsenv,
                                  enum silofs_ltype vspace)
 {
 	struct silofs_vnode_info *vi = NULL;
 	const struct silofs_vaddr *vaddr = NULL;
 	int err;
 
-	err = exec_spawn_vnode(fs_ctx, vspace, &vi);
+	err = exec_spawn_vnode(fsenv, vspace, &vi);
 	if (err) {
 		log_err("failed to spawn: vspace=%d err=%d", vspace, err);
 		return err;
@@ -1249,7 +1184,7 @@ static int format_zero_vspace_of(const struct silofs_fs_ctx *fs_ctx,
 	return 0;
 }
 
-static int format_zero_vspace(const struct silofs_fs_ctx *fs_ctx)
+static int format_zero_vspace(struct silofs_fsenv *fsenv)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -1258,11 +1193,11 @@ static int format_zero_vspace(const struct silofs_fs_ctx *fs_ctx)
 		if (!ltype_isvnode(ltype)) {
 			continue;
 		}
-		err = format_zero_vspace_of(fs_ctx, ltype);
+		err = format_zero_vspace_of(fsenv, ltype);
 		if (err) {
 			return err;
 		}
-		err = flush_and_drop_cache(fs_ctx);
+		err = flush_and_drop_cache(fsenv);
 		if (err) {
 			return err;
 		}
@@ -1279,13 +1214,13 @@ static int do_spawn_rootdir(struct silofs_task *task,
 	return silofs_spawn_inode(task, &inp, out_ii);
 }
 
-static int exec_spawn_rootdir(const struct silofs_fs_ctx *fs_ctx,
+static int exec_spawn_rootdir(struct silofs_fsenv *fsenv,
                               struct silofs_inode_info **out_ii)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1293,12 +1228,12 @@ static int exec_spawn_rootdir(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-static int format_rootdir(const struct silofs_fs_ctx *fs_ctx)
+static int do_format_rootdir(struct silofs_fsenv *fsenv)
 {
 	struct silofs_inode_info *root_ii = NULL;
 	int err;
 
-	err = exec_spawn_rootdir(fs_ctx, &root_ii);
+	err = exec_spawn_rootdir(fsenv, &root_ii);
 	if (err) {
 		return err;
 	}
@@ -1307,12 +1242,18 @@ static int format_rootdir(const struct silofs_fs_ctx *fs_ctx)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	silofs_ii_fixup_as_rootdir(root_ii);
-
-	err = flush_and_drop_cache(fs_ctx);
-	if (err) {
-		return err;
-	}
 	return 0;
+}
+
+static int format_rootdir(struct silofs_fsenv *fsenv)
+{
+	int err;
+
+	err = do_format_rootdir(fsenv);
+	if (!err) {
+		err = flush_and_drop_cache(fsenv);
+	}
+	return err;
 }
 
 static int check_fs_capacity(size_t cap_size)
@@ -1326,9 +1267,9 @@ static int check_fs_capacity(size_t cap_size)
 	return 0;
 }
 
-static int check_want_capacity(const struct silofs_fs_ctx *fs_ctx)
+static int check_want_capacity(const struct silofs_fsenv *fsenv)
 {
-	const size_t cap_want = fs_ctx->fs_args.capacity;
+	const size_t cap_want = fsenv->fse.args->capacity;
 	int err;
 
 	err = check_fs_capacity(cap_want);
@@ -1340,15 +1281,15 @@ static int check_want_capacity(const struct silofs_fs_ctx *fs_ctx)
 	return 0;
 }
 
-static int check_owner_ids(const struct silofs_fs_ctx *fs_ctx)
+static int check_owner_ids(const struct silofs_fsenv *fsenv)
 {
-	const uid_t owner_uid = fs_ctx->fs_args.uid;
-	const gid_t owner_gid = fs_ctx->fs_args.gid;
+	const uid_t owner_uid = fsenv->fse.args->uid;
+	const gid_t owner_gid = fsenv->fse.args->gid;
 	uid_t suid;
 	gid_t sgid;
 	int err;
 
-	err = silofs_idsmap_map_uidgid(fs_ctx->idsmap, owner_uid,
+	err = silofs_idsmap_map_uidgid(fsenv->fse.idsmap, owner_uid,
 	                               owner_gid, &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%ld gid=%ld",
@@ -1365,294 +1306,290 @@ static size_t calc_aligned_fs_cap(size_t cap_want)
 	return (cap_want / align_size) * align_size;
 }
 
-static int format_umeta(const struct silofs_fs_ctx *fs_ctx)
+static int format_umeta(struct silofs_fsenv *fsenv)
 {
-	const size_t cap = calc_aligned_fs_cap(fs_ctx->fs_args.capacity);
+	size_t fs_cap;
 	int err;
 
-	err = check_want_capacity(fs_ctx);
+	err = check_want_capacity(fsenv);
 	if (err) {
 		return err;
 	}
-	err = silofs_fsenv_format_super(fs_ctx->fsenv, cap);
+	fs_cap = calc_aligned_fs_cap(fsenv->fse.args->capacity);
+	err = silofs_fsenv_format_super(fsenv, fs_cap);
 	if (err) {
 		return err;
 	}
-	err = check_superblock(fs_ctx);
+	err = check_superblock(fsenv);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty(fs_ctx);
+	err = flush_dirty(fsenv);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int format_vmeta(const struct silofs_fs_ctx *fs_ctx)
+static int format_vmeta(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = format_base_vspmaps(fs_ctx);
+	err = format_base_vspmaps(fsenv);
 	if (err) {
 		return err;
 	}
-	err = claim_reclaim_vspace(fs_ctx);
+	err = claim_reclaim_vspace(fsenv);
 	if (err) {
 		return err;
 	}
-	err = format_zero_vspace(fs_ctx);
+	err = format_zero_vspace(fsenv);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty(fs_ctx);
+	err = flush_dirty(fsenv);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int do_format_repo(const struct silofs_fs_ctx *fs_ctx)
-{
-	return silofs_repo_format(fs_ctx->repo);
-}
-
-int silofs_format_repo(struct silofs_fs_ctx *fs_ctx)
+int silofs_format_repo(struct silofs_fsenv *fsenv)
 {
 	int ret;
 
-	fs_ctx_lock(fs_ctx);
-	ret = do_format_repo(fs_ctx);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	ret = silofs_repo_format(fsenv->fse.repo);
+	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
 
-static int do_open_repo(const struct silofs_fs_ctx *fs_ctx)
-{
-	return silofs_repo_open(fs_ctx->repo);
-}
-
-int silofs_open_repo(struct silofs_fs_ctx *fs_ctx)
+int silofs_open_repo(struct silofs_fsenv *fsenv)
 {
 	int ret;
 
-	fs_ctx_lock(fs_ctx);
-	ret = do_open_repo(fs_ctx);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	ret = silofs_repo_open(fsenv->fse.repo);
+	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
 
-static int reload_bootrec(struct silofs_fs_ctx *fs_ctx,
+static int reload_bootrec(const struct silofs_fsenv *fsenv,
                           const struct silofs_caddr *caddr,
                           struct silofs_bootrec *out_brec)
 {
 	int err;
 
-	err = silofs_stat_bootrec(fs_ctx->fsenv, caddr);
+	err = silofs_stat_bootrec(fsenv, caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_load_bootrec(fs_ctx->fsenv, caddr, out_brec);
+	err = silofs_load_bootrec(fsenv, caddr, out_brec);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int unlink_bootrec_of(struct silofs_fs_ctx *fs_ctx,
+static int unlink_bootrec_of(const struct silofs_fsenv *fsenv,
                              const struct silofs_caddr *caddr)
 {
-	return silofs_unlink_bootrec(fs_ctx->fsenv, caddr);
+	return silofs_unlink_bootrec(fsenv, caddr);
 }
 
-static void update_bootrec(const struct silofs_fs_ctx *fs_ctx,
+static void update_bootrec(const struct silofs_fsenv *fsenv,
                            struct silofs_bootrec *brec)
 {
-	const struct silofs_sb_info *sbi = fs_ctx->fsenv->fse_sbi;
+	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
 	const struct silofs_ulink *sb_ulink = sbi_ulink(sbi);
 
 	silofs_bootrec_set_sb_ulink(brec, sb_ulink);
 }
 
-static int commit_bootrec(const struct silofs_fs_ctx *fs_ctx,
+static int commit_bootrec(struct silofs_fsenv *fsenv,
                           struct silofs_bootrec *brec)
 {
-	update_bootrec(fs_ctx, brec);
-	return silofs_resave_bootrec(fs_ctx->fsenv, brec);
+	update_bootrec(fsenv, brec);
+	return silofs_resave_bootrec(fsenv, brec);
 }
 
-static void resolve_bootrec_caddr(const struct silofs_fs_ctx *fs_ctx,
+static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
                                   struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &fs_ctx->fsenv->fse_boot_ref);
+	caddr_assign(out_caddr, &fsenv->fse_boot_ref);
 }
 
-static int do_format_fs(struct silofs_fs_ctx *fs_ctx,
+static int do_format_fs(struct silofs_fsenv *fsenv,
                         struct silofs_caddr *out_caddr)
 {
 	struct silofs_bootrec brec;
 	int err;
 
 	silofs_bootrec_setup(&brec);
-	err = check_want_capacity(fs_ctx);
+	err = check_want_capacity(fsenv);
 	if (err) {
 		return err;
 	}
-	err = check_owner_ids(fs_ctx);
+	err = check_owner_ids(fsenv);
 	if (err) {
 		return err;
 	}
-	err = derive_main_ivkey(fs_ctx, &brec);
+	err = derive_main_ivkey(fsenv, &brec);
 	if (err) {
 		return err;
 	}
-	err = format_umeta(fs_ctx);
+	err = format_umeta(fsenv);
 	if (err) {
 		return err;
 	}
-	err = format_vmeta(fs_ctx);
+	err = format_vmeta(fsenv);
 	if (err) {
 		return err;
 	}
-	err = format_rootdir(fs_ctx);
+	err = format_rootdir(fsenv);
 	if (err) {
 		return err;
 	}
-	err = commit_bootrec(fs_ctx, &brec);
+	err = commit_bootrec(fsenv, &brec);
 	if (err) {
 		return err;
 	}
-	resolve_bootrec_caddr(fs_ctx, out_caddr);
+	resolve_bootrec_caddr(fsenv, out_caddr);
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_format_fs(struct silofs_fsenv *fsenv,
                      struct silofs_caddr *out_caddr)
 {
 	int ret;
 
-	fs_ctx_lock(fs_ctx);
-	ret = do_format_fs(fs_ctx, out_caddr);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	ret = do_format_fs(fsenv, out_caddr);
+	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
 
-static int fse_reload_root_sb_lseg(struct silofs_fs_ctx *fs_ctx,
-                                   const struct silofs_bootrec *brec)
+static int reload_root_lseg(struct silofs_fsenv *fsenv,
+                            const struct silofs_bootrec *brec)
 {
-	silofs_fsenv_set_sb_ulink(fs_ctx->fsenv, &brec->sb_ulink);
-	return silofs_fsenv_reload_sb_lseg(fs_ctx->fsenv);
+	silofs_fsenv_set_sb_ulink(fsenv, &brec->sb_ulink);
+	return silofs_fsenv_reload_sb_lseg(fsenv);
 }
 
-static int do_boot_fs(struct silofs_fs_ctx *fs_ctx,
+static int do_boot_fs(struct silofs_fsenv *fsenv,
                       const struct silofs_caddr *caddr)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	err = reload_bootrec(fs_ctx, caddr, &brec);
+	err = reload_bootrec(fsenv, caddr, &brec);
 	if (err) {
 		return err;
 	}
-	err = derive_main_ivkey(fs_ctx, &brec);
+	err = derive_main_ivkey(fsenv, &brec);
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sb_lseg(fs_ctx, &brec);
+	err = reload_root_lseg(fsenv, &brec);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_boot_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_boot_fs(struct silofs_fsenv *fsenv,
                    const struct silofs_caddr *boot_ref)
 {
 	int ret;
 
-	fs_ctx_lock(fs_ctx);
-	ret = do_boot_fs(fs_ctx, boot_ref);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	ret = do_boot_fs(fsenv, boot_ref);
+	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
 
-static int do_open_fs(const struct silofs_fs_ctx *fs_ctx)
+static int do_open_fs(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = reload_super(fs_ctx);
+	err = reload_super(fsenv);
 	if (err) {
 		return err;
 	}
-	err = reload_base_vspace(fs_ctx);
+	err = reload_base_vspace(fsenv);
 	if (err) {
 		return err;
 	}
-	err = reload_free_vspace(fs_ctx);
+	err = reload_free_vspace(fsenv);
 	if (err) {
 		return err;
 	}
-	err = reload_fs_meta(fs_ctx);
+	err = reload_fs_meta(fsenv);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_open_fs(struct silofs_fs_ctx *fs_ctx)
+int silofs_open_fs(struct silofs_fsenv *fsenv)
 {
 	int ret;
 
-	fs_ctx_lock(fs_ctx);
-	ret = do_open_fs(fs_ctx);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	ret = do_open_fs(fsenv);
+	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
 
-static int do_close_fs(struct silofs_fs_ctx *fs_ctx)
+static int do_close_fs(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = flush_dirty(fs_ctx);
+	err = flush_dirty(fsenv);
 	if (err) {
 		return err;
 	}
-	err = fsync_lsegs(fs_ctx);
+	err = fsync_lsegs(fsenv);
 	if (err) {
 		return err;
 	}
-	err = shutdown_fsenv(fs_ctx);
+	err = shutdown_fsenv(fsenv);
 	if (err) {
 		return err;
 	}
-	drop_caches(fs_ctx);
+	drop_caches(fsenv);
 	return err;
 }
 
-int silofs_close_fs(struct silofs_fs_ctx *fs_ctx)
+int silofs_close_fs(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	fs_ctx_lock(fs_ctx);
-	err = do_close_fs(fs_ctx);
-	fs_ctx_unlock(fs_ctx);
+	silofs_fsenv_lock(fsenv);
+	err = do_close_fs(fsenv);
+	silofs_fsenv_unlock(fsenv);
 	return err;
 }
 
-int silofs_poke_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_poke_fs(struct silofs_fsenv *fsenv,
                    const struct silofs_caddr *caddr,
                    struct silofs_bootrec *out_brec)
 {
-	return silofs_load_bootrec(fs_ctx->fsenv, caddr, out_brec);
+	int err;
+
+	silofs_fsenv_lock(fsenv);
+	err = reload_bootrec(fsenv, caddr, out_brec);
+	silofs_fsenv_unlock(fsenv);
+	return err;
 }
 
-static int exec_clone_fs(const struct silofs_fs_ctx *fs_ctx,
+static int exec_clone_fs(struct silofs_fsenv *fsenv,
                          struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1663,79 +1600,80 @@ static int exec_clone_fs(const struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-int silofs_fork_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_fork_fs(struct silofs_fsenv *fsenv,
                    struct silofs_caddr *out_boot_new,
                    struct silofs_caddr *out_boot_alt)
 {
 	struct silofs_bootrecs brecs;
 	int err;
 
-	err = exec_clone_fs(fs_ctx, &brecs);
-	if (err) {
-		return err;
+	silofs_fsenv_lock(fsenv);
+	err = exec_clone_fs(fsenv, &brecs);
+	if (!err) {
+		caddr_assign(out_boot_new, &brecs.caddr_new);
+		caddr_assign(out_boot_alt, &brecs.caddr_alt);
 	}
-	silofs_caddr_assign(out_boot_new, &brecs.caddr_new);
-	silofs_caddr_assign(out_boot_alt, &brecs.caddr_alt);
-	return 0;
+	silofs_fsenv_unlock(fsenv);
+	return err;
 }
 
-static int exec_unref_fs(struct silofs_fs_ctx *fse)
+static int exec_unref_fs(struct silofs_fsenv *fsenv)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fse, &task);
-	if (!err) {
-		err = silofs_fs_unrefs(&task);
-		err = term_task(&task, err);
+	err = make_task(fsenv, &task);
+	if (err) {
+		return err;
 	}
-	return err;
+	err = silofs_fs_unrefs(&task);
+	return term_task(&task, err);
 }
 
-int silofs_unref_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_unref_fs(struct silofs_fsenv *fsenv,
                     const struct silofs_caddr *caddr)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	err = reload_bootrec(fs_ctx, caddr, &brec);
+	err = reload_bootrec(fsenv, caddr, &brec);
 	if (err) {
 		return err;
 	}
-	err = derive_main_ivkey(fs_ctx, &brec);
+	err = derive_main_ivkey(fsenv, &brec);
 	if (err) {
 		return err;
 	}
-	err = fse_reload_root_sb_lseg(fs_ctx, &brec);
+	err = reload_root_lseg(fsenv, &brec);
 	if (err) {
 		return err;
 	}
-	err = reload_super(fs_ctx);
+	err = reload_super(fsenv);
 	if (err) {
 		return err;
 	}
-	err = exec_unref_fs(fs_ctx);
+	err = exec_unref_fs(fsenv);
 	if (err) {
 		return err;
 	}
-	err = unlink_bootrec_of(fs_ctx, caddr);
+	err = unlink_bootrec_of(fsenv, caddr);
 	if (err) {
 		return err;
 	}
-	err = do_close_fs(fs_ctx);
+	err = do_close_fs(fsenv);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int exec_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+static int exec_inspect_fs(struct silofs_fsenv *fsenv,
                            silofs_visit_laddr_fn cb, void *user_ctx)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1743,19 +1681,24 @@ static int exec_inspect_fs(struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-int silofs_inspect_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_inspect_fs(struct silofs_fsenv *fsenv,
                       silofs_visit_laddr_fn cb, void *user_ctx)
 {
-	return exec_inspect_fs(fs_ctx, cb, user_ctx);
+	int err;
+
+	silofs_fsenv_lock(fsenv);
+	err = exec_inspect_fs(fsenv, cb, user_ctx);
+	silofs_fsenv_unlock(fsenv);
+	return err;
 }
 
-static int exec_pack_fs(struct silofs_fs_ctx *fs_ctx,
+static int exec_pack_fs(struct silofs_fsenv *fsenv,
                         struct silofs_caddr *out_caddr)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1763,19 +1706,23 @@ static int exec_pack_fs(struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-int silofs_pack_fs(struct silofs_fs_ctx *fs_ctx,
-                   struct silofs_caddr *out_caddr)
+int silofs_pack_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
 {
-	return exec_pack_fs(fs_ctx, out_caddr);
+	int err;
+
+	silofs_fsenv_lock(fsenv);
+	err = exec_pack_fs(fsenv, out_caddr);
+	silofs_fsenv_unlock(fsenv);
+	return err;
 }
 
-static int exec_unpack_fs(struct silofs_fs_ctx *fs_ctx,
+static int exec_unpack_fs(struct silofs_fsenv *fsenv,
                           const struct silofs_caddr *caddr)
 {
 	struct silofs_task task;
 	int err;
 
-	err = make_task(fs_ctx, &task);
+	err = make_task(fsenv, &task);
 	if (err) {
 		return err;
 	}
@@ -1783,8 +1730,13 @@ static int exec_unpack_fs(struct silofs_fs_ctx *fs_ctx,
 	return term_task(&task, err);
 }
 
-int silofs_unpack_fs(struct silofs_fs_ctx *fs_ctx,
+int silofs_unpack_fs(struct silofs_fsenv *fsenv,
                      const struct silofs_caddr *caddr)
 {
-	return exec_unpack_fs(fs_ctx, caddr);
+	int err;
+
+	silofs_fsenv_lock(fsenv);
+	err = exec_unpack_fs(fsenv, caddr);
+	silofs_fsenv_unlock(fsenv);
+	return err;
 }

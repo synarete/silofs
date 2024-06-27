@@ -64,14 +64,14 @@ static void fsenv_bind_sbi(struct silofs_fsenv *fsenv,
 
 static void fsenv_update_boot(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
+	const struct silofs_fs_args *fs_args = fsenv->fse.args;
 
 	silofs_fsenv_set_boot_ref(fsenv, &fs_args->bconf.boot_ref);
 }
 
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
+	const struct silofs_fs_args *fs_args = fsenv->fse.args;
 
 	fsenv->fse_owner.uid = fs_args->uid;
 	fsenv->fse_owner.gid = fs_args->gid;
@@ -80,7 +80,7 @@ static void fsenv_update_owner(struct silofs_fsenv *fsenv)
 
 static void fsenv_update_mntflags(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
+	const struct silofs_fs_args *fs_args = fsenv->fse.args;
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
@@ -115,7 +115,7 @@ static void fsenv_update_mntflags(struct silofs_fsenv *fsenv)
 
 static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_fs_args *fs_args = fsenv->fse.fs_args;
+	const struct silofs_fs_args *fs_args = fsenv->fse.args;
 
 	if (fs_args->cflags.with_fuse) {
 		fsenv->fse_ctl_flags |= SILOFS_ENVF_WITHFUSE;
@@ -166,6 +166,8 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 	memcpy(&fsenv->fse, fse_base, sizeof(fsenv->fse));
 	silofs_caddr_reset(&fsenv->fse_boot_ref);
 	silofs_lsegid_reset(&fsenv->fse_sb_lsegid);
+	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
+	silofs_ivkey_init(&fsenv->fse_main_ivkey);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -182,6 +184,8 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 static void fsenv_fini_commons(struct silofs_fsenv *fsenv)
 {
 	memset(&fsenv->fse, 0, sizeof(fsenv->fse));
+	silofs_ivkey_fini(&fsenv->fse_boot_ivkey);
+	silofs_ivkey_fini(&fsenv->fse_main_ivkey);
 	lsegid_reset(&fsenv->fse_sb_lsegid);
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -260,6 +264,24 @@ static void fsenv_fini_iconv(struct silofs_fsenv *fsenv)
 	}
 }
 
+static int fsenv_init_boot_ivkey(struct silofs_fsenv *fsenv)
+{
+	const struct silofs_password *passwd = fsenv->fse.passwd;
+	int ret = 0;
+
+	if ((passwd != NULL) && passwd->passlen) {
+		ret = silofs_ivkey_for_bootrec(&fsenv->fse_boot_ivkey,
+		                               passwd, &fsenv->fse_mdigest);
+	}
+	return ret;
+}
+
+static void fsenv_fini_ivkeys(struct silofs_fsenv *fsenv)
+{
+	silofs_ivkey_fini(&fsenv->fse_boot_ivkey);
+	silofs_ivkey_fini(&fsenv->fse_main_ivkey);
+}
+
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
                       const struct silofs_fsenv_base *fse_base)
 {
@@ -273,6 +295,10 @@ int silofs_fsenv_init(struct silofs_fsenv *fsenv,
 		return err;
 	}
 	err = fsenv_init_crypto(fsenv);
+	if (err) {
+		goto out_err;
+	}
+	err = fsenv_init_boot_ivkey(fsenv);
 	if (err) {
 		goto out_err;
 	}
@@ -290,6 +316,7 @@ void silofs_fsenv_fini(struct silofs_fsenv *fsenv)
 {
 	fsenv_bind_sbi(fsenv, NULL);
 	fsenv_fini_iconv(fsenv);
+	fsenv_fini_ivkeys(fsenv);
 	fsenv_fini_crypto(fsenv);
 	fsenv_fini_locks(fsenv);
 	fsenv_fini_commons(fsenv);
@@ -353,7 +380,7 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 	make_super_lsegid(&lsegid);
 	make_super_uaddr(&lsegid, &uaddr);
-	ulink_init(out_ulink, &uaddr, &fsenv->fse.main_ivkey->iv);
+	ulink_init(out_ulink, &uaddr, &fsenv->fse_main_ivkey.iv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -361,13 +388,13 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 void silofs_fsenv_set_boot_ref(struct silofs_fsenv *fsenv,
                                const struct silofs_caddr *caddr)
 {
-	silofs_caddr_assign(&fsenv->fse_boot_ref, caddr);
+	caddr_assign(&fsenv->fse_boot_ref, caddr);
 }
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
                                const struct silofs_ulink *sb_ulink)
 {
-	silofs_ulink_assign(&fsenv->fse_sb_ulink, sb_ulink);
+	ulink_assign(&fsenv->fse_sb_ulink, sb_ulink);
 }
 
 static int fsenv_spawn_super_at(struct silofs_fsenv *fsenv,
@@ -473,10 +500,17 @@ static void sbi_make_clone(struct silofs_sb_info *sbi_new,
 	sbi_account_super_of(sbi_new);
 }
 
-void silofs_fsenv_shut(struct silofs_fsenv *fsenv)
+int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
 {
+	int err;
+
+	err = silofs_sbi_shut(fsenv->fse_sbi);
+	if (err) {
+		return err;
+	}
 	fsenv_bind_sbi(fsenv, NULL);
 	fsenv_bind_sb_lsegid(fsenv, NULL);
+	return 0;
 }
 
 static void fsenv_rebind_root_sb(struct silofs_fsenv *fsenv,
@@ -567,4 +601,28 @@ void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
                             struct silofs_alloc_stat *out_alst)
 {
 	silofs_memstat(fsenv->fse.alloc, out_alst);
+}
+
+void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
+                           struct silofs_bootpath *out_bootpath)
+{
+	const struct silofs_fs_args *fs_args = fsenv->fse.args;
+
+	silofs_bootpath_setup(out_bootpath, fs_args->repodir, fs_args->name);
+}
+
+int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
+                                   const struct silofs_bootrec *brec)
+{
+	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
+	const struct silofs_password *passwd = fsenv->fse.passwd;
+	int ret = 0;
+
+	if (passwd && passwd->passlen) {
+		silofs_bootrec_cipher_args(brec, &cip_args);
+		ret = silofs_derive_ivkey(&cip_args, passwd,
+		                          &fsenv->fse_mdigest,
+		                          &fsenv->fse_main_ivkey);
+	}
+	return ret;
 }

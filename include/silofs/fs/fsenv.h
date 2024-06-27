@@ -46,21 +46,22 @@ struct silofs_oper_stat {
 
 /* base members of fsenv-block (provided) */
 struct silofs_fsenv_base {
-	const struct silofs_fs_args    *fs_args;
-	const struct silofs_bootpath   *bootpath;
-	const struct silofs_ivkey      *boot_ivkey;
-	const struct silofs_ivkey      *main_ivkey;
+	const struct silofs_fs_args    *args;
+	const struct silofs_password   *passwd;
 	struct silofs_alloc            *alloc;
 	struct silofs_lcache           *lcache;
 	struct silofs_repo             *repo;
 	struct silofs_submitq          *submitq;
 	struct silofs_flusher          *flusher;
 	struct silofs_idsmap           *idsmap;
+	struct silofs_fuseq            *fuseq;
 };
 
-/* top-level pseudo meta node */
+/* top-level envinment obejct */
 struct silofs_fsenv {
 	struct silofs_fsenv_base        fse;
+	struct silofs_ivkey             fse_boot_ivkey;
+	struct silofs_ivkey             fse_main_ivkey;
 	struct silofs_mutex             fse_mutex;
 	struct silofs_rwlock            fse_rwlock;
 	struct silofs_mdigest           fse_mdigest;
@@ -93,7 +94,7 @@ void silofs_fsenv_rwlock(struct silofs_fsenv *fsenv, bool ex);
 
 void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv);
 
-void silofs_fsenv_shut(struct silofs_fsenv *fsenv);
+int silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
 void silofs_fsenv_set_boot_ref(struct silofs_fsenv *fsenv,
                                const struct silofs_caddr *caddr);
@@ -117,5 +118,10 @@ void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime);
 void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
                             struct silofs_alloc_stat *out_alst);
 
+void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
+                           struct silofs_bootpath *out_bootpath);
+
+int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
+                                   const struct silofs_bootrec *brec);
 
 #endif /* SILOFS_FSENV_H_ */

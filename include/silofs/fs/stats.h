@@ -17,6 +17,9 @@
 #ifndef SILOFS_STATS_H_
 #define SILOFS_STATS_H_
 
+#include <silofs/defs.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 /* space accounting per sub-type */
 struct silofs_spacegauges {

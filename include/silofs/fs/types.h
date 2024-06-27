@@ -26,7 +26,6 @@
 #include <iconv.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
 #include <silofs/defs.h>

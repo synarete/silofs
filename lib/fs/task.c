@@ -461,6 +461,7 @@ void silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
 	task->t_fs_locked = false;
 	task->t_ex_locked = false;
 	task->t_exclusive = false;
+	task->t_uber_op = false;
 }
 
 void silofs_task_fini(struct silofs_task *task)
@@ -536,7 +537,7 @@ static void task_purge(struct silofs_task *task)
 
 void silofs_task_lock_fs(struct silofs_task *task)
 {
-	if (!task->t_fs_locked) {
+	if (!task->t_fs_locked && !task->t_uber_op) {
 		silofs_fsenv_lock(task->t_fsenv);
 		task->t_fs_locked = true;
 	}
@@ -544,7 +545,7 @@ void silofs_task_lock_fs(struct silofs_task *task)
 
 void silofs_task_unlock_fs(struct silofs_task *task)
 {
-	if (task->t_fs_locked) {
+	if (task->t_fs_locked && !task->t_uber_op) {
 		silofs_fsenv_unlock(task->t_fsenv);
 		task->t_fs_locked = false;
 	}
@@ -579,4 +580,3 @@ int silofs_task_submit(struct silofs_task *task, bool all)
 	task_purge(task);
 	return ret;
 }
-

@@ -17,6 +17,9 @@
 #ifndef SILOFS_LCACHE_H_
 #define SILOFS_LCACHE_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/fs/spxmap.h>
 
 /* dirty-queues of cached-elements by owner */
 struct silofs_dirtyqs {

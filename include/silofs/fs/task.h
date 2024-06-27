@@ -42,6 +42,7 @@ struct silofs_task {
 	volatile bool                   t_fs_locked;
 	bool                            t_ex_locked;
 	bool                            t_exclusive;
+	bool                            t_uber_op;
 };
 
 /* submit reference into view within underlying block */

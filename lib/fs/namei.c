@@ -2099,7 +2099,7 @@ static void fill_proc(const struct silofs_fsenv *fsenv,
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid = fsenv->fse_owner.uid;
 	qpr->gid = fsenv->fse_owner.gid;
-	qpr->pid = fsenv->fse.fs_args->pid;
+	qpr->pid = fsenv->fse.args->pid;
 	qpr->msflags = fsenv->fse_ms_flags;
 	qpr->uptime = uptime;
 	qpr->iopen_max = fsenv->fse_op_stat.op_iopen_max;
@@ -2156,21 +2156,23 @@ static void fill_query_repo(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
-	const struct silofs_bootpath *bootpath = fsenv->fse.bootpath;
+	struct silofs_bootpath bootpath;
 	size_t bsz;
 
+	silofs_fsenv_bootpath(fsenv, &bootpath);
 	bsz = sizeof(query->u.repo.path);
-	str_to_buf(&bootpath->repodir, query->u.repo.path, bsz);
+	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
 }
 
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
-	const struct silofs_bootpath *bootpath = fsenv->fse.bootpath;
+	struct silofs_bootpath bootpath;
 	const size_t bsz = sizeof(query->u.boot.name);
 
-	str_to_buf(&bootpath->name.s, query->u.boot.name, bsz);
+	silofs_fsenv_bootpath(fsenv, &bootpath);
+	str_to_buf(&bootpath.name.s, query->u.boot.name, bsz);
 	silofs_caddr_to_name2(&fsenv->fse_boot_ref, query->u.boot.addr);
 }
 

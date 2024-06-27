@@ -3980,7 +3980,7 @@ static struct silofs_fuseq_worker *fqw_from_th(struct silofs_thread *th)
 static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
                                 struct silofs_task *task)
 {
-	const struct silofs_fs_args *args = fqw->fqw_fq->fq_fsenv->fse.fs_args;
+	const struct silofs_fs_args *args = fqw->fqw_fq->fq_fsenv->fse.args;
 
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	silofs_task_set_ts(task, false);

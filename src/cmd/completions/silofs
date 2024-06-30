@@ -1,3 +1,4 @@
+# -*- mode: sh; sh-shell: bash; -*-
 # silofs(1) bash completion
 # shellcheck shell=bash
 # shellcheck disable=SC2207
@@ -214,4 +215,3 @@ _silofs_completions() {
 complete -o bashdefault -o default -o nospace -F _silofs_completions silofs
 
 # vim: filetype=sh
-

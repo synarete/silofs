@@ -61,13 +61,13 @@ struct silofs_fsenv {
 	struct silofs_fs_args           fse_args;
 	struct silofs_fsenv_base        fse;
 	struct silofs_ivkey             fse_boot_ivkey;
+	struct silofs_caddr             fse_boot_caddr;
 	struct silofs_ivkey             fse_main_ivkey;
 	struct silofs_mutex             fse_mutex;
 	struct silofs_rwlock            fse_rwlock;
 	struct silofs_mdigest           fse_mdigest;
 	struct silofs_cipher            fse_enc_cipher;
 	struct silofs_cipher            fse_dec_cipher;
-	struct silofs_caddr             fse_boot_ref;
 	struct silofs_oper_stat         fse_op_stat;
 	struct silofs_lsegid            fse_sb_lsegid;
 	struct silofs_sb_info          *fse_sbi;
@@ -97,8 +97,8 @@ void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
-void silofs_fsenv_set_boot_ref(struct silofs_fsenv *fsenv,
-                               const struct silofs_caddr *caddr);
+void silofs_fsenv_update_boot_caddr(struct silofs_fsenv *fsenv,
+                                    const struct silofs_caddr *caddr);
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
                                const struct silofs_ulink *ulink);

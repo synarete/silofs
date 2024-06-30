@@ -2173,7 +2173,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 
 	silofs_fsenv_bootpath(fsenv, &bootpath);
 	str_to_buf(&bootpath.name.s, query->u.boot.name, bsz);
-	silofs_caddr_to_name2(&fsenv->fse_boot_ref, query->u.boot.addr);
+	silofs_caddr_to_name2(&fsenv->fse_boot_caddr, query->u.boot.addr);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
@@ -2333,7 +2333,6 @@ static int update_save_bootrec(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	silofs_fsenv_set_boot_ref(task->t_fsenv, out_caddr);
 	return 0;
 }
 
@@ -2350,6 +2349,7 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
+	silofs_fsenv_update_boot_caddr(task->t_fsenv, &brecs->caddr_new);
 	return 0;
 }
 

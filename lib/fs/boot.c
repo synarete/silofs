@@ -733,7 +733,7 @@ int silofs_resave_bootrec(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	silofs_fsenv_set_boot_ref(fsenv, &caddr);
+	silofs_fsenv_update_boot_caddr(fsenv, &caddr);
 	return 0;
 }
 

@@ -66,7 +66,7 @@ static void fsenv_update_boot(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
-	silofs_fsenv_set_boot_ref(fsenv, &fs_args->bconf.boot_ref);
+	silofs_fsenv_update_boot_caddr(fsenv, &fs_args->bconf.boot_ref);
 }
 
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
@@ -166,7 +166,7 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 {
 	memcpy(&fsenv->fse_args, args, sizeof(fsenv->fse_args));
 	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
-	silofs_caddr_reset(&fsenv->fse_boot_ref);
+	silofs_caddr_reset(&fsenv->fse_boot_caddr);
 	silofs_lsegid_reset(&fsenv->fse_sb_lsegid);
 	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
 	silofs_ivkey_init(&fsenv->fse_main_ivkey);
@@ -388,10 +388,10 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_fsenv_set_boot_ref(struct silofs_fsenv *fsenv,
-                               const struct silofs_caddr *caddr)
+void silofs_fsenv_update_boot_caddr(struct silofs_fsenv *fsenv,
+                                    const struct silofs_caddr *caddr)
 {
-	caddr_assign(&fsenv->fse_boot_ref, caddr);
+	caddr_assign(&fsenv->fse_boot_caddr, caddr);
 }
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,

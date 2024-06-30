@@ -452,7 +452,7 @@ static bool run_with_fuse(const struct silofs_fsenv *fsenv)
 }
 
 static bool has_ctlf(const struct silofs_fsenv *fsenv,
-		     enum silofs_env_flags mask)
+                     enum silofs_env_flags mask)
 {
 	return (fsenv->fse_ctl_flags & mask) == mask;
 }
@@ -1461,7 +1461,7 @@ static int commit_bootrec(struct silofs_fsenv *fsenv,
 static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
                                   struct silofs_caddr *out_caddr)
 {
-	caddr_assign(out_caddr, &fsenv->fse_boot_ref);
+	caddr_assign(out_caddr, &fsenv->fse_boot_caddr);
 }
 
 static int do_format_fs(struct silofs_fsenv *fsenv,

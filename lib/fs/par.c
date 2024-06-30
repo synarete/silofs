@@ -877,7 +877,7 @@ pac_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 {
 	const struct silofs_fsenv *fsenv = pa_ctx->pac_task->t_fsenv;
 
-	return &fsenv->fse_boot_ref;
+	return &fsenv->fse_boot_caddr;
 }
 
 static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
@@ -906,7 +906,7 @@ static void pac_update_bootref(const struct silofs_par_ctx *pa_ctx,
 {
 	struct silofs_fsenv *fsenv = pa_ctx->pac_task->t_fsenv;
 
-	silofs_fsenv_set_boot_ref(fsenv, caddr);
+	silofs_fsenv_update_boot_caddr(fsenv, caddr);
 }
 
 static int pac_import_bootrec(const struct silofs_par_ctx *pa_ctx,

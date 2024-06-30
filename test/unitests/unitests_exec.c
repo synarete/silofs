@@ -23,6 +23,7 @@
 	{ .tests = &(t_), .name = SILOFS_STR(t_) }
 
 static struct ut_tgroup const g_ut_tgroups[] = {
+
 	/* infra */
 	UT_DEFTGRP(ut_tdefs_strings),
 	UT_DEFTGRP(ut_tdefs_avl),
@@ -62,12 +63,10 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	/* snapshot */
 	UT_DEFTGRP(ut_tdefs_snap_basic),
 	UT_DEFTGRP(ut_tdefs_snap_io),
-	/* re-run post snapshot */
-	/*
+	/* re-run some post-snapshot */
 	UT_DEFTGRP(ut_tdefs_pack),
-	UT_DEFTGRP(ut_tdefs_file_basic),
-	UT_DEFTGRP(ut_tdefs_dir),
-	*/
+	UT_DEFTGRP(ut_tdefs_file_stat),
+	UT_DEFTGRP(ut_tdefs_dir_iter),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

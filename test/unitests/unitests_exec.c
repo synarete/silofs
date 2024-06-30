@@ -23,11 +23,12 @@
 	{ .tests = &(t_), .name = SILOFS_STR(t_) }
 
 static struct ut_tgroup const g_ut_tgroups[] = {
-
+	/* infra */
 	UT_DEFTGRP(ut_tdefs_strings),
 	UT_DEFTGRP(ut_tdefs_avl),
 	UT_DEFTGRP(ut_tdefs_base64),
 	UT_DEFTGRP(ut_tdefs_qalloc),
+	/* namespace */
 	UT_DEFTGRP(ut_tdefs_super),
 	UT_DEFTGRP(ut_tdefs_statfs),
 	UT_DEFTGRP(ut_tdefs_ioctl),
@@ -36,8 +37,10 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_dir_list),
 	UT_DEFTGRP(ut_tdefs_namei),
 	UT_DEFTGRP(ut_tdefs_rename),
+	/* symlink & xattr */
 	UT_DEFTGRP(ut_tdefs_symlink),
 	UT_DEFTGRP(ut_tdefs_xattr),
+	/* file */
 	UT_DEFTGRP(ut_tdefs_file_basic),
 	UT_DEFTGRP(ut_tdefs_file_stat),
 	UT_DEFTGRP(ut_tdefs_file_rwiter),
@@ -51,13 +54,20 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_file_fiemap),
 	UT_DEFTGRP(ut_tdefs_file_copy_range),
 	UT_DEFTGRP(ut_tdefs_file_mthreads),
+	/* fs (pre snapshot)*/
 	UT_DEFTGRP(ut_tdefs_inspect),
 	UT_DEFTGRP(ut_tdefs_reload),
 	UT_DEFTGRP(ut_tdefs_fillfs),
-	UT_DEFTGRP(ut_tdefs_pack), /* test pack pre-snapshot */
+	UT_DEFTGRP(ut_tdefs_pack),
+	/* snapshot */
 	UT_DEFTGRP(ut_tdefs_snap_basic),
 	UT_DEFTGRP(ut_tdefs_snap_io),
-	/* UT_DEFTGRP(ut_tdefs_pack), */ /* re-test pack post-snapshot */
+	/* re-run post snapshot */
+	/*
+	UT_DEFTGRP(ut_tdefs_pack),
+	UT_DEFTGRP(ut_tdefs_file_basic),
+	UT_DEFTGRP(ut_tdefs_dir),
+	*/
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

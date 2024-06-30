@@ -103,10 +103,62 @@ static void ut_pack_nfiles(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_pack_twice(struct ut_env *ute)
+{
+	const char *dname = UT_NAME;
+	const char *name1 = "file1";
+	const char *name2 = "file2";
+	const size_t len = UT_1M;
+	const loff_t off1 = UT_1G - 1;
+	const loff_t off2 = UT_1T - UT_1M - 2;
+	void *buf1 = ut_randbuf(ute, len);
+	void *buf2 = ut_randbuf(ute, len);
+	ino_t dino = 0;
+	ino_t ino1 = 0;
+	ino_t ino2 = 0;
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	ut_create_file(ute, dino, name1, &ino1);
+	ut_write_read(ute, ino1, buf1, len, off1);
+	ut_release_flush_ok(ute, ino1);
+	ut_create_file(ute, dino, name2, &ino2);
+	ut_write_read(ute, ino2, buf2, len, off2);
+	ut_release_flush_ok(ute, ino2);
+	ut_pack_fs_ok(ute);
+	ut_close_fs_ok(ute);
+	ut_unref_fs_ok(ute);
+	ut_unpack_fs_ok(ute);
+	ut_open_fs_ok(ute);
+	ut_open_rdonly(ute, ino1);
+	ut_read_verify(ute, ino1, buf1, len, off1);
+	ut_release_file(ute, ino1);
+	ut_open_rdonly(ute, ino2);
+	ut_read_verify(ute, ino2, buf2, len, off2);
+	ut_release_file(ute, ino2);
+	ut_rename_exchange(ute, dino, name1, dino, name2);
+	ut_pack_fs_ok(ute);
+	ut_close_fs_ok(ute);
+	ut_unref_fs_ok(ute);
+	ut_unpack_fs_ok(ute);
+	ut_open_fs_ok(ute);
+	ut_open_rdonly(ute, ino1);
+	ut_read_verify(ute, ino1, buf1, len, off1);
+	ut_release_file(ute, ino1);
+	ut_unlink_file(ute, dino, name2);
+	ut_open_rdonly(ute, ino2);
+	ut_read_verify(ute, ino2, buf2, len, off2);
+	ut_release_file(ute, ino2);
+	ut_unlink_file(ute, dino, name1);
+	ut_rmdir_at_root(ute, dname);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST1(ut_pack_simple),
-	UT_DEFTEST1(ut_pack_data),
-	UT_DEFTEST1(ut_pack_nfiles),
+	UT_DEFTEST(ut_pack_data),
+	UT_DEFTEST(ut_pack_nfiles),
+	UT_DEFTEST(ut_pack_twice),
 };
 
 const struct ut_testdefs ut_tdefs_pack = UT_MKTESTS(ut_local_tests);

@@ -95,9 +95,9 @@ void cmd_execute_fsck(void);
 
 void cmd_execute_view(void);
 
-void cmd_execute_pack(void);
+void cmd_execute_archive(void);
 
-void cmd_execute_unpack(void);
+void cmd_execute_restore(void);
 
 /* fatal-error handling */
 __attribute__((__noreturn__))
@@ -262,10 +262,11 @@ void cmd_unref_fs(struct silofs_fsenv *fsenv,
 void cmd_inspect_fs(struct silofs_fsenv *fsenv,
                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-void cmd_pack_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr);
+void cmd_archive_fs(struct silofs_fsenv *fsenv,
+                    struct silofs_caddr *out_caddr);
 
-void cmd_unpack_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *caddr);
+void cmd_restore_fs(struct silofs_fsenv *fsenv,
+                    const struct silofs_caddr *caddr);
 
 /* mount-info */
 struct cmd_proc_mntinfo {

@@ -16,8 +16,8 @@
  */
 #include "cmd.h"
 
-static const char *cmd_unpack_help_desc[] = {
-	"unpack -n <name> <repodir/arname>",
+static const char *cmd_restore_help_desc[] = {
+	"restore -n <name> <repodir/arname>",
 	"",
 	"options:",
 	"  -n, --name=fsname            Restored file-system name",
@@ -25,7 +25,7 @@ static const char *cmd_unpack_help_desc[] = {
 	NULL
 };
 
-struct cmd_unpack_in_args {
+struct cmd_restore_in_args {
 	char   *repodir_arname;
 	char   *repodir;
 	char   *repodir_real;
@@ -35,18 +35,18 @@ struct cmd_unpack_in_args {
 	bool    no_prompt;
 };
 
-struct cmd_unpack_ctx {
-	struct cmd_unpack_in_args in_args;
+struct cmd_restore_ctx {
+	struct cmd_restore_in_args in_args;
 	struct silofs_fs_args   fs_args;
 	struct silofs_fsenv    *fsenv;
 	bool has_lockfile;
 };
 
-static struct cmd_unpack_ctx *cmd_unpack_ctx;
+static struct cmd_restore_ctx *cmd_restore_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_unpack_getopt(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
@@ -69,7 +69,7 @@ static void cmd_unpack_getopt(struct cmd_unpack_ctx *ctx)
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
 		} else if (opt_chr == 'h') {
-			cmd_print_help_and_exit(cmd_unpack_help_desc);
+			cmd_print_help_and_exit(cmd_restore_help_desc);
 		} else if (opt_chr > 0) {
 			cmd_getopt_unrecognized();
 		}
@@ -81,7 +81,7 @@ static void cmd_unpack_getopt(struct cmd_unpack_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_unpack_acquire_lockfile(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_acquire_lockfile(struct cmd_restore_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
 		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.arname);
@@ -89,7 +89,7 @@ static void cmd_unpack_acquire_lockfile(struct cmd_unpack_ctx *ctx)
 	}
 }
 
-static void cmd_unpack_release_lockfile(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_release_lockfile(struct cmd_restore_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
 		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
@@ -97,12 +97,12 @@ static void cmd_unpack_release_lockfile(struct cmd_unpack_ctx *ctx)
 	}
 }
 
-static void cmd_unpack_destroy_fs_ctx(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_destroy_fs_ctx(struct cmd_restore_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 }
 
-static void cmd_unpack_finalize(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
@@ -112,29 +112,29 @@ static void cmd_unpack_finalize(struct cmd_unpack_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_unpack_ctx = NULL;
+	cmd_restore_ctx = NULL;
 }
 
-static void cmd_unpack_atexit(void)
+static void cmd_restore_atexit(void)
 {
-	if (cmd_unpack_ctx != NULL) {
-		cmd_unpack_release_lockfile(cmd_unpack_ctx);
-		cmd_unpack_finalize(cmd_unpack_ctx);
+	if (cmd_restore_ctx != NULL) {
+		cmd_restore_release_lockfile(cmd_restore_ctx);
+		cmd_restore_finalize(cmd_restore_ctx);
 	}
 }
 
-static void cmd_unpack_start(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_start(struct cmd_restore_ctx *ctx)
 {
-	cmd_unpack_ctx = ctx;
-	atexit(cmd_unpack_atexit);
+	cmd_restore_ctx = ctx;
+	atexit(cmd_restore_atexit);
 }
 
-static void cmd_unpack_enable_signals(void)
+static void cmd_restore_enable_signals(void)
 {
 	cmd_register_sigactions(NULL);
 }
 
-static void cmd_unpack_prepare(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
 {
 	cmd_check_fsname(ctx->in_args.name);
 	cmd_split_path(ctx->in_args.repodir_arname,
@@ -146,7 +146,7 @@ static void cmd_unpack_prepare(struct cmd_unpack_ctx *ctx)
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.name);
 }
 
-static void cmd_unpack_getpass(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_getpass(struct cmd_restore_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
@@ -154,7 +154,7 @@ static void cmd_unpack_getpass(struct cmd_unpack_ctx *ctx)
 	}
 }
 
-static void cmd_unpack_setup_fs_args(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_setup_fs_args(struct cmd_restore_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
@@ -165,38 +165,38 @@ static void cmd_unpack_setup_fs_args(struct cmd_unpack_ctx *ctx)
 	fs_args->name = ctx->in_args.arname;
 }
 
-static void cmd_unpack_load_bconf(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_load_bconf(struct cmd_restore_ctx *ctx)
 {
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_unpack_setup_fs_ctx(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_setup_fs_ctx(struct cmd_restore_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
-static void cmd_unpack_open_repo(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)
 {
 	cmd_open_repo(ctx->fsenv);
 }
 
-static void cmd_unpack_close_repo(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 {
 	cmd_close_repo(ctx->fsenv);
 }
 
-static void cmd_unpack_require_brec(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_require_brec(struct cmd_restore_ctx *ctx)
 {
 	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
-static void cmd_unpack_execute(struct cmd_unpack_ctx *ctx)
+static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
 	struct silofs_fs_bconf bconf;
 
 	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
 	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
-	cmd_unpack_fs(ctx->fsenv, &bconf.pack_ref);
+	cmd_restore_fs(ctx->fsenv, &bconf.pack_ref);
 	cmd_bconf_set_name(&bconf, ctx->in_args.name);
 	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
 	cmd_bconf_fini(&bconf);
@@ -204,57 +204,57 @@ static void cmd_unpack_execute(struct cmd_unpack_ctx *ctx)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void cmd_execute_unpack(void)
+void cmd_execute_restore(void)
 {
-	struct cmd_unpack_ctx ctx = {
+	struct cmd_restore_ctx ctx = {
 		.fsenv = NULL,
 	};
 
 	/* Do all cleanups upon exits */
-	cmd_unpack_start(&ctx);
+	cmd_restore_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_unpack_getopt(&ctx);
+	cmd_restore_getopt(&ctx);
 
 	/* Verify user's arguments */
-	cmd_unpack_prepare(&ctx);
+	cmd_restore_prepare(&ctx);
 
 	/* Require password */
-	cmd_unpack_getpass(&ctx);
+	cmd_restore_getpass(&ctx);
 
 	/* Run with signals */
-	cmd_unpack_enable_signals();
+	cmd_restore_enable_signals();
 
 	/* Setup input arguments */
-	cmd_unpack_setup_fs_args(&ctx);
+	cmd_restore_setup_fs_args(&ctx);
 
 	/* Require boot-config */
-	cmd_unpack_load_bconf(&ctx);
+	cmd_restore_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_unpack_setup_fs_ctx(&ctx);
+	cmd_restore_setup_fs_ctx(&ctx);
 
 	/* Acquire lock */
-	cmd_unpack_acquire_lockfile(&ctx);
+	cmd_restore_acquire_lockfile(&ctx);
 
 	/* Open repository */
-	cmd_unpack_open_repo(&ctx);
+	cmd_restore_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_unpack_require_brec(&ctx);
+	cmd_restore_require_brec(&ctx);
 
-	/* Do actual unpack */
-	cmd_unpack_execute(&ctx);
+	/* Do actual restore */
+	cmd_restore_execute(&ctx);
 
 	/* Close repository */
-	cmd_unpack_close_repo(&ctx);
+	cmd_restore_close_repo(&ctx);
 
 	/* Release lock */
-	cmd_unpack_release_lockfile(&ctx);
+	cmd_restore_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_unpack_destroy_fs_ctx(&ctx);
+	cmd_restore_destroy_fs_ctx(&ctx);
 
 	/* Post execution cleanups */
-	cmd_unpack_finalize(&ctx);
+	cmd_restore_finalize(&ctx);
 }

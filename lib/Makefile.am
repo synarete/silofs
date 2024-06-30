@@ -65,7 +65,7 @@ libsilofs_la_SOURCES += fs/lnodes.c
 libsilofs_la_SOURCES += fs/mntsvc.c
 libsilofs_la_SOURCES += fs/namei.c
 libsilofs_la_SOURCES += fs/opers.c
-libsilofs_la_SOURCES += fs/par.c
+libsilofs_la_SOURCES += fs/pack.c
 libsilofs_la_SOURCES += fs/spmaps.c
 libsilofs_la_SOURCES += fs/spxmap.c
 libsilofs_la_SOURCES += fs/stats.c
@@ -80,4 +80,3 @@ libsilofs_la_SOURCES += fs/xattr.c
 
 libsilofs_la_SOURCES += execlib.c
 libsilofs_la_SOURCES += version.c
-

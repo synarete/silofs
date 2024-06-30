@@ -22,9 +22,9 @@ static void ut_pack_simple(struct ut_env *ute)
 	ino_t dino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_pack_fs_ok(ute);
+	ut_archive_fs_ok(ute);
 	ut_close_fs_ok(ute);
-	ut_unpack_fs_ok(ute);
+	ut_restore_fs_ok(ute);
 	ut_open_fs_ok(ute);
 	ut_rmdir_at_root(ute, name);
 }
@@ -46,10 +46,10 @@ static void ut_pack_data(struct ut_env *ute)
 	ut_write_read(ute, ino, buf, len, off);
 	ut_release_flush_ok(ute, ino);
 	ut_reload_fs_ok(ute);
-	ut_pack_fs_ok(ute);
+	ut_archive_fs_ok(ute);
 	ut_close_fs_ok(ute);
 	ut_unref_fs_ok(ute);
-	ut_unpack_fs_ok(ute);
+	ut_restore_fs_ok(ute);
 	ut_open_fs_ok(ute);
 	ut_getattr_reg(ute, ino, &st);
 	ut_open_rdwr(ute, ino);
@@ -82,10 +82,10 @@ static void ut_pack_nfiles(struct ut_env *ute)
 		ut_write_read(ute, ino, buf, len, off);
 		ut_release_flush_ok(ute, ino);
 	}
-	ut_pack_fs_ok(ute);
+	ut_archive_fs_ok(ute);
 	ut_close_fs_ok(ute);
 	ut_unref_fs_ok(ute);
-	ut_unpack_fs_ok(ute);
+	ut_restore_fs_ok(ute);
 	ut_open_fs_ok(ute);
 	for (size_t i = 0; i < cnt; ++i) {
 		off = (loff_t)((i * len) + (i * UT_1G) + i);
@@ -124,10 +124,10 @@ static void ut_pack_twice(struct ut_env *ute)
 	ut_create_file(ute, dino, name2, &ino2);
 	ut_write_read(ute, ino2, buf2, len, off2);
 	ut_release_flush_ok(ute, ino2);
-	ut_pack_fs_ok(ute);
+	ut_archive_fs_ok(ute);
 	ut_close_fs_ok(ute);
 	ut_unref_fs_ok(ute);
-	ut_unpack_fs_ok(ute);
+	ut_restore_fs_ok(ute);
 	ut_open_fs_ok(ute);
 	ut_open_rdonly(ute, ino1);
 	ut_read_verify(ute, ino1, buf1, len, off1);
@@ -136,10 +136,10 @@ static void ut_pack_twice(struct ut_env *ute)
 	ut_read_verify(ute, ino2, buf2, len, off2);
 	ut_release_file(ute, ino2);
 	ut_rename_exchange(ute, dino, name1, dino, name2);
-	ut_pack_fs_ok(ute);
+	ut_archive_fs_ok(ute);
 	ut_close_fs_ok(ute);
 	ut_unref_fs_ok(ute);
-	ut_unpack_fs_ok(ute);
+	ut_restore_fs_ok(ute);
 	ut_open_fs_ok(ute);
 	ut_open_rdonly(ute, ino1);
 	ut_read_verify(ute, ino1, buf1, len, off1);

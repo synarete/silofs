@@ -2051,18 +2051,18 @@ void ut_fork_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_pack_fs_ok(struct ut_env *ute)
+void ut_archive_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_pack_fs(ute->fsenv, &ute->pack_ref);
+	err = silofs_archive_fs(ute->fsenv, &ute->pack_ref);
 	ut_expect_ok(err);
 }
 
-void ut_unpack_fs_ok(struct ut_env *ute)
+void ut_restore_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_unpack_fs(ute->fsenv, &ute->pack_ref);
+	err = silofs_restore_fs(ute->fsenv, &ute->pack_ref);
 	ut_expect_ok(err);
 }

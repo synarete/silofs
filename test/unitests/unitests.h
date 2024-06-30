@@ -534,9 +534,9 @@ void ut_unref_fs2_ok(struct ut_env *ute);
 
 void ut_fork_fs_ok(struct ut_env *ute);
 
-void ut_pack_fs_ok(struct ut_env *ute);
+void ut_archive_fs_ok(struct ut_env *ute);
 
-void ut_unpack_fs_ok(struct ut_env *ute);
+void ut_restore_fs_ok(struct ut_env *ute);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

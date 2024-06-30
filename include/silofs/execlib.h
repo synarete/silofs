@@ -72,10 +72,10 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 int silofs_inspect_fs(struct silofs_fsenv *fsenv,
                       silofs_visit_laddr_fn cb, void *user_ctx);
 
-int silofs_pack_fs(struct silofs_fsenv *fsenv,
-                   struct silofs_caddr *out_caddr);
+int silofs_archive_fs(struct silofs_fsenv *fsenv,
+                      struct silofs_caddr *out_caddr);
 
-int silofs_unpack_fs(struct silofs_fsenv *fsenv,
-                     const struct silofs_caddr *caddr);
+int silofs_restore_fs(struct silofs_fsenv *fsenv,
+                      const struct silofs_caddr *caddr);
 
 #endif /* SILOFS_EXECLIB_H_ */

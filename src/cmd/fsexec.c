@@ -242,20 +242,20 @@ void cmd_inspect_fs(struct silofs_fsenv *fsenv,
 	cmd_require_ok(fsenv, err, "inspect-fs error");
 }
 
-void cmd_pack_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
+void cmd_archive_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = silofs_pack_fs(fsenv, out_caddr);
+	err = silofs_archive_fs(fsenv, out_caddr);
 	cmd_require_ok(fsenv, err, "pack-fs error");
 }
 
-void cmd_unpack_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *caddr)
+void cmd_restore_fs(struct silofs_fsenv *fsenv,
+                    const struct silofs_caddr *caddr)
 {
 	int err;
 
-	err = silofs_unpack_fs(fsenv, caddr);
+	err = silofs_restore_fs(fsenv, caddr);
 	cmd_require_ok(fsenv, err, "unpack-fs error");
 }
 

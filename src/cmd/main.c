@@ -160,8 +160,8 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(prune),
 	DEFCMD(fsck),
 	DEFCMD(view),
-	DEFCMD(pack),
-	DEFCMD(unpack),
+	DEFCMD(archive),
+	DEFCMD(restore),
 };
 
 static bool equals(const char *s1, const char *s2)

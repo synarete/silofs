@@ -75,7 +75,7 @@ nobase_include_HEADERS += silofs/fs/lnodes.h
 nobase_include_HEADERS += silofs/fs/mntsvc.h
 nobase_include_HEADERS += silofs/fs/namei.h
 nobase_include_HEADERS += silofs/fs/opers.h
-nobase_include_HEADERS += silofs/fs/par.h
+nobase_include_HEADERS += silofs/fs/pack.h
 nobase_include_HEADERS += silofs/fs/spmaps.h
 nobase_include_HEADERS += silofs/fs/spxmap.h
 nobase_include_HEADERS += silofs/fs/stats.h
@@ -95,4 +95,3 @@ EXTRA_DIST = config-am.h.in
 
 config-am.h: config-am.h.in
 	$(silofs_sedsub) "$<" > "$@"
-

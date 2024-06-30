@@ -2286,6 +2286,22 @@ int silofs_repo_punch_lseg(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int repo_do_spawn_stage_lseg(struct silofs_repo *repo,
+                                    const struct silofs_lsegid *lsegid)
+{
+	int err;
+
+	err = repo_do_spawn_lseg(repo, lsegid);
+	if (err) {
+		return err;
+	}
+	err = repo_do_stage_lseg(repo, true, lsegid);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int repo_do_require_lseg(struct silofs_repo *repo,
                                 const struct silofs_lsegid *lsegid)
 {
@@ -2294,17 +2310,11 @@ static int repo_do_require_lseg(struct silofs_repo *repo,
 
 	err = repo_do_stat_lseg(repo, lsegid, true, &st);
 	if (!err) {
-		goto out_ok;
+		err = repo_do_stage_lseg(repo, true, lsegid);
+	} else if (err == -SILOFS_ENOENT) {
+		err = repo_do_spawn_stage_lseg(repo, lsegid);
 	}
-	if (err != -SILOFS_ENOENT) {
-		return err;
-	}
-	err = repo_do_spawn_lseg(repo, lsegid);
-	if (err) {
-		return err;
-	}
-out_ok:
-	return repo_do_stage_lseg(repo, true, lsegid);
+	return err;
 }
 
 int silofs_repo_require_lseg(struct silofs_repo *repo,

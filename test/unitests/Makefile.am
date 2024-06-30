@@ -18,6 +18,7 @@ silofs_unitests_SOURCES += unitests.h
 silofs_unitests_SOURCES += unitests_main.c
 silofs_unitests_SOURCES += unitests_exec.c
 silofs_unitests_SOURCES += unitests_ops.c
+silofs_unitests_SOURCES += ut_archive.c
 silofs_unitests_SOURCES += ut_avl.c
 silofs_unitests_SOURCES += ut_base64.c
 silofs_unitests_SOURCES += ut_dir_basic.c
@@ -40,7 +41,6 @@ silofs_unitests_SOURCES += ut_fillfs.c
 silofs_unitests_SOURCES += ut_inspect.c
 silofs_unitests_SOURCES += ut_ioctl.c
 silofs_unitests_SOURCES += ut_namei.c
-silofs_unitests_SOURCES += ut_pack.c
 silofs_unitests_SOURCES += ut_qalloc.c
 silofs_unitests_SOURCES += ut_reload.c
 silofs_unitests_SOURCES += ut_rename.c
@@ -68,5 +68,3 @@ check-local: $(bin_PROGRAMS)
 	  $$(realpath "$^") -l $(SILOFS_UNITESTS_LEVEL) $(ut_check_dir) ;
 	$(AM_V)rm -rf $(ut_check_dir)
 endif
-
-

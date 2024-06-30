@@ -207,7 +207,7 @@ extern const struct ut_testdefs ut_tdefs_reload;
 extern const struct ut_testdefs ut_tdefs_fillfs;
 extern const struct ut_testdefs ut_tdefs_snap_basic;
 extern const struct ut_testdefs ut_tdefs_snap_io;
-extern const struct ut_testdefs ut_tdefs_pack;
+extern const struct ut_testdefs ut_tdefs_archive;
 
 /* exec */
 void ut_execute_tests(void);

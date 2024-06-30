@@ -16,7 +16,7 @@
  */
 #include "unitests.h"
 
-static void ut_pack_simple(struct ut_env *ute)
+static void ut_archive_simple(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
 	ino_t dino = 0;
@@ -31,7 +31,7 @@ static void ut_pack_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_pack_data(struct ut_env *ute)
+static void ut_archive_data(struct ut_env *ute)
 {
 	struct stat st = {.st_ino = 0};
 	const char *name = UT_NAME;
@@ -61,7 +61,7 @@ static void ut_pack_data(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_pack_nfiles(struct ut_env *ute)
+static void ut_archive_nfiles(struct ut_env *ute)
 {
 	struct stat st = {.st_ino = 0};
 	const ino_t root_ino = SILOFS_INO_ROOT;
@@ -103,7 +103,7 @@ static void ut_pack_nfiles(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_pack_twice(struct ut_env *ute)
+static void ut_archive_twice(struct ut_env *ute)
 {
 	const char *dname = UT_NAME;
 	const char *name1 = "file1";
@@ -155,10 +155,10 @@ static void ut_pack_twice(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_pack_simple),
-	UT_DEFTEST(ut_pack_data),
-	UT_DEFTEST(ut_pack_nfiles),
-	UT_DEFTEST(ut_pack_twice),
+	UT_DEFTEST1(ut_archive_simple),
+	UT_DEFTEST(ut_archive_data),
+	UT_DEFTEST(ut_archive_nfiles),
+	UT_DEFTEST(ut_archive_twice),
 };
 
-const struct ut_testdefs ut_tdefs_pack = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_archive = UT_MKTESTS(ut_local_tests);

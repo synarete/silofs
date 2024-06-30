@@ -444,10 +444,10 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 	return ret;
 }
 
-static bool spac_ismutable_lsegid(const struct silofs_spalloc_ctx *spa_ctx,
-                                  const struct silofs_lsegid *lsegid)
+static bool spac_ismutable_laddr(const struct silofs_spalloc_ctx *spa_ctx,
+                                 const struct silofs_laddr *laddr)
 {
-	return silofs_sbi_ismutable_lsegid(spa_ctx->sbi, lsegid);
+	return silofs_sbi_ismutable_laddr(spa_ctx->sbi, laddr);
 }
 
 static int
@@ -483,7 +483,7 @@ static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 	if (err) {
 		return 0; /* not on main lseg: no-op */
 	}
-	if (!spac_ismutable_lsegid(spa_ctx, &laddr.lsegid)) {
+	if (!spac_ismutable_laddr(spa_ctx, &laddr)) {
 		return 0; /* not a mutable lseg */
 	}
 	err = silofs_repo_punch_lseg(spa_ctx->fsenv->fse.repo, &laddr.lsegid);

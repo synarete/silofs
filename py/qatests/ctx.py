@@ -253,6 +253,14 @@ class TestEnv:
         repodir_name = self._repodir_name(name)
         return list(self.cmd.silofs.view(repodir_name, self._passwd()))
 
+    def exec_archive(self, arname: str, name: str = "") -> None:
+        repodir_name = self._repodir_name(name)
+        self.cmd.silofs.archive(repodir_name, arname, self._passwd())
+
+    def exec_restore(self, arname: str, name: str = "") -> None:
+        repodir_name = self._repodir_name(name)
+        self.cmd.silofs.restore(repodir_name, arname, self._passwd())
+
     def exec_lsmnt(self) -> None:
         mntp = self.cfg.mntdir
         mnts = self.cmd.silofs.lsmnt()

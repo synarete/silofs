@@ -263,6 +263,14 @@ class CmdSilofs(CmdExec):
         args = ["view", "--no-prompt", repodir_name]
         return self.execute_sub(args, indat=password).split("\n")
 
+    def archive(self, repodir_name: Path, arname: str, password: str) -> None:
+        args = ["archive", repodir_name, "--into", arname]
+        self.execute_sub(args, indat=password)
+
+    def restore(self, repodir_name: Path, name: str, password: str) -> None:
+        args = ["restore", repodir_name, "--from", name]
+        self.execute_sub(args, indat=password)
+
 
 class CmdUnitests(CmdExec):
     """Wrapper over silofs-unitests command-line front-end"""

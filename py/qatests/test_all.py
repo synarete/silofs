@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 from . import ctx
+from . import test_archive
 from . import test_basic
 from . import test_fillfs
 from . import test_fio
@@ -40,6 +41,8 @@ TESTS = [
     test_snap.test_snap_repeated,
     test_fsck.test_fsck_basic,
     test_fsck.test_fsck_snap,
+    test_archive.test_archive_basic,
+    test_archive.test_archive_twice,
     test_fillfs.test_fill_data,
     test_fillfs.test_fill_meta,
     test_fio.test_fio_simple,

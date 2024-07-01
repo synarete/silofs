@@ -284,7 +284,7 @@ static void cmd_snap_load_bconf(struct cmd_snap_ctx *ctx)
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_snap_setup_fs_ctx(struct cmd_snap_ctx *ctx)
+static void cmd_snap_setup_fsenv(struct cmd_snap_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -299,9 +299,9 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 	cmd_close_repo(ctx->fsenv);
 }
 
-static void cmd_snap_require_brec(struct cmd_snap_ctx *ctx)
+static void cmd_snap_poke_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
@@ -411,13 +411,13 @@ void cmd_execute_snap(void)
 	cmd_snap_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_snap_setup_fs_ctx(&ctx);
+	cmd_snap_setup_fsenv(&ctx);
 
 	/* Open repository */
 	cmd_snap_open_repo(&ctx);
 
 	/* Require source boot-record */
-	cmd_snap_require_brec(&ctx);
+	cmd_snap_poke_fs(&ctx);
 
 	/* Do actual snap (offline|online) */
 	cmd_snap_execute(&ctx);

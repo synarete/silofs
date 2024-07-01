@@ -97,7 +97,7 @@ static void cmd_archive_release_lockfile(struct cmd_archive_ctx *ctx)
 	}
 }
 
-static void cmd_archive_destroy_fs_ctx(struct cmd_archive_ctx *ctx)
+static void cmd_archive_destroy_fsenv(struct cmd_archive_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 }
@@ -170,7 +170,7 @@ static void cmd_archive_load_bconf(struct cmd_archive_ctx *ctx)
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_archive_setup_fs_ctx(struct cmd_archive_ctx *ctx)
+static void cmd_archive_setup_fsenv(struct cmd_archive_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -185,9 +185,9 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 	cmd_close_repo(ctx->fsenv);
 }
 
-static void cmd_archive_require_brec(struct cmd_archive_ctx *ctx)
+static void cmd_archive_poke_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_archive_boot_fs(struct cmd_archive_ctx *ctx)
@@ -246,7 +246,7 @@ void cmd_execute_archive(void)
 	cmd_archive_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_archive_setup_fs_ctx(&ctx);
+	cmd_archive_setup_fsenv(&ctx);
 
 	/* Acquire lock */
 	cmd_archive_acquire_lockfile(&ctx);
@@ -255,7 +255,7 @@ void cmd_execute_archive(void)
 	cmd_archive_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_archive_require_brec(&ctx);
+	cmd_archive_poke_fs(&ctx);
 
 	/* Require boot-able file-system */
 	cmd_archive_boot_fs(&ctx);
@@ -276,7 +276,7 @@ void cmd_execute_archive(void)
 	cmd_archive_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_archive_destroy_fs_ctx(&ctx);
+	cmd_archive_destroy_fsenv(&ctx);
 
 	/* Post execution cleanups */
 	cmd_archive_finalize(&ctx);

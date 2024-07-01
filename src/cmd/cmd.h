@@ -243,8 +243,11 @@ void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bconf *bconf);
 
 void cmd_close_fs(struct silofs_fsenv *fsenv);
 
-void cmd_require_fs(struct silofs_fsenv *fsenv,
-                    const struct silofs_fs_bconf *bconf);
+void cmd_poke_fs(struct silofs_fsenv *fsenv,
+                 const struct silofs_fs_bconf *bconf);
+
+void cmd_poke_archive(struct silofs_fsenv *fsenv,
+                      const struct silofs_fs_bconf *bconf);
 
 void cmd_boot_fs(struct silofs_fsenv *fsenv,
                  const struct silofs_fs_bconf *bconf);

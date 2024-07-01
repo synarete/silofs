@@ -72,7 +72,7 @@ static void cmd_fsck_getopt(struct cmd_fsck_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_fsck_destroy_fs_ctx(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_destroy_fsenv(struct cmd_fsck_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 }
@@ -153,7 +153,7 @@ static void cmd_fsck_load_bconf(struct cmd_fsck_ctx *ctx)
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_fsck_setup_fs_ctx(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_setup_fsenv(struct cmd_fsck_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -163,9 +163,9 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 	cmd_open_repo(ctx->fsenv);
 }
 
-static void cmd_fsck_require_brec(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_poke_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
@@ -220,7 +220,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_fsck_setup_fs_ctx(&ctx);
+	cmd_fsck_setup_fsenv(&ctx);
 
 	/* Acquire lock */
 	cmd_fsck_acquire_lockfile(&ctx);
@@ -229,7 +229,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_open_repo(&ctx);
 
 	/* Require source boot-record */
-	cmd_fsck_require_brec(&ctx);
+	cmd_fsck_poke_fs(&ctx);
 
 	/* Require boot + lock-able file-system */
 	cmd_fsck_boot_fs(&ctx);
@@ -250,7 +250,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_fsck_destroy_fs_ctx(&ctx);
+	cmd_fsck_destroy_fsenv(&ctx);
 
 	/* Post execution cleanups */
 	cmd_fsck_finalize(&ctx);

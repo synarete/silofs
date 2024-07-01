@@ -93,7 +93,7 @@ static void cmd_view_release_lockfile(struct cmd_view_ctx *ctx)
 	}
 }
 
-static void cmd_view_destroy_fs_ctx(struct cmd_view_ctx *ctx)
+static void cmd_view_destroy_fsenv(struct cmd_view_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 }
@@ -164,7 +164,7 @@ static void cmd_view_load_bconf(struct cmd_view_ctx *ctx)
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_view_setup_fs_ctx(struct cmd_view_ctx *ctx)
+static void cmd_view_setup_fsenv(struct cmd_view_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -179,9 +179,9 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 	cmd_close_repo(ctx->fsenv);
 }
 
-static void cmd_view_require_brec(struct cmd_view_ctx *ctx)
+static void cmd_view_poke_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_view_boot_fs(struct cmd_view_ctx *ctx)
@@ -253,7 +253,7 @@ void cmd_execute_view(void)
 	cmd_view_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_view_setup_fs_ctx(&ctx);
+	cmd_view_setup_fsenv(&ctx);
 
 	/* Acquire lock */
 	cmd_view_acquire_lockfile(&ctx);
@@ -262,7 +262,7 @@ void cmd_execute_view(void)
 	cmd_view_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_view_require_brec(&ctx);
+	cmd_view_poke_fs(&ctx);
 
 	/* Require boot-able file-system */
 	cmd_view_boot_fs(&ctx);
@@ -283,7 +283,7 @@ void cmd_execute_view(void)
 	cmd_view_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_view_destroy_fs_ctx(&ctx);
+	cmd_view_destroy_fsenv(&ctx);
 
 	/* Post execution cleanups */
 	cmd_view_finalize(&ctx);

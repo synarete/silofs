@@ -118,7 +118,7 @@ static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
 	ctx->fs_args.name = name;
 }
 
-static void cmd_init_setup_fs_ctx(struct cmd_init_ctx *ctx)
+static void cmd_init_setup_fsenv(struct cmd_init_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -152,7 +152,7 @@ void cmd_execute_init(void)
 	cmd_init_setup_fs_args(&ctx);
 
 	/* Prepare environment */
-	cmd_init_setup_fs_ctx(&ctx);
+	cmd_init_setup_fsenv(&ctx);
 
 	/* Format repository layout */
 	cmd_init_format_repo(&ctx);

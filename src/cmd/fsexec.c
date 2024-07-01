@@ -155,14 +155,23 @@ void cmd_close_repo(struct silofs_fsenv *fsenv)
 	cmd_require_ok(fsenv, err, "failed to close repo");
 }
 
-void cmd_require_fs(struct silofs_fsenv *fsenv,
-                    const struct silofs_fs_bconf *bconf)
+void cmd_poke_fs(struct silofs_fsenv *fsenv,
+                 const struct silofs_fs_bconf *bconf)
 {
 	struct silofs_bootrec brec;
 	int err;
 
 	err = silofs_poke_fs(fsenv, &bconf->boot_ref, &brec);
-	cmd_require_ok(fsenv, err, "can not load");
+	cmd_require_ok(fsenv, err, "can not poke fs");
+}
+
+void cmd_poke_archive(struct silofs_fsenv *fsenv,
+                      const struct silofs_fs_bconf *bconf)
+{
+	int err;
+
+	err = silofs_poke_archive(fsenv, &bconf->pack_ref);
+	cmd_require_ok(fsenv, err, "can not poke archive");
 }
 
 static void cmd_do_format_fs(struct silofs_fsenv *fsenv,

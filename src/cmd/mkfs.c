@@ -99,14 +99,14 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mkfs_destroy_fs_ctx(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_destroy_fsenv(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 }
 
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_mkfs_destroy_fs_ctx(ctx);
+	cmd_mkfs_destroy_fsenv(ctx);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -212,7 +212,7 @@ static void cmd_mkfs_update_bconf(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&rootname);
 }
 
-static void cmd_mkfs_setup_fs_ctx(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_setup_fsenv(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -273,7 +273,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_update_bconf(&ctx);
 
 	/* Prepare environment */
-	cmd_mkfs_setup_fs_ctx(&ctx);
+	cmd_mkfs_setup_fsenv(&ctx);
 
 	/* Acquire lock */
 	cmd_mkfs_acquire_lockfile(&ctx);

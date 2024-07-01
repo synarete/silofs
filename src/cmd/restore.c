@@ -97,7 +97,7 @@ static void cmd_restore_release_lockfile(struct cmd_restore_ctx *ctx)
 	}
 }
 
-static void cmd_restore_destroy_fs_ctx(struct cmd_restore_ctx *ctx)
+static void cmd_restore_destroy_fsenv(struct cmd_restore_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 }
@@ -170,7 +170,7 @@ static void cmd_restore_load_bconf(struct cmd_restore_ctx *ctx)
 	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
 }
 
-static void cmd_restore_setup_fs_ctx(struct cmd_restore_ctx *ctx)
+static void cmd_restore_setup_fsenv(struct cmd_restore_ctx *ctx)
 {
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
@@ -185,9 +185,9 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 	cmd_close_repo(ctx->fsenv);
 }
 
-static void cmd_restore_require_brec(struct cmd_restore_ctx *ctx)
+static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_require_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_archive(ctx->fsenv, &ctx->fs_args.bconf);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
@@ -232,7 +232,7 @@ void cmd_execute_restore(void)
 	cmd_restore_load_bconf(&ctx);
 
 	/* Setup execution environment */
-	cmd_restore_setup_fs_ctx(&ctx);
+	cmd_restore_setup_fsenv(&ctx);
 
 	/* Acquire lock */
 	cmd_restore_acquire_lockfile(&ctx);
@@ -241,7 +241,7 @@ void cmd_execute_restore(void)
 	cmd_restore_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_restore_require_brec(&ctx);
+	cmd_restore_poke_archive(&ctx);
 
 	/* Do actual restore */
 	cmd_restore_execute(&ctx);
@@ -253,7 +253,7 @@ void cmd_execute_restore(void)
 	cmd_restore_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_restore_destroy_fs_ctx(&ctx);
+	cmd_restore_destroy_fsenv(&ctx);
 
 	/* Post execution cleanups */
 	cmd_restore_finalize(&ctx);

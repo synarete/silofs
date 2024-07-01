@@ -17,20 +17,20 @@
 #include "cmd.h"
 
 static const char *cmd_restore_help_desc[] = {
-	"restore -n <name> <repodir/arname>",
+	"restore -n <arname> <repodir/name>",
 	"",
 	"options:",
-	"  -n, --name=fsname            Restored file-system name",
+	"  -n, --name=arname            Archive name",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_restore_in_args {
-	char   *repodir_arname;
+	char   *repodir_name;
 	char   *repodir;
 	char   *repodir_real;
-	char   *arname;
 	char   *name;
+	char   *arname;
 	char   *password;
 	bool    no_prompt;
 };
@@ -61,7 +61,7 @@ static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
 	while (opt_chr > 0) {
 		opt_chr = cmd_getopt("n:p:PL:h", opts);
 		if (opt_chr == 'n') {
-			ctx->in_args.name = cmd_strdup(optarg);
+			ctx->in_args.arname = cmd_strdup(optarg);
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg("--password", &ctx->in_args.password);
 		} else if (opt_chr == 'P') {
@@ -74,8 +74,8 @@ static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
 			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_require_arg("name", ctx->in_args.name);
-	cmd_getopt_getarg("repodir/arname", &ctx->in_args.repodir_arname);
+	cmd_require_arg("arname", ctx->in_args.arname);
+	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
 	cmd_getopt_endargs();
 }
 
@@ -106,7 +106,7 @@ static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
 	cmd_bconf_fini(&ctx->fs_args.bconf);
-	cmd_pstrfree(&ctx->in_args.repodir_arname);
+	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.arname);
@@ -136,9 +136,9 @@ static void cmd_restore_enable_signals(void)
 
 static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
 {
+	cmd_split_path(ctx->in_args.repodir_name,
+	               &ctx->in_args.repodir, &ctx->in_args.name);
 	cmd_check_fsname(ctx->in_args.name);
-	cmd_split_path(ctx->in_args.repodir_arname,
-	               &ctx->in_args.repodir, &ctx->in_args.arname);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
 	                         ctx->in_args.arname);

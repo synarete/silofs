@@ -78,4 +78,7 @@ int silofs_archive_fs(struct silofs_fsenv *fsenv,
 int silofs_restore_fs(struct silofs_fsenv *fsenv,
                       const struct silofs_caddr *caddr);
 
+int silofs_poke_archive(struct silofs_fsenv *fsenv,
+                        const struct silofs_caddr *caddr);
+
 #endif /* SILOFS_EXECLIB_H_ */

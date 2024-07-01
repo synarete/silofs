@@ -1628,6 +1628,25 @@ int silofs_poke_fs(struct silofs_fsenv *fsenv,
 	return err;
 }
 
+static int stat_archive_index(const struct silofs_fsenv *fsenv,
+                              const struct silofs_caddr *caddr)
+{
+	ssize_t sz = -1;
+
+	return silofs_repo_stat_pack(fsenv->fse.repo, caddr, &sz);
+}
+
+int silofs_poke_archive(struct silofs_fsenv *fsenv,
+                        const struct silofs_caddr *caddr)
+{
+	int err;
+
+	silofs_fsenv_lock(fsenv);
+	err = stat_archive_index(fsenv, caddr);
+	silofs_fsenv_unlock(fsenv);
+	return err;
+}
+
 static int exec_clone_fs(struct silofs_fsenv *fsenv,
                          struct silofs_bootrecs *out_brecs)
 {

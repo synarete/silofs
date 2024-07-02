@@ -97,8 +97,8 @@ void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
-void silofs_fsenv_update_boot_caddr(struct silofs_fsenv *fsenv,
-                                    const struct silofs_caddr *caddr);
+void silofs_fsenv_set_boot_caddr(struct silofs_fsenv *fsenv,
+                                 const struct silofs_caddr *caddr);
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
                                const struct silofs_ulink *ulink);

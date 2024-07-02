@@ -46,6 +46,7 @@ struct silofs_par_index {
 struct silofs_par_ctx {
 	struct silofs_par_index         pac_pindex;
 	struct silofs_task             *pac_task;
+	struct silofs_fsenv            *pac_fsenv;
 	struct silofs_alloc            *pac_alloc;
 	struct silofs_repo             *pac_repo;
 };
@@ -248,11 +249,6 @@ static void pdi_update_caddr(struct silofs_par_desc_info *pdi,
 static bool pdi_isbootrec(const struct silofs_par_desc_info *pdi)
 {
 	return ltype_isbootrec(pdi->pd.laddr.ltype);
-}
-
-static bool pdi_issuper(const struct silofs_par_desc_info *pdi)
-{
-	return ltype_issuper(pdi->pd.laddr.ltype);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -642,10 +638,13 @@ static void pac_release_buf(const struct silofs_par_ctx *pa_ctx,
 static int pac_init(struct silofs_par_ctx *pa_ctx,
                     struct silofs_task *task)
 {
+	struct silofs_fsenv *fsenv = task->t_fsenv;
+
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
 	pa_ctx->pac_task = task;
-	pa_ctx->pac_alloc = task->t_fsenv->fse.alloc;
-	pa_ctx->pac_repo = task->t_fsenv->fse.repo;
+	pa_ctx->pac_fsenv = fsenv;
+	pa_ctx->pac_alloc = fsenv->fse.alloc;
+	pa_ctx->pac_repo = fsenv->fse.repo;
 	return pindex_init(&pa_ctx->pac_pindex, pa_ctx->pac_alloc);
 }
 
@@ -653,6 +652,7 @@ static void pac_fini(struct silofs_par_ctx *pa_ctx)
 {
 	pindex_fini(&pa_ctx->pac_pindex);
 	pa_ctx->pac_task = NULL;
+	pa_ctx->pac_fsenv = NULL;
 	pa_ctx->pac_alloc = NULL;
 	pa_ctx->pac_repo = NULL;
 }
@@ -754,12 +754,6 @@ static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-static const struct silofs_fsenv *
-pac_fsenv(const struct silofs_par_ctx *pa_ctx)
-{
-	return pa_ctx->pac_task->t_fsenv;
-}
-
 static int pac_load_bootrec(const struct silofs_par_ctx *pa_ctx,
                             const struct silofs_caddr *caddr,
                             struct silofs_bootrec1k *out_brec1k)
@@ -767,12 +761,12 @@ static int pac_load_bootrec(const struct silofs_par_ctx *pa_ctx,
 	struct silofs_bootrec brec = { .flags = 0 };
 	int err;
 
-	err = silofs_load_bootrec(pac_fsenv(pa_ctx), caddr, &brec);
+	err = silofs_load_bootrec(pa_ctx->pac_fsenv, caddr, &brec);
 	if (err) {
 		log_err("failed to load bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_encode_bootrec(pac_fsenv(pa_ctx), &brec, out_brec1k);
+	err = silofs_encode_bootrec(pa_ctx->pac_fsenv, &brec, out_brec1k);
 	if (err) {
 		log_err("failed to encode bootrec: err=%d", err);
 		return err;
@@ -788,12 +782,12 @@ static int pac_save_bootrec(const struct silofs_par_ctx *pa_ctx,
 	struct silofs_caddr caddr2;
 	int err;
 
-	err = silofs_decode_bootrec(pac_fsenv(pa_ctx), brec1k, &brec);
+	err = silofs_decode_bootrec(pa_ctx->pac_fsenv, brec1k, &brec);
 	if (err) {
 		return err;
 	}
 	/* TODO: check proper caddr before save */
-	err = silofs_save_bootrec(pac_fsenv(pa_ctx), &brec, &caddr2);
+	err = silofs_save_bootrec(pa_ctx->pac_fsenv, &brec, &caddr2);
 	if (err) {
 		return err;
 	}
@@ -875,9 +869,7 @@ out:
 static const struct silofs_caddr *
 pac_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 {
-	const struct silofs_fsenv *fsenv = pa_ctx->pac_task->t_fsenv;
-
-	return &fsenv->fse_boot_caddr;
+	return &pa_ctx->pac_fsenv->fse_boot_caddr;
 }
 
 static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
@@ -901,14 +893,6 @@ static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-static void pac_update_bootref(const struct silofs_par_ctx *pa_ctx,
-                               const struct silofs_caddr *caddr)
-{
-	struct silofs_fsenv *fsenv = pa_ctx->pac_task->t_fsenv;
-
-	silofs_fsenv_update_boot_caddr(fsenv, caddr);
-}
-
 static int pac_import_bootrec(const struct silofs_par_ctx *pa_ctx,
                               const struct silofs_par_desc_info *pdi)
 {
@@ -920,12 +904,10 @@ static int pac_import_bootrec(const struct silofs_par_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
-	/* TODO: check caddr vs content hash */
 	err = pac_save_bootrec(pa_ctx, caddr, &brec1k);
 	if (err) {
 		return err;
 	}
-	pac_update_bootref(pa_ctx, caddr);
 	return 0;
 }
 
@@ -1136,22 +1118,6 @@ out:
 	return err;
 }
 
-static int pac_import_super(const struct silofs_par_ctx *pa_ctx,
-                            const struct silofs_par_desc_info *pdi)
-{
-	int err;
-
-	err = pac_import_segdata(pa_ctx, pdi);
-	if (err) {
-		return err;
-	}
-	err = silofs_fsenv_reload_super(pa_ctx->pac_task->t_fsenv);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int pac_import_by_desc(const struct silofs_par_ctx *pa_ctx,
                               const struct silofs_par_desc_info *pdi)
 {
@@ -1159,8 +1125,6 @@ static int pac_import_by_desc(const struct silofs_par_ctx *pa_ctx,
 
 	if (pdi_isbootrec(pdi)) {
 		err = pac_import_bootrec(pa_ctx, pdi);
-	} else if (pdi_issuper(pdi)) {
-		err = pac_import_super(pa_ctx, pdi);
 	} else {
 		err = pac_import_segdata(pa_ctx, pdi);
 	}

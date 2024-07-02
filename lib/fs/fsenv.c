@@ -66,7 +66,7 @@ static void fsenv_update_boot(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
-	silofs_fsenv_update_boot_caddr(fsenv, &fs_args->bconf.boot_ref);
+	silofs_fsenv_set_boot_caddr(fsenv, &fs_args->bconf.boot_ref);
 }
 
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
@@ -388,8 +388,8 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_fsenv_update_boot_caddr(struct silofs_fsenv *fsenv,
-                                    const struct silofs_caddr *caddr)
+void silofs_fsenv_set_boot_caddr(struct silofs_fsenv *fsenv,
+                                 const struct silofs_caddr *caddr)
 {
 	caddr_assign(&fsenv->fse_boot_caddr, caddr);
 }
@@ -619,13 +619,13 @@ int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
 {
 	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
 	const struct silofs_password *passwd = fsenv->fse.passwd;
+	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
+	struct silofs_ivkey *main_ivkey = &fsenv->fse_main_ivkey;
 	int ret = 0;
 
 	if (passwd && passwd->passlen) {
 		silofs_bootrec_cipher_args(brec, &cip_args);
-		ret = silofs_derive_ivkey(&cip_args, passwd,
-		                          &fsenv->fse_mdigest,
-		                          &fsenv->fse_main_ivkey);
+		ret = silofs_derive_ivkey(&cip_args, passwd, md, main_ivkey);
 	}
 	return ret;
 }

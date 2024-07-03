@@ -546,7 +546,6 @@ static void pindex_calc_caddr_of(const struct silofs_par_index *pindex,
 	piview_calc_caddr(piview, &pindex->mdigest, out_caddr);
 }
 
-
 static int pindex_encode(struct silofs_par_index *pindex,
                          struct silofs_rwvec *rwv,
                          struct silofs_caddr *out_caddr)

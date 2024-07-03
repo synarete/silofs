@@ -509,6 +509,11 @@ static size_t bkr_usecnt(const struct silofs_bk_ref *bkr)
 	return bk_state_popcount(&bk_st);
 }
 
+static size_t bkr_usecnt_nbytes(const struct silofs_bk_ref *bkr)
+{
+	return SILOFS_KB_SIZE * bkr_usecnt(bkr);
+}
+
 static size_t bkr_freecnt(const struct silofs_bk_ref *bkr)
 {
 	return SILOFS_NKB_IN_LBK - bkr_usecnt(bkr);
@@ -1398,28 +1403,50 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 	sli_dirtify(sli);
 }
 
-static int lmap_append(struct silofs_spmap_lmap *lmap,
-                       const struct silofs_laddr *laddr)
+static void lmap_append_entry(struct silofs_spmap_lmap *lmap,
+                              const struct silofs_laddr *laddr)
 {
-	struct silofs_laddr *laddr_prev = NULL;
+	silofs_assert_lt(lmap->cnt, ARRAY_SIZE(lmap->laddr));
 
-	if (laddr_isnull(laddr)) {
-		return 0;
-	}
-	if (lmap->cnt == 0) {
-		goto out_ok;
-	}
-	laddr_prev = &lmap->laddr[lmap->cnt - 1];
-	if (laddr_isnext(laddr_prev, laddr)) {
-		laddr_prev->len += laddr->len;
-		return 0;
-	}
-	if (lmap->cnt == ARRAY_SIZE(lmap->laddr)) {
-		return -SILOFS_ENOSPC;
-	}
-out_ok:
 	laddr_assign(&lmap->laddr[lmap->cnt++], laddr);
-	return 0;
+}
+
+static void lmap_append_length(struct silofs_spmap_lmap *lmap,
+                               const struct silofs_laddr *laddr)
+{
+	struct silofs_laddr *laddr_prev = &lmap->laddr[lmap->cnt - 1];
+
+	silofs_assert_lt(lmap->cnt, ARRAY_SIZE(lmap->laddr));
+	silofs_assert_gt(lmap->cnt, 0);
+
+	laddr_prev->len += laddr->len;
+}
+
+static bool lmap_may_append_length(const struct silofs_spmap_lmap *lmap,
+                                   const struct silofs_laddr *laddr)
+{
+	const struct silofs_laddr *laddr_prev = NULL;
+	bool ret = false;
+
+	if (lmap->cnt > 0) {
+		laddr_prev = &lmap->laddr[lmap->cnt - 1];
+		ret = laddr_isnext(laddr_prev, laddr);
+	}
+	return ret;
+}
+
+static void lmap_append(struct silofs_spmap_lmap *lmap,
+                        const struct silofs_laddr *laddr)
+{
+	silofs_assert_le(lmap->cnt, ARRAY_SIZE(lmap->laddr));
+
+	if (!laddr_isnull(laddr)) {
+		if (lmap_may_append_length(lmap, laddr)) {
+			lmap_append_length(lmap, laddr);
+		} else {
+			lmap_append_entry(lmap, laddr);
+		}
+	}
 }
 
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
@@ -1430,6 +1457,7 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 	const struct silofs_bk_ref *bkr = NULL;
 	const size_t nslots = ARRAY_SIZE(sl->sl_subrefs);
 	const size_t nused = sli->sl_nused_bytes;
+	size_t nused_at_slot = 0;
 	size_t nbytes = 0;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
@@ -1438,12 +1466,15 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 	out_lmap->cnt = 0;
 	for (size_t slot = 0; (slot < nslots) && (nbytes < nused); ++slot) {
 		bkr = spleaf_subref_at(sl, slot);
-		bkr_uref(bkr, &laddr);
-		if (!laddr_isnull(&laddr)) {
+		nused_at_slot = bkr_usecnt_nbytes(bkr);
+		if (nused_at_slot > 0) {
+			bkr_uref(bkr, &laddr);
 			lmap_append(out_lmap, &laddr);
-			nbytes += laddr.len;
+			nbytes += nused_at_slot;
 		}
 	}
+
+	silofs_assert_eq(nbytes, nused);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

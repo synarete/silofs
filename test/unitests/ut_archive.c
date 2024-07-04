@@ -106,8 +106,8 @@ static void ut_archive_nfiles(struct ut_env *ute)
 static void ut_archive_twice(struct ut_env *ute)
 {
 	const char *dname = UT_NAME;
-	const char *name1 = "file1";
-	const char *name2 = "file2";
+	const char *name1 = UT_NAME_AT;
+	const char *name2 = UT_NAME_AT;
 	const size_t len = UT_1M;
 	const loff_t off1 = UT_1G - 1;
 	const loff_t off2 = UT_1T - UT_1M - 2;

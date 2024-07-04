@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*\ SPDX-License-Identifier: GPL-3.0-or-later */
 /*
  * This file is part of silofs.
  *
@@ -17,10 +17,10 @@
 #include "cmd.h"
 
 static const char *cmd_archive_help_desc[] = {
-	"archive -n <arname> <repodir/name>",
+	"archive <repodir/name> --into=<arname>",
 	"",
 	"options:",
-	"  -n, --name=archivename       Result archive name",
+	"  -n, --into=archivename       Result archive name",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
@@ -50,7 +50,7 @@ static void cmd_archive_getopt(struct cmd_archive_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "name", required_argument, NULL, 'n' },
+		{ "into", required_argument, NULL, 'n' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "no-prompt", no_argument, NULL, 'P' },
 		{ "loglevel", required_argument, NULL, 'L' },

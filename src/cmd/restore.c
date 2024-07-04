@@ -17,10 +17,10 @@
 #include "cmd.h"
 
 static const char *cmd_restore_help_desc[] = {
-	"restore -n <arname> <repodir/name>",
+	"restore <repodir/name> --from=<arname>",
 	"",
 	"options:",
-	"  -n, --name=arname            Archive name",
+	"  -n, --from=arname            Source archive name",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
@@ -50,7 +50,7 @@ static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
-		{ "name", required_argument, NULL, 'n' },
+		{ "from", required_argument, NULL, 'n' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "no-prompt", no_argument, NULL, 'P' },
 		{ "loglevel", required_argument, NULL, 'L' },

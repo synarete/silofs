@@ -54,6 +54,35 @@ def _test_rsync_at(env: TestEnv, base: Path) -> None:
     env.cmd.sh.run_ok("make clean", base)
 
 
+def test_findutils(env: TestEnv) -> None:
+    url = env.cfg.remotes.findutils_repo_url
+    if not url:
+        return
+    name = env.uniq_name()
+    env.exec_init()
+    env.exec_mkfs(20)
+    env.exec_mount(
+        allow_hostids=True,
+        allow_xattr_acl=False,
+        writeback_cache=False,
+    )
+    env.exec_lsmnt()
+    base = env.create_fstree(name)
+    ret = env.cmd.git.clone(url, base)
+    if ret == 0:
+        _test_findutils_at(env, base)
+    env.remove_fstree(name)
+    env.exec_umount()
+
+
+def _test_findutils_at(env: TestEnv, base: Path) -> None:
+    env.cmd.sh.run_ok("./bootstrap", base)
+    env.cmd.sh.run_ok("./configure", base)
+    env.cmd.sh.run_ok("make", base)
+    env.cmd.sh.run_ok("make check", base)
+    env.cmd.sh.run_ok("make clean", base)
+
+
 def test_gitscm(env: TestEnv) -> None:
     url = env.cfg.remotes.git_repo_url
     if not url:

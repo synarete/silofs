@@ -33,20 +33,21 @@ base_deps=(
 )
 
 qatests_deps=(
-  gcc
-  git
-  make
   automake
-  libtool
+  bison
+  dejagnu
   fio
   flex
-  bison
+  gcc
+  git
   libcap-dev
   libicu-dev
   libunwind-dev
   libreadline-dev
   libssl-dev
   libexpat1-dev
+  libtool
+  make
   python3-pydantic
   python3-setproctitle
   valgrind
@@ -90,4 +91,3 @@ case "$arg" in
     _install_deb_pkgs "${base_deps[@]}"
     ;;
 esac
-

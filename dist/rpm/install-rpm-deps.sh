@@ -26,6 +26,7 @@ qatests_deps=(
   automake
   bison
   expat-devel
+  dejagnu
   fio
   flex
   gcc

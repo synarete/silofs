@@ -173,6 +173,7 @@ static void ut_statfs_bfree(struct ut_env *ute)
 	ut_statfs_bfree_(ute, UT_1M, UT_1M);
 	ut_statfs_bfree_(ute, UT_1M + 1, UT_1M);
 	ut_statfs_bfree_(ute, UT_1T - 11, UT_1M + 111);
+	ut_statfs_bfree_(ute, UT_FILESIZE_MAX / 2, UT_1M / 2);
 	ut_statfs_bfree_(ute, UT_FILESIZE_MAX - UT_1M, UT_1M);
 }
 

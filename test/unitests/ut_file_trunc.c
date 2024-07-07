@@ -70,6 +70,7 @@ static void ut_file_trunc_aligned(struct ut_env *ute)
 		UT_MKRANGE1(UT_1M, UT_1M),
 		UT_MKRANGE1(UT_1G, UT_1M),
 		UT_MKRANGE1(UT_1T, UT_1M),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M, UT_1M),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_trunc_data_, ranges);
@@ -85,6 +86,7 @@ static void ut_file_trunc_unaligned(struct ut_env *ute)
 		UT_MKRANGE1(13 * UT_1G - 13, 13 * UT_64K + 13),
 		UT_MKRANGE1(UT_1T - 11111, UT_64K + 111111),
 		UT_MKRANGE1(UT_1T - 1111111, UT_64K + 1111111),
+		UT_MKRANGE1(UT_FILESIZE_MAX / 11, UT_1M / 11),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M),
 	};
 
@@ -465,5 +467,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_file_truncate = UT_MKTESTS(ut_local_tests);
-
-

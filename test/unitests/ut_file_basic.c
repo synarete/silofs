@@ -33,10 +33,9 @@ static void ut_file_simple1_(struct ut_env *ute, loff_t off)
 	ut_expect_statvfs(&stv[0], &stv[1]);
 }
 
-static void ut_file_simple2_(struct ut_env *ute, loff_t off)
+static void ut_file_simple2_(struct ut_env *ute, loff_t off, size_t bsz)
 {
 	const char *name = UT_NAME;
-	const size_t bsz = UT_1M / 4;
 	void *buf = ut_randbuf(ute, bsz);
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -49,10 +48,9 @@ static void ut_file_simple2_(struct ut_env *ute, loff_t off)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_file_simple3_(struct ut_env *ute, loff_t off)
+static void ut_file_simple3_(struct ut_env *ute, loff_t off, size_t bsz)
 {
 	const char *name = UT_NAME;
-	const size_t bsz = UT_1M;
 	void *buf = ut_randbuf(ute, bsz);
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -72,37 +70,42 @@ static void ut_file_simple3_(struct ut_env *ute, loff_t off)
 static void ut_file_simple_(struct ut_env *ute, loff_t off, size_t len)
 {
 	ut_file_simple1_(ute, off);
-	ut_file_simple2_(ute, off);
-	ut_file_simple3_(ute, off);
-	ut_unused(len);
+	ut_file_simple2_(ute, off, len);
+	ut_file_simple3_(ute, off, len);
 }
 
 static void ut_file_simple(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE0(0),
-		UT_MKRANGE0(1),
-		UT_MKRANGE0(UT_4K),
-		UT_MKRANGE0(UT_4K - 1),
-		UT_MKRANGE0(3 * UT_4K),
-		UT_MKRANGE0(3 * UT_4K - 3),
-		UT_MKRANGE0(UT_8K),
-		UT_MKRANGE0(UT_8K - 1),
-		UT_MKRANGE0(2 * UT_8K - 1),
-		UT_MKRANGE0(UT_64K),
-		UT_MKRANGE0(UT_64K - 1),
-		UT_MKRANGE0(UT_64K + 1),
-		UT_MKRANGE0(UT_1M),
-		UT_MKRANGE0(UT_1M - 1),
-		UT_MKRANGE0(UT_1M + 1),
-		UT_MKRANGE0(UT_1M),
-		UT_MKRANGE0(11 * UT_1M - 11),
-		UT_MKRANGE0(11 * UT_1M + 11),
-		UT_MKRANGE0(UT_1G),
-		UT_MKRANGE0(UT_1G - 3),
-		UT_MKRANGE0(11 * UT_1G - 11),
-		UT_MKRANGE0(UT_1T),
-		UT_MKRANGE0(UT_1T - 11),
+		UT_MKRANGE1(0, 1),
+		UT_MKRANGE1(0, UT_1K),
+		UT_MKRANGE1(1, UT_1K),
+		UT_MKRANGE1(UT_4K, UT_4K),
+		UT_MKRANGE1(UT_4K, UT_64K),
+		UT_MKRANGE1(UT_4K - 1, 4),
+		UT_MKRANGE1(3 * UT_4K, UT_4K),
+		UT_MKRANGE1(3 * UT_4K - 3, 3 * UT_4K),
+		UT_MKRANGE1(UT_8K, UT_8K),
+		UT_MKRANGE1(UT_8K - 1, UT_64K),
+		UT_MKRANGE1(2 * UT_8K - 1, UT_8K + 7),
+		UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(UT_64K - 1, UT_64K + 3),
+		UT_MKRANGE1(UT_64K + 1, UT_4K - 3),
+		UT_MKRANGE1(0, UT_1M),
+		UT_MKRANGE1(UT_1M, UT_64K),
+		UT_MKRANGE1(UT_1M - 1, 3 * UT_64K + 3),
+		UT_MKRANGE1(UT_1M + 1, UT_1M - 3),
+		UT_MKRANGE1(UT_1M, UT_1M),
+		UT_MKRANGE1(11 * UT_1M - 11, UT_1M + 1),
+		UT_MKRANGE1(11 * UT_1M + 11, UT_1M + 1),
+		UT_MKRANGE1(UT_1G, UT_1M),
+		UT_MKRANGE1(UT_1G - 3, 3 * UT_64K),
+		UT_MKRANGE1(11 * UT_1G - 11, 11 * UT_64K + 11),
+		UT_MKRANGE1(UT_1T, UT_1M),
+		UT_MKRANGE1(UT_1T - 11, UT_1M + 111),
+		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M / 2),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M, UT_1M),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M + 1),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_simple_, ranges);

@@ -41,13 +41,14 @@ _run_pylint() {
   local srcdir="${1}"
 
   cd "${srcdir}" || exit 1
+  export PYLINTHOME="${basedir}"
   _run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
 }
 
 _run_pychecks() {
   local srcdir
 
-   cd "${basedir}" || exit 1
+  cd "${basedir}" || exit 1
   _run_black "${1}"
   _run_flake8 "${1}"
   _run_mypy "${1}"

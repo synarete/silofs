@@ -16,7 +16,7 @@ selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 dist_name="$1"
 archive_tgz="${dist_name}.tar.gz"
 workdir="${selfdir}/${dist_name}"
-unitestsdir="${workdir}/build/src/test/unitests/"
+unitestsdir="${workdir}/build/test/unitests/"
 
 ###
 msg "cheching input: ${archive_tgz}"
@@ -76,5 +76,3 @@ run rm -rf "${workdir}"
 
 ###
 msg "passed all checks: ${dist_name} "
-
-

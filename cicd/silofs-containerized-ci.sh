@@ -12,7 +12,7 @@ try() { ( "$@" ) || die "failed: $*"; }
 run() { echo "$self:" "$@" >&2; try "$@"; }
 
 # Common variables
-osflavor=${1:-fedora}
+osflavor=${1:-debian}
 name=silofs
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 basedir=$(realpath "${selfdir}"/../)

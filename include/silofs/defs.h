@@ -245,7 +245,7 @@
 
 
 /* height-limit of file-mapping radix-tree */
-#define SILOFS_FILE_HEIGHT_MAX          (4)
+#define SILOFS_FILE_HEIGHT_MAX          (5)
 
 /* bits-shift of single file-mapping address-space */
 #define SILOFS_FILE_MAP_SHIFT           (10)

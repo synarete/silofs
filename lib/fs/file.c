@@ -241,18 +241,17 @@ static size_t off_to_leaf_slot(loff_t off)
 
 static size_t off_to_tree_height(loff_t off)
 {
-	size_t height;
+	const long leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
+	const int shift = SILOFS_FILE_MAP_SHIFT;
+	size_t height = 2;
 	loff_t xpos;
 
 	/* TODO: count bits */
-	if (off <= SILOFS_FILE_TREE_LEAF_SIZE) {
-		height = 2;
-	} else {
-		height = 1;
-		xpos = off / SILOFS_FILE_TREE_LEAF_SIZE;
+	if (off > leaf_size) {
+		xpos = (off / leaf_size) >> shift;
 		while (xpos > 0) {
 			height += 1;
-			xpos = (xpos >> SILOFS_FILE_MAP_SHIFT);
+			xpos = (xpos >> shift);
 		}
 	}
 	return height;
@@ -479,12 +478,21 @@ static size_t ftn_nbytes_per_slot(const struct silofs_ftree_node *ftn)
 static size_t
 ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, loff_t file_pos)
 {
-	size_t slot;
-	ssize_t roff;
-	const loff_t span = ftn_span(ftn);
 	const size_t nslots = ftn_nchilds_max(ftn);
+	const int shift = SILOFS_FILE_MAP_SHIFT;
+	int64_t span;
+	int64_t roff;
+	size_t slot;
 
-	roff = off_diff(ftn_beg(ftn), file_pos);
+	/*
+	  Basic math:
+	    slot / nslots == roff / span ==> slot == (roff * nslots) / span
+
+	  However, need to do a right-shift to avoid integer-overflow.
+	*/
+	span = ftn_span(ftn) >> shift;
+	roff = off_diff(ftn_beg(ftn), file_pos) >> shift;
+
 	slot = (size_t)((roff * (long)nslots) / span);
 
 	return slot;

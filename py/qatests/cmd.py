@@ -265,11 +265,11 @@ class CmdSilofs(CmdExec):
 
     def archive(self, repodir_name: Path, arname: str, password: str) -> None:
         args = ["archive", repodir_name, "--into", arname]
-        self.execute_sub(args, indat=password)
+        self.execute_sub(args, indat=password, timeout=600.0)
 
     def restore(self, repodir_name: Path, name: str, password: str) -> None:
         args = ["restore", repodir_name, "--from", name]
-        self.execute_sub(args, indat=password)
+        self.execute_sub(args, indat=password, timeout=600.0)
 
 
 class CmdUnitests(CmdExec):

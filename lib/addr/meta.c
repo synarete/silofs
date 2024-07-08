@@ -76,6 +76,18 @@ uint64_t silofs_u8b_as_u64(const uint8_t p[8])
 	return u;
 }
 
+static void silofs_u8b_from_u64(uint8_t p[8], uint64_t u)
+{
+	p[0] = (uint8_t)(u >> 56);
+	p[1] = (uint8_t)(u >> 48);
+	p[2] = (uint8_t)(u >> 40);
+	p[3] = (uint8_t)(u >> 32);
+	p[4] = (uint8_t)(u >> 24);
+	p[5] = (uint8_t)(u >> 16);
+	p[6] = (uint8_t)(u >> 8);
+	p[7] = (uint8_t)(u);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_uuid_generate(struct silofs_uuid *uu)
@@ -311,6 +323,30 @@ void silofs_hash256_assign(struct silofs_hash256 *hash,
                            const struct silofs_hash256 *other)
 {
 	memcpy(hash->hash, other->hash, sizeof(hash->hash));
+}
+
+void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4])
+{
+	const uint8_t *p = hash->hash;
+
+	STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
+
+	u[0] = silofs_u8b_as_u64(p);
+	u[1] = silofs_u8b_as_u64(p + 8);
+	u[2] = silofs_u8b_as_u64(p + 16);
+	u[3] = silofs_u8b_as_u64(p + 24);
+}
+
+void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
+{
+	uint8_t *p = hash->hash;
+
+	STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
+
+	silofs_u8b_from_u64(p, u[0]);
+	silofs_u8b_from_u64(p + 8, u[1]);
+	silofs_u8b_from_u64(p + 16, u[2]);
+	silofs_u8b_from_u64(p + 24, u[3]);
 }
 
 void silofs_hash256_to_name(const struct silofs_hash256 *hash,

@@ -72,6 +72,11 @@ bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
 void silofs_hash256_assign(struct silofs_hash256 *hash,
                            const struct silofs_hash256 *other);
 
+void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4]);
+
+void silofs_hash256_from_u64s(struct silofs_hash256 *hash,
+                              const uint64_t u[4]);
+
 void silofs_hash256_to_name(const struct silofs_hash256 *hash,
                             struct silofs_strbuf *out_name);
 

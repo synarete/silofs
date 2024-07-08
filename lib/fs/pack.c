@@ -155,7 +155,7 @@ static void pd_update_caddr_by(struct silofs_par_desc *pd,
 		.iov_len = rov->rov_len,
 	};
 
-	silofs_calc_caddr_of(&iov, 1, md, &caddr);
+	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_ENCSEG, md, &caddr);
 	pd_update_caddr(pd, &caddr);
 }
 
@@ -362,7 +362,7 @@ static void piview_calc_caddr(const struct silofs_par_index_view *piv,
 	iov[1].iov_base = unconst(descs);
 	iov[1].iov_len = piv->ndescs_max * sizeof(*descs);
 
-	silofs_calc_caddr_of(iov, 2, md, out_caddr);
+	silofs_calc_caddr_of(iov, 2, SILOFS_CTYPE_PACKIDX, md, out_caddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

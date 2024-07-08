@@ -17,17 +17,22 @@
 #ifndef SILOFS_CADDR_H_
 #define SILOFS_CADDR_H_
 
+#include <silofs/defs.h>
+#include <silofs/infra.h>
+
 /* packed-object identifier */
 struct silofs_caddr {
 	struct silofs_hash256 hash;
-	uint8_t pad[32]; /* padding for ioctl */
+	uint32_t size;
+	enum silofs_ctype ctype;
 };
 
 
 void silofs_caddr_reset(struct silofs_caddr *caddr);
 
 void silofs_caddr_setup(struct silofs_caddr *caddr,
-                        const struct silofs_hash256 *hash);
+                        const struct silofs_hash256 *hash,
+                        uint32_t size, enum silofs_ctype ctype);
 
 void silofs_caddr_assign(struct silofs_caddr *caddr,
                          const struct silofs_caddr *other);

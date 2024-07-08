@@ -356,6 +356,14 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE    = 2,
 };
 
+/* content-addressable sub-types */
+enum silofs_ctype {
+	SILOFS_CTYPE_NONE       = 0,
+	SILOFS_CTYPE_BOOTREC    = 1,
+	SILOFS_CTYPE_ENCSEG     = 2,
+	SILOFS_CTYPE_PACKIDX    = 3,
+};
+
 /* storage objects sub-types */
 enum silofs_otype {
 	SILOFS_OTYPE_NONE       = 0,
@@ -560,7 +568,9 @@ struct silofs_laddr48b {
 /* content address (by hash) */
 struct silofs_caddr64b {
 	struct silofs_hash256           hash;
-	uint8_t                         reserved[32];
+	uint32_t                        size;
+	uint8_t                         ctype;
+	uint8_t                         reserved[27];
 } silofs_packed_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

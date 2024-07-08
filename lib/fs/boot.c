@@ -683,7 +683,8 @@ static void calc_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
 		.iov_len = sizeof(*brec1k)
 	};
 
-	silofs_calc_caddr_of(&iov, 1, &fsenv->fse_mdigest, out_caddr);
+	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_BOOTREC,
+	                     &fsenv->fse_mdigest, out_caddr);
 }
 
 static int verify_bootrec1k_caddr(const struct silofs_fsenv *fsenv,

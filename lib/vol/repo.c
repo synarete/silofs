@@ -483,12 +483,12 @@ static void index_to_name(size_t idx, struct silofs_strbuf *out_name)
 static int make_pathname(const struct silofs_hash256 *hash, size_t idx,
                          struct silofs_strbuf *out_name)
 {
-	struct silofs_strbuf hash_name;
+	struct silofs_strbuf sbuf;
 	const size_t nmax = sizeof(out_name->str);
 	int n;
 
-	silofs_hash256_to_name(hash, &hash_name);
-	n = snprintf(out_name->str, nmax, "%02x/%s", (int)idx, hash_name.str);
+	silofs_hash256_to_name(hash, &sbuf);
+	n = snprintf(out_name->str, nmax, "%02x/%s", (int)idx, sbuf.str);
 	return (n < (int)nmax) ? 0 : -SILOFS_EINVAL;
 }
 
@@ -2704,11 +2704,13 @@ int silofs_repo_load_pack(struct silofs_repo *repo,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
+                          enum silofs_ctype ctype,
                           const struct silofs_mdigest *md,
                           struct silofs_caddr *out_caddr)
 {
 	struct silofs_hash256 hash;
+	const uint32_t size = (uint32_t)silofs_iov_length(iov, cnt);
 
 	silofs_sha256_ofv(md, iov, cnt, &hash);
-	silofs_caddr_setup(out_caddr, &hash);
+	silofs_caddr_setup(out_caddr, &hash, size, ctype);
 }

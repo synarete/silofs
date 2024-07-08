@@ -17,64 +17,136 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include <stdio.h>
 
 
 void silofs_caddr_reset(struct silofs_caddr *caddr)
 {
-	silofs_memzero(caddr, sizeof(*caddr));
+	silofs_memzero(&caddr->hash, sizeof(caddr->hash));
+	caddr->size = 0;
+	caddr->ctype = SILOFS_CTYPE_NONE;
 }
 
 void silofs_caddr_setup(struct silofs_caddr *caddr,
-                        const struct silofs_hash256 *hash)
+                        const struct silofs_hash256 *hash,
+                        uint32_t size, enum silofs_ctype ctype)
 {
 	silofs_hash256_assign(&caddr->hash, hash);
+	caddr->size = size;
+	caddr->ctype = ctype;
 }
 
 void silofs_caddr_assign(struct silofs_caddr *caddr,
                          const struct silofs_caddr *other)
 {
 	silofs_hash256_assign(&caddr->hash, &other->hash);
+	caddr->size = other->size;
+	caddr->ctype = other->ctype;
 }
 
 bool silofs_caddr_isnone(const struct silofs_caddr *caddr)
 {
-	return silofs_hash256_isnil(&caddr->hash);
+	return (caddr->ctype == SILOFS_CTYPE_NONE) || (caddr->size == 0);
 }
 
 bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
                           const struct silofs_caddr *other)
 {
-	return silofs_hash256_isequal(&caddr->hash, &other->hash);
+	return (caddr->size == other->size) &&
+	       (caddr->ctype == other->ctype) &&
+	       silofs_hash256_isequal(&caddr->hash, &other->hash);
+}
+
+static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
+{
+	struct silofs_strbuf hname;
+	const int vers = SILOFS_FMT_VERSION;
+	const int ctype = caddr->ctype;
+	const uint32_t size = caddr->size;
+	int k;
+
+	silofs_hash256_to_name(&caddr->hash, &hname);
+	k = snprintf(s, n, "silofs.v%d.%d.%x:%64s",
+	             vers, ctype, size, hname.str);
+	return (size_t)k;
+}
+
+static int check_ctype_size(enum silofs_ctype ctype, size_t size)
+{
+	int ret;
+
+	switch (ctype) {
+	case SILOFS_CTYPE_BOOTREC:
+		ret = (size == SILOFS_BOOTREC_SIZE) ? 0 : -SILOFS_EPROTO;
+		break;
+	case SILOFS_CTYPE_ENCSEG:
+	case SILOFS_CTYPE_PACKIDX:
+		ret = !(size % SILOFS_KB_SIZE) ? 0 : -SILOFS_EPROTO;
+		break;
+	case SILOFS_CTYPE_NONE:
+	default:
+		ret = -SILOFS_EPROTO;
+		break;
+	}
+	return ret;
+}
+
+static int caddr_from_str(struct silofs_caddr *caddr, const char *s)
+{
+	struct silofs_strbuf hname;
+	struct silofs_hash256 hash;
+	enum silofs_ctype ctype;
+	int vers = 0;
+	int ctyp = 0;
+	uint32_t size = 0;
+	int k = 0;
+	int err = 0;
+
+	silofs_strbuf_reset(&hname);
+	k = sscanf(s, "silofs.v%d.%d.%x:%64s",
+	           &vers, &ctyp, &size, hname.str);
+	if (k != 4) {
+		return -SILOFS_EINVAL;
+	}
+	if (vers != SILOFS_FMT_VERSION) {
+		return -SILOFS_EPROTO;
+	}
+	ctype = (enum silofs_ctype)ctyp;
+	err = check_ctype_size(ctype, size);
+	if (err) {
+		return err;
+	}
+	err = silofs_hash256_by_name(&hash, &hname);
+	if (err) {
+		return err;
+	}
+	silofs_caddr_setup(caddr, &hash, size, ctype);
+	return 0;
 }
 
 void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf *out_name)
 {
-	silofs_hash256_to_name(&caddr->hash, out_name);
+	silofs_strbuf_reset(out_name);
+	caddr_to_str(caddr, out_name->str, sizeof(out_name->str) - 1);
 }
 
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
                            char s[SILOFS_NAME_MAX + 1])
 {
-	struct silofs_strbuf name;
+	const size_t n = SILOFS_NAME_MAX;
+	size_t k;
 
-	STATICASSERT_EQ(ARRAY_SIZE(name.str), SILOFS_NAME_MAX + 1);
-	silofs_caddr_to_name(caddr, &name);
-	silofs_strbuf_copyto(&name, s, SILOFS_NAME_MAX);
+	k = caddr_to_str(caddr, s, n);
+	if (k >= n) {
+		s[n] = '\0';
+	}
 }
 
 int silofs_caddr_by_name(struct silofs_caddr *caddr,
                          const struct silofs_strbuf *name)
 {
-	struct silofs_hash256 hash;
-	int err;
-
-	err = silofs_hash256_by_name(&hash, name);
-	if (err) {
-		return err;
-	}
-	silofs_caddr_setup(caddr, &hash);
-	return 0;
+	return caddr_from_str(caddr, name->str);
 }
 
 uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr)
@@ -89,11 +161,15 @@ void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
                           const struct silofs_caddr *caddr)
 {
 	silofs_hash256_assign(&caddr64b->hash, &caddr->hash);
+	caddr64b->size = silofs_cpu_to_le32(caddr->size);
+	caddr64b->ctype = (uint8_t)caddr->ctype;
 	memset(caddr64b->reserved, 0, sizeof(caddr64b->reserved));
 }
 
 void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
                           struct silofs_caddr *caddr)
 {
-	silofs_caddr_setup(caddr, &caddr64b->hash);
+	const uint32_t size = silofs_le32_to_cpu(caddr64b->size);
+
+	silofs_caddr_setup(caddr, &caddr64b->hash, size, caddr64b->ctype);
 }

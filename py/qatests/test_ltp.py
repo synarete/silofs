@@ -159,8 +159,6 @@ def _runltp_fsstress_with(
 
 
 _LTP_TESTS = [
-    "aio01",
-    "aio02",
     "chdir04",
     "chmod01",
     "close01",

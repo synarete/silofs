@@ -220,6 +220,11 @@ int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off)
 	return err;
 }
 
+size_t silofs_iov_length(const struct iovec *iov, size_t cnt)
+{
+	return iov_length(iov, (int)cnt);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_sys_opendir(const char *path, int *out_fd)

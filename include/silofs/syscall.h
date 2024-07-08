@@ -393,6 +393,7 @@ long silofs_sc_nproc_onln(void);
 
 long silofs_sc_iov_max(void);
 
+/* iovec */
+size_t silofs_iov_length(const struct iovec *iov, size_t cnt);
 
 #endif /* SILOFS_SYSCALL_H_ */
-

@@ -105,13 +105,13 @@ static void cmd_archive_destroy_fsenv(struct cmd_archive_ctx *ctx)
 static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
-	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_delpass(&ctx->in_args.password);
+	cmd_fini_fs_args(&ctx->fs_args);
 	cmd_archive_ctx = NULL;
 }
 
@@ -158,16 +158,15 @@ static void cmd_archive_setup_fs_args(struct cmd_archive_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
-	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
-	fs_args->passwd = ctx->in_args.password;
-	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.name;
+	cmd_fs_args_init(fs_args);
+	fs_args->bref.repodir = ctx->in_args.repodir_real;
+	fs_args->bref.name = ctx->in_args.name;
+	fs_args->bref.passwd = ctx->in_args.password;
 }
 
-static void cmd_archive_load_bconf(struct cmd_archive_ctx *ctx)
+static void cmd_archive_load_bref(struct cmd_archive_ctx *ctx)
 {
-	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
+	cmd_bootref_load_ar(&ctx->fs_args.bref);
 }
 
 static void cmd_archive_setup_fsenv(struct cmd_archive_ctx *ctx)
@@ -187,12 +186,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_poke_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_archive_boot_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
@@ -207,13 +206,10 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_fs_bconf bconf;
+	struct silofs_caddr caddr;
 
-	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
-	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
-	cmd_archive_fs(ctx->fsenv, &bconf.pack_ref);
-	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
-	cmd_bconf_fini(&bconf);
+	cmd_archive_fs(ctx->fsenv, &caddr);
+	cmd_bootref_resave(&ctx->fs_args.bref, &caddr, ctx->in_args.arname);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -242,8 +238,8 @@ void cmd_execute_archive(void)
 	/* Setup input arguments */
 	cmd_archive_setup_fs_args(&ctx);
 
-	/* Require boot-config */
-	cmd_archive_load_bconf(&ctx);
+	/* Load fs boot-reference */
+	cmd_archive_load_bref(&ctx);
 
 	/* Setup execution environment */
 	cmd_archive_setup_fsenv(&ctx);

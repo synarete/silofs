@@ -139,6 +139,12 @@ static void pd_fini(struct silofs_par_desc *pd)
 	silofs_laddr_reset(&pd->laddr);
 }
 
+static void pd_caddr(const struct silofs_par_desc *pd,
+                     struct silofs_caddr *out_caddr)
+{
+	caddr_assign(out_caddr, &pd->caddr);
+}
+
 static void pd_update_caddr(struct silofs_par_desc *pd,
                             const struct silofs_caddr *caddr)
 {
@@ -238,6 +244,12 @@ static void pdi_del(struct silofs_par_desc_info *pdi,
 		pdi_fini(pdi);
 		pdi_free(pdi, alloc);
 	}
+}
+
+static void pdi_caddr(const struct silofs_par_desc_info *pdi,
+                      struct silofs_caddr *out_caddr)
+{
+	pd_caddr(&pdi->pd, out_caddr);
 }
 
 static void pdi_update_caddr(struct silofs_par_desc_info *pdi,
@@ -866,9 +878,13 @@ out:
 }
 
 static const struct silofs_caddr *
-pac_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
+pac_fs_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 {
-	return &pa_ctx->pac_fsenv->fse_boot_caddr;
+	const struct silofs_fsenv *fsenv = pa_ctx->pac_fsenv;
+	const struct silofs_caddr *caddr = &fsenv->fse_boot_caddr;
+
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_BOOTREC);
+	return caddr;
 }
 
 static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
@@ -878,7 +894,7 @@ static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
 	const struct silofs_caddr *boot_caddr = NULL;
 	int err;
 
-	boot_caddr = pac_bootrec_caddr(pa_ctx);
+	boot_caddr = pac_fs_bootrec_caddr(pa_ctx);
 	err = pac_load_bootrec(pa_ctx, boot_caddr, &brec1k);
 	if (err) {
 		return err;
@@ -1010,6 +1026,14 @@ out:
 	return err;
 }
 
+static int pac_export_post(struct silofs_par_ctx *pa_ctx,
+                           const struct silofs_caddr *caddr)
+{
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
+
+	return silofs_fsenv_set_base_caddr(pa_ctx->pac_fsenv, caddr);
+}
+
 static int pac_do_export(struct silofs_par_ctx *pa_ctx,
                          struct silofs_caddr *out_caddr)
 {
@@ -1020,6 +1044,10 @@ static int pac_do_export(struct silofs_par_ctx *pa_ctx,
 		return err;
 	}
 	err = pac_export_pindex(pa_ctx, out_caddr);
+	if (err) {
+		return err;
+	}
+	err = pac_export_post(pa_ctx, out_caddr);
 	if (err) {
 		return err;
 	}
@@ -1093,13 +1121,24 @@ static int pac_stat_pindex(const struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_import_pindex(struct silofs_par_ctx *pa_ctx,
-                             const struct silofs_caddr *caddr)
+static const struct silofs_caddr *
+pac_ar_packidx_caddr(const struct silofs_par_ctx *pa_ctx)
+{
+	const struct silofs_fsenv *fsenv = pa_ctx->pac_fsenv;
+	const struct silofs_caddr *caddr = &fsenv->fse_pack_caddr;
+
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
+	return caddr;
+}
+
+static int pac_import_pindex(struct silofs_par_ctx *pa_ctx)
 {
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
+	const struct silofs_caddr *caddr = NULL;
 	size_t sz = 0;
 	int err;
 
+	caddr = pac_ar_packidx_caddr(pa_ctx);
 	err = pac_stat_pindex(pa_ctx, caddr, &sz);
 	if (err) {
 		goto out;
@@ -1146,12 +1185,32 @@ static int pac_import_fs(struct silofs_par_ctx *pa_ctx)
 	return 0;
 }
 
+static int pac_import_post(struct silofs_par_ctx *pa_ctx,
+                           struct silofs_caddr *out_caddr)
+{
+	const struct silofs_par_desc_info *pdi = NULL;
+	size_t nbootrecs = 0;
+
+	pdi = pindex_next_desc(&pa_ctx->pac_pindex, pdi);
+	while (pdi != NULL) {
+		if (pdi_isbootrec(pdi)) {
+			pdi_caddr(pdi, out_caddr);
+			nbootrecs++;
+		}
+		pdi = pindex_next_desc(&pa_ctx->pac_pindex, pdi);
+	}
+	if (nbootrecs != 1) {
+		return -SILOFS_EBADPACK;
+	}
+	return silofs_fsenv_set_base_caddr(pa_ctx->pac_fsenv, out_caddr);
+}
+
 static int pac_do_import(struct silofs_par_ctx *pa_ctx,
-                         const struct silofs_caddr *caddr)
+                         struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = pac_import_pindex(pa_ctx, caddr);
+	err = pac_import_pindex(pa_ctx);
 	if (err) {
 		return err;
 	}
@@ -1159,11 +1218,15 @@ static int pac_do_import(struct silofs_par_ctx *pa_ctx,
 	if (err) {
 		return err;
 	}
+	err = pac_import_post(pa_ctx, out_caddr);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
 int silofs_fs_unpack(struct silofs_task *task,
-                     const struct silofs_caddr *caddr)
+                     struct silofs_caddr *out_caddr)
 {
 	struct silofs_par_ctx pa_ctx;
 	int err;
@@ -1172,7 +1235,7 @@ int silofs_fs_unpack(struct silofs_task *task,
 	if (err) {
 		goto out;
 	}
-	err = pac_do_import(&pa_ctx, caddr);
+	err = pac_do_import(&pa_ctx, out_caddr);
 	if (err) {
 		goto out;
 	}

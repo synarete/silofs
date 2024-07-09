@@ -77,6 +77,7 @@
 #define SILOFS_EDECOMPRESS      SILOFS_DEFERR2(14)
 #define SILOFS_EQALLOC          SILOFS_DEFERR2(15)
 #define SILOFS_EILLSTR          SILOFS_DEFERR2(16)
+#define SILOFS_EBADPACK         SILOFS_DEFERR2(17)
 
 /* error codes which are purely internal to silofs */
 #define SILOFS_EBUG             SILOFS_DEFERR2(1111)

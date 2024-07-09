@@ -164,16 +164,15 @@ static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
-	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
-	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.name;
-	fs_args->passwd = ctx->in_args.password;
+	cmd_fs_args_init(fs_args);
+	fs_args->bref.repodir = ctx->in_args.repodir_real;
+	fs_args->bref.name = ctx->in_args.name;
+	fs_args->bref.passwd = ctx->in_args.password;
 }
 
-static void cmd_rmfs_load_bconf(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_load_bref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
+	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
 static void cmd_rmfs_setup_fsenv(struct cmd_rmfs_ctx *ctx)
@@ -193,17 +192,17 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_poke_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_unref_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_rmfs_unlink_bconf(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_unlink_bref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_bconf_unlink(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
+	cmd_bootref_unlink(&ctx->fs_args.bref);
 }
 
 static void cmd_rmfs_destroy_fsenv(struct cmd_rmfs_ctx *ctx)
@@ -286,8 +285,8 @@ void cmd_execute_rmfs(void)
 	/* Setup input arguments */
 	cmd_rmfs_setup_fs_args(&ctx);
 
-	/* Require boot-config */
-	cmd_rmfs_load_bconf(&ctx);
+	/* Load fs boot-reference */
+	cmd_rmfs_load_bref(&ctx);
 
 	/* Setup execution context */
 	cmd_rmfs_setup_fsenv(&ctx);
@@ -305,7 +304,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_execute(&ctx);
 
 	/* Unlink boot-configuration */
-	cmd_rmfs_unlink_bconf(&ctx);
+	cmd_rmfs_unlink_bref(&ctx);
 
 	/* Close repository */
 	cmd_rmfs_close_repo(&ctx);

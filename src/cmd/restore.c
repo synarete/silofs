@@ -105,13 +105,13 @@ static void cmd_restore_destroy_fsenv(struct cmd_restore_ctx *ctx)
 static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 {
 	cmd_del_fsenv(&ctx->fsenv);
-	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
+	cmd_fini_fs_args(&ctx->fs_args);
 	cmd_restore_ctx = NULL;
 }
 
@@ -158,16 +158,15 @@ static void cmd_restore_setup_fs_args(struct cmd_restore_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
-	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.arname);
-	fs_args->passwd = ctx->in_args.password;
-	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.arname;
+	cmd_fs_args_init(fs_args);
+	fs_args->bref.repodir = ctx->in_args.repodir_real;
+	fs_args->bref.name = ctx->in_args.arname;
+	fs_args->bref.passwd = ctx->in_args.password;
 }
 
-static void cmd_restore_load_bconf(struct cmd_restore_ctx *ctx)
+static void cmd_restore_load_bref(struct cmd_restore_ctx *ctx)
 {
-	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
+	cmd_bootref_load_ar(&ctx->fs_args.bref);
 }
 
 static void cmd_restore_setup_fsenv(struct cmd_restore_ctx *ctx)
@@ -187,19 +186,15 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_poke_archive(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_archive(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_fs_bconf bconf;
+	struct silofs_caddr caddr;
 
-	cmd_bconf_assign(&bconf, &ctx->fs_args.bconf);
-	cmd_bconf_set_name(&bconf, ctx->in_args.arname);
-	cmd_restore_fs(ctx->fsenv, &bconf.pack_ref);
-	cmd_bconf_set_name(&bconf, ctx->in_args.name);
-	cmd_bconf_save_rdonly(&bconf, ctx->in_args.repodir_real);
-	cmd_bconf_fini(&bconf);
+	cmd_restore_fs(ctx->fsenv, &caddr);
+	cmd_bootref_resave(&ctx->fs_args.bref, &caddr, ctx->in_args.name);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -228,8 +223,8 @@ void cmd_execute_restore(void)
 	/* Setup input arguments */
 	cmd_restore_setup_fs_args(&ctx);
 
-	/* Require boot-config */
-	cmd_restore_load_bconf(&ctx);
+	/* Load archive boot-reference */
+	cmd_restore_load_bref(&ctx);
 
 	/* Setup execution environment */
 	cmd_restore_setup_fsenv(&ctx);

@@ -62,11 +62,11 @@ static void fsenv_bind_sbi(struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fsenv_update_boot(struct silofs_fsenv *fsenv)
+static int fsenv_update_base_caddr(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
 
-	silofs_fsenv_set_boot_caddr(fsenv, &fs_args->bconf.boot_ref);
+	return silofs_fsenv_set_base_caddr(fsenv, &fs_args->bref.caddr);
 }
 
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
@@ -141,12 +141,13 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 	}
 }
 
-static void fsenv_update_by_fs_args(struct silofs_fsenv *fsenv)
+static int fsenv_update_by_fs_args(struct silofs_fsenv *fsenv)
 {
-	fsenv_update_boot(fsenv);
 	fsenv_update_owner(fsenv);
 	fsenv_update_mntflags(fsenv);
 	fsenv_update_ctlflags(fsenv);
+
+	return fsenv_update_base_caddr(fsenv);
 }
 
 static size_t fsenv_calc_iopen_limit(const struct silofs_fsenv *fsenv)
@@ -167,6 +168,7 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 	memcpy(&fsenv->fse_args, args, sizeof(fsenv->fse_args));
 	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
 	silofs_caddr_reset(&fsenv->fse_boot_caddr);
+	silofs_caddr_reset(&fsenv->fse_pack_caddr);
 	silofs_lsegid_reset(&fsenv->fse_sb_lsegid);
 	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
 	silofs_ivkey_init(&fsenv->fse_main_ivkey);
@@ -291,8 +293,11 @@ int silofs_fsenv_init(struct silofs_fsenv *fsenv,
 	int err;
 
 	fsenv_init_commons(fsenv, args, base);
-	fsenv_update_by_fs_args(fsenv);
 
+	err = fsenv_update_by_fs_args(fsenv);
+	if (err) {
+		return err;
+	}
 	err = fsenv_init_locks(fsenv);
 	if (err) {
 		return err;
@@ -388,10 +393,19 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_fsenv_set_boot_caddr(struct silofs_fsenv *fsenv,
-                                 const struct silofs_caddr *caddr)
+int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
+                                const struct silofs_caddr *caddr)
 {
-	caddr_assign(&fsenv->fse_boot_caddr, caddr);
+	int ret = 0;
+
+	if (caddr->ctype == SILOFS_CTYPE_BOOTREC) {
+		caddr_assign(&fsenv->fse_boot_caddr, caddr);
+	} else if (caddr->ctype == SILOFS_CTYPE_PACKIDX) {
+		caddr_assign(&fsenv->fse_pack_caddr, caddr);
+	} else if (caddr->ctype != SILOFS_CTYPE_NONE) {
+		ret = -SILOFS_EINVAL;
+	}
+	return ret;
 }
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
@@ -609,9 +623,9 @@ void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
 void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
                            struct silofs_bootpath *out_bootpath)
 {
-	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
+	const struct silofs_fs_bref *bref = &fsenv->fse_args.bref;
 
-	silofs_bootpath_setup(out_bootpath, fs_args->repodir, fs_args->name);
+	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
 }
 
 int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,

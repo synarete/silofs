@@ -22,9 +22,6 @@ static const char *cmd_mkfs_help_desc[] = {
 	"options:",
 	"  -s, --size=nbytes            Capacity size limit",
 	"  -u, --user=username          Make username the owner of root-dir",
-	"  -G, --sup-groups             Allow owner's supplementary groups",
-	"  -r, --allow-root             Allow root user and group",
-	"  -F, --force                  Force overwrite if already exists",
 	"  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
@@ -38,9 +35,6 @@ struct cmd_mkfs_in_args {
 	char   *password;
 	char   *username;
 	long    fs_size;
-	bool    allow_root;
-	bool    with_sup_groups;
-	bool    force;
 };
 
 struct cmd_mkfs_ctx {
@@ -60,9 +54,6 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	const struct option opts[] = {
 		{ "size", required_argument, NULL, 's' },
 		{ "user", required_argument, NULL, 'u' },
-		{ "sup-groups", no_argument, NULL, 'G' },
-		{ "allow-root", no_argument, NULL, 'r' },
-		{ "force", no_argument, NULL, 'F' },
 		{ "password", required_argument, NULL, 'p' },
 		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
@@ -70,18 +61,12 @@ static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:u:GrFp:L:h", opts);
+		opt_chr = cmd_getopt("s:u:p:L:h", opts);
 		if (opt_chr == 's') {
 			ctx->in_args.size = optarg;
 			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
 		} else if (opt_chr == 'u') {
 			ctx->in_args.username = cmd_strdup(optarg);
-		} else if (opt_chr == 'G') {
-			ctx->in_args.with_sup_groups = true;
-		} else if (opt_chr == 'r') {
-			ctx->in_args.allow_root = true;
-		} else if (opt_chr == 'F') {
-			ctx->in_args.force = true;
 		} else if (opt_chr == 'p') {
 			cmd_getoptarg_pass(&ctx->in_args.password);
 		} else if (opt_chr == 'L') {
@@ -107,13 +92,13 @@ static void cmd_mkfs_destroy_fsenv(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_fsenv(ctx);
-	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
+	cmd_fini_fs_args(&ctx->fs_args);
 	cmd_mkfs_ctx = NULL;
 }
 
@@ -175,41 +160,22 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
-	uid_t uid;
-	gid_t gid;
 
-	cmd_resolve_uidgid(ctx->in_args.username, &uid, &gid);
-	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, ctx->in_args.name);
-	fs_args->passwd = ctx->in_args.password;
-	fs_args->repodir = ctx->in_args.repodir_real;
-	fs_args->name = ctx->in_args.name;
+	cmd_fs_args_init(fs_args);
+	fs_args->bref.repodir = ctx->in_args.repodir_real;
+	fs_args->bref.name = ctx->in_args.name;
+	fs_args->bref.passwd = ctx->in_args.password;
 	fs_args->capacity = (size_t)ctx->in_args.fs_size;
-	fs_args->uid = uid;
-	fs_args->gid = gid;
 }
 
-static void cmd_mkfs_update_bconf(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_fs_bconf *bconf = &ctx->fs_args.bconf;
+	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	struct silofs_fs_ids *ids = &fs_args->ids;
 	const char *username = ctx->in_args.username;
-	bool with_sup_groups = ctx->in_args.with_sup_groups;
-	char *selfname = NULL;
-	char *rootname = NULL;
 
-	selfname = cmd_getpwuid(getuid());
-	rootname = cmd_getpwuid(0);
-	if (ctx->in_args.allow_root && strcmp(rootname, username)) {
-		cmd_bconf_add_user(bconf, rootname, false);
-	}
-	if (strcmp(selfname, username)) {
-		cmd_bconf_add_user(bconf, selfname, false);
-	}
-	if (strlen(username)) {
-		cmd_bconf_add_user(bconf, username, with_sup_groups);
-	}
-	cmd_pstrfree(&selfname);
-	cmd_pstrfree(&rootname);
+	cmd_fs_ids_load(ids, ctx->in_args.repodir_real);
+	cmd_require_uidgid(ids, username, &fs_args->uid, &fs_args->gid);
 }
 
 static void cmd_mkfs_setup_fsenv(struct cmd_mkfs_ctx *ctx)
@@ -229,12 +195,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_format_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_mkfs_save_bconf(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_bref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_bconf_save(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
+	cmd_bootref_save(&ctx->fs_args.bref);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -269,8 +235,8 @@ void cmd_execute_mkfs(void)
 	/* Setup input arguments */
 	cmd_mkfs_setup_fs_args(&ctx);
 
-	/* Add user-ids configuration */
-	cmd_mkfs_update_bconf(&ctx);
+	/* Setup fs owner and ids */
+	cmd_mkfs_setup_fs_ids(&ctx);
 
 	/* Prepare environment */
 	cmd_mkfs_setup_fsenv(&ctx);
@@ -281,11 +247,11 @@ void cmd_execute_mkfs(void)
 	/* Open repository */
 	cmd_mkfs_open_repo(&ctx);
 
-	/* Do actual mkfs */
+	/* Do actual fs-formatting */
 	cmd_mkfs_format_fs(&ctx);
 
-	/* Save top-level fs-uuid */
-	cmd_mkfs_save_bconf(&ctx);
+	/* Save top-level fs boot-ref */
+	cmd_mkfs_save_bref(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_close_fs(&ctx);

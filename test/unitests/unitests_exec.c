@@ -62,7 +62,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	/* snapshot */
 	UT_DEFTGRP(ut_tdefs_snap_basic),
 	UT_DEFTGRP(ut_tdefs_snap_io),
-	/* re-run some post-snapshot */
+	/* re-run (post snapshot) */
 	UT_DEFTGRP(ut_tdefs_archive),
 	UT_DEFTGRP(ut_tdefs_file_stat),
 	UT_DEFTGRP(ut_tdefs_dir_iter),
@@ -139,7 +139,7 @@ static void ute_setup_random_passwd(struct ut_env *ute)
 
 	pp->passlen = sizeof(pp->pass) - 1;
 	silofs_prandgen_ascii(&ute->prng, (char *)pp->pass, pp->passlen);
-	fs_args->passwd = (const char *)(pp->pass);
+	fs_args->bref.passwd = (const char *)(pp->pass);
 }
 
 static void ute_setup(struct ut_env *ute)
@@ -449,17 +449,18 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	args->fs_args.bconf.ids.users.uids = ut_new_uids();
-	args->fs_args.bconf.ids.users.nuids = 2;
-	args->fs_args.bconf.ids.groups.gids = ut_new_gids();
-	args->fs_args.bconf.ids.groups.ngids = 2;
+	silofs_bootref_init(&args->fs_args.bref);
+	args->fs_args.bref.repodir = ut_globals.test_dir_repo;
+	args->fs_args.bref.name = "unitests";
+	args->fs_args.mntdir = "/";
+	args->fs_args.ids.users.uids = ut_new_uids();
+	args->fs_args.ids.users.nuids = 2;
+	args->fs_args.ids.groups.gids = ut_new_gids();
+	args->fs_args.ids.groups.ngids = 2;
 	args->fs_args.uid = getuid();
 	args->fs_args.gid = getgid();
 	args->fs_args.pid = getpid();
 	args->fs_args.umask = 0002;
-	args->fs_args.repodir = ut_globals.test_dir_repo;
-	args->fs_args.name = "unitests";
-	args->fs_args.mntdir = "/";
 	args->fs_args.capacity = SILOFS_CAPACITY_SIZE_MIN;
 	args->fs_args.memwant = UT_1G;
 	args->fs_args.cflags.pedantic = ut_globals.pedantic;
@@ -470,8 +471,8 @@ static void ut_init_args(struct ut_args *args)
 
 static void ut_fini_args(struct ut_args *args)
 {
-	ut_del_uids(args->fs_args.bconf.ids.users.uids);
-	ut_del_gids(args->fs_args.bconf.ids.groups.gids);
+	ut_del_uids(args->fs_args.ids.users.uids);
+	ut_del_gids(args->fs_args.ids.groups.gids);
 	memset(args, 0, sizeof(*args));
 }
 

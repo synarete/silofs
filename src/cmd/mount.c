@@ -39,8 +39,7 @@ static const char *cmd_mount_help_desc[] = {
 	"  -E  --allow-xattr-acl        Enable ACL via extended attributes",
 	"  -A  --no-allow-other         Do not allow other users",
 	"  -W  --writeback-cache=0|1    Write-back cache mode",
-	"  -B  --buffer-copy-mode       "
-	"Use copy-to-buffer mode (instead of pipe-splice)",
+	"  -B  --buffer-copy-mode       Set FUSE with copy-to-buffer mode",
 	"  -D, --nodaemon               Do not run as daemon process",
 	"  -C, --coredump               Allow core-dumps upon fatal errors",
 	"  -M, --stdalloc               Use standard C allocator",
@@ -231,23 +230,25 @@ static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
 	const struct cmd_mount_in_args *in_args = &ctx->in_args;
 	struct silofs_fs_args *fs_args = &ctx->fs_args;
 
-	cmd_init_fs_args(fs_args);
-	cmd_bconf_set_name(&fs_args->bconf, in_args->name);
-	memcpy(&fs_args->cflags, &in_args->flags, sizeof(fs_args->cflags));
-	fs_args->passwd = in_args->password;
-	fs_args->repodir = in_args->repodir_real;
-	fs_args->name = in_args->name;
+	cmd_fs_args_init2(fs_args, &in_args->flags);
+	fs_args->bref.repodir = in_args->repodir_real;
+	fs_args->bref.name = in_args->name;
+	fs_args->bref.passwd = in_args->password;
 	fs_args->mntdir = in_args->mntpoint_real;
 }
 
-static void cmd_mount_load_bconf(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 {
-	cmd_bconf_load(&ctx->fs_args.bconf, ctx->in_args.repodir_real);
+	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+}
+
+static void cmd_mount_load_bref(struct cmd_mount_ctx *ctx)
+{
+	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
 static void cmd_mount_setup_fsenv(struct cmd_mount_ctx *ctx)
 {
-	ctx->fs_args.passwd = ctx->in_args.password;
 	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
 }
 
@@ -292,7 +293,6 @@ static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_fsenv(ctx);
-	cmd_bconf_fini(&ctx->fs_args.bconf);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -301,6 +301,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
+	cmd_fini_fs_args(&ctx->fs_args);
 	cmd_close_syslog();
 	cmd_mount_ctx = NULL;
 }
@@ -379,12 +380,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bconf);
+	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -674,8 +675,11 @@ void cmd_execute_mount(void)
 	/* Setup input arguments */
 	cmd_mount_setup_fs_args(&ctx);
 
-	/* Require boot-config */
-	cmd_mount_load_bconf(&ctx);
+	/* Load fs-ids mapping */
+	cmd_mount_setup_fs_ids(&ctx);
+
+	/* Load fs boot-reference */
+	cmd_mount_load_bref(&ctx);
 
 	/* Execute pre-mount as command-line process */
 	cmd_mount_exec_phase1(&ctx);

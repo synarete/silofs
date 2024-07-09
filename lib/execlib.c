@@ -121,18 +121,17 @@ static struct silofs_fs_inst *fs_inst_of(struct silofs_fsenv *fsenv)
 
 static int check_bootpath(const struct silofs_fs_args *fs_args)
 {
+	const struct silofs_fs_bref *bref = &fs_args->bref;
 	struct silofs_bootpath bootpath;
 
-	return silofs_bootpath_setup(&bootpath,
-	                             fs_args->repodir,
-	                             fs_args->name);
+	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->name);
 }
 
 static int check_password(const struct silofs_fs_args *fs_args)
 {
 	struct silofs_password passwd;
 
-	return silofs_password_setup(&passwd, fs_args->passwd);
+	return silofs_password_setup(&passwd, fs_args->bref.passwd);
 }
 
 static int check_fs_args(const struct silofs_fs_args *fs_args)
@@ -289,7 +288,7 @@ static void fs_ctx_make_repo_base(const struct silofs_fs_ctx *fs_ctx,
 	if (fs_ctx->args.cflags.rdonly) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_substr_init(&re_base->repodir, fs_ctx->args.repodir);
+	silofs_substr_init(&re_base->repodir, fs_ctx->args.bref.repodir);
 }
 
 static int fs_ctx_setup_repo(struct silofs_fs_ctx *fs_ctx)
@@ -362,22 +361,22 @@ static void fs_ctx_destroy_flusher(struct silofs_fs_ctx *fs_ctx)
 
 static int fs_ctx_setup_idsmap(struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_fs_bconf *bconf = &fs_ctx->args.bconf;
+	const struct silofs_fs_ids *ids = &fs_ctx->args.ids;
+	const struct silofs_fs_cflags *cflags = &fs_ctx->args.cflags;
 	struct silofs_idsmap *idsmap = NULL;
-	const bool allow_hostids = fs_ctx->args.cflags.allow_hostids;
 	int err;
 
 	idsmap = &fs_ctx->inst->fs_core.c.idsmap;
-	err = silofs_idsmap_init(idsmap, fs_ctx->alloc, allow_hostids);
+	err = silofs_idsmap_init(idsmap, fs_ctx->alloc, cflags->allow_hostids);
 	if (err) {
 		return err;
 	}
-	err = silofs_idsmap_populate_uids(idsmap, &bconf->ids.users);
+	err = silofs_idsmap_populate_uids(idsmap, ids);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;
 	}
-	err = silofs_idsmap_populate_gids(idsmap, &bconf->ids.groups);
+	err = silofs_idsmap_populate_gids(idsmap, ids);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;
@@ -520,7 +519,7 @@ static int fs_ctx_setup_password(struct silofs_fs_ctx *fs_ctx)
 	int err;
 
 	passwd = &fs_ctx->inst->fs_core.c.passwd;
-	err = silofs_password_setup(passwd, fs_ctx->args.passwd);
+	err = silofs_password_setup(passwd, fs_ctx->args.bref.passwd);
 	if (err) {
 		return err;
 	}
@@ -1782,7 +1781,7 @@ int silofs_archive_fs(struct silofs_fsenv *fsenv,
 }
 
 static int exec_unpack_fs(struct silofs_fsenv *fsenv,
-                          const struct silofs_caddr *caddr)
+                          struct silofs_caddr *out_caddr)
 {
 	struct silofs_task task;
 	int err;
@@ -1791,17 +1790,17 @@ static int exec_unpack_fs(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unpack(&task, caddr);
+	err = silofs_fs_unpack(&task, out_caddr);
 	return term_task(&task, err);
 }
 
 int silofs_restore_fs(struct silofs_fsenv *fsenv,
-                      const struct silofs_caddr *caddr)
+                      struct silofs_caddr *out_caddr)
 {
 	int err;
 
 	silofs_fsenv_lock(fsenv);
-	err = exec_unpack_fs(fsenv, caddr);
+	err = exec_unpack_fs(fsenv, out_caddr);
 	silofs_fsenv_unlock(fsenv);
 	return err;
 }

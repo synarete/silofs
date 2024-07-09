@@ -734,7 +734,7 @@ int silofs_resave_bootrec(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	silofs_fsenv_set_boot_caddr(fsenv, &caddr);
+	silofs_fsenv_set_base_caddr(fsenv, &caddr);
 	return 0;
 }
 
@@ -798,4 +798,51 @@ int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
 		return err;
 	}
 	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void silofs_bootref_init(struct silofs_fs_bref *bref)
+{
+	silofs_caddr_reset(&bref->caddr);
+	bref->repodir = NULL;
+	bref->name = NULL;
+	bref->passwd = NULL;
+}
+
+void silofs_bootref_fini(struct silofs_fs_bref *bref)
+{
+	silofs_caddr_reset(&bref->caddr);
+	bref->repodir = NULL;
+	bref->name = NULL;
+	bref->passwd = NULL;
+}
+
+void silofs_bootref_assign(struct silofs_fs_bref *bref,
+                           const struct silofs_fs_bref *other)
+{
+	silofs_caddr_assign(&bref->caddr, &other->caddr);
+	bref->repodir = other->repodir;
+	bref->name = other->name;
+	bref->passwd = other->passwd;
+}
+
+void silofs_bootref_update(struct silofs_fs_bref *bref,
+                           const struct silofs_caddr *caddr,
+                           const char *name)
+{
+	silofs_caddr_assign(&bref->caddr, caddr);
+	bref->name = name;
+}
+
+int silofs_bootref_import(struct silofs_fs_bref *bref,
+                          const struct silofs_strbuf *sbuf)
+{
+	return silofs_caddr_by_name(&bref->caddr, sbuf);
+}
+
+void silofs_bootref_export(const struct silofs_fs_bref *bref,
+                           struct silofs_strbuf *sbuf)
+{
+	silofs_caddr_to_name(&bref->caddr, sbuf);
 }

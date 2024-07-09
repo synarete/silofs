@@ -96,11 +96,17 @@ static int caddr_from_str(struct silofs_caddr *caddr, const char *s)
 	struct silofs_strbuf hname;
 	struct silofs_hash256 hash;
 	enum silofs_ctype ctype;
+	size_t len = 0;
 	int vers = 0;
 	int ctyp = 0;
 	uint32_t size = 0;
 	int k = 0;
 	int err = 0;
+
+	len = strlen(s);
+	if ((len < 64) || (len > 128)) {
+		return -SILOFS_EILLSTR;
+	}
 
 	silofs_strbuf_reset(&hname);
 	k = sscanf(s, "silofs.v%d.%d.%x:%64s",

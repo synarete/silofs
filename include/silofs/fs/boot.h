@@ -68,28 +68,20 @@ struct silofs_fs_cflags {
 	bool stdalloc;
 };
 
-/* users & groups id-mappings */
-struct silofs_fs_ids {
-	struct silofs_users_ids         users;
-	struct silofs_groups_ids        groups;
-};
-
-/* file-system's boot configurations */
-struct silofs_fs_bconf {
-	struct silofs_strbuf            name;
-	struct silofs_caddr             boot_ref;
-	struct silofs_caddr             pack_ref;
-	struct silofs_fs_ids            ids;
+/* file-system's boot reference */
+struct silofs_fs_bref {
+	struct silofs_caddr     caddr;
+	const char             *repodir;
+	const char             *name;
+	const char             *passwd;
 };
 
 /* file-system's arguments */
 struct silofs_fs_args {
-	struct silofs_fs_bconf  bconf;
+	struct silofs_fs_bref   bref;
+	struct silofs_fs_ids    ids;
 	struct silofs_fs_cflags cflags;
-	const char             *repodir;
-	const char             *name;
 	const char             *mntdir;
-	const char             *passwd;
 	uid_t                   uid;
 	gid_t                   gid;
 	pid_t                   pid;
@@ -97,6 +89,25 @@ struct silofs_fs_args {
 	size_t                  capacity;
 	size_t                  memwant;
 };
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_bootref_init(struct silofs_fs_bref *bref);
+
+void silofs_bootref_fini(struct silofs_fs_bref *bref);
+
+void silofs_bootref_assign(struct silofs_fs_bref *bref,
+                           const struct silofs_fs_bref *other);
+
+void silofs_bootref_update(struct silofs_fs_bref *bref,
+                           const struct silofs_caddr *caddr,
+                           const char *name);
+
+int silofs_bootref_import(struct silofs_fs_bref *bref,
+                          const struct silofs_strbuf *sbuf);
+
+void silofs_bootref_export(const struct silofs_fs_bref *bref,
+                           struct silofs_strbuf *sbuf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

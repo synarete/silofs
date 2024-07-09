@@ -40,9 +40,10 @@ void cmd_del_fsenv(struct silofs_fsenv **p_fsenv)
 
 static char *cmd_repodir_name(const struct silofs_fsenv *fsenv)
 {
+	const struct silofs_fs_bref *bref = &fsenv->fse_args.bref;
 	char *ret = NULL;
 
-	cmd_join_path(fsenv->fse_args.repodir, fsenv->fse_args.name, &ret);
+	cmd_join_path(bref->repodir, bref->name, &ret);
 	return ret;
 }
 
@@ -156,21 +157,21 @@ void cmd_close_repo(struct silofs_fsenv *fsenv)
 }
 
 void cmd_poke_fs(struct silofs_fsenv *fsenv,
-                 const struct silofs_fs_bconf *bconf)
+                 const struct silofs_fs_bref *bref)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	err = silofs_poke_fs(fsenv, &bconf->boot_ref, &brec);
+	err = silofs_poke_fs(fsenv, &bref->caddr, &brec);
 	cmd_require_ok(fsenv, err, "can not poke fs");
 }
 
 void cmd_poke_archive(struct silofs_fsenv *fsenv,
-                      const struct silofs_fs_bconf *bconf)
+                      const struct silofs_fs_bref *bref)
 {
 	int err;
 
-	err = silofs_poke_archive(fsenv, &bconf->pack_ref);
+	err = silofs_poke_archive(fsenv, &bref->caddr);
 	cmd_require_ok(fsenv, err, "can not poke archive");
 }
 
@@ -183,12 +184,9 @@ static void cmd_do_format_fs(struct silofs_fsenv *fsenv,
 	cmd_require_ok(fsenv, err, "failed to format fs");
 }
 
-void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bconf *bconf)
+void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bref *bref)
 {
-	struct silofs_caddr root_ref;
-
-	cmd_do_format_fs(fsenv, &root_ref);
-	cmd_bconf_set_boot_ref(bconf, &root_ref);
+	cmd_do_format_fs(fsenv, &bref->caddr);
 }
 
 void cmd_close_fs(struct silofs_fsenv *fsenv)
@@ -199,12 +197,11 @@ void cmd_close_fs(struct silofs_fsenv *fsenv)
 	cmd_require_ok(fsenv, err, "failed to close fs");
 }
 
-void cmd_boot_fs(struct silofs_fsenv *fsenv,
-                 const struct silofs_fs_bconf *bconf)
+void cmd_boot_fs(struct silofs_fsenv *fsenv, const struct silofs_fs_bref *bref)
 {
 	int err;
 
-	err = silofs_boot_fs(fsenv, &bconf->boot_ref);
+	err = silofs_boot_fs(fsenv, &bref->caddr);
 	cmd_require_ok(fsenv, err, "failed to boot fs");
 }
 
@@ -234,11 +231,11 @@ void cmd_fork_fs(struct silofs_fsenv *fsenv,
 }
 
 void cmd_unref_fs(struct silofs_fsenv *fsenv,
-                  const struct silofs_fs_bconf *bconf)
+                  const struct silofs_fs_bref *bref)
 {
 	int err;
 
-	err = silofs_unref_fs(fsenv, &bconf->boot_ref);
+	err = silofs_unref_fs(fsenv, &bref->caddr);
 	cmd_require_ok(fsenv, err, "unref-fs error");
 }
 
@@ -256,26 +253,40 @@ void cmd_archive_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
 	int err;
 
 	err = silofs_archive_fs(fsenv, out_caddr);
-	cmd_require_ok(fsenv, err, "pack-fs error");
+	cmd_require_ok(fsenv, err, "archive-fs failure");
 }
 
-void cmd_restore_fs(struct silofs_fsenv *fsenv,
-                    const struct silofs_caddr *caddr)
+void cmd_restore_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = silofs_restore_fs(fsenv, caddr);
-	cmd_require_ok(fsenv, err, "unpack-fs error");
+	err = silofs_restore_fs(fsenv, out_caddr);
+	cmd_require_ok(fsenv, err, "restore-fs failure");
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_init_fs_args(struct silofs_fs_args *fs_args)
+void cmd_fs_args_init(struct silofs_fs_args *fs_args)
 {
 	memset(fs_args, 0, sizeof(*fs_args));
-	cmd_bconf_init(&fs_args->bconf);
+	silofs_bootref_init(&fs_args->bref);
+	cmd_fs_ids_init(&fs_args->ids);
 	fs_args->uid = getuid();
 	fs_args->gid = getgid();
 	fs_args->pid = getpid();
 	fs_args->umask = 0022;
+}
+
+void cmd_fs_args_init2(struct silofs_fs_args *fs_args,
+                       const struct silofs_fs_cflags *fs_cflags)
+{
+	cmd_fs_args_init(fs_args);
+	memcpy(&fs_args->cflags, fs_cflags, sizeof(fs_args->cflags));
+}
+
+void cmd_fini_fs_args(struct silofs_fs_args *fs_args)
+{
+	silofs_bootref_fini(&fs_args->bref);
+	cmd_fs_ids_fini(&fs_args->ids);
+	fs_args->umask = 0;
 }

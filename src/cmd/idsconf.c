@@ -88,38 +88,63 @@ static bool substr_ends_with(const struct silofs_substr *ss, char c)
 	return silofs_substr_ends_with(ss, c);
 }
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+enum idsconf_sec {
+	IDSCONF_SEC_NIL,
+	IDSCONF_SEC_USERS,
+	IDSCONF_SEC_GROUPS,
+};
+
+static const char *s_idsconf_sec_name[] = {
+	[IDSCONF_SEC_NIL] = "",
+	[IDSCONF_SEC_USERS] = "users",
+	[IDSCONF_SEC_GROUPS] = "groups",
+};
+
+
+struct idsconf_ctx {
+	char *path;
+	char *text;
+	int line_no;
+	enum idsconf_sec sec;
+	const struct silofs_substr *line;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 __attribute__((__noreturn__))
-static void cmd_die_by(const struct silofs_substr *ss, const char *prefix)
+static void cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
 {
-	if (ss != NULL) {
-		cmd_dief(errno, "%s: '%.*s'", prefix, ss->len, ss->str);
+	if (ctx && ctx->line_no && ctx->path) {
+		cmd_dief(errno, "%s (%s:%d)", msg, ctx->path, ctx->line_no);
 	} else {
-		cmd_dief(errno, "%s", prefix);
+		cmd_dief(errno, "%s", msg);
 	}
 	silofs_unreachable();
 }
 
-static void
-cmd_parse_uid_by_value(const struct silofs_substr *ss, uid_t *out_uid)
+static void cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
+                                   const struct silofs_substr *ss,
+                                   uid_t *out_uid)
 {
 	char str[64] = "";
 
 	if (ss->len >= sizeof(str)) {
-		cmd_die_by(ss, "not an integer");
+		cmd_die_by(ctx, "not an integer");
 	}
 	substr_copyto(ss, str, sizeof(str));
 	*out_uid = cmd_parse_str_as_uid(str);
 }
 
-static void
-cmd_parse_gid_by_value(const struct silofs_substr *ss, gid_t *out_gid)
+static void cmd_parse_gid_by_value(const struct idsconf_ctx *ctx,
+                                   const struct silofs_substr *ss,
+                                   gid_t *out_gid)
 {
 	char str[64] = "";
 
 	if (ss->len >= sizeof(str)) {
-		cmd_die_by(ss, "not an integer");
+		cmd_die_by(ctx, "not an integer");
 	}
 	substr_copyto(ss, str, sizeof(str));
 	*out_gid = cmd_parse_str_as_gid(str);
@@ -350,47 +375,51 @@ static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-cmd_parse_uid_by_name(const struct silofs_substr *name, uid_t *out_uid)
+static void cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
+                                  const struct silofs_substr *name,
+                                  uid_t *out_uid)
 {
 	char buf[NAME_MAX + 1] = "";
 
 	if (name->len >= sizeof(buf)) {
-		cmd_die_by(name, "illegal user name");
+		cmd_die_by(ctx, "illegal user name");
 	}
 	substr_copyto(name, buf, sizeof(buf) - 1);
 	cmd_resolve_uid_by_name(buf, out_uid);
 }
 
-static void
-cmd_parse_gid_by_name(const struct silofs_substr *name, gid_t *out_gid)
+static void cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
+                                  const struct silofs_substr *name,
+                                  gid_t *out_gid)
 {
 	char buf[NAME_MAX + 1] = "";
 
 	if (name->len >= sizeof(buf)) {
-		cmd_die_by(name, "illegal group name");
+		cmd_die_by(ctx, "illegal group name");
 	}
 	substr_copyto(name, buf, sizeof(buf) - 1);
 	cmd_resolve_gid_by_name(buf, out_gid);
 }
 
-static void cmd_parse_uids(const struct silofs_substr *name,
+static void cmd_parse_uids(const struct idsconf_ctx *ctx,
+                           const struct silofs_substr *name,
                            const struct silofs_substr *suid,
                            struct silofs_uids *out_uids)
 {
-	cmd_parse_uid_by_name(name, &out_uids->fs_uid);
-	cmd_parse_uid_by_value(suid, &out_uids->host_uid);
+	cmd_parse_uid_by_name(ctx, name, &out_uids->fs_uid);
+	cmd_parse_uid_by_value(ctx, suid, &out_uids->host_uid);
 }
 
-static void cmd_parse_gids(const struct silofs_substr *name,
+static void cmd_parse_gids(const struct idsconf_ctx *ctx,
+                           const struct silofs_substr *name,
                            const struct silofs_substr *sgid,
                            struct silofs_gids *out_gids)
 {
-	cmd_parse_gid_by_name(name, &out_gids->host_gid);
-	cmd_parse_gid_by_value(sgid, &out_gids->fs_gid);
+	cmd_parse_gid_by_name(ctx, name, &out_gids->host_gid);
+	cmd_parse_gid_by_value(ctx, sgid, &out_gids->fs_gid);
 }
 
-static void cmd_parse_user_conf(const struct silofs_substr *line,
+static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
                                 struct silofs_uids **uids, size_t *nuids)
 {
 	struct silofs_substr_pair ssp;
@@ -398,18 +427,18 @@ static void cmd_parse_user_conf(const struct silofs_substr *line,
 	struct silofs_substr suid;
 	struct silofs_uids uid;
 
-	substr_split_by(line, '=', &ssp);
+	substr_split_by(ctx->line, '=', &ssp);
 	substr_strip_ws(&ssp.first, &name);
 	substr_strip_ws(&ssp.second, &suid);
 
 	if (substr_isempty(&name) || substr_isempty(&suid)) {
-		cmd_die_by(line, "missing user mapping");
+		cmd_die_by(ctx, "missing user mapping");
 	}
-	cmd_parse_uids(&name, &suid, &uid);
+	cmd_parse_uids(ctx, &name, &suid, &uid);
 	cmd_append_uids1(uids, nuids, &uid);
 }
 
-static void cmd_parse_group_conf(const struct silofs_substr *line,
+static void cmd_parse_group_conf(const struct idsconf_ctx *ctx,
                                  struct silofs_gids **gids, size_t *ngids)
 {
 	struct silofs_substr_pair ssp;
@@ -417,14 +446,14 @@ static void cmd_parse_group_conf(const struct silofs_substr *line,
 	struct silofs_substr sgid;
 	struct silofs_gids gid;
 
-	substr_split_by(line, '=', &ssp);
+	substr_split_by(ctx->line, '=', &ssp);
 	substr_strip_ws(&ssp.first, &name);
 	substr_strip_ws(&ssp.second, &sgid);
 
 	if (substr_isempty(&name) || substr_isempty(&sgid)) {
-		cmd_die_by(line, "missing group mapping");
+		cmd_die_by(ctx, "missing group mapping");
 	}
-	cmd_parse_gids(&name, &sgid, &gid);
+	cmd_parse_gids(ctx, &name, &sgid, &gid);
 	cmd_append_gids1(gids, ngids, &gid);
 }
 
@@ -552,142 +581,131 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-enum cmd_conf_sec {
-	CMD_CONF_SEC_NIL,
-	CMD_CONF_SEC_USERS,
-	CMD_CONF_SEC_GROUPS,
-};
-
-static const char *s_cmd_conf_sec_name[] = {
-	[CMD_CONF_SEC_NIL] = "",
-	[CMD_CONF_SEC_USERS] = "users",
-	[CMD_CONF_SEC_GROUPS] = "groups",
-};
-
-static const char *cmd_conf_sec_to_name(enum cmd_conf_sec sec)
+static const char *idsconf_sec_to_name(enum idsconf_sec sec)
 {
 	const char *sec_name = "";
 
-	if (sec < SILOFS_ARRAY_SIZE(s_cmd_conf_sec_name)) {
-		sec_name = s_cmd_conf_sec_name[sec];
+	if (sec < SILOFS_ARRAY_SIZE(s_idsconf_sec_name)) {
+		sec_name = s_idsconf_sec_name[sec];
 	}
 	return sec_name;
 }
 
-static enum cmd_conf_sec cmd_conf_sec_by_name(const struct silofs_substr *ss)
+static enum idsconf_sec idsconf_sec_by_name(const struct silofs_substr *ss)
 {
 	const char *sec_name;
 
-	for (int i = 0; i < (int)SILOFS_ARRAY_SIZE(s_cmd_conf_sec_name); ++i) {
-		sec_name = s_cmd_conf_sec_name[i];
+	for (int i = 0; i < (int)SILOFS_ARRAY_SIZE(s_idsconf_sec_name); ++i) {
+		sec_name = s_idsconf_sec_name[i];
 		if (substr_isequal(ss, sec_name)) {
-			return (enum cmd_conf_sec)i;
+			return (enum idsconf_sec)i;
 		}
 	}
-	return CMD_CONF_SEC_NIL;
+	return IDSCONF_SEC_NIL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void fs_ids_parse_user_conf(struct silofs_fs_ids *ids,
-                                   const struct silofs_substr *line)
+                                   const struct idsconf_ctx *ctx)
 {
-	cmd_parse_user_conf(line, &ids->users.uids, &ids->users.nuids);
+	cmd_parse_user_conf(ctx, &ids->users.uids, &ids->users.nuids);
 }
 
 static void fs_ids_parse_group_conf(struct silofs_fs_ids *ids,
-                                    const struct silofs_substr *line)
+                                    const struct idsconf_ctx *ctx)
 {
-	cmd_parse_group_conf(line, &ids->groups.gids, &ids->groups.ngids);
+	cmd_parse_group_conf(ctx, &ids->groups.gids, &ids->groups.ngids);
 }
 
 static void fs_ids_parse_line(struct silofs_fs_ids *ids,
-                              enum cmd_conf_sec sec_state,
-                              const struct silofs_substr *line)
+                              const struct idsconf_ctx *ctx)
 {
-	switch (sec_state) {
-	case CMD_CONF_SEC_NIL:
+	switch (ctx->sec) {
+	case IDSCONF_SEC_NIL:
 		break;
-	case CMD_CONF_SEC_USERS:
-		fs_ids_parse_user_conf(ids, line);
+	case IDSCONF_SEC_USERS:
+		fs_ids_parse_user_conf(ids, ctx);
 		break;
-	case CMD_CONF_SEC_GROUPS:
-		fs_ids_parse_group_conf(ids, line);
+	case IDSCONF_SEC_GROUPS:
+		fs_ids_parse_group_conf(ids, ctx);
 		break;
 	default:
-		cmd_die_by(line, "illegal config");
+		cmd_die_by(ctx, "illegal config");
 		break;
 	}
 }
 
-static enum cmd_conf_sec cmd_parse_sec_state(const struct silofs_substr *line)
+static enum idsconf_sec cmd_parse_sec_state(const struct silofs_substr *line)
 {
 	struct silofs_substr ss;
-	enum cmd_conf_sec sec = CMD_CONF_SEC_NIL;
+	enum idsconf_sec sec = IDSCONF_SEC_NIL;
 
 	substr_strip_ws(line, &ss);
 	if (substr_starts_with(&ss, '[') && substr_ends_with(&ss, ']')) {
 		substr_strip_any(&ss, "[]", &ss);
 		substr_strip_ws(&ss, &ss);
-		sec = cmd_conf_sec_by_name(&ss);
+		sec = idsconf_sec_by_name(&ss);
 	}
 	return sec;
 }
 
-static void fs_ids_parse_data(struct silofs_fs_ids *ids,
-                              const struct silofs_substr *data)
+static void fs_ids_parse(struct silofs_fs_ids *ids, struct idsconf_ctx *ctx)
 {
+	struct silofs_substr data;
 	struct silofs_substr_pair pair;
 	struct silofs_substr_pair pair2;
 	struct silofs_substr *line = &pair.first;
 	struct silofs_substr *tail = &pair.second;
 	struct silofs_substr sline;
-	enum cmd_conf_sec sec_curr = CMD_CONF_SEC_NIL;
-	enum cmd_conf_sec sec_next = CMD_CONF_SEC_NIL;
+	enum idsconf_sec sec_next = IDSCONF_SEC_NIL;
 
-	substr_split_by_nl(data, &pair);
+	substr_init(&data, ctx->text);
+	ctx->line_no = 0;
+	ctx->line = line;
+	ctx->sec = IDSCONF_SEC_NIL;
+
+	substr_split_by_nl(&data, &pair);
 	while (!substr_isempty(line) || !substr_isempty(tail)) {
+		ctx->line_no++;
+		ctx->line = line;
+
 		substr_split_by(line, '#', &pair2);
 		substr_strip_ws(&pair2.first, &sline);
 
 		sec_next = cmd_parse_sec_state(&sline);
-		if ((sec_next != CMD_CONF_SEC_NIL) &&
-		    (sec_next != sec_curr)) {
-			sec_curr = sec_next;
+		if ((sec_next != IDSCONF_SEC_NIL) &&
+		    (sec_next != ctx->sec)) {
+			ctx->sec = sec_next;
 		} else if (!substr_isempty(&sline)) {
-			fs_ids_parse_line(ids, sec_curr, &sline);
+			ctx->line = &sline;
+			fs_ids_parse_line(ids, ctx);
 		}
 		substr_split_by_nl(tail, &pair);
 	}
+	ctx->line = NULL;
 }
 
-static void fs_ids_parse(struct silofs_fs_ids *ids, const char *txt)
-{
-	struct silofs_substr dat;
-
-	substr_init(&dat, txt);
-	fs_ids_parse_data(ids, &dat);
-}
-
-static void fs_ids_unparse(const struct silofs_fs_ids *ids, char **out_txt)
+static void fs_ids_unparse(const struct silofs_fs_ids *ids,
+                           struct idsconf_ctx *ctx)
 {
 	const char *sec_name = NULL;
 	char *text = NULL;
 
-	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_USERS);
+	sec_name = idsconf_sec_to_name(IDSCONF_SEC_USERS);
 	cmd_append_section(sec_name, &text);
 	for (size_t i = 0; i < ids->users.nuids; ++i) {
 		cmd_append_user(&ids->users.uids[i], &text);
 	}
 	cmd_append_newline(&text);
 
-	sec_name = cmd_conf_sec_to_name(CMD_CONF_SEC_GROUPS);
+	sec_name = idsconf_sec_to_name(IDSCONF_SEC_GROUPS);
 	cmd_append_section(sec_name, &text);
 	for (size_t j = 0; j < ids->groups.ngids; ++j) {
 		cmd_append_group(&ids->groups.gids[j], &text);
 	}
 	cmd_append_newline(&text);
-	*out_txt = text;
+	ctx->text = text;
 }
 
 static void fs_ids_append_uids(struct silofs_fs_ids *ids,
@@ -700,6 +718,16 @@ static void fs_ids_append_gids(struct silofs_fs_ids *ids,
                                const struct silofs_gids *gids)
 {
 	cmd_append_gids1(&ids->groups.gids, &ids->groups.ngids, gids);
+}
+
+static bool fs_ids_has_host_uid(const struct silofs_fs_ids *ids, uid_t uid)
+{
+	for (size_t i = 0; i < ids->users.nuids; ++i) {
+		if (ids->users.uids[i].host_uid == uid) {
+			return true;
+		}
+	}
+	return false;
 }
 
 static bool fs_ids_has_host_gid(const struct silofs_fs_ids *ids, gid_t gid)
@@ -797,66 +825,28 @@ static void cmd_fs_ids_pathname(const char *basedir, char **out_pathname)
 
 void cmd_fs_ids_load(struct silofs_fs_ids *ids, const char *basedir)
 {
-	char *conf = NULL;
-	char *path = NULL;
+	struct idsconf_ctx ctx = { .line_no = 0 };
 
 	cmd_fs_ids_reset(ids);
-	cmd_fs_ids_pathname(basedir, &path);
-	cmd_load_idsconf_file(path, &conf);
-	cmd_pstrfree(&path);
-	fs_ids_parse(ids, conf);
-	cmd_pstrfree(&conf);
+	cmd_fs_ids_pathname(basedir, &ctx.path);
+	cmd_load_idsconf_file(ctx.path, &ctx.text);
+	fs_ids_parse(ids, &ctx);
+	cmd_pstrfree(&ctx.text);
+	cmd_pstrfree(&ctx.path);
 }
 
 void cmd_fs_ids_save(const struct silofs_fs_ids *ids, const char *basedir)
 {
-	char *conf = NULL;
-	char *path = NULL;
+	struct idsconf_ctx ctx = { .line_no = 0 };
 
-	fs_ids_unparse(ids, &conf);
-	cmd_fs_ids_pathname(basedir, &path);
-	cmd_save_idsconf_file(path, conf);
-	cmd_pstrfree(&conf);
-	cmd_pstrfree(&path);
+	fs_ids_unparse(ids, &ctx);
+	cmd_fs_ids_pathname(basedir, &ctx.path);
+	cmd_save_idsconf_file(ctx.path, ctx.text);
+	cmd_pstrfree(&ctx.text);
+	cmd_pstrfree(&ctx.path);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static int cmd_try_getlogin(char **out_name)
-{
-	char name[LOGIN_NAME_MAX + 1] = "";
-	int err;
-
-	err = getlogin_r(name, sizeof(name) - 1);
-	if (err) {
-		return err;
-	}
-	if (!strlen(name)) {
-		return -ENOENT;
-	}
-	*out_name = cmd_strdup(name);
-	return 0;
-}
-
-char *cmd_getpwuid(uid_t uid)
-{
-	char name[NAME_MAX + 1] = "";
-
-	cmd_resolve_uid_to_name(uid, name, sizeof(name) - 1);
-	return cmd_strdup(name);
-}
-
-char *cmd_getusername(void)
-{
-	char *name = NULL;
-	int err;
-
-	err = cmd_try_getlogin(&name);
-	if (err) {
-		name = cmd_getpwuid(geteuid());
-	}
-	return name;
-}
 
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 {
@@ -878,4 +868,51 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 	*out_uid = pw->pw_uid;
 	*out_gid = pw->pw_gid;
 	cmd_zfree(buf, bsz);
+}
+
+void cmd_require_uidgid(const struct silofs_fs_ids *ids,
+                        const char *name, uid_t *out_uid, gid_t *out_gid)
+{
+	cmd_resolve_uidgid(name, out_uid, out_gid);
+	if (!fs_ids_has_host_uid(ids, *out_uid)) {
+		cmd_dief(0, "missing uid-mapping for user: '%s'", name);
+	}
+	if (!fs_ids_has_host_gid(ids, *out_gid)) {
+		cmd_dief(0, "missing gid-mapping for user: '%s'", name);
+	}
+}
+
+static char *cmd_getlogin(void)
+{
+	char name[LOGIN_NAME_MAX + 1] = "";
+	int err;
+
+	err = getlogin_r(name, sizeof(name) - 1);
+	if (err) {
+		return NULL;
+	}
+	if (!strlen(name)) {
+		return NULL;
+	}
+	return cmd_strdup(name);
+}
+
+char *cmd_getpwuid(uid_t uid)
+{
+	char name[NAME_MAX + 1] = "";
+
+	cmd_resolve_uid_to_name(uid, name, sizeof(name) - 1);
+	return cmd_strdup(name);
+}
+
+static char *cmd_getpwuid_self(void)
+{
+	return cmd_getpwuid(geteuid());
+}
+
+char *cmd_getusername(void)
+{
+	char *name = cmd_getlogin();
+
+	return name ? name : cmd_getpwuid_self();
 }

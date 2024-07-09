@@ -360,8 +360,8 @@ enum silofs_endianness {
 enum silofs_ctype {
 	SILOFS_CTYPE_NONE       = 0,
 	SILOFS_CTYPE_BOOTREC    = 1,
-	SILOFS_CTYPE_ENCSEG     = 2,
-	SILOFS_CTYPE_PACKIDX    = 3,
+	SILOFS_CTYPE_PACKIDX    = 2,
+	SILOFS_CTYPE_ENCSEG     = 3,
 };
 
 /* storage objects sub-types */

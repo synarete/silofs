@@ -2063,6 +2063,6 @@ void ut_restore_fs_ok(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_restore_fs(ute->fsenv, &ute->pack_ref);
+	err = silofs_restore_fs(ute->fsenv, &ute->boot_ref[0]);
 	ut_expect_ok(err);
 }

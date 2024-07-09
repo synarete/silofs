@@ -644,12 +644,6 @@ static int idsmap_resolve_gftoh(const struct silofs_idsmap *idsm,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int idsmap_add_gid(struct silofs_idsmap *idsm,
-                          const struct silofs_gids *gid)
-{
-	return idsmap_insert_gmap(idsm, gid->host_gid, gid->fs_gid);
-}
-
 static int idsmap_add_uid(struct silofs_idsmap *idsm,
                           const struct silofs_uids *uid)
 {
@@ -657,29 +651,39 @@ static int idsmap_add_uid(struct silofs_idsmap *idsm,
 }
 
 int silofs_idsmap_populate_uids(struct silofs_idsmap *idsm,
-                                const struct silofs_users_ids *uids)
+                                const struct silofs_fs_ids *ids)
 {
-	int err = 0;
+	const struct silofs_users_ids *uids = &ids->users;
+	int err;
 
-	if (uids != NULL) {
-		for (size_t i = 0; (i < uids->nuids) && !err; ++i) {
-			err = idsmap_add_uid(idsm, &uids->uids[i]);
+	for (size_t i = 0; i < uids->nuids; ++i) {
+		err = idsmap_add_uid(idsm, &uids->uids[i]);
+		if (err) {
+			return err;
 		}
 	}
-	return err;
+	return 0;
+}
+
+static int idsmap_add_gid(struct silofs_idsmap *idsm,
+                          const struct silofs_gids *gid)
+{
+	return idsmap_insert_gmap(idsm, gid->host_gid, gid->fs_gid);
 }
 
 int silofs_idsmap_populate_gids(struct silofs_idsmap *idsm,
-                                const struct silofs_groups_ids *gids)
+                                const struct silofs_fs_ids *ids)
 {
-	int err = 0;
+	const struct silofs_groups_ids *gids = &ids->groups;
+	int err;
 
-	if (gids != NULL) {
-		for (size_t j = 0; (j < gids->ngids) && !err; ++j) {
-			err = idsmap_add_gid(idsm, &gids->gids[j]);
+	for (size_t j = 0; j < gids->ngids; ++j) {
+		err = idsmap_add_gid(idsm, &gids->gids[j]);
+		if (err) {
+			return err;
 		}
 	}
-	return err;
+	return 0;
 }
 
 void silofs_idsmap_clear(struct silofs_idsmap *idsm)
@@ -731,4 +735,3 @@ int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
 	}
 	return err1 ? err1 : err2;
 }
-

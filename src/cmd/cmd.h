@@ -346,7 +346,26 @@ void cmd_bconf_save_rdonly(const struct silofs_fs_bconf *bconf,
 void cmd_bconf_unlink(const struct silofs_fs_bconf *bconf,
                       const char *basedir);
 
+/* fs-ids config */
+void cmd_fs_ids_unlinkat(const char *basedir);
 
+void cmd_fs_ids_init(struct silofs_fs_ids *ids);
+
+void cmd_fs_ids_fini(struct silofs_fs_ids *ids);
+
+void cmd_fs_ids_assign(struct silofs_fs_ids *ids,
+                       const struct silofs_fs_ids *other);
+
+void cmd_fs_ids_reset(struct silofs_fs_ids *ids);
+
+void cmd_fs_ids_load(struct silofs_fs_ids *ids, const char *basedir);
+
+void cmd_fs_ids_save(const struct silofs_fs_ids *ids, const char *basedir);
+
+void cmd_fs_ids_add_user(struct silofs_fs_ids *ids,
+                         const char *user, bool with_sup_groups);
+
+/* users/groups */
 char *cmd_getpwuid(uid_t uid);
 
 char *cmd_getusername(void);

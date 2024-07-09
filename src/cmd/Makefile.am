@@ -21,6 +21,7 @@ silofs_SOURCES += rmfs.c
 silofs_SOURCES += fsck.c
 silofs_SOURCES += fsexec.c
 silofs_SOURCES += getpass.c
+silofs_SOURCES += idsconf.c
 silofs_SOURCES += init.c
 silofs_SOURCES += locks.c
 silofs_SOURCES += view.c

@@ -68,13 +68,18 @@ struct silofs_fs_cflags {
 	bool stdalloc;
 };
 
+/* users & groups id-mappings */
+struct silofs_fs_ids {
+	struct silofs_users_ids         users;
+	struct silofs_groups_ids        groups;
+};
+
 /* file-system's boot configurations */
 struct silofs_fs_bconf {
 	struct silofs_strbuf            name;
 	struct silofs_caddr             boot_ref;
 	struct silofs_caddr             pack_ref;
-	struct silofs_users_ids         users_ids;
-	struct silofs_groups_ids        groups_ids;
+	struct silofs_fs_ids            ids;
 };
 
 /* file-system's arguments */

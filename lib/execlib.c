@@ -372,12 +372,12 @@ static int fs_ctx_setup_idsmap(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	err = silofs_idsmap_populate_uids(idsmap, &bconf->users_ids);
+	err = silofs_idsmap_populate_uids(idsmap, &bconf->ids.users);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;
 	}
-	err = silofs_idsmap_populate_gids(idsmap, &bconf->groups_ids);
+	err = silofs_idsmap_populate_gids(idsmap, &bconf->ids.groups);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;

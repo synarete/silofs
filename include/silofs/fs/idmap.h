@@ -17,6 +17,9 @@
 #ifndef SILOFS_IDMAP_H_
 #define SILOFS_IDMAP_H_
 
+#include <unistd.h>
+#include <stdbool.h>
+
 /* user-id host-to-fs bidirectional-mapping */
 struct silofs_uids {
 	uid_t host_uid;

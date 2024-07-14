@@ -49,7 +49,6 @@ def test_funtests_nosplice(env: TestEnv) -> None:
     ff_dname = "funtests_nosplice"
     env.exec_init()
     env.exec_mkfs(40)
-    env.update_bconf()
     env.exec_mount(writeback_cache=False, buffer_copy_mode=True)
     tds = env.make_tds(40, ff_dname, 2**22)
     tds.do_makedirs()

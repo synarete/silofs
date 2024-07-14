@@ -155,12 +155,23 @@ class CmdSilofs(CmdExec):
         CmdExec.__init__(self, "silofs")
         self.use_stdalloc = use_stdalloc
         self.allow_coredump = allow_coredump
+        self.giga = 2**30
+        self.tera = 2**40
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def init(self, repodir: Path) -> None:
+    def init(
+        self,
+        repodir: Path,
+        sup_groups: bool = False,
+        allow_root: bool = False,
+    ) -> None:
         args = ["init", repodir]
+        if sup_groups:
+            args = args + ["--sup-groups"]
+        if allow_root:
+            args = args + ["--allow-root"]
         self.execute_sub(args)
 
     # pylint: disable=R0913
@@ -169,23 +180,23 @@ class CmdSilofs(CmdExec):
         repodir_name: Path,
         size: int,
         password: str,
-        sup_groups: bool = False,
-        allow_root: bool = False,
     ) -> None:
-        giga = 2**30
         args = ["mkfs", repodir_name]
-        if (size % giga) == 0:
-            gsize = int(size / giga)
-            args = args + [f"--size={gsize}G"]
-        else:
-            args = args + [f"--size={size}"]
+        srep = self._mkfssize(size)
+        args = args + [f"--size={srep}"]
         if password:
             args = args + [f"--password={password}"]
-        if sup_groups:
-            args = args + ["--sup-groups"]
-        if allow_root:
-            args = args + ["--allow-root"]
         self.execute_sub(args)
+
+    def _mkfssize(self, size: int) -> str:
+        rep = str(size)
+        if (size >= self.tera) and (size % self.tera) == 0:
+            tsize = int(size / self.tera)
+            rep = f"{tsize}T"
+        elif (size >= self.giga) and (size % self.giga) == 0:
+            gsize = int(size / self.giga)
+            rep = f"{gsize}G"
+        return rep
 
     def mount(
         self,

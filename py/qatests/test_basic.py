@@ -92,8 +92,8 @@ def test_show(env: TestEnv) -> None:
 
 def test_mkfs_mount_with_opts(env: TestEnv) -> None:
     fsname = "0123456789abcdef"
-    env.exec_init()
-    env.exec_mkfs(gsize=123, name=fsname, sup_groups=True, allow_root=True)
+    env.exec_init(sup_groups=True, allow_root=True)
+    env.exec_mkfs(gsize=123, name=fsname)
     env.exec_mount(name=fsname, allow_hostids=True, writeback_cache=False)
     tds = env.make_tds(1, "A", 2**21)
     tds.do_makedirs()

@@ -86,7 +86,7 @@ class TestDataSet:
         return list(ret)
 
 
-# pylint: disable=R0904
+# pylint: disable=R0904,R0902
 class TestEnv:
     def __init__(self, name: str, cfg: conf.Config) -> None:
         self.name = name
@@ -95,7 +95,7 @@ class TestEnv:
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
         self.cmd = cmd.Cmds(cfg.params.use_stdalloc, cfg.params.allow_coredump)
-        self.bconf = conf.FsBootConf()
+        self.fsids = conf.FsIdsConf()
 
     @staticmethod
     def suspend(nsec: int) -> None:
@@ -164,25 +164,24 @@ class TestEnv:
     def _passwd(self) -> str:
         return self.cfg.params.password
 
-    def exec_init(self) -> None:
-        self.cmd.silofs.init(self.repodir())
+    def exec_init(
+        self, sup_groups: bool = False, allow_root: bool = False
+    ) -> None:
+        self.cmd.silofs.init(self.repodir(), sup_groups, allow_root)
+        self._update_fsids()
 
     def exec_mkfs(
         self,
         gsize: int = 2,
         name: str = "",
-        sup_groups: bool = False,
-        allow_root: bool = False,
     ):
         gibi = 2**30
-        size = gsize * gibi
         self.cmd.silofs.mkfs(
-            self._repodir_name(name),
-            size,
-            self._passwd(),
-            sup_groups,
-            allow_root,
+            repodir_name=self._repodir_name(name),
+            size=gsize * gibi,
+            password=self._passwd(),
         )
+        self._require_bref(name)
 
     def exec_mount(
         self,
@@ -192,6 +191,7 @@ class TestEnv:
         writeback_cache: bool = True,
         buffer_copy_mode: bool = False,
     ) -> None:
+        self._require_bref(name)
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.mount(
             repodir_name=repodir_name,
@@ -214,25 +214,25 @@ class TestEnv:
     ) -> None:
         self.exec_init()
         self.exec_mkfs(gsize)
-        self.update_bconf()
         self.exec_mount(
             allow_xattr_acl=allow_xattr_acl, writeback_cache=writeback_cache
         )
         self.exec_lsmnt()
 
     def exec_teardown_fs(self) -> None:
-        self.update_bconf()
         self.exec_lsmnt()
         self.exec_umount()
         self.exec_rmfs()
 
     def exec_snap(self, name: str) -> None:
         self.cmd.silofs.snap(name, self.mntpoint(), self._passwd())
+        self._require_bref(name)
 
     def exec_snap_offline(self, mainname: str, snapname: str) -> None:
         self.cmd.silofs.snap_offline(
             snapname, self._repodir_name(mainname), self._passwd()
         )
+        self._require_bref(snapname)
 
     def exec_tune(self, path: Path, ftype: int = 2) -> None:
         self.cmd.silofs.tune(path, ftype)
@@ -242,18 +242,22 @@ class TestEnv:
             self.cmd.silofs.tune(path, 2)
 
     def exec_rmfs(self, name: str = "") -> None:
+        self._require_bref(name)
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.rmfs(repodir_name, self._passwd())
 
     def exec_fsck(self, name: str = "") -> None:
+        self._require_bref(name)
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.fsck(repodir_name, self._passwd())
 
     def exec_view(self, name: str = "") -> list[str]:
+        self._require_bref(name)
         repodir_name = self._repodir_name(name)
         return list(self.cmd.silofs.view(repodir_name, self._passwd()))
 
     def exec_archive(self, arname: str, name: str = "") -> None:
+        self._require_bref(name)
         repodir_name = self._repodir_name(name)
         self.cmd.silofs.archive(repodir_name, arname, self._passwd())
 
@@ -266,8 +270,11 @@ class TestEnv:
         mnts = self.cmd.silofs.lsmnt()
         self.expect.within(mntp, mnts)
 
-    def update_bconf(self, name: str = "") -> None:
-        self.bconf = conf.load_fs_boot_conf(self._repodir_name(name))
+    def _update_fsids(self) -> None:
+        self.fsids = conf.load_fsids(self.repodir())
+
+    def _require_bref(self, name: str = "") -> None:
+        conf.load_bref(self._repodir_name(name))
 
 
 # pylint: disable=R0903

@@ -37,13 +37,11 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class FsBootConfRefs(pydantic.BaseModel):
-    boot: Optional[str] = pydantic.Field(None, max_length=64)
-    pack: Optional[str] = pydantic.Field(None, max_length=64)
+class FsBootRef(pydantic.BaseModel):
+    bref: str = pydantic.Field(str, min_length=64, max_length=128)
 
 
-class FsBootConf(pydantic.BaseModel):
-    refs: FsBootConfRefs = FsBootConfRefs()
+class FsIdsConf(pydantic.BaseModel):
     users: Optional[Dict[str, int]] = {}
     groups: Optional[Dict[str, int]] = {}
 
@@ -63,11 +61,25 @@ def load_config(path: Path) -> Config:
         raise ExpectException(f"non-valid configuration: {path}") from ve
 
 
-def load_fs_boot_conf(path: Path) -> FsBootConf:
+def load_fsids(repodir: Path) -> FsIdsConf:
+    path = repodir / "fsids.conf"
     try:
         json_conf = json.loads(_load_toml_as_json(path))
-        return FsBootConf(**json_conf)
+        return FsIdsConf(**json_conf)
     except toml.TomlDecodeError as tde:
-        raise ExpectException(f"bad fs boot-conf toml: {path}") from tde
+        raise ExpectException(f"bad fs-ids conf: {path}") from tde
     except pydantic.ValidationError as ve:
-        raise ExpectException(f"non-valid fs boot-conf: {path}") from ve
+        raise ExpectException(f"non-valid fs-ids conf: {path}") from ve
+
+
+def load_bref(path: Path) -> FsBootRef:
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        if len(lines) != 1:
+            raise ExpectException(f"bad fs boot-ref: {path}")
+        return FsBootRef(bref=lines[0])
+    except toml.TomlDecodeError as tde:
+        raise ExpectException(f"bad fs boot-ref: {path}") from tde
+    except pydantic.ValidationError as ve:
+        raise ExpectException(f"non-valid fs boot-ref: {path}") from ve

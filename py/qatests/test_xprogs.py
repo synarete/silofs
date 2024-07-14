@@ -31,8 +31,8 @@ def test_rsync(env: TestEnv) -> None:
     if not url:
         return
     name = env.uniq_name()
-    env.exec_init()
-    env.exec_mkfs(20, sup_groups=True)
+    env.exec_init(sup_groups=True)
+    env.exec_mkfs(20)
     env.exec_mount(
         allow_hostids=True,
         allow_xattr_acl=False,

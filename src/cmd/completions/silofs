@@ -10,6 +10,8 @@ _silofs_init() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
+    COMPREPLY+=( $(compgen -W '-u --user= -G --sup-groups' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-R --allow-root' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-L --loglevel= -h --help' -- "$cur") )
   fi
 }
@@ -19,9 +21,7 @@ _silofs_mkfs() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-s --size= -F --force' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-u --user= -G --sup-groups' -- "$cur") )
-    COMPREPLY+=( $(compgen -W '-r --allow-root' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-s --size= -u --user= ' -- "$cur") )
     COMPREPLY+=( $(compgen -W '-L --loglevel= -h ' -- "$cur") )
   fi
 }

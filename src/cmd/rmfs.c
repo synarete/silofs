@@ -50,6 +50,7 @@ static void cmd_rmfs_getopt(struct cmd_rmfs_ctx *ctx)
 {
 	int opt_chr = 1;
 	const struct option opts[] = {
+		{ "password", required_argument, NULL, 'p' },
 		{ "no-prompt", no_argument, NULL, 'P' },
 		{ "loglevel", required_argument, NULL, 'L' },
 		{ "help", no_argument, NULL, 'h' },
@@ -57,8 +58,10 @@ static void cmd_rmfs_getopt(struct cmd_rmfs_ctx *ctx)
 	};
 
 	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("PL:h", opts);
-		if (opt_chr == 'P') {
+		opt_chr = cmd_getopt("p:PL:h", opts);
+		if (opt_chr == 'p') {
+			cmd_getoptarg_pass(&ctx->in_args.password);
+		} else if (opt_chr == 'P') {
 			ctx->in_args.no_prompt = true;
 		} else if (opt_chr == 'L') {
 			cmd_set_log_level_by(optarg);
@@ -168,6 +171,11 @@ static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
 	fs_args->bref.repodir = ctx->in_args.repodir_real;
 	fs_args->bref.name = ctx->in_args.name;
 	fs_args->bref.passwd = ctx->in_args.password;
+}
+
+static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
+{
+	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_rmfs_load_bref(struct cmd_rmfs_ctx *ctx)
@@ -284,6 +292,9 @@ void cmd_execute_rmfs(void)
 
 	/* Setup input arguments */
 	cmd_rmfs_setup_fs_args(&ctx);
+
+	/* Load fs-ids mapping */
+	cmd_rmfs_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
 	cmd_rmfs_load_bref(&ctx);

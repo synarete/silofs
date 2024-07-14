@@ -278,6 +278,11 @@ static void cmd_snap_setup_fs_args(struct cmd_snap_ctx *ctx)
 	fs_args->bref.passwd = ctx->in_args.password;
 }
 
+static void cmd_snap_setup_fs_ids(struct cmd_snap_ctx *ctx)
+{
+	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+}
+
 static void cmd_snap_load_bref(struct cmd_snap_ctx *ctx)
 {
 	cmd_bootref_load(&ctx->fs_args.bref);
@@ -408,6 +413,9 @@ void cmd_execute_snap(void)
 
 	/* Load fs boot-reference */
 	cmd_snap_load_bref(&ctx);
+
+	/* Load fs-ids mapping */
+	cmd_snap_setup_fs_ids(&ctx);
 
 	/* Setup execution environment */
 	cmd_snap_setup_fsenv(&ctx);

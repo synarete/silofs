@@ -164,6 +164,11 @@ static void cmd_archive_setup_fs_args(struct cmd_archive_ctx *ctx)
 	fs_args->bref.passwd = ctx->in_args.password;
 }
 
+static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
+{
+	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+}
+
 static void cmd_archive_load_bref(struct cmd_archive_ctx *ctx)
 {
 	cmd_bootref_load_ar(&ctx->fs_args.bref);
@@ -237,6 +242,9 @@ void cmd_execute_archive(void)
 
 	/* Setup input arguments */
 	cmd_archive_setup_fs_args(&ctx);
+
+	/* Load local fs ids */
+	cmd_archive_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
 	cmd_archive_load_bref(&ctx);

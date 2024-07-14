@@ -147,6 +147,11 @@ static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
 	fs_args->bref.passwd = ctx->in_args.password;
 }
 
+static void cmd_fsck_setup_fs_ids(struct cmd_fsck_ctx *ctx)
+{
+	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+}
+
 static void cmd_fsck_load_bref(struct cmd_fsck_ctx *ctx)
 {
 	cmd_bootref_load(&ctx->fs_args.bref);
@@ -214,6 +219,9 @@ void cmd_execute_fsck(void)
 
 	/* Setup input arguments */
 	cmd_fsck_setup_fs_args(&ctx);
+
+	/* Load fs-ids mapping */
+	cmd_fsck_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
 	cmd_fsck_load_bref(&ctx);

@@ -349,14 +349,15 @@ void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
 	silofs_u8b_from_u64(p + 24, u[3]);
 }
 
-void silofs_hash256_to_name(const struct silofs_hash256 *hash,
-                            struct silofs_strbuf *out_name)
+size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
+                              struct silofs_strbuf *out_name)
 {
 	size_t cnt = 0;
 
 	silofs_strbuf_reset(out_name);
 	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash),
 	                    out_name->str, sizeof(out_name->str) - 1, &cnt);
+	return cnt;
 }
 
 int silofs_hash256_by_name(struct silofs_hash256 *hash,

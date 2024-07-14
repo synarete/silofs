@@ -63,12 +63,19 @@ static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 	const int vers = SILOFS_FMT_VERSION;
 	const int ctype = caddr->ctype;
 	const uint32_t size = caddr->size;
-	int k;
+	size_t hn = 0;
+	size_t pn = 0;
+	char *d = s;
 
-	silofs_hash256_to_name(&caddr->hash, &hname);
-	k = snprintf(s, n, "silofs.v%d.%d.%x:%64s",
-	             vers, ctype, size, hname.str);
-	return (size_t)k;
+	hn = silofs_hash256_to_name(&caddr->hash, &hname);
+	pn = (size_t)snprintf(d, n, "silofs.v%d.%d.%x:", vers, ctype, size);
+	if ((pn + hn) < n) {
+		d += pn;
+		strncpy(d, hname.str, hn);
+		d += hn;
+		*d = '\0';
+	}
+	return (size_t)(d - s);
 }
 
 static int check_ctype_size(enum silofs_ctype ctype, size_t size)

@@ -77,8 +77,8 @@ void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4]);
 void silofs_hash256_from_u64s(struct silofs_hash256 *hash,
                               const uint64_t u[4]);
 
-void silofs_hash256_to_name(const struct silofs_hash256 *hash,
-                            struct silofs_strbuf *out_name);
+size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
+                              struct silofs_strbuf *out_name);
 
 int silofs_hash256_by_name(struct silofs_hash256 *hash,
                            const struct silofs_strbuf *name);

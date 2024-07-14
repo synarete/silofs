@@ -73,13 +73,15 @@ def load_fsids(repodir: Path) -> FsIdsConf:
 
 
 def load_bref(path: Path) -> FsBootRef:
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    if len(lines) != 1:
+        raise ExpectException(f"bad fs boot-ref: {path}")
+    dat = str(lines[0]).strip()
+    if not dat.isascii():
+        raise ExpectException(f"non-ascii fs boot-ref: {path}")
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        if len(lines) != 1:
-            raise ExpectException(f"bad fs boot-ref: {path}")
-        return FsBootRef(bref=lines[0])
-    except toml.TomlDecodeError as tde:
-        raise ExpectException(f"bad fs boot-ref: {path}") from tde
+        bref = FsBootRef(bref=dat)
     except pydantic.ValidationError as ve:
         raise ExpectException(f"non-valid fs boot-ref: {path}") from ve
+    return bref

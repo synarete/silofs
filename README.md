@@ -40,7 +40,7 @@ you may need to install additional development packages in order to
 compile it. On *rpm* or *deb* based systems, an appropriate install
 scripts may be found under the *dist* directory in the source tree:
 
-``` sh
+```console
 $ git clone https://github.com/synarete/silofs
 $ cd silofs
 
@@ -55,7 +55,7 @@ Once all build-dependencies are installed on your local build machine,
 bootstrap the project and execute the standard GNU/autotools build
 process with `configure`, `make` and `make install`:
 
-``` sh
+```console
 $ ./bootstrap
 $ ./configure --sysconfdir=/etc
 $ make
@@ -66,7 +66,7 @@ Alternatively, when running over *rpm* or *deb* based systems, you may
 try installation via package managers. Helper scripts are provided to
 build packages directly from source:
 
-``` sh
+```console
 $ # on rpm-based system:
 $ ./dist/rpm/packagize-rpm.sh
 $ sudo dnf install ./build/dist/silofs-0*.rpm
@@ -98,7 +98,7 @@ The first step after installation, and before mounting any `silofs`
 instance, the administrator of the host machine should add new entries
 to `silofs-mountd.service` (as a privileged user):
 
-``` sh
+```console
 $ echo '/path/to/mntdir' >> /etc/silofs/mountd.conf
 $ systemctl restart silofs-mountd.service
 $ systemctl enable silofs-mountd.service
@@ -117,7 +117,7 @@ would be to define a single file-system (with all its associated
 snapshots) within a single repository. In order to setup a new silofs
 repository over an empty directory, use the `silofs init` command:
 
-``` sh
+```console
 $ silofs init /path/to/repo
 ```
 
@@ -138,7 +138,7 @@ three fundamental parameters:
 
 For example, creating a 100G file-system called `myfs` with:
 
-``` sh
+```console
 $ silofs mkfs --size=100G /path/to/repo/myfs
 enter password: ********
 re-enter password: ********
@@ -157,7 +157,7 @@ actual `mount` system call is performed by an auxiliary daemon process
 However, to enhanced security the user which executes `silofs mount`
 must have read-write access to the mount-point directory:
 
-``` sh
+```console
 $ # ensure mounting service is active
 $ systemctl status silofs-mountd.service
 
@@ -191,7 +191,7 @@ is mounted; however, being a FUSE based file system those requests are
 executed by ordinary user-space process, so normal users may monitor
 its resource utilization using standard command-line tools:
 
-``` sh
+```console
 $ top -p $(pgrep -f "silofs mount")
 
 $ du -sh /path/to/repo/
@@ -204,7 +204,7 @@ as in the mount case, there is no need for elevated privileges. The
 actual `umount` system call is issued by the `silofs-mountd.service`
 daemon:
 
-``` sh
+```console
 $ silofs lsmnt
 /path/to/mntdir
 $ silofs umount /path/to/mntdir
@@ -227,7 +227,7 @@ Creating an online snapshot requires a mounted `silofs` file-system, in
 read-write mode. Upon successful `silofs snap` a new boot configuration
 file with the snapshot name is created at the root of the repository:
 
-``` sh
+```console
 $ silofs mount /path/to/repo/myfs /path/to/mntdir
 $ silofs lsmnt
 /path/to/mntdir
@@ -242,7 +242,7 @@ myfs snap1
 Alternatively, the user may achieve the same result using *offline*
 mode:
 
-``` sh
+```console
 $ silofs umount /path/to/mntdir
 $ silofs snap --name=snap2 --offline /path/to/repo/myfs
 enter password: ********
@@ -254,7 +254,7 @@ myfs snap1 snap2
 In both bases, the newly created snapshot may be mounted as an ordinary
 silofs file-system:
 
-``` sh
+```console
 $ silofs mount /path/to/repo/snap2 /path/to/mntdir
 $ silofs lsmnt
 /path/to/mntdir
@@ -293,7 +293,7 @@ therefore there is no need for additional processing or traversal.
 As a demonstrative example, consider the following set of changes to a
 single file:
 
-``` sh
+```console
 $ # step1: create 1G file with random data
 $ dd if=/dev/urandom of=./a bs=1M count=1024
 $ stat -c "%h %s" ./a

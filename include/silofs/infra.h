@@ -17,10 +17,6 @@
 #ifndef SILOFS_INFRA_H_
 #define SILOFS_INFRA_H_
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
 #include <silofs/macros.h>
@@ -40,6 +36,8 @@
 #include <silofs/infra/pipe.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/socket.h>
+#include <silofs/infra/strchr.h>
+#include <silofs/infra/strview.h>
 #include <silofs/infra/strings.h>
 #include <silofs/infra/strbuf.h>
 #include <silofs/infra/thread.h>

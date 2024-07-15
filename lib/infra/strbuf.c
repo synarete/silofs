@@ -15,8 +15,10 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/infra/strchr.h>
 #include <silofs/infra/strbuf.h>
 #include <silofs/infra/strings.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 

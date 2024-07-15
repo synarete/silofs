@@ -107,7 +107,7 @@ static void cmd_tune_set_iflags(struct cmd_tune_ctx *ctx)
 	} else if (ctx->in_args.ftype == 1) {
 		ctx->iflags_dont = SILOFS_INODEF_FTYPE2;
 	} else {
-		cmd_dief(0, "must provide ftype: %s", "1|2");
+		cmd_die(0, "must provide ftype: %s", "1|2");
 	}
 }
 
@@ -121,11 +121,11 @@ static void cmd_tune_execute(struct cmd_tune_ctx *ctx)
 	ctx->ioc->tune.iflags_dont = ctx->iflags_dont;
 	err = silofs_sys_open(dirpath, O_RDONLY | O_DIRECTORY, 0, &fd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s", dirpath);
+		cmd_die(err, "failed to open: %s", dirpath);
 	}
 	err = silofs_sys_ioctlp(fd, SILOFS_IOC_TUNE, &ctx->ioc->tune);
 	if (err) {
-		cmd_dief(err, "ioctl error: %s", dirpath);
+		cmd_die(err, "ioctl error: %s", dirpath);
 	}
 	silofs_sys_close(fd);
 }

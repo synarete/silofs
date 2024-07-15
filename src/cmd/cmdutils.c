@@ -51,7 +51,7 @@ static int cmd_errnum_of(int err)
 }
 
 __attribute__((__noreturn__))
-void cmd_dief(int err, const char *restrict fmt, ...)
+void cmd_die(int err, const char *restrict fmt, ...)
 {
 	char msg[2048] = "";
 	va_list ap;
@@ -66,13 +66,13 @@ void cmd_dief(int err, const char *restrict fmt, ...)
 __attribute__((__noreturn__))
 static void cmd_fatal_missing_arg(const char *s)
 {
-	cmd_dief(0, "missing argument: '%s'", s);
+	cmd_die(0, "missing argument: '%s'", s);
 }
 
 __attribute__((__noreturn__))
 static void cmd_fatal_redundant_arg(const char *s)
 {
-	cmd_dief(0, "redundant argument: '%s'", s);
+	cmd_die(0, "redundant argument: '%s'", s);
 }
 
 void cmd_require_arg(const char *arg_name, const void *arg_val)
@@ -87,7 +87,7 @@ void cmd_check_repopath(const char *arg_val)
 	const size_t len = strlen(arg_val);
 
 	if ((len < 2) || (len >= SILOFS_REPOPATH_MAX)) {
-		cmd_dief(-EINVAL, "illegal repo pathname: %s", arg_val);
+		cmd_die(-EINVAL, "illegal repo pathname: %s", arg_val);
 	}
 }
 
@@ -98,7 +98,7 @@ void cmd_check_fsname(const char *arg_val)
 
 	err = silofs_make_fsnamestr(&nstr, arg_val);
 	if (err) {
-		cmd_dief(err, "illegal file-system name: %s", arg_val);
+		cmd_die(err, "illegal file-system name: %s", arg_val);
 	}
 }
 
@@ -120,9 +120,9 @@ static void cmd_stat_ok(const char *path, struct stat *st)
 
 	err = silofs_sys_stat(path, st);
 	if (err == -ENOENT) {
-		cmd_dief(0, "no such path: %s", path);
+		cmd_die(0, "no such path: %s", path);
 	} else if (err) {
-		cmd_dief(err, "stat failed: %s", path);
+		cmd_die(err, "stat failed: %s", path);
 	}
 }
 
@@ -134,11 +134,11 @@ static void cmd_check_isdir(const char *path, bool w_ok)
 
 	cmd_stat_ok(path, &st);
 	if (!S_ISDIR(st.st_mode)) {
-		cmd_dief(-ENOTDIR, "illegal dir-path: %s", path);
+		cmd_die(-ENOTDIR, "illegal dir-path: %s", path);
 	}
 	err = silofs_sys_access(path, access_mode);
 	if (err) {
-		cmd_dief(err, "no-access: %s", path);
+		cmd_die(err, "no-access: %s", path);
 	}
 }
 
@@ -150,14 +150,14 @@ void cmd_check_isreg(const char *path)
 
 	cmd_stat_ok(path, &st);
 	if (S_ISDIR(st.st_mode)) {
-		cmd_dief(-EISDIR, "illegal: %s", path);
+		cmd_die(-EISDIR, "illegal: %s", path);
 	}
 	if (!S_ISREG(st.st_mode)) {
-		cmd_dief(0, "not reg: %s", path);
+		cmd_die(0, "not reg: %s", path);
 	}
 	err = silofs_sys_access(path, access_mode);
 	if (err) {
-		cmd_dief(err, "no-access: %s", path);
+		cmd_die(err, "no-access: %s", path);
 	}
 }
 
@@ -176,7 +176,7 @@ void cmd_check_reg_or_dir(const char *path)
 
 	cmd_stat_ok(path, &st);
 	if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode)) {
-		cmd_dief(0, "not dir-or-reg: %s", path);
+		cmd_die(0, "not dir-or-reg: %s", path);
 	}
 }
 
@@ -187,7 +187,7 @@ void cmd_check_notdir(const char *path)
 
 	err = silofs_sys_stat(path, &st);
 	if (!err && S_ISDIR(st.st_mode)) {
-		cmd_dief(EISDIR, "illegal: %s", path);
+		cmd_die(EISDIR, "illegal: %s", path);
 	}
 }
 
@@ -199,13 +199,13 @@ void cmd_check_notexists(const char *path)
 	err = silofs_sys_stat(path, &st);
 	if (!err) {
 		if (S_ISDIR(st.st_mode)) {
-			cmd_dief(0, "directory exists: %s", path);
+			cmd_die(0, "directory exists: %s", path);
 		} else {
-			cmd_dief(0, "path exists: %s", path);
+			cmd_die(0, "path exists: %s", path);
 		}
 	}
 	if (err != -ENOENT) {
-		cmd_dief(err, "stat failure: %s", path);
+		cmd_die(err, "stat failure: %s", path);
 	}
 }
 
@@ -249,11 +249,11 @@ void cmd_check_not_same(const char *path, const char *other)
 	if ((st.st_ino == st_other.st_ino) &&
 	    (st.st_dev == st_other.st_dev)) {
 		if (S_ISDIR(st.st_mode)) {
-			cmd_dief(0, "not different directory: %s", path);
+			cmd_die(0, "not different directory: %s", path);
 		} else if (S_ISREG(st.st_mode)) {
-			cmd_dief(0, "not different file: %s", path);
+			cmd_die(0, "not different file: %s", path);
 		} else {
-			cmd_dief(0, "not different: %s", path);
+			cmd_die(0, "not different: %s", path);
 		}
 	}
 }
@@ -271,8 +271,8 @@ void cmd_check_mntsrv_conn(void)
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
-		cmd_dief(err, "failed to handshake with mountd: "
-		         "sock=@%s", cmd_mntsock_name());
+		cmd_die(err, "failed to handshake with mountd: "
+		        "sock=@%s", cmd_mntsock_name());
 	}
 }
 
@@ -286,9 +286,9 @@ void cmd_check_mntsrv_perm(const char *path)
 
 	err = silofs_mntrpc_mount(path, uid, gid, rdsz, 0, false, true, &fd);
 	if (err == -SILOFS_EMOUNT) {
-		cmd_dief(0, "mount not permitted: %s", path);
+		cmd_die(0, "mount not permitted: %s", path);
 	} else if (err) {
-		cmd_dief(err, "can not mount: %s", path);
+		cmd_die(err, "can not mount: %s", path);
 	}
 }
 
@@ -304,18 +304,18 @@ void cmd_check_nonemptydir(const char *path, bool w_ok)
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
-		cmd_dief(err, "open-dir error: %s", path);
+		cmd_die(err, "open-dir error: %s", path);
 	}
 	err = silofs_sys_getdents(dfd, buf, sizeof(buf), de, nde, &ndes);
 	if (err) {
-		cmd_dief(err, "read dir failure: %s", path);
+		cmd_die(err, "read dir failure: %s", path);
 	}
 	err = silofs_sys_close(dfd);
 	if (err) {
-		cmd_dief(err, "close-dir error: %s", path);
+		cmd_die(err, "close-dir error: %s", path);
 	}
 	if (ndes <= 2) {
-		cmd_dief(0, "an empty directory: %s", path);
+		cmd_die(0, "an empty directory: %s", path);
 	}
 }
 
@@ -331,18 +331,18 @@ void cmd_check_emptydir(const char *path, bool w_ok)
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
-		cmd_dief(err, "open-dir error: %s", path);
+		cmd_die(err, "open-dir error: %s", path);
 	}
 	err = silofs_sys_getdents(dfd, buf, sizeof(buf), de, nde, &ndes);
 	if (err) {
-		cmd_dief(err, "read dir failure: %s", path);
+		cmd_die(err, "read dir failure: %s", path);
 	}
 	err = silofs_sys_close(dfd);
 	if (err) {
-		cmd_dief(err, "close-dir error: %s", path);
+		cmd_die(err, "close-dir error: %s", path);
 	}
 	if (ndes > 2) {
-		cmd_dief(0, "not an empty directory: %s", path);
+		cmd_die(0, "not an empty directory: %s", path);
 	}
 }
 
@@ -352,7 +352,7 @@ void cmd_mkdir(const char *path, mode_t mode)
 
 	err = silofs_sys_mkdir(path, mode);
 	if (err) {
-		cmd_dief(err, "mkdir failed: %s", path);
+		cmd_die(err, "mkdir failed: %s", path);
 	}
 }
 
@@ -362,11 +362,11 @@ static void cmd_access_ok(const char *path)
 
 	err = silofs_sys_access(path, R_OK);
 	if (err == -ENOENT) {
-		cmd_dief(err, "no such path: %s", path);
+		cmd_die(err, "no such path: %s", path);
 	}
 	if (err) {
-		cmd_dief(err, "no access: %s uid=%d gid=%d",
-		         path, getuid(), getgid());
+		cmd_die(err, "no access: %s uid=%d gid=%d",
+		        path, getuid(), getgid());
 	}
 }
 
@@ -377,7 +377,7 @@ static void cmd_statfs_ok(const char *path, struct statfs *stfs)
 	cmd_access_ok(path);
 	err = silofs_sys_statfs(path, stfs);
 	if (err) {
-		cmd_dief(err, "statfs failure: %s", path);
+		cmd_die(err, "statfs failure: %s", path);
 	}
 }
 
@@ -389,7 +389,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 	const struct silofs_fsinfo *fsi = NULL;
 
 	if (strlen(path) >= SILOFS_MNTPATH_MAX) {
-		cmd_dief(0, "illegal mount-path length: %s", path);
+		cmd_die(0, "illegal mount-path length: %s", path);
 	}
 	cmd_check_isdir(path, mount);
 
@@ -398,16 +398,16 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_dief(0, "unknown fstype at: "
-			         "%s fstype=0x%lx", path, fstype);
+			cmd_die(0, "unknown fstype at: "
+			        "%s fstype=0x%lx", path, fstype);
 		}
 		if (fsi->isfuse) {
-			cmd_dief(0, "can not mount over FUSE file-system: "
-			         "%s fstype=0x%lx", path, fstype);
+			cmd_die(0, "can not mount over FUSE file-system: "
+			        "%s fstype=0x%lx", path, fstype);
 		}
 		if (!fsi->allowed) {
-			cmd_dief(0, "not allowed to mount over: "
-			         "%s fstype=0x%lx", path, fstype);
+			cmd_die(0, "not allowed to mount over: "
+			        "%s fstype=0x%lx", path, fstype);
 		}
 		cmd_check_emptydir(path, true);
 	} else {
@@ -415,15 +415,15 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_dief(0, "unknown fstype at: "
-			         "%s fstype=0x%lx", path, fstype);
+			cmd_die(0, "unknown fstype at: "
+			        "%s fstype=0x%lx", path, fstype);
 		}
 		if (!fsi->isfuse) {
-			cmd_dief(0, "not a FUSE file-system: %s", path);
+			cmd_die(0, "not a FUSE file-system: %s", path);
 		}
 		cmd_stat_ok(path, &st);
 		if (st.st_ino != SILOFS_INO_ROOT) {
-			cmd_dief(0, "not a silofs mount-point: %s", path);
+			cmd_die(0, "not a silofs mount-point: %s", path);
 		}
 	}
 }
@@ -434,7 +434,7 @@ void cmd_check_fusefs(const char *path)
 
 	cmd_statfs_ok(path, &stfs);
 	if (!silofs_is_fuse_fstype(stfs.f_type)) {
-		cmd_dief(0, "not on FUSE file-system: %s", path);
+		cmd_die(0, "not on FUSE file-system: %s", path);
 	}
 }
 
@@ -444,7 +444,7 @@ static void cmd_getcwd(char **out_wd)
 {
 	*out_wd = get_current_dir_name();
 	if (*out_wd == NULL) {
-		cmd_dief(errno, "failed to get current working directory");
+		cmd_die(errno, "failed to get current working directory");
 	}
 }
 
@@ -461,7 +461,7 @@ void cmd_getopt_endargs(void)
 void cmd_getoptarg(const char *opt_name, char **out_opt)
 {
 	if (!optarg || !strlen(optarg)) {
-		cmd_dief(0, "missing option argument: %s", opt_name);
+		cmd_die(0, "missing option argument: %s", opt_name);
 	}
 	*out_opt = cmd_strdup(optarg);
 }
@@ -528,7 +528,7 @@ void cmd_getopt_unrecognized(void)
 	} else {
 		opt = optarg;
 	}
-	cmd_dief(0, "unrecognized option: '%s'", opt);
+	cmd_die(0, "unrecognized option: '%s'", opt);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -577,7 +577,7 @@ long cmd_parse_str_as_size(const char *str)
 	return (long)(val * (long double)mul);
 
 illegal_value:
-	cmd_dief(0, "illegal value: %s", str);
+	cmd_die(0, "illegal value: %s", str);
 	return -EINVAL;
 }
 
@@ -589,10 +589,10 @@ static long cmd_parse_str_as_long(const char *str)
 	errno = 0;
 	val = strtol(str, &endptr, 0);
 	if ((endptr == str) || (errno == ERANGE)) {
-		cmd_dief(errno, "bad integer value: %s", str);
+		cmd_die(errno, "bad integer value: %s", str);
 	}
 	if (strlen(endptr) > 1) {
-		cmd_dief(0, "illegal integer value: %s", str);
+		cmd_die(0, "illegal integer value: %s", str);
 	}
 	return val;
 }
@@ -603,7 +603,7 @@ uint32_t cmd_parse_str_as_u32(const char *str)
 
 	val = cmd_parse_str_as_long(str);
 	if ((val < 0) || (val > UINT32_MAX)) {
-		cmd_dief(0, "bad uint32 value: %s", str);
+		cmd_die(0, "bad uint32 value: %s", str);
 	}
 	return (uint32_t)val;
 }
@@ -614,8 +614,8 @@ uint32_t cmd_parse_str_as_u32v(const char *str,  uint32_t vmin, uint32_t vmax)
 
 	val = cmd_parse_str_as_u32(str);
 	if ((val < vmin) || (val > vmax)) {
-		cmd_dief(0, "%s is not within range [%u..%u]",
-		         str, vmin, vmax);
+		cmd_die(0, "%s is not within range [%u..%u]",
+		        str, vmin, vmax);
 	}
 	return val;
 }
@@ -626,7 +626,7 @@ uid_t cmd_parse_str_as_uid(const char *str)
 
 	val = cmd_parse_str_as_long(str);
 	if ((val < 0) || (val > (INT_MAX / 2))) {
-		cmd_dief(0, "illegal uid: %s", str);
+		cmd_die(0, "illegal uid: %s", str);
 	}
 	return (uid_t)val;
 }
@@ -637,7 +637,7 @@ gid_t cmd_parse_str_as_gid(const char *str)
 
 	val = cmd_parse_str_as_long(str);
 	if ((val < 0) || (val > (INT_MAX / 2))) {
-		cmd_dief(0, "illegal gid: %s", str);
+		cmd_die(0, "illegal gid: %s", str);
 	}
 	return (gid_t)val;
 }
@@ -651,7 +651,7 @@ bool cmd_parse_str_as_bool(const char *str)
 	} else if (!strcmp(str, "1") || !strcmp(str, "true")) {
 		val = true;
 	} else {
-		cmd_dief(0, "illegal bool: %s", str);
+		cmd_die(0, "illegal bool: %s", str);
 	}
 	return val;
 }
@@ -670,7 +670,7 @@ static void cmd_daemonize(void)
 
 	err = daemon(0, 1);
 	if (err) {
-		cmd_dief(0, "failed to daemonize");
+		cmd_die(0, "failed to daemonize");
 	}
 
 	/*
@@ -687,7 +687,7 @@ void cmd_fork_daemon(pid_t *out_pid)
 
 	pid = fork();
 	if (pid == -1) {
-		cmd_dief(errno, "fork error");
+		cmd_die(errno, "fork error");
 	}
 	if (pid == 0) {
 		cmd_daemonize();
@@ -720,7 +720,7 @@ static void cmd_setup_dumpable(void)
 
 	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
 	if (err) {
-		cmd_dief(err, "prctl PR_SET_DUMPABLE failed: state=%d", state);
+		cmd_die(err, "prctl PR_SET_DUMPABLE failed: state=%d", state);
 	}
 }
 
@@ -731,7 +731,7 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 
 	err = silofs_sys_getrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
-		cmd_dief(err, "failed to getrlimit RLIMIT_CORE");
+		cmd_die(err, "failed to getrlimit RLIMIT_CORE");
 	}
 	if (enable_coredump) {
 		rlim.rlim_cur = rlim.rlim_max;
@@ -740,9 +740,9 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 	}
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
-		cmd_dief(err, "failed to setrlimit RLIMIT_CORE: "
-		         "rlim_cur=%zu rlim_max=%zu",
-		         rlim.rlim_cur, rlim.rlim_max);
+		cmd_die(err, "failed to setrlimit RLIMIT_CORE: "
+		        "rlim_cur=%zu rlim_max=%zu",
+		        rlim.rlim_cur, rlim.rlim_max);
 	}
 	if (enable_coredump) {
 		cmd_setup_dumpable();
@@ -753,7 +753,7 @@ void cmd_realpath(const char *path, char **out_real)
 {
 	*out_real = realpath(path, NULL);
 	if (*out_real == NULL) {
-		cmd_dief(-errno, "realpath failure: '%s'", path);
+		cmd_die(-errno, "realpath failure: '%s'", path);
 	}
 }
 
@@ -773,7 +773,7 @@ void cmd_stat_dir(const char *path, struct stat *st)
 {
 	cmd_stat_ok(path, st);
 	if (!S_ISDIR(st->st_mode)) {
-		cmd_dief(0, "not a directory: %s", path);
+		cmd_die(0, "not a directory: %s", path);
 	}
 }
 
@@ -790,10 +790,10 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 	} else {
 		tail_len = strlen(sep + 1);
 		if (!tail_len) {
-			cmd_dief(0, "missing filename: %s", path);
+			cmd_die(0, "missing filename: %s", path);
 		}
 		if (sep == path) {
-			cmd_dief(0, "missing basename: %s", path);
+			cmd_die(0, "missing basename: %s", path);
 		}
 		head_len = (size_t)(sep - path);
 		*out_head = cmd_strndup(path, head_len);
@@ -841,7 +841,7 @@ void *cmd_zalloc(size_t nbytes)
 
 	err = silofs_zmalloc(nbytes, &mem);
 	if (err) {
-		cmd_dief(-err, "alloc failed: nbytes=%lu", nbytes);
+		cmd_die(-err, "alloc failed: nbytes=%lu", nbytes);
 	}
 	return mem;
 }
@@ -866,7 +866,7 @@ char *cmd_strdup(const char *s)
 	char *d = strdup(s);
 
 	if (d == NULL) {
-		cmd_dief(errno, "strdup failed");
+		cmd_die(errno, "strdup failed");
 	}
 	return d;
 }
@@ -876,7 +876,7 @@ char *cmd_strndup(const char *s, size_t n)
 	char *d = strndup(s, n);
 
 	if (d == NULL) {
-		cmd_dief(errno, "strndup failed: n=%lu", n);
+		cmd_die(errno, "strndup failed: n=%lu", n);
 	}
 	return d;
 }
@@ -894,7 +894,7 @@ char *cmd_mkpathf(const char *fmt, ...)
 	va_end(ap);
 
 	if (n >= (int)path_size) {
-		cmd_dief(0, "illegal path-len %d", n);
+		cmd_die(0, "illegal path-len %d", n);
 	}
 	path_dup = cmd_strdup(path);
 	cmd_pstrfree(&path);
@@ -948,7 +948,7 @@ static void cmd_openat(int dfd, const char *name, int flags, int *out_fd)
 
 	err = silofs_sys_openat(dfd, name, flags, 0, out_fd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s flags=%o", name, flags);
+		cmd_die(err, "failed to open: %s flags=%o", name, flags);
 	}
 }
 
@@ -958,7 +958,7 @@ static void cmd_opendir(const char *pathname, int *out_dfd)
 
 	err = silofs_sys_opendir(pathname, out_dfd);
 	if (err) {
-		cmd_dief(err, "failed to open directory: %s", pathname);
+		cmd_die(err, "failed to open directory: %s", pathname);
 	}
 }
 
@@ -968,7 +968,7 @@ static void cmd_read(int fd, void *buf, size_t cnt, size_t *nrd)
 
 	err = silofs_sys_read(fd, buf, cnt, nrd);
 	if (err) {
-		cmd_dief(err, "read error");
+		cmd_die(err, "read error");
 	}
 }
 
@@ -999,7 +999,7 @@ static void cmd_closefd(int *pfd)
 
 	err = silofs_sys_closefd(pfd);
 	if (err) {
-		cmd_dief(err, "close error: fd=%d", *pfd);
+		cmd_die(err, "close error: fd=%d", *pfd);
 	}
 }
 

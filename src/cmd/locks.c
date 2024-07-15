@@ -78,7 +78,7 @@ static void cmd_lockfile_opendir(struct cmd_lockfile_ctx *lf_ctx)
 
 	err = silofs_sys_opendir(lf_ctx->repodir, &lf_ctx->dfd);
 	if (err) {
-		cmd_dief(err, "failed to open repodir: %s", lf_ctx->repodir);
+		cmd_die(err, "failed to open repodir: %s", lf_ctx->repodir);
 	}
 }
 
@@ -107,11 +107,11 @@ static void cmd_lockfile_wait_noent(const struct cmd_lockfile_ctx *lf_ctx)
 	}
 
 	if (!err) {
-		cmd_dief(0, "lock-file exists: %s/%s",
-		         lf_ctx->repodir, lf_ctx->lockname);
+		cmd_die(0, "lock-file exists: %s/%s",
+		        lf_ctx->repodir, lf_ctx->lockname);
 	} else if (err != -ENOENT) {
-		cmd_dief(err, "fail to stat lock-file: %s/%s",
-		         lf_ctx->repodir, lf_ctx->lockname);
+		cmd_die(err, "fail to stat lock-file: %s/%s",
+		        lf_ctx->repodir, lf_ctx->lockname);
 	}
 }
 
@@ -123,14 +123,14 @@ static void cmd_lockfile_mktemp(const struct cmd_lockfile_ctx *lf_ctx)
 	err = silofs_sys_openat(lf_ctx->dfd, lf_ctx->tempname,
 	                        O_CREAT | O_RDWR, 0600, &fd);
 	if (err) {
-		cmd_dief(err, "failed to create temp lock-file: %s/%s",
-		         lf_ctx->repodir, lf_ctx->tempname);
+		cmd_die(err, "failed to create temp lock-file: %s/%s",
+		        lf_ctx->repodir, lf_ctx->tempname);
 	}
 	err = silofs_sys_writen(fd, lf_ctx->data, strlen(lf_ctx->data));
 	if (err) {
 		silofs_sys_unlinkat(lf_ctx->dfd, lf_ctx->tempname, 0);
-		cmd_dief(err, "failed to write temp lock-file: %s/%s",
-		         lf_ctx->repodir, lf_ctx->tempname);
+		cmd_die(err, "failed to write temp lock-file: %s/%s",
+		        lf_ctx->repodir, lf_ctx->tempname);
 	}
 	silofs_sys_closefd(&fd);
 }
@@ -144,8 +144,8 @@ static void cmd_lockfile_mklock(const struct cmd_lockfile_ctx *lf_ctx)
 	                           RENAME_NOREPLACE);
 	if (err) {
 		silofs_sys_unlinkat(lf_ctx->dfd, lf_ctx->tempname, 0);
-		cmd_dief(err, "failed to rename lock-file: %s/%s --> %s",
-		         lf_ctx->repodir, lf_ctx->tempname, lf_ctx->lockname);
+		cmd_die(err, "failed to rename lock-file: %s/%s --> %s",
+		        lf_ctx->repodir, lf_ctx->tempname, lf_ctx->lockname);
 	}
 }
 
@@ -196,14 +196,14 @@ static void cmd_open_repo_lock(const char *path, int *out_fd)
 
 	err = silofs_sys_open(path, O_RDWR, 0, &fd);
 	if (err) {
-		cmd_dief(err, "failed to open repo lock: %s", path);
+		cmd_die(err, "failed to open repo lock: %s", path);
 	}
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
-		cmd_dief(err, "failed to stat repo lock: %s", path);
+		cmd_die(err, "failed to stat repo lock: %s", path);
 	}
 	if (st.st_size != SILOFS_REPO_METAFILE_SIZE) {
-		cmd_dief(0, "bad repo lock: %s", path);
+		cmd_die(0, "bad repo lock: %s", path);
 	}
 	*out_fd = fd;
 }
@@ -214,7 +214,7 @@ static void cmd_close_repo_lock(const char *path, int *pfd)
 
 	err = silofs_sys_close(*pfd);
 	if (err) {
-		cmd_dief(err, "failed to close repo lock: %s", path);
+		cmd_die(err, "failed to close repo lock: %s", path);
 	}
 	*pfd = -1;
 }
@@ -227,12 +227,12 @@ static void cmd_acquire_repo_lock(const char *path, int fd, bool wrlck)
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
-		cmd_dief(err, "failed to stat repo lock: %s", path);
+		cmd_die(err, "failed to stat repo lock: %s", path);
 	}
 	fl.l_len = st.st_size;
 	err = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
 	if (err) {
-		cmd_dief(err, "failed to acquire repo lock: %s", path);
+		cmd_die(err, "failed to acquire repo lock: %s", path);
 	}
 }
 
@@ -244,12 +244,12 @@ static void cmd_release_repo_lock(const char *path, int fd)
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
-		cmd_dief(err, "failed to stat repo lock: %s", path);
+		cmd_die(err, "failed to stat repo lock: %s", path);
 	}
 	fl.l_len = st.st_size;
 	err = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
 	if (err) {
-		cmd_dief(err, "failed to release repo lock: %s", path);
+		cmd_die(err, "failed to release repo lock: %s", path);
 	}
 }
 

@@ -124,7 +124,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 
 	len = strlen(optarg);
 	if (len >= sizeof(subopts)) {
-		cmd_dief(0, "too many sub-options: %s", optarg);
+		cmd_die(0, "too many sub-options: %s", optarg);
 	}
 	memcpy(subopts, optarg, len);
 	sopt = subopts;
@@ -152,7 +152,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
 			ctx->in_args.password = cmd_duppass(sval);
 		} else {
-			cmd_dief(0, "illegal sub-options: %s", optarg);
+			cmd_die(0, "illegal sub-options: %s", optarg);
 		}
 	}
 }

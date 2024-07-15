@@ -35,19 +35,19 @@ static void write_newline(void)
 static void check_password_char(int ch)
 {
 	if (!isascii(ch)) {
-		cmd_dief(-EINVAL, "non ASCII char in password");
+		cmd_die(-EINVAL, "non ASCII char in password");
 	}
 	if (iscntrl(ch)) {
-		cmd_dief(-EINVAL, "control char in password");
+		cmd_die(-EINVAL, "control char in password");
 	}
 	if (isspace(ch)) {
-		cmd_dief(-EINVAL, "space char in password");
+		cmd_die(-EINVAL, "space char in password");
 	}
 	if (!isprint(ch)) {
-		cmd_dief(-EINVAL, "non printable char in password");
+		cmd_die(-EINVAL, "non printable char in password");
 	}
 	if (!isalnum(ch) && !ispunct(ch)) {
-		cmd_dief(-EINVAL, "illegal char in password");
+		cmd_die(-EINVAL, "illegal char in password");
 	}
 }
 
@@ -69,10 +69,10 @@ static char *parse_dup_password(const char *buf, size_t bsz)
 		len--;
 	}
 	if (len == 0) {
-		cmd_dief(-EINVAL, "zero length password");
+		cmd_die(-EINVAL, "zero length password");
 	}
 	if (len > SILOFS_PASSWORD_MAX) {
-		cmd_dief(-EINVAL, "password too long");
+		cmd_die(-EINVAL, "password too long");
 	}
 	for (size_t i = 0; i < len; ++i) {
 		check_password_char(str[i]);
@@ -88,15 +88,15 @@ read_password_buf_from_fd(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = silofs_sys_read(fd, buf, bsz, out_len);
 	if (err) {
-		cmd_dief(err, "failed to read password");
+		cmd_die(err, "failed to read password");
 	}
 	if (*out_len == 0) {
-		cmd_dief(-EINVAL, "zero-length password");
+		cmd_die(-EINVAL, "zero-length password");
 	}
 	if (*out_len == bsz) {
 		err = silofs_sys_read(fd, &ch, 1, &nrd);
 		if (!err && (nrd > 0)) {
-			cmd_dief(-EINVAL, "password too long");
+			cmd_die(-EINVAL, "password too long");
 		}
 	}
 }
@@ -109,13 +109,13 @@ read_password_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
-		cmd_dief(err, "fstat failed");
+		cmd_die(err, "fstat failed");
 	}
 	if (!st.st_size) {
-		cmd_dief(-EINVAL, "zero-length password file");
+		cmd_die(-EINVAL, "zero-length password file");
 	}
 	if (st.st_size > (loff_t)bsz) {
-		cmd_dief(-EFBIG, "illegal password file size");
+		cmd_die(-EFBIG, "illegal password file size");
 	}
 	read_password_buf_from_fd(fd, buf, (size_t)st.st_size, out_len);
 }
@@ -131,7 +131,7 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = tcgetattr(fd, &tr_old);
 	if (err) {
-		cmd_dief(errno, "tcgetattr fd=%d", fd);
+		cmd_die(errno, "tcgetattr fd=%d", fd);
 	}
 	memcpy(&tr_new, &tr_old, sizeof(tr_new));
 	tr_new.c_lflag &= ~((tcflag_t)ECHO);
@@ -141,7 +141,7 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 	tr_new.c_cc[VTIME] = 0;
 	err = tcsetattr(fd, TCSANOW, &tr_new);
 	if (err) {
-		cmd_dief(errno, "tcsetattr fd=%d", fd);
+		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
 
 	read_err = silofs_sys_read(fd, buf, bsz, out_len);
@@ -149,19 +149,19 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = tcsetattr(fd, TCSANOW, &tr_old);
 	if (err) {
-		cmd_dief(errno, "tcsetattr fd=%d", fd);
+		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
 
 	err = read_err;
 	if (err) {
-		cmd_dief(err, "read password error");
+		cmd_die(err, "read password error");
 	}
 	if (*out_len == 0) {
-		cmd_dief(-EINVAL, "read zero-length password");
+		cmd_die(-EINVAL, "read zero-length password");
 	}
 	pass = buf;
 	if (pass[*out_len - 1] != '\n') {
-		cmd_dief(-EINVAL, "password too long");
+		cmd_die(-EINVAL, "password too long");
 	}
 }
 
@@ -195,11 +195,11 @@ static int open_password_fd(const char *path)
 	}
 	err = silofs_sys_access(path, R_OK);
 	if (err) {
-		cmd_dief(err, "no read access to password file %s", path);
+		cmd_die(err, "no read access to password file %s", path);
 	}
 	err = silofs_sys_open(path, O_RDONLY, 0, &fd);
 	if (err) {
-		cmd_dief(err, "can not open password file %s", path);
+		cmd_die(err, "can not open password file %s", path);
 	}
 	return fd;
 }
@@ -211,7 +211,7 @@ static void close_password_fd(int fd, const char *path)
 	if (path != NULL) {
 		err = silofs_sys_close(fd);
 		if (err) {
-			cmd_dief(err, "close failed: %s", path);
+			cmd_die(err, "close failed: %s", path);
 		}
 	}
 }
@@ -250,7 +250,7 @@ static char *do_getpass(const char *path, bool with_prompt, bool repeat)
 	if (strcmp(pass, pass2) != 0) {
 		cmd_delpass(&pass);
 		cmd_delpass(&pass2);
-		cmd_dief(0, "password not equal");
+		cmd_die(0, "password not equal");
 	}
 	cmd_delpass(&pass2);
 	return pass;

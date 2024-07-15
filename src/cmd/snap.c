@@ -206,11 +206,11 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s", path);
+		cmd_die(err, "failed to open: %s", path);
 	}
 	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
-		cmd_dief(err, "ioctl error: %s", path);
+		cmd_die(err, "ioctl error: %s", path);
 	}
 	silofs_sys_closefd(&dfd);
 }
@@ -226,19 +226,19 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
 	if (err) {
-		cmd_dief(err, "failed to open dir: %s", dirpath);
+		cmd_die(err, "failed to open dir: %s", dirpath);
 	}
 	err = silofs_sys_syncfs(dfd);
 	if (err) {
-		cmd_dief(err, "syncfs error: %s", dirpath);
+		cmd_die(err, "syncfs error: %s", dirpath);
 	}
 	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_CLONE, cl);
 	silofs_sys_close(dfd);
 	if (err == -ENOTTY) {
-		cmd_dief(err, "ioctl error: %s", dirpath);
+		cmd_die(err, "ioctl error: %s", dirpath);
 	} else if (err) {
-		cmd_dief(err, "failed to snap: %s",
-		         ctx->in_args.repodir_name);
+		cmd_die(err, "failed to snap: %s",
+		        ctx->in_args.repodir_name);
 	}
 
 	silofs_strbuf_setup_by(&name, cl->boot_new);
@@ -257,11 +257,11 @@ static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_open(dirpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s", dirpath);
+		cmd_die(err, "failed to open: %s", dirpath);
 	}
 	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_SYNCFS, &ctx->ioc->syncfs);
 	if (err) {
-		cmd_dief(err, "ioctl error: %s", dirpath);
+		cmd_die(err, "ioctl error: %s", dirpath);
 	}
 	silofs_sys_close(dfd);
 }

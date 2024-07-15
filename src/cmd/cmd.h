@@ -101,7 +101,7 @@ void cmd_execute_restore(void);
 
 /* fatal-error handling */
 __attribute__((__noreturn__))
-void cmd_dief(int errnum, const char *restrict fmt, ...);
+void cmd_die(int errnum, const char *restrict fmt, ...);
 
 /* common utilities */
 void cmd_require_arg(const char *arg_name, const void *arg_val);

@@ -89,7 +89,7 @@ static void register_sigaction(int signum, const struct sigaction *sa)
 
 	err = silofs_sys_sigaction(signum, sa, NULL);
 	if (err) {
-		cmd_dief(err, "sigaction error: signum=%d", signum);
+		cmd_die(err, "sigaction error: signum=%d", signum);
 	}
 }
 

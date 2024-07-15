@@ -117,9 +117,9 @@ __attribute__((__noreturn__))
 static void cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
 {
 	if (ctx && ctx->line_no && ctx->path) {
-		cmd_dief(errno, "%s (%s:%d)", msg, ctx->path, ctx->line_no);
+		cmd_die(errno, "%s (%s:%d)", msg, ctx->path, ctx->line_no);
 	} else {
-		cmd_dief(errno, "%s", msg);
+		cmd_die(errno, "%s", msg);
 	}
 	silofs_unreachable();
 }
@@ -158,7 +158,7 @@ static size_t cmd_sysconf(int key)
 
 	ret = sysconf(key);
 	if (ret < 0) {
-		cmd_dief(errno, "sysconf error: key=%d", key);
+		cmd_die(errno, "sysconf error: key=%d", key);
 	}
 	return (size_t)key;
 }
@@ -187,10 +187,10 @@ static void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid)
 	buf = cmd_zalloc(bsz);
 	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
 	if (err) {
-		cmd_dief(err, "failed to resolve user name: %s", name);
+		cmd_die(err, "failed to resolve user name: %s", name);
 	}
 	if (pw == NULL) {
-		cmd_dief(0, "unknown user name: %s", name);
+		cmd_die(0, "unknown user name: %s", name);
 	}
 	*out_uid = pw->pw_uid;
 	cmd_zfree(buf, bsz);
@@ -208,10 +208,10 @@ static void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid)
 	buf = cmd_zalloc(bsz);
 	err = getgrnam_r(name, &grp, buf, bsz, &gr);
 	if (err) {
-		cmd_dief(err, "failed to resolve group name: %s", name);
+		cmd_die(err, "failed to resolve group name: %s", name);
 	}
 	if (gr == NULL) {
-		cmd_dief(0, "unknown group name: %s", name);
+		cmd_die(0, "unknown group name: %s", name);
 	}
 	*out_gid = gr->gr_gid;
 	cmd_zfree(buf, bsz);
@@ -230,14 +230,14 @@ static void cmd_resolve_uid_to_name(uid_t uid, char *name, size_t nsz)
 	buf = cmd_zalloc(bsz);
 	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
 	if (err) {
-		cmd_dief(err, "failed to resolve uid: %u", uid);
+		cmd_die(err, "failed to resolve uid: %u", uid);
 	}
 	if ((pw == NULL) || (pw->pw_name == NULL)) {
-		cmd_dief(0, "unknown uid: %u", uid);
+		cmd_die(0, "unknown uid: %u", uid);
 	}
 	len = strlen(pw->pw_name);
 	if (!len || (len >= nsz)) {
-		cmd_dief(-ENAMETOOLONG, "bad user name: %s", pw->pw_name);
+		cmd_die(-ENAMETOOLONG, "bad user name: %s", pw->pw_name);
 	}
 	strncpy(name, pw->pw_name, nsz);
 	cmd_zfree(buf, bsz);
@@ -256,14 +256,14 @@ static void cmd_resolve_gid_to_name(gid_t gid, char *name, size_t nsz)
 	buf = cmd_zalloc(bsz);
 	err = getgrgid_r(gid, &grp, buf, bsz, &gr);
 	if (err) {
-		cmd_dief(err, "failed to resolve gid: %u", gid);
+		cmd_die(err, "failed to resolve gid: %u", gid);
 	}
 	if ((gr == NULL) || (gr->gr_name == NULL)) {
-		cmd_dief(0, "unknown gid: %u", gid);
+		cmd_die(0, "unknown gid: %u", gid);
 	}
 	len = strlen(gr->gr_name);
 	if (!len || (len >= nsz)) {
-		cmd_dief(-ENAMETOOLONG, "bad group name: %s", gr->gr_name);
+		cmd_die(-ENAMETOOLONG, "bad group name: %s", gr->gr_name);
 	}
 	strncpy(name, gr->gr_name, nsz);
 	cmd_zfree(buf, bsz);
@@ -533,29 +533,29 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 
 	err = silofs_sys_stat(pathname, &st);
 	if (err) {
-		silofs_die(err, "stat failure: %s", pathname);
+		cmd_die(err, "stat failure: %s", pathname);
 	}
 	if (!S_ISREG(st.st_mode)) {
-		silofs_die(0, "not a regular file: %s", pathname);
+		cmd_die(0, "not a regular file: %s", pathname);
 	}
 	size = (size_t)st.st_size;
 	if (size >= SILOFS_MEGA) {
-		silofs_die(-EFBIG, "illegal ids-config file: %s", pathname);
+		cmd_die(-EFBIG, "illegal ids-config file: %s", pathname);
 	}
 	err = silofs_sys_open(pathname, O_RDONLY, 0, &fd);
 	if (err) {
-		silofs_die(err, "failed to open: %s", pathname);
+		cmd_die(err, "failed to open: %s", pathname);
 	}
 
 	txt = cmd_zalloc(size + 1);
 	err = silofs_sys_readn(fd, txt, size);
 	if (err) {
-		silofs_die(err, "failed to read: %s", pathname);
+		cmd_die(err, "failed to read: %s", pathname);
 	}
 	silofs_sys_close(fd);
 
 	if (!isascii_idsconf(txt, size)) {
-		silofs_die(0, "non-ascii character in: %s", pathname);
+		cmd_die(0, "non-ascii character in: %s", pathname);
 	}
 	*out_txt = txt;
 }
@@ -569,12 +569,12 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 	err = silofs_sys_open(pathname, O_CREAT | O_RDWR | O_TRUNC,
 	                      S_IRUSR | S_IWUSR | S_IRGRP, &fd);
 	if (err) {
-		silofs_die(err, "failed to create ids-config: %s", pathname);
+		cmd_die(err, "failed to create ids-config: %s", pathname);
 	}
 
 	err = silofs_sys_writen(fd, txt, len);
 	if (err) {
-		silofs_die(err, "failed to write ids-config: %s", pathname);
+		cmd_die(err, "failed to write ids-config: %s", pathname);
 	}
 	silofs_sys_closefd(&fd);
 }
@@ -750,7 +750,7 @@ static void fs_ids_add_supgr(struct silofs_fs_ids *ids, const char *user)
 
 	ret = getgrouplist(user, gid, groups, &ngroups);
 	if (ret < 0) {
-		cmd_dief(errno, "getgrouplist failure: ret=%d", ret);
+		cmd_die(errno, "getgrouplist failure: ret=%d", ret);
 	}
 	for (int i = 0; i < ngroups; ++i) {
 		gid = groups[i];
@@ -860,10 +860,10 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 	buf = cmd_zalloc(bsz);
 	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
 	if (err) {
-		cmd_dief(err, "getpwnam failed: %s", name);
+		cmd_die(err, "getpwnam failed: %s", name);
 	}
 	if (pw == NULL) {
-		cmd_dief(0, "unknown user name: %s", name);
+		cmd_die(0, "unknown user name: %s", name);
 	}
 	*out_uid = pw->pw_uid;
 	*out_gid = pw->pw_gid;
@@ -875,10 +875,10 @@ void cmd_require_uidgid(const struct silofs_fs_ids *ids,
 {
 	cmd_resolve_uidgid(name, out_uid, out_gid);
 	if (!fs_ids_has_host_uid(ids, *out_uid)) {
-		cmd_dief(0, "missing uid-mapping for user: '%s'", name);
+		cmd_die(0, "missing uid-mapping for user: '%s'", name);
 	}
 	if (!fs_ids_has_host_gid(ids, *out_gid)) {
-		cmd_dief(0, "missing gid-mapping for user: '%s'", name);
+		cmd_die(0, "missing gid-mapping for user: '%s'", name);
 	}
 }
 

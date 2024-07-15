@@ -24,7 +24,7 @@ void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
 
 	err = silofs_new_fsenv(fs_args, p_fsenv);
 	if (err) {
-		cmd_dief(err, "failed to create fs instance");
+		cmd_die(err, "failed to create fs instance");
 	}
 }
 
@@ -65,34 +65,34 @@ static void cmd_report_err_and_die(const struct silofs_fsenv *fsenv,
 	err = abs(status);
 	switch (err) {
 	case SILOFS_ENOREPO:
-		cmd_dief(err, "%s%smissing repo: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%smissing repo: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EBADREPO:
-		cmd_dief(err, "%s%sillegal repo: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sillegal repo: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_ENOBOOT:
-		cmd_dief(err, "%s%smissing boot: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%smissing boot: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EBADBOOT:
-		cmd_dief(err, "%s%sbad boot: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad boot: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EKEYEXPIRED:
-		cmd_dief(err, "%s%sbad password: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EMOUNT:
-		cmd_dief(err, "%s%scan not mount: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scan not mount: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EUMOUNT:
-		cmd_dief(err, "%s%scan not umount: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scan not umount: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EFSCORRUPTED:
-		cmd_dief(err, "%s%scorrupted fs: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scorrupted fs: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_ECSUM:
-		cmd_dief(err, "%s%schecksum error: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%schecksum error: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EILLSTR:
-		cmd_dief(err, "%s%sillegal string", xmsg, xtag);
+		cmd_die(err, "%s%sillegal string", xmsg, xtag);
 		break;
 	default:
 		break;
@@ -102,22 +102,22 @@ static void cmd_report_err_and_die(const struct silofs_fsenv *fsenv,
 	err = abs(silofs_remap_status_code(status));
 	switch (err) {
 	case EWOULDBLOCK:
-		cmd_dief(err, "%s%scan not lock: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scan not lock: %s", xmsg, xtag, rname);
 		break;
 	case EROFS:
-		cmd_dief(err, "%s%sread-only fs: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sread-only fs: %s", xmsg, xtag, rname);
 		break;
 	case EUCLEAN:
-		cmd_dief(err, "%s%sunclean: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sunclean: %s", xmsg, xtag, rname);
 		break;
 	case EKEYEXPIRED:
-		cmd_dief(err, "%s%sbad password: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rname);
 		break;
 	case ENOENT:
-		cmd_dief(0, "%s%snot exist: %s", xmsg, xtag, rname);
+		cmd_die(0, "%s%snot exist: %s", xmsg, xtag, rname);
 		break;
 	default:
-		cmd_dief(err, "%s%s%s", xmsg, xtag, rname);
+		cmd_die(err, "%s%s%s", xmsg, xtag, rname);
 		break;
 	}
 

@@ -133,7 +133,7 @@ static void cmd_show_resolve_subcmd(struct cmd_show_ctx *ctx)
 {
 	ctx->qtype = cmd_show_qtype_by_subcmd(ctx->in_args.subcmd);
 	if (ctx->qtype == SILOFS_QUERY_NONE) {
-		cmd_dief(0, "unknown sub-command %s", ctx->in_args.subcmd);
+		cmd_die(0, "unknown sub-command %s", ctx->in_args.subcmd);
 	}
 	ctx->ioc->query.qtype = (int32_t)ctx->qtype;
 }
@@ -145,12 +145,12 @@ static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
 
 	err = silofs_sys_open(ctx->in_args.pathname_real, O_RDONLY, 0, &fd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s",
-		         ctx->in_args.pathname_real);
+		cmd_die(err, "failed to open: %s",
+		        ctx->in_args.pathname_real);
 	}
 	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->ioc->query);
 	if (err) {
-		cmd_dief(err, "ioctl error: %s", ctx->in_args.pathname_real);
+		cmd_die(err, "ioctl error: %s", ctx->in_args.pathname_real);
 	}
 	silofs_sys_close(fd);
 }

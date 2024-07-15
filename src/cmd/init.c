@@ -112,7 +112,7 @@ static void cmd_init_prepare_repodir(const struct cmd_init_ctx *ctx)
 	if (err == -ENOENT) {
 		cmd_mkdir(ctx->in_args.repodir, 0700);
 	} else if (err != 0) {
-		cmd_dief(err, "stat failure: %s", ctx->in_args.repodir);
+		cmd_die(err, "stat failure: %s", ctx->in_args.repodir);
 	}
 }
 

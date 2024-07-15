@@ -141,7 +141,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 
 	if ((st[0].st_ino == st[1].st_ino) &&
 	    (st[0].st_dev == st[1].st_dev)) {
-		cmd_dief(EBUSY, "currently mounted at: %s", mi->mntdir);
+		cmd_die(EBUSY, "currently mounted at: %s", mi->mntdir);
 	}
 out:
 	silofs_sys_closefd(&dfd);

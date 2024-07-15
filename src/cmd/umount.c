@@ -101,13 +101,13 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 
 	err = silofs_sys_open(ctx->in_args.mntpoint_real, O_RDONLY, 0, &fd);
 	if (err) {
-		cmd_dief(err, "failed to open: %s",
-		         ctx->in_args.mntpoint_real);
+		cmd_die(err, "failed to open: %s",
+		        ctx->in_args.mntpoint_real);
 	}
 	ctx->query.qtype = SILOFS_QUERY_PROC;
 	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->query);
 	if (err) {
-		cmd_dief(err, "ioctl error: %s", ctx->in_args.mntpoint_real);
+		cmd_die(err, "ioctl error: %s", ctx->in_args.mntpoint_real);
 	}
 	silofs_sys_close(fd);
 	ctx->server_pid = (pid_t)(ctx->query.u.proc.pid);
@@ -162,10 +162,10 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 	mnt_flags = cmd_umount_mnt_flags(ctx);
 	err = silofs_mntrpc_umount(mntpath, uid, gid, mnt_flags);
 	if (err == -SILOFS_EUMOUNT) {
-		cmd_dief(err, "umount not permitted by caller: %s", mntpath);
+		cmd_die(err, "umount not permitted by caller: %s", mntpath);
 	} else if (err) {
-		cmd_dief(err, "umount failed: %s lazy=%d force=%d",
-		         mntpath, ctx->in_args.lazy, ctx->in_args.force);
+		cmd_die(err, "umount failed: %s lazy=%d force=%d",
+		        mntpath, ctx->in_args.lazy, ctx->in_args.force);
 	}
 }
 

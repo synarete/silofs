@@ -27,7 +27,7 @@ struct silofs_fsenv;
 
 /* boot pathname: a pair of repo-directory & boot-record name (optional) */
 struct silofs_bootpath {
-	struct silofs_substr            repodir;
+	struct silofs_strref            repodir;
 	struct silofs_namestr           name;
 };
 

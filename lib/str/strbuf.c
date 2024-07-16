@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/str/strchr.h>
 #include <silofs/str/strbuf.h>
-#include <silofs/str/strings.h>
+#include <silofs/str/strref.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -35,17 +35,17 @@ void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
 }
 
 void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
-                         const struct silofs_substr *str)
+                         const struct silofs_strref *str)
 {
 	silofs_strbuf_reset(sbuf);
-	silofs_substr_copyto(str, sbuf->str, sizeof(sbuf->str) - 1);
+	silofs_strref_copyto(str, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
 {
-	struct silofs_substr ss;
+	struct silofs_strref ss;
 
-	silofs_substr_init(&ss, s);
+	silofs_strref_init(&ss, s);
 	silofs_strbuf_setup(sbuf, &ss);
 }
 

@@ -1365,7 +1365,7 @@ int silofs_do_rmdir(struct silofs_task *task,
 
 static int create_lnk_inode(struct silofs_task *task,
                             const struct silofs_inode_info *dir_ii,
-                            const struct silofs_substr *symval,
+                            const struct silofs_strref *symval,
                             struct silofs_inode_info **out_ii)
 {
 	int err;
@@ -1382,7 +1382,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	return 0;
 }
 
-static int check_symval(const struct silofs_substr *symval)
+static int check_symval(const struct silofs_strref *symval)
 {
 	if (symval->len == 0) {
 		return -SILOFS_EINVAL;
@@ -1396,7 +1396,7 @@ static int check_symval(const struct silofs_substr *symval)
 static int check_symlink(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name,
-                         const struct silofs_substr *symval)
+                         const struct silofs_strref *symval)
 {
 	int err;
 
@@ -1414,7 +1414,7 @@ static int check_symlink(struct silofs_task *task,
 static int do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_substr *symval,
+                      const struct silofs_strref *symval,
                       struct silofs_inode_info **out_ii)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -1441,7 +1441,7 @@ static int do_symlink(struct silofs_task *task,
 int silofs_do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_substr *symval,
+                      const struct silofs_strref *symval,
                       struct silofs_inode_info **out_ii)
 {
 	int err;
@@ -2130,10 +2130,10 @@ int silofs_do_statvfs(const struct silofs_task *task,
 	return err;
 }
 
-static void str_to_buf(const struct silofs_substr *s, char *buf, size_t bsz)
+static void str_to_buf(const struct silofs_strref *s, char *buf, size_t bsz)
 {
 	if ((s != NULL) && (bsz > 0)) {
-		silofs_substr_copyto(s, buf, bsz);
+		silofs_strref_copyto(s, buf, bsz);
 		buf[bsz - 1] = '\0';
 	}
 }
@@ -2141,10 +2141,10 @@ static void str_to_buf(const struct silofs_substr *s, char *buf, size_t bsz)
 static void fill_query_version(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	struct silofs_substr s;
+	struct silofs_strref s;
 	const size_t bsz = sizeof(query->u.version.string);
 
-	silofs_substr_init(&s, silofs_version.string);
+	silofs_strref_init(&s, silofs_version.string);
 	query->u.version.major = silofs_version.major;
 	query->u.version.minor = silofs_version.minor;
 	query->u.version.sublevel = silofs_version.sublevel;

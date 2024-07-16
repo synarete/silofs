@@ -23,7 +23,7 @@
 #include <stdbool.h>
 
 struct silofs_uuid;
-struct silofs_substr;
+struct silofs_strref;
 struct silofs_strbuf;
 struct silofs_header;
 
@@ -48,7 +48,7 @@ int silofs_uuid_parse(struct silofs_uuid *uu,
                       const struct silofs_strbuf *sbuf);
 
 int silofs_uuid_parse2(struct silofs_uuid *uu,
-                       const struct silofs_substr *ss);
+                       const struct silofs_strref *ss);
 
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
 

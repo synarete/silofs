@@ -1021,46 +1021,46 @@ static char *cmd_read_proc_mountinfo(void)
 	return buf;
 }
 
-static bool substr_isempty(const struct silofs_substr *ss)
+static bool strref_isempty(const struct silofs_strref *ss)
 {
-	return silofs_substr_isempty(ss);
+	return silofs_strref_isempty(ss);
 }
 
-static void cmd_parse_field(const struct silofs_substr *line, size_t idx,
-                            struct silofs_substr *out_field)
+static void cmd_parse_field(const struct silofs_strref *line, size_t idx,
+                            struct silofs_strref *out_field)
 {
-	struct silofs_substr_pair pair;
-	struct silofs_substr *word = &pair.first;
-	struct silofs_substr *tail = &pair.second;
+	struct silofs_strref_pair pair;
+	struct silofs_strref *word = &pair.first;
+	struct silofs_strref *tail = &pair.second;
 
-	silofs_substr_init(out_field, "");
-	silofs_substr_split(line, " \t\v", &pair);
-	while (!substr_isempty(word) || !substr_isempty(tail)) {
+	silofs_strref_init(out_field, "");
+	silofs_strref_split(line, " \t\v", &pair);
+	while (!strref_isempty(word) || !strref_isempty(tail)) {
 		if (idx == 0) {
-			silofs_substr_strip_ws(word, out_field);
+			silofs_strref_strip_ws(word, out_field);
 			break;
 		}
-		silofs_substr_split(tail, " \t\v", &pair);
+		silofs_strref_split(tail, " \t\v", &pair);
 		idx--;
 	}
 }
 
-static void cmd_parse_mountinfo_line(const struct silofs_substr *line,
-                                     struct silofs_substr *out_mntdir,
-                                     struct silofs_substr *out_mntargs)
+static void cmd_parse_mountinfo_line(const struct silofs_strref *line,
+                                     struct silofs_strref *out_mntdir,
+                                     struct silofs_strref *out_mntargs)
 {
-	struct silofs_substr_pair pair;
-	struct silofs_substr *head = &pair.first;
-	struct silofs_substr *tail = &pair.second;
+	struct silofs_strref_pair pair;
+	struct silofs_strref *head = &pair.first;
+	struct silofs_strref *tail = &pair.second;
 
-	silofs_substr_split_str(line, " - ", &pair);
+	silofs_strref_split_str(line, " - ", &pair);
 	cmd_parse_field(head, 4, out_mntdir);
 	cmd_parse_field(tail, 2, out_mntargs);
 }
 
-static bool cmd_isfusesilofs_mountinfo_line(const struct silofs_substr *line)
+static bool cmd_isfusesilofs_mountinfo_line(const struct silofs_strref *line)
 {
-	return (silofs_substr_find(line, "fuse.silofs") < line->len);
+	return (silofs_strref_find(line, "fuse.silofs") < line->len);
 }
 
 static size_t round_up(size_t sz)
@@ -1076,8 +1076,8 @@ static void *memory_at(void *mem, size_t pos)
 }
 
 static struct cmd_proc_mntinfo *
-cmd_new_mntinfo(const struct silofs_substr *mntdir,
-                const struct silofs_substr *mntargs)
+cmd_new_mntinfo(const struct silofs_strref *mntdir,
+                const struct silofs_strref *mntargs)
 {
 	struct cmd_proc_mntinfo *mi;
 	void *mem;
@@ -1098,21 +1098,21 @@ cmd_new_mntinfo(const struct silofs_substr *mntdir,
 	mi->next = NULL;
 
 	str = memory_at(mem, hsz);
-	silofs_substr_copyto(mntdir, str, sz1);
+	silofs_strref_copyto(mntdir, str, sz1);
 	mi->mntdir = str;
 
 	str = memory_at(mem, hsz + sz1);
-	silofs_substr_copyto(mntargs, str, sz2);
+	silofs_strref_copyto(mntargs, str, sz2);
 	mi->mntargs = str;
 
 	return mi;
 }
 
 static struct cmd_proc_mntinfo *
-cmd_new_mntinfo_of(const struct silofs_substr *line)
+cmd_new_mntinfo_of(const struct silofs_strref *line)
 {
-	struct silofs_substr mntdir;
-	struct silofs_substr mntargs;
+	struct silofs_strref mntdir;
+	struct silofs_strref mntargs;
 
 	cmd_parse_mountinfo_line(line, &mntdir, &mntargs);
 	return cmd_new_mntinfo(&mntdir, &mntargs);
@@ -1121,22 +1121,22 @@ cmd_new_mntinfo_of(const struct silofs_substr *line)
 static void cmd_parse_mountinfo_into(struct cmd_proc_mntinfo **pmi_list,
                                      const char *mount_info_text)
 {
-	struct silofs_substr info;
-	struct silofs_substr_pair pair;
-	struct silofs_substr *line = &pair.first;
-	struct silofs_substr *tail = &pair.second;
+	struct silofs_strref info;
+	struct silofs_strref_pair pair;
+	struct silofs_strref *line = &pair.first;
+	struct silofs_strref *tail = &pair.second;
 	struct cmd_proc_mntinfo *mi = NULL;
 
-	silofs_substr_init(&info, mount_info_text);
-	silofs_substr_split_chr(&info, '\n', &pair);
-	while (!silofs_substr_isempty(line) ||
-	       !silofs_substr_isempty(tail)) {
+	silofs_strref_init(&info, mount_info_text);
+	silofs_strref_split_chr(&info, '\n', &pair);
+	while (!silofs_strref_isempty(line) ||
+	       !silofs_strref_isempty(tail)) {
 		if (cmd_isfusesilofs_mountinfo_line(line)) {
 			mi = cmd_new_mntinfo_of(line);
 			mi->next = *pmi_list;
 			*pmi_list = mi;
 		}
-		silofs_substr_split_chr(tail, '\n', &pair);
+		silofs_strref_split_chr(tail, '\n', &pair);
 	}
 }
 

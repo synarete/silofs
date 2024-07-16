@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 
-struct silofs_substr;
+struct silofs_strref;
 
 /* fixed-size string-buffer (typically, for names) */
 struct silofs_strbuf {
@@ -32,7 +32,7 @@ void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
                           const struct silofs_strbuf *other);
 
 void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
-                         const struct silofs_substr *str);
+                         const struct silofs_strref *str);
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s);
 

@@ -119,7 +119,7 @@ static void stat_to_itimes(const struct stat *times,
 	/* Birth _must_not_ be set from outside */
 }
 
-static int symval_to_str(const char *symval, struct silofs_substr *ss)
+static int symval_to_str(const char *symval, struct silofs_strref *ss)
 {
 	size_t symlen;
 
@@ -130,7 +130,7 @@ static int symval_to_str(const char *symval, struct silofs_substr *ss)
 	if (symlen > SILOFS_SYMLNK_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
-	silofs_substr_init_rd(ss, symval, symlen);
+	silofs_strref_init_rd(ss, symval, symlen);
 	return 0;
 }
 
@@ -528,7 +528,7 @@ int silofs_fs_symlink(struct silofs_task *task, ino_t parent,
                       const char *name, const char *symval,
                       struct silofs_stat *out_stat)
 {
-	struct silofs_substr value;
+	struct silofs_strref value;
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = NULL;
 	struct silofs_inode_info *dir_ii = NULL;

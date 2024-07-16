@@ -26,7 +26,7 @@
 
 /* repository base config */
 struct silofs_repo_base {
-	struct silofs_substr            repodir;
+	struct silofs_strref            repodir;
 	struct silofs_alloc            *alloc;
 	long                            flags;
 };

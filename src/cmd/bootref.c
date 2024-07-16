@@ -110,12 +110,12 @@ static void cmd_save_bref_file(const char *pathname, const char *txt)
 static void cmd_decode_bootref(struct silofs_fs_bref *bref, const char *txt)
 {
 	struct silofs_strbuf sbuf;
-	struct silofs_substr ss;
+	struct silofs_strref ss;
 	int err;
 
-	silofs_substr_init(&ss, txt);
-	silofs_substr_strip_ws(&ss, &ss);
-	if (!silofs_substr_isascii(&ss)) {
+	silofs_strref_init(&ss, txt);
+	silofs_strref_strip_ws(&ss, &ss);
+	if (!silofs_strref_isascii(&ss)) {
 		cmd_die(0, "non-ascii character in: %s", bref->name);
 	}
 	if (ss.len >= sizeof(sbuf.str)) {

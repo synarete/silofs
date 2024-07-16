@@ -33,7 +33,7 @@ libsilofs_la_SOURCES += infra/zcmpr.c
 libsilofs_la_SOURCES += str/ascii.c
 libsilofs_la_SOURCES += str/strbuf.c
 libsilofs_la_SOURCES += str/strchr.c
-libsilofs_la_SOURCES += str/strings.c
+libsilofs_la_SOURCES += str/strref.c
 libsilofs_la_SOURCES += str/strview.c
 libsilofs_la_SOURCES += addr/blobid.c
 libsilofs_la_SOURCES += addr/hmapq.c
@@ -79,6 +79,5 @@ libsilofs_la_SOURCES += fs/ustage.c
 libsilofs_la_SOURCES += fs/vstage.c
 libsilofs_la_SOURCES += fs/walk.c
 libsilofs_la_SOURCES += fs/xattr.c
-
 libsilofs_la_SOURCES += execlib.c
 libsilofs_la_SOURCES += version.c

@@ -26,21 +26,21 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 	        "abcdefghijklmnopqrstuvwxyz"
 	        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	        "0123456789_-+.";
-	const struct silofs_substr *ss = &nstr->s;
+	const struct silofs_strref *ss = &nstr->s;
 	size_t n;
 
-	if (!silofs_substr_isprint(ss)) {
+	if (!silofs_strref_isprint(ss)) {
 		return -SILOFS_EILLSTR;
 	}
-	n = silofs_substr_count_if(ss, silofs_chr_isspace);
+	n = silofs_strref_count_if(ss, silofs_chr_isspace);
 	if (n > 0) {
 		return -SILOFS_EILLSTR;
 	}
-	n = silofs_substr_count_if(ss, silofs_chr_iscntrl);
+	n = silofs_strref_count_if(ss, silofs_chr_iscntrl);
 	if (n > 0) {
 		return -SILOFS_EILLSTR;
 	}
-	n = silofs_substr_find_first_not_of(ss, allowed);
+	n = silofs_strref_find_first_not_of(ss, allowed);
 	if (n < ss->len) {
 		return -SILOFS_EILLSTR;
 	}
@@ -89,7 +89,7 @@ int silofs_check_name(const struct silofs_namestr *nstr)
 
 int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
 {
-	silofs_substr_init(&nstr->s, s);
+	silofs_strref_init(&nstr->s, s);
 	nstr->hash = 0;
 	return silofs_check_name(nstr);
 }
@@ -634,7 +634,7 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath,
 	if (!len || (len >= SILOFS_REPOPATH_MAX)) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_substr_init(&bpath->repodir, repodir);
+	silofs_strref_init(&bpath->repodir, repodir);
 	if (name == NULL) {
 		return 0; /* boot with repo-dir only */
 	}

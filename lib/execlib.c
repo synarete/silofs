@@ -288,7 +288,7 @@ static void fs_ctx_make_repo_base(const struct silofs_fs_ctx *fs_ctx,
 	if (fs_ctx->args.cflags.rdonly) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_substr_init(&re_base->repodir, fs_ctx->args.bref.repodir);
+	silofs_strref_init(&re_base->repodir, fs_ctx->args.bref.repodir);
 }
 
 static int fs_ctx_setup_repo(struct silofs_fs_ctx *fs_ctx)

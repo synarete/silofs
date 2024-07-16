@@ -76,7 +76,7 @@ enum silofs_iattr_flags {
 
 /* name-string + hash (optional) */
 struct silofs_namestr {
-	struct silofs_substr s;
+	struct silofs_strref s;
 	uint64_t hash;
 };
 

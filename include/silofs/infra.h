@@ -23,7 +23,6 @@
 #include <silofs/syscall.h>
 #include <silofs/version.h>
 
-#include <silofs/infra/ascii.h>
 #include <silofs/infra/atomic.h>
 #include <silofs/infra/avl.h>
 #include <silofs/infra/base64.h>
@@ -36,10 +35,6 @@
 #include <silofs/infra/pipe.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/socket.h>
-#include <silofs/infra/strchr.h>
-#include <silofs/infra/strview.h>
-#include <silofs/infra/strings.h>
-#include <silofs/infra/strbuf.h>
 #include <silofs/infra/thread.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/qalloc.h>

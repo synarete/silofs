@@ -18,8 +18,8 @@
 #define SILOFS_REPO_H_
 
 #include <silofs/infra.h>
+#include <silofs/str.h>
 #include <silofs/addr.h>
-#include <silofs/vol.h>
 
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY     (1)

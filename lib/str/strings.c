@@ -15,11 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/macros.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/strchr.h>
-#include <silofs/infra/strings.h>
+#include <silofs/infra.h>
+#include <silofs/str/strchr.h>
+#include <silofs/str/strings.h>
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>

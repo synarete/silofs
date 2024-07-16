@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra/ascii.h>
+#include <silofs/str/ascii.h>
 #include <ctype.h>
 
 

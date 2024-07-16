@@ -17,7 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/macros.h>
 #include <silofs/infra/utility.h>
-#include <silofs/infra/ascii.h>
 #include <silofs/infra/panic.h>
 #include <silofs/infra/logging.h>
 #include <unistd.h>
@@ -333,27 +332,6 @@ void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln)
 	}
 }
 
-static void mem_to_str(const void *mem, size_t nn, char *str, size_t len)
-{
-	const uint8_t *ptr = mem;
-	size_t pos = 0;
-	size_t i = 0;
-	int b;
-
-	memset(str, 0, len);
-	while ((i < nn) && ((pos + 4) < len)) {
-		b = (int)ptr[i];
-		str[pos++] = silofs_nibble_to_ascii(b >> 4);
-		str[pos++] = silofs_nibble_to_ascii(b);
-		i += 1;
-	}
-	if (i < nn) {
-		while ((pos + 2) < len) {
-			str[pos++] = '.';
-		}
-	}
-}
-
 static size_t find_first_not_eq(const uint8_t *p, const uint8_t *q, size_t n)
 {
 	for (size_t i = 0; i < n; ++i) {
@@ -368,19 +346,11 @@ __attribute__((__noreturn__))
 static void silofs_die_not_eqm(const uint8_t *p, const uint8_t *q,
                                size_t n, const char *fl, int ln)
 {
-	char s1[20];
-	char s2[20];
 	struct silofs_fatal_msg fm = { .pad = 0 };
 	const size_t pos = find_first_not_eq(p, q, n);
 
-	if (pos > sizeof(s1)) {
-		fmtmsg(&fm, "memory-not-equal-at: %lu (%u != %u)",
-		       pos, (uint32_t)(p[pos]), (uint32_t)(q[pos]));
-	} else {
-		mem_to_str(p, n, s1, sizeof(s1));
-		mem_to_str(q, n, s2, sizeof(s2));
-		fmtmsg(&fm, "memory-not-equal: %s != %s ", s1, s2);
-	}
+	fmtmsg(&fm, "memory-not-equal-at: %zu (%u != %u)",
+	       pos, (uint32_t)(p[pos]), (uint32_t)(q[pos]));
 	silofs_fatal_at_(fm.str, fl, ln);
 }
 

@@ -17,7 +17,7 @@
 #ifndef SILOFS_STRVIEW_H_
 #define SILOFS_STRVIEW_H_
 
-#include <silofs/infra/strchr.h>
+#include <silofs/str/strchr.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -64,6 +64,9 @@ void silofs_strview_fini(struct silofs_strview *sv);
 
 /* Returns the string-view read-length. Synonym to sv->len */
 size_t silofs_strview_size(const struct silofs_strview *sv);
+
+/* Returns pointer to beginning of immutable characters array */
+const char *silofs_strview_data(const struct silofs_strview *sv);
 
 /* Returns TRUE if the string-view length is zero */
 bool silofs_strview_isempty(const struct silofs_strview *sv);

@@ -15,11 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/macros.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/strchr.h>
-#include <silofs/infra/strview.h>
+#include <silofs/infra.h>
+#include <silofs/str/strchr.h>
+#include <silofs/str/strview.h>
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
@@ -95,6 +93,11 @@ void silofs_strview_fini(struct silofs_strview *sv)
 size_t silofs_strview_size(const struct silofs_strview *sv)
 {
 	return sv->len;
+}
+
+const char *silofs_strview_data(const struct silofs_strview *sv)
+{
+	return sv->str;
 }
 
 bool silofs_strview_isempty(const struct silofs_strview *sv)

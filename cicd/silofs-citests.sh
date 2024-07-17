@@ -49,6 +49,9 @@ run make -f devel.mk O=2 check
 msg "run gcc-analyzer"
 run make -f devel.mk reset
 run make -f devel.mk O=0 CC=gcc ANALYZER=1
+msg "build with clang"
+run make -f devel.mk reset
+run make -f devel.mk CC=clang O=2
 msg "run clang-scan"
 run make -f devel.mk reset
 run make -f devel.mk V=1 O=2 clangscan

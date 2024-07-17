@@ -68,7 +68,7 @@ int silofs_do_rename(struct silofs_task *task,
 int silofs_do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_strref *symval,
+                      const struct silofs_strview *symval,
                       struct silofs_inode_info **out_ii);
 
 int silofs_do_link(struct silofs_task *task,

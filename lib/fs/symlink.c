@@ -20,8 +20,8 @@
 #include <silofs/fs-private.h>
 
 struct silofs_symval_desc {
-	struct silofs_strref head;
-	struct silofs_strref parts[SILOFS_SYMLNK_NPARTS];
+	struct silofs_strview head;
+	struct silofs_strview parts[SILOFS_SYMLNK_NPARTS];
 	size_t nparts;
 };
 
@@ -29,7 +29,7 @@ struct silofs_symlnk_ctx {
 	struct silofs_task             *task;
 	struct silofs_sb_info          *sbi;
 	struct silofs_inode_info       *lnk_ii;
-	const struct silofs_strref     *symval;
+	const struct silofs_strview     *symval;
 	enum silofs_stg_mode            stg_mode;
 };
 
@@ -53,26 +53,26 @@ static size_t part_size(size_t len)
 static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
                              const char *val, size_t len)
 {
-	struct silofs_strref *str;
+	struct silofs_strview *sv;
 	size_t rem;
 
 	silofs_memzero(sv_dsc, sizeof(*sv_dsc));
 	sv_dsc->nparts = 0;
 
-	str = &sv_dsc->head;
-	silofs_strref_init_rd(str, val, head_size(len));
+	sv = &sv_dsc->head;
+	silofs_strview_initn(sv, val, head_size(len));
 
-	val = next_part(val, str->len);
-	rem = len - str->len;
+	val = next_part(val, sv->len);
+	rem = len - sv->len;
 	while (rem > 0) {
 		if (sv_dsc->nparts == ARRAY_SIZE(sv_dsc->parts)) {
 			return -SILOFS_ENAMETOOLONG;
 		}
-		str = &sv_dsc->parts[sv_dsc->nparts++];
-		silofs_strref_init_rd(str, val, part_size(rem));
+		sv = &sv_dsc->parts[sv_dsc->nparts++];
+		silofs_strview_initn(sv, val, part_size(rem));
 
-		val = next_part(val, str->len);
-		rem -= str->len;
+		val = next_part(val, sv->len);
+		rem -= sv->len;
 	}
 	return 0;
 }
@@ -392,7 +392,7 @@ static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
 }
 
 static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
-                             const struct silofs_strref *str,
+                             const struct silofs_strview *str,
                              struct silofs_symval_info **out_syi)
 {
 	struct silofs_symval_info *syi = NULL;
@@ -448,7 +448,7 @@ static int slc_assign_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
 
 static int slc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 {
-	const struct silofs_strref *symval = sl_ctx->symval;
+	const struct silofs_strview *symval = sl_ctx->symval;
 	struct silofs_symval_desc sv_dsc = { .nparts = 0 };
 	int err;
 
@@ -467,7 +467,7 @@ static int slc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 	return 0;
 }
 
-static ssize_t symval_length(const struct silofs_strref *symval)
+static ssize_t symval_length(const struct silofs_strview *symval)
 {
 	return (ssize_t)symval->len;
 }
@@ -512,7 +512,7 @@ static int slc_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 
 int silofs_bind_symval(struct silofs_task *task,
                        struct silofs_inode_info *lnk_ii,
-                       const struct silofs_strref *symval)
+                       const struct silofs_strview *symval)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task = task,
@@ -595,4 +595,3 @@ int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv)
 	}
 	return 0;
 }
-

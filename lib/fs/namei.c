@@ -1365,7 +1365,7 @@ int silofs_do_rmdir(struct silofs_task *task,
 
 static int create_lnk_inode(struct silofs_task *task,
                             const struct silofs_inode_info *dir_ii,
-                            const struct silofs_strref *symval,
+                            const struct silofs_strview *symval,
                             struct silofs_inode_info **out_ii)
 {
 	int err;
@@ -1382,7 +1382,7 @@ static int create_lnk_inode(struct silofs_task *task,
 	return 0;
 }
 
-static int check_symval(const struct silofs_strref *symval)
+static int check_symval(const struct silofs_strview *symval)
 {
 	if (symval->len == 0) {
 		return -SILOFS_EINVAL;
@@ -1396,7 +1396,7 @@ static int check_symval(const struct silofs_strref *symval)
 static int check_symlink(struct silofs_task *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name,
-                         const struct silofs_strref *symval)
+                         const struct silofs_strview *symval)
 {
 	int err;
 
@@ -1414,7 +1414,7 @@ static int check_symlink(struct silofs_task *task,
 static int do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_strref *symval,
+                      const struct silofs_strview *symval,
                       struct silofs_inode_info **out_ii)
 {
 	struct silofs_inode_info *ii = NULL;
@@ -1441,7 +1441,7 @@ static int do_symlink(struct silofs_task *task,
 int silofs_do_symlink(struct silofs_task *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
-                      const struct silofs_strref *symval,
+                      const struct silofs_strview *symval,
                       struct silofs_inode_info **out_ii)
 {
 	int err;

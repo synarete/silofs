@@ -17,7 +17,11 @@
 #ifndef SILOFS_SYMLINK_H_
 #define SILOFS_SYMLINK_H_
 
-#include <stdlib.h>
+#include <silofs/infra.h>
+#include <silofs/str.h>
+#include <silofs/vol.h>
+#include <silofs/fs/types.h>
+#include <silofs/fs/task.h>
 
 void silofs_setup_symlnk(struct silofs_inode_info *lnk_ii);
 
@@ -30,7 +34,7 @@ int silofs_do_readlink(struct silofs_task *task,
 
 int silofs_bind_symval(struct silofs_task *task,
                        struct silofs_inode_info *lnk_ii,
-                       const struct silofs_strref *symval);
+                       const struct silofs_strview *symval);
 
 int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv);
 

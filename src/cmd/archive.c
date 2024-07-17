@@ -171,7 +171,7 @@ static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_load_bref(struct cmd_archive_ctx *ctx)
 {
-	cmd_bootref_load_ar(&ctx->fs_args.bref);
+	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
 static void cmd_archive_setup_fsenv(struct cmd_archive_ctx *ctx)

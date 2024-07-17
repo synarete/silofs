@@ -22,70 +22,69 @@
 #include <grp.h>
 #include "cmd.h"
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void strref_init(struct silofs_strref *ss, const char *s)
+static void strview_init(struct silofs_strview *sv, const char *s)
 {
-	silofs_strref_init(ss, s);
+	silofs_strview_init(sv, s);
 }
 
-static void strref_initn(struct silofs_strref *ss, const char *s, size_t n)
+static void strview_initn(struct silofs_strview *sv, const char *s, size_t n)
 {
-	silofs_strref_init_rd(ss, s, n);
+	silofs_strview_initn(sv, s, n);
 }
 
-static bool strref_isempty(const struct silofs_strref *ss)
+static bool strview_isempty(const struct silofs_strview *sv)
 {
-	return silofs_strref_isempty(ss);
+	return silofs_strview_isempty(sv);
 }
 
-static void strref_split_by(const struct silofs_strref *ss, char sep,
-                            struct silofs_strref_pair *out_ss_pair)
+static void strview_split_by(const struct silofs_strview *sv, char sep,
+                             struct silofs_strview_pair *out_sv_pair)
 {
-	silofs_strref_split_chr(ss, sep, out_ss_pair);
+	silofs_strview_split_chr(sv, sep, out_sv_pair);
 }
 
-static void strref_split_by_nl(const struct silofs_strref *ss,
-                               struct silofs_strref_pair *out_ss_pair)
+static void strview_split_by_nl(const struct silofs_strview *sv,
+                                struct silofs_strview_pair *out_sv_pair)
 {
-	strref_split_by(ss, '\n', out_ss_pair);
+	strview_split_by(sv, '\n', out_sv_pair);
 }
 
-static void strref_strip_ws(const struct silofs_strref *ss,
-                            struct silofs_strref *out_ss)
+static void strview_strip_ws(const struct silofs_strview *sv,
+                             struct silofs_strview *out_sv)
 {
-	silofs_strref_strip_ws(ss, out_ss);
+	silofs_strview_strip_ws(sv, out_sv);
 }
 
-static void strref_strip_any(const struct silofs_strref *ss, const char *set,
-                             struct silofs_strref *out_ss)
+static void strview_strip_any(const struct silofs_strview *sv, const char *set,
+                              struct silofs_strview *out_sv)
 {
-	silofs_strref_strip_any_of(ss, set, out_ss);
+	silofs_strview_strip_any_of(sv, set, out_sv);
 }
 
-static void strref_copyto(const struct silofs_strref *ss, char *s, size_t n)
+static void strview_copyto(const struct silofs_strview *sv, char *s, size_t n)
 {
-	silofs_strref_copyto(ss, s, n);
+	silofs_strview_copyto(sv, s, n);
 }
 
-static bool strref_isascii(const struct silofs_strref *ss)
+static bool strview_isascii(const struct silofs_strview *sv)
 {
-	return silofs_strref_isascii(ss);
+	return silofs_strview_isascii(sv);
 }
 
-static bool strref_isequal(const struct silofs_strref *ss, const char *s)
+static bool strview_isequal(const struct silofs_strview *sv, const char *s)
 {
-	return silofs_strref_isequal(ss, s);
+	return silofs_strview_isequal(sv, s);
 }
 
-static bool strref_starts_with(const struct silofs_strref *ss, char c)
+static bool strview_starts_with(const struct silofs_strview *sv, char c)
 {
-	return silofs_strref_starts_with(ss, c);
+	return silofs_strview_starts_with(sv, c);
 }
 
-static bool strref_ends_with(const struct silofs_strref *ss, char c)
+static bool strview_ends_with(const struct silofs_strview *sv, char c)
 {
-	return silofs_strref_ends_with(ss, c);
+	return silofs_strview_ends_with(sv, c);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -108,7 +107,7 @@ struct idsconf_ctx {
 	char *text;
 	int line_no;
 	enum idsconf_sec sec;
-	const struct silofs_strref *line;
+	const struct silofs_strview *line;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -125,7 +124,7 @@ static void cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
 }
 
 static void cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
-                                   const struct silofs_strref *ss,
+                                   const struct silofs_strview *ss,
                                    uid_t *out_uid)
 {
 	char str[64] = "";
@@ -133,12 +132,12 @@ static void cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
 	if (ss->len >= sizeof(str)) {
 		cmd_die_by(ctx, "not an integer");
 	}
-	strref_copyto(ss, str, sizeof(str));
+	strview_copyto(ss, str, sizeof(str));
 	*out_uid = cmd_parse_str_as_uid(str);
 }
 
 static void cmd_parse_gid_by_value(const struct idsconf_ctx *ctx,
-                                   const struct silofs_strref *ss,
+                                   const struct silofs_strview *ss,
                                    gid_t *out_gid)
 {
 	char str[64] = "";
@@ -146,7 +145,7 @@ static void cmd_parse_gid_by_value(const struct idsconf_ctx *ctx,
 	if (ss->len >= sizeof(str)) {
 		cmd_die_by(ctx, "not an integer");
 	}
-	strref_copyto(ss, str, sizeof(str));
+	strview_copyto(ss, str, sizeof(str));
 	*out_gid = cmd_parse_str_as_gid(str);
 }
 
@@ -376,7 +375,7 @@ static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
-                                  const struct silofs_strref *name,
+                                  const struct silofs_strview *name,
                                   uid_t *out_uid)
 {
 	char buf[NAME_MAX + 1] = "";
@@ -384,12 +383,12 @@ static void cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
 	if (name->len >= sizeof(buf)) {
 		cmd_die_by(ctx, "illegal user name");
 	}
-	strref_copyto(name, buf, sizeof(buf) - 1);
+	strview_copyto(name, buf, sizeof(buf) - 1);
 	cmd_resolve_uid_by_name(buf, out_uid);
 }
 
 static void cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
-                                  const struct silofs_strref *name,
+                                  const struct silofs_strview *name,
                                   gid_t *out_gid)
 {
 	char buf[NAME_MAX + 1] = "";
@@ -397,13 +396,13 @@ static void cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
 	if (name->len >= sizeof(buf)) {
 		cmd_die_by(ctx, "illegal group name");
 	}
-	strref_copyto(name, buf, sizeof(buf) - 1);
+	strview_copyto(name, buf, sizeof(buf) - 1);
 	cmd_resolve_gid_by_name(buf, out_gid);
 }
 
 static void cmd_parse_uids(const struct idsconf_ctx *ctx,
-                           const struct silofs_strref *name,
-                           const struct silofs_strref *suid,
+                           const struct silofs_strview *name,
+                           const struct silofs_strview *suid,
                            struct silofs_uids *out_uids)
 {
 	cmd_parse_uid_by_name(ctx, name, &out_uids->fs_uid);
@@ -411,8 +410,8 @@ static void cmd_parse_uids(const struct idsconf_ctx *ctx,
 }
 
 static void cmd_parse_gids(const struct idsconf_ctx *ctx,
-                           const struct silofs_strref *name,
-                           const struct silofs_strref *sgid,
+                           const struct silofs_strview *name,
+                           const struct silofs_strview *sgid,
                            struct silofs_gids *out_gids)
 {
 	cmd_parse_gid_by_name(ctx, name, &out_gids->host_gid);
@@ -422,16 +421,16 @@ static void cmd_parse_gids(const struct idsconf_ctx *ctx,
 static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
                                 struct silofs_uids **uids, size_t *nuids)
 {
-	struct silofs_strref_pair ssp;
-	struct silofs_strref name;
-	struct silofs_strref suid;
+	struct silofs_strview_pair ssp;
+	struct silofs_strview name;
+	struct silofs_strview suid;
 	struct silofs_uids uid;
 
-	strref_split_by(ctx->line, '=', &ssp);
-	strref_strip_ws(&ssp.first, &name);
-	strref_strip_ws(&ssp.second, &suid);
+	strview_split_by(ctx->line, '=', &ssp);
+	strview_strip_ws(&ssp.first, &name);
+	strview_strip_ws(&ssp.second, &suid);
 
-	if (strref_isempty(&name) || strref_isempty(&suid)) {
+	if (strview_isempty(&name) || strview_isempty(&suid)) {
 		cmd_die_by(ctx, "missing user mapping");
 	}
 	cmd_parse_uids(ctx, &name, &suid, &uid);
@@ -441,16 +440,16 @@ static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
 static void cmd_parse_group_conf(const struct idsconf_ctx *ctx,
                                  struct silofs_gids **gids, size_t *ngids)
 {
-	struct silofs_strref_pair ssp;
-	struct silofs_strref name;
-	struct silofs_strref sgid;
+	struct silofs_strview_pair ssp;
+	struct silofs_strview name;
+	struct silofs_strview sgid;
 	struct silofs_gids gid;
 
-	strref_split_by(ctx->line, '=', &ssp);
-	strref_strip_ws(&ssp.first, &name);
-	strref_strip_ws(&ssp.second, &sgid);
+	strview_split_by(ctx->line, '=', &ssp);
+	strview_strip_ws(&ssp.first, &name);
+	strview_strip_ws(&ssp.second, &sgid);
 
-	if (strref_isempty(&name) || strref_isempty(&sgid)) {
+	if (strview_isempty(&name) || strview_isempty(&sgid)) {
 		cmd_die_by(ctx, "missing group mapping");
 	}
 	cmd_parse_gids(ctx, &name, &sgid, &gid);
@@ -517,10 +516,10 @@ cmd_append_group(const struct silofs_gids *gid, char **conf)
 
 static bool isascii_idsconf(const char *txt, size_t size)
 {
-	struct silofs_strref ss;
+	struct silofs_strview ss;
 
-	strref_initn(&ss, txt, size);
-	return strref_isascii(&ss);
+	strview_initn(&ss, txt, size);
+	return strview_isascii(&ss);
 }
 
 static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
@@ -591,13 +590,13 @@ static const char *idsconf_sec_to_name(enum idsconf_sec sec)
 	return sec_name;
 }
 
-static enum idsconf_sec idsconf_sec_by_name(const struct silofs_strref *ss)
+static enum idsconf_sec idsconf_sec_by_name(const struct silofs_strview *sv)
 {
 	const char *sec_name;
 
 	for (int i = 0; i < (int)SILOFS_ARRAY_SIZE(s_idsconf_sec_name); ++i) {
 		sec_name = s_idsconf_sec_name[i];
-		if (strref_isequal(ss, sec_name)) {
+		if (strview_isequal(sv, sec_name)) {
 			return (enum idsconf_sec)i;
 		}
 	}
@@ -636,52 +635,52 @@ static void fs_ids_parse_line(struct silofs_fs_ids *ids,
 	}
 }
 
-static enum idsconf_sec cmd_parse_sec_state(const struct silofs_strref *line)
+static enum idsconf_sec cmd_parse_sec_state(const struct silofs_strview *line)
 {
-	struct silofs_strref ss;
+	struct silofs_strview sv = { .str = NULL };
 	enum idsconf_sec sec = IDSCONF_SEC_NIL;
 
-	strref_strip_ws(line, &ss);
-	if (strref_starts_with(&ss, '[') && strref_ends_with(&ss, ']')) {
-		strref_strip_any(&ss, "[]", &ss);
-		strref_strip_ws(&ss, &ss);
-		sec = idsconf_sec_by_name(&ss);
+	strview_strip_ws(line, &sv);
+	if (strview_starts_with(&sv, '[') && strview_ends_with(&sv, ']')) {
+		strview_strip_any(&sv, "[]", &sv);
+		strview_strip_ws(&sv, &sv);
+		sec = idsconf_sec_by_name(&sv);
 	}
 	return sec;
 }
 
 static void fs_ids_parse(struct silofs_fs_ids *ids, struct idsconf_ctx *ctx)
 {
-	struct silofs_strref data;
-	struct silofs_strref_pair pair;
-	struct silofs_strref_pair pair2;
-	struct silofs_strref *line = &pair.first;
-	struct silofs_strref *tail = &pair.second;
-	struct silofs_strref sline;
+	struct silofs_strview data;
+	struct silofs_strview_pair pair;
+	struct silofs_strview_pair pair2;
+	struct silofs_strview *line = &pair.first;
+	struct silofs_strview *tail = &pair.second;
+	struct silofs_strview sline;
 	enum idsconf_sec sec_next = IDSCONF_SEC_NIL;
 
-	strref_init(&data, ctx->text);
+	strview_init(&data, ctx->text);
 	ctx->line_no = 0;
 	ctx->line = line;
 	ctx->sec = IDSCONF_SEC_NIL;
 
-	strref_split_by_nl(&data, &pair);
-	while (!strref_isempty(line) || !strref_isempty(tail)) {
+	strview_split_by_nl(&data, &pair);
+	while (!strview_isempty(line) || !strview_isempty(tail)) {
 		ctx->line_no++;
 		ctx->line = line;
 
-		strref_split_by(line, '#', &pair2);
-		strref_strip_ws(&pair2.first, &sline);
+		strview_split_by(line, '#', &pair2);
+		strview_strip_ws(&pair2.first, &sline);
 
 		sec_next = cmd_parse_sec_state(&sline);
 		if ((sec_next != IDSCONF_SEC_NIL) &&
 		    (sec_next != ctx->sec)) {
 			ctx->sec = sec_next;
-		} else if (!strref_isempty(&sline)) {
+		} else if (!strview_isempty(&sline)) {
 			ctx->line = &sline;
 			fs_ids_parse_line(ids, ctx);
 		}
-		strref_split_by_nl(tail, &pair);
+		strview_split_by_nl(tail, &pair);
 	}
 	ctx->line = NULL;
 }

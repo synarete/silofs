@@ -248,17 +248,17 @@ static void close_fd(int *pfd)
 
 static bool equal_mntpath(const char *path1, const char *path2)
 {
-	struct silofs_strref sp1;
-	struct silofs_strref sp2;
+	struct silofs_strview sv_path1;
+	struct silofs_strview sv_path2;
 
-	silofs_strref_init(&sp1, path1);
-	silofs_strref_trim_chr(&sp1, '/', &sp1);
+	silofs_strview_init(&sv_path1, path1);
+	silofs_strview_trim_chr(&sv_path1, '/', &sv_path1);
 
-	silofs_strref_init(&sp2, path2);
-	silofs_strref_trim_chr(&sp2, '/', &sp2);
+	silofs_strview_init(&sv_path2, path2);
+	silofs_strview_trim_chr(&sv_path2, '/', &sv_path2);
 
-	return (sp1.len > 0) && (sp1.len == sp2.len) &&
-	       silofs_strref_nisequal(&sp1, sp2.str, sp2.len);
+	return (sv_path1.len > 0) && (sv_path1.len == sv_path2.len) &&
+	       silofs_strview_nisequal(&sv_path1, sv_path2.str, sv_path2.len);
 }
 
 static bool equal_path_by_stat(const char *path1, const struct stat *st2)
@@ -1681,4 +1681,3 @@ bool silofs_is_fuse_fstype(long fstype)
 {
 	return (fstype == FUSE_SUPER_MAGIC);
 }
-

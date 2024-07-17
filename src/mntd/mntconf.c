@@ -30,45 +30,6 @@ struct silofs_fileline {
 	int line;
 };
 
-static bool ss_equals(const struct silofs_strref *ss, const char *s)
-{
-	return silofs_strref_isequal(ss, s);
-}
-
-static bool ss_isempty(const struct silofs_strref *ss)
-{
-	return silofs_strref_isempty(ss);
-}
-
-static void ss_split_by(const struct silofs_strref *ss, char sep,
-                        struct silofs_strref_pair *out_ss_pair)
-{
-	silofs_strref_split_chr(ss, sep, out_ss_pair);
-}
-
-static void ss_split_by_nl(const struct silofs_strref *ss,
-                           struct silofs_strref_pair *out_ss_pair)
-{
-	ss_split_by(ss, '\n', out_ss_pair);
-}
-
-static void ss_split_by_ws(const struct silofs_strref *ss,
-                           struct silofs_strref_pair *out_ss_pair)
-{
-	silofs_strref_split(ss, " \t", out_ss_pair);
-}
-
-static void ss_strip_ws(const struct silofs_strref *ss,
-                        struct silofs_strref *out_ss)
-{
-	silofs_strref_strip_ws(ss, out_ss);
-}
-
-static void ss_copyto(const struct silofs_strref *ss, char *s, size_t n)
-{
-	silofs_strref_copyto(ss, s, n);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void *zalloc(size_t nbytes)
@@ -84,83 +45,85 @@ static void *zalloc(size_t nbytes)
 }
 
 static bool parse_bool(const struct silofs_fileline *fl,
-                       const struct silofs_strref *ss)
+                       const struct silofs_strview *sv)
 {
-	if (ss_equals(ss, "1") || ss_equals(ss, "true")) {
+	if (silofs_strview_isequal(sv, "1") ||
+	    silofs_strview_isequal(sv, "true")) {
 		return true;
 	}
-	if (ss_equals(ss, "0") || ss_equals(ss, "false")) {
+	if (silofs_strview_isequal(sv, "0") ||
+	    silofs_strview_isequal(sv, "false")) {
 		return false;
 	}
-	die_illegal_value(fl, ss, "boolean");
+	die_illegal_value(fl, sv, "boolean");
 	return false; /* make clangscan happy */
 }
 
 static long parse_long(const struct silofs_fileline *fl,
-                       const struct silofs_strref *ss)
+                       const struct silofs_strview *sv)
 {
 	long val = 0;
 	char *endptr = NULL;
 	char str[64] = "";
 
-	if (ss->len >= sizeof(str)) {
-		die_illegal_value(fl, ss, "integer");
+	if (sv->len >= sizeof(str)) {
+		die_illegal_value(fl, sv, "integer");
 	}
-	silofs_strref_copyto(ss, str, sizeof(str));
+	silofs_strview_copyto(sv, str, sizeof(str));
 
 	errno = 0;
 	val = strtol(str, &endptr, 0);
 	if ((endptr == str) || (errno == ERANGE)) {
-		die_illegal_value(fl, ss, "integer");
+		die_illegal_value(fl, sv, "integer");
 	}
 	if (strlen(endptr) > 1) {
-		die_illegal_value(fl, ss, "integer");
+		die_illegal_value(fl, sv, "integer");
 	}
 	return val;
 }
 
 static int parse_int(const struct silofs_fileline *fl,
-                     const struct silofs_strref *ss)
+                     const struct silofs_strview *sv)
 
 {
 	long num;
 
-	num = parse_long(fl, ss);
+	num = parse_long(fl, sv);
 	if ((num > INT_MAX) || (num < INT_MIN)) {
-		die_illegal_value(fl, ss, "int");
+		die_illegal_value(fl, sv, "int");
 	}
 	return (int)num;
 }
 
 static uid_t parse_uid(const struct silofs_fileline *fl,
-                       const struct silofs_strref *ss)
+                       const struct silofs_strview *sv)
 {
 	int val;
 
-	val = parse_int(fl, ss);
+	val = parse_int(fl, sv);
 	if ((val < 0) || (val > (INT_MAX / 2))) {
-		die_illegal_value(fl, ss, "uid");
+		die_illegal_value(fl, sv, "uid");
 	}
 	return (uid_t)val;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static char *dup_strref(const struct silofs_strref *ss)
+static char *dup_strview(const struct silofs_strview *sv)
 {
 	char *s;
 
-	s = zalloc(ss->len + 1);
-	ss_copyto(ss, s, ss->len);
+	s = zalloc(sv->len + 1);
+	silofs_strview_copyto(sv, s, sv->len);
 	return s;
 }
 
-static char *realpath_of(const struct silofs_strref *path)
+static char *realpath_of(const struct silofs_strview *path)
 {
 	char *rpath;
 	char *cpath;
 
-	cpath = dup_strref(path);
+	cpath = dup_strview(path);
 	rpath = realpath(cpath, NULL);
 	if (rpath == NULL) {
 		return cpath; /* no realpath (now) */
@@ -170,41 +133,44 @@ static char *realpath_of(const struct silofs_strref *path)
 }
 
 static void parse_mntconf_rule_args(const struct silofs_fileline *fl,
-                                    const struct silofs_strref *args,
+                                    const struct silofs_strview *args,
                                     struct silofs_mntrule *mntr)
 {
-	struct silofs_strref_pair key_val;
-	struct silofs_strref_pair ss_pair;
-	struct silofs_strref *key = &key_val.first;
-	struct silofs_strref *val = &key_val.second;
-	struct silofs_strref *carg = &ss_pair.first;
-	struct silofs_strref *tail = &ss_pair.second;
+	struct silofs_strview_pair key_val;
+	struct silofs_strview_pair ss_pair;
+	struct silofs_strview *key = &key_val.first;
+	struct silofs_strview *val = &key_val.second;
+	struct silofs_strview *carg = &ss_pair.first;
+	struct silofs_strview *tail = &ss_pair.second;
+	const char *seps = " \t";
 
 	mntr->uid = (uid_t)(-1);
 	mntr->recursive = false;
 
-	ss_split_by_ws(args, &ss_pair);
-	while (!ss_isempty(carg) || !ss_isempty(tail)) {
-		ss_split_by(carg, '=', &key_val);
-		if (ss_isempty(key) || ss_isempty(val)) {
+	silofs_strview_split(args, seps, &ss_pair);
+	while (!silofs_strview_isempty(carg) ||
+	       !silofs_strview_isempty(tail)) {
+		silofs_strview_split_chr(carg, '=', &key_val);
+		if (silofs_strview_isempty(key) ||
+		    silofs_strview_isempty(val)) {
 			die_illegal_conf(fl, "illegal key-value: '%.*s'",
 			                 carg->len, carg->str);
 		}
-		if (ss_equals(key, "recursive")) {
+		if (silofs_strview_isequal(key, "recursive")) {
 			mntr->recursive = parse_bool(fl, val);
-		} else if (ss_equals(key, "uid")) {
+		} else if (silofs_strview_isequal(key, "uid")) {
 			mntr->uid = parse_uid(fl, val);
 		} else {
 			die_illegal_conf(fl, "unknown key: '%.*s'",
 			                 key->len, key->str);
 		}
-		ss_split_by_ws(tail, &ss_pair);
+		silofs_strview_split(tail, seps, &ss_pair);
 	}
 }
 
 static void parse_mntconf_rule(const struct silofs_fileline *fl,
-                               const struct silofs_strref *path,
-                               const struct silofs_strref *args,
+                               const struct silofs_strview *path,
+                               const struct silofs_strview *args,
                                struct silofs_mntrules *mrules)
 {
 	struct silofs_mntrule *mntr;
@@ -220,36 +186,38 @@ static void parse_mntconf_rule(const struct silofs_fileline *fl,
 }
 
 static void parse_mntconf_line(const struct silofs_fileline *fl,
-                               const struct silofs_strref *line,
+                               const struct silofs_strview *line,
                                struct silofs_mntrules *mrules)
 {
-	struct silofs_strref sline;
-	struct silofs_strref_pair ssp;
+	struct silofs_strview sline;
+	struct silofs_strview_pair svp;
+	const char *seps = " \t";
 
-	ss_split_by(line, '#', &ssp);
-	ss_strip_ws(&ssp.first, &sline);
-	if (!ss_isempty(&sline)) {
-		ss_split_by_ws(&sline, &ssp);
-		parse_mntconf_rule(fl, &ssp.first, &ssp.second, mrules);
+	silofs_strview_split_chr(line, '#', &svp);
+	silofs_strview_strip_ws(&svp.first, &sline);
+	if (!silofs_strview_isempty(&sline)) {
+		silofs_strview_split(&sline, seps, &svp);
+		parse_mntconf_rule(fl, &svp.first, &svp.second, mrules);
 	}
 }
 
-static void parse_mntconf(const struct silofs_strref *ss_conf,
+static void parse_mntconf(const struct silofs_strview *conf,
                           const char *path, struct silofs_mntrules *mrules)
 {
-	struct silofs_strref_pair ss_pair;
-	struct silofs_strref *line = &ss_pair.first;
-	struct silofs_strref *tail = &ss_pair.second;
+	struct silofs_strview_pair svp;
+	struct silofs_strview *line = &svp.first;
+	struct silofs_strview *tail = &svp.second;
 	struct silofs_fileline fl = {
 		.file = path,
 		.line = 0
 	};
 
-	ss_split_by_nl(ss_conf, &ss_pair);
-	while (!ss_isempty(line) || !ss_isempty(tail)) {
+	silofs_strview_split_chr(conf, '\n', &svp);
+	while (!silofs_strview_isempty(line) ||
+	       !silofs_strview_isempty(tail)) {
 		fl.line++;
 		parse_mntconf_line(&fl, line, mrules);
-		ss_split_by_nl(tail, &ss_pair);
+		silofs_strview_split_chr(tail, '\n', &svp);
 	}
 }
 
@@ -257,8 +225,8 @@ static void parse_mntconf(const struct silofs_strref *ss_conf,
 
 static char *read_mntconf_file(const char *path)
 {
-	struct stat st;
-	size_t size;
+	struct stat st = { .st_size = -1 };
+	size_t size = 0;
 	char *conf = NULL;
 	int fd = -1;
 	int err;
@@ -311,12 +279,12 @@ static void del_mnt_conf(struct silofs_mntrules *mrules)
 struct silofs_mntrules *mountd_parse_mntrules(const char *path)
 {
 	char *conf;
-	struct silofs_strref ss_conf;
+	struct silofs_strview ss_conf;
 	struct silofs_mntrules *mrules;
 
 	errno = 0;
 	conf = read_mntconf_file(path);
-	silofs_strref_init(&ss_conf, conf);
+	silofs_strview_init(&ss_conf, conf);
 	mrules = new_mntrules();
 	parse_mntconf(&ss_conf, path, mrules);
 	free(conf);
@@ -330,4 +298,3 @@ void mountd_free_mntrules(struct silofs_mntrules *mnt_conf)
 		del_mnt_conf(mnt_conf);
 	}
 }
-

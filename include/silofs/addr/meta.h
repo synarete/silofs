@@ -18,13 +18,10 @@
 #define SILOFS_META_H_
 
 #include <silofs/defs.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <silofs/infra.h>
+#include <silofs/str.h>
 
 struct silofs_uuid;
-struct silofs_strref;
-struct silofs_strbuf;
 struct silofs_header;
 
 uint32_t silofs_squash_to_u32(const void *ptr, size_t len);
@@ -48,7 +45,7 @@ int silofs_uuid_parse(struct silofs_uuid *uu,
                       const struct silofs_strbuf *sbuf);
 
 int silofs_uuid_parse2(struct silofs_uuid *uu,
-                       const struct silofs_strref *ss);
+                       const struct silofs_strview *sv);
 
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
 

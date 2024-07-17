@@ -130,12 +130,11 @@ int silofs_uuid_parse(struct silofs_uuid *uu,
 }
 
 int silofs_uuid_parse2(struct silofs_uuid *uu,
-                       const struct silofs_strref *ss)
+                       const struct silofs_strview *sv)
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_strbuf_reset(&sbuf);
-	silofs_strref_copyto(ss, sbuf.str, sizeof(sbuf.str) - 1);
+	silofs_strbuf_setup(&sbuf, sv);
 	return silofs_uuid_parse(uu, &sbuf);
 }
 

@@ -62,7 +62,7 @@ static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 {
 	struct silofs_strbuf hname;
 	const int vers = SILOFS_FMT_VERSION;
-	const int ctype = caddr->ctype;
+	const int ctype = (int)(caddr->ctype);
 	const uint32_t size = caddr->size;
 	size_t hn = 0;
 	size_t pn = 0;

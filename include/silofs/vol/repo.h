@@ -20,13 +20,15 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/addr.h>
+#include <silofs/vol/crypto.h>
+#include <silofs/vol/blobs.h>
 
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY     (1)
 
 /* repository base config */
 struct silofs_repo_base {
-	struct silofs_strref            repodir;
+	struct silofs_strview           repodir;
 	struct silofs_alloc            *alloc;
 	long                            flags;
 };

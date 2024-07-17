@@ -17,6 +17,11 @@
 #ifndef SILOFS_XATTR_H_
 #define SILOFS_XATTR_H_
 
+#include <silofs/infra.h>
+#include <silofs/str.h>
+#include <silofs/fs/types.h>
+#include <silofs/fs/task.h>
+
 /* call-back context for list extended-attributes operations */
 typedef int (*silofs_fillxattr_fn)(struct silofs_listxattr_ctx *lxa_ctx,
                                    const char *name, size_t name_len);

@@ -106,7 +106,7 @@ static size_t xe_calc_nents(size_t name_len, size_t value_size)
 	return 1 + xe_calc_payload_nents(name_len, value_size);
 }
 
-static size_t xe_calc_nents_of(const struct silofs_strref *name,
+static size_t xe_calc_nents_of(const struct silofs_strview *name,
                                const struct silofs_bytebuf *value)
 {
 	return xe_calc_nents(name->len, value->len);
@@ -168,7 +168,7 @@ static void *xe_value(const struct silofs_xattr_entry *xe)
 }
 
 static bool xe_has_name(const struct silofs_xattr_entry *xe,
-                        const struct silofs_strref *name)
+                        const struct silofs_strview *name)
 {
 	return (name->len == xe_name_len(xe)) &&
 	       !memcmp(xe_name(xe), name->str, name->len);
@@ -185,7 +185,7 @@ static struct silofs_xattr_entry *xe_next(const struct silofs_xattr_entry *xe)
 }
 
 static void xe_assign(struct silofs_xattr_entry *xe,
-                      const struct silofs_strref *name,
+                      const struct silofs_strview *name,
                       const struct silofs_bytebuf *value)
 {
 	xe_set_name_len(xe, name->len);
@@ -226,7 +226,7 @@ static void xe_copy_value(const struct silofs_xattr_entry *xe,
 static struct silofs_xattr_entry *
 xe_search(const struct silofs_xattr_entry *itr,
           const struct silofs_xattr_entry *end,
-          const struct silofs_strref *name)
+          const struct silofs_strview *name)
 {
 	while (itr < end) {
 		if (xe_has_name(itr, name)) {
@@ -239,7 +239,7 @@ xe_search(const struct silofs_xattr_entry *itr,
 
 static bool xe_may_append(const struct silofs_xattr_entry *xe,
                           const struct silofs_xattr_entry *end,
-                          const struct silofs_strref *name,
+                          const struct silofs_strview *name,
                           const struct silofs_bytebuf *value)
 {
 	const size_t nfree = xe_diff(xe, end);
@@ -251,7 +251,7 @@ static bool xe_may_append(const struct silofs_xattr_entry *xe,
 static struct silofs_xattr_entry *
 xe_append(struct silofs_xattr_entry *xe,
           const struct silofs_xattr_entry *end,
-          const struct silofs_strref *name,
+          const struct silofs_strview *name,
           const struct silofs_bytebuf *value)
 {
 	const size_t nfree = xe_diff(xe, end);
@@ -358,7 +358,7 @@ static struct silofs_xattr_entry *xan_tip(const struct silofs_xattr_node *xan)
 
 static struct silofs_xattr_entry *
 xan_search(const struct silofs_xattr_node *xan,
-           const struct silofs_strref *str)
+           const struct silofs_strview *str)
 {
 	struct silofs_xattr_entry *xe = NULL;
 	const size_t nmin = xe_calc_nents(str->len, 0);
@@ -371,7 +371,7 @@ xan_search(const struct silofs_xattr_node *xan,
 
 static struct silofs_xattr_entry *
 xan_insert(struct silofs_xattr_node *xan,
-           const struct silofs_strref *name,
+           const struct silofs_strview *name,
            const struct silofs_bytebuf *value)
 {
 	struct silofs_xattr_entry *xe = xan_tip(xan);
@@ -1063,8 +1063,11 @@ int silofs_do_setxattr(struct silofs_task *task,
  */
 static bool is_posix_acl_name(const struct silofs_namestr *name)
 {
-	return silofs_strref_isequal(&name->s, XATTR_NAME_POSIX_ACL_ACCESS) ||
-	       silofs_strref_isequal(&name->s, XATTR_NAME_POSIX_ACL_DEFAULT);
+	const char *posix_acl_access = XATTR_NAME_POSIX_ACL_ACCESS;
+	const char *posix_acl_default = XATTR_NAME_POSIX_ACL_DEFAULT;
+
+	return silofs_strview_isequal(&name->s, posix_acl_access) ||
+	       silofs_strview_isequal(&name->s, posix_acl_default);
 }
 
 static int
@@ -1332,4 +1335,3 @@ int silofs_verify_xattr_node(const struct silofs_xattr_node *xan)
 	}
 	return 0;
 }
-

@@ -2130,10 +2130,10 @@ int silofs_do_statvfs(const struct silofs_task *task,
 	return err;
 }
 
-static void str_to_buf(const struct silofs_strref *s, char *buf, size_t bsz)
+static void str_to_buf(const struct silofs_strview *s, char *buf, size_t bsz)
 {
 	if ((s != NULL) && (bsz > 0)) {
-		silofs_strref_copyto(s, buf, bsz);
+		silofs_strview_copyto(s, buf, bsz);
 		buf[bsz - 1] = '\0';
 	}
 }
@@ -2141,10 +2141,10 @@ static void str_to_buf(const struct silofs_strref *s, char *buf, size_t bsz)
 static void fill_query_version(const struct silofs_inode_info *ii,
                                struct silofs_ioc_query *query)
 {
-	struct silofs_strref s;
+	struct silofs_strview s = { .str = NULL };
 	const size_t bsz = sizeof(query->u.version.string);
 
-	silofs_strref_init(&s, silofs_version.string);
+	silofs_strview_init(&s, silofs_version.string);
 	query->u.version.major = silofs_version.major;
 	query->u.version.minor = silofs_version.minor;
 	query->u.version.sublevel = silofs_version.sublevel;

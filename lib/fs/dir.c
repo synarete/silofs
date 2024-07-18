@@ -1376,7 +1376,7 @@ dir_calc_namehash(const struct silofs_inode_info *dir_ii,
 static void make_namestr(struct silofs_namestr *nstr,
                          const struct silofs_namestr *base, uint64_t hash)
 {
-	silofs_strview_assign(&nstr->s, &base->s);
+	silofs_strview_init_by(&nstr->s, &base->s);
 	nstr->hash = hash;
 }
 

@@ -37,15 +37,15 @@ int silofs_str_ncompare(const char *s1, size_t n1,
                         const char *s2, size_t n2);
 
 /*
- * Returns the first occurrence of s2 as a strrefing of s1, or null if no such
- * strrefing.
+ * Returns the first occurrence of s2 as a strmrefing of s1, or null if no such
+ * strmrefing.
  */
 const char *silofs_str_find(const char *s1, size_t n1,
                             const char *s2, size_t n2);
 
 
 /*
- * Returns the last occurrence of s2 as strrefing of s1.
+ * Returns the last occurrence of s2 as strmrefing of s1.
  */
 const char *silofs_str_rfind(const char *s1, size_t n1,
                              const char *s2, size_t n2);

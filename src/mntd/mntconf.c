@@ -66,14 +66,14 @@ static void mntc_setup(struct mntconf_ctx *mntc,
 {
 	silofs_strview_init(&mntc->file, file);
 	silofs_strview_init(&mntc->conf, conf);
-	silofs_strview_inits(&mntc->line);
+	silofs_strview_initz(&mntc->line);
 	mntc->line_no = 0;
 }
 
 static void mntc_update_line(struct mntconf_ctx *mntc,
                              const struct silofs_strview *line)
 {
-	silofs_strview_assign(&mntc->line, line);
+	silofs_strview_init_by(&mntc->line, line);
 }
 
 static void mntc_update_next_line(struct mntconf_ctx *mntc,

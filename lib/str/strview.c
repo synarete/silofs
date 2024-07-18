@@ -39,22 +39,14 @@ static bool chr_eq(char c1, char c2)
 	return c1 == c2;
 }
 
-static size_t strview_max_size(void)
-{
-	return ULONG_MAX >> 2;
-}
 size_t silofs_strview_max_size(void)
 {
-	return strview_max_size();
+	return SIZE_MAX >> 2;
 }
 
-static size_t strview_npos(void)
-{
-	return strview_max_size();
-}
 size_t silofs_strview_npos(void)
 {
-	return strview_npos();
+	return silofs_strview_max_size();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -70,15 +62,15 @@ void silofs_strview_initn(struct silofs_strview *sv, const char *s, size_t n)
 	sv->len = n;
 }
 
-void silofs_strview_inits(struct silofs_strview *sv)
+void silofs_strview_initz(struct silofs_strview *sv)
 {
-	static const char *es = "";
+	static const char z[1] = "";
 
-	silofs_strview_initn(sv, es, 0);
+	silofs_strview_initn(sv, z, 0);
 }
 
-void silofs_strview_assign(struct silofs_strview *sv,
-                           const struct silofs_strview *other)
+void silofs_strview_init_by(struct silofs_strview *sv,
+                            const struct silofs_strview *other)
 {
 	sv->str = other->str;
 	sv->len = other->len;
@@ -117,7 +109,7 @@ const char *silofs_strview_end(const struct silofs_strview *sv)
 
 size_t silofs_strview_offset(const struct silofs_strview *sv, const char *p)
 {
-	const size_t npos = strview_npos();
+	const size_t npos = silofs_strview_npos();
 	ptrdiff_t dif;
 
 	if (p == NULL) {
@@ -810,7 +802,7 @@ int silofs_strview_ntokenize(const struct silofs_strview *ss,
 			return -1; /* Insufficient room */
 		}
 		tgt = &tok_list[ntok++];
-		silofs_strview_assign(tgt, &tok);
+		silofs_strview_init_by(tgt, &tok);
 
 		silofs_strview_nfind_next_token(ss, &tok, seps, n, &tok);
 	}
@@ -832,7 +824,7 @@ int silofs_strview_tokenize_chr(const struct silofs_strview *ss, char sep,
 			return -1; /* Insufficient room */
 		}
 		tgt = &tok_list[ntok++];
-		silofs_strview_assign(tgt, &tok);
+		silofs_strview_init_by(tgt, &tok);
 
 		silofs_strview_find_next_token_chr(ss, &tok, sep, &tok);
 	}
@@ -905,7 +897,7 @@ static size_t strview_find_if(const struct silofs_strview *sv,
 {
 	const char *p = silofs_strview_begin(sv);
 	const char *q = silofs_strview_end(sv);
-	size_t pos = strview_npos();
+	size_t pos = silofs_strview_npos();
 
 	while (p < q) {
 		if (fn(*p) == cond) {
@@ -936,7 +928,7 @@ static size_t strview_rfind_if(const struct silofs_strview *sv,
 {
 	const char *p = silofs_strview_end(sv);
 	const char *q = silofs_strview_begin(sv);
-	size_t pos = strview_npos();
+	size_t pos = silofs_strview_npos();
 
 	while (p-- > q) {
 		if (fn(*p) == cond) {

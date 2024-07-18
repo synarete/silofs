@@ -50,12 +50,12 @@ void silofs_strview_init(struct silofs_strview *sv, const char *str);
 /* Constructor from explicit string + length */
 void silofs_strview_initn(struct silofs_strview *sv, const char *s, size_t n);
 
-/* Constructor with empty string */
-void silofs_strview_inits(struct silofs_strview *sv);
+/* Constructor from zero-length empty string */
+void silofs_strview_initz(struct silofs_strview *sv);
 
-/* Assignment (shallow copy) */
-void silofs_strview_assign(struct silofs_strview *sv,
-                           const struct silofs_strview *other);
+/* Copy constructor (shallow copy) */
+void silofs_strview_init_by(struct silofs_strview *sv,
+                            const struct silofs_strview *other);
 
 /* Destructor: set to NULL */
 void silofs_strview_fini(struct silofs_strview *sv);

@@ -17,11 +17,34 @@
 #include <silofs/configs.h>
 #include <silofs/str/strchr.h>
 #include <silofs/str/strbuf.h>
-#include <silofs/str/strview.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 
+
+void silofs_strbuf_init(struct silofs_strbuf *sbuf)
+{
+	sbuf->str[0] = '\0';
+}
+
+void silofs_strbuf_fini(struct silofs_strbuf *sbuf)
+{
+	sbuf->str[0] = '\0';
+}
+
+void silofs_strbuf_as_sv(const struct silofs_strbuf *sbuf,
+                         struct silofs_strview *out_sv)
+{
+	silofs_strview_init(out_sv, sbuf->str);
+}
+
+void silofs_strbuf_as_smr(struct silofs_strbuf *sbuf,
+                          struct silofs_strmref *out_smr)
+{
+	const size_t len = silofs_str_length(sbuf->str);
+
+	silofs_strmref_initk(out_smr, sbuf->str, len, sizeof(sbuf->str));
+}
 
 void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
 {
@@ -31,14 +54,23 @@ void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
 void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
                           const struct silofs_strbuf *other)
 {
-	memcpy(sbuf, other, sizeof(*sbuf));
+	struct silofs_strview sv;
+	struct silofs_strmref smr;
+
+	sbuf->str[0] = '\0';
+	silofs_strbuf_as_smr(sbuf, &smr);
+	silofs_strbuf_as_sv(other, &sv);
+	silofs_strmref_vassign(&smr, &sv);
 }
 
 void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
                          const struct silofs_strview *sv)
 {
-	silofs_strbuf_reset(sbuf);
-	silofs_strview_copyto(sv, sbuf->str, sizeof(sbuf->str) - 1);
+	struct silofs_strmref smr;
+
+	silofs_strbuf_as_smr(sbuf, &smr);
+	silofs_strmref_clear(&smr);
+	silofs_strmref_vassign(&smr, sv);
 }
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
@@ -47,19 +79,6 @@ void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
 
 	silofs_strview_init(&sv, s);
 	silofs_strbuf_setup(sbuf, &sv);
-}
-
-size_t silofs_strbuf_copyto(const struct silofs_strbuf *sbuf,
-                            char *str, size_t lim)
-{
-	const size_t len = strlen(sbuf->str);
-	const size_t n = (lim < len) ? lim : len;
-
-	memcpy(str, sbuf->str, n);
-	if (lim && (n < lim)) {
-		str[n] = '\0';
-	}
-	return n;
 }
 
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)

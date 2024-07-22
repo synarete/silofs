@@ -1784,7 +1784,7 @@ int silofs_lookup_dentry(struct silofs_task *task,
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task = task,
-		.dir_ii = ii_unconst(dir_ii),
+		.dir_ii = dir_ii,
 		.name = name,
 		.stg_mode = SILOFS_STG_CUR,
 	};
@@ -2704,7 +2704,7 @@ int silofs_remove_dentry(struct silofs_task *task,
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task = task,
-		.dir_ii = ii_unconst(dir_ii),
+		.dir_ii = dir_ii,
 		.name = name,
 		.stg_mode = SILOFS_STG_COW,
 	};

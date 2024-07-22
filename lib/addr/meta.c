@@ -120,7 +120,7 @@ void silofs_uuid_unparse(const struct silofs_uuid *uu,
 int silofs_uuid_parse(struct silofs_uuid *uu,
                       const struct silofs_strbuf *sbuf)
 {
-	const size_t len = strlen(sbuf->str);
+	const size_t len = silofs_str_length(sbuf->str);
 	int ret = -EINVAL;
 
 	if (len == 36) {
@@ -363,11 +363,13 @@ size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
 int silofs_hash256_by_name(struct silofs_hash256 *hash,
                            const struct silofs_strbuf *name)
 {
+	struct silofs_strview sv;
 	size_t cnt = 0;
 	int err;
 
+	silofs_strbuf_as_sv(name, &sv);
 	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash),
-	                          name->str, strlen(name->str), &cnt);
+	                          sv.str, sv.len, &cnt);
 	if (err) {
 		return err;
 	}

@@ -431,7 +431,7 @@ static void password_setup(struct silofs_password *pp,
 
 int silofs_password_setup(struct silofs_password *pp, const void *pass)
 {
-	const size_t passlen = (pass != NULL) ? strlen(pass) : 0;
+	const size_t passlen = silofs_str_length(pass);
 
 	if (passlen >= sizeof(pp->pass)) {
 		return -SILOFS_EINVAL;

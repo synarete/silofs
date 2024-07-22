@@ -287,7 +287,7 @@ static int check_canonical_path(const char *path)
 	char *cpath = NULL;
 	int err = 0;
 
-	if (!path || !strlen(path)) {
+	if (!silofs_str_length(path)) {
 		return -SILOFS_EINVAL;
 	}
 	cpath = canonicalize_file_name(path);
@@ -372,8 +372,8 @@ static int open_fuse_dev(const char *devname, int *out_fd)
 static int format_mount_data(const struct silofs_mntparams *mntp,
                              int fd, char *dat, int dat_size)
 {
-	int ret;
 	size_t len;
+	int ret;
 
 	ret = snprintf(dat, (size_t)dat_size,
 	               "default_permissions,max_read=%d,fd=%d,"
@@ -384,7 +384,7 @@ static int format_mount_data(const struct silofs_mntparams *mntp,
 	if ((ret <= 0) || (ret >= dat_size)) {
 		return -SILOFS_EINVAL;
 	}
-	len = strlen(dat);
+	len = silofs_str_length(dat);
 	if (dat[len - 1] == ',') {
 		dat[len - 1] = '\0';
 	}
@@ -461,13 +461,9 @@ static const char *mntmsg_path(const struct silofs_mntmsg *mmsg)
 
 static int mntmsg_set_path(struct silofs_mntmsg *mmsg, const char *path)
 {
-	size_t len;
+	const size_t len = silofs_str_length(path);
 
-	if (path == NULL) {
-		return -SILOFS_EINVAL;
-	}
-	len = strlen(path);
-	if (len >= sizeof(mmsg->mn_path)) {
+	if (!len || (len >= sizeof(mmsg->mn_path))) {
 		return -SILOFS_EINVAL;
 	}
 	memcpy(mmsg->mn_path, path, len);
@@ -955,7 +951,7 @@ static int mntsvc_check_umount(const struct silofs_mntsvc *msvc,
 	int err;
 	bool force;
 
-	if (!strlen(path)) {
+	if (!silofs_str_length(path)) {
 		return -SILOFS_EPERM;
 	}
 	if (mntp->flags & ~mnt_allow) {

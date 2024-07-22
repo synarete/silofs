@@ -71,7 +71,7 @@ static void sb_add_flags(struct silofs_super_block *sb,
 static void sb_set_swversion(struct silofs_super_block *sb,
                              const char *sw_version)
 {
-	const size_t len = strlen(sw_version);
+	const size_t len = silofs_str_length(sw_version);
 	const size_t len_max = ARRAY_SIZE(sb->sb_sw_version) - 1;
 
 	memcpy(sb->sb_sw_version, sw_version, min(len, len_max));
@@ -959,4 +959,3 @@ void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
 	}
 	out_lmap->cnt = cnt;
 }
-

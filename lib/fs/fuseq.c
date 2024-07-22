@@ -462,7 +462,7 @@ struct silofs_fuseq_cmd_desc {
 
 static const void *after_name(const char *name)
 {
-	return name + strlen(name) + 1;
+	return name + silofs_str_length(name) + 1;
 }
 
 static void ts_to_fuse_attr(const struct timespec *ts,

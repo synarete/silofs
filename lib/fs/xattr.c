@@ -606,9 +606,16 @@ static bool is_valid_xflags(int flags)
 static bool has_xattr_prefix(const struct silofs_namestr *name,
                              const struct silofs_xattr_prefix *xap)
 {
-	const size_t len = strlen(xap->prefix);
+	const char *prefix = xap->prefix;
+	const size_t len = silofs_str_length(prefix);
+	size_t npr = 0;
+	bool ret = false;
 
-	return (name->sv.len > len) && !strncmp(name->sv.str, xap->prefix, len);
+	if (name->sv.len > len) {
+		npr = silofs_strview_ncommon_prefix(&name->sv, prefix, len);
+		ret = (npr == len);
+	}
+	return ret;
 }
 
 static const struct silofs_xattr_prefix *

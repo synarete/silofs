@@ -111,7 +111,7 @@ static int caddr_from_str(struct silofs_caddr *caddr, const char *s)
 	int k = 0;
 	int err = 0;
 
-	len = strlen(s);
+	len = silofs_str_length(s);
 	if ((len < 64) || (len > 128)) {
 		return -SILOFS_EILLSTR;
 	}

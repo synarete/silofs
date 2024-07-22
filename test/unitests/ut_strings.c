@@ -644,12 +644,47 @@ static void ut_strmref_case(struct ut_env *ute)
 
 	silofs_strmref_init(smr, buf);
 	silofs_strmref_toupper(smr);
-	eq  = silofs_strview_isequal(&smr->v, "0123456789ABCDEF");
+	eq = silofs_strview_isequal(&smr->v, "0123456789ABCDEF");
 	ut_expect(eq);
 	silofs_strmref_tolower(smr);
-	eq  = silofs_strview_isequal(&smr->v, "0123456789abcdef");
+	eq = silofs_strview_isequal(&smr->v, "0123456789abcdef");
 	ut_expect(eq);
 	silofs_strmref_fini(smr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_strbuf *ut_new_strbuf(struct ut_env *ute)
+{
+	struct silofs_strbuf *sbuf = NULL;
+
+	sbuf = ut_zalloc(ute, sizeof(*sbuf));
+	silofs_strbuf_init(sbuf);
+	return sbuf;
+}
+
+static void ut_strbuf_simple(struct ut_env *ute)
+{
+	struct silofs_strbuf *sbuf1 = ut_new_strbuf(ute);
+	struct silofs_strbuf *sbuf2 = ut_new_strbuf(ute);
+	struct silofs_strview sv = { .str = NULL };
+	const char *abc = "abcdefghijklmnopqrstuvwxyz";
+	const char *xdig = "0123456789abcdef";
+	bool eq;
+
+	silofs_strbuf_setup_by(sbuf1, abc);
+	silofs_strbuf_assign(sbuf2, sbuf1);
+	silofs_strbuf_as_sv(sbuf2, &sv);
+	eq = silofs_strview_isequal(&sv, abc);
+	ut_expect(eq);
+	silofs_strview_init(&sv, xdig);
+	silofs_strbuf_setup(sbuf1, &sv);
+	silofs_strbuf_assign(sbuf2, sbuf1);
+	silofs_strbuf_as_sv(sbuf2, &sv);
+	eq = silofs_strview_isequal(&sv, xdig);
+	ut_expect(eq);
+	silofs_strbuf_fini(sbuf1);
+	silofs_strbuf_fini(sbuf2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -681,6 +716,7 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_strmref_reverse),
 	UT_DEFTEST(ut_strmref_copyto),
 	UT_DEFTEST(ut_strmref_case),
+	UT_DEFTEST(ut_strbuf_simple),
 };
 
 const struct ut_testdefs ut_tdefs_strings = UT_MKTESTS(ut_local_tests);

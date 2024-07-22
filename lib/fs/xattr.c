@@ -608,7 +608,7 @@ static bool has_xattr_prefix(const struct silofs_namestr *name,
 {
 	const size_t len = strlen(xap->prefix);
 
-	return (name->s.len > len) && !strncmp(name->s.str, xap->prefix, len);
+	return (name->sv.len > len) && !strncmp(name->sv.str, xap->prefix, len);
 }
 
 static const struct silofs_xattr_prefix *
@@ -641,7 +641,7 @@ xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 	if (!name) {
 		return 0;
 	}
-	if (name->s.len > SILOFS_NAME_MAX) {
+	if (name->sv.len > SILOFS_NAME_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	xap = search_prefix(name);
@@ -699,7 +699,7 @@ xac_lookup_entry_at_node(const struct silofs_xattr_ctx *xa_ctx,
 	if (err) {
 		return err;
 	}
-	xe = xan_search(xai->xan, &xa_ctx->name->s);
+	xe = xan_search(xai->xan, &xa_ctx->name->sv);
 	if (xe == NULL) {
 		return -SILOFS_ENOENT;
 	}
@@ -864,7 +864,7 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 {
 	struct silofs_xattr_entry *xe;
 
-	xe = xan_insert(xai->xan, &xa_ctx->name->s, &xa_ctx->value);
+	xe = xan_insert(xai->xan, &xa_ctx->name->sv, &xa_ctx->value);
 	if (xe == NULL) {
 		return -SILOFS_ENOSPC;
 	}
@@ -1066,8 +1066,8 @@ static bool is_posix_acl_name(const struct silofs_namestr *name)
 	const char *posix_acl_access = XATTR_NAME_POSIX_ACL_ACCESS;
 	const char *posix_acl_default = XATTR_NAME_POSIX_ACL_DEFAULT;
 
-	return silofs_strview_isequal(&name->s, posix_acl_access) ||
-	       silofs_strview_isequal(&name->s, posix_acl_default);
+	return silofs_strview_isequal(&name->sv, posix_acl_access) ||
+	       silofs_strview_isequal(&name->sv, posix_acl_default);
 }
 
 static int

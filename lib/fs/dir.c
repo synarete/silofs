@@ -606,7 +606,7 @@ static bool dtn_has_name_at(const struct silofs_dtree_node *dtn,
 {
 	const char *de_name = dtn_name_of(dtn, de);
 
-	return memcmp(de_name, name->s.str, name->s.len) == 0;
+	return memcmp(de_name, name->sv.str, name->sv.len) == 0;
 }
 
 static bool dtn_de_has_name(const struct silofs_dtree_node *dtn,
@@ -616,7 +616,7 @@ static bool dtn_de_has_name(const struct silofs_dtree_node *dtn,
 	if (!de_has_name_hash_lo(de, name->hash)) {
 		return false;
 	}
-	if (!de_has_name_len(de, name->s.len)) {
+	if (!de_has_name_len(de, name->sv.len)) {
 		return false;
 	}
 	if (!dtn_has_name_at(dtn, de, name)) {
@@ -703,7 +703,7 @@ static void dtn_de_assing_name(struct silofs_dtree_node *dtn,
 {
 	char *dst = dtn_name_of(dtn, de);
 
-	memcpy(dst, name->s.str, name->s.len);
+	memcpy(dst, name->sv.str, name->sv.len);
 }
 
 static size_t
@@ -734,7 +734,7 @@ static void dtn_insert(struct silofs_dtree_node *dtn,
                        const struct silofs_namestr *name, ino_t ino, mode_t dt)
 {
 	struct silofs_dir_entry *de;
-	const size_t name_len = name->s.len;
+	const size_t name_len = name->sv.len;
 	const size_t name_pos = dtn_insert_name_pos(dtn, name_len);
 
 	de = dtn_resolve_insert_de(dtn);
@@ -1250,9 +1250,9 @@ static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
                                const struct silofs_namestr *nstr)
 {
 	union silofs_utf32_name_buf unb = { .n = 0 };
-	char *in = unconst(nstr->s.str);
+	char *in = unconst(nstr->sv.str);
 	char *out = unb.dat;
-	size_t len = nstr->s.len;
+	size_t len = nstr->sv.len;
 	size_t outlen = sizeof(unb.dat);
 	size_t datlen;
 	size_t ret;
@@ -1271,7 +1271,7 @@ static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
 int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
                           const struct silofs_namestr *nstr)
 {
-	if (nstr->s.len > SILOFS_NAME_MAX) {
+	if (nstr->sv.len > SILOFS_NAME_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	if (!silofs_dir_has_flags(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
@@ -1354,18 +1354,18 @@ dir_calc_namehash(const struct silofs_inode_info *dir_ii,
                   const struct silofs_namestr *nstr, uint64_t *out_hash)
 {
 	struct silofs_strbuf sbuf;
-	const size_t alen = 8 * div_round_up(nstr->s.len, 8);
+	const size_t alen = 8 * div_round_up(nstr->sv.len, 8);
 	uint64_t hash = 0;
 	int err;
 
 	STATICASSERT_EQ(sizeof(sbuf.str) % 8, 0);
 	STATICASSERT_EQ(sizeof(sbuf.str), SILOFS_NAME_MAX + 1);
 
-	if (likely(nstr->s.len >= sizeof(sbuf.str))) {
+	if (likely(nstr->sv.len >= sizeof(sbuf.str))) {
 		return -SILOFS_EINVAL;
 	}
 	silofs_strbuf_bzero(&sbuf, alen);
-	silofs_strbuf_setup(&sbuf, &nstr->s);
+	silofs_strbuf_setup(&sbuf, &nstr->sv);
 	err = dir_namehash_by(dir_ii, &sbuf, alen, &hash);
 	if (err) {
 		return err;
@@ -1377,7 +1377,7 @@ dir_calc_namehash(const struct silofs_inode_info *dir_ii,
 static void make_namestr(struct silofs_namestr *nstr,
                          const struct silofs_namestr *base, uint64_t hash)
 {
-	silofs_strview_init_by(&nstr->s, &base->s);
+	silofs_strview_init_by(&nstr->sv, &base->sv);
 	nstr->hash = hash;
 }
 
@@ -1723,10 +1723,10 @@ static int dirc_check_self_and_name(const struct silofs_dir_ctx *d_ctx)
 	if (!ii_isdir(d_ctx->dir_ii)) {
 		return -SILOFS_ENOTDIR;
 	}
-	if (d_ctx->name->s.len == 0) {
+	if (d_ctx->name->sv.len == 0) {
 		return -SILOFS_EINVAL;
 	}
-	if (d_ctx->name->s.len > SILOFS_NAME_MAX) {
+	if (d_ctx->name->sv.len > SILOFS_NAME_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;
@@ -1924,7 +1924,7 @@ static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
 {
 	const struct silofs_inode_info *ii = d_ctx->child_ii;
 
-	if (!dtn_may_insert(dni->dtn, d_ctx->name->s.len)) {
+	if (!dtn_may_insert(dni->dtn, d_ctx->name->sv.len)) {
 		return -SILOFS_ENOSPC;
 	}
 	dtn_insert(dni->dtn, d_ctx->name, ii_ino(ii), ii_dtype_of(ii));

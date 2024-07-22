@@ -26,7 +26,7 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 	        "abcdefghijklmnopqrstuvwxyz"
 	        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	        "0123456789_-+.";
-	const struct silofs_strview *sv = &nstr->s;
+	const struct silofs_strview *sv = &nstr->sv;
 	size_t n;
 
 	if (!silofs_strview_isprint(sv)) {
@@ -52,10 +52,10 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 
 static int check_name_len(const struct silofs_namestr *nstr)
 {
-	if (nstr->s.len == 0) {
+	if (nstr->sv.len == 0) {
 		return -SILOFS_EILLSTR;
 	}
-	if (nstr->s.len > SILOFS_NAME_MAX) {
+	if (nstr->sv.len > SILOFS_NAME_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;
@@ -63,13 +63,13 @@ static int check_name_len(const struct silofs_namestr *nstr)
 
 static int check_name_dat(const struct silofs_namestr *nstr)
 {
-	if (nstr->s.str == NULL) {
+	if (nstr->sv.str == NULL) {
 		return -SILOFS_EILLSTR;
 	}
-	if (memchr(nstr->s.str, '/', nstr->s.len)) {
+	if (memchr(nstr->sv.str, '/', nstr->sv.len)) {
 		return -SILOFS_EILLSTR;
 	}
-	if (nstr->s.str[nstr->s.len] != '\0') {
+	if (nstr->sv.str[nstr->sv.len] != '\0') {
 		return -SILOFS_EILLSTR;
 	}
 	return 0;
@@ -92,7 +92,7 @@ int silofs_check_name(const struct silofs_namestr *nstr)
 
 int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
 {
-	silofs_strview_init(&nstr->s, s);
+	silofs_strview_init(&nstr->sv, s);
 	nstr->hash = 0;
 	return silofs_check_name(nstr);
 }
@@ -101,10 +101,10 @@ static int check_fsname(const struct silofs_namestr *nstr)
 {
 	int err;
 
-	if (nstr->s.str[0] == '.') {
+	if (nstr->sv.str[0] == '.') {
 		return -SILOFS_EILLSTR;
 	}
-	if (nstr->s.len > SILOFS_FSNAME_MAX) {
+	if (nstr->sv.len > SILOFS_FSNAME_MAX) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	err = check_ascii_fs_name(nstr);

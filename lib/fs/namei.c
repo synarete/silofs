@@ -2172,7 +2172,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	const size_t bsz = sizeof(query->u.boot.name);
 
 	silofs_fsenv_bootpath(fsenv, &bootpath);
-	str_to_buf(&bootpath.name.s, query->u.boot.name, bsz);
+	str_to_buf(&bootpath.name.sv, query->u.boot.name, bsz);
 	silofs_caddr_to_name2(&fsenv->fse_boot_caddr, query->u.boot.addr);
 }
 

@@ -30,6 +30,7 @@
 #include <time.h>
 #include <silofs/defs.h>
 #include <silofs/infra.h>
+#include <silofs/str.h>
 
 
 /* types forward declarations */
@@ -74,9 +75,9 @@ enum silofs_iattr_flags {
 };
 
 
-/* name-string + hash (optional) */
+/* name-string: a pair of string-view and (optional) 64-bits hash */
 struct silofs_namestr {
-	struct silofs_strview s;
+	struct silofs_strview sv;
 	uint64_t hash;
 };
 

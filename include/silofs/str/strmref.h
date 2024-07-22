@@ -117,6 +117,9 @@ char *silofs_strmref_data(const struct silofs_strmref *smr);
 size_t silofs_strmref_assign(struct silofs_strmref *smr, const char *s);
 size_t silofs_strmref_nassign(struct silofs_strmref *smr,
                               const char *s, size_t len);
+size_t silofs_strmref_vassign(struct silofs_strmref *smr,
+                              const struct silofs_strview *sv);
+
 
 /* Assigns n copies of c. Return the number of added cheracters */
 size_t silofs_strmref_assign_chr(struct silofs_strmref *smr, size_t n, char c);
@@ -146,17 +149,20 @@ size_t silofs_strmref_insert_chr(struct silofs_strmref *smr,
 
 /* Replaces a part of sub-string with the string s. Returns the number of added
    characters */
-size_t silofs_strmref_replace(struct silofs_strmref *ss,
+size_t silofs_strmref_replace(struct silofs_strmref *smr,
                               size_t pos, size_t n, const char *s);
-size_t silofs_strmref_nreplace(struct silofs_strmref *ss, size_t pos,
+size_t silofs_strmref_nreplace(struct silofs_strmref *smr, size_t pos,
                                size_t n, const char *s, size_t len);
 
 /* Replaces part of sub-string with n2 copies of c */
-size_t silofs_strmref_replace_chr(struct silofs_strmref *ss,
+size_t silofs_strmref_replace_chr(struct silofs_strmref *smr,
                                   size_t pos, size_t n1, size_t n2, char c);
 
 /* Erases part of sub-string */
-void silofs_strmref_erase(struct silofs_strmref *ss, size_t pos, size_t n);
+void silofs_strmref_erase(struct silofs_strmref *smr, size_t pos, size_t n);
+
+/* Erases the entire sub-string */
+void silofs_strmref_clear(struct silofs_strmref *smr);
 
 /* Reverse the writable portion of sub-string */
 void silofs_strmref_reverse(struct silofs_strmref *ss);

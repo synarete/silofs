@@ -287,6 +287,12 @@ size_t silofs_strmref_nassign(struct silofs_strmref *smr,
 	return silofs_strmref_nreplace(smr, 0, smr->v.len, s, len);
 }
 
+size_t silofs_strmref_vassign(struct silofs_strmref *smr,
+                              const struct silofs_strview *sv)
+{
+	return silofs_strmref_nassign(smr, sv->str, sv->len);
+}
+
 size_t silofs_strmref_assign_chr(struct silofs_strmref *smr, size_t n, char c)
 {
 	return silofs_strmref_replace_chr(smr, 0, smr->v.len, n, c);
@@ -386,6 +392,12 @@ size_t silofs_strmref_replace_chr(struct silofs_strmref *smr,
 void silofs_strmref_erase(struct silofs_strmref *smr, size_t pos, size_t n)
 {
 	silofs_strmref_replace_chr(smr, pos, n, 0, '\0');
+}
+
+void silofs_strmref_clear(struct silofs_strmref *smr)
+{
+	silofs_strmref_initk(smr, smr->s, 0, smr->n);
+	strmref_terminate(smr);
 }
 
 void silofs_strmref_reverse(struct silofs_strmref *smr)

@@ -723,7 +723,7 @@ struct silofs_super_block {
 	uint8_t                         sb_endianness;
 	uint8_t                         sb_reserved2[23];
 	uint8_t                         sb_sw_version[64];
-	struct silofs_uuid              sb_uuid;
+	struct silofs_uuid              sb_fs_uuid;
 	uint8_t                         sb_reserved3[112];
 	struct silofs_name              sb_name;
 	/* 512..1K */

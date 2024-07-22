@@ -243,7 +243,7 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_magic, 16);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_version, 24);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sw_version, 64);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_uuid, 128);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_fs_uuid, 128);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 256);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_self_uaddr, 512);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_orig_uaddr, 576);

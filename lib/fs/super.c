@@ -77,9 +77,9 @@ static void sb_set_swversion(struct silofs_super_block *sb,
 	memcpy(sb->sb_sw_version, sw_version, min(len, len_max));
 }
 
-static void sb_generate_uuid(struct silofs_super_block *sb)
+static void sb_generate_fs_uuid(struct silofs_super_block *sb)
 {
-	silofs_uuid_generate(&sb->sb_uuid);
+	silofs_uuid_generate(&sb->sb_fs_uuid);
 }
 
 int silofs_sb_check_version(const struct silofs_super_block *sb)
@@ -476,7 +476,7 @@ static void sb_init(struct silofs_super_block *sb)
 	sb_set_version(sb, SILOFS_FMT_VERSION);
 	sb_set_flags(sb, SILOFS_SUPERF_NONE);
 	sb_set_swversion(sb, silofs_version.string);
-	sb_generate_uuid(sb);
+	sb_generate_fs_uuid(sb);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_sproots(sb);
 	sb_gen_rootivs(sb);

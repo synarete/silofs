@@ -587,7 +587,6 @@ void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
 
 	silofs_memzero(&repr, sizeof(repr));
 	silofs_laddr48b_htox(&repr.laddr48, laddr);
-	silofs_strbuf_reset(sbuf);
 	silofs_base64_encode(repr.d, sizeof(repr.d),
 	                     sbuf->str, sizeof(sbuf->str) - 1, &len);
 	sbuf->str[len] = '\0';

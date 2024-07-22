@@ -141,8 +141,10 @@ static int caddr_from_str(struct silofs_caddr *caddr, const char *s)
 void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf *out_name)
 {
-	silofs_strbuf_reset(out_name);
-	caddr_to_str(caddr, out_name->str, sizeof(out_name->str) - 1);
+	const size_t n = sizeof(out_name->str);
+
+	caddr_to_str(caddr, out_name->str, n);
+	out_name->str[n - 1] = '\0';
 }
 
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,

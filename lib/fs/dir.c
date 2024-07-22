@@ -1364,6 +1364,7 @@ dir_calc_namehash(const struct silofs_inode_info *dir_ii,
 	if (likely(nstr->s.len >= sizeof(sbuf.str))) {
 		return -SILOFS_EINVAL;
 	}
+	silofs_strbuf_bzero(&sbuf, alen);
 	silofs_strbuf_setup(&sbuf, &nstr->s);
 	err = dir_namehash_by(dir_ii, &sbuf, alen, &hash);
 	if (err) {

@@ -48,7 +48,12 @@ void silofs_strbuf_as_smr(struct silofs_strbuf *sbuf,
 
 void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
 {
-	memset(sbuf, 0, sizeof(*sbuf));
+	silofs_strbuf_bzero(sbuf, sizeof(*sbuf));
+}
+
+void silofs_strbuf_bzero(struct silofs_strbuf *sbuf, size_t n)
+{
+	memset(sbuf, 0, silofs_min(n, sizeof(*sbuf)));
 }
 
 void silofs_strbuf_assign(struct silofs_strbuf *sbuf,

@@ -76,6 +76,9 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
 
+void silofs_sbi_fs_uuid(const struct silofs_sb_info *sbi,
+                        struct silofs_uuid *out_uuid);
+
 void silofs_sbi_get_lvid(const struct silofs_sb_info *sbi,
                          struct silofs_lvid *out_lvid);
 

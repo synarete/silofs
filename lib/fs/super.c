@@ -77,6 +77,12 @@ static void sb_set_swversion(struct silofs_super_block *sb,
 	memcpy(sb->sb_sw_version, sw_version, min(len, len_max));
 }
 
+static void sb_fs_uuid(const struct silofs_super_block *sb,
+                       struct silofs_uuid *out_uuid)
+{
+	silofs_uuid_assign(out_uuid, &sb->sb_fs_uuid);
+}
+
 static void sb_generate_fs_uuid(struct silofs_super_block *sb)
 {
 	silofs_uuid_generate(&sb->sb_fs_uuid);
@@ -646,6 +652,12 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_sbi_fs_uuid(const struct silofs_sb_info *sbi,
+                        struct silofs_uuid *out_uuid)
+{
+	sb_fs_uuid(sbi->sb, out_uuid);
+}
 
 void silofs_sbi_get_lvid(const struct silofs_sb_info *sbi,
                          struct silofs_lvid *out_lvid)

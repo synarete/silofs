@@ -2168,12 +2168,20 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
-	struct silofs_bootpath bootpath;
+	struct silofs_bootpath bootpath = { .repodir.len = 0 };
+	struct silofs_uuid fs_uuid;
+	struct silofs_lvid lvid;
 	const size_t bsz = sizeof(query->u.boot.name);
 
 	silofs_fsenv_bootpath(fsenv, &bootpath);
 	str_to_buf(&bootpath.name.sv, query->u.boot.name, bsz);
 	silofs_caddr_to_name2(&fsenv->fse_boot_caddr, query->u.boot.addr);
+
+	silofs_sbi_fs_uuid(fsenv->fse_sbi, &fs_uuid);
+	silofs_uuid_copyto(&fs_uuid, query->u.boot.fs_uuid);
+
+	silofs_sbi_get_lvid(fsenv->fse_sbi, &lvid);
+	silofs_uuid_copyto(&lvid.uuid, query->u.boot.lv_uuid);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

@@ -91,11 +91,11 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
                        const struct silofs_ivkey *ivkey,
                        const void *in_dat, void *out_dat, size_t dat_len);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_password_setup(struct silofs_password *pp, const void *pass);
+int silofs_password_setup(struct silofs_password *pp, const char *pass);
 
 void silofs_password_reset(struct silofs_password *pp);
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

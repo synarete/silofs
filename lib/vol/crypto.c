@@ -419,24 +419,17 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void password_setup(struct silofs_password *pp,
-                           const void *pass, size_t passlen)
+int silofs_password_setup(struct silofs_password *pp, const char *pass)
 {
-	silofs_memzero(pp, sizeof(*pp));
-	if (passlen > 0) {
-		memcpy(pp->pass, pass, passlen);
-	}
-	pp->passlen = passlen;
-}
+	struct silofs_strview ps;
 
-int silofs_password_setup(struct silofs_password *pp, const void *pass)
-{
-	const size_t passlen = silofs_str_length(pass);
-
-	if (passlen >= sizeof(pp->pass)) {
+	silofs_password_reset(pp);
+	silofs_strview_init(&ps, pass);
+	if (ps.len >= sizeof(pp->pass)) {
 		return -SILOFS_EINVAL;
 	}
-	password_setup(pp, pass, passlen);
+	memcpy(pp->pass, ps.str, ps.len);
+	pp->passlen = ps.len;
 	return 0;
 }
 

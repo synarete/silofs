@@ -169,10 +169,20 @@ static void cmd_show_repo(struct cmd_show_ctx *ctx)
 
 static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
+	struct silofs_ioc_query *qry = &ctx->ioc->query;
+	char *boot_name = NULL;
+	char *boot_addr = NULL;
+	char *fs_uuid = NULL;
+
 	cmd_show_do_ioctl_query(ctx);
-	fprintf(ctx->out_fp, "%s %s\n",
-	        ctx->ioc->query.u.boot.name,
-	        ctx->ioc->query.u.boot.addr);
+
+	boot_name = cmd_strdup(qry->u.boot.name);
+	boot_addr = cmd_strdup(qry->u.boot.addr);
+	fs_uuid = cmd_struuid(qry->u.boot.fs_uuid);
+	fprintf(ctx->out_fp, "%s %s %s\n", boot_name, boot_addr, fs_uuid);
+	cmd_pstrfree(&boot_name);
+	cmd_pstrfree(&boot_addr);
+	cmd_pstrfree(&fs_uuid);
 }
 
 struct silofs_msflag_name {
@@ -398,5 +408,3 @@ void cmd_execute_show(void)
 	/* Post execution cleanups */
 	cmd_show_finalize(&ctx);
 }
-
-

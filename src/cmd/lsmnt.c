@@ -101,6 +101,7 @@ static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
 	char *repo_path = NULL;
 	char *boot_name = NULL;
 	char *boot_addr = NULL;
+	char *fs_uuid = NULL;
 	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd = -1;
 	int err = 0;
@@ -127,17 +128,19 @@ static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
 	}
 	boot_name = cmd_strdup(qry->u.boot.name);
 	boot_addr = cmd_strdup(qry->u.boot.addr);
+	fs_uuid = cmd_struuid(qry->u.boot.fs_uuid);
 
-	fprintf(ctx->out_fp, "%s %s %s/%s",
-	        boot_addr, mntd_path, repo_path, boot_name);
+	fprintf(ctx->out_fp, "%s %s/%s %s %s",
+	        mntd_path, repo_path, boot_name, boot_addr, fs_uuid);
 out:
+	fputs("\n", ctx->out_fp);
+	fflush(ctx->out_fp);
 	silofs_sys_closefd(&dfd);
 	cmd_pstrfree(&mntd_path);
 	cmd_pstrfree(&repo_path);
 	cmd_pstrfree(&boot_name);
 	cmd_pstrfree(&boot_addr);
-	fputs("\n", ctx->out_fp);
-	fflush(ctx->out_fp);
+	cmd_pstrfree(&fs_uuid);
 }
 
 static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
@@ -180,4 +183,3 @@ void cmd_execute_lsmnt(void)
 	/* Post execution cleanups */
 	cmd_lsmnt_finalize(&ctx);
 }
-

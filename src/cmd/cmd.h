@@ -188,6 +188,8 @@ char *cmd_strdup(const char *s);
 
 char *cmd_strndup(const char *s, size_t n);
 
+char *cmd_struuid(const uint8_t uu[16]);
+
 char *cmd_mkpathf(const char *fmt, ...);
 
 __attribute__((__noreturn__))

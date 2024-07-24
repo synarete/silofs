@@ -881,6 +881,17 @@ char *cmd_strndup(const char *s, size_t n)
 	return d;
 }
 
+char *cmd_struuid(const uint8_t uu[16])
+{
+	struct silofs_strbuf sbuf;
+	struct silofs_uuid uuid;
+
+	silofs_strbuf_reset(&sbuf);
+	silofs_uuid_assign2(&uuid, uu);
+	silofs_uuid_unparse(&uuid, &sbuf);
+	return cmd_strdup(sbuf.str);
+}
+
 char *cmd_mkpathf(const char *fmt, ...)
 {
 	va_list ap;

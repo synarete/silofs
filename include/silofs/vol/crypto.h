@@ -17,6 +17,8 @@
 #ifndef SILOFS_CRYPTO_H_
 #define SILOFS_CRYPTO_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
 #include <gcrypt.h>
 
 /* pass-phrase buffers */
@@ -70,10 +72,6 @@ void silofs_sha256_of(const struct silofs_mdigest *md,
                       const void *buf, size_t bsz,
                       struct silofs_hash256 *out_hash);
 
-void silofs_sha256_ofv(const struct silofs_mdigest *md,
-                       const struct iovec *iov, size_t cnt,
-                       struct silofs_hash256 *out_hash);
-
 void silofs_sha3_256_of(const struct silofs_mdigest *md,
                         const void *buf, size_t bsz,
                         struct silofs_hash256 *out_hash);
@@ -97,5 +95,13 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 int silofs_password_setup(struct silofs_password *pp, const void *pass);
 
 void silofs_password_reset(struct silofs_password *pp);
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
+                          enum silofs_ctype ctype,
+                          const struct silofs_mdigest *md,
+                          struct silofs_caddr *out_caddr);
 
 #endif /* SILOFS_CRYPTO_H_ */

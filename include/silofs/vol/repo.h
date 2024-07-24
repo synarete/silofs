@@ -139,11 +139,4 @@ int silofs_repo_load_pack(struct silofs_repo *repo,
                           const struct silofs_caddr *caddr,
                           const struct silofs_rwvec *rwv);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
-                          enum silofs_ctype ctype,
-                          const struct silofs_mdigest *md,
-                          struct silofs_caddr *out_caddr);
-
 #endif /* SILOFS_REPO_H_ */

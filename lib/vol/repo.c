@@ -2700,17 +2700,3 @@ int silofs_repo_load_pack(struct silofs_repo *repo,
 	repo_unlock(repo);
 	return err;
 }
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
-                          enum silofs_ctype ctype,
-                          const struct silofs_mdigest *md,
-                          struct silofs_caddr *out_caddr)
-{
-	struct silofs_hash256 hash;
-	const uint32_t size = (uint32_t)silofs_iov_length(iov, cnt);
-
-	silofs_sha256_ofv(md, iov, cnt, &hash);
-	silofs_caddr_setup(out_caddr, &hash, size, ctype);
-}

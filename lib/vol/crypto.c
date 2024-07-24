@@ -204,9 +204,9 @@ void silofs_sha256_of(const struct silofs_mdigest *md,
 	mdigest_calc(md, algo, buf, bsz, hlen, out_hash->hash);
 }
 
-void silofs_sha256_ofv(const struct silofs_mdigest *md,
-                       const struct iovec *iov, size_t cnt,
-                       struct silofs_hash256 *out_hash)
+static void silofs_sha256_ofv(const struct silofs_mdigest *md,
+                              const struct iovec *iov, size_t cnt,
+                              struct silofs_hash256 *out_hash)
 {
 	const int algo = GCRY_MD_SHA256;
 	const size_t hlen = sizeof(out_hash->hash);
@@ -534,4 +534,18 @@ out:
 		silofs_memzero(ivkey, sizeof(*ivkey));
 	}
 	return err;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
+                          enum silofs_ctype ctype,
+                          const struct silofs_mdigest *md,
+                          struct silofs_caddr *out_caddr)
+{
+	struct silofs_hash256 hash;
+	const uint32_t size = (uint32_t)silofs_iov_length(iov, cnt);
+
+	silofs_sha256_ofv(md, iov, cnt, &hash);
+	silofs_caddr_setup(out_caddr, &hash, size, ctype);
 }

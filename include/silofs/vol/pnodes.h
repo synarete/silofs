@@ -17,6 +17,8 @@
 #ifndef SILOFS_PNODES_H_
 #define SILOFS_PNODES_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
 
 /* bnode: base of all btree-mapping nodes */
 struct silofs_bnode_info {

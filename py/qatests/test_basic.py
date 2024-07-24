@@ -78,7 +78,7 @@ def test_show(env: TestEnv) -> None:
     env.expect.eq(vers2, vers1.split()[1])
     repo = env.cmd.silofs.show_repo(base)
     env.expect.eq(repo, env.repodir())
-    boot_name, _ = env.cmd.silofs.show_boot(base)
+    boot_name, _, _ = env.cmd.silofs.show_boot(base)
     env.expect.eq(boot_name, env.name)
     prst = env.cmd.silofs.show_proc(base)
     env.expect.gt(len(prst), 1)

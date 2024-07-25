@@ -46,7 +46,7 @@ OPTS := 0 1 2 3
 DBGS := 0 1 2
 VRBS := 0 1
 ANLZ := 0 1
-SNTZ := 0 1 2
+SNTZ := 0 1
 
 # Guard against environment variables
 CFLAGS =
@@ -118,8 +118,7 @@ CFLAGS += -Wswitch-default -Wcomment -Wparentheses -Wsequence-point
 CFLAGS += -Wpointer-arith -Wdisabled-optimization -Wmain -Wundef
 CFLAGS += -Wunknown-pragmas -Wunused-macros -Wendif-labels
 CFLAGS += -Wvla -Waddress -Woverlength-strings -Wconversion -Wsign-conversion
-CFLAGS += -Wunreachable-code -Wwrite-strings -Wlarger-than=4096
-CFLAGS += -Wframe-larger-than=4096 -Wmissing-field-initializers
+CFLAGS += -Wunreachable-code -Wwrite-strings -Wmissing-field-initializers
 CFLAGS += -Wstrict-aliasing=2 -Warray-bounds -Winline -Wcast-qual
 CFLAGS += -Wmissing-noreturn -Wimplicit-fallthrough
 CFLAGS += -fwrapv -fstrict-aliasing -fsigned-char
@@ -127,6 +126,9 @@ CFLAGS += -fstack-protector-all -fstack-protector-strong
 CFLAGS += -fstack-clash-protection
 CFLAGS += -fasynchronous-unwind-tables -fcf-protection=full
 CFLAGS += -fPIE -fPIC
+ifeq ($(SANITIZER), 0)
+CFLAGS += -Wframe-larger-than=4096 -Wlarger-than=4096
+endif
 # CFLAGS += -Wsuggest-attribute=const -Wpadded
 
 # C-Dialect compilation flags
@@ -193,18 +195,14 @@ CFLAGS += -fsanitize=object-size
 CFLAGS += -fsanitize=undefined
 CFLAGS += -fsanitize=float-divide-by-zero
 CFLAGS += -fsanitize=float-cast-overflow
-# CFLAGS += -fsanitize=null
-CFLAGS += -fno-sanitize=null
-LDFLAGS += -fsanitize=address
-
-LDFLAGS += -fsanitize=undefined
-endif
-ifeq ($(SANITIZER), 2)
+CFLAGS += -fsanitize=null
 CFLAGS += -fsanitize=bounds
 CFLAGS += -fsanitize=object-size
 CFLAGS += -fsanitize=undefined
 CFLAGS += -fsanitize=null
 CFLAGS += -fsanitize=undefined
+LDFLAGS += -fsanitize=address
+LDFLAGS += -fsanitize=undefined
 ifeq ($(CC), clang)
 CFLAGS += -fsanitize=memory
 CFLAGS += -fsanitize-memory-track-origins=2

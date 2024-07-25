@@ -98,13 +98,29 @@ void ft_do_expect_ge(intmax_t a, intmax_t b, const char *fl, int ln)
 	}
 }
 
+static size_t ft_memdif_at(const uint8_t *p, const uint8_t *q, size_t n)
+{
+	size_t pos = 0;
+
+	for (size_t i = 0; i < n; ++i) {
+		if (p[i] != q[i]) {
+			break;
+		}
+		pos++;
+	}
+	return pos;
+}
+
 void ft_do_expect_eqm(const void *p, const void *q, size_t n,
                       const char *fl, int ln)
 {
 	const int cmp = ft_memcmp(p, q, n);
 
 	if (cmp != 0) {
-		do_error_at_line(fl, ln, "not equal mem: cmp=%d", cmp);
+		const size_t pos = ft_memdif_at(p, q, n);
+
+		do_error_at_line(fl, ln, "not equal mem: cmp=%d pos=%zu",
+		                 cmp, pos);
 	}
 }
 

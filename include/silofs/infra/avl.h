@@ -41,8 +41,8 @@ struct silofs_avl_node {
 	struct silofs_avl_node *parent;
 	struct silofs_avl_node *left;
 	struct silofs_avl_node *right;
-	int balance;
-	int magic;
+	int32_t balance;
+	int32_t magic;
 };
 
 /* "Iterators" range a-la STL pair */
@@ -130,7 +130,3 @@ void silofs_avl_clear(struct silofs_avl *avl,
 
 
 #endif /* SILOFS_AVL_H_ */
-
-
-
-

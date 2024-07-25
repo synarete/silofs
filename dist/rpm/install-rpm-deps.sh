@@ -32,6 +32,7 @@ qatests_deps=(
   gcc
   git
   git-email
+  libasan
   libattr-devel
   libcap-devel
   libicu-devel

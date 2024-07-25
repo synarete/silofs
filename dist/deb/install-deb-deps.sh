@@ -40,6 +40,8 @@ qatests_deps=(
   flex
   gcc
   git
+  libasan8
+  libattr1-dev
   libcap-dev
   libicu-dev
   libunwind-dev

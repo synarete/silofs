@@ -168,7 +168,7 @@ int silofs_sys_mknodat(int dirfd, const char *pathname,
                        mode_t mode, dev_t dev);
 
 int silofs_sys_mmap(void *addr, size_t length, int prot, int flags,
-                    int fd, off_t offset, void **out_addr);
+                    int fd, loff_t offset, void **out_addr);
 
 int silofs_sys_mmap_anon(size_t length, int flags, void **out_addr);
 

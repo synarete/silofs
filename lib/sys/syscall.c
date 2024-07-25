@@ -599,7 +599,7 @@ int silofs_sys_flistxattr(int fd, char *list, size_t size, size_t *out_size)
 }
 
 int silofs_sys_mmap(void *addr, size_t length, int prot, int flags,
-                    int fd, off_t offset, void **out_addr)
+                    int fd, loff_t offset, void **out_addr)
 {
 	return differ_or_errno(mmap(addr, length, prot, flags, fd, offset),
 	                       MAP_FAILED, out_addr);

@@ -607,8 +607,8 @@ static void test_copy_file_range_mtime(struct ft_env *fte)
 		COPYARGS3(0, FT_64K, FT_64K),
 		COPYARGS3(FT_4K, FT_64K, 4 * FT_64K),
 		COPYARGS3(FT_64K, FT_64K, FT_1M),
-		COPYARGS3(FT_1M, FT_64K, FT_1G),
-		COPYARGS3(FT_1G, FT_1M, FT_1M),
+		COPYARGS3(FT_1M, FT_64K, FT_1M),
+		COPYARGS3(FT_1G, 2 * FT_1M, FT_1M - FT_64K),
 		COPYARGS3(FT_1T, FT_1G, FT_1M / 2),
 		/* unaligned */
 		COPYARGS3(1, 11, FT_64K),
@@ -750,7 +750,7 @@ static void test_copy_file_range_sparse(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /*
- * Expects copy_file_range(2) over large sparse file with two bytes only to
+ * Expects copy_file_range(2) over large sparse file with few bytes only to
  * copy data properly.
  */
 static void

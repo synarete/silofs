@@ -64,7 +64,7 @@ static void test_truncate_unaligned(struct ft_env *fte)
 	loff_t off;
 	struct stat st;
 	const char *dat = "ABCDEFGHIJKLMNOPQ";
-	const size_t len = strlen(dat);
+	const size_t len = ft_strlen(dat);
 	const loff_t offs[] = {
 		17, 7177, 17 * FT_1M - 7, 17 * FT_1G - 7,
 		3 * FT_1T - 7, FT_FILESIZE_MAX / 7,

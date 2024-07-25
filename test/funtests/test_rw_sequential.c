@@ -227,7 +227,7 @@ static void test_sequencial_strings_(struct ft_env *fte,
 	for (size_t i = 0; i < cnt; ++i) {
 		ni = snprintf(buf1, sizeof(buf1), "%lu", i);
 		nu = (size_t)ni;
-		ft_expect_eq(nu, strlen(buf1));
+		ft_expect_eq(nu, ft_strlen(buf1));
 		ft_write(fd, buf1, nu, &nwr);
 		ft_expect_eq(nu, nwr);
 	}
@@ -235,7 +235,7 @@ static void test_sequencial_strings_(struct ft_env *fte,
 	for (size_t i = 0; i < cnt; ++i) {
 		ni = snprintf(buf1, sizeof(buf1), "%lu", i);
 		nu = (size_t)ni;
-		ft_expect_eq(nu, strlen(buf1));
+		ft_expect_eq(nu, ft_strlen(buf1));
 		ft_read(fd, buf2, nu, &nrd);
 		ft_expect_eq(nu, nrd);
 		ft_expect_eq(0, strcmp(buf1, buf2));

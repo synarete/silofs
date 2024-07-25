@@ -168,7 +168,7 @@ static void test_readdir_unlink_(struct ft_env *fte, size_t lim)
 		ft_llseek(dfd, off, SEEK_SET, &pos);
 		ft_expect_eq(off, pos);
 		ft_getdent(dfd, &dent);
-		if (!strlen(dent.d_name)) {
+		if (!ft_strlen(dent.d_name)) {
 			break;
 		}
 		if (ft_dirent_isxdot(&dent)) {
@@ -212,11 +212,11 @@ make_iname(struct ft_env *fte, const char *path, const char *pref, size_t idx)
 
 static void test_readdir_getdents_(struct ft_env *fte, size_t lim)
 {
-	char buf[1024];
 	struct dirent64 dents[8];
 	struct stat st = { .st_size = -1 };
-	const size_t bsz = sizeof(buf);
+	const size_t bsz = 1024;
 	const size_t ndents = FT_ARRAY_SIZE(dents);
+	char *buf = ft_new_buf_zeros(fte, bsz);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = NULL;
 	const char *prefix = ft_new_name_unique(fte);
@@ -250,7 +250,7 @@ static void test_readdir_getdents_(struct ft_env *fte, size_t lim)
 				continue;
 			}
 			ft_expect_true(ft_dirent_isreg(dent));
-			cmp = strncmp(dent->d_name, prefix, strlen(prefix));
+			cmp = strncmp(dent->d_name, prefix, ft_strlen(prefix));
 			ft_expect_eq(cmp, 0);
 			cnt++;
 		}

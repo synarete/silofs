@@ -26,7 +26,7 @@ static void test_xattr_simple(struct ft_env *fte)
 	const char *path = ft_new_path_unique(fte);
 	const char *name = "user.digits";
 	const char *value = "0123456789";
-	const size_t valsz = strlen(value);
+	const size_t valsz = ft_strlen(value);
 	size_t sz = 0;
 	int fd = -1;
 
@@ -55,11 +55,11 @@ static void test_xattr_by_fd(struct ft_env *fte)
 	const char *fpath = ft_new_path_under(fte, dpath);
 	const char *name1 = "user.ascii_lowercase";
 	const char *value1 = "abcdefghijklmnopqrstuvwxyz";
-	const size_t valsz1 = strlen(value1);
+	const size_t valsz1 = ft_strlen(value1);
 	const char *name2 = "user.ascii_letters";
 	const char *value2 =
 	        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-	const size_t valsz2 = strlen(value2);
+	const size_t valsz2 = ft_strlen(value2);
 	size_t sz = 0;
 	int dfd = -1;
 	int fd = -1;
@@ -109,7 +109,7 @@ static void test_xattr_inode(struct ft_env *fte)
 	const char *path3 = ft_new_path_under(fte, path1);
 	const char *name = "user.digits";
 	const char *value = "0123456789";
-	const size_t valsz = strlen(value);
+	const size_t valsz = ft_strlen(value);
 	size_t sz = 0;
 	int fd = -1;
 
@@ -155,7 +155,7 @@ static void test_xattr_ctime(struct ft_env *fte)
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_fstat(fd, &st[0]);
-	ft_fsetxattr(fd, name, value, strlen(value), 0);
+	ft_fsetxattr(fd, name, value, ft_strlen(value), 0);
 	ft_fstat(fd, &st[1]);
 	ft_expect_st_mtime_eq(&st[0], &st[1]);
 	ft_expect_st_ctime_ge(&st[0], &st[1]);
@@ -194,23 +194,23 @@ static void test_xattr_replace(struct ft_env *fte)
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
-	ft_fsetxattr(fd, name, val1, strlen(val1), 0);
+	ft_fsetxattr(fd, name, val1, ft_strlen(val1), 0);
 	ft_fgetxattr(fd, name, NULL, 0, &sz);
-	ft_expect_eq(sz, strlen(val1));
+	ft_expect_eq(sz, ft_strlen(val1));
 	ft_fgetxattr(fd, name, buf, sizeof(buf) - 1, &sz);
-	ft_expect_eq(sz, strlen(val1));
+	ft_expect_eq(sz, ft_strlen(val1));
 	ft_expect_eqm(buf, val1, sz);
-	ft_fsetxattr(fd, name, val2, strlen(val2), 0);
+	ft_fsetxattr(fd, name, val2, ft_strlen(val2), 0);
 	ft_fgetxattr(fd, name, NULL, 0, &sz);
-	ft_expect_eq(sz, strlen(val2));
+	ft_expect_eq(sz, ft_strlen(val2));
 	ft_fgetxattr(fd, name, buf, sizeof(buf) - 1, &sz);
-	ft_expect_eq(sz, strlen(val2));
+	ft_expect_eq(sz, ft_strlen(val2));
 	ft_expect_eqm(buf, val2, sz);
-	ft_fsetxattr(fd, name, val3, strlen(val3), XATTR_REPLACE);
+	ft_fsetxattr(fd, name, val3, ft_strlen(val3), XATTR_REPLACE);
 	ft_fgetxattr(fd, name, NULL, 0, &sz);
-	ft_expect_eq(sz, strlen(val3));
+	ft_expect_eq(sz, ft_strlen(val3));
 	ft_fgetxattr(fd, name, buf, sizeof(buf) - 1, &sz);
-	ft_expect_eq(sz, strlen(val3));
+	ft_expect_eq(sz, ft_strlen(val3));
 	ft_expect_eqm(buf, val3, sz);
 	ft_fremovexattr(fd, name);
 	ft_fremovexattr_err(fd, name, -ENODATA);
@@ -229,15 +229,15 @@ static void test_xattr_list(struct ft_env *fte)
 	const char *name1 = "user.xattr_list1";
 	const char *name2 = "user.xattr_xxxxx_list2";
 	const char *value = "0123456789ABCDEF";
-	const size_t nlen1 = strlen(name1);
-	const size_t nlen2 = strlen(name2);
+	const size_t nlen1 = ft_strlen(name1);
+	const size_t nlen2 = ft_strlen(name2);
 	size_t sz = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_flistxattr(fd, list, sizeof(list), &sz);
 	ft_expect_eq(sz, 0);
-	ft_fsetxattr(fd, name1, value, strlen(value), 0);
+	ft_fsetxattr(fd, name1, value, ft_strlen(value), 0);
 	ft_flistxattr(fd, NULL, 0, &sz);
 	ft_expect_eq(sz, nlen1 + 1);
 	ft_expect_lt(sz, sizeof(list));
@@ -246,7 +246,7 @@ static void test_xattr_list(struct ft_env *fte)
 	ft_expect_eq(sz, nlen1 + 1);
 	ft_flistxattr(fd, list, sz, &sz);
 	ft_expect_eq(sz, nlen1 + 1);
-	ft_fsetxattr(fd, name2, value, strlen(value), 0);
+	ft_fsetxattr(fd, name2, value, ft_strlen(value), 0);
 	ft_flistxattr(fd, NULL, 0, &sz);
 	ft_expect_eq(sz, nlen1 + nlen2 + 2);
 	ft_flistxattr_err(fd, list, 1, -ERANGE);

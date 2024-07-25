@@ -62,7 +62,7 @@ static void test_opath_symlnk(struct ft_env *fte)
 	struct stat st = { .st_size = -1 };
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
-	const size_t len = strlen(path0);
+	const size_t len = ft_strlen(path0);
 	char *symval = ft_new_buf_zeros(fte, len + 1);
 	size_t nch = 0;
 	int fd = -1;

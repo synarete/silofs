@@ -220,7 +220,7 @@ static void test_link_similar_names(struct ft_env *fte)
 	const char *rpath = ft_new_path_under(fte, path0);
 	const char *abc =
 	        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const size_t abc_len = strlen(abc);
+	const size_t abc_len = ft_strlen(abc);
 	const size_t name_max = SILOFS_NAME_MAX;
 	int fd = -1;
 
@@ -387,7 +387,7 @@ static void test_linkat_with_io_(struct ft_env *fte, size_t cnt)
 		link = ft_new_namef(fte, "%s-%lu", name, i);
 		ft_linkat(dfd, name, dfd, link, 0);
 		off = (ssize_t)(i * FT_1M + i);
-		ft_pwriten(fd, link, strlen(link), off);
+		ft_pwriten(fd, link, ft_strlen(link), off);
 	}
 	for (size_t j = cnt; j > 0; --j) {
 		ft_fstatat(dfd, name, &st, 0);
@@ -395,7 +395,7 @@ static void test_linkat_with_io_(struct ft_env *fte, size_t cnt)
 		link = ft_new_namef(fte, "%s-%lu", name, j - 1);
 		ft_unlinkat(dfd, link, 0);
 		off = (ssize_t)(FT_1G + j);
-		ft_pwriten(fd, link, strlen(link), off);
+		ft_pwriten(fd, link, ft_strlen(link), off);
 	}
 	ft_close(fd);
 	ft_unlinkat(dfd, name, 0);

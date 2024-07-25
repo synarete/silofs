@@ -28,7 +28,7 @@
 static const char *syscall_name(const char *fn)
 {
 	const char *prefix = "ft_do_";
-	const size_t preflen = strlen(prefix);
+	const size_t preflen = ft_strlen(prefix);
 
 	if (!strncmp(prefix, fn, preflen)) {
 		fn += preflen;

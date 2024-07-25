@@ -21,6 +21,7 @@
 #include <silofs/defs.h>
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
+#include <silofs/str.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -136,10 +137,6 @@ void fte_run(struct ft_env *fte);
 
 void fte_fini(struct ft_env *fte);
 
-void ft_memcpy(void *dst, const void *src, size_t n);
-
-int ft_memcmp(const void *p, const void *q, size_t n);
-
 void ft_relax_mem(struct ft_env *fte);
 
 void ft_suspend(const struct ft_env *fte, int sec, int part);
@@ -192,8 +189,6 @@ long ft_timespec_diff(const struct timespec *ts1, const struct timespec *ts2);
 long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
                         const struct statx_timestamp *ts2);
 
-size_t ft_page_size(void);
-
 const char *ft_curr_test_name(const struct ft_env *fte);
 
 /* Directory-entry helpers */
@@ -206,6 +201,15 @@ int ft_dirent_isxdot(const struct dirent64 *dent);
 int ft_dirent_isdir(const struct dirent64 *dent);
 
 int ft_dirent_isreg(const struct dirent64 *dent);
+
+/* misc */
+void ft_memcpy(void *dst, const void *src, size_t n);
+
+int ft_memcmp(const void *p, const void *q, size_t n);
+
+size_t ft_strlen(const char *s);
+
+size_t ft_page_size(void);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -286,4 +290,3 @@ extern const struct ft_tests ft_stress_rw;
 #include "funtests_expect.h"
 
 #endif /* SILOFS_FUNTESTS_H_ */
-

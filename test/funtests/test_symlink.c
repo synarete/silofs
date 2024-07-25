@@ -66,10 +66,10 @@ static void test_symlink_readlink(struct ft_env *fte)
 	ft_symlink(path0, path1);
 	ft_lstat(path1, &st);
 	ft_expect_st_lnk(&st);
-	ft_expect_eq(st.st_size, strlen(path0));
+	ft_expect_eq(st.st_size, ft_strlen(path0));
 
 	ft_readlink(path1, buf, bsz, &nch);
-	ft_expect_eq(nch, strlen(path0));
+	ft_expect_eq(nch, ft_strlen(path0));
 	ft_expect_eq(strncmp(buf, path0, nch), 0);
 	ft_readlink_err(path0, buf, bsz, -EINVAL);
 	ft_readlink_err(path2, buf, bsz, -ENOENT);
@@ -101,7 +101,7 @@ static void test_symlink_readlink_atime(struct ft_env *fte)
 	ft_symlink(path0, path1);
 	ft_lstat(path1, &st);
 	ft_expect_st_lnk(&st);
-	ft_expect_eq(st.st_size, strlen(path0));
+	ft_expect_eq(st.st_size, ft_strlen(path0));
 
 	atime[0] = st.st_atim.tv_sec;
 	ft_readlink(path1, buf, bsz, &nch);
@@ -133,7 +133,7 @@ static char *ft_new_path_dummy(struct ft_env *fte, size_t len)
 	char *name = ft_new_name_unique(fte);
 	char *path = ft_new_buf_zeros(fte, lim + 1);
 
-	while ((cnt = strlen(path)) < len) {
+	while ((cnt = ft_strlen(path)) < len) {
 		snprintf(path + cnt, lim - cnt, "/%s", name);
 	}
 	path[len] = '\0';
@@ -270,7 +270,7 @@ static void test_symlinkat_simple(struct ft_env *fte)
 	ft_stat(spath, &st);
 	ft_expect_st_reg(&st);
 	ft_readlinkat(dfd, sname, symval, symval_bsz, &len);
-	ft_expect_eq(len, strlen(rpath));
+	ft_expect_eq(len, ft_strlen(rpath));
 	ft_expect_eqm(symval, rpath, len);
 	ft_unlinkat(dfd, sname, 0);
 	ft_fstatat_err(dfd, sname, 0, -ENOENT);

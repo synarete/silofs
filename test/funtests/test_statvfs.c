@@ -33,7 +33,7 @@ static void test_statvfs_simple(struct ft_env *fte)
 	ft_expect_eq((stv.f_bsize % FT_FRGSIZE), 0);
 	ft_expect_gt(stv.f_frsize, 0);
 	ft_expect_eq(stv.f_frsize % FT_FRGSIZE, 0);
-	ft_expect_gt(stv.f_namemax, strlen(name));
+	ft_expect_gt(stv.f_namemax, ft_strlen(name));
 	ft_statvfs_err(path, -ENOENT);
 }
 

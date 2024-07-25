@@ -66,7 +66,7 @@ static void test_utime_now(struct ft_env *fte)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_utime(path, NULL);
 	ft_stat(path, &st[0]);
-	ft_write(fd, path, strlen(path), &nwr);
+	ft_write(fd, path, ft_strlen(path), &nwr);
 	ft_utime(path, NULL);
 	ft_stat(path, &st[1]);
 	ft_expect_st_ctime_ge(&st[0], &st[1]);
@@ -100,7 +100,7 @@ static void test_utimes_file(struct ft_env *fte)
 	ft_expect_eq(st[1].st_atim.tv_nsec / 1000, tv1[0].tv_usec);
 	ft_expect_eq(st[1].st_mtim.tv_sec, tv1[1].tv_sec);
 	ft_expect_eq(st[1].st_mtim.tv_nsec / 1000, tv1[1].tv_usec);
-	ft_write(fd, path, strlen(path), &nwr);
+	ft_write(fd, path, ft_strlen(path), &nwr);
 	tv2[0].tv_sec = 55555;
 	tv2[0].tv_usec = 55;
 	tv2[1].tv_sec = 666666;
@@ -145,7 +145,7 @@ static void test_utimensat_file(struct ft_env *fte)
 	ft_expect_st_ctime_ge(&st[0], &st[1]);
 	ft_expect_ts_eq(&st[1].st_atim, &ts1[0]);
 	ft_expect_ts_eq(&st[1].st_mtim, &ts1[1]);
-	ft_writen(fd, name, strlen(name));
+	ft_writen(fd, name, ft_strlen(name));
 
 	ts2[0].tv_sec = 0;
 	ts2[0].tv_nsec = 0;

@@ -210,7 +210,7 @@ static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 		snprintf(name, sizeof(name) - 1, "%lx-%ld", i, off);
 		ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 		ft_fstat(fd, &st);
-		ft_pwriten(fd, name, strlen(name), off);
+		ft_pwriten(fd, name, ft_strlen(name), off);
 		ft_fstat(fd, &sts[i]);
 		ft_expect_st_mtime_gt(&st, &sts[i]);
 		ft_expect_st_ctime_gt(&st, &sts[i]);

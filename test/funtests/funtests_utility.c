@@ -131,7 +131,7 @@ static void *ft_do_zalloc(struct ft_env *fte, size_t sz)
 static char *ft_do_strdup(struct ft_env *fte, const char *str)
 {
 	char *str2;
-	const size_t len = strlen(str);
+	const size_t len = ft_strlen(str);
 
 	str2 = ft_do_malloc(fte, len + 1);
 	memcpy(str2, str, len);
@@ -154,8 +154,8 @@ static char *ft_do_strcat(struct ft_env *fte,
                           const char *str1, const char *str2)
 {
 	char *str;
-	const size_t len1 = strlen(str1);
-	const size_t len2 = strlen(str2);
+	const size_t len1 = ft_strlen(str1);
+	const size_t len2 = ft_strlen(str2);
 
 	str = ft_do_malloc(fte, len1 + len2 + 1);
 	memcpy(str, str1, len1);
@@ -203,20 +203,6 @@ void ft_relax_mem(struct ft_env *fte)
 	ft_freeall(fte);
 }
 
-void ft_memcpy(void *dst, const void *src, size_t n)
-{
-	silofs_assert_not_null(dst);
-	silofs_assert_not_null(src);
-	memcpy(dst, src, n);
-}
-
-int ft_memcmp(const void *p, const void *q, size_t n)
-{
-	silofs_assert_not_null(p);
-	silofs_assert_not_null(q);
-	return memcmp(p, q, n);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ft_do_fill_random(struct ft_env *fte, void *buf, size_t bsz)
@@ -250,10 +236,10 @@ void ft_suspend1(const struct ft_env *fte)
 
 static char *ft_do_joinpath(struct ft_env *fte, const char *s1, const char *s2)
 {
-	char *path;
-	const size_t len1 = strlen(s1);
-	const size_t len2 = strlen(s2);
+	const size_t len1 = ft_strlen(s1);
+	const size_t len2 = ft_strlen(s2);
 	const size_t msz = len1 + len2 + 2;
+	char *path = NULL;
 
 	path = (char *)ft_do_malloc(fte, msz);
 	strncpy(path, s1, len1 + 1);
@@ -437,7 +423,7 @@ char *ft_make_ulong_name(struct ft_env *fte, unsigned long key)
 static void ft_force_alnum(char *str, size_t len)
 {
 	const char *alt = "_0123456789abcdefghijklmnopqrstuvwxyz";
-	const size_t alt_len = strlen(alt);
+	const size_t alt_len = ft_strlen(alt);
 	size_t idx;
 	int ch;
 
@@ -524,9 +510,30 @@ long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
 	return (d_sec * n) + d_nsec;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 size_t ft_page_size(void)
 {
 	return (size_t)silofs_sc_page_size();
+}
+
+void ft_memcpy(void *dst, const void *src, size_t n)
+{
+	silofs_assert_not_null(dst);
+	silofs_assert_not_null(src);
+	memcpy(dst, src, n);
+}
+
+int ft_memcmp(const void *p, const void *q, size_t n)
+{
+	silofs_assert_not_null(p);
+	silofs_assert_not_null(q);
+	return memcmp(p, q, n);
+}
+
+size_t ft_strlen(const char *s)
+{
+	return silofs_str_length(s);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -566,4 +573,3 @@ int ft_dirent_isreg(const struct dirent64 *dent)
 
 	return S_ISREG(mode);
 }
-

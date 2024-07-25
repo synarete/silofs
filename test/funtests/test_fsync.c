@@ -120,7 +120,7 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 		name2 = ft_new_namef(fte, "2-%08x", i + 1);
 		ft_openat(dfd, name1, O_CREAT | O_RDWR, 0600, &fd);
 		ft_fsync(dfd);
-		len = strlen(name1);
+		len = ft_strlen(name1);
 		off = off_base + (long)i;
 		ft_pwriten(fd, name1, len, off);
 		ft_fsync(fd);
@@ -135,7 +135,7 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 		ft_openat(dfd, name2, O_RDONLY, 0600, &fd);
 		ft_unlinkat(dfd, name2, 0);
 		ft_fsync(dfd);
-		len = strlen(name1);
+		len = ft_strlen(name1);
 		off = off_base + (long)j;
 		buf = ft_new_buf_zeros(fte, len);
 		ft_preadn(fd, buf, len, off);

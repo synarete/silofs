@@ -31,7 +31,7 @@ static void test_truncate_basic_(struct ft_env *fte, size_t cnt)
 
 	ft_creat(path, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
-		ft_write(fd, path, strlen(path), &nwr);
+		ft_write(fd, path, ft_strlen(path), &nwr);
 	}
 	for (size_t i = cnt; i > 0; i--) {
 		off = (loff_t)(19 * i);

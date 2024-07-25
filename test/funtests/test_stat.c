@@ -119,7 +119,7 @@ static void test_statx_btime(struct ft_env *fte)
 	ft_expect_xts_eq(&stx[0].stx_btime, &stx[0].stx_mtime);
 	ft_expect_xts_eq(&stx[0].stx_btime, &stx[0].stx_ctime);
 	ft_suspends(fte, 1);
-	ft_writen(fd, name, strlen(name));
+	ft_writen(fd, name, ft_strlen(name));
 	ft_statx(dfd, name, flags, STATX_ALL, &stx[1]);
 	ft_expect_xts_eq(&stx[0].stx_btime, &stx[1].stx_btime);
 	ft_expect_xts_gt(&stx[1].stx_btime, &stx[1].stx_mtime);
@@ -148,7 +148,7 @@ static void test_fstatat_simple(struct ft_env *fte)
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	ft_mkdirat(dfd, dname, 0750);
 	ft_openat(dfd, fname, O_CREAT | O_RDWR, 0600, &fd);
-	ft_writen(fd, fname, strlen(fname));
+	ft_writen(fd, fname, ft_strlen(fname));
 	ft_close(fd);
 	ft_fstatat(dfd, dname, &st, 0);
 	ft_expect_st_dir(&st);

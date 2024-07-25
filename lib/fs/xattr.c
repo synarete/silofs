@@ -886,7 +886,7 @@ static int xac_try_insert_at_nodes(const struct silofs_xattr_ctx *xa_ctx,
 {
 	struct silofs_xanode_info *xai = NULL;
 	const size_t nslots_max = ii_xa_nslots_max(xa_ctx->ii);
-	int err;
+	int err = -SILOFS_ENOSPC;
 
 	for (size_t sloti = 0; sloti < nslots_max; ++sloti) {
 		err = xac_require_xanode(xa_ctx, sloti, &xai);

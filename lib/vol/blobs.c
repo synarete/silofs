@@ -148,12 +148,12 @@ static void blobid_to_name(const struct silofs_blobid *blobid,
 
 	STATICASSERT_GT(sizeof(sbuf->str), 2 * sizeof(blobid->id));
 
+	silofs_strbuf_reset(sbuf);
 	for (size_t i = 0; i < blobid->id_len; ++i) {
 		b = blobid->id[i];
 		byte_to_ascii(b, s);
 		s += 2;
 	}
-	*s = '\0';
 }
 
 static struct silofs_blob_fh *

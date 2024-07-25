@@ -229,10 +229,13 @@ __attribute__((__noreturn__))
 static void silofs_fatal_op(long a, const char *op, long b,
                             const struct silofs_fileline *fl)
 {
-	struct silofs_fatal_msg fm;
+	struct silofs_fatal_msg fm = {
+		.fl.file = fl->file,
+		.fl.line = fl->line
+	};
 
 	fmtmsg(&fm, "%ld %s %ld", a, op, b);
-	silofs_fatal_at_(fm.str, fl);
+	silofs_fatal_by_(&fm);
 }
 
 void silofs_expect_cond_(int cond, const char *str, const char *file, int line)

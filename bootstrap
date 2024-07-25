@@ -59,6 +59,7 @@ do_autoclean() {
   run rm -rf "${autom4te_cachedir}"
   run rm -rf "${basedir}/.cache"
   run rm -f "${basedir}/tags"
+  run rm -f "${basedir}/TAGS"
   run rm -f "${basedir}/configure"
   run rm -f "${basedir}/configure~"
   run rm -f "${basedir}/aclocal.m4"

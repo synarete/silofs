@@ -411,10 +411,10 @@ static long *random_keys(struct ut_env *ute, size_t cnt, long base)
 
 static void ut_avl_random_(struct ut_env *ute, size_t cnt)
 {
-	long key;
-	struct silofs_avl *avl;
 	const long base = 100000;
 	const long *keys = random_keys(ute, cnt, base);
+	struct silofs_avl *avl = NULL;
+	long key;
 
 	avl = avl_new(ute);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -441,7 +441,8 @@ static void ut_avl_random_(struct ut_env *ute, size_t cnt)
 static void ut_avl_random(struct ut_env *ute)
 {
 	ut_avl_random_(ute, 10);
-	ut_avl_random_(ute, 10000);
+	ut_avl_random_(ute, 1000);
+	ut_avl_random_(ute, 100000);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -515,5 +516,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_avl = UT_MKTESTS(ut_local_tests);
-
-

@@ -25,4 +25,20 @@ static inline loff_t ft_off_end(loff_t off, size_t len)
 	return off + (long)len;
 }
 
+static inline size_t ft_max(size_t a, size_t b)
+{
+	return (a > b) ? a : b;
+}
+
+static inline size_t ft_min(size_t a, size_t b)
+{
+	return (a < b) ? a : b;
+}
+
+static inline long ft_lmax(long a, long b)
+{
+	return (a > b) ? a : b;
+}
+
+
 #endif /* SILOFS_FUNTESTS_INLINE_H_ */

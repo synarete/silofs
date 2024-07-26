@@ -599,14 +599,14 @@ static void test_mmap_rw_mixed(struct ft_env *fte)
  */
 static void test_mmap_private_(struct ft_env *fte, size_t mlen)
 {
-	int fd = -1;
-	const int prot = PROT_READ | PROT_WRITE;
-	const int flag = MAP_PRIVATE;
-	size_t nwr = 0;
-	void *addr = NULL;
-	uint8_t *dptr = NULL;
 	uint8_t *data = ft_new_buf_rands(fte, mlen);
 	const char *path = ft_new_path_unique(fte);
+	void *addr = NULL;
+	uint8_t *dptr = NULL;
+	size_t nwr = 0;
+	const int prot = PROT_READ | PROT_WRITE;
+	const int flag = MAP_PRIVATE;
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_write(fd, data, mlen, &nwr);
@@ -695,14 +695,14 @@ static void test_mmap_madvise_simple(struct ft_env *fte)
 
 static void test_mmap_madvise_dontneed_(struct ft_env *fte, size_t mlen)
 {
-	int fd1 = -1;
-	int fd2 = -1;
-	size_t nwr = 0;
-	void *addr1 = NULL;
-	void *addr2 = NULL;
 	void *data = ft_new_buf_rands(fte, mlen);
 	const char *path = ft_new_path_unique(fte);
 	const int prot = PROT_READ | PROT_WRITE;
+	size_t nwr = 0;
+	void *addr1 = NULL;
+	void *addr2 = NULL;
+	int fd1 = -1;
+	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDWR, 0600, &fd2);
@@ -728,6 +728,70 @@ static void test_mmap_madvise_dontneed(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Test mmap(2) over very large range of two files by write + copy + compare.
+ */
+static void test_mmap_vlarge_(struct ft_env *fte, loff_t off, size_t len)
+{
+	const char *path1 = ft_new_path_unique(fte);
+	const char *path2 = ft_new_path_unique(fte);
+	const loff_t end = ft_off_end(off, len);
+	const size_t msz = len;
+	const size_t bsz = FT_1M;
+	void *buf = ft_new_buf_rands(fte, bsz);
+	void *mem1 = NULL;
+	void *mem2 = NULL;
+	loff_t pos = -1;
+	size_t cnt = 0;
+	size_t nwr = 0;
+	int cmp = 0;
+	int fd1 = -1;
+	int fd2 = -1;
+
+	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd1);
+	while (cnt < len) {
+		nwr = ft_min(bsz, len - cnt);
+		pos = ft_off_end(off, cnt);
+		ft_pwriten(fd1, buf, nwr, pos);
+		cnt += nwr;
+	}
+	ft_open(path2, O_CREAT | O_RDWR, 0600, &fd2);
+	ft_ftruncate(fd2, end);
+	ft_mmap(NULL, msz, PROT_READ, MAP_SHARED, fd1, off, &mem1);
+	ft_mmap(NULL, msz, PROT_WRITE, MAP_SHARED, fd2, off, &mem2);
+	memcpy(mem2, mem1, len);
+	ft_munmap(mem1, msz);
+	ft_munmap(mem2, msz);
+	ft_close(fd1);
+	ft_close(fd2);
+	ft_open(path1, O_RDONLY, 0, &fd1);
+	ft_open(path2, O_RDONLY, 0, &fd2);
+	ft_unlink(path1);
+	ft_unlink(path2);
+	ft_mmap(NULL, msz, PROT_READ, MAP_SHARED, fd1, off, &mem1);
+	ft_mmap(NULL, msz, PROT_READ, MAP_SHARED, fd2, off, &mem2);
+	cmp = memcmp(mem1, mem2, msz);
+	ft_expect_eq(cmp, 0);
+	ft_munmap(mem1, msz);
+	ft_munmap(mem2, msz);
+	ft_close(fd1);
+	ft_close(fd2);
+}
+
+static void test_mmap_vlarge(struct ft_env *fte)
+{
+	const struct ft_range ranges[] = {
+		FT_MKRANGE(0, FT_1G),
+		FT_MKRANGE(FT_4K, FT_1G),
+		FT_MKRANGE(4 * FT_1M, 2 * FT_1G),
+		FT_MKRANGE(FT_1T - FT_1M, FT_1G + FT_1M),
+		FT_MKRANGE(FT_FILESIZE_ALIGNED_MAX - FT_1G, FT_1G),
+	};
+
+	ft_exec_with_ranges(fte, test_mmap_vlarge_, ranges);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mmap_basic),
@@ -747,7 +811,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mmap_private2),
 	FT_DEFTEST(test_mmap_madvise_simple),
 	FT_DEFTEST(test_mmap_madvise_dontneed),
+	FT_DEFTEST(test_mmap_vlarge),
 };
 
 const struct ft_tests ft_test_mmap = FT_DEFTESTS(ft_local_tests);
-

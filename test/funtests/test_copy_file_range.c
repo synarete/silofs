@@ -75,22 +75,6 @@ ft_copy_range3_(struct ft_env *fte,
 	}
 }
 
-/* TODO: make me common util */
-static size_t ft_max(size_t a, size_t b)
-{
-	return (a > b) ? a : b;
-}
-
-static size_t ft_min(size_t a, size_t b)
-{
-	return (a < b) ? a : b;
-}
-
-static long ft_lmax(long a, long b)
-{
-	return (a > b) ? a : b;
-}
-
 static void ft_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
                                 loff_t off_out, size_t len)
 {

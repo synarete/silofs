@@ -682,7 +682,7 @@ void ft_do_access_err(const char *path, int mode, int err,
 }
 
 void ft_do_mmap(void *addr, size_t len, int prot, int flags,
-                int fd, off_t offset, void **out, const char *fl, int ln)
+                int fd, loff_t offset, void **out, const char *fl, int ln)
 {
 	int res;
 

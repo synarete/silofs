@@ -215,7 +215,7 @@ void ft_do_access_err(const char *path, int mode, int err,
                       const char *fl, int ln);
 
 void ft_do_mmap(void *addr, size_t len, int prot, int flags,
-                int fd, off_t offset, void **out, const char *fl, int ln);
+                int fd, loff_t offset, void **out, const char *fl, int ln);
 
 void ft_do_munmap(void *addr, size_t len, const char *fl, int ln);
 
@@ -612,4 +612,3 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 	ft_do_ioctl_syncfs(fd_, FT_FL_LN_)
 
 #endif /* SILOFS_FUNTESTS_SYSCALL_H_ */
-

@@ -1,0 +1,8 @@
+FROM quay.io/centos/centos:stream9
+WORKDIR /scratch
+RUN dnf update -y --enablerepo=crb
+RUN dnf install -y --enablerepo=crb epel-release epel-next-release
+COPY install-rpm-deps.sh .
+RUN ./install-rpm-deps.sh --all
+RUN rm -f /scratch/*
+

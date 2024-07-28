@@ -1,9 +1,8 @@
 FROM debian:latest
 WORKDIR /scratch
-COPY install-deb-deps.sh .
 RUN apt update -y
 RUN apt upgrade -y
-RUN sleep 10 && apt update -y
+COPY install-deb-deps.sh .
 RUN ./install-deb-deps.sh --all
 RUN rm -f /scratch/*
 

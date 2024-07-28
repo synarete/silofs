@@ -14,6 +14,7 @@ _RSYNC_REPO_URL = "git://git.samba.org/rsync.git"
 _FINDUTILS_REPO_URL = "https://git.savannah.gnu.org/git/findutils.git"
 _GITSCM_REPO_URL = "https://github.com/git/git.git"
 _SILOFS_REPO_URL = "https://github.com/synarete/silofs"
+_CENTOS_MIRROR_URL = "https://mirrors.centos.org"
 
 
 class ConfigParams(pydantic.BaseModel):
@@ -28,6 +29,7 @@ class ConfigRemotes(pydantic.BaseModel):
     findutils_repo_url: str = _FINDUTILS_REPO_URL
     git_repo_url: str = _GITSCM_REPO_URL
     silofs_repo_url: str = _SILOFS_REPO_URL
+    centos_mirror_url: str = _CENTOS_MIRROR_URL
 
 
 class Config(pydantic.BaseModel):

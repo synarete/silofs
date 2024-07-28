@@ -69,8 +69,19 @@ def fstype_of(path: Path) -> str:
 
 def try_urlopen(url: str, timeout: int = 5) -> bool:
     try:
-        with contextlib.closing(urllib.request.urlopen(url, timeout=timeout)):
+        urlopen = urllib.request.urlopen
+        with contextlib.closing(urlopen(url, timeout=timeout)):
             return True
+    except urllib.error.URLError:
+        return False
+
+
+def try_urlread_some(url: str, timeout: int = 5) -> bool:
+    try:
+        urlopen = urllib.request.urlopen
+        with contextlib.closing(urlopen(url, timeout=timeout)) as fh:
+            dat = fh.read()
+            return len(dat) > 0
     except urllib.error.URLError:
         return False
 

@@ -114,9 +114,18 @@ def test_funtests_mt(env: TestEnv) -> None:
     env.exec_rmfs(ff_snap_name2)
 
 
+def _is_active_url(url: str) -> bool:
+    if not url:
+        return False
+    if url.startswith("http") and not utils.try_urlread_some(url):
+        return False
+    return True
+
+
 def test_cicd(env: TestEnv) -> None:
-    url = env.cfg.remotes.silofs_repo_url
-    if url:
+    url1 = env.cfg.remotes.silofs_repo_url
+    url2 = env.cfg.remotes.centos_mirror_url
+    if _is_active_url(url1) and _is_active_url(url2):
         _test_cicd(env)
 
 

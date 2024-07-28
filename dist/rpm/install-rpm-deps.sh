@@ -73,7 +73,7 @@ extra_deps=(
 )
 
 _install_rpm_pkgs() {
-  dnf install -y "$@"
+  dnf install -y --enablerepo=crb "$@"
 }
 
 arg=${1:-}

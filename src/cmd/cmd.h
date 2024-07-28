@@ -18,7 +18,6 @@
 #define SILOFS_CMD_H_
 
 #include <silofs/libsilofs.h>
-#include <getopt.h>
 
 typedef void (*silofs_exec_fn)(void);
 
@@ -28,19 +27,40 @@ struct cmd_info {
 	silofs_exec_fn action_hook;
 };
 
+/* sub-command option descriptor */
+struct cmd_optdesc {
+	const char *lopt;
+	char sopt;
+	int has_arg;
+};
+
+/* internal getopt state */
+struct cmd_getopt_info;
+
+/* sub-command options and arguments */
+struct cmd_optargs {
+	struct cmd_getopt_info *opa_goi;
+	char      **opa_cmd_argv;
+	int         opa_cmd_argc;
+	int         opa_optind;
+	int         opa_optidx;
+	int         opa_opterr;
+	char       *opa_optarg;
+	bool        opa_done;
+};
+
 /* global settings */
 struct cmd_globals {
 	/* program's version string */
 	const char *version;
 
-	/* program's arguments */
-	char   *name;
-	char   *prog;
+	/* program short/full name */
+	const char *name;
+	const char *prog;
+
+	/* program arguments */
 	int     argc;
 	char  **argv;
-	char   *cmd_name;
-	char  **cmd_argv;
-	int     cmd_argc;
 
 	/* logging */
 	struct silofs_log_params log_params;
@@ -99,12 +119,45 @@ void cmd_execute_archive(void);
 
 void cmd_execute_restore(void);
 
+/* options-arguments parsing via getopt */
+void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods);
+
+void cmd_optargs_fini(struct cmd_optargs *opa);
+
+int cmd_optargs_parse(struct cmd_optargs *opa);
+
+char *cmd_optargs_dupcurr(const struct cmd_optargs *opa);
+
+char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id);
+
+char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name);
+
+char *cmd_optargs_getarg2(struct cmd_optargs *opa,
+                          const char *arg_name, const char *default_val);
+
+char *cmd_optargs_getpass(const struct cmd_optargs *opa);
+
+bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
+
+long cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
+
+uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa,
+                                  uint32_t vmin, uint32_t vmax);
+
+void cmd_optargs_endargs(const struct cmd_optargs *opa);
+
+void cmd_optargs_set_loglevel(const struct cmd_optargs *opa);
+
+
+void cmd_require_arg(const char *arg_name, const void *arg_val);
+
+void cmd_require_arg_size(const char *arg_name, long val);
+
 /* fatal-error handling */
 __attribute__((__noreturn__))
 void cmd_die(int errnum, const char *restrict fmt, ...);
 
 /* common utilities */
-void cmd_require_arg(const char *arg_name, const void *arg_val);
 
 void cmd_check_repopath(const char *arg_val);
 
@@ -143,12 +196,6 @@ void cmd_check_mntsrv_conn(void);
 void cmd_check_mntsrv_perm(const char *path);
 
 void cmd_mkdir(const char *path, mode_t mode);
-
-void cmd_getoptarg(const char *opt_name, char **out_opt);
-
-void cmd_getoptarg_pass(char **out_pass);
-
-void cmd_getarg_or_cwd(const char *arg_name, char **out_arg);
 
 void cmd_realpath(const char *path, char **out_real);
 
@@ -194,19 +241,6 @@ char *cmd_mkpathf(const char *fmt, ...);
 
 __attribute__((__noreturn__))
 void cmd_print_help_and_exit(const char **help_strings);
-
-/* getopt wrappers */
-int cmd_getopt(const char *sopts, const struct option *lopts);
-
-void cmd_getopt_endargs(void);
-
-void cmd_getopt_getarg(const char *arg_name, char **out_arg);
-
-void cmd_getopt_trygetarg(const char *arg_name,
-                          const char *arg_default_val, char **out_arg);
-
-__attribute__((__noreturn__))
-void cmd_getopt_unrecognized(void);
 
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);

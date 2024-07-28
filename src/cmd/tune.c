@@ -43,31 +43,40 @@ static struct cmd_tune_ctx *cmd_tune_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_tune_getopt(struct cmd_tune_ctx *ctx)
+static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "ftype", required_argument, NULL, 't' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "ftype", 't', 1 },
+		{ "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 },
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("t:L:h", opts);
-		if (opt_chr == 't') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 't':
 			ctx->in_args.ftype =
-			        cmd_parse_str_as_u32v(optarg, 1, 2);
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
-		} else if (opt_chr == 'h') {
+			        cmd_optargs_curr_as_u32v(&opa, 1, 2);
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_tune_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
-	cmd_getarg_or_cwd("dirpath", &ctx->in_args.dirpath);
-	cmd_getopt_endargs();
+
+	ctx->in_args.dirpath = cmd_optargs_getarg(&opa, "dirpath");
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -144,7 +153,7 @@ void cmd_execute_tune(void)
 	cmd_tune_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_tune_getopt(&ctx);
+	cmd_tune_parse_optargs(&ctx);
 
 	/* Verify user's arguments */
 	cmd_tune_prepare(&ctx);
@@ -158,5 +167,3 @@ void cmd_execute_tune(void)
 	/* Post execution cleanups */
 	cmd_tune_finalize(&ctx);
 }
-
-

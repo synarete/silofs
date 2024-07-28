@@ -46,37 +46,48 @@ static struct cmd_restore_ctx *cmd_restore_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_restore_getopt(struct cmd_restore_ctx *ctx)
+static void cmd_restore_parse_optargs(struct cmd_restore_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "from", required_argument, NULL, 'n' },
-		{ "password", required_argument, NULL, 'p' },
-		{ "no-prompt", no_argument, NULL, 'P' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "from", 'n', 1 },
+		{ "password", 'p', 1 },
+		{ "no-prompt", 'P', 0 },
+		{ "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 },
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("n:p:PL:h", opts);
-		if (opt_chr == 'n') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 'n':
 			ctx->in_args.arname = cmd_strdup(optarg);
-		} else if (opt_chr == 'p') {
-			cmd_getoptarg("--password", &ctx->in_args.password);
-		} else if (opt_chr == 'P') {
+			break;
+		case 'P':
 			ctx->in_args.no_prompt = true;
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
-		} else if (opt_chr == 'h') {
+			break;
+		case 'p':
+			ctx->in_args.password = cmd_optargs_getpass(&opa);
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_restore_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
 	cmd_require_arg("arname", ctx->in_args.arname);
-	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
-	cmd_getopt_endargs();
+
+	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -209,7 +220,7 @@ void cmd_execute_restore(void)
 	cmd_restore_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_restore_getopt(&ctx);
+	cmd_restore_parse_optargs(&ctx);
 
 	/* Verify user's arguments */
 	cmd_restore_prepare(&ctx);

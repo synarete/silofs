@@ -63,25 +63,6 @@ void cmd_die(int err, const char *restrict fmt, ...)
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
-__attribute__((__noreturn__))
-static void cmd_fatal_missing_arg(const char *s)
-{
-	cmd_die(0, "missing argument: '%s'", s);
-}
-
-__attribute__((__noreturn__))
-static void cmd_fatal_redundant_arg(const char *s)
-{
-	cmd_die(0, "redundant argument: '%s'", s);
-}
-
-void cmd_require_arg(const char *arg_name, const void *arg_val)
-{
-	if (arg_val == NULL) {
-		cmd_fatal_missing_arg(arg_name);
-	}
-}
-
 void cmd_check_repopath(const char *arg_val)
 {
 	const size_t len = strlen(arg_val);
@@ -438,113 +419,14 @@ void cmd_check_fusefs(const char *path)
 	}
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void cmd_getcwd(char **out_wd)
+static char *cmd_getcwd(void)
 {
-	*out_wd = get_current_dir_name();
-	if (*out_wd == NULL) {
+	char *cwd = get_current_dir_name();
+
+	if (cwd == NULL) {
 		cmd_die(errno, "failed to get current working directory");
 	}
-}
-
-void cmd_getopt_endargs(void)
-{
-	int argc = cmd_globals.cmd_argc;
-	char **argv = cmd_globals.cmd_argv;
-
-	if (optind < argc) {
-		cmd_fatal_redundant_arg(argv[optind]);
-	}
-}
-
-void cmd_getoptarg(const char *opt_name, char **out_opt)
-{
-	if (!optarg || !strlen(optarg)) {
-		cmd_die(0, "missing option argument: %s", opt_name);
-	}
-	*out_opt = cmd_strdup(optarg);
-}
-
-void cmd_getoptarg_pass(char **out_pass)
-{
-	char *opt = NULL;
-
-	cmd_getoptarg("--password", &opt);
-	*out_pass = cmd_duppass(opt);
-	cmd_pstrfree(&opt);
-}
-
-void cmd_getopt_getarg(const char *arg_name, char **out_arg)
-{
-	char **argv = cmd_globals.cmd_argv;
-	const int argc = cmd_globals.cmd_argc;
-	char *arg = argv[optind];
-
-	if ((optind >= argc) || (arg == NULL)) {
-		cmd_fatal_missing_arg(arg_name);
-	}
-	optind++;
-	*out_arg = cmd_strdup(arg);
-}
-
-void cmd_getopt_trygetarg(const char *arg_name,
-                          const char *arg_default_val, char **out_arg)
-{
-	char **argv = cmd_globals.cmd_argv;
-	const int argc = cmd_globals.cmd_argc;
-	char *arg = argv[optind];
-
-	if (optind > argc) {
-		cmd_fatal_missing_arg(arg_name);
-	} else if ((optind == argc) || (arg == NULL)) {
-		*out_arg = cmd_strdup(arg_default_val);
-	} else {
-		optind++;
-		*out_arg = cmd_strdup(arg);
-	}
-}
-
-void cmd_getarg_or_cwd(const char *arg_name, char **out_arg)
-{
-	char *arg = NULL;
-	char **argv = cmd_globals.cmd_argv;
-	const int argc = cmd_globals.cmd_argc;
-
-	arg = argv[optind];
-	if ((optind >= argc) || (arg == NULL)) {
-		cmd_getcwd(out_arg);
-	} else {
-		optind++;
-		*out_arg = cmd_strdup(arg);
-	}
-	silofs_unused(arg_name);
-}
-
-int cmd_getopt(const char *sopts, const struct option *lopts)
-{
-	char **argv = cmd_globals.cmd_argv;
-	const int argc = cmd_globals.cmd_argc;
-	int opt_index = 0;
-
-	opterr = 0;
-	return getopt_long(argc, argv, sopts, lopts, &opt_index);
-}
-
-__attribute__((__noreturn__))
-void cmd_getopt_unrecognized(void)
-{
-	char **argv = cmd_globals.cmd_argv;
-	const int argc = cmd_globals.cmd_argc;
-	const int ind = optind;
-	const char *opt = NULL;
-
-	if ((ind > 0) && (ind <= argc)) {
-		opt = argv[ind - 1];
-	} else {
-		opt = optarg;
-	}
-	cmd_die(0, "unrecognized option: '%s'", opt);
+	return cwd;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -801,7 +683,7 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 
 	sep = strrchr(path, '/');
 	if (sep == NULL) {
-		cmd_getcwd(out_head);
+		*out_head = cmd_getcwd();
 		*out_tail = cmd_strdup(path);
 	} else {
 		tail_len = strlen(sep + 1);

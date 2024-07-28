@@ -46,33 +46,43 @@ static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_rmfs_getopt(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "password", required_argument, NULL, 'p' },
-		{ "no-prompt", no_argument, NULL, 'P' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "password", 'p', 1 },
+		{ "no-prompt", 'P', 0 },
+		{ "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 }
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("p:PL:h", opts);
-		if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'P') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 'P':
 			ctx->in_args.no_prompt = true;
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
-		} else if (opt_chr == 'h') {
+			break;
+		case 'p':
+			ctx->in_args.password = cmd_optargs_getpass(&opa);
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_rmfs_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
-	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
-	cmd_getopt_endargs();
+
+	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -276,7 +286,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_rmfs_getopt(&ctx);
+	cmd_rmfs_parse_optargs(&ctx);
 
 	/* Verify user's arguments */
 	cmd_rmfs_prepare(&ctx);

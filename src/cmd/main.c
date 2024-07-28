@@ -74,13 +74,13 @@ int main(int argc, char *argv[])
 static void cmd_error_print_progname(void)
 {
 	FILE *fp = stderr;
-	const char *name = cmd_globals.name;
-	const char *subcmd = cmd_globals.cmd_name;
 
-	if (subcmd && (subcmd[0] != '-')) {
-		fprintf(fp, "%s %s: ", name, subcmd);
+	if ((cmd_globals.cmdi == NULL) ||
+	    (cmd_globals.cmdi->name == NULL)) {
+		fprintf(fp, "%s: ", cmd_globals.name);
 	} else {
-		fprintf(fp, "%s: ", name);
+		fprintf(fp, "%s %s: ", cmd_globals.name,
+		        cmd_globals.cmdi->name);
 	}
 	fflush(fp);
 }
@@ -94,9 +94,6 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_globals.prog = program_invocation_name;
 	cmd_globals.argc = argc;
 	cmd_globals.argv = argv;
-	cmd_globals.cmd_argc = argc;
-	cmd_globals.cmd_argv = argv;
-	cmd_globals.cmd_name = NULL;
 	cmd_globals.pid = getpid();
 	cmd_globals.uid = getuid();
 	cmd_globals.gid = getgid();
@@ -174,7 +171,7 @@ static bool equals2(const char *s, const char *s1, const char *s2)
 	return equals(s, s1) || equals(s, s2);
 }
 
-static const struct cmd_info *cmt_info_of(const char *cmd_name)
+static const struct cmd_info *cmd_info_of(const char *cmd_name)
 {
 	const struct cmd_info *cmdi = NULL;
 
@@ -198,16 +195,6 @@ static void show_main_help_and_exit(int exit_code)
 	exit(exit_code);
 }
 
-static void silofs_grab_args(void)
-{
-	if (cmd_globals.argc <= 1) {
-		show_main_help_and_exit(1);
-	}
-	cmd_globals.cmd_name = cmd_globals.argv[1];
-	cmd_globals.cmd_argc = cmd_globals.argc - 1;
-	cmd_globals.cmd_argv = cmd_globals.argv + 1;
-}
-
 __attribute__((__noreturn__))
 static void cmd_print_version_and_exit(void)
 {
@@ -215,28 +202,36 @@ static void cmd_print_version_and_exit(void)
 	exit(0);
 }
 
+static bool cmd_has_subname(const char *cmd_name,
+                            const char *name1, const char *name2)
+{
+	return equals2(cmd_name, name1, name2);
+}
+
 static void cmd_parse_global_args(void)
 {
-	const char *cmd_name = NULL;
+	const char *cmd_name = cmd_globals.argv[1];
 
-	silofs_grab_args();
-	cmd_name = cmd_globals.cmd_name;
-	if (equals2(cmd_name, "-v", "--version")) {
+	if (cmd_globals.argc <= 1) {
+		show_main_help_and_exit(1);
+	}
+	if (cmd_has_subname(cmd_name, "-v", "--version")) {
 		cmd_print_version_and_exit();
 	}
-	if (equals2(cmd_name, "-h", "--help")) {
+	if (cmd_has_subname(cmd_name, "-h", "--help")) {
 		show_main_help_and_exit(0);
 	}
-	cmd_globals.cmdi = cmt_info_of(cmd_name);
+	cmd_globals.cmdi = cmd_info_of(cmd_name);
+	if (cmd_globals.cmdi == NULL) {
+		show_main_help_and_exit(1);
+	}
 }
 
 static void cmd_execute_sub(void)
 {
 	const struct cmd_info *cmdi = cmd_globals.cmdi;
 
-	if (cmdi == NULL) {
-		show_main_help_and_exit(1);
-	} else if (cmdi->action_hook != NULL) {
+	if ((cmdi != NULL) && (cmdi->action_hook != NULL)) {
 		cmdi->action_hook();
 	}
 }

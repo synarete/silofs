@@ -31,7 +31,6 @@ struct cmd_mkfs_in_args {
 	char   *repodir;
 	char   *repodir_real;
 	char   *name;
-	char   *size;
 	char   *password;
 	char   *username;
 	long    fs_size;
@@ -48,38 +47,49 @@ static struct cmd_mkfs_ctx *cmd_mkfs_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mkfs_getopt(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "size", required_argument, NULL, 's' },
-		{ "user", required_argument, NULL, 'u' },
-		{ "password", required_argument, NULL, 'p' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "size", 's', 1 },
+		{ "user", 'u', 1 },
+		{ "password", 'p', 1 },
+		{ "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 },
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("s:u:p:L:h", opts);
-		if (opt_chr == 's') {
-			ctx->in_args.size = optarg;
-			ctx->in_args.fs_size = cmd_parse_str_as_size(optarg);
-		} else if (opt_chr == 'u') {
-			ctx->in_args.username = cmd_strdup(optarg);
-		} else if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
-		} else if (opt_chr == 'h') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 's':
+			ctx->in_args.fs_size = cmd_optargs_curr_as_size(&opa);
+			break;
+		case 'u':
+			ctx->in_args.username =
+			        cmd_optarg_dupoptarg(&opa, "user");
+			break;
+		case 'p':
+			ctx->in_args.password = cmd_optargs_getpass(&opa);
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_mkfs_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
-	cmd_require_arg("size", ctx->in_args.size);
-	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
-	cmd_getopt_endargs();
+	cmd_require_arg_size("size", ctx->in_args.fs_size);
+
+	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -213,7 +223,7 @@ static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
 void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
-		.in_args = { .fs_size = 0, },
+		.in_args = { .fs_size = -1, },
 		.fsenv = NULL,
 	};
 
@@ -221,7 +231,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_mkfs_getopt(&ctx);
+	cmd_mkfs_parse_optargs(&ctx);
 
 	/* Verify user's arguments */
 	cmd_mkfs_prepare(&ctx);

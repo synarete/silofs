@@ -29,6 +29,7 @@ silofs_SOURCES += lsmnt.c
 silofs_SOURCES += main.c
 silofs_SOURCES += mkfs.c
 silofs_SOURCES += mount.c
+silofs_SOURCES += optargs.c
 silofs_SOURCES += prune.c
 silofs_SOURCES += restore.c
 silofs_SOURCES += show.c

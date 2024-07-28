@@ -46,36 +46,47 @@ static struct cmd_init_ctx *cmd_init_ctx;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_init_getopt(struct cmd_init_ctx *ctx)
+static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "user", required_argument, NULL, 'u' },
-		{ "sup-groups", no_argument, NULL, 'G' },
-		{ "allow-root", no_argument, NULL, 'R' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "user", 'u', 1 },
+		{ "sup-groups", 'G', 0 },
+		{ "allow-root", 'R', 0 },
+		{ "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 },
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("u:GRL:h", opts);
-		if (opt_chr == 'u') {
-			ctx->in_args.username = cmd_strdup(optarg);
-		} else if (opt_chr == 'G') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 'u':
+			ctx->in_args.username =
+			        cmd_optarg_dupoptarg(&opa, "user");
+			break;
+		case 'G':
 			ctx->in_args.with_sup_groups = true;
-		} else if (opt_chr == 'R') {
+			break;
+		case 'R':
 			ctx->in_args.with_root_user = true;
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
-		} else if (opt_chr == 'h') {
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_init_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
-	cmd_getopt_trygetarg("repodir", ".", &ctx->in_args.repodir);
-	cmd_getopt_endargs();
+	ctx->in_args.repodir = cmd_optargs_getarg2(&opa, "repodir", ".");
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -187,7 +198,7 @@ void cmd_execute_init(void)
 	cmd_init_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_init_getopt(&ctx);
+	cmd_init_parse_optargs(&ctx);
 
 	/* Verify user's arguments */
 	cmd_init_prepare(&ctx);

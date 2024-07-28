@@ -68,44 +68,58 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_snap_getopt(struct cmd_snap_ctx *ctx)
+static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "name", required_argument, NULL, 'n' },
-		{ "offline", no_argument, NULL, 'X' },
-		{ "no-prompt", no_argument, NULL, 'P' },
-		{ "password", required_argument, NULL, 'p' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "name", 'n', 1 },
+		{ "offline", 'X', 0 },
+		{ "no-prompt", 'P', 0 },
+		{ "password", 'p', 1 },
+		{ "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 },
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("n:Pp:XL:h", opts);
-		if (opt_chr == 'n') {
-			ctx->in_args.snapname = cmd_strdup(optarg);
-		} else if (opt_chr == 'X') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 'n':
+			ctx->in_args.snapname =
+			        cmd_optarg_dupoptarg(&opa, "name");
+			break;
+		case 'X':
 			ctx->in_args.offline = true;
-		} else if (opt_chr == 'P') {
+			break;
+		case 'P':
 			ctx->in_args.no_prompt = true;
-		} else if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
-		} else if (opt_chr == 'h') {
+			break;
+		case 'p':
+			ctx->in_args.password = cmd_optargs_getpass(&opa);
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_snap_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
 	cmd_require_arg("name", ctx->in_args.snapname);
+
 	if (ctx->in_args.offline) {
-		cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
+		ctx->in_args.repodir_name =
+		        cmd_optargs_getarg(&opa, "repodir/name");
 	} else {
-		cmd_getarg_or_cwd("pathname", &ctx->in_args.dirpath);
+		ctx->in_args.dirpath = cmd_optargs_getarg(&opa, "pathname");
 	}
-	cmd_getopt_endargs();
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -403,7 +417,7 @@ void cmd_execute_snap(void)
 	cmd_snap_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_snap_getopt(&ctx);
+	cmd_snap_parse_optargs(&ctx);
 
 	/* Verify user's arguments */
 	cmd_snap_prepare(&ctx);

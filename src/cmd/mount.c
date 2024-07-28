@@ -157,70 +157,91 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	}
 }
 
-static void cmd_mount_getopt(struct cmd_mount_ctx *ctx)
+static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 {
-	int opt_chr = 1;
-	const struct option opts[] = {
-		{ "opts", required_argument, NULL, 'o' },
-		{ "allow-hostids", no_argument, NULL, 'i' },
-		{ "allow-xattr-acl", no_argument, NULL, 'E' },
-		{ "no-allow-other", no_argument, NULL, 'A' },
-		{ "writeback-cache", required_argument, NULL, 'W' },
-		{ "buffer-copy-mode", no_argument, NULL, 'B' },
-		{ "nodaemon", no_argument, NULL, 'D' },
-		{ "coredump", no_argument, NULL, 'C' },
-		{ "asyncwr", required_argument, NULL, 'a' },
-		{ "stdalloc", no_argument, NULL, 'M' },
-		{ "no-prompt", no_argument, NULL, 'P' },
-		{ "password", required_argument, NULL, 'p' },
-		{ "loglevel", required_argument, NULL, 'L' },
-		{ "systemd-run", no_argument, NULL, 'R' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+	const struct cmd_optdesc ods[] = {
+		{ "opts", 'o', 1 },
+		{ "allow-hostids", 'i', 0 },
+		{ "allow-xattr-acl", 'E', 0 },
+		{ "no-allow-other", 'A', 0 },
+		{ "writeback-cache", 'W', 1 },
+		{ "buffer-copy-mode", 'B', 0 },
+		{ "nodaemon", 'D', 0 },
+		{ "coredump", 'C', 0 },
+		{ "asyncwr", 'a', 1 },
+		{ "stdalloc", 'M', 0 },
+		{ "no-prompt", 'P', 0 },
+		{ "password", 'p', 1 },
+		{ "loglevel", 'L', 1 },
+		{ "systemd-run", 'R', 0 },
+		{ "help", 'h', 0 },
+		{ NULL, 0, 0 },
 	};
+	struct cmd_optargs opa;
+	int opt_chr = 1;
 
-	while (opt_chr > 0) {
-		opt_chr = cmd_getopt("o:iAEW:BDCa:MPp:L:Rh", opts);
-		if (opt_chr == 'o') {
+	cmd_optargs_init(&opa, ods);
+	while (!opa.opa_done && (opt_chr > 0)) {
+		opt_chr = cmd_optargs_parse(&opa);
+		switch (opt_chr) {
+		case 'o':
 			cmd_mount_getsubopts(ctx);
-		} else if (opt_chr == 'i') {
+			break;
+		case 'i':
 			ctx->in_args.flags.allow_hostids = true;
-		} else if (opt_chr == 'A') {
+			break;
+		case 'A':
 			ctx->in_args.flags.allow_other = false;
-		} else if (opt_chr == 'E') {
+			break;
+		case 'E':
 			ctx->in_args.flags.allow_xattr_acl = true;
-		} else if (opt_chr == 'W') {
+			break;
+		case 'W':
 			ctx->in_args.flags.writeback_cache =
-			        cmd_parse_str_as_bool(optarg);
-		} else if (opt_chr == 'B') {
+			        cmd_optargs_curr_as_bool(&opa);
+			break;
+		case 'B':
 			ctx->in_args.flags.may_splice = false;
-		} else if (opt_chr == 'D') {
+			break;
+		case 'D':
 			cmd_globals.dont_daemonize = true;
-		} else if (opt_chr == 'C') {
+			break;
+		case 'C':
 			cmd_globals.allow_coredump = true;
-		} else if (opt_chr == 'a') {
+			break;
+		case 'a':
 			ctx->in_args.flags.asyncwr =
-			        cmd_parse_str_as_bool(optarg);
-		} else if (opt_chr == 'M') {
+			        cmd_optargs_curr_as_bool(&opa);
+			break;
+		case 'M':
 			ctx->in_args.flags.stdalloc = true;
-		} else if (opt_chr == 'P') {
+			break;
+		case 'P':
 			ctx->in_args.no_prompt = true;
-		} else if (opt_chr == 'p') {
-			cmd_getoptarg_pass(&ctx->in_args.password);
-		} else if (opt_chr == 'L') {
-			cmd_set_log_level_by(optarg);
+			break;
+		case 'p':
+			ctx->in_args.password = cmd_optargs_getpass(&opa);
+			break;
+		case 'L':
+			cmd_optargs_set_loglevel(&opa);
 			ctx->in_args.explicit_log_level = true;
-		} else if (opt_chr == 'R') {
+			break;
+		case 'R':
 			ctx->in_args.systemd_run = true;
-		} else if (opt_chr == 'h') {
+			break;
+		case 'h':
 			cmd_print_help_and_exit(cmd_mount_help_desc);
-		} else if (opt_chr > 0) {
-			cmd_getopt_unrecognized();
+			break;
+		default:
+			opt_chr = 0;
+			break;
 		}
 	}
-	cmd_getopt_getarg("repodir/name", &ctx->in_args.repodir_name);
-	cmd_getopt_getarg("mountpoint", &ctx->in_args.mntpoint);
-	cmd_getopt_endargs();
+
+	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	ctx->in_args.mntpoint = cmd_optargs_getarg(&opa, "mountpoint");
+	cmd_optargs_endargs(&opa);
+	cmd_optargs_fini(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -661,7 +682,7 @@ void cmd_execute_mount(void)
 	cmd_mount_mkdefaults(&ctx);
 
 	/* Parse command's arguments */
-	cmd_mount_getopt(&ctx);
+	cmd_mount_parse_optargs(&ctx);
 
 	/* Require valid mount-point */
 	cmd_mount_prepare_mntpoint(&ctx);

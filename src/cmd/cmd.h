@@ -202,6 +202,9 @@ void cmd_getopt_endargs(void);
 
 void cmd_getopt_getarg(const char *arg_name, char **out_arg);
 
+void cmd_getopt_trygetarg(const char *arg_name,
+                          const char *arg_default_val, char **out_arg);
+
 __attribute__((__noreturn__))
 void cmd_getopt_unrecognized(void);
 

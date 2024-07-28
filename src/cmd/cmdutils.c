@@ -477,16 +477,32 @@ void cmd_getoptarg_pass(char **out_pass)
 
 void cmd_getopt_getarg(const char *arg_name, char **out_arg)
 {
-	char *arg = NULL;
 	char **argv = cmd_globals.cmd_argv;
 	const int argc = cmd_globals.cmd_argc;
+	char *arg = argv[optind];
 
-	arg = argv[optind];
 	if ((optind >= argc) || (arg == NULL)) {
 		cmd_fatal_missing_arg(arg_name);
 	}
 	optind++;
 	*out_arg = cmd_strdup(arg);
+}
+
+void cmd_getopt_trygetarg(const char *arg_name,
+                          const char *arg_default_val, char **out_arg)
+{
+	char **argv = cmd_globals.cmd_argv;
+	const int argc = cmd_globals.cmd_argc;
+	char *arg = argv[optind];
+
+	if (optind > argc) {
+		cmd_fatal_missing_arg(arg_name);
+	} else if ((optind == argc) || (arg == NULL)) {
+		*out_arg = cmd_strdup(arg_default_val);
+	} else {
+		optind++;
+		*out_arg = cmd_strdup(arg);
+	}
 }
 
 void cmd_getarg_or_cwd(const char *arg_name, char **out_arg)

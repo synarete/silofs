@@ -17,7 +17,7 @@
 #include "cmd.h"
 
 static const char *cmd_init_help_desc[] = {
-	"init [--user=<username>] <repodir>",
+	"init [--user=<username>] [<repodir>]",
 	"",
 	"options:",
 	"  -u, --user=username          Primary fs-owner user-name",
@@ -74,7 +74,7 @@ static void cmd_init_getopt(struct cmd_init_ctx *ctx)
 			cmd_getopt_unrecognized();
 		}
 	}
-	cmd_getopt_getarg("repodir", &ctx->in_args.repodir);
+	cmd_getopt_trygetarg("repodir", ".", &ctx->in_args.repodir);
 	cmd_getopt_endargs();
 }
 

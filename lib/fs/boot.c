@@ -711,6 +711,7 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 		.rov_base = &brec1k_enc,
 		.rov_len = sizeof(brec1k_enc)
 	};
+	struct silofs_caddr caddr;
 	int err;
 
 	err = silofs_encode_bootrec(fsenv, brec, &brec1k_enc);
@@ -718,12 +719,18 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 		log_err("failed to encode bootrec: err=%d", err);
 		return err;
 	}
-	calc_bootrec1k_caddr(fsenv, &brec1k_enc, out_caddr);
-	err = silofs_repo_save_cobj(fsenv->fse.repo, out_caddr, &rovec);
+	calc_bootrec1k_caddr(fsenv, &brec1k_enc, &caddr);
+	err = silofs_repo_save_cobj(fsenv->fse.repo, &caddr, &rovec);
 	if (err) {
 		log_err("failed to save bootrec: err=%d", err);
 		return err;
 	}
+	err = silofs_repo_create_ref(fsenv->fse.repo, &caddr);
+	if (err) {
+		log_err("failed to create ref: err=%d", err);
+		return err;
+	}
+	silofs_caddr_assign(out_caddr, &caddr);
 	return 0;
 }
 
@@ -754,6 +761,11 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 	};
 	int err;
 
+	err = silofs_repo_lookup_ref(fsenv->fse.repo, caddr);
+	if (err) {
+		log_dbg("failed to lookup ref: err=%d", err);
+		return (err == -ENOENT) ? -SILOFS_ENOREF : err;
+	}
 	err = silofs_repo_load_cobj(fsenv->fse.repo, caddr, &rwvec);
 	if (err) {
 		log_dbg("failed to load bootrec: err=%d", err);
@@ -798,6 +810,11 @@ int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
 	err = silofs_repo_unlink_cobj(fsenv->fse.repo, caddr);
 	if (err) {
 		log_err("failed to unlink bootrec: err=%d", err);
+		return err;
+	}
+	err = silofs_repo_remove_ref(fsenv->fse.repo, caddr);
+	if (err) {
+		log_err("failed to unlink ref: err=%d", err);
 		return err;
 	}
 	return 0;

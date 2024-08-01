@@ -2667,8 +2667,7 @@ int silofs_repo_lookup_ref(struct silofs_repo *repo,
 	err = repo_stat_ref(repo, caddr, &st);
 	repo_unlock(repo);
 
-	return (err == -ENOENT) ? -SILOFS_ENOREF :
-	       ((!err && st.st_size) ?  -SILOFS_EBADREF : 0);
+	return (!err && st.st_size) ? -SILOFS_EBADREF : err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

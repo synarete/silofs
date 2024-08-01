@@ -2334,14 +2334,9 @@ static int update_save_bootrec(const struct silofs_task *task,
                                struct silofs_caddr *out_caddr)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	int err;
 
 	silofs_bootrec_self_uaddr(brec, &uaddr);
-	err = silofs_save_bootrec(task->t_fsenv, brec, out_caddr);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_save_bootrec(task->t_fsenv, brec, out_caddr);
 }
 
 static int do_post_clone_updates(const struct silofs_task *task,
@@ -2406,6 +2401,19 @@ static int do_clone(struct silofs_task *task,
 	return 0;
 }
 
+static int do_clone_of(struct silofs_task *task,
+                       struct silofs_sb_info *sbi_cur,
+                       struct silofs_inode_info *dir_ii, int flags,
+                       struct silofs_bootrecs *out_brecs)
+{
+	int err;
+
+	sbi_incref(sbi_cur);
+	err = do_clone(task, dir_ii, flags, out_brecs);
+	sbi_decref(sbi_cur);
+	return err;
+}
+
 static void do_post_clone_relax(const struct silofs_task *task,
                                 struct silofs_sb_info *sbi)
 {
@@ -2420,9 +2428,7 @@ static int do_clone_and_relex(struct silofs_task *task,
 	struct silofs_sb_info *sbi_cur = task_sbi(task);
 	int err;
 
-	sbi_incref(sbi_cur);
-	err = do_clone(task, dir_ii, flags, out_brecs);
-	sbi_decref(sbi_cur);
+	err = do_clone_of(task, sbi_cur, dir_ii, flags, out_brecs);
 	if (!err) {
 		do_post_clone_relax(task, sbi_cur);
 	}

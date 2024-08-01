@@ -69,6 +69,13 @@ void silofs_strview_initz(struct silofs_strview *sv)
 	silofs_strview_initn(sv, z, 0);
 }
 
+void silofs_strview_initv(struct silofs_strview *sv,
+                          const struct silofs_strview *other)
+{
+	silofs_strview_initn(sv, other->str, other->len);
+}
+
+
 void silofs_strview_init_by(struct silofs_strview *sv,
                             const struct silofs_strview *other)
 {

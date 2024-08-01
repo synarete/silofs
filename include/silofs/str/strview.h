@@ -53,6 +53,10 @@ void silofs_strview_initn(struct silofs_strview *sv, const char *s, size_t n);
 /* Constructor from zero-length empty string */
 void silofs_strview_initz(struct silofs_strview *sv);
 
+/* Copy constructor (shallow) */
+void silofs_strview_initv(struct silofs_strview *sv,
+                          const struct silofs_strview *other);
+
 /* Copy constructor (shallow copy) */
 void silofs_strview_init_by(struct silofs_strview *sv,
                             const struct silofs_strview *other);

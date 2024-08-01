@@ -161,7 +161,10 @@ void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
 int silofs_caddr_by_name(struct silofs_caddr *caddr,
                          const struct silofs_strbuf *name)
 {
-	return silofs_caddr_by_name2(caddr, &name->smr.v);
+	struct silofs_strview sv;
+
+	silofs_strbuf_as_sv(name, &sv);
+	return silofs_caddr_by_name2(caddr, &sv);
 }
 
 int silofs_caddr_by_name2(struct silofs_caddr *caddr,

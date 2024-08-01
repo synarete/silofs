@@ -25,7 +25,6 @@
 /* fixed-size string-buffer (typically, for names) */
 struct silofs_strbuf {
 	char str[256];
-	struct silofs_strmref smr;
 };
 
 

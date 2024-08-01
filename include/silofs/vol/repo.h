@@ -139,4 +139,15 @@ int silofs_repo_load_pack(struct silofs_repo *repo,
                           const struct silofs_caddr *caddr,
                           const struct silofs_rwvec *rwv);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_repo_create_ref(struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr);
+
+int silofs_repo_remove_ref(struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr);
+
+int silofs_repo_lookup_ref(struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr);
+
 #endif /* SILOFS_REPO_H_ */

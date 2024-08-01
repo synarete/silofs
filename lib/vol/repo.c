@@ -40,6 +40,7 @@ struct silofs_repo_defs {
 	const char     *re_dots_name;
 	const char     *re_meta_name;
 	const char     *re_lock_name;
+	const char     *re_refs_name;
 	const char     *re_blobs_name;
 	const char     *re_pack_name;
 	const char     *re_objs_name;
@@ -51,6 +52,7 @@ static const struct silofs_repo_defs repo_defs = {
 	.re_dots_name   = SILOFS_REPO_DOTS_DIRNAME,
 	.re_meta_name   = SILOFS_REPO_META_FILENAME,
 	.re_lock_name   = SILOFS_REPO_LOCK_FILENAME,
+	.re_refs_name   = SILOFS_REPO_REFS_DIRNAME,
 	.re_blobs_name  = SILOFS_REPO_BLOBS_DIRNAME,
 	.re_pack_name   = SILOFS_REPO_PACK_DIRNAME,
 	.re_objs_name   = SILOFS_REPO_OBJS_DIRNAME,
@@ -431,6 +433,9 @@ static int do_save_obj(int dirfd, const char *pathname,
 	err = do_fchmod(fd, 0400);
 	if (err) {
 		goto out;
+	}
+	if (len == 0) {
+		goto out; /* ok -- zero length object */
 	}
 	err = do_pwriten(fd, dat, len, 0);
 	if (err) {
@@ -1701,6 +1706,12 @@ static int repo_create_skel(const struct silofs_repo *repo)
 		return err;
 	}
 
+	name = repo->re_defs->re_refs_name;
+	err = repo_create_skel_subdir(repo, name, 0700);
+	if (err) {
+		return err;
+	}
+
 	size = SILOFS_REPO_METAFILE_SIZE;
 	name = repo->re_defs->re_meta_name;
 	err = repo_create_skel_subfile(repo, name, 0600, size);
@@ -1769,6 +1780,12 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	name = repo->re_defs->re_meta_name;
 	size = SILOFS_REPO_METAFILE_SIZE;
 	err = repo_require_skel_subfile(repo, name, size);
+	if (err) {
+		return err;
+	}
+
+	name = repo->re_defs->re_refs_name;
+	err = repo_require_skel_subdir(repo, name);
 	if (err) {
 		return err;
 	}
@@ -2575,6 +2592,83 @@ int silofs_repo_unlink_cobj(struct silofs_repo *repo,
 	err = repo_unlink_cobj_at(repo, &sbuf);
 	repo_unlock(repo);
 	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void repo_ref_pathname_of(const struct silofs_repo *repo,
+                                 const struct silofs_caddr *caddr,
+                                 struct silofs_strbuf *out_sbuf)
+{
+	struct silofs_strbuf name;
+
+	silofs_caddr_to_name(caddr, &name);
+	silofs_strbuf_sprintf(out_sbuf, "%s/%s",
+	                      repo->re_defs->re_refs_name, name.str);
+}
+
+static int repo_create_ref(const struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr)
+{
+	struct silofs_strbuf sbuf;
+
+	repo_ref_pathname_of(repo, caddr, &sbuf);
+	return do_save_obj(repo->re_dots_dfd, sbuf.str, NULL, 0);
+}
+
+int silofs_repo_create_ref(struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_create_ref(repo, caddr);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_remove_ref(const struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr)
+{
+	struct silofs_strbuf sbuf;
+
+	repo_ref_pathname_of(repo, caddr, &sbuf);
+	return do_unlinkat(repo->re_dots_dfd, sbuf.str, 0);
+}
+
+int silofs_repo_remove_ref(struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_remove_ref(repo, caddr);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_stat_ref(const struct silofs_repo *repo,
+                         const struct silofs_caddr *caddr,
+                         struct stat *out_st)
+{
+	struct silofs_strbuf sbuf;
+
+	repo_ref_pathname_of(repo, caddr, &sbuf);
+	return do_fstatat(repo->re_dots_dfd, sbuf.str, out_st, 0);
+}
+
+int silofs_repo_lookup_ref(struct silofs_repo *repo,
+                           const struct silofs_caddr *caddr)
+{
+	struct stat st = { .st_size = 0 };
+	int err;
+
+	repo_lock(repo);
+	err = repo_stat_ref(repo, caddr, &st);
+	repo_unlock(repo);
+
+	return (err == -ENOENT) ? -SILOFS_ENOREF :
+	       ((!err && st.st_size) ?  -SILOFS_EBADREF : 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

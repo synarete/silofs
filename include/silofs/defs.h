@@ -77,6 +77,9 @@
 /* repository global lock file name */
 #define SILOFS_REPO_LOCK_FILENAME       "lock"
 
+/* repository boot-refs sub-directory */
+#define SILOFS_REPO_REFS_DIRNAME        "refs"
+
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME       "blobs"
 

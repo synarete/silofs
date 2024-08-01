@@ -51,6 +51,9 @@ void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
 int silofs_caddr_by_name(struct silofs_caddr *caddr,
                          const struct silofs_strbuf *name);
 
+int silofs_caddr_by_name2(struct silofs_caddr *caddr,
+                          const struct silofs_strview *name);
+
 uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr);
 
 

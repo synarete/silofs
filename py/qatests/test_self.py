@@ -134,7 +134,7 @@ def _test_cicd(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(60)
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.cmd.git.clone(url, base, branch="next")
     ok = utils.has_executables(["podman"])
     if ok and ret == 0:
         _test_cicd_at(env, base)

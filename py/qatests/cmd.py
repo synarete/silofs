@@ -336,10 +336,13 @@ class CmdGit(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["version"])
 
-    def clone(self, repo: str, dpath: Path) -> int:
+    def clone(self, repo: str, dpath: Path, branch: str = "") -> int:
         ret = 0
+        args = ["clone", repo, dpath]
+        if branch:
+            args.append(f"--branch={branch}")
         try:
-            self.execute_sub(["clone", repo, dpath], timeout=300)
+            self.execute_sub(args, timeout=300)
         except CmdError as ex:
             ret = ex.retcode
         return ret

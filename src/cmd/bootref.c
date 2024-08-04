@@ -109,20 +109,11 @@ static void cmd_save_bref_file(const char *pathname, const char *txt)
 
 static void cmd_decode_bootref(struct silofs_fs_bref *bref, const char *txt)
 {
-	struct silofs_strbuf sbuf;
 	struct silofs_strview sv;
 	int err;
 
 	silofs_strview_init(&sv, txt);
-	silofs_strview_strip_ws(&sv, &sv);
-	if (!silofs_strview_isascii(&sv)) {
-		cmd_die(0, "non-ascii character in: %s", bref->name);
-	}
-	if (sv.len >= sizeof(sbuf.str)) {
-		cmd_die(0, "illegal boot-ref length in: %s", bref->name);
-	}
-	silofs_strbuf_setup(&sbuf, &sv);
-	err = silofs_bootref_import(bref, &sbuf);
+	err = silofs_bootref_import(bref, &sv);
 	if (err) {
 		cmd_die(err, "bad boot-ref in: %s", bref->name);
 	}

@@ -790,6 +790,11 @@ int silofs_stat_bootrec(const struct silofs_fsenv *fsenv,
 	size_t sz = 0;
 	int err;
 
+	err = silofs_repo_lookup_ref(fsenv->fse.repo, caddr);
+	if (err) {
+		log_err("failed to lookup ref: err=%d", err);
+		return err;
+	}
 	err = silofs_repo_stat_cobj(fsenv->fse.repo, caddr, &sz);
 	if (err) {
 		log_err("failed to stat bootrec: err=%d", err);
@@ -856,9 +861,9 @@ void silofs_bootref_update(struct silofs_fs_bref *bref,
 }
 
 int silofs_bootref_import(struct silofs_fs_bref *bref,
-                          const struct silofs_strbuf *sbuf)
+                          const struct silofs_strview *sv)
 {
-	return silofs_caddr_by_name(&bref->caddr, sbuf);
+	return silofs_caddr_by_name2(&bref->caddr, sv);
 }
 
 void silofs_bootref_export(const struct silofs_fs_bref *bref,

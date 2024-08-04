@@ -50,6 +50,9 @@ void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s);
 
+void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf,
+                             const char *s, size_t n);
+
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...);
 
 #endif /* SILOFS_STRBUF_H_ */

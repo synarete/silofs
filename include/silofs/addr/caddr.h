@@ -19,6 +19,7 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
+#include <silofs/str.h>
 
 /* packed-object identifier */
 struct silofs_caddr {

@@ -86,6 +86,15 @@ void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
 	silofs_strbuf_setup(sbuf, &sv);
 }
 
+void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf,
+                             const char *s, size_t n)
+{
+	struct silofs_strview sv;
+
+	silofs_strview_initn(&sv, s, n);
+	silofs_strbuf_setup(sbuf, &sv);
+}
+
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
 {
 	va_list ap;

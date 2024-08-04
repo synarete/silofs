@@ -1438,7 +1438,17 @@ static int reload_bootrec(const struct silofs_fsenv *fsenv,
 static int unlink_bootrec_of(const struct silofs_fsenv *fsenv,
                              const struct silofs_caddr *caddr)
 {
-	return silofs_unlink_bootrec(fsenv, caddr);
+	int err;
+
+	err = silofs_stat_bootrec(fsenv, caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_unlink_bootrec(fsenv, caddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static void update_bootrec(const struct silofs_fsenv *fsenv,

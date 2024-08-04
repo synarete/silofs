@@ -2494,7 +2494,7 @@ static void repo_cobj_pathname_of(const struct silofs_repo *repo,
 	struct silofs_strbuf name;
 
 	repo_cobj_subdir_of(repo, caddr, &subdir);
-	silofs_caddr_to_name(caddr, &name);
+	silofs_hash256_to_name(&caddr->hash, &name);
 	silofs_strbuf_sprintf(out_sbuf, "%s/%s", subdir.str, name.str);
 }
 

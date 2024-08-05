@@ -14,7 +14,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
 #define _GNU_SOURCE 1
 #include <sys/types.h>
 #include <sys/time.h>
@@ -28,17 +27,10 @@
 #include <syslog.h>
 #include <errno.h>
 #include <error.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 #include <limits.h>
 #include <ctype.h>
 #include <math.h>
-#include <time.h>
 #include <dirent.h>
-#include <locale.h>
-#include <getopt.h>
 #include "cmd.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

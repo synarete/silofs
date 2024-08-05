@@ -14,6 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE 1
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -21,10 +22,6 @@
 #include <sys/wait.h>
 #include <sys/prctl.h>
 #include <sys/mount.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <limits.h>
-#include <time.h>
 #include "cmd.h"
 
 static const char *cmd_mount_help_desc[] = {

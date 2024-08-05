@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE 1
 #include "cmd.h"
-
 
 void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
                    struct silofs_fsenv **p_fsenv)

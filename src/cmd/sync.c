@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <sys/mount.h>
+#define _GNU_SOURCE 1
 #include "cmd.h"
 
 static const char *cmd_sync_help_desc[] = {

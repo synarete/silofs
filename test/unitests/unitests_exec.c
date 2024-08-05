@@ -681,26 +681,16 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 
 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 {
-	int nb;
-	size_t bsz = 255;
-	char *buf;
+	char tmp[1024] = "";
 	va_list ap;
+	int nb = 0;
 
 	va_start(ap, fmt);
-	nb = vsnprintf(NULL, 0, fmt, ap);
+	nb = vsnprintf(tmp, sizeof(tmp), fmt, ap);
 	va_end(ap);
+	ut_expect_lt(nb, sizeof(tmp));
 
-	if ((size_t)nb > bsz) {
-		bsz = (size_t)nb;
-	}
-
-	va_start(ap, fmt);
-	buf = ut_zerobuf(ute, bsz + 1);
-	nb = vsnprintf(buf, bsz, fmt, ap);
-	va_end(ap);
-
-	silofs_unused(nb);
-	return buf;
+	return ut_strdup(ute, tmp);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

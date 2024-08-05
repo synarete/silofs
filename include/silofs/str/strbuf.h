@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/str/strview.h>
-#include <silofs/str/strmref.h>
+#include <silofs/str/strspan.h>
 
 
 /* fixed-size string-buffer (typically, for names) */
@@ -35,8 +35,8 @@ void silofs_strbuf_fini(struct silofs_strbuf *sbuf);
 void silofs_strbuf_as_sv(const struct silofs_strbuf *sbuf,
                          struct silofs_strview *out_sv);
 
-void silofs_strbuf_as_smr(struct silofs_strbuf *sbuf,
-                          struct silofs_strmref *out_smr);
+void silofs_strbuf_as_ss(struct silofs_strbuf *sbuf,
+                         struct silofs_strspan *out_ss);
 
 void silofs_strbuf_reset(struct silofs_strbuf *sbuf);
 

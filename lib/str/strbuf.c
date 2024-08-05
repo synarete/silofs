@@ -38,12 +38,12 @@ void silofs_strbuf_as_sv(const struct silofs_strbuf *sbuf,
 	silofs_strview_init(out_sv, sbuf->str);
 }
 
-void silofs_strbuf_as_smr(struct silofs_strbuf *sbuf,
-                          struct silofs_strmref *out_smr)
+void silofs_strbuf_as_ss(struct silofs_strbuf *sbuf,
+                         struct silofs_strspan *out_ss)
 {
 	const size_t len = silofs_str_length(sbuf->str);
 
-	silofs_strmref_initk(out_smr, sbuf->str, len, sizeof(sbuf->str));
+	silofs_strspan_initk(out_ss, sbuf->str, len, sizeof(sbuf->str));
 }
 
 void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
@@ -60,22 +60,22 @@ void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
                           const struct silofs_strbuf *other)
 {
 	struct silofs_strview sv;
-	struct silofs_strmref smr;
+	struct silofs_strspan ss;
 
 	sbuf->str[0] = '\0';
-	silofs_strbuf_as_smr(sbuf, &smr);
+	silofs_strbuf_as_ss(sbuf, &ss);
 	silofs_strbuf_as_sv(other, &sv);
-	silofs_strmref_vassign(&smr, &sv);
+	silofs_strspan_vassign(&ss, &sv);
 }
 
 void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
                          const struct silofs_strview *sv)
 {
-	struct silofs_strmref smr;
+	struct silofs_strspan ss;
 
-	silofs_strbuf_as_smr(sbuf, &smr);
-	silofs_strmref_clear(&smr);
-	silofs_strmref_vassign(&smr, sv);
+	silofs_strbuf_as_ss(sbuf, &ss);
+	silofs_strspan_clear(&ss);
+	silofs_strspan_vassign(&ss, sv);
 }
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)

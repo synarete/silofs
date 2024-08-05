@@ -21,7 +21,7 @@
 #include <silofs/str/ascii.h>
 #include <silofs/str/strchr.h>
 #include <silofs/str/strview.h>
-#include <silofs/str/strmref.h>
+#include <silofs/str/strspan.h>
 #include <silofs/str/strbuf.h>
 
 #endif /* SILOFS_STR_H_ */

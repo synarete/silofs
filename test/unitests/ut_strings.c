@@ -413,243 +413,243 @@ static void ut_strview_common_suffix(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_strmref *ut_new_strmref(struct ut_env *ute)
+static struct silofs_strspan *ut_new_strspan(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = NULL;
+	struct silofs_strspan *ss = NULL;
 
-	smr = ut_zalloc(ute, sizeof(*smr));
-	silofs_strmref_initz(smr);
-	return smr;
+	ss = ut_zalloc(ute, sizeof(*ss));
+	silofs_strspan_initz(ss);
+	return ss;
 }
 
-static void ut_strmref_assign(struct ut_env *ute)
+static void ut_strspan_assign(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
-	struct silofs_strmref sub;
+	struct silofs_strspan *ss = ut_new_strspan(ute);
+	struct silofs_strspan sub;
 	char dat[] = "0123456789......";
 	const char *s = NULL;
 	size_t sz = 0;
 	bool eq;
 
-	silofs_strmref_initk(smr, dat, 10, 16);
-	silofs_strmref_sub(smr, 10, 6, &sub);
-	sz = silofs_strmref_size(&sub);
+	silofs_strspan_initk(ss, dat, 10, 16);
+	silofs_strspan_sub(ss, 10, 6, &sub);
+	sz = silofs_strspan_size(&sub);
 	ut_expect_eq(sz, 0);
-	sz = silofs_strmref_wrsize(&sub);
+	sz = silofs_strspan_wrsize(&sub);
 	ut_expect_eq(sz, 6);
 
 	s = "ABC";
-	silofs_strmref_assign(smr, s);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_assign(ss, s);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 3);
-	sz = silofs_strmref_wrsize(smr);
+	sz = silofs_strspan_wrsize(ss);
 	ut_expect_eq(sz, 16);
-	eq = silofs_strview_isequal(&smr->v, s);
+	eq = silofs_strview_isequal(&ss->v, s);
 	ut_expect(eq);
 	s = "ABCDEF";
-	silofs_strmref_assign(&sub, s);
+	silofs_strspan_assign(&sub, s);
 	eq = silofs_strview_isequal(&sub.v, s);
 	ut_expect(eq);
 	s = "ABCDEF$$$";
-	silofs_strmref_assign(&sub, s);
-	sz = silofs_strmref_size(&sub);
+	silofs_strspan_assign(&sub, s);
+	sz = silofs_strspan_size(&sub);
 	ut_expect_eq(sz, 6);
-	sz = silofs_strmref_wrsize(&sub);
+	sz = silofs_strspan_wrsize(&sub);
 	ut_expect_eq(sz, 6);
 	eq = silofs_strview_isequal(&sub.v, s);
 	ut_expect(!eq);
-	silofs_strmref_sub(&sub, 5, 100, &sub);
+	silofs_strspan_sub(&sub, 5, 100, &sub);
 	s = "XYZ";
-	silofs_strmref_assign(&sub, s);
-	sz = silofs_strmref_size(&sub);
+	silofs_strspan_assign(&sub, s);
+	sz = silofs_strspan_size(&sub);
 	ut_expect_eq(sz, 1);
-	sz = silofs_strmref_wrsize(&sub);
+	sz = silofs_strspan_wrsize(&sub);
 	ut_expect_eq(sz, 1);
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_append(struct ut_env *ute)
+static void ut_strspan_append(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char buf[20] = "";
 	const char *s = "0123456789abcdef";
 	size_t sz = 0;
 	bool eq;
 
-	silofs_strmref_initk(smr, buf, 0, UT_ARRAY_SIZE(buf));
-	silofs_strmref_append(smr, s);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_initk(ss, buf, 0, UT_ARRAY_SIZE(buf));
+	silofs_strspan_append(ss, s);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 16);
-	sz = silofs_strmref_wrsize(smr);
+	sz = silofs_strspan_wrsize(ss);
 	ut_expect_eq(sz, UT_ARRAY_SIZE(buf));
-	eq = silofs_strview_isequal(&smr->v, s);
+	eq = silofs_strview_isequal(&ss->v, s);
 	ut_expect(eq);
-	silofs_strmref_append(smr, s);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_append(ss, s);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, UT_ARRAY_SIZE(buf));
-	sz = silofs_strmref_wrsize(smr);
+	sz = silofs_strspan_wrsize(ss);
 	ut_expect_eq(sz, UT_ARRAY_SIZE(buf));
-	silofs_strmref_initk(smr, buf, 0, UT_ARRAY_SIZE(buf));
-	silofs_strmref_nappend(smr, s, 1);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_initk(ss, buf, 0, UT_ARRAY_SIZE(buf));
+	silofs_strspan_nappend(ss, s, 1);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 1);
-	silofs_strmref_nappend(smr, s + 1, 1);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_nappend(ss, s + 1, 1);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 2);
-	eq = silofs_strview_nisequal(&smr->v, s, 2);
+	eq = silofs_strview_nisequal(&ss->v, s, 2);
 	ut_expect(eq);
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_insert(struct ut_env *ute)
+static void ut_strspan_insert(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char buf[20] = "";
 	const char *s = "0123456789";
 	size_t sz = 0;
 	bool eq;
 
-	silofs_strmref_initk(smr, buf, 0, UT_ARRAY_SIZE(buf));
-	silofs_strmref_insert(smr, 0, s);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_initk(ss, buf, 0, UT_ARRAY_SIZE(buf));
+	silofs_strspan_insert(ss, 0, s);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 10);
-	eq = silofs_strview_isequal(&smr->v, s);
+	eq = silofs_strview_isequal(&ss->v, s);
 	ut_expect(eq);
-	silofs_strmref_insert(smr, 10, s);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_insert(ss, 10, s);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 20);
-	eq = silofs_strview_isequal(&smr->v, "01234567890123456789");
+	eq = silofs_strview_isequal(&ss->v, "01234567890123456789");
 	ut_expect(eq);
-	silofs_strmref_insert(smr, 1, "....");
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_insert(ss, 1, "....");
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 20);
-	eq = silofs_strview_isequal(&smr->v, "0....123456789012345");
+	eq = silofs_strview_isequal(&ss->v, "0....123456789012345");
 	ut_expect(eq);
-	silofs_strmref_insert(smr, 16, "%%%");
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_insert(ss, 16, "%%%");
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 20);
-	eq = silofs_strview_isequal(&smr->v, "0....12345678901%%%2");
+	eq = silofs_strview_isequal(&ss->v, "0....12345678901%%%2");
 	ut_expect(eq);
-	silofs_strmref_insert_chr(smr, 1, 20, '$');
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_insert_chr(ss, 1, 20, '$');
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 20);
-	eq = silofs_strview_isequal(&smr->v, "0$$$$$$$$$$$$$$$$$$$");
+	eq = silofs_strview_isequal(&ss->v, "0$$$$$$$$$$$$$$$$$$$");
 	ut_expect(eq);
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_replace(struct ut_env *ute)
+static void ut_strspan_replace(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char buf[10] = "";
 	const char *s = "ABCDEF";
 	size_t wsz = 0;
 	size_t sz = 0;
 	bool eq;
 
-	silofs_strmref_initk(smr, buf, 0, UT_ARRAY_SIZE(buf));
-	silofs_strmref_replace(smr, 0, 2, s);
-	wsz = silofs_strmref_size(smr);
+	silofs_strspan_initk(ss, buf, 0, UT_ARRAY_SIZE(buf));
+	silofs_strspan_replace(ss, 0, 2, s);
+	wsz = silofs_strspan_size(ss);
 	ut_expect_eq(wsz, 6);
-	eq = silofs_strview_isequal(&smr->v, s);
+	eq = silofs_strview_isequal(&ss->v, s);
 	ut_expect(eq);
-	silofs_strmref_replace(smr, 1, 2, s);
-	eq = silofs_strview_isequal(&smr->v, "AABCDEFDEF");
+	silofs_strspan_replace(ss, 1, 2, s);
+	eq = silofs_strview_isequal(&ss->v, "AABCDEFDEF");
 	ut_expect(eq);
-	silofs_strmref_replace(smr, 6, 3, s);
-	eq = silofs_strview_isequal(&smr->v, "AABCDEABCD");
+	silofs_strspan_replace(ss, 6, 3, s);
+	eq = silofs_strview_isequal(&ss->v, "AABCDEABCD");
 	ut_expect(eq);
-	silofs_strmref_replace_chr(smr, 0, 10, 30, '.');
-	eq = silofs_strview_isequal(&smr->v, "..........");
+	silofs_strspan_replace_chr(ss, 0, 10, 30, '.');
+	eq = silofs_strview_isequal(&ss->v, "..........");
 	ut_expect(eq);
-	silofs_strmref_replace_chr(smr, 1, 8, 4, 'A');
-	eq = silofs_strview_isequal(&smr->v, ".AAAA.");
+	silofs_strspan_replace_chr(ss, 1, 8, 4, 'A');
+	eq = silofs_strview_isequal(&ss->v, ".AAAA.");
 	ut_expect(eq);
-	sz = silofs_strmref_size(smr);
-	silofs_strmref_nreplace(smr, 2, 80, silofs_strmref_data(smr), sz);
-	eq = silofs_strview_isequal(&smr->v, ".A.AAAA.");
+	sz = silofs_strspan_size(ss);
+	silofs_strspan_nreplace(ss, 2, 80, silofs_strspan_data(ss), sz);
+	eq = silofs_strview_isequal(&ss->v, ".A.AAAA.");
 	ut_expect(eq);
-	sz = silofs_strmref_size(smr);
-	silofs_strmref_nreplace(smr, 4, 80, silofs_strmref_data(smr), sz);
-	eq = silofs_strview_isequal(&smr->v, ".A.A.A.AAA");  /* Truncated */
+	sz = silofs_strspan_size(ss);
+	silofs_strspan_nreplace(ss, 4, 80, silofs_strspan_data(ss), sz);
+	eq = silofs_strview_isequal(&ss->v, ".A.A.A.AAA");  /* Truncated */
 	ut_expect(eq);
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_erase(struct ut_env *ute)
+static void ut_strspan_erase(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char buf[5] = "";
 	size_t wsz = 0;
 	bool eq;
 
-	silofs_strmref_initk(smr, buf, 0, UT_ARRAY_SIZE(buf));
-	silofs_strmref_assign(smr, "ABCDEF");
-	eq = silofs_strview_isequal(&smr->v, "ABCDE");
+	silofs_strspan_initk(ss, buf, 0, UT_ARRAY_SIZE(buf));
+	silofs_strspan_assign(ss, "ABCDEF");
+	eq = silofs_strview_isequal(&ss->v, "ABCDE");
 	ut_expect(eq);
-	silofs_strmref_erase(smr, 1, 2);
-	eq = silofs_strview_isequal(&smr->v, "ADE");
+	silofs_strspan_erase(ss, 1, 2);
+	eq = silofs_strview_isequal(&ss->v, "ADE");
 	ut_expect(eq);
-	silofs_strmref_erase(smr, 0, 100);
-	eq = silofs_strview_isequal(&smr->v, "");
+	silofs_strspan_erase(ss, 0, 100);
+	eq = silofs_strview_isequal(&ss->v, "");
 	ut_expect(eq);
-	wsz = silofs_strmref_wrsize(smr);
+	wsz = silofs_strspan_wrsize(ss);
 	ut_expect_eq(wsz, UT_ARRAY_SIZE(buf));
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_reverse(struct ut_env *ute)
+static void ut_strspan_reverse(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char buf[40] = "";
 	bool eq;
 
-	silofs_strmref_initk(smr, buf, 0, UT_ARRAY_SIZE(buf));
-	silofs_strmref_assign(smr, "abracadabra");
-	silofs_strmref_reverse(smr);
-	eq = silofs_strview_isequal(&smr->v, "arbadacarba");
+	silofs_strspan_initk(ss, buf, 0, UT_ARRAY_SIZE(buf));
+	silofs_strspan_assign(ss, "abracadabra");
+	silofs_strspan_reverse(ss);
+	eq = silofs_strview_isequal(&ss->v, "arbadacarba");
 	ut_expect(eq);
-	silofs_strmref_assign(smr, "0123456789");
-	silofs_strmref_reverse(smr);
-	eq = silofs_strview_isequal(&smr->v, "9876543210");
+	silofs_strspan_assign(ss, "0123456789");
+	silofs_strspan_reverse(ss);
+	eq = silofs_strview_isequal(&ss->v, "9876543210");
 	ut_expect(eq);
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_copyto(struct ut_env *ute)
+static void ut_strspan_copyto(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char dat[] = "123456789";
 	char buf[10] = "";
 	size_t sz = 0;
 	char pad = '@';
 	bool eq;
 
-	silofs_strmref_init(smr, dat);
-	sz = silofs_strmref_size(smr);
+	silofs_strspan_init(ss, dat);
+	sz = silofs_strspan_size(ss);
 	ut_expect_eq(sz, 9);
-	sz = silofs_strview_copyto(&smr->v, buf, sizeof(buf));
+	sz = silofs_strview_copyto(&ss->v, buf, sizeof(buf));
 	ut_expect_eq(sz, 9);
 	eq = !strcmp(buf, "123456789");
 	ut_expect(eq);
 	ut_expect_eq(pad, '@');
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
-static void ut_strmref_case(struct ut_env *ute)
+static void ut_strspan_case(struct ut_env *ute)
 {
-	struct silofs_strmref *smr = ut_new_strmref(ute);
+	struct silofs_strspan *ss = ut_new_strspan(ute);
 	char buf[20] = "0123456789abcdef";
 	bool eq;
 
-	silofs_strmref_init(smr, buf);
-	silofs_strmref_toupper(smr);
-	eq = silofs_strview_isequal(&smr->v, "0123456789ABCDEF");
+	silofs_strspan_init(ss, buf);
+	silofs_strspan_toupper(ss);
+	eq = silofs_strview_isequal(&ss->v, "0123456789ABCDEF");
 	ut_expect(eq);
-	silofs_strmref_tolower(smr);
-	eq = silofs_strview_isequal(&smr->v, "0123456789abcdef");
+	silofs_strspan_tolower(ss);
+	eq = silofs_strview_isequal(&ss->v, "0123456789abcdef");
 	ut_expect(eq);
-	silofs_strmref_fini(smr);
+	silofs_strspan_fini(ss);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -708,14 +708,14 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_strview_tokenize),
 	UT_DEFTEST(ut_strview_common_prefix),
 	UT_DEFTEST(ut_strview_common_suffix),
-	UT_DEFTEST(ut_strmref_assign),
-	UT_DEFTEST(ut_strmref_append),
-	UT_DEFTEST(ut_strmref_insert),
-	UT_DEFTEST(ut_strmref_replace),
-	UT_DEFTEST(ut_strmref_erase),
-	UT_DEFTEST(ut_strmref_reverse),
-	UT_DEFTEST(ut_strmref_copyto),
-	UT_DEFTEST(ut_strmref_case),
+	UT_DEFTEST(ut_strspan_assign),
+	UT_DEFTEST(ut_strspan_append),
+	UT_DEFTEST(ut_strspan_insert),
+	UT_DEFTEST(ut_strspan_replace),
+	UT_DEFTEST(ut_strspan_erase),
+	UT_DEFTEST(ut_strspan_reverse),
+	UT_DEFTEST(ut_strspan_copyto),
+	UT_DEFTEST(ut_strspan_case),
 	UT_DEFTEST(ut_strbuf_simple),
 };
 

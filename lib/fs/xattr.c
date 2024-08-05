@@ -191,7 +191,9 @@ static void xe_assign(struct silofs_xattr_entry *xe,
 	xe_set_name_len(xe, name->len);
 	xe_set_value_size(xe, value->len);
 	memcpy(xe_name(xe), name->str, name->len);
-	memcpy(xe_value(xe), value->ptr, value->len);
+	if ((value->len > 0) && (value->ptr != NULL)) {
+		memcpy(xe_value(xe), value->ptr, value->len);
+	}
 }
 
 static void xe_reset(struct silofs_xattr_entry *xe)

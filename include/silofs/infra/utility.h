@@ -91,12 +91,12 @@ static inline uint64_t silofs_div_round_up(uint64_t n, uint64_t d)
 
 static inline uint64_t silofs_lrotate64(uint64_t x, unsigned int n)
 {
-	return (x << n) | (x >> (64 - n));
+	return ((n > 0) && (n < 64)) ? (x << n) | (x >> (64 - n)) : x;
 }
 
 static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
 {
-	return (x >> n) | (x << (64 - n));
+	return ((n > 0) && (n < 64)) ? (x >> n) | (x << (64 - n)) : x;
 }
 
 static inline void *silofs_unconst(const void *p)

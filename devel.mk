@@ -192,21 +192,18 @@ CFLAGS += -fsanitize=pointer-overflow
 CFLAGS += -fsanitize=alignment
 CFLAGS += -fsanitize=bounds
 CFLAGS += -fsanitize=object-size
+CFLAGS += -fsanitize=null
 CFLAGS += -fsanitize=undefined
 CFLAGS += -fsanitize=float-divide-by-zero
 CFLAGS += -fsanitize=float-cast-overflow
-CFLAGS += -fsanitize=null
-CFLAGS += -fsanitize=bounds
-CFLAGS += -fsanitize=object-size
-CFLAGS += -fsanitize=undefined
-CFLAGS += -fsanitize=null
-CFLAGS += -fsanitize=undefined
 LDFLAGS += -fsanitize=address
 LDFLAGS += -fsanitize=undefined
+LDFLAGS += -static-libasan
 ifeq ($(CC), clang)
-CFLAGS += -fsanitize=memory
-CFLAGS += -fsanitize-memory-track-origins=2
-LDFLAGS += -fsanitize=memory
+# TODO: with SANITIZER=2 enable those and disable '-fsanitize=address'
+# CFLAGS += -fsanitize=memory
+# CFLAGS += -fsanitize-memory-track-origins=2
+# LDFLAGS += -fsanitize=memory
 endif
 endif
 
@@ -280,6 +277,7 @@ bootstrap:
 
 tags:
 	$(call report, $@)
+	@rm -f $(TOP)/TAGS
 	@find $(TOP) -name "*.[ch]" -print | etags -
 
 clangscan:

@@ -485,7 +485,7 @@ enum silofs_kdf_algos {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_tm {
+struct silofs_tm64b {
 	uint16_t tm_sec;
 	uint16_t tm_min;
 	uint8_t  tm_hour;
@@ -495,7 +495,7 @@ struct silofs_tm {
 	uint32_t tm_year;
 	uint32_t tm_yday;
 	uint64_t tm_gmtoff;
-	uint8_t  tm_reserved[8];
+	uint64_t tm_reserved;
 } silofs_packed_aligned64;
 
 
@@ -744,14 +744,13 @@ struct silofs_super_block {
 	uint8_t                         sb_reserved3[112];
 	struct silofs_name              sb_name;
 	/* 512..1K */
+	struct silofs_tm64b             sb_fs_birth_tm;
+	struct silofs_tm64b             sb_lv_birth_tm;
 	struct silofs_uaddr64b          sb_self_uaddr;
 	struct silofs_uaddr64b          sb_orig_uaddr;
 	struct silofs_lvid              sb_lvid;
 	struct silofs_vrange128         sb_vrange;
-	uint64_t                        sb_reserved4a;
-	uint64_t                        sb_birth_time;
-	uint64_t                        sb_clone_time;
-	uint8_t                         sb_reserved4b[328];
+	uint8_t                         sb_reserved4b[224];
 	/* 1K..2K */
 	struct silofs_sb_sproots        sb_sproots;
 	/* 2K..3K */

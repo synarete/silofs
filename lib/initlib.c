@@ -156,7 +156,7 @@ static void validate_persistent_types_size1(void)
 
 static void validate_persistent_types_size2(void)
 {
-	REQUIRE_SIZEOF(struct silofs_tm, 64);
+	REQUIRE_SIZEOF(struct silofs_tm64b, 64);
 	REQUIRE_SIZEOF(struct silofs_timespec, 16);
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
 	REQUIRE_SIZEOF(struct silofs_hash256, 32);
@@ -246,12 +246,12 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sw_version, 64);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_fs_uuid, 128);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 256);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_self_uaddr, 512);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_orig_uaddr, 576);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lvid, 640);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_vrange, 656);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_birth_time, 680);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_clone_time, 688);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_fs_birth_tm, 512);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_birth_tm, 576);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_self_uaddr, 640);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_orig_uaddr, 704);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_lvid, 768);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_vrange, 784);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproots, 1024);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_lsegid, 2048);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_rootivs, 3072);

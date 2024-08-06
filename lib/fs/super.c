@@ -14,6 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/fs.h>
@@ -22,6 +23,35 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 
+
+static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
+{
+	tm64->tm_sec = silofs_cpu_to_le16((uint16_t)tm->tm_sec);
+	tm64->tm_min = silofs_cpu_to_le16((uint16_t)tm->tm_min);
+	tm64->tm_hour = (uint8_t)(tm->tm_hour);
+	tm64->tm_mday = (uint8_t)(tm->tm_mday);
+	tm64->tm_mon = (uint8_t)(tm->tm_mon);
+	tm64->tm_wday = (uint8_t)(tm->tm_wday);
+	tm64->tm_year = silofs_cpu_to_le32((uint32_t)tm->tm_year);
+	tm64->tm_yday = silofs_cpu_to_le32((uint32_t)tm->tm_yday);
+	tm64->tm_gmtoff = silofs_cpu_to_le64((uint64_t)tm->tm_gmtoff);
+	tm64->tm_reserved = 0;
+}
+
+static void tm64b_xtoh(const struct silofs_tm64b *tm64, struct tm *tm)
+{
+	tm->tm_sec = (int)silofs_le16_to_cpu(tm64->tm_sec);
+	tm->tm_min = (int)silofs_le16_to_cpu(tm64->tm_min);
+	tm->tm_hour = (int)(tm64->tm_hour);
+	tm->tm_mday = (int)(tm64->tm_mday);
+	tm->tm_mon = (int)(tm64->tm_mon);
+	tm->tm_wday = (int)(tm64->tm_wday);
+	tm->tm_year = (int)silofs_le32_to_cpu(tm64->tm_year);
+	tm->tm_yday = (int)silofs_le32_to_cpu(tm64->tm_yday);
+	tm->tm_gmtoff = (long)silofs_le64_to_cpu(tm64->tm_gmtoff);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void sb_assign(struct silofs_super_block *sb,
                       const struct silofs_super_block *sb_other)
@@ -492,20 +522,47 @@ static void sb_init(struct silofs_super_block *sb)
 	silofs_uaddr64b_reset(&sb->sb_orig_uaddr);
 }
 
-static void sb_set_birth_time(struct silofs_super_block *sb, time_t btime)
+static void sb_fs_birth_tm(const struct silofs_super_block *sb, struct tm *tm)
 {
-	sb->sb_birth_time = silofs_cpu_to_le64((uint64_t)btime);
+	tm64b_xtoh(&sb->sb_fs_birth_tm, tm);
 }
 
-static void sb_set_clone_time(struct silofs_super_block *sb, time_t btime)
+static void sb_set_fs_birth_tm(struct silofs_super_block *sb,
+                               const struct tm *tm)
 {
-	sb->sb_clone_time = silofs_cpu_to_le64((uint64_t)btime);
+	tm64b_htox(&sb->sb_fs_birth_tm, tm);
 }
 
-static void sb_setup_fresh(struct silofs_super_block *sb)
+static void sb_lv_birth_tm(const struct silofs_super_block *sb, struct tm *tm)
 {
-	sb_set_birth_time(sb, silofs_time_now());
+	tm64b_xtoh(&sb->sb_lv_birth_tm, tm);
 }
+
+static void sb_set_lv_birth_tm(struct silofs_super_block *sb,
+                               const struct tm *tm)
+{
+	tm64b_htox(&sb->sb_lv_birth_tm, tm);
+}
+
+static void sb_set_birth_tms(struct silofs_super_block *sb,
+                             const struct tm *tm)
+{
+	sb_set_fs_birth_tm(sb, tm);
+	sb_set_lv_birth_tm(sb, tm);
+}
+
+static void sb_clone_tms(struct silofs_super_block *sb,
+                         const struct silofs_super_block *sb_other)
+{
+	struct tm tm;
+
+	sb_fs_birth_tm(sb_other, &tm);
+	sb_set_fs_birth_tm(sb, &tm);
+
+	sb_lv_birth_tm(sb_other, &tm);
+	sb_set_lv_birth_tm(sb, &tm);
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -903,6 +960,24 @@ void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_sbi_set_fs_birth(struct silofs_sb_info *sbi)
+{
+	struct tm now;
+
+	silofs_localtime_now(&now);
+	sb_set_birth_tms(sbi->sb, &now);
+	sbi_dirtify(sbi);
+}
+
+void silofs_sbi_set_lv_birth(struct silofs_sb_info *sbi)
+{
+	struct tm now;
+
+	silofs_localtime_now(&now);
+	sb_set_lv_birth_tm(sbi->sb, &now);
+	sbi_dirtify(sbi);
+}
+
 static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 {
 	struct silofs_vrange vrange;
@@ -920,21 +995,8 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 {
 	sb_init(sbi->sb);
 	sb_set_self(sbi->sb, sbi_uaddr(sbi));
-	sb_setup_fresh(sbi->sb);
 	sbi_setup_spstats(sbi);
 	sbi_assign_vspace_span(sbi);
-	sbi_dirtify(sbi);
-}
-
-void silofs_sbi_setup_btime(struct silofs_sb_info *sbi)
-{
-	sb_set_birth_time(sbi->sb, silofs_time_now());
-	sbi_dirtify(sbi);
-}
-
-void silofs_sbi_setup_ctime(struct silofs_sb_info *sbi)
-{
-	sb_set_clone_time(sbi->sb, silofs_time_now());
 	sbi_dirtify(sbi);
 }
 
@@ -947,6 +1009,7 @@ void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
 	sb_assign(sb, sb_other);
 	sb_clone_sproots(sb, sb_other);
 	sb_clone_rootivs(sb, sb_other);
+	sb_clone_tms(sb, sb_other);
 	sb_generate_lvid(sb);
 	sb_reset_main_lsegids(sb);
 	sb_set_self(sb, sbi_uaddr(sbi));

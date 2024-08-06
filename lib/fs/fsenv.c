@@ -447,7 +447,7 @@ static int fsenv_spawn_super(struct silofs_fsenv *fsenv, size_t capacity,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_setup_btime(sbi);
+	silofs_sbi_set_fs_birth(sbi);
 	silofs_sti_set_capacity(&sbi->sb_sti, capacity);
 	*out_sbi = sbi;
 	return 0;
@@ -512,7 +512,7 @@ static void sbi_make_clone(struct silofs_sb_info *sbi_new,
 	silofs_sbi_clone_from(sbi_new, sbi_cur);
 	silofs_sti_make_clone(sti_new, sti_cur);
 	silofs_sti_renew_stats(sti_new);
-	silofs_sbi_setup_ctime(sbi_new);
+	silofs_sbi_set_lv_birth(sbi_new);
 
 	sbi_account_super_of(sbi_new);
 }

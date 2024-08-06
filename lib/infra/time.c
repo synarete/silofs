@@ -146,13 +146,17 @@ int silofs_suspend_ts(const struct timespec *ts)
 int silofs_init_time(void)
 {
 	struct tm res = { .tm_zone = NULL };
-	struct tm *ptm = NULL;
-	time_t now;
 
 	tzset();
-	now = silofs_time_now();
-	errno = 0;
-	ptm = localtime_r(&now, &res);
+	return silofs_localtime_now(&res);
+}
 
-	return (ptm == &res) ? 0 : -errno;
+int silofs_localtime_now(struct tm *res)
+{
+	const time_t now = silofs_time_now();
+	const struct tm *ptm = NULL;
+
+	errno = 0;
+	ptm = localtime_r(&now, res);
+	return (ptm == res) ? 0 : -errno;
 }

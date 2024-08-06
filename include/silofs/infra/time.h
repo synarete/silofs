@@ -21,6 +21,8 @@
 
 int silofs_init_time(void);
 
+int silofs_localtime_now(struct tm *res);
+
 time_t silofs_time_now(void);
 
 time_t silofs_time_now_monotonic(void);

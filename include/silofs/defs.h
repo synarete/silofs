@@ -495,7 +495,7 @@ struct silofs_tm {
 	uint32_t tm_year;
 	uint32_t tm_yday;
 	uint64_t tm_gmtoff;
-	uint8_t tm_reserved[8];
+	uint8_t  tm_reserved[8];
 } silofs_packed_aligned64;
 
 

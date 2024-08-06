@@ -17,6 +17,7 @@
 #ifndef SILOFS_UTILITY_H_
 #define SILOFS_UTILITY_H_
 
+#include <silofs/macros.h>
 #include <stdint.h>
 
 static inline int32_t silofs_min32(int32_t x, int32_t y)
@@ -91,12 +92,14 @@ static inline uint64_t silofs_div_round_up(uint64_t n, uint64_t d)
 
 static inline uint64_t silofs_lrotate64(uint64_t x, unsigned int n)
 {
-	return ((n > 0) && (n < 64)) ? (x << n) | (x >> (64 - n)) : x;
+	return silofs_likely((n > 0) && (n < 64)) ?
+	       (x << n) | (x >> (64 - n)) : x;
 }
 
 static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
 {
-	return ((n > 0) && (n < 64)) ? (x >> n) | (x << (64 - n)) : x;
+	return silofs_likely((n > 0) && (n < 64)) ?
+	       (x >> n) | (x << (64 - n)) : x;
 }
 
 static inline void *silofs_unconst(const void *p)

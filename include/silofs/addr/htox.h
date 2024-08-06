@@ -17,6 +17,7 @@
 #ifndef SILOFS_HTOX_H_
 #define SILOFS_HTOX_H_
 
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <endian.h>

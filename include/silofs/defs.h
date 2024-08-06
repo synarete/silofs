@@ -485,6 +485,20 @@ enum silofs_kdf_algos {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+struct silofs_tm {
+	uint16_t tm_sec;
+	uint16_t tm_min;
+	uint8_t  tm_hour;
+	uint8_t  tm_mday;
+	uint8_t  tm_mon;
+	uint8_t  tm_wday;
+	uint32_t tm_year;
+	uint32_t tm_yday;
+	uint64_t tm_gmtoff;
+	uint8_t tm_reserved[8];
+} silofs_packed_aligned64;
+
+
 struct silofs_timespec {
 	uint64_t t_sec;
 	uint64_t t_nsec;

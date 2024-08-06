@@ -156,6 +156,7 @@ static void validate_persistent_types_size1(void)
 
 static void validate_persistent_types_size2(void)
 {
+	REQUIRE_SIZEOF(struct silofs_tm, 64);
 	REQUIRE_SIZEOF(struct silofs_timespec, 16);
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
 	REQUIRE_SIZEOF(struct silofs_hash256, 32);

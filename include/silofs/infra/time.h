@@ -19,6 +19,8 @@
 
 #include <time.h>
 
+int silofs_init_time(void);
+
 time_t silofs_time_now(void);
 
 time_t silofs_time_now_monotonic(void);

@@ -1,4 +1,3 @@
-
 AC_DEFUN([AX_SILOFS_CHECK_FUNCS],
 [
   AC_CHECK_FUNCS([$1], :,
@@ -74,6 +73,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([sysconf])
   AX_SILOFS_CHECK_FUNCS([tcgetattr])
   AX_SILOFS_CHECK_FUNCS([tcsetattr])
+  AX_SILOFS_CHECK_FUNCS([tzset])
   AX_SILOFS_CHECK_FUNCS([umount2])
   AX_SILOFS_CHECK_FUNCS([usleep])
   AX_SILOFS_CHECK_FUNCS([utimensat])
@@ -86,6 +86,3 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([get_current_dir_name])
   AX_SILOFS_CHECK_FUNCS([sched_yield])
 ])
-
-
-

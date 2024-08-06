@@ -14,6 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE 1
 #include <silofs/configs.h>
 #include <silofs/syscall.h>
 #include <silofs/infra/panic.h>
@@ -138,4 +139,20 @@ int silofs_suspend_ts(const struct timespec *ts)
 		err = silofs_nanosleep(&req, &rem);
 	}
 	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_init_time(void)
+{
+	struct tm res = { .tm_zone = NULL };
+	struct tm *ptm = NULL;
+	time_t now;
+
+	tzset();
+	now = silofs_time_now();
+	errno = 0;
+	ptm = localtime_r(&now, &res);
+
+	return (ptm == &res) ? 0 : -errno;
 }

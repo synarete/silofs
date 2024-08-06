@@ -545,6 +545,10 @@ static int init_libsilofs(void)
 {
 	int err;
 
+	err = silofs_init_time();
+	if (err) {
+		return err;
+	}
 	err = check_endianess();
 	if (err) {
 		return err;

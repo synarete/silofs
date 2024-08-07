@@ -17,6 +17,10 @@
 #ifndef SILOFS_IVKEY_H_
 #define SILOFS_IVKEY_H_
 
+#include <silofs/defs.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
 /* encryption tuple (IV, key, cipher-algo, mode) */
 struct silofs_ivkey {
 	struct silofs_key       key;
@@ -41,6 +45,10 @@ long silofs_iv_compare(const struct silofs_iv *iv,
 
 void silofs_iv_xor_with(struct silofs_iv *iv,
                         const struct silofs_iv *iv_other);
+
+void silofs_iv_xor_with2(struct silofs_iv *iv,
+                         const struct silofs_iv *iv1,
+                         const struct silofs_iv *iv2);
 
 void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs);
 

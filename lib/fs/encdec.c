@@ -25,12 +25,11 @@ static void resolve_ivkey_of(const struct silofs_fsenv *fsenv,
                              const struct silofs_iv *seediv,
                              struct silofs_ivkey *out_ivkey)
 {
-	struct silofs_iv iv;
+	struct silofs_iv laddriv;
 
-	silofs_laddr_as_iv(laddr, &iv);
+	silofs_laddr_as_iv(laddr, &laddriv);
 	silofs_ivkey_assign(out_ivkey, &fsenv->fse_main_ivkey);
-	silofs_iv_xor_with(&out_ivkey->iv, seediv);
-	silofs_iv_xor_with(&out_ivkey->iv, &iv);
+	silofs_iv_xor_with2(&out_ivkey->iv, &laddriv, seediv);
 }
 
 static int encrypt_view_with(const struct silofs_fsenv *fsenv,

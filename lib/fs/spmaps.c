@@ -1013,14 +1013,24 @@ static void spleaf_gen_rivs(struct silofs_spmap_leaf *spl)
 	silofs_gen_random_ivs(spl->sl_rivs, ARRAY_SIZE(spl->sl_rivs));
 }
 
-static struct silofs_iv *
+static const struct silofs_iv *
 spleaf_riv_at(const struct silofs_spmap_leaf *spl, size_t slot)
 {
 	const struct silofs_iv *riv = &spl->sl_rivs[slot];
 
 	silofs_assert_lt(slot, ARRAY_SIZE(spl->sl_rivs));
 
-	return unconst(riv);
+	return riv;
+}
+
+static struct silofs_iv *
+spleaf_riv_at2(struct silofs_spmap_leaf *spl, size_t slot)
+{
+	struct silofs_iv *riv = &spl->sl_rivs[slot];
+
+	silofs_assert_lt(slot, ARRAY_SIZE(spl->sl_rivs));
+
+	return riv;
 }
 
 static void spleaf_riv_of(const struct silofs_spmap_leaf *spl, loff_t voff,
@@ -1031,16 +1041,24 @@ static void spleaf_riv_of(const struct silofs_spmap_leaf *spl, loff_t voff,
 	silofs_iv_assign(out_riv, spleaf_riv_at(spl, slot));
 }
 
-static void spleaf_set_riv_at(const struct silofs_spmap_leaf *spl, size_t slot,
+static void spleaf_set_riv_at(struct silofs_spmap_leaf *spl, size_t slot,
                               const struct silofs_iv *riv)
 {
-	silofs_iv_assign(spleaf_riv_at(spl, slot), riv);
+	silofs_iv_assign(spleaf_riv_at2(spl, slot), riv);
 }
 
-static void spleaf_set_riv_of(const struct silofs_spmap_leaf *spl, loff_t voff,
+static void spleaf_set_riv_of(struct silofs_spmap_leaf *spl, loff_t voff,
                               const struct silofs_iv *riv)
 {
 	spleaf_set_riv_at(spl, spleaf_slot_of(spl, voff), riv);
+}
+
+static void spleaf_renew_riv_of(struct silofs_spmap_leaf *spl, loff_t voff)
+{
+	struct silofs_iv riv;
+
+	silofs_gen_random_iv(&riv);
+	spleaf_set_riv_of(spl, voff, &riv);
 }
 
 static void spleaf_resolve_child(const struct silofs_spmap_leaf *spl,
@@ -1275,6 +1293,7 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
+	const loff_t voff = vaddr->off;
 	const bool last = spleaf_is_last_allocated(sl, vaddr);
 
 	spleaf_unref_allocated_at(sl, vaddr);
@@ -1284,6 +1303,7 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
 	}
 	if (last) {
 		spleaf_renew_bk_at(sl, vaddr);
+		spleaf_renew_riv_of(sl, voff);
 	}
 	sli_dirtify(sli);
 }

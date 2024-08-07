@@ -50,6 +50,8 @@ void silofs_iv_xor_with2(struct silofs_iv *iv,
                          const struct silofs_iv *iv1,
                          const struct silofs_iv *iv2);
 
+void silofs_gen_random_iv(struct silofs_iv *iv);
+
 void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

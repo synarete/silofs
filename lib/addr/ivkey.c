@@ -71,6 +71,11 @@ void silofs_iv_mkrand(struct silofs_iv *iv)
 	randomize(iv->iv, sizeof(iv->iv), false);
 }
 
+void silofs_gen_random_iv(struct silofs_iv *iv)
+{
+	silofs_gen_random_ivs(iv, 1);
+}
+
 void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs)
 {
 	randomize(ivs, nivs * sizeof(*ivs), false);

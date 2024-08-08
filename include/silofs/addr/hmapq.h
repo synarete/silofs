@@ -31,7 +31,7 @@ enum silofs_hkey_type {
 /* addresses as mapping-key */
 union silofs_hkey_u {
 	const struct silofs_blobid  *blobid;
-	const struct silofs_oaddr   *oaddr;
+	const struct silofs_paddr   *paddr;
 	const struct silofs_uaddr   *uaddr;
 	const struct silofs_vaddr   *vaddr;
 	const void                  *key;
@@ -73,8 +73,8 @@ typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 void silofs_hkey_by_blobid(struct silofs_hkey *hkey,
                            const struct silofs_blobid *blobid);
 
-void silofs_hkey_by_oaddr(struct silofs_hkey *hkey,
-                          const struct silofs_oaddr *oaddr);
+void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
+                          const struct silofs_paddr *paddr);
 
 void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,
                           const struct silofs_uaddr *uaddr);

@@ -22,9 +22,9 @@
 
 /* bnode: base of all btree-mapping nodes */
 struct silofs_bnode_info {
-	struct silofs_oaddr             bn_oaddr;
+	struct silofs_paddr             bn_paddr;
 	struct silofs_hmapq_elem        bn_hmqe;
-	enum silofs_otype               bn_otype;
+	enum silofs_ptype               bn_ptype;
 };
 
 /* btree-node */
@@ -42,7 +42,7 @@ struct silofs_btleaf_info {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_btnode_info *
-silofs_bti_new(const struct silofs_oaddr *oaddr,
+silofs_bti_new(const struct silofs_paddr *paddr,
                struct silofs_alloc *alloc);
 
 void silofs_bti_del(struct silofs_btnode_info *bti,
@@ -50,19 +50,19 @@ void silofs_bti_del(struct silofs_btnode_info *bti,
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
                        const struct silofs_laddr *laddr,
-                       struct silofs_oaddr *out_oaddr);
+                       struct silofs_paddr *out_paddr);
 
 int silofs_bti_expand(struct silofs_btnode_info *bti,
                       const struct silofs_laddr *laddr,
-                      const struct silofs_oaddr *oaddr);
+                      const struct silofs_paddr *paddr);
 
 void silofs_bti_setapex(struct silofs_btnode_info *bti,
-                        const struct silofs_oaddr *oaddr);
+                        const struct silofs_paddr *paddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_btleaf_info *
-silofs_bli_new(const struct silofs_oaddr *oaddr,
+silofs_bli_new(const struct silofs_paddr *paddr,
                struct silofs_alloc *alloc);
 
 void silofs_bli_del(struct silofs_btleaf_info *bli,
@@ -70,10 +70,10 @@ void silofs_bli_del(struct silofs_btleaf_info *bli,
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
                        const struct silofs_laddr *laddr,
-                       struct silofs_oaddr *out_oaddr);
+                       struct silofs_paddr *out_paddr);
 
 int silofs_bli_extend(struct silofs_btleaf_info *bli,
                       const struct silofs_laddr *laddr,
-                      const struct silofs_oaddr *oaddr);
+                      const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_PNODES_H_ */

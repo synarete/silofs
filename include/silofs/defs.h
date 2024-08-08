@@ -367,16 +367,16 @@ enum silofs_ctype {
 	SILOFS_CTYPE_ENCSEG     = 3,
 };
 
-/* storage objects sub-types */
-enum silofs_otype {
-	SILOFS_OTYPE_NONE       = 0,
-	SILOFS_OTYPE_BTNODE     = 1,
-	SILOFS_OTYPE_BTLEAF     = 2,
-	SILOFS_OTYPE_DATA       = 3,
-	SILOFS_OTYPE_LAST, /* keep last */
+/* persistent objects sub-types */
+enum silofs_ptype {
+	SILOFS_PTYPE_NONE       = 0,
+	SILOFS_PTYPE_BTNODE     = 1,
+	SILOFS_PTYPE_BTLEAF     = 2,
+	SILOFS_PTYPE_DATA       = 3,
+	SILOFS_PTYPE_LAST, /* keep last */
 };
 
-/* file-system logical-elements types */
+/* logical-elements types */
 enum silofs_ltype {
 	SILOFS_LTYPE_NONE       = 0,
 	SILOFS_LTYPE_BOOTREC    = 1,
@@ -411,7 +411,7 @@ enum silofs_height {
 /* common-header flags */
 enum silofs_hdrf {
 	SILOFS_HDRF_CSUM        = 0x01,
-	SILOFS_HDRF_OTYPE       = 0x02,
+	SILOFS_HDRF_PTYPE       = 0x02,
 	SILOFS_HDRF_LTYPE       = 0x04,
 };
 
@@ -541,7 +541,7 @@ struct silofs_uuid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_ovid {
+struct silofs_pvid {
 	struct silofs_uuid              uuid;
 } silofs_packed_aligned16;
 
@@ -552,12 +552,12 @@ struct silofs_lvid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* object address */
-struct silofs_oaddr32b {
-	struct silofs_ovid              ovid;
+/* persistent object address */
+struct silofs_paddr32b {
+	struct silofs_pvid              pvid;
 	uint32_t                        index;
 	uint32_t                        len;
-	uint64_t                        off_otype;
+	uint64_t                        off_ptype;
 } silofs_packed_aligned16;
 
 
@@ -1034,8 +1034,8 @@ struct silofs_repo_meta {
 
 /* root meta-data of persistent volume mapping */
 struct silofs_pvmap_root {
-	struct silofs_header            vol_hdr;
-	struct silofs_ovid              vol_id;
+	struct silofs_header            pvr_hdr;
+	struct silofs_pvid              pvr_id;
 } silofs_packed_aligned64;
 
 
@@ -1043,18 +1043,19 @@ struct silofs_pvmap_root {
 struct silofs_btree_node {
 	struct silofs_header            btn_hdr;
 	uint16_t                        btn_nkeys;
-	uint8_t                         btn_reserved1[46];
-	struct silofs_oaddr32b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	uint16_t                        btn_nchilds;
+	uint8_t                         btn_reserved1[44];
+	struct silofs_paddr32b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint8_t                         btn_reserved2[192];
 	struct silofs_laddr48b          btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                         btn_reserved3[48];
 } silofs_packed_aligned64;
 
 
-/* laddr-to-oaddr mapping entry */
+/* laddr-to-paddr mapping entry */
 struct silofs_btree_ltop {
 	struct silofs_laddr48b          laddr;
-	struct silofs_oaddr32b          oaddr;
+	struct silofs_paddr32b          paddr;
 } silofs_packed_aligned16;
 
 

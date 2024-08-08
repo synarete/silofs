@@ -17,6 +17,8 @@
 #ifndef SILOFS_FLUSH_H_
 #define SILOFS_FLUSH_H_
 
+#include <silofs/infra.h>
+#include <silofs/fs/task.h>
 
 struct silofs_dset {
 	struct silofs_lnode_info       *ds_preq;

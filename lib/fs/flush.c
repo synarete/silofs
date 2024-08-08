@@ -37,8 +37,14 @@ ui_from(const struct silofs_lnode_info *lni)
 	return silofs_ui_from_lni(lni);
 }
 
+static const struct silofs_vnode_info *
+vi_from(const struct silofs_lnode_info *lni)
+{
+	return silofs_vi_from_lni(lni);
+}
+
 static struct silofs_vnode_info *
-vi_from(struct silofs_lnode_info *lni)
+vi_from2(struct silofs_lnode_info *lni)
 {
 	return silofs_vi_from_lni(lni);
 }
@@ -145,15 +151,32 @@ static void dset_push_postq(struct silofs_dset *dset,
 	dset->ds_postq = lni;
 }
 
+static struct silofs_lnode_info *dset_pop_preq(struct silofs_dset *dset)
+{
+	struct silofs_lnode_info *lni = NULL;
+
+	if (dset->ds_preq != NULL) {
+		lni = dset->ds_preq;
+		dset->ds_preq = lni->l_ds_next;
+		lni->l_ds_next = NULL;
+	}
+	return lni;
+}
+
 static void dset_moveq(struct silofs_dset *dset)
 {
-	struct silofs_lnode_info *lni = dset->ds_preq;
+	struct silofs_lnode_info *lni;
 
+	lni = dset_pop_preq(dset);
 	if (lni != NULL) {
-		dset->ds_preq = dset->ds_preq->l_ds_next;
-		lni->l_ds_next = NULL;
 		dset_push_postq(dset, lni);
 	}
+}
+
+static struct silofs_lnode_info *
+dset_preq_front(const struct silofs_dset *dset)
+{
+	return dset->ds_preq;
 }
 
 static void dset_seal_all(const struct silofs_dset *dset)
@@ -475,35 +498,43 @@ static int flusher_resolve_llink_of_ui(const struct silofs_flusher *flusher,
 }
 
 static int flusher_resolve_llink_of_vi(const struct silofs_flusher *flusher,
-                                       struct silofs_vnode_info *vi,
+                                       const struct silofs_vnode_info *vi,
                                        struct silofs_llink *out_llink)
 {
-	int err;
-
-	err = silofs_refresh_llink(flusher->task, vi);
-	if (err) {
-		return err;
-	}
 	silofs_llink_assign(out_llink, &vi->v_llink);
 	return flusher_require_mutable_llink(flusher, out_llink);
 }
 
+static int flusher_pre_resolve_llink_of(const struct silofs_flusher *flusher,
+                                        struct silofs_lnode_info *lni)
+{
+	struct silofs_vnode_info *vi = NULL;
+	int ret = 0;
+
+	if (ltype_isvnode(lni->l_ltype)) {
+		vi = vi_from2(lni);
+		ret = silofs_refresh_llink(flusher->task, vi);
+	}
+	return ret;
+}
+
 static int flusher_resolve_llink_of(const struct silofs_flusher *flusher,
-                                    struct silofs_lnode_info *lni,
+                                    const struct silofs_lnode_info *lni,
                                     struct silofs_llink *out_llink)
 {
+	const struct silofs_unode_info *ui = NULL;
+	const struct silofs_vnode_info *vi = NULL;
+	const enum silofs_ltype ltype = lni->l_ltype;
 	int ret;
 
-	if (ltype_isunode(lni->l_ltype)) {
-		ret = flusher_resolve_llink_of_ui(flusher,
-		                                  ui_from(lni),
-		                                  out_llink);
-	} else if (ltype_isvnode(lni->l_ltype)) {
-		ret = flusher_resolve_llink_of_vi(flusher,
-		                                  vi_from(lni),
-		                                  out_llink);
+	if (ltype_isunode(ltype)) {
+		ui = ui_from(lni);
+		ret = flusher_resolve_llink_of_ui(flusher, ui, out_llink);
+	} else if (ltype_isvnode(ltype)) {
+		vi = vi_from(lni);
+		ret = flusher_resolve_llink_of_vi(flusher, vi, out_llink);
 	} else {
-		silofs_panic("corrupted lnode: ltype=%d", lni->l_ltype);
+		silofs_panic("corrupted lnode: ltype=%d", ltype);
 		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
 	}
 	return ret;
@@ -580,10 +611,15 @@ static int flusher_populate_sqe_refs(struct silofs_flusher *flusher,
                                      struct silofs_submitq_ent *sqe)
 {
 	struct silofs_llink llink;
-	struct silofs_lnode_info *lni = dset->ds_preq;
+	struct silofs_lnode_info *lni;
 	int err;
 
+	lni = dset_preq_front(dset);
 	while (lni != NULL) {
+		err = flusher_pre_resolve_llink_of(flusher, lni);
+		if (err) {
+			return err;
+		}
 		err = flusher_resolve_llink_of(flusher, lni, &llink);
 		if (err) {
 			return err;
@@ -592,7 +628,7 @@ static int flusher_populate_sqe_refs(struct silofs_flusher *flusher,
 			break;
 		}
 		dset_moveq(dset);
-		lni = dset->ds_preq;
+		lni = dset_preq_front(dset);
 	}
 	return 0;
 }

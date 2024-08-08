@@ -46,9 +46,9 @@ msg "run unit-tests"
 run make -f devel.mk reset
 run make -f devel.mk O=2
 run make -f devel.mk O=2 check
-msg "build with analyzer and sanitizer"
+msg "build with analyzer"
 run make -f devel.mk reset
-run make -f devel.mk O=2 ANALYZER=1 SANITIZER=1
+run make -f devel.mk O=0 ANALYZER=1
 msg "build with clang"
 run make -f devel.mk reset
 run make -f devel.mk CC=clang O=2

@@ -54,6 +54,8 @@ silofs_uaddr_lvid(const struct silofs_uaddr *uaddr);
 const struct silofs_lsegid *
 silofs_uaddr_lsegid(const struct silofs_uaddr *uaddr);
 
+enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr);
+
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,

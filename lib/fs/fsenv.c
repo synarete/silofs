@@ -361,8 +361,8 @@ static void make_super_lsegid(struct silofs_lsegid *out_lsegid)
 	struct silofs_lvid lvid;
 
 	silofs_lvid_generate(&lvid);
-	silofs_lsegid_setup(out_lsegid, &lvid, 0,
-	                    SILOFS_LTYPE_SUPER, SILOFS_HEIGHT_SUPER);
+	silofs_lsegid_setup(out_lsegid, &lvid, 0, SILOFS_LTYPE_SUPER,
+	                    SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
 }
 
 static void make_super_uaddr(const struct silofs_lsegid *lsegid,

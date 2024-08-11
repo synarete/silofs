@@ -68,6 +68,7 @@
 #define laddr_none()                    silofs_laddr_none()
 #define laddr_reset(la)                 silofs_laddr_reset(la)
 #define laddr_assign(la, oth)           silofs_laddr_assign(la, oth)
+#define laddr_ltype(la)                 silofs_laddr_ltype(la)
 #define laddr_isvalid(la)               silofs_laddr_isvalid(la)
 #define laddr_isnull(la)                silofs_laddr_isnull(la)
 #define laddr_isnext(la, oth)           silofs_laddr_isnext(la, oth)
@@ -80,6 +81,7 @@
 #define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
 #define uaddr_lvid(ua)                  silofs_uaddr_lvid(ua)
 #define uaddr_lsegid(ua)                silofs_uaddr_lsegid(ua)
+#define uaddr_ltype(ua)                 silofs_uaddr_ltype(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)
 
 #define ulink_assign(ul, oth)           silofs_ulink_assign(ul, oth)

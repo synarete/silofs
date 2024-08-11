@@ -26,12 +26,12 @@ struct silofs_lsegid {
 	uint32_t                vindex;
 	enum silofs_ltype       vspace;
 	enum silofs_height      height;
+	enum silofs_ltype       ltype;
 };
 
 /* logical-address within specific volume's mapping extend */
 struct silofs_laddr {
 	struct silofs_lsegid    lsegid;
-	enum silofs_ltype       ltype;
 	loff_t                  pos;
 	size_t                  len;
 };
@@ -75,12 +75,16 @@ bool silofs_lsegid_has_lvid(const struct silofs_lsegid *lsegid,
 void silofs_lsegid_reset(struct silofs_lsegid *lsegid);
 
 void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
-                         const struct silofs_lvid *lvid,
-                         loff_t voff, enum silofs_ltype vspace,
-                         enum silofs_height height);
+                         const struct silofs_lvid *lvid, loff_t voff,
+                         enum silofs_ltype vspace, enum silofs_height height,
+                         enum silofs_ltype ltype);
 
 void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
                           const struct silofs_lsegid *other);
+
+void silofs_lsegid_assign2(struct silofs_lsegid *lsegid,
+                           const struct silofs_lsegid *other,
+                           enum silofs_ltype ltype);
 
 bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
                            const struct silofs_lsegid *other);
@@ -113,6 +117,8 @@ void silofs_laddr_reset(struct silofs_laddr *laddr);
 
 void silofs_laddr_assign(struct silofs_laddr *laddr,
                          const struct silofs_laddr *other);
+
+enum silofs_ltype silofs_laddr_ltype(const struct silofs_laddr *laddr);
 
 long silofs_laddr_compare(const struct silofs_laddr *laddr1,
                           const struct silofs_laddr *laddr2);

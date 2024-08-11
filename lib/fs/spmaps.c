@@ -1758,7 +1758,7 @@ static int verify_spmap_leaf_parent(const struct silofs_spmap_leaf *sl)
 	if (uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (uaddr.laddr.ltype != SILOFS_LTYPE_SPNODE) {
+	if (uaddr_ltype(&uaddr) != SILOFS_LTYPE_SPNODE) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -1772,7 +1772,7 @@ static int verify_spmap_leaf_self(const struct silofs_spmap_leaf *sl)
 	if (uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (uaddr.laddr.ltype != SILOFS_LTYPE_SPLEAF) {
+	if (uaddr_ltype(&uaddr) != SILOFS_LTYPE_SPLEAF) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -1838,7 +1838,7 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 	if (parent_height != (height + 1)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	parent_ltype = parent_uaddr.laddr.ltype;
+	parent_ltype = uaddr_ltype(&parent_uaddr);
 	if ((height == height_max) && !ltype_issuper(parent_ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
@@ -1852,13 +1852,15 @@ static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 {
 	struct silofs_uaddr uaddr;
 	enum silofs_height height;
+	enum silofs_ltype ltype;
 	int err;
 
 	spnode_self(sn, &uaddr);
 	if (uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (!ltype_isspnode(uaddr.laddr.ltype)) {
+	ltype = uaddr_ltype(&uaddr);
+	if (!ltype_isspnode(ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	height = uaddr_height(&uaddr);

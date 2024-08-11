@@ -260,7 +260,7 @@ static void pdi_update_caddr(struct silofs_par_desc_info *pdi,
 
 static bool pdi_isbootrec(const struct silofs_par_desc_info *pdi)
 {
-	return ltype_isbootrec(pdi->pd.laddr.ltype);
+	return ltype_isbootrec(laddr_ltype(&pdi->pd.laddr));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -735,7 +735,7 @@ static int pac_load_seg(const struct silofs_par_ctx *pa_ctx,
 	err = silofs_repo_read_at(pa_ctx->pac_repo, laddr, seg);
 	if (err) {
 		log_err("failed to read: ltype=%d len=%zu err=%d",
-		        laddr->ltype, laddr->len, err);
+		        laddr_ltype(laddr), laddr->len, err);
 	}
 	return err;
 }
@@ -743,23 +743,24 @@ static int pac_load_seg(const struct silofs_par_ctx *pa_ctx,
 static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
                         const struct silofs_laddr *laddr, void *seg)
 {
+	const enum silofs_ltype ltype = laddr_ltype(laddr);
 	int err;
 
 	err = silofs_repo_require_lseg(pa_ctx->pac_repo, &laddr->lsegid);
 	if (err) {
-		log_err("failed to require lseg: ltype=%d", laddr->ltype);
+		log_err("failed to require lseg: ltype=%d", (int)ltype);
 		return err;
 	}
 	err = silofs_repo_require_laddr(pa_ctx->pac_repo, laddr);
 	if (err) {
 		log_err("failed to require laddr: ltype=%d len=%zu err=%d",
-		        laddr->ltype, laddr->len, err);
+		        (int)ltype, laddr->len, err);
 		return err;
 	}
 	err = silofs_repo_write_at(pa_ctx->pac_repo, laddr, seg);
 	if (err) {
 		log_err("failed to write: ltype=%d len=%zu err=%d",
-		        laddr->ltype, laddr->len, err);
+		        (int)ltype, laddr->len, err);
 		return err;
 	}
 	return 0;

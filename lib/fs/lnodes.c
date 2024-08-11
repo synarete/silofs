@@ -76,7 +76,7 @@ view_new_by(struct silofs_alloc *alloc, enum silofs_ltype ltype)
 static struct silofs_view *
 view_new_by_ulink(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
-	return view_new_by(alloc, ulink->uaddr.laddr.ltype);
+	return view_new_by(alloc, uaddr_ltype(&ulink->uaddr));
 }
 
 static struct silofs_view *
@@ -108,7 +108,7 @@ static void view_del_by_ulink(struct silofs_view *view,
                               const struct silofs_ulink *ulink,
                               struct silofs_alloc *alloc, int flags)
 {
-	view_del_by(view, ulink->uaddr.laddr.ltype, alloc, flags);
+	view_del_by(view, uaddr_ltype(&ulink->uaddr), alloc, flags);
 }
 
 static void view_del_by_vaddr(struct silofs_view *view,
@@ -173,7 +173,7 @@ static void ui_init(struct silofs_unode_info *ui,
                     struct silofs_view *view,
                     silofs_lnode_del_fn del_fn)
 {
-	lni_init(&ui->u_lni, ulink->uaddr.laddr.ltype, view, del_fn);
+	lni_init(&ui->u_lni, uaddr_ltype(&ulink->uaddr), view, del_fn);
 	list_head_init(&ui->u_dq_lh);
 	ulink_assign(&ui->u_ulink, ulink);
 	ui->u_dq = NULL;
@@ -1294,7 +1294,7 @@ struct silofs_unode_info *
 silofs_new_ui(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
 	struct silofs_unode_info *ui = NULL;
-	const enum silofs_ltype ltype = ulink->uaddr.laddr.ltype;
+	const enum silofs_ltype ltype = uaddr_ltype(&ulink->uaddr);
 
 	switch (ltype) {
 	case SILOFS_LTYPE_BOOTREC:

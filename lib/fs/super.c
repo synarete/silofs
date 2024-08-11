@@ -569,7 +569,7 @@ static void sb_clone_tms(struct silofs_super_block *sb,
 static int verify_sproot(const struct silofs_uaddr *uaddr)
 {
 	const enum silofs_height height = uaddr_height(uaddr);
-	const enum silofs_ltype ltype = uaddr->laddr.ltype;
+	const enum silofs_ltype ltype = uaddr_ltype(uaddr);
 
 	if (uaddr_isnull(uaddr)) {
 		return 0;
@@ -605,9 +605,14 @@ static int sb_verify_sproots(const struct silofs_super_block *sb)
 static int sb_verify_self(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
+	enum silofs_ltype ltype;
 
 	sb_self(sb, &uaddr);
-	if (uaddr_isnull(&uaddr) || !ltype_issuper(uaddr.laddr.ltype)) {
+	ltype = uaddr_ltype(&uaddr);
+	if (!ltype_issuper(ltype)) {
+		return -SILOFS_EFSCORRUPTED;
+	}
+	if (uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -616,9 +621,11 @@ static int sb_verify_self(const struct silofs_super_block *sb)
 static int sb_verify_origin(const struct silofs_super_block *sb)
 {
 	struct silofs_uaddr uaddr;
+	enum silofs_ltype ltype;
 
 	sb_origin(sb, &uaddr);
-	if (!uaddr_isnull(&uaddr) && !ltype_issuper(uaddr.laddr.ltype)) {
+	ltype = uaddr_ltype(&uaddr);
+	if (!uaddr_isnull(&uaddr) && !ltype_issuper(ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

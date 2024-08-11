@@ -20,8 +20,8 @@
 
 static const struct silofs_uaddr s_uaddr_none = {
 	.laddr.lsegid.lsize = 0,
+	.laddr.lsegid.ltype = SILOFS_LTYPE_NONE,
 	.laddr.pos = SILOFS_OFF_NULL,
-	.laddr.ltype = SILOFS_LTYPE_NONE,
 	.voff = SILOFS_OFF_NULL,
 };
 
@@ -90,6 +90,11 @@ const struct silofs_lsegid *
 silofs_uaddr_lsegid(const struct silofs_uaddr *uaddr)
 {
 	return &uaddr->laddr.lsegid;
+}
+
+enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr)
+{
+	return laddr_ltype(&uaddr->laddr);
 }
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)

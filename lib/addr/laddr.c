@@ -117,6 +117,7 @@ static const struct silofs_lsegid s_lsegid_none = {
 	.vindex = 0,
 	.vspace = SILOFS_LTYPE_NONE,
 	.height = SILOFS_HEIGHT_LAST,
+	.ltype = SILOFS_LTYPE_NONE,
 };
 
 const struct silofs_lsegid *silofs_lsegid_none(void)
@@ -131,7 +132,8 @@ size_t silofs_lsegid_size(const struct silofs_lsegid *lsegid)
 
 bool silofs_lsegid_isnull(const struct silofs_lsegid *lsegid)
 {
-	return (lsegid->lsize == 0) || (lsegid->vindex == UINT32_MAX);
+	return silofs_ltype_isnone(lsegid->ltype) ||
+	       (lsegid->lsize == 0) || (lsegid->vindex == UINT32_MAX);
 }
 
 bool silofs_lsegid_has_lvid(const struct silofs_lsegid *lsegid,
@@ -154,6 +156,7 @@ void silofs_lsegid_reset(struct silofs_lsegid *lsegid)
 	lsegid->lsize = 0;
 	lsegid->vspace = SILOFS_LTYPE_NONE;
 	lsegid->height = SILOFS_HEIGHT_NONE;
+	lsegid->ltype = SILOFS_LTYPE_NONE;
 }
 
 void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
@@ -164,6 +167,15 @@ void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
 	lsegid->lsize = other->lsize;
 	lsegid->vspace = other->vspace;
 	lsegid->height = other->height;
+	lsegid->ltype = other->ltype;
+}
+
+void silofs_lsegid_assign2(struct silofs_lsegid *lsegid,
+                           const struct silofs_lsegid *other,
+                           enum silofs_ltype ltype)
+{
+	silofs_lsegid_assign(lsegid, other);
+	lsegid->ltype = ltype;
 }
 
 static long lsegid_compare(const struct silofs_lsegid *lsegid1,
@@ -187,6 +199,10 @@ static long lsegid_compare(const struct silofs_lsegid *lsegid1,
 	if (cmp) {
 		return cmp;
 	}
+	cmp = (long)(lsegid2->ltype) - (long)(lsegid1->ltype);
+	if (cmp) {
+		return cmp;
+	}
 	cmp = (long)(lsegid2->lsize) - (long)(lsegid1->lsize);
 	if (cmp) {
 		return cmp;
@@ -203,16 +219,17 @@ bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
 uint64_t silofs_lsegid_hash64(const struct silofs_lsegid *lsegid)
 {
 	struct silofs_lsegid32b lsegid32b = { .lsize = 0 };
-	const uint64_t seed = lsegid->vspace;
+	const uint64_t seed1 = ((uint64_t)lsegid->vspace) << 17;
+	const uint64_t seed2 = (uint64_t)lsegid->ltype;
 
 	silofs_lsegid32b_htox(&lsegid32b, lsegid);
-	return silofs_hash_xxh64(&lsegid32b, sizeof(lsegid32b), seed);
+	return silofs_hash_xxh64(&lsegid32b, sizeof(lsegid32b), seed1 | seed2);
 }
 
 void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
-                         const struct silofs_lvid *lvid,
-                         loff_t voff, enum silofs_ltype vspace,
-                         enum silofs_height height)
+                         const struct silofs_lvid *lvid, loff_t voff,
+                         enum silofs_ltype vspace, enum silofs_height height,
+                         enum silofs_ltype ltype)
 {
 	const size_t lseg_size = height_to_lseg_size(height);
 
@@ -221,6 +238,7 @@ void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
 	lsegid->vindex = lseg_vindex_of(voff, (ssize_t)lseg_size);
 	lsegid->height = height;
 	lsegid->vspace = vspace;
+	lsegid->ltype = ltype;
 }
 
 void silofs_lsegid32b_reset(struct silofs_lsegid32b *lsegid32)
@@ -230,6 +248,7 @@ void silofs_lsegid32b_reset(struct silofs_lsegid32b *lsegid32)
 	lsegid32->lsize = 0;
 	lsegid32->vspace = SILOFS_LTYPE_NONE;
 	lsegid32->height = SILOFS_HEIGHT_LAST;
+	lsegid32->ltype = SILOFS_LTYPE_NONE;
 }
 
 void silofs_lsegid32b_htox(struct silofs_lsegid32b *lsegid32,
@@ -241,6 +260,7 @@ void silofs_lsegid32b_htox(struct silofs_lsegid32b *lsegid32,
 	lsegid32->lsize = silofs_cpu_to_le32((uint32_t)lsegid->lsize);
 	lsegid32->vspace = (uint8_t)lsegid->vspace;
 	lsegid32->height = (uint8_t)lsegid->height;
+	lsegid32->ltype = (uint8_t)lsegid->ltype;
 }
 
 void silofs_lsegid32b_xtoh(const struct silofs_lsegid32b *lsegid32,
@@ -251,13 +271,13 @@ void silofs_lsegid32b_xtoh(const struct silofs_lsegid32b *lsegid32,
 	lsegid->lsize = silofs_le32_to_cpu(lsegid32->lsize);
 	lsegid->vspace = (enum silofs_ltype)lsegid32->vspace;
 	lsegid->height = (enum silofs_height)lsegid32->height;
+	lsegid->ltype = (enum silofs_ltype)lsegid32->ltype;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_laddr s_laddr_none = {
 	.pos = SILOFS_OFF_NULL,
-	.ltype = SILOFS_LTYPE_NONE,
 };
 
 const struct silofs_laddr *silofs_laddr_none(void)
@@ -269,8 +289,9 @@ void silofs_laddr_setup(struct silofs_laddr *laddr,
                         const struct silofs_lsegid *lsegid,
                         enum silofs_ltype ltype, loff_t off, size_t len)
 {
-	silofs_lsegid_assign(&laddr->lsegid, lsegid);
-	laddr->ltype = ltype;
+	silofs_assert_eq(lsegid->ltype, ltype);
+
+	silofs_lsegid_assign2(&laddr->lsegid, lsegid, ltype);
 	if (lsegid->lsize && !off_isnull(off)) {
 		laddr->len = len;
 		laddr->pos = silofs_lsegid_pos(lsegid, off);
@@ -294,16 +315,20 @@ void silofs_laddr_reset(struct silofs_laddr *laddr)
 	silofs_lsegid_reset(&laddr->lsegid);
 	laddr->len = 0;
 	laddr->pos = SILOFS_OFF_NULL;
-	laddr->ltype = SILOFS_LTYPE_NONE;
 }
 
 void silofs_laddr_assign(struct silofs_laddr *laddr,
                          const struct silofs_laddr *other)
 {
-	silofs_lsegid_assign(&laddr->lsegid, &other->lsegid);
+	silofs_lsegid_assign2(&laddr->lsegid,
+	                      &other->lsegid, other->lsegid.ltype);
 	laddr->len = other->len;
 	laddr->pos = other->pos;
-	laddr->ltype = other->ltype;
+}
+
+enum silofs_ltype silofs_laddr_ltype(const struct silofs_laddr *laddr)
+{
+	return laddr->lsegid.ltype;
 }
 
 long silofs_laddr_compare(const struct silofs_laddr *laddr1,
@@ -312,10 +337,6 @@ long silofs_laddr_compare(const struct silofs_laddr *laddr1,
 	long cmp;
 
 	cmp = lsegid_compare(&laddr1->lsegid, &laddr2->lsegid);
-	if (cmp) {
-		return cmp;
-	}
-	cmp = (long)laddr1->ltype - (long)laddr2->ltype;
 	if (cmp) {
 		return cmp;
 	}
@@ -332,8 +353,7 @@ long silofs_laddr_compare(const struct silofs_laddr *laddr1,
 
 bool silofs_laddr_isnull(const struct silofs_laddr *laddr)
 {
-	return silofs_ltype_isnone(laddr->ltype) ||
-	       silofs_off_isnull(laddr->pos) ||
+	return silofs_off_isnull(laddr->pos) ||
 	       silofs_lsegid_isnull(&laddr->lsegid);
 }
 
@@ -348,8 +368,7 @@ bool silofs_laddr_isvalid(const struct silofs_laddr *laddr)
 bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
                           const struct silofs_laddr *other)
 {
-	return ((laddr->ltype == other->ltype) &&
-	        (laddr->len == other->len) &&
+	return ((laddr->len == other->len) &&
 	        (laddr->pos == other->pos) &&
 	        lsegid_isequal(&laddr->lsegid, &other->lsegid));
 }
@@ -359,7 +378,7 @@ bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
 {
 	loff_t end;
 
-	if (laddr->ltype != other->ltype) {
+	if (laddr->lsegid.ltype != other->lsegid.ltype) {
 		return false;
 	}
 	end = off_end(laddr->pos, laddr->len);
@@ -400,7 +419,6 @@ void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)
 	silofs_lsegid32b_reset(&laddr48->lsegid);
 	laddr48->pos = 0;
 	laddr48->len = 0;
-	laddr48->ltype = 0;
 }
 
 void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
@@ -410,7 +428,6 @@ void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
 	silofs_lsegid32b_htox(&laddr48->lsegid, &laddr->lsegid);
 	laddr48->pos = silofs_cpu_to_le32((uint32_t)(laddr->pos));
 	laddr48->len = silofs_cpu_to_le32((uint32_t)(laddr->len));
-	laddr48->ltype = (uint8_t)laddr->ltype;
 }
 
 void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
@@ -419,7 +436,6 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 	silofs_lsegid32b_xtoh(&laddr48->lsegid, &laddr->lsegid);
 	laddr->pos = (loff_t)silofs_le32_to_cpu(laddr48->pos);
 	laddr->len = (size_t)silofs_le32_to_cpu(laddr48->len);
-	laddr->ltype = (enum silofs_ltype)laddr48->ltype;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -447,7 +463,7 @@ static void laddr_to_repr(const struct silofs_laddr *laddr,
 	repr->vindex = laddr->lsegid.vindex;
 	repr->vspace = (uint8_t)laddr->lsegid.vspace;
 	repr->height = (uint8_t)laddr->lsegid.height;
-	repr->ltype = (uint8_t)laddr->ltype;
+	repr->ltype = (uint8_t)laddr->lsegid.ltype;
 	repr->version = 1;
 }
 
@@ -465,7 +481,7 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 	laddr->lsegid.vindex = repr->vindex;
 	laddr->lsegid.vspace = repr->vspace;
 	laddr->lsegid.height = repr->height;
-	laddr->ltype = repr->ltype;
+	laddr->lsegid.ltype = repr->ltype;
 	if (!silofs_laddr_isvalid(laddr)) {
 		return -SILOFS_EINVAL;
 	}

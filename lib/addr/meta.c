@@ -128,24 +128,17 @@ void silofs_uuid_unparse(const struct silofs_uuid *uu,
 }
 
 int silofs_uuid_parse(struct silofs_uuid *uu,
-                      const struct silofs_strbuf *sbuf)
+                      const struct silofs_strview *sv)
 {
-	const size_t len = silofs_str_length(sbuf->str);
+	struct silofs_strview sv2;
 	int ret = -EINVAL;
 
-	if (len == 36) {
-		ret = uuid_parse_range(sbuf->str, sbuf->str + len, uu->uu);
+	silofs_strview_strip_ws(sv, &sv2);
+	if (sv2.len == 36) {
+		ret = uuid_parse_range(silofs_strview_begin(&sv2),
+		                       silofs_strview_end(&sv2), uu->uu);
 	}
 	return ret;
-}
-
-int silofs_uuid_parse2(struct silofs_uuid *uu,
-                       const struct silofs_strview *sv)
-{
-	struct silofs_strbuf sbuf;
-
-	silofs_strbuf_setup(&sbuf, sv);
-	return silofs_uuid_parse(uu, &sbuf);
 }
 
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])

@@ -19,13 +19,13 @@
 
 #include <sys/uio.h>
 
-/* read-only I/O vector: pointer to immutable data and its length */
+/* read-only I/O vector: pointer to immutable data and length */
 struct silofs_rovec {
 	const void *rov_base;
 	size_t rov_len;
 };
 
-/* read-write I/O vector: pointer to mutable data and its length */
+/* read-write I/O vector: pointer to mutable data and length */
 struct silofs_rwvec {
 	void  *rwv_base;
 	size_t rwv_len;

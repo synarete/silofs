@@ -45,6 +45,18 @@ uint64_t silofs_pvid_hash64(const struct silofs_pvid *pvid)
 	return u[0] ^ u[1];
 }
 
+void silofs_pvid_to_str(const struct silofs_pvid *pvid,
+                        struct silofs_strbuf *sbuf)
+{
+	silofs_uuid_unparse(&pvid->uuid, sbuf);
+}
+
+int silofs_pvid_from_str(struct silofs_lvid *pvid,
+                         const struct silofs_strview *sv)
+{
+	return silofs_uuid_parse(&pvid->uuid, sv);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr s_paddr_none = {

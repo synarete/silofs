@@ -17,6 +17,8 @@
 #ifndef SILOFS_PADDR_H_
 #define SILOFS_PADDR_H_
 
+#include <silofs/defs.h>
+#include <stdlib.h>
 
 
 /* object-address within specific volume mapping */
@@ -36,6 +38,12 @@ void silofs_pvid_assign(struct silofs_pvid *pvid,
                         const struct silofs_pvid *other);
 
 uint64_t silofs_pvid_hash64(const struct silofs_pvid *pvid);
+
+void silofs_pvid_to_str(const struct silofs_pvid *pvid,
+                        struct silofs_strbuf *sbuf);
+
+int silofs_pvid_from_str(struct silofs_lvid *pvid,
+                         const struct silofs_strview *sv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

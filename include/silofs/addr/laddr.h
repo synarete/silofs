@@ -55,6 +55,12 @@ bool silofs_lvid_isequal(const struct silofs_lvid *lvid1,
 void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
                          const struct silofs_uuid *uuid);
 
+void silofs_lvid_to_str(const struct silofs_lvid *lvid,
+                        struct silofs_strbuf *sbuf);
+
+int silofs_lvid_from_str(struct silofs_lvid *lvid,
+                         const struct silofs_strview *sv);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_lsegid *silofs_lsegid_none(void);

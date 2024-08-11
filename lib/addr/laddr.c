@@ -51,6 +51,18 @@ void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
 	silofs_uuid_assign(&lvid->uuid, uuid);
 }
 
+void silofs_lvid_to_str(const struct silofs_lvid *lvid,
+                        struct silofs_strbuf *sbuf)
+{
+	silofs_uuid_unparse(&lvid->uuid, sbuf);
+}
+
+int silofs_lvid_from_str(struct silofs_lvid *lvid,
+                         const struct silofs_strview *sv)
+{
+	return silofs_uuid_parse(&lvid->uuid, sv);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t height_to_lseg_size(enum silofs_height height)
@@ -463,13 +475,16 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 static void laddr_repr_lvid_to_str(const struct silofs_laddr_repr *repr,
                                    struct silofs_strbuf *sbuf)
 {
-	silofs_uuid_unparse(&repr->lvid.uuid, sbuf);
+	silofs_lvid_to_str(&repr->lvid, sbuf);
 }
 
 static int laddr_repr_lvid_from_str(struct silofs_laddr_repr *repr,
                                     const struct silofs_strbuf *sbuf)
 {
-	return silofs_uuid_parse(&repr->lvid.uuid, sbuf);
+	struct silofs_strview sv;
+
+	silofs_strview_init(&sv, sbuf->str);
+	return silofs_lvid_from_str(&repr->lvid, &sv);
 }
 
 static void laddr_repr_meta_to_str(const struct silofs_laddr_repr *repr,

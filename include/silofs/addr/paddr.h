@@ -18,10 +18,17 @@
 #define SILOFS_PADDR_H_
 
 #include <silofs/defs.h>
-#include <stdlib.h>
+#include <silofs/str.h>
 
 
-/* object-address within specific volume mapping */
+/* persistent volume segment */
+struct silofs_psegid {
+	struct silofs_pvid      pvid;
+	uint32_t                index;
+	enum silofs_ptype       ptype;
+};
+
+/* persistent object address within specific volume segment */
 struct silofs_paddr {
 	struct silofs_pvid      pvid;
 	uint32_t                index;

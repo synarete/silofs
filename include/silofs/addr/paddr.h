@@ -21,7 +21,7 @@
 #include <silofs/str.h>
 
 
-/* persistent volume segment */
+/* persistent volume segment id */
 struct silofs_psegid {
 	struct silofs_pvid      pvid;
 	uint32_t                index;
@@ -44,6 +44,9 @@ void silofs_pvid_generate(struct silofs_pvid *pvid);
 void silofs_pvid_assign(struct silofs_pvid *pvid,
                         const struct silofs_pvid *other);
 
+bool silofs_pvid_isequal(const struct silofs_pvid *pvid1,
+                         const struct silofs_pvid *pvid2);
+
 uint64_t silofs_pvid_hash64(const struct silofs_pvid *pvid);
 
 void silofs_pvid_to_str(const struct silofs_pvid *pvid,
@@ -51,6 +54,31 @@ void silofs_pvid_to_str(const struct silofs_pvid *pvid,
 
 int silofs_pvid_from_str(struct silofs_lvid *pvid,
                          const struct silofs_strview *sv);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_psegid *silofs_psegid_none(void);
+
+bool silofs_psegid_isnull(const struct silofs_psegid *psegid);
+
+bool silofs_psegid_has_pvid(const struct silofs_psegid *psegid,
+                            const struct silofs_pvid *pvid);
+
+void silofs_psegid_reset(struct silofs_psegid *psegid);
+
+void silofs_psegid_assign(struct silofs_psegid *psegid,
+                          const struct silofs_psegid *other);
+
+bool silofs_psegid_isequal(const struct silofs_psegid *psegid,
+                           const struct silofs_psegid *other);
+
+uint64_t silofs_psegid_hash64(const struct silofs_psegid *psegid);
+
+void silofs_psegid32b_htox(struct silofs_psegid32b *psegid32,
+                           const struct silofs_psegid *psegid);
+
+void silofs_psegid32b_xtoh(const struct silofs_psegid32b *psegid32,
+                           struct silofs_psegid *psegid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -67,12 +95,12 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
                           const struct silofs_paddr *paddr2);
 
 
-void silofs_paddr32b_reset(struct silofs_paddr32b *paddr32);
+void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48);
 
-void silofs_paddr32b_htox(struct silofs_paddr32b *paddr32,
+void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
                           const struct silofs_paddr *paddr);
 
-void silofs_paddr32b_xtoh(const struct silofs_paddr32b *paddr32,
+void silofs_paddr48b_xtoh(const struct silofs_paddr48b *paddr48,
                           struct silofs_paddr *paddr);
 
 #endif /* SILOFS_PADDR_H_ */

@@ -144,7 +144,7 @@ static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
 
-	silofs_paddr32b_xtoh(&btn->btn_child[slot], out_paddr);
+	silofs_paddr48b_xtoh(&btn->btn_child[slot], out_paddr);
 }
 
 static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
@@ -152,7 +152,7 @@ static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
 
-	silofs_paddr32b_htox(&btn->btn_child[slot], paddr);
+	silofs_paddr48b_htox(&btn->btn_child[slot], paddr);
 }
 
 static void btn_reset_child_at(struct silofs_btree_node *btn, size_t slot)
@@ -232,15 +232,15 @@ static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 
 #define laddr48b_htox(lx_, lh_)         silofs_laddr48b_htox(lx_, lh_)
 #define laddr48b_xtoh(lx_, lh_)         silofs_laddr48b_xtoh(lx_, lh_)
-#define paddr32b_htox(px_, ph_)         silofs_paddr32b_htox(px_, ph_)
-#define paddr32b_xtoh(px_, ph_)         silofs_paddr32b_xtoh(px_, ph_)
+#define paddr48b_htox(px_, ph_)         silofs_paddr48b_htox(px_, ph_)
+#define paddr48b_xtoh(px_, ph_)         silofs_paddr48b_xtoh(px_, ph_)
 
 static void ltop_htox(struct silofs_btree_ltop *ltop,
                       const struct silofs_laddr *laddr,
                       const struct silofs_paddr *paddr)
 {
 	laddr48b_htox(&ltop->laddr, laddr);
-	paddr32b_htox(&ltop->paddr, paddr);
+	paddr48b_htox(&ltop->paddr, paddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -295,7 +295,7 @@ static void btl_paddr_at(const struct silofs_btree_leaf *btl,
 {
 	silofs_assert_lt(slot, btl_nltops_max(btl));
 
-	paddr32b_xtoh(&btl->btl_ltop[slot].paddr, out_paddr);
+	paddr48b_xtoh(&btl->btl_ltop[slot].paddr, out_paddr);
 }
 
 static void btl_ltop_at(const struct silofs_btree_leaf *btl, size_t slot,

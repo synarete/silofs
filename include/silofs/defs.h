@@ -111,13 +111,13 @@
 
 
 /* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS       (48)
+#define SILOFS_BTREE_NODE_NCHILDS       (42)
 
 /* number of keys in btree mapping-node */
 #define SILOFS_BTREE_NODE_NKEYS         (SILOFS_BTREE_NODE_NCHILDS - 1)
 
 /* number of entries in btree mapping-leaf */
-#define SILOFS_BTREE_LEAF_NENTS         (102)
+#define SILOFS_BTREE_LEAF_NENTS         (84)
 
 /* on-disk size of btree node */
 #define SILOFS_BTREE_NODE_SIZE          (4096)
@@ -552,16 +552,26 @@ struct silofs_lvid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* persistent volume's segment identifier */
+struct silofs_psegid32b {
+	struct silofs_pvid              pvid;
+	uint32_t                        index;
+	uint8_t                         ptype;
+	uint8_t                         pad[11];
+} silofs_packed_aligned16;
+
+
 /* persistent object address */
-struct silofs_paddr32b {
+struct silofs_paddr48b {
 	struct silofs_pvid              pvid;
 	uint32_t                        index;
 	uint32_t                        len;
 	uint64_t                        off_ptype;
+	uint8_t                         pad[16];
 } silofs_packed_aligned16;
 
 
-/* logical-segment identifier */
+/* logical volume's segment identifier */
 struct silofs_lsegid32b {
 	struct silofs_lvid              lvid;
 	uint32_t                        lsize;
@@ -1045,8 +1055,7 @@ struct silofs_btree_node {
 	uint16_t                        btn_nkeys;
 	uint16_t                        btn_nchilds;
 	uint8_t                         btn_reserved1[44];
-	struct silofs_paddr32b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
-	uint8_t                         btn_reserved2[192];
+	struct silofs_paddr48b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	struct silofs_laddr48b          btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                         btn_reserved3[48];
 } silofs_packed_aligned64;
@@ -1055,7 +1064,7 @@ struct silofs_btree_node {
 /* laddr-to-paddr mapping entry */
 struct silofs_btree_ltop {
 	struct silofs_laddr48b          laddr;
-	struct silofs_paddr32b          paddr;
+	struct silofs_paddr48b          paddr;
 } silofs_packed_aligned16;
 
 
@@ -1063,7 +1072,7 @@ struct silofs_btree_ltop {
 struct silofs_btree_leaf {
 	struct silofs_header            btl_hdr;
 	uint16_t                        btl_nltops;
-	uint8_t                         btl_reserved1[14];
+	uint8_t                         btl_reserved1[110];
 	struct silofs_btree_ltop        btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_packed_aligned64;
 

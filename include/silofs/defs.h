@@ -563,11 +563,10 @@ struct silofs_psegid32b {
 
 /* persistent object address */
 struct silofs_paddr48b {
-	struct silofs_pvid              pvid;
-	uint32_t                        index;
+	struct silofs_psegid32b         psid;
+	int64_t                         off;
 	uint32_t                        len;
-	uint64_t                        off_ptype;
-	uint8_t                         pad[16];
+	uint8_t                         pad[4];
 } silofs_packed_aligned16;
 
 

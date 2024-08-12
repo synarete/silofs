@@ -30,9 +30,7 @@ struct silofs_psegid {
 
 /* persistent object address within specific volume segment */
 struct silofs_paddr {
-	struct silofs_pvid      pvid;
-	uint32_t                index;
-	enum silofs_ptype       ptype;
+	struct silofs_psegid    psid;
 	loff_t                  off;
 	size_t                  len;
 };

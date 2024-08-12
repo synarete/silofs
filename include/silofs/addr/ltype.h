@@ -18,6 +18,7 @@
 #define SILOFS_LTYPE_H_
 
 #include <silofs/defs.h>
+#include <stdbool.h>
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);
 

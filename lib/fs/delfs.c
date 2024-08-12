@@ -35,7 +35,7 @@ static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
 
 	ret = silofs_sli_resolve_child(sli, voff, &llink);
 	if (ret == 0) {
-		lsegid_assign(out_lsegid, &llink.laddr.lsegid);
+		lsegid_assign(out_lsegid, &llink.laddr.lsid);
 	}
 	return ret;
 }
@@ -46,7 +46,7 @@ static bool delfc_is_lsegid_of(const struct silofs_delfs_ctx *delf_ctx,
                                const struct silofs_lsegid *lsegid)
 {
 	const struct silofs_uaddr *sb_uaddr = &delf_ctx->sb_uaddr;
-	const struct silofs_lvid *lvid = &sb_uaddr->laddr.lsegid.lvid;
+	const struct silofs_lvid *lvid = &sb_uaddr->laddr.lsid.lvid;
 
 	return silofs_lsegid_has_lvid(lsegid, lvid);
 }

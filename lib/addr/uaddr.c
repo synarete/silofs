@@ -19,8 +19,8 @@
 #include <silofs/addr.h>
 
 static const struct silofs_uaddr s_uaddr_none = {
-	.laddr.lsegid.lsize = 0,
-	.laddr.lsegid.ltype = SILOFS_LTYPE_NONE,
+	.laddr.lsid.lsize = 0,
+	.laddr.lsid.ltype = SILOFS_LTYPE_NONE,
 	.laddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 };
@@ -83,13 +83,13 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_lvid *
 silofs_uaddr_lvid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->laddr.lsegid.lvid;
+	return &uaddr->laddr.lsid.lvid;
 }
 
 const struct silofs_lsegid *
 silofs_uaddr_lsegid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->laddr.lsegid;
+	return &uaddr->laddr.lsid;
 }
 
 enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr)
@@ -99,7 +99,7 @@ enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr)
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 {
-	return uaddr->laddr.lsegid.height;
+	return uaddr->laddr.lsid.height;
 }
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)

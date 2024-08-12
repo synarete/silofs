@@ -273,7 +273,7 @@ static int vstgc_do_stage_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_do_stage_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   const struct silofs_laddr *laddr)
 {
-	return vstgc_do_stage_lseg(vstg_ctx, &laddr->lsegid);
+	return vstgc_do_stage_lseg(vstg_ctx, &laddr->lsid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1853,7 +1853,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsegid,
+	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid,
 	                   vaddr->ltype, vaddr->off, vaddr->len);
 	silofs_llink_setup(out_llink, &laddr, &llink_lbk.riv);
 	return 0;
@@ -2045,7 +2045,7 @@ static int vstgc_require_laddr(const struct silofs_vstage_ctx *vstg_ctx,
 	struct silofs_repo *repo = vstg_ctx->fsenv->fse.repo;
 	int err;
 
-	err = silofs_repo_require_lseg(repo, &laddr->lsegid);
+	err = silofs_repo_require_lseg(repo, &laddr->lsid);
 	if (err) {
 		return err;
 	}
@@ -2065,7 +2065,7 @@ static int vstgc_do_require_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = vstgc_do_stage_lseg(vstg_ctx, &laddr->lsegid);
+	err = vstgc_do_stage_lseg(vstg_ctx, &laddr->lsid);
 	if (err) {
 		return err;
 	}
@@ -2084,7 +2084,7 @@ static int vstgc_stage_load_view(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = vstgc_do_stage_lseg(vstg_ctx, &laddr->lsegid);
+	err = vstgc_do_stage_lseg(vstg_ctx, &laddr->lsid);
 	if (err) {
 		return err;
 	}
@@ -2288,7 +2288,7 @@ static int vstgc_clone_lbk_of(struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_laddr laddr_lbk;
 
-	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsegid,
+	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsid,
 	                       laddr_ltype(src_laddr), src_laddr->pos);
 	return vstgc_clone_lbk_at(vstg_ctx, &laddr_lbk);
 }

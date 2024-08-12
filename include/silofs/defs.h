@@ -575,7 +575,7 @@ struct silofs_lsegid32b {
 
 /* logical address */
 struct silofs_laddr48b {
-	struct silofs_lsegid32b         lsegid;
+	struct silofs_lsegid32b         lsid;
 	uint32_t                        pos;
 	uint32_t                        len;
 	uint8_t                         pad[8];

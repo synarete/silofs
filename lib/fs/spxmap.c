@@ -631,7 +631,7 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam)
 
 static enum silofs_ltype uaddr_vspace(const struct silofs_uaddr *uaddr)
 {
-	return uaddr->laddr.lsegid.vspace;
+	return uaddr->laddr.lsid.vspace;
 }
 
 static void uakey_setup(struct silofs_uakey *uakey, loff_t voff,
@@ -965,5 +965,3 @@ bool silofs_uamap_drop_lru(struct silofs_uamap *uamap)
 {
 	return (uamap_remove_lru(uamap) == 0);
 }
-
-

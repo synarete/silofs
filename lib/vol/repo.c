@@ -2355,7 +2355,7 @@ static int repo_do_require_laddr(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_stage_lseg_of(repo, true, &laddr->lsegid, &lsegf);
+	err = repo_stage_lseg_of(repo, true, &laddr->lsid, &lsegf);
 	if (err) {
 		return err;
 	}
@@ -2388,7 +2388,7 @@ static int repo_do_writev_at(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_stage_lseg_of(repo, true, &laddr->lsegid, &lsegf);
+	err = repo_stage_lseg_of(repo, true, &laddr->lsid, &lsegf);
 	if (err) {
 		return err;
 	}
@@ -2432,7 +2432,7 @@ static int repo_do_read_at(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_stage_lseg_of(repo, false, &laddr->lsegid, &lsegf);
+	err = repo_stage_lseg_of(repo, false, &laddr->lsid, &lsegf);
 	if (err) {
 		return err;
 	}

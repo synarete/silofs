@@ -256,7 +256,7 @@ static int require_lseg(const struct silofs_fsenv *fsenv,
 static int require_lseg_by(const struct silofs_fsenv *fsenv,
                            const struct silofs_ulink *ulink)
 {
-	return require_lseg(fsenv, &ulink->uaddr.laddr.lsegid);
+	return require_lseg(fsenv, &ulink->uaddr.laddr.lsid);
 }
 
 static int load_view_at(const struct silofs_fsenv *fsenv,
@@ -274,7 +274,7 @@ static int stage_load_view(const struct silofs_fsenv *fsenv,
 
 	silofs_assert_not_null(view);
 
-	err = stage_lseg(fsenv, &laddr->lsegid);
+	err = stage_lseg(fsenv, &laddr->lsid);
 	if (err) {
 		return err;
 	}

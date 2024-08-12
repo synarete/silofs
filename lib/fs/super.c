@@ -179,7 +179,7 @@ static void sb_set_self(struct silofs_super_block *sb,
                         const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr64b_htox(&sb->sb_self_uaddr, uaddr);
-	sb_set_lvid(sb, &uaddr->laddr.lsegid.lvid);
+	sb_set_lvid(sb, &uaddr->laddr.lsid.lvid);
 }
 
 static void sb_origin(const struct silofs_super_block *sb,
@@ -855,7 +855,7 @@ bool silofs_sbi_ismutable_lsegid(const struct silofs_sb_info *sbi,
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_laddr *laddr)
 {
-	return silofs_sbi_ismutable_lsegid(sbi, &laddr->lsegid);
+	return silofs_sbi_ismutable_lsegid(sbi, &laddr->lsid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -713,7 +713,7 @@ static enum silofs_ltype spleaf_vspace(const struct silofs_spmap_leaf *spl)
 	struct silofs_uaddr uaddr;
 
 	spleaf_self(spl, &uaddr);
-	return uaddr.laddr.lsegid.vspace;
+	return uaddr.laddr.lsid.vspace;
 }
 
 static void spleaf_vrange(const struct silofs_spmap_leaf *spl,

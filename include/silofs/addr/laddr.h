@@ -31,7 +31,7 @@ struct silofs_lsegid {
 
 /* logical-address within specific volume's mapping extend */
 struct silofs_laddr {
-	struct silofs_lsegid    lsegid;
+	struct silofs_lsegid    lsid;
 	loff_t                  pos;
 	size_t                  len;
 };

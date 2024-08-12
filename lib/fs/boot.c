@@ -534,7 +534,7 @@ void silofs_bootrec_lvid(const struct silofs_bootrec *brec,
 {
 	const struct silofs_uaddr *sb_uaddr = &brec->sb_ulink.uaddr;
 
-	silofs_lvid_assign(out_lvid, &sb_uaddr->laddr.lsegid.lvid);
+	silofs_lvid_assign(out_lvid, &sb_uaddr->laddr.lsid.lvid);
 }
 
 static void

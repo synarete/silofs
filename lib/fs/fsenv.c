@@ -25,7 +25,7 @@
 
 static const struct silofs_lsegid *lsegid_of(const struct silofs_ulink *ulink)
 {
-	return &ulink->uaddr.laddr.lsegid;
+	return &ulink->uaddr.laddr.lsid;
 }
 
 static const struct silofs_lsegid *

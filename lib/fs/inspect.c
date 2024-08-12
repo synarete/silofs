@@ -208,7 +208,7 @@ static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 	struct silofs_uaddr brec_uaddr = { .voff = -1 };
 	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
 
-	silofs_make_bootrec_uaddr(&sb_laddr->lsegid.lvid, &brec_uaddr);
+	silofs_make_bootrec_uaddr(&sb_laddr->lsid.lvid, &brec_uaddr);
 	return insp_ctx->cb(insp_ctx->user_ctx, &brec_uaddr.laddr);
 }
 

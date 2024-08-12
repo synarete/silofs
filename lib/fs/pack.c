@@ -746,7 +746,7 @@ static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
 	const enum silofs_ltype ltype = laddr_ltype(laddr);
 	int err;
 
-	err = silofs_repo_require_lseg(pa_ctx->pac_repo, &laddr->lsegid);
+	err = silofs_repo_require_lseg(pa_ctx->pac_repo, &laddr->lsid);
 	if (err) {
 		log_err("failed to require lseg: ltype=%d", (int)ltype);
 		return err;

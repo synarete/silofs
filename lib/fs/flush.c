@@ -704,7 +704,7 @@ static int flusher_prep_sqe(const struct silofs_flusher *flusher,
 {
 	struct silofs_fsenv *fsenv = flusher_fsenv_from_task(flusher);
 
-	return silofs_stage_lseg(fsenv, &sqe->laddr.lsegid);
+	return silofs_stage_lseg(fsenv, &sqe->laddr.lsid);
 }
 
 static void flusher_submit_sqe(struct silofs_flusher *flusher,

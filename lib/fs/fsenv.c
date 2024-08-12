@@ -369,7 +369,9 @@ static void make_super_uaddr(const struct silofs_lsegid *lsegid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_assert_eq(lsegid->height, SILOFS_HEIGHT_SUPER);
-	uaddr_setup(out_uaddr, lsegid, 0, SILOFS_LTYPE_SUPER, 0);
+	silofs_assert_eq(lsegid->ltype, SILOFS_LTYPE_SUPER);
+
+	uaddr_setup(out_uaddr, lsegid, 0, 0);
 }
 
 static void ulink_init(struct silofs_ulink *ulink,

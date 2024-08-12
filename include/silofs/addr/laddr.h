@@ -82,10 +82,6 @@ void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
 void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
                           const struct silofs_lsegid *other);
 
-void silofs_lsegid_assign2(struct silofs_lsegid *lsegid,
-                           const struct silofs_lsegid *other,
-                           enum silofs_ltype ltype);
-
 bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
                            const struct silofs_lsegid *other);
 
@@ -107,11 +103,10 @@ const struct silofs_laddr *silofs_laddr_none(void);
 
 void silofs_laddr_setup(struct silofs_laddr *laddr,
                         const struct silofs_lsegid *lsegid,
-                        enum silofs_ltype ltype, loff_t off, size_t len);
+                        loff_t off, size_t len);
 
 void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
-                            const struct silofs_lsegid *lsegid,
-                            enum silofs_ltype ltype, loff_t off);
+                            const struct silofs_lsegid *lsegid, loff_t off);
 
 void silofs_laddr_reset(struct silofs_laddr *laddr);
 

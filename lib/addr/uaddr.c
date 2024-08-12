@@ -37,11 +37,11 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_lsegid *lsegid,
-                        loff_t pos, enum silofs_ltype ltype, loff_t voff)
+                        loff_t pos, loff_t voff)
 {
-	const size_t lsz = ltype_size(ltype);
+	const size_t lsz = ltype_size(lsegid->ltype);
 
-	silofs_laddr_setup(&uaddr->laddr, lsegid, ltype, pos, lsz);
+	silofs_laddr_setup(&uaddr->laddr, lsegid, pos, lsz);
 	uaddr->voff = voff;
 }
 

@@ -78,7 +78,7 @@
 #define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
-#define uaddr_setup(ua, b, p, s, o)     silofs_uaddr_setup(ua, b, p, s, o)
+#define uaddr_setup(ua, ls, p, o)       silofs_uaddr_setup(ua, ls, p, o)
 #define uaddr_lvid(ua)                  silofs_uaddr_lvid(ua)
 #define uaddr_lsegid(ua)                silofs_uaddr_lsegid(ua)
 #define uaddr_ltype(ua)                 silofs_uaddr_ltype(ua)

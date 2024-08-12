@@ -114,7 +114,7 @@ static uint32_t lseg_vindex_of(loff_t voff, ssize_t lseg_size)
 
 static const struct silofs_lsegid s_lsegid_none = {
 	.lsize = 0,
-	.vindex = 0,
+	.vindex = UINT32_MAX,
 	.vspace = SILOFS_LTYPE_NONE,
 	.height = SILOFS_HEIGHT_LAST,
 	.ltype = SILOFS_LTYPE_NONE,
@@ -170,14 +170,6 @@ void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
 	lsegid->ltype = other->ltype;
 }
 
-void silofs_lsegid_assign2(struct silofs_lsegid *lsegid,
-                           const struct silofs_lsegid *other,
-                           enum silofs_ltype ltype)
-{
-	silofs_lsegid_assign(lsegid, other);
-	lsegid->ltype = ltype;
-}
-
 static long lsegid_compare(const struct silofs_lsegid *lsegid1,
                            const struct silofs_lsegid *lsegid2)
 {
@@ -219,7 +211,7 @@ bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
 uint64_t silofs_lsegid_hash64(const struct silofs_lsegid *lsegid)
 {
 	struct silofs_lsegid32b lsegid32b = { .lsize = 0 };
-	const uint64_t seed1 = ((uint64_t)lsegid->vspace) << 17;
+	const uint64_t seed1 = ((uint64_t)lsegid->vspace) << 11;
 	const uint64_t seed2 = (uint64_t)lsegid->ltype;
 
 	silofs_lsegid32b_htox(&lsegid32b, lsegid);
@@ -287,11 +279,9 @@ const struct silofs_laddr *silofs_laddr_none(void)
 
 void silofs_laddr_setup(struct silofs_laddr *laddr,
                         const struct silofs_lsegid *lsegid,
-                        enum silofs_ltype ltype, loff_t off, size_t len)
+                        loff_t off, size_t len)
 {
-	silofs_assert_eq(lsegid->ltype, ltype);
-
-	silofs_lsegid_assign2(&laddr->lsid, lsegid, ltype);
+	silofs_lsegid_assign(&laddr->lsid, lsegid);
 	if (lsegid->lsize && !off_isnull(off)) {
 		laddr->len = len;
 		laddr->pos = silofs_lsegid_pos(lsegid, off);
@@ -302,12 +292,11 @@ void silofs_laddr_setup(struct silofs_laddr *laddr,
 }
 
 void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
-                            const struct silofs_lsegid *lsegid,
-                            enum silofs_ltype ltype, loff_t off)
+                            const struct silofs_lsegid *lsegid, loff_t off)
 {
 	const loff_t lbk_off = !off_isnull(off) ? off_align_to_lbk(off) : off;
 
-	silofs_laddr_setup(laddr, lsegid, ltype, lbk_off, SILOFS_LBK_SIZE);
+	silofs_laddr_setup(laddr, lsegid, lbk_off, SILOFS_LBK_SIZE);
 }
 
 void silofs_laddr_reset(struct silofs_laddr *laddr)
@@ -320,8 +309,7 @@ void silofs_laddr_reset(struct silofs_laddr *laddr)
 void silofs_laddr_assign(struct silofs_laddr *laddr,
                          const struct silofs_laddr *other)
 {
-	silofs_lsegid_assign2(&laddr->lsid,
-	                      &other->lsid, other->lsid.ltype);
+	silofs_lsegid_assign(&laddr->lsid, &other->lsid);
 	laddr->len = other->len;
 	laddr->pos = other->pos;
 }

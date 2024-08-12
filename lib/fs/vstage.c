@@ -1853,8 +1853,10 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
+	silofs_assert_eq(llink_lbk.laddr.lsid.ltype, vaddr->ltype);
+
 	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid,
-	                   vaddr->ltype, vaddr->off, vaddr->len);
+	                   vaddr->off, vaddr->len);
 	silofs_llink_setup(out_llink, &laddr, &llink_lbk.riv);
 	return 0;
 }
@@ -2288,8 +2290,7 @@ static int vstgc_clone_lbk_of(struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_laddr laddr_lbk;
 
-	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsid,
-	                       laddr_ltype(src_laddr), src_laddr->pos);
+	silofs_laddr_setup_lbk(&laddr_lbk, &src_laddr->lsid, src_laddr->pos);
 	return vstgc_clone_lbk_at(vstg_ctx, &laddr_lbk);
 }
 

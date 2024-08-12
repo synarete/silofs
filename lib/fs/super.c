@@ -804,8 +804,9 @@ static void sbi_main_ulink(const struct silofs_sb_info *sbi,
 	const loff_t base = sbi_base_voff_of_child(sbi, voff);
 
 	silofs_sbi_main_lseg(sbi, vspace, &lsegid);
-	uaddr_setup(out_uaddr, &lsegid, bpos, SILOFS_LTYPE_SPNODE, base);
+	silofs_assert_eq(lsegid.ltype, SILOFS_LTYPE_SPNODE);
 
+	uaddr_setup(out_uaddr, &lsegid, bpos, base);
 	silofs_assert_eq(lsegid.height, SILOFS_HEIGHT_SUPER - 1);
 }
 

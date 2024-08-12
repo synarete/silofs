@@ -18,6 +18,8 @@
 #define SILOFS_UADDR_H_
 
 #include <silofs/defs.h>
+#include <silofs/infra.h>
+#include <silofs/addr/laddr.h>
 
 /* logical addressing of space-mapping nodes */
 struct silofs_uaddr {
@@ -60,7 +62,7 @@ enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_lsegid *lsegid,
-                        loff_t bpos, enum silofs_ltype ltype, loff_t voff);
+                        loff_t bpos, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64);
 

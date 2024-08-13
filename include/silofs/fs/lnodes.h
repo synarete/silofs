@@ -17,6 +17,8 @@
 #ifndef SILOFS_LNODES_H_
 #define SILOFS_LNODES_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
 
 struct silofs_lnode_info;
 struct silofs_unode_info;
@@ -52,7 +54,7 @@ struct silofs_unode_info {
 	struct silofs_ulink             u_ulink;
 	struct silofs_list_head         u_dq_lh;
 	struct silofs_dirtyq           *u_dq;
-	int                             u_magic;
+	uint64_t                        u_magic;
 };
 
 /* space-stats */
@@ -86,12 +88,12 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info        v_lni;
-	int                             v_asyncwr;
-	int                             v_magic;
 	struct silofs_list_head         v_dq_lh;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_llink             v_llink;
 	struct silofs_dirtyq           *v_dq;
+	uint64_t                        v_magic;
+	int                             v_asyncwr;
 };
 
 /* inode */

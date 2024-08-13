@@ -20,8 +20,8 @@
 #include <silofs/fs-private.h>
 #include <limits.h>
 
-#define UI_MAGIC (0xA1B3C5)
-#define VI_MAGIC (0xD2E4F6)
+#define UI_MAGIC (0xCAFEBEBE)
+#define VI_MAGIC (0xFEEDFACE)
 
 /* local functions forward declarations */
 static void sbi_delete_by(struct silofs_lnode_info *lni,
@@ -188,7 +188,7 @@ static void ui_fini(struct silofs_unode_info *ui)
 	list_head_fini(&ui->u_dq_lh);
 	lni_fini(&ui->u_lni);
 	ui->u_dq = NULL;
-	ui->u_magic = -2;
+	ui->u_magic = UINT64_MAX;
 }
 
 struct silofs_unode_info *
@@ -278,7 +278,7 @@ static void vi_fini(struct silofs_vnode_info *vi)
 	list_head_fini(&vi->v_dq_lh);
 	vaddr_reset(&vi->v_vaddr);
 	vi->v_dq = NULL;
-	vi->v_magic = -1;
+	vi->v_magic = UINT64_MAX;
 }
 
 struct silofs_vnode_info *

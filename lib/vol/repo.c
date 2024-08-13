@@ -43,7 +43,6 @@ struct silofs_repo_ce {
 /* logical-segment control file */
 struct silofs_lsegf {
 	struct silofs_repo_ce           lsf_rce;
-	struct silofs_strbuf            lsf_name;
 	long                            lsf_size;
 	int                             lsf_fd;
 	bool                            lsf_rdonly;
@@ -667,14 +666,13 @@ static int lsegf_inspect_size(struct silofs_lsegf *lsegf)
 		return err;
 	}
 	if (st.st_size % SILOFS_LBK_SIZE) {
-		log_warn("lseg-size not aligned: lseg=%s size=%ld",
-		         lsegf->lsf_name.str, st.st_size);
+		log_warn("lseg-size not aligned: size=%ld", st.st_size);
 		return -SILOFS_ELSEG;
 	}
 	cap = lsegf_capacity(lsegf);
 	if (st.st_size > (cap + SILOFS_LBK_SIZE)) {
-		log_warn("lseg-size mismatch: lseg=%s size=%ld cap=%ld",
-		         lsegf->lsf_name.str, st.st_size, cap);
+		log_warn("lseg-size mismatch: size=%ld cap=%ld",
+		         st.st_size, cap);
 		return -SILOFS_ELSEG;
 	}
 	lsegf_set_size(lsegf, st.st_size);
@@ -1384,29 +1382,35 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	return make_pathname(&hash, idx, out_name);
 }
 
-static int repo_objs_setup_pathname_of(const struct silofs_repo *repo,
-                                       struct silofs_lsegf *lsegf)
+static int repo_objs_pathname_of(const struct silofs_repo *repo,
+                                 const struct silofs_lsegf *lsegf,
+                                 struct silofs_strbuf *out_sbuf)
 {
-	struct silofs_repo_ce *rce = &lsegf->lsf_rce;
+	const struct silofs_repo_ce *rce = &lsegf->lsf_rce;
+	const struct silofs_lsegid *lsid = &rce->rce_key.u.lsid;
 
-	return repo_objs_sub_pathname_of(repo, &rce->rce_key.u.lsid,
-	                                 &lsegf->lsf_name);
+	return repo_objs_sub_pathname_of(repo, lsid, out_sbuf);
 }
 
-static int repo_objs_require_nolseg(const struct silofs_repo *repo,
-                                    const struct silofs_strbuf *sbuf)
+static int repo_objs_require_notexists(const struct silofs_repo *repo,
+                                       const struct silofs_lsegf *lsegf)
 {
+	struct silofs_strbuf sbuf;
 	struct stat st = { .st_size = 0 };
 	const int dfd = repo->re_objs_dfd;
 	int err;
 
-	err = do_fstatat(dfd, sbuf->str, &st, 0);
+	err = repo_objs_pathname_of(repo, lsegf, &sbuf);
+	if (err) {
+		return err;
+	}
+	err = do_fstatat(dfd, sbuf.str, &st, 0);
 	if (err == 0) {
-		log_err("lseg already exists: name=%s", sbuf->str);
+		log_err("lseg already exists: name=%s", sbuf.str);
 		return -SILOFS_EEXIST;
 	}
 	if (err != -ENOENT) {
-		log_err("lseg stat error: name=%s err=%d", sbuf->str, err);
+		log_err("lseg stat error: name=%s err=%d", sbuf.str, err);
 		return err;
 	}
 	return 0;
@@ -1415,19 +1419,24 @@ static int repo_objs_require_nolseg(const struct silofs_repo *repo,
 static int repo_objs_create_lseg_of(const struct silofs_repo *repo,
                                     struct silofs_lsegf *lsegf)
 {
+	struct silofs_strbuf sbuf;
 	const int dfd = repo->re_objs_dfd;
 	const int o_flags = O_CREAT | O_RDWR | O_TRUNC;
 	int fd = -1;
 	int err;
 
-	err = do_openat(dfd, lsegf->lsf_name.str, o_flags, 0600, &fd);
+	err = repo_objs_pathname_of(repo, lsegf, &sbuf);
+	if (err) {
+		return err;
+	}
+	err = do_openat(dfd, sbuf.str, o_flags, 0600, &fd);
 	if (err) {
 		return err;
 	}
 	lsegf_bindto(lsegf, fd, true);
 	err = lsegf_reassign_size(lsegf, lsegf_capacity(lsegf));
 	if (err) {
-		do_unlinkat(dfd, lsegf->lsf_name.str, 0);
+		do_unlinkat(dfd, sbuf.str, 0);
 		return err;
 	}
 	return 0;
@@ -1436,6 +1445,7 @@ static int repo_objs_create_lseg_of(const struct silofs_repo *repo,
 static int repo_objs_open_lseg_of(const struct silofs_repo *repo,
                                   struct silofs_lsegf *lsegf, bool rw)
 {
+	struct silofs_strbuf sbuf;
 	const int o_flags = rw ? O_RDWR : O_RDONLY;
 	const int dfd = repo->re_objs_dfd;
 	int fd = -1;
@@ -1443,7 +1453,12 @@ static int repo_objs_open_lseg_of(const struct silofs_repo *repo,
 
 	silofs_assert_lt(lsegf->lsf_fd, 0);
 
-	err = do_openat(dfd, lsegf->lsf_name.str, o_flags, 0600, &fd);
+	err = repo_objs_pathname_of(repo, lsegf, &sbuf);
+	if (err) {
+		return err;
+	}
+
+	err = do_openat(dfd, sbuf.str, o_flags, 0600, &fd);
 	if (err) {
 		/*
 		 * TODO-0032: Consider using SILOFS_EFSCORRUPTED
@@ -1495,10 +1510,6 @@ static int repo_objs_open_lseg(struct silofs_repo *repo, bool rw,
 	if (err) {
 		return err;
 	}
-	err = repo_objs_setup_pathname_of(repo, lsegf);
-	if (err) {
-		goto out_err;
-	}
 	err = repo_objs_open_lseg_of(repo, lsegf, rw);
 	if (err) {
 		goto out_err;
@@ -1547,11 +1558,7 @@ static int repo_objs_create_lseg(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_objs_setup_pathname_of(repo, lsegf);
-	if (err) {
-		goto out_err;
-	}
-	err = repo_objs_require_nolseg(repo, &lsegf->lsf_name);
+	err = repo_objs_require_notexists(repo, lsegf);
 	if (err) {
 		goto out_err;
 	}

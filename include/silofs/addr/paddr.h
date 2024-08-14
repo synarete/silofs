@@ -72,6 +72,9 @@ bool silofs_psid_isequal(const struct silofs_psid *psid,
 
 uint64_t silofs_psid_hash64(const struct silofs_psid *psid);
 
+void silofs_psid_to_str(const struct silofs_psid *psid,
+                        struct silofs_strbuf *sbuf);
+
 void silofs_psid32b_htox(struct silofs_psid32b *psid32,
                          const struct silofs_psid *psid);
 

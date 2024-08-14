@@ -142,6 +142,16 @@ uint64_t silofs_psid_hash64(const struct silofs_psid *psid)
 	return silofs_hash_xxh64(&psid32b, sizeof(psid32b), seed1 | seed2);
 }
 
+void silofs_psid_to_str(const struct silofs_psid *psid,
+                        struct silofs_strbuf *out_sbuf)
+{
+	struct silofs_strbuf sbuf;
+
+	silofs_pvid_to_str(&psid->pvid, &sbuf);
+	silofs_strbuf_sprintf(out_sbuf, "%s:%d.%u", sbuf.str,
+	                      (int)psid->ptype, psid->index);
+}
+
 void silofs_psid32b_htox(struct silofs_psid32b *psid32,
                          const struct silofs_psid *psid)
 {

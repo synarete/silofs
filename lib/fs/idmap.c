@@ -465,7 +465,6 @@ static int idsmap_resolve_uftoh(const struct silofs_idsmap *idsm,
 	return ret;
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_gmap_entry *

@@ -59,11 +59,11 @@
 #define ltype_isdata4k(lt)              silofs_ltype_isdata4k(lt)
 #define ltype_isdatabk(lt)              silofs_ltype_isdatabk(lt)
 
-#define lsegid_reset(lid)               silofs_lsegid_reset(lid)
-#define lsegid_assign(lid, oth)         silofs_lsegid_assign(lid, oth)
-#define lsegid_isequal(lid, oth)        silofs_lsegid_isequal(lid, oth)
-#define lsegid_isnull(lid)              silofs_lsegid_isnull(lid)
-#define lsegid_size(lid)                silofs_lsegid_size(lid)
+#define lsid_reset(lid)                 silofs_lsid_reset(lid)
+#define lsid_assign(lid, oth)           silofs_lsid_assign(lid, oth)
+#define lsid_isequal(lid, oth)          silofs_lsid_isequal(lid, oth)
+#define lsid_isnull(lid)                silofs_lsid_isnull(lid)
+#define lsid_size(lid)                  silofs_lsid_size(lid)
 
 #define laddr_none()                    silofs_laddr_none()
 #define laddr_reset(la)                 silofs_laddr_reset(la)
@@ -80,7 +80,7 @@
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, ls, p, o)       silofs_uaddr_setup(ua, ls, p, o)
 #define uaddr_lvid(ua)                  silofs_uaddr_lvid(ua)
-#define uaddr_lsegid(ua)                silofs_uaddr_lsegid(ua)
+#define uaddr_lsid(ua)                  silofs_uaddr_lsid(ua)
 #define uaddr_ltype(ua)                 silofs_uaddr_ltype(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)
 

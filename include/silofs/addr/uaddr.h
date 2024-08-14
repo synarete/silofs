@@ -53,15 +53,15 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 const struct silofs_lvid *
 silofs_uaddr_lvid(const struct silofs_uaddr *uaddr);
 
-const struct silofs_lsegid *
-silofs_uaddr_lsegid(const struct silofs_uaddr *uaddr);
+const struct silofs_lsid *
+silofs_uaddr_lsid(const struct silofs_uaddr *uaddr);
 
 enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr);
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_lsegid *lsegid,
+                        const struct silofs_lsid *lsid,
                         loff_t bpos, loff_t voff);
 
 void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64);

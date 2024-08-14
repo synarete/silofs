@@ -455,19 +455,19 @@ spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
                         struct silofs_laddr *out_laddr)
 {
 	struct silofs_vrange vrange;
-	struct silofs_lsegid lsegid;
+	struct silofs_lsid lsid;
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
 
-	silofs_sli_main_lseg(sli, &lsegid);
-	if (lsegid_isnull(&lsegid)) {
+	silofs_sli_main_lseg(sli, &lsid);
+	if (lsid_isnull(&lsid)) {
 		return -SILOFS_ENOENT;
 	}
-	silofs_assert_eq(lsegid.ltype, spa_ctx->ltype);
-	if (lsegid.ltype != spa_ctx->ltype) {
+	silofs_assert_eq(lsid.ltype, spa_ctx->ltype);
+	if (lsid.ltype != spa_ctx->ltype) {
 		return -SILOFS_EBUG;
 	}
 	silofs_sli_vspace_range(sli, &vrange);
-	silofs_laddr_setup(out_laddr, &lsegid, 0, vrange.len);
+	silofs_laddr_setup(out_laddr, &lsid, 0, vrange.len);
 	return 0;
 }
 

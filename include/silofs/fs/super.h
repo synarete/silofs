@@ -17,10 +17,16 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
+#include <silofs/defs.h>
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+
 struct silofs_stats_info;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 struct silofs_spmap_lmap;
+struct silofs_super_block;
+struct silofs_sb_info;
 
 int silofs_sb_check_version(const struct silofs_super_block *sb);
 
@@ -84,11 +90,11 @@ void silofs_sbi_get_lvid(const struct silofs_sb_info *sbi,
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
                          enum silofs_ltype vspace,
-                         struct silofs_lsegid *out_lsegid);
+                         struct silofs_lsid *out_lsid);
 
 void silofs_sbi_bind_main_lseg(struct silofs_sb_info *sbi,
                                enum silofs_ltype vspace,
-                               const struct silofs_lsegid *lsegid);
+                               const struct silofs_lsid *lsid);
 
 bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
                               enum silofs_ltype vspace);
@@ -97,8 +103,8 @@ void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi,
                                 loff_t voff, enum silofs_ltype vspace,
                                 struct silofs_ulink *out_ulink);
 
-bool silofs_sbi_ismutable_lsegid(const struct silofs_sb_info *sbi,
-                                 const struct silofs_lsegid *lsegid);
+bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
+                               const struct silofs_lsid *lsid);
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_laddr *laddr);

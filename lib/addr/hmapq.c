@@ -86,23 +86,23 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 	return silofs_blobid_hash64(blobid);
 }
 
-static uint64_t hash_of_psegid(const struct silofs_psegid *psegid)
+static uint64_t hash_of_psid(const struct silofs_psid *psid)
 {
-	return silofs_psegid_hash64(psegid);
+	return silofs_psid_hash64(psid);
 }
 
 static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 {
 	const uint64_t uoff = (uint64_t)paddr->off;
 	const uint64_t h1 = 0xc6a4a7935bd1e995ULL - paddr->len;
-	const uint64_t h2 = hash_of_psegid(&paddr->psid);
+	const uint64_t h2 = hash_of_psid(&paddr->psid);
 
 	return uoff ^ h1 ^ h2;
 }
 
-static uint64_t hash_of_lsegid(const struct silofs_lsegid *lsegid)
+static uint64_t hash_of_lsid(const struct silofs_lsid *lsid)
 {
-	return silofs_lsegid_hash64(lsegid);
+	return silofs_lsid_hash64(lsid);
 }
 
 static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
@@ -110,7 +110,7 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 	const uint64_t uoff = (uint64_t)uaddr->voff;
 	const uint64_t upos = (uint64_t)uaddr->laddr.pos;
 	const uint64_t h1 = 0x646f72616e646f6dULL - upos;
-	const uint64_t h2 = hash_of_lsegid(&uaddr->laddr.lsid);
+	const uint64_t h2 = hash_of_lsid(&uaddr->laddr.lsid);
 
 	return uoff ^ h1 ^ h2;
 }

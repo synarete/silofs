@@ -21,8 +21,8 @@
 #include <silofs/str.h>
 
 
-/* persistent volume segment id */
-struct silofs_psegid {
+/* persistent-volume segment id */
+struct silofs_psid {
 	struct silofs_pvid      pvid;
 	uint32_t                index;
 	enum silofs_ptype       ptype;
@@ -30,7 +30,7 @@ struct silofs_psegid {
 
 /* persistent object address within specific volume segment */
 struct silofs_paddr {
-	struct silofs_psegid    psid;
+	struct silofs_psid      psid;
 	loff_t                  off;
 	size_t                  len;
 };
@@ -55,28 +55,28 @@ int silofs_pvid_from_str(struct silofs_lvid *pvid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_psegid *silofs_psegid_none(void);
+const struct silofs_psid *silofs_psid_none(void);
 
-bool silofs_psegid_isnull(const struct silofs_psegid *psegid);
+bool silofs_psid_isnull(const struct silofs_psid *psid);
 
-bool silofs_psegid_has_pvid(const struct silofs_psegid *psegid,
-                            const struct silofs_pvid *pvid);
+bool silofs_psid_has_pvid(const struct silofs_psid *psid,
+                          const struct silofs_pvid *pvid);
 
-void silofs_psegid_reset(struct silofs_psegid *psegid);
+void silofs_psid_reset(struct silofs_psid *psid);
 
-void silofs_psegid_assign(struct silofs_psegid *psegid,
-                          const struct silofs_psegid *other);
+void silofs_psid_assign(struct silofs_psid *psid,
+                        const struct silofs_psid *other);
 
-bool silofs_psegid_isequal(const struct silofs_psegid *psegid,
-                           const struct silofs_psegid *other);
+bool silofs_psid_isequal(const struct silofs_psid *psid,
+                         const struct silofs_psid *other);
 
-uint64_t silofs_psegid_hash64(const struct silofs_psegid *psegid);
+uint64_t silofs_psid_hash64(const struct silofs_psid *psid);
 
-void silofs_psegid32b_htox(struct silofs_psegid32b *psegid32,
-                           const struct silofs_psegid *psegid);
+void silofs_psid32b_htox(struct silofs_psid32b *psid32,
+                         const struct silofs_psid *psid);
 
-void silofs_psegid32b_xtoh(const struct silofs_psegid32b *psegid32,
-                           struct silofs_psegid *psegid);
+void silofs_psid32b_xtoh(const struct silofs_psid32b *psid32,
+                         struct silofs_psid *psid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

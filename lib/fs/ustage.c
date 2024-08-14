@@ -182,15 +182,15 @@ static void forget_cached_ui(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool lsegid_rw_mode(const struct silofs_fsenv *fsenv,
-                           const struct silofs_lsegid *lsegid)
+static bool lsid_rw_mode(const struct silofs_fsenv *fsenv,
+                         const struct silofs_lsid *lsid)
 {
 	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
 	bool rw_mode;
 
 	if (unlikely(sbi == NULL)) {
 		rw_mode = true;
-	} else if (silofs_sbi_ismutable_lsegid(sbi, lsegid)) {
+	} else if (silofs_sbi_ismutable_lsid(sbi, lsid)) {
 		rw_mode = true;
 	} else {
 		/*
@@ -207,20 +207,20 @@ static bool lsegid_rw_mode(const struct silofs_fsenv *fsenv,
 }
 
 static int lookup_lseg(const struct silofs_fsenv *fsenv,
-                       const struct silofs_lsegid *lsegid)
+                       const struct silofs_lsid *lsid)
 {
 	struct stat st;
 
-	return silofs_repo_stat_lseg(fsenv->fse.repo, lsegid, true, &st);
+	return silofs_repo_stat_lseg(fsenv->fse.repo, lsid, true, &st);
 }
 
 static int stage_lseg(const struct silofs_fsenv *fsenv,
-                      const struct silofs_lsegid *lsegid)
+                      const struct silofs_lsid *lsid)
 {
 	int err;
-	const bool rw = lsegid_rw_mode(fsenv, lsegid);
+	const bool rw = lsid_rw_mode(fsenv, lsid);
 
-	err = silofs_repo_stage_lseg(fsenv->fse.repo, rw, lsegid);
+	err = silofs_repo_stage_lseg(fsenv->fse.repo, rw, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage lseg failed: err=%d", err);
 	}
@@ -228,11 +228,11 @@ static int stage_lseg(const struct silofs_fsenv *fsenv,
 }
 
 static int spawn_lseg(const struct silofs_fsenv *fsenv,
-                      const struct silofs_lsegid *lsegid)
+                      const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = silofs_repo_spawn_lseg(fsenv->fse.repo, lsegid);
+	err = silofs_repo_spawn_lseg(fsenv->fse.repo, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn lseg failed: err=%d", err);
 	}
@@ -240,15 +240,15 @@ static int spawn_lseg(const struct silofs_fsenv *fsenv,
 }
 
 static int require_lseg(const struct silofs_fsenv *fsenv,
-                        const struct silofs_lsegid *lsegid)
+                        const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = lookup_lseg(fsenv, lsegid);
+	err = lookup_lseg(fsenv, lsid);
 	if (!err) {
-		err = stage_lseg(fsenv, lsegid);
+		err = stage_lseg(fsenv, lsid);
 	} else if (err == -SILOFS_ENOENT) {
-		err = spawn_lseg(fsenv, lsegid);
+		err = spawn_lseg(fsenv, lsid);
 	}
 	return err;
 }
@@ -654,11 +654,11 @@ int silofs_stage_spleaf(struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int require_no_lseg(const struct silofs_fsenv *fsenv,
-                           const struct silofs_lsegid *lsegid)
+                           const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = lookup_lseg(fsenv, lsegid);
+	err = lookup_lseg(fsenv, lsid);
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
@@ -669,15 +669,15 @@ static int require_no_lseg(const struct silofs_fsenv *fsenv,
 }
 
 int silofs_spawn_lseg(struct silofs_fsenv *fsenv,
-                      const struct silofs_lsegid *lsegid)
+                      const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = require_no_lseg(fsenv, lsegid);
+	err = require_no_lseg(fsenv, lsid);
 	if (err) {
 		return err;
 	}
-	err = spawn_lseg(fsenv, lsegid);
+	err = spawn_lseg(fsenv, lsid);
 	if (err) {
 		return err;
 	}
@@ -685,15 +685,15 @@ int silofs_spawn_lseg(struct silofs_fsenv *fsenv,
 }
 
 int silofs_stage_lseg(struct silofs_fsenv *fsenv,
-                      const struct silofs_lsegid *lsegid)
+                      const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = lookup_lseg(fsenv, lsegid);
+	err = lookup_lseg(fsenv, lsid);
 	if (err) {
 		return err;
 	}
-	err = stage_lseg(fsenv, lsegid);
+	err = stage_lseg(fsenv, lsid);
 	if (err) {
 		return err;
 	}

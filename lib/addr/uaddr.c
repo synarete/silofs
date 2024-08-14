@@ -36,12 +36,12 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_lsegid *lsegid,
+                        const struct silofs_lsid *lsid,
                         loff_t pos, loff_t voff)
 {
-	const size_t lsz = ltype_size(lsegid->ltype);
+	const size_t lsz = ltype_size(lsid->ltype);
 
-	silofs_laddr_setup(&uaddr->laddr, lsegid, pos, lsz);
+	silofs_laddr_setup(&uaddr->laddr, lsid, pos, lsz);
 	uaddr->voff = voff;
 }
 
@@ -86,8 +86,8 @@ silofs_uaddr_lvid(const struct silofs_uaddr *uaddr)
 	return &uaddr->laddr.lsid.lvid;
 }
 
-const struct silofs_lsegid *
-silofs_uaddr_lsegid(const struct silofs_uaddr *uaddr)
+const struct silofs_lsid *
+silofs_uaddr_lsid(const struct silofs_uaddr *uaddr)
 {
 	return &uaddr->laddr.lsid;
 }

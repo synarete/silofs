@@ -18,14 +18,16 @@
 #define SILOFS_SPMAPS_H_
 
 #include <silofs/defs.h>
+#include <silofs/infra.h>
+#include <silofs/addr.h>
 #include <silofs/fs/types.h>
 
+struct silofs_spnode_info;
 
 struct silofs_spmap_lmap {
 	struct silofs_laddr laddr[SILOFS_SPMAP_NCHILDS];
 	uint32_t cnt;
 };
-
 
 void silofs_bk_state_init(struct silofs_bk_state *bk_st);
 
@@ -60,10 +62,10 @@ void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
                               struct silofs_vrange *out_vrange);
 
 void silofs_sni_main_lseg(const struct silofs_spnode_info *sni,
-                          struct silofs_lsegid *out_lsegid);
+                          struct silofs_lsid *out_lsid);
 
 void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
-                               const struct silofs_lsegid *lsegid);
+                               const struct silofs_lsid *lsid);
 
 void silofs_sni_resolve_main(const struct silofs_spnode_info *sni,
                              loff_t voff, struct silofs_ulink *out_ulink);
@@ -139,10 +141,10 @@ void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
                           struct silofs_vaddrs *vas);
 
 void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
-                          struct silofs_lsegid *out_lsegid);
+                          struct silofs_lsid *out_lsid);
 
 void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
-                               const struct silofs_lsegid *lsegid);
+                               const struct silofs_lsid *lsid);
 
 void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
                            const struct silofs_spleaf_info *sli_other);

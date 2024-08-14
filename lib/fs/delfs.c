@@ -28,27 +28,27 @@ struct silofs_delfs_ctx {
 
 
 static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
-                               loff_t voff, struct silofs_lsegid *out_lsegid)
+                               loff_t voff, struct silofs_lsid *out_lsid)
 {
 	struct silofs_llink llink;
 	int ret;
 
 	ret = silofs_sli_resolve_child(sli, voff, &llink);
 	if (ret == 0) {
-		lsegid_assign(out_lsegid, &llink.laddr.lsid);
+		lsid_assign(out_lsid, &llink.laddr.lsid);
 	}
 	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool delfc_is_lsegid_of(const struct silofs_delfs_ctx *delf_ctx,
-                               const struct silofs_lsegid *lsegid)
+static bool delfc_is_lsid_of(const struct silofs_delfs_ctx *delf_ctx,
+                             const struct silofs_lsid *lsid)
 {
 	const struct silofs_uaddr *sb_uaddr = &delf_ctx->sb_uaddr;
 	const struct silofs_lvid *lvid = &sb_uaddr->laddr.lsid.lvid;
 
-	return silofs_lsegid_has_lvid(lsegid, lvid);
+	return silofs_lsid_has_lvid(lsid, lvid);
 }
 
 static int delfc_exec_unrefs_at(struct silofs_delfs_ctx *delf_ctx,
@@ -60,19 +60,19 @@ static int delfc_exec_unrefs_at(struct silofs_delfs_ctx *delf_ctx,
 }
 
 static int delfc_try_remove_lseg_of(const struct silofs_delfs_ctx *delf_ctx,
-                                    const struct silofs_lsegid *lsegid)
+                                    const struct silofs_lsid *lsid)
 {
 	struct stat st = { .st_size = -1 };
 	int err;
 
-	if (!delfc_is_lsegid_of(delf_ctx, lsegid)) {
+	if (!delfc_is_lsid_of(delf_ctx, lsid)) {
 		return 0;
 	}
-	err = silofs_repo_stat_lseg(delf_ctx->repo, lsegid, false, &st);
+	err = silofs_repo_stat_lseg(delf_ctx->repo, lsid, false, &st);
 	if (err) {
 		return (err == -SILOFS_ENOENT) ? 0 : err;
 	}
-	err = silofs_repo_remove_lseg(delf_ctx->repo, lsegid);
+	err = silofs_repo_remove_lseg(delf_ctx->repo, lsid);
 	if (err) {
 		silofs_assert_ne(err, -ENOENT);
 		return err;
@@ -84,14 +84,14 @@ static int
 delfc_post_at_lseg_of(struct silofs_delfs_ctx *delf_ctx,
                       const struct silofs_spleaf_info *sli, loff_t voff)
 {
-	struct silofs_lsegid lsegid;
+	struct silofs_lsid lsid;
 	int err;
 
-	err = sli_resolve_lseg_of(sli, voff, &lsegid);
+	err = sli_resolve_lseg_of(sli, voff, &lsid);
 	if (err) {
 		return err;
 	}
-	err = delfc_try_remove_lseg_of(delf_ctx, &lsegid);
+	err = delfc_try_remove_lseg_of(delf_ctx, &lsid);
 	if (err) {
 		return err;
 	}
@@ -117,10 +117,10 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
 	return 0;
 }
 
-static const struct silofs_lsegid *
-lsegid_of(const struct silofs_ulink *ulink)
+static const struct silofs_lsid *
+lsid_of(const struct silofs_ulink *ulink)
 {
-	return uaddr_lsegid(&ulink->uaddr);
+	return uaddr_lsid(&ulink->uaddr);
 }
 
 static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
@@ -138,7 +138,7 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
 		if (err == -SILOFS_ENOENT) {
 			break;
 		}
-		err = delfc_try_remove_lseg_of(delf_ctx, lsegid_of(&ulink));
+		err = delfc_try_remove_lseg_of(delf_ctx, lsid_of(&ulink));
 		if (err) {
 			return err;
 		}
@@ -157,7 +157,7 @@ static int delfc_post_at_super(struct silofs_delfs_ctx *delf_ctx,
 	if (err) {
 		return err;
 	}
-	err = delfc_try_remove_lseg_of(delf_ctx, uaddr_lsegid(&uaddr));
+	err = delfc_try_remove_lseg_of(delf_ctx, uaddr_lsid(&uaddr));
 	if (err) {
 		return err;
 	}
@@ -241,9 +241,9 @@ static void delfc_fini(struct silofs_delfs_ctx *delf_ctx)
 
 static int delfc_remove_super(const struct silofs_delfs_ctx *delf_ctx)
 {
-	const struct silofs_lsegid *lsegid = uaddr_lsegid(&delf_ctx->sb_uaddr);
+	const struct silofs_lsid *lsid = uaddr_lsid(&delf_ctx->sb_uaddr);
 
-	return delfc_try_remove_lseg_of(delf_ctx, lsegid);
+	return delfc_try_remove_lseg_of(delf_ctx, lsid);
 }
 
 int silofs_walk_unref_fs(struct silofs_task *task,

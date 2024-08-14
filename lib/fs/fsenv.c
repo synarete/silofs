@@ -23,26 +23,26 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_lsegid *lsegid_of(const struct silofs_ulink *ulink)
+static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 {
 	return &ulink->uaddr.laddr.lsid;
 }
 
-static const struct silofs_lsegid *
-sbi_lsegid(const struct silofs_sb_info *sbi)
+static const struct silofs_lsid *
+sbi_lsid(const struct silofs_sb_info *sbi)
 {
-	return lsegid_of(&sbi->sb_ui.u_ulink);
+	return lsid_of(&sbi->sb_ui.u_ulink);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fsenv_bind_sb_lsegid(struct silofs_fsenv *fsenv,
-                                 const struct silofs_lsegid *lsegid_new)
+static void fsenv_bind_sb_lsid(struct silofs_fsenv *fsenv,
+                               const struct silofs_lsid *lsid_new)
 {
-	if (lsegid_new) {
-		lsegid_assign(&fsenv->fse_sb_lsegid, lsegid_new);
+	if (lsid_new) {
+		lsid_assign(&fsenv->fse_sb_lsid, lsid_new);
 	} else {
-		lsegid_reset(&fsenv->fse_sb_lsegid);
+		lsid_reset(&fsenv->fse_sb_lsid);
 	}
 }
 
@@ -169,7 +169,7 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
 	silofs_caddr_reset(&fsenv->fse_boot_caddr);
 	silofs_caddr_reset(&fsenv->fse_pack_caddr);
-	silofs_lsegid_reset(&fsenv->fse_sb_lsegid);
+	silofs_lsid_reset(&fsenv->fse_sb_lsid);
 	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
 	silofs_ivkey_init(&fsenv->fse_main_ivkey);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
@@ -190,7 +190,7 @@ static void fsenv_fini_commons(struct silofs_fsenv *fsenv)
 	memset(&fsenv->fse, 0, sizeof(fsenv->fse));
 	silofs_ivkey_fini(&fsenv->fse_boot_ivkey);
 	silofs_ivkey_fini(&fsenv->fse_main_ivkey);
-	lsegid_reset(&fsenv->fse_sb_lsegid);
+	lsid_reset(&fsenv->fse_sb_lsid);
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
 }
@@ -356,22 +356,22 @@ void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void make_super_lsegid(struct silofs_lsegid *out_lsegid)
+static void make_super_lsid(struct silofs_lsid *out_lsid)
 {
 	struct silofs_lvid lvid;
 
 	silofs_lvid_generate(&lvid);
-	silofs_lsegid_setup(out_lsegid, &lvid, 0, SILOFS_LTYPE_SUPER,
-	                    SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
+	silofs_lsid_setup(out_lsid, &lvid, 0, SILOFS_LTYPE_SUPER,
+	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
 }
 
-static void make_super_uaddr(const struct silofs_lsegid *lsegid,
+static void make_super_uaddr(const struct silofs_lsid *lsid,
                              struct silofs_uaddr *out_uaddr)
 {
-	silofs_assert_eq(lsegid->height, SILOFS_HEIGHT_SUPER);
-	silofs_assert_eq(lsegid->ltype, SILOFS_LTYPE_SUPER);
+	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
+	silofs_assert_eq(lsid->ltype, SILOFS_LTYPE_SUPER);
 
-	uaddr_setup(out_uaddr, lsegid, 0, 0);
+	uaddr_setup(out_uaddr, lsid, 0, 0);
 }
 
 static void ulink_init(struct silofs_ulink *ulink,
@@ -385,11 +385,11 @@ static void ulink_init(struct silofs_ulink *ulink,
 static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
                                    struct silofs_ulink *out_ulink)
 {
-	struct silofs_lsegid lsegid;
+	struct silofs_lsid lsid;
 	struct silofs_uaddr uaddr;
 
-	make_super_lsegid(&lsegid);
-	make_super_uaddr(&lsegid, &uaddr);
+	make_super_lsid(&lsid);
+	make_super_uaddr(&lsid, &uaddr);
 	ulink_init(out_ulink, &uaddr, &fsenv->fse_main_ivkey.iv);
 }
 
@@ -493,15 +493,15 @@ int silofs_fsenv_reload_super(struct silofs_fsenv *fsenv)
 
 int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_lsegid *lsegid = lsegid_of(&fsenv->fse_sb_ulink);
+	const struct silofs_lsid *lsid = lsid_of(&fsenv->fse_sb_ulink);
 	int err;
 
-	err = silofs_stage_lseg(fsenv, lsegid);
+	err = silofs_stage_lseg(fsenv, lsid);
 	if (err) {
 		log_warn("unable to stage sb-lseg: err=%d", err);
 		return err;
 	}
-	fsenv_bind_sb_lsegid(fsenv, lsegid);
+	fsenv_bind_sb_lsid(fsenv, lsid);
 	return 0;
 }
 
@@ -528,7 +528,7 @@ int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
 		return err;
 	}
 	fsenv_bind_sbi(fsenv, NULL);
-	fsenv_bind_sb_lsegid(fsenv, NULL);
+	fsenv_bind_sb_lsid(fsenv, NULL);
 	return 0;
 }
 
@@ -536,7 +536,7 @@ static void fsenv_rebind_root_sb(struct silofs_fsenv *fsenv,
                                  struct silofs_sb_info *sbi)
 {
 	silofs_fsenv_set_sb_ulink(fsenv, sbi_ulink(sbi));
-	fsenv_bind_sb_lsegid(fsenv, sbi_lsegid(sbi));
+	fsenv_bind_sb_lsid(fsenv, sbi_lsid(sbi));
 	fsenv_bind_sbi(fsenv, sbi);
 }
 

@@ -77,23 +77,23 @@ void silofs_repo_relax(struct silofs_repo *repo);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stat_lseg(struct silofs_repo *repo,
-                          const struct silofs_lsegid *lsegid,
+                          const struct silofs_lsid *lsid,
                           bool allow_cache, struct stat *out_st);
 
 int silofs_repo_spawn_lseg(struct silofs_repo *repo,
-                           const struct silofs_lsegid *lsegid);
+                           const struct silofs_lsid *lsid);
 
 int silofs_repo_stage_lseg(struct silofs_repo *repo, bool rw,
-                           const struct silofs_lsegid *lsegid);
+                           const struct silofs_lsid *lsid);
 
 int silofs_repo_remove_lseg(struct silofs_repo *repo,
-                            const struct silofs_lsegid *lsegid);
+                            const struct silofs_lsid *lsid);
 
 int silofs_repo_punch_lseg(struct silofs_repo *repo,
-                           const struct silofs_lsegid *lsegid);
+                           const struct silofs_lsid *lsid);
 
 int silofs_repo_require_lseg(struct silofs_repo *repo,
-                             const struct silofs_lsegid *lsegid);
+                             const struct silofs_lsid *lsid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

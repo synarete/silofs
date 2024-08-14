@@ -70,7 +70,7 @@ struct silofs_fsenv {
 	struct silofs_cipher            fse_enc_cipher;
 	struct silofs_cipher            fse_dec_cipher;
 	struct silofs_oper_stat         fse_op_stat;
-	struct silofs_lsegid            fse_sb_lsegid;
+	struct silofs_lsid              fse_sb_lsid;
 	struct silofs_sb_info          *fse_sbi;
 	struct silofs_ulink             fse_sb_ulink;
 	struct silofs_cred              fse_owner;

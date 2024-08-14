@@ -46,10 +46,10 @@ int silofs_stage_spleaf(struct silofs_fsenv *fsenv,
 
 
 int silofs_spawn_lseg(struct silofs_fsenv *fsenv,
-                      const struct silofs_lsegid *lsegid);
+                      const struct silofs_lsid *lsid);
 
 int silofs_stage_lseg(struct silofs_fsenv *fsenv,
-                      const struct silofs_lsegid *lsegid);
+                      const struct silofs_lsid *lsid);
 
 
 #endif /* SILOFS_USTAGE_H_ */

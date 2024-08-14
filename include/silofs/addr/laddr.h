@@ -22,7 +22,7 @@
 
 
 /* logical-segment id within specific volume mapping */
-struct silofs_lsegid {
+struct silofs_lsid {
 	struct silofs_lvid      lvid;
 	size_t                  lsize;
 	uint32_t                vindex;
@@ -33,7 +33,7 @@ struct silofs_lsegid {
 
 /* logical-address within specific volume's mapping extend */
 struct silofs_laddr {
-	struct silofs_lsegid    lsid;
+	struct silofs_lsid      lsid;
 	loff_t                  pos;
 	size_t                  len;
 };
@@ -65,50 +65,50 @@ int silofs_lvid_from_str(struct silofs_lvid *lvid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_lsegid *silofs_lsegid_none(void);
+const struct silofs_lsid *silofs_lsid_none(void);
 
-size_t silofs_lsegid_size(const struct silofs_lsegid *lsegid);
+size_t silofs_lsid_size(const struct silofs_lsid *lsid);
 
-bool silofs_lsegid_isnull(const struct silofs_lsegid *lsegid);
+bool silofs_lsid_isnull(const struct silofs_lsid *lsid);
 
-bool silofs_lsegid_has_lvid(const struct silofs_lsegid *lsegid,
-                            const struct silofs_lvid *lvid);
+bool silofs_lsid_has_lvid(const struct silofs_lsid *lsid,
+                          const struct silofs_lvid *lvid);
 
-void silofs_lsegid_reset(struct silofs_lsegid *lsegid);
+void silofs_lsid_reset(struct silofs_lsid *lsid);
 
-void silofs_lsegid_setup(struct silofs_lsegid *lsegid,
-                         const struct silofs_lvid *lvid, loff_t voff,
-                         enum silofs_ltype vspace, enum silofs_height height,
-                         enum silofs_ltype ltype);
+void silofs_lsid_setup(struct silofs_lsid *lsid,
+                       const struct silofs_lvid *lvid, loff_t voff,
+                       enum silofs_ltype vspace, enum silofs_height height,
+                       enum silofs_ltype ltype);
 
-void silofs_lsegid_assign(struct silofs_lsegid *lsegid,
-                          const struct silofs_lsegid *other);
+void silofs_lsid_assign(struct silofs_lsid *lsid,
+                        const struct silofs_lsid *other);
 
-bool silofs_lsegid_isequal(const struct silofs_lsegid *lsegid,
-                           const struct silofs_lsegid *other);
+bool silofs_lsid_isequal(const struct silofs_lsid *lsid,
+                         const struct silofs_lsid *other);
 
-uint64_t silofs_lsegid_hash64(const struct silofs_lsegid *lsegid);
+uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid);
 
-loff_t silofs_lsegid_pos(const struct silofs_lsegid *lsegid, loff_t off);
+loff_t silofs_lsid_pos(const struct silofs_lsid *lsid, loff_t off);
 
-void silofs_lsegid32b_reset(struct silofs_lsegid32b *lsegid32);
+void silofs_lsid32b_reset(struct silofs_lsid32b *lsid32);
 
-void silofs_lsegid32b_htox(struct silofs_lsegid32b *lsegid32,
-                           const struct silofs_lsegid *lsegid);
+void silofs_lsid32b_htox(struct silofs_lsid32b *lsid32,
+                         const struct silofs_lsid *lsid);
 
-void silofs_lsegid32b_xtoh(const struct silofs_lsegid32b *lsegid32,
-                           struct silofs_lsegid *lsegid);
+void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
+                         struct silofs_lsid *lsid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_laddr *silofs_laddr_none(void);
 
 void silofs_laddr_setup(struct silofs_laddr *laddr,
-                        const struct silofs_lsegid *lsegid,
+                        const struct silofs_lsid *lsid,
                         loff_t off, size_t len);
 
 void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
-                            const struct silofs_lsegid *lsegid, loff_t off);
+                            const struct silofs_lsid *lsid, loff_t off);
 
 void silofs_laddr_reset(struct silofs_laddr *laddr);
 

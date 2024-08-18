@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/vol.h>
+#include <silofs/ps.h>
 
 
 static void btn_setup_hdr(struct silofs_btree_node *btn)

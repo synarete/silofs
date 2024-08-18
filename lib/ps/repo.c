@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/vol.h>
+#include <silofs/ps.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>

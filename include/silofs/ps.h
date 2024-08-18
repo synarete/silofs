@@ -14,18 +14,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_VOL_H_
-#define SILOFS_VOL_H_
+#ifndef SILOFS_PS_H_
+#define SILOFS_PS_H_
 
 #include <silofs/defs.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-#include <silofs/vol/crypto.h>
-#include <silofs/vol/blobs.h>
-#include <silofs/vol/repo.h>
-#include <silofs/vol/pnodes.h>
-#include <silofs/vol/bcache.h>
+#include <silofs/ps/crypto.h>
+#include <silofs/ps/blobs.h>
+#include <silofs/ps/repo.h>
+#include <silofs/ps/pnodes.h>
+#include <silofs/ps/bcache.h>
 
-#endif /* SILOFS_VOL_H_ */
+#endif /* SILOFS_PS_H_ */

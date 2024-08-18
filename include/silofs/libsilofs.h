@@ -24,7 +24,7 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/addr.h>
-#include <silofs/vol.h>
+#include <silofs/ps.h>
 #include <silofs/fs.h>
 #include <silofs/execlib.h>
 

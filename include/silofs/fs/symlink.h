@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/vol.h>
+#include <silofs/ps.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/task.h>
 

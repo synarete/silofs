@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/errors.h>
-#include <silofs/vol.h>
+#include <silofs/ps.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>

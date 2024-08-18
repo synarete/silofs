@@ -8,7 +8,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *      ut_inspect_ok(ute, dino);
+ *
  * Silofs is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/vol.h>
+#include <silofs/ps.h>
 
 
 static struct silofs_bnode_info *
@@ -404,4 +404,3 @@ void silofs_bcache_relax(struct silofs_bcache *bcache, int flags)
 	bcache_relax_args(bcache, flags, &niter, &iterall);
 	bcache_evict_some(bcache, niter, iterall);
 }
-

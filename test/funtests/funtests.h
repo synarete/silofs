@@ -30,13 +30,11 @@
 #include <sys/xattr.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include <errno.h>
 #include <stdint.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
-#include <errno.h>
 #include <dirent.h>
 
 
@@ -227,6 +225,8 @@ void ft_exec_with_ranges_(struct ft_env *fte,
 /* sub-tests grouped by topic */
 extern const struct ft_tests ft_test_access;
 extern const struct ft_tests ft_test_stat;
+extern const struct ft_tests ft_test_statx;
+extern const struct ft_tests ft_test_stat_io;
 extern const struct ft_tests ft_test_statvfs;
 extern const struct ft_tests ft_test_utimes;
 extern const struct ft_tests ft_test_mkdir;
@@ -248,7 +248,6 @@ extern const struct ft_tests ft_test_lseek;
 extern const struct ft_tests ft_test_fiemap;
 extern const struct ft_tests ft_test_boundaries;
 extern const struct ft_tests ft_test_tmpfile;
-extern const struct ft_tests ft_test_stat_io;
 extern const struct ft_tests ft_test_rw_basic;
 extern const struct ft_tests ft_test_rw_sequencial;
 extern const struct ft_tests ft_test_rw_sparse;

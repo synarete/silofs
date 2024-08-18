@@ -16,8 +16,9 @@
  */
 #include "funtests.h"
 #include <sys/wait.h>
-#include <error.h>
 #include <stdarg.h>
+#include <error.h>
+#include <errno.h>
 #include <ctype.h>
 
 #define MCHUNK_MAGIC 0x3A4BE8C1

@@ -21,6 +21,7 @@
 #include <error.h>
 #include <errno.h>
 #include <locale.h>
+#include <stdio.h>
 
 struct ft_global_settings {
 	struct silofs_log_params log_params;
@@ -369,4 +370,3 @@ static void ft_show_program_version(void)
 
 	printf("%s %s\n", progname, silofs_version.string);
 }
-

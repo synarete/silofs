@@ -17,6 +17,7 @@
 #include "funtests.h"
 #include <utime.h>
 #include <error.h>
+#include <errno.h>
 #include <time.h>
 
 #define ft_expect_sys_ok(err_, fl_, ln_) \

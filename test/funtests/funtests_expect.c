@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <error.h>
 
 static const char *basename_of(const char *path)

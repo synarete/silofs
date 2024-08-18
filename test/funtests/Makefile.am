@@ -49,6 +49,7 @@ silofs_funtests_SOURCES += test_rw_sparse.c
 silofs_funtests_SOURCES += test_stat.c
 silofs_funtests_SOURCES += test_stat_io.c
 silofs_funtests_SOURCES += test_statvfs.c
+silofs_funtests_SOURCES += test_statx.c
 silofs_funtests_SOURCES += test_symlink.c
 silofs_funtests_SOURCES += test_tmpfile.c
 silofs_funtests_SOURCES += test_truncate.c
@@ -58,4 +59,3 @@ silofs_funtests_SOURCES += test_unlinked_file.c
 silofs_funtests_SOURCES += test_utimes.c
 silofs_funtests_SOURCES += test_write.c
 silofs_funtests_SOURCES += test_xattr.c
-

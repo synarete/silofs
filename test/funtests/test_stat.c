@@ -96,43 +96,6 @@ static void test_stat_statvfs(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
- * Expects statx(2) to return valid and constant birth time.
- */
-static void test_statx_btime(struct ft_env *fte)
-{
-	struct statx stx[2];
-	const char *name = ft_new_name_unique(fte);
-	const char *path = ft_new_path_unique(fte);
-	const int flags = AT_STATX_FORCE_SYNC;
-	int dfd = -1;
-	int fd = -1;
-
-	ft_mkdir(path, 0750);
-	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
-	ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
-
-	ft_statx(dfd, name, flags, STATX_ALL, &stx[0]);
-	if (!(stx[0].stx_mask & STATX_BTIME)) {
-		goto out; /* no FUSE statx */
-	}
-	ft_expect_eq(stx[0].stx_mask & STATX_ALL, STATX_ALL);
-	ft_expect_xts_eq(&stx[0].stx_btime, &stx[0].stx_mtime);
-	ft_expect_xts_eq(&stx[0].stx_btime, &stx[0].stx_ctime);
-	ft_suspends(fte, 1);
-	ft_writen(fd, name, ft_strlen(name));
-	ft_statx(dfd, name, flags, STATX_ALL, &stx[1]);
-	ft_expect_xts_eq(&stx[0].stx_btime, &stx[1].stx_btime);
-	ft_expect_xts_gt(&stx[1].stx_btime, &stx[1].stx_mtime);
-	ft_expect_xts_gt(&stx[1].stx_btime, &stx[1].stx_ctime);
-out:
-	ft_close(fd);
-	ft_unlinkat(dfd, name, 0);
-	ft_close(dfd);
-	ft_rmdir(path);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/*
  * Expects fstatat(2) to successfully probe sub-directory components.
  */
 static void test_fstatat_simple(struct ft_env *fte)
@@ -167,7 +130,6 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_stat_simple),
 	FT_DEFTEST(test_stat_notdir),
 	FT_DEFTESTF(test_stat_statvfs, FT_F_STATVFS),
-	FT_DEFTEST(test_statx_btime),
 	FT_DEFTEST(test_fstatat_simple),
 };
 

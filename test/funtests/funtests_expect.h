@@ -95,6 +95,9 @@
 #define ft_expect_xts_gt(xt1, xt2) \
 	ft_expect_gt(ft_xtimestamp_diff(xt1, xt2), 0)
 
+#define ft_expect_xts_ge(xt1, xt2) \
+	ft_expect_ge(ft_xtimestamp_diff(xt1, xt2), 0)
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void ft_do_expect_cond(int cond, const char *s, const char *fl, int ln);

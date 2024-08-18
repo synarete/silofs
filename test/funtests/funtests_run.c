@@ -15,8 +15,9 @@
  * GNU General Public License for more details.
  */
 #include "funtests.h"
-#include <signal.h>
+#include <stdio.h>
 #include <error.h>
+#include <errno.h>
 #include <time.h>
 
 
@@ -25,6 +26,8 @@
 static const struct ft_tests *const ft_testsbl[]  = {
 	FT_METATEST(ft_test_access),
 	FT_METATEST(ft_test_stat),
+	FT_METATEST(ft_test_statx),
+	FT_METATEST(ft_test_stat_io),
 	FT_METATEST(ft_test_statvfs),
 	FT_METATEST(ft_test_utimes),
 	FT_METATEST(ft_test_mkdir),
@@ -47,7 +50,6 @@ static const struct ft_tests *const ft_testsbl[]  = {
 	FT_METATEST(ft_test_namespace),
 	FT_METATEST(ft_test_rw_basic),
 	FT_METATEST(ft_test_boundaries),
-	FT_METATEST(ft_test_stat_io),
 	FT_METATEST(ft_test_rw_sequencial),
 	FT_METATEST(ft_test_rw_sparse),
 	FT_METATEST(ft_test_rw_random),
@@ -338,4 +340,3 @@ void ft_exec_with_ranges_(struct ft_env *fte,
 		ft_relax_mem(fte);
 	}
 }
-

@@ -62,6 +62,7 @@ nobase_include_HEADERS += silofs/ps/crypto.h
 nobase_include_HEADERS += silofs/ps/bcache.h
 nobase_include_HEADERS += silofs/ps/pnodes.h
 nobase_include_HEADERS += silofs/ps/repo.h
+nobase_include_HEADERS += silofs/ps/psenv.h
 nobase_include_HEADERS += silofs/ps.h
 nobase_include_HEADERS += silofs/fs/boot.h
 nobase_include_HEADERS += silofs/fs/claim.h

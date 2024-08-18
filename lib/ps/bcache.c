@@ -57,18 +57,18 @@ int silofs_bcache_init(struct silofs_bcache *bcache,
 	int err;
 
 	silofs_memzero(bcache, sizeof(*bcache));
-	err = silofs_hmapq_init(&bcache->pc_hmapq, alloc, nslots);
+	err = silofs_hmapq_init(&bcache->bc_hmapq, alloc, nslots);
 	if (err) {
 		return err;
 	}
-	bcache->pc_alloc = alloc;
+	bcache->bc_alloc = alloc;
 	return 0;
 }
 
 void silofs_bcache_fini(struct silofs_bcache *bcache)
 {
-	silofs_hmapq_fini(&bcache->pc_hmapq, bcache->pc_alloc);
-	bcache->pc_alloc = NULL;
+	silofs_hmapq_fini(&bcache->bc_hmapq, bcache->bc_alloc);
+	bcache->bc_alloc = NULL;
 }
 
 static struct silofs_bnode_info *
@@ -79,14 +79,14 @@ bcache_find_pni(const struct silofs_bcache *bcache,
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_paddr(&hkey, paddr);
-	hmqe = silofs_hmapq_lookup(&bcache->pc_hmapq, &hkey);
+	hmqe = silofs_hmapq_lookup(&bcache->bc_hmapq, &hkey);
 	return pni_from_hmqe(hmqe);
 }
 
 static void bcache_promote_pni(struct silofs_bcache *bcache,
                                struct silofs_bnode_info *pni, bool now)
 {
-	silofs_hmapq_promote(&bcache->pc_hmapq, pni_to_hmqe(pni), now);
+	silofs_hmapq_promote(&bcache->bc_hmapq, pni_to_hmqe(pni), now);
 }
 
 
@@ -158,7 +158,7 @@ bcache_new_bti_as_pni(const struct silofs_bcache *bcache,
 {
 	struct silofs_btnode_info *bti;
 
-	bti = silofs_bti_new(paddr, bcache->pc_alloc);
+	bti = silofs_bti_new(paddr, bcache->bc_alloc);
 	return (bti != NULL) ? &bti->btn_bni : NULL;
 }
 
@@ -167,7 +167,7 @@ static void bcache_del_bti_by_pni(const struct silofs_bcache *bcache,
 {
 	struct silofs_btnode_info *bti = bti_from_bni(pni);
 
-	silofs_bti_del(bti, bcache->pc_alloc);
+	silofs_bti_del(bti, bcache->bc_alloc);
 }
 
 static struct silofs_bnode_info *
@@ -176,7 +176,7 @@ bcache_new_bli_as_pni(const struct silofs_bcache *bcache,
 {
 	struct silofs_btleaf_info *bli;
 
-	bli = silofs_bli_new(paddr, bcache->pc_alloc);
+	bli = silofs_bli_new(paddr, bcache->bc_alloc);
 	return (bli != NULL) ? &bli->btl_bni : NULL;
 }
 
@@ -185,7 +185,7 @@ static void bcache_del_bli_by_pni(const struct silofs_bcache *bcache,
 {
 	struct silofs_btleaf_info *bli = bli_from_bni(pni);
 
-	silofs_bli_del(bli, bcache->pc_alloc);
+	silofs_bli_del(bli, bcache->bc_alloc);
 }
 
 static struct silofs_bnode_info *
@@ -247,7 +247,7 @@ static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
 static void bcache_remove_pni(struct silofs_bcache *bcache,
                               struct silofs_bnode_info *pni)
 {
-	silofs_hmapq_remove(&bcache->pc_hmapq, pni_to_hmqe(pni));
+	silofs_hmapq_remove(&bcache->bc_hmapq, pni_to_hmqe(pni));
 }
 
 static void bcache_evict_pni(struct silofs_bcache *bcache,
@@ -264,7 +264,7 @@ bcache_find_evictable_pni(struct silofs_bcache *bcache, bool iterall)
 	struct silofs_bnode_info *pni = NULL;
 	const size_t limit = iterall ? SILOFS_HMAPQ_ITERALL : 10;
 
-	silofs_hmapq_riterate(&bcache->pc_hmapq, limit,
+	silofs_hmapq_riterate(&bcache->bc_hmapq, limit,
 	                      visit_evictable_pni, &pni);
 	return pni;
 }
@@ -306,7 +306,7 @@ bcache_require_pni(struct silofs_bcache *bcache,
 static void bcache_store_pni(struct silofs_bcache *bcache,
                              struct silofs_bnode_info *pni)
 {
-	silofs_hmapq_store(&bcache->pc_hmapq, pni_to_hmqe(pni));
+	silofs_hmapq_store(&bcache->bc_hmapq, pni_to_hmqe(pni));
 }
 
 static struct silofs_bnode_info *
@@ -344,7 +344,7 @@ silofs_bcache_create_bli(struct silofs_bcache *bcache,
 
 static size_t bcache_usage(const struct silofs_bcache *bcache)
 {
-	return silofs_hmapq_usage(&bcache->pc_hmapq);
+	return silofs_hmapq_usage(&bcache->bc_hmapq);
 }
 
 bool silofs_bcache_isempty(const struct silofs_bcache *bcache)
@@ -367,7 +367,7 @@ static size_t bcache_memory_pressure(const struct silofs_bcache *bcache)
 	struct silofs_alloc_stat st;
 	size_t mem_pres = 0;
 
-	silofs_memstat(bcache->pc_alloc, &st);
+	silofs_memstat(bcache->bc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
 	}

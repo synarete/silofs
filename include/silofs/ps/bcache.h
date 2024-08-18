@@ -17,10 +17,13 @@
 #ifndef SILOFS_BCACHE_H_
 #define SILOFS_BCACHE_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+
 
 struct silofs_bcache {
-	struct silofs_hmapq     pc_hmapq;
-	struct silofs_alloc    *pc_alloc;
+	struct silofs_hmapq     bc_hmapq;
+	struct silofs_alloc    *bc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

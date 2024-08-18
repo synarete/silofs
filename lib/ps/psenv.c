@@ -8,25 +8,29 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ *      ut_inspect_ok(ute, dino);
  * Silofs is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
-
-#include <silofs/defs.h>
-#include <silofs/errors.h>
+#include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include <silofs/ps.h>
 
-#include <silofs/ps/crypto.h>
-#include <silofs/ps/blobs.h>
-#include <silofs/ps/repo.h>
-#include <silofs/ps/pnodes.h>
-#include <silofs/ps/bcache.h>
-#include <silofs/ps/psenv.h>
 
-#endif /* SILOFS_PS_H_ */
+int silofs_psenv_init(struct silofs_psenv *psenv,
+                      struct silofs_repo *repo)
+{
+	psenv->repo = repo;
+	psenv->alloc = repo->re.alloc;
+	return silofs_bcache_init(&psenv->bcache, psenv->alloc);
+}
+
+void silofs_psenv_fini(struct silofs_psenv *psenv)
+{
+	silofs_bcache_drop(&psenv->bcache);
+	silofs_bcache_fini(&psenv->bcache);
+	psenv->alloc = NULL;
+	psenv->repo = NULL;
+}

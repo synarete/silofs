@@ -14,19 +14,28 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
+#ifndef SILOFS_PSENV_H_
+#define SILOFS_PSENV_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
 #include <silofs/infra.h>
+#include <silofs/str.h>
 #include <silofs/addr.h>
-
-#include <silofs/ps/crypto.h>
-#include <silofs/ps/blobs.h>
 #include <silofs/ps/repo.h>
-#include <silofs/ps/pnodes.h>
 #include <silofs/ps/bcache.h>
-#include <silofs/ps/psenv.h>
 
-#endif /* SILOFS_PS_H_ */
+
+struct silofs_psenv {
+	struct silofs_repo             *repo;
+	struct silofs_alloc            *alloc;
+	struct silofs_bcache            bcache;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_psenv_init(struct silofs_psenv *psenv,
+                      struct silofs_repo *repo);
+
+void silofs_psenv_fini(struct silofs_psenv *psenv);
+
+
+#endif /* SILOFS_PSENV_H_ */

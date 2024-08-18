@@ -72,8 +72,16 @@ extra_deps=(
   python3-setproctitle
 )
 
+_os_release_id() {
+  grep -E "^ID=" /etc/os-release | awk -F "=" '{print $2}' | tr -d "\""
+}
+
 _install_rpm_pkgs() {
-  dnf install -y --enablerepo=crb "$@"
+  dnf_cmd=(dnf)
+  if [[ "$(_os_release_id)" = centos ]]; then
+      dnf_cmd+=(--enablerepo=crb --enablerepo=epel)
+  fi
+  "${dnf_cmd[@]}" install -y "$@"
 }
 
 arg=${1:-}

@@ -24,10 +24,23 @@
 #include <silofs/ps/bcache.h>
 
 
+struct silofs_prange {
+	struct silofs_psid beg;
+	struct silofs_psid cur;
+	loff_t cur_pos;
+};
+
+struct silofs_pstate {
+	struct silofs_prange    btn;
+	struct silofs_prange    btl;
+	struct silofs_prange    dat;
+};
+
 struct silofs_psenv {
-	struct silofs_repo             *repo;
-	struct silofs_alloc            *alloc;
-	struct silofs_bcache            bcache;
+	struct silofs_repo     *repo;
+	struct silofs_alloc    *alloc;
+	struct silofs_bcache    bcache;
+	struct silofs_pstate    pstate;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -36,6 +49,8 @@ int silofs_psenv_init(struct silofs_psenv *psenv,
                       struct silofs_repo *repo);
 
 void silofs_psenv_fini(struct silofs_psenv *psenv);
+
+void silofs_psenv_format_bt(struct silofs_psenv *psenv);
 
 
 #endif /* SILOFS_PSENV_H_ */

@@ -653,6 +653,11 @@ static int psegf_truncate(const struct silofs_psegf *psegf, ssize_t len)
 	return do_ftruncate(psegf->psf_fd, len);
 }
 
+static int psegf_sync(const struct silofs_psegf *psegf)
+{
+	return do_fsync(psegf->psf_fd);
+}
+
 static struct silofs_psegf *psegf_new(struct silofs_alloc *alloc,
                                       const struct silofs_psid *psid)
 {
@@ -1892,17 +1897,6 @@ static void repo_fini_mutex(struct silofs_repo *repo)
 	silofs_mutex_fini(&repo->re_mutex);
 }
 
-static int repo_init_bstore(struct silofs_repo *repo)
-{
-	return silofs_bstore_init(&repo->re_bstore, repo->re.alloc);
-}
-
-static void repo_fini_bstore(struct silofs_repo *repo)
-{
-	silofs_bstore_fini(&repo->re_bstore);
-}
-
-
 int silofs_repo_init(struct silofs_repo *repo,
                      const struct silofs_repo_base *re_base)
 {
@@ -1927,13 +1921,8 @@ int silofs_repo_init(struct silofs_repo *repo,
 	if (err) {
 		goto out_err;
 	}
-	err = repo_init_bstore(repo);
-	if (err) {
-		goto out_err;
-	}
 	return 0;
 out_err:
-	repo_fini_bstore(repo);
 	repo_fini_mutex(repo);
 	repo_fini_mdigest(repo);
 	return err;
@@ -1944,7 +1933,6 @@ void silofs_repo_fini(struct silofs_repo *repo)
 	repo_close(repo);
 	repo_evict_all(repo);
 	repo_htbl_fini(repo);
-	repo_fini_bstore(repo);
 	repo_fini_mdigest(repo);
 	repo_fini_mutex(repo);
 	listq_fini(&repo->re_lruq);
@@ -2331,13 +2319,6 @@ int silofs_repo_format(struct silofs_repo *repo)
 	return err;
 }
 
-static int repo_open_bstore(struct silofs_repo *repo)
-{
-	return silofs_bstore_openat(&repo->re_bstore,
-	                            repo->re_dots_dfd,
-	                            repo->re_defs->re_blobs_name);
-}
-
 static int repo_do_open(struct silofs_repo *repo)
 {
 	int err;
@@ -2363,10 +2344,6 @@ static int repo_do_open(struct silofs_repo *repo)
 		return err;
 	}
 	err = repo_open_objs_dir(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_open_bstore(repo);
 	if (err) {
 		return err;
 	}
@@ -2398,19 +2375,10 @@ static int repo_close_objs_dir(struct silofs_repo *repo)
 	return do_closefd(&repo->re_objs_dfd);
 }
 
-static int repo_close_bstore(struct silofs_repo *repo)
-{
-	return silofs_bstore_close(&repo->re_bstore);
-}
-
 static int repo_close(struct silofs_repo *repo)
 {
 	int err;
 
-	err = repo_close_bstore(repo);
-	if (err) {
-		return err;
-	}
 	err = repo_close_objs_dir(repo);
 	if (err) {
 		return err;
@@ -3315,6 +3283,42 @@ int silofs_repo_remove_pseg(struct silofs_repo *repo,
 
 	repo_lock(repo);
 	err = repo_remove_pseg(repo, psid);
+	repo_unlock(repo);
+	return err;
+}
+
+static int repo_flush_pseg(struct silofs_repo *repo,
+                           const struct silofs_psid *psid)
+{
+	struct silofs_psegf *psegf = NULL;
+	int err;
+
+	err = repo_check_wopen(repo);
+	if (err) {
+		return err;
+	}
+	err = repo_check_has_pseg(repo, psid);
+	if (err) {
+		return err;
+	}
+	err = repo_stage_pseg(repo, psid, &psegf);
+	if (err) {
+		return err;
+	}
+	err = psegf_sync(psegf);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_repo_flush_pseg(struct silofs_repo *repo,
+                           const struct silofs_psid *psid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_flush_pseg(repo, psid);
 	repo_unlock(repo);
 	return err;
 }

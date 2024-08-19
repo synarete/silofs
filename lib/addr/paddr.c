@@ -91,6 +91,13 @@ bool silofs_psid_has_pvid(const struct silofs_psid *psid,
 	return silofs_pvid_isequal(&psid->pvid, pvid);
 }
 
+void silofs_psid_setup(struct silofs_psid *psid, enum silofs_ptype ptype)
+{
+	silofs_pvid_generate(&psid->pvid);
+	psid->ptype = ptype;
+	psid->index = 1;
+}
+
 void silofs_psid_reset(struct silofs_psid *psid)
 {
 	pvid_reset(&psid->pvid);

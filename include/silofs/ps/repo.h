@@ -47,7 +47,6 @@ struct silofs_repo {
 	struct silofs_repo_htbl         re_htbl;
 	struct silofs_listq             re_lruq;
 	struct silofs_mdigest           re_mdigest;
-	struct silofs_bstore            re_bstore;
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
 	int                             re_objs_dfd;
@@ -132,6 +131,9 @@ int silofs_repo_create_pseg(struct silofs_repo *repo,
 
 int silofs_repo_remove_pseg(struct silofs_repo *repo,
                             const struct silofs_psid *psid);
+
+int silofs_repo_flush_pseg(struct silofs_repo *repo,
+                           const struct silofs_psid *psid);
 
 int silofs_repo_save_pobj(struct silofs_repo *repo,
                           const struct silofs_paddr *paddr,

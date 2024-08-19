@@ -62,6 +62,8 @@ bool silofs_psid_isnull(const struct silofs_psid *psid);
 bool silofs_psid_has_pvid(const struct silofs_psid *psid,
                           const struct silofs_pvid *pvid);
 
+void silofs_psid_setup(struct silofs_psid *psid, enum silofs_ptype ptype);
+
 void silofs_psid_reset(struct silofs_psid *psid);
 
 void silofs_psid_assign(struct silofs_psid *psid,

@@ -23,7 +23,6 @@
 #include <silofs/addr.h>
 
 #include <silofs/ps/crypto.h>
-#include <silofs/ps/blobs.h>
 #include <silofs/ps/repo.h>
 #include <silofs/ps/pnodes.h>
 #include <silofs/ps/bcache.h>

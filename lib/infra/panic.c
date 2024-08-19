@@ -117,9 +117,9 @@ static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool silofs_enable_backtrace = true;
+static bool silofs_backtrace_enabled = true;
 
-static int log_err_bt(const struct silofs_backtrace_args *bt_args)
+static int backtrace_log_err(const struct silofs_backtrace_args *bt_args)
 {
 	silofs_log_error("[<%p>] 0x%lx %s+0x%lx",
 	                 bt_args->ip, bt_args->sp,
@@ -129,19 +129,20 @@ static int log_err_bt(const struct silofs_backtrace_args *bt_args)
 
 void silofs_backtrace(void)
 {
-	if (silofs_enable_backtrace) {
-		silofs_backtrace_calls(log_err_bt);
+	if (silofs_backtrace_enabled) {
+		silofs_backtrace_calls(backtrace_log_err);
 	}
 }
 
 static void silofs_dump_backtrace(void)
 {
 	silofs_backtrace();
-	silofs_enable_backtrace = false;
+	silofs_backtrace_enabled = false;
 }
 
 #ifdef SILOFS_WITH_LIBUNWIND
-static void bt_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
+static void backtrace_addrs_to_str(char *buf, size_t bsz,
+                                   void **bt_arr, int bt_len)
 {
 	size_t len;
 
@@ -165,7 +166,7 @@ static void silofs_dump_addr2line(void)
 	memset(bt_addrs, 0, sizeof(bt_addrs));
 
 	bt_len = unw_backtrace(bt_arr, bt_cnt);
-	bt_addrs_to_str(bt_addrs, sizeof(bt_addrs) - 1, bt_arr, bt_len);
+	backtrace_addrs_to_str(bt_addrs, sizeof(bt_addrs) - 1, bt_arr, bt_len);
 	silofs_log_error("addr2line -a -C -e %s -f -p -s %s",
 	                 program_invocation_name, bt_addrs);
 }

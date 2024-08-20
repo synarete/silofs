@@ -281,6 +281,43 @@ static void test_symlinkat_simple(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects symlinkat(2)/readlinkat(2) with empty string
+ */
+static void test_symlinkat_readlinkat_empty(struct ft_env *fte)
+{
+	struct stat st = { .st_size = -1 };
+	const char *rname = ft_new_name_unique(fte);
+	const char *sname = ft_new_name_unique(fte);
+	const char *dpath = ft_new_path_unique(fte);
+	const char *rpath = ft_new_path_nested(fte, dpath, rname);
+	const size_t symval_bsz = 4096;
+	char *symval = ft_new_buf_zeros(fte, symval_bsz);
+	size_t len = 0;
+	int dfd = -1;
+	int fd = -1;
+
+	ft_mkdir(dpath, 0700);
+	ft_open(dpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	ft_openat(dfd, rname, O_CREAT | O_RDWR, 0600, &fd);
+	ft_close(fd);
+	ft_symlinkat(rpath, dfd, sname);
+	ft_fstatat(dfd, sname, &st, AT_SYMLINK_NOFOLLOW);
+	ft_expect_st_lnk(&st);
+	ft_openat(dfd, sname, O_PATH | O_NOFOLLOW, 0, &fd);
+	ft_fstatat(fd, "", &st, AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW);
+	ft_expect_st_lnk(&st);
+	ft_readlinkat(fd, "", symval, symval_bsz, &len);
+	ft_expect_eq(len, ft_strlen(rpath));
+	ft_expect_eqm(symval, rpath, len);
+	ft_close(fd);
+	ft_unlinkat(dfd, sname, 0);
+	ft_unlinkat(dfd, rname, 0);
+	ft_close(dfd);
+	ft_rmdir(dpath);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_symlink_simple),
@@ -289,6 +326,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_symlink_anylen),
 	FT_DEFTEST(test_symlink_with_io),
 	FT_DEFTEST(test_symlinkat_simple),
+	FT_DEFTEST(test_symlinkat_readlinkat_empty),
 };
 
 const struct ft_tests ft_test_symlink = FT_DEFTESTS(ft_local_tests);

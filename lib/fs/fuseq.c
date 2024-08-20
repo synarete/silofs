@@ -601,6 +601,34 @@ static int task_submit(struct silofs_task *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static uint64_t operid_of(const struct silofs_task *task)
+{
+	return task->t_oper.op_unique;
+}
+
+static uint32_t opcode_of(const struct silofs_task *task)
+{
+	return task->t_oper.op_code;
+}
+
+static int sanitize_err(int err, uint32_t opcode)
+{
+	int err2 = abs(err);
+
+	if (unlikely(err2 >= SILOFS_ERRBASE2)) {
+		fuseq_log_err("internal error: err=%d op=%u", err, opcode);
+		err2 = silofs_remap_status_code(err);
+	} else if (err2 >= SILOFS_ERRBASE) {
+		err2 = silofs_remap_status_code(err);
+	}
+	return -abs(err2);
+}
+
+static int sanitize_err_by(int err, const struct silofs_task *task)
+{
+	return sanitize_err(err, opcode_of(task));
+}
+
 static void fill_out_header(struct fuse_out_header *out_hdr,
                             uint64_t unique, size_t len, int err)
 {
@@ -609,11 +637,17 @@ static void fill_out_header(struct fuse_out_header *out_hdr,
 	out_hdr->unique = unique;
 }
 
-static void
-fill_out_header_by(struct fuse_out_header *out_hdr,
-                   const struct silofs_task *task, size_t len, int err)
+static void fill_out_header_ok(struct fuse_out_header *out_hdr,
+                               const struct silofs_task *task, size_t xlen)
 {
-	fill_out_header(out_hdr, task->t_oper.op_unique, len, err);
+	fill_out_header(out_hdr, operid_of(task), sizeof(*out_hdr) + xlen, 0);
+}
+
+static void fill_out_header_err(struct fuse_out_header *out_hdr,
+                                const struct silofs_task *task, int err)
+{
+	fill_out_header(out_hdr, operid_of(task), sizeof(*out_hdr),
+	                sanitize_err_by(err, task));
 }
 
 static int fqd_send_msg(struct silofs_fuseq_dispatcher *fqd,
@@ -638,17 +672,16 @@ static int fqd_reply_arg(struct silofs_fuseq_dispatcher *fqd,
 {
 	struct fuse_out_header hdr;
 	struct iovec iov[2];
-	const size_t hdrsz = sizeof(hdr);
 	size_t cnt = 1;
 
 	iov[0].iov_base = &hdr;
-	iov[0].iov_len = hdrsz;
+	iov[0].iov_len = sizeof(hdr);
 	if (argsz) {
 		iov[1].iov_base = unconst(arg);
 		iov[1].iov_len = argsz;
 		cnt = 2;
 	}
-	fill_out_header_by(&hdr, task, hdrsz + argsz, 0);
+	fill_out_header_ok(&hdr, task, argsz);
 	return fqd_send_msg(fqd, iov, cnt);
 }
 
@@ -659,16 +692,15 @@ static int fqd_reply_arg2(struct silofs_fuseq_dispatcher *fqd,
 {
 	struct fuse_out_header hdr;
 	struct iovec iov[3];
-	const size_t hdrsz = sizeof(hdr);
 
 	iov[0].iov_base = &hdr;
-	iov[0].iov_len = hdrsz;
+	iov[0].iov_len = sizeof(hdr);
 	iov[1].iov_base = unconst(arg);
 	iov[1].iov_len = argsz;
 	iov[2].iov_base = unconst(buf);
 	iov[2].iov_len = bufsz;
 
-	fill_out_header_by(&hdr, task, hdrsz + argsz + bufsz, 0);
+	fill_out_header_ok(&hdr, task, argsz + bufsz);
 	return fqd_send_msg(fqd, iov, 3);
 }
 
@@ -679,37 +711,17 @@ static int fqd_reply_buf(struct silofs_fuseq_dispatcher *fqd,
 	return fqd_reply_arg(fqd, task, buf, bsz);
 }
 
-static int sanitize_err(int err, uint32_t opcode)
-{
-	int err2 = abs(err);
-
-	if (unlikely(err2 >= SILOFS_ERRBASE2)) {
-		fuseq_log_err("unexpected internal error: "
-		              "err=%d op=%u", err, opcode);
-		err2 = silofs_remap_status_code(err);
-	} else if (err2 >= SILOFS_ERRBASE) {
-		err2 = silofs_remap_status_code(err);
-	}
-	return -abs(err2);
-}
-
-static int sanitize_err_by(int err, const struct silofs_task *task)
-{
-	return sanitize_err(err, task->t_oper.op_code);
-}
-
 static int fqd_reply_err(struct silofs_fuseq_dispatcher *fqd,
                          const struct silofs_task *task, int err)
 {
 	struct fuse_out_header hdr;
-	struct iovec iov[1];
-	const size_t hdrsz = sizeof(hdr);
+	const struct iovec iov = {
+		.iov_base = &hdr,
+		.iov_len = sizeof(hdr)
+	};
 
-	iov[0].iov_base = &hdr;
-	iov[0].iov_len = hdrsz;
-
-	fill_out_header_by(&hdr, task, hdrsz, sanitize_err_by(err, task));
-	return fqd_send_msg(fqd, iov, 1);
+	fill_out_header_err(&hdr, task, err);
+	return fqd_send_msg(fqd, &iov, 1);
 }
 
 static int fqd_reply_intr(struct silofs_fuseq_dispatcher *fqd,
@@ -1204,7 +1216,7 @@ static int fqd_append_hdr_to_pipe(struct silofs_fuseq_dispatcher *fqd,
 	struct fuse_out_header hdr;
 	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
 
-	fill_out_header_by(&hdr, task, sizeof(hdr) + len, 0);
+	fill_out_header_ok(&hdr, task, len);
 	return silofs_pipe_append_from_buf(pipe, &hdr, sizeof(hdr));
 }
 

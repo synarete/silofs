@@ -3613,20 +3613,63 @@ int silofs_do_lseek(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+#define FALLOC_FL_MODE_MASK \
+	(FALLOC_FL_PUNCH_HOLE | \
+	 FALLOC_FL_COLLAPSE_RANGE | \
+	 FALLOC_FL_ZERO_RANGE | \
+	 FALLOC_FL_INSERT_RANGE | \
+	 FALLOC_FL_UNSHARE_RANGE)
+
 /*
  * TODO-0012: Proper hanfling for FALLOC_FL_KEEP_SIZE beyond file size
  *
  * See 'man 2 fallocate' for semantics details of FALLOC_FL_KEEP_SIZE
  * beyond end-of-file.
  */
+/*
+ * TODO-0055: Have FALLOC_FL_ALLOCATE_RANGE
+ */
+/*
+ * TODO-0055: Implement FALLOC_FL_UNSHARE_RANGE
+ *
+ * Allow sub-file ranges to become unshared.
+ */
 static int filc_check_fl_mode(const struct silofs_file_ctx *f_ctx)
 {
-	int mask;
 	const int mode = f_ctx->fl_mode;
+	int mask;
 
+	/* require exclusive modes */
+	mask = FALLOC_FL_MODE_MASK;
+	switch (mode & mask) {
+	case FALLOC_FL_UNSHARE_RANGE:
+	case FALLOC_FL_ZERO_RANGE:
+		break;
+	case FALLOC_FL_PUNCH_HOLE:
+		if (!(mode & FALLOC_FL_KEEP_SIZE)) {
+			return -SILOFS_EOPNOTSUPP;
+		}
+		break;
+	case FALLOC_FL_COLLAPSE_RANGE:
+	case FALLOC_FL_INSERT_RANGE:
+		if (mode & FALLOC_FL_KEEP_SIZE) {
+			return -SILOFS_EOPNOTSUPP;
+		}
+		break;
+	default:
+		if (mode & mask) {
+			return -SILOFS_EOPNOTSUPP;
+		}
+		break;
+	}
 	/* punch hole and zero range are mutually exclusive */
 	mask = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE;
 	if ((mode & mask) == mask) {
+		return -SILOFS_EOPNOTSUPP;
+	}
+	/* currently known modes */
+	mask = FALLOC_FL_MODE_MASK | FALLOC_FL_KEEP_SIZE;
+	if (mode & ~mask) {
 		return -SILOFS_EOPNOTSUPP;
 	}
 	/* currently supported modes */

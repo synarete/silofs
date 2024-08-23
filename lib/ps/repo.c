@@ -2983,7 +2983,7 @@ static int repo_fetch_cached_psegf(const struct silofs_repo *repo,
                                    struct silofs_psegf **out_psegf)
 {
 	*out_psegf = repo_htbl_lookup_psegf(repo, psid);
-	return (*out_psegf == NULL) ? 0 : -SILOFS_ENOENT;
+	return (*out_psegf != NULL) ? 0 : -SILOFS_ENOENT;
 }
 
 static int repo_fetch_cached_psegf2(struct silofs_repo *repo,

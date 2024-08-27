@@ -25,7 +25,6 @@
 struct silofs_psid {
 	struct silofs_pvid      pvid;
 	uint32_t                index;
-	enum silofs_ptype       ptype;
 };
 
 /* persistent object address within specific volume segment */
@@ -33,6 +32,7 @@ struct silofs_paddr {
 	struct silofs_psid      psid;
 	loff_t                  off;
 	size_t                  len;
+	enum silofs_ptype       ptype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -62,7 +62,7 @@ bool silofs_psid_isnull(const struct silofs_psid *psid);
 bool silofs_psid_has_pvid(const struct silofs_psid *psid,
                           const struct silofs_pvid *pvid);
 
-void silofs_psid_setup(struct silofs_psid *psid, enum silofs_ptype ptype);
+void silofs_psid_setup(struct silofs_psid *psid);
 
 void silofs_psid_reset(struct silofs_psid *psid);
 
@@ -90,6 +90,10 @@ const struct silofs_paddr *silofs_paddr_none(void);
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
 void silofs_paddr_reset(struct silofs_paddr *paddr);
+
+void silofs_paddr_setup(struct silofs_paddr *paddr,
+                        const struct silofs_psid *psid,
+                        enum silofs_ptype ptype, loff_t off, size_t len);
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other);

@@ -462,6 +462,7 @@ void silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
 	task->t_ex_locked = false;
 	task->t_exclusive = false;
 	task->t_uber_op = false;
+	task->t_kwrite = false;
 }
 
 void silofs_task_fini(struct silofs_task *task)

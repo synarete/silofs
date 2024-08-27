@@ -153,10 +153,19 @@ static struct silofs_creds *creds_of2(struct silofs_task *task)
 
 static bool op_is_kernel(const struct silofs_task *task)
 {
-	const struct silofs_creds *creds = creds_of(task);
+	const struct silofs_creds *creds;
 
-	return !task->t_oper.op_pid &&
-	       !creds->host_cred.uid && !creds->host_cred.gid;
+	if (task->t_kwrite) {
+		return true;
+	}
+	if (task->t_oper.op_pid) {
+		return false;
+	}
+	creds = creds_of(task);
+	if (!creds->host_cred.uid && !creds->host_cred.gid) {
+		return true;
+	}
+	return false;
 }
 
 static bool op_is_admin(const struct silofs_task *task)

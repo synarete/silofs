@@ -2674,8 +2674,10 @@ static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	const size_t wr_size = fcc->in->u.write.arg.size;
 	const size_t wr_iter_thresh = FUSEQ_RWITER_THRESH;
+	const uint32_t write_flags = fcc->in->u.write.arg.write_flags;
 	int ret;
 
+	fcc->task->t_kwrite = (write_flags & FUSE_WRITE_CACHE) > 0;
 	if ((wr_size >= wr_iter_thresh) && fqd_cap_write_iter(fcc->fqd)) {
 		ret = do_write_iter(fcc);
 	} else {

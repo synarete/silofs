@@ -61,9 +61,6 @@
 #define SILOFS_CMD_FORGET_ONE_MAX \
 	(SILOFS_CMD_TAIL_MAX / sizeof(struct fuse_forget_one))
 
-/* max size for read/write I/O copy-buffer in splice-pipe mode */
-#define FUSEQ_RWITER_THRESH             (SILOFS_PAGE_SIZE_MIN)
-
 /*
  * Currently, there is limitation to output-size of FUSE_COPY_FILE_RANGE: the
  * reply is using fuse_write_out.size which is uint32_t. Thus, we can not
@@ -75,6 +72,8 @@
 
 /* local functions */
 static void fqd_interrupt_op(struct silofs_fuseq_dispatcher *fqd, uint64_t uq);
+static bool fqd_has_large_write_in(const struct silofs_fuseq_dispatcher *fqd);
+static bool fqd_has_large_read_in(const struct silofs_fuseq_dispatcher *fqd);
 static void fuseq_lock_ctl(struct silofs_fuseq *fq);
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq);
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n);
@@ -85,7 +84,6 @@ static int fuseq_block_thread_signals(const struct silofs_fuseq *fq,
                                       const struct silofs_thread *th);
 static int exec_op(struct silofs_task *task, struct silofs_oper_args *args);
 static const struct silofs_fuseq_cmd_desc *cmd_desc_of(unsigned int opc);
-
 
 /* FUSE types per 7.34 */
 struct fuse_setxattr1_in {
@@ -442,7 +440,7 @@ struct silofs_fuseq_rw_iter {
 
 struct silofs_fuseq_cmd_ctx {
 	struct silofs_fuseq            *fq;
-	struct silofs_fuseq_dispatcher     *fqd;
+	struct silofs_fuseq_dispatcher *fqd;
 	struct silofs_task             *task;
 	struct silofs_oper_args        *args;
 	const struct silofs_fuseq_in   *in;
@@ -2435,15 +2433,17 @@ static bool fqd_cap_read_iter(const struct silofs_fuseq_dispatcher *fqd)
 	return fuseq_allowed_splice(fqd->fqd_fq);
 }
 
+static bool fqd_may_read_iter(const struct silofs_fuseq_dispatcher *fqd)
+{
+	return fqd_cap_read_iter(fqd) && fqd_has_large_read_in(fqd);
+}
+
 static int do_read(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	const size_t rd_size = fcc->in->u.read.arg.size;
-	const size_t rd_iter_thresh = FUSEQ_RWITER_THRESH;
 	int ret;
 
 	task_check_fh(fcc->task, fcc->ino, fcc->in->u.read.arg.fh);
-
-	if ((rd_size >= rd_iter_thresh) && fqd_cap_read_iter(fcc->fqd)) {
+	if (fqd_may_read_iter(fcc->fqd)) {
 		ret = do_read_iter(fcc);
 	} else {
 		ret = do_read_buf(fcc);
@@ -2670,15 +2670,24 @@ static bool fqd_cap_write_iter(const struct silofs_fuseq_dispatcher *fqd)
 	return fuseq_allowed_splice(fqd->fqd_fq);
 }
 
+static bool fqd_may_write_iter(const struct silofs_fuseq_dispatcher *fqd)
+{
+	return fqd_cap_write_iter(fqd) && fqd_has_large_write_in(fqd);
+}
+
+static void do_pre_write(const struct silofs_fuseq_cmd_ctx *fcc)
+{
+	if (fcc->in->u.write.arg.write_flags & FUSE_WRITE_CACHE) {
+		fcc->task->t_kwrite = true;
+	}
+}
+
 static int do_write(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	const size_t wr_size = fcc->in->u.write.arg.size;
-	const size_t wr_iter_thresh = FUSEQ_RWITER_THRESH;
-	const uint32_t write_flags = fcc->in->u.write.arg.write_flags;
 	int ret;
 
-	fcc->task->t_kwrite = (write_flags & FUSE_WRITE_CACHE) > 0;
-	if ((wr_size >= wr_iter_thresh) && fqd_cap_write_iter(fcc->fqd)) {
+	do_pre_write(fcc);
+	if (fqd_may_write_iter(fcc->fqd)) {
 		ret = do_write_iter(fcc);
 	} else {
 		ret = do_write_buf(fcc);
@@ -3046,12 +3055,54 @@ static int fqd_check_perm(const struct silofs_fuseq_dispatcher *fqd,
 	return -EACCES;
 }
 
-static struct silofs_fuseq_in *fqd_in_of(const struct silofs_fuseq_dispatcher
-                *fqd)
+static struct silofs_fuseq_in *
+fqd_in_of(const struct silofs_fuseq_dispatcher *fqd)
 {
 	const struct silofs_fuseq_in *in = &fqd->fqd_inb->u.in;
 
 	return unconst(in);
+}
+
+static bool is_large_io(loff_t off, size_t size)
+{
+	loff_t end;
+
+	if (size <= SILOFS_PAGE_SIZE_MIN) {
+		return false;
+	}
+	end = silofs_off_end(off, size);
+	if (end <= SILOFS_LBK_SIZE) {
+		return false;
+	}
+	return true;
+}
+
+static bool fqd_has_large_write_in(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
+	const int opc = (int)in->u.hdr.hdr.opcode;
+	loff_t off = 0;
+	bool ret = false;
+
+	if (opc == FUSE_WRITE) {
+		off = (loff_t)in->u.write.arg.offset;
+		ret = is_large_io(off, in->u.write.arg.size);
+	}
+	return ret;
+}
+
+static bool fqd_has_large_read_in(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
+	const int opc = (int)in->u.hdr.hdr.opcode;
+	loff_t off = 0;
+	bool ret = false;
+
+	if (opc == FUSE_READ) {
+		off = (loff_t)in->u.read.arg.offset;
+		ret = is_large_io(off, in->u.read.arg.size);
+	}
+	return ret;
 }
 
 static void fqd_update_task(const struct silofs_fuseq_dispatcher *fqd,
@@ -3346,15 +3397,6 @@ static int fqd_copy_from_pipe_in(struct silofs_fuseq_dispatcher *fqd,
 	return 0;
 }
 
-static bool fqd_has_long_write_in(const struct silofs_fuseq_dispatcher *fqd)
-{
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
-	const int opc = (int)in->u.hdr.hdr.opcode;
-
-	return (opc == FUSE_WRITE) &&
-	       (in->u.write.arg.size >= FUSEQ_RWITER_THRESH);
-}
-
 /*
  * fuse.ko requires user-space to transfer the entire message (header +
  * sub-command control + data payload) into user-space owned buffer: either
@@ -3391,7 +3433,7 @@ static int fqd_copy_pipe_in(struct silofs_fuseq_dispatcher *fqd)
 	if (unlikely(err)) {
 		return err;
 	}
-	if (!rem || fqd_has_long_write_in(fqd)) {
+	if (!rem || fqd_has_large_write_in(fqd)) {
 		return 0;
 	}
 	err = fqd_copy_from_pipe_in(fqd, ncp1, rem, &ncp2);

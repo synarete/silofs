@@ -141,9 +141,6 @@ void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
 void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
                                  const struct silofs_ulink *sb_ulink);
 
-void silofs_bootrec_cipher_args(const struct silofs_bootrec *brec,
-                                struct silofs_cipher_args *out_cip_args);
-
 void silofs_bootrec_lvid(const struct silofs_bootrec *brec,
                          struct silofs_lvid *out_lvid);
 
@@ -153,11 +150,12 @@ void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
 void silofs_make_bootrec_uaddr(const struct silofs_lvid *lvid,
                                struct silofs_uaddr *out_uaddr);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+int silofs_bootrec_derive_main_ivkey(const struct silofs_bootrec *brec,
+                                     const struct silofs_password *pw,
+                                     const struct silofs_mdigest *md,
+                                     struct silofs_ivkey *out_ivkey);
 
-int silofs_ivkey_for_bootrec(struct silofs_ivkey *ivkey,
-                             const struct silofs_password *passwd,
-                             const struct silofs_mdigest *mdigest);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bootpath_setup(struct silofs_bootpath *bp,
                           const char *repodir, const char *name);
@@ -171,8 +169,6 @@ int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
 int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_default_cip_args(struct silofs_cipher_args *cip_args);
 
 void silofs_calc_key_hash(const struct silofs_key *key,
                           const struct silofs_mdigest *md,

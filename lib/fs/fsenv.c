@@ -270,12 +270,13 @@ static void fsenv_fini_iconv(struct silofs_fsenv *fsenv)
 
 static int fsenv_init_boot_ivkey(struct silofs_fsenv *fsenv)
 {
-	const struct silofs_password *passwd = fsenv->fse.passwd;
+	const struct silofs_password *pw = fsenv->fse.passwd;
+	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
+	struct silofs_ivkey *ivkey = &fsenv->fse_boot_ivkey;
 	int ret = 0;
 
-	if ((passwd != NULL) && passwd->passlen) {
-		ret = silofs_ivkey_for_bootrec(&fsenv->fse_boot_ivkey,
-		                               passwd, &fsenv->fse_mdigest);
+	if ((pw != NULL) && (pw->passlen > 0)) {
+		ret = silofs_derive_boot_ivkey(pw, md, ivkey);
 	}
 	return ret;
 }
@@ -633,15 +634,13 @@ void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
 int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
                                    const struct silofs_bootrec *brec)
 {
-	struct silofs_cipher_args cip_args = { .cipher_algo = 0 };
-	const struct silofs_password *passwd = fsenv->fse.passwd;
+	const struct silofs_password *pw = fsenv->fse.passwd;
 	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
-	struct silofs_ivkey *main_ivkey = &fsenv->fse_main_ivkey;
 	int ret = 0;
 
-	if (passwd && passwd->passlen) {
-		silofs_bootrec_cipher_args(brec, &cip_args);
-		ret = silofs_derive_ivkey(&cip_args, passwd, md, main_ivkey);
+	if ((pw != NULL) && (pw->passlen > 0)) {
+		ret = silofs_bootrec_derive_main_ivkey(brec, pw, md,
+		                                       &fsenv->fse_main_ivkey);
 	}
 	return ret;
 }

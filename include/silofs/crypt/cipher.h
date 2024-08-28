@@ -41,18 +41,29 @@ void silofs_cipher_fini(struct silofs_cipher *ci);
 
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-		       const struct silofs_ivkey *ivkey,
-		       const void *in_dat, void *out_dat, size_t dat_len);
+                       const struct silofs_ivkey *ivkey,
+                       const void *in_dat, void *out_dat, size_t dat_len);
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-		       const struct silofs_ivkey *ivkey,
-		       const void *in_dat, void *out_dat, size_t dat_len);
+                       const struct silofs_ivkey *ivkey,
+                       const void *in_dat, void *out_dat, size_t dat_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_derive_ivkey(const struct silofs_cipher_args *cip_args,
-			const struct silofs_password *pw,
-			const struct silofs_mdigest *md,
-			struct silofs_ivkey *out_ivkey);
+                        const struct silofs_password *pw,
+                        const struct silofs_mdigest *md,
+                        struct silofs_ivkey *out_ivkey);
+
+int silofs_derive_boot_ivkey(const struct silofs_password *pw,
+                             const struct silofs_mdigest *md,
+                             struct silofs_ivkey *out_ivkey);
+
+void silofs_default_cip_args(struct silofs_cipher_args *cip_args);
+
+bool silofs_is_default_cip_args(struct silofs_cipher_args *cip_args);
+
+void silofs_cip_args_assign(struct silofs_cipher_args *cip_args,
+                            const struct silofs_cipher_args *other);
 
 #endif /* SILOFS_CIPHER_H_ */

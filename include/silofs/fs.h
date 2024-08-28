@@ -22,6 +22,8 @@
 #include <silofs/defs.h>
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
+#include <silofs/str.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <silofs/ps.h>
 

@@ -14,18 +14,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
+#ifndef SILOFS_CRYPT_H_
+#define SILOFS_CRYPT_H_
 
-#include <silofs/defs.h>
+#include <silofs/consts.h>
 #include <silofs/errors.h>
+#include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/crypt.h>
-#include <silofs/addr.h>
 
-#include <silofs/ps/repo.h>
-#include <silofs/ps/pnodes.h>
-#include <silofs/ps/bcache.h>
-#include <silofs/ps/psenv.h>
+#include <silofs/crypt/passwd.h>
+#include <silofs/crypt/ivkey.h>
+#include <silofs/crypt/mdigest.h>
+#include <silofs/crypt/cipher.h>
+#include <silofs/crypt/gcry.h>
 
-#endif /* SILOFS_PS_H_ */
+#endif /* SILOFS_CRYPT_H_ */

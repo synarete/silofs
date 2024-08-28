@@ -16,6 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 
 static const struct silofs_uaddr s_uaddr_none = {

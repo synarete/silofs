@@ -14,18 +14,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
+#ifndef SILOFS_PASSWD_H_
+#define SILOFS_PASSWD_H_
 
 #include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/infra.h>
-#include <silofs/crypt.h>
-#include <silofs/addr.h>
+#include <stdlib.h>
 
-#include <silofs/ps/repo.h>
-#include <silofs/ps/pnodes.h>
-#include <silofs/ps/bcache.h>
-#include <silofs/ps/psenv.h>
+/* password octets-buffers */
+struct silofs_password {
+	uint8_t pass[SILOFS_PASSWORD_MAX + 1];
+	size_t passlen;
+};
 
-#endif /* SILOFS_PS_H_ */
+
+int silofs_password_setup(struct silofs_password *pw, const char *pass);
+
+void silofs_password_reset(struct silofs_password *pw);
+
+int silofs_password_check(const struct silofs_password *pw);
+
+#endif /* SILOFS_PASSWD_H_ */

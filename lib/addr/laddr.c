@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <stdio.h>
 

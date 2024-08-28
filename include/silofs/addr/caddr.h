@@ -21,13 +21,14 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 
-/* packed-object identifier */
+/* content-addressable identifier */
 struct silofs_caddr {
 	struct silofs_hash256 hash;
 	uint32_t size;
 	enum silofs_ctype ctype;
 };
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_caddr_reset(struct silofs_caddr *caddr);
 
@@ -63,5 +64,16 @@ void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
 
 void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
                           struct silofs_caddr *caddr);
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct iovec;
+struct silofs_mdigest;
+
+void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
+                          enum silofs_ctype ctype,
+                          const struct silofs_mdigest *md,
+                          struct silofs_caddr *out_caddr);
 
 #endif /* SILOFS_CADDR_H_ */

@@ -23,15 +23,14 @@
 #include <gcrypt.h>
 
 
-struct silofs_cipher {
-	gcry_cipher_hd_t cipher_hd;
+struct silofs_encdec_args {
+	struct silofs_kdf_pair kdf;
 	int cipher_algo;
 	int cipher_mode;
 };
 
-/* cryptographic-cipher arguments */
-struct silofs_cipher_args {
-	struct silofs_kdf_pair kdf;
+struct silofs_cipher {
+	gcry_cipher_hd_t cipher_hd;
 	int cipher_algo;
 	int cipher_mode;
 };
@@ -46,29 +45,24 @@ void silofs_cipher_fini(struct silofs_cipher *ci);
 
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-		       const struct silofs_ivkey *ivkey,
-		       const void *in_dat, void *out_dat, size_t dat_len);
+                       const struct silofs_ivkey *ivkey,
+                       const void *in_dat, void *out_dat, size_t dat_len);
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-		       const struct silofs_ivkey *ivkey,
-		       const void *in_dat, void *out_dat, size_t dat_len);
+                       const struct silofs_ivkey *ivkey,
+                       const void *in_dat, void *out_dat, size_t dat_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_derive_ivkey(const struct silofs_mdigest *md,
-			const struct silofs_password *pw,
-			const struct silofs_kdf_pair *kdf,
-			struct silofs_ivkey *out_ivkey);
+                        const struct silofs_password *pw,
+                        const struct silofs_kdf_pair *kdf,
+                        struct silofs_ivkey *out_ivkey);
 
 int silofs_derive_boot_ivkey(const struct silofs_mdigest *md,
-			     const struct silofs_password *pw,
-			     struct silofs_ivkey *out_ivkey);
+                             const struct silofs_password *pw,
+                             struct silofs_ivkey *out_ivkey);
 
-void silofs_default_cip_args(struct silofs_cipher_args *cip_args);
-
-bool silofs_is_default_cip_args(struct silofs_cipher_args *cip_args);
-
-void silofs_cip_args_assign(struct silofs_cipher_args *cip_args,
-			    const struct silofs_cipher_args *other);
+void silofs_main_encdec_args(struct silofs_encdec_args *ed_args);
 
 #endif /* SILOFS_CIPHER_H_ */

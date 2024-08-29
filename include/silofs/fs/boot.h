@@ -34,7 +34,7 @@ struct silofs_bootpath {
 /* boot-record representation (in-memory) */
 struct silofs_bootrec {
 	struct silofs_ulink             sb_ulink;
-	struct silofs_cipher_args       cip_args;
+	struct silofs_encdec_args       ed_args;
 	struct silofs_uuid              uuid;
 	enum silofs_bootf               flags;
 };

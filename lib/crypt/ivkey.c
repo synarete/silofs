@@ -23,7 +23,7 @@
 static void randomize(void *ptr, size_t len, bool very_strong)
 {
 	const enum gcry_random_level random_level =
-		very_strong ? GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM;
+	        very_strong ? GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM;
 
 	gcry_randomize(ptr, len, random_level);
 }
@@ -39,13 +39,13 @@ void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other)
 }
 
 bool silofs_iv_isequal(const struct silofs_iv *iv,
-		       const struct silofs_iv *iv_other)
+                       const struct silofs_iv *iv_other)
 {
 	return silofs_iv_compare(iv, iv_other) == 0;
 }
 
 long silofs_iv_compare(const struct silofs_iv *iv,
-		       const struct silofs_iv *iv_other)
+                       const struct silofs_iv *iv_other)
 {
 	return memcmp(iv->iv, iv_other->iv, sizeof(iv->iv));
 }
@@ -58,8 +58,8 @@ void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv_other)
 }
 
 void silofs_iv_xor_with2(struct silofs_iv *iv,
-			 const struct silofs_iv *iv1,
-			 const struct silofs_iv *iv2)
+                         const struct silofs_iv *iv1,
+                         const struct silofs_iv *iv2)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
 		iv->iv[i] ^= (iv1->iv[i] ^ iv2->iv[i]);
@@ -94,7 +94,7 @@ void silofs_ivkey_fini(struct silofs_ivkey *ivkey)
 }
 
 void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
-			 const struct silofs_ivkey *other)
+                         const struct silofs_ivkey *other)
 {
 	memcpy(ivkey, other, sizeof(*ivkey));
 }

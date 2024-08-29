@@ -37,7 +37,7 @@ sbi_lsid(const struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void fsenv_bind_sb_lsid(struct silofs_fsenv *fsenv,
-			       const struct silofs_lsid *lsid_new)
+                               const struct silofs_lsid *lsid_new)
 {
 	if (lsid_new) {
 		lsid_assign(&fsenv->fse_sb_lsid, lsid_new);
@@ -47,7 +47,7 @@ static void fsenv_bind_sb_lsid(struct silofs_fsenv *fsenv,
 }
 
 static void fsenv_bind_sbi(struct silofs_fsenv *fsenv,
-			   struct silofs_sb_info *sbi_new)
+                           struct silofs_sb_info *sbi_new)
 {
 	struct silofs_sb_info *sbi_cur = fsenv->fse_sbi;
 
@@ -162,8 +162,8 @@ static size_t fsenv_calc_iopen_limit(const struct silofs_fsenv *fsenv)
 }
 
 static void fsenv_init_commons(struct silofs_fsenv *fsenv,
-			       const struct silofs_fs_args *args,
-			       const struct silofs_fsenv_base *base)
+                               const struct silofs_fs_args *args,
+                               const struct silofs_fsenv_base *base)
 {
 	memcpy(&fsenv->fse_args, args, sizeof(fsenv->fse_args));
 	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
@@ -291,8 +291,8 @@ static void fsenv_fini_ivkeys(struct silofs_fsenv *fsenv)
 }
 
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
-		      const struct silofs_fs_args *args,
-		      const struct silofs_fsenv_base *base)
+                      const struct silofs_fs_args *args,
+                      const struct silofs_fsenv_base *base)
 {
 	int err;
 
@@ -366,11 +366,11 @@ static void make_super_lsid(struct silofs_lsid *out_lsid)
 
 	silofs_lvid_generate(&lvid);
 	silofs_lsid_setup(out_lsid, &lvid, 0, SILOFS_LTYPE_SUPER,
-			  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
+	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
 }
 
 static void make_super_uaddr(const struct silofs_lsid *lsid,
-			     struct silofs_uaddr *out_uaddr)
+                             struct silofs_uaddr *out_uaddr)
 {
 	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
 	silofs_assert_eq(lsid->ltype, SILOFS_LTYPE_SUPER);
@@ -379,15 +379,15 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 }
 
 static void ulink_init(struct silofs_ulink *ulink,
-		       const struct silofs_uaddr *uaddr,
-		       const struct silofs_iv *iv)
+                       const struct silofs_uaddr *uaddr,
+                       const struct silofs_iv *iv)
 {
 	silofs_uaddr_assign(&ulink->uaddr, uaddr);
 	silofs_iv_assign(&ulink->riv, iv);
 }
 
 static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
-				   struct silofs_ulink *out_ulink)
+                                   struct silofs_ulink *out_ulink)
 {
 	struct silofs_lsid lsid;
 	struct silofs_uaddr uaddr;
@@ -400,7 +400,7 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
-				const struct silofs_caddr *caddr)
+                                const struct silofs_caddr *caddr)
 {
 	int ret = 0;
 
@@ -415,14 +415,14 @@ int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
 }
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
-			       const struct silofs_ulink *sb_ulink)
+                               const struct silofs_ulink *sb_ulink)
 {
 	ulink_assign(&fsenv->fse_sb_ulink, sb_ulink);
 }
 
 static int fsenv_spawn_super_at(struct silofs_fsenv *fsenv,
-				const struct silofs_ulink *ulink,
-				struct silofs_sb_info **out_sbi)
+                                const struct silofs_ulink *ulink,
+                                struct silofs_sb_info **out_sbi)
 {
 	int err;
 
@@ -435,7 +435,7 @@ static int fsenv_spawn_super_at(struct silofs_fsenv *fsenv,
 }
 
 static int fsenv_spawn_super_of(struct silofs_fsenv *fsenv,
-				struct silofs_sb_info **out_sbi)
+                                struct silofs_sb_info **out_sbi)
 {
 	struct silofs_ulink ulink = { .uaddr.voff = -1 };
 
@@ -444,7 +444,7 @@ static int fsenv_spawn_super_of(struct silofs_fsenv *fsenv,
 }
 
 static int fsenv_spawn_super(struct silofs_fsenv *fsenv, size_t capacity,
-			     struct silofs_sb_info **out_sbi)
+                             struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -510,7 +510,7 @@ int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv)
 }
 
 static void sbi_make_clone(struct silofs_sb_info *sbi_new,
-			   const struct silofs_sb_info *sbi_cur)
+                           const struct silofs_sb_info *sbi_cur)
 {
 	struct silofs_stats_info *sti_new = &sbi_new->sb_sti;
 	const struct silofs_stats_info *sti_cur = &sbi_cur->sb_sti;
@@ -537,7 +537,7 @@ int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
 }
 
 static void fsenv_rebind_root_sb(struct silofs_fsenv *fsenv,
-				 struct silofs_sb_info *sbi)
+                                 struct silofs_sb_info *sbi)
 {
 	silofs_fsenv_set_sb_ulink(fsenv, sbi_ulink(sbi));
 	fsenv_bind_sb_lsid(fsenv, sbi_lsid(sbi));
@@ -545,8 +545,8 @@ static void fsenv_rebind_root_sb(struct silofs_fsenv *fsenv,
 }
 
 static int fsenv_clone_rebind_super(struct silofs_fsenv *fsenv,
-				    const struct silofs_sb_info *sbi_cur,
-				    struct silofs_sb_info **out_sbi)
+                                    const struct silofs_sb_info *sbi_cur,
+                                    struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -568,7 +568,7 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 }
 
 static void sbi_make_bootrec(const struct silofs_sb_info *sbi,
-			     struct silofs_bootrec *brec)
+                             struct silofs_bootrec *brec)
 {
 	silofs_bootrec_setup(brec);
 	silofs_bootrec_set_sb_ulink(brec, sbi_ulink(sbi));
@@ -580,7 +580,7 @@ static void fsenv_pre_forkfs(struct silofs_fsenv *fsenv)
 }
 
 int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
-			struct silofs_bootrecs *out_brecs)
+                        struct silofs_bootrecs *out_brecs)
 {
 	struct silofs_sb_info *sbi_alt = NULL;
 	struct silofs_sb_info *sbi_new = NULL;
@@ -621,13 +621,13 @@ void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime)
 }
 
 void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
-			    struct silofs_alloc_stat *out_alst)
+                            struct silofs_alloc_stat *out_alst)
 {
 	silofs_memstat(fsenv->fse.alloc, out_alst);
 }
 
 void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
-			   struct silofs_bootpath *out_bootpath)
+                           struct silofs_bootpath *out_bootpath)
 {
 	const struct silofs_fs_bref *bref = &fsenv->fse_args.bref;
 
@@ -635,7 +635,7 @@ void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
 }
 
 int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
-				   const struct silofs_bootrec *brec)
+                                   const struct silofs_bootrec *brec)
 {
 	const struct silofs_password *pw = fsenv->fse.passwd;
 	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
@@ -649,10 +649,10 @@ int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
 }
 
 int silofs_fsenv_update_ciphers(struct silofs_fsenv *fsenv,
-				       const struct silofs_bootrec *brec)
+                                const struct silofs_bootrec *brec)
 {
-	const int algo = brec->cip_args.cipher_algo;
-	const int mode = brec->cip_args.cipher_mode;
+	const int algo = brec->ed_args.cipher_algo;
+	const int mode = brec->ed_args.cipher_mode;
 	int err;
 
 	err = silofs_cipher_reinit(&fsenv->fse_enc_cipher, algo, mode);

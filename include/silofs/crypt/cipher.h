@@ -24,6 +24,8 @@
 
 struct silofs_cipher {
 	gcry_cipher_hd_t cipher_hd;
+	int cipher_algo;
+	int cipher_mode;
 };
 
 /* cryptographic-cipher arguments */

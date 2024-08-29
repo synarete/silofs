@@ -21,10 +21,23 @@
 #include <gcrypt.h>
 
 
-int silofs_cipher_init(struct silofs_cipher *ci)
+static int cipher_check_algo_mode(int algo, int mode)
 {
-	const int algo = GCRY_CIPHER_AES256;
-	const int mode = GCRY_CIPHER_MODE_GCM;
+	if (algo != GCRY_CIPHER_AES256) {
+		silofs_log_warn("unsupported chipher-algo: %d", algo);
+		return -SILOFS_EOPNOTSUPP;
+	}
+	if ((mode != GCRY_CIPHER_MODE_GCM) &&
+	    (mode != GCRY_CIPHER_MODE_CBC) &&
+	    (mode != GCRY_CIPHER_MODE_XTS)) {
+		silofs_log_warn("unsupported chipher-mode: %d", mode);
+		return -SILOFS_EOPNOTSUPP;
+	}
+	return 0;
+}
+
+static int cipher_open(struct silofs_cipher *ci, int algo, int mode)
+{
 	const unsigned int flags = 0; /* XXX GCRY_CIPHER_SECURE ? */
 	gcry_error_t err;
 
@@ -32,14 +45,40 @@ int silofs_cipher_init(struct silofs_cipher *ci)
 	if (err) {
 		return silofs_gcrypt_err(err, "gcry_cipher_open");
 	}
+	ci->cipher_algo = algo;
+	ci->cipher_mode = mode;
+	return 0;
+}
+
+static void cipher_close(struct silofs_cipher *ci)
+{
+	gcry_cipher_close(ci->cipher_hd);
+	ci->cipher_hd = NULL;
+	ci->cipher_algo = GCRY_CIPHER_NONE;
+	ci->cipher_mode = GCRY_CIPHER_MODE_NONE;
+}
+
+int silofs_cipher_init(struct silofs_cipher *ci)
+{
+	const int algo = GCRY_CIPHER_AES256;
+	const int mode = GCRY_CIPHER_MODE_GCM;
+	int err;
+
+	err = cipher_check_algo_mode(algo, mode);
+	if (err) {
+		return err;
+	}
+	err = cipher_open(ci, algo, mode);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
 void silofs_cipher_fini(struct silofs_cipher *ci)
 {
 	if (ci->cipher_hd != NULL) {
-		gcry_cipher_close(ci->cipher_hd);
-		ci->cipher_hd = NULL;
+		cipher_close(ci);
 	}
 }
 

@@ -60,15 +60,16 @@ struct silofs_fsenv_base {
 struct silofs_fsenv {
 	struct silofs_fs_args           fse_args;
 	struct silofs_fsenv_base        fse;
-	struct silofs_ivkey             fse_boot_ivkey;
-	struct silofs_caddr             fse_boot_caddr;
-	struct silofs_caddr             fse_pack_caddr;
-	struct silofs_ivkey             fse_main_ivkey;
 	struct silofs_mutex             fse_mutex;
 	struct silofs_rwlock            fse_rwlock;
-	struct silofs_mdigest           fse_mdigest;
+	struct silofs_ivkey             fse_boot_ivkey;
+	struct silofs_caddr             fse_boot_caddr;
+	struct silofs_cipher            fse_boot_cipher;
 	struct silofs_cipher            fse_enc_cipher;
 	struct silofs_cipher            fse_dec_cipher;
+	struct silofs_mdigest           fse_mdigest;
+	struct silofs_caddr             fse_pack_caddr;
+	struct silofs_ivkey             fse_main_ivkey;
 	struct silofs_oper_stat         fse_op_stat;
 	struct silofs_lsid              fse_sb_lsid;
 	struct silofs_sb_info          *fse_sbi;
@@ -78,13 +79,13 @@ struct silofs_fsenv {
 	enum silofs_env_flags           fse_ctl_flags;
 	iconv_t                         fse_iconv;
 	time_t                          fse_init_time;
-} silofs_aligned64;
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
-                      const struct silofs_fs_args *args,
-                      const struct silofs_fsenv_base *base);
+		      const struct silofs_fs_args *args,
+		      const struct silofs_fsenv_base *base);
 
 void silofs_fsenv_fini(struct silofs_fsenv *fsenv);
 
@@ -99,10 +100,10 @@ void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv);
 int silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
-                                const struct silofs_caddr *caddr);
+				const struct silofs_caddr *caddr);
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
-                               const struct silofs_ulink *ulink);
+			       const struct silofs_ulink *ulink);
 
 int silofs_fsenv_format_super(struct silofs_fsenv *fsenv, size_t capacity);
 
@@ -111,19 +112,22 @@ int silofs_fsenv_reload_super(struct silofs_fsenv *fsenv);
 int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
-                        struct silofs_bootrecs *out_brecs);
+			struct silofs_bootrecs *out_brecs);
 
 void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags);
 
 void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime);
 
 void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
-                            struct silofs_alloc_stat *out_alst);
+			    struct silofs_alloc_stat *out_alst);
 
 void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
-                           struct silofs_bootpath *out_bootpath);
+			   struct silofs_bootpath *out_bootpath);
 
 int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
-                                   const struct silofs_bootrec *brec);
+				   const struct silofs_bootrec *brec);
+
+int silofs_fsenv_update_ciphers(struct silofs_fsenv *fsenv,
+				       const struct silofs_bootrec *brec);
 
 #endif /* SILOFS_FSENV_H_ */

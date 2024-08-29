@@ -21,6 +21,10 @@
 #include <gcrypt.h>
 
 
+#define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
+#define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM
+
+
 static int cipher_check_algo_mode(int algo, int mode)
 {
 	if (algo != GCRY_CIPHER_AES256) {
@@ -64,10 +68,32 @@ int silofs_cipher_init(struct silofs_cipher *ci)
 	const int mode = GCRY_CIPHER_MODE_GCM;
 	int err;
 
+	STATICASSERT_EQ(GCRY_CIPHER_AES256, (int)SILOFS_CIPHER_ALGO_DEFAULT);
+	STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM, (int)SILOFS_CIPHER_MODE_DEFAULT);
+
 	err = cipher_check_algo_mode(algo, mode);
 	if (err) {
 		return err;
 	}
+	err = cipher_open(ci, algo, mode);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_cipher_reinit(struct silofs_cipher *ci, int algo, int mode)
+{
+	int err;
+
+	err = cipher_check_algo_mode(algo, mode);
+	if (err) {
+		return err;
+	}
+	if ((ci->cipher_algo == algo) && (ci->cipher_mode == mode)) {
+		return 0; /* no-op */
+	}
+	cipher_close(ci);
 	err = cipher_open(ci, algo, mode);
 	if (err) {
 		return err;
@@ -82,32 +108,15 @@ void silofs_cipher_fini(struct silofs_cipher *ci)
 	}
 }
 
-static int cipher_verify(const struct silofs_cipher *ci,
-                         const struct silofs_ivkey *ivkey)
-{
-	silofs_unused(ci);
-	if (ivkey->algo != GCRY_CIPHER_AES256) {
-		silofs_log_warn("unsupported chipher-algo: %d", ivkey->algo);
-		return -SILOFS_EOPNOTSUPP;
-	}
-	if ((ivkey->mode != GCRY_CIPHER_MODE_GCM) &&
-	    (ivkey->mode != GCRY_CIPHER_MODE_CBC) &&
-	    (ivkey->mode != GCRY_CIPHER_MODE_XTS)) {
-		silofs_log_warn("unsupported chipher-mode: %d", ivkey->mode);
-		return -SILOFS_EOPNOTSUPP;
-	}
-	return 0;
-}
-
 static int cipher_prepare(const struct silofs_cipher *ci,
-                          const struct silofs_ivkey *ivkey)
+			  const struct silofs_ivkey *ivkey)
 {
-	size_t blklen;
-	gcry_error_t err;
 	const struct silofs_iv *iv = &ivkey->iv;
 	const struct silofs_key *key = &ivkey->key;
+	size_t blklen;
+	gcry_error_t err;
 
-	blklen = gcry_cipher_get_algo_blklen((int)ivkey->algo);
+	blklen = gcry_cipher_get_algo_blklen(ci->cipher_algo);
 	if (blklen > sizeof(iv->iv)) {
 		silofs_log_warn("bad blklen: %lu", blklen);
 		return -SILOFS_EINVAL;
@@ -128,12 +137,12 @@ static int cipher_prepare(const struct silofs_cipher *ci,
 }
 
 static int cipher_encrypt(const struct silofs_cipher *ci,
-                          const void *in_dat, void *out_dat, size_t dat_len)
+			  const void *in_dat, void *out_dat, size_t dat_len)
 {
 	gcry_error_t err;
 
 	err = gcry_cipher_encrypt(ci->cipher_hd, out_dat,
-	                          dat_len, in_dat, dat_len);
+				  dat_len, in_dat, dat_len);
 	if (err) {
 		return silofs_gcrypt_err(err, "gcry_cipher_encrypt");
 	}
@@ -145,12 +154,12 @@ static int cipher_encrypt(const struct silofs_cipher *ci,
 }
 
 static int cipher_decrypt(const struct silofs_cipher *ci,
-                          const void *in_dat, void *out_dat, size_t dat_len)
+			  const void *in_dat, void *out_dat, size_t dat_len)
 {
 	gcry_error_t err;
 
 	err = gcry_cipher_decrypt(ci->cipher_hd, out_dat,
-	                          dat_len, in_dat, dat_len);
+				  dat_len, in_dat, dat_len);
 	if (err) {
 		return silofs_gcrypt_err(err, "gcry_cipher_decrypt");
 	}
@@ -162,15 +171,11 @@ static int cipher_decrypt(const struct silofs_cipher *ci,
 }
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_ivkey *ivkey,
-                       const void *in_dat, void *out_dat, size_t dat_len)
+		       const struct silofs_ivkey *ivkey,
+		       const void *in_dat, void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = cipher_verify(ci, ivkey);
-	if (err) {
-		return err;
-	}
 	err = cipher_prepare(ci, ivkey);
 	if (err) {
 		return err;
@@ -183,15 +188,11 @@ int silofs_encrypt_buf(const struct silofs_cipher *ci,
 }
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_ivkey *ivkey,
-                       const void *in_dat, void *out_dat, size_t dat_len)
+		       const struct silofs_ivkey *ivkey,
+		       const void *in_dat, void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = cipher_verify(ci, ivkey);
-	if (err) {
-		return err;
-	}
 	err = cipher_prepare(ci, ivkey);
 	if (err) {
 		return err;
@@ -205,10 +206,10 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int derive_iv(const struct silofs_kdf_desc *kdf,
-                     const struct silofs_password *pp,
-                     const struct silofs_mdigest *md,
-                     struct silofs_iv *out_iv)
+static int derive_iv(const struct silofs_mdigest *md,
+		     const struct silofs_password *pw,
+		     const struct silofs_kdf_desc *kdf,
+		     struct silofs_iv *out_iv)
 {
 	struct silofs_hash256 salt;
 	gpg_error_t gcry_err;
@@ -216,21 +217,20 @@ static int derive_iv(const struct silofs_kdf_desc *kdf,
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_256) {
 		return -SILOFS_EOPNOTSUPP;
 	}
-	silofs_sha3_256_of(md, pp->pass, pp->passlen, &salt);
-
-	gcry_err = gcry_kdf_derive(pp->pass, pp->passlen,
-	                           (int)kdf->kd_algo, /* GCRY_KDF_PBKDF2 */
-	                           (int)kdf->kd_subalgo, /* GCRY_MD_SHA256 */
-	                           salt.hash, sizeof(salt.hash),
-	                           kdf->kd_iterations, /* 4096 */
-	                           sizeof(out_iv->iv), out_iv->iv);
+	silofs_sha3_256_of(md, pw->pass, pw->passlen, &salt);
+	gcry_err = gcry_kdf_derive(pw->pass, pw->passlen,
+				   (int)kdf->kd_algo, /* GCRY_KDF_PBKDF2 */
+				   (int)kdf->kd_subalgo, /* GCRY_MD_SHA256 */
+				   salt.hash, sizeof(salt.hash),
+				   kdf->kd_iterations, /* 4096 */
+				   sizeof(out_iv->iv), out_iv->iv);
 	return gcry_err ? silofs_gcrypt_err(gcry_err, "gcry_kdf_derive") : 0;
 }
 
-static int derive_key(const struct silofs_kdf_desc *kdf,
-                      const struct silofs_password *pp,
-                      const struct silofs_mdigest *md,
-                      struct silofs_key *out_key)
+static int derive_key(const struct silofs_mdigest *md,
+		      const struct silofs_password *pw,
+		      const struct silofs_kdf_desc *kdf,
+		      struct silofs_key *out_key)
 {
 	struct silofs_hash512 salt;
 	gpg_error_t gcry_err;
@@ -238,21 +238,20 @@ static int derive_key(const struct silofs_kdf_desc *kdf,
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_512) {
 		return -SILOFS_EOPNOTSUPP;
 	}
-	silofs_sha3_512_of(md, pp->pass, pp->passlen, &salt);
-
-	gcry_err = gcry_kdf_derive(pp->pass, pp->passlen,
-	                           (int)kdf->kd_algo, /* GCRY_KDF_SCRYPT */
-	                           (int)kdf->kd_subalgo, /* 8 */
-	                           salt.hash, sizeof(salt.hash),
-	                           kdf->kd_iterations, /* 1024 */
-	                           sizeof(out_key->key), out_key->key);
+	silofs_sha3_512_of(md, pw->pass, pw->passlen, &salt);
+	gcry_err = gcry_kdf_derive(pw->pass, pw->passlen,
+				   (int)kdf->kd_algo, /* GCRY_KDF_SCRYPT */
+				   (int)kdf->kd_subalgo, /* 8 */
+				   salt.hash, sizeof(salt.hash),
+				   kdf->kd_iterations, /* 1024 */
+				   sizeof(out_key->key), out_key->key);
 	return gcry_err ? silofs_gcrypt_err(gcry_err, "gcry_kdf_derive") : 0;
 }
 
-int silofs_derive_ivkey(const struct silofs_cipher_args *cip_args,
-                        const struct silofs_password *pw,
-                        const struct silofs_mdigest *md,
-                        struct silofs_ivkey *out_ivkey)
+int silofs_derive_ivkey(const struct silofs_mdigest *md,
+			const struct silofs_password *pw,
+			const struct silofs_kdf_pair *kdf,
+			struct silofs_ivkey *out_ivkey)
 {
 	int err;
 
@@ -261,16 +260,14 @@ int silofs_derive_ivkey(const struct silofs_cipher_args *cip_args,
 	if (err) {
 		goto out;
 	}
-	err = derive_iv(&cip_args->kdf.kdf_iv, pw, md, &out_ivkey->iv);
+	err = derive_iv(md, pw, &kdf->kdf_iv, &out_ivkey->iv);
 	if (err) {
 		goto out;
 	}
-	err = derive_key(&cip_args->kdf.kdf_key, pw, md, &out_ivkey->key);
+	err = derive_key(md, pw, &kdf->kdf_key, &out_ivkey->key);
 	if (err) {
 		goto out;
 	}
-	out_ivkey->algo = cip_args->cipher_algo;
-	out_ivkey->mode = cip_args->cipher_mode;
 out:
 	return err;
 }
@@ -292,8 +289,8 @@ static const struct silofs_cipher_args s_boot_cip_args = {
 			.kd_salt_md = SILOFS_MD_SHA3_256,
 		},
 	},
-	.cipher_algo = SILOFS_CIPHER_AES256,
-	.cipher_mode = SILOFS_CIPHER_MODE_XTS,
+	.cipher_algo = SILOFS_CIPHER_ALGO_DEFAULT,
+	.cipher_mode = SILOFS_CIPHER_MODE_DEFAULT,
 };
 
 static const struct silofs_cipher_args s_default_cip_args = {
@@ -315,24 +312,24 @@ static const struct silofs_cipher_args s_default_cip_args = {
 	.cipher_mode = SILOFS_CIPHER_MODE_XTS,
 };
 
-int silofs_derive_boot_ivkey(const struct silofs_password *pw,
-                             const struct silofs_mdigest *md,
-                             struct silofs_ivkey *out_ivkey)
+int silofs_derive_boot_ivkey(const struct silofs_mdigest *md,
+				const struct silofs_password *pw,
+			     struct silofs_ivkey *out_ivkey)
 {
 	const struct silofs_cipher_args *cip_args = &s_boot_cip_args;
 
-	return silofs_derive_ivkey(cip_args, pw, md, out_ivkey);
+	return silofs_derive_ivkey(md, pw, &cip_args->kdf, out_ivkey);
 }
 
 
 static bool cip_args_isequal(const struct silofs_cipher_args *cip_args1,
-                             const struct silofs_cipher_args *cip_args2)
+			     const struct silofs_cipher_args *cip_args2)
 {
 	return (memcmp(cip_args1, cip_args2, sizeof(*cip_args1)) == 0);
 }
 
 void silofs_cip_args_assign(struct silofs_cipher_args *cip_args,
-                            const struct silofs_cipher_args *other)
+			    const struct silofs_cipher_args *other)
 {
 	memcpy(cip_args, other, sizeof(*cip_args));
 }

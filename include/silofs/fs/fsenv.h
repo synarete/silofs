@@ -124,10 +124,7 @@ void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
 void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
                            struct silofs_bootpath *out_bootpath);
 
-int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
-                                   const struct silofs_bootrec *brec);
-
-int silofs_fsenv_update_ciphers(struct silofs_fsenv *fsenv,
-                                const struct silofs_bootrec *brec);
+int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
+                           const struct silofs_bootrec *brec);
 
 #endif /* SILOFS_FSENV_H_ */

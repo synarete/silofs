@@ -959,10 +959,25 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int derive_main_ivkey(struct silofs_fsenv *fsenv,
-                             const struct silofs_bootrec *brec)
+static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
+                                struct silofs_bootrec *brec)
 {
-	return silofs_fsenv_derive_main_ivkey(fsenv, brec);
+	const union {
+		uint8_t d[8];
+		time_t t;
+	} u = {
+		.t = fsenv->fse_init_time
+	};
+
+	silofs_bootrec_gen_ivkey(brec);
+	silofs_key_xor_with(&brec->main_ivkey.key, u.d, sizeof(u.d));
+}
+
+static void format_bootrec(const struct silofs_fsenv *fsenv,
+                           struct silofs_bootrec *brec)
+{
+	silofs_bootrec_setup(brec);
+	generate_main_ivkey(fsenv, brec);
 }
 
 static int check_superblock(const struct silofs_fsenv *fsenv)
@@ -1445,7 +1460,7 @@ static int reload_bootrec(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	err = silofs_fsenv_update_ciphers(fsenv, out_brec);
+	err = silofs_fsenv_update_by(fsenv, out_brec);
 	if (err) {
 		return err;
 	}
@@ -1496,8 +1511,8 @@ static int do_format_fs(struct silofs_fsenv *fsenv,
 	struct silofs_bootrec brec;
 	int err;
 
-	silofs_bootrec_setup(&brec);
-	err = silofs_fsenv_update_ciphers(fsenv, &brec);
+	format_bootrec(fsenv, &brec);
+	err = silofs_fsenv_update_by(fsenv, &brec);
 	if (err) {
 		return err;
 	}
@@ -1506,10 +1521,6 @@ static int do_format_fs(struct silofs_fsenv *fsenv,
 		return err;
 	}
 	err = check_owner_ids(fsenv);
-	if (err) {
-		return err;
-	}
-	err = derive_main_ivkey(fsenv, &brec);
 	if (err) {
 		return err;
 	}
@@ -1558,10 +1569,6 @@ static int do_boot_fs(struct silofs_fsenv *fsenv,
 	int err;
 
 	err = reload_bootrec(fsenv, caddr, &brec);
-	if (err) {
-		return err;
-	}
-	err = derive_main_ivkey(fsenv, &brec);
 	if (err) {
 		return err;
 	}
@@ -1731,10 +1738,6 @@ int silofs_unref_fs(struct silofs_fsenv *fsenv,
 	int err;
 
 	err = reload_bootrec(fsenv, caddr, &brec);
-	if (err) {
-		return err;
-	}
-	err = derive_main_ivkey(fsenv, &brec);
 	if (err) {
 		return err;
 	}

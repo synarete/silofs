@@ -23,6 +23,23 @@
 #include <gcrypt.h>
 
 
+#define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
+#define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM
+
+
+struct silofs_kdf_desc {
+	uint32_t                        kd_iterations;
+	uint32_t                        kd_algo;
+	uint16_t                        kd_subalgo;
+	uint16_t                        kd_salt_md;
+	uint32_t                        kd_reserved;
+};
+
+struct silofs_kdf_pair {
+	struct silofs_kdf_desc          kdf_iv;
+	struct silofs_kdf_desc          kdf_key;
+};
+
 struct silofs_encdec_args {
 	struct silofs_kdf_pair kdf;
 	int cipher_algo;
@@ -36,6 +53,9 @@ struct silofs_cipher {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_check_cipher_args(int algo, int mode);
+
 
 int silofs_cipher_init(struct silofs_cipher *ci);
 
@@ -54,15 +74,8 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_derive_ivkey(const struct silofs_mdigest *md,
-                        const struct silofs_password *pw,
-                        const struct silofs_kdf_pair *kdf,
-                        struct silofs_ivkey *out_ivkey);
-
 int silofs_derive_boot_ivkey(const struct silofs_mdigest *md,
                              const struct silofs_password *pw,
                              struct silofs_ivkey *out_ivkey);
-
-void silofs_main_encdec_args(struct silofs_encdec_args *ed_args);
 
 #endif /* SILOFS_CIPHER_H_ */

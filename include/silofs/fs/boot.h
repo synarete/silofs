@@ -33,10 +33,12 @@ struct silofs_bootpath {
 
 /* boot-record representation (in-memory) */
 struct silofs_bootrec {
-	struct silofs_ulink             sb_ulink;
-	struct silofs_encdec_args       ed_args;
 	struct silofs_uuid              uuid;
+	struct silofs_ivkey             main_ivkey;
+	struct silofs_ulink             sb_ulink;
 	enum silofs_bootf               flags;
+	int32_t cipher_algo;
+	int32_t cipher_mode;
 };
 
 /* boot-records pair after fork-fs with their content-addresses */
@@ -135,6 +137,11 @@ void silofs_bootrec_fini(struct silofs_bootrec *brec);
 
 void silofs_bootrec_setup(struct silofs_bootrec *brec);
 
+void silofs_bootrec_set_ivkey(struct silofs_bootrec *brec,
+                              const struct silofs_ivkey *ivkey);
+
+void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec);
+
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink);
 
@@ -149,11 +156,6 @@ void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
 
 void silofs_make_bootrec_uaddr(const struct silofs_lvid *lvid,
                                struct silofs_uaddr *out_uaddr);
-
-int silofs_bootrec_derive_main_ivkey(const struct silofs_bootrec *brec,
-                                     const struct silofs_password *pw,
-                                     const struct silofs_mdigest *md,
-                                     struct silofs_ivkey *out_ivkey);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

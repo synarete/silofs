@@ -129,26 +129,6 @@ int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
 	return 0;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void kdf_to_cpu(const struct silofs_kdf_desc *kd_le,
-                       struct silofs_kdf_desc *kd)
-{
-	kd->kd_iterations = silofs_le32_to_cpu(kd_le->kd_iterations);
-	kd->kd_algo = silofs_le32_to_cpu(kd_le->kd_algo);
-	kd->kd_subalgo = silofs_le16_to_cpu(kd_le->kd_subalgo);
-	kd->kd_salt_md = silofs_le16_to_cpu(kd_le->kd_salt_md);
-}
-
-static void cpu_to_kdf(const struct silofs_kdf_desc *kd,
-                       struct silofs_kdf_desc *kd_le)
-{
-	kd_le->kd_iterations = silofs_cpu_to_le32(kd->kd_iterations);
-	kd_le->kd_algo = silofs_cpu_to_le32(kd->kd_algo);
-	kd_le->kd_subalgo = silofs_cpu_to_le16(kd->kd_subalgo);
-	kd_le->kd_salt_md = silofs_cpu_to_le16(kd->kd_salt_md);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static uint64_t bootrec1k_magic(const struct silofs_bootrec1k *brec1k)
@@ -186,32 +166,18 @@ bootrec1k_set_flags(struct silofs_bootrec1k *brec1k, enum silofs_bootf f)
 	brec1k->br_flags = silofs_cpu_to_le64((uint64_t)f);
 }
 
-static void bootrec1k_kdf(const struct silofs_bootrec1k *brec1k,
-                          struct silofs_kdf_pair *kdf)
+static int32_t bootrec1k_chiper_algo(const struct silofs_bootrec1k *brec1k)
 {
-	kdf_to_cpu(&brec1k->br_kdf_pair.kdf_iv, &kdf->kdf_iv);
-	kdf_to_cpu(&brec1k->br_kdf_pair.kdf_key, &kdf->kdf_key);
+	return (int32_t)silofs_le32_to_cpu(brec1k->br_chiper_algo);
 }
 
-static void bootrec1k_set_kdf(struct silofs_bootrec1k *brec1k,
-                              const struct silofs_kdf_pair *kdf)
+static int32_t bootrec1k_chiper_mode(const struct silofs_bootrec1k *brec1k)
 {
-	cpu_to_kdf(&kdf->kdf_iv, &brec1k->br_kdf_pair.kdf_iv);
-	cpu_to_kdf(&kdf->kdf_key, &brec1k->br_kdf_pair.kdf_key);
-}
-
-static uint32_t bootrec1k_chiper_algo(const struct silofs_bootrec1k *brec1k)
-{
-	return silofs_le32_to_cpu(brec1k->br_chiper_algo);
-}
-
-static uint32_t bootrec1k_chiper_mode(const struct silofs_bootrec1k *brec1k)
-{
-	return silofs_le32_to_cpu(brec1k->br_chiper_mode);
+	return (int32_t)silofs_le32_to_cpu(brec1k->br_chiper_mode);
 }
 
 static void bootrec1k_set_cipher(struct silofs_bootrec1k *brec1k,
-                                 int cipher_algo, int cipher_mode)
+                                 int32_t cipher_algo, int32_t cipher_mode)
 {
 	brec1k->br_chiper_algo = silofs_cpu_to_le32((uint32_t)cipher_algo);
 	brec1k->br_chiper_mode = silofs_cpu_to_le32((uint32_t)cipher_mode);
@@ -219,16 +185,12 @@ static void bootrec1k_set_cipher(struct silofs_bootrec1k *brec1k,
 
 void silofs_bootrec1k_init(struct silofs_bootrec1k *brec1k)
 {
-	struct silofs_encdec_args ed_args;
-
-	silofs_main_encdec_args(&ed_args);
 	silofs_memzero(brec1k, sizeof(*brec1k));
 	bootrec1k_set_magic(brec1k, SILOFS_BOOT_RECORD_MAGIC);
 	bootrec1k_set_version(brec1k, SILOFS_FMT_VERSION);
 	bootrec1k_set_flags(brec1k, SILOFS_BOOTF_NONE);
-	bootrec1k_set_kdf(brec1k, &ed_args.kdf);
-	bootrec1k_set_cipher(brec1k, ed_args.cipher_algo,
-	                     ed_args.cipher_mode);
+	bootrec1k_set_cipher(brec1k, SILOFS_CIPHER_ALGO_DEFAULT,
+	                     SILOFS_CIPHER_MODE_DEFAULT);
 }
 
 void silofs_bootrec1k_fini(struct silofs_bootrec1k *brec1k)
@@ -260,6 +222,18 @@ static void bootrec1k_set_sb_riv(struct silofs_bootrec1k *brec1k,
 	silofs_iv_assign(&brec1k->br_sb_riv, sb_riv);
 }
 
+static void bootrec1k_main_ivkey(const struct silofs_bootrec1k *brec1k,
+                                 struct silofs_ivkey *ivkey)
+{
+	silofs_ivkey_setup(ivkey, &brec1k->br_main_key, &brec1k->br_main_iv);
+}
+
+static void bootrec1k_set_main_ivkey(struct silofs_bootrec1k *brec1k,
+                                     const struct silofs_ivkey *ivkey)
+{
+	silofs_key_assign(&brec1k->br_main_key, &ivkey->key);
+	silofs_iv_assign(&brec1k->br_main_iv, &ivkey->iv);
+}
 
 static int bootrec1k_check_base(const struct silofs_bootrec1k *brec1k)
 {
@@ -301,14 +275,6 @@ static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *brec1k)
 	return 0;
 }
 
-static void bootrec1k_encdec_args(const struct silofs_bootrec1k *brec1k,
-                                  struct silofs_encdec_args *ed_args)
-{
-	bootrec1k_kdf(brec1k, &ed_args->kdf);
-	ed_args->cipher_algo = (int32_t)bootrec1k_chiper_algo(brec1k);
-	ed_args->cipher_mode = (int32_t)bootrec1k_chiper_mode(brec1k);
-}
-
 static void bootrec1k_uuid(const struct silofs_bootrec1k *brec1k,
                            struct silofs_uuid *out_uuid)
 {
@@ -321,25 +287,10 @@ static void bootrec1k_set_uuid(struct silofs_bootrec1k *brec1k,
 	silofs_uuid_assign(&brec1k->br_uuid, uuid);
 }
 
-static bool is_default_encdec_args(const struct silofs_encdec_args *ed_args)
-{
-	struct silofs_encdec_args main_ed_args = {
-		.cipher_algo = 0,
-		.cipher_mode = 0,
-	};
-	int cmp;
-
-	silofs_main_encdec_args(&main_ed_args);
-	cmp = memcmp(ed_args, &main_ed_args, sizeof(*ed_args));
-	return (cmp == 0);
-}
-
 static int bootrec1k_check(const struct silofs_bootrec1k *brec1k)
 {
-	struct silofs_encdec_args ed_args = {
-		.cipher_algo = 0,
-		.cipher_mode = 0,
-	};
+	int algo;
+	int mode;
 	int err;
 
 	err = bootrec1k_check_base(brec1k);
@@ -350,10 +301,11 @@ static int bootrec1k_check(const struct silofs_bootrec1k *brec1k)
 	if (err) {
 		return err;
 	}
-	/* currently, requires default values */
-	bootrec1k_encdec_args(brec1k, &ed_args);
-	if (!is_default_encdec_args(&ed_args)) {
-		return -SILOFS_EINVAL;
+	algo = bootrec1k_chiper_algo(brec1k);
+	mode = bootrec1k_chiper_mode(brec1k);
+	err = silofs_check_cipher_args(algo, mode);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
@@ -426,9 +378,11 @@ void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
 {
 	bootrec1k_sb_uaddr(brec1k, &brec->sb_ulink.uaddr);
 	bootrec1k_sb_riv(brec1k, &brec->sb_ulink.riv);
-	bootrec1k_encdec_args(brec1k, &brec->ed_args);
 	brec->flags = bootrec1k_flags(brec1k);
 	bootrec1k_uuid(brec1k, &brec->uuid);
+	bootrec1k_main_ivkey(brec1k, &brec->main_ivkey);
+	brec->cipher_algo = (int32_t)bootrec1k_chiper_algo(brec1k);
+	brec->cipher_mode = (int32_t)bootrec1k_chiper_mode(brec1k);
 }
 
 void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
@@ -439,6 +393,8 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
 	bootrec1k_set_sb_riv(brec1k, &brec->sb_ulink.riv);
 	bootrec1k_set_flags(brec1k, brec->flags);
 	bootrec1k_set_uuid(brec1k, &brec->uuid);
+	bootrec1k_set_main_ivkey(brec1k, &brec->main_ivkey);
+	bootrec1k_set_cipher(brec1k, brec->cipher_algo, brec->cipher_mode);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -447,8 +403,9 @@ void silofs_bootrec_init(struct silofs_bootrec *brec)
 {
 	silofs_memzero(brec, sizeof(*brec));
 	silofs_ulink_reset(&brec->sb_ulink);
-	silofs_main_encdec_args(&brec->ed_args);
 	brec->flags = SILOFS_BOOTF_NONE;
+	brec->cipher_algo = SILOFS_CIPHER_AES256;
+	brec->cipher_mode = SILOFS_CIPHER_MODE_XTS;
 }
 
 void silofs_bootrec_fini(struct silofs_bootrec *brec)
@@ -462,6 +419,20 @@ void silofs_bootrec_setup(struct silofs_bootrec *brec)
 	silofs_uuid_generate(&brec->uuid);
 }
 
+void silofs_bootrec_set_ivkey(struct silofs_bootrec *brec,
+                              const struct silofs_ivkey *ivkey)
+{
+	silofs_ivkey_assign(&brec->main_ivkey, ivkey);
+}
+
+void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec)
+{
+	struct silofs_ivkey ivkey;
+
+	silofs_ivkey_mkrand(&ivkey);
+	silofs_bootrec_set_ivkey(brec, &ivkey);
+}
+
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink)
 {
@@ -472,26 +443,6 @@ void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *brec,
                                  const struct silofs_ulink *sb_ulink)
 {
 	silofs_ulink_assign(&brec->sb_ulink, sb_ulink);
-}
-
-static void bootrec_encdec_args(const struct silofs_bootrec *brec,
-                                struct silofs_encdec_args *out_ed_args)
-{
-	memcpy(out_ed_args, &brec->ed_args, sizeof(*out_ed_args));
-}
-
-int silofs_bootrec_derive_main_ivkey(const struct silofs_bootrec *brec,
-                                     const struct silofs_password *pw,
-                                     const struct silofs_mdigest *md,
-                                     struct silofs_ivkey *out_ivkey)
-{
-	struct silofs_encdec_args ed_args = {
-		.cipher_algo = 0,
-		.cipher_mode = 0
-	};
-
-	bootrec_encdec_args(brec, &ed_args);
-	return silofs_derive_ivkey(md, pw, &ed_args.kdf, out_ivkey);
 }
 
 void silofs_bootrec_lvid(const struct silofs_bootrec *brec,

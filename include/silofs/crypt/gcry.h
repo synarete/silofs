@@ -25,6 +25,6 @@ const char *silofs_gcrypt_version(void);
 
 int silofs_init_gcrypt(void);
 
-int silofs_gcrypt_err(gcry_error_t gcry_err, const char *fn);
+int silofs_gcrypt_status(gcry_error_t gcry_err, const char *fn);
 
 #endif /* SILOFS_GCRY_H_ */

@@ -38,13 +38,13 @@ int silofs_mdigest_init(struct silofs_mdigest *md)
 
 	err = gcry_md_open(&md->md_hd, 0, 0 /* GCRY_MD_FLAG_SECURE */);
 	if (err) {
-		return silofs_gcrypt_err(err, "gcry_md_open");
+		return silofs_gcrypt_status(err, "gcry_md_open");
 	}
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(algos); ++i) {
 		algo = algos[i];
 		err = gcry_md_enable(md->md_hd, algo);
 		if (err) {
-			return silofs_gcrypt_err(err, "gcry_md_enable");
+			return silofs_gcrypt_status(err, "gcry_md_enable");
 		}
 	}
 	return 0;

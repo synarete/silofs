@@ -625,21 +625,6 @@ struct silofs_vaddr64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_kdf_desc {
-	uint32_t                        kd_iterations;
-	uint32_t                        kd_algo;
-	uint16_t                        kd_subalgo;
-	uint16_t                        kd_salt_md;
-	uint32_t                        kd_reserved;
-} silofs_packed_aligned16;
-
-
-struct silofs_kdf_pair {
-	struct silofs_kdf_desc          kdf_iv;
-	struct silofs_kdf_desc          kdf_key;
-} silofs_packed_aligned32;
-
-
 struct silofs_bootrec1k {
 	uint64_t                        br_magic;
 	uint64_t                        br_version;
@@ -648,8 +633,9 @@ struct silofs_bootrec1k {
 	uint32_t                        br_chiper_algo;
 	uint32_t                        br_chiper_mode;
 	uint8_t                         br_reserved1[16];
-	struct silofs_kdf_pair          br_kdf_pair;
-	uint8_t                         br_reserved2[32];
+	struct silofs_key               br_main_key;
+	struct silofs_iv                br_main_iv;
+	uint8_t                         br_reserved2[16];
 	struct silofs_uaddr64b          br_sb_uaddr;
 	struct silofs_iv                br_sb_riv;
 	uint8_t                         br_reserved3[784];

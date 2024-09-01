@@ -83,6 +83,28 @@ void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_key_assign(struct silofs_key *key, const struct silofs_key *other)
+{
+	memcpy(key, other, sizeof(*key));
+}
+
+void silofs_key_mkrand(struct silofs_key *key)
+{
+	randomize(key->key, sizeof(key->key), true);
+}
+
+void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len)
+{
+	const uint8_t *p = buf;
+	const size_t n = min(len, sizeof(key->key));
+
+	for (size_t i = 0; i < n; ++i) {
+		key->key[i] ^= *p++;
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_ivkey_init(struct silofs_ivkey *ivkey)
 {
 	memset(ivkey, 0, sizeof(*ivkey));
@@ -93,8 +115,22 @@ void silofs_ivkey_fini(struct silofs_ivkey *ivkey)
 	memset(ivkey, 0xC3, sizeof(*ivkey));
 }
 
+void silofs_ivkey_mkrand(struct silofs_ivkey *ivkey)
+{
+	silofs_key_mkrand(&ivkey->key);
+	silofs_iv_mkrand(&ivkey->iv);
+}
+
+void silofs_ivkey_setup(struct silofs_ivkey *ivkey,
+                        const struct silofs_key *key,
+                        const struct silofs_iv *iv)
+{
+	silofs_key_assign(&ivkey->key, key);
+	silofs_iv_assign(&ivkey->iv, iv);
+}
+
 void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
                          const struct silofs_ivkey *other)
 {
-	memcpy(ivkey, other, sizeof(*ivkey));
+	silofs_ivkey_setup(ivkey, &other->key, &other->iv);
 }

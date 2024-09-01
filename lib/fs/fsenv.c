@@ -568,10 +568,18 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 }
 
 static void sbi_make_bootrec(const struct silofs_sb_info *sbi,
-                             struct silofs_bootrec *brec)
+                             struct silofs_bootrec *out_brec)
 {
-	silofs_bootrec_setup(brec);
-	silofs_bootrec_set_sb_ulink(brec, sbi_ulink(sbi));
+	silofs_bootrec_setup(out_brec);
+	silofs_bootrec_set_sb_ulink(out_brec, sbi_ulink(sbi));
+}
+
+static void fsenv_make_bootrec_of(const struct silofs_fsenv *fsenv,
+                                  const struct silofs_sb_info *sbi,
+                                  struct silofs_bootrec *out_brec)
+{
+	sbi_make_bootrec(sbi, out_brec);
+	silofs_bootrec_set_ivkey(out_brec, &fsenv->fse_main_ivkey);
 }
 
 static void fsenv_pre_forkfs(struct silofs_fsenv *fsenv)
@@ -592,14 +600,14 @@ int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	sbi_make_bootrec(sbi_alt, &out_brecs->brec_alt);
+	fsenv_make_bootrec_of(fsenv, sbi_alt, &out_brecs->brec_alt);
 
 	fsenv_pre_forkfs(fsenv);
 	err = fsenv_clone_rebind_super(fsenv, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}
-	sbi_make_bootrec(sbi_new, &out_brecs->brec_new);
+	fsenv_make_bootrec_of(fsenv, sbi_new, &out_brecs->brec_new);
 
 	sbi_mark_fossil(sbi_cur);
 	return 0;
@@ -634,25 +642,11 @@ void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
 	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
 }
 
-int silofs_fsenv_derive_main_ivkey(struct silofs_fsenv *fsenv,
-                                   const struct silofs_bootrec *brec)
+int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
+                           const struct silofs_bootrec *brec)
 {
-	const struct silofs_password *pw = fsenv->fse.passwd;
-	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
-	struct silofs_ivkey *ivkey = &fsenv->fse_main_ivkey;
-	int ret = 0;
-
-	if ((pw != NULL) && (pw->passlen > 0)) {
-		ret = silofs_bootrec_derive_main_ivkey(brec, pw, md, ivkey);
-	}
-	return ret;
-}
-
-int silofs_fsenv_update_ciphers(struct silofs_fsenv *fsenv,
-                                const struct silofs_bootrec *brec)
-{
-	const int algo = brec->ed_args.cipher_algo;
-	const int mode = brec->ed_args.cipher_mode;
+	const int algo = brec->cipher_algo;
+	const int mode = brec->cipher_mode;
 	int err;
 
 	err = silofs_cipher_reinit(&fsenv->fse_enc_cipher, algo, mode);
@@ -663,5 +657,6 @@ int silofs_fsenv_update_ciphers(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
+	silofs_ivkey_assign(&fsenv->fse_main_ivkey, &brec->main_ivkey);
 	return 0;
 }

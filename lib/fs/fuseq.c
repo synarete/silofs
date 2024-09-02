@@ -3413,6 +3413,14 @@ static int fqd_recv_splice_in(struct silofs_fuseq_dispatcher *fqd)
 	return fqd_splice_into_pipe(fqd, fqd->fqd_fq->fq_coni.buffsize);
 }
 
+
+/*
+ * TODO-0056: Copy into in-buffer with offset to make I/O page-aligned
+ *
+ * When doing FUSE_WRITE in non-large mode, copy data into in buffer with
+ * proper initial skip to make each sub-io copy operation touch only a single
+ * memory page. Check that it improves performance.
+ */
 static int fqd_copy_pipe_in(struct silofs_fuseq_dispatcher *fqd)
 {
 	struct silofs_fuseq_in *in = fqd_in_of(fqd);

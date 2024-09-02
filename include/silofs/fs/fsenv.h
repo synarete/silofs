@@ -55,16 +55,26 @@ struct silofs_fsenv_base {
 	struct silofs_fuseq            *fuseq;
 };
 
-/* top-level envinment obejct */
+/* fs two-layers locking */
+struct silofs_fsenv_locks {
+	struct silofs_mutex             mutex;
+	struct silofs_rwlock            rwlock;
+};
+
+/* top-level boot state */
+struct silofs_fsenv_boot {
+	struct silofs_ivkey             ivkey;
+	struct silofs_caddr             caddr;
+	struct silofs_cipher            cipher;
+	struct silofs_bootrec           brec;
+};
+
+/* top-level environment object */
 struct silofs_fsenv {
 	struct silofs_fs_args           fse_args;
 	struct silofs_fsenv_base        fse;
-	struct silofs_mutex             fse_mutex;
-	struct silofs_rwlock            fse_rwlock;
-	struct silofs_ivkey             fse_boot_ivkey;
-	struct silofs_caddr             fse_boot_caddr;
-	struct silofs_cipher            fse_boot_cipher;
-	struct silofs_bootrec           fse_bootrec;
+	struct silofs_fsenv_locks       fse_locks;
+	struct silofs_fsenv_boot        fse_boot;
 	struct silofs_cipher            fse_enc_cipher;
 	struct silofs_cipher            fse_dec_cipher;
 	struct silofs_mdigest           fse_mdigest;

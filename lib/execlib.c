@@ -1505,7 +1505,7 @@ static int commit_bootrec(struct silofs_fsenv *fsenv,
 static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
                                   struct silofs_caddr *out_caddr)
 {
-	caddr_assign(out_caddr, &fsenv->fse_boot_caddr);
+	caddr_assign(out_caddr, &fsenv->fse_boot.caddr);
 }
 
 static int do_format_fs(struct silofs_fsenv *fsenv,

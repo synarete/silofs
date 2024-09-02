@@ -2175,7 +2175,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 
 	silofs_fsenv_bootpath(fsenv, &bootpath);
 	str_to_buf(&bootpath.name.sv, query->u.boot.name, bsz);
-	silofs_caddr_to_name2(&fsenv->fse_boot_caddr, query->u.boot.addr);
+	silofs_caddr_to_name2(&fsenv->fse_boot.caddr, query->u.boot.addr);
 
 	silofs_sbi_fs_uuid(fsenv->fse_sbi, &fs_uuid);
 	silofs_uuid_copyto(&fs_uuid, query->u.boot.fs_uuid);

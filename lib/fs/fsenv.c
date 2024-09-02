@@ -167,11 +167,8 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 {
 	memcpy(&fsenv->fse_args, args, sizeof(fsenv->fse_args));
 	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
-	silofs_bootrec_init(&fsenv->fse_bootrec);
-	silofs_caddr_reset(&fsenv->fse_boot_caddr);
 	silofs_caddr_reset(&fsenv->fse_pack_caddr);
 	silofs_lsid_reset(&fsenv->fse_sb_lsid);
-	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -188,8 +185,6 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 static void fsenv_fini_commons(struct silofs_fsenv *fsenv)
 {
 	memset(&fsenv->fse, 0, sizeof(fsenv->fse));
-	silofs_bootrec_fini(&fsenv->fse_bootrec);
-	silofs_ivkey_fini(&fsenv->fse_boot_ivkey);
 	lsid_reset(&fsenv->fse_sb_lsid);
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -199,13 +194,13 @@ static int fsenv_init_locks(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_rwlock_init(&fsenv->fse_rwlock);
+	err = silofs_rwlock_init(&fsenv->fse_locks.rwlock);
 	if (err) {
 		return err;
 	}
-	err = silofs_mutex_init(&fsenv->fse_mutex);
+	err = silofs_mutex_init(&fsenv->fse_locks.mutex);
 	if (err) {
-		silofs_rwlock_fini(&fsenv->fse_rwlock);
+		silofs_rwlock_fini(&fsenv->fse_locks.rwlock);
 		return err;
 	}
 	return 0;
@@ -213,8 +208,24 @@ static int fsenv_init_locks(struct silofs_fsenv *fsenv)
 
 static void fsenv_fini_locks(struct silofs_fsenv *fsenv)
 {
-	silofs_mutex_fini(&fsenv->fse_mutex);
-	silofs_rwlock_fini(&fsenv->fse_rwlock);
+	silofs_mutex_fini(&fsenv->fse_locks.mutex);
+	silofs_rwlock_fini(&fsenv->fse_locks.rwlock);
+}
+
+static int fsenv_init_boot(struct silofs_fsenv *fsenv)
+{
+	silofs_bootrec_init(&fsenv->fse_boot.brec);
+	silofs_caddr_reset(&fsenv->fse_boot.caddr);
+	silofs_ivkey_init(&fsenv->fse_boot.ivkey);
+	return silofs_cipher_init(&fsenv->fse_boot.cipher);
+}
+
+static void fsenv_fini_boot(struct silofs_fsenv *fsenv)
+{
+	silofs_cipher_fini(&fsenv->fse_boot.cipher);
+	silofs_bootrec_fini(&fsenv->fse_boot.brec);
+	silofs_caddr_reset(&fsenv->fse_boot.caddr);
+	silofs_ivkey_fini(&fsenv->fse_boot.ivkey);
 }
 
 static int fsenv_init_crypto(struct silofs_fsenv *fsenv)
@@ -224,10 +235,6 @@ static int fsenv_init_crypto(struct silofs_fsenv *fsenv)
 	err = silofs_mdigest_init(&fsenv->fse_mdigest);
 	if (err) {
 		return err;
-	}
-	err = silofs_cipher_init(&fsenv->fse_boot_cipher);
-	if (err) {
-		goto out_err;
 	}
 	err = silofs_cipher_init(&fsenv->fse_enc_cipher);
 	if (err) {
@@ -241,7 +248,6 @@ static int fsenv_init_crypto(struct silofs_fsenv *fsenv)
 out_err:
 	silofs_cipher_fini(&fsenv->fse_dec_cipher);
 	silofs_cipher_fini(&fsenv->fse_enc_cipher);
-	silofs_cipher_fini(&fsenv->fse_boot_cipher);
 	silofs_mdigest_fini(&fsenv->fse_mdigest);
 	return err;
 }
@@ -287,6 +293,10 @@ int silofs_fsenv_init(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
+	err = fsenv_init_boot(fsenv);
+	if (err) {
+		goto out_err;
+	}
 	err = fsenv_init_crypto(fsenv);
 	if (err) {
 		goto out_err;
@@ -306,39 +316,40 @@ void silofs_fsenv_fini(struct silofs_fsenv *fsenv)
 	fsenv_bind_sbi(fsenv, NULL);
 	fsenv_fini_iconv(fsenv);
 	fsenv_fini_crypto(fsenv);
+	fsenv_fini_boot(fsenv);
 	fsenv_fini_locks(fsenv);
 	fsenv_fini_commons(fsenv);
 }
 
 void silofs_fsenv_lock(struct silofs_fsenv *fsenv)
 {
-	silofs_mutex_lock(&fsenv->fse_mutex);
+	silofs_mutex_lock(&fsenv->fse_locks.mutex);
 }
 
 void silofs_fsenv_unlock(struct silofs_fsenv *fsenv)
 {
-	silofs_mutex_unlock(&fsenv->fse_mutex);
+	silofs_mutex_unlock(&fsenv->fse_locks.mutex);
 }
 
 void silofs_fsenv_rwlock(struct silofs_fsenv *fsenv, bool ex)
 {
 	if (ex) {
-		silofs_rwlock_wrlock(&fsenv->fse_rwlock);
+		silofs_rwlock_wrlock(&fsenv->fse_locks.rwlock);
 	} else {
-		silofs_rwlock_rdlock(&fsenv->fse_rwlock);
+		silofs_rwlock_rdlock(&fsenv->fse_locks.rwlock);
 	}
 }
 
 void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv)
 {
-	silofs_rwlock_unlock(&fsenv->fse_rwlock);
+	silofs_rwlock_unlock(&fsenv->fse_locks.rwlock);
 }
 
 int silofs_fsenv_setup(struct silofs_fsenv *fsenv,
                        const struct silofs_password *pw)
 {
 	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
-	struct silofs_ivkey *ivkey = &fsenv->fse_boot_ivkey;
+	struct silofs_ivkey *ivkey = &fsenv->fse_boot.ivkey;
 	int ret = 0;
 
 	if ((pw != NULL) && (pw->passlen > 0)) {
@@ -378,12 +389,13 @@ static void ulink_init(struct silofs_ulink *ulink,
 static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
                                    struct silofs_ulink *out_ulink)
 {
-	struct silofs_lsid lsid;
-	struct silofs_uaddr uaddr;
+	struct silofs_lsid lsid = { .lsize = 0 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
+	const struct silofs_iv *iv = &fsenv->fse_boot.brec.main_ivkey.iv;
 
 	make_super_lsid(&lsid);
 	make_super_uaddr(&lsid, &uaddr);
-	ulink_init(out_ulink, &uaddr, &fsenv->fse_bootrec.main_ivkey.iv);
+	ulink_init(out_ulink, &uaddr, iv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -394,7 +406,7 @@ int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
 	int ret = 0;
 
 	if (caddr->ctype == SILOFS_CTYPE_BOOTREC) {
-		caddr_assign(&fsenv->fse_boot_caddr, caddr);
+		caddr_assign(&fsenv->fse_boot.caddr, caddr);
 	} else if (caddr->ctype == SILOFS_CTYPE_PACKIDX) {
 		caddr_assign(&fsenv->fse_pack_caddr, caddr);
 	} else if (caddr->ctype != SILOFS_CTYPE_NONE) {
@@ -560,7 +572,7 @@ static void fsenv_make_bootrec_of(const struct silofs_fsenv *fsenv,
                                   const struct silofs_sb_info *sbi,
                                   struct silofs_bootrec *out_brec)
 {
-	silofs_bootrec_assign(out_brec, &fsenv->fse_bootrec);
+	silofs_bootrec_assign(out_brec, &fsenv->fse_boot.brec);
 	silofs_bootrec_gen_uuid(out_brec);
 	silofs_bootrec_set_sb_ulink(out_brec, sbi_ulink(sbi));
 }
@@ -640,6 +652,6 @@ int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	silofs_bootrec_assign(&fsenv->fse_bootrec, brec);
+	silofs_bootrec_assign(&fsenv->fse_boot.brec, brec);
 	return 0;
 }

@@ -585,8 +585,8 @@ int silofs_encode_bootrec(const struct silofs_fsenv *fsenv,
                           struct silofs_bootrec1k *out_brec1k)
 {
 	const struct silofs_mdigest *mdigest = &fsenv->fse_mdigest;
-	const struct silofs_cipher *cipher = &fsenv->fse_boot_cipher;
-	const struct silofs_ivkey *ivkey = &fsenv->fse_boot_ivkey;
+	const struct silofs_cipher *cipher = &fsenv->fse_boot.cipher;
+	const struct silofs_ivkey *ivkey = &fsenv->fse_boot.ivkey;
 
 	return bootrec_encode(brec, mdigest, cipher, ivkey, out_brec1k);
 }
@@ -596,8 +596,8 @@ int silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
                           struct silofs_bootrec *out_brec)
 {
 	const struct silofs_mdigest *mdigest = &fsenv->fse_mdigest;
-	const struct silofs_cipher *cipher = &fsenv->fse_boot_cipher;
-	const struct silofs_ivkey *ivkey = &fsenv->fse_boot_ivkey;
+	const struct silofs_cipher *cipher = &fsenv->fse_boot.cipher;
+	const struct silofs_ivkey *ivkey = &fsenv->fse_boot.ivkey;
 
 	return bootrec_decode(out_brec, mdigest, cipher, ivkey, brec1k_enc);
 }

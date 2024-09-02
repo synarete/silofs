@@ -882,7 +882,7 @@ static const struct silofs_caddr *
 pac_fs_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 {
 	const struct silofs_fsenv *fsenv = pa_ctx->pac_fsenv;
-	const struct silofs_caddr *caddr = &fsenv->fse_boot_caddr;
+	const struct silofs_caddr *caddr = &fsenv->fse_boot.caddr;
 
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_BOOTREC);
 	return caddr;

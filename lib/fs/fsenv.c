@@ -167,11 +167,11 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 {
 	memcpy(&fsenv->fse_args, args, sizeof(fsenv->fse_args));
 	memcpy(&fsenv->fse, base, sizeof(fsenv->fse));
+	silofs_bootrec_init(&fsenv->fse_bootrec);
 	silofs_caddr_reset(&fsenv->fse_boot_caddr);
 	silofs_caddr_reset(&fsenv->fse_pack_caddr);
 	silofs_lsid_reset(&fsenv->fse_sb_lsid);
 	silofs_ivkey_init(&fsenv->fse_boot_ivkey);
-	silofs_ivkey_init(&fsenv->fse_main_ivkey);
 	fsenv->fse_init_time = silofs_time_now_monotonic();
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -188,8 +188,8 @@ static void fsenv_init_commons(struct silofs_fsenv *fsenv,
 static void fsenv_fini_commons(struct silofs_fsenv *fsenv)
 {
 	memset(&fsenv->fse, 0, sizeof(fsenv->fse));
+	silofs_bootrec_fini(&fsenv->fse_bootrec);
 	silofs_ivkey_fini(&fsenv->fse_boot_ivkey);
-	silofs_ivkey_fini(&fsenv->fse_main_ivkey);
 	lsid_reset(&fsenv->fse_sb_lsid);
 	fsenv->fse_iconv = (iconv_t)(-1);
 	fsenv->fse_sbi = NULL;
@@ -271,25 +271,6 @@ static void fsenv_fini_iconv(struct silofs_fsenv *fsenv)
 	}
 }
 
-static int fsenv_init_boot_ivkey(struct silofs_fsenv *fsenv)
-{
-	const struct silofs_password *pw = fsenv->fse.passwd;
-	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
-	struct silofs_ivkey *ivkey = &fsenv->fse_boot_ivkey;
-	int ret = 0;
-
-	if ((pw != NULL) && (pw->passlen > 0)) {
-		ret = silofs_derive_boot_ivkey(md, pw, ivkey);
-	}
-	return ret;
-}
-
-static void fsenv_fini_ivkeys(struct silofs_fsenv *fsenv)
-{
-	silofs_ivkey_fini(&fsenv->fse_boot_ivkey);
-	silofs_ivkey_fini(&fsenv->fse_main_ivkey);
-}
-
 int silofs_fsenv_init(struct silofs_fsenv *fsenv,
                       const struct silofs_fs_args *args,
                       const struct silofs_fsenv_base *base)
@@ -310,10 +291,6 @@ int silofs_fsenv_init(struct silofs_fsenv *fsenv,
 	if (err) {
 		goto out_err;
 	}
-	err = fsenv_init_boot_ivkey(fsenv);
-	if (err) {
-		goto out_err;
-	}
 	err = fsenv_init_iconv(fsenv);
 	if (err) {
 		goto out_err;
@@ -328,7 +305,6 @@ void silofs_fsenv_fini(struct silofs_fsenv *fsenv)
 {
 	fsenv_bind_sbi(fsenv, NULL);
 	fsenv_fini_iconv(fsenv);
-	fsenv_fini_ivkeys(fsenv);
 	fsenv_fini_crypto(fsenv);
 	fsenv_fini_locks(fsenv);
 	fsenv_fini_commons(fsenv);
@@ -356,6 +332,19 @@ void silofs_fsenv_rwlock(struct silofs_fsenv *fsenv, bool ex)
 void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv)
 {
 	silofs_rwlock_unlock(&fsenv->fse_rwlock);
+}
+
+int silofs_fsenv_setup(struct silofs_fsenv *fsenv,
+                       const struct silofs_password *pw)
+{
+	const struct silofs_mdigest *md = &fsenv->fse_mdigest;
+	struct silofs_ivkey *ivkey = &fsenv->fse_boot_ivkey;
+	int ret = 0;
+
+	if ((pw != NULL) && (pw->passlen > 0)) {
+		ret = silofs_derive_boot_ivkey(md, pw, ivkey);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -394,7 +383,7 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 	make_super_lsid(&lsid);
 	make_super_uaddr(&lsid, &uaddr);
-	ulink_init(out_ulink, &uaddr, &fsenv->fse_main_ivkey.iv);
+	ulink_init(out_ulink, &uaddr, &fsenv->fse_bootrec.main_ivkey.iv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -567,19 +556,13 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
 }
 
-static void sbi_make_bootrec(const struct silofs_sb_info *sbi,
-                             struct silofs_bootrec *out_brec)
-{
-	silofs_bootrec_setup(out_brec);
-	silofs_bootrec_set_sb_ulink(out_brec, sbi_ulink(sbi));
-}
-
 static void fsenv_make_bootrec_of(const struct silofs_fsenv *fsenv,
                                   const struct silofs_sb_info *sbi,
                                   struct silofs_bootrec *out_brec)
 {
-	sbi_make_bootrec(sbi, out_brec);
-	silofs_bootrec_set_ivkey(out_brec, &fsenv->fse_main_ivkey);
+	silofs_bootrec_assign(out_brec, &fsenv->fse_bootrec);
+	silofs_bootrec_gen_uuid(out_brec);
+	silofs_bootrec_set_sb_ulink(out_brec, sbi_ulink(sbi));
 }
 
 static void fsenv_pre_forkfs(struct silofs_fsenv *fsenv)
@@ -657,6 +640,6 @@ int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	silofs_ivkey_assign(&fsenv->fse_main_ivkey, &brec->main_ivkey);
+	silofs_bootrec_assign(&fsenv->fse_bootrec, brec);
 	return 0;
 }

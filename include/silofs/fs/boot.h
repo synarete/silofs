@@ -137,6 +137,11 @@ void silofs_bootrec_fini(struct silofs_bootrec *brec);
 
 void silofs_bootrec_setup(struct silofs_bootrec *brec);
 
+void silofs_bootrec_assign(struct silofs_bootrec *brec,
+                           const struct silofs_bootrec *other);
+
+void silofs_bootrec_gen_uuid(struct silofs_bootrec *brec);
+
 void silofs_bootrec_set_ivkey(struct silofs_bootrec *brec,
                               const struct silofs_ivkey *ivkey);
 

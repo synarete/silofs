@@ -416,6 +416,22 @@ void silofs_bootrec_fini(struct silofs_bootrec *brec)
 void silofs_bootrec_setup(struct silofs_bootrec *brec)
 {
 	silofs_bootrec_init(brec);
+	silofs_bootrec_gen_uuid(brec);
+}
+
+void silofs_bootrec_assign(struct silofs_bootrec *brec,
+                           const struct silofs_bootrec *other)
+{
+	silofs_uuid_assign(&brec->uuid, &other->uuid);
+	silofs_ivkey_assign(&brec->main_ivkey, &other->main_ivkey);
+	silofs_ulink_assign(&brec->sb_ulink, &other->sb_ulink);
+	brec->flags = other->flags;
+	brec->cipher_algo = other->cipher_algo;
+	brec->cipher_mode = other->cipher_mode;
+}
+
+void silofs_bootrec_gen_uuid(struct silofs_bootrec *brec)
+{
 	silofs_uuid_generate(&brec->uuid);
 }
 

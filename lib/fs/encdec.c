@@ -28,7 +28,7 @@ static void resolve_ivkey_of(const struct silofs_fsenv *fsenv,
 	struct silofs_iv laddriv;
 
 	silofs_laddr_as_iv(laddr, &laddriv);
-	silofs_ivkey_assign(out_ivkey, &fsenv->fse_main_ivkey);
+	silofs_ivkey_assign(out_ivkey, &fsenv->fse_bootrec.main_ivkey);
 	silofs_iv_xor_with2(&out_ivkey->iv, &laddriv, seediv);
 }
 

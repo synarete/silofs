@@ -397,7 +397,6 @@ static void fs_ctx_destroy_idsmap(struct silofs_fs_ctx *fs_ctx)
 static int fs_ctx_setup_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_fsenv_base fse_base = {
-		.passwd = fs_ctx->password,
 		.alloc = fs_ctx->alloc,
 		.lcache = fs_ctx->lcache,
 		.repo = fs_ctx->repo,
@@ -411,6 +410,10 @@ static int fs_ctx_setup_fsenv(struct silofs_fs_ctx *fs_ctx)
 
 	fsenv = &fs_ctx->inst->fs_core.c.fsenv;
 	err = silofs_fsenv_init(fsenv, &fs_ctx->args, &fse_base);
+	if (err) {
+		return err;
+	}
+	err = silofs_fsenv_setup(fsenv, fs_ctx->password);
 	if (err) {
 		return err;
 	}

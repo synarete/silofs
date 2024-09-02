@@ -17,6 +17,7 @@
 #ifndef SILOFS_FUSEQ_H_
 #define SILOFS_FUSEQ_H_
 
+#include <silofs/infra.h>
 
 /* fuse-q machinery */
 struct silofs_fuseq_conn_info {

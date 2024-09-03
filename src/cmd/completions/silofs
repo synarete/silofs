@@ -139,7 +139,7 @@ _silofs_archive() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-n --name= -h' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-n --into= -h' -- "$cur") )
   fi
 }
 
@@ -148,7 +148,7 @@ _silofs_restore() {
   _init_completion || return
 
   if [[ "$cur" == -* ]]; then
-    COMPREPLY+=( $(compgen -W '-n --name= -h' -- "$cur") )
+    COMPREPLY+=( $(compgen -W '-n --from= -h' -- "$cur") )
   fi
 }
 

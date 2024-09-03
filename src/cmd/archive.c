@@ -51,7 +51,7 @@ static void cmd_archive_parse_optargs(struct cmd_archive_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
 		{ "into", 'n', 1 },
-		{ "password", 'p', 0 },
+		{ "password", 'p', 1 },
 		{ "no-prompt", 'P', 0 },
 		{ "loglevel", 'L', 1 },
 		{ "help", 'h', 0 },

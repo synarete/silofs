@@ -111,12 +111,6 @@ void silofs_fsenv_rwunlock(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_shut(struct silofs_fsenv *fsenv);
 
-int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
-                                const struct silofs_caddr *caddr);
-
-void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
-                               const struct silofs_ulink *ulink);
-
 int silofs_fsenv_format_super(struct silofs_fsenv *fsenv, size_t capacity);
 
 int silofs_fsenv_reload_super(struct silofs_fsenv *fsenv);
@@ -138,5 +132,15 @@ void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
 
 int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
                            const struct silofs_bootrec *brec);
+
+void silofs_fsenv_set_boot_caddr(struct silofs_fsenv *fsenv,
+                                 const struct silofs_caddr *caddr);
+
+void silofs_fsenv_set_pack_caddr(struct silofs_fsenv *fsenv,
+                                 const struct silofs_caddr *caddr);
+
+void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
+                               const struct silofs_ulink *ulink);
+
 
 #endif /* SILOFS_FSENV_H_ */

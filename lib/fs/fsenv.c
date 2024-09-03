@@ -62,13 +62,6 @@ static void fsenv_bind_sbi(struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int fsenv_update_base_caddr(struct silofs_fsenv *fsenv)
-{
-	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
-
-	return silofs_fsenv_set_base_caddr(fsenv, &fs_args->bref.caddr);
-}
-
 static void fsenv_update_owner(struct silofs_fsenv *fsenv)
 {
 	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
@@ -141,12 +134,36 @@ static void fsenv_update_ctlflags(struct silofs_fsenv *fsenv)
 	}
 }
 
+static int fsenv_update_base_caddr(struct silofs_fsenv *fsenv)
+{
+	const struct silofs_fs_args *fs_args = &fsenv->fse_args;
+	const struct silofs_caddr *caddr = &fs_args->bref.caddr;
+	int ret = 0;
+
+	switch (caddr->ctype) {
+	case SILOFS_CTYPE_BOOTREC:
+		silofs_fsenv_set_boot_caddr(fsenv, caddr);
+		break;
+	case SILOFS_CTYPE_PACKIDX:
+		silofs_fsenv_set_pack_caddr(fsenv, caddr);
+		break;
+	case SILOFS_CTYPE_NONE:
+		break;
+	case SILOFS_CTYPE_ENCSEG:
+	default:
+		log_err("bad fs-args boot-ref: ctype=%d", caddr->ctype);
+		ret = -SILOFS_EINVAL;
+		break;
+	}
+	return ret;
+}
+
 static int fsenv_update_by_fs_args(struct silofs_fsenv *fsenv)
 {
+
 	fsenv_update_owner(fsenv);
 	fsenv_update_mntflags(fsenv);
 	fsenv_update_ctlflags(fsenv);
-
 	return fsenv_update_base_caddr(fsenv);
 }
 
@@ -400,19 +417,20 @@ static void fsenv_make_super_ulink(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_fsenv_set_base_caddr(struct silofs_fsenv *fsenv,
-                                const struct silofs_caddr *caddr)
+void silofs_fsenv_set_boot_caddr(struct silofs_fsenv *fsenv,
+                                 const struct silofs_caddr *caddr)
 {
-	int ret = 0;
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_BOOTREC);
 
-	if (caddr->ctype == SILOFS_CTYPE_BOOTREC) {
-		caddr_assign(&fsenv->fse_boot.caddr, caddr);
-	} else if (caddr->ctype == SILOFS_CTYPE_PACKIDX) {
-		caddr_assign(&fsenv->fse_pack_caddr, caddr);
-	} else if (caddr->ctype != SILOFS_CTYPE_NONE) {
-		ret = -SILOFS_EINVAL;
-	}
-	return ret;
+	caddr_assign(&fsenv->fse_boot.caddr, caddr);
+}
+
+void silofs_fsenv_set_pack_caddr(struct silofs_fsenv *fsenv,
+                                 const struct silofs_caddr *caddr)
+{
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
+
+	caddr_assign(&fsenv->fse_pack_caddr, caddr);
 }
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv *fsenv,
@@ -637,11 +655,8 @@ void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
 	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
 }
 
-int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
-                           const struct silofs_bootrec *brec)
+static int fsenv_reinit_ciphers(struct silofs_fsenv *fsenv, int algo, int mode)
 {
-	const int algo = brec->cipher_algo;
-	const int mode = brec->cipher_mode;
 	int err;
 
 	err = silofs_cipher_reinit(&fsenv->fse_enc_cipher, algo, mode);
@@ -652,6 +667,45 @@ int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+static int fsenv_reinit_ciphers_by(struct silofs_fsenv *fsenv,
+                                   const struct silofs_bootrec *brec)
+{
+	const int algo = brec->cipher_algo;
+	const int mode = brec->cipher_mode;
+
+	return fsenv_reinit_ciphers(fsenv, algo, mode);
+}
+
+static int fsenv_update_bootrec(struct silofs_fsenv *fsenv,
+                                const struct silofs_bootrec *brec)
+{
+	struct silofs_caddr caddr;
+	int err;
+
+	err = silofs_calc_bootrec_caddr(fsenv, brec, &caddr);
+	if (err) {
+		return err;
+	}
+	silofs_fsenv_set_boot_caddr(fsenv, &caddr);
 	silofs_bootrec_assign(&fsenv->fse_boot.brec, brec);
+	return 0;
+}
+
+int silofs_fsenv_update_by(struct silofs_fsenv *fsenv,
+                           const struct silofs_bootrec *brec)
+{
+	int err;
+
+	err = fsenv_reinit_ciphers_by(fsenv, brec);
+	if (err) {
+		return err;
+	}
+	err = fsenv_update_bootrec(fsenv, brec);
+	if (err) {
+		return err;
+	}
 	return 0;
 }

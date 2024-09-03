@@ -625,6 +625,24 @@ static int verify_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
 	return caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOT;
 }
 
+int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
+                              const struct silofs_bootrec *brec,
+                              struct silofs_caddr *out_caddr)
+{
+	struct silofs_bootrec1k brec1k_enc = {
+		.br_magic = 1,
+	};
+	int err;
+
+	err = silofs_encode_bootrec(fsenv, brec, &brec1k_enc);
+	if (err) {
+		log_err("failed to encode bootrec: err=%d", err);
+		return err;
+	}
+	calc_bootrec1k_caddr(fsenv, &brec1k_enc, out_caddr);
+	return 0;
+}
+
 int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
                         const struct silofs_bootrec *brec,
                         struct silofs_caddr *out_caddr)
@@ -656,20 +674,6 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 		return err;
 	}
 	silofs_caddr_assign(out_caddr, &caddr);
-	return 0;
-}
-
-int silofs_resave_bootrec(struct silofs_fsenv *fsenv,
-                          const struct silofs_bootrec *brec)
-{
-	struct silofs_caddr caddr;
-	int err;
-
-	err = silofs_save_bootrec(fsenv, brec, &caddr);
-	if (err) {
-		return err;
-	}
-	silofs_fsenv_set_base_caddr(fsenv, &caddr);
 	return 0;
 }
 

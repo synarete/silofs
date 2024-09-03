@@ -1486,11 +1486,16 @@ static int unlink_bootrec_of(const struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-static void update_bootrec(const struct silofs_fsenv *fsenv,
-                           struct silofs_bootrec *brec)
+static int update_by_bootrec(struct silofs_fsenv *fsenv,
+                             const struct silofs_bootrec *brec)
 {
-	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
-	const struct silofs_ulink *sb_ulink = sbi_ulink(sbi);
+	return silofs_fsenv_update_by(fsenv, brec);
+}
+
+static void ref_super_by(const struct silofs_fsenv *fsenv,
+                         struct silofs_bootrec *brec)
+{
+	const struct silofs_ulink *sb_ulink = sbi_ulink(fsenv->fse_sbi);
 
 	silofs_bootrec_set_sb_ulink(brec, sb_ulink);
 }
@@ -1498,8 +1503,19 @@ static void update_bootrec(const struct silofs_fsenv *fsenv,
 static int commit_bootrec(struct silofs_fsenv *fsenv,
                           struct silofs_bootrec *brec)
 {
-	update_bootrec(fsenv, brec);
-	return silofs_resave_bootrec(fsenv, brec);
+	struct silofs_caddr caddr;
+	int err;
+
+	ref_super_by(fsenv, brec);
+	err = silofs_save_bootrec(fsenv, brec, &caddr);
+	if (err) {
+		return err;
+	}
+	err = update_by_bootrec(fsenv, brec);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
@@ -1515,7 +1531,7 @@ static int do_format_fs(struct silofs_fsenv *fsenv,
 	int err;
 
 	format_bootrec(fsenv, &brec);
-	err = silofs_fsenv_update_by(fsenv, &brec);
+	err = update_by_bootrec(fsenv, &brec);
 	if (err) {
 		return err;
 	}
@@ -1583,12 +1599,12 @@ static int do_boot_fs(struct silofs_fsenv *fsenv,
 }
 
 int silofs_boot_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *boot_ref)
+                   const struct silofs_caddr *caddr)
 {
 	int ret;
 
 	silofs_fsenv_lock(fsenv);
-	ret = do_boot_fs(fsenv, boot_ref);
+	ret = do_boot_fs(fsenv, caddr);
 	silofs_fsenv_unlock(fsenv);
 	return ret;
 }

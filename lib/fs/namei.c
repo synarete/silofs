@@ -2356,7 +2356,6 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	silofs_fsenv_set_base_caddr(task->t_fsenv, &brecs->caddr_new);
 	return 0;
 }
 

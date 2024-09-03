@@ -1030,9 +1030,8 @@ out:
 static int pac_export_post(struct silofs_par_ctx *pa_ctx,
                            const struct silofs_caddr *caddr)
 {
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
-
-	return silofs_fsenv_set_base_caddr(pa_ctx->pac_fsenv, caddr);
+	silofs_fsenv_set_pack_caddr(pa_ctx->pac_fsenv, caddr);
+	return 0;
 }
 
 static int pac_do_export(struct silofs_par_ctx *pa_ctx,
@@ -1203,7 +1202,8 @@ static int pac_import_post(struct silofs_par_ctx *pa_ctx,
 	if (nbootrecs != 1) {
 		return -SILOFS_EBADPACK;
 	}
-	return silofs_fsenv_set_base_caddr(pa_ctx->pac_fsenv, out_caddr);
+	silofs_fsenv_set_boot_caddr(pa_ctx->pac_fsenv, out_caddr);
+	return 0;
 }
 
 static int pac_do_import(struct silofs_par_ctx *pa_ctx,

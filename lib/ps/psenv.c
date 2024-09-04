@@ -19,34 +19,25 @@
 #include <silofs/ps.h>
 
 
-static void prange_init(struct silofs_prange *prange, enum silofs_ptype ptype)
-{
-	silofs_psid_setup(&prange->beg, ptype);
-	silofs_psid_assign(&prange->cur, &prange->beg);
-	prange->cur_pos = 0;
-}
-
-static void prange_fini(struct silofs_prange *prange)
-{
-	silofs_psid_reset(&prange->beg);
-	silofs_psid_reset(&prange->cur);
-	prange->cur_pos = -1;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void pstate_init(struct silofs_pstate *pstate)
 {
-	prange_init(&pstate->btn, SILOFS_PTYPE_BTNODE);
-	prange_init(&pstate->btl, SILOFS_PTYPE_BTLEAF);
-	prange_init(&pstate->dat, SILOFS_PTYPE_DATA);
+	silofs_psid_setup(&pstate->beg);
+	silofs_psid_assign(&pstate->cur, &pstate->beg);
+	pstate->cur_pos = 0;
 }
 
 static void pstate_fini(struct silofs_pstate *pstate)
 {
-	prange_fini(&pstate->btn);
-	prange_fini(&pstate->btl);
-	prange_fini(&pstate->dat);
+	silofs_psid_reset(&pstate->beg);
+	silofs_psid_reset(&pstate->cur);
+	pstate->cur_pos = -1;
+}
+
+static void pstate_next_btn(struct silofs_pstate *pstate,
+                            struct silofs_paddr *out_paddr)
+{
+	silofs_paddr_init_btn(out_paddr, &pstate->cur, pstate->cur_pos);
+	pstate->cur_pos = off_end(out_paddr->off, out_paddr->len);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -69,4 +60,58 @@ void silofs_psenv_fini(struct silofs_psenv *psenv)
 	psenv->repo = NULL;
 }
 
-void silofs_psenv_format_bt(struct silofs_psenv *psenv);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_paddr *
+bti_paddr(const struct silofs_btnode_info *bti)
+{
+	return &bti->btn_bni.bn_paddr;
+}
+
+static int create_cached_bti(struct silofs_psenv *psenv,
+                             const struct silofs_paddr *paddr,
+                             struct silofs_btnode_info **out_bti)
+{
+	*out_bti = silofs_bcache_create_bti(&psenv->bcache, paddr);
+	return (*out_bti == NULL) ? -SILOFS_ENOMEM : 0;
+}
+
+static void forget_cached_bti(struct silofs_psenv *psenv,
+                              struct silofs_btnode_info *bti)
+{
+	silofs_bcache_forget_bti(&psenv->bcache, bti);
+}
+
+static int commit_btnode(const struct silofs_psenv *psenv,
+                         const struct silofs_btnode_info *bti)
+{
+	const struct silofs_rovec rov = {
+		.rov_base = bti->btn,
+		.rov_len = sizeof(*bti->btn),
+	};
+
+	return silofs_repo_save_pobj(psenv->repo, bti_paddr(bti), &rov);
+}
+
+int silofs_psenv_format_bt(struct silofs_psenv *psenv)
+{
+	struct silofs_paddr paddr;
+	struct silofs_btnode_info *bti = NULL;
+	int err;
+
+	pstate_next_btn(&psenv->pstate, &paddr);
+	err = create_cached_bti(psenv, &paddr, &bti);
+	if (err) {
+		return err;
+	}
+
+	/* XXX TODO: mark me as root */
+
+
+	err = commit_btnode(psenv, bti);
+	if (err) {
+		forget_cached_bti(psenv, bti);
+		return err;
+	}
+	return 0;
+}

@@ -47,6 +47,9 @@ struct silofs_btnode_info *
 silofs_bcache_create_bti(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);
 
+void silofs_bcache_forget_bti(struct silofs_bcache *bcache,
+                              struct silofs_btnode_info *bti);
+
 struct silofs_btleaf_info *
 silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);

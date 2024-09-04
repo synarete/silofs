@@ -18,6 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_pvid_generate(struct silofs_pvid *pvid)
@@ -184,22 +185,31 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 	       silofs_psid_isnull(&paddr->psid);
 }
 
-void silofs_paddr_reset(struct silofs_paddr *paddr)
-{
-	silofs_psid_reset(&paddr->psid);
-	paddr->off = SILOFS_OFF_NULL;
-	paddr->len = 0;
-	paddr->ptype = SILOFS_PTYPE_NONE;
-}
-
-void silofs_paddr_setup(struct silofs_paddr *paddr,
-                        const struct silofs_psid *psid,
-                        enum silofs_ptype ptype, loff_t off, size_t len)
+void silofs_paddr_init(struct silofs_paddr *paddr,
+                       const struct silofs_psid *psid,
+                       enum silofs_ptype ptype, loff_t off, size_t len)
 {
 	silofs_psid_assign(&paddr->psid, psid);
 	paddr->off = off;
 	paddr->len = len;
 	paddr->ptype = ptype;
+}
+
+void silofs_paddr_init_btn(struct silofs_paddr *paddr,
+                           const struct silofs_psid *psid, loff_t off)
+{
+	const enum silofs_ptype ptype = SILOFS_PTYPE_BTNODE;
+	const size_t len = SILOFS_BTREE_NODE_SIZE;
+
+	silofs_paddr_init(paddr, psid, ptype, off, len);
+}
+
+void silofs_paddr_fini(struct silofs_paddr *paddr)
+{
+	silofs_psid_reset(&paddr->psid);
+	paddr->off = SILOFS_OFF_NULL;
+	paddr->len = 0;
+	paddr->ptype = SILOFS_PTYPE_NONE;
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,

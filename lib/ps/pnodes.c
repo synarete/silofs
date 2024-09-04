@@ -443,7 +443,7 @@ static void bni_init(struct silofs_bnode_info *bni, enum silofs_ptype ptype,
 
 static void bni_fini(struct silofs_bnode_info *bni)
 {
-	silofs_paddr_reset(&bni->bn_paddr);
+	silofs_paddr_fini(&bni->bn_paddr);
 	silofs_hmqe_fini(&bni->bn_hmqe);
 }
 

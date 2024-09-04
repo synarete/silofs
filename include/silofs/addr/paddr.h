@@ -89,11 +89,14 @@ const struct silofs_paddr *silofs_paddr_none(void);
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
-void silofs_paddr_reset(struct silofs_paddr *paddr);
+void silofs_paddr_init(struct silofs_paddr *paddr,
+                       const struct silofs_psid *psid,
+                       enum silofs_ptype ptype, loff_t off, size_t len);
 
-void silofs_paddr_setup(struct silofs_paddr *paddr,
-                        const struct silofs_psid *psid,
-                        enum silofs_ptype ptype, loff_t off, size_t len);
+void silofs_paddr_init_btn(struct silofs_paddr *paddr,
+                           const struct silofs_psid *psid, loff_t off);
+
+void silofs_paddr_fini(struct silofs_paddr *paddr);
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other);

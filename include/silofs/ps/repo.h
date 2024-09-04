@@ -50,7 +50,6 @@ struct silofs_repo {
 	int                             re_root_dfd;
 	int                             re_dots_dfd;
 	int                             re_objs_dfd;
-
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

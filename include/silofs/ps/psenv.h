@@ -44,6 +44,8 @@ int silofs_psenv_init(struct silofs_psenv *psenv,
 
 void silofs_psenv_fini(struct silofs_psenv *psenv);
 
+int silofs_psenv_dropall(struct silofs_psenv *psenv);
+
 
 int silofs_format_btree(struct silofs_psenv *psenv);
 

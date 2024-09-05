@@ -60,6 +60,12 @@ void silofs_psenv_fini(struct silofs_psenv *psenv)
 	psenv->repo = NULL;
 }
 
+int silofs_psenv_dropall(struct silofs_psenv *psenv)
+{
+	silofs_bcache_drop(&psenv->bcache);
+	return 0;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *

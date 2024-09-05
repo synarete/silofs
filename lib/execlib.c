@@ -885,9 +885,14 @@ static int fsync_lsegs(const struct silofs_fsenv *fsenv)
 	return err;
 }
 
-static int shutdown_fsenv(struct silofs_fsenv *fsenv)
+static int shutdown_fs(struct silofs_fsenv *fsenv)
 {
 	return silofs_fsenv_shut(fsenv);
+}
+
+static int shutdown_ps(struct silofs_fsenv *fsenv)
+{
+	return silofs_psenv_dropall(fsenv->fse.psenv);
 }
 
 int silofs_close_repo(struct silofs_fsenv *fsenv)
@@ -1694,7 +1699,11 @@ static int do_close_fs(struct silofs_fsenv *fsenv)
 	if (err) {
 		return err;
 	}
-	err = shutdown_fsenv(fsenv);
+	err = shutdown_fs(fsenv);
+	if (err) {
+		return err;
+	}
+	err = shutdown_ps(fsenv);
 	if (err) {
 		return err;
 	}

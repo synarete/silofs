@@ -34,6 +34,7 @@ struct silofs_fs_core {
 	struct silofs_repo      repo;
 	struct silofs_submitq   submitq;
 	struct silofs_idsmap    idsmap;
+	struct silofs_psenv     psenv;
 	struct silofs_fsenv     fsenv;
 	struct silofs_flusher   flusher;
 };
@@ -62,6 +63,7 @@ struct silofs_fs_ctx {
 	struct silofs_submitq  *submitq;
 	struct silofs_flusher  *flusher;
 	struct silofs_idsmap   *idsmap;
+	struct silofs_psenv    *psenv;
 	struct silofs_fsenv    *fsenv;
 	struct silofs_fuseq    *fuseq;
 };
@@ -394,6 +396,28 @@ static void fs_ctx_destroy_idsmap(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
+static int fs_ctx_setup_psenv(struct silofs_fs_ctx *fs_ctx)
+{
+	struct silofs_psenv *psenv;
+	int err;
+
+	psenv = &fs_ctx->inst->fs_core.c.psenv;
+	err = silofs_psenv_init(psenv, fs_ctx->repo);
+	if (err) {
+		return err;
+	}
+	fs_ctx->psenv = psenv;
+	return 0;
+}
+
+static void fs_ctx_destroy_psenv(struct silofs_fs_ctx *fs_ctx)
+{
+	if (fs_ctx->psenv != NULL) {
+		silofs_psenv_fini(fs_ctx->psenv);
+		fs_ctx->psenv = NULL;
+	}
+}
+
 static int fs_ctx_setup_fsenv(struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_fsenv_base fse_base = {
@@ -403,6 +427,7 @@ static int fs_ctx_setup_fsenv(struct silofs_fs_ctx *fs_ctx)
 		.submitq = fs_ctx->submitq,
 		.flusher = fs_ctx->flusher,
 		.idsmap = fs_ctx->idsmap,
+		.psenv = fs_ctx->psenv,
 		.fuseq = NULL,
 	};
 	struct silofs_fsenv *fsenv;
@@ -542,6 +567,7 @@ static void fs_ctx_destroy(struct silofs_fs_ctx *fs_ctx)
 {
 	fs_ctx_destroy_fuseq(fs_ctx);
 	fs_ctx_destroy_fsenv(fs_ctx);
+	fs_ctx_destroy_psenv(fs_ctx);
 	fs_ctx_destroy_idsmap(fs_ctx);
 	fs_ctx_destroy_flusher(fs_ctx);
 	fs_ctx_destroy_submitq(fs_ctx);
@@ -580,6 +606,10 @@ static int fs_ctx_setup(struct silofs_fs_ctx *fs_ctx)
 		goto out_err;
 	}
 	err = fs_ctx_setup_idsmap(fs_ctx);
+	if (err) {
+		goto out_err;
+	}
+	err = fs_ctx_setup_psenv(fs_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -1432,6 +1462,16 @@ int silofs_open_repo(struct silofs_fsenv *fsenv)
 
 	silofs_fsenv_lock(fsenv);
 	ret = silofs_repo_open(fsenv->fse.repo);
+	silofs_fsenv_unlock(fsenv);
+	return ret;
+}
+
+int silofs_format_ps(struct silofs_fsenv *fsenv)
+{
+	int ret;
+
+	silofs_fsenv_lock(fsenv);
+	ret = silofs_format_btree(fsenv->fse.psenv);
 	silofs_fsenv_unlock(fsenv);
 	return ret;
 }

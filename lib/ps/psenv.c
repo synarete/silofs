@@ -93,13 +93,35 @@ static int commit_btnode(const struct silofs_psenv *psenv,
 	return silofs_repo_save_pobj(psenv->repo, bti_paddr(bti), &rov);
 }
 
-int silofs_psenv_format_bt(struct silofs_psenv *psenv)
+static int require_pseg(const struct silofs_psenv *psenv,
+                        const struct silofs_psid *psid)
+{
+	int err;
+
+	err = silofs_repo_stage_pseg(psenv->repo, psid);
+	if (err == -SILOFS_ENOENT) {
+		err = silofs_repo_create_pseg(psenv->repo, psid);
+	}
+	return err;
+}
+
+static int require_pseg_of(const struct silofs_psenv *psenv,
+                           const struct silofs_paddr *paddr)
+{
+	return require_pseg(psenv, &paddr->psid);
+}
+
+static int format_btree_root(struct silofs_psenv *psenv)
 {
 	struct silofs_paddr paddr;
 	struct silofs_btnode_info *bti = NULL;
 	int err;
 
 	pstate_next_btn(&psenv->pstate, &paddr);
+	err = require_pseg_of(psenv, &paddr);
+	if (err) {
+		return err;
+	}
 	err = create_cached_bti(psenv, &paddr, &bti);
 	if (err) {
 		return err;
@@ -107,11 +129,15 @@ int silofs_psenv_format_bt(struct silofs_psenv *psenv)
 
 	/* XXX TODO: mark me as root */
 
-
 	err = commit_btnode(psenv, bti);
 	if (err) {
 		forget_cached_bti(psenv, bti);
 		return err;
 	}
 	return 0;
+}
+
+int silofs_format_btree(struct silofs_psenv *psenv)
+{
+	return format_btree_root(psenv);
 }

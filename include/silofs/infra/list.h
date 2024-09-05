@@ -173,7 +173,3 @@ void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
                       struct silofs_alloc *alloc);
 
 #endif /* SILOFS_LIST_H_ */
-
-
-
-

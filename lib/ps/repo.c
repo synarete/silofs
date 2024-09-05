@@ -1296,12 +1296,22 @@ static void repo_lruq_remove_lsegf(struct silofs_repo *repo,
 	repo_lruq_remove(repo, &lsegf->lsf_rce);
 }
 
+static bool repo_lruq_isfront(const struct silofs_repo *repo,
+                              const struct silofs_repo_ce *rce)
+{
+	const struct silofs_list_head *lruq_front;
+
+	lruq_front = silofs_listq_front(&repo->re_lruq);
+	return lruq_front == &rce->rce_lru_lh;
+}
+
 static void repo_lruq_requeue(struct silofs_repo *repo,
                               struct silofs_repo_ce *rce)
 {
-
-	listq_remove(&repo->re_lruq, &rce->rce_lru_lh);
-	listq_push_front(&repo->re_lruq, &rce->rce_lru_lh);
+	if (!repo_lruq_isfront(repo, rce)) {
+		listq_remove(&repo->re_lruq, &rce->rce_lru_lh);
+		listq_push_front(&repo->re_lruq, &rce->rce_lru_lh);
+	}
 }
 
 static void repo_lruq_requeue_psegf(struct silofs_repo *repo,
@@ -3008,8 +3018,27 @@ static int repo_stat_pseg(const struct silofs_repo *repo,
 
 	repo_pseg_pathname(repo, psid, &sbuf);
 	err = do_fstatat(repo->re_dots_dfd, sbuf.str, out_st, 0);
-	return (err == -ENOENT) ? -SILOFS_ENOENT : err;
+	if (err) {
+		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
+	}
+	if (!S_ISREG(out_st->st_mode)) {
+		return -SILOFS_EBADREPO;
+	}
+	return 0;
 }
+
+int silofs_repo_stat_pseg(struct silofs_repo *repo,
+                          const struct silofs_psid *psid,
+                          struct stat *out_st)
+{
+	int err;
+
+	repo_lock(repo);
+	err = repo_stat_pseg(repo, psid, out_st);
+	repo_unlock(repo);
+	return err;
+}
+
 
 static int repo_stat_no_pseg(const struct silofs_repo *repo,
                              const struct silofs_psid *psid)
@@ -3124,6 +3153,12 @@ static int repo_check_has_pseg(const struct silofs_repo *repo,
 	return 0;
 }
 
+static int repo_check_has_pseg_of(const struct silofs_repo *repo,
+                                  const struct silofs_paddr *paddr)
+{
+	return repo_check_has_pseg(repo, &paddr->psid);
+}
+
 static int repo_open_pseg_of(const struct silofs_repo *repo,
                              struct silofs_psegf *psegf)
 {
@@ -3134,15 +3169,16 @@ static int repo_open_pseg_of(const struct silofs_repo *repo,
 	return psegf_openat(psegf, repo->re_dots_dfd, sbuf.str, false);
 }
 
-static int repo_stage_pseg(struct silofs_repo *repo,
-                           const struct silofs_psid *psid,
-                           struct silofs_psegf **out_psegf)
+static int repo_do_stage_pseg(struct silofs_repo *repo,
+                              const struct silofs_psid *psid,
+                              struct silofs_psegf **out_psegf)
 {
 	struct silofs_psegf *psegf = NULL;
 	int err;
 
 	err = repo_fetch_cached_psegf2(repo, psid, out_psegf);
 	if (!err) {
+		repo_requeue_psegf(repo, *out_psegf);
 		return 0; /* OK -- cached */
 	}
 	err = repo_create_cached_psegf(repo, psid, &psegf);
@@ -3158,6 +3194,46 @@ static int repo_stage_pseg(struct silofs_repo *repo,
 	return 0;
 }
 
+static int repo_stage_pseg_of(struct silofs_repo *repo,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_psegf **out_psegf)
+{
+	return repo_do_stage_pseg(repo, &paddr->psid, out_psegf);
+}
+
+static int repo_stage_pseg(struct silofs_repo *repo,
+                           const struct silofs_psid *psid,
+                           struct silofs_psegf **out_psegf)
+{
+	int err;
+
+	err = repo_check_wopen(repo);
+	if (err) {
+		return err;
+	}
+	err = repo_check_has_pseg(repo, psid);
+	if (err) {
+		return err;
+	}
+	err = repo_do_stage_pseg(repo, psid, out_psegf);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_repo_stage_pseg(struct silofs_repo *repo,
+                           const struct silofs_psid *psid)
+{
+	struct silofs_psegf *psegf = NULL;
+	int err;
+
+	repo_lock(repo);
+	err = repo_stage_pseg(repo, psid, &psegf);
+	repo_unlock(repo);
+	return err;
+}
+
 static int repo_save_pobj(struct silofs_repo *repo,
                           const struct silofs_paddr *paddr,
                           const struct silofs_rovec *rovec)
@@ -3170,11 +3246,11 @@ static int repo_save_pobj(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg(repo, &paddr->psid);
+	err = repo_check_has_pseg_of(repo, paddr);
 	if (err) {
 		return err;
 	}
-	err = repo_stage_pseg(repo, &paddr->psid, &psegf);
+	err = repo_stage_pseg_of(repo, paddr, &psegf);
 	if (err) {
 		return err;
 	}
@@ -3209,11 +3285,11 @@ static int repo_load_pobj(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg(repo, &paddr->psid);
+	err = repo_check_has_pseg_of(repo, paddr);
 	if (err) {
 		return err;
 	}
-	err = repo_stage_pseg(repo, &paddr->psid, &psegf);
+	err = repo_stage_pseg_of(repo, paddr, &psegf);
 	if (err) {
 		return err;
 	}
@@ -3260,7 +3336,7 @@ static int repo_remove_pseg(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_stage_pseg(repo, psid, &psegf);
+	err = repo_do_stage_pseg(repo, psid, &psegf);
 	if (err) {
 		return err;
 	}
@@ -3301,7 +3377,7 @@ static int repo_flush_pseg(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = repo_stage_pseg(repo, psid, &psegf);
+	err = repo_do_stage_pseg(repo, psid, &psegf);
 	if (err) {
 		return err;
 	}

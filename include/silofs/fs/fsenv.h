@@ -17,7 +17,6 @@
 #ifndef SILOFS_FSENV_H_
 #define SILOFS_FSENV_H_
 
-#include <silofs/infra.h>
 #include <silofs/ps.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/boot.h>
@@ -52,6 +51,7 @@ struct silofs_fsenv_base {
 	struct silofs_submitq          *submitq;
 	struct silofs_flusher          *flusher;
 	struct silofs_idsmap           *idsmap;
+	struct silofs_psenv            *psenv;
 	struct silofs_fuseq            *fuseq;
 };
 

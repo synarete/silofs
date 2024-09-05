@@ -181,18 +181,20 @@ void cmd_poke_archive(struct silofs_fsenv *fsenv,
 	cmd_require_ok(fsenv, err, "can not poke archive");
 }
 
-static void cmd_do_format_fs(struct silofs_fsenv *fsenv,
-                             struct silofs_caddr *out_root_ref)
+void cmd_format_ps(struct silofs_fsenv *fsenv)
 {
 	int err;
 
-	err = silofs_format_fs(fsenv, out_root_ref);
-	cmd_require_ok(fsenv, err, "failed to format fs");
+	err = silofs_format_ps(fsenv);
+	cmd_require_ok(fsenv, err, "failed to format ps");
 }
 
 void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bref *bref)
 {
-	cmd_do_format_fs(fsenv, &bref->caddr);
+	int err;
+
+	err = silofs_format_fs(fsenv, &bref->caddr);
+	cmd_require_ok(fsenv, err, "failed to format fs");
 }
 
 void cmd_close_fs(struct silofs_fsenv *fsenv)

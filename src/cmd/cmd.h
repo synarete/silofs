@@ -274,6 +274,8 @@ void cmd_open_repo(struct silofs_fsenv *fsenv);
 
 void cmd_close_repo(struct silofs_fsenv *fsenv);
 
+void cmd_format_ps(struct silofs_fsenv *fsenv);
+
 void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bref *bref);
 
 void cmd_close_fs(struct silofs_fsenv *fsenv);

@@ -376,6 +376,7 @@ static void ut_exec_tests(struct ut_env *ute)
 static void ut_prep_tests(struct ut_env *ute)
 {
 	ut_format_repo(ute);
+	ut_format_ps(ute);
 	ut_format_fs(ute);
 	ut_close_fs(ute);
 	ut_close_repo(ute);

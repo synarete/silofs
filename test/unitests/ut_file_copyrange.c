@@ -95,7 +95,7 @@ static void ut_file_copy_range_simple_(struct ut_env *ute,
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_write_read(ute, ino_src, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, ut_off_end(off, len));
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
 	ut_remove_file(ute, dino, name_src, ino_src);
@@ -165,16 +165,16 @@ static void ut_file_copy_range_between_(struct ut_env *ute,
 	ut_trunacate_file(ute, ino_src, ut_off_end(off_src, len_max));
 	ut_trunacate_file(ute, ino_dst, ut_off_end(off_dst, len_max));
 	ut_write_read(ute, ino_src, buf_src, len_src, off_src);
-	ut_copy_file_range_ok(ute, ino_src, off_src,
-	                      ino_dst, off_dst, len_dst);
+	ut_copy_file_range(ute, ino_src, off_src,
+	                   ino_dst, off_dst, len_dst);
 	ut_read_verify(ute, ino_dst, buf_src, len_min, off_dst);
 	ut_read_zeros(ute, ino_dst, ut_off_end(off_dst, len_min),
 	              len_dst - len_min);
 	ut_write_read(ute, ino_dst, buf_dst, len_dst, off_dst);
 	ut_trunacate_file(ute, ino_src, off_src);
 	ut_trunacate_file(ute, ino_src, ut_off_end(off_src, len_max));
-	ut_copy_file_range_ok(ute, ino_src, off_src,
-	                      ino_dst, off_dst, len_dst);
+	ut_copy_file_range(ute, ino_src, off_src,
+	                   ino_dst, off_dst, len_dst);
 	ut_read_zeros(ute, ino_dst, off_dst, len_min);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
 	ut_remove_file(ute, dino, name_src, ino_src);
@@ -252,16 +252,16 @@ static void ut_file_copy_range_self_(struct ut_env *ute,
 	ut_create_file(ute, dino, name, &ino);
 	ut_trunacate_file(ute, ino, off_max);
 	ut_write_read(ute, ino, buf_src, len_src, off_src);
-	ut_copy_file_range_ok(ute, ino, off_src, ino, off_dst, len_dst);
+	ut_copy_file_range(ute, ino, off_src, ino, off_dst, len_dst);
 	ut_read_verify(ute, ino, buf_src, len_min, off_dst);
 	ut_read_zeros(ute, ino, off_zeros, len_zeros);
 	ut_write_read(ute, ino, buf_dst, len_dst, off_dst);
 	ut_trunacate_file(ute, ino, 0);
 	ut_trunacate_file(ute, ino, off_max);
-	ut_copy_file_range_ok(ute, ino, off_src, ino, off_dst, len_dst);
+	ut_copy_file_range(ute, ino, off_src, ino, off_dst, len_dst);
 	ut_read_zeros(ute, ino, off_dst, len_min);
 	ut_write_read(ute, ino, buf_src, len_src, off_src);
-	ut_copy_file_range_ok(ute, ino, off_src, ino, off_dst, len_dst);
+	ut_copy_file_range(ute, ino, off_src, ino, off_dst, len_dst);
 	ut_read_verify(ute, ino, buf_src, len_min, off_dst);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
@@ -328,14 +328,14 @@ ut_file_copy_range_truncate_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_write_read(ute, ino_src, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, end);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, end - 1);
 	ut_trunacate_file(ute, ino_dst, end);
 	ut_read_verify(ute, ino_src, buf, len, off);
 	ut_read_verify(ute, ino_dst, buf, len - 1, off);
 	ut_read_zero(ute, ino_dst, end - 1);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_trunacate_file(ute, ino_dst, off + 1);
 	ut_trunacate_file(ute, ino_dst, end);
 	ut_read_verify(ute, ino_src, buf, len, off);
@@ -390,17 +390,17 @@ ut_file_copy_range_overwrite_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_write_read(ute, ino_src, buf1, len, off);
 	ut_trunacate_file(ute, ino_dst, end);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_read_verify(ute, ino_dst, buf1, len, off);
 	ut_write_read(ute, ino_src, buf2, len, off);
 	ut_read_verify(ute, ino_dst, buf1, len, off);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_dst, buf2, len, off);
 	ut_read_verify(ute, ino_src, buf2, len, off);
 	ut_write_read(ute, ino_src, buf1, len, off);
 	ut_read_verify(ute, ino_dst, buf2, len, off);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_dst, buf1, len, off);
 	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_trunacate_file(ute, ino_src, 0);
@@ -459,16 +459,16 @@ ut_file_copy_range_nfiles_(struct ut_env *ute, loff_t off, size_t len)
 		name_dst = ut_make_name(ute, name, i);
 		ut_create_file(ute, dino, name_dst, &ino_dst);
 		ut_trunacate_file(ute, ino_dst, end);
-		ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+		ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 		ut_read_verify(ute, ino_dst, buf, len, off);
-		ut_release_ok(ute, ino_dst);
+		ut_release(ute, ino_dst);
 		ut_read_verify(ute, ino_src, buf, len, off);
 		ut_lookup_file(ute, dino, name_dst, ino_dst);
 	}
 	for (size_t i = 0; i < nfiles; ++i) {
 		name_dst = ut_make_name(ute, name, i);
 		ut_lookup_ino(ute, dino, name_dst, &ino_dst);
-		ut_unlink_ok(ute, dino, name_dst);
+		ut_unlink(ute, dino, name_dst);
 		ut_read_verify(ute, ino_src, buf, len, off);
 	}
 	ut_remove_file(ute, dino, name_src, ino_src);
@@ -530,17 +530,17 @@ ut_file_copy_range_from_hole_(struct ut_env *ute,
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_trunacate_file(ute, ino_dst, ut_off_end(off_dst, len_dst));
 	ut_write_read(ute, ino_dst, buf, len, off_dst);
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_zeros(ute, ino_dst, off_dst, len);
 	ut_write_read(ute, ino_dst, buf, len, off_dst);
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_zeros(ute, ino_src, off_src, len_src);
 	ut_read_zeros(ute, ino_dst, off_dst, len_dst);
 	ut_trunacate_file(ute, ino_src, 0);
 	ut_read_zeros(ute, ino_dst, off_dst, len_dst);
 	ut_trunacate_file(ute, ino_src, ut_off_end(off_src, len_src));
 	ut_write_read(ute, ino_src, buf, len / 2, off_src);
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_verify(ute, ino_dst, buf, 1, off_dst);
 	ut_read_zero(ute, ino_dst, off_dst - 1);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
@@ -591,9 +591,9 @@ ut_file_copy_range_into_hole_(struct ut_env *ute,
 	ut_write_read(ute, ino_src, buf, len, off_src);
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_trunacate_file(ute, ino_dst, ut_off_end(off_dst, len_dst));
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_verify(ute, ino_dst, buf, len, off_dst);
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_verify(ute, ino_dst, buf, len, off_dst);
 	ut_trunacate_file(ute, ino_src, 0);
 	ut_read_verify(ute, ino_dst, buf, len, off_dst);
@@ -645,14 +645,14 @@ ut_file_copy_range_mtime_(struct ut_env *ute,
 	ut_write_read(ute, ino_src, buf, len, off_src);
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_trunacate_file(ute, ino_dst, ut_off_end(off_dst, len_dst));
-	ut_getattr_ok(ute, ino_dst, &st[0]);
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_getattr(ute, ino_dst, &st[0]);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_verify(ute, ino_dst, buf, len, off_dst);
-	ut_getattr_ok(ute, ino_dst, &st[1]);
+	ut_getattr(ute, ino_dst, &st[1]);
 	ut_expect_gt_mtime(&st[1], &st[0]);
-	ut_copy_file_range_ok(ute, ino_src, off_src, ino_dst, off_dst, len);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len);
 	ut_read_verify(ute, ino_dst, buf, len, off_dst);
-	ut_getattr_ok(ute, ino_dst, &st[2]);
+	ut_getattr(ute, ino_dst, &st[2]);
 	ut_expect_gt_mtime(&st[2], &st[1]);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
 	ut_remove_file(ute, dino, name_src, ino_src);
@@ -698,9 +698,9 @@ ut_file_copy_range_extend_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_src, &ino_src);
 	ut_write_read(ute, ino_src, buf, len, off);
 	ut_create_file(ute, dino, name_dst, &ino_dst);
-	ut_getattr_ok(ute, ino_dst, &st[0]);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
-	ut_getattr_ok(ute, ino_dst, &st[1]);
+	ut_getattr(ute, ino_dst, &st[0]);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
+	ut_getattr(ute, ino_dst, &st[1]);
 	ut_expect_gt_mtime(&st[1], &st[0]);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_trunacate_zero(ute, ino_src);
@@ -757,7 +757,7 @@ ut_file_copy_range_empty_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_src, &ino_src);
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_trunacate_file(ute, ino_src, end);
-	ut_copy_file_range_ok(ute, ino_src, 0, ino_dst, 0, (size_t)end);
+	ut_copy_file_range(ute, ino_src, 0, ino_dst, 0, (size_t)end);
 	ut_read_zeros(ute, ino_dst, off, len);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
 	ut_remove_file(ute, dino, name_src, ino_src);
@@ -803,7 +803,7 @@ ut_file_copy_range_sparse_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_write_read(ute, ino_src, &b[0], 1, off);
 	ut_write_read(ute, ino_src, &b[1], 1, end - 1);
-	ut_copy_file_range_ok(ute, ino_src, 0, ino_dst, 0, (size_t)end);
+	ut_copy_file_range(ute, ino_src, 0, ino_dst, 0, (size_t)end);
 	ut_read_verify(ute, ino_dst, &b[0], 1, off);
 	ut_read_verify(ute, ino_dst, &b[1], 1, end - 1);
 	ut_read_zero(ute, ino_dst, off + 1);

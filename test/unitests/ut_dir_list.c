@@ -77,9 +77,9 @@ dir_list(struct ut_env *ute, ino_t dino, size_t expected_nents)
 	loff_t doff = 0;
 	int partial = 0;
 
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	while (ndents > 0) {
-		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		ut_readdir(ute, dino, doff, rd_ctx);
 		ndents = rd_ctx->nde;
 		ut_expect_le(ndents, ndents_max);
 
@@ -102,7 +102,7 @@ dir_list(struct ut_env *ute, ino_t dino, size_t expected_nents)
 	if (expected_nents < UINT_MAX) {
 		ut_expect_eq(dl->count, expected_nents);
 	}
-	ut_releasedir_ok(ute, dino);
+	ut_releasedir(ute, dino);
 	return dl;
 }
 
@@ -121,9 +121,9 @@ static struct ut_dirlist *dir_list_some(struct ut_env *ute, ino_t dino,
 	struct ut_readdir_ctx *rd_ctx =
 	        ut_new_readdir_ctx(ute);
 
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	while (keep_iter) {
-		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		ut_readdir(ute, dino, doff, rd_ctx);
 		for (size_t i = 0; i < rd_ctx->nde; ++i) {
 			dei = &rd_ctx->dei[i];
 			if (!ut_dot_or_dotdot(dei->de.d_name)) {
@@ -138,7 +138,7 @@ static struct ut_dirlist *dir_list_some(struct ut_env *ute, ino_t dino,
 			keep_iter = false;
 		}
 	}
-	ut_releasedir_ok(ute, dino);
+	ut_releasedir(ute, dino);
 	return dl;
 }
 
@@ -152,11 +152,11 @@ static void dir_unlink_all(struct ut_dirlist *dl)
 		ut_expect_lt(count, dl->count);
 		name = de->dei.de.d_name;
 		if (S_ISDIR(de->mode)) {
-			ut_rmdir_ok(dl->ute, dl->dino, name);
+			ut_rmdir(dl->ute, dl->dino, name);
 		} else if (S_ISLNK(de->mode)) {
 			ut_remove_link(dl->ute, dl->dino, name);
 		} else {
-			ut_unlink_ok(dl->ute, dl->dino, name);
+			ut_unlink(dl->ute, dl->dino, name);
 		}
 		count += 1;
 	}
@@ -190,15 +190,15 @@ static void ut_create_ninodes(struct ut_env *ute, ino_t dino,
 	for (size_t i = 0; i < count; ++i) {
 		name = ut_make_name(ute, dname, i);
 		if ((i % 3) == 0) {
-			ut_mkdir_oki(ute, dino, name, &ino);
+			ut_mkdir2(ute, dino, name, &ino);
 		} else if ((i % 5) == 0) {
 			snprintf(s, sizeof(s) - 1, "%s_%lu", dname, i);
-			ut_symlink_ok(ute, dino, name, s, &ino);
+			ut_symlink(ute, dino, name, s, &ino);
 		} else {
 			ut_create_only(ute, dino, name, &ino);
 		}
 	}
-	ut_getattr_ok(ute, dino, &st);
+	ut_getattr(ute, dino, &st);
 	ut_expect_ge(st.st_size, count);
 }
 
@@ -279,7 +279,7 @@ static void create_nfiles_sparse(struct ut_env *ute, ino_t dino,
 	}
 	for (size_t j = 1; j < (2 * count); j += 2) {
 		name = ut_make_name(ute, prefix, j);
-		ut_unlink_ok(ute, dino, name);
+		ut_unlink(ute, dino, name);
 	}
 }
 

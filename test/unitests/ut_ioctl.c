@@ -26,10 +26,10 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_query_ok(ute, dino, SILOFS_QUERY_VERSION, &query);
+	ut_query(ute, dino, SILOFS_QUERY_VERSION, &query);
 	ut_expect_eq(query.u.version.major, silofs_version.major);
 	ut_create_file(ute, dino, name, &ino);
-	ut_query_ok(ute, ino, SILOFS_QUERY_VERSION, &query);
+	ut_query(ute, ino, SILOFS_QUERY_VERSION, &query);
 	ut_expect_eq(query.u.version.minor, silofs_version.minor);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
@@ -44,7 +44,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ino_t dino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_query_spst_ok(ute, dino, &spst);
+	ut_query_spst(ute, dino, &spst);
 	ut_expect_gt(spst.btime, 0);
 	ut_expect_gt(spst.ctime, 0);
 	ut_expect_ge(spst.capacity, SILOFS_CAPACITY_SIZE_MIN);
@@ -95,7 +95,7 @@ static struct silofs_ioc_query *ut_new_ioc_query(struct ut_env *ute)
 static void ut_query_proc(struct ut_env *ute, ino_t ino,
                           struct silofs_ioc_query *ioc_qry)
 {
-	ut_query_ok(ute, ino, SILOFS_QUERY_PROC, ioc_qry);
+	ut_query(ute, ino, SILOFS_QUERY_PROC, ioc_qry);
 }
 
 static void ut_ioctl_query_proc(struct ut_env *ute)

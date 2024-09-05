@@ -121,7 +121,7 @@ static void ut_read_record(struct ut_env *ute, ino_t ino,
 {
 	const size_t bsz = record_size(rec, rec->size);
 
-	ut_read_ok(ute, ino, rec->data, bsz, off);
+	ut_read(ute, ino, rec->data, bsz, off);
 }
 
 static void ut_read_record_verify(struct ut_env *ute, ino_t ino,

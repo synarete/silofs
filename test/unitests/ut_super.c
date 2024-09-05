@@ -21,7 +21,7 @@ static void ut_rootd_getattr(struct ut_env *ute)
 {
 	struct stat st = { .st_size = -1 };
 
-	ut_getattr_ok(ute, UT_ROOT_INO, &st);
+	ut_getattr(ute, UT_ROOT_INO, &st);
 	ut_expect(S_ISDIR(st.st_mode));
 	ut_expect_eq(st.st_size, SILOFS_DIR_EMPTY_SIZE);
 	ut_expect_eq(st.st_nlink, 2);
@@ -29,8 +29,8 @@ static void ut_rootd_getattr(struct ut_env *ute)
 
 static void ut_rootd_access(struct ut_env *ute)
 {
-	ut_access_ok(ute, UT_ROOT_INO, R_OK);
-	ut_access_ok(ute, UT_ROOT_INO, X_OK);
+	ut_access(ute, UT_ROOT_INO, R_OK);
+	ut_access(ute, UT_ROOT_INO, X_OK);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -79,12 +79,12 @@ static void ut_dir_open_release(struct ut_env *ute)
 	const ino_t parent = UT_ROOT_INO;
 	ino_t ino;
 
-	ut_mkdir_ok(ute, parent, name, &st);
-	ut_lookup_ok(ute, parent, name, &st);
+	ut_mkdir(ute, parent, name, &st);
+	ut_lookup(ute, parent, name, &st);
 	ino = st.st_ino;
-	ut_opendir_ok(ute, ino);
-	ut_releasedir_ok(ute, ino);
-	ut_rmdir_ok(ute, parent, name);
+	ut_opendir(ute, ino);
+	ut_releasedir(ute, ino);
+	ut_rmdir(ute, parent, name);
 	ut_opendir_err(ute, ino, -ENOENT);
 	ut_releasedir_err(ute, ino, -ENOENT);
 }
@@ -117,26 +117,26 @@ static void ut_dir_iter_simple(struct ut_env *ute)
 	const size_t count = UT_ARRAY_SIZE(rd_ctx->dei) - 2;
 
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	for (size_t i = 0; i < count; ++i) {
-		ut_readdir_ok(ute, dino, 0, rd_ctx);
+		ut_readdir(ute, dino, 0, rd_ctx);
 		ut_expect_eq(rd_ctx->nde, i + 2);
 
 		name = ut_make_name(ute, dname, i);
-		ut_mkdir_ok(ute, dino, name, &st);
-		ut_readdir_ok(ute, dino, 0, rd_ctx);
+		ut_mkdir(ute, dino, name, &st);
+		ut_readdir(ute, dino, 0, rd_ctx);
 		ut_expect_eq(rd_ctx->nde, i + 3);
 
-		ut_fsyncdir_ok(ute, dino);
+		ut_fsyncdir(ute, dino);
 		ut_verify_iter_simple(ute, dname, rd_ctx);
 	}
 	for (size_t j = count; j > 0; --j) {
 		name = ut_make_name(ute, dname, j - 1);
-		ut_rmdir_ok(ute, dino, name);
-		ut_readdir_ok(ute, dino, 0, rd_ctx);
+		ut_rmdir(ute, dino, name);
+		ut_readdir(ute, dino, 0, rd_ctx);
 		ut_verify_iter_simple(ute, dname, rd_ctx);
 	}
-	ut_releasedir_ok(ute, dino);
+	ut_releasedir(ute, dino);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -154,11 +154,11 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
 
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	for (size_t i = 0; i < nnames; ++i) {
 		ut_create_only(ute, dino, names[i], &ino);
 	}
-	ut_readdir_ok(ute, dino, doff, rd_ctx);
+	ut_readdir(ute, dino, doff, rd_ctx);
 	while (rd_ctx->nde > 0) {
 		for (size_t i = 0; i < rd_ctx->nde; ++i) {
 			name = rd_ctx->dei[i].de.d_name;
@@ -171,20 +171,20 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 				break;
 			}
 		}
-		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		ut_readdir(ute, dino, doff, rd_ctx);
 		dcnt = 0;
 	}
 	for (size_t i = nnames; i > 0; --i) {
 		ut_create_only(ute, dino, names[i - 1], &ino);
 	}
-	ut_readdir_ok(ute, dino, 0, rd_ctx);
+	ut_readdir(ute, dino, 0, rd_ctx);
 	for (size_t i = 0; i < rd_ctx->nde; ++i) {
 		name = rd_ctx->dei[i].de.d_name;
 		if (!ut_dot_or_dotdot(name)) {
 			ut_unlink_file(ute, dino, name);
 		}
 	}
-	ut_releasedir_ok(ute, dino);
+	ut_releasedir(ute, dino);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -276,39 +276,39 @@ static void ut_dir_iter_links_(struct ut_env *ute, size_t cnt)
 
 	/* TODO: Use comp wrappers */
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	ut_mkdir_at_root(ute, dname2, &dino2);
-	ut_opendir_ok(ute, dino2);
+	ut_opendir(ute, dino2);
 	ut_create_only(ute, dino2, fname, &ino);
 	rd_ctx = ut_new_readdir_ctx(ute);
 	for (size_t i = 0; i < cnt; ++i) {
 		lname = ut_make_name(ute, dname, i);
-		ut_link_ok(ute, ino, dino, lname, &st);
+		ut_link(ute, ino, dino, lname, &st);
 		ut_expect_eq(ino, st.st_ino);
 		ut_expect_eq(i + 2, st.st_nlink);
-		ut_fsyncdir_ok(ute, dino);
+		ut_fsyncdir(ute, dino);
 	}
 	doff = 0;
 	for (size_t i = 0; i < cnt; ++i) {
-		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		ut_readdir(ute, dino, doff, rd_ctx);
 		ut_expect_gt(rd_ctx->nde, 0);
 		dei = ut_find_first_not_dot(rd_ctx->dei, rd_ctx->nde);
-		ut_lookup_ok(ute, dino, dei->de.d_name, &st);
+		ut_lookup(ute, dino, dei->de.d_name, &st);
 		ut_expect_eq(ino, st.st_ino);
 		doff = dei->de.d_off + 1;
 	}
 	doff = 0;
 	for (size_t i = 0; i < cnt; ++i) {
-		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		ut_readdir(ute, dino, doff, rd_ctx);
 		ut_expect_gt(rd_ctx->nde, 0);
 		dei = ut_find_first_not_dot(rd_ctx->dei, rd_ctx->nde);
-		ut_unlink_ok(ute, dino, dei->de.d_name);
+		ut_unlink(ute, dino, dei->de.d_name);
 		ut_lookup_noent(ute, dino, dei->de.d_name);
 		doff = dei->de.d_off;
 	}
-	ut_unlink_ok(ute, dino2, fname);
-	ut_releasedir_ok(ute, dino2);
-	ut_releasedir_ok(ute, dino);
+	ut_unlink(ute, dino2, fname);
+	ut_releasedir(ute, dino2);
+	ut_releasedir(ute, dino);
 	ut_rmdir_at_root(ute, dname2);
 	ut_rmdir_at_root(ute, dname);
 }
@@ -338,24 +338,24 @@ static void ut_dir_iter_unlink_(struct ut_env *ute, size_t cnt)
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, dname, i);
 		ut_create_only(ute, dino, fname, &ino);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		ut_readdir_ok(ute, dino, doff, rd_ctx);
+		ut_readdir(ute, dino, doff, rd_ctx);
 		nde = rd_ctx->nde;
 		ut_expect_gt(nde, 0);
 
 		dei = ut_find_any_not_dot(rd_ctx->dei, nde);
-		ut_lookup_ok(ute, dino, dei->de.d_name, &st);
-		ut_unlink_ok(ute, dino, dei->de.d_name);
+		ut_lookup(ute, dino, dei->de.d_name, &st);
+		ut_unlink(ute, dino, dei->de.d_name);
 
 		dei = ut_find_first_not_dot(rd_ctx->dei, nde);
 		doff = dei->de.d_off;
 	}
-	ut_releasedir_ok(ute, dino);
+	ut_releasedir(ute, dino);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -385,7 +385,7 @@ static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 
 	/* TODO: Use comp wrappers */
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_opendir_ok(ute, dino);
+	ut_opendir(ute, dino);
 	for (size_t i = 0; i < cnt; ++i) {
 		name = ut_make_name(ute, dname, i);
 		ut_create_file(ute, dino, name, &ino);
@@ -394,11 +394,11 @@ static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 	}
 	doff = 0;
 	for (size_t i = 0; i < cnt; ++i) {
-		ut_readdirplus_ok(ute, dino, doff, rd_ctx);
+		ut_readdirplus(ute, dino, doff, rd_ctx);
 		ut_expect_gt(rd_ctx->nde, 0);
 
 		dei = ut_find_first_not_dot(rd_ctx->dei, rd_ctx->nde);
-		ut_lookup_ok(ute, dino, dei->de.d_name, &st);
+		ut_lookup(ute, dino, dei->de.d_name, &st);
 		ut_expect_gt(dei->attr.st_size, 0);
 		ut_expect_eq(dei->attr.st_size, st.st_size);
 		ut_expect_eq(dei->attr.st_mode, st.st_mode);
@@ -406,14 +406,14 @@ static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 	}
 	doff = 0;
 	for (size_t i = 0; i < cnt; ++i) {
-		ut_readdirplus_ok(ute, dino, doff, rd_ctx);
+		ut_readdirplus(ute, dino, doff, rd_ctx);
 		ut_expect_gt(rd_ctx->nde, 0);
 
 		dei = ut_find_first_not_dot(rd_ctx->dei, rd_ctx->nde);
-		ut_unlink_ok(ute, dino, dei->de.d_name);
+		ut_unlink(ute, dino, dei->de.d_name);
 		doff = dei->de.d_off;
 	}
-	ut_releasedir_ok(ute, dino);
+	ut_releasedir(ute, dino);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -440,4 +440,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_dir_iter = UT_MKTESTS(ut_local_tests);
-

@@ -285,13 +285,13 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 	size_t ualloc_dif;
 
 	if (pre_execute) {
-		ut_statfs_rootd_ok(ute, &ute->stvfs[0]);
-		ut_statsp_rootd_ok(ute, &ute->spst[0]);
+		ut_statfs_rootd(ute, &ute->stvfs[0]);
+		ut_statsp_rootd(ute, &ute->spst[0]);
 		ut_drop_caches_fully(ute);
 		ute->ualloc_start = ualloc_nbytes_now(ute);
 	} else {
-		ut_statfs_rootd_ok(ute, &ute->stvfs[1]);
-		ut_statsp_rootd_ok(ute, &ute->spst[1]);
+		ut_statfs_rootd(ute, &ute->stvfs[1]);
+		ut_statsp_rootd(ute, &ute->spst[1]);
 		ut_check_statvfs(&ute->stvfs[0], &ute->stvfs[1]);
 		ut_check_spacestats(&ute->spst[0], &ute->spst[1]);
 
@@ -375,18 +375,18 @@ static void ut_exec_tests(struct ut_env *ute)
 
 static void ut_prep_tests(struct ut_env *ute)
 {
-	ut_format_repo_ok(ute);
-	ut_format_fs_ok(ute);
-	ut_close_fs_ok(ute);
-	ut_close_repo_ok(ute);
-	ut_open_repo_ok(ute);
-	ut_open_fs_ok(ute);
+	ut_format_repo(ute);
+	ut_format_fs(ute);
+	ut_close_fs(ute);
+	ut_close_repo(ute);
+	ut_open_repo(ute);
+	ut_open_fs(ute);
 }
 
 static void ut_done_tests(struct ut_env *ute)
 {
-	ut_close_fs_ok(ute);
-	ut_close_repo_ok(ute);
+	ut_close_fs(ute);
+	ut_close_repo(ute);
 }
 
 static void ut_execute_tests_cycle(struct ut_args *args)

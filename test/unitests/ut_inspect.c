@@ -27,7 +27,7 @@ static void ut_inspect_simple(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_inspect_fs_ok(ute);
+	ut_inspect_fs(ute);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }

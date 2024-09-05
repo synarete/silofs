@@ -55,15 +55,15 @@ static void ut_symlink_simple(struct ut_env *ute)
 	const char *sname = "symlink";
 
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_mkdir_oki(ute, dino, tname, &tino);
-	ut_symlink_ok(ute, dino, sname, tname, &sino);
+	ut_mkdir2(ute, dino, tname, &tino);
+	ut_symlink(ute, dino, sname, tname, &sino);
 	ut_lookup_exists(ute, dino, sname, sino, S_IFLNK);
 	ut_readlink_expect(ute, sino, tname);
-	ut_rmdir_ok(ute, dino, tname);
+	ut_rmdir(ute, dino, tname);
 	ut_lookup_exists(ute, dino, sname, sino, S_IFLNK);
 	ut_readlink_expect(ute, sino, tname);
 	ut_rmdir_err(ute, UT_ROOT_INO, dname, -ENOTEMPTY);
-	ut_unlink_ok(ute, dino, sname);
+	ut_unlink(ute, dino, sname);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -79,18 +79,18 @@ static void ut_symlink_length(struct ut_env *ute)
 	const char *sname = NULL;
 	const size_t nlinks = SILOFS_PATH_MAX - 1;
 
-	ut_mkdir_oki(ute, root_ino, dname, &dino);
+	ut_mkdir2(ute, root_ino, dname, &dino);
 	for (size_t i = 1; i <= nlinks; ++i) {
 		sname = ut_make_symname(ute, i);
 		tname = ut_make_symval_with(ute, 'A', i);
-		ut_symlink_ok(ute, dino, sname, tname, &sino);
+		ut_symlink(ute, dino, sname, tname, &sino);
 	}
 	ut_rmdir_err(ute, root_ino, dname, -ENOTEMPTY);
 	for (size_t j = 1; j <= nlinks; ++j) {
 		sname = ut_make_symname(ute, j);
-		ut_unlink_ok(ute, dino, sname);
+		ut_unlink(ute, dino, sname);
 	}
-	ut_rmdir_ok(ute, root_ino, dname);
+	ut_rmdir(ute, root_ino, dname);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -105,17 +105,17 @@ static void ut_symlink_nested(struct ut_env *ute)
 
 	dino[0] = UT_ROOT_INO;
 	for (size_t i = 1; i < UT_ARRAY_SIZE(dino); ++i) {
-		ut_mkdir_oki(ute, dino[i - 1], dname, &dino[i]);
+		ut_mkdir2(ute, dino[i - 1], dname, &dino[i]);
 		sname[i] = ut_make_symname(ute, 8 * i);
-		ut_symlink_ok(ute, dino[i], sname[i],
-		              ut_make_symval_with(ute, 'z', i), &sino);
+		ut_symlink(ute, dino[i], sname[i],
+		           ut_make_symval_with(ute, 'z', i), &sino);
 		ut_rmdir_err(ute, dino[i - 1], dname, -ENOTEMPTY);
 	}
 	for (size_t j = UT_ARRAY_SIZE(dino); j > 1; --j) {
-		ut_unlink_ok(ute, dino[j - 1], sname[j - 1]);
-		ut_rmdir_ok(ute, dino[j - 2], dname);
+		ut_unlink(ute, dino[j - 1], sname[j - 1]);
+		ut_rmdir(ute, dino[j - 2], dname);
 	}
-	ut_getattr_ok(ute, dino[0], &st);
+	ut_getattr(ute, dino[0], &st);
 	ut_expect_eq(st.st_size, SILOFS_DIR_EMPTY_SIZE);
 	ut_expect_eq(st.st_nlink, 2);
 }
@@ -136,7 +136,7 @@ static void ut_symlink_to_reg_(struct ut_env *ute, size_t cnt)
 		sname = ut_make_symname(ute, i);
 		fname = ut_make_name(ute, dname, i);
 		ut_create_only(ute, dino, fname, &ino);
-		ut_symlink_ok(ute, dino, sname, fname, &sino);
+		ut_symlink(ute, dino, sname, fname, &sino);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		sname = ut_make_symname(ute, i);
@@ -144,11 +144,11 @@ static void ut_symlink_to_reg_(struct ut_env *ute, size_t cnt)
 		ut_lookup_ino(ute, dino, sname, &sino);
 		ut_lookup_lnk(ute, dino, sname, sino);
 		ut_readlink_expect(ute, sino, fname);
-		ut_unlink_ok(ute, dino, sname);
+		ut_unlink(ute, dino, sname);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, dname, i);
-		ut_unlink_ok(ute, dino, fname);
+		ut_unlink(ute, dino, fname);
 	}
 	ut_rmdir_at_root(ute, dname);
 }
@@ -180,7 +180,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 		fname = ut_make_name(ute, fp, i);
 		symval = ut_make_symval(ute, i + 1);
 		ut_create_file(ute, dino, fname, &fino);
-		ut_symlink_ok(ute, dino, sname, symval, &sino);
+		ut_symlink(ute, dino, sname, symval, &sino);
 
 		off = (loff_t)(i * UT_1M + i);
 		ut_write_read_str(ute, fino, symval, off);
@@ -202,8 +202,8 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 
 		ut_lookup_ino(ute, dino, fname, &fino);
 		ut_release_file(ute, fino);
-		ut_unlink_ok(ute, dino, sname);
-		ut_unlink_ok(ute, dino, fname);
+		ut_unlink(ute, dino, sname);
+		ut_unlink(ute, dino, fname);
 	}
 	ut_rmdir_at_root(ute, dname);
 }
@@ -231,13 +231,13 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 	const char *s2 = "s2";
 	const ino_t root_ino = UT_ROOT_INO;
 
-	ut_mkdir_oki(ute, root_ino, dname, &dino);
+	ut_mkdir2(ute, root_ino, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
 		sname = ut_make_name(ute, s1, i);
 		fname = ut_make_name(ute, ff, i);
 		symval = ut_make_symval(ute, cnt);
 		ut_create_file(ute, dino, fname, &fino);
-		ut_symlink_ok(ute, dino, sname, symval, &sino);
+		ut_symlink(ute, dino, sname, symval, &sino);
 
 		off = (loff_t)(i * cnt);
 		ut_write_read_str(ute, fino, symval, off);
@@ -256,25 +256,25 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 		off = (loff_t)((j - 1) * cnt);
 		ut_read_verify_str(ute, fino, symval, off);
 		ut_release_file(ute, fino);
-		ut_unlink_ok(ute, dino, fname);
+		ut_unlink(ute, dino, fname);
 
 		sname = ut_make_name(ute, s2, j - 1);
-		ut_symlink_ok(ute, dino, sname, symval, &sino);
+		ut_symlink(ute, dino, sname, symval, &sino);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, ff, i);
 		ut_create_only(ute, dino, fname, &fino);
 		sname = ut_make_name(ute, s1, i);
-		ut_unlink_ok(ute, dino, sname);
+		ut_unlink(ute, dino, sname);
 		ut_lookup_file(ute, dino, fname, fino);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, ff, i);
 		sname = ut_make_name(ute, s2, i);
-		ut_unlink_ok(ute, dino, sname);
-		ut_unlink_ok(ute, dino, fname);
+		ut_unlink(ute, dino, sname);
+		ut_unlink(ute, dino, fname);
 	}
-	ut_rmdir_ok(ute, root_ino, dname);
+	ut_rmdir(ute, root_ino, dname);
 }
 
 static void ut_symlink_and_io2(struct ut_env *ute)
@@ -312,13 +312,13 @@ static void ut_symlink_stat_(struct ut_env *ute, size_t valsize)
 	const blkcnt_t blocks = symval_length_to_blocks(valsize);
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_symlink_ok(ute, dino, name, symval, &sino);
+	ut_symlink(ute, dino, name, symval, &sino);
 	ut_lookup_exists(ute, dino, name, sino, S_IFLNK);
 	ut_readlink_expect(ute, sino, symval);
 	ut_getattr_lnk(ute, sino, &st);
 	ut_expect_eq(st.st_size, valsize);
 	ut_expect_eq(st.st_blocks, blocks);
-	ut_unlink_ok(ute, dino, name);
+	ut_unlink(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 

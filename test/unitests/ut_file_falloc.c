@@ -468,7 +468,7 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, loff_t base_off,
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 
-	ut_getattr_ok(ute, ino, &st[0]);
+	ut_getattr(ute, ino, &st[0]);
 	ut_expect_eq(st[0].st_size, 0);
 	ut_expect_eq(st[0].st_blocks, 0);
 
@@ -476,9 +476,9 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, loff_t base_off,
 	for (size_t i = 0; i < cnt; ++i) {
 		nblk = blocks_count_of(off, len);
 
-		ut_getattr_ok(ute, ino, &st[0]);
+		ut_getattr(ute, ino, &st[0]);
 		ut_fallocate_reserve(ute, ino, off, len);
-		ut_getattr_ok(ute, ino, &st[1]);
+		ut_getattr(ute, ino, &st[1]);
 
 		ut_expect_eq(off + len, st[1].st_size);
 		ut_expect_eq(st[0].st_blocks + nblk, st[1].st_blocks);
@@ -487,9 +487,9 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, loff_t base_off,
 	off = base_off;
 	for (size_t j = 0; j < cnt; ++j) {
 		nblk = blocks_count_of(off, len);
-		ut_getattr_ok(ute, ino, &st[0]);
+		ut_getattr(ute, ino, &st[0]);
 		ut_fallocate_punch_hole(ute, ino, off, nblk * 512);
-		ut_getattr_ok(ute, ino, &st[1]);
+		ut_getattr(ute, ino, &st[1]);
 		ut_expect_eq(st[0].st_blocks - nblk, st[1].st_blocks);
 		off += step_size;
 	}
@@ -526,7 +526,7 @@ static void ut_file_fallocate_sparse_(struct ut_env *ute,
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_getattr_ok(ute, ino, &st);
+	ut_getattr(ute, ino, &st);
 	ut_expect_eq(st.st_size, 0);
 	ut_expect_eq(st.st_blocks, 0);
 	off = base_off;
@@ -652,4 +652,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_file_fallocate = UT_MKTESTS(ut_local_tests);
-

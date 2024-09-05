@@ -39,7 +39,7 @@ static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 	blkcnt_t blocks_min;
 	blkcnt_t blocks_max;
 
-	ut_getattr_ok(ute, ino, &st);
+	ut_getattr(ute, ino, &st);
 	if (st.st_size < SILOFS_LBK_SIZE) {
 		ut_expect_eq(st.st_blksize, SILOFS_FILE_HEAD2_LEAF_SIZE);
 	} else {
@@ -110,25 +110,25 @@ static void ut_file_statvfs_(struct ut_env *ute, loff_t off, size_t len)
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_statfs_ok(ute, dino, &stv[0]);
+	ut_statfs(ute, dino, &stv[0]);
 	bcnt = len / stv[0].f_frsize;
 
 	ut_create_file(ute, dino, name, &ino);
-	ut_statfs_ok(ute, ino, &stv[0]);
+	ut_statfs(ute, ino, &stv[0]);
 	ut_write_read(ute, ino, buf, len, off);
-	ut_statfs_ok(ute, ino, &stv[1]);
+	ut_statfs(ute, ino, &stv[1]);
 	ut_expect_lt(stv[1].f_bfree, stv[0].f_bfree);
 	ut_expect_le(stv[1].f_bfree + bcnt, stv[0].f_bfree);
 
-	ut_statfs_ok(ute, ino, &stv[0]);
+	ut_statfs(ute, ino, &stv[0]);
 	ut_write_read(ute, ino, buf, len, off);
-	ut_statfs_ok(ute, ino, &stv[1]);
+	ut_statfs(ute, ino, &stv[1]);
 	ut_expect_eq(stv[1].f_bfree, stv[0].f_bfree);
 
 	ut_trunacate_file(ute, ino, off);
-	ut_statfs_ok(ute, ino, &stv[0]);
+	ut_statfs(ute, ino, &stv[0]);
 	ut_trunacate_file(ute, ino, off + (loff_t)len);
-	ut_statfs_ok(ute, ino, &stv[1]);
+	ut_statfs(ute, ino, &stv[1]);
 	ut_expect_eq(stv[0].f_bfree, stv[1].f_bfree);
 
 	ut_remove_file(ute, dino, name, ino);

@@ -32,8 +32,8 @@ static void ut_snap_write_sparse_(struct ut_env *ute,
 	for (size_t i = 0; i < cnt; ++i) {
 		ut_write_read(ute, ino, buf, bsz, offs[i]);
 	}
-	ut_release_ok(ute, ino);
-	ut_snap_ok(ute, dino);
+	ut_release(ute, ino);
+	ut_snap(ute, dino);
 	ut_open_rdwr(ute, ino);
 	for (size_t i = 0; i < cnt; ++i) {
 		ut_read_verify(ute, ino, buf, bsz, offs[i]);
@@ -79,8 +79,8 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_write_read(ute, ino_src, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, end);
-	ut_snap_ok(ute, dino);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_snap(ute, dino);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf, len, off);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, end - 1);
@@ -88,8 +88,8 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_read_verify(ute, ino_src, buf, len, off);
 	ut_read_verify(ute, ino_dst, buf, len - 1, off);
 	ut_read_zero(ute, ino_dst, end - 1);
-	ut_snap_ok(ute, dino);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_snap(ute, dino);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf, len, off);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_trunacate_file(ute, ino_dst, off + 1);
@@ -99,8 +99,8 @@ static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_read_zeros(ute, ino_dst, off + 1, len - 1);
 	ut_write_read(ute, ino_dst, buf2, len, off);
 	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_snap_ok(ute, dino);
-	ut_copy_file_range_ok(ute, ino_src, off, ino_dst, off, len);
+	ut_snap(ute, dino);
+	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf, len, off);
 	ut_read_verify(ute, ino_dst, buf, len, off);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
@@ -147,7 +147,7 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 		ut_create_file(ute, dino, name2, &ino2);
 		ut_write_read(ute, ino1, buf1, bsz, off);
 		ut_write_read(ute, ino2, buf2, bsz, off);
-		ut_snap_ok(ute, dino);
+		ut_snap(ute, dino);
 		ut_read_verify(ute, ino1, buf1, bsz, off);
 		ut_read_verify(ute, ino2, buf2, bsz, off);
 		ut_release_file(ute, ino1);
@@ -157,7 +157,7 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 		ut_open_rdonly(ute, ino1);
 		ut_read_verify(ute, ino1, buf1, bsz, off);
 		ut_release_file(ute, ino1);
-		ut_unlink_ok(ute, dino, name2);
+		ut_unlink(ute, dino, name2);
 	}
 	ut_rmdir_at_root(ute, dname);
 }

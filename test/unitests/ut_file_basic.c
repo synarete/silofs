@@ -25,11 +25,11 @@ static void ut_file_simple1_(struct ut_env *ute, loff_t off)
 	ino_t ino = 0;
 	uint8_t z = 0;
 
-	ut_statfs_ok(ute, rootd_ino, &stv[0]);
+	ut_statfs(ute, rootd_ino, &stv[0]);
 	ut_create_file(ute, rootd_ino, name, &ino);
 	ut_write_read(ute, ino, &z, 1, off);
 	ut_remove_file(ute, rootd_ino, name, ino);
-	ut_statfs_ok(ute, rootd_ino, &stv[1]);
+	ut_statfs(ute, rootd_ino, &stv[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
 }
 
@@ -43,7 +43,7 @@ static void ut_file_simple2_(struct ut_env *ute, loff_t off, size_t bsz)
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, bsz, off);
-	ut_release_flush_ok(ute, ino);
+	ut_release_flush(ute, ino);
 	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
@@ -58,7 +58,7 @@ static void ut_file_simple3_(struct ut_env *ute, loff_t off, size_t bsz)
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, bsz, off);
-	ut_fsync_ok(ute, ino, true);
+	ut_fsync(ute, ino, true);
 	ut_release_file(ute, ino);
 	ut_drop_caches_fully(ute);
 	ut_open_rdonly(ute, ino);
@@ -269,7 +269,7 @@ static void ut_file_multi_(struct ut_env *ute, size_t bsz,
 	ut_write_read(ute, ino, buf2, bsz, off2);
 	ut_write_read(ute, ino, buf3, bsz, off3);
 	ut_write_read(ute, ino, buf4, bsz, off4);
-	ut_fsync_ok(ute, ino, false);
+	ut_fsync(ute, ino, false);
 
 	ut_read_verify(ute, ino, buf1, bsz, off1);
 	ut_read_verify(ute, ino, buf2, bsz, off2);
@@ -377,7 +377,7 @@ static void ut_file_overwrite_complex_(struct ut_env *ute,
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf1, len, off1);
 	ut_write_read(ute, ino, buf2, len, off2);
-	ut_fsync_ok(ute, ino, true);
+	ut_fsync(ute, ino, true);
 	ut_read_verify(ute, ino, buf2, len, off2);
 	ut_read_verify(ute, ino, buf1, (size_t)diff, off1);
 	ut_write_read(ute, ino, buf2, len, off2);
@@ -805,7 +805,7 @@ static void ut_file_read_behind_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name, &ino);
 	ut_trunacate_file(ute, ino, off + bsz);
 	ut_write_read(ute, ino, &da, 1, off);
-	ut_read_ok(ute, ino, buf, (size_t)bsz, pos);
+	ut_read(ute, ino, buf, (size_t)bsz, pos);
 	ut_expect_eq(buf[idx], da);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);

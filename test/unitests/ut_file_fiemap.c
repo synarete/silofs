@@ -42,7 +42,7 @@ ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 	const struct fiemap_extent *fm_ext = NULL;
 	loff_t pos = -1;
 
-	ut_fiemap_ok(ute, ino, &fm0);
+	ut_fiemap(ute, ino, &fm0);
 	ut_expect_eq(magic, SILOFS_FSID_MAGIC);
 	ut_expect_eq(fm0.fm_extent_count, 0);
 	ut_expect_null(fm);
@@ -50,7 +50,7 @@ ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 	fm = new_fiemap(ute, fm0.fm_mapped_extents);
 	fm->fm_start = (uint64_t)off;
 	fm->fm_length = len;
-	ut_fiemap_ok(ute, ino, fm);
+	ut_fiemap(ute, ino, fm);
 
 	pos = off;
 	for (size_t i = 0; i < fm->fm_mapped_extents; ++i) {

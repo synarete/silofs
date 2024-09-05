@@ -28,7 +28,7 @@ static void ut_file_write_iter_(struct ut_env *ute, loff_t off, size_t len)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_write_iter_ok(ute, ino, buf, len, off);
+	ut_write_iter(ute, ino, buf, len, off);
 	ut_read_verify(ute, ino, buf, len, off);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
@@ -96,7 +96,7 @@ static void ut_file_write_iter_sparse_(struct ut_env *ute,
 	for (size_t i = 0; i < cnt; ++i) {
 		off = offs[i];
 		val = (uint64_t)off;
-		ut_write_iter_ok(ute, ino, &val, sizeof(val), off);
+		ut_write_iter(ute, ino, &val, sizeof(val), off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		off = offs[i];
@@ -106,7 +106,7 @@ static void ut_file_write_iter_sparse_(struct ut_env *ute,
 	for (size_t i = cnt; i > 0; --i) {
 		off = offs[i - 1];
 		val = (uint64_t)off + i;
-		ut_write_iter_ok(ute, ino, &val, sizeof(val), off);
+		ut_write_iter(ute, ino, &val, sizeof(val), off);
 	}
 	for (size_t i = cnt; i > 0; --i) {
 		off = offs[i - 1];

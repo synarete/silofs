@@ -51,15 +51,15 @@ static void ut_rw_plus_minus_1_(struct ut_env *ute,
 	dv2 = ut_new_dvec(ute, off + 1, len);
 	ut_write_dvec(ute, ino, dv2);
 	byte = dvec_first_byte(dv1);
-	ut_read_ok(ute, ino, &byte, 1, dv1->off);
+	ut_read(ute, ino, &byte, 1, dv1->off);
 	dv3 = ut_new_dvec(ute, off - 1, len);
 	ut_write_dvec(ute, ino, dv3);
 	byte = dvec_last_byte(dv2);
-	ut_read_ok(ute, ino, &byte, 1, dvec_last_off(dv2));
+	ut_read(ute, ino, &byte, 1, dvec_last_off(dv2));
 	ut_fallocate_punch_hole(ute, ino, off, (loff_t)len);
 	ut_read_zeros(ute, ino, off, len);
 	byte = dvec_first_byte(dv3);
-	ut_read_ok(ute, ino, &byte, 1, dv3->off);
+	ut_read(ute, ino, &byte, 1, dv3->off);
 	dv4 = ut_new_dvec(ute, off, len);
 	ut_write_dvec(ute, ino, dv4);
 	ut_fallocate_punch_hole(ute, ino, off - 1, (loff_t)len + 2);

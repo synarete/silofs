@@ -279,7 +279,7 @@ static void ut_file_trunc_tail_(struct ut_env *ute,
 	ut_write_read(ute, ino, buf, ulen, off);
 	ut_read_zero_byte(ute, ino, off - 1);
 	ut_trunacate_file(ute, ino, off + 1);
-	ut_read_ok(ute, ino, buf, 1, off);
+	ut_read(ute, ino, buf, 1, off);
 	ut_read_zero_byte(ute, ino, off - 1);
 	ut_trunacate_file(ute, ino, off + len);
 	ut_read_zero_byte(ute, ino, off + len - 1);
@@ -319,7 +319,7 @@ static void ut_file_trunc_void_(struct ut_env *ute, loff_t off, size_t ulen)
 	ut_create_file(ute, dino, name, &ino);
 	ut_trunacate_file(ute, ino, end);
 	ut_read_zeros(ute, ino, off, ulen);
-	ut_getattr_ok(ute, ino, &st);
+	ut_getattr(ute, ino, &st);
 	ut_expect_eq(st.st_blocks, 0);
 	ut_trunacate_file(ute, ino, 0);
 	ut_trunacate_file(ute, ino, end);
@@ -359,17 +359,17 @@ static void ut_file_trunc_zero_size_(struct ut_env *ute,
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_getattr_ok(ute, ino, &st[0]);
-	ut_statfs_ok(ute, ino, &stv[0]);
+	ut_getattr(ute, ino, &st[0]);
+	ut_statfs(ute, ino, &stv[0]);
 	ut_write_read(ute, ino, buf, len, off);
-	ut_getattr_ok(ute, ino, &st[1]);
-	ut_statfs_ok(ute, ino, &stv[1]);
+	ut_getattr(ute, ino, &st[1]);
+	ut_statfs(ute, ino, &stv[1]);
 	ut_expect_eq(st[1].st_size, off + (loff_t)len);
 	ut_expect_gt(st[1].st_blocks, st[0].st_blocks);
 	ut_expect_lt(stv[1].f_bfree, stv[0].f_bfree);
 	ut_trunacate_file(ute, ino, 0);
-	ut_getattr_ok(ute, ino, &st[2]);
-	ut_statfs_ok(ute, ino, &stv[2]);
+	ut_getattr(ute, ino, &st[2]);
+	ut_statfs(ute, ino, &stv[2]);
 	ut_expect_eq(st[2].st_size, 0);
 	ut_expect_eq(st[2].st_blocks, 0);
 	ut_expect_eq(stv[2].f_bfree, stv[0].f_bfree);

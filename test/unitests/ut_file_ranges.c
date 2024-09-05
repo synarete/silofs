@@ -109,7 +109,7 @@ static void ut_write_read_n(struct ut_env *ute,
 		dvec = dvecs->dvec[i];
 		len = dvec->len;
 		off = dvec->off;
-		ut_write_ok(ute, ino, dvec->dat, len, off);
+		ut_write(ute, ino, dvec->dat, len, off);
 	}
 
 	for (size_t j = 0; j < dvecs->count; ++j) {
@@ -117,7 +117,7 @@ static void ut_write_read_n(struct ut_env *ute,
 		len = dvec->len;
 		off = dvec->off;
 		buf = ut_randbuf(ute, len);
-		ut_read_ok(ute, ino, buf, len, off);
+		ut_read(ute, ino, buf, len, off);
 		ut_expect_eqm(buf, dvec->dat, len);
 	}
 }
@@ -133,8 +133,8 @@ static void ut_rdwr_file1(struct ut_env *ute,
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read_n(ute, drefs, ino);
-	ut_release_ok(ute, ino);
-	ut_unlink_ok(ute, dino, name);
+	ut_release(ute, ino);
+	ut_unlink(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 
@@ -150,8 +150,8 @@ static void ut_rdwr_file2(struct ut_env *ute,
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read_n(ute, drefs1, ino);
 	ut_write_read_n(ute, drefs2, ino);
-	ut_release_ok(ute, ino);
-	ut_unlink_ok(ute, dino, name);
+	ut_release(ute, ino);
+	ut_unlink(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 

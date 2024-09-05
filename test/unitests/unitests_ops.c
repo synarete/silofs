@@ -67,7 +67,7 @@ void ut_release_task(struct ut_env *ute, struct silofs_task *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
+static int ut_do_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 {
 	struct silofs_task task;
 	int ret;
@@ -78,8 +78,8 @@ static int ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 	return sanitize_status(ret);
 }
 
-static int ut_statx(struct ut_env *ute, ino_t ino,
-                    unsigned int request_mask, struct statx *stx)
+static int ut_do_statx(struct ut_env *ute, ino_t ino,
+                       unsigned int request_mask, struct statx *stx)
 {
 	struct silofs_task task;
 	int ret;
@@ -90,7 +90,7 @@ static int ut_statx(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_access(struct ut_env *ute, ino_t ino, int mode)
+static int ut_do_access(struct ut_env *ute, ino_t ino, int mode)
 {
 	struct silofs_task task;
 	int ret;
@@ -108,7 +108,7 @@ static void assign_stat(struct stat *st, const struct silofs_stat *sst)
 	}
 }
 
-static int ut_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
+static int ut_do_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -121,8 +121,8 @@ static int ut_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
 	return sanitize_status(ret);
 }
 
-static int ut_lookup(struct ut_env *ute, ino_t parent,
-                     const char *name, struct stat *out_st)
+static int ut_do_lookup(struct ut_env *ute, ino_t parent,
+                        const char *name, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -135,8 +135,8 @@ static int ut_lookup(struct ut_env *ute, ino_t parent,
 	return sanitize_status(ret);
 }
 
-static int ut_utimens(struct ut_env *ute, ino_t ino,
-                      const struct stat *utimes, struct stat *out_st)
+static int ut_do_utimens(struct ut_env *ute, ino_t ino,
+                         const struct stat *utimes, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -149,8 +149,8 @@ static int ut_utimens(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_mkdir(struct ut_env *ute, ino_t parent,
-                    const char *name, mode_t mode, struct stat *out_st)
+static int ut_do_mkdir(struct ut_env *ute, ino_t parent,
+                       const char *name, mode_t mode, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -163,7 +163,7 @@ static int ut_mkdir(struct ut_env *ute, ino_t parent,
 	return sanitize_status(ret);
 }
 
-static int ut_rmdir(struct ut_env *ute, ino_t parent, const char *name)
+static int ut_do_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 {
 	struct silofs_task task;
 	int ret;
@@ -174,7 +174,7 @@ static int ut_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 	return sanitize_status(ret);
 }
 
-static int ut_opendir(struct ut_env *ute, ino_t ino)
+static int ut_do_opendir(struct ut_env *ute, ino_t ino)
 {
 	struct silofs_task task;
 	int ret;
@@ -185,7 +185,7 @@ static int ut_opendir(struct ut_env *ute, ino_t ino)
 	return sanitize_status(ret);
 }
 
-static int ut_releasedir(struct ut_env *ute, ino_t ino)
+static int ut_do_releasedir(struct ut_env *ute, ino_t ino)
 {
 	struct silofs_task task;
 	int ret;
@@ -196,7 +196,7 @@ static int ut_releasedir(struct ut_env *ute, ino_t ino)
 	return sanitize_status(ret);
 }
 
-static int ut_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
+static int ut_do_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 {
 	struct silofs_task task;
 	int ret;
@@ -208,8 +208,9 @@ static int ut_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 }
 
 
-static int ut_symlink(struct ut_env *ute, ino_t parent,
-                      const char *name, const char *val, struct stat *out_st)
+static int ut_do_symlink(struct ut_env *ute, ino_t parent,
+                         const char *name, const char *val,
+                         struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -222,8 +223,8 @@ static int ut_symlink(struct ut_env *ute, ino_t parent,
 	return sanitize_status(ret);
 }
 
-static int ut_readlink(struct ut_env *ute,
-                       ino_t ino, char *buf, size_t len, size_t *out_len)
+static int ut_do_readlink(struct ut_env *ute,
+                          ino_t ino, char *buf, size_t len, size_t *out_len)
 {
 	struct silofs_task task;
 	int ret;
@@ -234,8 +235,8 @@ static int ut_readlink(struct ut_env *ute,
 	return sanitize_status(ret);
 }
 
-static int ut_link(struct ut_env *ute, ino_t ino, ino_t parent,
-                   const char *name, struct stat *out_st)
+static int ut_do_link(struct ut_env *ute, ino_t ino, ino_t parent,
+                      const char *name, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -248,7 +249,7 @@ static int ut_link(struct ut_env *ute, ino_t ino, ino_t parent,
 	return sanitize_status(ret);
 }
 
-static int ut_unlink(struct ut_env *ute, ino_t parent, const char *name)
+static int ut_do_unlink(struct ut_env *ute, ino_t parent, const char *name)
 {
 	struct silofs_task task;
 	int ret;
@@ -259,8 +260,8 @@ static int ut_unlink(struct ut_env *ute, ino_t parent, const char *name)
 	return sanitize_status(ret);
 }
 
-static int ut_create(struct ut_env *ute, ino_t parent,
-                     const char *name, mode_t mode, struct stat *out_st)
+static int ut_do_create(struct ut_env *ute, ino_t parent,
+                        const char *name, mode_t mode, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -273,7 +274,7 @@ static int ut_create(struct ut_env *ute, ino_t parent,
 	return sanitize_status(ret);
 }
 
-static int ut_open(struct ut_env *ute, ino_t ino, int flags)
+static int ut_do_open(struct ut_env *ute, ino_t ino, int flags)
 {
 	struct silofs_task task;
 	int ret;
@@ -284,7 +285,7 @@ static int ut_open(struct ut_env *ute, ino_t ino, int flags)
 	return sanitize_status(ret);
 }
 
-static int ut_release(struct ut_env *ute, ino_t ino, bool flush)
+static int ut_do_release(struct ut_env *ute, ino_t ino, bool flush)
 {
 	struct silofs_task task;
 	int ret;
@@ -295,8 +296,8 @@ static int ut_release(struct ut_env *ute, ino_t ino, bool flush)
 	return sanitize_status(ret);
 }
 
-static int ut_truncate(struct ut_env *ute, ino_t ino,
-                       loff_t length, struct stat *out_st)
+static int ut_do_truncate(struct ut_env *ute, ino_t ino,
+                          loff_t length, struct stat *out_st)
 {
 	struct silofs_task task;
 	struct silofs_stat st;
@@ -309,7 +310,7 @@ static int ut_truncate(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_fsync(struct ut_env *ute, ino_t ino, bool datasync)
+static int ut_do_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 {
 	struct silofs_task task;
 	int ret;
@@ -320,9 +321,9 @@ static int ut_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 	return sanitize_status(ret);
 }
 
-static int ut_rename(struct ut_env *ute, ino_t parent,
-                     const char *name, ino_t newparent,
-                     const char *newname, int flags)
+static int ut_do_rename(struct ut_env *ute, ino_t parent,
+                        const char *name, ino_t newparent,
+                        const char *newname, int flags)
 {
 	struct silofs_task task;
 	int ret;
@@ -334,7 +335,7 @@ static int ut_rename(struct ut_env *ute, ino_t parent,
 	return sanitize_status(ret);
 }
 
-static int ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
+static int ut_do_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 {
 	struct silofs_task task;
 	int ret;
@@ -345,8 +346,8 @@ static int ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 	return sanitize_status(ret);
 }
 
-static int ut_lseek(struct ut_env *ute, ino_t ino,
-                    loff_t off, int whence, loff_t *out)
+static int ut_do_lseek(struct ut_env *ute, ino_t ino,
+                       loff_t off, int whence, loff_t *out)
 {
 	struct silofs_task task;
 	int ret;
@@ -357,9 +358,9 @@ static int ut_lseek(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_copy_file_range(struct ut_env *ute, ino_t ino_in,
-                              loff_t off_in, ino_t ino_out, loff_t off_out,
-                              size_t len, size_t *out_len)
+static int ut_do_copy_file_range(struct ut_env *ute, ino_t ino_in,
+                                 loff_t off_in, ino_t ino_out, loff_t off_out,
+                                 size_t len, size_t *out_len)
 {
 	struct silofs_task task;
 	int ret;
@@ -371,9 +372,9 @@ static int ut_copy_file_range(struct ut_env *ute, ino_t ino_in,
 	return sanitize_status(ret);
 }
 
-static int ut_query(struct ut_env *ute, ino_t ino,
-                    enum silofs_query_type qtype,
-                    struct silofs_ioc_query *out_qry)
+static int ut_do_query(struct ut_env *ute, ino_t ino,
+                       enum silofs_query_type qtype,
+                       struct silofs_ioc_query *out_qry)
 {
 	struct silofs_task task;
 	int ret;
@@ -384,7 +385,7 @@ static int ut_query(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_flush(struct ut_env *ute, ino_t ino, bool now)
+static int ut_do_flush(struct ut_env *ute, ino_t ino, bool now)
 {
 	struct silofs_task task;
 	int ret;
@@ -395,8 +396,8 @@ static int ut_flush(struct ut_env *ute, ino_t ino, bool now)
 	return sanitize_status(ret);
 }
 
-static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
-                   size_t len, loff_t off, size_t *out_len)
+static int ut_do_read(struct ut_env *ute, ino_t ino, void *buf,
+                      size_t len, loff_t off, size_t *out_len)
 {
 	struct silofs_task task;
 	int ret;
@@ -407,8 +408,8 @@ static int ut_read(struct ut_env *ute, ino_t ino, void *buf,
 	return sanitize_status(ret);
 }
 
-static int ut_fallocate(struct ut_env *ute, ino_t ino,
-                        int mode, loff_t offset, loff_t len)
+static int ut_do_fallocate(struct ut_env *ute, ino_t ino,
+                           int mode, loff_t offset, loff_t len)
 {
 	struct silofs_task task;
 	int ret;
@@ -419,8 +420,8 @@ static int ut_fallocate(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_write(struct ut_env *ute, ino_t ino, const void *buf,
-                    size_t len, off_t off, size_t *out_len)
+static int ut_do_write(struct ut_env *ute, ino_t ino, const void *buf,
+                       size_t len, off_t off, size_t *out_len)
 {
 	struct silofs_task task;
 	int ret;
@@ -525,8 +526,8 @@ static bool ut_with_aswyncwr(const struct ut_env *ute)
 	return ute->args->fs_args.cflags.asyncwr;
 }
 
-static int ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
-                         size_t len, off_t off, size_t *out_len)
+static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
+                            size_t len, off_t off, size_t *out_len)
 {
 	struct silofs_task task = { .t_interrupt = -1 };
 	struct ut_write_iter wri = {
@@ -595,8 +596,8 @@ static int filldir(struct silofs_readdir_ctx *rd_ctx,
 	return 0;
 }
 
-static int ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
-                      struct ut_readdir_ctx *ut_rd_ctx)
+static int ut_do_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
+                         struct ut_readdir_ctx *ut_rd_ctx)
 {
 	struct silofs_task task;
 	struct silofs_readdir_ctx *rd_ctx = &ut_rd_ctx->rd_ctx;
@@ -613,8 +614,8 @@ static int ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
 	return sanitize_status(ret);
 }
 
-static int ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
-                          struct ut_readdir_ctx *ut_rd_ctx)
+static int ut_do_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
+                             struct ut_readdir_ctx *ut_rd_ctx)
 {
 	struct silofs_task task;
 	struct silofs_readdir_ctx *rd_ctx = &ut_rd_ctx->rd_ctx;
@@ -631,9 +632,9 @@ static int ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
 	return sanitize_status(ret);
 }
 
-static int ut_setxattr(struct ut_env *ute, ino_t ino,
-                       const char *name, const void *value,
-                       size_t size, int flags)
+static int ut_do_setxattr(struct ut_env *ute, ino_t ino,
+                          const char *name, const void *value,
+                          size_t size, int flags)
 {
 	struct silofs_task task;
 	int ret;
@@ -644,9 +645,9 @@ static int ut_setxattr(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_getxattr(struct ut_env *ute, ino_t ino,
-                       const char *name, void *buf,
-                       size_t size, size_t *out_size)
+static int ut_do_getxattr(struct ut_env *ute, ino_t ino,
+                          const char *name, void *buf,
+                          size_t size, size_t *out_size)
 {
 	struct silofs_task task;
 	int ret;
@@ -657,7 +658,7 @@ static int ut_getxattr(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_removexattr(struct ut_env *ute, ino_t ino, const char *name)
+static int ut_do_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 {
 	struct silofs_task task;
 	int ret;
@@ -692,8 +693,8 @@ static int fillxent(struct silofs_listxattr_ctx *lxa_ctx,
 	return 0;
 }
 
-static int ut_listxattr(struct ut_env *ute, ino_t ino,
-                        struct ut_listxattr_ctx *ut_lxa_ctx)
+static int ut_do_listxattr(struct ut_env *ute, ino_t ino,
+                           struct ut_listxattr_ctx *ut_lxa_ctx)
 {
 	struct silofs_task task;
 	struct silofs_listxattr_ctx *lxa_ctx = &ut_lxa_ctx->lxa_ctx;
@@ -709,8 +710,8 @@ static int ut_listxattr(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_tune(struct ut_env *ute, ino_t ino,
-                   int iflags_want, int iflags_dont)
+static int ut_do_tune(struct ut_env *ute, ino_t ino,
+                      int iflags_want, int iflags_dont)
 {
 	struct silofs_task task;
 	int ret;
@@ -721,7 +722,7 @@ static int ut_tune(struct ut_env *ute, ino_t ino,
 	return sanitize_status(ret);
 }
 
-static int ut_timedout(struct ut_env *ute)
+static int ut_do_timedout(struct ut_env *ute)
 {
 	struct silofs_task task;
 	int ret;
@@ -737,36 +738,36 @@ static int ut_timedout(struct ut_env *ute)
 #define ut_expect_status(err_, status_) \
 	ut_expect_eq(err_, -abs(status_))
 
-void ut_access_ok(struct ut_env *ute, ino_t ino, int mode)
+void ut_access(struct ut_env *ute, ino_t ino, int mode)
 {
 	int err;
 
-	err = ut_access(ute, ino, mode);
+	err = ut_do_access(ute, ino, mode);
 	ut_expect_ok(err);
 }
 
-void ut_statfs_ok(struct ut_env *ute, ino_t ino, struct statvfs *st)
+void ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 {
 	int err;
 
-	err = ut_statfs(ute, ino, st);
+	err = ut_do_statfs(ute, ino, st);
 	ut_expect_ok(err);
 }
 
-void ut_statfs_rootd_ok(struct ut_env *ute, struct statvfs *stv)
+void ut_statfs_rootd(struct ut_env *ute, struct statvfs *stv)
 {
-	ut_statfs_ok(ute, SILOFS_INO_ROOT, stv);
+	ut_statfs(ute, SILOFS_INO_ROOT, stv);
 }
 
-void ut_statsp_ok(struct ut_env *ute, ino_t ino,
-                  struct silofs_spacestats *spst)
+void ut_statsp(struct ut_env *ute, ino_t ino,
+               struct silofs_spacestats *spst)
 {
-	ut_query_spst_ok(ute, ino, spst);
+	ut_query_spst(ute, ino, spst);
 }
 
-void ut_statsp_rootd_ok(struct ut_env *ute, struct silofs_spacestats *spst)
+void ut_statsp_rootd(struct ut_env *ute, struct silofs_spacestats *spst)
 {
-	ut_statsp_ok(ute, SILOFS_INO_ROOT, spst);
+	ut_statsp(ute, SILOFS_INO_ROOT, spst);
 }
 
 static void ut_expect_sane_statx(const struct statx *stx)
@@ -777,22 +778,22 @@ static void ut_expect_sane_statx(const struct statx *stx)
 	ut_expect_le(stx->stx_btime.tv_sec, stx->stx_mtime.tv_sec);
 }
 
-void ut_statx_ok(struct ut_env *ute, ino_t ino, struct statx *stx)
+void ut_statx(struct ut_env *ute, ino_t ino, struct statx *stx)
 {
 	int err;
 	const unsigned int mask = STATX_ALL | STATX_BTIME;
 
-	err = ut_statx(ute, ino, mask, stx);
+	err = ut_do_statx(ute, ino, mask, stx);
 	ut_expect_ok(err);
 	ut_expect_eq(stx->stx_mask & mask, mask);
 	ut_expect_sane_statx(stx);
 }
 
-void ut_getattr_ok(struct ut_env *ute, ino_t ino, struct stat *st)
+void ut_getattr(struct ut_env *ute, ino_t ino, struct stat *st)
 {
 	int err;
 
-	err = ut_getattr(ute, ino, st);
+	err = ut_do_getattr(ute, ino, st);
 	ut_expect_ok(err);
 	ut_expect_eq(ino, st->st_ino);
 }
@@ -802,25 +803,25 @@ void ut_getattr_noent(struct ut_env *ute, ino_t ino)
 	int err;
 	struct stat st;
 
-	err = ut_getattr(ute, ino, &st);
+	err = ut_do_getattr(ute, ino, &st);
 	ut_expect_err(err, -ENOENT);
 }
 
 void ut_getattr_reg(struct ut_env *ute, ino_t ino, struct stat *st)
 {
-	ut_getattr_ok(ute, ino, st);
+	ut_getattr(ute, ino, st);
 	ut_expect(S_ISREG(st->st_mode));
 }
 
 void ut_getattr_lnk(struct ut_env *ute, ino_t ino, struct stat *st)
 {
-	ut_getattr_ok(ute, ino, st);
+	ut_getattr(ute, ino, st);
 	ut_expect(S_ISLNK(st->st_mode));
 }
 
 void ut_getattr_dir(struct ut_env *ute, ino_t ino, struct stat *st)
 {
-	ut_getattr_ok(ute, ino, st);
+	ut_getattr(ute, ino, st);
 	ut_expect(S_ISDIR(st->st_mode));
 }
 
@@ -848,7 +849,7 @@ void ut_utimens_atime(struct ut_env *ute, ino_t ino,
 	uts.st_ctim.tv_sec = atime->tv_sec;
 	uts.st_ctim.tv_nsec = atime->tv_nsec;
 
-	err = ut_utimens(ute, ino, &uts, &st);
+	err = ut_do_utimens(ute, ino, &uts, &st);
 	ut_expect_ok(err);
 	ut_expect_eq(ino, st.st_ino);
 	ut_expect_eq(st.st_atim.tv_sec, atime->tv_sec);
@@ -869,7 +870,7 @@ void ut_utimens_mtime(struct ut_env *ute, ino_t ino,
 	uts.st_ctim.tv_sec = mtime->tv_sec;
 	uts.st_ctim.tv_nsec = mtime->tv_nsec;
 
-	err = ut_utimens(ute, ino, &uts, &st);
+	err = ut_do_utimens(ute, ino, &uts, &st);
 	ut_expect_ok(err);
 	ut_expect_eq(ino, st.st_ino);
 	ut_expect_eq(st.st_mtim.tv_sec, mtime->tv_sec);
@@ -881,12 +882,12 @@ static void ut_lookup_status(struct ut_env *ute, ino_t parent,
 {
 	int err;
 
-	err = ut_lookup(ute, parent, name, out_st);
+	err = ut_do_lookup(ute, parent, name, out_st);
 	ut_expect_status(err, status);
 }
 
-void ut_lookup_ok(struct ut_env *ute, ino_t parent,
-                  const char *name, struct stat *out_st)
+void ut_lookup(struct ut_env *ute, ino_t parent,
+               const char *name, struct stat *out_st)
 {
 	ut_lookup_status(ute, parent, name, out_st, 0);
 }
@@ -896,7 +897,7 @@ void ut_lookup_ino(struct ut_env *ute, ino_t parent,
 {
 	struct stat st;
 
-	ut_lookup_ok(ute, parent, name, &st);
+	ut_lookup(ute, parent, name, &st);
 	*out_ino = st.st_ino;
 }
 
@@ -912,7 +913,7 @@ void ut_lookup_exists(struct ut_env *ute, ino_t parent,
 {
 	struct stat st;
 
-	ut_lookup_ok(ute, parent, name, &st);
+	ut_lookup(ute, parent, name, &st);
 	ut_expect_eq(ino, st.st_ino);
 	ut_expect_eq(mode, st.st_mode & mode);
 }
@@ -941,12 +942,12 @@ static void ut_mkdir_status(struct ut_env *ute, ino_t parent,
 {
 	int err;
 
-	err = ut_mkdir(ute, parent, name, 0700, out_st);
+	err = ut_do_mkdir(ute, parent, name, 0700, out_st);
 	ut_expect_status(err, status);
 }
 
-void ut_mkdir_ok(struct ut_env *ute, ino_t parent,
-                 const char *name, struct stat *out_st)
+void ut_mkdir(struct ut_env *ute, ino_t parent,
+              const char *name, struct stat *out_st)
 {
 	int err;
 	ino_t dino;
@@ -958,28 +959,28 @@ void ut_mkdir_ok(struct ut_env *ute, ino_t parent,
 	ut_expect_ne(dino, parent);
 	ut_expect_ne(dino, SILOFS_INO_NULL);
 
-	err = ut_getattr(ute, dino, &st);
+	err = ut_do_getattr(ute, dino, &st);
 	ut_expect_ok(err);
 	ut_expect_eq(st.st_ino, dino);
 	ut_expect_eq(st.st_nlink, 2);
 
-	err = ut_lookup(ute, parent, name, &st);
+	err = ut_do_lookup(ute, parent, name, &st);
 	ut_expect_ok(err);
 	ut_expect_eq(st.st_ino, dino);
 
-	err = ut_getattr(ute, parent, &st);
+	err = ut_do_getattr(ute, parent, &st);
 	ut_expect_ok(err);
 	ut_expect_eq(st.st_ino, parent);
 	ut_expect_gt(st.st_nlink, 2);
 	ut_expect_gt(st.st_size, 0);
 }
 
-void ut_mkdir_oki(struct ut_env *ute, ino_t parent,
-                  const char *name, ino_t *out_ino)
+void ut_mkdir2(struct ut_env *ute, ino_t parent,
+               const char *name, ino_t *out_ino)
 {
 	struct stat st;
 
-	ut_mkdir_ok(ute, parent, name, &st);
+	ut_mkdir(ute, parent, name, &st);
 	*out_ino = st.st_ino;
 }
 
@@ -992,9 +993,9 @@ void ut_mkdir_err(struct ut_env *ute, ino_t parent,
 void ut_mkdir_at_root(struct ut_env *ute,
                       const char *name, ino_t *out_ino)
 {
-	ut_mkdir_oki(ute, SILOFS_INO_ROOT, name, out_ino);
+	ut_mkdir2(ute, SILOFS_INO_ROOT, name, out_ino);
 	if (ute->ftype == SILOFS_FILE_TYPE2) {
-		ut_tune_ftype2_ok(ute, *out_ino);
+		ut_tune_ftype2(ute, *out_ino);
 	}
 }
 
@@ -1003,18 +1004,18 @@ static void ut_rmdir_status(struct ut_env *ute,
 {
 	int err;
 
-	err = ut_rmdir(ute, parent, name);
+	err = ut_do_rmdir(ute, parent, name);
 	ut_expect_status(err, status);
 }
 
-void ut_rmdir_ok(struct ut_env *ute, ino_t parent, const char *name)
+void ut_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 {
 	struct stat st;
 
-	ut_lookup_ok(ute, parent, name, &st);
+	ut_lookup(ute, parent, name, &st);
 	ut_rmdir_status(ute, parent, name, 0);
 	ut_lookup_noent(ute, parent, name);
-	ut_getattr_ok(ute, parent, &st);
+	ut_getattr(ute, parent, &st);
 }
 
 void ut_rmdir_err(struct ut_env *ute, ino_t parent,
@@ -1025,7 +1026,7 @@ void ut_rmdir_err(struct ut_env *ute, ino_t parent,
 
 void ut_rmdir_at_root(struct ut_env *ute, const char *name)
 {
-	ut_rmdir_ok(ute, SILOFS_INO_ROOT, name);
+	ut_rmdir(ute, SILOFS_INO_ROOT, name);
 }
 
 static void ut_require_dir(struct ut_env *ute, ino_t dino)
@@ -1033,7 +1034,7 @@ static void ut_require_dir(struct ut_env *ute, ino_t dino)
 	int err;
 	struct stat st;
 
-	err = ut_getattr(ute, dino, &st);
+	err = ut_do_getattr(ute, dino, &st);
 	ut_expect_ok(err);
 	ut_expect(S_ISDIR(st.st_mode));
 }
@@ -1042,11 +1043,11 @@ static void ut_opendir_status(struct ut_env *ute, ino_t ino, int status)
 {
 	int err;
 
-	err = ut_opendir(ute, ino);
+	err = ut_do_opendir(ute, ino);
 	ut_expect_status(err, status);
 }
 
-void ut_opendir_ok(struct ut_env *ute, ino_t ino)
+void ut_opendir(struct ut_env *ute, ino_t ino)
 {
 	ut_require_dir(ute, ino);
 	ut_opendir_status(ute, ino, 0);
@@ -1061,11 +1062,11 @@ static void ut_releasedir_status(struct ut_env *ute, ino_t ino, int status)
 {
 	int err;
 
-	err = ut_releasedir(ute, ino);
+	err = ut_do_releasedir(ute, ino);
 	ut_expect_status(err, status);
 }
 
-void ut_releasedir_ok(struct ut_env *ute, ino_t ino)
+void ut_releasedir(struct ut_env *ute, ino_t ino)
 {
 	ut_require_dir(ute, ino);
 	ut_releasedir_status(ute, ino, 0);
@@ -1076,29 +1077,29 @@ void ut_releasedir_err(struct ut_env *ute, ino_t ino, int err)
 	ut_releasedir_status(ute, ino, err);
 }
 
-void ut_fsyncdir_ok(struct ut_env *ute, ino_t ino)
+void ut_fsyncdir(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_fsyncdir(ute, ino, true);
+	err = ut_do_fsyncdir(ute, ino, true);
 	ut_expect_ok(err);
 }
 
-void ut_readdir_ok(struct ut_env *ute, ino_t ino, loff_t doff,
-                   struct ut_readdir_ctx *ut_rd_ctx)
+void ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
+                struct ut_readdir_ctx *ut_rd_ctx)
 {
 	int err;
 
-	err = ut_readdir(ute, ino, doff, ut_rd_ctx);
+	err = ut_do_readdir(ute, ino, doff, ut_rd_ctx);
 	ut_expect_ok(err);
 }
 
-void ut_readdirplus_ok(struct ut_env *ute, ino_t ino, loff_t doff,
-                       struct ut_readdir_ctx *ut_rd_ctx)
+void ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
+                    struct ut_readdir_ctx *ut_rd_ctx)
 {
 	int err;
 
-	err = ut_readdirplus(ute, ino, doff, ut_rd_ctx);
+	err = ut_do_readdirplus(ute, ino, doff, ut_rd_ctx);
 	ut_expect_ok(err);
 }
 
@@ -1108,27 +1109,27 @@ static void ut_link_status(struct ut_env *ute, ino_t ino,
 {
 	int err;
 
-	err = ut_link(ute, ino, parent, name, out_st);
+	err = ut_do_link(ute, ino, parent, name, out_st);
 	ut_expect_status(err, status);
 }
 
-void ut_link_ok(struct ut_env *ute, ino_t ino,
-                ino_t parent, const char *name, struct stat *out_st)
+void ut_link(struct ut_env *ute, ino_t ino,
+             ino_t parent, const char *name, struct stat *out_st)
 {
 	nlink_t nlink1;
 	nlink_t nlink2;
 	struct stat st;
 
 	ut_lookup_noent(ute, parent, name);
-	ut_getattr_ok(ute, ino, &st);
+	ut_getattr(ute, ino, &st);
 	nlink1 = st.st_nlink;
 
 	ut_link_status(ute, ino, parent, name, out_st, 0);
 	ut_expect_eq(out_st->st_ino, ino);
 	ut_expect_gt(out_st->st_nlink, 1);
 
-	ut_lookup_ok(ute, parent, name, &st);
-	ut_getattr_ok(ute, ino, &st);
+	ut_lookup(ute, parent, name, &st);
+	ut_getattr(ute, ino, &st);
 	nlink2 = st.st_nlink;
 	ut_expect_eq(nlink1 + 1, nlink2);
 }
@@ -1144,11 +1145,11 @@ static void ut_unlink_status(struct ut_env *ute,
 {
 	int err;
 
-	err = ut_unlink(ute, parent, name);
+	err = ut_do_unlink(ute, parent, name);
 	ut_expect_status(err, status);
 }
 
-void ut_unlink_ok(struct ut_env *ute, ino_t parent, const char *name)
+void ut_unlink(struct ut_env *ute, ino_t parent, const char *name)
 {
 	ut_unlink_status(ute, parent, name, 0);
 	ut_lookup_noent(ute, parent, name);
@@ -1168,16 +1169,16 @@ void ut_unlink_file(struct ut_env *ute,
 
 	ut_lookup_ino(ute, parent, name, &ino);
 	ut_getattr_reg(ute, ino, &st);
-	ut_unlink_ok(ute, parent, name);
+	ut_unlink(ute, parent, name);
 }
 
-static void ut_rename_ok(struct ut_env *ute, ino_t parent,
-                         const char *name, ino_t newparent,
-                         const char *newname, int flags)
+static void ut_rename(struct ut_env *ute, ino_t parent,
+                      const char *name, ino_t newparent,
+                      const char *newname, int flags)
 {
 	int err;
 
-	err = ut_rename(ute, parent, name, newparent, newname, flags);
+	err = ut_do_rename(ute, parent, name, newparent, newname, flags);
 	ut_expect_ok(err);
 }
 
@@ -1186,12 +1187,12 @@ void ut_rename_move(struct ut_env *ute, ino_t parent, const char *name,
 {
 	struct stat st;
 
-	ut_lookup_ok(ute, parent, name, &st);
+	ut_lookup(ute, parent, name, &st);
 	ut_lookup_noent(ute, newparent, newname);
-	ut_rename_ok(ute, parent, name, newparent, newname, 0);
+	ut_rename(ute, parent, name, newparent, newname, 0);
 	ut_lookup_noent(ute, parent, name);
-	ut_getattr_ok(ute, st.st_ino, &st);
-	ut_lookup_ok(ute, newparent, newname, &st);
+	ut_getattr(ute, st.st_ino, &st);
+	ut_lookup(ute, newparent, newname, &st);
 }
 
 void ut_rename_replace(struct ut_env *ute, ino_t parent, const char *name,
@@ -1199,12 +1200,12 @@ void ut_rename_replace(struct ut_env *ute, ino_t parent, const char *name,
 {
 	struct stat st[2];
 
-	ut_lookup_ok(ute, parent, name, &st[0]);
-	ut_lookup_ok(ute, newparent, newname, &st[1]);
-	ut_rename_ok(ute, parent, name, newparent, newname, 0);
+	ut_lookup(ute, parent, name, &st[0]);
+	ut_lookup(ute, newparent, newname, &st[1]);
+	ut_rename(ute, parent, name, newparent, newname, 0);
 	ut_lookup_noent(ute, parent, name);
-	ut_getattr_ok(ute, st[0].st_ino, &st[0]);
-	ut_lookup_ok(ute, newparent, newname, &st[1]);
+	ut_getattr(ute, st[0].st_ino, &st[0]);
+	ut_lookup(ute, newparent, newname, &st[1]);
 }
 
 void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
@@ -1213,13 +1214,13 @@ void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
 	struct stat st[4];
 	const int flags = RENAME_EXCHANGE;
 
-	ut_lookup_ok(ute, parent, name, &st[0]);
+	ut_lookup(ute, parent, name, &st[0]);
 	ut_expect_gt(st[0].st_nlink, 0);
-	ut_lookup_ok(ute, newparent, newname, &st[1]);
+	ut_lookup(ute, newparent, newname, &st[1]);
 	ut_expect_gt(st[1].st_nlink, 0);
-	ut_rename_ok(ute, parent, name, newparent, newname, flags);
-	ut_lookup_ok(ute, parent, name, &st[2]);
-	ut_lookup_ok(ute, newparent, newname, &st[3]);
+	ut_rename(ute, parent, name, newparent, newname, flags);
+	ut_lookup(ute, parent, name, &st[2]);
+	ut_lookup(ute, newparent, newname, &st[3]);
 	ut_expect_eq(st[0].st_ino, st[3].st_ino);
 	ut_expect_eq(st[0].st_mode, st[3].st_mode);
 	ut_expect_eq(st[0].st_nlink, st[3].st_nlink);
@@ -1228,16 +1229,16 @@ void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
 	ut_expect_eq(st[1].st_nlink, st[2].st_nlink);
 }
 
-void ut_symlink_ok(struct ut_env *ute, ino_t parent,
-                   const char *name, const char *value, ino_t *out_ino)
+void ut_symlink(struct ut_env *ute, ino_t parent,
+                const char *name, const char *value, ino_t *out_ino)
 {
 	int err;
 	struct stat st;
 
-	err = ut_lookup(ute, parent, name, &st);
+	err = ut_do_lookup(ute, parent, name, &st);
 	ut_expect_err(err, -ENOENT);
 
-	err = ut_symlink(ute, parent, name, value, &st);
+	err = ut_do_symlink(ute, parent, name, value, &st);
 	ut_expect_ok(err);
 	ut_expect_ne(st.st_ino, parent);
 
@@ -1254,7 +1255,7 @@ void ut_readlink_expect(struct ut_env *ute, ino_t ino, const char *value)
 	const size_t lsz = SILOFS_PATH_MAX;
 
 	lnk = ut_zalloc(ute, lsz);
-	err = ut_readlink(ute, ino, lnk, lsz, &nrd);
+	err = ut_do_readlink(ute, ino, lnk, lsz, &nrd);
 	ut_expect_ok(err);
 	ut_expect_eq(strlen(value), nrd);
 	ut_expect_eqm(value, lnk, nrd);
@@ -1266,23 +1267,23 @@ static void ut_create_status(struct ut_env *ute, ino_t parent,
 {
 	int err;
 
-	err = ut_create(ute, parent, name, mode, out_st);
+	err = ut_do_create(ute, parent, name, mode, out_st);
 	ut_expect_status(err, status);
 }
 
-void ut_create_ok(struct ut_env *ute, ino_t parent,
-                  const char *name, mode_t mode, struct stat *out_st)
+void ut_create(struct ut_env *ute, ino_t parent,
+               const char *name, mode_t mode, struct stat *out_st)
 {
 	ut_create_status(ute, parent, name, mode, out_st, 0);
 }
 
-static void ut_create_new(struct ut_env *ute, ino_t parent,
-                          const char *name, mode_t mode, ino_t *out_ino)
+static void ut_create2(struct ut_env *ute, ino_t parent,
+                       const char *name, mode_t mode, ino_t *out_ino)
 {
 	struct stat st;
 	ino_t ino = 0;
 
-	ut_create_ok(ute, parent, name, mode, &st);
+	ut_create(ute, parent, name, mode, &st);
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
 	ut_expect_ne(ino, SILOFS_INO_NULL);
@@ -1294,14 +1295,14 @@ static void ut_create_new(struct ut_env *ute, ino_t parent,
 void ut_create_file(struct ut_env *ute, ino_t parent,
                     const char *name, ino_t *out_ino)
 {
-	ut_create_new(ute, parent, name, S_IFREG | 0600, out_ino);
+	ut_create2(ute, parent, name, S_IFREG | 0600, out_ino);
 }
 
 void ut_create_special(struct ut_env *ute, ino_t parent,
                        const char *name, mode_t mode, ino_t *out_ino)
 {
 	ut_expect(S_ISFIFO(mode) || S_ISSOCK(mode));
-	ut_create_new(ute, parent, name, mode, out_ino);
+	ut_create2(ute, parent, name, mode, out_ino);
 }
 
 void ut_create_noent(struct ut_env *ute, ino_t parent, const char *name)
@@ -1309,19 +1310,19 @@ void ut_create_noent(struct ut_env *ute, ino_t parent, const char *name)
 	ut_create_status(ute, parent, name, S_IFREG | 0600, NULL, -ENOENT);
 }
 
-void ut_release_ok(struct ut_env *ute, ino_t ino)
+void ut_release(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_release(ute, ino, false);
+	err = ut_do_release(ute, ino, false);
 	ut_expect_ok(err);
 }
 
-void ut_release_flush_ok(struct ut_env *ute, ino_t ino)
+void ut_release_flush(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_release(ute, ino, true);
+	err = ut_do_release(ute, ino, true);
 	ut_expect_ok(err);
 }
 
@@ -1330,14 +1331,14 @@ void ut_release_file(struct ut_env *ute, ino_t ino)
 	struct stat st;
 
 	ut_getattr_reg(ute, ino, &st);
-	ut_release_ok(ute, ino);
+	ut_release(ute, ino);
 }
 
-void ut_fsync_ok(struct ut_env *ute, ino_t ino, bool datasync)
+void ut_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 {
 	int err;
 
-	err = ut_fsync(ute, ino, datasync);
+	err = ut_do_fsync(ute, ino, datasync);
 	ut_expect_ok(err);
 }
 
@@ -1347,13 +1348,13 @@ void ut_create_only(struct ut_env *ute, ino_t parent,
 	ino_t ino;
 	struct stat st;
 
-	ut_create_ok(ute, parent, name, S_IFREG | 0600, &st);
+	ut_create(ute, parent, name, S_IFREG | 0600, &st);
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
 	ut_expect_ne(ino, SILOFS_INO_NULL);
 
-	ut_release_ok(ute, ino);
-	ut_lookup_ok(ute, parent, name, &st);
+	ut_release(ute, ino);
+	ut_lookup(ute, parent, name, &st);
 	ut_expect_eq(ino, st.st_ino);
 
 	*out_ino = ino;
@@ -1363,7 +1364,7 @@ void ut_open_rdonly(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_open(ute, ino, O_RDONLY);
+	err = ut_do_open(ute, ino, O_RDONLY);
 	ut_expect_ok(err);
 }
 
@@ -1371,15 +1372,15 @@ void ut_open_rdwr(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_open(ute, ino, O_RDWR);
+	err = ut_do_open(ute, ino, O_RDWR);
 	ut_expect_ok(err);
 }
 
 void ut_remove_file(struct ut_env *ute, ino_t parent,
                     const char *name, ino_t ino)
 {
-	ut_release_ok(ute, ino);
-	ut_unlink_ok(ute, parent, name);
+	ut_release(ute, ino);
+	ut_unlink(ute, parent, name);
 	ut_unlink_err(ute, parent, name, -ENOENT);
 }
 
@@ -1388,37 +1389,37 @@ void ut_remove_link(struct ut_env *ute,
 {
 	struct stat st;
 
-	ut_lookup_ok(ute, parent, name, &st);
-	ut_unlink_ok(ute, parent, name);
+	ut_lookup(ute, parent, name, &st);
+	ut_unlink(ute, parent, name);
 	ut_unlink_err(ute, parent, name, -ENOENT);
 }
 
-void ut_flush_ok(struct ut_env *ute, ino_t ino, bool now)
+void ut_flush(struct ut_env *ute, ino_t ino, bool now)
 {
 	int err;
 
-	err = ut_flush(ute, ino, now);
+	err = ut_do_flush(ute, ino, now);
 	ut_expect_ok(err);
 }
 
-void ut_write_ok(struct ut_env *ute, ino_t ino,
-                 const void *buf, size_t bsz, loff_t off)
+void ut_write(struct ut_env *ute, ino_t ino,
+              const void *buf, size_t bsz, loff_t off)
 {
 	size_t nwr = 0;
 	int err;
 
-	err = ut_write(ute, ino, buf, bsz, off, &nwr);
+	err = ut_do_write(ute, ino, buf, bsz, off, &nwr);
 	ut_expect_ok(err);
 	ut_expect_eq(nwr, bsz);
 }
 
-void ut_write_iter_ok(struct ut_env *ute, ino_t ino,
-                      const void *buf, size_t bsz, off_t off)
+void ut_write_iter(struct ut_env *ute, ino_t ino,
+                   const void *buf, size_t bsz, off_t off)
 {
 	size_t nwr = 0;
 	int err;
 
-	err = ut_write_iter(ute, ino, buf, bsz, off, &nwr);
+	err = ut_do_write_iter(ute, ino, buf, bsz, off, &nwr);
 	ut_expect_ok(err);
 	ut_expect_eq(nwr, bsz);
 }
@@ -1430,7 +1431,7 @@ void ut_write_nospc(struct ut_env *ute, ino_t ino,
 	int err;
 
 	*out_nwr = 0;
-	err = ut_write(ute, ino, buf, bsz, off, out_nwr);
+	err = ut_do_write(ute, ino, buf, bsz, off, out_nwr);
 	if (err) {
 		ut_expect_status(err, -ENOSPC);
 	}
@@ -1439,7 +1440,7 @@ void ut_write_nospc(struct ut_env *ute, ino_t ino,
 void ut_write_read(struct ut_env *ute, ino_t ino,
                    const void *buf, size_t bsz, loff_t off)
 {
-	ut_write_ok(ute, ino, buf, bsz, off);
+	ut_write(ute, ino, buf, bsz, off);
 	ut_read_verify(ute, ino, buf, bsz, off);
 }
 
@@ -1462,7 +1463,7 @@ void ut_read_verify(struct ut_env *ute, ino_t ino,
 	char tmp[1024];
 	void *dat = (bsz > sizeof(tmp)) ? ut_randbuf(ute, bsz) : tmp;
 
-	ut_read_ok(ute, ino, dat, bsz, off);
+	ut_read(ute, ino, dat, bsz, off);
 	ut_expect_eqm(buf, dat, bsz);
 }
 
@@ -1472,13 +1473,13 @@ void ut_read_verify_str(struct ut_env *ute, ino_t ino,
 	ut_read_verify(ute, ino, str, strlen(str), off);
 }
 
-void ut_read_ok(struct ut_env *ute, ino_t ino,
-                void *buf, size_t bsz, loff_t off)
+void ut_read(struct ut_env *ute, ino_t ino,
+             void *buf, size_t bsz, loff_t off)
 {
-	int err;
 	size_t nrd;
+	int err;
 
-	err = ut_read(ute, ino, buf, bsz, off, &nrd);
+	err = ut_do_read(ute, ino, buf, bsz, off, &nrd);
 	ut_expect_ok(err);
 	ut_expect_eq(nrd, bsz);
 }
@@ -1509,11 +1510,11 @@ void ut_trunacate_file(struct ut_env *ute, ino_t ino, loff_t off)
 	uint8_t buf[1] = { 0 };
 	int err;
 
-	err = ut_truncate(ute, ino, off, &st);
+	err = ut_do_truncate(ute, ino, off, &st);
 	ut_expect_ok(err);
 	ut_expect_eq(off, st.st_size);
 
-	err = ut_read(ute, ino, buf, 1, off, &nrd);
+	err = ut_do_read(ute, ino, buf, 1, off, &nrd);
 	ut_expect_ok(err);
 	ut_expect_eq(nrd, 0);
 	ut_expect_eq(buf[0], 0);
@@ -1534,10 +1535,10 @@ void ut_fallocate_reserve(struct ut_env *ute, ino_t ino,
 	struct stat st;
 	int err;
 
-	err = ut_fallocate(ute, ino, 0, off, len);
+	err = ut_do_fallocate(ute, ino, 0, off, len);
 	ut_expect_ok(err);
 
-	err = ut_getattr(ute, ino, &st);
+	err = ut_do_getattr(ute, ino, &st);
 	ut_expect_ok(err);
 	ut_expect_ge(st.st_size, off + len);
 }
@@ -1549,13 +1550,13 @@ void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino,
 	const int mode = FALLOC_FL_KEEP_SIZE;
 	int err;
 
-	err = ut_getattr(ute, ino, &st[0]);
+	err = ut_do_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
 
-	err = ut_fallocate(ute, ino, mode, off, len);
+	err = ut_do_fallocate(ute, ino, mode, off, len);
 	ut_expect_ok(err);
 
-	err = ut_getattr(ute, ino, &st[1]);
+	err = ut_do_getattr(ute, ino, &st[1]);
 	ut_expect_ok(err);
 
 	ut_expect_eq(st[1].st_size, st[0].st_size);
@@ -1571,13 +1572,13 @@ void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino,
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 	int err;
 
-	err = ut_getattr(ute, ino, &st[0]);
+	err = ut_do_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
 
-	err = ut_fallocate(ute, ino, mode, off, len);
+	err = ut_do_fallocate(ute, ino, mode, off, len);
 	ut_expect_ok(err);
 
-	err = ut_getattr(ute, ino, &st[1]);
+	err = ut_do_getattr(ute, ino, &st[1]);
 	ut_expect_ok(err);
 	ut_expect_eq(st[1].st_size, st[0].st_size);
 	ut_expect_le(st[1].st_blocks, st[0].st_blocks);
@@ -1595,13 +1596,13 @@ void ut_fallocate_zero_range(struct ut_env *ute, ino_t ino,
 		mode |= FALLOC_FL_KEEP_SIZE;
 	}
 
-	err = ut_getattr(ute, ino, &st[0]);
+	err = ut_do_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
 
-	err = ut_fallocate(ute, ino, mode, off, len);
+	err = ut_do_fallocate(ute, ino, mode, off, len);
 	ut_expect_ok(err);
 
-	err = ut_getattr(ute, ino, &st[1]);
+	err = ut_do_getattr(ute, ino, &st[1]);
 	ut_expect_ok(err);
 	if (keep_size) {
 		ut_expect_eq(st[1].st_size, st[0].st_size);
@@ -1620,7 +1621,7 @@ static void ut_setgetxattr(struct ut_env *ute, ino_t ino,
 {
 	int err;
 
-	err = ut_setxattr(ute, ino, kv->name, kv->value, kv->size, flags);
+	err = ut_do_setxattr(ute, ino, kv->name, kv->value, kv->size, flags);
 	ut_expect_ok(err);
 
 	ut_getxattr_value(ute, ino, kv);
@@ -1656,7 +1657,6 @@ void ut_setxattr_all(struct ut_env *ute, ino_t ino,
 	}
 }
 
-
 void ut_getxattr_value(struct ut_env *ute, ino_t ino,
                        const struct ut_keyval *kv)
 {
@@ -1665,12 +1665,12 @@ void ut_getxattr_value(struct ut_env *ute, ino_t ino,
 	int err;
 
 	vsz = 0;
-	err = ut_getxattr(ute, ino, kv->name, NULL, 0, &vsz);
+	err = ut_do_getxattr(ute, ino, kv->name, NULL, 0, &vsz);
 	ut_expect_ok(err);
 	ut_expect_eq(vsz, kv->size);
 
 	val = ut_randbuf(ute, vsz);
-	err = ut_getxattr(ute, ino, kv->name, val, vsz, &vsz);
+	err = ut_do_getxattr(ute, ino, kv->name, val, vsz, &vsz);
 	ut_expect_ok(err);
 	ut_expect_eqm(val, kv->value, kv->size);
 }
@@ -1683,21 +1683,20 @@ void ut_getxattr_nodata(struct ut_env *ute, ino_t ino,
 	size_t bsz = 0;
 	int err;
 
-	err = ut_getxattr(ute, ino, kv->name,
-	                  buf, sizeof(buf), &bsz);
+	err = ut_do_getxattr(ute, ino, kv->name, buf, sizeof(buf), &bsz);
 	ut_expect_err(err, -ENODATA);
 	ut_expect_eq(bsz, 0);
 }
 
-void ut_removexattr_ok(struct ut_env *ute, ino_t ino,
-                       const struct ut_keyval *kv)
+void ut_removexattr(struct ut_env *ute, ino_t ino,
+                    const struct ut_keyval *kv)
 {
 	int err;
 
-	err = ut_removexattr(ute, ino, kv->name);
+	err = ut_do_removexattr(ute, ino, kv->name);
 	ut_expect_ok(err);
 
-	err = ut_removexattr(ute, ino, kv->name);
+	err = ut_do_removexattr(ute, ino, kv->name);
 	ut_expect_err(err, -ENODATA);
 }
 
@@ -1716,15 +1715,14 @@ kvl_search(const struct ut_kvl *kvl, const char *name)
 	return NULL;
 }
 
-void ut_listxattr_ok(struct ut_env *ute, ino_t ino,
-                     const struct ut_kvl *kvl)
+void ut_listxattr(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 {
 	struct ut_listxattr_ctx ut_lxa_ctx;
 	const struct ut_keyval *kv = NULL;
 	const char *name = NULL;
 	int err;
 
-	err = ut_listxattr(ute, ino, &ut_lxa_ctx);
+	err = ut_do_listxattr(ute, ino, &ut_lxa_ctx);
 	ut_expect_ok(err);
 	ut_expect_eq(ut_lxa_ctx.count, kvl->count);
 
@@ -1743,34 +1741,34 @@ void ut_removexattr_all(struct ut_env *ute, ino_t ino,
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
-		ut_removexattr_ok(ute, ino, kv);
+		ut_removexattr(ute, ino, kv);
 	}
 }
 
-void ut_query_ok(struct ut_env *ute, ino_t ino,
-                 enum silofs_query_type qtype,
-                 struct silofs_ioc_query *out_qry)
+void ut_query(struct ut_env *ute, ino_t ino,
+              enum silofs_query_type qtype,
+              struct silofs_ioc_query *out_qry)
 {
 	int err;
 
-	err = ut_query(ute, ino, qtype, out_qry);
+	err = ut_do_query(ute, ino, qtype, out_qry);
 	ut_expect_ok(err);
 }
 
-void ut_query_spst_ok(struct ut_env *ute, ino_t ino,
-                      struct silofs_spacestats *out_spst)
+void ut_query_spst(struct ut_env *ute, ino_t ino,
+                   struct silofs_spacestats *out_spst)
 {
 	struct silofs_ioc_query query = { .qtype = 0 };
 
-	ut_query_ok(ute, ino, SILOFS_QUERY_SPSTATS, &query);
+	ut_query(ute, ino, SILOFS_QUERY_SPSTATS, &query);
 	silofs_spacestats_import(out_spst, &query.u.spstats.spst);
 }
 
-void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm)
+void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 {
 	int err;
 
-	err = ut_fiemap(ute, ino, fm);
+	err = ut_do_fiemap(ute, ino, fm);
 	ut_expect_ok(err);
 	ut_expect_lt(fm->fm_mapped_extents, UINT_MAX / 2);
 	if (fm->fm_extent_count) {
@@ -1778,16 +1776,16 @@ void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 	}
 }
 
-static void ut_lseek_ok(struct ut_env *ute, ino_t ino,
-                        loff_t off, int whence, loff_t *out_off)
+static void ut_lseek(struct ut_env *ute, ino_t ino,
+                     loff_t off, int whence, loff_t *out_off)
 {
 	struct stat st;
 	int err;
 
-	ut_getattr_ok(ute, ino, &st);
+	ut_getattr(ute, ino, &st);
 
 	*out_off = -1;
-	err = ut_lseek(ute, ino, off, whence, out_off);
+	err = ut_do_lseek(ute, ino, off, whence, out_off);
 	ut_expect_ok(err);
 	ut_expect_ge(*out_off, 0);
 	ut_expect_le(*out_off, st.st_size);
@@ -1796,13 +1794,13 @@ static void ut_lseek_ok(struct ut_env *ute, ino_t ino,
 void ut_lseek_data(struct ut_env *ute,
                    ino_t ino, loff_t off, loff_t *out_off)
 {
-	ut_lseek_ok(ute, ino, off, SEEK_DATA, out_off);
+	ut_lseek(ute, ino, off, SEEK_DATA, out_off);
 }
 
 void ut_lseek_hole(struct ut_env *ute,
                    ino_t ino, loff_t off, loff_t *out_off)
 {
-	ut_lseek_ok(ute, ino, off, SEEK_HOLE, out_off);
+	ut_lseek(ute, ino, off, SEEK_HOLE, out_off);
 }
 
 void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
@@ -1810,18 +1808,18 @@ void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
 	loff_t res_off = -1;
 	int err;
 
-	err = ut_lseek(ute, ino, off, SEEK_DATA, &res_off);
+	err = ut_do_lseek(ute, ino, off, SEEK_DATA, &res_off);
 	ut_expect_err(err, -ENXIO);
 }
 
-void ut_copy_file_range_ok(struct ut_env *ute, ino_t ino_in, loff_t off_in,
-                           ino_t ino_out, loff_t off_out, size_t len)
+void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, loff_t off_in,
+                        ino_t ino_out, loff_t off_out, size_t len)
 {
 	size_t cnt = 0;
 	int err;
 
-	err = ut_copy_file_range(ute, ino_in, off_in,
-	                         ino_out, off_out, len, &cnt);
+	err = ut_do_copy_file_range(ute, ino_in, off_in,
+	                            ino_out, off_out, len, &cnt);
 	ut_expect_ok(err);
 	ut_expect_eq(len, cnt);
 }
@@ -1839,7 +1837,7 @@ void ut_read_dvec(struct ut_env *ute, ino_t ino,
 {
 	void *dat = ut_zerobuf(ute, dvec->len);
 
-	ut_read_ok(ute, ino, dat, dvec->len, dvec->off);
+	ut_read(ute, ino, dat, dvec->len, dvec->off);
 	ut_expect_eqm(dat, dvec->dat, dvec->len);
 }
 
@@ -1863,19 +1861,19 @@ void ut_drop_caches_fully(struct ut_env *ute)
 	ut_expect_eq(st.ncache_vnodes, 0);
 }
 
-void ut_tune_ftype2_ok(struct ut_env *ute, ino_t ino)
+void ut_tune_ftype2(struct ut_env *ute, ino_t ino)
 {
 	int err;
 
-	err = ut_tune(ute, ino, SILOFS_INODEF_FTYPE2, 0);
+	err = ut_do_tune(ute, ino, SILOFS_INODEF_FTYPE2, 0);
 	ut_expect_ok(err);
 }
 
-void ut_timedout_ok(struct ut_env *ute)
+void ut_timedout(struct ut_env *ute)
 {
 	int err;
 
-	err = ut_timedout(ute);
+	err = ut_do_timedout(ute);
 	ut_expect_ok(err);
 }
 
@@ -1923,33 +1921,33 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_lt(bfree_dif, 16 * 4000);
 }
 
-void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino)
+void ut_reload_fs_at(struct ut_env *ute, ino_t ino)
 {
 	struct stat st[2];
 	struct statvfs stv[2];
 
-	ut_statfs_ok(ute, ino, &stv[0]);
-	ut_getattr_ok(ute, ino, &st[0]);
-	ut_reload_fs_ok(ute);
-	ut_statfs_ok(ute, ino, &stv[1]);
-	ut_getattr_ok(ute, ino, &st[1]);
+	ut_statfs(ute, ino, &stv[0]);
+	ut_getattr(ute, ino, &st[0]);
+	ut_reload_fs(ute);
+	ut_statfs(ute, ino, &stv[1]);
+	ut_getattr(ute, ino, &st[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
 	ut_expect_eq_stat(&st[0], &st[1]);
 }
 
-void ut_snap_ok(struct ut_env *ute, ino_t ino)
+void ut_snap(struct ut_env *ute, ino_t ino)
 {
 	struct stat st[2];
 
-	ut_getattr_ok(ute, ino, &st[0]);
-	ut_fork_fs_ok(ute);
-	ut_getattr_ok(ute, ino, &st[1]);
+	ut_getattr(ute, ino, &st[0]);
+	ut_fork_fs(ute);
+	ut_getattr(ute, ino, &st[1]);
 	ut_expect_eq_stat(&st[0], &st[1]);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void ut_format_repo_ok(struct ut_env *ute)
+void ut_format_repo(struct ut_env *ute)
 {
 	int err;
 
@@ -1957,7 +1955,7 @@ void ut_format_repo_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_open_repo_ok(struct ut_env *ute)
+void ut_open_repo(struct ut_env *ute)
 {
 	int err;
 
@@ -1965,7 +1963,7 @@ void ut_open_repo_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_close_repo_ok(struct ut_env *ute)
+void ut_close_repo(struct ut_env *ute)
 {
 	int err;
 
@@ -1973,7 +1971,7 @@ void ut_close_repo_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_format_fs_ok(struct ut_env *ute)
+void ut_format_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -1981,7 +1979,7 @@ void ut_format_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_open_fs_ok(struct ut_env *ute)
+void ut_open_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -1992,7 +1990,7 @@ void ut_open_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_open_fs2_ok(struct ut_env *ute)
+void ut_open_fs2(struct ut_env *ute)
 {
 	int err;
 
@@ -2003,7 +2001,7 @@ void ut_open_fs2_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_close_fs_ok(struct ut_env *ute)
+void ut_close_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -2011,7 +2009,7 @@ void ut_close_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_inspect_fs_ok(struct ut_env *ute)
+void ut_inspect_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -2019,7 +2017,7 @@ void ut_inspect_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_unref_fs_ok(struct ut_env *ute)
+void ut_unref_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -2027,7 +2025,7 @@ void ut_unref_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_unref_fs2_ok(struct ut_env *ute)
+void ut_unref_fs2(struct ut_env *ute)
 {
 	int err;
 
@@ -2035,15 +2033,15 @@ void ut_unref_fs2_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_reload_fs_ok(struct ut_env *ute)
+void ut_reload_fs(struct ut_env *ute)
 {
-	ut_close_fs_ok(ute);
-	ut_close_repo_ok(ute);
-	ut_open_repo_ok(ute);
-	ut_open_fs_ok(ute);
+	ut_close_fs(ute);
+	ut_close_repo(ute);
+	ut_open_repo(ute);
+	ut_open_fs(ute);
 }
 
-void ut_fork_fs_ok(struct ut_env *ute)
+void ut_fork_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -2051,7 +2049,7 @@ void ut_fork_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_archive_fs_ok(struct ut_env *ute)
+void ut_archive_fs(struct ut_env *ute)
 {
 	int err;
 
@@ -2059,7 +2057,7 @@ void ut_archive_fs_ok(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_restore_fs_ok(struct ut_env *ute)
+void ut_restore_fs(struct ut_env *ute)
 {
 	int err;
 

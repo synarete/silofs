@@ -46,38 +46,38 @@ static void ut_fillfs_simple(struct ut_env *ute)
 	const char *name = UT_NAME;
 	const size_t bsz = UT_1M;
 
-	ut_statfs_rootd_ok(ute, &stv[0]);
+	ut_statfs_rootd(ute, &stv[0]);
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_statfs_ok(ute, dino, &stv2);
+	ut_statfs(ute, dino, &stv2);
 	ut_expect_gt(stv2.f_bfree, 0);
 	ut_create_file(ute, dino, name, &ino);
 
-	ut_statfs_ok(ute, dino, &stv2);
+	ut_statfs(ute, dino, &stv2);
 	len = calc_wr_size(&stv2, bsz);
 	nwr = len;
 	buf = ut_randbuf(ute, bsz);
 	while (nwr == len) {
 		ut_getattr_reg(ute, ino, &st);
-		ut_statfs_ok(ute, dino, &stv2);
+		ut_statfs(ute, dino, &stv2);
 		len = calc_wr_size(&stv2, bsz);
 		nwr = 0;
 		off = st.st_size;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
-		ut_flush_ok(ute, ino, false);
-		ut_timedout_ok(ute);
+		ut_flush(ute, ino, false);
+		ut_timedout(ute);
 	}
 	for (size_t i = 0; i < 10; ++i) {
 		ut_getattr_reg(ute, ino, &st);
-		ut_statfs_ok(ute, dino, &stv2);
+		ut_statfs(ute, dino, &stv2);
 		len = calc_wr_size(&stv2, bsz);
 		off = st.st_size;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
-		ut_timedout_ok(ute);
+		ut_timedout(ute);
 	}
 	ut_release_file(ute, ino);
 	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
-	ut_statfs_rootd_ok(ute, &stv[1]);
+	ut_statfs_rootd(ute, &stv[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
 }
 
@@ -99,26 +99,26 @@ static void ut_fillfs_mixed(struct ut_env *ute)
 	const void *buf = ut_randbuf(ute, bsz);
 
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_statfs_ok(ute, dino, &stv);
+	ut_statfs(ute, dino, &stv);
 	while ((nwr == len) && (stv.f_bfree > 2) && bsz) {
 		name = ut_make_name(ute, dname, idx++);
-		ut_mkdir_oki(ute, dino, name, &ino);
+		ut_mkdir2(ute, dino, name, &ino);
 		ut_create_file(ute, ino, name, &ino);
 		len = calc_wr_size(&stv, bsz--);
 		off = (loff_t)idx;
 		nwr = 0;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
 		ut_release_file(ute, ino);
-		ut_statfs_ok(ute, dino, &stv);
+		ut_statfs(ute, dino, &stv);
 		idx_end = idx;
-		ut_timedout_ok(ute);
+		ut_timedout(ute);
 	}
 	idx = 0;
 	while (idx < idx_end) {
 		name = ut_make_name(ute, dname, idx++);
 		ut_lookup_ino(ute, dino, name, &ino);
 		ut_unlink_file(ute, ino, name);
-		ut_rmdir_ok(ute, dino, name);
+		ut_rmdir(ute, dino, name);
 	}
 	ut_rmdir_at_root(ute, dname);
 }
@@ -134,7 +134,7 @@ static void ut_fillfs_append_(struct ut_env *ute, ino_t ino, size_t bsz)
 	struct statvfs stv;
 	const void *buf = ut_randbuf(ute, bsz);
 
-	ut_statfs_ok(ute, ino, &stv);
+	ut_statfs(ute, ino, &stv);
 	fs_size_bytes = stv.f_blocks * stv.f_frsize;
 	fs_free_bytes = stv.f_bfree * stv.f_bsize;
 	ut_expect_le(fs_free_bytes, fs_size_bytes);
@@ -144,10 +144,10 @@ static void ut_fillfs_append_(struct ut_env *ute, ino_t ino, size_t bsz)
 		ut_getattr_reg(ute, ino, &st);
 		nwr = 0;
 		ut_write_nospc(ute, ino, buf, bsz, st.st_size, &nwr);
-		ut_statfs_ok(ute, ino, &stv);
-		ut_timedout_ok(ute);
+		ut_statfs(ute, ino, &stv);
+		ut_timedout(ute);
 	}
-	ut_statfs_ok(ute, ino, &stv);
+	ut_statfs(ute, ino, &stv);
 	fs_size_bytes = stv.f_blocks * stv.f_frsize;
 	fs_free_bytes = stv.f_bfree * stv.f_bsize;
 	ut_expect_le(fs_free_bytes, fs_size_bytes);
@@ -162,12 +162,12 @@ static void ut_fillfs_data_(struct ut_env *ute, size_t bsz)
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_statfs_ok(ute, dino, &stv[0]);
+	ut_statfs(ute, dino, &stv[0]);
 	ut_create_file(ute, dino, name, &ino);
 	ut_fillfs_append_(ute, ino, bsz);
 	ut_release_file(ute, ino);
 	ut_unlink_file(ute, dino, name);
-	ut_statfs_ok(ute, dino, &stv[1]);
+	ut_statfs(ute, dino, &stv[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
 	ut_rmdir_at_root(ute, name);
 }
@@ -186,13 +186,13 @@ static void ut_fillfs_reload_(struct ut_env *ute, size_t bsz)
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_statfs_ok(ute, dino, &stv[0]);
+	ut_statfs(ute, dino, &stv[0]);
 	ut_create_file(ute, dino, name, &ino);
 	ut_fillfs_append_(ute, ino, bsz);
 	ut_release_file(ute, ino);
-	ut_reload_fs_ok_at(ute, ino);
+	ut_reload_fs_at(ute, ino);
 	ut_unlink_file(ute, dino, name);
-	ut_statfs_ok(ute, dino, &stv[1]);
+	ut_statfs(ute, dino, &stv[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
 	ut_rmdir_at_root(ute, name);
 }
@@ -212,4 +212,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_fillfs = UT_MKTESTS(ut_local_tests);
-

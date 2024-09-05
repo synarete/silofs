@@ -24,17 +24,17 @@ static void ut_reload_nfiles_(struct ut_env *ute, size_t nfiles)
 	const char *dname = UT_NAME;
 
 	ut_mkdir_at_root(ute, dname, &dino);
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname = ut_make_name(ute, "f", i);
 		ut_create_only(ute, dino, fname, &ino);
 	}
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname = ut_make_name(ute, "f", i);
 		ut_remove_link(ute, dino, fname);
 	}
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -63,15 +63,15 @@ static void ut_reload_mixed_(struct ut_env *ute, size_t nfiles)
 	struct stat st;
 
 	ut_mkdir_at_root(ute, tname, &tino);
-	ut_reload_fs_ok_at(ute, tino);
+	ut_reload_fs_at(ute, tino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		name = ut_make_name(ute, "d", i);
-		ut_mkdir_oki(ute, tino, name, &dino);
+		ut_mkdir2(ute, tino, name, &dino);
 		name = ut_make_name(ute, "f", i);
 		ut_create_only(ute, dino, name, &fino);
 		name = ut_make_name(ute, "s", i);
-		ut_symlink_ok(ute, dino, name, tname, &sino);
-		ut_reload_fs_ok_at(ute, dino);
+		ut_symlink(ute, dino, name, tname, &sino);
+		ut_reload_fs_at(ute, dino);
 		ut_getattr_reg(ute, fino, &st);
 		ut_lookup_lnk(ute, dino, name, sino);
 	}
@@ -82,16 +82,16 @@ static void ut_reload_mixed_(struct ut_env *ute, size_t nfiles)
 		name = ut_make_name(ute, "f", i);
 		ut_lookup_ino(ute, dino, name, &fino);
 		ut_getattr_reg(ute, fino, &st);
-		ut_reload_fs_ok_at(ute, dino);
+		ut_reload_fs_at(ute, dino);
 		ut_remove_link(ute, dino, name);
 		name = ut_make_name(ute, "s", i);
 		ut_lookup_ino(ute, dino, name, &sino);
 		ut_getattr_lnk(ute, sino, &st);
 		ut_remove_link(ute, dino, name);
 		name = ut_make_name(ute, "d", i);
-		ut_rmdir_ok(ute, tino, name);
+		ut_rmdir(ute, tino, name);
 	}
-	ut_reload_fs_ok_at(ute, tino);
+	ut_reload_fs_at(ute, tino);
 	ut_rmdir_at_root(ute, tname);
 }
 
@@ -127,7 +127,7 @@ static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 		ut_write_read(ute, fino, fname, len, off);
 		ut_release_file(ute, fino);
 	}
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname = ut_make_name(ute, "f", i);
 		ut_lookup_ino(ute, dino, fname, &fino);
@@ -139,14 +139,14 @@ static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 		ut_trunacate_file(ute, fino, off);
 		ut_release_file(ute, fino);
 	}
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname = ut_make_name(ute, "f", i);
 		ut_lookup_ino(ute, dino, fname, &fino);
 		off = make_offset(i, step);
 		ut_getattr_reg(ute, fino, &st);
 		ut_expect_eq(st.st_size, off);
-		ut_unlink_ok(ute, dino, fname);
+		ut_unlink(ute, dino, fname);
 	}
 	ut_rmdir_at_root(ute, dname);
 }
@@ -189,7 +189,7 @@ static void ut_reload_unlinked_(struct ut_env *ute,
 		ut_read_verify(ute, fino, fname, len, off);
 		ut_release_file(ute, fino);
 	}
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	ut_rmdir_at_root(ute, dname);
 }
 
@@ -218,13 +218,13 @@ static void ut_reload_xattr_(struct ut_env *ute, loff_t off, size_t value_size)
 	ut_write_read(ute, ino, kv.value, kv.size, off);
 	ut_setxattr_create(ute, ino, &kv);
 	ut_release_file(ute, ino);
-	ut_reload_fs_ok_at(ute, dino);
+	ut_reload_fs_at(ute, dino);
 	ut_getxattr_value(ute, dino, &kv);
 	ut_open_rdonly(ute, ino);
 	ut_getxattr_value(ute, ino, &kv);
 	ut_read_verify(ute, ino, kv.value, kv.size, off);
 	ut_release_file(ute, ino);
-	ut_unlink_ok(ute, dino, name);
+	ut_unlink(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }
 

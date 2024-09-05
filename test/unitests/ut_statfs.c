@@ -26,7 +26,7 @@ static void ut_statfs_empty(struct ut_env *ute)
 	size_t used_files = 0;
 	struct statvfs stv = { .f_bsize = 0 };
 
-	ut_statfs_ok(ute, UT_ROOT_INO, &stv);
+	ut_statfs(ute, UT_ROOT_INO, &stv);
 	ut_expect_le(stv.f_bsize, UT_64K); /* TODO: needs to be eq one day */
 	ut_expect_ge(stv.f_frsize, UT_1K); /* TODO: needs to be eq one day */
 	ut_expect_gt(stv.f_blocks, 0);
@@ -58,23 +58,23 @@ static void ut_statfs_files_(struct ut_env *ute, size_t cnt)
 	struct statvfs stv = { .f_bsize = 0 };
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_statfs_ok(ute, dino, &stv);
+	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
 	ut_expect_gt(ffree, cnt);
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, name, i);
 		ut_create_only(ute, dino, fname, &ino);
-		ut_statfs_ok(ute, dino, &stv);
+		ut_statfs(ute, dino, &stv);
 		ut_expect_eq(ffree, stv.f_ffree + 1);
 		ffree = stv.f_ffree;
 	}
-	ut_statfs_ok(ute, dino, &stv);
+	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
 	ut_expect_gt(ffree, 0);
 	for (size_t i = 0; i < cnt; ++i) {
 		fname = ut_make_name(ute, name, i);
 		ut_unlink_file(ute, dino, fname);
-		ut_statfs_ok(ute, dino, &stv);
+		ut_statfs(ute, dino, &stv);
 		ut_expect_eq(ffree + 1, stv.f_ffree);
 		ffree = stv.f_ffree;
 	}
@@ -101,24 +101,24 @@ static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 	struct statvfs stv = { .f_bsize = 0 };
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_statfs_ok(ute, dino, &stv);
+	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
 	ut_expect_gt(ffree, cnt);
 	for (size_t i = 0; i < cnt; ++i) {
 		dname = ut_make_name(ute, name, i);
-		ut_mkdir_oki(ute, dino, dname, &ino);
-		ut_statfs_ok(ute, ino, &stv);
+		ut_mkdir2(ute, dino, dname, &ino);
+		ut_statfs(ute, ino, &stv);
 		ut_expect_eq(ffree, stv.f_ffree + 1);
 		ffree = stv.f_ffree;
 	}
 	ut_drop_caches_fully(ute);
-	ut_statfs_ok(ute, dino, &stv);
+	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
 	ut_expect_gt(ffree, 0);
 	for (size_t i = 0; i < cnt; ++i) {
 		dname = ut_make_name(ute, name, i);
-		ut_rmdir_ok(ute, dino, dname);
-		ut_statfs_ok(ute, dino, &stv);
+		ut_rmdir(ute, dino, dname);
+		ut_statfs(ute, dino, &stv);
 		ut_expect_eq(ffree + 1, stv.f_ffree);
 		ffree = stv.f_ffree;
 	}
@@ -145,21 +145,21 @@ static void ut_statfs_bfree_(struct ut_env *ute, loff_t off, size_t bsz)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
-	ut_getattr_ok(ute, ino, &st[0]);
-	ut_statfs_ok(ute, ino, &stv[0]);
+	ut_getattr(ute, ino, &st[0]);
+	ut_statfs(ute, ino, &stv[0]);
 	for (size_t i = 0; i < 2; ++i) {
 		ut_write_read(ute, ino, buf, bsz, off);
-		ut_getattr_ok(ute, ino, &st[1]);
-		ut_statfs_ok(ute, ino, &stv[1]);
+		ut_getattr(ute, ino, &st[1]);
+		ut_statfs(ute, ino, &stv[1]);
 		ut_expect_gt(st[1].st_blocks, st[0].st_blocks);
 		ut_expect_gt(stv[0].f_bfree, stv[1].f_bfree);
 		ut_trunacate_zero(ute, ino);
-		ut_getattr_ok(ute, ino, &st[1]);
-		ut_statfs_ok(ute, ino, &stv[1]);
+		ut_getattr(ute, ino, &st[1]);
+		ut_statfs(ute, ino, &stv[1]);
 		ut_expect_eq(st[1].st_blocks, st[0].st_blocks);
 		ut_expect_eq(stv[1].f_bfree, stv[0].f_bfree);
 	}
-	ut_release_flush_ok(ute, ino);
+	ut_release_flush(ute, ino);
 	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
 }

@@ -248,20 +248,20 @@ void ut_setup_task(struct ut_env *ute, struct silofs_task *task);
 void ut_release_task(struct ut_env *ute, struct silofs_task *task);
 
 /* no-fail operations wrappers */
-void ut_access_ok(struct ut_env *ute, ino_t ino, int mode);
+void ut_access(struct ut_env *ute, ino_t ino, int mode);
 
-void ut_statfs_ok(struct ut_env *ute, ino_t ino, struct statvfs *st);
+void ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st);
 
-void ut_statfs_rootd_ok(struct ut_env *ute, struct statvfs *st);
+void ut_statfs_rootd(struct ut_env *ute, struct statvfs *st);
 
-void ut_statsp_ok(struct ut_env *ute, ino_t ino,
-                  struct silofs_spacestats *spst);
+void ut_statsp(struct ut_env *ute, ino_t ino,
+               struct silofs_spacestats *spst);
 
-void ut_statsp_rootd_ok(struct ut_env *ute, struct silofs_spacestats *spst);
+void ut_statsp_rootd(struct ut_env *ute, struct silofs_spacestats *spst);
 
-void ut_statx_ok(struct ut_env *ute, ino_t ino, struct statx *stx);
+void ut_statx(struct ut_env *ute, ino_t ino, struct statx *stx);
 
-void ut_getattr_ok(struct ut_env *ute, ino_t ino, struct stat *st);
+void ut_getattr(struct ut_env *ute, ino_t ino, struct stat *st);
 
 void ut_getattr_noent(struct ut_env *ute, ino_t ino);
 
@@ -279,8 +279,8 @@ void ut_utimens_atime(struct ut_env *ute,
 void ut_utimens_mtime(struct ut_env *ute,
                       ino_t ino, const struct timespec *mtime);
 
-void ut_lookup_ok(struct ut_env *ute, ino_t parent,
-                  const char *name, struct stat *out_st);
+void ut_lookup(struct ut_env *ute, ino_t parent,
+               const char *name, struct stat *out_st);
 
 void ut_lookup_ino(struct ut_env *ute, ino_t parent,
                    const char *name, ino_t *out_ino);
@@ -299,47 +299,47 @@ void ut_lookup_lnk(struct ut_env *ute, ino_t parent,
 
 void ut_lookup_noent(struct ut_env *ute, ino_t ino, const char *name);
 
-void ut_mkdir_ok(struct ut_env *ute, ino_t parent,
-                 const char *name, struct stat *out_st);
+void ut_mkdir(struct ut_env *ute, ino_t parent,
+              const char *name, struct stat *out_st);
 
-void ut_mkdir_oki(struct ut_env *ute, ino_t parent,
-                  const char *name, ino_t *out_ino);
+void ut_mkdir2(struct ut_env *ute, ino_t parent,
+               const char *name, ino_t *out_ino);
 
 void ut_mkdir_at_root(struct ut_env *ute, const char *name, ino_t *out_ino);
 
 void ut_mkdir_err(struct ut_env *ute,
                   ino_t parent, const char *name, int err);
 
-void ut_rmdir_ok(struct ut_env *ute, ino_t parent, const char *name);
+void ut_rmdir(struct ut_env *ute, ino_t parent, const char *name);
 
 void ut_rmdir_err(struct ut_env *ute, ino_t parent,
                   const char *name, int err);
 
 void ut_rmdir_at_root(struct ut_env *ute, const char *name);
 
-void ut_opendir_ok(struct ut_env *ute, ino_t ino);
+void ut_opendir(struct ut_env *ute, ino_t ino);
 
 void ut_opendir_err(struct ut_env *ute, ino_t ino, int err);
 
-void ut_releasedir_ok(struct ut_env *ute, ino_t ino);
+void ut_releasedir(struct ut_env *ute, ino_t ino);
 
 void ut_releasedir_err(struct ut_env *ute, ino_t ino, int err);
 
-void ut_fsyncdir_ok(struct ut_env *ute, ino_t ino);
+void ut_fsyncdir(struct ut_env *ute, ino_t ino);
 
-void ut_readdir_ok(struct ut_env *ute, ino_t ino, loff_t doff,
-                   struct ut_readdir_ctx *ut_rd_ctx);
+void ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
+                struct ut_readdir_ctx *ut_rd_ctx);
 
-void ut_readdirplus_ok(struct ut_env *ute, ino_t ino, loff_t doff,
-                       struct ut_readdir_ctx *ut_rd_ctx);
+void ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
+                    struct ut_readdir_ctx *ut_rd_ctx);
 
-void ut_link_ok(struct ut_env *ute, ino_t ino,
-                ino_t parent, const char *name, struct stat *out_st);
+void ut_link(struct ut_env *ute, ino_t ino,
+             ino_t parent, const char *name, struct stat *out_st);
 
 void ut_link_err(struct ut_env *ute, ino_t ino,
                  ino_t parent, const char *name, int err);
 
-void ut_unlink_ok(struct ut_env *ute, ino_t parent, const char *name);
+void ut_unlink(struct ut_env *ute, ino_t parent, const char *name);
 
 void ut_unlink_err(struct ut_env *ute, ino_t parent,
                    const char *name, int err);
@@ -355,30 +355,29 @@ void ut_rename_replace(struct ut_env *ute, ino_t parent, const char *name,
 void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
                         ino_t newparent, const char *newname);
 
-void ut_symlink_ok(struct ut_env *ute, ino_t parent,
-                   const char *name, const char *value, ino_t *out_ino);
+void ut_symlink(struct ut_env *ute, ino_t parent,
+                const char *name, const char *value, ino_t *out_ino);
 
 void ut_readlink_expect(struct ut_env *ute, ino_t ino, const char *value);
 
-void ut_create_ok(struct ut_env *ute, ino_t parent,
-                  const char *name, mode_t mode, struct stat *out_st);
+void ut_create(struct ut_env *ute, ino_t parent,
+               const char *name, mode_t mode, struct stat *out_st);
 
 void ut_create_file(struct ut_env *ute, ino_t parent,
                     const char *name, ino_t *out_ino);
 
-void ut_create_noent(struct ut_env *ute,
-                     ino_t parent, const char *name);
+void ut_create_noent(struct ut_env *ute, ino_t parent, const char *name);
 
 void ut_create_special(struct ut_env *ute, ino_t parent,
                        const char *name, mode_t mode, ino_t *out_ino);
 
-void ut_release_ok(struct ut_env *ute, ino_t ino);
+void ut_release(struct ut_env *ute, ino_t ino);
 
-void ut_release_flush_ok(struct ut_env *ute, ino_t ino);
+void ut_release_flush(struct ut_env *ute, ino_t ino);
 
 void ut_release_file(struct ut_env *ute, ino_t ino);
 
-void ut_fsync_ok(struct ut_env *ute, ino_t ino, bool datasync);
+void ut_fsync(struct ut_env *ute, ino_t ino, bool datasync);
 
 void ut_remove_file(struct ut_env *ute, ino_t parent,
                     const char *, ino_t ino);
@@ -393,13 +392,13 @@ void ut_open_rdwr(struct ut_env *ute, ino_t ino);
 void ut_remove_link(struct ut_env *ute,
                     ino_t parent, const char *name);
 
-void ut_flush_ok(struct ut_env *ute, ino_t ino, bool now);
+void ut_flush(struct ut_env *ute, ino_t ino, bool now);
 
-void ut_write_ok(struct ut_env *ute, ino_t ino,
-                 const void *buf, size_t bsz, loff_t off);
+void ut_write(struct ut_env *ute, ino_t ino,
+              const void *buf, size_t bsz, loff_t off);
 
-void ut_write_iter_ok(struct ut_env *ute, ino_t ino,
-                      const void *buf, size_t bsz, off_t off);
+void ut_write_iter(struct ut_env *ute, ino_t ino,
+                   const void *buf, size_t bsz, off_t off);
 
 void ut_write_nospc(struct ut_env *ute, ino_t ino,
                     const void *buf, size_t bsz,
@@ -423,8 +422,8 @@ void ut_read_zero(struct ut_env *ute, ino_t ino, loff_t off);
 
 void ut_read_zeros(struct ut_env *ute, ino_t ino, loff_t off, size_t len);
 
-void ut_read_ok(struct ut_env *ute, ino_t ino,
-                void *buf, size_t bsz, loff_t off);
+void ut_read(struct ut_env *ute, ino_t ino,
+             void *buf, size_t bsz, loff_t off);
 
 void ut_trunacate_file(struct ut_env *ute, ino_t ino, loff_t off);
 
@@ -457,40 +456,35 @@ void ut_getxattr_value(struct ut_env *ute, ino_t ino,
 void ut_getxattr_nodata(struct ut_env *ute, ino_t ino,
                         const struct ut_keyval *);
 
-void ut_removexattr_ok(struct ut_env *ute, ino_t ino,
-                       const struct ut_keyval *);
+void ut_removexattr(struct ut_env *ute, ino_t ino,
+                    const struct ut_keyval *kvl);
 
-void ut_listxattr_ok(struct ut_env *ute, ino_t ino,
-                     const struct ut_kvl *kvl);
+void ut_listxattr(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl);
 
-void ut_setxattr_all(struct ut_env *ute, ino_t ino,
-                     const struct ut_kvl *kvl);
+void ut_setxattr_all(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl);
 
 void ut_removexattr_all(struct ut_env *ute, ino_t ino,
                         const struct ut_kvl *kvl);
 
-void ut_query_ok(struct ut_env *ute, ino_t ino,
-                 enum silofs_query_type qtype,
-                 struct silofs_ioc_query *out_qry);
+void ut_query(struct ut_env *ute, ino_t ino,
+              enum silofs_query_type qtype,
+              struct silofs_ioc_query *out_qry);
 
-void ut_query_spst_ok(struct ut_env *ute, ino_t ino,
-                      struct silofs_spacestats *out_spst);
+void ut_query_spst(struct ut_env *ute, ino_t ino,
+                   struct silofs_spacestats *out_spst);
 
-void ut_snap_ok(struct ut_env *ute, ino_t ino);
+void ut_snap(struct ut_env *ute, ino_t ino);
 
+void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm);
 
-void ut_fiemap_ok(struct ut_env *ute, ino_t ino, struct fiemap *fm);
+void ut_lseek_data(struct ut_env *ute, ino_t ino, loff_t off, loff_t *out_off);
 
-void ut_lseek_data(struct ut_env *ute,
-                   ino_t ino, loff_t off, loff_t *out_off);
-
-void ut_lseek_hole(struct ut_env *ute,
-                   ino_t ino, loff_t off, loff_t *out_off);
+void ut_lseek_hole(struct ut_env *ute, ino_t ino, loff_t off, loff_t *out_off);
 
 void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off);
 
-void ut_copy_file_range_ok(struct ut_env *ute, ino_t ino_in, loff_t off_in,
-                           ino_t ino_out, loff_t off_out, size_t len);
+void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, loff_t off_in,
+                        ino_t ino_out, loff_t off_out, size_t len);
 
 void ut_write_dvec(struct ut_env *ute, ino_t ino,
                    const struct ut_dvec *dvec);
@@ -502,41 +496,41 @@ void ut_sync_drop(struct ut_env *ute);
 
 void ut_drop_caches_fully(struct ut_env *ute);
 
-void ut_tune_ftype2_ok(struct ut_env *ute, ino_t ino);
+void ut_tune_ftype2(struct ut_env *ute, ino_t ino);
 
-void ut_timedout_ok(struct ut_env *ute);
+void ut_timedout(struct ut_env *ute);
 
-void ut_reload_fs_ok(struct ut_env *ute);
+void ut_reload_fs(struct ut_env *ute);
 
-void ut_reload_fs_ok_at(struct ut_env *ute, ino_t ino);
+void ut_reload_fs_at(struct ut_env *ute, ino_t ino);
 
 
 /* top-level exec ops */
-void ut_format_repo_ok(struct ut_env *ute);
+void ut_format_repo(struct ut_env *ute);
 
-void ut_format_fs_ok(struct ut_env *ute);
+void ut_format_fs(struct ut_env *ute);
 
-void ut_close_fs_ok(struct ut_env *ute);
+void ut_close_fs(struct ut_env *ute);
 
-void ut_open_repo_ok(struct ut_env *ute);
+void ut_open_repo(struct ut_env *ute);
 
-void ut_close_repo_ok(struct ut_env *ute);
+void ut_close_repo(struct ut_env *ute);
 
-void ut_open_fs_ok(struct ut_env *ute);
+void ut_open_fs(struct ut_env *ute);
 
-void ut_open_fs2_ok(struct ut_env *ute);
+void ut_open_fs2(struct ut_env *ute);
 
-void ut_inspect_fs_ok(struct ut_env *ute);
+void ut_inspect_fs(struct ut_env *ute);
 
-void ut_unref_fs_ok(struct ut_env *ute);
+void ut_unref_fs(struct ut_env *ute);
 
-void ut_unref_fs2_ok(struct ut_env *ute);
+void ut_unref_fs2(struct ut_env *ute);
 
-void ut_fork_fs_ok(struct ut_env *ute);
+void ut_fork_fs(struct ut_env *ute);
 
-void ut_archive_fs_ok(struct ut_env *ute);
+void ut_archive_fs(struct ut_env *ute);
 
-void ut_restore_fs_ok(struct ut_env *ute);
+void ut_restore_fs(struct ut_env *ute);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

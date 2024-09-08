@@ -132,8 +132,7 @@ static int format_btree_root(struct silofs_psenv *psenv)
 	if (err) {
 		return err;
 	}
-
-	/* XXX TODO: mark me as root */
+	silofs_bti_mark_root(bti);
 
 	err = commit_btnode(psenv, bti);
 	if (err) {

@@ -367,15 +367,6 @@ enum silofs_ctype {
 	SILOFS_CTYPE_ENCSEG     = 3,
 };
 
-/* persistent objects sub-types */
-enum silofs_ptype {
-	SILOFS_PTYPE_NONE       = 0,
-	SILOFS_PTYPE_BTNODE     = 1,
-	SILOFS_PTYPE_BTLEAF     = 2,
-	SILOFS_PTYPE_DATA       = 3,
-	SILOFS_PTYPE_LAST, /* keep last */
-};
-
 /* logical-elements types */
 enum silofs_ltype {
 	SILOFS_LTYPE_NONE       = 0,
@@ -417,20 +408,20 @@ enum silofs_hdrf {
 
 /* super-block flags */
 enum silofs_superf {
-	SILOFS_SUPERF_NONE      = 0,
-	SILOFS_SUPERF_FOSSIL    = 1,
+	SILOFS_SUPERF_NONE      = 0x00,
+	SILOFS_SUPERF_FOSSIL    = 0x01,
 };
 
 /* inode control flags */
 enum silofs_inodef {
-	SILOFS_INODEF_ROOTD     = 1,
-	SILOFS_INODEF_FTYPE2    = 2,
+	SILOFS_INODEF_ROOTD     = 0x01,
+	SILOFS_INODEF_FTYPE2    = 0x02,
 };
 
 /* dir-inode control flags */
 enum silofs_dirf {
-	SILOFS_DIRF_NONE        = 0,
-	SILOFS_DIRF_NAME_UTF8   = 1,
+	SILOFS_DIRF_NONE        = 0x00,
+	SILOFS_DIRF_NAME_UTF8   = 0x01,
 };
 
 /* dir-inode hash-functions for names */
@@ -1027,6 +1018,22 @@ struct silofs_repo_meta {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/* persistent objects sub-types */
+enum silofs_ptype {
+	SILOFS_PTYPE_NONE       = 0,
+	SILOFS_PTYPE_BTNODE     = 1,
+	SILOFS_PTYPE_BTLEAF     = 2,
+	SILOFS_PTYPE_DATA       = 3,
+	SILOFS_PTYPE_LAST, /* keep last */
+};
+
+/* btree nodes' flags */
+enum silofs_btreef {
+	SILOFS_BTREEF_NONE      = 0x00,
+	SILOFS_BTREEF_ROOT      = 0x01,
+};
+
+
 /* root meta-data of persistent volume mapping */
 struct silofs_pvmap_root {
 	struct silofs_header            pvr_hdr;
@@ -1037,9 +1044,10 @@ struct silofs_pvmap_root {
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header            btn_hdr;
+	uint32_t                        btn_flags;
 	uint16_t                        btn_nkeys;
 	uint16_t                        btn_nchilds;
-	uint8_t                         btn_reserved1[44];
+	uint8_t                         btn_reserved1[40];
 	struct silofs_paddr48b          btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	struct silofs_laddr48b          btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                         btn_reserved3[48];
@@ -1056,8 +1064,9 @@ struct silofs_btree_ltop {
 /*  b+tree leaf of persistent volume mapping */
 struct silofs_btree_leaf {
 	struct silofs_header            btl_hdr;
+	uint32_t                        btl_flags;
 	uint16_t                        btl_nltops;
-	uint8_t                         btl_reserved1[110];
+	uint8_t                         btl_reserved1[106];
 	struct silofs_btree_ltop        btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_packed_aligned64;
 

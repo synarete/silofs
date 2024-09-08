@@ -48,6 +48,8 @@ silofs_bti_new(const struct silofs_paddr *paddr,
 void silofs_bti_del(struct silofs_btnode_info *bti,
                     struct silofs_alloc *alloc);
 
+void silofs_bti_mark_root(struct silofs_btnode_info *bti);
+
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
                        const struct silofs_laddr *laddr,
                        struct silofs_paddr *out_paddr);

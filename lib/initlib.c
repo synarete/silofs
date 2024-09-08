@@ -98,10 +98,10 @@
 #define ISOFFSET(type, member, off) \
 	(offsetof(type, member) == (off))
 
-#define REQUIRE_XOFFSET(type, member, off) \
+#define REQUIRE_OFFSETXX(type, member, off) \
 	SILOFS_STATICASSERT(ISOFFSET(type, member, off))
 
-#define REQUIRE_OFFSET(type, member, off) \
+#define REQUIRE_OFFSET32(type, member, off) \
 	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED32(off))
 
 #define REQUIRE_OFFSET64(type, member, off) \
@@ -236,7 +236,7 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_uuid, 16);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_flags, 32);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_chiper_algo, 40);
-	REQUIRE_OFFSET(struct silofs_bootrec1k, br_chiper_mode, 44);
+	REQUIRE_OFFSET32(struct silofs_bootrec1k, br_chiper_mode, 44);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_main_key, 64);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_main_iv, 96);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_uaddr, 128);
@@ -285,47 +285,51 @@ static void validate_persistent_types_alignment2(void)
 
 static void validate_persistent_types_alignment3(void)
 {
-	REQUIRE_OFFSET(struct silofs_inode, i_hdr, 0);
-	REQUIRE_OFFSET(struct silofs_inode, i_ino, 16);
-	REQUIRE_OFFSET(struct silofs_inode, i_parent, 24);
-	REQUIRE_OFFSET(struct silofs_inode, i_uid, 32);
-	REQUIRE_OFFSET(struct silofs_inode, i_gid, 36);
-	REQUIRE_OFFSET(struct silofs_inode, i_mode, 40);
-	REQUIRE_OFFSET(struct silofs_inode, i_flags, 44);
-	REQUIRE_OFFSET(struct silofs_inode, i_size, 48);
-	REQUIRE_OFFSET(struct silofs_inode, i_span, 56);
-	REQUIRE_OFFSET(struct silofs_inode, i_blocks, 64);
-	REQUIRE_OFFSET(struct silofs_inode, i_nlink, 72);
-	REQUIRE_OFFSET(struct silofs_inode, i_attributes, 80);
+	REQUIRE_OFFSET64(struct silofs_inode, i_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_inode, i_ino, 16);
+	REQUIRE_OFFSET64(struct silofs_inode, i_parent, 24);
+	REQUIRE_OFFSET64(struct silofs_inode, i_uid, 32);
+	REQUIRE_OFFSET32(struct silofs_inode, i_gid, 36);
+	REQUIRE_OFFSET64(struct silofs_inode, i_mode, 40);
+	REQUIRE_OFFSET32(struct silofs_inode, i_flags, 44);
+	REQUIRE_OFFSET64(struct silofs_inode, i_size, 48);
+	REQUIRE_OFFSET32(struct silofs_inode, i_span, 56);
+	REQUIRE_OFFSET64(struct silofs_inode, i_blocks, 64);
+	REQUIRE_OFFSET64(struct silofs_inode, i_nlink, 72);
+	REQUIRE_OFFSET64(struct silofs_inode, i_attributes, 80);
 	REQUIRE_OFFSET64(struct silofs_inode, i_tm, 128);
 	REQUIRE_OFFSET64(struct silofs_inode, i_xa, 256);
 	REQUIRE_OFFSET64(struct silofs_inode, i_ta, 512);
-	REQUIRE_OFFSET(struct silofs_inode_dir, d_root, 0);
-	REQUIRE_OFFSET(struct silofs_inode_dir, d_seed, 8);
-	REQUIRE_OFFSET(struct silofs_inode_dir, d_ndents, 16);
-	REQUIRE_OFFSET(struct silofs_dir_entry, de_ino, 0);
-	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_hash_lo, 8);
-	REQUIRE_OFFSET(struct silofs_dir_entry, de_name_len_dt, 12);
-	REQUIRE_XOFFSET(struct silofs_dir_entry, de_name_pos, 14);
-	REQUIRE_OFFSET(struct silofs_dtree_node, dn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_inode_dir, d_root, 0);
+	REQUIRE_OFFSET64(struct silofs_inode_dir, d_seed, 8);
+	REQUIRE_OFFSET64(struct silofs_inode_dir, d_ndents, 16);
+	REQUIRE_OFFSET64(struct silofs_dir_entry, de_ino, 0);
+	REQUIRE_OFFSET64(struct silofs_dir_entry, de_name_hash_lo, 8);
+	REQUIRE_OFFSET32(struct silofs_dir_entry, de_name_len_dt, 12);
+	REQUIRE_OFFSETXX(struct silofs_dir_entry, de_name_pos, 14);
+	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_data, 512);
-	REQUIRE_OFFSET(struct silofs_ftree_node, fn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_zeros, 64);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);
-	REQUIRE_OFFSET(struct silofs_inode_xattr, ix_vaddr, 0);
-	REQUIRE_OFFSET(struct silofs_xattr_node, xa_hdr, 0);
-	REQUIRE_OFFSET(struct silofs_xattr_node, xe, 64);
+	REQUIRE_OFFSET64(struct silofs_inode_xattr, ix_vaddr, 0);
+	REQUIRE_OFFSET64(struct silofs_xattr_node, xa_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_xattr_node, xe, 64);
 	REQUIRE_OFFSET64(struct silofs_symlnk_value, sy_value, 64);
 }
 
 static void validate_persistent_types_alignment4(void)
 {
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_nkeys, 16);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 16);
+	REQUIRE_OFFSET32(struct silofs_btree_node, btn_nkeys, 20);
+	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 22);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 2080);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_flags, 16);
+	REQUIRE_OFFSET32(struct silofs_btree_leaf, btl_nltops, 20);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltop, 128);
 }
 

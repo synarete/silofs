@@ -17,6 +17,13 @@
 #ifndef SILOFS_DIR_H_
 #define SILOFS_DIR_H_
 
+#include <silofs/infra.h>
+#include <silofs/fs/types.h>
+
+struct silofs_task;
+struct silofs_readdir_ctx;
+struct silofs_readdir_info;
+
 
 /* call-back context for read-dir operations */
 typedef int (*silofs_filldir_fn)(struct silofs_readdir_ctx *rd_ctx,

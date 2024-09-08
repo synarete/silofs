@@ -643,13 +643,14 @@ static void fs_ctx_init_from(struct silofs_fs_ctx *fs_ctx,
 
 	fs_ctx_init(fs_ctx, fs_inst, &fsenv->fse_args);
 	fs_ctx->password = &fs_inst->fs_core.c.passwd;
-	fs_ctx->fsenv = fsenv;
 	fs_ctx->alloc = fsenv->fse.alloc;
 	fs_ctx->lcache = fsenv->fse.lcache;
 	fs_ctx->repo = fsenv->fse.repo;
 	fs_ctx->submitq = fsenv->fse.submitq;
 	fs_ctx->flusher = fsenv->fse.flusher;
 	fs_ctx->idsmap = fsenv->fse.idsmap;
+	fs_ctx->psenv = fsenv->fse.psenv;
+	fs_ctx->fsenv = fsenv;
 	fs_ctx->fuseq = fsenv->fse.fuseq;
 }
 

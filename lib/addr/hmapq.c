@@ -524,13 +524,15 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq,
 
 void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 {
+	const size_t nslots = hmapq->hmq_htbl_nslots;
+
 	if (hmapq->hmq_htbl != NULL) {
-		silofs_lista_del(hmapq->hmq_htbl,
-		                 hmapq->hmq_htbl_nslots, alloc);
-		listq_fini(&hmapq->hmq_lru);
-		hmapq->hmq_htbl = NULL;
-		hmapq->hmq_htbl_nslots = 0;
+		silofs_lista_del(hmapq->hmq_htbl, nslots, alloc);
 	}
+	listq_fini(&hmapq->hmq_lru);
+	hmapq->hmq_htbl = NULL;
+	hmapq->hmq_htbl_nslots = 0;
+	hmapq->hmq_htbl_size = 0;
 }
 
 size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)

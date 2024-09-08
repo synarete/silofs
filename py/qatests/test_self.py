@@ -124,7 +124,7 @@ def _is_active_url(url: str) -> bool:
 
 def test_cicd(env: TestEnv) -> None:
     url1 = env.cfg.remotes.silofs_repo_url
-    url2 = env.cfg.remotes.centos_mirror_url
+    url2 = env.cfg.remotes.fedora_registry_url
     if _is_active_url(url1) and _is_active_url(url2):
         _test_cicd(env)
 

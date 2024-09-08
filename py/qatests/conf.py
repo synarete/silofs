@@ -15,6 +15,7 @@ _FINDUTILS_REPO_URL = "https://git.savannah.gnu.org/git/findutils.git"
 _GITSCM_REPO_URL = "https://github.com/git/git.git"
 _SILOFS_REPO_URL = "https://github.com/synarete/silofs"
 _CENTOS_MIRROR_URL = "https://mirrors.centos.org"
+_FEDORA_REGISTRY_URL = "https://registry.fedoraproject.org/"
 
 
 class ConfigParams(pydantic.BaseModel):
@@ -30,6 +31,7 @@ class ConfigRemotes(pydantic.BaseModel):
     git_repo_url: str = _GITSCM_REPO_URL
     silofs_repo_url: str = _SILOFS_REPO_URL
     centos_mirror_url: str = _CENTOS_MIRROR_URL
+    fedora_registry_url: str = _FEDORA_REGISTRY_URL
 
 
 class Config(pydantic.BaseModel):

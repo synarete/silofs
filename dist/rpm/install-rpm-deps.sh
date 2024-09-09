@@ -32,6 +32,8 @@ qatests_deps=(
   gcc
   git
   git-email
+  gperftools
+  gperftools-devel
   libasan
   libattr-devel
   libcap-devel

@@ -40,6 +40,8 @@ qatests_deps=(
   flex
   gcc
   git
+  google-perftools
+  libgoogle-perftools-dev
   libasan8
   libattr1-dev
   libcap-dev

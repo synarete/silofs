@@ -35,36 +35,51 @@ run ./configure
 run make
 run make distcheck
 run make clean
+cd "${selfdir}"
+run rm -rf "${workdir}"
+
 
 ###
 msg "run developer's checks"
 cd "${selfdir}"
-run rm -rf "${workdir}"
 run tar xfz "${archive_tgz}"
 cd "${workdir}"
 msg "run unit-tests"
-run make -f devel.mk reset
 run make -f devel.mk O=2
 run make -f devel.mk O=2 check
+run make -f devel.mk reset
 msg "build with analyzer"
-run make -f devel.mk reset
 run make -f devel.mk O=0 ANALYZER=1
+run make -f devel.mk reset
 msg "build with clang"
-run make -f devel.mk reset
 run make -f devel.mk CC=clang O=2
+run make -f devel.mk reset
 msg "run clang-scan"
-run make -f devel.mk reset
 run make -f devel.mk V=1 O=2 clangscan
-msg "run valgrind check"
 run make -f devel.mk reset
+msg "run valgrind check"
 run make -f devel.mk
 run valgrind --tool=memcheck --error-exitcode=1 \
   "${unitestsdir}/silofs-unitests" "${unitestsdir}/ut" -M -l1
+run make -f devel.mk reset
+
+###
+cd "${workdir}"
+msg "run heap checker to detect memory leaks"
+run ./bootstrap
+run mkdir -p "${workdir}/build/local/tmp"
+cd "${workdir}/build"
+run ../configure --prefix="${workdir}/build/local" --with-tcmalloc
+run make install
+run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
+  "${workdir}/build/local/bin/silofs-unitests" \
+  -M -l2 "${workdir}/build/local/tmp"
+cd "${selfdir}"
+run rm -rf "${workdir}"
 
 ###
 msg "build dist-package"
 cd "${selfdir}"
-run rm -rf "${workdir}"
 run tar xfz "${archive_tgz}"
 cd "${workdir}"
 run ./dist/packagize.sh

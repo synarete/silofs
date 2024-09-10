@@ -61,8 +61,7 @@ int silofs_thread_sigblock_common(void)
 
 static void silofs_thread_prepare(struct silofs_thread *th)
 {
-	th->start_time = time(NULL);
-	th->finish_time = 0;
+	th->start_time = silofs_time_now_monotonic();
 	if (strlen(th->name)) {
 		pthread_setname_np(th->pth, th->name);
 	}
@@ -71,7 +70,7 @@ static void silofs_thread_prepare(struct silofs_thread *th)
 static void silofs_thread_complete(struct silofs_thread *th, int err)
 {
 	th->status = err;
-	th->finish_time = time(NULL);
+	th->finish_time = silofs_time_now_monotonic();
 }
 
 static void *silofs_thread_start(void *arg)
@@ -101,6 +100,8 @@ int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
 	}
 
 	memset(th, 0, sizeof(*th));
+	th->start_time = 0;
+	th->finish_time = 0;
 	th->status = 0;
 	th->exec = exec;
 	th->arg = arg;
@@ -454,4 +455,3 @@ void silofs_burnstack(void)
 {
 	silofs_burnstackn((int)silofs_sc_page_size());
 }
-

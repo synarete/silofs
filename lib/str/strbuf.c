@@ -82,6 +82,7 @@ void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
 {
 	struct silofs_strview sv;
 
+	silofs_strbuf_reset(sbuf);
 	silofs_strview_init(&sv, s);
 	silofs_strbuf_setup(sbuf, &sv);
 }
@@ -91,6 +92,7 @@ void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf,
 {
 	struct silofs_strview sv;
 
+	silofs_strbuf_reset(sbuf);
 	silofs_strview_initn(&sv, s, n);
 	silofs_strbuf_setup(sbuf, &sv);
 }

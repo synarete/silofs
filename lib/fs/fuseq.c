@@ -3013,6 +3013,27 @@ static int fqt_join_thread(struct silofs_fuseq_thread *fqt)
 	return 0;
 }
 
+static void fqt_join_thread_now(struct silofs_fuseq_thread *fqt)
+{
+	int err;
+
+	if (fqt->execed && !fqt->joined) {
+		err = fqt_join_thread(fqt);
+		if (err) {
+			silofs_panic("failed to join thread: name=%s err=%d",
+			             fqt->th.name, err);
+		}
+	}
+}
+
+static bool fqt_completed(const struct silofs_fuseq_thread *fqt)
+{
+	const time_t start_time = fqt->th.start_time;
+	const time_t finish_time = fqt->th.finish_time;
+
+	return (start_time > 0) && (finish_time >= start_time);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 
@@ -4115,9 +4136,18 @@ static int fqd_exec_thread(struct silofs_fuseq_dispatcher *fqd)
 	return fqt_exec_thread(&fqd->fqd_th, fqd_start, "fqd");
 }
 
-static int fqd_join_thread(struct silofs_fuseq_dispatcher *fqd)
+static bool fqd_try_join_thread(struct silofs_fuseq_dispatcher *fqd)
 {
-	return fqt_join_thread(&fqd->fqd_th);
+	struct silofs_fuseq_thread *fqt = &fqd->fqd_th;
+
+	if (fqt->joined) {
+		return false;
+	}
+	if (!fqt_completed(fqt)) {
+		return false;
+	}
+	fqt_join_thread_now(fqt);
+	return true;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4260,9 +4290,18 @@ static int fqw_exec_thread(struct silofs_fuseq_worker *fqw)
 	return fqt_exec_thread(&fqw->fqw_th, fqw_start, "fqw");
 }
 
-static int fqw_join_thread(struct silofs_fuseq_worker *fqw)
+static bool fqw_try_join_thread(struct silofs_fuseq_worker *fqw)
 {
-	return fqt_join_thread(&fqw->fqw_th);
+	struct silofs_fuseq_thread *fqt = &fqw->fqw_th;
+
+	if (fqt->joined) {
+		return false;
+	}
+	if (!fqt_completed(fqt)) {
+		return false;
+	}
+	fqt_join_thread_now(fqt);
+	return true;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4698,17 +4737,40 @@ static int fuseq_start_workers(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static void fuseq_finish_workers(struct silofs_fuseq *fq)
+static bool fuseq_join_workers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_worker *fqw = NULL;
-	const size_t nworkers_run = fq->fq_nworkers_run;
+	size_t njoined = 0;
 
-	fuseq_log_dbg("finish workers: run=%zu", nworkers_run);
 	for (size_t i = 0; i < fq->fq_nworkers_run; ++i) {
 		fqw = &fq->fq_worker[i];
-		fqw_join_thread(fqw);
-		fq->fq_nworkers_run--;
+		if (fqw->fqw_th.joined) {
+			njoined++;
+		} else if (fqw_try_join_thread(fqw)) {
+			njoined++;
+		}
+		silofs_sys_sched_yield();
 	}
+	return (njoined == fq->fq_nworkers_run);
+}
+
+static void fuseq_finish_workers(struct silofs_fuseq *fq)
+{
+	const size_t nworkers_run = fq->fq_nworkers_run;
+	int retry = 30;
+
+	fuseq_log_dbg("finish workers: nworkers_run=%zu", nworkers_run);
+	while (--retry > 0) {
+		if (fuseq_join_workers(fq)) {
+			break;
+		}
+		silofs_suspend_secs(1);
+	}
+	if (retry == 0) {
+		silofs_panic("failed to join all worker threads: "
+		             "nworkers_run=%zu", nworkers_run);
+	}
+	fq->fq_nworkers_run = 0;
 }
 
 static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
@@ -4730,17 +4792,40 @@ static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
+static bool fuseq_join_dispatchers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_dispatcher *fqd = NULL;
-	const size_t ndisptch_run = fq->fq_ndisptch_run;
+	size_t njoined = 0;
 
-	fuseq_log_dbg("finish dispatchers: run=%zu", ndisptch_run);
-	for (size_t i = 0; i < ndisptch_run; ++i) {
+	for (size_t i = 0; i < fq->fq_ndisptch_run; ++i) {
 		fqd = &fq->fq_disptch[i];
-		fqd_join_thread(fqd);
-		fq->fq_ndisptch_run--;
+		if (fqd->fqd_th.joined) {
+			njoined++;
+		} else if (fqd_try_join_thread(fqd)) {
+			njoined++;
+		}
+		silofs_sys_sched_yield();
 	}
+	return (njoined == fq->fq_ndisptch_run);
+}
+
+static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
+{
+	const size_t ndisptch_run = fq->fq_ndisptch_run;
+	int retry = 30;
+
+	fuseq_log_dbg("finish dispatchers: ndisptch_run=%zu", ndisptch_run);
+	while (--retry > 0) {
+		if (fuseq_join_dispatchers(fq)) {
+			break;
+		}
+		silofs_suspend_secs(1);
+	}
+	if (retry == 0) {
+		silofs_panic("failed to join all dispatchers threads: "
+		             "ndisptch_run=%zu", ndisptch_run);
+	}
+	fq->fq_ndisptch_run = 0;
 }
 
 static int fuseq_start_exec_threads(struct silofs_fuseq *fq)

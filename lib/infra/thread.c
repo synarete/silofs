@@ -73,6 +73,11 @@ static void silofs_thread_complete(struct silofs_thread *th, int err)
 	th->finish_time = silofs_time_now_monotonic();
 }
 
+static void silofs_thread_exit(struct silofs_thread *th)
+{
+	pthread_exit(th);
+}
+
 static void *silofs_thread_start(void *arg)
 {
 	struct silofs_thread *th = (struct silofs_thread *)arg;
@@ -81,7 +86,8 @@ static void *silofs_thread_start(void *arg)
 	silofs_thread_prepare(th);
 	err = th->exec(th);
 	silofs_thread_complete(th, err);
-	return th;
+	silofs_thread_exit(th);
+	return th; /* should not get here */
 }
 
 int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,

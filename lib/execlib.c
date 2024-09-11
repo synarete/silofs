@@ -998,18 +998,33 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void make_prandom_hash(const struct silofs_fsenv *fsenv,
+                              struct silofs_hash256 *out_hash)
+{
+	union {
+		uint8_t d[32];
+		struct {
+			time_t it;
+			time_t mt;
+			struct timespec ts;
+		} s;
+	} u;
+
+	silofs_memzero(&u, sizeof(u));
+	u.s.it = fsenv->fse_init_time;
+	u.s.mt = silofs_time_now_monotonic();
+	silofs_ts_gettime(&u.s.ts, 1);
+	silofs_sha3_256_of(&fsenv->fse_mdigest, &u, sizeof(u), out_hash);
+}
+
 static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
                                 struct silofs_bootrec *brec)
 {
-	const union {
-		uint8_t d[8];
-		time_t t;
-	} u = {
-		.t = fsenv->fse_init_time
-	};
+	struct silofs_hash256 h;
 
 	silofs_bootrec_gen_ivkey(brec);
-	silofs_key_xor_with(&brec->main_ivkey.key, u.d, sizeof(u.d));
+	make_prandom_hash(fsenv, &h);
+	silofs_key_xor_with(&brec->main_ivkey.key, &h, sizeof(h));
 }
 
 static void format_bootrec(const struct silofs_fsenv *fsenv,

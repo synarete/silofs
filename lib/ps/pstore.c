@@ -42,27 +42,27 @@ static void pstate_next_btn(struct silofs_pstate *pstate,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_psenv_init(struct silofs_psenv *psenv,
-                      struct silofs_repo *repo)
+int silofs_pstore_init(struct silofs_pstore *pstore,
+                       struct silofs_repo *repo)
 {
-	pstate_init(&psenv->pstate);
-	psenv->repo = repo;
-	psenv->alloc = repo->re.alloc;
-	return silofs_bcache_init(&psenv->bcache, psenv->alloc);
+	pstate_init(&pstore->pstate);
+	pstore->repo = repo;
+	pstore->alloc = repo->re.alloc;
+	return silofs_bcache_init(&pstore->bcache, pstore->alloc);
 }
 
-void silofs_psenv_fini(struct silofs_psenv *psenv)
+void silofs_pstore_fini(struct silofs_pstore *pstore)
 {
-	silofs_bcache_drop(&psenv->bcache);
-	silofs_bcache_fini(&psenv->bcache);
-	pstate_fini(&psenv->pstate);
-	psenv->alloc = NULL;
-	psenv->repo = NULL;
+	silofs_bcache_drop(&pstore->bcache);
+	silofs_bcache_fini(&pstore->bcache);
+	pstate_fini(&pstore->pstate);
+	pstore->alloc = NULL;
+	pstore->repo = NULL;
 }
 
-int silofs_psenv_dropall(struct silofs_psenv *psenv)
+int silofs_pstore_dropall(struct silofs_pstore *pstore)
 {
-	silofs_bcache_drop(&psenv->bcache);
+	silofs_bcache_drop(&pstore->bcache);
 	return 0;
 }
 
@@ -74,21 +74,21 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return &bti->btn_bni.bn_paddr;
 }
 
-static int create_cached_bti(struct silofs_psenv *psenv,
+static int create_cached_bti(struct silofs_pstore *pstore,
                              const struct silofs_paddr *paddr,
                              struct silofs_btnode_info **out_bti)
 {
-	*out_bti = silofs_bcache_create_bti(&psenv->bcache, paddr);
+	*out_bti = silofs_bcache_create_bti(&pstore->bcache, paddr);
 	return (*out_bti == NULL) ? -SILOFS_ENOMEM : 0;
 }
 
-static void forget_cached_bti(struct silofs_psenv *psenv,
+static void forget_cached_bti(struct silofs_pstore *pstore,
                               struct silofs_btnode_info *bti)
 {
-	silofs_bcache_forget_bti(&psenv->bcache, bti);
+	silofs_bcache_forget_bti(&pstore->bcache, bti);
 }
 
-static int commit_btnode(const struct silofs_psenv *psenv,
+static int commit_btnode(const struct silofs_pstore *pstore,
                          const struct silofs_btnode_info *bti)
 {
 	const struct silofs_rovec rov = {
@@ -96,53 +96,53 @@ static int commit_btnode(const struct silofs_psenv *psenv,
 		.rov_len = sizeof(*bti->btn),
 	};
 
-	return silofs_repo_save_pobj(psenv->repo, bti_paddr(bti), &rov);
+	return silofs_repo_save_pobj(pstore->repo, bti_paddr(bti), &rov);
 }
 
-static int require_pseg(const struct silofs_psenv *psenv,
+static int require_pseg(const struct silofs_pstore *pstore,
                         const struct silofs_psid *psid)
 {
 	int err;
 
-	err = silofs_repo_stage_pseg(psenv->repo, psid);
+	err = silofs_repo_stage_pseg(pstore->repo, psid);
 	if (err == -SILOFS_ENOENT) {
-		err = silofs_repo_create_pseg(psenv->repo, psid);
+		err = silofs_repo_create_pseg(pstore->repo, psid);
 	}
 	return err;
 }
 
-static int require_pseg_of(const struct silofs_psenv *psenv,
+static int require_pseg_of(const struct silofs_pstore *pstore,
                            const struct silofs_paddr *paddr)
 {
-	return require_pseg(psenv, &paddr->psid);
+	return require_pseg(pstore, &paddr->psid);
 }
 
-static int format_btree_root(struct silofs_psenv *psenv)
+static int format_btree_root(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
 	struct silofs_btnode_info *bti = NULL;
 	int err;
 
-	pstate_next_btn(&psenv->pstate, &paddr);
-	err = require_pseg_of(psenv, &paddr);
+	pstate_next_btn(&pstore->pstate, &paddr);
+	err = require_pseg_of(pstore, &paddr);
 	if (err) {
 		return err;
 	}
-	err = create_cached_bti(psenv, &paddr, &bti);
+	err = create_cached_bti(pstore, &paddr, &bti);
 	if (err) {
 		return err;
 	}
 	silofs_bti_mark_root(bti);
 
-	err = commit_btnode(psenv, bti);
+	err = commit_btnode(pstore, bti);
 	if (err) {
-		forget_cached_bti(psenv, bti);
+		forget_cached_bti(pstore, bti);
 		return err;
 	}
 	return 0;
 }
 
-int silofs_format_btree(struct silofs_psenv *psenv)
+int silofs_format_btree(struct silofs_pstore *pstore)
 {
-	return format_btree_root(psenv);
+	return format_btree_root(pstore);
 }

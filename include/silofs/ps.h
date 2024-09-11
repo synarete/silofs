@@ -26,6 +26,6 @@
 #include <silofs/ps/repo.h>
 #include <silofs/ps/pnodes.h>
 #include <silofs/ps/bcache.h>
-#include <silofs/ps/psenv.h>
+#include <silofs/ps/pstore.h>
 
 #endif /* SILOFS_PS_H_ */

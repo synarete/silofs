@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PSENV_H_
-#define SILOFS_PSENV_H_
+#ifndef SILOFS_PSTORE_H_
+#define SILOFS_PSTORE_H_
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
@@ -30,7 +30,7 @@ struct silofs_pstate {
 	loff_t cur_pos;
 };
 
-struct silofs_psenv {
+struct silofs_pstore {
 	struct silofs_repo     *repo;
 	struct silofs_alloc    *alloc;
 	struct silofs_bcache    bcache;
@@ -39,15 +39,15 @@ struct silofs_psenv {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_psenv_init(struct silofs_psenv *psenv,
-                      struct silofs_repo *repo);
+int silofs_pstore_init(struct silofs_pstore *pstore,
+                       struct silofs_repo *repo);
 
-void silofs_psenv_fini(struct silofs_psenv *psenv);
+void silofs_pstore_fini(struct silofs_pstore *pstore);
 
-int silofs_psenv_dropall(struct silofs_psenv *psenv);
-
-
-int silofs_format_btree(struct silofs_psenv *psenv);
+int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
 
-#endif /* SILOFS_PSENV_H_ */
+int silofs_format_btree(struct silofs_pstore *pstore);
+
+
+#endif /* SILOFS_PSTORE_H_ */

@@ -41,8 +41,7 @@ bool silofs_iv_isequal(const struct silofs_iv *iv,
 long silofs_iv_compare(const struct silofs_iv *iv,
                        const struct silofs_iv *iv_other);
 
-void silofs_iv_xor_with(struct silofs_iv *iv,
-                        const struct silofs_iv *iv_other);
+void silofs_iv_xor_with(struct silofs_iv *iv, const void *buf, size_t len);
 
 void silofs_iv_xor_with2(struct silofs_iv *iv,
                          const struct silofs_iv *iv1,

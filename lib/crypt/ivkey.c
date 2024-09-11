@@ -50,10 +50,13 @@ long silofs_iv_compare(const struct silofs_iv *iv,
 	return memcmp(iv->iv, iv_other->iv, sizeof(iv->iv));
 }
 
-void silofs_iv_xor_with(struct silofs_iv *iv, const struct silofs_iv *iv_other)
+void silofs_iv_xor_with(struct silofs_iv *iv, const void *buf, size_t len)
 {
-	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
-		iv->iv[i] ^= iv_other->iv[i];
+	const uint8_t *p = buf;
+	const size_t n = min(len, ARRAY_SIZE(iv->iv));
+
+	for (size_t i = 0; i < n; ++i) {
+		iv->iv[i] ^= p[i];
 	}
 }
 
@@ -96,10 +99,10 @@ void silofs_key_mkrand(struct silofs_key *key)
 void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
-	const size_t n = min(len, sizeof(key->key));
+	const size_t n = min(len, ARRAY_SIZE(key->key));
 
 	for (size_t i = 0; i < n; ++i) {
-		key->key[i] ^= *p++;
+		key->key[i] ^= p[i];
 	}
 }
 

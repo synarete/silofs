@@ -18,7 +18,8 @@
 #include <silofs/fs.h>
 #include <silofs/fs/fuseq.h>
 #include <silofs/execlib.h>
-
+#include <sys/sysinfo.h>
+#include <sys/time.h>
 
 #define ROUND_TO_4K(n)  SILOFS_ROUND_TO(n, (4 * SILOFS_KILO))
 
@@ -998,33 +999,57 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void make_prandom_hash(const struct silofs_fsenv *fsenv,
-                              struct silofs_hash256 *out_hash)
+/*
+ * Try to add some pseudo-randomness using strong hash function for the rare
+ * but possible case where '/dev/urandom' does not provide good-enough random
+ * bits stream.
+ */
+static void gen_prandom(const struct silofs_fsenv *fsenv, uint32_t mn,
+                        struct silofs_hash256 *out_hash, uint32_t *out_crc32)
 {
 	union {
-		uint8_t d[32];
+		uint8_t d[256];
 		struct {
+			struct sysinfo si;
+			struct timeval tv;
 			time_t it;
 			time_t mt;
-			struct timespec ts;
+			pid_t pid;
+			uint32_t mn;
 		} s;
 	} u;
 
+	STATICASSERT_EQ(sizeof(u), sizeof(u.d));
+
 	silofs_memzero(&u, sizeof(u));
+	sysinfo(&u.s.si);
+	gettimeofday(&u.s.tv, NULL);
+	u.s.pid = getpid();
 	u.s.it = fsenv->fse_init_time;
 	u.s.mt = silofs_time_now_monotonic();
-	silofs_ts_gettime(&u.s.ts, 1);
+	u.s.mn = mn;
+
 	silofs_sha3_256_of(&fsenv->fse_mdigest, &u, sizeof(u), out_hash);
+	silofs_crc32_of(&fsenv->fse_mdigest, &u, sizeof(u), out_crc32);
+}
+
+static void xrandom_ivkey(const struct silofs_fsenv *fsenv,
+                          struct silofs_ivkey *ivkey)
+{
+	struct silofs_hash256 h;
+	uint32_t mn = SILOFS_META_MAGIC;
+
+	gen_prandom(fsenv, mn, &h, &mn);
+	silofs_iv_xor_with(&ivkey->iv, &h, sizeof(h));
+	gen_prandom(fsenv, mn, &h, &mn);
+	silofs_key_xor_with(&ivkey->key, &h, sizeof(h));
 }
 
 static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
                                 struct silofs_bootrec *brec)
 {
-	struct silofs_hash256 h;
-
 	silofs_bootrec_gen_ivkey(brec);
-	make_prandom_hash(fsenv, &h);
-	silofs_key_xor_with(&brec->main_ivkey.key, &h, sizeof(h));
+	xrandom_ivkey(fsenv, &brec->main_ivkey);
 }
 
 static void format_bootrec(const struct silofs_fsenv *fsenv,

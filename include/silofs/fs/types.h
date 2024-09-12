@@ -142,10 +142,4 @@ struct silofs_inoent {
 	loff_t  voff;
 };
 
-/* dirty-queue of cached-elements */
-struct silofs_dirtyq {
-	struct silofs_listq     dq;
-	size_t                  dq_accum;
-};
-
 #endif /* SILOFS_TYPES_H_ */

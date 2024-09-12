@@ -19,7 +19,9 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include <silofs/hmdq.h>
 #include <silofs/fs/spxmap.h>
+
 
 /* dirty-queues of cached-elements by owner */
 struct silofs_dirtyqs {
@@ -38,26 +40,6 @@ struct silofs_lcache {
 	struct silofs_spamaps   lc_spamaps;
 	struct silofs_uamap     lc_uamap;
 };
-
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_dirtyq_init(struct silofs_dirtyq *dq);
-
-void silofs_dirtyq_fini(struct silofs_dirtyq *dq);
-
-void silofs_dirtyq_append(struct silofs_dirtyq *dq,
-                          struct silofs_list_head *lh, size_t len);
-
-void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
-                          struct silofs_list_head *lh, size_t len);
-
-struct silofs_list_head *
-silofs_dirtyq_front(const struct silofs_dirtyq *dq);
-
-struct silofs_list_head *
-silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
-                      const struct silofs_list_head *lh);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

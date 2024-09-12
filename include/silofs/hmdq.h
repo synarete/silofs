@@ -14,25 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_HMDQ_H_
+#define SILOFS_HMDQ_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/flags.h>
-#include <silofs/addr/offlba.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/meta.h>
-#include <silofs/addr/blobid.h>
-#include <silofs/addr/paddr.h>
-#include <silofs/addr/ltype.h>
-#include <silofs/addr/laddr.h>
-#include <silofs/addr/uaddr.h>
-#include <silofs/addr/vaddr.h>
-#include <silofs/addr/caddr.h>
+#include <silofs/infra.h>
+#include <silofs/hmdq/dirtyq.h>
+#include <silofs/hmdq/hmapq.h>
 
-#ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/addr-private.h>
-#endif
-
-#endif /* SILOFS_ADDR_H_ */
+#endif /* SILOFS_HMDQ_H_ */

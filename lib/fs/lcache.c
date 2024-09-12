@@ -41,48 +41,6 @@ static void lbk_free(struct silofs_lblock *lbk,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_dirtyq_init(struct silofs_dirtyq *dq)
-{
-	listq_init(&dq->dq);
-	dq->dq_accum = 0;
-}
-
-void silofs_dirtyq_fini(struct silofs_dirtyq *dq)
-{
-	listq_fini(&dq->dq);
-	dq->dq_accum = 0;
-}
-
-void silofs_dirtyq_append(struct silofs_dirtyq *dq,
-                          struct silofs_list_head *lh, size_t len)
-{
-	listq_push_back(&dq->dq, lh);
-	dq->dq_accum += len;
-}
-
-void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
-                          struct silofs_list_head *lh, size_t len)
-{
-	silofs_assert_ge(dq->dq_accum, len);
-
-	listq_remove(&dq->dq, lh);
-	dq->dq_accum -= len;
-}
-
-struct silofs_list_head *silofs_dirtyq_front(const struct silofs_dirtyq *dq)
-{
-	return listq_front(&dq->dq);
-}
-
-struct silofs_list_head *
-silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
-                      const struct silofs_list_head *lh)
-{
-	return listq_next(&dq->dq, lh);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void dirtyqs_init(struct silofs_dirtyqs *dqs)
 {
 	silofs_dirtyq_init(&dqs->dq_uis);

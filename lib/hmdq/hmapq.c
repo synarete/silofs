@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include <silofs/hmdq/hmapq.h>
 #include <limits.h>
 
 #define HMQE_MAGIC      (0xDEFEC8EDBADCAFE)

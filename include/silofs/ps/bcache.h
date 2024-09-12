@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-
+#include <silofs/hmdq.h>
 
 struct silofs_bcache {
 	struct silofs_hmapq     bc_hmapq;

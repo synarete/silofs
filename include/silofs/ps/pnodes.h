@@ -20,10 +20,14 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
+struct silofs_pstore;
+
+
 /* bnode: base of all btree-mapping nodes */
 struct silofs_bnode_info {
 	struct silofs_paddr             bn_paddr;
 	struct silofs_hmapq_elem        bn_hmqe;
+	struct silofs_pstore           *bn_pstore;
 	enum silofs_ptype               bn_ptype;
 };
 

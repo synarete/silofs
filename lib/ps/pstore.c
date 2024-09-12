@@ -79,7 +79,11 @@ static int create_cached_bti(struct silofs_pstore *pstore,
                              struct silofs_btnode_info **out_bti)
 {
 	*out_bti = silofs_bcache_create_bti(&pstore->bcache, paddr);
-	return (*out_bti == NULL) ? -SILOFS_ENOMEM : 0;
+	if (*out_bti == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	(*out_bti)->btn_bni.bn_pstore = pstore;
+	return 0;
 }
 
 static void forget_cached_bti(struct silofs_pstore *pstore,

@@ -52,7 +52,7 @@ struct silofs_lnode_info {
 struct silofs_unode_info {
 	struct silofs_lnode_info        u_lni;
 	struct silofs_ulink             u_ulink;
-	struct silofs_list_head         u_dq_lh;
+	struct silofs_dqe               u_dqe;
 	struct silofs_dirtyq           *u_dq;
 	uint64_t                        u_magic;
 };
@@ -88,7 +88,7 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info        v_lni;
-	struct silofs_list_head         v_dq_lh;
+	struct silofs_dqe               v_dqe;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_llink             v_llink;
 	struct silofs_dirtyq           *v_dq;
@@ -163,8 +163,7 @@ silofs_ii_from_lni(const struct silofs_lnode_info *lni);
 struct silofs_inode_info *
 silofs_ii_from_vi(const struct silofs_vnode_info *vi);
 
-struct silofs_inode_info *
-silofs_ii_from_dirty_lh(struct silofs_list_head *lh);
+struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dqe *dqe);
 
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
 
@@ -182,18 +181,16 @@ struct silofs_finode_info *silofs_fni_from_vi(struct silofs_vnode_info *vi);
 struct silofs_fileaf_info *silofs_fli_from_vi(struct silofs_vnode_info *vi);
 
 
-struct silofs_vnode_info *
-silofs_vi_from_dirty_lh(struct silofs_list_head *lh);
+struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dqe *dqe);
 
 struct silofs_vnode_info *
 silofs_vi_from_lni(const struct silofs_lnode_info *lni);
 
 
-struct silofs_unode_info *
-silofs_ui_from_lni(const struct silofs_lnode_info *lni);
+struct silofs_unode_info *silofs_ui_from_dqe(struct silofs_dqe *dqe);
 
 struct silofs_unode_info *
-silofs_ui_from_dirty_lh(struct silofs_list_head *lh);
+silofs_ui_from_lni(const struct silofs_lnode_info *lni);
 
 void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
                          struct silofs_fsenv *fsenv);

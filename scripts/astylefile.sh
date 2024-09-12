@@ -5,7 +5,7 @@ set -o nounset
 set -o pipefail
 
 command -v astyle > /dev/null
-for src in "${@}"; do
+for f in "${@}"; do
   astyle -Q \
     --style=1tbs \
     --suffix=none \
@@ -23,5 +23,5 @@ for src in "${@}"; do
     --max-code-length=79 \
     --indent-col1-comments \
     --lineend=linux \
-    "${src}" | sed "s,^Formatted ,${self}:,g"
+    "${f}" | sed "s,^Formatted ,${self}:,g"
 done

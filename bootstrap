@@ -123,4 +123,3 @@ case "$arg" in
     do_autogen
     ;;
 esac
-

@@ -73,6 +73,7 @@ static void silofs_thread_complete(struct silofs_thread *th, int err)
 	th->finish_time = silofs_time_now_monotonic();
 }
 
+__attribute__((__noreturn__))
 static void silofs_thread_exit(struct silofs_thread *th)
 {
 	pthread_exit(th);

@@ -35,15 +35,9 @@ struct silofs_kdf_desc {
 	uint32_t                        kd_reserved;
 };
 
-struct silofs_kdf_pair {
+struct silofs_kdf_descs {
 	struct silofs_kdf_desc          kdf_iv;
 	struct silofs_kdf_desc          kdf_key;
-};
-
-struct silofs_encdec_args {
-	struct silofs_kdf_pair kdf;
-	int cipher_algo;
-	int cipher_mode;
 };
 
 struct silofs_cipher {

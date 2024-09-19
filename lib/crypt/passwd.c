@@ -35,6 +35,19 @@ int silofs_password_setup(struct silofs_password *pw, const char *pass)
 	return 0;
 }
 
+int silofs_password_setup2(struct silofs_password *pw,
+                           const void *pass, size_t len)
+{
+	silofs_password_reset(pw);
+	if (len >= sizeof(pw->pass)) {
+		return -SILOFS_EINVAL;
+	}
+	memcpy(pw->pass, pass, len);
+	pw->passlen = len;
+	return 0;
+}
+
+
 void silofs_password_reset(struct silofs_password *pw)
 {
 	silofs_memzero(pw, sizeof(*pw));

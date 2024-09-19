@@ -1000,49 +1000,50 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /*
- * Try to add some pseudo-randomness using strong hash function for the rare
- * but possible case where '/dev/urandom' does not provide good-enough random
- * bits stream.
+ * Try to add some pseudo-randomness for the rare (yet, possible) case where
+ * '/dev/urandom' does not provide good-enough random  bits stream.
  */
-static void gen_prandom(const struct silofs_fsenv *fsenv, uint32_t mn,
-                        struct silofs_hash256 *out_hash, uint32_t *out_crc32)
+static void make_prandom_password(struct silofs_password *out_pw)
 {
 	union {
-		uint8_t d[256];
+		uint8_t d[96];
 		struct {
 			struct sysinfo si;
-			struct timeval tv;
-			time_t it;
-			time_t mt;
 			pid_t pid;
-			uint32_t mn;
+			struct timespec rts;
+			uid_t uid;
+			struct timespec mts;
 		} s;
 	} u;
 
-	STATICASSERT_EQ(sizeof(u), sizeof(u.d));
+	STATICASSERT_GT(sizeof(out_pw->pass), sizeof(u));
 
 	silofs_memzero(&u, sizeof(u));
 	sysinfo(&u.s.si);
-	gettimeofday(&u.s.tv, NULL);
 	u.s.pid = getpid();
-	u.s.it = fsenv->fse_init_time;
-	u.s.mt = silofs_time_now_monotonic();
-	u.s.mn = mn;
+	silofs_rclock_now(&u.s.rts);
+	u.s.uid = getuid();
+	silofs_mclock_now(&u.s.mts);
 
-	silofs_sha3_256_of(&fsenv->fse_mdigest, &u, sizeof(u), out_hash);
-	silofs_crc32_of(&fsenv->fse_mdigest, &u, sizeof(u), out_crc32);
+	silofs_password_setup2(out_pw, &u, sizeof(u));
+}
+
+static void make_prandom_ivkey(const struct silofs_fsenv *fsenv,
+                               struct silofs_ivkey *out_ivkey)
+{
+	struct silofs_password pw = { .passlen = 0 };
+
+	make_prandom_password(&pw);
+	silofs_derive_boot_ivkey(&fsenv->fse_mdigest, &pw, out_ivkey);
 }
 
 static void xrandom_ivkey(const struct silofs_fsenv *fsenv,
                           struct silofs_ivkey *ivkey)
 {
-	struct silofs_hash256 h;
-	uint32_t mn = SILOFS_META_MAGIC;
+	struct silofs_ivkey ivkey2;
 
-	gen_prandom(fsenv, mn, &h, &mn);
-	silofs_iv_xor_with(&ivkey->iv, &h, sizeof(h));
-	gen_prandom(fsenv, mn, &h, &mn);
-	silofs_key_xor_with(&ivkey->key, &h, sizeof(h));
+	make_prandom_ivkey(fsenv, &ivkey2);
+	silofs_ivkey_xor_with(ivkey, &ivkey2);
 }
 
 static void generate_main_ivkey(const struct silofs_fsenv *fsenv,

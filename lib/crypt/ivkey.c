@@ -60,6 +60,13 @@ void silofs_iv_xor_with(struct silofs_iv *iv, const void *buf, size_t len)
 	}
 }
 
+void silofs_iv_xor_with1(struct silofs_iv *iv, const struct silofs_iv *iv1)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
+		iv->iv[i] ^= iv1->iv[i];
+	}
+}
+
 void silofs_iv_xor_with2(struct silofs_iv *iv,
                          const struct silofs_iv *iv1,
                          const struct silofs_iv *iv2)
@@ -106,6 +113,14 @@ void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len)
 	}
 }
 
+void silofs_key_xor_with1(struct silofs_key *key,
+                          const struct silofs_key *key1)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(key->key); ++i) {
+		key->key[i] ^= key1->key[i];
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_ivkey_init(struct silofs_ivkey *ivkey)
@@ -136,4 +151,11 @@ void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
                          const struct silofs_ivkey *other)
 {
 	silofs_ivkey_setup(ivkey, &other->key, &other->iv);
+}
+
+void silofs_ivkey_xor_with(struct silofs_ivkey *ivkey,
+                           const struct silofs_ivkey *other)
+{
+	silofs_key_xor_with1(&ivkey->key, &other->key);
+	silofs_iv_xor_with1(&ivkey->iv, &other->iv);
 }

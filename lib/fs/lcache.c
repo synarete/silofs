@@ -108,11 +108,6 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
 	return ret;
 }
 
-static size_t lni_view_len(const struct silofs_lnode_info *lni)
-{
-	return silofs_ltype_size(lni->l_ltype);
-}
-
 static void lni_incref(struct silofs_lnode_info *lni)
 {
 	silofs_hmqe_incref(&lni->l_hmqe);
@@ -168,8 +163,7 @@ static int visit_evictable_lni(struct silofs_hmapq_elem *hmqe, void *arg)
 
 static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 {
-	silofs_assert_null(ui->u_dq);
-	ui->u_dq = dq;
+	silofs_dqe_setq(&ui->u_dqe, dq);
 }
 
 static bool ui_isdirty(const struct silofs_unode_info *ui)
@@ -180,19 +174,15 @@ static bool ui_isdirty(const struct silofs_unode_info *ui)
 static void ui_do_dirtify(struct silofs_unode_info *ui)
 {
 	if (!ui_isdirty(ui)) {
-		silofs_dirtyq_append(ui->u_dq, &ui->u_dqe,
-		                     lni_view_len(&ui->u_lni));
+		silofs_dqe_enqueue(&ui->u_dqe);
 		ui->u_lni.l_hmqe.hme_dirty = true;
 	}
 }
 
 static void ui_do_undirtify(struct silofs_unode_info *ui)
 {
-	silofs_assert_not_null(ui->u_dq);
-
 	if (ui_isdirty(ui)) {
-		silofs_dirtyq_remove(ui->u_dq, &ui->u_dqe,
-		                     lni_view_len(&ui->u_lni));
+		silofs_dqe_dequeue(&ui->u_dqe);
 		ui->u_lni.l_hmqe.hme_dirty = false;
 	}
 }
@@ -268,7 +258,7 @@ static struct silofs_dirtyqs *vi_dirtyqs(const struct silofs_vnode_info *vi)
 
 static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
 {
-	vi->v_dq = dq;
+	silofs_dqe_setq(&vi->v_dqe, dq);
 }
 
 static void vi_update_dq_by(struct silofs_vnode_info *vi,
@@ -1210,21 +1200,17 @@ static void vi_set_dirty(struct silofs_vnode_info *vi, bool dirty)
 static void vi_do_dirtify(struct silofs_vnode_info *vi,
                           struct silofs_inode_info *ii)
 {
-	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
-
 	if (!vi_isdirty(vi)) {
 		vi_update_dq_by(vi, ii);
-		silofs_dirtyq_append(vi->v_dq, &vi->v_dqe, vaddr->len);
+		silofs_dqe_enqueue(&vi->v_dqe);
 		vi_set_dirty(vi, true);
 	}
 }
 
 static void vi_do_undirtify(struct silofs_vnode_info *vi)
 {
-	const struct silofs_vaddr *vaddr = vi_vaddr(vi);
-
 	if (vi_isdirty(vi)) {
-		silofs_dirtyq_remove(vi->v_dq, &vi->v_dqe, vaddr->len);
+		silofs_dqe_dequeue(&vi->v_dqe);
 		vi_update_dq_by(vi, NULL);
 		vi_set_dirty(vi, false);
 	}

@@ -27,16 +27,27 @@ struct silofs_dirtyq {
 	size_t                  dq_accum;
 };
 
+
 /* dirty-queue element (type-safe) */
-struct silofs_dqe {
+struct silofs_dq_elem {
 	struct silofs_list_head lh;
+	struct silofs_dirtyq   *dq;
+	uint32_t                sz;
+	bool                    inq;
 };
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_dqe_init(struct silofs_dqe *dqe);
+void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz);
 
-void silofs_dqe_fini(struct silofs_dqe *dqe);
+void silofs_dqe_fini(struct silofs_dq_elem *dqe);
+
+void silofs_dqe_setq(struct silofs_dq_elem *dqe, struct silofs_dirtyq *dq);
+
+void silofs_dqe_enqueue(struct silofs_dq_elem *dqe);
+
+void silofs_dqe_dequeue(struct silofs_dq_elem *dqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -44,16 +55,12 @@ void silofs_dirtyq_init(struct silofs_dirtyq *dq);
 
 void silofs_dirtyq_fini(struct silofs_dirtyq *dq);
 
-void silofs_dirtyq_append(struct silofs_dirtyq *dq,
-                          struct silofs_dqe *dqe, size_t len);
+struct silofs_dq_elem *
+silofs_dirtyq_front(const struct silofs_dirtyq *dq);
 
-void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
-                          struct silofs_dqe *dqe, size_t len);
-
-struct silofs_dqe *silofs_dirtyq_front(const struct silofs_dirtyq *dq);
-
-struct silofs_dqe *silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
-                const struct silofs_dqe *dqe);
+struct silofs_dq_elem *
+silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
+                      const struct silofs_dq_elem *dqe);
 
 
 #endif /* SILOFS_DIRTYQ_H_ */

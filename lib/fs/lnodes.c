@@ -173,10 +173,11 @@ static void ui_init(struct silofs_unode_info *ui,
                     struct silofs_view *view,
                     silofs_lnode_del_fn del_fn)
 {
-	lni_init(&ui->u_lni, uaddr_ltype(&ulink->uaddr), view, del_fn);
-	silofs_dqe_init(&ui->u_dqe);
+	const enum silofs_ltype ltype = uaddr_ltype(&ulink->uaddr);
+
+	lni_init(&ui->u_lni, ltype, view, del_fn);
+	silofs_dqe_init(&ui->u_dqe, ltype_size(ltype));
 	ulink_assign(&ui->u_ulink, ulink);
-	ui->u_dq = NULL;
 	ui->u_magic = UI_MAGIC;
 }
 
@@ -187,7 +188,6 @@ static void ui_fini(struct silofs_unode_info *ui)
 	ulink_reset(&ui->u_ulink);
 	silofs_dqe_fini(&ui->u_dqe);
 	lni_fini(&ui->u_lni);
-	ui->u_dq = NULL;
 	ui->u_magic = UINT64_MAX;
 }
 
@@ -217,7 +217,7 @@ void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
 	ui->u_lni.l_fsenv = fsenv;
 }
 
-struct silofs_unode_info *silofs_ui_from_dqe(struct silofs_dqe *dqe)
+struct silofs_unode_info *silofs_ui_from_dqe(struct silofs_dq_elem *dqe)
 {
 	struct silofs_unode_info *ui = NULL;
 
@@ -245,7 +245,7 @@ static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
 	return u.q;
 }
 
-struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dqe *dqe)
+struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dq_elem *dqe)
 {
 	struct silofs_vnode_info *vi = NULL;
 
@@ -258,11 +258,12 @@ static void vi_init(struct silofs_vnode_info *vi,
                     struct silofs_view *view,
                     silofs_lnode_del_fn del_fn)
 {
-	lni_init(&vi->v_lni, vaddr->ltype, view, del_fn);
-	silofs_dqe_init(&vi->v_dqe);
+	const enum silofs_ltype ltype = vaddr->ltype;
+
+	lni_init(&vi->v_lni, ltype, view, del_fn);
+	silofs_dqe_init(&vi->v_dqe, ltype_size(ltype));
 	vaddr_assign(&vi->v_vaddr, vaddr);
 	silofs_llink_reset(&vi->v_llink);
-	vi->v_dq = NULL;
 	vi->v_asyncwr = 0;
 	vi->v_magic = VI_MAGIC;
 }
@@ -275,7 +276,6 @@ static void vi_fini(struct silofs_vnode_info *vi)
 	lni_fini(&vi->v_lni);
 	silofs_dqe_fini(&vi->v_dqe);
 	vaddr_reset(&vi->v_vaddr);
-	vi->v_dq = NULL;
 	vi->v_magic = UINT64_MAX;
 }
 
@@ -747,7 +747,7 @@ struct silofs_inode_info *silofs_ii_from_vi(const struct silofs_vnode_info *vi)
 	return ii_unconst(ii);
 }
 
-struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dqe *dqe)
+struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dq_elem *dqe)
 {
 	return silofs_ii_from_vi(silofs_vi_from_dqe(dqe));
 }
@@ -762,7 +762,7 @@ void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 
 void silofs_ii_undirtify_vis(struct silofs_inode_info *ii)
 {
-	struct silofs_dqe *dqe;
+	struct silofs_dq_elem *dqe;
 	struct silofs_vnode_info *vi;
 	struct silofs_dirtyq *dq = &ii->i_dq_vis;
 

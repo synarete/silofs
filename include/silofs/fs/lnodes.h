@@ -19,6 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include <silofs/hmdq.h>
 
 struct silofs_lnode_info;
 struct silofs_unode_info;
@@ -52,8 +53,7 @@ struct silofs_lnode_info {
 struct silofs_unode_info {
 	struct silofs_lnode_info        u_lni;
 	struct silofs_ulink             u_ulink;
-	struct silofs_dqe               u_dqe;
-	struct silofs_dirtyq           *u_dq;
+	struct silofs_dq_elem           u_dqe;
 	uint64_t                        u_magic;
 };
 
@@ -88,10 +88,9 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info        v_lni;
-	struct silofs_dqe               v_dqe;
+	struct silofs_dq_elem           v_dqe;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_llink             v_llink;
-	struct silofs_dirtyq           *v_dq;
 	uint64_t                        v_magic;
 	int                             v_asyncwr;
 };
@@ -163,7 +162,7 @@ silofs_ii_from_lni(const struct silofs_lnode_info *lni);
 struct silofs_inode_info *
 silofs_ii_from_vi(const struct silofs_vnode_info *vi);
 
-struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dqe *dqe);
+struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dq_elem *dqe);
 
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
 
@@ -181,13 +180,13 @@ struct silofs_finode_info *silofs_fni_from_vi(struct silofs_vnode_info *vi);
 struct silofs_fileaf_info *silofs_fli_from_vi(struct silofs_vnode_info *vi);
 
 
-struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dqe *dqe);
+struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dq_elem *dqe);
 
 struct silofs_vnode_info *
 silofs_vi_from_lni(const struct silofs_lnode_info *lni);
 
 
-struct silofs_unode_info *silofs_ui_from_dqe(struct silofs_dqe *dqe);
+struct silofs_unode_info *silofs_ui_from_dqe(struct silofs_dq_elem *dqe);
 
 struct silofs_unode_info *
 silofs_ui_from_lni(const struct silofs_lnode_info *lni);

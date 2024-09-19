@@ -352,13 +352,13 @@ static void flusher_add_dirty_ui(struct silofs_flusher *flusher,
 static void flusher_add_dirty_vis_of(struct silofs_flusher *flusher,
                                      struct silofs_dirtyq *dq)
 {
-	struct silofs_dqe *dqe = NULL;
+	struct silofs_dq_elem *dqe = NULL;
 	struct silofs_vnode_info *vi = NULL;
 
 	dqe = silofs_dirtyq_front(dq);
 	while (dqe != NULL) {
 		vi = silofs_vi_from_dqe(dqe);
-		silofs_assert_eq(vi->v_dq, dq);
+		silofs_assert_eq(vi->v_dqe.dq, dq);
 		if (vi_may_flush(vi)) {
 			flusher_add_dirty_vi(flusher, vi);
 		}
@@ -376,7 +376,7 @@ static void flusher_add_dirty_ii(struct silofs_flusher *flusher,
 static void flusher_add_dirty_iis_of(struct silofs_flusher *flusher,
                                      struct silofs_dirtyq *dq)
 {
-	struct silofs_dqe *dqe = NULL;
+	struct silofs_dq_elem *dqe = NULL;
 	struct silofs_inode_info *ii = NULL;
 
 	dqe = silofs_dirtyq_front(dq);
@@ -390,7 +390,7 @@ static void flusher_add_dirty_iis_of(struct silofs_flusher *flusher,
 static void flusher_add_dirty_uis_of(struct silofs_flusher *flusher,
                                      struct silofs_dirtyq *dq)
 {
-	struct silofs_dqe *dqe = NULL;
+	struct silofs_dq_elem *dqe = NULL;
 	struct silofs_unode_info *ui = NULL;
 
 	dqe = silofs_dirtyq_front(dq);

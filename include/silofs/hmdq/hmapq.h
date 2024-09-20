@@ -18,6 +18,8 @@
 #define SILOFS_HMAPQ_H_
 
 #include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/hmdq/dirtyq.h>
 
 #define SILOFS_HMAPQ_ITERALL   (0xffffffffU)
 

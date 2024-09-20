@@ -126,6 +126,7 @@ static void lni_init(struct silofs_lnode_info *lni,
                      silofs_lnode_del_fn del_fn)
 {
 	silofs_hmqe_init(&lni->l_hmqe);
+	silofs_dqe_init(&lni->l_dqe, ltype_size(ltype));
 	silofs_avl_node_init(&lni->l_ds_avl_node);
 	lni->l_ltype = ltype;
 	lni->l_ds_next = NULL;
@@ -138,6 +139,7 @@ static void lni_init(struct silofs_lnode_info *lni,
 static void lni_fini(struct silofs_lnode_info *lni)
 {
 	silofs_hmqe_fini(&lni->l_hmqe);
+	silofs_dqe_fini(&lni->l_dqe);
 	silofs_avl_node_fini(&lni->l_ds_avl_node);
 	lni->l_ds_next = NULL;
 	lni->l_fsenv = NULL;
@@ -155,6 +157,15 @@ static int lni_verify_view(struct silofs_lnode_info *lni)
 	return verify_view_by(lni->l_view, lni->l_ltype);
 }
 
+static const struct silofs_lnode_info *
+lni_from_dqe(const struct silofs_dq_elem *dqe)
+{
+	const struct silofs_lnode_info *lni;
+
+	lni = container_of2(dqe, struct silofs_lnode_info, l_dqe);
+	return lni;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)
@@ -168,6 +179,13 @@ static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)
 	return u.q;
 }
 
+static void ui_verify(const struct silofs_unode_info *ui)
+{
+	if (unlikely(ui->u_magic != UI_MAGIC)) {
+		silofs_panic("corrupted: ui=%p u_magic=%x", ui, ui->u_magic);
+	}
+}
+
 static void ui_init(struct silofs_unode_info *ui,
                     const struct silofs_ulink *ulink,
                     struct silofs_view *view,
@@ -176,20 +194,19 @@ static void ui_init(struct silofs_unode_info *ui,
 	const enum silofs_ltype ltype = uaddr_ltype(&ulink->uaddr);
 
 	lni_init(&ui->u_lni, ltype, view, del_fn);
-	silofs_dqe_init(&ui->u_dqe, ltype_size(ltype));
 	ulink_assign(&ui->u_ulink, ulink);
 	ui->u_magic = UI_MAGIC;
 }
 
 static void ui_fini(struct silofs_unode_info *ui)
 {
-	silofs_assert_eq(ui->u_magic, UI_MAGIC);
+	ui_verify(ui);
 
 	ulink_reset(&ui->u_ulink);
-	silofs_dqe_fini(&ui->u_dqe);
 	lni_fini(&ui->u_lni);
 	ui->u_magic = UINT64_MAX;
 }
+
 
 struct silofs_unode_info *
 silofs_ui_from_lni(const struct silofs_lnode_info *lni)
@@ -198,10 +215,7 @@ silofs_ui_from_lni(const struct silofs_lnode_info *lni)
 
 	if (lni != NULL) {
 		ui = container_of2(lni, struct silofs_unode_info, u_lni);
-		if (unlikely(ui->u_magic != UI_MAGIC)) {
-			silofs_panic("corrupted unode-info: "
-			             "ui=%p u_magic=%x", ui, ui->u_magic);
-		}
+		ui_verify(ui);
 	}
 	return ui_unconst(ui);
 }
@@ -219,10 +233,7 @@ void silofs_ui_set_fsenv(struct silofs_unode_info *ui,
 
 struct silofs_unode_info *silofs_ui_from_dqe(struct silofs_dq_elem *dqe)
 {
-	struct silofs_unode_info *ui = NULL;
-
-	ui = container_of(dqe, struct silofs_unode_info, u_dqe);
-	return ui;
+	return silofs_ui_from_lni(lni_from_dqe(dqe));
 }
 
 static void ui_del_view(struct silofs_unode_info *ui,
@@ -234,7 +245,8 @@ static void ui_del_view(struct silofs_unode_info *ui,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
+static struct silofs_vnode_info *
+vi_unconst(const struct silofs_vnode_info *vi)
 {
 	union {
 		const struct silofs_vnode_info *p;
@@ -245,12 +257,11 @@ static struct silofs_vnode_info *vi_unconst(const struct silofs_vnode_info *vi)
 	return u.q;
 }
 
-struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dq_elem *dqe)
+static void vi_verify(const struct silofs_vnode_info *vi)
 {
-	struct silofs_vnode_info *vi = NULL;
-
-	vi = container_of(dqe, struct silofs_vnode_info, v_dqe);
-	return vi;
+	if (unlikely(vi->v_magic != VI_MAGIC)) {
+		silofs_panic("corrupted: vi=%p v_magic=%x", vi, vi->v_magic);
+	}
 }
 
 static void vi_init(struct silofs_vnode_info *vi,
@@ -261,7 +272,6 @@ static void vi_init(struct silofs_vnode_info *vi,
 	const enum silofs_ltype ltype = vaddr->ltype;
 
 	lni_init(&vi->v_lni, ltype, view, del_fn);
-	silofs_dqe_init(&vi->v_dqe, ltype_size(ltype));
 	vaddr_assign(&vi->v_vaddr, vaddr);
 	silofs_llink_reset(&vi->v_llink);
 	vi->v_asyncwr = 0;
@@ -270,11 +280,10 @@ static void vi_init(struct silofs_vnode_info *vi,
 
 static void vi_fini(struct silofs_vnode_info *vi)
 {
-	silofs_assert_eq(vi->v_magic, VI_MAGIC);
+	vi_verify(vi);
 	silofs_assert_eq(vi->v_asyncwr, 0);
 
 	lni_fini(&vi->v_lni);
-	silofs_dqe_fini(&vi->v_dqe);
 	vaddr_reset(&vi->v_vaddr);
 	vi->v_magic = UINT64_MAX;
 }
@@ -286,12 +295,14 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni)
 
 	if (lni != NULL) {
 		vi = container_of2(lni, struct silofs_vnode_info, v_lni);
-		if (unlikely(vi->v_magic != VI_MAGIC)) {
-			silofs_panic("corrupted vnode-info: "
-			             "vi=%p v_magic=%x", vi, vi->v_magic);
-		}
+		vi_verify(vi);
 	}
 	return vi_unconst(vi);
+}
+
+struct silofs_vnode_info *silofs_vi_from_dqe(struct silofs_dq_elem *dqe)
+{
+	return silofs_vi_from_lni(lni_from_dqe(dqe));
 }
 
 void silofs_seal_vnode(struct silofs_vnode_info *vi)

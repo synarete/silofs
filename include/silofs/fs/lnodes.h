@@ -40,6 +40,7 @@ typedef void (*silofs_lnode_del_fn)(struct silofs_lnode_info *lni,
 /* lnode: base object of all logical-nodes */
 struct silofs_lnode_info {
 	struct silofs_hmapq_elem        l_hmqe;
+	struct silofs_dq_elem           l_dqe;
 	struct silofs_avl_node          l_ds_avl_node;
 	struct silofs_lnode_info       *l_ds_next;
 	struct silofs_fsenv            *l_fsenv;
@@ -53,7 +54,6 @@ struct silofs_lnode_info {
 struct silofs_unode_info {
 	struct silofs_lnode_info        u_lni;
 	struct silofs_ulink             u_ulink;
-	struct silofs_dq_elem           u_dqe;
 	uint64_t                        u_magic;
 };
 
@@ -88,7 +88,6 @@ struct silofs_spleaf_info {
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info        v_lni;
-	struct silofs_dq_elem           v_dqe;
 	struct silofs_vaddr             v_vaddr;
 	struct silofs_llink             v_llink;
 	uint64_t                        v_magic;

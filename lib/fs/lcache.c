@@ -138,6 +138,33 @@ static void lni_remove_from_hmapq(struct silofs_lnode_info *lni,
 	silofs_hmapq_remove(hmapq, lni_to_hmqe(lni));
 }
 
+static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
+{
+	silofs_dqe_setq(&lni->l_dqe, dq);
+}
+
+static bool lni_isdirty(const struct silofs_lnode_info *lni)
+{
+	return lni->l_hmqe.hme_dirty;
+}
+
+static void lni_dirtify(struct silofs_lnode_info *lni)
+{
+	if (!lni_isdirty(lni)) {
+		silofs_dqe_enqueue(&lni->l_dqe);
+		lni->l_hmqe.hme_dirty = true;
+	}
+}
+
+static void lni_undirtify(struct silofs_lnode_info *lni)
+{
+	if (lni_isdirty(lni)) {
+		silofs_dqe_dequeue(&lni->l_dqe);
+		lni->l_hmqe.hme_dirty = false;
+	}
+}
+
+
 static void lni_delete(struct silofs_lnode_info *lni,
                        struct silofs_alloc *alloc, int flags)
 {
@@ -163,28 +190,17 @@ static int visit_evictable_lni(struct silofs_hmapq_elem *hmqe, void *arg)
 
 static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_setq(&ui->u_dqe, dq);
-}
-
-static bool ui_isdirty(const struct silofs_unode_info *ui)
-{
-	return ui->u_lni.l_hmqe.hme_dirty;
+	lni_set_dq(&ui->u_lni, dq);
 }
 
 static void ui_do_dirtify(struct silofs_unode_info *ui)
 {
-	if (!ui_isdirty(ui)) {
-		silofs_dqe_enqueue(&ui->u_dqe);
-		ui->u_lni.l_hmqe.hme_dirty = true;
-	}
+	lni_dirtify(&ui->u_lni);
 }
 
 static void ui_do_undirtify(struct silofs_unode_info *ui)
 {
-	if (ui_isdirty(ui)) {
-		silofs_dqe_dequeue(&ui->u_dqe);
-		ui->u_lni.l_hmqe.hme_dirty = false;
-	}
+	lni_undirtify(&ui->u_lni);
 }
 
 void silofs_ui_dirtify(struct silofs_unode_info *ui)
@@ -258,7 +274,7 @@ static struct silofs_dirtyqs *vi_dirtyqs(const struct silofs_vnode_info *vi)
 
 static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_setq(&vi->v_dqe, dq);
+	lni_set_dq(&vi->v_lni, dq);
 }
 
 static void vi_update_dq_by(struct silofs_vnode_info *vi,
@@ -1189,7 +1205,7 @@ void silofs_lcache_fini(struct silofs_lcache *lcache)
 
 static bool vi_isdirty(const struct silofs_vnode_info *vi)
 {
-	return vi->v_lni.l_hmqe.hme_dirty;
+	return lni_isdirty(&vi->v_lni);
 }
 
 static void vi_set_dirty(struct silofs_vnode_info *vi, bool dirty)
@@ -1202,7 +1218,7 @@ static void vi_do_dirtify(struct silofs_vnode_info *vi,
 {
 	if (!vi_isdirty(vi)) {
 		vi_update_dq_by(vi, ii);
-		silofs_dqe_enqueue(&vi->v_dqe);
+		lni_dirtify(&vi->v_lni);
 		vi_set_dirty(vi, true);
 	}
 }
@@ -1210,7 +1226,7 @@ static void vi_do_dirtify(struct silofs_vnode_info *vi,
 static void vi_do_undirtify(struct silofs_vnode_info *vi)
 {
 	if (vi_isdirty(vi)) {
-		silofs_dqe_dequeue(&vi->v_dqe);
+		lni_undirtify(&vi->v_lni);
 		vi_update_dq_by(vi, NULL);
 		vi_set_dirty(vi, false);
 	}

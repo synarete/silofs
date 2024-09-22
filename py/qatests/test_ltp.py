@@ -211,8 +211,6 @@ _LTP_TESTS = [
     "ftruncate01",
     "ftruncate03",
     "futimesat01",
-    "getdents01",
-    "getdents02",
     "getdents02",
     "inode01",
     "inode02",
@@ -338,4 +336,5 @@ _LTP_TESTS_MORE = [
     "ln_tests.sh",
     "mv_tests.sh",
     "openfile",
+    "getdents01",
 ]

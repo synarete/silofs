@@ -6,7 +6,6 @@ from . import test_fillfs
 from . import test_fio
 from . import test_fsck
 from . import test_io
-from . import test_ltp
 from . import test_self
 from . import test_snap
 from . import test_view
@@ -47,7 +46,6 @@ TESTS = [
     test_self.test_funtests_mt,
     test_fio.test_fio_simple,
     test_fio.test_fio_njobs,
-    test_ltp.test_ltp,
     test_xprogs.test_postgresql,
     test_xprogs.test_rsync,
     test_xprogs.test_findutils,

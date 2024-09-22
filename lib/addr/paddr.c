@@ -21,6 +21,24 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+uint32_t silofs_ptype_size(enum silofs_ptype ptype)
+{
+	switch (ptype) {
+	case SILOFS_PTYPE_BTNODE:
+		return sizeof(struct silofs_btree_node);
+	case SILOFS_PTYPE_BTLEAF:
+		return sizeof(struct silofs_btree_leaf);
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_DATA:
+	case SILOFS_PTYPE_LAST:
+	default:
+		break;
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_pvid_generate(struct silofs_pvid *pvid)
 {
 	silofs_uuid_generate(&pvid->uuid);

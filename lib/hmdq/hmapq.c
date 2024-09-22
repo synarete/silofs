@@ -20,7 +20,7 @@
 #include <silofs/hmdq/hmapq.h>
 #include <limits.h>
 
-#define HMQE_MAGIC      (0xDEFEC8EDBADCAFE)
+#define HMQE_MAGIC      (0xDECAFE)
 
 /* prime-value for hash-table of n-elements */
 static const unsigned int htbl_primes[] = {
@@ -272,12 +272,14 @@ static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 {
 	if (unlikely(hmqe->hme_magic != HMQE_MAGIC) ||
 	    unlikely(hmqe->hme_refcnt < 0)) {
-		silofs_panic("illegal: hmqe=%p hme_key.type=%d "
-		             "hme_refcnt=%d hme_dirty=%d hme_mapped=%d "
-		             "hme_forgot=%d hme_magic=0x%lx", hmqe,
-		             (int)hmqe->hme_key.type, hmqe->hme_refcnt,
-		             (int)hmqe->hme_dirty, (int)hmqe->hme_mapped,
-		             (int)hmqe->hme_forgot, hmqe->hme_magic);
+		silofs_panic("corrupted: hmqe=%p hme_key.type=%d "
+		             "hme_refcnt=%d hme_mapped=%d "
+		             "hme_forgot=%d hme_magic=0x%x", hmqe,
+		             (int)hmqe->hme_key.type,
+		             hmqe->hme_refcnt,
+		             (int)hmqe->hme_mapped,
+		             (int)hmqe->hme_forgot,
+		             hmqe->hme_magic);
 	}
 }
 
@@ -313,8 +315,9 @@ hmqe_from_lru_link(const struct silofs_list_head *lru_lh)
 	return hmqe_unconst(hmqe);
 }
 
-void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe)
+void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe, size_t sz)
 {
+	silofs_dqe_init(&hmqe->hme_dqe, sz);
 	hkey_reset(&hmqe->hme_key);
 	list_head_init(&hmqe->hme_htb_lh);
 	list_head_init(&hmqe->hme_lru_lh);
@@ -322,7 +325,6 @@ void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe)
 	hmqe->hme_refcnt = 0;
 	hmqe->hme_htb_hitcnt = 0;
 	hmqe->hme_lru_hitcnt = 0;
-	hmqe->hme_dirty = false;
 	hmqe->hme_mapped = false;
 	hmqe->hme_forgot = false;
 }
@@ -332,13 +334,14 @@ void silofs_hmqe_fini(struct silofs_hmapq_elem *hmqe)
 	hmqe_sanitize(hmqe);
 	silofs_assert_eq(hmqe->hme_refcnt, 0);
 
+	silofs_dqe_fini(&hmqe->hme_dqe);
 	hkey_reset(&hmqe->hme_key);
 	list_head_fini(&hmqe->hme_htb_lh);
 	list_head_fini(&hmqe->hme_lru_lh);
 	hmqe->hme_refcnt = INT_MIN;
 	hmqe->hme_htb_hitcnt = -1;
 	hmqe->hme_lru_hitcnt = -1;
-	hmqe->hme_magic = LONG_MIN;
+	hmqe->hme_magic = INT32_MIN;
 }
 
 static void hmqe_hmap(struct silofs_hmapq_elem *hmqe,
@@ -373,10 +376,9 @@ static void hmqe_sanitize_mapped(const struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_sanitize(hmqe);
 	if (unlikely(!hmqe->hme_mapped)) {
-		silofs_panic("unexpected non-mapped state: hmqe=%p "
-		             "hme_key=%d hme_dirty=%d hme_refcnt=%d",
-		             hmqe, (int)hmqe->hme_key.type,
-		             (int)hmqe->hme_dirty, hmqe->hme_refcnt);
+		silofs_panic("unexpected non-mapped state: "
+		             "hmqe=%p hme_key=%d hme_refcnt=%d",
+		             hmqe, (int)hmqe->hme_key.type, hmqe->hme_refcnt);
 	}
 }
 
@@ -473,7 +475,7 @@ static void hmqe_decref_atomic(struct silofs_hmapq_elem *hmqe)
 
 static bool hmqe_is_evictable_atomic(const struct silofs_hmapq_elem *hmqe)
 {
-	return !hmqe->hme_dirty && !hmqe_refcnt_atomic(hmqe);
+	return !silofs_hmqe_is_dirty(hmqe) && !hmqe_refcnt_atomic(hmqe);
 }
 
 int silofs_hmqe_refcnt(const struct silofs_hmapq_elem *hmqe)
@@ -499,6 +501,21 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 	hmqe_sanitize(hmqe);
 	return hmqe_is_evictable_atomic(hmqe);
 }
+
+bool silofs_hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe)
+{
+	return hmqe->hme_dqe.inq;
+}
+
+const struct silofs_hmapq_elem *
+silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe)
+{
+	const struct silofs_hmapq_elem *hmqe;
+
+	hmqe = container_of2(dqe, struct silofs_hmapq_elem, hme_dqe);
+	return hmqe;
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -125,8 +125,7 @@ static void lni_init(struct silofs_lnode_info *lni,
                      struct silofs_view *view,
                      silofs_lnode_del_fn del_fn)
 {
-	silofs_hmqe_init(&lni->l_hmqe);
-	silofs_dqe_init(&lni->l_dqe, ltype_size(ltype));
+	silofs_hmqe_init(&lni->l_hmqe, ltype_size(ltype));
 	silofs_avl_node_init(&lni->l_ds_avl_node);
 	lni->l_ltype = ltype;
 	lni->l_ds_next = NULL;
@@ -139,7 +138,6 @@ static void lni_init(struct silofs_lnode_info *lni,
 static void lni_fini(struct silofs_lnode_info *lni)
 {
 	silofs_hmqe_fini(&lni->l_hmqe);
-	silofs_dqe_fini(&lni->l_dqe);
 	silofs_avl_node_fini(&lni->l_ds_avl_node);
 	lni->l_ds_next = NULL;
 	lni->l_fsenv = NULL;
@@ -157,13 +155,22 @@ static int lni_verify_view(struct silofs_lnode_info *lni)
 	return verify_view_by(lni->l_view, lni->l_ltype);
 }
 
+const struct silofs_lnode_info *
+silofs_lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
+{
+	const struct silofs_lnode_info *lni = NULL;
+
+	lni = container_of2(hmqe, struct silofs_lnode_info, l_hmqe);
+	return lni;
+}
+
 static const struct silofs_lnode_info *
 lni_from_dqe(const struct silofs_dq_elem *dqe)
 {
-	const struct silofs_lnode_info *lni;
+	const struct silofs_hmapq_elem *hmqe;
 
-	lni = container_of2(dqe, struct silofs_lnode_info, l_dqe);
-	return lni;
+	hmqe = silofs_hmqe_from_dqe(dqe);
+	return silofs_lni_from_hmqe(hmqe);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

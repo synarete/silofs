@@ -460,7 +460,7 @@ static void bni_init(struct silofs_bnode_info *bni, enum silofs_ptype ptype,
 	silofs_assert(!silofs_paddr_isnull(paddr));
 
 	silofs_paddr_assign(&bni->bn_paddr, paddr);
-	silofs_hmqe_init(&bni->bn_hmqe);
+	silofs_hmqe_init(&bni->bn_hmqe, ptype_size(ptype));
 	silofs_hkey_by_paddr(&bni->bn_hmqe.hme_key, &bni->bn_paddr);
 	bni->bn_pstore = NULL;
 	bni->bn_ptype = ptype;

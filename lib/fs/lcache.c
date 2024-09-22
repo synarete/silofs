@@ -85,7 +85,7 @@ lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 	const struct silofs_lnode_info *lni = NULL;
 
 	if (likely(hmqe != NULL)) {
-		lni = container_of2(hmqe, struct silofs_lnode_info, l_hmqe);
+		lni = silofs_lni_from_hmqe(hmqe);
 	}
 	return unconst(lni);
 }
@@ -138,29 +138,32 @@ static void lni_remove_from_hmapq(struct silofs_lnode_info *lni,
 	silofs_hmapq_remove(hmapq, lni_to_hmqe(lni));
 }
 
+static struct silofs_dq_elem *lni_dqe(struct silofs_lnode_info *lni)
+{
+	return &lni->l_hmqe.hme_dqe;
+}
+
 static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_setq(&lni->l_dqe, dq);
+	silofs_dqe_setq(lni_dqe(lni), dq);
 }
 
 static bool lni_isdirty(const struct silofs_lnode_info *lni)
 {
-	return lni->l_hmqe.hme_dirty;
+	return silofs_hmqe_is_dirty(&lni->l_hmqe);
 }
 
 static void lni_dirtify(struct silofs_lnode_info *lni)
 {
 	if (!lni_isdirty(lni)) {
-		silofs_dqe_enqueue(&lni->l_dqe);
-		lni->l_hmqe.hme_dirty = true;
+		silofs_dqe_enqueue(lni_dqe(lni));
 	}
 }
 
 static void lni_undirtify(struct silofs_lnode_info *lni)
 {
 	if (lni_isdirty(lni)) {
-		silofs_dqe_dequeue(&lni->l_dqe);
-		lni->l_hmqe.hme_dirty = false;
+		silofs_dqe_dequeue(lni_dqe(lni));
 	}
 }
 
@@ -1208,18 +1211,12 @@ static bool vi_isdirty(const struct silofs_vnode_info *vi)
 	return lni_isdirty(&vi->v_lni);
 }
 
-static void vi_set_dirty(struct silofs_vnode_info *vi, bool dirty)
-{
-	vi->v_lni.l_hmqe.hme_dirty = dirty;
-}
-
 static void vi_do_dirtify(struct silofs_vnode_info *vi,
                           struct silofs_inode_info *ii)
 {
 	if (!vi_isdirty(vi)) {
 		vi_update_dq_by(vi, ii);
 		lni_dirtify(&vi->v_lni);
-		vi_set_dirty(vi, true);
 	}
 }
 
@@ -1228,7 +1225,6 @@ static void vi_do_undirtify(struct silofs_vnode_info *vi)
 	if (vi_isdirty(vi)) {
 		lni_undirtify(&vi->v_lni);
 		vi_update_dq_by(vi, NULL);
-		vi_set_dirty(vi, false);
 	}
 }
 

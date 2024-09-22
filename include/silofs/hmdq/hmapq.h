@@ -50,15 +50,15 @@ struct silofs_hkey {
 /* caching-elements */
 struct silofs_hmapq_elem {
 	struct silofs_list_head hme_htb_lh;
-	struct silofs_list_head hme_lru_lh;
-	struct silofs_hkey      hme_key;
-	int64_t                 hme_magic;
 	int64_t                 hme_htb_hitcnt;
+	struct silofs_list_head hme_lru_lh;
 	int64_t                 hme_lru_hitcnt;
-	int                     hme_refcnt;
-	bool                    hme_dirty;
+	struct silofs_hkey      hme_key;
+	struct silofs_dq_elem   hme_dqe;
 	bool                    hme_mapped;
 	bool                    hme_forgot;
+	int32_t                 hme_refcnt;
+	int32_t                 hme_magic;
 };
 
 /* LRU + hash-map */
@@ -92,7 +92,7 @@ long silofs_hkey_compare(const struct silofs_hkey *hkey1,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe);
+void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe, size_t sz);
 
 void silofs_hmqe_fini(struct silofs_hmapq_elem *hmqe);
 
@@ -103,6 +103,11 @@ void silofs_hmqe_incref(struct silofs_hmapq_elem *hmqe);
 void silofs_hmqe_decref(struct silofs_hmapq_elem *hmqe);
 
 bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe);
+
+bool silofs_hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe);
+
+const struct silofs_hmapq_elem *
+silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

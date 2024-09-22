@@ -40,7 +40,6 @@ typedef void (*silofs_lnode_del_fn)(struct silofs_lnode_info *lni,
 /* lnode: base object of all logical-nodes */
 struct silofs_lnode_info {
 	struct silofs_hmapq_elem        l_hmqe;
-	struct silofs_dq_elem           l_dqe;
 	struct silofs_avl_node          l_ds_avl_node;
 	struct silofs_lnode_info       *l_ds_next;
 	struct silofs_fsenv            *l_fsenv;
@@ -142,6 +141,12 @@ struct silofs_fileaf_info {
 	struct silofs_vnode_info        fl_vi;
 	union silofs_fileaf_u           flu;
 };
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_lnode_info *
+silofs_lni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

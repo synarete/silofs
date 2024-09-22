@@ -37,6 +37,10 @@ struct silofs_paddr {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+uint32_t silofs_ptype_size(enum silofs_ptype ptype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_pvid_generate(struct silofs_pvid *pvid);
 
 void silofs_pvid_assign(struct silofs_pvid *pvid,

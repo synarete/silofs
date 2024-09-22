@@ -42,17 +42,32 @@ bni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 	return bni_unconst(bni);
 }
 
-static struct silofs_hmapq_elem *
-bni_to_hmqe(const struct silofs_bnode_info *bni)
+static struct silofs_dq_elem *bni_to_dqe(struct silofs_bnode_info *bni)
 {
-	const struct silofs_hmapq_elem *hmqe = &bni->bn_hmqe;
+	return &bni->bn_hmqe.hme_dqe;
+}
 
-	return unconst(hmqe);
+static struct silofs_hmapq_elem *bni_to_hmqe(struct silofs_bnode_info *bni)
+{
+	return &bni->bn_hmqe;
+}
+
+static const struct silofs_hmapq_elem *
+bni_to_hmqe2(const struct silofs_bnode_info *bni)
+{
+	return &bni->bn_hmqe;
+}
+
+static bool bni_is_dirty(const struct silofs_bnode_info *bni)
+{
+	return silofs_hmqe_is_dirty(bni_to_hmqe2(bni));
 }
 
 static void bni_do_undirtify(struct silofs_bnode_info *bni)
 {
-	bni->bn_hmqe.hme_dirty = false;
+	if (bni_is_dirty(bni)) {
+		silofs_dqe_dequeue(bni_to_dqe(bni));
+	}
 }
 
 static bool bni_isevictable(const struct silofs_bnode_info *bni)
@@ -256,17 +271,17 @@ static int visit_evictable_bni(struct silofs_hmapq_elem *hmqe, void *arg)
 	return ret;
 }
 
-static void bcache_remove_pni(struct silofs_bcache *bcache,
+static void bcache_remove_bni(struct silofs_bcache *bcache,
                               struct silofs_bnode_info *bni)
 {
 	silofs_hmapq_remove(&bcache->bc_hmapq, bni_to_hmqe(bni));
 }
 
-static void bcache_evict_pni(struct silofs_bcache *bcache,
+static void bcache_evict_bni(struct silofs_bcache *bcache,
                              struct silofs_bnode_info *bni)
 {
 	bni_do_undirtify(bni);
-	bcache_remove_pni(bcache, bni);
+	bcache_remove_bni(bcache, bni);
 	bcache_del_pni(bcache, bni);
 }
 
@@ -292,7 +307,7 @@ static size_t bcache_evict_some(struct silofs_bcache *bcache,
 		if (bni == NULL) {
 			break;
 		}
-		bcache_evict_pni(bcache, bni);
+		bcache_evict_bni(bcache, bni);
 		cnt++;
 	}
 	return cnt;
@@ -347,7 +362,7 @@ silofs_bcache_create_bti(struct silofs_bcache *bcache,
 void silofs_bcache_forget_bti(struct silofs_bcache *bcache,
                               struct silofs_btnode_info *bti)
 {
-	bcache_evict_pni(bcache, &bti->btn_bni);
+	bcache_evict_bni(bcache, &bti->btn_bni);
 }
 
 struct silofs_btleaf_info *

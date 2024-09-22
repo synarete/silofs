@@ -111,9 +111,9 @@ void silofs_dqe_setq(struct silofs_dq_elem *dqe, struct silofs_dirtyq *dq)
 
 void silofs_dqe_enqueue(struct silofs_dq_elem *dqe)
 {
-	silofs_assert_not_null(dqe->dq);
-
 	if (!dqe->inq) {
+		silofs_assert_not_null(dqe->dq);
+
 		silofs_dirtyq_append(dqe->dq, dqe);
 		dqe->inq = true;
 	}
@@ -121,9 +121,9 @@ void silofs_dqe_enqueue(struct silofs_dq_elem *dqe)
 
 void silofs_dqe_dequeue(struct silofs_dq_elem *dqe)
 {
-	silofs_assert_not_null(dqe->dq);
-
 	if (dqe->inq) {
+		silofs_assert_not_null(dqe->dq);
+
 		silofs_dirtyq_remove(dqe->dq, dqe);
 		dqe->inq = false;
 	}

@@ -465,8 +465,6 @@ enum silofs_kdf_algos {
 	SILOFS_KDF_NONE         = 0,
 	SILOFS_KDF_PBKDF2       = 34,
 	SILOFS_KDF_SCRYPT       = 48,
-	SILOFS_KDF_ARGON2       = 64,
-	SILOFS_KDF_BALLOON      = 65,
 };
 
 /* unix-domain socket for mount daemon */

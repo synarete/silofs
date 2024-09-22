@@ -940,29 +940,9 @@ static size_t flush_threshold_of(int flags)
 	return threshold;
 }
 
-static size_t total_ndirty_by(const struct silofs_task *task,
-                              const struct silofs_inode_info *ii)
-{
-	const struct silofs_dirtyqs *dqs = NULL;
-	size_t ret;
-
-	if (ii != NULL) {
-		ret = ii->i_dq_vis.dq_accum;
-	} else {
-		dqs = &task->t_fsenv->fse.lcache->lc_dirtyqs;
-		ret = dqs->dq_uis.dq_accum +
-		      dqs->dq_iis.dq_accum +
-		      dqs->dq_vis.dq_accum;
-	}
-	return ret;
-}
-
-static bool need_flush_by(const struct silofs_task *task,
-                          const struct silofs_inode_info *ii, int flags)
+static bool need_flush_now(const struct silofs_task *task, int flags)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0, .nbytes_max = 0 };
-	size_t ndirtysum;
-	size_t threshold;
 
 	if (flags & SILOFS_F_NOW) {
 		return true;
@@ -971,9 +951,47 @@ static bool need_flush_by(const struct silofs_task *task,
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}
-	threshold = flush_threshold_of(flags);
-	ndirtysum = total_ndirty_by(task, ii);
-	return (ndirtysum > threshold);
+	return false;
+}
+
+static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
+{
+	size_t ndirty;
+	size_t thresh;
+
+	thresh = flush_threshold_of(flags);
+	ndirty = ii->i_dq_vis.dq_accum;
+	return (ndirty > thresh);
+}
+
+static bool need_flush_by_fsenv(const struct silofs_fsenv *fsenv, int flags)
+{
+	const struct silofs_lcache *lcache = fsenv->fse.lcache;
+	const struct silofs_dirtyqs *dqs = &lcache->lc_dirtyqs;
+	size_t ndirty;
+	size_t thresh;
+
+
+	thresh = flush_threshold_of(flags);
+	ndirty = dqs->dq_uis.dq_accum +
+	         dqs->dq_iis.dq_accum +
+	         dqs->dq_vis.dq_accum;
+	return (ndirty > thresh);
+}
+
+static bool need_flush_by(const struct silofs_task *task,
+                          const struct silofs_inode_info *ii, int flags)
+{
+	bool ret = false;
+
+	if (need_flush_now(task, flags)) {
+		ret = true;
+	} else if (ii != NULL) {
+		ret = need_flush_by_ii(ii, flags);
+	} else {
+		ret = need_flush_by_fsenv(task->t_fsenv, flags);
+	}
+	return ret;
 }
 
 int silofs_flush_dirty(struct silofs_task *task,

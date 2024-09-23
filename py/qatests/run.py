@@ -20,11 +20,11 @@ class RunArgs:
         self.start_time = datetime.datetime.now()
         self.config = conf.Config()
 
-    def exec_duration(self) -> float:
+    def exec_duration(self) -> datetime.timedelta:
         """Returns the total time (in minutes) since start"""
         now = datetime.datetime.now()
         dif = now - self.start_time
-        return dif.total_seconds() / 60.0
+        return datetime.timedelta(seconds=dif.total_seconds())
 
     def load_config(self, path: Path) -> None:
         self.config = conf.load_config(path.resolve(strict=True))
@@ -59,8 +59,8 @@ def _report_done(args: RunArgs) -> None:
     prog = cmds.silofs.xbin
     vers = cmds.silofs.version()
     log.println(f"DONE: {prog} {vers}")
-    durs = round(args.exec_duration(), 2)
-    log.println(f"DURATION: {durs} minutes")
+    durs = args.exec_duration()
+    log.println(f"DURATION: {durs}")
 
 
 def _pre_run_tests(args: RunArgs) -> None:

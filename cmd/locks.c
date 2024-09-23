@@ -24,7 +24,6 @@ struct cmd_lockfile_ctx {
 	char data[256];
 	const char *repodir;
 	const char *name;
-	size_t  retry;
 	time_t  now;
 	pid_t   pid;
 	int     dfd;
@@ -40,15 +39,13 @@ static void cmd_lockfile_closedir(struct cmd_lockfile_ctx *lf_ctx)
 	silofs_sys_closefd(&lf_ctx->dfd);
 }
 
-static void
-cmd_lockfile_init(struct cmd_lockfile_ctx *lf_ctx,
-                  const char *repodir, const char *name, size_t retry)
+static void cmd_lockfile_init(struct cmd_lockfile_ctx *lf_ctx,
+                              const char *repodir, const char *name)
 {
 	memset(lf_ctx, 0, sizeof(*lf_ctx));
 	lf_ctx->repodir = repodir;
 	lf_ctx->name = name;
 	lf_ctx->now = silofs_time_now();
-	lf_ctx->retry = retry;
 	lf_ctx->pid = getpid();
 	lf_ctx->dfd = -1;
 }
@@ -82,24 +79,40 @@ static void cmd_lockfile_opendir(struct cmd_lockfile_ctx *lf_ctx)
 	}
 }
 
-static void
-cmd_lockfile_setup(struct cmd_lockfile_ctx *lf_ctx,
-                   const char *repodir, const char *name, size_t retry)
+static void cmd_lockfile_setup(struct cmd_lockfile_ctx *lf_ctx,
+                               const char *repodir, const char *name)
 {
-	cmd_lockfile_init(lf_ctx, repodir, name, retry);
+	cmd_lockfile_init(lf_ctx, repodir, name);
 	cmd_lockfile_mknames(lf_ctx);
 	cmd_lockfile_mkdata(lf_ctx);
 	cmd_lockfile_opendir(lf_ctx);
 }
 
-static void cmd_lockfile_wait_noent(const struct cmd_lockfile_ctx *lf_ctx)
+static int cmd_lockfile_trystat(const struct cmd_lockfile_ctx *lf_ctx)
 {
 	struct stat st = { .st_size = -1 };
-	size_t retry = 0;
+	int err;
+
+	err = do_fstatat(lf_ctx->dfd, lf_ctx->lockname, &st);
+	if (err) {
+		return err;
+	}
+	if (S_ISDIR(st.st_mode)) {
+		return -EISDIR;
+	}
+	if (!S_ISREG(st.st_mode)) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static void
+cmd_lockfile_wait_noent(const struct cmd_lockfile_ctx *lf_ctx, int retry_max)
+{
 	int err = 0;
 
-	while (retry++ < lf_ctx->retry) {
-		err = do_fstatat(lf_ctx->dfd, lf_ctx->lockname, &st);
+	for (int retry = 0; retry < retry_max; ++retry) {
+		err = cmd_lockfile_trystat(lf_ctx);
 		if (err) {
 			break;
 		}
@@ -107,7 +120,7 @@ static void cmd_lockfile_wait_noent(const struct cmd_lockfile_ctx *lf_ctx)
 	}
 
 	if (!err) {
-		cmd_die(0, "lock-file exists: %s/%s",
+		cmd_die(-EEXIST, "lock-file exists: %s/%s",
 		        lf_ctx->repodir, lf_ctx->lockname);
 	} else if (err != -ENOENT) {
 		cmd_die(err, "fail to stat lock-file: %s/%s",
@@ -161,8 +174,8 @@ void cmd_lock_fs(const char *repodir, const char *name)
 {
 	struct cmd_lockfile_ctx lf_ctx;
 
-	cmd_lockfile_setup(&lf_ctx, repodir, name, 3);
-	cmd_lockfile_wait_noent(&lf_ctx);
+	cmd_lockfile_setup(&lf_ctx, repodir, name);
+	cmd_lockfile_wait_noent(&lf_ctx, 10);
 	cmd_lockfile_mktemp(&lf_ctx);
 	cmd_lockfile_mklock(&lf_ctx);
 	cmd_lockfile_fini(&lf_ctx);
@@ -172,7 +185,7 @@ void cmd_unlock_fs(const char *repodir, const char *name)
 {
 	struct cmd_lockfile_ctx lf_ctx;
 
-	cmd_lockfile_setup(&lf_ctx, repodir, name, 1);
+	cmd_lockfile_setup(&lf_ctx, repodir, name);
 	cmd_lockfile_unlinkall(&lf_ctx);
 	cmd_lockfile_fini(&lf_ctx);
 }

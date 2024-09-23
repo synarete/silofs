@@ -49,6 +49,8 @@ void silofs_dqe_enqueue(struct silofs_dq_elem *dqe);
 
 void silofs_dqe_dequeue(struct silofs_dq_elem *dqe);
 
+bool silofs_dqe_is_dirty(const struct silofs_dq_elem *dqe);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_dirtyq_init(struct silofs_dirtyq *dq);

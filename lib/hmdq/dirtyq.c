@@ -128,3 +128,8 @@ void silofs_dqe_dequeue(struct silofs_dq_elem *dqe)
 		dqe->inq = false;
 	}
 }
+
+bool silofs_dqe_is_dirty(const struct silofs_dq_elem *dqe)
+{
+	return dqe->inq;
+}

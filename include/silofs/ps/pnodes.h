@@ -29,7 +29,6 @@ struct silofs_bnode_info {
 	struct silofs_paddr             bn_paddr;
 	struct silofs_hmapq_elem        bn_hmqe;
 	struct silofs_pstore           *bn_pstore;
-	enum silofs_ptype               bn_ptype;
 };
 
 /* btree-node */
@@ -53,6 +52,9 @@ silofs_bti_new(const struct silofs_paddr *paddr,
 void silofs_bti_del(struct silofs_btnode_info *bti,
                     struct silofs_alloc *alloc);
 
+void silofs_bti_set_dq(struct silofs_btnode_info *bti,
+                       struct silofs_dirtyq *dq);
+
 void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
@@ -74,6 +76,9 @@ silofs_bli_new(const struct silofs_paddr *paddr,
 
 void silofs_bli_del(struct silofs_btleaf_info *bli,
                     struct silofs_alloc *alloc);
+
+void silofs_bli_set_dq(struct silofs_btleaf_info *bli,
+                       struct silofs_dirtyq *dq);
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
                        const struct silofs_laddr *laddr,

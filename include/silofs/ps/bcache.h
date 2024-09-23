@@ -23,6 +23,7 @@
 
 struct silofs_bcache {
 	struct silofs_hmapq     bc_hmapq;
+	struct silofs_dirtyq    bc_dirtyq;
 	struct silofs_alloc    *bc_alloc;
 };
 
@@ -39,6 +40,7 @@ void silofs_bcache_drop(struct silofs_bcache *bcache);
 
 void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 
+
 struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);
@@ -47,8 +49,8 @@ struct silofs_btnode_info *
 silofs_bcache_create_bti(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);
 
-void silofs_bcache_forget_bti(struct silofs_bcache *bcache,
-                              struct silofs_btnode_info *bti);
+void silofs_bcache_evict_bti(struct silofs_bcache *bcache,
+                             struct silofs_btnode_info *bti);
 
 struct silofs_btleaf_info *
 silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
@@ -57,5 +59,8 @@ silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
 struct silofs_btleaf_info *
 silofs_bcache_create_bli(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);
+
+void silofs_bcache_evict_bli(struct silofs_bcache *bcache,
+                             struct silofs_btleaf_info *bli);
 
 #endif /* SILOFS_BCACHE_H_ */

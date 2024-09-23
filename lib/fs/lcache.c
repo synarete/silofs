@@ -150,7 +150,7 @@ static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 
 static bool lni_isdirty(const struct silofs_lnode_info *lni)
 {
-	return silofs_hmqe_is_dirty(&lni->l_hmqe);
+	return silofs_dqe_is_dirty(&lni->l_hmqe.hme_dqe);
 }
 
 static void lni_dirtify(struct silofs_lnode_info *lni)

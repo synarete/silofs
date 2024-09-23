@@ -89,7 +89,7 @@ static int create_cached_bti(struct silofs_pstore *pstore,
 static void forget_cached_bti(struct silofs_pstore *pstore,
                               struct silofs_btnode_info *bti)
 {
-	silofs_bcache_forget_bti(&pstore->bcache, bti);
+	silofs_bcache_evict_bti(&pstore->bcache, bti);
 }
 
 static int commit_btnode(const struct silofs_pstore *pstore,

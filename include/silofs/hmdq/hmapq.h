@@ -104,8 +104,6 @@ void silofs_hmqe_decref(struct silofs_hmapq_elem *hmqe);
 
 bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe);
 
-bool silofs_hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe);
-
 const struct silofs_hmapq_elem *
 silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe);
 

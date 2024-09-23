@@ -454,16 +454,13 @@ static void btl_del(struct silofs_btree_leaf *btl, struct silofs_alloc *alloc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void bni_init(struct silofs_bnode_info *bni, enum silofs_ptype ptype,
+static void bni_init(struct silofs_bnode_info *bni,
                      const struct silofs_paddr *paddr)
 {
-	silofs_assert(!silofs_paddr_isnull(paddr));
-
 	silofs_paddr_assign(&bni->bn_paddr, paddr);
-	silofs_hmqe_init(&bni->bn_hmqe, ptype_size(ptype));
+	silofs_hmqe_init(&bni->bn_hmqe, ptype_size(paddr->ptype));
 	silofs_hkey_by_paddr(&bni->bn_hmqe.hme_key, &bni->bn_paddr);
 	bni->bn_pstore = NULL;
-	bni->bn_ptype = ptype;
 }
 
 static void bni_fini(struct silofs_bnode_info *bni)
@@ -471,6 +468,12 @@ static void bni_fini(struct silofs_bnode_info *bni)
 	silofs_paddr_fini(&bni->bn_paddr);
 	silofs_hmqe_fini(&bni->bn_hmqe);
 }
+
+static void bni_set_dq(struct silofs_bnode_info *bni, struct silofs_dirtyq *dq)
+{
+	silofs_dqe_setq(&bni->bn_hmqe.hme_dqe, dq);
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -492,8 +495,9 @@ static void bti_init(struct silofs_btnode_info *bti,
                      const struct silofs_paddr *paddr)
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
-	bni_init(&bti->btn_bni, SILOFS_PTYPE_BTNODE, paddr);
+	bni_init(&bti->btn_bni, paddr);
 	bti->btn = NULL;
 }
 
@@ -530,6 +534,12 @@ void silofs_bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 	bti_fini(bti);
 	bti_free(bti, alloc);
 	btn_del(btn, alloc);
+}
+
+void silofs_bti_set_dq(struct silofs_btnode_info *bti,
+                       struct silofs_dirtyq *dq)
+{
+	bni_set_dq(&bti->btn_bni, dq);
 }
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti)
@@ -600,8 +610,9 @@ static void bli_init(struct silofs_btleaf_info *bli,
                      const struct silofs_paddr *paddr)
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTLEAF);
 
-	bni_init(&bli->btl_bni, SILOFS_PTYPE_BTLEAF, paddr);
+	bni_init(&bli->btl_bni, paddr);
 	bli->btl = NULL;
 }
 
@@ -638,6 +649,12 @@ void silofs_bli_del(struct silofs_btleaf_info *bli, struct silofs_alloc *alloc)
 	bli_fini(bli);
 	bli_free(bli, alloc);
 	btl_del(btl, alloc);
+}
+
+void silofs_bli_set_dq(struct silofs_btleaf_info *bli,
+                       struct silofs_dirtyq *dq)
+{
+	bni_set_dq(&bli->btl_bni, dq);
 }
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,

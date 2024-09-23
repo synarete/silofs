@@ -473,9 +473,14 @@ static void hmqe_decref_atomic(struct silofs_hmapq_elem *hmqe)
 	silofs_atomic_sub(&hmqe->hme_refcnt, 1);
 }
 
+static bool hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe)
+{
+	return silofs_dqe_is_dirty(&hmqe->hme_dqe);
+}
+
 static bool hmqe_is_evictable_atomic(const struct silofs_hmapq_elem *hmqe)
 {
-	return !silofs_hmqe_is_dirty(hmqe) && !hmqe_refcnt_atomic(hmqe);
+	return !hmqe_is_dirty(hmqe) && !hmqe_refcnt_atomic(hmqe);
 }
 
 int silofs_hmqe_refcnt(const struct silofs_hmapq_elem *hmqe)
@@ -500,11 +505,6 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_sanitize(hmqe);
 	return hmqe_is_evictable_atomic(hmqe);
-}
-
-bool silofs_hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe)
-{
-	return hmqe->hme_dqe.inq;
 }
 
 const struct silofs_hmapq_elem *

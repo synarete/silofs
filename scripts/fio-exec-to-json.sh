@@ -24,7 +24,7 @@ RW=${RW:-readwrite}
 
 _fio_to_json() {
   local testdir=$1
-  local jobs=$2
+  local nj=$2
   local bs=$3
   local base
   local name
@@ -37,7 +37,7 @@ _fio_to_json() {
   run fio \
       --name="${name}" \
       --directory="${testdir}" \
-      --numjobs="${jobs}" \
+      --numjobs="${nj}" \
       --bs=$((bs * 1024)) \
       --size="${DATASIZE}" \
       --fallocate=none \
@@ -62,9 +62,9 @@ _fio_execat() {
   local jobs=(1 2 4 8)
   local bss=(64 256)
 
-  for job in "${jobs[@]}"; do
+  for nj in "${jobs[@]}"; do
     for bs in "${bss[@]}"; do
-      _fio_to_json "${testdir}" "${job}" "${bs}"
+      _fio_to_json "${testdir}" "${nj}" "${bs}"
     done
   done
 }

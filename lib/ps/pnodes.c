@@ -469,9 +469,40 @@ static void bni_fini(struct silofs_bnode_info *bni)
 	silofs_hmqe_fini(&bni->bn_hmqe);
 }
 
+static struct silofs_dq_elem *
+bni_dqe(struct silofs_bnode_info *bni)
+{
+	return &bni->bn_hmqe.hme_dqe;
+}
+
+static const struct silofs_dq_elem *
+bni_dqe2(const struct silofs_bnode_info *bni)
+{
+	return &bni->bn_hmqe.hme_dqe;
+}
+
 static void bni_set_dq(struct silofs_bnode_info *bni, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_setq(&bni->bn_hmqe.hme_dqe, dq);
+	silofs_dqe_setq(bni_dqe(bni), dq);
+}
+
+static bool bni_isdirty(const struct silofs_bnode_info *bni)
+{
+	return silofs_dqe_is_dirty(bni_dqe2(bni));
+}
+
+static void bni_dirtify(struct silofs_bnode_info *bni)
+{
+	if (!bni_isdirty(bni)) {
+		silofs_dqe_enqueue(bni_dqe(bni));
+	}
+}
+
+static void bni_undirtify(struct silofs_bnode_info *bni)
+{
+	if (bni_isdirty(bni)) {
+		silofs_dqe_dequeue(bni_dqe(bni));
+	}
 }
 
 
@@ -590,6 +621,16 @@ void silofs_bti_setapex(struct silofs_btnode_info *bti,
 	btn_set_child_at(bti->btn, slot, paddr);
 }
 
+void silofs_bti_dirtify(struct silofs_btnode_info *bti)
+{
+	bni_dirtify(&bti->btn_bni);
+}
+
+void silofs_bti_undirtify(struct silofs_btnode_info *bti)
+{
+	bni_undirtify(&bti->btn_bni);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_btleaf_info *bli_malloc(struct silofs_alloc *alloc)
@@ -655,6 +696,16 @@ void silofs_bli_set_dq(struct silofs_btleaf_info *bli,
                        struct silofs_dirtyq *dq)
 {
 	bni_set_dq(&bli->btl_bni, dq);
+}
+
+void silofs_bli_dirtify(struct silofs_btleaf_info *bli)
+{
+	bni_dirtify(&bli->btl_bni);
+}
+
+void silofs_bli_undirtify(struct silofs_btleaf_info *bli)
+{
+	bni_undirtify(&bli->btl_bni);
 }
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,

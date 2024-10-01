@@ -138,7 +138,14 @@ static void lni_remove_from_hmapq(struct silofs_lnode_info *lni,
 	silofs_hmapq_remove(hmapq, lni_to_hmqe(lni));
 }
 
-static struct silofs_dq_elem *lni_dqe(struct silofs_lnode_info *lni)
+static struct silofs_dq_elem *
+lni_dqe(struct silofs_lnode_info *lni)
+{
+	return &lni->l_hmqe.hme_dqe;
+}
+
+static const struct silofs_dq_elem *
+lni_dqe2(const struct silofs_lnode_info *lni)
 {
 	return &lni->l_hmqe.hme_dqe;
 }
@@ -150,7 +157,7 @@ static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 
 static bool lni_isdirty(const struct silofs_lnode_info *lni)
 {
-	return silofs_dqe_is_dirty(&lni->l_hmqe.hme_dqe);
+	return silofs_dqe_is_dirty(lni_dqe2(lni));
 }
 
 static void lni_dirtify(struct silofs_lnode_info *lni)

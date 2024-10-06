@@ -7,7 +7,7 @@ import json
 import sys
 import itertools
 from pathlib import Path
-from typing import Dict, List, Tuple, Iterable
+from typing import Dict, List, Iterable
 
 import matplotlib as mpl  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
@@ -126,12 +126,12 @@ class FioDataSets:
 
 
 def dset_to_plot_labels(dset: FioDataSet) -> List[str]:
-    labels: Dict[str, int] = {}
+    labels: Dict[int, int] = {}
     for nj in dset.dset:
         for fio_data in dset.dset[nj]:
             njobs = fio_data.numjobs
-            labels[f"njobs={njobs}"] = 1
-    return labels.keys()
+            labels[njobs] = 1
+    return [f"njobs={nj}" for nj in sorted(labels)]
 
 
 def dset_to_plot_subdat(dset: FioDataSet) -> Dict[str, List[int]]:

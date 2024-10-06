@@ -31,7 +31,7 @@ _fio_to_json() {
   local jout
 
   base=$(basename "${testdir}")
-  name="${base}-${bs}k-${jobs}j"
+  name="${base}-${bs}k-${nj}j"
   jout="${name}.json"
 
   run fio \

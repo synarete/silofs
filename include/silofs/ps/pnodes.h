@@ -43,6 +43,13 @@ struct silofs_btleaf_info {
 	struct silofs_btree_leaf       *btl;
 };
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+enum silofs_ptype silofs_bni_ptype(const struct silofs_bnode_info *bni);
+
+void silofs_bni_undirtify(struct silofs_bnode_info *bni);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_btnode_info *
@@ -72,6 +79,9 @@ void silofs_bti_dirtify(struct silofs_btnode_info *bti);
 
 void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
+struct silofs_btnode_info *
+silofs_bti_from_bni(const struct silofs_bnode_info *bni);
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -96,5 +106,8 @@ int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
 int silofs_bli_extend(struct silofs_btleaf_info *bli,
                       const struct silofs_laddr *laddr,
                       const struct silofs_paddr *paddr);
+
+struct silofs_btleaf_info *
+silofs_bli_from_bni(const struct silofs_bnode_info *bni);
 
 #endif /* SILOFS_PNODES_H_ */

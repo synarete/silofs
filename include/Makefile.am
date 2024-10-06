@@ -69,6 +69,7 @@ nobase_include_HEADERS += silofs/ps/pnodes.h
 nobase_include_HEADERS += silofs/ps/pstore.h
 nobase_include_HEADERS += silofs/ps/repo.h
 nobase_include_HEADERS += silofs/ps.h
+nobase_include_HEADERS += silofs/ps-private.h
 nobase_include_HEADERS += silofs/fs/boot.h
 nobase_include_HEADERS += silofs/fs/claim.h
 nobase_include_HEADERS += silofs/fs/dir.h

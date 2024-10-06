@@ -510,9 +510,11 @@ bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
 const struct silofs_hmapq_elem *
 silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe)
 {
-	const struct silofs_hmapq_elem *hmqe;
+	const struct silofs_hmapq_elem *hmqe = NULL;
 
-	hmqe = container_of2(dqe, struct silofs_hmapq_elem, hme_dqe);
+	if (dqe != NULL) {
+		hmqe = container_of2(dqe, struct silofs_hmapq_elem, hme_dqe);
+	}
 	return hmqe;
 }
 

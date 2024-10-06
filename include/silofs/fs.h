@@ -55,7 +55,6 @@
 #include <silofs/fs/mntsvc.h>
 #include <silofs/fs/pack.h>
 
-
 #ifdef SILOFS_HAVE_PRIVATE
 #include <silofs/fs-private.h>
 #endif

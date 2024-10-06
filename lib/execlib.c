@@ -894,7 +894,7 @@ static int shutdown_fs(struct silofs_fsenv *fsenv)
 
 static int shutdown_ps(struct silofs_fsenv *fsenv)
 {
-	return silofs_pstore_dropall(fsenv->fse.pstore);
+	return silofs_pstore_flush_dirty(fsenv->fse.pstore);
 }
 
 int silofs_close_repo(struct silofs_fsenv *fsenv)
@@ -1518,7 +1518,7 @@ int silofs_format_ps(struct silofs_fsenv *fsenv)
 	int ret;
 
 	silofs_fsenv_lock(fsenv);
-	ret = silofs_format_btree(fsenv->fse.pstore);
+	ret = silofs_pstore_format_btree(fsenv->fse.pstore);
 	silofs_fsenv_unlock(fsenv);
 	return ret;
 }

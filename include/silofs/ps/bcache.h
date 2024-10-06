@@ -40,6 +40,9 @@ void silofs_bcache_drop(struct silofs_bcache *bcache);
 
 void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 
+struct silofs_bnode_info *
+silofs_bcache_dq_front(const struct silofs_bcache *bcache);
+
 
 struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache *bcache,

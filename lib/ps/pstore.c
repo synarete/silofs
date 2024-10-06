@@ -60,12 +60,6 @@ void silofs_pstore_fini(struct silofs_pstore *pstore)
 	pstore->repo = NULL;
 }
 
-int silofs_pstore_dropall(struct silofs_pstore *pstore)
-{
-	silofs_bcache_drop(&pstore->bcache);
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *
@@ -74,9 +68,9 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return &bti->btn_bni.bn_paddr;
 }
 
-static int create_cached_bti(struct silofs_pstore *pstore,
-                             const struct silofs_paddr *paddr,
-                             struct silofs_btnode_info **out_bti)
+static int pstore_create_cached_bti(struct silofs_pstore *pstore,
+                                    const struct silofs_paddr *paddr,
+                                    struct silofs_btnode_info **out_bti)
 {
 	*out_bti = silofs_bcache_create_bti(&pstore->bcache, paddr);
 	if (*out_bti == NULL) {
@@ -86,25 +80,25 @@ static int create_cached_bti(struct silofs_pstore *pstore,
 	return 0;
 }
 
-static void forget_cached_bti(struct silofs_pstore *pstore,
-                              struct silofs_btnode_info *bti)
-{
-	silofs_bcache_evict_bti(&pstore->bcache, bti);
-}
-
-static int commit_btnode(const struct silofs_pstore *pstore,
-                         const struct silofs_btnode_info *bti)
+static int pstore_commit_btnode(const struct silofs_pstore *pstore,
+                                struct silofs_btnode_info *bti)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = bti->btn,
 		.rov_len = sizeof(*bti->btn),
 	};
+	int err;
 
-	return silofs_repo_save_pobj(pstore->repo, bti_paddr(bti), &rov);
+	err = silofs_repo_save_pobj(pstore->repo, bti_paddr(bti), &rov);
+	if (err) {
+		return err;
+	}
+	silofs_bti_undirtify(bti);
+	return 0;
 }
 
-static int require_pseg(const struct silofs_pstore *pstore,
-                        const struct silofs_psid *psid)
+static int pstore_require_pseg(const struct silofs_pstore *pstore,
+                               const struct silofs_psid *psid)
 {
 	int err;
 
@@ -115,38 +109,115 @@ static int require_pseg(const struct silofs_pstore *pstore,
 	return err;
 }
 
-static int require_pseg_of(const struct silofs_pstore *pstore,
-                           const struct silofs_paddr *paddr)
+static int pstore_require_pseg_of(const struct silofs_pstore *pstore,
+                                  const struct silofs_paddr *paddr)
 {
-	return require_pseg(pstore, &paddr->psid);
+	return pstore_require_pseg(pstore, &paddr->psid);
 }
 
-static int format_btree_root(struct silofs_pstore *pstore)
+static int pstore_commit_bnode(struct silofs_pstore *pstore,
+                               struct silofs_bnode_info *bni)
 {
-	struct silofs_paddr paddr;
+	const enum silofs_ptype ptype = bni_ptype(bni);
+	int ret = -SILOFS_EINVAL;
+
+	switch (ptype) {
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_BTNODE:
+		ret = pstore_commit_btnode(pstore, silofs_bti_from_bni(bni));
+		break;
+	case SILOFS_PTYPE_BTLEAF:
+	case SILOFS_PTYPE_DATA:
+	case SILOFS_PTYPE_LAST:
+	default:
+		silofs_panic("bad commit: ptype=%d", (int)ptype);
+		break;
+	}
+	return ret;
+}
+
+static struct silofs_bnode_info *
+pstore_dirtyq_front(const struct silofs_pstore *pstore)
+{
+	return silofs_bcache_dq_front(&pstore->bcache);
+}
+
+static int pstore_create_btree_root_at(struct silofs_pstore *pstore,
+                                       const struct silofs_paddr *paddr)
+{
 	struct silofs_btnode_info *bti = NULL;
 	int err;
 
-	pstate_next_btn(&pstore->pstate, &paddr);
-	err = require_pseg_of(pstore, &paddr);
-	if (err) {
-		return err;
-	}
-	err = create_cached_bti(pstore, &paddr, &bti);
+	err = pstore_create_cached_bti(pstore, paddr, &bti);
 	if (err) {
 		return err;
 	}
 	silofs_bti_mark_root(bti);
+	return 0;
+}
 
-	err = commit_btnode(pstore, bti);
+static int pstore_format_btree_root(struct silofs_pstore *pstore)
+{
+	struct silofs_paddr paddr;
+	int err;
+
+	pstate_next_btn(&pstore->pstate, &paddr);
+	err = pstore_require_pseg_of(pstore, &paddr);
 	if (err) {
-		forget_cached_bti(pstore, bti);
+		return err;
+	}
+	err = pstore_create_btree_root_at(pstore, &paddr);
+	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_format_btree(struct silofs_pstore *pstore)
+int silofs_pstore_format_btree(struct silofs_pstore *pstore)
 {
-	return format_btree_root(pstore);
+	int err;
+
+	err = pstore_format_btree_root(pstore);
+	if (err) {
+		return err;
+	}
+	err = silofs_pstore_flush_dirty(pstore);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static void pstore_drop_dirty(struct silofs_pstore *pstore)
+{
+	struct silofs_bnode_info *bni;
+
+	bni = pstore_dirtyq_front(pstore);
+	while (bni != NULL) {
+		bni_undirtify(bni);
+		bni = pstore_dirtyq_front(pstore);
+	}
+}
+
+int silofs_pstore_flush_dirty(struct silofs_pstore *pstore)
+{
+	struct silofs_bnode_info *bni;
+	int err;
+
+	bni = pstore_dirtyq_front(pstore);
+	while (bni != NULL) {
+		err = pstore_commit_bnode(pstore, bni);
+		if (err) {
+			return err;
+		}
+		bni = pstore_dirtyq_front(pstore);
+	}
+	return 0;
+}
+
+int silofs_pstore_dropall(struct silofs_pstore *pstore)
+{
+	pstore_drop_dirty(pstore);
+	silofs_bcache_drop(&pstore->bcache);
+	return 0;
 }

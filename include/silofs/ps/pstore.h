@@ -46,8 +46,9 @@ void silofs_pstore_fini(struct silofs_pstore *pstore);
 
 int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
+int silofs_pstore_format_btree(struct silofs_pstore *pstore);
 
-int silofs_format_btree(struct silofs_pstore *pstore);
+int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
 
 
 #endif /* SILOFS_PSTORE_H_ */

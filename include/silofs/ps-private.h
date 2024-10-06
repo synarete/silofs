@@ -14,23 +14,24 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
+#ifndef SILOFS_PS_PRIVATE_H_
+#define SILOFS_PS_PRIVATE_H_
 
-#include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/infra.h>
-#include <silofs/crypt.h>
-#include <silofs/addr.h>
-
-#include <silofs/ps/repo.h>
-#include <silofs/ps/pnodes.h>
-#include <silofs/ps/bcache.h>
-#include <silofs/ps/pstore.h>
-
-
-#ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/ps-private.h>
+#ifndef SILOFS_HAVE_PRIVATE
+#error "internal library header -- do not include!"
 #endif
 
-#endif /* SILOFS_PS_H_ */
+#include <silofs/infra.h>
+#include <silofs/defs.h>
+
+
+#define bni_ptype(bni)                  silofs_bni_ptype(bni)
+#define bni_undirtify(bni)              silofs_bni_undirtify(bni)
+
+#define bti_dirtify(bti)                silofs_bti_dirtify(bti)
+#define bti_undirtify(bti)              silofs_bti_undirtify(bti)
+
+#define bli_dirtify(bli)                silofs_bli_dirtify(bli)
+#define bli_undirtify(bli)              silofs_bli_undirtify(bli)
+
+#endif /* SILOFS_PS_PRIVATE_H_ */

@@ -469,6 +469,12 @@ static void bni_fini(struct silofs_bnode_info *bni)
 	silofs_hmqe_fini(&bni->bn_hmqe);
 }
 
+enum silofs_ptype silofs_bni_ptype(const struct silofs_bnode_info *bni)
+{
+	return bni->bn_paddr.ptype;
+}
+
+
 static struct silofs_dq_elem *
 bni_dqe(struct silofs_bnode_info *bni)
 {
@@ -498,7 +504,7 @@ static void bni_dirtify(struct silofs_bnode_info *bni)
 	}
 }
 
-static void bni_undirtify(struct silofs_bnode_info *bni)
+void silofs_bni_undirtify(struct silofs_bnode_info *bni)
 {
 	if (bni_isdirty(bni)) {
 		silofs_dqe_dequeue(bni_dqe(bni));
@@ -576,6 +582,7 @@ void silofs_bti_set_dq(struct silofs_btnode_info *bti,
 void silofs_bti_mark_root(struct silofs_btnode_info *bti)
 {
 	btn_add_flags(bti->btn, SILOFS_BTREEF_ROOT);
+	silofs_bti_dirtify(bti);
 }
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
@@ -629,6 +636,30 @@ void silofs_bti_dirtify(struct silofs_btnode_info *bti)
 void silofs_bti_undirtify(struct silofs_btnode_info *bti)
 {
 	bni_undirtify(&bti->btn_bni);
+}
+
+static struct silofs_btnode_info *
+bti_unconst(const struct silofs_btnode_info *p)
+{
+	union {
+		const struct silofs_btnode_info *p;
+		struct silofs_btnode_info *q;
+	} u = {
+		.p = p
+	};
+	return u.q;
+}
+
+struct silofs_btnode_info *
+silofs_bti_from_bni(const struct silofs_bnode_info *bni)
+{
+	const struct silofs_btnode_info *bti = NULL;
+
+	if (bni != NULL) {
+		silofs_assert_eq(bni->bn_paddr.ptype, SILOFS_PTYPE_BTNODE);
+		bti = container_of2(bni, struct silofs_btnode_info, btn_bni);
+	}
+	return bti_unconst(bti);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -741,4 +772,28 @@ int silofs_bli_extend(struct silofs_btleaf_info *bli,
 	slot = btl_insert_slot_of(btl, laddr);
 	btl_insert_ltop(btl, slot, laddr, paddr);
 	return 0;
+}
+
+static struct silofs_btleaf_info *
+bli_unconst(const struct silofs_btleaf_info *p)
+{
+	union {
+		const struct silofs_btleaf_info *p;
+		struct silofs_btleaf_info *q;
+	} u = {
+		.p = p
+	};
+	return u.q;
+}
+
+struct silofs_btleaf_info *
+silofs_bli_from_bni(const struct silofs_bnode_info *bni)
+{
+	const struct silofs_btleaf_info *bli = NULL;
+
+	if (bni != NULL) {
+		silofs_assert_eq(bni->bn_paddr.ptype, SILOFS_PTYPE_BTLEAF);
+		bli = container_of2(bni, struct silofs_btleaf_info, btl_bni);
+	}
+	return bli_unconst(bli);
 }

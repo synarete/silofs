@@ -122,11 +122,12 @@ static int pstore_commit_bnode(struct silofs_pstore *pstore,
 	int ret = -SILOFS_EINVAL;
 
 	switch (ptype) {
-	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_BTNODE:
 		ret = pstore_commit_btnode(pstore, silofs_bti_from_bni(bni));
 		break;
 	case SILOFS_PTYPE_BTLEAF:
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_UBER:
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_LAST:
 	default:

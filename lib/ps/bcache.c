@@ -344,6 +344,7 @@ static void bcache_evict_by(struct silofs_bcache *bcache,
 	case SILOFS_PTYPE_BTLEAF:
 		silofs_bcache_evict_bli(bcache, silofs_bli_from_bni(bni));
 		break;
+	case SILOFS_PTYPE_UBER:
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:

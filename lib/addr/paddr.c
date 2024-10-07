@@ -24,6 +24,8 @@
 uint32_t silofs_ptype_size(enum silofs_ptype ptype)
 {
 	switch (ptype) {
+	case SILOFS_PTYPE_UBER:
+		return sizeof(struct silofs_pseg_uber);
 	case SILOFS_PTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);
 	case SILOFS_PTYPE_BTLEAF:

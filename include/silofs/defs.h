@@ -110,6 +110,9 @@
 #define SILOFS_HEADER_SIZE              (16)
 
 
+/* on-disk size of persistent segment uber node */
+#define SILOFS_PSEG_UBER_SIZE           (4096)
+
 /* number of pointers btree mapping-node */
 #define SILOFS_BTREE_NODE_NCHILDS       (42)
 
@@ -1021,9 +1024,10 @@ struct silofs_repo_meta {
 /* persistent objects sub-types */
 enum silofs_ptype {
 	SILOFS_PTYPE_NONE       = 0,
-	SILOFS_PTYPE_BTNODE     = 1,
-	SILOFS_PTYPE_BTLEAF     = 2,
-	SILOFS_PTYPE_DATA       = 3,
+	SILOFS_PTYPE_UBER       = 1,
+	SILOFS_PTYPE_BTNODE     = 2,
+	SILOFS_PTYPE_BTLEAF     = 3,
+	SILOFS_PTYPE_DATA       = 4,
 	SILOFS_PTYPE_LAST, /* keep last */
 };
 
@@ -1034,10 +1038,12 @@ enum silofs_btreef {
 };
 
 
-/* root meta-data of persistent volume mapping */
-struct silofs_pvmap_root {
-	struct silofs_header            pvr_hdr;
-	struct silofs_pvid              pvr_id;
+/* persistent volume-segment uber node */
+struct silofs_pseg_uber {
+	struct silofs_header            psu_hdr;
+	uint8_t                         psu_reserved1[16];
+	struct silofs_psid32b           psu_id;
+	uint8_t                         psu_reserved2[4032];
 } silofs_packed_aligned64;
 
 

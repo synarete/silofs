@@ -31,6 +31,12 @@ struct silofs_bnode_info {
 	struct silofs_pstore           *bn_pstore;
 };
 
+/* pseg uber-node */
+struct silofs_psuber_info {
+	struct silofs_bnode_info        psu_bni;
+	struct silofs_pseg_uber        *psu;
+};
+
 /* btree-node */
 struct silofs_btnode_info {
 	struct silofs_bnode_info        btn_bni;

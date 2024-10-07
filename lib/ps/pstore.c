@@ -65,7 +65,7 @@ void silofs_pstore_fini(struct silofs_pstore *pstore)
 static const struct silofs_paddr *
 bti_paddr(const struct silofs_btnode_info *bti)
 {
-	return &bti->btn_bni.bn_paddr;
+	return &bti->bn_pni.pn_paddr;
 }
 
 static int pstore_create_cached_bti(struct silofs_pstore *pstore,
@@ -76,7 +76,7 @@ static int pstore_create_cached_bti(struct silofs_pstore *pstore,
 	if (*out_bti == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	(*out_bti)->btn_bni.bn_pstore = pstore;
+	(*out_bti)->bn_pni.pn_pstore = pstore;
 	return 0;
 }
 
@@ -84,8 +84,8 @@ static int pstore_commit_btnode(const struct silofs_pstore *pstore,
                                 struct silofs_btnode_info *bti)
 {
 	const struct silofs_rovec rov = {
-		.rov_base = bti->btn,
-		.rov_len = sizeof(*bti->btn),
+		.rov_base = bti->bn,
+		.rov_len = sizeof(*bti->bn),
 	};
 	int err;
 
@@ -116,14 +116,14 @@ static int pstore_require_pseg_of(const struct silofs_pstore *pstore,
 }
 
 static int pstore_commit_bnode(struct silofs_pstore *pstore,
-                               struct silofs_bnode_info *bni)
+                               struct silofs_pnode_info *bni)
 {
-	const enum silofs_ptype ptype = bni_ptype(bni);
+	const enum silofs_ptype ptype = pni_ptype(bni);
 	int ret = -SILOFS_EINVAL;
 
 	switch (ptype) {
 	case SILOFS_PTYPE_BTNODE:
-		ret = pstore_commit_btnode(pstore, silofs_bti_from_bni(bni));
+		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(bni));
 		break;
 	case SILOFS_PTYPE_BTLEAF:
 	case SILOFS_PTYPE_NONE:
@@ -137,7 +137,7 @@ static int pstore_commit_bnode(struct silofs_pstore *pstore,
 	return ret;
 }
 
-static struct silofs_bnode_info *
+static struct silofs_pnode_info *
 pstore_dirtyq_front(const struct silofs_pstore *pstore)
 {
 	return silofs_bcache_dq_front(&pstore->bcache);
@@ -191,18 +191,18 @@ int silofs_pstore_format_btree(struct silofs_pstore *pstore)
 
 static void pstore_drop_dirty(struct silofs_pstore *pstore)
 {
-	struct silofs_bnode_info *bni;
+	struct silofs_pnode_info *pni;
 
-	bni = pstore_dirtyq_front(pstore);
-	while (bni != NULL) {
-		bni_undirtify(bni);
-		bni = pstore_dirtyq_front(pstore);
+	pni = pstore_dirtyq_front(pstore);
+	while (pni != NULL) {
+		pni_undirtify(pni);
+		pni = pstore_dirtyq_front(pstore);
 	}
 }
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore)
 {
-	struct silofs_bnode_info *bni;
+	struct silofs_pnode_info *bni;
 	int err;
 
 	bni = pstore_dirtyq_front(pstore);

@@ -40,7 +40,7 @@ void silofs_bcache_drop(struct silofs_bcache *bcache);
 
 void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 
-struct silofs_bnode_info *
+struct silofs_pnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
 

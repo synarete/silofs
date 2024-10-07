@@ -24,37 +24,37 @@
 struct silofs_pstore;
 
 
-/* bnode: base of all btree-mapping nodes */
-struct silofs_bnode_info {
-	struct silofs_paddr             bn_paddr;
-	struct silofs_hmapq_elem        bn_hmqe;
-	struct silofs_pstore           *bn_pstore;
+/* base of all persistent-segment nodes */
+struct silofs_pnode_info {
+	struct silofs_paddr             pn_paddr;
+	struct silofs_hmapq_elem        pn_hmqe;
+	struct silofs_pstore           *pn_pstore;
 };
 
 /* pseg uber-node */
 struct silofs_psuber_info {
-	struct silofs_bnode_info        psu_bni;
-	struct silofs_pseg_uber        *psu;
+	struct silofs_pnode_info        pu_pni;
+	struct silofs_pseg_uber        *pu;
 };
 
 /* btree-node */
 struct silofs_btnode_info {
-	struct silofs_bnode_info        btn_bni;
-	struct silofs_btree_node       *btn;
+	struct silofs_pnode_info        bn_pni;
+	struct silofs_btree_node       *bn;
 };
 
 /* btree-leaf */
 struct silofs_btleaf_info {
-	struct silofs_bnode_info        btl_bni;
-	struct silofs_btree_leaf       *btl;
+	struct silofs_pnode_info        bl_pni;
+	struct silofs_btree_leaf       *bl;
 };
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-enum silofs_ptype silofs_bni_ptype(const struct silofs_bnode_info *bni);
+enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
 
-void silofs_bni_undirtify(struct silofs_bnode_info *bni);
+void silofs_pni_undirtify(struct silofs_pnode_info *pni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -86,7 +86,7 @@ void silofs_bti_dirtify(struct silofs_btnode_info *bti);
 void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
 struct silofs_btnode_info *
-silofs_bti_from_bni(const struct silofs_bnode_info *bni);
+silofs_bti_from_pni(const struct silofs_pnode_info *pni);
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -114,6 +114,6 @@ int silofs_bli_extend(struct silofs_btleaf_info *bli,
                       const struct silofs_paddr *paddr);
 
 struct silofs_btleaf_info *
-silofs_bli_from_bni(const struct silofs_bnode_info *bni);
+silofs_bli_from_pni(const struct silofs_pnode_info *pni);
 
 #endif /* SILOFS_PNODES_H_ */

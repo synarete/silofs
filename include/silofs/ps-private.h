@@ -25,8 +25,8 @@
 #include <silofs/defs.h>
 
 
-#define bni_ptype(bni)                  silofs_bni_ptype(bni)
-#define bni_undirtify(bni)              silofs_bni_undirtify(bni)
+#define pni_ptype(pni)                  silofs_pni_ptype(pni)
+#define pni_undirtify(pni)              silofs_pni_undirtify(pni)
 
 #define bti_dirtify(bti)                silofs_bti_dirtify(bti)
 #define bti_undirtify(bti)              silofs_bti_undirtify(bti)

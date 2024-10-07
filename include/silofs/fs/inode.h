@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <silofs/fs/types.h>
 
+struct silofs_task;
+
 struct silofs_inew_params {
 	struct silofs_creds     creds;
 	mode_t                  mode;
@@ -36,6 +38,8 @@ bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 
+
+void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
 
@@ -109,6 +113,8 @@ void silofs_ii_statof(const struct silofs_inode_info *ii,
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
                        struct silofs_iattr *out_iattr);
+
+void silofs_ii_undirtify_vis(struct silofs_inode_info *ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

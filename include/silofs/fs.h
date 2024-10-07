@@ -32,8 +32,8 @@
 #include <silofs/fs/idmap.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/spxmap.h>
-#include <silofs/fs/lcache.h>
 #include <silofs/fs/lnodes.h>
+#include <silofs/fs/lcache.h>
 #include <silofs/fs/encdec.h>
 #include <silofs/fs/task.h>
 #include <silofs/fs/super.h>

@@ -116,14 +116,14 @@ static int pstore_require_pseg_of(const struct silofs_pstore *pstore,
 }
 
 static int pstore_commit_bnode(struct silofs_pstore *pstore,
-                               struct silofs_pnode_info *bni)
+                               struct silofs_pnode_info *pni)
 {
-	const enum silofs_ptype ptype = pni_ptype(bni);
+	const enum silofs_ptype ptype = pni_ptype(pni);
 	int ret = -SILOFS_EINVAL;
 
 	switch (ptype) {
 	case SILOFS_PTYPE_BTNODE:
-		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(bni));
+		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTLEAF:
 	case SILOFS_PTYPE_NONE:

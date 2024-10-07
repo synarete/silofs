@@ -23,22 +23,28 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ui_set_fsenv(struct silofs_unode_info *ui,
+                         struct silofs_fsenv *fsenv)
+{
+	ui->u_lni.ln_fsenv = fsenv;
+}
+
 static void sbi_set_fsenv(struct silofs_sb_info *sbi,
                           struct silofs_fsenv *fsenv)
 {
-	silofs_ui_set_fsenv(&sbi->sb_ui, fsenv);
+	ui_set_fsenv(&sbi->sb_ui, fsenv);
 }
 
 static void sni_set_fsenv(struct silofs_spnode_info *sni,
                           struct silofs_fsenv *fsenv)
 {
-	silofs_ui_set_fsenv(&sni->sn_ui, fsenv);
+	ui_set_fsenv(&sni->sn_ui, fsenv);
 }
 
 static void sli_set_fsenv(struct silofs_spleaf_info *sli,
                           struct silofs_fsenv *fsenv)
 {
-	silofs_ui_set_fsenv(&sli->sl_ui, fsenv);
+	ui_set_fsenv(&sli->sl_ui, fsenv);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -52,7 +58,7 @@ static void sbi_bind_spstats(struct silofs_sb_info *sbi)
 
 static bool sbi_is_active(const struct silofs_sb_info *sbi)
 {
-	return silofs_ui_is_active(&sbi->sb_ui);
+	return silofs_ui_isactive(&sbi->sb_ui);
 }
 
 static void sbi_set_active(struct silofs_sb_info *sbi)
@@ -81,7 +87,7 @@ static void sbi_set_spawned(struct silofs_sb_info *sbi)
 
 static bool sni_is_active(const struct silofs_spnode_info *sni)
 {
-	return silofs_ui_is_active(&sni->sn_ui);
+	return silofs_ui_isactive(&sni->sn_ui);
 }
 
 static void sni_set_active(struct silofs_spnode_info *sni)
@@ -109,7 +115,7 @@ static void sni_set_spawned(struct silofs_spnode_info *sni)
 
 static bool sli_is_active(const struct silofs_spleaf_info *sli)
 {
-	return silofs_ui_is_active(&sli->sl_ui);
+	return silofs_ui_isactive(&sli->sl_ui);
 }
 
 static void sli_set_active(struct silofs_spleaf_info *sli)
@@ -146,7 +152,7 @@ static int fetch_cached_ui(const struct silofs_fsenv *fsenv,
 static void bind_spawned_ui(struct silofs_fsenv *fsenv,
                             struct silofs_unode_info *ui)
 {
-	ui->u_lni.l_fsenv = fsenv;
+	ui->u_lni.ln_fsenv = fsenv;
 }
 
 static int create_cached_ui(struct silofs_fsenv *fsenv,
@@ -359,7 +365,7 @@ static int load_view_of_sbi(const struct silofs_fsenv *fsenv,
                             struct silofs_sb_info *sbi)
 {
 	return stage_load_view(fsenv, sbi_laddr(sbi),
-	                       sbi->sb_ui.u_lni.l_view);
+	                       sbi->sb_ui.u_lni.ln_view);
 }
 
 static int stage_super_at(struct silofs_fsenv *fsenv,
@@ -480,7 +486,7 @@ static int load_view_of_sni(const struct silofs_fsenv *fsenv,
                             struct silofs_spnode_info *sni)
 {
 	return stage_load_view(fsenv, sni_laddr(sni),
-	                       sni->sn_ui.u_lni.l_view);
+	                       sni->sn_ui.u_lni.ln_view);
 }
 
 static int stage_spnode_at(struct silofs_fsenv *fsenv,
@@ -601,7 +607,7 @@ static int load_view_of_sli(const struct silofs_fsenv *fsenv,
                             struct silofs_spleaf_info *sli)
 {
 	return stage_load_view(fsenv, sli_laddr(sli),
-	                       sli->sl_ui.u_lni.l_view);
+	                       sli->sl_ui.u_lni.ln_view);
 }
 
 static int stage_spleaf_at(struct silofs_fsenv *fsenv,

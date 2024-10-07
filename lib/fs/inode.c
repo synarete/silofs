@@ -361,6 +361,14 @@ static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
+{
+	silofs_assert_not_null(ii->i_vi.v_lni.ln_view);
+	silofs_assert_not_null(ii->inode);
+
+	ii->i_ino = ino;
+}
+
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
 {
 	return ii_isrootd(ii) ? SILOFS_INO_ROOT : ii_ino(ii);
@@ -1300,6 +1308,19 @@ void silofs_ii_update_isize(struct silofs_inode_info *ii,
 	iattr.ia_flags = SILOFS_IATTR_SIZE;
 
 	ii_update_iattrs(ii, creds, &iattr);
+}
+
+void silofs_ii_undirtify_vis(struct silofs_inode_info *ii)
+{
+	struct silofs_dq_elem *dqe;
+	struct silofs_vnode_info *vi;
+	struct silofs_dirtyq *dq = &ii->i_dq_vis;
+
+	while (dq->dq.sz > 0) {
+		dqe = silofs_dirtyq_front(dq);
+		vi = silofs_vi_from_dqe(dqe);
+		silofs_vi_undirtify(vi);
+	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

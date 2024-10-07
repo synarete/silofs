@@ -90,11 +90,11 @@ int silofs_decrypt_ui_view(const struct silofs_fsenv *fsenv,
 	struct silofs_llink llink;
 
 	silofs_ulink_as_llink(ui_ulink(ui), &llink);
-	return decrypt_view_inplace(fsenv, &llink, ui->u_lni.l_view);
+	return decrypt_view_inplace(fsenv, &llink, ui->u_lni.ln_view);
 }
 
 int silofs_decrypt_vi_view(const struct silofs_fsenv *fsenv,
                            struct silofs_vnode_info *vi)
 {
-	return decrypt_view_inplace(fsenv, &vi->v_llink, vi->v_lni.l_view);
+	return decrypt_view_inplace(fsenv, &vi->v_llink, vi->v_lni.ln_view);
 }

@@ -92,7 +92,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	}
 	if (sqe->cnt == 0) {
 		laddr_assign(&sqe->laddr, laddr);
-		sqe->ltype = lni->l_ltype;
+		sqe->ltype = lni->ln_ltype;
 	} else {
 		sqe->laddr.len += laddr->len;
 	}
@@ -478,7 +478,7 @@ void silofs_task_enq_loose(struct silofs_task *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
-	silofs_assert_eq(ii->i_vi.v_lni.l_flags & SILOFS_LNF_PINNED, 0);
+	silofs_assert_eq(ii->i_vi.v_lni.ln_flags & SILOFS_LNF_PINNED, 0);
 
 	if (!ii->i_in_looseq) {
 		ii->i_looseq_next = task->t_looseq;
@@ -515,7 +515,7 @@ static void task_forget_looseq(struct silofs_task *task)
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("failed to forget loose inode: "
 			             "ino=%ld flags=%x err=%d",
-			             ii->i_ino, ii->i_vi.v_lni.l_flags, err);
+			             ii->i_ino, ii->i_vi.v_lni.ln_flags, err);
 		}
 		ii = task_deq_loose(task);
 	}

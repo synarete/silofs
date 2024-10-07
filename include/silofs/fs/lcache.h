@@ -21,6 +21,7 @@
 #include <silofs/addr.h>
 #include <silofs/hmdq.h>
 #include <silofs/fs/spxmap.h>
+#include <silofs/fs/lnodes.h>
 
 
 /* dirty-queues of cached-elements by owner */
@@ -89,12 +90,6 @@ void silofs_vi_dirtify(struct silofs_vnode_info *vi,
 
 void silofs_vi_undirtify(struct silofs_vnode_info *vi);
 
-void silofs_vi_incref(struct silofs_vnode_info *vi);
-
-void silofs_vi_decref(struct silofs_vnode_info *vi);
-
-
-int silofs_vi_refcnt(const struct silofs_vnode_info *vi);
 
 void silofs_ii_incref(struct silofs_inode_info *ii);
 
@@ -109,21 +104,5 @@ bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 void silofs_ii_set_loose(struct silofs_inode_info *ii);
 
 bool silofs_ii_is_loose(const struct silofs_inode_info *ii);
-
-
-void silofs_ui_incref(struct silofs_unode_info *ui);
-
-void silofs_ui_decref(struct silofs_unode_info *ui);
-
-void silofs_ui_dirtify(struct silofs_unode_info *ui);
-
-void silofs_ui_undirtify(struct silofs_unode_info *ui);
-
-
-bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
-
-void silofs_lni_incref(struct silofs_lnode_info *lni);
-
-void silofs_lni_decref(struct silofs_lnode_info *lni);
 
 #endif /* SILOFS_LCACHE_H_ */

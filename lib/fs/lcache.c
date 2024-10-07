@@ -79,201 +79,25 @@ dirtyqs_get_by(struct silofs_dirtyqs *dqs, const struct silofs_vaddr *vaddr)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_lnode_info *
-lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
-{
-	const struct silofs_lnode_info *lni = NULL;
-
-	if (likely(hmqe != NULL)) {
-		lni = silofs_lni_from_hmqe(hmqe);
-	}
-	return unconst(lni);
-}
-
-static struct silofs_hmapq_elem *
-lni_to_hmqe(const struct silofs_lnode_info *lni)
-{
-	const struct silofs_hmapq_elem *hmqe = &lni->l_hmqe;
-
-	return unconst(hmqe);
-}
-
-bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
-{
-	bool ret = false;
-
-	if (!(lni->l_flags & SILOFS_LNF_PINNED)) {
-		ret = silofs_hmqe_is_evictable(lni_to_hmqe(lni));
-	}
-	return ret;
-}
-
-static void lni_incref(struct silofs_lnode_info *lni)
-{
-	silofs_hmqe_incref(&lni->l_hmqe);
-}
-
-static void lni_decref(struct silofs_lnode_info *lni)
-{
-	silofs_hmqe_decref(&lni->l_hmqe);
-}
-
-void silofs_lni_incref(struct silofs_lnode_info *lni)
-{
-	if (likely(lni != NULL)) {
-		lni_incref(lni);
-	}
-}
-
-void silofs_lni_decref(struct silofs_lnode_info *lni)
-{
-	if (likely(lni != NULL)) {
-		lni_decref(lni);
-	}
-}
-
-static void lni_remove_from_hmapq(struct silofs_lnode_info *lni,
-                                  struct silofs_hmapq *hmapq)
-{
-	silofs_hmapq_remove(hmapq, lni_to_hmqe(lni));
-}
-
-static struct silofs_dq_elem *
-lni_dqe(struct silofs_lnode_info *lni)
-{
-	return &lni->l_hmqe.hme_dqe;
-}
-
-static const struct silofs_dq_elem *
-lni_dqe2(const struct silofs_lnode_info *lni)
-{
-	return &lni->l_hmqe.hme_dqe;
-}
-
-static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
-{
-	silofs_dqe_setq(lni_dqe(lni), dq);
-}
-
-static bool lni_isdirty(const struct silofs_lnode_info *lni)
-{
-	return silofs_dqe_is_dirty(lni_dqe2(lni));
-}
-
-static void lni_dirtify(struct silofs_lnode_info *lni)
-{
-	if (!lni_isdirty(lni)) {
-		silofs_dqe_enqueue(lni_dqe(lni));
-	}
-}
-
-static void lni_undirtify(struct silofs_lnode_info *lni)
-{
-	if (lni_isdirty(lni)) {
-		silofs_dqe_dequeue(lni_dqe(lni));
-	}
-}
-
-
-static void lni_delete(struct silofs_lnode_info *lni,
-                       struct silofs_alloc *alloc, int flags)
-{
-	silofs_lnode_del_fn del = lni->l_del_cb;
-
-	del(lni, alloc, flags);
-}
-
-static int visit_evictable_lni(struct silofs_hmapq_elem *hmqe, void *arg)
-{
-	struct silofs_lnode_info *lni = lni_from_hmqe(hmqe);
-	struct silofs_lnode_info **out_lni = arg;
-	int ret = 0;
-
-	if (silofs_test_evictable(lni)) {
-		*out_lni = lni; /* found candidate for eviction */
-		ret = 1;
-	}
-	return ret;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
-{
-	lni_set_dq(&ui->u_lni, dq);
-}
-
-static void ui_do_dirtify(struct silofs_unode_info *ui)
-{
-	lni_dirtify(&ui->u_lni);
-}
-
-static void ui_do_undirtify(struct silofs_unode_info *ui)
-{
-	lni_undirtify(&ui->u_lni);
-}
-
-void silofs_ui_dirtify(struct silofs_unode_info *ui)
-{
-	if (likely(ui != NULL)) {
-		ui_do_dirtify(ui);
-	}
-}
-
-void silofs_ui_undirtify(struct silofs_unode_info *ui)
-{
-	if (likely(ui != NULL)) {
-		ui_do_undirtify(ui);
-	}
-}
-
-void silofs_ui_incref(struct silofs_unode_info *ui)
-{
-	if (likely(ui != NULL)) {
-		lni_incref(&ui->u_lni);
-	}
-}
-
-void silofs_ui_decref(struct silofs_unode_info *ui)
-{
-	if (likely(ui != NULL)) {
-		lni_decref(&ui->u_lni);
-	}
-}
-
 static struct silofs_unode_info *ui_from_hmqe(struct silofs_hmapq_elem *hmqe)
 {
 	struct silofs_unode_info *ui = NULL;
 
 	if (hmqe != NULL) {
-		ui = silofs_ui_from_lni(lni_from_hmqe(hmqe));
+		ui = silofs_ui_from_lni(silofs_lni_from_hmqe(hmqe));
 	}
 	return ui;
 }
 
 static struct silofs_hmapq_elem *ui_to_hmqe(struct silofs_unode_info *ui)
 {
-	return lni_to_hmqe(&ui->u_lni);
+	return silofs_lni_to_hmqe(&ui->u_lni);
 }
 
-static int visit_evictable_ui(struct silofs_hmapq_elem *hmqe, void *arg)
+static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 {
-	return visit_evictable_lni(hmqe, arg);
+	silofs_lni_set_dq(&ui->u_lni, dq);
 }
-
-static bool ui_is_evictable(const struct silofs_unode_info *ui)
-{
-	return silofs_test_evictable(&ui->u_lni);
-}
-
-
-static void ui_delete(struct silofs_unode_info *ui,
-                      struct silofs_alloc *alloc, int flags)
-{
-	lni_delete(&ui->u_lni, alloc, flags);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_dirtyqs *vi_dirtyqs(const struct silofs_vnode_info *vi)
 {
@@ -284,7 +108,7 @@ static struct silofs_dirtyqs *vi_dirtyqs(const struct silofs_vnode_info *vi)
 
 static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
 {
-	lni_set_dq(&vi->v_lni, dq);
+	silofs_lni_set_dq(&vi->v_lni, dq);
 }
 
 static void vi_update_dq_by(struct silofs_vnode_info *vi,
@@ -300,60 +124,24 @@ static void vi_update_dq_by(struct silofs_vnode_info *vi,
 	vi_set_dq(vi, dq);
 }
 
-static struct silofs_vnode_info *vi_from_hmqe(struct silofs_hmapq_elem *lme)
+static struct silofs_vnode_info *vi_from_hmqe(struct silofs_hmapq_elem *hmqe)
 {
-	struct silofs_vnode_info *vi = NULL;
-
-	if (lme != NULL) {
-		vi = silofs_vi_from_lni(lni_from_hmqe(lme));
-	}
-	return vi;
+	return silofs_vi_from_lni(silofs_lni_from_hmqe(hmqe));
 }
 
-static struct silofs_hmapq_elem *
-vi_to_hmqe(const struct silofs_vnode_info *vi)
+static struct silofs_hmapq_elem *vi_to_hmqe(struct silofs_vnode_info *vi)
 {
-	const struct silofs_hmapq_elem *hmqe = &vi->v_lni.l_hmqe;
-
-	return unconst(hmqe);
+	return &vi->v_lni.ln_hmqe;
 }
 
-static int visit_evictable_vi(struct silofs_hmapq_elem *lme, void *arg)
+static bool vi_isinode(const struct silofs_vnode_info *vi)
 {
-	return visit_evictable_lni(lme, arg);
+	const enum silofs_ltype ltype = vi_ltype(vi);
+
+	return ltype_isinode(ltype);
 }
 
-int silofs_vi_refcnt(const struct silofs_vnode_info *vi)
-{
-	return likely(vi != NULL) ? silofs_hmqe_refcnt(vi_to_hmqe(vi)) : 0;
-}
-
-void silofs_vi_incref(struct silofs_vnode_info *vi)
-{
-	if (likely(vi != NULL)) {
-		lni_incref(&vi->v_lni);
-	}
-}
-
-void silofs_vi_decref(struct silofs_vnode_info *vi)
-{
-	if (likely(vi != NULL)) {
-		lni_decref(&vi->v_lni);
-	}
-}
-
-static bool vi_is_evictable(const struct silofs_vnode_info *vi)
-{
-	return silofs_test_evictable(&vi->v_lni);
-}
-
-static void vi_delete(struct silofs_vnode_info *vi,
-                      struct silofs_alloc *alloc, int flags)
-{
-	lni_delete(&vi->v_lni, alloc, flags);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_dirtyq *
 lcache_dirtyq_by(struct silofs_lcache *lcache, enum silofs_ltype ltype)
@@ -374,14 +162,27 @@ static void lcache_fini_ui_hmapq(struct silofs_lcache *lcache)
 	silofs_hmapq_fini(&lcache->lc_ui_hmapq, lcache->lc_alloc);
 }
 
+static int visit_evictable_ui(struct silofs_hmapq_elem *hmqe, void *arg)
+{
+	struct silofs_unode_info *ui = ui_from_hmqe(hmqe);
+	struct silofs_unode_info **out_ui = arg;
+	int ret = 0;
+
+	if (silofs_ui_isevictable(ui)) {
+		*out_ui = ui;
+		ret = 1;
+	}
+	return ret;
+}
+
 static struct silofs_unode_info *
 lcache_find_evictable_ui(struct silofs_lcache *lcache)
 {
-	struct silofs_lnode_info *lni = NULL;
+	struct silofs_unode_info *ui = NULL;
 
 	silofs_hmapq_riterate(&lcache->lc_ui_hmapq, 10,
-	                      visit_evictable_ui, &lni);
-	return silofs_ui_from_lni(lni);
+	                      visit_evictable_ui, &ui);
+	return ui;
 }
 
 static struct silofs_unode_info *
@@ -418,15 +219,15 @@ lcache_find_relru_ui(struct silofs_lcache *lcache,
 static void lcache_remove_ui(struct silofs_lcache *lcache,
                              struct silofs_unode_info *ui)
 {
-	lni_remove_from_hmapq(&ui->u_lni, &lcache->lc_ui_hmapq);
+	silofs_lni_remove_from(&ui->u_lni, &lcache->lc_ui_hmapq);
 }
 
 static void lcache_evict_ui(struct silofs_lcache *lcache,
                             struct silofs_unode_info *ui, int flags)
 {
-	ui_do_undirtify(ui);
+	silofs_ui_undirtify(ui);
 	lcache_remove_ui(lcache, ui);
-	ui_delete(ui, lcache->lc_alloc, flags);
+	silofs_del_unode(ui, lcache->lc_alloc, flags);
 }
 
 static void lcache_store_ui_hmapq(struct silofs_lcache *lcache,
@@ -450,7 +251,7 @@ static bool lcache_evict_or_relru_ui(struct silofs_lcache *lcache,
 	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
 	bool evicted;
 
-	if (ui_is_evictable(ui)) {
+	if (silofs_ui_isevictable(ui)) {
 		lcache_evict_ui(lcache, ui, alf);
 		evicted = true;
 	} else {
@@ -505,7 +306,7 @@ static struct silofs_unode_info *
 lcache_new_ui(const struct silofs_lcache *lcache,
               const struct silofs_ulink *ulink)
 {
-	return silofs_new_ui(lcache->lc_alloc, ulink);
+	return silofs_new_unode(lcache->lc_alloc, ulink);
 }
 
 static void lcache_track_uaddr(struct silofs_lcache *lcache,
@@ -585,7 +386,7 @@ lcache_require_ui(struct silofs_lcache *lcache,
 static void lcache_store_ui(struct silofs_lcache *lcache,
                             struct silofs_unode_info *ui)
 {
-	silofs_hkey_by_uaddr(&ui->u_lni.l_hmqe.hme_key, ui_uaddr(ui));
+	silofs_hkey_by_uaddr(&ui->u_lni.ln_hmqe.hme_key, ui_uaddr(ui));
 	lcache_store_ui_hmapq(lcache, ui);
 }
 
@@ -681,14 +482,41 @@ static void lcache_fini_vi_hmapq(struct silofs_lcache *lcache)
 	silofs_hmapq_fini(&lcache->lc_vi_hmapq, lcache->lc_alloc);
 }
 
+static bool test_evictable_vi(const struct silofs_vnode_info *vi)
+{
+	const struct silofs_inode_info *ii = NULL;
+	bool ret = false;
+
+	if (vi_isinode(vi)) {
+		ii = silofs_ii_from_vi(vi);
+		ret = silofs_ii_isevictable(ii);
+	} else {
+		ret = silofs_vi_isevictable(vi);
+	}
+	return ret;
+}
+
+static int visit_evictable_vi(struct silofs_hmapq_elem *hmqe, void *arg)
+{
+	struct silofs_vnode_info *vi = vi_from_hmqe(hmqe);
+	struct silofs_vnode_info **out_vi = arg;
+	int ret = 0;
+
+	if (test_evictable_vi(vi)) {
+		*out_vi = vi;
+		ret = 1;
+	}
+	return ret;
+}
+
 static struct silofs_vnode_info *
 lcache_find_evictable_vi(struct silofs_lcache *lcache)
 {
-	struct silofs_lnode_info *lni = NULL;
+	struct silofs_vnode_info *vi = NULL;
 
 	silofs_hmapq_riterate(&lcache->lc_vi_hmapq, 10,
-	                      visit_evictable_vi, &lni);
-	return silofs_vi_from_lni(lni);
+	                      visit_evictable_vi, &vi);
+	return vi;
 }
 
 static struct silofs_vnode_info *
@@ -699,7 +527,7 @@ lcache_find_vi(struct silofs_lcache *lcache, const struct silofs_vaddr *vaddr)
 
 	silofs_hkey_by_vaddr(&hkey, vaddr);
 	hmqe = silofs_hmapq_lookup(&lcache->lc_vi_hmapq, &hkey);
-	return vi_from_hmqe(hmqe);
+	return (hmqe != NULL) ? vi_from_hmqe(hmqe) : NULL;
 }
 
 static void lcache_promote_vi(struct silofs_lcache *lcache,
@@ -724,15 +552,15 @@ lcache_find_relru_vi(struct silofs_lcache *lcache,
 static void lcache_remove_vi(struct silofs_lcache *lcache,
                              struct silofs_vnode_info *vi)
 {
-	lni_remove_from_hmapq(&vi->v_lni, &lcache->lc_vi_hmapq);
-	vi->v_lni.l_hmqe.hme_forgot = false;
+	silofs_lni_remove_from(&vi->v_lni, &lcache->lc_vi_hmapq);
+	vi->v_lni.ln_hmqe.hme_forgot = false;
 }
 
 static void lcache_evict_vi(struct silofs_lcache *lcache,
                             struct silofs_vnode_info *vi, int flags)
 {
 	lcache_remove_vi(lcache, vi);
-	vi_delete(vi, lcache->lc_alloc, flags);
+	silofs_del_vnode(vi, lcache->lc_alloc, flags);
 }
 
 static void lcache_store_vi_hmapq(struct silofs_lcache *lcache,
@@ -744,7 +572,7 @@ static void lcache_store_vi_hmapq(struct silofs_lcache *lcache,
 static void lcache_store_vi(struct silofs_lcache *lcache,
                             struct silofs_vnode_info *vi)
 {
-	silofs_hkey_by_vaddr(&vi->v_lni.l_hmqe.hme_key, &vi->v_vaddr);
+	silofs_hkey_by_vaddr(&vi->v_lni.ln_hmqe.hme_key, &vi->v_vaddr);
 	lcache_store_vi_hmapq(lcache, vi);
 }
 
@@ -760,11 +588,12 @@ lcache_get_lru_vi(struct silofs_lcache *lcache)
 static bool lcache_evict_or_relru_vi(struct silofs_lcache *lcache,
                                      struct silofs_vnode_info *vi, int flags)
 {
-	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
+	int allocf;
 	bool evicted;
 
-	if (vi_is_evictable(vi)) {
-		lcache_evict_vi(lcache, vi, alf);
+	if (test_evictable_vi(vi)) {
+		allocf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
+		lcache_evict_vi(lcache, vi, allocf);
 		evicted = true;
 	} else {
 		lcache_promote_vi(lcache, vi, true);
@@ -820,7 +649,7 @@ static struct silofs_vnode_info *
 lcache_new_vi(const struct silofs_lcache *lcache,
               const struct silofs_vaddr *vaddr)
 {
-	return silofs_new_vi(lcache->lc_alloc, vaddr);
+	return silofs_new_vnode(lcache->lc_alloc, vaddr);
 }
 
 struct silofs_vnode_info *
@@ -862,7 +691,7 @@ static void lcache_forget_vi(struct silofs_lcache *lcache,
 	vi_do_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		lcache_unmap_vi(lcache, vi);
-		vi->v_lni.l_hmqe.hme_forgot = true;
+		vi->v_lni.ln_hmqe.hme_forgot = true;
 	} else {
 		lcache_evict_vi(lcache, vi, 0);
 	}
@@ -925,12 +754,12 @@ static void lcache_evict_some(struct silofs_lcache *lcache)
 	bool evicted = false;
 
 	vi = lcache_find_evictable_vi(lcache);
-	if ((vi != NULL) && vi_is_evictable(vi)) {
+	if ((vi != NULL) && test_evictable_vi(vi)) {
 		lcache_evict_vi(lcache, vi, 0);
 		evicted = true;
 	}
 	ui = lcache_find_evictable_ui(lcache);
-	if ((ui != NULL) && ui_is_evictable(ui)) {
+	if ((ui != NULL) && silofs_ui_isevictable(ui)) {
 		lcache_evict_ui(lcache, ui, 0);
 		evicted = true;
 	}
@@ -1211,11 +1040,11 @@ void silofs_lcache_fini(struct silofs_lcache *lcache)
 	lcache->lc_alloc = NULL;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static bool vi_isdirty(const struct silofs_vnode_info *vi)
 {
-	return lni_isdirty(&vi->v_lni);
+	return silofs_lni_isdirty(&vi->v_lni);
 }
 
 static void vi_do_dirtify(struct silofs_vnode_info *vi,
@@ -1223,14 +1052,14 @@ static void vi_do_dirtify(struct silofs_vnode_info *vi,
 {
 	if (!vi_isdirty(vi)) {
 		vi_update_dq_by(vi, ii);
-		lni_dirtify(&vi->v_lni);
+		silofs_lni_dirtify(&vi->v_lni);
 	}
 }
 
 static void vi_do_undirtify(struct silofs_vnode_info *vi)
 {
 	if (vi_isdirty(vi)) {
-		lni_undirtify(&vi->v_lni);
+		silofs_lni_undirtify(&vi->v_lni);
 		vi_update_dq_by(vi, NULL);
 	}
 }
@@ -1300,10 +1129,10 @@ void silofs_ii_decref(struct silofs_inode_info *ii)
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v_lni.l_flags |= SILOFS_LNF_LOOSE;
+	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_LOOSE;
 }
 
 bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
 {
-	return (ii->i_vi.v_lni.l_flags & SILOFS_LNF_LOOSE) > 0;
+	return (ii->i_vi.v_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
 }

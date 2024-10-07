@@ -52,22 +52,22 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v_lni.l_flags);
+	const int flags = (int)(ii->i_vi.v_lni.ln_flags);
 
 	return (flags & SILOFS_LNF_PINNED) > 0;
 }
 
 static void ii_unpin(struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v_lni.l_flags);
+	const int flags = (int)(ii->i_vi.v_lni.ln_flags);
 
-	ii->i_vi.v_lni.l_flags =
+	ii->i_vi.v_lni.ln_flags =
 	        (enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
 }
 
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v_lni.l_flags |= SILOFS_LNF_PINNED;
+	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_PINNED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

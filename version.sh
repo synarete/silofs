@@ -10,7 +10,7 @@ export GIT_DIR="${base}/.git"
 gittop=$(git rev-parse --show-toplevel > /dev/null 2>&1 && echo -n "git-repo")
 
 if [ -n "${gittop}" ]; then
-  gitrevision=$(git describe --abbrev=7 --always --dirty=+)
+  gitrevision=$(git describe --abbrev=8 --always --dirty=+)
   # gitrevision=$(git rev-parse --short=7 HEAD)
 else
   gitrevision=""

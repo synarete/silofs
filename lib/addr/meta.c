@@ -168,19 +168,22 @@ static size_t hdr_size(const struct silofs_header *hdr)
 	return silofs_le32_to_cpu(hdr->h_size);
 }
 
-static size_t hdr_payload_size(const struct silofs_header *hdr)
-{
-	const size_t sz = hdr_size(hdr);
-
-	silofs_assert_gt(sz, sizeof(*hdr));
-	silofs_assert_le(sz, SILOFS_LBK_SIZE);
-
-	return sz - sizeof(*hdr);
-}
-
 static void hdr_set_size(struct silofs_header *hdr, size_t size)
 {
+	silofs_assert_gt(size, sizeof(*hdr));
+	silofs_assert_le(size, SILOFS_LBK_SIZE);
+
 	hdr->h_size = silofs_cpu_to_le32((uint32_t)size);
+}
+
+static size_t hdr_payload_size(const struct silofs_header *hdr)
+{
+	const size_t size = hdr_size(hdr);
+
+	silofs_assert_gt(size, sizeof(*hdr));
+	silofs_assert_le(size, SILOFS_LBK_SIZE);
+
+	return size - sizeof(*hdr);
 }
 
 static uint8_t hdr_type(const struct silofs_header *hdr)
@@ -190,12 +193,9 @@ static uint8_t hdr_type(const struct silofs_header *hdr)
 
 static void hdr_set_type(struct silofs_header *hdr, uint8_t ltype)
 {
-	hdr->h_type = (uint8_t)ltype;
-}
+	silofs_assert_le(hdr->h_size, SILOFS_LBK_SIZE);
 
-static uint32_t hdr_csum(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_csum);
+	hdr->h_type = (uint8_t)ltype;
 }
 
 static enum silofs_hdrf hdr_flags(const struct silofs_header *hdr)
@@ -207,6 +207,8 @@ static enum silofs_hdrf hdr_flags(const struct silofs_header *hdr)
 
 static void hdr_set_flags(struct silofs_header *hdr, enum silofs_hdrf flags)
 {
+	silofs_assert_le(hdr->h_size, SILOFS_LBK_SIZE);
+
 	hdr->h_flags = silofs_cpu_to_le16((uint16_t)flags);
 }
 
@@ -219,6 +221,11 @@ static bool hdr_has_flags(const struct silofs_header *hdr,
                           enum silofs_hdrf flags)
 {
 	return (hdr_flags(hdr) & flags) > 0;
+}
+
+static uint32_t hdr_csum(const struct silofs_header *hdr)
+{
+	return silofs_le32_to_cpu(hdr->h_csum);
 }
 
 static void hdr_set_csum(struct silofs_header *hdr, uint32_t csum)

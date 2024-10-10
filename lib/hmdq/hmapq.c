@@ -518,7 +518,6 @@ silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe)
 	return hmqe;
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_hmapq_nslots_by(const struct silofs_alloc *alloc, uint8_t fac)

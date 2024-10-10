@@ -41,6 +41,12 @@ bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
 
+void silofs_ii_set_loose(struct silofs_inode_info *ii);
+
+bool silofs_ii_is_loose(const struct silofs_inode_info *ii);
+
+enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
+
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
 
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii);
@@ -83,8 +89,6 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 
 void silofs_ii_update_iflags(struct silofs_inode_info *ii,
                              int iflags_want, int iflags_dont);
-
-enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
 
 void silofs_ii_update_itimes(struct silofs_inode_info *ii,
                              const struct silofs_creds *creds,

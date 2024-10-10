@@ -140,13 +140,11 @@ struct silofs_fileaf_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
+int silofs_lni_refcnt(const struct silofs_lnode_info *lni);
 
 void silofs_lni_incref(struct silofs_lnode_info *lni);
 
 void silofs_lni_decref(struct silofs_lnode_info *lni);
-
-int silofs_lni_refcnt(const struct silofs_lnode_info *lni);
 
 void silofs_lni_set_dq(struct silofs_lnode_info *lni,
                        struct silofs_dirtyq *dq);
@@ -158,7 +156,11 @@ void silofs_lni_undirtify(struct silofs_lnode_info *lni);
 void silofs_lni_remove_from(struct silofs_lnode_info *lni,
                             struct silofs_hmapq *hmapq);
 
+bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
+
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni);
+
+int silofs_lni_verify_view(struct silofs_lnode_info *lni);
 
 struct silofs_lnode_info *
 silofs_lni_from_dqe(const struct silofs_dq_elem *dqe);
@@ -185,8 +187,6 @@ bool silofs_ui_isactive(const struct silofs_unode_info *ui);
 
 void silofs_ui_set_active(struct silofs_unode_info *ui);
 
-int silofs_ui_verify_view(struct silofs_unode_info *ui);
-
 void silofs_ui_seal_view(struct silofs_unode_info *ui);
 
 enum silofs_ltype silofs_ui_ltype(const struct silofs_unode_info *ui);
@@ -203,8 +203,6 @@ void silofs_vi_incref(struct silofs_vnode_info *vi);
 void silofs_vi_decref(struct silofs_vnode_info *vi);
 
 bool silofs_vi_isevictable(const struct silofs_vnode_info *vi);
-
-int silofs_vi_verify_view(struct silofs_vnode_info *vi);
 
 void silofs_vi_seal_view(struct silofs_vnode_info *vi);
 

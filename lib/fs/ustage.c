@@ -29,6 +29,13 @@ static void ui_set_fsenv(struct silofs_unode_info *ui,
 	ui->u_lni.ln_fsenv = fsenv;
 }
 
+static int ui_verify_view(struct silofs_unode_info *ui)
+{
+	return silofs_lni_verify_view(&ui->u_lni);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void sbi_set_fsenv(struct silofs_sb_info *sbi,
                           struct silofs_fsenv *fsenv)
 {
@@ -68,7 +75,7 @@ static void sbi_set_active(struct silofs_sb_info *sbi)
 
 static int sbi_verify_view(struct silofs_sb_info *sbi)
 {
-	return silofs_ui_verify_view(&sbi->sb_ui);
+	return ui_verify_view(&sbi->sb_ui);
 }
 
 static void sbi_set_staged(struct silofs_sb_info *sbi)
@@ -97,7 +104,7 @@ static void sni_set_active(struct silofs_spnode_info *sni)
 
 static int sni_verify_view(struct silofs_spnode_info *sni)
 {
-	return silofs_ui_verify_view(&sni->sn_ui);
+	return ui_verify_view(&sni->sn_ui);
 }
 
 static void sni_set_staged(struct silofs_spnode_info *sni)
@@ -125,7 +132,7 @@ static void sli_set_active(struct silofs_spleaf_info *sli)
 
 static int sli_verify_view(struct silofs_spleaf_info *sli)
 {
-	return silofs_ui_verify_view(&sli->sl_ui);
+	return ui_verify_view(&sli->sl_ui);
 }
 
 static void sli_set_staged(struct silofs_spleaf_info *sli)

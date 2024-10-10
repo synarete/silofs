@@ -369,6 +369,16 @@ void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 	ii->i_ino = ino;
 }
 
+void silofs_ii_set_loose(struct silofs_inode_info *ii)
+{
+	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_LOOSE;
+}
+
+bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
+{
+	return (ii->i_vi.v_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
+}
+
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
 {
 	return ii_isrootd(ii) ? SILOFS_INO_ROOT : ii_ino(ii);

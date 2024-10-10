@@ -19,7 +19,6 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
-static void vi_do_undirtify(struct silofs_vnode_info *vi);
 static void lcache_drop_uamap(struct silofs_lcache *lcache);
 static void lcache_evict_some(struct silofs_lcache *lcache);
 
@@ -71,12 +70,6 @@ dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_ltype ltype)
 	return dq;
 }
 
-static struct silofs_dirtyq *
-dirtyqs_get_by(struct silofs_dirtyqs *dqs, const struct silofs_vaddr *vaddr)
-{
-	return dirtyqs_get(dqs, vaddr->ltype);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_unode_info *ui_from_hmqe(struct silofs_hmapq_elem *hmqe)
@@ -99,13 +92,6 @@ static void ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
 	silofs_lni_set_dq(&ui->u_lni, dq);
 }
 
-static struct silofs_dirtyqs *vi_dirtyqs(const struct silofs_vnode_info *vi)
-{
-	const struct silofs_fsenv *fsenv = vi_fsenv(vi);
-
-	return &fsenv->fse.lcache->lc_dirtyqs;
-}
-
 static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
 {
 	silofs_lni_set_dq(&vi->v_lni, dq);
@@ -114,14 +100,9 @@ static void vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
 static void vi_update_dq_by(struct silofs_vnode_info *vi,
                             struct silofs_inode_info *ii)
 {
-	struct silofs_dirtyq *dq;
-
 	if (ii != NULL) {
-		dq = &ii->i_dq_vis;
-	} else {
-		dq = dirtyqs_get_by(vi_dirtyqs(vi), vi_vaddr(vi));
+		vi_set_dq(vi, &ii->i_dq_vis);
 	}
-	vi_set_dq(vi, dq);
 }
 
 static struct silofs_vnode_info *vi_from_hmqe(struct silofs_hmapq_elem *hmqe)
@@ -165,14 +146,12 @@ static void lcache_fini_ui_hmapq(struct silofs_lcache *lcache)
 static int visit_evictable_ui(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_unode_info *ui = ui_from_hmqe(hmqe);
-	struct silofs_unode_info **out_ui = arg;
-	int ret = 0;
 
-	if (silofs_ui_isevictable(ui)) {
-		*out_ui = ui;
-		ret = 1;
+	if (!silofs_ui_isevictable(ui)) {
+		return 0;
 	}
-	return ret;
+	*(struct silofs_unode_info **)arg = ui;
+	return 1;
 }
 
 static struct silofs_unode_info *
@@ -393,10 +372,8 @@ static void lcache_store_ui(struct silofs_lcache *lcache,
 static void lcache_set_dq_of_ui(struct silofs_lcache *lcache,
                                 struct silofs_unode_info *ui)
 {
-	const struct silofs_uaddr *uaddr = ui_uaddr(ui);
-	struct silofs_dirtyq *dq;
+	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, ui_ltype(ui));
 
-	dq = lcache_dirtyq_by(lcache, uaddr_ltype(uaddr));
 	ui_set_dq(ui, dq);
 }
 
@@ -499,14 +476,12 @@ static bool test_evictable_vi(const struct silofs_vnode_info *vi)
 static int visit_evictable_vi(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_vnode_info *vi = vi_from_hmqe(hmqe);
-	struct silofs_vnode_info **out_vi = arg;
-	int ret = 0;
 
-	if (test_evictable_vi(vi)) {
-		*out_vi = vi;
-		ret = 1;
+	if (!test_evictable_vi(vi)) {
+		return 0;
 	}
-	return ret;
+	*(struct silofs_vnode_info **)arg = vi;
+	return 1;
 }
 
 static struct silofs_vnode_info *
@@ -688,7 +663,7 @@ static void lcache_unmap_vi(struct silofs_lcache *lcache,
 static void lcache_forget_vi(struct silofs_lcache *lcache,
                              struct silofs_vnode_info *vi)
 {
-	vi_do_undirtify(vi);
+	silofs_vi_undirtify(vi);
 	if (vi_refcnt(vi) > 0) {
 		lcache_unmap_vi(lcache, vi);
 		vi->v_lni.ln_hmqe.hme_forgot = true;
@@ -703,6 +678,14 @@ void silofs_lcache_forget_vi(struct silofs_lcache *lcache,
 	lcache_forget_vi(lcache, vi);
 }
 
+static void lcache_set_dq_of_vi(struct silofs_lcache *lcache,
+                                struct silofs_vnode_info *vi)
+{
+	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, vi_ltype(vi));
+
+	vi_set_dq(vi, dq);
+}
+
 static struct silofs_vnode_info *
 lcache_create_vi(struct silofs_lcache *lcache,
                  const struct silofs_vaddr *vaddr)
@@ -711,6 +694,7 @@ lcache_create_vi(struct silofs_lcache *lcache,
 
 	vi = lcache_require_vi(lcache, vaddr);
 	if (vi != NULL) {
+		lcache_set_dq_of_vi(lcache, vi);
 		lcache_store_vi(lcache, vi);
 	}
 	return vi;
@@ -724,6 +708,14 @@ silofs_lcache_create_vi(struct silofs_lcache *lcache,
 
 	vi = lcache_create_vi(lcache, vaddr);
 	return vi;
+}
+
+void silofs_lcache_reditify_vi(struct silofs_lcache *lcache,
+                               struct silofs_vnode_info *vi)
+{
+	silofs_vi_undirtify(vi);
+	lcache_set_dq_of_vi(lcache, vi);
+	silofs_vi_dirtify(vi, NULL);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1047,70 +1039,47 @@ static bool vi_isdirty(const struct silofs_vnode_info *vi)
 	return silofs_lni_isdirty(&vi->v_lni);
 }
 
-static void vi_do_dirtify(struct silofs_vnode_info *vi,
-                          struct silofs_inode_info *ii)
+void silofs_vi_dirtify(struct silofs_vnode_info *vi,
+                       struct silofs_inode_info *ii)
 {
+	silofs_assert_not_null(vi);
+
 	if (!vi_isdirty(vi)) {
 		vi_update_dq_by(vi, ii);
 		silofs_lni_dirtify(&vi->v_lni);
 	}
 }
 
-static void vi_do_undirtify(struct silofs_vnode_info *vi)
-{
-	if (vi_isdirty(vi)) {
-		silofs_lni_undirtify(&vi->v_lni);
-		vi_update_dq_by(vi, NULL);
-	}
-}
-
-void silofs_vi_dirtify(struct silofs_vnode_info *vi,
-                       struct silofs_inode_info *ii)
-{
-	if (likely(vi != NULL)) {
-		vi_do_dirtify(vi, ii);
-	}
-}
-
 void silofs_vi_undirtify(struct silofs_vnode_info *vi)
 {
-	if (likely(vi != NULL)) {
-		vi_do_undirtify(vi);
+	silofs_assert_not_null(vi);
+
+	if (vi_isdirty(vi)) {
+		silofs_lni_undirtify(&vi->v_lni);
 	}
-}
-
-static void ii_do_dirtify(struct silofs_inode_info *ii)
-{
-	vi_do_dirtify(&ii->i_vi, NULL);
-}
-
-static void ii_do_undirtify(struct silofs_inode_info *ii)
-{
-	vi_do_undirtify(&ii->i_vi);
 }
 
 void silofs_ii_dirtify(struct silofs_inode_info *ii)
 {
-	if (likely(ii != NULL) && !ii_isloose(ii)) {
-		ii_do_dirtify(ii);
+	silofs_assert_not_null(ii);
+
+	if (!ii_isloose(ii)) {
+		silofs_vi_dirtify(ii_to_vi(ii), NULL);
 	}
 }
 
 void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
-	if (likely(ii != NULL)) {
-		ii_do_undirtify(ii);
-	}
+	silofs_assert_not_null(ii);
+
+	silofs_vi_undirtify(ii_to_vi(ii));
 }
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
 {
-	bool ret = false;
+	silofs_assert_not_null(ii);
 
-	if (likely(ii != NULL)) {
-		ret = vi_isdirty(&ii->i_vi);
-	}
-	return ret;
+	return vi_isdirty(&ii->i_vi);
 }
 
 void silofs_ii_incref(struct silofs_inode_info *ii)
@@ -1125,14 +1094,4 @@ void silofs_ii_decref(struct silofs_inode_info *ii)
 	if (likely(ii != NULL)) {
 		silofs_vi_decref(ii_to_vi(ii));
 	}
-}
-
-void silofs_ii_set_loose(struct silofs_inode_info *ii)
-{
-	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_LOOSE;
-}
-
-bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
-{
-	return (ii->i_vi.v_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
 }

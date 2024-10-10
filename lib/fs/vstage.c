@@ -124,6 +124,11 @@ static void vi_update_llink(struct silofs_vnode_info *vi,
 	silofs_llink_assign(&vi->v_llink, llink);
 }
 
+static int vi_verify_view(struct silofs_vnode_info *vi)
+{
+	return silofs_lni_verify_view(&vi->v_lni);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void sbi_bind_child_spnode(struct silofs_sb_info *sbi,
@@ -309,7 +314,7 @@ static int vstgc_update_view_of(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_vi_verify_view(vi);
+	err = vi_verify_view(vi);
 	if (err) {
 		return err;
 	}
@@ -2258,6 +2263,12 @@ static int vstgc_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
 	return err;
 }
 
+static void vstgc_redirtify_vi(const struct silofs_vstage_ctx *vstg_ctx,
+                               struct silofs_vnode_info *vi)
+{
+	silofs_lcache_reditify_vi(vstgc_lcache(vstg_ctx), vi);
+}
+
 static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
                                  const struct silofs_vis *vis)
 {
@@ -2265,10 +2276,11 @@ static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 
 	for (size_t i = 0; i < vis->vas.count; ++i) {
 		vi = vis->vis[i];
-		vi_dirtify(vi, NULL);
-		vi_decref(vi);
+		if (vi != NULL) {
+			vstgc_redirtify_vi(vstg_ctx, vi);
+			vi_decref(vi);
+		}
 	}
-	silofs_unused(vstg_ctx);
 }
 
 static int vstgc_clone_lbk_at(struct silofs_vstage_ctx *vstg_ctx,

@@ -170,7 +170,12 @@ static size_t hdr_size(const struct silofs_header *hdr)
 
 static size_t hdr_payload_size(const struct silofs_header *hdr)
 {
-	return hdr_size(hdr) - sizeof(*hdr);
+	const size_t sz = hdr_size(hdr);
+
+	silofs_assert_gt(sz, sizeof(*hdr));
+	silofs_assert_le(sz, SILOFS_LBK_SIZE);
+
+	return sz - sizeof(*hdr);
 }
 
 static void hdr_set_size(struct silofs_header *hdr, size_t size)

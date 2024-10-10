@@ -296,8 +296,12 @@ class CmdUnitests(CmdExec):
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def run(self, basedir: Path, level: int = 1) -> None:
-        args = [basedir, f"--level={level}"]
+    def run(self, basedir: Path, level: int = 1, malloc: bool = False) -> None:
+        args = [str(basedir)]
+        if level > 0:
+            args.append(f"--level={level}")
+        if malloc:
+            args.append("--malloc")
         self.execute_sub(args, timeout=1200)
 
 

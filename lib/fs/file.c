@@ -299,32 +299,32 @@ static bool fl_mode_zero_range(int fl_mode)
 static void fli_dirtify(struct silofs_fileaf_info *fli,
                         struct silofs_inode_info *ii)
 {
-	vi_dirtify(&fli->fl_vi, ii);
+	vni_dirtify(&fli->fl_vni, ii);
 }
 
 static void fli_incref(struct silofs_fileaf_info *fli)
 {
 	if (likely(fli != NULL)) {
-		vi_incref(&fli->fl_vi);
+		vni_incref(&fli->fl_vni);
 	}
 }
 
 static void fli_decref(struct silofs_fileaf_info *fli)
 {
 	if (likely(fli != NULL)) {
-		vi_decref(&fli->fl_vi);
+		vni_decref(&fli->fl_vni);
 	}
 }
 
 static const struct silofs_vaddr *
 fli_vaddr(const struct silofs_fileaf_info *fli)
 {
-	return (fli != NULL) ? vi_vaddr(&fli->fl_vi) : NULL;
+	return (fli != NULL) ? vni_vaddr(&fli->fl_vni) : NULL;
 }
 
 static enum silofs_ltype fli_ltype(const struct silofs_fileaf_info *fli)
 {
-	return vi_ltype(&fli->fl_vi);
+	return vni_ltype(&fli->fl_vni);
 }
 
 static size_t fli_data_len(const struct silofs_fileaf_info *fli)
@@ -369,7 +369,7 @@ static size_t fli_len_within(const struct silofs_fileaf_info *fli,
 
 static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
-	const struct silofs_fsenv *fsenv = vi_fsenv(&fli->fl_vi);
+	const struct silofs_fsenv *fsenv = vni_fsenv(&fli->fl_vni);
 
 	return (fsenv->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
 }
@@ -378,7 +378,7 @@ static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
 {
 	fli_incref(fli);
 	if (wr_mode && fli_asyncwr(fli)) {
-		silofs_atomic_add(&fli->fl_vi.v_asyncwr, 1);
+		silofs_atomic_add(&fli->fl_vni.vn_asyncwr, 1);
 	}
 }
 
@@ -386,7 +386,7 @@ static void fli_post_io(struct silofs_fileaf_info *fli, int wr_mode)
 {
 	fli_decref(fli);
 	if (wr_mode && fli_asyncwr(fli)) {
-		silofs_atomic_sub(&fli->fl_vi.v_asyncwr, 1);
+		silofs_atomic_sub(&fli->fl_vni.vn_asyncwr, 1);
 	}
 }
 
@@ -753,27 +753,27 @@ static struct silofs_inode_file *ii_infl_of(const struct silofs_inode_info *ii)
 static void fni_dirtify(struct silofs_finode_info *fni,
                         struct silofs_inode_info *ii)
 {
-	vi_dirtify(&fni->fn_vi, ii);
+	vni_dirtify(&fni->fn_vni, ii);
 }
 
 static void fni_incref(struct silofs_finode_info *fni)
 {
 	if (likely(fni != NULL)) {
-		vi_incref(&fni->fn_vi);
+		vni_incref(&fni->fn_vni);
 	}
 }
 
 static void fni_decref(struct silofs_finode_info *fni)
 {
 	if (likely(fni != NULL)) {
-		vi_decref(&fni->fn_vi);
+		vni_decref(&fni->fn_vni);
 	}
 }
 
 static const struct silofs_vaddr *
 fni_vaddr(const struct silofs_finode_info *fni)
 {
-	return vi_vaddr(&fni->fn_vi);
+	return vni_vaddr(&fni->fn_vni);
 }
 
 static bool
@@ -1435,11 +1435,11 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	if (!vi_need_recheck(&fli->fl_vi)) {
+	if (!vni_need_recheck(&fli->fl_vni)) {
 		return 0;
 	}
 	silofs_unused(f_ctx);
-	vi_set_rechecked(&fli->fl_vi);
+	vni_set_rechecked(&fli->fl_vni);
 	return 0;
 }
 
@@ -1447,16 +1447,16 @@ static int filc_stage_fileaf(const struct silofs_file_ctx *f_ctx,
                              const struct silofs_vaddr *vaddr,
                              struct silofs_fileaf_info **out_fli)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_fileaf_info *fli = NULL;
 	int err;
 
 	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
-	                         f_ctx->stg_mode, &vi);
+	                         f_ctx->stg_mode, &vni);
 	if (err) {
 		return err;
 	}
-	fli = silofs_fli_from_vi(vi);
+	fli = silofs_fli_from_vni(vni);
 	err = filc_recheck_fileaf(f_ctx, fli);
 	if (err) {
 		return err;
@@ -1510,7 +1510,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 	ino_t owner_ino;
 	size_t height;
 
-	if (!vi_need_recheck(&fni->fn_vi)) {
+	if (!vni_need_recheck(&fni->fn_vni)) {
 		return 0;
 	}
 	fnode_ino = ftn_ino(fni->ftn);
@@ -1526,7 +1526,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 		        height, owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	vi_set_rechecked(&fni->fn_vi);
+	vni_set_rechecked(&fni->fn_vni);
 	return 0;
 }
 
@@ -1534,16 +1534,16 @@ static int filc_stage_tree_node(const struct silofs_file_ctx *f_ctx,
                                 const struct silofs_vaddr *vaddr,
                                 struct silofs_finode_info **out_fni)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
 	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
-	                         f_ctx->stg_mode, &vi);
+	                         f_ctx->stg_mode, &vni);
 	if (err) {
 		return err;
 	}
-	fni = silofs_fni_from_vi(vi);
+	fni = silofs_fni_from_vni(vni);
 	err = filc_recheck_fni(f_ctx, fni);
 	if (err) {
 		return err;
@@ -2255,16 +2255,16 @@ static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
 static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
                              struct silofs_finode_info **out_fni)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_finode_info *fni = NULL;
 	int err;
 
 	err = silofs_spawn_vnode(f_ctx->task, f_ctx->ii,
-	                         SILOFS_LTYPE_FTNODE, &vi);
+	                         SILOFS_LTYPE_FTNODE, &vni);
 	if (err) {
 		return err;
 	}
-	fni = silofs_fni_from_vi(vi);
+	fni = silofs_fni_from_vni(vni);
 	fni_dirtify(fni, f_ctx->ii);
 	*out_fni = fni;
 	return 0;
@@ -2273,7 +2273,7 @@ static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
 static int filc_remove_finode(const struct silofs_file_ctx *f_ctx,
                               struct silofs_finode_info *fni)
 {
-	return silofs_remove_vnode(f_ctx->task, &fni->fn_vi);
+	return silofs_remove_vnode(f_ctx->task, &fni->fn_vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

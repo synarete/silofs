@@ -32,7 +32,7 @@ int silofs_encrypt_view(const struct silofs_fsenv *fsenv,
 int silofs_decrypt_uni_view(const struct silofs_fsenv *fsenv,
                             struct silofs_unode_info *uni);
 
-int silofs_decrypt_vi_view(const struct silofs_fsenv *fsenv,
-                           struct silofs_vnode_info *vi);
+int silofs_decrypt_vni_view(const struct silofs_fsenv *fsenv,
+                            struct silofs_vnode_info *vni);
 
 #endif /* SILOFS_ENCDEC_H_ */

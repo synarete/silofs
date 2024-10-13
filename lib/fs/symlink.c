@@ -199,22 +199,22 @@ static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,
 static const struct silofs_vaddr *
 syi_vaddr(const struct silofs_symval_info *syi)
 {
-	return vi_vaddr(&syi->sy_vi);
+	return vni_vaddr(&syi->sy_vni);
 }
 
 static void syi_dirtify(struct silofs_symval_info *syi,
                         struct silofs_inode_info *ii)
 {
-	vi_dirtify(&syi->sy_vi, ii);
+	vni_dirtify(&syi->sy_vni, ii);
 }
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
-	if (!vi_need_recheck(&syi->sy_vi)) {
+	if (!vni_need_recheck(&syi->sy_vni)) {
 		return 0;
 	}
 	/* TODO: recheck */
-	vi_set_rechecked(&syi->sy_vi);
+	vni_set_rechecked(&syi->sy_vni);
 	return 0;
 }
 
@@ -235,16 +235,16 @@ static int slc_do_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
                                const struct silofs_vaddr *vaddr,
                                struct silofs_symval_info **out_syi)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
 	err = silofs_stage_vnode(sl_ctx->task, sl_ctx->lnk_ii,
-	                         vaddr, sl_ctx->stg_mode, &vi);
+	                         vaddr, sl_ctx->stg_mode, &vni);
 	if (err) {
 		return err;
 	}
-	syi = silofs_syi_from_vi(vi);
+	syi = silofs_syi_from_vni(vni);
 	err = syi_recheck_symval(syi);
 	if (err) {
 		return err;
@@ -370,16 +370,16 @@ int silofs_do_readlink(struct silofs_task *task,
 static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
                             struct silofs_symval_info **out_syi)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_symval_info *syi = NULL;
 	int err;
 
 	err = silofs_spawn_vnode(sl_ctx->task, sl_ctx->lnk_ii,
-	                         SILOFS_LTYPE_SYMVAL, &vi);
+	                         SILOFS_LTYPE_SYMVAL, &vni);
 	if (err) {
 		return err;
 	}
-	syi = silofs_syi_from_vi(vi);
+	syi = silofs_syi_from_vni(vni);
 	syi_dirtify(syi, sl_ctx->lnk_ii);
 	*out_syi = syi;
 	return 0;

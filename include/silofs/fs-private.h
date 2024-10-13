@@ -33,14 +33,14 @@
 #define task_idsmap(t)                  silofs_task_idsmap(t)
 #define task_creds(t)                   silofs_task_creds(t)
 
-#define uni_incref(ui)                  silofs_uni_incref(ui)
-#define uni_decref(ui)                  silofs_uni_decref(ui)
-#define uni_dirtify(ui)                 silofs_uni_dirtify(ui)
-#define uni_ulink(ui)                   silofs_uni_ulink(ui)
-#define uni_uaddr(ui)                   silofs_uni_uaddr(ui)
-#define uni_laddr(ui)                   silofs_uni_laddr(ui)
-#define uni_ltype(ui)                   silofs_uni_ltype(ui)
-#define uni_riv(ui)                     silofs_uni_riv(ui)
+#define uni_incref(uni)                 silofs_uni_incref(uni)
+#define uni_decref(uni)                 silofs_uni_decref(uni)
+#define uni_dirtify(uni)                silofs_uni_dirtify(uni)
+#define uni_ulink(uni)                  silofs_uni_ulink(uni)
+#define uni_uaddr(uni)                  silofs_uni_uaddr(uni)
+#define uni_laddr(uni)                  silofs_uni_laddr(uni)
+#define uni_ltype(uni)                  silofs_uni_ltype(uni)
+#define uni_riv(uni)                    silofs_uni_riv(uni)
 
 #define sbi_fsenv(sbi)                  silofs_sbi_fsenv(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
@@ -68,19 +68,19 @@
 #define sli_vrange(sli, vrng)           silofs_sli_vspace_range(sli, vrng)
 #define sli_base_voff(sli)              silofs_sli_base_voff(sli)
 
-#define vi_ltype(vi)                    silofs_vi_ltype(vi)
-#define vi_vaddr(vi)                    silofs_vi_vaddr(vi)
-#define vi_fsenv(vi)                    silofs_vi_fsenv(vi)
-#define vi_sbi(vi)                      silofs_vi_sbi(vi)
-#define vi_refcnt(vi)                   silofs_vi_refcnt(vi)
-#define vi_incref(vi)                   silofs_vi_incref(vi)
-#define vi_decref(vi)                   silofs_vi_decref(vi)
-#define vi_dirtify(vi, ii)              silofs_vi_dirtify(vi, ii)
-#define vi_need_recheck(vi)             silofs_vi_need_recheck(vi)
-#define vi_set_rechecked(vi)            silofs_vi_set_rechecked(vi)
+#define vni_ltype(vni)                  silofs_vni_ltype(vni)
+#define vni_vaddr(vni)                  silofs_vni_vaddr(vni)
+#define vni_fsenv(vni)                  silofs_vni_fsenv(vni)
+#define vni_sbi(vni)                    silofs_vni_sbi(vni)
+#define vni_refcnt(vni)                 silofs_vni_refcnt(vni)
+#define vni_incref(vni)                 silofs_vni_incref(vni)
+#define vni_decref(vni)                 silofs_vni_decref(vni)
+#define vni_dirtify(vni, ii)            silofs_vni_dirtify(vni, ii)
+#define vni_need_recheck(vni)           silofs_vni_need_recheck(vni)
+#define vni_set_rechecked(vni)          silofs_vni_set_rechecked(vni)
 
 #define ii_unconst(ii)                  silofs_ii_unconst(ii)
-#define ii_to_vi(ii)                    silofs_ii_to_vi(ii)
+#define ii_to_vni(ii)                   silofs_ii_to_vni(ii)
 #define ii_ino(ii)                      silofs_ii_ino(ii)
 #define ii_vaddr(ii)                    silofs_ii_vaddr(ii)
 #define ii_sbi(ii)                      silofs_ii_sbi(ii)
@@ -147,37 +147,27 @@ silofs_uni_laddr(const struct silofs_unode_info *uni)
 }
 
 static inline
-enum silofs_ltype silofs_vi_ltype(const struct silofs_vnode_info *vi)
+enum silofs_ltype silofs_vni_ltype(const struct silofs_vnode_info *vni)
 {
-	return vi->v_vaddr.ltype;
+	return vni->vn_vaddr.ltype;
 }
 
 static inline const struct silofs_vaddr *
-silofs_vi_vaddr(const struct silofs_vnode_info *vi)
+silofs_vni_vaddr(const struct silofs_vnode_info *vni)
 {
-	return &vi->v_vaddr;
+	return &vni->vn_vaddr;
 }
 
 static inline struct silofs_fsenv *
-silofs_vi_fsenv(const struct silofs_vnode_info *vi)
+silofs_vni_fsenv(const struct silofs_vnode_info *vni)
 {
-	return vi->v_lni.ln_fsenv;
+	return vni->vn_lni.ln_fsenv;
 }
 
 static inline struct silofs_sb_info *
-silofs_vi_sbi(const struct silofs_vnode_info *vi)
+silofs_vni_sbi(const struct silofs_vnode_info *vni)
 {
-	return vi->v_lni.ln_fsenv->fse_sbi;
-}
-
-static inline bool silofs_vi_need_recheck(const struct silofs_vnode_info *vi)
-{
-	return (vi->v_lni.ln_flags & SILOFS_LNF_RECHECK) != SILOFS_LNF_RECHECK;
-}
-
-static inline void silofs_vi_set_rechecked(struct silofs_vnode_info *vi)
-{
-	vi->v_lni.ln_flags |= SILOFS_LNF_RECHECK;
+	return vni->vn_lni.ln_fsenv->fse_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -195,9 +185,9 @@ silofs_ii_unconst(const struct silofs_inode_info *ii)
 }
 
 static inline struct silofs_vnode_info *
-silofs_ii_to_vi(const struct silofs_inode_info *ii)
+silofs_ii_to_vni(const struct silofs_inode_info *ii)
 {
-	return silofs_unconst(&ii->i_vi);
+	return silofs_unconst(&ii->i_vni);
 }
 
 static inline ino_t silofs_ii_ino(const struct silofs_inode_info *ii)
@@ -208,19 +198,19 @@ static inline ino_t silofs_ii_ino(const struct silofs_inode_info *ii)
 static inline const struct silofs_vaddr *
 silofs_ii_vaddr(const struct silofs_inode_info *ii)
 {
-	return silofs_vi_vaddr(silofs_ii_to_vi(ii));
+	return silofs_vni_vaddr(silofs_ii_to_vni(ii));
 }
 
 static inline struct silofs_sb_info *
 silofs_ii_sbi(const struct silofs_inode_info *ii)
 {
-	return silofs_vi_sbi(silofs_ii_to_vi(ii));
+	return silofs_vni_sbi(silofs_ii_to_vni(ii));
 }
 
 static inline struct silofs_fsenv *
 silofs_ii_fsenv(const struct silofs_inode_info *ii)
 {
-	return ii->i_vi.v_lni.ln_fsenv;
+	return ii->i_vni.vn_lni.ln_fsenv;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

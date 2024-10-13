@@ -52,22 +52,22 @@ static void ii_inc_nlookup(struct silofs_inode_info *ii, int err)
 
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v_lni.ln_flags);
+	const int flags = (int)(ii->i_vni.vn_lni.ln_flags);
 
 	return (flags & SILOFS_LNF_PINNED) > 0;
 }
 
 static void ii_unpin(struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vi.v_lni.ln_flags);
+	const int flags = (int)(ii->i_vni.vn_lni.ln_flags);
 
-	ii->i_vi.v_lni.ln_flags =
+	ii->i_vni.vn_lni.ln_flags =
 	        (enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
 }
 
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_PINNED;
+	ii->i_vni.vn_lni.ln_flags |= SILOFS_LNF_PINNED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -897,7 +897,7 @@ int silofs_do_open(struct silofs_task *task,
 
 static void ii_undirtify_all(struct silofs_inode_info *ii)
 {
-	silofs_ii_undirtify_vis(ii);
+	silofs_ii_undirtify_vnis(ii);
 	silofs_ii_undirtify(ii);
 }
 
@@ -1545,7 +1545,7 @@ static int flush_dirty_of(struct silofs_task *task,
 {
 	int ret = 0;
 
-	if (silofs_ii_isdirty(ii) || ii->i_dq_vis.dq_accum) {
+	if (silofs_ii_isdirty(ii) || ii->i_dq_vnis.dq_accum) {
 		ret = silofs_flush_dirty(task, ii, flags);
 	}
 	return ret;
@@ -2609,7 +2609,7 @@ static int try_forget_cached_ii(const struct silofs_task *task,
                                 struct silofs_inode_info *ii)
 {
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
-		silofs_lcache_forget_vi(task_lcache(task), ii_to_vi(ii));
+		silofs_lcache_forget_vni(task_lcache(task), ii_to_vni(ii));
 	}
 	return 0;
 }

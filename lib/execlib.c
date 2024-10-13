@@ -994,7 +994,7 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 	silofs_memstat(alloc, &alst);
 	cst->nalloc_bytes = alst.nbytes_use;
 	cst->ncache_unodes += lcache->lc_uni_hmapq.hmq_htbl_size;
-	cst->ncache_vnodes += lcache->lc_vi_hmapq.hmq_htbl_size;
+	cst->ncache_vnodes += lcache->lc_vni_hmapq.hmq_htbl_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1287,7 +1287,7 @@ static int reload_base_vspace(struct silofs_fsenv *fsenv)
 
 static int exec_spawn_vnode(struct silofs_fsenv *fsenv,
                             enum silofs_ltype ltype,
-                            struct silofs_vnode_info **out_vi)
+                            struct silofs_vnode_info **out_vni)
 {
 	struct silofs_task task;
 	int err;
@@ -1296,9 +1296,9 @@ static int exec_spawn_vnode(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode(&task, NULL, ltype, out_vi);
+	err = silofs_spawn_vnode(&task, NULL, ltype, out_vni);
 	if (!err) {
-		vi_dirtify(*out_vi, NULL);
+		vni_dirtify(*out_vni, NULL);
 	}
 	return term_task(&task, err);
 }
@@ -1306,16 +1306,16 @@ static int exec_spawn_vnode(struct silofs_fsenv *fsenv,
 static int format_zero_vspace_of(struct silofs_fsenv *fsenv,
                                  enum silofs_ltype vspace)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	const struct silofs_vaddr *vaddr = NULL;
 	int err;
 
-	err = exec_spawn_vnode(fsenv, vspace, &vi);
+	err = exec_spawn_vnode(fsenv, vspace, &vni);
 	if (err) {
 		log_err("failed to spawn: vspace=%d err=%d", vspace, err);
 		return err;
 	}
-	vaddr = vi_vaddr(vi);
+	vaddr = vni_vaddr(vni);
 	if (vaddr->off != 0) {
 		log_err("bad offset: vspace=%d off=%ld", vspace, vaddr->off);
 		return -SILOFS_EFSCORRUPTED;

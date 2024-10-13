@@ -53,14 +53,14 @@ static struct silofs_unode_info *uni_from_dqe(struct silofs_dq_elem *dqe)
 }
 
 static struct silofs_vnode_info *
-vi_from_lni(const struct silofs_lnode_info *lni)
+vni_from_lni(const struct silofs_lnode_info *lni)
 {
-	return silofs_vi_from_lni(lni);
+	return silofs_vni_from_lni(lni);
 }
 
-static bool vi_may_flush(const struct silofs_vnode_info *vi)
+static bool vni_may_flush(const struct silofs_vnode_info *vni)
 {
-	const int asyncwr = silofs_atomic_get(&vi->v_asyncwr);
+	const int asyncwr = silofs_atomic_get(&vni->vn_asyncwr);
 
 	return (asyncwr == 0);
 }
@@ -104,7 +104,7 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 	if (lni_isunode(lni)) {
 		silofs_uni_seal_view(uni_from_lni(lni));
 	} else if (lni_isvnode(lni) && !lni_isdata(lni)) {
-		silofs_vi_seal_view(vi_from_lni(lni));
+		silofs_vni_seal_view(vni_from_lni(lni));
 	}
 }
 
@@ -112,12 +112,12 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 
 static void undirtify_lnode(struct silofs_lnode_info *lni)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_unode_info *uni = NULL;
 
 	if (lni_isvnode(lni)) {
-		vi = vi_from_lni(lni);
-		silofs_vi_undirtify(vi);
+		vni = vni_from_lni(lni);
+		silofs_vni_undirtify(vni);
 	} else if (lni_isunode(lni)) {
 		uni = uni_from_lni(lni);
 		silofs_uni_undirtify(uni);
@@ -330,10 +330,10 @@ flusher_dset_at2(const struct silofs_flusher *flusher, size_t slot)
 }
 
 static struct silofs_dset *
-flusher_dset_of_vi(struct silofs_flusher *flusher,
-                   const struct silofs_vnode_info *vi)
+flusher_dset_of_vni(struct silofs_flusher *flusher,
+                    const struct silofs_vnode_info *vni)
 {
-	return flusher_dset_of(flusher, vi_ltype(vi));
+	return flusher_dset_of(flusher, vni_ltype(vni));
 }
 
 static struct silofs_dset *
@@ -343,12 +343,12 @@ flusher_dset_of_uni(struct silofs_flusher *flusher,
 	return flusher_dset_of(flusher, uni_ltype(uni));
 }
 
-static void flusher_add_dirty_vi(struct silofs_flusher *flusher,
-                                 struct silofs_vnode_info *vi)
+static void flusher_add_dirty_vni(struct silofs_flusher *flusher,
+                                  struct silofs_vnode_info *vni)
 {
-	struct silofs_dset *dset = flusher_dset_of_vi(flusher, vi);
+	struct silofs_dset *dset = flusher_dset_of_vni(flusher, vni);
 
-	dset_add_dirty(dset, &vi->v_lni);
+	dset_add_dirty(dset, &vni->vn_lni);
 }
 
 static void flusher_add_dirty_uni(struct silofs_flusher *flusher,
@@ -359,17 +359,17 @@ static void flusher_add_dirty_uni(struct silofs_flusher *flusher,
 	dset_add_dirty(dset, &uni->un_lni);
 }
 
-static void flusher_add_dirty_vis_of(struct silofs_flusher *flusher,
-                                     struct silofs_dirtyq *dq)
+static void flusher_add_dirty_vnis_of(struct silofs_flusher *flusher,
+                                      struct silofs_dirtyq *dq)
 {
 	struct silofs_dq_elem *dqe = NULL;
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 
 	dqe = silofs_dirtyq_front(dq);
 	while (dqe != NULL) {
-		vi = silofs_vi_from_dqe(dqe);
-		if (vi_may_flush(vi)) {
-			flusher_add_dirty_vi(flusher, vi);
+		vni = silofs_vni_from_dqe(dqe);
+		if (vni_may_flush(vni)) {
+			flusher_add_dirty_vni(flusher, vni);
 		}
 		dqe = silofs_dirtyq_next_of(dq, dqe);
 	}
@@ -378,8 +378,8 @@ static void flusher_add_dirty_vis_of(struct silofs_flusher *flusher,
 static void flusher_add_dirty_ii(struct silofs_flusher *flusher,
                                  struct silofs_inode_info *ii)
 {
-	flusher_add_dirty_vis_of(flusher, &ii->i_dq_vis);
-	flusher_add_dirty_vi(flusher, &ii->i_vi);
+	flusher_add_dirty_vnis_of(flusher, &ii->i_dq_vnis);
+	flusher_add_dirty_vni(flusher, &ii->i_vni);
 }
 
 static void flusher_add_dirty_iis_of(struct silofs_flusher *flusher,
@@ -413,7 +413,7 @@ static void flusher_add_dirty_unis_of(struct silofs_flusher *flusher,
 static void flusher_add_dirty_alt_of(struct silofs_flusher *flusher,
                                      struct silofs_dirtyqs *dqs)
 {
-	flusher_add_dirty_vis_of(flusher, &dqs->dq_vis);
+	flusher_add_dirty_vnis_of(flusher, &dqs->dq_vnis);
 	flusher_add_dirty_unis_of(flusher, &dqs->dq_unis);
 }
 
@@ -506,23 +506,23 @@ static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
 	return ret;
 }
 
-static int flusher_resolve_llink_of_vi(const struct silofs_flusher *flusher,
-                                       const struct silofs_vnode_info *vi,
-                                       struct silofs_llink *out_llink)
+static int flusher_resolve_llink_of_vni(const struct silofs_flusher *flusher,
+                                        const struct silofs_vnode_info *vni,
+                                        struct silofs_llink *out_llink)
 {
-	silofs_llink_assign(out_llink, &vi->v_llink);
+	silofs_llink_assign(out_llink, &vni->vn_llink);
 	return flusher_require_mutable_llink(flusher, out_llink);
 }
 
 static int flusher_pre_resolve_llink_of(const struct silofs_flusher *flusher,
                                         struct silofs_lnode_info *lni)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	int ret = 0;
 
 	if (lni_isvnode(lni)) {
-		vi = vi_from_lni(lni);
-		ret = silofs_refresh_llink(flusher->task, vi);
+		vni = vni_from_lni(lni);
+		ret = silofs_refresh_llink(flusher->task, vni);
 	}
 	return ret;
 }
@@ -532,15 +532,15 @@ static int flusher_resolve_llink_of(const struct silofs_flusher *flusher,
                                     struct silofs_llink *out_llink)
 {
 	const struct silofs_unode_info *uni = NULL;
-	const struct silofs_vnode_info *vi = NULL;
+	const struct silofs_vnode_info *vni = NULL;
 	int ret;
 
 	if (lni_isunode(lni)) {
 		uni = uni_from_lni(lni);
 		ret = flusher_resolve_llink_of_uni(flusher, uni, out_llink);
 	} else if (lni_isvnode(lni)) {
-		vi = vi_from_lni(lni);
-		ret = flusher_resolve_llink_of_vi(flusher, vi, out_llink);
+		vni = vni_from_lni(lni);
+		ret = flusher_resolve_llink_of_vni(flusher, vni, out_llink);
 	} else {
 		silofs_panic("corrupted lnode: ltype=%d", (int)lni->ln_ltype);
 		ret = -SILOFS_EFSCORRUPTED; /* makes clang-scan happy */
@@ -968,7 +968,7 @@ static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 	size_t thresh;
 
 	thresh = flush_threshold_of(flags);
-	ndirty = ii->i_dq_vis.dq_accum;
+	ndirty = ii->i_dq_vnis.dq_accum;
 	return (ndirty > thresh);
 }
 
@@ -983,7 +983,7 @@ static bool need_flush_by_fsenv(const struct silofs_fsenv *fsenv, int flags)
 	thresh = flush_threshold_of(flags);
 	ndirty = dqs->dq_unis.dq_accum +
 	         dqs->dq_iis.dq_accum +
-	         dqs->dq_vis.dq_accum;
+	         dqs->dq_vnis.dq_accum;
 	return (ndirty > thresh);
 }
 

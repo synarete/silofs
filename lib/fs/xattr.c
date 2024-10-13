@@ -506,26 +506,26 @@ void silofs_setup_xattr(struct silofs_inode_info *ii)
 static const struct silofs_vaddr *
 xai_vaddr(const struct silofs_xanode_info *xai)
 {
-	return vi_vaddr(&xai->xan_vi);
+	return vni_vaddr(&xai->xan_vni);
 }
 
 static void xai_dirtify(struct silofs_xanode_info *xai,
                         struct silofs_inode_info *ii)
 {
-	vi_dirtify(&xai->xan_vi, ii);
+	vni_dirtify(&xai->xan_vni, ii);
 }
 
 static void xai_incref(struct silofs_xanode_info *xai)
 {
 	if (likely(xai != NULL)) {
-		vi_incref(&xai->xan_vi);
+		vni_incref(&xai->xan_vni);
 	}
 }
 
 static void xai_decref(struct silofs_xanode_info *xai)
 {
 	if (likely(xai != NULL)) {
-		vi_decref(&xai->xan_vi);
+		vni_decref(&xai->xan_vni);
 	}
 }
 
@@ -553,7 +553,7 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 	ino_t owner_ino;
 	ino_t xanode_ino;
 
-	if (!vi_need_recheck(&xai->xan_vi)) {
+	if (!vni_need_recheck(&xai->xan_vni)) {
 		return 0;
 	}
 	owner_ino = ii_ino(xa_ctx->ii);
@@ -563,23 +563,23 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 		        owner_ino, xanode_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	vi_set_rechecked(&xai->xan_vi);
+	vni_set_rechecked(&xai->xan_vni);
 	return 0;
 }
 static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
                                const struct silofs_vaddr *vaddr,
                                struct silofs_xanode_info **out_xai)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_xanode_info *xai = NULL;
 	int err;
 
 	err = silofs_stage_vnode(xa_ctx->task, xa_ctx->ii,
-	                         vaddr, xa_ctx->stg_mode, &vi);
+	                         vaddr, xa_ctx->stg_mode, &vni);
 	if (err) {
 		return err;
 	}
-	xai = silofs_xai_from_vi(vi);
+	xai = silofs_xai_from_vni(vni);
 	err = xac_recheck_node(xa_ctx, xai);
 	if (err) {
 		return err;
@@ -812,16 +812,16 @@ int silofs_do_getxattr(struct silofs_task *task,
 static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
                             struct silofs_xanode_info **out_xai)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_xanode_info *xai = NULL;
 	int err;
 
 	err = silofs_spawn_vnode(xa_ctx->task, xa_ctx->ii,
-	                         SILOFS_LTYPE_XANODE, &vi);
+	                         SILOFS_LTYPE_XANODE, &vni);
 	if (err) {
 		return err;
 	}
-	xai = silofs_xai_from_vi(vi);
+	xai = silofs_xai_from_vni(vni);
 	xai_dirtify(xai, xa_ctx->ii);
 	*out_xai = xai;
 	return 0;

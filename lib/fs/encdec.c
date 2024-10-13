@@ -93,8 +93,10 @@ int silofs_decrypt_uni_view(const struct silofs_fsenv *fsenv,
 	return decrypt_view_inplace(fsenv, &llink, uni->un_lni.ln_view);
 }
 
-int silofs_decrypt_vi_view(const struct silofs_fsenv *fsenv,
-                           struct silofs_vnode_info *vi)
+int silofs_decrypt_vni_view(const struct silofs_fsenv *fsenv,
+                            struct silofs_vnode_info *vni)
 {
-	return decrypt_view_inplace(fsenv, &vi->v_llink, vi->v_lni.ln_view);
+	const struct silofs_llink *llink = &vni->vn_llink;
+
+	return decrypt_view_inplace(fsenv, llink, vni->vn_lni.ln_view);
 }

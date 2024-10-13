@@ -917,27 +917,27 @@ dni_unconst(const struct silofs_dnode_info *dni)
 static void dni_dirtify(struct silofs_dnode_info *dni,
                         struct silofs_inode_info *ii)
 {
-	vi_dirtify(&dni->dn_vi, ii);
+	vni_dirtify(&dni->dn_vni, ii);
 }
 
 static void dni_incref(struct silofs_dnode_info *dni)
 {
 	if (likely(dni != NULL)) {
-		vi_incref(&dni->dn_vi);
+		vni_incref(&dni->dn_vni);
 	}
 }
 
 static void dni_decref(struct silofs_dnode_info *dni)
 {
 	if (likely(dni != NULL)) {
-		vi_decref(&dni->dn_vi);
+		vni_decref(&dni->dn_vni);
 	}
 }
 
 static const struct silofs_vaddr *
 dni_vaddr(const struct silofs_dnode_info *dni)
 {
-	return vi_vaddr(&dni->dn_vi);
+	return vni_vaddr(&dni->dn_vni);
 }
 
 static void
@@ -1445,7 +1445,7 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 	ino_t dnode_ino;
 	ino_t owner_ino;
 
-	if (!vi_need_recheck(&dni->dn_vi)) {
+	if (!vni_need_recheck(&dni->dn_vni)) {
 		return 0;
 	}
 	dnode_ino = dtn_ino(dni->dtn);
@@ -1455,31 +1455,31 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 		        dnode_ino, owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	vi_set_rechecked(&dni->dn_vi);
+	vni_set_rechecked(&dni->dn_vni);
 	return 0;
 }
 
 static int dirc_stage_vnode(const struct silofs_dir_ctx *d_ctx,
                             const struct silofs_vaddr *vaddr,
-                            struct silofs_vnode_info **out_vi)
+                            struct silofs_vnode_info **out_vni)
 {
 	return silofs_stage_vnode(d_ctx->task, d_ctx->dir_ii,
-	                          vaddr, d_ctx->stg_mode, out_vi);
+	                          vaddr, d_ctx->stg_mode, out_vni);
 }
 
 static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
                             const struct silofs_vaddr *vaddr,
                             struct silofs_dnode_info **out_dni)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = dirc_stage_vnode(d_ctx, vaddr, &vi);
+	err = dirc_stage_vnode(d_ctx, vaddr, &vni);
 	if (err) {
 		return err;
 	}
-	dni = silofs_dni_from_vi(vi);
+	dni = silofs_dni_from_vni(vni);
 	err = dirc_recheck_dnode(d_ctx, dni);
 	if (err) {
 		return err;
@@ -1514,23 +1514,23 @@ dirc_stage_child_by_name(const struct silofs_dir_ctx *d_ctx,
 
 static int dirc_spawn_vnode(const struct silofs_dir_ctx *d_ctx,
                             enum silofs_ltype ltype,
-                            struct silofs_vnode_info **out_vi)
+                            struct silofs_vnode_info **out_vni)
 {
-	return silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii, ltype, out_vi);
+	return silofs_spawn_vnode(d_ctx->task, d_ctx->dir_ii, ltype, out_vni);
 }
 
 static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
                             struct silofs_dnode_info **out_dni)
 {
-	struct silofs_vnode_info *vi = NULL;
+	struct silofs_vnode_info *vni = NULL;
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	err = dirc_spawn_vnode(d_ctx, SILOFS_LTYPE_DTNODE, &vi);
+	err = dirc_spawn_vnode(d_ctx, SILOFS_LTYPE_DTNODE, &vni);
 	if (err) {
 		return err;
 	}
-	dni = silofs_dni_from_vi(vi);
+	dni = silofs_dni_from_vni(vni);
 	dni_dirtify(dni, d_ctx->dir_ii);
 	*out_dni = dni;
 	return 0;
@@ -1539,7 +1539,7 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 static int dirc_remove_dnode(const struct silofs_dir_ctx *d_ctx,
                              struct silofs_dnode_info *dni)
 {
-	return silofs_remove_vnode(d_ctx->task, &dni->dn_vi);
+	return silofs_remove_vnode(d_ctx->task, &dni->dn_vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

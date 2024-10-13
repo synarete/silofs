@@ -112,7 +112,7 @@ void silofs_ii_statof(const struct silofs_inode_info *ii,
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
                        struct silofs_iattr *out_iattr);
 
-void silofs_ii_undirtify_vis(struct silofs_inode_info *ii);
+void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii);
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii);
 

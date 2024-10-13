@@ -363,7 +363,7 @@ static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
 
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 {
-	silofs_assert_not_null(ii->i_vi.v_lni.ln_view);
+	silofs_assert_not_null(ii->i_vni.vn_lni.ln_view);
 	silofs_assert_not_null(ii->inode);
 
 	ii->i_ino = ino;
@@ -516,12 +516,12 @@ bool silofs_is_rootdir(const struct silofs_inode_info *ii)
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
 {
-	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_LOOSE;
+	ii->i_vni.vn_lni.ln_flags |= SILOFS_LNF_LOOSE;
 }
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii)
 {
-	return (ii->i_vi.v_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
+	return (ii->i_vni.vn_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
 }
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii)
@@ -540,9 +540,9 @@ static void silofs_ii_times(const struct silofs_inode_info *ii,
 	inode_ctime(inode, &tms->ctime);
 }
 
-static size_t ii_dq_vis_size(const struct silofs_inode_info *ii)
+static size_t ii_dq_vnis_size(const struct silofs_inode_info *ii)
 {
-	return ii->i_dq_vis.dq.sz;
+	return ii->i_dq_vnis.dq.sz;
 }
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
@@ -550,10 +550,10 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	if (ii->i_nopen > 0) {
 		return false;
 	}
-	if (ii_dq_vis_size(ii) > 0) {
+	if (ii_dq_vnis_size(ii) > 0) {
 		return false;
 	}
-	return silofs_vi_isevictable(&ii->i_vi);
+	return silofs_vni_isevictable(&ii->i_vni);
 }
 
 void silofs_ii_dirtify(struct silofs_inode_info *ii)
@@ -561,7 +561,7 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii)
 	silofs_assert_not_null(ii);
 
 	if (!silofs_ii_isloose(ii)) {
-		silofs_vi_dirtify(ii_to_vi(ii), NULL);
+		silofs_vni_dirtify(ii_to_vni(ii), NULL);
 	}
 }
 
@@ -569,27 +569,27 @@ void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	silofs_vi_undirtify(ii_to_vi(ii));
+	silofs_vni_undirtify(ii_to_vni(ii));
 }
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	return silofs_vi_isdirty(&ii->i_vi);
+	return silofs_vni_isdirty(&ii->i_vni);
 }
 
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		silofs_vi_incref(ii_to_vi(ii));
+		silofs_vni_incref(ii_to_vni(ii));
 	}
 }
 
 void silofs_ii_decref(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		silofs_vi_decref(ii_to_vi(ii));
+		silofs_vni_decref(ii_to_vni(ii));
 	}
 }
 
@@ -1364,16 +1364,16 @@ void silofs_ii_update_isize(struct silofs_inode_info *ii,
 	ii_update_iattrs(ii, creds, &iattr);
 }
 
-void silofs_ii_undirtify_vis(struct silofs_inode_info *ii)
+void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 {
 	struct silofs_dq_elem *dqe;
-	struct silofs_vnode_info *vi;
-	struct silofs_dirtyq *dq = &ii->i_dq_vis;
+	struct silofs_vnode_info *vni;
+	struct silofs_dirtyq *dq = &ii->i_dq_vnis;
 
 	while (dq->dq.sz > 0) {
 		dqe = silofs_dirtyq_front(dq);
-		vi = silofs_vi_from_dqe(dqe);
-		silofs_vi_undirtify(vi);
+		vni = silofs_vni_from_dqe(dqe);
+		silofs_vni_undirtify(vni);
 	}
 }
 

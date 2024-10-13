@@ -146,9 +146,6 @@ void silofs_lni_incref(struct silofs_lnode_info *lni);
 
 void silofs_lni_decref(struct silofs_lnode_info *lni);
 
-void silofs_lni_set_dq(struct silofs_lnode_info *lni,
-                       struct silofs_dirtyq *dq);
-
 void silofs_lni_dirtify(struct silofs_lnode_info *lni);
 
 void silofs_lni_undirtify(struct silofs_lnode_info *lni);
@@ -191,6 +188,8 @@ void silofs_ui_seal_view(struct silofs_unode_info *ui);
 
 enum silofs_ltype silofs_ui_ltype(const struct silofs_unode_info *ui);
 
+void silofs_ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq);
+
 struct silofs_unode_info *
 silofs_ui_from_lni(const struct silofs_lnode_info *lni);
 
@@ -202,9 +201,18 @@ void silofs_vi_incref(struct silofs_vnode_info *vi);
 
 void silofs_vi_decref(struct silofs_vnode_info *vi);
 
+bool silofs_vi_isdirty(const struct silofs_vnode_info *vi);
+
+void silofs_vi_dirtify(struct silofs_vnode_info *vi,
+                       struct silofs_inode_info *ii);
+
+void silofs_vi_undirtify(struct silofs_vnode_info *vi);
+
 bool silofs_vi_isevictable(const struct silofs_vnode_info *vi);
 
 void silofs_vi_seal_view(struct silofs_vnode_info *vi);
+
+void silofs_vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq);
 
 struct silofs_vnode_info *
 silofs_vi_from_dqe(struct silofs_dq_elem *dqe);

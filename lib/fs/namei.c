@@ -995,14 +995,14 @@ static int try_prune_loose_data(struct silofs_task *task,
 	 * ref-count due to in-flight flush. In such case, drop its data now
 	 * to release resources from within current call.
 	 */
-	return (ii_isreg(ii) && ii_isloose(ii)) ?
+	return (silofs_ii_isreg(ii) && silofs_ii_isloose(ii)) ?
 	       silofs_drop_reg(task, ii) : 0;
 }
 
 static void enqueue_if_loose(struct silofs_task *task,
                              struct silofs_inode_info *ii)
 {
-	if (ii_isloose(ii) && !ii_ispinned(ii)) {
+	if (silofs_ii_isloose(ii) && !ii_ispinned(ii)) {
 		silofs_task_enq_loose(task, ii);
 	}
 }
@@ -1014,7 +1014,7 @@ static int try_prune_inode(struct silofs_task *task,
 
 	if (ii_is_orphan(ii)) {
 		ii_undirtify_all(ii);
-		ii_set_loose(ii);
+		silofs_ii_set_loose(ii);
 	}
 	if (ii_isdropable(ii)) {
 		return drop_unlinked(task, ii);

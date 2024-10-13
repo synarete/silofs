@@ -369,16 +369,6 @@ void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 	ii->i_ino = ino;
 }
 
-void silofs_ii_set_loose(struct silofs_inode_info *ii)
-{
-	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_LOOSE;
-}
-
-bool silofs_ii_is_loose(const struct silofs_inode_info *ii)
-{
-	return (ii->i_vi.v_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
-}
-
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
 {
 	return ii_isrootd(ii) ? SILOFS_INO_ROOT : ii_ino(ii);
@@ -524,6 +514,16 @@ bool silofs_is_rootdir(const struct silofs_inode_info *ii)
 	return ii_isdir(ii) && inode_has_flags(ii->inode, SILOFS_INODEF_ROOTD);
 }
 
+void silofs_ii_set_loose(struct silofs_inode_info *ii)
+{
+	ii->i_vi.v_lni.ln_flags |= SILOFS_LNF_LOOSE;
+}
+
+bool silofs_ii_isloose(const struct silofs_inode_info *ii)
+{
+	return (ii->i_vi.v_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
+}
+
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii)
 {
 	return inode_flags(ii->inode);
@@ -540,15 +540,59 @@ static void silofs_ii_times(const struct silofs_inode_info *ii,
 	inode_ctime(inode, &tms->ctime);
 }
 
+static size_t ii_dq_vis_size(const struct silofs_inode_info *ii)
+{
+	return ii->i_dq_vis.dq.sz;
+}
+
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	bool ret = false;
-
-	if (!ii->i_dq_vis.dq.sz && !ii->i_nopen) {
-		ret = silofs_lni_isevictable(&ii->i_vi.v_lni);
+	if (ii->i_nopen > 0) {
+		return false;
 	}
-	return ret;
+	if (ii_dq_vis_size(ii) > 0) {
+		return false;
+	}
+	return silofs_vi_isevictable(&ii->i_vi);
 }
+
+void silofs_ii_dirtify(struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(ii);
+
+	if (!silofs_ii_isloose(ii)) {
+		silofs_vi_dirtify(ii_to_vi(ii), NULL);
+	}
+}
+
+void silofs_ii_undirtify(struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(ii);
+
+	silofs_vi_undirtify(ii_to_vi(ii));
+}
+
+bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(ii);
+
+	return silofs_vi_isdirty(&ii->i_vi);
+}
+
+void silofs_ii_incref(struct silofs_inode_info *ii)
+{
+	if (likely(ii != NULL)) {
+		silofs_vi_incref(ii_to_vi(ii));
+	}
+}
+
+void silofs_ii_decref(struct silofs_inode_info *ii)
+{
+	if (likely(ii != NULL)) {
+		silofs_vi_decref(ii_to_vi(ii));
+	}
+}
+
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -244,7 +244,7 @@ lni_dqe2(const struct silofs_lnode_info *lni)
 	return &lni->ln_hmqe.hme_dqe;
 }
 
-void silofs_lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
+static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 {
 	silofs_dqe_setq(lni_dqe(lni), dq);
 }
@@ -389,6 +389,11 @@ enum silofs_ltype silofs_ui_ltype(const struct silofs_unode_info *ui)
 	return uaddr_ltype(&ui->u_ulink.uaddr);
 }
 
+void silofs_ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
+{
+	lni_set_dq(&ui->u_lni, dq);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *
@@ -448,6 +453,44 @@ void silofs_vi_decref(struct silofs_vnode_info *vi)
 {
 	if (likely(vi != NULL)) {
 		silofs_lni_decref(&vi->v_lni);
+	}
+}
+
+void silofs_vi_set_dq(struct silofs_vnode_info *vi, struct silofs_dirtyq *dq)
+{
+	lni_set_dq(&vi->v_lni, dq);
+}
+
+bool silofs_vi_isdirty(const struct silofs_vnode_info *vi)
+{
+	return silofs_lni_isdirty(&vi->v_lni);
+}
+
+static void vi_update_dq_by(struct silofs_vnode_info *vi,
+                            struct silofs_inode_info *ii)
+{
+	if (ii != NULL) {
+		silofs_vi_set_dq(vi, &ii->i_dq_vis);
+	}
+}
+
+void silofs_vi_dirtify(struct silofs_vnode_info *vi,
+                       struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(vi);
+
+	if (!silofs_vi_isdirty(vi)) {
+		vi_update_dq_by(vi, ii);
+		silofs_lni_dirtify(&vi->v_lni);
+	}
+}
+
+void silofs_vi_undirtify(struct silofs_vnode_info *vi)
+{
+	silofs_assert_not_null(vi);
+
+	if (silofs_vi_isdirty(vi)) {
+		silofs_lni_undirtify(&vi->v_lni);
 	}
 }
 

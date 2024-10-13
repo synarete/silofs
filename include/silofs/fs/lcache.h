@@ -86,22 +86,4 @@ void silofs_lcache_forget_vi(struct silofs_lcache *lcache,
 void silofs_lcache_reditify_vi(struct silofs_lcache *lcache,
                                struct silofs_vnode_info *vi);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_vi_dirtify(struct silofs_vnode_info *vi,
-                       struct silofs_inode_info *ii);
-
-void silofs_vi_undirtify(struct silofs_vnode_info *vi);
-
-
-void silofs_ii_incref(struct silofs_inode_info *ii);
-
-void silofs_ii_decref(struct silofs_inode_info *ii);
-
-void silofs_ii_dirtify(struct silofs_inode_info *ii);
-
-void silofs_ii_undirtify(struct silofs_inode_info *ii);
-
-bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
-
 #endif /* SILOFS_LCACHE_H_ */

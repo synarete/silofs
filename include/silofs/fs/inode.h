@@ -43,12 +43,6 @@ void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii);
 
-bool silofs_ii_is_loose(const struct silofs_inode_info *ii);
-
-enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
-
-ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
-
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii);
 
 ino_t silofs_ii_ino_of(const struct silofs_inode_info *ii);
@@ -119,6 +113,24 @@ void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
                        struct silofs_iattr *out_iattr);
 
 void silofs_ii_undirtify_vis(struct silofs_inode_info *ii);
+
+bool silofs_ii_isloose(const struct silofs_inode_info *ii);
+
+ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
+
+enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ii_incref(struct silofs_inode_info *ii);
+
+void silofs_ii_decref(struct silofs_inode_info *ii);
+
+void silofs_ii_dirtify(struct silofs_inode_info *ii);
+
+void silofs_ii_undirtify(struct silofs_inode_info *ii);
+
+bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

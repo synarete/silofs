@@ -2420,7 +2420,7 @@ static int do_clone_of(struct silofs_task *task,
 static void do_post_clone_relax(const struct silofs_task *task,
                                 struct silofs_sb_info *sbi)
 {
-	silofs_lcache_forget_ui(task_lcache(task), &sbi->sb_ui);
+	silofs_lcache_forget_uni(task_lcache(task), &sbi->sb_uni);
 	silofs_lcache_relax(task_lcache(task), SILOFS_F_NOW);
 }
 

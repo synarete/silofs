@@ -993,7 +993,7 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
 	silofs_memzero(cst, sizeof(*cst));
 	silofs_memstat(alloc, &alst);
 	cst->nalloc_bytes = alst.nbytes_use;
-	cst->ncache_unodes += lcache->lc_ui_hmapq.hmq_htbl_size;
+	cst->ncache_unodes += lcache->lc_uni_hmapq.hmq_htbl_size;
 	cst->ncache_vnodes += lcache->lc_vi_hmapq.hmq_htbl_size;
 }
 

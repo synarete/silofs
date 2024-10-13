@@ -950,20 +950,20 @@ int silofs_test_shared_dbkref(struct silofs_task *task,
 void silofs_sbi_incref(struct silofs_sb_info *sbi)
 {
 	if (likely(sbi != NULL)) {
-		silofs_lni_incref(&sbi->sb_ui.u_lni);
+		silofs_lni_incref(&sbi->sb_uni.un_lni);
 	}
 }
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi)
 {
 	if (likely(sbi != NULL)) {
-		silofs_lni_decref(&sbi->sb_ui.u_lni);
+		silofs_lni_decref(&sbi->sb_uni.un_lni);
 	}
 }
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 {
-	ui_dirtify(&sbi->sb_ui);
+	uni_dirtify(&sbi->sb_uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

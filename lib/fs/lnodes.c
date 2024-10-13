@@ -270,128 +270,131 @@ void silofs_lni_undirtify(struct silofs_lnode_info *lni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_unode_info *ui_unconst(const struct silofs_unode_info *ui)
+static struct silofs_unode_info *
+uni_unconst(const struct silofs_unode_info *uni)
 {
 	union {
 		const struct silofs_unode_info *p;
 		struct silofs_unode_info *q;
 	} u = {
-		.p = ui
+		.p = uni
 	};
 	return u.q;
 }
 
-static void ui_verify(const struct silofs_unode_info *ui)
+static void uni_verify(const struct silofs_unode_info *uni)
 {
-	silofs_assert_not_null(ui);
-	silofs_assert_not_null(ui->u_lni.ln_view);
+	silofs_assert_not_null(uni);
+	silofs_assert_not_null(uni->un_lni.ln_view);
 
-	if (unlikely(ui->u_magic != UI_MAGIC)) {
-		silofs_panic("corrupted: ui=%p u_magic=%x", ui, ui->u_magic);
+	if (unlikely(uni->un_magic != UI_MAGIC)) {
+		silofs_panic("bad unode: uni=%p magic=%x",
+		             uni, uni->un_magic);
 	}
 }
 
-static void ui_init(struct silofs_unode_info *ui,
-                    const struct silofs_ulink *ulink, struct silofs_view *view)
+static void uni_init(struct silofs_unode_info *uni,
+                     const struct silofs_ulink *ulink,
+                     struct silofs_view *view)
 {
-	lni_init(&ui->u_lni, ltype_of(ulink), view);
-	ulink_assign(&ui->u_ulink, ulink);
-	ui->u_magic = UI_MAGIC;
+	lni_init(&uni->un_lni, ltype_of(ulink), view);
+	ulink_assign(&uni->un_ulink, ulink);
+	uni->un_magic = UI_MAGIC;
 }
 
-static void ui_fini(struct silofs_unode_info *ui)
+static void uni_fini(struct silofs_unode_info *uni)
 {
-	ulink_reset(&ui->u_ulink);
-	lni_fini(&ui->u_lni);
-	ui->u_magic = UINT64_MAX;
+	ulink_reset(&uni->un_ulink);
+	lni_fini(&uni->un_lni);
+	uni->un_magic = UINT64_MAX;
 }
 
-void silofs_ui_incref(struct silofs_unode_info *ui)
+void silofs_uni_incref(struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	silofs_lni_incref(&ui->u_lni);
+	silofs_lni_incref(&uni->un_lni);
 }
 
-void silofs_ui_decref(struct silofs_unode_info *ui)
+void silofs_uni_decref(struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	silofs_lni_decref(&ui->u_lni);
+	silofs_lni_decref(&uni->un_lni);
 }
 
 struct silofs_unode_info *
-silofs_ui_from_lni(const struct silofs_lnode_info *lni)
+silofs_uni_from_lni(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_unode_info *ui;
+	const struct silofs_unode_info *uni;
 
 	silofs_assert_not_null(lni);
 
-	ui = container_of2(lni, struct silofs_unode_info, u_lni);
-	ui_verify(ui);
+	uni = container_of2(lni, struct silofs_unode_info, un_lni);
+	uni_verify(uni);
 
-	return ui_unconst(ui);
+	return uni_unconst(uni);
 }
 
-void silofs_ui_seal_view(struct silofs_unode_info *ui)
+void silofs_uni_seal_view(struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	silofs_hdr_seal(&ui->u_lni.ln_view->u.hdr);
+	silofs_hdr_seal(&uni->un_lni.ln_view->u.hdr);
 }
 
-static void ui_del_view(struct silofs_unode_info *ui,
-                        struct silofs_alloc *alloc, int flags)
+static void uni_del_view(struct silofs_unode_info *uni,
+                         struct silofs_alloc *alloc, int flags)
 {
-	view_del_by_ulink(ui->u_lni.ln_view, ui_ulink(ui), alloc, flags);
-	ui->u_lni.ln_view = NULL;
+	view_del_by_ulink(uni->un_lni.ln_view, uni_ulink(uni), alloc, flags);
+	uni->un_lni.ln_view = NULL;
 }
 
-bool silofs_ui_isactive(const struct silofs_unode_info *ui)
+bool silofs_uni_isactive(const struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	return (ui->u_lni.ln_flags & SILOFS_LNF_ACTIVE) > 0;
+	return (uni->un_lni.ln_flags & SILOFS_LNF_ACTIVE) > 0;
 }
 
-void silofs_ui_set_active(struct silofs_unode_info *ui)
+void silofs_uni_set_active(struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	ui->u_lni.ln_flags |= SILOFS_LNF_ACTIVE;
+	uni->un_lni.ln_flags |= SILOFS_LNF_ACTIVE;
 }
 
-void silofs_ui_dirtify(struct silofs_unode_info *ui)
+void silofs_uni_dirtify(struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	silofs_lni_dirtify(&ui->u_lni);
+	silofs_lni_dirtify(&uni->un_lni);
 }
 
-void silofs_ui_undirtify(struct silofs_unode_info *ui)
+void silofs_uni_undirtify(struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	silofs_lni_undirtify(&ui->u_lni);
+	silofs_lni_undirtify(&uni->un_lni);
 }
 
-bool silofs_ui_isevictable(const struct silofs_unode_info *ui)
+bool silofs_uni_isevictable(const struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	return silofs_lni_isevictable(&ui->u_lni);
+	return silofs_lni_isevictable(&uni->un_lni);
 }
 
-enum silofs_ltype silofs_ui_ltype(const struct silofs_unode_info *ui)
+enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni)
 {
-	ui_verify(ui);
+	uni_verify(uni);
 
-	return uaddr_ltype(&ui->u_ulink.uaddr);
+	return uaddr_ltype(&uni->un_ulink.uaddr);
 }
 
-void silofs_ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq)
+void silofs_uni_set_dq(struct silofs_unode_info *uni, struct silofs_dirtyq *dq)
 {
-	lni_set_dq(&ui->u_lni, dq);
+	lni_set_dq(&uni->un_lni, dq);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -539,30 +542,30 @@ bool silofs_vi_isevictable(const struct silofs_vnode_info *vi)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_unode_info *sbi_to_ui(struct silofs_sb_info *sbi)
+static struct silofs_unode_info *sbi_to_uni(struct silofs_sb_info *sbi)
 {
-	return &sbi->sb_ui;
+	return &sbi->sb_uni;
 }
 
-static struct silofs_sb_info *sbi_from_ui(struct silofs_unode_info *ui)
+static struct silofs_sb_info *sbi_from_uni(struct silofs_unode_info *uni)
 {
 	struct silofs_sb_info *sbi = NULL;
 
-	sbi = container_of(ui, struct silofs_sb_info, sb_ui);
+	sbi = container_of(uni, struct silofs_sb_info, sb_uni);
 	return sbi;
 }
 
 static int sbi_init(struct silofs_sb_info *sbi,
                     const struct silofs_ulink *ulink, struct silofs_view *view)
 {
-	ui_init(&sbi->sb_ui, ulink, view);
+	uni_init(&sbi->sb_uni, ulink, view);
 	sbi->sb = &view->u.sb;
 	return 0;
 }
 
 static void sbi_fini(struct silofs_sb_info *sbi)
 {
-	ui_fini(&sbi->sb_ui);
+	uni_fini(&sbi->sb_uni);
 	sbi->sb = NULL;
 }
 
@@ -608,29 +611,29 @@ sbi_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 static void sbi_del(struct silofs_sb_info *sbi,
                     struct silofs_alloc *alloc, int flags)
 {
-	ui_del_view(&sbi->sb_ui, alloc, flags);
+	uni_del_view(&sbi->sb_uni, alloc, flags);
 	sbi_fini(sbi);
 	sbi_free(sbi, alloc, flags);
 }
 
-struct silofs_sb_info *silofs_sbi_from_ui(struct silofs_unode_info *ui)
+struct silofs_sb_info *silofs_sbi_from_uni(struct silofs_unode_info *uni)
 {
-	silofs_assert_not_null(ui);
-	return sbi_from_ui(ui);
+	silofs_assert_not_null(uni);
+	return sbi_from_uni(uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_unode_info *sni_to_ui(struct silofs_spnode_info *sni)
+static struct silofs_unode_info *sni_to_uni(struct silofs_spnode_info *sni)
 {
-	return &sni->sn_ui;
+	return &sni->sn_uni;
 }
 
-static struct silofs_spnode_info *sni_from_ui(struct silofs_unode_info *ui)
+static struct silofs_spnode_info *sni_from_uni(struct silofs_unode_info *uni)
 {
 	struct silofs_spnode_info *sni = NULL;
 
-	sni = container_of(ui, struct silofs_spnode_info, sn_ui);
+	sni = container_of(uni, struct silofs_spnode_info, sn_uni);
 	return sni;
 }
 
@@ -638,14 +641,14 @@ static void sni_init(struct silofs_spnode_info *sni,
                      const struct silofs_ulink *ulink,
                      struct silofs_view *view)
 {
-	ui_init(&sni->sn_ui, ulink, view);
+	uni_init(&sni->sn_uni, ulink, view);
 	sni->sn = &view->u.sn;
 	sni->sn_nactive_subs = 0;
 }
 
 static void sni_fini(struct silofs_spnode_info *sni)
 {
-	ui_fini(&sni->sn_ui);
+	uni_fini(&sni->sn_uni);
 	sni->sn = NULL;
 	sni->sn_nactive_subs = 0;
 }
@@ -667,8 +670,8 @@ static void sni_free(struct silofs_spnode_info *sni,
 static void sni_del(struct silofs_spnode_info *sni,
                     struct silofs_alloc *alloc, int flags)
 {
-	ui_verify(&sni->sn_ui);
-	ui_del_view(&sni->sn_ui, alloc, flags);
+	uni_verify(&sni->sn_uni);
+	uni_del_view(&sni->sn_uni, alloc, flags);
 	sni_fini(sni);
 	sni_free(sni, alloc, flags);
 }
@@ -692,24 +695,24 @@ sni_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 	return sni;
 }
 
-struct silofs_spnode_info *silofs_sni_from_ui(struct silofs_unode_info *ui)
+struct silofs_spnode_info *silofs_sni_from_uni(struct silofs_unode_info *uni)
 {
-	silofs_assert_not_null(ui);
-	return sni_from_ui(ui_unconst(ui));
+	silofs_assert_not_null(uni);
+	return sni_from_uni(uni_unconst(uni));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_unode_info *sli_to_ui(struct silofs_spleaf_info *sli)
+static struct silofs_unode_info *sli_to_uni(struct silofs_spleaf_info *sli)
 {
-	return &sli->sl_ui;
+	return &sli->sl_uni;
 }
 
-static struct silofs_spleaf_info *sli_from_ui(struct silofs_unode_info *ui)
+static struct silofs_spleaf_info *sli_from_uni(struct silofs_unode_info *uni)
 {
 	struct silofs_spleaf_info *sli = NULL;
 
-	sli = container_of(ui, struct silofs_spleaf_info, sl_ui);
+	sli = container_of(uni, struct silofs_spleaf_info, sl_uni);
 	return sli;
 }
 
@@ -717,14 +720,14 @@ static void sli_init(struct silofs_spleaf_info *sli,
                      const struct silofs_ulink *ulink,
                      struct silofs_view *view)
 {
-	ui_init(&sli->sl_ui, ulink, view);
+	uni_init(&sli->sl_uni, ulink, view);
 	sli->sl = &view->u.sl;
 	sli->sl_nused_bytes = 0;
 }
 
 static void sli_fini(struct silofs_spleaf_info *sli)
 {
-	ui_fini(&sli->sl_ui);
+	uni_fini(&sli->sl_uni);
 	sli->sl = NULL;
 	sli->sl_nused_bytes = UINT_MAX;
 }
@@ -765,15 +768,15 @@ sli_new(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 static void sli_del(struct silofs_spleaf_info *sli,
                     struct silofs_alloc *alloc, int flags)
 {
-	ui_verify(&sli->sl_ui);
-	ui_del_view(&sli->sl_ui, alloc, flags);
+	uni_verify(&sli->sl_uni);
+	uni_del_view(&sli->sl_uni, alloc, flags);
 	sli_fini(sli);
 	sli_free(sli, alloc, flags);
 }
 
-struct silofs_spleaf_info *silofs_sli_from_ui(struct silofs_unode_info *ui)
+struct silofs_spleaf_info *silofs_sli_from_uni(struct silofs_unode_info *uni)
 {
-	return sli_from_ui(ui_unconst(ui));
+	return sli_from_uni(uni_unconst(uni));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1337,18 +1340,18 @@ static int verify_view_by(const struct silofs_view *view,
 struct silofs_unode_info *
 silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 {
-	struct silofs_unode_info *ui = NULL;
+	struct silofs_unode_info *uni = NULL;
 	const enum silofs_ltype ltype = ltype_of(ulink);
 
 	switch (ltype) {
 	case SILOFS_LTYPE_SUPER:
-		ui = sbi_to_ui(sbi_new(alloc, ulink));
+		uni = sbi_to_uni(sbi_new(alloc, ulink));
 		break;
 	case SILOFS_LTYPE_SPNODE:
-		ui = sni_to_ui(sni_new(alloc, ulink));
+		uni = sni_to_uni(sni_new(alloc, ulink));
 		break;
 	case SILOFS_LTYPE_SPLEAF:
-		ui = sli_to_ui(sli_new(alloc, ulink));
+		uni = sli_to_uni(sli_new(alloc, ulink));
 		break;
 	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_INODE:
@@ -1365,23 +1368,23 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 		silofs_panic("can not create unode: ltype=%d", (int)ltype);
 		break;
 	}
-	return ui;
+	return uni;
 }
 
-void silofs_del_unode(struct silofs_unode_info *ui,
+void silofs_del_unode(struct silofs_unode_info *uni,
                       struct silofs_alloc *alloc, int flags)
 {
-	const enum silofs_ltype ltype = ui_ltype(ui);
+	const enum silofs_ltype ltype = uni_ltype(uni);
 
 	switch (ltype) {
 	case SILOFS_LTYPE_SUPER:
-		sbi_del(sbi_from_ui(ui), alloc, flags);
+		sbi_del(sbi_from_uni(uni), alloc, flags);
 		break;
 	case SILOFS_LTYPE_SPNODE:
-		sni_del(sni_from_ui(ui), alloc, flags);
+		sni_del(sni_from_uni(uni), alloc, flags);
 		break;
 	case SILOFS_LTYPE_SPLEAF:
-		sli_del(sli_from_ui(ui), alloc, flags);
+		sli_del(sli_from_uni(uni), alloc, flags);
 		break;
 	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_INODE:

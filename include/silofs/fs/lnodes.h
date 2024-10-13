@@ -46,9 +46,9 @@ struct silofs_lnode_info {
 
 /* unode */
 struct silofs_unode_info {
-	struct silofs_lnode_info        u_lni;
-	struct silofs_ulink             u_ulink;
-	uint64_t                        u_magic;
+	struct silofs_lnode_info        un_lni;
+	struct silofs_ulink             un_ulink;
+	uint64_t                        un_magic;
 };
 
 /* space-stats */
@@ -60,21 +60,21 @@ struct silofs_stats_info {
 
 /* super-block */
 struct silofs_sb_info {
-	struct silofs_unode_info        sb_ui;
+	struct silofs_unode_info        sb_uni;
 	struct silofs_stats_info        sb_sti;
 	struct silofs_super_block      *sb;
 };
 
 /* space-node */
 struct silofs_spnode_info {
-	struct silofs_unode_info        sn_ui;
+	struct silofs_unode_info        sn_uni;
 	struct silofs_spmap_node       *sn;
 	size_t                          sn_nactive_subs;
 };
 
 /* space-leaf */
 struct silofs_spleaf_info {
-	struct silofs_unode_info        sl_ui;
+	struct silofs_unode_info        sl_uni;
 	struct silofs_spmap_leaf       *sl;
 	size_t                          sl_nused_bytes;
 };
@@ -170,28 +170,29 @@ silofs_lni_to_hmqe(struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ui_incref(struct silofs_unode_info *ui);
+void silofs_uni_incref(struct silofs_unode_info *uni);
 
-void silofs_ui_decref(struct silofs_unode_info *ui);
+void silofs_uni_decref(struct silofs_unode_info *uni);
 
-void silofs_ui_dirtify(struct silofs_unode_info *ui);
+void silofs_uni_dirtify(struct silofs_unode_info *uni);
 
-void silofs_ui_undirtify(struct silofs_unode_info *ui);
+void silofs_uni_undirtify(struct silofs_unode_info *uni);
 
-bool silofs_ui_isevictable(const struct silofs_unode_info *ui);
+bool silofs_uni_isevictable(const struct silofs_unode_info *uni);
 
-bool silofs_ui_isactive(const struct silofs_unode_info *ui);
+bool silofs_uni_isactive(const struct silofs_unode_info *uni);
 
-void silofs_ui_set_active(struct silofs_unode_info *ui);
+void silofs_uni_set_active(struct silofs_unode_info *uni);
 
-void silofs_ui_seal_view(struct silofs_unode_info *ui);
+void silofs_uni_seal_view(struct silofs_unode_info *uni);
 
-enum silofs_ltype silofs_ui_ltype(const struct silofs_unode_info *ui);
+enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni);
 
-void silofs_ui_set_dq(struct silofs_unode_info *ui, struct silofs_dirtyq *dq);
+void silofs_uni_set_dq(struct silofs_unode_info *uni,
+                       struct silofs_dirtyq *dq);
 
 struct silofs_unode_info *
-silofs_ui_from_lni(const struct silofs_lnode_info *lni);
+silofs_uni_from_lni(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -223,13 +224,13 @@ silofs_vi_from_lni(const struct silofs_lnode_info *lni);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_sb_info *
-silofs_sbi_from_ui(struct silofs_unode_info *ui);
+silofs_sbi_from_uni(struct silofs_unode_info *uni);
 
 struct silofs_spnode_info *
-silofs_sni_from_ui(struct silofs_unode_info *ui);
+silofs_sni_from_uni(struct silofs_unode_info *uni);
 
 struct silofs_spleaf_info *
-silofs_sli_from_ui(struct silofs_unode_info *ui);
+silofs_sli_from_uni(struct silofs_unode_info *uni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -264,7 +265,7 @@ struct silofs_unode_info *
 silofs_new_unode(struct silofs_alloc *alloc,
                  const struct silofs_ulink *ulink);
 
-void silofs_del_unode(struct silofs_unode_info *ui,
+void silofs_del_unode(struct silofs_unode_info *uni,
                       struct silofs_alloc *alloc, int flags);
 
 struct silofs_vnode_info *

@@ -31,7 +31,7 @@ static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 static const struct silofs_lsid *
 sbi_lsid(const struct silofs_sb_info *sbi)
 {
-	return lsid_of(&sbi->sb_ui.u_ulink);
+	return lsid_of(&sbi->sb_uni.un_ulink);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

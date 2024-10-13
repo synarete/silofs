@@ -84,13 +84,13 @@ static int decrypt_view_inplace(const struct silofs_fsenv *fsenv,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_decrypt_ui_view(const struct silofs_fsenv *fsenv,
-                           struct silofs_unode_info *ui)
+int silofs_decrypt_uni_view(const struct silofs_fsenv *fsenv,
+                            struct silofs_unode_info *uni)
 {
 	struct silofs_llink llink;
 
-	silofs_ulink_as_llink(ui_ulink(ui), &llink);
-	return decrypt_view_inplace(fsenv, &llink, ui->u_lni.ln_view);
+	silofs_ulink_as_llink(uni_ulink(uni), &llink);
+	return decrypt_view_inplace(fsenv, &llink, uni->un_lni.ln_view);
 }
 
 int silofs_decrypt_vi_view(const struct silofs_fsenv *fsenv,

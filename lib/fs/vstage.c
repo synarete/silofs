@@ -184,10 +184,10 @@ static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 
 	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "\
 	        "accum_vnodes=%lu ui=%lu vi=%lu",
-	        dqs->dq_uis.dq_accum,
+	        dqs->dq_unis.dq_accum,
 	        dqs->dq_iis.dq_accum,
 	        dqs->dq_vis.dq_accum,
-	        lcache->lc_ui_hmapq.hmq_lru.sz,
+	        lcache->lc_uni_hmapq.hmq_lru.sz,
 	        lcache->lc_vi_hmapq.hmq_lru.sz);
 }
 
@@ -336,25 +336,25 @@ static int sbi_inspect_laddr(const struct silofs_sb_info *sbi,
 	return -SILOFS_EPERM;
 }
 
-static int sbi_inspect_cached_ui(const struct silofs_sb_info *sbi,
-                                 const struct silofs_unode_info *ui,
-                                 enum silofs_stg_mode stg_mode)
+static int sbi_inspect_cached_uni(const struct silofs_sb_info *sbi,
+                                  const struct silofs_unode_info *uni,
+                                  enum silofs_stg_mode stg_mode)
 {
-	return sbi_inspect_laddr(sbi, ui_laddr(ui), stg_mode);
+	return sbi_inspect_laddr(sbi, uni_laddr(uni), stg_mode);
 }
 
 static int sbi_inspect_cached_sni(const struct silofs_sb_info *sbi,
                                   const struct silofs_spnode_info *sni,
                                   enum silofs_stg_mode stg_mode)
 {
-	return sbi_inspect_cached_ui(sbi, &sni->sn_ui, stg_mode);
+	return sbi_inspect_cached_uni(sbi, &sni->sn_uni, stg_mode);
 }
 
 static int sbi_inspect_cached_sli(const struct silofs_sb_info *sbi,
                                   const struct silofs_spleaf_info *sli,
                                   enum silofs_stg_mode stg_mode)
 {
-	return sbi_inspect_cached_ui(sbi, &sli->sl_ui, stg_mode);
+	return sbi_inspect_cached_uni(sbi, &sli->sl_uni, stg_mode);
 }
 
 static enum silofs_ltype sni_child_ltype(const struct silofs_spnode_info *sni)
@@ -569,10 +569,10 @@ static int vstgc_inspect_llink(const struct silofs_vstage_ctx *vstg_ctx,
 	return vstgc_inspect_laddr(vstg_ctx, &llink->laddr);
 }
 
-static int vstgc_inspect_cached_ui(const struct silofs_vstage_ctx *vstg_ctx,
-                                   const struct silofs_unode_info *ui)
+static int vstgc_inspect_cached_uni(const struct silofs_vstage_ctx *vstg_ctx,
+                                    const struct silofs_unode_info *uni)
 {
-	return vstgc_inspect_laddr(vstg_ctx, ui_laddr(ui));
+	return vstgc_inspect_laddr(vstg_ctx, uni_laddr(uni));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -630,51 +630,51 @@ static loff_t vstgc_lbk_voff(const struct silofs_vstage_ctx *vstg_ctx)
 
 static int vstgc_find_cached_unode(const struct silofs_vstage_ctx *vstg_ctx,
                                    enum silofs_height height,
-                                   struct silofs_unode_info **out_ui)
+                                   struct silofs_unode_info **out_uni)
 {
 	struct silofs_uakey uakey;
 	struct silofs_vrange vrange;
 
 	silofs_vrange_of_spmap(&vrange, height, vstgc_lbk_voff(vstg_ctx));
 	silofs_uakey_setup_by2(&uakey, &vrange, vstg_ctx->vspace);
-	*out_ui = silofs_lcache_find_ui_by(vstgc_lcache(vstg_ctx), &uakey);
-	return (*out_ui != NULL) ? 0 : -SILOFS_ENOENT;
+	*out_uni = silofs_lcache_find_uni_by(vstgc_lcache(vstg_ctx), &uakey);
+	return (*out_uni != NULL) ? 0 : -SILOFS_ENOENT;
 }
 
 static int vstgc_fetch_cached_spnode(const struct silofs_vstage_ctx *vstg_ctx,
                                      enum silofs_height height,
                                      struct silofs_spnode_info **out_sni)
 {
-	struct silofs_unode_info *ui = NULL;
+	struct silofs_unode_info *uni = NULL;
 	int err;
 
-	err = vstgc_find_cached_unode(vstg_ctx, height, &ui);
+	err = vstgc_find_cached_unode(vstg_ctx, height, &uni);
 	if (err) {
 		return err;
 	}
-	err = vstgc_inspect_cached_ui(vstg_ctx, ui);
+	err = vstgc_inspect_cached_uni(vstg_ctx, uni);
 	if (err) {
 		return err;
 	}
-	*out_sni = silofs_sni_from_ui(ui);
+	*out_sni = silofs_sni_from_uni(uni);
 	return 0;
 }
 
 static int vstgc_fetch_cached_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
                                      struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_unode_info *ui = NULL;
+	struct silofs_unode_info *uni = NULL;
 	int err;
 
-	err = vstgc_find_cached_unode(vstg_ctx, SILOFS_HEIGHT_SPLEAF, &ui);
+	err = vstgc_find_cached_unode(vstg_ctx, SILOFS_HEIGHT_SPLEAF, &uni);
 	if (err) {
 		return err;
 	}
-	err = vstgc_inspect_cached_ui(vstg_ctx, ui);
+	err = vstgc_inspect_cached_uni(vstg_ctx, uni);
 	if (err) {
 		return err;
 	}
-	*out_sli = silofs_sli_from_ui(ui);
+	*out_sli = silofs_sli_from_uni(uni);
 	return 0;
 }
 

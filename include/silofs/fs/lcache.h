@@ -26,7 +26,7 @@
 
 /* dirty-queues of cached-elements by owner */
 struct silofs_dirtyqs {
-	struct silofs_dirtyq    dq_uis;
+	struct silofs_dirtyq    dq_unis;
 	struct silofs_dirtyq    dq_iis;
 	struct silofs_dirtyq    dq_vis;
 };
@@ -35,7 +35,7 @@ struct silofs_dirtyqs {
 struct silofs_lcache {
 	struct silofs_alloc    *lc_alloc;
 	struct silofs_lblock   *lc_nil_lbk;
-	struct silofs_hmapq     lc_ui_hmapq;
+	struct silofs_hmapq     lc_uni_hmapq;
 	struct silofs_hmapq     lc_vi_hmapq;
 	struct silofs_dirtyqs   lc_dirtyqs;
 	struct silofs_spamaps   lc_spamaps;
@@ -55,19 +55,19 @@ void silofs_lcache_drop(struct silofs_lcache *lcache);
 
 
 struct silofs_unode_info *
-silofs_lcache_lookup_ui(struct silofs_lcache *lcache,
-                        const struct silofs_uaddr *uaddr);
+silofs_lcache_lookup_uni(struct silofs_lcache *lcache,
+                         const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
-silofs_lcache_create_ui(struct silofs_lcache *lcache,
-                        const struct silofs_ulink *ulink);
+silofs_lcache_create_uni(struct silofs_lcache *lcache,
+                         const struct silofs_ulink *ulink);
 
-void silofs_lcache_forget_ui(struct silofs_lcache *lcache,
-                             struct silofs_unode_info *ui);
+void silofs_lcache_forget_uni(struct silofs_lcache *lcache,
+                              struct silofs_unode_info *uni);
 
 struct silofs_unode_info *
-silofs_lcache_find_ui_by(struct silofs_lcache *lcache,
-                         const struct silofs_uakey *uakey);
+silofs_lcache_find_uni_by(struct silofs_lcache *lcache,
+                          const struct silofs_uakey *uakey);
 
 void silofs_lcache_drop_uamap(struct silofs_lcache *lcache);
 

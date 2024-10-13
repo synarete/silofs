@@ -33,14 +33,14 @@
 #define task_idsmap(t)                  silofs_task_idsmap(t)
 #define task_creds(t)                   silofs_task_creds(t)
 
-#define ui_incref(ui)                   silofs_ui_incref(ui)
-#define ui_decref(ui)                   silofs_ui_decref(ui)
-#define ui_dirtify(ui)                  silofs_ui_dirtify(ui)
-#define ui_ulink(ui)                    silofs_ui_ulink(ui)
-#define ui_uaddr(ui)                    silofs_ui_uaddr(ui)
-#define ui_laddr(ui)                    silofs_ui_laddr(ui)
-#define ui_ltype(ui)                    silofs_ui_ltype(ui)
-#define ui_riv(ui)                      silofs_ui_riv(ui)
+#define uni_incref(ui)                  silofs_uni_incref(ui)
+#define uni_decref(ui)                  silofs_uni_decref(ui)
+#define uni_dirtify(ui)                 silofs_uni_dirtify(ui)
+#define uni_ulink(ui)                   silofs_uni_ulink(ui)
+#define uni_uaddr(ui)                   silofs_uni_uaddr(ui)
+#define uni_laddr(ui)                   silofs_uni_laddr(ui)
+#define uni_ltype(ui)                   silofs_uni_ltype(ui)
+#define uni_riv(ui)                     silofs_uni_riv(ui)
 
 #define sbi_fsenv(sbi)                  silofs_sbi_fsenv(sbi)
 #define sbi_cache(sbi)                  silofs_sbi_cache(sbi)
@@ -123,27 +123,27 @@
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static inline const struct silofs_ulink *
-silofs_ui_ulink(const struct silofs_unode_info *ui)
+silofs_uni_ulink(const struct silofs_unode_info *uni)
 {
-	return &ui->u_ulink;
+	return &uni->un_ulink;
 }
 
 static inline const struct silofs_iv *
-silofs_ui_riv(const struct silofs_unode_info *ui)
+silofs_uni_riv(const struct silofs_unode_info *uni)
 {
-	return &ui->u_ulink.riv;
+	return &uni->un_ulink.riv;
 }
 
 static inline const struct silofs_uaddr *
-silofs_ui_uaddr(const struct silofs_unode_info *ui)
+silofs_uni_uaddr(const struct silofs_unode_info *uni)
 {
-	return &ui->u_ulink.uaddr;
+	return &uni->un_ulink.uaddr;
 }
 
 static inline const struct silofs_laddr *
-silofs_ui_laddr(const struct silofs_unode_info *ui)
+silofs_uni_laddr(const struct silofs_unode_info *uni)
 {
-	return &ui->u_ulink.uaddr.laddr;
+	return &uni->un_ulink.uaddr.laddr;
 }
 
 static inline
@@ -228,37 +228,37 @@ silofs_ii_fsenv(const struct silofs_inode_info *ii)
 static inline struct silofs_fsenv *
 silofs_sbi_fsenv(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_ui.u_lni.ln_fsenv;
+	return sbi->sb_uni.un_lni.ln_fsenv;
 }
 
 static inline const struct silofs_ulink *
 silofs_sbi_ulink(const struct silofs_sb_info *sbi)
 {
-	return silofs_ui_ulink(&sbi->sb_ui);
+	return silofs_uni_ulink(&sbi->sb_uni);
 }
 
 static inline const struct silofs_uaddr *
 silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 {
-	return silofs_ui_uaddr(&sbi->sb_ui);
+	return silofs_uni_uaddr(&sbi->sb_uni);
 }
 
 static inline const struct silofs_laddr *
 silofs_sbi_laddr(const struct silofs_sb_info *sbi)
 {
-	return silofs_ui_laddr(&sbi->sb_ui);
+	return silofs_uni_laddr(&sbi->sb_uni);
 }
 
 static inline const struct silofs_laddr *
 silofs_sni_laddr(const struct silofs_spnode_info *sni)
 {
-	return silofs_ui_laddr(&sni->sn_ui);
+	return silofs_uni_laddr(&sni->sn_uni);
 }
 
 static inline const struct silofs_laddr *
 silofs_sli_laddr(const struct silofs_spleaf_info *sli)
 {
-	return silofs_ui_laddr(&sli->sl_ui);
+	return silofs_uni_laddr(&sli->sl_uni);
 }
 
 #endif /* SILOFS_FS_PRIVATE_H_ */

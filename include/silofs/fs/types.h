@@ -128,8 +128,8 @@ struct silofs_iattr {
 	uid_t           ia_uid;
 	gid_t           ia_gid;
 	dev_t           ia_rdev;
-	loff_t          ia_size;
-	loff_t          ia_span;
+	ssize_t         ia_size;
+	ssize_t         ia_span;
 	blkcnt_t        ia_blocks;
 	struct silofs_itimes ia_t;
 };

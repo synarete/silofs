@@ -239,9 +239,9 @@ static size_t doff_to_slot(loff_t doff)
 	return slot;
 }
 
-static loff_t dtn_index_to_isize(silofs_dtn_index_t dtn_index_last)
+static ssize_t dtn_index_to_isize(silofs_dtn_index_t dtn_index_last)
 {
-	loff_t dir_isize;
+	ssize_t dir_isize;
 
 	if (dtn_index_isnull(dtn_index_last)) {
 		dir_isize = SILOFS_DIR_EMPTY_SIZE;
@@ -1556,20 +1556,30 @@ dirc_curr_node_index_of(const struct silofs_dir_ctx *d_ctx)
 	return doff_to_dtn_index(d_ctx->rd_ctx->pos);
 }
 
-static void
-dirc_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
-                        silofs_dtn_index_t dtn_index, bool new_node)
+static void dirc_update_isize(const struct silofs_dir_ctx *d_ctx, ssize_t sz)
 {
-	silofs_dtn_index_t last_dtn_index;
-	const long dif = new_node ? 1 : -1;
-	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	const struct silofs_creds *creds = task_creds(d_ctx->task);
+	silofs_ii_update_isize(d_ctx->dir_ii, task_creds(d_ctx->task), sz);
+}
 
-	dir_update_last_index(dir_ii, dtn_index, new_node);
+static void dirc_update_iblocks(const struct silofs_dir_ctx *d_ctx, int dif)
+{
+	silofs_ii_update_iblocks(d_ctx->dir_ii,
+	                         task_creds(d_ctx->task),
+	                         SILOFS_LTYPE_DTNODE, dif);
+}
+
+static void dirc_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
+                                    silofs_dtn_index_t dtn_index, bool newn)
+{
+	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
+	silofs_dtn_index_t last_dtn_index = 0;
+	const int dif = newn ? 1 : -1;
+
+	dir_update_last_index(dir_ii, dtn_index, newn);
 	last_dtn_index = dir_last_index(dir_ii);
 
-	ii_update_isize(dir_ii, creds, dtn_index_to_isize(last_dtn_index));
-	ii_update_iblocks(dir_ii, creds, SILOFS_LTYPE_DTNODE, dif);
+	dirc_update_isize(d_ctx, dtn_index_to_isize(last_dtn_index));
+	dirc_update_iblocks(d_ctx, dif);
 }
 
 static int dirc_spawn_setup_dnode(const struct silofs_dir_ctx *d_ctx,

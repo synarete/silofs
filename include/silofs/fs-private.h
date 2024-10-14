@@ -110,9 +110,6 @@
 #define ii_mkiattr(ii, ia)              silofs_ii_mkiattr(ii, ia)
 #define ii_update_itimes(ii, cr, f)     silofs_ii_update_itimes(ii, cr, f)
 #define ii_update_iattrs(ii, cr, a)     silofs_ii_update_iattrs(ii, cr, a)
-#define ii_update_isize(ii, cr, sz)     silofs_ii_update_isize(ii, cr, sz)
-#define ii_update_iblocks(ii, cr, vt, d) \
-	silofs_ii_update_iblocks(ii, cr, vt, d)
 
 #define uid_eq(uid1, uid2)              silofs_uid_eq(uid1, uid2)
 #define uid_isroot(uid)                 silofs_uid_isroot(uid)

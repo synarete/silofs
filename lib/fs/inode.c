@@ -1353,7 +1353,7 @@ void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
 }
 
 void silofs_ii_update_isize(struct silofs_inode_info *ii,
-                            const struct silofs_creds *creds, loff_t size)
+                            const struct silofs_creds *creds, ssize_t size)
 {
 	struct silofs_iattr iattr;
 

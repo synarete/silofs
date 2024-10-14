@@ -2299,12 +2299,12 @@ static void filc_update_tree_root(const struct silofs_file_ctx *f_ctx,
 	ii_dirtify(f_ctx->ii);
 }
 
-static void
-filc_update_iattr_blocks(const struct silofs_file_ctx *f_ctx,
-                         const struct silofs_vaddr *vaddr, long dif)
+static void filc_update_iblocks(const struct silofs_file_ctx *f_ctx,
+                                const struct silofs_vaddr *vaddr, long dif)
 {
-	ii_update_iblocks(f_ctx->ii, task_creds(f_ctx->task),
-	                  vaddr->ltype, dif);
+	silofs_ii_update_iblocks(f_ctx->ii,
+	                         task_creds(f_ctx->task),
+	                         vaddr->ltype, dif);
 }
 
 static int filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx,
@@ -2358,7 +2358,7 @@ static int filc_create_data_leaf(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	filc_update_iattr_blocks(f_ctx, out_vaddr, 1);
+	filc_update_iblocks(f_ctx, out_vaddr, 1);
 	return 0;
 }
 
@@ -2961,7 +2961,7 @@ static int filc_discard_data_leaf(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	filc_update_iattr_blocks(f_ctx, vaddr, -1);
+	filc_update_iblocks(f_ctx, vaddr, -1);
 	return 0;
 }
 
@@ -4397,7 +4397,7 @@ static int filc_share_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 		return err;
 	}
 	filc_rebind_child_by(f_ctx_dst, flref_dst, &flref_src->vaddr);
-	filc_update_iattr_blocks(f_ctx_dst, &flref_dst->vaddr, 1);
+	filc_update_iblocks(f_ctx_dst, &flref_dst->vaddr, 1);
 	return 0;
 }
 

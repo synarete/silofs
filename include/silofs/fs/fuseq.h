@@ -66,13 +66,13 @@ struct silofs_fuseq_dispatcher {
 } silofs_aligned64;
 
 struct silofs_fuseq_wset {
-	struct silofs_fuseq_worker      fq_worker[4];
+	struct silofs_fuseq_worker     *fq_workers;
 	uint32_t                        fq_nworkers_lim;
 	uint32_t                        fq_nworkers_run;
 };
 
 struct silofs_fuseq_dset {
-	struct silofs_fuseq_dispatcher  fq_disptch[4];
+	struct silofs_fuseq_dispatcher *fq_disptchs;
 	uint32_t                        fq_ndisptch_lim;
 	uint32_t                        fq_ndisptch_run;
 };

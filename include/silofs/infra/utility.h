@@ -72,7 +72,7 @@ static inline uint64_t silofs_max_u64(uint64_t x, uint64_t y)
 
 static inline uint32_t silofs_clamp_u32(uint32_t v, uint32_t lo, uint32_t hi)
 {
-	return silofs_max_u32(silofs_min_u32(v, lo), hi);
+	return silofs_min_u32(silofs_max_u32(v, lo), hi);
 }
 
 static inline uint64_t silofs_clamp_u64(uint64_t v, uint64_t lo, uint64_t hi)

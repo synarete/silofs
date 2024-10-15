@@ -76,6 +76,11 @@ static size_t align_down(size_t sz, size_t align)
 	return (sz / align) * align;
 }
 
+static uint64_t minu64(uint64_t x, uint64_t y, uint64_t z)
+{
+	return silofs_min(silofs_min(x, y), z);
+}
+
 static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 {
 	const size_t mem_floor = SILOFS_UGIGA / 4;
@@ -101,8 +106,8 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 	if (mem_rlim < mem_floor) {
 		return -SILOFS_ENOMEM;
 	}
-	mem_ceil = silofs_min3(mem_glim, mem_rlim, mem_total / 4);
-	mem_uget = silofs_clamp(mem_want, mem_floor, mem_ceil);
+	mem_ceil = minu64(mem_glim, mem_rlim, mem_total / 4);
+	mem_uget = silofs_clamp_u64(mem_want, mem_floor, mem_ceil);
 	*out_mem_size = align_down(mem_uget, 2 * SILOFS_UMEGA);
 	return 0;
 }

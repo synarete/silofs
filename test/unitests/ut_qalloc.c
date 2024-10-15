@@ -262,7 +262,7 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 	while (total < alst.nbytes_max) {
 		rem = alst.nbytes_max - total;
 		msz = sizeof(*mr) + (bk_size / 2) + (total % 10000);
-		msz = silofs_clamp(msz, (bk_size / 2) + 1, rem);
+		msz = silofs_clamp_u64(msz, (bk_size / 2) + 1, rem);
 
 		mr = mrecord_new(qal, msz);
 		silofs_list_push_back(&lst, &mr->link);
@@ -290,7 +290,7 @@ static void ut_qalloc_small_elems(struct ut_env *ute)
 	qal = ut_new_qalloc(ute, 256 * UT_1M);
 	for (size_t i = 0; i < 10000; ++i) {
 		val = (small_sz + i) % (small_sz / 2);
-		msz = silofs_clamp(val, sizeof(*mr), (small_sz / 2));
+		msz = silofs_clamp_u64(val, sizeof(*mr), (small_sz / 2));
 		mr = mrecord_new(qal, msz);
 		memset(mr->dat, (int)i, mr->dat_len);
 		silofs_list_push_back(&lst, &mr->link);
@@ -319,7 +319,7 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 256 * UT_1M);
 	for (val = 0; val < val_max; val += 100) {
-		msz = silofs_clamp(val, sizeof(*mr), 11 * bk_size);
+		msz = silofs_clamp_u64(val, sizeof(*mr), 11 * bk_size);
 		mr = mrecord_new(qal, msz);
 		silofs_list_push_back(&lst, &mr->link);
 
@@ -328,7 +328,7 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 		}
 
 		val2 = (val_max - val) / 2;
-		msz = silofs_clamp(val2, sizeof(*mr), 11 * bk_size);
+		msz = silofs_clamp_u64(val2, sizeof(*mr), 11 * bk_size);
 		mr = mrecord_new(qal, msz);
 		silofs_list_push_back(&lst, &mr->link);
 	}
@@ -485,4 +485,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_qalloc = UT_MKTESTS(ut_local_tests);
-

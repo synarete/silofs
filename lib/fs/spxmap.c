@@ -667,7 +667,7 @@ static bool uakey_isequal(const struct silofs_uakey *uakey1,
 static uint64_t uakey_hash(const struct silofs_uakey *uakey)
 {
 	const uint64_t off = (uint64_t)(uakey->voff);
-	const uint64_t nlz = silofs_clz64(off);
+	const uint64_t nlz = silofs_clz_u64(off);
 	uint64_t hval;
 
 	hval = off;

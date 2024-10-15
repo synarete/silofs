@@ -90,7 +90,8 @@ make_names_any_len(struct ut_env *ute, size_t cnt)
 	struct ut_namesarr *na = new_namesarr(ute, cnt);
 
 	for (size_t i = 0; i < na->cnt; ++i) {
-		size_t len = silofs_clamp(i % UT_NAME_MAX, 17, UT_NAME_MAX);
+		size_t len = silofs_clamp_u64(i % UT_NAME_MAX,
+		                              17, UT_NAME_MAX);
 
 		na->arr[i] = make_name(ute, (long)i + 1, len);
 	}

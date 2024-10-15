@@ -1714,12 +1714,12 @@ static bool fuseq_allowed_splice(const struct silofs_fuseq *fq)
 
 static bool fuseq_has_nactive_disptch(const struct silofs_fuseq *fq)
 {
-	return (fq->fq_ndisptch_run == fq->fq_ndisptch_lim);
+	return (fq->fq_ds.fq_ndisptch_run == fq->fq_ds.fq_ndisptch_lim);
 }
 
 static bool fuseq_is_nexecs_idle(struct silofs_fuseq *fq)
 {
-	const int ndisptch_run = fq->fq_ndisptch_run;
+	const int ndisptch_run = (int)(fq->fq_ds.fq_ndisptch_run);
 	bool ret;
 
 	fuseq_lock_ctl(fq);
@@ -1733,9 +1733,10 @@ static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n)
 	fuseq_lock_ctl(fq);
 	if (n > 0) {
 		fq->fq_nopers += n;
-		fq->fq_nexecs = max64(1, fq->fq_nexecs + n);
+		fq->fq_nexecs = silofs_max_i64(1, fq->fq_nexecs + n);
 	} else if (n < 0) {
-		fq->fq_nexecs = min64(fq->fq_ndisptch_run, fq->fq_nexecs + n);
+		fq->fq_nexecs = silofs_min_i64(fq->fq_ds.fq_ndisptch_run,
+		                               fq->fq_nexecs + n);
 	}
 	fuseq_unlock_ctl(fq);
 }
@@ -4308,16 +4309,18 @@ static bool fqw_try_join_thread(struct silofs_fuseq_worker *fqw)
 
 static void fuseq_init_thread_limits(struct silofs_fuseq *fq)
 {
-	const size_t nproc_lim = (size_t)silofs_sc_nproc_onln();
-	const size_t nworkers_lim = ARRAY_SIZE(fq->fq_worker);
-	const size_t ndisptch_lim = ARRAY_SIZE(fq->fq_disptch);
+	const uint32_t nproc_lim = (uint32_t)silofs_sc_nproc_onln();
+	const uint32_t nworkers_lim = ARRAY_SIZE(fq->fq_ws.fq_worker);
+	const uint32_t ndisptch_lim = ARRAY_SIZE(fq->fq_ds.fq_disptch);
 
-	STATICASSERT_GE(ARRAY_SIZE(fq->fq_disptch), 2);
+	STATICASSERT_GE(ARRAY_SIZE(fq->fq_ds.fq_disptch), 2);
 
-	fq->fq_nworkers_lim = (uint16_t)clamp(nproc_lim / 2, 1, nworkers_lim);
-	fq->fq_nworkers_run = 0;
-	fq->fq_ndisptch_lim = (uint16_t)clamp(nproc_lim / 2, 2, ndisptch_lim);
-	fq->fq_ndisptch_run = 0;
+	fq->fq_ws.fq_nworkers_lim = silofs_clamp_u32(nproc_lim / 2,
+	                            1, nworkers_lim);
+	fq->fq_ws.fq_nworkers_run = 0;
+	fq->fq_ds.fq_ndisptch_lim = silofs_clamp_u32(nproc_lim / 2,
+	                            2, ndisptch_lim);
+	fq->fq_ds.fq_ndisptch_run = 0;
 }
 
 
@@ -4334,8 +4337,8 @@ static int fuseq_update_dispatchers(struct silofs_fuseq *fq)
 		return 0;
 	}
 	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
-	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
-		fqd = &fq->fq_disptch[i];
+	for (size_t i = 0; i < fq->fq_ds.fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_ds.fq_disptch[i];
 		err = fqd_open_piper(fqd, pipesize);
 		if (err == -EPERM) {
 			goto can_not_splice;
@@ -4351,7 +4354,7 @@ can_not_splice:
 	/* can not have proper pipe size: fallback to buffer-only mode */
 	fuseq_log_dbg("disable splice mode: cnt=%zu", cnt);
 	for (size_t i = 0; i < cnt; ++i) {
-		fqd = &fq->fq_disptch[i];
+		fqd = &fq->fq_ds.fq_disptch[i];
 		fqd_close_piper(fqd);
 	}
 	fq->fq_may_splice = false;
@@ -4397,10 +4400,10 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
                               struct silofs_alloc *alloc)
 {
 	listq_init(&fq->fq_curr_opers);
-	fq->fq_nworkers_lim = 0;
-	fq->fq_nworkers_run = 0;
-	fq->fq_ndisptch_lim = 0;
-	fq->fq_ndisptch_run = 0;
+	fq->fq_ws.fq_nworkers_lim = 0;
+	fq->fq_ws.fq_nworkers_run = 0;
+	fq->fq_ds.fq_ndisptch_lim = 0;
+	fq->fq_ds.fq_ndisptch_run = 0;
 	fq->fq_fsenv = NULL;
 	fq->fq_alloc = alloc;
 	fq->fq_nopers = 0;
@@ -4423,8 +4426,8 @@ static int fuseq_init_workers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_worker *fqw = NULL;
 	int err;
 
-	for (uint32_t i = 0; i < fq->fq_nworkers_lim; ++i) {
-		fqw = &fq->fq_worker[i];
+	for (uint32_t i = 0; i < fq->fq_ws.fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_ws.fq_worker[i];
 		err = fqw_init(fqw, fq, i);
 		if (err) {
 			return err;
@@ -4437,8 +4440,8 @@ static void fuseq_fini_workers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_worker *fqw = NULL;
 
-	for (size_t i = 0; i < fq->fq_nworkers_lim; ++i) {
-		fqw = &fq->fq_worker[i];
+	for (size_t i = 0; i < fq->fq_ws.fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_ws.fq_worker[i];
 		fqw_fini(fqw);
 	}
 }
@@ -4448,8 +4451,8 @@ static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_dispatcher *fqd = NULL;
 	int err;
 
-	for (uint32_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
-		fqd = &fq->fq_disptch[i];
+	for (uint32_t i = 0; i < fq->fq_ds.fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_ds.fq_disptch[i];
 		err = fqd_init(fqd, fq, i);
 		if (err) {
 			return err;
@@ -4462,15 +4465,15 @@ static void fuseq_fini_dispatchers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_dispatcher *fqd = NULL;
 
-	for (uint32_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
-		fqd = &fq->fq_disptch[i];
+	for (uint32_t i = 0; i < fq->fq_ds.fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_ds.fq_disptch[i];
 		fqd_fini(fqd);
 	}
 }
 
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 {
-	const struct silofs_fuseq_dispatcher *fqd = &fq->fq_disptch[0];
+	const struct silofs_fuseq_dispatcher *fqd = &fq->fq_ds.fq_disptch[0];
 	const size_t inbuf_max = sizeof(*fqd->fqd_inb);
 	const size_t outbuf_max = sizeof(*fqd->fqd_outb);
 
@@ -4723,16 +4726,16 @@ static int fuseq_start_workers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_worker *fqw = NULL;
 	int err;
 
-	fuseq_log_dbg("start workers: lim=%zu", fq->fq_nworkers_lim);
-	fq->fq_nworkers_run = 0;
-	for (size_t i = 0; i < fq->fq_nworkers_lim; ++i) {
-		fqw = &fq->fq_worker[i];
+	fuseq_log_dbg("start workers: lim=%zu", fq->fq_ws.fq_nworkers_lim);
+	fq->fq_ws.fq_nworkers_run = 0;
+	for (size_t i = 0; i < fq->fq_ws.fq_nworkers_lim; ++i) {
+		fqw = &fq->fq_ws.fq_worker[i];
 		err = fqw_exec_thread(fqw);
 		if (err) {
 			return err;
 		}
 		silofs_sys_sched_yield();
-		fq->fq_nworkers_run++;
+		fq->fq_ws.fq_nworkers_run++;
 	}
 	return 0;
 }
@@ -4742,8 +4745,8 @@ static bool fuseq_join_workers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_worker *fqw = NULL;
 	size_t njoined = 0;
 
-	for (size_t i = 0; i < fq->fq_nworkers_run; ++i) {
-		fqw = &fq->fq_worker[i];
+	for (size_t i = 0; i < fq->fq_ws.fq_nworkers_run; ++i) {
+		fqw = &fq->fq_ws.fq_worker[i];
 		if (fqw->fqw_th.joined) {
 			njoined++;
 		} else if (fqw_try_join_thread(fqw)) {
@@ -4751,12 +4754,12 @@ static bool fuseq_join_workers(struct silofs_fuseq *fq)
 		}
 		silofs_sys_sched_yield();
 	}
-	return (njoined == fq->fq_nworkers_run);
+	return (njoined == fq->fq_ws.fq_nworkers_run);
 }
 
 static void fuseq_finish_workers(struct silofs_fuseq *fq)
 {
-	const size_t nworkers_run = fq->fq_nworkers_run;
+	const size_t nworkers_run = fq->fq_ws.fq_nworkers_run;
 	int retry = 30;
 
 	fuseq_log_dbg("finish workers: nworkers_run=%zu", nworkers_run);
@@ -4770,7 +4773,7 @@ static void fuseq_finish_workers(struct silofs_fuseq *fq)
 		silofs_panic("failed to join all worker threads: "
 		             "nworkers_run=%zu", nworkers_run);
 	}
-	fq->fq_nworkers_run = 0;
+	fq->fq_ws.fq_nworkers_run = 0;
 }
 
 static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
@@ -4778,16 +4781,16 @@ static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_dispatcher *fqd = NULL;
 	int err;
 
-	fuseq_log_dbg("start dispatchers: lim=%zu", fq->fq_ndisptch_lim);
-	fq->fq_ndisptch_run = 0;
-	for (size_t i = 0; i < fq->fq_ndisptch_lim; ++i) {
-		fqd = &fq->fq_disptch[i];
+	fuseq_log_dbg("start dispatchers: lim=%zu", fq->fq_ds.fq_ndisptch_lim);
+	fq->fq_ds.fq_ndisptch_run = 0;
+	for (size_t i = 0; i < fq->fq_ds.fq_ndisptch_lim; ++i) {
+		fqd = &fq->fq_ds.fq_disptch[i];
 		err = fqd_exec_thread(fqd);
 		if (err) {
 			return err;
 		}
 		silofs_sys_sched_yield();
-		fq->fq_ndisptch_run++;
+		fq->fq_ds.fq_ndisptch_run++;
 	}
 	return 0;
 }
@@ -4797,8 +4800,8 @@ static bool fuseq_join_dispatchers(struct silofs_fuseq *fq)
 	struct silofs_fuseq_dispatcher *fqd = NULL;
 	size_t njoined = 0;
 
-	for (size_t i = 0; i < fq->fq_ndisptch_run; ++i) {
-		fqd = &fq->fq_disptch[i];
+	for (size_t i = 0; i < fq->fq_ds.fq_ndisptch_run; ++i) {
+		fqd = &fq->fq_ds.fq_disptch[i];
 		if (fqd->fqd_th.joined) {
 			njoined++;
 		} else if (fqd_try_join_thread(fqd)) {
@@ -4806,12 +4809,12 @@ static bool fuseq_join_dispatchers(struct silofs_fuseq *fq)
 		}
 		silofs_sys_sched_yield();
 	}
-	return (njoined == fq->fq_ndisptch_run);
+	return (njoined == fq->fq_ds.fq_ndisptch_run);
 }
 
 static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
 {
-	const size_t ndisptch_run = fq->fq_ndisptch_run;
+	const size_t ndisptch_run = fq->fq_ds.fq_ndisptch_run;
 	int retry = 30;
 
 	fuseq_log_dbg("finish dispatchers: ndisptch_run=%zu", ndisptch_run);
@@ -4825,7 +4828,7 @@ static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
 		silofs_panic("failed to join all dispatchers threads: "
 		             "ndisptch_run=%zu", ndisptch_run);
 	}
-	fq->fq_ndisptch_run = 0;
+	fq->fq_ds.fq_ndisptch_run = 0;
 }
 
 static int fuseq_start_exec_threads(struct silofs_fuseq *fq)

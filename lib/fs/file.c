@@ -4655,7 +4655,7 @@ static int filc_set_copy_range_start(struct silofs_file_ctx *f_ctx_src,
 	if (f_ctx_dst->off < off_data_dst) {
 		skip_dst = off_len(f_ctx_dst->off, off_data_dst);
 	}
-	skip = min64(skip_src, skip_dst);
+	skip = silofs_min_i64(skip_src, skip_dst);
 	filc_advance_by_nbytes2(f_ctx_src, f_ctx_dst, skip);
 	return 0;
 }

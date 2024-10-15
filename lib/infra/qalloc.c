@@ -891,7 +891,7 @@ static size_t slab_size_to_nlz(size_t size)
 {
 	const size_t shift = QALLOC_SLAB_SHIFT_MIN;
 
-	return silofs_clz32(((uint32_t)size - 1) >> shift);
+	return silofs_clz_u32(((uint32_t)size - 1) >> shift);
 }
 
 static int32_t slab_size_to_sindex(size_t size)
@@ -1641,7 +1641,7 @@ static size_t alignment_of(size_t sz)
 	} else if (sz >= al_max) {
 		al = al_max;
 	} else {
-		al = 1 << (64 - silofs_clz64(sz - 1));
+		al = 1 << (64 - silofs_clz_u64(sz - 1));
 	}
 	return al;
 }

@@ -32,7 +32,7 @@
 /* Find last set bit in a non-zero 32-bit word */
 static unsigned fls32(uint32_t x)
 {
-	return 32 - (unsigned)silofs_clz32(x);
+	return 32 - (unsigned)silofs_clz_u32(x);
 }
 
 static long roundup_pow_of_two(long n)

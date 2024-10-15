@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 
-/* fuse-q machinery */
+/* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
 	size_t          pagesize;
 	size_t          buffsize;
@@ -65,9 +65,21 @@ struct silofs_fuseq_dispatcher {
 	bool                            fqd_init_ok;
 } silofs_aligned64;
 
-struct silofs_fuseq {
+struct silofs_fuseq_wset {
 	struct silofs_fuseq_worker      fq_worker[4];
+	uint32_t                        fq_nworkers_lim;
+	uint32_t                        fq_nworkers_run;
+};
+
+struct silofs_fuseq_dset {
 	struct silofs_fuseq_dispatcher  fq_disptch[4];
+	uint32_t                        fq_ndisptch_lim;
+	uint32_t                        fq_ndisptch_run;
+};
+
+struct silofs_fuseq {
+	struct silofs_fuseq_wset        fq_ws;
+	struct silofs_fuseq_dset        fq_ds;
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;
@@ -78,10 +90,6 @@ struct silofs_fuseq {
 	int64_t                         fq_nexecs;
 	int64_t                         fq_nopers;
 	uid_t                           fq_fs_owner;
-	uint16_t                        fq_nworkers_lim;
-	uint16_t                        fq_nworkers_run;
-	uint16_t                        fq_ndisptch_lim;
-	uint16_t                        fq_ndisptch_run;
 	volatile int                    fq_active;
 	volatile int                    fq_fuse_fd;
 	bool                            fq_init_locks;

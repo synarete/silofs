@@ -445,7 +445,7 @@ void silofs_muco_fini(struct silofs_muco *mocu)
 static void burnstack_recursively(int depth, int nbytes)
 {
 	char buf[512];
-	const int cnt = silofs_min32((int)sizeof(buf), nbytes);
+	const int cnt = silofs_min_i32((int)sizeof(buf), nbytes);
 
 	if (cnt > 0) {
 		memset(buf, 0xF4 ^ depth, (size_t)cnt);

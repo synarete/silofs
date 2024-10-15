@@ -20,39 +20,9 @@
 #include <silofs/macros.h>
 #include <stdint.h>
 
-static inline int32_t silofs_min32(int32_t x, int32_t y)
-{
-	return x < y ? x : y;
-}
-
-static inline int64_t silofs_min64(int64_t x, int64_t y)
-{
-	return x < y ? x : y;
-}
-
 static inline uint64_t silofs_min(uint64_t x, uint64_t y)
 {
 	return x < y ? x : y;
-}
-
-static inline uint64_t silofs_min3(uint64_t x, uint64_t y, uint64_t z)
-{
-	return silofs_min(silofs_min(x, y), z);
-}
-
-static inline int32_t silofs_max32(int32_t x, int32_t y)
-{
-	return x > y ? x : y;
-}
-
-static inline int32_t silofs_clamp32(int32_t x, int32_t x_min, int32_t x_max)
-{
-	return silofs_max32(silofs_min32(x, x_max), x_min);
-}
-
-static inline int64_t silofs_max64(int64_t x, int64_t y)
-{
-	return x > y ? x : y;
 }
 
 static inline uint64_t silofs_max(uint64_t x, uint64_t y)
@@ -60,27 +30,72 @@ static inline uint64_t silofs_max(uint64_t x, uint64_t y)
 	return x > y ? x : y;
 }
 
-static inline uint64_t silofs_clamp(uint64_t v, uint64_t lo, uint64_t hi)
+static inline int32_t silofs_min_i32(int32_t x, int32_t y)
 {
-	return silofs_min(silofs_max(v, lo), hi);
+	return x < y ? x : y;
 }
 
-static inline uint32_t silofs_clz32(uint32_t n)
+static inline int64_t silofs_min_i64(int64_t x, int64_t y)
+{
+	return x < y ? x : y;
+}
+
+static inline int32_t silofs_max_i32(int32_t x, int32_t y)
+{
+	return x > y ? x : y;
+}
+
+static inline int64_t silofs_max_i64(int64_t x, int64_t y)
+{
+	return x > y ? x : y;
+}
+
+static inline uint32_t silofs_min_u32(uint32_t x, uint32_t y)
+{
+	return x < y ? x : y;
+}
+
+static inline uint64_t silofs_min_u64(uint64_t x, uint64_t y)
+{
+	return x < y ? x : y;
+}
+
+static inline uint32_t silofs_max_u32(uint32_t x, uint32_t y)
+{
+	return x > y ? x : y;
+}
+
+static inline uint64_t silofs_max_u64(uint64_t x, uint64_t y)
+{
+	return x > y ? x : y;
+}
+
+static inline uint32_t silofs_clamp_u32(uint32_t v, uint32_t lo, uint32_t hi)
+{
+	return silofs_max_u32(silofs_min_u32(v, lo), hi);
+}
+
+static inline uint64_t silofs_clamp_u64(uint64_t v, uint64_t lo, uint64_t hi)
+{
+	return silofs_min_u64(silofs_max_u64(v, lo), hi);
+}
+
+static inline uint32_t silofs_clz_u32(uint32_t n)
 {
 	return n ? (uint32_t)__builtin_clz(n) : 32;
 }
 
-static inline uint32_t silofs_clz64(uint64_t n)
+static inline uint32_t silofs_clz_u64(uint64_t n)
 {
 	return n ? (uint32_t)__builtin_clzl(n) : 64;
 }
 
-static inline uint32_t silofs_popcount32(uint32_t n)
+static inline uint32_t silofs_popcount_u32(uint32_t n)
 {
 	return n ? (uint32_t)__builtin_popcount(n) : 0;
 }
 
-static inline uint32_t silofs_popcount64(uint64_t n)
+static inline uint32_t silofs_popcount_u64(uint64_t n)
 {
 	return n ? (uint32_t)__builtin_popcountl(n) : 0;
 }

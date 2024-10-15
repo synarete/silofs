@@ -375,7 +375,7 @@ static void bk_state_unset_mask(struct silofs_bk_state *bk_st,
 
 static size_t bk_state_popcount(const struct silofs_bk_state *bk_st)
 {
-	return silofs_popcount64(bk_st->state);
+	return silofs_popcount_u64(bk_st->state);
 }
 
 static void bk_state_xtoh(const struct silofs_bk_state *bk_st_le,

@@ -61,7 +61,7 @@ static uint64_t htbl_nslots_by_memsize(const struct silofs_alloc *alloc)
 	memsize_ngigs = al_st.nbytes_max / SILOFS_GIGA;
 
 	/* derive slots (buckets) factor based on available memory size */
-	nslots_factor = clamp(memsize_ngigs, 1, 64);
+	nslots_factor = silofs_clamp_u64(memsize_ngigs, 1, 64);
 
 	/* 4K hash-buckets for each available 1G of memory */
 	return (1UL << 12) * nslots_factor;
@@ -75,7 +75,7 @@ static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)
 	nslots = htbl_nslots_by_memsize(alloc);
 
 	/* abd clamp it to prime value */
-	nslots = htbl_prime_of(nslots * clamp(fac, 1, 10));
+	nslots = htbl_prime_of(nslots * silofs_clamp_u32(fac, 1, 10));
 
 	return nslots;
 }

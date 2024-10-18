@@ -132,7 +132,7 @@ class CmdShell(CmdExec):
         wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> None:
-        log.printsl(f"SH: {cmd}")
+        log.printsl(f"SH: {cmd} (wd={wdir})")
         ret = self.run(cmd, wdir, xenv)
         if ret != 0:
             raise CmdError("failed: " + cmd, ret=ret)

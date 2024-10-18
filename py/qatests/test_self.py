@@ -149,5 +149,5 @@ def _test_cicd(env: TestEnv) -> None:
 
 def _test_cicd_at(env: TestEnv, base: Path) -> None:
     cicd_dir = base / "cicd"
-    run_ci_sh = "./silofs-containerized-ci.sh"
-    env.cmd.sh.run_ok(run_ci_sh, cicd_dir)
+    env.cmd.sh.run_ok("./silofs-exec-cicd.sh", cicd_dir)
+    env.cmd.sh.run_ok("./silofs-post-cicd.sh", cicd_dir)

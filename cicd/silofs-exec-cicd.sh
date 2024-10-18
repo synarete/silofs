@@ -84,5 +84,3 @@ try rm -rf "${workdir}"
 # Goodby ;)
 msg "completed successfully for '${osflavor}'"
 exit 0
-
-

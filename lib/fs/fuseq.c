@@ -4453,6 +4453,8 @@ static void fuseq_fini_workers(struct silofs_fuseq *fq)
 	if (fq_workers == NULL) {
 		return;
 	}
+
+	silofs_assert_gt(fq->fq_ws.fq_nworkers_lim, 0);
 	for (size_t i = 0; i < fq->fq_ws.fq_nworkers_lim; ++i) {
 		fqw = &fq->fq_ws.fq_workers[i];
 		fqw_fini(fqw);
@@ -4504,7 +4506,7 @@ static void fuseq_fini_dispatchers(struct silofs_fuseq *fq)
 
 	msz = sizeof(*fq_disptchs) * fq->fq_ds.fq_ndisptch_lim;
 	silofs_memfree(fq->fq_alloc, fq_disptchs, msz, SILOFS_ALLOCF_TRYPUNCH);
-	fq->fq_ws.fq_workers = NULL;
+	fq->fq_ds.fq_disptchs = NULL;
 }
 
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
@@ -4672,6 +4674,7 @@ void silofs_fuseq_fini(struct silofs_fuseq *fq)
 
 	fuseq_fini_fuse_fd(fq);
 	fuseq_fini_dispatchers(fq);
+	fuseq_fini_workers(fq);
 	fuseq_fini_locks(fq);
 	listq_fini(&fq->fq_curr_opers);
 	fq->fq_alloc = NULL;

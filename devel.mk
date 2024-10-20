@@ -23,7 +23,7 @@
 # V=0|1            VERBOSE-MODE
 # CC=gcc|clang     COMPLIER
 # ANALYZER=0|1     ANALYZER-MODE
-# SANITIZER=0|1|2  SANITIZER-MODE
+# SANITIZER=0|1    SANITIZER-MODE
 # PREFIX =
 D ?= 1
 O ?= 0
@@ -185,25 +185,17 @@ endif
 endif
 
 # Sanitizer flags
+# (ASAN_OPTIONS=detect_leaks=1)
 ifeq ($(SANITIZER), 1)
+ifeq ($(CC), gcc)
 CFLAGS += -fsanitize=address
-CFLAGS += -fsanitize-address-use-after-scope
-CFLAGS += -fsanitize=pointer-overflow
-CFLAGS += -fsanitize=alignment
-CFLAGS += -fsanitize=bounds
-CFLAGS += -fsanitize=object-size
-CFLAGS += -fsanitize=null
 CFLAGS += -fsanitize=undefined
-CFLAGS += -fsanitize=float-divide-by-zero
-CFLAGS += -fsanitize=float-cast-overflow
-LDFLAGS += -fsanitize=address
-LDFLAGS += -fsanitize=undefined
-LDFLAGS += -static-libasan
+CFLAGS += -fsanitize=leak
+#LDFLAGS += -static-libasan
+endif
 ifeq ($(CC), clang)
-# TODO: with SANITIZER=2 enable those and disable '-fsanitize=address'
-# CFLAGS += -fsanitize=memory
-# CFLAGS += -fsanitize-memory-track-origins=2
-# LDFLAGS += -fsanitize=memory
+CFLAGS += -fsanitize=leak
+CFLAGS += -fsanitize=address
 endif
 endif
 
@@ -263,8 +255,8 @@ dist: check
 configure: bootstrap
 	$(call report, $@, $(CONFIGURE_OPTS))
 	@if [ ! -e $(BUILDDIR)/config.status ]; then \
-            cd $(BUILDDIR) && \
-            $(TOP)/configure $(CONFIGURE_OPTS) $(CONFIGURE_RE); fi
+	    cd $(BUILDDIR) && \
+	    $(TOP)/configure $(CONFIGURE_OPTS) $(CONFIGURE_RE); fi
 
 bootstrap:
 	$(call report, $@, $(BUILDDIR))

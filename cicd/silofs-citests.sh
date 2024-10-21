@@ -43,19 +43,27 @@ msg "run developer's checks"
 cd "${selfdir}"
 run tar xfz "${archive_tgz}"
 cd "${workdir}"
-msg "run unit-tests"
-run make -f devel.mk O=2
-run make -f devel.mk O=2 check
+msg "build default mode"
+run make -f devel.mk
 run make -f devel.mk reset
 msg "build with analyzer"
 run make -f devel.mk O=0 ANALYZER=1
 run make -f devel.mk reset
-msg "build with clang"
-run make -f devel.mk CC=clang O=2
+msg "run unit-tests"
+run make -f devel.mk check
 run make -f devel.mk reset
 msg "run clang-scan"
 run make -f devel.mk V=1 O=2 clangscan
 run make -f devel.mk reset
+
+###
+msg "run sanitizer check"
+run make -f devel.mk O=1 SANITIZER=1
+run env ASAN_OPTIONS=detect_leaks=1 \
+  "${unitestsdir}/silofs-unitests" "${unitestsdir}/ut" -M -l1
+run make -f devel.mk reset
+
+###
 msg "run valgrind check"
 run make -f devel.mk
 run valgrind --tool=memcheck --error-exitcode=1 \

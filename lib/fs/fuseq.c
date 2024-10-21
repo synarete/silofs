@@ -1628,7 +1628,6 @@ static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
 	fuseq_log_info("init: proto_major=%u proto_minor=%u",
 	               coni->proto_major, coni->proto_minor);
 	fuseq_log_info("init: want_cap=0x%x", coni->want_cap);
-	fuseq_log_info("init: pagesize=%zu", coni->pagesize);
 	fuseq_log_info("init: buffsize=%zu", coni->buffsize);
 	fuseq_log_info("init: max_write=%u", coni->max_write);
 	fuseq_log_info("init: max_read=%u", coni->max_read);
@@ -4404,6 +4403,7 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_ds.fq_ndisptch_lim = 0;
 	fq->fq_ds.fq_ndisptch_run = 0;
 	fq->fq_fsenv = NULL;
+	fq->fq_pagesize = (size_t)silofs_sc_page_size();
 	fq->fq_alloc = alloc;
 	fq->fq_nopers = 0;
 	fq->fq_nexecs = 0;
@@ -4420,6 +4420,22 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_fs_owner = (uid_t)(-1);
 }
 
+static size_t fuseq_subs_memsize(const struct silofs_fuseq *fq, bool workers)
+{
+	const size_t pagesize = fq->fq_pagesize;
+	size_t elemsz;
+	size_t nelems;
+
+	if (workers) {
+		elemsz = sizeof(fq->fq_ws.fq_workers[0]);
+		nelems = fq->fq_ws.fq_nworkers_lim;
+	} else {
+		elemsz = sizeof(fq->fq_ds.fq_disptchs[0]);
+		nelems = fq->fq_ds.fq_ndisptch_lim;
+	}
+	return div_round_up(elemsz * nelems, pagesize) * pagesize;
+}
+
 static int fuseq_init_workers(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_worker *fq_workers = NULL;
@@ -4427,7 +4443,7 @@ static int fuseq_init_workers(struct silofs_fuseq *fq)
 	size_t msz;
 	int err;
 
-	msz = sizeof(*fq_workers) * fq->fq_ws.fq_nworkers_lim;
+	msz = fuseq_subs_memsize(fq, true);
 	fq_workers = silofs_memalloc(fq->fq_alloc, msz, SILOFS_ALLOCF_BZERO);
 	if (fq_workers == NULL) {
 		return -SILOFS_ENOMEM;
@@ -4460,7 +4476,7 @@ static void fuseq_fini_workers(struct silofs_fuseq *fq)
 		fqw_fini(fqw);
 	}
 
-	msz = sizeof(*fq_workers) * fq->fq_ws.fq_nworkers_lim;
+	msz = fuseq_subs_memsize(fq, true);
 	silofs_memfree(fq->fq_alloc, fq_workers, msz, SILOFS_ALLOCF_TRYPUNCH);
 	fq->fq_ws.fq_workers = NULL;
 }
@@ -4472,7 +4488,7 @@ static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
 	size_t msz;
 	int err;
 
-	msz = sizeof(*fq_disptchs) * fq->fq_ds.fq_ndisptch_lim;
+	msz = fuseq_subs_memsize(fq, false);
 	fq_disptchs = silofs_memalloc(fq->fq_alloc, msz, SILOFS_ALLOCF_BZERO);
 	if (fq_disptchs == NULL) {
 		return -SILOFS_ENOMEM;
@@ -4504,7 +4520,7 @@ static void fuseq_fini_dispatchers(struct silofs_fuseq *fq)
 		fqd_fini(fqd);
 	}
 
-	msz = sizeof(*fq_disptchs) * fq->fq_ds.fq_ndisptch_lim;
+	msz = fuseq_subs_memsize(fq, false);
 	silofs_memfree(fq->fq_alloc, fq_disptchs, msz, SILOFS_ALLOCF_TRYPUNCH);
 	fq->fq_ds.fq_disptchs = NULL;
 }
@@ -4522,8 +4538,7 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 static int fuseq_resolve_bufsize(const struct silofs_fuseq *fq,
                                  size_t *out_bufsize)
 {
-	const struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	const size_t page_size = coni->pagesize;
+	const size_t page_size = fq->fq_pagesize;
 	size_t bufsize_min;
 	size_t bufsize_max;
 	size_t bufsize_may;
@@ -4560,7 +4575,7 @@ static int fuseq_resolve_bufsize(const struct silofs_fuseq *fq,
 static int fuseq_calc_max_write(const struct silofs_fuseq *fq,
                                 size_t bufsize, size_t *out_max_write)
 {
-	const size_t page_size = fq->fq_coni.pagesize;
+	const size_t page_size = fq->fq_pagesize;
 	const size_t hdr_size = sizeof(struct fuse_in_header);
 	const size_t write_in_size = sizeof(struct fuse_write_in);
 	size_t data_size;
@@ -4602,10 +4617,10 @@ static int fuseq_update_conn_info(struct silofs_fuseq *fq)
 	coni->buffsize = bufsize;
 	coni->max_write = (uint32_t)max_write;
 	coni->max_read = (uint32_t)max_write;
-	coni->max_readahead = (uint32_t)(bufsize - coni->pagesize);
+	coni->max_readahead = (uint32_t)(bufsize - fq->fq_pagesize);
 
 	/* logic from libfuse::fuse_lowlevel.c -- is it correct? */
-	max_pages = ((coni->max_write - 1) / coni->pagesize) + 1;
+	max_pages = ((coni->max_write - 1) / fq->fq_pagesize) + 1;
 	coni->max_pages = (uint32_t)min(max_pages, UINT16_MAX);
 
 	return 0;
@@ -4616,7 +4631,6 @@ static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
 
 	memset(coni, 0, sizeof(*coni));
-	coni->pagesize = (size_t)silofs_sc_page_size();
 	coni->proto_major = FUSE_KERNEL_VERSION;
 	coni->proto_minor = FUSE_KERNEL_MINOR_VERSION;
 	coni->time_gran = 1;

@@ -21,7 +21,6 @@
 
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
-	size_t          pagesize;
 	size_t          buffsize;
 	uint32_t        kern_proto_major;
 	uint32_t        kern_proto_minor;
@@ -87,6 +86,7 @@ struct silofs_fuseq {
 	struct silofs_fsenv            *fq_fsenv;
 	struct silofs_alloc            *fq_alloc;
 	struct silofs_listq             fq_curr_opers;
+	size_t                          fq_pagesize;
 	int64_t                         fq_nexecs;
 	int64_t                         fq_nopers;
 	uid_t                           fq_fs_owner;

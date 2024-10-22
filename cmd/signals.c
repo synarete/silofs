@@ -15,8 +15,17 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include <sys/signalfd.h>
 #include <signal.h>
 #include "cmd.h"
+
+
+/*
+ * TODO-0057: Use 'signalfd' system API
+ *
+ * Use the more modern 'signalfd' Linux API to monitor in-coming signals at
+ * run-time.
+ */
 
 static void (*silofs_signal_callback_hook)(int) = NULL;
 

@@ -4,7 +4,7 @@ AC_DEFUN([AX_SILOFS_CHECK_FUNCS],
     AC_MSG_ERROR([Unable to find function $1]))
 ])
 
-AC_DEFUN([AX_SILOFS_NEED_FUNCS],
+AC_DEFUN([AX_SILOFS_NEED_FUNCS1],
 [
   AC_FUNC_ERROR_AT_LINE
   AC_FUNC_MALLOC
@@ -25,6 +25,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([endpwent])
   AX_SILOFS_CHECK_FUNCS([fcntl])
   AX_SILOFS_CHECK_FUNCS([futimens])
+  AX_SILOFS_CHECK_FUNCS([get_current_dir_name])
   AX_SILOFS_CHECK_FUNCS([getentropy])
   AX_SILOFS_CHECK_FUNCS([getgrent])
   AX_SILOFS_CHECK_FUNCS([getgrnam])
@@ -32,6 +33,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([getgrouplist])
   AX_SILOFS_CHECK_FUNCS([getgroups])
   AX_SILOFS_CHECK_FUNCS([getline])
+  AX_SILOFS_CHECK_FUNCS([getloadavg])
   AX_SILOFS_CHECK_FUNCS([getlogin])
   AX_SILOFS_CHECK_FUNCS([getlogin_r])
   AX_SILOFS_CHECK_FUNCS([get_nprocs_conf])
@@ -61,16 +63,21 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([pwrite])
   AX_SILOFS_CHECK_FUNCS([pwritev])
   AX_SILOFS_CHECK_FUNCS([pwritev2])
+  AX_SILOFS_CHECK_FUNCS([readlinkat])
   AX_SILOFS_CHECK_FUNCS([renameat2])
+  AX_SILOFS_CHECK_FUNCS([sched_yield])
   AX_SILOFS_CHECK_FUNCS([select])
   AX_SILOFS_CHECK_FUNCS([setpwent])
+  AX_SILOFS_CHECK_FUNCS([signalfd])
   AX_SILOFS_CHECK_FUNCS([sigprocmask])
   AX_SILOFS_CHECK_FUNCS([splice])
   AX_SILOFS_CHECK_FUNCS([statx])
   AX_SILOFS_CHECK_FUNCS([strcasecmp])
   AX_SILOFS_CHECK_FUNCS([strdup])
   AX_SILOFS_CHECK_FUNCS([strrchr])
+  AX_SILOFS_CHECK_FUNCS([symlinkat])
   AX_SILOFS_CHECK_FUNCS([sysconf])
+  AX_SILOFS_CHECK_FUNCS([sysinfo])
   AX_SILOFS_CHECK_FUNCS([tcgetattr])
   AX_SILOFS_CHECK_FUNCS([tcsetattr])
   AX_SILOFS_CHECK_FUNCS([tzset])
@@ -80,11 +87,10 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([uuid_parse])
   AX_SILOFS_CHECK_FUNCS([vmsplice])
   AX_SILOFS_CHECK_FUNCS([waitpid])
-  AX_SILOFS_CHECK_FUNCS([symlinkat])
-  AX_SILOFS_CHECK_FUNCS([readlinkat])
-  AX_SILOFS_CHECK_FUNCS([renameat2])
-  AX_SILOFS_CHECK_FUNCS([get_current_dir_name])
-  AX_SILOFS_CHECK_FUNCS([sched_yield])
-  AX_SILOFS_CHECK_FUNCS([getloadavg])
-  AX_SILOFS_CHECK_FUNCS([sysinfo])
-])n
+])
+
+AC_DEFUN([AX_SILOFS_NEED_FUNCS],
+  [AX_SILOFS_NEED_FUNCS1 AX_SILOFS_NEED_FUNCS2])
+
+
+

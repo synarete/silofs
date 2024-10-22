@@ -147,6 +147,99 @@ static void bcache_remove(struct silofs_bcache *bcache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_puber_info *
+bcache_new_pui(const struct silofs_bcache *bcache,
+               const struct silofs_paddr *paddr)
+{
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+	silofs_assert_eq(paddr->off, 0);
+
+	return silofs_pui_new(paddr, bcache->bc_alloc);
+}
+
+static void bcache_del_pui(const struct silofs_bcache *bcache,
+                           struct silofs_puber_info *pui)
+{
+	silofs_pui_del(pui, bcache->bc_alloc);
+}
+
+struct silofs_puber_info *
+silofs_bcache_lookup_pui(struct silofs_bcache *bcache,
+                         const struct silofs_paddr *paddr)
+{
+	struct silofs_pnode_info *pni;
+
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+
+	pni = bcache_lookup(bcache, paddr);
+	return silofs_pui_from_pni(pni);
+}
+
+static struct silofs_puber_info *
+bcache_require_pui(struct silofs_bcache *bcache,
+                   const struct silofs_paddr *paddr)
+{
+	struct silofs_puber_info *pui = NULL;
+
+	for (size_t i = 0; i < RETRY_MAX; ++i) {
+		pui = bcache_new_pui(bcache, paddr);
+		if (pui != NULL) {
+			break;
+		}
+		bcache_evict_some(bcache, i + 1, false);
+	}
+	return pui;
+}
+
+static void bcache_bind_pui_dq(struct silofs_bcache *bcache,
+                               struct silofs_puber_info *pui)
+{
+	silofs_pui_set_dq(pui, &bcache->bc_dirtyq);
+}
+
+static void bcache_store_pui(struct silofs_bcache *bcache,
+                             struct silofs_puber_info *pui)
+{
+	bcache_store(bcache, &pui->pu_pni);
+}
+
+struct silofs_puber_info *
+silofs_bcache_create_pui(struct silofs_bcache *bcache,
+                         const struct silofs_paddr *paddr)
+{
+	struct silofs_puber_info *pui;
+
+	pui = bcache_require_pui(bcache, paddr);
+	if (pui != NULL) {
+		bcache_bind_pui_dq(bcache, pui);
+		bcache_store_pui(bcache, pui);
+	}
+	return pui;
+}
+
+static void bcache_remove_pui(struct silofs_bcache *bcache,
+                              struct silofs_puber_info *pui)
+{
+	bcache_remove(bcache, &pui->pu_pni);
+}
+
+static void bcache_forget_pui(struct silofs_bcache *bcache,
+                              struct silofs_puber_info *pui)
+{
+	pui_undirtify(pui);
+	bcache_remove_pui(bcache, pui);
+}
+
+void silofs_bcache_evict_pui(struct silofs_bcache *bcache,
+                             struct silofs_puber_info *pui)
+{
+	bcache_forget_pui(bcache, pui);
+	bcache_del_pui(bcache, pui);
+}
+
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_btnode_info *
 bcache_new_bti(const struct silofs_bcache *bcache,
                const struct silofs_paddr *paddr)
@@ -339,13 +432,15 @@ static void bcache_evict_by(struct silofs_bcache *bcache,
 	const enum silofs_ptype ptype = pni_ptype(pni);
 
 	switch (ptype) {
+	case SILOFS_PTYPE_UBER:
+		silofs_bcache_evict_pui(bcache, silofs_pui_from_pni(pni));
+		break;
 	case SILOFS_PTYPE_BTNODE:
 		silofs_bcache_evict_bti(bcache, silofs_bti_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTLEAF:
 		silofs_bcache_evict_bli(bcache, silofs_bli_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_UBER:
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:

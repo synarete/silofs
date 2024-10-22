@@ -215,15 +215,6 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
 	paddr->ptype = ptype;
 }
 
-void silofs_paddr_init_btn(struct silofs_paddr *paddr,
-                           const struct silofs_psid *psid, loff_t off)
-{
-	const enum silofs_ptype ptype = SILOFS_PTYPE_BTNODE;
-	const size_t len = SILOFS_BTREE_NODE_SIZE;
-
-	silofs_paddr_init(paddr, psid, ptype, off, len);
-}
-
 void silofs_paddr_fini(struct silofs_paddr *paddr)
 {
 	silofs_psid_reset(&paddr->psid);

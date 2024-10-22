@@ -19,6 +19,68 @@
 #include <silofs/ps.h>
 
 
+static void psu_setup_hdr(struct silofs_pseg_uber *psu)
+{
+	silofs_hdr_setup(&psu->psu_hdr, SILOFS_PTYPE_UBER,
+	                 sizeof(*psu), SILOFS_HDRF_PTYPE);
+}
+
+static void psu_set_id(struct silofs_pseg_uber *psu,
+                       const struct silofs_psid *psid)
+{
+	silofs_psid32b_htox(&psu->psu_id, psid);
+}
+
+static void psu_reset_id(struct silofs_pseg_uber *psu)
+{
+	silofs_memffff(&psu->psu_id, sizeof(psu->psu_id));
+}
+
+static void psu_init(struct silofs_pseg_uber *psu,
+                     const struct silofs_psid *psid)
+{
+	psu_setup_hdr(psu);
+	psu_set_id(psu, psid);
+}
+
+static void psu_fini(struct silofs_pseg_uber *psu)
+{
+	psu_reset_id(psu);
+}
+
+static struct silofs_pseg_uber *psu_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_pseg_uber *psu;
+
+	psu = silofs_memalloc(alloc, sizeof(*psu), SILOFS_ALLOCF_BZERO);
+	return psu;
+}
+
+static void psu_free(struct silofs_pseg_uber *psu, struct silofs_alloc *alloc)
+{
+	silofs_memfree(alloc, psu, sizeof(*psu), 0);
+}
+
+static struct silofs_pseg_uber *
+psu_new(struct silofs_alloc *alloc, const struct silofs_psid *psid)
+{
+	struct silofs_pseg_uber *psu;
+
+	psu = psu_malloc(alloc);
+	if (psu != NULL) {
+		psu_init(psu, psid);
+	}
+	return psu;
+}
+
+static void psu_del(struct silofs_pseg_uber *psu, struct silofs_alloc *alloc)
+{
+	psu_fini(psu);
+	psu_free(psu, alloc);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void btn_setup_hdr(struct silofs_btree_node *btn)
 {
 	silofs_hdr_setup(&btn->btn_hdr, SILOFS_PTYPE_BTNODE,
@@ -497,7 +559,7 @@ static bool pni_isdirty(const struct silofs_pnode_info *pni)
 	return silofs_dqe_is_dirty(pni_dqe2(pni));
 }
 
-static void pni_dirtify(struct silofs_pnode_info *pni)
+static void silofs_pni_dirtify(struct silofs_pnode_info *pni)
 {
 	if (!pni_isdirty(pni)) {
 		silofs_dqe_enqueue(pni_dqe(pni));
@@ -511,6 +573,108 @@ void silofs_pni_undirtify(struct silofs_pnode_info *pni)
 	}
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_puber_info *pui_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_puber_info *pui = NULL;
+
+	pui = silofs_memalloc(alloc, sizeof(*pui), 0);
+	return pui;
+}
+
+static void pui_free(struct silofs_puber_info *pui,
+                     struct silofs_alloc *alloc)
+{
+	silofs_memfree(alloc, pui, sizeof(*pui), 0);
+}
+
+static void pui_init(struct silofs_puber_info *pui,
+                     const struct silofs_paddr *paddr)
+{
+	silofs_assert(!silofs_paddr_isnull(paddr));
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+
+	pni_init(&pui->pu_pni, paddr);
+	pui->pu = NULL;
+}
+
+static void pui_fini(struct silofs_puber_info *pui)
+{
+	pni_fini(&pui->pu_pni);
+	pui->pu = NULL;
+}
+
+struct silofs_puber_info *
+silofs_pui_new(const struct silofs_paddr *paddr,
+               struct silofs_alloc *alloc)
+{
+	struct silofs_pseg_uber *psu = NULL;
+	struct silofs_puber_info *pui = NULL;
+
+	psu = psu_new(alloc, &paddr->psid);
+	if (psu == NULL) {
+		return NULL;
+	}
+	pui = pui_malloc(alloc);
+	if (pui == NULL) {
+		psu_del(psu, alloc);
+		return NULL;
+	}
+	pui_init(pui, paddr);
+	pui->pu = psu;
+	return pui;
+}
+
+void silofs_pui_del(struct silofs_puber_info *pui,
+                    struct silofs_alloc *alloc)
+{
+	struct silofs_pseg_uber *psu = pui->pu;
+
+	pui_fini(pui);
+	pui_free(pui, alloc);
+	psu_del(psu, alloc);
+}
+
+static struct silofs_puber_info *
+pui_unconst(const struct silofs_puber_info *p)
+{
+	union {
+		const struct silofs_puber_info *p;
+		struct silofs_puber_info *q;
+	} u = {
+		.p = p
+	};
+	return u.q;
+}
+
+struct silofs_puber_info *
+silofs_pui_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_puber_info *pui;
+
+	silofs_assert_not_null(pni);
+	silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_UBER);
+
+	pui = container_of2(pni, struct silofs_puber_info, pu_pni);
+	return pui_unconst(pui);
+}
+
+void silofs_pui_set_dq(struct silofs_puber_info *pui,
+                       struct silofs_dirtyq *dq)
+{
+	pni_set_dq(&pui->pu_pni, dq);
+}
+
+void silofs_pui_dirtify(struct silofs_puber_info *pui)
+{
+	silofs_pni_dirtify(&pui->pu_pni);
+}
+
+void silofs_pui_undirtify(struct silofs_puber_info *pui)
+{
+	silofs_pni_undirtify(&pui->pu_pni);
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -630,12 +794,12 @@ void silofs_bti_setapex(struct silofs_btnode_info *bti,
 
 void silofs_bti_dirtify(struct silofs_btnode_info *bti)
 {
-	pni_dirtify(&bti->bn_pni);
+	silofs_pni_dirtify(&bti->bn_pni);
 }
 
 void silofs_bti_undirtify(struct silofs_btnode_info *bti)
 {
-	pni_undirtify(&bti->bn_pni);
+	silofs_pni_undirtify(&bti->bn_pni);
 }
 
 static struct silofs_btnode_info *
@@ -655,10 +819,10 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 {
 	const struct silofs_btnode_info *bti = NULL;
 
-	if (pni != NULL) {
-		silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_BTNODE);
-		bti = container_of2(pni, struct silofs_btnode_info, bn_pni);
-	}
+	silofs_assert_not_null(pni);
+	silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_BTNODE);
+
+	bti = container_of2(pni, struct silofs_btnode_info, bn_pni);
 	return bti_unconst(bti);
 }
 
@@ -731,12 +895,12 @@ void silofs_bli_set_dq(struct silofs_btleaf_info *bli,
 
 void silofs_bli_dirtify(struct silofs_btleaf_info *bli)
 {
-	pni_dirtify(&bli->bl_pni);
+	silofs_pni_dirtify(&bli->bl_pni);
 }
 
 void silofs_bli_undirtify(struct silofs_btleaf_info *bli)
 {
-	pni_undirtify(&bli->bl_pni);
+	silofs_pni_undirtify(&bli->bl_pni);
 }
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
@@ -791,9 +955,9 @@ silofs_bli_from_pni(const struct silofs_pnode_info *pni)
 {
 	const struct silofs_btleaf_info *bli = NULL;
 
-	if (pni != NULL) {
-		silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_BTLEAF);
-		bli = container_of2(pni, struct silofs_btleaf_info, bl_pni);
-	}
+	silofs_assert_not_null(pni);
+	silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_BTLEAF);
+
+	bli = container_of2(pni, struct silofs_btleaf_info, bl_pni);
 	return bli_unconst(bli);
 }

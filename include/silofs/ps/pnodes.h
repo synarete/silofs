@@ -32,7 +32,7 @@ struct silofs_pnode_info {
 };
 
 /* pseg uber-node */
-struct silofs_psuber_info {
+struct silofs_puber_info {
 	struct silofs_pnode_info        pu_pni;
 	struct silofs_pseg_uber        *pu;
 };
@@ -55,6 +55,25 @@ struct silofs_btleaf_info {
 enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_undirtify(struct silofs_pnode_info *pni);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_puber_info *
+silofs_pui_new(const struct silofs_paddr *paddr,
+               struct silofs_alloc *alloc);
+
+void silofs_pui_del(struct silofs_puber_info *pui,
+                    struct silofs_alloc *alloc);
+
+struct silofs_puber_info *
+silofs_pui_from_pni(const struct silofs_pnode_info *pni);
+
+void silofs_pui_set_dq(struct silofs_puber_info *pui,
+                       struct silofs_dirtyq *dq);
+
+void silofs_pui_dirtify(struct silofs_puber_info *pui);
+
+void silofs_pui_undirtify(struct silofs_puber_info *pui);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

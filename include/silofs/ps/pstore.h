@@ -24,10 +24,15 @@
 #include <silofs/ps/bcache.h>
 
 
-struct silofs_pstate {
+struct silofs_pstsub {
 	struct silofs_psid beg;
 	struct silofs_psid cur;
 	loff_t cur_pos;
+};
+
+struct silofs_pstate {
+	struct silofs_pstsub meta;
+	struct silofs_pstsub data;
 };
 
 struct silofs_pstore {
@@ -46,7 +51,7 @@ void silofs_pstore_fini(struct silofs_pstore *pstore);
 
 int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
-int silofs_pstore_format_btree(struct silofs_pstore *pstore);
+int silofs_pstore_format(struct silofs_pstore *pstore);
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
 

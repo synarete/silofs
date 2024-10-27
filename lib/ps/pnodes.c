@@ -36,11 +36,29 @@ static void psu_reset_id(struct silofs_pseg_uber *psu)
 	silofs_memffff(&psu->psu_id, sizeof(psu->psu_id));
 }
 
+static enum silofs_pnodef psu_flags(const struct silofs_pseg_uber *psu)
+{
+	const uint32_t f = silofs_le32_to_cpu(psu->psu_flags);
+
+	return (enum silofs_pnodef)f;
+}
+
+static void psu_set_flags(struct silofs_pseg_uber *psu, enum silofs_pnodef f)
+{
+	psu->psu_flags = silofs_cpu_to_le32((uint32_t)f);
+}
+
+static void psu_add_flags(struct silofs_pseg_uber *psu, enum silofs_pnodef f)
+{
+	psu_set_flags(psu, f | psu_flags(psu));
+}
+
 static void psu_init(struct silofs_pseg_uber *psu,
                      const struct silofs_psid *psid)
 {
 	psu_setup_hdr(psu);
 	psu_set_id(psu, psid);
+	psu_set_flags(psu, SILOFS_PNODEF_NONE);
 }
 
 static void psu_fini(struct silofs_pseg_uber *psu)
@@ -87,19 +105,19 @@ static void btn_setup_hdr(struct silofs_btree_node *btn)
 	                 sizeof(*btn), SILOFS_HDRF_PTYPE);
 }
 
-static enum silofs_btreef btn_flags(const struct silofs_btree_node *btn)
+static enum silofs_pnodef btn_flags(const struct silofs_btree_node *btn)
 {
 	const uint32_t f = silofs_le32_to_cpu(btn->btn_flags);
 
-	return (enum silofs_btreef)f;
+	return (enum silofs_pnodef)f;
 }
 
-static void btn_set_flags(struct silofs_btree_node *btn, enum silofs_btreef f)
+static void btn_set_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
 {
 	btn->btn_flags = silofs_cpu_to_le32((uint32_t)f);
 }
 
-static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_btreef f)
+static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
 {
 	btn_set_flags(btn, f | btn_flags(btn));
 }
@@ -263,7 +281,7 @@ static void btn_insert_child(struct silofs_btree_node *btn, size_t slot,
 static void btn_init(struct silofs_btree_node *btn)
 {
 	btn_setup_hdr(btn);
-	btn_set_flags(btn, SILOFS_BTREEF_NONE);
+	btn_set_flags(btn, SILOFS_PNODEF_NONE);
 	btn_set_nkeys(btn, 0);
 	btn_set_nchilds(btn, 0);
 	btn_reset_childs(btn);
@@ -331,7 +349,7 @@ static void btl_setup_hdr(struct silofs_btree_leaf *btl)
 	                 sizeof(*btl), SILOFS_HDRF_PTYPE);
 }
 
-static void btl_set_flags(struct silofs_btree_leaf *btl, enum silofs_btreef f)
+static void btl_set_flags(struct silofs_btree_leaf *btl, enum silofs_pnodef f)
 {
 	btl->btl_flags = silofs_cpu_to_le32((uint32_t)f);
 }
@@ -474,7 +492,7 @@ static void btl_insert_ltop(struct silofs_btree_leaf *btl, size_t slot,
 static void btl_init(struct silofs_btree_leaf *btl)
 {
 	btl_setup_hdr(btl);
-	btl_set_flags(btl, SILOFS_BTREEF_NONE);
+	btl_set_flags(btl, SILOFS_PNODEF_NONE);
 	btl_set_nltops(btl, 0);
 	btl_reset_ltops(btl);
 }
@@ -666,6 +684,18 @@ void silofs_pui_set_dq(struct silofs_puber_info *pui,
 	pni_set_dq(&pui->pu_pni, dq);
 }
 
+void silofs_pui_mark_meta(struct silofs_puber_info *pui)
+{
+	psu_add_flags(pui->pu, SILOFS_PNODEF_META);
+	silofs_pui_dirtify(pui);
+}
+
+void silofs_pui_mark_data(struct silofs_puber_info *pui)
+{
+	psu_add_flags(pui->pu, SILOFS_PNODEF_DATA);
+	silofs_pui_dirtify(pui);
+}
+
 void silofs_pui_dirtify(struct silofs_puber_info *pui)
 {
 	silofs_pni_dirtify(&pui->pu_pni);
@@ -745,7 +775,7 @@ void silofs_bti_set_dq(struct silofs_btnode_info *bti,
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti)
 {
-	btn_add_flags(bti->bn, SILOFS_BTREEF_ROOT);
+	btn_add_flags(bti->bn, SILOFS_PNODEF_META | SILOFS_PNODEF_BTROOT);
 	silofs_bti_dirtify(bti);
 }
 

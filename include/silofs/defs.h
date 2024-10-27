@@ -1031,17 +1031,20 @@ enum silofs_ptype {
 	SILOFS_PTYPE_LAST, /* keep last */
 };
 
-/* btree nodes' flags */
-enum silofs_btreef {
-	SILOFS_BTREEF_NONE      = 0x00,
-	SILOFS_BTREEF_ROOT      = 0x01,
+/* persistent nodes' flags */
+enum silofs_pnodef {
+	SILOFS_PNODEF_NONE      = 0x00,
+	SILOFS_PNODEF_META      = 0x01,
+	SILOFS_PNODEF_DATA      = 0x02,
+	SILOFS_PNODEF_BTROOT    = 0x04,
 };
 
 
 /* persistent volume-segment uber node */
 struct silofs_pseg_uber {
 	struct silofs_header            psu_hdr;
-	uint8_t                         psu_reserved1[16];
+	uint32_t                        psu_flags;
+	uint8_t                         psu_reserved1[12];
 	struct silofs_psid32b           psu_id;
 	uint8_t                         psu_reserved2[4032];
 } silofs_packed_aligned64;

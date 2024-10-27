@@ -71,6 +71,10 @@ silofs_pui_from_pni(const struct silofs_pnode_info *pni);
 void silofs_pui_set_dq(struct silofs_puber_info *pui,
                        struct silofs_dirtyq *dq);
 
+void silofs_pui_mark_meta(struct silofs_puber_info *pui);
+
+void silofs_pui_mark_data(struct silofs_puber_info *pui);
+
 void silofs_pui_dirtify(struct silofs_puber_info *pui);
 
 void silofs_pui_undirtify(struct silofs_puber_info *pui);

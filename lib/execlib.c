@@ -1523,7 +1523,7 @@ int silofs_format_ps(struct silofs_fsenv *fsenv)
 	int ret;
 
 	silofs_fsenv_lock(fsenv);
-	ret = silofs_pstore_format_btree(fsenv->fse.pstore);
+	ret = silofs_pstore_format(fsenv->fse.pstore);
 	silofs_fsenv_unlock(fsenv);
 	return ret;
 }

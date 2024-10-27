@@ -19,63 +19,84 @@
 #include <silofs/ps.h>
 
 
-static void paddr_of_psu(struct silofs_paddr *paddr,
-                         const struct silofs_psid *psid, loff_t off)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void pstsub_init(struct silofs_pstsub *pstsub)
 {
-	silofs_paddr_init(paddr, psid, SILOFS_PTYPE_UBER,
-	                  off, SILOFS_PSEG_UBER_SIZE);
+	silofs_psid_setup(&pstsub->beg);
+	silofs_psid_assign(&pstsub->cur, &pstsub->beg);
+	pstsub->cur_pos = 0;
 }
 
-static void paddr_of_btn(struct silofs_paddr *paddr,
-                         const struct silofs_psid *psid, loff_t off)
+static void pstsub_fini(struct silofs_pstsub *pstsub)
 {
-	silofs_paddr_init(paddr, psid, SILOFS_PTYPE_BTNODE,
-	                  off, SILOFS_BTREE_NODE_SIZE);
+	silofs_psid_reset(&pstsub->beg);
+	silofs_psid_reset(&pstsub->cur);
+	pstsub->cur_pos = -1;
 }
 
-static loff_t paddr_next(const struct silofs_paddr *paddr)
+static void pstsub_cur_paddr(struct silofs_pstsub *pstsub,
+                             enum silofs_ptype ptype,
+                             struct silofs_paddr *out_paddr)
 {
-	return off_end(paddr->off, paddr->len);
+	const size_t len = silofs_ptype_size(ptype);
+
+	silofs_paddr_init(out_paddr, &pstsub->cur, ptype,
+	                  pstsub->cur_pos, len);
+}
+
+static void pstsub_advance_by(struct silofs_pstsub *pstsub,
+                              const struct silofs_paddr *paddr)
+{
+	pstsub->cur_pos = off_end(paddr->off, paddr->len);
+}
+
+static void pstsub_carve(struct silofs_pstsub *pstsub,
+                         enum silofs_ptype ptype,
+                         struct silofs_paddr *out_paddr)
+{
+	pstsub_cur_paddr(pstsub, ptype, out_paddr);
+	pstsub_advance_by(pstsub, out_paddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void pstate_init(struct silofs_pstate *pstate)
 {
-	silofs_psid_setup(&pstate->beg);
-	silofs_psid_assign(&pstate->cur, &pstate->beg);
-	pstate->cur_pos = 0;
+	pstsub_init(&pstate->data);
+	pstsub_init(&pstate->meta);
 }
 
 static void pstate_fini(struct silofs_pstate *pstate)
 {
-	silofs_psid_reset(&pstate->beg);
-	silofs_psid_reset(&pstate->cur);
-	pstate->cur_pos = -1;
+	pstsub_fini(&pstate->data);
+	pstsub_fini(&pstate->meta);
 }
 
-static void pstate_advance_by(struct silofs_pstate *pstate,
-                              const struct silofs_paddr *paddr)
+static struct silofs_pstsub *
+pstate_sub(struct silofs_pstate *pstate, bool meta)
 {
-	pstate->cur_pos = paddr_next(paddr);
+	return meta ? &pstate->meta : &pstate->data;
 }
 
-static void pstate_next_psu(struct silofs_pstate *pstate,
+static void pstate_next_psu(struct silofs_pstate *pstate, bool meta,
                             struct silofs_paddr *out_paddr)
 {
-	silofs_assert_eq(pstate->cur_pos, 0);
+	struct silofs_pstsub *pstsub = pstate_sub(pstate, meta);
 
-	paddr_of_psu(out_paddr, &pstate->cur, pstate->cur_pos);
-	pstate_advance_by(pstate, out_paddr);
+	silofs_assert_eq(pstsub->cur_pos, 0);
+
+	pstsub_carve(pstsub, SILOFS_PTYPE_UBER, out_paddr);
 }
 
 static void pstate_next_btn(struct silofs_pstate *pstate,
                             struct silofs_paddr *out_paddr)
 {
-	silofs_assert_gt(pstate->cur_pos, 0);
+	struct silofs_pstsub *pstsub = pstate_sub(pstate, true);
 
-	paddr_of_btn(out_paddr, &pstate->cur, pstate->cur_pos);
-	pstate_advance_by(pstate, out_paddr);
+	silofs_assert_gt(pstsub->cur_pos, 0);
+
+	pstsub_carve(pstsub, SILOFS_PTYPE_BTNODE, out_paddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -130,20 +151,19 @@ static int pstore_spawn_cached_pui(struct silofs_pstore *pstore,
 }
 
 static int pstore_format_pseg_at(struct silofs_pstore *pstore,
-                                 const struct silofs_paddr *paddr)
+                                 const struct silofs_paddr *paddr,
+                                 struct silofs_puber_info **out_pui)
 {
-	struct silofs_puber_info *pui = NULL;
 	int err;
 
 	err = silofs_repo_create_pseg(pstore->repo, &paddr->psid);
 	if (err) {
 		return err;
 	}
-	err = pstore_spawn_cached_pui(pstore, paddr, &pui);
+	err = pstore_spawn_cached_pui(pstore, paddr, out_pui);
 	if (err) {
 		return err;
 	}
-	silofs_pui_dirtify(pui);
 	return 0;
 }
 
@@ -275,21 +295,42 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 static int pstore_format_meta_pseg(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
+	struct silofs_puber_info *pui = NULL;
 	int err;
 
-	pstate_next_psu(&pstore->pstate, &paddr);
-	err = pstore_format_pseg_at(pstore, &paddr);
+	pstate_next_psu(&pstore->pstate, true, &paddr);
+	err = pstore_format_pseg_at(pstore, &paddr, &pui);
 	if (err) {
 		return err;
 	}
+	silofs_pui_mark_meta(pui);
 	return 0;
 }
 
-int silofs_pstore_format_btree(struct silofs_pstore *pstore)
+static int pstore_format_data_pseg(struct silofs_pstore *pstore)
+{
+	struct silofs_paddr paddr;
+	struct silofs_puber_info *pui = NULL;
+	int err;
+
+	pstate_next_psu(&pstore->pstate, false, &paddr);
+	err = pstore_format_pseg_at(pstore, &paddr, &pui);
+	if (err) {
+		return err;
+	}
+	silofs_pui_mark_data(pui);
+	return 0;
+}
+
+int silofs_pstore_format(struct silofs_pstore *pstore)
 {
 	int err;
 
 	err = pstore_format_meta_pseg(pstore);
+	if (err) {
+		return err;
+	}
+	err = pstore_format_data_pseg(pstore);
 	if (err) {
 		return err;
 	}
@@ -317,16 +358,16 @@ static void pstore_drop_dirty(struct silofs_pstore *pstore)
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore)
 {
-	struct silofs_pnode_info *bni;
+	struct silofs_pnode_info *pni;
 	int err;
 
-	bni = pstore_dirtyq_front(pstore);
-	while (bni != NULL) {
-		err = pstore_commit_pnode(pstore, bni);
+	pni = pstore_dirtyq_front(pstore);
+	while (pni != NULL) {
+		err = pstore_commit_pnode(pstore, pni);
 		if (err) {
 			return err;
 		}
-		bni = pstore_dirtyq_front(pstore);
+		pni = pstore_dirtyq_front(pstore);
 	}
 	return 0;
 }

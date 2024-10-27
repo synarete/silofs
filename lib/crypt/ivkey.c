@@ -20,13 +20,47 @@
 #include <gcrypt.h>
 
 
+static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
+{
+	gcry_randomize(ptr, len, very_strong ?
+	               GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM);
+}
+
+/* add pseudo-randomness in case gcry_randomize is poor */
+static void xor_with_prandom(void *ptr, size_t len)
+{
+	uint64_t u[8];
+	struct timespec t[2];
+	uint64_t *itr = ptr;
+	const size_t ns = len / sizeof(*itr);
+	const size_t nu = ARRAY_SIZE(u);
+	uint64_t xx = *itr;
+
+	silofs_memzero(u, sizeof(u));
+	silofs_mclock_now(&t[0]);
+	silofs_rclock_now(&t[1]);
+
+	for (size_t i = 0; i < ns; ++i) {
+		u[i % nu] ^= silofs_twang_mix64(xx);
+		u[(i + 1) % nu] ^= (uint64_t)t[0].tv_sec + i;
+		u[(i + 2) % nu] ^= (uint64_t)t[0].tv_nsec + i;
+		u[(i + 3) % nu] ^= ~xx;
+		u[(i + 4) % nu] ^= (uint64_t)t[1].tv_sec - i;
+		u[(i + 5) % nu] ^= (uint64_t)t[1].tv_nsec - i;
+		u[(i + 6) % nu] ^= i;
+
+		xx = silofs_hash_xxh64(u, sizeof(u), xx);
+		*itr++ ^= xx;
+	}
+}
+
 static void randomize(void *ptr, size_t len, bool very_strong)
 {
-	const enum gcry_random_level random_level =
-	        very_strong ? GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM;
-
-	gcry_randomize(ptr, len, random_level);
+	randomize_by_gcry(ptr, len, very_strong);
+	xor_with_prandom(ptr, len);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_iv_reset(struct silofs_iv *iv)
 {
@@ -78,17 +112,17 @@ void silofs_iv_xor_with2(struct silofs_iv *iv,
 
 void silofs_iv_mkrand(struct silofs_iv *iv)
 {
-	randomize(iv->iv, sizeof(iv->iv), false);
+	silofs_gen_random_ivs(iv, 1);
 }
 
-void silofs_gen_random_iv(struct silofs_iv *iv)
+static void randomize_ivs(struct silofs_iv *ivs, size_t nivs)
 {
-	silofs_gen_random_ivs(iv, 1);
+	randomize(ivs, nivs * sizeof(*ivs), false);
 }
 
 void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs)
 {
-	randomize(ivs, nivs * sizeof(*ivs), false);
+	randomize_ivs(ivs, nivs);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

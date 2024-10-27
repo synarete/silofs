@@ -31,9 +31,9 @@ struct silofs_ivkey {
 
 void silofs_iv_reset(struct silofs_iv *iv);
 
-void silofs_iv_mkrand(struct silofs_iv *iv);
-
 void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other);
+
+void silofs_iv_mkrand(struct silofs_iv *iv);
 
 bool silofs_iv_isequal(const struct silofs_iv *iv,
                        const struct silofs_iv *iv_other);

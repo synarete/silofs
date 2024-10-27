@@ -1049,7 +1049,7 @@ static void spleaf_renew_riv_of(struct silofs_spmap_leaf *spl, loff_t voff)
 {
 	struct silofs_iv riv;
 
-	silofs_gen_random_iv(&riv);
+	silofs_iv_mkrand(&riv);
 	spleaf_set_riv_of(spl, voff, &riv);
 }
 

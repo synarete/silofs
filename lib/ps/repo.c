@@ -2784,11 +2784,8 @@ static void repo_cobj_subdir_of(const struct silofs_repo *repo,
                                 const struct silofs_caddr *caddr,
                                 struct silofs_strbuf *out_sbuf)
 {
-	const uint32_t u = silofs_caddr_to_u32(caddr);
-	const uint32_t i = u % repo->re_defs->re_objs_nsubs;
-
-	silofs_strbuf_sprintf(out_sbuf, "%s/%02x",
-	                      repo->re_defs->re_objs_name, (int)i);
+	silofs_unused(caddr);
+	silofs_strbuf_setup_by(out_sbuf, repo->re_defs->re_blobs_name);
 }
 
 static void repo_cobj_pathname_of(const struct silofs_repo *repo,

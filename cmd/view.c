@@ -199,14 +199,9 @@ static void cmd_view_poke_fs(struct cmd_view_ctx *ctx)
 	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_view_boot_fs(struct cmd_view_ctx *ctx)
-{
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
-}
-
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv);
+	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
@@ -281,9 +276,6 @@ void cmd_execute_view(void)
 
 	/* Require valid boot-record */
 	cmd_view_poke_fs(&ctx);
-
-	/* Require boot-able file-system */
-	cmd_view_boot_fs(&ctx);
 
 	/* Open file-system */
 	cmd_view_open_fs(&ctx);

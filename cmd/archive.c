@@ -207,14 +207,9 @@ static void cmd_archive_poke_fs(struct cmd_archive_ctx *ctx)
 	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_archive_boot_fs(struct cmd_archive_ctx *ctx)
-{
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
-}
-
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv);
+	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
@@ -273,9 +268,6 @@ void cmd_execute_archive(void)
 
 	/* Require valid boot-record */
 	cmd_archive_poke_fs(&ctx);
-
-	/* Require boot-able file-system */
-	cmd_archive_boot_fs(&ctx);
 
 	/* Open file-system */
 	cmd_archive_open_fs(&ctx);

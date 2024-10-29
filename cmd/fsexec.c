@@ -205,17 +205,13 @@ void cmd_close_fs(struct silofs_fsenv *fsenv)
 	cmd_require_ok(fsenv, err, "failed to close fs");
 }
 
-void cmd_boot_fs(struct silofs_fsenv *fsenv, const struct silofs_fs_bref *bref)
+void cmd_open_fs(struct silofs_fsenv *fsenv,
+                 const struct silofs_fs_bref *bref)
 {
 	int err;
 
 	err = silofs_boot_fs(fsenv, &bref->caddr);
 	cmd_require_ok(fsenv, err, "failed to boot fs");
-}
-
-void cmd_open_fs(struct silofs_fsenv *fsenv)
-{
-	int err;
 
 	err = silofs_open_fs(fsenv);
 	cmd_require_ok(fsenv, err, "failed to open fs");

@@ -286,10 +286,8 @@ void cmd_poke_fs(struct silofs_fsenv *fsenv,
 void cmd_poke_archive(struct silofs_fsenv *fsenv,
                       const struct silofs_fs_bref *bref);
 
-void cmd_boot_fs(struct silofs_fsenv *fsenv,
+void cmd_open_fs(struct silofs_fsenv *fsenv,
                  const struct silofs_fs_bref *bref);
-
-void cmd_open_fs(struct silofs_fsenv *fsenv);
 
 void cmd_exec_fs(struct silofs_fsenv *fsenv);
 

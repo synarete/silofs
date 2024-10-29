@@ -182,14 +182,9 @@ static void cmd_fsck_poke_fs(struct cmd_fsck_ctx *ctx)
 	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_fsck_boot_fs(struct cmd_fsck_ctx *ctx)
-{
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
-}
-
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv);
+	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
@@ -247,9 +242,6 @@ void cmd_execute_fsck(void)
 
 	/* Require source boot-record */
 	cmd_fsck_poke_fs(&ctx);
-
-	/* Require boot + lock-able file-system */
-	cmd_fsck_boot_fs(&ctx);
 
 	/* Open file-system */
 	cmd_fsck_open_fs(&ctx);

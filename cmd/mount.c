@@ -401,9 +401,9 @@ static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
 	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_mount_boot_fs(struct cmd_mount_ctx *ctx)
+static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -513,11 +513,6 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 	}
 }
 
-static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
-{
-	cmd_open_fs(ctx->fsenv);
-}
-
 /*
  * Trace global setting to user. When running as daemon on systemd-based
  * environments, users should use the following command to inspect silofs's
@@ -597,7 +592,7 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	cmd_mount_poke_fs(ctx);
 
 	/* Require boot + lock-able file-system */
-	cmd_mount_boot_fs(ctx);
+	cmd_mount_open_fs(ctx);
 
 	/* Flush-close file-system */
 	cmd_mount_close_fs(ctx);
@@ -631,9 +626,6 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 
 	/* Re-load and verify boot-record  */
 	cmd_mount_poke_fs(ctx);
-
-	/* Re-boot and lock file-system */
-	cmd_mount_boot_fs(ctx);
 
 	/* Open-load file-system meta-data */
 	cmd_mount_open_fs(ctx);

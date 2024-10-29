@@ -317,14 +317,9 @@ static void cmd_snap_poke_fs(struct cmd_snap_ctx *ctx)
 	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
-static void cmd_snap_boot_fs(struct cmd_snap_ctx *ctx)
-{
-	cmd_boot_fs(ctx->fsenv, &ctx->fs_args.bref);
-}
-
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv);
+	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
 }
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
@@ -372,9 +367,6 @@ static void cmd_snap_online(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_offline(struct cmd_snap_ctx *ctx)
 {
-	/* Boot and lock file-system */
-	cmd_snap_boot_fs(ctx);
-
 	/* Open file-system */
 	cmd_snap_open_fs(ctx);
 

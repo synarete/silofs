@@ -165,10 +165,9 @@ void cmd_close_repo(struct silofs_fsenv *fsenv)
 void cmd_poke_fs(struct silofs_fsenv *fsenv,
                  const struct silofs_fs_bref *bref)
 {
-	struct silofs_bootrec brec;
 	int err;
 
-	err = silofs_poke_fs(fsenv, &bref->caddr, &brec);
+	err = silofs_poke_fs(fsenv, &bref->caddr);
 	cmd_require_ok(fsenv, err, "can not poke fs");
 }
 
@@ -210,10 +209,7 @@ void cmd_open_fs(struct silofs_fsenv *fsenv,
 {
 	int err;
 
-	err = silofs_boot_fs(fsenv, &bref->caddr);
-	cmd_require_ok(fsenv, err, "failed to boot fs");
-
-	err = silofs_open_fs(fsenv);
+	err = silofs_open_fs(fsenv, &bref->caddr);
 	cmd_require_ok(fsenv, err, "failed to open fs");
 }
 

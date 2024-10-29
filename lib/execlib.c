@@ -1673,8 +1673,8 @@ static int reload_root_lseg(struct silofs_fsenv *fsenv,
 	return silofs_fsenv_reload_sb_lseg(fsenv);
 }
 
-static int do_boot_fs(struct silofs_fsenv *fsenv,
-                      const struct silofs_caddr *caddr)
+static int boot_fs(struct silofs_fsenv *fsenv,
+                   const struct silofs_caddr *caddr)
 {
 	struct silofs_bootrec brec;
 	int err;
@@ -1690,21 +1690,15 @@ static int do_boot_fs(struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-int silofs_boot_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *caddr)
-{
-	int ret;
-
-	silofs_fsenv_lock(fsenv);
-	ret = do_boot_fs(fsenv, caddr);
-	silofs_fsenv_unlock(fsenv);
-	return ret;
-}
-
-static int do_open_fs(struct silofs_fsenv *fsenv)
+static int do_open_fs(struct silofs_fsenv *fsenv,
+                      const struct silofs_caddr *caddr)
 {
 	int err;
 
+	err = boot_fs(fsenv, caddr);
+	if (err) {
+		return err;
+	}
 	err = reload_super(fsenv);
 	if (err) {
 		return err;
@@ -1724,12 +1718,13 @@ static int do_open_fs(struct silofs_fsenv *fsenv)
 	return 0;
 }
 
-int silofs_open_fs(struct silofs_fsenv *fsenv)
+int silofs_open_fs(struct silofs_fsenv *fsenv,
+                   const struct silofs_caddr *caddr)
 {
 	int ret;
 
 	silofs_fsenv_lock(fsenv);
-	ret = do_open_fs(fsenv);
+	ret = do_open_fs(fsenv, caddr);
 	silofs_fsenv_unlock(fsenv);
 	return ret;
 }
@@ -1769,13 +1764,13 @@ int silofs_close_fs(struct silofs_fsenv *fsenv)
 }
 
 int silofs_poke_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *caddr,
-                   struct silofs_bootrec *out_brec)
+                   const struct silofs_caddr *caddr)
 {
+	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
 	silofs_fsenv_lock(fsenv);
-	err = reload_bootrec(fsenv, caddr, out_brec);
+	err = reload_bootrec(fsenv, caddr, &brec);
 	silofs_fsenv_unlock(fsenv);
 	return err;
 }

@@ -1991,10 +1991,7 @@ void ut_open_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_boot_fs(ute->fsenv, &ute->boot_ref[0]);
-	ut_expect_ok(err);
-
-	err = silofs_open_fs(ute->fsenv);
+	err = silofs_open_fs(ute->fsenv, &ute->boot_ref[0]);
 	ut_expect_ok(err);
 }
 
@@ -2002,10 +1999,7 @@ void ut_open_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_boot_fs(ute->fsenv, &ute->boot_ref[1]);
-	ut_expect_ok(err);
-
-	err = silofs_open_fs(ute->fsenv);
+	err = silofs_open_fs(ute->fsenv, &ute->boot_ref[1]);
 	ut_expect_ok(err);
 }
 

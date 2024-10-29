@@ -21,9 +21,11 @@
 #include <silofs/addr.h>
 #include <silofs/fs/types.h>
 
-
+struct silofs_task;
 struct silofs_visitor;
 struct silofs_walk_iter;
+struct silofs_sb_info;
+struct silofs_spnode_info;
 
 typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
                                const struct silofs_walk_iter *wit);

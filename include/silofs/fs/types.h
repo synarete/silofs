@@ -44,12 +44,6 @@ struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_listxattr_ctx;
 
-/* stage operation control flags */
-enum silofs_stg_mode {
-	SILOFS_STG_CUR          = SILOFS_BIT(0), /* stage current (normal) */
-	SILOFS_STG_COW          = SILOFS_BIT(1), /* copy-on-write */
-	SILOFS_STG_RAW          = SILOFS_BIT(2), /* not-set-yet */
-};
 
 /* inode's attributes masks */
 enum silofs_iattr_flags {

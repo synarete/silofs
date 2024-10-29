@@ -21,6 +21,7 @@
 #include <silofs/addr.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/stats.h>
+#include <silofs/fs/walk.h>
 
 
 int silofs_init_lib(void);
@@ -43,14 +44,11 @@ int silofs_format_ps(struct silofs_fsenv *fsenv);
 int silofs_format_fs(struct silofs_fsenv *fsenv,
                      struct silofs_caddr *out_caddr);
 
-int silofs_boot_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *boot_ref);
-
-int silofs_open_fs(struct silofs_fsenv *fsenv);
-
 int silofs_poke_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *caddr,
-                   struct silofs_bootrec *out_brec);
+                   const struct silofs_caddr *caddr);
+
+int silofs_open_fs(struct silofs_fsenv *fsenv,
+                   const struct silofs_caddr *caddr);
 
 int silofs_close_fs(struct silofs_fsenv *fsenv);
 

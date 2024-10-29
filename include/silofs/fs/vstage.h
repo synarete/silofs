@@ -19,6 +19,24 @@
 
 #include <silofs/infra.h>
 
+struct silofs_vaddr;
+struct silofs_llink;
+struct silofs_task;
+struct silofs_spnode_info;
+struct silofs_spleaf_info;
+struct silofs_vnode_info;
+struct silofs_inode_info;
+
+
+/* stage operation control flags */
+enum silofs_stg_mode {
+	SILOFS_STG_CUR          = SILOFS_BIT(0), /* stage current (normal) */
+	SILOFS_STG_COW          = SILOFS_BIT(1), /* copy-on-write */
+	SILOFS_STG_RAW          = SILOFS_BIT(2), /* not-set-yet */
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_stage_spmaps_of(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stg_mode stg_mode,

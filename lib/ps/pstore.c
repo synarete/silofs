@@ -231,36 +231,6 @@ static int pstore_require_pseg_of(struct silofs_pstore *pstore,
 	return silofs_repo_stage_pseg(pstore->repo, &paddr->psid);
 }
 
-static int pstore_commit_pnode(struct silofs_pstore *pstore,
-                               struct silofs_pnode_info *pni)
-{
-	const enum silofs_ptype ptype = pni_ptype(pni);
-	int ret = -SILOFS_EINVAL;
-
-	switch (ptype) {
-	case SILOFS_PTYPE_UBER:
-		ret = pstore_commit_puber(pstore, silofs_pui_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_BTNODE:
-		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_BTLEAF:
-	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_DATA:
-	case SILOFS_PTYPE_LAST:
-	default:
-		silofs_panic("bad commit: ptype=%d", (int)ptype);
-		break;
-	}
-	return ret;
-}
-
-static struct silofs_pnode_info *
-pstore_dirtyq_front(const struct silofs_pstore *pstore)
-{
-	return silofs_bcache_dq_front(&pstore->bcache);
-}
-
 static int pstore_create_btree_root_at(struct silofs_pstore *pstore,
                                        const struct silofs_paddr *paddr)
 {
@@ -343,6 +313,38 @@ int silofs_pstore_format(struct silofs_pstore *pstore)
 		return err;
 	}
 	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int pstore_commit_pnode(struct silofs_pstore *pstore,
+                               struct silofs_pnode_info *pni)
+{
+	const enum silofs_ptype ptype = pni_ptype(pni);
+	int ret = -SILOFS_EINVAL;
+
+	switch (ptype) {
+	case SILOFS_PTYPE_UBER:
+		ret = pstore_commit_puber(pstore, silofs_pui_from_pni(pni));
+		break;
+	case SILOFS_PTYPE_BTNODE:
+		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(pni));
+		break;
+	case SILOFS_PTYPE_BTLEAF:
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_DATA:
+	case SILOFS_PTYPE_LAST:
+	default:
+		silofs_panic("bad commit: ptype=%d", (int)ptype);
+		break;
+	}
+	return ret;
+}
+
+static struct silofs_pnode_info *
+pstore_dirtyq_front(const struct silofs_pstore *pstore)
+{
+	return silofs_bcache_dq_front(&pstore->bcache);
 }
 
 static void pstore_drop_dirty(struct silofs_pstore *pstore)

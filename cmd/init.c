@@ -179,11 +179,6 @@ static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)
 	cmd_format_repo(ctx->fsenv);
 }
 
-static void cmd_init_format_ps(struct cmd_init_ctx *ctx)
-{
-	cmd_format_ps(ctx->fsenv);
-}
-
 static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 {
 	cmd_close_repo(ctx->fsenv);
@@ -223,9 +218,6 @@ void cmd_execute_init(void)
 
 	/* Format repository layout */
 	cmd_init_format_repo(&ctx);
-
-	/* Format persistent-storage initial layout */
-	cmd_init_format_ps(&ctx);
 
 	/* Post-format cleanups */
 	cmd_init_close_repo(&ctx);

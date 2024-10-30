@@ -18,6 +18,7 @@
 #define SILOFS_THREAD_H_
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdbool.h>
 
 struct silofs_thread;
@@ -46,10 +47,8 @@ struct silofs_rwlock {
 	pthread_rwlock_t        rwlock;
 };
 
-struct silofs_muco {
-	struct silofs_cond      co;
-	struct silofs_mutex     mu;
-	long flags;
+struct silofs_sem {
+	sem_t sem;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -61,6 +60,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
 
 int silofs_thread_join(struct silofs_thread *th);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_mutex_init(struct silofs_mutex *mutex);
 
@@ -75,6 +75,7 @@ bool silofs_mutex_timedlock(struct silofs_mutex *mutex,
 
 void silofs_mutex_unlock(struct silofs_mutex *mutex);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_cond_init(struct silofs_cond *cond);
 
@@ -93,6 +94,7 @@ void silofs_cond_signal(struct silofs_cond *cond);
 
 void silofs_cond_broadcast(struct silofs_cond *cond);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_rwlock_init(struct silofs_rwlock *rwlock);
 
@@ -108,10 +110,19 @@ bool silofs_rwlock_trywrlock(struct silofs_rwlock *rwlock);
 
 void silofs_rwlock_unlock(struct silofs_rwlock *rwlock);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_muco_init(struct silofs_muco *muco);
+int silofs_sem_init(struct silofs_sem *sem);
 
-void silofs_muco_fini(struct silofs_muco *muco);
+void silofs_sem_fini(struct silofs_sem *sem);
+
+void silofs_sem_post(struct silofs_sem *sem);
+
+void silofs_sem_wait(struct silofs_sem *sem);
+
+bool silofs_sem_timedwait(struct silofs_sem *sem, const struct timespec *ts);
+
+bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

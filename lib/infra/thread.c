@@ -405,39 +405,81 @@ void silofs_rwlock_unlock(struct silofs_rwlock *rwlock)
 
 	err = pthread_rwlock_unlock(&rwlock->rwlock);
 	if (err) {
-		silofs_panic("silofs_rwlock_unlock: %d", err);
+		silofs_panic("pthread_rwlock_unlock: %d", err);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define SILOFS_MUCOF_INIT       (1L)
-
-int silofs_muco_init(struct silofs_muco *mocu)
+int silofs_sem_init(struct silofs_sem *sem)
 {
 	int err;
 
-	memset(mocu, 0, sizeof(*mocu));
-	err = silofs_cond_init(&mocu->co);
+	err = sem_init(&sem->sem, 0, 0);
 	if (err) {
-		return err;
+		err = -errno;
 	}
-	err = silofs_mutex_init(&mocu->mu);
-	if (err) {
-		silofs_cond_fini(&mocu->co);
-		return err;
-	}
-	mocu->flags |= SILOFS_MUCOF_INIT;
-	return 0;
+	return err;
 }
 
-void silofs_muco_fini(struct silofs_muco *mocu)
+void silofs_sem_fini(struct silofs_sem *sem)
 {
-	if (mocu->flags & SILOFS_MUCOF_INIT) {
-		silofs_mutex_fini(&mocu->mu);
-		silofs_cond_fini(&mocu->co);
-		mocu->flags &= ~SILOFS_MUCOF_INIT;
+	int err;
+
+	err = sem_destroy(&sem->sem);
+	if (err) {
+		err = -errno;
+		silofs_panic("sem_destroy: %d", err);
 	}
+}
+
+void silofs_sem_post(struct silofs_sem *sem)
+{
+	int err;
+
+	err = sem_post(&sem->sem);
+	if (err) {
+		err = -errno;
+		silofs_panic("sem_post: %d", err);
+	}
+}
+
+void silofs_sem_wait(struct silofs_sem *sem)
+{
+	int err;
+
+	while ((err = sem_wait(&sem->sem)) != 0) {
+		err = -errno;
+		if (err != -EINTR) {
+			silofs_panic("sem_wait: %d", err);
+		}
+	}
+}
+
+bool silofs_sem_timedwait(struct silofs_sem *sem, const struct timespec *ts)
+{
+	int err;
+
+	while ((err = sem_timedwait(&sem->sem, ts)) != 0) {
+		err = -errno;
+		if (err == -ETIMEDOUT) {
+			return false;
+		}
+		if (err != -EINTR) {
+			silofs_panic("sem_timedwait: %d", err);
+		}
+	}
+	return true;
+}
+
+bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec)
+{
+	struct timespec ts;
+
+	silofs_rclock_now(&ts);
+	ts.tv_sec += nsec;
+
+	return silofs_sem_timedwait(sem, &ts);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

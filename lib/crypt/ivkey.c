@@ -26,28 +26,32 @@ static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 	               GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM);
 }
 
-/* add pseudo-randomness in case gcry_randomize is poor */
+/* add pseudo-randomness as protection from poor gcry_randomize */
 static void xor_with_prandom(void *ptr, size_t len)
 {
-	uint64_t u[8];
-	struct timespec t[2];
+	uint64_t u[6];
 	uint64_t *itr = ptr;
+	uint64_t xx = *itr;
 	const size_t ns = len / sizeof(*itr);
 	const size_t nu = ARRAY_SIZE(u);
-	uint64_t xx = *itr;
+	struct timespec t;
+	pid_t tid;
 
 	silofs_memzero(u, sizeof(u));
-	silofs_mclock_now(&t[0]);
-	silofs_rclock_now(&t[1]);
+	silofs_mclock_now(&t);
+	u[0] = (uint64_t)t.tv_sec;
+	u[1] = (uint64_t)t.tv_nsec;
+	silofs_rclock_now(&t);
+	u[2] = (uint64_t)t.tv_sec;
+	u[3] = (uint64_t)t.tv_nsec;
+	tid = gettid();
+	u[4] = (uint64_t)tid;
 
-	for (size_t i = 0; i < ns; ++i) {
-		u[i % nu] ^= silofs_twang_mix64(xx);
-		u[(i + 1) % nu] ^= (uint64_t)t[0].tv_sec + i;
-		u[(i + 2) % nu] ^= (uint64_t)t[0].tv_nsec + i;
-		u[(i + 3) % nu] ^= ~xx;
-		u[(i + 4) % nu] ^= (uint64_t)t[1].tv_sec - i;
-		u[(i + 5) % nu] ^= (uint64_t)t[1].tv_nsec - i;
-		u[(i + 6) % nu] ^= i;
+	for (uint32_t i = 0; i < ns; ++i) {
+		u[(i + 1) % nu] ^= silofs_twang_mix64(xx);
+		u[(i + 2) % nu] ^= xx / (i | 1);
+		u[(i + 3) % nu] ^= ~xx + i;
+		u[(i + 4) % nu] ^= silofs_lrotate64(xx, i % 61);
 
 		xx = silofs_hash_xxh64(u, sizeof(u), xx);
 		*itr++ ^= xx;

@@ -35,6 +35,7 @@ struct silofs_bootpath {
 struct silofs_bootrec {
 	struct silofs_uuid              uuid;
 	struct silofs_ivkey             main_ivkey;
+	struct silofs_pvid              meta_pvid;
 	struct silofs_ulink             sb_ulink;
 	enum silofs_bootf               flags;
 	int32_t cipher_algo;

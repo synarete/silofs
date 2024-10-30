@@ -223,9 +223,10 @@ static void bootrec1k_set_sb_riv(struct silofs_bootrec1k *brec1k,
 }
 
 static void bootrec1k_main_ivkey(const struct silofs_bootrec1k *brec1k,
-                                 struct silofs_ivkey *ivkey)
+                                 struct silofs_ivkey *out_ivkey)
 {
-	silofs_ivkey_setup(ivkey, &brec1k->br_main_key, &brec1k->br_main_iv);
+	silofs_ivkey_setup(out_ivkey, &brec1k->br_main_key,
+	                   &brec1k->br_main_iv);
 }
 
 static void bootrec1k_set_main_ivkey(struct silofs_bootrec1k *brec1k,
@@ -233,6 +234,18 @@ static void bootrec1k_set_main_ivkey(struct silofs_bootrec1k *brec1k,
 {
 	silofs_key_assign(&brec1k->br_main_key, &ivkey->key);
 	silofs_iv_assign(&brec1k->br_main_iv, &ivkey->iv);
+}
+
+static void bootrec1k_meta_pvid(const struct silofs_bootrec1k *brec1k,
+                                struct silofs_pvid *out_pvid)
+{
+	silofs_pvid_assign(out_pvid, &brec1k->br_meta_pvid);
+}
+
+static void bootrec1k_set_meta_pvid(struct silofs_bootrec1k *brec1k,
+                                    const struct silofs_pvid *pvid)
+{
+	silofs_pvid_assign(&brec1k->br_meta_pvid, pvid);
 }
 
 static int bootrec1k_check_base(const struct silofs_bootrec1k *brec1k)
@@ -381,6 +394,7 @@ void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
 	brec->flags = bootrec1k_flags(brec1k);
 	bootrec1k_uuid(brec1k, &brec->uuid);
 	bootrec1k_main_ivkey(brec1k, &brec->main_ivkey);
+	bootrec1k_meta_pvid(brec1k, &brec->meta_pvid);
 	brec->cipher_algo = (int32_t)bootrec1k_chiper_algo(brec1k);
 	brec->cipher_mode = (int32_t)bootrec1k_chiper_mode(brec1k);
 }
@@ -394,6 +408,7 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
 	bootrec1k_set_flags(brec1k, brec->flags);
 	bootrec1k_set_uuid(brec1k, &brec->uuid);
 	bootrec1k_set_main_ivkey(brec1k, &brec->main_ivkey);
+	bootrec1k_set_meta_pvid(brec1k, &brec->meta_pvid);
 	bootrec1k_set_cipher(brec1k, brec->cipher_algo, brec->cipher_mode);
 }
 
@@ -424,6 +439,7 @@ void silofs_bootrec_assign(struct silofs_bootrec *brec,
 {
 	silofs_uuid_assign(&brec->uuid, &other->uuid);
 	silofs_ivkey_assign(&brec->main_ivkey, &other->main_ivkey);
+	silofs_pvid_assign(&brec->meta_pvid, &other->meta_pvid);
 	silofs_ulink_assign(&brec->sb_ulink, &other->sb_ulink);
 	brec->flags = other->flags;
 	brec->cipher_algo = other->cipher_algo;

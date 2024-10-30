@@ -33,6 +33,7 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([pthread.h])
   AX_SILOFS_NEED_HEADER([pwd.h])
   AX_SILOFS_NEED_HEADER([sched.h])
+  AX_SILOFS_NEED_HEADER([semaphore.h])
   AX_SILOFS_NEED_HEADER([stdbool.h])
   AX_SILOFS_NEED_HEADER([stddef.h])
   AX_SILOFS_NEED_HEADER([stdint.h])
@@ -116,4 +117,3 @@ AC_DEFUN([AX_SILOFS_WANT_LIBS],
       [Use libtcmalloc for heap memory leak detection])
   ])
 ])
-

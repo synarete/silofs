@@ -4325,7 +4325,7 @@ static bool fuseq_has_live_opers(const struct silofs_fuseq *fq)
 
 static bool fuseq_is_active(const struct silofs_fuseq *fq)
 {
-	return (fq->fq_active > 0) || (fq->fq_curr_opers.sz > 0);
+	return (fq->fq_active > 0);
 }
 
 static void fuseq_set_active(struct silofs_fuseq *fq)
@@ -4339,6 +4339,7 @@ static void fuseq_set_non_active(struct silofs_fuseq *fq)
 {
 	if (fq->fq_active > 0) {
 		fq->fq_active = 0;
+		silofs_sem_post(&fq->fq_sem);
 	}
 }
 
@@ -4394,25 +4395,32 @@ static int fuseq_init_locks(struct silofs_fuseq *fq)
 {
 	int err;
 
-	err = silofs_mutex_init(&fq->fq_ch_lock);
+	err = silofs_sem_init(&fq->fq_sem);
 	if (err) {
 		return err;
 	}
-	err = silofs_mutex_init(&fq->fq_op_lock);
+	err = silofs_mutex_init(&fq->fq_ch_lock);
 	if (err) {
 		goto out_err1;
 	}
-	err = silofs_mutex_init(&fq->fq_ctl_lock);
+	err = silofs_mutex_init(&fq->fq_op_lock);
 	if (err) {
 		goto out_err2;
+	}
+	err = silofs_mutex_init(&fq->fq_ctl_lock);
+	if (err) {
+		goto out_err3;
 	}
 	fq->fq_init_locks = true;
 	return 0;
 
-out_err2:
+
+out_err3:
 	silofs_mutex_fini(&fq->fq_op_lock);
-out_err1:
+out_err2:
 	silofs_mutex_fini(&fq->fq_ch_lock);
+out_err1:
+	silofs_sem_fini(&fq->fq_sem);
 	return err;
 }
 
@@ -4422,6 +4430,7 @@ static void fuseq_fini_locks(struct silofs_fuseq *fq)
 		silofs_mutex_fini(&fq->fq_ctl_lock);
 		silofs_mutex_fini(&fq->fq_op_lock);
 		silofs_mutex_fini(&fq->fq_ch_lock);
+		silofs_sem_fini(&fq->fq_sem);
 	}
 }
 
@@ -4938,20 +4947,20 @@ static void fuseq_finish_exec_threads(struct silofs_fuseq *fq)
 	fuseq_finish_workers(fq);
 }
 
-static void fuseq_suspend_while_active(const struct silofs_fuseq *fq)
+static void fuseq_suspend_while_active(struct silofs_fuseq *fq)
 {
-	bool active = fuseq_is_active(fq);
-	bool hasops = fuseq_has_live_opers(fq);
+	bool active, hasops;
 
-	while (active || hasops) {
+	do {
+		active = fuseq_is_active(fq);
+		hasops = fuseq_has_live_opers(fq);
+
 		if (active) {
-			silofs_suspend_secs(2);
-			active = fuseq_is_active(fq);
+			silofs_sem_ntimedwait(&fq->fq_sem, 10);
 		} else {
 			silofs_suspend_secs(1);
 		}
-		hasops = fuseq_has_live_opers(fq);
-	}
+	} while (active || hasops);
 }
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq)

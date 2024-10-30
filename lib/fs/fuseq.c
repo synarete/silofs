@@ -77,6 +77,10 @@ static bool fqd_has_large_read_in(const struct silofs_fuseq_dispatcher *fqd);
 static void fuseq_lock_ctl(struct silofs_fuseq *fq);
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq);
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n);
+static bool fuseq_has_live_opers(const struct silofs_fuseq *fq);
+static bool fuseq_is_active(const struct silofs_fuseq *fq);
+static void fuseq_set_active(struct silofs_fuseq *fq);
+static void fuseq_set_non_active(struct silofs_fuseq *fq);
 static int exec_op(struct silofs_task *task, struct silofs_oper_args *args);
 static const struct silofs_fuseq_cmd_desc *cmd_desc_of(unsigned int opc);
 
@@ -1677,7 +1681,7 @@ static int do_destroy(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	fuseq_lock_ctl(fcc->fq);
 	fcc->fq->fq_got_destroy = true;
-	fcc->fq->fq_active = 0;
+	fuseq_set_non_active(fcc->fq);
 	fuseq_unlock_ctl(fcc->fq);
 
 	return fqd_reply_status(fcc->fqd, fcc->task, 0);
@@ -3571,14 +3575,11 @@ static int fqd_copy_pipe_in(struct silofs_fuseq_dispatcher *fqd)
 	return 0;
 }
 
-static bool fuseq_is_active(const struct silofs_fuseq *fq)
+static bool fqd_has_exec_mode(const struct silofs_fuseq_dispatcher *fqd)
 {
-	return (fq->fq_active > 0) || (fq->fq_curr_opers.sz > 0);
-}
+	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
 
-static bool fqd_is_active_fuseq(const struct silofs_fuseq_dispatcher *fqd)
-{
-	return fuseq_is_active(fqd_fuseq(fqd));
+	return fuseq_is_active(fq) || fuseq_has_live_opers(fq);
 }
 
 static bool fqd_allowed_splice_in(const struct silofs_fuseq_dispatcher *fqd)
@@ -3590,7 +3591,7 @@ static int fqd_do_recv_in(struct silofs_fuseq_dispatcher *fqd, bool *out_spl)
 {
 	int err;
 
-	if (!fqd_is_active_fuseq(fqd)) {
+	if (!fqd_has_exec_mode(fqd)) {
 		return -SILOFS_ENORX;
 	}
 	err = fqd_wait_request(fqd);
@@ -3615,11 +3616,11 @@ static int fqd_recv_in_locked(struct silofs_fuseq_dispatcher *fqd)
 	if (err == -SILOFS_EINVAL) {
 		fuseq_log_err("unexpected input error: fuse_fd=%d err=%d",
 		              fqd_fuse_fd(fqd), err);
-		fq->fq_active = 0;
+		fuseq_set_non_active(fq);
 	} else if (err == -ENODEV) {
 		/* umount case: set non-active under channel-lock */
 		fuseq_log_info("input status: err=%d", err);
-		fq->fq_active = 0;
+		fuseq_set_non_active(fq);
 	}
 	fuseq_unlock_ch(fq);
 
@@ -3958,7 +3959,7 @@ static int fqd_recv_exec_request(struct silofs_fuseq_dispatcher *fqd)
 {
 	int err;
 
-	if (!fqd_is_active_fuseq(fqd)) {
+	if (!fqd_has_exec_mode(fqd)) {
 		return -SILOFS_ENORX;
 	}
 	err = fqd_recv_request(fqd);
@@ -4049,7 +4050,7 @@ static void fqd_deactivate_fuseq(struct silofs_fuseq_dispatcher *fqd)
 	struct silofs_fuseq *fq = fqd_fuseq2(fqd);
 
 	if (fq->fq_active) {
-		fq->fq_active = 0;
+		fuseq_set_non_active(fq);
 		fuseq_log_info("deactivated by: %s", fqd_thread_name(fqd));
 	}
 }
@@ -4108,7 +4109,7 @@ static int fqd_exec_loop(struct silofs_fuseq_dispatcher *fqd)
 {
 	int err = 0;
 
-	while (fqd_is_active_fuseq(fqd) && !err) {
+	while (fqd_has_exec_mode(fqd) && !err) {
 		err = fqd_exec_once(fqd);
 	}
 	if (err && (err != -ENODEV)) {
@@ -4258,12 +4259,18 @@ static void fqw_post_exec(const struct silofs_fuseq_worker *fqw)
 	silofs_suspend_ts(&ts);
 }
 
-static int fqw_exec_loop(struct silofs_fuseq_worker *fqw)
+static bool fqw_has_exec_mode(const struct silofs_fuseq_worker *fqw)
 {
 	const struct silofs_fuseq *fq = fqw_fuseq(fqw);
+
+	return fuseq_is_active(fq) || fuseq_has_live_opers(fq);
+}
+
+static int fqw_exec_loop(struct silofs_fuseq_worker *fqw)
+{
 	int err = 0;
 
-	while (fuseq_is_active(fq) && !err) {
+	while (fqw_has_exec_mode(fqw) && !err) {
 		err = fqw_exec_once(fqw);
 		fqw_post_exec(fqw);
 	}
@@ -4309,6 +4316,30 @@ static bool fqw_try_join_thread(struct silofs_fuseq_worker *fqw)
 static uint32_t clamp(uint32_t v, uint32_t lo, uint32_t hi)
 {
 	return silofs_clamp_u32(v, lo, hi);
+}
+
+static bool fuseq_has_live_opers(const struct silofs_fuseq *fq)
+{
+	return (fq->fq_curr_opers.sz > 0);
+}
+
+static bool fuseq_is_active(const struct silofs_fuseq *fq)
+{
+	return (fq->fq_active > 0) || (fq->fq_curr_opers.sz > 0);
+}
+
+static void fuseq_set_active(struct silofs_fuseq *fq)
+{
+	if (fq->fq_active <= 0) {
+		fq->fq_active = 1;
+	}
+}
+
+static void fuseq_set_non_active(struct silofs_fuseq *fq)
+{
+	if (fq->fq_active > 0) {
+		fq->fq_active = 0;
+	}
 }
 
 static void fuseq_init_thread_limits(struct silofs_fuseq *fq)
@@ -4888,7 +4919,7 @@ static int fuseq_start_exec_threads(struct silofs_fuseq *fq)
 {
 	int err;
 
-	fq->fq_active = 1;
+	fuseq_set_active(fq);
 	err = fuseq_start_workers(fq);
 	if (err) {
 		return err;
@@ -4902,15 +4933,24 @@ static int fuseq_start_exec_threads(struct silofs_fuseq *fq)
 
 static void fuseq_finish_exec_threads(struct silofs_fuseq *fq)
 {
-	fq->fq_active = 0;
+	fuseq_set_non_active(fq);
 	fuseq_finish_dispatchers(fq);
 	fuseq_finish_workers(fq);
 }
 
 static void fuseq_suspend_while_active(const struct silofs_fuseq *fq)
 {
-	while (fuseq_is_active(fq)) {
-		silofs_suspend_secs(1);
+	bool active = fuseq_is_active(fq);
+	bool hasops = fuseq_has_live_opers(fq);
+
+	while (active || hasops) {
+		if (active) {
+			silofs_suspend_secs(2);
+			active = fuseq_is_active(fq);
+		} else {
+			silofs_suspend_secs(1);
+		}
+		hasops = fuseq_has_live_opers(fq);
 	}
 }
 

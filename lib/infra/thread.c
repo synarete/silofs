@@ -448,7 +448,7 @@ void silofs_sem_wait(struct silofs_sem *sem)
 {
 	int err;
 
-	while ((err = sem_wait(&sem->sem)) != 0) {
+	while (sem_wait(&sem->sem) != 0) {
 		err = -errno;
 		if (err != -EINTR) {
 			silofs_panic("sem_wait: %d", err);
@@ -460,7 +460,7 @@ bool silofs_sem_timedwait(struct silofs_sem *sem, const struct timespec *ts)
 {
 	int err;
 
-	while ((err = sem_timedwait(&sem->sem, ts)) != 0) {
+	while (sem_timedwait(&sem->sem, ts) != 0) {
 		err = -errno;
 		if (err == -ETIMEDOUT) {
 			return false;

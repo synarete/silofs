@@ -465,6 +465,18 @@ void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec)
 	silofs_bootrec_set_ivkey(brec, &ivkey);
 }
 
+void silofs_bootrec_meta_pvid(const struct silofs_bootrec *brec,
+                              struct silofs_pvid *out_pvid)
+{
+	silofs_pvid_assign(out_pvid, &brec->meta_pvid);
+}
+
+void silofs_bootrec_set_meta_pvid(struct silofs_bootrec *brec,
+                                  const struct silofs_pvid *pvid)
+{
+	silofs_pvid_assign(&brec->meta_pvid, pvid);
+}
+
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink *out_ulink)
 {

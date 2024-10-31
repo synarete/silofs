@@ -44,10 +44,10 @@ def test_funtests(env: TestEnv) -> None:
     env.cmd.funtests.run(ff_root, rand=True)
     tds.do_read()
     tds.do_unlink()
+    env.exec_rmfs(ff_snap_name)
     env.remove_fstree(ff_pre_dname)
     env.remove_fstree(ff_dname)
-    env.exec_umount()
-    env.exec_rmfs(ff_snap_name)
+    env.exec_teardown_fs()
 
 
 def test_funtests_nosplice(env: TestEnv) -> None:
@@ -114,9 +114,9 @@ def test_funtests_mt(env: TestEnv) -> None:
     env.remove_fstree(ff_pre_dname)
     env.remove_fstree(ff_dname1)
     env.remove_fstree(ff_dname2)
-    env.exec_umount()
     env.exec_rmfs(ff_snap_name1)
     env.exec_rmfs(ff_snap_name2)
+    env.exec_teardown_fs()
 
 
 def _is_active_url(url: str) -> bool:

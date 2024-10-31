@@ -106,4 +106,4 @@ def test_async_io(env: TestEnv) -> None:
         fus.append(fui)
     for fui in fus:
         fui.result()
-    env.exec_umount()
+    env.exec_teardown_fs()

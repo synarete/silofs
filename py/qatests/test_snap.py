@@ -15,7 +15,7 @@ def test_snap_basic(env: TestEnv) -> None:
     tds.do_unlink()
     env.exec_rmfs("snap1")
     env.exec_rmfs("snap2")
-    env.exec_umount()
+    env.exec_teardown_fs()
 
 
 def test_snap_reload_twice(env: TestEnv) -> None:

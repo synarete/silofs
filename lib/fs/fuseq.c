@@ -4947,20 +4947,21 @@ static void fuseq_finish_exec_threads(struct silofs_fuseq *fq)
 	fuseq_finish_workers(fq);
 }
 
+static bool fuseq_ntimedwait(struct silofs_fuseq *fq, time_t nsecs)
+{
+	return silofs_sem_ntimedwait(&fq->fq_sem, nsecs);
+}
+
 static void fuseq_suspend_while_active(struct silofs_fuseq *fq)
 {
-	bool active, hasops;
+	bool active = fuseq_is_active(fq);
 
-	do {
-		active = fuseq_is_active(fq);
-		hasops = fuseq_has_live_opers(fq);
-
-		if (active) {
-			silofs_sem_ntimedwait(&fq->fq_sem, 10);
-		} else {
+	while (active || fuseq_has_live_opers(fq)) {
+		if (!active || !fuseq_ntimedwait(fq, 10)) {
 			silofs_suspend_secs(1);
 		}
-	} while (active || hasops);
+		active = fuseq_is_active(fq);
+	}
 }
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq)

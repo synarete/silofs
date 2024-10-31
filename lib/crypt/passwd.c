@@ -19,6 +19,8 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/crypt/passwd.h>
+#include <silofs/crypt/ivkey.h>
+#include <sys/sysinfo.h>
 
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
@@ -60,4 +62,26 @@ int silofs_password_check(const struct silofs_password *pw)
 		return -SILOFS_EINVAL;
 	}
 	return 0;
+}
+
+void silofs_password_mkrand(struct silofs_password *pw)
+{
+	union {
+		uint8_t d[128];
+		struct {
+			struct sysinfo si;
+			pid_t pid;
+			uid_t uid;
+		} s;
+	} u;
+
+	STATICASSERT_LT(sizeof(u), sizeof(pw->pass));
+
+	silofs_memzero(&u, sizeof(u));
+	sysinfo(&u.s.si);
+	u.s.pid = getpid();
+	u.s.uid = getuid();
+
+	silofs_prandomize_with(&u, sizeof(u));
+	silofs_password_setup2(pw, &u, sizeof(u));
 }

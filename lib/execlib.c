@@ -18,8 +18,6 @@
 #include <silofs/fs.h>
 #include <silofs/fs/fuseq.h>
 #include <silofs/execlib.h>
-#include <sys/sysinfo.h>
-#include <sys/time.h>
 
 #define ROUND_TO_4K(n)  SILOFS_ROUND_TO(n, (4 * SILOFS_KILO))
 
@@ -1008,37 +1006,12 @@ void silofs_stat_fs(const struct silofs_fsenv *fsenv,
  * Try to add some pseudo-randomness for the rare (yet, possible) case where
  * '/dev/urandom' does not provide good-enough random  bits stream.
  */
-static void make_prandom_password(struct silofs_password *out_pw)
-{
-	union {
-		uint8_t d[96];
-		struct {
-			struct sysinfo si;
-			pid_t pid;
-			struct timespec rts;
-			uid_t uid;
-			struct timespec mts;
-		} s;
-	} u;
-
-	STATICASSERT_GT(sizeof(out_pw->pass), sizeof(u));
-
-	silofs_memzero(&u, sizeof(u));
-	sysinfo(&u.s.si);
-	u.s.pid = getpid();
-	silofs_rclock_now(&u.s.rts);
-	u.s.uid = getuid();
-	silofs_mclock_now(&u.s.mts);
-
-	silofs_password_setup2(out_pw, &u, sizeof(u));
-}
-
 static void make_prandom_ivkey(const struct silofs_fsenv *fsenv,
                                struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_password pw = { .passlen = 0 };
 
-	make_prandom_password(&pw);
+	silofs_password_mkrand(&pw);
 	silofs_derive_boot_ivkey(&fsenv->fse_mdigest, &pw, out_ivkey);
 }
 

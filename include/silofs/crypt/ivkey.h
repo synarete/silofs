@@ -29,6 +29,10 @@ struct silofs_ivkey {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_prandomize_with(void *ptr, size_t len);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_iv_reset(struct silofs_iv *iv);
 
 void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other);

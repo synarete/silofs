@@ -27,7 +27,7 @@ static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 }
 
 /* add pseudo-randomness as protection from poor gcry_randomize */
-static void xor_with_prandom(void *ptr, size_t len)
+void silofs_prandomize_with(void *ptr, size_t len)
 {
 	uint64_t u[6];
 	uint64_t *itr = ptr;
@@ -61,7 +61,7 @@ static void xor_with_prandom(void *ptr, size_t len)
 static void randomize(void *ptr, size_t len, bool very_strong)
 {
 	randomize_by_gcry(ptr, len, very_strong);
-	xor_with_prandom(ptr, len);
+	silofs_prandomize_with(ptr, len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

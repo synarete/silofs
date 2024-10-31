@@ -24,15 +24,16 @@
 #include <silofs/ps/bcache.h>
 
 
-struct silofs_pstsub {
-	struct silofs_psid beg;
-	struct silofs_psid cur;
-	loff_t cur_pos;
+struct silofs_prange {
+	struct silofs_pvid pvid;
+	uint32_t beg_index;
+	uint32_t cur_index;
+	loff_t   cur_pos;
 };
 
 struct silofs_pstate {
-	struct silofs_pstsub meta;
-	struct silofs_pstsub data;
+	struct silofs_prange meta;
+	struct silofs_prange data;
 };
 
 struct silofs_pstore {

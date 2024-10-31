@@ -21,59 +21,67 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void pstsub_init(struct silofs_pstsub *pstsub)
+static void prange_init(struct silofs_prange *prange)
 {
-	silofs_psid_setup(&pstsub->beg);
-	silofs_psid_assign(&pstsub->cur, &pstsub->beg);
-	pstsub->cur_pos = 0;
+	silofs_pvid_generate(&prange->pvid);
+	prange->beg_index = 1;
+	prange->cur_index = 1;
+	prange->cur_pos = 0;
 }
 
-static void pstsub_fini(struct silofs_pstsub *pstsub)
+static void prange_fini(struct silofs_prange *prange)
 {
-	silofs_psid_reset(&pstsub->beg);
-	silofs_psid_reset(&pstsub->cur);
-	pstsub->cur_pos = -1;
+	prange->beg_index = 0;
+	prange->cur_index = 0;
+	prange->cur_pos = -1;
 }
 
-static void pstsub_cur_paddr(struct silofs_pstsub *pstsub,
+static void prange_cur_psid(const struct silofs_prange *prange,
+                            struct silofs_psid *out_psid)
+{
+	silofs_psid_init(out_psid, &prange->pvid, prange->cur_index);
+}
+
+static void prange_cur_paddr(struct silofs_prange *prange,
                              enum silofs_ptype ptype,
                              struct silofs_paddr *out_paddr)
 {
-	const size_t len = silofs_ptype_size(ptype);
+	struct silofs_psid psid;
 
-	silofs_paddr_init(out_paddr, &pstsub->cur, ptype,
-	                  pstsub->cur_pos, len);
+	prange_cur_psid(prange, &psid);
+	silofs_paddr_init(out_paddr, &psid, ptype,
+	                  prange->cur_pos, silofs_ptype_size(ptype));
 }
 
-static void pstsub_advance_by(struct silofs_pstsub *pstsub,
+static void prange_advance_by(struct silofs_prange *prange,
                               const struct silofs_paddr *paddr)
 {
-	pstsub->cur_pos = off_end(paddr->off, paddr->len);
+	prange->cur_pos = off_end(paddr->off, paddr->len);
 }
 
-static void pstsub_carve(struct silofs_pstsub *pstsub,
+static void prange_carve(struct silofs_prange *prange,
                          enum silofs_ptype ptype,
                          struct silofs_paddr *out_paddr)
 {
-	pstsub_cur_paddr(pstsub, ptype, out_paddr);
-	pstsub_advance_by(pstsub, out_paddr);
+	prange_cur_paddr(prange, ptype, out_paddr);
+	prange_advance_by(prange, out_paddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void pstate_init(struct silofs_pstate *pstate)
 {
-	pstsub_init(&pstate->data);
-	pstsub_init(&pstate->meta);
+	prange_init(&pstate->data);
+	prange_init(&pstate->meta);
 }
 
 static void pstate_fini(struct silofs_pstate *pstate)
 {
-	pstsub_fini(&pstate->data);
-	pstsub_fini(&pstate->meta);
+	prange_fini(&pstate->data);
+	prange_fini(&pstate->meta);
 }
 
-static struct silofs_pstsub *
+static struct silofs_prange *
 pstate_sub(struct silofs_pstate *pstate, bool meta)
 {
 	return meta ? &pstate->meta : &pstate->data;
@@ -82,21 +90,21 @@ pstate_sub(struct silofs_pstate *pstate, bool meta)
 static void pstate_next_psu(struct silofs_pstate *pstate, bool meta,
                             struct silofs_paddr *out_paddr)
 {
-	struct silofs_pstsub *pstsub = pstate_sub(pstate, meta);
+	struct silofs_prange *prange = pstate_sub(pstate, meta);
 
-	silofs_assert_eq(pstsub->cur_pos, 0);
+	silofs_assert_eq(prange->cur_pos, 0);
 
-	pstsub_carve(pstsub, SILOFS_PTYPE_UBER, out_paddr);
+	prange_carve(prange, SILOFS_PTYPE_UBER, out_paddr);
 }
 
 static void pstate_next_btn(struct silofs_pstate *pstate,
                             struct silofs_paddr *out_paddr)
 {
-	struct silofs_pstsub *pstsub = pstate_sub(pstate, true);
+	struct silofs_prange *prange = pstate_sub(pstate, true);
 
-	silofs_assert_gt(pstsub->cur_pos, 0);
+	silofs_assert_gt(prange->cur_pos, 0);
 
-	pstsub_carve(pstsub, SILOFS_PTYPE_BTNODE, out_paddr);
+	prange_carve(prange, SILOFS_PTYPE_BTNODE, out_paddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

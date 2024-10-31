@@ -100,6 +100,19 @@ const struct silofs_psid *silofs_psid_none(void)
 	return &s_psid_none;
 }
 
+void silofs_psid_init(struct silofs_psid *psid,
+                      const struct silofs_pvid *pvid, uint32_t idx)
+{
+	silofs_pvid_assign(&psid->pvid, pvid);
+	psid->index = idx;
+}
+
+void silofs_psid_fini(struct silofs_psid *psid)
+{
+	pvid_reset(&psid->pvid);
+	psid->index = 0;
+}
+
 bool silofs_psid_isnull(const struct silofs_psid *psid)
 {
 	return (psid->index == 0);
@@ -111,7 +124,7 @@ bool silofs_psid_has_pvid(const struct silofs_psid *psid,
 	return silofs_pvid_isequal(&psid->pvid, pvid);
 }
 
-void silofs_psid_setup(struct silofs_psid *psid)
+void silofs_psid_generate(struct silofs_psid *psid)
 {
 	silofs_pvid_generate(&psid->pvid);
 	psid->index = 1;

@@ -61,12 +61,17 @@ int silofs_pvid_from_str(struct silofs_lvid *pvid,
 
 const struct silofs_psid *silofs_psid_none(void);
 
+void silofs_psid_init(struct silofs_psid *psid,
+                      const struct silofs_pvid *pvid, uint32_t idx);
+
+void silofs_psid_fini(struct silofs_psid *psid);
+
 bool silofs_psid_isnull(const struct silofs_psid *psid);
 
 bool silofs_psid_has_pvid(const struct silofs_psid *psid,
                           const struct silofs_pvid *pvid);
 
-void silofs_psid_setup(struct silofs_psid *psid);
+void silofs_psid_generate(struct silofs_psid *psid);
 
 void silofs_psid_reset(struct silofs_psid *psid);
 

@@ -44,12 +44,12 @@ do_autogen() {
   run mkdir -p "${builddir}"
   do_autom4te_cfg
   run libtoolize --automake --copy --install --force
-  run aclocal -I m4
-  run autoheader
-  run autoconf
-  run automake --add-missing --copy -Woverride
+  run aclocal -I m4 --warnings=all
+  run autoheader --warnings=all
+  run automake --add-missing --copy -Woverride --warnings=all
+  run autoconf --warnings=all
   export LIBTOOLIZE=true
-  run autoreconf --install -I m4
+  run autoreconf --install -I m4 --warnings=all
 }
 
 do_autoclean() {

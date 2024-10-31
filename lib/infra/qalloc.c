@@ -190,7 +190,7 @@ static int memfd_setup(struct silofs_memfd *memfd,
 {
 	void *mem = NULL;
 	const int prot = PROT_READ | PROT_WRITE;
-	const int flags = MAP_SHARED;
+	const int flags = MAP_PRIVATE;
 	int fd = -1;
 	int err;
 
